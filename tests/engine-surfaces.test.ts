@@ -1,11 +1,13 @@
-// tests/engine-surfaces.test.ts — pins the provident-ssr 0.1.1 shared
-// multi-host dispatch surface this repo adopts (the upstream REQ-GAP-4/5/3
-// landings): Supervisor.dispatchAndReport ({results, dirtied}), the opt-in
-// bounded requestId dedup, the public flush(), and the opt-in data-node-id
-// render option (REQ-GAP-3/A2). Mirrors the upstream ssr-synthetic-event
-// harness so a version bump cannot silently break our host adoption.
+// tests/engine-surfaces.test.ts — pins the provident-ssr shared multi-host
+// surfaces this repo adopts (the upstream REQ-GAP-4/5/3 landings + the
+// REQ-GAP-8 threading): Supervisor.dispatchAndReport ({results, dirtied}),
+// the opt-in bounded requestId dedup, the public flush(), and the opt-in
+// data-node-id render option threaded through the canonical
+// renderProducingProcess loop (0.1.2). Mirrors the upstream
+// ssr-synthetic-event harness so a version bump cannot silently break our
+// host adoption.
 import { describe, it, expect, beforeAll } from 'vitest'
-import { translateLegacy, Supervisor, EventBridge, DomAdapter, SSRFragmentAdapter, emitElements, diffMinimal, applyOps } from 'provident-ssr'
+import { translateLegacy, Supervisor, EventBridge, DomAdapter, SSRFragmentAdapter, renderProducingProcess, type RenderAdapter } from 'provident-ssr'
 import { installShim, mountEl } from './helpers/dom-shim.js'
 
 beforeAll(() => {
@@ -55,15 +57,23 @@ function producingProcess(adapter: DomAdapter | SSRFragmentAdapter, mount?: Retu
     arr.push(cs as unknown as unknown[])
     prevStates.set(cs.nodeId as string, arr)
   }
-  let prevMap: Map<string, unknown> | null = null
+  // The CANONICAL re-emit loop (REQ-GAP-5/8): renderProducingProcess with the
+  // opt-in renderOptions threaded through — the exact loop the host Runtime
+  // adopts. The caller owns each per-tree prevMap (null on first render).
+  let domPrevMap: Map<string, unknown> | null = null
+  let ssrPrevMap: Map<string, unknown> | null = null
+  const opts = { nodeIdAttribute: true }
   function render(): string {
     const actionable: unknown[] = []
     for (const group of prevStates.values()) actionable.push(...group)
-    const els = emitElements(actionable as never, nodeById as never, { nodeIdAttribute: true })
-    const ops = diffMinimal(prevMap as never, els as never)
-    prevMap = new Map(els.map((e) => [(e as { wire: string }).wire, e]))
-    applyOps(adapter, ops as never)
-    return adapter instanceof SSRFragmentAdapter ? adapter.toString() : (mount ?? mountEl()).innerHTML
+    if (adapter instanceof SSRFragmentAdapter) {
+      const r = renderProducingProcess(actionable as never, nodeById as never, adapter, ssrPrevMap as never, opts)
+      ssrPrevMap = r.prevMap as unknown as Map<string, unknown>
+      return adapter.toString()
+    }
+    const r = renderProducingProcess(actionable as never, nodeById as never, adapter, domPrevMap as never, opts)
+    domPrevMap = r.prevMap as unknown as Map<string, unknown>
+    return (mount ?? mountEl()).innerHTML
   }
   const nodeByCssId = (id: string) => t.nodes.find((n) => (n.css as { id?: string })?.id === id)
   async function dispatch(target: string, event: string, options: { requestId?: string }, ...args: unknown[]) {
@@ -131,5 +141,17 @@ describe('provident-ssr 0.1.1 shared surfaces (the adopted contract)', () => {
     const ssrEls = (ssrHtml.match(/data-node-id="node-\d+"/g) ?? []).length
     expect(domEls).toBeGreaterThan(2)
     expect(ssrEls).toBeGreaterThan(2)
+  })
+
+  it('REQ-GAP-8: renderProducingProcess threads renderOptions (nodeIdAttribute default-OFF, opt-in ON)', () => {
+    const t = translateLegacy(ENV)
+    const nodeById = new Map(t.nodes.map((n) => [n.id, n]))
+    const cr = t.root.compile(t.nodes)
+    const ssrOff = new SSRFragmentAdapter()
+    renderProducingProcess(cr.actionable, nodeById, ssrOff, null, undefined)
+    expect(ssrOff.toString()).not.toMatch(/data-node-id=/)
+    const ssrOn = new SSRFragmentAdapter()
+    renderProducingProcess(cr.actionable, nodeById, ssrOn, null, { nodeIdAttribute: true })
+    expect(ssrOn.toString()).toMatch(/data-node-id="node-\d+"/)
   })
 })

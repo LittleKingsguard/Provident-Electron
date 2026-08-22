@@ -28,25 +28,28 @@ issue:
 | REQ-GAP-6 (DomAdapter needs a DOM) | **CLOSED-ALREADY-ADDRESSED** | Renderer-hosts the graph; IPC bridge |
 | REQ-GAP-7 (CSP silently skips string bodies) | **PASS-WITH-RESHAPE** — distinct `handler-body-eval-blocked` warn code + docs | CSP `'unsafe-eval'` stays (environment constraint); the failure is now detectable |
 
-## Round 2 — REQ-GAP-8 (new, open): `renderProducingProcess` cannot thread `nodeIdAttribute`
+## Round 2 — REQ-GAP-8 (filed 2026-08-21): RESOLVED by provident-ssr 0.1.2
 
-- **Observed symptom**: the exported canonical re-emit loop
-  (`renderProducingProcess(actionable, nodeById, adapter, prevMap)`) calls
-  `emitElements(live, nodeById)` WITHOUT options, so a host adopting the loop
-  cannot get the opt-in `data-node-id` traceability attribute that `emitElements`
-  itself offers.
-- **Reproduction**: call `renderProducingProcess`; the returned `els` carry no
-  `data:node-id` op prop regardless of the caller wanting it.
-- **Suspected root cause**: the 0.1.1 loop landed without the `renderOptions`
-  parameter the handoffs-review Opening A/B explicitly planned ("the §B loop
-  absorbs the A2 option in the same pass").
-- **Proposed fix shape (upstream)**: add a `renderOptions`/`nodeIdAttribute`
-  parameter to `renderProducingProcess` and thread it to `emitElements`; the
-  ownership rules (per-tree prevMap, destroy-prune, caller drain, on-demand/P4)
-  are unchanged. Small TDD change.
-- **Consumer workaround**: the Runtime keeps an explicit emit-with-options loop
-  (single emit `{nodeIdAttribute: true}` + the same op stream applied to the
-  DOM and SSR adapters for parity).
+- **Gap**: the exported canonical re-emit loop `renderProducingProcess` could
+  not thread the opt-in `nodeIdAttribute` option (the handoffs-review Opening
+  A/B planned the loop absorbing the A2 option in the same pass; the 0.1.1
+  loop omitted it).
+- **0.1.2 landing**: `renderProducingProcess(actionable, nodeById, adapter,
+  prevMap, renderOptions?)` — the optional `renderOptions` threads to
+  `emitElements`; `{ nodeIdAttribute: true }` stamps `data-node-id`, default
+  undefined = byte-identical render. Ownership rules unchanged.
+- **This repo's adoption**: the Runtime's re-emit now calls
+  `renderProducingProcess(…, { nodeIdAttribute: true })` per adapter (DOM +
+  SSR, each with its own caller-owned prevMap). The explicit emit-with-options
+  loop is removed. Verified live in Electron (data-node-id DOM=SSR on all 12
+  elements; engine dirtied; engine dedup echo; event.value echo).
+
+## Round 3 — no new gaps
+
+0.1.2 closes the catalogue. No new requirement gaps discovered during the
+0.1.2 adoption pass. The sole remaining work is consumer-side debugging
+niceties (next-steps items: surface `TranslatedTree.warnings` through MCP,
+renderer debug panel).
 
 ---
 
@@ -65,13 +68,14 @@ issue:
 
 ## Verified state (the workarounds ARE proven)
 
-- Unit: `tests/runtime.test.ts` (9) + `tests/engine-surfaces.test.ts` (4) —
-  green (13 total).
+- Unit: `tests/runtime.test.ts` (9) + `tests/engine-surfaces.test.ts` (5) —
+  green (14 total).
 - MCP e2e (both transports, standalone server): `tests/mcp-stdio-e2e.test.mjs`
   — green (all four tools over stdio AND Streamable HTTP).
-- Real-Electron e2e (0.1.1): MCP client → HTTP → IPC → renderer graph —
-  `data-node-id` on all 12 elements (DOM = SSR), `provident.dispatch` on `inc`
-  mutates the graph + re-renders both views with engine-derived `dirtied`
+- Real-Electron e2e (0.1.2): MCP client → HTTP → IPC → renderer graph —
+  `data-node-id` on all 12 elements (DOM = SSR, via the canonical
+  `renderProducingProcess` loop), `provident.dispatch` on `inc` mutates the
+  graph + re-renders both views with engine-derived `dirtied`
   (`["node-5","node-3","node-1"]`), engine `requestId` dedup echoes the first
   report (no re-fire), `event.value` echo works, node state works.
 - Trio (this repo's gate): `npm test` green, `npm run typecheck` clean,

@@ -13,7 +13,7 @@ recorded future proposals with their recorded constraints.
 | **HEADLESS/SSR-ONLY producing process in the MAIN process** | 2026-08-21 | PARKED (not implemented). A main-process graph using only `SSRFragmentAdapter` (no DOM, no renderer) would let the MCP server dispatch + re-emit without a BrowserWindow. Rejected for now: the user chose "Renderer DOM + IPC bridge", and REQ-GAP-6 makes DomAdapter impossible in main. Revisit if a rendererless/headless mode is wanted (Electron `--headless` or a pure-Node MCP server using the same Runtime). |
 | **`requestId` idempotency + `{results, dirtied}` as an ENGINE surface** | 2026-08-21 | **RESOLVED by upstream 0.1.1** — `Supervisor.dispatchAndReport` + the opt-in bounded `requestId` dedup (echo semantics) + public `flush()` landed (ssr-synthetic-event.md §3). This host ADOPTS it; the host-side dedup is removed. No longer parked. |
 | **A single canonical emitted `data-node-id`** | 2026-08-21 | **RESOLVED by upstream 0.1.1** — opt-in `renderOptions: { nodeIdAttribute: true }` (the scoped no-render-change-pin lift, REQ-GAP-3/A2). This host opts in. No longer parked. |
-| **`renderProducingProcess` + `nodeIdAttribute`** | 2026-08-21 | **PARKED (REQ-GAP-8, open)** — the exported canonical loop cannot thread the opt-in option, so this host keeps its explicit emit-with-options loop. Revisit when the upstream adds the option (or when a companion package wraps the loop + options). |
+| **`renderProducingProcess` + `nodeIdAttribute`** | 2026-08-21 | **RESOLVED by upstream 0.1.2 (REQ-GAP-8)** — the loop gained the optional `renderOptions` param threaded to `emitElements`. This host now ADOPTS the canonical loop with `{ nodeIdAttribute: true }`. No longer parked. |
 
 ## UPSTREAM (imported constraints)
 

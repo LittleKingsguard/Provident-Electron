@@ -9,9 +9,25 @@ this repo's local next-steps (the upstream queue lives in
 
 | # | Item | Status / blocker |
 | --- | --- | --- |
-| 1 | **REQ-GAP-8 follow-up** — when upstream `renderProducingProcess` gains the `nodeIdAttribute`/renderOptions param, re-point the Runtime's re-emit at the canonical loop (the explicit emit-with-options loop is the current host shape). | Open (REQ-GAP-8 in defects.md). |
-| 2 | **Surface `TranslatedTree.warnings` through MCP** — read translate warnings (`handler-body-eval-blocked`, `handler-body-invalid`, …) and expose them in `get_rendered_html` / a diagnostics field so an agent learns a handler was skipped (REQ-GAP-7's host-must-read-warnings pin, consumer side). | Pending — the CSP carve-out already lets our demo handlers compile; the surface is a debugging nicety. |
-| 3 | **Update the renderer's debug panel** to show the live census + a copy of the SSR fragment (the `#status` area is currently "booting…"). | Pending — debugging exposure is a stated goal; the MCP tools already expose it, a visible panel is a nice-to-have. |
+| 1 | **Surface `TranslatedTree.warnings` through MCP** — read translate warnings (`handler-body-eval-blocked`, `handler-body-invalid`, …) and expose them in `get_rendered_html` / a diagnostics field so an agent learns a handler was skipped (REQ-GAP-7's host-must-read-warnings pin, consumer side). | Pending — the CSP carve-out already lets our demo handlers compile; the surface is a debugging nicety. |
+| 2 | **Update the renderer's debug panel** to show the live census + a copy of the SSR fragment (the `#status` area is currently "booting…"). | Pending — debugging exposure is a stated goal; the MCP tools already expose it, a visible panel is a nice-to-have. |
+
+## DONE (2026-08-21, third pass — 0.1.2 adoption)
+
+- Refreshed `provident-ssr` to ^0.1.2.
+- Reviewed the REQ-GAP-8 landing (upstream decisions.md row): `renderProducingProcess`
+  gained the optional `renderOptions` param threaded to `emitElements`.
+- Adopted the canonical loop: the Runtime's re-emit now calls
+  `renderProducingProcess(actionable, nodeById, adapter, prevMap, { nodeIdAttribute: true })`
+  per adapter (DOM + SSR, each with its own caller-owned prevMap). The explicit
+  emit-with-options loop is removed. REQ-GAP-8 closed.
+- Tests: `tests/engine-surfaces.test.ts` now drives the canonical loop (5 tests,
+  incl. a REQ-GAP-8 opt-in default-off pin) + `tests/runtime.test.ts` (9) =
+  14 green; typecheck clean; build clean; MCP e2e (both transports) green;
+  real-Electron e2e green (data-node-id DOM=SSR on all 12 elements, engine
+  dirtied, engine dedup echo, event.value echo).
+- Trackers updated: defects.md (REQ-GAP-8 → RESOLVED, none open), decisions.md
+  (ADOPT row), pending.md, HANDOFF.md, spec, README.
 
 ## DONE (2026-08-21, second pass — 0.1.1 adoption)
 

@@ -13,11 +13,10 @@ import {
   EventBridge,
   DomAdapter,
   SSRFragmentAdapter,
-  emitElements,
-  applyOps,
-  diffMinimal,
+  renderProducingProcess,
   type RenderOp,
   type LegacyInitialData,
+  type RenderOptions,
 } from 'provident-ssr'
 import type { Node } from 'provident-ssr/core/node.js'
 import type { CompiledState } from 'provident-ssr/core/types.js'
@@ -45,8 +44,13 @@ export class Runtime {
   private readonly rootNode: Node
   private readonly nodes: Node[]
   private readonly prevStates = new Map<string, CompiledState[]>()
-  private prevMap: Map<string, unknown> | null = null
+  private domPrevMap: Map<string, unknown> | null = null
+  private ssrPrevMap: Map<string, unknown> | null = null
   private bootstrapped = false
+  /** The opt-in data-node-id (REQ-GAP-3/A2 + REQ-GAP-8): every emitted element
+   *  carries its engine nodeId in BOTH views so an MCP agent reading the
+   *  rendered HTML can trace each element back to its producing graph node. */
+  private readonly renderOptions: RenderOptions = { nodeIdAttribute: true }
 
   constructor(opts: RuntimeOptions) {
     this.mount = opts.mount
@@ -102,19 +106,19 @@ export class Runtime {
     const actionable: CompiledState[] = []
     for (const states of this.prevStates.values()) actionable.push(...states)
     const byNode = new Map(this.supervisor.allNodes().map((n) => [n.id, n]))
-    // Opt-in data-node-id (REQ-GAP-3/A2): every emitted element carries its
-    // engine nodeId so an MCP agent reading the rendered HTML can trace each
-    // element back to its producing graph node.
-    const els = emitElements(actionable as never, byNode as never, { nodeIdAttribute: true })
-    const ops = diffMinimal(this.prevMap as never, els as never)
+    // The canonical re-emit loop (REQ-GAP-5/8, 0.1.2): the exported
+    // renderProducingProcess with the opt-in nodeIdAttribute threaded through.
+    // The caller owns each per-tree prevMap (null on first render); the loop
+    // prunes destroyed/not-in-tree nodes and never drains takePass2States.
     this.adapter.beginBatch()
-    applyOps(this.adapter, ops as never)
+    const dom = renderProducingProcess(actionable as never, byNode as never, this.adapter, this.domPrevMap as never, this.renderOptions)
     this.adapter.endBatch()
-    // The op stream is adapter-neutral: apply the SAME ops to the SSR adapter
-    // so the build-time fragment stays in parity with the live DOM (PAR-5).
-    applyOps(this.ssr, ops as never)
-    this.prevMap = new Map(els.map((e) => [(e as { wire: string }).wire, e]))
-    return { els, ops }
+    this.domPrevMap = dom.prevMap as unknown as Map<string, unknown>
+    // Same actionable + options → identical els; the SSR adapter mirrors the
+    // same element set (PAR-5 parity) through its own prevMap.
+    const ssr = renderProducingProcess(actionable as never, byNode as never, this.ssr, this.ssrPrevMap as never, this.renderOptions)
+    this.ssrPrevMap = ssr.prevMap as unknown as Map<string, unknown>
+    return { els: dom.els, ops: dom.ops }
   }
 
   private mergePass2(): void {

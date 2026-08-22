@@ -92,15 +92,15 @@ provident.dispatch { target: { kind: "nodeId", nodeId: "node-6" }, event: "click
   trackers (imported from the upstream `AGENTS.md` document-archival loop).
 - `AGENTS.md` — the process rules for agents working in this repo.
 
-## 0.1.1 adoption notes
+## 0.1.x adoption notes
 
 Provident-Electron consumes the shared multi-host surfaces the upstream landed
-in 0.1.1 (`docs/specs/handoffs-review.md`): `Supervisor.dispatchAndReport`
-(engine `{results, dirtied}` + opt-in `requestId` dedup), the public
-`flush()`, and the opt-in `data-node-id` render option (the one scoped lift of
-the no-render-change pin). `renderProducingProcess` (the exported canonical
-re-emit loop) is NOT used because it cannot thread `nodeIdAttribute` —
-REQ-GAP-8 (open).
+across 0.1.1/0.1.2 (`docs/specs/handoffs-review.md`): `Supervisor.dispatchAndReport`
+(engine `{results, dirtied}` + opt-in `requestId` dedup), the public `flush()`,
+the opt-in `data-node-id` render option (the one scoped lift of the
+no-render-change pin), and the exported canonical re-emit loop
+`renderProducingProcess` with the `renderOptions` threading (REQ-GAP-8). All
+eight filed gaps (REQ-GAP-1..8) are resolved upstream; none remain open.
 
 ## License
 

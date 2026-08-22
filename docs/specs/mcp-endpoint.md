@@ -69,8 +69,10 @@ the 0.1.1 shared dispatch-report surface, ssr-synthetic-event.md §3):
   non-draining).
 - **re-render** — the host then refreshes its render baseline from the
   NON-draining resolved store (`getResolvedStates` for each dirtied id) and
-  runs its re-emit loop against BOTH adapters; the response carries the fresh
-  `renderedHtml` (live `#app`) + `ssrHtml` (SSR re-emit) (REQ-GAP-5).
+  re-emits through the canonical `renderProducingProcess` loop (REQ-GAP-5/8,
+  with the opt-in `nodeIdAttribute` threaded) against BOTH adapters — the
+  response carries the fresh `renderedHtml` (live `#app`) + `ssrHtml` (SSR
+  re-emit).
 - **dirtied** — engine-derived (see above); a duplicate `requestId` echoes the
   first caller's report.
 - **requestId** — idempotency is ENGINE-owned: `dispatchAndReport`'s opt-in
