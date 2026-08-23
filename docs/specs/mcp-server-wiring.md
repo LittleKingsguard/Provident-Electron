@@ -16,9 +16,11 @@ registers the tools. This unit:
    (and not listed / not callable). The `provident` prefix is part of the name
    (e.g. `provident.dispatch`).
 2. **HTTP token gate** — the HTTP transport calls `gate.checkRequest(headers)`
-   on every `/mcp` POST/GET; a failed check ⇒ `401` with a JSON-RPC error,
-   BEFORE any tool runs. stdio is NOT token-gated (spawn-local; the manual
-   grant + group gating is the stdio control).
+   on every `/mcp` POST; a failed check ⇒ `401` with a JSON-RPC error,
+   BEFORE any tool runs. GET/DELETE ⇒ `405` (the SDK's stateless canonical
+   ordering — the 405 is returned before the token check; no tool runs on
+   GET/DELETE). stdio is NOT token-gated (spawn-local; the manual grant + group
+   gating is the stdio control).
 3. **Settings IPC** — `provident:security:get` / `provident:security:set`
    (main ↔ renderer, manual-UI-only) read/apply the gate config. Applying a
    patch re-derives the enabled-tool registration (the running server's tools
@@ -55,21 +57,25 @@ export function registeredToolNames(gate: SecurityGate, allNames: string[]): str
 
 ## 4. The HTTP 401 contract
 
-`httpAuthorized(gate, headers)` → `boolean` = `gate.checkRequest(headers).ok`.
+The HTTP handler's token check is `gate.checkRequest(headers).ok` (the
+`SecurityGate` surface; there is no separately-exported `httpAuthorized` — the
+test-local `httpAuthorized(gate, headers)` helper in
+`tests/mcp-server-wiring.test.ts` is just `gate.checkRequest(headers).ok`).
 When it returns `false`, the HTTP handler MUST return 401 before touching any
 tool. When the gate has no token (`token:null`), `checkRequest({})` is `true`.
 
 ## 5. Verify (the TestWriter's exact states)
 
-- `toolForName('provident.dispatch')` → `'dispatch'`; `toolForName('unknown')`
-  → throws.
-- `registeredToolNames(defaultGate, ALL)` = the `read`+`dispatch` set (5 tools:
+- `toolForName('provident.dispatch')` → `'dispatch'`;
+  `toolForName('provident.code.load')` → `'code.load'` (a two-part name keeps
+  its sub-path); `toolForName('unknown')` → throws.
+- `registeredToolNames(defaultGate, ALL)` = the `read`+`dispatch` set (6 tools:
   dispatch + get_rendered_html + list_targets + get_node_state + code.get +
-  code.validate → count them per the §3 list) and NOT graph/code tools.
+  code.validate) and NOT graph/code tools.
 - `registeredToolNames(defaultGate.apply({groups:['graph','code']}), ALL)` ⇒
-  all the graph + code tools are now included.
-- `httpAuthorized(gateWithNoToken, {})` → `true`.
-- `httpAuthorized(gateWithToken('s'), {authorization:'Bearer s'})` → `true`;
-  `{authorization:'Bearer wrong'}` → `false`.
+  all 15 tools are now included.
+- `gate.checkRequest({})` with no token → `{ok:true}`;
+  `gateWithToken('s').checkRequest({authorization:'Bearer s'})` → `{ok:true}`;
+  `{authorization:'Bearer wrong'}` → `{ok:false}`.
 - The full tool list `ALL` covers every tool the MCP server will register (the
   current 4 + the planned graph/code tools).

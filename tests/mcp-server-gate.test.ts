@@ -88,4 +88,21 @@ describe('ProvidentMcpServer gate (spec §2/§4)', () => {
     server.applyGatePatch({ groups: ['dispatch', 'read'] })
     expect(server.registeredEnabled('provident.dispatch')).toBe(true)
   })
+
+  it('M1-widen — applyGatePatch REGISTERS newly-allowed tools on a LIVE server (spec §2 "registers any newly-allowed ones")', () => {
+    const server = new ProvidentMcpServer({ backend })
+    server.ensureServerRegistered()
+    // default gate: code-mutation + graph tools are NOT registered
+    expect(server.registeredEnabled('provident.code.load')).toBe(false)
+    expect(server.registeredEnabled('provident.load')).toBe(false)
+    // Widen: enable the code group on the LIVE server
+    server.applyGatePatch({ groups: ['code'] })
+    // the newly-allowed code tools are now registered + enabled on the live server
+    expect(server.registeredEnabled('provident.code.load')).toBe(true)
+    expect(server.registeredEnabled('provident.code.set')).toBe(true)
+    // widen further to graph
+    server.applyGatePatch({ groups: ['graph'] })
+    expect(server.registeredEnabled('provident.load')).toBe(true)
+    expect(server.registeredEnabled('provident.teardown')).toBe(true)
+  })
 })

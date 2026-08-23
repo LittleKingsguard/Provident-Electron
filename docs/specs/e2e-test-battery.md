@@ -58,7 +58,7 @@ envelope (hooks/handler bodies/component bindings) then re-load:
 | Tool | Payload | Returns | Internal (existing interfaces) |
 | --- | --- | --- | --- |
 | `provident.load` | `{ kind: 'envelope', envelope: LegacyInitialData }` (A2) OR `{ kind: 'doc', doc: SerializedRenderDoc }` (A1) OR `{ kind: 'commands', commands: OpCommand[] }` (A3) | `{ census, renderedHtml, ssrHtml, warnings }` | A2: `translateLegacy` (+ userData set) → register → `recordResolved` → render. A1 (**the 4-step recipe, R2**): `loadState(doc)` → `new Node(d, hub)` per seed (template root first, content after) with ONE hub instance shared with the supervisor → `reconcileParentTargets(nodes)` → `registerNode` per node → compile → `recordResolved` → render. A3: `Supervisor.apply(op)` per command → `flush()` → **pass-2 drain rule (R9)** → render. |
-| `provident.op` | a single `OpCommand` | apply result `{ status, dirtied, ... }` | `Supervisor.apply` + `flush()` + drain rule (R9) + render |
+| `provident.op` | `{ command: OpCommand }` (the op rides under a `command` key) | apply result `{ status, dirtied?, minted?, renderedHtml, ssrHtml, warnings }` | `Supervisor.apply` + `flush()` + drain rule (R9) + render |
 | `provident.export` | `{ format: 'legacy' \| 'serialized' }` | the export + a census snapshot | `reverseTranslate(root)` / `serializeSlice(root, kids, clientConfig)` |
 | `provident.validate` | `{ export: <the export>, kind }` | `{ valid, censusMatch, treeSigMatch, warnings }` | re-load the export into a THROWAWAY graph (a fresh supervisor; id-namespaced reseed, R7) → compare census + `treeSig(treeFromOps(...))` vs the pre-export render; ONLY structural parity for def/seam-bearing exports (R3 — serialize→loadState is snapshot-only) |
 | `provident.teardown` | `{}` | `{ census, renderedHtml, warnings }` (root-only proof) | destroy/detach every in-tree child of root via `Supervisor.apply('destroy')` per node (runtime-minted retention), `dropPayload` on content payloads + clear userData (R8), `removeLayer` cleanups, then **the settle-gate (R6): `while (hasPendingWork()) await flush()`**, re-render; assert mount = root-only |
@@ -228,6 +228,13 @@ Export/validate: legacy path (seam-bearing, R3). Teardown.
 
 ### 5.3 hooks-scenarios
 
+> **Implementation status (2026-08-23): NOT YET LANDED in the e2e battery.**
+> The battery runner (`tests/e2e-battery.test.mjs`) implements §5.1, §5.2, a
+> §5.5 representative (counter inc), and §5.4. The full hooks-scenarios block
+> (theme/user/counter hook providers + the four containment verdicts) is
+> deferred — the `hooksScenariosEnvelope` shape + the containment codes are
+> documented here as the contract for a later landing.
+
 Source: `demo/hooks-scenarios.js` (`hooksScenariosEnvelope` — one envelope:
 root carries the `theme`/`user`/`counter` value providers + the authored
 `hooks` field; cards are consumers + controls).
@@ -270,6 +277,11 @@ exercises the full CRUD (create/read/update/delete) + the load-apply round-trip.
 
 ### 5.5 handler-scenarios
 
+> **Implementation status (2026-08-23): PARTIAL.** The e2e battery implements
+> one representative handler scenario (the counter `inc` dispatch). The full
+> anon/alice/main matrix (S1a, S1b, S2..S10) + the containment scenarios are
+> deferred — documented here as the contract for a later landing.
+
 Source: `demo/handlers-scenarios.js` (`handlersScenariosEnvelopes()` = anon /
 alice / main — one envelope per mount) + `demo/handlers-scenarios.template.html`.
 
@@ -299,9 +311,12 @@ per R8 is exercise-covered by anon-then-alice-then-anon.)
 - **Battery**: `tests/e2e-battery.test.mjs` — spawns the battery host (stdio),
   connects the SDK client ONCE, then runs the scenarios §5.1–§5.5 in order.
   Between scenarios only `provident.teardown` resets (C4); after each teardown
-  it asserts `get_rendered_html` = root-only AND `hasPendingWork() === false`
-  (C3 + R6). All drive via MCP tools (C1); assertions may also check returned
-  values directly.
+  it asserts `get_rendered_html` = root-only (C3 — `census.inTree === 1` + no
+  child content in the mount). The R6 settle-gate (`hasPendingWork() === false`)
+  is asserted at the Runtime unit level (`tests/runtime-battery.test.ts`:
+  `teardownResult` is async + awaits the settle-gate; the MCP `provident.teardown`
+  returns the post-quiescence census). All drive via MCP tools (C1); assertions
+  may also check returned values directly.
 - **Assertion hygiene (R7):** key on authored ids (css.id/props.id — never
   engine-minted `node-N`); an empty `results`/`dirtied` is a failure; fresh
   requestIds per scenario; no requestIds inside command arrays.

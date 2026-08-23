@@ -4,8 +4,10 @@
 // IPC.
 import { app, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'node:path'
-import { IPC_INVOKE, IPC_REPLY, IPC_READY, type RpcReply } from '../shared/types.js'
+import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, type RpcReply } from '../shared/types.js'
 import { ProvidentMcpServer, RendererBackend, type McpTransportKind } from './mcp-server.js'
+import { createSecurityStore, type SecurityStore } from './security-store.js'
+import { SecurityGate, type ToolGroup } from './security.js'
 
 // The main process is bundled as CJS (Electron runs it reliably that way), so
 // `__dirname` is available.
@@ -38,8 +40,42 @@ async function main(): Promise<void> {
   const transport = transportFromArgs(process.argv.slice(1))
   const port = portFromArgs(process.argv.slice(1))
 
+  // The manual-UI security settings (mcp-endpoint.md §6.4): persisted to
+  // userData so a restart restores them. The MCP server gate is built from the
+  // persisted config (read+dispatch ON by default on first run).
+  const securityStore: SecurityStore = createSecurityStore({
+    path: join(app.getPath('userData'), 'provident-security.json'),
+  })
+  const persisted = securityStore.get()
+  const gate = new SecurityGate({ token: persisted.token, enabled: persisted.enabled as ToolGroup[] })
   const backend = new RendererBackend()
-  const mcp = new ProvidentMcpServer({ backend, transport, port })
+  const mcp = new ProvidentMcpServer({ backend, transport, port, gate })
+
+  // The manual-UI settings IPC: main owns the config + re-wires the MCP server
+  // tool-gating on change. This is manual-UI-ONLY — it is NOT reachable over an
+  // MCP tool (the MCP tool handlers never route to it), so an agent cannot grant
+  // itself capabilities.
+  ipcMain.handle(IPC_SECURITY_GET, () => securityStore.get())
+  ipcMain.handle(IPC_SECURITY_SET, (_event, patch: { token?: string | null; groups?: string[]; disable?: string[] }) => {
+    const updated = securityStore.set(patch)
+    // Re-gate the live MCP server + persist.
+    mcp.applyGatePatch({ token: patch.token, groups: patch.groups as ToolGroup[] | undefined, disable: patch.disable as ToolGroup[] | undefined })
+    return updated
+  })
+
+  // The MCP stdio transport is spawned by a client (the battery, a test, or an
+  // agent). When that client disconnects, stdin closes. Exit so a test run does
+  // NOT leave an orphaned Electron app instance open on the machine — otherwise
+  // every test spawn leaves a live BrowserWindow behind.
+  if (transport === 'stdio') {
+    process.stdin.on('end', () => {
+      console.error('[provident-main] stdin closed — MCP client disconnected; exiting')
+      void mcp.close().finally(() => app.exit(0))
+    })
+    process.stdin.on('error', () => {
+      void mcp.close().finally(() => app.exit(0))
+    })
+  }
 
   ipcMain.on(IPC_READY, () => {
     backend.markReady()

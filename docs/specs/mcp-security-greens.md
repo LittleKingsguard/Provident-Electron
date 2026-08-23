@@ -96,8 +96,8 @@ MCP server; here the scenarios are unit-level + a transport-integration note.)
     raw fetch-style object with `Authorization` must be lowercased by the
     caller). Documented contract (F7).
 38. A group that is DISABLED is not merely filtered at the tool boundary — the
-    gate is the single source of truth; a disabled-group tool returns an
-    authorization error, never a silent run.
+   gate is the single source of truth; a disabled-group tool is NOT registered
+   (an MCP call to it returns the SDK's "tool not found", never a silent run).
 
 ## How the blind-test uses this
 

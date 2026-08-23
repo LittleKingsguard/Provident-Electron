@@ -8,7 +8,7 @@
 // host adoption.
 import { describe, it, expect, beforeAll } from 'vitest'
 import { translateLegacy, Supervisor, EventBridge, DomAdapter, SSRFragmentAdapter, renderProducingProcess, type RenderAdapter } from 'provident-ssr'
-import { installShim, mountEl } from './helpers/dom-shim.js'
+import { installShim, mountEl } from '../src/shared/dom-shim.js'
 
 beforeAll(() => {
   installShim()

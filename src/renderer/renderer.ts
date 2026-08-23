@@ -3,17 +3,8 @@
 // MCP-facing operations over the preload bridge (main process = MCP server).
 import { Runtime } from './runtime.js'
 import { demoEnvelope } from '../shared/demo-envelope.js'
+import { initSettingsPane } from './settings.js'
 import type { RpcRequest, RpcReply } from '../shared/types.js'
-
-declare global {
-  interface Window {
-    provident?: {
-      ready(): void
-      onRequest(handler: (req: RpcRequest) => void): void
-      sendReply(reply: RpcReply): void
-    }
-  }
-}
 
 function handleRequest(runtime: Runtime, req: RpcRequest): Promise<RpcReply> {
   return (async (): Promise<RpcReply> => {
@@ -31,6 +22,39 @@ function handleRequest(runtime: Runtime, req: RpcRequest): Promise<RpcReply> {
           break
         case 'nodeState':
           value = runtime.nodeState(req.payload as never)
+          break
+        case 'load':
+          value = runtime.load(req.payload as never)
+          break
+        case 'op':
+          value = runtime.op(req.payload as never)
+          break
+        case 'export':
+          value = runtime.export((req.payload as { format: 'legacy' | 'serialized' }).format)
+          break
+        case 'validate':
+          value = runtime.validate((req.payload as { kind: 'legacy' | 'serialized'; export: unknown }).kind, (req.payload as { export: unknown }).export)
+          break
+        case 'teardown':
+          value = await runtime.teardownResult()
+          break
+        case 'code.get':
+          value = runtime.codeGet((req.payload as { path: string }).path)
+          break
+        case 'code.set':
+          value = runtime.codeSet((req.payload as { path: string; value: unknown }).path, (req.payload as { value: unknown }).value)
+          break
+        case 'code.create':
+          value = runtime.codeCreate((req.payload as { path: string; entry: unknown }).path, (req.payload as { entry: unknown }).entry)
+          break
+        case 'code.delete':
+          value = runtime.codeDelete((req.payload as { path: string; index?: number }).path, (req.payload as { index?: number }).index)
+          break
+        case 'code.validate':
+          value = runtime.codeValidate((req.payload as { envelope?: unknown }).envelope)
+          break
+        case 'code.load':
+          value = runtime.codeLoad((req.payload as { envelope?: unknown }).envelope)
           break
         default:
           throw new Error(`unknown method: ${(req as { method: string }).method}`)
@@ -59,6 +83,8 @@ function main(): void {
   bridge.onRequest((req) => {
     void handleRequest(runtime, req).then((reply) => bridge.sendReply(reply))
   })
+  // The manual-UI Security Settings pane (mcp-endpoint.md §6.4).
+  void initSettingsPane()
   bridge.ready()
 }
 

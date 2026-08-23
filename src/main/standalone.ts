@@ -53,3 +53,13 @@ const portArg = process.argv.find((a) => a.startsWith('--mcp-port='))
 const port = portArg ? Number(portArg.slice('--mcp-port='.length)) : 3788
 const server = new ProvidentMcpServer({ backend: new MockBackend(), transport, port })
 await server.start()
+
+// A spawned (non-interactive) server must exit when its stdio client
+// disconnects — otherwise a test run leaves an orphaned Node process on the
+// machine. StdioServerTransport does not auto-exit.
+if (transport === 'stdio') {
+  process.stdin.on('end', () => {
+    void server.close().finally(() => process.exit(0))
+  })
+  process.stdin.on('error', () => process.exit(0))
+}

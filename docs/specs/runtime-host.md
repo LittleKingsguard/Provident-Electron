@@ -18,24 +18,30 @@ the battery host call. They are pure host code (no package change).
 ```ts
 loadEnvelope(envelope: LegacyInitialData, opts?: { userData?: unknown }): Census
 loadDoc(doc: SerializedRenderDoc): Census
-applyCommand(cmd: OpCommand): { status: string; dirtied?: string[]; minted?: string[] }
+applyCommand(cmd: OpCommand | null | undefined): { status: string; dirtied?: string[]; minted?: string[] }
 exportLegacy(): LegacyInitialData
 exportSerialized(): SerializedRenderDoc
 validateExport(kind: 'legacy' | 'serialized', export: unknown): { valid: boolean; censusMatch: boolean; warnings: unknown[] }
 teardown(): Census
 ```
 
+The MCP-facing wrappers (Unit C, `docs/specs/e2e-test-battery.md` §3 + `mcp-endpoint.md` §4) ride on top of these: `load(req)` → A2/A1/A3, `op(cmd)` → `applyCommand`, `export(format)` → `exportLegacy`/`exportSerialized`, `validate(kind, exp)` → `validateExport` + a `treeSigMatch` parity compare (the MCP `validate` return adds `treeSigMatch`), `teardownResult()` → `teardown` + the awaited R6 settle-gate (async), and the six `codeGet`/`codeSet`/`codeCreate`/`codeDelete`/`codeValidate`/`codeLoad` envelope-CRUD methods.
+
 `OpCommand` = a managed-channel op payload (`{ kind: 'clone-instance' | 'attach'
 | 'detach' | 'move' | 'state-slice' | 'layer-apply' | 'rows-mint' | 'rows-clear'
-| 'placement-attach' | 'destroy', ... }`).
+| 'placement-attach' | 'destroy', ... }`). The op-kind vocabulary is ENGINE-owned
+(`supervisor.apply` rejects an unknown kind with `{status:'rejected'}`); the host
+forwards and never whitelists the kind itself.
 
 ## 3. Behavior (every state / fail-state)
 
 ### 3.1 `loadEnvelope(envelope, { userData })` — A2 load
 - Replaces the current graph: tears down the existing content (see §3.6), then
   `translateLegacy(envelope)` → register → compile → `recordResolved` → render.
-- Sets the translate-scoped `userData` (R8) when provided; CLEARS it when
-  absent (so an anon load after a user load has no stale userData).
+- Sets the translate-scoped `userData` (R8) when provided; a fresh `Supervisor`
+  is built on every load, so an absent-`userData` load after a user load carries
+  NO stale userData (the anon-after-alice trap is closed by the supervisor
+  rebuild, not an explicit clear).
 - Returns the post-load census.
 - Placement-routed envelopes (a node with a `content`-role anchor) bootstrap via
   `compilePath()` per node (the path-enumeration pass), NOT `rootNode.compile`
@@ -54,7 +60,12 @@ teardown(): Census
 - `supervisor.apply(cmd)` (the managed channel) → `flush()` → drain rule (R9:
   `takePass2States` consumed exactly once, before render) → render.
 - Returns the apply result `{ status, dirtied?, minted? }`.
-- A rejected op returns its `{ status: 'rejected', error }` — never throws.
+- A rejected op returns `{ status: 'rejected' }` — never throws. Rejection
+  sources: an unresolvable string `node` (H3), a non-string/non-Node `node`
+  value (H4), a non-object command (H4), or an unknown op `kind` (engine-side).
+- The MCP wrapper `teardownResult()` is ASYNC: it awaits the R6 settle-gate
+  before + after `teardown()` so the returned census reflects provable
+  quiescence (`hasPendingWork() === false`).
 
 ### 3.4 `exportLegacy()` / `exportSerialized()`
 - `exportLegacy()` → `reverseTranslate(root, { content: contentNodes })`.
@@ -62,19 +73,26 @@ teardown(): Census
 - Both return the current graph's export (no mutation).
 
 ### 3.5 `validateExport(kind, export)`
-- Re-loads the export into a THROWAWAY graph (a fresh `Supervisor` + hub; never
-  the live one) and compares census + (for legacy) re-translate warnings.
-- `censusMatch` = the throwaway graph's census equals the live graph's census.
+- Re-loads the export into a THROWAWAY graph (a fresh `Supervisor`; never
+  the live one) and compares census. The `hub` is used only on the serialized
+  branch (`loadState` → `new Node(s, hub)`); the legacy branch uses
+  `translateLegacy` (which makes its own hub).
+- `censusMatch` = the throwaway graph's `inTree`+`registered` equal the live
+  graph's. The MCP `validate` wrapper adds a `treeSigMatch` parity digest.
 - Returns `{ valid, censusMatch, warnings }` — never throws on a malformed
-  export (returns `valid:false`).
+  export (returns `valid:false`). A `kind` other than `'legacy'|'serialized'`
+  returns `{ valid:false }` (H6 — never a wrong serialized parse).
 
 ### 3.6 `teardown()` — restore root-only (C3/C4)
 - Destroys every in-tree child of root via `supervisor.apply('destroy')` per
-  node (runtime-minted retention), `dropPayload` on content payloads, clears
-  userData (R8), then the **settle-gate (R6): `while (hasPendingWork())
-  await flush()`**, then re-render.
+  node (runtime-minted retention), `dropPayload` on content payloads, then
+  re-render. A fresh `Supervisor` is built on the next load, so userData (R8)
+  does not persist across loads.
 - Returns the post-teardown census — `inTree === 1` (root only), mount empty.
 - Idempotent: calling teardown on an already-root-only graph is a no-op.
+- The R6 settle-gate (`while (hasPendingWork()) await flush()`) is awaited in
+  the async `teardownResult()` wrapper (the MCP `provident.teardown` path), so
+  the post-teardown state is at provable quiescence.
 
 ### 3.7 id-index (A5)
 - The Runtime maintains a `Map<cssId, nodeId>` + `Map<propsId, nodeId>` rebuilt
@@ -93,15 +111,36 @@ An adversarial review of the first Unit-A green landed these host-side fixes
 | H1 | Placement-routed loads always used `rootNode.compile` → the path-state element set (4095 at d12) was silently dropped (the fragment was the wrong ~3). | `render()`/`loadEnvelope`/`loadDoc` detect placement-routing (a `content`-role anchor) and bootstrap via `compilePath()` per node. |
 | H2 | `teardown` left children as resolvable `unplaced` ghosts (only link-dissolved, never destroyed) — a stale ghost tree + index. | `teardown`/the id-index/`resolveTarget`/`listTargets` are all IN-TREE-only: torn-down node ids never resolve (A5). |
 | H3 | `applyCommand` clone-instance with an unresolvable string `node` THREW (`source.clone` on the raw string) instead of returning rejected. | `applyCommand` rejects cleanly when a string `node` does not resolve (never throws). |
+| H4 (F1/F10) | `applyCommand`/`op` with a NON-string/non-object `node` value (a number/object) or a non-object command (`null`/primitive) THREW (`source.clone` on the raw value / a `cmd.node` read on `null`), violating §3.3 "never throws". | `applyCommand` rejects any non-object command AND any `node` that is not a string or a Node (never throws). |
+| H5 (F8) | `codeDelete` with an out-of-range (or negative) index silently returned `{ok:true, removed:undefined}` — a negative index would splice from the end, corrupting the envelope. | `codeDelete` throws `code.delete: '<path>' index <n> out of range` for a non-integer/negative/≥-length index; the array is untouched. |
+| H6 (F5) | `validateExport('bogus', export)` silently took the serialized path (`loadState` on a legacy-shaped export) instead of an explicit invalid-kind verdict. | `validateExport` discriminates `'legacy' | 'serialized'` only; a `'bogus'` kind returns `{valid:false}` (never a wrong serialized parse). |
+
+## 3b. Adversarial findings (2026-08-23, H7..H13) — the battery units, landed as fixes
+
+A second adversarial review (read-only sub-agent) over the Unit C battery/code-CRUD
+surface found 7 host defects — all fixed + regression-tested in
+`tests/runtime-battery.test.ts`. No engine defect (all host-side `src/renderer/runtime.ts`).
+
+| # | Finding | Fix (documented contract) |
+| --- | --- | --- |
+| H7 | `codeDelete('template.root.hooks[99]')` (a path INDEX, vs the H5 `index`-arg) silently returned `{ok:true, removed:undefined}` — the H5 `/out of range/` guard covered only the `index` argument, not the path form. | `codeDelete` bounds-checks a path-index element exactly like the `index` argument (`/out of range/`); a malformed negative path index (`[-1]`) is rejected by the path grammar. |
+| H8 | `codeDelete` had two overlapping splice semantics (path-index vs `index`-arg): deleting a path-selected array ELEMENT that is itself an array would splice INSIDE it, and a provided `index` was silently ignored. | The two forms are now mutually exclusive: a path-index element splices that element (the `index` arg is ignored); a path resolving to an ARRAY + `index` splices the index; a non-array element resolution is rejected. |
+| H9 | A malformed path (`children]`, `children[0`, empty segment) was treated as a literal property name → a garbage key was silently written into the envelope. | `assertValidPath` validates the grammar up front (balanced brackets, single well-formed `[i]` suffix, no empty/leading/trailing segments); a malformed path is rejected before any read/write. |
+| H10 | `validate('bogus', export)` returned `{valid:true}` for a valid doc — the kind was not gated (H6's spec case only passed because `{a:1}` is an invalid doc). | `validateExport` rejects any kind other than `'legacy' | 'serialized'` with `{valid:false, censusMatch:false}`. |
+| H11 | `op({kind:'clone-instance', source:{foo:1}})` THREW a `TypeError` (`source.clone is not a function`) instead of returning rejected — the H4 guard passed plain OBJECTS through, assuming a real `Node`. | `applyCommand` resolves any object `node`/`source` against the registry (`isRegisteredNode`); a plain object → `{status:'rejected'}`. |
+| H12 | `op({kind:'state-slice', node})` without `mutation` THREW an unhandled `TypeError` (`for (const m of op.mutation)` over `undefined`). | `applyCommand` rejects a `state-slice`/`layer-apply` whose `mutation` is not an array (`{status:'rejected'}`). |
+| H13 | `codeLoad()` after a `codeSet` that invalidated `children` silently loaded a root-only graph (the edit was discarded with zero signal). | `codeLoad` pre-validates the edited envelope (`codeValidate`) and rejects a structurally-invalid edit (`children-shape-invalid`/`payload-shape-obsolete`/etc.) with a clear error; the live graph is NOT silently torn down. |
 
 ## 4. Verify (the TestWriter's exact states)
 
 - `loadEnvelope(demoEnvelope())` → census with `inTree > 0`; the mount renders.
 - `loadEnvelope` with `userData` then `loadEnvelope` without → the second has no
   stale userData (the anon-after-alice trap is closed).
-- `loadEnvelope` of a placement-routed envelope (the path-fork shape) →
-  `inTree === 23` (the static family census), `elements === 4095` (via the
-  digest/sample, not the raw fragment).
+- `loadEnvelope` of a placement-routed envelope (the path-fork shape) → the
+  static-family census (`inTree === 2·depth−1`; at d12 → 23 nodes / 2^depth−1 =
+  4095 path-state elements via the digest/sample, not the raw fragment). The
+  greens + `tests/runtime-host.test.ts` verify at depth 4 → `inTree === 7` (the
+  depth-scaled census).
 - `applyCommand({ kind: 'state-slice', ... })` → `{ status: 'applied' }` and the
   render reflects it; a rejected op returns `{ status: 'rejected' }` (no throw).
 - `exportLegacy()` → a `LegacyInitialData`; `validateExport('legacy', it)` →

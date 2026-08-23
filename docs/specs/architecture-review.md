@@ -18,10 +18,14 @@ renderer,shared}`, the installed `provident-ssr@0.1.3` dist, and the upstream
   graph + `DomAdapter` render + `SSRFragmentAdapter` mirror); a preload
   contextBridge is the only renderer→main channel. Forced by `DomAdapter`'s
   hard DOM requirement (REQ-GAP-6) + the package's ESM-only constraint.
-- **MCP surface**: 4 read/dispatch tools live + 5 planned graph tools
-  (`load`/`op`/`export`/`validate`/`teardown`) + 6 code-CRUD tools
-  (`code.get`/`set`/`create`/`delete`/`validate`/`load`) that edit the
-  ENVELOPE outside the live graph and re-load to materialize.
+- **MCP surface**: 15 `provident.*` tools, all IMPLEMENTED (Unit C LANDED).
+  Grouping (per `src/main/security.ts` `TOOL_GROUPS`): `read` =
+  `get_rendered_html`/`list_targets`/`get_node_state`/`code.get`/`code.validate`
+  (5); `dispatch` = `dispatch` (1); `graph` = `load`/`op`/`export`/`validate`/
+  `teardown` (5); `code` = `code.set`/`create`/`delete`/`load` (4). 6 tools are
+  live under the default gate (`read`+`dispatch`); `graph`/`code` are OFF
+  (manual grant). The `code.*` tools edit the ENVELOPE outside the live graph
+  and re-load to materialize.
 - **Battery host**: a second Node process running the SAME Runtime under the
   DOM shim, spawned over stdio; single process, no external reset (C4),
   teardown-only; one Electron-run as the divergence check (R13).

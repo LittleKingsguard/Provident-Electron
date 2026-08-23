@@ -7,7 +7,7 @@
 // new-method test MUST be RED (TypeError: runtime.X is not a function) until
 // an Implementer adds them.
 import { describe, it, expect, beforeAll } from 'vitest'
-import { installShim, mountEl } from './helpers/dom-shim.js'
+import { installShim, mountEl } from '../src/shared/dom-shim.js'
 import { Runtime } from '../src/renderer/runtime.js'
 import { demoEnvelope } from '../src/shared/demo-envelope.js'
 import { translateLegacy, serializeSlice, type LegacyInitialData } from 'provident-ssr'
@@ -217,6 +217,41 @@ describe('renderer Runtime — host-capability hardening (spec runtime-host.md �
     let result: { status: string }
     expect(() => {
       result = (runtime as any).applyCommand({ kind: 'clone-instance', node: 'does-not-exist', source: 'x', slot: 'y' })
+    }).not.toThrow()
+    expect(result!.status).toBe('rejected')
+  })
+
+  it('adversarial F1/F10 — a NON-string node value returns rejected, never throws (no raw source.clone)', () => {
+    const runtime = new Runtime({ mount: mountEl() as never, envelope: demoEnvelope() as never })
+    runtime.bootstrap()
+    let result: { status: string }
+    expect(() => {
+      result = (runtime as any).applyCommand({ kind: 'clone-instance', node: 5 as never, source: 'x', slot: 'y' })
+    }).not.toThrow()
+    expect(result!.status).toBe('rejected')
+  })
+
+  it('adversarial F1/F10 — op/applyCommand with a non-object command returns rejected, never throws', () => {
+    const runtime = new Runtime({ mount: mountEl() as never, envelope: demoEnvelope() as never })
+    runtime.bootstrap()
+    let result: { status: string }
+    expect(() => {
+      result = (runtime as any).applyCommand(null)
+    }).not.toThrow()
+    expect(result!.status).toBe('rejected')
+    let opResult: { status: string }
+    expect(() => {
+      opResult = (runtime as any).op(undefined)
+    }).not.toThrow()
+    expect(opResult!.status).toBe('rejected')
+  })
+
+  it('adversarial F2 — an unknown op kind returns rejected, never throws', () => {
+    const runtime = new Runtime({ mount: mountEl() as never, envelope: demoEnvelope() as never })
+    runtime.bootstrap()
+    let result: { status: string }
+    expect(() => {
+      result = (runtime as any).applyCommand({ kind: 'bogus-kind' })
     }).not.toThrow()
     expect(result!.status).toBe('rejected')
   })

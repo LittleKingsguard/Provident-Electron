@@ -25,6 +25,14 @@ project's two distinct goals:
    continue.
 2. **50% task threshold**: a task estimated to take >50% of context is
    delegated to sub-agents, never done inline.
+   **RCA-5 (2026-08-23): a multi-unit deliverable must be delegated PER UNIT, not
+   inlined as one pass.** Context budget pressure was the primary cause of the
+   B/C/D miss — the three units + R13 were implemented inline in a single pass
+   instead of delegated as separate TestWriter-red → Implementer-green →
+   adversarial → blind-greens cycles. Treat "delegate this multi-unit deliverable"
+   as a hard gate: if the deliverable spans 2+ spec'd units, split it before
+   starting, and never let a unit's red→green→adversarial→greens sequence share
+   one inline run with a sibling unit's.
 3. **Handover must include a documentation-staleness review**: before any
    handover is reported complete, reconcile the active trackers
    (`docs/next-steps.md`, `docs/pending.md`, `docs/defects.md`,
@@ -40,11 +48,24 @@ project's two distinct goals:
 ## Process requirements
 
 3. **TDD, always (imported, subagents.md workflow)**: every source-code task
-   is red → green → verify, in order: (a) write tests encoding the states /
+   is red → green → verify, in order: (a) write tests with the states /
    fail-states (red); (b) run them and report the failing set; (c) implement
    the least code that makes them green; (d) re-run the validation (item 5).
    A change that adds no test is itself a review finding. Delegation prompts
    must never be "implement X and add tests".
+   **RCA-1 (2026-08-23): do NOT invert the order.** Writing the implementation
+   first and the tests after is a process violation even if the final suite is
+   green — the red set must be RUN and REPORTED per unit BEFORE implementation.
+   Record the red set explicitly in the next-steps DONE row for that unit (e.g.
+   "TestWriter red: N failing (method does not exist)" → "Implementer green: N
+   pass"). An entry that claims green without a recorded red run for the unit is
+   a review finding.
+   **RCA-2 (2026-08-23): a multi-unit deliverable is split PER UNIT.** Do not
+   implement Units B, C, D (+R13) as one inline run. Each unit is its own
+   red→green→adversarial→verify cycle, delegated to sub-agents per item 2/9, and
+   each lands as its own DONE row with its own red/green + adversarial + greens
+   set. A single pass that implements several spec'd units together and writes
+   all their tests at the end repeats the miss.
 4. **Validation after features/tests**: after any feature or test change run
    the trio before reporting complete:
    ```
@@ -82,6 +103,15 @@ project's two distinct goals:
    is still a handoff item: record it in `docs/defects.md` + `docs/HANDOFF.md`
    exactly as any engine defect, and NEVER patch the package. Host-side
    findings (this repo's `src/`) are fixed here, not handed off.
+   **RCA-3 (2026-08-23): the adversarial pass is MANDATORY per completed unit,
+   not optional.** After each unit's green, a read-only adversarial sub-agent
+   (edge cases / unauthorized access / malformed inputs) must run before the
+   unit is reported done; its findings are recorded in the unit's spec
+   (`docs/specs/*.md` §3a/§3b "Adversarial findings") and each host finding is
+   fixed here + regression-tested. A unit DONE row that cites no adversarial
+   pass (or whose findings are unrecorded) is a review finding. This closes the
+   battery gap where Units B/C/D were merged without a structured adversarial
+   pass.
 
 ## Process gates for sub-agents (imported, adapted)
 
@@ -94,6 +124,22 @@ project's two distinct goals:
 9. **Delegation gate (imported)**: a code unit is only delegable once (a) its
    `docs/specs/*.md` contract exists, (b) a TestWriter unit has run and
    reported the red set. Reviewer sub-agents are read-only.
+10. **Blind-test → subagent review loop (imported, upstream AGENTS.md item 10;
+    RCA-4 2026-08-23)**: after a feature/behavior change ships, its
+    documentation + test claims are verified by agents who did NOT write them:
+    a. A **writer** produces the green-scenario artifact from the DOCUMENTATION
+       ONLY (`docs/specs/*.md` + the `*-greens.md` set; NO implementation
+       reading). It runs the scenarios against the live modules/host and records
+       pass/fail. A failure is a doc/spec drift OR an un-hardened regression —
+       never a pass.
+    b. A **proofreader** audits the docs against code+specs and fixes doc
+       inconsistencies (spec refs, section numbers, claims vs behavior,
+       version/test-count staleness).
+    c. Findings merge into the active trackers and the trio must be green before
+       the loop is complete. A unit whose `*-greens.md` set was authored by the
+       same agent who implemented it, WITHOUT a blind re-run, is a review
+       finding — the batteries B/C/D miss (self-verified greens, no fresh-agent
+       run) is the exact anti-pattern this rule closes.
 
 ## Roles (imported, adapted)
 
@@ -103,6 +149,17 @@ project's two distinct goals:
 | Reviewer | explore/general, read-only | never edits; returns findings; a code change with no test is a finding |
 | TestWriter | write/bash | writes tests FIRST (red) from specs; never implements alongside |
 | Implementer | read/edit/bash | runs only after TestWriter reports red; least code to go green; re-runs trio |
+| Adversarial reviewer | explore/general, read-only | hunts edge cases / unauthorized access / malformed inputs AFTER each unit's green; records findings in the spec; host findings fixed here, package findings → defects.md/HANDOFF.md |
+| Blind-test writer | write/bash | produces the green-scenario artifact from `docs/specs/*.md` + `*-greens.md` ONLY (no implementation read); runs scenarios against the live module/host |
+| Proofreader | read/general, read-only | audits docs against code+specs; fixes doc/spec/version/test-count staleness |
 
 Inputs always read from `docs/specs/*.md` + the upstream docs
 (`../Preempt-Providence/docs/`) unless stated. Artifacts commit in the repo.
+
+## RCA lessons (2026-08-23 — the battery B/C/D process miss)
+
+The battery pass (Units B/C/D/R13) was implemented inline and tested after
+(red/green order inverted), merged without an adversarial pass, and its greens
+were self-verified rather than blind-run. The RCA is `docs/specs/process-rca-battery.md`.
+The guards above (RCA-1..RCA-5) encode its lessons directly; the
+`docs/skills/process-guardrails.md` skill consolidates them for fresh sub-agents.

@@ -145,6 +145,18 @@ export class ProvidentMcpServer {
     for (const [name, tool] of this.registered) {
       tool.update({ enabled: this._gate.toolAllowed(name) })
     }
+    // M1-widen — REGISTER any newly-allowed tools that were not registered
+    // before (a widen to a previously-disabled group must make those tools
+    // callable on the live server, not only on the next fresh HTTP request).
+    // The live server is the stdio server (HTTP builds a fresh server per POST
+    // from the current gate, so widening is automatic there).
+    const liveServer = this.stdioServer
+    if (liveServer) {
+      const toAdd = this.allowedToolNames().filter((n) => !this.registered.has(n))
+      if (toAdd.length > 0) {
+        ProvidentMcpServer.registerTools(liveServer, this.backend, toAdd, this.registered)
+      }
+    }
     return this._gate.config
   }
 
@@ -279,31 +291,36 @@ export class ProvidentMcpServer {
       }))
     }
 
-    // M2 — STUB tools for the graph/code groups until Unit C implements them.
-    // They are registered only when their group is enabled, so the gate's
-    // enabled-map and the real registration agree (no silent no-op). They
-    // return an explicit "not implemented" result until Unit C replaces them.
-    const stubs: Array<[string, string]> = [
-      ['provident.load', 'Load an envelope into the graph (Unit C — not yet implemented)'],
-      ['provident.op', 'Apply a single managed-channel op (Unit C — not yet implemented)'],
-      ['provident.export', 'Export the graph (Unit C — not yet implemented)'],
-      ['provident.validate', 'Validate an export (Unit C — not yet implemented)'],
-      ['provident.teardown', 'Tear the graph down to root (Unit C — not yet implemented)'],
-      ['provident.code.get', 'Read the envelope (Unit C — not yet implemented)'],
-      ['provident.code.set', 'Set the envelope (Unit C — not yet implemented)'],
-      ['provident.code.create', 'Create envelope entries (Unit C — not yet implemented)'],
-      ['provident.code.delete', 'Delete envelope entries (Unit C — not yet implemented)'],
-      ['provident.code.validate', 'Validate the envelope (Unit C — not yet implemented)'],
-      ['provident.code.load', 'Re-load the edited envelope (Unit C — not yet implemented)'],
+    // M2 — the graph + code tools are REAL (Unit C): the backend forwards each
+    // call to the renderer (or the battery host's runtime) over the invoke
+    // seam. They register only when their group is enabled, so the gate's
+    // enabled-map and the real registration agree. The `read`-group
+    // `code.get`/`code.validate` also register here (they're read-only).
+    const graph: Array<{ name: string; description: string; inputSchema: Record<string, z.ZodTypeAny> }> = [
+      { name: 'provident.load', description: 'Load an envelope/doc/commands into the graph (battery §3)', inputSchema: { kind: z.enum(['envelope', 'doc', 'commands']).describe('A2 envelope / A1 doc / A3 command array'), envelope: z.unknown().optional(), doc: z.unknown().optional(), commands: z.array(z.unknown()).optional(), userData: z.unknown().optional() } },
+      { name: 'provident.op', description: 'Apply a single managed-channel op', inputSchema: { command: z.unknown().describe('the OpCommand payload') } },
+      { name: 'provident.export', description: 'Export the graph (legacy or serialized)', inputSchema: { format: z.enum(['legacy', 'serialized']) } },
+      { name: 'provident.validate', description: 'Validate an export against a throwaway graph', inputSchema: { kind: z.enum(['legacy', 'serialized']), export: z.unknown() } },
+      { name: 'provident.teardown', description: 'Tear the graph down to root-only', inputSchema: {} },
+      { name: 'provident.code.get', description: 'Read the envelope subtree at path', inputSchema: { path: z.string() } },
+      { name: 'provident.code.set', description: 'Set the envelope value at path', inputSchema: { path: z.string(), value: z.unknown() } },
+      { name: 'provident.code.create', description: 'Append an entry to the envelope array at path', inputSchema: { path: z.string(), entry: z.unknown() } },
+      { name: 'provident.code.delete', description: 'Delete an envelope entry at path', inputSchema: { path: z.string(), index: z.number().optional() } },
+      { name: 'provident.code.validate', description: 'Schema-validate an envelope without building the graph', inputSchema: { envelope: z.unknown().optional() } },
+      { name: 'provident.code.load', description: 'Apply an edited envelope to the live graph', inputSchema: { envelope: z.unknown().optional() } },
     ]
-    for (const [name, description] of stubs) {
-      if (allowed.includes(name)) {
-        registered.set(name, server.registerTool(name, {
-          title: name,
-          description,
-          inputSchema: {},
-        }, async () => text({ ok: false, notImplemented: true, tool: name })))
-      }
+    const dispatch = (name: string): string => name.slice('provident.'.length)
+    for (const { name, description, inputSchema } of graph) {
+      if (!allowed.includes(name)) continue
+      registered.set(name, server.registerTool(name, {
+        title: name,
+        description,
+        inputSchema,
+      }, async (args: Record<string, unknown>) => {
+        const method = dispatch(name)
+        const value = await backend.invoke(method, args)
+        return text(value)
+      }))
     }
   }
 

@@ -6,7 +6,7 @@
 // dispatch-report surface (Supervisor.dispatchAndReport + requestId dedup +
 // the opt-in data-node-id render option).
 import { describe, it, expect, beforeAll } from 'vitest'
-import { installShim, mountEl } from './helpers/dom-shim.js'
+import { installShim, mountEl } from '../src/shared/dom-shim.js'
 import { Runtime } from '../src/renderer/runtime.js'
 import { demoEnvelope } from '../src/shared/demo-envelope.js'
 

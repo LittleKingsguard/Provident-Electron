@@ -4,12 +4,16 @@
 // and replies flow renderer → main (send). Exposed as a minimal `provident`
 // surface (no Node objects leak into the page).
 import { contextBridge, ipcRenderer } from 'electron'
-import { IPC_INVOKE, IPC_REPLY, IPC_READY, type RpcRequest, type RpcReply } from '../shared/types.js'
+import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, type RpcRequest, type RpcReply, type SecuritySettings } from '../shared/types.js'
 
 export interface ProvidentBridge {
   ready(): void
   onRequest(handler: (req: RpcRequest) => void): void
   sendReply(reply: RpcReply): void
+  security: {
+    get(): Promise<SecuritySettings>
+    set(patch: { token?: string | null; groups?: string[]; disable?: string[] }): Promise<SecuritySettings>
+  }
 }
 
 const bridge: ProvidentBridge = {
@@ -23,6 +27,17 @@ const bridge: ProvidentBridge = {
   },
   sendReply(reply: RpcReply): void {
     ipcRenderer.send(IPC_REPLY, reply)
+  },
+  // The manual-UI security settings (mcp-endpoint.md §6.4): exposed to the
+  // renderer Settings pane ONLY. The MCP tool handlers never route to these
+  // channels, so an agent cannot grant itself capabilities.
+  security: {
+    get(): Promise<SecuritySettings> {
+      return ipcRenderer.invoke(IPC_SECURITY_GET)
+    },
+    set(patch: { token?: string | null; groups?: string[]; disable?: string[] }): Promise<SecuritySettings> {
+      return ipcRenderer.invoke(IPC_SECURITY_SET, patch)
+    },
   },
 }
 

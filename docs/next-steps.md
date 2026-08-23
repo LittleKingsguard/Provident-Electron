@@ -9,16 +9,214 @@ this repo's local next-steps (the upstream queue lives in
 
 | # | Item | Status / blocker |
 | --- | --- | --- |
-| 1 | **E2E battery — SPEC-COMPLETE, awaiting user go-ahead** (`docs/specs/e2e-test-battery.md`, review `docs/specs/e2e-test-battery-review.md` + addendum = APPROVED-WITH-RESHAPE). Fork-stress = STATIC path-enumeration family (23 nodes / 4095 path-state elements); cycle variant = new `pathForkCycleLegacyData` spec (§5.1.x). | Gate passed; static-family correction applied; blocked on user go-ahead before the delegations below. |
+| 1 | **E2E battery — COMPLETE (Units B/C/D + R13, 2026-08-23)** (`docs/specs/e2e-test-battery.md`). All 4 fork-stress d12 variants (placement/values/link/**cycle**) + landings + handlers + code-CRUD driven over MCP, 93 battery checks green; battery host `src/main/battery-host.ts` (real Runtime under the DOM shim, all tool groups pre-enabled) + `tests/e2e-battery.test.mjs` (single process, teardown-only reset, root-only + settle-gate asserts). Cycle-variant data module `src/shared/path-fork-cycle.ts`. **R13 (Electron divergence) DONE — 9/9 checks green** via `scripts/electron-divergence.mjs`; the shim is now trusted. R13 also surfaced a host bug (stale SSR adapter collapsed re-emits across reloads) which is fixed + regression-tested. | **DONE (2026-08-23)** — complete. |
 | 1a | **Unit A — host capabilities (battery mode Runtime)** — **DONE + HARDENED (TDD + adversarial)**. `src/renderer/runtime.ts` has `loadEnvelope`/`loadDoc`/`applyCommand`/`exportLegacy`/`exportSerialized`/`validateExport`/`teardown` + the id-index (A5) + compilePath placement routing (H1) + in-tree-only resolution (H2) + clean reject (H3). Spec `docs/specs/runtime-host.md`; `tests/runtime-host.test.ts` (13) green. | **DONE (2026-08-22)** — green. |
-| 1b | **Unit B — the cycle-variant envelope data module** `pathForkCycleLegacyData(depth)` (author in this repo; no upstream static equivalent) — placement→values→link cycle per layer, zero handlers/clones, 23-node/4095-element census. | Deliverable spec exists (§5.1.x); red → green to implement + verify the mixed-method render + census. |
-| 1c | **Unit C — the additive MCP tools** the 5 graph tools `load`/`op`/`export`/`validate`/`teardown` + the 6 code-CRUD tools `code.get`/`set`/`create`/`delete`/`validate`/`load` (the authoring surface, mcp-endpoint.md §4) + `warnings` in returns (R10) + `provident` IPC wiring. | Red → green; R2 (A1 recipe), R3 (snapshot-parity validate), R7 (assertion hygiene), R13 (SSR-first), P-C1..C5 (envelope-authoring pins) all in the spec. |
-| 1d | **Unit D — the battery host + runner** `src/main/battery-host.ts` + `tests/e2e-battery.test.mjs` (single-process, C4 no-external-reset, teardown-only resets), the battery-wide assertion hygiene (authored ids, non-empty dispatch, fresh requestIds), the `hash64` digest assertions over large renders. | Red → green; then the one Electron-run divergence check (R13) before shim is trusted. |
-| 2 | **Surface `TranslatedTree.warnings` through MCP** — fold into `provident.load`/`validate` returns (R10) so CSP-eval-blocked handlers are MCP-visible. | Pending — consumed by Unit C (part of 1c). |
+| 1b | **Unit B — the cycle-variant envelope data module** `pathForkCycleLegacyData(depth)` + `pathForkCycleLegacyData`-shaped cycle over the static trio (`src/shared/path-fork-cycle.ts`); census 23-node/4095-element; `tests/path-fork-cycle.test.ts` (9) green; consumed by the battery's cycle d12 variant. | **DONE (2026-08-23)** — green. |
+| 1c | **Unit C — the additive MCP tools** — the 5 graph tools `load`/`op`/`export`/`validate`/`teardown` + the 6 code-CRUD tools `code.get`/`set`/`create`/`delete`/`validate`/`load` (real, replacing the M2 stubs) + `warnings` in returns (R10) + the Runtime's load/op/export/validate/teardownResult + envelope CRUD (`codeGet`/`codeSet`/`codeCreate`/`codeDelete`/`codeValidate`/`codeLoad`) + IPC wiring. `tests/runtime-battery.test.ts` (29, incl. H7..H13 adversarial) green. | **DONE (2026-08-23)** — green. |
+| 1d | **Unit D — the battery host + runner** `src/main/battery-host.ts` + `tests/e2e-battery.test.mjs` (single-process, C4 no-external-reset, teardown-only resets), the battery-wide assertion hygiene (authored ids, non-empty dispatch, fresh requestIds), the 93-check battery. | **DONE (2026-08-23)** — battery green; R13 (Electron divergence) DONE. |
+| 2 | **Surface `TranslatedTree.warnings` through MCP** — fold into `provident.load`/`validate`/`op`/`teardown`/`code.validate` returns (R10) so CSP-eval-blocked handlers are MCP-visible. | **DONE (2026-08-23)** — `warnings` returned by all battery + code tools. |
 | 3 | **Renderer debug panel** — live census + SSR fragment in `#status`. | Pending — nice-to-have. |
-| 4 | **Publish-trigger refresh — DONE** — `provident-ssr@0.1.3` published the Round-4 landings; refreshed + verified (createLinkHub, evictDestroyedNode/destroyedRefs, markCascadeExplicit all present; trio + MCP e2e green). | **DONE (2026-08-22)** — the battery now drops the vendored hub (A1) and relies on the published surfaces. |
+| 4 | **Publish-trigger refresh — DONE** — `provident-ssr@0.1.3` published the Round-4 landings; refreshed + verified. | **DONE (2026-08-22)** — the battery now drops the vendored hub (A1) and relies on the published surfaces. |
 
-| 5 | **Architecture reshapes A1..A6** (from `docs/specs/architecture-review.md`, gate 2026-08-22). **A1 (core + SecurityGate + Runtime host + server gate plumbing + M1/M2/M3 fixes) LANDED + HARDENED (TDD + adversarial)**: `src/main/security.ts` + `src/renderer/runtime.ts` host methods + `src/main/mcp-server.ts` (gate plumbing, gated registration, HTTP 401, stdio re-gate, stub tools) + specs + **112 tests green**; MCP e2e (both transports) green. **Next**: Unit C (replace the graph/code STUBS with real tools), Unit D (battery host+runner), Unit B (cycle envelope), A2/A3/A4/A6. | A1 + M1/M2/M3 DONE; Units C/D/B + A2/A3/A4/A6 pending. |
+| 5 | **Architecture reshapes A1..A6**. A1 + M1/M2/M3 + Units C/D/B LANDED. **Remaining**: A2/A3/A4/A6. | A1 + M1/M2/M3 + Units C/D/B DONE; A2/A3/A4/A6 pending. |
+| 6 | **R13 — ONE Electron-run divergence check** — `scripts/electron-divergence.mjs` drives the real Electron app (real DOM) + the DOM-shim battery host over stdio and compares structural surfaces (census, SSR, data-node-id set, nodeId vocabulary, dirtied ids normalized for the root-only-boot offset, counter content, non-empty dispatch). **9/9 checks green.** R13 surfaced + fixed a real host bug: the `SSRFragmentAdapter` retained stale state across graph reloads, collapsing the SSR re-emit to empty (fixed: recreate the SSR adapter + reset prevMaps on load — `resetRenderState`; regression test `runtime-battery.test.ts`). | **DONE (2026-08-23)** — battery shim is now trusted for 4095-node trees. |
+| 7 | **Tests close spawned server/app processes at end** — repeated test runs left orphaned Node + Electron processes (each spawn left a live BrowserWindow or a held-open Node server; the stdio transport does not auto-exit). Fixed: `main.ts`/`battery-host.ts`/`standalone.ts` all `exit` on stdin close (the client disconnect ends stdin). Verified: no lingering `main.cjs`/`battery-host`/`standalone.mjs`/electron after a full run. | **DONE (2026-08-23)** — process cleanup. |
+| 8 | **Renderer `provident.teardown` IPC path awaits the async `teardownResult`** — review found the `renderer.ts` `teardown` case assigned `runtime.teardownResult()` (a Promise) to the reply value WITHOUT awaiting, so the IPC reply carried a non-JSON Promise and the R6 settle-gate never ran on that path (the twentieth-pass "all call sites awaited" claim was wrong for `renderer.ts`). Fixed: `await`. | **DONE (2026-08-23)** — TDD red→green. |
+| 9 | **Manual-UI Security Settings pane (the A1 trust-gate's remaining piece, mcp-endpoint.md §6.4)** — persistence (`security-store.ts`), the `provident:security:get/set` IPC (main), the preload `window.provident.security` exposure, the renderer Settings pane (`settings.ts` + `index.html` `#settings-pane`: token show/clear/regenerate + one toggle per tool group), and the MCP server booting from the persisted config. `tests/security-store.test.ts` (5) green. | **DONE (2026-08-23)** — TDD red→green. |
+
+## DONE (2026-08-23, twenty-first pass — manual-UI Security Settings pane, the A1 trust-gate completion)
+
+Per the user's "proceed with pending change" (the manual-UI Settings pane, the
+one NOT-YET-LANDED piece of `mcp-endpoint.md §6.4`):
+
+- **Persistence store** `src/main/security-store.ts` — a JSON store in userData,
+  loaded on boot, write-through; first-run default `read`+`dispatch` ON /
+  `graph`+`code` OFF / token null; a corrupt file falls back to the default
+  (never crashes). `tests/security-store.test.ts` (5) TDD red→green.
+- **Main-process IPC** — `provident:security:get`/`set` via `ipcMain.handle`
+  (`main.ts`); the MCP server is built from the persisted config on boot;
+  `set` re-wires the LIVE MCP server tool-gating (`applyGatePatch`) + persists.
+- **Preload** — exposes `window.provident.security.get()`/`.set(patch)` (main→
+  renderer→main only).
+- **Renderer Settings pane** (`src/renderer/settings.ts` + `index.html`
+  `#settings-pane`) — token show/clear/regenerate + one toggle per tool group,
+  reflecting the LIVE enabled set, updating the running server on change.
+- The settings surface is **manual-UI-only by construction** (never an MCP tool,
+  so an agent cannot grant itself capabilities) — the A1 trust gate is now
+  complete.
+- Trio green (**196 tests**), typecheck clean, build clean, MCP e2e both
+  transports green, battery 93/93, R13 9/9; no lingering processes.
+
+## DONE (2026-08-23, twentieth pass — design-compliance pass vs specs)
+
+Per the user's "run design pass for compliance with specs": three read-only
+compliance reviews (cluster A = mcp-endpoint + mcp-security*; cluster B =
+runtime-host + e2e-test-battery + battery greens; cluster C = mcp-server-wiring
++ mcp-server-gate + their greens + architecture-review) reconciled every spec
+against the running code. Findings split into doc-fixes (stale claims) and
+code-fixes (contract violations); all fixed + the trio re-verified.
+
+- **Code fixes (TDD red → green)**:
+  - **M1-widen** — `applyGatePatch` did NOT register newly-allowed tools on a
+    LIVE stdio server (spec `mcp-server-gate.md` §2: "registers any
+    newly-allowed ones"). Fixed: `applyGatePatch` now calls `registerTools`
+    for the newly-allowed names absent from the live `registered` map. Red
+    test (`M1-widen`) → green.
+  - **R6 settle-gate** — `teardownResult` `void`-ed the settle-gate
+    (fire-and-forget), so `hasPendingWork()` was `true` after teardown
+    (violating the R6 provable-quiescence contract). Fixed: `teardownResult`
+    is now `async` and `await`s the settle-gate before + after `teardown()`; a
+    public `hasPendingWork()` test seam added. Red test → green. The three
+    sync `teardownResult()` call sites updated to `await`.
+- **Doc fixes (stale claims reconciled)**:
+  - `mcp-endpoint.md` — `provident.dispatch` return dropped the phantom
+    `deduplicated?` field; §6.2 `graph` group gained `validate`; §6→§8 jump
+    closed (renumbered §7 Pins / §8 Non-goals / §9 Verification); §9 test
+    counts updated (`engine-surfaces` 4→5, `runtime-battery` 19→28); §6.4
+    (manual-UI IPC) + §6.5 (A2/A3/A4/A6) marked with NOT-YET-LANDED status
+    notes.
+  - `e2e-test-battery.md` — `provident.op` payload corrected to
+    `{command: OpCommand}`; §6 `hasPendingWork()===false` claim restated (the
+    R6 settle-gate is asserted at the Runtime unit level, the async
+    `teardownResult`); §5.3 hooks-scenarios + §5.5 handler matrix marked
+    PARTIAL/NOT-YET-LANDED.
+  - `runtime-host.md` — §2 surface cross-references the MCP wrappers
+    (`load`/`op`/`export`/`validate`/`teardownResult`/`code*`) + the
+    `treeSigMatch` parity; §3.3 reject shape dropped the phantom `error`
+    field + lists the H3/H4 rejection sources + the async `teardownResult`;
+    §3.5 `validateExport` hub-branch + H6 kind discrimination; §3.6
+    userData-clear wording (fresh-supervisor rebuild) + the awaited
+    settle-gate; §4 placement census depth-scaled (d12→23, depth-4→7).
+  - `mcp-server-wiring.md` — §1 POST-only 401 (GET/DELETE→405 first); §4
+    `httpAuthorized` restated as `gate.checkRequest().ok` (no separate
+    export); §5 "5 tools"→6 + `code.load` two-part-name + 15-tool widen.
+  - `mcp-server-gate.md` — status LANDED; "4 current tools"→6; "planned/
+    stubbed"→implemented (Unit C); POST-only 401; M1-widen contract recorded;
+    §4 verify 6-tool default + M1-widen state.
+  - `architecture-review.md` §1 — tool grouping aligned with `TOOL_GROUPS`
+    (read=5, dispatch=1, graph=5, code=4; 6 live under default).
+  - Greens: `runtime-host-greens.md` #1 "never equality"→`>=` (equality holds
+    for the no-mint demo); `battery-units-greens.md` #19 vs #34 reconciled
+    (cycle = `registered===23`; e2e runner = `>= 23` version-stable);
+    `mcp-server-gate-greens.md` W3 `httpAuthorized` restated via
+    `checkRequest().ok`; `mcp-security-greens.md` G6#38 "authorization error"
+    → "not registered (tool not found)"; `mcp-security-gate.md`
+    `checkRequest` signature widened to the post-hardening `unknown|null`.
+  - Test tighten: `runtime-battery.test.ts` non-array-commands assertion now
+    matches `/not iterable/` (the greens contract).
+- **Trio + battery + e2e**: **191 tests** (was 189 — the 2 new red→green
+  tests), typecheck clean, build clean, MCP e2e both transports green,
+  battery **93/93** green.
+
+## DONE (2026-08-23, nineteenth pass — adversarial + blind-test green scenarios for ALL completed sections)
+
+Per the user's "run adversarial + green scenarios draft for all completed
+sections": ran the adversarial loop (AGENTS.md item 7) + drafted blind-test
+green-scenario sets for every completed section. Only the A1 security gate had
+a green set (`mcp-security-greens.md`); the rest were missing.
+
+- **Adversarial (host-side findings → fixed here, never the package)** — two
+  read-only adversarial reviews + empirical probes surfaced + confirmed host
+  contract violations:
+  - **H4 (F1/F10)** — `applyCommand`/`op` with a NON-string/non-object `node`
+    value (a number/object) or a non-object command (`null`/primitive) THREW
+    (`source.clone` on the raw value / a `cmd.node` read on `null`), violating
+    runtime-host.md §3.3 "a rejected op never throws". Fixed: `applyCommand`
+    rejects any non-object command AND any `node` that is not a string or a
+    Node. Red tests → green.
+  - **H5 (F8)** — `codeDelete` with an out-of-range (or negative) index silently
+    returned `{ok:true, removed:undefined}` (a negative index would splice from
+    the end, corrupting the envelope). Fixed: `codeDelete` throws
+    `code.delete: '<path>' index <n> out of range` for a non-integer/negative/
+    ≥-length index; the array is untouched. Red test → green.
+  - **H6 (F5)** — `validateExport('bogus', …)` silently took the serialized
+    path instead of an explicit invalid-kind verdict; now returns
+    `{valid:false}`. (Already failing-closed; recorded in the spec §3a table.)
+- **Green-scenario drafts (blind-test sets)** — one per completed section,
+  verified against the running code before landing:
+  - `docs/specs/runtime-host-greens.md` — Unit A (R1..R8: loadEnvelope/userData/
+    loadDoc/applyCommand/export/validate/teardown/id-index/placement-routed/
+    code-CRUD), the H1..H6 regression net.
+  - `docs/specs/mcp-server-gate-greens.md` — A1-W2 wiring + A1-W4/W5 gate
+    (toolForName/registeredToolNames/httpAuthorized/server gate/M1 stdio re-gate).
+  - `docs/specs/battery-units-greens.md` — Unit B cycle variant + Unit C battery
+    surface/code-CRUD + Unit D battery host/runner (B1/C1/B3/B4/C1/D1).
+- **Specs reconciled**: `docs/specs/runtime-host.md` §3a gained the H4/H5/H6
+  rows (the host-side adversarial fixes).
+- **Trio + battery + e2e**: **144 tests** (was 141 — the 3 adversarial red→green
+  tests added), typecheck clean, build clean, MCP e2e (stdio + HTTP) green,
+  battery **93/93** green.
+
+## DONE (2026-08-23, eighteenth pass — full battery: Units B/C/D + cycle variant + R13 divergence)
+
+Per the user's "proceed with full battery":
+- **Unit B** — `src/shared/path-fork-cycle.ts` (`pathForkCycleLegacyData(depth)`,
+  the NEW static cycle variant cycling placement/values/link per layer, zero
+  handlers/clones). `tests/path-fork-cycle.test.ts` (9) green.
+- **Unit C** — the 5 graph tools (`load`/`op`/`export`/`validate`/`teardown`)
+  + the 6 code-CRUD tools (`code.get`/`set`/`create`/`delete`/`validate`/`load`)
+  are now REAL (replacing the M2 stubs), backed by new `Runtime` methods
+  (`load`/`op`/`export`/`validate`/`teardownResult` + `codeGet`/`codeSet`/
+  `codeCreate`/`codeDelete`/`codeValidate`/`codeLoad`) + the envelope
+  (source-of-truth) store + `warnings` returns (R10). `tests/runtime-battery.test.ts` (29, incl. H7..H13) green.
+- **Unit D** — `src/main/battery-host.ts` (a Node MCP server owning a REAL
+  `Runtime` under the DOM shim; all tool groups pre-enabled for the CI path) +
+  `tests/e2e-battery.test.mjs` (single process, teardown-only reset, root-only +
+  settle-gate asserts). **93 battery checks green** across the 4 fork-stress
+  d12 variants + landings + handlers + code-CRUD. The DOM shim moved to
+  `src/shared/dom-shim.ts` so the host can import it.
+- Trio green (**141 tests**), typecheck + build clean, MCP e2e (both transports)
+  green.
+- **R13 (the last battery gate) DONE**: `scripts/electron-divergence.mjs` drives
+  the real Electron app (real DOM) + the DOM-shim battery host over stdio and
+  compares structural surfaces (census, SSR, data-node-id set, nodeId
+  vocabulary, dirtied ids normalized for the root-only-boot offset, counter
+  content, non-empty dispatch). **9/9 checks green — the shim is now trusted
+  for 4095-node trees.** R13 also surfaced a real host bug: the
+  `SSRFragmentAdapter` retained stale state across graph reloads, collapsing
+  the SSR re-emit to empty. Fixed by recreating the SSR adapter + resetting
+  the prevMaps on load (`resetRenderState`); regression test
+  (`runtime-battery.test.ts`).
+
+## DONE (2026-08-23, twentieth pass — process-compliance remediation: RCA + blind TDD + adversarial H7..H13 + skills)
+
+Triggered by the user's RCA request. The original battery pass (Units B/C/D/R13)
+implemented-then-tested (a process miss). This pass closed the gap:
+- **RCA** documented in `docs/specs/process-rca-battery.md` (root causes: momentum
+  over process, context-budget pressure, test-first affordance reused from Unit A
+  rather than re-run, R13's bug-find misattributed).
+- **Blind TDD** — a fresh TestWriter sub-agent (no implementation read) wrote
+  `tests/blind-battery-verify.test.ts` from the greens docs ONLY. Result:
+  **37/39 pass**, 2 skipped (the e2e-runner scenarios); **1 red → scenario 17**
+  (`treeSigMatch:true` for a legacy round-trip). Investigated: the throwaway
+  re-translate of a seam/def-bearing export emits only the root — this is the
+  **R3 caveat**, not a bug. The greens doc OVER-CLAIMED `treeSigMatch:true`; fixed
+  the doc + blind test to the honest R3 contract (`{valid,censusMatch}` + signal
+  `treeSigMatch` is a boolean).
+- **Adversarial H7..H13** (read-only sub-agent) found 7 host defects, all fixed +
+  regression-tested in `tests/runtime-battery.test.ts`:
+  - H7 codeDelete path-index out-of-range → now throws `/out of range/`.
+  - H8 codeDelete double-splice (path element + index arg) → mutually exclusive.
+  - H9 malformed path (unbalanced bracket) → rejected, no garbage key.
+  - H10 validate bogus kind → valid:false (no silent serialized parse).
+  - H11 op with plain-object node/source → rejected (no `.clone()` TypeError).
+  - H12 op state-slice without mutation → rejected (no unhandled TypeError).
+  - H13 codeLoad of a structurally-invalid envelope → rejected, not a silent
+    root-only load.
+  - Plus H4/F10: non-array `commands` → rejected (never a silent per-key apply).
+- Suite now **191 pass / 2 skip (193)**; typecheck + build clean; battery **93/93**;
+  MCP e2e both transports green; R13 9/9 green.
+- The compliance checker sub-agent verdict was **PARTIAL → now CLOSED**: the red
+  run is recorded (scenario 17 red→green), the adversarial findings are
+  documented (`runtime-host.md §3b`) + enforced, the greens blind loop ran, and
+  the stale test-count claims in next-steps (Unit C "18" → "28") are reconciled.
+- **Skills + docs corrected for the RCA** (the user's follow-up): `AGENTS.md`
+  items 2/3/7/10 now carry the RCA-1..RCA-5 guards (no inverted red/green; split
+  multi-unit deliverables PER UNIT; adversarial pass MANDATORY per unit; greens
+  blind-verified; >50%-context delegated). New process skill
+  `docs/skills/process-guardrails.md` consolidates them; `docs/decisions.md`
+  gained the PROCESS-GUARDRAILS row; the RCA record is
+  `docs/specs/process-rca-battery.md` (closure §7).
 
 ## DONE (2026-08-22, seventeenth pass — M1/M2/M3 must-fix defects)
 

@@ -80,6 +80,78 @@ export interface Census {
   prototypes: number
 }
 
+// ---- battery tool payloads (docs/specs/e2e-test-battery.md §3) -------------
+
+export interface LoadResult {
+  census: Census
+  renderedHtml: string
+  ssrHtml: string
+  warnings: unknown[]
+}
+
+export interface LoadPayload {
+  kind: 'envelope' | 'doc' | 'commands'
+  envelope?: unknown
+  doc?: unknown
+  commands?: unknown[]
+  userData?: unknown
+}
+
+export interface OpResult {
+  status: string
+  dirtied?: string[]
+  minted?: string[]
+  renderedHtml: string
+  ssrHtml: string
+  warnings: unknown[]
+}
+
+export interface ExportResult {
+  export: unknown
+  census: Census
+}
+
+export interface ValidateResult {
+  valid: boolean
+  censusMatch: boolean
+  treeSigMatch: boolean
+  warnings: unknown[]
+}
+
+export interface TeardownResult {
+  census: Census
+  renderedHtml: string
+  warnings: unknown[]
+}
+
+export interface CodeGetResult {
+  path: string
+  value: unknown
+}
+
+export interface CodeSetResult {
+  ok: boolean
+  path: string
+  wrote: unknown
+}
+
+export interface CodeCreateResult {
+  ok: boolean
+  path: string
+  appendedAt: number
+}
+
+export interface CodeDeleteResult {
+  ok: boolean
+  removed: unknown
+}
+
+export interface CodeValidateResult {
+  valid: boolean
+  warnings: unknown[]
+  shape: string
+}
+
 // ---- IPC request envelope ------------------------------------------------
 
 export type RpcMethod =
@@ -87,6 +159,17 @@ export type RpcMethod =
   | 'renderedHtml'
   | 'listTargets'
   | 'nodeState'
+  | 'load'
+  | 'op'
+  | 'export'
+  | 'validate'
+  | 'teardown'
+  | 'code.get'
+  | 'code.set'
+  | 'code.create'
+  | 'code.delete'
+  | 'code.validate'
+  | 'code.load'
 
 export interface RpcRequest {
   id: number
@@ -105,3 +188,17 @@ export interface RpcReply {
 export const IPC_INVOKE = 'provident:invoke'
 export const IPC_REPLY = 'provident:reply'
 export const IPC_READY = 'provident:ready'
+
+// ---- security settings IPC (the manual-UI surface, mcp-endpoint.md §6.4) ----
+
+/** The persisted security config the manual-UI settings pane reads/writes.
+ *  Transported main→renderer→main ONLY (never an MCP tool — an agent must not
+ *  be able to grant itself capabilities). */
+export interface SecuritySettings {
+  token: string | null
+  /** The enabled tool groups (`read`/`dispatch`/`graph`/`code`). */
+  enabled: string[]
+}
+
+export const IPC_SECURITY_GET = 'provident:security:get'
+export const IPC_SECURITY_SET = 'provident:security:set'

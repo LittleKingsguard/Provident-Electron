@@ -21,6 +21,7 @@ import {
   createLinkHub,
   reconcileParentTargets,
   dropPayload,
+  emitElements,
   Node,
   type RenderOp,
   type LegacyInitialData,
@@ -38,7 +39,19 @@ import type {
   NodeInfo,
   Census,
   DispatchTarget,
+  LoadResult,
+  LoadPayload,
+  OpResult,
+  ExportResult,
+  ValidateResult,
+  TeardownResult,
+  CodeGetResult,
+  CodeSetResult,
+  CodeCreateResult,
+  CodeDeleteResult,
+  CodeValidateResult,
 } from '../shared/types.js'
+import type { TranslatedWarning } from 'provident-ssr/core/translate.js'
 
 export interface RuntimeOptions {
   mount: HTMLElement
@@ -48,7 +61,7 @@ export interface RuntimeOptions {
 export class Runtime {
   private supervisor: Supervisor
   private readonly adapter: DomAdapter
-  private readonly ssr = new SSRFragmentAdapter()
+  private ssr = new SSRFragmentAdapter()
   private readonly mount: HTMLElement
   private rootNode: Node
   private nodes: Node[]
@@ -70,6 +83,13 @@ export class Runtime {
    *  graph — built at load, consumed by teardown's dropPayload + userData
    *  clear, so a teardown returns to a root-only graph. */
   private payloads: Payload[] = []
+  /** The ENVELOPE (the code/data source of truth) the graph was last derived
+   *  from — the code-CRUD surface reads/writes it (mcp-endpoint.md §4). */
+  private envelope: LegacyInitialData | null = null
+  /** The last translate's additive warnings channel (R10) — surfaced through
+   *  load/validate/op/teardown so a CSP-eval-block or a handler-body-invalid
+   *  is MCP-visible, never a silently dead page. */
+  private warnings: TranslatedWarning[] = []
 
   constructor(opts: RuntimeOptions) {
     this.mount = opts.mount
@@ -251,7 +271,8 @@ export class Runtime {
 
   /** A2 — replace the current graph from a legacy envelope. Tears down the
    *  existing content, sets/clears the translate-scoped userData (R8), then
-   *  translate → register → compile → recordResolved → render. */
+   *  translate → register → compile → recordResolved → render. Captures the
+   *  envelope (the code-CRUD source of truth) + the translate warnings (R10). */
   loadEnvelope(envelope: LegacyInitialData, opts?: { userData?: unknown }): Census {
     this.tearDownGraph()
     const env = structuredClone(envelope)
@@ -268,8 +289,10 @@ export class Runtime {
     this.supervisor = new Supervisor({ events: new EventBridge() })
     for (const n of translated.nodes) this.supervisor.registerNode(n)
     this.payloads = this.buildPayloads(translated.content, translated.userData)
+    this.envelope = env
+    this.warnings = translated.warnings ?? []
     this.rebuildIdIndex()
-    this.bootstrapped = false
+    this.resetRenderState()
     this.render()
     return this.census()
   }
@@ -288,19 +311,74 @@ export class Runtime {
     this.supervisor = new Supervisor({ events: new EventBridge() })
     for (const n of nodes) this.supervisor.registerNode(n)
     this.payloads = this.buildPayloads(nodes, undefined)
+    this.envelope = null
+    this.warnings = []
     this.rebuildIdIndex()
-    this.bootstrapped = false
+    this.resetRenderState()
     this.render()
     return this.census()
   }
 
+  /** MCP `provident.load` (battery §3): dispatch to the A2/A1/A3 load paths
+   *  and return the census + both render views + the translate warnings (R10).
+   *  `userData` (R8) rides only the envelope path. */
+  load(req: LoadPayload): LoadResult {
+    let census: Census
+    if (req.kind === 'envelope') {
+      census = this.loadEnvelope(req.envelope as LegacyInitialData, req.userData !== undefined ? { userData: req.userData } : undefined)
+    } else if (req.kind === 'doc') {
+      census = this.loadDoc(req.doc as never)
+    } else if (req.kind === 'commands') {
+      // A3 — a command ARRAY, each applied singly (no requestIds — R7).
+      const commands = req.commands ?? []
+      for (const cmd of commands) this.applyCommand(cmd as never)
+      census = this.census()
+    } else {
+      throw new Error(`unknown load kind: ${String((req as { kind?: unknown }).kind)}`)
+    }
+    return {
+      census,
+      renderedHtml: this.renderedHtml(),
+      ssrHtml: this.ssrHtml(),
+      warnings: this.warnings,
+    }
+  }
+
   /** A3 — a single managed-channel op: resolve the string `node` to a Node,
    *  supervisor.apply → flush() → drain takePass2States once → render. */
-  applyCommand(cmd: { kind: string; node?: string; [k: string]: unknown }): { status: string; dirtied?: string[]; minted?: string[] } {
+  applyCommand(cmd: { kind: string; node?: string; [k: string]: unknown } | null | undefined): { status: string; dirtied?: string[]; minted?: string[] } {
+    // F1/F10 — a non-object command (null/undefined/primitive) is a hostile or
+    // malformed op: reject cleanly, never throw.
+    if (cmd === null || cmd === undefined || typeof cmd !== 'object') {
+      return { status: 'rejected' }
+    }
     // If the op names a string `node` that does NOT resolve, reject cleanly
     // (never throw — a raw string must not reach `source.clone()` for the
     // node-less clone-instance op). Adversarial A3 fix.
     if (typeof cmd.node === 'string' && !this.resolveTarget(cmd.node)) {
+      return { status: 'rejected' }
+    }
+    // F1 — a NON-string, non-Node `node` value (number/object) would reach the
+    // engine raw and throw (`source.clone` on the raw value); reject it.
+    if (cmd.node !== undefined && typeof cmd.node !== 'string' && typeof cmd.node !== 'object') {
+      return { status: 'rejected' }
+    }
+    // F5 — an OBJECT `node`/`source` that is not a real registered Node (a plain
+    // object like `{foo:1}`) would pass the typeof gate but crash on
+    // `.clone()`/`.source` in the engine. Resolve object node/source against the
+    // registry; reject if not a live Node (never throw out of applyCommand).
+    if (cmd.node !== undefined && typeof cmd.node === 'object' && !this.isRegisteredNode(cmd.node)) {
+      return { status: 'rejected' }
+    }
+    if (cmd.source !== undefined && typeof cmd.source === 'object' && !this.isRegisteredNode(cmd.source)) {
+      return { status: 'rejected' }
+    }
+    // F6 — a `state-slice`/`rows-mint`-style op whose `mutation` is missing or
+    // not an array would crash `for (const m of op.mutation)`. Reject cleanly.
+    if (cmd.kind === 'state-slice' && !Array.isArray(cmd.mutation)) {
+      return { status: 'rejected' }
+    }
+    if (cmd.kind === 'layer-apply' && !Array.isArray(cmd.mutation)) {
       return { status: 'rejected' }
     }
     const payload: { kind: string; node?: Node; [k: string]: unknown } = { ...cmd } as never
@@ -337,6 +415,15 @@ export class Runtime {
     return focusedSliceFor(node, () => this.supervisor.allNodes())
   }
 
+  /** F5 — is this object a real registered (not-destroyed) Node, not a plain
+   *  object masquerading as one? Used to reject a hostile/malformed op before
+   *  the engine calls `.clone()`/`.source` on it. */
+  private isRegisteredNode(obj: unknown): boolean {
+    if (obj === null || typeof obj !== 'object') return false
+    const n = obj as Node
+    return typeof n.id === 'string' && this.supervisor.getNode(n.id) === n && !n.destroyed
+  }
+
   /** The current graph's legacy export — no mutation. */
   exportLegacy(): LegacyInitialData {
     const rev = reverseTranslate(this.rootNode, { content: this.nodes.slice(1) })
@@ -355,6 +442,11 @@ export class Runtime {
   /** Re-load an export into a THROWAWAY graph (a fresh Supervisor + hub; never
    *  the live one) and compare census. Never throws on a malformed export. */
   validateExport(kind: 'legacy' | 'serialized', exp: unknown): { valid: boolean; censusMatch: boolean; warnings: unknown[] } {
+    // F4 — a kind other than 'legacy'|'serialized' is invalid (never a silent
+    // serialized parse). H6 — a non-legacy/non-serialized kind → valid:false.
+    if (kind !== 'legacy' && kind !== 'serialized') {
+      return { valid: false, censusMatch: false, warnings: [] }
+    }
     try {
       let nodes: Node[]
       let hub = createLinkHub()
@@ -392,6 +484,177 @@ export class Runtime {
     return this.census()
   }
 
+  /** MCP `provident.teardown` — the interface-driven reset (C4): teardown →
+   *  settle-gate (R6: `hasPendingWork()` false) → re-render → root-only proof.
+   *  Returns the post-teardown census + the root-only render + warnings.
+   *  ASYNC (R6): the destroy cascade may leave pending pass-2 work; the
+   *  settle-gate is AWAITED so the returned census reflects provable
+   *  quiescence, never a pre-settle snapshot. */
+  async teardownResult(): Promise<TeardownResult> {
+    await this.settleGate()
+    const census = this.teardown()
+    await this.settleGate()
+    return { census, renderedHtml: this.renderedHtml(), warnings: this.warnings }
+  }
+
+  /** R6 test seam — whether the supervisor has undrained pass-2 work (the
+   *  battery + the settle-gate assert this is false after a teardown). */
+  hasPendingWork(): boolean {
+    return this.supervisor.hasPendingWork()
+  }
+
+  /** R6 — the settle-gate: drain pending work to provable quiescence before
+   *  the render is trusted (the battery asserts `hasPendingWork() === false`).
+   *  The engine's public flush + hasPendingWork (0.1.3). */
+  private async settleGate(): Promise<void> {
+    let guard = 0
+    while (this.supervisor.hasPendingWork()) {
+      if (guard++ > 1000) break
+      await this.supervisor.flush()
+      this.mergePass2()
+    }
+  }
+
+  /** MCP `provident.op` — apply a single managed-channel op, drain pass-2
+   *  once (R9), re-render, return status + both views + warnings (R10). */
+  op(cmd: unknown): OpResult {
+    const result = this.applyCommand(cmd as never)
+    return {
+      status: result.status,
+      ...(result.dirtied !== undefined ? { dirtied: result.dirtied } : {}),
+      ...(result.minted !== undefined ? { minted: result.minted } : {}),
+      renderedHtml: this.renderedHtml(),
+      ssrHtml: this.ssrHtml(),
+      warnings: this.warnings,
+    }
+  }
+
+  /** MCP `provident.export` — the graph's legacy/serialized export + a census
+   *  snapshot. No mutation. */
+  export(format: 'legacy' | 'serialized'): ExportResult {
+    const value = format === 'legacy' ? this.exportLegacy() : this.exportSerialized()
+    return { export: value, census: this.census() }
+  }
+
+  /** MCP `provident.validate` — validate an export against a THROWAWAY graph
+   *  (never the live one) + compare census + tree-signature parity (R3: only
+   *  structural parity for def/seam-bearing exports). */
+  validate(kind: 'legacy' | 'serialized', exp: unknown): ValidateResult {
+    const verdict = this.validateExport(kind, exp)
+    let treeSigMatch = false
+    try {
+      const ourSig = this.shapeSig()
+      const theirSig = this.validateSig(kind, exp)
+      treeSigMatch = verdict.valid && ourSig === theirSig
+    } catch {
+      treeSigMatch = false
+    }
+    return { valid: verdict.valid, censusMatch: verdict.censusMatch, treeSigMatch, warnings: verdict.warnings }
+  }
+
+  /** The engine auto-mints a per-translate `props.id` (e.g. `preempt-node-node-1`)
+   *  that differs across a legacy round-trip. Strip it (and any `node-N`
+   *  minted id) so the shape digest is stable — R3 "structural parity only". */
+  private structuralProps(props: Record<string, unknown> | undefined): string {
+    if (!props) return ''
+    const o: Record<string, unknown> = {}
+    for (const k of Object.keys(props)) {
+      if (k === 'id' && typeof props[k] === 'string' && /^(preempt-node-|node-)/.test(props[k] as string)) continue
+      o[k] = this.sortVal(props[k])
+    }
+    return JSON.stringify(o)
+  }
+
+  private sortVal(v: unknown): unknown {
+    if (Array.isArray(v)) return v.map((x) => this.sortVal(x))
+    if (v !== null && typeof v === 'object') {
+      const o: Record<string, unknown> = {}
+      for (const k of Object.keys(v as Record<string, unknown>).sort()) o[k] = this.sortVal((v as Record<string, unknown>)[k])
+      return o
+    }
+    return v
+  }
+
+  /** A deterministic shape digest of a rendered structure (never the raw
+   *  fragment — a 4095-element tree serializes to ~180MB). Folds the EMITTED
+   *  element tree (type + structural props + children digests) — the upstream
+   *  `shapeSigOfTrees` pattern. Engine-minted auto ids (`node-N`,
+   *  `preempt-node-*`) are stripped so the digest is stable across a legacy
+   *  round-trip (R3 "structural parity only"). */
+
+  private foldElements(els: Array<{ wire?: unknown; type?: unknown; props?: Record<string, unknown>; parent?: unknown; forkKey?: unknown }>, kids: Map<string, Array<{ wire?: unknown; type?: unknown; props?: Record<string, unknown> }>>): string {
+    const sort = (v: unknown): unknown => {
+      if (Array.isArray(v)) return v.map(sort)
+      if (v !== null && typeof v === 'object') {
+        const o: Record<string, unknown> = {}
+        for (const k of Object.keys(v as Record<string, unknown>).sort()) o[k] = sort((v as Record<string, unknown>)[k])
+        return o
+      }
+      return v
+    }
+    const foldEl = (e: { wire?: unknown; type?: unknown; props?: Record<string, unknown> }): string => {
+      const props = e.props ? this.structuralProps(e.props) : ''
+      const ch = (kids.get(String(e.wire)) ?? []).map(foldEl).join('')
+      return `${String(e.type)}:${props}:${ch.length ? this.hash64(ch) : ''};`
+    }
+    const roots = els.filter((e) => !e.parent || !String(e.parent))
+    return this.hash64(roots.map(foldEl).join(''))
+  }
+
+  private emitTree(nodes: Node[], supervisor: Supervisor): Array<{ wire?: unknown; type?: unknown; props?: Record<string, unknown>; parent?: unknown; forkKey?: unknown }> {
+    const cr = nodes[0].compile(nodes)
+    supervisor.recordResolved(cr.actionable)
+    const byNode = new Map(supervisor.allNodes().map((n) => [n.id, n]))
+    return emitElements(cr.actionable as never, byNode as never) as never
+  }
+
+  /** A deterministic shape digest of the LIVE graph (never the raw fragment).
+   *  Emits the live graph to its element tree and folds it. */
+  private shapeSig(): string {
+    const els = this.emitTree(this.nodes, this.supervisor)
+    const kids = new Map<string, Array<{ wire?: unknown; type?: unknown; props?: Record<string, unknown> }>>()
+    for (const e of els) {
+      if (e.parent) {
+        const arr = kids.get(String(e.parent)) ?? []
+        arr.push(e)
+        kids.set(String(e.parent), arr)
+      }
+    }
+    return this.foldElements(els, kids)
+  }
+
+  /** The THROWAWAY graph's shape sig for a candidate export — never the live
+   *  graph; a throwaway copy used only for the parity compare. */
+  private validateSig(kind: 'legacy' | 'serialized', exp: unknown): string {
+    const hub = createLinkHub()
+    const seedNodes = kind === 'legacy'
+      ? translateLegacy(exp as LegacyInitialData).nodes
+      : loadState(exp as never).map((s) => new Node(s, hub))
+    reconcileParentTargets(seedNodes)
+    const sup = new Supervisor({ events: new EventBridge() })
+    for (const n of seedNodes) sup.registerNode(n)
+    const els = this.emitTree(seedNodes, sup)
+    const kids = new Map<string, Array<{ wire?: unknown; type?: unknown; props?: Record<string, unknown> }>>()
+    for (const e of els) {
+      if (e.parent) {
+        const arr = kids.get(String(e.parent)) ?? []
+        arr.push(e)
+        kids.set(String(e.parent), arr)
+      }
+    }
+    return this.foldElements(els, kids)
+  }
+
+  /** Deterministic FNV-1a 64-bit hash (the upstream hash64 — path-fork-data.js). */
+  private hash64(str: string): string {
+    let h = 0xcbf29ce484222325n
+    for (let i = 0; i < str.length; i += 1) {
+      h ^= BigInt(str.charCodeAt(i))
+      h = (h * 0x100000001b3n) & 0xffffffffffffffffn
+    }
+    return h.toString(16).padStart(16, '0')
+  }
+
   // ---- internal teardown helpers -----------------------------------------
 
   private tearDownGraph(): void {
@@ -414,8 +677,206 @@ export class Runtime {
     this.rebuildIdIndex()
   }
 
-  // ---- MCP-facing operations ---------------------------------------------
+  /** Reset the render baseline to a fresh graph (called on every load). The
+   *  prevMaps are caller-owned per-tree state; reusing them across a graph
+   *  reload collapses the emit (the adapter's diff keys no longer exist). The
+   *  SSRFragmentAdapter also retains stale state across a reload, so it is
+   *  recreated. Also reset bootstrapped so the next render runs the compile
+   *  pass again. */
+  private resetRenderState(): void {
+    this.bootstrapped = false
+    this.domPrevMap = null
+    this.ssrPrevMap = null
+    this.ssr = new SSRFragmentAdapter()
+    this.prevStates.clear()
+  }
 
+  // ---- code / data CRUD (mcp-endpoint.md §4 — envelope authoring) ---------
+
+  /** Validate the path grammar (F3): each dot-segment must be a bare key or a
+   *  well-formed `key[i]` index form. A trailing `]`, an unclosed `[`, a `]`
+   *  before its `[`, an empty segment (`a..b`), or a leading/trailing dot is
+   *  rejected BEFORE any read/write — otherwise a malformed segment is silently
+   *  treated as a literal property name and corrupts the envelope. */
+  private assertValidPath(path: string): void {
+    if (typeof path !== 'string' || path === '') throw new Error('code: path must be a non-empty string')
+    if (path[0] === '.' || path[path.length - 1] === '.') throw new Error(`code: malformed path '${path}'`)
+    const segs = path.split('.')
+    for (const seg of segs) {
+      if (seg === '') throw new Error(`code: malformed path '${path}'`)
+      const opens = (seg.match(/\[/g) ?? []).length
+      const closes = (seg.match(/\]/g) ?? []).length
+      if (opens !== closes) throw new Error(`code: malformed path '${path}'`)
+      if (closes > 0) {
+        // must be exactly one `[...]` suffix with a non-negative integer
+        const m = /^([^[\]]+)\[(\d+)\]$/.exec(seg)
+        if (!m) throw new Error(`code: malformed path '${path}'`)
+      }
+    }
+  }
+
+  private envelopeParent(path: string): { parent: unknown; key: string | number } | null {
+    this.assertValidPath(path)
+    let cur: unknown = this.envelope
+    const segs = path.split('.')
+    for (let i = 0; i < segs.length - 1; i += 1) {
+      const seg = segs[i]
+      if (cur == null || typeof cur !== 'object') return null
+      cur = this.segment(cur, seg)
+      if (cur === undefined) return null
+    }
+    const last = segs[segs.length - 1]
+    if (cur == null || typeof cur !== 'object') return null
+    const m = /^([^[]+)\[(\d+)\]$/.exec(last)
+    if (m) {
+      const arr = (cur as Record<string, unknown>)[m[1]]
+      if (!Array.isArray(arr)) return null
+      return { parent: arr, key: Number(m[2]) }
+    }
+    return { parent: cur, key: last }
+  }
+
+  /** Resolve a single path segment against an object: a bare key or a
+   *  `key[i]` array-index form. Returns the resulting value (or undefined). */
+  private segment(obj: unknown, seg: string): unknown {
+    const m = /^([^[]+)\[(\d+)\]$/.exec(seg)
+    if (!m) return (obj as Record<string, unknown>)[seg]
+    const val = (obj as Record<string, unknown>)[m[1]]
+    if (!Array.isArray(val)) return undefined
+    return val[Number(m[2])]
+  }
+
+  /** `provident.code.get` — read the envelope subtree/entry at `path` (raw
+   *  JSON; no graph touch). */
+  codeGet(path: string): CodeGetResult {
+    if (path === '' || path === '.') return { path, value: this.envelope }
+    const loc = this.envelopeParent(path)
+    if (!loc) throw new Error(`code.get: unresolved path '${path}'`)
+    const value = (loc.parent as Record<string, unknown>)[loc.key]
+    return { path, value }
+  }
+
+  /** `provident.code.set` — set the envelope value at `path`. */
+  codeSet(path: string, value: unknown): CodeSetResult {
+    if (this.envelope === null) throw new Error('code.set: no envelope loaded (A1 doc loads have no legacy envelope)')
+    const loc = this.envelopeParent(path)
+    if (!loc) throw new Error(`code.set: unresolved path '${path}'`)
+    ;(loc.parent as Record<string, unknown>)[loc.key] = value
+    return { ok: true, path, wrote: value }
+  }
+
+  /** `provident.code.create` — append a new entry to the ARRAY at `path`
+   *  (e.g. push a hook name, a handler, a content node). The path resolves to
+   *  an ARRAY. */
+  codeCreate(path: string, entry: unknown): CodeCreateResult {
+    if (this.envelope === null) throw new Error('code.create: no envelope loaded')
+    const loc = this.envelopeParent(path)
+    if (!loc) throw new Error(`code.create: unresolved path '${path}'`)
+    const value = (loc.parent as Record<string, unknown>)[loc.key]
+    if (!Array.isArray(value)) throw new Error(`code.create: '${path}' is not an array`)
+    ;(value as unknown[]).push(entry)
+    return { ok: true, path, appendedAt: (value as unknown[]).length - 1 }
+  }
+
+  /** `provident.code.delete` — delete an array element at `path`.
+   *
+   *  Two addressing forms (mutually exclusive — F2):
+   *  1. `path` resolves to an ARRAY (e.g. `template.root.hooks`) + an `index`
+   *     argument → splice that index.
+   *  2. `path` resolves to a specific array element (e.g. `hooks[1]`, where the
+   *     last segment is `[i]` and the resolved parent is the array) → splice
+   *     that element; a provided `index` is ignored (the path already selected
+   *     it — never double-splice).
+   *
+   * F1 — a path-index element is bounds-checked exactly like the `index`
+   *   argument (an out-of-range/negative element index throws `/out of range/`,
+   *   never a silent `{ok:true, removed:undefined}`).
+   */
+  codeDelete(path: string, index?: number): CodeDeleteResult {
+    if (this.envelope === null) throw new Error('code.delete: no envelope loaded')
+    const loc = this.envelopeParent(path)
+    if (!loc) throw new Error(`code.delete: unresolved path '${path}'`)
+    const parent = loc.parent as Record<string, unknown>
+    // Form 2 — the path selected a specific array ELEMENT (`...hooks[1]`):
+    // loc.key is the numeric index and loc.parent is the array.
+    if (typeof loc.key === 'number' && Array.isArray(parent)) {
+      const k = loc.key
+      if (!Number.isInteger(k) || k < 0 || k >= (parent as unknown[]).length) {
+        throw new Error(`code.delete: '${path}' index ${k} out of range`)
+      }
+      const removed = (parent as unknown[]).splice(k, 1)[0]
+      return { ok: true, removed }
+    }
+    const value = parent[loc.key]
+    // Form 1 — `path` resolves to an ARRAY property + an `index` argument.
+    if (Array.isArray(value)) {
+      if (index === undefined) throw new Error(`code.delete: '${path}' needs an index`)
+      // F8 — an out-of-range (or negative) index must not silently splice the
+      // end of the array (a negative index is a JS from-the-end splice that
+      // would corrupt the envelope). Reject instead of a wrong `removed`.
+      if (!Number.isInteger(index) || index < 0 || index >= (value as unknown[]).length) {
+        throw new Error(`code.delete: '${path}' index ${index} out of range`)
+      }
+      const removed = (value as unknown[]).splice(index, 1)[0]
+      return { ok: true, removed }
+    }
+    // F2 — a path that selected an element but resolved to a NON-array value
+    // (e.g. a scalar, or an array already consumed by the path-index form) is
+    // ambiguous; reject rather than silently delete an arbitrary key.
+    if (typeof loc.key === 'number' || Array.isArray(parent)) {
+      throw new Error(`code.delete: '${path}' resolved to a non-array element; provide a valid index`)
+    }
+    const removed = value
+    delete parent[loc.key]
+    return { ok: true, removed }
+  }
+
+  /** `provident.code.validate` — schema-validate an envelope WITHOUT building
+   *  the graph (translate boundary checks; report TranslatedTree.warnings). */
+  codeValidate(envelope?: unknown): CodeValidateResult {
+    const env = (envelope ?? this.envelope) as LegacyInitialData | null
+    if (env === null || env === undefined) throw new Error('code.validate: no envelope to validate')
+    try {
+      const translated = translateLegacy(structuredClone(env))
+      const warnings = translated.warnings ?? []
+      const bad = warnings.some((w) => w.code === 'handler-body-eval-blocked' || w.code === 'handler-body-invalid')
+      return { valid: !bad, warnings, shape: `${translated.nodes.length} nodes / ${translated.content.length} content` }
+    } catch {
+      return { valid: false, warnings: [{ code: 'envelope-mismatch' }], shape: '' }
+    }
+  }
+
+  /** `provident.code.load` — apply an edited envelope to the LIVE graph (the
+   *  A2 `load` path: teardown → translate → register → compile → render).
+   *
+   *  F7 — a structurally-invalid edited envelope (e.g. `children` set to a
+   *  non-array) is REJECTED up front (P-C4: "a malformed edit is rejected with
+   *  the framework's own codes, never applied silently") instead of silently
+   *  loading a root-only graph. The offending code surfaces in the error. */
+  codeLoad(envelope?: unknown): LoadResult {
+    const env = (envelope ?? this.envelope) as LegacyInitialData | null
+    if (!env) throw new Error('code.load: no envelope to load')
+    const pre = this.codeValidate(env)
+    const bad = (pre.warnings as Array<{ code?: string }>).find((w) =>
+      w.code === 'handler-body-eval-blocked' ||
+      w.code === 'handler-body-invalid' ||
+      w.code === 'children-shape-invalid' ||
+      w.code === 'payload-shape-obsolete' ||
+      w.code === 'node-shape-invalid' ||
+      w.code === 'envelope-mismatch')
+    if (bad) {
+      throw new Error(`code.load: envelope invalid (${bad.code}); not applied`)
+    }
+    this.loadEnvelope(env)
+    return {
+      census: this.census(),
+      renderedHtml: this.renderedHtml(),
+      ssrHtml: this.ssrHtml(),
+      warnings: this.warnings,
+    }
+  }
+
+  // ---- MCP-facing operations ---------------------------------------------
   async dispatch(req: DispatchRequest): Promise<DispatchResult> {
     const nodeId = this.resolveTarget(req.target)
     if (nodeId === null) {

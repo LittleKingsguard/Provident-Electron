@@ -45,7 +45,7 @@ Notes:
 
 | Tool | Input | Returns |
 | --- | --- | --- |
-| `provident.dispatch` | `{ target, event, args?, requestId? }` | `{ results, dirtied, renderedHtml, ssrHtml, deduplicated? }` |
+| `provident.dispatch` | `{ target, event, args?, requestId? }` | `{ results, dirtied, renderedHtml, ssrHtml }` (the engine's `dispatchAndReport` derives `dirtied`; a duplicate `requestId` echoes the first report — no separate `deduplicated` field is surfaced) |
 | `provident.get_rendered_html` | `{}` | `{ renderedHtml, ssrHtml, census }` |
 | `provident.list_targets` | `{}` | `{ nodes: [{ nodeId, cssId?, propsId?, type, content, state, inTree, handlers }] }` |
 | `provident.get_node_state` | `{ target }` | `{ nodeId, states, census }` |
@@ -256,7 +256,7 @@ whose group is disabled is not registered / not listed / returns an error.
 | --- | --- | --- | --- |
 | `read` | `get_rendered_html`, `list_targets`, `get_node_state`, `code.get`, `code.validate` | read-only (no mutation, no eval for `code.get`/`validate`* ) | **ON** |
 | `dispatch` | `provident.dispatch` | mutates the graph (handler args, no eval) | **ON** |
-| `graph` | `load`, `op`, `export`, `teardown` | mutates/re-derives the graph + the envelope re-load | **OFF** (manual) |
+| `graph` | `load`, `op`, `export`, `validate`, `teardown` | mutates/re-derives the graph + the envelope re-load | **OFF** (manual) |
 | `code` | `code.set`, `code.create`, `code.delete`, `code.load` | WRITES + re-loads (eval via `new Function` on load) | **OFF** (manual) |
 
 \* `code.validate` may eval a proposed body to check it compiles — treat it as
@@ -281,6 +281,21 @@ re-build the graph. Enabling `graph`/`code` is an explicit human grant.
   (below). Token = authentication (who); group = authorization (what).
 
 ### 6.4 Manual-UI-only settings controls
+
+> **Implementation status (2026-08-23): LANDED.** The `SecurityGate` primitive +
+> the MCP server gating + the HTTP 401 + the stdio re-gate (M1) + **the manual-UI
+> Settings pane** are all implemented:
+> - persistence (`src/main/security-store.ts` — a JSON store in userData, loaded
+>   on boot, write-through);
+> - the IPC bridge (`provident:security:get`/`set` via `ipcMain.handle`),
+>   exposed to the renderer only through `window.provident.security` (preload);
+> - the renderer Settings pane (`src/renderer/settings.ts` + `#settings-pane` in
+>   `index.html`) — token show/clear/regenerate + one toggle per tool group,
+>   re-wiring the LIVE MCP server on change + persisting;
+> - the MCP server is built from the persisted config on boot (default
+>   `read`+`dispatch` ON / `graph`+`code` OFF / token null on first run).
+> The settings surface is **manual-UI-only by construction**: the IPC channel is
+> main→renderer→main and the MCP tool handlers never route to it.
 
 The MCP security + agent permissions are configured **manually by the human
 operator in the app UI only** — never via an MCP tool (an agent must not be
@@ -308,6 +323,13 @@ the MCP tool handlers never route to it.
 
 ### 6.5 The A1..A6 host-side hardening (folded in)
 
+> **Implementation status (2026-08-23):** A1 + A5 + the A6 stateless-HTTP
+> idempotency half ARE landed. A2 (RendererBackend lifecycle timeouts), A3
+> (permanent CI divergence leg — the R13 `scripts/electron-divergence.mjs`
+> exists as a one-off, not a CI leg), A4 (`code.loadBatch`), and the A6
+> readiness-timeout half are NOT yet implemented. This section is the DESIGN
+> for the remaining hardening.
+
 - **A1** (above): the `code`/`graph` groups are OFF by default; `--mcp-allow`
   can pre-enable at launch; the manual UI is the operator gate. `dispatch` is
   lower-risk (structured-clone args, no eval) but is a documented trust grant.
@@ -324,7 +346,7 @@ the MCP tool handlers never route to it.
   consequence (fresh server per POST; dedup is per-supervisor, not per-session)
   is documented.
 
-## 8. Pins (this repo)
+## 7. Pins (this repo)
 
 - P-E1 **No package edit**: `node_modules/provident-ssr/` and
   `../Preempt-Providence/` are never modified; every gap lands in
@@ -354,7 +376,7 @@ the MCP tool handlers never route to it.
   provider, a `handlers[].body`, a `component` binding are all authored by
   `code.*`, materialized by `new Function` on load.
 
-## 9. Non-goals
+## 8. Non-goals
 
 - No engine/adapter/render change (upstream-owned; REQ-GAP-1..6 are the
   catalogue, not this repo's fixes).
@@ -364,21 +386,29 @@ the MCP tool handlers never route to it.
 - No server push (pending.md SPECULATIVE rows) — the current surface is
   pull-based read-after-dispatch.
 
-## 10. Verification
+## 9. Verification
 
 - `tests/runtime.test.ts` (9) pins the Runtime's MCP-facing operations against
   a DOM shim: bootstrap render, the opt-in `data-node-id` on every element
   (DOM = SSR), target listing, css.id dispatch mutation + re-render of both
   views, engine-derived `dirtied`, `event.value` echo, bare-string + unknown
   targets, engine-owned `requestId` dedup echo, node state.
-- `tests/engine-surfaces.test.ts` (4) pins the adopted 0.1.1 shared surfaces
+- `tests/engine-surfaces.test.ts` (5) pins the adopted 0.1.1 shared surfaces
   directly (parity with the upstream contract): `dispatchAndReport`
   {results, dirtied} after an awaited flush, opt-in bounded `requestId` dedup
-  (echo; a different key re-fires), `flush()` deterministic settle, and the
-  `data-node-id` opt-in (DOM + SSR).
+  (echo; a different key re-fires), `flush()` deterministic settle, the
+  `data-node-id` opt-in (DOM + SSR), and the REQ-GAP-8 `renderOptions` threading.
 - `tests/mcp-stdio-e2e.test.mjs` drives the standalone MCP server (builds
   `dist/main/standalone.mjs`) over BOTH transports with the official SDK
-  client: all four tools list + respond (stdio and Streamable HTTP).
+  client: the tools list + respond (stdio and Streamable HTTP).
+- `tests/runtime-battery.test.ts` (28) pins the Runtime's battery + code-CRUD
+  surface (the 5 graph tools + 6 code-CRUD tools backing methods +
+  `warnings` R10 + the SSR-survives-reload regression + the H4/H5/H6
+  adversarial fixes + the R6 settle-gate quiescence). `tests/path-fork-cycle.test.ts` (9) pins the cycle-variant
+  envelope. `tests/e2e-battery.test.mjs` drives the battery host
+  (`dist/main/battery-host.mjs`) end-to-end: 93 checks green across the 4
+  fork-stress d12 variants + landings + handlers + code-CRUD. `scripts/electron-divergence.mjs`
+  is the R13 real-DOM-vs-shim divergence check (9/9 green).
 - Real-Electron end-to-end (0.1.1, verified 2026-08-21): the SDK client talks
   to the running app over HTTP → IPC → renderer graph. `data-node-id` on all
   12 elements (DOM = SSR); `provident.dispatch` on `inc` mutated the graph and

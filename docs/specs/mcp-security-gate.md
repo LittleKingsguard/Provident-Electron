@@ -24,7 +24,7 @@ export class SecurityGate {
   get config(): SecurityConfig                 // a copy (never the live object)
   get enabled(): ReadonlySet<ToolGroup>
   toolAllowed(name: string): boolean           // a tool may run
-  checkRequest(headers: Record<string, string | string[] | undefined>): { ok: true } | { ok: false; reason: string }
+  checkRequest(headers: Record<string, unknown> | null | undefined): { ok: true } | { ok: false; reason: string }
   apply(patch: { token?: string | null; groups?: ToolGroup[]; disable?: ToolGroup[] }): SecurityGate  // returns a NEW gate (immutable-ish)
   private: holds the config
 }

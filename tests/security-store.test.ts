@@ -1,0 +1,76 @@
+// tests/security-store.test.ts — the manual-UI security settings persistence
+// store (docs/specs/mcp-endpoint.md §6.4). It loads a SecuritySettings JSON
+// from a path, defaults to `read`+`dispatch` ON / `graph`+`code` OFF / token
+// null on first run, and persists changes write-through.
+import { describe, it, expect } from 'vitest'
+import { mkdtempSync, rmSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { createSecurityStore, type SecurityStore } from '../src/main/security-store.js'
+import type { SecuritySettings } from '../src/shared/types.js'
+
+function freshDir(): string {
+  return mkdtempSync(join(tmpdir(), 'provident-sec-'))
+}
+
+describe('SecurityStore — manual-UI settings persistence (mcp-endpoint.md §6.4)', () => {
+  it('RED — createSecurityStore is not exported yet', () => {
+    // This test fails (red) until the store is implemented.
+    expect(typeof createSecurityStore).toBe('function')
+  })
+
+  it('a fresh store returns the default config (read+dispatch ON, graph+code OFF, no token)', () => {
+    const dir = freshDir()
+    try {
+      const store: SecurityStore = createSecurityStore({ path: join(dir, 'sec.json') })
+      const cfg = store.get()
+      expect(cfg.enabled).toEqual(['read', 'dispatch'])
+      expect(cfg.token).toBeNull()
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('set(patch) updates the config and persists it write-through (the file is written)', () => {
+    const dir = freshDir()
+    try {
+      const file = join(dir, 'sec.json')
+      const store: SecurityStore = createSecurityStore({ path: file })
+      const after = store.set({ groups: ['code'], token: 'abc123' })
+      expect(after.enabled).toContain('code')
+      expect(after.token).toBe('abc123')
+      // write-through: the JSON file exists and round-trips
+      expect(existsSync(file)).toBe(true)
+      const onDisk = JSON.parse(readFileSync(file, 'utf8')) as SecuritySettings
+      expect(onDisk.token).toBe('abc123')
+      expect(onDisk.enabled).toContain('code')
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('a pre-existing file is loaded on construction (reload/restart restores settings)', () => {
+    const dir = freshDir()
+    try {
+      const file = join(dir, 'sec.json')
+      writeFileSync(file, JSON.stringify({ token: 'persisted-token', enabled: ['read', 'dispatch', 'code'] }))
+      const store: SecurityStore = createSecurityStore({ path: file })
+      expect(store.get().token).toBe('persisted-token')
+      expect(store.get().enabled).toEqual(['read', 'dispatch', 'code'])
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('a disable patch removes a group', () => {
+    const dir = freshDir()
+    try {
+      const store: SecurityStore = createSecurityStore({ path: join(dir, 'sec.json') })
+      store.set({ groups: ['code'] })
+      const after = store.set({ disable: ['code'] })
+      expect(after.enabled).not.toContain('code')
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+})
