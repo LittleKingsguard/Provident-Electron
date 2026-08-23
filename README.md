@@ -85,9 +85,9 @@ provident.dispatch { target: { kind: "nodeId", nodeId: "node-6" }, event: "click
 
 - `docs/specs/mcp-endpoint.md` — this repo's behavior contract (the MCP
   endpoint surface; implements the upstream's Phase C as a consumer).
-- `docs/defects.md` — the implementation-test catalogue (REQ-GAP-1..7
-  RESOLVED by provident-ssr 0.1.1; REQ-GAP-8 open) → `docs/HANDOFF.md` (the
-  issue handoff to the upstream project).
+- `docs/defects.md` — the implementation-test catalogue (REQ-GAP-1..8 resolved
+  by provident-ssr 0.1.1/0.1.2; REQ-GAP-9..12 published in 0.1.3; none open) →
+  `docs/HANDOFF.md` (the issue handoff to the upstream project).
 - `docs/decisions.md` / `docs/pending.md` / `docs/next-steps.md` — the process
   trackers (imported from the upstream `AGENTS.md` document-archival loop).
 - `AGENTS.md` — the process rules for agents working in this repo.
@@ -95,12 +95,15 @@ provident.dispatch { target: { kind: "nodeId", nodeId: "node-6" }, event: "click
 ## 0.1.x adoption notes
 
 Provident-Electron consumes the shared multi-host surfaces the upstream landed
-across 0.1.1/0.1.2 (`docs/specs/handoffs-review.md`): `Supervisor.dispatchAndReport`
-(engine `{results, dirtied}` + opt-in `requestId` dedup), the public `flush()`,
-the opt-in `data-node-id` render option (the one scoped lift of the
-no-render-change pin), and the exported canonical re-emit loop
-`renderProducingProcess` with the `renderOptions` threading (REQ-GAP-8). All
-eight filed gaps (REQ-GAP-1..8) are resolved upstream; none remain open.
+across 0.1.1/0.1.2/0.1.3 (`docs/specs/handoffs-review.md`,
+`docs/specs/handoffs-review-2.md`): `Supervisor.dispatchAndReport` (engine
+`{results, dirtied}` + opt-in `requestId` dedup), the public `flush()`, the
+opt-in `data-node-id` render option (the one scoped lift of the no-render-change
+pin), the exported canonical re-emit loop `renderProducingProcess` with the
+`renderOptions` threading (REQ-GAP-8), and the Round-4 surfaces — the public
+`createLinkHub()` + the corrected A1 recipe, the self-evicting sweep
+(REQ-GAP-11), and the destroy-cascade flag (REQ-GAP-12). All filed gaps
+(REQ-GAP-1..12) are resolved upstream; none remain open.
 
 ## License
 

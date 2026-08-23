@@ -83,6 +83,7 @@ out
 dist
 .output
 archive/
+live-prod/
 
 # Gatsby files
 .cache/

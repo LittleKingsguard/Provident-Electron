@@ -51,7 +51,23 @@ issue:
 niceties (next-steps items: surface `TranslatedTree.warnings` through MCP,
 renderer debug panel).
 
----
+## Round 4 — REQ-GAP-9..12 (filed 2026-08-21, from the E2E-battery plan) — PUBLISHED in provident-ssr 0.1.3
+
+The upstream ran its own three-agent gate on these four
+(`../Preempt-Providence/docs/specs/handoffs-review-2.md`, user rulings
+2026-08-21/22) — all **APPROVED-WITH-RESHAPE** and **PUBLISHED in
+provident-ssr@0.1.3** (verified in the installed dist: `createLinkHub`,
+`LinkConfigNameHub` type, the self-evicting sweep `evictDestroyedNode`/
+`destroyedRefs`, the destroy-cascade `markCascadeExplicit`). The battery's
+workarounds (vendored hub, accepted registry growth, per-child teardown) are
+now droppable in favor of the published surfaces.
+
+| Issue | Gap (as filed) | Upstream disposition (published 0.1.3) | This repo's response |
+| --- | --- | --- | --- |
+| **REQ-GAP-9** | No public `LinkConfigNameHub` factory; `loadState`→graph construction is test-only | `createLinkHub()` + type export + the `node.ts:463` seed-hub threading + the corrected 4-step recipe (`loadState` → `new Node(d,hub)` template-first → `reconcileParentTargets` → `registerNode` per node, ONE hub everywhere). Caveat (user ruling): component-bearing docs → `translateLegacy(doc, {hub})`; `serializeSlice`→`loadState` is snapshot/restore-only. | Battery A1 uses the exported `createLinkHub()` (no vendored hub). Component-bearing first-class loads use `translateLegacy(doc,{hub})` regardless. |
+| **REQ-GAP-10** | No sanctioned handler-body-by-name injection | Doc-only seam letter: `addLayer` sanctioned for PRE-MOUNT prototype setup (fork-stress pattern); in-tree live injection via journaled `state-slice handlers`/`layer-apply`; prefix rules; hooks delimiter; D16 precedence + clone inheritance. `registerHandlerBody` REJECTED. | Battery's pre-mount prototype injection IS the sanctioned seam; bodies imported with provenance comment + guard test. |
+| **REQ-GAP-11** | No `Supervisor` reset; destroyed nodes accumulate | Self-evicting sweep (`finalizeDestroyed` evicts from registered/byId/content/minted + supervisor nodes; `destroyedRefs` tombstone keeps `getNode`). `reset()`/`prune()`/`unregisterNode` REJECTED. | Battery asserts `inTree`/mount only (never `registered` equality), fresh requestIds per scenario; the sweep means the registry no longer grows across scenarios. |
+| **REQ-GAP-12** | No single clear-children op | Destroy-cascade trigger flag (explicit children only, skips placements + `'component'`-token prototypes, runtimeMinted → retention). `clear-children` op REJECTED. | Battery teardown = per-child destroy loop (the pinned shape for fork-stress even post-cascade: clones are runtimeMinted, prototypes skipped); cascade helps plain family trees. |
 
 ## Handoff mechanics
 

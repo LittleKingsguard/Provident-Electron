@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
-    "provident-ssr": "^0.1.2"
+    "provident-ssr": "^0.1.3"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
