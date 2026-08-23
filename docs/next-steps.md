@@ -10,7 +10,7 @@ this repo's local next-steps (the upstream queue lives in
 | # | Item | Status / blocker |
 | --- | --- | --- |
 | 1 | **E2E battery — SPEC-COMPLETE, awaiting user go-ahead** (`docs/specs/e2e-test-battery.md`, review `docs/specs/e2e-test-battery-review.md` + addendum = APPROVED-WITH-RESHAPE). Fork-stress = STATIC path-enumeration family (23 nodes / 4095 path-state elements); cycle variant = new `pathForkCycleLegacyData` spec (§5.1.x). | Gate passed; static-family correction applied; blocked on user go-ahead before the delegations below. |
-| 1a | **Unit A — host capabilities (battery mode Runtime)** — `loadEnvelope`/`loadDoc`/`applyCommand`/`exportLegacy`/`exportSerialized`/`validateExport`/`teardown`, boot-root-only, the **compilePath-per-node** bootstrap for placement-routed loads, the **userData set/clear lifecycle**, the **pass-2 drain rule**, the **`hasPendingWork()` settle-gate** in teardown. | Red (TestWriter) → green (Implementer). Pinned by the review R8/R9/R6/R-new. |
+| 1a | **Unit A — host capabilities (battery mode Runtime)** — **DONE + HARDENED (TDD + adversarial)**. `src/renderer/runtime.ts` has `loadEnvelope`/`loadDoc`/`applyCommand`/`exportLegacy`/`exportSerialized`/`validateExport`/`teardown` + the id-index (A5) + compilePath placement routing (H1) + in-tree-only resolution (H2) + clean reject (H3). Spec `docs/specs/runtime-host.md`; `tests/runtime-host.test.ts` (13) green. | **DONE (2026-08-22)** — green. |
 | 1b | **Unit B — the cycle-variant envelope data module** `pathForkCycleLegacyData(depth)` (author in this repo; no upstream static equivalent) — placement→values→link cycle per layer, zero handlers/clones, 23-node/4095-element census. | Deliverable spec exists (§5.1.x); red → green to implement + verify the mixed-method render + census. |
 | 1c | **Unit C — the additive MCP tools** the 5 graph tools `load`/`op`/`export`/`validate`/`teardown` + the 6 code-CRUD tools `code.get`/`set`/`create`/`delete`/`validate`/`load` (the authoring surface, mcp-endpoint.md §4) + `warnings` in returns (R10) + `provident` IPC wiring. | Red → green; R2 (A1 recipe), R3 (snapshot-parity validate), R7 (assertion hygiene), R13 (SSR-first), P-C1..C5 (envelope-authoring pins) all in the spec. |
 | 1d | **Unit D — the battery host + runner** `src/main/battery-host.ts` + `tests/e2e-battery.test.mjs` (single-process, C4 no-external-reset, teardown-only resets), the battery-wide assertion hygiene (authored ids, non-empty dispatch, fresh requestIds), the `hash64` digest assertions over large renders. | Red → green; then the one Electron-run divergence check (R13) before shim is trusted. |
@@ -18,7 +18,112 @@ this repo's local next-steps (the upstream queue lives in
 | 3 | **Renderer debug panel** — live census + SSR fragment in `#status`. | Pending — nice-to-have. |
 | 4 | **Publish-trigger refresh — DONE** — `provident-ssr@0.1.3` published the Round-4 landings; refreshed + verified (createLinkHub, evictDestroyedNode/destroyedRefs, markCascadeExplicit all present; trio + MCP e2e green). | **DONE (2026-08-22)** — the battery now drops the vendored hub (A1) and relies on the published surfaces. |
 
-| 5 | **Architecture reshapes A1..A6** (from `docs/specs/architecture-review.md`, gate 2026-08-22). **A1 LANDED (TDD)**: the security-gate pure module `src/main/security.ts` (`groupForTool`/`toolAllowed`/`defaultSecurityConfig`/`authorized`/`applyPatch`) — spec `docs/specs/mcp-security.md`, red 30 → green 38, full suite 52 green, typecheck + build clean. **Remaining A1**: wire the gate into `mcp-server.ts` (register only `toolAllowed` tools) + the manual-UI settings IPC (`provident:security:get/set`) + the loopback-token check in the HTTP handler. **A2..A6** (lifecycle, CI leg, batch, id-index, timeout) ride the battery Units A/C/D. | A1 core module DONE (TDD); wiring + UI pending. |
+| 5 | **Architecture reshapes A1..A6** (from `docs/specs/architecture-review.md`, gate 2026-08-22). **A1 (core + SecurityGate + Runtime host + server gate plumbing + M1/M2/M3 fixes) LANDED + HARDENED (TDD + adversarial)**: `src/main/security.ts` + `src/renderer/runtime.ts` host methods + `src/main/mcp-server.ts` (gate plumbing, gated registration, HTTP 401, stdio re-gate, stub tools) + specs + **112 tests green**; MCP e2e (both transports) green. **Next**: Unit C (replace the graph/code STUBS with real tools), Unit D (battery host+runner), Unit B (cycle envelope), A2/A3/A4/A6. | A1 + M1/M2/M3 DONE; Units C/D/B + A2/A3/A4/A6 pending. |
+
+## DONE (2026-08-22, seventeenth pass — M1/M2/M3 must-fix defects)
+
+Per the user's direction:
+- **M1 (first option)** — `applyGatePatch` now re-gates the LIVE stdio server:
+  captured `RegisteredTool` handles (the SDK exposes no enumerator) are
+  toggled `enabled` per the new gate, so a NARROW takes effect immediately.
+  Red test (`registeredEnabled` narrow → disabled → re-enabled) → green.
+- **M2 (stubs until Unit C)** — the unimplemented graph/code tools now
+  register as explicit STUBS (`{ok:false, notImplemented:true, tool}`) when
+  their group is enabled; `code.get`/`code.validate` (read group, default) are
+  stubs too, so the gate's enabled-map and the real registration AGREE (no
+  silent no-op). Confirmed by the MCP e2e: the default tool surface now
+  includes the two read-group stubs.
+- **M3 (doc fix)** — `docs/decisions.md` gained the M1/M2 DECIDED rows (stdio
+  re-gate in place; unimplemented groups register stubs). GET→405-before-401
+  recorded as intent.
+- 112 tests green, typecheck + build clean, MCP e2e (both transports) green.
+
+## DONE (2026-08-22, sixteenth pass — A1-W4/W5 gate plumbing, TDD + adversarial + handover)
+
+- **Spec** `docs/specs/mcp-server-gate.md`. TestWriter red → Implementer green
+  for the `SecurityGate` plumbing (gate option, getGateConfig, applyGatePatch,
+  gate accessor) then the fail-open fix: `registerTools` registers only
+  `allowedToolNames()` and `handleHttp` 401s on a failed token check.
+  111 tests green, typecheck + build, MCP e2e (both transports) green.
+- **Adversarial (A1-W5)** → confirmed the HTTP fail-open is closed + gating
+  registration = gating dispatch (SDK-verified); left MUST-fixes **M1** (stdio
+  re-gate no-op/TOCTOU), **M2** (ALL_TOOLS↔registerTools↔specs divergence —
+  code.get/code.validate unregistered; graph/code enable = silent no-op),
+  **M3** (decisions doc: GET→405-before-401, enable-no-op). No engine defect.
+- Context threshold crossed → wrote the **handover `docs/HANDOFF-battery.md`**
+  (exact next state + M1/M2/M3 + the Units C/D/B + the A2/A3/A4/A6 list + the
+  process loop) for a fresh sub-agent.
+
+## DONE (2026-08-22, fifteenth pass — A1-W3 server-wiring pure functions, TDD + adversarial)
+
+- **Spec** `docs/specs/mcp-server-wiring.md` (`toolForName`/`registeredToolNames`
+  + the httpAuthorized/registration contract).
+- **TestWriter red** → `toolForName`/`registeredToolNames` not exported.
+- **Implementer green** → the two pure functions; 100/100. Fixed a TestWriter
+  contract ambiguity (`provident.nope` → `'nope'`, not throw).
+- **Adversarial** → confirmed the pure functions are correct but **dead code**
+  (the server does not gate yet — that's the NEXT wiring unit) + F2
+  (`toolForName('provident.')`/double-prefix returned garbage — now fail-closed
+  throw) + F3 (`registeredToolNames` kept duplicates → SDK register crash —
+  now deduped). Red tests → green. 104/104, typecheck + build.
+- **Engine note**: no provident-ssr defect (all host-side); the SDK's duplicate-
+  registration throw + `RegisteredTool.update({enabled})` are the two SDK
+  surfaces the wiring leans on.
+
+## DONE (2026-08-22, fourteenth pass — Unit A Runtime host capabilities, TDD + adversarial + greens)
+
+- **Spec** `docs/specs/runtime-host.md` (loadEnvelope/loadDoc/applyCommand/
+  export/validate/teardown + the compilePath bootstrap + id-index).
+- **TestWriter red** → 10 tests (module methods missing). Fixed a TestWriter
+  contract bug (loadDoc used an impossible `{template:{}}` doc → now a valid
+  serialized doc).
+- **Implementer green** → the host methods + id-index added; 86/86. The
+  Implementer's "dispatch catch-all fallback" was an out-of-process change
+  (made a `push` event fire a `click` handler to satisfy a mis-written test) —
+  I reverted it to spec dispatch and corrected the test (`event:'click'`).
+- **Adversarial** → H1 (placement loads never path-enumerated → wrong 3-element
+  fragment), H2 (teardown left resolvable unplaced ghosts + stale index),
+  H3 (applyCommand clone-instance with bad node threw). Red tests → green:
+  `compilePath` placement routing, in-tree-only id-index/resolveTarget/
+  listTargets, clean reject on unresolvable node. 89/89, typecheck + build.
+- **Greens** — the H1/H2/H3 fixes recorded in `runtime-host.md` §3a (the
+  blind-test green scenarios).
+- The adversarial-loop carve-out held: no engine defect found (compilePath/
+  destroy are existing engine surfaces); all fixes are host-side.
+
+## DONE (2026-08-22, thirteenth pass — A1-W SecurityGate unit, TDD + adversarial + greens)
+
+- **Spec** `docs/specs/mcp-security-gate.md` (the SecurityGate class: config
+  store + gate decisions shared by the MCP server + settings UI).
+- **TestWriter red** → 18 tests, `SecurityGate is not a constructor`.
+- **Implementer green** → `SecurityGate` added to `src/main/security.ts`
+  (immutable-ish; fresh copies on construct/config/apply); 70/70.
+- **Adversarial** found F-gate (HIGH: `checkRequest(null|undefined)` throws,
+  violating "never throws") + F-key (MEDIUM: uppercase header keys missed).
+  Red tests for both → green: `authorized`/`checkRequest` now accept null/
+  undefined headers (fail-closed) + case-insensitive `header()` lookup.
+  76/76, typecheck + build clean.
+- **Green blind-test scenarios** `mcp-security-greens.md` Part 2 (G7..G10,
+  21 scenarios + transport note) encode the F-gate/F-key hardening.
+- The adversarial-loop carve-out (AGENTS.md item 7): package defects → handoff;
+  host findings → fixed here.
+
+## DONE (2026-08-22, twelfth pass — A1 adversarial review + blind-test green scenarios)
+
+- After the A1 green, ran the adversarial sub-agent (edge cases, unauthorized
+  access, malformed inputs): found F1 (crash on non-string/array `authorization`
+  header), F2 (array-vs-Set `enabled` gap — the gate threw on its own config),
+  F3 (garbage `token` stored), F4 (crash on non-iterable `disable`), F5
+  (enabled-array aliasing), F6 (empty-string-token bypass), F7 (header-key
+  casing contract). Verdict: not safe to wire as-is.
+- Hardened `src/main/security.ts` to close F1..F6 (coerce header, array-or-Set
+  gate, validate token/groups/disable, always-fresh array, reject empty token)
+  — the 52-test suite + typecheck stay green.
+- Recorded the findings + fix contract in `docs/specs/mcp-security.md` §6a and
+  wrote the **blind-test green scenario set** (`docs/specs/mcp-security-greens.md`,
+  38 unit scenarios + 2 transport notes) — the regression net for the
+  adversarial fixes, to be run by an agent who has NOT read the implementation
+  (AGENTS.md item 10 / subagents.md).
 
 ## DONE (2026-08-22, eleventh pass — A1 security-gate unit, TDD red→green)
 

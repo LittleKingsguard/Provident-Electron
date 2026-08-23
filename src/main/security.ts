@@ -24,9 +24,10 @@ export function groupForTool(toolName: string): ToolGroup | null {
   return TOOL_GROUPS[toolName] ?? null
 }
 
-export function toolAllowed(toolName: string, enabled: ReadonlySet<ToolGroup>): boolean {
+export function toolAllowed(toolName: string, enabled: ReadonlySet<ToolGroup> | readonly ToolGroup[]): boolean {
   const group = groupForTool(toolName)
-  return group !== null && enabled.has(group)
+  const set: ReadonlySet<ToolGroup> = enabled instanceof Set ? enabled : new Set(enabled)
+  return group !== null && set.has(group)
 }
 
 export function defaultSecurityConfig(): { token: string | null; enabled: ToolGroup[] } {
@@ -38,12 +39,37 @@ function safeEqual(a: string, b: string): boolean {
   return timingSafeEqual(Buffer.from(a), Buffer.from(b))
 }
 
+/** F1 — a non-string header value (a duplicate HTTP header is an array, a
+ *  hostile value may be a number/object) is treated as ABSENT. Never crash. */
+function asString(v: unknown): string | undefined {
+  return typeof v === 'string' ? v : undefined
+}
+
+/** F-key — a case-insensitive header lookup (callers may pass `Authorization`
+ *  or `authorization`; the transport seam uses Node-lowercased keys). */
+function header(headers: Record<string, unknown> | null | undefined, name: string): string | undefined {
+  if (headers === null || headers === undefined) return undefined
+  if (name in headers) return asString(headers[name])
+  const lower = name.toLowerCase()
+  for (const k of Object.keys(headers)) {
+    if (k.toLowerCase() === lower) return asString(headers[k])
+  }
+  return undefined
+}
+
 export function authorized(
-  headers: Record<string, string | undefined>,
+  headers: Record<string, unknown> | null | undefined,
   token: string | null,
 ): boolean {
-  if (token === null) return true
-  const auth = headers['authorization']
+  // F-gate — a null/undefined headers object is a hostile/wiring input; treat
+  // as NO headers (fails closed), never throw.
+  if (headers === null || headers === undefined) return token === null
+  // F6 — a non-null token must be non-empty (an empty-string token would admit
+  // `Bearer ` / an empty `mcp-token`); an empty token authenticates nothing.
+  if (token === null || token === '') return token === null
+  // F-key — case-insensitive header lookup (a caller may pass
+  // `Authorization`/`MCP-Token`; the transport seam uses Node-lowercased keys).
+  const auth = header(headers, 'authorization')
   if (auth !== undefined && auth !== '') {
     const scheme = auth.slice(0, 7).toLowerCase()
     if (scheme === 'bearer ') {
@@ -51,12 +77,18 @@ export function authorized(
       if (safeEqual(supplied, token)) return true
     }
   }
-  const mcpToken = headers['mcp-token']
+  const mcpToken = header(headers, 'mcp-token')
   if (mcpToken !== undefined && safeEqual(mcpToken, token)) return true
   return false
 }
 
 const VALID_GROUPS: ReadonlySet<string> = new Set(['read', 'dispatch', 'graph', 'code'])
+
+/** F3/F4 — a token/groups/disable field of the wrong shape ⇒ the whole patch
+ *  is REJECTED (config unchanged, never throws). */
+function isToolGroup(v: unknown): v is ToolGroup {
+  return typeof v === 'string' && VALID_GROUPS.has(v)
+}
 
 export function applyPatch(
   config: { token: string | null; enabled: ToolGroup[] },
@@ -66,27 +98,64 @@ export function applyPatch(
     disable?: ToolGroup[]
   },
 ): { token: string | null; enabled: ToolGroup[] } {
-  const groups = patch.groups ?? []
-  const disable = patch.disable ?? []
-
-  for (const g of groups) {
-    if (!VALID_GROUPS.has(g)) return config
+  const { groups, disable } = patch
+  // F3 — token must be string|null (non-empty if set).
+  if (patch.token !== undefined && (typeof patch.token !== 'string' || patch.token === '')) {
+    return config
   }
-  for (const g of disable) {
-    if (!VALID_GROUPS.has(g)) return config
+  // F4 — groups/disable must be arrays of valid ToolGroup (non-iterable/mixed
+  // inputs reject the whole patch, never throw).
+  if (groups !== undefined && (!Array.isArray(groups) || !groups.every(isToolGroup))) {
+    return config
   }
-
-  let enabled = config.enabled
-  for (const g of groups) {
-    if (!enabled.includes(g)) enabled = [...enabled, g]
+  if (disable !== undefined && (!Array.isArray(disable) || !disable.every(isToolGroup))) {
+    return config
   }
-  for (const g of disable) {
-    if (enabled.includes(g)) enabled = enabled.filter((item) => item !== g)
+  const add = groups ?? []
+  const del = disable ?? []
+  // F5 — always a FRESH enabled array (no aliasing into the caller's config).
+  const enabled = [...config.enabled]
+  for (const g of add) if (!enabled.includes(g)) enabled.push(g)
+  for (const g of del) {
+    const i = enabled.indexOf(g)
+    if (i !== -1) enabled.splice(i, 1)
   }
-
-  const next: { token: string | null; enabled: ToolGroup[] } = {
+  return {
     token: patch.token !== undefined ? patch.token : config.token,
     enabled,
   }
-  return next
+}
+
+export interface SecurityConfig { token: string | null; enabled: ToolGroup[] }
+
+export class SecurityGate {
+  private readonly _config: { token: string | null; enabled: ToolGroup[] }
+
+  constructor(initial?: SecurityConfig) {
+    this._config = initial
+      ? { token: initial.token, enabled: [...initial.enabled] }
+      : defaultSecurityConfig()
+  }
+
+  get config(): SecurityConfig {
+    return { token: this._config.token, enabled: [...this._config.enabled] }
+  }
+
+  get enabled(): ReadonlySet<ToolGroup> {
+    return new Set(this._config.enabled)
+  }
+
+  toolAllowed(name: string): boolean {
+    return toolAllowed(name, this.enabled)
+  }
+
+  checkRequest(headers: Record<string, unknown> | null | undefined): { ok: true } | { ok: false; reason: string } {
+    return authorized(headers, this._config.token)
+      ? { ok: true }
+      : { ok: false, reason: 'unauthorized' }
+  }
+
+  apply(patch: { token?: string | null; groups?: ToolGroup[]; disable?: ToolGroup[] }): SecurityGate {
+    return new SecurityGate(applyPatch(this.config, patch))
+  }
 }

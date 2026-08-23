@@ -64,16 +64,24 @@ export class ShimElement {
     this.removed = true
   }
 
-  /** Serialize this element (and descendants) to an HTML string — the 
-   *  `mount.innerHTML` surface our Runtime exposes to MCP. */
+  /** Serialize this element's CHILDREN to an HTML string — the `mount.innerHTML`
+   *  surface our Runtime exposes to MCP. Real-DOM semantics: `innerHTML` is the
+   *  inner content only (children's own serialization, tags included), so an
+   *  empty mount serializes to `''` — mirroring `HTMLElement.innerHTML`. */
   get innerHTML(): string {
+    return (this.textContent ?? '') + this.children.map((c) => c.outerHTML).join('')
+  }
+
+  /** Serialize this element AND descendants (its open tag, attributes, inner
+   *  HTML, close tag) — the `outerHTML` used by a parent's innerHTML. */
+  get outerHTML(): string {
     const attrs: string[] = []
     for (const [k, v] of Object.entries(this.attrs)) attrs.push(`${k}="${v}"`)
     if (this.id) attrs.push(`id="${this.id}"`)
     if (this.className) attrs.push(`class="${this.className}"`)
     if (this.style.cssText) attrs.push(`style="${this.style.cssText}"`)
     const open = `<${this.tagName.toLowerCase()}${attrs.length ? ' ' + attrs.join(' ') : ''}>`
-    const body = (this.textContent ?? '') + this.children.map((c) => c.innerHTML).join('')
+    const body = (this.textContent ?? '') + this.children.map((c) => c.outerHTML).join('')
     const voidTags = new Set(['input', 'br', 'img', 'hr', 'meta', 'link', 'source', 'track', 'wbr'])
     if (voidTags.has(this.tagName.toLowerCase())) return open
     return open + body + `</${this.tagName.toLowerCase()}>`

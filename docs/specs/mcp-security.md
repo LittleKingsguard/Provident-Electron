@@ -85,6 +85,22 @@ additive/replace ambiguity the first TestWriter pass exposed):
   NOT MCP tools; no MCP tool may reach them).
 - `applyPatch(patch): SecurityConfig` returns the new config (pure).
 
+## 6a. Adversarial findings (2026-08-22) — MUST-fix before the blind test
+
+An adversarial review of the first A1 green landed these. They are INTERNAL
+code bugs in this repo's `security.ts` (not upstream package gaps). The green
+scenarios (§8) encode the HARDENED behavior; the module must conform.
+
+| # | Finding | Fix (documented contract) |
+| --- | --- | --- |
+| F1 | `authorized` CRASHES on a non-string/array `authorization` header (`auth.slice(...).toLowerCase` — a duplicate HTTP header is an array). | `authorized` treats any non-string header value as `undefined` (coerce/normalize; never throws in the auth path). |
+| F2 | `toolAllowed(name, enabled)` throws when `enabled` is an ARRAY (the config's own type) — `enabled.has is not a function`. | `toolAllowed` accepts `ReadonlySet<ToolGroup> | readonly ToolGroup[]` (wrap arrays in a Set internally). |
+| F3 | `applyPatch` stores a non-string `token` (garbage in a security field). | `applyPatch` validates `patch.token` is `string | null`; anything else ⇒ the whole patch is rejected (config unchanged). |
+| F4 | `applyPatch` CRASHES on a non-iterable `disable` (`{}`). | `applyPatch` validates `groups`/`disable` are arrays of valid `ToolGroup`; malformed ⇒ rejected (config unchanged), never throws. |
+| F5 | `applyPatch` returns the SAME `enabled` array reference on a no-op (aliasing breaks the declared purity). | `applyPatch` always returns a FRESH `enabled` array. |
+| F6 (low) | Empty-string token (`''`) admits `Bearer ` / empty `mcp-token`. | Documented: a non-null token must be non-empty; `applyPatch({token:''})` is REJECTED. |
+| F7 (low) | Header KEY casing is not normalized (caller must lowercase). | Documented at the HTTP seam: the transport normalizes header keys to lowercase before `authorized`. |
+
 ## 7. Verify behavior
 
 - `toolAllowed('provident.dispatch', {'read','dispatch'})` ⇒ `true`.

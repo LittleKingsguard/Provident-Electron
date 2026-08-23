@@ -25,6 +25,17 @@ project's two distinct goals:
    continue.
 2. **50% task threshold**: a task estimated to take >50% of context is
    delegated to sub-agents, never done inline.
+3. **Handover must include a documentation-staleness review**: before any
+   handover is reported complete, reconcile the active trackers
+   (`docs/next-steps.md`, `docs/pending.md`, `docs/defects.md`,
+   `docs/decisions.md`, `docs/HANDOFF.md`) and the relevant
+   `docs/specs/*.md` against the ACTUAL repo/build state — every DONE row
+   that is now implemented, every OPEN item that changed status, every
+   method/behavior named in a spec that drifted from the code, and every
+   version/test-count claimed. Fix stale entries in the same pass so a fresh
+   sub-agent inherits an accurate picture, and note the staleness pass in the
+   handover doc itself. A handover that repeats an out-of-date DONE/OPEN
+   status or a wrong method name is a review finding.
 
 ## Process requirements
 
@@ -64,6 +75,13 @@ project's two distinct goals:
    suspected root cause, and a proposed fix shape (upstream-owned). The
    finished catalogue is written to `docs/HANDOFF.md` (the issue-handoff
    document) before a pass is reported complete. DO NOT fix the package.
+   **Adversarial-loop carve-out:** the post-completion adversarial sub-agent
+   hunts edge cases / unauthorized access / malformed inputs. If it finds a
+   genuine defect in the PACKAGE code (`node_modules/provident-ssr/` or the
+   upstream `../Preempt-Providence/` source — NOT this repo's host code), that
+   is still a handoff item: record it in `docs/defects.md` + `docs/HANDOFF.md`
+   exactly as any engine defect, and NEVER patch the package. Host-side
+   findings (this repo's `src/`) are fixed here, not handed off.
 
 ## Process gates for sub-agents (imported, adapted)
 
