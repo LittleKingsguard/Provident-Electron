@@ -4,6 +4,7 @@
 import { Runtime } from './runtime.js'
 import { demoEnvelope } from '../shared/demo-envelope.js'
 import { initSettingsPane } from './settings.js'
+import { initDebugPanel } from './debug-panel.js'
 import type { RpcRequest, RpcReply } from '../shared/types.js'
 
 function handleRequest(runtime: Runtime, req: RpcRequest): Promise<RpcReply> {
@@ -75,13 +76,19 @@ function main(): void {
   if (!mount) throw new Error('mount #app missing')
   const runtime = new Runtime({ mount, envelope: demoEnvelope() })
   runtime.bootstrap()
+  // The read-only Debug / agent-visibility pane (docs/specs/debug-panel.md).
+  const refreshDebug = initDebugPanel(runtime)
+  refreshDebug()
   const bridge = window.provident
   if (!bridge) {
     console.warn('[provident-renderer] no preload bridge — MCP endpoints unavailable (running as a plain page?)')
     return
   }
   bridge.onRequest((req) => {
-    void handleRequest(runtime, req).then((reply) => bridge.sendReply(reply))
+    void handleRequest(runtime, req).then((reply) => {
+      refreshDebug()
+      bridge.sendReply(reply)
+    })
   })
   // The manual-UI Security Settings pane (mcp-endpoint.md §6.4).
   void initSettingsPane()

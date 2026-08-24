@@ -79,15 +79,25 @@ project's two distinct goals:
    (this repo's contract = the MCP endpoint spec, `docs/specs/mcp-endpoint.md`).
    Design decisions are recorded in `docs/decisions.md` as `DECIDED:` /
    `ACTIVE` / `SUPERSEDED` rows. Keep both in sync with the implementation.
-6. **Document-archival loop (imported, adapted)**: after each significant
-   change: (a) merge new/changed information into the core docs —
-   `docs/specs/mcp-endpoint.md`, `docs/defects.md` (active defect/finding
-   list — open on top, fixed rows below), `docs/decisions.md`,
+6. **Document-archival loop (imported from upstream Preempt-Providence
+   AGENTS.md item 6, adapted)**: the git-visible `docs/` tree is for ACTIVE
+   development work + the CURRENT contract/spec state. After EACH significant
+   change (and as a MANDATORY per-unit step after the greens — see item 10b),
+   run a cleanup pass: (a) merge the new/changed information into the core docs —
+   `docs/specs/mcp-endpoint.md`, `docs/defects.md` (active defect/finding list —
+   open on top, fixed rows below, superseded rows archived), `docs/decisions.md`
+   (ACTIVE/SUPERSEDED status, pinned contracts with their sources),
    `docs/pending.md` (parked/upstream constraints + speculative items),
-   `docs/next-steps.md` (work queue); (b) archive obsolete docs into the
-   GITIGNORED `archive/` dir (`archive/<topic>/<date>-<name>.md`); (c) never
-   leave a citation pointing at a moved file. The `archive/` dir is excluded
-   from builds and tests.
+   `docs/next-steps.md` (work queue); (b) archive obsolete documentation, stale
+   test data, findings reports, feedback reviews, and historical review records
+   into the GITIGNORED `archive/` dir (`archive/<topic>/<date>-<name>.md` — see
+   `archive/README.md`); (c) repoint or remove every reference to an archived
+   file — never leave a citation pointing at a moved file; never archive a
+   still-cited file without repointing it. The `archive/` dir is excluded from
+   builds and tests. **Active trackers (maintained every pass):**
+   `docs/defects.md`, `docs/decisions.md`, `docs/pending.md`, `docs/next-steps.md`
+   — a change that fixes a defect, lands a decision, parks an item, or launches
+   a speculative proposal MUST update these trackers in the same pass.
 7. **Defect-catalogue + handoff rule (this project's core duty)**: ANY defect
    or requirement gap discovered in the `provident-ssr` package — a behavior
    that contradicts `../Preempt-Providence/docs/specs/*.md`, a missing
@@ -136,10 +146,35 @@ project's two distinct goals:
        inconsistencies (spec refs, section numbers, claims vs behavior,
        version/test-count staleness).
     c. Findings merge into the active trackers and the trio must be green before
-       the loop is complete. A unit whose `*-greens.md` set was authored by the
-       same agent who implemented it, WITHOUT a blind re-run, is a review
-       finding — the batteries B/C/D miss (self-verified greens, no fresh-agent
-       run) is the exact anti-pattern this rule closes.
+    the loop is complete. A unit whose `*-greens.md` set was authored by the
+    same agent who implemented it, WITHOUT a blind re-run, is a review
+    finding — the batteries B/C/D miss (self-verified greens, no fresh-agent
+    run) is the exact anti-pattern this rule closes.
+    d. **Documentation review (imported from the upstream archival loop —
+       runs AFTER the greens, before the unit is reported done)**: a read-only
+       **documentation reviewer** reconciles the unit's docs against the ACTUAL
+       repo/build state immediately after the greens ship. It is the
+       item-6 archival loop applied AS A GATE, not an afterthought:
+       - reconcile every method/behavior named in the unit's spec
+         (`docs/specs/<unit>.md`) + its `*-greens.md` against the code — names,
+         signatures, return shapes, throw patterns, census/numeric claims;
+       - reconcile the active trackers (`docs/next-steps.md`,
+         `docs/pending.md`, `docs/decisions.md`, `docs/defects.md`,
+         `docs/HANDOFF.md`) against the build — every DONE row now implemented,
+         every OPEN item that changed status, every version/test-count claim;
+       - reconcile cross-references + section numbers (no citation pointing at
+         a moved/renumbered section); archive obsolete docs into `archive/` and
+         repoint every reference;
+       - fix stale entries in the SAME pass (a doc claim that drifted from the
+         code is a review finding if left for the next agent). The full
+         review record is appended to `archive/reviews/<date>-<unit>-doc-review.md`.
+    **RCA-6 (2026-08-23): a documentation review is MANDATORY after the greens,
+    not optional.** A unit DONE row that cites no documentation-review pass (or
+    whose spec/trackers drifted uncaught into the next pass) is a review
+    finding. The twentieth-pass design-compliance review surfaced stale
+    test-counts, phantom return fields, and renumbered sections across every
+    spec — exactly the drift this step prevents when run per-unit instead of
+    batched.
 
 ## Roles (imported, adapted)
 
@@ -152,14 +187,23 @@ project's two distinct goals:
 | Adversarial reviewer | explore/general, read-only | hunts edge cases / unauthorized access / malformed inputs AFTER each unit's green; records findings in the spec; host findings fixed here, package findings → defects.md/HANDOFF.md |
 | Blind-test writer | write/bash | produces the green-scenario artifact from `docs/specs/*.md` + `*-greens.md` ONLY (no implementation read); runs scenarios against the live module/host |
 | Proofreader | read/general, read-only | audits docs against code+specs; fixes doc/spec/version/test-count staleness |
+| Documentation reviewer | explore/general, read-only | AFTER the greens: reconciles the unit's spec + `*-greens.md` + active trackers against the actual build (names/signatures/return shapes/census claims/cross-refs/section numbers/test-counts); fixes stale entries in the SAME pass; record to `archive/reviews/<date>-<unit>-doc-review.md` |
 
 Inputs always read from `docs/specs/*.md` + the upstream docs
 (`../Preempt-Providence/docs/`) unless stated. Artifacts commit in the repo.
 
-## RCA lessons (2026-08-23 — the battery B/C/D process miss)
+## RCA lessons (2026-08-23 — the battery B/C/D process miss + the design-compliance drift)
 
 The battery pass (Units B/C/D/R13) was implemented inline and tested after
 (red/green order inverted), merged without an adversarial pass, and its greens
 were self-verified rather than blind-run. The RCA is `docs/specs/process-rca-battery.md`.
 The guards above (RCA-1..RCA-5) encode its lessons directly; the
 `docs/skills/process-guardrails.md` skill consolidates them for fresh sub-agents.
+
+**RCA-6 (2026-08-23 — the design-compliance drift)**: the twentieth-pass
+compliance review surfaced stale test-counts, phantom return fields, and
+renumbered sections across every spec — because the documentation review was
+batched (run once, late) rather than per-unit after the greens. RCA-6 makes
+the documentation review a MANDATORY per-unit gate (item 10d), importing the
+upstream Preempt-Providence archival loop's cleanup-pass discipline: the
+doc review is the archival loop applied AS A GATE, not an afterthought.

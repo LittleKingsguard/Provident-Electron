@@ -10,19 +10,124 @@ this repo's local next-steps (the upstream queue lives in
 | # | Item | Status / blocker |
 | --- | --- | --- |
 | 1 | **E2E battery — COMPLETE (Units B/C/D + R13, 2026-08-23)** (`docs/specs/e2e-test-battery.md`). All 4 fork-stress d12 variants (placement/values/link/**cycle**) + landings + handlers + code-CRUD driven over MCP, 93 battery checks green; battery host `src/main/battery-host.ts` (real Runtime under the DOM shim, all tool groups pre-enabled) + `tests/e2e-battery.test.mjs` (single process, teardown-only reset, root-only + settle-gate asserts). Cycle-variant data module `src/shared/path-fork-cycle.ts`. **R13 (Electron divergence) DONE — 9/9 checks green** via `scripts/electron-divergence.mjs`; the shim is now trusted. R13 also surfaced a host bug (stale SSR adapter collapsed re-emits across reloads) which is fixed + regression-tested. | **DONE (2026-08-23)** — complete. |
-| 1a | **Unit A — host capabilities (battery mode Runtime)** — **DONE + HARDENED (TDD + adversarial)**. `src/renderer/runtime.ts` has `loadEnvelope`/`loadDoc`/`applyCommand`/`exportLegacy`/`exportSerialized`/`validateExport`/`teardown` + the id-index (A5) + compilePath placement routing (H1) + in-tree-only resolution (H2) + clean reject (H3). Spec `docs/specs/runtime-host.md`; `tests/runtime-host.test.ts` (13) green. | **DONE (2026-08-22)** — green. |
+| 1a | **Unit A — host capabilities (battery mode Runtime)** — **DONE + HARDENED (TDD + adversarial)**. `src/renderer/runtime.ts` has `loadEnvelope`/`loadDoc`/`applyCommand`/`exportLegacy`/`exportSerialized`/`validateExport`/`teardown` + the id-index (A5) + compilePath placement routing (H1) + in-tree-only resolution (H2) + clean reject (H3) + the H4/H5/H6 adversarial fixes (non-object/non-Node node reject, codeDelete range check, validateExport kind discrimination). Spec `docs/specs/runtime-host.md`; `tests/runtime-host.test.ts` (16) green. | **DONE (2026-08-22)** — green. |
 | 1b | **Unit B — the cycle-variant envelope data module** `pathForkCycleLegacyData(depth)` + `pathForkCycleLegacyData`-shaped cycle over the static trio (`src/shared/path-fork-cycle.ts`); census 23-node/4095-element; `tests/path-fork-cycle.test.ts` (9) green; consumed by the battery's cycle d12 variant. | **DONE (2026-08-23)** — green. |
-| 1c | **Unit C — the additive MCP tools** — the 5 graph tools `load`/`op`/`export`/`validate`/`teardown` + the 6 code-CRUD tools `code.get`/`set`/`create`/`delete`/`validate`/`load` (real, replacing the M2 stubs) + `warnings` in returns (R10) + the Runtime's load/op/export/validate/teardownResult + envelope CRUD (`codeGet`/`codeSet`/`codeCreate`/`codeDelete`/`codeValidate`/`codeLoad`) + IPC wiring. `tests/runtime-battery.test.ts` (29, incl. H7..H13 adversarial) green. | **DONE (2026-08-23)** — green. |
+| 1c | **Unit C — the additive MCP tools** — the 5 graph tools `load`/`op`/`export`/`validate`/`teardown` + the 6 code-CRUD tools `code.get`/`set`/`create`/`delete`/`validate`/`load` (real, replacing the M2 stubs) + `warnings` in returns (R10) + the Runtime's load/op/export/validate/teardownResult + envelope CRUD (`codeGet`/`codeSet`/`codeCreate`/`codeDelete`/`codeValidate`/`codeLoad`) + IPC wiring. `tests/runtime-battery.test.ts` (30, incl. H7..H13 adversarial + the A3-b code.load teardown pin) green. | **DONE (2026-08-23)** — green. |
 | 1d | **Unit D — the battery host + runner** `src/main/battery-host.ts` + `tests/e2e-battery.test.mjs` (single-process, C4 no-external-reset, teardown-only resets), the battery-wide assertion hygiene (authored ids, non-empty dispatch, fresh requestIds), the 93-check battery. | **DONE (2026-08-23)** — battery green; R13 (Electron divergence) DONE. |
 | 2 | **Surface `TranslatedTree.warnings` through MCP** — fold into `provident.load`/`validate`/`op`/`teardown`/`code.validate` returns (R10) so CSP-eval-blocked handlers are MCP-visible. | **DONE (2026-08-23)** — `warnings` returned by all battery + code tools. |
-| 3 | **Renderer debug panel** — live census + SSR fragment in `#status`. | Pending — nice-to-have. |
+| 3 | **Renderer debug panel** — live census + SSR fragment in `#status`. `src/renderer/debug-panel.ts` (`initDebugPanel`, read-only) + `renderer.ts` wiring (refresh after bootstrap + after every MCP reply). `tests/debug-panel.test.ts` (8, incl. F1/F2 adversarial) green. Spec `docs/specs/debug-panel.md`; greens `debug-panel-greens.md`. | **DONE (2026-08-23)** — TDD red→green→adversarial→greens→doc-review. |
 | 4 | **Publish-trigger refresh — DONE** — `provident-ssr@0.1.3` published the Round-4 landings; refreshed + verified. | **DONE (2026-08-22)** — the battery now drops the vendored hub (A1) and relies on the published surfaces. |
 
-| 5 | **Architecture reshapes A1..A6**. A1 + M1/M2/M3 + Units C/D/B LANDED. **Remaining**: A2/A3/A4/A6. | A1 + M1/M2/M3 + Units C/D/B DONE; A2/A3/A4/A6 pending. |
+| 5 | **Architecture reshapes A1..A6**. A1 + M1/M2/M3 + Units C/D/B + A2/A3/A4/A6 LANDED. | A1 + M1/M2/M3 + Units C/D/B + A2/A3/A4/A6 DONE; A5 was DONE earlier (id-index). All reshapes complete. |
 | 6 | **R13 — ONE Electron-run divergence check** — `scripts/electron-divergence.mjs` drives the real Electron app (real DOM) + the DOM-shim battery host over stdio and compares structural surfaces (census, SSR, data-node-id set, nodeId vocabulary, dirtied ids normalized for the root-only-boot offset, counter content, non-empty dispatch). **9/9 checks green.** R13 surfaced + fixed a real host bug: the `SSRFragmentAdapter` retained stale state across graph reloads, collapsing the SSR re-emit to empty (fixed: recreate the SSR adapter + reset prevMaps on load — `resetRenderState`; regression test `runtime-battery.test.ts`). | **DONE (2026-08-23)** — battery shim is now trusted for 4095-node trees. |
 | 7 | **Tests close spawned server/app processes at end** — repeated test runs left orphaned Node + Electron processes (each spawn left a live BrowserWindow or a held-open Node server; the stdio transport does not auto-exit). Fixed: `main.ts`/`battery-host.ts`/`standalone.ts` all `exit` on stdin close (the client disconnect ends stdin). Verified: no lingering `main.cjs`/`battery-host`/`standalone.mjs`/electron after a full run. | **DONE (2026-08-23)** — process cleanup. |
 | 8 | **Renderer `provident.teardown` IPC path awaits the async `teardownResult`** — review found the `renderer.ts` `teardown` case assigned `runtime.teardownResult()` (a Promise) to the reply value WITHOUT awaiting, so the IPC reply carried a non-JSON Promise and the R6 settle-gate never ran on that path (the twentieth-pass "all call sites awaited" claim was wrong for `renderer.ts`). Fixed: `await`. | **DONE (2026-08-23)** — TDD red→green. |
 | 9 | **Manual-UI Security Settings pane (the A1 trust-gate's remaining piece, mcp-endpoint.md §6.4)** — persistence (`security-store.ts`), the `provident:security:get/set` IPC (main), the preload `window.provident.security` exposure, the renderer Settings pane (`settings.ts` + `index.html` `#settings-pane`: token show/clear/regenerate + one toggle per tool group), and the MCP server booting from the persisted config. `tests/security-store.test.ts` (5) green. | **DONE (2026-08-23)** — TDD red→green. |
+| 10 | **Battery §5.3 hooks-scenarios + §5.5 handler matrix (DEFERRED)** — `docs/specs/e2e-test-battery.md` §5.3 (the `hooksScenariosEnvelope`: theme/user/counter hook providers + the `hook-name-unresolved`/`hook-seam-exempt`/`hook-mode-blocked`/`hook-kind-mismatch` containment verdicts) and §5.5's full anon/alice/main handler matrix (S1a, S1b, S2..S10) are marked PARTIAL/NOT-YET-LANDED in the spec. The e2e battery currently implements one representative handler (counter `inc`) + the §5.1/§5.2/§5.4 scenarios. | Pending — the spec is the contract; landing is a later unit. |
+
+## DONE (2026-08-23, twenty-fourth pass — #3 Renderer debug panel)
+
+Per the user's "proceed with #3": the Renderer debug panel (live census + SSR
+fragment in `#status`) landed via the full per-unit cadence (RCA-1..6:
+spec → TestWriter red → Implementer green → adversarial → greens →
+documentation review).
+
+- **Spec** `docs/specs/debug-panel.md` (§2 surface `initDebugPanel(runtime):
+  () => void`, §3 behavior, §4 verify, §3a adversarial, §5 wiring).
+- **TestWriter red** → module-not-found (0 tests run, `debug-panel.ts` absent).
+- **Implementer green** → `src/renderer/debug-panel.ts` (read-only: reads
+  `runtime.renderedHtmlResult()`, writes a one-line census + a truncated SSR
+  preview to `#status`); wired into `src/renderer/renderer.ts` (refresh after
+  bootstrap + after every MCP reply). `tests/debug-panel.test.ts` (6) green.
+- **Adversarial** → F1 (a non-number census field printed `undefined`/`NaN` →
+  coerced to `?`), F2 (a non-string `ssrHtml` threw TypeError → coerced to
+  `''`). Red tests → green; recorded in the spec §3a. (8 tests now.)
+- **Greens** — `docs/specs/debug-panel-greens.md` (D1..D4, 10 scenarios)
+  encoding the F1/F2 hardening.
+- **Documentation review** (RCA-6, the new mandatory step) — reconciled the
+  spec + greens + trackers against the build: fixed next-steps #3
+  (Pending → DONE) + added the spec's missing §3a adversarial-findings table;
+  record at `archive/reviews/2026-08-23-debug-panel-doc-review.md`.
+- **Trio**: **217 tests** (was 209 — the 8 debug-panel red→green + adversarial
+  tests), typecheck clean, build clean, MCP e2e both transports green, battery
+  93/93.
+
+## DONE (2026-08-23, twenty-third pass — documentation review added to the agent process + archival loop imported)
+
+Per the user's "add documentation review to agent implementation process after
+scenarios writing; import the archival loop from the upstream Preempt-Providence
+project for this":
+
+- **AGENTS.md item 10d** — added a **documentation review** step to the per-unit
+  process, running AFTER the greens (before the unit is done). A read-only
+  **documentation reviewer** reconciles the unit's spec + `*-greens.md` + active
+  trackers against the ACTUAL build (names/signatures/return shapes/census
+  claims/cross-refs/section numbers/test-counts); fixes stale entries in the
+  SAME pass; appends the record to `archive/reviews/<date>-<unit>-doc-review.md`.
+- **RCA-6** — the documentation review is MANDATORY per unit, not optional. A
+  unit DONE row that cites no doc-review pass (or whose spec/trackers drifted
+  uncaught into the next pass) is a review finding. This encodes the
+  twentieth-pass design-compliance drift lesson (stale test-counts, phantom
+  return fields, renumbered sections surfaced across every spec — because the
+  doc review was batched late, not per-unit).
+- **AGENTS.md item 6** — re-imported the full upstream Preempt-Providence
+  archival loop (the cleanup-pass discipline: merge into core docs, archive
+  obsolete docs into the GITIGNORED `archive/` dir, repoint every citation),
+  adapted to this repo's trackers. The active-tracker list is now explicit.
+- **Roles table** — gained the **Documentation reviewer** role (explore/general,
+  read-only).
+- **`docs/skills/process-guardrails.md`** — updated to the six guards
+  (RCA-1..RCA-6) + the 9-step per-unit cadence (step 7 = the documentation
+  review) + the expanded reviewer checklist.
+- **`archive/` dir** — created (already gitignored) with `README.md` +
+  `reviews/` + `findings/` + `defects/` topics, faithful to the upstream
+  `archive/README.md` (nothing deleted; archiving is not destruction).
+- No code change (process/docs only); trio green (209 tests), typecheck +
+  build clean.
+
+## DONE (2026-08-23, twenty-second pass — A2/A3/A4/A6 architecture reshapes)
+
+Per the user's "start #5 pass": the four remaining architecture reshapes
+(`docs/specs/architecture-review.md` §4) landed, each its own red→green→
+adversarial→greens cycle (RCA-2/5 — split PER UNIT).
+
+- **A2/A6 — RendererBackend lifecycle hardening** (spec
+  `docs/specs/renderer-backend-hardening.md`). `RendererBackend` gains
+  `RendererBackendOptions` (readyTimeoutMs/invokeTimeoutMs/largePayloadBytes)
+  + test seams (`isReady`/`pendingCount`). A6: readiness-gate timeout (never
+  hang forever before ready). A2: per-request timeout (never hang forever
+  waiting for a reply); reload/destroy re-arm (`did-finish-load`/`closed`/
+  `destroyed` reject all in-flight `pending` + re-arm the gate); bounded/digest
+  large payloads (`renderedHtml`/`ssrHtml` > `largePayloadBytes` →
+  `{census, digest, preview, truncated:true}`). `tests/renderer-backend.test.ts`
+  (12) TDD red→green.
+  - **Adversarial (F1..F6)**: F1 (initial `did-finish-load` is NOT a reload —
+    `firstLoadSeen` skip); F2/F7 (stale `readyPromise` awaiter released —
+    `handleReset` rejects the old gate); F3 (readiness-timer cleared on
+    success); F4 (send-throw caught + pending cleaned); F5 (double-fire
+    idempotent); F6 (re-attach ignores the old window's resets). Red→green.
+  - **Greens**: `docs/specs/renderer-backend-greens.md` (R1..R10).
+- **A3 — permanent CI divergence leg + `code.load` teardown pin** (spec
+  `docs/specs/ci-divergence-leg.md`). `npm run divergence` (the
+  `scripts/electron-divergence.mjs` harness, already present) runs the real
+  Electron app + the DOM-shim battery host over the SAME demo + dispatch +
+  compares 9 structural surfaces (9/9 green). The `code.load` teardown pin
+  (`tests/runtime-battery.test.ts` A3-b): `codeLoad()` drains
+  (`hasPendingWork()===false`) + clears prior userData (no leak into the
+  re-derive). Red→green (the pin was already-true; it is now a regression net).
+  - **Greens**: `docs/specs/ci-divergence-greens.md` (D1..D2).
+- **A4 — `code.load` non-incremental cost (doc-only)** — recorded in
+  `docs/specs/mcp-endpoint.md` §6.5: `code.load` is O(graph) per edit
+  (whole-graph teardown + translate + compile + render), with a render
+  discontinuity (prior view destroyed then rebuilt); `code.loadBatch` is a
+  FUTURE surface, NOT implemented.
+- **A6 stateless-HTTP idempotency note** — recorded in `decisions.md` (each
+  HTTP POST builds a fresh `McpServer`; dedup is per-supervisor, not
+  per-session).
+- **Trio + battery + e2e + divergence**: **209 tests** (was 196 — the
+  renderer-backend + A3-b red→green tests), typecheck clean, build clean,
+  MCP e2e both transports green, battery 93/93, R13 divergence 9/9; no
+  lingering processes.
 
 ## DONE (2026-08-23, twenty-first pass — manual-UI Security Settings pane, the A1 trust-gate completion)
 

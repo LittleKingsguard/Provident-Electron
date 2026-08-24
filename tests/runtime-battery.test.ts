@@ -195,6 +195,32 @@ describe('Runtime code-CRUD (mcp-endpoint.md §4)', () => {
     expect(res.renderedHtml).toContain('counter')
   })
 
+  it('A3-b — code.load teardown pin: codeLoad drains pending work (hasPendingWork === false) + clears prior userData', async () => {
+    const runtime = r()
+    // a userData-bearing load (alice), dispatch to confirm userData is seen
+    const userEnv = userEnvelope()
+    runtime.loadEnvelope(userEnv, { userData: { username: 'alice' } })
+    await runtime.dispatch({ target: { kind: 'cssId', cssId: 'ud-read' }, event: 'click' })
+    expect(runtime.renderedHtmlResult().renderedHtml).toContain('alice')
+    // generate pending pass-2 work via a dispatch on the demo graph
+    runtime.load({ kind: 'envelope', envelope: demoEnvelope() })
+    await runtime.dispatch({ target: { kind: 'cssId', cssId: 'inc' }, event: 'click' })
+    // code.load re-derives the graph — the teardown it performs MUST drain
+    runtime.codeSet('template.root.hooks', ['theme'])
+    runtime.codeCreate('template.root.hooks', 'accent')
+    runtime.codeLoad()
+    expect(runtime.hasPendingWork()).toBe(false)
+    // userData no-leak: codeLoad of an envelope with NO userData after an alice
+    // load leaves no stale userData (the fresh-supervisor rebuild clears it).
+    const anon = userEnvelope()
+    runtime.loadEnvelope(anon)
+    runtime.codeSet('template.root.hooks', ['x'])
+    runtime.codeLoad()
+    const after = await runtime.dispatch({ target: { kind: 'cssId', cssId: 'ud-read' }, event: 'click' })
+    expect(after.renderedHtml).toContain('ANON')
+    expect(after.renderedHtml).not.toContain('alice')
+  })
+
   it('code.set errors when no legacy envelope is loaded (A1 doc load)', () => {
     const runtime = r()
     const t = translateLegacy(demoEnvelope())
@@ -294,3 +320,30 @@ describe('Runtime battery — adversarial hardening (H7..H13, 2026-08-23)', () =
 })
 
 type LegacyEnvelope = LegacyInitialData & { template: { root: { hooks?: string[] } } }
+
+/** A tiny envelope whose handler reads translate-scoped `userData` and writes
+ *  it into a display node (mirrors runtime-host.test.ts's userEnvelope). */
+function userEnvelope(): LegacyInitialData {
+  const READ_USER = `function (event, context) {
+    const ud = context.supervisor && context.supervisor.userData;
+    const all = context.tree.allNodes();
+    const node = all.find(function (n) { return n && n.props && n.props.id === 'ud-out'; });
+    if (!node) return;
+    const v = (ud && ud.username) ? String(ud.username) : 'ANON';
+    context.clientAPI.apply(node.id, [{ targetProp: 'content', mode: 'replace', value: v }]);
+  }`
+  return {
+    template: {
+      root: {
+        type: 'div',
+        css: { id: 'ud-shell' },
+        children: [
+          { type: 'button', css: { id: 'ud-read' }, props: { id: 'ud-read' }, content: 'Read user', handlers: [{ name: 'read', event: 'click', format: 'legacy', body: READ_USER }] },
+          { type: 'div', css: { id: 'ud-out' }, props: { id: 'ud-out' }, content: 'ANON' },
+        ],
+      },
+    },
+    content: [],
+    clientConfig: { runInstantiation: true, runRendering: true },
+  }
+}

@@ -338,8 +338,15 @@ the MCP tool handlers never route to it.
   silent demo-rebind — a reload resets the graph and the agent is told.
 - **A3**: the Electron divergence check becomes a repeatable CI leg; `code.load`
   teardown IS `provident.teardown` (userData clear + settle-gate).
-- **A4**: `code.load` is a whole-graph teardown + translate + compile + render
-  (non-incremental); documented + optional `code.loadBatch` buffer.
+- **A4**: `code.load` is a **whole-graph teardown + translate + compile +
+  render** per edit — NON-incremental (O(graph) per `code.load`, not O(edit)).
+  The prior view is DESTROYED then rebuilt (a render discontinuity: the agent
+  sees a fresh root-only mount, then the new graph's render — there is no
+  in-place diff). The cost is O(nodes) translate + O(path-states) compile +
+  O(elements) emit; for a 4095-element tree this is the ~2.8s enumeration pass,
+  not a small patch. Documented here; an optional `code.loadBatch`/write buffer
+  (stage N edits, one re-derive) is a FUTURE surface, NOT implemented — `code.*`
+  edits accumulate on the envelope until an explicit `code.load`.
 - **A5**: index authored css.id/props.id once at load (a Map rebuilt on
   load/teardown), not per-call `allNodes().find`.
 - **A6**: readiness timeout on the backend; the stateless-HTTP idempotency

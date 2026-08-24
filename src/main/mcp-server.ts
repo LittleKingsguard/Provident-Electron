@@ -432,38 +432,161 @@ function readBody(req: IncomingMessage): Promise<unknown> {
 
 /** The main process's bridge: forwards MCP tool invocations to the renderer
  *  over IPC and returns the awaited reply. Requests are queued until the
- *  renderer signals readiness. */
-export class RendererBackend implements McpBackend {
-  private resolveReady!: () => void
-  private readonly readyPromise: Promise<void>
-  private seq = 0
-  private readonly pending = new Map<number, { resolve: (v: unknown) => void; reject: (e: Error) => void }>()
-  private window: Electron.BrowserWindow | null = null
+ *  renderer signals readiness.
+ *
+ *  A2/A6 hardening (docs/specs/renderer-backend-hardening.md): a readiness
+ *  timeout (never hang forever waiting for the renderer), a per-request
+ *  timeout (never hang forever waiting for a reply), a reload/destroy re-arm
+ *  (a `did-finish-load`/`closed`/`destroyed` rejects all in-flight `pending` +
+ *  re-arms the readiness gate), and a bounded/digest large-payload guard (a
+ *  `renderedHtml`/`ssrHtml` over `largePayloadBytes` is returned as a census +
+ *  hash64 digest + truncated preview, NOT the full fragment). */
+export interface RendererBackendOptions {
+  readyTimeoutMs?: number
+  invokeTimeoutMs?: number
+  largePayloadBytes?: number
+}
 
-  constructor() {
-    this.readyPromise = new Promise<void>((resolve) => {
+/** A minimal webContents/window event-target shape (so the backend is testable
+ *  without a real Electron import — the fake in the tests implements it). */
+interface WebContentsLike {
+  on(event: string, cb: (...args: unknown[]) => void): void
+  send(channel: string, msg: unknown): void
+  isDestroyed(): boolean
+}
+interface WindowLike {
+  on(event: string, cb: (...args: unknown[]) => void): void
+  webContents: WebContentsLike
+  isDestroyed(): boolean
+}
+
+export class RendererBackend implements McpBackend {
+  private readyTimeoutMs: number
+  private invokeTimeoutMs: number
+  private largePayloadBytes: number
+  private resolveReady: (() => void) | null = null
+  private rejectReady: ((e: Error) => void) | null = null
+  private readyPromise: Promise<void>
+  private ready = false
+  /** F1 — the INITIAL load's `did-finish-load` is not a reload; only after the
+   *  first arm does a subsequent `did-finish-load` count as a reload. */
+  private firstLoadSeen = false
+  private seq = 0
+  private readonly pending = new Map<number, {
+    resolve: (v: unknown) => void
+    reject: (e: Error) => void
+    timer: ReturnType<typeof setTimeout>
+  }>()
+  private window: WindowLike | null = null
+
+  constructor(opts: RendererBackendOptions = {}) {
+    this.readyTimeoutMs = opts.readyTimeoutMs ?? 30000
+    this.invokeTimeoutMs = opts.invokeTimeoutMs ?? 60000
+    this.largePayloadBytes = opts.largePayloadBytes ?? 1_000_000
+    this.readyPromise = this.newReadyPromise()
+  }
+
+  private newReadyPromise(): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
       this.resolveReady = resolve
+      this.rejectReady = reject
     })
   }
 
-  attachWindow(win: Electron.BrowserWindow): void {
+  attachWindow(win: WindowLike): void {
     this.window = win
+    // A2 — a reload (did-finish-load) or a close/destroy re-arms the backend:
+    // reject all in-flight pending + reset the readiness gate. F1: the FIRST
+    // did-finish-load is the initial load, not a reload — skip it. F6: ignore
+    // resets from a window that is no longer the attached one (a re-attach
+    // replaces the window; the old window's lingering close must not reset).
+    const rearm = (reason: string) => {
+      if (win !== this.window) return
+      if (reason === 'renderer reloaded (pending cleared)' && !this.firstLoadSeen) {
+        this.firstLoadSeen = true
+        return
+      }
+      this.handleReset(reason)
+    }
+    win.webContents.on('did-finish-load', () => rearm('renderer reloaded (pending cleared)'))
+    win.on('closed', () => rearm('renderer window destroyed'))
+    win.on('destroyed', () => rearm('renderer window destroyed'))
+  }
+
+  /** A2/A6 test seam — whether the renderer has signaled readiness. */
+  isReady(): boolean {
+    return this.ready
+  }
+
+  /** A2/A6 test seam — the number of in-flight requests. */
+  pendingCount(): number {
+    return this.pending.size
   }
 
   markReady(): void {
-    this.resolveReady()
+    if (this.ready) return
+    this.ready = true
+    this.resolveReady?.()
+  }
+
+  /** Reject all in-flight pending + reset the readiness gate (a fresh
+   *  `readyPromise` so the next `markReady` re-arms). Used on reload/destroy.
+   *  F2/F7 — the OLD `readyPromise` is REJECTED so a caller awaiting it is
+   *  released (not stranded on a stale closure). */
+  private handleReset(reason: string): void {
+    for (const [, entry] of this.pending) {
+      clearTimeout(entry.timer)
+      entry.reject(new Error(reason))
+    }
+    this.pending.clear()
+    this.ready = false
+    // release any awaiter on the current gate with the reset reason
+    this.rejectReady?.(new Error(reason))
+    this.readyPromise = this.newReadyPromise()
   }
 
   async invoke(method: string, payload: unknown): Promise<unknown> {
-    await this.readyPromise
+    // A6 — readiness gate with a timeout (never hang forever before ready).
+    let readyTimer: ReturnType<typeof setTimeout> | undefined
+    if (!this.ready) {
+      try {
+        await Promise.race([
+          this.readyPromise,
+          new Promise<never>((_resolve, reject) => {
+            readyTimer = setTimeout(() => reject(new Error(`renderer not ready (timeout ${this.readyTimeoutMs}ms)`)), this.readyTimeoutMs)
+          }),
+        ])
+      } finally {
+        if (readyTimer) clearTimeout(readyTimer)
+      }
+    }
     const win = this.window
     if (!win || win.isDestroyed()) throw new Error('renderer window unavailable')
     const id = ++this.seq
     const req: RpcRequest = { id, method: method as never, payload }
+    // A2 — per-request timeout (never hang forever waiting for a reply).
     const result = new Promise<unknown>((resolve, reject) => {
-      this.pending.set(id, { resolve, reject })
+      const timer = setTimeout(
+        () => {
+          if (this.pending.delete(id)) reject(new Error(`renderer invoke timeout (${this.invokeTimeoutMs}ms)`))
+        },
+        this.invokeTimeoutMs,
+      )
+      this.pending.set(id, { resolve, reject, timer })
     })
-    win.webContents.send('provident:invoke', req)
+    // F4 — a destroy between the check and the send throws on a destroyed
+    // webContents; catch it + clean the pending entry + rethrow a spec-shaped
+    // error (never a dangling entry / a bare 'Object has been destroyed').
+    try {
+      win.webContents.send('provident:invoke', req)
+    } catch (e) {
+      const entry = this.pending.get(id)
+      if (entry) {
+        clearTimeout(entry.timer)
+        this.pending.delete(id)
+      }
+      throw new Error('renderer window destroyed')
+    }
     return result
   }
 
@@ -471,7 +594,37 @@ export class RendererBackend implements McpBackend {
     const entry = this.pending.get(reply.id)
     if (!entry) return
     this.pending.delete(reply.id)
-    if (reply.ok) entry.resolve(reply.value)
+    clearTimeout(entry.timer)
+    if (reply.ok) entry.resolve(this.maybeDigest(reply.value))
     else entry.reject(new Error(reply.error ?? 'renderer error'))
   }
+
+  /** A2 — replace an oversized `renderedHtml`/`ssrHtml` result with a census +
+   *  hash64 digest + truncated preview (mirror the battery's census+hash64
+   *  shape). The full payload is NOT serialized over IPC. */
+  private maybeDigest(value: unknown): unknown {
+    if (value === null || typeof value !== 'object') return value
+    const v = value as { renderedHtml?: unknown; ssrHtml?: unknown; census?: unknown }
+    const rh = typeof v.renderedHtml === 'string' ? v.renderedHtml : ''
+    const sh = typeof v.ssrHtml === 'string' ? v.ssrHtml : ''
+    const size = rh.length + sh.length
+    if (size <= this.largePayloadBytes) return value
+    const preview = rh.slice(0, 512)
+    return {
+      census: v.census ?? null,
+      digest: hash64(rh + '\u0000' + sh),
+      preview,
+      truncated: true,
+    }
+  }
+}
+
+/** Deterministic FNV-1a 64-bit hash (the upstream hash64 — mirrors Runtime's). */
+function hash64(str: string): string {
+  let h = 0xcbf29ce484222325n
+  for (let i = 0; i < str.length; i += 1) {
+    h ^= BigInt(str.charCodeAt(i))
+    h = (h * 0x100000001b3n) & 0xffffffffffffffffn
+  }
+  return h.toString(16).padStart(16, '0')
 }
