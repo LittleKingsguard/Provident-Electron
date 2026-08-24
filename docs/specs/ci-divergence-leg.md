@@ -56,8 +56,10 @@ Two parts:
 
 ## 4. Verify (states)
 
-- `npm run divergence` → exit 0, report `N/N checks green` (N ≥ 10 — the
-  existing 9 + the new settle-gate assertion).
+- `npm run divergence` → exit 0, report `N/N checks green` (N = 9 — the
+  structural comparison checks). The R6 settle-gate (`hasPendingWork() ===
+  false`) is asserted at the Runtime unit level (`tests/runtime-battery.test.ts`
+  A3-b), NOT in the divergence harness (there is no MCP tool for it).
 - `tests/code-load-teardown-pin.test.ts`:
   - `runtime.codeLoad()` after a `codeSet` → `hasPendingWork() === false` +
     `census.inTree > 1`.

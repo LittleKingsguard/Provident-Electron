@@ -34,6 +34,14 @@ Setup for every scenario: `installShim()` once, then
 
 ## R2 — loadEnvelope userData lifecycle (R8)
 
+**D4 (2026-08-23):** `userEnvelope` is NOT a pinned fixture in this repo — it
+must be reconstructed from `runtime-host.md` §3.1's R8 prose: an envelope whose
+root has a child node carrying the authored `cssId` `'ud-read'` + a
+`handlers: [{ event:'click', body: <reads translate userData> }]`, rendered
+via the A2 envelope path. The blind writer must author this node (no fixture
+is shipped); the R8 contract is that the handler renders the translate-scoped
+`supervisor.userData.username` (or `ANON` when absent).
+
 5. `loadEnvelope(userEnvelope, { userData: { username: 'alice' } })` then
    `await runtime.dispatch({ target: {kind:'cssId',cssId:'ud-read'},
    event:'click' })` → the rendered HTML contains `alice`.
@@ -66,10 +74,11 @@ Setup for every scenario: `installShim()` once, then
     `{ status: 'rejected' }`, never throw (a non-object command).
 14. **F2** — `applyCommand({ kind:'bogus-kind' })` → `{ status: 'rejected' }`
     (an unknown op kind is rejected, not a throw).
-15. `op({ kind:'state', node: counterNodeId, mutation:[{targetProp:'content',
+15. `op({ kind:'state-slice', node: counterNodeId, mutation:[{targetProp:'content',
     mode:'replace', value:'9'}] })` returns `{ status:'applied', renderedHtml,
     ssrHtml, warnings }` — the `op` (MCP `provident.op`) shape carries the two
-    render views + a `warnings` array (R10).
+    render views + a `warnings` array (R10). (The op-kind vocabulary is
+    `state-slice`/`layer-apply`/`destroy`/etc. — `state` is NOT a valid kind.)
 
 ## R4 — export / validate
 
@@ -86,10 +95,12 @@ Setup for every scenario: `installShim()` once, then
 
 ## R5 — teardown (C3/C4)
 
-21. `teardown()` → `Census` with `inTree === 1` (root only); `mount.innerHTML`
-    is `''` (empty mount).
+21. `teardown()` → `Census` with `inTree === 1` (root only); the mount is
+    **EMPTY** (`mount.innerHTML === ''` — the root element is NOT re-emitted
+    after the teardown re-render; D11, corrected 2026-08-23). The child
+    content is gone and the root is not re-serialized.
 22. `teardown()` is idempotent — a second call returns `inTree === 1` and the
-    mount stays empty.
+    mount stays root-only.
 23. After teardown, a destroyed node's `cssId` does NOT resolve:
     `runtime.nodeState({ kind:'cssId', cssId:'counter' })` throws
     `/unresolved target/` (H2 — no resolvable ghost tree).
@@ -103,7 +114,9 @@ Setup for every scenario: `installShim()` once, then
     counter node's `nodeId` (resolved via the index, not an `allNodes()` scan).
 26. A destroyed node's id does not resolve via the index (covered by R5 #24).
 27. `listTargets().nodes` includes only in-tree, not-destroyed nodes with their
-    authored `cssId`/`propsId`/`type`/`state`/`inTree`/`handlers`.
+    authored `cssId`/`propsId`/`type`/`state`/`inTree`/`handlers` — the
+    auto-minted ROOT node has NO authored `cssId` (only `nodeId` + the other
+    fields); authored child nodes carry their `cssId`/`propsId`.
 
 ## R6 — placement-routed loads path-enumerate (H1)
 

@@ -14,7 +14,9 @@ reproduction → suspected root cause → proposed fix shape (upstream-owned).
 
 ## OPEN
 
-_(none — REQ-GAP-1..8 resolved by 0.1.1/0.1.2; REQ-GAP-9..12 PUBLISHED in 0.1.3; see below.)_
+| ID | Gap (as filed) | Observed symptom / reproduction | Suspected root cause | Proposed fix shape (upstream-owned) |
+| --- | --- | --- | --- | --- |
+| **DEFECT-SSR-REMOVE** | `SSRFragmentAdapter` retains removed/destroyed elements in the serialized fragment | Load an envelope with `keeper`/`doomed`/`nuke` (nuke `{kind:'destroy'}` on `doomed`), dispatch nuke. `provident.get_rendered_html`: the DOM collapses to root-only, but the SSR fragment STILL contains `doomed` AND the full prior subtree (`keeper`/`doomed`/`nuke`). Repro: `tests/adapter-parity-battery.test.mjs` S5 (green doc `docs/specs/adapter-parity-greens.md`). | `SSRFragmentAdapter.removeEl` (dist/core/adapters.js:397-400) only does `fragments.delete(wireKey(wire, forkKey))`. It NEVER detaches the fragment from its parent's `children` array NOR rematerializes the owner, so a removed element survives in `ssr.toString()` (its parent's `children` still reference it; the floating/top-level serialize re-emits it). The DomAdapter's `removeEl` (adapters.js:213-229) detaches + removes, so the two adapters diverge on removal. | (upstream) `SSRFragmentAdapter.removeEl` should splice the child out of its parent state's `children`, set its parent to null, and call `rematerialize(parent)` (mirror the DomAdapter detach). This restores DOM/SSR parity on destroy/remove. |
 
 ## PUBLISHED (provident-ssr 0.1.3) — Round 4 / REQ-GAP-9..12
 
@@ -50,6 +52,30 @@ favor of the published surfaces.
 
 _(none this pass — the battery plan is gated (e2e-test-battery-review.md) and
 the 0.1.2 adoption is verified; no open gaps remain.)_
+
+## DOC-CONSISTENCY FINDINGS (2026-08-23 — the gemma4 blind battery)
+
+These are NOT package gaps (no `provident-ssr` defect; the engine + host code
+are consistent). They are THIS-REPO documentation defects that sent the blind
+writer (`docs/specs/gemma4-blind-battery.md` → `tests/gemma4-blind-battery.test.ts`)
+to wrong assertions, and one ground-truth defect in the companion
+`docs/specs/gemma4-blind-expected.md`. All fixed in the same pass (the
+docs below were corrected; the review record is
+`archive/reviews/2026-08-23-gemma4-doc-review.md`).
+
+| ID | Doc artifact (line) | Doc claim | LIVE behavior (probed 2026-08-23) | Class | Disposition |
+| --- | --- | --- | --- | --- | --- |
+| D1 | `battery-handlers-greens.md` H1 (20–24) | anon S1a rendered HTML **IS present** `dropdown-menu` (the component-def node emits it) | anon render has **NO** `dropdown-menu` — `AUTH_INIT_BODY` destroys the dropdown child (kids[1]) and destroyed nodes are pruned from the emit | CODE-CONSISTENCY (doc vs live) | greens corrected; `gemma4-blind-expected.md` S28 corrected (same claim) |
+| D2 | `gemma4-blind-expected.md` S16 (35) | cycle d12 DOM view emits **4096** `data-node-id`, SSR **4095** (root adds one) | DOM **4095**, SSR **4095** — the root does NOT add a `data-node-id` occurrence in the DOM view (it carries the attr once as a node, and 4095 path-states is the full set) | CODE-CONSISTENCY (expected-map wrong; the greens/spec 4095 claim is right) | expected map corrected to 4095/4095 |
+| D3 | `runtime-host.md` §3.3 + `runtime-host-greens.md` R4 #14 (F2) | an unknown op `kind` → `{status:'rejected'}` (implied for ANY op) | `op({kind:'bogus', node:<valid>})` → `{status:'no-usable-state'}` — the engine returns `no-usable-state` for an unhandled kind on a RESOLVED node; the host's `rejected` guard covers only the unknown-kind path with NO resolvable node | DOC-COMPLETENESS (the `no-usable-state` verdict is never named; the rejection vocabulary is imprecise) | runtime-host.md §3.3 + greens note the split |
+| D4 | `runtime-host-greens.md` R2 (5–6) + battery S2 | "load `userEnvelope()`" | `userEnvelope` is NOT defined/pinned anywhere in the read-set — the fixture the scenario depends on is absent; a blind writer must reconstruct it from prose | DOC-COMPLETENESS | greens note the fixture is not pinned |
+| D5 | `runtime-host.md` §2/§3.4 + battery S8 | `validateExport`/`validate` both named; `treeSigMatch` implied a field on the round-trip | `validateExport` returns `{valid, censusMatch, warnings}` (NO `treeSigMatch`); only the MCP `validate()` wrapper adds `treeSigMatch`. A reader can't tell which returns what | DOC-CLARITY | runtime-host.md pins the two signatures |
+| D6 | battery S10/S11 (`teardown` vs `teardownResult`) | "after `teardown()` (or `await teardownResult()`)" then read `.inTree` | `teardown()` returns a bare `Census`; `teardownResult()` returns `{census, renderedHtml, warnings}`. `load()` returns `{census, …}` not a bare Census. Reading `.inTree` off the wrapper is a mis-assertion | DOC-CLARITY (return shapes never pinned) | greens + battery note the wrapper shapes |
+| D7 | battery S26 / `mcp-endpoint.md` §3.1 `args` | `args?` (no array pin) | `dispatch` spreads `...args`; a non-array `args:'light'` becomes chars → `themeName="l"`; only `args:['light']` bakes `"light"` | DOC-CLARITY | mcp-endpoint.md pins `args` as an array |
+| D8 | battery S13/edge `listTargets` root id | (implicit) root nodeId `'0'` | root `nodeId` is `'0'` and has NO authored `cssId` (D2/H2-correct) | PASS (no defect) | — |
+| D9 | battery S22/S23 + runtime-battery greens | `codeSet`/`codeDelete` after a plain constructor boot | the constructor's `{envelope:}` option does NOT populate the CRUD `this.envelope` — `codeSet` throws `no envelope loaded` until a `loadEnvelope`/`load`. The greenspace implies a prior load but never states the constructor path | DOC-COMPLETENESS (minor) | runtime-host.md §2 notes the CRUD envelope is only set by load paths |
+| D10 | battery edge + `mcp-endpoint.md` §3.1 | unknown-target → "tool error" | `dispatch` throws `unresolved target: {"kind":"cssId","cssId":"nope"}` (wording `/unresolved target/`, not `/unresolved node target/`) | DOC-CLARITY | mcp-endpoint.md pins the message shape |
+| D11 | `runtime-host-greens.md` R5 #21/#22 + `gemma4-blind-expected.md` S10 | teardown mount is "root-only — `mount.innerHTML` is the root's own serialization, NOT `''`" | after `teardown()` the mount is **EMPTY** (`innerHTML === ''`, inTree === 1) — the root element is NOT re-emitted; `tests/runtime-host.test.ts:157` asserts `innerHTML === ''` | CODE-CONSISTENCY (doc vs live) | greens + expected map corrected to `''` |
 
 ## SUPERSEDED / ARCHIVED
 

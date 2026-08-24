@@ -128,7 +128,7 @@ F-gate + F-key hardening the adversarial pass forced.
 
 ### G8 — checkRequest (the token gate)
 4. `new SecurityGate().checkRequest({})` → `{ok:true}` (no token ⇒ open).
-5. `new SecurityGate({token:'s'}).checkRequest({authorization:'Bearer s'})` →
+5. `new SecurityGate({token:'s', enabled:['read','dispatch']}).checkRequest({authorization:'Bearer s'})` →
    `{ok:true}`.
 6. `...checkRequest({authorization:'Bearer wrong'})` → `{ok:false,
    reason:'unauthorized'}`.
@@ -140,6 +140,12 @@ F-gate + F-key hardening the adversarial pass forced.
    → `{ok:true}`; `{ 'MCP-Token': 's' }` → `{ok:true}`.
 10. **F6**: `...checkRequest({authorization:'Bearer '})` with `token:''` →
     `{ok:false}` (empty token admits nothing).
+
+> **Note (blind-test finding, 2026-08-23):** the `SecurityGate` constructor
+> requires `enabled` to be present + iterable — a token-only config
+> (`{token:'s'}`) THROWS `TypeError: initial.enabled is not iterable`. The
+> canonical construction form always includes `enabled` (per
+> `mcp-security-gate.md` §5). The scenarios above use the canonical form.
 
 ### G9 — toolAllowed
 11. `new SecurityGate().toolAllowed('provident.dispatch')` → `true`.

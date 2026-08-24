@@ -228,12 +228,15 @@ Export/validate: legacy path (seam-bearing, R3). Teardown.
 
 ### 5.3 hooks-scenarios
 
-> **Implementation status (2026-08-23): NOT YET LANDED in the e2e battery.**
-> The battery runner (`tests/e2e-battery.test.mjs`) implements §5.1, §5.2, a
-> §5.5 representative (counter inc), and §5.4. The full hooks-scenarios block
-> (theme/user/counter hook providers + the four containment verdicts) is
-> deferred — the `hooksScenariosEnvelope` shape + the containment codes are
-> documented here as the contract for a later landing.
+> **Implementation status (2026-08-23): LANDED.** The e2e battery
+> (`tests/e2e-battery.test.mjs`) now implements the full hooks-scenarios block
+> (theme/user/counter hook providers + the four containment verdicts, R15
+> `hook-kind-mismatch` included), driven over `provident.dispatch` per the unit
+> spec `docs/specs/battery-hooks-unit.md`. The §5.3 section adds **23 checks**
+> to the battery (93 → 116, all green). A host defect surfaced + fixed: the
+> `get_node_state` resolved states carry circular `anchors` that broke JSON
+> serialization — `nodeState` now projects a JSON-safe snapshot
+> (`src/renderer/runtime.ts`).
 
 Source: `demo/hooks-scenarios.js` (`hooksScenariosEnvelope` — one envelope:
 root carries the `theme`/`user`/`counter` value providers + the authored
@@ -277,10 +280,15 @@ exercises the full CRUD (create/read/update/delete) + the load-apply round-trip.
 
 ### 5.5 handler-scenarios
 
-> **Implementation status (2026-08-23): PARTIAL.** The e2e battery implements
-> one representative handler scenario (the counter `inc` dispatch). The full
-> anon/alice/main matrix (S1a, S1b, S2..S10) + the containment scenarios are
-> deferred — documented here as the contract for a later landing.
+> **Implementation status (2026-08-23): LANDED.** The e2e battery
+> (`tests/e2e-battery.test.mjs`) now implements the full anon/alice/main handler
+> matrix (S1a, S1b, S2..S10), data-only ported from the upstream
+> `demo/handlers-scenarios.js` fixture (`tests/fixtures/handlers-scenarios-data.mjs`),
+> driven over `provident.dispatch` per the unit spec
+> `docs/specs/battery-handlers-unit.md`. The §5.5 section adds **68 checks** to
+> the battery (116 → 184, all green). Three host defects surfaced + fixed: the
+> destroyed-node stale-state re-emit (F1), the contained-Error JSON projection
+> (F2), and the destroyed-node export leak (F3) — all in `src/renderer/runtime.ts`.
 
 Source: `demo/handlers-scenarios.js` (`handlersScenariosEnvelopes()` = anon /
 alice / main — one envelope per mount) + `demo/handlers-scenarios.template.html`.

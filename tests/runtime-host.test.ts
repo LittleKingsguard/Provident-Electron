@@ -257,6 +257,40 @@ describe('renderer Runtime — host-capability hardening (spec runtime-host.md �
   })
 })
 
+describe('renderer Runtime — nodeState JSON-safe projection (host defect: circular anchors)', () => {
+  it('nodeState returns states whose anchors are plain data (JSON.stringify-safe)', () => {
+    const mount = mountEl()
+    const runtime = new Runtime({ mount: mount as never, envelope: demoEnvelope() as never })
+    runtime.bootstrap()
+    // The counter consumer is a component-bearing node — the engine's raw
+    // CompiledState.anchors carry live circular Node/Link refs that a naive
+    // JSON.stringify rejects. The projected snapshot must serialize.
+    const ns = runtime.nodeState({ kind: 'cssId', cssId: 'counter' })
+    let serialized: string
+    expect(() => { serialized = JSON.stringify(ns) }).not.toThrow()
+    const parsed = JSON.parse(serialized!)
+    expect(parsed.states.length).toBeGreaterThan(0)
+    for (const st of parsed.states) {
+      // every projected anchor is plain {role, target, value?} — never a live Node
+      for (const a of st.anchors) {
+        expect(a.role).toBeTypeOf('string')
+        expect(['string', 'number', 'boolean']).toContain(typeof a.target)
+      }
+      // the JSON-safe surface still carries the consumer's resolved bindings
+      expect(st).toHaveProperty('bindings')
+    }
+  })
+
+  it('nodeState snapshot surfaces the resolved bindings on a component consumer', () => {
+    const mount = mountEl()
+    const runtime = new Runtime({ mount: mount as never, envelope: demoEnvelope() as never })
+    runtime.bootstrap()
+    const ns = runtime.nodeState({ kind: 'cssId', cssId: 'counter' })
+    expect(() => JSON.parse(JSON.stringify(ns))).not.toThrow()
+    expect(ns.states.length).toBeGreaterThan(0)
+  })
+})
+
 /** A minimal placement-routed envelope (the path-fork shape): root + 2
  *  level-1 producers owning 'zone-1'; every deeper prototype is a content
  *  payload root with placementName + targetPlacement. Path enumeration yields

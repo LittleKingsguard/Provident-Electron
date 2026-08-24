@@ -487,10 +487,16 @@ export class RendererBackend implements McpBackend {
   }
 
   private newReadyPromise(): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
+    const p = new Promise<void>((resolve, reject) => {
       this.resolveReady = resolve
       this.rejectReady = reject
     })
+    // A2-harden: the gate's rejection must never be UNHANDLED when no `invoke`
+    // is awaiting it (e.g. a reset with no in-flight readiness await). Mark it
+    // handled so the engine does not emit an unhandledRejection; `invoke`'s
+    // `Promise.race` still observes the original rejection.
+    p.catch(() => undefined)
+    return p
   }
 
   attachWindow(win: WindowLike): void {

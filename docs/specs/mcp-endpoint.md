@@ -59,12 +59,16 @@ the 0.1.1 shared dispatch-report surface, ssr-synthetic-event.md §3):
   `{ kind: 'cssId', cssId }` (ergonomic, authored), `{ kind: 'nodeId',
   nodeId }` / `{ kind: 'wire', wire }` (authoritative), or a bare string
   resolved css.id → props.id → nodeId. Host-side resolution only
-  (REQ-GAP-2); unknown target → tool error.
+  (REQ-GAP-2); an unknown/unresolvable target → the tool throws
+  `unresolved target: {…}` (a missing cssId is an ERROR, never empty results;
+  D10, 2026-08-23).
 - **event / args** — `Supervisor.dispatchAndReport(nodeId, event, options,
-  ...args)` (the shared engine surface). `args` are structured-clone-safe JSON
-  (the Phase C concern); the handler's first-arg semantics depend on the
-  handler's authored convention (REQ-GAP-1: modern `(ctx, value)` default vs
-  `format: 'legacy'`).
+  ...args)` (the shared engine surface). `args` MUST be an ARRAY (spread into
+  the call) of structured-clone-safe JSON (the Phase C concern); the handler's
+  first-arg semantics depend on the handler's authored convention
+  (REQ-GAP-1: modern `(ctx, value)` default vs `format: 'legacy'`). A non-array
+  `args` (e.g. a bare string) is spread into its characters — the first char
+  becomes `event.value` (D7, 2026-08-23).
 - **flush-before-response** — `dispatchAndReport` awaits the engine's public
   `flush()` internally (deterministic settle; no host tick loop), then derives
   `dirtied = apply().dirtied ∪ keys(takePass2States())` (bounded,

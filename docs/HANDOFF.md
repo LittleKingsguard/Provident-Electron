@@ -82,6 +82,29 @@ now droppable in favor of the published surfaces.
   recorded in `docs/decisions.md` / `docs/pending.md` for this repo's own
   maintenance.
 
+## Round 5 — DEFECT-SSR-REMOVE (filed 2026-08-23, from the adapter-parity battery)
+
+- **Issue**: `SSRFragmentAdapter` retains removed/destroyed elements in the
+  serialized fragment, diverging from `DomAdapter`.
+- **Symptom / repro**: load an envelope with `keeper`/`doomed`/`nuke` (nuke =
+  `{kind:'destroy'}` on `doomed`), dispatch nuke →
+  `provident.get_rendered_html`. The DOM collapses to root-only; the SSR
+  fragment STILL contains `doomed` AND the full prior subtree
+  (`keeper`/`doomed`/`nuke`). Repro: `tests/adapter-parity-battery.test.mjs`
+  S5 (spec `docs/specs/adapter-parity-battery.md`, greens
+  `docs/specs/adapter-parity-greens.md`).
+- **Root cause**: `SSRFragmentAdapter.removeEl` (dist/core/adapters.js:397-400)
+  only does `fragments.delete(wireKey(...))` — it never detaches the fragment
+  from its parent's `children` array nor rematerializes the owner, so the
+  removed element survives serialization. `DomAdapter.removeEl`
+  (adapters.js:213-229) detaches + removes.
+- **Proposed fix shape (upstream-owned)**: `SSRFragmentAdapter.removeEl`
+  should splice the child out of its parent state's `children`, set its parent
+  to null, and call `rematerialize(parent)` — mirroring the DomAdapter detach.
+- **This repo's response**: defect recorded + handed off (this row); the DOM
+  collapse is asserted as the host green and the SSR retention is pinned as the
+  defect in the battery (NEVER patched here).
+
 ## Verified state (the workarounds ARE proven)
 
 - Unit: `tests/runtime.test.ts` (9) + `tests/engine-surfaces.test.ts` (5) —

@@ -157,17 +157,27 @@ export class Runtime {
     const actionable: CompiledState[] = []
     for (const states of this.prevStates.values()) actionable.push(...states)
     const byNode = new Map(this.supervisor.allNodes().map((n) => [n.id, n]))
+    // Prune prevStates entries whose node was destroyed AND evicted from the
+    // registry (the self-evicting sweep — REQ-GAP-11): renderProducingProcess
+    // keeps a state whose nodeById lookup is undefined, so a destroyed node's
+    // stale state would otherwise re-emit forever. Drop it here so the render
+    // reflects the live graph.
+    for (const id of [...this.prevStates.keys()]) {
+      if (!byNode.has(id)) this.prevStates.delete(id)
+    }
+    const liveActionable: CompiledState[] = []
+    for (const states of this.prevStates.values()) liveActionable.push(...states)
     // The canonical re-emit loop (REQ-GAP-5/8, 0.1.2): the exported
     // renderProducingProcess with the opt-in nodeIdAttribute threaded through.
     // The caller owns each per-tree prevMap (null on first render); the loop
     // prunes destroyed/not-in-tree nodes and never drains takePass2States.
     this.adapter.beginBatch()
-    const dom = renderProducingProcess(actionable as never, byNode as never, this.adapter, this.domPrevMap as never, this.renderOptions)
+    const dom = renderProducingProcess(liveActionable as never, byNode as never, this.adapter, this.domPrevMap as never, this.renderOptions)
     this.adapter.endBatch()
     this.domPrevMap = dom.prevMap as unknown as Map<string, unknown>
     // Same actionable + options → identical els; the SSR adapter mirrors the
     // same element set (PAR-5 parity) through its own prevMap.
-    const ssr = renderProducingProcess(actionable as never, byNode as never, this.ssr, this.ssrPrevMap as never, this.renderOptions)
+    const ssr = renderProducingProcess(liveActionable as never, byNode as never, this.ssr, this.ssrPrevMap as never, this.renderOptions)
     this.ssrPrevMap = ssr.prevMap as unknown as Map<string, unknown>
     return { els: dom.els, ops: dom.ops }
   }
@@ -426,7 +436,12 @@ export class Runtime {
 
   /** The current graph's legacy export — no mutation. */
   exportLegacy(): LegacyInitialData {
-    const rev = reverseTranslate(this.rootNode, { content: this.nodes.slice(1) })
+    // Exclude destroyed nodes from the export (the retention walk keeps them
+    // in the family, but a re-translate would resurrect them as live — a
+    // census mismatch on the export→validate round-trip). Only in-tree,
+    // not-destroyed content nodes are exported.
+    const live = this.nodes.slice(1).filter((n) => !n.destroyed && n.isInTree)
+    const rev = reverseTranslate(this.rootNode, { content: live })
     return {
       ...rev,
       content: rev.content ?? [],
@@ -903,7 +918,7 @@ export class Runtime {
     }
     this.render()
     return {
-      results: report.results,
+      results: report.results.map((r) => (r instanceof Error ? { error: { message: r.message, name: r.name } } : r)),
       dirtied: report.dirtied,
       renderedHtml: this.renderedHtml(),
       ssrHtml: this.ssrHtml(),
@@ -957,7 +972,47 @@ export class Runtime {
     const nodeId = this.resolveTarget(target)
     if (nodeId === null) throw new Error(`unresolved target: ${JSON.stringify(target)}`)
     const states = this.supervisor.getResolvedStates(nodeId)
-    return { nodeId, states: states as unknown[], census: this.census() }
+    // The engine's CompiledState.anchors carry LIVE circular Node/Link refs —
+    // a raw snapshot violates the JSON-safe contract (types.ts NodeStateResult
+    // "states: unknown[] — JSON-safe"). Project each state into a snapshot
+    // whose anchors become plain {role, targetId, value} data (never the Node
+    // graph), so get_node_state survives JSON serialization over MCP.
+    const projected = states.map((s) => this.projectedState(s as CompiledState))
+    return { nodeId, states: projected as unknown[], census: this.census() }
+  }
+
+  /** Build a JSON-safe compiled-state mirror: every scalar/binding field is
+   *  carried verbatim; the `anchors` array is projected to plain data (a live
+   *  Node anchor resolves to its id + value, never the circular Node/Link
+   *  refs the engine keeps). */
+  private projectedState(s: CompiledState): Record<string, unknown> {
+    const anchors = (s.anchors ?? []).map((a) => {
+      const targetNode = (a.target as { isNode?: boolean; id?: string } | null)?.isNode
+        ? (a.target as { id?: string }).id
+        : typeof a.target === 'string'
+          ? a.target
+          : String(a.target ?? '')
+      return {
+        role: a.role,
+        target: targetNode,
+        ...(a.value !== undefined ? { value: this.sortVal(a.value) } : {}),
+      }
+    })
+    return {
+      nodeId: s.nodeId,
+      ...(s.pathKey !== undefined ? { pathKey: s.pathKey } : {}),
+      state: s.state,
+      type: s.type,
+      props: s.props,
+      css: s.css,
+      content: s.content,
+      anchors,
+      parent: s.parent,
+      children: s.children,
+      bindings: s.bindings,
+      unresolved: s.unresolved,
+      ...(s.trace !== undefined ? { trace: s.trace } : {}),
+    }
   }
 
   private census(): Census {

@@ -331,4 +331,24 @@ describe('RendererBackend — A2/A6 lifecycle hardening (RED)', () => {
     backend.handleReply({ id: req.id, ok: true, value: { ok: 9 } })
     await expect(p).resolves.toEqual({ ok: 9 })
   })
+
+  it('A2-harden — handleReset rejects the readiness gate WITHOUT an unhandled-rejection (no awaiting invoke)', async () => {
+    const fake = makeFakeWindow()
+    const backend = new RendererBackend()
+    backend.attachWindow(fake.win as never)
+    backend.markReady()
+    // no invoke is awaiting the gate — a reset must NOT leak an unhandled rejection
+    const unhandled: unknown[] = []
+    const onUnhandled = (e: unknown): void => { unhandled.push(e) }
+    process.on('unhandledRejection', onUnhandled)
+    try {
+      fake.emit('win', 'closed') // rejectReady fires with nobody awaiting
+      fake.emit('win', 'destroyed')
+      await new Promise((r) => setTimeout(r, 20))
+      // an orphaned-rejection would surface here as an unhandledRejection event
+      expect(unhandled.length).toBe(0)
+    } finally {
+      process.off('unhandledRejection', onUnhandled)
+    }
+  })
 })

@@ -9,6 +9,8 @@ this repo's local next-steps (the upstream queue lives in
 
 | # | Item | Status / blocker |
 | --- | --- | --- |
+| 11 | **Adapter parity battery (2026-08-23)** — `docs/specs/adapter-parity-battery.md` + `docs/specs/adapter-parity-greens.md` + `tests/adapter-parity-battery.test.mjs` (72 checks, drives the battery host over stdio). Probes DOM (`renderedHtml`) vs SSR (`ssrHtml`) across the adapter seams. **P1/P7/P8/P9 host parity GREEN** (structural digest + data-node-id set + SSR-survives-reload + fork-arm). Contract pins P2/P3/P4 documented. **P6 SURFACED AN ENGINE DEFECT**: `SSRFragmentAdapter` retains removed/destroyed elements in the serialized fragment (`DEFECT-SSR-REMOVE`) — recorded in `docs/defects.md` + `docs/HANDOFF.md` Round 5 (upstream-owned, NOT patched). | **DONE (2026-08-23)** — battery green (1 recorded engine-divergence pin). |
+
 | 1 | **E2E battery — COMPLETE (Units B/C/D + R13, 2026-08-23)** (`docs/specs/e2e-test-battery.md`). All 4 fork-stress d12 variants (placement/values/link/**cycle**) + landings + handlers + code-CRUD driven over MCP, 93 battery checks green; battery host `src/main/battery-host.ts` (real Runtime under the DOM shim, all tool groups pre-enabled) + `tests/e2e-battery.test.mjs` (single process, teardown-only reset, root-only + settle-gate asserts). Cycle-variant data module `src/shared/path-fork-cycle.ts`. **R13 (Electron divergence) DONE — 9/9 checks green** via `scripts/electron-divergence.mjs`; the shim is now trusted. R13 also surfaced a host bug (stale SSR adapter collapsed re-emits across reloads) which is fixed + regression-tested. | **DONE (2026-08-23)** — complete. |
 | 1a | **Unit A — host capabilities (battery mode Runtime)** — **DONE + HARDENED (TDD + adversarial)**. `src/renderer/runtime.ts` has `loadEnvelope`/`loadDoc`/`applyCommand`/`exportLegacy`/`exportSerialized`/`validateExport`/`teardown` + the id-index (A5) + compilePath placement routing (H1) + in-tree-only resolution (H2) + clean reject (H3) + the H4/H5/H6 adversarial fixes (non-object/non-Node node reject, codeDelete range check, validateExport kind discrimination). Spec `docs/specs/runtime-host.md`; `tests/runtime-host.test.ts` (16) green. | **DONE (2026-08-22)** — green. |
 | 1b | **Unit B — the cycle-variant envelope data module** `pathForkCycleLegacyData(depth)` + `pathForkCycleLegacyData`-shaped cycle over the static trio (`src/shared/path-fork-cycle.ts`); census 23-node/4095-element; `tests/path-fork-cycle.test.ts` (9) green; consumed by the battery's cycle d12 variant. | **DONE (2026-08-23)** — green. |
@@ -23,7 +25,122 @@ this repo's local next-steps (the upstream queue lives in
 | 7 | **Tests close spawned server/app processes at end** — repeated test runs left orphaned Node + Electron processes (each spawn left a live BrowserWindow or a held-open Node server; the stdio transport does not auto-exit). Fixed: `main.ts`/`battery-host.ts`/`standalone.ts` all `exit` on stdin close (the client disconnect ends stdin). Verified: no lingering `main.cjs`/`battery-host`/`standalone.mjs`/electron after a full run. | **DONE (2026-08-23)** — process cleanup. |
 | 8 | **Renderer `provident.teardown` IPC path awaits the async `teardownResult`** — review found the `renderer.ts` `teardown` case assigned `runtime.teardownResult()` (a Promise) to the reply value WITHOUT awaiting, so the IPC reply carried a non-JSON Promise and the R6 settle-gate never ran on that path (the twentieth-pass "all call sites awaited" claim was wrong for `renderer.ts`). Fixed: `await`. | **DONE (2026-08-23)** — TDD red→green. |
 | 9 | **Manual-UI Security Settings pane (the A1 trust-gate's remaining piece, mcp-endpoint.md §6.4)** — persistence (`security-store.ts`), the `provident:security:get/set` IPC (main), the preload `window.provident.security` exposure, the renderer Settings pane (`settings.ts` + `index.html` `#settings-pane`: token show/clear/regenerate + one toggle per tool group), and the MCP server booting from the persisted config. `tests/security-store.test.ts` (5) green. | **DONE (2026-08-23)** — TDD red→green. |
-| 10 | **Battery §5.3 hooks-scenarios + §5.5 handler matrix (DEFERRED)** — `docs/specs/e2e-test-battery.md` §5.3 (the `hooksScenariosEnvelope`: theme/user/counter hook providers + the `hook-name-unresolved`/`hook-seam-exempt`/`hook-mode-blocked`/`hook-kind-mismatch` containment verdicts) and §5.5's full anon/alice/main handler matrix (S1a, S1b, S2..S10) are marked PARTIAL/NOT-YET-LANDED in the spec. The e2e battery currently implements one representative handler (counter `inc`) + the §5.1/§5.2/§5.4 scenarios. | Pending — the spec is the contract; landing is a later unit. |
+| 10 | **Battery §5.3 hooks-scenarios (DEFERRED)** — `docs/specs/e2e-test-battery.md` §5.3 (the `hooksScenariosEnvelope`: theme/user/counter hook providers + the `hook-name-unresolved`/`hook-seam-exempt`/`hook-mode-blocked`/`hook-kind-mismatch` containment verdicts) was marked NOT-YET-LANDED in the spec. **§5.3 DONE (2026-08-23)** — landed per the unit spec `docs/specs/battery-hooks-unit.md` (TestWriter red → green → adversarial → greens → doc-review). **§5.5 full anon/alice/main handler matrix (S1a, S1b, S2..S10) DONE (2026-08-23)** — landed per the unit spec `docs/specs/battery-handlers-unit.md` (TestWriter red → green → adversarial → greens → doc-review). | **§5.3 + §5.5 DONE (2026-08-23)** — battery 184/184. |
+
+## DONE (2026-08-23, twenty-seventh pass — blind scenario subagents through ALL green-scenario docs)
+
+Per the user's "start blind scenario subagents, following the example in the
+upstream project and running through all of the scenario documents written
+during the build": five blind-test writers (AGENTS.md item 10a, the upstream
+writer→proofreader pattern) produced artifacts from the DOCUMENTATION ONLY (no
+implementation read) and ran them against the live modules, covering every
+`*-greens.md` written during the build.
+
+- **Blind writers + artifacts** (all green after the proofreader pass):
+  - `runtime-host-greens.md` → `tests/blind-runtime-host.test.ts` (39).
+  - `mcp-security-greens.md` + `mcp-server-gate-greens.md` →
+    `tests/blind-security-gate.test.ts` (84).
+  - `renderer-backend-greens.md` + `debug-panel-greens.md` →
+    `tests/blind-renderer-debug.test.ts` (27).
+  - `battery-hooks-greens.md` + `battery-handlers-greens.md` →
+    `tests/blind-battery-hooks-handlers.test.ts` (21).
+  - `ci-divergence-greens.md` → `tests/blind-ci-divergence.test.ts` (3).
+  - (Plus the pre-existing `tests/blind-battery-verify.test.ts` covering
+    `battery-units-greens.md`, 37.)
+- **Doc drift found + fixed** (all doc-fixes, no code regression):
+  - `runtime-host-greens.md` #15 (`op kind:'state'` → `'state-slice'`),
+    #21/#22 (teardown mount is root-only, NOT `''` — the root stays),
+    #27 (the auto-minted root has no authored `cssId`).
+  - `mcp-security-greens.md` G8 #5-10 (token-only `SecurityGate` construction
+    throws — fixed to the canonical `{token, enabled}` form + a note).
+  - `battery-handlers-greens.md` H1/H2/leak-guard (the `dropdown-menu`/`Log out`
+    strings emit from the component-def node and are NOT destroyed — assert the
+    LIVE controls + root-only census, not the def-node strings).
+  - `ci-divergence-leg.md` §4 (N = 9, not ≥ 10 — the settle-gate is a Runtime
+    unit assertion, not in the harness).
+- **Trio + battery**: **394 tests** (was 220 — the 5 blind artifacts added 174),
+  typecheck clean, build clean, battery **184/184**. Findings record:
+  `archive/findings/2026-08-23-blind-test-all-greens.md`.
+
+## DONE (2026-08-23, twenty-sixth pass — Battery §5.5 handler-scenarios)
+
+Per the user's §5.5 unit directive: the full anon/alice/main handler matrix
+(S1a, S1b, S2..S10) landed via the full per-unit cadence (RCA-1..6). The spec
+is `docs/specs/battery-handlers-unit.md`; the greens are
+`battery-handlers-greens.md`.
+
+- **TestWriter red** — the new §5.5 `runScenario`s failed on the FIRST target
+  dispatch: `unresolved target: {"kind":"cssId","cssId":"s1a-chip"}` (the
+  handlers envelopes address nodes by `props.id`, the test originally targeted
+  by `css.id`). Fixed the drive path to plain-string targets (resolves via
+  `props.id`). Recorded as the red set.
+- **Implementer green** — `tests/fixtures/handlers-scenarios-data.mjs` (the
+  data-only port of the upstream `userAuthEnvelope`/`mainEnvelope` + the 14
+  handler body consts, provenance header) + `tests/e2e-battery.test.mjs` §5.5
+  section (S1a anon, S1b alice + logout, S2..S10 main, each with the manual
+  load-phase drive + rendered-HTML asserts + export/validate/teardown).
+- **Adversarial (RCA-3)** — 3 host findings, all fixed + regression-asserted
+  in the §5.5 checks (see the spec §3a table):
+  - F1 — a destroyed node's stale state re-emitted forever: the self-evicting
+    sweep evicts a destroyed node from `allNodes()`, and
+    `renderProducingProcess` keeps a state whose `nodeById` lookup is
+    `undefined` — so the destroyed toast kept rendering. Fixed: the Runtime's
+    `render` prunes `prevStates` entries whose node is no longer in the
+    registry (`src/renderer/runtime.ts`).
+  - F2 — a contained `Error` in `dispatch.results` serialized to `{}` over
+    JSON (an `Error`'s own enumerable props are empty). Fixed: `dispatch`
+    projects each `Error` result to `{error:{message,name}}`.
+  - F3 — `exportLegacy` included destroyed nodes, so a structurally-mutated
+    seam/def-bearing envelope (S1a/S1b dropdown destroyed) failed the
+    export→validate censusMatch. Fixed: `exportLegacy` exports only in-tree,
+    not-destroyed content nodes.
+  - No package (`provident-ssr`) defect — all host-side, none handed off.
+- **Documentation review (RCA-6)** — reconciled the spec + greens + trackers:
+  `e2e-test-battery.md` §5.5 status PARTIAL→LANDED + the check count; the unit
+  spec header → LANDED + §3a adversarial table; next-steps #10 §5.5 DONE row;
+  review record `archive/reviews/2026-08-23-battery-handlers-doc-review.md`.
+- **Trio + battery** — **220 tests** (was 220 — no new unit tests; the §5.5
+  checks live in the e2e battery), typecheck clean, build clean, battery
+  **184/184** (was 116 — the §5.5 section adds 68 checks).
+
+## DONE (2026-08-23, twenty-fifth pass — Battery §5.3 hooks-scenarios)
+
+Per the user's §5.3 unit directive: the full hooks-scenarios block
+(theme/user/counter value providers + the four containment verdicts) landed
+via the full per-unit cadence (RCA-1..6). The spec is
+`docs/specs/battery-hooks-unit.md`; the greens are `battery-hooks-greens.md`.
+
+- **TestWriter red** — the new §5.3 `runScenario` failed on the FIRST target
+  dispatch: `unresolved target: {"kind":"cssId","cssId":"theme-light-btn"}`
+  (the envelope addresses nodes by `props.id`, the test originally targeted by
+  `css.id`). Fixed the drive path to plain-string targets (resolves via
+  `props.id`). Recorded as the red set.
+- **Implementer green** — `tests/fixtures/hooks-scenarios-data.mjs` (the
+  data-only port of the upstream `hooksScenariosEnvelope` + the 4 probe
+  handler bodies returning the `clientAPI.apply` result + a `hooksKind`
+  `'component'` declaration + a `SetTheme` def-shaped seam target) +
+  `tests/e2e-battery.test.mjs` §5.3 section (dispatch 6 controls → readouts,
+  node_state bindings, the 4 containment probes, export/validate/teardown).
+- **Adversarial (RCA-3)** — 3 host findings, all fixed + regression-asserted
+  in the §5.3 checks (see the spec §3a table):
+  - F1 — readout assertions passed VACUOUSLY (button labels contain the words);
+    now assert the derived `themeName=`/`sessionLabel=`/`count=` bakes.
+  - H1 — `get_node_state` THREW `Converting circular structure to JSON` on any
+    component-bearing node (engine `CompiledState.anchors` carry live circular
+    Node/Link refs; the raw snapshot violated the `types.ts:71` JSON-safe
+    contract). Fixed: `nodeState` projects a JSON-safe snapshot
+    (`src/renderer/runtime.ts`), 2 regression tests in `runtime-host.test.ts`.
+   - F3 seam-exempt "layer did NOT land" assertion was VACUOUS (the root
+    resolves to 0 states); replaced with a functional proof (a theme dispatch
+    after the probe still flips the readout — the SetTheme seam is intact).
+  - No package (`provident-ssr`) defect — all host-side, none handed off.
+- **Documentation review (RCA-6)** — reconciled the spec + greens + trackers:
+  `e2e-test-battery.md` §5.3 status PARTIAL→LANDED + the check count; the unit
+  spec header → LANDED + §3A adversarial table; next-steps #10 §5.3 DONE row;
+  review record `archive/reviews/2026-08-23-battery-hooks-doc-review.md`.
+- **Trio + battery** — **219 tests** (was 217 — the 2 nodeState regression
+  tests), typecheck clean, build clean, battery **116/116** (was 93 — the §5.3
+  section adds 23 checks).
 
 ## DONE (2026-08-23, twenty-fourth pass — #3 Renderer debug panel)
 

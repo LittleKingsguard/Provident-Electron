@@ -18,14 +18,36 @@ the battery host call. They are pure host code (no package change).
 ```ts
 loadEnvelope(envelope: LegacyInitialData, opts?: { userData?: unknown }): Census
 loadDoc(doc: SerializedRenderDoc): Census
+load(req: LoadPayload): { census: Census; renderedHtml: string; ssrHtml: string; warnings: unknown[] }
+op(cmd: OpCommand | null | undefined): { status: string; dirtied?: string[]; minted?: string[]; renderedHtml: string; ssrHtml: string; warnings: unknown[] }
 applyCommand(cmd: OpCommand | null | undefined): { status: string; dirtied?: string[]; minted?: string[] }
 exportLegacy(): LegacyInitialData
 exportSerialized(): SerializedRenderDoc
 validateExport(kind: 'legacy' | 'serialized', export: unknown): { valid: boolean; censusMatch: boolean; warnings: unknown[] }
+validate(kind: 'legacy' | 'serialized', export: unknown): { valid: boolean; censusMatch: boolean; treeSigMatch: boolean; warnings: unknown[] }
 teardown(): Census
+teardownResult(): Promise<{ census: Census; renderedHtml: string; warnings: unknown[] }>
 ```
 
-The MCP-facing wrappers (Unit C, `docs/specs/e2e-test-battery.md` §3 + `mcp-endpoint.md` §4) ride on top of these: `load(req)` → A2/A1/A3, `op(cmd)` → `applyCommand`, `export(format)` → `exportLegacy`/`exportSerialized`, `validate(kind, exp)` → `validateExport` + a `treeSigMatch` parity compare (the MCP `validate` return adds `treeSigMatch`), `teardownResult()` → `teardown` + the awaited R6 settle-gate (async), and the six `codeGet`/`codeSet`/`codeCreate`/`codeDelete`/`codeValidate`/`codeLoad` envelope-CRUD methods.
+**Return-shape map (D5/D6, 2026-08-23):** three surface shapes must not be
+conflated —
+- `loadEnvelope`/`loadDoc`/`teardown` return a bare `Census`.
+- `load`/`teardownResult` return a WRAPPER object (`{census, …}`) — read
+  `.census.inTree`, never `.inTree` on the wrapper.
+- `validateExport` returns `{valid, censusMatch, warnings}` and does **NOT**
+  carry `treeSigMatch`; only the MCP-facing `validate()` wrapper adds
+  `treeSigMatch` (R3, a parity signal — a boolean, never a contract).
+- `op` returns the apply status **plus** the two render views + `warnings`
+  (R10) — even on a `rejected`/`no-usable-state` verdict (assert `.status`,
+  not deep-equality on `{status:'rejected'}`).
+- The MCP-facing wrappers (Unit C, `docs/specs/e2e-test-battery.md` §3 + `mcp-endpoint.md` §4) ride on top of these: `load(req)` → A2/A1/A3, `op(cmd)` → `applyCommand`, `export(format)` → `exportLegacy`/`exportSerialized`, `validate(kind, exp)` → `validateExport` + a `treeSigMatch` parity compare (the MCP `validate` return adds `treeSigMatch`), `teardownResult()` → `teardown` + the awaited R6 settle-gate (async), and the six `codeGet`/`codeSet`/`codeCreate`/`codeDelete`/`codeValidate`/`codeLoad` envelope-CRUD methods.
+
+**CRUD envelope source (D9, 2026-08-23):** the `code*` surface reads/writes the
+Runtime's `envelope` field, which is populated ONLY by a load path
+(`loadEnvelope`/`load`/`codeLoad`) — the constructor's `{envelope:}` option
+builds the graph but does NOT set the CRUD envelope. `codeSet`/`codeDelete` on
+a fresh constructor-booted Runtime throw `no envelope loaded` until a load. The
+code-CRUD greens assume a prior load; callers must load first.
 
 `OpCommand` = a managed-channel op payload (`{ kind: 'clone-instance' | 'attach'
 | 'detach' | 'move' | 'state-slice' | 'layer-apply' | 'rows-mint' | 'rows-clear'
@@ -63,6 +85,11 @@ forwards and never whitelists the kind itself.
 - A rejected op returns `{ status: 'rejected' }` — never throws. Rejection
   sources: an unresolvable string `node` (H3), a non-string/non-Node `node`
   value (H4), a non-object command (H4), or an unknown op `kind` (engine-side).
+- **Unknown-kind split (D3, 2026-08-23):** an unknown `kind` WITHOUT a resolvable
+  `node` path → `{ status: 'rejected' }` (the host's H4/F10 guard, above). An
+  unknown `kind` ON A RESOLVED `node` reaches the engine, which returns
+  `{ status: 'no-usable-state' }` — NOT `rejected`. `no-usable-state` is an
+  engine verdict, never a throw; both statuses are "did not apply".
 - The MCP wrapper `teardownResult()` is ASYNC: it awaits the R6 settle-gate
   before + after `teardown()` so the returned census reflects provable
   quiescence (`hasPendingWork() === false`).
