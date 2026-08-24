@@ -68,6 +68,39 @@ counter (`inc` / `dec` / `reset` buttons) and an echo input (`echo-input` →
 `echo-out`) — drive them with `provident.dispatch` and observe with
 `provident.get_rendered_html`.
 
+### Local CLI toolset (`npm run mcp`)
+
+`scripts/mcp-cli.mjs` drives **all 15 MCP endpoints** for development + dynamic
+testing. Two targets:
+
+- **battery** (default) — spawns `dist/main/battery-host.mjs` (a real Runtime
+  under the DOM shim, all tool groups pre-enabled) over stdio: a throwaway,
+  deterministic host for CI-style probing.
+- **http** — connects to a **running** app at `http://127.0.0.1:<port>/mcp`
+  (the real Electron app, or a standalone server). This is the live
+  development target.
+
+```sh
+npm run mcp -- --help                       # usage
+npm run mcp -- html                         # read the rendered HTML (battery)
+npm run mcp -- dispatch inc click           # dispatch a click on #inc
+npm run mcp -- targets                      # list dispatch targets
+npm run mcp -- node-state counter           # a node's resolved state
+npm run mcp -- export legacy                # export the graph
+npm run mcp -- teardown                     # reset to root-only
+npm run mcp -- code-get template.root.hooks # read the envelope
+npm run mcp -- run steps.json               # run a sequence against ONE host
+
+# against a running app (e.g. `npm start -- --mcp-transport=http --mcp-port=3787`):
+npm run mcp -- --target http --port 3787 html
+npm run mcp -- --target http --port 3787 dispatch inc click
+```
+
+`run <steps.json>` executes an array of `{cmd, args}` steps against **one
+persistent host**, so a `dispatch` can see a prior `load` — the dynamic-testing
+mode. Each step's result prints; the last step's result is the exit value.
+`args` is the raw tool-arguments object (targets/values passed verbatim).
+
 ### Example agent flow
 
 ```text

@@ -85,6 +85,10 @@ dist
 archive/
 live-prod/
 
+# Local opencode config (machine-specific MCP registration)
+opencode.json
+opencode.jsonc
+
 # Gatsby files
 .cache/
 # Comment in the public line in if your project uses Gatsby and not Next.js
