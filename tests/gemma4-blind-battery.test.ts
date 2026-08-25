@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import { Runtime } from '../src/renderer/runtime.js';
 import { installShim, mountEl } from '../src/shared/dom-shim.js';
 import { demoEnvelope } from '../src/shared/demo-envelope.js';
-import { translateLegacy, serializeSlice } from 'provident-ssr';
+import { translateLegacy, serializeSlice } from '@littlekingsguard/provident-ssr';
 import {
   pathForkCycleLegacyData,
 } from '../src/shared/path-fork-cycle.js';
@@ -12,7 +12,7 @@ import {
 import {
   userAuthEnvelope,
 } from '../tests/fixtures/handlers-scenarios-data.mjs';
-import { initDebugPanel } from '../src/renderer/debug-panel.js';
+import { SecurePanels } from '../src/renderer/secure-panels.js';
 
 beforeAll(() => {
   installShim();
@@ -344,19 +344,16 @@ describe('Gemma4 Blind Battery', () => {
   describe('Part 4 — Debug panel + divergence', () => {
     it('S30. debug-panel census line', () => {
       // PREDICTION: PASS. matches /inTree \d+ · registered \d+/
-      // Shim document has no body; #status is auto-created via getElementById.
-      const refresh = initDebugPanel(runtime);
-      refresh();
-      const status = document.getElementById('status');
-      expect(status.textContent).toMatch(/inTree \d+ · registered \d+/);
+      const panels = new SecurePanels(document.createElement('div'));
+      panels.refreshDebug(runtime);
+      expect(panels.debugText()).toMatch(/inTree \d+ · registered \d+/);
     });
 
     it('S31. debug-panel truncated preview', () => {
       // PREDICTION: PASS. ends with … and ≤ ~125 chars.
-      const refresh = initDebugPanel(runtime);
-      refresh();
-      const status = document.getElementById('status');
-      const lines = status.textContent.split('\n');
+      const panels = new SecurePanels(document.createElement('div'));
+      panels.refreshDebug(runtime);
+      const lines = panels.debugText().split('\n');
       const preview = lines[1] || '';
       expect(preview.endsWith('…')).toBe(true);
       expect(preview.length).toBeLessThanOrEqual(125);

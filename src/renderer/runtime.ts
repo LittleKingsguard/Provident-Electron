@@ -13,12 +13,14 @@ import {
   EventBridge,
   DomAdapter,
   SSRFragmentAdapter,
+  MarkdownAdapter,
   renderProducingProcess,
   focusedSliceFor,
   reverseTranslate,
   serializeSlice,
   loadState,
   createLinkHub,
+  reRegisterDefPrototypes,
   reconcileParentTargets,
   dropPayload,
   emitElements,
@@ -28,12 +30,13 @@ import {
   type RenderOptions,
   type SerializedRenderDoc,
   type Payload,
-} from 'provident-ssr'
-import type { CompiledState } from 'provident-ssr/core/types.js'
+} from '@littlekingsguard/provident-ssr'
+import type { CompiledState } from '@littlekingsguard/provident-ssr/core/types.js'
 import type {
   DispatchRequest,
   DispatchResult,
   RenderedHtmlResult,
+  MarkdownResult,
   ListTargetsResult,
   NodeStateResult,
   NodeInfo,
@@ -51,7 +54,7 @@ import type {
   CodeDeleteResult,
   CodeValidateResult,
 } from '../shared/types.js'
-import type { TranslatedWarning } from 'provident-ssr/core/translate.js'
+import type { TranslatedWarning } from '@littlekingsguard/provident-ssr/core/translate.js'
 
 export interface RuntimeOptions {
   mount: HTMLElement
@@ -316,6 +319,10 @@ export class Runtime {
     const hub = createLinkHub()
     const nodes = seeds.map((s) => new Node(s, hub))
     reconcileParentTargets(nodes)
+    // 0.2 Feature 1a — re-register the def prototypes (the `defPrototypes`
+    // census section) on the loadState hub so a rows-bearing doc re-mints
+    // (the `rows-prototype-unresolved` caveat flips for round-tripped docs).
+    reRegisterDefPrototypes(doc as never, hub, nodes as never)
     this.rootNode = nodes[0]
     this.nodes = nodes
     this.supervisor = new Supervisor({ events: new EventBridge() })
@@ -933,12 +940,34 @@ export class Runtime {
     }
   }
 
+  /** 0.2 Feature 2 — the MCP `provident.get_markdown` result: the markdown
+   *  text + the census snapshot. */
+  markdownResult(): MarkdownResult {
+    return { markdown: this.markdown(), census: this.census() }
+  }
+
   private renderedHtml(): string {
     return this.mount.innerHTML
   }
 
   private ssrHtml(): string {
     return this.ssr.toString()
+  }
+
+  /** 0.2 Feature 2 — the MarkdownAdapter endpoint (`provident.get_markdown`):
+   *  re-emit the CURRENT graph through a fresh MarkdownAdapter (the simplified
+   *  text-only output document for agentic consumers). The adapter is a pure
+   *  op-stream consumer (D15) — it renders the same actionable set the DOM/SSR
+   *  views use, but emits markdown text (non-interactive: on:* and data:*
+   *  props are dropped, D7). A fresh adapter per call (D10 — instance-bound
+   *  prevMap; never reuse a stale one). */
+  markdown(): string {
+    const actionable: CompiledState[] = []
+    for (const states of this.prevStates.values()) actionable.push(...states)
+    const byNode = new Map(this.supervisor.allNodes().map((n) => [n.id, n]))
+    const md = new MarkdownAdapter()
+    renderProducingProcess(actionable as never, byNode as never, md, null, this.renderOptions)
+    return md.toString()
   }
 
   listTargets(): ListTargetsResult {

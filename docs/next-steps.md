@@ -28,6 +28,139 @@ this repo's local next-steps (the upstream queue lives in
 | 9 | **Manual-UI Security Settings pane (the A1 trust-gate's remaining piece, mcp-endpoint.md §6.4)** — persistence (`security-store.ts`), the `provident:security:get/set` IPC (main), the preload `window.provident.security` exposure, the renderer Settings pane (`settings.ts` + `index.html` `#settings-pane`: token show/clear/regenerate + one toggle per tool group), and the MCP server booting from the persisted config. `tests/security-store.test.ts` (5) green. | **DONE (2026-08-23)** — TDD red→green. |
 | 10 | **Battery §5.3 hooks-scenarios (DEFERRED)** — `docs/specs/e2e-test-battery.md` §5.3 (the `hooksScenariosEnvelope`: theme/user/counter hook providers + the `hook-name-unresolved`/`hook-seam-exempt`/`hook-mode-blocked`/`hook-kind-mismatch` containment verdicts) was marked NOT-YET-LANDED in the spec. **§5.3 DONE (2026-08-23)** — landed per the unit spec `docs/specs/battery-hooks-unit.md` (TestWriter red → green → adversarial → greens → doc-review). **§5.5 full anon/alice/main handler matrix (S1a, S1b, S2..S10) DONE (2026-08-23)** — landed per the unit spec `docs/specs/battery-handlers-unit.md` (TestWriter red → green → adversarial → greens → doc-review). | **§5.3 + §5.5 DONE (2026-08-23)** — battery 184/184. |
 
+## DONE (2026-08-25 — SecurePanels: the Security/Debug panes moved to an ISOLATED provident graph)
+
+Per the user's "proceed with adoption, concentrating on maintaining compliance
+with the added constraint while protecting secure elements from MCP access":
+adopted the 0.2.0-rc.2 `GraphScope` isolation surface so the operator-only
+panes render as provident data in a SECOND, isolated graph — satisfying the
+project-wide UI-rendering constraint AND keeping them out of the MCP surface.
+
+- **`src/renderer/secure-panels.ts`** (new) — `SecurePanels(mount)`: a second
+  provident graph (own `createIsolatedScope()` GraphScope + own hub + own
+  `Supervisor` + own `DomAdapter` → `#panes`) rendering the Security Settings +
+  Debug panes as provident data (function-STRING handler bodies).
+- **Isolation**: the app `Runtime` (the MCP surface) boots WITHOUT a scope
+  (module singleton, D8). The pane graph's registry sets are scope-local — no
+  cross-graph addressability. `Runtime.dispatch`/`get_rendered_html`/
+  `list_targets`/`get_markdown`/`get_node_state` never see the security
+  controls or the token value.
+- **Manual-UI-only preserved**: pane handlers call `window.provident.security`
+  (the IPC bridge, main→renderer→main) — NEVER an MCP tool. An agent cannot
+  route to them (isolated graph + non-MCP IPC channel).
+- **Removed**: the hand-written `src/renderer/settings.ts` + `debug-panel.ts`
+  (constraint violations); `index.html` now has just `#app` + `#panes`
+  (provident-rendered).
+- **Debug pane**: `refreshDebug(runtime)` sources the app graph's census + SSR
+  preview into the panes graph's `#status` node.
+- **Spec** `docs/specs/secure-panels.md`; `docs/decisions.md`
+  MULTI-GRAPH-ISOLATION row → ADOPTED; `docs/pending.md` PARKED row → LANDED;
+  `docs/specs/mcp-endpoint.md` §6.4 status note updated.
+- **Trio on rc.2**: 438 tests / 2 skipped, typecheck clean, build clean,
+  battery 184/184. (The R3.5 timing test is the pre-existing flake — passes in
+  isolation.)
+
+## DONE (2026-08-25 — scoped-package refresh to `@littlekingsguard/provident-ssr@0.2.0-rc.2`: the isolation surface is AVAILABLE)
+
+Per the user's "upstream package containing full isolation has been pushed to
+github": the upstream shipped multi-graph/registry isolation in
+`@littlekingsguard/provident-ssr@0.2.0-rc.2` (the D1-D8 `GraphScope`,
+`../Preempt-Providence/docs/specs/multi-graph-isolation-spec.md`, commit
+`9e66983`). Refreshed this repo to consume it.
+
+- **`package.json`** — `@littlekingsguard/provident-ssr` `^0.2.0-rc.1` →
+  `^0.2.0-rc.2`. Installed + verified `createIsolatedScope()` / `DEFAULT_SCOPE`
+  resolve (via the `core/registry.js` subpath; distinct isolated scopes are
+  distinct objects, distinct from the default module singleton).
+- **The isolation surface is AVAILABLE but NOT adopted**: an OPT-IN
+  `GraphScope` (per-graph registry sets — `createIsolatedScope()`), threaded
+  through `translateLegacy(doc, { graphScope })`, `new Supervisor({ graphScope })`,
+  `loadState`, `renderProducingProcess(…, { graphScope })`. Default = byte-
+  identical to today (D8). This is the Security/Debug-pane isolation the shell
+  needs — adoption is parked (see `docs/pending.md` + `docs/decisions.md`
+  MULTI-GRAPH-ISOLATION).
+- **Trio green on rc.2** — 446 tests / 2 skipped, typecheck clean, build clean,
+  battery 184/184.
+- **Trackers** — `docs/decisions.md` SCOPED-PACKAGE-RETARGET row bumped to rc.2
+  + new MULTI-GRAPH-ISOLATION row; `docs/pending.md` RESTORE row → rc.2 + new
+  isolation-adoption PARKED row.
+
+## DONE (2026-08-25 — project-wide UI-rendering constraint)
+
+Per the user's direction: added the project-wide constraint that all UI
+elements not directly part of the Electron shell (e.g. pre-existing
+menu/settings dropdowns, panels, dialogs, controls) MUST be rendered with the
+provident framework — authored as provident-ssr data (envelope nodes / handler
+bodies / hooks / component bindings) and driven through the producing graph,
+NOT as hand-written HTML/DOM in the renderer. The shell's own chrome (window
+frame, native menu bar, preload bridge, MCP server) is the only exception.
+Rationale: a UI element rendered outside the provident graph is invisible to
+`provident.dispatch`/`get_rendered_html`/`get_markdown` and defeats the
+agentic/debugging surface. A UI element added outside the framework is a
+review finding.
+
+- **AGENTS.md** — new "Project-wide constraint (UI rendering)" section.
+- **`docs/decisions.md`** — `UI-RENDERED-WITH-PROVIDENT` DECIDED row.
+- No code change; trio unaffected.
+
+## DONE (2026-08-25 — 0.2 package surface review + the `provident.get_markdown` endpoint)
+
+Per the user's "review changes made in the 0.2 package surface and add/update
+MCP endpoints for new/updated features": reviewed the 0.2.0-rc.1 surface
+(`../Preempt-Providence/docs/next-feature-batch-0.2.0.md` — the four-feature
+batch) against the current MCP endpoints and added the one genuinely NEW
+endpoint the surface warrants.
+
+- **0.2 features → endpoint mapping**:
+  - **Feature 1/1a/1b (hooks array injection, def-prototype round-trip, keyed
+    batch-reuse)** — flow through EXISTING endpoints: `rows-mint`/`rows-clear`/
+    `keyField`/`preserveByReversal` via `provident.op`; the def-prototype
+    round-trip via `provident.load`/`export`/`validate`. The Runtime's
+    `loadDoc` now calls `reRegisterDefPrototypes` (Feature 1a) so a
+    rows-bearing serialized doc re-mints.
+  - **Feature 2 (MarkdownAdapter — the simplified output document for agentic
+    consumers)** — **NEW endpoint** `provident.get_markdown`.
+  - **Feature 3 (journal condensing)** — host config (`maxJournalLength`
+    Supervisor option); no new endpoint.
+  - **Feature 4 (preservation-by-reversal)** — flows through `provident.op`
+    (the `preserveByReversal` layer field).
+- **`provident.get_markdown`** (read group): re-emits the CURRENT graph through
+  a fresh `MarkdownAdapter` per call → `{ markdown, census }`. Non-interactive
+  (ruling 15/16): `on:*` and `data:*` props (incl. `data-node-id`) dropped — no
+  event surface, no element→node mapping (use `get_rendered_html` for tracing).
+  Text-only (D5: css classes/style dropped); empty graph → `''` (D11).
+- **Wiring**: `Runtime.markdown()`/`markdownResult()` (fresh `MarkdownAdapter`
+  per call, D10), the renderer IPC (`markdown` method), the battery host, the
+  MCP server (`ALL_TOOLS` + registration), and the `read` tool group
+  (`src/main/security.ts`).
+- **TDD**: `tests/markdown-endpoint.test.ts` (4) — red (module method missing)
+  → green. Trio green: **447 tests / 2 skipped** (was 442), typecheck clean,
+  build clean, battery **184/184**.
+- **Spec**: `docs/specs/mcp-endpoint.md` §3.3 `get_markdown` + the §3 tool table
+  + §6.2 `read` group + §9 verification.
+
+## DONE (2026-08-25 — scoped-package retarget to `@littlekingsguard/provident-ssr@0.2.0-rc.1` for pre-release testing)
+
+Per the user's direction: the upstream `Preempt-Providence` repo moved the 0.2.0
+package to the scoped GitHub Packages registry. This repo retargeted to
+`@littlekingsguard/provident-ssr@0.2.0-rc.1` to TEST the 0.2 package in a
+deployable environment prior to public release.
+
+- **`.npmrc`** (gitignored) — routes `@littlekingsguard` to
+  `https://npm.pkg.github.com/` with the `read:packages` token. Root cause of
+  the initial 401: npm does NOT expand `${...}` env-var placeholders in
+  `.npmrc`, so the literal `${ghp_...}` string was sent as the token; fixed to
+  the raw token.
+- **`package.json`** — `provident-ssr: ^0.1.5` → `@littlekingsguard/provident-ssr: ^0.2.0-rc.1`.
+- **Imports** — `provident-ssr` → `@littlekingsguard/provident-ssr` across 11
+  files (`src/shared/path-fork-cycle.ts`, `src/renderer/runtime.ts`, 9 test
+  files); the `core/*.js` subpath imports retargeted too.
+- **Trio green** — 442 tests / 2 skipped, typecheck clean, build clean.
+- **RESTORE NOTE (this is a restore document)**: the retarget is TEST-ONLY.
+  After the public 0.2.0 release, revert `package.json` + all imports to the
+  public `provident-ssr@0.2.0` and re-run the trio. The `.npmrc` can then be
+  removed (or kept for the scoped registry).
+
 ## DONE (2026-08-23, twenty-seventh pass — blind scenario subagents through ALL green-scenario docs)
 
 Per the user's "start blind scenario subagents, following the example in the

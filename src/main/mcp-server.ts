@@ -117,6 +117,7 @@ export class ProvidentMcpServer {
   static readonly ALL_TOOLS: string[] = [
     'provident.dispatch',
     'provident.get_rendered_html',
+    'provident.get_markdown',
     'provident.list_targets',
     'provident.get_node_state',
     'provident.code.get',
@@ -253,6 +254,22 @@ export class ProvidentMcpServer {
         inputSchema: {},
       }, async () => {
         const value = await backend.invoke('renderedHtml', {})
+        return text(value)
+      }))
+    }
+
+    if (allowed.includes('provident.get_markdown')) {
+      registered.set('provident.get_markdown', server.registerTool('provident.get_markdown', {
+        title: 'Read the rendered markdown',
+        description:
+          'Read the current graph as a simplified text-only markdown document ' +
+          '(the 0.2 MarkdownAdapter — Feature 2). Non-interactive: on:* and ' +
+          'data:* props are dropped, so there is no element-to-node mapping in ' +
+          'the markdown output (use get_rendered_html for that). Use this for ' +
+          'a compact, agent-friendly summary of what the app currently displays.',
+        inputSchema: {},
+      }, async () => {
+        const value = await backend.invoke('markdown', {})
         return text(value)
       }))
     }

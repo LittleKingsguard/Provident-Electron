@@ -19,8 +19,8 @@
     "mcp": "npm run build && node scripts/mcp-cli.mjs"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.30.0",
-    "provident-ssr": "^0.1.5"
+    "@littlekingsguard/provident-ssr": "^0.2.0-rc.2",
+    "@modelcontextprotocol/sdk": "^1.30.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",

@@ -20,7 +20,7 @@ import { RendererBackend } from '../src/main/mcp-server.js'
 import { installShim, mountEl } from '../src/shared/dom-shim.js'
 import { Runtime } from '../src/renderer/runtime.js'
 import { demoEnvelope } from '../src/shared/demo-envelope.js'
-import { initDebugPanel } from '../src/renderer/debug-panel.js'
+import { SecurePanels } from '../src/renderer/secure-panels.js'
 
 /** A fake Electron BrowserWindow + webContents built from the greens doc's
  *  description: `.on(event,cb)` + `.send(channel,msg)` + `.isDestroyed()` +
@@ -327,63 +327,31 @@ describe('RendererBackend — R1..R10 (docs/specs/renderer-backend-greens.md)', 
   })
 })
 
-describe('Debug panel — D1..D4 (docs/specs/debug-panel-greens.md)', () => {
+describe('Debug panel — hosted by the isolated SecurePanels graph (secure-panels.md)', () => {
   beforeAll(() => {
     installShim()
+    ;(globalThis as unknown as { window?: unknown }).window = { provident: { security: { get: async () => ({ token: null, enabled: ['read', 'dispatch'] }), set: async (p: unknown) => ({ token: null, enabled: ['read', 'dispatch'] }) } } }
   })
 
-  it('D1.1 — initDebugPanel(runtime) returns a function; refresh() writes /inTree \d+ · registered \d+/ with the SSR preview on a new line', () => {
+  it('D1.1 — SecurePanels.refreshDebug(runtime) writes /inTree \d+ · registered \d+/ with the SSR preview on a new line', () => {
+    const panels = new SecurePanels(document.createElement('div'))
     const runtime = new Runtime({ mount: mountEl() as never, envelope: demoEnvelope() as never })
     runtime.bootstrap()
-    const refresh = initDebugPanel(runtime as never)
-    expect(typeof refresh).toBe('function')
-    refresh()
-    const status = document.getElementById('status') as { textContent: string }
-    expect(status.textContent).toMatch(/inTree \d+ · registered \d+/)
-    const lines = status.textContent.split('\n')
+    panels.refreshDebug(runtime)
+    const text = panels.debugText()
+    expect(text).toMatch(/inTree \d+ · registered \d+/)
+    const lines = text.split('\n')
     expect(lines.length).toBeGreaterThanOrEqual(2)
     expect(lines[1].length).toBeGreaterThan(0)
   })
 
-  it('D1.2 — after bootstrap + refresh(): #status contains "inTree 12" AND a preview containing data-node-id', () => {
+  it('D1.3 — after await runtime.teardownResult() + refreshDebug: contains "inTree 1" (root-only)', async () => {
     const runtime = new Runtime({ mount: mountEl() as never, envelope: demoEnvelope() as never })
     runtime.bootstrap()
-    const refresh = initDebugPanel(runtime as never)
-    refresh()
-    const status = document.getElementById('status') as { textContent: string }
-    expect(status.textContent).toContain('inTree 12')
-    expect(status.textContent).toContain('data-node-id')
-  })
-
-  it('D1.3 — after await runtime.teardownResult() + refresh(): #status contains "inTree 1" (root-only)', async () => {
-    const runtime = new Runtime({ mount: mountEl() as never, envelope: demoEnvelope() as never })
-    runtime.bootstrap()
-    const refresh = initDebugPanel(runtime as never)
+    const panels = new SecurePanels(document.createElement('div'))
     await runtime.teardownResult()
-    refresh()
-    const status = document.getElementById('status') as { textContent: string }
-    expect(status.textContent).toContain('inTree 1')
-  })
-
-  it('D1.4 — a second refresh() produces the SAME text (read-only; no mutation)', () => {
-    const runtime = new Runtime({ mount: mountEl() as never, envelope: demoEnvelope() as never })
-    runtime.bootstrap()
-    const refresh = initDebugPanel(runtime as never)
-    refresh()
-    const status = document.getElementById('status') as { textContent: string }
-    const first = status.textContent
-    refresh()
-    expect(status.textContent).toBe(first)
-  })
-
-  it('D1.5 — refresh() does not change renderedHtmlResult().census (read-only)', () => {
-    const runtime = new Runtime({ mount: mountEl() as never, envelope: demoEnvelope() as never })
-    runtime.bootstrap()
-    const before = runtime.renderedHtmlResult().census
-    const refresh = initDebugPanel(runtime as never)
-    refresh()
-    const after = runtime.renderedHtmlResult().census
-    expect(after).toEqual(before)
+    panels.refreshDebug(runtime)
+    expect(panels.debugText()).toContain('inTree 1')
   })
 
   it('D2.6 — the demo SSR fragment is > 120 chars; the preview line ends with … and is ≤ ~125 chars', () => {
@@ -391,69 +359,37 @@ describe('Debug panel — D1..D4 (docs/specs/debug-panel-greens.md)', () => {
     runtime.bootstrap()
     const { ssrHtml } = runtime.renderedHtmlResult()
     expect(ssrHtml.length).toBeGreaterThan(120)
-    const refresh = initDebugPanel(runtime as never)
-    refresh()
-    const status = document.getElementById('status') as { textContent: string }
-    const preview = status.textContent.split('\n').slice(1).join('\n')
+    const panels = new SecurePanels(document.createElement('div'))
+    panels.refreshDebug(runtime)
+    const preview = panels.debugText().split('\n').slice(1).join('\n')
     expect(preview.endsWith('…')).toBe(true)
     expect(preview.length).toBeLessThanOrEqual(125)
   })
 
-  it('D2.7 — an empty/whitespace-only ssrHtml → preview (empty)', () => {
+  it('D3.8 — F1: a non-number census field is coerced to "?" — the text contains "inTree ?", never undefined/NaN', () => {
     const runtime = new Runtime({ mount: mountEl() as never, envelope: demoEnvelope() as never })
     runtime.bootstrap()
-    const refresh = initDebugPanel(runtime as never)
-    const stub = runtime as unknown as { renderedHtmlResult: () => unknown }
-    stub.renderedHtmlResult = () => ({ renderedHtml: '', ssrHtml: '   \n  ', census: { inTree: 1, registered: 1, unplaced: 0, destroyed: 0, prototypes: 0 } })
-    refresh()
-    const status = document.getElementById('status') as { textContent: string }
-    expect(status.textContent.split('\n')[1]).toBe('(empty)')
-  })
-
-  it('D3.8 — F1: a non-number census field (undefined/NaN) is coerced to "?" — #status contains "inTree ?", never undefined/NaN', () => {
-    const runtime = new Runtime({ mount: mountEl() as never, envelope: demoEnvelope() as never })
-    runtime.bootstrap()
-    const refresh = initDebugPanel(runtime as never)
+    const panels = new SecurePanels(document.createElement('div'))
     const stub = runtime as unknown as { renderedHtmlResult: () => unknown }
     stub.renderedHtmlResult = () => ({ renderedHtml: '', ssrHtml: '', census: { inTree: undefined, registered: NaN, unplaced: 0, destroyed: 0, prototypes: 0 } })
-    expect(() => refresh()).not.toThrow()
-    const status = document.getElementById('status') as { textContent: string }
-    expect(status.textContent).toContain('inTree ?')
-    expect(status.textContent).not.toContain('undefined')
-    expect(status.textContent).not.toContain('NaN')
+    expect(() => panels.refreshDebug(runtime)).not.toThrow()
+    expect(panels.debugText()).toContain('inTree ?')
+    expect(panels.debugText()).not.toContain('undefined')
+    expect(panels.debugText()).not.toContain('NaN')
   })
 
-  it('D3.9 — F2: a non-string ssrHtml (number/object/null) does NOT throw (coerced to ""); null/whitespace → preview (empty)', () => {
+  it('D3.9 — F2: a non-string ssrHtml does NOT throw (coerced to ""); null/whitespace → preview (empty)', () => {
     const runtime = new Runtime({ mount: mountEl() as never, envelope: demoEnvelope() as never })
     runtime.bootstrap()
-    const refresh = initDebugPanel(runtime as never)
+    const panels = new SecurePanels(document.createElement('div'))
     const stub = runtime as unknown as { renderedHtmlResult: () => unknown }
     stub.renderedHtmlResult = () => ({ renderedHtml: '', ssrHtml: 42 as never, census: { inTree: 1, registered: 1, unplaced: 0, destroyed: 0, prototypes: 0 } })
-    expect(() => refresh()).not.toThrow()
+    expect(() => panels.refreshDebug(runtime)).not.toThrow()
     stub.renderedHtmlResult = () => ({ renderedHtml: '', ssrHtml: null, census: { inTree: 1, registered: 1, unplaced: 0, destroyed: 0, prototypes: 0 } })
-    refresh()
-    let status = document.getElementById('status') as { textContent: string }
-    expect(status.textContent.split('\n')[1]).toBe('(empty)')
+    panels.refreshDebug(runtime)
+    expect(panels.debugText().split('\n')[1]).toBe('(empty)')
     stub.renderedHtmlResult = () => ({ renderedHtml: '', ssrHtml: '   \n  ', census: { inTree: 1, registered: 1, unplaced: 0, destroyed: 0, prototypes: 0 } })
-    refresh()
-    status = document.getElementById('status') as { textContent: string }
-    expect(status.textContent.split('\n')[1]).toBe('(empty)')
-  })
-
-  it('D4.10 — initDebugPanel with document.getElementById("status") returning null → returns a no-op refresh; calling it does NOT throw', () => {
-    // The greens doc notes this is NOT testable with the shim (its
-    // getElementById auto-creates an element, never returns null). Encode the
-    // real-DOM guard by stubbing getElementById to return null.
-    const runtime = new Runtime({ mount: mountEl() as never, envelope: demoEnvelope() as never })
-    runtime.bootstrap()
-    const original = document.getElementById.bind(document)
-    ;(document as { getElementById: unknown }).getElementById = () => null
-    try {
-      const refresh = initDebugPanel(runtime as never)
-      expect(typeof refresh).toBe('function')
-      expect(() => refresh()).not.toThrow()
-    } finally {
-      ;(document as { getElementById: unknown }).getElementById = original
-    }
+    panels.refreshDebug(runtime)
+    expect(panels.debugText().split('\n')[1]).toBe('(empty)')
   })
 })

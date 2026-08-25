@@ -50,6 +50,16 @@ export interface RenderedHtmlResult {
   census: Census
 }
 
+/** 0.2 Feature 2 — the MarkdownAdapter endpoint result (`provident.get_markdown`):
+ *  the simplified text-only output document for agentic consumers. */
+export interface MarkdownResult {
+  /** The markdown text re-emitted from the current graph (non-interactive:
+   *  on:* and data:* props dropped). */
+  markdown: string
+  /** Node/compile census snapshot. */
+  census: Census
+}
+
 export interface NodeInfo {
   nodeId: string
   cssId?: string
@@ -157,6 +167,7 @@ export interface CodeValidateResult {
 export type RpcMethod =
   | 'dispatch'
   | 'renderedHtml'
+  | 'markdown'
   | 'listTargets'
   | 'nodeState'
   | 'load'

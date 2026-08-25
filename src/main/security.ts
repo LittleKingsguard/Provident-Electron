@@ -4,6 +4,7 @@ export type ToolGroup = 'read' | 'dispatch' | 'graph' | 'code'
 
 const TOOL_GROUPS: Record<string, ToolGroup> = {
   'provident.get_rendered_html': 'read',
+  'provident.get_markdown': 'read',
   'provident.list_targets': 'read',
   'provident.get_node_state': 'read',
   'provident.code.get': 'read',

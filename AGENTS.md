@@ -18,6 +18,21 @@ project's two distinct goals:
    (agentic use + debugging exposure). This implements the upstream's parked
    "Phase C" (cross-process MCP/Electron endpoint) as a consumer.
 
+## Project-wide constraint (UI rendering)
+
+**All UI elements that are not directly part of the Electron shell itself
+(e.g. pre-existing menu/settings dropdowns, panels, dialogs, controls) MUST be
+rendered with the provident framework** — authored as provident-ssr data
+(envelope nodes / handler bodies / hooks / component bindings) and driven
+through the producing graph, NOT as hand-written HTML/DOM in the renderer.
+The Electron shell's own chrome (the window frame, the native menu bar, the
+preload bridge, the MCP server) is the only exception. Rationale: the shell's
+whole purpose is full synthetic-event access + rendered-HTML visibility for
+MCP endpoints — a UI element rendered outside the provident graph is invisible
+to `provident.dispatch`/`get_rendered_html`/`get_markdown` and defeats the
+agentic/debugging surface. A UI element added outside the framework is a
+review finding.
+
 ## Context budget rules (imported from upstream)
 
 1. **75% threshold**: past 75% of available context, stop starting new work

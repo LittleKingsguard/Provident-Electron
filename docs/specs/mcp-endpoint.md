@@ -47,6 +47,7 @@ Notes:
 | --- | --- | --- |
 | `provident.dispatch` | `{ target, event, args?, requestId? }` | `{ results, dirtied, renderedHtml, ssrHtml }` (the engine's `dispatchAndReport` derives `dirtied`; a duplicate `requestId` echoes the first report — no separate `deduplicated` field is surfaced) |
 | `provident.get_rendered_html` | `{}` | `{ renderedHtml, ssrHtml, census }` |
+| `provident.get_markdown` | `{}` | `{ markdown, census }` (0.2 Feature 2 — the simplified text-only output document for agentic consumers) |
 | `provident.list_targets` | `{}` | `{ nodes: [{ nodeId, cssId?, propsId?, type, content, state, inTree, handlers }] }` |
 | `provident.get_node_state` | `{ target }` | `{ nodeId, states, census }` |
 
@@ -97,14 +98,35 @@ REQ-GAP-3/A2) in BOTH views — so an agent reading the HTML can trace each
 element back to its producing graph node (element → `data-node-id` →
 `Supervisor` node → compiled state → `provident.dispatch`/`get_node_state`).
 
-### 3.3 `provident.list_targets`
+### 3.3 `provident.get_markdown`
+
+Rendered-markdown visibility (0.2 Feature 2 — the simplified output document
+for agentic consumers). Re-emits the CURRENT graph through a fresh
+`MarkdownAdapter` (the DomAdapter/SSRFragmentAdapter family's text-only
+member) and returns the markdown text + the census. The adapter is a pure
+op-stream consumer (D15) — it renders the same actionable set the DOM/SSR
+views use, but emits markdown text.
+
+- **Non-interactive (ruling 15/16)**: `on:*` AND `data:*` props (incl. the
+  opt-in `data-node-id`) are DROPPED — the markdown output carries no event
+  surface and no element→node mapping. For element→node tracing use
+  `get_rendered_html` (the DOM/SSR surface).
+- **Text-only**: headings/lists/emphasis/links map to markdown constructs;
+  `css:classes`/`css:style` are dropped (emphasis comes from the element
+  TYPE, D5).
+- **On request (ruling 14)**: a fresh `MarkdownAdapter` per call (D10 —
+  instance-bound prevMap; never a stale one). The host chooses the adapter at
+  emit; nothing is embedded by default.
+- **Empty graph → `''`** (D11).
+
+### 3.4 `provident.list_targets`
 
 The addressable vocabulary for `provident.dispatch` + debugging: every live
 node's nodeId, authored css.id, authored props.id, type, content, state,
 in-tree flag, and declared handlers (event/phase/name). Exposes both id
 vocabularies per node (REQ-GAP-3).
 
-### 3.4 `provident.get_node_state`
+### 3.5 `provident.get_node_state`
 
 The node's pass-2 resolved compiled states (read-only snapshot via
 `supervisor.getResolvedStates`) + the census. For an agent inspecting why a
@@ -258,7 +280,7 @@ whose group is disabled is not registered / not listed / returns an error.
 
 | Group | Tools | Risk | Default |
 | --- | --- | --- | --- |
-| `read` | `get_rendered_html`, `list_targets`, `get_node_state`, `code.get`, `code.validate` | read-only (no mutation, no eval for `code.get`/`validate`* ) | **ON** |
+| `read` | `get_rendered_html`, `get_markdown`, `list_targets`, `get_node_state`, `code.get`, `code.validate` | read-only (no mutation, no eval for `code.get`/`validate`* ) | **ON** |
 | `dispatch` | `provident.dispatch` | mutates the graph (handler args, no eval) | **ON** |
 | `graph` | `load`, `op`, `export`, `validate`, `teardown` | mutates/re-derives the graph + the envelope re-load | **OFF** (manual) |
 | `code` | `code.set`, `code.create`, `code.delete`, `code.load` | WRITES + re-loads (eval via `new Function` on load) | **OFF** (manual) |
@@ -286,20 +308,24 @@ re-build the graph. Enabling `graph`/`code` is an explicit human grant.
 
 ### 6.4 Manual-UI-only settings controls
 
-> **Implementation status (2026-08-23): LANDED.** The `SecurityGate` primitive +
+> **Implementation status (2026-08-25): LANDED.** The `SecurityGate` primitive +
 > the MCP server gating + the HTTP 401 + the stdio re-gate (M1) + **the manual-UI
 > Settings pane** are all implemented:
 > - persistence (`src/main/security-store.ts` — a JSON store in userData, loaded
 >   on boot, write-through);
 > - the IPC bridge (`provident:security:get`/`set` via `ipcMain.handle`),
 >   exposed to the renderer only through `window.provident.security` (preload);
-> - the renderer Settings pane (`src/renderer/settings.ts` + `#settings-pane` in
->   `index.html`) — token show/clear/regenerate + one toggle per tool group,
->   re-wiring the LIVE MCP server on change + persisting;
+> - the renderer Settings pane — **since 2026-08-25 rendered as provident data
+>   in an ISOLATED graph** (`src/renderer/secure-panels.ts` + `#panes` —
+>   `createIsolatedScope()` GraphScope, own Supervisor + DomAdapter, so the MCP
+>   endpoints never see/dispatch it). Token show/clear/regenerate + one toggle
+>   per tool group, re-wiring the LIVE MCP server on change + persisting. See
+>   `docs/specs/secure-panels.md`;
 > - the MCP server is built from the persisted config on boot (default
 >   `read`+`dispatch` ON / `graph`+`code` OFF / token null on first run).
 > The settings surface is **manual-UI-only by construction**: the IPC channel is
-> main→renderer→main and the MCP tool handlers never route to it.
+> main→renderer→main, the MCP tool handlers never route to it, AND the pane
+> lives in an isolated graph the MCP endpoints cannot read/dispatch.
 
 The MCP security + agent permissions are configured **manually by the human
 operator in the app UI only** — never via an MCP tool (an agent must not be
@@ -404,6 +430,11 @@ the MCP tool handlers never route to it.
   (DOM = SSR), target listing, css.id dispatch mutation + re-render of both
   views, engine-derived `dirtied`, `event.value` echo, bare-string + unknown
   targets, engine-owned `requestId` dedup echo, node state.
+- `tests/markdown-endpoint.test.ts` (4) pins the 0.2 MarkdownAdapter endpoint
+  (`provident.get_markdown`): the live graph renders as markdown text
+  (non-interactive — no `on:`/`data-node-id`), a dispatch mutation reflects in
+  the markdown, and the def-prototype round-trip (Feature 1a) re-registers on a
+  serialized-doc load.
 - `tests/engine-surfaces.test.ts` (5) pins the adopted 0.1.1 shared surfaces
   directly (parity with the upstream contract): `dispatchAndReport`
   {results, dirtied} after an awaited flush, opt-in bounded `requestId` dedup

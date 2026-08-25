@@ -7,7 +7,7 @@ import { describe, it, expect, beforeAll } from 'vitest'
 import { installShim, mountEl } from '../src/shared/dom-shim.js'
 import { Runtime } from '../src/renderer/runtime.js'
 import { demoEnvelope } from '../src/shared/demo-envelope.js'
-import type { LegacyInitialData } from 'provident-ssr'
+import type { LegacyInitialData } from '@littlekingsguard/provident-ssr'
 
 beforeAll(() => {
   installShim()

@@ -38,6 +38,8 @@ class RuntimeBackend implements McpBackend {
         return this.runtime.dispatch(p as never)
       case 'renderedHtml':
         return this.runtime.renderedHtmlResult()
+      case 'markdown':
+        return this.runtime.markdownResult()
       case 'listTargets':
         return this.runtime.listTargets()
       case 'nodeState':

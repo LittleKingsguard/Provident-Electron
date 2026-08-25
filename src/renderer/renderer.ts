@@ -3,8 +3,7 @@
 // MCP-facing operations over the preload bridge (main process = MCP server).
 import { Runtime } from './runtime.js'
 import { demoEnvelope } from '../shared/demo-envelope.js'
-import { initSettingsPane } from './settings.js'
-import { initDebugPanel } from './debug-panel.js'
+import { SecurePanels } from './secure-panels.js'
 import type { RpcRequest, RpcReply } from '../shared/types.js'
 
 function handleRequest(runtime: Runtime, req: RpcRequest): Promise<RpcReply> {
@@ -17,6 +16,9 @@ function handleRequest(runtime: Runtime, req: RpcRequest): Promise<RpcReply> {
           break
         case 'renderedHtml':
           value = runtime.renderedHtmlResult()
+          break
+        case 'markdown':
+          value = runtime.markdownResult()
           break
         case 'listTargets':
           value = runtime.listTargets()
@@ -76,22 +78,27 @@ function main(): void {
   if (!mount) throw new Error('mount #app missing')
   const runtime = new Runtime({ mount, envelope: demoEnvelope() })
   runtime.bootstrap()
-  // The read-only Debug / agent-visibility pane (docs/specs/debug-panel.md).
-  const refreshDebug = initDebugPanel(runtime)
-  refreshDebug()
   const bridge = window.provident
   if (!bridge) {
     console.warn('[provident-renderer] no preload bridge — MCP endpoints unavailable (running as a plain page?)')
     return
   }
+  // The operator-only Security + Debug panes render in their OWN isolated
+  // provident graph (secure-panels.ts) — a separate GraphScope, so the MCP
+  // endpoints (which read the app Runtime) can never see/dispatch them.
+  const panesMount = document.getElementById('panes')
+  const panels = panesMount ? new SecurePanels(panesMount) : null
+  if (panels) {
+    void panels.refresh()
+    // the Debug pane's live census + SSR preview, sourced from the APP graph
+    panels.refreshDebug(runtime)
+  }
   bridge.onRequest((req) => {
     void handleRequest(runtime, req).then((reply) => {
-      refreshDebug()
+      panels?.refreshDebug(runtime)
       bridge.sendReply(reply)
     })
   })
-  // The manual-UI Security Settings pane (mcp-endpoint.md §6.4).
-  void initSettingsPane()
   bridge.ready()
 }
 

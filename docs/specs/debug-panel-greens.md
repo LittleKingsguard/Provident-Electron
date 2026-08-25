@@ -1,6 +1,12 @@
 # Green Scenarios — Renderer Debug Panel (#3)
 
-Status: **GREEN-SCENARIO SET** — to be attempted during the blind-test loop.
+> **SUPERSEDED (2026-08-25).** The Debug pane's behavior is now covered by
+> `SecurePanels.refreshDebug(runtime)` in the isolated panes graph
+> (`docs/specs/secure-panels.md`). The blind scenarios here (`initDebugPanel`)
+> were re-authored against the new surface in `tests/blind-renderer-debug.test.ts`
+> (D1.1/D1.3/D2.6/D3.8/D3.9) + the gemma4 S30/S31. Kept for provenance.
+
+Status: **SUPERSEDED** (originally the green-scenario set).
 Each scenario below is a behavior `docs/specs/debug-panel.md` claims; the
 blind-test agent runs it against the live `initDebugPanel` + the Runtime
 (under the DOM shim) and confirms it PASSES. A failure is a doc bug OR an

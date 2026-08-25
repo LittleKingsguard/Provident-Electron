@@ -1,6 +1,14 @@
 # Spec — Renderer Debug Panel (#3)
 
-Status: **SPEC** (delegation gate for the debug-panel unit). Source:
+> **SUPERSEDED (2026-08-25).** The Debug pane is now hosted in the isolated
+> `SecurePanels` graph (`src/renderer/secure-panels.ts` + `docs/specs/secure-panels.md`)
+> — provident-rendered in its own `GraphScope`, not the hand-written
+> `debug-panel.ts` this spec describes. The `SecurePanels.refreshDebug(runtime)`
+> surface carries the same behavior (census + truncated SSR preview) into the
+> panes graph's `#status` node. Kept for provenance; the ACTIVE contract is
+> `docs/specs/secure-panels.md`.
+
+Status: **SUPERSEDED** (originally the delegation gate for the debug-panel unit). Source:
 `docs/next-steps.md` #3 ("Renderer debug panel — live census + SSR fragment in
 `#status`"). A read-only debugging surface in the Electron renderer that
 mirrors the MCP agent's view (census + SSR) into the `#status` pane after

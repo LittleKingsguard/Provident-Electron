@@ -6,7 +6,7 @@
 // console probes (the battery's purpose is to CONFIRM/DISPROVE the provisional
 // verdicts in the spec §4 — engine gaps are recorded, never patched here).
 import { describe, it, expect, beforeAll } from 'vitest'
-import { translateLegacy, Supervisor, EventBridge, type Node } from 'provident-ssr'
+import { translateLegacy, Supervisor, EventBridge, type Node } from '@littlekingsguard/provident-ssr'
 import { installShim } from '../src/shared/dom-shim.js'
 
 beforeAll(() => {
