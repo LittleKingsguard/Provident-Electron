@@ -82,7 +82,7 @@ now droppable in favor of the published surfaces.
   recorded in `docs/decisions.md` / `docs/pending.md` for this repo's own
   maintenance.
 
-## Round 5 — DEFECT-SSR-REMOVE (filed 2026-08-23, from the adapter-parity battery)
+## Round 5 — DEFECT-SSR-REMOVE (filed 2026-08-23, from the adapter-parity battery) — RESOLVED in provident-ssr 0.1.4
 
 - **Issue**: `SSRFragmentAdapter` retains removed/destroyed elements in the
   serialized fragment, diverging from `DomAdapter`.
@@ -94,16 +94,46 @@ now droppable in favor of the published surfaces.
   S5 (spec `docs/specs/adapter-parity-battery.md`, greens
   `docs/specs/adapter-parity-greens.md`).
 - **Root cause**: `SSRFragmentAdapter.removeEl` (dist/core/adapters.js:397-400)
-  only does `fragments.delete(wireKey(...))` — it never detaches the fragment
-  from its parent's `children` array nor rematerializes the owner, so the
-  removed element survives serialization. `DomAdapter.removeEl`
+  only did `fragments.delete(wireKey(...))` — it never detached the fragment
+  from its parent's `children` array nor rematerialized the owner, so the
+  removed element survived serialization. `DomAdapter.removeEl`
   (adapters.js:213-229) detaches + removes.
-- **Proposed fix shape (upstream-owned)**: `SSRFragmentAdapter.removeEl`
-  should splice the child out of its parent state's `children`, set its parent
-  to null, and call `rematerialize(parent)` — mirroring the DomAdapter detach.
-- **This repo's response**: defect recorded + handed off (this row); the DOM
-  collapse is asserted as the host green and the SSR retention is pinned as the
-  defect in the battery (NEVER patched here).
+- **0.1.4 landing**: `SSRFragmentAdapter.removeEl` now splices the child out of
+  its parent state's `children`, nulls its parent, purges it from `created`,
+  and calls `rematerialize(parent)` — mirroring the DomAdapter detach
+  (dist/core/adapters.js:397-424).
+- **This repo's verification**: the adapter-parity battery S5 now reports "SSR
+  drops the destroyed element (parity recovered)" — **73 checks, 0 failures**;
+  the full trio green (433 tests, typecheck clean, build clean).
+
+## Round 6 — DEFECT-JOURNAL-UNDO + DEFECT-JOURNAL-REPLAY-APPEND (filed 2026-08-24) — RESOLVED in provident-ssr 0.1.5
+
+Two journal-reversibility defects surfaced by the stress battery
+(`docs/specs/journal-reversibility-battery.md`, repro `tests/journal-reversibility.test.ts`):
+
+- **DEFECT-JOURNAL-UNDO** — `Supervisor.undo()` reverted only `attach` /
+  `destroy` / `rows-mint`; a `state-slice` undo was a silent no-op.
+  **RESOLVED in 0.1.5**: `undo()` now inverts `state-slice` EXACTLY (the
+  journaled `sliceLayers` → removeLayer per id + hooks `hookUndo` anchor
+  restore + `markPass2`/consumer walk). The remaining kinds
+  (`detach`/`move`/`clone-instance`/`layer-apply`/`placement-attach`/
+  `rows-clear`) are **DOCUMENTED NO-OPs** in the G14 per-kind table (ops.md §6)
+  with parked fact-sets — no longer silent gaps.
+- **DEFECT-JOURNAL-REPLAY-APPEND** — a `state-slice append` replayed against an
+  already-appended array grew it. **RESOLVED in 0.1.5**: replay() gates a
+  state-slice whose recorded `sliceLayers` all exist (the OO-2 idempotency
+  pattern); `redo()` is no-journal; clone-instance replay gates on `minted`
+  liveness.
+
+- **This repo's verification**: `tests/journal-reversibility.test.ts` (9 tests)
+  now asserts the resolved contract — state-slice undo reverts (O1), append /
+  append-first / replaceAll replay idempotent (O2/O2b/O3), detach + clone-instance
+  undo as the documented no-op pins (O5/O7), destroy no-op (R11), atomicity (R5).
+  **9/9 green; trio green (442 tests).**
+
+The destroy-undo NO-OP is the documented contract pin (pending.md REQ-GAP-12 +
+supervisor.js "destroy is terminal"), NOT a defect. Host-side: none — all
+findings are engine-level.
 
 ## Verified state (the workarounds ARE proven)
 

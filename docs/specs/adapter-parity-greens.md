@@ -46,12 +46,11 @@ handlers). `provident.get_rendered_html` →
 
 - Load an envelope with `keeper`, `doomed`, `nuke` (nuke destroys `doomed`).
 - Dispatch `nuke` (click) → non-empty; `dirtied` includes the doomed node.
-- **P6 — EXPECTED ENGINE DIVERGENCE (defect, upstream-owned)**: the DOM
-  collapses to root-only after destroy; the SSR fragment RETAINS the destroyed
-  `doomed` element AND the full prior subtree (`keeper`/`doomed`/`nuke`).
-  → recorded in `docs/defects.md` + `docs/HANDOFF.md` Round 5 (never patched
-  here). The battery asserts the DOM collapse as the host green and pins the
-  SSR retention as the recorded defect.
+- **P6 — RESOLVED (provident-ssr 0.1.4)**: the SSR adapter now drops the
+  destroyed element (parity recovered). The battery asserts the DOM collapse
+  AND the SSR drop — **73 checks, 0 failures**. (The defect was recorded in
+  `docs/defects.md` + `docs/HANDOFF.md` Round 5 and fixed upstream in 0.1.4;
+  the battery's parity-recovered branch is now the green path.)
 
 ### S6 — stale-SSR-across-reload (P8, the R13 regression net)
 
@@ -73,11 +72,12 @@ handlers). `provident.get_rendered_html` →
 - **Host green:** P1/P7/P8/P9 structural + data-node-id + reload-survival all
   pass.
 - **Engine defect (upstream-owned, handed off):** P6 — `SSRFragmentAdapter`
-  retains removed/destroyed elements in `ssr.toString()`. Repro: dispatch a
-  destroy; the SSR keeps the destroyed element + its siblings while the DOM
-  drops them. Root cause: `SSRFragmentAdapter.removeEl` only does
-  `fragments.delete(wireKey(...))` — it never detaches the fragment from its
-  parent's `children` array nor rematerializes the owner, so the removed
-  element survives serialization. Fix shape (upstream): `removeEl` should also
-  splice the child out of its parent state's `children` and call
-  `rematerialize(parent)`.
+  retained removed/destroyed elements in `ssr.toString()`. Repro: dispatch a
+  destroy; the SSR kept the destroyed element + its siblings while the DOM
+  dropped them. Root cause: `SSRFragmentAdapter.removeEl` only did
+  `fragments.delete(wireKey(...))` — it never detached the fragment from its
+  parent's `children` array nor rematerialized the owner, so the removed
+  element survived serialization. **RESOLVED in provident-ssr 0.1.4** — the
+  fix shape (splice the child out of its parent state's `children`, null the
+  parent, purge `created`, rematerialize the parent) landed upstream
+  (dist/core/adapters.js:397-424). The battery now reports parity recovered.

@@ -14,9 +14,21 @@ reproduction → suspected root cause → proposed fix shape (upstream-owned).
 
 ## OPEN
 
-| ID | Gap (as filed) | Observed symptom / reproduction | Suspected root cause | Proposed fix shape (upstream-owned) |
-| --- | --- | --- | --- | --- |
-| **DEFECT-SSR-REMOVE** | `SSRFragmentAdapter` retains removed/destroyed elements in the serialized fragment | Load an envelope with `keeper`/`doomed`/`nuke` (nuke `{kind:'destroy'}` on `doomed`), dispatch nuke. `provident.get_rendered_html`: the DOM collapses to root-only, but the SSR fragment STILL contains `doomed` AND the full prior subtree (`keeper`/`doomed`/`nuke`). Repro: `tests/adapter-parity-battery.test.mjs` S5 (green doc `docs/specs/adapter-parity-greens.md`). | `SSRFragmentAdapter.removeEl` (dist/core/adapters.js:397-400) only does `fragments.delete(wireKey(wire, forkKey))`. It NEVER detaches the fragment from its parent's `children` array NOR rematerializes the owner, so a removed element survives in `ssr.toString()` (its parent's `children` still reference it; the floating/top-level serialize re-emits it). The DomAdapter's `removeEl` (adapters.js:213-229) detaches + removes, so the two adapters diverge on removal. | (upstream) `SSRFragmentAdapter.removeEl` should splice the child out of its parent state's `children`, set its parent to null, and call `rematerialize(parent)` (mirror the DomAdapter detach). This restores DOM/SSR parity on destroy/remove. |
+_(none — REQ-GAP-1..8 resolved by 0.1.1/0.1.2; REQ-GAP-9..12 PUBLISHED in 0.1.3; DEFECT-SSR-REMOVE RESOLVED in 0.1.4; DEFECT-JOURNAL-UNDO + DEFECT-JOURNAL-REPLAY-APPEND RESOLVED in 0.1.5 (documented no-op residuals); see below.)_
+
+## RESOLVED BY UPSTREAM (provident-ssr 0.1.5, 2026-08-24)
+
+| ID | Gap (as filed) | Resolution in 0.1.5 | This repo's verification |
+| --- | --- | --- | --- |
+| **DEFECT-JOURNAL-UNDO** | `Supervisor.undo()` reverted only `attach`/`destroy`/`rows-mint`; a `state-slice`/`detach`/`clone-instance` undo was a silent no-op. | **FIXED (0.1.5)** — `undo()` now inverts `state-slice` EXACTLY (the journaled `sliceLayers` → removeLayer per id, hooks `hookUndo` anchor restore, `markPass2` + E2E-3 consumer walk; per-inverse try/catch, destroyed/missing silent). `detach`/`move`/`clone-instance`/`layer-apply`/`placement-attach`/`rows-clear` are now **DOCUMENTED NO-OPs** (the G14 per-kind table, ops.md §6 — each with its parked fact-set for a future user-gated pass), NOT silent gaps. | `tests/journal-reversibility.test.ts` O1 asserts state-slice undo reverts; O5/O7 assert the documented no-op pins. 9/9 green. |
+| **DEFECT-JOURNAL-REPLAY-APPEND** | A `state-slice append` replayed against an already-appended array grew it (`["x"]`→`["x","x"]`→`["x","x","x","x"]`). | **FIXED (0.1.5)** — replay() now gates a state-slice whose recorded `sliceLayers` all exist (the OO-2 idempotency pattern); a replayed append never grows. `redo()` is no-journal (one entry per op, no double-undo). Clone-instance replay gates on the recorded `minted` set resolving live. | `tests/journal-reversibility.test.ts` O2/O2b/O3 assert replay idempotency. **9/9 green.** |
+
+
+## RESOLVED BY UPSTREAM (provident-ssr 0.1.4, 2026-08-24)
+
+| ID | Gap (as filed) | Resolution in 0.1.4 | Reference |
+| --- | --- | --- | --- |
+| **DEFECT-SSR-REMOVE** | `SSRFragmentAdapter` retained removed/destroyed elements in the serialized fragment (the adapter-parity battery P6 probe) | **FIXED (0.1.4)** — `SSRFragmentAdapter.removeEl` now detaches the fragment from its parent's `children` array, nulls its parent, purges it from `created`, and rematerializes the parent (dist/core/adapters.js:397-424) — mirroring `DomAdapter.removeEl` (PAR-5/SSR-F4 parity). The adapter-parity battery S5 now reports "SSR drops the destroyed element (parity recovered)" (73 checks, 0 failures). | handoffs-review-3.md (2026-08-23), the adapter-parity battery `docs/specs/adapter-parity-battery.md` + `docs/specs/adapter-parity-greens.md` |
 
 ## PUBLISHED (provident-ssr 0.1.3) — Round 4 / REQ-GAP-9..12
 
