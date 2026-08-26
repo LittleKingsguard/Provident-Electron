@@ -6,7 +6,12 @@ import { demoEnvelope } from '../shared/demo-envelope.js'
 import { SecurePanels } from './secure-panels.js'
 import type { RpcRequest, RpcReply } from '../shared/types.js'
 
-function handleRequest(runtime: Runtime, req: RpcRequest): Promise<RpcReply> {
+/** N3 (live-notification-review.md) — the MCP methods that mutate the APP graph
+ *  (content/structural/re-derive). Only these trigger the app-graph-changed push
+ *  AFTER the reply. Never triggered by the isolated SecurePanels graph. */
+const MUTATING_METHODS = new Set(['dispatch', 'load', 'op', 'teardown', 'code.load', 'code.loadBatch'])
+
+function handleRequest(runtime: Runtime, req: RpcRequest, notify: (p: { uri: string }) => void): Promise<RpcReply> {
   return (async (): Promise<RpcReply> => {
     try {
       let value: unknown
@@ -59,6 +64,9 @@ function handleRequest(runtime: Runtime, req: RpcRequest): Promise<RpcReply> {
         case 'code.load':
           value = runtime.codeLoad((req.payload as { envelope?: unknown }).envelope)
           break
+        case 'code.loadBatch':
+          value = runtime.codeLoadBatch((req.payload as { ops: unknown[] }).ops as never)
+          break
         default:
           throw new Error(`unknown method: ${(req as { method: string }).method}`)
       }
@@ -70,7 +78,15 @@ function handleRequest(runtime: Runtime, req: RpcRequest): Promise<RpcReply> {
         error: e instanceof Error ? e.message : String(e),
       }
     }
-  })()
+  })().then((reply) => {
+    // N3/N6 — after a MUTATING app-graph op succeeds, emit ONE app-graph-changed
+    // push (the resource content changed). App-Runtime-only: SecurePanels never
+    // calls this. Coalesced to once per tool invocation (after the reply).
+    if (reply.ok && MUTATING_METHODS.has(req.method)) {
+      notify({ uri: 'mcp://provident/app' })
+    }
+    return reply
+  })
 }
 
 function main(): void {
@@ -94,7 +110,7 @@ function main(): void {
     panels.refreshDebug(runtime)
   }
   bridge.onRequest((req) => {
-    void handleRequest(runtime, req).then((reply) => {
+    void handleRequest(runtime, req, (p) => bridge!.notify(p)).then((reply) => {
       panels?.refreshDebug(runtime)
       bridge.sendReply(reply)
     })

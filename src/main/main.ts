@@ -4,7 +4,7 @@
 // IPC.
 import { app, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'node:path'
-import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, type RpcReply } from '../shared/types.js'
+import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_NOTIFY, type RpcReply, type NotifyPayload } from '../shared/types.js'
 import { ProvidentMcpServer, RendererBackend, type McpTransportKind } from './mcp-server.js'
 import { createSecurityStore, type SecurityStore } from './security-store.js'
 import { SecurityGate, type ToolGroup } from './security.js'
@@ -83,6 +83,13 @@ async function main(): Promise<void> {
   })
   ipcMain.on(IPC_REPLY, (_event, reply: RpcReply) => {
     backend.handleReply(reply)
+  })
+  // N4 (live-notification-review.md) — the app-graph-changed push from the
+  // renderer. Maps it into a resource-updated notification over the stdio MCP
+  // server (N2: HTTP is stateless → no-op). Sourced ONLY from the app Runtime
+  // re-render; SecurePanels never emits here.
+  ipcMain.on(IPC_NOTIFY, (_event, payload: NotifyPayload) => {
+    void mcp.notifyGraphChanged()
   })
 
   const win = new BrowserWindow({

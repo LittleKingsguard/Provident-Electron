@@ -19,6 +19,7 @@ const TOOL_GROUPS: Record<string, ToolGroup> = {
   'provident.code.create': 'code',
   'provident.code.delete': 'code',
   'provident.code.load': 'code',
+  'provident.code.loadBatch': 'code',
   // R1 (mcp-resources-review.md) — the read-group resources. Keyed by
   // `resource:<uri>` so `toolAllowed` gates them with the `read` group. A
   // resource is registered ONLY when its group is allowed (never always-

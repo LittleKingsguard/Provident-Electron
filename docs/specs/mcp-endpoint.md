@@ -158,7 +158,9 @@ The resource read callbacks forward over the SAME `RendererBackend` IPC the
 tools use (main → renderer → app Runtime) — never the isolated SecurePanels
 graph (R4). Reads are always-fresh point-in-time snapshots; a client must not
 cache a resource URI's content across a dispatch. The companion
-live-change-notification row stays parked (the future invalidation answer).
+live-change-notification row is LANDED 2026-08-25 as the invalidation answer: a
+stdio-only, app-Runtime-sourced `notifications/resources/updated` after a
+mutating app-graph op (see §8 Non-goals).
 
 ## 4. Code / data CRUD (the authoring surface — OUTSIDE the live graph)
 
@@ -188,6 +190,7 @@ the `hooks: ['name', …]` declaration live in the envelope).
 | `provident.code.delete` | `{ path, index? }` | `{ ok, removed }` | delete an entry at `path` (an array index, a `props.<key>`, a `hooks` member, a `component` binding) |
 | `provident.code.validate` | `{ envelope? }` | `{ valid, warnings, shape }` | schema-validate an envelope (the current one or a proposed one): run the translate/`loadState`-boundary checks (envelope-mismatch, node-shape, handler format, hooks shape) and report `TranslatedTree.warnings` — WITHOUT building the graph |
 | `provident.code.load` | `{ envelope? }` | `{ census, renderedHtml, ssrHtml, warnings }` | apply an edited envelope to the LIVE graph (the A2 `load` path — teardown the current content first, then translate/register/compile/render the new envelope) |
+| `provident.code.loadBatch` | `{ ops }` | `{ census, renderedHtml, ssrHtml, warnings, ops }` | stage N `code.*` envelope ops (`[{op:'set'|'create'|'delete', path, value?/entry?/index?}]`) and re-derive ONCE. **All-or-nothing** (B2): the ops apply to a clone; on any failure the live envelope is untouched. **Ordered with dependencies** (B3): a later op can reference a path created by an earlier op. **Schema-validated** (B4): a malformed op is rejected. Returns the re-derive `LoadResult` + a per-op status array (B5). Throws "no envelope loaded" when there is no legacy envelope (B7). `code`-group (OFF by default). |
 
 `path` is a JSON-pointer-style string into the envelope, e.g.
 `template.root.children[0].handlers`, `template.root.hooks`,
@@ -403,7 +406,8 @@ the MCP tool handlers never route to it.
   in-place diff). The cost is O(nodes) translate + O(path-states) compile +
   O(elements) emit; for a 4095-element tree this is the ~2.8s enumeration pass,
   not a small patch. Documented here; an optional `code.loadBatch`/write buffer
-  (stage N edits, one re-derive) is a FUTURE surface, NOT implemented — `code.*`
+  (stage N edits, one re-derive) is a **FUTURE surface, NOT implemented** (see
+  `docs/pending.md` SPECULATIVE — `code.loadBatch` / write buffer) — `code.*`
   edits accumulate on the envelope until an explicit `code.load`.
 - **A5**: index authored css.id/props.id once at load (a Map rebuilt on
   load/teardown), not per-call `allNodes().find`.
@@ -448,8 +452,15 @@ the MCP tool handlers never route to it.
 - No browser hydration path (browsers get real DOM events + hydration;
   render.md §7). Real DOM events are wired through the same `DomAdapter.onEvent`
   seam, but the MCP surface is synthetic-event + read.
-- No server push (pending.md SPECULATIVE rows) — the current surface is
-  pull-based read-after-dispatch.
+- **Server push is stdio-only and content-level.** A live-change notification
+  (`notifications/resources/updated` for `mcp://provident/app`) is delivered
+  ONLY on the stdio transport (the HTTP transport is stateless — a fresh server
+  per POST, no session — so a notify there is a no-op, never a hang). It fires
+  after an app-graph MUTATING operation (dispatch/load/op/teardown/code.load),
+  sourced ONLY from the app Runtime re-render (never the isolated SecurePanels
+  graph — an operator action must not leak to the agent through the push). The
+  current surface remains pull-based read-after-dispatch + this best-effort
+  stdio-only push (see §3.6).
 
 ## 9. Verification
 

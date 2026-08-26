@@ -146,6 +146,7 @@ export class ProvidentMcpServer {
     'provident.code.create',
     'provident.code.delete',
     'provident.code.load',
+    'provident.code.loadBatch',
   ]
 
   /** The subset of ALL_TOOLS whose group the current gate allows — the tools
@@ -261,6 +262,54 @@ export class ProvidentMcpServer {
       }
     }
     return result
+  }
+
+  /** N2 test seam — connect a mock transport to the stdio server so the notify
+   *  path's `isConnected()` gate can be exercised without a real stdio session.
+   *  Returns the mock transport's recorded sent messages. */
+  async connectMockTransport(): Promise<Array<{ method?: string; params?: unknown }>> {
+    const sent: Array<{ method?: string; params?: unknown }> = []
+    const transport = {
+      start: async () => {},
+      send: async (msg: { method?: string; params?: unknown }) => { sent.push(msg) },
+      close: async () => {},
+      onclose: undefined as (() => void) | undefined,
+      onerror: undefined as ((e: unknown) => void) | undefined,
+      onmessage: undefined as unknown,
+    }
+    const server = this.ensureServerRegistered()
+    await (server as unknown as { connect(t: unknown): Promise<void> }).connect(transport)
+    return sent
+  }
+
+  /** N2/N5 (live-notification-review.md) — a renderer "app graph changed" push.
+   *  Returns `true` if a notification was actually delivered, `false` if it was
+   *  a no-op. Guards:
+   *  - N2 (stdio-only): the HTTP transport is stateless (a fresh McpServer per
+   *    POST, disconnected after the response) — `isConnected()` is false there,
+   *    so a notify is a NO-OP (never a hang). Only the long-lived stdio server
+   *    delivers.
+   *  - N5 (gate-aware): the `resources` capability is present only when a
+   *    `read`-group resource is registered. If `read` is off (no resources,
+   *    no capability), a notify emits nothing.
+   *  - N1 (typed): the notify maps to a per-resource `sendResourceUpdated`
+   *    (content change), NOT a tool-list/list-changed (those are applyGatePatch-
+   *    only).
+   */
+  async notifyGraphChanged(): Promise<boolean> {
+    // N2 — only the stdio transport is a connected, push-capable session.
+    if (this.transport !== 'stdio' || !this.stdioServer?.isConnected()) return false
+    // N5 — gate-aware: only emit resource-updated when `read` (the resources'
+    // group) is enabled (the capability is present only when resources register).
+    if (!this._gate.toolAllowed('resource:mcp://provident/app')) return false
+    try {
+      await this.stdioServer.server.sendResourceUpdated({ uri: 'mcp://provident/app' })
+      return true
+    } catch {
+      // N2 — a disconnected/failed send is a no-op (never a hang, never a throw
+      // that breaks the renderer push path).
+      return false
+    }
   }
 
   get gate(): SecurityGate {
@@ -417,6 +466,7 @@ export class ProvidentMcpServer {
       { name: 'provident.code.delete', description: 'Delete an envelope entry at path', inputSchema: { path: z.string(), index: z.number().optional() } },
       { name: 'provident.code.validate', description: 'Schema-validate an envelope without building the graph', inputSchema: { envelope: z.unknown().optional() } },
       { name: 'provident.code.load', description: 'Apply an edited envelope to the live graph', inputSchema: { envelope: z.unknown().optional() } },
+      { name: 'provident.code.loadBatch', description: 'Stage N code.* envelope ops and re-derive once (all-or-nothing)', inputSchema: { ops: z.array(z.unknown()).describe('the batch ops: [{op:"set"|"create"|"delete", path, value?/entry?/index?}]') } },
     ]
     const dispatch = (name: string): string => name.slice('provident.'.length)
     for (const { name, description, inputSchema } of graph) {

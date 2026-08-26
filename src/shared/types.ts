@@ -162,6 +162,22 @@ export interface CodeValidateResult {
   shape: string
 }
 
+/** B4 (loadbatch-review.md) — a single `code.loadBatch` op. A discriminated
+ *  union: `set`/`create`/`delete`, mirroring the individual `code.*` tools.
+ *  The `delete` addressing rule (path-index vs `index` arg, mutually exclusive)
+ *  is pinned. */
+export type CodeBatchOp =
+  | { op: 'set'; path: string; value: unknown }
+  | { op: 'create'; path: string; entry: unknown }
+  | { op: 'delete'; path: string; index?: number }
+
+/** B5 — the `code.loadBatch` result: the re-derive `LoadResult` + a per-op
+ *  status array (or, on rejection, the failing op index + code). */
+export interface CodeLoadBatchResult extends LoadResult {
+  /** per-op status, in order (`applied` for each successful op). */
+  ops: Array<{ op: string; path: string; status: 'applied' }>
+}
+
 // ---- IPC request envelope ------------------------------------------------
 
 export type RpcMethod =
@@ -181,6 +197,7 @@ export type RpcMethod =
   | 'code.delete'
   | 'code.validate'
   | 'code.load'
+  | 'code.loadBatch'
 
 export interface RpcRequest {
   id: number
@@ -199,6 +216,16 @@ export interface RpcReply {
 export const IPC_INVOKE = 'provident:invoke'
 export const IPC_REPLY = 'provident:reply'
 export const IPC_READY = 'provident:ready'
+/** N4 (live-notification-review.md) — the renderer→main "app graph changed"
+ *  push channel. Sourced ONLY from the app Runtime re-render (never the
+ *  isolated SecurePanels graph — an operator action must not leak to the
+ *  agent through a push). The MCP server maps it into a resource-updated
+ *  notification over stdio. */
+export const IPC_NOTIFY = 'provident:notify'
+export interface NotifyPayload {
+  /** the changed resource URI (e.g. `mcp://provident/app`) */
+  uri: string
+}
 
 // ---- security settings IPC (the manual-UI surface, mcp-endpoint.md §6.4) ----
 

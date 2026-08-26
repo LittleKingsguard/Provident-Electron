@@ -66,6 +66,8 @@ class RuntimeBackend implements McpBackend {
         return this.runtime.codeValidate(p.envelope)
       case 'code.load':
         return this.runtime.codeLoad(p.envelope)
+      case 'code.loadBatch':
+        return this.runtime.codeLoadBatch(p.ops as never)
       default:
         throw new Error(`unknown method: ${method}`)
     }

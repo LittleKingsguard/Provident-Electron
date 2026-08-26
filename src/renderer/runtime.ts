@@ -53,6 +53,7 @@ import type {
   CodeCreateResult,
   CodeDeleteResult,
   CodeValidateResult,
+  CodeLoadBatchResult,
 } from '../shared/types.js'
 import type { TranslatedWarning } from 'provident-ssr/core/translate.js'
 
@@ -738,8 +739,15 @@ export class Runtime {
   }
 
   private envelopeParent(path: string): { parent: unknown; key: string | number } | null {
+    return this.envelopeParentIn(this.envelope, path)
+  }
+
+  /** B3 (loadbatch-review.md) — resolve a path against a GIVEN envelope (the
+   *  batch clone), so a later op can reference a path created by an earlier op
+   *  in the same batch. */
+  private envelopeParentIn(env: unknown, path: string): { parent: unknown; key: string | number } | null {
     this.assertValidPath(path)
-    let cur: unknown = this.envelope
+    let cur: unknown = env
     const segs = path.split('.')
     for (let i = 0; i < segs.length - 1; i += 1) {
       const seg = segs[i]
@@ -896,6 +904,71 @@ export class Runtime {
       ssrHtml: this.ssrHtml(),
       warnings: this.warnings,
     }
+  }
+
+  /** `provident.code.loadBatch` (loadbatch-review.md B1-B8) — stage N `code.*`
+   *  envelope ops and perform ONE re-derive.
+   *
+   *  B2 (all-or-nothing): the ops apply to a `structuredClone` of the envelope;
+   *  on ANY op failure the clone is discarded and the live `this.envelope` is
+   *  UNTOUCHED (no half-applied state). Only on full success is the clone
+   *  committed + re-derived once.
+   *  B3 (ordering with dependencies): ops apply SEQUENTIALLY to the clone, so a
+   *  later op can reference a path created by an earlier op.
+   *  B4 (schema): a malformed op (unknown kind / bad shape) is rejected.
+   *  B5 (return): the re-derive `LoadResult` + a per-op status array.
+   *  B7 (no-envelope): throws "no envelope loaded" when `this.envelope` is null
+   *  (A1 doc loads). */
+  codeLoadBatch(ops: Array<{ op: string; path: string; value?: unknown; entry?: unknown; index?: number }>): CodeLoadBatchResult {
+    if (this.envelope === null) throw new Error('code.loadBatch: no envelope loaded (A1 doc loads have no legacy envelope)')
+    if (!Array.isArray(ops)) throw new Error('code.loadBatch: ops must be an array')
+    // B2 — apply to a clone; commit only on full success.
+    const clone = structuredClone(this.envelope) as LegacyInitialData
+    const applied: Array<{ op: string; path: string; status: 'applied' }> = []
+    for (const op of ops) {
+      if (op === null || typeof op !== 'object') throw new Error(`code.loadBatch: malformed op (${String(op)})`)
+      const kind = op.op
+      if (kind === 'set') {
+        const loc = this.envelopeParentIn(clone, op.path)
+        if (!loc) throw new Error(`code.loadBatch: unresolved path '${op.path}'`)
+        ;(loc.parent as Record<string, unknown>)[loc.key] = op.value
+      } else if (kind === 'create') {
+        const loc = this.envelopeParentIn(clone, op.path)
+        if (!loc) throw new Error(`code.loadBatch: unresolved path '${op.path}'`)
+        const value = (loc.parent as Record<string, unknown>)[loc.key]
+        if (!Array.isArray(value)) throw new Error(`code.loadBatch: '${op.path}' is not an array`)
+        ;(value as unknown[]).push(op.entry)
+      } else if (kind === 'delete') {
+        const loc = this.envelopeParentIn(clone, op.path)
+        if (!loc) throw new Error(`code.loadBatch: unresolved path '${op.path}'`)
+        const parent = loc.parent as Record<string, unknown>
+        if (typeof loc.key === 'number' && Array.isArray(parent)) {
+          const k = loc.key
+          if (!Number.isInteger(k) || k < 0 || k >= (parent as unknown[]).length) {
+            throw new Error(`code.loadBatch: '${op.path}' index ${k} out of range`)
+          }
+          ;(parent as unknown[]).splice(k, 1)
+        } else {
+          const value = parent[loc.key]
+          if (Array.isArray(value)) {
+            if (op.index === undefined) throw new Error(`code.loadBatch: '${op.path}' needs an index`)
+            if (!Number.isInteger(op.index) || op.index < 0 || op.index >= (value as unknown[]).length) {
+              throw new Error(`code.loadBatch: '${op.path}' index ${op.index} out of range`)
+            }
+            ;(value as unknown[]).splice(op.index, 1)
+          } else {
+            delete parent[loc.key]
+          }
+        }
+      } else {
+        throw new Error(`code.loadBatch: unknown op '${String(kind)}'`)
+      }
+      applied.push({ op: kind, path: op.path, status: 'applied' })
+    }
+    // B2 — commit the clone + re-derive once (P-C4 validation inside codeLoad).
+    this.envelope = clone
+    const result = this.codeLoad(clone)
+    return { ...result, ops: applied }
   }
 
   // ---- MCP-facing operations ---------------------------------------------

@@ -34,6 +34,7 @@ declare global {
       ready(): void
       onRequest(handler: (req: RpcRequest) => void): void
       sendReply(reply: RpcReply): void
+      notify(payload: { uri: string }): void
       security?: {
         get(): Promise<SecuritySettings>
         set(patch: { token?: string | null; groups?: string[]; disable?: string[] }): Promise<SecuritySettings>

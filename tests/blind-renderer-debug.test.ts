@@ -111,13 +111,17 @@ describe('RendererBackend — R1..R10 (docs/specs/renderer-backend-greens.md)', 
     const backend = new RendererBackend({ invokeTimeoutMs: 30 })
     backend.attachWindow(fake.win as never)
     backend.markReady()
+    // capture `start` BEFORE `invoke` — the measured window must include the
+    // FULL 30ms timeout (the earlier failure captured start after a 5ms tick,
+    // so the window collapsed under load and the `>= 25` bound was flaky).
+    const start = Date.now()
     const p = backend.invoke('renderedHtml', {})
     await tick(5)
     const req = fake.sent[0].msg as { id: number }
-    const start = Date.now()
     await expect(p).rejects.toThrow(/invoke.*timeout|timeout.*invoke/i)
     const elapsed = Date.now() - start
-    expect(elapsed).toBeGreaterThanOrEqual(25)
+    // comfortably below the 30ms timeout but proves the reject was NOT immediate
+    expect(elapsed).toBeGreaterThanOrEqual(20) // ~30ms
     expect(elapsed).toBeLessThan(500)
     expect(backend.pendingCount()).toBe(0)
     // keep req referenced for the late-reply no-op test

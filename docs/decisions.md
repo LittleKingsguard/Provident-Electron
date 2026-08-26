@@ -59,6 +59,38 @@ implemented (`src/main/mcp-server.ts` + `security.ts`), tests
 `mcp-resources-greens.md`, spec `mcp-endpoint.md` §3.6. Trio green 472 / 2.
 Rows open 2026-08-21.
 
+**GATED PROPOSAL (2026-08-25):** the live-change-notification proposal
+(`docs/specs/live-notification-proposal.md`) passed the three-agent gate
+(`docs/specs/live-notification-review.md`, verdict PROCEED-WITH-RESHAPES) —
+server-initiated push so an agent reacts to state changes instead of pull-reading
+(and invalidates cached resource URIs). Reshapes N1-N7: (N1) a notification-type
+enum; (N2) stdio-only push ENFORCED (HTTP is stateless → no-op + surfaced marker);
+(N3) app-Runtime-only push source (SecurePanels never emits — no operator leak);
+(N4) a new `provident:notify` renderer→main IPC channel; (N5) gated + opt-in
+DEFAULT-OFF; (N6) coalescing + stdio test matrix; (N7) low-level
+`sendResourceUpdated` + `resources/subscribe` gate. Overrides the
+`mcp-endpoint.md` §8 "No server push" non-goal. **LANDED 2026-08-25** — a
+stdio-only, app-Runtime-sourced `notifications/resources/updated` push
+(`mcp://provident/app`) after a mutating app-graph op, gated `read`-group,
+never the SecurePanels graph. **N7 residual:** the `sendResourceUpdated` uses
+the low-level `McpServer.server` but does NOT track per-client
+`resources/subscribe` — it emits on the connected stdio server regardless (a
+documented client-contract residual, not a correctness break for the always-fresh
+contract). Tests `mcp-notify.test.ts` + `mcp-notify-adversarial.test.ts`; trio
+480 / 2.
+
+**GATED PROPOSAL (2026-08-25):** `code.loadBatch` / write buffer (A4) — stage N
+`code.*` envelope edits, ONE re-derive — passed the three-agent gate
+(`docs/specs/loadbatch-review.md`, verdict PROCEED-WITH-RESHAPES). Reshapes
+B1-B8: single-tool `code.loadBatch(ops[])` form (write-buffer variant REJECTED);
+all-or-nothing clone-then-validate-then-commit; dependent-op ordering; pinned
+batch-op schema; `LoadResult` + per-op status return; the six-site `code`-group
+registration checklist; the no-envelope case; honest benefit framing (round-trips
++ atomicity, NOT re-derive cost) + a test matrix. **LANDED 2026-08-25** —
+`provident.code.loadBatch(ops[])` implemented (Runtime `codeLoadBatch` + the
+six-site wiring), tests `loadbatch.test.ts` + `loadbatch-adversarial.test.ts`,
+spec `mcp-endpoint.md` §4.1. Trio 495 / 2.
+
 Canonical imported records: `../Preempt-Providence/docs/decisions.md`,
 `../Preempt-Providence/docs/specs/ssr-synthetic-event.md`,
 `../Preempt-Providence/docs/pending.md` (Phase C row).

@@ -10,6 +10,8 @@ this repo's local next-steps (the upstream queue lives in
 | # | Item | Status / blocker |
 | --- | --- | --- |
 | 13 | **MCP resources (2026-08-25 gate)** — `mcp://provident/app` + `mcp://provident/node/{nodeId}` (template) + `mcp://provident/targets`, gated `read`-group (R1 blocking), live re-gate (R2), both transport builds (R3), node-template in-tree validation + no SecurePanels reach (R4), always-fresh + mimeType (R5). Gate verdict PROCEED-WITH-RESHAPES (`docs/specs/mcp-resources-review.md`; proposal `mcp-resources-proposal.md`). | **DONE (2026-08-25)** — LANDED. Tests `tests/mcp-resources.test.ts` (6) + `tests/mcp-resources-adversarial.test.ts` (5); greens `mcp-resources-greens.md`; spec `mcp-endpoint.md` §3.6. Trio green: 472 / 2 skipped, battery 184/184. |
+| 14 | **Live change notification (2026-08-25 gate)** — server-initiated push (a `notifications/tools/list_changed` or resource update) after a dispatch/re-render, so an agent learns state changed instead of pull-reading. The companion to the landed MCP resources (their invalidation answer). | **DONE (2026-08-25)** — LANDED. stdio-only `notifications/resources/updated` push (`mcp://provident/app`) after a mutating app-graph op, gated `read`-group, app-Runtime-only source (SecurePanels never emits), HTTP no-op, `provident:notify` IPC channel. Tests `mcp-notify.test.ts` (4) + `mcp-notify-adversarial.test.ts` (4). N7 residual: no per-client `resources/subscribe` tracking (emits on the connected stdio server). Trio: 480 / 2 skipped, battery 184/184. |
+| 15 | **`code.loadBatch` / write buffer (A4)** — stage N `code.*` envelope edits, ONE re-derive. | **DONE (2026-08-25)** — LANDED. `provident.code.loadBatch(ops[])`, all-or-nothing clone-commit, ordered-with-dependencies, pinned op schema, `LoadResult` + per-op status, six-site `code`-group registration, no-envelope case. Tests `loadbatch.test.ts` (6) + `loadbatch-adversarial.test.ts` (9). Trio: 495 / 2 skipped, battery 184/184. |
 | 12 | **Journal reversibility stress battery (2026-08-24)** — `docs/specs/journal-reversibility-battery.md` + `docs/specs/journal-reversibility-greens.md` + `tests/journal-reversibility.test.ts` (9 tests, drives the engine's undo/redo/replay directly). **2 ENGINE DEFECTS confirmed + RESOLVED in provident-ssr 0.1.5:** `DEFECT-JOURNAL-UNDO` (state-slice undo now exact; detach/move/clone-instance/layer-apply/placement-attach/rows-clear are DOCUMENTED no-op pins in the G14 per-kind table, ops.md §6) + `DEFECT-JOURNAL-REPLAY-APPEND` (sliceLayers replay gate + no-journal redo). Destroy-undo is the documented contract pin. Host-side: none. Battery asserts the resolved contract — **9/9 green.** | **DONE (2026-08-24)** — battery green (9 tests); both journal defects resolved upstream in 0.1.5. |
 | 11 | **Adapter parity battery (2026-08-23)** — `docs/specs/adapter-parity-battery.md` + `docs/specs/adapter-parity-greens.md` + `tests/adapter-parity-battery.test.mjs` (73 checks, drives the battery host over stdio). Probes DOM (`renderedHtml`) vs SSR (`ssrHtml`) across the adapter seams. **P1/P7/P8/P9 host parity GREEN** (structural digest + data-node-id set + SSR-survives-reload + fork-arm). Contract pins P2/P3/P4 documented. **P6 SURFACED AN ENGINE DEFECT**: `SSRFragmentAdapter` retained removed/destroyed elements in the serialized fragment (`DEFECT-SSR-REMOVE`) — **RESOLVED in provident-ssr 0.1.4** (the fix landed upstream; the battery now reports parity recovered, 73/73). | **DONE (2026-08-24)** — battery green; DEFECT-SSR-REMOVE resolved upstream. |
 
@@ -29,20 +31,103 @@ this repo's local next-steps (the upstream queue lives in
 | 9 | **Manual-UI Security Settings pane (the A1 trust-gate's remaining piece, mcp-endpoint.md §6.4)** — persistence (`security-store.ts`), the `provident:security:get/set` IPC (main), the preload `window.provident.security` exposure, the renderer Settings pane (`settings.ts` + `index.html` `#settings-pane`: token show/clear/regenerate + one toggle per tool group), and the MCP server booting from the persisted config. `tests/security-store.test.ts` (5) green. | **DONE (2026-08-23)** — TDD red→green. |
 | 10 | **Battery §5.3 hooks-scenarios (DEFERRED)** — `docs/specs/e2e-test-battery.md` §5.3 (the `hooksScenariosEnvelope`: theme/user/counter hook providers + the `hook-name-unresolved`/`hook-seam-exempt`/`hook-mode-blocked`/`hook-kind-mismatch` containment verdicts) was marked NOT-YET-LANDED in the spec. **§5.3 DONE (2026-08-23)** — landed per the unit spec `docs/specs/battery-hooks-unit.md` (TestWriter red → green → adversarial → greens → doc-review). **§5.5 full anon/alice/main handler matrix (S1a, S1b, S2..S10) DONE (2026-08-23)** — landed per the unit spec `docs/specs/battery-handlers-unit.md` (TestWriter red → green → adversarial → greens → doc-review). | **§5.3 + §5.5 DONE (2026-08-23)** — battery 184/184. |
 
-## DONE (2026-08-25 — MCP-resources BLIND-TEST loop)
+## OPEN — blind-test pending (2026-08-25)
 
-Per the greens doc (`docs/specs/mcp-resources-greens.md` G1-G5), a blind-test
-writer produced `tests/blind-mcp-resources.test.ts` from the DOCUMENTATION ONLY
-(greens + mcp-endpoint §3.6 + review R1-R5; no implementation read) and ran it
-against the live `ProvidentMcpServer` + `SecurityGate`.
+The MCP-resources blind-test is **drafted but NOT yet run**. The scenario
+document `docs/specs/mcp-resources-blind.md` is the open-ended, high-level ask
+(read-set + scenarios S1-S9 + report format) for the blind agent — it leaves
+every implementation decision (method names, signatures, assertions) to the
+agent's interpretation of the docs. A blind agent runs it later, per AGENTS.md
+item 10a, and produces `tests/blind-mcp-resources.test.ts`.
 
-- **Blind artifact** — `tests/blind-mcp-resources.test.ts` (10 scenarios:
-  G1.1-G1.5 read-group gating, G3.6/6b/7 node-template + isolation, G4.8 fresh
-  snapshots, G5.10 clean not-found).
-- **All 10 PASS** against the live modules. No doc drift, no un-hardened
-  regression.
-- **Trio green**: **482 tests / 2 skipped** (was 472, +10 blind), typecheck
-  clean, build clean, battery 184/184.
+- **Scenario doc**: `docs/specs/mcp-resources-blind.md` (S1-S9: read-group
+  gating, read-off bypass, fresh-build no-register, app/node/targets reads,
+  node-template validation + isolation, freshness, clean not-found).
+- **NOT yet run.** Test count is currently **480 / 2 skipped** (the +10
+  blind artifact does not exist yet).
+
+## OPEN — blind-test pending (2026-08-25)
+
+The MCP-notify blind-test is **drafted but NOT yet run**. The scenario document
+`docs/specs/mcp-notify-blind.md` is the open-ended, high-level ask (read-set +
+scenarios S1-S6 + report format) for the blind agent — it leaves every
+implementation decision (method names, signatures, assertions) to the agent's
+interpretation of the docs. A blind agent runs it later, per AGENTS.md item 10a,
+and produces `tests/blind-mcp-notify.test.ts`.
+
+- **Scenario doc**: `docs/specs/mcp-notify-blind.md` (S1-S6: per-resource
+  content update not tool/list-changed; stdio-only HTTP no-op; stdio delivers;
+  read-off gate no-op; app-Runtime-only source; mutating-op trigger).
+- **NOT yet run.** Test count is currently **480 / 2 skipped** (the +blind
+  artifact does not exist yet).
+
+## OPEN — blind-test pending (2026-08-25)
+
+The `code.loadBatch` blind-test is **drafted but NOT yet run**. The scenario
+document `docs/specs/loadbatch-blind.md` is the open-ended, high-level ask
+(read-set + scenarios S1-S6 + report format) for the blind agent — it leaves
+every implementation decision (method names, signatures, assertions) to the
+agent's interpretation of the docs. A blind agent runs it later, per AGENTS.md
+item 10a, and produces `tests/blind-loadbatch.test.ts`.
+
+- **Scenario doc**: `docs/specs/loadbatch-blind.md` (S1-S6: batch applies N ops
+  + re-derives once; all-or-nothing untouched envelope; ordered-with-dependencies;
+  malformed-op rejection; no-envelope case; `code`-group gating).
+- **NOT yet run.** Test count is currently **495 / 2 skipped** (the +blind
+  artifact does not exist yet).
+
+## DONE (2026-08-25 — `code.loadBatch` LANDED (all-or-nothing batched re-derive))
+
+Per the gated proposal (`docs/specs/loadbatch-review.md` PROCEED-WITH-RESHAPES),
+implemented `provident.code.loadBatch(ops[])` via TDD (red → green → adversarial
+→ doc-reconciliation).
+
+- **`src/renderer/runtime.ts`** — `codeLoadBatch(ops)`: applies ops to a
+  `structuredClone` of the envelope (B2 all-or-nothing — on any failure the live
+  envelope is untouched), sequentially with per-op path validation against the
+  evolving clone (B3 dependent ops), pinned op schema set/create/delete (B4),
+  returns the re-derive `LoadResult` + per-op status (B5), throws "no envelope
+  loaded" when `this.envelope` is null (B7).
+- **Six-site registration (B6)** — `security.ts` TOOL_GROUPS (`code` group),
+  `mcp-server.ts` ALL_TOOLS + input schema, `types.ts` RpcMethod +
+  `CodeBatchOp`/`CodeLoadBatchResult`, `renderer.ts` switch + `MUTATING_METHODS`
+  (so the live-change notify fires after a batch), `battery-host.ts` dispatch.
+- **Tests** — `tests/loadbatch.test.ts` (6: B2 atomicity, B3 ordering, B4
+  schema, B5 return, B7 no-envelope) + `tests/loadbatch-adversarial.test.ts`
+  (9: half-applied, dependent-op, never-existing path, malformed op, `code`-group
+  gating, N3 notify).
+- **Spec** `mcp-endpoint.md` §4.1 (the `code.loadBatch` tool row).
+- **Trio green**: **495 tests / 2 skipped** (was 480, +15), typecheck clean,
+  build clean, battery 184/184.
+
+## DONE (2026-08-25 — live change notification LANDED (stdio-only, app-Runtime-sourced push))
+
+Per the gated proposal (`docs/specs/live-notification-review.md` PROCEED-WITH-
+RESHAPES), implemented the live-change-notification surface via TDD (red → green
+→ adversarial → doc-reconciliation).
+
+- **`src/main/mcp-server.ts`** — `notifyGraphChanged()`: maps a renderer push
+  into a per-resource `notifications/resources/updated` (`mcp://provident/app`),
+  stdio-only (HTTP/`isConnected()` false → no-op, never a hang, N2), gated
+  `read`-group (N5), low-level `McpServer.server.sendResourceUpdated` (N7).
+- **`src/shared/types.ts` + `src/main/preload.ts`** — the `provident:notify`
+  IPC channel (N4) + `bridge.notify(payload)`.
+- **`src/main/main.ts`** — the `IPC_NOTIFY` handler routes to `notifyGraphChanged`.
+- **`src/renderer/renderer.ts`** — the notify fires AFTER a mutating app-graph
+  op (`dispatch`/`load`/`op`/`teardown`/`code.load`) succeeds, one per tool
+  invocation (N6), sourced ONLY from the app Runtime (N3 — `SecurePanels` never
+  calls notify).
+- **Tests** — `tests/mcp-notify.test.ts` (4: N2 stdio-only, N5 gate-aware,
+  N1 typed) + `tests/mcp-notify-adversarial.test.ts` (4: N3 no operator leak,
+  N5 read-off, N1 no tool/list-changed, N2 HTTP no-op).
+- **Spec** `mcp-endpoint.md` §3.6 + §8 (the "No server push" non-goal is
+  superseded by the stdio-only, app-Runtime-sourced content push).
+- **N7 residual (documented)**: `sendResourceUpdated` uses the low-level server
+  but does NOT track per-client `resources/subscribe` — it emits on the
+  connected stdio server regardless. A client-contract residual, not a
+  correctness break for the always-fresh contract.
+- **Trio green**: **480 tests / 2 skipped** (was 472, +8), typecheck clean,
+  build clean, battery 184/184.
 
 ## DONE (2026-08-25 — MCP resources LANDED (gated read-group `mcp://` URIs))
 
