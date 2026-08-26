@@ -21,7 +21,7 @@ import {
   CYCLE_METHODS,
 } from '../src/shared/path-fork-cycle.js'
 import { Runtime } from '../src/renderer/runtime.js'
-import { translateLegacy, serializeSlice } from '@littlekingsguard/provident-ssr'
+import { translateLegacy, serializeSlice } from 'provident-ssr'
 
 beforeAll(() => {
   installShim()

@@ -24,8 +24,8 @@ import {
   createLinkHub,
   type RenderOptions,
   type LegacyInitialData,
-} from '@littlekingsguard/provident-ssr'
-import { createIsolatedScope, type GraphScope } from '@littlekingsguard/provident-ssr/core/registry.js'
+} from 'provident-ssr'
+import { createIsolatedScope, type GraphScope } from 'provident-ssr/core/registry.js'
 import type { SecuritySettings, RpcRequest, RpcReply } from '../shared/types.js'
 
 declare global {

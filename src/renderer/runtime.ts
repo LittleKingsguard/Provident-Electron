@@ -30,8 +30,8 @@ import {
   type RenderOptions,
   type SerializedRenderDoc,
   type Payload,
-} from '@littlekingsguard/provident-ssr'
-import type { CompiledState } from '@littlekingsguard/provident-ssr/core/types.js'
+} from 'provident-ssr'
+import type { CompiledState } from 'provident-ssr/core/types.js'
 import type {
   DispatchRequest,
   DispatchResult,
@@ -54,7 +54,7 @@ import type {
   CodeDeleteResult,
   CodeValidateResult,
 } from '../shared/types.js'
-import type { TranslatedWarning } from '@littlekingsguard/provident-ssr/core/translate.js'
+import type { TranslatedWarning } from 'provident-ssr/core/translate.js'
 
 export interface RuntimeOptions {
   mount: HTMLElement

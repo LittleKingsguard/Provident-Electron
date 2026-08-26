@@ -135,6 +135,33 @@ The destroy-undo NO-OP is the documented contract pin (pending.md REQ-GAP-12 +
 supervisor.js "destroy is terminal"), NOT a defect. Host-side: none — all
 findings are engine-level.
 
+## Round 7 — ISO-ADV-D (X13): `translateNodeData` `data.children` recursion drops `graphScope` (CRITICAL, filed 2026-08-25 → **RESOLVED in 0.2.0-rc.4**)
+
+The 0.2.0-rc.3 isolation hardening (ISOLATION-A/B/C) introduced a NEW engine
+defect that the host's SecurePanels adoption surfaced:
+
+- **Symptom**: an isolated graph's CHILD nodes (e.g. the security-pane
+  controls) are constructed with `graphScope = null` → they register in
+  `DEFAULT_SCOPE` (the app/MCP graph's scope). This is an isolation LEAK (the
+  pane nodes are resolvable/addressable from the app graph) AND it breaks the
+  rc.3 cross-graph-target guard (a `state-slice` on a mis-scoped child is
+  rejected `cross-graph-target`, so the pane cannot mutate its own controls).
+- **Root cause**: `translate.ts:1046` — the `data.children` recursion in
+  `translateNodeData` omits the trailing `graphScope` arg (the def-children
+  site :835 and the template/content-children site :1117 both pass it).
+- **Fix shape (upstream-owned)**: thread `graphScope` into the `data.children`
+  recursion (one-line fix, matching :835/:1117).
+- **This repo's verification**: `tests/secure-panels.test.ts` group-toggle +
+  `tests/isolation-adversarial-e2e.test.ts` fail on rc.3 with
+  `cross-graph-target`; the raw engine probe confirms `t.nodes[1].graphScope ===
+  null` for an isolated graph's child. Filed upstream `docs/defects.md`
+  ISO-ADV-D (X13) + `archive/test-data/2026-08-25/2026-08-25-isolation-adversarial-probe.md`.
+- **RESOLVED (0.2.0-rc.4, commit `d1691cd`)**: the upstream threaded
+  `graphScope` into the `data.children` recursion (translate.ts:1046). The host
+  re-verified on rc.4 — SecurePanels + isolation-e2e pass again; `tests/isolation-adv-d.test.ts`
+  asserts the child carries its scope. Trio green: 453 / 2 skipped, build clean,
+  battery 184/184.
+
 ## Verified state (the workarounds ARE proven)
 
 - Unit: `tests/runtime.test.ts` (9) + `tests/engine-surfaces.test.ts` (5) —

@@ -80,3 +80,107 @@ it renders).
   gemma4 blind battery (S30/S31) — the Debug pane's live line, via the panes
   graph.
 - Trio + battery: green on `@littlekingsguard/provident-ssr@0.2.0-rc.2`.
+
+## 5a. Adversarial pass (2026-08-25) — the isolation holds
+
+A stress/adversarial pass probed every cross-scope leak vector (an agent
+holding ONLY app-graph handles must never reach the isolated panes graph):
+
+- `tests/isolation-adversarial.test.ts` (5) — **D3** `resolveNodeRef` is
+  scope-local (the default scope cannot resolve an isolated node id); **D2**
+  a handler-def registered in the isolated scope is NOT resolvable from the
+  default scope; **D4** `translateUserData` is scope-local (no clobber); **D6**
+  the app census excludes the isolated nodes; an app-graph `dispatchEvent` on a
+  pane node id is a no-op (never reaches the pane).
+- `tests/isolation-adversarial-e2e.test.ts` (5) — through the REAL MCP
+  surfaces (`Runtime` + `SecurePanels`): **get_rendered_html** never contains
+  pane content ('Loopback token'/'Regenerate'/'Security & agent permissions');
+  **list_targets** exposes no pane props.id; an MCP `dispatch` to a pane
+  css/props id throws `/unresolved target/`; a pane mutation (token regenerate)
+  is invisible to the MCP surface; an app teardown does NOT destroy the pane
+  graph (scope-partitioned sweep, D6); a shared minted-id collision resolves
+  the APP node in the app scope, never the pane node (scope-local `byId`, D3).
+
+**Verdict: no host defect, no package defect.** The D1-D8 isolation holds — an
+agent with app-graph access cannot see, dispatch, or mutate the isolated panes.
+Trio green on rc.2: 448 tests / 2 skipped, typecheck clean, build clean,
+battery 184/184.
+
+## 5b. Broad 0.1.x regression adversarial pass (2026-08-25) — no 0.2 regression
+
+A broad-spectrum pass over the host's 0.1.x MCP/Runtime surface, hunting
+regressions the 0.2 changes (scope threading across registry/serialize/ops/
+supervisor + Feature 1a def-prototype round-trip + Feature 3 condensing + the
+serialize derived-exclusion) might have introduced into the default (no-opt-in)
+path the host runs.
+
+`tests/0-2-regression-adversarial.test.ts` (5):
+- **Round-trip intact** — `serializeSlice → loadDoc` preserves the full census
+  on a plain demo (no derived/minted exclusion shrink); a fork-cycle envelope
+  round-trips without census drift.
+- **reRegisterDefPrototypes idempotent** — `loadDoc` twice is stable (no node
+  accumulation).
+- **clone-instance + teardown** — a minted clone lands in the target graph,
+  then teardown cleans it to root-only (no leak).
+- **two isolated graphs render independently** — each mounts only its own
+  content (no cross-talk).
+- The default (no-opt-in) path shares one module registry (D8) — the 0.1.x
+  cross-graph byId contract is preserved.
+
+**Verdict: no 0.2 regression found.** The host's 0.1.x surface (dispatch/
+render/load/export/validate/teardown/clone-instance) behaves identically under
+rc.2. Trio green: 453 tests / 2 skipped, typecheck clean, build clean, battery
+184/184. (The R3.5 timing assertion is a pre-existing flake — passes in
+isolation.)
+
+## 5c. rc.3 refresh — ISO-ADV-D engine defect (2026-08-25)
+
+Refreshed to `@littlekingsguard/provident-ssr@0.2.0-rc.3` (the upstream
+ISOLATION-A/B/C fixes). The rc.3 cross-graph-target guard surfaced a NEW
+engine defect — **ISO-ADV-D (X13)**: `translateNodeData`'s `data.children`
+recursion (translate.ts:1046) drops the `graphScope` arg, so every CHILD of an
+isolated graph's root is constructed with `graphScope = null` → falls into
+`DEFAULT_SCOPE` (the app/MCP graph's scope). This is an isolation LEAK (the
+pane controls are resolvable/addressable from the app graph) AND it breaks the
+rc.3 guard (a `state-slice` on a mis-scoped child is rejected
+`cross-graph-target`, so the pane cannot mutate its own controls).
+
+**Host impact**: the SecurePanels group-toggle + token-status writes fail on
+rc.3. **BLOCKED** until the upstream threads `graphScope` into the
+`data.children` recursion. Filed upstream (`docs/defects.md` ISO-ADV-D +
+`docs/HANDOFF.md` Round 7).
+
+## 5d. rc.4 refresh — ISO-ADV-D RESOLVED (2026-08-25)
+
+The upstream fixed ISO-ADV-D in `@littlekingsguard/provident-ssr@0.2.0-rc.4`
+(commit `d1691cd`) — threaded `graphScope` into `translateNodeData`'s
+`data.children` recursion (translate.ts:1046). Re-verified on rc.4:
+
+- `tests/secure-panels.test.ts` (group-toggle) + `tests/isolation-adversarial-e2e.test.ts`
+  (pane mutation/teardown) pass again.
+- `tests/isolation-adv-d.test.ts` (1, new) — an isolated graph's CHILD now
+  carries the scope: NOT resolvable from the default/app scope (the leak is
+  closed), resolvable from its own isolated scope.
+
+Trio green on rc.4: 453 tests / 2 skipped, typecheck clean, build clean,
+battery 184/184.
+
+## 5e. Repeat adversarial pass (rc.4) — construction-path exhaustion + cross-scope (2026-08-25)
+
+Re-ran the isolation adversarial pass on rc.4, adding the upstream's
+"construction-path exhaustion" check (AGENTS.md item 11a — assert `graphScope`
+on EVERY node each distinct construction site produces) plus deeper
+cross-scope probes:
+
+- `tests/construction-exhaustion.test.ts` (5) — `graphScope` is threaded at
+  every construction site: ROOT + nested `data.children` (depth-2), CONTENT
+  payload children, DEF-children prototypes, `loadState` seeds, and
+  `clone-instance` copies all carry the isolated scope.
+- `tests/construction-exhaustion2.test.ts` (2) — an isolated graph's child is
+  NOT addressable from a default-scope supervisor; a render with a MISMATCHED
+  scope does not def-fill from the isolated scope (no cross-graph brand leak).
+
+**Verdict: no defect found on rc.4.** The ISO-ADV-D fix holds across every
+construction path (no residual mis-scoped node), and the cross-scope seams stay
+closed. Trio green on rc.4: 461 tests / 2 skipped, typecheck clean, build
+clean, battery 184/184.

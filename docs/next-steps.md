@@ -28,6 +28,144 @@ this repo's local next-steps (the upstream queue lives in
 | 9 | **Manual-UI Security Settings pane (the A1 trust-gate's remaining piece, mcp-endpoint.md §6.4)** — persistence (`security-store.ts`), the `provident:security:get/set` IPC (main), the preload `window.provident.security` exposure, the renderer Settings pane (`settings.ts` + `index.html` `#settings-pane`: token show/clear/regenerate + one toggle per tool group), and the MCP server booting from the persisted config. `tests/security-store.test.ts` (5) green. | **DONE (2026-08-23)** — TDD red→green. |
 | 10 | **Battery §5.3 hooks-scenarios (DEFERRED)** — `docs/specs/e2e-test-battery.md` §5.3 (the `hooksScenariosEnvelope`: theme/user/counter hook providers + the `hook-name-unresolved`/`hook-seam-exempt`/`hook-mode-blocked`/`hook-kind-mismatch` containment verdicts) was marked NOT-YET-LANDED in the spec. **§5.3 DONE (2026-08-23)** — landed per the unit spec `docs/specs/battery-hooks-unit.md` (TestWriter red → green → adversarial → greens → doc-review). **§5.5 full anon/alice/main handler matrix (S1a, S1b, S2..S10) DONE (2026-08-23)** — landed per the unit spec `docs/specs/battery-handlers-unit.md` (TestWriter red → green → adversarial → greens → doc-review). | **§5.3 + §5.5 DONE (2026-08-23)** — battery 184/184. |
 
+## DONE (2026-08-25 — public `provident-ssr@0.2.0` release; RESTORED from the scoped package)
+
+Per the user's "update pushed to public provident-ssr 0.2.0, switch back to
+public version": the upstream released the public `provident-ssr@0.2.0`. This
+repo RESTORED from the test-only scoped-package retarget.
+
+- **`package.json`** — `@littlekingsguard/provident-ssr@0.2.0-rc.4` removed;
+  the public `provident-ssr@^0.2.0` is the sole dependency.
+- **Imports** — all 18 files reverted `@littlekingsguard/provident-ssr` →
+  `provident-ssr` (src: path-fork-cycle, runtime, secure-panels; 15 test files).
+- **The 0.2-surface additions STAY** (they are the point of the test):
+  `provident.get_markdown`, `reRegisterDefPrototypes` loadDoc call,
+  `SecurePanels` isolation, the isolation/construction adversarial suites.
+- **`.npmrc`** (gitignored, routes `@littlekingsguard`) can be removed or kept.
+- **Trackers** — `docs/decisions.md` SCOPED-PACKAGE-RETARGET → RESTORED;
+  `docs/pending.md` RESTORE row → RESOLVED.
+- **Trio green on public `provident-ssr@0.2.0`**: 461 tests / 2 skipped,
+  typecheck clean, build clean, battery 184/184.
+
+## DONE (2026-08-25 — repeat adversarial pass (rc.4): construction-path exhaustion + cross-scope — no defect)
+
+Per the user's "repeat adversarial pass": re-ran the isolation adversarial pass
+on rc.4, adding the upstream's construction-path-exhaustion check (AGENTS.md
+item 11a) + deeper cross-scope probes.
+
+- `tests/construction-exhaustion.test.ts` (5) — `graphScope` threaded at EVERY
+  construction site: ROOT + nested `data.children` (depth-2), CONTENT payload
+  children, DEF-children prototypes, `loadState` seeds, `clone-instance` copies.
+- `tests/construction-exhaustion2.test.ts` (2) — an isolated graph's child is
+  NOT addressable from a default-scope supervisor; a render with a MISMATCHED
+  scope does not def-fill from the isolated scope (no cross-graph brand leak).
+
+**Verdict: no defect on rc.4.** The ISO-ADV-D fix holds across every
+construction path; cross-scope seams stay closed. Trio green on rc.4: **461
+tests / 2 skipped**, typecheck clean, build clean, battery 184/184. Recorded in
+`docs/specs/secure-panels.md` §5e.
+
+## DONE (2026-08-25 — rc.4 refresh: ISO-ADV-D patched upstream, SecurePanels unblocked)
+
+Per the user's "defect patched upstream": the upstream fixed ISO-ADV-D (X13)
+in `@littlekingsguard/provident-ssr@0.2.0-rc.4` (commit `d1691cd` — threaded
+`graphScope` into `translateNodeData`'s `data.children` recursion at
+translate.ts:1046, exactly the one-line fix filed). Refreshed + re-verified.
+
+- **`package.json`** — `@littlekingsguard/provident-ssr` `^0.2.0-rc.3` →
+  `^0.2.0-rc.4`.
+- **The previously-failing SecurePanels tests pass again**: `tests/secure-panels.test.ts`
+  (group-toggle) + `tests/isolation-adversarial-e2e.test.ts` (pane
+  mutation/teardown).
+- **New regression test** `tests/isolation-adv-d.test.ts` (1) — an isolated
+  graph's CHILD now carries the scope: NOT resolvable from the default/app
+  scope (the leak is closed), resolvable from its own isolated scope.
+- **Trackers** — `docs/defects.md` ISO-ADV-D moved OPEN → RESOLVED (0.2.0-rc.4);
+  `docs/HANDOFF.md` Round 7 → RESOLVED; `docs/decisions.md` MULTI-GRAPH-ISOLATION
+  rc.4 note; `docs/specs/secure-panels.md` §5d.
+- **Trio green on rc.4**: **453 tests / 2 skipped**, typecheck clean, build
+  clean, battery 184/184.
+
+## DONE (2026-08-25 — rc.3 refresh + ISO-ADV-D engine defect discovered + filed upstream)
+
+Per the user's "new package update in github, download and test": refreshed to
+`@littlekingsguard/provident-ssr@0.2.0-rc.3` (the ISOLATION-A/B/C fixes from
+the upstream adversarial pass) and re-ran the host suite.
+
+- **rc.3 introduced a NEW engine defect — ISO-ADV-D (X13)**: the rc.3
+  cross-graph-target guard (ISOLATION-B) surfaced that `translateNodeData`'s
+  `data.children` recursion (translate.ts:1046) drops the `graphScope` arg
+  (unlike the def-children :835 and template/content-children :1117 sites).
+  Every CHILD of an isolated graph's root is constructed with `graphScope =
+  null` → falls into `DEFAULT_SCOPE` (the app/MCP graph's scope).
+  - **Isolation LEAK**: an isolated graph's child nodes (the security-pane
+    controls) register in `DEFAULT_SCOPE.byId` → resolvable/addressable from
+    the app graph. Verified: `resolveNodeRef(childId, DEFAULT_SCOPE) === child`.
+  - **Managed-channel break**: the rc.3 guard then REJECTS a `state-slice` on
+    those mis-scoped children (`cross-graph-target`), so the SecurePanels
+    group-toggle + token-status writes fail.
+- **Host impact**: `tests/secure-panels.test.ts` (group-toggle) +
+  `tests/isolation-adversarial-e2e.test.ts` (pane mutation + teardown) fail on
+  rc.3. The SecurePanels adoption is BLOCKED until the upstream threads
+  `graphScope` into the `data.children` recursion.
+- **Filed upstream** (per the process — the host does NOT fix the package):
+  `../Preempt-Providence/docs/defects.md` ISO-ADV-D (X13) OPEN row +
+  `archive/test-data/2026-08-25/2026-08-25-isolation-adversarial-probe.md`
+  probe record. Host trackers: `docs/defects.md` OPEN row + `docs/HANDOFF.md`
+  Round 7 + `docs/decisions.md` MULTI-GRAPH-ISOLATION rc.3 note.
+- **Trio on rc.3**: 449 passed / 2 skipped + 4 failures (the R3.5 timing flake
+  + the 3 ISO-ADV-D SecurePanels failures). Battery 184/184.
+
+## DONE (2026-08-25 — broad 0.1.x regression adversarial pass: no 0.2 regression)
+
+Per the user's "run a broad-spectrum adversarial pass, emphasizing cases where
+the 0.2 changes may have introduced defects into the 0.1.x surface": a broad
+pass over the host's 0.1.x MCP/Runtime surface, hunting regressions the 0.2
+scope refactor (registry/serialize/ops/supervisor + Feature 1a/3 + the
+serialize derived-exclusion) might have introduced into the default (no-opt-in)
+path.
+
+- `tests/0-2-regression-adversarial.test.ts` (5):
+  - `serializeSlice → loadDoc` preserves the full census (no derived/minted
+    shrink); a fork-cycle round-trips without census drift.
+  - `loadDoc` twice is stable (reRegisterDefPrototypes idempotent — no
+    accumulation).
+  - clone-instance mint → teardown cleans to root-only (no leak).
+  - two isolated graphs render only their own content to their own mounts.
+  - the default (no-opt-in) path shares one module registry (D8) — the 0.1.x
+    cross-graph byId contract preserved.
+
+**Verdict: no 0.2 regression found.** Trio green on rc.2: **453 tests / 2
+skipped**, typecheck clean, build clean, battery 184/184. Recorded in
+`docs/specs/secure-panels.md` §5b. (The R3.5 timing assertion is the
+pre-existing flake — passes in isolation.)
+
+## DONE (2026-08-25 — isolation ADVERSARIAL pass: no leak found)
+
+Per the user's "execute a stress/adversarial pass testing whether the isolation
+strategy works or if there are defects that allow access to isolated parts of
+the runtime": a focused adversarial pass probed every cross-scope leak vector.
+
+- `tests/isolation-adversarial.test.ts` (5) — the scope-level primitives: **D3**
+  `resolveNodeRef` scope-local (default scope cannot resolve an isolated node
+  id); **D2** a handler-def registered in an isolated scope is NOT resolvable
+  from the default scope; **D4** `translateUserData` scope-local (no clobber);
+  **D6** the app census excludes isolated nodes; an app-graph `dispatchEvent`
+  on a pane node id is a no-op.
+- `tests/isolation-adversarial-e2e.test.ts` (5) — through the REAL MCP surfaces
+  (`Runtime` + `SecurePanels`): `get_rendered_html` never contains pane content
+  ('Loopback token'/'Regenerate'/'Security & agent permissions'); `list_targets`
+  exposes no pane props.id; an MCP `dispatch` to a pane css/props id throws
+  `/unresolved target/`; a pane mutation (token regenerate) is invisible to the
+  MCP surface; an app teardown does NOT destroy the pane graph (scope-
+  partitioned sweep, D6); a shared minted-id collision resolves the APP node in
+  the app scope, never the pane node (scope-local `byId`, D3).
+
+**Verdict: NO host defect, NO package defect — the D1-D8 isolation holds.**
+An agent with app-graph access cannot see, dispatch, or mutate the isolated
+panes. Recorded in `docs/specs/secure-panels.md` §5a. Trio green on rc.2:
+**448 tests / 2 skipped**, typecheck clean, build clean, battery 184/184.
+
 ## DONE (2026-08-25 — SecurePanels: the Security/Debug panes moved to an ISOLATED provident graph)
 
 Per the user's "proceed with adoption, concentrating on maintaining compliance

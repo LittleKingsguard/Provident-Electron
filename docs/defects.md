@@ -14,7 +14,15 @@ reproduction → suspected root cause → proposed fix shape (upstream-owned).
 
 ## OPEN
 
-_(none — REQ-GAP-1..8 resolved by 0.1.1/0.1.2; REQ-GAP-9..12 PUBLISHED in 0.1.3; DEFECT-SSR-REMOVE RESOLVED in 0.1.4; DEFECT-JOURNAL-UNDO + DEFECT-JOURNAL-REPLAY-APPEND RESOLVED in 0.1.5 (documented no-op residuals); see below.)_
+_(none — REQ-GAP-1..8 resolved by 0.1.1/0.1.2; REQ-GAP-9..12 PUBLISHED in 0.1.3; DEFECT-SSR-REMOVE RESOLVED in 0.1.4; DEFECT-JOURNAL-UNDO + DEFECT-JOURNAL-REPLAY-APPEND RESOLVED in 0.1.5; ISO-ADV-D RESOLVED in 0.2.0-rc.4; see below.)_
+
+## RESOLVED BY UPSTREAM (provident-ssr 0.2.0-rc.4, 2026-08-25)
+
+| ID | Defect (as filed) | Resolution in 0.2.0-rc.4 | This repo's verification |
+| --- | --- | --- | --- |
+| **ISO-ADV-D (X13)** — `translateNodeData` `data.children` recursion drops `graphScope`, so an isolated graph's children fall into `DEFAULT_SCOPE` (an isolation leak + the rc.3 cross-graph guard rejects `state-slice` on them) | **FIXED (0.2.0-rc.4, commit `d1691cd`)** — threaded `graphScope` into the `data.children` recursion (`translate.ts:1046`), matching the def-children :835 + template/content-children :1117 sites. One-line fix as filed. | `tests/secure-panels.test.ts` (group-toggle) + `tests/isolation-adversarial-e2e.test.ts` (pane mutation/teardown) pass again; `tests/isolation-adv-d.test.ts` (1) asserts an isolated graph's child carries the scope (not resolvable from the default/app scope, resolvable from its own). **9/9 + 1 green.** |
+
+
 
 ## RESOLVED BY UPSTREAM (provident-ssr 0.1.5, 2026-08-24)
 

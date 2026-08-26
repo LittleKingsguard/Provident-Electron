@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import { Runtime } from '../src/renderer/runtime.js';
 import { installShim, mountEl } from '../src/shared/dom-shim.js';
 import { demoEnvelope } from '../src/shared/demo-envelope.js';
-import { translateLegacy, serializeSlice } from '@littlekingsguard/provident-ssr';
+import { translateLegacy, serializeSlice } from 'provident-ssr';
 import {
   pathForkCycleLegacyData,
 } from '../src/shared/path-fork-cycle.js';

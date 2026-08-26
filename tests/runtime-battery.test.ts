@@ -7,7 +7,7 @@ import { installShim, mountEl } from '../src/shared/dom-shim.js'
 import { Runtime } from '../src/renderer/runtime.js'
 import { demoEnvelope } from '../src/shared/demo-envelope.js'
 import { pathForkCycleLegacyData } from '../src/shared/path-fork-cycle.js'
-import { translateLegacy, serializeSlice, type LegacyInitialData } from '@littlekingsguard/provident-ssr'
+import { translateLegacy, serializeSlice, type LegacyInitialData } from 'provident-ssr'
 
 beforeAll(() => {
   installShim()

@@ -5,8 +5,8 @@
 // layer with zero handlers and zero clones.
 import { describe, it, expect } from 'vitest'
 import { pathForkCycleLegacyData, cycleMethodFor, CYCLE_METHODS } from '../src/shared/path-fork-cycle.js'
-import { translateLegacy } from '@littlekingsguard/provident-ssr'
-import type { LegacyNodeData } from '@littlekingsguard/provident-ssr'
+import { translateLegacy } from 'provident-ssr'
+import type { LegacyNodeData } from 'provident-ssr'
 
 const C = 'content'
 

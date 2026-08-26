@@ -18,7 +18,7 @@
 //
 // Census (identical to the trio): 2·depth−1 nodes / 2^depth − 1 path-state
 // elements. d12: 23 nodes / 4095 elements. ONE compilePath pass, zero ops.
-import type { LegacyInitialData, LegacyNodeData } from '@littlekingsguard/provident-ssr'
+import type { LegacyInitialData, LegacyNodeData } from 'provident-ssr'
 
 export type CycleMethod = 'placement' | 'values' | 'link'
 

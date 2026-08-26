@@ -7,7 +7,7 @@
 // ssr-synthetic-event harness so a version bump cannot silently break our
 // host adoption.
 import { describe, it, expect, beforeAll } from 'vitest'
-import { translateLegacy, Supervisor, EventBridge, DomAdapter, SSRFragmentAdapter, renderProducingProcess, type RenderAdapter } from '@littlekingsguard/provident-ssr'
+import { translateLegacy, Supervisor, EventBridge, DomAdapter, SSRFragmentAdapter, renderProducingProcess, type RenderAdapter } from 'provident-ssr'
 import { installShim, mountEl } from '../src/shared/dom-shim.js'
 
 beforeAll(() => {
