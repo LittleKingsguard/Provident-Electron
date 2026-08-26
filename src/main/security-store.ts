@@ -15,7 +15,7 @@ export interface SecurityStoreOptions {
 
 export interface SecurityStore {
   get(): SecuritySettings
-  set(patch: { token?: string | null; groups?: string[]; disable?: string[] }): SecuritySettings
+  set(patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }): SecuritySettings
 }
 
 const VALID_GROUPS = new Set(['read', 'dispatch', 'graph', 'code'])
@@ -25,7 +25,10 @@ function sanitize(input: unknown): SecuritySettings {
   const enabled = Array.isArray(src.enabled)
     ? [...new Set(src.enabled.filter((g): g is string => typeof g === 'string' && VALID_GROUPS.has(g)))]
     : ['read', 'dispatch']
-  return { token: typeof src.token === 'string' && src.token !== '' ? src.token : null, enabled }
+  const maxJournalLength = typeof src.maxJournalLength === 'number' && src.maxJournalLength > 0
+    ? Math.floor(src.maxJournalLength)
+    : undefined
+  return { token: typeof src.token === 'string' && src.token !== '' ? src.token : null, enabled, maxJournalLength }
 }
 
 /** Create a security settings store backed by `path`. A missing/empty file is
@@ -37,10 +40,10 @@ export function createSecurityStore(opts: SecurityStoreOptions): SecurityStore {
     if (existsSync(opts.path)) {
       current = sanitize(JSON.parse(readFileSync(opts.path, 'utf8')))
     } else {
-      current = { token: null, enabled: ['read', 'dispatch'] }
+      current = { token: null, enabled: ['read', 'dispatch'], maxJournalLength: undefined }
     }
   } catch {
-    current = { token: null, enabled: ['read', 'dispatch'] }
+    current = { token: null, enabled: ['read', 'dispatch'], maxJournalLength: undefined }
   }
 
   function persist(): void {
@@ -55,9 +58,9 @@ export function createSecurityStore(opts: SecurityStoreOptions): SecurityStore {
 
   return {
     get(): SecuritySettings {
-      return { token: current.token, enabled: [...current.enabled] }
+      return { token: current.token, enabled: [...current.enabled], maxJournalLength: current.maxJournalLength }
     },
-    set(patch: { token?: string | null; groups?: string[]; disable?: string[] }): SecuritySettings {
+    set(patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }): SecuritySettings {
       const add = Array.isArray(patch.groups)
         ? [...new Set(patch.groups.filter((g) => VALID_GROUPS.has(g)))]
         : []
@@ -71,7 +74,10 @@ export function createSecurityStore(opts: SecurityStoreOptions): SecurityStore {
         if (i !== -1) enabled.splice(i, 1)
       }
       const token = patch.token !== undefined ? (typeof patch.token === 'string' && patch.token !== '' ? patch.token : null) : current.token
-      current = { token, enabled }
+      const maxJournalLength = patch.maxJournalLength !== undefined
+        ? (typeof patch.maxJournalLength === 'number' && patch.maxJournalLength > 0 ? Math.floor(patch.maxJournalLength) : undefined)
+        : current.maxJournalLength
+      current = { token, enabled, maxJournalLength }
       persist()
       return this.get()
     },

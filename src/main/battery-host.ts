@@ -25,9 +25,9 @@ function rootOnlyEnvelope() {
 class RuntimeBackend implements McpBackend {
   readonly runtime: Runtime
 
-  constructor() {
+  constructor(maxJournalLength?: number) {
     installShim()
-    this.runtime = new Runtime({ mount: mountEl() as never, envelope: rootOnlyEnvelope() as never })
+    this.runtime = new Runtime({ mount: mountEl() as never, envelope: rootOnlyEnvelope() as never, maxJournalLength })
     this.runtime.bootstrap()
   }
 
@@ -80,7 +80,9 @@ const transportArg = process.argv.find((a) => a.startsWith('--mcp-transport='))
 const transport: McpTransportKind = transportArg?.endsWith('http') ? 'http' : 'stdio'
 const portArg = process.argv.find((a) => a.startsWith('--mcp-port='))
 const port = portArg ? Number(portArg.slice('--mcp-port='.length)) : 3789
-const backend = new RuntimeBackend()
+const journalArg = process.argv.find((a) => a.startsWith('--max-journal-length='))
+const maxJournalLength = journalArg ? Number(journalArg.slice('--max-journal-length='.length)) : undefined
+const backend = new RuntimeBackend(maxJournalLength && maxJournalLength > 0 ? maxJournalLength : undefined)
 // The battery host pre-enables ALL tool groups (a deterministic CI path with
 // no interactive UI): the full surface — read/dispatch/graph/code — is what the
 // battery drives. stdio is spawn-local (trusted).

@@ -260,6 +260,9 @@ export interface SecuritySettings {
   token: string | null
   /** The enabled tool groups (`read`/`dispatch`/`graph`/`code`). */
   enabled: string[]
+  /** Maximum journal entries before auto-condense (undefined = never condense).
+   *  Passed to the provident-ssr Supervisor constructor. */
+  maxJournalLength?: number
 }
 
 export const IPC_SECURITY_GET = 'provident:security:get'

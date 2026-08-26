@@ -139,7 +139,10 @@ node resolved/unresolved after a dispatch.
 > endpoint (journal-endpoint-review.md J3-J8) is implemented: the `graph`-group
 > tool drives the engine's `Supervisor.undo()`/`redo()`/`replay()` (provident-ssr
 > 0.2.1 `UndoRedoReport` surface) and re-renders. Tests `tests/journal-endpoint.test.ts`
-> (10) + the adversarial destroy-undo/malformed-action pins.
+> (17) + the adversarial destroy-undo/malformed-action/replay-clears-redo/double-undo/
+> dispatch-not-undoable/id-index-coherence/fail-closed-gate/teardown-load-no-op pins.
+> **Note**: `base-boundary` status is latent — the host never sets `maxJournalLength`,
+> so condense never fires and `_restoreBase` never runs (pending.md GAP 1).
 
 The engine's journal surface (`Supervisor.undo()`/`redo()`/`replay()`) is
 exposed to agents as a single `provident.journal` tool with a discriminated

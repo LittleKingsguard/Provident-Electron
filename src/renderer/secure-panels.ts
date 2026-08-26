@@ -37,7 +37,7 @@ declare global {
       notify(payload: { uri: string }): void
       security?: {
         get(): Promise<SecuritySettings>
-        set(patch: { token?: string | null; groups?: string[]; disable?: string[] }): Promise<SecuritySettings>
+        set(patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }): Promise<SecuritySettings>
       }
     }
   }
@@ -80,6 +80,16 @@ const TOGGLE_BODY = `function (ctx) {
   if (!group) return;
   var on = ctx.node.props && ctx.node.props['data-on'] === 'true';
   if (on) s.set({ disable: [group] }); else s.set({ groups: [group] });
+}`
+// The maxJournalLength input handler: reads the numeric value from the input
+// and persists it via the managed channel. Empty/null clears the setting.
+const JOURNAL_LENGTH_BODY = `function (ctx) {
+  var s = window && window.provident && window.provident.security;
+  if (!s) return;
+  var val = ctx.node && ctx.node.props && ctx.node.props['value'];
+  var num = val ? parseInt(val, 10) : NaN;
+  if (isNaN(num) || num <= 0) s.set({ maxJournalLength: null });
+  else s.set({ maxJournalLength: num });
 }`
 
 /** The pane-graph envelope: the Security Settings pane + the Debug pane,
@@ -125,6 +135,22 @@ function paneEnvelope(): LegacyInitialData {
                 ],
               },
               { type: 'div', props: { id: 'group-toggles' }, children: toggles },
+              {
+                type: 'div',
+                props: { id: 'journal-length' },
+                css: { classes: ['group-row'] },
+                children: [
+                  { type: 'label', content: 'Max journal entries' },
+                  {
+                    type: 'div',
+                    css: { classes: ['token-row'] },
+                    children: [
+                      { type: 'input', props: { id: 'journal-length-input', placeholder: '(never condense)', type: 'number', min: '1' } },
+                      { type: 'button', props: { id: 'journal-length-apply' }, css: { classes: ['btn'] }, content: 'Apply', handlers: [{ name: 'journal-length-apply', event: 'click', body: JOURNAL_LENGTH_BODY }] },
+                    ],
+                  },
+                ],
+              },
             ],
           },
           // ---- Debug / agent-visibility pane -----------------------------
@@ -254,7 +280,8 @@ export class SecurePanels {
       const id = (n.props as { id?: string })?.id
       const mutation: Array<{ targetProp: string; value: unknown; mode?: string }> = []
       if (id === 'security-status') {
-        mutation.push({ targetProp: 'content', value: `token: ${this.cfg.token ? '••••' : '(none)'} · enabled: [${this.cfg.enabled.join(', ')}]` })
+        const jl = this.cfg.maxJournalLength !== undefined ? ` · journal: ≤${this.cfg.maxJournalLength}` : ' · journal: ∞'
+        mutation.push({ targetProp: 'content', value: `token: ${this.cfg.token ? '••••' : '(none)'} · enabled: [${this.cfg.enabled.join(', ')}]${jl}` })
       } else if (id === 'status') {
         mutation.push({ targetProp: 'content', value: this.debugText })
       } else if (id === 'token-input') {
@@ -264,6 +291,8 @@ export class SecurePanels {
         const on = this.cfg.enabled.includes(g)
         mutation.push({ targetProp: 'props.data-on', mode: 'replace', value: on ? 'true' : 'false' })
         mutation.push({ targetProp: 'content', value: `${on ? '☑' : '☐'} ${GROUP_LABELS[g]}` })
+      } else if (id === 'journal-length-input') {
+        mutation.push({ targetProp: 'props.value', mode: 'replace', value: this.cfg.maxJournalLength ?? '' })
       }
       if (mutation.length > 0) {
         this.supervisor.apply({ kind: 'state-slice', node: n, mutation })

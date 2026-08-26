@@ -4,8 +4,10 @@
 DOCUMENTATION ONLY — `docs/specs/mcp-endpoint.md` §3.6, `docs/specs/journal-endpoint-review.md`
 (J3-J8), `docs/specs/journal-endpoint-proposal.md`, and the upstream engine spec
 `docs/specs/undo-redo-report.md`. No implementation reading. **Execution
-POSTPONED (2026-08-26)** — the scenarios below are the green-scenario artifact;
-a fresh agent runs them against the live modules and records pass/fail.
+COMPLETED 2026-08-26** — B1-B10 all PASS against the live modules (10 tests,
+throwaway script in `/tmp/opencode/` cleaned up). **Adversarial gaps 4-10
+closed 2026-08-26** — 7 adversarial tests added to `tests/journal-endpoint.test.ts`
+(17 total); gaps 1,2,3,11,12 deferred (pending.md).
 
 ## Contract under test (from the docs)
 
@@ -43,17 +45,43 @@ A fresh agent writes a throwaway script in `/tmp/opencode/` importing the real
 `demoEnvelope()`), then runs B1-B10 and records pass/fail. A FAIL is a doc/spec
 drift OR an un-hardened regression — never a pass.
 
-## Execution record (filled by the runner)
+## Execution record (completed 2026-08-26)
+
+Command: `npx vitest run --config /tmp/opencode/vitest-blind.config.ts`
+
+Output: `✓ journal-blind-test.ts (10 tests) 21ms | Tests 10 passed (10)`
 
 | # | Result | Notes |
 | --- | --- | --- |
-| B1 | _pending_ | |
-| B2 | _pending_ | |
-| B3 | _pending_ | |
-| B4 | _pending_ | |
-| B5 | _pending_ | |
-| B6 | _pending_ | |
-| B7 | _pending_ | |
-| B8 | _pending_ | |
-| B9 | _pending_ | |
-| B10 | _pending_ | |
+| B1 | **PASS** | `journal('undo')` after `state-slice` → `status:'applied'`; rendered HTML no longer contains the post-op value |
+| B2 | **PASS** | `journal('redo')` after undo → `status:'applied'`; rendered HTML contains the post-op value again |
+| B3 | **PASS** | `journal('replay')` after `state-slice` → `status:'applied'`; rendered HTML contains the post-op value |
+| B4 | **PASS** | `journal('undo')` with empty stack → `status:'no-op'`; never throws |
+| B5 | **PASS** | `journal('bogus')` / `undefined` / `null` / `42` → throws `unknown journal action` |
+| B6 | **PASS** | `SecurityGate` default (read+dispatch) → `provident.journal` NOT in allowed tools |
+| B7 | **PASS** | `SecurityGate` with `graph` granted → `provident.journal` allowed |
+| B8 | **PASS** | `ProvidentMcpServer` default gate → `allowedToolNames()` does NOT include `provident.journal` |
+| B9 | **PASS** | `ProvidentMcpServer` after `applyGatePatch({groups:['graph']})` → `allowedToolNames()` includes `provident.journal` |
+| B10 | **PASS** | Journal result shape has `status`, `scheduledDirtied`, `baseBoundary`, `renderedHtml`, `ssrHtml`, `warnings` |
+
+## Adversarial findings (closed 2026-08-26)
+
+| Gap | Scenario | Expected | Actual | Status |
+| --- | --- | --- | --- | --- |
+| GAP 4 | `replay` clears redo stack | `redo` after `replay` → `no-op` | `no-op` | **PASS** |
+| GAP 5 | Double-undo (non-idempotent, J7) | Two undoes invert two different ops | First undoes most recent, second undoes previous | **PASS** |
+| GAP 6 | Dispatch handler side effects ARE undoable | `undo` after `dispatch('inc')` → `applied` (reverses handler's internal state-slice) | `applied` | **PASS** |
+| GAP 7 | Id index coherence after mixed destroy+undo | `listTargets()` returns consistent data after undo cycle | Non-empty list, all nodes have truthy nodeId, destroyed node absent | **PASS** |
+| GAP 8 | Fail-closed gate (graph disabled) | `provident.journal` NOT in `allowedToolNames()` | Not in list | **PASS** |
+| GAP 9 | Journal after `teardown` → stacks emptied | `undo` → `no-op` | `no-op` | **PASS** |
+| GAP 10 | Journal after `load` (re-derive) → stacks emptied | `undo` → `no-op` | `no-op` | **PASS** |
+
+### Deferred adversarial gaps (recorded in pending.md)
+
+| Gap | Scenario | Why deferred |
+| --- | --- | --- |
+| GAP 1 | `base-boundary` status after condense | Latent — host never sets `maxJournalLength` |
+| GAP 2 | `scheduledDirtied` contents after undo | Lower value — return shape test asserts keys exist |
+| GAP 3 | `stackTopKind` / `redoTopKind` after ops | Lower value — return shape test asserts keys exist |
+| GAP 11 | Zod boundary rejects malformed input | Lower value — runtime guard catches what zod misses |
+| GAP 12 | Renderer destruction mid-flight | Hard to test (async race); defer to A2 hardening |

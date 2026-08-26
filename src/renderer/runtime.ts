@@ -61,6 +61,9 @@ import type { TranslatedWarning } from 'provident-ssr/core/translate.js'
 export interface RuntimeOptions {
   mount: HTMLElement
   envelope: LegacyInitialData
+  /** Maximum journal entries before auto-condense (undefined = never condense).
+   *  Passed to the provident-ssr Supervisor constructor. */
+  maxJournalLength?: number
 }
 
 export class Runtime {
@@ -74,6 +77,7 @@ export class Runtime {
   private domPrevMap: Map<string, unknown> | null = null
   private ssrPrevMap: Map<string, unknown> | null = null
   private bootstrapped = false
+  private readonly maxJournalLength: number | undefined
   /** The opt-in data-node-id (REQ-GAP-3/A2 + REQ-GAP-8): every emitted element
    *  carries its engine nodeId in BOTH views so an MCP agent reading the
    *  rendered HTML can trace each element back to its producing graph node. */
@@ -98,10 +102,11 @@ export class Runtime {
 
   constructor(opts: RuntimeOptions) {
     this.mount = opts.mount
+    this.maxJournalLength = opts.maxJournalLength
     const translated = translateLegacy(opts.envelope)
     this.rootNode = translated.root
     this.nodes = translated.nodes
-    this.supervisor = new Supervisor({ events: new EventBridge() })
+    this.supervisor = new Supervisor({ events: new EventBridge(), maxJournalLength: opts.maxJournalLength })
     for (const n of translated.nodes) this.supervisor.registerNode(n)
     this.adapter = new DomAdapter(opts.mount, { onEvent: this.handleDomEvent })
     this.payloads = this.buildPayloads(translated.content, opts.envelope.content)
@@ -301,7 +306,7 @@ export class Runtime {
     const translated = translateLegacy(env)
     this.rootNode = translated.root
     this.nodes = translated.nodes
-    this.supervisor = new Supervisor({ events: new EventBridge() })
+    this.supervisor = new Supervisor({ events: new EventBridge(), maxJournalLength: this.maxJournalLength })
     for (const n of translated.nodes) this.supervisor.registerNode(n)
     this.payloads = this.buildPayloads(translated.content, translated.userData)
     this.envelope = env
@@ -327,7 +332,7 @@ export class Runtime {
     reRegisterDefPrototypes(doc as never, hub, nodes as never)
     this.rootNode = nodes[0]
     this.nodes = nodes
-    this.supervisor = new Supervisor({ events: new EventBridge() })
+    this.supervisor = new Supervisor({ events: new EventBridge(), maxJournalLength: this.maxJournalLength })
     for (const n of nodes) this.supervisor.registerNode(n)
     this.payloads = this.buildPayloads(nodes, undefined)
     this.envelope = null
@@ -482,7 +487,7 @@ export class Runtime {
         nodes = seeds.map((s) => new Node(s, hub))
         reconcileParentTargets(nodes)
       }
-      const throwaway = new Supervisor({ events: new EventBridge() })
+      const throwaway = new Supervisor({ events: new EventBridge(), maxJournalLength: this.maxJournalLength })
       for (const n of nodes) throwaway.registerNode(n)
       const cr = nodes[0].compile(nodes)
       throwaway.recordResolved(cr.actionable)
@@ -694,7 +699,7 @@ export class Runtime {
       ? translateLegacy(exp as LegacyInitialData).nodes
       : loadState(exp as never).map((s) => new Node(s, hub))
     reconcileParentTargets(seedNodes)
-    const sup = new Supervisor({ events: new EventBridge() })
+    const sup = new Supervisor({ events: new EventBridge(), maxJournalLength: this.maxJournalLength })
     for (const n of seedNodes) sup.registerNode(n)
     const els = this.emitTree(seedNodes, sup)
     const kids = new Map<string, Array<{ wire?: unknown; type?: unknown; props?: Record<string, unknown> }>>()

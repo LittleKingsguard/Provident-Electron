@@ -214,7 +214,12 @@ filed as a handoff item per AGENTS.md item 7:
   host-side downgrade — the engine's `applied` is authoritative). The
   adversarial test pins the current behavior (no crash, report returned) and
   documents the package finding. Recorded in `docs/defects.md`
-  UNDO-REDO-DESTROY-STATUS.
+  UNDO-REDO-DESTROY-STATUS. **Adversarial gaps 4-10 closed 2026-08-26** — 7
+  additional adversarial tests added to `tests/journal-endpoint.test.ts` (17
+  total): replay-clears-redo (GAP 4), double-undo non-idempotent (GAP 5),
+  dispatch-not-undoable (GAP 6), id-index-coherence (GAP 7), fail-closed gate
+  (GAP 8), teardown-no-op (GAP 9), load-no-op (GAP 10). Gaps 1,2,3,11,12
+  deferred (pending.md).
 
 ## Verified state (the workarounds ARE proven)
 

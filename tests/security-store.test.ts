@@ -73,4 +73,69 @@ describe('SecurityStore — manual-UI settings persistence (mcp-endpoint.md §6.
       rmSync(dir, { recursive: true, force: true })
     }
   })
+
+  it('a fresh store has maxJournalLength undefined (never condense)', () => {
+    const dir = freshDir()
+    try {
+      const store: SecurityStore = createSecurityStore({ path: join(dir, 'sec.json') })
+      expect(store.get().maxJournalLength).toBeUndefined()
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('set({ maxJournalLength }) persists and round-trips', () => {
+    const dir = freshDir()
+    try {
+      const file = join(dir, 'sec.json')
+      const store: SecurityStore = createSecurityStore({ path: file })
+      const after = store.set({ maxJournalLength: 100 })
+      expect(after.maxJournalLength).toBe(100)
+      // write-through
+      const onDisk = JSON.parse(readFileSync(file, 'utf8')) as SecuritySettings
+      expect(onDisk.maxJournalLength).toBe(100)
+      // reload
+      const reloaded = createSecurityStore({ path: file })
+      expect(reloaded.get().maxJournalLength).toBe(100)
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('set({ maxJournalLength: null }) clears the setting', () => {
+    const dir = freshDir()
+    try {
+      const store: SecurityStore = createSecurityStore({ path: join(dir, 'sec.json') })
+      store.set({ maxJournalLength: 50 })
+      expect(store.get().maxJournalLength).toBe(50)
+      store.set({ maxJournalLength: null })
+      expect(store.get().maxJournalLength).toBeUndefined()
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('set({ maxJournalLength: 0 }) clears the setting (invalid value)', () => {
+    const dir = freshDir()
+    try {
+      const store: SecurityStore = createSecurityStore({ path: join(dir, 'sec.json') })
+      store.set({ maxJournalLength: 50 })
+      store.set({ maxJournalLength: 0 })
+      expect(store.get().maxJournalLength).toBeUndefined()
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('a pre-existing file with maxJournalLength is loaded on construction', () => {
+    const dir = freshDir()
+    try {
+      const file = join(dir, 'sec.json')
+      writeFileSync(file, JSON.stringify({ token: null, enabled: ['read'], maxJournalLength: 200 }))
+      const store: SecurityStore = createSecurityStore({ path: file })
+      expect(store.get().maxJournalLength).toBe(200)
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
 })

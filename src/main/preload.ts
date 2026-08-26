@@ -13,7 +13,7 @@ export interface ProvidentBridge {
   notify(payload: NotifyPayload): void
   security: {
     get(): Promise<SecuritySettings>
-    set(patch: { token?: string | null; groups?: string[]; disable?: string[] }): Promise<SecuritySettings>
+    set(patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }): Promise<SecuritySettings>
   }
 }
 
@@ -42,7 +42,7 @@ const bridge: ProvidentBridge = {
     get(): Promise<SecuritySettings> {
       return ipcRenderer.invoke(IPC_SECURITY_GET)
     },
-    set(patch: { token?: string | null; groups?: string[]; disable?: string[] }): Promise<SecuritySettings> {
+    set(patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }): Promise<SecuritySettings> {
       return ipcRenderer.invoke(IPC_SECURITY_SET, patch)
     },
   },
