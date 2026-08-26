@@ -1,8 +1,8 @@
 # Green Scenarios — MCP Resources (gated read-group)
 
 Status: **GREEN-SCENARIO SET** (2026-08-25). Each scenario is a behavior the
-gated MCP resources claim (`docs/specs/mcp-resources-review.md` R1-R5 +
-`docs/specs/mcp-resources-proposal.md`). The blind-test writer runs these
+gated MCP resources claim (`archive/specs/mcp-resources-review.md` R1-R5 +
+`archive/specs/mcp-resources-proposal.md`). The blind-test writer runs these
 against the live `ProvidentMcpServer` (under the stub backend) and confirms each
 PASSES. A failure is a doc bug OR an un-hardened regression — never a pass.
 

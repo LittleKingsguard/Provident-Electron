@@ -139,7 +139,7 @@ node resolved/unresolved after a dispatch.
 > endpoint (journal-endpoint-review.md J3-J8) is implemented: the `graph`-group
 > tool drives the engine's `Supervisor.undo()`/`redo()`/`replay()` (provident-ssr
 > 0.2.1 `UndoRedoReport` surface) and re-renders. Tests `tests/journal-endpoint.test.ts`
-> (17) + the adversarial destroy-undo/malformed-action/replay-clears-redo/double-undo/
+> (19) + the adversarial destroy-undo/malformed-action/replay-clears-redo/double-undo/
 > dispatch-not-undoable/id-index-coherence/fail-closed-gate/teardown-load-no-op pins.
 > **Note**: `base-boundary` status is latent — the host never sets `maxJournalLength`,
 > so condense never fires and `_restoreBase` never runs (pending.md GAP 1).
@@ -184,7 +184,7 @@ exposed to agents as a single `provident.journal` tool with a discriminated
 ### 3.7 MCP resources (read-only `mcp://` URIs)
 
 > **Implementation status (2026-08-25): LANDED.** The gated read-group
-> resources (`docs/specs/mcp-resources-review.md` R1-R5) are implemented: the
+> resources (`archive/specs/mcp-resources-review.md` R1-R5) are implemented: the
 > three URIs below are registered on the MCP server, gated with the `read`
 > tool group (R1 — never always-registered), live re-gated on `applyGatePatch`
 > (R2), registered in both transport builds (R3), node-template reads validate

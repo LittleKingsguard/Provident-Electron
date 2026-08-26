@@ -155,7 +155,8 @@ defect that the host's SecurePanels adoption surfaced:
   `tests/isolation-adversarial-e2e.test.ts` fail on rc.3 with
   `cross-graph-target`; the raw engine probe confirms `t.nodes[1].graphScope ===
   null` for an isolated graph's child. Filed upstream `docs/defects.md`
-  ISO-ADV-D (X13) + `archive/test-data/2026-08-25/2026-08-25-isolation-adversarial-probe.md`.
+  ISO-ADV-D (X13) + the isolation-adversarial probe (the raw engine probe
+  confirming `t.nodes[1].graphScope === null` for an isolated graph's child).
 - **RESOLVED (0.2.0-rc.4, commit `d1691cd`)**: the upstream threaded
   `graphScope` into the `data.children` recursion (translate.ts:1046). The host
   re-verified on rc.4 — SecurePanels + isolation-e2e pass again; `tests/isolation-adv-d.test.ts`

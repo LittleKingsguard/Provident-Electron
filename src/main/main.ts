@@ -56,7 +56,7 @@ async function main(): Promise<void> {
   // MCP tool (the MCP tool handlers never route to it), so an agent cannot grant
   // itself capabilities.
   ipcMain.handle(IPC_SECURITY_GET, () => securityStore.get())
-  ipcMain.handle(IPC_SECURITY_SET, (_event, patch: { token?: string | null; groups?: string[]; disable?: string[] }) => {
+  ipcMain.handle(IPC_SECURITY_SET, (_event, patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }) => {
     const updated = securityStore.set(patch)
     // Re-gate the live MCP server + persist.
     mcp.applyGatePatch({ token: patch.token, groups: patch.groups as ToolGroup[] | undefined, disable: patch.disable as ToolGroup[] | undefined })

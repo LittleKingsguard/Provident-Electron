@@ -7,7 +7,7 @@ DOCUMENTATION ONLY — `docs/specs/mcp-endpoint.md` §3.6, `archive/specs/journa
 COMPLETED 2026-08-26** — B1-B10 all PASS against the live modules (10 tests,
 throwaway script in `/tmp/opencode/` cleaned up). **Adversarial gaps 4-10
 closed 2026-08-26** — 7 adversarial tests added to `tests/journal-endpoint.test.ts`
-(17 total); gaps 1,2,3,11,12 deferred (pending.md).
+(19 total); gaps 1,2,3,11,12 deferred (pending.md).
 
 ## Contract under test (from the docs)
 

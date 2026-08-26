@@ -92,12 +92,24 @@ function handleRequest(runtime: Runtime, req: RpcRequest, notify: (p: { uri: str
   })
 }
 
-function main(): void {
+async function main(): Promise<void> {
   const mount = document.getElementById('app')
   if (!mount) throw new Error('mount #app missing')
-  const runtime = new Runtime({ mount, envelope: demoEnvelope() })
-  runtime.bootstrap()
   const bridge = window.provident
+  // Read the persisted operator config (maxJournalLength) so the app Runtime's
+  // Supervisor is constructed with the journal-condense threshold. The config
+  // is manual-UI-only (never an MCP tool); the Runtime reads it at boot.
+  let maxJournalLength: number | undefined
+  if (bridge?.security) {
+    try {
+      const cfg = await bridge.security.get()
+      maxJournalLength = cfg.maxJournalLength
+    } catch {
+      // keep the default (never condense) on a bridge error
+    }
+  }
+  const runtime = new Runtime({ mount, envelope: demoEnvelope(), maxJournalLength })
+  runtime.bootstrap()
   if (!bridge) {
     console.warn('[provident-renderer] no preload bridge — MCP endpoints unavailable (running as a plain page?)')
     return
@@ -123,8 +135,8 @@ function main(): void {
 
 if (typeof document !== 'undefined') {
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => main())
+    document.addEventListener('DOMContentLoaded', () => void main())
   } else {
-    main()
+    void main()
   }
 }
