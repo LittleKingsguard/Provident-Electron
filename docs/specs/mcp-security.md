@@ -23,6 +23,7 @@ tool belongs to (tool names use the `provident.` prefix):
 | Tool (full name) | Group |
 | --- | --- |
 | `provident.get_rendered_html` | read |
+| `provident.get_markdown` | read |
 | `provident.list_targets` | read |
 | `provident.get_node_state` | read |
 | `provident.code.get` | read |
@@ -33,10 +34,12 @@ tool belongs to (tool names use the `provident.` prefix):
 | `provident.export` | graph |
 | `provident.validate` | graph |
 | `provident.teardown` | graph |
+| `provident.journal` | graph |
 | `provident.code.set` | code |
 | `provident.code.create` | code |
 | `provident.code.delete` | code |
 | `provident.code.load` | code |
+| `provident.code.loadBatch` | code |
 
 `toolAllowed(toolName, enabled: ReadonlySet<ToolGroup>): boolean` —
 `true` iff `groupFor(toolName) ∈ enabled` AND the tool name is a known tool

@@ -51,13 +51,14 @@ applyGatePatch(patch: { token?: string|null; groups?: ToolGroup[]; disable?: Too
 
 ## 3. `ALL_TOOLS` (the full registration list)
 
-The 15 `provident.`-prefixed names (all IMPLEMENTED as of Unit C — the graph +
+The 18 `provident.`-prefixed names (all IMPLEMENTED as of Unit C — the graph +
 code-CRUD tools are real, not stubs): `dispatch`, `get_rendered_html`,
-`list_targets`, `get_node_state`, `code.get`, `code.validate` (the `read`/
-`dispatch` groups, 6 live under the default gate) + `load`, `op`, `export`,
-`validate`, `teardown` (`graph`) + `code.set`, `code.create`, `code.delete`,
-`code.load` (`code`). Under the DEFAULT gate, only the `read`+`dispatch` subset
-(6 tools) registers; graph/code tools are NOT present.
+`get_markdown`, `list_targets`, `get_node_state`, `code.get`, `code.validate`
+(the `read`/`dispatch` groups, 7 live under the default gate) + `load`, `op`,
+`export`, `validate`, `teardown`, `journal` (`graph`) + `code.set`,
+`code.create`, `code.delete`, `code.load`, `code.loadBatch` (`code`). Under the
+DEFAULT gate, only the `read`+`dispatch` subset (7 tools) registers; graph/code
+tools are NOT present.
 
 ## 4. Verify (states)
 

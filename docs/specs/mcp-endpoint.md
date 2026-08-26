@@ -157,7 +157,7 @@ exposed to agents as a single `provident.journal` tool with a discriminated
   `'base-boundary'` (undoStack empty because truncated at the condensed base).
 - **scheduledDirtied** — the markPass2-SCHEDULED (pending-flush) set from the
   engine report. The host AWAITS the flush + drains pass-2 before re-rendering
-  (undo-redo-report §2.5), so the returned `renderedHtml`/`ssrHtml` reflect the
+  (upstream undo-redo-report §2.5), so the returned `renderedHtml`/`ssrHtml` reflect the
   settled post-op state.
 - **stackTopKind / redoTopKind** — the post-op undo/redo stack tops (the next
   undoable/redoable op kind), if any.
@@ -433,11 +433,11 @@ the MCP tool handlers never route to it.
 
 ### 6.5 The A1..A6 host-side hardening (folded in)
 
-> **Implementation status (2026-08-23):** A1 + A5 + the A6 stateless-HTTP
-> idempotency half ARE landed. A2 (RendererBackend lifecycle timeouts), A3
-> (permanent CI divergence leg — the R13 `scripts/electron-divergence.mjs`
-> exists as a one-off, not a CI leg), A4 (`code.loadBatch`), and the A6
-> readiness-timeout half are NOT yet implemented. This section is the DESIGN
+> **Implementation status (2026-08-25):** A1 + A4 (`code.loadBatch`) + A5 + the A6
+> stateless-HTTP idempotency half ARE landed. A2 (RendererBackend lifecycle
+> timeouts), A3 (permanent CI divergence leg — the R13
+> `scripts/electron-divergence.mjs` exists as a one-off, not a CI leg), and the
+> A6 readiness-timeout half are NOT yet implemented. This section is the DESIGN
 > for the remaining hardening.
 
 - **A1** (above): the `code`/`graph` groups are OFF by default; `--mcp-allow`
@@ -454,9 +454,12 @@ the MCP tool handlers never route to it.
   sees a fresh root-only mount, then the new graph's render — there is no
   in-place diff). The cost is O(nodes) translate + O(path-states) compile +
   O(elements) emit; for a 4095-element tree this is the ~2.8s enumeration pass,
-  not a small patch. Documented here; an optional `code.loadBatch`/write buffer
-  (stage N edits, one re-derive) is a **FUTURE surface, NOT implemented** (see
-  `docs/pending.md` SPECULATIVE — `code.loadBatch` / write buffer) — `code.*`
+  not a small patch. Documented here; `code.loadBatch`/write buffer (stage N
+  edits, one re-derive) **LANDED 2026-08-25** — `provident.code.loadBatch(ops[])`,
+  all-or-nothing clone-then-validate-then-commit, ordered-with-dependencies,
+  pinned op schema, `LoadResult` + per-op status return, six-site `code`-group
+  registration, no-envelope case, honest framing (round-trips + atomicity, NOT
+  re-derive cost). Tests `tests/loadbatch.test.ts` + `tests/loadbatch-adversarial.test.ts`;
   edits accumulate on the envelope until an explicit `code.load`.
 - **A5**: index authored css.id/props.id once at load (a Map rebuilt on
   load/teardown), not per-call `allNodes().find`.

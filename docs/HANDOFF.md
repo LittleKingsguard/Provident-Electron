@@ -182,7 +182,7 @@ filed as a handoff item per AGENTS.md item 7:
   redoTopKind?, baseBoundary }`) + read-only stack accessors (`undoDepth`/
   `redoDepth`/`undoTopKind`/`redoTopKind`/`undoBaseBoundary`).
 - **RESOLVED (0.2.1, commit `be11b2e`)**: the upstream landed exactly this as
-  `docs/specs/undo-redo-report.md` (DECIDED). `scheduledDirtied` is the
+  `../Preempt-Providence/docs/specs/undo-redo-report.md` (DECIDED). `scheduledDirtied` is the
   markPass2-SCHEDULED (pending-flush) set; a host awaiting settled states must
   `await flush()` + `takePass2States()`. The adversarial pass also fixed 13
   defects (ISO-1 cross-graph id leak in the undo consumer walk, UR-6 redo-of-

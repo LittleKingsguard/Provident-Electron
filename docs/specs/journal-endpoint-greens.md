@@ -1,9 +1,9 @@
 # Blind-test greens — `provident.journal` (journal reversibility endpoint)
 
 **Status**: BLIND-TEST WRITER artifact (AGENTS.md item 10a). Produced from the
-DOCUMENTATION ONLY — `docs/specs/mcp-endpoint.md` §3.6, `docs/specs/journal-endpoint-review.md`
-(J3-J8), `docs/specs/journal-endpoint-proposal.md`, and the upstream engine spec
-`docs/specs/undo-redo-report.md`. No implementation reading. **Execution
+DOCUMENTATION ONLY — `docs/specs/mcp-endpoint.md` §3.6, `archive/specs/journal-endpoint-review.md`
+(J3-J8), `archive/specs/journal-endpoint-proposal.md`, and the upstream engine spec
+`../Preempt-Providence/docs/specs/undo-redo-report.md`. No implementation reading. **Execution
 COMPLETED 2026-08-26** — B1-B10 all PASS against the live modules (10 tests,
 throwaway script in `/tmp/opencode/` cleaned up). **Adversarial gaps 4-10
 closed 2026-08-26** — 7 adversarial tests added to `tests/journal-endpoint.test.ts`
