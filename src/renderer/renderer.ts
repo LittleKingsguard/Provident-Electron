@@ -9,7 +9,7 @@ import type { RpcRequest, RpcReply } from '../shared/types.js'
 /** N3 (live-notification-review.md) — the MCP methods that mutate the APP graph
  *  (content/structural/re-derive). Only these trigger the app-graph-changed push
  *  AFTER the reply. Never triggered by the isolated SecurePanels graph. */
-const MUTATING_METHODS = new Set(['dispatch', 'load', 'op', 'teardown', 'code.load', 'code.loadBatch'])
+const MUTATING_METHODS = new Set(['dispatch', 'load', 'op', 'teardown', 'code.load', 'code.loadBatch', 'journal'])
 
 function handleRequest(runtime: Runtime, req: RpcRequest, notify: (p: { uri: string }) => void): Promise<RpcReply> {
   return (async (): Promise<RpcReply> => {
@@ -66,6 +66,9 @@ function handleRequest(runtime: Runtime, req: RpcRequest, notify: (p: { uri: str
           break
         case 'code.loadBatch':
           value = runtime.codeLoadBatch((req.payload as { ops: unknown[] }).ops as never)
+          break
+        case 'journal':
+          value = runtime.journal((req.payload as { action?: 'undo' | 'redo' | 'replay' } | null)?.action as 'undo' | 'redo' | 'replay')
           break
         default:
           throw new Error(`unknown method: ${(req as { method: string }).method}`)

@@ -134,6 +134,29 @@ export interface TeardownResult {
   warnings: unknown[]
 }
 
+/** J (journal-endpoint-review.md J2/J3) — the `provident.journal` result. The
+ *  engine's `UndoRedoReport` (provident-ssr 0.2.1) is surfaced faithfully:
+ *  `status` ('applied'|'no-op'|'base-boundary'), `scheduledDirtied` (the
+ *  markPass2-SCHEDULED pending-flush set), `stackTopKind`/`redoTopKind`, and
+ *  `baseBoundary`. The host re-renders after the op and returns both views +
+ *  warnings. */
+export interface JournalResult {
+  status: 'applied' | 'no-op' | 'base-boundary'
+  /** The markPass2-SCHEDULED (pending-flush) set from the engine report. */
+  scheduledDirtied: string[]
+  /** kind of the post-op undoStack top (next undoable), if any. */
+  stackTopKind?: string
+  /** kind of the post-op redoStack top, if any (replay may clear it). */
+  redoTopKind?: string
+  /** true when the undo cursor sits at the condensed base. */
+  baseBoundary: boolean
+  /** The live `#app` innerHTML after the re-render. */
+  renderedHtml: string
+  /** The SSR re-emit (SSRFragmentAdapter) after the re-render. */
+  ssrHtml: string
+  warnings: unknown[]
+}
+
 export interface CodeGetResult {
   path: string
   value: unknown
@@ -198,6 +221,7 @@ export type RpcMethod =
   | 'code.validate'
   | 'code.load'
   | 'code.loadBatch'
+  | 'journal'
 
 export interface RpcRequest {
   id: number

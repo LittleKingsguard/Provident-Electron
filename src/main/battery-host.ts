@@ -54,6 +54,8 @@ class RuntimeBackend implements McpBackend {
         return this.runtime.validate(p.kind as 'legacy' | 'serialized', p.export)
       case 'teardown':
         return this.runtime.teardownResult()
+      case 'journal':
+        return this.runtime.journal(p.action as 'undo' | 'redo' | 'replay')
       case 'code.get':
         return this.runtime.codeGet(p.path as string)
       case 'code.set':

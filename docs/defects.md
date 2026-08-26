@@ -14,7 +14,15 @@ reproduction → suspected root cause → proposed fix shape (upstream-owned).
 
 ## OPEN
 
-_(none — REQ-GAP-1..8 resolved by 0.1.1/0.1.2; REQ-GAP-9..12 PUBLISHED in 0.1.3; DEFECT-SSR-REMOVE RESOLVED in 0.1.4; DEFECT-JOURNAL-UNDO + DEFECT-JOURNAL-REPLAY-APPEND RESOLVED in 0.1.5; ISO-ADV-D RESOLVED in 0.2.0-rc.4; see below.)_
+| ID | Defect (as filed) | Observed symptom / repro | Suspected root cause | Proposed fix shape (upstream-owned) |
+| --- | --- | --- | --- | --- |
+| **UNDO-REDO-DESTROY-STATUS** | `Supervisor.undo()` of a `destroy` entry (a G14 PINNED NO-OP) reports `status:'applied'` with an empty `scheduledDirtied` and an unchanged graph — a silent false-success. | `apply({kind:'destroy', node})` then `undo()` → the report is `{status:'applied', scheduledDirtied:[]}` and the render is unchanged. An MCP host surfaces `status:'applied'` verbatim, so an agent cannot tell a real undo from a no-op — exactly the "no-op must never be silent" trap (journal-endpoint-review.md J4). Repro: `tests/journal-endpoint.test.ts` J-adversarial destroy-undo. | `supervisor.js:1477-1479` — the destroy branch does nothing (no inverse, no dirtied ids) then falls through to `return this.report('applied', dirtied)` (:1577). The G14 pinned-no-op contract says destroy-undo is a no-op, but the report says `applied`. | `undo()` should return `status:'no-op'` for a `destroy` entry (matching the G14 pinned-no-op contract), or expose a `destroyed` hint so a host can distinguish a no-op from a real inverse. |
+
+## RESOLVED BY UPSTREAM (provident-ssr 0.2.1, 2026-08-26)
+
+| ID | Defect (as filed) | Resolution in 0.2.1 | This repo's verification |
+| --- | --- | --- | --- |
+| **UNDO-REDO-REPORT (J1)** — `Supervisor.undo()`/`redo()`/`replay()` return `void` and the `undoStack`/`redoStack` are private, so an MCP/Electron host cannot faithfully report status / dirtied / stack-top-kind after a journal op (cannot distinguish "work done + which nodes touched" from "silent no-op", nor know the next undoable/redoable op or the condensed-base boundary). | **FIXED (0.2.1, commit `be11b2e`)** — `undo()`/`redo()`/`replay()` now return an `UndoRedoReport` (`{ status: 'applied'|'no-op'|'base-boundary', scheduledDirtied, stackTopKind?, redoTopKind?, baseBoundary }`) + read-only stack accessors (`undoDepth`/`redoDepth`/`undoTopKind`/`redoTopKind`/`undoBaseBoundary`). `scheduledDirtied` is the markPass2-SCHEDULED (pending-flush) set; a host awaiting settled states must `await flush()` + `takePass2States()`. Spec `docs/specs/undo-redo-report.md` (DECIDED). | This repo bumped to `provident-ssr@^0.2.1` (2026-08-26); typecheck clean. The journal-endpoint proposal's J1 reshape is unblocked — the host can now report `status`/`scheduledDirtied`/`stackTopKind`/`baseBoundary` faithfully. |
 
 ## RESOLVED BY UPSTREAM (provident-ssr 0.2.0-rc.4, 2026-08-25)
 

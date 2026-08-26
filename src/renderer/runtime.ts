@@ -54,6 +54,7 @@ import type {
   CodeDeleteResult,
   CodeValidateResult,
   CodeLoadBatchResult,
+  JournalResult,
 } from '../shared/types.js'
 import type { TranslatedWarning } from 'provident-ssr/core/translate.js'
 
@@ -546,6 +547,45 @@ export class Runtime {
       status: result.status,
       ...(result.dirtied !== undefined ? { dirtied: result.dirtied } : {}),
       ...(result.minted !== undefined ? { minted: result.minted } : {}),
+      renderedHtml: this.renderedHtml(),
+      ssrHtml: this.ssrHtml(),
+      warnings: this.warnings,
+    }
+  }
+
+  /** MCP `provident.journal` — drive the engine's journal reversibility
+   *  surface (`Supervisor.undo()`/`redo()`/`replay()`, provident-ssr 0.2.1
+   *  UndoRedoReport). The engine returns a report (`status`/`scheduledDirtied`/
+   *  `stackTopKind`/`redoTopKind`/`baseBoundary`); the host then AWAITS the
+   *  flush + drains pass-2 (the report's `scheduledDirtied` is the pending-flush
+   *  set — settled states need `flush()` + `takePass2States()`, undo-redo-report
+   *  §2.5), re-renders, and returns both views + warnings. J3 — a base-restoring
+   *  journal op swaps the graph's node objects, so the render baseline + id
+   *  index are rebuilt from the live graph (never a stale focused-slice cache).
+   *  J7 — no requestId: undo/redo/replay are intrinsically non-idempotent. */
+  async journal(action: 'undo' | 'redo' | 'replay'): Promise<JournalResult> {
+    if (action !== 'undo' && action !== 'redo' && action !== 'replay') {
+      throw new Error(`unknown journal action: ${String(action)}`)
+    }
+    const report = this.supervisor[action]()
+    // J3 — the journal op may have swapped node objects (base-restore) or
+    // dirtied a set; drain the settled pass-2 states + rebuild the id index
+    // from the live graph so the re-render reflects the post-op state. The
+    // host's own `nodes`/`rootNode` caches are refreshed from the supervisor
+    // too — a base-restoring op replaces the node objects, and export/validate/
+    // shapeSig read those caches (adversarial J3 finding).
+    await this.settleGate()
+    this.nodes = [...this.supervisor.allNodes()]
+    const root = this.nodes.find((n) => n.id === this.rootNode.id)
+    if (root) this.rootNode = root
+    this.rebuildIdIndex()
+    this.render()
+    return {
+      status: report.status,
+      scheduledDirtied: report.scheduledDirtied,
+      ...(report.stackTopKind !== undefined ? { stackTopKind: report.stackTopKind } : {}),
+      ...(report.redoTopKind !== undefined ? { redoTopKind: report.redoTopKind } : {}),
+      baseBoundary: report.baseBoundary,
       renderedHtml: this.renderedHtml(),
       ssrHtml: this.ssrHtml(),
       warnings: this.warnings,

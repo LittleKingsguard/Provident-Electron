@@ -162,6 +162,60 @@ defect that the host's SecurePanels adoption surfaced:
   asserts the child carries its scope. Trio green: 453 / 2 skipped, build clean,
   battery 184/184.
 
+## Round 8 — UNDO-REDO-REPORT (J1): `undo()`/`redo()`/`replay()` return `void` + private stacks (filed 2026-08-26 → **RESOLVED in provident-ssr 0.2.1**)
+
+The journal-endpoint proposal's J1 reshape (the blocking derivability gap) —
+filed as a handoff item per AGENTS.md item 7:
+
+- **Issue**: `Supervisor.undo()`/`redo()`/`replay()` return `void` and the
+  `undoStack`/`redoStack` are private. An MCP/Electron host cannot faithfully
+  report status / dirtied / stack-top-kind after a journal op — it cannot
+  distinguish "work done + which nodes touched" from "silent no-op", nor know
+  the next undoable/redoable op or the condensed-base boundary.
+- **Symptom / repro**: the journal-reversibility battery drives the engine
+  methods directly (`tests/journal-reversibility.test.ts`); an MCP agent has no
+  tool that calls them, and a host wrapper cannot report the outcome.
+- **Root cause**: `undo()`/`redo()`/`replay()` return `void`; the stacks are
+  private (`supervisor.ts:131-132`).
+- **Fix shape (upstream-owned)**: return an `UndoRedoReport`
+  (`{ status: 'applied'|'no-op'|'base-boundary', scheduledDirtied, stackTopKind?,
+  redoTopKind?, baseBoundary }`) + read-only stack accessors (`undoDepth`/
+  `redoDepth`/`undoTopKind`/`redoTopKind`/`undoBaseBoundary`).
+- **RESOLVED (0.2.1, commit `be11b2e`)**: the upstream landed exactly this as
+  `docs/specs/undo-redo-report.md` (DECIDED). `scheduledDirtied` is the
+  markPass2-SCHEDULED (pending-flush) set; a host awaiting settled states must
+  `await flush()` + `takePass2States()`. The adversarial pass also fixed 13
+  defects (ISO-1 cross-graph id leak in the undo consumer walk, UR-6 redo-of-
+  failed-re-apply, UR-7 replay clears redoStack, MAL-1..6 malformed-op
+  containment).
+- **This repo's verification**: bumped to `provident-ssr@^0.2.1` (2026-08-26);
+  typecheck clean. The journal-endpoint proposal's J1 reshape is unblocked — the
+  host can now report `status`/`scheduledDirtied`/`stackTopKind`/`baseBoundary`
+  faithfully.
+
+## Round 9 — UNDO-REDO-DESTROY-STATUS: `undo()` of a `destroy` reports `applied` (filed 2026-08-26, from the journal-endpoint adversarial pass)
+
+- **Issue**: `Supervisor.undo()` of a `destroy` entry (a G14 PINNED NO-OP)
+  reports `status:'applied'` with an empty `scheduledDirtied` and an unchanged
+  graph — a silent false-success. An MCP host surfaces `status:'applied'`
+  verbatim, so an agent cannot tell a real undo from a no-op (the
+  journal-endpoint-review.md J4 "no-op must never be silent" trap).
+- **Symptom / repro**: `apply({kind:'destroy', node})` then `undo()` → the
+  report is `{status:'applied', scheduledDirtied:[]}` and the render is
+  unchanged. Repro: `tests/journal-endpoint.test.ts` J-adversarial destroy-undo.
+- **Root cause**: `supervisor.js:1477-1479` — the destroy branch does nothing
+  (no inverse, no dirtied ids) then falls through to
+  `return this.report('applied', dirtied)` (:1577). The G14 pinned-no-op
+  contract says destroy-undo is a no-op, but the report says `applied`.
+- **Fix shape (upstream-owned)**: `undo()` should return `status:'no-op'` for a
+  `destroy` entry (matching the G14 pinned-no-op contract), or expose a
+  `destroyed` hint so a host can distinguish a no-op from a real inverse.
+- **This repo's response**: the host surfaces the engine report verbatim (no
+  host-side downgrade — the engine's `applied` is authoritative). The
+  adversarial test pins the current behavior (no crash, report returned) and
+  documents the package finding. Recorded in `docs/defects.md`
+  UNDO-REDO-DESTROY-STATUS.
+
 ## Verified state (the workarounds ARE proven)
 
 - Unit: `tests/runtime.test.ts` (9) + `tests/engine-surfaces.test.ts` (5) —

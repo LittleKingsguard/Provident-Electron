@@ -50,6 +50,7 @@ Notes:
 | `provident.get_markdown` | `{}` | `{ markdown, census }` (0.2 Feature 2 — the simplified text-only output document for agentic consumers) |
 | `provident.list_targets` | `{}` | `{ nodes: [{ nodeId, cssId?, propsId?, type, content, state, inTree, handlers }] }` |
 | `provident.get_node_state` | `{ target }` | `{ nodeId, states, census }` |
+| `provident.journal` | `{ action: 'undo'\|'redo'\|'replay' }` | `{ status, scheduledDirtied, stackTopKind?, redoTopKind?, baseBoundary, renderedHtml, ssrHtml, warnings }` (the engine's `UndoRedoReport` surfaced faithfully — journal-endpoint-review.md J2/J3) |
 
 ### 3.1 `provident.dispatch`
 
@@ -132,7 +133,52 @@ The node's pass-2 resolved compiled states (read-only snapshot via
 `supervisor.getResolvedStates`) + the census. For an agent inspecting why a
 node resolved/unresolved after a dispatch.
 
-### 3.6 MCP resources (read-only `mcp://` URIs)
+### 3.6 `provident.journal` (journal reversibility — undo/redo/replay)
+
+> **Implementation status (2026-08-26): LANDED.** The journal reversibility
+> endpoint (journal-endpoint-review.md J3-J8) is implemented: the `graph`-group
+> tool drives the engine's `Supervisor.undo()`/`redo()`/`replay()` (provident-ssr
+> 0.2.1 `UndoRedoReport` surface) and re-renders. Tests `tests/journal-endpoint.test.ts`
+> (10) + the adversarial destroy-undo/malformed-action pins.
+
+The engine's journal surface (`Supervisor.undo()`/`redo()`/`replay()`) is
+exposed to agents as a single `provident.journal` tool with a discriminated
+`action` input. It mutates the app graph and re-renders both views.
+
+- **action** — `'undo'` (invert the top of the undo stack), `'redo'` (re-apply
+  the undone op, no-journal), `'replay'` (re-run the journal in order). A
+  malformed/non-string action is rejected at the zod boundary + the Runtime
+  (`unknown journal action`).
+- **status** — the engine's `UndoRedoReport.status`: `'applied'` (real work
+  ran), `'no-op'` (empty stack / unresolved / terminal-destroy), or
+  `'base-boundary'` (undoStack empty because truncated at the condensed base).
+- **scheduledDirtied** — the markPass2-SCHEDULED (pending-flush) set from the
+  engine report. The host AWAITS the flush + drains pass-2 before re-rendering
+  (undo-redo-report §2.5), so the returned `renderedHtml`/`ssrHtml` reflect the
+  settled post-op state.
+- **stackTopKind / redoTopKind** — the post-op undo/redo stack tops (the next
+  undoable/redoable op kind), if any.
+- **baseBoundary** — true when the undo cursor sits at the condensed base
+  (further undo is a guarded no-op).
+- **G14 per-kind contract** — undo is EXACT for `state-slice`/`attach`/
+  `rows-mint`, a PINNED NO-OP for `destroy`, and a DOCUMENTED NO-OP for
+  `detach`/`move`/`clone-instance`/`layer-apply`/`placement-attach`/`rows-clear`
+  (ops.md §6). The tool surfaces the engine's report verbatim — a no-op is
+  never silent. **Package finding (UNDO-REDO-DESTROY-STATUS)**: the engine
+  currently reports `status:'applied'` for a destroy-undo (a pinned no-op) with
+  an empty `scheduledDirtied`; recorded in `docs/defects.md` + `docs/HANDOFF.md`.
+- **J3 — base-restore** — a replay/undo/redo that hits the condensed `base`
+  marker triggers a quiet graph-REPLACE (fresh seed objects). The host rebuilds
+  its `nodes`/`rootNode` caches + id index from the live graph before
+  re-rendering, so export/validate/shapeSig stay coherent.
+- **J7 — no requestId** — undo/redo/replay take no payload and are intrinsically
+  non-idempotent (a double-undo undoes two ops). No `requestId` field.
+- **J8 — app-Runtime-only** — the tool targets the app Runtime's single
+  `Supervisor`, never the isolated SecurePanels graph.
+- **Live-change notification** — `journal` is in `MUTATING_METHODS`, so the
+  `resources/updated` push fires after a successful journal op (stdio-only).
+
+### 3.7 MCP resources (read-only `mcp://` URIs)
 
 > **Implementation status (2026-08-25): LANDED.** The gated read-group
 > resources (`docs/specs/mcp-resources-review.md` R1-R5) are implemented: the
@@ -313,7 +359,7 @@ whose group is disabled is not registered / not listed / returns an error.
 | --- | --- | --- | --- |
 | `read` | `get_rendered_html`, `get_markdown`, `list_targets`, `get_node_state`, `code.get`, `code.validate` | read-only (no mutation, no eval for `code.get`/`validate`* ) | **ON** |
 | `dispatch` | `provident.dispatch` | mutates the graph (handler args, no eval) | **ON** |
-| `graph` | `load`, `op`, `export`, `validate`, `teardown` | mutates/re-derives the graph + the envelope re-load | **OFF** (manual) |
+| `graph` | `load`, `op`, `export`, `validate`, `teardown`, `journal` | mutates/re-derives the graph + the envelope re-load + journal reversibility | **OFF** (manual) |
 | `code` | `code.set`, `code.create`, `code.delete`, `code.load` | WRITES + re-loads (eval via `new Function` on load) | **OFF** (manual) |
 
 \* `code.validate` may eval a proposed body to check it compiles — treat it as

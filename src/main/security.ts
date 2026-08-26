@@ -15,6 +15,7 @@ const TOOL_GROUPS: Record<string, ToolGroup> = {
   'provident.export': 'graph',
   'provident.validate': 'graph',
   'provident.teardown': 'graph',
+  'provident.journal': 'graph',
   'provident.code.set': 'code',
   'provident.code.create': 'code',
   'provident.code.delete': 'code',
