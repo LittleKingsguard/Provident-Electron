@@ -19,6 +19,13 @@ const TOOL_GROUPS: Record<string, ToolGroup> = {
   'provident.code.create': 'code',
   'provident.code.delete': 'code',
   'provident.code.load': 'code',
+  // R1 (mcp-resources-review.md) — the read-group resources. Keyed by
+  // `resource:<uri>` so `toolAllowed` gates them with the `read` group. A
+  // resource is registered ONLY when its group is allowed (never always-
+  // registered).
+  'resource:mcp://provident/app': 'read',
+  'resource:mcp://provident/targets': 'read',
+  'resource:mcp://provident/node/{nodeId}': 'read',
 }
 
 export function groupForTool(toolName: string): ToolGroup | null {

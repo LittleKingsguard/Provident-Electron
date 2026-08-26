@@ -6,8 +6,8 @@
 //   - stdio: the process is spawned by an MCP client (agent/IDE).
 //   - http:   a Streamable HTTP server on 127.0.0.1:<port>/mcp (the app runs,
 //             the client connects).
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import type { RegisteredTool } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js'
+import type { RegisteredTool, RegisteredResource, RegisteredResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { z } from 'zod'
@@ -23,6 +23,17 @@ import type {
 import { SecurityGate, type ToolGroup } from './security.js'
 
 const TOOL_PREFIX = 'provident.'
+
+/** R1 (mcp-resources-review.md) — a gated read-group resource definition. */
+interface ResourceDef {
+  name: string
+  uri?: string
+  uriTemplate?: string
+  group: ToolGroup
+  mimeType: string
+  method: 'renderedHtml' | 'listTargets' | 'nodeState'
+  description: string
+}
 
 /** Map a `provident.`-prefixed tool name to its registration name (spec
  *  §2/§5). A name WITHOUT the prefix throws — a registered tool must be under
@@ -97,6 +108,10 @@ export class ProvidentMcpServer {
    *  enumerator), so this is the only way to re-gate (enable/disable) a
    *  running server's tools on `applyGatePatch`. */
   private readonly registered = new Map<string, RegisteredTool>()
+  /** R2 (mcp-resources-review.md) — the live resource handles, keyed by URI.
+   *  Captured at registration so `applyGatePatch` can re-gate them alongside
+   *  the tools (the SDK keeps its registry private). */
+  private readonly resources = new Map<string, RegisteredResource | RegisteredResourceTemplate>()
   /** M1: the (possibly single) long-lived stdio server, so `applyGatePatch`
    *  can re-gate it in place. */
   private stdioServer: McpServer | null = null
@@ -139,12 +154,33 @@ export class ProvidentMcpServer {
     return registeredToolNames(this._gate, ProvidentMcpServer.ALL_TOOLS)
   }
 
-  applyGatePatch(patch: { token?: string | null; groups?: ToolGroup[]; disable?: ToolGroup[] }): SecuritySnapshot {
+  /** R1 (mcp-resources-review.md) — the resource list + their read-group
+   *  mapping. Each resource mirrors a `read`-group tool; a resource is
+   *  registered ONLY when its group is allowed (never always-registered). */
+  /** R1 (mcp-resources-review.md) — a resource definition. */
+  static readonly ALL_RESOURCES: Array<ResourceDef> = [
+    { name: 'app', uri: 'mcp://provident/app', group: 'read', mimeType: 'text/html', method: 'renderedHtml', description: 'The current rendered HTML view (DOM + SSR + census) — mirrors provident.get_rendered_html. Always-fresh; a large read may return {census,digest,preview,truncated}.' },
+    { name: 'targets', uri: 'mcp://provident/targets', group: 'read', mimeType: 'application/json', method: 'listTargets', description: 'The addressable node vocabulary — mirrors provident.list_targets. Concrete node URIs are discoverable only here (resources/list lists this template, not concrete nodes).' },
+    { name: 'node', uriTemplate: 'mcp://provident/node/{nodeId}', group: 'read', mimeType: 'application/json', method: 'nodeState', description: 'A single node\'s resolved state — mirrors provident.get_node_state. The nodeId is validated against the live in-tree graph.' },
+  ]
+
+  /** The resource URIs whose group the current gate allows (R1). */
+  allowedResourceUris(): string[] {
+    return ProvidentMcpServer.ALL_RESOURCES.filter((r) => this._gate.toolAllowed(`resource:${r.uri ?? r.uriTemplate!}`)).map((r) => r.uri ?? r.uriTemplate!)
+  }
+
+  applyGatePatch(
+    patch: { token?: string | null; groups?: ToolGroup[]; disable?: ToolGroup[] },
+  ): SecuritySnapshot {
     this._gate = this._gate.apply(patch)
     // M1 — re-gate the LIVE server (stdio, one long-lived McpServer): toggle
     // the captured RegisteredTool handles so a narrow actually takes effect.
     for (const [name, tool] of this.registered) {
       tool.update({ enabled: this._gate.toolAllowed(name) })
+    }
+    // R2 — re-gate the captured resource handles the same way.
+    for (const [uri, res] of this.resources) {
+      res.update({ enabled: this._gate.toolAllowed(`resource:${uri}`) })
     }
     // M1-widen — REGISTER any newly-allowed tools that were not registered
     // before (a widen to a previously-disabled group must make those tools
@@ -156,6 +192,12 @@ export class ProvidentMcpServer {
       const toAdd = this.allowedToolNames().filter((n) => !this.registered.has(n))
       if (toAdd.length > 0) {
         ProvidentMcpServer.registerTools(liveServer, this.backend, toAdd, this.registered)
+      }
+      const resToAdd = ProvidentMcpServer.ALL_RESOURCES.filter(
+        (r) => this._gate.toolAllowed(`resource:${r.uri ?? r.uriTemplate}`) && !this.resources.has(r.uri ?? r.uriTemplate!),
+      )
+      if (resToAdd.length > 0) {
+        ProvidentMcpServer.registerResources(liveServer, this.backend, resToAdd, this.resources)
       }
     }
     return this._gate.config
@@ -173,6 +215,52 @@ export class ProvidentMcpServer {
 
   registeredEnabled(name: string): boolean {
     return this.registered.get(name)?.enabled ?? false
+  }
+
+  /** R2 test/accessor — the registered resource URIs + template. */
+  registeredResources(): Array<{ uri?: string; uriTemplate?: string; enabled: boolean }> {
+    const out: Array<{ uri?: string; uriTemplate?: string; enabled: boolean }> = []
+    for (const [uri, r] of this.resources) {
+      if ('resourceTemplate' in r) {
+        out.push({ uriTemplate: String((r as RegisteredResourceTemplate).resourceTemplate.uriTemplate), enabled: r.enabled })
+      } else {
+        out.push({ uri, enabled: r.enabled })
+      }
+    }
+    return out
+  }
+
+  /** R2 test — a resource's live enabled state by URI. */
+  resourceEnabled(uri: string): boolean {
+    return this.resources.get(uri)?.enabled ?? false
+  }
+
+  /** R4/R5 test — invoke a registered resource's read callback by URI.
+   *  Returns the underlying Runtime snapshot (JSON-safe). A concrete node URI
+   *  resolves to the `{nodeId}` template. */
+  async readResource(uri: string): Promise<unknown> {
+    let res = this.resources.get(uri)
+    let variables: Record<string, string> = {}
+    if (!res) {
+      const m = /mcp:\/\/provident\/node\/(.+)$/.exec(uri)
+      if (m) {
+        res = this.resources.get('mcp://provident/node/{nodeId}')
+        variables = { nodeId: decodeURIComponent(m[1]) }
+      }
+    }
+    if (!res) throw new Error(`resource not found: ${uri}`)
+    const result = 'resourceTemplate' in res
+      ? await (res as RegisteredResourceTemplate).readCallback(new URL(uri), variables, undefined as never)
+      : await (res as RegisteredResource).readCallback(new URL(uri), undefined as never)
+    const contents = (result as { contents?: Array<{ text?: string }> }).contents?.[0]
+    if (contents?.text) {
+      try {
+        return JSON.parse(contents.text)
+      } catch {
+        return contents.text
+      }
+    }
+    return result
   }
 
   get gate(): SecurityGate {
@@ -200,6 +288,10 @@ export class ProvidentMcpServer {
       },
     )
     ProvidentMcpServer.registerTools(server, this.backend, this.allowedToolNames(), this.registered)
+    // R3 — register the gated read-group resources in the SAME server build
+    // (serves BOTH the stdio long-lived server and the per-POST HTTP server).
+    const allowedResources = ProvidentMcpServer.ALL_RESOURCES.filter((r) => this._gate.toolAllowed(`resource:${r.uri ?? r.uriTemplate!}`))
+    ProvidentMcpServer.registerResources(server, this.backend, allowedResources, this.resources)
     return server
   }
 
@@ -338,6 +430,50 @@ export class ProvidentMcpServer {
         const value = await backend.invoke(method, args)
         return text(value)
       }))
+    }
+  }
+
+  /** R1-R3 (mcp-resources-review.md) — register the gated `read`-group
+   *  resources. Fixed URIs (`app`, `targets`) + one template
+   *  (`node/{nodeId}`). Each read callback forwards over the SAME `backend`
+   *  invoke seam the tools use (main → renderer → app Runtime — never the
+   *  isolated SecurePanels graph, R4). */
+  private static registerResources(
+    server: McpServer,
+    backend: McpBackend,
+    defs: Array<ResourceDef>,
+    resources: Map<string, RegisteredResource | RegisteredResourceTemplate>,
+  ): void {
+    for (const def of defs) {
+      if (def.uriTemplate) {
+        const template = def.uriTemplate
+        const key = template
+        resources.set(key, server.resource(
+          def.name,
+          new ResourceTemplate(template, { list: undefined }),
+          {
+            title: `provident.${def.name}`,
+            description: def.description,
+            mimeType: def.mimeType,
+          },
+          async (uri, variables) => {
+            const nodeId = decodeURIComponent(String(variables?.nodeId ?? ''))
+            const value = await backend.invoke('nodeState', nodeId)
+            return { contents: [{ uri: uri.href, text: JSON.stringify(value, null, 2), mimeType: def.mimeType }] }
+          },
+        ) as RegisteredResourceTemplate)
+      } else {
+        const uri = def.uri!
+        resources.set(uri, server.registerResource(
+          def.name,
+          uri,
+          { title: `provident.${def.name}`, description: def.description, mimeType: def.mimeType },
+          async (u) => {
+            const value = await backend.invoke(def.method, {})
+            return { contents: [{ uri: u.href, text: JSON.stringify(value, null, 2), mimeType: def.mimeType }] }
+          },
+        ) as RegisteredResource)
+      }
     }
   }
 

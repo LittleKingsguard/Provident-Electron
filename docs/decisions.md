@@ -47,6 +47,18 @@ upstream project are marked **IMPORTED** (their canonical record is in
 
 _(none yet — decisions opened 2026-08-21.)_
 
+**GATED PROPOSAL (2026-08-25):** the MCP-resources proposal
+(`docs/specs/mcp-resources-proposal.md`) passed the three-agent gate
+(`docs/specs/mcp-resources-review.md`, verdict PROCEED-WITH-RESHAPES) —
+resources `mcp://provident/app`, `mcp://provident/node/{nodeId}` (template),
+`mcp://provident/targets`, gated as `read`-group members (R1 blocking: never
+always-registered), live re-gated (R2), both transport builds (R3), node-template
+in-tree validation + no SecurePanels reach (R4). **LANDED 2026-08-25** —
+implemented (`src/main/mcp-server.ts` + `security.ts`), tests
+`mcp-resources.test.ts` + `mcp-resources-adversarial.test.ts`, greens
+`mcp-resources-greens.md`, spec `mcp-endpoint.md` §3.6. Trio green 472 / 2.
+Rows open 2026-08-21.
+
 Canonical imported records: `../Preempt-Providence/docs/decisions.md`,
 `../Preempt-Providence/docs/specs/ssr-synthetic-event.md`,
 `../Preempt-Providence/docs/pending.md` (Phase C row).

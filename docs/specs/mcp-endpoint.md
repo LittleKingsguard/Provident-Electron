@@ -132,6 +132,34 @@ The node's pass-2 resolved compiled states (read-only snapshot via
 `supervisor.getResolvedStates`) + the census. For an agent inspecting why a
 node resolved/unresolved after a dispatch.
 
+### 3.6 MCP resources (read-only `mcp://` URIs)
+
+> **Implementation status (2026-08-25): LANDED.** The gated read-group
+> resources (`docs/specs/mcp-resources-review.md` R1-R5) are implemented: the
+> three URIs below are registered on the MCP server, gated with the `read`
+> tool group (R1 — never always-registered), live re-gated on `applyGatePatch`
+> (R2), registered in both transport builds (R3), node-template reads validate
+> in-tree + never reach the isolated SecurePanels graph (R4), always-fresh +
+> per-resource mimeType (R5). Tests: `tests/mcp-resources.test.ts` +
+> `tests/mcp-resources-adversarial.test.ts`.
+
+Alongside the tools, an agent can READ rendered state declaratively via `mcp://`
+URIs (the SDK's resource surface). Each resource mirrors a `read`-group tool and
+is registered ONLY when the `read` group is allowed — a human disabling `read`
+shuts off the resources too (R1, no always-registered bypass door).
+
+| Resource (URI) | Mirrors | mimeType | Notes |
+| --- | --- | --- | --- |
+| `mcp://provident/app` | `provident.get_rendered_html` | `text/html` | always-fresh; a large read may return `{census,digest,preview,truncated}` |
+| `mcp://provident/targets` | `provident.list_targets` | `application/json` | concrete node URIs are discoverable only here (`resources/list` lists the template, not concrete nodes) |
+| `mcp://provident/node/{nodeId}` | `provident.get_node_state` | `application/json` | template; the nodeId is validated against the live in-tree graph |
+
+The resource read callbacks forward over the SAME `RendererBackend` IPC the
+tools use (main → renderer → app Runtime) — never the isolated SecurePanels
+graph (R4). Reads are always-fresh point-in-time snapshots; a client must not
+cache a resource URI's content across a dispatch. The companion
+live-change-notification row stays parked (the future invalidation answer).
+
 ## 4. Code / data CRUD (the authoring surface — OUTSIDE the live graph)
 
 The tools above READ the live graph + DISPATCH into it. This section adds a

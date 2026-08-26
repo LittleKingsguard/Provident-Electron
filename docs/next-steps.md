@@ -9,6 +9,7 @@ this repo's local next-steps (the upstream queue lives in
 
 | # | Item | Status / blocker |
 | --- | --- | --- |
+| 13 | **MCP resources (2026-08-25 gate)** — `mcp://provident/app` + `mcp://provident/node/{nodeId}` (template) + `mcp://provident/targets`, gated `read`-group (R1 blocking), live re-gate (R2), both transport builds (R3), node-template in-tree validation + no SecurePanels reach (R4), always-fresh + mimeType (R5). Gate verdict PROCEED-WITH-RESHAPES (`docs/specs/mcp-resources-review.md`; proposal `mcp-resources-proposal.md`). | **DONE (2026-08-25)** — LANDED. Tests `tests/mcp-resources.test.ts` (6) + `tests/mcp-resources-adversarial.test.ts` (5); greens `mcp-resources-greens.md`; spec `mcp-endpoint.md` §3.6. Trio green: 472 / 2 skipped, battery 184/184. |
 | 12 | **Journal reversibility stress battery (2026-08-24)** — `docs/specs/journal-reversibility-battery.md` + `docs/specs/journal-reversibility-greens.md` + `tests/journal-reversibility.test.ts` (9 tests, drives the engine's undo/redo/replay directly). **2 ENGINE DEFECTS confirmed + RESOLVED in provident-ssr 0.1.5:** `DEFECT-JOURNAL-UNDO` (state-slice undo now exact; detach/move/clone-instance/layer-apply/placement-attach/rows-clear are DOCUMENTED no-op pins in the G14 per-kind table, ops.md §6) + `DEFECT-JOURNAL-REPLAY-APPEND` (sliceLayers replay gate + no-journal redo). Destroy-undo is the documented contract pin. Host-side: none. Battery asserts the resolved contract — **9/9 green.** | **DONE (2026-08-24)** — battery green (9 tests); both journal defects resolved upstream in 0.1.5. |
 | 11 | **Adapter parity battery (2026-08-23)** — `docs/specs/adapter-parity-battery.md` + `docs/specs/adapter-parity-greens.md` + `tests/adapter-parity-battery.test.mjs` (73 checks, drives the battery host over stdio). Probes DOM (`renderedHtml`) vs SSR (`ssrHtml`) across the adapter seams. **P1/P7/P8/P9 host parity GREEN** (structural digest + data-node-id set + SSR-survives-reload + fork-arm). Contract pins P2/P3/P4 documented. **P6 SURFACED AN ENGINE DEFECT**: `SSRFragmentAdapter` retained removed/destroyed elements in the serialized fragment (`DEFECT-SSR-REMOVE`) — **RESOLVED in provident-ssr 0.1.4** (the fix landed upstream; the battery now reports parity recovered, 73/73). | **DONE (2026-08-24)** — battery green; DEFECT-SSR-REMOVE resolved upstream. |
 
@@ -27,6 +28,44 @@ this repo's local next-steps (the upstream queue lives in
 | 8 | **Renderer `provident.teardown` IPC path awaits the async `teardownResult`** — review found the `renderer.ts` `teardown` case assigned `runtime.teardownResult()` (a Promise) to the reply value WITHOUT awaiting, so the IPC reply carried a non-JSON Promise and the R6 settle-gate never ran on that path (the twentieth-pass "all call sites awaited" claim was wrong for `renderer.ts`). Fixed: `await`. | **DONE (2026-08-23)** — TDD red→green. |
 | 9 | **Manual-UI Security Settings pane (the A1 trust-gate's remaining piece, mcp-endpoint.md §6.4)** — persistence (`security-store.ts`), the `provident:security:get/set` IPC (main), the preload `window.provident.security` exposure, the renderer Settings pane (`settings.ts` + `index.html` `#settings-pane`: token show/clear/regenerate + one toggle per tool group), and the MCP server booting from the persisted config. `tests/security-store.test.ts` (5) green. | **DONE (2026-08-23)** — TDD red→green. |
 | 10 | **Battery §5.3 hooks-scenarios (DEFERRED)** — `docs/specs/e2e-test-battery.md` §5.3 (the `hooksScenariosEnvelope`: theme/user/counter hook providers + the `hook-name-unresolved`/`hook-seam-exempt`/`hook-mode-blocked`/`hook-kind-mismatch` containment verdicts) was marked NOT-YET-LANDED in the spec. **§5.3 DONE (2026-08-23)** — landed per the unit spec `docs/specs/battery-hooks-unit.md` (TestWriter red → green → adversarial → greens → doc-review). **§5.5 full anon/alice/main handler matrix (S1a, S1b, S2..S10) DONE (2026-08-23)** — landed per the unit spec `docs/specs/battery-handlers-unit.md` (TestWriter red → green → adversarial → greens → doc-review). | **§5.3 + §5.5 DONE (2026-08-23)** — battery 184/184. |
+
+## DONE (2026-08-25 — MCP-resources BLIND-TEST loop)
+
+Per the greens doc (`docs/specs/mcp-resources-greens.md` G1-G5), a blind-test
+writer produced `tests/blind-mcp-resources.test.ts` from the DOCUMENTATION ONLY
+(greens + mcp-endpoint §3.6 + review R1-R5; no implementation read) and ran it
+against the live `ProvidentMcpServer` + `SecurityGate`.
+
+- **Blind artifact** — `tests/blind-mcp-resources.test.ts` (10 scenarios:
+  G1.1-G1.5 read-group gating, G3.6/6b/7 node-template + isolation, G4.8 fresh
+  snapshots, G5.10 clean not-found).
+- **All 10 PASS** against the live modules. No doc drift, no un-hardened
+  regression.
+- **Trio green**: **482 tests / 2 skipped** (was 472, +10 blind), typecheck
+  clean, build clean, battery 184/184.
+
+## DONE (2026-08-25 — MCP resources LANDED (gated read-group `mcp://` URIs))
+
+Per the gated proposal (`docs/specs/mcp-resources-review.md` PROCEED-WITH-
+RESHAPES), implemented the three read-only MCP resources via TDD (red → green →
+adversarial → greens).
+
+- **`src/main/mcp-server.ts`** — `ALL_RESOURCES` (app/targets/node template),
+  `registerResources` static, resource handles map + re-gate in
+  `applyGatePatch` (R2), registration in `createServer` (R3), node-template
+  read (R4), per-resource mimeType + always-fresh (R5).
+- **`src/main/security.ts`** — the three `resource:mcp://...` entries mapped to
+  the `read` group (R1 — resources never always-registered; a `read`-off gate
+  shuts them off).
+- **Tests** — `tests/mcp-resources.test.ts` (6: R1 gating, R2 re-gate, R4 reads,
+  R5 fresh/mimeType) + `tests/mcp-resources-adversarial.test.ts` (5: read-off
+  bypass, fresh-build no-register, clean not-found, node-template validation,
+  SecurePanels isolation).
+- **Greens** `docs/specs/mcp-resources-greens.md` (G1-G5); **spec**
+  `mcp-endpoint.md` §3.6; `docs/pending.md` SPECULATIVE row → LANDED/RETIRED;
+  `docs/next-steps.md` #13 → DONE; `docs/decisions.md` MCP-RESOURCES row.
+- **Trio green**: **472 tests / 2 skipped** (was 461, +11), typecheck clean,
+  build clean, battery **184/184**.
 
 ## DONE (2026-08-25 — public `provident-ssr@0.2.0` release; RESTORED from the scoped package)
 
