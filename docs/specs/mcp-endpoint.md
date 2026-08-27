@@ -50,7 +50,7 @@ Notes:
 | `provident.get_markdown` | `{}` | `{ markdown, census }` (0.2 Feature 2 — the simplified text-only output document for agentic consumers) |
 | `provident.list_targets` | `{}` | `{ nodes: [{ nodeId, cssId?, propsId?, type, content, state, inTree, handlers }] }` |
 | `provident.get_node_state` | `{ target }` | `{ nodeId, states, census }` |
-| `provident.journal` | `{ action: 'undo'\|'redo'\|'replay' }` | `{ status, scheduledDirtied, stackTopKind?, redoTopKind?, baseBoundary, renderedHtml, ssrHtml, warnings }` (the engine's `UndoRedoReport` surfaced faithfully — journal-endpoint-review.md J2/J3) |
+| `provident.journal` | `{ action: 'undo'\|'redo'\|'replay' }` | `{ status, scheduledDirtied, stackTopKind?, redoTopKind?, baseBoundary, renderedHtml, ssrHtml, warnings }` (the engine's `UndoRedoReport` surfaced faithfully — docs/FORKER.md §4 J2/J3) |
 
 ### 3.1 `provident.dispatch`
 
@@ -136,7 +136,7 @@ node resolved/unresolved after a dispatch.
 ### 3.6 `provident.journal` (journal reversibility — undo/redo/replay)
 
 > **Implementation status (2026-08-26): LANDED.** The journal reversibility
-> endpoint (journal-endpoint-review.md J3-J8) is implemented: the `graph`-group
+> endpoint (docs/FORKER.md §4 J3-J8) is implemented: the `graph`-group
 > tool drives the engine's `Supervisor.undo()`/`redo()`/`replay()` (provident-ssr
 > 0.2.1 `UndoRedoReport` surface) and re-renders. Tests `tests/journal-endpoint.test.ts`
 > (19) + the adversarial destroy-undo/malformed-action/replay-clears-redo/double-undo/
@@ -184,7 +184,7 @@ exposed to agents as a single `provident.journal` tool with a discriminated
 ### 3.7 MCP resources (read-only `mcp://` URIs)
 
 > **Implementation status (2026-08-25): LANDED.** The gated read-group
-> resources (`archive/specs/mcp-resources-review.md` R1-R5) are implemented: the
+> resources (`docs/FORKER.md` §4 R1-R5 digest) are implemented: the
 > three URIs below are registered on the MCP server, gated with the `read`
 > tool group (R1 — never always-registered), live re-gated on `applyGatePatch`
 > (R2), registered in both transport builds (R3), node-template reads validate

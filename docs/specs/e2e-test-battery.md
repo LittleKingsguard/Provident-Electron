@@ -1,7 +1,7 @@
 # Spec/Plan — End-to-End MCP Test Battery
 
 Status: **APPROVED-WITH-RESHAPE** (the three-agent gate review at
-`archive/specs/e2e-test-battery-review.md` — verdict: the shape is sound;
+`docs/FORKER.md` §4 (R1-R16 digest) — verdict: the shape is sound;
 reshapes R1..R16 below are REQUIRED before TestWriter red). **Target package
 (R1, updated 2026-08-22):** the battery targets the **published
 `provident-ssr@0.1.3`** — the Round-4 landings (REQ-GAP-9..12: `createLinkHub`
@@ -348,7 +348,7 @@ delegated to LATER agents.
 1. **§0 — Rebase pass (THIS review):** R1..R16 applied to this spec +
   trackers reconciled (defects.md/HANDOFF.md Round-4 rows → shipped
   dispositions; decisions.md gains the target-version pin + the battery
-  reshape row) — **the gate artifact is `archive/specs/e2e-test-battery-review.md`
+  reshape row) — **the gate artifact is `docs/FORKER.md` §4 (R1-R16 digest)
   and this SPEC is now the revised contract.** User go-ahead.
 2. **Cycle-variant spec (this step):** `docs/specs/e2e-test-battery.md §5.1.x`
   defines `pathForkCycleLegacyData(depth)` — the NEW static cycle variant

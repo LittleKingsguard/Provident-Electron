@@ -84,7 +84,7 @@ The containment codes surface in `dispatch.results[].error.code` via the
   modify `../Preempt-Providence/`.
 - Per RCA-1..6, this is ONE unit: TestWriter red → Implementer green →
   adversarial → greens → documentation review (record to
-  `archive/reviews/<date>-battery-hooks-doc-review.md`).
+  `archive/reviews/<date>-battery-hooks-doc-review.md` — the archive is gitignored; the record is provenance only, findings land in the active trackers).
 - The battery runner gains ~N checks (recorded in the DONE row).
 - Updating the spec's `docs/specs/e2e-test-battery.md` §5.3 status note
   (PARTIAL → LANDED) is part of the documentation review.

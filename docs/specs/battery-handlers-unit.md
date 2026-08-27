@@ -110,7 +110,7 @@ only); the export must still round-trip VALID.
   modify `../Preempt-Providence/`.
 - Per RCA-1..6, this is ONE unit: TestWriter red → Implementer green →
   adversarial → greens → documentation review (record to
-  `archive/reviews/<date>-battery-handlers-doc-review.md`).
+  `archive/reviews/<date>-battery-handlers-doc-review.md` — the archive is gitignored; the record is provenance only, findings land in the active trackers).
 - The battery runner gains more checks (recorded in the DONE row).
 - Updating `docs/specs/e2e-test-battery.md` §5.5 status (PARTIAL → LANDED +
   count) is part of the documentation review.

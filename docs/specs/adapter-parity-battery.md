@@ -117,7 +117,7 @@ This is ONE unit: a delegation spec → TestWriter red (the tests written FIRST
 against the MCP contract + this spec, run → red) → Implementer green (least
 code, host-side fixes only if a host finding surfaced) → adversarial (read-only;
 engine findings → defects.md/HANDOFF, host findings fixed here) → blind greens →
-documentation review (record `archive/reviews/<date>-adapter-parity-doc-review.md`).
+documentation review (record `archive/reviews/<date>-adapter-parity-doc-review.md` — the archive is gitignored; the record is provenance only, findings land in the active trackers).
 Run `npm test` + `npm run typecheck` + `npm run build` + the battery before the
 unit is reported done.
 

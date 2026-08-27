@@ -5,8 +5,8 @@ top; finished items move to the tracker rows they produced. This queue is
 this repo's local next-steps (the upstream queue lives in
 `../Preempt-Providence/docs/next-steps.md`).
 
-Historical pass records are archived in
-`archive/next-steps/2026-08-26-archival-pass.md`.
+Historical pass records are archived in the gitignored `archive/` dir and do
+not ship in a fork (see `docs/FORKER.md` §1/§5).
 
 ## OPEN
 

@@ -6,8 +6,8 @@ repo must respect (imported from `../Preempt-Providence/docs/`); (b) DEFERRED �
 lower-value adversarial gaps parked until a use case surfaces; (c) SPECULATIVE /
 IN GATE — in-flight proposals with their recorded constraints.
 
-Retired PARKED and SPECULATIVE rows are archived in
-`archive/pending/2026-08-26-archival-pass.md`.
+Retired PARKED and SPECULATIVE rows are archived in the gitignored `archive/`
+dir and do not ship in a fork (see `docs/FORKER.md` §1/§5).
 
 ## UPSTREAM (imported constraints)
 

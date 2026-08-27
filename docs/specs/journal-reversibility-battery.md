@@ -148,6 +148,6 @@ This is ONE unit: delegation spec → TestWriter red (tests FIRST against the
 engine contract + this spec, run → red) → TestWriter green (least code — for a
 PROBE battery this means confirming the probed behavior; host findings fixed
 here, engine findings recorded) → adversarial (read-only) → blind greens →
-documentation review (record `archive/reviews/<date>-journal-reversibility-doc-review.md`).
+documentation review (record `archive/reviews/<date>-journal-reversibility-doc-review.md` — the archive is gitignored; the record is provenance only, findings land in the active trackers).
 Run `npm test` + `npm run typecheck` + `npm run build` before the unit is
 reported done.

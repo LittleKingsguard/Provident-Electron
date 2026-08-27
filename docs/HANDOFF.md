@@ -183,7 +183,8 @@ filed as a handoff item per AGENTS.md item 7:
   redoTopKind?, baseBoundary }`) + read-only stack accessors (`undoDepth`/
   `redoDepth`/`undoTopKind`/`redoTopKind`/`undoBaseBoundary`).
 - **RESOLVED (0.2.1, commit `be11b2e`)**: the upstream landed exactly this as
-  `../Preempt-Providence/docs/specs/undo-redo-report.md` (DECIDED). `scheduledDirtied` is the
+  `../Preempt-Providence/docs/specs/undo-redo-report.md` (DECIDED — an upstream spec
+  recoverable from the upstream repo, per `docs/FORKER.md` §2). `scheduledDirtied` is the
   markPass2-SCHEDULED (pending-flush) set; a host awaiting settled states must
   `await flush()` + `takePass2States()`. The adversarial pass also fixed 13
   defects (ISO-1 cross-graph id leak in the undo consumer walk, UR-6 redo-of-
@@ -200,7 +201,7 @@ filed as a handoff item per AGENTS.md item 7:
   reports `status:'applied'` with an empty `scheduledDirtied` and an unchanged
   graph — a silent false-success. An MCP host surfaces `status:'applied'`
   verbatim, so an agent cannot tell a real undo from a no-op (the
-  journal-endpoint-review.md J4 "no-op must never be silent" trap).
+  docs/FORKER.md §4 J4 "no-op must never be silent" trap).
 - **Symptom / repro**: `apply({kind:'destroy', node})` then `undo()` → the
   report is `{status:'applied', scheduledDirtied:[]}` and the render is
   unchanged. Repro: `tests/journal-endpoint.test.ts` J-adversarial destroy-undo.

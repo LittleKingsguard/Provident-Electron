@@ -16,7 +16,7 @@ reproduction → suspected root cause → proposed fix shape (upstream-owned).
 
 | ID | Defect (as filed) | Observed symptom / repro | Suspected root cause | Proposed fix shape (upstream-owned) |
 | --- | --- | --- | --- | --- |
-| **UNDO-REDO-DESTROY-STATUS** | `Supervisor.undo()` of a `destroy` entry (a G14 PINNED NO-OP) reports `status:'applied'` with an empty `scheduledDirtied` and an unchanged graph — a silent false-success. | `apply({kind:'destroy', node})` then `undo()` → the report is `{status:'applied', scheduledDirtied:[]}` and the render is unchanged. An MCP host surfaces `status:'applied'` verbatim, so an agent cannot tell a real undo from a no-op — exactly the "no-op must never be silent" trap (journal-endpoint-review.md J4). Repro: `tests/journal-endpoint.test.ts` J-adversarial destroy-undo. | `supervisor.js:1477-1479` — the destroy branch does nothing (no inverse, no dirtied ids) then falls through to `return this.report('applied', dirtied)` (:1577). The G14 pinned-no-op contract says destroy-undo is a no-op, but the report says `applied`. | `undo()` should return `status:'no-op'` for a `destroy` entry (matching the G14 pinned-no-op contract), or expose a `destroyed` hint so a host can distinguish a no-op from a real inverse. |
+| **UNDO-REDO-DESTROY-STATUS** | `Supervisor.undo()` of a `destroy` entry (a G14 PINNED NO-OP) reports `status:'applied'` with an empty `scheduledDirtied` and an unchanged graph — a silent false-success. | `apply({kind:'destroy', node})` then `undo()` → the report is `{status:'applied', scheduledDirtied:[]}` and the render is unchanged. An MCP host surfaces `status:'applied'` verbatim, so an agent cannot tell a real undo from a no-op — exactly the "no-op must never be silent" trap (docs/FORKER.md §4 J4). Repro: `tests/journal-endpoint.test.ts` J-adversarial destroy-undo. | `supervisor.js:1477-1479` — the destroy branch does nothing (no inverse, no dirtied ids) then falls through to `return this.report('applied', dirtied)` (:1577). The G14 pinned-no-op contract says destroy-undo is a no-op, but the report says `applied`. | `undo()` should return `status:'no-op'` for a `destroy` entry (matching the G14 pinned-no-op contract), or expose a `destroyed` hint so a host can distinguish a no-op from a real inverse. |
 
 ## RESOLVED BY UPSTREAM (provident-ssr 0.2.1, 2026-08-26)
 
@@ -78,7 +78,7 @@ favor of the published surfaces.
 
 ## FIXED (in this repo)
 
-_(none this pass — the battery plan is gated (e2e-test-battery-review.md) and
+_(none this pass — the battery plan is gated (docs/FORKER.md §4 R1-R16) and
 the 0.1.2 adoption is verified; no open gaps remain.)_
 
 ## DOC-CONSISTENCY FINDINGS (2026-08-23 — the gemma4 blind battery)
@@ -88,8 +88,9 @@ are consistent). They are THIS-REPO documentation defects that sent the blind
 writer (`docs/specs/gemma4-blind-battery.md` → `tests/gemma4-blind-battery.test.ts`)
 to wrong assertions, and one ground-truth defect in the companion
 `docs/specs/gemma4-blind-expected.md`. All fixed in the same pass (the
-docs below were corrected; the review record is
-`archive/reviews/2026-08-23-gemma4-doc-review.md`).
+docs below were corrected; the review record is archived (gitignored) — the
+corrected artifacts are the active `docs/specs/gemma4-blind-battery.md` +
+`docs/specs/gemma4-blind-expected.md`).
 
 | ID | Doc artifact (line) | Doc claim | LIVE behavior (probed 2026-08-23) | Class | Disposition |
 | --- | --- | --- | --- | --- | --- |
