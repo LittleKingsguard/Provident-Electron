@@ -4,7 +4,14 @@
 // and replies flow renderer → main (send). Exposed as a minimal `provident`
 // surface (no Node objects leak into the page).
 import { contextBridge, ipcRenderer } from 'electron'
-import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_NOTIFY, type RpcRequest, type RpcReply, type SecuritySettings, type NotifyPayload } from '../shared/types.js'
+import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_NOTIFY, IPC_MODULE_GET, IPC_MODULE_SET_DISABLED, type RpcRequest, type RpcReply, type SecuritySettings, type NotifyPayload, type ModuleListEntry } from '../shared/types.js'
+
+export interface ModuleBridgeResult {
+  corrupt: boolean
+  quarantined: string[]
+  loaded: string[]
+  modules: ModuleListEntry[]
+}
 
 export interface ProvidentBridge {
   ready(): void
@@ -14,6 +21,10 @@ export interface ProvidentBridge {
   security: {
     get(): Promise<SecuritySettings>
     set(patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }): Promise<SecuritySettings>
+  }
+  module: {
+    get(): Promise<ModuleBridgeResult>
+    setDisabled(name: string, disabled: boolean): Promise<ModuleBridgeResult>
   }
 }
 
@@ -44,6 +55,16 @@ const bridge: ProvidentBridge = {
     },
     set(patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }): Promise<SecuritySettings> {
       return ipcRenderer.invoke(IPC_SECURITY_SET, patch)
+    },
+  },
+  // U8 — the module management bridge (module-feature-list.md §4). Manual-UI
+  // only: the module store is operator-owned; an agent never reaches it over MCP.
+  module: {
+    get(): Promise<ModuleBridgeResult> {
+      return ipcRenderer.invoke(IPC_MODULE_GET)
+    },
+    setDisabled(name: string, disabled: boolean): Promise<ModuleBridgeResult> {
+      return ipcRenderer.invoke(IPC_MODULE_SET_DISABLED, { name, disabled })
     },
   },
 }

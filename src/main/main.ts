@@ -4,9 +4,12 @@
 // IPC.
 import { app, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'node:path'
-import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_NOTIFY, type RpcReply, type NotifyPayload } from '../shared/types.js'
+import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_NOTIFY, IPC_MODULE_GET, IPC_MODULE_SET_DISABLED, type RpcReply, type NotifyPayload } from '../shared/types.js'
 import { ProvidentMcpServer, RendererBackend, type McpTransportKind } from './mcp-server.js'
 import { createSecurityStore, type SecurityStore } from './security-store.js'
+import { createModuleStore } from './module-store.js'
+import { CapabilityRouter } from '../renderer/extensions.js'
+import { syncModuleRouter } from './mcp-server.js'
 import { SecurityGate, type ToolGroup } from './security.js'
 
 // The main process is bundled as CJS (Electron runs it reliably that way), so
@@ -49,7 +52,17 @@ async function main(): Promise<void> {
   const persisted = securityStore.get()
   const gate = new SecurityGate({ token: persisted.token, enabled: persisted.enabled as ToolGroup[] })
   const backend = new RendererBackend()
-  const mcp = new ProvidentMcpServer({ backend, transport, port, gate })
+  // U8 — the module store (operator-owned, persisted to userData). The MCP
+  // server handles module.* tools against it; the pane reads/writes it over IPC.
+  const moduleStore = createModuleStore({
+    path: join(app.getPath('userData'), 'provident-modules.json'),
+  })
+  // U9-FIX — the live capability router (main-process). Synced from the module
+  // store so installed modules' declared tools become callable. Passed to the
+  // MCP server so dynamic module tools are registered + two-gated.
+  const moduleRouter = new CapabilityRouter()
+  syncModuleRouter(moduleRouter, moduleStore)
+  const mcp = new ProvidentMcpServer({ backend, transport, port, gate, moduleStore, router: moduleRouter })
 
   // The manual-UI settings IPC: main owns the config + re-wires the MCP server
   // tool-gating on change. This is manual-UI-ONLY — it is NOT reachable over an
@@ -61,6 +74,34 @@ async function main(): Promise<void> {
     // Re-gate the live MCP server + persist.
     mcp.applyGatePatch({ token: patch.token, groups: patch.groups as ToolGroup[] | undefined, disable: patch.disable as ToolGroup[] | undefined })
     return updated
+  })
+
+  // U8 — the module management IPC (module-feature-list.md §4). Manual-UI only:
+  // the module store is operator-owned; an agent never reaches it over MCP.
+  const moduleBridgeResult = () => {
+    const status = moduleStore.status()
+    return {
+      corrupt: status.corrupt,
+      quarantined: status.quarantined,
+      loaded: status.loaded,
+      modules: moduleStore.list().map((r) => ({
+        name: r.name,
+        version: r.version,
+        capabilities: r.capabilities,
+        disabled: r.disabled,
+        quarantined: r.quarantined,
+      })),
+    }
+  }
+  ipcMain.handle(IPC_MODULE_GET, () => moduleBridgeResult())
+  ipcMain.handle(IPC_MODULE_SET_DISABLED, (_event, payload: { name?: string; disabled?: boolean }) => {
+    if (typeof payload?.name === 'string' && payload.name !== '') {
+      moduleStore.setDisabled(payload.name, payload.disabled === true)
+      // U9-FIX (#2) — disabling/enabling a module must re-sync the live router
+      // so its tools are registered/deregistered accordingly.
+      syncModuleRouter(moduleRouter, moduleStore)
+    }
+    return moduleBridgeResult()
   })
 
   // The MCP stdio transport is spawned by a client (the battery, a test, or an

@@ -201,6 +201,59 @@ export interface CodeLoadBatchResult extends LoadResult {
   ops: Array<{ op: string; path: string; status: 'applied' }>
 }
 
+// ---- module.* extension system (docs/specs/module-import-proposal.md §2/§3) --
+
+/** A module's declared capability surface. */
+export interface ModuleCapabilities {
+  tools?: string[]
+  hooks?: string[]
+  transforms?: string[]
+}
+
+/** A module dependency (M-r9 — declared, no resolver this pass). */
+export interface ModuleDependency {
+  name: string
+  versionRange: string
+}
+
+/** The loaded-module contract (module-import-proposal.md §2). */
+export interface ModuleManifest {
+  name: string
+  version: string
+  capabilities: ModuleCapabilities
+  /** Executable host-side JS (function-STRING). Requires the `code` group. */
+  entry?: string
+  /** True if `entry` carries executable code (authoritative: entry !== ''). */
+  needsCode?: boolean
+  /** Declared deps (M-r9 — no resolver; a dep on an absent module is a no-op). */
+  dependsOn?: ModuleDependency[]
+}
+
+/** The `module.install`/`module.update` payload. */
+export interface ModuleInstallPayload {
+  name: string
+  source: string
+  version?: string
+  force?: boolean
+}
+
+/** The `module.install`/`module.update` result. */
+export interface ModuleInstallResult {
+  status: 'installed' | 'updated' | 'no-op' | 'rejected'
+  name: string
+  version?: string
+  reason?: string
+}
+
+/** A listed module (module.list). */
+export interface ModuleListEntry {
+  name: string
+  version: string
+  capabilities?: ModuleCapabilities
+  disabled?: boolean
+  quarantined?: boolean
+}
+
 // ---- IPC request envelope ------------------------------------------------
 
 export type RpcMethod =
@@ -222,6 +275,9 @@ export type RpcMethod =
   | 'code.load'
   | 'code.loadBatch'
   | 'journal'
+  | 'module.install'
+  | 'module.update'
+  | 'module.list'
 
 export interface RpcRequest {
   id: number
@@ -267,3 +323,5 @@ export interface SecuritySettings {
 
 export const IPC_SECURITY_GET = 'provident:security:get'
 export const IPC_SECURITY_SET = 'provident:security:set'
+export const IPC_MODULE_GET = 'provident:module:get'
+export const IPC_MODULE_SET_DISABLED = 'provident:module:set-disabled'

@@ -1,6 +1,6 @@
 import { timingSafeEqual } from 'node:crypto'
 
-export type ToolGroup = 'read' | 'dispatch' | 'graph' | 'code'
+export type ToolGroup = 'read' | 'dispatch' | 'graph' | 'code' | 'module'
 
 const TOOL_GROUPS: Record<string, ToolGroup> = {
   'provident.get_rendered_html': 'read',
@@ -21,6 +21,13 @@ const TOOL_GROUPS: Record<string, ToolGroup> = {
   'provident.code.delete': 'code',
   'provident.code.load': 'code',
   'provident.code.loadBatch': 'code',
+  // U1 (module-extension system, docs/specs/module-import-proposal.md §5) — the
+  // `module` group (OFF by default). The static module.* management tools.
+  'module.install': 'module',
+  'module.update': 'module',
+  'module.list': 'module',
+  'module.disable': 'module',
+  'module.enable': 'module',
   // R1 (mcp-resources-review.md) — the read-group resources. Keyed by
   // `resource:<uri>` so `toolAllowed` gates them with the `read` group. A
   // resource is registered ONLY when its group is allowed (never always-
@@ -31,13 +38,45 @@ const TOOL_GROUPS: Record<string, ToolGroup> = {
 }
 
 export function groupForTool(toolName: string): ToolGroup | null {
-  return TOOL_GROUPS[toolName] ?? null
+  // M-r3 (module-import-proposal.md §5) — a dynamic module tool is namespaced
+  // `module:<name>.<tool>`. It resolves to the `module` group via PREFIX (the
+  // dynamic tool names cannot be enumerated statically in TOOL_GROUPS). An
+  // exact-name static tool always wins; the prefix only catches `module:` names.
+  // F4 (adversarial): `module:` with an EMPTY rest (no `<name>.<tool>`) is
+  // malformed and denied, never resolved to `module`.
+  if (typeof toolName !== 'string') return null
+  if (toolName in TOOL_GROUPS) return TOOL_GROUPS[toolName]
+  if (toolName.startsWith('module:') && toolName.length > 'module:'.length) return 'module'
+  return null
 }
 
 export function toolAllowed(toolName: string, enabled: ReadonlySet<ToolGroup> | readonly ToolGroup[]): boolean {
   const group = groupForTool(toolName)
   const set: ReadonlySet<ToolGroup> = enabled instanceof Set ? enabled : new Set(enabled)
   return group !== null && set.has(group)
+}
+
+/** U1 (third-pass blocking fix) — the module-tool INVOCATION two-gate. A module
+ *  tool backed by an executable `entry` is trusted-equivalent to the `code`
+ *  group, so invoking it requires BOTH `module` AND `code`. A pure-capability
+ *  (non-executable) module tool needs `module` only. Only `module:`-prefixed
+ *  tools are gated here; any other name is denied (not a module tool).
+ *  `executable` defaults to TRUE (fail-closed): a module tool that could carry
+ *  code is denied unless `code` is also enabled. */
+export function moduleToolAllowed(
+  toolName: string,
+  enabled: ReadonlySet<ToolGroup> | readonly ToolGroup[] | null | undefined,
+  opts?: { executable?: boolean },
+): boolean {
+  if (typeof toolName !== 'string' || !toolName.startsWith('module:') || toolName.length <= 'module:'.length) return false
+  // F3 (adversarial) — malformed `enabled` (non-iterable object) FAILS CLOSED
+  // (false), never throws. null/undefined → empty set → false.
+  if (!(enabled instanceof Set || Array.isArray(enabled))) return false
+  const set: ReadonlySet<ToolGroup> = enabled instanceof Set ? enabled : new Set(enabled)
+  if (!set.has('module')) return false
+  const executable = opts?.executable ?? true
+  if (executable && !set.has('code')) return false
+  return true
 }
 
 export function defaultSecurityConfig(): { token: string | null; enabled: ToolGroup[] } {
@@ -92,7 +131,7 @@ export function authorized(
   return false
 }
 
-const VALID_GROUPS: ReadonlySet<string> = new Set(['read', 'dispatch', 'graph', 'code'])
+const VALID_GROUPS: ReadonlySet<string> = new Set(['read', 'dispatch', 'graph', 'code', 'module'])
 
 /** F3/F4 — a token/groups/disable field of the wrong shape ⇒ the whole patch
  *  is REJECTED (config unchanged, never throws). */

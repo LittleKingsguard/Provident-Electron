@@ -20,9 +20,120 @@ import type {
   ListTargetsResult,
   NodeStateResult,
 } from '../shared/types.js'
-import { SecurityGate, type ToolGroup } from './security.js'
+import { SecurityGate, type ToolGroup, moduleToolAllowed } from './security.js'
+import type { ModuleStore } from './module-store.js'
+import type { CapabilityRouter } from '../renderer/extensions.js'
 
 const TOOL_PREFIX = 'provident.'
+
+/** U9 (F1) — invoke a dynamic `module:<name>.<tool>` tool. Enforces the
+ *  invocation two-gate: a module tool backed by an executable entry requires
+ *  `module` AND `code` at EACH call (not just install). A module-only agent
+ *  cannot run a module tool that is arbitrary code. Standalone so the static
+ *  `registerTools` can route SDK calls through it. */
+export function invokeModuleTool(router: CapabilityRouter, gate: SecurityGate, toolName: string, args: unknown): unknown {
+  if (typeof toolName !== 'string' || !toolName.startsWith('module:')) {
+    throw new Error(`invokeTool: not a module tool: ${String(toolName)}`)
+  }
+  // F1 — the invocation two-gate. A dynamic module tool is trusted-equivalent
+  // to `code` (executable entry), so it needs module AND code.
+  if (!moduleToolAllowed(toolName, gate.enabled, { executable: true })) {
+    throw new Error(`invokeTool: ${toolName} requires module AND code groups (invocation two-gate)`)
+  }
+  return router.invokeTool(toolName, args)
+}
+
+/** U3 — handle a `module.*` tool in MAIN (the persisted node:fs store). The
+ *  module tools are NOT routed to the renderer (the store is main-process).
+ *  Exported for direct unit testing. */
+export function handleModuleTool(store: ModuleStore | null, name: string, args: Record<string, unknown>): unknown {
+  if (!store) throw new Error(`${name}: no module store configured`)
+  const nameArg = typeof args.name === 'string' ? args.name : ''
+  const source = typeof args.source === 'string' ? args.source : ''
+  const version = typeof args.version === 'string' ? args.version : undefined
+  const force = args.force === true
+  // U9-FIX (#6) — parse the module `source` manifest into declared capabilities.
+  // The source is the module's manifest (a JSON/JS object declaring `name`,
+  // `version`, `capabilities.tools/hooks/transforms`). A best-effort parse: if
+  // the source is a plain `{...}` manifest, extract capabilities.tools; else
+  // fall back to any `capabilities` arg. The store records the parsed
+  // capabilities so `syncModuleRouter` can register the module's tools.
+  const parseCapabilities = (src: string, argCaps?: unknown): { tools?: string[]; hooks?: string[]; transforms?: string[] } => {
+    let parsed: { capabilities?: { tools?: unknown; hooks?: unknown; transforms?: unknown } } | null = null
+    const trimmed = src.trim()
+    if (trimmed.startsWith('{')) {
+      try {
+        parsed = JSON.parse(trimmed) as { capabilities?: { tools?: unknown; hooks?: unknown; transforms?: unknown } }
+      } catch {
+        parsed = null
+      }
+    }
+    const caps = parsed?.capabilities ?? argCaps
+    if (caps && typeof caps === 'object' && !Array.isArray(caps)) {
+      const c = caps as { tools?: unknown; hooks?: unknown; transforms?: unknown }
+      const strArr = (v: unknown): string[] | undefined => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : undefined)
+      return {
+        ...(strArr(c.tools) ? { tools: strArr(c.tools) } : {}),
+        ...(strArr(c.hooks) ? { hooks: strArr(c.hooks) } : {}),
+        ...(strArr(c.transforms) ? { transforms: strArr(c.transforms) } : {}),
+      }
+    }
+    return {}
+  }
+  if (name === 'module.install') {
+    if (nameArg === '' || source === '') throw new Error('module.install: name and source required')
+    const existing = store.get(nameArg)
+    const v = version ?? '0.0.0'
+    if (existing) {
+      if (existing.version === v) return { status: 'no-op', name: nameArg, version: v }
+      if (!force) return { status: 'rejected', name: nameArg, version: v, reason: `version conflict: ${existing.version} installed; ${v} requested (pass force:true)` }
+    }
+    store.put({ name: nameArg, version: v, source, capabilities: parseCapabilities(source, args.capabilities) })
+    return { status: 'installed', name: nameArg, version: v }
+  }
+  if (name === 'module.update') {
+    if (nameArg === '' || source === '') throw new Error('module.update: name and source required')
+    const v = version ?? '0.0.0'
+    store.put({ name: nameArg, version: v, source, capabilities: parseCapabilities(source, args.capabilities) })
+    return { status: 'updated', name: nameArg, version: v }
+  }
+  if (name === 'module.list') {
+    return store.list().map((r) => ({ name: r.name, version: r.version, capabilities: r.capabilities ?? {}, disabled: r.disabled, quarantined: r.quarantined }))
+  }
+  throw new Error(`unknown module tool: ${name}`)
+}
+
+/** U9-FIX — re-sync the CapabilityRouter from the persisted module store. The
+ *  store is the source of truth (persisted, fail-disabled/hash-verified); the
+ *  router is the LIVE capability surface. Each installed, non-disabled,
+ *  non-quarantined module's declared capabilities are registered into the router
+ *  so its dynamic `module:<name>.<tool>` tools become callable. Disabled and
+ *  quarantined modules are NOT registered (their tools are not callable). This
+ *  closes the store→router→MCP dynamic-tool chain in production.
+ *
+ *  NOTE: the module's `entry` source (trusted-equivalent to `code`) is NOT
+ *  evaluated here — the declared capability NAMES are registered with a
+ *  pass-through handler that echoes the declared tool. Full entry execution is a
+ *  documented follow-on (the eval of the source body); the registration +
+ *  invocation two-gate + namespacing are all wired. */
+export function syncModuleRouter(router: CapabilityRouter | null, store: ModuleStore): void {
+  if (!router) return
+  router.clear()
+  const status = store.status()
+  const active = new Set(status.loaded)
+  for (const r of store.list()) {
+    if (!active.has(r.name)) continue // disabled or quarantined → not live
+    const caps = r.capabilities ?? {}
+    const tools = caps.tools ?? []
+    if (tools.length === 0) continue
+    router.registerModule(r.name, (ctx) => {
+      for (const fullTool of tools) {
+        const bare = fullTool.startsWith(`module:${r.name}.`) ? fullTool.slice(`module:${r.name}.`.length) : fullTool
+        ctx.tool(bare, (args) => ({ tool: fullTool, args }))
+      }
+    })
+  }
+}
 
 /** R1 (mcp-resources-review.md) — a gated read-group resource definition. */
 interface ResourceDef {
@@ -65,6 +176,18 @@ export function registeredToolNames(gate: SecurityGate, allNames: string[]): str
   const seen = new Set<string>()
   const out: string[] = []
   for (const name of allNames) {
+    // U3 — the module.* install/update tools carry an executable entry, so they
+    // are trusted-equivalent to `code`: they register ONLY when BOTH `module`
+    // AND `code` are enabled (the two-gate, U1). `module.list` needs `module`
+    // only. This is the registration-level gate; the invocation-level
+    // `moduleToolAllowed` predicate (U1) is the per-call enforcement.
+    if (name === 'module.install' || name === 'module.update') {
+      if (gate.toolAllowed(name) && gate.enabled.has('code')) {
+        seen.add(name)
+        out.push(name)
+      }
+      continue
+    }
     if (gate.toolAllowed(name) && !seen.has(name)) {
       seen.add(name)
       out.push(name)
@@ -84,6 +207,22 @@ function text(value: unknown) {
   return { content: [{ type: 'text' as const, text: JSON.stringify(value, null, 2) }] }
 }
 
+/** U5 (M-r4) — format an MCP IMAGE content block from a data-URI. The MCP SDK
+ *  supports `{ type: 'image', data: <base64>, mimeType: <mime> }`. Parses the
+ *  `data:<mime>;base64,<data>` URI into the data + mimeType. A non-data-URI
+ *  throws a clean error (never crashes). */
+export function imageResult(dataUri: string, mimeType?: string): { content: Array<{ type: 'image'; data: string; mimeType: string }> } {
+  if (typeof dataUri !== 'string' || !dataUri.startsWith('data:')) {
+    throw new Error('imageResult: expected a data: URI')
+  }
+  const comma = dataUri.indexOf(',')
+  if (comma === -1) throw new Error('imageResult: malformed data: URI (no comma)')
+  const header = dataUri.slice(5, comma)
+  const data = dataUri.slice(comma + 1)
+  const mime = mimeType ?? (header.includes(';') ? header.slice(0, header.indexOf(';')) : header)
+  return { content: [{ type: 'image', data, mimeType: mime }] }
+}
+
 export type McpTransportKind = 'stdio' | 'http'
 
 export interface McpServerOptions {
@@ -91,6 +230,12 @@ export interface McpServerOptions {
   transport: McpTransportKind
   port?: number
   gate?: SecurityGate
+  /** U3 — the persisted module registry. When set, the server handles the
+   *  `module.*` tools in MAIN (node:fs store), NOT routed to the renderer. */
+  moduleStore?: ModuleStore
+  /** U9 — the CapabilityRouter whose dynamic `module:<name>.<tool>` tools are
+   *  registered + invoked (with the invocation two-gate, F1). */
+  router?: CapabilityRouter
 }
 
 export interface SecuritySnapshot { token: string | null; enabled: ToolGroup[] }
@@ -100,6 +245,8 @@ export class ProvidentMcpServer {
   private readonly backend: McpBackend
   private readonly transport: McpTransportKind
   private readonly port: number
+  private readonly moduleStore: ModuleStore | null
+  private readonly router: CapabilityRouter | null
   private httpServer: ReturnType<typeof createServer> | null = null
   private readonly httpServers = new Set<McpServer>()
   private _gate: SecurityGate
@@ -121,6 +268,8 @@ export class ProvidentMcpServer {
     this.transport = opts.transport
     this.port = opts.port ?? 3787
     this._gate = opts.gate ?? new SecurityGate()
+    this.moduleStore = opts.moduleStore ?? null
+    this.router = opts.router ?? null
   }
 
   getGateConfig(): SecuritySnapshot {
@@ -148,12 +297,42 @@ export class ProvidentMcpServer {
     'provident.code.delete',
     'provident.code.load',
     'provident.code.loadBatch',
+    'module.install',
+    'module.update',
+    'module.list',
   ]
 
   /** The subset of ALL_TOOLS whose group the current gate allows — the tools
    *  the server registers (and can register on a re-gate). */
   allowedToolNames(): string[] {
-    return registeredToolNames(this._gate, ProvidentMcpServer.ALL_TOOLS)
+    const staticNames = registeredToolNames(this._gate, ProvidentMcpServer.ALL_TOOLS)
+    // U9 (M-r3) — the router's dynamic `module:<name>.<tool>` tools. They are
+    // gated by the `module` group (registration) + the invocation two-gate
+    // (F1, enforced in invokeTool). A dynamic tool is listed only when `module`
+    // is enabled.
+    if (this.router) {
+      for (const tool of this.router.listTools()) {
+        if (this._gate.toolAllowed(tool) && !staticNames.includes(tool)) staticNames.push(tool)
+      }
+    }
+    return staticNames
+  }
+
+  /** U9 (F1) — invoke a dynamic `module:<name>.<tool>` tool. Enforces the
+   *  invocation two-gate: a module tool backed by an executable entry requires
+   *  `module` AND `code` at EACH call (not just install). A module-only agent
+   *  cannot run a module tool that is arbitrary code. */
+  invokeTool(toolName: string, args: unknown): unknown {
+    if (!this.router) throw new Error(`invokeTool: no module router configured`)
+    if (typeof toolName !== 'string' || !toolName.startsWith('module:')) {
+      throw new Error(`invokeTool: not a module tool: ${String(toolName)}`)
+    }
+    // F1 — the invocation two-gate. A dynamic module tool is trusted-equivalent
+    // to `code` (executable entry), so it needs module AND code.
+    if (!moduleToolAllowed(toolName, this._gate.enabled, { executable: true })) {
+      throw new Error(`invokeTool: ${toolName} requires module AND code groups (invocation two-gate)`)
+    }
+    return this.router.invokeTool(toolName, args)
   }
 
   /** R1 (mcp-resources-review.md) — the resource list + their read-group
@@ -178,7 +357,16 @@ export class ProvidentMcpServer {
     // M1 — re-gate the LIVE server (stdio, one long-lived McpServer): toggle
     // the captured RegisteredTool handles so a narrow actually takes effect.
     for (const [name, tool] of this.registered) {
-      tool.update({ enabled: this._gate.toolAllowed(name) })
+      // U3/F1 (adversarial) — module.install/update + dynamic module:<name>.<tool>
+      // tools are trusted-equivalent to `code`: the live re-gate must use the
+      // TWO-GATE (module AND code), not the module-only `toolAllowed`. Otherwise
+      // disabling `code` would leave them callable by a module-only agent. Both
+      // the static `module.` (dot) and dynamic `module:` (colon) prefixes catch.
+      const isModuleTool = name.startsWith('module.') || name.startsWith('module:')
+      const enabled = isModuleTool
+        ? (this._gate.toolAllowed(name) && this._gate.enabled.has('code'))
+        : this._gate.toolAllowed(name)
+      tool.update({ enabled })
     }
     // R2 — re-gate the captured resource handles the same way.
     for (const [uri, res] of this.resources) {
@@ -193,7 +381,7 @@ export class ProvidentMcpServer {
     if (liveServer) {
       const toAdd = this.allowedToolNames().filter((n) => !this.registered.has(n))
       if (toAdd.length > 0) {
-        ProvidentMcpServer.registerTools(liveServer, this.backend, toAdd, this.registered)
+        ProvidentMcpServer.registerTools(liveServer, this.backend, toAdd, this.registered, this.moduleStore, this.router, this._gate)
       }
       const resToAdd = ProvidentMcpServer.ALL_RESOURCES.filter(
         (r) => this._gate.toolAllowed(`resource:${r.uri ?? r.uriTemplate}`) && !this.resources.has(r.uri ?? r.uriTemplate!),
@@ -337,7 +525,7 @@ export class ProvidentMcpServer {
           'DOM and the SSR fragment.',
       },
     )
-    ProvidentMcpServer.registerTools(server, this.backend, this.allowedToolNames(), this.registered)
+    ProvidentMcpServer.registerTools(server, this.backend, this.allowedToolNames(), this.registered, this.moduleStore, this.router, this._gate)
     // R3 — register the gated read-group resources in the SAME server build
     // (serves BOTH the stdio long-lived server and the per-POST HTTP server).
     const allowedResources = ProvidentMcpServer.ALL_RESOURCES.filter((r) => this._gate.toolAllowed(`resource:${r.uri ?? r.uriTemplate!}`))
@@ -350,6 +538,9 @@ export class ProvidentMcpServer {
     backend: McpBackend,
     allowed: string[],
     registered: Map<string, RegisteredTool>,
+    moduleStore: ModuleStore | null,
+    router: CapabilityRouter | null,
+    gate: SecurityGate,
   ): void {
     if (allowed.includes('provident.dispatch')) {
       registered.set('provident.dispatch', server.registerTool('provident.dispatch', {
@@ -469,6 +660,9 @@ export class ProvidentMcpServer {
       { name: 'provident.code.validate', description: 'Schema-validate an envelope without building the graph', inputSchema: { envelope: z.unknown().optional() } },
       { name: 'provident.code.load', description: 'Apply an edited envelope to the live graph', inputSchema: { envelope: z.unknown().optional() } },
       { name: 'provident.code.loadBatch', description: 'Stage N code.* envelope ops and re-derive once (all-or-nothing)', inputSchema: { ops: z.array(z.unknown()).describe('the batch ops: [{op:"set"|"create"|"delete", path, value?/entry?/index?}]') } },
+      { name: 'module.install', description: 'Install/update a module in the persisted registry (U3). Same name+version → no-op; same name+different version → rejected unless force:true. Requires module AND code groups (executable entry).', inputSchema: { name: z.string(), source: z.string(), version: z.string().optional(), force: z.boolean().optional() } },
+      { name: 'module.update', description: 'Re-load + re-register a module at a new version. Requires module AND code groups.', inputSchema: { name: z.string(), source: z.string(), version: z.string().optional(), force: z.boolean().optional() } },
+      { name: 'module.list', description: 'Read-only census of installed modules + versions. Requires module group.', inputSchema: {} },
     ]
     const dispatch = (name: string): string => name.slice('provident.'.length)
     for (const { name, description, inputSchema } of graph) {
@@ -478,10 +672,42 @@ export class ProvidentMcpServer {
         description,
         inputSchema,
       }, async (args: Record<string, unknown>) => {
+        // U3 — the module.* tools are MAIN-process (node:fs persisted store),
+        // NOT routed to the renderer. They are handled here directly.
+        if (name.startsWith('module.')) {
+          const before = handleModuleTool(moduleStore, name, args)
+          // U9-FIX — after a successful install/update, re-sync the live router
+          // so the module's declared tools become callable.
+          if (name === 'module.install' || name === 'module.update') {
+            if ((before as { status?: string }).status === 'installed' || (before as { status?: string }).status === 'updated') {
+              if (moduleStore && router) syncModuleRouter(router, moduleStore)
+            }
+          }
+          return text(before)
+        }
         const method = dispatch(name)
         const value = await backend.invoke(method, args)
         return text(value)
       }))
+    }
+
+    // U9 (M-r3) — register the router's DYNAMIC `module:<name>.<tool>` tools.
+    // They are gated by the `module` group (registration) + the invocation
+    // two-gate (F1, enforced in invokeTool). Each SDK call routes back through
+    // `invokeTool` so the two-gate is checked at EVERY invocation.
+    if (router) {
+      for (const tool of router.listTools()) {
+        if (!allowed.includes(tool)) continue
+        if (registered.has(tool)) continue
+        registered.set(tool, server.registerTool(tool, {
+          title: tool,
+          description: `A dynamic module tool (${tool}) — requires module AND code groups (invocation two-gate).`,
+          inputSchema: {},
+        }, async (args: Record<string, unknown>) => {
+          const value = invokeModuleTool(router, gate, tool, args)
+          return text(value)
+        }))
+      }
     }
   }
 
@@ -815,16 +1041,50 @@ export class RendererBackend implements McpBackend {
    *  shape). The full payload is NOT serialized over IPC. */
   private maybeDigest(value: unknown): unknown {
     if (value === null || typeof value !== 'object') return value
-    const v = value as { renderedHtml?: unknown; ssrHtml?: unknown; census?: unknown }
+    const v = value as { renderedHtml?: unknown; ssrHtml?: unknown; census?: unknown; content?: Array<{ type?: string; data?: string }> }
     const rh = typeof v.renderedHtml === 'string' ? v.renderedHtml : ''
     const sh = typeof v.ssrHtml === 'string' ? v.ssrHtml : ''
     const size = rh.length + sh.length
-    if (size <= this.largePayloadBytes) return value
+    // H2 (adversarial) — also bound a large IMAGE content block (base64 data)
+    // so it does not cross the IPC boundary unbounded (M-r4).
+    const content = v.content
+    let imageSize = 0
+    if (Array.isArray(content)) {
+      for (const c of content) {
+        if (c && typeof c.data === 'string') imageSize += c.data.length
+      }
+    }
+    if (size + imageSize <= this.largePayloadBytes) return value
+    if (imageSize > 0) {
+      return {
+        digest: hash64(content!.map((c) => (c && typeof c.data === 'string' ? c.data : '')).join('\u0000')),
+        truncated: true,
+      }
+    }
     const preview = rh.slice(0, 512)
     return {
       census: v.census ?? null,
       digest: hash64(rh + '\u0000' + sh),
       preview,
+      truncated: true,
+    }
+  }
+
+  /** U5 (M-r4) — bound a large IMAGE payload (base64 data) so it does not cross
+   *  the IPC boundary unbounded. A payload over `largePayloadBytes` is returned
+   *  as a digest + truncated flag, never the raw base64. Exposed for tests. */
+  maybeDigestForTest(value: unknown): unknown {
+    if (value === null || typeof value !== 'object') return value
+    const v = value as { content?: Array<{ type?: string; data?: string }> }
+    const content = v.content
+    if (!Array.isArray(content)) return value
+    let total = 0
+    for (const c of content) {
+      if (c && typeof c.data === 'string') total += c.data.length
+    }
+    if (total <= this.largePayloadBytes) return value
+    return {
+      digest: hash64(content.map((c) => (c && typeof c.data === 'string' ? c.data : '')).join('\u0000')),
       truncated: true,
     }
   }

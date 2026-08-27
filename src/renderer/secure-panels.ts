@@ -39,16 +39,21 @@ declare global {
         get(): Promise<SecuritySettings>
         set(patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }): Promise<SecuritySettings>
       }
+      module?: {
+        get(): Promise<{ corrupt: boolean; quarantined: string[]; loaded: string[]; modules: Array<{ name: string; version: string; capabilities?: unknown; disabled?: boolean; quarantined?: boolean }> }>
+        setDisabled(name: string, disabled: boolean): Promise<{ corrupt: boolean; quarantined: string[]; loaded: string[]; modules: Array<{ name: string; version: string; capabilities?: unknown; disabled?: boolean; quarantined?: boolean }> }>
+      }
     }
   }
 }
 
-const GROUPS = ['read', 'dispatch', 'graph', 'code'] as const
+const GROUPS = ['read', 'dispatch', 'graph', 'code', 'module'] as const
 const GROUP_LABELS: Record<string, string> = {
   read: 'read (get_rendered_html, get_markdown, list_targets, get_node_state, code.get, code.validate)',
   dispatch: 'dispatch (synthetic event driving)',
   graph: 'graph (load, op, export, validate, teardown)',
   code: 'code (code.set/create/delete/load — evaluates handler bodies)',
+  module: 'module (module.install/update/list + module:<name>.<tool> extensions — trusted-equivalent to code)',
 }
 
 function randToken(len = 32): string {
@@ -163,6 +168,18 @@ function paneEnvelope(): LegacyInitialData {
               { type: 'div', props: { id: 'status' }, content: 'booting…' },
             ],
           },
+          // ---- Module management pane (U8) --------------------------------
+          {
+            type: 'section',
+            props: { id: 'module-pane' },
+            css: { classes: ['card'] },
+            children: [
+              { type: 'h2', content: 'Modules / extensions' },
+              { type: 'p', css: { classes: ['hint'] }, content: 'Manual-UI only — installed modules + versions + quarantine status.' },
+              { type: 'div', props: { id: 'module-status' }, content: 'loading…' },
+              { type: 'div', props: { id: 'module-list' }, content: '' },
+            ],
+          },
         ],
       },
     },
@@ -187,6 +204,8 @@ export class SecurePanels {
   private prevMap: Map<string, unknown> | null = null
   private cfg: SecuritySettings = { token: null, enabled: ['read', 'dispatch'] }
   private debugValue = 'booting…'
+  private moduleStatus = 'loading…'
+  private moduleListText = ''
 
   /** Test/visibility accessor — the current Debug pane text (census + SSR
    *  preview). */
@@ -267,6 +286,19 @@ export class SecurePanels {
         // keep the last-known config on a bridge error
       }
     }
+    // U8 — read the module store status + list over the module bridge.
+    const moduleBridge = typeof window !== 'undefined' && window.provident?.module
+    if (moduleBridge) {
+      try {
+        const res = await moduleBridge.get()
+        this.moduleStatus = `corrupt: ${res.corrupt} · quarantined: [${res.quarantined.join(', ')}] · loaded: [${res.loaded.join(', ')}]`
+        this.moduleListText = res.modules
+          .map((m) => `${m.disabled ? '☐' : '☑'} ${m.name}@${m.version}${m.quarantined ? ' (quarantined)' : ''}`)
+          .join('\n')
+      } catch {
+        // keep the last-known module state on a bridge error
+      }
+    }
     this.syncConfig()
     this.render()
   }
@@ -293,6 +325,10 @@ export class SecurePanels {
         mutation.push({ targetProp: 'content', value: `${on ? '☑' : '☐'} ${GROUP_LABELS[g]}` })
       } else if (id === 'journal-length-input') {
         mutation.push({ targetProp: 'props.value', mode: 'replace', value: this.cfg.maxJournalLength ?? '' })
+      } else if (id === 'module-status') {
+        mutation.push({ targetProp: 'content', value: this.moduleStatus })
+      } else if (id === 'module-list') {
+        mutation.push({ targetProp: 'content', value: this.moduleListText })
       }
       if (mutation.length > 0) {
         this.supervisor.apply({ kind: 'state-slice', node: n, mutation })

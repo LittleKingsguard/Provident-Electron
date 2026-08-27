@@ -57,6 +57,7 @@ import type {
   JournalResult,
 } from '../shared/types.js'
 import type { TranslatedWarning } from 'provident-ssr/core/translate.js'
+import type { CapabilityRouter } from './extensions.js'
 
 export interface RuntimeOptions {
   mount: HTMLElement
@@ -64,6 +65,10 @@ export interface RuntimeOptions {
   /** Maximum journal entries before auto-condense (undefined = never condense).
    *  Passed to the provident-ssr Supervisor constructor. */
   maxJournalLength?: number
+  /** U6 (M-r5) — an optional CapabilityRouter whose emit-only transforms are
+   *  applied to the rendered fragment BEFORE both the DOM and SSR views are
+   *  produced (parity). The transform NEVER touches Node/Supervisor content. */
+  transformRouter?: CapabilityRouter
 }
 
 export class Runtime {
@@ -78,6 +83,7 @@ export class Runtime {
   private ssrPrevMap: Map<string, unknown> | null = null
   private bootstrapped = false
   private readonly maxJournalLength: number | undefined
+  private readonly transformRouter: CapabilityRouter | null
   /** The opt-in data-node-id (REQ-GAP-3/A2 + REQ-GAP-8): every emitted element
    *  carries its engine nodeId in BOTH views so an MCP agent reading the
    *  rendered HTML can trace each element back to its producing graph node. */
@@ -103,6 +109,7 @@ export class Runtime {
   constructor(opts: RuntimeOptions) {
     this.mount = opts.mount
     this.maxJournalLength = opts.maxJournalLength
+    this.transformRouter = opts.transformRouter ?? null
     const translated = translateLegacy(opts.envelope)
     this.rootNode = translated.root
     this.nodes = translated.nodes
@@ -1065,11 +1072,17 @@ export class Runtime {
   }
 
   private renderedHtml(): string {
-    return this.mount.innerHTML
+    const html = this.mount.innerHTML
+    // U6 (M-r5) — apply the emit-only transforms to the DOM view. The transform
+    // is applied to the emitted fragment, never the Node content.
+    return this.transformRouter ? this.transformRouter.applyTransforms(html) : html
   }
 
   private ssrHtml(): string {
-    return this.ssr.toString()
+    const html = this.ssr.toString()
+    // U6 (M-r5) — apply the SAME transforms to the SSR fragment (parity: the
+    // MCP agent's ssrHtml must not diverge from the operator's DOM).
+    return this.transformRouter ? this.transformRouter.applyTransforms(html) : html
   }
 
   /** 0.2 Feature 2 — the MarkdownAdapter endpoint (`provident.get_markdown`):
@@ -1085,7 +1098,10 @@ export class Runtime {
     const byNode = new Map(this.supervisor.allNodes().map((n) => [n.id, n]))
     const md = new MarkdownAdapter()
     renderProducingProcess(actionable as never, byNode as never, md, null, this.renderOptions)
-    return md.toString()
+    const out = md.toString()
+    // U6 (M-r5) — apply the SAME transforms to the markdown view (parity: the
+    // MCP agent's get_markdown must not diverge from get_rendered_html).
+    return this.transformRouter ? this.transformRouter.applyTransforms(out) : out
   }
 
   listTargets(): ListTargetsResult {

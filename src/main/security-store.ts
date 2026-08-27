@@ -18,7 +18,7 @@ export interface SecurityStore {
   set(patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }): SecuritySettings
 }
 
-const VALID_GROUPS = new Set(['read', 'dispatch', 'graph', 'code'])
+const VALID_GROUPS = new Set(['read', 'dispatch', 'graph', 'code', 'module'])
 
 function sanitize(input: unknown): SecuritySettings {
   const src = (input ?? {}) as Partial<SecuritySettings>

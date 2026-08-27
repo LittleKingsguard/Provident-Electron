@@ -81,6 +81,21 @@ describe('SecurityStore — manual-UI settings persistence (mcp-endpoint.md §6.
     }
   })
 
+  it('the module group persists through the store (U1, F2 adversarial fix)', () => {
+    const dir = freshDir()
+    try {
+      const file = join(dir, 'sec.json')
+      const store: SecurityStore = createSecurityStore({ path: file })
+      store.set({ groups: ['module'] })
+      expect(store.get().enabled).toContain('module')
+      // reload
+      const reloaded = createSecurityStore({ path: file })
+      expect(reloaded.get().enabled).toContain('module')
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
   it('a fresh store has maxJournalLength undefined (never condense)', () => {
     const dir = freshDir()
     try {
