@@ -412,6 +412,19 @@ export class Runtime {
     if (cmd.kind === 'layer-apply' && !Array.isArray(cmd.mutation)) {
       return { status: 'rejected' }
     }
+    // HOST-OP-REJECT / U-ENGINE-PIN §2.3 (AMENDED — ruling 1, "pass removals
+    // through") — the predicate is SHAPE-ONLY: a malformed mutation SHAPE is
+    // rejected WHOLE (bare `{status:'rejected'}`, never a throw, no partial
+    // application, graph unchanged). A VALUE-shaped write is never refused here:
+    // an `undefined` / `null` / ABSENT `value` on `props.<key>` / `css.<key>`
+    // (or the colon twins) is a legitimate attribute REMOVAL in the engine and
+    // is APPLIED — the mechanism that makes it safe is the shim completion
+    // (`ShimElement.removeAttribute`), NOT a host rejection. Kind-scoped
+    // exactly like the guards above; the COMMAND SURFACE only (handler-
+    // originated writes reach `supervisor.apply` directly and are outside it).
+    if ((cmd.kind === 'state-slice' || cmd.kind === 'layer-apply') && !Runtime.mutationPropsValid(cmd.mutation)) {
+      return { status: 'rejected' }
+    }
     const payload: { kind: string; node?: Node; [k: string]: unknown } = { ...cmd } as never
     if (typeof cmd.node === 'string') {
       const id = this.resolveTarget(cmd.node)
@@ -444,6 +457,35 @@ export class Runtime {
 
   private focusedSlice(node: Node): Node[] {
     return focusedSliceFor(node, () => this.supervisor.allNodes())
+  }
+
+  /** U-ENGINE-PIN §2.3 (AMENDED — ruling 1) — the SHAPE-ONLY predicate.
+   *  Returns `false` (⇒ reject the whole batch) if `mutation` is not an array,
+   *  or if any element is not a non-null object, misses `targetProp` / carries a
+   *  non-string `targetProp`. These are the predicate's ONLY reject class.
+   *
+   *  It does NOT inspect `value`, and therefore REFUSES NO VALUE-SHAPED WRITE:
+   *  every nullish / absent `value` on an attribute-path namespace — and every
+   *  defined value, every falsy literal, every array/object value, every other
+   *  namespace (`content`, `handlers`, `on:*`, `data:*`, a bare attribute name)
+   *  and every spelling (`props.<key>`, `css.<key>`, `props:<key>`, `css:<key>`,
+   *  bare) — passes through to the engine. The engine owns those paths and the
+   *  shim completion makes the engine's `removeAttribute` paths safe (§2.2.6,
+   *  §3.7).
+   *
+   *  The scope is the COMMAND SURFACE (`provident.op` / `applyCommand` here, plus
+   *  the pane channel in `src/renderer/secure-panels.ts`): handler-originated
+   *  writes reach `supervisor.apply` directly and are OUTSIDE this predicate, and
+   *  no attempt is made to wrap or patch the engine to widen it (a REJECTED
+   *  option, §2.3/§1). */
+  private static mutationPropsValid(mutation: unknown): boolean {
+    if (!Array.isArray(mutation)) return false
+    for (const m of mutation) {
+      if (m === null || typeof m !== 'object') return false
+      const target = (m as { targetProp?: unknown }).targetProp
+      if (typeof target !== 'string') return false
+    }
+    return true
   }
 
   /** F5 — is this object a real registered (not-destroyed) Node, not a plain

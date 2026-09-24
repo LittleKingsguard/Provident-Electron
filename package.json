@@ -16,17 +16,21 @@
     "test:watch": "vitest",
     "battery": "npm run build && node tests/e2e-battery.test.mjs",
     "divergence": "npm run build && node scripts/electron-divergence.mjs",
+    "ui": "npm run build && node scripts/electron-ui.mjs",
     "mcp": "npm run build && node scripts/mcp-cli.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
-    "provident-ssr": "^0.2.1"
+    "provident-ssr": "^0.5.1"
   },
   "devDependencies": {
-    "@types/node": "^20.14.0",
-    "electron": "^33.4.11",
-    "esbuild": "^0.24.0",
+    "@types/node": "^26.6.2",
+    "electron": "^44.4.5",
+    "esbuild": "^0.28.2",
     "typescript": "^5.5.0",
-    "vitest": "^2.0.0"
+    "vitest": "^5.0.1"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true
   }
 }

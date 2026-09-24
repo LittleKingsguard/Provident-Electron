@@ -56,6 +56,38 @@ const GROUP_LABELS: Record<string, string> = {
   module: 'module (module.install/update/list + module:<name>.<tool> extensions — trusted-equivalent to code)',
 }
 
+/** U-ENGINE-PIN §2.4 (AMENDED — ruling 1 applied to the pane channel) — the
+ *  managed channel's OWN call site for the same SHAPE-ONLY predicate as
+ *  `Runtime.applyCommand` (`src/renderer/runtime.ts`, which cannot be imported
+ *  here: the pane graph is deliberately isolated from the app runtime).
+ *  Module-local, NOT exported and NOT on the class — no new public API, no new
+ *  seam, and the shipped writes below are untouched (both are defined strings,
+ *  so they pass). Returns `false` (⇒ that node's whole batch is SKIPPED, and
+ *  its last-known state survives the render) for a NON-ARRAY batch, a
+ *  non-object element or a missing/non-string `targetProp` — its ONLY reject
+ *  class. It does not inspect `value`: an `undefined`/`null`/absent `value` on
+ *  `props.<key>` / `props:<key>` / `css.<key>` / `css:<key>` is a legitimate
+ *  attribute REMOVAL in the engine and is APPLIED (the shim completion makes it
+ *  safe, §2.2.6). The predicate must differ from §2.3's in nothing but its
+ *  container — and that class explicitly INCLUDES the non-array batch
+ *  (§2.4b item 3, the `M9` requirement): the guard lives here, in the
+ *  predicate, so BOTH call sites carry the same class — the public seam
+ *  (outcome (i), `{status:'rejected', applied:false}`) and `syncConfig`'s own
+ *  call site (skip-whole). Before it, `for (const m of mutation)` threw
+ *  `TypeError: mutation is not iterable` where the contract promises a status.
+ *  `Array.isArray` is used rather than any iterator-protocol duck-typing: it
+ *  never reads `Symbol.iterator`, so a hostile Proxy cannot throw out of the
+ *  seam. */
+function paneMutationValid(mutation: unknown[]): boolean {
+  if (!Array.isArray(mutation)) return false
+  for (const m of mutation) {
+    if (m === null || typeof m !== 'object') return false
+    const target = (m as { targetProp?: unknown }).targetProp
+    if (typeof target !== 'string') return false
+  }
+  return true
+}
+
 function randToken(len = 32): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
   let out = ''
@@ -252,6 +284,56 @@ export class SecurePanels {
     await this.refresh()
   }
 
+  /** U-ENGINE-PIN §2.4a (ruling 2) — the ONE test-only injection point the
+   *  amendment authorises, so the pane-managed channel's predicate is
+   *  REACHABLE and its behaviour assertable (before it, `syncConfig` is private
+   *  and both shipped writes are defined strings, so no test could drive the
+   *  channel — the adversarial pass's false-green finding `H-02`).
+   *
+   *  Contract, exactly as §2.4b pins it (amendment block 7 — the amended
+   *  return shape; §5.1 item 5's diff scope is this method + the predicate):
+   *   - runs `paneMutationValid(mutation)` first;
+   *   - **`applied` means "the ENGINE applied it": `applied ===
+   *     (status === 'applied')`; a refusal is never reported as applied.** The
+   *     `status` field stays the ENGINE's own verdict where the engine was
+   *     reached (`'applied'`, its `rejected`, or its other verdict); the
+   *     predicate's own refusal contributes the one literal `'rejected'`;
+   *   - the THREE reachable outcomes (§2.4b item 1), and no fourth:
+   *     (i) **shape-refused** — the predicate refuses (a non-array batch, a
+   *     non-object element, a missing/non-string `targetProp`) ⇒
+   *     `{ status: 'rejected', applied: false }`, nothing applied, nothing
+   *     re-rendered (the node keeps its prior state and its last-known render),
+   *     **NEVER a throw**;
+   *     (ii) **engine-applied** ⇒ `{ status: 'applied', applied: true }`;
+   *     (iii) **engine-refused** — the predicate passed and the engine did not
+   *     apply it (an unknown / foreign `nodeId` ⇒ `getNode` `undefined` ⇒ the
+   *     engine's own `unknown-node` rejection) ⇒
+   *     `{ status: <the engine's verdict>, applied: false }`. `applied: false`
+   *     is therefore NOT a synonym for "the predicate refused": the public
+   *     `{status}` alone carries no predicate-vs-engine discriminator (use a
+   *     shape-malformed input to attribute a refusal to the predicate);
+   *   - on a predicate pass it calls `this.supervisor.apply({kind:'state-slice',
+   *     node, mutation})` on the ISOLATED pane graph and re-renders. A nullish
+   *     value is a legitimate removal and PASSES THROUGH (ruling 1); the shim
+   *     completion makes the engine's `removeAttribute` path safe;
+   *   - the first parameter is the ENGINE `nodeId` of a node in the PANE graph
+   *     (§2.4b item 4) — an authored `props.id` is an unresolved id (outcome
+   *     (iii)), and no public pane-side accessor converts one into the other.
+   *
+   *  It adds no shim member, no DOM capability and no browser emulation (it is
+   *  not `H-r7` shim expansion), no vocabulary, no content, no default, no
+   *  store and no MCP/IPC surface: the node id and the mutation are the
+   *  caller's. `syncConfig`'s own call site and its shipped writes are
+   *  unchanged. */
+  applyPaneMutation(nodeId: string, mutation: unknown[]): { status: string; applied: boolean } {
+    if (!paneMutationValid(mutation)) return { status: 'rejected', applied: false }
+    const node = this.supervisor.getNode(nodeId)
+    const result = this.supervisor.apply({ kind: 'state-slice', node, mutation } as never) as { status?: unknown }
+    this.render()
+    const status = typeof result?.status === 'string' ? result.status : 'unknown'
+    return { status, applied: status === 'applied' }
+  }
+
   /** The Debug pane's live agent-visibility line: set from the APP runtime's
    *  census + SSR preview. Written into the pane graph's `#status` node (its
    *  own isolated graph — never the app graph). */
@@ -330,7 +412,7 @@ export class SecurePanels {
       } else if (id === 'module-list') {
         mutation.push({ targetProp: 'content', value: this.moduleListText })
       }
-      if (mutation.length > 0) {
+      if (mutation.length > 0 && paneMutationValid(mutation)) {
         this.supervisor.apply({ kind: 'state-slice', node: n, mutation })
       }
     }

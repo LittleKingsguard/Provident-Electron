@@ -38,8 +38,30 @@ function portFromArgs(argv: string[]): number {
   return 3787
 }
 
+/** Read a user-data override off the process's own command line, using the same
+ *  argv-scan idiom as `--mcp-transport=` / `--mcp-port=` above: the flag is a
+ *  `--`-prefixed argument carrying the scratch profile path, and `undefined` when
+ *  it is absent — the inert case (`SEAM-1`). The spec pins the argv route only
+ *  (§4.2 ADD-2), so no env fallback is added: a narrower seam is the safer seam.
+ *  The flag SPELLING is passed in by `main()` (recorded in the leg and in
+ *  docs/decisions.md when the unit lands). */
+function userDataFromArgs(argv: string[], flagName: string): string | undefined {
+  const flag = argv.find((a) => a.startsWith(flagName))
+  if (flag === undefined) return undefined
+  const v = flag.slice(flagName.length)
+  return v !== '' ? v : undefined
+}
+
 async function main(): Promise<void> {
   console.error(`[provident-main] node ${process.versions.node} electron ${process.versions.electron} crypto=${typeof globalThis.crypto}`)
+  // ADDITIVE SEAM (docs/specs/ci-ui-leg.md §4): honour a user-data override
+  // BEFORE the security store is created, so a controlled temp profile can be
+  // booted. `app.setPath('userData', …)` must run before `app.whenReady()`
+  // resolves — `main()` itself runs inside `app.whenReady().then(...)`, so this
+  // is in time. Absent ⇒ nothing below changes (SEAM-1): the store paths keep
+  // their landed `app.getPath('userData')` derivation.
+  const userDataOverride = userDataFromArgs(process.argv.slice(1), '--provident-user-data=')
+  if (userDataOverride !== undefined) app.setPath('userData', userDataOverride)
   const transport = transportFromArgs(process.argv.slice(1))
   const port = portFromArgs(process.argv.slice(1))
 

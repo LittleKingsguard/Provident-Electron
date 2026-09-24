@@ -11,11 +11,20 @@ PASSES. A failure is a doc bug OR an un-hardened regression — never a pass.
    exits 0 only if EVERY structural check matches (census inTree, census
    registered, dirtied ids normalized, SSR fragment structural, data-node-id
    set, nodeId vocabulary, counter increment in BOTH, non-empty dispatch
-   results) — `R13 RESULT: N checks, 0 failures` with N ≥ 9.
+   results) — `R13 RESULT: 9 checks, 0 failures`, **N = 9 is a PIN**
+   (`docs/specs/ci-divergence-leg.md` §5). *(This line read "`N` ≥ 9" until
+   2026-09-27: **corrected by the repo-wide documentation audit** — `N ≥ 9`
+   was the pre-pin form and it is the stale half `gemma4-blind-expected.md`'s
+   `S32` already records as a trap. Superseded, not deleted.)*
 2. The harness drives the REAL Electron app (real DOM) over stdio + the
    DOM-shim battery host with the SAME demo envelope + dispatch, then compares.
-3. The harness is hermetic (no network; a `--mcp-transport=stdio` spawn; the
-   client disconnect ends stdin → the app exits, no lingering process).
+3. The harness is **HERMETIC IN THE ISOLATION SENSE (corrected 2026-09-27,
+   `H-r19`)**: a temp `userData` profile, no network, no writes outside the
+   temp dir — **and headlessness is NOT claimed** (the leg needs a `DISPLAY`;
+   see `docs/specs/ci-divergence-leg.md`'s two-part truth). A
+   `--mcp-transport=stdio` spawn; the client disconnect ends stdin → the app
+   exits, no lingering process. *(This line claimed bare "hermetic" until
+   2026-09-27; that was the same false claim `H-r19` corrected in the spec.)*
 4. A mismatch on any check → exit 1 with a per-check `✗` report.
 
 ## D2 — the `code.load` teardown pin (A3-b, Runtime unit)

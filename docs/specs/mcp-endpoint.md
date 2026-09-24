@@ -211,6 +211,56 @@ live-change-notification row is LANDED 2026-08-25 as the invalidation answer: a
 stdio-only, app-Runtime-sourced `notifications/resources/updated` after a
 mutating app-graph op (see §8 Non-goals).
 
+### 3.8 `provident.focus` — **`OWED — lands with `U-FOCUS-TOOL`; the tool DOES NOT EXIST YET**
+
+> **Status: `OWED — NOT WRITTEN`.** Architect ruling **A-d5** adopted `SCH-13` as two units
+> (`U-FOCUS-MODEL` + `U-FOCUS-TOOL`) and **requires this contract section**. **The tool is
+> not implemented**, so this document **must not be read as documenting a live tool**: there
+> is **no** `provident.focus` in `ALL_TOOLS` today (`src/main/mcp-server.ts:281-303` — **21**
+> names, read this pass, and **no `focus` member** in the renderer's `RpcMethod` union). This
+> section records the **required amendment**, to be filled in **in the same pass** as the
+> tool, per `H-r18`/`FOCUS-UI-ONLY-MCP-TOOL`.
+>
+> **The amendment this section owes, with its named sections:**
+> 1. **§3 (the tool table above)** gains the `provident.focus` row.
+> 2. **This §3.8** gains the contract: `{ target?: string, newTab?: boolean } →
+>    { activeId: string | null, entries: string[], opened: boolean, refused?: { reason: string } }`
+>    — find-or-open-by-opaque-target on the renderer's focus model, then activate; `newTab: true`
+>    opens a new entry for the same target. **Group `dispatch`** (ON by default). **UI-ONLY
+>    ASYMMETRY (binding):** focus mutates **no** graph node, envelope or state slice; it emits
+>    **no** `resource-updated` and **no** `app-graph-changed` (it is **not** a
+>    `MUTATING_METHODS` member — `src/renderer/renderer.ts:12`); it persists **nothing** on this
+>    repo's side (this repo owns no UI-config store); and it **cannot force a re-render**. It is
+>    reachable **only** through this tool and the app's own UI path — `list_targets`,
+>    `get_rendered_html`, `get_markdown` and `get_node_state` **never** observe it. A target the
+>    consumer refuses returns `{refused:{reason}}` and changes nothing. Before the renderer
+>    signals ready, the call **rejects with the backend's readiness error**
+>    (`renderer not ready (timeout <n>ms)`) and the focus state is untouched — **no silent
+>    no-op, no queued mutation, no special case, no fallback.** A focus call is **never a real
+>    user gesture** (see §9).
+> 3. **§6.2 (the group table below)** gains `provident.focus` under `dispatch` — **and,
+>    separately, the missing `module` row** (`VALID_GROUPS` has five members,
+>    `src/main/security.ts:134`; the table below lists four).
+> 4. **§7 (pins)** gains a focus pin: focus is a **non-emitting mutator of UI state**, and a
+>    later edit that adds `'focus'` to `MUTATING_METHODS` is a **contract violation**.
+> 5. **§8 (non-goals)** is amended so the push paragraph names focus **explicitly as a
+>    NON-EMITTING mutator of UI state** — or a later pass will "fix" it by adding the method.
+> 6. **§9 (verification)** gains the focus rows: the renderer-not-ready rejection, the
+>    zero-notification negative row, and the tool's observability on the `ui` leg.
+>
+> **Counts this amendment carries:** `ALL_TOOLS` **21 → 22**, `RpcMethod` **21 → 22**
+> (CORRECTED 2026-09-27 by the `U-ENGINE-PIN` doc review — the live census is **21**,
+> `src/shared/types.ts:259-280`, asserted at 21 by `tests/engine-pin-version.test.ts:174-197`;
+> the earlier **"19 → 20"** was stale), the
+> default-gate registered subset **7 → 8**. **The census re-parameterisation of
+> `tests/engine-pin-version.test.ts` (`:79-165`) from a numeric freeze to a SET-EQUALITY
+> freeze has ALREADY LANDED** (`PINNED_TOOL_SET` compared by set equality; the bare `21`
+> survives only as that list's own size check) — the remaining same-commit obligation is to
+> ADD `provident.focus` to that set and to the `RpcMethod` census, which is a legitimate
+> contract change made with the thing
+> that causes it, and it leaves `U-ENGINE-PIN`'s prohibition-5 red intact for any **unlisted**
+> name.
+
 ## 4. Code / data CRUD (the authoring surface — OUTSIDE the live graph)
 
 The tools above READ the live graph + DISPATCH into it. This section adds a
@@ -534,13 +584,19 @@ the MCP tool handlers never route to it.
 - `tests/mcp-stdio-e2e.test.mjs` drives the standalone MCP server (builds
   `dist/main/standalone.mjs`) over BOTH transports with the official SDK
   client: the tools list + respond (stdio and Streamable HTTP).
-- `tests/runtime-battery.test.ts` (28) pins the Runtime's battery + code-CRUD
+- `tests/runtime-battery.test.ts` (**30** rows today — `grep`-counted
+  2026-09-27; the `28` this line read before was stale) pins the Runtime's
+  battery + code-CRUD
   surface (the 5 graph tools + 6 code-CRUD tools backing methods +
   `warnings` R10 + the SSR-survives-reload regression + the H4/H5/H6
   adversarial fixes + the R6 settle-gate quiescence). `tests/path-fork-cycle.test.ts` (9) pins the cycle-variant
   envelope. `tests/e2e-battery.test.mjs` drives the battery host
-  (`dist/main/battery-host.mjs`) end-to-end: 93 checks green across the 4
-  fork-stress d12 variants + landings + handlers + code-CRUD. `scripts/electron-divergence.mjs`
+  (`dist/main/battery-host.mjs`) end-to-end: **184 checks / 0 failures** across the 4
+  fork-stress d12 variants + landings + handlers + code-CRUD (**CORRECTED
+  2026-09-27**: this line read `93 checks green`, the 2026-08-23 B/C/D-era
+  count; the runner's own line is the authority and it reports 184 — the
+  93-check figure survives as the historical record in
+  `docs/specs/battery-units-greens.md`). `scripts/electron-divergence.mjs`
   is the R13 real-DOM-vs-shim divergence check (9/9 green).
 - Real-Electron end-to-end (0.1.1, verified 2026-08-21): the SDK client talks
   to the running app over HTTP → IPC → renderer graph. `data-node-id` on all

@@ -51,19 +51,29 @@ applyGatePatch(patch: { token?: string|null; groups?: ToolGroup[]; disable?: Too
 
 ## 3. `ALL_TOOLS` (the full registration list)
 
-The 18 `provident.`-prefixed names (all IMPLEMENTED as of Unit C — the graph +
+**CORRECTED 2026-09-27 (count drift):** this section previously said "the **18**
+`provident.`-prefixed names" and "**7** tools under the default gate". **The live
+list is 21 names** (`src/main/mcp-server.ts:281-303`, read this pass) and the
+default-gate registered subset is **7** today / **8** once `provident.focus`
+lands (see `docs/specs/mcp-endpoint.md` §3.8's `OWED` note; **the module trio
+landed after this section was written**, which is why 18 was stale). The
+`provident.`-prefixed names, all IMPLEMENTED as of Unit C (the graph +
 code-CRUD tools are real, not stubs): `dispatch`, `get_rendered_html`,
 `get_markdown`, `list_targets`, `get_node_state`, `code.get`, `code.validate`
-(the `read`/`dispatch` groups, 7 live under the default gate) + `load`, `op`,
+(the `read` group is **6** tools — `get_markdown` was missing from this list
+until **CORRECTED 2026-09-27**; with `dispatch` that is **7** live under the
+default gate) + `load`, `op`,
 `export`, `validate`, `teardown`, `journal` (`graph`) + `code.set`,
-`code.create`, `code.delete`, `code.load`, `code.loadBatch` (`code`). Under the
-DEFAULT gate, only the `read`+`dispatch` subset (7 tools) registers; graph/code
-tools are NOT present.
+`code.create`, `code.delete`, `code.load`, `code.loadBatch` (`code`) + the three
+**`module.install`/`module.update`/`module.list`** names (`module`, OFF by
+default, gated by the two-gate `module`+`code` predicate). Under the
+DEFAULT gate, only the `read`+`dispatch` subset (7 tools) registers; graph/code/
+module tools are NOT present.
 
 ## 4. Verify (states)
 
 - `new ProvidentMcpServer({backend})` (no gate) has gate = default; its
-  `allowedToolNames()` = the 6 read/dispatch tools; graph/code tools are NOT
+  `allowedToolNames()` = the **7** read+dispatch tools (6 `read` + `dispatch`); graph/code tools are NOT
   registered.
 - `new ProvidentMcpServer({backend, gate: new SecurityGate().apply({groups:['graph']})})`
   → `provident.load` IS registered.

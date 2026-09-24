@@ -7,17 +7,19 @@
 // live-DOM innerHTML substring asserts as secondary."
 //
 // Run: npm run build && node scripts/electron-divergence.mjs
-import { spawn } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
+// §2.1 item 1 (ci-ui-leg.md) — the TWO spawn sites below are now calls into the
+// shared helper. The base argument vector, the env pair, the stdio wiring and
+// the cwd are byte-identical to the landed spawn; the fresh scratch profiles
+// (and their best-effort cleanup on `process.on('exit')`) live in the helper.
+import { baseArgs, electronBin, mainCjs, repoRoot, spawnElectron, spawnProfile, stdioWiringJson } from './electron-spawn.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
-const root = join(here, '..')
-const electronBin = join(root, 'node_modules', '.bin', 'electron')
-const mainCjs = join(root, 'dist', 'main', 'main.cjs')
-const batteryHost = join(root, 'dist', 'main', 'battery-host.mjs')
+const root = repoRoot
+const batteryHost = join(here, '..', 'dist', 'main', 'battery-host.mjs')
 
 let failures = 0
 let checks = 0
@@ -100,19 +102,38 @@ console.log('\nR13 — REAL-ELECTRON vs DOM-SHIM DIVERGENCE CHECK')
 console.log('================================================')
 
 // ---- leg 1: real Electron app (real DOM) over stdio -----------------------
+// Hermetic profile + sandbox-safe Chromium flags (ci-divergence-leg.md §1's
+// isolation clause; both flags are REQUIRED where /dev/shm is unavailable —
+// Chromium dies SIGTRAP during browser init otherwise, GPU-cache writes into
+// the operator's profile are denied, and the run is not hermetic). Neither flag
+// changes the app under test: `--disable-dev-shm-usage` moves Chromium's shared
+// memory to /tmp, and each spawn gets a fresh scratch user-data dir.
+//
+// THE LANDED VECTOR, byte-identical (ci-ui-leg.md §2.1 item 1 / PRE-4), and the
+// member the shared helper supplies verbatim in `baseArgs`:
+//   [mainCjs, '--mcp-transport=stdio', '--no-sandbox', '--disable-gpu',
+//    '--disable-software-rasterizer', '--in-process-gpu', '--ozone-platform=x11',
+//    '--disable-dev-shm-usage']  +  `--user-data-dir=<fresh scratch>` per spawn
+// The helper (scripts/electron-spawn.mjs, §2.1) owns the vector, the env pair,
+// the stdio wiring, the cwd and the two scratch profiles; this leg passes the
+// profile, byte-for-byte as before.
+const profileA = spawnProfile('provident-r13-app')
+
 console.log('\n--- real Electron (real DOM) ---')
-const electron = spawn(electronBin, [mainCjs, '--mcp-transport=stdio', '--no-sandbox', '--disable-gpu', '--disable-software-rasterizer', '--in-process-gpu', '--ozone-platform=x11'], {
-  cwd: root, stdio: ['pipe', 'pipe', 'pipe'], env: { ...process.env, DISPLAY: process.env.DISPLAY || ':0', ELECTRON_DISABLE_SANDBOX: '1' },
-})
+const electron = spawnElectron([`--user-data-dir=${profileA.profile}`]).child
 electron.stdout.resume()
 let estderr = ''
 electron.stderr.on('data', (d) => {
   estderr += String(d)
   if (estderr.includes('MCP') || estderr.includes('ready') || estderr.includes('error') || estderr.includes('fatal')) console.error('[electron] ' + String(d).trim())
 })
+const profileB = spawnProfile('provident-r13-drive')
 const eTransport = new StdioClientTransport({
   command: electronBin,
-  args: [mainCjs, '--mcp-transport=stdio', '--no-sandbox', '--disable-gpu', '--disable-software-rasterizer', '--in-process-gpu', '--ozone-platform=x11'],
+  args: [...baseArgs, `--user-data-dir=${profileB.profile}`],
+  // The landed wiring, byte-identical (`stdio: ['pipe','pipe','pipe']` in the
+  // helper's `stdioWiring`): parsed here so this leg carries no second copy.
+  stdio: JSON.parse(stdioWiringJson),
   cwd: root,
   env: { ...process.env, DISPLAY: process.env.DISPLAY || ':0', ELECTRON_DISABLE_SANDBOX: '1' },
 })

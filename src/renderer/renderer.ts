@@ -11,7 +11,7 @@ import type { RpcRequest, RpcReply } from '../shared/types.js'
  *  AFTER the reply. Never triggered by the isolated SecurePanels graph. */
 const MUTATING_METHODS = new Set(['dispatch', 'load', 'op', 'teardown', 'code.load', 'code.loadBatch', 'journal'])
 
-function handleRequest(runtime: Runtime, req: RpcRequest, notify: (p: { uri: string }) => void): Promise<RpcReply> {
+export function handleRequest(runtime: Runtime, req: RpcRequest, notify: (p: { uri: string }) => void): Promise<RpcReply> {
   return (async (): Promise<RpcReply> => {
     try {
       let value: unknown
@@ -35,7 +35,12 @@ function handleRequest(runtime: Runtime, req: RpcRequest, notify: (p: { uri: str
           value = runtime.load(req.payload as never)
           break
         case 'op':
-          value = runtime.op(req.payload as never)
+          // LIVE-OP-REJECT (docs/defects.md, HOST-owned): the `provident.op` MCP
+          // tool registers its argument as `command`, so the IPC backend hands us
+          // the WRAPPED args object `{ command: <cmd> }` — while the in-process
+          // host unwraps (src/main/battery-host.ts `this.runtime.op(p.command)`).
+          // Unwrap here; `?? req.payload` keeps an already-bare command untouched.
+          value = runtime.op(((req.payload as { command?: unknown })?.command ?? req.payload) as never)
           break
         case 'export':
           value = runtime.export((req.payload as { format: 'legacy' | 'serialized' }).format)

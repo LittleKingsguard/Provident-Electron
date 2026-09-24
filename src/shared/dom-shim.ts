@@ -43,6 +43,37 @@ export class ShimElement {
     return this.attrs[k] ?? null
   }
 
+  /** The engine's `undefined`-valued attribute write (`prop:` / `css:<key>` /
+   *  `data:*`, and the boolean-attribute OFF branch in `^0.5.1`) routes here.
+   *  Mirrors `HTMLElement.removeAttribute` for the shim's two bookkeeping
+   *  stores: `id` lives in the `id` SLOT (`setAttribute('id', …)` writes it and
+   *  deletes `attrs['id']`; `outerHTML` emits from the slot), so clearing the
+   *  attribute store alone would leave a stale `id="…"` in the serialization.
+   *  `value` has the SAME slot/store split on a FORM CONTROL (spec `§2.2.1`):
+   *  the adapter sends a `VALUE_FORMS` tag's `value` down its PROPERTY path
+   *  (`attr === 'value' && VALUE_FORMS.has(elem.tagName)` → `elem.value = …`,
+   *  `provident-ssr/dist/core/adapters.js:315-318`), so `value` on an
+   *  `INPUT`/`TEXTAREA` clears BOTH the `value` slot and `attrs['value']` — a
+   *  removal leaves the serialized form and the readable value in agreement.
+   *  The scope is EXACTLY the engine's `VALUE_FORMS` set (`:20`, read:
+   *  `new Set(['INPUT', 'TEXTAREA'])`); `SELECT` is in `FORM_CONTROLS` but NOT
+   *  in `VALUE_FORMS`, and every other tag/key keeps the store-only rule.
+   *  Idempotent on an absent key and never throws — this method is reached from
+   *  a render path that must not crash. */
+  removeAttribute(k: string): void {
+    if (k === 'id') {
+      this.id = ''
+      delete this.attrs['id']
+      return
+    }
+    if (k === 'value' && (this.tagName === 'INPUT' || this.tagName === 'TEXTAREA')) {
+      this.value = ''
+      delete this.attrs['value']
+      return
+    }
+    delete this.attrs[k]
+  }
+
   addEventListener(evt: string, fn: (e: unknown) => void): void {
     ;(this.listeners[evt] ??= []).push(fn)
   }

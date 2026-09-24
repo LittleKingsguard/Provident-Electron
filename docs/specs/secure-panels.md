@@ -35,6 +35,66 @@ provident graph:
 The app `Runtime` (the MCP surface) boots its graph WITHOUT a `graphScope`
 (module singleton = today's behavior, D8). The two graphs share nothing.
 
+## 2a. The public surface, completed (U-ENGINE-PIN amendment block 7, 2026-09-27)
+
+`SecurePanels.applyPaneMutation(nodeId, mutation)` is a **public method of this class**
+(`src/renderer/secure-panels.ts:328`, read by this unit's documentation review — the
+pre-review `:299` anchor was the pre-`value`-slot-clear state) that this spec had not
+disclosed. It is the
+**testability seam** `U-ENGINE-PIN` §2.4a/§2.4b added (the ONE production surface that unit
+admits for testability), and it is a **real member of the surface** — recorded here so the
+pane spec's surface list is not read as exhaustive without it.
+
+```ts
+applyPaneMutation(nodeId: string, mutation: unknown[]): { status: string; applied: boolean }
+```
+
+- **Return contract (the amended `U-ENGINE-PIN` §2.4b shape).** **`applied` means "the
+  ENGINE applied it": `applied === (status === 'applied')`; a refusal is never reported as
+  applied.** Three outcomes are reachable, and only three:
+  1. **shape-refused** (the pane predicate refuses: a **non-array** `mutation`, a non-object
+     element, or a missing/non-string `targetProp`) ⇒ **`{status:'rejected', applied:false}`**,
+     nothing applied, nothing rendered, the node's last-known state survives — **never a
+     throw**;
+  2. **engine-applied** ⇒ **`{status:'applied', applied:true}`**;
+  3. **engine-refused** (the predicate passed, the engine did not apply) ⇒
+     **`{status: <the engine's verdict>, applied:false}`** — e.g. an **unknown / foreign
+     `nodeId`**, which does not resolve in the pane graph's supervisor (`getNode` ⇒
+     `undefined`) and therefore takes the engine's `unknown-node` rejection
+     (`node_modules/provident-ssr/dist/core/supervisor.js:847-850`). `applied:false` is the
+     honest answer to "did the engine apply it?", even though the predicate passed.
+- **Vocabulary.** The first parameter is the **engine nodeId** of a node in the PANE graph —
+  **not** an authored `props.id`, and this class exposes **no public accessor** that converts
+  one into the other (`Runtime.listTargets()` is the app graph's; `dispatch(id)` resolves an
+  authored id internally but is a click seam that returns no id). A caller must resolve the
+  nodeId from the host's own id index; the test suite's resolution reads the class's private
+  `supervisor` and is a **harness detail**. A pane-side resolution accessor is **owed/
+  recommended, not admitted** (`U-ENGINE-PIN` §2.4b item 4, §7.11).
+- **Renderer-side only; NOT IPC/MCP-reachable.** It is a method on a renderer class, it adds
+  no `RpcMethod` union member (`src/shared/types.ts:259-280`) and no `MUTATING_METHODS`
+  entry, it is never registered as an MCP tool, and it reaches only the **isolated pane
+  graph** — so the `D1-D8` isolation in §4 is unchanged by it: the app Runtime (the MCP
+  surface) can neither see nor dispatch it. **An agent holding MCP access can not call it.**
+- **Accepted broadening (recorded as such).** Within the PANE graph it is a **general write
+  channel**: `state-slice` mutation targets `content` / `handlers` / `props.<key>` /
+  `css.<key>` / `hooks.<key>` **on any node of that graph** are accepted (the predicate is
+  **shape-only**; it no longer inspects `value`, so nullish values pass through as
+  legitimate removals). That is **wider than the `syncConfig()` writes it grew out of**
+  (which only ever wrote `content` + `props.data-on` + `props.value`, `:406-425`, read by
+  this unit's documentation review — the `:362-389` anchor predated the `value`-slot clear) —
+  accepted
+  because the seam is renderer-side, isolated, and exists so the pane channel's predicate is
+  reachable and falsifiable at all. **It does not widen the MCP/agent surface**: everything
+  it can touch is in the graph the MCP endpoints cannot address (§4).
+- **Rollback and the standing adversarial duty (added by this unit's documentation review,
+  2026-09-27 — `docs/decisions.md` `ENGINE-PIN-PANE-INJECTION-SEAM`).** The seam is
+  **independently revertible**: deleting `applyPaneMutation` (plus the pane test file and its
+  fixture) restores the class's prior public surface — **but the shape predicate at
+  `syncConfig`'s own call site must STAY** (it is the shipped channel's guard), so the revert
+  removes **testability, not behaviour**. **The next adversarial pass MUST review this method
+  as a seam** (it is the only public surface of this class that takes a caller-supplied
+  `mutation`, so it is the reachable entry to the pane graph's general write channel).
+
 ## 3. The panes (authored as provident data)
 
 The envelope (function-STRING handler bodies, `translate.md` §2):

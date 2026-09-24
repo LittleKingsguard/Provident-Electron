@@ -306,7 +306,10 @@ per R8 is exercise-covered by anon-then-alice-then-anon.)
 - **Host**: `src/main/battery-host.ts` (Node, no Electron display) — a
   `ProvidentMcpServer` whose backend owns a real `Runtime` (from
   `src/renderer/runtime.ts`) running under the DOM shim
-  (`tests/helpers/dom-shim.ts`). This is the un-parked **HEADLESS / Node-only
+  (`src/shared/dom-shim.ts` — **CITATION CORRECTED 2026-09-27:** this line
+  formerly read `tests/helpers/dom-shim.ts`, **a path that does not exist**
+  (`tests/helpers/**` contains no files); the shim is host-owned test code that
+  lives in `src/shared/`). This is the un-parked **HEADLESS / Node-only
   MCP server mode** (docs/pending.md, 2026-08-22 design review): the runtime
   is identical to the Electron renderer, so the Electron app is the same
   contract against a real DOM. The battery uses the deterministic Node host

@@ -37,8 +37,16 @@ Phase B contract).
 
 ## Setup & run
 
-Requires Node ≥ 18 for install tooling (Electron is pinned to ^33 so it
-installs on Node 18; the Electron runtime embeds its own Node 20).
+Requires Node ≥ 18 for install tooling. **The `electron` devDependency is
+`^44.4.5` (Electron 44 installed) — CORRECTED 2026-09-27.** This line read
+"Electron is pinned to ^33 so it installs on Node 18" until the engine-pin
+install moved it (`package.json:27`); that was a **MAJOR** jump against this
+repo's own `ELECTRON-PIN` row (`docs/decisions.md:29`, `^33`), it was
+**not** covered by `U-ENGINE-PIN`'s red set, and a fork should **choose its own
+Electron pin deliberately rather than copy `^44`** — the risk is recorded in
+`docs/decisions.md` `ENGINE-PIN-DEVDEP-JUMP-ACCEPTED` + `docs/pending.md`'s
+devDependency scope-change row. The whole Electron-44 stack is exercised by
+`npm run divergence` (Electron 44.4.5, `R13 RESULT: 9 checks, 0 failures`).
 
 ```sh
 npm install
@@ -70,8 +78,18 @@ counter (`inc` / `dec` / `reset` buttons) and an echo input (`echo-input` →
 
 ### Local CLI toolset (`npm run mcp`)
 
-`scripts/mcp-cli.mjs` drives **all 15 MCP endpoints** for development + dynamic
-testing. Two targets:
+`scripts/mcp-cli.mjs` drives **the MCP endpoints** for development + dynamic
+testing (**21 tools today** — `provident.dispatch`, the four `read` tools,
+`code.get`/`code.validate`, the six `graph` tools incl. `journal`, the five
+`code.*` writers and the three `module.*` tools; `ALL_TOOLS` becomes **22** when
+`provident.focus` lands — see `docs/specs/mcp-endpoint.md` §3/§3.8. An earlier
+version of this line said "all 15", which was stale: **CORRECTED 2026-09-27**.
+The **`read` group is 6** tools — `get_rendered_html`, `get_markdown`,
+`list_targets`, `get_node_state`, `code.get`, `code.validate` — so the
+**default-gate registered subset is 7** (those 6 + `dispatch`), not 6;
+**CORRECTED 2026-09-27** by the `U-ENGINE-PIN` doc review against
+`src/main/security.ts:5-38`).
+Two targets:
 
 - **battery** (default) — spawns `dist/main/battery-host.mjs` (a real Runtime
   under the DOM shim, all tool groups pre-enabled) over stdio: a throwaway,
@@ -119,8 +137,11 @@ provident.dispatch { target: { kind: "nodeId", nodeId: "node-6" }, event: "click
 - `docs/specs/mcp-endpoint.md` — this repo's behavior contract (the MCP
   endpoint surface; implements the upstream's Phase C as a consumer).
 - `docs/defects.md` — the implementation-test catalogue (REQ-GAP-1..8 resolved
-  by provident-ssr 0.1.1/0.1.2; REQ-GAP-9..12 published in 0.1.3; none open) →
-  `docs/HANDOFF.md` (the issue handoff to the upstream project).
+  by provident-ssr 0.1.1/0.1.2; REQ-GAP-9..12 published in 0.1.3; **no open
+  package row today** — the last one, `UNDO-REDO-DESTROY-STATUS`, is CLOSED as
+  not reproducible at `0.5.1`, and `LIVE-OP-REJECT` is a HOST-owned row in that
+  file's `## FIXED (in this repo)` section) → `docs/HANDOFF.md` (the issue
+  handoff to the upstream project; **no round is open**).
 - `docs/decisions.md` / `docs/pending.md` / `docs/next-steps.md` — the process
   trackers (imported from the upstream `AGENTS.md` document-archival loop).
 - `AGENTS.md` — the process rules for agents working in this repo.
