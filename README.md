@@ -69,6 +69,17 @@ Transports are also selectable via `PROVIDENT_MCP_TRANSPORT` /
 Three legs sit beside `npm test` / `npm run typecheck` / `npm run build`, each
 running its own `npm run build` first:
 
+**Verified counts (2026-09-27, after the `G-4` fix pass that closed the `U-REALDOM-BOOT` adversarial
+pass's last open routed item):** the suite is **`58` files / `872` passed / `2` skipped / `0` failed**;
+the `ui` leg's declared rows are **`77/77`** (`tests/ui-leg-contract.test.ts` **`66`** = `59` clause rows
++ `7` rebuilt falsifiable rows whose falsifiability is shown by a **`15`-mutation out-of-tree matrix**;
+`tests/ui-leg-seam.test.ts` **`11`**); `npm run divergence` → **`R13 RESULT: 9 checks, 0 failures`**
+(`N = 9`); `npm run battery` → **`184 checks / 0 failures`**; `npm run ui` → exit **`0`**, **`11/11`**
+assertions green, one measurement **`427x22`**, **`retries=0`**. **Earlier records that read `863` passed
+/ `68/68` are the wave-C passes' own dated measurements — annotated in `docs/next-steps.md`,
+`docs/decisions.md`, `docs/pending.md` and `docs/FORKER.md`, never deleted**; `M-46` stays
+`UNMEASURABLE`.
+
 | Leg | What it is | What it is **not** |
 | --- | --- | --- |
 | `npm run battery` | the DOM-shim battery host (`dist/main/battery-host.mjs`) over stdio MCP — envelope/shim-layer corroboration | **not** a browser and **not** a real-DOM carrier |

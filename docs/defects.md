@@ -12,6 +12,18 @@ Naming: `REQ-GAP-<n>` — a requirement gap, documentation gap, or missing
 convenience for an MCP/Electron (or general non-DOM) host. Observed symptom →
 reproduction → suspected root cause → proposed fix shape (upstream-owned).
 
+> **⟶ COUNT NOTE, added 2026-09-27 (the `G-4` fix pass — status only; no defect row changes).** No row of
+> this file carries a test-count or row-count claim, so nothing here drifted: the wave-C figures quoted
+> elsewhere (`58 files / 863 passed / 2 skipped / 0 failed`, the unit's set `68/68`) are **dated
+> measurements of the passes that produced them.** The **live** figures are **`58 files / 872 passed /
+> 2 skipped / 0 failed`** and the `U-REALDOM-BOOT` unit's set **`77/77`** (`66` contract + `11` seam) after
+> the **`G-4` fix pass** closed the unit's adversarial pass's **last open routed item**. The `ui` leg's three
+> CLOSED host rows below (`UI-LEG-LEFTOVER-PROFILES`, `UI-LEG-TIMEOUT-CLASS-RACE`,
+> `UI-LEG-DISPLAY-PRECONDITION` + its consolidated `UI-LEG-EVIDENCE-ROW-OBSERVES-ITS-CLAIM` row) are
+> **unaffected** — each still states **no `docs/HANDOFF.md` round and no upstream issue is owed**, which
+> remains correct (all are HOST-owned; **no `provident-ssr` package defect was found** by that pass either).
+> The reconcile's authority is `docs/next-steps.md`'s `## ⟶ COUNT RECONCILIATION` block.
+
 ## OPEN
 
 **THIS TABLE IS THE PACKAGE-GAP CATALOGUE — and one row below is not a package gap, so
