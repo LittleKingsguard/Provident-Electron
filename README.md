@@ -46,7 +46,9 @@ repo's own `ELECTRON-PIN` row (`docs/decisions.md:29`, `^33`), it was
 Electron pin deliberately rather than copy `^44`** — the risk is recorded in
 `docs/decisions.md` `ENGINE-PIN-DEVDEP-JUMP-ACCEPTED` + `docs/pending.md`'s
 devDependency scope-change row. The whole Electron-44 stack is exercised by
-`npm run divergence` (Electron 44.4.5, `R13 RESULT: 9 checks, 0 failures`).
+`npm run divergence` (Electron 44.4.5, `R13 RESULT: 9 checks, 0 failures`) —
+and, since 2026-09-27, by `npm run ui` too (a real renderer boot; see
+**Harness legs** below).
 
 ```sh
 npm install
@@ -61,6 +63,23 @@ npm start -- --mcp-transport=stdio                  # stdio
 
 Transports are also selectable via `PROVIDENT_MCP_TRANSPORT` /
 `PROVIDENT_MCP_PORT`.
+
+### Harness legs (outside the trio)
+
+Three legs sit beside `npm test` / `npm run typecheck` / `npm run build`, each
+running its own `npm run build` first:
+
+| Leg | What it is | What it is **not** |
+| --- | --- | --- |
+| `npm run battery` | the DOM-shim battery host (`dist/main/battery-host.mjs`) over stdio MCP — envelope/shim-layer corroboration | **not** a browser and **not** a real-DOM carrier |
+| `npm run divergence` | the identity leg on the same built tree (`R13 RESULT: 9 checks, 0 failures`, `N = 9` pinned) | **structural-surfaces-only** evidence, **never IPC-layer** (the `LIVE-OP-REJECT` lesson) |
+| `npm run ui` | **added 2026-09-27 · unit `U-REALDOM-BOOT`, `DONE` 2026-09-27** on every leg its spec declares (`docs/specs/ci-ui-leg.md`; record: `docs/next-steps.md`'s `## DONE — U-REALDOM-BOOT`): boots the **real Electron renderer** twice under fresh scratch temp profiles, driven over stdio MCP, and takes **ONE** real measurement (`427x22` at `fontSize="16px"`), read back through the existing `provident.get_rendered_html`; its declared rows are **live-green** (`11/11 assertions green, mapped onto the five declared rows R0-R4`) and both live-battery findings are **closed**; **requires a `DISPLAY`** (no display ⇒ an actionable `PREREQUISITE ERROR`, exit **3**, never a skip) and treats a red `divergence` as `PRECONDITION-FAILED` (**exit 2, no measurement** — *a `ui` green is never stronger than a `divergence` red*) | **not** the packaged app · **no** rendered-geometry proof · **no** IPC proof · **no** attribute row · the shim's `UNSUPPORTED` record is **not** a verdict on the shim · and it does **not** move `M-46` off `UNMEASURABLE` |
+
+`npm run ui` retries a failed **bootstrap** (bounded: `4` attempts per boot,
+fixed `250/500/1000 ms` backoff, `30 000 ms` per-attempt handshake timeout —
+operator-lowerable only, via `PROVIDENT_UI_BOOT_ATTEMPTS` / `PROVIDENT_UI_BOOT_TIMEOUT_MS`),
+records every attempt, labels a retried green, and **exits `1` on exhaustion** —
+never a pass. *(Its green's honest limits are printed by the leg itself as `R4`.)*
 
 ## MCP tools
 

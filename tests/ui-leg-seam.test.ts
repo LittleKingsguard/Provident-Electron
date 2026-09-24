@@ -369,3 +369,180 @@ describe('§3.5 SEAM-1..4 + §4 ADD-1..ADD-6 — the ONE additive seam (src/main
     ).toBe(true)
   })
 })
+
+// ===========================================================================
+// ADVERSARIAL FINDING `G-4` (MED) — the seam file's HALF of the re-point
+// ===========================================================================
+//
+// §3b's `G-4` names the seam `R0`(c) row's **string-count** as the same class as
+// the contract file's `R0`…`R4` rows: the row asserted how many times the
+// identifiers `--user-data-dir`/`scratchProfile`/… appear in the leg's text, so a
+// leg with the right COUNT and the wrong BEHAVIOUR stayed green, and the row could
+// not falsify the one thing `R0`(c) now claims: that the operator profile was
+// OBSERVED before and after the run and COMPARED.
+//
+// The observation itself is the leg's (the `G-2` fix): `operatorProfileState()`
+// read before the run and after it, and `operatorProfileUnchanged(before, after)`
+// as the comparison. This block RUNS that comparison, out of the leg's own source,
+// on states a break must distinguish — and then RUNS the `R0`(c) row's own
+// predicate against the witness's verdict, so a row that prints the witness but
+// keeps its condition independent of it reddens. A string count cannot do either.
+describe('G-4 falsifiability — the seam-side `R0`(c) witness is RUN, not counted', () => {
+  /** The leg's own `function NAME(…) { … }`, extracted verbatim. */
+  function legFunction(name: string): string {
+    const re = new RegExp(`^(?:export\\s+)?(?:async\\s+)?function\\s+${name}\\s*\\(`, 'm')
+    const m = re.exec(LEG_SRC as string)
+    expect(
+      m,
+      `G-4 falsifiability: the leg has no top-level \`function ${name}\` — the operator-profile witness IS the observation \`R0\`(c) claims, so a renamed/removed one fails this row rather than skipping it`,
+    ).not.toBeNull()
+    const from = (m as RegExpExecArray).index + (m as RegExpExecArray)[0].length
+    const braceOpen = (LEG_SRC as string).indexOf('{', from)
+    expect(braceOpen, `G-4 falsifiability: \`function ${name}\` carries no body`).toBeGreaterThan(0)
+    // walk the body with a brace counter that ignores strings/templates/comments
+    let depth = 0
+    let close = -1
+    for (let i = braceOpen; i < (LEG_SRC as string).length && close === -1; i += 1) {
+      const ch = (LEG_SRC as string)[i]
+      if (ch === '{') depth += 1
+      else if (ch === '}') {
+        depth -= 1
+        if (depth === 0) close = i
+      }
+    }
+    expect(close, `G-4 falsifiability: \`function ${name}\` is not brace-balanced`).toBeGreaterThan(0)
+    return (LEG_SRC as string).slice((m as RegExpExecArray).index, close + 1)
+  }
+
+  const WITNESS_STATE = (mtimeMs: number | null, present: boolean): Array<Record<string, unknown>> => [
+    {
+      profile: '/home/operator/.config/app',
+      exists: true,
+      files: {
+        'provident-security.json': { present, mtimeMs, size: present ? 10 : null },
+        'provident-modules.json': { present: false, mtimeMs: null, size: null },
+      },
+    },
+  ]
+
+  it('SEAM-R0(c)-a (§3.0 R0(c) / the `G-2` witness) — the leg\'s own before/after comparison RUNS: a moved operator profile is caught, an unchanged one passes', () => {
+    expect(LEG_SRC, LEG_ABSENT).not.toBeNull()
+    if (LEG_SRC === null) return
+    const decl = legFunction('operatorProfileUnchanged')
+    const unchanged = new Function('join', `${decl}\nreturn operatorProfileUnchanged`)(join) as (
+      b: Array<Record<string, unknown>>,
+      a: Array<Record<string, unknown>>,
+    ) => { unchanged: boolean; diffs: string[] }
+
+    // S1 — the equal state (the run touched nothing): unchanged.
+    expect(
+      unchanged(WITNESS_STATE(1000, true), WITNESS_STATE(1000, true)).unchanged,
+      '§3.0 R0(c): an operator profile that did not move ⇒ the witness reports unchanged (the pass state)',
+    ).toBe(true)
+
+    // S2 — the three ways a boot can touch the operator profile, each of which a
+    // reverted/skipped comparison would miss:
+    //   (i) the store's mtime moved (the app wrote it),
+    //   (ii) the store appeared (it was absent before),
+    //   (iii) the directory itself appeared/was removed.
+    const moved = unchanged(WITNESS_STATE(1000, true), WITNESS_STATE(2000, true))
+    expect(moved.unchanged, '§3.0 R0(c): a boot that WROTE the operator store moves its mtime ⇒ NOT unchanged').toBe(false)
+    expect(moved.diffs.join(' '), '§3.0 R0(c): the diff NAMES the file that moved, so the failure is legible evidence').toContain(
+      '/home/operator/.config/app/provident-security.json',
+    )
+    expect(
+      unchanged(WITNESS_STATE(null, false), WITNESS_STATE(1500, true)).unchanged,
+      '§3.0 R0(c): a store APPEARING under the operator profile ⇒ NOT unchanged',
+    ).toBe(false)
+    expect(
+      unchanged(WITNESS_STATE(1000, true), [
+        {
+          profile: '/home/operator/.config/app',
+          exists: false,
+          files: { 'provident-security.json': { present: true, mtimeMs: 1000, size: 10 }, 'provident-modules.json': { present: false, mtimeMs: null, size: null } },
+        },
+      ]).unchanged,
+      '§3.0 R0(c): the operator directory itself vanishing/being created ⇒ NOT unchanged',
+    ).toBe(false)
+    expect(
+      unchanged(WITNESS_STATE(1000, true), [{ profile: '/home/operator/.config/other', exists: true, files: {} }]).unchanged,
+      '§3.0 R0(c): a candidate that is not observed AFTER the run is caught — a witness that silently skipped a missing path would compare nothing',
+    ).toBe(false)
+
+    // S3 — the comparison is the leg's OWN, and it is a pure function of the two
+    // states (no I/O, no environment read, no early `return true`).
+    const declCommentsStripped = decl.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '')
+    expect(
+      declCommentsStripped,
+      '§3.0 R0(c): the comparison may not short-circuit to a constant — every path depends on the states it was handed',
+    ).not.toMatch(/return\s+true\s*;?\s*\n\s*}/)
+    expect(
+      (LEG_SRC as string),
+      '§3.0 R0(c)/`G-2`: the witness\'s BEFORE and AFTER states are taken from the leg\'s own state reader',
+    ).toMatch(/operatorProfileBefore\s*=\s*operatorProfileState\(\)/)
+    expect(
+      (LEG_SRC as string),
+      '§3.0 R0(c)/`G-2`: … and its AFTER state too — a single read would compare nothing',
+    ).toMatch(/operatorProfileAfter\s*=\s*operatorProfileState\(\)/)
+  })
+
+  it('SEAM-R0(c)-b (§3.0 R0(c)) — the `R0`(c) ROW consumes the witness verdict: a moved profile reddens the row, and the row\'s assertion is the OBSERVATION, not a path spelling', () => {
+    expect(LEG_SRC, LEG_ABSENT).not.toBeNull()
+    if (LEG_SRC === null) return
+
+    // The row's own call site, taken verbatim (label + predicate), so the row is
+    // RUN rather than restated.
+    const rowAt = (LEG_SRC as string).indexOf("R0(c) neither boot read/wrote")
+    expect(rowAt, '§3.0 R0(c): the leg must carry its `R0`(c) row').toBeGreaterThanOrEqual(0)
+    const callAt = (LEG_SRC as string).lastIndexOf('row(', rowAt)
+    expect(callAt, '§3.0 R0(c): the labelled `R0`(c) line is a `row(...)` call').toBeGreaterThanOrEqual(0)
+    const callText = (LEG_SRC as string).slice(callAt, (LEG_SRC as string).indexOf('\n  )', rowAt) + 4)
+    expect(callText, '§3.0 R0(c): the row\'s predicate is a real expression').toMatch(/operatorWitness\.unchanged/)
+    expect(
+      callText,
+      '§3.0 R0(c)/`G-4`: the row\'s condition depends on ALL THREE halves — the seeded scratch store, the code-group surface and the witness verdict',
+    ).toMatch(/seededStoreIntact\s*&&\s*codeToolsOn\s*&&\s*operatorWitness\.unchanged/)
+
+    // The predicate itself, evaluated with the witness in each state. (The halves
+    // are identifiers in the row's own scope, so they are supplied here.)
+    const run = (scope: Record<string, unknown>): boolean => {
+      const names = Object.keys(scope)
+      return (new Function(...names, 'return (seededStoreIntact && codeToolsOn && operatorWitness.unchanged)') as (
+        ...args: unknown[]
+      ) => boolean)(...names.map((n) => scope[n]))
+    }
+    expect(
+      run({ seededStoreIntact: true, codeToolsOn: true, operatorWitness: { unchanged: true } }),
+      '§3.0 R0(c): all halves hold ⇒ the row passes',
+    ).toBe(true)
+    expect(
+      run({ seededStoreIntact: true, codeToolsOn: true, operatorWitness: { unchanged: false } }),
+      '§3.0 R0(c)/`G-4`: the witness reporting the operator profile MOVED ⇒ the ROW FAILS — this is what the string-count row could not do',
+    ).toBe(false)
+    expect(
+      run({ seededStoreIntact: false, codeToolsOn: true, operatorWitness: { unchanged: true } }),
+      '§3.0 R0(c): a boot whose seeded store did not resolve under its scratch profile ⇒ the row fails',
+    ).toBe(false)
+    expect(
+      run({ seededStoreIntact: true, codeToolsOn: false, operatorWitness: { unchanged: true } }),
+      '§3.0 R0(c): the code-group surface a default/first-run store could not produce is part of the row',
+    ).toBe(false)
+
+    // And the reason the row may NOT be a path spelling: the leg's own §3.0 R0(c)
+    // guard rows forbid naming the operator profile, so the witness DERIVES its
+    // candidates at run time — the row cannot assert a literal path, and must
+    // assert the observation instead.
+    expect(
+      LEG_SRC,
+      '§3.0 R0(c) guard rows: the leg may not spell the operator profile path — which is exactly why the row must assert the witness OBSERVATION',
+    ).not.toMatch(/homedir\s*\(/)
+    expect(
+      LEG_SRC,
+      '§3.0 R0(c) guard rows: … and may not name `~/.config/Electron` either',
+    ).not.toMatch(/\.config\/Electron/)
+    expect(
+      LEG_SRC,
+      '§3.0 R0(c)/`G-2`: the candidates are derived from the operator\'s own environment at run time (a witness that covered the wrong directory would prove nothing)',
+    ).toMatch(/XDG_CONFIG_HOME|process\.env\.HOME/)
+  })
+})

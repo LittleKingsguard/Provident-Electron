@@ -15,7 +15,12 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 // shared helper. The base argument vector, the env pair, the stdio wiring and
 // the cwd are byte-identical to the landed spawn; the fresh scratch profiles
 // (and their best-effort cleanup on `process.on('exit')`) live in the helper.
-import { baseArgs, electronBin, mainCjs, repoRoot, spawnElectron, spawnProfile, stdioWiringJson } from './electron-spawn.mjs'
+// F-1 (adversarial, 2026-09-27) — the two profile creations use the helper's
+// PROFILE-ONLY call `makeFreshProfile`: `spawnProfile` SPAWNS a child and
+// returns it, so using it here left an undrained, unreferenced Electron process
+// per site AND made this leg boot FOUR Electron processes instead of TWO. Each
+// profile below is now spawned exactly ONCE (§2.1 item 1's pinned behaviour).
+import { baseArgs, electronBin, mainCjs, makeFreshProfile, repoRoot, spawnElectron, stdioWiringJson } from './electron-spawn.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const root = repoRoot
@@ -116,21 +121,22 @@ console.log('================================================')
 //    '--disable-dev-shm-usage']  +  `--user-data-dir=<fresh scratch>` per spawn
 // The helper (scripts/electron-spawn.mjs, §2.1) owns the vector, the env pair,
 // the stdio wiring, the cwd and the two scratch profiles; this leg passes the
-// profile, byte-for-byte as before.
-const profileA = spawnProfile('provident-r13-app')
+// profile, byte-for-byte as before. F-1: the profile is CREATED here (profile
+// only, no child) and the ONE child that uses it is spawned on the next line.
+const profileA = makeFreshProfile('provident-r13-app')
 
 console.log('\n--- real Electron (real DOM) ---')
-const electron = spawnElectron([`--user-data-dir=${profileA.profile}`]).child
+const electron = spawnElectron([`--user-data-dir=${profileA}`]).child
 electron.stdout.resume()
 let estderr = ''
 electron.stderr.on('data', (d) => {
   estderr += String(d)
   if (estderr.includes('MCP') || estderr.includes('ready') || estderr.includes('error') || estderr.includes('fatal')) console.error('[electron] ' + String(d).trim())
 })
-const profileB = spawnProfile('provident-r13-drive')
+const profileB = makeFreshProfile('provident-r13-drive')
 const eTransport = new StdioClientTransport({
   command: electronBin,
-  args: [...baseArgs, `--user-data-dir=${profileB.profile}`],
+  args: [...baseArgs, `--user-data-dir=${profileB}`],
   // The landed wiring, byte-identical (`stdio: ['pipe','pipe','pipe']` in the
   // helper's `stdioWiring`): parsed here so this leg carries no second copy.
   stdio: JSON.parse(stdioWiringJson),
