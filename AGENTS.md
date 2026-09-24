@@ -62,6 +62,42 @@ review finding.
 
 ## Process requirements
 
+**RCA-8 (2026-09-27): COMMIT ATOMICITY — every gate leaves a commit, and no
+pass may destroy unrecoverable work.** The wave-C pass lost ~996 uncommitted
+lines of `docs/specs/ci-ui-leg.md` when a doc agent's intended *append* was
+executed as a whole-file *replace*; the base survived only because it happened
+to be tracked, and everything the cycle had added after that commit was
+rebuilt from session notes rather than recovered. **Rules, binding on every
+agent and on the orchestrator:**
+
+a. **Commit at every gate boundary, not at the end of a unit.** A unit's work
+   is committed **at least** once per gate that changed files (spec → red →
+   green → adversarial/doc-review → DONE). A working tree carrying more than
+   **one** unit's uncommitted work is itself a review finding.
+b. **Commit before a destructive-capable operation.** Immediately before any
+   whole-file rewrite, bulk regeneration, archival move, or a delegated pass
+   whose prompt authorizes a file-replacing write, the current state MUST
+   already be committed — or, if it cannot be (an untracked artifact), the
+   agent must copy it aside first and say where.
+c. **Whole-file `write` on an existing file over ~200 lines is FORBIDDEN**
+   unless the file is committed in the same pass. Use bounded `edit`s, or
+   append, or `write` a NEW file. A doc/spec file that is long, actively
+   appended-to, and uncommitted is the exact artifact this rule exists for.
+d. **Append means append.** A pass that intends to add a block to a document
+   must use an anchored `edit` on the file's last line (or verify afterwards
+   that the pre-existing bytes are still present) — never a `write`. If a pass
+   discovers it has truncated a file, it must **stop**, state the fact in the
+   file itself and to the orchestrator, and restore from version control
+   before any other edit.
+e. **Unrecoverable-loss check, per pass.** A pass that edits a tracked
+   document asserts the edited file still exists in `HEAD`, and the
+   orchestrator verifies `git status` at each checkpoint. An untracked
+   document that matters (a spec, a greens set, a tracker) must be committed
+   **before** further passes edit it.
+f. **Commits are scoped, not bulk.** One commit per gate boundary with a
+   message naming the unit and the gate; unrelated units do not share a
+   commit merely because they were finished near each other.
+
 3. **TDD, always (imported, subagents.md workflow)**: every source-code task
    is red → green → verify, in order: (a) write tests with the states /
    fail-states (red); (b) run them and report the failing set; (c) implement
