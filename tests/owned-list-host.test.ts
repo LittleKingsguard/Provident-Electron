@@ -6,10 +6,27 @@
 // `src/shared/owned-list-host.ts` and its **SEVEN exports**, each signature,
 // return shape and refusal pattern), `§2.2` (the six prohibitions), `§2.3`
 // (own-node ownership — the `V-7` hard row), `§2.4` (order-as-projection),
-// `§3.1` (`M-1`..`M-18`), `§3.2` (`F-1`..`F-10`), `§3.3` (`I-1`..`I-9`),
+// `§3.1` (`M-1`..`M-21`), `§3.2` (`F-1`..`F-11`), `§3.3` (`I-1`..`I-9`),
 // `§4` (the red), `§5.1` (diff scope: this file + the module, nothing else),
 // `§5.2` (the node suite is leg 1) and `§5.5.1` (the SEVEN-row typed property
 // register, whose `§5.5.0` zero-row exemption is SUPERSEDED).
+//
+// ⟶ 2026-09-27, THE REGRESSION-ROW PASS (`ADV-LH-*`): this file is no longer
+// only the `52`-row red set of `§4.1` — it is that set PLUS the rows the
+// amended contract owes. `§3.1 M-19`/`M-20`/`M-21` and `§3.2 F-11` were NOT in
+// the `52`-row red set that was RUN (`§4.2` item 1, `§3.1`'s own note), and
+// neither were the `ADV-LH-1`/`ADV-LH-3` regression rows: they are APPENDED
+// here, **authored RED from `§2.1`'s totality clause (both halves: an injected
+// `orderOf` and the injected functions' four NAMED safe defaults) and its
+// ACCEPTANCE rule + `N-5`**, before the Implementer fixes anything. `F-2`, `F-6`,
+// `M-15`, `P-LH-IM-1` and `P-LH-TP-1` are RE-PINNED IN TEXT ONLY (their drives
+// and their attempt counts are unchanged; `F-2`'s first-wins is scoped to
+// ACCEPTED occurrences, `F-6`'s detached node now DOES appear in `removed`,
+// `M-15`'s `order`-vs-`placed` non-parallelism is annotated, `P-LH-IM-1` carries
+// the `YES (bounded)` marking `ADV-LH-6` added, and `P-LH-TP-1`'s pool list and
+// generator step form are reconciled to the executed `22` shapes / two steps per
+// attempt). `P-LH-IM-4`'s STRATEGY is strengthened per `ADV-LH-5` — its
+// statement, its row id and its `5`-attempt discipline are UNCHANGED.
 //
 // LAYER: **[T] — the repo's node suite against `src/shared/dom-shim.ts` ONLY.**
 // No window is booted, no IPC round-trip runs, no real DOM is touched, no
@@ -30,11 +47,25 @@
 // evaluated in register order, **STOP AFTER 5 CONSECUTIVE FAILURES** (the
 // running row's remaining attempts are abandoned and no further row starts).
 // `P-LH-TP-1` is `YES (bounded)` — its enumeration is smaller than its property
-// text, and the row's record says so. **The attempt total this file's tables
+// text, and the row's record says so; `P-LH-IM-1` now carries the SAME honest
+// bounded marking (`ADV-LH-6`, 2026-09-27 — a DOC act: its property text
+// ("EVERY permutation") is larger than its enumeration (`n = 3` and `n = 4`
+// only), so its cell reads `YES (bounded)` too, and its statement and its `33`
+// attempts are unchanged). **The attempt total this file's tables
 // drive is `168` = `33 + 34 + 8 + 5 + 8 + 8 + 72` — `§5.5.1`'s CORRECTED
 // arithmetic (2026-09-27); the as-filed `157` omitted `P-LH-IM-1`'s third fixed
 // `setOrder` table (`+3`) and `P-LH-TP-1`'s fixed after-`dispose()` sweep
-// (`+8`). `PRE-3` asserts that total green against the tables below.**
+// (`+8`). `PRE-3` asserts that total green against the tables below.** The
+// `P-LH-TP-1` pool is the executed **`22` shapes** (`§5.5.1`'s `ADV-LH-7`
+// reconciliation; the cell's list named `20`, and the executed pool holds `22`
+// — its two extra members are REPORTED as a spec/test contradiction below the
+// pool's own record, because the two shapes the spec names for them are NOT in
+// the executed pool and adding them would change the pool size, the draw
+// indices and the attempt discipline the same ruling forbids changing), the
+// generator consumes **TWO LCG steps
+// per attempt** (`next(1) === 0` by construction, the pool index read from the
+// RAW state as `state mod pool.length`), and a **`Symbol`-keyed shape is NOT in
+// the pool** — the pool's stated BOUNDARY, not an omission.
 //
 // **THIS FILE IS THE UNIT'S RED SET (`§4.1`) AND NOTHING ELSE.** It is authored
 // FIRST and RUN before any implementation: `src/shared/owned-list-host.ts` does
@@ -51,10 +82,11 @@
 // module-collection error that would take the whole red set with it. `PRE-1`
 // proves the boundary mechanism itself resolves, against an EXISTING module.
 //
-// AUTHORED ORDER (`§4.2` step 1): `I-1..I-9`, `M-1..M-18`, `F-1..F-10` — the
-// describe blocks below are in exactly that order (`M-18` appends after `M-17`
-// and renumbers nothing; `§4.2` step 1 is AMENDED to that enumeration), followed
-// by the `§2.1` surface / `§2.2` static rows and then `§5.5.1`'s register.
+// AUTHORED ORDER (`§4.2` step 1, EXTENDED 2026-09-27): `I-1..I-9`,
+// `M-1..M-21`, `F-1..F-11`, then the `ADV-LH-*` regression rows of the
+// 2026-09-27 adversarial pass, then the `§2.1` surface / `§2.2` static rows and
+// `§5.5.1`'s register. The describe blocks below are in that order; `M-19`..
+// `M-21` append after `M-18` and `F-11` after `F-10`, and NOTHING is renumbered.
 // ===========================================================================
 import { describe, it, expect, beforeAll } from 'vitest'
 import { existsSync, readFileSync } from 'node:fs'
@@ -220,6 +252,41 @@ function nodeEl(tag = 'div', id = ''): ShimElement {
 
 function sameRef(a: unknown, b: unknown): boolean {
   return a === b
+}
+
+/** A `catch`-and-record drive: the throw is DATA, not an escape. Used by the
+ *  `ADV-LH-1`/`ADV-LH-3` regression rows, whose whole assertion is that a
+ *  caller-supplied injected function's throw NEVER escapes a method
+ *  (`§2.1`'s totality clause + its totality-extends-to-injected-functions
+ *  clause). `null` in `thrown` means the drive did not escape. */
+type DriveRecord = { label: string; thrown: unknown; value: unknown }
+function tryDrive(label: string, fn: () => unknown): DriveRecord {
+  try {
+    return { label, thrown: null, value: fn() }
+  } catch (e) {
+    return { label, thrown: e, value: undefined }
+  }
+}
+
+/** The first escaped drive of a list, as one sentence — `null` when none
+ *  escaped (the property HOLDS). */
+function firstEscape(drives: readonly DriveRecord[]): string | null {
+  for (const d of drives) {
+    if (d.thrown !== null) {
+      const kind = d.thrown instanceof Error ? `${d.thrown.name}: ${d.thrown.message}` : String(d.thrown)
+      return `${d.label} ESCAPED (${kind}) — §2.1: no method of this host throws, for any input, and a caller-supplied injected function's throw is CAUGHT with the safe default named for that injection`
+    }
+  }
+  return null
+}
+
+/** The escaped drives as a multi-line report (for the assertion message). */
+function escapeReport(drives: readonly DriveRecord[]): string {
+  const escaped = drives.filter((d) => d.thrown !== null)
+  if (escaped.length === 0) return '(none escaped)'
+  return escaped
+    .map((d) => `  · ${d.label} → ${d.thrown instanceof Error ? `${d.thrown.name}: ${d.thrown.message}` : String(d.thrown)}`)
+    .join('\n')
 }
 
 function childrenOf(mount: unknown): unknown[] {
@@ -934,7 +1001,7 @@ describe('PRE — harness preconditions (not spec rows)', () => {
     expect(new Set(PERMS_S4.map(permKey)).size, 'S₄ entries are distinct').toBe(24)
     for (const p of PERMS_S3) expect([...p].sort(), 'every S₃ entry is a permutation of {a,b,c}').toEqual(['a', 'b', 'c'])
     for (const p of PERMS_S4) expect([...p].sort(), 'every S₄ entry is a permutation of {a,b,c,d}').toEqual(['a', 'b', 'c', 'd'])
-    expect(TP_POOL.length, "§5.5.1 P-LH-TP-1's input pool is 22 shapes").toBe(22)
+    expect(TP_POOL.length, "§5.5.1 P-LH-TP-1's input pool is 22 shapes (the EXECUTED pool; `ADV-LH-7` reconciles the cell's `20`-member list to this count — see the contradiction recorded at that row's comment)").toBe(22)
     expect(new Set(TP_POOL.map((s) => s.id)).size, 'the 22 pool shapes are distinct').toBe(22)
     // THE ARITHMETIC, checked against THIS file's own tables. `§5.5.1` states the
     // CORRECTED total (2026-09-27, finding 4/the arithmetic correction):
@@ -1313,7 +1380,9 @@ describe('I — §3.3 the every-state invariants', () => {
 })
 
 // ===========================================================================
-// M-1..M-17 — §3.1, the valid/happy states (one per reasonable data state).
+// M-1..M-21 — §3.1, the valid/happy states (one per reasonable data state).
+// `M-19`/`M-20`/`M-21` APPEND after `M-18` (2026-09-27, the adversarial +
+// PBT-audit pass) and NOTHING is renumbered (`§3.1`'s own note).
 // ===========================================================================
 describe('M — §3.1 the valid states', () => {
   it('M-1 §3.1 — the empty set: ok, empty arrays, and the mount is UNCHANGED', async () => {
@@ -1626,6 +1695,14 @@ describe('M — §3.1 the valid states', () => {
   })
 
   it('M-15 §3.1 — a null/absent mount ⇒ every operation a NO-OP with a VALID state, read once', async () => {
+    // ⟶ ANNOTATED 2026-09-27 (the adversarial + PBT-audit pass; judgment call 9 —
+    // TEXT ONLY: the drive below is UNCHANGED). **This drive is the WITNESS that
+    // this contract NEVER asserts index-parallelism of `order` and `placed`**:
+    // over an unplaceable mount, `order` is the CURRENT KEY SET (an OWNERSHIP /
+    // projection statement) while `placed` is `[]` (a PLACEMENT statement), so
+    // `order.length === placed.length` is false here — deliberately, and per
+    // `§2.1`'s mount-absence paragraph and `§3.3 I-7`'s SHARPENED clause. A row
+    // or register cell may assert parallelism ONLY over a PLACEABLE mount.
     const { create } = await surface('M-15')
     for (const mountCase of [{ id: 'mount: null', mount: null }, { id: 'mount: undefined (absent)', mount: undefined }] as const) {
       const na = nodeEl('div', 'a')
@@ -1640,6 +1717,10 @@ describe('M — §3.1 the valid states', () => {
       expect(r1.placed, `M-15 ${mountCase.id}: placed is []`).toEqual([])
       expect(r1.removed, `M-15 ${mountCase.id}: removed is []`).toEqual([])
       expect(r1.order, `M-15 ${mountCase.id}: the keys are still owned, in the supplied order`).toEqual(['a', 'b'])
+      expect(
+        r1.placed.length !== r1.order.length,
+        `M-15 ${mountCase.id}: THE NON-PARALLELISM WITNESS — order is the current key set while placed is [] (never asserted index-parallel by this contract, §2.1 mount-absence paragraph / §3.3 I-7)`,
+      ).toBe(true)
       const r2 = asResult(drive(() => h.setOrder(['b', 'a']), `M-15 ${mountCase.id} setOrder`), `M-15 ${mountCase.id} setOrder`)
       expect(r2.ok, `M-15 ${mountCase.id}: setOrder is ok`).toBe(true)
       expect(r2.refused, `M-15 ${mountCase.id}: setOrder refuses nothing`).toEqual([])
@@ -1818,10 +1899,159 @@ describe('M — §3.1 the valid states', () => {
     expect(r4.refused, "M-18: refused === [] — no refusal class is produced by ''").toEqual([])
     expect(r4.order, "M-18: the unknown '' never appears in order").toEqual([])
   })
+
+  it('M-19 §3.1 — a REFUSED first occurrence does NOT reserve its key: the later VALID duplicate is PLACED (the ADV-LH-4 valid-state half)', async () => {
+    // =====================================================================
+    // THE STATES THIS ROW ENUMERATES (`§3.1 M-19`, ADDED 2026-09-27 by the
+    // adversarial + PBT-audit pass; finding `ADV-LH-4`, MED — the valid-state
+    // half of the hole `§3.2 F-11` documents; the contract text is `§2.1`'s
+    // ACCEPTANCE rule + node-rule case `N-5`).
+    //   (1) the REFUSED-FIRST state — `setEntries([{key:'k'}, {key:'k', node:n}])`
+    //       with NO `itemFactory`: exactly ONE refusal, `no-node`, and NO
+    //       `duplicate-key` refusal at all (a refused occurrence contributes
+    //       NOTHING — least of all a reserved key);
+    //   (2) the PLACED/OWNED state — the second, independently VALID occurrence
+    //       IS placed and owned: `placed === [n]` by reference (`toBe`),
+    //       `order === ['k']` (each key ONCE, `I-7`), `ok === false` (`I-1`);
+    //   (3) the CLOSE state — `close('k')` on the now-known key removes `n`
+    //       from the mount and fires `onClose` exactly once.
+    // RED TODAY (`ADV-LH-4`): the as-shipped host calls `seen.add(key)` BEFORE
+    // the node/factory question, so this drive yields TWO refusals
+    // (`no-node` + `duplicate-key`), `order === []` and NOTHING placed.
+    // =====================================================================
+    const { create } = await surface('M-19')
+    const mount = mountEl()
+    const n = nodeEl('div', 'n')
+    const closed: Array<{ key: ListKey; entry: ListEntry<unknown> }> = []
+    const h = create({ mount, onClose: (key, entry) => closed.push({ key, entry }) })
+
+    const r = asResult(
+      drive(() => h.setEntries([{ key: 'k' }, { key: 'k', node: n }]), 'M-19 setEntries([{key:k}, {key:k, node:n}]) with no itemFactory'),
+      'M-19 setEntries([{key:k}, {key:k, node:n}]) with no itemFactory',
+    )
+    expect(r.refused, 'M-19: EXACTLY ONE refusal — one per REFUSED occurrence (§2.1 ACCEPTANCE rule, N-5)').toHaveLength(1)
+    expect(r.refused[0].code, 'M-19: the refusal class of the FIRST occurrence — no-node, not duplicate-key').toBe('no-node')
+    expect(keyIsVerbatim('k', r.refused[0].key), 'M-19: the refusal names the key as supplied').toBe(true)
+    expect(
+      r.refused.some((x) => x.code === 'duplicate-key'),
+      'M-19: NO duplicate-key refusal exists for this call — a REFUSED occurrence reserves nothing (ADV-LH-4)',
+    ).toBe(false)
+    expect(r.order, "M-19: order is exactly ['k'] — the valid duplicate is owned, each key ONCE (§3.3 I-7)").toEqual(['k'])
+    expect(r.placed, 'M-19: placed is exactly [n]').toHaveLength(1)
+    expect(r.placed[0], 'M-19: the VALID occurrence is placed BY REFERENCE (§2.3 item 5 / I-6)').toBe(n)
+    expect(r.ok, 'M-19: ok === false — the first occurrence WAS refused (§3.3 I-1)').toBe(false)
+    expect(h.keys(), "M-19: the key is owned once").toEqual(['k'])
+    expect(containsRef(childrenOf(mount), n), 'M-19: the valid occurrence is really placed in the mount').toBe(true)
+
+    const rc = asResult(drive(() => h.close('k'), "M-19 close('k') on the now-known key"), "M-19 close('k') on the now-known key")
+    expect(rc.ok, "M-19: close('k') on a KNOWN key is not a refusal").toBe(true)
+    expect(closed.length, 'M-19: onClose fires EXACTLY once for the close').toBe(1)
+    expect(containsRef(rc.removed, n), "M-19: close('k') removes n (it appears in removed)").toBe(true)
+    expect(containsRef(childrenOf(mount), n), "M-19: close('k') takes n OUT of the mount").toBe(false)
+    expect(h.keys(), 'M-19: the key is gone after the close').toEqual([])
+  })
+
+  it('M-20 §3.1 — a NON-ARRAY argument is a silent empty set / a no-op: never a throw, and setEntries drops prior ownership', async () => {
+    // =====================================================================
+    // THE STATES THIS ROW ENUMERATES (`§3.1 M-20`, ADDED 2026-09-27 by the
+    // adversarial + PBT-audit pass; judgment call 5 — `PARKED-with-revisit-
+    // condition` as a READING, while the ownership-drop CONSEQUENCE is
+    // contract text at `§2.1 setEntries`/`setOrder`).
+    //   (1) `setEntries(42)` / `setEntries({})` / `setEntries('x')` after a
+    //       populated 3-entry set: NO throw, `ok === true`, `refused === []`,
+    //       `order === []`, `placed === []`, and **the 3 previously placed
+    //       nodes are removed and appear in `removed`** — the silent empty set
+    //       DROPS prior ownership;
+    //   (2) `setOrder(42)` after a projected order: NO throw, the projected
+    //       order is UNCHANGED, `ok === true`, `refused === []`.
+    // =====================================================================
+    const { create } = await surface('M-20')
+    for (const arg of [42, {}, 'x'] as const) {
+      const mount = mountEl()
+      const nodes = [nodeEl('div', 'a'), nodeEl('div', 'b'), nodeEl('div', 'c')]
+      const h = create({ mount })
+      drive(
+        () => h.setEntries(nodes.map((node, i) => ({ key: ['a', 'b', 'c'][i], node }))),
+        `M-20 ${brief(arg)}: the populate call`,
+      )
+      const r = asResult(drive(() => h.setEntries(arg as never), `M-20 setEntries(${brief(arg)})`), `M-20 setEntries(${brief(arg)})`)
+      expect(r.ok, `M-20 setEntries(${brief(arg)}): ok === true — a non-array is not a refusal`).toBe(true)
+      expect(r.refused, `M-20 setEntries(${brief(arg)}): refused === []`).toEqual([])
+      expect(r.order, `M-20 setEntries(${brief(arg)}): order === [] (read as an EMPTY set)`).toEqual([])
+      expect(r.placed, `M-20 setEntries(${brief(arg)}): placed === []`).toEqual([])
+      expect(r.removed, `M-20 setEntries(${brief(arg)}): the 3 previously placed nodes are REMOVED — the ownership drop is the observable consequence`).toHaveLength(3)
+      for (let i = 0; i < nodes.length; i += 1) {
+        expect(containsRef(r.removed, nodes[i]), `M-20 setEntries(${brief(arg)}): node ${i} is in removed, by reference`).toBe(true)
+        expect(containsRef(childrenOf(mount), nodes[i]), `M-20 setEntries(${brief(arg)}): node ${i} left the mount`).toBe(false)
+      }
+      expect(h.keys(), `M-20 setEntries(${brief(arg)}): keys() is []`).toEqual([])
+    }
+
+    // (2) `setOrder` with a non-array keys argument is a NO-OP on the projection.
+    const mount2 = mountEl()
+    const h2 = create({ mount: mount2 })
+    drive(
+      () => h2.setEntries([{ key: 'a', node: nodeEl('div', 'a') }, { key: 'b', node: nodeEl('div', 'b') }]),
+      'M-20 setOrder(42): the populate call',
+    )
+    const projected = asResult(drive(() => h2.setOrder(['b', 'a']), "M-20 setOrder(['b','a'])"), "M-20 setOrder(['b','a'])")
+    expect(projected.order, "M-20 precondition: the projection is ['b','a']").toEqual(['b', 'a'])
+    const r2 = asResult(drive(() => h2.setOrder(42 as never), 'M-20 setOrder(42)'), 'M-20 setOrder(42)')
+    expect(r2.ok, 'M-20 setOrder(42): ok === true — never a throw').toBe(true)
+    expect(r2.refused, 'M-20 setOrder(42): refused === []').toEqual([])
+    expect(r2.order, 'M-20 setOrder(42): the current projected order is left UNCHANGED').toEqual(['b', 'a'])
+    expect(h2.keys(), 'M-20 setOrder(42): keys() is unchanged too').toEqual(['b', 'a'])
+  })
+
+  it('M-21 §3.1 — render() never re-appends a caller-detached node: the detach is PERMANENT for that key', async () => {
+    // =====================================================================
+    // THE STATES THIS ROW ENUMERATES (`§3.1 M-21`, ADDED 2026-09-27 by the
+    // adversarial + PBT-audit pass; judgment call 10 — `ACCEPTED-AS-PINNED`;
+    // contract text at `§2.1 render()`'s doc string and `§3.2 F-6`).
+    //   (1) the CALLER-DETACHED state — the caller removes a host-placed node
+    //       from the mount itself;
+    //   (2) the FIRST `render()` — the node is NOT re-appended (the host writes
+    //       only where its OWN bookkeeping disagrees with the mount, and the
+    //       bookkeeping still owns the key), so the node stays out of
+    //       `mount.children`; `keys()`/`order` still name the key (`I-7`);
+    //   (3) the SECOND `render()` — a no-op at the DOM level: `removed === []`
+    //       and the mount's child sequence is reference-identical (`I-2`);
+    //   (4) the `close(key)` state — the key is not left dangling: no throw,
+    //       the detached node is not resurrected, and the key leaves `keys()`.
+    // =====================================================================
+    const { create } = await surface('M-21')
+    const mount = mountEl()
+    const a = nodeEl('div', 'a')
+    const b = nodeEl('div', 'b')
+    const h = create({ mount })
+    drive(() => h.setEntries([{ key: 'a', node: a }, { key: 'b', node: b }]), 'M-21 setEntries')
+    expectRefsEqual(childrenOf(mount), [a, b], 'M-21 precondition: both nodes are placed')
+    a.remove() // the CALLER detaches a host-placed node itself
+    expect(containsRef(childrenOf(mount), a), 'M-21 precondition: the caller detached the node').toBe(false)
+
+    const r1 = asResult(drive(() => h.render(), 'M-21 render() #1 after the caller detach'), 'M-21 render() #1 after the caller detach')
+    expect(containsRef(childrenOf(mount), a), 'M-21: render() does NOT re-append the detached node — the detach is PERMANENT').toBe(false)
+    expect(r1.placed, "M-21: placed reports the host's placement bookkeeping").toHaveLength(2)
+    expect(r1.order, "M-21: order still names the key (I-7)").toEqual(['a', 'b'])
+    expect(h.keys(), "M-21: keys() still names the key — it is not left dangling").toEqual(['a', 'b'])
+
+    const before = snapshotChildren(mount)
+    const r2 = asResult(drive(() => h.render(), 'M-21 render() #2 (the no-op)'), 'M-21 render() #2 (the no-op)')
+    expect(r2.removed, 'M-21: the second render is a no-op at the DOM level — removed === []').toEqual([])
+    expectRefsEqual(snapshotChildren(mount), before, 'M-21: the mount child sequence is reference-identical — nothing was re-appended')
+
+    const rc = asResult(drive(() => h.close('a'), "M-21 close('a') on the detached key"), "M-21 close('a') on the detached key")
+    expect(rc.ok, "M-21: close() on the detached key does not throw and is not a refusal").toBe(true)
+    expect(rc.refused, 'M-21: refused === []').toEqual([])
+    expect(h.keys(), "M-21: the key leaves keys()").toEqual(['b'])
+    expect(containsRef(childrenOf(mount), a), 'M-21: close() resurrections nothing — the node stays out of the mount').toBe(false)
+  })
 })
 
 // ===========================================================================
-// F-1..F-10 — §3.2, the documented fail-states (each is a typed `code`).
+// F-1..F-11 — §3.2, the documented fail-states (each is a typed `code`).
+// `F-11` appends after `F-10` (ADDED 2026-09-27 by the adversarial + PBT-audit
+// pass); NOTHING is renumbered (`§3.2`'s own note).
 // ===========================================================================
 describe('F — §3.2 the documented fail-states / refusals', () => {
   it('F-1 §3.2 — an UNKNOWN key: refused, never thrown, the exact key string, and no callback fires', async () => {
@@ -1854,6 +2084,17 @@ describe('F — §3.2 the documented fail-states / refusals', () => {
   })
 
   it('F-2 §3.2 — a DUPLICATE key in one setEntries call: one refusal, FIRST-WINS, the key once', async () => {
+    // ⟶ RE-PINNED 2026-09-27 (the adversarial + PBT-audit pass; finding
+    // `ADV-LH-4` — TEXT ONLY: the drive below is UNCHANGED). `§3.2 F-2` is
+    // SCOPED, not weakened: **first-wins applies when the FIRST occurrence is
+    // itself ACCEPTED**, i.e. the `duplicate-key` test is made against keys
+    // ACCEPTED in this call (`§2.1`'s ACCEPTANCE rule — a key joins the seen set
+    // only AFTER its occurrence passes BOTH the key check and the node/factory
+    // check). A first occurrence that is REFUSED reserves NOTHING and its key may
+    // be taken by a later VALID occurrence — that shape is `§3.2 F-11` (refusal
+    // half) and `§3.1 M-19` (valid-state half). THIS row stays the two-VALID-
+    // occurrences shape, and its assertion is therefore the full first-wins
+    // statement: one refusal, the FIRST occurrence placed.
     const { create } = await surface('F-2')
     const mount = mountEl()
     const first = nodeEl('div', 'first')
@@ -1999,10 +2240,27 @@ describe('F — §3.2 the documented fail-states / refusals', () => {
       expect(r.ok, `F-6 ${driveKind}: the removal is a no-op, never a refusal`).toBe(true)
       expect(r.refused, `F-6 ${driveKind}: refused is []`).toEqual([])
       expect(h.keys().includes('a'), `F-6 ${driveKind}: the key is NOT left dangling in keys()`).toBe(false)
-      // `removed` membership for the already-detached node is DELIBERATELY NOT
-      // pinned — §3.2 F-6 leaves it a choice for the implementer (the shim's
-      // `remove()` is idempotent). The pinned contract is: no throw, no dangling
-      // ownership.
+      // ⟶ PINNED 2026-09-27 (the adversarial + PBT-audit pass; judgment call 10 —
+      // this replaces the OLD "deliberately NOT pinned" text, because the
+      // contract now rules it): a DETACHED node still DOES appear in `removed`.
+      // `§3.2 F-6`'s "or not" is no longer an open implementer choice — the host
+      // reports what it removed for the key, whether or not the tree still held
+      // it (`§3.2 F-6`'s own pinned ruling; `§3.1 M-21` carries the permanence).
+      expect(
+        containsRef(r.removed, a),
+        `F-6 ${driveKind}: the caller-detached node STILL appears in removed — the pinned reading (judgment call 10 at §3.2 F-6, 2026-09-27)`,
+      ).toBe(true)
+      if (driveKind === 'close') {
+        expect(r.removed, `F-6 close('a'): removed is exactly [a] — one key dropped, one node reported`).toEqual([a])
+      } else {
+        expect(r.removed, `F-6 setEntries(null): the already-detached 'a' is reported alongside the still-placed 'b'`).toEqual([a, b])
+      }
+      for (const node of r.removed) {
+        expect(
+          node === a || node === b,
+          `F-6 ${driveKind}: only the host's OWN nodes (a, b) appear in removed — never a node it did not place (§2.3 item 2)`,
+        ).toBe(true)
+      }
     }
   })
 
@@ -2095,6 +2353,299 @@ describe('F — §3.2 the documented fail-states / refusals', () => {
     expect(r.ok, 'F-10: a KNOWN key is not refused, detached or not').toBe(true)
     expect(r.refused, 'F-10: refused is []').toEqual([])
     expect(h.keys(), 'F-10: the key is still owned').toEqual(['a'])
+  })
+
+  it('F-11 §3.2 — a REFUSED first occurrence followed by a VALID one: ONE no-node refusal, no duplicate-key, the valid occurrence PLACED (the ADV-LH-4 refusal half)', async () => {
+    // =====================================================================
+    // THE STATES THIS ROW ENUMERATES (`§3.2 F-11`, ADDED 2026-09-27 by the
+    // adversarial + PBT-audit pass; finding `ADV-LH-4`, MED — the REFUSAL half;
+    // the valid-state half is `§3.1 M-19`, ruled by `§2.1`'s ACCEPTANCE rule +
+    // node-rule case `N-5`).
+    //   (1) the REFUSAL state — `setEntries([{key:'k'}, {key:'k', node:n}])`
+    //       with no `itemFactory`: **ONE** refusal, `code === 'no-node'`, the
+    //       refused key `'k'` VERBATIM, and **NO** `duplicate-key` member;
+    //   (2) the PLACEMENT state — the second, valid occurrence IS placed:
+    //       `placed === [n]` by reference (`toBe`), `order === ['k']`;
+    //   (3) the CALLBACK state — a subsequent `close('k')` fires `onClose`
+    //       once and removes `n` from the mount (`M-10`/`M-19`).
+    // F-2 and F-11 are TWO DIFFERENT SHAPES and both remain rows: F-2 is two
+    // VALID occurrences (first-wins); F-11 is a REFUSED first occurrence
+    // followed by a valid one (the valid occurrence wins the key outright).
+    // RED TODAY (`ADV-LH-4`): TWO refusals (`no-node` + `duplicate-key`),
+    // `order === []`, `placed === []`.
+    // =====================================================================
+    const { create } = await surface('F-11')
+    const mount = mountEl()
+    const n = nodeEl('div', 'n')
+    const closed: ListKey[] = []
+    const h = create({ mount, onClose: (key) => closed.push(key) })
+
+    const r = asResult(
+      drive(() => h.setEntries([{ key: 'k' }, { key: 'k', node: n }]), 'F-11 setEntries([{key:k}, {key:k, node:n}]) with no itemFactory'),
+      'F-11 setEntries([{key:k}, {key:k, node:n}]) with no itemFactory',
+    )
+    expect(r.ok, 'F-11: ok === false — the first occurrence was refused (§3.3 I-1)').toBe(false)
+    expect(r.refused, 'F-11: refused has EXACTLY one member').toHaveLength(1)
+    expect(r.refused[0].code, 'F-11: the typed code of the FIRST occurrence — no-node').toBe('no-node')
+    expect(keyIsVerbatim('k', r.refused[0].key), 'F-11: the refusal names the key exactly as supplied').toBe(true)
+    expect(
+      r.refused.some((x) => x.code === 'duplicate-key'),
+      'F-11: NO duplicate-key refusal — the duplicate test is made against keys ACCEPTED in this call (ADV-LH-4 / §2.1 ACCEPTANCE rule)',
+    ).toBe(false)
+    expect(r.placed, 'F-11: the second, VALID occurrence IS placed — placed === [n]').toHaveLength(1)
+    expect(r.placed[0], 'F-11: by reference (the host never clones or re-creates a caller node)').toBe(n)
+    expect(r.order, "F-11: order === ['k'] — the key is owned once, not reserved by the refused occurrence").toEqual(['k'])
+    expect(containsRef(childrenOf(mount), n), 'F-11: the valid occurrence really is in the mount').toBe(true)
+
+    const rc = asResult(drive(() => h.close('k'), "F-11 close('k')"), "F-11 close('k')")
+    expect(closed, "F-11: onClose fires exactly once, with the key").toEqual(['k'])
+    expect(containsRef(rc.removed, n), "F-11: close('k') removes n").toBe(true)
+    expect(containsRef(childrenOf(mount), n), "F-11: n left the mount").toBe(false)
+    expect(h.keys(), 'F-11: no ownership survives the close').toEqual([])
+  })
+})
+
+// ===========================================================================
+// ADV-LH-1 / ADV-LH-3 / ADV-LH-4 — THE REGRESSION ROWS OF THE 2026-09-27
+// ADVERSARIAL + PBT-AUDIT PASS (`docs/specs/listhost.md` §3b-1's four fix-side
+// findings; §0's adversarial status note names the clause each row is written
+// against). These rows are the RED half of the next cycle: they are authored
+// from the CONTRACT TEXT (`§2.1`'s totality clause, its totality-extends-to-
+// injected-functions clause with its four named safe defaults, and its
+// ACCEPTANCE rule + `N-5`) and every one of them is RED against the as-shipped
+// host. `ADV-LH-4`'s two halves are the contract rows `§3.1 M-19` and `§3.2
+// F-11`, driven above in their own blocks; this block carries the three
+// totality rows plus the FOUR per-seam rows the finding takes.
+// ===========================================================================
+describe('ADV-LH — the adversarial regression rows (§2.1 totality, per-seam safe defaults, the ACCEPTANCE rule)', () => {
+  it('ADV-LH-1 (§3b-1, HIGH) — an injected orderOf that THROWS escapes NO result-returning method; the SUPPLIED order is used and NO refusal is invented for it', async () => {
+    // =====================================================================
+    // THE BEHAVIOUR CONTRACT THIS ROW IS WRITTEN AGAINST (`§2.1`'s totality
+    // clause, RULED 2026-09-27 by `ADV-LH-1`; `§3a A-5` is RULED BY IT, not
+    // deferred). Drive: `createOwnedListHost({ mount, orderOf: () => { throw new
+    // Error('x') } })`, then `setEntries([a,b])` / `render()` / `setOrder([...])`.
+    // THE OBSERVABLE, in the three parts the spec states:
+    //   (1) NO escape from any of the SIX result-returning methods
+    //       (`setEntries`, `remove`, `setOrder`, `render`, `activate`, `close`);
+    //   (2) NOTHING is lost to the throw: every VALID entry is still placed and
+    //       owned, exactly as if `orderOf` had been omitted — the SUPPLIED
+    //       order is the fallback, and `order` is the current key set in
+    //       supplied order, each key ONCE (`I-7`);
+    //   (3) NO refusal code is invented for it — `orderOf` is CALLER code, the
+    //       vocabulary is FIVE codes and none of them is "the comparator threw",
+    //       so a swallowed `orderOf` throw contributes NO `ListHostRefusal`
+    //       entry and `ok === true` when nothing was refused (`I-1`).
+    // RED TODAY: the as-shipped `setEntries` calls the projection OUTSIDE any
+    // `try`, so the throw escapes the row's very first drive.
+    // =====================================================================
+    const { create } = await surface('ADV-LH-1')
+    const mount = mountEl()
+    const foreign = nodeEl('div', 'foreign')
+    mount.appendChild(foreign) // a foreign sibling, so the row also pins §2.3 item 3
+    const a = nodeEl('div', 'a')
+    const b = nodeEl('div', 'b')
+
+    let comparatorCalls = 0
+    const h = create({
+      mount,
+      orderOf: () => {
+        comparatorCalls += 1
+        throw new Error('x')
+      },
+    })
+
+    const r1 = tryDrive('setEntries([a,b])', () => h.setEntries([{ key: 'a', node: a }, { key: 'b', node: b }]))
+    const r2 = tryDrive('render()', () => h.render())
+    const r3 = tryDrive("setOrder(['b','a'])", () => h.setOrder(['b', 'a']))
+    const r4 = tryDrive("activate('zzz') (an UNKNOWN key — the only refusal in this sequence)", () => h.activate('zzz'))
+    const r5 = tryDrive("close('b')", () => h.close('b'))
+    const r6 = tryDrive("remove('a')", () => h.remove('a'))
+    const drives = [r1, r2, r3, r4, r5, r6]
+
+    const escaped = firstEscape(drives)
+    expect(
+      escaped,
+      `ADV-LH-1: the throws that escaped (each is a §2.1 totality violation):\n${escapeReport(drives)}`,
+    ).toBe(null)
+    expect(comparatorCalls, 'ADV-LH-1: the injected comparator really IS called (its throw is swallowed, never avoided by not calling it)').toBeGreaterThan(0)
+
+    const s1 = asResult(r1.value, 'ADV-LH-1 setEntries([a,b]) with a throwing orderOf')
+    expect(s1.refused, 'ADV-LH-1: NO refusal is invented for the comparator throw (a swallowed orderOf throw contributes no ListHostRefusal)').toEqual([])
+    expect(s1.ok, 'ADV-LH-1: ok === true — nothing was refused (I-1)').toBe(true)
+    expect(s1.order, 'ADV-LH-1: order is the current key set in the SUPPLIED order, each key once (§2.1 totality clause, I-7)').toEqual(['a', 'b'])
+    expect(s1.placed, 'ADV-LH-1: every VALID entry is still placed — nothing is lost to the throw').toHaveLength(2)
+    expect(s1.placed[0], 'ADV-LH-1: placed[0] is the supplied node for a, by reference').toBe(a)
+    expect(s1.placed[1], 'ADV-LH-1: placed[1] is the supplied node for b, by reference').toBe(b)
+    expect(h.keys(), 'ADV-LH-1: the keys are OWNED, in the supplied order').toEqual(['a', 'b'])
+    expect(childrenOf(mount)[0], 'ADV-LH-1: the foreign sibling is still the first child (§2.3 item 3)').toBe(foreign)
+    expect(containsRef(childrenOf(mount), a), 'ADV-LH-1: the valid entry a is really placed in the mount').toBe(true)
+    expect(containsRef(childrenOf(mount), b), 'ADV-LH-1: the valid entry b is really placed in the mount').toBe(true)
+    const s2 = asResult(r2.value, 'ADV-LH-1 render() with a throwing orderOf')
+    expect(s2.refused, 'ADV-LH-1: render() refuses nothing').toEqual([])
+    expect(s2.ok, 'ADV-LH-1: render() is ok').toBe(true)
+    expect(s2.order, 'ADV-LH-1: render() keeps the supplied order').toEqual(['a', 'b'])
+
+    const s3 = asResult(r3.value, "ADV-LH-1 setOrder(['b','a']) with a throwing orderOf")
+    expect(s3.refused, 'ADV-LH-1: setOrder refuses nothing — the caught comparator falls back to the supplied order').toEqual([])
+    expect(s3.ok, 'ADV-LH-1: setOrder is ok').toBe(true)
+    expect(s3.order, "ADV-LH-1: setOrder(['b','a']) projects the requested order even though the comparator threw").toEqual(['b', 'a'])
+
+    const s4 = asResult(r4.value, "ADV-LH-1 activate('zzz') on an unknown key")
+    expect(s4.refused, "ADV-LH-1: the ONLY refusal in this sequence is the unknown key's — never the comparator's").toHaveLength(1)
+    expect(s4.refused[0].code, "ADV-LH-1: and its class is unknown-key (the five-code vocabulary has no comparator-threw member)").toBe('unknown-key')
+    expect(keyIsVerbatim('zzz', s4.refused[0].key), 'ADV-LH-1: the refusal holds the supplied key verbatim').toBe(true)
+    expect(s4.ok, 'ADV-LH-1: ok === false for the refused call (I-1)').toBe(false)
+
+    const s5 = asResult(r5.value, "ADV-LH-1 close('b')")
+    expect(s5.refused, 'ADV-LH-1: close on a KNOWN key refuses nothing').toEqual([])
+    expect(s5.ok, 'ADV-LH-1: close is ok').toBe(true)
+    expect(h.keys(), "ADV-LH-1: close('b') dropped b, and a is still owned").toEqual(['a'])
+
+    const s6 = asResult(r6.value, "ADV-LH-1 remove('a')")
+    expect(s6.refused, 'ADV-LH-1: remove on a KNOWN key refuses nothing').toEqual([])
+    expect(s6.ok, 'ADV-LH-1: remove is ok').toBe(true)
+    expect(h.keys(), 'ADV-LH-1: the host ends owned-empty, with no throw anywhere').toEqual([])
+  })
+
+  it('ADV-LH-3 · seam 1 — a THROWING orderOf is caught with the NAMED safe default: the SUPPLIED order, and no refusal', async () => {
+    // The `§2.1` injected-function table's FIRST row: `orderOf` ⇒ the entry
+    // takes the SUPPLIED order, identical to the omitted-`orderOf` default
+    // (§2.2 prohibition 3: no policy is invented). No throw; `order` is the
+    // current key set in supplied order, once each; NO refusal; ownership and
+    // placement unaffected. Participating methods: `setEntries`/`setOrder` (the
+    // projection paths) and `render`/`remove`/`close` (the sync paths).
+    // BOTH projection paths are asserted on their FULL observable, because the
+    // as-shipped host catches the comparator on `setOrder` ONLY: the
+    // `setEntries` half of this seam's drive is what is RED today (the same
+    // escape `ADV-LH-1` drives — `§2.1`'s totality clause makes the catch the
+    // contract on BOTH paths, and the observable is asserted here, not just the
+    // absence of a throw, so a no-throw-but-nothing-placed host cannot pass).
+    const { create } = await surface('ADV-LH-3 · orderOf')
+    const mount = mountEl()
+    const a = nodeEl('div', 'a')
+    const b = nodeEl('div', 'b')
+    let calls = 0
+    const h = create({
+      mount,
+      orderOf: () => {
+        calls += 1
+        throw new Error('orderOf')
+      },
+    })
+    const drives = [
+      tryDrive('setEntries([a,b])', () => h.setEntries([{ key: 'a', node: a }, { key: 'b', node: b }])),
+      tryDrive("setOrder(['b','a'])", () => h.setOrder(['b', 'a'])),
+      tryDrive('render()', () => h.render()),
+      tryDrive("close('b')", () => h.close('b')),
+      tryDrive("remove('a')", () => h.remove('a')),
+    ]
+    expect(firstEscape(drives), `ADV-LH-3 orderOf: the throws that escaped:\n${escapeReport(drives)}`).toBe(null)
+    expect(calls, 'ADV-LH-3 orderOf: the comparator is CALLED — the safe default is a CATCH, not an avoidance').toBeGreaterThan(0)
+    const s1 = asResult(drives[0].value, 'ADV-LH-3 orderOf setEntries')
+    expect(s1.refused, 'ADV-LH-3 orderOf: no refusal — the throw is not a contract refusal class').toEqual([])
+    expect(s1.ok, 'ADV-LH-3 orderOf: ok === true').toBe(true)
+    expect(s1.order, 'ADV-LH-3 orderOf: order is the current key set in SUPPLIED order, once each').toEqual(['a', 'b'])
+    expect(s1.placed, 'ADV-LH-3 orderOf: ownership/placement unaffected — both entries placed').toHaveLength(2)
+    expect(s1.placed[0], 'ADV-LH-3 orderOf: placed[0] is the supplied node by reference').toBe(a)
+    expect(s1.placed[1], 'ADV-LH-3 orderOf: placed[1] is the supplied node by reference').toBe(b)
+    expect(h.keys(), 'ADV-LH-3 orderOf: the keys ARE owned after the setEntries path (the as-shipped escape loses them)').toEqual(['a', 'b'])
+    expect(containsRef(childrenOf(mount), a), 'ADV-LH-3 orderOf: nothing is lost to the throw — a is really placed').toBe(true)
+    const s2 = asResult(drives[1].value, "ADV-LH-3 orderOf setOrder(['b','a'])")
+    expect(s2.refused, 'ADV-LH-3 orderOf: setOrder refuses nothing').toEqual([])
+    expect(s2.order, 'ADV-LH-3 orderOf: the requested projection is applied').toEqual(['b', 'a'])
+    expect(h.keys(), 'ADV-LH-3 orderOf: the host state stays valid to the end').toEqual([])
+  })
+
+  it('ADV-LH-3 · seam 2 — a THROWING itemFactory is caught with the NAMED safe default: ONE factory-returned-null refusal, the key not owned', async () => {
+    // The `§2.1` injected-function table's SECOND row: `itemFactory` ⇒ the
+    // entry is refused **`factory-returned-null`** — the SAME class as a factory
+    // that RETURNS `null`/`undefined` (`F-4`): no throw; `ok === false`; ONE
+    // refusal; the key is NOT owned and ABSENT from `order` (`N-4`).
+    // RED TODAY: the factory's throw escapes `setEntries`.
+    const { create } = await surface('ADV-LH-3 · itemFactory')
+    const mount = mountEl()
+    const good = nodeEl('div', 'good')
+    let calls = 0
+    const h = create({
+      mount,
+      itemFactory: () => {
+        calls += 1
+        throw new Error('itemFactory')
+      },
+    })
+    const drives = [tryDrive('setEntries([{key:bad}, {key:good, node}])', () => h.setEntries([{ key: 'bad' }, { key: 'good', node: good }]))]
+    expect(firstEscape(drives), `ADV-LH-3 itemFactory: the throws that escaped:\n${escapeReport(drives)}`).toBe(null)
+    expect(calls, 'ADV-LH-3 itemFactory: the factory is CALLED once for the node-less entry').toBe(1)
+    const r = asResult(drives[0].value, 'ADV-LH-3 itemFactory setEntries')
+    expect(r.ok, 'ADV-LH-3 itemFactory: ok === false — the entry was refused').toBe(false)
+    expect(r.refused, 'ADV-LH-3 itemFactory: exactly ONE refusal (the node-less entry), not one per entry').toHaveLength(1)
+    expect(r.refused[0].code, 'ADV-LH-3 itemFactory: the NAMED safe default class — factory-returned-null (the same class F-4 pins)').toBe('factory-returned-null')
+    expect(keyIsVerbatim('bad', r.refused[0].key), 'ADV-LH-3 itemFactory: the refused key is the node-less one, verbatim').toBe(true)
+    expect(r.order, 'ADV-LH-3 itemFactory: the key is NOT owned and is ABSENT from order (N-4)').toEqual(['good'])
+    expect(containsRef(r.placed, good), 'ADV-LH-3 itemFactory: the other entry is placed normally (the §2.1 totality note)').toBe(true)
+    expect(h.keys(), 'ADV-LH-3 itemFactory: keys() names only the valid key').toEqual(['good'])
+  })
+
+  it('ADV-LH-3 · seam 3 — a THROWING onActivate is SWALLOWED: the key stays owned and the callback is attempted exactly once per activate()', async () => {
+    // The `§2.1` injected-function table's THIRD row: `onActivate` ⇒ the event
+    // is **swallowed**: no throw; `ok === true`; the key stays owned; the
+    // callback is attempted **exactly once** for that `activate(key)` (`M-9`).
+    // RED TODAY: the throw escapes `activate`.
+    const { create } = await surface('ADV-LH-3 · onActivate')
+    const mount = mountEl()
+    const a = nodeEl('div', 'a')
+    let calls = 0
+    const h = create({
+      mount,
+      onActivate: () => {
+        calls += 1
+        throw new Error('onActivate')
+      },
+    })
+    const drives = [tryDrive('setEntries([{key:a}])', () => h.setEntries([{ key: 'a', node: a }]))]
+    expect(firstEscape(drives), `ADV-LH-3 onActivate: the throws that escaped:\n${escapeReport(drives)}`).toBe(null)
+    const act1 = tryDrive("activate('a') #1", () => h.activate('a'))
+    expect(firstEscape([act1]), 'ADV-LH-3 onActivate: the callback throw must not escape activate()').toBe(null)
+    expect(calls, 'ADV-LH-3 onActivate: the callback is attempted EXACTLY once for that activate(key) (M-9)').toBe(1)
+    const s1 = asResult(act1.value, "ADV-LH-3 onActivate activate('a') #1")
+    expect(s1.ok, 'ADV-LH-3 onActivate: ok === true — the swallowed event is not a refusal').toBe(true)
+    expect(s1.refused, 'ADV-LH-3 onActivate: refused === []').toEqual([])
+    expect(h.keys(), 'ADV-LH-3 onActivate: the key STAYS OWNED').toEqual(['a'])
+    const act2 = tryDrive("activate('a') #2 (activation is not one-shot)", () => h.activate('a'))
+    expect(firstEscape([act2]), 'ADV-LH-3 onActivate: the second activate is swallowed too').toBe(null)
+    expect(calls, 'ADV-LH-3 onActivate: exactly ONE call per activate(key) — the count is 2 after two calls').toBe(2)
+  })
+
+  it("ADV-LH-3 · seam 4 — a THROWING onClose is SWALLOWED and the drop STANDS (ok === true, the key gone, the node removed, `removed` holds it)", async () => {
+    // The `§2.1` injected-function table's FOURTH row: `onClose` ⇒ swallowed AND
+    // **the ownership drop STANDS** — the drop happens BEFORE the callback would
+    // fire, so the host can catch the throw and still return its result: no
+    // throw; `ok === true`; the key is GONE from `keys()`; its node is removed
+    // (`M-10`) and appears in `removed`; never "ownership dropped with no result
+    // returned" (the `ADV-LH-3` finding's own wording).
+    // RED TODAY: the throw escapes `close`, WITH the ownership already dropped.
+    const { create } = await surface('ADV-LH-3 · onClose')
+    const mount = mountEl()
+    const a = nodeEl('div', 'a')
+    let calls = 0
+    const h = create({
+      mount,
+      onClose: () => {
+        calls += 1
+        throw new Error('onClose')
+      },
+    })
+    const drives = [tryDrive('setEntries([{key:a}])', () => h.setEntries([{ key: 'a', node: a }]))]
+    expect(firstEscape(drives), `ADV-LH-3 onClose: the throws that escaped before the close:\n${escapeReport(drives)}`).toBe(null)
+    const cl = tryDrive("close('a')", () => h.close('a'))
+    expect(firstEscape([cl]), 'ADV-LH-3 onClose: the callback throw must NOT escape close() — the drop stands and the RESULT is still returned').toBe(null)
+    expect(calls, 'ADV-LH-3 onClose: the callback is attempted exactly once for that close(key) (M-10)').toBe(1)
+    const s = asResult(cl.value, "ADV-LH-3 onClose close('a')")
+    expect(s.ok, 'ADV-LH-3 onClose: ok === true — a swallowed callback is not a refusal').toBe(true)
+    expect(s.refused, 'ADV-LH-3 onClose: refused === []').toEqual([])
+    expect(h.keys(), 'ADV-LH-3 onClose: the key is GONE from keys() — the drop STANDS').toEqual([])
+    expect(containsRef(s.removed, a), "ADV-LH-3 onClose: the node is in `removed` — it was removed for that key").toBe(true)
+    expect(containsRef(childrenOf(mount), a), 'ADV-LH-3 onClose: the node is really out of the mount (M-10)').toBe(false)
   })
 })
 
@@ -2235,6 +2786,17 @@ describe('S — §2.1 the surface + §2.2/§2.4/§5.1 the static rows over the m
 // ===========================================================================
 describe('§5.5.1 — the typed property register (7 rows, executed deterministically, no PBT harness)', () => {
   it('P-LH-IM-1 [S-LH-PERM-1] — for EVERY permutation of the current key set: order === p, no refusals, identity preserved, nothing removed', async () => {
+    // ⟶ RE-PINNED 2026-09-27 (the adversarial + PBT-audit pass; finding
+    // `ADV-LH-6`, LOW — `ACCEPTED-AS-PINNED`, a DOC act: the row's STATEMENT and
+    // its `33`-attempt discipline are UNCHANGED). `§5.5.1 P-LH-IM-1` now carries
+    // the SAME HONEST BOUNDED MARKING `P-LH-TP-1` carries: the property TEXT
+    // ("for EVERY permutation of the current key set") is **LARGER THAN ITS
+    // ENUMERATION** — what is executed is the exhaustive `S₃` (`6`) and `S₄`
+    // (`24`) tables below plus the `3` partial-`setOrder` drives of `§3.2 F-8`,
+    // i.e. `n = 3` and `n = 4` ONLY. So this row's executed cell reads
+    // **`YES (bounded)`** — an exhaustive-over-what-is-enumerated claim, never a
+    // proof of the unbounded universal. No clause of the statement is weakened:
+    // every permutation IN THE TABLES is asserted exactly.
     const s = await resolveSurface()
     const create = s.create
     const reason = s.reason ?? 'the module surface is unavailable'
@@ -2527,6 +3089,66 @@ describe('§5.5.1 — the typed property register (7 rows, executed deterministi
         for (const f of foreign) mount.appendChild(f) // the caller seeds them BEFORE the host exists
         const supplied: Record<string, ShimElement> = { a: nodeEl('div', 'a'), b: nodeEl('div', 'b'), c: nodeEl('div', 'c') }
         const removedSeen: unknown[] = []
+        // ⟶ ADV-LH-5 (2026-09-27, the adversarial + PBT-audit pass; HIGH): the
+        // row's STATEMENT stays exactly as written and is NOT weakened — what is
+        // strengthened is the strategy's POWER, so the row can FAIL for a host
+        // that RE-APPENDS a node it already holds on every `sync()`. Every one of
+        // the four assertions that stood here (the foreign siblings' RELATIVE
+        // order among themselves, `removed === false`, `parent === mount`, and
+        // non-membership in `removed`) HOLDS for that mutation — a re-appended
+        // node is still the same object, still ordered among its siblings and
+        // still parented — which is why this row could not fail for it.
+        //
+        // THE STRENGTHENED FORM (the TestWriter's choice between the spec's two
+        // named options — "the mount's FULL CHILD REFERENCE SEQUENCE per step,
+        // or an append/re-place COUNTER"): the mount's full child reference
+        // sequence is captured BEFORE and AFTER every step, and the FOREIGN
+        // siblings' exact indices are asserted to be INVARIANT across that
+        // step's write — so the row reads the mount's whole child reference
+        // sequence per step, not just the foreign subsequence. A re-append MOVES
+        // an already-present child to the END (the shim's `appendChild` splices
+        // it out first, `src/shared/dom-shim.ts:22-28`), so a foreign sibling
+        // driven through it lands at the END of `mount.children` and its index
+        // CHANGES — reported here as `foreign sibling … MOVED to index …
+        // (RE-APPENDED)` whether the host drove the re-append through the mount
+        // or through the child's own parent. The alternative form the spec names
+        // (an append/re-place COUNTER) is subsumed by this one: the index
+        // comparison catches the re-append on BOTH paths and needs no instrument
+        // the contract does not already expose. The OWNED nodes are deliberately
+        // NOT index-pinned, because two of the five sequences legitimately
+        // REORDER them (`setOrder`) and two legitimately REMOVE them (`close`,
+        // `setEntries(null)`) — pinning those too would make the row assert
+        // something the contract does not state, which is precisely the failure
+        // mode `ADV-LH-5` is about.
+        const foreignIndexOf = (kids: readonly unknown[], f: unknown): number => kids.findIndex((child) => sameRef(child, f))
+        const transition = (stepId: string, pre: readonly unknown[], post: readonly unknown[]): string | null => {
+          // (a) every foreign sibling occupies the SAME index after the step as
+          //     before it — it was neither removed, nor re-parented, nor
+          //     re-appended.
+          for (const f of foreign) {
+            const before = foreignIndexOf(pre, f)
+            const after = foreignIndexOf(post, f)
+            if (after === -1) {
+              return `${stepId}: foreign sibling ${before} is GONE from mount.children after the step (§2.3 item 3)`
+            }
+            if (after !== before) {
+              return (
+                `${stepId}: foreign sibling ${before} MOVED to index ${after} — the host RE-APPENDED a node it already held ` +
+                `(the full child reference sequence per step: ${pre.map((c) => (c as { id?: string }).id ?? '?').join(',')} → ` +
+                `${post.map((c) => (c as { id?: string }).id ?? '?').join(',')}) (ADV-LH-5)`
+              )
+            }
+          }
+          // (b) a FOREIGN sibling may never be dropped by a step (§2.3 item 3);
+          //     the two steps that DO remove children remove only the host's own
+          //     nodes, which the `check` below accounts for through `removedSeen`.
+          for (const child of pre) {
+            if (foreign.some((f) => sameRef(f, child)) && !containsRef(post, child)) {
+              return `${stepId}: a FOREIGN sibling was REMOVED from the mount during the step (§2.3 item 3)`
+            }
+          }
+          return null
+        }
         const check = (stepId: string): string | null => {
           const kids = childrenOf(mount)
           const foreignNow = kids.filter((child) => foreign.some((f) => sameRef(f, child)))
@@ -2547,11 +3169,19 @@ describe('§5.5.1 — the typed property register (7 rows, executed deterministi
         }
         const h = create({ mount })
         const ctx: Ctx = { mount, foreign, supplied, h, removedSeen, check }
+        let stepsRun = 0
         for (const step of seq.steps) {
+          const pre = snapshotChildren(mount)
           step.run(ctx)
+          stepsRun += 1
+          const moved = transition(step.id, pre, childrenOf(mount))
+          if (moved !== null) return moved
           const verdict = check(step.id)
           if (verdict !== null) return verdict
         }
+        // The step count is data: `§5.5.1 P-LH-IM-4` fixes the five sequences'
+        // step lists, and an un-run step would make the attempt vacuous.
+        if (stepsRun !== seq.steps.length) return `${seq.id}: ${stepsRun} of ${seq.steps.length} steps ran`
         return null
       })
     }
@@ -2926,12 +3556,55 @@ describe('§5.5.1 — the typed property register (7 rows, executed deterministi
     // `64` pinned-seed attempts: each draws (method, input) from the 22-shape pool.
     // `P-LH-TP-1`'s own total is `72` = these `64` drawn attempts `+` the fixed
     // after-`dispose()` sweep of all `8` methods (`§5.5.1`, corrected arithmetic).
+    //
+    // ⟶ RE-PINNED 2026-09-27 (the adversarial + PBT-audit pass; finding
+    // `ADV-LH-7`, LOW — `PARKED-with-revisit-condition`, a DOC reconciliation:
+    // the STATEMENT and the `22`/`64`/`72` numbers are UNCHANGED). TWO cells of
+    // `§5.5.1 P-LH-TP-1` are reconciled to what is EXECUTED:
+    //   (i) THE POOL LIST. The cell's own list named `20` shapes while the
+    //       EXECUTED pool (`TP_POOL` above, asserted `22` by `PRE-3`) holds
+    //       **`22`**, and the `22` executed ids are exactly: `null` ·
+    //       `undefined` · `42` · `NaN` · `''` · `'x'` · `[]` · `[{}]` ·
+    //       `[{key:42}]` · a non-string key (`{key:null}`) · an entry with no
+    //       node and no factory · `itemFactory: () => null` · a detached node ·
+    //       a `ShimElement` mount already holding host-placed children ·
+    //       `mount: null` · `mount: {}` · `mount: 42` · `mount: 'div'` ·
+    //       a frozen array · a caller array also held by the test · a
+    //       duplicate-key pair · a key of `''`. **REPORTED, NOT RECONCILED
+    //       SILENTLY:** `§5.5.1`'s `ADV-LH-7` block names the two members it
+    //       says the list "OMITS" as **`true`** and **"an object argument that
+    //       is a CALLER NODE used as an entry"** — and **neither of those two
+    //       shapes is in the executed pool** (checked against `TP_POOL`
+    //       member-by-member: there is no `true` entry and no caller-node-as-
+    //       entry entry; the nearest executed primitives are `42`/`NaN`).
+    //       Reconciling the WORDING by ADDING them would change the pool size
+    //       (`22` → `24`), the `64` draws' indices and the row's attempt
+    //       discipline — which the spec's own `ADV-LH-7` ruling forbids
+    //       ("the pool's `22`-shape count, the `64` draws and the `72`-attempt
+    //       row total are unchanged"). So the drift is REPORTED to the
+    //       supervisor as a spec/test contradiction instead of being papered
+    //       over here, and the executed pool stays what it is.
+    //       The pool's **STATED BOUNDARY** (this half of the ruling reconciles
+    //       cleanly): a **`Symbol`-keyed shape** is NOT in the pool,
+    //       deliberately — a `Symbol` is not a `ListKey`, so the pool is silent
+    //       about it BY DESIGN rather than by omission (revisit condition: if
+    //       one is admitted).
+    //   (ii) THE GENERATOR'S ACTUAL STEP FORM. `S-LH-SEED-1` is deterministic and
+    //       pinned to `20260927`; it consumes **TWO LCG steps per attempt**, and
+    //       the first of them always draws `next(1)` — which is `0` **by
+    //       construction** (`floor(state · 1 / 2³²)` with `state < 2³²`) — while
+    //       the pool index is taken from the **RAW state** (`state mod
+    //       pool.length`), not from a `next(k)` draw. So the two calls below are
+    //       exactly the executed form: one step whose `next(1)` draw is discarded
+    //       (it exists so the index is read from the advanced state), then the
+    //       pool index from the raw state, then a second step for the method.
     for (let attempt = 1; attempt <= 64; attempt += 1) {
       rec.run(`attempt ${attempt} (seed ${SEED})`, () => {
         if (create === null) return reason
-        lcg.next(1) // one LCG step, then the pool index reads `state mod pool.length` (§5.5.1 S-LH-SEED-1)
-        const poolIdx = lcg.state() % TP_POOL.length
-        const method = HOST_METHODS[lcg.next(HOST_METHODS.length)]
+        const zeroDraw = lcg.next(1) // LCG step 1 — `next(1) === 0` by construction (§5.5.1, ADV-LH-7)
+        if (zeroDraw !== 0) return `next(1) drew ${zeroDraw} — the pinned generator draws 0 by construction (two LCG steps per attempt, ADV-LH-7)`
+        const poolIdx = lcg.state() % TP_POOL.length // the pool index comes from the RAW state
+        const method = HOST_METHODS[lcg.next(HOST_METHODS.length)] // LCG step 2 — the method draw
         const shape = TP_POOL[poolIdx]
         return tpAttempt(create, shape, method, `attempt ${attempt} (pool #${poolIdx} '${shape.id}' · method '${method}')`)
       })
