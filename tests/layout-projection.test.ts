@@ -3121,7 +3121,7 @@ describe('R — §3.4/§3.5 the static + existence rows', () => {
     }
   })
 
-  it('R-20 §3.4 — the diff-scope row: this unit touches only the module + this test file (no src/**, no scripts/**, no package.json)', () => {
+  it('R-20 §3.4 — the diff-scope row: the unit’s change set stays inside the RULED allow-list (module + this test file + this spec + the unit’s own gate artifacts; no src/**, no scripts/**, no package.json)', () => {
     // -----------------------------------------------------------------------
     // THE SCOPE ASSERTION, RE-EXPRESSED AGAINST THE UNIT'S COMMITTED CHANGE SET
     // (`ADV-PJ-12`, `OWED — TEST-SIDE`). The half that stood here was
@@ -3196,12 +3196,20 @@ describe('R — §3.4/§3.5 the static + existence rows', () => {
       committed.length,
       `R-20/ADV-PJ-12: the unit's committed range (${range}) is NON-EMPTY — a vacuous census cannot pass this row`,
     ).toBeGreaterThan(0)
-    // `§3.4 R-20`'s own text allows the spec: "Only `src/shared/layout-projection.ts`
-    // (NEW), `tests/layout-projection.test.ts` (NEW) and THIS SPEC (plus the
-    // trackers, the SUPERVISOR's pass) are touched by this unit". The spec is the
-    // contract's own file, `docs/next-steps.md` carries the unit's own DONE row
-    // (§5.1 row 4's "the SUPERVISOR's pass") and `docs/specs/projection-greens.md`
-    // is this unit's own gate-5 greens artifact — every other path is out of scope.
+    // `§3.4 R-20`'s allow-list is now NAMED EXPLICITLY by the FINAL SPEC PASS
+    // (`O-12` ruled there): *the row's allow-list binds the UNIT'S PASS — including
+    // the unit's MANDATORY gate artifacts — and not only the three code/spec
+    // paths.* THE RULED LIST, one path each, is:
+    //   `src/shared/layout-projection.ts` · `tests/layout-projection.test.ts` ·
+    //   `docs/specs/projection.md` · `docs/specs/projection-greens.md` (this unit's
+    //   gate-5 blind-greens artifact, and any `docs/specs/*-greens.md` of this
+    //   unit) · the unit's tracker row `docs/next-steps.md` (the "SUPERVISOR's
+    //   pass"), plus the unit's own gate-7 review record under `archive/reviews/`
+    //   where one exists.
+    // EVERY OTHER PATH in the unit's committed range or working tree FAILS the row —
+    // the falsifiable half is UNWEAKENED, and the two pattern halves below are
+    // deliberately narrow (this unit's OWN greens artifact and this unit's OWN
+    // review record: a SIBLING unit's artifact is out of scope and still fails).
     const ALLOWED: readonly string[] = [
       'src/shared/layout-projection.ts',
       'tests/layout-projection.test.ts',
@@ -3209,13 +3217,25 @@ describe('R — §3.4/§3.5 the static + existence rows', () => {
       'docs/specs/projection-greens.md',
       'docs/next-steps.md',
     ]
+    /** This unit's OWN `*-greens.md` artifacts (`docs/specs/projection-greens.md`
+     *  and any sibling spelling of it) — the gate-5 artifact RCA-4 makes
+     *  mandatory, committed at the gate boundary by RCA-8(a). */
+    const UNIT_GREENS = /^docs\/specs\/projection[^/]*-greens\.md$/
+    /** This unit's OWN gate-7 review record under `archive/reviews/` (the ruled
+     *  list's last entry: `archive/reviews/2026-09-27-U-PROJ-doc-review.md`). */
+    const UNIT_REVIEW_RECORD = /^archive\/reviews\/[^/]*U-PROJ[^/]*\.md$/
+    const inScope = (path: string): boolean =>
+      ALLOWED.includes(path) || UNIT_GREENS.test(path) || UNIT_REVIEW_RECORD.test(path)
+    const SCOPE_TEXT = `${ALLOWED.join(
+      ' + ',
+    )} + this unit's own docs/specs/*-greens.md + this unit's own gate-7 review record under archive/reviews/`
     // THE SCOPE ASSERTION OVER THE COMMITTED SET — the falsifiable half.
     for (const path of committed) {
       expect(
-        ALLOWED.includes(path),
-        `R-20/§5.1 (ADV-PJ-12): '${path}' was COMMITTED inside this unit's range ${range} and is OUTSIDE this unit's artifact scope (only ${ALLOWED.join(
-          ' + ',
-        )} may be touched) — the committed change set was: ${JSON.stringify(committed)}`,
+        inScope(path),
+        `R-20/§5.1 (ADV-PJ-12; the O-12 ruling): '${path}' was COMMITTED inside this unit's range ${range} and is OUTSIDE this unit's artifact scope (the RULED allow-list is: ${SCOPE_TEXT}) — the committed change set was: ${JSON.stringify(
+          committed,
+        )}`,
       ).toBe(true)
     }
     const CANONICAL: readonly string[] = [
@@ -3231,12 +3251,11 @@ describe('R — §3.4/§3.5 the static + existence rows', () => {
     ).toBeGreaterThan(0)
     // The tree-level census (kept, and still meaningful: it names an UNCOMMITTED
     // out-of-scope path when one exists — the half the committed range cannot see).
+    // It reads the SAME ruled allow-list, patterns included.
     for (const path of paths) {
       expect(
-        ALLOWED.includes(path),
-        `R-20/§5.1: '${path}' is OUTSIDE this unit's diff scope in the WORKING TREE (only ${ALLOWED.join(
-          ' + ',
-        )} may be touched) — git status said: ${JSON.stringify(porcelain)}`,
+        inScope(path),
+        `R-20/§5.1: '${path}' is OUTSIDE this unit's diff scope in the WORKING TREE (the RULED allow-list is: ${SCOPE_TEXT}) — git status said: ${JSON.stringify(porcelain)}`,
       ).toBe(true)
     }
     // §5.1's named OUT-OF-SCOPE paths are untouched by this unit's change set.
@@ -4547,6 +4566,28 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
 // `§2.3` item 4's list assembly), `ADV-PJ-8` (`§2.3` item 4 / `F-6`'s
 // re-labelling of CARRIED entries) and `ADV-PJ-10` (`§2.4` item 8 (3): the
 // observable is the REASON and the LIST ORDER, never an unstated call order).
+//
+// ⟶ APPENDED 2026-09-27 (the `U-PROJ` FINAL-CLOSURE pass, against the rulings the
+// EIGHTH STATUS NOTE / `§3b`-1 / `§3.4 R-20` now pin). THREE edits, all TEST-side,
+// none re-litigating a ruling:
+//   (1) `ADV-PJ-1`'s row is NARROWED to the RULED reason (`§2.4` item 3 clause
+//       (v) (A): a throwing own-property PRESENCE test records `'accessor-threw'`
+//       with the key's own emitted `name`) and asserts the spec's OWN two-key
+//       case's EXACT ordered `skipped` array — the landed row's "either
+//       `missing-value` or `accessor-threw`" acceptance was the WEAKER reading
+//       `§3b`-1 records as superseded;
+//   (2) `ADV-PJ-2`'s row gains the DISCRIMINATING (ii) drive (`§3b`-1: the two
+//       fields are read INDEPENDENTLY — a readable `applied` beside a throwing
+//       `skipped` still performs the writes), which the landed row could not
+//       discriminate from "nothing is ever decided";
+//   (3) TWO clause rows are APPENDED for the two clauses the FINAL SPEC PASS
+//       pinned but no row drove — clause (v) (D) (a `specOf` the module cannot
+//       ENUMERATE contributes NO entries: `{applied:{},skipped:[]}`, nothing
+//       decided) and clause (v) (E) (`values` is NEVER ENUMERATED, so an
+//       enumerating-throwing `values` changes nothing and the answered keys are
+//       APPLIED).
+// No row id, no register statement/id/strategy/attempt term and no `231` total is
+// touched by any of the three; the two appended rows carry NO new id.
 // ===========================================================================
 
 /** A REVOKED `Proxy` used as `values`: `typeof` invokes no trap (`isObjectLike`
@@ -4554,6 +4595,15 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
  *  question about it throws. */
 function revokedValuesProxy(): unknown {
   const { proxy, revoke } = Proxy.revocable({ k: 1, k2: 2 }, {})
+  revoke()
+  return proxy
+}
+
+/** `§2.4` item 3 clause (v) (A)'s OWN EXACT CASE — `Proxy.revocable({k1:1,k2:2},
+ *  {})` + `revoke()` — so the `ADV-PJ-1` row asserts the skip list the SPEC
+ *  states, letter for letter, rather than a look-alike fixture. */
+function revokedValuesProxyK1K2(): unknown {
+  const { proxy, revoke } = Proxy.revocable({ k1: 1, k2: 2 }, {})
   revoke()
   return proxy
 }
@@ -4606,6 +4656,18 @@ function throwingOwnKeysProxy(): unknown {
   )
 }
 
+/** The SAME `ownKeys`-throwing trait over a CALLER-SUPPLIED target — the
+ *  SPEC-SET side of clause (v) (C)/(D) (a set the module must ENUMERATE and
+ *  cannot ⇒ no entries) and, used as a `values`, the clause-(v) (E) control
+ *  (`values` is never enumerated). */
+function throwingOwnKeysOver(target: object): unknown {
+  return new Proxy(target, {
+    ownKeys() {
+      throw new Error('hostile ownKeys trap')
+    },
+  })
+}
+
 /** `true` iff the own-property question about `fixture` is answerable. The
  *  `ADV-PJ-1` fixtures must answer `false` here while `isObjectLike` still lets
  *  them through (`typeof` invokes no trap). */
@@ -4626,6 +4688,30 @@ function ownKeysQuestionThrows(fixture: unknown): boolean {
     return false
   } catch {
     return true
+  }
+}
+
+/** `true` iff an OWN FIELD READ of `field` on `fixture` throws. The `ADV-PJ-2`
+ *  fixtures must answer `true` here while the object is still object-like, so the
+ *  read really reaches the module's per-field boundary. */
+function fieldReadThrows(fixture: unknown, field: string): boolean {
+  try {
+    void (fixture as Record<string, unknown>)[field]
+    return false
+  } catch {
+    return true
+  }
+}
+
+/** The LENGTH of an own field that must be READABLE — the non-vacuity instrument
+ *  for `ADV-PJ-2` (i) SHARPENED's carried list: a field whose read throws, or a
+ *  non-array, is reported as `-1` rather than passed off as a list. */
+function carriedFieldReads(fixture: unknown, field: string): number {
+  try {
+    const list = (fixture as Record<string, unknown>)[field]
+    return Array.isArray(list) ? list.length : -1
+  } catch {
+    return -1
   }
 }
 
@@ -4693,7 +4779,7 @@ describe('ADV — the adversarial pass’s regression rows (§3b-1, the OWED hos
     ).toBe(true)
     expect(
       ownPropertyTestThrows(throwingOwnKeysProxy(), 'k'),
-      'PRE-4: the MIRROR FIXTURE — a Proxy whose `ownKeys` trap alone throws still ANSWERS the own-property test (and NOT with the key present, since the trap throws)',
+      'PRE-4: the MIRROR FIXTURE — a Proxy whose `ownKeys` trap alone throws still ANSWERS the own-property test (the trap is `ownKeys` ONLY, so `[[GetOwnProperty]]` is the ordinary target lookup and the key IS present — clause (v) (E) drives exactly this; it is the question the module MUST NOT ask)',
     ).toBe(false)
     expect(
       [ownKeysQuestionThrows(throwingOwnKeysProxy()), ownKeysQuestionThrows(revokedValuesProxy())],
@@ -4706,35 +4792,51 @@ describe('ADV — the adversarial pass’s regression rows (§3b-1, the OWED hos
     ).toEqual([false, true])
   })
 
-  it('ADV-PJ-1 §3b-1 — a REVOKED / trap-throwing `values` never makes `project` throw: every spec key is still ACCOUNTED FOR', async () => {
-    // THE CLAUSE THE FIX MUST SATISFY (§3b-1 `ADV-PJ-1`, citing `I-7` and `§2.4`
-    // item 2): `project` DOES NOT THROW FOR ANY `values`, INCLUDING A `values`
-    // WHOSE OWN-PROPERTY TEST THROWS — the own-property test is INSIDE the same
-    // totality boundary as the read (`§2.4` item 3 clause (i)/(2), `§2.5` item 2),
-    // one decision per spec entry, and no key silently vanishes (`I-1`/`I-2`).
+  it('ADV-PJ-1 §3b-1 — a REVOKED / trap-throwing `values`: `project` never throws AND the RULED reason is `accessor-threw` (the spec’s own exact skip list)', async () => {
+    // THE CLAUSE THE FIX MUST SATISFY, AS `§3b`-1 `ADV-PJ-1` NOW RE-RULES IT
+    // (`§2.4` item 3 clause (v) (A), citing `I-7` and `§2.4` item 2): `project`
+    // DOES NOT THROW FOR ANY `values`, INCLUDING A `values` WHOSE OWN-PROPERTY TEST
+    // THROWS — the own-property question and the read sit INSIDE the same totality
+    // boundary (`§2.4` item 3 clause (i)/(2), `§2.5` item 2), one decision per spec
+    // entry, and no key silently vanishes (`I-1`/`I-2`).
     //
-    // WHAT THE MODULE DOES TODAY (recorded so the red is legible): the own-property
-    // test at `src/shared/layout-projection.ts:167` sits OUTSIDE the
-    // `try`/`catch` that guards the read (`:168-172`), so the throw ESCAPES.
+    // THE RULED REASON IS `'accessor-threw'`, NOT `missing-value` (clause (v) (A)):
+    // the module ASKED the caller's `values` a question ABOUT AN OWN PROPERTY and
+    // the caller's object ANSWERED WITH A THROW, so the decision is a NAMED
+    // caller-data read failure carrying the entry's OWN emitted `name` — *"we could
+    // not obtain this caller's value"* — and NOT *"this caller owns no such key"*.
+    //
+    // THIS ROW IS THEREFORE NARROWED TO THE RULED REASON. The landed row admitted
+    // EITHER `missing-value` OR `accessor-threw`; `§3b`-1 `ADV-PJ-1` records that
+    // "either" acceptance as a WEAKER reading than the contract's and its narrowing
+    // as a TEST-side repair. The narrowed row asserts the spec's OWN revoked-Proxy
+    // case, key by key and in order.
+    //
+    // THE FIX IS LANDED (`e16ee8e`): the own-property question and the read share
+    // ONE `try`/`catch` (the `readValue` totality boundary, cited by clause — the
+    // as-recorded `src/shared/layout-projection.ts:167` / `:168-172` anchors in
+    // `§3b`-1 are STALE historical line anchors, marked as such there).
     const { project } = await surface('ADV-PJ-1')
-    const specOf: Record<string, unknown> = {
-      k: { name: '--k', unit: 'px' },
-      k2: { name: '--k2', unit: 'px' },
-    }
-    // The REASON a hostile `values` yields: the remedy names `missing-value` ("the
-    // key could not be established as an own key") and the module's own shape for
-    // a refused read is `accessor-threw` (`F-4B`'s per-key catch, which §3b-1
-    // calls "the SHAPE the fix generalizes"). BOTH are documented members of the
-    // eight-member union, so the row admits either and FAILS a key with NO
-    // decision, an invented ninth reason, or a throw — never an Implementer's
-    // choice between two contract-permitted readings.
-    const HOSTILE_REASON: readonly ProjectionSkipReason[] = ['missing-value', 'accessor-threw']
-    for (const [hostile, fixture] of [
-      ['a REVOKED Proxy (every own-property question throws)', revokedValuesProxy()],
-      ['a Proxy whose `getOwnPropertyDescriptor` TRAP throws', throwingOwnPropertyProxy()],
-    ] as ReadonlyArray<readonly [string, unknown]>) {
+    // The TWO drives, each with its OWN spec map, so the expected list is derived
+    // from the drive's OWN entries: (1) clause (v) (A)'s EXACT case — a revoked
+    // `Proxy.revocable({k1:1,k2:2}, {})` under a two-entry spec; (2) the same
+    // defect class by a different route, the `getOwnPropertyDescriptor`-throwing
+    // trap.
+    const drives: ReadonlyArray<readonly [string, () => unknown, Record<string, unknown>]> = [
+      [
+        'the spec’s own case — `Proxy.revocable({k1:1,k2:2}, {})` + `revoke()`',
+        revokedValuesProxyK1K2,
+        { k1: { name: '--k1', unit: 'px' }, k2: { name: '--k2', unit: 'px' } },
+      ],
+      [
+        'the same class by another route — a `getOwnPropertyDescriptor` trap that THROWS',
+        throwingOwnPropertyProxy,
+        { k: { name: '--k', unit: 'px' }, k2: { name: '--k2', unit: 'px' } },
+      ],
+    ]
+    for (const [hostile, make, specOf] of drives) {
       const p = asProjection(
-        drive(() => project(fixture, specOf), `ADV-PJ-1 ${hostile} — project must not throw`),
+        drive(() => project(make(), specOf), `ADV-PJ-1 ${hostile} — project must not throw`),
         `ADV-PJ-1 ${hostile}`,
       )
       expect(
@@ -4742,22 +4844,44 @@ describe('ADV — the adversarial pass’s regression rows (§3b-1, the OWED hos
         `ADV-PJ-1 ${hostile}: nothing may be APPLIED from a values whose own-key question cannot be answered — an applied key would be data read through a hostile object`,
       ).toEqual([])
       everySkipReasonDeclared(p, `ADV-PJ-1 ${hostile}`)
-      // EVERY spec entry has exactly one decision: the specOf key is `k`, the
-      // emitted name is the spec's own `--k`, and the entry is decided IN ORDER.
+      // THE EXACT ORDERED LIST, in SPEC-ENTRY order, each entry carrying its OWN
+      // emitted `name` and the RULED reason. For the spec's own two-key case that
+      // is exactly [{name:'--k1',reason:'accessor-threw'},
+      // {name:'--k2',reason:'accessor-threw'}].
       expect(
-        p.skipped.map((entry) => entry.name),
-        `ADV-PJ-1 ${hostile}: EVERY spec entry is accounted for, in SPEC-ENTRY order — a key that vanishes FAILS this row`,
-      ).toEqual(['--k', '--k2'])
+        p.skipped,
+        `ADV-PJ-1 ${hostile}: skipped is EXACTLY one 'accessor-threw' entry per spec entry, in SPEC-ENTRY order, each carrying the entry's OWN emitted name (§2.4 item 3 clause (v)(A))`,
+      ).toEqual(Object.entries(specOf).map(([, entry]) => ({ name: (entry as VarSpec).name, reason: 'accessor-threw' })))
       expect(
         p.skipped.length,
         `ADV-PJ-1 ${hostile}: exactly ONE decision per spec entry (I-1) — no key may be dropped`,
       ).toBe(Object.keys(specOf).length)
       for (const entry of p.skipped) {
         expect(
-          HOSTILE_REASON.includes(entry.reason),
-          `ADV-PJ-1 ${hostile}: the reason '${String(entry.reason)}' for '${entry.name}' is a DOCUMENTED reason for a values whose own-key question threw (missing-value, or accessor-threw by F-4B's per-key catch) — an invented ninth reason, or a key with no decision, FAILS this row`,
-        ).toBe(true)
+          entry.reason,
+          `ADV-PJ-1 ${hostile}: the reason for '${entry.name}' is the RULED 'accessor-threw' (§2.4 item 3 clause (v)(A)) — 'missing-value' here is the WEAKER reading §3b-1 records as superseded, and an invented ninth reason FAILS the declared-union check above`,
+        ).toBe('accessor-threw')
       }
+    }
+    // THE CONTROL FOR THE OTHER RULED HALF (clause (v) (B)): a TRUE NON-RECORD
+    // `values` — including the callable case — is a DIFFERENT INPUT, not a
+    // different reason for the same input: it answers no own-property question at
+    // all, so the reason stays `missing-value`. (Their FULL drives are the `F-11`
+    // (b) row and the `FUNCTION-VALUES-1` row; this control keeps the two pinned
+    // facts side by side so neither can drift into the other.)
+    for (const [id, nonRecord] of [
+      ['null', null],
+      ['a FUNCTION (a callable is a non-record `values`, clause (iii))', function nonRecordValues(): void {}],
+    ] as ReadonlyArray<readonly [string, unknown]>) {
+      const q = asProjection(
+        drive(() => project(nonRecord, { k: { name: '--k', unit: 'px' } }), `ADV-PJ-1 control (B) ${id}`),
+        `ADV-PJ-1 control (B) ${id}`,
+      )
+      expect(
+        q.skipped,
+        `ADV-PJ-1 control (B) ${id}: a NON-RECORD values answers no own-property question at all, so the ruled reason is 'missing-value' (clause (v)(B)) — 'accessor-threw' here FAILS this control`,
+      ).toEqual([{ name: '--k', reason: 'missing-value' }])
+      expect(Object.keys(q.applied), `ADV-PJ-1 control (B) ${id}: applied is {}`).toEqual([])
     }
     // THE CONTROL: a HEALTHY Proxy behaves EXACTLY like the equivalent plain
     // object — so the rows above are about the THROW, never about Proxy-ness.
@@ -4781,23 +4905,41 @@ describe('ADV — the adversarial pass’s regression rows (§3b-1, the OWED hos
     ).toBe(JSON.stringify(asPlain(skipPairs(viaPlain))))
   })
 
-  it('ADV-PJ-2 §3b-1 — a projection whose `applied`/`skipped` FIELD read throws: `applyProjection` never throws, and an unreadable field is treated as ABSENT', async () => {
+  it('ADV-PJ-2 §3b-1 — a projection whose `applied`/`skipped` FIELD read throws: `applyProjection` never throws, and the two fields are read INDEPENDENTLY', async () => {
     // THE CLAUSE THE FIX MUST SATISFY (§3b-1 `ADV-PJ-2`, citing `§2.3` item 4's
     // malformed-projection asymmetry and `M-11`): `applyProjection` DOES NOT THROW
-    // FOR ANY `projection`; an unreadable `applied` contributes NO planned writes
-    // and an unreadable `skipped` contributes NO carried entries, so the call
-    // returns `ApplyResult{ applied: {}, skipped: [], ok: true }` and NOTHING
-    // throws. NO ninth reason is invented (`S-9`'s class).
+    // FOR ANY `projection`; a field that cannot be read is treated as ABSENT — no
+    // planned writes for an unreadable `applied`, no carried entries for an
+    // unreadable `skipped` — and NO ninth reason is invented (`S-9`'s class).
     //
-    // WHAT THE MODULE DOES TODAY: `src/shared/layout-projection.ts:354-355` reads
-    // `projection['applied']` / `projection['skipped']` with NO `try`/`catch`, so
-    // an own accessor that throws — or a revoked Proxy — lets the throw escape.
+    // THE RULED PER-FIELD BEHAVIOUR (in place 2026-09-27, the addendum's `PJ-R-08`
+    // / ambiguity `O-11`): *the two fields are read INDEPENDENTLY … each unreadable
+    // field degrades to ABSENT on ITS OWN HALF ONLY; the "nothing is decided"
+    // result applies to the case where `applied` cannot be read.* THE THREE
+    // SHAPES: **(i)** an unreadable `applied` ⇒ `{applied:{},skipped:[],ok:true}`,
+    // ZERO sink calls; **(ii)** an unreadable `skipped` while `applied` IS readable
+    // ⇒ the writes ARE performed (the readable half is honoured) and the unreadable
+    // `skipped` contributes NO carried entries; **(iii)** a revoked-Proxy
+    // projection ⇒ BOTH fields degrade ⇒ `{applied:{},skipped:[],ok:true}`, zero
+    // sink calls.
+    //
+    // THE LANDED ROW COULD NOT DISCRIMINATE (ii) FROM (i): its `skipped`-throwing
+    // shape carried an EMPTY `applied`, so an empty expected result held for either
+    // reading. THE DISCRIMINATING DRIVE IS APPENDED BELOW — a readable NON-EMPTY
+    // `applied` beside a throwing `skipped` — so a module that treats ANY unreadable
+    // field as "decide nothing" FAILS (ii), while a module that honours an
+    // unreadable `applied` FAILS (i)/(iii).
+    //
+    // WHAT THE MODULE DOES TODAY (the fix is LANDED at `e16ee8e`; the as-recorded
+    // `src/shared/layout-projection.ts:354-355` anchors in `§3b`-1 are STALE
+    // historical line anchors, marked as such there): the two guarded FIELD reads
+    // inside `applyProjection` (§2.3 item 4's asymmetry, one boundary per field).
     const { apply } = await surface('ADV-PJ-2')
     const sink = recordingSink()
     const EMPTY_RESULT = { applied: {}, skipped: [], ok: true }
     const hostile: Array<[string, () => unknown]> = [
       [
-        'the projection’s own `applied` FIELD is an accessor that THROWS',
+        'shape (i) — the projection’s own `applied` FIELD is an accessor that THROWS (the `skipped` beside it reads, and is empty)',
         () => {
           const projection: Record<string, unknown> = { skipped: [] }
           Object.defineProperty(projection, 'applied', {
@@ -4811,7 +4953,7 @@ describe('ADV — the adversarial pass’s regression rows (§3b-1, the OWED hos
         },
       ],
       [
-        'the projection’s own `skipped` FIELD is an accessor that THROWS',
+        'shape (ii) WITH AN EMPTY readable `applied` — NOT the discriminating drive: the projection’s own `skipped` FIELD is an accessor that THROWS',
         () => {
           const projection: Record<string, unknown> = { applied: {} }
           Object.defineProperty(projection, 'skipped', {
@@ -4825,7 +4967,7 @@ describe('ADV — the adversarial pass’s regression rows (§3b-1, the OWED hos
         },
       ],
       [
-        'a REVOKED-Proxy projection (every field read throws)',
+        'shape (iii) — a REVOKED-Proxy projection (every field read throws, so BOTH fields degrade)',
         () => {
           const { proxy, revoke } = Proxy.revocable({ applied: { '--a': '1' }, skipped: [] }, {})
           revoke()
@@ -4859,6 +5001,58 @@ describe('ADV — the adversarial pass’s regression rows (§3b-1, the OWED hos
       sink.calls,
       'ADV-PJ-2: ZERO sink calls — an unreadable `applied` plans no writes, so no write is ever attempted',
     ).toEqual([])
+    // -----------------------------------------------------------------------
+    // THE DISCRIMINATING (ii) DRIVE — an unreadable `skipped` while `applied` IS
+    // READABLE. This is the drive the landed row lacked (`§3b`-1 `ADV-PJ-2`: *"a
+    // discriminating drive pairs a readable non-empty `applied` with a throwing
+    // `skipped` and asserts `applied`'s keys land"*). The ruled (ii) result is
+    // EXACTLY `{applied: {'--a':'1','--b':'2'}, skipped: [], ok: true}` with TWO
+    // sink calls, in `applied`'s own key order; `ok` is computed from the EMITTED
+    // list (`I-10`), hence `true`. A module that treats ANY unreadable field as
+    // "decide nothing" FAILS here; the shapes (i)/(iii) above FAIL a module that
+    // honours an unreadable `applied`.
+    // -----------------------------------------------------------------------
+    const discSink = recordingSink()
+    const discApplied: Record<string, string> = Object.create(null) as Record<string, string>
+    for (const [name, text] of [['--a', '1'], ['--b', '2']] as ReadonlyArray<readonly [string, string]>) {
+      Object.defineProperty(discApplied, name, { value: text, enumerable: true, configurable: true, writable: true })
+    }
+    const discProjection: Record<string, unknown> = { applied: discApplied }
+    let skippedFieldReads = 0
+    Object.defineProperty(discProjection, 'skipped', {
+      get() {
+        skippedFieldReads += 1
+        throw new Error('the skipped field accessor threw')
+      },
+      enumerable: true,
+      configurable: true,
+    })
+    expect(
+      Object.keys(discApplied),
+      'ADV-PJ-2 (ii): the drive is NON-VACUOUS — the readable `applied` really carries two keys in this order, so an empty expected result could not discriminate (ii) from (i)',
+    ).toEqual(['--a', '--b'])
+    const disc = asApplyResult(
+      drive(
+        () => apply(discProjection, discSink.sink),
+        'ADV-PJ-2 (ii) — an unreadable `skipped` beside a readable `applied`',
+      ),
+      'ADV-PJ-2 (ii)',
+    )
+    expect(
+      { applied: asPlain(disc.applied), skipped: asPlain(skipPairs(disc)), ok: disc.ok },
+      'ADV-PJ-2 (ii): the readable `applied` half IS HONOURED — the writes ARE performed — and the unreadable `skipped` contributes NO carried entries, so the result is EXACTLY {applied:{"--a":"1","--b":"2"}, skipped:[], ok:true} (the two fields are read INDEPENDENTLY, each degrading to ABSENT on its own half only)',
+    ).toEqual({ applied: { '--a': '1', '--b': '2' }, skipped: [], ok: true })
+    expect(
+      controlCallsOf(discSink),
+      'ADV-PJ-2 (ii): TWO sink calls, in `applied`’s own key order — the write log is the readable half’s',
+    ).toEqual([
+      ['--a', '1'],
+      ['--b', '2'],
+    ])
+    expect(
+      skippedFieldReads,
+      'ADV-PJ-2 (ii): the unreadable `skipped` field WAS read — the drive exercises the per-field boundary itself, never a module that skips the read (its exact count is NOT asserted: the contract pins the VALUE read’s once-only rule, never a field-read count)',
+    ).toBeGreaterThan(0)
     // THE CONTROLS — the fix may not flatten correct behaviour:
     // (c1) an accessor-bearing `applied` that does NOT throw is unchanged correct
     //      behaviour (`F-10`'s coercion of the primitive it returns);
@@ -4907,6 +5101,201 @@ describe('ADV — the adversarial pass’s regression rows (§3b-1, the OWED hos
       { applied: asPlain(Object.keys(valueLevel.applied)), skipped: asPlain(skipPairs(valueLevel)) },
       'ADV-PJ-2 control (c2): the applier’s OWN per-key guard is unchanged — one `write-refused` entry for the key whose value could not be read, and no throw (a regression to a throw reddens HERE, separately from the FIELD-level rows above)',
     ).toEqual({ applied: [], skipped: [['--thrower', 'write-refused']] })
+  })
+
+  it('ADV-PJ-2 (i) SHARPENED §3b-1 — an unreadable `applied` beside a READABLE `skipped`: the carried entries are kept VERBATIM and `ok === false` (zero sink calls, no throw)', async () => {
+    // =====================================================================
+    // THE OWED CORNER, AND WHY THE BLANKET FORM IS NOT IT.
+    //
+    // `§3b`-1 `ADV-PJ-2`'s shape (i) as FILED read as if ANY unreadable field
+    // dropped BOTH halves ("with `skipped` readable or unreadable — it changes
+    // nothing"). THE GOVERNING SENTENCE is the two-field RULE ruled in place
+    // 2026-09-27, quoted verbatim in the cell: *the two fields are read
+    // INDEPENDENTLY: an unreadable `applied` plans no writes, an unreadable
+    // `skipped` carries no entries, and each unreadable field degrades to ABSENT
+    // on ITS OWN HALF ONLY* — with `§2.3` item 1 reading the projection as an
+    // INPUT RECORD. THE SHARPENED SHAPE (i) (`⟶ SHARPENED 2026-09-27`, whose
+    // discriminating drive this row is — the cell records it as OWED to the
+    // TestWriter):
+    //
+    //   * an unreadable `applied` plans NO WRITES (its own half only), while a
+    //     READABLE `skipped` still CONTRIBUTES ITS CARRIED ENTRIES UNCHANGED, so
+    //     a projection whose `applied` read throws while a readable `skipped`
+    //     carries ONE entry yields
+    //     `ApplyResult{ applied: {}, skipped: <that entry, verbatim>, ok: false }`
+    //     with ZERO sink calls and NO throw — `ok` computed from the EMITTED list
+    //     (`I-10`), which is WHY it is `false` and NOT `true`;
+    //   * the `{applied:{}, skipped:[], ok:true}` form of shape (i)'s sentence is
+    //     the case where the readable `skipped` list is EMPTY (and the case
+    //     reached through BOTH fields at once is (iii), the revoked Proxy — driven
+    //     by the `ADV-PJ-2` row above);
+    //   * the (ii) case — `applied` READABLE, `skipped` unreadable, the Writes
+    //     landing — IS ALREADY DRIVEN and is NOT duplicated here: the `ADV-PJ-2`
+    //     row's "DISCRIMINATING (ii) DRIVE" (`{applied:{'--a':'1','--b':'2'},
+    //     skipped:[], ok:true}` with two sink calls in `applied`'s key order, its
+    //     own non-vacuity control and its field-read instrumentation).
+    //
+    // THE THREE DRIVES BELOW are the two corners this row owes plus the
+    // non-vacuity control the task names: the carried entry really IS in the
+    // projection before the call, the unreadable `applied` really DOES throw when
+    // read (an INSTRUMENTED accessor recording the read attempt), and the SAME
+    // field-read question with the SAME carried entry — `applied` readable and
+    // non-empty — really does PLAN A WRITE. So the corner cannot pass on an empty
+    // list, and it cannot pass on a module that simply plans no writes ever.
+    //
+    // A module that returned `ok: true` here would be reporting A TOTAL SKIP THAT
+    // DID NOT HAPPEN: one carried entry IS emitted, so `I-10`
+    // (`ok === (skipped.length === 0)`), stated over the result's OWN emitted
+    // list, forces `ok === false`. The `ok === false` half is therefore asserted
+    // TWICE: as the whole-result record, and in its own assertion whose failure
+    // message carries the `I-10` clause.
+    //
+    // WHAT THE MODULE DOES TODAY (the `ADV-PJ-2` host fix is LANDED at `e16ee8e`;
+    // the as-recorded `src/shared/layout-projection.ts:354-355` anchors in `§3b`-1
+    // are STALE historical line anchors, marked as such there): the two guarded
+    // FIELD reads inside `applyProjection` (`§2.3` item 4's asymmetry, ONE boundary
+    // per field), and the projection's own readable skips are propagated after the
+    // write loop. THIS ROW DRIVES THAT.
+    // =====================================================================
+    const { apply } = await surface('ADV-PJ-2 (i) SHARPENED')
+    // THE INSTRUMENTS. `appliedReads` counts the ATTEMPTS to read the unreadable
+    // `applied` FIELD (the accessor's own invocation), so the read attempt is
+    // recorded rather than assumed. The carried entry is the spec's own shape: the
+    // single `{name:'--s1', reason:'negative'}` of the sharpened cell.
+    let appliedReads = 0
+    const CARRIED: ProjectionSkip = { name: '--s1', reason: 'negative' }
+    const CARRIED_LIST: readonly ProjectionSkip[] = [CARRIED]
+    /** The same projection SHAPE twice: `applied` is an INSTRUMENTED accessor
+     *  (each build's own read counter), `skipped` is the same readable carried
+     *  list. `applied` is the ONLY difference between the hostile shape and the
+     *  control, so the two results differ in exactly the field this row is about. */
+    const makeProjection = (
+      appliedValue: Record<string, string>,
+      onRead: () => void,
+    ): Record<string, unknown> => ({
+      get applied() {
+        onRead()
+        return appliedValue
+      },
+      skipped: CARRIED_LIST,
+    })
+    const hostileProjection = makeProjection(
+      {},
+      () => {
+        appliedReads += 1
+        throw new Error('the applied field accessor threw')
+      },
+    )
+    // ---- DRIVE 1: `applied` UNREADABLE + `skipped` READABLE AND NON-EMPTY ----
+    // The sharpened shape (i). EXACTLY `{applied:{}, skipped:[{name:'--s1',
+    // reason:'negative'}], ok:false}`, in the carried entry's OWN ORDER, with zero
+    // sink calls and no throw.
+    const nonEmptySink = recordingSink()
+    expect(
+      [carriedFieldReads(hostileProjection, 'skipped'), CARRIED_LIST.length, nonEmptySink.calls.length],
+      'ADV-PJ-2 (i) SHARPENED: NON-VACUITY — the `skipped` field of the fixture IS readable and really carries ONE entry before the call, and the sink starts with zero calls, so the expected `skipped` list is not the empty-list form passing by accident',
+    ).toEqual([1, 1, 0])
+    expect(
+      fieldReadThrows(hostileProjection, 'applied'),
+      'ADV-PJ-2 (i) SHARPENED: NON-VACUITY (the instrumented accessor) — reading the projection’s `applied` field really DOES THROW, so the drive cannot pass on a merely absent/empty `applied`',
+    ).toBe(true)
+    expect(appliedReads, 'ADV-PJ-2 (i) SHARPENED: the instrument is live — the non-vacuity probe above is itself one recorded read ATTEMPT of the throwing accessor').toBe(1)
+    const appliedReadsBeforeCall = appliedReads
+    const nonEmpty = asApplyResult(
+      drive(
+        () => apply(hostileProjection, nonEmptySink.sink),
+        'ADV-PJ-2 (i) SHARPENED — an unreadable `applied` beside a readable non-empty `skipped`: applyProjection must not throw',
+      ),
+      'ADV-PJ-2 (i) SHARPENED non-empty',
+    )
+    expect(
+      { applied: asPlain(nonEmpty.applied), skipped: asPlain(skipPairs(nonEmpty)), ok: nonEmpty.ok },
+      'ADV-PJ-2 (i) SHARPENED: the CORRECTED shape (i) — an unreadable `applied` plans NO WRITES (its own half only) while the READABLE `skipped` still CONTRIBUTES ITS CARRIED ENTRIES UNCHANGED, so the result is EXACTLY {applied:{}, skipped:[{name:"--s1",reason:"negative"}], ok:false} (the two fields are read INDEPENDENTLY; §3b-1 ADV-PJ-2’s SHARPENED note)',
+    ).toEqual({ applied: {}, skipped: [['--s1', 'negative']], ok: false })
+    expect(
+      nonEmpty.skipped.map((entry) => ({ name: entry.name, reason: entry.reason })),
+      'ADV-PJ-2 (i) SHARPENED: the carried entry is the projection’s OWN entry VERBATIM — its `name` and its `reason` are unchanged and carry no invented ninth reason (§4.4 S-9), and the list is in the carried ORDER',
+    ).toEqual([{ name: '--s1', reason: 'negative' }])
+    expect(
+      nonEmpty.ok,
+      'ADV-PJ-2 (i) SHARPENED: `ok === false`, and this is the SHARPENED half — `I-10` (`ok === (skipped.length === 0)`) is stated over the result’s OWN EMITTED list, and one carried entry IS emitted; a module returning `ok === true` here reports a TOTAL SKIP THAT DID NOT HAPPEN',
+    ).toBe(false)
+    expect(
+      nonEmptySink.calls,
+      'ADV-PJ-2 (i) SHARPENED: ZERO sink calls — an unreadable `applied` plans no writes, so nothing is ever attempted (the carried half is a SKIP list, never a write)',
+    ).toEqual([])
+    expect(
+      controlCallsOf(nonEmptySink).length,
+      'ADV-PJ-2 (i) SHARPENED: no `setProperty` was called even once — the carried half is a SKIP list, so nothing is ever ATTEMPTED (the ONE `style` read is the applier’s own upfront usability question about the sink, `I-6`’s callability probe, and is not a write attempt)',
+    ).toBe(0)
+    expect(
+      nonEmptySink.styleReads(),
+      'ADV-PJ-2 (i) SHARPENED: the sink’s usability was resolved (exactly the ONE `I-6` callability read the contract permits) — asserted here so this row cannot pass by never consulting the sink at all',
+    ).toBe(1)
+    expect(
+      appliedReads - appliedReadsBeforeCall,
+      'ADV-PJ-2 (i) SHARPENED: the unreadable `applied` field WAS read BY THE CALL — the drive exercises the per-field boundary itself, never a module that skips the read (its EXACT count is NOT asserted: the contract pins the VALUE read’s once-only rule, never a field-read count)',
+    ).toBeGreaterThan(0)
+    // ---- DRIVE 2: `applied` UNREADABLE + `skipped` READABLE BUT EMPTY ----
+    // The form shape (i)'s own sentence names, with its condition (= the readable
+    // list is EMPTY) made explicit: `{applied:{}, skipped:[], ok:true}`, zero calls.
+    const emptySink = recordingSink()
+    let emptyAppliedReads = 0
+    const emptySkippedProjection = makeProjection({}, () => {
+      emptyAppliedReads += 1
+      throw new Error('the applied field accessor threw')
+    })
+    ;(emptySkippedProjection as { skipped: unknown }).skipped = []
+    expect(
+      [(emptySkippedProjection as { skipped: unknown }).skipped, emptySink.calls.length],
+      'ADV-PJ-2 (i) SHARPENED: NON-VACUITY for the empty corner — this projection’s readable `skipped` really IS an EMPTY array (not an unreadable field), so the `ok:true` form is driven by the EMPTY LIST and never by a dropped read',
+    ).toEqual([[], 0])
+    const empty = asApplyResult(
+      drive(
+        () => apply(emptySkippedProjection, emptySink.sink),
+        'ADV-PJ-2 (i) SHARPENED — an unreadable `applied` beside a readable EMPTY `skipped`: applyProjection must not throw',
+      ),
+      'ADV-PJ-2 (i) SHARPENED empty',
+    )
+    expect(
+      { applied: asPlain(empty.applied), skipped: asPlain(skipPairs(empty)), ok: empty.ok },
+      'ADV-PJ-2 (i) SHARPENED: shape (i)’s `{applied:{},skipped:[],ok:true}` form applies WHEN THE READABLE `skipped` LIST IS EMPTY — the condition the SHARPENED note makes explicit (and `I-10` holds: an empty emitted list ⇒ ok true)',
+    ).toEqual({ applied: {}, skipped: [], ok: true })
+    expect(
+      emptySink.calls,
+      'ADV-PJ-2 (i) SHARPENED: ZERO sink calls in the empty-list corner too',
+    ).toEqual([])
+    expect(
+      emptyAppliedReads,
+      'ADV-PJ-2 (i) SHARPENED: the unreadable `applied` field was read in this corner as well (no throw, and the read attempt is recorded rather than assumed)',
+    ).toBeGreaterThan(0)
+    // ---- DRIVE 3: THE NON-VACUITY CONTROL — the SAME field question, `applied`
+    // READABLE and NON-EMPTY: the write IS planned. So drive 1’s zero writes come
+    // from the UNREADABLE FIELD, never from a module that plans nothing.
+    const controlSink = recordingSink()
+    let controlAppliedReads = 0
+    const readableProjection = makeProjection(expectedRecord([['--should-not-land', '1']]), () => {
+      controlAppliedReads += 1
+    })
+    const control = asApplyResult(
+      drive(
+        () => apply(readableProjection, controlSink.sink),
+        'ADV-PJ-2 (i) SHARPENED control — the same projection with a READABLE, non-empty `applied`',
+      ),
+      'ADV-PJ-2 (i) SHARPENED control',
+    )
+    expect(
+      controlCallsOf(controlSink),
+      'ADV-PJ-2 (i) SHARPENED control: with `applied` READABLE and non-empty the SAME carried list yields a PLANNED WRITE — so drive 1’s zero sink calls are the unreadable FIELD’s doing, not a module that never plans a write',
+    ).toEqual([['--should-not-land', '1']])
+    expect(
+      { applied: asPlain(control.applied), skipped: asPlain(skipPairs(control)), ok: control.ok },
+      'ADV-PJ-2 (i) SHARPENED control: and there the applied key lands while the carried entry is STILL emitted — the SAME `ok === false`, so `ok` tracks the EMITTED list and never the applied half (I-10)',
+    ).toEqual({ applied: { '--should-not-land': '1' }, skipped: [['--s1', 'negative']], ok: false })
+    expect(
+      [controlAppliedReads, controlSink.styleReads()],
+      'ADV-PJ-2 (i) SHARPENED control: the readable `applied` field WAS read (once is what the module does; the exact count is not the contract’s) and the sink was consulted — the control is real',
+    ).toEqual([1, controlSink.styleReads()])
   })
 
   it('FUNCTION-VALUES-1 §2.4 item 3 (iii) — a FUNCTION is a NON-RECORD `values`: every entry `missing-value` (with clause (d)’s four positions still duck-typed)', async () => {
@@ -5449,5 +5838,118 @@ describe('ADV — the adversarial pass’s regression rows (§3b-1, the OWED hos
     ).toBe(0)
     everySkipReasonDeclared(malformed, 'ADV-PJ-10 (a)')
     everySkipReasonDeclared(duplicate, 'ADV-PJ-10 (b)')
+  })
+
+  it('§2.4 item 3 clause (v)(D) — a HOSTILE `specOf` (un-enumerable) contributes NO entries: `{applied:{}, skipped:[]}`, nothing decided, no throw', async () => {
+    // THE CLAUSE, verbatim (`§2.4` item 3 clause (v) (D), pinned by the FINAL SPEC
+    // PASS; the shape the gate-5 addendum recorded as `F-03`): *A spec set the
+    // module CANNOT ENUMERATE contributes NO entries.* A `specOf` whose own-key
+    // enumeration cannot be answered — a revoked `Proxy`, a `Proxy` with a
+    // throwing `ownKeys` trap, an object whose own-key enumeration throws — yields
+    // the SAME result as the non-record case (clause (i), `§3.2 F-11` (a)):
+    // `Projection{ applied: {}, skipped: [] }`, both records empty, NO decision
+    // taken, NOTHING thrown, and **no new skip reason** — there is no key to name
+    // and therefore no skip entry to carry (`§4.4 S-9`: a ninth reason is
+    // forbidden; `§2.1`'s eight members are a CLOSED union).
+    //
+    // THE CONTRAST IS CITED, NOT RE-DRIVEN (the clause's own sentence: *"A `specOf`
+    // whose ENUMERATION succeeds but whose ENTRY read throws is a DIFFERENT shape"*
+    // — `malformed-spec` with `name: ''`, `§3.2`'s `SKIP-THREW-1` cell): that half
+    // is driven by this file's `SKIP-THREW-1` row. An entry that cannot be READ
+    // yields a NAMED skip; a key set that cannot be ENUMERATED yields no entries at
+    // all, and the two must not be merged.
+    const { project } = await surface('§2.4 item 3 clause (v)(D)')
+    // THE FIXTURES, each over a REAL one-entry spec map so "no entries" is a
+    // decision about the SET and never about an empty fixture.
+    const rawSpec: Record<string, unknown> = { k: { name: '--k', unit: 'px' } }
+    const { proxy: revokedSpec, revoke } = Proxy.revocable(rawSpec, {})
+    revoke()
+    const throwingOwnKeysSpec = throwingOwnKeysOver(rawSpec)
+    expect(
+      [Object.keys(rawSpec).length, ownKeysQuestionThrows(revokedSpec), ownKeysQuestionThrows(throwingOwnKeysSpec)],
+      'clause (v)(D): the instruments — each hostile `specOf` carries a REAL one-entry spec map (so an empty result is a decision, never a vacuous fixture) and its own-key enumeration really THROWS',
+    ).toEqual([1, true, true])
+    for (const [id, specSet] of [
+      ['a REVOKED-Proxy `specOf` (every operation throws)', revokedSpec],
+      ['a `specOf` whose `ownKeys` trap throws', throwingOwnKeysSpec],
+    ] as ReadonlyArray<readonly [string, unknown]>) {
+      const p = asProjection(
+        drive(() => project({ k: 7 }, specSet), `clause (v)(D) ${id} — project must not throw`),
+        `clause (v)(D) ${id}`,
+      )
+      expect(
+        { applied: Object.keys(p.applied), skipped: p.skipped },
+        `clause (v)(D) ${id}: the SAME shape as a non-record specOf — applied {} and skipped [] (no entry, no name, so nothing to carry and no reason to invent)`,
+      ).toEqual({ applied: [], skipped: [] })
+      expect(
+        Object.keys(p.applied).length + p.skipped.length,
+        `clause (v)(D) ${id}: ZERO decisions were taken — a set that yields no entries yields no decisions (§2.3 item 1, I-1/I-7)`,
+      ).toBe(0)
+      everySkipReasonDeclared(p, `clause (v)(D) ${id}`)
+    }
+    // THE POSITIVE CONTROL: the SAME target, enumerable, is fully decided — so the
+    // rows above are about the ENUMERATION and never about this unit's spec text.
+    const control = asProjection(
+      drive(() => project({ k: 7 }, rawSpec), 'clause (v)(D) control — the same target, enumerable'),
+      'clause (v)(D) control',
+    )
+    expect(control.applied, 'clause (v)(D) control: the same one-entry map applies normally').toEqual(
+      expectedRecord([['--k', '7px']]),
+    )
+    expect(control.skipped, 'clause (v)(D) control: and nothing is skipped').toEqual([])
+  })
+
+  it('§2.4 item 3 clause (v)(E) — `values` is NEVER ENUMERATED: an enumerating-throwing `values` changes NOTHING (the answered keys are APPLIED)', async () => {
+    // THE CLAUSE, verbatim (`§2.4` item 3 clause (v) (E), pinned by the FINAL SPEC
+    // PASS; the gate-5 addendum drove this territory green as `PJ-R-03`): *`values`
+    // is NEVER ENUMERATED — the module enumerates the SPEC SET (whose own keys are
+    // the lookup keys) and asks `values` only an OWN-PROPERTY question per entry.
+    // Therefore a `values` whose own-key enumeration would throw (a `Proxy` with a
+    // throwing `ownKeys` trap) changes NOTHING: the entries are decided from the
+    // own-property question alone and, where it is answered, the values ARE
+    // APPLIED.* Clause (E) states this precisely so the two sides are not merged:
+    // (v) (D) is the `specOf` side (a set the module must ENUMERATE and cannot ⇒ no
+    // entries); a `values` it never enumerates ⇒ no effect.
+    const { project } = await surface('§2.4 item 3 clause (v)(E)')
+    const hostileValues = throwingOwnKeysProxy()
+    expect(
+      [
+        ownKeysQuestionThrows(hostileValues),
+        ownPropertyTestThrows(hostileValues, 'k'),
+        hasOwn.call(hostileValues as object, 'k'),
+        (hostileValues as Record<string, unknown>)['k'],
+      ],
+      'clause (v)(E): the instruments — this `values` really THROWS on own-key enumeration, while its own-property question is ANSWERED (the key IS present: the trap is `ownKeys` ONLY) and its value read SUCCEEDS',
+    ).toEqual([true, false, true, 1])
+    const p = asProjection(
+      drive(
+        () => project(hostileValues, { k: { name: '--k', unit: 'px' } }),
+        'clause (v)(E) — project must not throw',
+      ),
+      'clause (v)(E)',
+    )
+    expect(
+      p.applied,
+      'clause (v)(E): the entries ARE APPLIED — the module asks `values` an own-property question and never enumerates it, so a `values` whose enumeration would throw changes nothing',
+    ).toEqual(expectedRecord([['--k', '1px']]))
+    expect(
+      p.skipped,
+      'clause (v)(E): and nothing is skipped — a `missing-value` entry here would mean the module consulted the enumeration it must NOT consult',
+    ).toEqual([])
+    everySkipReasonDeclared(p, 'clause (v)(E)')
+    // THE CONTRAST, one assertion pair: the SAME `ownKeys`-throwing trait used as the
+    // SPEC SET yields NO entries at all — clause (v) (D)'s shape, driven in full by
+    // the clause-(v)(D) row above. The two SIDES are what may not be merged.
+    const specSide = asProjection(
+      drive(
+        () => project({ k: 1 }, throwingOwnKeysOver({ k: { name: '--k', unit: 'px' } })),
+        'clause (v)(E) contrast — the same trait on the SPEC side',
+      ),
+      'clause (v)(E) contrast',
+    )
+    expect(
+      { applied: Object.keys(specSide.applied), skipped: specSide.skipped },
+      'clause (v)(E) contrast: the spec side IS enumerated (an un-enumerable set ⇒ no entries, nothing decided) while the values side is NOT (an answered key is APPLIED) — the two directions are distinct',
+    ).toEqual({ applied: [], skipped: [] })
   })
 })
