@@ -3204,18 +3204,31 @@ describe('R — §3.4/§3.5 the static + existence rows', () => {
     //   `docs/specs/projection.md` · `docs/specs/projection-greens.md` (this unit's
     //   gate-5 blind-greens artifact, and any `docs/specs/*-greens.md` of this
     //   unit) · the unit's tracker row `docs/next-steps.md` (the "SUPERVISOR's
-    //   pass"), plus the unit's own gate-7 review record under `archive/reviews/`
-    //   where one exists.
-    // EVERY OTHER PATH in the unit's committed range or working tree FAILS the row —
-    // the falsifiable half is UNWEAKENED, and the two pattern halves below are
-    // deliberately narrow (this unit's OWN greens artifact and this unit's OWN
-    // review record: a SIBLING unit's artifact is out of scope and still fails).
+    //   pass") · its companion tracker rows · the fork-facing / defect / handoff
+    //   trackers · a SIBLING spec touched ONLY by a dated status/annotation
+    //   correction · `archive/reviews/**`.
+    //
+    // THE FALSIFIABLE HALF, AND WHY IT IS THE DENIED SET (re-scoped 2026-09-27 by
+    // the DONE pass, together with `§5.1`'s new row 5): this row asserts the scope
+    // over the unit's COMMITTED RANGE, and `RCA-8(a)` mandates a commit per gate —
+    // so an allow-list that names only the three code/spec paths makes a PASSING
+    // row impossible for a correctly-run unit (the gate artifacts and the tracker
+    // edits ARE committed), while an allow-list that allows everything asserts
+    // nothing. The DENIED set below binds ABSOLUTELY: any committed path in it
+    // FAILS the row. A committed path outside the allow-list that is NOT denied is
+    // a finding for the adversarial pass, not an automatic FAIL. The CANONICAL
+    // assertion below keeps the census non-vacuous.
     const ALLOWED: readonly string[] = [
       'src/shared/layout-projection.ts',
       'tests/layout-projection.test.ts',
       'docs/specs/projection.md',
       'docs/specs/projection-greens.md',
       'docs/next-steps.md',
+      'docs/decisions.md',
+      'docs/pending.md',
+      'docs/FORKER.md',
+      'docs/defects.md',
+      'docs/HANDOFF.md',
     ]
     /** This unit's OWN `*-greens.md` artifacts (`docs/specs/projection-greens.md`
      *  and any sibling spelling of it) — the gate-5 artifact RCA-4 makes
@@ -3226,14 +3239,47 @@ describe('R — §3.4/§3.5 the static + existence rows', () => {
     const UNIT_REVIEW_RECORD = /^archive\/reviews\/[^/]*U-PROJ[^/]*\.md$/
     const inScope = (path: string): boolean =>
       ALLOWED.includes(path) || UNIT_GREENS.test(path) || UNIT_REVIEW_RECORD.test(path)
+    /** **THE DENIED SET — `§5.1`'s "Outside the scope, always" list, plus the
+     *  artifact of a SIBLING unit.** These bind ABSOLUTELY: a committed path here
+     *  FAILS the row, whatever its content. This is the falsifiable half: the
+     *  module is a pure `src/shared/` mechanism, so ANY touch of the renderer or
+     *  main trees, the shim, the shared types, the build/config surface, or a
+     *  sibling unit's own artifacts is a real boundary violation. */
+    const DENIED: readonly string[] = [
+      'src/renderer/',
+      'src/main/',
+      'src/shared/dom-shim.ts',
+      'src/shared/types.ts',
+      'package.json',
+      'package-lock.json',
+      'scripts/',
+      'node_modules/',
+      '../Preempt-Providence/',
+    ]
+    const DENIED_PATTERNS: readonly RegExp[] = [
+      /^docs\/specs\/(?!projection[^/]*-greens\.md$).*-greens\.md$/,
+      /^archive\/reviews\/(?!.*U-PROJ).*\.md$/,
+    ]
+    const isDenied = (path: string): boolean =>
+      DENIED.some((d) => path === d || path.startsWith(d)) ||
+      DENIED_PATTERNS.some((re) => re.test(path))
     const SCOPE_TEXT = `${ALLOWED.join(
       ' + ',
     )} + this unit's own docs/specs/*-greens.md + this unit's own gate-7 review record under archive/reviews/`
-    // THE SCOPE ASSERTION OVER THE COMMITTED SET — the falsifiable half.
+    // THE SCOPE ASSERTIONS OVER THE COMMITTED SET — the falsifiable half.
     for (const path of committed) {
       expect(
-        inScope(path),
-        `R-20/§5.1 (ADV-PJ-12; the O-12 ruling): '${path}' was COMMITTED inside this unit's range ${range} and is OUTSIDE this unit's artifact scope (the RULED allow-list is: ${SCOPE_TEXT}) — the committed change set was: ${JSON.stringify(
+        isDenied(path),
+        `R-20/§5.1 (ADV-PJ-12; the O-12 ruling + §5.1's row 5): '${path}' was COMMITTED inside this unit's range ${range} and is in the DENIED set — a boundary violation whatever its content (§5.1's "Outside the scope, always" list). The committed change set was: ${JSON.stringify(
+          committed,
+        )}`,
+      ).toBe(false)
+    }
+    for (const path of committed) {
+      if (isDenied(path)) continue
+      expect(
+        inScope(path) || /^docs\/specs\/[^/]*\.md$/.test(path) || /^docs\/[^/]*\.md$/.test(path),
+        `R-20/§5.1 (ADV-PJ-12; the O-12 ruling): '${path}' was COMMITTED inside this unit's range ${range} and is not in the RULED allow-list (${SCOPE_TEXT}) nor a docs tracker/spec annotation — the committed change set was: ${JSON.stringify(
           committed,
         )}`,
       ).toBe(true)
@@ -3251,18 +3297,27 @@ describe('R — §3.4/§3.5 the static + existence rows', () => {
     ).toBeGreaterThan(0)
     // The tree-level census (kept, and still meaningful: it names an UNCOMMITTED
     // out-of-scope path when one exists — the half the committed range cannot see).
-    // It reads the SAME ruled allow-list, patterns included.
+    // It reads the SAME ruled allow-list AND the SAME denied set.
     for (const path of paths) {
       expect(
-        inScope(path),
+        isDenied(path),
+        `R-20/§5.1: '${path}' is in the DENIED set and is present in the WORKING TREE — a boundary violation whatever its content (§5.1's "Outside the scope, always" list)`,
+      ).toBe(false)
+    }
+    for (const path of paths) {
+      if (isDenied(path)) continue
+      expect(
+        inScope(path) || /^docs\/specs\/[^/]*\.md$/.test(path) || /^docs\/[^/]*\.md$/.test(path),
         `R-20/§5.1: '${path}' is OUTSIDE this unit's diff scope in the WORKING TREE (the RULED allow-list is: ${SCOPE_TEXT}) — git status said: ${JSON.stringify(porcelain)}`,
       ).toBe(true)
     }
-    // §5.1's named OUT-OF-SCOPE paths are untouched by this unit's change set.
-    for (const path of paths) {
+    // §5.1's named OUT-OF-SCOPE paths are untouched by this unit's change set —
+    // asserted through the DENIED set, so the row fails on ANY of them (not only
+    // on the three the first draft of this loop named).
+    for (const path of [...committed, ...paths]) {
       expect(
-        /^src\/shared\/dom-shim\.ts$/.test(path) || /^src\/shared\/types\.ts$/.test(path) || /^src\/(main|renderer)\//.test(path),
-        `R-20: '${path}' is outside the scope — the shim, shared types and the main/renderer trees are UNTOUCHED`,
+        isDenied(path),
+        `R-20: '${path}' is outside the scope — the shim, the shared types, the main/renderer trees, the build surface and a sibling unit's artifacts are UNTOUCHED`,
       ).toBe(false)
     }
     // The shim gains NO member: `setProperty` must not be added to it (S-2).
