@@ -71,9 +71,48 @@
 // NOTHING is renumbered.
 //
 // REGISTER FINDINGS REPORTED IN PLACE (never tuned to green — `§4.2` item 2,
-// `§7` item 12): the per-row TERM decompositions of `P-ZN-TP-1` and `P-ZN-SM-1`
-// and the negative pool member of `P-ZN-TP-2` are each reported beside the table
-// that drives them, with the clause pair. See the `§5.5.1` block below.
+// `§7` item 12) — **AND NOW RULED (the RED-RUN REGISTER-RECONCILIATION pass,
+// 2026-09-27, SPEC TEXT ONLY)**: the six clauses this file's first red run
+// reported are reconciled in the contract, and this remand re-aligns the rows to
+// the rulings rather than re-reporting them:
+//   (1) `P-ZN-TP-1`'s decomposition is RULED `90 = 40 + 50` — `40` = the `20`
+//       pool shapes x the `2` one-call-per-function bindings, `50` = the fixed
+//       hostile pairings `5+2+2+2+1+4+4+30`; the "Attempt-arithmetic" table's
+//       `20 x 3 = 60 + 30` was the DEFECT and is corrected in place. This file
+//       drove the strategy cell's partition all along and now CITES the ruling.
+//   (2) `P-ZN-SM-1`'s sweep is RULED `20 = 10` `empty` VALUES x `2` SIZE
+//       CLASSIFICATIONS (S1 valid, S2 invalid) — the ruled words now stand in the
+//       row's own title, sweep comment and per-attempt message.
+//   (3) `P-ZN-TP-2`'s pool member #23 (negative) is RULED (A): INTENTIONAL, with
+//       the boundary NARROWED — every draw finite; non-negative ⇒
+//       `String(drawn) + unit`; NEGATIVE ⇒ `spec.emptyToken` VERBATIM, asserted
+//       PER DRAW at positions 29/57/65 of the 66. The row now asserts the
+//       negative limb instead of excusing it (stronger, not weaker).
+//   (4) `§2.3` item 1's precedence is RULED: the MALFORMED-spec limb is evaluated
+//       FIRST and gates the other three, so `''` in BOTH flag halves is the
+//       PINNED PRECEDENCE (`F-1` and `P-ZN-SM-1`'s 32 limb-order re-drives now
+//       cite it).
+//   (5) `R-1`'s TWO scan scopes are stated: vocabulary = the whole module file
+//       INCLUDING comments; the `'0px'`/`'fit-content'` literal = code with
+//       comments STRIPPED. `R-1`'s two halves implement exactly those scopes
+//       (confirmed, and now cited at the row).
+//   (6) `§4.1`'s red statement is reconciled: an fs probe + a computed specifier
+//       ⇒ every clause row fails as a LABELLED ASSERTION (not a collection
+//       error), and `TS2307` appears only in leg 4. CONFIRMED — this file's red
+//       shape is that shape, and no row is red for a reason `§4.1` did not name.
+// THE TWO NEW REQUIREMENTS THE RULINGS IMPLY are also carried: the
+// POOL-VERSUS-BOUNDARY rule is asserted mechanically over all eight rows'
+// declared members (`PRE-4`), and the register tables are machine-comparable for
+// the later read-only PBT audit (`§3a A-16`: row ids, strategy ids, terms, seed
+// and the `369` total are declared ONCE in `REGISTER_DECLARED` and reconciled by
+// both `PRE-2` and `REGISTER-STATUS`; no row is owed for the audit itself).
+// THE CROSS-UNIT RE-SCOPE (the same class U-PROJ's `R-20` was re-scoped for at
+// `323a4a0`): `R-4` and `R-8` census git STATE, and they went RED on a SIBLING
+// unit's commit / on this file's own red-set commit rather than on the module's
+// absence — red for a reason `§4.1` did not name. Both now census the unit's OWN
+// commit partition (`unitScopedCommitted`) and the unit-owned paths, which is
+// what `§3.4 R-4` ("the unit's own committed range") and `§3.5 R-8` ("the only
+// unit-owned file in the change set") actually state. See the `§5.5.1` block.
 // ===========================================================================
 import { describe, it, expect } from 'vitest'
 import { existsSync, readFileSync } from 'node:fs'
@@ -584,15 +623,71 @@ function treeChangeSet(): { paths: string[]; raw: string } {
 }
 /** The COMMITTED range anchored at the commit that ADDED this file (the unit's
  *  own red-set commit), through `HEAD`; `null` while that commit does not exist
- *  yet (the honest RED-time state — nothing is committed, `RCA-8(a)`). */
-function committedChangeSet(): { range: string; paths: string[] } | null {
+ *  yet (the honest RED-time state — nothing is committed, `RCA-8(a)`). **The
+ *  anchor is returned WITH the range because the unit-scoped partition must
+ *  include the anchor commit's own files**: `anchor..HEAD` alone EXCLUDES the
+ *  unit's red-set commit — the unit's own work, and the ONLY unit commit in the
+ *  range today (`7fb37b3`) — so a partition over it alone would be empty and the
+ *  row would fail on its own non-vacuity clause. */
+function committedChangeSet(): { anchor: string; range: string; paths: string[] } | null {
   const added = gitOrNull(['log', '--diff-filter=A', '--format=%H', '--', 'tests/zones.test.ts'])
   const anchor = added === null ? undefined : added.filter((l) => /^[0-9a-f]{7,40}$/.test(l))[0]
   if (anchor === undefined) return null
   const range = `${anchor}..HEAD`
   const listed = gitOrNull(['log', '--name-only', '--pretty=format:', range])
   if (listed === null) return null
-  return { range, paths: Array.from(new Set(listed)).sort() }
+  return { anchor, range, paths: Array.from(new Set(listed)).sort() }
+}
+
+/** This unit's OWN `*-greens.md` artifact (RCA-4's gate-5 blind-greens set). */
+const ZONES_GREENS_PROBE = /^docs\/specs\/zones[^/]*-greens\.md$/
+/** This unit's own gate-7 review record under `archive/reviews/`. */
+const ZONES_REVIEW_PROBE = /^archive\/reviews\/[^/]*(U-ZONES|zones)[^/]*\.md$/
+/** **THE UNIT-SCOPED COMMIT PARTITION** (`§3.4 R-4` / `§3.5 R-8`; the
+ *  `323a4a0` precedent — U-PROJ's `R-20` was re-scoped for exactly this class).
+ *  The anchored range is `anchor..HEAD` and HEAD moves through LATER UNITS'
+ *  commits, so a census over the WHOLE range charges this unit for every unit
+ *  that lands after it: it made `R-4` RED on `323a4a0`'s
+ *  `tests/layout-projection.test.ts` — a SIBLING unit's artifact — which is a row
+ *  that has stopped measuring its own unit. A commit that touches NONE of these
+ *  paths is another unit's commit and is OUT of this unit's jurisdiction — not a
+ *  licence, a boundary: a commit that carries one of this unit's paths TOGETHER
+ *  WITH `package.json` (or `src/main/**`, or a sibling artifact) still FAILS. */
+function isZonesUnitArtifact(path: string): boolean {
+  return (
+    path === 'src/shared/zones.ts' ||
+    path === 'tests/zones.test.ts' ||
+    path === 'docs/specs/zones.md' ||
+    ZONES_GREENS_PROBE.test(path) ||
+    ZONES_REVIEW_PROBE.test(path)
+  )
+}
+/** The per-commit file lists of `anchor` PLUS the range `anchor..HEAD`, with the
+ *  unit-scoped partition applied: `files` holds only the files of the commits
+ *  that touched at least one of THIS unit's artifacts, and the counts are
+ *  reported so the census cannot be vacuous silently. */
+function unitScopedCommitted(anchor: string, range: string): { commitsInRange: number; unitCommits: number; files: string[] } {
+  const listed = [
+    ...(gitOrNull(['show', '--name-only', '--format=@@%H', anchor]) ?? []),
+    ...(gitOrNull(['log', '--format=@@%H', '--name-only', range]) ?? []),
+  ]
+  const perCommit = listed
+    .join('\n')
+    .split('@@')
+    .filter((block) => block.trim().length > 0)
+    .map((block) => {
+      const parts = block
+        .split('\n')
+        .map((line) => line.trim().replace(/^"|"$/g, ''))
+        .filter((line) => line.length > 0)
+      return { sha: parts[0] ?? '', files: parts.slice(1) }
+    })
+  const unitCommits = perCommit.filter((c) => c.files.some(isZonesUnitArtifact))
+  return {
+    commitsInRange: perCommit.length,
+    unitCommits: unitCommits.length,
+    files: Array.from(new Set(unitCommits.flatMap((c) => c.files))).sort(),
+  }
 }
 
 // ===========================================================================
@@ -763,15 +858,25 @@ describe('R-8/R-9 — §3.5 the existence rows (the red’s own premise)', () =>
         `finds it must report the inversion rather than proceed (${fileURLToPath(MODULE_SRC)}).`,
     ).toBe(false)
     // The unit-owned-file half: this test file is the ONLY unit-owned path in the
-    // change set while the module is absent. A `git status` probe is used ONCE,
-    // here, and its meaning is exactly this premise (`§3.4 R-8`); `R-4`'s scope
-    // row does NOT rest on it.
+    // change set while the module is absent. The census reads BOTH the working
+    // tree and this unit's own committed commits (`§3.5 R-8`'s claim is about
+    // "the change set"; the `323a4a0` unit-scoped partition applies here for the
+    // same reason it applies to `R-4`). A `git status`-ONLY probe is VACUOUS the
+    // moment the red set is COMMITTED — which `RCA-8(a)` mandates at every gate
+    // boundary — and it did read `[]` after `7fb37b3` (this file's own red-set
+    // commit), a FALSE RED for a row red for a reason `§4.1` did not name.
     const tree = treeChangeSet()
-    const unitOwned = tree.paths.filter((p) => /^(tests|src\/shared)\/zones/.test(p)).sort()
+    const committed = committedChangeSet()
+    const committedUnitOwned =
+      committed === null ? [] : unitScopedCommitted(committed.anchor, committed.range).files.filter((p) => /^(tests|src\/shared)\/zones/.test(p))
+    const unitOwned = Array.from(
+      new Set([...tree.paths, ...committedUnitOwned].filter((p) => /^(tests|src\/shared)\/zones/.test(p))),
+    ).sort()
     expect(
       unitOwned,
-      `R-8/§3.5 — at RED time the unit-owned change set is exactly \`tests/zones.test.ts\` (the module is absent). ` +
-        `git status said: ${JSON.stringify(tree.raw)}`,
+      `R-8/§3.5 — at RED time the unit-owned change set (the WORKING TREE plus this unit's own committed commits) is ` +
+        `exactly \`tests/zones.test.ts\` (the module is absent). git status said: ${JSON.stringify(tree.raw)}; the ` +
+        `unit-scoped committed census said: ${JSON.stringify(committedUnitOwned)}`,
     ).toEqual(['tests/zones.test.ts'])
     expect(
       existsSync(TEST_FILE),
@@ -1349,9 +1454,13 @@ describe('F — §3.2 the documented fail-states (every outcome is a VALUE)', ()
             got,
             `F-1/§2.3 item 1(d) — the rule is: '' is returned iff the spec is not a usable record OR any of the three ` +
               `fields is unreadable or is not a string. Spec: ${label}, size: ${sizeLabel}, empty: ${brief(empty)} ⇒ '' ` +
-              `(never the empty token, never a fabricated default, never a throw). The SAME string is returned for all ` +
-              `three field failures deliberately: this unit has no diagnostic vocabulary (no per-field distinction), ` +
-              `because a per-field distinction would be a refusal domain this contract does not have (§2.3 item 4)`,
+              `(never the empty token, never a fabricated default, never a throw). THE empty === true HALF IS THE ` +
+              `PINNED PRECEDENCE, not a choice: limb (d) is evaluated FIRST and GATES the flag (the dated malformed-spec ` +
+              `precedence ruling at §2.3 item 1(d) / §5.5.1 RULING 4, and §2.1's trackFor doc block): for a malformed ` +
+              `spec the answer is '' REGARDLESS of empty and size, because a spec the mechanism cannot read supplies no ` +
+              `emptyToken to return. The SAME string is returned for all three field failures deliberately: this unit has ` +
+              `no diagnostic vocabulary (no per-field distinction), because a per-field distinction would be a refusal ` +
+              `domain this contract does not have (§2.3 item 4)`,
           ).toBe('')
         }
       }
@@ -1498,9 +1607,23 @@ describe('F — §3.2 the documented fail-states (every outcome is a VALUE)', ()
 // proving the scanner can fail, and each states its scan scope (`§4.4 S-7`).
 // ===========================================================================
 describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', () => {
-  it('R-1 §3.4 — the anti-evasion VOCABULARY row: no consumer vocabulary and no banned literal as a mechanism constant (comments scanned, boundary rule, assembly closed)', () => {
+  it('R-1 §3.4 — the anti-evasion VOCABULARY row: no consumer vocabulary and no banned literal as a mechanism constant (the TWO RULED SCOPES: vocabulary = whole file incl. comments; literal = code with comments stripped; boundary rule, assembly closed)', () => {
     const raw = moduleSource('R-1 §2.2 P-1/P-2')
-    // (1)+(2) the MODULE half is the WHOLE module file, comments included.
+    // ⟶ THE TWO SCAN SCOPES, AS RULED 2026-09-27 (`§3.4 R-1`'s dated correction:
+    // "THE LITERAL HALF IS SCOPED TO CODE WITH COMMENTS STRIPPED"; `§2.2` P-1's
+    // dated note states the same pair; `§3a A-8` answers that the scan's scope IS
+    // `R-1`'s and that it is now TWO scopes). The two halves are NOT the same
+    // claim, and this row implements them exactly:
+    //   (1) the VOCABULARY half reads the WHOLE MODULE FILE, COMMENTS INCLUDED —
+    //       a comment carrying the vocabulary is the same violation as code
+    //       carrying it, and the module's own doc comments must therefore be
+    //       worded so as not to carry a bounded token (the implementer hazard);
+    //   (2) the LITERAL half reads CODE WITH COMMENTS STRIPPED — the clause
+    //       forbids the `'0px'`/`'fit-content'` literal as a mechanism CONSTANT,
+    //       and a comment is not a constant (a comment-inclusive literal scan
+    //       would be unsatisfiable by a module that documents its own contract,
+    //       which is the as-filed form the ruling supersedes).
+    // (1)+(2) the MODULE half, scope (1): the whole file, comments included.
     const violations = vocabularyViolations(raw)
     expect(
       violations,
@@ -1509,12 +1632,14 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
         `legitimate names that CONTAIN a spelling as a substring ('zoneId', 'ZoneCensus' — both declared by §2.1) are a ` +
         `stated BOUNDARY, not a violation; a BOUNDED spelling is one.`,
     ).toEqual([])
+    // scope (2): the LITERAL half, code with comments STRIPPED (the ruled scope).
     const literals = literalViolations(stripComments(raw))
     expect(
       literals,
-      `R-1/§2.2 P-1 (S-1's class) — the module carries NO banned literal as a mechanism constant in its CODE: ${JSON.stringify(
-        literals,
-      )}. The spelling is legal ONLY as a drive's own data (inside this row's controlled corpora), and the mechanism ` +
+      `R-1/§2.2 P-1 (S-1's class) — the module carries NO banned literal as a mechanism constant in its CODE (comments ` +
+        `stripped, the ruled scope of the literal half): ${JSON.stringify(
+          literals,
+        )}. The spelling is legal ONLY as a drive's own data (inside this row's controlled corpora), and the mechanism ` +
         `must not know that an empty token may be one: the emptyToken is caller data (§2.4 item 2).`,
     ).toEqual([])
     // The BOUNDARY RULE itself, asserted rather than assumed: ordinary words that
@@ -1645,10 +1770,11 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       'docs/defects.md',
       'docs/HANDOFF.md',
     ]
-    /** This unit's own `*-greens.md` artifact (RCA-4's gate-5 blind-greens set). */
-    const UNIT_GREENS = /^docs\/specs\/zones[^/]*-greens\.md$/
+    /** This unit's own `*-greens.md` artifact (RCA-4's gate-5 blind-greens set) —
+     *  the module-scope probe the unit-scoped commit partition reads too. */
+    const UNIT_GREENS = ZONES_GREENS_PROBE
     /** This unit's own gate-7 review record under `archive/reviews/`. */
-    const UNIT_REVIEW_RECORD = /^archive\/reviews\/[^/]*(U-ZONES|zones)[^/]*\.md$/
+    const UNIT_REVIEW_RECORD = ZONES_REVIEW_PROBE
     const inScope = (path: string): boolean =>
       ALLOWED.includes(path) || UNIT_GREENS.test(path) || UNIT_REVIEW_RECORD.test(path)
     /** **§5.1's “Outside the scope, ALWAYS” DENIED set** — these bind absolutely.
@@ -1678,21 +1804,42 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
     )} + this unit's own docs/specs/zones*-greens.md + this unit's own review record under archive/reviews/`
     const committed = committedChangeSet()
     if (committed !== null) {
+      // ── THE UNIT-SCOPED COMMIT PARTITION (RE-SCOPED 2026-09-27, this remand —
+      // the CROSS-UNIT defect class U-PROJ's `R-20` was re-scoped for at
+      // `323a4a0`). `§3.4 R-4`'s own text names "the unit's OWN committed range";
+      // a census over the WHOLE `anchor..HEAD` range instead charges this unit for
+      // every unit that lands after it, and it did: `323a4a0` committed
+      // `tests/layout-projection.test.ts` — a SIBLING unit's artifact — and this
+      // row went RED on it, i.e. red for a reason `§4.1` did not name. Keep only
+      // the range's commits that TOUCH AT LEAST ONE ARTIFACT OF THIS UNIT and
+      // assert the DENIED/allow-list claim over those. The falsifiable half is
+      // intact: a commit carrying one of this unit's paths TOGETHER WITH
+      // `package.json` (or `src/main/**`, or a sibling's artifact) FAILS here.
+      const scoped = unitScopedCommitted(committed.anchor, committed.range)
       expect(
-        committed.paths.length,
-        `R-4/§5.1 — the unit's committed range (${committed.range}) is NON-EMPTY: a vacuous census cannot pass this row`,
+        scoped.unitCommits,
+        `R-4/§5.1 — at least ONE commit in ${committed.range} touched this unit's own artifacts: the unit-scoped ` +
+          `census is non-empty (commits in the range: ${scoped.commitsInRange}, unit-touching commits: ` +
+          `${scoped.unitCommits}). A commit touching none of them is another unit's commit and is out of this row's ` +
+          `jurisdiction — not a licence, a boundary (the 323a4a0 precedent).`,
       ).toBeGreaterThan(0)
-      for (const path of committed.paths) {
+      expect(
+        scoped.files.length,
+        `R-4/§5.1 — the unit's own committed change set (${committed.range}, unit-scoped) is NON-EMPTY: a vacuous census cannot pass this row`,
+      ).toBeGreaterThan(0)
+      for (const path of scoped.files) {
         expect(
           isDenied(path),
-          `R-4/§5.1 — '${path}' was COMMITTED inside this unit's range ${committed.range} and is in the DENIED set: a boundary violation whatever its content. The committed change set was: ${JSON.stringify(
-            committed.paths,
+          `R-4/§5.1 — '${path}' was COMMITTED inside this unit's range ${committed.range} and is in the DENIED set: a boundary violation whatever its content. The unit-scoped committed change set was: ${JSON.stringify(
+            scoped.files,
           )}`,
         ).toBe(false)
       }
       expect(
-        committed.paths.filter((p) => ['src/shared/zones.ts', 'tests/zones.test.ts', 'docs/specs/zones.md'].includes(p)).length,
-        `R-4 — at least ONE of the unit's three canonical artifacts (src/shared/zones.ts / tests/zones.test.ts / docs/specs/zones.md) is genuinely committed inside the range, so the census is a census of real unit work`,
+        scoped.files.filter((p) => ['src/shared/zones.ts', 'tests/zones.test.ts', 'docs/specs/zones.md'].includes(p)).length,
+        `R-4 — at least ONE of the unit's three canonical artifacts (src/shared/zones.ts / tests/zones.test.ts / docs/specs/zones.md) is genuinely committed inside the unit-scoped range, so the census is a census of real unit work: ${JSON.stringify(
+          scoped.files,
+        )}`,
       ).toBeGreaterThan(0)
     } else {
       const tree = treeChangeSet()
@@ -1952,6 +2099,37 @@ const LCG_A = 1664525
 const LCG_C = 1013904223
 const LCG_MOD = 4294967296
 
+/** **`§5.5.1`'s EIGHT DECLARED ROWS** — `(row id, strategy id, term)`, as the
+ *  reconciled register states them: `30+90+36+68+52+12+15+66 = 369` (the as-filed
+ *  total `400` was their mis-sum, corrected at the gate-2 closure; NO term moved at
+ *  the red-run reconciliation either). Declared ONCE, at module scope, so `PRE-2`
+ *  (the table precondition), `PRE-4` (the POOL-VERSUS-BOUNDARY rule) and
+ *  `REGISTER-STATUS` (the executed record) all reconcile against the same object —
+ *  which is what makes this file's tables **machine-comparable for the later
+ *  read-only PBT audit** (`§3a A-16`: per-row attempts, terms, strategy ids, the
+ *  `369` total, and every member against its row's boundary).
+ *  **ROW ORDER IS NOT A CLAIM**: `§5.5.1`'s register table prints the eight rows in
+ *  one order and its Attempt-arithmetic table in another (`P-ZN-SM-1` and
+ *  `P-ZN-IM-3` are swapped between the two sites), so the binding claim is the SET
+ *  of `(row, strategy, term)`; a row order is derivable from neither site, and no
+ *  clause of `§5.5.1` requires one. The comparisons below are therefore sorted by
+ *  row id, and this file's execution order follows the register table's. */
+const REGISTER_DECLARED: ReadonlyArray<{ row: string; strategy: string; term: number }> = [
+  { row: 'P-ZN-IM-1', strategy: 'S-ZN-EMPTY-1', term: 30 },
+  { row: 'P-ZN-TP-1', strategy: 'S-ZN-TOTAL-1', term: 90 },
+  { row: 'P-ZN-IM-2', strategy: 'S-ZN-ZERO-1', term: 36 },
+  { row: 'P-ZN-IM-3', strategy: 'S-ZN-CENSUS-1', term: 52 },
+  { row: 'P-ZN-SM-1', strategy: 'S-ZN-TABLE-1', term: 68 },
+  { row: 'P-ZN-SM-2', strategy: 'S-ZN-PURITY-1', term: 12 },
+  { row: 'P-ZN-IM-4', strategy: 'S-ZN-FORMAT-1', term: 15 },
+  { row: 'P-ZN-TP-2', strategy: 'S-ZN-SEED-1/S-ZN-POOL-1', term: 66 },
+]
+/** The eight declared rows as a ROW-ORDER-INSENSITIVE key list (`row :: strategy`),
+ *  which is what both spec sites agree on (see the note above `REGISTER_DECLARED`). */
+function registerKeySet(rows: ReadonlyArray<{ row: string; strategy: string }>): string[] {
+  return rows.map((r) => `${r.row} :: ${r.strategy}`).sort()
+}
+
 const registerState = {
   attempts: 0,
   consecutiveFailures: 0,
@@ -2118,19 +2296,14 @@ describe('PRE — harness preconditions (not spec rows)', () => {
     expect(REGISTER_ROW_CAP, 'the per-row cap is <=100').toBe(100)
     expect(REGISTER_TOTAL_CAP, 'the register cap is <=400').toBe(400)
     expect(CONSECUTIVE_FAILURE_CAP, 'the stop rule is 5 consecutive failures').toBe(5)
-    // §5.5.1's EIGHT declared terms, printed in register order (`REGISTER-ATTEMPT-
-    // TOTALS-PRINT-THEIR-TERMS`, ACTIVE): the total must be the SUM OF ITS OWN
-    // TERMS, and the as-filed `400` was the mis-sum this check exists for.
-    const declared: ReadonlyArray<readonly [string, number]> = [
-      ['P-ZN-IM-1', 30],
-      ['P-ZN-TP-1', 90],
-      ['P-ZN-IM-2', 36],
-      ['P-ZN-SM-1', 68],
-      ['P-ZN-IM-3', 52],
-      ['P-ZN-SM-2', 12],
-      ['P-ZN-IM-4', 15],
-      ['P-ZN-TP-2', 66],
-    ]
+    // §5.5.1's EIGHT declared rows — `(row id, strategy id, term)` in register
+    // order (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`, ACTIVE): the total must
+    // be the SUM OF ITS OWN TERMS (the as-filed `400` was the mis-sum this check
+    // exists for), and the strategy ids are carried HERE so the later read-only
+    // PBT audit (`§3a A-16`) can compare its tables against `§5.5.1`'s per-row
+    // attempts/terms/strategy ids/the `369` total without reading prose. The same
+    // table is what `REGISTER-STATUS` reconciles the executed rows against.
+    const declared: ReadonlyArray<readonly [string, number]> = REGISTER_DECLARED.map((r) => [r.row, r.term] as const)
     const total = declared.reduce((sum, [, n]) => sum + n, 0)
     expect(
       total,
@@ -2178,44 +2351,80 @@ describe('PRE — harness preconditions (not spec rows)', () => {
     // (1) `P-ZN-TP-1`'s TERMS DISAGREE BETWEEN THE TWO SPEC SITES: the register
     //     row's own strategy cell prints `40` pool drives (`20` shapes x `2`
     //     cycling axis bindings) + `50` fixed hostile pairings, itemized
-    //     `5+2+2+2+1+4+4+30`; the "Attempt arithmetic" table prints
+    //     `5+2+2+2+1+4+4+30`; the "Attempt arithmetic" table printed
     //     `20 pool shapes x 3 cycling method-axis bindings = 60` + `30 fixed
-    //     hostile pairings`. Both sum to the SAME row total (`90`), so the row is
-    //     drivable and the declared figure is unambiguous — this file drives the
-    //     strategy cell's decomposition and reports the disagreement.
-    // (2) `P-ZN-SM-1`'s sweep term is under-specified: the cell prints "the `20`
+    //     hostile pairings` — a SECOND, incompatible partition of the same `90`.
+    //     ⟶ RULED 2026-09-27 (`§5.5.1`'s dated correction + RULING 1): the
+    //     decomposition is `90 = 40 + 50` — `40` = the `20` pool shapes x the `2`
+    //     one-call-per-function bindings, `50` = the fixed hostile pairings — the
+    //     TABLE was the defect, and THIS FILE DRIVES THE RULED PARTITION. No term
+    //     moved; the declared term stays `90`.
+    // (2) `P-ZN-SM-1`'s sweep term was under-specified: the cell printed "the `20`
     //     sweep drives cross `empty` in {5 truthy} and {5 falsy} with `C1 x S1`",
-    //     which is 10 drives as literally written; the declared term is 20 and the
-    //     row's own arithmetic needs 20 (`16 + 20 + 32 = 68`). This file drives
-    //     the 10 values x 2 size classifications (S1 valid, S2 invalid) = 20,
-    //     because the converse half of the property ("a truthy empty yields the
-    //     empty token for ANY size") is exactly what the second classification
-    //     probes — reported rather than guessed.
+    //     which is 10 drives as literally written against a declared term of 20.
+    //     ⟶ RULED 2026-09-27 (`§5.5.1`'s dated correction + RULING 2): the `20` is
+    //     `10` `empty` VALUES x `2` SIZE CLASSIFICATIONS — (S1) a finite
+    //     non-negative number (120) and (S2) an invalid size (NaN). `S2` is exactly
+    //     the converse half the row's property states, which is why the second axis
+    //     is the size classification. This file drove that product before the ruling
+    //     and now STATES it in the ruled words; the term stays `20`.
     // (3) `P-ZN-TP-2`'s pool carries a NEGATIVE member (`Number.MIN_SAFE_INTEGER +
-    //     + 1` = -9007199254740990) while the row's own boundary text declares
+    //     + 1` = -9007199254740990) while the row's as-filed boundary text declared
     //     every draw "a finite non-negative number ... no draw may yield the empty
-    //     token". The pinned seed SELECTS that member 3 times out of the 66 draws.
-    //     The binding clause is `§2.3` item 1(b) (a negative size ⇒ the empty
-    //     token), so the row asserts the DECISION TABLE's outcome for those three
-    //     draws and reports the conflict; it does not guess which clause is wrong.
+    //     token"; the pinned seed SELECTS it at draws 29, 57 and 65 of the 66.
+    //     ⟶ RULED (A) 2026-09-27 (`§5.5.1`'s dated narrowing + RULING 3): the member
+    //     is INTENTIONAL (the pool's sign-boundary value, beside
+    //     `Number.MAX_SAFE_INTEGER`) and the BOUNDARY TEXT IS NARROWED — every draw
+    //     is finite; a non-negative draw emits `String(drawn) + unit` and may not
+    //     yield the empty token; a NEGATIVE draw MUST yield `spec.emptyToken`
+    //     VERBATIM, asserted PER DRAW. Ruling (B) (a pool typo) was DECLINED. The
+    //     pool, seed, step form, `66` draws and the declared term `66` are
+    //     UNCHANGED, so the `369` total stands.
+    // The rows' tables are now reconciled against the rulings; the records below
+    // are the RULED states, kept as console records so a later read-only pass can
+    // audit them without reading prose (`§3a A-16`).
     // ---------------------------------------------------------------
+    // The RULED draw arithmetic of `P-ZN-TP-2`, asserted (not merely printed): the
+    // `66` draws decompose as `63` NON-NEGATIVE + `3` NEGATIVE, and the three are
+    // exactly draw positions `29`, `57` and `65` (all selecting pool index `22`,
+    // 0-based, under the pinned seed and the one-step-per-draw LCG).
+    const negativeDraws = TP2_DRAW_INDICES.map((index, d) => ({ draw: d + 1, index })).filter(
+      (x) => TP2_POOL[x.index] < 0,
+    )
+    expect(
+      negativeDraws.map((x) => x.draw),
+      'PRE-2/§5.5.1 RULING 3 — the 3 NEGATIVE draws are exactly positions 29, 57 and 65 of the 66 (pool index 22, 0-based), the positions the ruled narrowing names',
+    ).toEqual([29, 57, 65])
+    expect(
+      new Set(negativeDraws.map((x) => x.index)),
+      'PRE-2/§5.5.1 RULING 3 — all three negative draws select the SAME pool member (#23, index 22), so the ruled boundary has one member to apply',
+    ).toEqual(new Set([22]))
+    expect(
+      TP2_DRAW_INDICES.length - negativeDraws.length,
+      'PRE-2/§5.5.1 RULING 3 — 63 NON-NEGATIVE draws + 3 NEGATIVE draws = 66: the declared term is the whole pool draw',
+    ).toBe(63)
     console.log(
-      `§5.5.1 reported findings :: ${JSON.stringify({
+      `§5.5.1 RULED findings :: ${JSON.stringify({
         row: 'P-ZN-TP-1',
-        finding: 'the strategy cell prints 40+50 while the Attempt-arithmetic table prints 60+30; both sum to 90',
+        ruling: 'RULING 1 (2026-09-27): 90 = 40 (20 pool shapes x 2 cycling axis bindings) + 50 (5+2+2+2+1+4+4+30); the Attempt-arithmetic table printed 20 x 3 = 60 + 30 and was the defect',
+        driven: '40 + 50',
       })}`,
     )
     console.log(
-      `§5.5.1 reported findings :: ${JSON.stringify({
+      `§5.5.1 RULED findings :: ${JSON.stringify({
         row: 'P-ZN-SM-1',
-        finding: 'the 20 sweep drives are 10 values as literally printed; driven as 10 values x 2 size classifications = 20',
+        ruling: 'RULING 2 (2026-09-27): 20 = 10 empty VALUES x 2 SIZE CLASSIFICATIONS (S1 finite non-negative, S2 invalid)',
+        driven: '10 x 2 = 20',
       })}`,
     )
     console.log(
-      `§5.5.1 reported findings :: ${JSON.stringify({
+      `§5.5.1 RULED findings :: ${JSON.stringify({
         row: 'P-ZN-TP-2',
-        finding: 'pool member 23 (Number.MIN_SAFE_INTEGER + 1) is negative; drawn 3 of 66 times',
-        drawsSelectingIt: TP2_DRAW_INDICES.map((idx, d) => ({ draw: d, index: idx })).filter((x) => x.index === 22),
+        ruling:
+          'RULING 3 (2026-09-27): the negative member is INTENTIONAL and the boundary is NARROWED — finite draws; non-negative ⇒ String(drawn) + unit; negative ⇒ spec.emptyToken VERBATIM, asserted per draw',
+        negativeDrawPositions: negativeDraws.map((x) => x.draw),
+        negativeDraws: negativeDraws.length,
+        nonNegativeDraws: TP2_DRAW_INDICES.length - negativeDraws.length,
       })}`,
     )
   })
@@ -2238,6 +2447,104 @@ describe('PRE — harness preconditions (not spec rows)', () => {
     expect(
       vocabularyViolations('const table = 1; const stable = 2; const IMMUTABLE = 3;'),
       'PRE-3 — ordinary words CONTAINING a spelling are not violations (this is why the scan is bounded)',
+    ).toEqual([])
+  })
+
+  it('PRE-4 (harness) — THE POOL-VERSUS-BOUNDARY RULE: every register row’s declared members are checked against ITS OWN declared boundary (the class the P-ZN-TP-2 contradiction exposes)', () => {
+    // -----------------------------------------------------------------------
+    // `§5.5.1`'s POOL-VERSUS-BOUNDARY RULE (ADDED 2026-09-27, the red-run
+    // register-reconciliation pass): *a pool or table member that contradicts the
+    // row's own declared boundary is a REGISTER DEFECT, and the RED RUN is where it
+    // is caught.* The SpecWriter checked all EIGHT rows and found `P-ZN-TP-2` the
+    // only contradiction; this row makes that check MECHANICAL and permanent, so
+    // the class cannot recur silently as a register is extended.
+    // WHAT A CONTRADICTION LOOKS LIKE (the three shapes the check reports):
+    //   (i)   the member's value-derived class is admitted by NO clause of the
+    //         row's boundary and is no declared intended class — the exact as-filed
+    //         `P-ZN-TP-2` shape: the negative member `-9007199254740990` under a
+    //         boundary claiming every draw is non-negative;
+    //   (ii)  the member's value-derived class DISAGREES with the class the row's
+    //         own table declares for it (a value contradicting its label), or the
+    //         member's class carries no declared per-member assertion clause;
+    //   (iii) a class declared with an assertion clause (or as intended) that NO
+    //         member carries — a STALE declaration.
+    // The positive controls below reproduce all three, so the check can FAIL.
+    // -----------------------------------------------------------------------
+    expect(
+      ZONE_BOUNDARY_ROWS.length,
+      'PRE-4 — the check covers the register’s EIGHT rows (§5.5.1)',
+    ).toBe(8)
+    expect(
+      registerKeySet(
+        ZONE_BOUNDARY_ROWS.map((r) => ({ row: r.id, strategy: r.strategy })),
+      ),
+      'PRE-4/§5.5.1 — the eight checked rows are the register’s own rows, with their declared `S-ZN-*` strategy ids (a SET comparison, sorted by row id: §5.5.1’s two tables print the rows in different orders, so a row ORDER is not a claim — the later read-only audit, §3a A-16, reads this same table)',
+    ).toEqual(registerKeySet(REGISTER_DECLARED))
+    const census: Record<string, number> = {}
+    for (const row of ZONE_BOUNDARY_ROWS) {
+      const members = row.members()
+      census[row.id] = members.length
+      expect(
+        members.length,
+        `PRE-4/§5.5.1 — row ${row.id} declares members, so the boundary check over it is NOT VACUOUS`,
+      ).toBeGreaterThan(0)
+      expect(
+        poolBoundaryViolations(row),
+        `PRE-4/§5.5.1 — every declared member of ${row.id} satisfies ${row.id}'s OWN declared boundary (${row.boundary}), its derived class equals the class its table declares, and its class carries a per-member assertion clause`,
+      ).toEqual([])
+    }
+    console.log(`§5.5.1 pool-versus-boundary census :: ${JSON.stringify(census)}`)
+    /** Rows are looked up BY ID (never by index): a re-order of the register must
+     *  not silently re-point a control at another row. */
+    const rowById = (id: string): BoundaryRow => {
+      const found = ZONE_BOUNDARY_ROWS.find((r) => r.id === id)
+      expect(found !== undefined, `PRE-4 — the register declares the row ${id}`).toBe(true)
+      return found as BoundaryRow
+    }
+    // ── THE POSITIVE CONTROLS (non-vacuity: a check that cannot fail is not a
+    // check). (1) the AS-FILED `P-ZN-TP-2` boundary — non-negative-only, with no
+    // declared intended class for the negative member — MUST be reported.
+    const tp2 = rowById('P-ZN-TP-2')
+    const asFiled = { ...tp2, boundary: 'AS FILED: every draw is a finite non-negative number … no draw may yield the empty token', intended: [] }
+    const asFiledViolations = poolBoundaryViolations(asFiled)
+    expect(
+      asFiledViolations.length,
+      'PRE-4/§5.5.1 RULING 3 — the AS-FILED P-ZN-TP-2 boundary (every draw non-negative, no intended class) MUST report the negative member: that is the exact defect this rule exists to catch',
+    ).toBeGreaterThan(0)
+    expect(
+      asFiledViolations.some((v) => v.includes('finite-negative-number')),
+      `PRE-4 — the reported violation NAMES the member's class (so the defect cannot recur silently): ${JSON.stringify(asFiledViolations)}`,
+    ).toBe(true)
+    // (2) a member whose class carries NO declared per-member assertion clause.
+    const unasserted = {
+      ...rowById('P-ZN-IM-4'),
+      asserted: { 'finite-non-negative-number': ASSERTED_IM4 },
+    }
+    expect(
+      poolBoundaryViolations(unasserted).some((v) => v.includes('bare-number-form')),
+      'PRE-4/§5.5.1 rule (ii) — a member class with NO declared per-member assertion clause is reported (an unasserted member is unreported by construction)',
+    ).toBe(true)
+    // (3) a STALE declaration: a declared intended class that no member carries.
+    expect(
+      poolBoundaryViolations({ ...rowById('P-ZN-IM-1'), intended: ['finite-non-negative-number'] }).some((v) =>
+        v.includes('STALE'),
+      ),
+      'PRE-4/§5.5.1 rule (iii) — a declared class that NO member carries is reported as STALE (a declaration that has drifted off its own pool)',
+    ).toBe(true)
+    // (4) a member whose VALUE contradicts the class its table DECLARES for it.
+    expect(
+      poolBoundaryViolations({
+        ...rowById('P-ZN-SM-1'),
+        members: () => [{ id: 'a value mislabelled as S1', cls: 'non-finite-number', declared: 'finite-non-negative-number' }],
+      }).some((v) => v.includes('DECLARES')),
+      'PRE-4/§5.5.1 rule (ii) — a value-derived class that disagrees with the row table’s own label is reported',
+    ).toBe(true)
+    // The clean direction, asserted so a check that reports EVERYTHING cannot pass
+    // the row either: the eight real rows report nothing (checked above) AND this
+    // clean control reports nothing.
+    expect(
+      poolBoundaryViolations(tp2),
+      'PRE-4/§5.5.1 RULING 3 — under the RULED (A) boundary the negative member is an INTENDED class with its own asserted limb, so the as-filed violation is GONE (the ruling, not a tuned row)',
     ).toEqual([])
   })
 })
@@ -2570,6 +2877,368 @@ const TP2_DRAW_INDICES: readonly number[] = (() => {
 })()
 
 // ===========================================================================
+// §5.5.1 — **THE POOL-VERSUS-BOUNDARY RULE** (ADDED 2026-09-27, the red-run
+// register-reconciliation pass; `P-ZN-TP-2`'s contradiction is the worked case).
+//
+// THE RULE THE REGISTER KEEPS: *a pool or table member that contradicts the row's
+// own declared boundary is a REGISTER DEFECT, and the RED RUN is where it is
+// caught.* Concretely, per the spec:
+//   (i)   a drawn/enumerated member must SATISFY the row's boundary text, or the
+//         row must DECLARE that member as an intended class with its expected
+//         outcome asserted (per member, not by category);
+//   (ii)  where a member is an intended hostile/negative class, the row asserts
+//         that member's OWN limb outcome, so the boundary text and the drawn
+//         members agree byte for byte;
+//   (iii) a boundary sentence that quantifies over the whole pool ("every draw
+//         is …") is a claim about EVERY listed member, checked at AUTHORING time.
+//
+// HOW THIS IS CHECKED, and it is mechanical: every member of every register row's
+// pool/table is enumerated with (a) the class DERIVED FROM ITS ACTUAL VALUE (or,
+// where the table declares the member by a class label, from that label), and
+// (b) the class the ROW'S OWN TABLE DECLARES for it. A contradiction LOOKS LIKE
+// THIS, and it is the exact as-filed defect: `P-ZN-TP-2` member #23
+// (`-9007199254740990`) under the AS-FILED boundary *"every draw is a finite
+// non-negative number … no draw may yield the empty token"* — the member's derived
+// class `finite-negative-number` is admitted by NO clause of that boundary and
+// declared nowhere, so the check reports it (the positive control in `PRE-4`
+// reproduces that shape and MUST fail). A second contradiction shape is a table
+// whose member's VALUE does not match its own LABEL (derived ≠ declared), and a
+// third is a member whose class carries no declared per-member assertion clause.
+// ===========================================================================
+/** The size-class taxonomy the rule compares members against — derived from the
+ *  VALUE, never from a label, so a member whose value contradicts its label is
+ *  caught as well. */
+function classifySize(v: unknown): string {
+  if (typeof v !== 'number') return 'non-number'
+  if (!Number.isFinite(v)) return 'non-finite-number'
+  return v < 0 ? 'finite-negative-number' : 'finite-non-negative-number'
+}
+/** A flag-axis member's class, from the row's own declared label prefix. */
+function classifyFlag(id: string): string {
+  return id.startsWith('truthy:') ? 'truthy-flag' : 'falsy-flag'
+}
+/** A census shape's class, derived from the census VALUE: does it own `0` under
+ *  the string key `'a'` (a `Map` through `Map.get`), or not? A throwing accessor
+ *  is `not-owning-zero-under-a` — the value `§2.3` item 2(v) pins to `false`. */
+function classifyCensus(census: unknown): string {
+  if (census === null || (typeof census !== 'object' && typeof census !== 'function')) {
+    return 'not-owning-zero-under-a'
+  }
+  if (census instanceof Map) {
+    try {
+      return census.get('a') === 0 ? 'owns-zero-under-a' : 'not-owning-zero-under-a'
+    } catch {
+      return 'not-owning-zero-under-a'
+    }
+  }
+  if (Array.isArray(census) || census instanceof Set) return 'not-owning-zero-under-a'
+  try {
+    if (!own(census as object, 'a')) return 'not-owning-zero-under-a'
+    return (census as Record<string, unknown>)['a'] === 0 ? 'owns-zero-under-a' : 'not-owning-zero-under-a'
+  } catch {
+    return 'not-owning-zero-under-a'
+  }
+}
+/** A spec class's class, derived from the SPEC VALUE: a usable record whose three
+ *  fields are strings, or malformed (`§2.3` item 1(d)). */
+function classifySpec(spec: unknown): string {
+  if (spec === null || typeof spec !== 'object') return 'malformed-spec'
+  const record = spec as Record<string, unknown>
+  for (const field of ['trackProp', 'unit', 'emptyToken'] as const) {
+    try {
+      if (typeof record[field] !== 'string') return 'malformed-spec'
+    } catch {
+      return 'malformed-spec'
+    }
+  }
+  return 'well-formed-spec'
+}
+type BoundaryMember = { id: string; cls: string; declared: string }
+type BoundaryRow = {
+  id: string
+  strategy: string
+  /** The row's DECLARED boundary, quoted from `§5.5.1`'s register. */
+  boundary: string
+  /** The row's declared members, each with its derived and its declared class. */
+  members: () => readonly BoundaryMember[]
+  /** The classes the boundary text ADMITS directly. */
+  admit: readonly string[]
+  /** Classes the boundary admits ONLY as DECLARED intended classes (a hostile or
+   *  negative member whose OWN limb outcome the row asserts per member). */
+  intended: readonly string[]
+  /** Every member class must carry a declared per-member assertion clause (rule
+   *  (ii)); an empty entry is a violation, and an UNUSED entry is stale. */
+  asserted: Readonly<Record<string, string>>
+}
+/** The check. Returns one message per contradiction — an empty array is the clean
+ *  state, and (as the positive controls in `PRE-4` show) a non-empty array is
+ *  reachable, so the check is falsifiable rather than decorative. */
+function poolBoundaryViolations(row: BoundaryRow): string[] {
+  const out: string[] = []
+  const admitted = new Set([...row.admit, ...row.intended])
+  const used = new Set<string>()
+  for (const m of row.members()) {
+    used.add(m.cls)
+    if (!admitted.has(m.cls)) {
+      out.push(
+        `${row.id} member '${m.id}': its class '${m.cls}' is NOT admitted by the row's boundary (${row.boundary}) and no ` +
+          `declared intended class covers it — §5.5.1 POOL-VERSUS-BOUNDARY RULE (i)`,
+      )
+      continue
+    }
+    if (m.declared !== m.cls) {
+      out.push(
+        `${row.id} member '${m.id}': the row's table DECLARES '${m.declared}' while the member's value IS '${m.cls}' — the ` +
+          `boundary text and the driven members must agree byte for byte — §5.5.1 POOL-VERSUS-BOUNDARY RULE (ii)`,
+      )
+      continue
+    }
+    if ((row.asserted[m.cls] ?? '').length === 0) {
+      out.push(
+        `${row.id} member '${m.id}': class '${m.cls}' carries NO declared per-member assertion clause — a member whose own ` +
+          `limb outcome is not asserted is exactly the unreported class this rule exists to close — §5.5.1 ` +
+          `POOL-VERSUS-BOUNDARY RULE (ii)`,
+      )
+    }
+  }
+  for (const cls of Object.keys(row.asserted)) {
+    if (!used.has(cls)) {
+      out.push(
+        `${row.id}: the class '${cls}' is declared with an assertion clause but NO member carries it — a STALE declaration — ` +
+          `§5.5.1 POOL-VERSUS-BOUNDARY RULE (iii)`,
+      )
+    }
+  }
+  for (const cls of row.intended) {
+    if (!used.has(cls)) {
+      out.push(
+        `${row.id}: the intended class '${cls}' is declared but NO member carries it — a STALE declaration — §5.5.1 ` +
+          `POOL-VERSUS-BOUNDARY RULE (iii)`,
+      )
+    }
+  }
+  return out
+}
+/** The per-attempt assertion clause of each row, quoted from its own cell — the
+ *  same text every member class must be covered by. */
+const ASSERTED_IM1 =
+  'the returned value === the exact expected string (the caller sentinel, byte for byte), the sentinel `unit` does not occur in it, and the three drives with different caller `emptyToken`s differ from one another'
+const ASSERTED_TP1 = 'the returned value is of the DECLARED TYPE (typeof check), NO throw, and the same call repeated immediately returns an equal value'
+const ASSERTED_IM2 = 'the exact `\'0\' + unit` string (or the empty token for the opposite limb) / the declared boolean, and for a `-0` value that the emitted string does not begin with `-\'`'
+const ASSERTED_IM3 = 'the returned boolean and its exact expected value for that pair, a post-call census snapshot identical to the pre-call one, and a second immediate call returning the same boolean'
+const ASSERTED_SM1 = 'the exact returned string per `(cell, empty)` pair, and that `\'\'` is NOT the spec\'s own `emptyToken` for C2/C3/C4'
+const ASSERTED_SM2 = 'the pre-call snapshot deep-equals the post-call snapshot, the returned value is unchanged by freezing, and the repeat call returns an equal value'
+const ASSERTED_IM4 = 'the exact expected string built by the row as `String(size) + unit`, and that the sentinel `emptyToken` does not occur in it'
+const ASSERTED_TP2 =
+  'PER DRAW: a non-negative draw === `String(drawn) + unit` with the sentinel-absence check; a NEGATIVE draw === `spec.emptyToken` VERBATIM (the RULED (A) limb), plus a repeat call returning the identical string'
+/** **THE EIGHT ROWS' DECLARED MEMBERS AGAINST THEIR OWN DECLARED BOUNDARIES**
+ *  (`§5.5.1`'s POOL-VERSUS-BOUNDARY check, which found `P-ZN-TP-2` the only row
+ *  carrying a contradiction, and this row now asserts that state mechanically). */
+const ZONE_BOUNDARY_ROWS: readonly BoundaryRow[] = [
+  {
+    id: 'P-ZN-IM-1',
+    strategy: 'S-ZN-EMPTY-1',
+    boundary:
+      'EVERY size that is NOT a finite non-negative number ⇒ spec.emptyToken VERBATIM (the 20 size classes); the converse half = a truthy `empty` yields the token for ANY size and a falsy `empty` NEVER does for a valid size (the 10 flag drives)',
+    members: () => [
+      ...IM1_CLASSES.map((c) => {
+        const cls = classifySize(c.size)
+        return { id: c.id, cls, declared: cls }
+      }),
+      ...IM1_FLAG_DRIVES.map((f) => {
+        const cls = classifyFlag(f.id)
+        return { id: f.id, cls, declared: cls }
+      }),
+    ],
+    admit: ['finite-negative-number', 'non-finite-number', 'non-number', 'truthy-flag', 'falsy-flag'],
+    intended: [],
+    asserted: {
+      'finite-negative-number': ASSERTED_IM1,
+      'non-finite-number': ASSERTED_IM1,
+      'non-number': ASSERTED_IM1,
+      'truthy-flag': ASSERTED_IM1,
+      'falsy-flag': ASSERTED_IM1,
+    },
+  },
+  {
+    id: 'P-ZN-TP-1',
+    strategy: 'S-ZN-TOTAL-1',
+    boundary:
+      'BOTH functions are TOTAL for every input shape in the 20-shape pool, over every pairing the row drives — the row claims NO value/emptiness boundary at all, so there is nothing for a member to contradict',
+    members: () => [
+      ...TP1_POOL.map((s) => ({ id: s.id, cls: 'totality-input-only', declared: 'totality-input-only' })),
+      ...TP1_FIXED_DRIVES.map((d) => ({ id: d.id, cls: 'fixed-hostile-pairing', declared: 'fixed-hostile-pairing' })),
+    ],
+    admit: ['totality-input-only', 'fixed-hostile-pairing'],
+    intended: [],
+    asserted: { 'totality-input-only': ASSERTED_TP1, 'fixed-hostile-pairing': ASSERTED_TP1 },
+  },
+  {
+    id: 'P-ZN-IM-2',
+    strategy: 'S-ZN-ZERO-1',
+    boundary: 'EVERY zero-valued input (`=== 0`, `-0` included) — the row claims no sign-free INPUT, only a sign-free OUTPUT',
+    members: () =>
+      IM2_ZERO_VALUES.map((z) => {
+        const cls = z.make() === 0 ? 'zero-valued' : 'nonzero-number'
+        return { id: z.id, cls, declared: 'zero-valued' }
+      }),
+    admit: ['zero-valued'],
+    intended: [],
+    asserted: { 'zero-valued': ASSERTED_IM2 },
+  },
+  {
+    id: 'P-ZN-SM-1',
+    strategy: 'S-ZN-TABLE-1',
+    boundary:
+      'the cross-product of the 4 size classifications (S1 finite non-negative · S2 NaN · S3 -1 · S4 \'12\') with the 4 spec classes (C1 well-formed · C2 null · C3 {} · C4 a non-string field), plus the 10-value x 2-classification sweep and the 32 limb-order re-drives',
+    members: () => [
+      ...SM1_SIZE_CLASSES.map((s) => {
+        const cls = classifySize(s.value)
+        const declared = s.id.startsWith('S1')
+          ? 'finite-non-negative-number'
+          : s.id.startsWith('S2')
+            ? 'non-finite-number'
+            : s.id.startsWith('S3')
+              ? 'finite-negative-number'
+              : 'non-number'
+        return { id: s.id, cls, declared }
+      }),
+      ...SM1_SPEC_CLASSES.map((c) => {
+        const cls = classifySpec(c.make())
+        const declared = c.id.startsWith('C1') ? 'well-formed-spec' : 'malformed-spec'
+        return { id: c.id, cls, declared }
+      }),
+      ...SM1_EMPTY_SWEEP.map((e) => {
+        const cls = e.truthy ? 'truthy-flag' : 'falsy-flag'
+        return { id: `sweep empty = ${e.id}`, cls, declared: cls }
+      }),
+    ],
+    admit: [
+      'finite-non-negative-number',
+      'non-finite-number',
+      'finite-negative-number',
+      'non-number',
+      'well-formed-spec',
+      'malformed-spec',
+      'truthy-flag',
+      'falsy-flag',
+    ],
+    intended: [],
+    asserted: {
+      'finite-non-negative-number': ASSERTED_SM1,
+      'non-finite-number': ASSERTED_SM1,
+      'finite-negative-number': ASSERTED_SM1,
+      'non-number': ASSERTED_SM1,
+      'well-formed-spec': ASSERTED_SM1,
+      'malformed-spec': ASSERTED_SM1,
+      'truthy-flag': ASSERTED_SM1,
+      'falsy-flag': ASSERTED_SM1,
+    },
+  },
+  {
+    id: 'P-ZN-IM-3',
+    strategy: 'S-ZN-CENSUS-1',
+    boundary:
+      'own value exactly `0` under the string key `\'a\'` ⇒ true; absent or non-zero ⇒ false; a prototype-only key ⇒ false (never a prototype read)',
+    members: () => [
+      ...IM3_CENSUS_SHAPES.map((c) => {
+        const cls = classifyCensus(c.make())
+        const declared = c.trueFor.includes('a') ? 'owns-zero-under-a' : 'not-owning-zero-under-a'
+        return { id: c.id, cls, declared }
+      }),
+      ...IM3_CENSUS_SHAPES.filter((c) => c.variant !== undefined).map((c) => ({
+        id: `${c.id} — the throwing-accessor VARIANT (pinned to false by §2.3 item 2(v))`,
+        cls: classifyCensus(c.variant?.()),
+        declared: 'not-owning-zero-under-a',
+      })),
+      ...IM3_ZONE_IDS.map((z) => {
+        const cls = typeof z.value === 'string' ? 'string-key' : 'non-string-key'
+        return { id: `zoneId ${z.id}`, cls, declared: cls }
+      }),
+    ],
+    admit: ['owns-zero-under-a', 'not-owning-zero-under-a', 'string-key', 'non-string-key'],
+    intended: [],
+    asserted: {
+      'owns-zero-under-a': ASSERTED_IM3,
+      'not-owning-zero-under-a': ASSERTED_IM3,
+      'string-key': ASSERTED_IM3,
+      'non-string-key': ASSERTED_IM3,
+    },
+  },
+  {
+    id: 'P-ZN-SM-2',
+    strategy: 'S-ZN-PURITY-1',
+    boundary:
+      'every entry is a caller object the row hands to ONE access pattern and one twin form; nothing in the table claims a value boundary',
+    members: () =>
+      SM2_CALLER_OBJECTS.flatMap((o) =>
+        SM2_ACCESS_PATTERNS.flatMap((p) =>
+          SM2_TWIN_FORMS.map((t) => {
+            const cls = `caller-object x ${p.fn === 'trackFor' ? 'trackFor-pattern' : 'isEmpty-pattern'} x ${t.freeze ? 'frozen' : 'unfrozen'}`
+            return { id: `${o.id} x ${p.id} x ${t.id}`, cls, declared: cls }
+          }),
+        ),
+      ),
+    admit: SM2_CALLER_OBJECTS.flatMap((o) =>
+      SM2_ACCESS_PATTERNS.flatMap((p) =>
+        SM2_TWIN_FORMS.map(
+          (t) => `caller-object x ${p.fn === 'trackFor' ? 'trackFor-pattern' : 'isEmpty-pattern'} x ${t.freeze ? 'frozen' : 'unfrozen'}`,
+        ),
+      ),
+    ),
+    intended: [],
+    asserted: Object.fromEntries(
+      SM2_ACCESS_PATTERNS.flatMap((p) =>
+        SM2_TWIN_FORMS.map((t) => [
+          `caller-object x ${p.fn === 'trackFor' ? 'trackFor-pattern' : 'isEmpty-pattern'} x ${t.freeze ? 'frozen' : 'unfrozen'}`,
+          ASSERTED_SM2,
+        ]),
+      ),
+    ),
+  },
+  {
+    id: 'P-ZN-IM-4',
+    strategy: 'S-ZN-FORMAT-1',
+    boundary:
+      'ALL 5 size values are FINITE and NON-NEGATIVE — exactly the row\'s `String(size) + unit` boundary — and `unit: \'\'` is the bare-number form (asserted as a form, not as a failure)',
+    members: () => [
+      ...IM4_SIZES.map((size) => {
+        const cls = classifySize(size)
+        return { id: `size value ${brief(size)}`, cls, declared: cls }
+      }),
+      ...IM4_SPEC_SHAPES.map((s) => {
+        const cls = s.spec.unit === '' ? 'bare-number-form' : 'suffixed-form'
+        return { id: s.id, cls, declared: cls }
+      }),
+    ],
+    admit: ['finite-non-negative-number', 'bare-number-form', 'suffixed-form'],
+    intended: [],
+    asserted: {
+      'finite-non-negative-number': ASSERTED_IM4,
+      'bare-number-form': ASSERTED_IM4,
+      'suffixed-form': ASSERTED_IM4,
+    },
+  },
+  {
+    id: 'P-ZN-TP-2',
+    strategy: 'S-ZN-SEED-1/S-ZN-POOL-1',
+    boundary:
+      'RULED (A) 2026-09-27: every draw is FINITE; a NON-NEGATIVE draw emits exactly `String(drawn) + unit` and may NOT yield the empty token; a NEGATIVE draw MUST yield `spec.emptyToken` VERBATIM, asserted per draw',
+    members: () =>
+      TP2_POOL.map((value, i) => {
+        const cls = classifySize(value)
+        return { id: `pool member #${i + 1} (0-based index ${i}) = ${brief(value)}`, cls, declared: cls }
+      }),
+    admit: ['finite-non-negative-number'],
+    intended: ['finite-negative-number'],
+    asserted: {
+      'finite-non-negative-number': ASSERTED_TP2,
+      'finite-negative-number': ASSERTED_TP2,
+    },
+  },
+]
+
+// ===========================================================================
 // §5.5.1 — THE TYPED PROPERTY REGISTER (8 rows, ALL executed deterministically).
 //
 // Type algebra (`docs/specs/engine-pin.md` §5.5's): `P-IM` invariant ·
@@ -2640,6 +3309,16 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
     // (1) the 40 pool drives = the 20-shape pool x 2 cycling axis bindings. For
     // pool index i the two calls are [isEmpty(shape, 'a'), trackFor(...)], and a
     // value that IS a TrackSpec-shaped record is driven in the spec position.
+    // ⟶ THE ONE TRUE DECOMPOSITION, AS RULED (`§5.5.1`'s dated correction on this
+    // row's strategy cell + RULING 1, 2026-09-27): `90 = 40 + 50`, where `40` is
+    // the `20` pool shapes x the `2` one-call-per-function bindings
+    // `[isEmpty(census, zoneId), trackFor(spec, size, empty)]` and `50` is the
+    // fixed hostile pairings itemized `5+2+2+2+1+4+4+30`. The as-filed
+    // "Attempt-arithmetic" table printed `20 x 3 = 60` + `30` — a SECOND,
+    // incompatible partition of the same `90` — and it was the DEFECT (its `30`
+    // contradicts the row's own itemization = `50`, and its `3` would drive an
+    // axis this row does not have). This row drives the ruled `40 + 50`; no term
+    // moved and the declared term stays `90`.
     for (const shape of TP1_POOL) {
       rec.run(`${shape.id} [binding 1: isEmpty(census, zoneId)]`, () => {
         if (isEmpty === null) return reason
@@ -2753,7 +3432,7 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
     rec.finish()
   })
 
-  it('P-ZN-SM-1 [S-ZN-TABLE-1] — EVERY decision-table cell is EXACTLY the limb order’s outcome (16 cells + 20 sweep + 32 limb-order = 68 attempts)', async () => {
+  it('P-ZN-SM-1 [S-ZN-TABLE-1] — EVERY decision-table cell is EXACTLY the limb order’s outcome, with limb (d) malformed-first as RULED (16 cells + 20 sweep = 10 empty VALUES x 2 SIZE CLASSIFICATIONS + 32 limb-order = 68 attempts)', async () => {
     const s = await resolveSurface()
     const trackFor = s.trackFor
     const reason = s.reason ?? 'the module surface is unavailable'
@@ -2764,6 +3443,13 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
     // size classification in BOTH flag halves (`§2.3` item 1(d), `F-1`: `''` is
     // returned iff the spec is not a usable record OR any field is unreadable or
     // not a string — and the SAME string for all three field failures).
+    // ⟶ THE MALFORMED-FIRST PRECEDENCE IS THE RULED READING (`§2.3` item 1(d)'s
+    // dated ruling, `§5.5.1` RULING 4, and `§2.1`'s trackFor doc block): limb (d)
+    // is evaluated FIRST and GATES the other three, so a malformed spec yields `''`
+    // whatever `empty` says — a module that returned `spec.emptyToken` for a
+    // malformed spec with `empty === true` would FAIL this row. That is why the
+    // 32 limb-order re-drives below assert `''` in BOTH flag halves: it is the
+    // PINNED PRECEDENCE, not a choice.
     const cellExpected = (sizeClassId: string, specClassId: string, empty: boolean): string => {
       if (specClassId !== 'C1') return ''
       if (empty) return '0px'
@@ -2786,11 +3472,17 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
         })
       }
     }
-    // (b) the 20 `empty`-sweep drives: the 10 `empty` values x the 2 size
-    // classifications (S1 valid, S2 invalid) with C1 — so a truthy `empty`
-    // overrides even an INVALID size and a falsy `empty` never yields the token
-    // for a valid one. (The cell prints "with C1 x S1"; see PRE-2's reported
-    // finding on the term.)
+    // (b) the 20 `empty`-sweep drives, in the RULED words (`§5.5.1`'s dated
+    // correction + RULING 2, 2026-09-27): THE TERM IS `10` `empty` VALUES x `2`
+    // SIZE CLASSIFICATIONS = `20` — the row's second axis is the SIZE
+    // classification, not a second spec class: (S1) a finite non-negative number
+    // (120), where a truthy `empty` OVERRIDES a VALID size (so a module that
+    // inspects the size first FAILS here), and (S2) an invalid size (NaN), where a
+    // falsy `empty` NEVER yields the token and a truthy `empty` still does — the
+    // converse half the row's property states, and the column where limbs (a) and
+    // (b) disagree. C1 is the well-formed spec on both halves. The as-filed cell
+    // printed "with C1 x S1", which could not reach the declared `20`; the ruling
+    // pinned the product and the term stayed `20`.
     for (const e of SM1_EMPTY_SWEEP) {
       for (const sizeClass of [SM1_SIZE_CLASSES[0], SM1_SIZE_CLASSES[1]]) {
         rec.run(`sweep empty = ${e.id} x ${sizeClass.id}`, () => {
@@ -2799,7 +3491,7 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
           const got = trackFor(spec, sizeClass.value, e.value)
           const expected = e.truthy ? '0px' : sizeClass.id.startsWith('S1') ? '120px' : '0px'
           if (got !== expected) {
-            return `expected ${brief(expected)}, got ${brief(got)} — a truthy empty overrides a VALID size; a falsy empty NEVER yields the token for a valid size`
+            return `expected ${brief(expected)}, got ${brief(got)} — the 10 empty VALUES x the 2 SIZE CLASSIFICATIONS (S1 valid, S2 invalid): a truthy empty overrides a VALID size; a falsy empty NEVER yields the token for a valid size`
           }
           return null
         })
@@ -2807,7 +3499,9 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
     }
     // (c) the 32 limb-order drives: the SAME 16 cells re-driven once with
     // empty = true and once with empty = false — the only drives in which a
-    // limb-ORDER difference is observable.
+    // limb-ORDER difference is observable, and the drives that pin limb (d)'s
+    // malformed-first precedence in BOTH flag halves (`§2.3` item 1(d)'s dated
+    // ruling, `§5.5.1` RULING 4).
     for (const empty of [true, false]) {
       for (const sizeClass of SM1_SIZE_CLASSES) {
         for (const specClass of SM1_SPEC_CLASSES) {
@@ -2815,7 +3509,9 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
             if (trackFor === null) return reason
             const got = trackFor(specClass.make(), sizeClass.value, empty)
             const expected = cellExpected(sizeClass.id.slice(0, 2), specClass.id.slice(0, 2), empty)
-            if (got !== expected) return `expected ${brief(expected)}, got ${brief(got)}`
+            if (got !== expected) {
+              return `expected ${brief(expected)}, got ${brief(got)} — §2.3 item 1's limb order as RULED: limb (d) (a malformed spec) is evaluated FIRST and gates the flag, so C2/C3/C4 yield '' in BOTH flag halves; a truthy empty decides a WELL-FORMED spec`
+            }
             return null
           })
         }
@@ -2899,37 +3595,58 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
     rec.finish()
   })
 
-  it('P-ZN-TP-2 [S-ZN-SEED-1 / S-ZN-POOL-1] — the 66 pinned-seed draws over the 28-value pool: the numeric text is `String(size)` VERBATIM (66 attempts) — YES (bounded)', async () => {
+  it('P-ZN-TP-2 [S-ZN-SEED-1 / S-ZN-POOL-1] — the 66 pinned-seed draws over the 28-value pool: RULED (A) — a non-negative draw is `String(size) + unit` VERBATIM, a NEGATIVE draw is `spec.emptyToken` VERBATIM, asserted per draw (66 attempts) — YES (bounded)', async () => {
     const s = await resolveSurface()
     const trackFor = s.trackFor
     const reason = s.reason ?? 'the module surface is unavailable'
     const rec = new RegisterRow('P-ZN-TP-2', 'S-ZN-SEED-1/S-ZN-POOL-1')
+    // ⟶ THE RULED BOUNDARY (RULING 3, `§5.5.1`'s dated narrowing, 2026-09-27), and
+    // this row now ASSERTS it rather than excusing it. Pool member #23 is
+    // `Number.MIN_SAFE_INTEGER + 1` = -9007199254740990 — INTENTIONAL, the pool's
+    // sign-boundary member beside `Number.MAX_SAFE_INTEGER` — and the pinned seed
+    // draws it at exactly draw positions 29, 57 and 65 of the 66 (pool index 22,
+    // 0-based, one LCG step per draw: `63` non-negative + `3` negative = `66`). The
+    // narrowed boundary, three clauses: (i) every draw is FINITE; (ii) a
+    // NON-NEGATIVE draw emits exactly `String(drawn) + unit` and may NOT yield the
+    // empty token; (iii) a NEGATIVE draw MUST yield `spec.emptyToken` VERBATIM
+    // (`§2.3` item 1(b)'s limb), asserted PER DRAW at those three positions. The
+    // as-filed boundary ("every draw … non-negative … no draw may yield the empty
+    // token") was unsatisfiable for those three draws by any conforming module;
+    // ruling (B) (a pool typo, positive substitution) was DECLINED, and the pool,
+    // the seed, the step form, the `66` draws and the declared term `66` are all
+    // UNCHANGED.
     for (let d = 0; d < TP2_DRAWS; d += 1) {
       const index = TP2_DRAW_INDICES[d]
       const drawn = TP2_POOL[index]
       const shape = TP2_SPECS[d % 3]
-      rec.run(`draw ${d + 1}/66: pool index ${index} = ${brief(drawn)} x ${shape.id}`, () => {
-        if (trackFor === null) return reason
-        // ⟶ REPORTED FINDING (never tuned to green): pool member #23 is
-        // `Number.MIN_SAFE_INTEGER + 1` = -9007199254740990, a NEGATIVE number,
-        // while this row's own boundary text declares EVERY draw "a finite
-        // non-negative number ... no draw may yield the empty token". The pinned
-        // seed SELECTS it (draws 29, 57, 65 of 66). The BINDING clause is `§2.3`
-        // item 1(b) — a negative size ⇒ spec.emptyToken — so those three draws
-        // assert the decision table's outcome and the conflict is reported beside
-        // the table instead of being guessed away in either direction.
-        const expected = drawn >= 0 ? String(drawn) + shape.spec.unit : shape.spec.emptyToken
-        const got = trackFor(shape.spec, drawn, false)
-        if (got !== expected) return `expected ${brief(expected)}, got ${brief(got)}`
-        if (drawn >= 0 && String(got).includes(shape.spec.emptyToken)) {
-          return `the emptyToken sentinel occurs in a drawn non-empty token: ${brief(got)}`
-        }
-        const again = trackFor(shape.spec, drawn, false)
-        if (again !== got) return `the repeat call returned ${brief(again)}, not ${brief(got)}`
-        return null
-      })
+      const negative = drawn < 0
+      rec.run(
+        `draw ${d + 1}/66: pool index ${index} = ${brief(drawn)} x ${shape.id}${negative ? ' [the NEGATIVE limb: §2.3 item 1(b)]' : ''}`,
+        () => {
+          if (trackFor === null) return reason
+          const got = trackFor(shape.spec, drawn, false)
+          if (negative) {
+            // clause (iii): the emptyToken VERBATIM, per draw — never
+            // `String(drawn) + unit` and never a literal of the mechanism's own.
+            if (got !== shape.spec.emptyToken) {
+              return `the NEGATIVE draw ${drawn} MUST yield spec.emptyToken VERBATIM (§2.3 item 1(b), the RULED (A) limb): expected ${brief(shape.spec.emptyToken)}, got ${brief(got)}`
+            }
+          } else {
+            // clause (ii): exactly `String(drawn) + unit`, and the emptyToken may
+            // NOT appear (the sentinel-absence check).
+            const expected = String(drawn) + shape.spec.unit
+            if (got !== expected) return `expected ${brief(expected)}, got ${brief(got)}`
+            if (String(got).includes(shape.spec.emptyToken)) {
+              return `the emptyToken sentinel occurs in a drawn NON-NEGATIVE token (clause (ii) forbids it): ${brief(got)}`
+            }
+          }
+          const again = trackFor(shape.spec, drawn, false)
+          if (again !== got) return `the repeat call returned ${brief(again)}, not ${brief(got)}`
+          return null
+        },
+      )
     }
-    reconcile(rec, 66, 'P-ZN-TP-2 — the declared term is `66` pinned-seed draws, one LCG step each')
+    reconcile(rec, 66, 'P-ZN-TP-2 — the declared term is `66` pinned-seed draws, one LCG step each (63 non-negative + 3 negative, at draws 29/57/65)')
     rec.finish()
   })
 
@@ -2955,6 +3672,24 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
     }
     console.log(`§5.5.1 register status :: ${JSON.stringify(census)}`)
     expect(registerRecords.length, 'REGISTER-STATUS — all EIGHT register rows reported their record (§5.5.1: 8 rows)').toBe(8)
+    // ⟶ THE EXECUTED RECORD AGAINST THE SPEC'S DECLARED TABLE (`§3a A-16`'s audit
+    // half, made machine-comparable): the rows, their `S-ZN-*` strategy ids and
+    // their declared terms are compared OBJECT-FOR-OBJECT against `§5.5.1`'s
+    // register — never by a bare count, and never by prose. A later read-only pass
+    // can read this same record and check attempts/terms/strategy ids/the `369`
+    // total plus every member against its row's boundary (`PRE-4`).
+    expect(
+      registerKeySet(registerRecords.map((r) => ({ row: r.row, strategy: r.strategy }))),
+      'REGISTER-STATUS/§5.5.1 — the executed rows and their strategy ids are EXACTLY the register’s declared eight (a SET comparison, sorted by row id — a rename, a dropped row or a wrong strategy id fails here)',
+    ).toEqual(registerKeySet(REGISTER_DECLARED))
+    expect(
+      registerRecords.map((r) => r.seed),
+      'REGISTER-STATUS/§5.5.1 — every executed row carries the ONE pinned seed 20260927 (the row record prints it, so the audit need not infer it)',
+    ).toEqual(REGISTER_DECLARED.map(() => SEED))
+    expect(
+      REGISTER_DECLARED.reduce((sum, r) => sum + r.term, 0),
+      'REGISTER-STATUS/§5.5.1 — the declared total is the SUM OF ITS OWN TERMS and reads 369 (not the as-filed mis-sum 400)',
+    ).toBe(369)
     expect(
       registerState.attempts,
       'REGISTER-STATUS — the register never exceeds the <=400-attempts cap',
