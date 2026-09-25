@@ -936,6 +936,34 @@ describe('PRE — harness preconditions (not spec rows)', () => {
     ).toBe(true)
     expect(TP_HALVES.length, 'the two-halves binding axis holds both halves').toBe(2)
     expect(TP_SINKS.length, 'the sink binding axis holds the five sink shapes (SINKS[d mod 5])').toBe(5)
+    // -----------------------------------------------------------------------
+    // `ADV-PJ-6` — THE COVERAGE RECORD (§5.3 item 10's added fact; §5.5.1
+    // `P-PJ-TP-1`'s RE-DERIVED binding cell). `PRE-2` asserted sizes, seed and
+    // indices ONLY, and a register whose draws are an LCG draw is NOT a pool
+    // sweep — so the row that reports coverage must state the DISTINCT-MEMBER
+    // count the pinned seed actually produces, and must NOT claim 20-of-20.
+    // The number asserted here is DERIVED from this file's own LCG constants
+    // (`SEED`/`LCG_A`/`LCG_C`/`LCG_MOD`) exactly as `TP_DRAW_INDICES` is — it is
+    // not a literal copied from a pass record — and it AGREES with the spec's
+    // measured gate-5 value (19 of 20; `§5.5.1`'s cell names the undrawn member
+    // as the 3-key spec with two keys naming the same `--dup`, which is this
+    // pool's index 19).
+    // -----------------------------------------------------------------------
+    const distinctDrawn = new Set(TP_DRAW_INDICES)
+    expect(
+      distinctDrawn.size,
+      `${TP_DRAWS} pinned-seed draws over the 20-shape pool reached ${distinctDrawn.size} DISTINCT members — ` +
+        `the pool draw is a DRAW, never a sweep (§5.5.1 P-PJ-TP-1's re-derived cell, ADV-PJ-6). ` +
+        `This row RECORDS the count the seed produces; it is deliberately NOT a 20-of-20 coverage claim.`,
+    ).toBe(19)
+    expect(
+      new Set(TP_DRAW_INDICES).size,
+      'the distinct-member count is a COUNT OF A SET, never a restatement of the draw count (a count is not a coverage claim, S-14)',
+    ).toBeLessThan(TP_POOL.length)
+    expect(
+      TP_DRAW_INDICES.includes(19),
+      'pool member index 19 (the 3-key spec whose two keys both name `--dup`) is the member the pinned seed does NOT draw — recorded, never papered over',
+    ).toBe(false)
   })
 
   it('PRE-3 (harness) — the R-17 scan detects BOTH evasions and passes the legitimate text (its own controls)', () => {
@@ -2282,25 +2310,42 @@ describe('M — §3.1 the valid states', () => {
 describe('F — §3.2 the documented fail-states / skips', () => {
   it('F-1 §3.2 — a malformed spec entry is `malformed-spec`, and NO default is substituted', async () => {
     const { project } = await surface('F-1')
-    const entries: ReadonlyArray<readonly [string, unknown]> = [
-      ['null', null],
-      ['undefined', undefined],
-      ['a string', 'nope'],
-      ['a number', 7],
-      ['an array', []],
-      ['a missing name', { unit: 'px' }],
-      ['a non-string name', { name: 42, unit: 'px' }],
-      ['a missing unit', { name: '--x' }],
-      ['a non-string unit', { name: '--x', unit: 42 }],
-      ['an unknown format value', { name: '--x', unit: 'px', format: 'percent' }],
+    // `§3.2 F-1` + `F-1`'s `SKIP-NAME-1` cell (2026-09-27, findings `ADV-PJ-13` +
+    // `ADV-PJ-14`): the skip entry's shape is PINNED as
+    // `{ name, reason: 'malformed-spec' }` where `name` is the entry's OWN `name`
+    // when that field is a USABLE STRING and `''` otherwise — NEVER invented
+    // (never the `specOf` key, never a placeholder, never a coercion of a
+    // non-string `name`). The third cell below carries the usable-string class,
+    // so the row asserts BOTH halves: the REASON for every malformed shape AND
+    // the `name` per class. The TWELFTH shape (`F-1`'s own-read-throws class,
+    // `SKIP-THREW-1`) has its own row below — it has no `name` to report.
+    const entries: ReadonlyArray<readonly [string, unknown, string]> = [
+      ['null', null, ''],
+      ['undefined', undefined, ''],
+      ['a string', 'nope', ''],
+      ['a number', 7, ''],
+      ['an array', [], ''],
+      ['a missing name', { unit: 'px' }, ''],
+      ['a non-string name', { name: 42, unit: 'px' }, ''],
+      ['a missing unit', { name: '--x' }, '--x'],
+      ['a non-string unit', { name: '--x', unit: 42 }, '--x'],
+      ['an unknown format value', { name: '--x', unit: 'px', format: 'percent' }, '--x'],
+      // (iii) the entry DOES declare a usable string `name`: it is kept VERBATIM
+      // even though the entry is malformed for another reason (the non-string
+      // `unit`) — `SKIP-NAME-1` (1).
+      ['a usable name with a non-string unit', { name: '--dup', unit: 7 }, '--dup'],
     ]
-    for (const [id, entry] of entries) {
+    for (const [id, entry, expectedName] of entries) {
       const p = asProjection(
         drive(() => project({ k: 1 }, { k: entry }), `F-1 ${id}`),
         `F-1 ${id}`,
       )
-      expect(p.skipped.length, `F-1 ${id}: the entry is skipped (exactly one decision)`).toBe(1)
-      expect(p.skipped[0].reason, `F-1 ${id}: the reason is exactly 'malformed-spec'`).toBe('malformed-spec')
+      expect(
+        p.skipped,
+        `F-1/SKIP-NAME-1 ${id}: the entry yields EXACTLY one skip — the PAIR {name: ${JSON.stringify(
+          expectedName,
+        )}, reason: 'malformed-spec'} — the entry's own usable name verbatim, and '' where it declares none (never the specOf key 'k', never an invented placeholder)`,
+      ).toEqual([{ name: expectedName, reason: 'malformed-spec' }])
       expect(Object.keys(p.applied), `F-1 ${id}: nothing is applied — NO default name/unit/value is invented`).toEqual([])
     }
   })
@@ -3077,7 +3122,33 @@ describe('R — §3.4/§3.5 the static + existence rows', () => {
   })
 
   it('R-20 §3.4 — the diff-scope row: this unit touches only the module + this test file (no src/**, no scripts/**, no package.json)', () => {
-    // The unit's own change set, read from git (read-only; this row never edits).
+    // -----------------------------------------------------------------------
+    // THE SCOPE ASSERTION, RE-EXPRESSED AGAINST THE UNIT'S COMMITTED CHANGE SET
+    // (`ADV-PJ-12`, `OWED — TEST-SIDE`). The half that stood here was
+    // `git status --porcelain` (the WORKING TREE) — a probe that is VACUOUS after
+    // any commit, which is exactly the state `RCA-8(a)` mandates (a commit at
+    // every gate boundary). It is replaced by a census of the COMMITTED range
+    // anchored at the commit that ADDED THIS FILE — the unit's own red-set
+    // commit — through `HEAD`: every path any commit in that range touched, and
+    // every one of them must be inside the unit's own artifact scope.
+    //
+    // WHY THE ANCHOR IS WHAT IT IS (stated so the row is not read as circular):
+    // the anchor is derived from git, never pinned as a literal — a literal hash
+    // would redden on any history rewrite — and it is used only to bound the
+    // range. The test file's own MEMBERSHIP in the range is therefore not
+    // asserted (that would be true by construction); what IS asserted is the
+    // falsifiable content: NO out-of-scope path appears anywhere in the unit's
+    // committed history, the range is non-empty, and at least one of the unit's
+    // three canonical artifacts is committed inside it.
+    //
+    // WHAT THIS ROW IS NOT: it is not a live working-tree check, and it cannot
+    // detect a working-tree modification that has NOT been committed — the
+    // tree-level half of that duty is the `existingTestFiles()` census below,
+    // which reads the same `git status` and keeps its own meaning. The honest
+    // limit is stated rather than papered over: this row's subject is the
+    // COMMITTED scope, and a pass that never commits its stray edits is invisible
+    // to it (that is `RCA-8(a)`'s concern, not this row's).
+    // -----------------------------------------------------------------------
     let porcelain = ''
     try {
       porcelain = execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' })
@@ -3088,22 +3159,84 @@ describe('R — §3.4/§3.5 the static + existence rows', () => {
       .split('\n')
       .filter((line) => line.trim().length > 0)
       .map((line) => line.slice(3).trim().replace(/^"|"$/g, ''))
+    const git = (args: readonly string[]): string => {
+      try {
+        return execFileSync('git', [...args], { encoding: 'utf8' }).trim()
+      } catch (e) {
+        return `<<git unavailable: ${describeThrown(e)}>>`
+      }
+    }
+    const unquote = (line: string): string => line.trim().replace(/^"|"$/g, '')
+    // The anchor: the commit that ADDED this file (the unit's red-set commit).
+    const anchor = git(['log', '--diff-filter=A', '--format=%H', '--', 'tests/layout-projection.test.ts'])
+      .split('\n')
+      .filter((line) => line.length > 0)[0]
+    expect(
+      anchor !== undefined && /^[0-9a-f]{7,40}$/.test(anchor),
+      `R-20/ADV-PJ-12: this unit's red-set commit is discoverable in git (the anchored range needs a real anchor; got ${brief(anchor)})`,
+    ).toBe(true)
+    const range = `${anchor}..HEAD`
+    // The COMMITTED change set of the unit's range: every path every commit in the
+    // range touched. (`git log --name-only` on a COMMIT RANGE is the leg that
+    // survives commits; a `git status` read cannot see a committed change set.)
+    const committedRaw = git(['log', '--name-only', '--pretty=format:', range])
+    const committed = Array.from(
+      new Set(
+        committedRaw
+          .split('\n')
+          .map(unquote)
+          .filter((line) => line.length > 0 && !line.startsWith('<<git unavailable')),
+      ),
+    ).sort()
+    expect(
+      committedRaw.includes('<<git unavailable'),
+      `R-20/ADV-PJ-12: the committed-range census itself resolved (git log over ${range}) — a probe that cannot read the change set must fail, never pass`,
+    ).toBe(false)
+    expect(
+      committed.length,
+      `R-20/ADV-PJ-12: the unit's committed range (${range}) is NON-EMPTY — a vacuous census cannot pass this row`,
+    ).toBeGreaterThan(0)
     // `§3.4 R-20`'s own text allows the spec: "Only `src/shared/layout-projection.ts`
     // (NEW), `tests/layout-projection.test.ts` (NEW) and THIS SPEC (plus the
     // trackers, the SUPERVISOR's pass) are touched by this unit". The spec is the
-    // contract's own file and the 2026-09-27 red-set-repair pass amended it (uncommitted
-    // as this row runs), so the spec is IN scope and every OTHER document is not.
+    // contract's own file, `docs/next-steps.md` carries the unit's own DONE row
+    // (§5.1 row 4's "the SUPERVISOR's pass") and `docs/specs/projection-greens.md`
+    // is this unit's own gate-5 greens artifact — every other path is out of scope.
     const ALLOWED: readonly string[] = [
       'src/shared/layout-projection.ts',
       'tests/layout-projection.test.ts',
       'docs/specs/projection.md',
+      'docs/specs/projection-greens.md',
+      'docs/next-steps.md',
     ]
+    // THE SCOPE ASSERTION OVER THE COMMITTED SET — the falsifiable half.
+    for (const path of committed) {
+      expect(
+        ALLOWED.includes(path),
+        `R-20/§5.1 (ADV-PJ-12): '${path}' was COMMITTED inside this unit's range ${range} and is OUTSIDE this unit's artifact scope (only ${ALLOWED.join(
+          ' + ',
+        )} may be touched) — the committed change set was: ${JSON.stringify(committed)}`,
+      ).toBe(true)
+    }
+    const CANONICAL: readonly string[] = [
+      'src/shared/layout-projection.ts',
+      'tests/layout-projection.test.ts',
+      'docs/specs/projection.md',
+    ]
+    expect(
+      committed.filter((p) => CANONICAL.includes(p)).length,
+      `R-20/ADV-PJ-12: at least ONE of the unit's three canonical artifacts (${CANONICAL.join(
+        ' / ',
+      )}) is genuinely committed inside the range — so the census is a census of real unit work, not of an empty set`,
+    ).toBeGreaterThan(0)
+    // The tree-level census (kept, and still meaningful: it names an UNCOMMITTED
+    // out-of-scope path when one exists — the half the committed range cannot see).
     for (const path of paths) {
       expect(
         ALLOWED.includes(path),
-        `R-20/§5.1: '${path}' is OUTSIDE this unit's diff scope (only ${ALLOWED.join(' + ')} may be touched) — git status said: ${JSON.stringify(
-          porcelain,
-        )}`,
+        `R-20/§5.1: '${path}' is OUTSIDE this unit's diff scope in the WORKING TREE (only ${ALLOWED.join(
+          ' + ',
+        )} may be touched) — git status said: ${JSON.stringify(porcelain)}`,
       ).toBe(true)
     }
     // §5.1's named OUT-OF-SCOPE paths are untouched by this unit's change set.
@@ -3260,10 +3393,16 @@ const OWNKEY_FIXED_SHAPES: readonly string[] = [
   '(4) the __proto__ projection against a recording fake sink (M-20)',
 ]
 
-/** `P-PJ-IM-3`'s axes: 3 accessor variants × 4 positions × 3 neighbour dispositions. */
+/** `P-PJ-IM-3`'s axes: 3 accessor variants × 4 positions × 3 neighbour dispositions.
+ *  Variant (b)'s LABEL states the RE-DERIVED reading (`ADV-PJ-5`; `§5.5.1`'s cell
+ *  supersedes its as-written *"throws only on its SECOND read … so (b) behaves as
+ *  (a)"*): an accessor whose FIRST read SUCCEEDS and whose later read would throw
+ *  is the APPLIED case, because the contract performs exactly ONE read (`§2.4`
+ *  item 3). Only the label changes here — the statement, the id, the `3 × 4 × 3`
+ *  attempt term and the register's `231` total are all UNCHANGED. */
 const ACCESSOR_VARIANTS: readonly string[] = [
   '(a) an own accessor that always throws',
-  '(b) an own accessor that throws only on its SECOND read (the memoization trap)',
+  '(b) an own accessor that returns a number on its FIRST read (the read happens ONCE, so this is the APPLIED case — ADV-PJ-5)',
   '(c) a frozen values object carrying the same throwing own accessor',
 ]
 const ACCESSOR_POSITIONS: readonly string[] = ['k1', 'k2', 'k3', 'k4']
@@ -3484,8 +3623,19 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
         } else {
           const entry = nameSkips.find((x) => x.reason === expectedReason)
           if (entry === undefined) {
-            if (c.entries === 1 && skipped.length === 1 && expectedReason === 'malformed-spec') continue
-            return `'${name}' must be skipped with '${expectedReason}' and carries no such skip entry`
+            // ⟶ `ADV-PJ-4` FIXED IN PLACE 2026-09-27 (the U-PROJ adversarial-pass
+            // regression pass; `OWED — TEST-SIDE`, class LABEL only — the class
+            // count, the statement, the attempt term and the register total are all
+            // UNCHANGED): the escape that stood here
+            // (`if (c.entries === 1 && skipped.length === 1 && expectedReason === 'malformed-spec') continue`)
+            // made ONE of the row's 23 counted attempts NON-FALSIFIABLE — a
+            // `malformed-spec` class could emit ANY `name` (or nothing decodable) and
+            // still pass, because the skip entry was searched FOR BY NAME and the
+            // escape then discarded the miss. `§3.2 F-1`'s `SKIP-NAME-1` cell now
+            // PINS the pair, so the comparison is exact and the class is decidable.
+            return `'${name}' must be skipped with '${expectedReason}' and carries no such skip entry (skipped=${JSON.stringify(
+              skipped.map((x) => [x.name, x.reason]),
+            )})`
           }
           if (own(applied, name) && expectedReason !== 'duplicate-name') {
             return `'${name}' is both applied and skipped with '${expectedReason}' (I-1)`
@@ -4374,5 +4524,922 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
       })
     }
     rec.finish()
+  })
+})
+
+// ===========================================================================
+// ADV — THE ADVERSARIAL PASS'S HOST/CLAUSE REGRESSION ROWS (2026-09-27).
+//
+// The rows of `docs/specs/projection.md` `§3b`-1 that were `OWED — HOST FIX` or
+// `OWED — TEST-SIDE` to the TestWriter, each derived from the pinned contract
+// cell that decides it. This block is APPENDED — no existing row is renumbered,
+// no existing register row's statement, id, pool or attempt term moves, and the
+// register's `231` total is untouched (these are CLAUSE rows, never register
+// attempts).
+//
+// Rows here: `ADV-PJ-1` (totality of the own-property test — `I-7`, `§2.4` item
+// 2, `§3b`-1's remedy), `ADV-PJ-2` (totality of the applier's two FIELD reads —
+// `§2.3` item 4's malformed-projection asymmetry, `M-11`'s shape), `ADV-PJ-3` /
+// `FUNCTION-VALUES-1` (`§2.4` item 3 clause (iii), incl. clause (d)'s explicit
+// non-over-generalisation), `ADV-PJ-14` / `SKIP-ACCEPT-1` (`§2.4` item 3 clause
+// (iv)), `ADV-PJ-15` / `SKIP-THREW-1` (`§3.2`'s cell), the re-derived
+// `P-PJ-IM-3` variant (b) (`§5.5.1`, `F-4B`), `ADV-PJ-7` (`§2.4` item 8 (2),
+// `§2.3` item 4's list assembly), `ADV-PJ-8` (`§2.3` item 4 / `F-6`'s
+// re-labelling of CARRIED entries) and `ADV-PJ-10` (`§2.4` item 8 (3): the
+// observable is the REASON and the LIST ORDER, never an unstated call order).
+// ===========================================================================
+
+/** A REVOKED `Proxy` used as `values`: `typeof` invokes no trap (`isObjectLike`
+ *  lets it through, `§2.4` item 3 clause (a)'s shape) while EVERY own-property
+ *  question about it throws. */
+function revokedValuesProxy(): unknown {
+  const { proxy, revoke } = Proxy.revocable({ k: 1, k2: 2 }, {})
+  revoke()
+  return proxy
+}
+
+/** The SAME defect class by a different route (`§3b`-1 `ADV-PJ-1`'s own drive):
+ *  a Proxy whose `getOwnPropertyDescriptor` trap throws, so the own-property
+ *  test — which forwards `[[GetOwnProperty]]` — is the call that throws. */
+function throwingOwnPropertyProxy(): unknown {
+  return new Proxy(
+    { k: 1, k2: 2 },
+    {
+      getOwnPropertyDescriptor() {
+        throw new Error('hostile getOwnPropertyDescriptor trap')
+      },
+    },
+  )
+}
+
+/** A HEALTHY `Proxy` over the same data as the two hostile ones — the control
+ *  that pins "a Proxy is not special": it behaves exactly like the equivalent
+ *  PLAIN object. */
+function healthyValuesProxy(): unknown {
+  return new Proxy({ w: 320 }, {})
+}
+
+/** The skip-entry PAIRS of one projection, as `[name, reason]` tuples in ORDER
+ *  (the only view that asserts value AND order at once). */
+function skipPairs(p: { skipped: readonly ProjectionSkip[] }): Array<[string, string]> {
+  return p.skipped.map((s) => [s.name, String(s.reason)] as [string, string])
+}
+
+/** The EXACT `(name, value)` arguments a recording sink received, in call order —
+ *  the write-log view a row compares against an array literal. */
+function controlCallsOf(rec: RecordingSink): Array<[string, string]> {
+  return rec.calls.map((c) => [c.name, c.value] as [string, string])
+}
+
+/** A Proxy whose `ownKeys` trap ALONE throws — the module's `ownKeys` guard
+ *  already catches this one, so it is the mirror image of the `ADV-PJ-1`
+ *  fixtures: it proves the row's subject is the UNGUARDED own-property test and
+ *  not a general claim about Proxies. */
+function throwingOwnKeysProxy(): unknown {
+  return new Proxy(
+    { k: 1 },
+    {
+      ownKeys() {
+        throw new Error('hostile ownKeys trap')
+      },
+    },
+  )
+}
+
+/** `true` iff the own-property question about `fixture` is answerable. The
+ *  `ADV-PJ-1` fixtures must answer `false` here while `isObjectLike` still lets
+ *  them through (`typeof` invokes no trap). */
+function ownPropertyTestThrows(fixture: unknown, key: string): boolean {
+  try {
+    hasOwn.call(fixture as object, key)
+    return false
+  } catch {
+    return true
+  }
+}
+
+/** `true` iff `Object.keys` can enumerate `fixture` — the question the module
+ *  ALREADY guards (`ownKeys`'s own `try`/`catch`, `src/shared/layout-projection.ts:113-119`). */
+function ownKeysQuestionThrows(fixture: unknown): boolean {
+  try {
+    Object.keys(fixture as object)
+    return false
+  } catch {
+    return true
+  }
+}
+
+/** The `Projection` shape check this block's collision drives need: the same
+ *  validations `asProjection` performs EXCEPT its "only a `duplicate-name` entry
+ *  may name an applied key" partition clause. That clause is exactly what
+ *  `SKIP-ACCEPT-1`'s drives (A)/(C) FALSIFY by construction — a malformed entry
+ *  keeps its own usable `name` (`SKIP-NAME-1` (1)) while a LATER valid entry
+ *  applies that same emitted name — so a row that drove them through
+ *  `asProjection` would fail on the very behaviour it is asserting. The
+ *  partition of the spec’s ENTRIES still holds (one decision per entry); what the
+ *  drive shows is that a NAME is not an entry. */
+function projectionShape(value: unknown, label: string): Projection {
+  expect(value !== null && typeof value === 'object', `${label} — §2.1: project() returns a Projection object`).toBe(true)
+  const p = value as Projection
+  expect(p.applied !== null && typeof p.applied === 'object', `${label} — §2.1: Projection.applied is a record`).toBe(true)
+  expect(Array.isArray(p.skipped), `${label} — §2.1: Projection.skipped is an array`).toBe(true)
+  expect(
+    Object.getPrototypeOf(p.applied),
+    `${label} — §2.5 item 1 / I-13: Projection.applied is built on Object.create(null)`,
+  ).toBe(null)
+  everySkipReasonDeclared(p, label)
+  for (const entry of p.skipped) {
+    expect(typeof entry.name, `${label} — §2.1: ProjectionSkip.name is a string`).toBe('string')
+  }
+  for (const name of Object.keys(p.applied)) {
+    expect(typeof p.applied[name], `${label} — I-9: the applied value for '${name}' is a STRING`).toBe('string')
+  }
+  return p
+}
+
+/** `§2.1`/`§4.4 S-9`: the reason of a skip entry is one of the EIGHT declared
+ *  members — the assertion that FAILS an invented ninth reason while remaining
+ *  total when the entry itself is absent (the `ADV-PJ-1` row's reason pin). */
+function everySkipReasonDeclared(p: Projection, label: string): void {
+  for (const entry of p.skipped) {
+    expect(
+      SKIP_REASONS.includes(entry.reason),
+      `${label} — §2.1/S-9: the reason '${String(entry.reason)}' is one of the EIGHT declared members (a ninth reason may not be invented)`,
+    ).toBe(true)
+  }
+}
+
+describe('ADV — the adversarial pass’s regression rows (§3b-1, the OWED host + clause rows)', () => {
+  it('PRE-4 (harness) — the hostile `values` fixtures really are hostile (the ADV-PJ-1 row is not vacuous)', () => {
+    // The instruments the `ADV-PJ-1` row depends on, asserted so that row cannot
+    // be an unfalsifiable pass: each hostile fixture must make the OWN-PROPERTY
+    // question throw, and must still pass `isObjectLike`'s `typeof` test (which
+    // invokes no trap) — the shape `§3b`-1 records.
+    //
+    // NOTE: this row does NOT use `drive()`. The whole point of the check is that
+    // the own-property question THROWS, so the assertion is built from the caught
+    // throw itself (`drive()` exists for the opposite contract, I-7).
+    expect(
+      typeof revokedValuesProxy(),
+      'PRE-4: a REVOKED Proxy is object-like under `typeof` (no trap runs), so it reaches the own-property test — `isObjectLike` does not filter it',
+    ).toBe('object')
+    expect(
+      ownPropertyTestThrows(revokedValuesProxy(), 'k'),
+      'PRE-4: the revoked Proxy makes the OWN-PROPERTY TEST itself throw (the call the module’s guard does not cover)',
+    ).toBe(true)
+    expect(
+      ownPropertyTestThrows(throwingOwnPropertyProxy(), 'k'),
+      'PRE-4: the `getOwnPropertyDescriptor`-throwing Proxy makes the own-property test throw too',
+    ).toBe(true)
+    expect(
+      ownPropertyTestThrows(throwingOwnKeysProxy(), 'k'),
+      'PRE-4: the MIRROR FIXTURE — a Proxy whose `ownKeys` trap alone throws still ANSWERS the own-property test (and NOT with the key present, since the trap throws)',
+    ).toBe(false)
+    expect(
+      [ownKeysQuestionThrows(throwingOwnKeysProxy()), ownKeysQuestionThrows(revokedValuesProxy())],
+      'PRE-4: `Object.keys` throws for BOTH of those fixtures — the question the module ALREADY guards — so the ADV-PJ-1 row is about the ONE unguarded call, never about Proxy-ness in general',
+    ).toEqual([true, true])
+    const healthy = healthyValuesProxy()
+    expect(
+      [ownPropertyTestThrows(healthy, 'w'), hasOwn.call(healthy, 'w')],
+      'PRE-4: the HEALTHY Proxy answers the own-property test true and never throws — the control half is real',
+    ).toEqual([false, true])
+  })
+
+  it('ADV-PJ-1 §3b-1 — a REVOKED / trap-throwing `values` never makes `project` throw: every spec key is still ACCOUNTED FOR', async () => {
+    // THE CLAUSE THE FIX MUST SATISFY (§3b-1 `ADV-PJ-1`, citing `I-7` and `§2.4`
+    // item 2): `project` DOES NOT THROW FOR ANY `values`, INCLUDING A `values`
+    // WHOSE OWN-PROPERTY TEST THROWS — the own-property test is INSIDE the same
+    // totality boundary as the read (`§2.4` item 3 clause (i)/(2), `§2.5` item 2),
+    // one decision per spec entry, and no key silently vanishes (`I-1`/`I-2`).
+    //
+    // WHAT THE MODULE DOES TODAY (recorded so the red is legible): the own-property
+    // test at `src/shared/layout-projection.ts:167` sits OUTSIDE the
+    // `try`/`catch` that guards the read (`:168-172`), so the throw ESCAPES.
+    const { project } = await surface('ADV-PJ-1')
+    const specOf: Record<string, unknown> = {
+      k: { name: '--k', unit: 'px' },
+      k2: { name: '--k2', unit: 'px' },
+    }
+    // The REASON a hostile `values` yields: the remedy names `missing-value` ("the
+    // key could not be established as an own key") and the module's own shape for
+    // a refused read is `accessor-threw` (`F-4B`'s per-key catch, which §3b-1
+    // calls "the SHAPE the fix generalizes"). BOTH are documented members of the
+    // eight-member union, so the row admits either and FAILS a key with NO
+    // decision, an invented ninth reason, or a throw — never an Implementer's
+    // choice between two contract-permitted readings.
+    const HOSTILE_REASON: readonly ProjectionSkipReason[] = ['missing-value', 'accessor-threw']
+    for (const [hostile, fixture] of [
+      ['a REVOKED Proxy (every own-property question throws)', revokedValuesProxy()],
+      ['a Proxy whose `getOwnPropertyDescriptor` TRAP throws', throwingOwnPropertyProxy()],
+    ] as ReadonlyArray<readonly [string, unknown]>) {
+      const p = asProjection(
+        drive(() => project(fixture, specOf), `ADV-PJ-1 ${hostile} — project must not throw`),
+        `ADV-PJ-1 ${hostile}`,
+      )
+      expect(
+        Object.keys(p.applied),
+        `ADV-PJ-1 ${hostile}: nothing may be APPLIED from a values whose own-key question cannot be answered — an applied key would be data read through a hostile object`,
+      ).toEqual([])
+      everySkipReasonDeclared(p, `ADV-PJ-1 ${hostile}`)
+      // EVERY spec entry has exactly one decision: the specOf key is `k`, the
+      // emitted name is the spec's own `--k`, and the entry is decided IN ORDER.
+      expect(
+        p.skipped.map((entry) => entry.name),
+        `ADV-PJ-1 ${hostile}: EVERY spec entry is accounted for, in SPEC-ENTRY order — a key that vanishes FAILS this row`,
+      ).toEqual(['--k', '--k2'])
+      expect(
+        p.skipped.length,
+        `ADV-PJ-1 ${hostile}: exactly ONE decision per spec entry (I-1) — no key may be dropped`,
+      ).toBe(Object.keys(specOf).length)
+      for (const entry of p.skipped) {
+        expect(
+          HOSTILE_REASON.includes(entry.reason),
+          `ADV-PJ-1 ${hostile}: the reason '${String(entry.reason)}' for '${entry.name}' is a DOCUMENTED reason for a values whose own-key question threw (missing-value, or accessor-threw by F-4B's per-key catch) — an invented ninth reason, or a key with no decision, FAILS this row`,
+        ).toBe(true)
+      }
+    }
+    // THE CONTROL: a HEALTHY Proxy behaves EXACTLY like the equivalent plain
+    // object — so the rows above are about the THROW, never about Proxy-ness.
+    const healthySpec = { w: { name: '--app-width', unit: 'px' } }
+    const viaProxy = asProjection(
+      drive(() => project(healthyValuesProxy(), healthySpec), 'ADV-PJ-1 control via the healthy Proxy'),
+      'ADV-PJ-1 control via the healthy Proxy',
+    )
+    const viaPlain = asProjection(
+      drive(() => project({ w: 320 }, healthySpec), 'ADV-PJ-1 control via the plain object'),
+      'ADV-PJ-1 control via the plain object',
+    )
+    expect(
+      viaProxy.applied,
+      'ADV-PJ-1 control: a healthy Proxy values yields EXACTLY the equivalent plain object’s applied record (`M-1`’s drive)',
+    ).toEqual(expectedRecord([['--app-width', '320px']]))
+    expect(viaProxy.skipped, 'ADV-PJ-1 control: and no skip').toEqual([])
+    expect(
+      JSON.stringify(asPlain(skipPairs(viaProxy))),
+      'ADV-PJ-1 control: the healthy Proxy and the plain object agree on the WHOLE result (a Proxy is not special)',
+    ).toBe(JSON.stringify(asPlain(skipPairs(viaPlain))))
+  })
+
+  it('ADV-PJ-2 §3b-1 — a projection whose `applied`/`skipped` FIELD read throws: `applyProjection` never throws, and an unreadable field is treated as ABSENT', async () => {
+    // THE CLAUSE THE FIX MUST SATISFY (§3b-1 `ADV-PJ-2`, citing `§2.3` item 4's
+    // malformed-projection asymmetry and `M-11`): `applyProjection` DOES NOT THROW
+    // FOR ANY `projection`; an unreadable `applied` contributes NO planned writes
+    // and an unreadable `skipped` contributes NO carried entries, so the call
+    // returns `ApplyResult{ applied: {}, skipped: [], ok: true }` and NOTHING
+    // throws. NO ninth reason is invented (`S-9`'s class).
+    //
+    // WHAT THE MODULE DOES TODAY: `src/shared/layout-projection.ts:354-355` reads
+    // `projection['applied']` / `projection['skipped']` with NO `try`/`catch`, so
+    // an own accessor that throws — or a revoked Proxy — lets the throw escape.
+    const { apply } = await surface('ADV-PJ-2')
+    const sink = recordingSink()
+    const EMPTY_RESULT = { applied: {}, skipped: [], ok: true }
+    const hostile: Array<[string, () => unknown]> = [
+      [
+        'the projection’s own `applied` FIELD is an accessor that THROWS',
+        () => {
+          const projection: Record<string, unknown> = { skipped: [] }
+          Object.defineProperty(projection, 'applied', {
+            get() {
+              throw new Error('the applied field accessor threw')
+            },
+            enumerable: true,
+            configurable: true,
+          })
+          return projection
+        },
+      ],
+      [
+        'the projection’s own `skipped` FIELD is an accessor that THROWS',
+        () => {
+          const projection: Record<string, unknown> = { applied: {} }
+          Object.defineProperty(projection, 'skipped', {
+            get() {
+              throw new Error('the skipped field accessor threw')
+            },
+            enumerable: true,
+            configurable: true,
+          })
+          return projection
+        },
+      ],
+      [
+        'a REVOKED-Proxy projection (every field read throws)',
+        () => {
+          const { proxy, revoke } = Proxy.revocable({ applied: { '--a': '1' }, skipped: [] }, {})
+          revoke()
+          return proxy
+        },
+      ],
+    ]
+    let hostileDrives = 0
+    for (const [shape, make] of hostile) {
+      hostileDrives += 1
+      const projection = make()
+      const r = asApplyResult(
+        drive(() => apply(projection, sink.sink), `ADV-PJ-2 ${shape} — applyProjection must not throw`),
+        `ADV-PJ-2 ${shape}`,
+      )
+      expect(
+        { applied: asPlain(Object.keys(r.applied)), skipped: asPlain(skipPairs(r)), ok: r.ok },
+        `ADV-PJ-2 ${shape}: the M-11 shape — a field that cannot be read is treated as ABSENT, so NOTHING is decided: applied {}, skipped [], ok === true (§2.3 item 4’s asymmetry; no ninth reason)`,
+      ).toEqual(EMPTY_RESULT)
+    }
+    expect(hostileDrives, 'ADV-PJ-2: the row drove every hostile projection shape it names').toBe(3)
+    expect(
+      sink.calls,
+      'ADV-PJ-2: ZERO sink calls — an unreadable `applied` plans no writes, so no write is ever attempted',
+    ).toEqual([])
+    // THE CONTROLS — the fix may not flatten correct behaviour:
+    // (c1) an accessor-bearing `applied` that does NOT throw is unchanged correct
+    //      behaviour (`F-10`'s coercion of the primitive it returns);
+    // (c2) a VALUE-inside-`applied` accessor that throws keeps the module's
+    //      per-key shape (`F-10`'s non-primitive half) — asserted as the OBSERVED
+    //      shape so a regression to a throw reddens here.
+    const controlSink = recordingSink()
+    let controlReads = 0
+    const controlApplied: Record<string, unknown> = {}
+    Object.defineProperty(controlApplied, '--a', {
+      get() {
+        controlReads += 1
+        return 12
+      },
+      enumerable: true,
+      configurable: true,
+    })
+    const control = asApplyResult(
+      drive(() => apply({ applied: controlApplied, skipped: [] }, controlSink.sink), 'ADV-PJ-2 control (c1)'),
+      'ADV-PJ-2 control (c1)',
+    )
+    expect(
+      controlCallsOf(controlSink),
+      'ADV-PJ-2 control (c1): an accessor-bearing `applied` whose read SUCCEEDS is unchanged correct behaviour (`F-10` coerces the primitive 12 to the string "12")',
+    ).toEqual([['--a', '12']])
+    expect(control.applied, 'ADV-PJ-2 control (c1): r.applied carries the coerced string').toEqual(expectedRecord([['--a', '12']]))
+    expect(control.skipped, 'ADV-PJ-2 control (c1): and nothing is skipped').toEqual([])
+    expect(controlReads, 'ADV-PJ-2 control (c1): the accessor was read exactly once per its own key').toBe(1)
+    const valueAccessor: Record<string, unknown> = {}
+    Object.defineProperty(valueAccessor, '--thrower', {
+      get() {
+        throw new Error('the applied VALUE accessor threw')
+      },
+      enumerable: true,
+      configurable: true,
+    })
+    const valueLevel = asApplyResult(
+      drive(
+        () => apply({ applied: valueAccessor, skipped: [] }, controlSink.sink),
+        'ADV-PJ-2 control (c2) — the applier’s per-key guard',
+      ),
+      'ADV-PJ-2 control (c2)',
+    )
+    everySkipReasonDeclared(valueLevel, 'ADV-PJ-2 control (c2)')
+    expect(
+      { applied: asPlain(Object.keys(valueLevel.applied)), skipped: asPlain(skipPairs(valueLevel)) },
+      'ADV-PJ-2 control (c2): the applier’s OWN per-key guard is unchanged — one `write-refused` entry for the key whose value could not be read, and no throw (a regression to a throw reddens HERE, separately from the FIELD-level rows above)',
+    ).toEqual({ applied: [], skipped: [['--thrower', 'write-refused']] })
+  })
+
+  it('FUNCTION-VALUES-1 §2.4 item 3 (iii) — a FUNCTION is a NON-RECORD `values`: every entry `missing-value` (with clause (d)’s four positions still duck-typed)', async () => {
+    // THE RULING (`§2.4` item 3 clause (iii), `FUNCTION-VALUES-1`, `ADV-PJ-3`): a
+    // FUNCTION passed as `values` contributes NO own keys, so EVERY
+    // otherwise-well-formed spec entry is skipped `missing-value` — INCLUDING for
+    // spec keys literally named `'length'`, `'name'` and `'prototype'` (each is a
+    // real own property of `fn`, and each is STILL `missing-value`: a callable is
+    // not a record). `applied` is `{}`, nothing throws (`I-7`).
+    const { project, apply } = await surface('FUNCTION-VALUES-1')
+    const fn = function f(a: unknown): unknown {
+      return a
+    }
+    expect(
+      [fn.length, typeof fn.name, 'prototype' in fn],
+      'FUNCTION-VALUES-1: the fixture is a REAL callable carrying the language’s own incidental own members (`length` 1, a usable `name` string, a `prototype` object) — the ruling’s drive, asserted so the row is not vacuous',
+    ).toEqual([1, 'string', true])
+    const p = asProjection(
+      drive(
+        () =>
+          project(fn, {
+            length: { name: '--n', unit: '' },
+            name: { name: '--m', unit: '' },
+            prototype: { name: '--p', unit: '' },
+          }),
+        'FUNCTION-VALUES-1 — project(fn, specOf) must not throw',
+      ),
+      'FUNCTION-VALUES-1',
+    )
+    expect(Object.keys(p.applied), 'FUNCTION-VALUES-1: applied is {} — nothing is applied').toEqual([])
+    // THE POSITIVE PROBE that FAILS the current (wrong) module: the callable
+    // reading APPLIES `'1'` from the function’s own `length`. Asserted BEFORE the
+    // skip-list comparison so the failure message NAMES the defect
+    // (`applied["--n"] === "1"`) rather than only showing a whole-list diff.
+    expect(
+      own(p.applied, '--n'),
+      'FUNCTION-VALUES-1 POSITIVE PROBE: applied must NOT contain the function’s own `length` — the module’s landed reading (applied["--n"] === "1") FAILS here',
+    ).toBe(false)
+    expect(
+      p.applied['--n'],
+      'FUNCTION-VALUES-1 POSITIVE PROBE: applied["--n"] is undefined (the language’s own function metadata may not be projected into the caller’s properties)',
+    ).toBeUndefined()
+    expect(
+      skipPairs(p),
+      'FUNCTION-VALUES-1: EVERY entry is `missing-value`, in SPEC-ENTRY order — `fn` is not a record, so it holds NO own keys for this contract’s purposes, and NO reason other than `missing-value` may be invented for a well-formed entry',
+    ).toEqual([
+      ['--n', 'missing-value'],
+      ['--m', 'missing-value'],
+      ['--p', 'missing-value'],
+    ])
+    everySkipReasonDeclared(p, 'FUNCTION-VALUES-1')
+    // (d) THE RULE APPLIES TO THE `values` POSITION ONLY — the three controls the
+    // clause names so a TestWriter does not over-generalise.
+    // (d)(1) a FUNCTION as the SINK carrying a callable `setProperty` on its own
+    //        `style` is a USABLE sink and the write proceeds.
+    const functionSink = function fnSink(): void {} as unknown as Record<string, unknown>
+    const sinkCalls: Array<[string, string]> = []
+    functionSink['style'] = {
+      setProperty(name: string, value: string): void {
+        sinkCalls.push([name, value])
+      },
+    }
+    const usable = asApplyResult(
+      drive(
+        () => apply({ applied: { '--a': '1' }, skipped: [] }, functionSink),
+        'FUNCTION-VALUES-1 (d)(1) — a function sink with a callable style.setProperty',
+      ),
+      'FUNCTION-VALUES-1 (d)(1)',
+    )
+    expect(
+      sinkCalls,
+      'FUNCTION-VALUES-1 (d)(1): a FUNCTION is object-like in the SINK position — the callable `setProperty` is the whole test (isObjectLike’s callable allowance is REQUIRED here)',
+    ).toEqual([['--a', '1']])
+    expect(usable.applied, 'FUNCTION-VALUES-1 (d)(1): the write is reported in r.applied').toEqual(expectedRecord([['--a', '1']]))
+    expect(usable.ok, 'FUNCTION-VALUES-1 (d)(1): ok === true').toBe(true)
+    // (d)(1) …and a function carrying NO such path is `sink-unusable` for EVERY key.
+    const bareFunctionSink = function fnNoPath(): void {}
+    const unusable = asApplyResult(
+      drive(
+        () => apply({ applied: { '--a': '1' }, skipped: [] }, bareFunctionSink),
+        'FUNCTION-VALUES-1 (d)(1) — a function sink with no style path',
+      ),
+      'FUNCTION-VALUES-1 (d)(1) unusable',
+    )
+    expect(
+      { applied: asPlain(Object.keys(unusable.applied)), skipped: asPlain(skipPairs(unusable)), ok: unusable.ok },
+      'FUNCTION-VALUES-1 (d)(1): a function carrying no `style.setProperty` path is `sink-unusable` for EVERY key (F-6) — and it is TOTAL (no throw)',
+    ).toEqual({ applied: [], skipped: [['--a', 'sink-unusable']], ok: false })
+    // (d)(2) a FUNCTION as a hand-built `projection.applied` is DUCK-TYPED: its own
+    //        ENUMERABLE keys become the planned writes, a non-primitive value is
+    //        `write-refused` (F-10), its non-enumerable own members (`length`,
+    //        `name`) are no keys of a record, and nothing throws.
+    const appliedFunction = function fnApplied(): void {} as unknown as Record<string, unknown>
+    appliedFunction['--a'] = 12n
+    appliedFunction['--b'] = {}
+    expect(
+      Object.keys(appliedFunction),
+      'FUNCTION-VALUES-1 (d)(2): the fixture’s OWN ENUMERABLE keys are exactly the two data properties — `length`/`name` are non-enumerable own members and are therefore no keys of a record',
+    ).toEqual(['--a', '--b'])
+    const duckSink = recordingSink()
+    const duck = asApplyResult(
+      drive(
+        () => apply({ applied: appliedFunction, skipped: [] }, duckSink.sink),
+        'FUNCTION-VALUES-1 (d)(2) — a function as the applied FIELD',
+      ),
+      'FUNCTION-VALUES-1 (d)(2)',
+    )
+    expect(
+      Object.keys(appliedFunction),
+      'FUNCTION-VALUES-1 (d)(2): the row is non-vacuous — the function still carries its own data keys after the call',
+    ).toEqual(['--a', '--b'])
+    expect(
+      { applied: asPlain(Object.keys(duck.applied)), skipped: asPlain(skipPairs(duck)) },
+      'FUNCTION-VALUES-1 (d)(2): the applier does not re-validate its input (M-13) — the 12n BigInt is coerceable so the first key is WRITTEN, and the non-primitive value is `write-refused` (F-10). Totality HOLDS; the `values` ruling is NOT extended here',
+    ).toEqual({ applied: ['--a'], skipped: [['--b', 'write-refused']] })
+    expect(controlCallsOf(duckSink), 'FUNCTION-VALUES-1 (d)(2): and the sink received exactly the coerced primitive').toEqual([['--a', '12']])
+  })
+
+  it('SKIP-ACCEPT-1 §2.4 item 3 (iv) — the duplicate-detection set is written AT THE ACCEPTANCE POINT ONLY (drives (A)/(B)/(C))', async () => {
+    // THE RULE, verbatim (`§2.4` item 3 clause (iv), `ADV-PJ-14`): *a name enters
+    // the duplicate-detection set AT THE ACCEPTANCE POINT — when the entry is a
+    // USABLE `VarSpec` and its name is not already in the set. An entry that is
+    // refused BEFORE that point (a `malformed-spec` entry, and an entry whose own
+    // read threw) writes NOTHING into the set and therefore reserves NOTHING.*
+    // A module that writes the set BEFORE the malformed/duplicate decisions FAILS
+    // (A) and (C); a module that never writes it FAILS (B).
+    const { project } = await surface('SKIP-ACCEPT-1')
+    // (A) a MALFORMED first occurrence (no `unit` ⇒ not a usable VarSpec) naming
+    //     '--dup' reserves NOTHING ⇒ the second, VALID entry is APPLIED.
+    //     (This drive and (C) use `projectionShape`, not `asProjection`: the
+    //     collision between a malformed entry's OWN name and a later applied key
+    //     IS the behaviour under test — see the helper's own note.)
+    const a = projectionShape(
+      drive(
+        () => project({ a: 1, b: 2 }, { a: { name: '--dup' }, b: { name: '--dup', unit: '' } }),
+        'SKIP-ACCEPT-1 (A)',
+      ),
+      'SKIP-ACCEPT-1 (A)',
+    )
+    expect(
+      skipPairs(a),
+      'SKIP-ACCEPT-1 (A): the malformed entry is `malformed-spec` and carries its OWN usable name VERBATIM (SKIP-NAME-1 (1)) — and NO `duplicate-name` entry exists anywhere',
+    ).toEqual([['--dup', 'malformed-spec']])
+    expect(
+      a.applied,
+      'SKIP-ACCEPT-1 (A): the SECOND entry is APPLIED — a refused first occurrence reserves nothing, so it does not make the later valid entry a duplicate',
+    ).toEqual(expectedRecord([['--dup', '2']]))
+    // (B) the CONTROL: two VALID entries naming '--dup' ⇒ the second IS
+    //     `duplicate-name`, so the set is still written for ACCEPTED entries.
+    const b = asProjection(
+      drive(
+        () => project({ a: 1, b: 2 }, { a: { name: '--dup', unit: '' }, b: { name: '--dup', unit: '' } }),
+        'SKIP-ACCEPT-1 (B)',
+      ),
+      'SKIP-ACCEPT-1 (B)',
+    )
+    expect(
+      skipPairs(b),
+      'SKIP-ACCEPT-1 (B) control: two VALID entries naming one name ⇒ the second is `duplicate-name` (F-2 unchanged) — the non-vacuous control that the set IS still written for accepted entries',
+    ).toEqual([['--dup', 'duplicate-name']])
+    expect(b.applied, 'SKIP-ACCEPT-1 (B): the first entry is applied').toEqual(expectedRecord([['--dup', '1']]))
+    // (C) the first occurrence's OWN READ THROWS (SKIP-THREW-1) ⇒ that entry is
+    //     `malformed-spec` with `name: ''` and reserves NOTHING ⇒ the second valid
+    //     entry naming the same string is APPLIED.
+    const specOfC: Record<string, unknown> = { b: { name: '--dup', unit: '' } }
+    Object.defineProperty(specOfC, 'a', {
+      get() {
+        throw new Error('hostile specOf entry')
+      },
+      enumerable: true,
+      configurable: true,
+    })
+    const c = projectionShape(
+      drive(() => project({ a: 1, b: 2 }, specOfC), 'SKIP-ACCEPT-1 (C)'),
+      'SKIP-ACCEPT-1 (C)',
+    )
+    expect(
+      skipPairs(c),
+      'SKIP-ACCEPT-1 (C): the entry whose OWN read threw is `malformed-spec` with `name: ""` (SKIP-THREW-1) and reserves nothing — and NO `duplicate-name` entry exists',
+    ).toEqual([['', 'malformed-spec']])
+    expect(
+      c.applied,
+      'SKIP-ACCEPT-1 (C): the second valid entry naming the same string is APPLIED',
+    ).toEqual(expectedRecord([['--dup', '2']]))
+  })
+
+  it('SKIP-THREW-1 §3.2 F-1 — a `specOf` entry whose own read throws is `malformed-spec`/`name: ""` AND the value is NEVER read (contrast: a throwing `values` accessor is `accessor-threw`)', async () => {
+    // THE CLAUSE, verbatim (`§3.2`'s `SKIP-THREW-1` cell, `ADV-PJ-15`): *a `specOf`
+    // entry whose OWN read throws is `malformed-spec` with `name: ''`; the throw is
+    // NEVER propagated; the `values`-accessor case is `accessor-threw`.* The cell
+    // requires ONE ROW to drive BOTH halves of the contrast.
+    const { project } = await surface('SKIP-THREW-1')
+    // HALF ONE — the cell's EXACT drive, with the `values` accessor INSTRUMENTED so
+    // the "never read" clause is falsifiable rather than asserted by prose: the
+    // entry has no usable spec, so there is no lookup key and NO value read.
+    const specOf: Record<string, unknown> = {}
+    Object.defineProperty(specOf, 'k', {
+      get() {
+        throw new Error('hostile spec')
+      },
+      enumerable: true,
+      configurable: true,
+    })
+    let valueReads = 0
+    const values: Record<string, unknown> = {}
+    Object.defineProperty(values, 'k', {
+      get() {
+        valueReads += 1
+        return 1
+      },
+      enumerable: true,
+      configurable: true,
+    })
+    const one = asProjection(
+      drive(() => project(values, specOf), 'SKIP-THREW-1 — the specOf-entry read throws'),
+      'SKIP-THREW-1',
+    )
+    expect(
+      one.skipped,
+      'SKIP-THREW-1: skipped is EXACTLY [{name: "", reason: "malformed-spec"}] — the specOf layer has no usable spec and therefore no usable name to report',
+    ).toEqual([{ name: '', reason: 'malformed-spec' }])
+    expect(one.applied, 'SKIP-THREW-1: applied is {}').toEqual({})
+    expect(
+      valueReads,
+      'SKIP-THREW-1: the value is NEVER read — `malformed-spec` is the FIRST reason in the fixed precedence (§2.4 item 3), so a throwing entry read never reaches a values lookup',
+    ).toBe(0)
+    everySkipReasonDeclared(one, 'SKIP-THREW-1')
+    // HALF TWO — the CONTRAST: a `values` accessor that throws is `accessor-threw`
+    // with the SPEC'S OWN emitted name (the caller-data layer), which is exactly
+    // why the two shapes may not share a reason.
+    let throwingReads = 0
+    const throwingValues: Record<string, unknown> = {}
+    Object.defineProperty(throwingValues, 'k', {
+      get() {
+        throwingReads += 1
+        throw new Error('hostile values accessor')
+      },
+      enumerable: true,
+      configurable: true,
+    })
+    const two = asProjection(
+      drive(
+        () => project(throwingValues, { k: { name: '--spec-name', unit: 'px' } }),
+        'SKIP-THREW-1 contrast — a values accessor that throws',
+      ),
+      'SKIP-THREW-1 contrast',
+    )
+    expect(
+      two.skipped,
+      'SKIP-THREW-1 contrast: a USABLE spec with an UNREADABLE value is `accessor-threw` — and the key IS named (the spec’s own emitted name), never ""',
+    ).toEqual([{ name: '--spec-name', reason: 'accessor-threw' }])
+    expect(two.applied, 'SKIP-THREW-1 contrast: applied is {}').toEqual({})
+    expect(
+      throwingReads,
+      'SKIP-THREW-1 contrast: the throwing read happened exactly ONCE — the module never retries a read (§2.4 item 3)',
+    ).toBe(1)
+    expect(
+      one.skipped[0].name !== two.skipped[0].name,
+      'SKIP-THREW-1: the two layers are NAMED differently — "" for the spec-map layer, the spec’s own name for the caller-data layer — so the shapes cannot be folded into one reason',
+    ).toBe(true)
+  })
+
+  it('P-PJ-IM-3 (re-derived variant (b)) §5.5.1 — a FIRST-read-succeeds / SECOND-read-would-throw accessor ⇒ the key is APPLIED and the accessor is read EXACTLY once', async () => {
+    // THE RE-DERIVED CELL (finding `ADV-PJ-5`, `§5.5.1 P-PJ-IM-3`, citing `§2.4`
+    // item 3's *"the read happens ONCE"*, its trigger clause (c) and `F-4B`):
+    // variant (b) is the APPLIED case and asserts FOUR observables — (i) the read
+    // COUNT is exactly 1; (ii) the key is an OWN key of `applied` (so NO
+    // `accessor-threw` entry exists for it); (iii) `applied[<name>]` is the FIRST
+    // read's formatted value; (iv) no throw. The memoization-trap SKIP case
+    // belongs to variant (a) — a FIRST-read throw.
+    //
+    // SUPERSEDED READING, KEPT VISIBLE (this file's annotate-never-rewrite
+    // convention, matching the spec cell that keeps its old text): the cell's
+    // as-written parenthetical read *"throws only on its SECOND read (the
+    // memoization trap) — the row asserts the read happens once, so (b) behaves as
+    // (a)"*. That reading is SUPERSEDED: an accessor that throws only on a LATER
+    // read does not throw on the one read the contract performs, so the key is
+    // APPLIED. `§5.5.1 P-PJ-IM-3`'s register row already drives this variant with
+    // these four observables (its attempt count, statement and strategy id are
+    // unchanged), and this row states the ruling as a standalone clause row so the
+    // contrast with variant (a) is asserted rather than inferred.
+    const { project } = await surface('P-PJ-IM-3 variant (b)')
+    let reads = 0
+    const values: Record<string, unknown> = { other: 5 }
+    Object.defineProperty(values, 'once', {
+      get() {
+        reads += 1
+        if (reads === 1) return 7
+        throw new Error('a SECOND read would throw')
+      },
+      enumerable: true,
+      configurable: true,
+    })
+    const p = asProjection(
+      drive(
+        () =>
+          project(values, {
+            once: { name: '--once', unit: 'px' },
+            other: { name: '--other', unit: 'px' },
+          }),
+        'P-PJ-IM-3 variant (b) — the first read succeeds',
+      ),
+      'P-PJ-IM-3 variant (b)',
+    )
+    expect(
+      reads,
+      'P-PJ-IM-3 variant (b): the accessor was read EXACTLY ONCE (§2.4 item 3) — a module that reads twice turns this APPLIED case into an `accessor-threw` skip',
+    ).toBe(1)
+    expect(
+      own(p.applied, '--once'),
+      'P-PJ-IM-3 variant (b): the key is an OWN key of `applied` — the first read returned a finite number',
+    ).toBe(true)
+    expect(
+      p.applied['--once'],
+      'P-PJ-IM-3 variant (b): applied["--once"] is the FIRST read’s formatted value',
+    ).toBe('7px')
+    expect(
+      skipPairs(p),
+      'P-PJ-IM-3 variant (b): NO `accessor-threw` entry exists for the key (and the neighbour is decided normally) — the whole skip list is empty here',
+    ).toEqual([])
+    // THE CONTRAST — variant (a): a FIRST-read throw IS the one read, so the key is
+    // skipped `accessor-threw` with a read count of 1 (the module never retries).
+    let firstReadAttempts = 0
+    const throwingValues: Record<string, unknown> = { other: 5 }
+    Object.defineProperty(throwingValues, 'once', {
+      get() {
+        firstReadAttempts += 1
+        throw new Error('the FIRST read throws')
+      },
+      enumerable: true,
+      configurable: true,
+    })
+    const a = asProjection(
+      drive(
+        () =>
+          project(throwingValues, {
+            once: { name: '--once', unit: 'px' },
+            other: { name: '--other', unit: 'px' },
+          }),
+        'P-PJ-IM-3 variant (a) — the first read throws',
+      ),
+      'P-PJ-IM-3 variant (a)',
+    )
+    expect(
+      skipPairs(a),
+      'P-PJ-IM-3 variant (a): the FIRST-read throw is skipped `accessor-threw` with the key’s own name, and the neighbour is still decided normally',
+    ).toEqual([['--once', 'accessor-threw']])
+    expect(a.applied, 'P-PJ-IM-3 variant (a): the throwing key is NOT applied; the good neighbour is').toEqual(
+      expectedRecord([['--other', '5px']]),
+    )
+    expect(
+      firstReadAttempts,
+      'P-PJ-IM-3 variant (a): the module never RETRIES a throwing read — exactly one attempt',
+    ).toBe(1)
+  })
+
+  it('ADV-PJ-7 §2.4 item 8 (2) — `ApplyResult.skipped` is the applier’s OWN refusals FIRST, then the CARRIED entries in input order', async () => {
+    // THE CLAUSE (`§2.4` item 8 (2), `§2.3` item 4, `F-6`): `ApplyResult.skipped`
+    // is assembled as (a) the refusals of the CURRENT call in
+    // `projection.applied`’s order, and THEN (b) the entries CARRIED UNCHANGED
+    // from `Projection.skipped`, in the caller’s own list order. Neither sub-list
+    // is re-sorted and the two are never interleaved. No row asserted it
+    // (`ADV-PJ-7`, `OWED — TEST-SIDE`).
+    const { apply } = await surface('ADV-PJ-7')
+    const sink = recordingSink()
+    // A hand-built projection carrying BOTH: three `applied` keys of which the
+    // MIDDLE one is a non-primitive (⇒ `write-refused`, `F-10`), and TWO carried
+    // skip entries whose reasons are in the OPPOSITE order to the precedence —
+    // so a reason-grouped or re-sorted assembly FAILS.
+    const expectedSkipped: readonly ProjectionSkip[] = [
+      { name: '--s1', reason: 'missing-value' },
+      { name: '--s2', reason: 'not-a-number' },
+    ]
+    const projected = { applied: Object.create(null) as Record<string, string>, skipped: [] as ProjectionSkip[] }
+    for (const [name, text] of [['--a', '1'], ['--b', null], ['--c', '3']] as ReadonlyArray<readonly [string, string | null]>) {
+      Object.defineProperty(projected.applied, name, { value: text, enumerable: true, configurable: true, writable: true })
+    }
+    projected.skipped.push(...expectedSkipped)
+    const handBuilt: Projection = projected as Projection
+    const r = asApplyResult(
+      drive(() => apply(handBuilt, sink.sink), 'ADV-PJ-7 — the applier’s list assembly'),
+      'ADV-PJ-7',
+    )
+    expect(
+      skipPairs(r),
+      'ADV-PJ-7: the EXACT ordered list — the current call’s OWN refusal (`write-refused` for the non-primitive `--b`) comes FIRST, then the carried entries unchanged and in the caller’s own input order; never re-sorted by reason, never interleaved',
+    ).toEqual([
+      ['--b', 'write-refused'],
+      ['--s1', 'missing-value'],
+      ['--s2', 'not-a-number'],
+    ])
+    expect(
+      Object.keys(r.applied),
+      'ADV-PJ-7: the applied half carries exactly the keys that were written, in the projection’s own key order (`§2.3` item 6)',
+    ).toEqual(['--a', '--c'])
+    expect(
+      controlCallsOf(sink),
+      'ADV-PJ-7: exactly one `setProperty` per written key, in order, and no attempt for the refused key',
+    ).toEqual([['--a', '1'], ['--c', '3']])
+    expect(r.ok, 'ADV-PJ-7: ok is false — the emitted list is non-empty (I-10)').toBe(false)
+    expect(
+      projected.skipped.map((s) => s.name),
+      'ADV-PJ-7: the caller’s own list is untouched by the assembly (the applier never mutates its input, I-14)',
+    ).toEqual(['--s1', '--s2'])
+    expect(
+      projected.skipped.map((s) => s.name),
+      'ADV-PJ-7: the carried entries are the ones the projection supplied (never re-derived from a spec, M-13’s trust half)',
+    ).toEqual(expectedSkipped.map((s) => s.name))
+  })
+
+  it('ADV-PJ-8 §2.3 item 4 / F-6 — an unusable sink re-labels EVERY key AND every CARRIED entry `sink-unusable`, preserving the carried order', async () => {
+    // THE CLAUSE (`§2.3` item 4, `F-6`, `§2.4` item 8 (2)): an unusable sink is a
+    // TOTAL skip — the `applied` keys first, ONE `sink-unusable` entry per key, and
+    // then EVERY carried entry re-labelled `sink-unusable`, each key once, with the
+    // carried entries’ RELATIVE ORDER preserved; `applied` is `{}` and `ok` is
+    // false. No row asserted the re-labelling (`ADV-PJ-8`, `OWED — TEST-SIDE`).
+    const { apply } = await surface('ADV-PJ-8')
+    const projection: Projection = {
+      applied: { '--a': '1', '--b': '2' },
+      skipped: [
+        { name: '--s1', reason: 'missing-value' },
+        { name: '--s2', reason: 'negative' },
+      ],
+    }
+    for (const [id, sink] of unusableSinks()) {
+      const r = asApplyResult(
+        drive(() => apply(projection, sink), `ADV-PJ-8 ${id}`),
+        `ADV-PJ-8 ${id}`,
+      )
+      expect(
+        skipPairs(r),
+        `ADV-PJ-8 ${id}: the applied keys come FIRST (in applied’s order) and the CARRIED entries follow, RE-LABELLED \`sink-unusable\` and keeping their own relative order — every key exactly ONCE`,
+      ).toEqual([
+        ['--a', 'sink-unusable'],
+        ['--b', 'sink-unusable'],
+        ['--s1', 'sink-unusable'],
+        ['--s2', 'sink-unusable'],
+      ])
+      expect(
+        Object.keys(r.applied),
+        `ADV-PJ-8 ${id}: applied is {} — nothing was written and no write was even ATTEMPTED (the applier never probes with a write)`,
+      ).toEqual([])
+      expect(r.ok, `ADV-PJ-8 ${id}: ok is false`).toBe(false)
+      expect(
+        r.skipped.length,
+        `ADV-PJ-8 ${id}: no key and no carried entry is dropped or duplicated — 2 applied keys + 2 carried entries`,
+      ).toBe(4)
+    }
+    expect(
+      projection.skipped.map((s) => s.reason),
+      'ADV-PJ-8: the caller’s carried entries are NOT rewritten in place — the re-labelling happens in the RESULT (I-14)',
+    ).toEqual(['missing-value', 'negative'])
+    // The CONTROL: a USABLE sink leaves those same carried entries unchanged, so
+    // the re-labelling is the unusable sink’s, never the applier’s default.
+    const usableSink = recordingSink()
+    const controlResult = asApplyResult(
+      drive(() => apply(projection, usableSink.sink), 'ADV-PJ-8 control'),
+      'ADV-PJ-8 control',
+    )
+    expect(
+      skipPairs(controlResult),
+      'ADV-PJ-8 control (non-vacuous): with a USABLE sink the carried entries propagate UNCHANGED and only the write log is non-empty',
+    ).toEqual([
+      ['--s1', 'missing-value'],
+      ['--s2', 'negative'],
+    ])
+    expect(controlCallsOf(usableSink), 'ADV-PJ-8 control: the usable sink received both writes').toEqual([['--a', '1'], ['--b', '2']])
+  })
+
+  it('ADV-PJ-10 §2.4 item 8 (3) — a MALFORMED / DUPLICATE entry is decided WITHOUT reading the value (the precedence beats the read)', async () => {
+    // THE FINDING (`ADV-PJ-10`): a module that reads EVERY value BEFORE deciding
+    // `malformed-spec`/`duplicate-name` passed all 70 rows, so the precedence and
+    // the read-once rule were unfalsified together. `§2.4` item 8 (3) fixes the
+    // observable: the entry’s REASON and the LIST’s ORDER. The instrumented accessor
+    // makes the read count the observable that fails an early-reading module.
+    const { project } = await surface('ADV-PJ-10')
+    // (a) MALFORMED (no `unit`) + a `values` accessor that would throw: the value is
+    //     NEVER read, so the reason is `malformed-spec` — a module that read the
+    //     value first would report `accessor-threw`.
+    let malformedReads = 0
+    const malformedValues: Record<string, unknown> = {}
+    Object.defineProperty(malformedValues, 'a', {
+      get() {
+        malformedReads += 1
+        throw new Error('hostile values accessor')
+      },
+      enumerable: true,
+      configurable: true,
+    })
+    const malformed = asProjection(
+      drive(
+        () => project(malformedValues, { a: { name: '--dup' } }),
+        'ADV-PJ-10 (a) — malformed entry with an unreadable value',
+      ),
+      'ADV-PJ-10 (a)',
+    )
+    expect(
+      skipPairs(malformed),
+      'ADV-PJ-10 (a): the malformed entry is `malformed-spec` (its own usable name, verbatim) — the FIRST reason in the fixed precedence decides it, so the throwing value is never reached',
+    ).toEqual([['--dup', 'malformed-spec']])
+    expect(
+      malformedReads,
+      'ADV-PJ-10 (a): the caller’s accessor was invoked ZERO times — a module that reads every value BEFORE deciding the malformed case FAILS here',
+    ).toBe(0)
+    // (b) DUPLICATE + a `values` accessor on the SECOND entry that would throw: the
+    //     duplicate decision precedes the value read for that entry, so the second
+    //     entry is `duplicate-name` and only the FIRST entry’s value is read.
+    let duplicateReads = 0
+    const duplicateValues: Record<string, unknown> = { a: 1 }
+    Object.defineProperty(duplicateValues, 'b', {
+      get() {
+        duplicateReads += 1
+        throw new Error('hostile values accessor')
+      },
+      enumerable: true,
+      configurable: true,
+    })
+    const duplicate = asProjection(
+      drive(
+        () =>
+          project(duplicateValues, {
+            a: { name: '--dup', unit: '' },
+            b: { name: '--dup', unit: '' },
+          }),
+        'ADV-PJ-10 (b) — duplicate entry with an unreadable value',
+      ),
+      'ADV-PJ-10 (b)',
+    )
+    expect(
+      skipPairs(duplicate),
+      'ADV-PJ-10 (b): the second entry is `duplicate-name` — the duplicate decision precedes that entry’s read, so the throwing accessor never turns it into `accessor-threw` (a read-first module FAILS here)',
+    ).toEqual([['--dup', 'duplicate-name']])
+    expect(
+      duplicate.applied,
+      'ADV-PJ-10 (b): the first entry is applied on its own merits',
+    ).toEqual(expectedRecord([['--dup', '1']]))
+    expect(
+      duplicateReads,
+      'ADV-PJ-10 (b): the SECOND entry’s accessor was invoked ZERO times — one read for the first entry, NONE for the duplicate',
+    ).toBe(0)
+    everySkipReasonDeclared(malformed, 'ADV-PJ-10 (a)')
+    everySkipReasonDeclared(duplicate, 'ADV-PJ-10 (b)')
   })
 })
