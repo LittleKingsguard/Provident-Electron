@@ -69,7 +69,11 @@ reconciliation from their owner (`AGENTS.md` items 3/6): that is a tracker edit,
 `774` lines — in `docs/next-steps.md` (the handover block's §2 + row `D2`), `docs/pending.md` (the
 `SCH-1`-invariant note and the `SCH-11` row), `docs/decisions.md` (amendment note 21) and the gate
 record (`U6` + the owed-spec list cell). This file's own census above (`765` lines) is the
-re-derivation pass's mid-pass measurement; the file is `774` lines as landed.**
+re-derivation pass's mid-pass measurement.** *(**⟶ SECOND RECONCILIATION, 2026-09-27, the contract-reconciliation
+pass (`4d6a451`):** every one of those figures was updated again to this file's post-ruling length — **`1056`
+lines** — and each site now carries the note that a line-count census **drifts on every pass**, so a citation
+should name this file's **sections**, never its length. The `774` figure this note previously carried is kept
+visible and is that pass's own measurement.)*
 
 **⟶ CONTRACT-RECONCILIATION NOTE — 2026-09-27, THE TESTWRITER-HANDOFF PASS (the red set was AUTHORED
 and RUN; eight clauses could not be pinned and were reported instead of guessed).** The red set
@@ -116,7 +120,9 @@ reconcile — **a census claim belongs to the pass that lands, and this one is i
 "seven", and the `157` arithmetic — **is still visible in this file.** **A tracker that carries the
 `774`-line figure for this file is now stale and owes a reconciliation from its owner**
 (`AGENTS.md` items 3/6) — recorded rather than silently corrected here, because the trackers are not
-this pass's files (§5.1).
+this pass's files (§5.1).** **⟶ DISCHARGED 2026-09-27 (the contract-reconciliation pass): the seven tracker
+sites were updated to `1056` and each now says the census DRIFTS — cite sections, never lengths. The `774`
+reading is kept visible as the previous pass's own measurement.**
 
 ## Layer declaration (read this before any table below)
 
