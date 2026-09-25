@@ -3310,8 +3310,23 @@ describe('R — §3.4/§3.5 the static + existence rows', () => {
         )}`,
       ).toBe(false)
     }
+    // ── THE SECOND CROSS-UNIT RE-SCOPE (2026-09-27, the U-ZONES adversarial gate —
+    // ADV-ZN-12; the same class as `323a4a0`, one layer deeper). The previous form
+    // required EVERY file in the unit-scoped committed set to be in THIS unit's
+    // allow-list — so a LATER unit's `src/shared/zones.ts` / `tests/zones.test.ts`,
+    // pulled in because a cross-unit repair commit also touched this unit's own
+    // test file, went red here. Another unit's artifact is NOT this unit's diff.
+    // THE RULE, reconciled with `§5.1`'s own row 5 (a sibling spec may be touched by
+    // a dated correction; a sibling's code may not): the allow-list binds THIS
+    // unit's own committed files, and the DENIED set binds the WHOLE unit-scoped
+    // committed set (asserted above, unconditionally). A sibling's new module or
+    // test file is therefore OUT of this row's jurisdiction — the finding class, not
+    // an automatic FAIL — while this unit touching `src/main/**`, the shim, the
+    // shared types, the build surface, `scripts/**` or a sibling's *artifact it may
+    // not own* still FAILS.
     for (const path of committed) {
       if (isDenied(path)) continue
+      if (!isUnitArtifact(path) && !/^docs\//.test(path)) continue
       expect(
         inScope(path) || /^docs\/specs\/[^/]*\.md$/.test(path) || /^docs\/[^/]*\.md$/.test(path),
         `R-20/§5.1 (ADV-PJ-12; the O-12 ruling): '${path}' was COMMITTED inside this unit's range ${range} and is not in the RULED allow-list (${SCOPE_TEXT}) nor a docs tracker/spec annotation — the committed change set was: ${JSON.stringify(
