@@ -410,7 +410,7 @@ first failure. The `removed` half is nevertheless **observed verbatim** in the p
 | **`O-1`** | **`SH-G-16` / `O-1`: a non-null container that is not an object is not refused.** With **no factory**, `container: 42` and `container: 'div'` accepted `setNode('a', node)` (`ok:true`, `refused:[]`, `placed:[]` — **nothing actually placed**, `containerFor('a') === null`), while `container: {}` refused it (`ok:false`, `container-not-appendable`). The contract's `M-14`/`F-7` split puts `{}`, `42` and `'div'` in **one** class (*present-but-unusable*) and the per-method table's column (b) requires `ok === false` with that code for a node-write attempt. | **This is the same failure as `§8.1` in kind — recorded here because it lives on a `PASS`-by-half row.** `SH-G-16` still PASSES on its `{}` cell (a real green) and its `42`/`'div'` cells are reported in this table with their observed-vs-expected values, so no cell of that row is silently converted. **Clause:** `§3.1 M-14`'s non-null half, `§3.2 F-7`'s trigger list and the per-method table column (b). **Read:** a real defect on the container-usability predicate (a non-object is treated as *absent* rather than as *present-but-unusable*), **not** drift — the contract names all three values. |
 | **`O-2`** | **A move does not report the moved node in `removed`.** `SH-G-09` reads `removedLen:0` on `setNode('b', n)` after `setNode('a', n)`, while the shim records `n.removed === true` (the host detached it from `'a'`'s container). | `M-9` **does not pin** `removed` for the move (it pins `order`, `placed` and the two containers), and `§2.1`'s doc string (*"Every node this call REMOVED"*) is the only clause that speaks to it. **Recorded, not scored**, because the contract does not name the move's `removed` membership — and it is the same bookkeeping path as `§8.1`. |
 | **`O-3`** | **`M-14`'s non-null half places nothing even when it accepts the call.** In `SH-G-16`/`SH-G-28`, `containerFor('a')` is `null` on all three shapes and the mount never receives a child. | Consistent with `F-7`'s *"the host has no USABLE container to place into"*; recorded so the `ok:true`/`placed:[]` combination is not mistaken for a silent placement. |
-| **`O-4`** | **`P-SH-SM-1`'s third triggered class is not constructible as the register's "valid input beside exactly one refused input" drive.** On a present-but-unusable container **nothing is placeable**, so the valid neighbour of a `container-not-appendable` refusal never lands. `SH-G-55` drives the register's **12** attempts over the two classes where the shape **is** constructible (4 attempts) plus the 4 rotations and the `''`-key pair, and reports the third class separately: `nope` → `unknown-key`, and **both** declared keys → `container-not-appendable` on their write attempts (3 refusals across 3 calls). | **The register's own cell arithmetic is not contradicted — it is re-derived and reported**: `§5.5.1`'s `12` is *"3 triggered classes × 2 steps = 6 + 4 rotation positions + 2 `''`-key attempts"*, and the third class's 2 steps cannot carry a valid neighbour. **Reported for the documentation reviewer; no register cell was edited.** |
+| **`O-4`** | **`P-SH-SM-1`'s third triggered class is not constructible as the register's "valid input beside exactly one refused input" drive.** On a present-but-unusable container **nothing is placeable**, so the valid neighbour of a `container-not-appendable` refusal never lands. `SH-G-55` drives the register's **12** attempts over the two classes where the shape **is** constructible (4 attempts) plus the 4 rotations and the `''`-key pair, and reports the third class separately: `nope` → `unknown-key`, and **both** declared keys → `container-not-appendable` on their write attempts (3 refusals across 3 calls). | **The register's own cell arithmetic is not contradicted — it is re-derived and reported**: `§5.5.1`'s `12` is *"3 triggered classes × 2 steps = 6 + 4 rotation positions + 2 `''`-key attempts"*, and the third class's 2 steps cannot carry a valid neighbour. **Reported for the documentation reviewer; no register cell was edited.** **⟶ `RECONCILED BY THE EXECUTED ROW` 2026-09-27 (the unit's documentation review, finding `F-13`; this observation is KEPT VISIBLE and UNEDITED): the landed drive keeps the register's `12` attempts EXACTLY — all three classes are driven, `2` steps each — but the third class's step 2 is `render()` + the coherence assertions, **NOT a valid placement** (the class can place nothing, `F-7`), recorded verbatim in the unit file's own `P-SH-SM-1` class table (*"This shape cannot place anything; the 'valid' step asserts the declared RESULT SHAPE and the coherence clauses instead of a placement"*), with the register's shape read as *"the step proves the refusal did not poison the host"*. `§5.5.1`'s `P-SH-SM-1` cell now carries the same dated annotation, so **no register cell and no count moved**: the strategy id `S-SH-MIXED-1`, the `12` attempts and the `155` total are unchanged.** |
 | **`O-5`** | **A `refuse` listener that returns a rejected promise produces an unhandled rejection report.** `SH-G-19` drives exactly what `M-17` asks (*"a row returns a rejected promise and asserts no effect"*) and the **refusal is unaffected** (`refused.length === 1` on both calls, listener fired twice in order) — but vitest reported `Unhandled Rejection: Error: boom` twice, which turned the runner's exit code non-zero while all 58 tests still read `passed`. The runner absorbs it (`process.on('unhandledRejection', …)`, harness hygiene) and the final run exits `0`/`1` on the tests alone. | `M-17` says the host **ignores** the return value; it does not say the host **swallows the promise**, and a host that ignores a promise cannot prevent Node's unhandled-rejection report. **Recorded, not scored** — but a reader must not read `M-17`'s green as "the rejection is contained". |
 | **`O-6`** | **`I-4`'s mount-member census: the host touched only `appendChild` (7 reads) and `children` (4 reads)** on the injected mount, and wrote nothing to the container or the node (`textContent`/`className` `''`, no attributes). | The **state** half is what `SH-G-37` scores; the census is **directional evidence** toward `§2.2` prohibitions 2/6, which are **static** rows (`SH-G-46`, `SH-G-48`) and are **not** passed from a node-suite observation. Recorded, not scored. |
 | **`O-7`** | **`P-SH-TP-1`: the 60 pinned draws reached 19 of the pool's 20 members.** `distinctShapesSeen:19`, `poolSize:20`. | The register's row is *"for every input shape in the pinned pool … no method throws"* over **60 draws**; the contract pins the **draw count** and the **pool inventory**, not that every member is visited. **Recorded so no reader reads the 60/60 as a 20-of-20 pool sweep.** All seven methods **were** covered (`methodsCovered` lists all seven). |
@@ -461,6 +461,16 @@ and the **8 counted attempts are the second calls** (the first call of each pair
    `ok === false`; (b) `render()` attempts no write **to a container it has no source for**, so it is
    write-free like `setOrder` and `ok === true`. **This run asserts none of them** — it records the value,
    reports both readings, and is the reason `SH-G-28` is scored on the table's unambiguous cells only.
+   **⟶ `RESOLVED BY THE EXECUTED ROW` (2026-09-27, the unit's documentation review, finding `F-19`; the two
+   readings above and the blind run's observed value are KEPT VISIBLE and UNEDITED): the shipped code
+   REFUSES on that shape.** `render()` iterates the projection and refuses **per key that has a node, is not
+   placed and whose container is `null`/unusable**, so `render()` on `{}`/`42`/`'div'` reads **`ok === false`
+   with one `container-not-appendable` per key the call attempts to place** — reading **(a)**, the per-method
+   table's own column (b) (`§3.2 F-7`), is the contract's reading. **The resolution is ASSERTED TWICE in the
+   unit file**: its `F-7` row and its `SH-REG-3` regression row (whose `oneRefusal('render()', …)` fails a cell
+   that reads `ok === true`). **The blind run's observed `ok:true` is the PRE-FIX behaviour of this tree** —
+   which is why this item is closed by the executed row (and by this file's `§10` `⟶ CLOSED` block) rather than
+   left as an open two-reading ambiguity.
 5. **§2.2 prohibition 1's *"no occurrence"* is a claim about the SOURCE, and this run's two clean censuses
    are a **raw** reading and a **comment-stripped** reading** (`SH-G-45`/`SH-G-46`). **The contract does not
    say which form the static row is written in**, so a later blind writer cannot tell whether a hit in
@@ -520,3 +530,40 @@ and the **8 counted attempts are the second calls** (the first call of each pair
 alone against `src/shared/slot-host.ts` over the repo's `dom-shim` with the **injected `containerFactory`**
 as the container source — **57 PASS / 1 FAIL / 0 NOT-BLIND-RUNNABLE**, one real-defect finding and eight
 recorded observations — a node green, never assembled-app evidence, and the `[U]` row is not taken.*
+
+---
+
+## 10. `⟶ CLOSED 2026-09-27` — what happened to this record's FAIL and its recorded defect (added by the unit's documentation review, finding `F-10` **of that review's own `F-nn` id series** — not this unit's `§3.2 F-n` behaviour rows)
+
+**Every verdict in this file is KEPT UNEDITED.** The `58` scored rows stand as this run's report — **one
+FAIL (`SH-G-58`, §8.1), one recorded defect (`O-1`, §8.2), `57` PASS, `0` NOT-BLIND-RUNNABLE** — and **no
+scenario is passed retroactively, no FAIL is softened, and no observation is withdrawn.** What this block
+adds is the pointer this file was missing, so its single FAIL is not read as a live red.
+
+**⟶ `CLOSED 2026-09-27` (the fix pass; the reconciliation below is this unit's documentation review's,
+`archive/reviews/2026-09-27-U-SLOTHOST-doc-review.md`, finding `F-10`):**
+
+1. **`§8.1 SH-G-58`** (the move's ownership record — `placed` naming `'a'` after the `n1` move and `removed`
+   empty) and **`§8.2 O-1`** (a non-object non-null container — `42`/`'div'` — accepting `setNode` instead of
+   taking the `F-7` refusing path) were **BOTH FIXED ON THE HOST** and **re-pinned as regression rows in
+   `tests/slot-host.test.ts`: `SH-REG-1`** (the move-owed bookkeeping — `KeyRecord.owed`, set when a move
+   vacates a key the host had placed and reported by the first write that takes that key over) **and
+   `SH-REG-3`** (the `isPresent`/`isUsable` split, so `{}` **and** `42` **and** `'div'` all take the `F-7`
+   refusing path — including `render()`), **with `SH-REG-2` as the absent-class CONTROL** (`null`/`undefined`
+   stay `ok === true` with `refused` `[]`, so the fix cannot have simply widened the refusing class).
+2. **The unit file is now `61` rows** (`58` spec rows + the `3` `SH-REG-*` rows) — **the `58` this record ran
+   is commit `6d5ff00`'s count**, the commit this file's own header quotes (*"58/58 rows"*, §2's runner/stack
+   block). **The `58` here is therefore a correctly-attributed snapshot of an earlier commit, not drift** —
+   and it must be read with the `6d5ff00` provenance line, never as the tree's current row count.
+3. **The register record in this file's §5 is unaffected** — `155 driven / 155 held / 0 broken` stands, and
+   nothing in the fix pass changed a register row's statement, type, strategy id or attempt count.
+4. **Nothing in §9's "May NOT rest on" list is relaxed by this block** — in particular, *"no DONE row may
+   read this unit as fully green"* **until the FAIL is fixed or the contract is amended** was written of the
+   state this run measured; the fix landed **host-side with its own regression rows** (item 1 above), so the
+   reading is now discharged **by the executed rows**, not by this record, and **the unit's `DONE` row
+   remains the supervisor's to write** (it is not written in this file, and the green-status note in
+   `docs/specs/slothost.md`'s status region records the measured state with its layer limits).
+
+**Layer honesty, unchanged by any of the above:** this record is **node-layer `[T]`/`[H]`/`[S]` evidence
+only**; the optional real-DOM `[U]` row is **NOT TAKEN**; and **nothing in this file, before or after this
+block, is assembled-app, IPC-layer or MCP-transport evidence.**
