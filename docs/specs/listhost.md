@@ -64,7 +64,12 @@ red→green cycle, and the DONE row must report the attempt counts.**
 register) and two `§8` rows — so the `619`-line figures carried by `docs/next-steps.md`'s two cells
 (`U6`, and the handover-staleness note) and by `docs/pending.md`'s `SCH-11` row are OWED a
 reconciliation from their owner (`AGENTS.md` items 3/6): that is a tracker edit, not this unit's
-(`§5.1`'s diff scope).**
+(`§5.1`'s diff scope).** **⟶ DISCHARGED 2026-09-27 (the supervisor's tracker pass): all SEVEN stale
+`619` figures (this file's own `§8`/status note excluded) have been reconciled to the current length —
+`774` lines — in `docs/next-steps.md` (the handover block's §2 + row `D2`), `docs/pending.md` (the
+`SCH-1`-invariant note and the `SCH-11` row), `docs/decisions.md` (amendment note 21) and the gate
+record (`U6` + the owed-spec list cell). This file's own census above (`765` lines) is the
+re-derivation pass's mid-pass measurement; the file is `774` lines as landed.**
 
 ## Layer declaration (read this before any table below)
 
