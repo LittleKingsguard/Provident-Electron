@@ -915,7 +915,9 @@ not silently reconcile).** Each was read in this pass:
 **Archival-loop check (`AGENTS.md` item 6): this filing archives, moves and repoints NOTHING.** It
 creates one new spec file and edits no existing document. **The `## OPEN` row `D1`'s spec cell
 therefore still reads `OWED — not filed` until the supervisor's reconciliation pass flips it** —
-recorded here so the staleness is attributable rather than silent.
+recorded here so the staleness is attributable rather than silent. **⟶ FLIPPED 2026-09-27 (the unit's DONE
+pass, and annotated again by the handover-staleness pass): the `D1` spec cell reads `FILED 2026-09-27` and the
+row has MOVED to the `## DONE — U-MOUNTGUARD` record**, so the clause above is the filing pass's state only.
 
 **⟶ ARCHIVAL-LOOP CHECK, AMENDED (2026-09-27, the red-set pass): the *"archives, moves and repoints
 NOTHING"* clause above is SUPERSEDED for this pass and kept visible.** The red-set pass **did** edit an
@@ -923,7 +925,7 @@ existing document — **this file** — by the amendment recorded throughout it,
 decision rows and the amendment note it adds to `docs/decisions.md`. **It archived nothing, moved
 nothing, and repointed no citation**, so the archival loop's own obligation (`AGENTS.md` item 6c —
 *never leave a citation pointing at a moved file*) is **discharged by doing nothing**: **no file was
-moved, so no reference needed repointing.** **The `D1` spec cell is STILL `OWED — not filed`**: this
+moved, so no reference needed repointing.** **The `D1` spec cell is STILL `OWED — not filed`** *(**⟶ NO LONGER TRUE — FLIPPED 2026-09-27**: the unit's DONE pass flipped the cell to `FILED 2026-09-27` and moved the row to the `## DONE — U-MOUNTGUARD` record; the sentence is kept visible as the red-set pass's own statement)*: this
 amendment does not flip it, because flipping the row's status is the supervisor's reconciliation, not
 a spec pass's. **Cross-file citation claims: NO NEW STALE ANCHOR was created by this amendment** —
 every line anchor this section lists was re-read in the filing pass and this pass moved **no row of

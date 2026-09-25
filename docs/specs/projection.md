@@ -1153,7 +1153,8 @@ are appended so that no previously cited `docs/decisions.md:<n>` anchor moves.**
 **Archival-loop check (`AGENTS.md` item 6): the FILING archived, moved and repointed NOTHING.** It
 creates one new spec file and edits no existing document. **Row D4's spec cell therefore still reads
 `OWED — not filed` until the supervisor's reconciliation pass flips it** — recorded so the staleness
-is attributable rather than silent.
+is attributable rather than silent. **⟶ FLIPPED 2026-09-27 (the handover-staleness pass): `D4`'s spec cell
+now reads `FILED 2026-09-27`**, so the sentence above describes the filing pass's own state and nothing current.
 
 **Archival-loop check, SECOND pass (`AGENTS.md` item 6 — this is the 2026-09-27 RULING-PACK pass, and
 the sentence above is kept as the FILING pass's record). This pass edits exactly TWO files and creates

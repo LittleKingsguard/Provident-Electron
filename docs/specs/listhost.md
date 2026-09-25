@@ -566,7 +566,8 @@ file before it is quoted**, which is what this spec did.
 **Archival-loop check (`AGENTS.md` item 6): this filing archives, moves and repoints NOTHING.** It
 creates one new spec file and edits no existing document. **Row D2's spec cell therefore still reads
 `OWED — not filed` until the supervisor's reconciliation pass flips it** — recorded so the staleness
-is attributable rather than silent.
+is attributable rather than silent. **⟶ FLIPPED 2026-09-27 (the handover-staleness pass): `D2`'s spec cell
+now reads `FILED 2026-09-27`**, so the sentence above describes the filing pass's own state and nothing current.
 
 ## 3a. Adversarial findings — **the pass has NOT run**
 
