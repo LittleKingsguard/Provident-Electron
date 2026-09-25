@@ -47,6 +47,25 @@ filed**) — this file is that filing).
 | **7** | **No unit may claim magnitude-equivalence.** Per the amendment's per-unit equivalence limits: *"order is a **projection**, so the mechanism may not claim the graph's child order changed; foreign-sibling survival is a **hard row**; no overflow/tab vocabulary; no equivalence between 'one visible item' and any graph op."* | §7 item 4, §5.3 |
 | **8** | **The go-ahead for wave D does not exist yet**, and within wave D this unit follows `U-MOUNTGUARD`. **This unit is BLOCKED on that go-ahead, on the wave-D order, and on its own red set.** **⟶ SUPERSEDED ON ITS GO-AHEAD HALF (2026-09-27, the `U-MOUNTGUARD` DONE pass; the as-written cell is kept visible): the wave-D go-ahead WAS GIVEN (architect, 2026-09-27) and `U-MOUNTGUARD` — the unit this one follows — is `DONE`, so the surviving blocker is this unit's OWN RED SET (plus this spec's `OWED`-cell status in its queue row). The wave-D order still binds.** | this status block, §4.5, §7 item 1 |
 
+**⟶ STATUS NOTE — 2026-09-27, THE `§5.5` RE-DERIVATION PASS (the architect's gate-11 ruling for
+code-bearing units): `§5.5`'s RECORDED ZERO-ROW EXEMPTION IS SUPERSEDED, and `§5.5` now carries a
+TYPED PROPERTY REGISTER OF `7` ROWS, ALL EXECUTED DETERMINISTICALLY (`§5.5.1`).** This note
+**amends no normative clause of §0 and moves no section number**; it exists because the status
+block above and §0 ruling 8 name this unit's *status*, and the register's status changed under
+them. **The exemption text and its five-cell table are kept verbatim at `§5.5.0`** (the
+annotate-never-rewrite convention), and the reconciliation of every dependent in-file cell is
+itemized in `§5.5.1`'s change summary and the two new `§8` rows. **No dependency, no leg, no file
+and no script is added** — the register rides the existing node suite (`§5.2`).
+**This pass ran NO test, NO leg and NO trio: the register is CONTRACT TEXT at `§5.5.1`, and every
+`YES` cell in it is the row's execution DESIGN — the executed-layer evidence is owed by this unit's
+red→green cycle, and the DONE row must report the attempt counts.**
+**File-length census: this file is now `765` lines, and this pass touched ONLY §0's status region,
+§3.3 `I-8`, §5.2, §5.3 item 9, §5.5 (`§5.5.0`'s superseded exemption kept verbatim, `§5.5.1`'s
+register) and two `§8` rows — so the `619`-line figures carried by `docs/next-steps.md`'s two cells
+(`U6`, and the handover-staleness note) and by `docs/pending.md`'s `SCH-11` row are OWED a
+reconciliation from their owner (`AGENTS.md` items 3/6): that is a tracker edit, not this unit's
+(`§5.1`'s diff scope).**
+
 ## Layer declaration (read this before any table below)
 
 **This spec is DOC-LAYER only.** No leg of it ran in this pass: no suite ran, no trio ran, no
@@ -328,7 +347,7 @@ a **contract row** for the TestWriter; **none is a measurement this pass took.**
 | **I-5** | After `dispose()`, the host retains **no** owned key, **no** placed-node reference, and no other state | Prohibition 4 |
 | **I-6** | For every owned key, `placed[i]` is **reference-identical** to the object the caller supplied (or the factory returned) for the whole life of the entry | §2.3 item 5 — the anti-cloning rule |
 | **I-7** | `order` is **exactly** the current key set, each key **once**, in some order | §2.4 item 2 |
-| **I-8** | No method throws **for any input** — the totality claim, asserted by a fuzz-shaped deterministic table (`null`, `undefined`, numbers, strings, arrays-in-place-of-objects, detached nodes, a mount that is a `ShimElement` already holding host-placed children) | The refusal contract's boundary |
+| **I-8** | No method throws **for any input** — the totality claim, asserted by a fuzz-shaped deterministic table (`null`, `undefined`, numbers, strings, arrays-in-place-of-objects, detached nodes, a mount that is a `ShimElement` already holding host-placed children) | The refusal contract's boundary. **⟶ NOTE 2026-09-27 (the `§5.5` re-derivation; the clause above is kept visible): this row's quantification now has a REGISTER HOME — `§5.5.1`'s `P-LH-TP-1` / `S-LH-SEED-1`, which drives all eight public methods against a pinned-seed enumeration (seed `20260927`, 64 attempts, ≤100-row / ≤400-register caps). "Fuzz-shaped" is NOT a licence to add a generator: the enumeration is hand-rolled in the test file (no `fast-check`, no dependency). The row stays a per-state `[T]` row; the register row is what makes its `for any input` claim count.** |
 | **I-9** | Every `ListHostResult` array is a **fresh array** and the result object is not reused across calls (a caller mutating a returned array cannot change host state) | A small but assertable anti-aliasing rule |
 
 ## 4. The red (RCA-1) — what must be written, RUN and REPORTED before any implementation
@@ -403,6 +422,14 @@ except this spec and the trackers.**
 | 2 | typecheck | `npm run typecheck` | **[H]** | the generic signatures (`N = unknown`) are part of the contract |
 | 3 | build | `npm run build` | **[H]** | esbuild, five bundles (`package.json:10`, read); a new `src/shared/` module that fails to bundle is a failure even when the suite is green |
 
+**The property layer rides leg 1 — no fourth leg, and no new file (⟶ ADDED 2026-09-27, the §5.5
+re-derivation).** `§5.5.1`'s register rows are executed by **the same node suite** (`npm test`,
+leg 1) in **this unit's own** `tests/owned-list-host.test.ts` (§4.1/§5.1): the deterministic
+tables and the pinned-seed enumeration are ordinary `[T]` rows. **No new leg, no new script, no
+`package.json` change, no new dependency** — and **no register row depends on the optional `[U]`
+row below**, so §5.2 leg 3 (build) is not the property layer either. The DONE row reports the
+register's per-row attempts/held/broken set and the pinned seed (§5.3 item 9).
+
 **OPTIONAL `[U]` real-DOM identity row — and its named preconditions.** The row: *one mount, a
 caller-supplied node placed and then re-ordered, with the node's identity observed in the **real**
 DOM across the reorder*. **Preconditions, all named and none assumed:** (a) the `ui` leg exists and
@@ -428,10 +455,36 @@ The DONE row (`docs/next-steps.md`, the supervisor's pass) must carry, in this o
 7. **The adversarial pass's findings** (§3a) and the **blind-greens + doc-review records**
    (`AGENTS.md` items 10a/10d, RCA-4/6).
 8. **The tracker reconciliation** (`AGENTS.md` items 3/6).
+9. **The property register's execution record** (`§5.5.1`, ⟶ ADDED 2026-09-27): per row the
+   **id · attempts-run · held · broken** counts, the **pinned seed** (`20260927`), the
+   **stop-after-5-consecutive-failures** status (`not triggered` / `triggered at row …`), the
+   **total attempts** against the ≤400 cap, and the explicit sentence that **`P-LH-TP-1` is
+   `YES (bounded)` and is NOT a proof of the unbounded universal**. **A DONE row that reports the
+   register as "executed" without these counts is a review finding** — and a **read-only PBT audit
+   may not accept this table alone** as the executed-layer evidence: it reads the counts here and
+   in the ledger.
 
-## 5.5 Typed Property register — **RECORDED ZERO-ROW EXEMPTION (justified), not a register**
+## 5.5 Typed Property register (EXECUTED deterministically — no PBT harness) — **2026-09-27: the zero-row exemption is SUPERSEDED; the register is RE-DERIVED below**
 
-**`H-r4` obliges an explicit zero-row/typed-PBT decision per unit. Stated exactly as
+> **SUPERSEDED AS-WRITTEN, KEPT VISIBLE (annotate-never-rewrite): the heading above replaced
+> `## 5.5 Typed Property register — **RECORDED ZERO-ROW EXEMPTION (justified), not a register**`.**
+> **Date: 2026-09-27. Reason: the architect's ruling enforcing the mandatory PBT gate (gate 11) for
+> CODE-BEARING units** — this unit is a code-bearing pure `src/shared/` owned-node list host, so its
+> `§5.5` must be a real typed register. **The exemption text and its five-cell table are kept verbatim
+> below** (§5.5.0), followed by **`§5.5.1`, the re-derived register that SUPERSEDES them.**
+
+> **⟶ SUPERSEDED 2026-09-27 (the architect's gate-11 ruling for code-bearing units; the text is kept
+> visible, not rewritten). This `§5.5.0` block is the exemption AS FILED — it is no longer the
+> contract's register. What survives of it is its FACTUAL half only: this repo still has no PBT
+> harness, and no dependency is added. What is refuted below, with in-repo precedent, is its
+> CONCLUSIVE half — *"therefore a register cannot be executed here"*: `docs/specs/engine-pin.md`
+> §5.5 executed **7 of 8** of ITS register rows with **plain deterministic vitest tables and no new
+> `devDependencies` key** (`package.json:26-31`, re-read this pass: still the five keys
+> `@types/node`, `electron`, `esbuild`, `typescript`, `vitest`) — e.g. its `P-IM-2` repeated-call
+> idempotence over a fixed key set and its `P-TP-2` enumerated booleans. `§5.5.1` is the
+> re-derived register; the replacement of each cell below is itemized there.**
+
+> **`H-r4` obliges an explicit zero-row/typed-PBT decision per unit. Stated exactly as
 `docs/specs/engine-drift.md` §5.5 and `docs/specs/engine-pin.md` §5.5 state it: THIS REPO HAS NO PBT
 HARNESS.** `package.json`'s `devDependencies` key set is `@types/node`, `electron`, `esbuild`,
 `typescript`, `vitest` — **five keys** (`package.json:26-31`, read this pass) — with **no
@@ -445,7 +498,15 @@ register**, and here is why that is the honest answer rather than a dodge:
 | Do the layers permit a property run here? | **Yes for the node layer, in principle** — everything here is pure `[T]` work over an injectable mount. **The blocker is the harness, not the layer**, and that is stated rather than hidden behind a layer claim. |
 | How are the deterministic tables here executed? | **Plain vitest: fixed input, fixed order, no randomness, no shrinking, no generated inputs.** Rows name their drive by the unit's own ids (`M-7` = the reorder drive, `M-8` = the foreign-sibling drive, `I-8` = the no-throw drive). **A strategy id here is a repeat-drive label, not a property id.** |
 
-**Register count: 0 rows. Not "0 executed" — 0 rows, declared.** The honest statements that replace
+**⟶ THE FOUR CELLS ABOVE ARE SUPERSEDED AS-WRITTEN AND KEPT VERBATIM (2026-09-27, the gate-11
+ruling for code-bearing units): each is answered by `§5.5.1` — cell 1 by `P-LH-IM-1`/`P-LH-IM-2` and
+`P-LH-TP-1`; cell 2 by the executed register (no harness added, the strategy discipline instead);
+cell 3 holds and is used; cell 4 is replaced by `S-LH-*` property-execution ids.** *(The rows are
+plain paragraphs rather than quoted lines here on purpose — quoting them would turn this table into
+a blockquote and garble its rendering; nothing is hidden by that, and the cells are byte-identical
+to the filing.)*
+
+**Register count: 0 rows. Not "0 executed" — 0 rows, declared.** **⟶ SUPERSEDED 2026-09-27: the register count of THIS unit is `7` rows, all executed — see `§5.5.1`.** The honest statements that replace
 a register:
 
 1. **No row of this unit may be reported as "executed" if it was sampled.**
@@ -455,7 +516,98 @@ a register:
 3. **No `fast-check` and no generator is added by this unit.**
 4. **Register change summary: none** — nothing to reconcile with `docs/specs/engine-pin.md` §5.5's
    register (its 8 rows: 4 `P-IM` + 3 `P-SM` + 2 `P-TP`; 7 executed deterministically, `P-TP-1`
-   `NOT EXECUTED`).
+   `NOT EXECUTED`). **⟶ SUPERSEDED 2026-09-27: the change summary is `§5.5.1`'s, and it now
+   reconciles against that same register by reusing its type algebra (`P-IM`/`P-SM`/`P-TP`) and its
+   strategy-id discipline — without copying a single row or creating a second authority over it.**
+
+### 5.5.1 THE REGISTER (2026-09-27, re-derived under the gate-11 ruling) — **7 rows, ALL executed**
+
+**What this section is, in one sentence.** The exemption `§5.5.0` above is replaced by a **typed
+register of 7 rows** whose two previously-sampled quantifications (`§5.5.0`'s cell 1: the
+permutation/identity property and the no-throw property) are **executed here as quantifications over
+finite, pinned enumerations** — **hand-rolled and deterministic, with no new dependency, no
+`fast-check`, no `hypothesis` and no property runner** (the `devDependencies` key set is unchanged:
+`package.json:26-31`, re-read this pass). Type algebra is `docs/specs/engine-pin.md` §5.5's:
+**`P-IM`** = invariant · **`P-SM`** = state-machine · **`P-TP`** = totality. **The rows are this
+unit's own ids (`P-LH-*`), so they collide with nothing: `P-IM`/`P-SM`/`P-TP` prefix an id and `LH`
+is this unit** — no id collides with `M-*`/`I-*`/`F-*` of §3, and **no `F-` register row is invented**
+(the `F-1`..`F-10` refusals stay §3.2 table rows, cited here as **compensating sample rows**).
+
+**How every row is executed (the strategy discipline, stated once so no row is ambiguous).**
+
+1. **Plain deterministic vitest in this unit's own test file** (`tests/owned-list-host.test.ts`,
+   §4.1/§5.1) — the file the red set already owes. **No row of this register is executed by a
+   generator library.**
+2. **Exhaustive/finite enumeration, or a PINNED-SEED deterministic generator written in plain
+   TypeScript inside the test file.** The only generator is `S-LH-SEED-1`'s, and it is pinned to
+   literals **in the test file itself** (a hand-rolled 32-bit LCG — the *literal* form is a
+   contract so the run is reproducible, **and the constants are the test's own choice, not a
+   dependency**): `state₀ = 20260927`, `stateₙ₊₁ = (stateₙ · 1664525 + 1013904223) mod 2³²`,
+   `next(k) = Math.floor(stateₙ₊₁ / 2³² · k)`; the pool is indexed `state mod pool.length`. **No
+   `Math.random`, no wall-clock seed, no shrinking, no adaptive input search.**
+3. **Caps, uniform for the whole register:** **≤100 attempts per row, ≤400 attempts in total**,
+   rows evaluated sequentially in register order, **STOP AFTER 5 CONSECUTIVE FAILURES** (the
+   remaining attempts of the running row are abandoned and no further row starts). The DONE
+   ledger records **attempts-run**, **held**, **broken**, **stopped-early** and the **seed**
+   (§5.3's DONE-row shape is extended by item 9 below).
+4. **Sample rows are the §3 rows this register compensates, never replaced by it.** A register
+   row **proves its quantification by enumeration**; the §3 rows remain the per-state contract
+   rows a TestWriter derives first.
+5. **No row may be reported as executed if it was sampled** — `§5.5.0`'s honesty anchor (`§5.5.0`
+   item 1) is **kept and honoured**: every row here is `YES` by **enumeration over a FINITE,
+   pinned input set**, and each row's cell states that input set exactly. **No row is marked
+   `NOT EXECUTED`** — and no row *could* honestly be, now that `engine-pin.md` §5.5's precedent is
+   on the record for every shape this unit needs.
+
+| ID | Type | Property | Executed? | Compensating sample rows (§3) | Strategy-id | Deterministic enumeration strategy |
+| --- | --- | --- | --- | --- | --- | --- |
+| **`P-LH-IM-1`** *(the permutation quantification `§5.5.0` left unproven)* | `P-IM` invariant | **For EVERY permutation of the current key set**, a `setOrder(p)` call leaves `order === p` exactly, `refused` empty, and **every element's identity preserved** (each placed node is the same object per key, `toBe`) — and the permutation never removes anything (`removed` `[]`). | **YES** | `M-7`, `I-6`, `I-7` | `S-LH-PERM-1` | **Exhaustive over `S₃` and `S₄`**, hand-authored permutation tables (literal key arrays — **no generator, no library**): `n=3` keys `['a','b','c']` ⇒ **all 6** permutations; `n=4` keys `['a','b','c','d']` ⇒ **all 24** permutations; **30 attempts, one `setOrder` each**, after one `setEntries`/`render()`; per permutation assert `order` equals the permutation element-wise, `refused.length === 0`, each `placed[i]` `toBe` the object supplied for that key, `removed.length === 0`, and the host-owned subsequence of `mount.children` matches. A third fixed table adds the **partial `setOrder`** shape (`['c','a']`, `['c','a','nope']`, `['a','a','c']`) for `F-8`'s ignored-key/duplicate rule. |
+| **`P-LH-IM-2`** | `P-IM` invariant | **For EVERY owned key and every enumeration above**, `placed[i]` is **reference-identical** to the exact object the caller supplied (or the factory returned) — the host never re-parents, clones or re-creates a caller node. | **YES** | `M-2`, `M-3`, `M-5`, `M-6`, `M-13`, `I-6`, `§2.3` item 5 | `S-LH-IDENT-1` | The **same 34-attempt enumeration as `P-LH-IM-1`** (reuse is deliberate: one input family, two properties — the 30 shared permutation attempts + 4 fixed identity shapes), the identity half being the 4 shapes — caller nodes; factory nodes; a changed node for a repeated key (`M-13`); a factory node supplied for one key while another key is node-less — each asserting `placed[i] === supplied[i]` (`toBe`) **and** that `keys()`/`order` still name every owned key exactly once. |
+| **`P-LH-IM-3`** | `P-IM` invariant | A **second** call with unchanged inputs performs **no child mutation** — `removed` is empty, no node is re-appended, the mount's `children` array is **reference-identical in element order** — for every entry-set shape of the fixed table. | **YES** | `M-1`, `M-12`, `M-17`, `I-2`, `I-9` | `S-LH-REPEAT-1` | Fixed **4-shape** table (3 entries with caller nodes · 3 entries through a factory · 1 entry · an empty set) × **2 sequential calls** each (fixed order) = **8 attempts**: `render()` twice per shape; assert the second `removed.length === 0`, `order`/`placed` equal the first call's **values**, each `children[i]` is the **same object** (`toBe`), and every returned array is a **fresh array** (`I-9`). |
+| **`P-LH-IM-4`** *(the `V-7` hard row, quantified over operation sequences)* | `P-IM` invariant | **For EVERY sequence below, every foreign sibling of the mount is the SAME element (`toBe`) before and after, at an unchanged relative index, and was never removed or re-appended by the host.** | **YES** | `M-8`, `M-16`, `F-9`, `I-3`, `§2.3` item 3 | `S-LH-FOREIGN-1` | **5 fixed sequences** over a mount pre-seeded with **3 foreign siblings** (`a`,`b`,`c` appended by the caller before the host exists), each sequence driven in fixed order: **(1)** `setEntries` → `render`; **(2)** sequence 1 then `setOrder` of the reverse key set; **(3)** two `setEntries`→`render` cycles; **(4)** `close(key)`; **(5)** `setEntries(null)`. Per step assert each foreign sibling `toBe` its original object, its index within `mount.children` unchanged relative to the other foreign siblings, `removed` contains no foreign node, and the host's own nodes are placed **inside the same mount**. |
+| **`P-LH-SM-1`** | `P-SM` state-machine | For an entry set that mixes **valid entries with exactly one refused entry**, the valid entries are **placed and owned** and the refused one is **not placed, not owned and absent from `order`** — `ok === false`, **one** refusal carrying the class's own code, and **`order` is exactly the valid keys in their supplied order** (the `§2.1` totality note: refusing one entry must not abort the call). | **YES** | `F-2`, `F-3`, `F-4`, `F-5`, `I-1`, `I-7`, `§2.1` totality note | `S-LH-MIXED-1` | Fixed table: for **each of the 4 refusal classes** (`no-node`, `factory-returned-null`, `malformed-entry`, `duplicate-key`) a **3-entry set** with exactly one entry of that class and two valid ones, **plus** a **4-entry set** with the class entry rotated through **all 4 positions** = **8 attempts**, fixed order. Per attempt assert `ok === false`, `refused.length === 1` with the expected `code` **and the exact key string as supplied**, `order` equals the expected valid-key permutation, every valid node placed by reference, and the refused key absent from `keys()`. |
+| **`P-LH-SM-2`** | `P-SM` state-machine | **For EVERY step of the fixed sequences, the host's state stays coherent**: `ok === (refused.length === 0)` (I-1), **every refusal `code` is one of the FIVE declared members** (`'unknown-key'`, `'duplicate-key'`, `'no-node'`, `'factory-returned-null'`, `'malformed-entry'` — no sixth), and **after `dispose()` no ownership is resurrected** while every caller node stays reachable. | **YES** | `F-1`..`F-10`, `M-9`, `M-10`, `M-11`, `M-14`, `M-15`, `I-1`, `I-4`, `I-5` | `S-LH-SEQ-1` | **8 fixed sequences, authored as literal step/expected-outcome data** and driven in fixed order: `activate` known → unknown · `close` known → unknown · `remove` known → unknown · `setEntries([])` after a populated set · `setEntries(null)` after a populated set · `dispose()` then `keys()`/`render()`/`setEntries` · `activate` on a **detached** node's key (`F-10`) · a **caller-detached** placed node then `close` (`F-6`). Per step assert `ok === (refused.length === 0)`, the `code` of every refusal ∈ the five-member set, `keys()` consistent with `order`, and — on the `dispose()` sequence — `keys()` `[]` with each caller node still reference-reachable and its `removed` flag unchanged by the host. |
+| **`P-LH-TP-1`** *(the no-throw quantification `§5.5.0` left unproven)* | `P-TP` totality | **For EVERY input shape drawn from the finite pool, no method of the host throws, and every method returns its declared shape** — a `ListHostResult` for the seven result-returning methods and `void` for `dispose()` (`§2.1`), with `ok === (refused.length === 0)` and `order` always a permutation of a subset of the keys the host has been given. | **YES (bounded — pinned-seed enumeration, ≤100 attempts; a table can only enumerate a FINITE pool)** | `I-8` (the no-throw row) + `F-1`..`F-10` + `M-15`, `M-16` (the absent/**malformed**-mount shapes) | `S-LH-SEED-1` | **Pinned-seed enumeration, seed `20260927`** (LCG above): **64 attempts**, each drawing `(method, input)` pairs from an ordered **pool of 22 input shapes** — `null`, `undefined`, `42`, `NaN`, `''`, `'x'`, `[]`, `[{}]`, `[{key:42}]`, a non-string key, an entry with no node and no factory, `itemFactory: () => null`, a **detached** node, a `ShimElement` mount already holding host-placed children, `mount: null`, `mount: {}`, `mount: 42`, `mount: 'div'`, a frozen array, a caller array also held by the test, a duplicate-key pair, and a key of `''` — driving all **8** public methods of §2.1 with fixed per-method argument forms, plus an explicit fixed **after-`dispose()`** sweep (all 8 methods once). Per attempt: `expect(() => …).not.toThrow()`, then the shape assertion, then `ok === (refused.length === 0)`. Any thrown error, any non-conforming result, or any `code` outside the five-member vocabulary **breaks its row** and is reported as `broken` (and counts toward the 5-consecutive-failure stop). **This row does NOT prove the unbounded universal** — it enumerates a finite, pinned pool, and the DONE row must report the **attempt count** with the `YES (bounded …)` marking, never as a proof of "all inputs". |
+
+**Register count: `7` rows — `4` `P-IM` (`P-LH-IM-1`..`P-LH-IM-4`), `2` `P-SM` (`P-LH-SM-1`,
+`P-LH-SM-2`), `1` `P-TP` (`P-LH-TP-1`). `7` executed deterministically by enumeration; `0` marked
+`NOT EXECUTED`.** **Attempt arithmetic (stated so it can be checked):** 30 (`P-LH-IM-1`) + 34 (`P-LH-IM-2` = 30 shared
+permutation attempts + 4 identity-shape attempts) + 8 (`P-LH-IM-3`) + 5 (`P-LH-IM-4`) + 8
+(`P-LH-SM-1`) + 8 (`P-LH-SM-2`) + 64 (`P-LH-TP-1`) = **157 attempts**, inside the ≤400 total cap
+and every row inside the ≤100 per-row cap. **Sample rows are named per row, so no quantification
+here is left to "and the §3 rows cover it"** — each row's cell names the §3 rows it compensates.
+**`P-LH-TP-1` carries the bounded marking deliberately**: it is the one row whose property text
+(the `for EVERY input shape` half) is **larger than its enumeration**, and `§5.5.0`'s no-sampling
+anchor is why that is stated rather than hidden.
+
+**Register change summary (what this pass did to `§5.5`).** `§5.5.0`'s **zero-row exemption is
+SUPERSEDED** by this register (date + reason in the two banners above). Its **cell 1** — *"two
+candidates, both genuine quantifications, both sampled… neither property is proven"* — is
+**resolved by rows**: the permutation/identity quantification becomes **`P-LH-IM-1`** (+
+`P-LH-IM-2`) and the no-throw quantification becomes **`P-LH-TP-1`** (+ the `P-LH-SM-*` sequences).
+Its **cell 2** — *"no harness exists, and adding one is a `devDependencies` change"* — is
+**refuted as a conclusion**: no harness IS added, and the register is nonetheless executed by the
+deterministic strategy discipline `docs/specs/engine-pin.md` §5.5 established. Its **cell 3**
+(*"yes for the node layer, in principle"*) **holds and is now used**. Its **cell 4** (*"a strategy
+id here is a repeat-drive label, not a property id"*) is **superseded**: strategy-ids here are
+`S-LH-*` **property-execution ids**, one per row. Its **items 1–4** are superseded by items 1–5 of
+the strategy discipline above — except **item 1 (the no-sampling anchor), which is KEPT and is why
+every row above is executed by enumeration rather than sampled.** **The register is this unit's own
+and is NOT a copy of `docs/specs/engine-pin.md` §5.5's** — no engine-pin row is restated, extended
+or contradicted, so no second authority over that register is created (the discipline
+`docs/specs/projection.md` §8 states as *"a second authority over a landed register is a finding"*).
+
+**Register integration with the legs and the DONE row (so the property layer is not an orphan).**
+The register rows are carried by **the same node suite** `npm test` already runs (§5.2 leg 1) in
+**this unit's own** `tests/owned-list-host.test.ts` — **no new leg, no new file, no new script, no
+`package.json` change** (§5.1's diff scope is unchanged). **No `[U]`-leg row is added**, and the
+optional real-DOM identity row of §5.2 stays an optional precondition-gated row that **no register
+row depends on**. **§5.3's DONE row gains one item (item 9):** the register's execution record —
+per row: **id · attempts-run · held · broken**, plus the **pinned seed**, the **stop-after-5**
+status (`not triggered` or `triggered at row …`), and the explicit sentence that **`P-LH-TP-1` is
+`YES (bounded)` and is not a proof of the unbounded universal**. **A read-only PBT audit may not
+report a row as executed on the strength of this table alone** — the audit reads the test file's
+attempt counts and the ledger's numbers against this cell.
 
 ## 6. Falsification / stop conditions
 
@@ -543,13 +695,15 @@ elsewhere or another unit's — listed so no later pass routes it here.
 | The eight-unit plan's **`U6`** row (its red-set cell) | amendment §"The amended unit plan" | **INHERITED-ONLY provenance** (superseded by the 20-unit plan, `H-r20`) — its red-set cell lists exactly the rows this spec expands (`M-7`/`M-8`/`M-17`/`F`-family) | §3, §4 |
 | `H-r8`'s six-prohibition block | `S-d8`, `H-r8` | **DISCHARGED** as a six-row assertion table | §2.2 |
 | The amendment's **"no new MCP surface"** obligation row | amendment §"Adopted units' security / equivalence obligations" | **DISCHARGED** as the five-seam negative | §2.2 (prohibition 5), `A-15` |
-| `H-r5` / `S-d3` (no shim expansion) | `H-r5`, `S-d3` | **INHERITED-ONLY** — the shim is untouched | §1, §4.4 `S-2` |
+| `H-r5` / `S-d3` (no shim expansion) | `H-r5`, `S-d3` | **INHERITED-ONLY** — the shim is untouched. **⟶ RECONCILED 2026-09-27 (the `§5.5` re-derivation): the property layer changes none of this** — no shim member is expanded, `tests/owned-list-host.test.ts` carries the register rows (`§5.5.1`) **inside the existing node suite**, and no new leg, file or script is added | §1, §4.4 `S-2`, `§5.5.1` (the legs/integration note) |
 | `RK-10` (`C-16`: contracts reverse-engineered from ONE consumer) | amendment §6 | **CARRIED** — §7 items 2/7/8 are this unit's answer: the rename, the seven recorded contract decisions, and the two deliberately-unruled seeds | §7 items 7–8 |
 | `H-r10`'s attribute-presence extractor | `H-r10` | **NOT THIS UNIT** (`U-DIVERGENCE-EXT`) — a **named precondition** of the optional attribute-shaped `[U]` variant | §5.2 |
 | `REAL-DOM-UI-GATE-LEG` (the shim is demoted to pre-filter) | `docs/decisions.md:65` | **CARRIED** — a node-suite green is never a real-DOM green | Layer declaration, §5.2 |
 | `UI-RENDERED-WITH-PROVIDENT` / `SHELL-CHROME-CARVE-OUT-FUNCTIONAL` (a mechanism authors no content) | `docs/decisions.md:53` / `:54`, both read | **CARRIED** — prohibition 2 is this unit's compliance row | §2.2, §7 item 4 |
 | Row **D2** (`docs/next-steps.md` `## OPEN`) | that file's `## OPEN` table (**cited by row id, never by line**) | **OWED**: its spec cell reads `docs/specs/listhost.md` (**OWED — not filed**) — **this filing discharges that cell** (the row itself stays `BLOCKED`, and its leg cell's *"a real-DOM identity row (**optional**) → `ui`"* is §5.2) | this file |
 | `docs/specs/listhost.md`'s entry in amendment §8's owed-spec list | amendment §8 | **DISCHARGED by this filing** | this file |
+| **`H-r4`'s required explicit PBT decision for this unit** | `H-r4` (as `H-r20` re-scoped it to twenty units), `docs/specs/engine-pin.md` §5.5 (the executed-register precedent) | **RECONCILED 2026-09-27 — the as-filed form was **`ZERO-ROW-EXEMPTION (recorded, justified)`**, which is **SUPERSEDED** by the architect's gate-11 ruling for code-bearing units**: the decision is now a **typed register of `7` rows, all executed deterministically**, and the `H-r4` *"this repo has no PBT harness — do not imply one"* clause **survives intact** (no `fast-check`, no property runner, no `devDependencies` change). The register row `P-LH-TP-1` is `YES (bounded)` — the one place where the enumeration is smaller than the property text, marked so rather than implied. | `§5.5` (the two SUPERSEDED banners + `§5.5.1`) |
+| The zero-row exemption's **strategy-id discipline** (a strategy id is a repeat-drive label, not a property id) | `§5.5` as filed (cell 4) | **SUPERSEDED 2026-09-27** — strategy-ids are now **property-execution ids** (`S-LH-PERM-1`, `S-LH-IDENT-1`, `S-LH-REPEAT-1`, `S-LH-FOREIGN-1`, `S-LH-MIXED-1`, `S-LH-SEQ-1`, `S-LH-SEED-1`), one per register row | `§5.5.1` |
 
 **Citation hygiene for this file:** every `src/**` and `tests/**` anchor cited above was **read in
 this pass** (`src/main/security.ts:134`; `src/shared/types.ts:259-281`;
