@@ -1128,3 +1128,39 @@ over caller-supplied fake sinks — **42 PASS / 3 FAIL / 2 NOT-BLIND-RUNNABLE**,
 **231/231 held** with **19 of 20** pool members reached, the two gate-5 FAILs' territory now **PASS**, and the
 three FAILs all doc/spec-level or ambiguity-level (never a totality regression) — a node green, never
 assembled-app evidence, and the `[U]` row is not taken.*
+
+
+---
+
+## ⟶ LINE-ANCHOR CORRECTION (2026-09-27, the archival pass — `AGENTS.md` item 6, the archival loop's step 3: *repoint every citation to a moved passage*)
+
+**WHY THIS BLOCK EXISTS.** This file cites `docs/specs/projection.md` by **line number** in a number of cells. **That file was COMPACTED** on 2026-09-27 (its superseded history was moved verbatim to `archive/specs/2026-09-27-projection-history.md` and each site replaced by a short provenance pointer), so **every line anchor below moved.** **No row id and no section number moved** — the compaction removes **words**, never numbers or ids (the ACTIVE rule is `docs/decisions.md`'s `REGISTER-ENTRY-COUNT-IS-NOT-CAPPED-AND-ARCHIVE-IS-THE-TRUTH-MECHANISM`, part 2(d)). **The clauses this file cites are all still present; only their line numbers changed.**
+
+**THE POLICY THIS FILE NOW FOLLOWS, and it is the repo's own rule:** **cite SECTIONS and ROW IDS, never line numbers.** Line numbers drift on every doc pass; `§` numbers and ids are citation-stable by construction. **A later pass reading a line anchor in an older cell of this file should resolve it through the table below, or — better — through the `§`/row id that cell already names.**
+
+**THE REMAP, for the cells that still carry a line anchor.** Each entry gives the old anchor, the clause (unchanged), and the clause's CURRENT line in the compacted file, established by a section-scoped search rather than by assumption:
+
+| old anchor | clause (unchanged) | current line |
+| --- | --- | --- |
+| `projection.md:761` | `§2.3` item 4 (the pinned asymmetry) | `593` |
+| `projection.md:852` | `§2.4` item 2 | `708` |
+| `projection.md:971` | `§2.4` item 3 clause (iii) — `FUNCTION-VALUES-1` | `804` |
+| `projection.md:985` | `§2.4` item 3 clause (iv) — `SKIP-ACCEPT-1` | `804` (same cell) |
+| `projection.md:1065` | `§2.5` item 4 (as corrected) | **resolve by `§2.5`/`F-12`** — the section-scoped search returned no unique line |
+| `projection.md:1162` | `§3.2` `SKIP-NAME-1` | `996` |
+| `projection.md:1164` | `§3.2` `SKIP-THREW-1` | `996` (same cell) |
+| `projection.md:1178` | `§3.2` `F-12` cell (c.1) | `1004` |
+| `projection.md:1229` | `§3.4` `R-17` (re-derived) | `1063` |
+| `projection.md:1231` | `§3.4` `R-18` (re-derived) | `1065` |
+| `projection.md:1233` | `§3.4` `R-20` | `1067` |
+| `projection.md:1252` | `§3.5` `R-22` (a) | `1086` |
+| `projection.md:1688` | `§5.5.1` `P-PJ-IM-5` cell | `1417` |
+| `projection.md:1690` | `§5.5.1` `P-PJ-IM-3` cell | `1362` |
+| `projection.md:2444` | `§3b`-1 `ADV-PJ-1` cell | `2190` |
+| `projection.md:2445` | `§3b`-1 `ADV-PJ-2` cell | `2190` (same table row) |
+| `projection.md:2472` | `§3b`-2 row (e) | `2226` |
+| `projection.md:2475` | `§3b`-2 row (h) | `2199` |
+
+**HONEST LIMITS OF THIS REMAP, stated so it is not over-read: (i)** it was produced by a **section-scoped line search**, not by a byte-exact diff, so two entries that resolve to the same line (a shared table row) and the one entry that resolved to no unique line are recorded as such rather than given a number that would be a guess; **(ii)** the anchors are **current as of this pass** and will drift again on any later edit — which is exactly why the policy above is *cite sections, never lines*; **(iii)** **no claim in this file was weakened, no verdict was moved and no scenario was re-scored** — this block is a citation correction only, and it is the archival loop's step 3 discharged for this file.
+
+**AND THE SAME LOOP APPLIED TO THE OTHER TWO COMPACTED SPECS:** `docs/specs/zones.md` and `docs/specs/census.md` carry **no line-anchored citations** from any other document (checked across `docs/` on 2026-09-27), so **no further repointing was owed for them.**
