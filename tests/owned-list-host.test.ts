@@ -6,7 +6,7 @@
 // `src/shared/owned-list-host.ts` and its **SEVEN exports**, each signature,
 // return shape and refusal pattern), `§2.2` (the six prohibitions), `§2.3`
 // (own-node ownership — the `V-7` hard row), `§2.4` (order-as-projection),
-// `§3.1` (`M-1`..`M-17`), `§3.2` (`F-1`..`F-10`), `§3.3` (`I-1`..`I-9`),
+// `§3.1` (`M-1`..`M-18`), `§3.2` (`F-1`..`F-10`), `§3.3` (`I-1`..`I-9`),
 // `§4` (the red), `§5.1` (diff scope: this file + the module, nothing else),
 // `§5.2` (the node suite is leg 1) and `§5.5.1` (the SEVEN-row typed property
 // register, whose `§5.5.0` zero-row exemption is SUPERSEDED).
@@ -30,7 +30,11 @@
 // evaluated in register order, **STOP AFTER 5 CONSECUTIVE FAILURES** (the
 // running row's remaining attempts are abandoned and no further row starts).
 // `P-LH-TP-1` is `YES (bounded)` — its enumeration is smaller than its property
-// text, and the row's record says so.
+// text, and the row's record says so. **The attempt total this file's tables
+// drive is `168` = `33 + 34 + 8 + 5 + 8 + 8 + 72` — `§5.5.1`'s CORRECTED
+// arithmetic (2026-09-27); the as-filed `157` omitted `P-LH-IM-1`'s third fixed
+// `setOrder` table (`+3`) and `P-LH-TP-1`'s fixed after-`dispose()` sweep
+// (`+8`). `PRE-3` asserts that total green against the tables below.**
 //
 // **THIS FILE IS THE UNIT'S RED SET (`§4.1`) AND NOTHING ELSE.** It is authored
 // FIRST and RUN before any implementation: `src/shared/owned-list-host.ts` does
@@ -47,9 +51,10 @@
 // module-collection error that would take the whole red set with it. `PRE-1`
 // proves the boundary mechanism itself resolves, against an EXISTING module.
 //
-// AUTHORED ORDER (`§4.2` step 1): `I-1..I-9`, `M-1..M-17`, `F-1..F-10` — the
-// describe blocks below are in exactly that order, followed by the `§2.1`
-// surface / `§2.2` static rows and then `§5.5.1`'s register.
+// AUTHORED ORDER (`§4.2` step 1): `I-1..I-9`, `M-1..M-18`, `F-1..F-10` — the
+// describe blocks below are in exactly that order (`M-18` appends after `M-17`
+// and renumbers nothing; `§4.2` step 1 is AMENDED to that enumeration), followed
+// by the `§2.1` surface / `§2.2` static rows and then `§5.5.1`'s register.
 // ===========================================================================
 import { describe, it, expect, beforeAll } from 'vitest'
 import { existsSync, readFileSync } from 'node:fs'
@@ -68,13 +73,14 @@ const hasOwn = Object.prototype.hasOwnProperty
 // be imported for its types: it does not exist yet). Field names, optionality
 // and the refusal vocabulary are `§2.1`'s.
 //
-// ONE DELIBERATE DEVIATION, recorded rather than hidden: `§2.1` declares
-// `ListEntry.node` as REQUIRED (`readonly node: N`), yet `§3.1 M-6`'s drive is
-// `setEntries([{key}])` and `§3.2 F-3`'s is an entry "with no node and no
-// factory" — inputs a required `node` cannot express. This mirror is
-// `node?: N | null` so those DOCUMENTED drives are expressible; **no row below
-// asserts the optionality itself**, and the tension is reported to the
-// supervisor (item 3 of this pass's report) rather than resolved here.
+// The declarations below now mirror the RECONCILED `§2.1` exactly: `ListEntry`
+// declares `readonly node?: N | null` (the spec's own amendment — the four-case
+// node rule `N-1`..`N-4` is stated at `§2.1` and its drives are `M-5`/`M-6`/
+// `F-3`/`F-4`), and `ListHostRefusal` declares `readonly key: unknown` (the
+// spec's own amendment — the field holds the supplied value VERBATIM, so it can
+// carry `42`/`null`/`{}`, exactly as `§3.2 F-5` supplies them). Both were
+// reported by the previous pass rather than guessed, and both are now ruled in
+// the spec; nothing below deviates from it any more.
 // ===========================================================================
 type ListKey = string
 type RefusalCode = 'unknown-key' | 'duplicate-key' | 'no-node' | 'factory-returned-null' | 'malformed-entry'
@@ -104,7 +110,12 @@ interface OwnedListHostOptions {
 }
 
 interface ListHostRefusal {
-  readonly key: ListKey
+  /** `§2.1` ⟶ AMENDED 2026-09-27 (the TestWriter-handoff pass; finding 5): the
+   *  field is `unknown`, NOT `ListKey` — it holds the supplied value VERBATIM
+   *  (a `ListKey` when the input was a string; `42`/`null`/`{}` when it was not),
+   *  with no `String(...)` coercion and no trim. The as-filed `readonly key:
+   *  ListKey` could not hold the non-string keys `§3.2 F-5` refuses. */
+  readonly key: unknown
   readonly code: RefusalCode
   readonly message: string
 }
@@ -394,6 +405,14 @@ function brief(value: unknown): string {
   }
 }
 
+/** `§2.1`'s `ListHostRefusal.key` is `unknown` after the 2026-09-27 amendment:
+ *  it holds the supplied value VERBATIM. This is the assertion helper for that
+ *  field — one `===`-by-value comparison that needs no type narrowing, so every
+ *  refusal-key row is legal under `npm run typecheck` (no cast, no `String()`). */
+function keyIdentity(expected: unknown): <T>(actual: T) => boolean {
+  return (actual) => actual === expected
+}
+
 /** The caller node's own observable surface — `§3.3 I-4`: the host writes NO
  *  attribute, class, style or text. */
 function nodeSurface(el: ShimElement): string {
@@ -409,13 +428,14 @@ function nodeSurface(el: ShimElement): string {
   })
 }
 
-/** The declared shape of ONE drive, per `§2.1`: a `ListHostResult` for the
- *  result-returning methods, `readonly ListKey[]` for `keys()` and `void` for
- *  `dispose()`. NOTE, reported rather than hidden: `§5.5.1`'s `P-LH-TP-1` cell
- *  says "a `ListHostResult` for the SEVEN result-returning methods", but `§2.1`
- *  declares EIGHT methods of which only SIX return a `ListHostResult` (`keys()`
- *  returns the key list, `dispose()` returns `void`). This helper pins `§2.1`'s
- *  own declarations. */
+/** The declared shape of ONE drive, per `§2.1`: a `ListHostResult` for the SIX
+ *  result-returning methods (`setEntries`, `remove`, `setOrder`, `render`,
+ *  `activate`, `close`), `readonly ListKey[]` for `keys()` and `void` for
+ *  `dispose()`. `§5.5.1`'s `P-LH-TP-1` cell said "the SEVEN result-returning
+ *  methods" AS FILED; that was a mis-count, and `§2.1`'s surface census — EIGHT
+ *  declared methods, SIX returning a `ListHostResult` — is now stated in the
+ *  spec itself (CORRECTED 2026-09-27, finding 4). This helper pins `§2.1`'s own
+ *  declarations, and the register row's title/comment pins the corrected count. */
 function shapeBreaks(value: unknown, method: HostMethod, label: string): string[] {
   const breaks: string[] = []
   if (method === 'keys') {
@@ -800,7 +820,9 @@ function makeLcg(seed: number): { next: (k: number) => number; state: () => numb
 }
 
 /** `S₃` and `S₄` — HAND-AUTHORED permutation tables (literal key arrays: no
- *  generator, no library). 6 + 24 = the 30 exhaustive attempts of `P-LH-IM-1`. */
+ *  generator, no library). 6 + 24 = the `30` exhaustive permutation attempts that
+ *  `P-LH-IM-1` and `P-LH-IM-2` each drive; `P-LH-IM-1`'s own total is `33`
+ *  (`+` its 3-shape partial table) per `§5.5.1`'s corrected arithmetic. */
 const S3_KEYS: readonly string[] = ['a', 'b', 'c']
 const S4_KEYS: readonly string[] = ['a', 'b', 'c', 'd']
 const PERMS_S3: ReadonlyArray<readonly string[]> = [
@@ -880,8 +902,13 @@ describe('PRE — harness preconditions (not spec rows)', () => {
     for (const p of PERMS_S4) expect([...p].sort(), 'every S₄ entry is a permutation of {a,b,c,d}').toEqual(['a', 'b', 'c', 'd'])
     expect(TP_POOL.length, "§5.5.1 P-LH-TP-1's input pool is 22 shapes").toBe(22)
     expect(new Set(TP_POOL.map((s) => s.id)).size, 'the 22 pool shapes are distinct').toBe(22)
-    // THE ARITHMETIC, checked against this file's own tables (the pass reports
-    // the real numbers; §5.5.1's 157 is reconciled in the report, not here).
+    // THE ARITHMETIC, checked against THIS file's own tables. `§5.5.1` states the
+    // CORRECTED total (2026-09-27, finding 4/the arithmetic correction):
+    // `168` = `33 + 34 + 8 + 5 + 8 + 8 + 72`, where `33` = the `6` `S₃` + `24` `S₄`
+    // permutations + PARTIAL_SHAPES.length (the `3` partial-`setOrder` drives for
+    // `F-8`), and `72` = the `64` pinned-seed draws + the fixed after-`dispose()`
+    // sweep of all `HOST_METHODS.length` (`8`) methods. The as-filed `157` omitted
+    // exactly those `+3` and `+8` terms; what this file DRIVES is unchanged.
     const arithmetic = {
       'P-LH-IM-1': PERMS_S3.length + PERMS_S4.length + PARTIAL_SHAPES.length,
       'P-LH-IM-2': PERMS_S3.length + PERMS_S4.length + 4,
@@ -892,15 +919,19 @@ describe('PRE — harness preconditions (not spec rows)', () => {
       'P-LH-TP-1': 64 + HOST_METHODS.length,
     }
     const total = Object.values(arithmetic).reduce((a, b) => a + b, 0)
-    expect(total, 'the register total, computed from THIS file\'s tables').toBe(168)
+    expect(
+      total,
+      "the register total, computed from THIS file's tables — §5.5.1's CORRECTED arithmetic (33+34+8+5+8+8+72 = 168)",
+    ).toBe(168)
     for (const [row, n] of Object.entries(arithmetic)) expect(n, `${row} is inside the ≤${REGISTER_ROW_CAP} per-row cap`).toBeLessThanOrEqual(REGISTER_ROW_CAP)
     expect(total, `the register total is inside the ≤${REGISTER_TOTAL_CAP} cap`).toBeLessThanOrEqual(REGISTER_TOTAL_CAP)
   })
 })
 
 /** The third FIXED table of `P-LH-IM-1`/`S-LH-PERM-1` (the `§3.2 F-8` shape).
- *  §5.5.1's "157" arithmetic does NOT count these 3 setOrder drives; they are
- *  executed and counted anyway (reported — never hidden). */
+ *  `§5.5.1`'s CORRECTED arithmetic (2026-09-27) COUNTS these `3` `setOrder`
+ *  drives as part of `P-LH-IM-1`'s total (`6 + 24 + 3 = 33`), where the as-filed
+ *  `30`/`157` form omitted them. */
 const PARTIAL_SHAPES: ReadonlyArray<readonly string[]> = [['c', 'a'], ['c', 'a', 'nope'], ['a', 'a', 'c']]
 
 // ===========================================================================
@@ -1630,6 +1661,96 @@ describe('M — §3.1 the valid states', () => {
     expect(clean2.ok, 'M-17: a later call is clean too — the earlier refusal left no residue').toBe(true)
     expect(clean2.refused, 'M-17: still no refusals').toEqual([])
   })
+
+  it('M-18 §3.1 — an EMPTY-STRING key is an ordinary opaque key: four opaque-key STATES, nothing normalizes a key', async () => {
+    // =====================================================================
+    // THE STATES THIS ROW ENUMERATES (§3.1 M-18, ADDED 2026-09-27 by the
+    // TestWriter-handoff reconciliation; finding 2 — appended AFTER M-17,
+    // nothing renumbered):
+    //   (1) the four opaque-key SHAPES, in the row's own order —
+    //       `''` (the empty string) · `' b\t'` (whitespace/tab) ·
+    //       `'ünïcøde'` (non-ASCII) · `'x'.repeat(4096)` (very long);
+    //   (2) the PROJECTION state — the four keys supplied in one
+    //       `setOrder(...)` argument, reordered;
+    //   (3) the CALLBACK/host state — `close('')` on the now-known `''` key
+    //       (fires `onClose` once, removes that node from the mount, drops
+    //       the key);
+    //   (4) the UNKNOWN-key edge of the same rule — `setOrder([''])` while
+    //       `''` is unknown: `§3.2 F-8`/"the `''` drive table" of the F-5
+    //       ruling says an unknown key in `setOrder` is IGNORED, never
+    //       refused (recorded here as an extension the row names, not a
+    //       refusal class of its own).
+    // The row is RED today for the same single reason as every other clause
+    // row: `src/shared/owned-list-host.ts` does not exist.
+    // =====================================================================
+    const { create } = await surface('M-18')
+    const longKey = 'x'.repeat(4096)
+    const keys: readonly string[] = ['', ' b\t', 'ünïcøde', longKey]
+    const nodes = keys.map((_, i) => nodeEl('div', `opaque-${i}`))
+    const mount = mountEl()
+    const seen: Array<{ key: ListKey; entry: ListEntry<unknown> }> = []
+    const h = create({ mount, onClose: (key, entry) => seen.push({ key, entry }) })
+
+    const r = asResult(
+      drive(
+        () =>
+          h.setEntries([
+            { key: '', node: nodes[0] },
+            { key: ' b\t', node: nodes[1] },
+            { key: 'ünïcøde', node: nodes[2] },
+            { key: longKey, node: nodes[3] },
+          ]),
+        'M-18 setEntries of the four opaque keys',
+      ),
+      'M-18 setEntries of the four opaque keys',
+    )
+    expect(r.ok, 'M-18: ok === true for every call — no key shape is a refusal').toBe(true)
+    expect(r.refused, 'M-18: refused === []').toEqual([])
+    // BYTE-IDENTICAL: no trim, no case-folding, no unicode normalization, no
+    // length check and NO empty-string special case.
+    expect(r.order, "M-18: the four keys are reported VERBATIM, and '' is a key like any other").toEqual([...keys])
+    expect(new Set(r.order).size, "M-18: '' never collides with ' b\\t' or the long key — four distinct keys").toBe(4)
+    for (let i = 0; i < keys.length; i += 1) {
+      expect(r.placed[i], `M-18: placed[${i}] is the supplied node by reference`).toBe(nodes[i])
+    }
+    expect(h.keys(), "M-18: keys() contains '' exactly once").toEqual([...keys])
+    expect(h.keys().filter((k) => k === '').length, "M-18: '' appears exactly once").toBe(1)
+
+    // (2) the PROJECTION state: the long key first, then '', then the others.
+    const projection: readonly string[] = [longKey, '', 'ünïcøde', ' b\t']
+    const r2 = asResult(drive(() => h.setOrder([...projection]), 'M-18 setOrder of the four opaque keys'), 'M-18 setOrder of the four opaque keys')
+    expect(r2.ok, 'M-18: the projection is clean').toBe(true)
+    expect(r2.refused, 'M-18: refused === []').toEqual([])
+    expect(r2.order, 'M-18: the projected order is the requested one, verbatim').toEqual([...projection])
+    expect(h.keys(), 'M-18: keys() follows the projection').toEqual([...projection])
+    for (let i = 0; i < projection.length; i += 1) {
+      const idx = keys.indexOf(projection[i])
+      expect(r2.placed[i], `M-18: identity is preserved through the projection (key ${brief(projection[i])})`).toBe(nodes[idx])
+    }
+
+    // (3) the CALLBACK/host state: `close('')` fires `onClose` ONCE with `('', entry)`.
+    const r3 = asResult(drive(() => h.close(''), "M-18 close('') on the KNOWN '' key"), "M-18 close('') on the KNOWN '' key")
+    expect(r3.ok, "M-18: close('') on a known key is not a refusal").toBe(true)
+    expect(r3.refused, "M-18: close('') refused === []").toEqual([])
+    expect(seen.length, "M-18: onClose fires EXACTLY once for close('')").toBe(1)
+    expect(seen[0].key, "M-18: the callback receives the '' key verbatim").toBe(keyIdentity(''))
+    expect(seen[0].entry.key, "M-18: the callback receives the entry whose key is ''").toBe('')
+    expect(containsRef(r3.removed, nodes[0]), "M-18: close('') removes that node (it appears in removed)").toBe(true)
+    expect(containsRef(childrenOf(mount), nodes[0]), "M-18: close('') takes the node OUT of the mount").toBe(false)
+    expect(h.keys().includes(''), "M-18: '' is no longer owned after the close").toBe(false)
+    expect(h.keys().length, "M-18: the other three opaque keys are still owned").toBe(3)
+    for (const k of [' b\t', 'ünïcøde', longKey]) {
+      expect(h.keys().includes(k), `M-18: the key ${brief(k)} survived the close untouched (no normalization)`).toBe(true)
+    }
+
+    // (4) the UNKNOWN-key edge of the same rule: an unknown `''` is IGNORED by
+    // `setOrder`, never refused (`§3.2 F-8` + the F-5 ruling's `''` drive table).
+    const fresh = create({ mount: mountEl() })
+    const r4 = asResult(drive(() => fresh.setOrder(['']), "M-18 setOrder(['']) while '' is unknown"), "M-18 setOrder(['']) while '' is unknown")
+    expect(r4.ok, "M-18: an unknown '' in setOrder is IGNORED, never refused (F-8)").toBe(true)
+    expect(r4.refused, "M-18: refused === [] — no refusal class is produced by ''").toEqual([])
+    expect(r4.order, "M-18: the unknown '' never appears in order").toEqual([])
+  })
 })
 
 // ===========================================================================
@@ -1651,7 +1772,7 @@ describe('F — §3.2 the documented fail-states / refusals', () => {
         expect(r.ok, `F-1 ${method}(${brief(key)}): ok === false`).toBe(false)
         expect(r.refused, `F-1 ${method}(${brief(key)}): refused has EXACTLY one member`).toHaveLength(1)
         expect(r.refused[0].code, `F-1 ${method}(${brief(key)}): the typed code`).toBe('unknown-key')
-        expect(r.refused[0].key, `F-1 ${method}(${brief(key)}): the EXACT key string as supplied (never normalized)`).toBe(key)
+        expect(r.refused[0].key, `F-1 ${method}(${brief(key)}): the EXACT key string as supplied (never normalized)`).toBe(keyIdentity(key))
         expect(typeof r.refused[0].message, `F-1 ${method}(${brief(key)}): a message is present`).toBe('string')
         expect(r.refused[0].message.length, `F-1 ${method}(${brief(key)}): the message is one non-empty sentence`).toBeGreaterThan(0)
         expect(activateCalls, `F-1 ${method}(${brief(key)}): NO callback fires`).toBe(0)
@@ -1675,7 +1796,7 @@ describe('F — §3.2 the documented fail-states / refusals', () => {
     expect(r.ok, 'F-2: ok === false').toBe(false)
     expect(r.refused, 'F-2: ONE refusal').toHaveLength(1)
     expect(r.refused[0].code, 'F-2: the typed code').toBe('duplicate-key')
-    expect(r.refused[0].key, 'F-2: the refusal names the duplicated key').toBe('k')
+    expect(r.refused[0].key, 'F-2: the refusal names the duplicated key').toBe(keyIdentity('k'))
     expect(r.order, "F-2: order contains 'k' ONCE").toEqual(['k'])
     expect(r.placed, 'F-2: exactly one node was placed').toHaveLength(1)
     expect(r.placed[0], 'F-2: the FIRST occurrence is placed (first-wins, stated so it is unambiguous)').toBe(first)
@@ -1692,7 +1813,7 @@ describe('F — §3.2 the documented fail-states / refusals', () => {
     expect(r.ok, 'F-3: ok === false').toBe(false)
     expect(r.refused, 'F-3: exactly one refusal').toHaveLength(1)
     expect(r.refused[0].code, 'F-3: the typed code').toBe('no-node')
-    expect(r.refused[0].key, 'F-3: the exact key as supplied').toBe('k')
+    expect(r.refused[0].key, 'F-3: the exact key as supplied').toBe(keyIdentity('k'))
     expect(h.keys(), 'F-3: the key is NOT owned').toEqual([])
     expect(r.order, 'F-3: order does not contain it').toEqual([])
     expect(r.placed, 'F-3: nothing was placed — the host NEVER creates a node itself').toEqual([])
@@ -1715,7 +1836,7 @@ describe('F — §3.2 the documented fail-states / refusals', () => {
       expect(r.ok, `F-4 (${String(ret)}): ok === false`).toBe(false)
       expect(r.refused, `F-4 (${String(ret)}): exactly one refusal`).toHaveLength(1)
       expect(r.refused[0].code, `F-4 (${String(ret)}): the typed code`).toBe('factory-returned-null')
-      expect(r.refused[0].key, `F-4 (${String(ret)}): the exact key as supplied`).toBe('k')
+      expect(r.refused[0].key, `F-4 (${String(ret)}): the exact key as supplied`).toBe(keyIdentity('k'))
       expect(h.keys(), `F-4 (${String(ret)}): the key is NOT owned`).toEqual([])
       expect(childrenOf(mount).length, `F-4 (${String(ret)}): the mount stays empty`).toBe(0)
     }
@@ -1723,14 +1844,19 @@ describe('F — §3.2 the documented fail-states / refusals', () => {
 
   it('F-5 §3.2 — a MALFORMED entry: malformed-entry, and the OTHER entries of the same call are placed', async () => {
     const { create } = await surface('F-5')
-    const cases: Array<{ id: string; entry: unknown; expectedKey: ListKey | null }> = [
-      { id: 'a non-object entry (a bare string)', entry: 'not-an-entry', expectedKey: null },
-      { id: 'a non-object entry (a number)', entry: 42, expectedKey: null },
-      { id: 'node: null with no factory', entry: { key: 'k-nullnode', node: null }, expectedKey: 'k-nullnode' },
-      { id: 'key not a string (42)', entry: { key: 42, node: nodeEl('div', 'x') }, expectedKey: null },
-      { id: 'key not a string (null)', entry: { key: null, node: nodeEl('div', 'x') }, expectedKey: null },
-      { id: 'key not a string ({})', entry: { key: {}, node: nodeEl('div', 'x') }, expectedKey: null },
-      { id: "key '' (F-5's own literal list)", entry: { key: '', node: nodeEl('div', 'x') }, expectedKey: '' },
+    // THE CORRECTED TRIGGER (`§3.2 F-5`, annotated 2026-09-27; finding 2): a
+    // NON-OBJECT entry, or a NON-STRING `key` (`42`, `null`, `{}`, `undefined`).
+    // `''` IS A VALID KEY and is never `malformed-entry` — its positive drive is
+    // row `M-18`; and the shape "`node: null` with no factory", which the as-filed
+    // cell listed here, is `no-node` per `§2.1`'s node rule `N-3` + `F-3`, so it
+    // is asserted under `F-3` (and cross-checked below) and NOT here.
+    const cases: Array<{ id: string; entry: unknown; expectedKey: unknown; keyIsSupplied: boolean }> = [
+      { id: 'a non-object entry (a bare string)', entry: 'not-an-entry', expectedKey: undefined, keyIsSupplied: false },
+      { id: 'a non-object entry (a number)', entry: 42, expectedKey: undefined, keyIsSupplied: false },
+      { id: 'key not a string (42)', entry: { key: 42, node: nodeEl('div', 'x') }, expectedKey: 42, keyIsSupplied: true },
+      { id: 'key not a string (null)', entry: { key: null, node: nodeEl('div', 'x') }, expectedKey: null, keyIsSupplied: true },
+      { id: 'key not a string ({})', entry: { key: {}, node: nodeEl('div', 'x') }, keyIsSupplied: false, expectedKey: undefined },
+      { id: 'key not a string (undefined)', entry: { key: undefined, node: nodeEl('div', 'x') }, keyIsSupplied: false, expectedKey: undefined },
     ]
     for (const c of cases) {
       const mount = mountEl()
@@ -1743,12 +1869,45 @@ describe('F — §3.2 the documented fail-states / refusals', () => {
       expect(r.ok, `F-5 ${c.id}: ok === false`).toBe(false)
       expect(r.refused, `F-5 ${c.id}: exactly one refusal`).toHaveLength(1)
       expect(r.refused[0].code, `F-5 ${c.id}: the typed code`).toBe('malformed-entry')
-      if (c.expectedKey !== null) {
-        expect(r.refused[0].key, `F-5 ${c.id}: the exact key as supplied`).toBe(c.expectedKey)
+      if (c.keyIsSupplied) {
+        // `ListHostRefusal.key` holds the supplied value VERBATIM (`§2.1`, amended):
+        // `42`/`null` stay `42`/`null`, never `'42'`/`'null'`.
+        expect(r.refused[0].key, `F-5 ${c.id}: the key VERBATIM, no String() coercion and no normalization`).toBe(
+          keyIdentity(c.expectedKey),
+        )
       }
       expect(r.order, `F-5 ${c.id}: the malformed entry is not owned; the valid one is (§2.1 totality note)`).toEqual(['good'])
       expect(containsRef(r.placed, good), `F-5 ${c.id}: the other entry in the same call is placed normally`).toBe(true)
       expect(h.keys(), `F-5 ${c.id}: only the valid key is owned`).toEqual(['good'])
+      // `''` is a VALID key: `setEntries([{key:'', node: n}])` is placed, never
+      // refused, and never malformed (the ruling at `§3.2 F-5`; positive drive
+      // `M-18`).
+      const emptyNode = nodeEl('div', 'empty-key')
+      const rEmpty = asResult(
+        drive(() => h.setEntries([{ key: '', node: emptyNode }]), `F-5 ${c.id}: the '' key is NOT malformed`),
+        `F-5 ${c.id}: the '' key is NOT malformed`,
+      )
+      expect(rEmpty.ok, `F-5 ${c.id}: '' is a valid key — the call is clean`).toBe(true)
+      expect(rEmpty.refused, `F-5 ${c.id}: '' is never malformed-entry (F-5's corrected trigger)`).toEqual([])
+      expect(rEmpty.order, `F-5 ${c.id}: the '' key is owned verbatim`).toEqual([''])
+    }
+    // THE RE-HOMED SHAPE, asserted where the ruling puts it: `node: null` (or
+    // absent) with NO factory is `no-node` (`§2.1` node rule `N-3`, `§3.2 F-3`) —
+    // never `malformed-entry`, and therefore never asserted under `F-5`'s class.
+    for (const node of [null, undefined] as const) {
+      const mount = mountEl()
+      const h = create({ mount })
+      const r = asResult(
+        drive(() => h.setEntries([{ key: 'k-nullnode', node }]), `F-5/F-3 re-home: node ${String(node)} with no factory`),
+        `F-5/F-3 re-home: node ${String(node)} with no factory`,
+      )
+      expect(r.refused, `F-5/F-3 re-home (node ${String(node)}): exactly one refusal`).toHaveLength(1)
+      expect(
+        r.refused[0].code,
+        `F-5/F-3 re-home (node ${String(node)}): 'node: null/absent with no factory' is NO-NODE (N-3/F-3), NOT malformed-entry (F-5)`,
+      ).toBe('no-node')
+      expect(r.refused[0].key, `F-5/F-3 re-home (node ${String(node)}): the exact key as supplied`).toBe(keyIdentity('k-nullnode'))
+      expect(h.keys(), `F-5/F-3 re-home (node ${String(node)}): the key is not owned`).toEqual([])
     }
   })
 
@@ -2042,8 +2201,9 @@ describe('§5.5.1 — the typed property register (7 rows, executed deterministi
     }
 
     // THE THIRD FIXED TABLE of the cell (§3.2 F-8's ignored-key/duplicate rule).
-    // §5.5.1's "157" arithmetic does NOT count these 3 setOrder drives as
-    // attempts; they are executed and REPORTED as 3 further attempts.
+    // COUNTED in `§5.5.1`'s corrected arithmetic (`P-LH-IM-1` = 6 + 24 + 3 = 33):
+    // these 3 `setOrder` drives are attempts of this row, and the as-filed "157"
+    // form omitted them.
     for (const p of PARTIAL_SHAPES) {
       rec.run(`partial setOrder(${JSON.stringify(p)})`, () => {
         if (create === null) return reason
@@ -2098,7 +2258,10 @@ describe('§5.5.1 — the typed property register (7 rows, executed deterministi
       })
     }
 
-    // THE FOUR FIXED IDENTITY SHAPES of the cell.
+    // THE FOUR FIXED IDENTITY SHAPES of the cell — `P-LH-IM-2`'s own total is
+    // `34` (`§5.5.1`: the `30` shared permutation attempts re-driven here `+`
+    // these `4` identity shapes); the `3` partial `F-8` drives of `P-LH-IM-1`'s
+    // third table are NOT re-driven here.
     const shapes: Array<{ id: string; run: () => string | null }> = [
       {
         id: 'shape 1 · caller nodes',
@@ -2324,23 +2487,42 @@ describe('§5.5.1 — the typed property register (7 rows, executed deterministi
     rec.finish()
   })
 
-  it('P-LH-SM-1 [S-LH-MIXED-1] — a set mixing valid entries with EXACTLY ONE refused entry places the valid ones and refuses only that one', async () => {
+  it('P-LH-SM-1 [S-LH-MIXED-1] — a set mixing valid entries with EXACTLY ONE refused entry: re-pinned BY CLASS (three classes absent from order/keys(), duplicate-key owned exactly once)', async () => {
     const s = await resolveSurface()
     const create = s.create
     const reason = s.reason ?? 'the module surface is unavailable'
     const rec = new RegisterRow('P-LH-SM-1', 'S-LH-MIXED-1')
 
+    // THE ROW'S STATEMENT, RE-PINNED BY REFUSAL CLASS (§5.5.1 P-LH-SM-1,
+    // CORRECTED 2026-09-27; finding 3), and asserted per attempt below:
+    //   · `no-node`, `factory-returned-null`, `malformed-entry` ⇒ the refused key
+    //     is ABSENT from `order`/`keys()`;
+    //   · `duplicate-key` ⇒ the key stays owned EXACTLY ONCE and the refused
+    //     occurrence contributes NO node and NO second `order` entry (`§3.2 F-2`
+    //     first-wins, `§2.4` item 2, `I-7`).
+    // The row id is unchanged; only the statement is restated, and the table
+    // below already drove exactly this behaviour.
     type MixedCase = {
       id: string
-      build: () => { entries: ListEntry<unknown>[]; valid: Record<string, ShimElement>; options: OwnedListOptionsLike }
+      build: () => MixedBuilt
       code: RefusalCode
-      refusalKey: string
+      /** The value the drive supplies in the refused position, VERBATIM — a
+       *  string when the drive supplies a string, `42`/`{}` when it does not.
+       *  `§2.1`'s amended `ListHostRefusal.key: unknown` holds exactly this. */
+      refusalKey: unknown
       expectedValidKeys: ListKey[]
       /** F-2's first-wins keeps the key owned for the duplicate class. */
       refusedKeyStaysOwned: boolean
-      refusedNode?: () => unknown
     }
     type OwnedListOptionsLike = { itemFactory?: (e: ListEntry<unknown>) => unknown | null }
+    type MixedBuilt = {
+      entries: ListEntry<unknown>[]
+      valid: Record<string, ShimElement>
+      options: OwnedListOptionsLike
+      /** The node the drive supplies in the REFUSED position, when it supplies
+       *  one — asserted to be absent from the mount (`F-2`/`F-3`/`F-4`/`F-5`). */
+      refusedNode?: () => unknown
+    }
     const mk = (id: string) => nodeEl('div', id)
     const cases: readonly MixedCase[] = [
       {
@@ -2396,26 +2578,34 @@ describe('§5.5.1 — the typed property register (7 rows, executed deterministi
         },
       },
       {
-        id: '3-entry set · malformed-entry first',
+        id: '3-entry set · malformed-entry first (a NON-STRING key: 42)',
         code: 'malformed-entry',
-        refusalKey: 'k-mal',
+        refusalKey: 42,
         expectedValidKeys: ['v1', 'v2'],
         refusedKeyStaysOwned: false,
         build: () => {
           const valid = { v1: mk('v1'), v2: mk('v2') }
-          return { entries: [{ key: 'k-mal', node: null }, { key: 'v1', node: valid.v1 }, { key: 'v2', node: valid.v2 }], valid, options: {} }
+          const bad = mk('k-mal-42')
+          // A NON-STRING key is not expressible as a `ListEntry` (whose `key` is
+          // `ListKey`) — it is exactly what `§3.2 F-5` REFUSES, so the drive casts it.
+          return {
+            entries: [{ key: 42, node: bad } as never, { key: 'v1', node: valid.v1 }, { key: 'v2', node: valid.v2 }],
+            valid,
+            options: {},
+            refusedNode: () => bad,
+          }
         },
       },
       {
-        id: '4-entry set · malformed-entry at position 2',
+        id: '4-entry set · malformed-entry at position 2 (a non-object entry)',
         code: 'malformed-entry',
-        refusalKey: 'k-mal',
+        refusalKey: 'not-an-entry',
         expectedValidKeys: ['v1', 'v2', 'v3'],
         refusedKeyStaysOwned: false,
         build: () => {
           const valid = { v1: mk('v1'), v2: mk('v2'), v3: mk('v3') }
           return {
-            entries: [{ key: 'v1', node: valid.v1 }, { key: 'v2', node: valid.v2 }, { key: 'k-mal', node: null }, { key: 'v3', node: valid.v3 }],
+            entries: [{ key: 'v1', node: valid.v1 }, { key: 'v2', node: valid.v2 }, 'not-an-entry' as never, { key: 'v3', node: valid.v3 }],
             valid,
             options: {},
           }
@@ -2457,27 +2647,43 @@ describe('§5.5.1 — the typed property register (7 rows, executed deterministi
         if (create === null) return reason
         const mount = mountEl()
         const built = c.build()
-        const h = create({ mount, ...(built.options as OwnedListHostOptions) })
+        // The mount is the row's own (the per-case `options` carry only the
+        // factory), so the spread is narrowed to exclude it rather than
+        // overwriting it.
+        const h = create({ mount, ...(built.options as Omit<OwnedListHostOptions, 'mount'>) })
         const r = h.setEntries(built.entries)
         if (r.ok !== false) return `ok === true (expected false — the class entry must be refused)`
         if (r.refused.length !== 1) return `refused.length === ${r.refused.length} (expected exactly ONE refusal): ${JSON.stringify(r.refused)}`
         if (r.refused[0].code !== c.code) return `refused[0].code === ${JSON.stringify(r.refused[0].code)} (expected ${JSON.stringify(c.code)})`
-        if (r.refused[0].key !== c.refusalKey) return `refused[0].key === ${JSON.stringify(r.refused[0].key)} (expected the exact key as supplied: ${JSON.stringify(c.refusalKey)})`
+        // VERBATIM, by `===`-identity: a string when the drive supplied a string,
+        // `42` when it did not — no `String(...)`, no normalization.
+        if (r.refused[0].key !== c.refusalKey) {
+          return `refused[0].key === ${JSON.stringify(r.refused[0].key)} (expected the value supplied VERBATIM: ${JSON.stringify(c.refusalKey)})`
+        }
         if (JSON.stringify(r.order) !== JSON.stringify(c.expectedValidKeys)) {
           return `order === ${JSON.stringify(r.order)} (expected the VALID keys in their supplied order: ${JSON.stringify(c.expectedValidKeys)})`
         }
         const brk = identityBreak(r, built.valid, `${c.id}: every valid node placed by reference`)
         if (brk !== null) return brk
         const keys = h.keys()
+        // The refused occurrence's node is NEVER placed — true of all four classes
+        // (`F-2` for duplicate-key, `F-3`/`F-4`/`F-5` for the other three).
+        const refusedNode = built.refusedNode?.()
+        if (refusedNode !== undefined && containsRef(childrenOf(mount), refusedNode)) {
+          return `the REFUSED entry's node was placed (key ${JSON.stringify(c.refusalKey)}): a refused entry contributes no node`
+        }
         if (c.refusedKeyStaysOwned) {
           // §3.2 F-2 first-wins: the key stays owned by its FIRST occurrence —
-          // §5.5.1's "the refused key absent from keys()" cannot hold for this
-          // class (reported, not hidden).
-          if (keys.filter((k) => k === c.refusalKey).length !== 1) return `keys() names '${c.refusalKey}' ${keys.filter((k) => k === c.refusalKey).length} times (first-wins keeps it owned exactly once)`
-          const refusedNode = built.refusedNode?.()
-          if (refusedNode !== undefined && containsRef(childrenOf(mount), refusedNode)) return `the REFUSED duplicate's node was placed — first-wins forbids it`
-        } else if (keys.includes(c.refusalKey)) {
-          return `the refused key '${c.refusalKey}' IS owned (keys() === ${JSON.stringify(keys)}) — a refused entry is not placed, not owned and absent from order`
+          // §5.5.1's as-written "the refused key absent from keys()" cannot hold
+          // for this class; the RE-PINNED statement says "owned exactly once".
+          if (keys.filter((k) => k === c.refusalKey).length !== 1) {
+            return `keys() names ${JSON.stringify(c.refusalKey)} ${keys.filter((k) => k === c.refusalKey).length} times (first-wins keeps it owned exactly once)`
+          }
+          if (r.order.filter((k) => k === c.refusalKey).length !== 1) {
+            return `order names ${JSON.stringify(c.refusalKey)} ${r.order.filter((k) => k === c.refusalKey).length} times (the refused occurrence adds NO second order entry)`
+          }
+        } else if (keys.includes(c.refusalKey as ListKey)) {
+          return `the refused key ${JSON.stringify(c.refusalKey)} IS owned (keys() === ${JSON.stringify(keys)}) — for no-node/factory-returned-null/malformed-entry the refused key is absent from order and keys()`
         }
         return null
       })
@@ -2633,13 +2839,22 @@ describe('§5.5.1 — the typed property register (7 rows, executed deterministi
   })
 
   it('P-LH-TP-1 [S-LH-SEED-1] — for EVERY shape drawn from the 22-shape pool (seed 20260927), no method throws and every method returns its declared shape', async () => {
+    // THE CELL'S SCOPE, RE-PINNED (`§5.5.1 P-LH-TP-1`, CORRECTED 2026-09-27;
+    // finding 4): "a ListHostResult for the SEVEN result-returning methods" was a
+    // MIS-COUNT. `§2.1`'s own surface census declares EIGHT methods of which SIX
+    // return a `ListHostResult` — `setEntries`, `remove`, `setOrder`, `render`,
+    // `activate`, `close` — one (`keys()`) returns `readonly ListKey[]`, and one
+    // (`dispose()`) returns `void`. This row asserts exactly that declared shape
+    // for every one of the eight methods (see `shapeBreaks`).
     const s = await resolveSurface()
     const create = s.create
     const reason = s.reason ?? 'the module surface is unavailable'
     const rec = new RegisterRow('P-LH-TP-1', 'S-LH-SEED-1')
 
     const lcg = makeLcg(SEED)
-    // 64 pinned-seed attempts: each draws (method, input) from the pool.
+    // `64` pinned-seed attempts: each draws (method, input) from the 22-shape pool.
+    // `P-LH-TP-1`'s own total is `72` = these `64` drawn attempts `+` the fixed
+    // after-`dispose()` sweep of all `8` methods (`§5.5.1`, corrected arithmetic).
     for (let attempt = 1; attempt <= 64; attempt += 1) {
       rec.run(`attempt ${attempt} (seed ${SEED})`, () => {
         if (create === null) return reason
