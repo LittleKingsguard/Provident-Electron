@@ -76,6 +76,54 @@ and **the unit's red set is still owed** (`§4.2`, `§4.5`: a TestWriter to RUN 
 this unit's status moves except the delegation gate's blocking list, which is now empty of
 underivable clauses.**
 
+**⟶ STATUS NOTE — 2026-09-27, THE `U-SLOTHOST` RED PASS: THE RED SET HAS **RUN** AND **REPORTED**, AND
+THIS UNIT IS STILL NOT IMPLEMENTED, NOT GREEN AND NOT `DONE`.** *(This note **amends no normative
+clause**, adds no `§3` row, moves no section number and changes no register statement, type, strategy
+id, attempt count or the `155` total. It exists because the clause immediately above — and the
+filing-time line **"The unit has NOT run: nothing here is implemented, no red set has been authored
+and no leg has been run by this pass"** — is **superseded on its red-set half while its text is kept
+visible**: the red set has since been **authored AND RUN** by the TestWriter.)* **MEASURED NUMBERS,
+recorded here and in full at `§5.5.1`'s executed-red block so a delegator need not reach it:** red set
+**`55` rows — `53` red / `2` pass** (the `2` passes are rows that can be green while the module is
+absent — at least one of them being the register's own pool-count precondition row, which the
+TestWriter reports as pinning the executed pool at `20` green; **this pass did not read the test file,
+so the identity of the second pass is reported as the TestWriter's to confirm, NOT asserted here**);
+whole node suite (`npm test`, §5.2 leg 1) **`61` files / `1035` tests — `980` passed / `53` failed /
+`2` skipped**; the property register **`5` of `155` attempts executed**, **stopped early at
+`P-SH-IM-1`** (`§5.5.1`'s stop-after-5-consecutive-failures rule, executed exactly as designed), with
+**the five un-run register rows reported as FAILURES** rather than silently omitted; and the module
+`src/shared/slot-host.ts` **does not exist**, which is why every red row reads
+`Cannot find module '../src/shared/slot-host.js'`. **THE IMPLEMENTATION HAS NOT BEEN WRITTEN: the unit
+is NOT green and NOT `DONE`** — the red RUN discharges the *author-and-run* half of `AGENTS.md` item 9
+only, and **`§4.5`'s condition (d) now reads differently: it is no longer "a TestWriter to RUN and
+REPORT" but "the Implementer's least-code pass", which has NOT run.** **The `155`/`20`/`60` figures
+this file states remain the register's DESIGN accounting — the executed red produced `5` of them —
+and nothing in them is re-pinned by this pass.**
+
+**⟶ STATUS NOTE — 2026-09-27, THE ADVERSARIAL PASS AND THE ARCHITECT'S CONTAINER-SOURCE RULING: THE
+UNIT IS NOT GREEN AND NOT `DONE`.** *(This note **amends no normative clause by itself** — every
+amendment it names lives, dated, in the cell that carries it — and it moves no section number.)* **Two
+things happened, and both are visible where a reader enters this file.** **(1) The architect has RULED
+the remedy for a HIGH finding (`ADV-SH-1`): the container source is an INJECTED element factory — a new
+OPTIONAL seam on `SlotHostOptions`; the ambient read (`globalThis['doc' + 'ument'].createElement('div')`,
+`src/shared/slot-host.ts:130-140`, a property name assembled from two literals so the static scans could
+not match it) is DELETED, not documented; and the static bans are TIGHTENED** — **no ambient global AND
+no assembled/computed member lookup, no aliased/re-derived global reference** (`§2.1`'s container-source
+clause + the seam, `§1`, `§2.2` prohibitions 1/2, the Layer declaration anchor 3, the new row `§3.2
+F-12`, `§4.4 S-2`/`S-4`, `§5.2`). **(2) A read-only ADVERSARIAL pass has RUN and its record is
+`§3a`/`§3b`: fifteen findings (`ADV-SH-1`..`ADV-SH-15`), all `20` seeds ruled, the `17` Implementer
+judgment calls ruled, the register executed `155` of `155` attempts with NOTHING STOPPED EARLY and TWO
+BROKEN attempts (`P-SH-SM-1` `11/12`, `P-SH-SM-2` `7/8`), and SIX ROWS RED — `M-14`, `M-17`, `F-7`,
+`P-SH-SM-1`, `P-SH-SM-2` sequence 5, `S-5` — ALL SIX RULED TEST-SIDE, with NO code defect among them.**
+**Three items stay OPEN WITH OWNERS: `ADV-SH-2` (OWED: an Implementer guard + a spec pin against a
+container passed back as a node), `ADV-SH-3` (OWED: module-local `WeakMap` bookkeeping instead of an
+expando `parent` marker on the caller's node), and `ADV-SH-12` (PARKED, revisit when a non-shim/real-DOM
+container is injected).** **`ADV-SH-15`: NO PACKAGE DEFECT — nothing is owed to `docs/defects.md` or
+`docs/HANDOFF.md` by this unit.** **The unit therefore may not be reported green, may not be reported
+`DONE`, and no tracker row may read otherwise; the container source is being REWORKED** (`§7` item 11).
+**This pass ran NO test, NO leg and NO trio** — the counts above are the adversarial pass's own report,
+recorded as reported. **The publisher/carrier half stays DECLINED — this note does not restore it.**
+
 **Go-ahead state — stated plainly: this unit is BLOCKED on the architect's go-ahead for the wave-D
 plan.** The go-ahead in force covers **wave B only** (`docs/specs/engine-drift.md` §0 ruling 1:
 *"the go-ahead is WAVE B ONLY … waves C–F are not authorised by this go-ahead"*), and it is **spent**.
@@ -127,6 +175,20 @@ Electron window booted, and **no result is recorded here**.
 3. **The container is injected and the module reads no ambient global.** No `document`, no `window`,
    no `matchMedia`, no `getElementById`. The module is admissible under **(C)** (a consumer-agnostic
    shell-chrome mechanism) and judged under **(C)'s six prohibitions**, which §2.2 asserts.
+   **⟶ TIGHTENED AND CORRECTED 2026-09-27 (the architect's option-(a) ruling on the container source;
+   `ADV-SH-1`, HIGH, `CONTRACT-AMENDED`; the sentence above is kept visible and stays TRUE only after
+   the fix):** the as-written sentence was **FALSE of the module as it stood** — `elementFor()`
+   reached the realm itself through `globalThis['doc' + 'ument'].createElement('div')`
+   (`src/shared/slot-host.ts:130-140`, read this pass), a property name **assembled from two
+   literals** so the `/document/i` scan could not match it, so the module **read an ambient global
+   while this anchor asserted it did not**. **The tightened rule, which both anchors 3 and `§2.2`
+   prohibition 1 now carry: the module reads NO ambient global AND performs NO assembled/computed
+   member lookup and NO aliased/re-derived global reference** — a property name assembled from
+   literals, a computed access, or an aliased global is **the same violation as the literal token**.
+   **The container source is the INJECTED `containerFactory` seam** (`§2.1`'s container-source
+   clause); the ambient read is **DELETED, not documented**, and the static bans were tightened so
+   the evasion cannot be re-introduced (`§4.4` `S-2`/`S-4`). **This anchor is therefore an assertion
+   the red set must be able to FAIL**, not a description of the code as it stood.
 
 **⟶ ADDED 2026-09-27 (the `§5.5` re-derivation pass): how this unit's QUANTIFIED claims are
 executed, stated at the layer declaration so no reader has to reach `§5.5.1` to learn it.** The
@@ -167,7 +229,18 @@ instead of creating anything**.
    **caller-created** node into the container for that node's key; it moves a node between two
    declared containers; it removes a node **it placed**; and it applies a **caller-supplied**
    `classNameOf`/`attributesOf` result to a **caller-created** node. **Nothing else. It authors no
-   text and no class value of its own.**
+   text and no class value of its own.** **⟶ AMENDED 2026-09-27 (the architect's option-(a) ruling on
+   the container source; `ADV-SH-1`, HIGH — the sentence above is kept visible): the host CREATES no
+   container element AT ALL.** It obtains **exactly one container per declared key** from the
+   **injected `containerFactory`** (the sole container source, `§2.1`'s container-source clause) and
+   **reads no ambient global — and performs no assembled/computed member lookup, no aliased or
+   re-derived global reference — to obtain one**. **So the complete write list reads: it obtains one
+   container per declared key from the factory; it projects those containers onto the injected
+   `container`; it places a caller-created node into that key's container; it moves a node between two
+   declared containers; it removes a node it placed; and it applies a caller-supplied
+   `classNameOf`/`attributesOf` result to a caller-created node.** **With the factory absent (or
+   non-callable, or returning an unusable value) it obtains none and every operation is the `F-6`-class
+   no-op of the new row `F-12`.**
 
 **Explicitly OUT of scope (do not do in this unit):**
 
@@ -182,6 +255,19 @@ instead of creating anything**.
   manipulation beyond the injected `classNameOf`** (§2.2).
 - **Any store, registry, persistence, or module-level mutable state** beyond the host's own
   per-key ownership bookkeeping.
+- **⟶ ADDED 2026-09-27 (the architect's option-(a) ruling on the container source; `ADV-SH-1`, HIGH):
+  NO AMBIENT GLOBAL **AND** NO ASSEMBLED/COMPUTED MEMBER LOOKUP.** The tightening is part of the
+  out-of-scope list itself, so it is a scope violation and not a style preference: **a property name
+  assembled from literals** (`globalThis['doc' + 'ument']`), **a computed access**
+  (`globalThis[x]`, `realm[propName]`), **an `eval`/`Function`-constructed access**, and **an
+  aliased or re-derived global reference** (`const g = globalThis; g.document` — or any helper that
+  returns the realm, the realm's factory owner, or a `createElement`-shaped function) are **ALL the
+  same violation as the literal token `document`**. Rationale, stated so the ban is not read as
+  over-broad: the clause exists to forbid the module **reaching the ambient realm for anything**,
+  and the assembled form above did exactly that while defeating `/document/i`. **The container source
+  is the injected `containerFactory` seam and nothing else** (`§2.1`'s container-source clause).
+  **This ADDS to the bullet above and deletes nothing from it** — the `document`/`window` ban keeps
+  its as-written text.
 - **Any new MCP surface** — the five-seam negative: no tool, resource, group, `VALID_GROUPS` member
   (`src/main/security.ts:134`, read: `read`/`dispatch`/`graph`/`code`/`module`), `RpcMethod` member
   (`src/shared/types.ts:259-281`, read: **21** members) or `MUTATING_METHODS` entry
@@ -233,6 +319,21 @@ export interface SlotHostOptions {
   /** Notified ONCE per refusal. The host NEVER awaits it and NEVER lets it
    *  change the refusal's outcome (§2.1's callback rule). */
   readonly refuse?: (refusal: SlotHostRefusal) => void
+  /** The SOLE container source: the caller's element factory. Called once per
+   *  declared key that needs a container; the value it returns IS that key's
+   *  container. The accepted shape is "offers `appendChild`" — the same
+   *  predicate the module already uses for `isNodeShaped`. Absent (or
+   *  non-callable, or returning an unusable value) ⇒ the EXISTING degradation:
+   *  every operation is a valid no-op with a valid state and nothing is
+   *  placeable (§2.1's container-source clause, §3.2 `F-12`).
+   *  ⟶ ADDED 2026-09-27 (the architect's option-(a) ruling on the container
+   *  source; the as-filed option list is kept visible below): the ambient read
+   *  is DELETED, not documented, and this seam REPLACES it.
+   *
+   *  ⟶ AS FILED 2026-09-27 (kept visible, not rewritten): there was NO factory
+   *  seam. `SlotHostRefusal`'s own `'no-container'` member was the only trace of
+   *  a container source, and the host obtained its container from `container`. */
+  readonly containerFactory?: (key: SlotKey) => unknown
 }
 
 export interface SlotHostRefusal {
@@ -302,6 +403,58 @@ returns a `SlotHostResult` (except `dispose()`, which returns `void` and is idem
 operation contributes a `SlotHostRefusal` and leaves the host's state valid. **`ok` is `false` iff
 `refused.length > 0`** (row `I-1`).
 
+**⟶ THE CONTAINER SOURCE — INJECTED, AND THE AMBIENT READ IS DELETED (ADDED 2026-09-27, the
+architect's option-(a) ruling; `ADV-SH-1`, HIGH, `CONTRACT-AMENDED`).** *Why this clause exists:* the
+module as it stands reaches the realm's element factory through the ambient global itself —
+`globalThis['doc' + 'ument'].createElement('div')` (`src/shared/slot-host.ts:130-140`, read this pass)
+— with the property name **assembled from two literals** so that a static token scan for `/document/i`
+cannot match it. That shape **evaded three clauses at once** (`§1`'s "no `document`/`window`
+reference", `§2.2` prohibition 1's static source row, and the Layer declaration's "reads no ambient
+global") while doing the banned thing. **The architect has RULED the remedy, and it is option (a): the
+container source is an INJECTED element factory — a new OPTIONAL seam on `SlotHostOptions`; the ambient
+read is DELETED, not documented; and the static bans are TIGHTENED so the evasion cannot be
+re-introduced.** The clause, normatively:
+
+1. **`containerFactory` is the SOLE container source.** `options.containerFactory(key)` is the only way
+   this host obtains a container element. **No ambient global, and no assembled/computed member
+   lookup, is a container source** — not `globalThis`, not a re-derived global reference, not an
+   alias of one (`§1`'s out-of-scope list, `§2.2`'s prohibitions 1/2).
+2. **Its SIGNATURE is `(key: SlotKey) => unknown`,** called **once per declared key that needs a
+   container** (the first call for that key that actually needs one — the host may not create a
+   container the contract's own drives do not require, `F-1`/`I-10` — and the value it returns for
+   that key **is** that key's container, including on a later re-creation after `dispose()`).
+3. **What a caller MAY return — the accepted shape, exactly:** a value that **offers `appendChild`**
+   (**a function-valued `appendChild` member**). **This is the SAME predicate the module already uses
+   for `isNodeShaped`** (`src/shared/slot-host.ts:152-156`, read) and for the injected container's own
+   usability (`isUsable`, `:180-184`): the host requires **exactly one operation** — `appendChild` —
+   and **no** `tagName`, `children`, `remove`, `setAttribute`, `className` or prototype is required
+   for a value to be accepted as a container. A real DOM element satisfies it; a shim `ShimElement`
+   satisfies it; a plain object offering an `appendChild` function satisfies it; **no predicate such
+   as `instanceof` or a tag check is asserted or admissible** (`§4.4 S-2`, `H-r5`).
+4. **ABSENT (or non-callable, or returning an unusable value) ⇒ the EXISTING degradation — STATED
+   EXPLICITLY, because it is not a new behaviour:** the factory is optional, and **every operation is
+   then a valid no-op with a valid state and nothing is placeable** — `refused` is `[]` and
+   `ok === true` for a valid input (`I-1`), `placed` is `[]`, `keys()` still reports the **declared**
+   keys in the projected order, `order` is still valid, and `containerFor(k)` returns **`null` for
+   every key**. **This is the SAME `F-6`-class behaviour as an absent container**, stated for the
+   factory so a TestWriter derives it without guessing: **no container-state refusal is produced**
+   (in particular **not `'no-container'`** — that member stays DECLARED-BUT-NOT-EMITTED, `§3.2
+   F-11`), and the non-callable/non-conforming-factory shapes are **NOT** the present-but-unusable
+   `F-7` refusal class (`F-7` is about an injected **container** that refuses the write, not about
+   the factory).
+5. **Absent container AND absent factory together ⇒ the same no-op state**, once (not two
+   degradations stacked): the host has nowhere to place and nothing creates containers, and every
+   method keeps its declared result shape (`I-8`).
+
+**⟶ AS FILED 2026-09-27 (kept visible, annotated): the filing-time option type carried NO container
+source seam** — `container: unknown | null` was the ONLY container-shaped input, and this spec's
+`§3.2 F-6`/`F-7` rows were the only statements about where containers come from. **The clause above
+does not delete any of that**: `container` remains the element whose children the host's containers are
+projected onto (the mount), and it is **still injected, still optional, still a supported no-op
+configuration** (`F-6`).** What the ruling DELETES is the ambient read the module performed to create
+the containers it was projecting — a source this contract never declared, and which no row of `§3`
+ever named.
+
 **⟶ THE REFUSAL-CODE DOMAIN, STATED EXACTLY SO THE TESTWRITER'S CODE SET IS EXACT — THREE EMITTED,
 ONE DECLARED-BUT-NOT-EMITTED (ADDED 2026-09-27, the `§7a` RULING pass, `§7a` item 1).** The union
 above declares **four** members; this unit's contract **emits exactly three** of them, and the
@@ -312,7 +465,7 @@ fourth is a **declared-but-not-emitted member**, stated here rather than left as
 | 1 | `'unknown-key'` | **YES** | `F-1` (`setNode`/`remove` on an undeclared key), `F-3` (a non-string/`''` key), `F-4` (a malformed `keys` option ⇒ an empty declared set, so every `setNode` is `unknown-key`) |
 | 2 | `'malformed-node'` | **YES** | `F-2` (`setNode('a', null)` / `undefined` / `42` / `'x'` / `{}`) |
 | 3 | `'container-not-appendable'` | **YES** | `F-7` (a container that is **present but refused by the environment**) — and **only** that shape: `F-6` states in writing that an **absent/`null`** container is **not** a refusal |
-| 4 | `'no-container'` | **NO — DECLARED BUT NOT EMITTED (the ruling of `§7a` item 1)** | **Reason:** `F-6` is the contract's majority reading of the absent container (*"`refused` is `[]`, `ok === true`"*, `M-14`, `§2.3` item 6) and it is a **supported no-op configuration**, not a refusal; `F-7` gives every present-but-unusable-container refusal to `'container-not-appendable'`; **no third container state exists in `§2.1`'s option type** (`container: unknown \| null`), so **no `§3.2` trigger emits `'no-container'`**, and none is invented. The member stays in the union for contract stability, and the negative is pinned: **the row `F-11` asserts that no method, for any drive in `I-8`/`P-SH-TP-1`'s enumeration, ever emits `'no-container'`** — a falsifiable assertion (a `code === 'no-container'` entry anywhere fails it) |
+| 4 | `'no-container'` | **NO — DECLARED BUT NOT EMITTED (the ruling of `§7a` item 1)** | **Reason:** `F-6` is the contract's majority reading of the absent container (*"`refused` is `[]`, `ok === true`"*, `M-14`, `§2.3` item 6) and it is a **supported no-op configuration**, not a refusal; `F-7` gives every present-but-unusable-container refusal to `'container-not-appendable'`; **no third container state exists in `§2.1`'s option type** (`container: unknown \| null`) — **and the CONTAINER-SOURCE seam adds no state that emits it either: with `containerFactory` absent, non-callable, throwing or returning an unusable value, the host degrades exactly as for an absent container (`§3.2 F-12`), producing `refused` `[]` and `ok === true` and never `'no-container'`** (`§2.1`'s container-source clause, its degradation item) — so **no `§3.2` trigger emits `'no-container'`**, and none is invented. The member stays in the union for contract stability, and the negative is pinned: **the row `F-11` asserts that no method, for any drive in `I-8`/`P-SH-TP-1`'s enumeration *and* in `F-12`'s five factory drives, ever emits `'no-container'`** — a falsifiable assertion (a `code === 'no-container'` entry anywhere fails it) |
 
 **What the TestWriter may therefore assert, in one line:** **every refusal produced anywhere in this
 unit carries one of the THREE emitted codes** (`P-SH-SM-2`'s per-step code-membership clause is
@@ -340,7 +493,10 @@ the **same words** `§5.5.1 P-SH-TP-1` already carries, and this clause is now i
 
 **The universal is therefore bounded by the injected-callback shape, and the bound is not a silent
 exemption: each injected caller function has a NAMED SAFE DEFAULT, the host CATCHES the throw and
-CONTINUES with that default, and the method still returns its declared result.** (This follows the
+CONTINUES with that default, and the method still returns its declared result.** **⟶ THE TABLE CARRIES
+`5` SEAMS, NOT `4` (ADDED 2026-09-27, the architect's option-(a) ruling on the container source):
+`containerFactory` is the fifth, appended after the four the `§7a` ruling pass named — see the last row
+and the count note below the table.** (This follows the
 sibling unit's own ruling shape: `docs/specs/listhost.md`'s `§2.1` totality-extends-to-injected-
 functions clause and its per-function safe-default table, read this pass — the three real seams
 there are `itemFactory`/`onActivate`/`onClose`, each with a named default. **The clause is mirrored
@@ -352,11 +508,21 @@ as a SHAPE, not copied as text: this unit's seams, codes and observables are its
 | `classNameOf` | the caller's class policy produced no value | **no class write for that node** — the **same** as a `null`/`undefined` return (`§2.5` item 4, `M-11`): `null`/`undefined` already means *no write for that field*, so the default needs no new rule and writes no empty class | **no throw**; the node's class field is unchanged; **no** refusal; `ok === true` when nothing else was refused |
 | `attributesOf` | the caller's attribute policy produced no list | **no attribute write for that node** — the same as a `null`/`undefined` return (`§2.5` item 4); entries are applied **best-effort per entry** (`F-8`), so a **malformed entry** is skipped without failing the call and a **throw** is the whole list's default | **no throw**; the attribute-name set is unchanged; **no** refusal; `ok === true` when nothing else was refused |
 | `refuse` | the caller's refusal listener failed | the throw is **swallowed**: the refusal has **already** been recorded in the returned `refused` list, and its outcome is unchanged | **no throw out of the method that produced the refusal**; the refusal **is** present in `refused`; `refuse` is still attempted **exactly once per refusal, in encounter order** (`M-17`) |
+| **`containerFactory`** *(THE FIFTH SEAM — ⟶ ADDED 2026-09-27, the architect's option-(a) ruling on the container source; the four rows above are the filing-time/ruling-pass table and are kept visible)* | the caller's **element factory** failed for that key — it threw, or it is present but **not callable**, or it returned a value that **does not offer `appendChild`** | **the key's container is treated as ABSENT**: the host catches the throw (and treats non-callable / non-conforming-factory shapes identically) and CONTINUES — **nothing is placeable for that key**, `placed` gains no key, and `containerFor(key)` returns **`null`** for it (`§2.1`'s container-source clause, `§3.2 F-12`) | **no throw**; the method returns its declared result shape; the key stays **declared** in `keys()`/`order`; **no** `SlotHostRefusal` is invented for it and **`'no-container'` is NOT emitted** (`F-11`); `ok` reflects only genuine refusals (`I-1`) |
 
 **No clause above weakens a refusal, and no new refusal code is invented**: a thrown injected
 function **never** becomes a `SlotHostRefusal` of its own kind (there is no code for "the callback
-threw"), so `§2.1`'s four-member union and the emitted-three domain above are unchanged. **What the
-caller MAY expect, precisely:** the method returns its declared shape, the host's state stays valid,
+threw"), so `§2.1`'s four-member union and the emitted-three domain above are unchanged. **⟶ THE SEAM
+COUNT IS NOW `5`, NOT `4` (ADDED 2026-09-27, the architect's option-(a) ruling on the container
+source; the paragraph above is the ruling pass's text and is kept visible and NOT weakened):**
+`containerFactory` is the **fifth injected caller function**, it has the NAMED SAFE DEFAULT the new
+table row states (the key's container is treated as absent, nothing is placeable for it,
+`containerFor` returns `null`, **no** refusal and **no `'no-container'`**), and the totality-boundary
+universal above therefore binds **five** seams — `orderOf`, `classNameOf`, `attributesOf`, `refuse`,
+**`containerFactory`**. **Everything else in the paragraph stands verbatim:** no invented code, no
+re-throw, and `P-SH-TP-1`'s pool still excludes the throwing-callback shapes (which is why the fifth
+seam is driven by a `§3.2` row, **`F-12`**, and not by that register row). **What the caller MAY
+expect, precisely:** the method returns its declared shape, the host's state stays valid,
 caller-code failure is **never** reported as a contract refusal, and the host **never re-throws** a
 caller throw. **`F-10` is re-ruled by this clause** — it is **no longer "this spec does not decide
 it"**: see the amended `F-10` row and `§3a A-5`'s disposition, and note that **`P-SH-TP-1`'s pool
@@ -374,8 +540,8 @@ it; the host **never** creates a node of its own); the **order** and the **order
 
 | # | Prohibition | This unit's binding assertion | Pinned by |
 | --- | --- | --- | --- |
-| **1** | **No consumer vocabulary** as a symbol, closed union member, default or documented constant | The module's source contains **no occurrence** of `zone`/`pane`/`tab`/`region`/`is-empty`/`is-minimized`/`is-revealed`/`status` as vocabulary; keys are typed as an **open** `type SlotKey = string` (an alias, not a closed union — so a consumer value can never be a member); no consumer constant is documented. The only string-union is `SlotHostRefusal['code']`'s **four** contract diagnostics. **The declared key set is caller data, not a vocabulary of the mechanism.** | static source row over the module file |
-| **2** | **No app UI content** authored | The host authors **no** text, **no** label, **no** status string, **no** `role`/ARIA attribute, **no** class value of its own, **no** style, and **no** default node. It creates **containers** (empty elements) and applies **caller-supplied** class/attribute values to **caller-created** nodes. **A `publish`-shaped surface is ABSENT by contract** (ruling 1). | static rows: zero `textContent` write, zero `className` value literal, zero `publish`-shaped export |
+| **1** | **No consumer vocabulary** as a symbol, closed union member, default or documented constant | The module's source contains **no occurrence** of `zone`/`pane`/`tab`/`region`/`is-empty`/`is-minimized`/`is-revealed`/`status` as vocabulary; keys are typed as an **open** `type SlotKey = string` (an alias, not a closed union — so a consumer value can never be a member); no consumer constant is documented. The only string-union is `SlotHostRefusal['code']`'s **four** contract diagnostics. **The declared key set is caller data, not a vocabulary of the mechanism.** **⟶ TIGHTENED 2026-09-27 (the architect's option-(a) ruling on the container source; `ADV-SH-1`, HIGH — this row is STRENGTHENED, not re-scoped, and the sentence above is kept visible): a source scan must ALSO reject an ASSEMBLED or COMPUTED member lookup and an aliased/re-derived global reference** — `globalThis['doc' + 'ument']`, `globalThis[name]`, `const g = globalThis; g['window']`, a returned realm/`createElement` alias — **because that shape does the banned thing while defeating the token scan** (`src/shared/slot-host.ts:130-140`, the evasion `ADV-SH-1` records). **A row that scans only for the literal tokens is an INCOMPLETE row and the evasion it misses is a finding.** | static source row over the module file **⟶ AND (2026-09-27) an anti-assembly row: no computed/assembled member lookup, no aliased global, no re-derived realm — the row FAILS on `globalThis['doc' + 'ument']`** |
+| **2** | **No app UI content** authored | The host authors **no** text, **no** label, **no** status string, **no** `role`/ARIA attribute, **no** class value of its own, **no** style, and **no** default node. It creates **containers** (empty elements) and applies **caller-supplied** class/attribute values to **caller-created** nodes. **A `publish`-shaped surface is ABSENT by contract** (ruling 1). **⟶ TIGHTENED 2026-09-27 (the architect's option-(a) ruling on the container source; `ADV-SH-1`, HIGH — STRENGTHENED, not re-scoped): the containers and every child they hold come FROM THE INJECTED `containerFactory`, so this row's static half gains the source-of-containers negative — the module creates NO element of its own and reads NO ambient global (no assembled/computed `document`/`window` lookup, no aliased realm) to obtain one; a container the module produced from anything other than the injected factory FAILS this row.** *(What the ruling deletes is the ambient read the module performed to create the containers it projects: the row's content half is unchanged, and the created element's emptiness is unchanged — the host still authors no text, no class value and no attribute.)* | static rows: zero `textContent` write, zero `className` value literal, zero `publish`-shaped export **⟶ AND (2026-09-27) zero element creation of the host's own: containers come from the injected `containerFactory` only, and no ambient/assembled global is read to get one** |
 | **3** | **No policy defaults** | No default container, no default ordering policy (omitted `orderOf` ⇒ **the supplied key order**, which is the **absence** of a policy), no default class, no default attribute, no default key, no default node, no default text. | `F-4` + `M-2`/`M-5` |
 | **4** | **No UI-config store or persistence** | Zero store, zero persistence, zero file/`localStorage`/IPC. The host's **only** state is its per-key ownership bookkeeping + the container elements it created; `dispose()` empties it, and a row asserts no state survives `dispose()`. **No consumer value is retained beyond the current declaration** (no history, no previous-value cache). | `M-13`, `I-5` |
 | **5** | **No new MCP surface** — the **five-seam negative** | No tool, no resource, no group, no `VALID_GROUPS` member, no `RpcMethod` member, no `MUTATING_METHODS` entry, **no IPC method**. `ALL_TOOLS` **stays 21**; `RpcMethod` **stays 21**. | `tests/engine-pin-version.test.ts:174-197`'s **21**-member census (read) **must still pass unchanged**; plus a static import row |
@@ -460,7 +626,7 @@ a **contract row** for the TestWriter; **none is a measurement this pass took.**
 
 | id | State | Trigger (exact) | Required behaviour | Layer |
 | --- | --- | --- | --- | --- |
-| **M-1** | **Declared keys ⇒ one container each, in `keys` order** | `createSlotHost({ container, keys: ['a','b','c'] })`; `render()` | `ok === true`; `order === ['a','b','c']`; the injected container's children are **exactly three** host-created elements, in that order; `containerFor('b')` is the second; each container holds **no text and no caller node yet**; `placed` `[]`. **⟶ RE-PINNED 2026-09-27 (`§7a` item 7, the `§7a` RULING pass — the drive is UNCHANGED and nothing is weakened): "is the second" is asserted by the TWO CAN-FAIL OBSERVABLES named under `F-7`'s table — `containerFor('b')` `toBe` the injected container's `children[1]` (reference identity with the caller-supplied container's child, observed as a per-step child-reference sequence) AND the same object on a second `containerFor('b')` call, with `containerFor('a')`/`containerFor('c')` as distinct objects (`!==`) — because "is an element" is TRUE BY CONSTRUCTION on the `unknown \| null` return type and cannot fail.** | `[T]` |
+| **M-1** | **Declared keys ⇒ one container each, in `keys` order** | `createSlotHost({ container, keys: ['a','b','c'] })`; `render()` | `ok === true`; `order === ['a','b','c']`; the injected container's children are **exactly three** host-created elements, in that order; `containerFor('b')` is the second; each container holds **no text and no caller node yet**; `placed` `[]`. **⟶ RE-PINNED 2026-09-27 (`§7a` item 7, the `§7a` RULING pass — the drive is UNCHANGED and nothing is weakened): "is the second" is asserted by the TWO CAN-FAIL OBSERVABLES named under `F-7`'s table — `containerFor('b')` `toBe` the injected container's `children[1]` (reference identity with the caller-supplied container's child, observed as a per-step child-reference sequence) AND the same object on a second `containerFor('b')` call, with `containerFor('a')`/`containerFor('c')` as distinct objects (`!==`) — because "is an element" is TRUE BY CONSTRUCTION on the `unknown \| null` return type and cannot fail.** **⟶ AMENDED 2026-09-27 (the architect's option-(a) ruling on the container source; `ADV-SH-1`): the containers this row observes COME FROM THE INJECTED `containerFactory`** — the three containers are the three values the factory returned for `'a'`/`'b'`/`'c'`, the host creates none of them itself, and it reads no ambient global to obtain one (`§2.1`'s container-source clause, `§2.2` prohibition 2). **The reference-identity observables above are UNCHANGED** — `containerFor('b')` is still `toBe` the injected container's `children[1]`, and per-key identity across two calls is still asserted — **but the drive gains the seam: the harness passes `containerFactory`, and a host that ignores it (or falls back to a realm-created element) FAILS this row.** | `[T]` |
 | **M-2** | **Omitted `orderOf` ⇒ the supplied key order** | M-1, no `orderOf` | `order` is exactly `keys`' order; **no sorting occurs**; prohibition-3 row | `[T]` |
 | **M-3** | **`orderOf`-projected container order** | `orderOf: (k) => ({a:2,b:0,c:1})[k]` | `order === ['b','c','a']`; the injected container's child sequence matches | `[T]` |
 | **M-4** | **`orderOf` ties keep the supplied key order (stability)** | two keys with equal `orderOf` values | relative order is the supplied order; **no invented tiebreak** (prohibition 3). **A row pins it so a later pass cannot "stabilise" differently without amending this clause** | `[T]` |
@@ -477,7 +643,8 @@ a **contract row** for the TestWriter; **none is a measurement this pass took.**
 | **M-15** | **`setOrder` with undeclared/duplicate keys ignores them** | `setOrder(['a','a','nope'])` | `ok === true`; `refused` `[]`; `order` is the declared key set in the requested relative order (here `['a', …rest]`) | `[T]` |
 | **M-16** | **`render()` is idempotent** | `render()` twice with unchanged state | the second call: `removed` `[]`, `refused` `[]`, **no child re-append**, and the same `order`/`placed`. **⟶ THE OBSERVABLE IS NAMED 2026-09-27 (`§7a` item 8, the `§7a` RULING pass; the clause is kept visible and is NOT weakened): "no child re-append" is NOT observable from values alone, so the row asserts the PER-STEP CHILD-REFERENCE SEQUENCE of the injected container — the child list captured before the second `render()` and after it, each index compared by REFERENCE (`toBe`), which is what makes a re-append (same node, removed and appended again) FAIL — plus each container's `children` array reference-identical element-by-element. A host that re-appends its containers on an unchanged render FAILS this row** (`P-SH-IM-3`'s strategy is the register's home for the same observable). | `[T]` |
 | **M-17** | **The refusal listener is notified once per refusal, in order** | a call producing two refusals with `refuse` injected | `refuse` called **exactly twice**, with the two refusal objects in **encounter order**, each `deepEqual` to its entry in the returned `refused`; **its return value is ignored** (a row returns a rejected promise and asserts no effect) | `[T]` |
-| **M-18** | **Allocation of the key set to the CONTAINER, not to the caller's node** | `keys: ['a','b']`, only `'a'` placed | **both** containers exist (`containerFor('b')` is an element); `placed === ['a']`; `order === ['a','b']` — the two fields are defined differently and a row asserts the difference. **⟶ RE-PINNED 2026-09-27 (`§7a` item 7, the `§7a` RULING pass — the drive is UNCHANGED): `containerFor('b')` is asserted as the SECOND can-fail observable under `F-7`'s table — an OBJECT distinct from `containerFor('a')` (`!==`) and `toBe` the injected container's `children[1]` — never as "is an element" (true by construction on `unknown \| null`).** | `[T]` |
+| **M-18** | **Allocation of the key set to the CONTAINER, not to the caller's node** | `keys: ['a','b']`, only `'a'` placed | **both** containers exist (`containerFor('b')` is an element); `placed === ['a']`; `order === ['a','b']` — the two fields are defined differently and a row asserts the difference. **⟶ RE-PINNED 2026-09-27 (`§7a` item 7, the `§7a` RULING pass — the drive is UNCHANGED): `containerFor('b')` is asserted as the SECOND can-fail observable under `F-7`'s table — an OBJECT distinct from `containerFor('a')` (`!==`) and `toBe` the injected container's `children[1]` — never as "is an element" (true by construction on `unknown \| null`).** **⟶ AMENDED 2026-09-27 (the architect's option-(a) ruling on the container source; `ADV-SH-1`, same amendment as `M-1`): both containers COME FROM THE INJECTED `containerFactory`** (one call per declared key, the returned value IS that key's container), so `containerFor('b')` is the **factory's** value for `'b'` observed as the injected container's `children[1]`, not a realm-created element. **The reference-identity observables and the `!==`/`toBe` assertions are UNCHANGED.** | `[T]` |
+| **M-19** | **`render()` does NOT re-append a caller-detached NODE — the detach is PERMANENT** *(⟶ ADDED 2026-09-27, the adversarial pass; judgment call `#17`, which the pass ruled `CONTRACT-CONSISTENT` **but must be pinned** — the sibling unit pinned its own equivalent as `M-21`)* | `setNode('a', n)`, then the **caller** detaches `n` from its container (`n.remove()`), then `render()` (any number of times), with NO `remove(key)` call | **no throw** for any call; `render()` **returns its declared result** and **does NOT re-append `n`** — for that key the caller's detach is **PERMANENT** (`render()` is **not an undo**); `'a'` stays **declared** (`keys()` still reports it, `containerFor('a')` is still the container) and still in `order`, `placed` may still report `'a'` (the host's ownership record is unchanged by a caller detach — `I-7`), and the injected container's child-reference sequence is **unchanged by the second `render()`** (`M-16`'s observable, `toBe` per index). **Assertion shape: the row FAILS for a host that re-appends the detached node on any `render()`** — assert the container's children **do not contain `n` by reference** after each `render()`, and that the tree is otherwise reference-identical. **This is the NODE half of the container/node asymmetry `ADV-SH-12` records** (a caller-detached **container** IS re-appended by the host's order write, because it is one of the host's own containers; a caller-detached **node** is not, because the host keeps no right to re-place a node the caller took back). **Scope: this row pins the `render()` policy ONLY** — `removed`'s membership for a detached node is pinned by `F-9` and is scoped to the `remove(key)` call; no `remove(key)` call ran in this row's drive, so this row asserts **nothing** about `removed` (`§7` item 9's surviving half). | `[T]` |
 
 ### 3.2 Documented fail-states / refusals (each is a typed `code`, and each is a row)
 
@@ -493,7 +660,8 @@ a **contract row** for the TestWriter; **none is a measurement this pass took.**
 | **F-8** | **`classNameOf`/`attributesOf` returning a malformed value** | a non-string class; an attributes array containing a non-object, a missing `name`, or a non-primitive `value` | **no throw**; the malformed entry is **skipped**; `ok` is **not** forced `false` (attribute application is best-effort per entry — **a contract decision**, §7 item 7) — a row pins that the well-formed entries are still applied | `[T]` |
 | **F-9** | **A node placed, then detached by the caller, then removed** | caller detaches `n`, then `remove('a')` | **no throw**; the key is no longer `placed`; **no dangling ownership** (`keys()` still shows `'a'` as declared, per `M-12`). *(The `removed` membership for this case is deliberately not pinned: the shim's `remove()` is idempotent at `src/shared/dom-shim.ts:89-96`, read, so the honest contract is "no throw, no dangling ownership" — stated as a decision, §7 item 7.)* **⟶ RULED 2026-09-27 (`§7a` item 6, the `§7a` RULING pass; the parenthesis above is the AS-FILED text and is kept visible): THE MEMBERSHIP IS NOW PINNED — `removed` CONTAINS `n`, BY REFERENCE.** The ruling follows the sibling unit's pin (`docs/specs/listhost.md`'s `F-6`/`M-21` sequence: a node the caller detached and the host then removes **does** appear in `removed`), and the deciding clauses are the ones this row already cites: `§2.1`'s `removed` doc string (*"Every node this call REMOVED (the ones the host had placed), by reference"*) and `§2.4` items 1–2 (*the host owns exactly the nodes it placed*). **The node detached by the caller is still a node the host placed, still in the host's ownership bookkeeping, and the `remove('a')` call is what relinquishes it — so the call that ends the host's ownership of `n` is the call that reports `n` in `removed`**, whether or not the tree still held it. The `remove()` idempotence the as-filed parenthesis names is a **shim detail about the TREE**, not a licence to leave the RESULT's membership undecided: the assertion is `removed` contains `n` by reference (`toBe`), and `§7` item 9's non-pin is superseded on its membership half only. **The detached-node shape with NO `remove()` call asserts nothing about `removed`** (no call ran), so the two halves do not collide: **the membership claim is scoped to the `remove(key)` call.** A host that drops `n` from its bookkeeping without reporting it in `removed` FAILS this row. | `[T]` |
 | **F-10** | **A throwing caller callback** | `classNameOf` that throws | **This spec does not decide it** — a caller-code throw is not this host's refusal class, and the sources are silent. **The row is a seed for the adversarial pass (`A-5`), which must rule it and record the ruling here** (§7 item 8). **⟶ RULED 2026-09-27 (`§7a` item 4, the `§7a` RULING pass; the as-filed cell is kept visible and is NOT deleted): THE FOUR SEAMS ARE DECIDED, WITH NAMED SAFE DEFAULTS — `§2.1`'s totality-boundary clause is the normative home and its per-function table gives the default and the observable.** **Consequence, stated plainly because it CHANGES what this row asserts:** this row is **`CONTRACT-AMENDED`** — it was *"the spec does not decide it"*, and it is now **a normal falsifiable row**: for **each** of the four injected caller functions (`orderOf`, `classNameOf`, `attributesOf`, `refuse`) the host **catches** the throw, **continues with the named safe default**, and **returns its declared result** — the method does not throw, `refused` gains **no** invented code (and no `'no-container'`), and the caller-code failure is **never** reported as a contract refusal. The four defaults: a throwing `orderOf` ⇒ **the supplied `keys` order** (exactly the omitted-`orderOf` fallback, `§2.5` item 1); a throwing `classNameOf` ⇒ **no class write for that node** (`M-11`'s `null`-return rule); a throwing `attributesOf` ⇒ **no attribute write for that node** (`M-11`'s rule, with `F-8`'s per-entry best-effort unchanged); a throwing `refuse` ⇒ **swallowed**, with the refusal **already recorded** in the returned `refused`. **The totality universal is bounded by this shape, in these words: *"NO method of this host throws — for any input shape — and `a throwing caller callback is excluded`"*** — and `P-SH-TP-1`'s statement carries the **same** boundary words (`§5.5.1`). **`§3a A-5`'s disposition follows** (see the amended seed). | `[T]` |
-| **F-11** | **`'no-container'` is DECLARED BUT NEVER EMITTED — the negative the code domain needs** | **every** drive of `I-8`'s deterministic table **and** every one of `P-SH-TP-1`'s `20` pool shapes under its `60` pinned-seed draws, plus the absent-container and unusable-container configurations (`M-14`/`F-6`/`F-7`) and a valid configuration as the control | **no throw**; **NO call ever produces a refusal whose `code === 'no-container'`** — the assertion is over the concatenation of every returned `refused` list in the enumeration (plus every refusal passed to an injected `refuse` listener, `M-17`): **zero entries carry either `'no-container'` or any code outside the three emitted members**. The control half proves the assertion is not vacuous: the **same** enumeration **does** observe `'unknown-key'` (`F-1`/`F-3`/`F-4`), `'malformed-node'` (`F-2`) and `'container-not-appendable'` (`F-7`) — **so a host that emitted nothing at all, or emitted a fifth code, fails this row.** *(Ruling and reason: `§2.1`'s refusal-code-domain clause. `§3.2`'s id set therefore reads `F-1`..`F-11`: this row is **appended after `F-10`**, nothing is renumbered, and it is the **negative row** the ruling of `§7a` item 1 requires — a falsifiable assertion that the code domain is exactly the emitted three.)* | `[T]` |
+| **F-11** | **`'no-container'` is DECLARED BUT NEVER EMITTED — the negative the code domain needs** | **every** drive of `I-8`'s deterministic table **and** every one of `P-SH-TP-1`'s `20` pool shapes under its `60` pinned-seed draws, **plus `F-12`'s five factory drives (⟶ ADDED 2026-09-27, the architect's option-(a) ruling — the new seam adds a container-SOURCE state and must be inside this negative's enumeration)**, plus the absent-container and unusable-container configurations (`M-14`/`F-6`/`F-7`) and a valid configuration as the control | **no throw**; **NO call ever produces a refusal whose `code === 'no-container'`** — the assertion is over the concatenation of every returned `refused` list in the enumeration (plus every refusal passed to an injected `refuse` listener, `M-17`): **zero entries carry either `'no-container'` or any code outside the three emitted members**. The control half proves the assertion is not vacuous: the **same** enumeration **does** observe `'unknown-key'` (`F-1`/`F-3`/`F-4`), `'malformed-node'` (`F-2`) and `'container-not-appendable'` (`F-7`) — **so a host that emitted nothing at all, or emitted a fifth code, fails this row.** *(Ruling and reason: `§2.1`'s refusal-code-domain clause. `§3.2`'s id set therefore reads `F-1`..`F-11`: this row is **appended after `F-10`**, nothing is renumbered, and it is the **negative row** the ruling of `§7a` item 1 requires — a falsifiable assertion that the code domain is exactly the emitted three.)* | `[T]` |
+| **F-12** | **NO FACTORY — the container source is absent, or present-but-broken** *(⟶ ADDED 2026-09-27, the architect's option-(a) ruling on the container source; appended AFTER `F-11`, RE-PINNING nothing and renumbering nothing — `§3.2`'s id set now reads `F-1`..`F-12`)* | **five drives, `containerFactory` supplied five ways:** **(1)** omitted entirely; **(2)** `undefined`; **(3)** present but **not callable** (`containerFactory: 42`, `'div'`, `{}`, `null`); **(4)** callable but **THROWING**; **(5)** callable, returning an **unusable value** (`{}` with no `appendChild`, `{appendChild: 42}`, `42`, `'div'`, `null`, `undefined`). Drive each through **all seven methods** (`setNode` on a declared key with a valid node, `setNode` on an undeclared key, `remove` on a declared key, `setOrder`, `render()`, `keys()`, `containerFor(k)`, `dispose()`) with a **valid** injected `container` (a shim mount element) so the mount is NOT the reason nothing is placed | **THE EXISTING `F-6`-CLASS DEGRADATION, STATED EXPLICITLY — and it is the SAME behaviour for all five drives: no throw for any call; every operation is a valid no-op with a valid state; nothing is placeable** (`placed` `[]` for every result) — `refused` `[]` and **`ok === true`** for every valid input, `keys()` still reports the **declared** keys in the projected order, `order` is still valid and reflects `setOrder`, and **`containerFor(k)` returns `null` for every key** (declared, broken-factory and undeclared alike — `toBe(null)`, never `undefined`); `dispose()` is `void`, idempotent and retains nothing (`I-5`). **The two negatives that make the row falsifiable:** **(i) NO container-state refusal is produced — in particular `'no-container'` is NOT emitted** (`F-11`'s negative; a host that invented `'no-container'` for this shape FAILS, and one that invented `'container-not-appendable'` for drives (1)–(5) fails the `F-6`-class reading, because the CONTAINER is not present-but-unusable here — the **source** is absent); **(ii) NO container is manufactured by any other means** — the injected container's child count is **unchanged from before the call** for every drive, and **a host that falls back to a realm read (an ambient global, or an assembled/computed member lookup) to create a container FAILS this row and `§2.2` prohibition 2's tightened row** (`ADV-SH-1`). **Drive (4) is the fifth seam of `§2.1`'s totality-boundary table** — a throwing factory is CAUGHT, never re-thrown, and never becomes a refusal of its own kind (there is no code for "the factory threw"). *(Reason this row exists: the seam is OPTIONAL and the evasion was reachable, so the degradation must be a row rather than an inference — `ADV-SH-1`. It is a `§3.2` row and **NOT** a change to `P-SH-TP-1`'s pool: that register row's `20` shapes are unchanged, and `§5.5.1` records why a no-factory shape is not added there.)* | `[T]` |
 
 **⟶ THE PER-METHOD TABLE — WHAT `F-6` AND `F-7` EACH ASSERT, METHOD BY METHOD (ADDED 2026-09-27, the
 `§7a` RULING pass, `§7a` item 2).** `F-6` (absent container ⇒ `ok === true`, **not** a refusal) and
@@ -503,15 +671,15 @@ methods. **Both container states are read as "the host has no USABLE container t
 the difference is what the contract says about each, and **the unifying clause is: an operation that
 attempts NO node write to a container never produces a container-state refusal.**
 
-| Method | Returns | (a) **ABSENT / `null` container** (`F-6`, `M-14`) | (b) **PRESENT-BUT-UNUSABLE** container (`F-7`) |
-| --- | --- | --- | --- |
-| `setNode(key, node)` | `SlotHostResult` | **no throw**; **no refusal**; `refused` `[]`; **`ok === true`**; `placed` `[]`; the valid input is simply not placeable | **one refusal per attempted placement**, `code === 'container-not-appendable'`; **`ok === false`**; placed `[]`; state valid |
-| `remove(key)` | `SlotHostResult` | **no throw**; **no refusal**; `ok === true`; `placed` loses no key (nothing was ever placed) | **one refusal** `code === 'container-not-appendable'` **when the host actually owns a node under that key** — the operation relinquishes an ownership the host cannot express in the tree, and `F-7`'s "once per attempted placement" is the per-call refusal for that key's node; **`ok === false`**; state valid. **A `remove` on a key with NO host-owned node is a NO-OP on this shape too** (`ok === true`, `refused` `[]`) — the unifying clause decides it: the call attempts **no node write**, because there is no node whose ownership the host can relinquish |
-| `setOrder(keys)` | `SlotHostResult` | **no throw**; **no refusal**; `ok === true`; the **projected order is updated and reported** (`order` reflects it — the projection is the host's own state, not the tree) | **no refusal; `ok === true`; the projection is updated**: `setOrder` attempts **no node write** (`§2.5` item 1, `M-3`) and therefore produces **no container-state refusal** — the containers, if any are ever creatable, are reordered by a later `render()`. **This is the method the "unusable ≠ refusal for every operation" scoping exists for** (`§7a` item 3): it RETURNS a `SlotHostResult`, so an unqualified *"the four result-returning methods refuse"* would wrongly include it |
-| `render()` | `SlotHostResult` | **no throw**; **no refusal**; `ok === true`; nothing is written; `order`/`keys()` valid (`M-14`) | **one refusal per key the call attempts to place**, `code === 'container-not-appendable'`; **`ok === false`**; `placed` `[]`; the host stays valid (`M-16`'s idempotence half still holds) |
-| `keys()` | `readonly SlotKey[]` | **no throw**; returns the **declared** keys in the projected order — **a read has no `ok` and no `refused`** | **no throw**; returns the **declared** keys in the projected order — **a read never refuses and never throws**; there is no `ok` to report and none is asserted (`I-8`'s scope clause) |
-| `containerFor(key)` | `unknown \| null` | `null` for **every** key (**no container was created**); **not a refusal** (`F-5`'s asymmetry) | `null` for **every** key (**no container was created** because the environment refused the container); **not a refusal** — and **never `undefined`** |
-| `dispose()` | `void` | **no throw**; idempotent; no state retained (`M-13`, `I-5`) | **no throw**; idempotent; no state retained — it removes the containers **the host created**, and on this shape it created none |
+| Method | Returns | (a) **ABSENT / `null` container** (`F-6`, `M-14`) | (b) **PRESENT-BUT-UNUSABLE** container (`F-7`) | (c) **NO FACTORY — absent, non-callable, or returning an unusable value** (NEW `F-12`; ⟶ ADDED 2026-09-27, the architect's option-(a) ruling on the container source) |
+| --- | --- | --- | --- | --- |
+| `setNode(key, node)` | `SlotHostResult` | **no throw**; **no refusal**; `refused` `[]`; **`ok === true`**; `placed` `[]`; the valid input is simply not placeable | **one refusal per attempted placement**, `code === 'container-not-appendable'`; **`ok === false`**; placed `[]`; state valid | **THE DEGRADATION, IDENTICAL TO (a)**: **no throw**; **no refusal**; `refused` `[]`; **`ok === true`**; `placed` `[]`; nothing is placeable and **no `'no-container'` is emitted**. **(c) is an absent container SOURCE, not a present-but-unusable container** — so it is `F-6`'s class and **never** `F-7`'s, even when the factory is present-but-broken |
+| `remove(key)` | `SlotHostResult` | **no throw**; **no refusal**; `ok === true`; `placed` loses no key (nothing was ever placed) | **one refusal** `code === 'container-not-appendable'` **when the host actually owns a node under that key** — the operation relinquishes an ownership the host cannot express in the tree, and `F-7`'s "once per attempted placement" is the per-call refusal for that key's node; **`ok === false`**; state valid. **A `remove` on a key with NO host-owned node is a NO-OP on this shape too** (`ok === true`, `refused` `[]`) — the unifying clause decides it: the call attempts **no node write**, because there is no node whose ownership the host can relinquish | **identical to (a)**: **no refusal**; `ok === true`; the key stays declared. **No node is ever host-placed on this shape** (`placed` `[]` throughout), so no `remove` can reach the `F-7` refusal branch |
+| `setOrder(keys)` | `SlotHostResult` | **no throw**; **no refusal**; `ok === true`; the **projected order is updated and reported** (`order` reflects it — the projection is the host's own state, not the tree) | **no refusal; `ok === true`; the projection is updated**: `setOrder` attempts **no node write** (`§2.5` item 1, `M-3`) and therefore produces **no container-state refusal** — the containers, if any are ever creatable, are reordered by a later `render()`. **This is the method the "unusable ≠ refusal for every operation" scoping exists for** (`§7a` item 3): it RETURNS a `SlotHostResult`, so an unqualified *"the four result-returning methods refuse"* would wrongly include it | **identical to (a)**: **no refusal; `ok === true`; the projection is updated and reported** — write-free, so the unifying clause gives it the same result on all three container-SOURCE states |
+| `render()` | `SlotHostResult` | **no throw**; **no refusal**; `ok === true`; nothing is written; `order`/`keys()` valid (`M-14`) | **one refusal per key the call attempts to place**, `code === 'container-not-appendable'`; **`ok === false`**; `placed` `[]`; the host stays valid (`M-16`'s idempotence half still holds) | **identical to (a)**: **no throw**; **no refusal**; `ok === true`; nothing is written; `order`/`keys()` valid, and `M-16`'s idempotence half holds. **The host may not manufacture a container to write into** — a `render()` that creates one by any other means (a realm read, an ambient factory) FAILS `F-12` and `§2.2` prohibition 2's tightened row |
+| `keys()` | `readonly SlotKey[]` | **no throw**; returns the **declared** keys in the projected order — **a read has no `ok` and no `refused`** | **no throw**; returns the **declared** keys in the projected order — **a read never refuses and never throws**; there is no `ok` to report and none is asserted (`I-8`'s scope clause) | **identical to (a)**: **no throw**; returns the **declared** keys in the projected order — the factory's absence never changes the DECLARED key set (`I-2`) |
+| `containerFor(key)` | `unknown \| null` | `null` for **every** key (**no container was created**); **not a refusal** (`F-5`'s asymmetry) | `null` for **every** key (**no container was created** because the environment refused the container); **not a refusal** — and **never `undefined`** | **identical to (a)**: **`null` for every key** — including a declared key, a key the caller's broken factory was called for, and an undeclared key; **not a refusal**, and **never `undefined`** |
+| `dispose()` | `void` | **no throw**; idempotent; no state retained (`M-13`, `I-5`) | **no throw**; idempotent; no state retained — it removes the containers **the host created**, and on this shape it created none | **identical to (a)**: **no throw**; idempotent; no state retained — no container was ever obtained, so none is removed, and (per `ADV-SH-3`'s contract decision) the host's parent bookkeeping is module-local and leaves **no expando `parent` marker** on any caller node |
 
 **⟶ THE `containerFor` OBSERVABLES — THE ANTI-VACUITY CLAUSE (`§7a` item 7, the same pass; the
 `ADV-LH-5` class).** `containerFor` is typed `unknown \| null`, so **"an element" is true by
@@ -546,7 +714,7 @@ not be written against a "is a DOM element" predicate.**
 | **I-1** | `ok === (refused.length === 0)` **always** | No "ok with refusals" state exists |
 | **I-2** | `order` is **exactly** the declared key set, each key **once**, in some order | §2.5 item 2 |
 | **I-3** | **Foreign siblings are reference-identical before and after every call** — in the injected container **and** inside every host container | The `V-7` hard row as an every-state invariant |
-| **I-4** | The host authors **no content**: no `textContent` write, no `className` **value** of its own, no `role`/ARIA attribute of its own, no style, no `publish`-shaped method | Prohibitions 1/2, made falsifiable (static + state rows) |
+| **I-4** | The host authors **no content**: no `textContent` write, no `className` **value** of its own, no `role`/ARIA attribute of its own, no style, no `publish`-shaped method | Prohibitions 1/2, made falsifiable (static + state rows). **⟶ AMENDED 2026-09-27 (the architect's option-(a) ruling on the container source; `ADV-SH-1`, HIGH): the CONTAINERS and their children come FROM THE INJECTED `containerFactory`** — the host creates no element of its own and reads no ambient global (no assembled/computed `document`/`window` lookup, no aliased realm) to obtain one, so this invariant now covers the container SOURCE as well as the container's emptiness. **The content-negative half is unchanged** (no text, no class value, no attribute, no style, no `publish`). |
 | **I-5** | After `dispose()`, the host retains **no** declared key, **no** container reference, **no** node reference and no other state | Prohibition 4 |
 | **I-6** | For every placed key, the container holds the caller's node **by reference** — never a clone | §2.4 item 4 |
 | **I-7** | `placed` is a **subset** of `order`, and `order` contains every declared key regardless of placement | `M-18`'s distinction |
@@ -573,6 +741,14 @@ this unit**: the module does not exist, so the red is purely additive.
    amended in its `removed`-membership half** (`§7a` item 6). A red run that authors `F-1`..`F-10`
    from the pre-ruling text would assert the two superseded forms, so **the amended rows are read
    from this spec, not from memory.**
+   **⟶ EXTENDED AGAIN 2026-09-27 (the ADVERSARIAL-RECORD pass; the two forms above are kept visible):
+   the enumeration is now `I-1`..`I-10`, `M-1`..`M-19`, `F-1`..`F-12`.** **`F-12`** (the NO-FACTORY /
+   present-but-broken-factory row, the container-source seam's falsifiable home) **appends after
+   `F-11`** — the same "append, never renumber" rule the `F-11` extension states — **and `M-19`**
+   (`render()`'s detached-node policy, judgment call `#17`) **appends after `M-18`**. **A red run that
+   stops at `F-11`/`M-18` omits the two rows the architect's container-source ruling and the `#17` pin
+   require**, so the ids a TestWriter authors are read from `§3.1`/`§3.2` as they stand, never from an
+   earlier pass's list.
 2. **RUN and REPORT** the failing set verbatim — the module-resolution failure, plus every static
    row that can already be evaluated (e.g. "the module file does not exist").
 3. **Then** implement the least code that makes them green.
@@ -588,6 +764,16 @@ this unit**: the module does not exist, so the red is purely additive.
    **The register's own `YES` markings are execution DESIGN, not results** — this pass ran nothing,
    so a `YES` cell is a promise the red run must keep, and **a row that is `YES` in `§5.5.1` but
    broken when run is a SPEC FINDING**, reported rather than tuned to green.
+   **⟶ RECORDED FROM THE EXECUTED RED 2026-09-27 (the `U-SLOTHOST` RED PASS; the item above is
+   UNCHANGED and is NOT weakened): the register riding the red run does NOT mean the register's
+   `155` attempts all execute in that run.** The register's strategy discipline
+   (`§5.5.1`, item 3) is **rows evaluated sequentially, STOP AFTER 5 CONSECUTIVE FAILURES** — so a
+   red run of a module-absent unit **is expected to stop early**, and it did: the executed red
+   **stopped at `P-SH-IM-1` after `5` of the `155` attempts**, and **the five un-run register rows
+   were REPORTED AS FAILURES rather than silently omitted** (a report, not a claim that they were
+   driven). **A run that reported all `155` attempts as executed would be the finding, not the
+   expectation**, and the `155`/`60`/`20` figures remain the register's **DESIGN** accounting —
+   §5.5.1's executed-red block and the status note above carry the measured numbers.
 5. **Re-run**, record the green. **No row may be edited to reach green**; a row found wrong is
    corrected **in this spec** first, with the old text kept as `SUPERSEDED`.
 
@@ -605,9 +791,9 @@ this unit**: the module does not exist, so the red is purely additive.
 | # | Stop condition | Required behaviour |
 | --- | --- | --- |
 | **S-1** | A row cannot be falsified on `[T]` | The row moves to §7 as **UNPROVABLE AT THIS LAYER**; it may not be moved to the `[U]` leg silently. |
-| **S-2** | A row requires a **new shim member** | **Scope violation** (`H-r5`) — re-write it against the shim's public surface (`children`, `appendChild`, `setAttribute`, `remove`, `className`). |
+| **S-2** | A row requires a **new shim member** | **Scope violation** (`H-r5`) — re-write it against the shim's public surface (`children`, `appendChild`, `setAttribute`, `remove`, `className`). **⟶ RE-SCOPED AND STRENGTHENED 2026-09-27 (the architect's option-(a) ruling on the container source; `ADV-SH-1`, HIGH — `CONTRACT-AMENDED`; the sentence above is kept visible and is NOT weakened): the `S-2`-class STATIC SOURCE SCAN now MUST include the ANTI-ASSEMBLY clause.** A source scan for this unit **must reject an assembled/computed member lookup and an aliased/re-derived global reference** (`globalThis['doc' + 'ument']`, `globalThis[name]`, `const g = globalThis; g.document`, a helper returning the realm or a `createElement`-shaped function) **exactly as it rejects the literal token `document`**. **The row is STRENGTHENED, NOT WEAKENED**: it grows a rejection (a token-only scan that passes the assembled form is **unfalsified and incomplete**), no existing rejection is dropped, no shim member is admitted, and the shim's public surface above is unchanged. **The container source the scanned module may use is the INJECTED `containerFactory` seam** (`§2.1`'s container-source clause) — a static row may therefore assert the **absence** of every ambient container source without admitting a new shim member. |
 | **S-3** | A row is only satisfiable by authoring content (a label, a status string, a class taxonomy, a default) | **Violates ruling 1** — the publisher half is declined. **Re-write the row; never the contract.** |
-| **S-4** | A row needs to inspect the **real** DOM's class/CSS resolution | The row is `[U]`-only and **optional**; mark it so, do not fake it on the shim. |
+| **S-4** | A row needs to inspect the **real** DOM's class/CSS resolution | The row is `[U]`-only and **optional**; mark it so, do not fake it on the shim. **⟶ RE-SCOPED AND STRENGTHENED 2026-09-27 (the architect's option-(a) ruling on the container source; `ADV-SH-1`, HIGH — same amendment as `S-2`): the `S-4`-class static source scan carries the ANTI-ASSEMBLY clause too.** A scan for **ambient-global vocabulary** (`document`, `window`, `matchMedia`, …) **must reject the assembled/computed member lookup and the aliased/re-derived global reference**, not only the literal token — which is precisely the shape that evaded the `S-4` word-boundary list (`src/shared/slot-host.ts:130-140`, `ADV-SH-1`). **STRENGTHENED, NOT WEAKENED**: no rejection is dropped, and this row still does **not** admit a real-DOM class/CSS-resolution assertion on the shim — that half stays `[U]`-only, optional and precondition-gated (`§5.2`). |
 | **S-5** | A row requires the host to grow a per-zone/per-pane semantic | **Violates `H-r15`** — this is exactly the named hazard. **Stop and report to the supervisor.** |
 | **S-6** | A row is only satisfiable by making `dispose()` destroy caller nodes | **Violates §2.4 item 5** — re-write it. |
 | **S-7** | A row needs a **graph seam** to prove "zero graph ops on order change" | There is no seam; the row is **static** (module imports/calls). **Do not add a spy, a hook or an injection point.** |
@@ -646,6 +832,16 @@ DONE / 16 open` form the status block above carries is the `U-MOUNTGUARD` pass's
 publisher-half prohibition stands unchanged and is the one clause of this section that no future
 pass may annotate away.**
 
+**⟶ FURTHER ANNOTATED 2026-09-27 (the `U-SLOTHOST` RED PASS; the filing-time clause and the
+`§5.5`-era annotation above are both kept visible, and this note amends no clause of them).** Of the
+four conditions, **(d) has moved one step forward and is still not discharged**: a TestWriter has now
+**RUN and REPORTED** the red set (§4.1–§4.2, measured numbers at `§5.5.1`'s executed-red block and in
+the status note at the head of this file), so the *author-and-run* half of `AGENTS.md` item 9 is
+satisfied — but **`AGENTS.md` items 9/3 also require the green to follow, and no Implementer pass has
+run: `src/shared/slot-host.ts` does not exist, every red row fails on the module-resolution error, and
+this unit is NOT green and NOT `DONE`.** **The permanent publisher-half prohibition still stands
+unchanged, and so does the rest of the filing-time clause.**
+
 ## 5. Wiring
 
 ### 5.1 Diff scope (what this unit may touch)
@@ -677,7 +873,24 @@ the pinned-seed enumeration are ordinary `[T]` rows, authored and RUN as part of
 4). **No new leg, no new script, no `package.json` change, no new dependency** — and **no register
 row depends on the optional `[U]` row below**, so leg 3 (build) is not the property layer either.
 **The DONE row reports the register's per-row attempts/held/broken set, the strategy ids and the
-pinned seed `20260927`** (§5.3 item 10). **⟶ ONE PROCESS CAVEAT THAT BINDS THIS LEG (2026-09-27,
+pinned seed `20260927`** (§5.3 item 10).
+
+**⟶ THE HARNESS SUPPLIES THE FACTORY — AND THE LEGS ARE UNCHANGED (ADDED 2026-09-27, the architect's
+option-(a) ruling on the container source; `ADV-SH-1`, HIGH).** **Leg 1's harness passes the injected
+element factory itself:** the node suite supplies `containerFactory` on every drive that needs a
+container, **returning the shim's own element factory's product** (`new ShimElement('div')` via
+`mountEl()`/`shimDocument.createElement`, `src/shared/dom-shim.ts:124-143`, read) or any value offering
+`appendChild` — **so the module never needs the realm and the harness never relies on the module
+reading a global.** **A harness that instead relies on the module reaching `globalThis` (or on
+`installShim()`'s global `document`) is testing the DELETED behaviour, not the contract**, and it is
+the exact coupling the `ADV-SH-1` remand names. **What this changes about the legs: nothing.** **Leg 1
+stays `npm test` (the node suite, `[T]` envelope/pure layer), leg 2 stays `npm run typecheck`
+(`[H]`) and leg 3 stays `npm run build` (`[H]`)** — **no leg is added, removed or re-scoped**, **leg 2
+still reads `src/**` only** (`tsconfig.json` includes `src/**/*.ts` and excludes `tests`, so a green
+leg 2 is evidence about `src/**` and never about this unit's test file or its register tables), and
+**leg 1's rows remain `[T]` rows over an injected container and a shim tree** (layer anchors 1/2).
+**The factory is INJECTED test input, not a new dependency and not a new file** (`§5.1`'s diff scope
+is unchanged). **⟶ ONE PROCESS CAVEAT THAT BINDS THIS LEG (2026-09-27,
 surfaced by `docs/pending.md` §G and stated here so no reader over-reads a green):** `npm run
 typecheck` (leg 2) **does not read `tests/**` at all** — `tsconfig.json` includes `src/**/*.ts` and
 excludes `tests` — so **"typecheck clean" is evidence about `src/**` ONLY and NEVER about this
@@ -885,6 +1098,12 @@ renumbered, and **this paragraph's rule is unchanged and still binds: none of `F
 register row, and no `F-` register row is created by the ruling pass** (the register's six rows, their
 types and their compensating-sample citations are unchanged — see the reconciliation block after the
 register table).
+**⟶ ANNOTATED AGAIN 2026-09-27 (the ADVERSARIAL-RECORD pass; the two figures above are kept visible):
+`§3.2`'s id set now reads `F-1`..`F-12`** — **`F-12` (NO FACTORY, the container-source seam's row) is
+appended after `F-11`** and **`§3.1`'s id set now reads `M-1`..`M-19`** — **`M-19` (`render()`'s
+detached-node policy) is appended after `M-18`** — with **nothing renumbered**, and **this paragraph's
+rule is unchanged and still binds: none of `F-1`..`F-12` is a register row, and no `F-` register row is
+created by this pass either.**
 
 **How every row is executed (the strategy discipline, stated once so no row is ambiguous).**
 
@@ -925,8 +1144,8 @@ register table).
 | **`P-SH-IM-2`** *(the identity half of the same quantification — `V-7`'s own-node half)* | `P-IM` invariant | **For EVERY permutation and every placed key in the enumeration above, IDENTITY IS PRESERVED**: the container element the host created for a key is the **same object** before and after (`toBe`), the caller's node is the **same object** (`toBe`) and is never cloned, re-created or re-parented, `placed` contains that key and no other, and **every foreign sibling of the injected container is still the same object** — the host removes exactly the nodes it placed and **nothing else**. | **YES** | `M-5`, `M-7`, `M-9`, `M-10`, `M-12`, `I-3`, `I-6`, `§2.4` items 3–4, `§2.5` item 2 | `S-SH-IDENT-1` | The **same permutation input family as `P-SH-IM-1`'s two exhaustive tables** (reuse is deliberate: one input family, two properties — the `30` permutation attempts are **DRIVEN AGAIN here as this row's own attempts**, so the register total counts them twice and the arithmetic says so below), **plus `4` fixed identity shapes** = **`34` attempts**. The `4` fixed shapes, driven in fixed order: **(1)** one caller node placed for every declared key of a `3`-key host; **(2)** the same, with the `container` option absent (`null`) — **asserting the no-op configuration places nothing and preserves every reference it was handed**; **(3)** `2` caller-created foreign siblings appended to the injected container **before** the host exists, then two `render()` cycles (`M-7`); **(4)** one node moved between two declared keys (`M-9`) and then replaced by a second node (`M-10`), asserting `removed` holds the first by reference. Per attempt: identity assertions by `toBe` on the container, the node and every foreign sibling; **a row may not pass by asserting presence alone** — the assertion is reference identity, never "an element is there". |
 | **`P-SH-IM-3`** | `P-IM` invariant | A **second** call with unchanged inputs performs **no child mutation**: for every declared key, `removed.length === 0`, `refused.length === 0`, **no node is re-appended**, the container's `children` array is **reference-identical element-by-element** (`toBe` per index), `order`/`placed` report the same values, and **every returned array is a fresh array** (`I-9`) — while `ok === true` on both calls. | **YES** | `M-1`, `M-16`, `I-9`, `§2.2` prohibition 4 | `S-SH-REPEAT-1` | Fixed **`4`-shape table × `2` sequential CALLS per shape** = **`8` attempts** (one attempt = one **second** call of a shape after its first call has established the state), driven in fixed order: **(1)** `render()` twice with `3` declared keys and `3` placed caller nodes; **(2)** `render()` twice with `1` declared key and `1` placed node; **(3)** `render()` twice with `keys: []` (`M-8`); **(4)** `render()` twice on the **absent-container** configuration (`M-14`), asserting the valid-state half. Per attempt assert the second call's `removed` `[]`, `refused` `[]`, `order`/`placed` equal to the first call's (by value), each container's `children[i]` **the same object** (`toBe`), and that the returned `order`/`placed`/`removed`/`refused` arrays are **not** the same array object as the first call's (`I-9`). |
 | **`P-SH-SM-1`** *(the no-silent-create quantification `§5.5.0` left unproven — required row (i))* | `P-SM` state-machine | For an input set that mixes **valid placements with exactly one REFUSED input**, the valid inputs are **placed and owned** and the refused input is **not placed, not in `placed`, and never creates a container** — `ok === false`, **exactly one** refusal carrying that class's own `code`, **the injected container's child count is unchanged from before the call** (no silent create), and `order` is **exactly the declared key set once each in the projected order** (the refused input contributes no key and no duplicate). | **YES** | `F-1`, `F-2`, `F-3`, `F-4`, `F-7`, `I-1`, `I-2`, `I-10`, `§2.3` items 2/5 | `S-SH-MIXED-1` | Fixed table, **`12` attempts**, driven in fixed order: **(a)** for **each of the `3` refusal classes that `§3.2` gives a trigger** (`'unknown-key'` — `F-1`/`F-3`/`F-4`; `'malformed-node'` — `F-2`; `'container-not-appendable'` — `F-7`) a **`2`-step sequence** — a refused attempt immediately followed by a valid placement for a declared key (`3` classes × `2` steps = `6` attempts; the refused step carries the assertions, the following valid step proves the call did not poison the host's state); **(b)** a **`4`-position rotation** of a mixed drive (`4` attempts — the refused input rotated through positions `1`–`4` of a `4`-entry drive) built from `F-1`, `F-2`, `F-3` and **`F-6`'s absent-container no-op shape**; **(c)** the `''`-key pair (`2` attempts — a declared `''` is a valid key while an **undeclared** non-string is `unknown-key`, `F-3`'s own two halves). **⟶ THE FOURTH DECLARED CODE IS DELIBERATELY NOT DRIVEN HERE (2026-09-27, the `§5.5` re-derivation pass — REPORTED, not guessed): `§2.1`'s `SlotHostRefusal['code']` union declares `'no-container'`, and NO `§3.2` row gives it a trigger** — `F-6` states the opposite in writing (*"a `null`/absent container is **NOT** a refusal … `refused` is `[]`, `ok === true`"*), and `F-7` hands the present-but-unusable case to `'container-not-appendable'`. **A register row may not invent the trigger a contract declined to state**, so this row drives the `3` codes `§3.2` triggers and asserts the **no-op** for the fourth shape. **The gap is reported at the end of this file (ambiguity report item 1) and must be ruled before any pass writes a row that drives `'no-container'`.** Per attempt assert `ok === (refused.length === 0)`, the refusal's `code` **is exactly the class under test** (not merely ∈ the set), `refuse` was notified **once** for that refusal with a `deepEqual` object and **its return value changed nothing** (`M-17`), and the injected container's child count equals the declared key count — **the child-count assertion is the no-silent-create half and is required, not optional** (`I-10`). |
-| **`P-SH-SM-2`** | `P-SM` state-machine | **For EVERY step of the fixed operation sequences below, the host's state stays COHERENT**: `ok === (refused.length === 0)` (`I-1`); **every refusal's `code` is one of the FOUR declared members** (`'unknown-key'`, `'no-container'`, `'malformed-node'`, `'container-not-appendable'` — no fifth code is ever produced); `order` is exactly the declared key set once each in projected order (`I-2`); `placed` is a **subset** of `order` and contains no key that was never placed (`I-7`); and `keys()` equals `order` (same keys, same relative order). | **YES** | `M-14`, `M-16`, `M-17`, `M-18`, `F-3`, `F-5`, `F-6`, `F-9`, `I-1`, `I-2`, `I-7` | `S-SH-SEQ-1` | **`8` fixed sequences, authored as literal step/expected-outcome data and driven in fixed order** — **`8` attempts, one per sequence** (an attempt = one complete sequence): **(1)** two `render()` cycles over `3` declared keys with `2` placed (`M-16`); **(2)** `render()` with `keys: []` (`M-8`); **(3)** `setNode` on an undeclared key, then `render()` (`F-1`); **(4)** `remove` on an undeclared key, then `containerFor` on the same key (`F-1`/`F-5` — the read is not a refusal); **(5)** the **absent-container** configuration (`null`) driven through **all seven result-returning methods** (`M-14`/`F-6`); **(6)** `keys: null` and `keys: [1,2]` (`F-4` — an empty declared set, every later `setNode` refused), then `render()`; **(7)** the **present-but-unusable** container (an object with no `appendChild`), then `setNode`/`render`/`keys`/`containerFor`/`dispose` (`F-7`); **(8)** a **detached** node — `setNode` a caller node, detach it from its container, then `remove` the key (`F-9`). Per step assert the four coherence clauses above, **and after any refusal assert every method is still callable and still returns a valid `SlotHostResult`** — the sequence proves the host is not left in a state a later call cannot read. **The sequence does NOT assert a specific `removed` membership for sequence 8** — that half is deliberately unpinned (`F-9`/`§7` item 9; see the ambiguity report at the end of this file). |
-| **`P-SH-TP-1`** *(the no-throw quantification `§5.5.0` left unproven — required row (ii))* | `P-TP` totality | **For EVERY input shape in the pinned pool below, NO method of the slot host throws** (`setNode`, `remove`, `setOrder`, `render`, `keys`, `containerFor`, `dispose` — and `createSlotHost` itself for malformed option shapes): every call returns a valid `SlotHostResult` (or `void` for `dispose()`), the host never leaves a state a later call cannot read, and a refusal — where one occurs — carries one of the four declared codes. **STATED BOUNDARY: this row does NOT cover a THROWING caller callback.** `classNameOf`/`attributesOf`/`refuse` are caller code, and `§2.1`'s injected-callback rule states the contract does **not** claim to swallow a caller throw; `F-10`/`A-5` are deliberately UNRULED (`§7` item 8), so **no shape that makes an injected callback throw is in the pool, and none may be added to it by a later pass without first ruling `F-10` in this spec.** **⟶ RECONCILED 2026-09-27 (`§7a` item 4, the `§7a` RULING pass; every sentence above is kept visible and this row's STATEMENT, POOL, DRAW COUNT and `60` attempts are UNCHANGED): `F-10`/`A-5` are NO LONGER UNRULED — `F-10` now carries the ruling and `§2.1`'s totality-boundary clause is its normative home, with a NAMED SAFE DEFAULT per injected function. What changes for THIS row is only the CITATION, not the row: its statement's boundary words are the ruling's own words (*"NO method of this host throws — for any input shape — and `a throwing caller callback is excluded`"*), and **its pool still excludes every callback-throwing shape** — the exclusion is the `YES (bounded)` marking, not a stale reference to an undecided clause. **The callback-throwing shapes are driven instead by the `§3.2` row `F-10`** (which is what the sentence *"none may be added to it by a later pass"* now means: the pool stays as it is; the seam rows live in `§3`). **"one of the four declared codes" is reconciled to the emitted-three domain:** the row asserts membership in the FOUR-member union, and its companion row `F-11` asserts the negative that `'no-container'` is never the member produced (see `§2.1`'s refusal-code-domain clause).** | **YES (bounded — the property text says "EVERY input shape" while the enumeration is a `20`-shape pool under `60` pinned-seed draws; only the enumerated pool is claimed, and the caller-callback boundary above is excluded by the statement itself)** | `I-8`, `F-1`, `F-2`, `F-3`, `F-4`, `F-6`, `F-7`, `F-9`, `M-8`, `M-14` | `S-SH-SEED-1` | **A PINNED-SEED deterministic generator** (item 2 above: `state₀ = 20260927`, one LCG step per pool draw, index `= state mod pool.length`) over a **fixed pool of `20` input shapes**, drawn **`60` times** in a fixed draw order = **`60` attempts** (one attempt = one drawn `(method, input)` pair driven once on a host built for that shape's configuration), all `60` inside the **≤100 per-row cap**. **The pool (each shape is a literal in the test file):** `null` · `undefined` · `42` · `NaN` · `''` · `'x'` · `[]` · `[{}]` · `[42]` · a non-object argument (a bare string used where a node is expected) · `{key: null}` as a node value · an object with no `appendChild` (present-but-unusable container) · an object whose `appendChild` is `42` · `container: null` · `container: 42` · `container: 'div'` · `keys: null` · `keys: 'a,b'` · `keys: [1,2]` · a caller node **already detached** from its container. **Every method is covered**: each draw drives all seven result-returning methods once plus `dispose()` once, so the `60` draws cover the method axis as well as the input axis. **Per attempt assert only that the call did not throw and that the result is a valid `SlotHostResult`** — **asserting a specific `code` per shape is `P-SH-SM-1`/`P-SH-SM-2`'s job, not this row's** (`F-7` vs `M-14` are not reconciled here; see the ambiguity report). **The pool's stated boundary: a `Symbol` key is NOT in the pool** (a `Symbol` is not a `SlotKey` by `§2.1`'s `type SlotKey = string`, so the pool is silent about it **by design**, recorded rather than left as an unrecorded omission), **and no callback shape is in the pool** (the `F-10` boundary above). |
+| **`P-SH-SM-2`** | `P-SM` state-machine | **For EVERY step of the fixed operation sequences below, the host's state stays COHERENT**: `ok === (refused.length === 0)` (`I-1`); **every refusal's `code` is one of the FOUR declared members** (`'unknown-key'`, `'no-container'`, `'malformed-node'`, `'container-not-appendable'`) **⟶ RE-PINNED 2026-09-27, THE RED PASS (`§5.5.1`'s executed-red reconciliation block, ruling 4; the as-written clause immediately above is KEPT VISIBLE and is superseded on its DOMAIN half only — this pass could not re-anchor the phrase in place, so its old form is quoted verbatim in that block): the asserted domain is the THREE EMITTED members (`'unknown-key'`, `'malformed-node'`, `'container-not-appendable'`) AND never `'no-container'` (`§2.1`'s refusal-code-domain clause; `§3.2 F-11` is the negative row); the union still DECLARES `4` and is not narrowed, so "no fifth code" is now "no fifth code and no `'no-container'`". The drive, the `8` sequences and the `8` attempts are UNCHANGED.** (the remaining clause ` — no fifth code is ever produced); `order` is exactly the declared key set once each in projected order (`I-2`); `placed` is a **subset** of `order` and contains no key that was never placed (`I-7`); and `keys()` equals `order` (same keys, same relative order). | **YES** | `M-14`, `M-16`, `M-17`, `M-18`, `F-3`, `F-5`, `F-6`, `F-9`, `I-1`, `I-2`, `I-7` | `S-SH-SEQ-1` | **`8` fixed sequences, authored as literal step/expected-outcome data and driven in fixed order** — **`8` attempts, one per sequence** (an attempt = one complete sequence): **(1)** two `render()` cycles over `3` declared keys with `2` placed (`M-16`); **(2)** `render()` with `keys: []` (`M-8`); **(3)** `setNode` on an undeclared key, then `render()` (`F-1`); **(4)** `remove` on an undeclared key, then `containerFor` on the same key (`F-1`/`F-5` — the read is not a refusal); **(5)** the **absent-container** configuration (`null`) driven through **all seven result-returning methods** (`M-14`/`F-6`); **(6)** `keys: null` and `keys: [1,2]` (`F-4` — an empty declared set, every later `setNode` refused), then `render()`; **(7)** the **present-but-unusable** container (an object with no `appendChild`), then `setNode`/`render`/`keys`/`containerFor`/`dispose` (`F-7`); **(8)** a **detached** node — `setNode` a caller node, detach it from its container, then `remove` the key (`F-9`). Per step assert the four coherence clauses above, **and after any refusal assert every method is still callable and still returns a valid `SlotHostResult`** — the sequence proves the host is not left in a state a later call cannot read. **⟶ RULED-IN-PLACE BY THE RED PASS 2026-09-27 (`§5.5.1`'s executed-red reconciliation block, ruling 3): the clause of THIS cell below was authored as "The sequence does NOT assert a specific `removed` membership for sequence 8" and it is SUPERSEDED ON ITS MEMBERSHIP HALF — `§3.2 F-9` pins `removed` to CONTAIN the caller-detached node BY REFERENCE (`CONTRACT-AMENDED 2026-09-27`), the reconciliation table above re-pins this row to that membership, and the HONESTY BLOCK's item 3 (`§5.5.1`) keeps the old prohibition visible with its dated SUPERSEDED note; this pass could not re-anchor that sentence in place, so its as-written form is quoted verbatim in that block.** **The sequence does NOT assert a specific `removed` membership for sequence 8** — that half is deliberately unpinned (`F-9`/`§7` item 9; see the ambiguity report at the end of this file). |
+| **`P-SH-TP-1`** *(the no-throw quantification `§5.5.0` left unproven — required row (ii))* | `P-TP` totality | **For EVERY input shape in the pinned pool below, NO method of the slot host throws** (`setNode`, `remove`, `setOrder`, `render`, `keys`, `containerFor`, `dispose` — and `createSlotHost` itself for malformed option shapes): every call returns a valid `SlotHostResult` (or `void` for `dispose()`), the host never leaves a state a later call cannot read, and a refusal — where one occurs — carries one of the four declared codes. **⟶ RE-PINNED 2026-09-27, THE RED PASS (`§5.5.1`'s executed-red reconciliation block, rulings 1/2/4; the clause immediately above is KEPT VISIBLE and is superseded on its domain half, its pool-arithmetic reading and its draw-binding rule — this cell is the one the TestWriter flagged, and its as-written form is quoted verbatim in that block, because the pass could not re-anchor every part of this cell in place): the refusal-code domain asserted here is the THREE EMITTED members AND never `'no-container'`; the pool is `20` DISTINCT input values (a shape reused on more than one method axis is the SAME pool member — the count is NOT `24`), which is what leaves the draw indices, the `60` draws and the `155` total consistent with the executed run; and a draw binds its shape to a method by driving the shape's own bound method AND the cycling method `HOST_METHODS[d mod 7]`, so **all methods are covered inside the `60` attempts** and the attempt count stays `60`. NOTHING in the row's statement, pool count, draw count, strategy id or attempt count is changed by this re-pin.** **STATED BOUNDARY: this row does NOT cover a THROWING caller callback.** `classNameOf`/`attributesOf`/`refuse` are caller code, and `§2.1`'s injected-callback rule states the contract does **not** claim to swallow a caller throw; `F-10`/`A-5` are deliberately UNRULED (`§7` item 8), so **no shape that makes an injected callback throw is in the pool, and none may be added to it by a later pass without first ruling `F-10` in this spec.** **⟶ RECONCILED 2026-09-27 (`§7a` item 4, the `§7a` RULING pass; every sentence above is kept visible and this row's STATEMENT, POOL, DRAW COUNT and `60` attempts are UNCHANGED): `F-10`/`A-5` are NO LONGER UNRULED — `F-10` now carries the ruling and `§2.1`'s totality-boundary clause is its normative home, with a NAMED SAFE DEFAULT per injected function. What changes for THIS row is only the CITATION, not the row: its statement's boundary words are the ruling's own words (*"NO method of this host throws — for any input shape — and `a throwing caller callback is excluded`"*), and **its pool still excludes every callback-throwing shape** — the exclusion is the `YES (bounded)` marking, not a stale reference to an undecided clause. **The callback-throwing shapes are driven instead by the `§3.2` row `F-10`** (which is what the sentence *"none may be added to it by a later pass"* now means: the pool stays as it is; the seam rows live in `§3`). **"one of the four declared codes" is reconciled to the emitted-three domain:** the row asserts membership in the FOUR-member union, and its companion row `F-11` asserts the negative that `'no-container'` is never the member produced (see `§2.1`'s refusal-code-domain clause).** | **YES (bounded — the property text says "EVERY input shape" while the enumeration is a `20`-shape pool under `60` pinned-seed draws; only the enumerated pool is claimed, and the caller-callback boundary above is excluded by the statement itself)** | `I-8`, `F-1`, `F-2`, `F-3`, `F-4`, `F-6`, `F-7`, `F-9`, `M-8`, `M-14` | `S-SH-SEED-1` | **A PINNED-SEED deterministic generator** (item 2 above: `state₀ = 20260927`, one LCG step per pool draw, index `= state mod pool.length`) over a **fixed pool of `20` input shapes**, drawn **`60` times** in a fixed draw order = **`60` attempts** (one attempt = one drawn `(method, input)` pair driven once on a host built for that shape's configuration), all `60` inside the **≤100 per-row cap**. **The pool (each shape is a literal in the test file):** `null` · `undefined` · `42` · `NaN` · `''` · `'x'` · `[]` · `[{}]` · `[42]` · a non-object argument (a bare string used where a node is expected) · `{key: null}` as a node value · an object with no `appendChild` (present-but-unusable container) · an object whose `appendChild` is `42` · `container: null` · `container: 42` · `container: 'div'` · `keys: null` · `keys: 'a,b'` · `keys: [1,2]` · a caller node **already detached** from its container. **Every method is covered**: each draw drives all seven result-returning methods once plus `dispose()` once, so the `60` draws cover the method axis as well as the input axis. **Per attempt assert only that the call did not throw and that the result is a valid `SlotHostResult`** — **asserting a specific `code` per shape is `P-SH-SM-1`/`P-SH-SM-2`'s job, not this row's** (`F-7` vs `M-14` are not reconciled here; see the ambiguity report). **The pool's stated boundary: a `Symbol` key is NOT in the pool** (a `Symbol` is not a `SlotKey` by `§2.1`'s `type SlotKey = string`, so the pool is silent about it **by design**, recorded rather than left as an unrecorded omission), **and no callback shape is in the pool** (the `F-10` boundary above). |
 
 **⟶ THE REGISTER ROWS' RECONCILIATION WITH `§7a`'s RULINGS — WHAT EACH ROW NOW DRIVES, AND WHAT ITS
 CELL STILL SAYS (ADDED 2026-09-27, the `§7a` RULING pass).** This block **amends no register row's
@@ -943,7 +1162,7 @@ are still unavailable, and a TestWriter reading only this block must not widen a
 | `P-SH-IM-3` | **Item 8 (`M-16`/`I-9`, amended):** its per-step child-reference sequence is now the NAMED observable of `M-16`, and its array-freshness half (`!==` by reference) is the NAMED observable of `I-9` — so both assertions are contract-named rather than the register's private reading. No cell change. |
 | `P-SH-SM-1` | **Item 1 (the code domain):** the row's cell says the fourth declared code is "deliberately not driven here — REPORTED, not guessed". **That is now a RULING, not an open report:** `'no-container'` is DECLARED-BUT-NOT-EMITTED (`§2.1`'s refusal-code-domain clause), so the row's `3`-triggered-classes enumeration stays **exactly as it is** and the negative is driven by the new `§3.2` row `F-11`. A TestWriter may **not** add a `'no-container'` drive to this row. |
 | `P-SH-SM-2` | **Items 1, 2, 3 and 6.** (a) Its per-step code-membership clause is re-pinned to the **three emitted** members **plus the `'no-container'`-absent negative** (honesty block item 4, sharpened). (b) Its **sequence 5** (absent container, `M-14`/`F-6`) and **sequence 7** (unusable container, `F-7`) may now assert the **`ok` values** the per-method table under `§3.2` fixes — `ok === true` with `refused` `[]` for sequence 5's valid inputs, `ok === false` with `code === 'container-not-appendable'` for sequence 7's placement attempts — **which the row previously declined "for want of a ruling"**. (c) Its **sequence 8** must now assert `removed`'s membership (`F-9`, amended). **Its `8` sequences and `8` attempts are unchanged.** |
-| `P-SH-TP-1` | **Item 4.** Its statement's boundary words are the ruling's own (*"a throwing caller callback is excluded"*), its pool still excludes every callback-throwing shape, and its `F-10`/`A-5` citation is no longer "deliberately UNRULED" — the seam rows live in `§3.2 F-10`. Its `20`-shape pool and `60` draws are unchanged. |
+| `P-SH-TP-1` | **Item 4.** Its statement's boundary words are the ruling's own (*"a throwing caller callback is excluded"*), its pool still excludes every callback-throwing shape, and its `F-10`/`A-5` citation is no longer "deliberately UNRULED" — the seam rows live in `§3.2 F-10`. Its `20`-shape pool and `60` draws are unchanged. **⟶ AND ON THE FIFTH SEAM (ADDED 2026-09-27, the architect's option-(a) ruling on the container source; `ADV-SH-1`, HIGH): the NO-FACTORY shape is NOT added to this row's pool, and the `20`-shape pool, the `60` draws and the `155` total are UNCHANGED.** The container-source seam is driven by the new **`§3.2` row `F-12`** (five factory drives × all seven methods), and the cell's own dated pool note states the correction to the re-indexing rationale: **the count stands on the EXECUTED `20` (distinct input values, each once) and on the coherence of the `60` draws and `155` total with that executed pool, NOT on the unsound claim that `pool.length` participates in the draw binding.** A TestWriter may **not** widen this row to the factory shapes, and may **not** narrow it: `F-12` is the home. |
 
 **⟶ THE REGISTER'S HONESTY BLOCK — what is NOT proven here (stated so no reader over-reads a `YES`).**
 
@@ -977,6 +1196,18 @@ are still unavailable, and a TestWriter reading only this block must not widen a
    `8`) and its `keys()`/`order` coherence assertions — is UNCHANGED.** The row's statement and the
    register's `8` attempts are not altered by this; only the sequence's assertion set grows from
    what the ruling now permits.**
+   **⟶ RECONCILED TO THE EXECUTED RED SET 2026-09-27 (the `U-SLOTHOST` RED PASS, Ruling 3 of
+   `§5.5.1`'s executed-red block; the as-written sentence and the `§7a`-era note above are BOTH kept
+   visible and NEITHER is rewritten): this item's stale half is now answered IN THE FILE'S OWN
+   RECORD — the TestWriter authored sequence 8 to the AMENDED `§3.2 F-9` plus `§7a.1` item 6, i.e.
+   **sequence 8 asserts `removed` CONTAINS the caller-detached node BY REFERENCE** (in addition to
+   "no throw, no dangling ownership"), and the register-reconciliation table above already reads
+   *"MAY AND MUST now assert that membership"*. **The old prohibition is therefore read as
+   superseded on its membership half and authoritative on nothing else**: **the drive and the attempt
+   count are UNCHANGED** (1 of the `8` sequences; the register's `8` attempts and the `155` total are
+   untouched), and a later pass may not cite this item to weaken the membership assertion back out.**
+   **Nothing else in this honesty block moves**: items 1, 2 and 4 stand as written (item 4's
+   emitted-`3` sharpening is the same domain Ruling 4 reconciles to the `P-SH-TP-1` cell).**
 4. **The `4` refusal codes are the register's whole code domain**, taken from `§2.1`'s
    `SlotHostRefusal['code']` union. **A fifth code appearing in any property run is a finding, not a
    table extension** (`P-SH-SM-2` asserts this per step). **⟶ SHARPENED 2026-09-27 (`§7a` item 1, the
@@ -1051,6 +1282,180 @@ audit may not report a row as executed on the strength of this table alone** —
 TestWriter's tables in the test file and the ledger's numbers against this cell, because **every
 `YES` here is execution DESIGN and this pass ran nothing.**
 
+**⟶ THE EXECUTED RED RUN AND THE FOUR CELL RECONCILIATIONS (ADDED 2026-09-27, the `U-SLOTHOST` RED
+PASS — SPEC TEXT ONLY; the pass ran no test, no suite, no leg and no trio).** This block is
+**`§5.5.1`'s executed layer, recorded where the register is**, and it does two things in the order the
+evidence requires: **(1)** it records what the red set's RUN actually produced, and **(2)** it rules
+the four cell drifts the run surfaced so the contract and the executed red set agree. **It amends no
+register row's drive, expectation, statement, type, `YES`/`YES (bounded)` marking, strategy id or
+attempt count — and NOT the `155` total (`20` pool members each counted once, `60` draws, `155`
+attempts).** **It moves no section number, renumbers nothing, and applies the same
+annotate-never-rewrite discipline as every pass before it: every clause it re-pins is kept visible,
+with its date and its reason, and each ruling QUOTES the as-written form it supersedes** (where a
+phrase could not be re-anchored in place — see item 8 — the quotation here is the only form of it
+this pass could write).
+
+**(1) The executed red run — MEASURED, not designed.**
+
+The red set has **RUN** and **REPORTED** for `U-SLOTHOST` (`AGENTS.md` item 9; §4.1–§4.2's
+author-and-run half is therefore discharged). **The measured numbers, stated exactly:**
+
+| What ran | The measured result |
+| --- | --- |
+| the red set (§4) | **`55` rows — `53` red / `2` pass** (the two passes are rows that can be green while the module is absent — at least one being the register's own pool-count precondition row, reported by the TestWriter as pinning the executed pool at `20` green; **this pass did not read the test file, so the second pass's identity is the TestWriter's to confirm rather than asserted here**) |
+| the node suite, `npm test` (§5.2 leg 1) | **`61` files / `1035` tests — `980` passed / `53` failed / `2` skipped** |
+| the property register (`§5.5.1`, riding leg 1) | **`5` of `155` attempts executed — STOPPED EARLY at `P-SH-IM-1`**, with the **five un-run register rows REPORTED AS FAILURES** |
+
+**THE IMPLEMENTATION HAS NOT BEEN WRITTEN and the unit is NOT green and NOT `DONE`.** The module
+`src/shared/slot-host.ts` **does not exist**, which is the designed red for this unit (§4.1): every red
+row's failure is the module-resolution failure `Cannot find module '../src/shared/slot-host.js'`.
+**The `2` passes are NOT evidence that any implementation behaviour is correct**, and no leg of the
+trio beyond the node suite (typecheck, build) is claimed to have run: **the red is a RED, not a
+partial green.**
+
+**THE EARLY STOP IS THE CORRECT, REPORTABLE BEHAVIOUR — stated because a reader may mistake it for a
+harness defect.** `§5.5.1`'s strategy discipline (item 3) evaluates register rows **sequentially and
+STOPS AFTER 5 CONSECUTIVE FAILURES**, abandoning the running row's remaining attempts and starting no
+further row; a module-absent unit fails every attempt it can make, so the register **must** stop at the
+first row — and it did, at **`P-SH-IM-1`**, after **`5`** of the `155` attempts. **The five un-run
+register rows are reported as FAILURES**: they were **not driven**, and reporting them as red (rather
+than omitting them, or letting an un-run row read as anything other than unresolved) is the honest
+accounting this spec requires. **The `155` total and the `20`-shape pool are the register's DESIGN
+accounting and are not contradicted by a `5`-attempt execution** — what is executed is reported as
+executed, what is un-run is reported as un-run and red, and **no `YES` cell of `§5.5.1` may be cited as
+an executed result until an Implementer's green produces attempts that hold** (`§5.3` item 10).
+
+**(2) The four rulings — the contract and the executed red set now agree.**
+
+**Ruling 1 — `P-SH-TP-1`'s pool is `20` DISTINCT INPUT VALUES, EACH COUNTED ONCE.**
+**This is the ruling the executed run forces, and the pool is NOT `24`.** The pinned count `20` stands;
+**a shape reused on more than one method axis is the SAME pool member, not a new one** — the cell's own
+parenthetical list enumerates a value again where a shape is exercised on a second axis (the
+**`container`-shaped** members on the render axis, the **`keys`-shaped** members on the `setNode`
+axis), and those re-appearances are **the same `20` members seen from another axis, not additional
+members**. **The executed run honoured the pinned `20` (each value once), and the TestWriter's own
+precondition row pins the executed pool at `20` green — so the executed pool and this ruling agree
+member for member.**
+**⟶ THE RATIONALE THAT FOLLOWS IS CORRECTED 2026-09-27 (the adversarial pass, `ADV-SH-1`/`ADV-SH-15`;
+the as-written sentences are kept visible and are NOT the reason the count stands): the claim that
+adding a pool member *"would re-index every seeded draw (`draw n` takes the pool index
+`stateₙ₊₁ mod pool.length`), which would change which shapes the `60` draws visit and would leave the
+`60`-draw and `155`-attempt figures describing a pool that was never executed"* is **NOT SOUND as a
+justification of the `20`-count** — and the register's parallel claim that *"adding members would
+re-index every seeded draw"* is unsound for the same reason.**
+**WHY IT IS UNSOUND:** the draw binding is **`d mod 7` over the draw's ORDINAL for the method** and
+**`stateₙ₊₁ mod pool.length` for the pool member**; **`pool.length` is NOT part of the draw
+binding** — it is an input to one modular reduction. Adding a member changes **which member** each draw
+lands on, **but it changes nothing about the binding rule, the number of draws (`60`), the number of
+attempts (`155`) or the register's arithmetic**: a re-derived pool-index list is **recomputable
+arithmetic**, not an impossibility. **THE HONEST REASON THE COUNT STANDS IS THE EXECUTED ONE:** `20`
+is the number of **distinct input values** the contract enumerates (each counted once, per-axis
+re-appearances being the SAME member), **the executed pool holds `20`** (the TestWriter's precondition
+row asserts it), and **the register's `60` draws and `155` total are computed against that executed
+pool** — a **COHERENCE** argument, not a re-indexing-impossibility argument. **Adding a pool member is
+still not free and still requires a ruling** (it re-derives the draw indices together with the
+counts, exactly as the `RE-PINNED` note in that cell says), **but the obstacle is the RE-DERIVATION of
+the figures, NOT a binding in which `pool.length` participates** — and **no later pass may cite the
+unsound rationale above to refuse a re-derivation, and no later pass may cite this correction to add a
+member without one.**
+**⟶ AND THE NO-FACTORY SHAPE IS NOT ADDED TO THIS POOL (ADDED 2026-09-27, the architect's option-(a)
+ruling on the container source; `ADV-SH-1`, HIGH).** The register row's `20` shapes and `60` draws are
+**unchanged**, and **no no-factory / non-callable-factory / throwing-factory / unusable-factory-return
+shape is added to `P-SH-TP-1`'s pool** — the fifth seam is driven by the **`§3.2` row `F-12`**, whose
+five drives cover all of those shapes through all seven methods. **Reason, stated plainly:** the
+register row's property is *"no method throws for every input shape"* and its pool is a **bounded,
+pinned, executed enumeration** (`YES (bounded)`) — extending it is a **re-derivation** owned by a
+ruling, not a free addition, and the `F-12` row is the falsifiable home the seam needs. **This does
+NOT mean the shape is unexercised** — it is exercised by `F-12` — and **it does not change the row's
+statement, type, marking, strategy id or attempt count** (`20` members, `60` draws, `155` total).
+**The five executed pool members the TestWriter named are recorded
+here so the ruling is not name-free: the `container`-shaped members (exercised on the `render` axis),
+the `keys`-shaped members (exercised on the `setNode` axis), and the primitive/non-string inputs `42`,
+`null` and `''`.** **This cell's own parenthetical enumeration stays visible as written** (it is the
+pre-ruling form; read it THROUGH this ruling, each value once) — and the executed file is the authority
+on the executed member list. **A later pass may NOT add or remove a pool member, or "reconcile" the
+list to `24`, without a new ruling that re-derives the draw indices, the `60` draws and the `155`
+total together**, and may not do it by editing the executed test file to match prose.
+
+**Ruling 2 — HOW A SHAPE IS BOUND TO A METHOD: a cycling rule, named, and labelled as a HARNESS
+choice.** The cell's own words — *an attempt = one drawn `(method, input)` pair* — and its requirement
+that **all methods be covered** are now one rule, and it is this: **a draw's index selects the pool
+member (the input) AND the method**, and the draw is exercised against **BOTH (a) the shape's own bound
+method and (b) the cycling method `HOST_METHODS[d mod 7]`** (the seven-entry method list, `d` the
+draw's ordinal), **within that single attempt**. **The shape→method assignment (the `HOST_METHODS`
+ordering and each shape's own bound method) is a HARNESS choice that the row's cell labels as such —
+it is NOT a clause of this contract**: no clause of this spec names a method for a shape, the register's
+observable is "no method throws", and any enumeration that covers all eight methods within the `60`
+attempts satisfies the row. **The rejected alternative reading, stated so it cannot be re-derived: one
+draw driving ALL EIGHT methods would make the `60` draws `480` calls and contradict the row's own
+`60`-attempt count** — so it is not the reading of this cell. **Under the ruled reading the `60`-attempt
+count is CONFIRMED and unchanged**: `60` draws, each one attempt (one drawn `(method, input)` pair),
+each attempt exercising the pair's method and its cycling method — the attempt count is not multiplied
+by the second method, exactly as the row's cell counts it. **The executed run drove this binding** and
+stopped at `P-SH-IM-1` before reaching `P-SH-TP-1`, so **the binding is the DESIGN confirmed
+consistent with the executed red set's counts, NOT yet an executed result of this row.**
+
+**Ruling 3 — the honesty block's item 3 is reconciled to the `F-9` ruling: `P-SH-SM-2` sequence 8's
+`removed`-membership assertion is now MANDATORY.** `F-9` is **`CONTRACT-AMENDED`** (`§7a` item 6,
+2026-09-27): a caller-detached node the host then removes **IS** in `removed`, **by reference** (§2.1's
+`removed` doc string; §2.4 items 1–2), and **the TestWriter authored sequence 8 to that amended `F-9`
+plus `§7a.1` item 6** — it asserts `removed` contains the detached node **by reference**. **The honesty
+block's item 3 therefore reads, on its membership half: SUPERSEDED — sequence 8 asserts "no throw, no
+dangling ownership, `keys()`/`order` coherent" AND `removed`'s membership (`removed` contains the
+caller-detached node by reference), which the reconciliation table above already permits and requires
+("MAY AND MUST").** **Its drive, its position (1 of the `8` sequences), the row's `8` attempts and the
+register's total are UNCHANGED**, and **the item's own prohibition sentence is kept visible with its
+dated `SUPERSEDED ON ITS MEMBERSHIP HALF` note** — the as-written form stays in the file beside the
+ruling that answers it.
+
+**Ruling 4 — the code-domain clause: the two cells now say the SAME thing, and it is THREE EMITTED
+plus the `'no-container'`-absent NEGATIVE.** The reconciliation table above re-pins `P-SH-SM-2`'s
+per-step code-membership clause to **the three emitted members plus the `'no-container'`-absent
+negative** (`§2.1`'s refusal-code-domain clause; `§3.2 F-11`), while **the `P-SH-TP-1` cell's text
+still read *"one of the four declared codes"*** — those two forms are reconciled now: **`P-SH-TP-1`'s
+code clause reads the emitted THREE (the `FOUR`-member union still DECLARES its fourth member, which is
+`'no-container'`, declared-but-never-emitted), and therefore carries the same negative as
+`P-SH-SM-2`.** **The TestWriter used three emitted (`'unknown-key'`, `'malformed-node'`,
+`'container-not-appendable'`) plus the `'no-container'`-absent negative** — which is what both cells
+now assert. **Both as-written forms — `P-SH-TP-1`'s *"one of the four declared codes"* and
+`P-SH-SM-2`'s *"one of the FOUR declared members"* — are kept visible in their cells under dated
+`RE-PINNED` notes, and are quoted again here with the ruling that supersedes each.** **No row's
+positive assertions change by this ruling**: the TestWriter's positive assertions of the three emitted
+codes (and `F-11`'s negative) stand exactly as executed.
+
+**(3) The exact cells this pass changed.**
+
+| # | Cell | What this pass wrote there |
+| --- | --- | --- |
+| 1 | **the status region** (the third status note's close) | a dated `STATUS NOTE — THE U-SLOTHOST RED PASS` block: the measured numbers, the "not implemented / not green / NOT `DONE`" sentence, and the note that the filing-time "nothing here is implemented, no red set has been authored and no leg has been run" line is superseded **on its red-set half only** |
+| 2 | **§4.2, item 4's close** | the annotation that riding the red run does **not** mean the register's `155` attempts execute in it — the stop-after-5-consecutive-failures rule is why the run stopped early, and a run claiming all `155` executed would be the finding |
+| 2b | **§4.5's delegation-gate close** | the dated note that condition **(d)** has moved one step forward (the red set is RUN and REPORTED) **and is still not discharged** — no Implementer pass has run, the module does not exist, and the unit is not green and not `DONE` |
+| 3 | **§5.5.1, `P-SH-SM-2`'s code-membership clause** | a dated `RE-PINNED` note: asserted domain = the THREE EMITTED members **AND never `'no-container'`**; the union still declares `4` |
+| 4 | **§5.5.1, `P-SH-SM-2`'s sequence-8 clause** | a dated `RULED-IN-PLACE` note: the `removed`-membership assertion is now MANDATORY (amended `F-9`), with the old prohibition kept visible in the honesty block |
+| 5 | **§5.5.1, `P-SH-TP-1`'s code clause** | a dated `RE-PINNED` note carrying **Ruling 1** (pool = `20` distinct values, NOT `24`), **Ruling 2** (the `HOST_METHODS[d mod 7]` binding, a harness choice, `60` attempts confirmed) and **Ruling 4** (the emitted-three domain) |
+| 6 | **this block** (`§5.5.1`, after the register's integration paragraph) | the executed-red record and the four rulings, with every superseded as-written form quoted |
+
+**Explicitly NOT changed by this pass** (recorded so the negative is auditable): `§5.2`'s three legs and
+its property-layer clause — **not edited**: neither implies that the register completes, and both defer
+to `§5.5.1`'s counts; **`§5.3`'s DONE-row shape — not edited**: item 10 already REQUIRES the per-row
+attempts/held/broken counts, the strategy ids, the pinned seed, the stop-after-5 status and the
+explicit `YES (bounded)` sentence, and **those counts are owed by the DONE row (the green's record),
+not by the red run's report**; **`§5.5.1`'s register cells' drives, expectations, strategy ids and
+attempt counts, the `155` total and the `F-11` cell — not changed**; and **no other file, no tracker
+and no test was touched by this pass.**
+
+**(4) The tool ceiling this pass hit (stated so the record is not over-read).**
+
+**This file's register cells are single lines longer than the read/grep tools return, and the pass's
+tools truncate a line at ~2000 characters per result.** Three consequences, all visible in the cells
+above: **(a)** `P-SH-TP-1`'s full pool list and `P-SH-SM-2`'s sequence-8 sentence could **not** be
+re-anchored in place, so their re-pins are **PREPENDED to the visible portion of the cell** (and the
+cell's as-written clause is quoted verbatim in this block) rather than replacing text the pass could
+not read; **(b)** **no line of any cell was replaced wholesale** — every edit in this pass is a bounded
+anchored `edit` on text that was read first (`RCA-8(c)/(d)`); and **(c)** **this pass asserts no line
+count and no byte count for this file** — a census drifts on every pass (§8's convention), and **a
+citation must name this file's sections, never its length**.
+
 ## 6. Falsification / stop conditions
 
 **The unit's falsification, stated once, plainly.** *If a slot host cannot place, order and attribute
@@ -1122,6 +1527,23 @@ call (`H-r1`'s cite-and-supersede rule).
    entry** — a malformed attribute entry is skipped without failing the call (`F-8`); (vii) **the
    refusal listener is notified once and its return value ignored** (§2.1). **Each is a decision,
    not a derivation — the sources are silent on all seven.**
+   **⟶ AND A DATE-STAMPED FOLLOW-UP TO THIS ITEM (2026-09-27, the architect's option-(a) ruling on
+   the container source; `ADV-SH-1`, HIGH): the seven decisions above are joined by the container
+   SOURCE decision — the container source is INJECTED (`containerFactory`) and NO AMBIENT GLOBAL MAY
+   BE READ.** Read it as item 7's eighth entry, and read it as a **ruling, not a silence**:
+   **(viii) the container source is the injected `containerFactory` seam; the ambient read is
+   DELETED, not documented; and nothing may read the ambient realm — no assembled/computed member
+   lookup, no aliased/re-derived global reference** (`§2.1`'s container-source clause, `§2.2`
+   prohibitions 1/2, `§3.2 F-12`). **Unlike (i)–(vii) this one is NOT a decision made where the
+   sources are silent: it is the architect's ruling on a HIGH finding, and the sentence *"the sources
+   are silent on all seven"* above is unchanged and still counts SEVEN of this item's decisions, not
+   eight.**
+   **A second, smaller contract decision from the same pass — `ADV-SH-3`:** the host's
+   **parent-ownership bookkeeping is MODULE-LOCAL** (a `WeakMap` keyed by the caller's node), **not an
+   expando marker written onto the caller's node** — the host leaves no `parent` property on a value
+   the caller owns, and a frozen/sealed caller node is bookkept exactly like any other. **A row may
+   assert the caller's node carries no host-written marker** (§2.4 item 4's identity rule is
+   unchanged: the host still clones nothing and re-creates nothing).
 8. **This spec deliberately leaves FOUR seeds UNRULED** rather than inventing rules: **`F-10`/`A-5`**
    (a throwing caller callback), **`A-3`** (duplicate declared keys), **`A-6`** (one node for two
    keys) and **`A-7`** (two host instances over one container). **The adversarial pass must rule them
@@ -1152,6 +1574,29 @@ call (`H-r1`'s cite-and-supersede rule).
     **⟶ RE-CHECKED 2026-09-27 (the `§5.5` re-derivation pass): still no such file** — `docs/skills/`
     holds `process-guardrails.md` alone, so this statement stands unchanged and **this pass touched
     no page-design artifact**.
+11. **⟶ ITEM 11 ADDED 2026-09-27 (the adversarial pass; `ADV-SH-*`): THE UNIT IS NOT GREEN AND NOT
+    `DONE`, and the honest state is recorded here rather than in `§3a` alone.** **Measured state as
+    this pass found it: `6` rows RED — `M-14`, `M-17`, `F-7`, `P-SH-SM-1` (`11/12`), `P-SH-SM-2`
+    (`7/8`), `S-5` — and ALL SIX are ruled TEST-SIDE, with no code defect among them** (`§3b`-1's red
+    table). **The register's six `§5.5.1` rows executed `155` of `155` attempts with NOTHING STOPPED
+    EARLY, and TWO BROKEN attempts** (`P-SH-SM-1` `11/12`, `P-SH-SM-2` `7/8`) — both breaks
+    **test-side defects, now remanded to the TestWriter** (contrast the RED pass's own early stop at
+    `P-SH-IM-1` after `5` attempts, which was that run's designed behaviour: `§5.5.1`'s executed-red
+    block). **The container source is being REWORKED** under the architect's option-(a) ruling
+    (`ADV-SH-1`, HIGH: the ambient read is deleted, the injected factory is the sole source, the
+    static bans are tightened), so **the unit may not be reported green, may not be reported `DONE`,
+    and no tracker row may read otherwise** (`AGENTS.md` RCA-3/items 3/6). **Two of the six red rows
+    are coupled to that rework and will go red again if the harness keeps relying on the shim global
+    instead of passing the factory** (`§5.2`'s harness clause; `ADV-SH-1`'s owner chain). **This
+    pass ran NO test, NO leg and NO trio** — the counts above are the pass's own report, recorded as
+    reported. **Three further items are OPEN WITH OWNERS and are NOT green by any reading:
+    `ADV-SH-2` (OWED-with-owner: Implementer guard + a spec pin against a container passed back as a
+    node — the cyclic tree), `ADV-SH-3` (OWED-with-owner: the module-local `WeakMap` bookkeeping
+    replacing the expando `parent` marker; the contract decision is recorded at item 7 above), and
+    `ADV-SH-12` (PARKED-with-revisit-condition: the orphan container on a failed `appendChild` and
+    the silently re-appended caller-detached container; revisit when a non-shim / real-DOM container
+    is injected).** **`ADV-SH-15` records that this unit owes NOTHING to `docs/defects.md` or
+    `docs/HANDOFF.md` — no package defect was found.**
 
 ### 7a. Ambiguity report — clauses the TestWriter could NOT derive a falsifiable row from (2026-09-27, the `§5.5` re-derivation pass)
 
@@ -1270,6 +1715,9 @@ with the fork (and must not be re-merged). **OWED** = an obligation not yet disc
 | This file's own **`§7a` ambiguity report — its nine underivable clauses** | this file's `§7a` as written 2026-09-27 (the `§5.5` re-derivation pass) | **RESOLVED BY RULING — `§7a.1` (the `§7a` RULING pass, 2026-09-27): `9` items ruled from the contract's own clauses, `0` OPEN QUESTIONS, and each carries the row TEXT it produces.** Two are **`CONTRACT-AMENDED`** (`F-10`'s four-seam defaults, `§7a` item 4; `F-9`'s pinned `removed` membership, `§7a` item 6) and one is a **type amendment** (`SlotHostRefusal.key` widened to `unknown`, `§7a` item 5); the other six are clarifications/scopings. **The report itself is kept visible** (annotate-never-rewrite). **The delegation gate's blocking list is therefore EMPTY** (`AGENTS.md` item 9) | §7a (verbatim report), **§7a.1** (the rulings), §2.1, §2.5 item 3, §3.2 `F-3`/`F-9`/`F-10`/`F-11`, §3.3 `I-8`/`I-9`, §5.5.1 (its register-row reconciliation + honesty block) |
 | The **`§5.5.1` register rows' cells** that declined a half "for want of a ruling" (`P-SH-SM-1`'s fourth code, `P-SH-SM-2`'s sequences 5/7/8, `P-SH-TP-1`'s `F-10` citation) | this file's `§5.5.1` (re-derivation pass) | **RECONCILED — the block "THE REGISTER ROWS' RECONCILIATION WITH `§7a`'s RULINGS"**: **no register row's statement, type, `YES`/`YES (bounded)` marking, strategy id or attempt count changes**, and the **`155`-attempt arithmetic is unchanged**; what changes is which halves a TestWriter may now assert (sequence 5/7's `ok` values, sequence 8's `removed` membership, the `'no-container'` negative, the callback-seam rows moving to `§3.2 F-10` while the register's `20`-shape pool keeps excluding them) | §5.5.1 (the reconciliation block, its honesty block) |
 
+| **THE ARCHITECT'S OPTION-(a) RULING ON THE CONTAINER SOURCE** (2026-09-27, on finding **`ADV-SH-1`**, HIGH) — *the container source is an INJECTED element factory (a new OPTIONAL seam on `SlotHostOptions`); the ambient read is DELETED, not documented; and the static bans are TIGHTENED so the evasion cannot be re-introduced* | the architect's ruling, carried by the adversarial pass's finding `ADV-SH-1` (`src/shared/slot-host.ts:130-140`, read: `globalThis['doc' + 'ument'].createElement('div')` — a property name assembled from two literals, defeating the static token scans) | **RULED AND HONOURED — a `CONTRACT-AMENDED` ruling, not a silence.** The seam is **`SlotHostOptions.containerFactory?: (key: SlotKey) => unknown`**, documented as **the SOLE container source** (accepted shape: *offers `appendChild`* — the same predicate as `isNodeShaped`); **absent (or non-callable, or returning an unusable value) ⇒ the existing `F-6`-class degradation: every operation a valid no-op with a valid state and nothing placeable**; the ambient read is **deleted**; and the bans now read **no ambient global AND no assembled/computed member lookup and no aliased/re-derived global reference**. **Every cell the ruling reaches: `§2.1` (the seam + the container-source clause), `§2.1`'s totality-boundary table (the FIFTH seam, named safe default), `§1`'s out-of-scope list, `§2.2` prohibitions 1 and 2, the Layer declaration anchor 3, `§3.1 M-1`/`M-18`, `§3.3 I-4`, `§3.2`'s per-method container-state table (column (c)) and the new row `F-12`, `§4.4 S-2`/`S-4` (STRENGTHENED, not weakened), `§5.2` (the harness supplies the factory), `§5.5.1` (the pool note: `20`/`60`/`155` unchanged), `§7` items 7/11 and the `§8` rows below.** **Owner chain: the Implementer deletes the ambient read; the TestWriter wires the injected factory and authors `F-12`; the static rows are tightened.** | **§2.1** (the seam + the container-source clause), **§3.2 F-12**, **§3a `ADV-SH-1`**, **§3b**-1, §1, §2.2, Layer declaration, **§3.2** (per-method table), §3.1 `M-1`/`M-18`, §3.3 `I-4`, §4.4 `S-2`/`S-4`, §5.2, §5.5.1, §7 items 7/11, §8 |
+| **The `U-SLOTHOST` ADVERSARIAL PASS (read-only) and its FIFTEEN findings `ADV-SH-1`..`ADV-SH-15`** — with the `20` seed rulings (`A-1`..`A-20`), the `17` Implementer judgment calls, the register record (`155/155` executed, nothing stopped early, two broken attempts) and the SIX RED rows | the pass's own report; the cells it cites (`src/shared/slot-host.ts` 607 lines; `tests/slot-host.test.ts` 2983 lines — **cite by section, never by length**) | **RECORDED 2026-09-27 (this pass) — the findings, seed rulings and judgment-call rulings are contract text at `§3a`/`§3b`.** **`ADV-SH-1` is `CONTRACT-AMENDED` + the option-(a) ruling** (the row above); **`ADV-SH-2`/`ADV-SH-3` are `OWED-with-owner`** (Implementer: a cyclic-container guard + module-local `WeakMap` bookkeeping) **and `ADV-SH-12` is `PARKED-with-revisit-condition`**; **`ADV-SH-5`/`ADV-SH-6`/`ADV-SH-7`/`ADV-SH-8` are `FIXED-this-pass`** (owner = this pass for `ADV-SH-6`'s cell text, the TestWriter for `5`/`7`/`8`); **`ADV-SH-9` is `ACCEPTED-AS-PINNED`, `ADV-SH-10`/`11`/`15` `NOT-A-FINDING`, `ADV-SH-13` `RESOLVED-BY-PINNING`, `ADV-SH-14` `OWED` to the TestWriter**; and **`ADV-SH-4` is folded into `ADV-SH-1`'s fix.** **ALL SIX RED ROWS ARE RULED TEST-SIDE, with no code defect among them**, and **the TestWriter remand is COUPLED to the injected-factory wiring** (`§5.2`). **`ADV-SH-15` finds NO package defect: nothing is owed to `docs/defects.md` or `docs/HANDOFF.md` by this unit.** **The unit is NOT green and NOT `DONE`** (`§7` item 11). | `§3a`, `§3b`-1, `§3b`-2, **§2.1**, **§3.2 F-12**, §3.1 `M-19`, §3.3, §4.4, §5.2, §5.5.1, §7 item 11 |
+
 **Citation hygiene for this file:** every `src/**`, `tests/**` and `docs/decisions.md` anchor cited
 above was **read in this pass** (`src/main/security.ts:134`; `src/shared/types.ts:259-281`;
 `src/renderer/renderer.ts:12`; `src/main/mcp-server.ts:281-303`; `src/shared/dom-shim.ts` — 143
@@ -1330,37 +1778,90 @@ no `§3` drive changed, no register statement/type/count changed, and no normati
 **A line-count census is deliberately NOT claimed here** for the same reason the paragraph above
 gives: cite this file's **sections**, never its length.
 
-## 3a. Adversarial findings — **the pass has NOT run**
+**⟶ ARCHIVAL-LOOP CHECK FOR THE `U-SLOTHOST` RED PASS (2026-09-27; added here so the scope is
+auditable and it changes neither paragraph above).** This pass **archives, moves and repoints
+NOTHING** (`AGENTS.md` item 6): it edits **this one spec file** by **bounded anchored `edit`s** (never
+a whole-file write, `RCA-8(c)`) — **every edit anchored on text this pass had read first, and no line
+of any cell replaced wholesale** — under **annotate-never-rewrite** (every superseded clause and cell
+form stays visible with its date and reason), with **no section number moved**, **no register row's
+drive/expectation/strategy id/attempt count changed**, **the `155` total unchanged**, and **no tracker
+row touched** — the trackers are the supervisor's files, and the tracker-side obligation this pass
+creates is named for its owner rather than assumed: **`docs/next-steps.md`'s `D3` row (its `Blocked on`
+and status cells now have a RUN and REPORTED red set plus an owed Implementer pass) and this unit's
+DONE row (still owed), with `docs/decisions.md` needing NO edit and `docs/pending.md` §G's `slothost`
+row belonging to the supervisor.** **It ran no test, no suite, no leg and no trio — the RUN it records
+is the TestWriter's red run, reported to this pass, not a run by this pass** — and it touched no
+`tests/**`, `src/**`, `scripts/**`, `package.json` or tracker, and made no commit. **What it changed:
+the status region's new `RED PASS` note; `§4.2` item 4's close; `§5.5.1`'s `P-SH-SM-2` cell (two dated
+notes) and `P-SH-TP-1` cell (one dated note); `§5.5.1`'s honesty item 3; and the NEW `§5.5.1`
+executed-red block (its measured table, its four rulings and its tool-ceiling note)** — **nothing
+else, no `§3` drive changed and no normative clause weakened.** **A line-count census is deliberately
+NOT claimed here** for the same reason the two paragraphs above give: cite this file's **sections**,
+never its length.
+
+## 3a. Adversarial findings — **the pass HAS RUN (2026-09-27, read-only adversarial + PBT audit); the as-filed status is kept below and the per-seed rulings are IN each row**
 
 **Status as filed: `OWED`. No adversarial pass has run for `U-SLOTHOST`** (this pass is the
 spec-filing pass; the unit is BLOCKED on its go-ahead and its red set, so there is no green to review
 — RCA-3 runs *after* a unit's green). **This table is the SEED SET for the pass that will run; no row
 below is a finding, and none may be cited as one.**
 
+**⟶ STATUS OF THIS SECTION, 2026-09-27 — THE `U-SLOTHOST` ADVERSARIAL PASS HAS RUN, and this section
+is no longer `OWED`: FIFTEEN findings (`ADV-SH-1`..`ADV-SH-15`) and the per-seed rulings for ALL `20`
+SEEDS (`A-1`..`A-20`) are recorded below, with the findings, the `17` Implementer judgment calls, the
+register record and the six red rows disposed of in `§3b`.** The pass was **READ-ONLY** (an adversarial
+review plus a PBT audit); it **changed no `tests/**` and no `src/**` file** and it **returned findings
+and rulings**. **What it reported about the unit, recorded AS REPORTED** (`§7` item 11): the register's
+six `§5.5.1` rows **executed `155` of `155` attempts with NOTHING STOPPED EARLY**, with **two broken
+attempts** (`P-SH-SM-1` `11/12`, `P-SH-SM-2` `7/8`); **`6` rows RED** (`M-14`, `M-17`, `F-7`,
+`P-SH-SM-1`, `P-SH-SM-2` sequence 5, `S-5`), **ALL SIX ruled TEST-SIDE**; and **the unit is NOT green
+and NOT `DONE`** — **the container source is being reworked under the architect's option-(a) ruling**.
+
+**⟶ ALL TWENTY SEEDS ARE RULED AS OF 2026-09-27 (ADDED this pass).** The rulings are appended **in each
+seed's own row** (never rewritten), because **silence about a seed is a review finding**. The counts,
+so no seed is unaccounted for: **`ACCEPTED-AS-PINNED` — `A-1`, `A-2`, `A-3`, `A-4`, `A-6`, `A-7`,
+`A-9`, `A-11`, `A-13`, `A-14`, `A-15`, `A-16`, `A-17`, `A-19`, `A-20` (`15` seeds); `CONFIRMED-RULED` /
+`CONFIRMED` — `A-5` (`CONFIRMED-RULED`, with a rejected-promise drive owed) and `A-12` (`CONFIRMED` for
+containers); `OWED-with-owner` — `A-8` (= `ADV-SH-2`, the Implementer); `NOT-A-FINDING` — `A-10`,
+`A-18` (`2` seeds).** **`15 + 2 + 1 + 2 = 20`, and every seed's row carries its ruling.** **Where the
+rulings touch the register:** `§5.5.1`'s honesty block cites the **callback-throwing boundary**
+(`P-SH-TP-1`'s pool, seeded by `A-5`) and the **detached-node `removed` membership** (`P-SH-SM-2`
+sequence 8, seeded by the `F-9` half), **and neither is re-opened by this pass**; **`A-18` is the
+`NOT-A-FINDING` that keeps the two wave-D registers from sharing a row, a table, a pool or an id** (the
+count line above mistakenly named `A-18` as an honesty-block citation — corrected here, with the
+miscount left visible). **`A-8`'s `OWED` marker is the only seed with unfinished code-side work, and it
+names its owner.**
+
+**⟶ THE PASS'S FINDINGS ARE DISPOSED IN `§3b`, NOT REPEATED ROW-BY-ROW IN THIS TABLE.** The fifteen
+`ADV-SH-*` findings, the `17` judgment calls, the register record and the red-row rulings live in
+`§3b`'s tables; this section keeps the **seed table** as the pass's work list, with each seed's final
+ruling appended in its own row. **A reader looking for a finding's disposition, owner and the clause it
+changed goes to `§3b`; a reader looking for a seed's fate reads the row below.**
+
 | Seed | Adversarial question | Layer |
 | --- | --- | --- |
-| **A-1** | **THE RE-MERGE PROBE (the unit's defining hazard, `H-r15`):** does any code path, symbol, literal, default or test row introduce a **`publish`**, a status text, a label, a badge, an `is-empty`/`is-minimized`/`is-revealed` class, a slot *model*, or a per-zone/per-pane semantic? **Any positive is a blocking finding.** | static + `[T]` |
-| **A-2** | An undeclared key tried by **every** entry point (`setNode`, `remove`, `setOrder`, `containerFor`) — is a container ever created, or a key ever added to the host's set? | `[T]` |
-| **A-3** | A declared key set containing **duplicates** (`['a','a']`) — one container or two? **Must be ruled explicitly** (this spec does not decide it) | `[T]` |
-| **A-4** | A declared key set containing `''`, whitespace, unicode and a very long key — all opaque, all must work identically; a row asserts **no normalization** anywhere | `[T]` |
-| **A-5** | A **throwing** `classNameOf`/`attributesOf` (caller code) and a `refuse` callback that **returns a rejected promise** — does the host swallow, propagate, or corrupt its state? **`F-10` is deliberately unruled: the pass must rule it and record the ruling here.** **⟶ RULED 2026-09-27 (the `§7a` RULING pass, `§7a` item 4; the as-written seed is kept visible): `F-10` IS NO LONGER UNRULED — `§2.1`'s totality-boundary clause names the SAFE DEFAULT of each of the four injected functions (a throwing `orderOf` ⇒ the supplied `keys` order · a throwing `classNameOf` ⇒ no class write, `M-11` · a throwing `attributesOf` ⇒ no attribute write, `M-11` with `F-8` unchanged · a throwing `refuse` ⇒ swallowed with the refusal already recorded, `M-17`), and the `§3.2` row `F-10` is a normal falsifiable row. **What the adversarial pass still owes on this seed is narrow and named: confirm the landed behaviour matches the four defaults, and rule the seed's `refuse`-returns-a-rejected-promise half** (`§2.1` states the return value and any promise are IGNORED — a rejected promise must therefore be an unobserved rejection and must not change a refusal's outcome; that half is stated in `§2.1` but is NOT yet driven by a row, so it is a legitimate `[T]` row for this pass to author).** | `[T]` |
-| **A-6** | The **same caller node** supplied for **two declared keys** in sequence (M-9 covers one step) and **in one render** — what is placed, and is it a refusal? **Must be ruled explicitly** | `[T]` |
-| **A-7** | Two **host instances** over the **same** injected container — is ownership isolated per instance, and can one instance remove the other's containers? **Must be ruled explicitly** | `[T]` |
-| **A-8** | A caller node that is **itself a container** the host created (node/container aliasing) — infinite recursion or a clean refusal? | `[T]` |
-| **A-9** | An injected container that is **already a child of another** host container, or that is the host's own container for a key | `[T]` |
-| **A-10** | `attributesOf` returning `name` values that collide with the node's **existing** attributes, with `id`, with a `data-*`, and with a duplicate name inside the array | `[T]` |
-| **A-11** | `attributesOf` returning a value of every primitive type (`string`/`number`/`boolean`) and a non-primitive (`{}`/`[]`/`null`) — what is written, and is a malformed entry skipped? | `[T]` |
-| **A-12** | An injected container whose `appendChild` **throws** on the 2nd call — is the host left in a valid state, and is the failure reported (it must **not** throw out of a method)? | `[T]` |
-| **A-13** | A caller **detaches** a host container, then the host is asked to remove/re-place a key — no throw, no dangling ownership? | `[T]` |
-| **A-14** | **Static/unauthorized-access sweep:** `querySelectorAll`/`querySelector`/`closest`/`getElementById`/`matchMedia`/`activeElement`/`getComputedStyle`/`document`/`window`, any `src/renderer/**` import, any `electron`/`node:fs`, any store, any module-level mutable state, any `publish`-shaped export. | static |
-| **A-15** | **Vocabulary sweep:** `zone`/`pane`/`tab`/`region`/`is-empty`/`is-minimized`/`is-revealed`/`status` in any spelling; any **closed string union** of consumer values; any documented consumer constant. | static |
-| **A-16** | The five-seam sweep: any new tool/resource/group/`VALID_GROUPS` member/`RpcMethod` member/`MUTATING_METHODS` entry/IPC method? Does `tests/engine-pin-version.test.ts`'s 21-member census still pass **unchanged**? | `[H]` + static |
-| **A-17** | **The `SCH-10`/`SCH-4` resurrection probe:** does the host grow a class taxonomy, a token, a track/zone concept, a `contain` declaration, or an emptiness rule under a new name? | static + `[T]` |
-| **A-18** | **Cross-unit boundary:** does this unit duplicate any `U-LISTHOST` responsibility (list ordering, activate/close callbacks) or any `U-PROJ` responsibility (variable values), or does `U-LISTHOST` duplicate this unit's per-key containers? **Duplication is a FINDING** — the wave-D units share one layer idiom and must not share one contract. | static + `[T]` |
-| **A-19** | **Content-leak probe (the `(C)#2` boundary):** can a caller's **node** be made to carry host-authored text through any code path (a default text node, a fallback label, an empty-state string)? | `[T]` |
-| **A-20** | **The declined-half boundary at the TRACKER level:** does any doc row (this file, `docs/pending.md`, `docs/FORKER.md`, `docs/next-steps.md`) read as if the carrier/publisher half were adopted? | static (docs) |
+| **A-1** | **THE RE-MERGE PROBE (the unit's defining hazard, `H-r15`):** does any code path, symbol, literal, default or test row introduce a **`publish`**, a status text, a label, a badge, an `is-empty`/`is-minimized`/`is-revealed` class, a slot *model*, or a per-zone/per-pane semantic? **Any positive is a blocking finding.** **⟶ FINAL 2026-09-27 (the adversarial pass): `ACCEPTED-AS-PINNED` — NO positive: the module's source carries no `publish`-shaped export, no status text, no label, no `is-*` class literal, no slot model and no per-zone/per-pane semantic, and the pass found no row asserting one. The code's observed behaviour IS the pinned reading (`§2.2` prohibitions 1/2, `§3.3 I-4`), and the probe is recorded CLEAN rather than silently assumed.** | static + `[T]` |
+| **A-2** | An undeclared key tried by **every** entry point (`setNode`, `remove`, `setOrder`, `containerFor`) — is a container ever created, or a key ever added to the host's set? **⟶ FINAL 2026-09-27 (the adversarial pass): `ACCEPTED-AS-PINNED` — no container is ever created for an undeclared key and no key is ever added to the host's declared set.** `setNode`/`remove` on an undeclared key are `'unknown-key'` with the injected container's child count unchanged (`F-1`), `setOrder` IGNORES an undeclared key without refusing (`M-15`), and `containerFor` returns **`null`** as a read, not a refusal (`F-5`) — which is the code's observed behaviour and therefore the pinned reading. | `[T]` |
+| **A-3** | A declared key set containing **duplicates** (`['a','a']`) — one container or two? **Must be ruled explicitly** (this spec does not decide it) **⟶ FINAL 2026-09-27 (the adversarial pass): `ACCEPTED-AS-PINNED` — the FIRST OCCURRENCE WINS.** *"Duplicate declared keys ⇒ first occurrence wins"*: the declared set is built by filtering to strings and **de-duplicating on first sight**, so `keys: ['a','a']` declares **one** key and creates **ONE** container, and the second occurrence is dropped without a refusal (`§2.1`'s container-source clause's "one container per declared key", `I-2`'s "each key once", `M-1`). **The code's observed behaviour IS the pinned reading.** | `[T]` |
+| **A-4** | A declared key set containing `''`, whitespace, unicode and a very long key — all opaque, all must work identically; a row asserts **no normalization** anywhere **⟶ FINAL 2026-09-27 (the adversarial pass): `ACCEPTED-AS-PINNED` — all four shapes work identically and nothing normalizes them.** The key is opaque: `''` **may** be declared and then works (`F-3`'s two halves), and whitespace/unicode/very-long keys are compared by **equality only** — no prefix, no trim, no case fold, no enumeration (`§2.3` item 1, `SlotKey`'s doc string, `I-2`). **The code's observed behaviour IS the pinned reading.** | `[T]` |
+| **A-5** | A **throwing** `classNameOf`/`attributesOf` (caller code) and a `refuse` callback that **returns a rejected promise** — does the host swallow, propagate, or corrupt its state? **`F-10` is deliberately unruled: the pass must rule it and record the ruling here.** **⟶ RULED 2026-09-27 (the `§7a` RULING pass, `§7a` item 4; the as-written seed is kept visible): `F-10` IS NO LONGER UNRULED — `§2.1`'s totality-boundary clause names the SAFE DEFAULT of each of the four injected functions (a throwing `orderOf` ⇒ the supplied `keys` order · a throwing `classNameOf` ⇒ no class write, `M-11` · a throwing `attributesOf` ⇒ no attribute write, `M-11` with `F-8` unchanged · a throwing `refuse` ⇒ swallowed with the refusal already recorded, `M-17`), and the `§3.2` row `F-10` is a normal falsifiable row. **What the adversarial pass still owes on this seed is narrow and named: confirm the landed behaviour matches the four defaults, and rule the seed's `refuse`-returns-a-rejected-promise half** (`§2.1` states the return value and any promise are IGNORED — a rejected promise must therefore be an unobserved rejection and must not change a refusal's outcome; that half is stated in `§2.1` but is NOT yet driven by a row, so it is a legitimate `[T]` row for this pass to author).** **⟶ FINAL 2026-09-27 (the adversarial pass): `CONFIRMED-RULED` — the landed behaviour matches ALL FOUR named safe defaults** (a throwing `orderOf` ⇒ the supplied `keys` order; a throwing `classNameOf` ⇒ no class write; a throwing `attributesOf` ⇒ no attribute write; a throwing `refuse` ⇒ swallowed with the refusal already in `refused`), and the host **never re-throws** caller code. **The rejected-promise half is ruled BY THE CLAUSE and is OWED A DRIVE:** `§2.1` states the listener's return value and any promise it returns are **IGNORED**, so a rejected promise must be an **unobserved rejection** that changes no refusal's outcome — **and the pass found that the row as authored CANNOT surface a violation** (`M-17`'s drive self-catches its own rejected promise, so a host that awaited it would still pass). **Owner = the TESTWRITER: add a NON-SELF-CATCHING drive** (`ADV-SH-14`) that would fail if the host awaited, re-threw or let the rejection escape. | `[T]` |
+| **A-6** | The **same caller node** supplied for **two declared keys** in sequence (M-9 covers one step) and **in one render** — what is placed, and is it a refusal? **Must be ruled explicitly** **⟶ FINAL 2026-09-27 (the adversarial pass): `ACCEPTED-AS-PINNED` — the node is MOVED, not refused.** A node supplied for a second declared key is **removed from the first key's container and placed in the second** (the old key is CLEARED, the new key PLACED, **not a refusal**), and **the move is NOT reported in `removed`** — the move ends no ownership, it relocates one (`M-9`'s one-node-one-key-one-container rule, `§2.4` item 6). The code's observed behaviour IS the pinned reading. | `[T]` |
+| **A-7** | Two **host instances** over the **same** injected container — is ownership isolated per instance, and can one instance remove the other's containers? **Must be ruled explicitly** **⟶ FINAL 2026-09-27 (the adversarial pass): `ACCEPTED-AS-PINNED` — OWNERSHIP IS PER-INSTANCE.** Each host owns exactly the containers it created and exactly the nodes it placed; a second host neither owns nor removes the first host's containers **and treats them as foreign siblings** — it never touches, removes or reorders them (`§2.4` items 1–3, `I-3`). **The code's observed behaviour IS the pinned reading**, and it is the same isolation the sibling unit records at its own two-hosts-one-mount seed. | `[T]` |
+| **A-8** | A caller node that is **itself a container** the host created (node/container aliasing) — infinite recursion or a clean refusal? **⟶ OWED-WITH-OWNER 2026-09-27 (the adversarial pass; finding `ADV-SH-2`, MED): `OWED-with-owner` — the finding is REAL and the fix is NOT in this spec's current text.** `isNodeShaped` accepts **anything offering `appendChild`**, so `containerFor('a')` is admissible as a node; `holds(container, container)` is **false** (an element is not its own child), so `setNode('a', containerFor('a'))` **appends the container INTO ITSELF — the tree becomes CYCLIC**, and the shim's `outerHTML`/`innerHTML` serialization then recurses without bound. **Owner = the IMPLEMENTER: a guard that refuses (or ignores) a container passed back as a node, plus a spec PIN**; the row that pins it is owed (`§3` addition, `ADV-SH-2`'s disposition in `§3b`-1). **This seed is the only one of the twenty whose code-side work is unfinished.** | `[T]` |
+| **A-9** | An injected container that is **already a child of another** host container, or that is the host's own container for a key **⟶ FINAL 2026-09-27 (the adversarial pass): `ACCEPTED-AS-PINNED` — no throw, no dangling ownership, and the host's own bookkeeping decides.** A container that is already some other element's child is **appended where the host needs it** (the shim's `appendChild` re-parents and removes the prior membership, `src/shared/dom-shim.ts:22-28`, read), and a container that IS the host's own container for a key is treated by the host as one of its own — the projection, the child-reference sequence and `dispose()` are unaffected, and **no call throws** (`I-8`). **The code's observed behaviour IS the pinned reading**; the composition hazard (a nested host container) is a CONSUMER choice, not a host defect. | `[T]` |
+| **A-10** | `attributesOf` returning `name` values that collide with the node's **existing** attributes, with `id`, with a `data-*`, and with a duplicate name inside the array **⟶ FINAL 2026-09-27 (the adversarial pass): `NOT-A-FINDING` — raised, examined, and consistent with the contract's own clauses.** A later entry for the same name **wins** (`§2.5` item 5, the shim's last-write-wins `setAttribute`), a colliding `id` is written through the shim's `id` SLOT (the shim's own documented slot/store split, `src/shared/dom-shim.ts:30-39`, read), a `data-*` name is written verbatim, and a duplicate inside the array is simply the last write. **All of it is verbatim application with NO validation, NO default and NO prefix (`§2.5` item 4, `M-6`)** — the shapes are the caller's data, not a contract question. | `[T]` |
+| **A-11** | `attributesOf` returning a value of every primitive type (`string`/`number`/`boolean`) and a non-primitive (`{}`/`[]`/`null`) — what is written, and is a malformed entry skipped? **⟶ FINAL 2026-09-27 (the adversarial pass): `ACCEPTED-AS-PINNED` — the three primitives are written and every non-primitive entry is SKIPPED without failing the call.** A `string`/`number`/`boolean` value is applied verbatim and a non-primitive (`{}`/`[]`/`null`), a missing `name`, or a non-string `name` is **skipped per entry**, while the well-formed entries of the same array are still applied and `ok` is NOT forced `false` (`F-8`, `§2.5` item 4/5, `M-6`). **The code's observed behaviour IS the pinned reading.** | `[T]` |
+| **A-12** | An injected container whose `appendChild` **throws** on the 2nd call — is the host left in a valid state, and is the failure reported (it must **not** throw out of a method)? **⟶ CONFIRMED 2026-09-27 (the adversarial pass): `CONFIRMED` FOR CONTAINERS — no throw escapes, and the container class's failure is REPORTED as `'container-not-appendable'`.** A `container` whose `appendChild` throws is the **present-but-unusable** shape (`F-7`): the host catches the throw, reports **one `'container-not-appendable'` refusal per attempted node write**, stays in a valid state, and returns its declared result — never a throw out of any method (`§3.2`'s per-method table, `I-8`). **What the pass does NOT extend this to:** a CALLER-SUPPLIED `appendChild` that throws **mid-call**, where the host's bookkeeping has already been rewritten — that half is `ADV-SH-12`, `PARKED-with-revisit-condition`, and is **not** ruled here. *(The new column (c) of the per-method table and the row `F-12` are the FACTORY seam's; this seed's ruling is about the injected CONTAINER.)* | `[T]` |
+| **A-13** | A caller **detaches** a host container, then the host is asked to remove/re-place a key — no throw, no dangling ownership? **⟶ FINAL 2026-09-27 (the adversarial pass): `ACCEPTED-AS-PINNED` — no throw and no dangling ownership.** A caller-detached host container is simply not in the injected container's children: the host's next `render()`/order write **re-appends it** (it is one of the host's own containers — **unlike a caller-detached NODE, which is NOT re-appended**: `§3.1 M-19`), `remove(key)` still ends the ownership and reports the node in `removed` (`F-9`), and `keys()` still shows the key declared (`M-12`). **The code's observed behaviour IS the pinned reading — and the container/node asymmetry is a contract decision recorded at `ADV-SH-12`.** | `[T]` |
+| **A-14** | **Static/unauthorized-access sweep:** `querySelectorAll`/`querySelector`/`closest`/`getElementById`/`matchMedia`/`activeElement`/`getComputedStyle`/`document`/`window`, any `src/renderer/**` import, any `electron`/`node:fs`, any store, any module-level mutable state, any `publish`-shaped export. **⟶ SWEPT, AND THE SWEEP FOUND THE `ADV-SH-1` EVASION — `ACCEPTED-AS-PINNED` for everything else, `CONTRACT-AMENDED` for the container source.** The module imports **nothing**, keeps **no module-level mutable state**, persists nothing, touches no renderer/main/electron/fs surface, and exposes exactly the seven `§2.1` names. **But the sweep ALSO found the ambient read**: `globalThis['doc' + 'ument'].createElement('div')` (`src/shared/slot-host.ts:130-140`, read this pass) — a **property name assembled from two literals**, which is why the pass records that **a token-only static scan is NOT sufficient** and that this seed's own sweep must carry the anti-assembly clause (now `§2.2` prohibitions 1/2, `§4.4` `S-2`/`S-4`). **`ADV-SH-1` is that finding; `ADV-SH-4` records the two now-false ambient claims it falsified.** | static |
+| **A-15** | **Vocabulary sweep:** `zone`/`pane`/`tab`/`region`/`is-empty`/`is-minimized`/`is-revealed`/`status` in any spelling; any **closed string union** of consumer values; any documented consumer constant. **⟶ SWEPT CLEAN + ONE WORDING FINDING 2026-09-27 (the adversarial pass; `ADV-SH-4`): `ACCEPTED-AS-PINNED`** — the module carries **no** occurrence of that vocabulary, **no** closed string union of consumer values (the only string-union is `SlotHostRefusal['code']`'s **four** contract diagnostics, of which **three** are emitted), and **no** documented consumer constant; the module ALSO carries **no `document`/`window` token** — **which is exactly the point of `ADV-SH-1`: the token's ABSENCE was not evidence, because the ambient read was assembled to defeat the scan.** | static |
+| **A-16** | The five-seam sweep: any new tool/resource/group/`VALID_GROUPS` member/`RpcMethod` member/`MUTATING_METHODS` entry/IPC method? Does `tests/engine-pin-version.test.ts`'s 21-member census still pass **unchanged**? **⟶ SWEPT CLEAN 2026-09-27 (the adversarial pass): `ACCEPTED-AS-PINNED`** — **no new MCP surface of any kind**, the module imports nothing from `src/main/**`/`src/renderer/**`/`shared/types`, and the pinned counts are **unchanged**: `RpcMethod` **21**, `ALL_TOOLS` **21**, `MUTATING_METHODS` **7**, `VALID_GROUPS` **5**. **The `S-5` row that asserts this census is one of the SIX RED rows and its fault is TEST-SIDE (`ADV-SH-5`): the assertion counts GROUP LITERALS in `tests/engine-pin-version.test.ts` by a line regex over a file that holds them inline, so it is self-referential — the census itself is clean.** | `[H]` + static |
+| **A-17** | **The `SCH-10`/`SCH-4` resurrection probe:** does the host grow a class taxonomy, a token, a track/zone concept, a `contain` declaration, or an emptiness rule under a new name? **⟶ FINAL 2026-09-27 (the adversarial pass): `ACCEPTED-AS-PINNED`** — **no resurrection**: no class taxonomy, no token, no track/zone concept, no `contain` declaration and no emptiness rule exists in the module, and the "empty slot" model the publisher half would have added has **no member of any kind** (`§1` item 2, `§2.2` prohibition 1, `H-r15`). **This probe and `A-1` are the two the disposition table marks `BLOCKING — RE-MERGE` if positive; both are negative.** | static + `[T]` |
+| **A-18** | **Cross-unit boundary:** does this unit duplicate any `U-LISTHOST` responsibility (list ordering, activate/close callbacks) or any `U-PROJ` responsibility (variable values), or does `U-LISTHOST` duplicate this unit's per-key containers? **Duplication is a FINDING** — the wave-D units share one layer idiom and must not share one contract. **⟶ NOT-A-FINDING 2026-09-27 (the adversarial pass)** — no responsibility is duplicated across the boundary: this unit has **no** activate/close callback, no entry/list model and no variable-value surface, `U-LISTHOST` owns no per-key containers, and the two share the **layer idiom and the strategy discipline only** (their registers share no row, table, pool or id — `§5.5.1`'s change summary states the same). **Recorded with its reason rather than left silent.** | static + `[T]` |
+| **A-19** | **Content-leak probe (the `(C)#2` boundary):** can a caller's **node** be made to carry host-authored text through any code path (a default text node, a fallback label, an empty-state string)? **⟶ FINAL 2026-09-27 (the adversarial pass): `ACCEPTED-AS-PINNED` — no path carries host-authored content.** The host writes **no** `textContent`, **no** default node, **no** fallback label and **no** empty-state string; the only writes to a caller's node are the **caller-supplied** class value and attribute entries, applied verbatim (`§2.2` prohibition 2, `I-4`, `M-6`/`M-11`), and the containers the host projects are **empty** (`M-1`). **The code's observed behaviour IS the pinned reading.** | `[T]` |
+| **A-20** | **The declined-half boundary at the TRACKER level:** does any doc row (this file, `docs/pending.md`, `docs/FORKER.md`, `docs/next-steps.md`) read as if the carrier/publisher half were adopted? **⟶ FINAL 2026-09-27 (the adversarial pass): `ACCEPTED-AS-PINNED`** — every doc row that names this unit keeps the split explicit: the publisher/carrier half is **DECLINED**, the queue row carries the permanent prohibition verbatim, and `§7` item 2 states it as the unit's defining constraint; **no tracker row reads as an adoption, and the pass found no such sentence to correct.** **CLEAN, and recorded as the `BLOCKING — RE-MERGE` probe's negative half.** | static (docs) |
 
-## 3b. The adversarial pass's disposition table — **the shape this contract will be reconciled to**
+## 3b. The adversarial pass's disposition table — **LANDED 2026-09-27: the fifteen findings, the seventeen judgment calls and the register record, with the filing's "shape this contract will be reconciled to" kept below**
 
 | Status | Meaning |
 | --- | --- |
@@ -1374,6 +1875,160 @@ below is a finding, and none may be cited as one.**
 
 **Status of the table itself: `OWED` — empty by construction.** **A DONE row that cites no adversarial
 pass (or whose findings are unrecorded) is a review finding** (`AGENTS.md` RCA-3).
+
+**⟶ STATUS OF THE TABLE ITSELF, 2026-09-27 — IT IS NO LONGER EMPTY AND THE PASS IS NO LONGER `OWED`
+(the sentence above is the filing state, kept visible).** The `U-SLOTHOST` adversarial + PBT-audit pass
+**ran** (read-only) and its findings, seed rulings, judgment-call rulings and register record are the
+tables below. **The disposition vocabulary above is EXTENDED by FIVE statuses this pass used**, on the
+record so a reader is not left with an undefined word — the same extension the sibling unit's table
+carries (its own words, its own rows): **`FIXED-this-pass`** (the pass's own token: the finding's fix is
+**mandated and OWNED** — for a HOST finding the fix and its regression row are owed to the
+Implementer/TestWriter passes that follow, so the token names *what was decided and who owes it*, not
+work this read-only pass performed); **`ACCEPTED-AS-PINNED`** (a behaviour examined and ruled
+**CORRECT**, with **the code's observed behaviour as the pinned reading** — the `CONFIRMED-RULED` half
+made explicit); **`PARKED-with-revisit-condition`** (a reading **deliberately left unpinned**, with the
+condition that reopens it **NAMED** in the row); **`OWED-with-owner`** (`OWED`, with a named owner that
+is **not** this pass); and **`RESOLVED-BY-PINNING`** (a question closed by **pin text this spec now
+carries**, rather than by a code change). **`HANDOFF` remains UNUSED — and that is a finding's result,
+not an omission:** `ADV-SH-15` records that this unit found **no package defect**, so nothing is owed to
+`docs/defects.md` or `docs/HANDOFF.md` by it (`AGENTS.md` item 7's handoff rule is satisfied by the
+negative).
+
+#### `§3b`-1 — the FIFTEEN `ADV-SH-*` findings, their severity, disposition, owner, and the clause each one changed
+
+| ID | Sev. | The finding, in one line | Disposition | Owner | What it changed, and where |
+| --- | --- | --- | --- | --- | --- |
+| **`ADV-SH-1`** | **HIGH** | **The evasion: the module reaches the ambient DOM through an ASSEMBLED property name.** `elementFor()` calls `globalThis['doc' + 'ument'].createElement('div')` (`src/shared/slot-host.ts:130-140`, read this pass) — the property name is built from two literals **precisely so the static token scans cannot match it** (`S-2`'s `/document/i` and `S-4`'s word-boundary list both miss it). It therefore **evades `§1`'s "no `document`/`window` reference" clause, `§2.2` prohibition 1's static source row, and the Layer declaration's "reads no ambient global"** — the module does the banned thing and hides the token. | **`CONTRACT-AMENDED` + the ARCHITECT'S OPTION-(a) RULING** — *the container source is an INJECTED element factory (a new OPTIONAL seam on `SlotHostOptions`); the ambient read is DELETED, not documented; and the static bans are TIGHTENED so the evasion cannot be re-introduced.* | **The OWNER CHAIN, all three parts named: (1) the IMPLEMENTER deletes the ambient read (`elementFor()` goes; `containerFactory(key)` becomes the sole container source); (2) the TESTWRITER wires the injected factory into every container-dependent drive and authors the new row `§3.2 F-12`; (3) the STATIC ROWS are TIGHTENED** (`§2.2` prohibitions 1/2, `§1`'s out-of-scope list, `§4.4 S-2`/`S-4`, the Layer declaration anchor 3). | **`§2.1` gains the `containerFactory` seam + the NORMATIVE container-source clause** (sole source; accepted shape = *offers `appendChild`*, the `isNodeShaped` predicate; absent/non-callable/unusable ⇒ the `F-6`-class degradation); **`§2.1`'s totality-boundary table gains the FIFTH seam** with its named safe default; **`§1`'s out-of-scope list, `§2.2` prohibitions 1 and 2 and the Layer declaration anchor 3 carry the tightened ban** (no ambient global **AND** no assembled/computed member lookup, no aliased/re-derived global reference — the literal token's absence was **not** evidence); **`§3.1 M-1`/`M-18`, `§3.3 I-4`** state containers come from the injected factory with the reference-identity observables **unchanged**; **`§3.2`'s per-method table gains column (c) and the row `§3.2 F-12`**; **`§5.2` records that the HARNESS supplies the factory** (the node suite passes the shim's element factory) with **the legs unchanged**; **`§5.5.1`'s `P-SH-TP-1` pool note** keeps the pool at `20`/`60`/`155`; **`§7` items 7/11** record the contract decision; **two `§8` rows** record the ruling and this pass. |
+| **`ADV-SH-2`** | MED | **A container passed back as a NODE makes the tree CYCLIC.** `isNodeShaped` (`:152-156`) admits any value offering `appendChild`, so `containerFor('a')` is admissible as a node; `holds(container, container)` is **false** (an element is not its own child, `:167-170`), so `setNode('a', containerFor('a'))` **appends the container INTO ITSELF** — `attach` reports success, the host is in a "valid" state, and the shim's `outerHTML`/`innerHTML` serialization then recurses without bound. | **`OWED-with-owner`** | **the IMPLEMENTER** (a guard that refuses or ignores a container passed back as a node) **+ a spec PIN** (the row that pins it is owed to this unit's next contract pass; recorded here rather than left silent) | **No clause amended yet** — the pin is OWED. The finding is recorded at **seed `§3a A-8`** (its `OWED` marker) and here. **The `A-8` seed's disposition IS this finding**, exactly as the pass's seed ruling says. |
+| **`ADV-SH-3`** | LOW-MED | **The host writes an expando `parent` marker onto the CALLER'S node.** `markParent` (`:216-224`) sets `object['parent'] = parent` on a value the caller owns, **and nothing ever reads it** (the host's own bookkeeping is its `records` map; `holds` uses the container's `children`) — so the host mutates caller-owned objects for no contract reason, and a frozen/sealed caller node is silently treated differently (the write throws and is swallowed). | **`OWED-with-owner` + a CONTRACT DECISION** | **the IMPLEMENTER** (replace `markParent` with a module-local `WeakMap` keyed by the caller's node) | **A contract decision, recorded at `§7` item 7** (item 7's eighth entry's companion): **the host's parent-ownership bookkeeping is MODULE-LOCAL; the host leaves NO expando marker on a caller-owned value.** **No row is weakened** — `§2.4` item 4's identity rule (the host never clones or re-creates a caller node) stands unchanged, and a row may now assert the caller's node carries no host-written marker. |
+| **`ADV-SH-4`** | LOW | **Two now-FALSE ambient claims.** The Layer declaration anchor 3 (*"the module reads no ambient global"*) and `§2.2` prohibition 1's static-source row both asserted an absence the code contradicted (the assembled `document` read of `ADV-SH-1`). | **`FIXED-this-pass` for the TEXT half — FOLDED INTO `ADV-SH-1`'s fix for the CODE half** | **this pass** (the claim text) **+ the Implementer's `ADV-SH-1` fix** (the code the claim is about) | **Both claims are annotated IN PLACE with the correction kept visible** (annotate-never-rewrite): the Layer declaration's anchor 3 now reads as an assertion the red set **must be able to FAIL**, states that the as-written sentence was **FALSE of the module as it stood**, and carries the tightened rule; `§2.2` prohibition 1's row gains the same tightening. **The old sentences stay visible and are NOT deleted** — that is the point of folding the text half here rather than rewriting them. |
+| **`ADV-SH-5`** | LOW | **`S-5`'s census row is brittle AND self-referential.** The row (`tests/slot-host.test.ts:2197-2201`, read this pass) opens `tests/engine-pin-version.test.ts` as **text** and counts matches of `/^\s*'(read\|dispatch\|graph\|code\|module)'\s*,?\s*$/gm`, asserting the count is `5` — i.e. it counts **GROUP LITERALS held inline in that other file**, not `VALID_GROUPS` itself. It is one of the SIX RED rows, and its failure mode is a **test-side** one (the assertion is over a file this unit may not edit, `§5.1`). | **`FIXED-this-pass`** | **the TESTWRITER** | **The fix shape, ruled:** assert **`VALID_GROUPS` from `src/main/security.ts` instead** — the live set is `src/main/security.ts:134` (read: `new Set(['read','dispatch','graph','code','module'])`), so the row asserts the **actual group set of the host**, not a literal count inside a sibling test file. **The prohibition's real assertion is unchanged and unharmed**: `§2.2` prohibition 5 / `§1`'s five-seam negative (no new tool/resource/group/`RpcMethod` member/`MUTATING_METHODS` entry; `ALL_TOOLS` stays `21`) — and **`src/main/**` is outside this unit's diff scope** (`§5.1`), so the TestWriter's fix must read the set, **never edit that file**. **The `S-5` row remains RED until that fix lands.** |
+| **`ADV-SH-6`** | LOW | **A register cell still says `F-10`/`A-5` are "deliberately UNRULED" while the same file RULES them.** `§5.5.1`'s `P-SH-TP-1` cell and its honesty item 2 carried the pre-ruling wording after `§7a` item 4 (`F-10`'s four named safe defaults) had ruled the seam — a reader meeting the cell first would conclude the seam is still unpinnable. | **`FIXED-this-pass`** | **this pass** (the cell's TEXT) — the finding is a **documentation** one, and the sibling unit's equivalent was fixed by the doc pass | **The register-cell reconciliation block already carries the correction** (`§5.5.1`: *"its `F-10`/`A-5` citation is no longer 'deliberately UNRULED' — the seam rows live in `§3.2 F-10`"*), and **this pass re-states it where the cell is**: `P-SH-TP-1`'s row in that block now says the seam is RULED and that the pool still excludes callback-throwing shapes. **No register statement, type, marking, strategy id or attempt count changed**; the **honesty item 2** already carries its own dated `UPDATE 2026-09-27` keeping the correction visible. |
+| **`ADV-SH-7`** | LOW-MED | **`P-SH-IM-1`'s partial-order drives filter its child-sequence assertion to SURVIVORS, so a host that keeps DECLARATION order passes those `3`.** The row's `3` fixed partial drives (`setOrder(['c','a'])`, `setOrder(['c','a','nope'])`, `setOrder(['a','a','c'])`) assert `order` equals the requested relative order, and the child-sequence half is read only over the keys present in the requested list — so for those `3` of the row's `33` attempts, **a host that ignores `setOrder`'s request and keeps the declared order can still pass**. | **`FIXED-this-pass` — STRATEGY ONLY** | **the TESTWRITER** (the row's STATEMENT stays; only its strategy is strengthened) | **The row's statement and its `33` attempts are UNCHANGED** (`§5.5.1`'s register discipline: no statement change, no attempt-count change). **What the strategy must gain:** for the `3` partial drives the child-sequence assertion must be read over the **WHOLE projected sequence** (the declared key set in the requested relative order, with the undeclared/duplicate keys ignored — `M-15`'s own expected `order`), **not filtered to the keys the caller happened to list** — so declaration-order-keeping FAILS. **This is a STRATEGY GAP, not a proof**: the row's `3` attempts are currently **over-strength relative to what they can falsify**, and the correction is the TestWriter's, with the statement untouched. |
+| **`ADV-SH-8`** | LOW | **`P-SH-IM-3` compares only INNER containers, so a host that re-appends its CONTAINERS on an unchanged `render()` passes.** The row asserts each container's `children` are reference-identical element-by-element and that the returned arrays are fresh (`I-9`), but it does **not** snapshot the **outer** injected container's child sequence — so a host that detaches and re-appends all its own containers on every `render()` (the exact mutation `M-16` exists to forbid) **passes**. | **`FIXED-this-pass` — STRATEGY ONLY** | **the TESTWRITER** (an added snapshot; the row's statement and `8` attempts are unchanged) | **What the strategy must gain: the OUTER snapshot** — capture the injected container's child-reference sequence before the second call and compare it index-by-index by **reference** (`toBe`) after it, so a re-append of the host's own containers FAILS. **The statement, the `8` attempts and the register's `155` total are unchanged**; `M-16`'s re-pin (`§7a` item 8) already NAMES the per-step child-reference sequence as the observable, so the row was under-strength against its own contract, not wrong. **A STRATEGY GAP, not a proof.** |
+| **`ADV-SH-9`** | INFO | **`P-SH-IM-2` fixed shape (2) — the absent-container configuration — asserts identity preservation, and its `placed` half is vacuous there** (nothing can be placed), so the shape's value is its `order`/reference half rather than a placement claim. | **`ACCEPTED-AS-PINNED`** | — (recorded) | **Examined and ruled CORRECT as authored, with the code's observed behaviour as the pinned reading:** the shape drives the **no-op configuration** (`M-14`/`F-6`) and its assertions (`ok === true`, `refused` `[]`, every reference it was handed preserved, `containerFor` `null`) are exactly what `§2.1`'s container-source clause and `F-6` fix. **No cell change; recorded so the vacuous half is not mistaken for a proof.** |
+| **`ADV-SH-10`** | INFO | **`P-SH-SM-1`'s `''`-key pair and its rotations overlap `P-SH-SM-2`'s sequences 3/4** — the same shapes are driven by two register rows. | **`NOT-A-FINDING`** | — (recorded) | **Raised and examined:** the overlap is **deliberate** and is the register's own counting rule — `§5.5.1` states that one attempt is one exercised **DRIVE of one register row**, and the two rows are **two properties over one input family** (no-silent-create vs state coherence), **the same reuse the `30` permutation attempts make between `P-SH-IM-1` and `P-SH-IM-2`**. **No dedup is owed and none may be applied** (`§5.5.1`: *"no reader may 'deduplicate' the total"*). |
+| **`ADV-SH-11`** | INFO | **The `17` Implementer judgment calls restate several `§3` rows' observables in the Implementer's own words.** | **`NOT-A-FINDING`** | — (recorded) | **Raised and examined:** a judgment call is the **Implementer's own reading**, and this spec's `§7a`/`§7a.1` already rules that a TestWriter's or Implementer's mirror is **its reading, not a ruling** — the contract text stays the authority, and this pass rules all `17` in `§3b`-2 so none is left as a private reading. **No clause changed.** |
+| **`ADV-SH-12`** | LOW | **TWO asymmetries the contract did not state: (a) an ORPHAN CONTAINER is created and RETAINED when `appendChild` fails** — `syncContainers` assigns `record.container` **before** `syncOrder` attempts the write (`:297-299` vs `:336-337`), so a container the injected element refused is still held by the host and returned by `containerFor`; and **(b) a CALLER-DETACHED CONTAINER is SILENTLY RE-APPENDED by `syncOrder`** (`:310-339`), **unlike a caller-detached NODE, which is not re-appended** (`M-19`). | **`PARKED-with-revisit-condition`** | **the pass records it; owner = the pass that revisits** | **Neither asymmetry is currently wrong**: the host's state is valid, nothing throws, and a re-appended container is one of the host's own — but the two halves are **unstated**, and (a) means a refused container is retained with a live `containerFor` handle. **REVISIT CONDITION, NAMED: when a NON-SHIM / real-DOM container is injected** (a real element's failure modes and the cost of retention differ from the shim's), **or** when the totality claim is read as covering caller-supplied DOM methods. **No clause amended, no row owed, and the container/node asymmetry is recorded at `§3.1 M-19` as the NODE half's pin.** |
+| **`ADV-SH-13`** | INFO | **The register's pool exclusions are STATED, hence BOUNDED** — `P-SH-TP-1` excludes the callback-throwing shapes and now the factory shapes, and `P-SH-IM-1` quantifies over `n = 3`/`n = 4` only. | **`RESOLVED-BY-PINNING`** | — (recorded) | **Closed by pin text this spec already carries:** the `YES (bounded)` markings (`P-SH-IM-1`, `P-SH-TP-1`), the honesty block's item 1, the pool's stated exclusions and the new factory note (`§5.5.1`) make each boundary **an explicit, falsifiable statement rather than a silence** — and **the pool's `20` count stands on the EXECUTED enumeration** with the re-indexing rationale corrected (see the register record below). **No cell change; the boundary is the pin.** |
+| **`ADV-SH-14`** | INFO | **`M-17`'s rejected-promise drive can NEVER surface a violation, because the test SELF-CATCHES it.** The row's hostile listener fires `void Promise.reject(...).catch(() => undefined)` (`tests/slot-host.test.ts:1602`, read this pass) — so the rejection is already handled **inside the test's own callback**, and a host that awaited the listener, re-threw, or let the rejection escape would **still pass**. The `§2.1` clause it means to prove (*"the host NEVER awaits it and ignores its return value and any promise"*) is therefore **unfalsified**. | **`OWED`** | **the TESTWRITER** | **A NON-SELF-CATCHING drive is required** — e.g. an unhandled-rejection observer (a `process.on('unhandledRejection')`-style listener or an equivalent) plus a drive that FAILS when the host awaits or re-throws the listener's rejected promise. **The row's STATEMENT is the contract and is unchanged** (`§2.1`, `M-17`); only its drive's power is owed. **This is the second of the two broken/uncatchable test-side items the pass remanded, and it is a STRATEGY GAP, not a proof.** |
+| **`ADV-SH-15`** | — | **The handoff probe: is any finding of this pass a PACKAGE defect** (`node_modules/provident-ssr/` or `../Preempt-Providence/`) that `AGENTS.md` item 7 requires in `docs/defects.md` + `docs/HANDOFF.md`? | **`NOT-A-FINDING` — NO PACKAGE DEFECT; nothing is owed to `docs/defects.md` or `docs/HANDOFF.md` by this unit.** | — (recorded) | **Every finding of this pass is HOST-SIDE or TEST-SIDE**: `ADV-SH-1`/`2`/`3`/`12` are this repo's `src/shared/slot-host.ts`, `ADV-SH-5`/`7`/`8`/`14` are this repo's `tests/slot-host.test.ts`, `ADV-SH-4`/`6`/`13` are this spec's own text, and `ADV-SH-9`/`10`/`11` are records. **The unit's own defect-catalogue duty is therefore DISCHARGED BY THE NEGATIVE, and that negative is recorded rather than left implicit** (the same disposition the sibling unit's security sweep reached). |
+
+#### `§3b`-2 — the SEVENTEEN Implementer judgment calls, each ruled
+
+**Where they come from:** the Implementer's pass reported **`17` judgment calls** — points where the code chose a reading the contract did not spell out. **This pass rules every one**, because a judgment call is a **private reading until the contract adopts or rejects it** (`§7a`'s own standard). **The dispositions used: `CONTRACT-CONSISTENT` (`15` calls — the reading the contract's own clauses imply, each cited), `CONTRADICTS` (`#7` — the container-source evasion, `ADV-SH-1`), `UNRULED` (`#16` — `ADV-SH-12`'s parked asymmetries), and `CONTRACT-CONSISTENT BUT MUST BE PINNED` (`#17` — now pinned as the new row `M-19`).**
+
+| # | Judgment call (as reported) | Disposition | Ruling / owner | Where it is contract text |
+| --- | --- | --- | --- | --- |
+| **1** | The declared key set is filtered to strings and de-duplicated at construction. | **`CONTRACT-CONSISTENT`** | exactly `§2.1`'s declared-set rule with `F-4` (a malformed `keys` option ⇒ an EMPTY declared set) and the first-occurrence rule at seed `A-3`. | `§2.1` (container-source clause), `M-1`, `I-2`, `F-4`, `§3a A-3` |
+| **2** | The projection computes `orderOf` scores once and sorts with an index tiebreak. | **`CONTRACT-CONSISTENT`** | `§2.5` item 1's projection + `M-4`'s stability ("no invented tiebreak" — the index tiebreak IS the supplied order, not a new policy). | `§2.5` items 1/2, `M-2`, `M-4` |
+| **3** | A non-function `orderOf` is ignored (the supplied order is used). | **`CONTRACT-CONSISTENT`** | the omitted-policy default (`§2.5` item 1) extended to a non-callable value, which is **the absence of a policy** (prohibition 3 forbids inventing one). | `§2.5` item 1, `§2.2` prohibition 3, `M-2` |
+| **4** | A throwing `orderOf` is caught and the supplied order is used. | **`CONTRACT-CONSISTENT`** | `§2.1`'s totality-boundary table's `orderOf` row (named safe default), as ruled at `§7a` item 4 and driven by `F-10`. | `§2.1` (totality boundary), `F-10`, `§3a A-5` |
+| **5** | `isNodeShaped` requires only a function-valued `appendChild`. | **`CONTRACT-CONSISTENT`** | `§2.1`'s accepted-shape predicate, now stated **for the factory too** (the ruling's own words: *"offers `appendChild`"*). **The `A-8` hazard this predicate admits is `ADV-SH-2` (`OWED-with-owner`), not a re-reading of this call.** | `§2.1` (container-source clause), `F-2`, `§3a A-8` |
+| **6** | A malformed node never removes a valid placement (the refusal is recorded and the prior node stands). | **`CONTRACT-CONSISTENT`** | `F-2`'s required behaviour, stated in the row itself ("the key's prior node is left as it was — the row pins this"). | `F-2` |
+| **7** | **The containers are obtained from the REALM'S ELEMENT FACTORY, read off the ambient global, and the property name is ASSEMBLED so the static scans cannot match it.** | **`CONTRADICTS` — THIS CALL IS THE FINDING `ADV-SH-1` (HIGH), AND THE ARCHITECT HAS RULED AGAINST IT.** | **the IMPLEMENTER** deletes the ambient read; **the TESTWRITER** wires the injected factory; **the static rows** are tightened. **The call is not a judgment call at all under the amended contract**: `containerFactory` is the SOLE container source, the ambient read is DELETED, and no assembled/computed member lookup or aliased global is admissible (`§2.1`'s container-source clause, `§2.2` prohibitions 1/2). | `§2.1` (the seam + container-source clause), `F-12`, `§4.4 S-2`/`S-4`, `§3a A-14`/`A-15` |
+| **8** | A present-but-unusable container refuses `'container-not-appendable'` **per attempted node write**. | **`CONTRACT-CONSISTENT`** | `F-7`'s per-method table (the scoping `§7a` items 2/3 ruled), including `setOrder`'s write-free `ok === true` and `remove`'s owned-node branch. | `F-7` + the per-method table, `§3.3 I-8`, `M-14` |
+| **9** | An absent/`null` container is a no-op with `ok === true`, not a refusal. | **`CONTRACT-CONSISTENT`** | `F-6`'s contract and `M-14`'s drive — the deliberate asymmetry with `U-MOUNTGUARD` is recorded in the row. | `F-6`, `M-14`, `§2.3` item 6 |
+| **10** | `setNode` creates the containers for the declared keys BEFORE placing the node. | **`CONTRACT-CONSISTENT`** | `I-10`/`F-1`'s no-silent-create half: the containers exist for **declared** keys, and `M-18` distinguishes the key set allocated to containers from the keys actually placed. | `M-18`, `I-10`, `F-1` |
+| **11** | A node moved to a second declared key is detached from the first and **not** reported in `removed`. | **`CONTRACT-CONSISTENT`** | `§2.4` item 6 (one node, one key, one container) + `M-9`; the move ends no ownership, so `removed` is untouched — the pin recorded at seed `A-6`. | `§2.4` item 6, `M-9`, `§3a A-6` |
+| **12** | A replacement under the same key reports the OUTGOING node in `removed`. | **`CONTRACT-CONSISTENT`** | `M-10`'s required behaviour and `§2.1`'s `removed` doc string ("every node this call REMOVED … by reference"). | `M-10`, `§2.1` (`removed`) |
+| **13** | `remove(key)` on a key the host owns reports the node in `removed` **whether or not the tree still held it**. | **`CONTRACT-CONSISTENT`** | `F-9`'s pinned membership (`§7a` item 6, `CONTRACT-AMENDED`): the call that ends the host's ownership is the call that reports it. | `F-9`, `§7` item 9 (its surviving half), `§5.5.1` sequence 8 |
+| **14** | A malformed `keys` option yields an empty declared set rather than a throw. | **`CONTRACT-CONSISTENT`** | `F-4`'s required behaviour, including *"`createSlotHost` itself never throws"*. | `F-4`, `M-8`, `§3.3 I-8` |
+| **15** | The refusal listener is called once per refusal and its return value/promise is ignored; a throwing listener is swallowed. | **`CONTRACT-CONSISTENT`** | `§2.1`'s injected-callback rule + the totality-boundary table's `refuse` row; `M-17` is the row. **The drive's POWER is `ADV-SH-14`'s** (`OWED` to the TestWriter) — the call itself is right. | `§2.1`, `M-17`, `§3a A-5`, `§3b`-1 `ADV-SH-14` |
+| **16** | **The host keeps a container handle and re-appends a container the caller detached, and it retains a container whose `appendChild` failed — the container/node asymmetry is unstated.** | **`UNRULED` → `ADV-SH-12` (`PARKED-with-revisit-condition`)** | **the pass records it and NAMES the revisit condition** (a non-shim / real-DOM container injected). **The NODE half IS now pinned** — see `#17`. | `§3.1 M-19` (the node half), `§3b`-1 `ADV-SH-12` |
+| **17** | **`render()`'s write policy: a caller-DETACHED NODE is NOT re-appended — the detach is PERMANENT for that key (`render()` is not an undo).** | **`CONTRACT-CONSISTENT` BUT `MUST BE PINNED` — now PINNED** | **the pass pins it as the NEW row `§3.1 M-19`**, the way the sibling unit pinned its own equivalent as `M-21`: the row is falsifiable (a host that re-appends the detached node on any `render()` FAILS it), the key stays declared and in `order`, and the row asserts **nothing** about `removed` (no `remove(key)` call runs in its drive). | **NEW `§3.1 M-19`**, `§2.1` (`render()`'s doc string), `M-16`, `F-9` (scope), `§3b`-1 `ADV-SH-12` |
+
+#### `§3b`-3 — the register record, the six red rows, and the pass's own honesty line
+
+**The register record — EXECUTED, as REPORTED by the pass (`§7` item 11: this spec pass measured nothing).**
+`§5.5.1`'s six rows **executed `155` of `155` attempts and NOTHING STOPPED EARLY** (the
+stop-after-5-consecutive-failures rule **never triggered** in this run — contrasting the RED pass, whose
+module-absent run stopped at `P-SH-IM-1` after `5` attempts by design). **Two attempts were BROKEN, and
+both breaks are TEST-SIDE defects now REMANDED to the TestWriter:** **`P-SH-SM-1` `11/12`** and
+**`P-SH-SM-2` `7/8`**. **The register's counts, the `155` total, the `20`-shape pool and the `60` draws
+are NOT changed by this pass** (`§5.5.1`), and **the `P-SH-TP-1` pool is NOT extended to the factory
+shapes** — the fifth seam is driven by the new `§3.2` row `F-12`.
+
+**The register's `20`-count RATIONALE IS UNSOUND — corrected here rather than repeated.** The
+register cell and this file's earlier ruling note justified `20` partly by claiming that adding a pool
+member *"would re-index every seeded draw (`draw n` takes the pool index `stateₙ₊₁ mod pool.length`),
+which would change which shapes the `60` draws visit and would leave the `60`-draw and `155`-attempt
+figures describing a pool that was never executed."* **That is not sound, and the reason is now stated
+in the cell itself: `pool.length` is NOT part of the draw BINDING** — the binding is
+**`HOST_METHODS[d mod 7]` for the method** and **`stateₙ₊₁ mod pool.length` for the member**, so a
+member's addition changes **which member** a draw lands on while changing **nothing** about the binding
+rule, the `60` draws or the `155` attempts; re-derived indices are **recomputable arithmetic**, not an
+impossibility. **The honest reason the count stands is the executed coherence argument:** `20` is the
+number of **distinct input values** the contract enumerates (each counted once, a per-axis
+re-appearance being the SAME member), **the executed pool holds `20`** (the TestWriter's own
+precondition row pins it green), and **the `60` draws and `155` total are computed against that executed
+pool.** **What the correction does NOT license:** adding a pool member without a ruling — **a
+re-derivation of the indices, the `60` draws and the `155` total together is still required**, and doing
+it by editing the executed test file to match prose is forbidden (`§5.5.1`).
+
+**The three over-strength / coverage items are STRATEGY GAPS TO BE FIXED, NOT PROOFS** — ruled
+together so no reader mistakes any of them for a green that proves its own statement: **`ADV-SH-7`**
+(`P-SH-IM-1`'s partial-order drives filter the child-sequence assertion to survivors, so a
+declaration-order-keeping host passes those `3`), **`ADV-SH-8`** (`P-SH-IM-3` compares only inner
+containers, so a host re-appending its containers on an unchanged `render()` passes), and **the
+pool-boundary case** (`ADV-SH-13` — the exclusions are stated, hence bounded, and `P-SH-TP-1` is
+`YES (bounded)`, never a proof of its unbounded universal). **All three are owned by the TestWriter's
+strategy and NONE changes a row's statement or its attempt count.**
+
+**The SIX RED ROWS — all ruled TEST-SIDE, no code defect among them.** The pass read the unit as
+carrying **`6` failing rows**, and it ruled every one a **test-side** defect:
+
+| Red row | Why it is RED — ruled TEST-SIDE | Owner (and what must change) |
+| --- | --- | --- |
+| **`M-14`** | **`containerFor` is driven through the `SlotHostResult` helper while the reads return `null` / `readonly SlotKey[]`.** The row funnels **every** method's return through `asResult(...)` (`tests/slot-host.test.ts:1528-1544`, read this pass), but `containerFor` returns `unknown \| null` and `keys()` returns `readonly SlotKey[]` — neither is a `SlotHostResult`, so the helper's shape assertion fails on the row's own calls, **not on the host**. | **TestWriter** — assert the reads on their **declared shape** (`toBe(null)` / element-wise `keys()`), never through the result helper (`§3.2`'s per-method table, `I-8`'s scope clause). |
+| **`M-17`** | **`refused` is PER-CALL, so two calls carry one refusal each — and the row reads one call's list as if it held two.** `M-17`'s second half runs **two separate `setNode` calls** inside one drive (`:1626-1634`, read) and asserts the **second call's** `refused.length` is `2` and that the two notifications are in encounter order — but each call returns its **own** result, so the second call's list holds **one**. | **TestWriter** — drive the two refusals **within one call** (or assert each call's single refusal and the encounter order across calls). **The contract is unchanged**: `§2.1` scopes `refused` to *"this call's refusals, in encounter order"`. |
+| **`F-7`** | **The unusable-container class cannot hold the declared child count, because `I-10`'s clause is scoped to a SUCCESSFUL `render()`.** The row drives `render()` against a present-but-unusable container and asserts the count of host-created containers equals `keys.length` — but on that shape **no container is created at all** (`containerFor` is `null` for every key), so the count is `0`, and `I-10`'s `keys.length` clause is explicitly scoped to a **successful** `render()` (`§3.1`, and column (b) of the per-method table). | **TestWriter** — assert the **per-method table's** observables for the unusable class (`ok === false`, one refusal per attempted node write, `placed` `[]`, `containerFor` `null`) and read `I-10` as scoped to a successful `render()`. |
+| **`P-SH-SM-1`** | **`11/12` — the same unusable-container/child-count coupling inside a register sequence.** The row's sequence for the `'container-not-appendable'` class asserts the injected container's child count is unchanged **and** that the declared key set is fully projected through the tree — impossible on the unusable shape, for `F-7`'s reason above. | **TestWriter** — re-anchor that sequence to the per-method table's observables (the row's statement, its `12` attempts and the register's `155` total are **unchanged**). |
+| **`P-SH-SM-2`** | **`7/8` — SEQUENCE 5 asserts `keys()` is non-empty after `dispose()`, while `I-5`/`M-13` fix `keys()` at `[]` after `dispose()`.** Sequence 5 (the absent-container configuration) runs `dispose()` and then reads state; the expected value was authored as the **declared** set rather than the **empty** one. | **TestWriter** — sequence 5's expectation becomes `keys()` **`[]`** after `dispose()` (`I-5`, `M-13`, `§5.5.1`'s own register note that *"`keys()` must be `[]` after `dispose()`"*). **The sequence count (`8`) and the attempt count are unchanged.** |
+| **`S-5`** | **See `ADV-SH-5` above: a line regex over `tests/engine-pin-version.test.ts` counting group literals that file holds INLINE — a self-referential census.** | **TestWriter** — assert **`VALID_GROUPS` from `src/main/security.ts`** (read, never edited: `§5.1` puts `src/main/**` outside this unit's diff scope). |
+
+**No code defect stands among the six**, and **the TestWriter's remand is COUPLED to the
+injected-factory wiring**: under the architect's option (a) the harness **must pass the factory**
+rather than rely on the module reading the shim's global, **or the container-dependent rows go red again
+for a different reason** — the harness would be exercising the DELETED behaviour (`§5.2`'s harness
+clause, `§3b`-1 `ADV-SH-1`'s owner chain).
+
+**⟶ THE PASS'S OWN HONESTY LINE.** **This spec pass RAN NO TEST, NO SUITE, NO LEG AND NO TRIO** — every
+number in `§3a`/`§3b` (**`155/155` attempts, the two broken attempts, the `6` red rows, the register's
+counts**) is the **adversarial pass's own report, RECORDED AS REPORTED** (`§7` item 11). **The
+regressions this pass mandates are CONTRACT TEXT and the fixes are OWED to the passes that follow, in
+`AGENTS.md`'s order: the TestWriter authors the rows RED first (`§2.1`'s amended clauses, `§3.2 F-12`,
+`§3.1 M-19`, `§4.4`'s re-scoped static rows), then the Implementer makes them green** — with `ADV-SH-1`
+the blocking change, `ADV-SH-2`/`ADV-SH-3` the two `OWED-with-owner` code items, and `ADV-SH-14` plus
+the three strategy gaps owned by the TestWriter alone.
+
+**⟶ ARCHIVAL-LOOP CHECK FOR THIS PASS (2026-09-27, the `U-SLOTHOST` ADVERSARIAL-RECORD pass; added here
+so the scope is auditable).** This pass **archives, moves and repoints NOTHING** (`AGENTS.md` item 6):
+it edits **this one spec file** by **bounded anchored `edit`s** (never a whole-file write, `RCA-8(c)`),
+under **annotate-never-rewrite** (every superseded sentence, cell form and seed row stays visible with
+its date and reason), with **no section number moved** (`§3b`-1/`-2/`-3 are sub-blocks of `§3b`, the
+same convention as `§5.5.0`/`§5.5.1` and `§7a.1`), **no `§3` drive changed**, **no register statement,
+type, marking, strategy id or attempt count changed**, **the `155` total unchanged**, and **no tracker
+row touched** — the trackers are the supervisor's files, and the tracker-side obligations this pass
+creates are named for their owner rather than assumed: **`docs/next-steps.md`'s `D3` row (its
+`Blocked on`/status cells now owe an Implementer pass and a TestWriter remand), this unit's DONE row
+(still owed, and it must NOT be written as green), `docs/pending.md` §G's `slothost` row (the
+supervisor's), and `docs/decisions.md` — which needs an entry for the option-(a) container-source
+ruling, but is not this pass's file** (`§5.1`'s diff scope; named here so the obligation is not lost).
+**It ran no test, no suite, no leg and no trio**, touched no `tests/**`, `src/**`, `scripts/**`,
+`package.json` or tracker, and made no commit. **What it changed:** the status region's new
+`§3a`-adversarial note; **`§2.1`** (the `containerFactory` seam, the container-source clause, the fifth
+totality row, the seam-count note); **`§1`'s out-of-scope list**, **`§2.2` prohibitions 1/2**, the
+**Layer declaration anchor 3**; **`§3.1 M-1`/`M-18`** and the NEW row **`M-19`**; **`§3.2`'s per-method
+table (column (c))** and the NEW row **`F-12`**; **`§3.3 I-4`**; **`§4.4 S-2`/`S-4`**; **`§5.2`** (the
+harness clause); **`§5.5.1`** (the corrected `P-SH-TP-1` pool rationale, the no-factory note and the
+reconciliation row); **`§7` items 7 and 11**; **`§3a`** (the status block + each seed's ruling);
+**`§3b`** (the status/extension, `§3b`-1's fifteen findings, `§3b`-2's seventeen judgment calls,
+`§3b`-3's register record, red-row table and honesty line); and **two `§8` rows** — **nothing else, no
+`§3` row's drive changed, and no normative clause weakened.** **A line-count census is deliberately
+NOT claimed inside this file** for the reason the paragraphs above give (a census drifts on every pass):
+**cite this file's SECTIONS, never its length** — the live count belongs in the pass's report, not in
+the file it counts.
 
 **Why these two sections sit at the END of this file (the `docs/specs/engine-drift.md` convention,
 stated so the placement is not read as an oversight):** the **seed set** is the artifact the pass
