@@ -255,6 +255,27 @@ function mountSurface(mount: unknown): string {
   return JSON.stringify({ childCount: kids.length, attrs: attrs ?? null })
 }
 
+/** The mount's ATTRIBUTE surface ONLY — the half of `mountSurface` that is
+ *  legitimately invariant across a host's life (`§2.3` item 2: the host writes
+ *  no attribute on anything; `§3.3 I-4`). The `childCount` half is NOT invariant:
+ *  placement adds children and `remove`/`close` take the host's own child back
+ *  out (`§3.1 M-2`/`M-11`), so a whole-`mountSurface` comparison across a
+ *  placement is unsatisfiable by any conforming host.
+ *
+ *  **⟶ HARNESS FIX 2026-09-27 (the red/green test-harness remand; the `I-4`
+ *  baseline/assertion defect).** `I-4` captured `mountSurface(mount)` BEFORE the
+ *  host existed (`childCount: 0`) and compared it to the mount at the end of a
+ *  sequence that had placed two caller nodes and removed one — so the row could
+ *  only have passed for a host that removed a node the caller never asked it to
+ *  remove, exactly what `§2.3` item 2 and `§3.1 M-2`/`M-11` forbid. The row's
+ *  stated intent (no attribute/class/style/text write on the mount) is asserted
+ *  through THIS helper, and the child-count claim is stated separately, against
+ *  the contract-forced sequence. */
+function mountAttrSurface(mount: unknown): string {
+  const attrs = mount !== null && typeof mount === 'object' ? (mount as { attrs?: unknown }).attrs : undefined
+  return JSON.stringify(attrs ?? null)
+}
+
 /** One method drive: the subject of `§2.1`'s "no method of this host throws —
  *  for any input" (`§3.3 I-8`). Driven ONCE (never twice — a double drive would
  *  change a callback count). */
@@ -408,9 +429,22 @@ function brief(value: unknown): string {
 /** `§2.1`'s `ListHostRefusal.key` is `unknown` after the 2026-09-27 amendment:
  *  it holds the supplied value VERBATIM. This is the assertion helper for that
  *  field — one `===`-by-value comparison that needs no type narrowing, so every
- *  refusal-key row is legal under `npm run typecheck` (no cast, no `String()`). */
-function keyIdentity(expected: unknown): <T>(actual: T) => boolean {
-  return (actual) => actual === expected
+ *  refusal-key row is legal under `npm run typecheck` (no cast, no `String()`).
+ *
+ *  **⟶ HARNESS FIX 2026-09-27 (the red/green test-harness remand; finding 1).**
+ *  This helper was as-filed a *predicate factory* — `keyIdentity(expected)`
+ *  returned `(actual) => actual === expected` — and every row below handed that
+ *  returned **function** to `.toBe(...)`. `toBe` is `Object.is`, so a value was
+ *  being compared against a function and could never match ("expected 'k' to be
+ *  [Function anonymous]"): a TEST defect, with no bearing on the module. The
+ *  factory is removed. The comparison now **takes both sides and returns the
+ *  boolean** (`keyIsVerbatim(expected, actual)`), so the rows assert
+ *  `expect(keyIsVerbatim(key, r.refused[0].key), '…').toBe(true)`. The
+ *  comparison itself is UNCHANGED and is still one verbatim `===`: no `String()`,
+ *  no `JSON.stringify`, no trim, no case-fold, no unicode normalization — every
+ *  row's intent and message text is untouched. */
+function keyIsVerbatim(expected: unknown, actual: unknown): boolean {
+  return actual === expected
 }
 
 /** The caller node's own observable surface — `§3.3 I-4`: the host writes NO
@@ -1068,16 +1102,49 @@ describe('I — §3.3 the every-state invariants', () => {
     a.textContent = 'caller text'
     const b = nodeEl('div', 'b')
     b.setAttribute('aria-hidden', 'true')
-    const snapshot = { a: nodeSurface(a), b: nodeSurface(b), mount: mountSurface(mount) }
+    const snapshot = { a: nodeSurface(a), b: nodeSurface(b), mountAttrs: mountAttrSurface(mount) }
     const h = create({ mount })
-    drive(() => h.setEntries([{ key: 'a', node: a }, { key: 'b', node: b }]), 'I-4 setEntries')
+    const placed = asResult(
+      drive(() => h.setEntries([{ key: 'a', node: a }, { key: 'b', node: b }]), 'I-4 setEntries'),
+      'I-4 setEntries',
+    )
+    // THE BASELINE IS TAKEN **HERE**, not before the host existed: the mount
+    // legitimately HOLDS the host's placed children from this point on, and the
+    // child count is contract-forced by `§3.1 M-2` (the supplied order IS the
+    // child sequence) — so a "mount unchanged" claim measured against the
+    // pre-host state is unsatisfiable for any conforming host. What must hold is
+    // that after this baseline NOTHING ELSE of the mount's own surface moves:
+    // attribute, class, style, text, id, value or listener (`§2.3` item 2,
+    // `§3.3 I-4`) — and that the child-count moves are EXACTLY the placement and
+    // removal the caller asked for (`§3.1 M-2`/`M-11`).
+    const atPlacement = mountSurface(mount)
+    const atPlacementCount = childrenOf(mount).length
+    expect(atPlacementCount, "I-4 after setEntries: the mount holds exactly the TWO children the caller's setEntries placed (M-2)").toBe(2)
     drive(() => h.render(), 'I-4 render')
     drive(() => h.setOrder(['b', 'a']), 'I-4 setOrder')
     drive(() => h.activate('a'), 'I-4 activate')
-    drive(() => h.remove('b'), 'I-4 remove')
+    const removed = asResult(drive(() => h.remove('b'), "I-4 remove('b')"), "I-4 remove('b')")
     expect(nodeSurface(a), 'I-4: the caller node\'s own surface is untouched (no attribute, class, style or textContent write)').toEqual(snapshot.a)
     expect(nodeSurface(b), 'I-4: the second caller node\'s surface is untouched').toEqual(snapshot.b)
-    expect(mountSurface(mount), 'I-4: the mount\'s own surface is untouched (no attribute write on the mount)').toEqual(snapshot.mount)
+    // The WHOLE mount surface is compared against the baseline taken at
+    // placement: only `childCount` may differ, and only by the ONE node the
+    // caller's own `remove('b')` took back out.
+    expect(mountAttrSurface(mount), 'I-4: the mount\'s ATTRIBUTE surface never moves (no attribute write on the mount)').toEqual(snapshot.mountAttrs)
+    expect(mountAttrSurface(mount), 'I-4: the mount gained and lost no attribute NAME across the whole sequence').toBe(JSON.stringify({}))
+    expect(childrenOf(mount).length, "I-4 after remove('b'): the mount holds exactly the ONE caller node no removal asked for (a stays — M-2's placement is the host's only tree write; M-11's remove takes back only the node it placed)").toBe(1)
+    expect(containsRef(childrenOf(mount), a), 'I-4: the untouched caller node a is still the mount\'s child').toBe(true)
+    expect(containsRef(childrenOf(mount), b), "I-4: b is gone from the mount — and only because the caller asked for remove('b')").toBe(false)
+    expect(containsRef(removed.removed, b), "I-4: b left the mount as remove('b')'s OWN removal, by reference (M-11)").toBe(true)
+    // With `childCount` accounted for, the mount's FULL surface (childCount AND
+    // attrs) is provably equal to the placement baseline MINUS the one removal
+    // the caller asked for — every other byte is the baseline's.
+    expect(mountSurface(mount), "I-4: the whole mount surface is exactly the placement baseline minus remove('b') — no other write of any kind").toBe(
+      JSON.stringify({ childCount: atPlacementCount - 1, attrs: JSON.parse(snapshot.mountAttrs) }),
+    )
+    expect(placed.placed, 'I-4: setEntries placed exactly the two caller nodes, by reference').toHaveLength(2)
+    expect(atPlacement, 'I-4: the placement baseline itself held exactly the two placed children and no attribute').toBe(
+      JSON.stringify({ childCount: atPlacementCount, attrs: JSON.parse(snapshot.mountAttrs) }),
+    )
   })
 
   it('I-5 §3.3 — after dispose() the host retains NO owned key, NO placed-node reference and no other state', async () => {
@@ -1733,7 +1800,7 @@ describe('M — §3.1 the valid states', () => {
     expect(r3.ok, "M-18: close('') on a known key is not a refusal").toBe(true)
     expect(r3.refused, "M-18: close('') refused === []").toEqual([])
     expect(seen.length, "M-18: onClose fires EXACTLY once for close('')").toBe(1)
-    expect(seen[0].key, "M-18: the callback receives the '' key verbatim").toBe(keyIdentity(''))
+    expect(keyIsVerbatim('', seen[0].key), "M-18: the callback receives the '' key verbatim").toBe(true)
     expect(seen[0].entry.key, "M-18: the callback receives the entry whose key is ''").toBe('')
     expect(containsRef(r3.removed, nodes[0]), "M-18: close('') removes that node (it appears in removed)").toBe(true)
     expect(containsRef(childrenOf(mount), nodes[0]), "M-18: close('') takes the node OUT of the mount").toBe(false)
@@ -1772,7 +1839,10 @@ describe('F — §3.2 the documented fail-states / refusals', () => {
         expect(r.ok, `F-1 ${method}(${brief(key)}): ok === false`).toBe(false)
         expect(r.refused, `F-1 ${method}(${brief(key)}): refused has EXACTLY one member`).toHaveLength(1)
         expect(r.refused[0].code, `F-1 ${method}(${brief(key)}): the typed code`).toBe('unknown-key')
-        expect(r.refused[0].key, `F-1 ${method}(${brief(key)}): the EXACT key string as supplied (never normalized)`).toBe(keyIdentity(key))
+        expect(
+          keyIsVerbatim(key, r.refused[0].key),
+          `F-1 ${method}(${brief(key)}): the EXACT key string as supplied (never normalized)`,
+        ).toBe(true)
         expect(typeof r.refused[0].message, `F-1 ${method}(${brief(key)}): a message is present`).toBe('string')
         expect(r.refused[0].message.length, `F-1 ${method}(${brief(key)}): the message is one non-empty sentence`).toBeGreaterThan(0)
         expect(activateCalls, `F-1 ${method}(${brief(key)}): NO callback fires`).toBe(0)
@@ -1796,7 +1866,7 @@ describe('F — §3.2 the documented fail-states / refusals', () => {
     expect(r.ok, 'F-2: ok === false').toBe(false)
     expect(r.refused, 'F-2: ONE refusal').toHaveLength(1)
     expect(r.refused[0].code, 'F-2: the typed code').toBe('duplicate-key')
-    expect(r.refused[0].key, 'F-2: the refusal names the duplicated key').toBe(keyIdentity('k'))
+    expect(keyIsVerbatim('k', r.refused[0].key), 'F-2: the refusal names the duplicated key').toBe(true)
     expect(r.order, "F-2: order contains 'k' ONCE").toEqual(['k'])
     expect(r.placed, 'F-2: exactly one node was placed').toHaveLength(1)
     expect(r.placed[0], 'F-2: the FIRST occurrence is placed (first-wins, stated so it is unambiguous)').toBe(first)
@@ -1813,7 +1883,7 @@ describe('F — §3.2 the documented fail-states / refusals', () => {
     expect(r.ok, 'F-3: ok === false').toBe(false)
     expect(r.refused, 'F-3: exactly one refusal').toHaveLength(1)
     expect(r.refused[0].code, 'F-3: the typed code').toBe('no-node')
-    expect(r.refused[0].key, 'F-3: the exact key as supplied').toBe(keyIdentity('k'))
+    expect(keyIsVerbatim('k', r.refused[0].key), 'F-3: the exact key as supplied').toBe(true)
     expect(h.keys(), 'F-3: the key is NOT owned').toEqual([])
     expect(r.order, 'F-3: order does not contain it').toEqual([])
     expect(r.placed, 'F-3: nothing was placed — the host NEVER creates a node itself').toEqual([])
@@ -1836,7 +1906,7 @@ describe('F — §3.2 the documented fail-states / refusals', () => {
       expect(r.ok, `F-4 (${String(ret)}): ok === false`).toBe(false)
       expect(r.refused, `F-4 (${String(ret)}): exactly one refusal`).toHaveLength(1)
       expect(r.refused[0].code, `F-4 (${String(ret)}): the typed code`).toBe('factory-returned-null')
-      expect(r.refused[0].key, `F-4 (${String(ret)}): the exact key as supplied`).toBe(keyIdentity('k'))
+      expect(keyIsVerbatim('k', r.refused[0].key), `F-4 (${String(ret)}): the exact key as supplied`).toBe(true)
       expect(h.keys(), `F-4 (${String(ret)}): the key is NOT owned`).toEqual([])
       expect(childrenOf(mount).length, `F-4 (${String(ret)}): the mount stays empty`).toBe(0)
     }
@@ -1872,9 +1942,10 @@ describe('F — §3.2 the documented fail-states / refusals', () => {
       if (c.keyIsSupplied) {
         // `ListHostRefusal.key` holds the supplied value VERBATIM (`§2.1`, amended):
         // `42`/`null` stay `42`/`null`, never `'42'`/`'null'`.
-        expect(r.refused[0].key, `F-5 ${c.id}: the key VERBATIM, no String() coercion and no normalization`).toBe(
-          keyIdentity(c.expectedKey),
-        )
+        expect(
+          keyIsVerbatim(c.expectedKey, r.refused[0].key),
+          `F-5 ${c.id}: the key VERBATIM, no String() coercion and no normalization`,
+        ).toBe(true)
       }
       expect(r.order, `F-5 ${c.id}: the malformed entry is not owned; the valid one is (§2.1 totality note)`).toEqual(['good'])
       expect(containsRef(r.placed, good), `F-5 ${c.id}: the other entry in the same call is placed normally`).toBe(true)
@@ -1906,7 +1977,7 @@ describe('F — §3.2 the documented fail-states / refusals', () => {
         r.refused[0].code,
         `F-5/F-3 re-home (node ${String(node)}): 'node: null/absent with no factory' is NO-NODE (N-3/F-3), NOT malformed-entry (F-5)`,
       ).toBe('no-node')
-      expect(r.refused[0].key, `F-5/F-3 re-home (node ${String(node)}): the exact key as supplied`).toBe(keyIdentity('k-nullnode'))
+      expect(keyIsVerbatim('k-nullnode', r.refused[0].key), `F-5/F-3 re-home (node ${String(node)}): the exact key as supplied`).toBe(true)
       expect(h.keys(), `F-5/F-3 re-home (node ${String(node)}): the key is not owned`).toEqual([])
     }
   })
