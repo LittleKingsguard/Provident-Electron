@@ -75,10 +75,16 @@ the `ui` leg's declared rows are **`77/77`** (`tests/ui-leg-contract.test.ts` **
 + `7` rebuilt falsifiable rows whose falsifiability is shown by a **`15`-mutation out-of-tree matrix**;
 `tests/ui-leg-seam.test.ts` **`11`**); `npm run divergence` → **`R13 RESULT: 9 checks, 0 failures`**
 (`N = 9`); `npm run battery` → **`184 checks / 0 failures`**; `npm run ui` → exit **`0`**, **`11/11`**
-assertions green, one measurement **`427x22`**, **`retries=0`**. **Earlier records that read `863` passed
-/ `68/68` are the wave-C passes' own dated measurements — annotated in `docs/next-steps.md`,
-`docs/decisions.md`, `docs/pending.md` and `docs/FORKER.md`, never deleted**; `M-46` stays
-`UNMEASURABLE`.
+assertions green, one measurement **`427x22`**, **`retries=0`**. **⟶ UPDATED (2026-09-27, the
+`U-MOUNTGUARD` per-unit documentation review): the suite is now `59` files / `916` passed / `2` skipped /
+`0` failed** — the new file is `tests/mount-invariant-guard.test.ts` (**`44` rows**, the wave-D unit's
+cross-envelope mount cardinality/identity probe + the `reconcileMount()` host fix; see
+`docs/specs/mount-invariant-guard.md`). **The `ui` leg's `77/77` and every other leg figure above are
+UNMOVED** (`divergence` `9/0` with `N = 9` intact, `battery` `184/0`, `ui` exit `0` with `11/11`,
+`427x22`, `retries=0`). **Earlier records that read `863` passed
+/ `68/68`, or `872` / `77/77`, are the earlier passes' own dated measurements — annotated in
+`docs/next-steps.md`, `docs/decisions.md`, `docs/pending.md` and `docs/FORKER.md`, never deleted**;
+`M-46` stays `UNMEASURABLE`.
 
 | Leg | What it is | What it is **not** |
 | --- | --- | --- |
@@ -174,6 +180,12 @@ provident.dispatch { target: { kind: "nodeId", nodeId: "node-6" }, event: "click
   handoff to the upstream project; **no round is open**).
 - `docs/decisions.md` / `docs/pending.md` / `docs/next-steps.md` — the process
   trackers (imported from the upstream `AGENTS.md` document-archival loop).
+  **`docs/next-steps.md` is the work queue AND the handover surface:** its
+  `⟶ HANDOVER — for a fresh supervisor (2026-09-27)` block is the entry point
+  (current state, the exact next wave-D action, the gate order, the RCA-8
+  commit-atomicity rules), and its `## DONE — <unit>` records are the completed
+  units' authoritative records (`U-MOUNTGUARD`, wave D, joined them 2026-09-27 —
+  counts `4 DONE / 16 open`; the wave-D go-ahead WAS GIVEN 2026-09-27).
 - `AGENTS.md` — the process rules for agents working in this repo.
 
 ## 0.1.x adoption notes
