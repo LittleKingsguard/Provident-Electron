@@ -117,12 +117,19 @@ export interface SlotHost {
 // ---------------------------------------------------------------------------
 
 /** One declared key's record: the container this host created for it, the node
- *  the caller handed over, and whether the host has actually placed it. */
+ *  the caller handed over, whether the host has actually placed it, and the
+ *  placement this key has lost WITHOUT the loss being reported yet. */
 type KeyRecord = {
   container: unknown
   node: unknown
   hasNode: boolean
   placed: boolean
+  /** The node this host HAD PLACED under this key and has not yet reported: the
+   *  `M-9` move RELOCATES an ownership instead of ending it and the move's own
+   *  result reports nothing (§3a `A-6`), so the vacated key keeps the fact of
+   *  the placement and owes it to the first write that takes that key over
+   *  (§2.1's `removed` doc string: *"the ones the host had placed"*). */
+  owed: unknown
 }
 
 type AnyObject = Record<string, unknown>
@@ -177,10 +184,14 @@ function holds(parent: unknown, child: unknown): boolean {
   return false
 }
 
-/** Whether the injected container is present at all (`null`/absent and every
- *  non-object shape are the supported no-op configuration). */
+/** Whether the injected container is present at all. The contract draws this
+ *  line at `null`/`undefined` ONLY: those two are the ABSENT container (the
+ *  supported no-op configuration, §3.2 `F-6`), while EVERY other value — `{}`,
+ *  `42`, `'div'`, an object whose `appendChild` is not callable — is PRESENT
+ *  and merely not-appendable, which is `F-7`'s refusing class (§3.1 `M-14`'s
+ *  reconciled cell + §3.2 `F-7`'s per-method table). */
 function isPresent(target: unknown): boolean {
-  return asObject(target) !== null
+  return target !== null && target !== undefined
 }
 
 /** Whether a value offers the one operation this host needs to place anything
@@ -461,6 +472,16 @@ export function createSlotHost(options: SlotHostOptions): SlotHost {
       removed.push(record.node)
       record.placed = false
     }
+    if (record.owed !== null) {
+      // The `M-9` move vacated this key WITHOUT reporting the node the host had
+      // placed under it (a move ends no ownership, it relocates one — §3a
+      // `A-6`), so the write that takes the key over is the call that reports
+      // it: the `F-9` reporting path, one step later. A write that re-places
+      // that very node relinquishes nothing — it reinstates the placement — so
+      // it reports nothing (`removed` never names the node the call PLACES).
+      if (record.owed !== node) removed.push(record.owed)
+      record.owed = null
+    }
     // One node, one key, one container at a time (§2.4 item 6): a node this
     // host had placed under ANOTHER declared key is moved, not duplicated.
     if (!record.hasNode || record.node !== node) {
@@ -468,6 +489,9 @@ export function createSlotHost(options: SlotHostOptions): SlotHost {
         if (otherKey === key) continue
         if (!other.hasNode || other.node !== node) continue
         detach(other.node)
+        // The vacated key keeps the FACT of a placement the host did make —
+        // only a placement the host actually made is one it "had placed".
+        if (other.placed) other.owed = other.node
         other.hasNode = false
         other.node = null
         other.placed = false
@@ -613,7 +637,7 @@ export function createSlotHost(options: SlotHostOptions): SlotHost {
   // driven at all — creates nothing (§3.2 F-1's no-silent-create half).
   const declared = declaredKeys()
   projection = project(declared)
-  for (const key of projection) records.set(key, { container: null, node: null, hasNode: false, placed: false })
+  for (const key of projection) records.set(key, { container: null, node: null, hasNode: false, placed: false, owed: null })
 
   return { setNode, remove, setOrder, render, keys, containerFor, dispose }
 }

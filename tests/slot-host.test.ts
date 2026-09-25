@@ -1684,7 +1684,16 @@ describe('M — §3.1 the valid states', () => {
     expect(childrenOf(container), 'M-13: the second dispose() changed nothing (no state retained — I-5)').toEqual([foreign])
   })
 
-  it('M-14 §3.1 — a null/absent/malformed container ⇒ every operation a NO-OP with a valid state (the reads driven AS reads)', async () => {
+  it('M-14 §3.1 — a null/undefined/absent/malformed container ⇒ a valid state on every method, read method by method against §3.2 F-7’s per-method table (the reads driven AS reads)', async () => {
+    // ⟶ CORRECTED 2026-09-27 (the RE-PIN pass): this row's title read
+    // *"M-14 §3.1 — a null/absent/malformed container ⇒ every operation a NO-OP
+    // with a valid state (the reads driven AS reads)"*. `M-14`'s five container
+    // values are TWO CONTAINER STATES (`§3.1 M-14`'s RECONCILED cell), so
+    // "every operation a NO-OP" holds for the ABSENT class only — the
+    // PRESENT-BUT-UNUSABLE class (`{}`/`42`/`'div'`) refuses
+    // `'container-not-appendable'` on every call that attempts a node write. The
+    // title now names the state and the table; the row id, the clause citations
+    // and every drive below are unchanged.
     const { create } = await surface('M-14')
     // §2.1's container-source clause item 5: an absent container AND a supplied
     // factory together give the SAME no-op state (once, not two degradations
@@ -1692,6 +1701,17 @@ describe('M — §3.1 the valid states', () => {
     // because there is no mount to project onto.
     //
     // TWO CLASSES, ONE DRIVE LIST: M-14's own trigger names `null`/`undefined`/
+    // `{}`/`42`/`'div'`, and they are TWO CONTAINER STATES. `null`/`undefined`
+    // are the ABSENT class of the per-method table (column (a): no refusal,
+    // `ok === true`, everything a no-op). `{}`/`42`/`'div'` are the
+    // PRESENT-BUT-UNUSABLE class (column (b): `ok === false` with exactly one
+    // EMITTED `'container-not-appendable'` refusal per attempted node write),
+    // exactly as `§3.1 M-14`'s RECONCILED 2026-09-27 cell splits them.
+    //
+    // ⟶ RE-PINNED 2026-09-27 (this pass; the superseded classification this row
+    // previously encoded is KEPT VISIBLE here, verbatim and un-elided): the
+    // row's earlier reading was
+    // *"TWO CLASSES, ONE DRIVE LIST: M-14's own trigger names `null`/`undefined`/
     // `{}`/`42`/`'div'`. `null`/`undefined`/`42`/`'div'` are the ABSENT class of
     // the per-method table (column (a): no refusal, `ok === true`, everything a
     // no-op). **`{}` is NOT that class**: `F-6`'s own text ("`container-not-appendable`
@@ -1701,15 +1721,59 @@ describe('M — §3.1 the valid states', () => {
     // variant asserts the observables COMMON to both classes plus `containerFor(k)
     // === null` (column (b)'s own value), never "ok === true". ⟶ REPORTED, never
     // fixed here: the M-14 cell and the table disagree for `{}` (see this row's
-    // report; the row drives every variant it names rather than dropping one).
-    const variants: Array<[string, unknown, boolean]> = [
-      ['null', null, true],
-      ['undefined', undefined, true],
-      ['42', 42, true],
-      ["'div'", 'div', true],
-      ['{} (the F-7 class by F-6’s own example)', {}, false],
+    // report; the row drives every variant it names rather than dropping one)."*
+    // — and the report it filed was **RECONCILED, in the direction it named**:
+    // `§3.2 F-7`'s per-method table GOVERNED (`§7a` item 2's ruling) and
+    // `§3.1 M-14`'s cell now reads *"`{}` / `42` / `'div'` are the
+    // PRESENT-BUT-UNUSABLE container"* — so it was `42` and `'div'` that the
+    // superseded cell had misclassified as ABSENT, and `{}` was already right.
+    // Every variant now drives its OWN class's per-method observables: the
+    // table's columns are asserted per call, never collapsed into one `ok` for
+    // all five methods.
+    const variants: Array<[string, unknown, 'absent' | 'present-but-unusable']> = [
+      ['null', null, 'absent'],
+      ['undefined', undefined, 'absent'],
+      ['42', 42, 'present-but-unusable'],
+      ["'div'", 'div', 'present-but-unusable'],
+      ['{}', {}, 'present-but-unusable'],
     ]
-    for (const [id, v, absentClass] of variants) {
+    for (const [id, v, containerState] of variants) {
+      // ⟶ THE PER-CALL TABLE THIS ROW NOW READS (`§3.2 F-7`'s per-method table,
+      // the text `§7a` item 2 RULED governs), method by method and state by
+      // state, as the table's OWN clauses scope it — read against THIS drive's
+      // step order, so nothing is collapsed into one `ok` for all five calls:
+      //   · `setNode('a', n)` on the UNUSABLE class: the table's `setNode` row is
+      //     categorical for this class — one refusal per attempted placement.
+      //   · `remove('a')`: the table's `remove` row refuses on this class **when
+      //     the host actually owns a node under that key**, and this drive
+      //     reaches that branch — the refused `setNode` established the
+      //     ownership first, so the declaration stands (`§2.4` item 1) and the
+      //     call relinquishes an ownership the host cannot express.
+      //   · `render()`: the table's `render` row gives **one refusal per key the
+      //     call ATTEMPTS TO PLACE**. This drive reaches `render()` only AFTER
+      //     `remove('a')` has dropped the declaration's node, so the call
+      //     attempts to place NOTHING — zero refusals, `ok === true`. That is
+      //     the same unifying clause the `remove`-with-nothing-owned no-op is
+      //     read through (an operation that attempts NO node write produces no
+      //     container-state refusal) and `I-10` is not in conflict with it
+      //     (`I-10` is scoped to a SUCCESSFUL `render()`); the refusing
+      //     `render()` is asserted by `SH-REG-3` and `F-7`, where a node is
+      //     still held when it is driven.
+      //   · `setOrder(['b','a'])` on BOTH classes: WRITE-FREE — the method the
+      //     scoping exists for — `ok === true`, `refused` `[]`.
+      // Nothing is ever placeable on either shape, so `placed` is `[]`
+      // throughout.
+      const absent: [boolean, number] = [true, 0]
+      const unusableWrite: [boolean, number] = [false, 1]
+      // The UNUSABLE class's step-ordered readings: `render()` runs last and
+      // therefore finds nothing left to attempt.
+      const unusableAfterRemove: [boolean, number] = [true, 0]
+      const expected: Record<string, [boolean, number]> = {
+        "setNode('a', n)": containerState === 'absent' ? absent : unusableWrite,
+        "setOrder(['b','a'])": absent,
+        "remove('a')": containerState === 'absent' ? absent : unusableWrite,
+        'render()': containerState === 'absent' ? absent : unusableAfterRemove,
+      }
       const h = create({ container: v as unknown, keys: ['a', 'b'] })
       const n = nodeEl('n')
       const calls: Array<[string, () => unknown]> = [
@@ -1725,21 +1789,41 @@ describe('M — §3.1 the valid states', () => {
         expect(r.placed, `M-14 container: ${id} — ${callId}: placed is [] (the host has nowhere to place)`).toEqual([])
         if (callId.includes('nope')) {
           expect(r.ok, `M-14 container: ${id} — ${callId}: an UNDECLARED key is still refused`).toBe(false)
+          expect(r.refused.length, `M-14 container: ${id} — ${callId}: exactly ONE refusal`).toBe(1)
           expect(r.refused[0].code, `M-14 container: ${id} — ${callId}: code === 'unknown-key' (F-1)`).toBe('unknown-key')
-        } else if (absentClass) {
-          expect(r.ok, `M-14 container: ${id} — ${callId}: ok === true — nothing is refused (F-6)`).toBe(true)
+        } else if (containerState === 'absent') {
+          // COLUMN (a) — `§3.2 F-6`: no refusal, `ok === true`, everything a
+          // no-op (the host simply has nowhere to place).
+          expect(r.ok, `M-14 container: ${id} — ${callId}: ok === true — nothing is refused (F-6, column (a))`).toBe(true)
           expect(r.refused, `M-14 container: ${id} — ${callId}: refused is []`).toEqual([])
         } else {
-          // The F-7-class value: `I-1` still holds, and every refusal it produces
-          // is the EMITTED 'container-not-appendable' — never 'no-container'
-          // (F-11's negative) and never a fifth code.
-          expect(r.ok, `M-14 container: ${id} — ${callId}: I-1 (ok === (refused.length === 0)) holds on this class too`).toBe(
-            r.refused.length === 0,
-          )
+          // COLUMN (b) — `§3.2 F-7`'s PRESENT-BUT-UNUSABLE class, as the table's
+          // own clauses scope it: a call that ATTEMPTS a node write (`setNode`
+          // on a declared key; `remove` where the host owns the key's node —
+          // `§2.4` item 1, which is what the preceding refused `setNode` left
+          // standing — one refusal per key `render()` attempts to place) carries
+          // `ok === false` with EXACTLY ONE EMITTED `'container-not-appendable'`
+          // refusal, while a call that attempts NO node write carries `ok ===
+          // true` with `refused` `[]` (the WRITE-FREE `setOrder`, and a
+          // `render()`/`remove` with nothing left to attempt). Never
+          // 'no-container' (F-11's negative) and never a fifth code.
+          const [wantOk, wantRefusals] = expected[callId]
           expect(
-            r.refused.every((ref) => ref.code === 'container-not-appendable'),
-            `M-14 container: ${id} — ${callId}: every refusal on this value is the EMITTED 'container-not-appendable' (F-11: never 'no-container')`,
-          ).toBe(true)
+            r.ok,
+            `M-14 container: ${id} — ${callId}: ok === ${String(wantOk)} for this container state (§3.2 F-7's per-method table, column (b)); I-1 (ok === (refused.length === 0)) holds on this class too`,
+          ).toBe(wantOk)
+          expect(
+            r.refused.length,
+            `M-14 container: ${id} — ${callId}: ${wantRefusals} refusal(s) on this container state — §3.2 F-7's per-method table gives one refusal per attempted node write, and this drive's own step order decides which calls attempt one (the write-free 'setOrder', and a 'render()'/'remove' with nothing left to attempt, attempt none) (got ${JSON.stringify(r.refused.map((ref) => ref.code))})`,
+          ).toBe(wantRefusals)
+          if (wantRefusals === 1) {
+            expect(
+              r.refused[0].code,
+              `M-14 container: ${id} — ${callId}: the ONE refusal is the EMITTED 'container-not-appendable' (F-11: never 'no-container')`,
+            ).toBe('container-not-appendable')
+          } else {
+            expect(r.refused, `M-14 container: ${id} — ${callId}: refused is []`).toEqual([])
+          }
         }
         expect(r.order.length, `M-14 container: ${id} — ${callId}: order is still valid`).toBe(2)
       }
@@ -3842,5 +3926,443 @@ describe('§5.5.1 — the typed property register (6 rows, executed deterministi
       })
     }
     rec.finish()
+  })
+})
+
+// ===========================================================================
+// SH-REG-1..SH-REG-3 — THE TWO REAL DEFECTS THE BLIND GREENS RUN FOUND,
+// RE-PINNED AS REGRESSION ROWS (the RED half of the fix cycle). **The block is
+// APPENDED after `§5.5.1`'s register, and the register is NOT edited** (its six
+// rows, strategy ids, `20`-shape pool, `155` arithmetic and caps are exactly as
+// they were — the arithmetic PRE-2 checks is untouched). No existing row's id,
+// statement, drive or expectation is changed by this block.
+//
+// THE EVIDENCE THESE ROWS PIN (`docs/specs/slothost-greens.md`, read):
+//   · `§8.1` `SH-G-58` — **the run's one FAIL**: the control
+//     `setNode('a', c1)` → `setNode('a', c2)` reads `removedLen:1` /
+//     `removed0IsC1:true`, while the drive `setNode('a', n1)` →
+//     `setNode('b', n1)` (the `M-9` move) → `setNode('a', n2)` reads
+//     `replRemovedLen:0` / `removed0IsN1:false` (with `replPlaced:['a','b']`,
+//     `aHoldsN2:true`, `bHoldsN1:true`). **The same host reports the replaced
+//     node when no move precedes the write and does NOT report it when one
+//     does** — the move erases the ownership bookkeeping the report derives
+//     from.
+//   · `§8.2` `O-1` — with **no factory**, `container: 42` and `container:
+//     'div'` accept `setNode('a', node)` (`ok:true`, `refused:[]`,
+//     `placed:[]`), while `container: {}` refuses it (`ok:false`,
+//     `'container-not-appendable'`): a non-object container is read as ABSENT
+//     instead of PRESENT-BUT-UNUSABLE.
+//
+// THE CLAUSES THESE ROWS ARE DERIVED FROM (`docs/specs/slothost.md`, read in
+// its RECONCILED 2026-09-27 text):
+//   · `§2.1`'s `removed` doc string — *"Every node this call REMOVED (the ones
+//     the host had placed), by reference"* — with `§2.4` items 1–2 (*the host
+//     owns exactly the nodes it placed; on a replacement it removes exactly
+//     those*) and `§2.4` item 6 / `§3.1 M-9` (*a move leaves the first key
+//     holding no host-placed node*). The call that ends the host's ownership of
+//     the node under a key is the call that reports it — the pin `F-9`'s ruling
+//     gives the caller-detached shape, on the same bookkeeping path.
+//   · `§3.1 M-14`'s reconciled cell + `§3.2 F-7`'s trigger list + **the
+//     PER-METHOD TABLE under `§3.2 F-7`**: `null`/`undefined` are the ABSENT
+//     class (`§3.2 F-6`: no refusal, `ok === true`, `refused` `[]`, `placed`
+//     `[]`, `containerFor(k)` `null`), while `{}` / `42` / `'div'` are the
+//     PRESENT-BUT-UNUSABLE class — **one refusal per attempted node write**,
+//     `code === 'container-not-appendable'` (the EMITTED code), `ok === false`,
+//     `placed` `[]` — with `setOrder` `ok === true` on BOTH classes (write-free)
+//     and a `remove` with no host-owned node a no-op on BOTH, and the READS
+//     (`keys()`, `containerFor()`) returning their declared shape and never
+//     refusing (`I-8`'s scope clause).
+//   · `§2.1`'s refusal-code domain: `'no-container'` is DECLARED-BUT-NOT-EMITTED
+//     (`F-11`'s negative), so no cell of these rows may carry it.
+//
+// **NO `§3` ID IS CLAIMED BY THESE ROWS.** The clauses they pin already have
+// ids: the reconciliation changed the CONTRACT's reading of `M-14`
+// (`{}`/`42`/`'div'` are ONE class — the unusable one) without adding a row, and
+// `§8.1` says in writing that `§3.1` has no "move, then write for the vacated
+// key" row. Neither gap is closed from here: these rows are the regression pins,
+// authored RED-first, and the module is NOT touched by this pass. **What these
+// rows deliberately do NOT pin** (recorded, never guessed — see the rows'
+// comments): the MOVE's own `removed` membership (`M-9` is silent; `§8.2`
+// `O-2` records `removedLen:0`) and the `removed` membership of a `remove()` on
+// a container state where nothing was ever placeable.
+//
+// EXPECTED VERDICTS OF THIS PASS (measured, not assumed — each row logs its
+// own `SH-REG record ::` line carrying the values verbatim):
+//   `SH-REG-1` **RED** (the `removed` half; its control half is green) ·
+//   `SH-REG-2` **GREEN** (the absent class — the control for `SH-REG-3`) ·
+//   `SH-REG-3` **RED** on the `42` and `'div'` cells, green on the `{}` control
+//   cell.
+// ===========================================================================
+describe('SH-REG — the two blind-greens defects re-pinned (regression rows; no §3 id is claimed)', () => {
+  /** ONE `M-14` container value driven through the SAME call sequence on ONE
+   *  container-source configuration. It returns the observations AND the breaks
+   *  of the observables the two container-state classes SHARE, so the
+   *  class-specific halves are asserted by the calling row and every cell of a
+   *  cell table is driven before any cell's failure can stop the row. */
+  type CellObserved = {
+    id: string
+    setNodeOk: boolean
+    setNodeRefused: number
+    setNodeCodes: string[]
+    setNodePlacedLen: number
+    renderOk: boolean
+    renderRefused: number
+    renderCodes: string[]
+    setOrderOk: boolean
+    setOrderRefused: number
+    setOrderOrder: string[]
+    removeUnownedOk: boolean
+    removeUnownedRefused: number
+    removeOwnedOk: boolean
+    removeOwnedRefused: number
+    removeOwnedCodes: string[]
+    removeOwnedRemovedLen: number
+    keysReported: string[]
+    containerFor: unknown[]
+    disposeVoid: boolean
+    disposeAgainVoid: boolean
+    allCodes: string[]
+  }
+
+  function driveContainerCell(
+    mk: CreateSlotHost,
+    id: string,
+    value: unknown,
+  ): { o: CellObserved; breaks: string[] } {
+    const seen: SlotHostRefusal[] = []
+    const h = mk({
+      container: value,
+      keys: ['a', 'b'],
+      refuse: (ref: SlotHostRefusal) => {
+        seen.push(ref)
+      },
+    })
+    const node = nodeEl(`${id}-node`)
+    const lbl = (call: string): string => `SH-REG ${id} — ${call}`
+    // Every call below is driven through the file's own no-throw boundary
+    // (`§2.1`/`§3.3 I-8`: no method throws, for any input) and every
+    // result-returning call through `asResult` (the declared `SlotHostResult`
+    // field set + `I-1`), so "no throw" and the declared shapes are asserted on
+    // both classes.
+    const setNode = asResult(drive(() => h.setNode('a', node), lbl("setNode('a', n)")), lbl("setNode('a', n)"))
+    const render = asResult(drive(() => h.render(), lbl('render()')), lbl('render()'))
+    const setOrder = asResult(
+      drive(() => h.setOrder(['b', 'a']), lbl("setOrder(['b','a'])")),
+      lbl("setOrder(['b','a'])"),
+    )
+    // A `remove` on a key with NO host-owned node — the class-COMMON no-op half
+    // of `F-7`'s per-method table.
+    const removeUnowned = asResult(
+      drive(() => h.remove('b'), lbl("remove('b') — no host-owned node")),
+      lbl("remove('b') — no host-owned node"),
+    )
+    // The READS, driven AS reads (`I-8`'s scope clause: no `ok`, no `refused`,
+    // never funnelled through the result helper) — pinned BY VALUE.
+    const keysReported = [...(drive(() => h.keys(), lbl('keys()')) as readonly SlotKey[])]
+    const readKeys = ['a', 'b', 'nope']
+    const containerFor = readKeys.map((k) => drive(() => h.containerFor(k), lbl(`containerFor('${k}')`)))
+    // A `remove` on the key whose DECLARATION the host holds: the table's
+    // `remove` row's F-7 branch on the unusable class, a no-op on the absent
+    // class. Its `removed` membership is RECORDED, never scored (see the rows).
+    const removeOwned = asResult(
+      drive(() => h.remove('a'), lbl("remove('a') — the declaration stands")),
+      lbl("remove('a') — the declaration stands"),
+    )
+    const disposeVoid = drive(() => h.dispose(), lbl('dispose()')) === undefined
+    const disposeAgainVoid = drive(() => h.dispose(), lbl('dispose() #2 (idempotent)')) === undefined
+
+    const refusedLists: ReadonlyArray<readonly SlotHostRefusal[]> = [
+      setNode.refused,
+      render.refused,
+      setOrder.refused,
+      removeUnowned.refused,
+      removeOwned.refused,
+    ]
+    const allRefusals = [...refusedLists.flat(), ...seen]
+    const breaks: string[] = []
+    // ---- the class-COMMON observables (BOTH columns of the per-method table,
+    // plus `§2.1`'s code domain and `I-1`/`I-2`/`I-7`/`I-8`) ----------------
+    for (const ref of allRefusals) {
+      if (ref.code === NOT_EMITTED_CODE) {
+        breaks.push(`${id}: a refusal carries '${NOT_EMITTED_CODE}' — F-11: that member is DECLARED-BUT-NOT-EMITTED`)
+      } else if (!EMITTED_CODES.includes(ref.code)) {
+        breaks.push(`${id}: a refusal carries '${ref.code}', outside the THREE emitted members (§2.1)`)
+      }
+    }
+    if (setNode.placed.length !== 0) {
+      breaks.push(`${id}: setNode reported placed ${JSON.stringify(setNode.placed)} — placed is [] on BOTH container states`)
+    }
+    if (render.placed.length !== 0) {
+      breaks.push(`${id}: render reported placed ${JSON.stringify(render.placed)} — placed is [] on BOTH container states`)
+    }
+    if (!setOrder.ok || setOrder.refused.length !== 0) {
+      breaks.push(
+        `${id}: setOrder read ok=${String(setOrder.ok)} with ${JSON.stringify(setOrder.refused.map((r) => r.code))} — it is WRITE-FREE and ok === true on BOTH columns (F-7's per-method table)`,
+      )
+    }
+    if (JSON.stringify(keysReported) !== JSON.stringify([...setOrder.order])) {
+      breaks.push(
+        `${id}: keys() reads ${JSON.stringify(keysReported)} while the projected order is ${JSON.stringify([...setOrder.order])} — the projection is the host's own state (§2.5 item 3)`,
+      )
+    }
+    for (const k of ['a', 'b']) {
+      if (keysReported.indexOf(k) === -1) breaks.push(`${id}: keys() DROPPED the DECLARED key '${k}' (I-2/the reads' declared shape)`)
+    }
+    containerFor.forEach((v, i) => {
+      if (v !== null) {
+        breaks.push(
+          `${id}: containerFor('${readKeys[i]}') returned ${brief(v)} — BY VALUE null (never undefined) on BOTH columns of the per-method table`,
+        )
+      }
+    })
+    if (!removeUnowned.ok || removeUnowned.refused.length !== 0) {
+      breaks.push(
+        `${id}: remove() on a key with NO host-owned node read ok=${String(removeUnowned.ok)} with ${JSON.stringify(removeUnowned.refused.map((r) => r.code))} — a NO-OP with ok === true on BOTH columns (the unifying clause: it attempts no node write)`,
+      )
+    }
+    if (!disposeVoid || !disposeAgainVoid) {
+      breaks.push(`${id}: dispose() did not return void, or was not idempotent (§2.1; I-5)`)
+    }
+
+    const o: CellObserved = {
+      id,
+      setNodeOk: setNode.ok,
+      setNodeRefused: setNode.refused.length,
+      setNodeCodes: setNode.refused.map((r) => r.code),
+      setNodePlacedLen: setNode.placed.length,
+      renderOk: render.ok,
+      renderRefused: render.refused.length,
+      renderCodes: render.refused.map((r) => r.code),
+      setOrderOk: setOrder.ok,
+      setOrderRefused: setOrder.refused.length,
+      setOrderOrder: [...setOrder.order],
+      removeUnownedOk: removeUnowned.ok,
+      removeUnownedRefused: removeUnowned.refused.length,
+      removeOwnedOk: removeOwned.ok,
+      removeOwnedRefused: removeOwned.refused.length,
+      removeOwnedCodes: removeOwned.refused.map((r) => r.code),
+      removeOwnedRemovedLen: removeOwned.removed.length,
+      keysReported,
+      containerFor,
+      disposeVoid,
+      disposeAgainVoid,
+      allCodes: allRefusals.map((r) => r.code),
+    }
+    return { o, breaks }
+  }
+
+  it('SH-REG-1 (§2.1 `removed` doc string × §2.4 items 1–2/6 × §3.1 M-9/M-10; greens §8.1 `SH-G-58`) — a node REPLACED after an M-9 MOVE is reported in `removed`, exactly as the same host reports it with NO move', async () => {
+    const { create } = await surface('SH-REG-1')
+    // =====================================================================
+    // THE CONTROL HALF (no move) — the `M-10` shape, on the SAME host shape as
+    // the drive below (two declared keys, the harness's injected factory). It
+    // is the row's NON-VACUITY half: if this half did not report the replaced
+    // node, the row's RED claim would be unfalsifiable.
+    // =====================================================================
+    const controlContainer = mountEl()
+    const control = create({ container: controlContainer, keys: ['a', 'b'] })
+    const c1 = nodeEl('c1')
+    const c2 = nodeEl('c2')
+    control.setNode('a', c1)
+    const ctrl = asResult(
+      drive(() => control.setNode('a', c2), "SH-REG-1 control — setNode('a', c2), NO move precedes it"),
+      "SH-REG-1 control — setNode('a', c2), NO move precedes it",
+    )
+    // =====================================================================
+    // THE DRIVE — `setNode('a', n1)` → `setNode('b', n1)` (the `M-9` move) →
+    // `setNode('a', n2)` (the replacement the RED claim is about). The move's
+    // OWN `removed` membership is RECORDED, never scored: `M-9` does not pin it
+    // and `§8.2` `O-2` records the observed `0` as an open reading (`§8.4`
+    // item 1 lists both readings as derivable).
+    // =====================================================================
+    const driveContainer = mountEl()
+    const h = create({ container: driveContainer, keys: ['a', 'b'] })
+    const n1 = nodeEl('n1')
+    const n2 = nodeEl('n2')
+    h.setNode('a', n1)
+    const move = asResult(
+      drive(() => h.setNode('b', n1), "SH-REG-1 — setNode('b', n1) (the M-9 move)"),
+      "SH-REG-1 — setNode('b', n1) (the M-9 move)",
+    )
+    const afterMoveA = [...childrenOf(h.containerFor('a'))]
+    const afterMoveB = [...childrenOf(h.containerFor('b'))]
+    const repl = asResult(
+      drive(() => h.setNode('a', n2), "SH-REG-1 — setNode('a', n2) (the replacement of the vacated key)"),
+      "SH-REG-1 — setNode('a', n2) (the replacement of the vacated key)",
+    )
+    const kidsA = [...childrenOf(h.containerFor('a'))]
+    const kidsB = [...childrenOf(h.containerFor('b'))]
+    const replHasN1 = containsRef(repl.removed, n1)
+    const replHasN2 = containsRef(repl.removed, n2)
+    console.log(
+      `SH-REG record :: ${JSON.stringify({
+        row: 'SH-REG-1',
+        control: { placed: [...ctrl.placed], removedLen: ctrl.removed.length, removed0IsC1: ctrl.removed[0] === c1 },
+        move: { ok: move.ok, placed: [...move.placed], removedLen: move.removed.length },
+        repl: {
+          ok: repl.ok,
+          placed: [...repl.placed],
+          order: [...repl.order],
+          removedLen: repl.removed.length,
+          removedContainsN1: replHasN1,
+          removedContainsN2: replHasN2,
+          aHoldsN2: kidsA.length === 1 && kidsA[0] === n2,
+          aHoldsN1: containsRef(kidsA, n1),
+          bHoldsN1: kidsB.length === 1 && kidsB[0] === n1,
+        },
+      })}`,
+    )
+    // ---- THE CONTROL'S ASSERTIONS (`M-10`; expected GREEN) ---------------
+    expect(ctrl.removed.length, 'SH-REG-1 control (no move): the replaced node IS reported — `removed` holds exactly one node').toBe(1)
+    expect(ctrl.removed[0], 'SH-REG-1 control (no move): `removed[0]` IS c1, by reference (`§2.1`\'s `removed` doc string)').toBe(c1)
+    expect(ctrl.placed, "SH-REG-1 control (no move): `placed` is ['a'] — the replacement keeps the key placed (M-10)").toEqual(['a'])
+    // ---- `M-9`'s OWN HALVES (expected GREEN; `M-9` pins the move's tree and
+    // its `placed`) --------------------------------------------------------
+    expect(afterMoveA, "SH-REG-1: after the move, containerFor('a') NO LONGER holds n1 (§2.4 item 6 / M-9)").toEqual([])
+    expect(afterMoveB.length, "SH-REG-1: after the move, containerFor('b') holds exactly one child").toBe(1)
+    expect(afterMoveB[0], 'SH-REG-1: …and it IS n1, by reference (M-9)').toBe(n1)
+    expect(move.placed, "SH-REG-1: the move's own result reads placed === ['b'] (M-9)").toEqual(['b'])
+    // ---- THE TREE AFTER THE REPLACEMENT (expected GREEN) -----------------
+    expect(kidsA.length, "SH-REG-1: after setNode('a', n2), containerFor('a') holds exactly one child").toBe(1)
+    expect(kidsA[0], "SH-REG-1: …and it IS n2, by reference (M-10's tree half)").toBe(n2)
+    expect(kidsB.length, "SH-REG-1: the move SURVIVES the replacement — containerFor('b') still holds exactly one child").toBe(1)
+    expect(kidsB[0], "SH-REG-1: …and it IS still n1, by reference (§2.4 item 6)").toBe(n1)
+    expect(repl.ok, 'SH-REG-1: the replacement is a VALID call — ok === true with no refusal (§3.3 I-1)').toBe(true)
+    expect(repl.refused, 'SH-REG-1: refused is [] — nothing about this drive is a refusal').toEqual([])
+    expect(repl.order, 'SH-REG-1: order is unchanged by the move or the replacement').toEqual(['a', 'b'])
+    expect(repl.order.filter((k) => k === 'a').length, "SH-REG-1: 'a' still appears in order EXACTLY once (I-2)").toBe(1)
+    expect(repl.placed, "SH-REG-1: placed is a SUBSET of order and keeps the move's placement of 'b' (I-7)").toContain('b')
+    expect(replHasN2, 'SH-REG-1: `removed` does NOT name the node this call PLACED (n2) — it names the node it relinquished').toBe(false)
+    // ---- THE RED CLAIM, LAST, so every green half above has already run ---
+    expect(
+      replHasN1,
+      `SH-REG-1 — RED, §2.1's \`removed\` doc string ("Every node this call REMOVED (the ones the host had placed), by reference") + §2.4 items 1–2 + §3.1 M-9/M-10: the call setNode('a', n2) REPLACED the node the host had placed under 'a' — n1, which the preceding M-9 move put under 'b' — so n1 MUST be reported BY REFERENCE in this call's \`removed\`; the move must NOT erase the ownership bookkeeping the report is derived from. OBSERVED: removed.length=${repl.removed.length}, removedContainsN1=${String(replHasN1)}, removed=${brief(repl.removed)}. CONTROL HALF OF THIS SAME ROW (no move, M-10): removed.length=${ctrl.removed.length}, removed[0] === c1 → ${String(ctrl.removed[0] === c1)}.`,
+    ).toBe(true)
+  })
+
+  it('SH-REG-2 (§3.1 M-14 ABSENT half + §3.2 F-6 + the per-method table column (a); greens §8.2 O-1) — `container: null` / `undefined` is a supported NO-OP on BOTH container-source configurations: NO refusal, declared keys intact, nothing placeable', async () => {
+    const { create, bare } = await surface('SH-REG-2')
+    // =====================================================================
+    // THE ABSENT CLASS, and the CONTROL for `SH-REG-3`: the SAME drive sequence
+    // (the shared `driveContainerCell`) on the class the contract allows NO
+    // refusal, so a red in `SH-REG-3` cannot be read as a harness artefact.
+    // The two configurations are driven because the `container` value is
+    // classified BEFORE the source is consulted (`§2.1`'s container-source
+    // clause item 4: an absent container AND an absent factory are the SAME
+    // no-op state, once, not two stacked degradations).
+    // =====================================================================
+    const fails: string[] = []
+    const observed: CellObserved[] = []
+    const cells: Array<{ id: string; value: unknown; mk: CreateSlotHost }> = []
+    for (const [valueId, value] of [
+      ['null', null],
+      ['undefined', undefined],
+    ] as Array<[string, unknown]>) {
+      for (const [sourceId, mk] of [
+        ['no factory (bare)', bare],
+        ["the harness factory (§5.2), absent container", create],
+      ] as Array<[string, CreateSlotHost]>) {
+        cells.push({ id: `container: ${valueId} · ${sourceId}`, value, mk })
+      }
+    }
+    for (const cell of cells) {
+      const { o, breaks } = driveContainerCell(cell.mk, cell.id, cell.value)
+      observed.push(o)
+      fails.push(...breaks)
+      // The absent class produces NO refusal on ANY call, and every
+      // result-returning call is ok === true (§3.2 F-6, M-14's admitted half).
+      if (!o.setNodeOk || o.setNodeRefused !== 0) {
+        fails.push(
+          `${cell.id}: setNode('a', n) read ok=${String(o.setNodeOk)} with ${o.setNodeRefused} refusal(s) ${JSON.stringify(o.setNodeCodes)} — §3.2 F-6: the absent container is a supported no-op, NOT a refusal (ok === true, refused [])`,
+        )
+      }
+      if (!o.renderOk || o.renderRefused !== 0) {
+        fails.push(
+          `${cell.id}: render() read ok=${String(o.renderOk)} with ${o.renderRefused} refusal(s) ${JSON.stringify(o.renderCodes)} — §3.2 F-6 / column (a): no refusal, ok === true`,
+        )
+      }
+      if (!o.removeOwnedOk || o.removeOwnedRefused !== 0) {
+        fails.push(
+          `${cell.id}: remove('a') (the declaration stands) read ok=${String(o.removeOwnedOk)} with ${o.removeOwnedRefused} refusal(s) — column (a)'s remove row: no refusal, ok === true; its removed.length=${o.removeOwnedRemovedLen} is RECORDED, never scored (the contract does not pin that membership)`,
+        )
+      }
+      if (o.allCodes.length !== 0) {
+        fails.push(
+          `${cell.id}: the absent class produced refusal code(s) ${JSON.stringify(o.allCodes)} — it produces NONE (F-6; never '${NOT_EMITTED_CODE}', F-11)`,
+        )
+      }
+    }
+    console.log(`SH-REG record :: ${JSON.stringify({ row: 'SH-REG-2', cells: observed })}`)
+    expect(
+      fails,
+      `SH-REG-2 — §3.1 M-14's ABSENT half + §3.2 F-6 + the per-method table's column (a): container: null/undefined must be the supported no-op on both container-source configurations (no throw, ok === true, refused [], placed [], containerFor(k) === null by value, the DECLARED keys reported, no '${NOT_EMITTED_CODE}'), while setOrder stays ok === true and a remove with no host-owned node is a no-op.`,
+    ).toEqual([])
+  })
+
+  it("SH-REG-3 (§3.1 M-14's PRESENT-BUT-UNUSABLE half + §3.2 F-7's per-method table column (b); greens §8.2 O-1) — `{}`, `42` and `'div'` take the F-7 REFUSING path ('container-not-appendable' per attempted node write) on BOTH container-source configurations", async () => {
+    const { create, bare } = await surface('SH-REG-3')
+    // =====================================================================
+    // THE UNUSABLE CLASS — the CONTRACT puts `{}`, `42` and `'div'` in ONE class
+    // (`§3.1 M-14`'s reconciled cell: *"the five trigger values … are TWO
+    // CONTAINER STATES, not one"*, and `§3.2 F-7`'s trigger list), and the
+    // per-method table's column (b) gives that class the F-7 refusal on every
+    // call that attempts a NODE WRITE. `{}` is driven as the row's CONTROL cell
+    // (it refuses today, `SH-G-16`/`SH-G-28`), so the two red cells cannot make
+    // the row pass or fail vacuously.
+    // =====================================================================
+    const fails: string[] = []
+    const observed: CellObserved[] = []
+    const cells: Array<{ id: string; value: unknown; mk: CreateSlotHost }> = []
+    for (const [valueId, value] of [
+      ['{}', {}],
+      ['42', 42],
+      ["'div'", 'div'],
+    ] as Array<[string, unknown]>) {
+      for (const [sourceId, mk] of [
+        ['no factory (bare)', bare],
+        ['the harness factory (§5.2)', create],
+      ] as Array<[string, CreateSlotHost]>) {
+        cells.push({ id: `container: ${valueId} · ${sourceId}`, value, mk })
+      }
+    }
+    for (const cell of cells) {
+      const { o, breaks } = driveContainerCell(cell.mk, cell.id, cell.value)
+      observed.push(o)
+      fails.push(...breaks)
+      // ONE refusal per attempted NODE WRITE, with the EMITTED code, and
+      // ok === false — the three write-attempt calls of the shared drive.
+      const oneRefusal = (call: string, ok: boolean, codes: string[]): void => {
+        if (ok) {
+          fails.push(
+            `${cell.id}: ${call} read ok === true — §3.2 F-7 column (b) requires ok === false for a call that ATTEMPTS a node write into a present-but-unusable container`,
+          )
+        }
+        if (codes.length !== 1) {
+          fails.push(
+            `${cell.id}: ${call} produced ${codes.length} refusal(s) ${JSON.stringify(codes)} — the table's "once per attempted placement" is read as ONE refusal per attempted node write`,
+          )
+        } else if (codes[0] !== 'container-not-appendable') {
+          fails.push(
+            `${cell.id}: ${call} produced code ${JSON.stringify(codes[0])} — the EMITTED code for this class is 'container-not-appendable', NEVER '${NOT_EMITTED_CODE}' (F-11)`,
+          )
+        }
+      }
+      oneRefusal("setNode('a', n)", o.setNodeOk, o.setNodeCodes)
+      oneRefusal('render()', o.renderOk, o.renderCodes)
+      oneRefusal("remove('a') (the declaration stands)", o.removeOwnedOk, o.removeOwnedCodes)
+      // The class's every refusal is that ONE code — no fifth code, and never
+      // the declared-but-not-emitted member.
+      const foreign = o.allCodes.filter((c) => c !== 'container-not-appendable')
+      if (foreign.length !== 0) {
+        fails.push(
+          `${cell.id}: refusal code(s) ${JSON.stringify(foreign)} are outside this class's code — every refusal here is 'container-not-appendable' (§2.1's emitted domain; F-11's negative)`,
+        )
+      }
+    }
+    console.log(`SH-REG record :: ${JSON.stringify({ row: 'SH-REG-3', cells: observed })}`)
+    expect(
+      fails,
+      `SH-REG-3 — §3.1 M-14's PRESENT-BUT-UNUSABLE half (the three values {}, 42 and 'div' are ONE class) + §3.2 F-7's per-method table column (b): each of the three values must take the F-7 REFUSING path on both container-source configurations — ok === false with exactly one 'container-not-appendable' refusal per attempted node write (setNode / render / remove-with-ownership), while placed stays [], containerFor(k) is null by value, keys() reports the DECLARED keys, setOrder stays ok === true, a remove with no host-owned node is a no-op, and no refusal carries '${NOT_EMITTED_CODE}'.`,
+    ).toEqual([])
   })
 })
