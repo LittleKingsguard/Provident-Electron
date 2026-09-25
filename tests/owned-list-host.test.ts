@@ -1915,9 +1915,12 @@ describe('M — §3.1 the valid states', () => {
     //       `order === ['k']` (each key ONCE, `I-7`), `ok === false` (`I-1`);
     //   (3) the CLOSE state — `close('k')` on the now-known key removes `n`
     //       from the mount and fires `onClose` exactly once.
-    // RED TODAY (`ADV-LH-4`): the as-shipped host calls `seen.add(key)` BEFORE
-    // the node/factory question, so this drive yields TWO refusals
-    // (`no-node` + `duplicate-key`), `order === []` and NOTHING placed.
+    // GREEN REGRESSION ROW (`ADV-LH-4`, MED, `CONTRACT-AMENDED`): the host guard
+    // on the ACCEPTANCE rule has LANDED (`seen.add(key)` now runs only AFTER an
+    // occurrence is ACCEPTED), so the row pins §2.1's ACCEPTANCE rule + `N-5`.
+    // (2026-09-27 old wording, kept visible: "the as-shipped host calls
+    // `seen.add(key)` BEFORE the node/factory question, so this drive yields TWO
+    // refusals (`no-node` + `duplicate-key`) ... NOTHING placed".)
     // =====================================================================
     const { create } = await surface('M-19')
     const mount = mountEl()
@@ -2371,8 +2374,11 @@ describe('F — §3.2 the documented fail-states / refusals', () => {
     // F-2 and F-11 are TWO DIFFERENT SHAPES and both remain rows: F-2 is two
     // VALID occurrences (first-wins); F-11 is a REFUSED first occurrence
     // followed by a valid one (the valid occurrence wins the key outright).
-    // RED TODAY (`ADV-LH-4`): TWO refusals (`no-node` + `duplicate-key`),
-    // `order === []`, `placed === []`.
+    // GREEN REGRESSION ROW (`ADV-LH-4`, MED, `CONTRACT-AMENDED` — the REFUSAL
+    // half the `§3b`-1 row owes): the guard has LANDED, so ONE `no-node` refusal
+    // is the whole refusal set and the VALID occurrence is placed.
+    // (2026-09-27 old wording, kept visible: "TWO refusals (`no-node` +
+    // `duplicate-key`), `order === []`, `placed === []`".)
     // =====================================================================
     const { create } = await surface('F-11')
     const mount = mountEl()
@@ -2435,8 +2441,16 @@ describe('ADV-LH — the adversarial regression rows (§2.1 totality, per-seam s
     //       vocabulary is FIVE codes and none of them is "the comparator threw",
     //       so a swallowed `orderOf` throw contributes NO `ListHostRefusal`
     //       entry and `ok === true` when nothing was refused (`I-1`).
-    // RED TODAY: the as-shipped `setEntries` calls the projection OUTSIDE any
-    // `try`, so the throw escapes the row's very first drive.
+    // GREEN REGRESSION ROW — the `ADV-LH-1` "escape" was REVERSED to
+    // `NOT-A-FINDING` (code) by the 2026-09-27 documentation/supervisor
+    // verification: the comparator has ONE invocation site, inside
+    // `projectionFor`'s own `try/catch`, and `setOrder` never invokes it — so no
+    // escape EVER existed, and the row is a green positive regression row pinning
+    // §2.1's totality observable (`keys()`/placement/no invented refusal) with
+    // its assertions re-pinned to the correct drive boundary (`§3b`-1 `ADV-LH-1`).
+    // (2026-09-27 old wording, kept visible: the as-shipped `setEntries` "calls
+    // the projection OUTSIDE any `try`, so the throw escapes the row's very first
+    // drive".)
     // =====================================================================
     const { create } = await surface('ADV-LH-1')
     const mount = mountEl()
@@ -2588,7 +2602,11 @@ describe('ADV-LH — the adversarial regression rows (§2.1 totality, per-seam s
     // entry is refused **`factory-returned-null`** — the SAME class as a factory
     // that RETURNS `null`/`undefined` (`F-4`): no throw; `ok === false`; ONE
     // refusal; the key is NOT owned and ABSENT from `order` (`N-4`).
-    // RED TODAY: the factory's throw escapes `setEntries`.
+    // GREEN REGRESSION ROW — the `ADV-LH-3` `itemFactory` guard has LANDED, so
+    // the row pins the ONE `factory-returned-null` refusal with the key NOT owned
+    // (§2.1's injected-function clause; `§3b`'s `ADV-LH-3` table row).
+    // (2026-09-27 old wording, kept visible: "the factory's throw escapes
+    // `setEntries`".)
     const { create } = await surface('ADV-LH-3 · itemFactory')
     const mount = mountEl()
     const good = nodeEl('div', 'good')
@@ -2617,7 +2635,10 @@ describe('ADV-LH — the adversarial regression rows (§2.1 totality, per-seam s
     // The `§2.1` injected-function table's THIRD row: `onActivate` ⇒ the event
     // is **swallowed**: no throw; `ok === true`; the key stays owned; the
     // callback is attempted **exactly once** for that `activate(key)` (`M-9`).
-    // RED TODAY: the throw escapes `activate`.
+    // GREEN REGRESSION ROW — the `ADV-LH-3` `onActivate` guard has LANDED: the
+    // callback's throw is SWALLOWED and the key stays owned (§2.1's
+    // injected-function clause, third row; `§3b`'s `ADV-LH-3` table row).
+    // (2026-09-27 old wording, kept visible: "the throw escapes `activate`".)
     const { create } = await surface('ADV-LH-3 · onActivate')
     const mount = mountEl()
     const a = nodeEl('div', 'a')
@@ -2650,7 +2671,11 @@ describe('ADV-LH — the adversarial regression rows (§2.1 totality, per-seam s
     // throw; `ok === true`; the key is GONE from `keys()`; its node is removed
     // (`M-10`) and appears in `removed`; never "ownership dropped with no result
     // returned" (the `ADV-LH-3` finding's own wording).
-    // RED TODAY: the throw escapes `close`, WITH the ownership already dropped.
+    // GREEN REGRESSION ROW — the `ADV-LH-3` `onClose` guard has LANDED: the
+    // callback's throw is SWALLOWED with the drop STANDING and the declared
+    // result still returned (§2.1's injected-function clause, fourth row).
+    // (2026-09-27 old wording, kept visible: "the throw escapes `close`, WITH the
+    // ownership already dropped".)
     const { create } = await surface('ADV-LH-3 · onClose')
     const mount = mountEl()
     const a = nodeEl('div', 'a')

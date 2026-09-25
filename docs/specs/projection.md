@@ -910,6 +910,15 @@ The DONE row (`docs/next-steps.md`, the supervisor's pass) must carry, in this o
    (`AGENTS.md` items 10a/10d, RCA-4/6).
 9. **The tracker reconciliation** (`AGENTS.md` items 3/6).
 
+**⟶ RECORDED 2026-09-27: the `§5.3 → §5.5` numbering gap (there is NO `§5.4`) is DELIBERATE and needs
+NO fix — it is recorded here by the `U-LISTHOST` documentation review (`AGENTS.md` item 10d / RCA‑6;
+record `archive/reviews/2026-09-27-U-LISTHOST-doc-review.md`, finding **F‑12**).** `§5.3` is the
+DONE-row shape and `§5.5` is the property register; **NO clause is missing** — the section simply does
+not exist. **Renumbering is FORBIDDEN for citation stability** (the hazard `docs/pending.md`'s §G row
+names: `§5.3`/`§5.5` are cited many times across the trackers and the unit's own text). The same skip
+exists in `docs/specs/listhost.md` and `docs/specs/slothost.md`; **this note renumbers nothing and
+changes no clause of this spec.**
+
 ## 5.5 Typed Property register — **RECORDED ZERO-ROW EXEMPTION (justified), not a register**
 
 **`H-r4` obliges an explicit zero-row/typed-PBT decision per unit. Stated exactly as
