@@ -1995,7 +1995,7 @@ not an implementation choice.
    unresolved input as unresolved is the contract; silently picking an answer would be the `C-16`
    class (`RK-10` — a contract reverse-engineered from one consumer) — **and the ruling pack is the
    architect's answer to exactly that objection, so it is neither a silence nor an invention by this
-   filing.** **What remains OWED is not a ruling but the adversarial PASS itself** (§3a/§3b: it runs
+   filing.** **⟶ SUPERSEDED 2026-09-27 (the `U-PROJ` DONE pass — status/annotation only; the sentence is this FILING pass's state and is NOT current): the adversarial PASS HAS RUN** (gate 4, read-only + the read-only PBT audit — **`17` findings `ADV-PJ-1`..`-17`, all `20` `§3a` seeds ruled, all `14` implementer judgment calls ruled, no package defect**), its two HIGH findings are **FIXED and regression-tested**, and **`§3a`/`§3b` are no longer `OWED`** — read those sections' status lines. The paragraph below is kept as the filing pass's own text. *(As written:)* **What remains OWED is not a ruling but the adversarial PASS itself** (§3a/§3b: it runs
    after the green and re-checks each of these four **against the landed module** — `A-7`'s
    `CONFIRMED-RULED` carries an explicit `BLOCKING` escalation path if a re-entrancy case is ever
    found that `I-3` does not cover).
