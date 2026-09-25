@@ -3,13 +3,36 @@
 Status: **SPEC — FILED 2026-09-27** (wave **D**, unit **`U-MOUNTGUARD`**, the invariant half of
 `SCH-1` `SHELL-REGION-HOST`). **The unit has NOT run: nothing here is implemented, no probe exists,
 no red set has been authored and no leg has been run by this pass.** This pass files the contract.
+
+**⟶ AMENDMENT — 2026-09-27, the RED-SET pass (the same date; this is the unit's next gate).** The
+as-filed filing status above is **SUPERSEDED**, kept in place: the unit's **red set HAS been authored
+AND RUN**, so `H-r4`'s *"the red is written and RUN and REPORTED before any implementation"* is now
+**DISCHARGED**, not owed. **The run HIT the spec's own stop condition `S-1`** (§4.4) and produced
+**two contract findings this amendment records** (§3a's red-run block — `RED-1`…`RED-6`; and §3.1
+`M-11`/`M-12` + §1.1's wording for the teardown decision). **The unit's shape
+is therefore §6 outcome (b) — THE HOST-FIX BRANCH:** this unit is now the probe module **plus a fix
+in `src/renderer/runtime.ts`** with a **regression row** (§5.1 rows 1–3, §3.1 `M-17`/`M-18`, §3a).
+**The probe stays the unit's acceptance evidence** — nothing of §2.1's surface is weakened, and the
+acceptance is that the probe reports the invariant on the reproducer (§3a `RED-1`). **Evidence, dated
+and verbatim:** the red set is `tests/mount-invariant-guard.test.ts` (**41 rows: 39 red / 2 pass**,
+committed **`aa8b92e`**; the 2 green are the harness preconditions `PRE-1`/`PRE-2`, which are **not
+spec rows**); the raw observation is recorded in §3a's red-run block; the ledger is §4.6.
+*(**Struck in place, superseded:** this pass's own sentence — "**no red set has been authored**" —
+and §0 ruling 6's *"**Status of its red set: RED SET OWED — NOT AUTHORED, NOT RUN**"*. What the red
+run authorises is only `S-1`'s branch: **wave D is still not authorised as a whole**, and no other
+wave-D/E/F unit is touched by this amendment.)*
+
 **Go-ahead state — stated plainly: this unit is BLOCKED on the architect's go-ahead for the wave-D
 plan.** The go-ahead in force covers **wave B only** (`docs/specs/engine-drift.md` §0 ruling 1:
 *"the go-ahead is WAVE B ONLY … waves C–F are not authorised by this go-ahead"*), and it is
 **spent** — wave B landed. Wave **D** is authorised by no ruling currently on the record, so this
 unit's red set may not be RUN and it may not be delegated (`AGENTS.md` item 9).
 **Status of its red set: RED SET OWED — NOT AUTHORED, NOT RUN** (RCA-1: the red is written and RUN
-and REPORTED before any implementation). Source of this unit:
+and REPORTED before any implementation). **⟶ THAT CLAUSE IS SUPERSEDED (2026-09-27, the red-set pass;
+kept in place): the red set HAS been authored and RUN — see the amendment block above, §4.6's ledger
+and §0 ruling 6's updated cell. What survives of this paragraph is the go-ahead half: wave D is still
+authorised by no ruling on the record, so the unit may not be delegated and no implementation of it may
+land.** Source of this unit:
 `docs/specs/provident-electron-shell-chrome-handoff-review.md`'s appended
 **`Amendment record (A-d4…A-d8)` — the governing layer** (`S-d8`'s admission rule with the six
 prohibitions; the `SCH-1` per-item row in §2.2; the `U-MOUNTGUARD` rows in §2.1/§3; `H-r4`/`H-r8`
@@ -24,10 +47,10 @@ artifact and the four call sites).
 | --- | --- | --- |
 | **1** | **`SCH-1` IS SPLIT** (`S-d2`, unchanged): the **cross-envelope mount cardinality/identity invariant** is ADOPTED as this repo's own unit; the **region host** half (`ShellRegionName`/`ShellRegionSpec`/`ShellRegions`) is **DECLINED + REFILED to the fork** and **is not restored by A-d7**. | §3, §7 item 2 |
 | **2** | **The region half's blockers are `(C)#1` + `(C)#6`, NOT prohibition #5** (adjudicated in the amendment's §0 and restated in the `SCH-1` row of §2.2). It fails **(C)#1** as a consumer-specified closed region set and **(C)#6** (API-shape criteria plus a render-count row this repo refuses), and it is **redundant for the invariant it was meant to support** — a declared region sits **outside** the mount, so root counting is unaffected. | §3, §6 (prohibition table) |
-| **3** | **The falsification is BINDING and unchanged:** a cycle-2 load into one mount yielding **2** engine-emitted roots ⇒ **a HOST fix is owed**; **1** ⇒ **detection + pin only**, and **no guard ships if the adversarial pass finds no reproduction**. This is the *only* ruling that decides the unit's shape. | §4, §5.4, §7 item 3 |
+| **3** | **The falsification is BINDING and unchanged:** a cycle-2 load into one mount yielding **2** engine-emitted roots ⇒ **a HOST fix is owed**; **1** ⇒ **detection + pin only**, and **no guard ships if the adversarial pass finds no reproduction**. This is the *only* ruling that decides the unit's shape. **⟶ ITS OUTCOME IS MEASURED (2026-09-27, the red-set pass): the red run produced `{"childCount":2,"count":2,"nodeIds":["node-234","node-246"]}` on a Runtime constructed but never `bootstrap()`ed — one `loadEnvelope` into one mount leaves TWO engine-emitted direct children, and the NON-placement attribution run reproduces `count 2`, so the read is not placement-specific. Rule 3's FIRST branch therefore FIRES: a HOST fix IS owed, and this unit's shape is §6 outcome (b). The finding, its mechanism, its reachability and the fix's required achievement are §3a's red-run block; the stop-condition state is §4.4 `S-1`.** | §4, §5.4, §7 item 3 |
 | **4** | **The verification layer is HELD** (`S-d3`, `H-r5`): the DOM shim **must NOT be expanded**; real-DOM claims belong on the offscreen Electron legs. The **one** admitted shim carve-out (`H-r7`, `ShimElement.removeAttribute`) is **already landed** and is **not this unit's to touch**. | §2.2, §5.3, §6 (prohibition 6) |
 | **5** | **The mount invariant's current behaviour is UNPROVEN** (the amendment's Layer declaration item 2): *"`U-MOUNTGUARD`'s red run is what settles the cardinality; this record asserts none."* **This spec asserts none either.** The per-teardown test that exists (`tests/runtime-host.test.ts:150-161`, read) is a **per-teardown** statement, **not** a cross-envelope one. | §2.4, §4.1, §7 item 4 |
-| **6** | **The go-ahead for wave D does not exist yet.** The wave-B go-ahead is spent; *"No unit is delegable"* (amendment §3, `H-r20`). **This unit is BLOCKED on that go-ahead plus its red set.** | this status block, §4.5, §7 item 1 |
+| **6** | **The go-ahead for wave D does not exist yet.** The wave-B go-ahead is spent; *"No unit is delegable"* (amendment §3, `H-r20`). **This unit is BLOCKED on that go-ahead plus its red set.** **⟶ UPDATED (2026-09-27): the RED-SET half of this blocker is DISCHARGED** — the red set was authorised, written and RUN (`tests/mount-invariant-guard.test.ts`, 41 rows: 39 red / 2 pass, `aa8b92e`), so *"Status of its red set: RED SET OWED — NOT AUTHORED, NOT RUN"* above is **SUPERSEDED** and `AGENTS.md` item 9's condition (c) is met. **The architect's wave-D go-ahead half STANDS: this unit is still BLOCKED on it** for anything beyond `S-1`'s branch — and `S-1`'s branch (the probe + the `src/renderer/runtime.ts` fix + its regression row) is **itself implementation, so it is not delegable or landable under this amendment either.** | this status block, §4.5, §7 item 1 |
 
 ## Layer declaration (read this before any table below)
 
@@ -67,12 +90,32 @@ its only leg is the node suite (§5.3), and its optional real-DOM row is a `[U]`
 
 **One deliverable: a cross-envelope mount cardinality/identity probe** — the repo's own, in-tree
 half of `SCH-1` — plus its red set, and **conditionally** a host fix in `src/renderer/runtime.ts`
-**only if** the red run proves rule 3's two-root outcome.
+**only if** the red run proves rule 3's two-root outcome. **⟶ THE CONDITION IS DISCHARGED
+(2026-09-27, the red-set pass): the red run DID prove it (rule 3's first branch, §0 ruling 3's
+amendment; the evidence is §3a's red-run block). The deliverable is therefore now BOTH halves — (1)
+the module of §2.1 (`src/shared/mount-invariant-guard.ts`: the probe + the thin assert) and (2) **a
+HOST fix in `src/renderer/runtime.ts`** with a regression row (§5.1 rows 1–3, §3.1 `M-17`/`M-18`).
+The as-filed conditional phrasing above is kept visible and is **no longer conditional**. The fix is
+owed by THIS unit and is not a `docs/defects.md` row (§3a, §4.4 `S-1`, the `R13-HOST-FIX`
+precedent).**
 
 1. **What the invariant is, stated in this spec's own voice.** *For one stable mount and one
    re-derivation path, at every point where the graph has been re-derived, the mount holds exactly
    one engine-emitted root element, and that element is the graph's current root node.* The mount
-   reference may not change across re-derivations.
+   reference may not change across re-derivations. **⟶ AMENDED WORDING (2026-09-27, the red-set
+   pass) — read this as the governing phrasing, with the as-filed sentence kept above: *at every
+   point where the graph has been re-derived* means at every point where the four re-derivation
+   paths of item 4 **have produced a rendered graph** — `loadEnvelope`, `loadDoc`, the `code.*`
+   route, and a cycle of any of them. THE TEARDOWN PATH IS NOT SUCH A POINT, and the invariant does
+   **not** claim one root there: `teardown()` deliberately DETACHES the root element from the mount
+   while the graph KEEPS the root node (`inTree === 1`), so the measured state after `teardown()` is
+   **zero** engine-emitted direct children on the mount (§3.1 `M-11`/`M-12`, amended to the
+   measurement; `tests/runtime-host.test.ts:157`/`:160` assert `mount.innerHTML === ''` — the
+   serialization side of the same fact). **Two layers, two facts, and the amended `M-11`/`M-12` rows
+   assert BOTH halves.** *(**As-filed, superseded and kept visible:** the unqualified phrase "exactly
+   one engine-emitted root element" read literally over the teardown path is **WRONG** — the
+   measurement is `0` — and §3.2's own rule makes that state read as `'no-root'`, not as a
+   one-root state. This parenthetical is the supersession; the phrasing above is the correction.)***
 2. **What the probe is.** A **pure** function over an injected mount element (and an optional
    injected identity expectation + an optional injected callback) — **no ambient `document`, no
    `window`, no global lookup, no store, no I/O** (admission **(B)**; §2.1). It **observes**; it
@@ -82,7 +125,12 @@ half of `SCH-1` — plus its red set, and **conditionally** a host fix in `src/r
    probe + the regression rows, if the red run yields **2**. **Rule 3's third clause binds both
    outcomes: if the adversarial pass finds no reproduction, NO GUARD SHIPS** — the unit then lands
    as its recorded red evidence + this spec's rows as *contract rows that failed their own
-   falsification*, and the supervisor's DONE row must say so.
+   falsification*, and the supervisor's DONE row must say so. **⟶ THE CHOICE IS MADE (2026-09-27,
+   the red-set pass): branch (b) — the HOST fix + the probe + the regression rows. Branch (a) is NOT
+   taken (the red run yielded `count 2`, not `1`), and rule 3's third clause (`S-2`) stays live
+   against the ADVERSARIAL pass, which has not run: if that pass finds no reproduction, `S-2`'s
+   no-guard landing is still the outcome and the host fix's regression row is reported as
+   unreproduced rather than as green. The as-filed "either (a) … or (b)" phrasing is kept visible.**
 4. **The four re-derivation paths the invariant is stated over** (each read this pass; **one of the
    four anchors the sources cite is STALE — see §8**):
    `loadEnvelope` (`src/renderer/runtime.ts:303`), `loadDoc` (`:330`), `teardown` (`:560`), and the
@@ -278,26 +326,28 @@ into a test; **none is a measurement this pass took.**
 | --- | --- | --- | --- | --- |
 | **M-1** | **One engine-emitted root — fresh graph** | `new Runtime({ mount, envelope: demoEnvelope() })`; `bootstrap()`; `probeMountInvariant(mount)` | `ok === true`; `count === 1`; `roots.length === 1`; `violation === null`; `roots[0].nodeId` is a **non-empty** string; `roots[0].element` is a **direct child of the mount by reference** (present in `mount.children`) | `[T]`/`[H]` |
 | **M-2** | **One engine-emitted root — after ONE re-derivation** | `loadEnvelope(demoEnvelope())` (cycle 2) | `ok === true`; `count === 1`; `violation === null` | `[T]`/`[H]` |
-| **M-3** | **THE CROSS-ENVELOPE ROW (the unit's reason to exist)** | Two loads into **one** mount, in **one** sequence, with the **same** mount reference | `count === 1` **at every observation point** — before the first load, after the first, after the second, and after a third. **`count === 2` at any point is rule 3's HOST-fix branch** and the row is reported as such, never softened | `[T]`/`[H]` |
+| **M-3** | **THE CROSS-ENVELOPE ROW (the unit's reason to exist)** | Two loads into **one** mount, in **one** sequence, with the **same** mount reference | **⟶ AMENDED (2026-09-27, the red-set pass) — read this as the governing wording; the as-filed wording is kept below and marked.** **THE FIVE OBSERVATION POINTS, exact, and the count each one holds:** **P0** = constructed but **BEFORE `bootstrap()`** ⇒ **`count === 0`** — this is `F-2`'s state (`'no-root'`), **NOT** a one-root state; **P1** = after `bootstrap()` (the fresh graph, `M-1`'s state) ⇒ `count === 1`; **P2**/**P3**/**P4** = after load #1 / #2 / #3 ⇒ `count === 1` each. The row's required behaviour is therefore **`count === 1` at every observation point where the graph has been rendered (P1–P4), and `count === 0` at the pre-bootstrap point (P0)**; **`count === 2` at ANY point is rule 3's HOST-fix branch and the row is reported as such, never softened. ⟶ MEASURED (2026-09-27): this row's own five points read `0 / 1 / 1 / 1 / 1`, so `M-3`'s drive alone does NOT produce the two-root read — the `count === 2` observation was made by the **`M-14` reproducer** (`new Runtime(…) → loadEnvelope(placementEnvelope(4))`, the as-written `M-14` drive) and by its non-placement attribution run (§3a `RED-1`/`RED-2`). `M-3`'s expectations above are therefore UNCHANGED and its row stands; no expectation of it is loosened by the measurement.** *(**As-filed, superseded and kept visible:** *"`count === 1` **at every observation point** — before the first load, after the first, after the second, and after a third."* The bracketed "before the first load" cannot hold for a **pre-bootstrap** mount: a Runtime constructed and not yet `bootstrap()`ed has no rendered graph, and `F-2` pins that state at **`0`**. The two readings are reconciled by naming the point: **point 1 = the bootstrapped fresh graph** — the first observation point that is a root state — while the pre-bootstrap point is **recorded as `0`** and asserted as `F-2`'s state.)* | `[T]`/`[H]` |
 | **M-4** | **Identity — the root is the graph's current root node** | `probeMountInvariant(mount, { rootNodeId })` where `rootNodeId` is read from the graph (e.g. the in-tree node whose `propsId`/`cssId` matches the envelope's root) | `ok === true`; `roots[0].nodeId === rootNodeId`; `expectedRootNodeId === rootNodeId` | `[T]`/`[H]` |
 | **M-5** | **Cardinality-only mode omits the identity field** | `probeMountInvariant(mount)` (no `expect`) | `ok === true`; `expectedRootNodeId` is **absent** (`Object.prototype.hasOwnProperty` is `false` — not `undefined`, not `null`); prohibition-3 row | `[T]` |
 | **M-6** | **Mount identity does not change across re-derivations** | Capture `mount`; run N re-derivations; `probeMountInvariant(mount, { mount })` | Every call returns `mount` **by reference** equal to the captured mount; `violation` is never `'mount-reference-mismatch'` | `[T]`/`[H]` |
 | **M-7** | **Foreign siblings are reported, never swept** | Append two caller-created elements to the mount **before** the probe (no `data-node-id`); probe | `ok === true`; `count === 1`; `foreignSiblings.length === 2`; both are the **same references**, in document order; the probe **removed nothing** (`mount.children.length` unchanged) | `[T]` |
 | **M-8** | **A `null`/absent mount is a typed refusal, not a throw** | `probeMountInvariant(null)` / `undefined` / `''` / `42` | returns (does not throw); `ok === false`; `violation.code === 'mount-not-appendable'`; `count === 0`; `roots` empty; `mount` echoes the argument | `[T]` |
 | **M-9** | **A malformed `expect` is a typed refusal, not a throw** | `probeMountInvariant(mount, 'nope')` / `42` / `[]` | returns; `ok === false`; `violation.code === 'expect-mismatch'` | `[T]` |
-| **M-10** | **`assertMountInvariant` returns the probe's own result on success** | `assertMountInvariant(mount)` on M-1's state | returns an object **deep-equal** to the probe's result and **identity-equal** to the probe's single call result; throws nothing | `[T]`/`[H]` |
-| **M-11** | **`teardown` leaves exactly one engine-emitted root** | `teardown()` on the landed graph | `count === 1` and the probe reports that root as the **graph root** (the root stays in-tree — `src/renderer/runtime.ts:783-786` skips the root; read) — **the mount's direct children are exactly one `data-node-id` element after teardown**, matching `tests/runtime-host.test.ts:150-161`'s `mount.innerHTML === ''` from the **serialization** side of the same fact | `[T]`/`[H]` |
-| **M-12** | **`teardown` is idempotent across N cycles** | `teardown()` × 3 | `count === 1` after each; `ok === true` after each | `[T]`/`[H]` |
+| **M-10** | **`assertMountInvariant` returns the probe's own result on success** | `assertMountInvariant(mount)` on M-1's state | returns an object **deep-equal** to the probe's result and **identity-equal** to the probe's single call result; throws nothing. **⟶ LIMITATION RECORDED (2026-09-27, the red-set pass — the TestWriter's report): the "identity-equal to the probe's single call result" half is NOT OBSERVABLE on `[T]`.** §2.1's surface exposes **no seam** into the assertion's internal call (the probe is called inside `assertMountInvariant` and nothing is injected or instrumented), so a `[T]` row **cannot** compare the assertion's return value against the probe's *internal* single call. **The closest falsifiable form is used and it is this row's contract:** the assertion throws nothing on M-1's state, its result is **projection-deep-equal** to a separate `probe(mount)` call on the same state, and its result carries the **tree's own references, not copies** (`roots[0].element` is the same object as the direct child, and `roots[0].element` is identity-equal to the reference the separate probe call returned; `mount` echoes by reference). **"`assertMountInvariant` calls the probe exactly once" remains a §2.1 contract clause — it is stated, and it is NOT a `[T]` row of this unit**; a later pass that wants the identity half must add an admitted seam, which is a surface change and needs its own gate. | `[T]`/`[H]` |
+| **M-11** | **`teardown` leaves exactly one engine-emitted root** | `teardown()` on the landed graph | **⟶ AMENDED TO THE MEASUREMENT (2026-09-27, the red-set pass) — read this as the governing expectation; the as-filed expectation is kept below and marked.** **After `teardown()` the mount's engine-emitted direct children are `0` (`count === 0`) and the mount's serialization is EMPTY (`mountHTML: ""`).** The row therefore asserts **BOTH HALVES of the two-layer fact, and a pass may not assert only one:** **(a) THE MOUNT HALF** — the probe on the mount reports `count === 0`, `roots` empty, `ok === false`, `violation.code === 'no-root'` (§3.2's own rule: a state with no engine-emitted root **is** `'no-root'`), matching `tests/runtime-host.test.ts:157`/`:160`'s `mount.innerHTML === ''`; and **(b) THE GRAPH HALF** — the root node stays in the graph: the post-teardown census reads `inTree === 1`, and exactly one node is in tree (the root). **The root is deliberately detached from the mount while the graph keeps it; that is the whole content of this row.** A row that asserts `count === 1` after `teardown()` **contradicts the measurement and is not this contract.** *(**As-filed expectation, SUPERSEDED and kept visible:** *"`count === 1` and the probe reports that root as the **graph root** … **the mount's direct children are exactly one `data-node-id` element after teardown**, matching `tests/runtime-host.test.ts:150-161`'s `mount.innerHTML === ''` from the **serialization** side of the same fact."* **The measurement is `0`, and the cited serialization line says `''` — so the as-filed row was internally inconsistent: it took a one-root reading of a citation that asserts an EMPTY mount.** The citation resolves; the as-filed count does not.)* | `[T]`/`[H]` |
+| **M-12** | **`teardown` is idempotent across N cycles** | `teardown()` × 3 | **⟶ AMENDED TO THE MEASUREMENT (2026-09-27, the red-set pass), consistently with `M-11`: `count === 0` after EACH of the three cycles, with `mountHTML === ""` and the graph still `inTree === 1`; and `ok === false` with `violation.code === 'no-root'` after each. Idempotence is the row's subject: cycle 1, 2 and 3 all hold the SAME state (`0` on the mount, `1` in the graph) — a later cycle that produced a DIFFERENT count would be the failure the row rejects, in either direction (`1` or `2`).** *(**As-filed expectation, SUPERSEDED and kept visible:** *"`count === 1` after each; `ok === true` after each."* The measurement is `0` after each, so the as-filed half read the mount as still holding the root; the amended row keeps both halves of the two-layer fact instead.)* | `[T]`/`[H]` |
 | **M-13** | **The `code.*` route enters the same invariant** | `codeLoad(envelope)` (`src/renderer/runtime.ts:980`, which calls `loadEnvelope` at `:994`); then `codeLoadBatch([…])` (`:1016` → `codeLoad` at `:1064`) | `count === 1` after each; the **first** `codeLoadBatch` is the row that exercises the multi-step staging path | `[T]`/`[H]` |
-| **M-14** | **The placement-routed path obeys the same invariant** | `loadEnvelope(placementEnvelope(4))` — the path-enumeration `compilePath` case (`tests/runtime-host.test.ts:183-189`, read: `inTree === 7`) | `count === 1`; `ok === true`. **This is the row that distinguishes "one root" from "one element"** — a depth-4 tree emits many elements, and the probe counts only **direct mount children** | `[T]`/`[H]` |
+| **M-14** | **The placement-routed path obeys the same invariant** | `loadEnvelope(placementEnvelope(4))` — the path-enumeration `compilePath` case (`tests/runtime-host.test.ts:183-189`, read: `inTree === 7`) **⟶ MEASURED (2026-09-27, the red-set pass): this is the row that produced the `count 2` observation — the as-written drive is `new Runtime({mount, envelope}) → loadEnvelope(placementEnvelope(4))` with NO `bootstrap()` call — i.e. the §3a `RED-4` reachable sequence. This row is RED against the tree today.** | `count === 1`; `ok === true`. **This is the row that distinguishes "one root" from "one element"** — a depth-4 tree emits many elements, and the probe counts only **direct mount children** | `[T]`/`[H]` |
 | **M-15** | **`loadDoc` (the snapshot path) obeys the same invariant** | `loadDoc(doc)` where `doc` comes from `exportSerialized()` (`src/renderer/runtime.ts:516`) | `count === 1`; `ok === true` | `[T]`/`[H]` |
 | **M-16** | **Round-trip identity: legacy → serialized → legacy** | `loadEnvelope(env)` → `exportLegacy()` (`:501`) → `loadEnvelope(exported)` → `exportSerialized()` → `loadDoc(…)` | `count === 1` at each step; **no cycle accumulates a second root** | `[T]`/`[H]` |
+| **M-17** | **⟶ NEW (2026-09-27, the red-set pass) — THE HOST-FIX REGRESSION ROW (the reproducer of §3a `RED-1`)** | **`const mount = mountEl(); const rt = new Runtime({ mount, envelope: demoEnvelope() }); rt.loadEnvelope(demoEnvelope())`** — i.e. **a load into a Runtime that was CONSTRUCTED but NEVER `bootstrap()`ed**, which is exactly the landed host sequence at `tests/runtime-host.test.ts:183-189` and exactly the sequence the red run measured at `count 2` | **`count === 1`** (on the mount, engine-emitted DIRECT children, per §2.4) **and the probe reports `ok === true`, `count === 1`, `violation === null`** — the same expectations as `M-2`'s state, entered by the SEQUENCE rather than by the envelope. **This is the row that fails today** (§3a `RED-1`'s raw `{"childCount":2,"count":2,"nodeIds":["node-234","node-246"]}`) and the row the host fix must turn green. **It asserts the probe's result, not a private seam** — the probe of §2.1 is this unit's acceptance instrument. Preconditions the row asserts so it cannot pass for the wrong reason: the census reports a non-root graph (`inTree > 1`) and the mount is the SAME reference captured before the load | `[T]`/`[H]` |
+| **M-18** | **⟶ NEW (2026-09-27, the red-set pass) — the ATTRIBUTION row (the defect is not placement-specific)** | The same construct-then-load sequence of `M-17` with the **NON-placement** demo envelope, AND the placement-routed variant of `M-14` (`loadEnvelope(placementEnvelope(4))`) | **`count === 1` in both.** The red run measured **`count 2` in the non-placement attribution run** (§3a `RED-2`), so neither half may be excused as a placement artefact (§3a `RED-1`). The row exists so a fix that repairs only the path-enumeration case is **red**, not green | `[T]`/`[H]` |
 
 ### 3.2 Documented fail-states (each is a typed violation, and each is a row)
 
 | id | Fail-state | Trigger (exact) | Required behaviour | Layer |
 | --- | --- | --- | --- | --- |
-| **F-1** | **Two or more engine-emitted roots in one mount** — the defect class this unit exists for | Any re-derivation sequence whose mount holds ≥ 2 `data-node-id` direct children | `ok === false`; `violation.code === 'multiple-roots'`; `count === 2` (or N); `nodeIds` lists **every** child in document order; `assertMountInvariant` **throws** with the `multiple-roots` prefix. **RULE 3: this row is the HOST-FIX branch** — the finding lands in this spec's §3a (a host finding is **not** a `docs/defects.md` row: the `R13-HOST-FIX` precedent, `docs/decisions.md:39`, read) | `[T]`/`[H]` |
+| **F-1** | **Two or more engine-emitted roots in one mount** — the defect class this unit exists for | Any re-derivation sequence whose mount holds ≥ 2 `data-node-id` direct children | `ok === false`; `violation.code === 'multiple-roots'`; `count === 2` (or N); `nodeIds` lists **every** child in document order; `assertMountInvariant` **throws** with the `multiple-roots` prefix. **RULE 3: this row is the HOST-FIX branch** — the finding lands in this spec's §3a (a host finding is **not** a `docs/defects.md` row: the `R13-HOST-FIX` precedent, `docs/decisions.md:39`, read) **⟶ AND IT HAS FIRED (2026-09-27, the red-set pass): the defect class is INSTANTIATED in this tree, not hypothetical — §3a `RED-1` carries the verbatim two-root observation, and the `M-3`/`M-14` raw rows are its evidence. `F-1`'s own `twoRootState()` row (a **caller-supplied** second root) stays a distinct row: it pins the PROBE's report on a two-root mount, while `RED-1` pins the ENGINE's production of one via a load.** | `[T]`/`[H]` |
 | **F-2** | **Zero engine-emitted roots** | A mount with no `data-node-id` direct children — e.g. a mount never bootstrapped, or an empty fresh mount before `bootstrap()` | `ok === false`; `violation.code === 'no-root'`; `count === 0`; `roots` empty. **Not** an exception, and **not** reported as `ok` | `[T]` |
 | **F-3** | **Root identity mismatch** | Exactly one root whose `nodeId` ≠ `expect.rootNodeId` (e.g. a **stale** expectation captured before a reload whose envelope has a different root) | `ok === false`; `violation.code === 'root-identity-mismatch'`; `count === 1`; `expectedRootNodeId === expect.rootNodeId`; `nodeIds[0]` is the **observed** root | `[T]`/`[H]` |
 | **F-4** | **Mount reference mismatch** | `probeMountInvariant(mountB, { mount: mountA })` where `mountA !== mountB` | `ok === false`; `violation.code === 'mount-reference-mismatch'`. **This is the row that makes "one stable mount" checkable** — it is a violation of the caller's own claim, not of the tree | `[T]` |
@@ -312,7 +362,7 @@ into a test; **none is a measurement this pass took.**
 
 | id | Invariant | Why it is here |
 | --- | --- | --- |
-| **I-1** | `roots.length === count` **always**, and `nodeIds.length === count` **always** | The three fields cannot disagree; a row asserts it for M-1, M-8, F-1 and F-5 |
+| **I-1** | `roots.length === count` **always**, and `nodeIds.length === count` **always** | The three fields cannot disagree; a row asserts it for M-1, M-8, F-1 and F-5. **⟶ AMENDED (2026-09-27, the red-set pass) — read this as the governing wording, and do NOT satisfy it literally by adding a field.** **`nodeIds` is NOT a top-level field of the result**: §2.1's surface has **no top-level `nodeIds`** — it lives on `MountViolation.nodeIds` alone, and §2.1's exact-surface rule plus `S-2` (the surface row) **fail a module that adds one**. The invariant therefore reads: **`roots.length === count` always**, and **the `nodeIds` list, in whichever layer it exists, has length `=== count`** — the violation's `nodeIds` in every **non-`ok`** state (where §2.1 requires it), and `roots.map(r => r.nodeId)` in the **`ok`** state (where there is no violation to carry it). **A row asserts exactly that, for `M-1`, `M-8`, `F-1` and `F-5`.** *(**As-filed, superseded and kept visible:** *"`nodeIds.length === count` **always**"* — read literally it demands a top-level `nodeIds`, which would **break `S-2`** and §2.1's exact-surface rule; the red set already reads the list from the violation else from `roots`, which is the corrected reading.)* |
 | **I-2** | `violation === null` **iff** `ok === true`; `violation !== null` **iff** `ok === false` | No "ok with a violation" state exists |
 | **I-3** | The probe performs **zero** writes: `mount.children` is **reference-identical (element-by-element, in order)** before and after every call, and no child's attribute set changes | The read-only claim, made falsifiable |
 | **I-4** | The probe holds **no state**: calling it twice with the same arguments returns deep-equal results, and the second call is unaffected by the first | Prohibition 4's row |
@@ -366,13 +416,19 @@ count — never as a summary.** A red run reported as *"the probe does not exist
 
 ### 4.4 The stop conditions (binding)
 
-| # | Stop condition | Required behaviour |
-| --- | --- | --- |
-| **S-1** | The cycle-2 count is **2** | **STOP implementation of the probe-first sequence and take the HOST-fix branch** — fix `src/renderer/runtime.ts`, add the regression rows, and record the finding in §3a. **Do not ship the probe as if the invariant held.** |
-| **S-2** | The adversarial pass finds **no reproduction** of a violation | **NO GUARD SHIPS** (rule 3's third clause). The unit lands as its red evidence + this spec's rows as contract rows; the DONE row must say *"the guard was not shipped because its falsification produced no reproduction"* in exactly those terms. |
-| **S-3** | The red run cannot obtain a raw `count` | The red is **incomplete**; report that, and do not proceed to implementation. |
-| **S-4** | The probe "needs" a new shim member, a global lookup, or a render call | **Scope violation** — re-read §2.4 and re-write the probe. |
-| **S-5** | A row of §3 turns out to be unverifiable on `[T]`/`[H]` | The row moves to §7's honest statements as **UNPROVABLE AT THIS LAYER**; it may not be moved to the `[U]` leg silently. |
+**⟶ STATE OF THE TABLE (2026-09-27, the red-set pass — the table itself is NOT re-ordered, re-numbered
+or re-worded; this column records each stop condition's measured state):** **`S-1` is HIT AND
+TAKEN.** `S-2`, `S-3`, `S-4` and `S-5` are **NOT reached / still live** (`S-2` binds the adversarial
+pass, which has not run; `S-3` is discharged — the red DID obtain raw counts; `S-4` did not fire;
+`S-5` did not fire).
+
+| # | Stop condition | Required behaviour | **State (2026-09-27)** |
+| --- | --- | --- | --- |
+| **S-1** | The cycle-2 count is **2** | **STOP implementation of the probe-first sequence and take the HOST-fix branch** — fix `src/renderer/runtime.ts`, add the regression rows, and record the finding in §3a. **Do not ship the probe as if the invariant held.** | **⟶ HIT AND TAKEN.** The measured count is **2** (`{"childCount":2,"count":2,"nodeIds":["node-234","node-246"]}`) — not only on a cycle-2 load but on **the first** `loadEnvelope` into a **never-`bootstrap()`ed** Runtime; the **non-placement attribution run also reads `2`**. The probe-first sequence is **STOPPED**: this unit's shape is the **HOST-fix branch** (the module + a `src/renderer/runtime.ts` fix + regression rows `M-17`/`M-18`), the finding is recorded **in §3a's red-run block** (§4.4's own instruction: `§3a`, **not** `docs/defects.md`), and **the probe is NOT shipped as if the invariant held** — it ships as the instrument whose reproducer row `M-17` is the acceptance evidence. *(**Superseded, kept visible:** the as-filed cell *"STOP implementation of the probe-first sequence and take the HOST-fix branch"* is unamended and is exactly what was done; only its **state** is new.)* |
+| **S-2** | The adversarial pass finds **no reproduction** of a violation | **NO GUARD SHIPS** (rule 3's third clause). The unit lands as its red evidence + this spec's rows as contract rows; the DONE row must say *"the guard was not shipped because its falsification produced no reproduction"* in exactly those terms. | **NOT REACHED — LIVE.** The adversarial pass has **not run** (RCA-3 runs after a green, and the unit has no green). The red run is **not** the adversarial pass: it produced the reproduction, so `S-2` is not triggered by it, and it remains the pass's binding clause if the later adversarial pass fails to reproduce. |
+| **S-3** | The red run cannot obtain a raw `count` | The red is **incomplete**; report that, and do not proceed to implementation. | **DISCHARGED — raw counts WERE obtained** (both the cycle-2 sequence's and the attribution run's), reported verbatim per §4.1. |
+| **S-4** | The probe "needs" a new shim member, a global lookup, or a render call | **Scope violation** — re-read §2.4 and re-write the probe. | **NOT FIRED.** The red set added **no shim member** and required none; the raw measurement is taken through the shim's already-public surface (`children`, `getAttribute`, `outerHTML`). |
+| **S-5** | A row of §3 turns out to be unverifiable on `[T]`/`[H]` | The row moves to §7's honest statements as **UNPROVABLE AT THIS LAYER**; it may not be moved to the `[U]` leg silently. | **NOT FIRED — but one HALF of `M-10` is unobservable on `[T]`, and it is recorded in §7, not moved silently** (§7 item 14, `M-10`'s limitation). No row of §3 moved to the `[U]` leg. |
 
 ### 4.5 Delegation gate
 
@@ -382,6 +438,30 @@ count — never as a summary.** A red run reported as *"the probe does not exist
 (`AGENTS.md` item 9). Its row in `docs/next-steps.md` `## OPEN` (D1) is `BLOCKED` and stays
 `BLOCKED` until (a) and (c) are both true.
 
+**⟶ UPDATED (2026-09-27, the red-set pass): condition (c) is now TRUE** — a TestWriter **has RUN and
+REPORTED** the red set (§4.6 below), and **(a) — the architect's wave-D go-ahead — is still FALSE**,
+so the gate's verdict is **unchanged: NOT delegable.** The unit's remaining work (the module + the
+`src/renderer/runtime.ts` host fix + the regression rows) is **implementation**, so it may not be
+delegated or landed until that go-ahead exists. **No status line of this subsection is rewritten; the
+as-filed `BLOCKED` reasoning stands and only its (c)-half is discharged.**
+
+### 4.6 The red set as RUN and REPORTED (2026-09-27, the red-set pass) — the unit's decisive record
+
+**Everything in this subsection is a MEASUREMENT made by the red run, or the ledger of that run's
+rows. It is the one place in this file where a row is evidence rather than contract** (the Layer
+declaration's rule is otherwise absolute: *every row below is a contract row, never a measurement* —
+this subsection is the declared exception, added by the amendment, and it cites no leg as passed
+beyond the red set itself).
+
+| # | Item | Value |
+| --- | --- | --- |
+| 1 | The red file | **`tests/mount-invariant-guard.test.ts`** — **NEW**, §5.1 row 2, committed **`aa8b92e`** |
+| 2 | **THE LEDGER** | **41 rows total: `39` red / `2` green.** The **2 green** are **`PRE-1`/`PRE-2`** — the **harness preconditions**, which are **NOT spec rows** (they assert the red file's own import boundary and its raw tree-reader mirror, so "a red row cannot be a harness artefact"). Their green is a **precondition fact, not a spec-row pass.** |
+| 3 | **The 39 red, split by cause** | **36** red **because the module is absent** (`S-1`…`S-7`, the `§2.1` surface + `§2.2` prohibition rows, and every row whose first reach is the import boundary) **+ 3** red **AGAINST THE TREE, with the module irrelevant to the failure**: **`M-14` (raw `count 2` — the `S-1` host-fix branch)**, **`M-11` and `M-12` (raw `count 0` after `teardown()`, contradicting the as-filed one-root expectation)**. **The 3 are the findings** (Finding 1 and Finding 2 of this amendment); the 36 are the expected `module-absent` class of §4.2 step 2. |
+| 4 | **The 39 spec-declared rows, exactly (the arithmetic, so no later pass reads a row as missing)** | The file asserts **39 spec-declared rows**: **`I-1`…`I-6` (6) + `M-1`…`M-16` (16) + `F-1`…`F-10` (10) = 32 ided rows**, **plus `S-1`…`S-7` (7)** — the `§2.1` exactly-surface rows (`S-1` exports, `S-2` return shape, `S-3` throw pattern) and the `§2.2` six-prohibition rows (`S-4`…`S-7`), which the spec states as its own contract but to which it gives **no `M`/`I`/`F` id**. **32 + 7 = 39**; adding the **2 harness preconditions** (`PRE-1`/`PRE-2`, **not spec rows**) gives the file's **41** rows. **Each `S` row is one row covering a declared group — the file's own header and §4.2 item 1 state that mapping — so no row of the file lacks a spec source and no spec obligation lacks a row.** |
+| 5 | **The decisive raw observations** | **The reproducer, verbatim (first load into a mount on a Runtime never `bootstrap()`ed — the `M-14` drive and `M-17`'s sequence):** `{"childCount":2,"count":2,"nodeIds":["node-234","node-246"]}`. **The `M-3` five-point drive itself read `0 / 1 / 1 / 1 / 1`** (the pre-bootstrap point is `0`, `F-2`'s state; the four rendered points are `1`). **Attribution run (the NON-placement demo envelope, same sequence): `count 2`** (§3a `RED-2`). **After `teardown()`:** `count 0`, `mountHTML: ""` (`M-11`/`M-12`). **The verbatim per-row reports are §3a's red-run block; the mechanism, reachability and owed fix are there too.** |
+| 6 | **The `[U]` row** | **§5.2's OPTIONAL `[U]` row was NOT TAKEN.** Reason: it needs the `ui` leg and is precondition-gated; §3's rows are all `[T]`/`[H]` and stand alone, so nothing in §3 is weakened by its absence. **Recorded in the DONE row's item 7 per §5.3.** |
+
 ## 5. Wiring
 
 ### 5.1 Diff scope (what this unit may touch)
@@ -390,7 +470,7 @@ count — never as a summary.** A red run reported as *"the probe does not exist
 | --- | --- | --- | --- |
 | 1 | `src/shared/mount-invariant-guard.ts` | **NEW** — the four exports of §2.1 | always |
 | 2 | `tests/mount-invariant-guard.test.ts` | **NEW** — the red set (§4.2) | always |
-| 3 | `src/renderer/runtime.ts` | a **host fix** on the teardown/diff-removal path | **only** under rule 3's two-root branch (S-1), with a regression row |
+| 3 | `src/renderer/runtime.ts` | a **host fix** on the teardown/diff-removal path | **only** under rule 3's two-root branch (S-1), with a regression row. **⟶ THE CONDITION IS MET (2026-09-27, the red-set pass): the two-root branch is TAKEN (§4.4 `S-1`, §3a `RED-1`), so this row is now an OBLIGATION of this unit — and it is OWED, not landed: no `src/**` file has been touched by the red-set pass or by this amendment.** The fix's required achievement is §3a's red-run block, its regression rows are §3.1 `M-17`/`M-18`, and its acceptance instrument is §2.1's probe |
 | 4 | `docs/specs/mount-invariant-guard.md` | this spec — §3a/§3b findings as they land, §7 additions | always |
 | 5 | `docs/next-steps.md` · `docs/decisions.md` · `docs/pending.md` · `docs/defects.md` | the unit's own tracker rows (the supervisor's DONE row; a decision row **if** a host fix lands; **no** `defects.md` row — host finding) | the pass that produces them |
 
@@ -414,7 +494,15 @@ therefore listed here **as obligations, not as new claims**. **No battery, no di
 unit asserts no MCP-surface behaviour and no real-DOM property.
 
 **OPTIONAL `[U]` row (needs the `ui` leg — and names its precondition):** the real-DOM
-cardinality row — *one mount, one real-DOM root element after a cycle-2 load*. **Preconditions, all
+cardinality row — *one mount, one real-DOM root element after a cycle-2 load*. **⟶ STATUS OF THIS ROW
+(2026-09-27, the red-set pass): NOT TAKEN — and its non-taking is correct, not a gap.** The red set
+ran **only** the node suite (§5.2 row 1); every §3 row is `[T]`/`[H]` and stands alone, so **nothing
+in §3 is weakened** by the row's absence. **This row is now MORE relevant than it was, and that is
+recorded rather than exploited:** the measured defect (§3a `RED-1`) is a **host-side** cardinality
+defect, and a real-DOM `[U]` row is the layer that could confirm it in a real renderer — but the row
+stays **optional + precondition-gated**, and **no claim about the real DOM is made anywhere in this
+unit** (Layer declaration anchor 3). **If it is taken, it is taken with its preconditions; it is never
+a substitute for `M-17`/`M-18`, which are the acceptance rows.** **Preconditions, all
 named and none assumed:** (a) the `ui` leg exists and is green on the same built tree,
 (b) `npm run divergence` is green for that tree, and (c) — for any **attribute-presence**-shaped
 variant of the row — the `H-r10` attribute-presence extractor, which is owed to
@@ -492,22 +580,48 @@ guard to justify itself.** The three outcomes, exhaustively:
 **A fourth outcome is not admissible.** *"The probe was needed because the invariant says so"* is not
 an outcome — it is a restatement of the claim under test.
 
+**⟶ THE OUTCOME IS SELECTED (2026-09-27, the red-set pass): `(b) HOST FIX`.** The falsification
+**DID** produce two engine-emitted roots (§4.4 `S-1`, §3a `RED-1`/`RED-2`), so the unit lands as
+**a fix in `src/renderer/runtime.ts` + its regression rows (`M-17`/`M-18`) + the `§3a` finding**, with
+**the probe shipping as the regression's instrument** — outcome (b)'s own text, unamended. **Outcome
+(a) is NOT selected** (the red run did not yield `count === 1`). **Outcome (c) is not selected and is
+NOT foreclosed:** rule 3's third clause (§4.4 `S-2`) keeps it live until the adversarial pass runs and
+either reproduces the violation or does not — **a fix landed before that pass is not yet a fixed
+finding, and the DONE row must say which of (b)/(c) governs.**
+
 ## 7. Honest statements (recorded so no later pass over-reads this unit)
 
-1. **Nothing in this unit is `DONE`, nothing is green, and no leg has been run by this pass.** This
+1. **Nothing in this unit is `DONE`, nothing is green, and no leg has been run by this pass.**
+   **⟶ AMENDED (2026-09-27, the red-set pass): ONE leg has been run — the RED node-suite run (§4.6) —
+   and it is NOT a green; nothing in this unit is `DONE`, and the trio has not been run (no
+   implementation exists to run it against). The as-filed sentence's *"no leg has been run"* is
+   superseded by that one fact and kept visible; its substance (no green, nothing DONE) is
+   unchanged.** This
    pass files the contract. **The unit is BLOCKED on the architect's go-ahead for wave D and on its
-   red set** (§0 ruling 6, §4.5). The wave-B go-ahead authorises **nothing here**.
+   red set** (§0 ruling 6, §4.5). The wave-B go-ahead authorises **nothing here**. **⟶ The *"and on
+   its red set"* half of that blocker sentence is now SPENT (the red set has been run, §4.6); the
+   wave-D go-ahead half STANDS.**
 2. **The region host stays DECLINED and this file must not be read as adopting it.** `SCH-1`'s
    region half is refiled to the fork; its blockers are `(C)#1` and `(C)#6` (**not** prohibition 5),
    and it is redundant for the invariant. **A later pass that re-merges the two halves to satisfy
    one fork request is repeating a landed ruling.**
 3. **The unit's shape is CONDITIONAL.** Rule 3 decides between detection-only, a host fix, and no
    guard at all — and **the third outcome is allowed**. Any document that presents the guard as a
-   certainty of this unit is over-reading §0 ruling 3.
+   certainty of this unit is over-reading §0 ruling 3. **⟶ AMENDED (2026-09-27, the red-set pass):
+   the CONDITION IS RESOLVED — §6 outcome (b), the HOST-fix branch — so the shape is no longer
+   conditional *as to which branch*; what remains open is whether the later adversarial pass
+   reproduces the violation (`S-2`), which is the third outcome's own trigger. The as-filed sentence
+   is kept: it was true, and it is exactly what the red run settled.**
 4. **The mount invariant's current behaviour is UNPROVEN, and this spec asserts no cardinality.**
    The per-teardown test at `tests/runtime-host.test.ts:150-161` (read) is a **per-teardown**
    statement; the validity pass's characterization of it as *"diff-based emptying exists and is
-   tested"* is **not** a cross-envelope statement. **Rule 3's red run is what settles it.**
+   tested"* is **not** a cross-envelope statement. **Rule 3's red run is what settles it. ⟶ IT HAS
+   SETTLED IT (2026-09-27): the cross-envelope behaviour is now MEASURED, not unproven — two
+   engine-emitted roots on the construct-then-load sequence (§3a `RED-1`), and zero on the mount
+   after `teardown()` (§3a `RED-6`/§4.6 item 5, `M-11`/`M-12` amended). The as-filed sentence is
+   kept because it is the state the red run was owed to end; the *per-teardown* citation above is
+   still accurate as a per-teardown statement, and the amended `M-11`/`M-12` are the per-teardown
+   rows.**
 5. **A node-suite green is envelope/pure-layer evidence, never assembled-app evidence** — and for
    this unit it is also **never real-DOM-tree evidence** (the shim has no layout, no CSS, no query
    API). The `[U]` row is optional and precondition-gated (§5.2).
@@ -524,7 +638,10 @@ an outcome — it is a restatement of the claim under test.
    `MULTI-GRAPH-ISOLATION` at `:51`, `UI-RENDERED-WITH-PROVIDENT` at `:53`,
    `SHELL-CHROME-CARVE-OUT-FUNCTIONAL` at `:54`, `SHELL-CHROME-HANDOFF-DISPOSITION` at `:58`. **Every
    one is cited here by ID as well as by line**, per the gate record's own "cite this record by ID,
-   not by line" rule (`§7` item 7).
+   not by line" rule (`§7` item 7). **⟶ STALE IN ONE RESPECT (2026-09-27) — only the *line count*
+   ("406 lines") is stale, and it is kept visible: read item 17 below as the governing note. The
+   structure description above and the six row anchors still resolve as claimed, and all six are
+   cited by ID as well as by line.**
 8. **Stale citations this pass found and did NOT fix (they are not this unit's files to edit — the
    rule is report, do not silently reconcile):** see §8's closing block. **Every anchor this spec
    cites by line was read by this pass**; every anchor this spec could **not** verify is either
@@ -540,6 +657,39 @@ an outcome — it is a restatement of the claim under test.
     that only throws cannot produce the evidence rule 3 requires; an implementation that only
     returns cannot be used as a regression assertion. **Both are required, and the split is a
     contract decision recorded here** (the sources name the probe only by its purpose).
+12. **⟶ ADDED (2026-09-27, the red-set pass). The red set was RUN and it HIT `S-1`; this unit's shape
+    is the HOST-fix branch.** Stated so no later pass reads the as-filed conditional shape: §4.6
+    carries the ledger (41 rows · 39 red / 2 pass · the 2 green are harness preconditions, not spec
+    rows), §3a `RED-1`…`RED-6` carry the finding, mechanism, reachability and the fix's required
+    achievement, and §3.1 `M-17`/`M-18` are the regression rows the fix must turn green. **The probe
+    has NOT been implemented, the host fix has NOT landed, and no leg beyond the red node-suite run
+    has been run by this amendment.**
+13. **⟶ ADDED (2026-09-27). The teardown path is EXCLUDED from §1.1's invariant, and the exclusion is
+    a measurement, not a preference.** `M-11`/`M-12` are amended to the measured `count === 0` on the
+    mount with the graph's `inTree === 1` retained; the mount is empty after `teardown()` and the root
+    leaves the mount while staying in the graph. **Both halves must be asserted together** — a
+    one-half reading is the contradiction this amendment removed.
+14. **⟶ ADDED (2026-09-27). `M-10`'s identity half is NOT observable on `[T]`**, and the row records
+    its closest falsifiable form (§3.1 `M-10`). *"Calls the probe exactly once"* stays a `§2.1`
+    contract clause; it is **not** a row of this unit, and adding a seam to observe it would be a
+    surface change needing its own gate.
+15. **⟶ ADDED (2026-09-27). The `[U]` row of §5.2 was NOT TAKEN** (§4.6 item 6, §5.2's status note).
+    Every §3 row is `[T]`/`[H]` and stands alone; **no real-DOM claim is made anywhere in this unit**,
+    and the optional row is never a substitute for the acceptance rows `M-17`/`M-18`.
+16. **⟶ ADDED (2026-09-27). The host finding is NOT a `docs/defects.md` row** — restated here as the
+    standing consequence, because the fix is now owed and a later pass might be tempted to file it as
+    a defect: §4.4 `S-1` and §4.1 both require the finding to land **in §3a**, and the `R13-HOST-FIX`
+    precedent (`docs/decisions.md:39`) refuses a `defects.md`/`HANDOFF.md` row for a **host** finding.
+    **What is owed instead is the fix in `src/renderer/runtime.ts` + its regression rows (§5.1 row 3,
+    §3a `RED-5`).**
+17. **⟶ ADDED (2026-09-27). The `docs/decisions.md` line-count claim in item 7 (*"406 lines"*) is
+    STALE, kept visible and superseded by this note — it was correct when written.** The file has
+    grown since (the `U-REALDOM-BOOT` and `U-PROJ` decision blocks appended after item 7's reading).
+    **This spec cites `docs/decisions.md` rows BY ID AS WELL AS BY LINE on purpose** (item 7's own
+    closing line, and the gate record's *"cite this record by ID, not by line"* rule), so the **row
+    ids are the durable reference and the line numbers are provenance**; every anchor this spec uses
+    was re-read when item 7 was written, and **no claim here is a line-number claim about the live
+    file's total length.**
 
 ## 8. Supersession / citation index
 
@@ -553,6 +703,7 @@ routes it here.
 | `SCH-1`'s **invariant half** (`S-d2`; §2.2's `SCH-1` row) | amendment §1 preamble, §2.2 | **ADOPTED — this unit** | §1, §2 |
 | `SCH-1`'s **region host** (`ShellRegionName`/`ShellRegionSpec`/`ShellRegions`) | amendment §0, §2.2, `S-d11`, `H-r17` | **DECLINED + REFILED to the fork** — **must not be re-merged** | §3, §7 item 2 |
 | Row **D1** (`docs/next-steps.md` `## OPEN`) | that file's `## OPEN` table (**cited by row id, never by line**) | **OWED**: the row's spec cell reads *"`docs/specs/mount-invariant-guard.md` (**OWED — not filed**)"* — **this filing discharges that cell** (the row itself stays `BLOCKED`) | this file |
+| **THE RED SET** — `tests/mount-invariant-guard.test.ts` (41 rows: 39 red / 2 pass, `aa8b92e`) and its report | this file **§4** (the red plan), **§4.2** (authoring order) | **ADOPTED + DISCHARGED IN PART (2026-09-27, the red-set pass): AUTHORED and RUN**, with the outcome recorded as **§4.6 (the ledger)**, **§4.4 `S-1` (HIT and TAKEN — the stop-condition state)** and **§3a `RED-1`…`RED-6` (the finding, the attribution, the mechanism, the reachability, the owed fix, its disposition)**. **What remains OWED: the probe module (§5.1 row 1), the host fix (§5.1 row 3) and the regression rows (§3.1 `M-17`/`M-18`).** The finding is a **HOST** finding and is **NOT** a `docs/defects.md`/`HANDOFF.md` row (§4.4 `S-1`; the `R13-HOST-FIX` precedent) | §3a, §3.1 `M-17`/`M-18`, §4.4, §4.6, §5.1 |
 | The eight-unit plan's **`U2`** row | amendment §"The amended unit plan" | **INHERITED-ONLY provenance** (superseded by the 20-unit plan, `H-r20`); its owner-artifact + red-set cells are re-anchored in §5.1/§4 | §5.1, §4 |
 | `H-r4` (the spec's required shape) | `H-r4` as amended by `H-r20` | **DISCHARGED by this filing**: status/source block, `§0` prohibitions, exact surface, every state/fail-state, red-set plan, trio plan, explicit falsification/stop condition, explicit zero-row PBT decision | §0–§7 |
 | `H-r8`'s six-prohibition block | `S-d8`, `H-r8` | **DISCHARGED** as a six-row assertion table | §2.2 |
@@ -565,6 +716,8 @@ routes it here.
 | `LIVE-OP-REJECT` | `docs/defects.md` `## FIXED (in this repo)`; `docs/decisions.md` | **NOT THIS UNIT** — but its **layer lesson binds**: an envelope green must never be converted into an IPC claim | Layer declaration anchor 1 |
 | `U-ENGINE-PIN`'s landed state (pin at `package.json:24` = `^0.5.1`; the shim's `removeAttribute`) | amendment §4.1, `docs/specs/engine-pin.md` | **INHERITED as landed state** — this unit does not re-open or re-measure it | §0 ruling 4, §2.4 |
 | `docs/specs/mount-invariant-guard.md`'s row in amendment §8's owed-spec list | amendment §8 | **DISCHARGED by this filing** (the file exists) | this file |
+| **`docs/decisions.md`'s ledger** — the two `U-MOUNTGUARD` ACTIVE rows added by **this amendment's pass** (the `S-1`/host-fix-branch row and the teardown-two-layer row) + the new **AMENDMENTS-to-pre-existing-rows** note | this spec's §3a `RED-5`/`RED-6`, §4.4 `S-1`, §3.1 `M-11`/`M-12` | **ADDED — APPENDED (2026-09-27, the red-set pass)**, deliberately appended so that **no previously cited `docs/decisions.md:<n>` anchor moves**; the rows are the compact pointers to this contract, and the contract is the sections named here | `docs/decisions.md` (appended blocks + the amendment note) |
+| **The red run's finding** (`RED-1`…`RED-6`) | this spec **§3a** (recorded here **per §4.4 `S-1`**), `docs/decisions.md`'s amendment note | **OWED — a HOST finding, fixed HERE, never a `docs/defects.md`/`HANDOFF.md` row**; **landed status: the finding is recorded, the FIX is not landed** | §3a, §5.1 row 3, §3.1 `M-17`/`M-18` |
 
 **Cross-file citation findings this pass found and did NOT fix (not this unit's files; report, do
 not silently reconcile).** Each was read in this pass:
@@ -575,7 +728,8 @@ not silently reconcile).** Each was read in this pass:
 | `src/renderer/runtime.ts:1074-1075` backs the invariant by reading `mount.innerHTML` | **STALE.** `renderedHtml()` reads `this.mount.innerHTML` at **`:1116-1118`** |
 | Re-derive call sites `:304`, `:331`, `:519` | **`:304` and `:331` VERIFIED** (`loadEnvelope`/`loadDoc` each call `tearDownGraph()`); **`:519` is STALE** — `teardown()` is declared at **`:560`** and calls it at **`:561`** |
 | `codeLoad` at `:938` → `:304`; `codeLoadBatch` at `:974` | **BOTH STALE.** `codeLoad` is declared at **`:980`** and calls `loadEnvelope` at **`:994`**; `codeLoadBatch` is declared at **`:1016`** and reaches `codeLoad` at **`:1064`**. **The dependency claim holds** — both routes do enter `loadEnvelope`, hence `tearDownGraph` |
-| `tests/runtime-host.test.ts:150-160` / `:150-161` (the per-teardown row) | **VERIFIED in substance.** The row is at `:150-161`: `teardown → inTree === 1, mount empty, and is idempotent`; `mount.innerHTML === ''` asserted at `:157` and `:160` |
+| `tests/runtime-host.test.ts:150-160` / `:150-161` (the per-teardown row) | **VERIFIED in substance.** The row is at `:150-161`: `teardown → inTree === 1, mount empty, and is idempotent`; `mount.innerHTML === ''` asserted at `:157` and `:160`. **⟶ MEASURED AGAINST, 2026-09-27: the cited `mount.innerHTML === ''` is now the CORRECT side of the fact** — the red run reads `count 0` / `mountHTML: ""` after `teardown()`, i.e. the landed test was right and the as-filed `M-11`/`M-12` one-root expectation was not. **This citation is read-only evidence and was NOT edited** (§4.3) |
+| `tests/runtime-host.test.ts:183-189` (the placement-routed load row) | **VERIFIED and REACHABILITY-LOAD-BEARING (2026-09-27).** The row is the `compilePath` case (`inTree === 7`, many elements) and it uses the **construct-then-`loadEnvelope` sequence with NO `bootstrap()`** — the exact sequence §3a `RED-4` names as the defect's reachable host entry, and the sequence measured at `count 2` in `M-14`'s attribution run. **Read-only evidence; NOT edited** |
 | `src/shared/dom-shim.ts:77-88` (the `outerHTML` serialization gap) | **STALE as an anchor, and the substance is spent**: the file was amended by the landed `U-ENGINE-PIN` unit and is **143 lines** today; `outerHTML` is the getter at **`:108-119`** |
 | `src/shared/dom-shim.ts:50-56` (listener removal by reference) | **STALE.** `removeEventListener` is at **`:81-87`** today |
 | `src/main/mcp-server.ts:281-303` (21 `ALL_TOOLS`) | **VERIFIED.** `ALL_TOOLS` is declared at `:281`, the 21 names run `:282-302`, the array closes at `:303` |
@@ -589,13 +743,55 @@ creates one new spec file and edits no existing document. **The `## OPEN` row `D
 therefore still reads `OWED — not filed` until the supervisor's reconciliation pass flips it** —
 recorded here so the staleness is attributable rather than silent.
 
+**⟶ ARCHIVAL-LOOP CHECK, AMENDED (2026-09-27, the red-set pass): the *"archives, moves and repoints
+NOTHING"* clause above is SUPERSEDED for this pass and kept visible.** The red-set pass **did** edit an
+existing document — **this file** — by the amendment recorded throughout it, plus the two ACTIVE
+decision rows and the amendment note it adds to `docs/decisions.md`. **It archived nothing, moved
+nothing, and repointed no citation**, so the archival loop's own obligation (`AGENTS.md` item 6c —
+*never leave a citation pointing at a moved file*) is **discharged by doing nothing**: **no file was
+moved, so no reference needed repointing.** **The `D1` spec cell is STILL `OWED — not filed`**: this
+amendment does not flip it, because flipping the row's status is the supervisor's reconciliation, not
+a spec pass's. **Cross-file citation claims: NO NEW STALE ANCHOR was created by this amendment** —
+every line anchor this section lists was re-read in the filing pass and this pass moved **no row of
+`docs/decisions.md`: the two new rows + the one new amendment note were APPENDED** (so no cited
+`docs/decisions.md:<n>` anchor shifted). **All other findings in the citation block above are
+unchanged and remain reported-not-fixed**, exactly as the filing pass recorded them.
+
 ## 3a. Adversarial findings — **the pass has NOT run**
 
 **Status as filed: `OWED`. No adversarial pass has run for `U-MOUNTGUARD`** (this pass is the
 spec-filing pass; the unit is BLOCKED on its go-ahead and its red set, so **there is no green for an
-adversarial pass to review** — RCA-3 runs *after* a unit's green). **The table below is the SEED SET
+adversarial pass to review** — RCA-3 runs *after* a unit's green). **⟶ STILL CORRECT AS AMENDED
+(2026-09-27, the red-set pass): `OWED` — a red set exists (§4.6), a green does not, and the
+adversarial pass has NOT run. The as-filed reason's *"its red set"* half is spent; its *"no green"*
+half is exactly why the status is unchanged.** **The table below is the SEED SET
 for the pass that will run**, not a findings table. **No row below is a finding, and none may be
 cited as one.**
+
+**⟶ STATUS UPDATED (2026-09-27, the red-set pass) — the `OWED` status line above STANDS, and this is
+the one amendment in this section.** The section's status is **still `OWED`**, for a sharpened reason:
+the unit now has a **red set** (§4.6) but **no green**, and RCA-3's adversarial pass runs **after a
+green**. **The red run is NOT the adversarial pass**, and the finding recorded immediately below is
+**not** one of §3a's seed-set dispositions — it is the **red run's own measurement**, recorded here
+because §4.4 `S-1`/§4.1 require a host finding to land **in §3a** and **not** as a
+`docs/defects.md` row (the `R13-HOST-FIX` precedent, `docs/decisions.md:39`). **The seed set below is
+untouched by the amendment and remains the pass's work list**; its `A-1`/`A-6`/`A-7` rows are now
+**known-live** rather than hypothetical, which is why this section still matters.
+
+**THE RED RUN'S FINDING (§3a `RED-1`…`RED-6`) — recorded here per §4.4 `S-1`, and it is a HOST finding, so it
+is deliberately NOT a `docs/defects.md` / `docs/HANDOFF.md` row** (a host finding is fixed **here**;
+the `R13-HOST-FIX` precedent is the class). **Layer: `[T]`/`[H]` (`src/renderer/runtime.ts` +
+the shim tree). Status: `OWED` — the fix has NOT landed; no `src/**` file is touched by this pass.
+The probe is the acceptance evidence; `M-17`/`M-18` are the regression rows.**
+
+| # | Item | Record |
+| --- | --- | --- |
+| **`RED-1`** | **THE MEASURED DEFECT — a re-derivation leaves TWO engine-emitted roots in one mount** | **Verbatim, measured:** one `loadEnvelope` into one mount leaves **two engine-emitted direct children** — **`{"childCount":2,"count":2,"nodeIds":["node-234","node-246"]}`** — on a Runtime that was **constructed but NEVER `bootstrap()`ed**. The first `loadEnvelope` is therefore already enough: this is not a cycle-2-only effect. |
+| **`RED-2`** | **THE ATTRIBUTION — the defect is NOT placement-specific** | The same sequence run with the **NON-placement demo envelope** reproduces **`count 2`**, so the read is not an artefact of the path-enumeration (`compilePath`) route. **A fix that repairs only the placement path is red** (§3.1 `M-18`). |
+| **`RED-3`** | **THE MECHANISM, as visible in the serialization** | `tearDownGraph()`'s re-render mounts an **emptied previous root** — serialized as **`class="demo-shell"` with no children** — and then `loadEnvelope`'s **`resetRenderState()` drops the diff baseline** (`src/renderer/runtime.ts:803-809`: `domPrevMap`/`ssrPrevMap` → `null`, `prevStates.clear()`), so the removal ops the diff would have emitted for the previous root are **never emitted** and **the new root is appended ALONGSIDE the old one**. Both elements carry `data-node-id` (`src/renderer/runtime.ts:90`'s `{ nodeIdAttribute: true }`), so both count as engine-emitted and the mount holds **`count === 2`**. The runtime itself has **no mount-clearing call**: the only `this.mount` uses are the assignment (`:110`) and the `innerHTML` read (`:1117`). |
+| **`RED-4`** | **REACHABILITY — stated so the fix is scoped to what is actually reachable** | **The live boot order does NOT reach it:** `src/renderer/renderer.ts` `bootstrap()`es before any load, so a fresh graph exists before the first `loadEnvelope`. **The HOST'S OWN LOAD ENTRY ON A NOT-YET-RENDERED RUNTIME DOES reach it** — `Runtime.loadEnvelope`/`loadDoc`/`codeLoad` are public and callable on a constructed-but-unbootstrapped runtime, and **the landed placement row `tests/runtime-host.test.ts:183-189` uses exactly that sequence** (`new Runtime({mount, envelope})` → `loadEnvelope(env)`, no `bootstrap()`). **The defect is therefore host-reachable through a documented public entry, not only through a synthetic drive.** |
+| **`RED-5`** | **WHAT THE FIX MUST ACHIEVE — the invariant, and the acceptance** | **Required outcome, and the whole of the obligation:** *after every re-derivation of the four paths of §1 item 4 completes, the mount holds exactly ONE engine-emitted root element and it is the graph's current root node* — so the sequence `new Runtime(…) → loadEnvelope(…)` (and every cycle after it, on **both** the placement and the non-placement envelopes) yields **`count === 1`**, and **the previous root's element is no longer a direct child of the mount**. **Both readings of the mechanism are acceptable and the fix must pick one and say which:** (i) `tearDownGraph()`'s diff-based emptying is completed **before** the baseline is dropped, so the previous root is removed and the mount is genuinely empty; **or** (ii) the load path **reconciles the mount** (removing leftover engine-emitted direct children) before the new tree is emitted. **Neither is licensed to skip the other four paths:** `loadEnvelope`, `loadDoc`, the `code.*` route and a cycle of any of them must all hold the invariant. **The acceptance is the probe, not a private seam:** §2.1's `probeMountInvariant` on the reproducer's mount must report **`ok === true` / `count === 1` / `violation === null`** (`M-17`), and `assertMountInvariant` must stop throwing there. **The fix may not touch the shim** (§5.1's outside-scope list), **may not add an MCP surface**, and **may not change `teardown()`'s measured two-layer state** (`M-11`/`M-12`: `count 0` on the mount, `inTree 1` in the graph) — the teardown path is **not** the defect path. |
+| **`RED-6`** | **THE DISPOSITION — and what is still owed** | **`OWED`.** §3b's disposition vocabulary is what this row is reconciled to: the host fix (with its regression rows) is what moves it to **`CONFIRMED-FIXED`**, and neither the fix nor the regression rows exist yet. **No `docs/defects.md` row is filed, and none is owed** (§4.4 `S-1`; §7 item 10). **`S-2` stays live over the whole unit:** if the later adversarial pass cannot reproduce the violation, the no-guard outcome governs and this finding is reported as unreproduced rather than as fixed. |
 
 **THE SEED SET — every row is an edge case / malformed input / unauthorized-access probe that the
 later pass MUST resolve:**
@@ -632,7 +828,11 @@ later pass MUST resolve:**
 **Status of the table itself: `OWED` — empty by construction.** **No row may be moved out of
 §3a's seed set into this table without a named disposition and, for a host finding, a landed fix +
 its regression row.** **A DONE row that cites no adversarial pass (or whose findings are
-unrecorded) is a review finding** (`AGENTS.md` RCA-3).
+unrecorded) is a review finding** (`AGENTS.md` RCA-3). **⟶ UPDATED (2026-09-27, the red-set pass):
+the table is still EMPTY BY CONSTRUCTION, and `OWED` still governs it — but the red run has landed
+its finding in §3a, and §3a's `RED-6` states the disposition it is owed. When the host fix lands with
+its regression rows, the host finding's disposition is `CONFIRMED-FIXED` and **this table is where it
+is recorded**; nothing in the red run may be filed here before that.**
 
 **Why these two sections sit at the END of this file (the `docs/specs/engine-drift.md` convention,
 stated so the placement is not read as an oversight):** the **seed set** is the artifact the pass
