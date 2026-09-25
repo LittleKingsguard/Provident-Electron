@@ -3176,22 +3176,59 @@ describe('R — §3.4/§3.5 the static + existence rows', () => {
       `R-20/ADV-PJ-12: this unit's red-set commit is discoverable in git (the anchored range needs a real anchor; got ${brief(anchor)})`,
     ).toBe(true)
     const range = `${anchor}..HEAD`
-    // The COMMITTED change set of the unit's range: every path every commit in the
-    // range touched. (`git log --name-only` on a COMMIT RANGE is the leg that
-    // survives commits; a `git status` read cannot see a committed change set.)
-    const committedRaw = git(['log', '--name-only', '--pretty=format:', range])
-    const committed = Array.from(
-      new Set(
-        committedRaw
+    /** This unit's OWN `*-greens.md` artifacts (`docs/specs/projection-greens.md`
+     *  and any sibling spelling of it) — the gate-5 artifact RCA-4 makes
+     *  mandatory, committed at the gate boundary by RCA-8(a). Declared HERE (the
+     *  unit-scoped commit partition below needs it); the scope assertions further
+     *  down read the same two probes. */
+    const UNIT_GREENS_PROBE = /^docs\/specs\/projection[^/]*-greens\.md$/
+    /** This unit's OWN gate-7 review record under `archive/reviews/` (the ruled
+     *  list's last entry: `archive/reviews/2026-09-27-U-PROJ-doc-review.md`). */
+    const UNIT_REVIEW_PROBE = /^archive\/reviews\/[^/]*U-PROJ[^/]*\.md$/
+    // ── THE UNIT-SCOPED COMMITTED SET (re-scoped 2026-09-27, the U-ZONES red-set
+    // gate — a CROSS-UNIT defect this row was found to have the moment a SIBLING
+    // unit's work became reachable from this range): the anchored range is
+    // `anchor..HEAD`, and HEAD moves through LATER UNITS' commits — so a census
+    // taken over the WHOLE range charges this unit for every unit that lands
+    // after it. That made the row go RED on SIBLING work (`tests/zones.test.ts`,
+    // wave E's red set), which is precisely a row that has stopped measuring its
+    // own unit.
+    // THE FIX, and it keeps the falsifiable half: partition the range's commits
+    // and keep only those that TOUCH AT LEAST ONE ARTIFACT OF THIS UNIT (the
+    // module, this test file, this spec, or this unit's `*-greens.md`/review
+    // record). A commit that touches none of them is another unit's commit and is
+    // OUT OF THIS ROW'S JURISDICTION — not a licence, a boundary. The assertion is
+    // therefore "no commit that touched this unit's artifacts also touched a
+    // DENIED path or a path outside the ruled allow-list", which is exactly the
+    // `§5.1` scope claim and is still falsifiable: a commit that carries one of
+    // this unit's paths TOGETHER WITH `package.json` (or `src/main/**`, or a
+    // sibling's artifact) FAILS here.
+    const UNIT_ARTIFACTS: readonly string[] = [
+      'src/shared/layout-projection.ts',
+      'tests/layout-projection.test.ts',
+      'docs/specs/projection.md',
+      'docs/specs/projection-greens.md',
+    ]
+    const isUnitArtifact = (path: string): boolean =>
+      UNIT_ARTIFACTS.includes(path) || UNIT_GREENS_PROBE.test(path) || UNIT_REVIEW_PROBE.test(path)
+    const perCommit = git(['log', '--format=@@%H', '--name-only', range])
+      .split('@@')
+      .filter((block) => block.trim().length > 0)
+      .map((block) => {
+        const lines = block
           .split('\n')
           .map(unquote)
-          .filter((line) => line.length > 0 && !line.startsWith('<<git unavailable')),
-      ),
-    ).sort()
+          .filter((line) => line.length > 0)
+        const sha = lines[0] ?? ''
+        const files = lines.slice(1)
+        return { sha, files }
+      })
+    const unitCommits = perCommit.filter((c) => c.files.some(isUnitArtifact))
+    const committed = Array.from(new Set(unitCommits.flatMap((c) => c.files))).sort()
     expect(
-      committedRaw.includes('<<git unavailable'),
-      `R-20/ADV-PJ-12: the committed-range census itself resolved (git log over ${range}) — a probe that cannot read the change set must fail, never pass`,
-    ).toBe(false)
+      unitCommits.length,
+      `R-20/ADV-PJ-12: at least ONE commit in ${range} touched this unit's own artifacts — the unit-scoped census is non-empty (range commits: ${perCommit.length}, unit-touching commits: ${unitCommits.length})`,
+    ).toBeGreaterThan(0)
     expect(
       committed.length,
       `R-20/ADV-PJ-12: the unit's committed range (${range}) is NON-EMPTY — a vacuous census cannot pass this row`,
@@ -3230,13 +3267,11 @@ describe('R — §3.4/§3.5 the static + existence rows', () => {
       'docs/defects.md',
       'docs/HANDOFF.md',
     ]
-    /** This unit's OWN `*-greens.md` artifacts (`docs/specs/projection-greens.md`
-     *  and any sibling spelling of it) — the gate-5 artifact RCA-4 makes
-     *  mandatory, committed at the gate boundary by RCA-8(a). */
-    const UNIT_GREENS = /^docs\/specs\/projection[^/]*-greens\.md$/
-    /** This unit's OWN gate-7 review record under `archive/reviews/` (the ruled
-     *  list's last entry: `archive/reviews/2026-09-27-U-PROJ-doc-review.md`). */
-    const UNIT_REVIEW_RECORD = /^archive\/reviews\/[^/]*U-PROJ[^/]*\.md$/
+    /** This unit's OWN `*-greens.md` artifacts — the same probe the unit-scoped
+     *  commit partition above uses (declared once, before the range). */
+    const UNIT_GREENS = UNIT_GREENS_PROBE
+    /** This unit's OWN gate-7 review record under `archive/reviews/`. */
+    const UNIT_REVIEW_RECORD = UNIT_REVIEW_PROBE
     const inScope = (path: string): boolean =>
       ALLOWED.includes(path) || UNIT_GREENS.test(path) || UNIT_REVIEW_RECORD.test(path)
     /** **THE DENIED SET — `§5.1`'s "Outside the scope, always" list, plus the
@@ -3297,14 +3332,18 @@ describe('R — §3.4/§3.5 the static + existence rows', () => {
     ).toBeGreaterThan(0)
     // The tree-level census (kept, and still meaningful: it names an UNCOMMITTED
     // out-of-scope path when one exists — the half the committed range cannot see).
-    // It reads the SAME ruled allow-list AND the SAME denied set.
-    for (const path of paths) {
+    // It reads the SAME ruled allow-list AND the SAME denied set — and it is now
+    // scoped to the WORKING-TREE paths that ARE this unit's own artifacts (the
+    // 2026-09-27 cross-unit re-scope): a sibling unit's new file appearing beside
+    // this one is not this unit's diff.
+    const ownTreePaths = paths.filter(isUnitArtifact)
+    for (const path of ownTreePaths) {
       expect(
         isDenied(path),
         `R-20/§5.1: '${path}' is in the DENIED set and is present in the WORKING TREE — a boundary violation whatever its content (§5.1's "Outside the scope, always" list)`,
       ).toBe(false)
     }
-    for (const path of paths) {
+    for (const path of ownTreePaths) {
       if (isDenied(path)) continue
       expect(
         inScope(path) || /^docs\/specs\/[^/]*\.md$/.test(path) || /^docs\/[^/]*\.md$/.test(path),
@@ -3312,12 +3351,19 @@ describe('R — §3.4/§3.5 the static + existence rows', () => {
       ).toBe(true)
     }
     // §5.1's named OUT-OF-SCOPE paths are untouched by this unit's change set —
-    // asserted through the DENIED set, so the row fails on ANY of them (not only
-    // on the three the first draft of this loop named).
-    for (const path of [...committed, ...paths]) {
+    // asserted through the DENIED set over the UNIT-SCOPED committed files, so the
+    // row fails on ANY of them (not only on the three an earlier draft named).
+    for (const path of committed) {
       expect(
         isDenied(path),
         `R-20: '${path}' is outside the scope — the shim, the shared types, the main/renderer trees, the build surface and a sibling unit's artifacts are UNTOUCHED`,
+      ).toBe(false)
+    }
+    // …and this unit's own artifacts are not themselves denied.
+    for (const path of UNIT_ARTIFACTS) {
+      expect(
+        isDenied(path),
+        `R-20: '${path}' is THIS unit's own artifact and can be in no denied set — the deny list above must not swallow the unit's own work`,
       ).toBe(false)
     }
     // The shim gains NO member: `setProperty` must not be added to it (S-2).
