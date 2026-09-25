@@ -799,13 +799,62 @@ export class Runtime {
    *  reload collapses the emit (the adapter's diff keys no longer exist). The
    *  SSRFragmentAdapter also retains stale state across a reload, so it is
    *  recreated. Also reset bootstrapped so the next render runs the compile
-   *  pass again. */
+   *  pass again.
+   *
+   *  Dropping the baseline also drops the removals the diff would have emitted
+   *  for elements of the DISCARDED graph, so the mount is reconciled here first
+   *  (§3a RED-5(ii)). */
   private resetRenderState(): void {
     this.bootstrapped = false
     this.domPrevMap = null
     this.ssrPrevMap = null
     this.ssr = new SSRFragmentAdapter()
     this.prevStates.clear()
+    this.reconcileMount()
+  }
+
+  /** `§3a RED-5(ii)` — the load path reconciles the mount BEFORE the new tree
+   *  is emitted: every direct child still carrying `data-node-id` (this
+   *  runtime's opt-in `renderOptions`, above) belongs to a graph that has
+   *  already been discarded and is detached here, so a re-derivation can never
+   *  leave a previous root mounted ALONGSIDE the new one.
+   *
+   *  Why it is needed: `tearDownGraph()` empties the mount through the diff —
+   *  but a runtime that was never bootstrapped has no baseline to diff against,
+   *  so that pass runs the compile pass instead and MOUNTS the graph it is
+   *  about to discard. The baseline is then dropped by `resetRenderState()`
+   *  above, so the new render emits only creates and the stale root survives
+   *  (measured: `{"childCount":2,"count":2,...}` on
+   *  `new Runtime(...) → loadEnvelope(...)` with no bootstrap).
+   *
+   *  It cannot change the live boot path: `renderer.ts` bootstraps before any
+   *  load, and on a bootstrapped runtime `tearDownGraph()`'s diff-emptying
+   *  leaves the mount with no engine-emitted child, so there is nothing to
+   *  detach. The `teardown()` path never calls this (the mount is empty and the
+   *  root stays in the graph — `M-11`/`M-12`). A child with NO `data-node-id`
+   *  is the caller's own sibling and is never touched. */
+  private reconcileMount(): void {
+    const holder = this.mount as unknown as { children?: ArrayLike<unknown> } | null
+    const kids = holder === null || holder === undefined ? null : holder.children
+    if (kids === null || kids === undefined) return
+    for (const child of Array.from(kids)) {
+      if (child === null || typeof child !== 'object') continue
+      const element = child as { getAttribute?: (name: string) => unknown; remove?: () => void }
+      if (typeof element.getAttribute !== 'function' || typeof element.remove !== 'function') continue
+      let nodeId: unknown
+      try {
+        nodeId = element.getAttribute('data-node-id')
+      } catch {
+        continue
+      }
+      if (typeof nodeId !== 'string' || nodeId.length === 0) continue
+      try {
+        element.remove()
+      } catch {
+        // An element that refuses to detach itself: the render that follows is
+        // unaffected (the baseline was already dropped), so this is not fatal.
+      }
+    }
   }
 
   // ---- code / data CRUD (mcp-endpoint.md §4 — envelope authoring) ---------
