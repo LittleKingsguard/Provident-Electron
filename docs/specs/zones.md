@@ -250,7 +250,7 @@ in TWO halves — TWO value exports (`isEmpty`, `trackFor`) and ONE type declara
 **The two halves are counted separately on purpose**, because the sibling `U-PROJ` review found a
 spec cell that said *"eight exports"* while its own block declared **eleven** names — **a count that
 does not match the block beside it is a review finding.** **This block declares exactly `2 + 1 = 3`
-exported names and nothing else**, and `§3.4 R-5` is the row that pins the SET (not the count).
+exported names and nothing else**, and `§3.4 R-5` is the row that pins the SET (not the count). **⟶ CORRECTED 2026-09-27 (the blind-greens pass, finding `ZN-G-67`; the as-written sentence is kept above): the block below carries a FOURTH `export`-prefixed line, `export type ZoneCensus`, and this sentence read as if the block held three. THE RECONCILED READING, and it is the one the module and `R-5` already implement: **the MODULE'S EXPORTED SURFACE is exactly THREE names — the two value exports `isEmpty`/`trackFor` and the type declaration `TrackSpec` — while `ZoneCensus` is a DOC-LEVEL ALIAS inside this spec's illustrative listing** (it names the census shapes `§0A` note 3's ruling accepts, and the module does not export it). **`R-5`(a) asserts the runtime set by NAME and `R-5`(b) asserts the type through leg 4; NO row asserts the alias, and NO pass may add an export to the module to make this listing agree.** The census sentence's “and nothing else” therefore binds the **module's** surface, not every `export`-prefixed line in the illustrative block.
 
 ```ts
 /** THE CALLER'S SPEC FOR ONE TRACK. ALL THREE FIELDS ARE CALLER-SUPPLIED DATA.
@@ -280,6 +280,21 @@ export interface TrackSpec {
  *  record, plus `Map.get` for a `Map`; every other shape is a non-record and
  *  answers `false` (§2.3 item 2, §3.2 F-3/F-4). NEVER stored, NEVER mutated. */
 export type ZoneCensus = Readonly<Record<string, unknown>> | ReadonlyMap<unknown, unknown> | unknown
+
+// ⟶ THE EXPORT CENSUS, CLARIFIED 2026-09-27 (the blind-greens pass, finding `ZN-G-67`
+// — an internal inconsistency this filing introduced): the block ABOVE is the spec's
+// ILLUSTRATIVE surface listing, and it carries FOUR `export`-prefixed names. The
+// MODULE exports **THREE**: the two value exports (`isEmpty`, `trackFor`) and the
+// type declaration `TrackSpec`. **`ZoneCensus` is a DOC-LEVEL ALIAS and is NOT part
+// of the module's exported surface** — it is written here (and only here) to state
+// which census shapes §2.3 item 2 accepts, because `§0A` note 3's ruling needs a
+// name for them. `R-5` asserts the runtime surface by SET EQUALITY over the two
+// values (and `TrackSpec` through leg 4), so no row was ever asserting the alias;
+// the census sentence that read *"exactly `2 + 1 = 3` exported names and nothing
+// else"* is the one that was loose, and it is corrected at §2.1's census paragraph
+// below. A later pass must NOT add `ZoneCensus` to the module to make the listing
+// agree — the module's three names are the contract (`R-5`, and the sibling units'
+// export-count reconciliations).
 
 /** Is this zone EMPTY, according to the census I was handed?
  *  TOTAL: returns a boolean for EVERY input, never throws, reads nothing but

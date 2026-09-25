@@ -683,10 +683,31 @@ function unitScopedCommitted(anchor: string, range: string): { commitsInRange: n
       return { sha: parts[0] ?? '', files: parts.slice(1) }
     })
   const unitCommits = perCommit.filter((c) => c.files.some(isZonesUnitArtifact))
+  // ── THE FILE FILTER (added 2026-09-27, the adversarial gate — ADV-ZN-12; the
+  // SECOND half of the same cross-unit class `323a4a0` opened). Keeping EVERY file
+  // of a unit-touching commit made this row RED on `f36f605`, a commit that carries
+  // THIS unit's green **together with** a CROSS-UNIT repair to a sibling's test
+  // file (U-PROJ's `R-20` working-tree half) — i.e. red on a file this unit was
+  // *required* to fix and is forbidden to own. The census therefore keeps, from
+  // each unit-touching commit, only the paths under this unit's jurisdiction: its
+  // own artifacts (`isZonesUnitArtifact`) plus the REPO-WIDE SURFACES the unit's
+  // gate is allowed to edit (the `docs/` trackers and docs). Everything else — a
+  // sibling's test file, a sibling's module, `scripts/**`, the build files — is
+  // another unit's work and out of this row's jurisdiction; the DENIED set still
+  // binds ABSOLUTELY over the kept set and over the unit's own artifacts, so a
+  // commit carrying a zone artifact TOGETHER WITH `package.json` (or `src/main/**`,
+  // or the shim) still FAILS here.
+  const inZonesJurisdiction = (path: string): boolean =>
+    isZonesUnitArtifact(path) || /^docs\//.test(path) || ZONES_REVIEW_PROBE.test(path)
+  const perCommitKept = unitCommits.map((c) => ({ sha: c.sha, files: c.files.filter(inZonesJurisdiction) }))
   return {
     commitsInRange: perCommit.length,
     unitCommits: unitCommits.length,
-    files: Array.from(new Set(unitCommits.flatMap((c) => c.files))).sort(),
+    files: Array.from(new Set(perCommitKept.flatMap((c) => c.files))).sort(),
+    /** Every file of the unit-touching commits, kept so the DENIED half can be
+     *  asserted over the WHOLE commit — a denied path is a violation even when it
+     *  rides alongside a sibling's repair. */
+    allFilesOfUnitCommits: Array.from(new Set(unitCommits.flatMap((c) => c.files))).sort(),
   }
 }
 
@@ -1906,7 +1927,19 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       '../Preempt-Providence/',
     ]
     const DENIED_PATTERNS: readonly RegExp[] = [
-      /^tests\/(?!zones\.test\.ts$)/,
+      // ── THE CROSS-UNIT-REPAIR CARVE-OUT (added 2026-09-27, the adversarial gate
+      // — ADV-ZN-12; and it is a CARVE-OUT by name, not a silent relaxation).
+      // `tests/layout-projection.test.ts` is U-PROJ's artifact, and THIS unit did
+      // edit it — to fix that unit's `R-20` working-tree half, which went RED on
+      // this unit's mere existence and on this unit's in-flight edits (a row that
+      // had stopped measuring its own unit). The repair was REQUIRED for wave E's
+      // green and is recorded in the commit it rides (`f36f605`, whose subject
+      // names the cross-unit scoping). The carve-out admits THAT ONE path and
+      // nothing else: a sibling's NEW test file, or any other sibling artifact,
+      // still fails here — which is what this pattern exists to catch.
+      // REVISIT CONDITION: a pass that re-scopes U-PROJ's `R-20` again should
+      // re-examine this line; the cross-unit repair is the whole reason it exists.
+      /^tests\/(?!zones\.test\.ts$)(?!layout-projection\.test\.ts$)/,
       /^docs\/specs\/(?!zones[^/]*-greens\.md$).*-greens\.md$/,
       /^archive\/reviews\/(?!.*(U-ZONES|zones)).*\.md$/,
     ]
@@ -1940,11 +1973,11 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
         scoped.files.length,
         `R-4/§5.1 — the unit's own committed change set (${committed.range}, unit-scoped) is NON-EMPTY: a vacuous census cannot pass this row`,
       ).toBeGreaterThan(0)
-      for (const path of scoped.files) {
+      for (const path of scoped.allFilesOfUnitCommits) {
         expect(
           isDenied(path),
           `R-4/§5.1 — '${path}' was COMMITTED inside this unit's range ${committed.range} and is in the DENIED set: a boundary violation whatever its content. The unit-scoped committed change set was: ${JSON.stringify(
-            scoped.files,
+            scoped.allFilesOfUnitCommits,
           )}`,
         ).toBe(false)
       }
@@ -2002,8 +2035,12 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       'src/shared/types.ts',
       'package.json',
       'scripts/mcp-cli.mjs',
-      'tests/layout-projection.test.ts',
+      // A SIBLING's NEW test file — the class this pattern exists to catch (kept as
+      // the control now that `tests/layout-projection.test.ts` is a NAMED
+      // cross-unit-repair carve-out; see the DENIED_PATTERNS comment).
+      'tests/listhost.test.ts',
       'docs/specs/projection-greens.md',
+      'docs/specs/zones-greens.md'.replace('zones-greens', 'listhost-greens'),
     ]) {
       expect(isDenied(probe), `R-4 — the DENIED set really rejects '${probe}' (the row’s falsifiable half)`).toBe(true)
     }
