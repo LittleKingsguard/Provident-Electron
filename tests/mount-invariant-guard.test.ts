@@ -1059,31 +1059,45 @@ describe('M — §3.1 the valid states (one engine-emitted root, per re-derivati
     // the same tree references" and this half is recorded in the red report.
   })
 
-  it('M-11 §3.1 — teardown leaves exactly one engine-emitted root (the graph root)', async () => {
+  it('M-11 §3.1 — teardown leaves ZERO engine-emitted roots on the mount while the graph keeps the root', async () => {
     const { runtime, mount } = bootedDemo()
     runtime.teardown()
-    expect(runtime.renderedHtmlResult().census.inTree, 'M-11 precondition: the graph is root-only').toBe(1)
-    // THE RAW TREE, asserted FIRST and verbatim (§4.1): §3.1 M-11 claims the
-    // mount's direct children are exactly one `data-node-id` element after
-    // teardown, and cites `tests/runtime-host.test.ts:150-161`'s
-    // `mount.innerHTML === ''` as "the serialization side of the same fact".
+    // ⟶ AMENDED TO THE MEASUREMENT (2026-09-27, the red-set pass): `§3.1 M-11`
+    // was amended after the red run measured `count 0` / `mountHTML: ""` after
+    // `teardown()`. The as-filed one-root expectation is SUPERSEDED — it read a
+    // `count === 1` into a citation (`tests/runtime-host.test.ts:157`/`:160`)
+    // that itself asserts `mount.innerHTML === ''`. DO NOT "restore" the
+    // one-root reading; the amended row asserts BOTH halves of the two-layer
+    // fact (0 on the mount, 1 in the graph), and neither half alone.
+    expect(runtime.renderedHtmlResult().census.inTree, 'M-11 (a) graph half: the graph is root-only').toBe(1)
+    // THE RAW TREE, asserted FIRST and verbatim (§4.1).
     const raw = observeMount(mount)
     const rawVerbatim = verbatimOf(raw)
     expect(
       raw.engineChildCount,
-      `M-11 RAW — the mount must hold exactly ONE engine-emitted direct child after teardown. VERBATIM: ${rawVerbatim}`,
-    ).toBe(1)
+      `M-11 (a) mount half: the mount must hold ZERO engine-emitted direct children after teardown. VERBATIM: ${rawVerbatim}`,
+    ).toBe(0)
+    expect(raw.childCount, `M-11 (a) mount half: zero direct children at all. VERBATIM: ${rawVerbatim}`).toBe(0)
+    expect(raw.mountHTML, `M-11 (a) mount half: the serialization side is EMPTY. VERBATIM: ${rawVerbatim}`).toBe('')
 
     const inTree = runtime.listTargets().nodes.filter((n) => n.inTree)
-    expect(inTree.length, 'M-11 precondition: exactly one in-tree node (the root)').toBe(1)
+    expect(inTree.length, 'M-11 (b) graph half: exactly one in-tree node (the root)').toBe(1)
     const rootNodeId = inTree[0].nodeId
-    expect(raw.nodeIds[0], `M-11: the surviving direct child is the graph root. VERBATIM: ${rawVerbatim}`).toBe(rootNodeId)
 
     const { probe } = await guard(`M-11 · RAW observation: ${rawVerbatim}`)
     const res = probe(mount, { rootNodeId })
-    expect(res.count).toBe(1)
-    expect(res.ok).toBe(true)
-    expect(res.roots[0].nodeId).toBe(rootNodeId)
+    expect(res.count, `M-11 (a) mount half: probe count === 0. VERBATIM: ${rawVerbatim}`).toBe(0)
+    expect(res.roots.length, 'M-11 (a) mount half: no root is reported').toBe(0)
+    expect(res.ok, 'M-11 (a) mount half: a state with no engine-emitted root is not "ok"').toBe(false)
+    expect(res.violation === null ? null : res.violation.code, 'M-11 (a): §3.2 — the documented code for 0 roots').toBe(
+      'no-root',
+    )
+    // (b) THE GRAPH HALF, asserted after the probe so the two are tied to the
+    // same post-teardown state: the root is deliberately detached from the
+    // mount while the graph keeps it — that IS the content of this row.
+    const inTreeAfter = runtime.listTargets().nodes.filter((n) => n.inTree)
+    expect(inTreeAfter.length, 'M-11 (b) graph half: the graph still holds exactly the root').toBe(1)
+    expect(inTreeAfter[0].nodeId, 'M-11 (b) graph half: it is the same root node').toBe(rootNodeId)
   })
 
   it('M-12 §3.1 — teardown is idempotent across N cycles', async () => {
@@ -1097,17 +1111,52 @@ describe('M — §3.1 the valid states (one engine-emitted root, per re-derivati
       cycles.map((c) => ({ point: `cycle ${c.cycle}`, obs: c.obs })),
       true,
     )
+    // ⟶ AMENDED TO THE MEASUREMENT (2026-09-27, the red-set pass), consistently
+    // with `M-11`: EVERY cycle holds the SAME two-layer state — `count === 0`
+    // with `mountHTML === ""` on the mount, `inTree === 1` in the graph. The
+    // as-filed "count === 1 after each" / "ok === true after each" is
+    // SUPERSEDED (the red run measured 0 after each cycle). Idempotence is the
+    // subject: a later cycle producing a DIFFERENT count (1 or 2) is the
+    // failure this row rejects, in either direction — so the per-cycle
+    // comparison against cycle 1 is asserted alongside the amended values.
+    const rootNodeId = runtime.listTargets().nodes.filter((n) => n.inTree).map((n) => n.nodeId).join(',')
+    const first = cycles[0].obs
     for (const c of cycles) {
-      expect(c.obs.engineChildCount, `M-12 cycle ${c.cycle}: count === 1. VERBATIM: ${rawVerbatim}`).toBe(1)
-      expect(c.obs.childCount, `M-12 cycle ${c.cycle}: exactly one direct child. VERBATIM: ${rawVerbatim}`).toBe(1)
+      expect(c.obs.engineChildCount, `M-12 cycle ${c.cycle}: count === 0. VERBATIM: ${rawVerbatim}`).toBe(0)
+      expect(c.obs.childCount, `M-12 cycle ${c.cycle}: zero direct children. VERBATIM: ${rawVerbatim}`).toBe(0)
+      expect(c.obs.mountHTML, `M-12 cycle ${c.cycle}: the serialization side is EMPTY. VERBATIM: ${rawVerbatim}`).toBe(
+        '',
+      )
+      // IDEMPOTENCE, the row's own subject: cycle 2 and 3 are the SAME state as
+      // cycle 1 (a drift to `count 1` or `count 2` fails right here).
+      expect(
+        { childCount: c.obs.childCount, count: c.obs.engineChildCount, nodeIds: c.obs.nodeIds, mountHTML: c.obs.mountHTML },
+        `M-12 cycle ${c.cycle}: the same mount state as cycle 1. VERBATIM: ${rawVerbatim}`,
+      ).toEqual({
+        childCount: first.childCount,
+        count: first.engineChildCount,
+        nodeIds: first.nodeIds,
+        mountHTML: first.mountHTML,
+      })
     }
 
     const { probe } = await guard(`M-12 · RAW observations: ${rawVerbatim}`)
     for (const c of cycles) {
       const res = probe(mount)
-      expect(res.count, `M-12 cycle ${c.cycle}: count === 1`).toBe(1)
-      expect(res.ok, `M-12 cycle ${c.cycle}: ok === true`).toBe(true)
+      expect(res.count, `M-12 cycle ${c.cycle}: count === 0`).toBe(0)
+      expect(res.ok, `M-12 cycle ${c.cycle}: ok === false (no engine-emitted root)`).toBe(false)
+      expect(res.violation === null ? null : res.violation.code, `M-12 cycle ${c.cycle}: the typed code`).toBe('no-root')
     }
+    // THE GRAPH HALF of the same two-layer fact (`M-11` (b)), unchanged by any
+    // cycle: the root stays in the graph after all three teardowns.
+    expect(
+      runtime.listTargets().nodes.filter((n) => n.inTree).length,
+      'M-12 graph half: exactly one in-tree node (the root) after every cycle',
+    ).toBe(1)
+    expect(
+      runtime.listTargets().nodes.filter((n) => n.inTree).map((n) => n.nodeId).join(','),
+      'M-12 graph half: the same root node survives every cycle',
+    ).toBe(rootNodeId)
   })
 
   it('M-13 §3.1 — the code.* route enters the same invariant (codeLoad, then the first codeLoadBatch)', async () => {

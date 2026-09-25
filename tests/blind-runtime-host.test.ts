@@ -285,15 +285,24 @@ describe('R4 — export / validate', () => {
 })
 
 describe('R5 — teardown (C3/C4)', () => {
-  it('21. teardown() → Census with inTree === 1; the mount shows ONLY the root element (root stays in-tree)', () => {
+  it('21. teardown() → Census with inTree === 1 and an EMPTY mount (root stays in-tree)', () => {
     const mount = mountEl()
+    // BLIND row: this drive never calls bootstrap() — and the assertions below
+    // were pinned against that drive. The PRE-FIX expectation (`mount.innerHTML`
+    // non-empty / no 'counter') passed only via the host defect: on a Runtime
+    // that is constructed but never bootstrap()ed, the load path left the
+    // DISCARDED graph's root mounted, so the teardown row was reading a stale
+    // root element rather than the graph's own serialization. Re-pinned to the
+    // contract `tests/runtime-host.test.ts`'s own teardown row asserts on the
+    // BOOTSTRAPPED drive (`:157`/`:160`): mount empty, graph root-only.
     const runtime = new Runtime({ mount: mount as never, envelope: demoEnvelope() as never })
     ;(runtime as any).loadEnvelope(demoEnvelope())
     const census = (runtime as any).teardown()
     expect(census.inTree).toBe(1)
-    // the root stays in-tree — the mount is the root's own serialization, NOT ''
-    expect(mount.innerHTML).not.toBe('')
-    expect(mount.innerHTML).not.toContain('counter')
+    // the root stays IN THE GRAPH (inTree === 1) while the MOUNT holds nothing:
+    // the two-layer fact — the root is detached from the mount, not destroyed.
+    expect(mount.innerHTML).toBe('')
+    expect(mount.children.length).toBe(0)
   })
 
   it('22. teardown() is idempotent — a second call returns inTree === 1 and the mount stays root-only', () => {

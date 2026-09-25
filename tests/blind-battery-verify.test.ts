@@ -222,15 +222,20 @@ describe('B3 — op / export / validate / teardownResult', () => {
     expect(typeof verdict.treeSigMatch).toBe('boolean')
   })
 
-  it('18. teardownResult → inTree 1, html no longer has counter but contains the root id', async () => {
+  it('18. teardownResult → inTree 1 with an EMPTY renderedHtml (the mount holds no root)', async () => {
     const r = withEnvelope()
     r.load({ kind: 'envelope', envelope: demoEnvelope() })
     const res = await r.teardownResult()
     expect(res.census.inTree).toBe(1)
     expect(res.renderedHtml).not.toContain('counter')
-    // the root-only mount is a single element carrying its own engine node id
-    expect(res.renderedHtml).toMatch(/data-node-id=/)
-    expect(res.renderedHtml).toContain('demo-shell')
+    // `renderedHtml` IS the mount's serialization (`mount.innerHTML`): after
+    // teardown the mount holds ZERO engine-emitted roots, so it is the EMPTY
+    // string. The prior expectation (`data-node-id=` present / `demo-shell`
+    // present) held only via the host defect — this drive never bootstrap()s, so
+    // the load path left the discarded graph's root mounted and teardown was
+    // serializing a stale root. Re-pinned to the contract: empty mount, graph
+    // root-only (census.inTree === 1).
+    expect(res.renderedHtml).toBe('')
   })
 
   it('19. load cycle envelope(12) → census.inTree===23 AND registered===23', () => {
