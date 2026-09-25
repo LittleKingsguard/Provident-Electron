@@ -321,6 +321,28 @@ function bootedLocal(rootId: string): { runtime: Runtime; mount: ShimElement; ro
   return { runtime, mount, rootNodeId: graphNodeId(runtime, rootId) }
 }
 
+/** THE CONSTRUCT-THEN-LOAD DRIVE of §3a `RED-4`/`RED-1` — `new Runtime({mount,
+ *  envelope})` → `loadEnvelope(envelope)` with **NO `bootstrap()` call**. This is
+ *  the host-reachable sequence (`tests/runtime-host.test.ts:183-189` uses it) and
+ *  the drive of the new rows `M-17`/`M-18`. The mount reference is captured
+ *  BEFORE the load and returned, so a row can assert the reference is unchanged
+ *  (a re-resolved mount would hide the defect). */
+function constructThenLoad(envelope: unknown): {
+  runtime: Runtime
+  mount: ShimElement
+  captured: ShimElement
+  census: { inTree: number; registered: number }
+} {
+  const mount = mountEl()
+  const captured = mount
+  const runtime = new Runtime({ mount: mount as never, envelope: (envelope ?? demoEnvelope()) as never })
+  const census = runtime.loadEnvelope(envelope as never)
+  expect(mount, 'constructThenLoad precondition: the mount reference is the SAME element captured before the load').toBe(
+    captured,
+  )
+  return { runtime, mount, captured, census }
+}
+
 /** A mount holding TWO engine-emitted direct children: the landed root plus a
  *  caller-appended element carrying `data-node-id` (`§3.2 F-1`). No `src/**`
  *  state is created — the second root is caller-supplied tree state. */
@@ -1194,16 +1216,33 @@ describe('M — §3.1 the valid states (one engine-emitted root, per re-derivati
     const elementCount = (html.match(/data-node-id=/g) ?? []).length
     expect(elementCount, 'M-14 precondition: a depth-4 path emits MANY elements').toBeGreaterThan(3)
 
-    // ATTRIBUTION PROBE (recorded, not a new row): the SAME construct-then-load
-    // sequence with the NON-placement demo envelope, measured BEFORE the
-    // assertion so the red report names whether a two-root observation belongs
-    // to the placement path or to "one load into a runtime that was never
-    // bootstrapped" — the sequence the landed row at
-    // `tests/runtime-host.test.ts:183-189` itself uses.
+    // ATTRIBUTION — AN ASSERTION, not a message-only artefact (⟶ AMENDED
+    // 2026-09-27, the adversarial pass): the SAME construct-then-load sequence
+    // with the NON-placement demo envelope, asserted BEFORE the placement half
+    // so a fix that repaired ONLY the path-enumeration (`compilePath`) route is
+    // RED here rather than green (§3a `RED-2`; §3.1 `M-18`). The sequence is the
+    // one the landed row at `tests/runtime-host.test.ts:183-189` itself uses:
+    // `new Runtime({mount, envelope})` → `loadEnvelope(env)`, NO `bootstrap()`
+    // (§3a `RED-4`). Before this amendment the raw observation below was
+    // interpolated into M-14's failure MESSAGE only, so a placement-only fix
+    // kept the suite green — exactly what `RED-2`/`M-18` forbid.
     const plainMount = mountEl()
     const plainRuntime = new Runtime({ mount: plainMount as never, envelope: demoEnvelope() as never })
     plainRuntime.loadEnvelope(demoEnvelope() as never)
     const plainRaw = observeMount(plainMount)
+    const plainVerbatim = verbatimOf(plainRaw)
+    expect(
+      plainRaw.engineChildCount,
+      `M-14 ATTRIBUTION (non-placement half) — the same construct-then-load sequence on the NON-placement demo envelope must ALSO hold exactly ONE engine-emitted direct child; a placement-only fix is red here (§3a RED-2). VERBATIM: ${plainVerbatim}`,
+    ).toBe(1)
+    expect(
+      plainRaw.childCount,
+      `M-14 ATTRIBUTION (non-placement half) — exactly one direct child at all, no stale root alongside the new one. VERBATIM: ${plainVerbatim}`,
+    ).toBe(1)
+    expect(
+      plainRaw.nodeIds.length,
+      `M-14 ATTRIBUTION (non-placement half) — the one direct child carries a readable non-empty data-node-id (not a blank/foreign element). VERBATIM: ${plainVerbatim}`,
+    ).toBe(1)
 
     const raw = observeMount(mount)
     expect(
@@ -1249,6 +1288,276 @@ describe('M — §3.1 the valid states (one engine-emitted root, per re-derivati
     const res = probe(mount)
     expect(res.count).toBe(1)
     expect(res.ok).toBe(true)
+  })
+
+  // =========================================================================
+  // M-17 / M-18 / M-19 — ADDED 2026-09-27 by the adversarial pass's closure of
+  // the unit's evidence hole (§3.1 `M-17`/`M-18`; §3a `RED-1`/`RED-2`). The gap
+  // the pass measured: the spec and the decision log name `M-17`/`M-18` as "the
+  // rows the host fix must turn green", but no such row existed — the ONLY row
+  // that reddened when the `reconcileMount()` call was removed from
+  // `src/renderer/runtime.ts` was `M-14`, i.e. 40 of the 41 rows stayed green
+  // with the fix reverted. The rows below are the load-bearing half.
+  //
+  // THE DRIVE, named once: **construct-then-load — `new Runtime({mount,
+  // envelope})` → `loadEnvelope(env)` with NO `bootstrap()` call**, which is
+  // §3a `RED-4`'s host-reachable sequence (`tests/runtime-host.test.ts:183-189`
+  // uses exactly it). Every state below was MEASURED on this tree with the fix
+  // landed; the `count === 2` observation of `RED-1` is what the fix repaired.
+  // =========================================================================
+
+  it('M-17 §3.1 — THE HOST-FIX REGRESSION ROW: construct-then-load (never bootstrapped) holds exactly ONE engine-emitted root', async () => {
+    // THE DRIVE (§3a `RED-4`): `new Runtime({mount, envelope})` → `loadEnvelope(env)`,
+    // NO `bootstrap()`. Measured pre-fix: `{"childCount":2,"count":2}` (§3a
+    // `RED-1`). Removing the reconcile from `src/renderer/runtime.ts` reddens
+    // this row and this row only (with `M-18`/the M-14 attribution half).
+    const mount = mountEl()
+    const runtime = new Runtime({ mount: mount as never, envelope: demoEnvelope() as never })
+    // The mount reference is captured BEFORE the load and asserted unchanged, so
+    // the row cannot pass by re-resolving a different mount (§3.1 M-17's own
+    // precondition; §1.1: "the mount reference may not change across
+    // re-derivations").
+    const captured = mount
+    const pre = observeMount(mount)
+    expect(
+      pre.engineChildCount,
+      `M-17 precondition — before the load a never-bootstrapped mount holds ZERO engine-emitted children (F-2's state, not a root state). VERBATIM: ${verbatimOf(pre)}`,
+    ).toBe(0)
+
+    const census = runtime.loadEnvelope(demoEnvelope() as never)
+    // PRECONDITION (§3.1 M-17): the census must report a NON-ROOT graph, else a
+    // `count === 1` would be vacuous (a root-only graph is F-2's `no-root`).
+    expect(census.inTree, 'M-17 precondition: the load produced a non-root graph (inTree > 1)').toBeGreaterThan(1)
+
+    const raw = expectRawEngineRoots(mount, 'M-17 (construct-then-load, never bootstrapped: §3a RED-4)', 1)
+    // The ONLY direct child, and the graph is populated — the two halves
+    // together are what make the row falsifiable: a stale root left alongside
+    // the new one makes `count` 2, and a load that rendered nothing makes
+    // `childCount` 0.
+    expect(raw.childCount, `M-17: the mount holds exactly ONE direct child — the graph's root, no stale root alongside it. VERBATIM: ${verbatimOf(raw)}`).toBe(1)
+    expect(raw.nodeIds.length, `M-17: the one child is engine-emitted (a readable non-empty data-node-id). VERBATIM: ${verbatimOf(raw)}`).toBe(1)
+    expect(runtime.renderedHtmlResult().census.inTree, 'M-17: the graph is populated (inTree > 1) — the root is not alone').toBeGreaterThan(1)
+
+    const { probe, assertion } = await guard(`M-17 · RAW observation: ${verbatimOf(raw)}`)
+    const res = probe(mount)
+    expect(res.ok, `M-17: §3a RED-5 — the probe reports the invariant as OK on the reproducer. VERBATIM: ${verbatimOf(raw)}`).toBe(true)
+    expect(res.count, `M-17: probe count === 1. VERBATIM: ${verbatimOf(raw)}`).toBe(1)
+    expect(res.violation, `M-17: violation === null. VERBATIM: ${verbatimOf(raw)}`).toBe(null)
+    expect(res.roots.length, 'M-17: exactly one root observation').toBe(1)
+    expect(res.roots[0].nodeId, 'M-17: the probe reads the same id the raw read took').toBe(raw.nodeIds[0])
+    expect(res.roots[0].nodeId.length, 'M-17: the root nodeId is non-empty').toBeGreaterThan(0)
+    const children = (mount as unknown as { children: unknown[] }).children
+    expect(
+      children.indexOf(res.roots[0].element),
+      'M-17: the observed root element is a DIRECT child of the mount, by reference',
+    ).toBeGreaterThanOrEqual(0)
+    // §3a RED-5's other half: `assertMountInvariant` must STOP THROWING here.
+    expect(() => assertion(mount), 'M-17: assertMountInvariant throws nothing on the reproducer (§3a RED-5)').not.toThrow()
+    // The captured reference, asserted LAST so the whole drive is tied to it.
+    expect(mount, 'M-17: the mount is the SAME reference captured before the load').toBe(captured)
+    const after = probe(mount, { mount: captured })
+    expect(after.mount, 'M-17: the probe echoes the captured mount by reference').toBe(captured)
+    expect(after.violation === null ? null : after.violation.code, 'M-17: never a mount-reference-mismatch').not.toBe(
+      'mount-reference-mismatch',
+    )
+  })
+
+  it('M-18 §3.1 — THE ATTRIBUTION ROW: BOTH drives (non-placement demo envelope AND placement-routed depth-4) hold exactly ONE root', async () => {
+    // §3.1 M-18: the same construct-then-load sequence of M-17 with the
+    // NON-placement demo envelope, AND the placement-routed variant
+    // (`loadEnvelope(placementEnvelope(4))`). `count === 1` in BOTH — a fix that
+    // repaired only the path-enumeration case is RED, not green (§3a `RED-2`).
+    //
+    // WHY `M-14` AND `M-18` SHARE THIS ASSERTION (stated, as the spec's §3.1
+    // M-18 cell demands, and as the alternative the task allowed): `M-14`'s
+    // existing `plainRaw` observation is a message-only artefact NO LONGER — it
+    // is now asserted in M-14 itself (the same `engineChildCount === 1` /
+    // `childCount === 1` predicate). This row keeps the ATTRIBUTION as its own
+    // ided row, because the two drives are the two halves of the attribution:
+    // `M-14`'s non-placement half is asserted in place, and this row re-derives
+    // BOTH halves on FRESH mounts so the attribution survives a later edit of
+    // either row. The shared predicate is one line, deliberately: it is the
+    // invariant, not a seam.
+    const nonPlacement = constructThenLoad(demoEnvelope())
+    const nonPlacementRaw = expectRawEngineRoots(
+      nonPlacement.mount,
+      'M-18 (non-placement drive: construct-then-load, never bootstrapped)',
+      1,
+    )
+    expect(
+      nonPlacementRaw.childCount,
+      `M-18 non-placement drive: exactly ONE direct child — the defect is NOT placement-specific (§3a RED-2). VERBATIM: ${verbatimOf(nonPlacementRaw)}`,
+    ).toBe(1)
+    expect(
+      nonPlacement.census.inTree,
+      `M-18 non-placement drive: the graph is populated (inTree > 1). VERBATIM: ${verbatimOf(nonPlacementRaw)}`,
+    ).toBeGreaterThan(1)
+    expect(nonPlacement.mount, 'M-18 non-placement drive: the SAME mount reference captured before the load').toBe(
+      nonPlacement.captured,
+    )
+
+    const placement = constructThenLoad(placementEnvelope(4))
+    const placementRaw = expectRawEngineRoots(
+      placement.mount,
+      'M-18 (placement drive: construct-then-load, loadEnvelope(placementEnvelope(4)))',
+      1,
+    )
+    expect(
+      placementRaw.childCount,
+      `M-18 placement drive: exactly ONE direct child — a depth-4 path emits MANY elements, but only the ROOT may be a direct mount child. VERBATIM: ${verbatimOf(placementRaw)}`,
+    ).toBe(1)
+    expect(
+      placement.census.inTree,
+      `M-18 placement drive: the path-enumeration census (inTree === 7). VERBATIM: ${verbatimOf(placementRaw)}`,
+    ).toBe(7)
+    expect(placement.mount, 'M-18 placement drive: the SAME mount reference captured before the load').toBe(placement.captured)
+
+    const { probe } = await guard(
+      `M-18 · RAW (non-placement) ${verbatimOf(nonPlacementRaw)} · RAW (placement) ${verbatimOf(placementRaw)}`,
+    )
+    for (const half of [
+      { id: 'non-placement drive', ...nonPlacement, raw: nonPlacementRaw },
+      { id: 'placement drive', ...placement, raw: placementRaw },
+    ]) {
+      const res = probe(half.mount)
+      expect(res.ok, `M-18 ${half.id}: ok === true. VERBATIM: ${verbatimOf(half.raw)}`).toBe(true)
+      expect(res.count, `M-18 ${half.id}: count === 1. VERBATIM: ${verbatimOf(half.raw)}`).toBe(1)
+      expect(res.violation, `M-18 ${half.id}: violation === null. VERBATIM: ${verbatimOf(half.raw)}`).toBe(null)
+      expect(res.roots.length, `M-18 ${half.id}: exactly one root observation`).toBe(1)
+      expect(res.roots[0].nodeId, `M-18 ${half.id}: the probe reads the same id the raw read took`).toBe(half.raw.nodeIds[0])
+    }
+  })
+
+  it('M-19 §3.1 — the NEVER-BOOTSTRAPPED teardown drive: cycle 1 mounts the graph root (count 1), cycles 2/3 render nothing (count 0)', async () => {
+    // THE DRIVE, named: `new Runtime({ mount, envelope: demoEnvelope() })` with
+    // NO `bootstrap()` AND **no prior load** — then `teardown()` × 3. This is
+    // the row the adversarial pass showed was MISSING (the amended `M-11`/`M-12`
+    // are the fresh-BOOTSTRAPPED drive and the host row 21 is
+    // load-then-teardown); `M-19` is deliberately a distinct id from both.
+    //
+    // THE MEASUREMENT, verbatim, taken on this tree and RE-VERIFIED here before
+    // being asserted (not assumed from the pass's report):
+    //   cycle 1 → childCount 1, one engine-emitted child whose id IS the graph's
+    //             single in-tree root node (on this drive the engine mints
+    //             `node-1`; the row asserts the graph's value, never the literal,
+    //             because engine ids are per-graph and monotonic per worker
+    //             session), class "demo-shell", EMPTY body
+    //             (`<div data-node-id="…" id="preempt-node-…"
+    //             class="demo-shell"></div>`), census {"registered":11,
+    //             "inTree":1,"unplaced":10,"destroyed":0,"prototypes":0}.
+    //   cycle 2 → childCount 0, ids [], mountHTML "", census identical.
+    //   cycle 3 → identical to cycle 2.
+    // So the cycle-1 vs cycle-2/3 DIFFERENCE IS REAL (1 vs 0): teardown's FIRST
+    // cycle on this drive MOUNTS the graph's root (nothing was rendered yet),
+    // and every later cycle mounts nothing. The row therefore pins BOTH the
+    // values and the difference, so the drive-specificity is asserted rather
+    // than assumed:
+    //   (a) cycle 1 is a ONE-ROOT state (`count === 1`, `ok === true`) and the
+    //       mounted element IS the live in-tree root node;
+    //   (b) cycles 2/3 are `count === 0` with an EMPTY serialization;
+    //   (c) the cycle-1 element survives into cycle 2 (they DIFFER) — a
+    //       reconciliation bolted onto `teardown()` would zero cycle 1 and
+    //       redden (a).
+    // NOTE, stated so it is not over-read: this row is NOT a regression row for
+    // the load-path fix of §3a `RED-5(ii)` (the teardown path never calls
+    // `reconcileMount()`); it pins what teardown ACTUALLY does on the drive the
+    // pass named. Reverting the load-path fix leaves this row GREEN — reported.
+    const mount = mountEl()
+    const runtime = new Runtime({ mount: mount as never, envelope: demoEnvelope() as never })
+    expect(
+      observeMount(mount).engineChildCount,
+      'M-19 precondition: constructed, never bootstrapped, never loaded — the mount holds nothing yet',
+    ).toBe(0)
+
+    const cycles: Array<{ cycle: number; obs: RawObservation }> = []
+    const censuses: number[] = []
+    // The cycle-1 child is held BY REFERENCE from inside the loop: a later cycle
+    // empties `mount.children`, so reading `children[0]` afterwards would read a
+    // post-teardown index and prove nothing about cycle 1.
+    let cycleOneChild: { className?: string | null } | undefined
+    let cycleOneProbe: MountInvariantResult | null = null
+    for (const cycle of [1, 2, 3]) {
+      const census = runtime.teardown()
+      censuses.push(census.inTree)
+      const obs = observeMount(mount)
+      cycles.push({ cycle, obs })
+      if (cycle === 1) {
+        cycleOneChild = (mount as unknown as { children: unknown[] }).children[0] as { className?: string | null }
+        // The probe is read IMMEDIATELY after cycle 1, while the mount still
+        // holds that root — a probe taken after cycle 2/3 would read F-2's
+        // 'no-root' state and prove nothing about cycle 1.
+        const cycleOneProbeFn = (await guard('M-19 cycle 1 (the probe read before cycle 2 empties the mount)')).probe
+        cycleOneProbe = cycleOneProbeFn(mount, { rootNodeId: obs.nodeIds[0] })
+      }
+    }
+    const rawVerbatim = verbatimList(
+      cycles.map((c) => ({ point: `cycle ${c.cycle}`, obs: c.obs })),
+      true,
+    )
+
+    // (a) CYCLE 1 — the measured one-root state, with the mounted element
+    // identified as the LIVE graph root (proven from the graph, not assumed).
+    const first = cycles[0].obs
+    expect(first.engineChildCount, `M-19 cycle 1: count === 1 — teardown's FIRST cycle on this drive mounts the graph root. VERBATIM: ${rawVerbatim}`).toBe(1)
+    expect(first.childCount, `M-19 cycle 1: exactly one direct child. VERBATIM: ${rawVerbatim}`).toBe(1)
+    const cycleOneChildRef = cycleOneChild as { className?: string | null } | undefined
+    expect(cycleOneChildRef, `M-19 cycle 1: the cycle-1 direct child was captured by reference. VERBATIM: ${rawVerbatim}`).toBeTruthy()
+    expect(cycleOneChildRef!.className, `M-19 cycle 1: the mounted root is the demo shell root (the measured class="demo-shell"). VERBATIM: ${rawVerbatim}`).toBe('demo-shell')
+    // The graph's own vocabulary, not a literal invented here (the engine ids are
+    // per-graph and monotonic across a vitest worker, so `node-1` is a SESSION
+    // artefact of a fresh worker, never a contract): after the teardown the graph
+    // keeps exactly ONE in-tree node — the root — and the MOUNTED element is that
+    // same node. Both halves are the measurement.
+    const inTreeIds = runtime.listTargets().nodes.filter((n) => n.inTree).map((n) => n.nodeId)
+    expect(inTreeIds.length, `M-19 cycle 1: the graph keeps exactly ONE in-tree node (the root). VERBATIM: ${rawVerbatim}`).toBe(1)
+    expect(first.nodeIds, `M-19 cycle 1: the MOUNTED element IS the live in-tree root node (not a discarded graph's root, not a stale second root). VERBATIM: ${rawVerbatim}`).toEqual(inTreeIds)
+    expect(censuses[0], `M-19 cycle 1: the teardown census reads inTree === 1 (the two-layer fact of M-11). VERBATIM: ${rawVerbatim}`).toBe(1)
+
+    // (b) CYCLES 2/3 — the measured empty state.
+    for (const c of cycles.slice(1)) {
+      expect(c.obs.engineChildCount, `M-19 cycle ${c.cycle}: count === 0 — a later cycle mounts NOTHING. VERBATIM: ${rawVerbatim}`).toBe(0)
+      expect(c.obs.childCount, `M-19 cycle ${c.cycle}: zero direct children. VERBATIM: ${rawVerbatim}`).toBe(0)
+      expect(c.obs.mountHTML, `M-19 cycle ${c.cycle}: the serialization side is EMPTY. VERBATIM: ${rawVerbatim}`).toBe('')
+    }
+
+    // (c) THE DIFFERENCE, asserted explicitly: cycle 1 != cycle 2, and cycle 3
+    // is the SAME state as cycle 2 (the drive settles after the first cycle).
+    expect(
+      { childCount: cycles[0].obs.childCount, count: cycles[0].obs.engineChildCount, mountHTML: cycles[0].obs.mountHTML },
+      `M-19: cycle 1 HOLDS the root while cycle 2 does not — the difference is real and is pinned (a later cycle that mounted the root again would redden here). VERBATIM: ${rawVerbatim}`,
+    ).not.toEqual({
+      childCount: cycles[1].obs.childCount,
+      count: cycles[1].obs.engineChildCount,
+      mountHTML: cycles[1].obs.mountHTML,
+    })
+    expect(
+      { childCount: cycles[2].obs.childCount, count: cycles[2].obs.engineChildCount, nodeIds: cycles[2].obs.nodeIds, mountHTML: cycles[2].obs.mountHTML },
+      `M-19: cycle 3 is the SAME state as cycle 2 (settled). VERBATIM: ${rawVerbatim}`,
+    ).toEqual({
+      childCount: cycles[1].obs.childCount,
+      count: cycles[1].obs.engineChildCount,
+      nodeIds: cycles[1].obs.nodeIds,
+      mountHTML: cycles[1].obs.mountHTML,
+    })
+    for (const cycle of [1, 2, 3]) {
+      expect(censuses[cycle - 1], `M-19 cycle ${cycle}: every teardown census reads inTree === 1`).toBe(1)
+    }
+
+    // The module on both cycle-1 and cycle-2/3 states (the probe agrees with the
+    // tree in each direction: one root is ok, no root is 'no-root').
+    const { probe } = await guard(`M-19 · RAW observations: ${rawVerbatim}`)
+    const firstRes = cycleOneProbe as MountInvariantResult | null
+    expect(firstRes, `M-19 cycle 1: the probe result was taken on the cycle-1 state. VERBATIM: ${rawVerbatim}`).not.toBe(null)
+    expect(firstRes!.ok, `M-19 cycle 1: the probe reports a ONE-ROOT state as ok. VERBATIM: ${rawVerbatim}`).toBe(true)
+    expect(firstRes!.count, `M-19 cycle 1: probe count === 1. VERBATIM: ${rawVerbatim}`).toBe(1)
+    expect(firstRes!.violation, `M-19 cycle 1: violation === null. VERBATIM: ${rawVerbatim}`).toBe(null)
+    const settledRes = probe(mount)
+    expect(settledRes.count, `M-19 cycle 2/3: probe count === 0. VERBATIM: ${rawVerbatim}`).toBe(0)
+    expect(settledRes.ok, `M-19 cycle 2/3: ok === false (no engine-emitted root). VERBATIM: ${rawVerbatim}`).toBe(false)
+    expect(
+      settledRes.violation === null ? null : settledRes.violation.code,
+      `M-19 cycle 2/3: the documented code for 0 roots. VERBATIM: ${rawVerbatim}`,
+    ).toBe('no-root')
   })
 })
 

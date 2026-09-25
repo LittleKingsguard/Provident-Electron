@@ -306,13 +306,46 @@ describe('R5 — teardown (C3/C4)', () => {
   })
 
   it('22. teardown() is idempotent — a second call returns inTree === 1 and the mount stays root-only', () => {
+    // ⟶ AMENDED 2026-09-27 (the U-MOUNTGUARD adversarial pass's closure of the
+    // unit's evidence hole): this row previously proved little — it asserted only
+    // that the emptied mount's serialization does NOT contain 'counter', a
+    // NEGATIVE substring over a root that was already emptied by the FIRST
+    // teardown. Two additions make a teardown regression redden it:
+    //   (a) `mount.children.length === 0` after EACH cycle (exact, not a
+    //       substring over `innerHTML`); and
+    //   (b) the cycle-1 state captured and COMPARED with the cycle-2 state, so
+    //       a later cycle that mounted anything again is caught.
+    // THE DRIVE, named (it is the drive this row — and row 21 — actually use):
+    // `new Runtime({mount, envelope})` → `loadEnvelope(demoEnvelope())` with NO
+    // `bootstrap()`. MEASURED on that drive: after the load the mount holds 1
+    // engine-emitted direct child (the root); cycle-1 teardown → childCount 0 /
+    // `innerHTML === ''` / census inTree 1; cycle-2 → the SAME state (so
+    // cycle 1 === cycle 2 here, unlike the never-bootstrapped-and-never-loaded
+    // drive of `tests/mount-invariant-guard.test.ts` row `M-19`, where cycle 1
+    // mounts the root and cycle 2 does not).
     const mount = mountEl()
     const runtime = new Runtime({ mount: mount as never, envelope: demoEnvelope() as never })
     ;(runtime as any).loadEnvelope(demoEnvelope())
-    ;(runtime as any).teardown()
+    // precondition: the load really rendered, so the teardown below has
+    // something to remove (an already-empty mount would make the row vacuous).
+    expect(mount.children.length).toBe(1)
+
+    const census1 = (runtime as any).teardown()
+    const cycle1 = { childCount: mount.children.length, html: mount.innerHTML }
+    expect(census1.inTree).toBe(1)
+    expect(cycle1.childCount).toBe(0)
+    expect(mount.innerHTML).toBe('')
+
     const census2 = (runtime as any).teardown()
+    const cycle2 = { childCount: mount.children.length, html: mount.innerHTML }
     expect(census2.inTree).toBe(1)
+    expect(cycle2.childCount).toBe(0)
     expect(mount.innerHTML).not.toContain('counter')
+    expect(mount.innerHTML).toBe('')
+    // (b) the cycle-1 ↔ cycle-2 comparison: teardown is idempotent on this
+    // drive, so a regression that let a second cycle re-mount the root (or fail
+    // to clear it) is RED here.
+    expect(cycle2, 'row 22: cycle 2 is the SAME mount state as cycle 1 (idempotent teardown)').toEqual(cycle1)
   })
 
   it('23. H2 — after teardown, a destroyed node cssId does not resolve (throws /unresolved target/)', () => {
