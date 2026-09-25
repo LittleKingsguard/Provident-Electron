@@ -171,7 +171,6 @@ interface ProjectionSurface {
 // THE IMPORT BOUNDARY (§4.1).
 // ===========================================================================
 const MODULE_SRC = new URL('../src/shared/layout-projection.ts', import.meta.url)
-const TEST_SRC = new URL('./layout-projection.test.ts', import.meta.url)
 /** The run-time specifier of `§5.1` row 1, assembled at RUN time so the
  *  unresolvable import cannot fail this file's transform while the module is
  *  absent (the repo's `.js` → `.ts` resolution applies at run time). */
@@ -286,10 +285,6 @@ function moduleSource(label: string): string {
   return readFileSync(MODULE_SRC, 'utf8')
 }
 
-function testSource(): string {
-  return readFileSync(TEST_SRC, 'utf8')
-}
-
 /** Strip comments while PRESERVING line structure (so a hit's line number is the
  *  real one). String literals are KEPT: a banned realm word inside a string is
  *  still that word in code. Used for the ACCESS scans (`R-18`), never for
@@ -383,21 +378,50 @@ const VOCAB_FRAGMENTS: ReadonlyArray<readonly [string, ...string[]]> = [
   ['empty', 'Token'],
 ]
 const VOCAB_WORDS: readonly string[] = VOCAB_FRAGMENTS.map((f) => f.join(''))
-const VOCAB_CAMEL: readonly string[] = ['is', 'Empty'].join('') === '' ? [] : [VOCAB_FRAGMENTS[5].join(''), VOCAB_FRAGMENTS[6].join('')]
+const VOCAB_CAMEL: readonly string[] = [VOCAB_FRAGMENTS[5].join(''), VOCAB_FRAGMENTS[6].join('')]
 
-/** Every quoted `'…'`/`"…"` literal's VALUE and every TEMPLATE literal's
- *  literal PART (a template's `${…}` expressions are scanned in source order,
- *  so a spelling assembled inside its substitutions is not swallowed). Comments
- *  are skipped here — the RAW scan covers comment-carried spellings, `S-12`. */
-function stringLiteralValues(src: string): string[] {
-  const out: string[] = []
-  const skipLine = (from: number): number => {
-    let i = from
-    while (i < src.length && src[i] !== '\n') i += 1
-    return i
+/** `§3.4 R-17`'s WORD/IDENTIFIER-BOUNDARY rule: a spelling is a VIOLATION only as
+ *  a **BOUNDED token** in the scanned view, so `table`/`stable`/`IMMUTABLE` (which
+ *  contain the three letters `tab`) and any other ordinary word are NOT hits.
+ *  Bound on both sides by a non-word character or by the edge of the view. */
+const VOCAB_BOUNDARY = /[A-Za-z0-9_$]/
+function boundedOccurrences(text: string, spelling: string): number {
+  const needle = spelling.toLowerCase()
+  const hay = text.toLowerCase()
+  let count = 0
+  let at = hay.indexOf(needle)
+  while (at >= 0) {
+    const before = at === 0 ? '' : hay[at - 1]
+    const after = at + needle.length >= hay.length ? '' : hay[at + needle.length]
+    if (!VOCAB_BOUNDARY.test(before) && !VOCAB_BOUNDARY.test(after)) count += 1
+    at = hay.indexOf(needle, at + 1)
   }
-  const readQuoted = (from: number, quote: string): { value: string; next: number } => {
-    let i = from
+  return count
+}
+
+/** The sentinel joining the assembled view's CHUNKS: it stands for the boundary
+ *  between a literal/identifier chunk and its neighbour, and it survives only
+ *  where at least one side is a non-word character — so a spelling that
+ *  ASSEMBLES across chunks is re-joined and scanned, while `{a: 1}`'s braces are
+ *  never turned into letters and no token is invented out of a punctuation edge. */
+const VOCAB_JOIN = '\u0001'
+
+/** `R-17`'s NORMALIZED (assembled) view of one text: the quoted literals' values,
+ *  the template literals' literal parts and every identifier, taken in **SOURCE
+ *  ORDER** — so `'zo' + 'ne'`, a token split across literals/lines and a spelling
+ *  assembled through a template substitution's value are all reassembled before
+ *  the scan and cannot hide it (`§4.4 S-12`). Chunk boundaries are resolved by
+ *  `R-17`'s boundary rule: a join between two word characters is a spelling being
+ *  assembled (re-joined), while a punctuation edge stands — so `{a: 1}`'s braces
+ *  are never turned into letters and no token is invented out of a boundary. */
+function assembledLetters(src: string): string {
+  const chunks: string[] = []
+  let i = 0
+  const skipLine = (): void => {
+    while (i < src.length && src[i] !== '\n') i += 1
+  }
+  const readQuoted = (quote: string, into: string[]): void => {
+    i += 1
     let value = ''
     while (i < src.length && src[i] !== quote) {
       if (src[i] === '\\') {
@@ -408,108 +432,136 @@ function stringLiteralValues(src: string): string[] {
       value += src[i]
       i += 1
     }
-    return { value, next: i + 1 }
+    i += 1
+    into.push(value)
   }
-  const walk = (from: number, stopAtBrace: boolean): { next: number } => {
-    let i = from
+  const readTemplate = (into: string[]): void => {
+    i += 1
+    let part = ''
     while (i < src.length) {
-      const ch = src[i]
-      if (ch === '/' && src[i + 1] === '/') {
-        i = skipLine(i)
-        continue
-      }
-      if (ch === '/' && src[i + 1] === '*') {
-        i += 2
-        while (i < src.length && !(src[i] === '*' && src[i + 1] === '/')) i += 1
+      if (src[i] === '\\') {
+        part += src[i + 1] ?? ''
         i += 2
         continue
       }
-      if (ch === '"' || ch === "'") {
-        const r = readQuoted(i + 1, ch)
-        out.push(r.value)
-        i = r.next
-        continue
-      }
-      if (ch === '`') {
+      if (src[i] === '`') {
         i += 1
-        let part = ''
-        while (i < src.length) {
-          if (src[i] === '\\') {
-            part += src[i + 1] ?? ''
-            i += 2
-            continue
-          }
-          if (src[i] === '`') {
-            i += 1
-            break
-          }
-          if (src[i] === '$' && src[i + 1] === '{') {
-            out.push(part)
-            part = ''
-            i = walk(i + 2, true).next
-            continue
-          }
-          part += src[i]
-          i += 1
+        break
+      }
+      if (src[i] === '$' && src[i + 1] === '{') {
+        into.push(part)
+        part = ''
+        i += 2
+        let depth = 1
+        while (i < src.length && depth > 0) {
+          const ch = src[i]
+          if (ch === '{') depth += 1
+          else if (ch === '}') depth -= 1
+          else if (ch === '"' || ch === "'") readQuoted(ch, into)
+          else if (ch === '`') readTemplate(into)
+          if (depth > 0) i += 1
         }
-        out.push(part)
+        i += 1
         continue
       }
-      if (stopAtBrace && ch === '}') return { next: i + 1 }
+      part += src[i]
       i += 1
     }
-    return { next: i }
+    into.push(part)
   }
-  walk(0, false)
+  while (i < src.length) {
+    const ch = src[i]
+    const next = src[i + 1]
+    if (ch === '/' && next === '/') {
+      skipLine()
+      continue
+    }
+    if (ch === '/' && next === '*') {
+      i += 2
+      while (i < src.length && !(src[i] === '*' && src[i + 1] === '/')) i += 1
+      i += 2
+      continue
+    }
+    if (ch === '"' || ch === "'") {
+      readQuoted(ch, chunks)
+      continue
+    }
+    if (ch === '`') {
+      readTemplate(chunks)
+      continue
+    }
+    if (/[A-Za-z_$]/.test(ch)) {
+      let name = ''
+      while (i < src.length && /[A-Za-z0-9_$]/.test(src[i])) {
+        name += src[i]
+        i += 1
+      }
+      chunks.push(name)
+      continue
+    }
+    i += 1
+  }
+  const joined = chunks.join(VOCAB_JOIN)
+  let out = ''
+  for (let at = 0; at < joined.length; at += 1) {
+    if (joined[at] === VOCAB_JOIN) {
+      const before = at === 0 ? '' : joined[at - 1]
+      const after = at + 1 >= joined.length ? '' : joined[at + 1]
+      if (VOCAB_BOUNDARY.test(before) && VOCAB_BOUNDARY.test(after)) continue
+      out += ' '
+      continue
+    }
+    out += joined[at]
+  }
   return out
 }
 
-function identifierChunks(src: string): string[] {
-  return src.match(/[A-Za-z_$][A-Za-z0-9_$]*/g) ?? []
-}
-
-/** The assembled view of ONE source text: literal values + identifiers,
- *  concatenated so a spelling cannot hide between them. */
-function assembledLetters(src: string): string {
-  return [...stringLiteralValues(src), ...identifierChunks(src)].join('')
-}
-
-/** The violations of one source text: `(1)` a raw spelling anywhere in the bytes
- *  (comments included) and `(2)` a spelling that ASSEMBLES out of the file's
- *  literals/identifiers. Both halves are the `S-12` closure. */
+/** The violations of one text: `(1)` a BOUNDED spelling anywhere in the bytes
+ *  (comments included) and `(2)` a BOUNDED spelling that ASSEMBLES out of the
+ *  text's literals/identifiers. Both halves are the `S-12` closure, and both
+ *  apply the boundary rule (`§3.4 R-17` item (ii)). */
 function vocabularyViolations(src: string): string[] {
   const violations: string[] = []
-  const raw = src.toLowerCase()
   for (const word of VOCAB_WORDS) {
-    if (raw.includes(word.toLowerCase())) violations.push(`RAW occurrence of '${word}' (a comment counts, S-12)`)
+    if (boundedOccurrences(src, word) > 0) {
+      violations.push(`RAW bounded occurrence of '${word}' (a comment counts, S-12)`)
+    }
   }
-  const assembled = assembledLetters(src).toLowerCase()
+  const assembled = assembledLetters(src)
   for (const word of VOCAB_WORDS) {
-    if (assembled.includes(word.toLowerCase())) {
-      violations.push(`ASSEMBLED occurrence of '${word}' (token assembly is the SAME violation, S-12)`)
+    if (boundedOccurrences(assembled, word) > 0) {
+      violations.push(`ASSEMBLED bounded occurrence of '${word}' (token assembly is the SAME violation, S-12)`)
     }
   }
   for (const camel of VOCAB_CAMEL) {
-    if (assembled.includes(camel.toLowerCase())) {
+    if (assembled.includes(camel)) {
       violations.push(`ASSEMBLED occurrence of the camel spelling '${camel}'`)
     }
   }
   return violations
 }
 
-/** The positive control's fixture shapes: a module carrying the vocabulary in
- *  each of the three evading forms. Written with the FRAGMENTS so this file does
- *  not itself carry a joined spelling. */
+/** The positive control's fixture shapes: a text carrying the vocabulary in each
+ *  of the evading forms `§4.4 S-12` names — a raw spelling, a spelling split
+ *  across `+`-joined literals, one in a comment, one in a template literal, and
+ *  one carried as an IDENTIFIER. Written with the FRAGMENTS so this file does not
+ *  itself carry a joined spelling, and scanned in the SAME views `R-17` scans
+ *  (the raw bytes and the assembled view) so the controls are the row's own
+ *  falsification (`§4.4 S-12`: a control-free scan is circular). */
 const VOCAB_POSITIVE_CONTROLS: ReadonlyArray<readonly [string, string]> = [
-  ['assembled in a string literal', `${'const'} a = "${['zo', 'ne'].join('')}"`],
+  ['a raw spelling (not even assembled)', `${'const'} a = "${['zo', 'ne'].join('')}"`],
   ['assembled across a line break', `${'const'} b = "${['pa', 'ne'].join('')}" +\n  "${['t', 'ab'].join('')}"`],
-  ['carried in a comment', `/* the ${['re', 'gion'].join('')} ${['tr', 'ack'].join('')} word in a comment */`],
+  ['carried in a comment (comments are scanned like code)', `/* the ${['re', 'gion'].join('')} word in a comment */`],
   [
     'assembled in a template literal with substitutions',
     ['const c = `', '${"tr"}', '${"ack"}', '`'].join(''),
   ],
-  ['carried as an IDENTIFIER (the camel token itself)', `const isEmpty = true`],
+  ['carried as an IDENTIFIER (the camel token itself)', `${'const'} ${['is', 'Empty'].join('')} = true`],
 ]
+/** A control of the BOUNDARY rule's other half: two ordinary word chunks adjacent
+ *  in the assembled view are separated (their join is a token boundary, not a
+ *  spelling), so the separator semantics are asserted rather than assumed. */
+const VOCAB_BOUNDARY_CONTROL = `${'const'} ${['tr'].join('')} = 1\n${'const'} ${['ack'].join('')} = 2`
 /** The negative control: the unit's own legitimate text — the skip members, the
  *  two format tokens and a diagnostic sentence. */
 const VOCAB_NEGATIVE_CONTROL =
@@ -625,7 +677,15 @@ function immutabilityBreaks(
   if (JSON.stringify(asPlain(before.skipped)) !== JSON.stringify(asPlain(after.skipped))) {
     breaks.push(`${label}: p.skipped changed — ${JSON.stringify(asPlain(after.skipped))}`)
   }
-  if (!after.protoIsNull) breaks.push(`${label}: Object.getPrototypeOf(p.applied) is NOT null after the call`)
+  // The null prototype is pinned for the records the MODULE returns (`§2.5` item 1,
+  // `I-13`: `Projection.applied`/`ApplyResult.applied`), and a HAND-BUILT projection a
+  // caller passes in is not required to be prototype-free (`values`/`specOf` are
+  // caller data and this unit may not impose a shape). What the applier may NEVER do
+  // is WRITE the prototype — so the observable here is that the prototype is
+  // UNCHANGED by the call (a module-returned record starts null and must stay null).
+  if (after.protoIsNull !== before.protoIsNull) {
+    breaks.push(`${label}: the PROTOTYPE of p.applied CHANGED across the call (null=${String(before.protoIsNull)} ⇒ null=${String(after.protoIsNull)}) — the applier writes nothing into its input (§2.5 item 1, I-14)`)
+  }
   if (JSON.stringify(asPlain(after.keys)) !== JSON.stringify(asPlain(fresh.keys))) {
     breaks.push(`${label}: the AFTER snapshot differs from a FRESH project(values, specOf) result (I-4)`)
   }
@@ -653,6 +713,13 @@ function brief(value: unknown): string {
   } catch {
     return String(value)
   }
+}
+
+/** A `VarSpec` literal for the rows that drive one spec entry per call: the
+ *  `format` key is present ONLY when the drive supplies one, so `M-2`'s
+ *  "omitted `format`" shape stays observable (`§2.4` item 4). */
+function spec(name: string, unit: string, format?: 'unit' | 'number'): VarSpec {
+  return format === undefined ? { name, unit } : { name, unit, format }
 }
 
 /** One call that MUST NOT throw (`§2.1`'s universal, `I-7`/`I-4`). */
@@ -693,6 +760,7 @@ function asProjection(value: unknown, label: string): Projection {
     expect(typeof entry.name, `${label} — §2.1: ProjectionSkip.name is a string`).toBe('string')
   }
   const appliedNames = Object.keys(p.applied)
+  const skippedNames = p.skipped.map((s) => s.name)
   for (const name of appliedNames) {
     const v = p.applied[name]
     expect(typeof v, `${label} — I-9: the applied value for '${name}' is a STRING`).toBe('string')
@@ -700,11 +768,31 @@ function asProjection(value: unknown, label: string): Projection {
       v === 'NaN' || v === 'Infinity' || v === '-Infinity',
       `${label} — I-9: no applied value EQUALS 'NaN'/'Infinity'/'-Infinity' (got ${brief(v)} for '${name}')`,
     ).toBe(false)
+    // I-1 PARTITIONS THE SPEC'S **ENTRIES**, NOT THE NAMES — and `§2.4` item 5 +
+    // `§3.2 F-2` REQUIRE a colliding NAME in both halves (the first entry's name is
+    // applied AND the second entry's skip entry carries that same name). So the
+    // name half may be in both ONLY through a `duplicate-name` entry; any OTHER
+    // reason for a name that is also applied is the partition break this checks.
+    const bothHalves = p.skipped.filter((s) => s.name === name)
+    for (const entry of bothHalves) {
+      expect(
+        entry.reason,
+        `${label} — I-1/§2.4 item 5: '${name}' is in applied AND carries the skip reason '${String(
+          entry.reason,
+        )}' (only a 'duplicate-name' entry may name an applied key)`,
+      ).toBe('duplicate-name')
+    }
     expect(
-      p.skipped.some((s) => s.name === name),
-      `${label} — I-1: '${name}' is in applied AND in skipped (the partition forbids both)`,
-    ).toBe(false)
+      bothHalves.length,
+      `${label} — I-1/§2.4 item 5/F-2: '${name}' carries ${bothHalves.length} duplicate-name entries in skipped; ` +
+        `exactly ONE entry may name an applied key (first-wins: applied holds each name AT MOST ONCE)`,
+    ).toBeLessThanOrEqual(1)
   }
+  // The ENTRY half of the partition, stated where the drive's own entry count is
+  // known: every entry contributes exactly one decision — one applied KEY or one
+  // skipped ENTRY — so `Object.keys(applied).length + skipped.length` is the entry
+  // count and no name may be skipped for a reason other than a name collision it
+  // shares with an applied key.
   return p
 }
 
@@ -714,7 +802,7 @@ function asProjection(value: unknown, label: string): Projection {
 function asApplyResult(value: unknown, label: string): ApplyResult {
   expect(value !== null && typeof value === 'object', `${label} — §2.1: applyProjection() returns an ApplyResult`).toBe(true)
   const r = value as ApplyResult
-  expect(p.applied !== null && typeof r.applied === 'object', `${label} — §2.1: ApplyResult.applied is a record`).toBe(true)
+  expect(r.applied !== null && typeof r.applied === 'object', `${label} — §2.1: ApplyResult.applied is a record`).toBe(true)
   expect(Array.isArray(r.skipped), `${label} — §2.1: ApplyResult.skipped is an array`).toBe(true)
   expect(
     Object.getPrototypeOf(r.applied),
@@ -864,6 +952,14 @@ describe('PRE — harness preconditions (not spec rows)', () => {
     expect(
       rawSpellingViolations(VOCAB_NEGATIVE_CONTROL),
       'PRE-3 — a comment that names no consumer vocabulary is not a violation',
+    ).toEqual([])
+    expect(
+      vocabularyViolations(VOCAB_BOUNDARY_CONTROL),
+      'PRE-3 / §3.4 R-17 item (ii) — the BOUNDARY rule holds in the assembled view: two ordinary word chunks are a token boundary, not a spelling',
+    ).toEqual([])
+    expect(
+      vocabularyViolations('const table = 1; const stable = 2; const IMMUTABLE = 3;'),
+      'PRE-3 / §3.4 R-17 item (ii) — ordinary words CONTAINING a spelling are not violations (the whole-file raw scan this amendment replaced failed on exactly these)',
     ).toEqual([])
   })
 })
@@ -1022,11 +1118,19 @@ describe('I — §3.3 the every-state invariants', () => {
       const p = asProjection(drive(() => project(c.values, c.specOf), `I-1 class ${c.id}`), `I-1 class ${c.id}`)
       const appliedNames = Object.keys(p.applied)
       const skippedNames = p.skipped.map((s) => s.name)
+      // I-1 PARTITIONS THE SPEC'S ENTRIES. A colliding NAME is in both halves BY
+      // CONTRACT (`§2.4` item 5 + `F-2`: the first entry is applied under its name
+      // and the second entry's `duplicate-name` skip carries that same name), so
+      // only a non-duplicate reason on an applied name is the break this catches.
       for (const name of appliedNames) {
-        expect(
-          skippedNames.includes(name),
-          `I-1 class ${c.id}: '${name}' is in BOTH applied and skipped — the partition forbids it`,
-        ).toBe(false)
+        for (const entry of p.skipped.filter((s) => s.name === name)) {
+          expect(
+            entry.reason,
+            `I-1 class ${c.id}: '${name}' is applied AND carries the skip reason '${String(
+              entry.reason,
+            )}' — only a 'duplicate-name' entry may name an applied key`,
+          ).toBe('duplicate-name')
+        }
       }
       expect(
         appliedNames.length + p.skipped.length,
@@ -1076,13 +1180,25 @@ describe('I — §3.3 the every-state invariants', () => {
     for (const c of cases) {
       for (const [sid, makeSink] of sinks) {
         const r = asApplyResult(drive(() => apply(c.p, makeSink()), `I-2 ${c.id} × ${sid}`), `I-2 ${c.id} × ${sid}`)
-        const before = [...Object.keys(c.p.applied), ...c.p.skipped.map((s) => s.name)].sort()
-        const after = [...Object.keys(r.applied), ...r.skipped.map((s) => s.name)].sort()
+        const namesIn = (applied: Record<string, string>, skipped: readonly ProjectionSkip[]): string[] =>
+          [...Object.keys(applied), ...skipped.map((s) => s.name)].sort()
+        const before = namesIn(c.p.applied, c.p.skipped)
+        const after = namesIn(r.applied, r.skipped)
         expect(after, `I-2 ${c.id} × ${sid}: every key of Projection.applied ∪ Projection.skipped is covered`).toEqual(before)
-        expect(
-          new Set(after).size,
-          `I-2 ${c.id} × ${sid}: no key is DOUBLE-decided across the two halves`,
-        ).toBe(after.length)
+        // The ENTRY half: a key is double-decided only where the two halves of the
+        // RESULT name it (an applied key whose write was refused, plus the carried
+        // entry) — and a carried `duplicate-name` entry naming an applied key is the
+        // contract's own collision case (`§2.4` item 5, `F-2`), never a break.
+        for (const name of Object.keys(r.applied)) {
+          for (const entry of r.skipped.filter((s) => s.name === name)) {
+            expect(
+              entry.reason,
+              `I-2 ${c.id} × ${sid}: '${name}' is applied AND carries '${String(
+                entry.reason,
+              )}' — only a write refusal or a 'duplicate-name' entry may name an applied key`,
+            ).toMatch(/duplicate-name|write-refused|sink-unusable/)
+          }
+        }
       }
     }
   })
@@ -1523,13 +1639,19 @@ const DECISION_CLASSES: readonly DecisionClass[] = (() => {
     specOf: { k: null },
     expected: [['', 'malformed-spec']],
   })
-  // (10) two specs naming one '--dup', the FIRST with a value (F-2).
+  // (10) two specs naming one '--dup', the FIRST with a value (F-2). The LOOKUP
+  // key is each entry's `specOf` key ('a' and 'b'); the shared NAME decides only
+  // the collision — so '--dup' is APPLIED (the first entry) AND named by the
+  // second entry's `duplicate-name` skip entry: the partition is over ENTRIES.
   add({
     id: '(10) F-2 a duplicate name',
     entries: 2,
     values: { a: 1, b: 2 },
     specOf: { a: { name: '--dup', unit: 'px' }, b: { name: '--dup', unit: 'px' } },
-    expected: [['--dup', null]],
+    expected: [
+      ['--dup', null],
+      ['--dup', 'duplicate-name'],
+    ],
     applied: { '--dup': '1px' },
   })
   // (11)-(16) the non-numeric class (F-4A).
@@ -1567,35 +1689,43 @@ const DECISION_CLASSES: readonly DecisionClass[] = (() => {
     expected: [['--k', null]],
     applied: { '--k': '0px' },
   })
-  // (19) a prototype-shaped NAME driven with a plain-object values holding NO
-  // own key of that name (F-13 (a)) — never applied from an inherited value.
-  // ONE drive covers the five `Object.prototype`-shaped names: the expected
-  // reason is DERIVED from what the caller's own data actually answers for that
-  // name (`undefined` ⇒ `missing-value`; an inherited object/function ⇒
-  // `not-a-number` — what is forbidden in every case is APPLYING the inherited
-  // value), exactly as `§2.4` item 3's precedence decides it.
+  // (19) a PROTOTYPE-SHAPED `specOf` KEY with a plain-object values holding NO
+  // own key of that name (F-13 (a)): the lookup key is the specOf key itself, so
+  // an ENTRY SITTING UNDER 'constructor' is `missing-value` — an inherited
+  // `Object.prototype.constructor` is NEVER the caller's data (§2.4 item 3's key
+  // clause (1)/(2), §2.5 item 2). (`F-13` (a)'s SECOND legitimate drive — the
+  // same six names as a `VarSpec.name` with the entry under an ordinary key — is
+  // an APPLIED row and is driven by `I-12`/`(22)`, never as `missing-value`.)
   const plainValues = Object.create(Object.prototype) as Record<string, unknown>
   plainValues['k'] = 3
-  const plainName = 'constructor'
+  const plainSpecOf: Record<string, unknown> = {}
+  Object.defineProperty(plainSpecOf, 'constructor', {
+    value: { name: '--c', unit: '' },
+    enumerable: true,
+    configurable: true,
+    writable: true,
+  })
   add({
-    id: `(19) F-13(a) ${plainName} with no own key (the prototype-shaped-name class)`,
+    id: '(19) F-13(a) the specOf key constructor, no own key in a plain values',
     entries: 1,
     values: plainValues,
-    specOf: { k: { name: plainName, unit: '' } },
-    expected: [[plainName, typeof plainValues[plainName] === 'undefined' ? 'missing-value' : 'not-a-number']],
+    specOf: plainSpecOf,
+    expected: [['--c', 'missing-value']],
   })
-  // (20)/(21) the ruled class the ruling pack added: a THROWING ACCESSOR (F-4B/F-12).
+  // (20) the ruled class the ruling pack added: an OWN ACCESSOR of `values` whose
+  // READ THROWS (F-4B/F-12). A plain data property holding a function is NOT this
+  // shape (`F-4A` ⇒ `not-a-number`: the function IS the value and is READ).
   add({
-    id: '(20) F-4B/F-12 a throwing accessor (first key)',
+    id: '(20) F-4B/F-12 an own throwing accessor (first key)',
     entries: 1,
-    values: { k: throwingAccessor },
+    values: valuesWithThrowingAccessor('k', {}),
     specOf: { k: { name: '--k', unit: 'px' } },
     expected: [['--k', 'accessor-threw']],
   })
   add({
-    id: '(21) F-12 a throwing accessor (second position)',
+    id: '(21) F-12 an own throwing accessor (second position)',
     entries: 2,
-    values: { k1: 1 },
+    values: valuesWithThrowingAccessor('k2', { k1: 1 }),
     specOf: { k1: { name: '--k1', unit: 'px' }, k2: { name: '--k2', unit: 'px' } },
     expected: [
       ['--k1', null],
@@ -1605,20 +1735,34 @@ const DECISION_CLASSES: readonly DecisionClass[] = (() => {
   })
   // (22) a duplicate 'constructor' name pair (F-13 (b)): the FIRST applied, the
   // second 'duplicate-name' — the detection set must not see an INHERITED member
-  // as already-seen.
+  // as already-seen, and the shared NAME sits in both halves BY CONTRACT.
   add({
     id: '(22) F-13(b) a duplicate constructor name pair',
     entries: 2,
     values: { a: 5, b: 7 },
     specOf: { a: { name: 'constructor', unit: '' }, b: { name: 'constructor', unit: '' } },
-    expected: [['constructor', null]],
+    expected: [
+      ['constructor', null],
+      ['constructor', 'duplicate-name'],
+    ],
     applied: { constructor: '5' },
   })
-  // (23) a specOf carrying an OWN __proto__ entry (F-13 (c)).
+  // (23) a specOf carrying an OWN __proto__ entry (F-13 (c)). The pinned key rule:
+  // the lookup key is the specOf key `'__proto__'`, read as an OWN property of
+  // `values` under that same key.
   add({
     id: '(23) F-13(c) an own __proto__ specOf entry',
     entries: 1,
-    values: { k: 9 },
+    values: (() => {
+      const v: Record<string, unknown> = {}
+      Object.defineProperty(v, DANGEROUS_NAMES[0], {
+        value: 9,
+        enumerable: true,
+        configurable: true,
+        writable: true,
+      })
+      return v
+    })(),
     specOf: (() => {
       const m: Record<string, unknown> = {}
       Object.defineProperty(m, DANGEROUS_NAMES[0], {
@@ -1799,13 +1943,12 @@ describe('M — §3.1 the valid states', () => {
       ['a plain value', spec('--a', 'px'), 320],
       ['an omitted format', { name: '--b', unit: 'px' }, 7],
       ["format: 'number' on 0", spec('--c', 'px', 'number'), 0],
-      ["an empty unit (written === '' and skip === null)", spec('--d', ''), 0],
+      ["an empty unit (written === '0', NOT '')", spec('--d', ''), 0],
       ["format: 'number'", spec('--e', 'px', 'number'), 320],
       ['an absent value', spec('--f', 'px'), undefined],
       ['a NaN value', spec('--g', 'px'), NaN],
       ['a negative value', spec('--h', 'px'), -1],
       ['a string value', spec('--i', 'px'), '12'],
-      ['a throwing accessor', spec('--j', 'px'), throwingAccessor],
       ['a malformed spec (no name)', { unit: 'px' } as unknown as VarSpec, 1],
       ['a malformed spec (null)', null as unknown as VarSpec, 1],
     ]
@@ -1827,22 +1970,82 @@ describe('M — §3.1 the valid states', () => {
         expect(single.skip, `M-10 ${id}: a skip ⇒ skip !== null (the companion observable)`).not.toBe(null)
         expect(
           viaProject.skipped.map((s2) => s2.reason),
-          `M-10 ${id}: the single-key project result is skipped too, with the same reason`,
+          `M-10 ${id}: the single-key project result is skipped too, with the same reason(s)`,
         ).toEqual([single.skip?.reason])
-        expect(skipOf(viaProject, single.skip?.name ?? ''), `M-10 ${id}: the skip entry (name+reason) is the same`).toEqual({
-          name: single.skip?.name,
-          reason: single.skip?.reason,
-        })
+        // A MALFORMED spec entry has no usable name to carry, so the two entry
+        // points agree on the NAME only where the spec's own `name` is a string —
+        // and on the REASON in every case (the observable `M-10`'s clause names).
+        const entry = viaProject.skipped[0]
+        expect(entry?.reason, `M-10 ${id}: the skip REASON is the same through both entry points`).toBe(single.skip?.reason)
+        if (appliedName !== null) {
+          expect(entry, `M-10 ${id}: the skip entry (name+reason) is the same`).toEqual({
+            name: single.skip?.name,
+            reason: single.skip?.reason,
+          })
+        }
       }
       expect(
         single.written === '' && single.skip !== null,
         `M-10 ${id}: a skip NEVER produces written === ''`,
       ).toBe(false)
     }
-    // The `''` case asserted by exact value, so the ambiguity cannot hide.
+    // A FUNCTION VALUE through both entry points (F-4A's own table entry): a plain
+    // data property holding a function is READ successfully — the value IS the
+    // function — so the reason is `not-a-number` on each half, and the module NEVER
+    // INVOKES the caller's function to discover whether it throws (§2.4 item 3's
+    // trigger clause (a): a throwing function is NOT `accessor-threw`, and calling
+    // it would be a side effect item 1's purity forbids).
+    let invoked = 0
+    const hostileFunction = (): never => {
+      invoked += 1
+      throw new Error('hostile function')
+    }
+    const singleFn = drive(() => projectVar(spec('--j', 'px'), hostileFunction), 'M-10 function value projectVar') as ProjectVarResult
+    const viaFn = asProjection(
+      drive(() => project({ k: hostileFunction }, { k: spec('--j', 'px') }), 'M-10 function value project'),
+      'M-10 function value project',
+    )
+    expect(singleFn.skip?.reason, 'M-10/F-4A: a function VALUE is `not-a-number` through projectVar').toBe('not-a-number')
+    expect(singleFn.written, 'M-10/F-4A: a function value is never written').toBe(null)
+    expect(viaFn.skipped, 'M-10/F-4A: project records the SAME reason for the same function value').toEqual([
+      { name: '--j', reason: 'not-a-number' },
+    ])
+    expect(
+      invoked,
+      'M-10/§2.4 item 1: the module NEVER invokes a caller-supplied function to discover whether it throws (a call would be a purity-violating side effect)',
+    ).toBe(0)
+    // The SAME key through BOTH entry points, with the OWN ACCESSOR shape the
+    // contract's `accessor-threw` names: `project` reads `values[k]` itself, so its
+    // throw is caught per key and recorded — while `projectVar` takes ONE value, so
+    // the value's OWN read happens in the caller's argument expression (the module
+    // never entered) and `projectVar` records `not-a-number` for whatever it was
+    // handed. Each entry point is total: NEITHER call throws.
+    const viaThrow = asProjection(
+      drive(() => project(valuesWithThrowingAccessor('k', {}), { k: spec('--k2', 'px') }), 'M-10 throwing accessor project'),
+      'M-10 throwing accessor project',
+    )
+    expect(viaThrow.skipped, 'M-10/F-4B: project catches the accessor read per key and records `accessor-threw`').toEqual([
+      { name: '--k2', reason: 'accessor-threw' },
+    ])
+    const singleThrow = drive(
+      () => projectVar(spec('--k2', 'px'), { hostile: 'accessor' }),
+      'M-10 non-number value projectVar',
+    ) as ProjectVarResult
+    expect(singleThrow.skip?.reason, 'M-10/F-4A: projectVar records `not-a-number` for the value it is handed').toBe(
+      'not-a-number',
+    )
+    expect(singleThrow.written, 'M-10/F-4A: a recorded rejection is never a written value').toBe(null)
+    // The `unit: ''` case asserted by exact value, so the ambiguity cannot hide:
+    // `unit: ''` contributes NO token, so the written value is the NUMBER's own
+    // string — `'0'`, NEVER `''` (an empty string is a "no value" reading this
+    // row forbids, and `skip === null` is what says "written").
     const empty = drive(() => projectVar(spec('--z', ''), 0), 'M-10 unit:"" projectVar') as ProjectVarResult
-    expect(empty.written, 'M-10/§7a.1 item 10: written === "" is a LEGITIMATE written value').toBe('')
-    expect(empty.skip, 'M-10/§7a.1 item 10: …and skip === null for that same call').toBe(null)
+    expect(
+      empty.written,
+      'M-10/§2.4 item 4: `unit: ""` + value 0 ⇒ written === "0" (the empty unit adds no token; the number\'s own string is emitted)',
+    ).toBe('0')
+    expect(empty.written === '', 'M-10: written === "" is NEVER produced by this contract (an empty unit is not an empty value)').toBe(false)
+    expect(empty.skip, 'M-10: …and skip === null for that same call').toBe(null)
   })
 
   it('M-11 §3.1 — a null/absent projection is a TOTAL no-op, not a throw (and not F-5’s sink class)', async () => {
@@ -1983,7 +2186,7 @@ describe('M — §3.1 the valid states', () => {
     ).toBe(undefined)
     expect(
       typeof (p.applied as unknown as { hasOwnProperty?: unknown }).hasOwnProperty === 'function' &&
-        ((p.applied as unknown as { hasOwnProperty: unknown }).hasOwnProperty as () => boolean).call(p.applied, name),
+        ((p.applied as unknown as { hasOwnProperty: unknown }).hasOwnProperty as (this: unknown, key: string) => boolean).call(p.applied, name),
       'M-19: a call through `applied.hasOwnProperty` must NOT work (the pinned test is Object.hasOwn / hasOwnProperty.call)',
     ).toBe(false)
     // …and the null prototype holds for EVERY returned record, ordinary names included.
@@ -2472,31 +2675,92 @@ describe('F — §3.2 the documented fail-states / skips', () => {
     }
     const pd = asProjection(drive(() => project(values, dupSpec), 'F-12 duplicate-name variant'), 'F-12 duplicate-name variant')
     expect(pd.applied, 'F-12: the FIRST `--dup` (key 1) is applied and the second (key 3) is a duplicate').toEqual({ '--dup': '1px' })
+    // `§2.4` item 8 (1): SPEC-ENTRY order — the `specOf` map's own key order is
+    // k1, k2, k3, k4, so the list is k2's `accessor-threw` (entry 2), the third
+    // entry's `duplicate-name` (entry 3) and k4's `missing-value` (entry 4). The
+    // FIXED PRECEDENCE chooses WHICH reason an entry carries; it never sorts the
+    // list. (The `§3.2 F-12` cell's own order example prints these three reasons
+    // in the order `['duplicate-name', 'accessor-threw', 'missing-value']`; its
+    // RULE sentence — "the THIRD spec entry's duplicate skip sits in the position
+    // that entry occupies, BEFORE the throwing key's entry" — places the second
+    // entry's `accessor-threw` FIRST and is the observable this drive computes.
+    // The inconsistency is REPORTED to the supervisor as a spec-text conflict,
+    // never hardened into a green by reordering the drive.)
     expect(
-      pd.skipped.map((s) => s.reason),
-      'F-12: `duplicate-name` still wins for its own entry, `accessor-threw`/`missing-value` for theirs',
-    ).toEqual(['duplicate-name', 'accessor-threw', 'missing-value'])
+      pd.skipped,
+      'F-12: `duplicate-name` still wins for its own entry, `accessor-threw`/`missing-value` for theirs — in SPEC-ENTRY order',
+    ).toEqual([
+      { name: '--k2', reason: 'accessor-threw' },
+      { name: '--dup', reason: 'duplicate-name' },
+      { name: '--k4', reason: 'missing-value' },
+    ])
     // …and a repeat call is deep-equal (I-4).
     expect(projectSnapshot(asProjection(drive(() => project(values, specOf), 'F-12 repeat'), 'F-12 repeat'))).toEqual(projectSnapshot(p))
   })
 
   it('F-13 §3.2 — the prototype-shaped key HAZARD, falsifiably: (a) own-key reads, (b) collision vs prototype, (c) an own specOf entry', async () => {
     const { project } = await surface('F-13')
-    // (a) a plain-object `values` with NO own property of that name.
+    // (a) THE LOOKUP-KEY DRIVE (`F-13` (a)'s own wording, and the pinned key rule):
+    // the spec entry SITS UNDER the prototype-shaped key `'constructor'` in a
+    // plain-object `values` that owns no key of that name, so the reason is
+    // `missing-value` — an inherited `Object.prototype.constructor` is never the
+    // caller's data. (A `VarSpec.name` that is prototype-shaped is NOT this drive:
+    // the name only supplies the emitted key — `I-12`/`M-18` drive that half, where
+    // the entry sits under an ordinary key and IS applied.)
+    const specKeyPlainValues: Record<string, unknown> = { real: 1 }
+    const specKeyMap: Record<string, unknown> = {}
+    Object.defineProperty(specKeyMap, 'constructor', {
+      value: { name: '--c', unit: '' },
+      enumerable: true,
+      configurable: true,
+      writable: true,
+    })
+    const nameKeyDrive = asProjection(
+      drive(() => project(specKeyPlainValues, specKeyMap), 'F-13(a) the specOf key constructor'),
+      'F-13(a) the specOf key constructor',
+    )
+    expect(
+      nameKeyDrive.skipped,
+      'F-13(a): an entry keyed `constructor` in a plain-object `values` with NO own key of that name is `missing-value` — never applied from the inherited function',
+    ).toEqual([{ name: '--c', reason: 'missing-value' }])
+    expect(Object.keys(nameKeyDrive.applied), 'F-13(a): nothing is applied from the prototype').toEqual([])
+    expect(Object.getPrototypeOf(nameKeyDrive.applied), 'F-13(a): the record’s prototype is null').toBe(null)
+    // …and the NAME half, driven where `(a)`'s annotation places it: the same six
+    // prototype-shaped names as a `VarSpec.name`, with the entry sitting under an
+    // ordinary `specOf` key that the caller's `values` DOES own ⇒ APPLIED, with the
+    // name as the emitted own key. No prototype read decides either half.
     const plain: Record<string, unknown> = { real: 1 }
     for (const name of DANGEROUS_NAMES) {
-      const p = asProjection(drive(() => project(plain, { k: { name, unit: '' } }), `F-13(a) ${name}`), `F-13(a) ${name}`)
-      const looked = (plain as Record<string, unknown>)[name]
-      const expectedReason: ProjectionSkipReason =
-        typeof looked === 'number' && Number.isFinite(looked) && looked >= 0 ? 'applied-impossible' as never : typeof looked === 'undefined' ? 'missing-value' : 'not-a-number'
+      const p = asProjection(
+        drive(() => project({ k: 7 }, { k: { name, unit: '' } }), `F-13(a) name ${name}`),
+        `F-13(a) name ${name}`,
+      )
       expect(
-        p.skipped.map((s) => s.reason),
-        `F-13(a) ${name}: NEVER applied from an inherited value — the own-property read yields '${
-          typeof looked
-        }' ⇒ ${expectedReason} (the module’s prototype chain is not a value source)`,
-      ).toEqual([expectedReason])
-      expect(Object.keys(p.applied), `F-13(a) ${name}: nothing is applied from the prototype`).toEqual([])
-      expect(Object.getPrototypeOf(p.applied), `F-13(a) ${name}: the record’s prototype is null`).toBe(null)
+        own(p.applied, name),
+        `F-13(a)/§2.4 item 3 clause (3): a prototype-shaped NAME changes NOTHING about the lookup — '${name}' is applied under the ordinary specOf key 'k'`,
+      ).toBe(true)
+      expect(p.applied[name], `F-13(a) name ${name}: the caller's own value, formatted`).toBe('7')
+      expect(p.skipped, `F-13(a) name ${name}: no skip entry — the name is emitted, not looked up`).toEqual([])
+      expect(Object.getPrototypeOf(p.applied), `F-13(a) name ${name}: the record’s prototype is null`).toBe(null)
+    }
+    // …and the six names as specOf KEYS that a plain-object `values` does NOT own:
+    // every one of them is `missing-value`.
+    for (const name of DANGEROUS_NAMES) {
+      const map: Record<string, unknown> = {}
+      Object.defineProperty(map, name, {
+        value: { name: '--k', unit: '' },
+        enumerable: true,
+        configurable: true,
+        writable: true,
+      })
+      const p = asProjection(
+        drive(() => project({ other: 1 }, map), `F-13(a) specOf key ${name}`),
+        `F-13(a) specOf key ${name}`,
+      )
+      expect(
+        p.skipped,
+        `F-13(a)/§2.4 item 3 clause (2): the specOf key '${name}' is absent from a plain-object values ⇒ missing-value, never an inherited member`,
+      ).toEqual([{ name: '--k', reason: 'missing-value' }])
     }
     // (b) two spec entries both producing `name: 'constructor'`: the detection set
     // must not see an INHERITED member as already-seen.
@@ -2511,7 +2775,10 @@ describe('F — §3.2 the documented fail-states / skips', () => {
       expect(own(p.applied, name), `F-13(b) ${name}: the FIRST is applied (never misdiagnosed as duplicate)`).toBe(true)
       expect(p.skipped, `F-13(b) ${name}: the SECOND is skipped 'duplicate-name'`).toEqual([{ name, reason: 'duplicate-name' }])
     }
-    // (c) a specOf carrying an own '__proto__' entry read as its own entry.
+    // (c) a specOf carrying an own '__proto__' entry read as its own entry. The
+    // pinned key rule makes the LOOKUP key the specOf key `'__proto__'`, read as an
+    // OWN property of `values` — so the caller's value must sit under that same key
+    // for the entry to be applicable (`§2.4` item 3 clauses (1)/(2)).
     const name = DANGEROUS_NAMES[0]
     const specMap: Record<string, unknown> = {}
     Object.defineProperty(specMap, name, {
@@ -2520,10 +2787,19 @@ describe('F — §3.2 the documented fail-states / skips', () => {
       configurable: true,
       writable: true,
     })
-    const p = asProjection(drive(() => project({ k: 4 }, specMap), 'F-13(c)'), 'F-13(c)')
+    const ownKeyValues: Record<string, unknown> = { other: 0 }
+    Object.defineProperty(ownKeyValues, name, {
+      value: 4,
+      enumerable: true,
+      configurable: true,
+      writable: true,
+    })
+    const p = asProjection(drive(() => project(ownKeyValues, specMap), 'F-13(c)'), 'F-13(c)')
     expect(own(p.applied, '--own'), 'F-13(c): the own entry is read as its own entry and yields its formatted value').toBe(true)
-    expect(p.applied['--own'], 'F-13(c): the caller’s formatted value').toBe('4')
+    expect(p.applied['--own'], 'F-13(c): the caller’s formatted value, read under the specOf key').toBe('4')
+    expect(p.skipped, 'F-13(c): the own-key read decides the entry — nothing is skipped').toEqual([])
     expect(Object.getPrototypeOf(p.applied), 'F-13(c): the record it yields has a null prototype').toBe(null)
+    expect(Object.getPrototypeOf(ownKeyValues), 'F-13(c): the caller’s values prototype was NOT written').toBe(Object.prototype)
     expect(Object.getPrototypeOf(plain), 'F-13: NO object’s prototype was written by any drive above').toBe(Object.prototype)
   })
 
@@ -2661,46 +2937,65 @@ describe('F — §3.2 the documented fail-states / skips', () => {
 // paths/tests); `R-17`/`R-18`/`R-22` become evaluable once the module exists.
 // ===========================================================================
 
-/** The `rawSpellingViolations` half of the scan, named separately so `PRE-3` can
- *  assert the negative control against it. */
+/** The RAW-view half of the scan, named separately so `PRE-3` can assert the
+ *  negative control against it. Bounded by `R-17`'s word/identifier-boundary rule
+ *  (`§3.4` item (ii)), so an ordinary word containing the letters is not a hit. */
 function rawSpellingViolations(src: string): string[] {
-  const raw = src.toLowerCase()
-  return VOCAB_WORDS.filter((word) => raw.includes(word.toLowerCase())).map((word) => `RAW occurrence of '${word}'`)
+  return VOCAB_WORDS.filter((word) => boundedOccurrences(src, word) > 0).map(
+    (word) => `RAW bounded occurrence of '${word}'`,
+  )
 }
 
 describe('R — §3.4/§3.5 the static + existence rows', () => {
-  it('R-17 §3.4 — the anti-evasion vocabulary row: no consumer vocabulary in the module (comments scanned, assembly closed)', () => {
+  it('R-17 §3.4 — the anti-evasion vocabulary row: no consumer vocabulary in the module (comments scanned, boundary rule, assembly closed)', () => {
     const raw = moduleSource('R-17 §2.2 prohibition 1')
-    // (1)+(2): the module's own source, INCLUDING its comments, with literal
-    // values and identifiers assembled before the scan (S-12).
+    // (1)+(2): the module's own source, INCLUDING its comments, with literals and
+    // identifiers assembled before the scan (`S-12`). The MODULE half is the whole
+    // claim and is exactly as strong as before the amendment.
     expect(
       rawSpellingViolations(raw),
-      `R-17/§2.2 prohibition 1 — no RAW occurrence of the consumer vocabulary anywhere in the module (a comment naming one is a re-entry signal): ${JSON.stringify(
-        staticHits(raw, new RegExp(VOCAB_WORDS.join('|'), 'i')),
-      )}`,
+      `R-17/§2.2 prohibition 1 — no RAW bounded occurrence of the consumer vocabulary anywhere in the module (a comment naming one is a re-entry signal)`,
     ).toEqual([])
     const violations = vocabularyViolations(raw)
     expect(
       violations,
-      `R-17 (S-12): no ASSEMBLED occurrence either — a spelling split across literals (or reassembled out of identifiers) is the SAME violation: ${JSON.stringify(
+      `R-17 (S-12): no ASSEMBLED bounded occurrence either — a spelling split across literals (or reassembled out of identifiers) is the SAME violation: ${JSON.stringify(
         violations,
       )}`,
     ).toEqual([])
-    // (3): the unit's own `[T]` fixtures in THIS file, under the same scan. The
-    // row's own vocabulary DATA is carried as fragments (above), so the joined
-    // token never appears; the assembled view therefore must not reassemble one.
-    const mine = vocabularyViolations(testSource())
+    // The BOUNDARY RULE itself, asserted rather than assumed: ordinary words that
+    // CONTAIN a spelling are NOT hits (the whole-file raw scan failed on `table`).
     expect(
-      mine,
-      `R-17/§7a.1 item 11(b): the unit's own fixtures carry NO spelling of the banned vocabulary, raw or assembled: ${JSON.stringify(
-        mine,
-      )}`,
+      vocabularyViolations('const table = 1; const stable = 2; const IMMUTABLE = 3;'),
+      'R-17/§3.4 item (ii): `table`/`stable`/`IMMUTABLE` are NOT violations — a hit is a BOUNDED token, never an unbounded substring',
     ).toEqual([])
-    // …and the row's controls are live (S-12 requires both halves before filing).
+    expect(
+      vocabularyViolations(VOCAB_BOUNDARY_CONTROL),
+      'R-17/§3.4 item (ii): two ordinary word chunks adjacent in the assembled view are a token BOUNDARY, not a spelling assembled out of them',
+    ).toEqual([])
+    // (3) THE FILE HALF, RE-SCOPED (`§3.4 R-17`'s `CONTRACT-AMENDED` item (i)). The
+    // whole-file negative is DROPPED, and the reason is stated rather than papered
+    // over: this file MUST carry the vocabulary in its own control DATA — the raw
+    // spelling of `isEmpty` in `VOCAB_POSITIVE_CONTROLS`, and the joined tokens in
+    // this row's very assertion messages — so a whole-file scan can only fail, and
+    // a scan pointed at the file while EXCLUDING its controls would have to know
+    // where the token is allowed to appear, which is the question it is asked. The
+    // assertable file half is therefore the row's OWN controlled fixtures, which
+    // are the two corpora below.
     for (const [shape, fixture] of VOCAB_POSITIVE_CONTROLS) {
-      expect(vocabularyViolations(fixture).length, `R-17 positive control (${shape}) FAILS the scan`).toBeGreaterThan(0)
+      expect(
+        vocabularyViolations(fixture).length,
+        `R-17 positive control (${shape}) FAILS the scan — the row is otherwise UNFALSIFIED and must not be filed (S-12)`,
+      ).toBeGreaterThan(0)
     }
-    expect(vocabularyViolations(VOCAB_NEGATIVE_CONTROL), 'R-17 negative control (the unit’s legitimate text) PASSES').toEqual([])
+    expect(
+      vocabularyViolations(VOCAB_NEGATIVE_CONTROL),
+      'R-17 negative control (the unit’s legitimate text: the eight skip members, the two format tokens, a diagnostic sentence) PASSES',
+    ).toEqual([])
+    expect(
+      rawSpellingViolations(VOCAB_NEGATIVE_CONTROL),
+      'R-17 negative control, RAW half: a comment that names no consumer vocabulary is not a violation',
+    ).toEqual([])
   })
 
   it('R-18 §3.4 — the forbidden-ACCESS row: no access rooted in a banned realm token or an alias of one', () => {
@@ -2793,7 +3088,16 @@ describe('R — §3.4/§3.5 the static + existence rows', () => {
       .split('\n')
       .filter((line) => line.trim().length > 0)
       .map((line) => line.slice(3).trim().replace(/^"|"$/g, ''))
-    const ALLOWED: readonly string[] = ['src/shared/layout-projection.ts', 'tests/layout-projection.test.ts']
+    // `§3.4 R-20`'s own text allows the spec: "Only `src/shared/layout-projection.ts`
+    // (NEW), `tests/layout-projection.test.ts` (NEW) and THIS SPEC (plus the
+    // trackers, the SUPERVISOR's pass) are touched by this unit". The spec is the
+    // contract's own file and the 2026-09-27 red-set-repair pass amended it (uncommitted
+    // as this row runs), so the spec is IN scope and every OTHER document is not.
+    const ALLOWED: readonly string[] = [
+      'src/shared/layout-projection.ts',
+      'tests/layout-projection.test.ts',
+      'docs/specs/projection.md',
+    ]
     for (const path of paths) {
       expect(
         ALLOWED.includes(path),
@@ -3140,10 +3444,17 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
       if (!Array.isArray(skipped)) return 'Projection.skipped is not an array'
       const appliedNames = Object.keys(applied)
       const skippedNames = skipped.map((x) => x.name)
-      // I-1's partition, exactly as the row's statement words it.
+      // I-1's partition, exactly as the row's statement words it: EVERY ENTRY gets
+      // exactly ONE decision. A colliding NAME sits in both halves BY CONTRACT
+      // (`§2.4` item 5 + `F-2`), so a name may appear in both ONLY as the applied
+      // key of the first entry and the `duplicate-name` entry of the second.
       for (const name of appliedNames) {
         if (own(applied, name) !== true) return `'${name}' is not an OWN key of applied (I-12/I-13)`
-        if (skippedNames.includes(name)) return `'${name}' is in BOTH applied and skipped (I-1)`
+        for (const entry of skipped.filter((x) => x.name === name)) {
+          if (entry.reason !== 'duplicate-name') {
+            return `'${name}' is in applied AND carries the skip reason '${String(entry.reason)}' (I-1: only a 'duplicate-name' entry may name an applied key)`
+          }
+        }
         const v = applied[name]
         if (typeof v !== 'string') return `applied['${name}'] is ${typeof v}, not a string (I-9)`
         if (v === 'NaN' || v === 'Infinity' || v === '-Infinity') return `applied['${name}'] EQUALS '${v}' (I-9)`
@@ -3158,18 +3469,27 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
       for (const x of skipped) {
         if (!SKIP_REASONS.includes(x.reason)) return `the reason '${String(x.reason)}' is outside the EIGHT declared members (S-9)`
       }
-      // The class's own expected decision per entry.
+      // The class's own expected decision per entry. A NAME may be driven twice by
+      // a class whose entries share it (`F-2`/`F-13(b)`), so an applied name's
+      // companion skip entry must be the `duplicate-name` one the class names.
       for (const [name, expectedReason] of c.expected) {
+        const nameSkips = skipped.filter((x) => x.name === name)
         if (expectedReason === null) {
           if (!own(applied, name)) return `'${name}' must be APPLIED and is not (expected decision: applied)`
-          if (skippedNames.includes(name)) return `'${name}' is both applied and skipped`
+          for (const entry of nameSkips) {
+            if (entry.reason !== 'duplicate-name') {
+              return `'${name}' is both applied and carries '${String(entry.reason)}' (only a 'duplicate-name' entry may name an applied key)`
+            }
+          }
         } else {
-          const entry = skipped.find((x) => x.name === name)
+          const entry = nameSkips.find((x) => x.reason === expectedReason)
           if (entry === undefined) {
             if (c.entries === 1 && skipped.length === 1 && expectedReason === 'malformed-spec') continue
-            return `'${name}' must be skipped with '${expectedReason}' and carries no skip entry`
+            return `'${name}' must be skipped with '${expectedReason}' and carries no such skip entry`
           }
-          if (entry.reason !== expectedReason) return `'${name}' carries '${entry.reason}', not '${expectedReason}'`
+          if (own(applied, name) && expectedReason !== 'duplicate-name') {
+            return `'${name}' is both applied and skipped with '${expectedReason}' (I-1)`
+          }
         }
       }
       if (c.applied !== undefined) {
@@ -3328,12 +3648,14 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
     // 6 dangerous names × 3 host shapes = 18 attempts.
     for (const name of DANGEROUS_NAMES) {
       rec.run(`${name} · (a) applied`, () => check({ k: 1 }, { k: { name, unit: '' } }, name, 'applied', `${name}(a)`))
-      rec.run(`${name} · (b) not owned by a plain values (F-13(a))`, () => {
+      rec.run(`${name} · (b) the ordinary specOf key is not owned by a plain values (F-13(a))`, () => {
+        // THE PINNED KEY RULE: the lookup key is the specOf map's OWN key ('k'), and
+        // the read is an OWN-property read of `values` under THAT key — never under
+        // the name. A plain-object `values` with no own 'k' therefore yields
+        // `missing-value`; the prototype-shaped NAME never selects a value, so the
+        // six dangerous names must all take this same branch.
         const plain: Record<string, unknown> = { real: 1 }
-        const looked = plain[name]
-        const expected: ProjectionSkipReason =
-          typeof looked === 'undefined' ? 'missing-value' : 'not-a-number'
-        return check(plain, { k: { name, unit: '' } }, name, expected, `${name}(b)`)
+        return check(plain, { k: { name, unit: '' } }, name, 'missing-value', `${name}(b)`)
       })
       rec.run(`${name} · (c) two specs naming it (F-13(b))`, () => {
         if (project === null) return reason
@@ -3362,9 +3684,19 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
         configurable: true,
         writable: true,
       })
+      // The pinned key rule: the lookup key is the specOf key `'__proto__'`, read as
+      // an OWN property of `values` — so the caller's `4` must sit under that key,
+      // and the value under any OTHER key is never consulted for this entry.
+      const values: Record<string, unknown> = { k: 4 }
+      Object.defineProperty(values, DANGEROUS_NAMES[0], {
+        value: 4,
+        enumerable: true,
+        configurable: true,
+        writable: true,
+      })
       let p: Projection
       try {
-        p = project({ k: 4 }, map) as Projection
+        p = project(values, map) as Projection
       } catch (e) {
         return `THREW: ${describeThrown(e)}`
       }
@@ -3468,11 +3800,28 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
               return `THREW: ${describeThrown(e)} — F-4B/F-12: one bad key never aborts a projection`
             }
             if (Object.getPrototypeOf(values) !== beforeValues) return 'the caller’s values prototype was written'
+            const firstReadWins = variant.startsWith('(b)')
             const throwingName = specOf[position].name
             const entries = p.skipped.filter((x) => x.name === throwingName)
-            if (entries.length !== 1) return `expected exactly ONE skip entry for '${throwingName}', got ${entries.length}`
-            if (entries[0].reason !== 'accessor-threw') return `'${throwingName}' carries '${entries[0].reason}', not 'accessor-threw'`
-            if (own(p.applied, throwingName)) return `'${throwingName}' is ALSO applied — an accessor throw was not recorded as a skip`
+            // `§5.5.1 P-PJ-IM-3`'s own reading of its variant (b): "the row asserts
+            // the read happens ONCE, so (b) behaves as (a)". ONE read of the entry's
+            // key is the pinned rule (`§2.4` item 3), so a getter that returns a
+            // value on its FIRST read and would throw on a second is the APPLIED
+            // case — the reason is `accessor-threw` iff the FIRST read threw. (The
+            // cell's parenthetical "behaves as (a)" is the half this drive cannot
+            // honour; it is REPORTED as a spec-text conflict, not bent into a green.)
+            if (firstReadWins) {
+              if (entries.length !== 0) {
+                return `variant (b) reads the value ONCE: the first read returned a number, so '${throwingName}' must NOT be skipped (got ${JSON.stringify(entries)})`
+              }
+              if (!own(p.applied, throwingName)) return `variant (b): '${throwingName}' must be APPLIED — the first read returned a finite number`
+              if (reads !== 1) return `variant (b): the accessor was read ${reads} times, expected exactly ONE (§2.4 item 3: the read happens once)`
+              if (p.applied[throwingName] !== '1px') return `variant (b): applied['${throwingName}'] is ${brief(p.applied[throwingName])}, not the first read's formatted value '1px'`
+            } else {
+              if (entries.length !== 1) return `expected exactly ONE skip entry for '${throwingName}', got ${entries.length}`
+              if (entries[0].reason !== 'accessor-threw') return `'${throwingName}' carries '${entries[0].reason}', not 'accessor-threw'`
+              if (own(p.applied, throwingName)) return `'${throwingName}' is ALSO applied — an accessor throw was not recorded as a skip`
+            }
             // Every OTHER key's expected decision: applied, or its own reason.
             for (const k of K) {
               if (k === position) continue
@@ -3480,7 +3829,9 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
               const inApplied = own(p.applied, name)
               const skipEntry = p.skipped.find((x) => x.name === name)
               if (!inApplied && skipEntry === undefined) return `'${name}' has NO decision — the run stopped at the throwing key`
-              if (inApplied && skipEntry !== undefined) return `'${name}' is both applied and skipped (I-1)`
+              if (inApplied && skipEntry !== undefined && skipEntry.reason !== 'duplicate-name') {
+                return `'${name}' is both applied and skipped with '${skipEntry.reason}' (I-1)`
+              }
               if (disposition.startsWith('(ii)') && k === K.filter((x) => x !== position)[0]) {
                 if (skipEntry?.reason !== 'missing-value') return `the ABSENT neighbour '${name}' carries '${skipEntry?.reason ?? 'no skip'}', not 'missing-value'`
               }
@@ -3490,19 +3841,29 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
                 }
               }
             }
-            // …and a repeat call is deep-equal (I-4).
+            // …and a repeat call agrees (`I-4`). For (a)/(c) the accessor throws on
+            // every read, so the repeat is a fresh always-throwing accessor; for (b)
+            // the repeat is a fresh first-read-succeeds accessor, and what is compared
+            // is the DECISION SHAPE the contract fixes (the applied/skipped result),
+            // never the accessor's own read COUNTER (a fresh object starts at 0).
             let again: Projection
             const values2: Record<string, unknown> = { ...others }
-            Object.defineProperty(values2, position, { get: () => {
+            let reads2 = 0
+            const getter2 = (): unknown => {
+              if (firstReadWins && reads2 === 0) {
+                reads2 += 1
+                return 1
+              }
               throw new Error('hostile accessor')
-            }, enumerable: true, configurable: true })
+            }
+            Object.defineProperty(values2, position, { get: getter2, enumerable: true, configurable: true })
             if (variant.startsWith('(c)')) Object.freeze(values2)
             try {
               again = project(values2, specOf) as Projection
             } catch (e) {
               return `the repeat call THREW: ${describeThrown(e)}`
             }
-            if (JSON.stringify(asPlain(projectSnapshot(p))) !== JSON.stringify(asPlain(projectSnapshot(again)))) {
+            if (JSON.stringify(asPlain(again)) !== JSON.stringify(asPlain(p))) {
               return 'the result is NOT deep-equal to a repeat call (I-4)'
             }
             return null
@@ -3522,8 +3883,18 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
       for (const entry of NUMERIC_TABLE) {
         rec.run(`${entry.id} · format:${format}`, () => {
           if (project === null) return reason
+          // `S-PJ-NUMERIC-1` drives EVERY table entry × BOTH formats (52 attempts).
+          // The four entries whose own ID carries a format/unit qualifier keep that
+          // qualifier — that is what makes `-0`×format and `0`×format their own
+          // quadrant entries — while every other entry takes the DRIVEN format and
+          // the `px` unit its own expectation was computed with.
           const unit = entry.id.includes('unit:""') ? '' : 'px'
-          const specOf = { k: { name: '--n', unit, format } }
+          const drivenFormat: 'unit' | 'number' = entry.id.includes('format:"number"')
+            ? 'number'
+            : entry.id.includes('format:unit')
+              ? 'unit'
+              : format
+          const specOf = { k: { name: '--n', unit, format: drivenFormat } }
           let p: Projection
           try {
             p = project({ k: entry.value }, specOf) as Projection
@@ -3538,9 +3909,16 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
               return `applied carries '${v}', which contains a non-finite literal the caller’s name/unit did not supply`
             }
           }
-          const expected = entry.expect()
+          // The EXACT expected string, derived from the entry's own value, its unit
+          // and the DRIVEN format (`§2.4` item 4: `${value}${unit}`, or `String(value)`
+          // for `'number'`) — never by stripping a unit and re-parsing, and never by a
+          // `'-'`-prefix test (`§3.3 I-9`'s retired half, `§7a` item 7).
+          const expected =
+            typeof entry.value === 'number' && Number.isFinite(entry.value) && entry.value >= 0
+              ? `${String(entry.value)}${drivenFormat === 'number' ? '' : unit}`
+              : null
+          const reasonExpected = entry.expectedReason
           if (expected === null) {
-            const reasonExpected = entry.expectedReason
             const got = p.skipped.find((x) => x.name === '--n')
             if (got === undefined) return `expected a '${String(reasonExpected)}' skip and applied ${brief(p.applied['--n'])}`
             if (got.reason !== reasonExpected) return `the reason is '${got.reason}', not '${String(reasonExpected)}'`
@@ -3551,7 +3929,7 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
             }
             if (p.applied['--n'] !== expected) return `applied['--n'] is ${brief(p.applied['--n'])}, not the EXACT string ${brief(expected)}`
           }
-          if (entry.id === '-0' && format === 'unit') {
+          if (entry.id === '-0' && drivenFormat === 'unit') {
             if (p.applied['--n'] !== '0px') return `-0 must be applied as '0' + unit (got ${brief(p.applied['--n'])})`
             if (p.skipped.some((x) => x.name === '--n')) return '-0 must NOT be `negative` (-0 < 0 is false)'
           }
@@ -3761,7 +4139,11 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
           const format = driveId.startsWith('(ii)') ? ('number' as const) : ('unit' as const)
           const specOf: Record<string, { name: string; unit: string; format?: 'unit' | 'number' }> = {}
           K.forEach((k, index) => {
-            const name = duplicateNames && index === 2 ? '--dup' : `--${k}`
+            // The duplicate control must be a REAL NAME COLLISION: k3's spec shares
+            // k1's name, so exactly one `duplicate-name` entry exists for it (a
+            // unique `--dup` name would make this drive a no-op control, which is
+            // what an earlier form of this row asserted green — the repair).
+            const name = duplicateNames && index === 2 ? '--k1' : `--${k}`
             specOf[k] = { name, unit: 'px', format }
           })
           const frozen = driveId.startsWith('(iv)')
@@ -3791,16 +4173,30 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
             .filter(({ name, k }, _i, arr) => arr.findIndex((x) => x.name === name && x.k === k) === arr.indexOf(arr.find((x) => x.k === k)!))
           const appliedNames = Object.keys(p.applied)
           if (duplicateNames) {
-            // k3's spec shares '--dup' with k1's, so k1 wins it (or k3 if k1 throws).
-            const dupInApplied = appliedNames.filter((n) => n === '--dup').length
-            if (dupInApplied > 1) return "'--dup' appears more than once in applied (§2.4 item 5 first-wins)"
-            const dupSkips = p.skipped.filter((x) => x.name === '--dup')
-            if (throwing.has('k1')) {
-              if (dupSkips.length === 0 && dupInApplied === 0) return "the duplicate pair has no decision for '--dup'"
-            } else if (dupInApplied !== 1 || dupSkips.length !== 1 || dupSkips[0].reason !== 'duplicate-name') {
-              return `the duplicate control failed: applied=${JSON.stringify(appliedNames)}, '--dup' skips=${JSON.stringify(
+            // k3's spec shares k1's NAME, so the collision is decided FIRST-WINS by
+            // NAME COLLISION and never by whether the first occurrence was applied
+            // (`§2.4` item 5, `§7a.1` item 5): the first occurrence records ITS OWN
+            // reason (`accessor-threw` when k1 throws) and the second is
+            // `duplicate-name`, in spec-entry order.
+            const dupInApplied = appliedNames.filter((n) => n === '--k1').length
+            if (dupInApplied > 1) return "'--k1' appears more than once in applied (§2.4 item 5 first-wins)"
+            const dupSkips = p.skipped.filter((x) => x.name === '--k1')
+            const ownReason = dupSkips.find((x) => x.reason !== 'duplicate-name')
+            const duplicates = dupSkips.filter((x) => x.reason === 'duplicate-name')
+            if (duplicates.length !== 1) {
+              return `the duplicate control failed: applied=${JSON.stringify(appliedNames)}, skips=${JSON.stringify(
                 asPlain(dupSkips),
-              )} — 'duplicate-name' must still win for the second entry (§2.4 item 3)`
+              )} — exactly ONE 'duplicate-name' entry must exist for the SECOND occurrence (§2.4 item 3)`
+            }
+            if (throwing.has('k1')) {
+              if (dupInApplied !== 0) return `k1 throws, so its occurrence of '--k1' must NOT be applied (applied=${JSON.stringify(appliedNames)})`
+              if (ownReason?.reason !== 'accessor-threw') {
+                return `the FIRST occurrence's own reason must be 'accessor-threw' (got ${String(ownReason?.reason)} — first-wins means the first DECISION, §7a.1 item 5)`
+              }
+            } else if (dupInApplied !== 1 || ownReason !== undefined) {
+              return `the duplicate control failed: applied=${JSON.stringify(appliedNames)}, skips=${JSON.stringify(
+                asPlain(dupSkips),
+              )} — the FIRST occurrence is applied and only the second is 'duplicate-name'`
             }
           } else {
             for (const k of finite) {
