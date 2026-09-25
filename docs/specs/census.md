@@ -51,29 +51,10 @@ the DROP-class coverage above). **Owner: a TestWriter pass on `tests/census.test
 **The archived history — the superseded filings, banners, red-set/contract corrections and gate records, in
 order and dated — is `archive/specs/2026-09-27-census-history.md`.**
 
-**⟶ COMPACTED 2026-09-27 (the never-rewrite / archive-is-the-truth-mechanism pass): the FILING-state status
-stack that stood here — *"**SPEC — FILED 2026-09-27**, `RED SET OWED — NOT AUTHORED, NOT RUN`, no module
-exists, no leg ran, no result is recorded"* — is SUPERSEDED, **compacted out** to its own dated section of
-`archive/specs/2026-09-27-census-history.md`, and **replaced by the CURRENT-STATE block directly below**,
-which is the operative statement. The gate-11 typed Property register it announced is `§5.5.1` below
-(**8 rows**, strategy prefix `S-CN-*`, pinned seed `20260927`, caps **`≤100` attempts/row · `≤400` total ·
-stop-after-5**, **no new dependency**, **no `fast-check`**), and **this unit is CODE-BEARING**, so **no
-zero-row exemption was available** (`docs/decisions.md` `PBT-REGISTER-REQUIRED-FOR-CODE-UNITS`, ACTIVE; its
-follow-ups in `docs/pending.md` §G and the register-entry-count ruling applied in `§5.5.1`).**
-
-**⟶ COMPACTED 2026-09-27 — the as-filed *"Go-ahead state"* block (`UNBLOCKED` on the architect question /
-`BLOCKED` on its own red set / the red set `OWED — NOT AUTHORED, NOT RUN` / wave **E**'s SECOND unit /
-`U-ZONES` the eighth `DONE` row / `U-GUTTER` (`E3`) the successor-in-need) is SUPERSEDED and **compacted
-out** to section (2) of `archive/specs/2026-09-27-census-history.md`. **The unit is `DONE`**, its red set ran
-and is recorded, and `U-ZONES` is no longer the ledger's newest `DONE` row — see the CURRENT-STATE block
-below and `docs/next-steps.md`'s `## DONE — U-CENSUS` record. **Its ordering obligation is DISCHARGED and
-its successor-in-need is unchanged (`U-GUTTER`, row `E3` — `§1` item 7, §8).**
-
-**⟶ COMPACTED 2026-09-27 — the *"RULING LANDED"* banner (the architect's answer of 2026-09-27, the
-delegation gate re-stated, and the *"NOTHING HAS BEEN RUN"* paragraph) is SUPERSEDED and **compacted out**
-to section (3) of `archive/specs/2026-09-27-census-history.md`. **The operative clause is unchanged and
-lives at `§0A` ruling note 11** (*"**Non-revealed zones still exist, they just don't get displayed.**"*);
-**the delegation gate condition it left open is DISCHARGED** (the red set was AUTHORED and RUN — §4.5).
+**⟶ COMPACTED 2026-09-27 — the filing-state banner, the as-filed *"Go-ahead state"* block and the *"RULING
+LANDED"* banner are SUPERSEDED, compacted out to `archive/specs/2026-09-27-census-history.md` §1/§2/§3.**
+**The operative clause is `§0A` ruling note 11; the delegation gate it left open is DISCHARGED (`§4.5`), and
+the successor-in-need is unchanged (`U-GUTTER`, row `E3` — `§1` item 7, §8).**
 
 **Source of this unit, cited by SECTION (never by line):** the appended **`Amendment record (A-d4…A-d8)`**
 of `docs/specs/provident-electron-shell-chrome-handoff-review.md` — **§0** (the supervisor adjudication:
@@ -125,7 +106,7 @@ format template.
 | **9** | **`A-d2` (the engine pin) is SPENT and is NOT this unit's dependency** — this module imports **no** engine surface at all, and its only import is its own predecessor (`§3.4 R-1`). | §1 item 8, `§3.4 R-1` |
 | **10** | **`A-d3`/`S-d9` (the node-local interaction rule) and the adopted `U-GSESSION` session are NOT this unit's dependency.** This unit is a **pure `src/shared/` mechanism**: it installs no listener, owns no element, opens no gesture and takes no event source. **It does not compose the session** — `U-GUTTER` does. | §1 item 8, §7 item 8 |
 | **11** | **`A-d7`'s static-UI reading and `A-d8`'s `ui` leg**: **`AGENTS.md:23-34` and `docs/decisions.md:53` are UNCHANGED**, and **a mechanism is outside that constraint because it is not a UI element** (`SHELL-CHROME-CARVE-OUT-FUNCTIONAL`). This unit authors **no text, no control, no affordance, no class, no token value, no CSS and no DOM**. | §2.2 (P-2/P-3), §7 item 5 |
-| **12** | **This unit's red set is not authorised by any ruling on the record** (wave E's go-ahead), so it may not be RUN and the unit may not be delegated (`AGENTS.md` item 9). **Its ordering precondition is DISCHARGED**: `U-ZONES` (row `E1`) is `DONE`. **⟶ ANNOTATED 2026-09-27 (`§0A` ruling note 11): the red set IS NOW AUTHORISED by the wave-E go-ahead plus the architect ruling, so it may be AUTHORED and RUN — and the unit becomes delegable the moment the red set has been RUN and REPORTED. `BLOCKED` is now true of ONE thing only: the red set (which is OWED, NOT AUTHORED, NOT RUN). The as-filed sentence above is kept visible. ⟶ COMPACTED 2026-09-27 (this pass): that annotation is SPENT in its turn — the red set WAS AUTHORED, RUN and REPORTED (`tests/census.test.ts`, `67` rows green), the unit went green, gates 4–7 ran and it is `DONE`; see the CURRENT STATE block above.** | CURRENT STATE block, §4.5, §7 item 1 |
+| **12** | **The red set IS AUTHORISED** by the wave-E go-ahead plus the architect ruling (`§0A` ruling note 11), WAS AUTHORED, RUN and REPORTED (`tests/census.test.ts`, `67` rows green), the unit went green, gates 4–7 ran and it is `DONE`. **Its ordering precondition is DISCHARGED**: `U-ZONES` (row `E1`) is `DONE`. | CURRENT STATE block, §4.5, §7 item 1 |
 
 ### 0A. The dated ruling notes — the clauses the ledger leaves open, RULED here (2026-09-27)
 
@@ -243,18 +224,12 @@ an `M-*` row as geometry evidence** (`RK-19`'s false-green class). Landing: §2.
 **No new ruling is asked of the architect by this filing.** Every clause the ledger leaves open is
 decided above, with its reason, its landing site and its falsifying row; **`§7a`'s list is therefore
 EMPTY after `§7a.1`'s rulings** (`§7a` items 1–8 are all decided here, and none is left open).
-**One item is REPORTED as a standing risk rather than a question** — **⟶ COMPACTED 2026-09-27: the as-filed
-clause here (*"this pass could not execute the pinned-seed generator, so the draws' distinct-member count is
-an execution record the red run must report"*) is SUPERSEDED and compacted out to section (9) of
-`archive/specs/2026-09-27-census-history.md`; the record now EXISTS — the seed's `36` draws reach `20` of
-`30` members (distinct) and the `S-CN-SEED-1` draw sequence was produced and reported** — **but the
-OBLIGATION it names still stands in its own right: the draws' distinct-member count is an execution record,
-NOT a sweep, and no row may assert "all `30` drawn"** (`§5.5.1`'s honesty item 5; the CURRENT STATE block's
-pooled-draw clause).
+**One item is REPORTED as a standing risk rather than a question: the draws' distinct-member count is an
+execution record, NOT a sweep, and no row may assert "all `30` drawn"** (`§5.5.1`'s honesty item 5; the
+CURRENT STATE block's pooled-draw clause).
 
 **Ruling note 11 — THE ARCHITECT RULING OF 2026-09-27, recorded here VERBATIM as the contract's own dated
-ruling.** *(This note is added by the annotation pass; the ten notes above are `§0A`'s as-filed text and
-are kept visible. **No section number moves, no note is renumbered, and `§0A` keeps its number.**)*
+ruling.** *(**No section number moves, no note is renumbered, and `§0A` keeps its number.**)*
 
 **The ruling, word for word:** *"**Non-revealed zones still exist, they just don't get displayed.**"*
 
@@ -276,22 +251,12 @@ ruling resolves it in READING A — the reading this filing pinned provisionally
 | **`P-CN-IM-1` cells `10`/`15`/`17`** — the three **callable-predicate** variants (`() => true`, `() => 1`, the spy `(id) => id !== 'b'`) | **CONFIRMED on the Reading-A form as filed**: the expected record is **all three keys** with the declined zone(s) carrying `''` — **the predicate decides the VALUE, never the PRESENCE.** **No cell, count, term or strategy id changes.** |
 | **`P-CN-SM-3`** — the zero-boundary row | **CONFIRMED as filed**: its three causes (`zones` yields nothing; `revealed` decides nothing; both) **each return the SAME empty record shape**, and **the ruling does not merge this row with `C-A`'s declined-zone case** — a **declined zone is not a zero-boundary case**: the row drives `revealed` over **zero-member / non-enumerable inputs**, so no zone is present to decline. **No term changes (`10` shapes × `3` passes = its declared `30`, distinct drives `10`).** |
 
-**THE SPENT CONTINGENCY — withdrawn with provenance, kept visible rather than deleted (the
-annotate-never-rewrite convention).** While the escalated clause was open, this filing framed the
-`C-A`-versus-`revealed` question as a **provisional best reading** (ruling note 9 above: *"THE READING THIS
-FILING PINS"*) and left open the alternative **"omit-reading"** — *"the returned key set is exactly the
-zones that were REVEALED"* — under which a declined zone would have been **omitted** and several expected
-outcomes (`C-A` (a), `M-4`, `F-2`'s declined-zone complement, the register cells flagged conditional)
-would have read differently. **THAT CONTINGENCY IS NOW WITHDRAWN — SPENT, NOT OPEN**, and **it is recorded
-as a spent contingency with its provenance** (the escalation and this ruling) **rather than being silently
-deleted**, because a later pass that finds the provisional framing must be able to see that it was spent
-and by what. **THE OMIT-READING IS NOT AN AVAILABLE READING OF THIS CONTRACT AND MAY NOT BE IMPLEMENTED,
-TESTED OR RE-OPENED:** **the architect's own words are that non-revealed zones "still exist"** — so **a
-module that omits a declined zone FAILS the `C-A` key-set row, and a row that EXPECTS an omission FAILS
-this spec's text** (`§4.4 S-9`). **Nothing else in the register changes on the ruling's
-account: no id, no strategy id, no attempt term, no `YES`/`YES (bounded)` marking, and the total stays
-`248` = `68+36+24+14+30+10+30+36`** (`§5.5.1`'s attempt arithmetic, re-verified after this annotation
-pass).
+**THE OMIT-READING IS NOT AN AVAILABLE READING OF THIS CONTRACT AND MAY NOT BE IMPLEMENTED, TESTED OR
+RE-OPENED:** **the architect's own words are that non-revealed zones "still exist"** — so **a module that
+omits a declined zone FAILS the `C-A` key-set row, and a row that EXPECTS an omission FAILS this spec's
+text** (`§4.4 S-9`). **Nothing else in the register changes on the ruling's account: no id, no strategy id,
+no attempt term, no `YES`/`YES (bounded)` marking, and the total stays `248` =
+`68+36+24+14+30+10+30+36`** (`§5.5.1`'s attempt arithmetic).
 
 **Ruling note 12 — THE FALSIFIERS the ruling carries, stated so a red row can be DERIVED from it.** *A
 ruling that cannot be falsified is not a contract clause.* **The ruling is falsifiable, and its five
@@ -340,12 +305,9 @@ either: it is what the ruled mechanism honestly does.**
 
 ## Layer declaration (read this before any table below)
 
-**This spec is DOC-LAYER only.** **⟶ COMPACTED 2026-09-27: the as-filed sentence that followed here —
-*"No leg of it ran in this pass: no suite ran, no trio ran, no Electron window booted, and no result is
-recorded here"* — described the FILING pass and is SUPERSEDED; it is compacted out to section (8) of
-`archive/specs/2026-09-27-census-history.md`. **The unit has since run its legs (the `[T]` node suite alone)
-and the results are recorded in the CURRENT STATE block above and in `docs/next-steps.md`'s `## DONE —
-U-CENSUS` record.** The layer table below is UNCHANGED contract text.**
+**This spec is DOC-LAYER only.** **The unit has run its legs (the `[T]` node suite alone) and the results
+are recorded in the CURRENT STATE block above and in `docs/next-steps.md`'s `## DONE — U-CENSUS` record.**
+The layer table below is UNCHANGED contract text.
 
 | Label | Layer | What it is | What it is **not** |
 | --- | --- | --- | --- |
@@ -411,9 +373,7 @@ token byte to `U-ZONES`**.
    is `U-ZONES`**, and `U-GUTTER`'s contract is *"arithmetic over injected values"* — a dependency edge
    asserted the other way would be a **fabricated edge**, `H-r6`'s dissolved-edge class). **Its
    geometry clause is its own** and this unit supplies no evidence for it (§5.2, §7 item 6).
-   **⟶ THE SIBLING-FACING CONSEQUENCE OF THE ARCHITECT RULING (2026-09-27), stated here because
-   `U-GUTTER` (`E3`) and `U-RELOCATE` (`E4`) will consume THIS record (`§0A` ruling note 11 verbatim:
-   *"**Non-revealed zones still exist, they just don't get displayed.**"*).** **(a) THE KEY SET IS THE
+   **⟶ THE SIBLING-FACING CONSEQUENCE OF THE ARCHITECT RULING (2026-09-27):** **(a) THE KEY SET IS THE
    FULL `zones` SET REGARDLESS OF REVEAL.** A consumer driving **geometry per KEY** — a `U-GUTTER`
    composing one track's controller per zone, or any consumer iterating `Object.keys(record)` — **SEES
    EVERY ZONE**, including every zone the predicate declined; **that consumer must therefore consult its
@@ -626,11 +586,8 @@ called and every zone is not-emitted (`F-2`). **`revealed` is NEVER defaulted**:
 visible or hidden value for the caller's own, and **`undefined` means "no decision was supplied", which
 yields the empty record** (ruling note 6, `§2.4` clause `C-C`).
 
-**⟶ ANNOTATED BY THE ARCHITECT RULING (2026-09-27) — `§0A` ruling note 11, and this is where the ruling's
-EXISTENCE/DISPLAY distinction lands in `§2.3`.** **The text above is unchanged in its call discipline**
-(`revealed(zoneId)` at most once, `Boolean(...)`, zero delegate calls for a not-emitted zone — `§2.3` item
-6). **What the ruling fixes is what "NOT emitted" MEANS, and both readings in the sentence above must be
-read with it:** **a FALSY return from a CALLABLE predicate means the zone is not DISPLAYED — and its key
+**⟶ THE ARCHITECT RULING (`§0A` ruling note 11) fixes what "NOT emitted" MEANS:**
+**a FALSY return from a CALLABLE predicate means the zone is not DISPLAYED — and its key
 STILL EXISTS in the returned record, carrying `''` (`§2.4 C-A` (a), `M-4`)** — whereas **an ABSENT,
 non-callable or throwing `revealed` is the no-decision case, which yields the EMPTY record with ZERO keys
 (`F-2`).** **The two cases are therefore NOT the same outcome, and a row that conflates them FAILS this
@@ -680,11 +637,10 @@ cannot be an own key and is dropped, and **that is stated rather than left to be
 (`§2.3` item 1 (iv)). **Pinned by `§2.3` items 1/3, `§5.5.1 P-CN-IM-2`/`P-CN-SM-2`, rows `M-1`/`M-2`/
 `M-7`/`F-1`/`F-2`/`F-3`.**
 
-**⟶ CONFIRMED BY THE ARCHITECT RULING (2026-09-27) — `§0A` ruling note 11.** *("**Non-revealed zones still
-exist, they just don't get displayed.**")* **The clause above is CONFIRMED on the form as filed and is now
-UNCONDITIONAL**: the returned record's key set is **exactly `zones`, in first-seen order, INCLUDING every
+**⟶ CONFIRMED BY THE ARCHITECT RULING (`§0A` ruling note 11).** **The returned record's key set is
+UNCONDITIONALLY exactly `zones`, in first-seen order, INCLUDING every
 zone a callable `revealed` predicate declines.** **This is NOT a subset claim** — it is not *"exactly the
-zones that produced a token"* and not *"exactly the revealed zones"*; **(a) is confirmed verbatim: the
+zones that produced a token"* and not *"exactly the revealed zones"*; **(a) holds verbatim: the
 declined zone HAS its key, with the value `''`, and is NOT omitted.** **No text above is superseded, no
 clause is weakened, and no other clause of this spec changes** — the ruling's five falsifiers and the
 `''`-collision limitation it leaves are recorded at `§0A` ruling note 12.
@@ -718,16 +674,14 @@ partial one and not a throw. **The values of the keys that ARE emitted are unaff
 the predicate decides presence, and `C-A` (not the predicate) decides the key set (`§0A` ruling note 9).
 **Pinned by `§2.3` item 3, `§5.5.1 P-CN-IM-2`, rows `M-3`/`F-2`/`I-5`.**
 
-**⟶ CONFIRMED BY THE ARCHITECT RULING (2026-09-27) — `§0A` ruling note 11.** *("**Non-revealed zones still
-exist, they just don't get displayed.**")* **`revealed` is confirmed to be the DISPLAY decision, and only
-the display decision**: **(a)–(g) stand exactly as filed and are NOT weakened** — **there is still no
+**⟶ CONFIRMED BY THE ARCHITECT RULING (`§0A` ruling note 11).** **`revealed` is the DISPLAY decision, and only
+the display decision**: **(a)–(g) stand and are NOT weakened** — **there is still no
 built-in default reveal, no guessing from the census, no `undefined`-means-visible fallback and no
-`undefined`-means-hidden fallback.** **What the ruling settles is the CONSEQUENCE for a decline: a zone the
+`undefined`-means-hidden fallback.** **The CONSEQUENCE for a decline: a zone the
 predicate declines is present in the record with the family's absent-display value `''`, and the predicate
 decides the VALUE, never the PRESENCE** (the `C-A` key set is not the predicate's to decide — text above
-unchanged). **The record carries no display CHANNEL beyond that value; the limitation that follows (three
-distinct causes all yielding `''`) is stated at `§0A` ruling note 12 and is this mechanism's STATED LIMIT,
-not a defect.**
+unchanged). **The record carries no display CHANNEL beyond that value; the three-`''`-causes limitation is
+stated at `§0A` ruling note 12 and is this mechanism's STATED LIMIT, not a defect.**
 
 ### 2.5 The geometry boundary, and the value semantics this unit does not own
 
@@ -758,10 +712,9 @@ token), and it is the ONE place this module writes a literal. **It names nothing
 it is not a fallback for a caller value, and it is distinguishable from the delegate's malformed-spec
 `''` only by the caller's own expectations — stated plainly so a consumer is not surprised** (`F-2`(c)).
 
-**⟶ ANNOTATED BY THE ARCHITECT RULING (2026-09-27) — `§0A` ruling note 12, and this item is where the
-mechanism's STATED LIMIT lands in `§2`.** **The ruling's sentence distinguishes EXISTENCE from DISPLAY;
-this unit's record can express existence (the KEY SET — `C-A`) and CANNOT express display state, because
-every outcome here is a VALUE and the record's value domain is `string` (`§0A` ruling note 8, `I-9`).**
+**⟶ THE STATED LIMIT THIS ITEM CARRIES (`§0A` ruling note 12).** **The record can express existence (the
+KEY SET — `C-A`) and CANNOT express display state, because every outcome here is a VALUE and the record's
+value domain is `string` (`§0A` ruling note 8, `I-9`).**
 **Therefore THREE distinct causes all yield `''` and are indistinguishable from the record's VALUE alone:
 (i) the consumer's `revealed` DECLINED the zone (this very item's case); (ii) the zone's spec entry is
 MALFORMED (the delegate's malformed-spec limb, `F-3`/`F-4`); (iii) the zone's size lookup MISSED and the
@@ -771,8 +724,7 @@ read the record's KEY SET, not the value** — and **a unit that needs a per-zon
 (status record, reason domain, or a sentinel other than `''`) is a NEW CONTRACT that must go through its
 own gate: it may NOT be smuggled in as a value-semantics change to this one.** **No sentinel and no second
 value domain is invented here** (that would break the `U-ZONES` delegation — `I-4`, `§3.4 R-1` — and the
-`V-13` anti-second-authority argument, `§0` ruling 3). **The text above is unchanged and nothing in `§2.3`
-item 3 is weakened: the value for a declined zone is still exactly `''`.**
+`V-13` anti-second-authority argument, `§0` ruling 3). **The value for a declined zone is exactly `''`.**
 
 **Item 4 — the record carries no order guarantee beyond first-seen order, and no caller may rely on
 more.** `Object.keys(record)` yields the zones in **first-seen enumeration order**, which is contract
@@ -816,19 +768,17 @@ citation; a row without an id is what this repo's reviews keep catching.**
 | **F-2** | **`revealed` absent, non-callable, or throwing ⇒ the EMPTY record (NEVER a default)** | **(a)** the argument OMITTED; **(b)** `undefined`; **(c)** `null`, `42`, `'x'`, `true`, `{},` `[]`, a `Map`; **(d)** `() => { throw new Error('x') }` | **`{}` in every case, for a NON-EMPTY `zones`** — no throw, no key, **no visible fallback and no hidden fallback**; `isEmpty`/`trackFor` called `0` times; and **the row asserts the forbidden readings explicitly**: a module that reveals everything on `undefined` FAILS, and a module that reveals nothing *by policy* rather than by absent decision fails `C-C` (d) in the register's drive | §2.3 item 3, `§2.4 C-C` (a)–(g), `§5.5.1 P-CN-IM-2` | `[T]` |
 | **F-3** | **A zone with NO spec entry (and/or no size entry)** | `zones = ['a','b']`, `specOf = {a: {unit:'px', emptyToken:'0px', trackProp:'--a'}}`, no `b` entry; `sizes` likewise missing `b` | **TWO keys** — `'a'` gets its token and **`'b'` gets `''`** (the delegate's malformed-spec limb, reached with `undefined`); **`trackFor` WAS called for `'b'`** (with `undefined` spec and `undefined` size); **no per-field distinction, no omission, no throw** | §2.3 item 5, `§2.4 C-A` (b) | `[T]` |
 | **F-4** | **A MALFORMED `sizes`/`specOf` ENTRY (wrong type, throwing accessor)** | `sizes` driven as a size of `-1`/`NaN`/`'12'`; a `sizes` record whose own accessor for the zone **throws**; a callable `sizes` that **throws**; the same for `specOf` (a spec that is `null`, `42`, `{}`, a wrong-typed field, a throwing accessor) | **the size case ⇒ the caller's `emptyToken`; the spec case ⇒ `''`** — i.e. **the delegate's own limbs, reached with what the lookup yielded**; **no throw ever escapes**, the key is still present, and **this unit invents no outcome** | §2.3 items 4/5, `§4.4 S-1` | `[T]` |
-| **F-5** | **A census that is unusable or hostile is the DELEGATE'S answer, not this unit's error** | `census` driven as `null`, `undefined`, `42`, an **array** (`[0]`), a **`Set`**, a **function**, a `Proxy` whose `get` throws, a record whose own accessor throws | **no throw**; every revealed zone yields **the `emptyToken`** (because `isEmpty` answered `false` ⟶ **CORRECTED 2026-09-27 (the documentation review, `D-07`; the as-filed reason is kept visible and is INVERTED): `false` means NOT EMPTY, so the delegate's limb is `String(size)+unit`, NOT the `emptyToken`.** **The test rows were repaired at the green step (they now compose the expectation through the delegate with non-vacuity assertions); the value this cell must pin is the delegate's own answer for the size THE DRIVE SUPPLIES, and a cell asserting the `emptyToken` for a hostile census is a cell that demands a second token authority (`§4.4 S-1`).** — it is a total function); **the census is unchanged** in every observable respect | §2.3 item 2, `§2.4 C-B`, `§3.3 I-4` | `[T]` |
+| **F-5** | **A census that is unusable or hostile is the DELEGATE'S answer, not this unit's error** | `census` driven as `null`, `undefined`, `42`, an **array** (`[0]`), a **`Set`**, a **function**, a `Proxy` whose `get` throws, a record whose own accessor throws | **no throw** — the delegate is total; **each revealed zone yields the delegate's own answer for the size THE DRIVE SUPPLIES** (`isEmpty`'s `false` means NOT EMPTY, so that limb is `String(size)+unit`; `true` gives the caller's `emptyToken`) — **the rows compose the expectation through the delegate with non-vacuity assertions, because a cell demanding the `emptyToken` for a hostile census would demand a second token authority (`§4.4 S-1`)**; **the census is unchanged** in every observable respect | §2.3 item 2, `§2.4 C-B`, `§3.3 I-4` | `[T]` |
 | **F-6** | **A NON-STRING zone member is never empty, whatever the census holds** | `zones = [42]` with a record census owning `'42'` = `0`; and `zones = new Map([[42, 0]])` | **no throw**; the zone key is `'42'` (the member's `String()` image becomes the own key) and its value is **the `emptyToken`** — **because `isEmpty(census, 42)` is `false`** (`U-ZONES` `§2.3` item 2 (c)); **the row states the reason in its assertion message so the behaviour is never read as a defect** | §0A note 3, `§2.3` items 1/2 | `[T]` |
 
-**⟶ ANNOTATED BY THE ARCHITECT RULING (2026-09-27) — `§0A` ruling note 11, and `F-2` is the row whose
-BOUNDARY the ruling sharpens.** *("**Non-revealed zones still exist, they just don't get displayed.**")*
+**⟶ THE RULING SHARPENS `F-2`'s BOUNDARY (`§0A` ruling note 11).**
 **`F-2` drives `revealed` that is NOT A PREDICATE AT ALL** (omitted, `undefined`, non-callable, throwing),
 so **no zone is ever enumerated-and-DECLINED in this row: the whole record is empty because no decision was
 supplied** — **`F-2` is the ZERO-ZONE case, NOT the declined-zone case.** **The declined-zone case is a
 CALLABLE predicate returning falsy, and it is `M-4`/`M-12`'s: there every key EXISTS with `''` (`C-A`
 (a)).** **The two are different rows on purpose and the ruling confirms the split; a row that expects `{}`
 for a callable predicate that declines a zone FAILS this spec's text, and a row that expects a key from an
-ABSENT `revealed` FAILS it in the other direction.** **Nothing in `F-2`'s own text is superseded, and its
-forbidden readings stand exactly as filed.**
+ABSENT `revealed` FAILS it in the other direction.** **`F-2`'s forbidden readings stand.**
 
 ### 3.3 Invariants that hold in every state
 
@@ -845,15 +795,12 @@ forbidden readings stand exactly as filed.**
 | **I-9** | **No refusal domain: `computeTrackVars` returns ONE record and has no `code`, `ok`, `reason`, `skipped`, `status` or `errors` field**, and a row asserting one FAILS this spec's text | §0A ruling note 8; the class `U-ZONES` `§4.4 S-3` closes for that unit | §2.1, §2.2 (P-3), `F-4`, `§4.4 S-5` |
 | **I-10** | **The record is a NULL-PROTOTYPE object** (`Object.getPrototypeOf(record) === null`), every zone id is an **own** key, and **no write to `Object.prototype` ever occurs** | §0A ruling note 7; the `'__proto__'`-is-a-legal-zone-id hazard | §0A note 7, `M-13`, `§5.5.1 P-CN-SM-2` |
 
-**⟶ CONFIRMED BY THE ARCHITECT RULING (2026-09-27) — `§0A` ruling note 11, and it names `I-2`/`I-5`
-explicitly.** *("**Non-revealed zones still exist, they just don't get displayed.**")* **`I-2` is CONFIRMED
-UNCONDITIONAL:** the key-set invariant is **exact equality against the enumerated zone set, never an extra
-key and never an omission**, and **the ruling removes the last clause under which it could have been read
-as a SUBSET** (*"exactly the zones that produced a token"* / *"exactly the revealed zones"*). **`I-5` is
-CONFIRMED with its scope made explicit:** **presence is the caller's decision, AND so is display** — the
-ruling separates **EXISTENCE** (the record's key set, which is this unit's contract) from **DISPLAY** (the
+**⟶ THE RULING CONFIRMS `I-2` AND `I-5` (`§0A` ruling note 11).** **`I-2` is UNCONDITIONAL:** the key-set
+invariant is **exact equality against the enumerated zone set, never an extra
+key and never an omission**, and it **may not be read as a SUBSET** (*"exactly the zones that produced a
+token"* / *"exactly the revealed zones"*). **`I-5`: presence is the caller's decision, AND so is display** —
+the ruling separates **EXISTENCE** (the record's key set, which is this unit's contract) from **DISPLAY** (the
 consumer's decision, which **the record's `string` value domain cannot express**, `§0A` ruling note 12).
-**Neither invariant is weakened, neither is widened, and no other invariant in this table changes.**
 
 ### 3.4 The STATIC rows — the rows `§2.2`'s prohibition table cites, ENUMERATED
 
@@ -899,11 +846,9 @@ existence claim with no probe is not a row** (`§4.4 S-4`'s class).
 ### 4.1 The red statement
 
 **The red is a NEW test file** — proposed **`tests/census.test.ts`** — authored **first**, **RUN**, and
-its failing set **REPORTED verbatim** before any implementation. **⟶ COMPACTED 2026-09-27: this is what
-HAPPENED (the red ran `64` rows = `44` red / `20` pass, its failing set was reported, two real contract
-defects were caught by it, and the module followed — `docs/next-steps.md`'s `## DONE — U-CENSUS` record
-item (4)); the as-filed FUTURE-TENSE framing of that sentence is compacted out to section (7) of
-`archive/specs/2026-09-27-census-history.md`.** **Expected red shape, stated in BOTH
+its failing set **REPORTED verbatim** before any implementation. **The red ran: `64` rows = `44` red /
+`20` pass; `docs/next-steps.md`'s `## DONE — U-CENSUS` record item (4). See
+`archive/specs/2026-09-27-census-history.md` §7.** **Expected red shape, stated in BOTH
 forms because the predecessor's filing got this wrong in writing (and its red run corrected it):** every
 clause/static/register row fails as a **LABELLED ASSERTION** — *"the module of `§2.1`/`§5.1` row 1 does
 not exist yet"* — carrying its own `§` citation, via **the repo's established import-boundary
@@ -934,18 +879,12 @@ cycle the module is still imported by NO `src/**` file** (`R-8`/`R-13`).
    `P-CN-IM-4` · `P-CN-SM-1` · `P-CN-SM-2` · `P-CN-SM-3` · `P-CN-TP-1`). They ride **`npm test` (leg 1)**
    unchanged and **need no new file, no new script, no `package.json` change and no dependency.**
    **The register's `YES` markings were execution DESIGN, not results** — **a row that is `YES` in
-   `§5.5.1` but broken when run is a SPEC FINDING, reported rather than tuned to green.** **⟶ COMPACTED
-   2026-09-27: the register HAS been executed (`248/248` held, `0` broken, `registerStoppedAt: null`), so
-   the as-filed future-tense half of this item is compacted out to section (7) of
-   `archive/specs/2026-09-27-census-history.md`; the SPEC-FINDING rule above is unchanged contract text.**
+   `§5.5.1` but broken when run is a SPEC FINDING, reported rather than tuned to green.** **The register
+   HAS been executed (`248/248` held, `0` broken, `registerStoppedAt: null`).**
    **The register's own stop rule binds the red run**: rows are evaluated **sequentially in register
-   order** with **STOP AFTER 5 CONSECUTIVE FAILURES**. **⟶ COMPACTED 2026-09-27: the as-filed continuation
-   — *"so a red run of a module-absent unit IS EXPECTED to stop early, and the un-run rows must be
-   REPORTED AS FAILURES … a red run that reports all `248` attempts as executed is the finding"* — described
-   the module-absent red run and is SUPERSEDED; it is compacted out to section (7) of
-   `archive/specs/2026-09-27-census-history.md`. **What the red run actually reported: `1` register row
+   order** with **STOP AFTER 5 CONSECUTIVE FAILURES**. **What the red run reported: `1` register row
    broke after `5` of `5` attempts at `P-CN-IM-1`, `7` never started and were ASSERTED AS FAILURES** (the
-   discipline held); the executed register run is `248/248` held, `0` broken, `registerStoppedAt: null`.
+   discipline held).
 3. **RUN and REPORT** the failing set verbatim — the module-resolution failure, plus every static and
    existence row that can already be evaluated.
 4. **Then** implement the least code that makes them green.
@@ -988,9 +927,7 @@ cycle the module is still imported by NO `src/**` file** (`R-8`/`R-13`).
 
 ### 4.5 Delegation gate
 
-**This unit is NOT delegable *(as filed)*. ⟶ COMPACTED 2026-09-27: this gate has been FULLY DISCHARGED and
-the as-filed condition set below — plus its *"ANNOTATED (2026-09-27)"* banner — is SUPERSEDED, compacted out
-to section (6) of `archive/specs/2026-09-27-census-history.md`.** **What holds NOW: (a) the wave-E go-ahead
+**This unit is FULLY DELEGABLE and DONE. What holds: (a) the wave-E go-ahead
 is on the record and the architect question this filing escalated is ruled** (`§0A` ruling note 11) — **no
 architect question is open; (b) this spec exists; (c) the red set WAS AUTHORED, RUN and REPORTED**
 (`tests/census.test.ts`, `64` rows = `44` red / `20` pass; `§4.2` item 3), **and the unit has since landed,
@@ -1000,12 +937,8 @@ delegate surface is landed, green and verified** (`docs/next-steps.md`'s `## DON
 R-12` is the row that keeps that premise falsifiable) — **while `docs/next-steps.md`'s `## OPEN` row `E2` is
 SPENT: it MOVED to `DONE` and is kept visible as a provenance row.** **Its row also carries a permanent
 scoping clause: the key-set/`revealed`/never-mutate rows are THIS unit's and the token arithmetic is the
-predecessor's; the successor's own mechanism is `U-GUTTER`'s** (§1 items 1/7).
-
-**⟶ COMPACTED 2026-09-27 — the *"ANNOTATED (2026-09-27) — the gate's conditions, re-stated against the
-ARCHITECT RULING"* banner that stood here (its text, including *"(c) IS NOT SATISFIED YET"* and *"this unit
-is NOT delegable until that run happens"*) is SUPERSEDED and compacted out to section (6) of
-`archive/specs/2026-09-27-census-history.md`; the discharge above is the operative statement.**
+predecessor's; the successor's own mechanism is `U-GUTTER`'s** (§1 items 1/7). **The as-filed condition set
+and its two banners are in `archive/specs/2026-09-27-census-history.md` §6.**
 
 ---
 
@@ -1022,20 +955,16 @@ is NOT delegable until that run happens"*) is SUPERSEDED and compacted out to se
 | 5 | `docs/next-steps.md` · `docs/decisions.md` · `docs/pending.md` · `docs/FORKER.md` · `docs/defects.md` · `docs/HANDOFF.md` · `archive/reviews/**` | the unit's own **tracker/record surface** — the supervisor's DONE row, the unit's own rows, the per-unit documentation-review record, and a **sibling spec** only for a dated status/annotation correction that changes **no normative clause** | the pass that produces them |
 
 **Outside the scope, ALWAYS — the DENIED set, which binds the WHOLE committed set absolutely (the same
-class `U-PROJ`'s `R-20` asserts):** **⟶ COMPACTED 2026-09-27: rows 1/2's `NEW` marking described the filing
-state; BOTH ARTIFACTS ARE LANDED** (`src/shared/census.ts`, `143` lines; `tests/census.test.ts`, `67` rows
-green) — the scope SENTENCE below is kept verbatim (it remains the scope contract); the filing-state
-`NEW` marking is the part compacted. **The DENIED
+class `U-PROJ`'s `R-20` asserts):** **BOTH ARTIFACTS ARE LANDED** (`src/shared/census.ts`, `143` lines;
+`tests/census.test.ts`, `67` rows green). **The DENIED
 set below is UNCHANGED contract text:** `src/main/**` · `src/renderer/**` · `src/shared/dom-shim.ts` ·
 `src/shared/types.ts` · **`src/shared/zones.ts` and `tests/zones.test.ts`** (the landed predecessor: its
 module and its test file are **read-only** to this unit — a residue of `U-ZONES` is its own pass's,
 `docs/pending.md` §H) · every **existing** test file of another unit · `package.json` /
 `package-lock.json` · `scripts/**` · `node_modules/**` · `../Preempt-Providence/**` · and **the artifact
 of a SIBLING unit** (its `*-greens.md`, its review record, its tracker-only rows). **This unit changes NO
-existing file except this spec and the trackers.** *(Kept as the scope CONTRACT — the scope claim is still
-exactly this; note that it was TRUE of the module work: the delta was the two NEW artifacts (`src/shared/
-census.ts`, `tests/census.test.ts`) + this spec + the trackers/records, and no existing `src/**` or
-`tests/**` file of another unit was edited by it.)*
+existing file except this spec and the trackers** — its delta was the two landed artifacts (`src/shared/
+census.ts`, `tests/census.test.ts`) + this spec + the trackers/records.
 
 **THE COMMIT-RANGE SCOPE RULE — stated here because a scope row that cannot distinguish correct gate work
 from a boundary violation has stopped being falsifiable (a lesson from the last three passes).** A
@@ -1145,10 +1074,9 @@ is the same deliberate gap in the four sibling specs (`docs/specs/projection.md`
 `slothost.md`, `zones.md`), recorded by the `U-LISTHOST` documentation review (`AGENTS.md` item 10d /
 RCA-6). `§5.3` is the DONE-row shape and `§5.5` is the property register; **NO clause is missing** — the
 section simply does not exist. **Renaming or renumbering is FORBIDDEN for citation stability** (both
-numbers are cited across the trackers and in sibling specs). **This note renumbers nothing and changes no
-clause of this spec, and no `§5.5.0` exists here** (this spec is filed AFTER the gate-11 ruling, so it
-carries the register from the start and has no superseded exemption to keep — the same reason
-`docs/specs/zones.md` `§5.5` gives).
+numbers are cited across the trackers and in sibling specs). **No `§5.5.0` exists here** — this spec is
+filed AFTER the gate-11 ruling, so it carries the register from the start and has no superseded exemption
+to keep.
 
 ## 5.5 Typed Property register (EXECUTED deterministically — no PBT harness) — **the gate-11 register is filed at `§5.5.1`**
 
@@ -1160,11 +1088,7 @@ the **five keys** `@types/node`, `electron`, `esbuild`, `typescript`, `vitest` �
 red set, a test file and a real key-set/delegation contract), so **the recorded ZERO-ROW EXEMPTION IS NOT
 AVAILABLE** to it: `docs/decisions.md`'s ACTIVE row **`PBT-REGISTER-REQUIRED-FOR-CODE-UNITS`** restricts
 that exemption to **genuinely invariant-free / doc-only / config-only / non-JS units**, and the gate
-record's amendment (§8) records the follow-up. **`§5.5.1` below is therefore a real typed register** —
-`≤8` rows typed `P-NN-IM`/`P-NN-SM`/`P-NN-TP` *(**⟶ the `≤8` here is the gate-11 filing form and a BREAKDOWN
-SIGNAL, NOT A CEILING — see the register-entry-count ruling applied at `§5.5`: a register enumerates every
-discernible testable property, and this unit's own enumeration answer and breakdown recommendation are stated
-there**)*, **never an `F-` row**, **never a `§6`/`FS-n` citation as a
+record's amendment (§8) records the follow-up. **`§5.5.1` below is therefore a real typed register, never an `F-` row and never a `§6`/`FS-n` citation as a
 row** — **executed by plain deterministic vitest tables and one pinned-seed hand-rolled generator, with
 NO new dependency.** **The precedent that makes this executable here: `docs/specs/engine-pin.md` §5.5
 executed `7` of its `8` register rows with plain deterministic vitest tables and no new devDependency.**
@@ -1175,10 +1099,7 @@ attempts) — **the type algebra, the strategy-id discipline, the pinned seed an
 form, and NO row, pool, table or id is copied from any of them** (a second authority over a landed
 register is a finding, the discipline `docs/specs/projection.md` §8 states).
 
-**`§5.5.0` does not exist in this file, and that is deliberate — stated so no later pass reads it as a
-loss:** this filing has **no superseded exemption to keep verbatim**, because it never recorded one (the
-sibling specs' `§5.5.0` blocks exist to preserve *their* filings' exemptions after the gate-11 ruling;
-**this spec is filed after that ruling and carries the register from the start**). **The gap is therefore
+**The gap is therefore
 `§5.3 → §5.5` with NO `§5.4` and NO `§5.5.0`, and no section number moves.**
 
 **⟶ THE REGISTER-ENTRY-COUNT RULING, APPLIED HERE (2026-09-27 — `docs/decisions.md`'s ACTIVE row
@@ -1189,20 +1110,17 @@ is **the gate-11 form the register was filed under**, and it is **NOT a cap on t
 **no claim in this file may be read as *"the register is complete because it has eight rows"*, and no row may
 be refused, merged away or omitted on the ground that the count would exceed eight.** **THE HONEST
 ENUMERATION ANSWER FOR THIS UNIT: the eight rows do NOT cover every discernible testable property of this
-unit.** **Covered BY THE REGISTER (runtime property layer):** the key-set/`C-A` quantification
+unit.** **Covered BY THE REGISTER:** the key-set/`C-A` quantification
 (`P-CN-IM-1`), the no-default-reveal/`C-C` quantification (`P-CN-IM-2`), the never-mutate/no-cache/`C-B`
 quantification (`P-CN-IM-3`), the pure-delegation quantification (`P-CN-IM-4`), totality/no-throw
 (`P-CN-SM-1`), the zone-member/shape/order/duplicate domain (`P-CN-SM-2`), the zero boundary
 (`P-CN-SM-3`) and the pooled zone-id totality draw (`P-CN-TP-1`). **Covered only OUTSIDE the register, by
 clause rows (`§3`-table rows cited by a `Pinned by` cell but NOT quantified by a register row):**
-**(a) THE STATIC/DELEGATION-SURFACE FAMILY** — the import/delegation-duplication scan (`§3.4 R-1`), the
-export-census + arity row (`R-2`), the anti-evasion vocabulary row (`R-3`), the forbidden-access/no-store
-row (`R-4`), the cross-unit boundary row (`R-5`), the geometry row (`R-6`), the no-shim/five-seam row
-(`R-7`), the diff-scope row (`R-8`), the no-mutation static row (`R-9`) and the path/module-absence row
-(`R-10`); **(b) THE REPO-EXISTENCE PROBES** — `§3.5 R-11` (the absent page-design file), `R-12` (the
+**(a) THE STATIC/DELEGATION-SURFACE FAMILY** — `§3.4 R-1`..`R-10`; **(b) THE REPO-EXISTENCE PROBES** —
+`§3.5 R-11` (the absent page-design file), `R-12` (the
 predecessor surface) and `R-13` (the no-consumer row); **(c) THE RULING'S FALSIFIER FAMILY** — the five
-falsifiers of the architect ruling are carried by `§6`'s fourth-form set and driven by the test file's
-`RUL-A`..`RUL-E` rows, whose register-side coverage is only *partial* (`P-CN-IM-1` cells `10`/`15`/`17` and
+falsifiers of the architect ruling (`§6`'s fourth-form set, driven by the test file's
+`RUL-A`..`RUL-E` rows), whose register-side coverage is only *partial* (`P-CN-IM-1` cells `10`/`15`/`17` and
 `P-CN-IM-2`'s `v2`/`v3` columns); **(d) THE RESIDUES** — `P-3`'s static default-scan property (the reserved
 `R-14`, still owed) and the `F-2` value-layer/freshness property (`ADV-CN-10`). **THE RECOMMENDATION: a
 COMPONENT-BREAKDOWN REVIEW of this unit's property set IS WARRANTED** — the missing halves are properties of
@@ -1281,34 +1199,31 @@ id, **`S-CN-SEED-1`**.
 | **`P-CN-IM-3`** *(the NEVER-MUTATE / NO-CACHE quantification — required row (iii))* | `P-IM` invariant | **For EVERY entry of the row's `3` caller-object × `2` access pattern × `2` frozen/unfrozen twin table plus its repeat, `computeTrackVars` mutates nothing it was handed and retains nothing: after the call the zone enumeration, the census and both lookups are reference-identical AND value-identical (post-call snapshot deep-equals pre-call snapshot), a FROZEN caller object behaves exactly like its unfrozen twin, a `Map` keeps its `size` and entries, no key/default/sentinel is written into the census, and the SAME call driven twice in sequence returns an equal record — i.e. no memo, no cache, no counter and no module-level state exists.** | **YES (bounded — the property text quantifies over EVERY caller object while the table holds `3` objects × `2` patterns × `2` twin forms `+ 2` repeat drives; the enumeration is the whole domain the row names)** | `M-6`, `M-14`, `F-5`, `I-3`, `I-7`, `§2.4 C-B`, `§2.2` (P-4) | `S-CN-PURITY-1` | **`24` attempts** = **`3` caller objects × `2` access patterns × `2` twin forms = `12`, plus `12` repeat drives** (the same matrix re-driven once, asserting an equal result and an unchanged snapshot after the SECOND call), driven in fixed order. **The `3` caller objects:** **(1)** a zone enumeration (`['a','b']`) with a census record `{a: 0}` — the **record** case; **(2)** the same drive with a **`Map`** census `new Map([['a', 0]])` (the non-record case, whose `size`/entries are snapshotted); **(3)** a drive whose `specOf` is a **frozen record** and whose `sizes` is a **record with an own accessor**. **The `2` access patterns:** **(a)** `revealed = () => true` (the full delegate path); **(b)** `revealed` absent (the zero-key path, which must still not touch anything). **The `2` twin forms:** unfrozen, and **`Object.freeze`d before the call** (the census, the enumeration and the lookups frozen where freezable). **Per attempt assert:** a pre-call snapshot — `Object.keys` order+content, every own value by `Object.hasOwn` + `Object.is`, `Object.getPrototypeOf`, `Object.isFrozen`, `Object.getOwnPropertyDescriptor` per own key, and `Map.size` + `[...entries()]` where applicable — **deep-equals** the post-call snapshot; the returned record deep-equals the unfrozen twin's; and **the repeat call's record deep-equals the first call's**. |
 | **`P-CN-IM-4`** *(the PURE-DELEGATION quantification — required row (iv))* | `P-IM` invariant | **For EVERY entry of the row's `14`-attempt fixed drive table, every token byte in the returned record comes from `trackFor` and every emptiness decision comes from `isEmpty`: `isEmpty` is called with EXACTLY `(census, zoneId)` — census FIRST and the zone member VERBATIM — its boolean reaches `trackFor`'s THIRD argument UNMODIFIED, `trackFor` is called with `(spec, size, empty)` where the spec and size are exactly what the two lookups yielded, the returned string is the record's value BYTE-IDENTICALLY, and the count of each call is the count `§2.3` item 6 pins (per revealed zone; `0` for non-revealed zones).** | **YES (bounded — the property text quantifies over EVERY zone/lookup combination while the drive table holds `14` fixed drives; the enumeration is the whole delegation domain this contract names)** | `M-1`, `M-4`, `M-5`, `M-8`, `M-10`, `F-3`, `F-4`, `I-4`, `§2.3` items 2/6, `§2.1` (the delegate clause) | `S-CN-DELEGATE-1` | **`14` attempts**, driven in fixed order, one `computeTrackVars` call per attempt, **each with spy wrappers over the delegate and the caller lookups**. **The `8` argument-shape drives:** **(1)** an empty census with a present size and spec (the empty limb); **(2)** a non-empty census with a `unit: ''` spec (the bare-number form); **(3)** a spec whose `emptyToken` is a caller sentinel (the value is asserted to BE that sentinel); **(4)** a spec whose `unit` is a full declaration string (the value is asserted byte-for-byte); **(5)** a size of `-0` (the delegate's `'0'+unit` limb, reached through this unit); **(6)** a `Map` census with a `0` value; **(7)** an **absent spec** entry (the `''` limb reached with `undefined`); **(8)** an **absent size** entry (the empty-token limb reached with `undefined`). **The `3` call-count drives:** **(9)** three zones revealed with full data ⇒ `isEmpty` `3` times, `trackFor` `3` times; **(10)** three zones where one predicate throws — **⟶ PINNED READING 2026-09-27 (the `U-CENSUS` green step, finding `CN-G-47`; the as-authored *"all 3 keys + 2 `isEmpty` calls"* reading was UNSATISFIABLE and CONTRADICTED the pinned clauses): the WHOLE call is the EMPTY record (`0` keys) with exactly `1` `isEmpty` and `1` `trackFor` call for the one zone whose gate passed BEFORE the throw; a THROWING predicate is the NO-DECISION case (`§2.4 C-C` (g), `§2.3` item 3's annotation, `F-2` (d), `§6`'s third falsification), and the zone after it is never reached** ⇒ the throwing zone costs `0` delegate calls and the other two cost `1` each; **(11)** three zones with `revealed` absent ⇒ both delegate functions called `0` times. **The `3` argument-fidelity drives:** **(12)** a zone id passed as a NUMBER member (asserting the delegate receives that number, not its string image — `F-6`'s premise); **(13)** a `sizes` spy asserting its second argument is the caller's census **by identity** (`===`); **(14)** a `specOf`/`sizes` pair driven as RECORDS and as CALLABLES over the same data, asserting the same record results both ways. **Per attempt assert:** the spy call log's argument tuples (deep-equal, and `===` for the census), the call counts above, and the record's values deep-equal to a direct `trackFor(spec, size, isEmpty(census, zoneId))` composition built by the row itself. |
 | **`P-CN-SM-1`** *(the TOTALITY / no-throw fixed-shape quantification — required row (i))* | `P-SM` state-machine | **For EVERY entry of the row's `10`-shape parameter table (all five parameters driven through their enumerated shape lists in fixed combinations), `computeTrackVars` RETURNS A RECORD and NEVER THROWS — the returned value is a non-`null` object with a `null` prototype, never an array, never a primitive, never `undefined` — including a hostile `Symbol.iterator`, an iterator that throws, a throwing `sizes`/`specOf`/`revealed`, a revoked `Proxy` census, a `Symbol` zone member and a `BigInt` size; and no call leaves a value a later call cannot read.** | **YES** *(the row's statement matches its enumeration exactly: it quantifies over the `10` parameter-shape classes, which are the whole failure surface the table drives)* | `I-1`, `F-1`, `F-4`, `F-5`, `M-13`, `§2.3` item 1 (ii)/(iv), `§0A` note 8 | `S-CN-TOTAL-1` | **`30` attempts** = **`10` shape classes × `3` driving passes**, driven in fixed order (shape-major), one `computeTrackVars` call per attempt. **The `10` shape classes:** **(1)** a `zones` whose own `Symbol.iterator` **throws** on the first `next()`; **(2)** a `zones` whose own `Symbol.iterator` is **present but not callable** (must fall to the record branch); **(3)** a `zones` **array** holding a `Symbol` member beside strings (the DROP case); **(4)** a **revoked `Proxy`** as `census`; **(5)** a `census` whose own accessor **throws** (this unit never reads it, so the row asserts the delegate still answers and no throw escapes); **(6)** `sizes` a **callable that throws**; **(7)** `specOf` a **callable that throws**; **(8)** `revealed` a **callable that throws**; **(9)** a `size` of `0n` (a `BigInt` reaching the delegate); **(10)** a `specOf` record whose own accessor for the zone **throws**. **The `3` passes:** **(a)** the shape with every other parameter well-formed; **(b)** the shape with `revealed` absent; **(c)** the shape with every other parameter ALSO a hostile shape (the composition pass). **Per attempt assert:** no throw; `typeof record === 'object' && record !== null && !Array.isArray(record)`; `Object.getPrototypeOf(record) === null`; and a **second immediate call** with the same arguments returning an equal record. |
-| **`P-CN-SM-2`** *(the ZONE-MEMBER / ORDER / DUPLICATE fixed-table quantification — the clause the ledger does not name)* | `P-SM` state-machine | **For EVERY zone-enumeration shape of the row's `10`-shape table, the zone members become the declared own keys IN FIRST-SEEN ORDER with the declared values: a `Map` contributes its KEYS and never its values; a `Set`/array/own-`Symbol.iterator` object contributes its iteration values; a record contributes its own enumerable STRING keys and never a `Symbol` key nor a prototype member; a non-object contributes ZERO zones; a DUPLICATE (including `1` beside `'1'`) yields ONE key at its first-seen position with the LAST occurrence's value; `'__proto__'` and `'constructor'` are ordinary own keys; and a `Symbol` member is DROPPED.** | **YES** *(the row's statement matches its enumeration exactly: the `10` shapes are the whole enumeration domain `§2.3` item 1 pins)* | `M-2`, `M-7`, `M-9`, `M-13`, `F-1`, `F-6`, `I-2`, `I-10`, `§2.3` item 1, `§0A` notes 2/3/7 | `S-CN-SHAPE-1` | **`10` attempts**, one per shape, driven in fixed order, with `revealed = () => true`, `census = Object.create(null)` carrying a `0` under every expected string key, and `sizes`/`specOf` records carrying an own entry under every expected key. **The `10` shapes and the expected key lists:** **(1)** `new Map([['a', 1], ['b', 2], ['a', 3]])` ⇒ `['a','b']` (**keys, one per unique key, first-seen order**) with `'a'`'s value computed from the LAST occurrence's lookup; **(2)** `new Set(['a', 'b'])` ⇒ `['a','b']`; **(3)** `['a', 1, 1]` ⇒ **⟶ CORRECTED 2026-09-27 (this compaction pass; the `U-CENSUS` gate-7 documentation review, `D-06`/`CN-G-70`, and the green-time test repair `tests/census.test.ts:138-140` — the as-filed `['a','1']` is SUPERSEDED and kept visible above): the declared key order is `['1','a']`** — JS own-key enumeration puts array-index-like own keys FIRST (the `§2.4 C-A` order qualification, `§0A` ruling note 7), and the expectation is composed with the MEMBER `1`, never its string image (`§0A` note 3) — (the number `1` beside the string `'1'` is **the duplicate case**); **(4)** an array holding `Symbol('s')` beside `'a'` ⇒ `['a']` (the **DROP**); **(5)** `Object.create(null)` carrying `{a: 0, b: 1}` ⇒ `['a','b']`; **(6)** a plain record `{a: 0}` whose **prototype** also carries `b` ⇒ `['a']` (never a prototype read); **(7)** a record carrying an own `Symbol` key beside `'a'` ⇒ `['a']`; **(8)** a plain object with an own **callable** `Symbol.iterator` yielding `'a'`,`'b'` (the **shape-(a) branch wins over shape (b)**); **(9)** a plain object with an own **non-callable** `Symbol.iterator` value 42 and own keys `a`,`b` ⇒ `['a','b']` (it falls to the record branch); **(10)** `'ab'` (a string primitive — **shape (c)**, not an iterable here) ⇒ `[]`. **Per attempt assert:** `Object.keys(record)` **deep-equals** the expected list **in order** (so both membership and order are falsified, not just membership); every value equals the row's independently computed expectation; and `Object.getPrototypeOf(record) === null`. **⟶ POOL-VERSUS-BOUNDARY CHECK (run at filing, member-for-member): all `10` members satisfy this row's declared boundary** — each member is either a shape (a)/(b) input whose members are the declared enumeration, or a shape (c) input whose declared outcome is the empty record; **the `Symbol`-bearing members (`3`/`4`/`7`) are declared as the DROP/duplicate classes with their own expected outcomes asserted per member**, so no member contradicts the boundary text. | **⟶ CORRECTED 2026-09-27 (the per-unit documentation review, `D-06`; the as-filed cell is kept visible above and this is an ANNOTATION, not a rewrite): the landed row declares shape `(3)` `['a',1,1]` as **`['1','a']`**, because a plain record enumerates INTEGER-LIKE own keys FIRST — the as-filed order cannot hold for the representation `§0A` note 7 mandates (see also the `ADV-CN-7` qualification at `§2.4 C-A`). **The expected VALUE is composed with the MEMBER (`1`), not with its string key.** **No id, no strategy id, no attempt term and not the `248` total changes** — the row's `10` drives are unchanged.
+| **`P-CN-SM-2`** *(the ZONE-MEMBER / ORDER / DUPLICATE fixed-table quantification — the clause the ledger does not name)* | `P-SM` state-machine | **For EVERY zone-enumeration shape of the row's `10`-shape table, the zone members become the declared own keys IN FIRST-SEEN ORDER with the declared values: a `Map` contributes its KEYS and never its values; a `Set`/array/own-`Symbol.iterator` object contributes its iteration values; a record contributes its own enumerable STRING keys and never a `Symbol` key nor a prototype member; a non-object contributes ZERO zones; a DUPLICATE (including `1` beside `'1'`) yields ONE key at its first-seen position with the LAST occurrence's value; `'__proto__'` and `'constructor'` are ordinary own keys; and a `Symbol` member is DROPPED.** | **YES** *(the row's statement matches its enumeration exactly: the `10` shapes are the whole enumeration domain `§2.3` item 1 pins)* | `M-2`, `M-7`, `M-9`, `M-13`, `F-1`, `F-6`, `I-2`, `I-10`, `§2.3` item 1, `§0A` notes 2/3/7 | `S-CN-SHAPE-1` | **`10` attempts**, one per shape, driven in fixed order, with `revealed = () => true`, `census = Object.create(null)` carrying a `0` under every expected string key, and `sizes`/`specOf` records carrying an own entry under every expected key. **The `10` shapes and the expected key lists:** **(1)** `new Map([['a', 1], ['b', 2], ['a', 3]])` ⇒ `['a','b']` (**keys, one per unique key, first-seen order**) with `'a'`'s value computed from the LAST occurrence's lookup; **(2)** `new Set(['a', 'b'])` ⇒ `['a','b']`; **(3)** `['a', 1, 1]` ⇒ **the declared key order is `['1','a']`** — JS own-key enumeration puts array-index-like own keys FIRST (the `§2.4 C-A` order qualification, `§0A` ruling note 7), and the expectation is composed with the MEMBER `1`, never its string image (`§0A` note 3) — (the number `1` beside the string `'1'` is **the duplicate case**); **(4)** an array holding `Symbol('s')` beside `'a'` ⇒ `['a']` (the **DROP**); **(5)** `Object.create(null)` carrying `{a: 0, b: 1}` ⇒ `['a','b']`; **(6)** a plain record `{a: 0}` whose **prototype** also carries `b` ⇒ `['a']` (never a prototype read); **(7)** a record carrying an own `Symbol` key beside `'a'` ⇒ `['a']`; **(8)** a plain object with an own **callable** `Symbol.iterator` yielding `'a'`,`'b'` (the **shape-(a) branch wins over shape (b)**); **(9)** a plain object with an own **non-callable** `Symbol.iterator` value 42 and own keys `a`,`b` ⇒ `['a','b']` (it falls to the record branch); **(10)** `'ab'` (a string primitive — **shape (c)**, not an iterable here) ⇒ `[]`. **Per attempt assert:** `Object.keys(record)` **deep-equals** the expected list **in order** (so both membership and order are falsified, not just membership); every value equals the row's independently computed expectation; and `Object.getPrototypeOf(record) === null`. **⟶ POOL-VERSUS-BOUNDARY CHECK (run at filing, member-for-member): all `10` members satisfy this row's declared boundary** — each member is either a shape (a)/(b) input whose members are the declared enumeration, or a shape (c) input whose declared outcome is the empty record; **the `Symbol`-bearing members (`3`/`4`/`7`) are declared as the DROP/duplicate classes with their own expected outcomes asserted per member**, so no member contradicts the boundary text. | **⟶ CORRECTED 2026-09-27 (the per-unit documentation review, `D-06`; the as-filed cell is kept visible above and this is an ANNOTATION, not a rewrite): the landed row declares shape `(3)` `['a',1,1]` as **`['1','a']`**, because a plain record enumerates INTEGER-LIKE own keys FIRST — the as-filed order cannot hold for the representation `§0A` note 7 mandates (see also the `ADV-CN-7` qualification at `§2.4 C-A`). **The expected VALUE is composed with the MEMBER (`1`), not with its string key.** **No id, no strategy id, no attempt term and not the `248` total changes** — the row's `10` drives are unchanged.
 | **`P-CN-SM-3`** *(the ZERO-BOUNDARY fixed-table quantification)* | `P-SM` state-machine | **For EVERY one of the row's `10` enumeration shapes, the EMPTY-INPUT outcomes are the declared ones — a zero-member enumeration yields the empty record (never `undefined`, never a throw, never a key), a NON-enumerable input yields the empty record, and the empty record of EVERY such drive is a valid `TrackVars` whose prototype is `null` and whose `Object.keys` is `[]`** — so the three "nothing to emit" causes (`zones` yields nothing; `revealed` decides nothing; both) are each driven and each returns the SAME empty record shape. | **YES** *(the row's statement matches its enumeration exactly)* | `F-1`, `F-2`, `M-4`, `I-1`, `I-2`, `§2.4 C-A` (c), `§3.5 R-10` | `S-CN-EMPTY-1` | **`30` attempts** = **`10` empty-input shapes × `3` passes** (the declared `30`; the **DISTINCT-DRIVE count is `10`**, because the three passes are three assertions over ONE drive each — reported per `§5.3` item 11). **The `10` shapes:** **(1)** `[]`; **(2)** `new Map()`; **(3)** `new Set()`; **(4)** `{}`; **(5)** `Object.create(null)`; **(6)** `null`; **(7)** `undefined`; **(8)** a number; **(9)** a function with no `Symbol.iterator`; **(10)** a record whose own `Symbol.iterator` yields nothing. **The `3` passes:** **(a)** `revealed = () => true`; **(b)** `revealed = () => false`; **(c)** `revealed` absent. **Per attempt assert:** `Object.keys(record)` deep-equals `[]`; `Object.getPrototypeOf(record) === null`; no throw; `isEmpty`/`trackFor` called `0` times; and the returned value is **distinguishable from `undefined`** (`record !== undefined`, and `'x' in record === false`). |
-| **`P-CN-TP-1`** *(the ZONE-ID totality quantification — the pinned-seed pool draw)* | `P-TP` totality | **For EVERY zone member drawn from the pinned `30`-member pool under the pinned seed, `computeTrackVars` is TOTAL and the declared own-key outcome holds: the drive returns a record with the pool member's `String()` image as an own key (or, for the `Symbol` member, DROPS it), never throws, and the member's own VALUE is carried VERBATIM to the consumer's lookups and to `isEmpty`'s second argument (so a `42` member is asked about as `42`, never as `'42'`) — and every draw's key set is exactly the enumerated set.** **⟶ THE POOL'S BOUNDARY IS HOMOGENEOUS BY CONSTRUCTION: **⟶ CORRECTED 2026-09-27 (the `U-CENSUS` RED-SET pass — the second REAL CONTRACT DEFECT the red run caught; the as-filed wording is kept above and is SUPERSEDED): the as-filed sentence claimed every pool member is an OBJECT or a FUNCTION, and the row's own 30-member list CONTRADICTS it** — members `(1)`–`(18)` are **primitives**, `(19)`/`(20)` are `null`/`undefined`, and `(24)` is a **`Symbol`**. **THE RECONCILED BOUNDARY, and it is the one the row's own DRIVE SCOPE clause already implements: the pool is HOMOGENEOUS IN ITS DRIVE, not in its member classes** — **every member is driven as a `zones` ARGUMENT**, and the row's expectation is a function of the member's own class (a sequence-shaped member enumerates zero-or-more zones; a non-sequence member yields **zero zones**; a `Symbol` member is **DROPPED** by the row's own drive-scope rule rather than coerced). **The falsifiable claim is therefore: for EVERY member, the call is TOTAL (a record, never a throw) and the KEY SET equals the set of zones the member itself enumerates — zero for a non-sequence member.** The as-filed 'objects-or-functions' sentence was the defect; the row's per-member expectations were always right. **No id, strategy id, attempt term (the `36`), the pool, the seed or the `248` total changes.** *(This is the THIRD contract defect this unit's red run has caught — after the `v2`/`v3` fold above — and the pattern is consistent with the three sibling units: the register's own design cells are where filing errors concentrate, which is why the register is executed under a red run rather than taken on the filing pass's word.)* — the primitive and `null`/`undefined` classes are **deliberately absent** from this pool and are driven by `P-CN-SM-2`/`P-CN-SM-3` instead. | **YES (bounded — the property text says "EVERY zone member" while the pool holds `30` members and the drive performs `36` draws; the universal is NOT proven, and no reader may read this row as its proof)** | `M-2`, `M-13`, `F-1`, `F-6`, `I-1`, `I-2`, `§2.3` item 1, `§0A` note 3 | `S-CN-SEED-1` | **`36` pinned-seed draws** (`state₀ = 20260927`; one LCG step per draw; `index = stateₙ₊₁ mod 30`), one draw = one attempt, driven in draw order, each draw driving the drawn member as the **sole** member of `zones` (an array wrapping it), with `revealed = () => true` and `sizes`/`specOf` **callables** (so the member's own value reaches them verbatim and the row can assert the received argument). **The `30` pool members, each counted once:** **(1)** `'a'` · **(2)** `''` (the empty string is a legal id) · **(3)** `'__proto__'` · **(4)** `'constructor'` · **(5)** `'toString'` · **(6)** `'hasOwnProperty'` · **(7)** `'valueOf'` · **(8)** `'0'` · **(9)** `'1'` · **(10)** `0` · **(11)** `1` · **(12)** `-0` · **(13)** `NaN` · **(14)** `Infinity` · **(15)** `-1` · **(16)** `Number.MAX_SAFE_INTEGER` · **(17)** `true` · **(18)** `false` · **(19)** `null` · **(20)** `undefined` · **(21)** `{}` · **(22)** `[]` · **(23)** a function · **(24)** `Symbol('s')` · **(25)** `new Map()` · **(26)** `new Set()` · **(27)** a `Date`-shaped object · **(28)** a frozen `{}` · **(29)** a long string of 300 characters · **(30)** an object with an own `Symbol.toPrimitive` that **throws**. **Per attempt assert:** the drawn member is the sole key (or the DROP case for member `24`); the record's prototype is `null`; no throw; the `sizes`/`specOf` spies received the member **by identity** (`===` for objects; `Object.is` for `-0`/`NaN`); and the value equals the row's independently composed `trackFor(spec, size, isEmpty(census, member))`. **DRIVE SCOPE, stated because the member's OWN type decides which `§2.3` item 1 shape the drive exercises: for a member that is an ARRAY (member `22`) or a `Map`/`Set` (members `25`/`26`) the drive wraps the member in a one-element array; for every member that is NOT itself a sequence — including primitive members `12`/`13`/`14`/`15`/`16`, `null` (member `19`) and `undefined` (member `20`), which `§2.3` item 1 (c) declares as ZERO zones — the drive passes the member DIRECTLY as `zones`, so a primitive member's declared outcome is the EMPTY record** (the `P-CN-SM-3` territory, asserted here for that member only), **and the row never claims a key for a member its own input shape cannot enumerate.** **⟶ ARITHMETIC HONESTY (see `§5.5.1`'s honesty item 5): the DRAW SEQUENCE this row's seed produces — the per-draw pool index, the distinct-member count and the repetition count — is an EXECUTION record the red run must report and this filing does NOT assert, because this pass could not execute `S-CN-SEED-1` and this repo's own rule forbids printing an arithmetic figure its author has not verified** (`docs/decisions.md` `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`; the predecessor's register needed exactly this kind of independent recomputation). **The seed, the LCG form, the one-step-per-draw rule, the `mod 30` reduction, the `36` declared attempts and the `30`-member pool ARE asserted contract text.** |
+| **`P-CN-TP-1`** *(the ZONE-ID totality quantification — the pinned-seed pool draw)* | `P-TP` totality | **For EVERY zone member drawn from the pinned `30`-member pool under the pinned seed, `computeTrackVars` is TOTAL and the declared own-key outcome holds: the drive returns a record with the pool member's `String()` image as an own key (or, for the `Symbol` member, DROPS it), never throws, and the member's own VALUE is carried VERBATIM to the consumer's lookups and to `isEmpty`'s second argument (so a `42` member is asked about as `42`, never as `'42'`) — and every draw's key set is exactly the enumerated set.** **the pool's boundary is HOMOGENEOUS IN ITS DRIVE, not in its member classes** — **every member is driven as a `zones` ARGUMENT**, and the row's expectation is a function of the member's own class (a sequence-shaped member enumerates zero-or-more zones; a non-sequence member yields **zero zones**; a `Symbol` member is **DROPPED** by the row's own drive-scope rule rather than coerced). **The falsifiable claim is therefore: for EVERY member, the call is TOTAL (a record, never a throw) and the KEY SET equals the set of zones the member itself enumerates — zero for a non-sequence member.** The row's per-member expectations are the governing ones. **No id, strategy id, attempt term (the `36`), the pool, the seed or the `248` total changes.** *(This is the THIRD contract defect this unit's red run has caught — after the `v2`/`v3` fold above — and the pattern is consistent with the three sibling units: the register's own design cells are where filing errors concentrate, which is why the register is executed under a red run rather than taken on the filing pass's word: the primitive and `null`/`undefined` classes are **driven by `P-CN-SM-2`/`P-CN-SM-3` instead**. | **YES (bounded — the property text says "EVERY zone member" while the pool holds `30` members and the drive performs `36` draws; the universal is NOT proven, and no reader may read this row as its proof)** | `M-2`, `M-13`, `F-1`, `F-6`, `I-1`, `I-2`, `§2.3` item 1, `§0A` note 3 | `S-CN-SEED-1` | **`36` pinned-seed draws** (`state₀ = 20260927`; one LCG step per draw; `index = stateₙ₊₁ mod 30`), one draw = one attempt, driven in draw order, each draw driving the drawn member as the **sole** member of `zones` (an array wrapping it), with `revealed = () => true` and `sizes`/`specOf` **callables** (so the member's own value reaches them verbatim and the row can assert the received argument). **The `30` pool members, each counted once:** **(1)** `'a'` · **(2)** `''` (the empty string is a legal id) · **(3)** `'__proto__'` · **(4)** `'constructor'` · **(5)** `'toString'` · **(6)** `'hasOwnProperty'` · **(7)** `'valueOf'` · **(8)** `'0'` · **(9)** `'1'` · **(10)** `0` · **(11)** `1` · **(12)** `-0` · **(13)** `NaN` · **(14)** `Infinity` · **(15)** `-1` · **(16)** `Number.MAX_SAFE_INTEGER` · **(17)** `true` · **(18)** `false` · **(19)** `null` · **(20)** `undefined` · **(21)** `{}` · **(22)** `[]` · **(23)** a function · **(24)** `Symbol('s')` · **(25)** `new Map()` · **(26)** `new Set()` · **(27)** a `Date`-shaped object · **(28)** a frozen `{}` · **(29)** a long string of 300 characters · **(30)** an object with an own `Symbol.toPrimitive` that **throws**. **Per attempt assert:** the drawn member is the sole key (or the DROP case for member `24`); the record's prototype is `null`; no throw; the `sizes`/`specOf` spies received the member **by identity** (`===` for objects; `Object.is` for `-0`/`NaN`); and the value equals the row's independently composed `trackFor(spec, size, isEmpty(census, member))`. **DRIVE SCOPE, stated because the member's OWN type decides which `§2.3` item 1 shape the drive exercises: for a member that is an ARRAY (member `22`) or a `Map`/`Set` (members `25`/`26`) the drive wraps the member in a one-element array; for every member that is NOT itself a sequence — including primitive members `12`/`13`/`14`/`15`/`16`, `null` (member `19`) and `undefined` (member `20`), which `§2.3` item 1 (c) declares as ZERO zones — the drive passes the member DIRECTLY as `zones`, so a primitive member's declared outcome is the EMPTY record** (the `P-CN-SM-3` territory, asserted here for that member only), **and the row never claims a key for a member its own input shape cannot enumerate.** **⟶ ARITHMETIC HONESTY (see `§5.5.1`'s honesty item 5): the DRAW SEQUENCE this row's seed produces — the per-draw pool index, the distinct-member count and the repetition count — is an EXECUTION record the red run must report and this filing does NOT assert, because this pass could not execute `S-CN-SEED-1` and this repo's own rule forbids printing an arithmetic figure its author has not verified** (`docs/decisions.md` `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`; the predecessor's register needed exactly this kind of independent recomputation). **The seed, the LCG form, the one-step-per-draw rule, the `mod 30` reduction, the `36` declared attempts and the `30`-member pool ARE asserted contract text.** |
 
 **⟶ THE REGISTER'S DATED CONFIRMATION (2026-09-27) — WHAT THE ARCHITECT RULING CONFIRMS, AND WHAT IT
 WITHDRAWS.** *(`§0A` ruling notes 11 and 12, verbatim: "**Non-revealed zones still exist, they just don't
-get displayed.**")* **The register table above is UNCHANGED in every row — no id, no type, no `YES`/
-`YES (bounded)` marking, no compensating-sample citation, no strategy id, no enumeration strategy and no
-attempt term is added, removed or rewritten** — because **every row above was filed on the READING-A form
-the ruling confirms.** **What the ruling CONFIRMS, named cell by cell so a red run can derive it:**
-**(a)** **`P-CN-IM-1` cells `10`/`15`/`17`** — the three **callable-predicate** variants (`() => true`,
-`() => 1`, the spy `(id) => id !== 'b'`) — **are CONFIRMED**: for each, the returned record's key set is
+get displayed.**")* **The register table above is UNCHANGED in every row — no id, no type, no `YES`/`YES (bounded)` marking, no
+compensating-sample citation, no strategy id, no enumeration strategy and no attempt term is added, removed
+or rewritten** — because **every row above was filed on the READING-A form the ruling confirms.** **What the
+ruling CONFIRMS, named cell by cell so a red run can derive it:**
+**(a)** **`P-CN-IM-1` cells `10`/`15`/`17`** — the three **callable-predicate** variants — **are CONFIRMED
+on the Reading-A form (`§0A` ruling note 11's clause table)**: for each, the record's key set is
 **all three keys** (`['a','b','c']`) and **a declined zone's value is exactly `''`**, i.e. **the predicate
 decides the VALUE and never the PRESENCE**; the variants `1`–`9`/`16` (no predicate at all) remain the
-EMPTY-record case (`F-2`) and are **not** the declined-zone case (`§2.3` item 3's annotation). **All `68`
-pairs of that row are driven unchanged.** **(b)** **`P-CN-SM-3`** is **CONFIRMED as filed**: its three
+EMPTY-record case (`F-2`) and are **not** the declined-zone case (`§2.3` item 3). **All `68`
+pairs of that row are driven unchanged.** **(b)** **`P-CN-SM-3`** is **CONFIRMED**: its three
 "nothing to emit" causes (`zones` yields nothing; `revealed` decides nothing; both) each return the SAME
 empty record shape, and **the ruling does NOT merge this row with the declined-zone case** — a declined
 zone is not a zero-boundary input, and **no shape, pass or term of that row moves** (`10` shapes × `3`
-passes = its declared `30`; **distinct drives `10`**, unchanged). **(c) THE WITHDRAWN, PROVISIONAL
-ALTERNATIVE — recorded as a SPENT CONTINGENCY, not deleted (annotate-never-rewrite):** the **"omit-reading"**
-under which a declined zone would have been **omitted** (and under which the two cells above and the `C-A`
-(a)/`F-2`/`M-4` outcomes would have read differently) **was a contingency attached to the open architect
-question; the question is ANSWERED in favour of Reading A, so the contingency is SPENT and WITHDRAWN with
-its provenance recorded at `§0A` ruling note 11** — **it is not an available reading, no row may expect an
-omission, and `§4.4 S-9` is the stop condition that forbids one.** **(d)** **Nothing else changes: no id,
+passes = its declared `30`; **distinct drives `10`**, unchanged). **(c) THE OMIT-READING IS NOT AN
+AVAILABLE READING:** a declined zone is never omitted, no row may expect an
+omission, and `§4.4 S-9` is the stop condition that forbids one (`§0A` ruling note 11). **(d)** **Nothing
+else changes: no id,
 no strategy id, no attempt term, and the total stays `248` = `68+36+24+14+30+10+30+36`** — re-verified
-after this annotation pass, term by term, against the table's own cells and the attempt-arithmetic block
+term by term against the table's own cells and the attempt-arithmetic block
 below.
 
 **⟶ THE REGISTER'S HONESTY BLOCK — what is NOT proven here (stated so no reader over-reads a `YES`).**
@@ -1322,11 +1237,8 @@ below.
    **None of the five is a proof of its unbounded universal**, and **a DONE row that reports any of them
    as one is a review finding.**
 2. **`P-CN-TP-1`'s pool is a SUBSET of the input space, by construction** (strategy-discipline item 6).
-   It holds **`30` members spanning primitives, `null`/`undefined`, objects, functions and one `Symbol`**
-   *(**⟶ COMPACTED 2026-09-27: the as-filed clause here — *"It holds `30` objects/functions"* — was the
-   boundary defect `ADV-CN-6`, corrected in the `P-CN-TP-1` cell above and in the pool-versus-boundary
-   table ("the pool is homogeneous in its DRIVE, not in its member classes"); the superseded wording is
-   compacted out to section (5) of `archive/specs/2026-09-27-census-history.md`)*; **a `Symbol`-KEYED
+   It holds **`30` members spanning primitives, `null`/`undefined`, objects, functions and one `Symbol`**;
+   **a `Symbol`-KEYED
    census, a `Proxy` with
    inconsistent traps and a hostile `Symbol.toPrimitive` on a SIZE are either driven as fixed shapes in
    another row or deliberately excluded**, and **their exclusion is stated rather than silently relied
@@ -1337,16 +1249,10 @@ below.
 4. **`P-CN-SM-1`'s hostile classes bind the shapes the table names.** A `Proxy` whose traps return
    **inconsistent** answers across reads, or a spec whose field reads throw **at different times**, is
    **deliberately outside** every pool (strategy-discipline item 6 (a)) so that no draw is ambiguous.
-5. **`S-CN-SEED-1`'s draw accounting was NOT asserted by the filing — and it has since been MEASURED.**
-   Every other arithmetic figure in this register is a product or sum of its own printed terms; **the
-   seed's draw sequence (per-draw pool index, distinct-member count, repetition count) was NOT computed at
-   filing** — **that pass could not execute the generator** (it writes no
-   code, runs no shell and authors no test), and **this repo's own ACTIVE rule forbids printing an
+5. **`S-CN-SEED-1`'s draw accounting has been MEASURED.**
+   **The repo's own ACTIVE rule forbids printing an
    arithmetic figure its author has not verified** (`docs/decisions.md`
-   `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`; the predecessor's register needed an independent
-   recomputation for exactly this class). **⟶ MEASURED 2026-09-27 (the current record, replacing the
-   as-filed future-tense obligation, which is compacted out to section (9) of
-   `archive/specs/2026-09-27-census-history.md`): `P-CN-TP-1`'s `36` draws reach `20` of `30` DISTINCT
+   `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`). **`P-CN-TP-1`'s `36` draws reach `20` of `30` DISTINCT
    members (repetition count `16`, `10` index-1-based pool numbers undrawn), and the DROP-class branches are
    only PARTLY reached** — the `Symbol` member (pool index `23`) at draw **positions `8` and `22`**, the
    **uncoercible** member (pool index `29`) at position **`14`**, **pool index `24` NEVER drawn**. **NO row
@@ -1397,7 +1303,7 @@ CLEAN, recorded member-for-member:**
 | `P-CN-SM-1` | *"EVERY entry of the `10`-shape parameter table"*, `× 3` passes | **`10 × 3 = 30`**, every shape declared as a hostile/negative class with its expected outcome (a record, no throw). **No member contradicts the text.** |
 | `P-CN-SM-2` | *"EVERY zone-enumeration shape of the `10`-shape table"*, with the expected key list per shape | **All `10` shapes' expected `Object.keys` lists are written out, INCLUDING the `Symbol` DROP, the duplicate `1`/`'1'`, the prototype-carrying record and the non-callable-`Symbol.iterator` fallback.** No member contradicts the text — **and this is the row whose boundary would have been easiest to overstate (a "strings only" boundary would have contradicted members `4`, `7` and `10`), which is why the boundary is stated as "the declared outcome per member".** |
 | `P-CN-SM-3` | *"EVERY one of the `10` enumeration shapes"*, empty-input outcomes, `× 3` passes | **`10 × 3 = 30` declared, `10` distinct drives**, all `30` enumerated. **No member contradicts the text** — every shape is an empty-or-non-enumerable input, which is exactly the boundary the row names. **⟶ CONFIRMED BY THE ARCHITECT RULING 2026-09-27 (`§0A` ruling note 11): the row is confirmed as filed and is NOT merged with the declined-zone case — a declined zone is not a zero-boundary input, and the ruling changes no shape, pass or term here.** |
-| `P-CN-TP-1` | *"EVERY zone member drawn from the `30`-member pool"*, **boundary: every member is an OBJECT or a FUNCTION** | **CHECKED MEMBER-FOR-MEMBER AND THE BOUNDARY WAS NARROWED AT FILING TO MAKE IT TRUE:** the pool was originally drafted to include the primitive and `null`/`undefined` zone-id classes beside the object classes; **a homogeneous boundary is the only one under which a *drawn* member cannot contradict the row's text**, so **those classes were REMOVED from this pool** (they are driven by `P-CN-SM-2` shape `(10)` and `P-CN-SM-3` shapes `(6)`–`(9)` instead) and **the row's boundary now reads exactly "every member is an object or a function"** — which **all `30` listed members satisfy**. **This is the pool-versus-boundary rule applied at filing time rather than at red time, and it is recorded because the alternative (a heterogeneous pool with a per-member outcome clause) would have made `36` unbounded draws assert a boundary the pool does not hold in general.** **⟶ THIS CELL IS SUPERSEDED 2026-09-27 (the `U-CENSUS` red-set pass's SECOND real contract defect, finding `ADV-CN-6`; the as-filed text above is kept visible): the row's boundary in this cell — *"every member is an OBJECT or a FUNCTION"*, and *"all `30` listed members satisfy"* it — is CONTRADICTED by the row's own `30`-member pool list** (members `(1)`–`(18)` are primitives, `(19)`/`(20)` are `null`/`undefined`, and `(24)` is a `Symbol`), **and the GOVERNING boundary is the corrected one stated in the `P-CN-TP-1` register cell above: the pool is HOMOGENEOUS IN ITS DRIVE, not in its member classes** (every member is driven as a `zones` ARGUMENT; a sequence-shaped member enumerates zero-or-more zones, a non-sequence member yields zero zones, a `Symbol` member is DROPPED). **The filing-time *"boundary was narrowed"* claim in this cell is the stale half and this cell may NOT be cited as the row's boundary; no id, strategy id, attempt term (`36`), pool, seed or the `248` total changes.** |
+| `P-CN-TP-1` | *"EVERY zone member drawn from the `30`-member pool"*, **boundary: the pool is HOMOGENEOUS IN ITS DRIVE, not in its member classes** (every member is driven as a `zones` ARGUMENT; a sequence-shaped member enumerates zero-or-more zones, a non-sequence member yields zero zones, a `Symbol` member is DROPPED) | **All `30` listed members are declared per member with their own expected outcome, so no drawn member contradicts the row's text.** **The corrected boundary above GOVERN (finding `ADV-CN-6`); no id, strategy id, attempt term (`36`), pool, seed or the `248` total changes.** |
 
 **Attempt arithmetic — STATED SO A READER CAN CHECK IT AGAINST THE TABLES (one term per register row,
 counted from the table above).** **`68` (`P-CN-IM-1`) + `36` (`P-CN-IM-2`) + `24` (`P-CN-IM-3`) + `14`
@@ -1433,7 +1339,7 @@ file's tables**, and **`docs/decisions.md` `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-
 printed arithmetic itself the assertion — *a total that is not the sum of its own terms is a review
 finding*.**
 
-**Register change summary (what this filing did).** **No exemption is superseded here — there was none**
+**Register change summary.** **No exemption is superseded here — there was none**
 (`§5.5`'s note: no `§5.5.0` exists). **This register is `U-CENSUS`'s own and is NOT a copy of
 `docs/specs/projection.md` §5.5.1's, `docs/specs/zones.md` §5.5.1's, `docs/specs/listhost.md` §5.5.1's or
 `docs/specs/slothost.md` §5.5.1's** — no row, table, pool or id is shared, and **no landed register's row
@@ -1442,19 +1348,14 @@ is restated, extended or contradicted**, so **no second authority over a landed 
 (`P-IM`/`P-SM`/`P-TP`) and the STRATEGY DISCIPLINE** (deterministic tables, one pinned-seed hand-rolled
 LCG, caps `≤100`/`≤400`, stop-after-5, no new dependency) **and nothing else.**
 
-**Register integration with the legs and the DONE row (so the property layer is not an orphan).** The
+**Register integration with the legs and the DONE row.** The
 register rows are carried by **the same node suite** `npm test` already runs (`§5.2` leg 1) in **this
 unit's own** `tests/census.test.ts` — **no new leg, no new file, no new script, no `package.json` change,
 no new dependency** (`§5.1`'s diff scope is unchanged). **No `[U]` row exists to depend on** (§5.2), so
-**no register row can be layer-blocked**. **`§5.3`'s DONE row carries items 10 and 11** (the per-row
-counts, strategy ids, the pinned seed and its step form, the stop-after-5 status, the total against the
-caps, the five `YES (bounded)` sentences, the `P-CN-TP-1` distinct-member report, and the arithmetic
-printed **with its terms**). **A PBT audit does not report a row as executed on the strength of
-this table alone** — the audit reads **the TestWriter's tables in `tests/census.test.ts`** and **the
-ledger's numbers against this cell**. **⟶ COMPACTED 2026-09-27: the as-filed clause *"every `YES` here is
-execution DESIGN and this pass ran nothing"* described the filing pass and is SUPERSEDED (compacted out to
-section (7) of `archive/specs/2026-09-27-census-history.md`); the read-only PBT audit HAS run and the register
-HAS been executed — `248/248` held, `0` broken, `registerStoppedAt: null`.**
+**no register row can be layer-blocked**. **`§5.3`'s DONE row carries items 10 and 11.** **A PBT audit does
+not report a row as executed on the strength of this table alone** — the audit reads **the TestWriter's
+tables in `tests/census.test.ts`** and **the ledger's numbers against this cell**. **The read-only PBT audit
+HAS run and the register HAS been executed — `248/248` held, `0` broken, `registerStoppedAt: null`.**
 
 ---
 
@@ -1478,20 +1379,13 @@ unchanged across `24` drives).
 **A third, independent falsification.** *If the key-set rule and the reveal rule cannot hold
 simultaneously, the ledger's contract is internally inconsistent.* **The test is `C-A` and `C-C` driven
 in the same cell** — `P-CN-IM-1`'s variants `1`–`9`/`16` (no decision supplied ⇒ `{}`) against its
-variant `10`/`15` (a truthy decision ⇒ all three keys) **and** `P-CN-IM-2`'s `v2`/`v3` columns (a falsy or
-absent decision for a single zone ⇒ the key present with `''`, never omitted).
+variant `10`/`15` (a truthy decision ⇒ all three keys) **and** `P-CN-IM-2`'s `v2` column (`() => false` ⇒
+the key present with `''`) against its `v3` column (absent ⇒ `{}`). **A row that folds `v2` and `v3` into
+one expectation FAILS this spec's text** — an absent decision is NOT a decline.
 
-**⟶ THE RULING'S FALSIFIERS, ADDED HERE AS THE FOURTH-FORM FALSIFICATION SET (`§0A` ruling note 11,
-2026-09-27: "**Non-revealed zones still exist, they just don't get displayed.**"; the falsifiers themselves
-are written out verbatim at `§0A` ruling note 12).** **The third paragraph above is kept as filed, and the
-ruling's own falsifiers SUPERSEDE its last clause in one NAMED respect rather than silently rewriting it:
-the ruling's falsifier (a) requires that a `revealed` predicate that DECLINES zone `z` still leaves `z` IN
-`Object.keys(record)` — and the ruling's own `F-2` boundary fix (`§3.2`'s annotation, `§2.3` item 3's
-annotation) says an ABSENT/non-callable/THROWING `revealed` is the EMPTY-record case, so `P-CN-IM-2`'s
-`v2` column (`() => false`) yields the key with `''` while its `v3` column (absent) yields `{}`. **A row
-that folds `v2` and `v3` into one expectation FAILS this spec's text** — the as-filed sentence lumped them
-together as *"a falsy or absent decision"*, and the ruling separates them.** **The falsifiable tests of the
-ruling are therefore, each on a NAMED row:** **(1)** the key-set falsifier — `Object.keys` contains `z` and
+**⟶ THE RULING'S FALSIFIERS — the fourth-form falsification set (`§0A` ruling notes 11/12).**
+**The falsifiable tests of the ruling are, each on a NAMED row:** **(1)** the key-set falsifier —
+`Object.keys` contains `z` and
 the key set equals the `zones` set **by set equality** (`C-A`, `I-2`, `P-CN-IM-1` cells `10`/`15`/`17`);
 **(2)** the display-value falsifier — the declined zone's value is **exactly `''`**, never a token and never
 the `emptyToken`, with `trackFor` proved uncalled for it (`M-4`, `M-12`, `F-3`); **(3)** the omission
@@ -1524,13 +1418,8 @@ files.
 
 ## 7. Honest statements (recorded so no later pass over-reads this unit)
 
-1. **⟶ COMPACTED 2026-09-27: the as-filed item 1 — *"Nothing in this unit is `DONE`, nothing is green, and
-no leg has been run by this pass … it is `UNBLOCKED` on the architect question and `BLOCKED` on ONE thing
-only — its own red set … and its red set is `OWED — NOT AUTHORED, NOT RUN`"* — is SUPERSEDED; it is
-compacted out to section (9) of `archive/specs/2026-09-27-census-history.md`. THE UNIT IS `DONE` (the
-ledger's NINTH `DONE` row): its red set was AUTHORED, RUN and REPORTED (`§4.2` item 3), its module and red
-set are landed and green, gates 4–7 ran, and its legs are recorded in the CURRENT STATE block above. Its
-ordering precondition was discharged** (`U-ZONES` is `DONE`; `R-12` keeps that premise falsifiable).
+1. **THE UNIT IS `DONE`**
+   The as-filed `BLOCKED`/`OWED` wording of this item is in `archive/specs/2026-09-27-census-history.md` §9.
 2. **THIS UNIT IS A PURE `src/shared/` MODULE IMPORTED BY NO `src/**` FILE, and that is load-bearing for
    every claim below.** Until a consumer exists, **its green proves the CONTRACT HOLDS FOR A CALLER — not
    that the app behaves differently.** No window, no IPC round-trip, no MCP transport and no renderer
@@ -1596,19 +1485,16 @@ ordering precondition was discharged** (`U-ZONES` is `DONE`; `R-12` keeps that p
 11. **No row of this unit claims a `bodyRuns`/`BARE-TEXT-EMIT` surface, an engine behaviour, a package
     capability or a census semantics** (`H-r11`'s no-overclaim rule); **this unit exercises no engine
     surface at all, and it does not know what any census counts.**
-12. **The property register's `YES` markings are execution DESIGN, not results** (`§5.5.1`). **⟶ COMPACTED
-2026-09-27: as filed this item added *"this pass ran nothing"* and *"ONE figure is deliberately NOT
-asserted: `S-CN-SEED-1`'s draw sequence and distinct-member count, which this pass could not execute and
-which the red run must REPORT"* — both are SUPERSEDED and are compacted out to section (9) of
-`archive/specs/2026-09-27-census-history.md`. **THE EXECUTED RECORD NOW: `248/248` held, `0` broken,
-`registerStoppedAt: null`, stop-after-5 NOT triggered, and the seed's draw sequence WAS produced and
-REPORTED — `36` draws reaching `20` of `30` members (distinct), with `P-CN-TP-1`'s distinct-member count
-`20` and the DROP-class coverage stated honestly (positions `8`/`22` for the `Symbol` member, position `14`
-for the uncoercible member, pool index `24` never drawn).** The register's arithmetic is printed **with its
-terms** — **`68+36+24+14+30+10+30+36 = 248`** (the gate-2/red-run arithmetic checks confirmed the sum; this
-unit did NOT mis-sum). **`C-B`'s static half (`R-9`) proves the absence of a write SITE and never the absence
-of a mutation behaviour** — the observable half is `I-3`'s and `P-CN-IM-3`'s, **whose honest DISTINCT-DRIVE
-count is `12`** (its declared `24` re-drives the same 12 cells).
+12. **The property register's `YES` markings are execution DESIGN, not results** (`§5.5.1`). **THE
+    EXECUTED RECORD: `248/248` held, `0` broken,
+    `registerStoppedAt: null`, stop-after-5 NOT triggered, and the seed's draw sequence WAS produced and
+    REPORTED — `36` draws reaching `20` of `30` members (distinct), with `P-CN-TP-1`'s distinct-member count
+    `20` and the DROP-class coverage stated honestly (positions `8`/`22` for the `Symbol` member, position `14`
+    for the uncoercible member, pool index `24` never drawn).** The register's arithmetic is printed **with its
+    terms** — **`68+36+24+14+30+10+30+36 = 248`** (the gate-2/red-run arithmetic checks confirmed the sum; this
+    unit did NOT mis-sum). **`C-B`'s static half (`R-9`) proves the absence of a write SITE and never the absence
+    of a mutation behaviour** — the observable half is `I-3`'s and `P-CN-IM-3`'s, **whose honest DISTINCT-DRIVE
+    count is `12`** (its declared `24` re-drives the same 12 cells).
 13. **THE STATED LIMITATION OF THE MECHANISM — the three-case `''` collision, recorded here because the
     ARCHITECT RULING (2026-09-27, `§0A` ruling note 11: *"**Non-revealed zones still exist, they just don't
     get displayed.**"*) makes it explicit and it is the load-bearing honesty item for a consumer.** **The
@@ -1677,40 +1563,21 @@ reverse-engineered from a guess).
 
 **The gate's list is therefore EMPTY: `8` items reported, `8` ruled, `0` OPEN QUESTIONS, and NO item is
 parked.** **No clause of this contract was weakened to make a test easy, and no ruling invents a
-vocabulary, a default, a field or an export.** **No item is presented as contract text without the clause
-that decides it**, and **no item needed the architect** — each was decidable from the ledger, A-d4's
-ruling, the predecessor's landed and RULED semantics (`docs/specs/zones.md` `§0A`/`§2.3`), or this unit's
-own boundary. **`§7a.1` is a sub-heading of `§7a`, and no section number moves.**
+vocabulary, a default, a field or an export.**
 
-**⟶ ANNOTATED (2026-09-27) — THE ARCHITECT RULING RATIFIES ITEM 4'S READING, AND THE LIST REMAINS EMPTY
-WITH NO OPEN QUESTION.** *(As-filed text above is kept visible. `§0A` ruling note 11, verbatim:
-"**Non-revealed zones still exist, they just don't get displayed.**")* **Item 4's ruling (the `C-A`
+**THE ARCHITECT RULING RATIFIES ITEM 4'S READING (`§0A` ruling note 11).** **Item 4's ruling (the `C-A`
 key-set question — *"YES — every enumerated zone HAS a key, whether revealed or not, whether its
 spec/size exists or not"*) is the reading the architect's ruling CONFIRMS, and item 2's ruled predicate
-shape (`revealed` as a CALLABLE PREDICATE) is the shape the ruling's DECLINE case presupposes — a decline
-needs a predicate to decline with.** **The one clause this filing escalated BEYOND `§7a`'s eight — the
-`C-A`-versus-`revealed` tension, pinned provisionally at `§7a.1` item 4 and in ruling note 9 — is now
-RULED, so there is NO open question in this subsection and NONE with the architect.** **The gate's list is
-therefore EMPTY for the second time and for a stronger reason.** **The two report cells are annotated below
-(the as-filed *"best available, NOT a ruling"* framing stands visible; the ratifying clause is the ruling),
-and NO section number moves, no item is renumbered and no clause is weakened.**
+shape (`revealed` as a CALLABLE PREDICATE) is the shape the ruling's DECLINE case presupposes.** **The one
+clause this filing escalated BEYOND `§7a`'s eight — the `C-A`-versus-`revealed` tension — is RULED, so
+there is NO open question here and NONE with the architect.** **No section number moves, no
+item is renumbered and no clause is weakened.**
 
-**ONE ITEM IS REPORTED AS A STANDING RISK RATHER THAN A QUESTION, so the list above stays honest** *(and
-**⟶ COMPACTED 2026-09-27: the as-filed wording of this paragraph — *"this pass could not execute
-`S-CN-SEED-1`, so `P-CN-TP-1`'s draw sequence and distinct-member count are an EXECUTION record the red run
-must report and this filing deliberately does not assert"* — is SUPERSEDED, because the record now exists:
-`36` draws reach `20` of `30` members; it is compacted out to section (9) of
-`archive/specs/2026-09-27-census-history.md`. What remains true and binding is the rule: a reported
-draw count is an EXECUTION record, the pool's coverage is a DRAW and not a sweep, and the DROP-class branches
-are only partly reached)*
-(`§5.5.1`'s honesty item 5): **the as-filed sentence that stood here — *"this pass could not execute
-`S-CN-SEED-1`, so `P-CN-TP-1`'s draw sequence and distinct-member count are an EXECUTION record the red run
-must report and this filing deliberately does not assert"* — is SUPERSEDED and compacted out to section (9)
-of `archive/specs/2026-09-27-census-history.md`; the draw sequence HAS been produced and reported (`36`
-draws, `20` of `30` members, DROP-class coverage partly reached).** **The rule it carried stands unchanged
-and is NOT an ambiguity in the contract and NOT an architect question: a reported draw count is an EXECUTION
-record, the repo's own ACTIVE rule forbids printing an arithmetic figure its author has not verified
-(`docs/decisions.md` `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`), and a draw is not a sweep.**
+**ONE ITEM IS REPORTED AS A STANDING RISK RATHER THAN A QUESTION, so the list above stays honest** — and
+**the rule is not an ambiguity in the contract and NOT an architect question: a reported draw count is an
+EXECUTION record, the pool's coverage is a DRAW and not a sweep, and the DROP-class branches of `P-CN-TP-1`
+are only partly reached** (`§5.5.1`'s honesty item 5; the repo's ACTIVE rule forbids printing an arithmetic
+figure its author has not verified — `docs/decisions.md` `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`).
 
 ---
 
@@ -1760,15 +1627,9 @@ appended), so its rows are cited **by NAME**. **This spec writes no line-count c
 | **`§3a`'s adversarial seed set (`A-*`)** | **⟶ RECONCILED 2026-09-27 (compacted): the as-filed `OWED — NOT RUN` cell is SUPERSEDED** — the pass RAN (all `21` seeds ruled: `19` `CONFIRMED-RULED` + `1` `CONFIRMED-FIXED`, `0` `OWED`, `0` `BLOCKING-SCOPE`) and **every `A-*` row was a QUESTION for that pass, not a finding** | `§3a`, `§3b.1` |
 | **`§3b`'s disposition table** | **⟶ RECONCILED 2026-09-27 (compacted): the as-filed `OWED — empty by construction` cell is SUPERSEDED** — the table was POPULATED by the run (`§3b.1`..`§3b.5`) and its status vocabulary is fixed in place so an appended findings block needs no renumbering and no new section | `§3b` |
 
-**Archival-loop check (`AGENTS.md` item 6).** **⟶ COMPACTED 2026-09-27: the as-filed wording of this
-paragraph — *"this filing archives, moves and repoints NOTHING"*, *"`docs/next-steps.md`'s `E2` row therefore
-still reads its spec cell as `OWED — not filed` and `docs/pending.md` §B's `SCH-8` row still reads
-`docs/specs/census.md` as still `OWED — not filed`"*, and *"this pass ran no test, no leg and no trio, edited
-exactly ONE file, and made no commit"* — is SUPERSEDED (the tracker cells named were reconciled by the DONE
-pass, the legs ran, and MANY passes have since committed); it is compacted out to section (10) of
-`archive/specs/2026-09-27-census-history.md`. **The CURRENT loop state: this compaction pass creates
-`archive/specs/2026-09-27-census-history.md` (gitignored provenance), compacts THIS file to current truth,
-adds NO tracker row and repoints every citation to the moved passages INSIDE this file; the unit's own
+**Archival-loop check (`AGENTS.md` item 6).** **The loop state: `archive/specs/2026-09-27-census-history.md`
+holds the compacted provenance, this file is compacted to current truth, no tracker row is added here; the
+unit's own
 tracker rows, its `## DONE` record and the parked residues live in `docs/next-steps.md` and
 `docs/pending.md` §H (`RCA-8`: a file-replacing operation is committed by the supervisor).**
 
@@ -1783,19 +1644,14 @@ specs).
 
 ## 3a. Adversarial findings — **status as filed: `OWED`; this table is the SEED SET for the pass that will run** *(⟶ the pass HAS run: all `21` seeds are ruled at `§3b.1` — the heading is kept verbatim, with its as-filed `OWED` word, for citation stability)*
 
-**Status as filed: `OWED`. No adversarial pass has run for `U-CENSUS`** — this is the spec-filing pass;
-the unit is `BLOCKED` on the wave-E go-ahead and on its own red set, **so there is no green to review**
-(RCA-3 runs *after* a unit's green: *"after each unit's green, a read-only adversarial sub-agent (edge
-cases / unauthorized access / malformed inputs) must run before the unit is reported done"*). **Every row
-below is a QUESTION for that pass, not a finding, and none may be cited as one.** **⟶ COMPACTED 2026-09-27
-— THE PASS HAS SINCE RUN: this as-filed `OWED` status is SUPERSEDED (compacted out to section (4) of
-`archive/specs/2026-09-27-census-history.md`) and is reconciled at `§3b.1` below — all `21` seeds are RULED
-(`19` `CONFIRMED-RULED`, `1` `CONFIRMED-FIXED` — the `A-18` ledger half, `0` `OWED`, `0` `BLOCKING-SCOPE`)
+**THE ADVERSARIAL PASS HAS RUN** (gate 4, read-only, incl. the gate-11 PBT audit). **Every row
+below is a QUESTION for that pass, not a finding, and none may be cited as one.** All `21` seeds are RULED at
+`§3b.1` (`19` `CONFIRMED-RULED`, `1` `CONFIRMED-FIXED` — the `A-18` ledger half, `0` `OWED`, `0` `BLOCKING-SCOPE`)
 and the eleven findings are dispositioned at `§3b.3`. The seed QUESTIONS below stand as the pass's own
-agenda record and are NOT findings.** The pass is
-**READ-ONLY** (it changes no `tests/**` and no `src/**`), it **must also perform the gate-11 read-only
-PBT audit** of `§5.5.1`'s executed tables — **including the pool-versus-boundary check, and including
-the `S-CN-SEED-1` draw accounting this filing deliberately did NOT assert** — and **its findings are
+agenda record and are NOT findings. The pass was
+**READ-ONLY** (it changed no `tests/**` and no `src/**`), it **performed the gate-11 read-only
+PBT audit** of `§5.5.1`'s executed tables — **including the pool-versus-boundary check and
+the `S-CN-SEED-1` draw accounting** — and **its findings are
 recorded in `§3b` and fixed here (host findings) with regression rows — never in `docs/defects.md` for a
 host finding** (`R13-HOST-FIX`'s precedent); **a genuine `provident-ssr` package defect would go to
 `docs/defects.md` + `docs/HANDOFF.md` and the package is NEVER patched.**
@@ -1824,20 +1680,18 @@ host finding** (`R13-HOST-FIX`'s precedent); **a genuine `provident-ssr` package
 | **`A-20`** | **The tracker/handoff probe:** does the DONE row state `U-GUTTER`'s unblock correctly (its **two** dependencies, `U-CENSUS` and `U-GSESSION`, with no fabricated edge), and does it leave `docs/pending.md` §H's `ADV-ZN-3`/`ADV-ZN-6` residues **with their own owner** rather than absorbing them into this unit's file? | the DONE row |
 | **`A-21`** | **THE ARCHITECT-RULING PROBE (`§0A` ruling notes 11/12, added by the 2026-09-27 annotation pass):** with a CALLABLE `revealed` that declines zone `z` — **is `z` still in `Object.keys(record)` (set equality against the `zones` set), is `z`'s value EXACTLY `''` and NOT a token and NOT the caller's `emptyToken`, is `trackFor` provably UNCALLED for `z`, and does an implementation that OMITS `z` FAIL the key-set row while one that EMITS A TOKEN for `z` FAILS the reveal row?** **And the boundary probe the ruling fixes: does an ABSENT/non-callable/throwing `revealed` give the EMPTY record (`F-2`) rather than a record with `''` keys — i.e. is the DECLINED case never conflated with the NO-DECISION case?** **Any positive on the omit/conflate/token/default halves is a `BLOCKING — SCOPE`-class finding against the ruled contract.** | `[T]` |
 
-**The seed set's own status, stated so it is not misread: `A-1`..`A-21` are ALL `OWED`** *(as filed — **⟶
-COMPACTED 2026-09-27: the pass HAS run and every seed is ruled at `§3b.1`; this as-filed `OWED` sentence is
-SUPERSEDED and compacted out to section (4) of `archive/specs/2026-09-27-census-history.md`**)* — the pass runs
-after the green, and **a DONE row that cites no adversarial pass (or whose findings are unrecorded) is a
-review finding** (`AGENTS.md` RCA-3). **⟶ ANNOTATION (2026-09-27): `A-21` is the ONE seed ADDED by the
-architect-ruling annotation pass** (`§0A` ruling notes 11/12) — **it exists because the ruling's five
-falsifiers and its one stated limit are the exact class of edge case this pass hunts, and because the
+**The seed set's own status: `A-1`..`A-21` are ALL RULED at `§3b.1` — the pass ran after the green, and
+a DONE row that cites no adversarial pass (or whose findings are unrecorded) is a
+review finding** (`AGENTS.md` RCA-3). **`A-21` is the ONE seed added by the
+architect-ruling annotation pass** (`§0A` ruling notes 11/12) — **the ruling's five
+falsifiers and its one stated limit are the exact class of edge case this pass hunts, and the
 ruling fixes a boundary (`F-2` vs `M-4`) that a later implementer could otherwise conflate. It is a
 QUESTION for the adversarial pass like every other seed, NOT a finding, and it changes no `§3` row, no
 register row, no attempt term and no `YES` marking.**
 
 ## 3b. The adversarial pass's disposition table — **the SHAPE this contract will be reconciled to** *(⟶ the pass HAS run and both tables are RECONCILED, `§3b.1`..`§3b.5` — the heading is kept verbatim for citation stability)*
 
-**⟶ THE PASS HAS RUN (2026-09-27) — BOTH TABLES ARE RECONCILED, AND `§3b` IS NO LONGER `OWED`.** (Annotation pass: the gate-4 read-only adversarial + gate-11 PBT audit, whose findings are `ADV-CN-1`..`ADV-CN-11`, and the gate-5 blind-greens pass `docs/specs/census-greens.md`. **No new top-level section is added; this is `§3b`'s own sub-record, `§3b.1`–`§3b.5`.**)
+**BOTH TABLES ARE RECONCILED, AND `§3b` IS NO LONGER `OWED`.** The gate-4 read-only adversarial + gate-11 PBT audit, whose findings are `ADV-CN-1`..`ADV-CN-11`, and the gate-5 blind-greens pass `docs/specs/census-greens.md`. **No new top-level section is added; this is `§3b`'s own sub-record, `§3b.1`–`§3b.5`.**
 
 ### 3b.1 THE SEED DISPOSITIONS (`§3a`'s `A-1`..`A-21`) — ALL RULED, ZERO `OWED`
 
@@ -1880,11 +1734,7 @@ The module's eight mechanism judgment calls (the `zones` dispatch; the verbatim 
 **Two claims in this cycle were raised as defects and DISPROVEN by recomputation, and they stay on the record so no later pass re-files them:** (i) the claim that the pinned seed draws the uncoercible member at *position 22* (**recomputed: index 29 is drawn at position 14; index 24 — the *other* DROP-class member — is never drawn**); and (ii) the claim that `TP1`-style tables were short a term (a sibling unit's finding, not this one). **THE LESSON, carried from the sibling unit's record: a read-only pass that asserts arithmetic must show its derivation, because a wrong derivation reads exactly like a correct one until someone recomputes it — and recomputing is what keeps this gate honest in BOTH directions.** **`ADV-CN-8`'s half-disproof above is this unit's own instance of it.**
 
 
-**⟶ COMPACTED 2026-09-27 — the as-filed sentence *"This table is EMPTY BY CONSTRUCTION at filing"* is
-SUPERSEDED (the pass HAS run and the vocabulary table below is the one its rows actually use — see
-`§3b.1`..`§3b.5` above); the superseded wording is compacted out to section (5) of
-`archive/specs/2026-09-27-census-history.md`. **What still stands, unchanged and operative: the table's
-VOCABULARY is fixed here** so an appended
+**The table's VOCABULARY is fixed here** so an appended
 findings block needs **no renumbering and no new section**. **A row added later must use one of the
 statuses below, or the pass must define its new token IN THIS TABLE with a one-line meaning** — an
 undefined status word is what this shape exists to prevent.
@@ -1902,10 +1752,8 @@ undefined status word is what this shape exists to prevent.
 | **HANDOFF** | a **package-class** finding → `docs/defects.md` + `docs/HANDOFF.md`; **the package is NEVER patched** |
 | **PARKED-with-revisit-condition** | recorded, not fixed, with the condition that would reopen it and its owner |
 
-**Status of the table itself: RECONCILED — it is no longer `OWED`. ⟶ COMPACTED 2026-09-27: the as-filed
-form *"Status of the table itself: `OWED` — empty by construction"* is SUPERSEDED (the pass HAS run; its
-eleven findings are dispositioned at `§3b.3` and the vocabulary table above is the one used), and the
-superseded wording is compacted out to section (5) of `archive/specs/2026-09-27-census-history.md`. **What
+**Status of the table itself: RECONCILED — it is no longer `OWED` (the pass HAS run; its
+eleven findings are dispositioned at `§3b.3` and the vocabulary table above is the one used).** **What
 stands: `OWED (0)` — every `§3a` seed is ruled; the five TEST-side residues (`ADV-CN-3`, `ADV-CN-4`'s
 reserved `R-14`, `ADV-CN-10`, `ADV-CN-11`) and the two honesty notes are parked in `docs/pending.md` §H with
 a named owner and a revisit condition — they are NOT dispositions of this table, whose vocabulary

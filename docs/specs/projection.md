@@ -12,77 +12,17 @@ Status: **`U-PROJ` IS `DONE` (2026-09-27) — the ledger's SEVENTH `DONE` row; w
 - **Open residues (TEST-side, non-blocking, with their owners):** the parked `docs/pending.md` §H items for this unit.
 - **Provenance:** the pre-pass status notes and **every superseded clause text this file compacted out are archived verbatim at `archive/specs/2026-09-27-projection-history.md`**; every compacted site below keeps a short provenance pointer, and **what governs now is the clause beside that pointer**.
 
-**⟶ PROVENANCE (2026-09-27, the COMPACTION pass): the STATUS-NOTE stack that stood here — the `U-MOUNTGUARD` DONE note, the FOURTH (`§5.5` RE-DERIVATION), the FIFTH (`§7a` RULING), the SIXTH (RED-SET REPAIR), the SEVENTH (ADVERSARIAL-DISPOSITION + GATE-5), the NINTH (DONE) and the EIGHTH (FINAL SPEC) status notes, the "Go-ahead state" paragraph and the 2026-09-27 ruling-pack preface — is COMPACTED OUT and archived verbatim at `archive/specs/2026-09-27-projection-history.md` (§A). What governs NOW is the CURRENT-STATE block above and the live contract below; the go-ahead the stack argued about was GIVEN and spent, and the unit is `DONE`.** **⟶ PROVENANCE: no second-status-note is current.**
-**⟶ PROVENANCE: the status notes' remaining clauses are compacted out — see the pointer above.**
+*⟶ the STATUS-NOTE stack that stood here is COMPACTED OUT and archived verbatim: `archive/specs/2026-09-27-projection-history.md` §A; what governs now is the CURRENT-STATE block above.*
 
-(`§7a`) and **ruled none of them**, which left the **delegation gate's standard unmet** (`AGENTS.md`
-item 9: the underivable list must be **EMPTY or explicitly parked** before this unit's red set is
-authored). **This pass rules every one of the eleven from the contract's own majority reading, each
-citing the clauses that decide it**, and lands the rulings as the new subsection **`§7a.1`** — the
-`docs/specs/slothost.md` `§7a.1` shape (`9` items ruled, `0` open) and the
-`docs/specs/listhost.md` rulings for the same classes (a **widened field**, **observables NAMED so a
-row can fail**, a **totality boundary stated explicitly with named safe defaults**). **`11` items
-ruled · `0` OPEN QUESTIONS** — **no item is left as a silent gap, and no reading is presented as
-contract text without the clause that decides it.** **The register's own honesty item 5 is
-superseded on one half** (`§5.5.1`: a row may now be READ as resolving the half `§7a.1` rules — the
-**statement, strategy, type, attempt count and the `231` total are UNCHANGED**), and **`§5.5.1`'s
-`P-PJ-*` ids are not re-pinned**: this pass adds **NO register row** and leaves the attempt
-arithmetic alone. **What moved, and where it is visible:** `§2.1` (`projectVar`'s `null`-vs-`''`
-clause, `M-13`/`F-10`'s coercion boundary), `§2.2` prohibition 1 (the vocabulary ban's **scope** and
-its anti-evasion clause) and prohibition 5 (the seam rows' real ids), `§2.3` (items 1/4: the
-malformed-projection vs malformed-sink asymmetry), `§2.4` items 2/3/5 (the non-record-`values` reason,
-the coercion, the collision-vs-application rule), `§2.5` item 5 (freeze semantics), `§3.1` **`M-9`**/
-**`M-13`**, `§3.2` **`F-9`**/**`F-10`**/**`F-11`**/**`F-15`**, `§3.3` **`I-2`**/**`I-9`**/**`I-10`**, the
-new **`§3.4`/`§3.5`** (the static and existence rows' ids), `§4.4` (**`S-12`..`S-15`**, the class its
-own note reported as owed), §6, §7 items 9/10, **§7a.1**, and two `§8` rows. **Two rulings are
-reported as `CONTRACT-AMENDED` because they change what a `§3` row asserts — item 2 (`M-13` vs
-`F-10`) and item 3 (`F-9`'s dropped entries vs `I-10`'s `ok`)** — and **every amended cell keeps its
-as-written words visible with the date and the reason** (the `H-r1` cite-and-supersede convention);
-**no clause is silently rewritten.** **The `A-13` static probe's own collision** (a module that must
-carry `track` nowhere cannot state that prohibition in its comments) **is closed by scoping the
-`§2.2` prohibition-1 scan: comments ARE scanned, and the words exist only in THIS spec's prose,
-which the module never contains** (item 11 (b)). **What this pass did NOT do:** it **ran no test, no
-leg and no trio** (it is spec text only, like the four passes above it), it **edited no file other
-than this one**, it **committed nothing**, and it **authored no red row** — the row TEXT each ruling
-produces is named in `§7a.1` and **owed to the TestWriter** wherever it is so marked. **The ledger
-counts are unchanged (`6 DONE / 14 open`) and this unit's ONE surviving precondition is still its own
-`TestWriter red` set RUN and REPORTED** (`§4.5`, `§7` item 1).
+*⟶ the `§7a` RULING pass's own note stood here; it is archived at `archive/specs/2026-09-27-projection-history.md` §A, and what governs is `§7a.1`'s rulings.*
 
 **⟶ SIXTH STATUS NOTE — SUPERSEDED / ARCHIVED (`archive/specs/2026-09-27-projection-history.md` §A; the CURRENT-STATE block at the top of this file is what governs now).**
-is deleted, no section number moves, and the four 2026-09-27 rulings are UNTOUCHED in substance).** The
-`U-PROJ` implementer **landed `src/shared/layout-projection.ts`, spec-faithfully, and STOPPED** rather than
-bend code: **`47` of the red set's `70` rows are TEST-SIDE**, and **four of the causes are SPEC-LEVEL GAPS
-that only the contract can settle** — so the TestWriter's repair pass needs them **PINNED here**, not
-guessed. **The four, ruled from the clauses that decide them:** **(1) THE VALUE-LOOKUP KEY RULE** — the
-`specOf` map's own key is what supplies the lookup key, read as an **own property of `values`** (a
-`VarSpec.name` is the EMITTED name only) → the new clause in **`§2.4` item 3** + **`§2.5` item 2**'s
-`values` bullet; **(2) THE `skipped` ORDER IS NOW PINNED** — **`§2.4` item 8, the `skipped`-order rule**
-(the projection's list is SPEC-ENTRY order; the applier's list is ITS OWN decisions first, then the carried
-entries in their input order, never re-sorted) — and **that rule carries the list's SECOND `item 8` BY
-DESIGN: it was APPENDED, not renumbered, so the pre-existing `§2.4` item 8 (the immutability rule) and
-every citation to it stay exactly where they are** (`§2.4` items 1–7 are untouched); **(3) `'accessor-threw'`'s TRIGGER IS PINNED** — an **own accessor whose READ
-throws**, never a plain data property holding a function (⇒ `not-a-number`), never an absent key (⇒
-`missing-value`), and **the module never INVOKES a caller-supplied function** to discover a throw →
-**`§2.4` item 3**; **(4) `R-17`'s SCAN SCOPE IS MADE SATISFIABLE AND HONEST** — module source (raw +
-assembled + comments) as the whole claim, the FILE half scoped to the fixtures the row itself controls plus
-a **word/identifier-BOUNDARY rule**, with the superseded file-wide wording kept visible →
-**`§3.4 R-17`** + **`§7` item 13 (i)**. **Two cells are amended because they change what a `§3` row
-ASSERTS — `F-2` (the key rule + the list order, so the "first occurrence" drive is unambiguous) and
-`F-12` (the duplicate variant's own order), both marked `CONTRACT-AMENDED` with their as-written words
-visible**; `M-1`, `F-3`, `F-4A`, `F-4B` and `F-13(a)` are **clarifications** (their drives already said
-the half these pins make explicit) and are marked as such. **This pass ran no test, no leg and no trio, ran
-no `git commit`, edited exactly ONE file (`docs/specs/projection.md`, by bounded anchored `edit`s — never a
-whole-file `write`, `RCA-8(c)`) and touched no `tests/**`, no `src/**`, no `scripts/**`, no `package.json`
-and none of the trackers.** **The four repaired row drives are OWED to the TestWriter** (this pass authors
-no red row); the implementer's stop is recorded as the CORRECT behaviour under `AGENTS.md` item 4's
-no-bend rule, and **no clause of the landed module is overridden by this pass** — every pin here is the
-contract's own majority reading, cited.
 
-**⟶ SEVENTH STATUS NOTE — SUPERSEDED / ARCHIVED (`archive/specs/2026-09-27-projection-history.md` §A).** **Gates 3 (red→green) and 4 (read-only adversarial + PBT audit) and gate 5 (blind greens) have RUN on the current tree, and this pass discharges the SPEC-SIDE half of their results.** **Gate 4 returned `17` findings, `ADV-PJ-1`..`ADV-PJ-17`; gate 5 returned `75` scenarios = `69` PASS / `2` FAIL / `4` NOT-BLIND-RUNNABLE with the register independently re-exercised `231/231` held** (`docs/specs/projection-greens.md`, cited by section). **Every finding and every FAIL is a `CONTRACT-AMENDED` spec gap, a spec RE-DERIVATION, or DOC DRIFT — no package defect was found, so nothing is owed to `docs/defects.md`/`docs/HANDOFF.md`.** **What THIS pass pinned (`CONTRACT-AMENDED`, four):** **(1)** the `name` a `malformed-spec` skip carries (`ADV-PJ-13`); **(2)** the duplicate-detection set is written at the ACCEPTANCE point only (`ADV-PJ-14`); **(3)** a `specOf` entry whose OWN read throws is `malformed-spec` with `name: ''` (`ADV-PJ-15`); **(4)** a FUNCTION is a NON-RECORD `values` — the callable ruling (`ADV-PJ-3`). **What it RE-DERIVED (four cells):** `P-PJ-IM-3`'s variant (b) (`ADV-PJ-5`), `P-PJ-TP-1`'s binding cell (`ADV-PJ-6`), `R-17` (`ADV-PJ-11`), `R-18` (`ADV-PJ-17`). **What it corrected as DOC DRIFT (two of the gate-5 FAILs):** `§2.5` item 4 / `§0A` note 3 consequence 3 (`PJ-G-58` — object spread KEEPS an own `'__proto__'` key) and `§3.2 F-12` cell (c)'s list order (`PJ-G-75`). **What it RECORDED (not re-litigated):** `§3a`/`§3b`'s status lines now carry the PASSED pass's `20` seed dispositions and its `14` implementer judgment-call rulings, `§3b` carries the `17` findings with severity · disposition · owner · remedy, `§5.2` gains the standalone strict `tsc` leg for `R-22(b)`, and `§7a`'s `O-1`..`O-9` ambiguities are recorded with their disposals. **`ADV-PJ-1` and `ADV-PJ-2` are HOST FIXES OWED: the module was RE-READ by this pass and is STILL UNGUARDED** (`src/shared/layout-projection.ts:167`'s own-property test sits OUTSIDE the `try`; `:354-355`'s `projection['applied']`/`['skipped']` reads are unguarded) — **so this spec records them as findings with the fix `OWED` (owner: the Implementer, red-first) and claims NO landed fix.** **This pass ran no test, no leg and no trio, edited exactly ONE file by bounded anchored `edit`s (never a whole-file `write`, `RCA-8(c)`), touched no `tests/**`, no `src/**`, no `scripts/**`, no `package.json` and none of the trackers, and ran no `git commit`.** **The four §0A rulings still bind and none is re-opened.**
+*⟶ the SEVENTH, NINTH and EIGHTH status notes stood here; they are archived verbatim at `archive/specs/2026-09-27-projection-history.md` §A (its `§B` carries the corrected figures); the CURRENT-STATE block above governs. Their archived bodies begin:* **SEVENTH note (archived):** **Gate 3 (red→green) and 4 (read-only adversarial + PBT audit) and gate 5 (blind greens) have RUN on the current tree, and this pass discharges the SPEC-SIDE half of their results.** **Gate 4 returned `17` findings, `ADV-PJ-1`..`ADV-PJ-17`; gate 5 returned `75` scenarios = `69` PASS / `2` FAIL / `4` NOT-BLIND-RUNNABLE with the register independently re-exercised `231/231` held** (`docs/specs/projection-greens.md`, cited by section). **Every finding and every FAIL is a `CONTRACT-AMENDED` spec gap, a spec RE-DERIVATION, or DOC DRIFT — no package defect was found, so nothing is owed to `docs/defects.md`/`docs/HANDOFF.md`.** **What THIS pass pinned (`CONTRACT-AMENDED`, four):** **(1)** the `name` a `malformed-spec` skip carries (`ADV-PJ-13`); **(2)** the duplicate-detection set is written at the ACCEPTANCE point only (`ADV-PJ-14`); **(3)** a `specOf` entry whose OWN read throws is `malformed-spec` with `name: ''` (`ADV-PJ-15`); **(4)** a FUNCTION is a NON-RECORD `values` — the callable ruling (`ADV-PJ-3`). **What it RE-DERIVED (four cells):** `P-PJ-IM-3`'s variant (b) (`ADV-PJ-5`), `P-PJ-TP-1`'s binding cell (`ADV-PJ-6`), `R-17` (`ADV-PJ-11`), `R-18` (`ADV-PJ-17`). **What it corrected as DOC DRIFT (two of the gate-5 FAILs):** `§2.5` item 4 / `§0A` note 3 consequence 3 (`PJ-G-58` — object spread KEEPS an own `'__proto__'` key) and `§3.2 F-12` cell (c)'s list order (`PJ-G-75`). **What it RECORDED (not re-litigated):** `§3a`/`§3b`'s status lines now carry the PASSED pass's `20` seed dispositions and its `14` implementer judgment-call rulings, `§3b` carries the `17` findings with severity · disposition · owner · remedy, `§5.2` gains the standalone strict `tsc` leg for `R-22(b)`, and `§7a`'s `O-1`..`O-9` ambiguities are recorded with their disposals. **`ADV-PJ-1` and `ADV-PJ-2` are HOST FIXES OWED: the module was RE-READ by this pass and is STILL UNGUARDED** (`src/shared/layout-projection.ts:167`'s own-property test sits OUTSIDE the `try`; `:354-355`'s `projection['applied']`/`['skipped']` reads are unguarded) — **so this spec records them as findings with the fix `OWED` (owner: the Implementer, red-first) and claims NO landed fix.** **This pass ran no test, no leg and no trio, edited exactly ONE file by bounded anchored `edit`s (never a whole-file `write`, `RCA-8(c)`), touched no `tests/**`, no `src/**`, no `scripts/**`, no `package.json` and none of the trackers, and ran no `git commit`.** **The four §0A rulings still bind and none is re-opened.**
 
-**⟶ NINTH STATUS NOTE — SUPERSEDED / ARCHIVED (`archive/specs/2026-09-27-projection-history.md` §A; `§B` carries the corrected figures).** **What this pass did to THIS FILE, itemized.** **(1) `§5.1` gains ROW 5 — the unit's TRACKER-SURFACE row** (`docs/FORKER.md` · `docs/defects.md` · `docs/HANDOFF.md` · a **sibling spec** touched only by a dated status/annotation correction that changes no normative clause · `archive/reviews/**`), with the **DENIED** half stated so the scope cannot be read as unbounded. **(2) `§3.4 R-20` is RE-SCOPED** in place (its earlier form could not fail over a committed range; the as-written text is kept visible): the allow-list is `§5.1`'s rows 1–5, the **denied set binds absolutely** and is the falsifiable half, a non-denied path outside the allow-list is an adversarial FINDING rather than an automatic FAIL, and the canonical-artifact assertion stays. **Falsifiability was MEASURED, not asserted** — a `package.json` key added out-of-suite made the row fail by name, and the sibling-artifact patterns were checked against this repo's real sibling artifacts. **(3) WHY IT WAS NEEDED, recorded because the failure mode is a trap:** the DONE pass's own gate-boundary commits legitimately carry the tracker/fork/defect edits, so the pre-rescope row went RED on **correct** work — a scope row that cannot distinguish correct gate work from a boundary violation is a row that has stopped being falsifiable. **THE UNIT'S FINAL STATE, quoted so no later pass re-reads a stale figure:** `src/shared/layout-projection.ts` (**the ELEVEN exports of `§2.1`**, zero imports) · `tests/layout-projection.test.ts` **`83` rows, all green** · register **`231/231` held, `0` broken, seed `20260927`, `registerStoppedAt: null`** · blind greens `75` = `69/2/4` **plus the re-verification addendum `47` = `42/3/2`** · the adversarial/PBT-audit pass **`17` findings, all ruled, the two HIGH ones FIXED and regression-tested** · the doc review **`17` findings, all dispositioned** · the trio **`62` files / `1124` tests — `1122` passed / `0` failed / `2` skipped** · `typecheck` / `build` / leg 4 all **exit 0** · **`U-PROJ` is `DONE`** (the ledger's SEVENTH row; the record is `docs/next-steps.md`'s `## DONE — U-PROJ`). **This pass edited exactly one spec file by bounded anchored `edit`s (never a whole-file `write`, `RCA-8(c)`), touched no `src/**` other than reading it, no `scripts/**`, no `package.json`, and ran no commit — the gate commits are the supervisor's.**
+**⟶ NINTH note (archived — see the pointer above).** **NINTH note body:** **What this pass did to THIS FILE, itemized.** **(1) `§5.1` gains ROW 5 — the unit's TRACKER-SURFACE row** (`docs/FORKER.md` · `docs/defects.md` · `docs/HANDOFF.md` · a **sibling spec** touched only by a dated status/annotation correction that changes no normative clause · `archive/reviews/**`), with the **DENIED** half stated so the scope cannot be read as unbounded. **(2) `§3.4 R-20` is RE-SCOPED** in place (its earlier form could not fail over a committed range; the as-written text is kept visible): the allow-list is `§5.1`'s rows 1–5, the **denied set binds absolutely** and is the falsifiable half, a non-denied path outside the allow-list is an adversarial FINDING rather than an automatic FAIL, and the canonical-artifact assertion stays. **Falsifiability was MEASURED, not asserted** — a `package.json` key added out-of-suite made the row fail by name, and the sibling-artifact patterns were checked against this repo's real sibling artifacts. **(3) WHY IT WAS NEEDED, recorded because the failure mode is a trap:** the DONE pass's own gate-boundary commits legitimately carry the tracker/fork/defect edits, so the pre-rescope row went RED on **correct** work — a scope row that cannot distinguish correct gate work from a boundary violation is a row that has stopped being falsifiable. **THE UNIT'S FINAL STATE, quoted so no later pass re-reads a stale figure:** `src/shared/layout-projection.ts` (**the ELEVEN exports of `§2.1`**, zero imports) · `tests/layout-projection.test.ts` **`83` rows, all green** · register **`231/231` held, `0` broken, seed `20260927`, `registerStoppedAt: null`** · blind greens `75` = `69/2/4` **plus the re-verification addendum `47` = `42/3/2`** · the adversarial/PBT-audit pass **`17` findings, all ruled, the two HIGH ones FIXED and regression-tested** · the doc review **`17` findings, all dispositioned** · the trio **`62` files / `1124` tests — `1122` passed / `0` failed / `2` skipped** · `typecheck` / `build` / leg 4 all **exit 0** · **`U-PROJ` is `DONE`** (the ledger's SEVENTH row; the record is `docs/next-steps.md`'s `## DONE — U-PROJ`). **This pass edited exactly one spec file by bounded anchored `edit`s (never a whole-file `write`, `RCA-8(c)`), touched no `src/**` other than reading it, no `scripts/**`, no `package.json`, and ran no commit — the gate commits are the supervisor's.**
 
-**⟶ EIGHTH STATUS NOTE — SUPERSEDED / ARCHIVED (`archive/specs/2026-09-27-projection-history.md` §A; **its `80`-row figure is superseded by the measured `83`, §B item 1**).** *Placement: this note is filed under the header block, and the `## 0.` heading follows it, so `§0`/`§0A` and every numbered section keep their numbers.* **WHY THIS PASS EXISTS.** The gate-7 documentation review (`archive/reviews/2026-09-27-U-PROJ-doc-review.md`, `F-01`..`F-17`) and the gate-5 BLIND RE-VERIFICATION ADDENDUM (`docs/specs/projection-greens.md` §12) left **THREE FAILs and a set of stale cells**: two of the gate-4 HOST findings (`ADV-PJ-1`, `ADV-PJ-2`) were still recorded as `OWED — HOST FIX` and as *"STILL UNGUARDED"*, two clauses disagreed about the reason a throwing own-property PRESENCE test records, one cell's blanket sentence was self-inconsistent with the module's per-field behaviour, a hostile `specOf` shape had **no** clause at all, and the `OWED — TEST-SIDE` dispositions plus several blocker/line-number citations were stale. **WHAT IS NOW TRUE ON THE TREE (measurements READ, this pass ran no test, no leg, no trio and no `git` command):** `src/shared/layout-projection.ts` is **`415` lines** with **exactly the ELEVEN exports of `§2.1` and ZERO imports**; **BOTH GATE-4 HOST FIXES ARE LANDED** (commit **`e16ee8e`**, whose red half is the gate-4-red commit **`f743e40`**) — the `values` own-property PRESENCE test now sits **INSIDE** the read's totality boundary (`readValue`, the own-property question and the read inside **one** `try`/`catch`, recorded in this spec **by clause name, never by line number** per the file-end citation rule) and `applyProjection`'s two FIELD reads are **each guarded independently**, an unreadable field being treated as **ABSENT**; the red set `tests/layout-projection.test.ts` carries **`80` rows, `80` green**, with the register **`231/231` held** at seed **`20260927`**, `registerStoppedAt: null`; the trio on the final tree reads **`62` files / `1121` tests — `1119` passed / `0` failed / `2` skipped**, `typecheck` exit `0`, `build` exit `0` (**five** bundles), and `§5.2` **leg 4** (the standalone strict `tsc` over the test file) exit `0`. **WHAT THIS PASS PINS (FOUR, all in place, all with the as-written form kept visible):** **(1) THE PRESENCE-TEST REASON RULING** — a `values` whose own-property PRESENCE test throws records **`'accessor-threw'`**, with the **trigger clause widened** (`§2.4` item 3, clause (v)); **(2) THE TWO-FIELD INDEPENDENCE RULING** — `applied` and `skipped` are read in **independent** totality boundaries, each degrading to ABSENT on its own half only (`§3b`-1 `ADV-PJ-2`); **(3) THE HOSTILE-`specOf` CLAUSE** — a spec set the module cannot enumerate **contributes NO entries** and decides nothing, with **no new reason** (`§2.4` item 2 + `§3.2`); **(4) A TRIGGER-WIDENING for the throwing-`ownKeys` case, stated so it is not read as an eighth reason or a ninth (`§2.4` item 3 clause (v) (B)).** **WHAT IT ANNOTATES (not rewrites):** the `§3b` status vocabulary's `OWED — HOST FIX` entry and the `§3b`-1 `ADV-PJ-1`/`ADV-PJ-2` disposition cells (**marked `CONFIRMED-FIXED` in place, with the as-recorded `OWED` text KEPT VISIBLE**, the landing commit, the regression rows' ids and the fact that the regression row accepts **either** admissible reason); the `OWED — TEST-SIDE` dispositions in the same table (**each marked landed with its row id**); `§7` item 1's surviving blocker sentence; `§8`'s `D4` row and its *"the pass has NOT run"* row; the line-number citations the file's own rule forbids (**replaced by clause citations, the historical anchors explicitly marked as pre-fix line anchors**); `§5.5.1`'s `P-PJ-IM-6` arithmetic term (the `ADV-PJ-9` dual count: **declared `16`/`231` UNCHANGED**, with the honest **`≈13` distinct drives** stated at the term) and `P-PJ-TP-1`'s **`19` of `20`** coverage figure where a DONE row must quote it; and **`§3.4 R-20`**'s allow-list wording, which now **names the unit's own gate artifacts** (`docs/specs/*-greens.md`, the review records and the tracker) so the committed-range census and the row's text agree. **WHAT IT DOES NOT DO:** it **moves no section number** (`§5.3 → §5.5` stays the deliberate gap with no `§5.4`), **adds no top-level section after the `§3b` file-end note** (everything here is an in-place annotation or the clause text inside an existing section), **adds no `F-` row to any `§5.x` register** (register ids stay `P-PJ-*`), **changes no register statement, type, strategy id, attempt term or the `231` total**, **does not renumber `§3a`'s seed table or `§3b`'s disposition rows** (both are annotated in place), **ran no test and no leg**, and **edited no file other than this one.** **The `O-10`/`O-11`/`O-12` ambiguities the addendum recorded are RULED here (§12.6 → the three rulings in this pass): `O-10` and `O-11` are the pins above; `O-12` is ruled in favour of the LANDED ROW's allow-list (the addendum's FAIL is attributable to an expectation narrower than the row, not to a module or contract defect).**
+**⟶ EIGHTH note (archived — see the pointer above).** **EIGHTH note body:** **WHY THIS PASS EXISTS.** The gate-7 documentation review (`archive/reviews/2026-09-27-U-PROJ-doc-review.md`, `F-01`..`F-17`) and the gate-5 BLIND RE-VERIFICATION ADDENDUM (`docs/specs/projection-greens.md` §12) left **THREE FAILs and a set of stale cells**: two of the gate-4 HOST findings (`ADV-PJ-1`, `ADV-PJ-2`) were still recorded as `OWED — HOST FIX` and as *"STILL UNGUARDED"*, two clauses disagreed about the reason a throwing own-property PRESENCE test records, one cell's blanket sentence was self-inconsistent with the module's per-field behaviour, a hostile `specOf` shape had **no** clause at all, and the `OWED — TEST-SIDE` dispositions plus several blocker/line-number citations were stale. **WHAT IS NOW TRUE ON THE TREE (measurements READ, this pass ran no test, no leg, no trio and no `git` command):** `src/shared/layout-projection.ts` is **`415` lines** with **exactly the ELEVEN exports of `§2.1` and ZERO imports**; **BOTH GATE-4 HOST FIXES ARE LANDED** (commit **`e16ee8e`**, whose red half is the gate-4-red commit **`f743e40`**) — the `values` own-property PRESENCE test now sits **INSIDE** the read's totality boundary (`readValue`, the own-property question and the read inside **one** `try`/`catch`, recorded in this spec **by clause name, never by line number** per the file-end citation rule) and `applyProjection`'s two FIELD reads are **each guarded independently**, an unreadable field being treated as **ABSENT**; the red set `tests/layout-projection.test.ts` carries **`80` rows, `80` green**, with the register **`231/231` held** at seed **`20260927`**, `registerStoppedAt: null`; the trio on the final tree reads **`62` files / `1121` tests — `1119` passed / `0` failed / `2` skipped**, `typecheck` exit `0`, `build` exit `0` (**five** bundles), and `§5.2` **leg 4** (the standalone strict `tsc` over the test file) exit `0`. **WHAT THIS PASS PINS (FOUR, all in place, all with the as-written form kept visible):** **(1) THE PRESENCE-TEST REASON RULING** — a `values` whose own-property PRESENCE test throws records **`'accessor-threw'`**, with the **trigger clause widened** (`§2.4` item 3, clause (v)); **(2) THE TWO-FIELD INDEPENDENCE RULING** — `applied` and `skipped` are read in **independent** totality boundaries, each degrading to ABSENT on its own half only (`§3b`-1 `ADV-PJ-2`); **(3) THE HOSTILE-`specOf` CLAUSE** — a spec set the module cannot enumerate **contributes NO entries** and decides nothing, with **no new reason** (`§2.4` item 2 + `§3.2`); **(4) A TRIGGER-WIDENING for the throwing-`ownKeys` case, stated so it is not read as an eighth reason or a ninth (`§2.4` item 3 clause (v) (B)).** **WHAT IT ANNOTATES (not rewrites):** the `§3b` status vocabulary's `OWED — HOST FIX` entry and the `§3b`-1 `ADV-PJ-1`/`ADV-PJ-2` disposition cells (**marked `CONFIRMED-FIXED` in place, with the as-recorded `OWED` text KEPT VISIBLE**, the landing commit, the regression rows' ids and the fact that the regression row accepts **either** admissible reason); the `OWED — TEST-SIDE` dispositions in the same table (**each marked landed with its row id**); `§7` item 1's surviving blocker sentence; `§8`'s `D4` row and its *"the pass has NOT run"* row; the line-number citations the file's own rule forbids (**replaced by clause citations, the historical anchors explicitly marked as pre-fix line anchors**); `§5.5.1`'s `P-PJ-IM-6` arithmetic term (the `ADV-PJ-9` dual count: **declared `16`/`231` UNCHANGED**, with the honest **`≈13` distinct drives** stated at the term) and `P-PJ-TP-1`'s **`19` of `20`** coverage figure where a DONE row must quote it; and **`§3.4 R-20`**'s allow-list wording, which now **names the unit's own gate artifacts** (`docs/specs/*-greens.md`, the review records and the tracker) so the committed-range census and the row's text agree. **WHAT IT DOES NOT DO:** it **moves no section number** (`§5.3 → §5.5` stays the deliberate gap with no `§5.4`), **adds no top-level section after the `§3b` file-end note** (everything here is an in-place annotation or the clause text inside an existing section), **adds no `F-` row to any `§5.x` register** (register ids stay `P-PJ-*`), **changes no register statement, type, strategy id, attempt term or the `231` total**, **does not renumber `§3a`'s seed table or `§3b`'s disposition rows** (both are annotated in place), **ran no test and no leg**, and **edited no file other than this one.** **The `O-10`/`O-11`/`O-12` ambiguities the addendum recorded are RULED here (§12.6 → the three rulings in this pass): `O-10` and `O-11` are the pins above; `O-12` is ruled in favour of the LANDED ROW's allow-list (the addendum's FAIL is attributable to an expectation narrower than the row, not to a module or contract defect).**
 
 ## 0. The rulings this unit derives from (recorded, NOT re-opened — with ONE CORRECTION APPROVED) and the go-ahead
 
@@ -146,14 +86,8 @@ acceptance line, `I-7`).
 **THE CHOICE — an EIGHTH member of the closed union, and this spec states plainly that it CHANGES A
 CLOSED UNION.** `ProjectionSkipReason` gains **`'accessor-threw'`** (**7 → 8 members**), with its
 diagnostic sentence: *"the value's accessor threw while it was being read; the key was skipped and the
-projection continued."* **The rejected alternative, and why it is rejected:** **reusing
-`'not-a-number'` would SILENTLY CONFLATE two different facts** — *"the value is not a number"* (the
-caller's data is the wrong type, which the caller can fix by passing a number) versus *"we could not
-read the value at all"* (the caller's **accessor** is hostile or broken, which the caller fixes
-somewhere else entirely). That distinction is **information the consumer cannot recover from
-`not-a-number`**, and a skip vocabulary exists precisely to hand the consumer recoverable information.
-**A closed union is allowed to grow by ruling** — what it may not do is **misreport**: the honest move
-is a new member, not a false diagnosis inside an existing one.
+projection continued."* **The rejected alternative, and why it is rejected:** **reusing `'not-a-number'` would SILENTLY CONFLATE two different facts** — *"the value is not a number"* versus *"we could not read the value at all"* — information the consumer cannot recover; a closed union may grow by ruling, but it may not **misreport**.
+*⟶ the note's pre-ruling reasoning is archived: `archive/specs/2026-09-27-projection-history.md` §D; what governs now is the union in `§2.1` and `§2.4` item 3.*
 
 **What this note pins, and where (the full recount, so no later pass has to hunt for one):**
 
@@ -212,29 +146,8 @@ rule** (names are **caller data**, §2.2; rulings 3/5). Therefore `'__proto__'`,
 **`Projection.applied` — and any internal key→value map — is built on a NULL-PROTOTYPE object
 (`Object.create(null)`).** Every key lookup on caller-supplied data is an **own-property** lookup
 (`Object.prototype.hasOwnProperty.call(obj, name)`-equivalent semantics), never a prototype-chain read.
-The four reasons, kept as the ruling's own justification:
-
-1. **It costs nothing** — `Object.create(null)` instead of `{}` is one expression, no new dependency,
-   no new policy, no new branch.
-2. **It is TOTAL** — it covers **every** dangerous key, **including ones nobody enumerated**
-   (`'valueOf'`, `'__defineGetter__'`, and every key a later JS engine adds to `Object.prototype`),
-   which is exactly this unit's **totality acceptance line** (ruling 2) applied to the record itself.
-   An enumerated **denylist** would be a **partial** answer to a total requirement.
-3. **It needs NO new skip reason and NO name-legality policy** — the caller's authority over names is
-   **intact**: **the unit may not invent a name-legality rule**, because names are caller data (§2.2),
-   and a rejected/renamed key would be the unit **editing caller data** (prohibition 2/3).
-4. **It is verifiable by ONE row** — a projection whose spec names `'__proto__'` produces an **own key
-   `'__proto__'`**, never a mutated prototype, and `I-1`'s partition still holds (`F-13`).
-
-**Alternatives this filing rejected, each with its reason** (recorded so the ruling is auditable and a
-later pass does not re-derive it):
-
-| Rejected alternative | Why it is rejected |
-| --- | --- |
-| **Plain object literal `{}` (status quo, no row)** | **Wrong today**: silently drops `'__proto__'` from `Object.keys`, mutates the record's prototype, breaks `I-1`'s partition, and misdiagnoses `'constructor'`/`'toString'` as `duplicate-name` during duplicate detection. **The false-green class; a review finding.** |
-| **`Object.defineProperty(applied, name, {value, enumerable: true, …})` per key** | **Works for own keys, but is not the better rule:** it is a per-key call (more code and more ways to get the descriptor wrong — a forgotten `enumerable: true` silently hides the key from `Object.keys`, re-breaking `I-1`), it does **not** fix the **duplicate-detection lookup** or the **`values` inherited-value** read, and it does not cover keys a later pass writes by plain assignment. **A `create(null)` record fixes all three by construction.** |
-| **Reject / rename / skip a "dangerous" name (a denylist, or a `'malformed-name'` skip)** | **A name-legality policy this unit may not have**: `VarSpec.name` is **caller data**, so the module would be **rejecting caller data on a criterion no ruling supplies** (prohibition 3's "no built-in vocabulary", ruling 3's "no built-in name"). It is also **partial** (an enumeration) and it **loses a legitimate caller name** — a consumer is entitled to name a property `'toString'` and have it written. |
-| **Return a `Map` / a `null`-prototype `Object` only for the *returned* record** | **A `Map` changes the return shape** (`Object.keys`/spread/`JSON.stringify` all change) — a different contract, needing its own gate. **Fixing only the returned record leaves the internal lookup maps** (duplicate detection, `values` reads) **polluted**, so the ruling is applied to **every** internal key→value map, not just the returned one. |
+**The four reasons, in brief:** it **costs nothing** (one expression, no dependency, no policy, no branch); it is **TOTAL** (it covers every dangerous key, **including ones nobody enumerated**, which is this unit's totality line applied to the record — an enumerated denylist would be a **partial** answer to a total requirement); it needs **no new skip reason and no name-legality policy** (the caller's authority over names is intact — names are caller data, `§2.2`); and it is **verifiable by ONE row** (`F-13`).
+*⟶ the analysis, the four reasons in their long form and the four REJECTED alternatives are archived: `archive/specs/2026-09-27-projection-history.md` §D; what governs now is this section's RULES and `§2.5`.*
 
 **THE CONSEQUENCES, RECORDED HONESTLY so no consumer is surprised** (each is a contract fact, not a
 caveat):
@@ -257,34 +170,13 @@ caveat):
    the pinned deterministic write order** (§2.3 item 6) — the ruling changes the record's
    **prototype**, never its key order.
 3. **A hazard the ruling EXPOSES rather than creates, recorded because the fix is a caller-side
-   obligation:** **the null prototype is destroyed by a naive copy** — and **the two named copies do
-   NOT behave the same way.** **PER-METHOD, CORRECTED 2026-09-27 (the gate-5 blind pass's FAIL
-   `PJ-G-58`, `docs/specs/projection-greens.md` §7.1 — DOC DRIFT, measured: `spreadKeys:["__proto__"]`,
-   `spreadHasOwn:true`, `assignKeys:[]`, `assignHasOwn:false`). The as-written sentence is kept visible
-   above and its CONCLUSION still holds.** **The mechanism, stated per method, because ONE of the two
-   claims was false:**
-   - **`{...applied}` (object spread) KEEPS the own `'__proto__'` key and does NOT invoke any target
-     setter.** **Object spread is a DEFINING copy**, not an assigning one: it performs
-     `CreateDataPropertyOrThrow` per own enumerable key, so the target gets an **own data property
-     `'__proto__'`** whose value is the source's (`spreadKeys:['__proto__']`, `spreadHasOwn === true`,
-     `spreadRead === '1'`). **So spread loses the PROTOTYPE (the target is a plain-prototype object)
-     but NOT the KEY.** *(The as-written phrase "spread and `Object.assign` copy own keys through
-     `[[Set]]` on the target" is `SUPERSEDED`: it is true of `Object.assign` and FALSE of spread.)*
-   - **`Object.assign({}, applied)` LOSES the own `'__proto__'` key.** `Object.assign` is a
-     **`[[Set]]`-based (assigning) copy**: the write reaches **`Object.prototype`'s `__proto__`
-     accessor** on the plain target, which sets the target's **prototype** instead of creating an own
-     property — so `Object.keys` shows nothing and the key is gone (`assignKeys:[]`,
-     `assignHasOwn === false`, `assignProto === 'object'`). **Both halves of the original claim HOLD for
-     this method.**
-   - **`Object.assign(Object.create(null), applied)` KEEPS the key — the mandated recipe.**
-     (`nullTargetKeys:['__proto__']`, `nullTargetHasOwn === true`, value `'1'`.)
-   **What a row may assert, exactly (the falsifiable form):** that spread's key SURVIVES while its
-   prototype is plain; that `Object.assign({}, …)`'s key is LOST; and that the null-prototype-target
-   copy keeps the key. **A consumer that copies the record MUST use a null-prototype target**
-   (`Object.assign(Object.create(null), applied)` — or `Object.entries`/`Object.fromEntries` + an
-   explicit null-prototype build). **This is a contract obligation on the consumer, not a defect in
-   the module**: the module returns a record whose keys survive, and it may not police how a caller
-   copies it. **`§2.5` item 4 states the same per-method rule; the two sites agree.**
+   obligation:** **the null prototype is destroyed by a naive copy** — and the two named copies do
+   NOT behave the same way: **object spread KEEPS the own `'__proto__'` key** (a defining copy, so the
+   target has a plain prototype but the key survives) while **`Object.assign({}, …)` LOSES it** (an
+   assigning copy that reaches `Object.prototype`'s `__proto__` accessor and sets the target's
+   prototype instead). **A consumer that copies the record MUST use a null-prototype target**
+   (`Object.assign(Object.create(null), applied)`).
+   *⟶ the per-method MEASUREMENT (`PJ-G-58`) and the superseded one-claim wording are archived: `archive/specs/2026-09-27-projection-history.md` §C; the rule above and `§2.5` item 4 govern.*
 4. **`readonly` is a TYPE-LEVEL promise and does NOT freeze the object.** `Projection.applied`'s
    `Readonly<Record<string, string>>` **prevents TypeScript-level reassignment**; **it freezes
    nothing at runtime**, and this spec **does not require `Object.freeze`** (a frozen record is
@@ -1455,102 +1347,7 @@ above and nothing was renumbered.** The same discharge was made by **both siblin
 
 ### 5.5.0 THE SUPERSEDED ZERO-ROW EXEMPTION — kept verbatim (the block `§5.5.0` names)
 
-**⟶ HEADING ADDED 2026-09-27 (the `§5.5` re-derivation pass).** The superseded exemption had **no
-heading of its own** — it lived as the body of `## 5.5`, identified only by prose. **This heading
-renumbers NOTHING**: `5.5.0` sorts before `5.5.1`, it is the file's own convention for this block
-(`### 5.5.1` is the sibling form, and both sibling specs' `§5.5.0` headings are the same device),
-and `## 5.5`'s id is untouched. It also does **not** collide with the `§5.3 → §5.5` numbering-gap
-note: that gap is the **absent `§5.4`**, which stays absent. **Everything below this line is the
-exemption AS FILED, kept byte-identical** — the four-cell table and the four numbered honest
-statements are unedited, and each carries its own dated superseded marker rather than being deleted.
-**One editorial note, so the block is not misread: the exemption's own second paragraph contains the
-words *"This spec therefore records a ZERO-ROW register"*, and those words are the FILING's claim,
-superseded by `§5.5.1`; they are left standing as the record.**
-
-**⟶ THE FOUR CELLS OF THE TABLE BELOW ARE SUPERSEDED AS-WRITTEN AND ARE KEPT VERBATIM (2026-09-27,
-the gate-11 ruling for code-bearing units). Each is answered by `§5.5.1`, and the answer is stated
-here so the superseded table is never read as the current register:**
-
-| Superseded cell | Answered by `§5.5.1` how |
-| --- | --- |
-| cell 1 (*"FOUR genuine quantifications … and this unit is the strongest PBT candidate in wave D … §3 samples each with fixed tables"*) | **RESOLVED BY ROWS**: the partition quantification becomes **`P-PJ-IM-1`**; totality becomes **`P-PJ-TP-1`**; the numeric bound becomes **`P-PJ-IM-5`**; the no-false-`applied`/write-or-skip quantification becomes **`P-PJ-IM-6`**. The ruled classes the cell names as *"extra INSTANCES of the same ones"* become **rows in their own right** — the throwing accessor ⇒ **`P-PJ-IM-3`**; the null-prototype/own-key rule ⇒ **`P-PJ-IM-2`**; reusability + re-entrancy ⇒ **`P-PJ-IM-8`** — and one row is this register's own beyond them (**`P-PJ-IM-7`**, the per-key read-throw totality). |
-| cell 2 (*"No, and not for a reason of effort … adding `fast-check` is a `devDependencies` change"*) | **REFUTED AS A CONCLUSION**: no harness IS added, and the register is nonetheless executed by the deterministic strategy discipline `docs/specs/engine-pin.md` §5.5 established (**7 of 8** rows, plain vitest tables, **no new devDependency**) — the same discipline both pilots' `§5.5.1` used. |
-| cell 3 (*"Yes in principle … The blocker is the harness, not the layer"*) | **HOLDS AND IS NOW USED** — every register row is `[T]` work over injectable arguments (a fake sink is the applier's whole environment), and `§5.5.1` executes it there. The **Layer declaration's fourth anchor** records the same. |
-| cell 4 (*"A strategy id here is a repeat-drive label, not a property id"*) | **SUPERSEDED**: strategy ids here are **`S-PJ-*` property-execution ids, one per register row** (the pilots' `S-LH-*`/`S-SH-*` convention). |
-
-
-**`H-r4` obliges an explicit zero-row/typed-PBT decision per unit. Stated exactly as
-`docs/specs/engine-drift.md` §5.5 and `docs/specs/engine-pin.md` §5.5 state it: THIS REPO HAS NO PBT
-HARNESS.** `package.json`'s `devDependencies` key set is `@types/node`, `electron`, `esbuild`,
-`typescript`, `vitest` — **five keys** (`package.json:26-31`, read this pass) — with **no
-`fast-check`, no `hypothesis`, and no property runner**. **This spec therefore records a ZERO-ROW
-register**, and here is why that is the honest answer rather than a dodge:
-
-| Question the register exists to answer | This unit's answer |
-| --- | --- |
-| Are there rows here that a **property** would express better than a table? | **FOUR genuine quantifications (the count is UNCHANGED by the 2026-09-27 ruling pack — the four new ruled classes are extra INSTANCES of the same ones), and this unit is the strongest PBT candidate in wave D:** (i) *"for **every** unusable input shape, `project` returns a `Projection` and never throws"* — **now explicitly including a throwing accessor (`A-2`/`F-4B`/`F-12`) and a re-entering sink (`A-7`/`F-14`)**; (ii) *"for **every** spec/value pair, the key appears in exactly one of `applied`/`skipped`"* (`I-1`) — **now explicitly including the prototype-shaped names `'__proto__'`/`'constructor'`/`'toString'` (`A-3`/`I-12`/`F-13`)**; (iii) *"for **every** non-finite or negative number, the output never contains `NaN`/`Infinity`/a negative"* (`I-9`); (iv) *"for **every** sink whose `setProperty` throws, no key reported applied is a key whose write failed"* (`I-3`) — **now explicitly including a re-entrant inner call (`F-14`) and a reused projection (`I-11`/`M-21`)**. §3 samples each with fixed tables. **None is proven by its sample**, and this spec says so — (iii) and (iv) are exactly the classes a generator would serve, and **they stay unproven**. |
-| Could this unit execute them **as properties**? | **No, and not for a reason of effort:** the harness does not exist, and **adding `fast-check` is a `devDependencies` change** — outside §5.1's diff scope and a gate of its own. **This unit may not smuggle a property runner in.** |
-| Do the layers permit a property run here? | **Yes in principle** for (i)…(iv): they are pure `[T]` claims over injectable arguments, and a fake sink makes (iv) trivially drivable. **The blocker is the harness, not the layer** — stated rather than hidden behind a layer claim. **The one claim that stays layer-blocked is the `[U]` one** (a real custom-property value). |
-| How are the deterministic tables here executed? | **Plain vitest: fixed input, fixed order, no randomness, no shrinking, no generated inputs.** Rows name their drive by the unit's own ids (`I-7` = the no-throw drive, `I-1` = the partition drive, **`F-4A`/`F-4B`/`F-12`** = the numeric-boundary **and** accessor-throw drives, **`F-13`** = the prototype-shaped-key drive, **`F-14`/`F-15`** = the re-entrancy/immutability drives, `F-5` = the sign-boundary drive, `F-7`/`F-8` = the write-failure drive). **A strategy id here is a repeat-drive label, not a property id.** *(**⟶ CORRECTED 2026-09-27: the pre-ruling row named `F-4`/`F-5` for the numeric drive; `F-4` is now the SPLIT `F-4A`/`F-4B`, so this drive names both halves and the ruling pack's `F-12`/`F-13`/`F-14`/`F-15`.**)* |
-
-**Register count: 0 rows. Not "0 executed" — 0 rows, declared.** **⟶ SUPERSEDED 2026-09-27: the register count of THIS unit is `8` rows, ALL executed by design — see `§5.5.1`.** The honest statements that replace
-a register:
-
-1. **No row of this unit may be reported as "executed" if it was sampled.**
-2. **The four quantified claims are recorded as `NOT EXECUTED — no PBT harness`**, with their
-   compensating rows named: `I-7` + `F-1`..`F-15` (totality — **the range endpoint moved from `F-11`
-   to `F-15` on 2026-09-27**, the ruling pack's `F-12`..`F-15` being part of the same no-throw drive),
-   `I-1` (partition — **now driven also over the prototype-shaped names by `F-13`**), `F-4A`/`F-4B`/
-   `F-12`/`F-5`/`I-9` (the numeric bound **and the accessor-throw class**), `I-3` + `F-7`/`F-8` (the
-   no-false-applied drive — **now extended by `F-14`'s re-entrancy and `M-21`'s reuse**).
-3. **No `fast-check` and no generator is added by this unit.**
-4. **Register change summary: none** — nothing to reconcile with `docs/specs/engine-pin.md` §5.5's
-   register (its 8 rows: 4 `P-IM` + 3 `P-SM` + 2 `P-TP`; 7 executed deterministically, `P-TP-1`
-   `NOT EXECUTED`). **`P-SM-2` (the pin unit's value-space property) is the nearest relative and is
-   NOT extended or duplicated here** — it is that unit's row, and copying it would be a second
-1. **No row of this unit may be reported as "executed" if it was sampled.**
-   — **⟶ KEPT AS A RULE AND HONOURED (2026-09-27, the `§5.5` re-derivation pass):** this is exactly
-   why every `§5.5.1` row is executed **by enumeration over a finite, pinned input set**, and why the
-   three rows whose property text is larger than their enumeration (`P-PJ-IM-1`, `P-PJ-TP-1`,
-   `P-PJ-IM-5`) carry the honest **`YES (bounded)`** marking instead of an implied proof.
-2. **The four quantified claims are recorded as `NOT EXECUTED — no PBT harness`**, with their
-   compensating rows named: `I-7` + `F-1`..`F-15` (totality — **the range endpoint moved from `F-11`
-   to `F-15` on 2026-09-27**, the ruling pack's `F-12`..`F-15` being part of the same no-throw drive),
-   `I-1` (partition — **now driven also over the prototype-shaped names by `F-13`**), `F-4A`/`F-4B`/
-   `F-12`/`F-5`/`I-9` (the numeric bound **and the accessor-throw class**), `I-3` + `F-7`/`F-8` (the
-   no-false-applied drive — **now extended by `F-14`'s re-entrancy and `M-21`'s reuse**).
-   — **⟶ SUPERSEDED 2026-09-27 (kept visible): `NOT EXECUTED — no PBT harness` is NO LONGER the
-   status of these four claims.** Each is a register row executed by enumeration, with its **strategy
-   id** and its **compensating `§3` rows** named in `§5.5.1`: partition ⇒ **`P-PJ-IM-1`** (compensating
-   `I-1`, `M-18`/`M-19`, `F-2`, `F-13`); totality ⇒ **`P-PJ-TP-1`** (compensating `I-7`, `F-1`..`F-15`);
-   the numeric bound ⇒ **`P-PJ-IM-5`** (compensating `I-9`, `F-4A`, `F-5`, `M-16`, `M-17`); the
-   no-false-`applied`/write-or-skip claim ⇒ **`P-PJ-IM-6`** (compensating `I-3`, `F-7`/`F-8`, `F-14`,
-   `M-5`, `M-21`). **The compensating-row citations are NOT withdrawn** — a `§3` row stays the
-   per-state contract row a TestWriter derives first, and `§5.5.1` item 4 states the same.
-3. **No `fast-check` and no generator is added by this unit.**
-   — **⟶ KEPT AND SATISFIED (2026-09-27):** no `fast-check` and no property-runner library is added.
-   `§5.5.1`'s one generator is a **hand-rolled 32-bit LCG written in the plain TypeScript of this
-   unit's own test file, pinned to the literal seed `20260927`** — its constants are the test's own
-   literals, **not a dependency** — and `package.json`'s `devDependencies` key set is unchanged (the
-   five keys, `package.json:26-31`). **The generator is not a library; the sentence above is honoured
-   as written.**
-4. **Register change summary: none** — nothing to reconcile with `docs/specs/engine-pin.md` §5.5's
-   register (its 8 rows: 4 `P-IM` + 3 `P-SM` + 2 `P-TP`; 7 executed deterministically, `P-TP-1`
-   `NOT EXECUTED`). **`P-SM-2` (the pin unit's value-space property) is the nearest relative and is
-   NOT extended or duplicated here** — it is that unit's row, and copying it would be a second
-   authority over a landed register.
-   — **⟶ SUPERSEDED 2026-09-27 (kept visible): the register change summary is `§5.5.1`'s, not
-   "none", and it reconciles against that same register by REUSING its type algebra
-   (`P-IM`/`P-SM`/`P-TP`) and its strategy-id discipline — without copying a single row of it and so
-   without creating a second authority over it.** **One arithmetic correction to the parenthetical
-   above, which this spec inherited from an earlier layer: `engine-pin.md` §5.5's split is `3` live
-   `P-IM` (`P-IM-1`, `P-IM-2`, `P-IM-4`) + `3` `P-SM` + `2` `P-TP` = `8` rows**, because the former
-   `P-IM-3` was **FOLDED** into `P-IM-4`; the `4 P-IM` form sums to `9` against a stated total of `8`
-   and was corrected at that file's own count line (`docs/pending.md` §G records the same correction
-   as FIXED). **This spec's superseded `§5.5` cells inherited the wrong `4/3/2` form from
-   `engine-pin.md`; the correction is recorded here rather than silently rewritten in
-   `engine-pin.md`, which is not this pass's file.** *(Both wave-D pilots' `§5.5.1` change summaries
-   carry the same correction, so the three wave-D specs agree.)*
+*⟶ this block was the ZERO-ROW EXEMPTION as filed, with its four-cell table and four honest statements; it is COMPACTED OUT and archived verbatim: `archive/specs/2026-09-27-projection-history.md` §E. What governs now is the register at `§5.5.1` — `8` typed rows, `231` declared attempts, seed `20260927`, no harness and no dependency added. The cells' replacements are `P-PJ-IM-1` (partition), `P-PJ-TP-1` (totality), `P-PJ-IM-5` (the numeric bound), `P-PJ-IM-6` (no-false-`applied`) and `P-PJ-IM-3`/`P-PJ-IM-2`/`P-PJ-IM-8` (the ruled classes); cell 2's conclusion is REFUTED (a register IS executable here without a harness), cell 3 HOLDS (`[T]` work over injectable arguments) and cell 4 is SUPERSEDED (`S-PJ-*` strategy ids).*
 
 ### 5.5.1 THE REGISTER (2026-09-27, re-derived under the gate-11 ruling) — **8 rows, ALL executed by design**
 
@@ -1858,7 +1655,7 @@ not an implementation choice.
    counts are `6 DONE / 14 open` (`6 + 14 = 20`), `U-PROJ` (`D4`) is the LAST wave-D unit and the NEXT
    in the order, and the surviving blocker is ONE: this unit's own `TestWriter red` set. Nothing in
    this unit is `DONE`, nothing is green, and no leg has been run by THIS pass either — the register
-   `§5.5.1` lands is gate-11 design, not a measurement.** **⟶ SUPERSEDED ON THAT REMAINING BLOCKER HALF TOO (2026-09-27, the `U-PROJ` FINAL SPEC PASS; the sentence above is KEPT VISIBLE and is the pass that ran the register re-derivation; `F-11`):** **THERE IS NO SURVIVING BLOCKER LEFT IN THIS ITEM'S SENSE, and the sentence above describes a state that has since closed.** **The red set RAN and is GREEN: `tests/layout-projection.test.ts` carries `80` rows / `80` green, with the register `231/231` held, seed `20260927` and `registerStoppedAt: null`; gates 3–5 have RUN (red→green, the read-only adversarial + PBT audit, and the blind greens), the gate-4 host fixes LANDED at `e16ee8e` (red half `f743e40`), the gate-5 blind re-verification addendum RAN (`docs/specs/projection-greens.md` §12), and the gate-7 documentation review is filed (`archive/reviews/2026-09-27-U-PROJ-doc-review.md`).** **What is genuinely still OWED is NOT a blocker of this unit's spec: it is (i) the SUPERVISOR's gate-10 DONE row (whose content `§5.3` item 10 and this pass's dual-count duty bind), and (ii) the tracker reconciliation this spec leaves to that pass (`docs/next-steps.md`'s `D4` row, `docs/pending.md` §G, `docs/decisions.md`'s `PROJECTION-*` rows) — every one of which is outside this file's write boundary.** **A DONE row may therefore read THIS item as discharged, with the "nothing is `DONE`" clause true of the unit's LEDGER row and never of its red set, its register or its legs.**
+   `§5.5.1` lands is gate-11 design, not a measurement.** **⟶ SUPERSEDED ON THAT REMAINING BLOCKER HALF TOO (2026-09-27, the `U-PROJ` FINAL SPEC PASS; the sentence above is KEPT VISIBLE and is the pass that ran the register re-derivation; `F-11`):** **THERE IS NO SURVIVING BLOCKER LEFT IN THIS ITEM'S SENSE, and the sentence above describes a state that has since closed.** **The red set RAN and is GREEN: `tests/layout-projection.test.ts` carries `83` rows, all green (the `80`/`80` figure this sentence first recorded is superseded — `archive/specs/2026-09-27-projection-history.md` §B item 1), with the register `231/231` held, seed `20260927` and `registerStoppedAt: null`; gates 3–5 have RUN (red→green, the read-only adversarial + PBT audit, and the blind greens), the gate-4 host fixes LANDED at `e16ee8e` (red half `f743e40`), the gate-5 blind re-verification addendum RAN (`docs/specs/projection-greens.md` §12), and the gate-7 documentation review is filed (`archive/reviews/2026-09-27-U-PROJ-doc-review.md`).** **What is genuinely still OWED is NOT a blocker of this unit's spec: it is (i) the SUPERVISOR's gate-10 DONE row (whose content `§5.3` item 10 and this pass's dual-count duty bind), and (ii) the tracker reconciliation this spec leaves to that pass (`docs/next-steps.md`'s `D4` row, `docs/pending.md` §G, `docs/decisions.md`'s `PROJECTION-*` rows) — every one of which is outside this file's write boundary.** **A DONE row may therefore read THIS item as discharged, with the "nothing is `DONE`" clause true of the unit's LEDGER row and never of its red set, its register or its legs.**
 2. **THIS IS THE PROJECTION HALF ONLY, and `U-CENSUS` is a separate wave-E unit.** The
    `computeTrackVars(zones, census, sizes, revealed, specOf)` half **exists in the plan** (its refile
    is WITHDRAWN, §1.2) but it is **not this unit's**, and this unit's diff scope **excludes its
@@ -2157,7 +1954,7 @@ proposal** (§7 item 5, the `U5` row below).
 | **`RK-19`** (geometry unprovable here; the node layer asserts contracts/arithmetic only) | amendment §6 | **CARRIED** — §7 item 10 + `A-20` are this unit's compliance rows | §7 item 10, `A-20` |
 | **`RK-16`** (a mis-sequenced census change turns a green suite red) | amendment §6 | **NOT THIS UNIT** (`U-FOCUS-TOOL`'s) — but its **false-green reading class** is `A-20`'s | `A-20` |
 | `docs/specs/engine-pin.md` §5.5's register (incl. `P-SM-2`) | that file | **NOT THIS UNIT** — the register is not extended, and `P-SM-2` is **not copied** (a second authority over a landed register is a finding) | §5.5 item 4 |
-| This unit's **own** register (`§5.5.1`, 2026-09-27) | `docs/specs/projection.md` `§5.5` | **RE-DERIVED — the recorded zero-row exemption is SUPERSEDED** under the architect's gate-11 ruling (ACTIVE row `PBT-REGISTER-REQUIRED-FOR-CODE-UNITS`, `docs/decisions.md`; follow-ups in `docs/pending.md` §G, whose `U-PROJ` row records this re-derivation as BLOCKING for this unit's red set only). **8 typed rows** `P-PJ-*` (7 `P-IM` + 1 `P-TP`), **`231` attempts**, **pinned seed `20260927`**, caps `≤100`/row · `≤400` total · stop-after-5; **no new dependency, no `fast-check`, no `F-` register row.** The exemption is kept byte-identical as `§5.5.0`; the pilots are `docs/specs/listhost.md` `§5.5.1` and `docs/specs/slothost.md` `§5.5.1` | §5.5 (banners), §5.5.0, §5.5.1, §5.3 item 10, §4.2 item 1, Layer declaration (fourth anchor) |
+| This unit's **own** register (`§5.5.1`, 2026-09-27) | `docs/specs/projection.md` `§5.5` | **RE-DERIVED — the recorded zero-row exemption is SUPERSEDED** under the architect's gate-11 ruling (ACTIVE row `PBT-REGISTER-REQUIRED-FOR-CODE-UNITS`, `docs/decisions.md`; follow-ups in `docs/pending.md` §G, whose `U-PROJ` row records this re-derivation as BLOCKING for this unit's red set only). **8 typed rows** `P-PJ-*` (7 `P-IM` + 1 `P-TP`), **`231` attempts**, **pinned seed `20260927`**, caps `≤100`/row · `≤400` total · stop-after-5; **no new dependency, no `fast-check`, no `F-` register row.** The exemption block is COMPACTED OUT and archived verbatim (`§5.5.0` keeps its heading as the citation anchor; `archive/specs/2026-09-27-projection-history.md` §E); the pilots are `docs/specs/listhost.md` `§5.5.1` and `docs/specs/slothost.md` `§5.5.1` | §5.5 (banners), §5.5.0, §5.5.1, §5.3 item 10, §4.2 item 1, Layer declaration (fourth anchor) |
 | Row **D4** (`docs/next-steps.md` `## OPEN`) | that file's `## OPEN` table (**cited by row id, never by line**) | **OWED**: its spec cell reads `docs/specs/projection.md` (**OWED — not filed**) — **this filing discharges that cell**; the row stays `BLOCKED`, and its *"`U-CENSUS` is separate"* clause is §7 item 2 | this file. **⟶ ANNOTATED 2026-09-27 (the `U-PROJ` FINAL SPEC PASS; the as-written cell is KEPT VISIBLE and is the FILING pass's state; `F-11`): `SUPERSEDED` ON THE `BLOCKED` HALF TOO.** **The spec cell is `FILED 2026-09-27`, the wave-D order is SATISFIED (`U-LISTHOST` and `U-SLOTHOST` are `DONE`), this unit is the LAST wave-D unit of a queue row whose own spec, red set, register, adversarial pass, blind greens and documentation review have ALL RUN — so the cell's `BLOCKED` and its "waits only on its own `TestWriter red` set" clauses are earlier readings.** **What `D4` still awaits is the SUPERVISOR's gate-10 DONE row (`§5.3` item 10 + this pass's dual-count duty) and the tracker reconciliation this file's write boundary excludes — never a spec, red-set or leg item.** |
 | Row **E2** (`docs/next-steps.md` `## OPEN`) | that file's `## OPEN` table | **NOT THIS UNIT** — `U-CENSUS`'s own row, whose spec is `docs/specs/census.md` (`OWED — not filed`) | §0 ruling 1, §4.3 |
 | `docs/specs/projection.md`'s entry in amendment §8's owed-spec list | amendment §8 | **DISCHARGED by this filing** | this file |
