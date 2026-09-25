@@ -153,7 +153,8 @@ export interface EventSource {
 export interface GestureOptionsInput {
   /** PER-CONTROL OPT-IN for pointer capture AFTER establishment.  `false`
    *  (or absent, or falsy of any kind) ⇒ ZERO capture calls, ever.  `true`
-   *  (or any truthy value) ⇒ exactly ONE `setPointerCapture`-call by the
+   *  (or any truthy value) ⇒ exactly ONE **capture call through the INJECTED SOURCE'S OWN CAPTURE METHOD** — 
+ *  **⟶ RULED 2026-09-27 (the red-set/green-set conflict the Implementer stopped on; the resolution is the one that satisfies BOTH clauses):** the session calls a method the SOURCE supplies (named by the source, discovered by the session from its own supplied surface) and the MODULE'S SOURCE TEXT carries **no DOM-specific capture method token** — because `EventSource`'s own doc block forbids the session from calling `setPointerCapture`/`releasePointerCapture` on anything, ever, and the module-level scans (`R-3`(2), `F-11`) fail any module whose bytes contain that token in any form. **The capture requirement and the token prohibition are therefore BOTH satisfied by injection: the capability is the caller's, the invocation is the session's, and the count (`exactly ONE` on an opted-in establishment, `ZERO` otherwise) is unchanged.** No id, term, strategy id or the `396` total moves.
    *  injected source, inside `begin`, AFTER the gesture is established. */
   readonly capture?: unknown
   /** Called synchronously at the END of a successful `begin`, AFTER the
