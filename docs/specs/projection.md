@@ -4,6 +4,24 @@ Status: **SPEC — FILED 2026-09-27** (wave **D**, unit **`U-PROJ`**, the **proj
 `SCH-8` `LAYOUT-STATE-PROJECTION`; **`U-CENSUS` is a SEPARATE unit and stays in wave E**). **The unit
 has NOT run: nothing here is implemented, no red set has been authored and no leg has been run by
 this pass.** This pass files the contract.
+**⟶ STATUS NOTE — 2026-09-27, THE `U-MOUNTGUARD` DONE PASS: THE WAVE-D GO-AHEAD WAS GIVEN.** The
+architect **GAVE the wave-D go-ahead (2026-09-27)** and **`U-MOUNTGUARD` is `DONE`** (the ledger's
+**FOURTH `DONE` row**; the counts are **`4 DONE / 16 open`**). **This is a STATUS/ANNOTATION note: it
+amends no normative clause, adds no row and moves no section number — in particular it does NOT touch the
+four ruling notes in §0A or any of the `CORRECTED`/approved cells they carry.** **What it supersedes, in
+its STATUS half only:** the go-ahead paragraph below (and §0 **ruling 8**, §0 **ruling 9**'s closing
+sentence *"the go-ahead of ruling 8 is still absent"*, §4.5, §7 item 1), whose *"BLOCKED on the
+architect's go-ahead … Wave D is authorised by no ruling currently on the record … the go-ahead of ruling
+8 is still absent … RED SET OWED — NOT AUTHORED, NOT RUN"* clauses are **kept visible and are the filing
+and ruling passes' state**. **What it does NOT change:** `AGENTS.md` item 9 still binds (delegable only
+once the red set is **RUN and REPORTED**), and the **wave-D order is unskipped** — `U-MOUNTGUARD`
+(`DONE`) → `U-LISTHOST` → `U-SLOTHOST` → **this unit (`U-PROJ`), which lands LAST** — so this unit's
+ordering precondition is `U-SLOTHOST`, not the go-ahead. **Its exact next action: `TestWriter red` RUN
+and REPORTED → green → adversarial → blind greens → legs → documentation review → DONE**, with
+`docs/next-steps.md` `## OPEN` row **`D4`** the queue pointer. **The four rulings in §0A are untouched and
+still bind** (`A-11` reuse, `A-2`/`F-4` `'accessor-threw'`, `A-3` `Object.create(null)`, `A-7`
+re-entrancy).
+
 **Go-ahead state — stated plainly: this unit is BLOCKED on two things only — the architect's go-ahead
 for the wave-D plan, and its own red set.** *(The two-argument projection signature was formerly listed
 here as a third, OPEN item; **it is no longer open — the architect APPROVED the correction
@@ -48,8 +66,8 @@ advance no unit status: no code, no red set, go-ahead of ruling 8 still absent (
 | **5** | **The `U-ZONES`/`U-CENSUS` delegation boundary is NOT this unit's to cross.** The **token-formatting authority is `U-ZONES`** for the **census family** (§1.1/§1.2: *"delegating token formatting to `U-ZONES` (one authority, not two)"*), and **`U-PROJ` must not import `U-ZONES`, `U-CENSUS`, or any zone/track module.** This unit formats **only** what the consumer's own `VarSpec` tells it to, and the contract makes that spec **data**, never a function it delegates to. | §2.1 (`VarSpec`), §2.4, §6 |
 | **6** | **`H-r17`'s consequence, quoted because it names this unit:** *"A dashboard/toolbar use case changes NO zone/track contract: `U-PROJ` still takes an injected write sink and consumer-supplied variable names/units, so a dashboard's custom properties are projected by the consumer's data through the repo's pure applier, **with no zone vocabulary anywhere**."* | §1, §2.2, §7 item 4 |
 | **7** | **No new MCP surface, no store, no persistence, no CSP change** (the amendment's obligations table): every adopted mechanism is renderer/host-resident module code — no `src/main/**`, no `electron`, no `node:fs`, no RPC types import; **no adopted unit persists anything**. | §2.2 (prohibitions 4/5), §5.1 |
-| **8** | **The go-ahead for wave D does not exist yet**, and within wave D this unit lands **last**. **This unit is BLOCKED on that go-ahead, on the wave-D order, and on its own red set.** | this status block, §4.5, §7 item 1 |
-| **9** | **THE 2026-09-27 RULING PACK (architect) — the FOUR previously UNRULED contract inputs of §7 item 8 are now RULED; ZERO remain unruled.** **(a) `A-11` — a `Projection` is REUSABLE** (a value, not a session: no consumption, no per-projection state; every call is equivalent to a first call with that value) ⇒ **new invariant `I-11`** + §2.3. **(b) `A-2`/`F-4` — a THROWING VALUE ACCESSOR is SKIPPED and RECORDED by the projection, NEVER propagated** ⇒ **`ProjectionSkipReason` 7 → 8 members (the new member `'accessor-threw'`)** + `F-4` split into `F-4A`/`F-4B` + `F-12`. **(c) `A-3` — the prototype-pollution-shaped key: `Projection.applied` (and any internal key→value map) is built on `Object.create(null)`** ⇒ §2.5 (the analysis + the alternatives rejected) + `I-12`/`I-13` + `F-13`/`M-18`/`M-19`/`M-20`. **(d) `A-7` — sink RE-ENTRANCY: NOT GUARDED; the projection is IMMUTABLE INPUT to the applier** ⇒ §2.3 item 8 + `I-11`/`I-14` + `M-21`/`M-22` + `F-14`/`F-15`; a consumer wanting different writes builds a **NEW** projection. **None of the four advances the unit's status** (§4.5): no code, no red set, and the go-ahead of ruling 8 is still absent. | §0A (the dated notes), §1, §2.3, §2.5, §3.2, §3.3, §7 items 7/8, §8 |
+| **8** | **The go-ahead for wave D does not exist yet**, and within wave D this unit lands **last**. **This unit is BLOCKED on that go-ahead, on the wave-D order, and on its own red set.** **⟶ SUPERSEDED ON ITS GO-AHEAD HALF (2026-09-27, the `U-MOUNTGUARD` DONE pass; the as-written cell is kept visible): the wave-D go-ahead WAS GIVEN (architect, 2026-09-27) and `U-MOUNTGUARD` is `DONE`, so the surviving blockers are the wave-D order (this unit lands LAST, after `U-SLOTHOST`) and its OWN RED SET.** | this status block, §4.5, §7 item 1 |
+| **9** | **THE 2026-09-27 RULING PACK (architect) — the FOUR previously UNRULED contract inputs of §7 item 8 are now RULED; ZERO remain unruled.** **(a) `A-11` — a `Projection` is REUSABLE** (a value, not a session: no consumption, no per-projection state; every call is equivalent to a first call with that value) ⇒ **new invariant `I-11`** + §2.3. **(b) `A-2`/`F-4` — a THROWING VALUE ACCESSOR is SKIPPED and RECORDED by the projection, NEVER propagated** ⇒ **`ProjectionSkipReason` 7 → 8 members (the new member `'accessor-threw'`)** + `F-4` split into `F-4A`/`F-4B` + `F-12`. **(c) `A-3` — the prototype-pollution-shaped key: `Projection.applied` (and any internal key→value map) is built on `Object.create(null)`** ⇒ §2.5 (the analysis + the alternatives rejected) + `I-12`/`I-13` + `F-13`/`M-18`/`M-19`/`M-20`. **(d) `A-7` — sink RE-ENTRANCY: NOT GUARDED; the projection is IMMUTABLE INPUT to the applier** ⇒ §2.3 item 8 + `I-11`/`I-14` + `M-21`/`M-22` + `F-14`/`F-15`; a consumer wanting different writes builds a **NEW** projection. **None of the four advances the unit's status** (§4.5): no code, no red set, and the go-ahead of ruling 8 is still absent. **⟶ SUPERSEDED ON ITS GO-AHEAD HALF (2026-09-27, the `U-MOUNTGUARD` DONE pass; the clause is kept visible): the wave-D go-ahead WAS GIVEN (architect, 2026-09-27), so this sentence's surviving truth is *"no code and no red set"* — the four rulings still advance no status by themselves, and the unit remains blocked on its own red set.** | §0A (the dated notes), §1, §2.3, §2.5, §3.2, §3.3, §7 items 7/8, §8 |
 
 ## 0A. The dated ruling notes — **the 2026-09-27 ruling pack (architect): the four UNRULED inputs are RULED**
 
@@ -963,7 +981,10 @@ not an implementation choice.
 
 1. **Nothing in this unit is `DONE`, nothing is green, and no leg has been run by this pass.** It is
    **BLOCKED on the architect's go-ahead for wave D, on the wave-D order (`U-MOUNTGUARD` →
-   `U-LISTHOST` → `U-SLOTHOST` first), and on its red set** (§0 ruling 8, §4.5).
+   `U-LISTHOST` → `U-SLOTHOST` first), and on its red set** (§0 ruling 8, §4.5). **⟶ SUPERSEDED ON ITS
+   GO-AHEAD HALF (2026-09-27, the `U-MOUNTGUARD` DONE pass; the sentence above is kept visible): the
+   wave-D go-ahead WAS GIVEN (architect, 2026-09-27) and `U-MOUNTGUARD` is `DONE`; the surviving
+   blockers are the wave-D order (this unit lands LAST) and its own red set.**
 2. **THIS IS THE PROJECTION HALF ONLY, and `U-CENSUS` is a separate wave-E unit.** The
    `computeTrackVars(zones, census, sizes, revealed, specOf)` half **exists in the plan** (its refile
    is WITHDRAWN, §1.2) but it is **not this unit's**, and this unit's diff scope **excludes its

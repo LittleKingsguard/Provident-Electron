@@ -3,6 +3,20 @@
 Status: **SPEC — FILED 2026-09-27** (wave **D**, unit **`U-LISTHOST`**, the adopted-reshaped form of
 `SCH-11` `TAB-STRIP-SHELL`). **The unit has NOT run: nothing here is implemented, no red set has been
 authored and no leg has been run by this pass.** This pass files the contract.
+**⟶ STATUS NOTE — 2026-09-27, THE `U-MOUNTGUARD` DONE PASS: THE WAVE-D GO-AHEAD WAS GIVEN.** The
+architect **GAVE the wave-D go-ahead (2026-09-27)** and **`U-MOUNTGUARD` is `DONE`** (the ledger's
+**FOURTH `DONE` row** — `docs/next-steps.md`'s `## DONE — U-MOUNTGUARD` record; the counts are
+**`4 DONE / 16 open`**). **This is a STATUS/ANNOTATION note: it amends no normative clause, adds no row
+and moves no section number.** **What it supersedes, and only in its STATUS half:** the go-ahead
+paragraph immediately below (and §0 **ruling 8**, §4.5, §7 item 1), whose *"BLOCKED on the architect's
+go-ahead … wave D is authorised by no ruling currently on the record … RED SET OWED — NOT AUTHORED, NOT
+RUN"* clauses are **kept visible and are the filing pass's state**. **What it does NOT change:**
+`AGENTS.md` item 9 still binds — **this unit is delegable only once its red set has been RUN and
+REPORTED**, and the **wave-D ORDER still stands unskipped**: `U-MOUNTGUARD` (now `DONE`) → **this unit
+(`U-LISTHOST`)** → `U-SLOTHOST` → `U-PROJ`. **So this unit's exact next action is: `TestWriter red` RUN
+and REPORTED → green → adversarial → blind greens → legs → documentation review → DONE**, with its
+`docs/next-steps.md` `## OPEN` row **`D2`** the queue pointer.
+
 **Go-ahead state — stated plainly: this unit is BLOCKED on the architect's go-ahead for the wave-D
 plan.** The go-ahead in force covers **wave B only** (`docs/specs/engine-drift.md` §0 ruling 1:
 *"the go-ahead is WAVE B ONLY … waves C–F are not authorised by this go-ahead"*), and it is **spent**
@@ -31,7 +45,7 @@ filed**) — this file is that filing).
 | **5** | **`V-7` is resolved by own-node ownership and stays a hard row**: `SCH-9` #2's *"publish replaces the element"* **contradicted** this unit's #1 foreign-sibling-survives rule; the resolution is that **this host replaces only its own nodes** — and **`U-SLOTHOST` must carry the same hard row** (its own §2.2/§3). | §3 (rows `M-8`/`F-2`), §7 item 3 |
 | **6** | **The `SCH-9 → SCH-11` dependency edge is DISSOLVED** (`H-r6`): *"each adopted contract takes an injected `orderOf`-shaped callback as its own parameter, so `C-15`'s cycle is broken rather than inherited"*. **`orderOf` is INJECTED HERE — it is not imported from `SCH-4`/`U-ZONES` and not a second authority over ordering** (`SCH-4`'s `orderOf` remains fork-owned). | §2.1 (`orderOf`), §6 |
 | **7** | **No unit may claim magnitude-equivalence.** Per the amendment's per-unit equivalence limits: *"order is a **projection**, so the mechanism may not claim the graph's child order changed; foreign-sibling survival is a **hard row**; no overflow/tab vocabulary; no equivalence between 'one visible item' and any graph op."* | §7 item 4, §5.3 |
-| **8** | **The go-ahead for wave D does not exist yet**, and within wave D this unit follows `U-MOUNTGUARD`. **This unit is BLOCKED on that go-ahead, on the wave-D order, and on its own red set.** | this status block, §4.5, §7 item 1 |
+| **8** | **The go-ahead for wave D does not exist yet**, and within wave D this unit follows `U-MOUNTGUARD`. **This unit is BLOCKED on that go-ahead, on the wave-D order, and on its own red set.** **⟶ SUPERSEDED ON ITS GO-AHEAD HALF (2026-09-27, the `U-MOUNTGUARD` DONE pass; the as-written cell is kept visible): the wave-D go-ahead WAS GIVEN (architect, 2026-09-27) and `U-MOUNTGUARD` — the unit this one follows — is `DONE`, so the surviving blocker is this unit's OWN RED SET (plus this spec's `OWED`-cell status in its queue row). The wave-D order still binds.** | this status block, §4.5, §7 item 1 |
 
 ## Layer declaration (read this before any table below)
 
@@ -466,7 +480,10 @@ which would be a **new gate**, not this unit's call (`H-r1`'s cite-and-supersede
 
 1. **Nothing in this unit is `DONE`, nothing is green, and no leg has been run by this pass.** It is
    **BLOCKED on the architect's go-ahead for wave D, on the wave-D order (`U-MOUNTGUARD` first), and
-   on its red set** (§0 ruling 8, §4.5).
+   on its red set** (§0 ruling 8, §4.5). **⟶ SUPERSEDED ON ITS GO-AHEAD HALF (2026-09-27, the
+   `U-MOUNTGUARD` DONE pass; the sentence above is kept visible): the wave-D go-ahead WAS GIVEN
+   (architect, 2026-09-27), `U-MOUNTGUARD` is `DONE`, and this unit is now blocked only on its own red
+   set — the wave-D order still binds.**
 2. **"Owned-node list host" is the amendment's own rename, and the rename is normative.** A later
    pass that implements a tab strip (labels, `role`, selected state, overflow) under this spec's
    symbol has **violated the contract**, not fulfilled it. **`SCH-11`'s own pre-amendment decline

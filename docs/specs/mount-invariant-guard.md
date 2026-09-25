@@ -55,6 +55,56 @@ all pre-existing rows stay green.** **UPDATED COUNTS (the same pass's green trio
 **`59 files / 916 passed / 2 skipped / 0 failed`**. **No row and no section number moves; `M-17`,
 `M-18` and `M-19` are appended ids.**
 
+**⟶ STATUS NOTE — 2026-09-27, THE SUPERVISOR'S DONE PASS: THE WAVE-D GO-AHEAD WAS GIVEN AND THIS UNIT IS
+`DONE` (the ledger's FOURTH `DONE` row).** **This note is a STATUS/ANNOTATION note: it amends NO normative
+clause of this contract, adds no row and no id, moves no section number, and supersedes nothing but the
+STATUS of the cells named below** (each of which keeps its own text, marked in place). **THE FACTS, one line
+each.** **(1) THE GO-AHEAD: the architect GAVE the wave-D go-ahead on 2026-09-27.** **EVERY CELL BELOW THAT
+STILL SAYS *"the go-ahead for wave D does not exist yet / wave D is authorised by no ruling on the record /
+the architect's wave-D go-ahead half STANDS / is still FALSE"* IS THEREFORE STALE — the cells are the filed
+status block, §0 **ruling 6**, §4.5's delegation-gate update and §7 **item 1**; all four are annotated this
+pass and their old text is kept visible.** **What the go-ahead does and does not do:** it makes the wave-D
+units **delegable in their own order, each blocked only on its own red set** — it does **not** weaken `AGENTS.md`
+item 9 for a unit whose red set has not run, and it does **not** authorise any unit out of order.
+**(2) THE UNIT: `U-MOUNTGUARD` IS `DONE`** — COMPLETE on every leg this §5.2/§5.3 declare, with §5.3's DONE-row
+order honoured by the record in `docs/next-steps.md` (**`## DONE — U-MOUNTGUARD`**), and row `D1` of that
+file's `## OPEN` table **moved** to it (kept visible, not deleted). **The rule-3 outcome, FIRST and
+explicitly, as §5.3 item 2 demands: `cycle-2 count = 2`** — measured **`{"childCount":2,"count":2,
+"nodeIds":["node-234","node-246"]}`**, and **not on a cycle-2 load alone**: **one `loadEnvelope` into one
+mount** on a `Runtime` constructed and **never `bootstrap()`ed** is already enough, with the **non-placement
+attribution run reproducing `count 2`** (so the read is not placement-specific). **The branch taken is the
+HOST-FIX BRANCH** (`§6` outcome (b)). **The guard's disposition, §5.3 item 3: the guard SHIPS** — `S-2`'s
+*"not shipped because the adversarial pass found no reproduction"* sentence does **NOT** apply, because the
+adversarial + blind-verification pass **DID reproduce a violation** (`§3b` `ADV-1`/`ADV-8`, `§3.1` `M-19`).
+**The code/test delta, §5.3 item 4:** `src/shared/mount-invariant-guard.ts` (**NEW** — four exports, two
+functions), the **host fix `reconcileMount()` in `src/renderer/runtime.ts`** (called from
+`resetRenderState()`; the previous root is detached **by reference**), and `tests/mount-invariant-guard.test.ts`
+(**`44` rows, all green**). **The red, §5.3 item 5:** RUN and REPORTED before any implementation (commit
+**`aa8b92e`**) — **`41` rows: `39` red / `2` pass**, the `2` greens being the harness preconditions
+`PRE-1`/`PRE-2`; the `39` split **`36` module-absent + `3` red against the tree** (`M-14`, `M-11`, `M-12`).
+**The legs, §5.3 item 6, each with its layer label:** `npm test` **`[T]`** `59` files / `916` passed /
+`2` skipped / `0` failed · `npm run typecheck` `[H]` **clean** · `npm run build` `[H]` **clean (5 bundles)**;
+**and the sentence the contract requires: a node-suite green is ENVELOPE/PURE-LAYER EVIDENCE and is NEVER
+assembled-app evidence.** (§5.2 declares **no battery and no divergence leg** for this unit — neither was
+claimed.) **The `[U]` row, §5.3 item 7: NOT TAKEN** — and now for the **measured** reason §3b `ADV-4` gives
+(the probe **refuses a real-DOM mount**: `directChildren()` requires `Array.isArray(children)` while a real
+DOM's `children` is an `HTMLCollection`), i.e. the refusal is a contract gap owned by the pass that would take
+the row, not a silent gap. **Adversarial + blind + doc review, §5.3 item 8:** the adversarial pass **RAN**
+(`§3a` `RED-1`…`RED-6` + `§3b` `ADV-1`…`ADV-10`) and closed the hole it found (the fix's named regression rows
+`M-17`/`M-18` **did not exist**; reversion in an out-of-tree mirror now reddens exactly `5` rows); the blind
+record is **`docs/specs/mount-invariant-guard-greens.md` (`56` rows = `48` PASS / `2` FAIL /
+`6` NOT-BLIND-RUNNABLE**, both FAILs the same teardown-drive finding, **resolved by pinning**); the doc review
+is **`archive/reviews/2026-09-27-U-MOUNTGUARD-doc-review.md`** (it fixed one genuine code/doc drift — the
+result's **seventh** field `expectedRootNodeId?` was undocumented — and two count/arithmetic residues).
+**Tracker reconciliation, §5.3 item 9:** `docs/next-steps.md` (the DONE record + its ledger and moved-`D1`
+rows + the re-enumerated totals `4 DONE / 16 open` + the `⟶ HANDOVER` block), `docs/decisions.md` (amendment
+note **21** + the four stale go-ahead cells annotated), this file, `docs/pending.md`, `docs/FORKER.md` and
+`README.md` (status annotations only). **COMMITS: `aa8b92e` … `1b7d1ca`.** **OWED, all non-blocking and
+recorded:** `§3b`'s `OWED-with-owner` (`ADV-4`, `ADV-7`) and `PARKED-with-revisit-condition` rows (`ADV-2`,
+`ADV-3` with the one-runtime-per-mount precondition), and the host comment `src/renderer/runtime.ts:559`
+(`ADV-10`) which still repeats the unconditional teardown form. **NO `docs/defects.md` row and NO
+`docs/HANDOFF.md` round is owed** — the finding is HOST-owned (§7 item 10's own standing statement).
+
 **Go-ahead state — stated plainly: this unit is BLOCKED on the architect's go-ahead for the wave-D
 plan.** The go-ahead in force covers **wave B only** (`docs/specs/engine-drift.md` §0 ruling 1:
 *"the go-ahead is WAVE B ONLY … waves C–F are not authorised by this go-ahead"*), and it is
@@ -65,7 +115,12 @@ and REPORTED before any implementation). **⟶ THAT CLAUSE IS SUPERSEDED (2026-0
 kept in place): the red set HAS been authored and RUN — see the amendment block above, §4.6's ledger
 and §0 ruling 6's updated cell. What survives of this paragraph is the go-ahead half: wave D is still
 authorised by no ruling on the record, so the unit may not be delegated and no implementation of it may
-land.** Source of this unit:
+land.** **⟶ THIS PARAGRAPH'S GO-AHEAD HALF IS NOW SUPERSEDED (2026-09-27, the supervisor's DONE pass; the
+as-filed sentences are kept visible): the architect GAVE the wave-D go-ahead (2026-09-27), the unit's
+implementation HAS landed (the module + `reconcileMount()` + its regression rows), and the unit is `DONE` on
+every leg this contract declares — read the dated STATUS NOTE at the head of this file, and `docs/next-steps.md`'s
+`## DONE — U-MOUNTGUARD` record. The whole paragraph is now a record of the filing pass's blocker, not live
+status.** Source of this unit:
 `docs/specs/provident-electron-shell-chrome-handoff-review.md`'s appended
 **`Amendment record (A-d4…A-d8)` — the governing layer** (`S-d8`'s admission rule with the six
 prohibitions; the `SCH-1` per-item row in §2.2; the `U-MOUNTGUARD` rows in §2.1/§3; `H-r4`/`H-r8`
@@ -83,7 +138,7 @@ artifact and the four call sites).
 | **3** | **The falsification is BINDING and unchanged:** a cycle-2 load into one mount yielding **2** engine-emitted roots ⇒ **a HOST fix is owed**; **1** ⇒ **detection + pin only**, and **no guard ships if the adversarial pass finds no reproduction**. This is the *only* ruling that decides the unit's shape. **⟶ ITS OUTCOME IS MEASURED (2026-09-27, the red-set pass): the red run produced `{"childCount":2,"count":2,"nodeIds":["node-234","node-246"]}` on a Runtime constructed but never `bootstrap()`ed — one `loadEnvelope` into one mount leaves TWO engine-emitted direct children, and the NON-placement attribution run reproduces `count 2`, so the read is not placement-specific. Rule 3's FIRST branch therefore FIRES: a HOST fix IS owed, and this unit's shape is §6 outcome (b). The finding, its mechanism, its reachability and the fix's required achievement are §3a's red-run block; the stop-condition state is §4.4 `S-1`.** | §4, §5.4, §7 item 3 |
 | **4** | **The verification layer is HELD** (`S-d3`, `H-r5`): the DOM shim **must NOT be expanded**; real-DOM claims belong on the offscreen Electron legs. The **one** admitted shim carve-out (`H-r7`, `ShimElement.removeAttribute`) is **already landed** and is **not this unit's to touch**. | §2.2, §5.3, §6 (prohibition 6) |
 | **5** | **The mount invariant's current behaviour is UNPROVEN** (the amendment's Layer declaration item 2): *"`U-MOUNTGUARD`'s red run is what settles the cardinality; this record asserts none."* **This spec asserts none either.** The per-teardown test that exists (`tests/runtime-host.test.ts:150-161`, read) is a **per-teardown** statement, **not** a cross-envelope one. | §2.4, §4.1, §7 item 4 |
-| **6** | **The go-ahead for wave D does not exist yet.** The wave-B go-ahead is spent; *"No unit is delegable"* (amendment §3, `H-r20`). **This unit is BLOCKED on that go-ahead plus its red set.** **⟶ UPDATED (2026-09-27): the RED-SET half of this blocker is DISCHARGED** — the red set was authorised, written and RUN (`tests/mount-invariant-guard.test.ts`, 41 rows: 39 red / 2 pass, `aa8b92e`), so *"Status of its red set: RED SET OWED — NOT AUTHORED, NOT RUN"* above is **SUPERSEDED** and `AGENTS.md` item 9's condition (c) is met. **The architect's wave-D go-ahead half STANDS: this unit is still BLOCKED on it** for anything beyond `S-1`'s branch — and `S-1`'s branch (the probe + the `src/renderer/runtime.ts` fix + its regression row) is **itself implementation, so it is not delegable or landable under this amendment either.** **⟶ THE `S-1`-BRANCH HALF IS NOW LANDED (2026-09-27, the adversarial + blind-verification pass): the module, the fix (`reconcileMount()`) and the regression rows `M-17`/`M-18` exist and are green, with `M-19` appended to pin the never-bootstrapped teardown drive; the wave-D go-ahead half of this ruling is unaffected and STANDS.** | this status block, §4.5, §7 item 1 |
+| **6** | **The go-ahead for wave D does not exist yet.** The wave-B go-ahead is spent; *"No unit is delegable"* (amendment §3, `H-r20`). **This unit is BLOCKED on that go-ahead plus its red set.** **⟶ UPDATED (2026-09-27): the RED-SET half of this blocker is DISCHARGED** — the red set was authorised, written and RUN (`tests/mount-invariant-guard.test.ts`, 41 rows: 39 red / 2 pass, `aa8b92e`), so *"Status of its red set: RED SET OWED — NOT AUTHORED, NOT RUN"* above is **SUPERSEDED** and `AGENTS.md` item 9's condition (c) is met. **The architect's wave-D go-ahead half STANDS: this unit is still BLOCKED on it** for anything beyond `S-1`'s branch — and `S-1`'s branch (the probe + the `src/renderer/runtime.ts` fix + its regression row) is **itself implementation, so it is not delegable or landable under this amendment either.** **⟶ THE `S-1`-BRANCH HALF IS NOW LANDED (2026-09-27, the adversarial + blind-verification pass): the module, the fix (`reconcileMount()`) and the regression rows `M-17`/`M-18` exist and are green, with `M-19` appended to pin the never-bootstrapped teardown drive; the wave-D go-ahead half of this ruling is unaffected and STANDS.** **⟶ THE GO-AHEAD HALF IS NOW SUPERSEDED TOO (2026-09-27, the supervisor's DONE pass; keep the as-written cell visible): the architect GAVE the wave-D go-ahead (2026-09-27), so this ruling's whole blocker is discharged — the red set ran, the `S-1` branch landed, and the unit is `DONE` (the ledger's FOURTH `DONE` row). Ruling 6's SUBSTANCE survives as an ordering statement for the wave-D units that follow (`U-LISTHOST` → `U-SLOTHOST` → `U-PROJ`), each blocked only on its own red set — and `AGENTS.md` item 9 still applies to every one of them.** | this status block, §4.5, §7 item 1 |
 
 ## Layer declaration (read this before any table below)
 
@@ -224,7 +279,7 @@ precedent).**
 ### 2.1 What this unit ADDS — every exported name, signature, return shape, and throw pattern
 
 **New module: `src/shared/mount-invariant-guard.ts`** (a pure `src/shared` module; no `electron`,
-no `node:fs`, no `src/main/**`, no renderer import). **Four exports**, and nothing else:
+no `node:fs`, no `src/main/**`, no renderer import). **Four exports** — **two interfaces + two functions**; the module's three further interfaces (`MountRootObservation`, `MountViolation`, `MountExpectation`) are the field types of those two; **⟶ the as-filed phrase above counts the two exported FUNCTIONS and the two headline interfaces, and the landed module's export list is `MountRootObservation` · `MountViolationCode` · `MountViolation` · `MountInvariantResult` · `MountExpectation` · `probeMountInvariant` · `assertMountInvariant` (the seven declarations of this block, read on `src/shared/mount-invariant-guard.ts` by the doc review) — no eighth export exists, and `S-1` asserts that exactly the two FUNCTIONS are reachable at run time (the interfaces are type-only)** — and nothing else:
 
 ```ts
 /** One engine-emitted element observed as a DIRECT child of the mount. */
@@ -273,6 +328,17 @@ export interface MountInvariantResult {
   readonly mount: unknown
   /** `null` when `ok`; otherwise exactly one typed violation. */
   readonly violation: MountViolation | null
+  /** **⟶ ADDED 2026-09-27 (the per-unit documentation review, AGENTS.md item
+   *  10d/RCA-6) — the SEVENTH field, documented here because the landed module
+   *  returns it and `S-2`/`M-4` assert it.** The `expect.rootNodeId` value the
+   *  caller supplied, echoed back; the field is ADDED only when a USABLE id was
+   *  supplied (omitted / `null` / `''` / non-string ⇒ the field is ABSENT, the
+   *  `M-5`/`F-10`/prohibition-3 rule), on the same `Object.prototype.hasOwnProperty`
+   *  test `M-5` uses. It is therefore on the RESULT in the `ok` outcome and on
+   *  `MountViolation` in the non-`ok` one (the declaration above; both are the
+   *  same field name and presence rule). Landed module: `src/shared/mount-invariant-guard.ts:68-69`
+   *  + `:174` (`assemble()`'s conditional spread). */
+  readonly expectedRootNodeId?: string
 }
 
 export interface MountExpectation {
@@ -395,7 +461,7 @@ into a test; **none is a measurement this pass took.**
 | **M-1** | **One engine-emitted root — fresh graph** | `new Runtime({ mount, envelope: demoEnvelope() })`; `bootstrap()`; `probeMountInvariant(mount)` | `ok === true`; `count === 1`; `roots.length === 1`; `violation === null`; `roots[0].nodeId` is a **non-empty** string; `roots[0].element` is a **direct child of the mount by reference** (present in `mount.children`) | `[T]`/`[H]` |
 | **M-2** | **One engine-emitted root — after ONE re-derivation** | `loadEnvelope(demoEnvelope())` (cycle 2) | `ok === true`; `count === 1`; `violation === null` | `[T]`/`[H]` |
 | **M-3** | **THE CROSS-ENVELOPE ROW (the unit's reason to exist)** | Two loads into **one** mount, in **one** sequence, with the **same** mount reference | **⟶ AMENDED (2026-09-27, the red-set pass) — read this as the governing wording; the as-filed wording is kept below and marked.** **THE FIVE OBSERVATION POINTS, exact, and the count each one holds:** **P0** = constructed but **BEFORE `bootstrap()`** ⇒ **`count === 0`** — this is `F-2`'s state (`'no-root'`), **NOT** a one-root state; **P1** = after `bootstrap()` (the fresh graph, `M-1`'s state) ⇒ `count === 1`; **P2**/**P3**/**P4** = after load #1 / #2 / #3 ⇒ `count === 1` each. The row's required behaviour is therefore **`count === 1` at every observation point where the graph has been rendered (P1–P4), and `count === 0` at the pre-bootstrap point (P0)**; **`count === 2` at ANY point is rule 3's HOST-fix branch and the row is reported as such, never softened. ⟶ MEASURED (2026-09-27): this row's own five points read `0 / 1 / 1 / 1 / 1`, so `M-3`'s drive alone does NOT produce the two-root read — the `count === 2` observation was made by the **`M-14` reproducer** (`new Runtime(…) → loadEnvelope(placementEnvelope(4))`, the as-written `M-14` drive) and by its non-placement attribution run (§3a `RED-1`/`RED-2`). `M-3`'s expectations above are therefore UNCHANGED and its row stands; no expectation of it is loosened by the measurement.** *(**As-filed, superseded and kept visible:** *"`count === 1` **at every observation point** — before the first load, after the first, after the second, and after a third."* The bracketed "before the first load" cannot hold for a **pre-bootstrap** mount: a Runtime constructed and not yet `bootstrap()`ed has no rendered graph, and `F-2` pins that state at **`0`**. The two readings are reconciled by naming the point: **point 1 = the bootstrapped fresh graph** — the first observation point that is a root state — while the pre-bootstrap point is **recorded as `0`** and asserted as `F-2`'s state.)* | `[T]`/`[H]` |
-| **M-4** | **Identity — the root is the graph's current root node** | `probeMountInvariant(mount, { rootNodeId })` where `rootNodeId` is read from the graph (e.g. the in-tree node whose `propsId`/`cssId` matches the envelope's root) | `ok === true`; `roots[0].nodeId === rootNodeId`; `expectedRootNodeId === rootNodeId` | `[T]`/`[H]` |
+| **M-4** | **Identity — the root is the graph's current root node** | `probeMountInvariant(mount, { rootNodeId })` where `rootNodeId` is read from the graph (e.g. the in-tree node whose `propsId`/`cssId` matches the envelope's root) | `ok === true`; `roots[0].nodeId === rootNodeId`; `expectedRootNodeId === rootNodeId` **— read this against §2.1's result shape: the field is on the RESULT (and on `MountViolation` in the non-`ok` outcome), added only when a usable `rootNodeId` was supplied (the amended §2.1 block's cross-reference; `S-2` asserts both key sets)** | `[T]`/`[H]` |
 | **M-5** | **Cardinality-only mode omits the identity field** | `probeMountInvariant(mount)` (no `expect`) | `ok === true`; `expectedRootNodeId` is **absent** (`Object.prototype.hasOwnProperty` is `false` — not `undefined`, not `null`); prohibition-3 row | `[T]` |
 | **M-6** | **Mount identity does not change across re-derivations** | Capture `mount`; run N re-derivations; `probeMountInvariant(mount, { mount })` | Every call returns `mount` **by reference** equal to the captured mount; `violation` is never `'mount-reference-mismatch'` | `[T]`/`[H]` |
 | **M-7** | **Foreign siblings are reported, never swept** | Append two caller-created elements to the mount **before** the probe (no `data-node-id`); probe | `ok === true`; `count === 1`; `foreignSiblings.length === 2`; both are the **same references**, in document order; the probe **removed nothing** (`mount.children.length` unchanged) | `[T]` |
@@ -515,7 +581,13 @@ REPORTED** the red set (§4.6 below), and **(a) — the architect's wave-D go-ah
 so the gate's verdict is **unchanged: NOT delegable.** The unit's remaining work (the module + the
 `src/renderer/runtime.ts` host fix + the regression rows) is **implementation**, so it may not be
 delegated or landed until that go-ahead exists. **No status line of this subsection is rewritten; the
-as-filed `BLOCKED` reasoning stands and only its (c)-half is discharged.**
+as-filed `BLOCKED` reasoning stands and only its (c)-half is discharged.** **⟶ BOTH HALVES ARE NOW DISCHARGED
+(2026-09-27, the supervisor's DONE pass; every sentence above is kept visible): the architect GAVE the wave-D
+go-ahead (2026-09-27) AND the implementation it gated HAS landed — the module, the host fix
+`reconcileMount()` and the regression rows `M-17`/`M-18` (with `M-19` appended) — so this subsection's
+`NOT delegable` verdict is a record of the gate as it stood before the go-ahead. **It remains the gate for
+the wave-D units that follow:** each needs (a) the go-ahead (**now in force for the wave-D plan**), (b) its
+own spec, and (c) its own **RUN and REPORTED** red set.**
 
 ### 4.6 The red set as RUN and REPORTED (2026-09-27, the red-set pass) — the unit's decisive record
 
@@ -529,7 +601,7 @@ beyond the red set itself).
 | --- | --- | --- |
 | 1 | The red file | **`tests/mount-invariant-guard.test.ts`** — **NEW**, §5.1 row 2, committed **`aa8b92e`** |
 | 2 | **THE LEDGER** | **⟶ SUPERSEDED AND RE-TAKEN (2026-09-27, the adversarial + blind-verification pass) — read this cell as the governing count, with the red-set pass's 41/39/2 kept below as the record of that pass: THE FILE IS `44` ROWS — `41` RED / `3` PASS.** The **3 pass** are **`PRE-1`/`PRE-2`** (the harness preconditions, **NOT spec rows**) **plus §3.1 `M-19`** (appended this pass; on the red set's own tree the `teardown`-drive rows were RED, and `M-19` is green on the tree that now carries the fix). The **41 red** keep their split of cause exactly as item 3 below records it (36 module-absent + 3 red-against-the-tree + the 2 harness-precondition greens were the only greens). *(**As taken by the red-set pass, SUPERSEDED and kept visible:** **41 rows total: `39` red / `2` green.** The **2 green** are **`PRE-1`/`PRE-2`** — the **harness preconditions**, which are **NOT spec rows** (they assert the red file's own import boundary and its raw tree-reader mirror, so "a red row cannot be a harness artefact"). Their green is a **precondition fact, not a spec-row pass.**)* |
-| 3 | **The 39 red, split by cause** | **36** red **because the module is absent** (`S-1`…`S-7`, the `§2.1` surface + `§2.2` prohibition rows, and every row whose first reach is the import boundary) **+ 3** red **AGAINST THE TREE, with the module irrelevant to the failure**: **`M-14` (raw `count 2` — the `S-1` host-fix branch)**, **`M-11` and `M-12` (raw `count 0` after `teardown()`, contradicting the as-filed one-root expectation)**. **The 3 are the findings** (Finding 1 and Finding 2 of this amendment); the 36 are the expected `module-absent` class of §4.2 step 2. |
+| 3 | **The 39 red, split by cause** | **⟶ RE-TAKEN WITH THE LEDGER (2026-09-27, the per-unit documentation review): the governing split is `41` RED — read item 2 above.** Of the `41` red, **`38`** were red **because the module was absent** and **`3`** were red **AGAINST THE TREE, with the module irrelevant to the failure**: **`M-14` (raw `count 2` — the `S-1` host-fix branch)**, **`M-11` and `M-12` (raw `count 0` after `teardown()`, contradicting the as-filed one-root expectation)**. **Those 3 are the findings**; the `38` are the expected `module-absent` class of §4.2 step 2 and they are green on the tree that now carries the fix. *(**As taken by the red-set pass, SUPERSEDED and kept visible:** *"the **39** red, split by cause — **36** red because the module is absent (`S-1`…`S-7`, the `§2.1` surface + `§2.2` prohibition rows, and every row whose first reach is the import boundary) **+ 3** red AGAINST THE TREE …"*. The `39` is a **subset** count of item 2's red total (the red-set pass's own ledger reads `41 rows · 39 red / 2 pass`), so the split could not close over all of them; the re-take above closes it as `38 + 3 = 41`. **No finding, no cause and no disposition moves** — `M-14`, `M-11` and `M-12` are the same three rows the red-set pass named.)* |
 | 4 | **The 39 spec-declared rows, exactly (the arithmetic, so no later pass reads a row as missing)** | The file asserts **39 spec-declared rows**: **`I-1`…`I-6` (6) + `M-1`…`M-16` (16) + `F-1`…`F-10` (10) = 32 ided rows**, **plus `S-1`…`S-7` (7)** — the `§2.1` exactly-surface rows (`S-1` exports, `S-2` return shape, `S-3` throw pattern) and the `§2.2` six-prohibition rows (`S-4`…`S-7`), which the spec states as its own contract but to which it gives **no `M`/`I`/`F` id**. **32 + 7 = 39**; adding the **2 harness preconditions** (`PRE-1`/`PRE-2`, **not spec rows**) gives the file's **41** rows. **⟶ RE-TAKEN (2026-09-27, the adversarial + blind-verification pass) — the ARITHMETIC DOES NOT CHANGE, only the totals, and the sentence above is kept visible as the red-set pass's count.** With `M-17`/`M-18`/`M-19` **now existing in the file** (they are spec rows, not harness rows), the arithmetic reads: **`I-1`…`I-6` (6) + `M-1`…`M-19` (19) + `F-1`…`F-10` (10) = 35 ided rows + `S-1`…`S-7` (7) = 42 spec-declared rows**, plus the **2 harness preconditions** (`PRE-1`/`PRE-2`, **not spec rows**) = **44 rows**, which is the file's own `44` (`npx vitest run tests/mount-invariant-guard.test.ts` → **44 passed**). **The 3 appended `M` ids are the whole delta: 39 → 42 spec-declared, 41 → 44 total.** *(**As counted by the red-set pass, SUPERSEDED and kept visible:** *"39 spec-declared rows … `M-1`…`M-16` (16) … 32 + 7 = 39 … gives the file's 41 rows."* — correct for that tree, before the three rows were appended.)* **Each `S` row is one row covering a declared group — the file's own header and §4.2 item 1 state that mapping — so no row of the file lacks a spec source and no spec obligation lacks a row.** |
 | 5 | **The decisive raw observations** | **The reproducer, verbatim (first load into a mount on a Runtime never `bootstrap()`ed — the `M-14` drive and `M-17`'s sequence):** `{"childCount":2,"count":2,"nodeIds":["node-234","node-246"]}`. **The `M-3` five-point drive itself read `0 / 1 / 1 / 1 / 1`** (the pre-bootstrap point is `0`, `F-2`'s state; the four rendered points are `1`). **Attribution run (the NON-placement demo envelope, same sequence): `count 2`** (§3a `RED-2`).**After `teardown()` — ON THE BOOTSTRAPPED DRIVE** `count 0`, `mountHTML: ""` (`M-11`/`M-12`)**; on the NEVER-BOOTSTRAPPED drive cycle 1 is `count 1` — one mounted root whose nodeId IS the graph's live in-tree root (`census.inTree === 1`) — and cycles 2/3 are `count 0` (`M-19`, appended this pass).** **The fix's own verification, re-taken this pass (out-of-tree mirror, `reconcileMount()` reverted): the target files go 5-failed — `M-17`, `M-18`, `M-14`'s attribution half, and the two blind teardown rows — while every pre-existing row stays green** (§3b `ADV-1`). **The verbatim per-row reports are §3a's red-run block; the mechanism, reachability and owed fix are there too.** |
 | 6 | **The `[U]` row** | **§5.2's OPTIONAL `[U]` row was NOT TAKEN.** Reason: it needs the `ui` leg and is precondition-gated; §3's rows are all `[T]`/`[H]` and stand alone, so nothing in §3 is weakened by its absence. **Recorded in the DONE row's item 7 per §5.3.** |
@@ -540,7 +612,7 @@ beyond the red set itself).
 
 | # | Path | Change | Condition |
 | --- | --- | --- | --- |
-| 1 | `src/shared/mount-invariant-guard.ts` | **NEW** — the four exports of §2.1 | always |
+| 1 | `src/shared/mount-invariant-guard.ts` | **NEW** — the seven declarations of §2.1 (two exported functions + five interfaces; see that block's amended export note) | always |
 | 2 | `tests/mount-invariant-guard.test.ts` | **NEW** — the red set (§4.2) | always |
 | 3 | `src/renderer/runtime.ts` | a **host fix** on the teardown/diff-removal path | **only** under rule 3's two-root branch (S-1), with a regression row. **⟶ THE CONDITION IS MET (2026-09-27, the red-set pass): the two-root branch is TAKEN (§4.4 `S-1`, §3a `RED-1`), so this row is now an OBLIGATION of this unit — and it is OWED, not landed: no `src/**` file has been touched by the red-set pass or by this amendment.** The fix's required achievement is §3a's red-run block, its regression rows are §3.1 `M-17`/`M-18`, and its acceptance instrument is §2.1's probe **⟶ LANDED (2026-09-27, the adversarial + blind-verification pass): the fix is `reconcileMount()` in `src/renderer/runtime.ts` — §3a `RED-5(ii)`'s second acceptable reading, reconciled before the new tree is emitted and reachable only through `resetRenderState()` (i.e. via a load). The as-filed "OWED, not landed" clause is kept visible as the state the red-set pass left.** |
 | 4 | `docs/specs/mount-invariant-guard.md` | this spec — §3a/§3b findings as they land, §7 additions | always |
@@ -672,7 +744,11 @@ finding, and the DONE row must say which of (b)/(c) governs.**
    pass files the contract. **The unit is BLOCKED on the architect's go-ahead for wave D and on its
    red set** (§0 ruling 6, §4.5). The wave-B go-ahead authorises **nothing here**. **⟶ The *"and on
    its red set"* half of that blocker sentence is now SPENT (the red set has been run, §4.6); the
-   wave-D go-ahead half STANDS.**
+   wave-D go-ahead half STANDS.** **⟶ THE GO-AHEAD HALF IS SUPERSEDED (2026-09-27, the supervisor's DONE
+   pass; the sentences above are kept visible): the architect GAVE the wave-D go-ahead (2026-09-27), and this
+   unit is `DONE` — so item 1's opening words *"Nothing in this unit is `DONE`, nothing is green, and no leg
+   has been run by this pass"* describe the FILING pass and no longer this unit's state. Read the dated STATUS
+   NOTE at the head of this file as the governing status.**
 2. **The region host stays DECLINED and this file must not be read as adopting it.** `SCH-1`'s
    region half is refiled to the fork; its blockers are `(C)#1` and `(C)#6` (**not** prohibition 5),
    and it is redundant for the invariant. **A later pass that re-merges the two halves to satisfy
@@ -800,8 +876,8 @@ routes it here.
 | --- | --- | --- | --- |
 | `SCH-1`'s **invariant half** (`S-d2`; §2.2's `SCH-1` row) | amendment §1 preamble, §2.2 | **ADOPTED — this unit** | §1, §2 |
 | `SCH-1`'s **region host** (`ShellRegionName`/`ShellRegionSpec`/`ShellRegions`) | amendment §0, §2.2, `S-d11`, `H-r17` | **DECLINED + REFILED to the fork** — **must not be re-merged** | §3, §7 item 2 |
-| Row **D1** (`docs/next-steps.md` `## OPEN`) | that file's `## OPEN` table (**cited by row id, never by line**) | **OWED**: the row's spec cell reads *"`docs/specs/mount-invariant-guard.md` (**OWED — not filed**)"* — **this filing discharges that cell** (the row itself stays `BLOCKED`) | this file |
-| **THE RED SET** — `tests/mount-invariant-guard.test.ts` (41 rows: 39 red / 2 pass, `aa8b92e`) and its report | this file **§4** (the red plan), **§4.2** (authoring order) | **ADOPTED + DISCHARGED IN PART (2026-09-27, the red-set pass): AUTHORED and RUN**, with the outcome recorded as **§4.6 (the ledger)**, **§4.4 `S-1` (HIT and TAKEN — the stop-condition state)** and **§3a `RED-1`…`RED-6` (the finding, the attribution, the mechanism, the reachability, the owed fix, its disposition)**. **What remains OWED: the probe module (§5.1 row 1), the host fix (§5.1 row 3) and the regression rows (§3.1 `M-17`/`M-18`).** The finding is a **HOST** finding and is **NOT** a `docs/defects.md`/`HANDOFF.md` row (§4.4 `S-1`; the `R13-HOST-FIX` precedent) | §3a, §3.1 `M-17`/`M-18`, §4.4, §4.6, §5.1 |
+| Row **D1** (`docs/next-steps.md` `## OPEN`) | that file's `## OPEN` table (**cited by row id, never by line**) | **OWED**: the row's spec cell reads *"`docs/specs/mount-invariant-guard.md` (**OWED — not filed**)"* — **this filing discharges that cell** (the row itself stays `BLOCKED`) **⟶ AND THE ROW HAS SINCE MOVED (2026-09-27, the per-unit documentation review): `D1` is `D1 — MOVED TO DONE`, the unit is the ledger's fourth `DONE` row, and this index cell's `BLOCKED` clause is kept only as the filing pass's record.** | this file |
+| **THE RED SET** — `tests/mount-invariant-guard.test.ts` (41 rows: 39 red / 2 pass at the red-set pass; **`44` rows today, and every row of it PASSES on the tree that carries the fix**) and its report | this file **§4** (the red plan), **§4.2** (authoring order) | **ADOPTED + DISCHARGED IN PART (2026-09-27, the red-set pass): AUTHORED and RUN**, with the outcome recorded as **§4.6 (the ledger)**, **§4.4 `S-1` (HIT and TAKEN — the stop-condition state)** and **§3a `RED-1`…`RED-6` (the finding, the attribution, the mechanism, the reachability, the owed fix, its disposition)**. **What remains OWED: the probe module (§5.1 row 1), the host fix (§5.1 row 3) and the regression rows (§3.1 `M-17`/`M-18`).** **⟶ THAT OWED SET IS DISCHARGED (2026-09-27, the adversarial + blind-verification pass, verified by the per-unit documentation review): the module EXISTS (§5.1 row 1), the host fix `reconcileMount()` is LANDED (§5.1 row 3, §3a `RED-5(ii)`), and `M-17`/`M-18` EXIST and are green (§3.1), with `M-19` appended — the as-filed `OWED` clause is kept above as the red-set pass's state.** The finding is a **HOST** finding and is **NOT** a `docs/defects.md`/`HANDOFF.md` row (§4.4 `S-1`; the `R13-HOST-FIX` precedent) | §3a, §3.1 `M-17`/`M-18`/`M-19`, §4.4, §4.6, §5.1 |
 | The eight-unit plan's **`U2`** row | amendment §"The amended unit plan" | **INHERITED-ONLY provenance** (superseded by the 20-unit plan, `H-r20`); its owner-artifact + red-set cells are re-anchored in §5.1/§4 | §5.1, §4 |
 | `H-r4` (the spec's required shape) | `H-r4` as amended by `H-r20` | **DISCHARGED by this filing**: status/source block, `§0` prohibitions, exact surface, every state/fail-state, red-set plan, trio plan, explicit falsification/stop condition, explicit zero-row PBT decision | §0–§7 |
 | `H-r8`'s six-prohibition block | `S-d8`, `H-r8` | **DISCHARGED** as a six-row assertion table | §2.2 |
@@ -815,7 +891,7 @@ routes it here.
 | `U-ENGINE-PIN`'s landed state (pin at `package.json:24` = `^0.5.1`; the shim's `removeAttribute`) | amendment §4.1, `docs/specs/engine-pin.md` | **INHERITED as landed state** — this unit does not re-open or re-measure it | §0 ruling 4, §2.4 |
 | `docs/specs/mount-invariant-guard.md`'s row in amendment §8's owed-spec list | amendment §8 | **DISCHARGED by this filing** (the file exists) | this file |
 | **`docs/decisions.md`'s ledger** — the two `U-MOUNTGUARD` ACTIVE rows added by **this amendment's pass** (the `S-1`/host-fix-branch row and the teardown-two-layer row) + the new **AMENDMENTS-to-pre-existing-rows** note | this spec's §3a `RED-5`/`RED-6`, §4.4 `S-1`, §3.1 `M-11`/`M-12` | **ADDED — APPENDED (2026-09-27, the red-set pass)**, deliberately appended so that **no previously cited `docs/decisions.md:<n>` anchor moves**; the rows are the compact pointers to this contract, and the contract is the sections named here | `docs/decisions.md` (appended blocks + the amendment note) |
-| **The red run's finding** (`RED-1`…`RED-6`) | this spec **§3a** (recorded here **per §4.4 `S-1`**), `docs/decisions.md`'s amendment note | **OWED — a HOST finding, fixed HERE, never a `docs/defects.md`/`HANDOFF.md` row**; **landed status: the finding is recorded, the FIX is not landed** | §3a, §5.1 row 3, §3.1 `M-17`/`M-18` |
+| **The red run's finding** (`RED-1`…`RED-6`) | this spec **§3a** (recorded here **per §4.4 `S-1`**), `docs/decisions.md`'s amendment note | **OWED — a HOST finding, fixed HERE, never a `docs/defects.md`/`HANDOFF.md` row**; **landed status: the finding is recorded, the FIX is not landed** **⟶ UPDATED (2026-09-27, the adversarial + blind-verification pass; read the as-filed cell above as that pass's state): the FIX IS LANDED — `reconcileMount()` (§3a `RED-5(ii)`), §3b `ADV-1`/`ADV-9`'s dispositions, and the regression rows `M-17`/`M-18` exist and are green. §3a's own status line now reads `CONFIRMED-FIXED`. It remains NOT a `docs/defects.md`/`HANDOFF.md` row — a HOST finding, fixed here** | §3a, §5.1 row 3, §3.1 `M-17`/`M-18`/`M-19`, §3b |
 
 **Cross-file citation findings this pass found and did NOT fix (not this unit's files; report, do
 not silently reconcile).** Each was read in this pass:
@@ -948,7 +1024,7 @@ unrecorded) is a review finding** (`AGENTS.md` RCA-3). **⟶ UPDATED (2026-09-27
 the table is still EMPTY BY CONSTRUCTION, and `OWED` still governs it — but the red run has landed
 its finding in §3a, and §3a's `RED-6` states the disposition it is owed. When the host fix lands with
 its regression rows, the host finding's disposition is `CONFIRMED-FIXED` and **this table is where it
-is recorded**; nothing in the red run may be filed here before that.**
+is recorded**; nothing in the red run may be filed here before that.** **⟶ DISCHARGED (2026-09-27, the adversarial + blind-verification pass; read the two `OWED` clauses above as that pass's state): the table is NO LONGER EMPTY — the landed disposition rows `ADV-1`…`ADV-10` are at the file's END under the `## 3b (continued …)` heading below, no row is left in the bare `OWED` state, and the host finding's disposition is recorded there as `CONFIRMED-FIXED`. The clause that survives unamended is the review rule: a DONE row that cites no adversarial pass, or whose findings are unrecorded, is a review finding (RCA-3).**
 
 **Why these two sections sit at the END of this file (the `docs/specs/engine-drift.md` convention,
 stated so the placement is not read as an oversight):** the **seed set** is the artifact the pass

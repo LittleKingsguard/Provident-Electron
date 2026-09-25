@@ -8,6 +8,157 @@ this repo's local next-steps (the upstream queue lives in
 Historical pass records are archived in the gitignored `archive/` dir and do
 not ship in a fork (see `docs/FORKER.md` §1/§5).
 
+## ⟶ HANDOVER — for a fresh supervisor (2026-09-27, the `U-MOUNTGUARD` DONE pass)
+
+**WHY THIS BLOCK IS HERE (and not in a standalone file): this file IS the repo's handover surface.** The
+established convention is `HANDOVER UPDATE` / `HANDOVER UPDATE 2` / `CURRENT WORK / HANDOVER STATE` blocks
+**inside** `docs/next-steps.md` (see the blocks below), and AGENTS.md item 3 requires a handover to carry the
+documentation-staleness reconciliation in the same pass. A separate `docs/HANDOVER-CURRENT.md` would become a
+**second source of truth** for counts this file already owns and would need its own DONE/OPEN reconciliation
+each pass — so **no new file was created**: this block is the handover, placed FIRST so a fresh agent reads it
+before any dated block. **Cite it by section name, never by line** (this file is 1400+ lines and growing).
+
+**1. THE EXACT CURRENT STATE (measured this session; every figure below is a measurement, not a projection).**
+**FOUR units are `DONE`:** `U-ENGINE-PIN` (wave **A**) · `U-ENGINE-DRIFT` (wave **B**) · `U-REALDOM-BOOT`
+(wave **C**) · **`U-MOUNTGUARD` (wave **D**, the ledger's FOURTH `DONE` row — its record is the
+`## DONE — U-MOUNTGUARD` section below)**. **The counts, verified against the `## OPEN` table this pass:
+`4 DONE / 16 open rows`, and `4 + 16 = 20` units**; the 16 open rows are `C2` (1) · `D2`–`D4` (3) ·
+`E1`–`E9` (9) · `F1`–`F4` (3) = `16`, and the four provenance rows (`A`, `B`, `C1`, `D1`) are **moved, not
+deleted, and not double-counted**. **The legs, green on the FINAL tree:** `npm test` `[T]` **`59` files /
+`916` passed / `2` skipped / `0` failed** · `npm run typecheck` **clean** · `npm run build` **clean**
+(5 bundles) · `npm run battery` `[B]` **`184` checks / `0` failures** · `npm run divergence` `[A]`
+**`R13 RESULT: 9 checks, 0 failures`** (`N = 9` **unmoved**); the blind run also observed `npm run ui` `[U]`
+green (**`11/11`**, **`427x22`**, `retries=0`). **`U-MOUNTGUARD`'s own evidence:** the red set was RUN first
+(**`aa8b92e`** — 41 rows: **39 red / 2 pass**, the 2 greens being the harness preconditions `PRE-1`/`PRE-2`),
+the red run **hit the spec's own stop condition `S-1`** (one `loadEnvelope` into a never-`bootstrap()`ed mount
+left **two** engine-emitted roots), so the unit's shape became the **HOST-fix branch**, and the final tree
+carries **44 rows, all green** (42 spec rows + 2 harness rows; `M-17`/`M-18`/`M-19` appended after the
+adversarial pass). **Commits: `aa8b92e` … `1b7d1ca`** (red set → green → adversarial/blind → doc review → this
+DONE pass); the doc review's own commit sits inside that range, and its record is
+`archive/reviews/2026-09-27-U-MOUNTGUARD-doc-review.md` (gitignored provenance). **The wave-D go-ahead WAS
+GIVEN (architect, 2026-09-27)** — older cells that still say it is absent are **stale and annotated, not
+silently rewritten** (see §8).
+
+**2. THE EXACT NEXT ACTION: wave D continues — `U-LISTHOST` (`D2`) → `U-SLOTHOST` (`D3`) → `U-PROJ` (`D4`),
+in that order.** Each is **`BLOCKED` only on its own red set**: `U-MOUNTGUARD` (`D1`) is `DONE`, which was the
+ordering precondition the three cells name. So each unit's *next* step is, in order: **file
+`docs/specs/{listhost,slothost,projection}.md`** (all three read `OWED — not filed`) → **TestWriter red RUN and
+REPORTED** → green → adversarial → blind greens → legs → doc review → DONE. **No wave-D unit may claim a
+real-DOM row**: the `[U]` rows those cells call *optional* need `U-DIVERGENCE-EXT`'s `H-r10` extractor for any
+attribute-shaped variant, and `npm run divergence` green for the tree. **`U-DIVERGENCE-EXT` (`C2`) remains
+`BLOCKED` on its own deliverables only** (`H-r10` channel + the set-wise attribute-presence extractor + the
+`props` falsy-toggle scenario); `U-GSESSION` (`E6`) is unblocked by `U-MOUNTGUARD` being `DONE`.
+
+**3. THE GATE TOPOLOGY A FRESH AGENT MUST FOLLOW (per unit, in this order — none may be skipped or reordered).**
+**(G1) spec** filed in `docs/specs/<unit>.md` (delegation gate, AGENTS.md item 9) → **(G2) red** authored by a
+TestWriter from the spec and **RUN and REPORTED before any implementation** (RCA-1; the DONE row must carry the
+red's own numbers) → **(G3) green** (least code; then the trio `npm test` / `typecheck` / `build`, plus the
+unit's declared extra legs, battery and divergence) → **(G4) adversarial** read-only pass (RCA-3), findings
+dispositioned **in the unit's spec §3a/§3b** and every host finding fixed **here** with a regression row →
+**(G5) blind greens** (`docs/specs/<unit>-greens.md`, written from the docs only, item 10a) → **(G6)
+live/legs** (the divergence leg and, where the unit declares one, `npm run ui`) → **(G7) documentation review**
+(item 10d/RCA-6; record in `archive/reviews/<date>-<unit>-doc-review.md`) → **(G8) DONE** (the supervisor's
+record in this file). **A unit missing any gate, or whose red was not run before its implementation, is a
+review finding** — the whole point of the order is that the red's numbers exist *before* the code does.
+
+**4. THE RCA-8 ATOMICITY RULES, ONE LINE EACH (binding on every agent and on the orchestrator).**
+**(a) Every gate boundary leaves a commit** (spec → red → green → adversarial/doc-review → DONE); **a tree
+carrying more than ONE unit's uncommitted work is itself a review finding.**
+**(b) Commit BEFORE any destructive-capable operation** (whole-file rewrite, bulk regen, archival move, or a
+delegated pass authorised to replace a file) — or copy the artifact aside first and say where.
+**(c) Never whole-file `write` an existing file over ~200 lines** unless it is committed in the same pass:
+use bounded `edit`s, or append, or `write` a NEW file.
+**(d) Append means append:** anchor the `edit` on the file's last line and verify the pre-existing bytes
+survive; if a pass clips or truncates anything it must **STOP**, state that in the file **and** to the
+orchestrator, and restore from version control before any other edit.
+**(e) Per pass, assert an edited tracked document still exists in `HEAD`** (the orchestrator verifies
+`git status` at each checkpoint); an untracked document that matters is committed **before** further passes
+edit it.
+**(f) Commits are scoped, not bulk:** one commit per gate boundary, the message naming the unit and the gate;
+unrelated units never share a commit.
+
+**5. THE FOUR OPEN CONTRACT RULINGS — ALREADY DECIDED; do not re-open, do not invent alternatives.**
+**(i) The projection signature is TWO arguments: `project(values, specOf) → Projection`** (the plan's
+single-argument form is NOT the contract; every name/unit/format choice is caller-supplied data).
+**(ii) `A-11` — a `Projection` is a REUSABLE VALUE**, not a session: no consumption, no per-projection state,
+every call equivalent to a first call with that value (`I-11`, rows `M-21`/`M-22`).
+**(iii) `A-2`/`F-4` — a THROWING VALUE ACCESSOR is SKIPPED and RECORDED, never propagated**: caught per key,
+one bad key never aborts a run, a **new eighth `ProjectionSkipReason` member `'accessor-threw'`** (the `F-4`
+split into `F-4A`/`F-4B`, row `F-12`; the vocabulary recount is **7 → 8**).
+**(iv) `A-3` — the prototype-pollution-shaped key ⇒ `Projection` built on `Object.create(null)`** (`I-12`/`I-13`,
+`F-13`, `M-18`/`M-19`/`M-20`); **and `A-7` — sink RE-ENTRANCY is NOT GUARDED**, the projection is
+**IMMUTABLE INPUT** to the applier (`I-11`/`I-14`, `M-21`/`M-22`, `F-14`/`F-15`; a consumer wanting different
+writes builds a **NEW** projection). **Where they live:** `docs/specs/projection.md` §0 ruling 9 + §0A's dated
+ruling notes, and `docs/decisions.md`'s `PROJECTION-SIGNATURE-TWO-ARGUMENTS`, `PROJECTION-REUSABLE`, plus
+amendment note 17. **These were ruled for `U-PROJ` (`D4`) — a wave-D unit must build on them, not adjudicate
+them again.**
+
+**6. THE TEN DELIBERATE UNRULED SEEDS — `U-MOUNTGUARD`'s adversarial pass worked from ten seeds, and each pass
+ruled them rather than inventing answers.** The pass's seed set (`docs/specs/mount-invariant-guard.md`'s
+adversarial section) runs `A-1`…`A-16`; the **ten that were deliberately left UNRULED rather than answered by
+silence** are the ones a pass must **rule on the record**, and the pass resolved them by pinning —
+`A-2`/`A-3`/`A-8`/`A-9`/`A-11`/`A-12` are now pinned by `M-7`/`F-4`/`F-2`/`F-5`/`F-8`/`F-9`, `A-4`/`A-5` by
+`M-15`/`M-13`, `A-10` **partly pinned with its remainder owed** (`ADV-7`), and `A-13`…`A-16` are the static
+sweeps (green: `0` forbidden tokens; `ALL_TOOLS` **21** / `RpcMethod` **21** unchanged; no shim member added;
+no region concept reintroduced) — **and the pass pinned the SIX further findings as `ADV-1`…`ADV-10`**
+(§3b). **THE BINDING RULE FOR EVERY WAVE-D UNIT, stated in one line: a wave-D unit's adversarial pass must
+RULE each seed it inherits rather than defer it** — a seed left unruled, or ruled by silence, is a review
+finding; and every finding gets **one of §3b's six dispositions** (`FIXED-this-pass`, `RESOLVED-BY-PINNING`,
+`OWED-with-owner`, `PARKED-with-revisit-condition`, `ACCEPTED-AS-PINNED`, `NOT-A-FINDING`), never a bare
+`OWED`.
+
+**7. PARKED / `OWED` ITEMS WITH THEIR OWNERS (all recorded; none blocks a DONE row).**
+**`U-MOUNTGUARD`'s `§3b` rows:** `ADV-2` the reconciler is not total (`holder.children` read + `Array.from`
+outside the local `try`) — **PARKED**, *owner: the host, the next `src/renderer/runtime.ts` change*;
+`ADV-4` the probe **REFUSES a real-DOM mount** (`children` must be an array; a real DOM's is an
+`HTMLCollection`) — **OWED-with-owner**, *owner: the pass that would take the optional `[U]` row* — **this is
+why the `[U]` row is still `NOT TAKEN`**; `ADV-7` the non-string/blank `expect.rootNodeId` clauses — **OWED**,
+*owner: the next contract pass for this module*; **plus two blind greens (item 10a) and every leg result.**
+**`U-REALDOM-BOOT`'s parked / `OWED` set (`docs/pending.md` §F, five rows):** `G-1`'s **residual** (a
+display-less host with no X server exits `2`, not `3` — *owner: the divergence leg's `PRE-4` /
+`U-DIVERGENCE-EXT`*, explicitly **not** `U-REALDOM-BOOT`'s) · **`G-7` — FIXED** (the scratch-profile cleanup:
+spawn the Electron binary + register the cleanup hook at `scratchRoot` creation) · `G-8` (the `PRE-2` digest
+window closes before the boots, so a concurrent rebuild is undetected — *owner: the leg owner*), `G-9` (probe
+observations are not pinned to the loaded envelope — *owner: leg owner + instrument*), `G-10` (the `R0`(a)/(b)
+isolation claim is weaker than it reads — *owner: TestWriter, tracker-only*) and `G-11` (the battery-host and
+the divergence child sit outside the helper's cleanup — *owner: leg owner, with `U-DIVERGENCE-EXT` the
+inherited half*); and **`G-13`'s two non-`scripts/**` halves are REPORTED, NOT REWRITTEN** with owners named
+(the contract text — a clause correction being a ruling; and the `src/main/main.ts:58-62` host seam). **Also
+owed, one line:** the **shim-integrity check** (`docs/pending.md` §E) — recommended, NOT implemented, *owner:
+any pass that edits the harness precondition; its trigger has already been touched*, and `U-MOUNTGUARD`'s
+`§3b ADV-10` host comment `src/renderer/runtime.ts:559` (**"Idempotent"**) still repeats the **unconditional**
+teardown form — *owner: the next pass that edits that file*.
+
+**8. THE ENVIRONMENT FACTS A FRESH AGENT NEEDS (each measured; none inferred).**
+**(i) The Electron runtime WORKS** — Electron **44.4.5** boots; a post-repair boot probe exits `0` in
+**`176 ms`** printing `BOOT-OK 44.4.5` (`docs/decisions.md` `NPM-SHIM-INTEGRITY`).
+**(ii) The `/dev/shm` restriction is REAL but MITIGATED** — the sandbox denies `/dev/shm` writes and a renderer
+can die `SIGTRAP` (~1-in-3 for back-to-back boots), which is exactly why the divergence leg spawns with
+**`--disable-dev-shm-usage` + a fresh scratch `--user-data-dir` per spawn** (both required; the
+`DIVERGENCE-SPAWN-FIX`, landed). A `SIGTRAP` death is an environment fact, **never** a unit failure.
+**(iii) `npm run divergence` IS the strict precondition for ANY real-DOM claim** — a `ui` green is never
+stronger than a `divergence` red (`PRE-1`/`PRE-3` authority order; exit `2` `PRECONDITION-FAILED` with no
+measurement taken), and **`N = 9` is a pin no unit may move.**
+**(iv) The CORRUPT-SHIM HAZARD, and its one-line check** — `node_modules/electron/cli.js` (the entry point every
+spawn here goes through) was found replaced by a **shell script that re-execs itself**, producing a **silent
+~99 %-CPU hang that is indistinguishable from a wedged host**; it cost multiple passes of misattribution to
+"the environment". **Before blaming the host: `file -L node_modules/electron/cli.js` must report a NODE script,
+not a shell script** (and `strace -f` is the discriminating test — an unbroken `openat` cycle with no
+`clone`/`execve` progress and no `EPERM`/`EACCES`).
+
+**9. THE HONEST LIMITS — WHAT NO GREEN IN THIS CYCLE PROVES (state these; never over-read a green).**
+**The unit's evidence is `[T]`/`[H]`** (the shim tree + the host) — **no real-DOM row was taken**; a **green
+node suite is NEVER assembled-app evidence** (no window, no IPC round-trip, no MCP transport, no real DOM);
+**a green `divergence` leg is STRUCTURAL-SURFACES-ONLY — never IPC-layer**; and **the module
+`src/shared/mount-invariant-guard.ts` is imported by NO `src/**` file** — it is the **regression instrument,
+not a guard the application runs**, so no green here proves the running app enforces the invariant. Also not
+proven: any rendered geometry, any attribute presence (`M-46` stays `UNMEASURABLE`), the shim's fidelity (it is
+demoted to **pre-filter**, not retired), `provident.dispatch`-is-a-real-gesture, and — for the wave-C leg — the
+Electron-44 API assumptions that the `Q7` risk left open. **And the unit's own evidence is instrument-plus-fix,
+not app-level enforcement:** the fix (`reconcileMount()` from `resetRenderState()`) is reached on the
+**re-derivation** path — the live boot path is **byte-identical** and never reaches the sequence the red run
+drove.
+
 ## CURRENT WORK / HANDOVER STATE — `U-ENGINE-PIN` is **DONE (2026-09-27)**: every leg its spec declares is GREEN, including the **live** `npm run divergence` leg (state as of 2026-09-27, the supervisor's DONE pass)
 
 **The unit-status and execution-log paragraphs this block used to carry have been ARCHIVED**
@@ -33,6 +184,18 @@ values** and are **kept as dated measurement records — annotated, never silent
 | `npm test` | **58 files / 863 passed / 2 skipped / 0 failed** | **58 files / 872 passed / 2 skipped / 0 failed** | the **`G-4`** fix pass rebuilt the unit's rows so each **extracts and RUNS** the leg's own predicates/producers instead of matching source text — **`+9` falsifiable rows**: `7` in the contract file / `2` in the seam file |
 | the unit's row set | **`68/68`** (`59` contract + `9` seam) | **`77/77`** | `tests/ui-leg-contract.test.ts` = **`66`** rows (**`59`** clause rows **+ `7`** rebuilt falsifiable rows: `R0-fals`, `R0(c)-fals`, `R1-fals`, `R2-tally-fals`, `R2-frame-fals`, `R3-fals`, `R4-fals`); `tests/ui-leg-seam.test.ts` = **`11`** (9 landing rows + the `G-2` witness pair `SEAM-R0(c)-a`/`-b`) |
 | the rest of the legs | `R13 RESULT: 9 checks, 0 failures` · battery `184 checks / 0 failures` · `npm run ui` exit `0`, `11/11 … R0-R4`, `427x22`, `retries=0` | **unchanged** | no leg result, no exit code and no measurement moved; **`M-46` stays `UNMEASURABLE`** |
+
+**⟶ COUNT RECONCILIATION, UPDATE 1 (2026-09-27, the `U-MOUNTGUARD` per-unit documentation review —
+`AGENTS.md` item 10d/RCA-6; read this with the table above, whose wave-C figures are that pass's own
+dated measurement):** `npm test` is now **`59` files / `916` passed / `2` skipped / `0` failed** — the
+new file is **`tests/mount-invariant-guard.test.ts`** (44 rows: `41` red / `3` pass at the red-set pass,
+**all `44` green** on the tree that carries the host fix), and the wave-C unit's figures are **unmoved**
+(`tests/ui-leg-contract.test.ts` **`66`**, `tests/ui-leg-seam.test.ts` **`11`**, set **`77/77`**).
+**Every other leg is unmoved too:** typecheck clean · build clean (5 bundles) · battery **`184 checks /
+0 failures`** · **`npm run divergence` → `R13 RESULT: 9 checks, 0 failures`** (`N = 9` intact) ·
+`npm run ui` exit `0`, `11/11 … R0-R4`, `427x22`, `retries=0` · `M-46` **`UNMEASURABLE`**. *(The `872`
+above is kept as the `G-4` pass's own measurement — the annotate-never-rewrite convention; the `+44`
+rows and the `+1` file are this unit's, and **no other pass's count is retracted**.)*
 
 **`G-4`'s outcome, recorded as the closure of the last open routed item:** the rows are **FIXED** — a
 **`15`-mutation out-of-tree matrix** shows **each strengthened row reddens**, so a revert of the behaviour a
@@ -456,6 +619,85 @@ A `retries=2`, B `retries=1`), one exhausted, **both `0` roots**) · the raised-
 **no** row to a pass, retired **no** seed, and re-dispositioned **no** `NBR-*` row; `M-46` stays
 `UNMEASURABLE`.
 
+## DONE — `U-MOUNTGUARD` (2026-09-27, the supervisor's DONE pass — the ledger's FOURTH `DONE` row)
+
+**The DONE row's facts, in prose (authoritative — the ledger row below is the same record in row form; cite
+this paragraph and the files it names when a viewer truncates the row).** **THE WAVE-D GO-AHEAD WAS GIVEN
+(architect, 2026-09-27).** This is recorded here because several older cells still say *"the wave-D go-ahead is
+absent"* — **all of them are stale, they are annotated rather than rewritten, and the go-ahead is the fact that
+makes wave D's queue live** (`docs/specs/mount-invariant-guard.md`'s filed status block and §0 ruling 6,
+`docs/decisions.md`'s `U-MOUNTGUARD` ACTIVE block + amendment notes 19 and 21, and the sibling D-unit specs'
+own go-ahead rows). **THE UNIT:** `U-MOUNTGUARD` — wave **D**, `SCH-1`'s **invariant half** (`SCH-1`'s
+**region-host half stays DECLINED**, unchanged and not re-merged), the cross-envelope mount
+cardinality/identity probe. Its spec is `docs/specs/mount-invariant-guard.md` (**FILED**; the ~1009-line
+figure is *the unit's documentation review's own measurement* — this pass's status annotations added lines on
+top, so the live file is longer), **now carrying**
+the red-set amendment, the **`S-1` host-fix branch**, §3a's `RED-1`…`RED-6`, §3b's `ADV-1`…`ADV-10`
+disposition table, and the drive-specific teardown clause, plus its blind record
+`docs/specs/mount-invariant-guard-greens.md`. **THE RED — RUN AND REPORTED BEFORE ANY IMPLEMENTATION
+(RCA-1), and its outcome decided the unit's shape:** the red set was authored and RUN first (commit
+**`aa8b92e`**): **41 rows — 39 red / 2 pass**, the 2 greens being the **harness preconditions**
+`PRE-1`/`PRE-2` (**not spec rows**); of the 39 red, **36 were the module-absent class** and **3 were red
+AGAINST THE TREE** (`M-14`, `M-11`, `M-12` — the module irrelevant to the failure). **THE UNIT'S HEADLINE
+OUTCOME: the red run HIT the spec's own stop condition `S-1`** — *"the cycle-2 count is 2"* — and the measured
+fact was stronger than the condition's wording: **one `loadEnvelope` into one mount left TWO engine-emitted
+roots** (`{"childCount":2,"count":2,"nodeIds":["node-234","node-246"]}`) on a `Runtime` that was **constructed
+but never `bootstrap()`ed**, with the non-placement attribution run reproducing `count 2`. **So the unit's shape
+became the HOST-FIX BRANCH (`§6` outcome (b)):** the probe module **`src/shared/mount-invariant-guard.ts`**
+(NEW — **four exports, two functions**), **plus a host fix in `src/renderer/runtime.ts`** (`reconcileMount()`
+called from `resetRenderState()`; the previous root is detached **by reference**), with the probe as the
+acceptance evidence — **the live boot path is byte-identical and never reaches the sequence** (the
+construct-then-load drive is the reachable one; `src/renderer/renderer.ts` `bootstrap()`s before any load).
+**THE GREEN, on the FINAL tree:** `tests/mount-invariant-guard.test.ts` is **44 rows — ALL GREEN** (`42` spec
+rows + `2` harness preconditions; `M-17`/`M-18`/`M-19` appended after the adversarial pass), and the suite is
+**`59` files / `916` passed / `2` skipped / `0` failed**. **THE ADVERSARIAL PASS (RCA-3) RAN and found the
+fix's own evidence MISSING** — the spec and the decision log named `M-17`/`M-18` as the regression rows the host
+fix must turn green **while no such rows existed**, so reverting the fix left **40 of 41 rows green**. **That
+hole is CLOSED:** the rows now exist, `M-14`'s non-placement observation is an **assertion** rather than an
+interpolation into a failure message, and an **out-of-tree mirror with the fix reverted reddens exactly `5`
+rows** — `M-17`, `M-18`, `M-14`'s attribution half, and the **two blind teardown rows** — while every
+pre-existing row stays green. Its other findings are §3b's advisory rows with owners: the reconciler is **not
+total** (`ADV-2`), the **one-runtime-per-mount** precondition (`ADV-3`), the probe **refuses a real-DOM mount**
+so the optional `[U]` row **cannot be taken** (`ADV-4`), two unguarded property GETs (`ADV-5`), the unanchored
+serialization fallback (`ADV-6`), the unpinned blank `rootNodeId` (`ADV-7`), and two stale comments
+(`ADV-10`). **THE BLIND GREENS (gate 5, item 10a):** `docs/specs/mount-invariant-guard-greens.md` — **`56` rows:
+`48` PASS / `2` FAIL / `6` NOT-BLIND-RUNNABLE**; **both FAILs were the same teardown-drive finding the
+adversarial pass also found, and both are resolved by PINNING** (verdicts kept verbatim, never converted). The
+blind run **independently verified the defect fix at the raw tree layer** — one root on all four re-derivation
+paths, and `RED-1`'s two roots **no longer reproduce**. **THE SECOND CONTRACT FINDING, NOW PINNED (the
+teardown claim is DRIVE-SPECIFIC):** on a **bootstrapped** runtime `teardown()` leaves the mount **empty**
+(`inTree === 1`); on a **never-bootstrapped** runtime the **FIRST** `teardown()` leaves **ONE** mounted root
+(the graph's **live in-tree root**) and later cycles leave **0** — pinned as §3.1 **`M-19`**, with the spec,
+`docs/specs/runtime-host.md` and the decisions row now saying so. **THE DOC REVIEW (gate 8, item 10d/RCA-6) HAS
+RUN:** `archive/reviews/2026-09-27-U-MOUNTGUARD-doc-review.md` — it fixed **one genuine code/doc drift** (the
+result's **seventh** field `expectedRootNodeId?` was undocumented) and **two count/arithmetic residues**, and
+reconciled the trackers. **THE LEGS, all on the FINAL tree, each with its layer label:**
+`npm test` `[T]` **`59` files / `916` passed / `2` skipped / `0` failed** · `npm run typecheck`
+**clean (exit 0)** · `npm run build` **clean, 5 bundles (exit 0)** · `npm run battery` `[B]` **`184` checks /
+`0` failures** · `npm run divergence` `[A]` **`R13 RESULT: 9 checks, 0 failures`** (**`N = 9` unmoved**); the
+blind run also observed **`npm run ui`** `[U]` green (**`11/11`**, **`427x22`**). **LAYER ATTRIBUTION (state
+it, so no row here is over-read):** the unit's evidence is **`[T]`/`[H]`** (the shim tree + the host) — **no
+real-DOM row was taken** (`ADV-4` is why); **a node-suite green is NEVER assembled-app evidence**; **a green
+`divergence` leg is STRUCTURAL-SURFACES-ONLY, never IPC-layer** (`LIVE-OP-REJECT`'s lesson); and **the module
+is imported by NO `src/**` file** — it is the **regression instrument, not a guard the application runs**.
+**STILL OWED, ALL NON-BLOCKING AND RECORDED:** §3b's **`OWED-with-owner`** (`ADV-4`, `ADV-7`) and
+**`PARKED-with-revisit-condition`** rows (`ADV-2`, `ADV-3`, with their preconditions), and the host comment
+**`src/renderer/runtime.ts:559`** (*"Idempotent"*) **which still repeats the unconditional teardown form**
+(`ADV-10`; a docs-only pass may not edit `src/**`). **COMMITS: `aa8b92e` … `1b7d1ca`** (red → green →
+adversarial/blind → doc review → this DONE pass). **NO upstream handoff:** the finding is **HOST-owned**, so
+**no `docs/defects.md` row and no `docs/HANDOFF.md` round is owed** (the `R13-HOST-FIX` precedent, which this
+spec restates as its own honest statement). **This is the ledger's FOURTH `DONE` row. It supersedes `## OPEN`
+row `D1` (moved out of the table into this record — the row is NOT deleted; `RCA-8(f)`: no successor row is
+added, because the wave-D queue continues at `D2`, which stood next in the order).**
+
+**⟶ LEDGER ROW (`U-MOUNTGUARD`) — and the moved `D1` provenance row, one table, two rows, so the ledger reads
+in one place:**
+
+| Unit | Wave | Red → green (RUN, per cycle) | Landing | Adversarial / blind greens / review | Legs (all run on the FINAL tree) |
+| --- | --- | --- | --- | --- | --- |
+| **`U-MOUNTGUARD`** — the cross-envelope mount cardinality/identity probe (`SCH-1`'s invariant half; the region-host half **stays DECLINED**), `docs/specs/mount-invariant-guard.md` (**FILED** + the red-set amendment + §3a `RED-1`…`RED-6` + §3b `ADV-1`…`ADV-10` + the drive-specific teardown clause). **The unit is COMPLETE on every leg its spec declares.** | **D** (`D1`) | **RUN and REPORTED before any implementation (RCA-1): `41` rows — `39` red / `2` pass, commit `aa8b92e`** (`36` module-absent + `3` red **against the tree**: `M-14`, `M-11`, `M-12`; the `2` greens are the harness preconditions `PRE-1`/`PRE-2`, **not spec rows**). **The red run HIT the spec's own stop condition `S-1`** — one `loadEnvelope` into a never-`bootstrap()`ed mount left **TWO** engine-emitted roots (`{"childCount":2,"count":2,"nodeIds":["node-234","node-246"]}`; the non-placement attribution run reproduces `count 2`) — **so the shape is the HOST-FIX BRANCH**. **GREEN: `44` rows, ALL GREEN** (`42` spec rows + `2` harness preconditions; `M-17`/`M-18`/`M-19` appended after the adversarial pass). | **NEW `src/shared/mount-invariant-guard.ts`** (four exports, two functions) **+ the HOST FIX `reconcileMount()` in `src/renderer/runtime.ts`** (called from `resetRenderState()`; the previous root is detached **by reference**; **the live boot path is byte-identical and never reaches the sequence**) **+ `tests/mount-invariant-guard.test.ts`**. No shim change, no MCP surface, no `scripts/**`, no `package.json` change. | **ADVERSARIAL PASS: RAN** — it found the fix's own evidence **MISSING** (the spec/decisions named `M-17`/`M-18` as the regression rows while no such rows existed; reverting the fix left **`40` of `41` rows green**) and that hole is **CLOSED**: the rows now exist, `M-14`'s non-placement observation is an **assertion**, and an **out-of-tree mirror with the fix reverted reddens exactly `5` rows** (`M-17`, `M-18`, `M-14`'s attribution half, the **two blind teardown rows**) while every pre-existing row stays green. Other findings = §3b's advisory rows with owners (`ADV-1`…`ADV-10`): reconciler not total · one-runtime-per-mount precondition · **probe refuses a real-DOM mount** (so the optional `[U]` row **cannot be taken**) · two unguarded property GETs · unanchored serialization fallback · unpinned blank `rootNodeId` · two stale comments. **BLIND GREENS: `docs/specs/mount-invariant-guard-greens.md` — `56` rows: `48` PASS / `2` FAIL / `6` NOT-BLIND-RUNNABLE**; both FAILs are the **teardown-drive** finding (also found by the adversarial pass) and are **resolved by pinning**; the blind run **independently verified the defect fix** at the raw tree layer (one root on all four re-derivation paths; `RED-1`'s two roots no longer reproduce). **SECOND CONTRACT FINDING PINNED:** the teardown claim is **DRIVE-SPECIFIC** (bootstrapped ⇒ empty mount, `inTree === 1`; never-bootstrapped ⇒ the **first** teardown leaves **ONE** mounted root — the graph's live root — and later cycles leave `0`) ⇒ §3.1 **`M-19`** + the spec + `docs/specs/runtime-host.md` + the decisions row. **DOC REVIEW (item 10d/RCA-6): RAN** — `archive/reviews/2026-09-27-U-MOUNTGUARD-doc-review.md`; fixed **one genuine code/doc drift** (the result's **seventh** field `expectedRootNodeId?` was undocumented) + **two count/arithmetic residues**, and reconciled the trackers. **NO `docs/defects.md` row and NO `docs/HANDOFF.md` round is owed** (HOST-owned, the `R13-HOST-FIX` precedent). | `npm test` `[T]` **`59` files / `916` passed / `2` skipped / `0` failed** · `npm run typecheck` **clean (exit 0)** · `npm run build` **clean, 5 bundles (exit 0)** · `npm run battery` `[B]` **`184` checks / `0` failures** · `npm run divergence` `[A]` **`R13 RESULT: 9 checks, 0 failures`** (**`N = 9` unmoved**) · `npm run ui` `[U]` observed green by the blind run (**`11/11`**, **`427x22`**). **LAYER ATTRIBUTION: `[T]`/`[H]` only — no real-DOM row taken; a node-suite green is NEVER assembled-app evidence; a green divergence leg is STRUCTURAL-SURFACES-ONLY; and the module is imported by NO `src/**` file (the regression instrument, not a guard the app runs).** **OWED, non-blocking:** §3b's `OWED-with-owner`/`PARKED` rows + the host comment `src/renderer/runtime.ts:559` (*"Idempotent"*) still repeating the unconditional teardown form. |
+| **`D1` — MOVED TO DONE (2026-09-27)** | D | The **`U-MOUNTGUARD`** row that stood here MOVED, not deleted — it is the **`U-MOUNTGUARD` DONE record directly above** (the ledger's **FOURTH** `DONE` row), which is the ONE authoritative cell; the row above is that record's own ledger row. | *(spec — unchanged)* `docs/specs/mount-invariant-guard.md` (**FILED 2026-09-27** — no longer `OWED`) + `docs/specs/mount-invariant-guard-greens.md` (**`56` rows = `48` PASS / `2` FAIL / `6` NOT-BLIND-RUNNABLE**) | `SCH-1` invariant half (region host **stays DECLINED**) | **SPENT — nothing is blocked on this row.** The spec is FILED, the red set ran (it hit its own stop condition `S-1`), the host fix `reconcileMount()` landed with its regression rows `M-17`/`M-18`, `M-19` pins the never-bootstrapped teardown drive, the unit's file is **`44` rows all green**, the blind + doc-review gates have RUN, and **the unit is `DONE` on every leg its spec declares**. *(Provenance, kept so the moved row stays visible per the convention rows `A`, `B` and `C1` used: it read `docs/specs/mount-invariant-guard.md` (**`OWED — not filed`**) with `Blocked on` = `BLOCKED` + spec + `TestWriter red`, and its later reading was `BLOCKED` on the wave-D go-ahead — **the go-ahead WAS GIVEN (2026-09-27)**. `RCA-8(f)`: no successor row is added — the wave-D queue continues at `D2`, which stood next in the order.)* |
+
 ## WAVE-B MEASUREMENT CHECKPOINT — `U-ENGINE-DRIFT` (2026-09-27): the measurement record landed **and was reconciled in its own 2026-09-27 correction pass**
 
 > **⟶ SUPERSEDED BY THE `U-ENGINE-DRIFT` DONE PASS (2026-09-27) — read it as history, not as live
@@ -672,9 +914,9 @@ under the amended clause.**
 **⟶ COUNT DRIFT (annotated 2026-09-27, the `G-4` fix pass):** the wave-C blocks state the suite as
 **`58 files / 863 passed / 2 skipped / 0 failed`** and the unit's row set as **`68/68`**. Those are **the
 then-measured values of the passes that wrote them** — kept as dated measurement records, never deleted.
-The **live** figures are **`58 files / 872 passed / 2 skipped / 0 failed`** and the unit's set **`77/77`**
+The **live** figures are **`59` files / `916` passed / `2` skipped / `0` failed** and the unit's set **`77/77`**
 (`66` contract + `11` seam), after the `G-4` fix pass closed the adversarial pass's **last open routed
-item** (`tests/**` rebuilt to **extract and RUN** the leg's predicates/producers; **`+9`** falsifiable rows = **`7`** contract / **`2`** seam; a **`15`-mutation out-of-tree matrix** showing **each strengthened row reddens**). **The
+item** (`tests/**` rebuilt to **extract and RUN** the leg's predicates/producers; **`+9`** falsifiable rows = **`7`** contract / **`2`** seam; a **`15`-mutation out-of-tree matrix** showing **each strengthened row reddens**). **⟶ THE SUITE HALF OF THIS CELL IS SUPERSEDED (2026-09-27, the `U-MOUNTGUARD` per-unit documentation review): the `872` was the `G-4` pass's own measurement; the live suite is `59 files / 916 passed / 2 skipped / 0 failed`, the delta being this unit's new `tests/mount-invariant-guard.test.ts` (44 rows). The `77/77` unit set is UNMOVED.** **The
 authoritative block is `## ⟶ COUNT RECONCILIATION` at the head of this file** — read it before quoting any
 count from any wave-C block below.
 
@@ -1058,11 +1300,20 @@ provenance row, not deleted); their blocker/measured history stays visible in th
 `WAVE-B MEASUREMENT CHECKPOINT` / `WAVE-C CHECKPOINT`+`WAVE-C UPDATE`+`WAVE-C UPDATE 2` blocks and the
 archived pre-green snapshot. The `Legs` column is what a unit must run once delegable — **none of the
 rows below has been run.**
-**⟶ TOTALS (2026-09-27, the DONE pass — verified against this table by enumerating its rows):
-3 `DONE` / 17 open.** The three DONE rows are `U-ENGINE-PIN`, `U-ENGINE-DRIFT` and `U-REALDOM-BOOT`,
-each COMPLETE on every leg its spec declares; the **three provenance rows (`A`, `B`, `C1`) are moved,
-not open and not double-counted** — they are visible in the table with the `MOVED TO DONE` marker and
-each is a pointer, never a claim (the earlier `2 DONE / 18 open` and `17 BLOCKED + C1
+**⟶ TOTALS — THE TRUTH, RE-VERIFIED BY ENUMERATING THIS TABLE (2026-09-27, the
+`U-MOUNTGUARD` DONE pass): `4` `DONE` / `16` open.** The row census the enumeration produces: **`16` live rows** (`C2` · `D2`–`D4` ·
+`E1`–`E9` · `F1`–`F4` = `1 + 3 + 9 + 3 = 16`) **plus four provenance rows** (`A`, `B`, `C1`, `D1`) that are
+**`MOVED TO DONE`, kept visible, and NOT counted as open and NOT double-counted** — so `4 DONE + 16 open =
+20` units, which matches the `Total: 20 units (A/B: 2 engine · C: 2 harness · D: 4 · E: 9 · F: 3)` identity
+below. **`D1` (`U-MOUNTGUARD`) was moved by the unit's per-unit documentation review and the record it points
+at is now WRITTEN — the `## DONE — U-MOUNTGUARD` section above** (the row's own text says a record not yet on
+the page means the supervisor's pass has not run; **it has run**). *(The DATED counts, kept as provenance:
+`3 DONE / 17 open` was the wave-C pass's own count and `2 DONE / 18 open` the wave-B pass's; the
+`3 DONE / 17 open` figures above and in the `⟶ DONE-PASS CORRECTION` line are those passes' measurements.)*
+The four DONE rows are `U-ENGINE-PIN` (wave A), `U-ENGINE-DRIFT` (wave B), `U-REALDOM-BOOT` (wave C) and
+`U-MOUNTGUARD` (wave D), each COMPLETE on every leg its spec declares; the **provenance rows (`A`, `B`, `C1`,
+`D1`) are moved, not open and not double-counted** — they are visible in the table with the `MOVED TO DONE`
+marker and each is a pointer, never a claim (the earlier `2 DONE / 18 open` and `17 BLOCKED + C1
 landed-but-not-DONE` forms are the pre-DONE-pass readings, kept as provenance in the blocks above).
 **⟶ WAVE-C UPDATE (2026-09-27, the wave-C checkpoint pass): `U-REALDOM-BOOT` (row `C1`) is
 `LANDED-GREEN-BUT-NOT-DONE`** — ⚠ **DISCHARGED 2026-09-27 (the DONE pass): that status word and every
@@ -1110,8 +1361,8 @@ now in `docs/defects.md`'s `## FIXED (in this repo)` section; live status flippe
 | **B — MOVED TO DONE (2026-09-27)** | B | The **`U-ENGINE-DRIFT`** row that stood here MOVED, not deleted — it is the **`U-ENGINE-DRIFT` DONE record** above (the ledger's **second** `DONE` row), which is the ONE authoritative cell. Nothing on this row is a blocker or a live claim: its former `Blocked on` cell is **spent**. | *(spec — unchanged)* `docs/specs/engine-drift.md` (**FILED 2026-09-27**) + **`docs/specs/engine-drift-measurements.md` — THE MEASUREMENT RECORD: LANDED 2026-09-27 (its own correction pass 2026-09-28)** (`N = 57` rows = 47 `CONSISTENT` + 2 `DRIFTED` + 7 `UNMEASURABLE` + 1 `INVALID`, single ledger; **0 production code / 0 new tests**) + `docs/specs/engine-drift-greens.md` (blind re-run: 51 scenarios / 42 PASS / 3 FAIL / 6 NOT-BLIND-RUNNABLE) | A-d2 (behavioural half) | **SPENT — nothing is blocked on this row.** The unit is `DONE` (2026-09-27) on every leg its spec declares, and it landed as §0 **ruling 3** authorises: a measurement record with **zero production code and zero new tests**. Red: the existing suite under the new pin, **RUN and REPORTED as empty** — `56 files / 795 passed / 2 skipped / 0 failed`, **0 failures attributable to the pin move**. Both `DRIFTED` rows' tracker halves landed (`RAW-STRING-CENSUS-RETIRED`, `UNDO-REDO-DESTROY-STATUS-CLOSED-AT-0.5.1`); the adversarial verdict `NOT DONE-ELIGIBLE` (as filed) was discharged by the corrections and the record re-verified. Legs, final tree: `npm test` **56 files / 795 passed / 2 skipped / 0 failed** · typecheck clean · build clean (5 bundles) · battery **184 / 0** · **`npm run divergence` → `R13 RESULT: 9 checks, 0 failures`**. *(Provenance: the row's former **MEASURED — NOT DONE** status and its §3.6-gated DONE ruling are superseded by the DONE record above; the row is not deleted.)* |
 | **C1 — MOVED TO DONE (2026-09-27)** | C | The **`U-REALDOM-BOOT`** row that stood here MOVED, not deleted — it is the **`U-REALDOM-BOOT` DONE record** above (the ledger's **THIRD** `DONE` row, and the identical ledger row inside that record), which is the ONE authoritative cell. Nothing on this row is a blocker or a live claim: its former `Blocked on` cell is **SPENT** — the spec is FILED, the leg (`npm run ui`) is LANDED and every declared row is green, both live-battery findings are CLOSED, the documentation review has RUN, and the unit is `DONE` on every leg its spec declares. *(Provenance, kept so the moved row stays visible per the convention rows A and B used: it read `LANDED-GREEN-BUT-NOT-DONE` with its rows `68/68` green and a succession of owed-gate lists; every one of those gates is discharged and the measured history is the `WAVE-C CHECKPOINT` / `WAVE-C UPDATE` / `WAVE-C UPDATE 2` blocks, status-annotated DISCHARGED by the `⟶ WAVE-C BLOCK STATUS` table above.)* | **FILED** `docs/specs/ci-ui-leg.md` (**FILED 2026-09-27** — **no longer `OWED`**; the **`R1`-marker + scripts-count re-pin has LANDED in it**, by the wave-C SpecWriter pass, while this pass ran) + **LANDED** `package.json`'s `"ui"` key (**the TWELFTH script key** — the pre-unit block held eleven; the SpecWriter's `M-2` re-pin lands that count) + **LANDED** `scripts/electron-spawn.mjs` (the shared helper — the divergence leg calls it; arg vector/env/stdio/profiles unchanged, `R13` arithmetic untouched) + **LANDED** `scripts/electron-ui.mjs` | A-d8 | **⟶ NOT `BLOCKED` ANY MORE (corrected 2026-09-27, the wave-C checkpoint — the old cell read `BLOCKED` → `U-ENGINE-PIN` green; every one of those is MET: the spec is FILED, the leg is LANDED and green, and `U-ENGINE-PIN` (+ `U-ENGINE-DRIFT`) is `DONE`).** **⟶ FINAL GATE STATUS 2026-09-27 (the per-unit documentation review, SEVENTH pass — status only): the documentation review HAS RUN — its record is `archive/reviews/2026-09-27-U-REALDOM-BOOT-doc-review.md` and its findings landed in these trackers in the same pass. `C1` remains `LANDED-GREEN-BUT-NOT-DONE`, and the `DONE` row is the ONLY item left on it — the supervisor's, NOT written here (its slot is left consistent).** **What actually remains before a DONE row:** **⟶ CORRECTED IN FULL 2026-09-27 (THIRD pass — the (i)…(v) list that follows is the SECOND-pass reading and is SUPERSEDED; read the `WAVE-C UPDATE` block above for the authoritative list). THE CURRENT BLOCKERS, IN ORDER (⟶ SUPERSEDED 2026-09-27, FOURTH pass, the RCA pass — read the resolution block in the `WAVE-C UPDATE` section above; the list that follows is the third-pass reading, kept for provenance): **⛔→✅ BLOCKER (1) IS DISCHARGED (2026-09-27, FOURTH pass): both live legs RAN and ARE GREEN — `npm run divergence` → `R13 RESULT: 9 checks, 0 failures` (census `12/12` both legs); `npm run ui` → exit 0, `UI RESULT: 0 failures (11/11 assertions green, mapped onto the five declared rows R0-R4)`, `retries=0`, the ONE measurement `427x22` at `fontSize="16px"`, scratch cleanup verified (`leftover profiles: NONE`)** — because the **"host runtime non-functional (ENVIRONMENT regression)"** attribution this row carried was **WRONG**: the cause was a **corrupted npm shim INSIDE this repo** (`node_modules/electron/cli.js` — a shell script that re-execs itself, so every boot spun at ~99 % CPU printing nothing), **repaired this pass** by restoring the correct Node wrapper; **WHAT REMAINS is (a) the per-unit documentation review (item 10d/RCA-6) and (b) the DONE row (the supervisor's).** **THE SUPERSEDED READING FOLLOWS — (1) THE TWO LIVE LEGS are BLOCKED ON THE ENVIRONMENT: the host's Electron runtime no longer boots (a direct launch prints nothing and must be killed after 25–40 s; `npm run divergence` → `✗ electron connect/drive failed: MCP error -32001: Request timed out` → `R13 RESULT: 1 checks, 2 failures`; `npm run ui` hangs in its own precondition; a bare `electron -e 'console.log(1)'` hangs). It is A/B-proven ENVIRONMENTAL — the same failure reproduces with the UNMODIFIED HEAD spawn helper, it began BEFORE this pass's edits, and contributing factors are the divergence leg's leaked ~95 %-CPU Electron wrappers plus the sandbox's `/dev/shm` denial. The retry change has therefore had NO live verification, and the last good divergence evidence stays `R13 RESULT: 9 checks, 0 failures` (post-change tree, earlier). (2) THE PER-UNIT DOCUMENTATION REVIEW (item 10d/RCA-6) — still owed. (3) THE ADVERSARIAL PASS'S OWN RECORD (§3a/§3b, `OWED`) — its known findings are FIXED. MET/SETTLED (do NOT re-list as owed): the retry ruling is ANSWERED and the retry is IMPLEMENTED + stub-verified (39 `RT-*` rows; the unit's set is `68/68` green); the blind-greens gate HAS RUN (26 scenarios = 16 PASS / 4 FAIL / 6 NOT-BLIND-RUNNABLE, all four FAILs dispositioned); the `R1`-marker + scripts-count spec re-pin LANDED. The second-pass list read:** **(i)** the per-unit **adversarial** pass (RCA-3 — §3a/§3b are `OWED`); **(ii)** the **blind-greens** gate (item 10a — no `*-greens.md` exists); **(iii)** the per-unit **documentation review** (item 10d/RCA-6); **(iv)** the **`R1`-marker + scripts-count spec re-pin** — **⟶ LANDED by the wave-C SpecWriter while this pass ran**: `R1` is now pinned on the **discriminating element/renderer-API provenance** (`HTMLDivElement`/`CSSStyleDeclaration`, never `typeof window`) and the count is **TWELVE** keys; that file's §7 honest statements are its remaining residue; **(v)** the **architect's retry decision** — the leg can legitimately exit **2 PRECONDITION-FAILED** because `RK-14`'s flake class is **CONFIRMED REAL here** (`/dev/shm` writes forbidden ⇒ an Electron renderer intermittently dies `SIGTRAP` at bootstrap, ≈1-in-3 back-to-back; the pre-existing divergence leg is flaky identically). **Requires a DISPLAY** (`H-r19`) — met here | `npm run ui` (after `build`) — **RUN: exit 0, `UI RESULT: 0 failures (5/5 rows green)`** + the `ui` leg's own precondition: `npm run divergence` green for the **same built tree**, else **PRECONDITION-FAILED** (exit 2 — the specified authority order, never a bypass)**⟶ ✅ CURRENT DISPOSITION 2026-09-27 (SIXTH pass, the `F-1` RCA + fix) — THIS IS THE AUTHORITATIVE CELL; read it before the fifth/fourth/third-pass notes in this cell's tail:** **BOTH live-battery findings are CLOSED, so NO LIVE FINDING GATES THIS ROW.** **`F-1` (the leftover scratch profiles) is FIXED + VERIFIED** — the leg now spawns the **Electron BINARY** (never the CLI wrapper `node_modules/.bin/electron` → `electron/cli.js`, whose child is the real app: the handle held was the wrapper, so the kill orphaned the app and it **re-created the scratch profile AFTER the delete-and-verify sweep had reported success**) and registers its **cleanup hook at `scratchRoot` creation** (the malformed-config path had been exiting **before** the hook existed, leaking an **empty** root) — so **every exit path leaves ZERO roots** (green · malformed config · timeout-class exhaustion · `npm run ui`), checked **immediately and after an 8 s settle**, with **0 surviving `electron` processes**, and the leg's `leftover profiles: NONE` report **now MATCHES the disk**. **`F-2` (the timeout-class retryability race) stays CLOSED.** **The blind run's `R0-04` FAIL is dispositioned REAL DEFECT, NOW FIXED** (its row text in `docs/specs/ci-ui-leg-greens.md` is **not** rewritten). **THE REMAINING LIST — the whole of it: the per-unit DOCUMENTATION REVIEW (item 10d/RCA-6; the unit is now ELIGIBLE, because no live finding gates it) and the `DONE` ROW (the supervisor's).** The adversarial pass's own record (§3a/§3b `OWED`) and the snapshot-ordering test row (TestWriter-owned) are recorded as **residue that gates no `DONE` row**. **The leg's verdict line is unchanged: `npm run ui` → exit `0`, `UI RESULT: 0 failures (11/11 assertions green, mapped onto the five declared rows R0-R4)`, ONE measurement `427x22`, `retries=0`, and `npm run divergence` → `R13 RESULT: 9 checks, 0 failures` (`N = 9` intact).** **The one split that must not be blurred:** the earlier *"delete-and-verify sweep + recorded report"* fix closed the **REPORTING** half only; this pass closed the **END STATE** (`docs/specs/ci-ui-leg-live-status.md` §6.1's split table). **No normative clause of `docs/specs/ci-ui-leg.md` changed** (its AMENDMENT BLOCK 6 is status/annotation only). |
 | **C2** | C | `U-DIVERGENCE-EXT` — the `H-r10` scenario-envelope channel + the **attribute-presence extractor** (set-wise, never a substring diff) + a `props` falsy-toggle scenario. **`divergence`'s pinned N=9 stays EXACTLY intact** | an amendment to `docs/specs/ci-divergence-leg.md` (**`OWED — not filed` is SPENT: FILED by the wave-C SpecWriter pass — the `AMENDMENT BLOCK` is in the file; the row stays `BLOCKED` until its legs run**) | `H-r10` / A-d8 | `BLOCKED` → **then `U-REALDOM-BOOT` (SPENT — it HAS landed, 2026-09-27: the new leg exists and its rows are green, and the divergence leg already calls the landed shared helper `scripts/electron-spawn.mjs` with its arg vector/env/stdio/profiles unchanged)** (it modifies a **pinned, passing** leg and must be revertible without touching the new one) **— and note (2026-09-27, THIRD pass) that this row's declared leg `npm run divergence` CANNOT RUN at all right now: the host's Electron runtime is non-functional (ENVIRONMENT regression, not this unit's and not `U-REALDOM-BOOT`'s — see the `WAVE-C UPDATE` block). So `U-DIVERGENCE-EXT` is BLOCKED twice over: on its own deliverables AND on the runtime; re-run `npm run divergence` (`N = 9`) the moment it recovers** *(**⟶ UPDATE 2026-09-27, FOURTH pass (the RCA pass): the runtime HAS recovered — the recorded "host's Electron runtime is non-functional (ENVIRONMENT regression)" was a **MISATTRIBUTION** of a **corrupted in-repo npm shim** (`node_modules/electron/cli.js` — a shell script re-execing itself), **repaired this pass**; `npm run divergence` **RAN GREEN post-repair: `R13 RESULT: 9 checks, 0 failures`** (census `12/12` both legs). So this row's runtime half is **NO LONGER the blocker**: `U-DIVERGENCE-EXT` is **BLOCKED ONLY ON ITS OWN DELIVERABLES** (the `H-r10` scenario-envelope channel + the attribute-presence extractor + the `props` falsy-toggle scenario), and its declared leg is **runnable now** and remains the **strict precondition** for every real-DOM **attribute** row. **No deliverable of this row has been landed by this pass, and the row is not re-scoped.**)* | `npm run divergence` (**N=9**) — and it is the **strict precondition** for every real-DOM **attribute** row |
-| **D1** | D | `U-MOUNTGUARD` — the cross-envelope mount cardinality/identity probe (`SCH-1` invariant half) | `docs/specs/mount-invariant-guard.md` (**OWED — not filed**) | `SCH-1` invariant half | `BLOCKED` + spec + `TestWriter red` | node suite (the shim is host-owned test code — **no shim change needed**) |
-| **D2** | D | `U-LISTHOST` — the owned-node list host (own-node ownership + order-as-projection; **not** a tab strip) | `docs/specs/listhost.md` (**OWED — not filed**) | `SCH-11` | `BLOCKED` → then the wave-D order → spec → `TestWriter red` | node suite; a real-DOM identity row (**optional**) → `ui` |
+| **D1 — MOVED TO DONE (2026-09-27)** | D | The **`U-MOUNTGUARD`** row that stood here MOVED, not deleted — it is the ledger's **FOURTH** `DONE` row, recorded in the **`## DONE — U-MOUNTGUARD` record above this table** (the supervisor's pass wrote it; a record that is NOT yet on the page means that pass has not been run, and **this row is the slot it fills**), which is the ONE authoritative cell. **⟶ AUTHORED BY THE SUPERVISOR (2026-09-27, `AGENTS.md` item 10d): the prose paragraph and its ledger row are the record; the documentation review that preceded it is `archive/reviews/2026-09-27-U-MOUNTGUARD-doc-review.md` (gitignored provenance).** Nothing on this row is a blocker or a live claim: **the spec is FILED** (`docs/specs/mount-invariant-guard.md`, plus its blind record `docs/specs/mount-invariant-guard-greens.md`), **the unit is green on every declared leg** (`npm test` **59 files / 916 passed / 2 skipped / 0 failed** · typecheck clean · build clean (5 bundles) — the unit's own file `tests/mount-invariant-guard.test.ts` is **44 rows, all green**), both earlier passes ran (the red set hit its own stop condition `S-1`; the adversarial + blind-verification pass pinned the teardown drive as `M-19`), the per-unit documentation review has RUN (`archive/reviews/2026-09-27-U-MOUNTGUARD-doc-review.md`), and **the unit is `DONE` on every leg its spec declares** — the host fix `reconcileMount()` landed with its regression rows `M-17`/`M-18`. *(Provenance, kept so the moved row stays visible per the convention rows `A`, `B` and `C1` used: it read `docs/specs/mount-invariant-guard.md` (**`OWED — not filed`**) with `Blocked on` = `BLOCKED` + spec + `TestWriter red`; the spec was filed 2026-09-27, the red set ran the same day, and every gate the cell named is discharged. `RCA-8(f)`: no successor row is added — the wave-D queue continues at `D2`, which stood next in the order.)* | **FILED** `docs/specs/mount-invariant-guard.md` (**FILED 2026-09-27** — no longer `OWED`) + **LANDED** `src/shared/mount-invariant-guard.ts` (the probe module: `probeMountInvariant`/`assertMountInvariant` + the five interfaces) + **LANDED** `src/renderer/runtime.ts`'s host fix `reconcileMount()` (§3a `RED-5(ii)`) + **LANDED** `tests/mount-invariant-guard.test.ts` (**44** rows) + the blind record `docs/specs/mount-invariant-guard-greens.md` | `SCH-1` invariant half | **SPENT — nothing is blocked on this row.** *(The wave-D go-ahead ruling the spec recorded as outstanding is a wave-level statement about work **beyond** this unit; this unit's own scope — the probe, the host fix and its regression rows — landed and is green, which is why the row moves. If the architect's wave-D go-ahead is read as still owed for the units after this one, that is recorded on those rows (`D2`–`D4`, `E*`, `F*`), not here.)* | node suite (the shim is host-owned test code — **no shim change needed**) |
+| **D2** | D | `U-LISTHOST` — the owned-node list host (own-node ownership + order-as-projection; **not** a tab strip) | `docs/specs/listhost.md` (**OWED — not filed**) | `SCH-11` | `BLOCKED` → **the wave-D order: `U-MOUNTGUARD` is DONE (row `D1`, the ledger's FOURTH `DONE` row) and this row now STANDS NEXT** → spec → `TestWriter red` | node suite; a real-DOM identity row (**optional**) → `ui` |
 | **D3** | D | `U-SLOTHOST` — the slot **host** only: opaque keys → containers of caller-created nodes, caller-supplied order/attributes, own-node ownership, foreign siblings survive, unknown key ⇒ **typed refusal**, **NO `publish`** | `docs/specs/slothost.md` (**OWED — not filed**) | `SCH-9` host half (A-d7) | `BLOCKED` → then `U-LISTHOST` → spec → `TestWriter red` | node suite; a real-DOM identity row (**optional**) → `ui`. **Publisher half stays DECLINED — do not re-merge** |
 | **D4** | D | `U-PROJ` — the pure projection + total applier (`SCH-8` **projection** half; `U-CENSUS` is separate) | `docs/specs/projection.md` (**OWED — not filed**) | `SCH-8` projection half | `BLOCKED` → then `U-SLOTHOST` → spec → `TestWriter red` | node suite; one measured custom-property value (**optional**) → `ui` |
 | **E1** | E | `U-ZONES` — pure tracks/zones: `TrackSpec { trackProp, unit, emptyToken }` all caller-supplied; `isEmpty`, `trackFor`; **the literal `'0px'` is NOT built in**; no DOM/registry/writes; non-finite/negative ⇒ the empty token | `docs/specs/zones.md` (**OWED — not filed**) | `SCH-4` (A-d4) | `BLOCKED` → spec → `TestWriter red` | node suite. **Geometry clause:** the contract/arithmetic is provable here; **any rendered-geometry claim is UNPROVABLE in this repo today** → `ui` only |
@@ -1128,13 +1379,26 @@ now in `docs/defects.md`'s `## FIXED (in this repo)` section; live status flippe
 | **F3** | F | `U-FOCUS-TOOL` — the new MCP tool: group **`dispatch`**, **NOT** in `MUTATING_METHODS`, **emits no notification**, persists nothing, cannot force a re-render; **`ALL_TOOLS` 21 → 22, `RpcMethod` 21 → 22** (CORRECTED 2026-09-27 — the live census is **21**, `src/shared/types.ts:259-280`, asserted at 21 by `tests/engine-pin-version.test.ts:174-197`; the pre-correction **"19 → 20"** is stale and must not be quoted), default-gate subset 7 → 8; the **six wiring sites** incl. the **unchanged** notification path and the **no-change** preload bridge | `docs/specs/focus-tool.md` (**OWED — not filed**) + the `docs/specs/mcp-endpoint.md` amendment (**§3 · new §3.8 · §6.2 incl. the `module` row · §7 · §8 · §9**) + **the census rows of `tests/engine-pin-version.test.ts` — the SET-EQUALITY re-parameterisation has ALREADY LANDED (`:85-165`: `PINNED_TOOL_SET` compared by set equality; the `ALL_TOOLS === 21` count is retained only as a duplicate check), so the remaining same-commit obligation is to ADD `provident.focus` to that set + the `RpcMethod` census (`21 → 22`) + the default-gate subset, IN THE SAME COMMIT AS THE TOOL** + `docs/specs/mcp-server-gate.md`'s counts | `SCH-13` (A-d5) | `BLOCKED` → then `U-FOCUS-MODEL` → spec → `TestWriter red`. **The census re-parameterisation may NOT be deferred** — land it in the same commit or the tool turns a green suite red (`H-r18`) | node suite · battery · **the `ui` leg once it exists** (the tool must be observable in a live window) + the **negative notification row** |
 | **F4** | F | **`H-r1` correction package owed to the FORK** — the per-item disposition re-issued in this repo's own voice with the withdrawal set (`SCH-2`/`SCH-5`/`SCH-8`/`SCH-11` → this repo; `SCH-12`'s package refile withdrawn; **`SCH-13` and `SCH-3` move OUT of the declined set under A-d5/A-d6**; **`SCH-4`/`SCH-6`/`SCH-7`/`SCH-10` move OUT under A-d4**; **`SCH-9` is now host-adopted/publisher-declined**; `SCH-1`'s region half **stays** declined; `SCH-8`'s `computeTrackVars` half **stays with this repo**), plus the `[target]`/`[fork]` attribution corrections, the `SCH-2`/`SCH-6`/`SCH-7` capture-reading row edits, and the **prohibition-5 clarification** (so the fork does not read the handoff as banning tools) | **no path in this repo** — see `docs/specs/provident-electron-shell-chrome-handoff-review.md` (`H-r1`, `H-r2`, `H-r9`, `H-r14`) and `docs/FORKER.md` §4 | `H-r1` / `H-r2` / `H-r9` / `H-r14` | **`BLOCKED` — the fork's own pass.** This repo writes **no** file under `<Astrographer>/`; nothing here can action it | n/a (documentation handoff) |
 
+**⟶ UPDATE (2026-09-27, the `U-MOUNTGUARD` per-unit documentation review — `AGENTS.md` item 10d/RCA-6;
+counts only, and **the authoring of the `DONE` row itself is the supervisor's**):** row **`D1`** MOVED
+from this table to the **`## DONE — U-MOUNTGUARD` record** above (kept visible as a
+`D1 — MOVED TO DONE` provenance row, the same convention rows `A`, `B` and `C1` used). **The unit
+counts therefore read `4 DONE / 16 open rows`:** `U-ENGINE-PIN` (wave A) · `U-ENGINE-DRIFT` (wave B) ·
+`U-REALDOM-BOOT` (wave C) · **`U-MOUNTGUARD` (wave D)**, with `16 = 1 (`C2`) + 3 (`D2`–`D4`) + 9 (`E1`–`E9`)
++ 3 (`F1`–`F4`)`; **`4 + 16 = 20` units**, unchanged. *(The `3 DONE / 17 open` figures below and in the
+`⟶ DONE-PASS CORRECTION` line are the wave-C pass's own counts, kept as that pass's measurement.)*
+
 **Total: 20 units (A/B: 2 engine · C: 2 harness · D: 4 · E: 9 · F: 3) + the fork correction
-package as a queue row (NOT a unit). 3 DONE — `U-ENGINE-PIN` (wave A),
-`U-ENGINE-DRIFT` (wave B) and `U-REALDOM-BOOT` (wave C, `DONE` 2026-09-27 — the `npm run ui` real-DOM
-measurement leg; its record is the `## DONE — U-REALDOM-BOOT` section above): COMPLETE on every leg each
-spec declares; **17 open rows remain** (`C2`…`F4`).** *(**⟶ THE TOTALS WERE `2 DONE` UNTIL THIS PASS —
-the `⟶ DONE-PASS CORRECTION` line below is the authoritative count; this paragraph's wave-A/wave-B
-figures are kept as their DONE-pass measurements.**)* `U-ENGINE-PIN` (`npm test`
+package as a queue row (NOT a unit). 4 DONE — `U-ENGINE-PIN` (wave A),
+`U-ENGINE-DRIFT` (wave B), `U-REALDOM-BOOT` (wave C, `DONE` 2026-09-27 — the `npm run ui` real-DOM
+measurement leg; its record is the `## DONE — U-REALDOM-BOOT` section above) **and `U-MOUNTGUARD`
+(wave D, `DONE` 2026-09-27 — the cross-envelope mount cardinality/identity probe + the
+`reconcileMount()` host fix; its record is the `## DONE — U-MOUNTGUARD` section above, and its
+doc-review record is `archive/reviews/2026-09-27-U-MOUNTGUARD-doc-review.md`)**: COMPLETE on every leg each
+spec declares; **16 open rows remain** (`C2` · `D2`–`D4` · `E1`–`E9` · `F1`–`F4`).** *(**⟶ THE TOTALS WERE
+`3 DONE / 17 open` UNTIL THIS PASS** — the `⟶ DONE-PASS CORRECTION` line below is the wave-C pass's
+authoritative count for its own pass, and this update supersedes its counts only;
+this paragraph's wave-A/wave-B figures are kept as their DONE-pass measurements.**) `U-ENGINE-PIN` (`npm test`
 **55 files / 789 passed / 2 skipped / 0 failed** *(the DONE-pass
 count — **⟶ 56 files / 795 passed / 2 skipped / 0 failed after the 2026-09-27 `LIVE-OP-REJECT` fix
 pass** — **⟶ 58 files / 822 passed / 2 skipped / 0 failed after the 2026-09-27 wave-C
@@ -1156,7 +1420,7 @@ other four legs green: typecheck clean · build clean (5 bundles) · battery **1
 `E1`–`E9` · `F1`–`F4` = **17** — **`BLOCKED`/not started**. **Arithmetic verified against the table by
 enumerating its rows in this pass: `3 + 17 = 20` units, and `17 = 1 (`C2`) + 4 (`D`) + 9 (`E`) + 3 (`F`)**,
 which matches the `Total: 20 units (A/B: 2 engine · C: 2 harness · D: 4 · E: 9 · F: 3)` identity below
-(the two harness units are counted in `C`, of which `C1` is now `DONE` and `C2` open).** *(The
+(the two harness units are counted in `C`, of which `C1` is now `DONE` and `C2` open).** **⟶ FURTHER CORRECTION, NOW AUTHORITATIVE (2026-09-27, the `U-MOUNTGUARD` per-unit documentation review — `AGENTS.md` item 10d/RCA-6; read the `3 DONE / 17 open` clause above as the wave-C pass's own count): the `## OPEN` table carries **16** live rows — **4 DONE** (`U-ENGINE-PIN` wave A · `U-ENGINE-DRIFT` wave B · `U-REALDOM-BOOT` wave C · **`U-MOUNTGUARD` wave D, the fourth, whose row `D1` MOVED TO DONE this pass**), with their four provenance rows (`A`, `B`, `C1`, **`D1`**) **MOVED TO DONE and kept visible, not deleted**, and the open rows `C2` · `D2`–`D4` · `E1`–`E9` · `F1`–`F4` = **16** — `BLOCKED`/not started. **Arithmetic, re-enumerated against the table: `4 + 16 = 20` units, and `16 = 1 (`C2`) + 3 (`D`) + 9 (`E`) + 3 (`F`)** — the wave-D count reads `3` open because `D1` is `DONE` and `D2`–`D4` remain, which is why the wave identity below still reads `D: 4` (it counts the wave, not its open rows).** *(The
 pre-DONE-pass reading follows, kept as provenance; every count and gate list in it is spent:)* **The `## OPEN` table
 therefore carries **18** rows (rows A and B moved to the DONE records, 2026-09-27) — **18 remain
 `BLOCKED`/not started** (*with **one exception added 2026-09-27**: row `C1` is **LANDED and its rows
@@ -1350,4 +1614,66 @@ or added by this pass**), and `docs/HANDOFF.md` (**read and NOT changed: it carr
 `LANDED-GREEN-BUT-NOT-DONE` or unit-status clause**). **Not touched by this pass:** `src/**`,
 `tests/**`, `scripts/**`, `package.json`, the `N = 9` pin, `ALL_TOOLS = 21`, the battery's `184/0`, the
 measurement record and both earlier DONE records.
+
+**Tracker reconciliation for the `U-MOUNTGUARD` per-unit DOCUMENTATION REVIEW (2026-09-27, wave D —
+`AGENTS.md` item 10d/RCA-6):** the review ran **after the greens** and **before** the unit's `DONE` row;
+its record is `archive/reviews/2026-09-27-U-MOUNTGUARD-doc-review.md` (**gitignored — provenance only;
+every finding that needed action landed in these active trackers in the same pass**). **This file:** the
+`## ⟶ COUNT RECONCILIATION` block (**UPDATE 1** — the live suite is `59 files / 916 passed / 2 skipped /
+0 failed`; the `872` is kept as the `G-4` pass's own measurement), the `COUNT DRIFT` line under the
+wave-C blocks, row **`D1`** (moved out of `## OPEN` into the `## DONE — U-MOUNTGUARD` slot — **NOT
+written by this pass**; the supervisor owns it), the totals paragraphs, the `## OPEN` prose's counts and
+this footer. **`docs/specs/mount-invariant-guard.md`:** §3.1/§4.6/§8/§3b **status annotations only** —
+the **§2.1 result-shape gap that was a genuine drift** (the `expectedRootNodeId` field the landed module
+returns and `S-2` asserts was missing from the documented `MountInvariantResult`) **is now documented**,
+§4.6 item 3's red split is re-taken to close over all `41` red rows, the §8 index's two `OWED` cells are
+marked **landed/discharged**, and the §3b status line is marked **DISCHARGED** — **no normative clause,
+no row expectation and no verdict was rewritten or weakened**. **`docs/specs/mount-invariant-guard-greens.md`:**
+the two `TEAR-3`/`TEAR-4` FAILs annotated **`RESOLVED-BY-PINNING`** (verdicts kept verbatim), a dated
+count pointer, and the FAIL/status header annotated as that run's own pre-fix readings.
+**`docs/specs/runtime-host.md`:** §3.6's *"mount empty"* / *"Idempotent"* pair and §3.7-adjacent
+summary row **re-written to the drive-specific form with the old text marked** (the staleness the unit
+spec could only report; `src/**` was NOT touched). **`docs/decisions.md`:** amendment **note 20** (the
+review record, the two corrected counts, the §2.1 documentation gap, the layer-honesty checks and the
+still-owed items). **`docs/pending.md`:** the `SCH-1`-invariant-half row's *"OWED — not filed"* / `BLOCKED`
+cell **annotated FILED + green**. **`docs/FORKER.md`:** the `U-MOUNTGUARD` row's **`BLOCKED`** status and
+the digest's suite count annotated. **`README.md`:** the harness-legs count block annotated with the live
+figures and the new test file. **`docs/defects.md`:** **read, not changed — no row is owed** (the unit's
+finding is HOST-owned and the `R13-HOST-FIX` precedent refuses a defect/HANDOFF round). **`docs/HANDOFF.md`:**
+**read, not changed — no round is owed.** **Read, not written (checked, and each already carries the status this pass reconciled):** `docs/specs/provident-electron-shell-chrome-handoff-review.md` (the amended plan's **`U2`** spec cell → annotated SUPERSEDED: the spec is FILED and the unit is `DONE`, the `U1`-cell precedent), `docs/specs/runtime-host.md` (**written** — §3.6's drive-specific staleness fix, see above; listed here because it is a sibling spec, not this unit's), `docs/specs/mount-invariant-guard-greens.md` and this unit's spec (both **written**: annotations only), `docs/HANDOFF.md` (read), `docs/defects.md` (read). **Not touched by this pass:** `src/**`, `tests/**`,
+`scripts/**`, `package.json`, the `N = 9` pin, `ALL_TOOLS = 21`, the battery's `184/0` and every earlier
+DONE record.
+
+**Tracker reconciliation for the `U-MOUNTGUARD` DONE pass (2026-09-27, the supervisor's pass,
+`AGENTS.md` items 3/6/10d):** **this file** — the **`## DONE — U-MOUNTGUARD`** record (the authoritative
+prose paragraph + its ledger row + the moved `D1` provenance row), the **`⟶ HANDOVER — for a fresh
+supervisor`** block at the head of the file, the `## OPEN` totals paragraph **re-enumerated to the truth
+(`4 DONE / 16 open`, `4 + 16 = 20`)**, row `D1` already moved by the unit's doc review (verified, kept
+visible), and this footer. **`docs/decisions.md`** — amendment **note 21** (the wave-D go-ahead + the unit's
+`DONE` record + the wave-D progression) and **five stale go-ahead cells annotated in place** (the
+`U-MOUNTGUARD` ACTIVE block's trailing parenthesis, note 19, note 20's latest-note pointer, and the two
+`U-PROJ` rows `PROJECTION-SIGNATURE-APPROVAL-SCOPE` + `PROJECTION-REUSABLE`) — **status/annotation notes
+only; no normative clause of any row was amended.** **`docs/specs/mount-invariant-guard.md`** — the dated
+**STATUS NOTE** at the head of the file recording the go-ahead, the `S-1`/host-fix outcome (cycle-2 count =
+**2**), the guard's disposition (**ships**), the code/test delta, the red ledger, the legs with their layer
+labels and §5.3's DONE-row order, the `[U]` row's **NOT TAKEN** reason, and the oweds; **plus §0 ruling 6,
+§4.5, §7 item 1 and the filed status block annotated at their own sites** (`§5.3`'s DONE-row shape is the
+checklist the record was written against). **The sibling wave-D specs `docs/specs/listhost.md` /
+`docs/specs/slothost.md` / `docs/specs/projection.md`** — a dated status note + their §0 go-ahead ruling
+rows + the `§7 item 1` blocker sentences annotated (the same stale clause surviving in three files the unit's
+own doc review could not reach). **`docs/pending.md`** — a section-level wave-D note + the `SCH-1`
+invariant-half row's `OWED`/`BLOCKED` clauses annotated (FILED, `DONE`, go-ahead given). **`docs/FORKER.md`** —
+the `U-MOUNTGUARD` row's closing sentence annotated with the go-ahead's fork-facing consequence (the wave-D
+order, each unit still gated on its own spec + red set). **`README.md`** — the documentation map's
+`next-steps.md` entry annotated (it is the work queue **and** the handover surface; the `⟶ HANDOVER` block is
+the entry point). **Read, not written:** `docs/defects.md` (**no row is owed** — the unit's finding is
+HOST-owned and the `R13-HOST-FIX` precedent refuses a defect/HANDOFF round; its `## OPEN` table is empty),
+`docs/HANDOFF.md` (**no round is owed**), `docs/specs/mount-invariant-guard-greens.md` (quoted — its
+`TEAR-3`/`TEAR-4` verdicts keep their own text; the doc review already annotated them
+`RESOLVED-BY-PINNING`), `docs/specs/runtime-host.md` (already re-pinned to the drive-specific form by the
+unit's doc review — **verified, not re-edited**), and the other unit specs (`ci-ui-leg*`, `engine-*` — quoted
+only). **Not touched by this pass:** `src/**`, `tests/**`, `scripts/**`, `package.json`, the `N = 9` pin,
+`ALL_TOOLS = 21`, the battery's `184/0`, and every earlier DONE record. **RCA-8(c) respected:** this file is
+far over 200 lines **and untracked-or-new edits were made by anchored `edit`s only — no whole-file write was
+used on any existing file, and every edit verified its anchor's surrounding bytes survive.**
 

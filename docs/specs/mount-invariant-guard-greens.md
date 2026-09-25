@@ -9,6 +9,25 @@ marked runnable to raise the count, and no row was re-scoped to make it pass.**
 FAIL rows and at `§8.6` for NBR reasons — the FAIL rows are **§8** (`TEAR-3`, `TEAR-4`) and the
 NOT-BLIND-RUNNABLE rows are **§7** (`NBR-01`…`NBR-06`); `§8` holds no NBR row. No verdict, count or row
 moved — this is a pointer correction in the record's own cross-references.**
+**⟶ RUN RECORD + LIVE STATE (2026-09-27, the per-unit documentation review): the counts in the status
+line above are THIS PRE-FIX RUN'S OWN readings (`41`-row unit file / `913` passed) and are preserved as
+the record of that run; today the unit's file is **`44` rows** and the suite is **`59` files / `916`
+passed / `2` skipped / `0` failed**. The two FAILs are **`RESOLVED-BY-PINNING`** (§6's `TEAR-3`/`TEAR-4`
+rows and §8's heading carry the annotation; the verdicts stand as returned). See §3's `DATED-COUNT
+POINTER` and §6.**
+
+**⟶ CURRENT STATUS OF THE TWO FAILS (added 2026-09-27 by the per-unit DOCUMENTATION REVIEW —
+annotation only; the run's own verdicts below are NOT rewritten; read it with the header note above,
+which it deliberately does not repeat): both `TEAR-3` and `TEAR-4` are `RESOLVED-BY-PINNING`.**
+The contract now **pins the drive** this run measured: the spec's appended **§3.1 `M-19`** is the row
+for the never-bootstrapped `teardown()` drive (cycle 1 = ONE mounted root that IS the graph's live
+in-tree root; cycles 2/3 = ZERO), **§1.1** is re-pinned to the drive, **§3.1 `M-11`/`M-12`** name their
+(bootstrapped) drive, and the two rows are recorded as ONE finding in the spec's disposition table —
+**`docs/specs/mount-invariant-guard.md` §3b `ADV-1`/`ADV-8`.**
+**No code changed for this**: `teardown()` was not altered (the `RED-5` clause forbids it), and the
+record's two FAIL rows, their evidence and every other verdict in this file stand exactly as returned
+(§8's own rule: nothing laundered, nothing converted to a pass). **The FAILs were correct as filed;
+the contract was the thing that was under-specified, and it has been fixed.**
 
 **Date stamp:** the host clock reads **2026-09-25** during this work (`date -u`); this unit, its
 contract and its trackers file the work under **2026-09-27** (the same host-clock-vs-filing-calendar
@@ -140,7 +159,14 @@ npm run ui
 
 **The row arithmetic, so it closes:** §4 `40` + §5 `4` + §6 `4` + **§7 `6`** = **56** scenario rows;
 `40 + 4 + 4 + 0 = 48` PASS, `2` FAIL (`TEAR-3`, `TEAR-4`, both in §6 and detailed in §8), `6`
-NOT-BLIND-RUNNABLE (§7's `NBR-01`…`NBR-06`). **The six §7 rows carry a NOT-BLIND-RUNNABLE verdict and are
+NOT-BLIND-RUNNABLE (§7's `NBR-01`…`NBR-06`). **⟶ DATED-COUNT POINTER (added 2026-09-27 by the per-unit
+documentation review; the figures in this table are THIS RUN'S OWN readings and are the record of that
+run, not live counts):** today's values are **`59` files / `916` passed / `2` skipped / `0` failed**
+(the pass that appended `M-17`/`M-18`/`M-19` took the unit's file from **`41`** to **`44`** rows, and
+the suite from `913` to `916` passed), and the unit's own file reads **`44 passed (44)`**; `typecheck` /
+`build` / `battery` `184/0` / divergence `9/0` / `ui` `11/11` are **unchanged today**. **Nothing in this
+row is retracted — `913` and `41 passed (41)` were correct when taken, and every verdict, count and
+citation above is preserved as that run's evidence.** **The six §7 rows carry a NOT-BLIND-RUNNABLE verdict and are
 the record's own scenario rows, not extra reasons** (the count defect `docs/specs/ci-ui-leg-greens.md` §3
 had to correct is avoided by stating this explicitly).
 
@@ -251,8 +277,8 @@ claim under test is the **host** half, and this is the layer at which it can be 
 | --- | --- | --- | --- | --- |
 | **TEAR-1** | §3.1 `M-11` (amended) + `runtime-host.md` §3.6 | bootstrap → `teardown()` | `preTeardown rawEngineChildren=1` → `afterTeardown rawEngineChildren=0 rawMountChildren=0 mountHTML="" census={"registered":11,"inTree":1,"unplaced":10,"destroyed":0,"prototypes":0}` · `listTargets inTree=1 inTreeNodeIds=["node-212"]` | **PASS** — **both halves**: the mount is empty **and** the graph holds exactly the root |
 | **TEAR-2** | §3.1 `M-12` + §3a `A-6` (the adversarial seed) | `teardown()` × 3, then a `loadEnvelope(demoEnvelope())` | `cycles=[{"raw":0,"inTree":1,"html":""} ×3] afterReload rawEngineChildren=1 ids=["node-236"] census={"registered":12,"inTree":12,…}` | **PASS** — idempotent, and the count returns to `1` after a load |
-| **TEAR-3** | §3.1 `M-11`/`M-12` + `runtime-host.md` §3.6 (*"Returns the post-teardown census — `inTree === 1` (root only), mount empty"*) | `teardown()` on a Runtime that was **constructed and never `bootstrap()`ed** (nor loaded) | `teardown rawEngineChildren=1 census={"registered":11,"inTree":1,"unplaced":10,"destroyed":0,"prototypes":0}` · after a subsequent load `rawEngineChildren=1 ids=["node-260"]` | **FAIL** — see §8.1 |
-| **TEAR-4** | §1 item 1 (**amended invariant**) at that same point | same drive, taking the amended invariant's own two halves | `mountRawEngineChildren=1 ids=["node-308"] graphInTreeIds=["node-308"] countEqualsGraphRoot=true census={"inTree":1,…} mountHTMLBytes=81` | **FAIL (as a one-root-at-every-point invariant)** / the root-identity half **holds** — see §8.2 |
+| **TEAR-3** | §3.1 `M-11`/`M-12` + `runtime-host.md` §3.6 (*"Returns the post-teardown census — `inTree === 1` (root only), mount empty"*) | `teardown()` on a Runtime that was **constructed and never `bootstrap()`ed** (nor loaded) | `teardown rawEngineChildren=1 census={"registered":11,"inTree":1,"unplaced":10,"destroyed":0,"prototypes":0}` · after a subsequent load `rawEngineChildren=1 ids=["node-260"]` | **FAIL** — see §8.1 · **⟶ `RESOLVED-BY-PINNING` (2026-09-27, the per-unit documentation review): the contract now pins this drive as §3.1 `M-19`; the verdict above is unchanged and is NOT converted** |
+| **TEAR-4** | §1 item 1 (**amended invariant**) at that same point | same drive, taking the amended invariant's own two halves | `mountRawEngineChildren=1 ids=["node-308"] graphInTreeIds=["node-308"] countEqualsGraphRoot=true census={"inTree":1,…} mountHTMLBytes=81` | **FAIL (as a one-root-at-every-point invariant)** / the root-identity half **holds** — see §8.2 · **⟶ `RESOLVED-BY-PINNING` (2026-09-27, the per-unit documentation review): the same finding as `TEAR-3`, one row per reading; §1.1's drive-specific re-pinning supplies the statement this row found missing. The verdict is unchanged** |
 
 **The `TEAR-3` re-take, with controls** (`node /tmp/mountguard-blind/run-tear3.mjs`, verbatim):
 
@@ -291,7 +317,11 @@ the tree), not because it failed and not because it was hard.** None of the six 
 
 ## 8. FAIL rows — verbatim (observed vs documented)
 
-**These are findings. Neither was converted to a pass.**
+**These are findings. Neither was converted to a pass.** **⟶ BOTH ARE NOW `RESOLVED-BY-PINNING`
+(2026-09-27, the per-unit documentation review — status annotation only): the contract pins this drive
+as **§3.1 `M-19`**, §1.1 is re-pinned to the drive, and the two findings are recorded as one in the
+spec's disposition table (`§3b ADV-1`/`ADV-8`). **The verdicts, the evidence and the analysis below are
+kept verbatim and unamended** — this file is the run's own record.**
 
 ### 8.1 `TEAR-3` — `teardown()` on a never-bootstrapped Runtime leaves ONE engine-emitted root in the mount
 

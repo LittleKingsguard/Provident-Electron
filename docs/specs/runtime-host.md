@@ -115,8 +115,23 @@ forwards and never whitelists the kind itself.
   node (runtime-minted retention), `dropPayload` on content payloads, then
   re-render. A fresh `Supervisor` is built on the next load, so userData (R8)
   does not persist across loads.
-- Returns the post-teardown census — `inTree === 1` (root only), mount empty.
-- Idempotent: calling teardown on an already-root-only graph is a no-op.
+- Returns the post-teardown census — `inTree === 1` (root only), mount empty. **⟶ AMENDED 2026-09-27
+  (a staleness fix by the `U-MOUNTGUARD` per-unit documentation review, `AGENTS.md` item 10d/RCA-6;
+  the as-filed unconditional form is kept above as the old form): THE MOUNT HALF IS DRIVE-SPECIFIC.**
+  On a runtime that HAS `bootstrap()`ed — the landed drive, and the drive
+  `tests/runtime-host.test.ts:150-161` uses (its row calls `bootstrap()` before the teardown) — the
+  mount holds **`0`** engine-emitted direct children and `mount.innerHTML === ''`. On a runtime that was
+  **constructed, never `bootstrap()`ed AND never loaded**, the **FIRST** `teardown()` leaves **ONE**
+  engine-emitted root in the mount — genuinely the graph's live in-tree root (`listTargets` agrees,
+  `census.inTree === 1`) — and cycles 2/3 leave `0`. That drive is pinned by the guard unit's appended
+  row **`§3.1 M-19`** (`docs/specs/mount-invariant-guard.md`; its `§3b ADV-1`/`ADV-8` carry the
+  disposition), and the mechanism is `tearDownGraph()` → `render()`'s compile branch, which runs
+  whenever `bootstrapped === false` (`src/renderer/runtime.ts:155-173`). **The `0` may not be
+  generalised to every drive.**
+- Idempotent. **⟶ AMENDED 2026-09-27 (the same staleness fix): idempotence is DRIVE-SPECIFIC too** —
+  on the bootstrapped drive every cycle holds the same state, while on the
+  never-bootstrapped-and-never-loaded drive cycle 1 differs from cycles 2/3 (`M-19`). The surviving
+  claim is therefore *"idempotent from the SETTLED point"*, **not** *"every cycle is identical"*.
 - The R6 settle-gate (`while (hasPendingWork()) await flush()`) is awaited in
   the async `teardownResult()` wrapper (the MCP `provident.teardown` path), so
   the post-teardown state is at provable quiescence.
@@ -172,7 +187,9 @@ surface found 7 host defects — all fixed + regression-tested in
   render reflects it; a rejected op returns `{ status: 'rejected' }` (no throw).
 - `exportLegacy()` → a `LegacyInitialData`; `validateExport('legacy', it)` →
   `{ valid: true, censusMatch: true }`.
-- `teardown()` → `inTree === 1`, mount empty; idempotent (second call no-op).
+- `teardown()` → `inTree === 1`, mount empty **on the bootstrapped drive** (`§3.6`'s amendment: on a
+  never-bootstrapped-never-loaded runtime the FIRST cycle leaves ONE root — `M-19`); idempotent from the
+  settled point.
 - `resolveTarget('counter')` (a css.id) resolves via the index without an
   `allNodes()` scan (the index is used).
 - A destroyed node's id does not resolve via the index.

@@ -4,6 +4,20 @@ Status: **SPEC — FILED 2026-09-27** (wave **D**, unit **`U-SLOTHOST`**, the **
 of `SCH-9` `SHELL-STATUS-CARRIER` under architect ruling **A-d7**). **The unit has NOT run: nothing
 here is implemented, no red set has been authored and no leg has been run by this pass.** This pass
 files the contract.
+**⟶ STATUS NOTE — 2026-09-27, THE `U-MOUNTGUARD` DONE PASS: THE WAVE-D GO-AHEAD WAS GIVEN.** The
+architect **GAVE the wave-D go-ahead (2026-09-27)** and **`U-MOUNTGUARD` is `DONE`** (the ledger's
+**FOURTH `DONE` row**; the counts are **`4 DONE / 16 open`**). **This is a STATUS/ANNOTATION note: it
+amends no normative clause, adds no row and moves no section number.** **What it supersedes, in its
+STATUS half only:** the go-ahead paragraph below (and §0 **ruling 7**, §4.4, §7 item 1), whose
+*"BLOCKED on the architect's go-ahead … wave D is authorised by no ruling currently on the record …
+RED SET OWED — NOT AUTHORED, NOT RUN"* clauses are **kept visible and are the filing pass's state**.
+**What it does NOT change:** `AGENTS.md` item 9 still binds (delegable only once the red set is **RUN
+and REPORTED**), and the **wave-D order is unskipped** — `U-MOUNTGUARD` (`DONE`) → `U-LISTHOST` → **this
+unit (`U-SLOTHOST`)** → `U-PROJ` — so this unit's ordering precondition is `U-LISTHOST`, not the
+go-ahead. **Its exact next action: `TestWriter red` RUN and REPORTED → green → adversarial → blind
+greens → legs → documentation review → DONE**, with `docs/next-steps.md` `## OPEN` row **`D3`** the queue
+pointer. **The publisher/carrier half stays DECLINED — this note does not restore it.**
+
 **Go-ahead state — stated plainly: this unit is BLOCKED on the architect's go-ahead for the wave-D
 plan.** The go-ahead in force covers **wave B only** (`docs/specs/engine-drift.md` §0 ruling 1:
 *"the go-ahead is WAVE B ONLY … waves C–F are not authorised by this go-ahead"*), and it is **spent**.
@@ -29,7 +43,7 @@ filed**; this file is that filing).
 | **4** | **`V-7` is resolved by own-node ownership and stays a HARD row in BOTH units** (§2.2 + §1.10): *"a re-render removes exactly the nodes the host placed and nothing else; a foreign sibling survives two re-renders as the SAME element (`toBe`)"*. | §2.4, §3 (`M-7`/`I-3`), §7 item 3 |
 | **5** | **`H-r17`'s decisive consequence — the SLOT host is the host that IS admissible, and the region host is NOT.** *"menus/toolbars/dashboards are containers + content, and the two halves have different admissibility — region host NO (stays declined) … slot host YES (`U-SLOTHOST`)"*. **This unit is therefore the ONLY host of the two that may exist**, and it must not acquire a region concept. | §1, §2.2, §7 item 4 |
 | **6** | **`A-d7` reading (a) is the authority: `AGENTS.md:23-34` and `docs/decisions.md:53` are UNCHANGED**, and a mechanism is outside that constraint **because it is not a UI element** (`SHELL-CHROME-CARVE-OUT-FUNCTIONAL`, `docs/decisions.md:54`, read) — *"it authors no text, no control, no affordance, no class taxonomy, no slot content and no styling, and every node it creates is empty and consumer-driven (every visual property is consumer-supplied)"*. **A mechanism that authors content — a status text, a status element, a mirror-class taxonomy, a slot model, a literal default — IS a UI element authored outside the provident graph and remains a review finding.** | §2.2, §5, §7 item 5 |
-| **7** | **The go-ahead for wave D does not exist yet**, and within wave D this unit follows `U-LISTHOST`. **This unit is BLOCKED on that go-ahead, on the wave-D order, and on its own red set.** | this status block, §4.4, §7 item 1 |
+| **7** | **The go-ahead for wave D does not exist yet**, and within wave D this unit follows `U-LISTHOST`. **This unit is BLOCKED on that go-ahead, on the wave-D order, and on its own red set.** **⟶ SUPERSEDED ON ITS GO-AHEAD HALF (2026-09-27, the `U-MOUNTGUARD` DONE pass; the as-written cell is kept visible): the wave-D go-ahead WAS GIVEN (architect, 2026-09-27) and `U-MOUNTGUARD` is `DONE`, so the surviving blockers are the wave-D order (its predecessor `U-LISTHOST`) and this unit's OWN RED SET.** | this status block, §4.4, §7 item 1 |
 
 ## Layer declaration (read this before any table below)
 
@@ -488,7 +502,10 @@ call (`H-r1`'s cite-and-supersede rule).
 
 1. **Nothing in this unit is `DONE`, nothing is green, and no leg has been run by this pass.** It is
    **BLOCKED on the architect's go-ahead for wave D, on the wave-D order (`U-MOUNTGUARD` →
-   `U-LISTHOST` first), and on its red set** (§0 ruling 7, §4.5).
+   `U-LISTHOST` first), and on its red set** (§0 ruling 7, §4.5). **⟶ SUPERSEDED ON ITS GO-AHEAD HALF
+   (2026-09-27, the `U-MOUNTGUARD` DONE pass; the sentence above is kept visible): the wave-D go-ahead
+   WAS GIVEN (architect, 2026-09-27) and `U-MOUNTGUARD` is `DONE`; the surviving blockers are the
+   wave-D order (`U-LISTHOST` first) and this unit's own red set.**
 2. **THE PUBLISHER/CARRIER HALF IS DECLINED — this file must never be read as adopting it.** The
    declined half is what authors the element's text and slot content; it is a `UI-RENDERED-WITH-
    PROVIDENT` review finding, and the host half is admissible **only** because it does not touch that.
