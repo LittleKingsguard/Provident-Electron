@@ -147,6 +147,14 @@
 //     `F-2` (d), `§6`'s third falsification); the register cell's "3 keys, 2
 //     `isEmpty` calls" reading CONTRADICTS those clauses and is REPORTED here
 //     rather than followed (§6's outcome (b): the cell needs `SUPERSEDED`).
+//
+// ⟶ SUPERSEDED IN ONE NAMED RESPECT (the COERCION cycle, red half): the sentence
+// "no new row id exists" above is true OF THE GREEN-TIME REPAIR PASS it describes,
+// and it is NOT true of this file any more — the `CO` block at the END of this file
+// adds ONE row, `CO-1` (the property-key coercion of an enumerated member). No
+// existing id, register id, strategy id, attempt term, seed, pool, the `248` total
+// or any diff-scope/type row moves; `CO-1` is a CLAUSE row, not a register row, so
+// the register's eight declared rows and their terms are untouched by it.
 // ===========================================================================
 import { describe, it, expect, vi } from 'vitest'
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
@@ -4548,5 +4556,552 @@ describe('§6/§7 item 13 — the ruling’s falsification set and the mechanism
       new Set([recordOf(declined).a, recordOf(malformed).a, recordOf(missed).a]).size,
       '§7 item 13/§0A note 12 — the value domain is `string` and carries no display-state channel: no sentinel exists',
     ).toBe(1)
+  })
+})
+
+// ===========================================================================
+// CO — THE PROPERTY-KEY COERCION OF A MEMBER INSIDE THE ENUMERATION.
+//
+// **This is a NEW row (`CO-1`), added by the red half of a later cycle, and it
+// renumbers NOTHING**: no existing id, no register id, no strategy id, no attempt
+// term, no seed, no pool, no `248` total and no diff-scope/type row moves. It is a
+// CLAUSE row (not a register row), so the register's declared eight rows and their
+// `248` attempts are untouched by it.
+//
+// THE MECHANISM, stated so the expectation is derived from the CONTRACT and never
+// from the module's current behaviour. For a record write `out[key] = rhs()`, JS
+// evaluates `ToPropertyKey(key)` BEFORE the right-hand side, and a throw there
+// aborts the write. Where the `key` expression is the raw ENUMERATED MEMBER (this
+// mechanism carries the member verbatim — `§0A` note 3, `§2.3` item 1 (v): no
+// member is normalized, stringified, trimmed or validated), a member whose OWN
+// primitive coercion THROWS (an own `Symbol.toPrimitive`/`valueOf`/`toString` that
+// throws) therefore aborts the write BEFORE anything is computed for it.
+//
+// THE TWO HALVES THE CONTRACT PINS FOR THAT MEMBER — and only these two, because
+// the clause pair below is the whole of what this contract says about it:
+//
+//   (1) `§2.3` ITEM 6 — THE CALL COUNTS. *"`isEmpty` is called exactly once per
+//       ENUMERATED zone that passes the reveal gate; `trackFor` is called exactly
+//       once per ENUMERATED zone that passes the reveal gate … and no delegate or
+//       caller function is called for a zone outside those sets."* The member's own
+//       coercion is NOT one of the two named exemptions: the only zero-call zone is
+//       a zone that does NOT pass the gate, and `§2.3` item 1 (iv)'s `Symbol` member
+//       is dropped BEFORE the loop body (it is not in "the sets" at all, and it is
+//       skipped without a decision). A member that PASSES the reveal gate is inside
+//       the set, so this clause admits no zero-call member.
+//   (2) `§2.4 C-A` / `§3.3 I-2` — THE KEY-SET INVARIANT FOR THE MEMBERS THAT CAN
+//       BE KEYS. *"the returned record's own enumerable string-key set equals
+//       `{ String(m) : m ∈ E }` MINUS the `Symbol` members — no key outside that set
+//       ever appears, and no member inside it is ever omitted"*, and the architect
+//       ruling of 2026-09-27 makes `I-2` *"exact equality …, never an omission"*
+//       (`§0A` ruling note 11). So `'b'` and `'c'` — ordinary string members that
+//       DO have a legal property-key image — may never be lost because some OTHER
+//       member was uncoercible.
+//
+// ⟶ CORRECTED 2026-09-27 (the SUPERVISOR'S RULING, landed as the `§2.4 C-A` (f)
+// AMENDMENT — the header above is the PRE-RULING clause-gap framing and is
+// SUPERSEDED on the uncoercible member's own class). This block previously reported
+// a clause gap (*"the contract PINS neither the outcome nor the cost of the
+// uncoercible member ITSELF"*). **The contract now PINS BOTH, and the ruling landed
+// in `docs/specs/census.md` `§2.4 C-A` (f) — AMENDED 2026-09-27 (the `U-CENSUS`
+// adversarial pass, findings `ADV-CN-1`/`ADV-CN-9`, and the module fix that
+// followed)**. The class is GENERALIZED from *"the `Symbol` member"* to *"a member
+// whose own PROPERTY-KEY COERCION cannot produce an own key"* — a `Symbol`, or an
+// object whose own `Symbol.toPrimitive`/`valueOf`/`toString` throws under
+// `ToPropertyKey` — and its FULL RULE is both halves: **(i) THE COST IS PAID** — such
+// a member, if it passes the reveal gate, still costs **exactly one `isEmpty` and one
+// `trackFor`** call in clause order, because `§2.3` item 6's zero-call exemption is
+// for a member OUTSIDE the gate-passing set, never for an uncoercible one; **(ii) THE
+// KEY IS NOT WRITTEN** — it contributes **no key** (the drop class, expressed as the
+// ABSENCE of a key: **no reason, no sentinel, no skip vocabulary** — `§3.3 I-9`,
+// `§0A` note 8) and **it must NOT end the enumeration**, so every member AFTER it that
+// CAN be a key is still enumerated and still keyed (`I-2`'s no-omission half, which is
+// UNCONDITIONAL and admits only this class); **(iii) the `Symbol` member KEEPS its
+// zero-cost PRE-GATE drop** (`§2.3` item 1 (iv)) — **the two classes differ in COST,
+// not in OUTCOME**. The spec's own falsifiers: *"a row asserting a key for such a
+// member, or asserting that members after it are lost, FAILS; a row asserting zero
+// delegate calls for a NON-`Symbol` uncoercible member FAILS."* **`'b'`/`'c'` keep
+// their unconditional keys.**
+//
+// ⟶ THE DISCRIMINATOR, made REAL by this same correction (one cell was not brought
+// along with the ruling). `trackFor`'s FIRST argument is the SPEC, and this drive's
+// `specOf` (`(id) => SPEC_X`) returned **the same `SPEC_X` object for every member** —
+// so `trackFor.filter((call) => Object.is(call[0], SPEC_X))` counted **the whole
+// drive's** calls (4), not one member's, and could never be 1 while the row's own
+// contract-required assertion `DELEGATE_LOG.trackFor.length === 4` held. The
+// unsatisfiable cell asserted the row's INTENT — *the uncoercible member REACHED
+// `trackFor`* — with the wrong instrument. **The instrument is now per-member:
+// `specOf` returns a DISTINCT spec object per member and the count of `1` is taken
+// against THAT member's OWN spec object BY IDENTITY.** The `isEmpty` half already
+// discriminated by identity (`call[1] === thrower`); no member of this drive is left
+// without a `trackFor` call of its own.
+//
+// THE FOUR EXISTING ASSERTION GROUPS ARE KEPT EXACTLY AS STRONG: cost `4/4` for both
+// delegates (with the uncoercible member inside the 4), the emptiness lookups VERBATIM
+// for all four members, no omission of `'b'`/`'c'`, and the key-set equality + count +
+// order with NO key for the uncoercible member.
+//
+// THE MODULE IS NOT TOUCHED BY THIS PASS: the row is driven against the LANDED module
+// (`src/shared/census.ts` is byte-for-byte the implementer's) and the red half is
+// RUN and reported.
+// ===========================================================================
+describe('CO — the property-key coercion of an enumerated member (the two pinned halves)', () => {
+  it('CO-1 — a member whose OWN primitive coercion THROWS and which PASSES the reveal gate still costs exactly ONE `isEmpty` and ONE `trackFor` (§2.3 item 6), and no member AFTER it that CAN be a key is LOST (§2.4 C-A, §3.3 I-2: exact key set, never an omission)', async () => {
+    const fn = await surface('CO-1 §2.3 item 6 / §2.4 C-A / I-2')
+    /** `§0A` note 3 / `§2.3` item 1 (v) — a member carried VERBATIM whose OWN
+     *  primitive coercion throws: `Object.create(null)` carries no `toString`/
+     *  `valueOf`, and the own `Symbol.toPrimitive` throws, so `ToPropertyKey(member)`
+     *  is the throwing coercion and NO `String()` image of it exists without a
+     *  `try/catch`. */
+    const uncoercible = (): unknown =>
+      Object.assign(Object.create(null) as object, {
+        [Symbol.toPrimitive](): never {
+          throw new Error('the member’s own primitive coercion threw')
+        },
+      })
+    const thrower = uncoercible()
+    // The drive, minimal and literal: a FOUR-member sequence whose SECOND member is
+    // the uncoercible one, with a predicate that displays EVERY member (so every
+    // member PASSES the reveal gate — `§2.3` item 3) and a census that is non-empty
+    // for every member that can be asked about.
+    const zones: unknown[] = ['a', thrower, 'b', 'c']
+    const gatedMembers: unknown[] = ['a', thrower, 'b', 'c']
+    const census: Record<string, number> = { a: 3, b: 3, c: 3 }
+    const SPEC_X: TrackSpec = { trackProp: '--t', unit: 'px', emptyToken: 'SENTINEL-E' }
+    const sizesCalls: unknown[] = []
+    const specCalls: unknown[] = []
+    const sizes = (id: unknown, c: unknown): unknown => {
+      sizesCalls.push([id, c])
+      return 40
+    }
+    // CORRECTED 2026-09-27 (see the header block): `specOf` returns a DISTINCT spec
+    // object PER MEMBER, so `trackFor`'s FIRST argument (the spec — `§2.3` item 5,
+    // U-ZONES `§2.1`) is a real per-member discriminator. With one shared `SPEC_X`
+    // object the count below could only ever be the WHOLE drive's count (4), which is
+    // exactly the unsatisfiable cell this correction removes. `SPEC_X` stays the spec
+    // of the FIRST member, so the drive's other rows read unchanged.
+    const specForMember: readonly TrackSpec[] = gatedMembers.map((_member, index) =>
+      index === 0 ? SPEC_X : { trackProp: '--t', unit: 'px', emptyToken: `SENTINEL-E#${index}` },
+    )
+    /** The uncoercible member's OWN spec object, by IDENTITY — its `trackFor` call is
+     *  counted against THIS object, never against the drive's first spec. */
+    const specOfThrower: TrackSpec = specForMember[1] as TrackSpec
+    const specOf = (id: unknown): unknown => {
+      specCalls.push(id)
+      return specForMember[specCalls.length - 1]
+    }
+    const revealCalls: unknown[] = []
+    const predicate = (id: unknown): boolean => {
+      revealCalls.push(id)
+      return true
+    }
+    resetDelegateLog()
+    // The coercion throw is CAUGHT HERE so the row reports WHICH half failed rather
+    // than aborting on the module's own throw (`§3.3 I-1` forbids the throw; this
+    // row's halves are the falsifiable statements).
+    let record: unknown = undefined
+    let thrown: string | null = null
+    try {
+      record = fn(zones, census, sizes, predicate, specOf)
+    } catch (e) {
+      thrown = describeThrown(e)
+    }
+    expect(
+      thrown,
+      `CO-1/§3.3 I-1 — \`computeTrackVars\` NEVER throws (one record for EVERY input): the coercion of an enumerated member may not escape as a throw. Observed: ${thrown ?? 'no throw'}`,
+    ).toBe(null)
+    // ── HALF (1): `§2.3` ITEM 6 — THE EXACT CALL COUNTS. Every member of this drive
+    // passes the reveal gate, so the clause pins ONE `isEmpty` and ONE `trackFor` per
+    // member — no member of this drive is outside "the sets".
+    expect(
+      DELEGATE_LOG.isEmpty.length,
+      `CO-1/§2.3 item 6 — \`isEmpty\` must be called EXACTLY once per ENUMERATED member that PASSES the reveal gate (all ${gatedMembers.length} members of this drive do), with no exception for a member whose own coercion throws. A cost of ZERO for that member is NOT the delegate's answer: it means the emptiness decision was never ASKED (and the decision has no other admissible source — §0A ruling note 4, §3.3 I-4). Observed ${DELEGATE_LOG.isEmpty.length} call(s).`,
+    ).toBe(gatedMembers.length)
+    expect(
+      DELEGATE_LOG.trackFor.length,
+      `CO-1/§2.3 item 6 — \`trackFor\` must be called EXACTLY once per ENUMERATED member that PASSES the reveal gate (all ${gatedMembers.length} members of this drive do). Observed ${DELEGATE_LOG.trackFor.length} call(s); the token bytes of a gated member never came from the delegate.`,
+    ).toBe(gatedMembers.length)
+    expect(
+      DELEGATE_LOG.isEmpty.map((call) => call[1]),
+      'CO-1/§2.3 item 6 / §0A note 3 — the EMPTYNESS lookups that did happen are over the caller’s own members, VERBATIM (the uncoercible member reaches the delegate as the member, never as an image this module manufactured)',
+    ).toEqual(gatedMembers)
+    expect(
+      DELEGATE_LOG.isEmpty.filter((call) => call[1] === thrower).length,
+      'CO-1/§2.3 item 6 — the uncoercible member reaches `isEmpty` BY IDENTITY (its own primitive coercion threw, so it cannot be compared by value here)',
+    ).toBe(1)
+    expect(
+      DELEGATE_LOG.trackFor.filter((call) => Object.is(call[0], specOfThrower)).length,
+      'CO-1/§2.3 item 6 — the uncoercible member also reaches `trackFor` (its own spec entry was looked up for it): counted BY IDENTITY against THAT member’s OWN spec object, not against a spec shared by the whole drive',
+    ).toBe(1)
+    expect(
+      specCalls.indexOf(thrower),
+      'CO-1/§2.3 item 5 — the uncoercible member’s OWN spec lookup is the SECOND of the four, by identity (`§2.4 C-A` (f) (iii): the delegate calls happen in clause order for each member), so the per-member discriminator above is the member’s own trace',
+    ).toBe(1)
+    // The drive’s FIVE `trackFor`-call classes, each counted BY IDENTITY, so the
+    // `4` above is not a total and the uncoercible member’s own call is named: the
+    // first member’s `SPEC_X`, the uncoercible member’s own spec (asserted `1`
+    // above), and `'b'`/`'c'`, whose specs are distinct objects per member.
+    expect(
+      [0, 1, 2, 3].map((index) => DELEGATE_LOG.trackFor.filter((call) => Object.is(call[0], specForMember[index])).length),
+      'CO-1/§2.3 item 6 — every one of the drive’s four GATED members owns exactly ONE `trackFor` call, counted per member BY IDENTITY (the uncoercible member included): a module that skipped the uncoercible member’s delegate calls, or one that cost a member twice, FAILS HERE',
+    ).toEqual([1, 1, 1, 1])
+    expect(
+      sizesCalls.length,
+      `CO-1/§2.3 item 4 — \`sizes\` is called AT MOST ONCE per enumerated member that passes the gate (never zero for a gated member). Observed ${sizesCalls.length}.`,
+    ).toBe(gatedMembers.length)
+    expect(
+      specCalls.length,
+      `CO-1/§2.3 item 5 — \`specOf\` is called AT MOST ONCE per enumerated member that passes the gate (never zero for a gated member). Observed ${specCalls.length}.`,
+    ).toBe(gatedMembers.length)
+    expect(
+      revealCalls.length,
+      'CO-1/§2.3 item 3 — the gate is evaluated for EVERY enumerated member (at most once each), so this drive really did put all four members through it',
+    ).toBe(gatedMembers.length)
+    // ── HALF (2): `§2.4 C-A` / `§3.3 I-2` — NO OMISSION FOR THE MEMBERS THAT CAN BE
+    // KEYS. `'b'`/`'c'` follow the uncoercible member; a string member always HAS a
+    // legal property-key image, so the key-set clause binds them unconditionally.
+    expect(
+      own(Object.create(null) as object, 'x'),
+      'CO-1 — the membership helper is the row’s own (a control that `own` is not vacuously true)',
+    ).toBe(false)
+    const keys = record === undefined || record === null ? [] : Object.keys(record as Record<string, unknown>)
+    const keyable: readonly string[] = ['a', 'b', 'c']
+    const omitted = keyable.filter((id) => !keys.includes(id))
+    expect(
+      omitted,
+      `CO-1/§2.4 C-A / §3.3 I-2 — NO member that CAN be a key may ever be OMITTED, whatever some OTHER member's coercion did: the enumerated member(s) following the uncoercible one must still own their keys (a module that loses them FAILS HERE, not on a later row). Omitted: ${JSON.stringify(
+        omitted,
+      )}; observed keys: ${JSON.stringify(keys)}.`,
+    ).toEqual([])
+    expect(
+      sameSet(keys, keyable),
+      `CO-1/§2.4 C-A — the returned record's own enumerable string-key set equals the string images of the enumerated members MINUS those that cannot carry a key, as SET EQUALITY (never a subset claim, never a bag): no key outside the set and no keyable member omitted. Observed ${JSON.stringify(
+        keys,
+      )}.`,
+    ).toBe(true)
+    expect(
+      keys.length,
+      `CO-1/§2.4 C-A (c)/(d) — the key COUNT matches the keyable members exactly (a phantom key invented for the uncoercible member, e.g. a manufactured string image, or a duplicate, is an EXTRA key and fails here). Observed ${JSON.stringify(
+        keys,
+      )}.`,
+    ).toBe(keyable.length)
+    expect(
+      keys,
+      'CO-1/§2.4 C-A (f) (ii) — first-seen enumeration order, which the record’s `Object.keys` must carry (§2.5 item 4, §0A note 7). The uncoercible member owns NO key (it is the DROP class, and that is now PINNED — see the CORRECTED header block; the pre-ruling “clause gap” framing of this one cell is SUPERSEDED): its absence is expressed by the ABSENCE of a key, never by a value, a reason or a sentinel (§3.3 I-9, §0A note 8).',
+    ).toEqual(['a', 'b', 'c'])
+  })
+})
+
+// ===========================================================================
+// CO-2 — THE `ADV-CN-2` REGRESSION ROW (the adversarial pass's finding, and the
+// MODULE FIX that followed it). **A NEW row id in the `CO` clause family; it
+// renumbers NOTHING** — no existing id, no register id, no strategy id, no attempt
+// term, no seed, no pool, the `248` total or any diff-scope/type row moves, and it
+// is a CLAUSE row, not a register row, so the register's eight declared rows and
+// their terms are untouched by it.
+//
+// THE FINDING (`ADV-CN-2`) AND THE FIX. `sizes`/`specOf` are LOOKUPS with exactly
+// TWO usable forms (`§2.3` items 4/5, `§0A` ruling note 5): **a CALLABLE** (called
+// once per gate-passing member) **or an own-keyed RECORD** (read by own property).
+// **Every other form is shape (c) of `§0A` note 5: "a number, a string, an array, a
+// `null` … every lookup yields `undefined`".** An ARRAY is the sharp case, because
+// it is an OBJECT whose own key `'0'` really does exist: an own-property read that
+// did not first rule out the array class would hand `trackFor` the CALLER'S OWN
+// VALUE — `sizes = [40]` would resolve as the size `40` and emit `'40px'` — which
+// is precisely the outcome the note forbids. **The landed module now treats an
+// ARRAY, a `Set` and a `Map` as NON-RECORDS and degrades every lookup on them to
+// `undefined`** (`src/shared/census.ts`'s `lookupValue`: `if (Array.isArray(lookup)
+// || lookup instanceof Map || lookup instanceof Set) return undefined`).
+//
+// ⟶ A NOTE ON WHAT THIS ROW CAN AND CANNOT DERIVE, stated before it is used.
+// **(1) THE ARRAY IS PINNED VERBATIM** (`§0A` note 5's own enumeration: *"a number,
+// a string, an array, a `null`"*) and so is the resulting limb: `undefined` handed to
+// `trackFor` ⇒ the caller's `emptyToken` for a size (`§2.3` item 4, U-ZONES `§2.3`
+// item 1 (b)) and `''` for a spec (`§2.3` item 5, the malformed-spec limb, evaluated
+// FIRST there and gating the other limbs). **(2) THE `Map` IS ALSO PINNED, by the
+// census's own non-record clause** — `§2.3` item 2's *"does not test `Map`/`Set`"*
+// and `F-6`'s *"a non-record census … is `U-ZONES`'s `false`"* establish that this
+// contract's RECORD class excludes a `Map` and a `Set`; the same two-form rule of
+// `§2.3` items 4/5 then puts `Map`/`Set` in shape (c). **(3) THE `Set` IS THE ONE
+// CASE THE SPEC DOES NOT ENUMERATE:** `§0A` note 5's sentence names *"a number, a
+// string, an array, a `null`"* and does NOT name a `Set` (or a `Map`) in that list.
+// **It is therefore REPORTED as derived, not quoted**: the `Set` cells below follow
+// the GENERAL rule the note states (*"A non-callable, non-record `sizes`/`specOf`
+// … is shape (c) of this note: every lookup yields `undefined`"*) plus the
+// record-class reading of `§2.3` item 2. **The pair (spec section, what is missing)
+// is reported to the supervisor**; the `Set` cells are driven because the contract's
+// own two-form rule has no third form and the landed guard is one expression for all
+// three containers — a row that drove only the array would leave the `Set`/`Map`
+// branches of that single expression un-driven.
+//
+// ⟶ THE NON-VACUITY CONTROL IS PART OF THE ROW, not a separate nicety: **the same
+// drive with a PLAIN RECORD and with a NULL-PROTOTYPE RECORD must STILL RESOLVE
+// (`'40px'`).** A guard that swallowed records too would make the `undefined` cells
+// above green for the wrong reason, so this row FAILS on such a module — the
+// degradation must be confined to the non-record class (`§2.3` items 4/5).
+//
+// THE MODULE IS NOT TOUCHED BY THIS PASS. The row was authored against the LANDED
+// module (green below), and the drive is literal and minimal: `zones = ['0']`, an
+// EMPTY census (so the delegate's emptiness answer is a plain `false` — the value
+// cells then read the SIZE/SPEC limbs alone), and one caller spec carrying a
+// distinctive `emptyToken` so the caller's limb is nameable.
+// ===========================================================================
+describe('CO-2 — the lookup classes: an array / `Set` / `Map` is a NON-record and every lookup on it yields `undefined` (`ADV-CN-2`)', () => {
+  it('CO-2a — the ADV-CN-2 regression: sizes/specOf driven as an ARRAY, a Set and a Map each degrade to `undefined` (the size ⇒ the caller’s `emptyToken`, the spec ⇒ the degenerate `\'\'`) while a PLAIN and a NULL-PROTOTYPE RECORD still RESOLVE (\'40px\') — the non-vacuity control that fails if the guard swallows records too (§0A note 5; §2.3 items 4/5; §2.4 C-A; §3.3 I-1)', async () => {
+    const fn = await surface('CO-2/§0A note 5 / §2.3 items 4/5')
+    /** The caller's spec — its `emptyToken` is distinctive so the SIZE limb that
+     *  `undefined` reaches is nameable, never confusable with a resolved token. */
+    const SPEC: TrackSpec = { trackProp: '--t', unit: 'px', emptyToken: 'SENTINEL-E' }
+    /** The caller's size, carried under the key `'0'` in EVERY container below, so
+     *  the only variable between the cells is the lookup CLASS (`§2.3` item 4). */
+    const SIZE_KEY = '0'
+    const SIZE_VALUE = 40
+    /** `§2.3` item 1 — the drive's enumeration is a one-member array whose member is
+     *  the STRING `'0'`, so it is an exact own key of a plain record and the value
+     *  cells below are unambiguous. */
+    const MEMBERS: readonly string[] = [SIZE_KEY]
+    /** The census is EMPTY, so `isEmpty(census, '0')` is a plain `false` (U-ZONES
+     *  `§2.3` item 2 (c)) and the token is the size/spec path's, never the empty
+     *  path's — the read is still the DELEGATE's (`§2.3` item 2, `I-4`). */
+    const CENSUS: Readonly<Record<string, unknown>> = {}
+    const predicate = (): boolean => true
+    /** A NULL-PROTOTYPE record carrying the one own key — `§0A` ruling note 7's
+     *  build, used here because it has no prototype at all: the record class must
+     *  be recognised WITHOUT consulting a prototype (`M-9`'s own half). */
+    const nullProtoRecord = (value: unknown): Record<string, unknown> =>
+      Object.assign(Object.create(null) as Record<string, unknown>, { [SIZE_KEY]: value })
+
+    type Attempt = { record: Record<string, string>; thrown: string | null; emptyCalls: number; trackCalls: number }
+    /** One attempt, with the delegate log scoped to it: the coercion/iterator throw
+     *  is CAUGHT HERE so this row reports WHICH cell broke rather than aborting on an
+     *  escaping throw (`§3.3 I-1` forbids one). */
+    const attempt = (
+      sizes: unknown,
+      specOf: unknown,
+    ): Attempt => {
+      resetDelegateLog()
+      let record: unknown = undefined
+      let thrown: string | null = null
+      try {
+        record = fn(MEMBERS, CENSUS, sizes, predicate, specOf)
+      } catch (e) {
+        thrown = describeThrown(e)
+      }
+      // A throw keeps the VALUE cells READABLE (an empty record) so the row’s own
+      // `thrown === null` assertion reports WHICH cell threw, instead of the cell
+      // body aborting on a `TypeError` while reading a non-record.
+      return {
+        record: record === undefined || record === null ? {} : recordOf(record),
+        thrown,
+        emptyCalls: DELEGATE_LOG.isEmpty.length,
+        trackCalls: DELEGATE_LOG.trackFor.length,
+      }
+    }
+
+    // ── THE DRIVE, minimal and literal, in fixed order: (1) the two RECORD forms
+    // (the non-vacuity control), then (2) the NON-RECORD forms — the pinned ARRAY, the
+    // pinned `Map` and the derived `Set` — each on BOTH axes, and finally both axes
+    // non-record at once.
+    const cells: ReadonlyArray<{ id: string; sizes: unknown; specOf: unknown; expected: string; what: string }> = [
+      {
+        id: 'sizes = a PLAIN RECORD `{0: 40}`',
+        sizes: { [SIZE_KEY]: SIZE_VALUE },
+        specOf: { [SIZE_KEY]: SPEC },
+        expected: `${SIZE_VALUE}px`,
+        what: '§2.3 item 4 — the RECORD form: read by OWN property, so the caller’s `40` really does resolve (the row’s non-vacuity control; a guard that swallowed records FAILS HERE)',
+      },
+      {
+        id: 'sizes = a NULL-PROTOTYPE RECORD carrying `0`',
+        sizes: nullProtoRecord(SIZE_VALUE),
+        specOf: nullProtoRecord(SPEC),
+        expected: `${SIZE_VALUE}px`,
+        what: '§0A ruling note 7 / M-9 — the same record class built on `Object.create(null)`: recognised with NO prototype to consult, and still resolving (the second non-vacuity control)',
+      },
+      {
+        id: 'sizes = `[40]` (a NON-record)',
+        sizes: [SIZE_VALUE],
+        specOf: { [SIZE_KEY]: SPEC },
+        expected: 'SENTINEL-E',
+        what: 'ADV-CN-2 / §0A note 5 — an ARRAY is shape (c): its lookup yields `undefined`, and `undefined` is handed to `trackFor`, which answers the caller’s `emptyToken`. The array’s OWN key `0` holding `40` is NOT the caller’s size — a module that read it would emit `\'40px\'` and FAILS HERE',
+      },
+      {
+        id: 'specOf = `[SPEC]` (a NON-record)',
+        sizes: { [SIZE_KEY]: SIZE_VALUE },
+        specOf: [SPEC],
+        expected: '',
+        what: 'ADV-CN-2 / §0A note 5 / §2.3 item 5 — the same degradation on the SPEC axis: `undefined` is handed to `trackFor`, which answers its MALFORMED-SPEC limb `\'\'` (evaluated FIRST there and gating the other limbs), NOT the resolved spec the array carries at its own key `0`',
+      },
+      {
+        id: 'sizes = `new Set([40])` (a NON-record)',
+        sizes: new Set<unknown>([SIZE_VALUE]),
+        specOf: { [SIZE_KEY]: SPEC },
+        expected: 'SENTINEL-E',
+        what: 'ADV-CN-2 / §0A note 5 / §2.3 item 2 (DERIVED — a `Set` is not enumerated in the note’s list; see this block’s derivation note) — a `Set` has no own-keyed read at all, so the lookup is shape (c) and the value is the caller’s `emptyToken`',
+      },
+      {
+        id: 'specOf = `new Set([SPEC])` (a NON-record)',
+        sizes: { [SIZE_KEY]: SIZE_VALUE },
+        specOf: new Set<unknown>([SPEC]),
+        expected: '',
+        what: 'ADV-CN-2 / §2.3 item 2 (DERIVED, as above) — the spec axis of the `Set` class: `\'\'`, the malformed-spec limb',
+      },
+      {
+        id: 'sizes = `new Map([[0, 40]])` (a NON-record)',
+        sizes: new Map<unknown, unknown>([[SIZE_KEY, SIZE_VALUE]]),
+        specOf: { [SIZE_KEY]: SPEC },
+        expected: 'SENTINEL-E',
+        what: 'ADV-CN-2 / §2.3 item 2 / F-6 — a `Map` is this contract’s NON-record on the census axis too (*"does not test `Map`/`Set`"*, *"a non-record census"*), so a `Map` LOOKUP is shape (c): `undefined` ⇒ the caller’s `emptyToken`. Its own `get(\'0\')` answer `40` is NOT the caller’s size',
+      },
+      {
+        id: 'specOf = `new Map([[0, SPEC]])` (a NON-record)',
+        sizes: { [SIZE_KEY]: SIZE_VALUE },
+        specOf: new Map<unknown, unknown>([[SIZE_KEY, SPEC]]),
+        expected: '',
+        what: 'ADV-CN-2 / §2.3 item 2 / §2.3 item 5 — the spec axis of the `Map` class: the delegate’s malformed-spec limb `\'\'`, never the spec the map holds',
+      },
+      {
+        id: 'BOTH lookups non-record (`[40]` + `[SPEC]`)',
+        sizes: [SIZE_VALUE],
+        specOf: [SPEC],
+        expected: '',
+        what: 'ADV-CN-2 — both axes degrade at once. `\'\'` is the MALFORMED-SPEC limb and it is evaluated FIRST in U-ZONES (`§2.3` item 5), so it gates the size limb: BOTH must have degraded for this cell to hold',
+      },
+    ]
+    const observed = cells.map((cell) => ({ id: cell.id, attempt: attempt(cell.sizes, cell.specOf), cell }))
+
+    expect(
+      observed.map((o) => o.attempt.thrown),
+      `CO-2/§3.3 I-1 — \`computeTrackVars\` NEVER throws (one record for EVERY input): a non-record LOOKUP class may not escape as a throw, on either axis. Observed: ${JSON.stringify(
+        observed.map((o) => o.attempt.thrown),
+      )}.`,
+    ).toEqual(cells.map(() => null))
+    expect(
+      observed.map((o) => o.attempt.record[SIZE_KEY]),
+      `CO-2/§0A note 5 / §2.3 items 4/5 — the VALUE for the one member of every cell: the caller’s \`emptyToken\` \`'SENTINEL-E'\` where the SIZE lookup degraded and \`'40px'\` ONLY where a RECORD carried \`40\`; the SPEC axis degrades to \`''\`. Observed: ${JSON.stringify(
+        observed.map((o) => o.attempt.record[SIZE_KEY]),
+      )}. A module that read an array or a Map by its own key (own property, or its own \`.get()\`) emits \`'40px'\` in the array/Map size cells and FAILS HERE instead.`,
+    ).toEqual(cells.map((cell) => cell.expected))
+    // ── THE NON-VACUITY CONTROL, stated as its own assertion pair so the
+    // discrimination is visible: the degradation is CONFINED to the non-record class.
+    const recordCells = observed.slice(0, 2)
+    const nonRecordCells = observed.slice(2)
+    expect(
+      recordCells.map((o) => o.attempt.record[SIZE_KEY]),
+      `CO-2/§2.3 item 4 (CONTROL) — the plain record and the null-prototype record BOTH still resolve to \`'${SIZE_VALUE}px'\`, while all ${nonRecordCells.length} non-record cells degrade. A module that routed RECORDS through the non-record path would report the caller’s token as \`'SENTINEL-E'\` here and the \`undefined\` cells above would be green FOR THE WRONG REASON: this pair is what makes them falsifiable. Observed: ${JSON.stringify(
+        recordCells.map((o) => o.attempt.record[SIZE_KEY]),
+      )}.`,
+    ).toEqual([`${SIZE_VALUE}px`, `${SIZE_VALUE}px`])
+    expect(
+      nonRecordCells.map((o) => o.attempt.record[SIZE_KEY]),
+      `CO-2/§0A note 5 (CONTROL) — every non-record cell degrades: the two size-axis cells (\`[40]\`, \`Set([40])\`, \`Map([[0,40]])\`) answer the caller’s \`emptyToken\` and every spec-axis or both-axes cell answers \`''\`. Observed: ${JSON.stringify(
+        nonRecordCells.map((o) => o.attempt.record[SIZE_KEY]),
+      )}.`,
+    ).toEqual(nonRecordCells.map((o) => o.cell.expected))
+    // ── THE CONTRACT HALVES THE DRIVE MUST NOT LOSE WHILE IT DEGRADES: the member
+    // still EXISTS with its key (`§2.4 C-A` — a degraded LOOKUP is not an omission),
+    // the delegate still costs exactly ONE call on each side (`§2.3` item 6 — every
+    // member of this drive passes the gate), and what reached `trackFor` IS the
+    // degraded `undefined` (not a value this module manufactured).
+    expect(
+      observed.map((o) => Object.keys(o.attempt.record)),
+      `CO-2/§2.4 C-A — a degraded lookup is NOT an omission: the one enumerated member \`'${SIZE_KEY}'\` owns its key in EVERY cell, including the cells whose value is \`''\` (a zone with NO spec entry has its key — \`§2.3\` item 5, ruling note 9). Observed: ${JSON.stringify(
+        observed.map((o) => Object.keys(o.attempt.record)),
+      )}.`,
+    ).toEqual(cells.map(() => (MEMBERS.length === 1 ? [SIZE_KEY] : [...MEMBERS])))
+    expect(
+      observed.map((o) => Object.getPrototypeOf(o.attempt.record) === null),
+      'CO-2/§0A ruling note 7 (C-A (e)) — the returned record is NULL-PROTOTYPE in every cell, whatever the lookup class did',
+    ).toEqual(cells.map(() => true))
+    expect(
+      { isEmpty: observed.map((o) => o.attempt.emptyCalls), trackFor: observed.map((o) => o.attempt.trackCalls) },
+      `CO-2/§2.3 item 6 — EXACTLY ONE \`isEmpty\` and ONE \`trackFor\` per cell: the drive has one enumerated member and it PASSES the gate, so a degraded lookup costs the delegate call rather than skipping it (the count is not a lookup's to decide). Observed: ${JSON.stringify(
+        observed.map((o) => [o.attempt.emptyCalls, o.attempt.trackCalls]),
+      )}.`,
+    ).toEqual({ isEmpty: cells.map(() => 1), trackFor: cells.map(() => 1) })
+    // The LAST cell's delegate call, read from the log that cell left behind: BOTH
+    // data arguments must have arrived as `undefined`, and NEITHER the lookup
+    // CONTAINER nor its element may have leaked in (`ADV-CN-2`'s own defect shape:
+    // `trackFor` receiving a value that came from an array's own key `'0'`).
+    const lastCall = DELEGATE_LOG.trackFor[0] as unknown[]
+    expect(
+      {
+        specIsArray: Array.isArray(lastCall[0]),
+        sizeIsArray: Array.isArray(lastCall[1]),
+        specIsUndefined: lastCall[0] === undefined,
+        sizeIsUndefined: lastCall[1] === undefined,
+        sizeIsTheArrayElement: (lastCall[1] as unknown) === SIZE_VALUE,
+      },
+      `CO-2/§0A note 5 / §2.3 items 4/5 — the LAST cell in the drive (\`[40]\` + \`[SPEC]\`) handed \`trackFor\` BOTH data arguments as the degraded \`undefined\`: NEITHER array container reached the delegate and the array’s own element \`40\` did NOT — so the \`''\` this cell expects is the delegate’s own malformed-spec limb and not a value this module manufactured. Observed ${JSON.stringify(
+        lastCall.map(brief),
+      )}.`,
+    ).toEqual({
+      specIsArray: false,
+      sizeIsArray: false,
+      specIsUndefined: true,
+      sizeIsUndefined: true,
+      sizeIsTheArrayElement: false,
+    })
+  })
+
+  it('CO-2b — the `ADV-CN-2` regression, on the DELEGATE’S OWN ARGUMENTS: the size and the spec that reach `trackFor` are exactly what the two lookups yielded (`undefined` for a non-record class), and the record’s value is the delegate’s own output for THAT triple BYTE-FOR-BYTE (§2.3 items 4/5, §2.4 C-A, I-4)', async () => {
+    const fn = await surface('CO-2/§2.3 items 4/5 / I-4')
+    const SPEC: TrackSpec = { trackProp: '--t', unit: 'px', emptyToken: 'SENTINEL-E' }
+    const CENSUS: Readonly<Record<string, unknown>> = {}
+    const SIZE_VALUE = 40
+    const predicate = (): boolean => true
+    /** The two lookups the row drives, each in its RECORD and its NON-RECORD form —
+     *  the ARRAY form is the pinned one (`§0A` note 5) and is what this control keys
+     *  on, because an array makes the resolved-versus-degraded distinction VISIBLE in
+     *  the delegate’s own argument tuple. */
+    const SIZES_RECORD: Record<string, unknown> = { 0: SIZE_VALUE }
+    const SIZES_ARRAY: unknown[] = [SIZE_VALUE]
+    const SIZES_ARRAY_ELEMENT: unknown = SIZES_ARRAY[0]
+    const SPECS_RECORD: Record<string, unknown> = { 0: SPEC }
+    const SPECS_ARRAY: unknown = [SPEC]
+
+    const run = (sizes: unknown, specOf: unknown): { value: string; threw: string | null; specArg: unknown; sizeArg: unknown; emptyArg: unknown } => {
+      resetDelegateLog()
+      let record: unknown = undefined
+      let threw: string | null = null
+      try {
+        record = fn(['0'], CENSUS, sizes, predicate, specOf)
+      } catch (e) {
+        threw = describeThrown(e)
+      }
+      expect(DELEGATE_LOG.trackFor.length, 'CO-2/§2.3 item 6 — one gate-passing member ⇒ exactly one `trackFor` call in each of the row’s two passes').toBe(1)
+      expect(DELEGATE_LOG.isEmpty.length, 'CO-2/§2.3 item 6 — one gate-passing member ⇒ exactly one `isEmpty` call in each of the row’s two passes').toBe(1)
+      const call = DELEGATE_LOG.trackFor[0] as unknown[]
+      return { value: recordOf(record)['0'] as string, threw, specArg: call[0], sizeArg: call[1], emptyArg: call[2] }
+    }
+
+    // PASS 1 — the RECORD form: the lookups really do resolve, and the delegate’s own
+    // arguments carry the caller’s objects BY IDENTITY. Without this pass the
+    // non-record pass below could pass for the wrong reason.
+    const resolved = run(SIZES_RECORD, SPECS_RECORD)
+    expect(
+      resolved.threw,
+      `CO-2/§3.3 I-1 (control) — the RECORD form never throws. Observed: ${resolved.threw ?? 'no throw'}.`,
+    ).toBe(null)
+    expect(
+      { spec: Object.is(resolved.specArg, SPEC), size: resolved.sizeArg === SIZE_VALUE, empty: resolved.emptyArg, value: resolved.value },
+      'CO-2/§2.3 items 4/5 (CONTROL) — with BOTH lookups as RECORDS the delegate receives the caller’s OWN spec object BY IDENTITY and the caller’s size VERBATIM, and the record’s value is that triple’s own output (`40px`). A guard that degraded records too would break THIS half, so the non-record half below is falsifiable.',
+    ).toEqual({ spec: true, size: true, empty: false, value: `${SIZE_VALUE}px` })
+
+    // PASS 2 — the NON-RECORD form: the same drive, the lookups replaced by arrays.
+    // The delegate’s arguments must now be exactly `undefined` for each axis — the
+    // degradation is visible IN THE ARGUMENTS, not merely in the returned string.
+    const degraded = run(SIZES_ARRAY, SPECS_ARRAY)
+    expect(
+      degraded.threw,
+      `CO-2/§3.3 I-1 — the NON-record form never throws. Observed: ${degraded.threw ?? 'no throw'}.`,
+    ).toBe(null)
+    expect(
+      { spec: degraded.specArg, size: degraded.sizeArg, empty: degraded.emptyArg, value: degraded.value },
+      'CO-2/§0A note 5 — with BOTH lookups as ARRAYS the delegate’s two data arguments are `undefined` BY IDENTITY (never the array, never `40`, never the array’s own element at key `0`), the emptiness boolean is still the delegate’s own `false` for an empty census, and the value is the delegate’s own malformed-spec limb `\'\'`. A module that passed the ARRAY ITSELF (or its own key) would differ here.',
+    ).toEqual({ spec: undefined, size: undefined, empty: false, value: '' })
+    expect(
+      { spec: degraded.specArg === SPECS_ARRAY, size: degraded.sizeArg === SIZES_ARRAY_ELEMENT },
+      'CO-2/§0A note 5 / §2.3 item 4 — NEITHER the lookup CONTAINER nor its element leaked into `trackFor`: the size that arrived is neither the array itself nor its own `0` element (`40`), which is exactly the defect `ADV-CN-2` names',
+    ).toEqual({ spec: false, size: false })
   })
 })

@@ -72,6 +72,7 @@ function lookupValue(lookup: unknown, member: unknown, census: unknown, withCens
   }
   if (lookup === null || typeof lookup !== 'object') return undefined
   try {
+    if (Array.isArray(lookup) || lookup instanceof Map || lookup instanceof Set) return undefined
     if (!Object.hasOwn(lookup, member as PropertyKey)) return undefined
     return (lookup as Record<PropertyKey, unknown>)[member as PropertyKey]
   } catch {
@@ -107,6 +108,8 @@ export function computeTrackVars(
   if (members === null) return out as TrackVars
   try {
     for (const member of members) {
+      // `§2.3` item 1 (iv) — the member that cannot become an own key AT ALL is
+      // dropped BEFORE the gate and therefore costs nothing.
       if (typeof member === 'symbol') continue
       let decision: unknown
       try {
@@ -114,18 +117,27 @@ export function computeTrackVars(
       } catch {
         return Object.create(null) as TrackVars
       }
-      if (!decision) {
-        out[member as string] = ''
-        continue
+      // The member's own token and the caller's two lookups are computed FIRST, so
+      // a gate-passing member pays its clause-ordered delegate calls whatever its
+      // own coercion does with the key write below.
+      const token = !decision
+        ? ''
+        : trackFor(
+            lookupValue(specOf, member, census, false),
+            lookupValue(sizes, member, census, true),
+            isEmpty(census, member),
+          )
+      // The key write ALONE is guarded, PER MEMBER: a member whose own
+      // property-key coercion cannot produce an own key contributes no key and
+      // ENDS NOTHING — the members after it are still enumerated and still keyed.
+      try {
+        out[member as string] = token
+      } catch {
+        // The member is the drop class: no key, no value of its own, no reason.
       }
-      out[member as string] = trackFor(
-        lookupValue(specOf, member, census, false),
-        lookupValue(sizes, member, census, true),
-        isEmpty(census, member),
-      )
     }
   } catch {
-    // The sequence answered with a throw: the members reached so far stand.
+    // The SEQUENCE answered with a throw: the members reached so far stand.
   }
   return out as TrackVars
 }
