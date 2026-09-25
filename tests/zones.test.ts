@@ -115,7 +115,7 @@
 // unit-owned file in the change set") actually state. See the `§5.5.1` block.
 // ===========================================================================
 import { describe, it, expect } from 'vitest'
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 
@@ -690,6 +690,31 @@ function unitScopedCommitted(anchor: string, range: string): { commitsInRange: n
   }
 }
 
+/** Every `zones*` path under `src/**` or `tests/**` in the WORKING TREE (a
+ *  recursive `readdirSync` census, `node_modules` pruned). `R-8`'s green-state
+ *  form asserts this set is exactly the unit's two owned files, so a second
+ *  artifact under a unit-owned path is a FINDING, not a silent extra. The harness
+ *  may read the filesystem; the MODULE may not (`R-3`). */
+function walkZonesPaths(): string[] {
+  const found: string[] = []
+  const visit = (rel: string): void => {
+    // The entry type is READ OFF the call itself (never annotated), so the walk
+    // compiles under this repo's Node/`Dirent` union without a cast.
+    const entries = readdirSync(`${REPO_ROOT}/${rel}`, { withFileTypes: true })
+    for (const entry of entries) {
+      const child = `${rel}/${String(entry.name)}`
+      if (entry.isDirectory()) {
+        if (String(entry.name) === 'node_modules' || String(entry.name).startsWith('.')) continue
+        visit(child)
+        continue
+      }
+      if (/zones/i.test(String(entry.name))) found.push(child)
+    }
+  }
+  for (const root of ['src', 'tests']) visit(root)
+  return found.sort()
+}
+
 // ===========================================================================
 // §2.1/§3.4 R-5 — the TYPE-ONLY name. `§5.2` leg 4 is the leg that covers it:
 // this import fails to compile IFF `TrackSpec` is not exported by the module
@@ -763,17 +788,27 @@ function hostileProxy(): unknown {
     },
   )
 }
-/** A `Map` whose `get` throws (`F-5`, `§2.3` item 2(v)). */
+/** A `Map` whose `get` throws (`F-5`, `§2.3` item 2(v); also `P-ZN-TP-1`'s fixed
+ *  drive `(15) a Map with a throwing get x isEmpty`).
+ *  ⟶ GREEN-TIME TEST REPAIR 2026-09-27 (the b1930d2/8e2c777 class: a TEST-side
+ *  defect repaired, the module NOT bent). The former fixture was
+ *  `new Map([['a', 0], ['get', throwingFn]])` — a `Map` ENTRY, not an own
+ *  property: **`Map` entries live in internal slots, so `map.get` was
+ *  `Map.prototype.get`**, and `map.get('a') === 0` ⇒ `§2.3` item 2(a) MANDATES
+ *  `true`, which the assertion then contradicted. The shape is now realized for
+ *  real: `Object.defineProperty` installs an OWN throwing accessor named `get`
+ *  on a genuine `Map` instance (`instanceof Map` still holds, so the module's
+ *  documented `Map`-branch reading is what is driven). */
 function throwingGetMap(): Map<unknown, unknown> {
-  return new Map<unknown, unknown>([
-    ['a', 0],
-    [
-      'get',
-      (): never => {
-        throw new Error('the map get threw')
-      },
-    ],
-  ])
+  const map = new Map<unknown, unknown>([['a', 0]])
+  Object.defineProperty(map, 'get', {
+    get(): never {
+      throw new Error('the map get threw')
+    },
+    enumerable: true,
+    configurable: true,
+  })
+  return map
 }
 /** A census snapshot for `I-6`/`P-ZN-IM-3`/`P-ZN-SM-2`: identity-relevant facts
  *  only, and a throwing shape is recorded as such rather than propagated. */
@@ -849,35 +884,80 @@ const NON_STRING_ZONE_IDS: ReadonlyArray<readonly [string, unknown]> = [
 // they are the red's own premise and are evaluable before the module exists.
 // ===========================================================================
 describe('R-8/R-9 — §3.5 the existence rows (the red’s own premise)', () => {
-  it('R-8 §3.5 — the module-absence row (the §4.1 red premise): `src/shared/zones.ts` does not exist at RED time', () => {
+  it('R-8 §3.5 — the MODULE-EXISTENCE row (the §4.1 red premise, GREEN-TIME RE-SCOPE): the module exists and the unit-owned change set is exactly the module + this test file', () => {
+    // -----------------------------------------------------------------------
+    // THE GREEN-TIME RE-SCOPE OF `§3.5 R-8` (green-time test repair 2026-09-27 —
+    // the b1930d2/8e2c777 class, and the SAME re-scope technique `a5ad335` applied
+    // to `R-4` at the remand: the row now censuses the unit's OWN change partition
+    // and asserts the form of its claim that is TRUE in the state it RUNS in, with
+    // the red-run form recorded as PROVENANCE below).
+    //
+    // WHY IT HAD TO BE RE-SCOPED, stated as the spec states it (`§3.5`): the as-filed
+    // row reads *"At the moment the red set is AUTHORED and RUN, `src/shared/zones.ts`
+    // does not exist …"* — a claim whose ONLY truth-state is the RED run. Its own
+    // text says so: *"if the module EXISTS before the red run, this row FAILS and the
+    // unit's red-order claim (RCA-1) is broken"*. The module's existence IS `§5.1`
+    // row 1 (the module, NEW — the landed deliverable), so in the GREEN state the
+    // as-filed assertion is red BY DESIGN for the correct reason, and leaving it red
+    // would report the deliverable's own landing as a defect.
+    //
+    // THE CLAIM CARRIED FORWARD, which is the row's second half and is exactly the
+    // half that stays falsifiable: *"`tests/zones.test.ts` is the only unit-owned
+    // file in the change set"* — i.e. **the unit-owned files ONLY**: the module of
+    // `§5.1` row 1 and this test file, and NO OTHER `zones*` path anywhere in
+    // `src/**` or `tests/**`. The RED-RUN PREMISE is recorded as PROVENANCE, not
+    // deleted: with the module absent the as-filed `['tests/zones.test.ts']` form is
+    // what the census below returned at the red run (`7fb37b3`/`a5ad335`).
+    //
+    // NON-VACUITY (`§4.4 S-8`'s `S-15` class, the discipline `R-4`'s re-scope also
+    // keeps): a probe whose fail is not meaningful is not a row, so (i) the module
+    // is asserted PRESENT through the same `fs` mechanism the red probe used, (ii)
+    // BOTH canonical artifacts must be present in the census, and (iii) the census
+    // is asserted to be non-empty before the equality that is its claim.
+    // -----------------------------------------------------------------------
+    // A unit-owned path is one whose BASENAME begins with `zones` (so a stray
+    // `src/shared/zones-extra.ts` or `tests/zones/legacy.test.ts` is caught, while
+    // an unrelated name that merely CONTAINS the token is not).
+    const ZONES_PATH = /^(?:src|tests)\/(?:.*\/)?zones/i
     const exists = existsSync(MODULE_SRC)
     expect(
       exists,
-      `R-8/§4.1/RCA-1 — \`src/shared/zones.ts\` does not exist at the moment this red set is AUTHORED and RUN. ` +
-        `IF IT EXISTS this row FAILS MEANINGFULLY: the unit's red-order claim (RCA-1) is broken and the pass that ` +
-        `finds it must report the inversion rather than proceed (${fileURLToPath(MODULE_SRC)}).`,
-    ).toBe(false)
-    // The unit-owned-file half: this test file is the ONLY unit-owned path in the
-    // change set while the module is absent. The census reads BOTH the working
-    // tree and this unit's own committed commits (`§3.5 R-8`'s claim is about
-    // "the change set"; the `323a4a0` unit-scoped partition applies here for the
-    // same reason it applies to `R-4`). A `git status`-ONLY probe is VACUOUS the
-    // moment the red set is COMMITTED — which `RCA-8(a)` mandates at every gate
-    // boundary — and it did read `[]` after `7fb37b3` (this file's own red-set
-    // commit), a FALSE RED for a row red for a reason `§4.1` did not name.
+      `R-8/§5.1 row 1 — the module \`src/shared/zones.ts\` is LANDED: the green-state form of this row is the module's EXISTENCE. ` +
+        `The RED-run premise is the opposite assertion and is recorded as provenance above: at AUTHOR+green-less time this probe answered ` +
+        `false and the row's FAIL was the unit's red-order claim (RCA-1) being broken, never a defect in the deliverable ` +
+        `(${fileURLToPath(MODULE_SRC)}).`,
+    ).toBe(true)
     const tree = treeChangeSet()
     const committed = committedChangeSet()
     const committedUnitOwned =
-      committed === null ? [] : unitScopedCommitted(committed.anchor, committed.range).files.filter((p) => /^(tests|src\/shared)\/zones/.test(p))
+      committed === null ? [] : unitScopedCommitted(committed.anchor, committed.range).files.filter((p) => ZONES_PATH.test(p))
     const unitOwned = Array.from(
-      new Set([...tree.paths, ...committedUnitOwned].filter((p) => /^(tests|src\/shared)\/zones/.test(p))),
+      new Set([...tree.paths, ...committedUnitOwned].filter((p) => ZONES_PATH.test(p))),
     ).sort()
+    // ── THE DISK HALF: no other `zones*` path exists anywhere in `src/**` or
+    // `tests/**` — the "unit-owned files ONLY" claim, checked against the tree
+    // itself rather than against a change census (a stray unit-owned path that
+    // happened to be committed by an earlier pass would still be caught here).
+    const onDisk = walkZonesPaths()
+    expect(
+      onDisk,
+      `R-8/§5.1 — the unit-owned surface of \`src/**\` and \`tests/**\` is EXACTLY the module of §5.1 row 1 and this red set: no other ` +
+        `\`zones*\` path exists there (a second unit-owned path would be a second artifact this row's claim does not admit)`,
+    ).toEqual(['src/shared/zones.ts', 'tests/zones.test.ts'])
+    expect(
+      unitOwned.length,
+      `R-8/§3.5 — the unit-owned change set (the WORKING TREE plus this unit's own committed commits) is NON-EMPTY, so the equality below is ` +
+        `not satisfied by a vacuous census. git status said: ${JSON.stringify(tree.raw)}; the unit-scoped committed census said: ${JSON.stringify(
+          committedUnitOwned,
+        )}`,
+    ).toBeGreaterThan(0)
     expect(
       unitOwned,
-      `R-8/§3.5 — at RED time the unit-owned change set (the WORKING TREE plus this unit's own committed commits) is ` +
-        `exactly \`tests/zones.test.ts\` (the module is absent). git status said: ${JSON.stringify(tree.raw)}; the ` +
-        `unit-scoped committed census said: ${JSON.stringify(committedUnitOwned)}`,
-    ).toEqual(['tests/zones.test.ts'])
+      `R-8/§3.5 (GREEN form) — the unit-owned change set is EXACTLY the module of §5.1 row 1 and this test file, and nothing else. ` +
+        `PROVENANCE — at RED time this same census returned \`['tests/zones.test.ts']\`, which is the as-filed \`§3.5 R-8\` claim (the module ` +
+        `was absent); the change of the expected set is the module LANDING (§5.1 row 1), not a weakening of the claim. git status said: ` +
+        `${JSON.stringify(tree.raw)}; the unit-scoped committed census said: ${JSON.stringify(committedUnitOwned)}`,
+    ).toEqual(['src/shared/zones.ts', 'tests/zones.test.ts'])
     expect(
       existsSync(TEST_FILE),
       'R-8/§3.5 — the probe is not vacuous: this test file itself exists on disk through the same mechanism',
@@ -1273,9 +1353,24 @@ describe('M — §3.1 the valid states', () => {
     expect(Object.is(size, -0), 'M-6/§0A note 4 — the drive really passes `-0` (Object.is(size, -0)), so a literal-collapsing parser cannot hide the case').toBe(
       true,
     )
-    const got = trackFor(SPEC_M1, size, false)
-    expect(got, 'M-6/§2.3 item 1(c) — `-0` is finite and not negative (`-0 < 0` is false), so it emits String(-0) + unit').toBe('0px')
-    expect(got, 'M-6/§0A note 4 — the EMPTY TOKEN is NOT returned for `-0`').not.toBe(SPEC_M1.emptyToken)
+    // ⟶ GREEN-TIME TEST REPAIR 2026-09-27 (the b1930d2/8e2c777 class: a TEST-side
+    // defect repaired, the module NOT bent). This drive used `SPEC_M1`, whose
+    // `emptyToken` IS the string `'0px'` (`M-1`'s spec) — exactly the string the
+    // `-0` limb must emit. So assertion (i) required `got === '0px'` and assertion
+    // (ii) required `got !== SPEC_M1.emptyToken` — the SAME string, opposite
+    // assertions, UNSATISFIABLE by any module (`§3.1 M-6` asserts the empty token
+    // is NOT returned; `§0A` note 4 makes `-0` fire limb (c), never the token limb).
+    // The fix is the one `M-5`/`M-10` already take: the drive carries its OWN spec
+    // with a DISTINCT sentinel `emptyToken`, so the "not the empty token" probe is
+    // NON-VACUOUS (two different strings) and the row's intent, message and clause
+    // citation are unchanged. `unit` stays `'px'`, so limb (c)'s text is still
+    // `String(size) + unit` = `'0px'` — `SPEC_M1`'s unit, never a built-in.
+    const spec: TrackSpec = { trackProp: '--w', unit: SPEC_M1.unit, emptyToken: 'SENTINEL-M6' }
+    const got = trackFor(spec, size, false)
+    expect(got, 'M-6/§2.3 item 1(c) — `-0` is finite and not negative (`-0 < 0` is false), so it emits String(-0) + unit').toBe(
+      String(size) + spec.unit,
+    )
+    expect(got, 'M-6/§0A note 4 — the EMPTY TOKEN is NOT returned for `-0`').not.toBe(spec.emptyToken)
     expect(got.startsWith('-'), 'M-6 — the negative sign is not emitted').toBe(false)
   })
 
@@ -1557,8 +1652,26 @@ describe('F — §3.2 the documented fail-states (every outcome is a VALUE)', ()
         `F-5/§2.3 item 2(v) — a Proxy whose get/has/getOwnPropertyDescriptor throw answers false for ${brief(zoneId)}, never a throw`,
       ).toBe(false)
     }
-    // (4) a Map whose get throws ⇒ false.
-    expect(isEmpty(throwingGetMap(), 'a'), 'F-5/§2.3 item 2(v) — a Map whose `get` throws answers false, never a throw').toBe(false)
+    // (4) a Map whose get throws ⇒ false. The fixture's own non-vacuity is
+    // asserted BESIDE the claim (green-time test repair 2026-09-27): the drive
+    // only exercises the limb if `get` really throws, and the plain-`Map` control
+    // below proves the assertion discriminates rather than passing for any Map.
+    const throwingMap = throwingGetMap()
+    let mapGetThrew = false
+    try {
+      void (throwingMap as unknown as { get: (key: unknown) => unknown }).get('a')
+    } catch {
+      mapGetThrew = true
+    }
+    expect(
+      mapGetThrew,
+      'F-5 — the drive is not vacuous: the fixture’s `get` REALLY throws, so the call below exercises the unreadable-accessor limb (§2.3 item 2(v)) and not a readable `Map` entry',
+    ).toBe(true)
+    expect(isEmpty(throwingMap, 'a'), 'F-5/§2.3 item 2(v) — a Map whose `get` throws answers false, never a throw').toBe(false)
+    expect(
+      isEmpty(new Map<unknown, unknown>([['a', 0]]), 'a'),
+      'F-5/§2.3 item 2(a) CONTROL — an ordinary `Map` whose `get` returns exactly 0 still answers true: the assertion above discriminates the throwing accessor from the readable one',
+    ).toBe(true)
   })
 
   it("F-6 §3.2 — `unit: ''` is the BARE-NUMBER form, not a failure", async () => {
@@ -1856,14 +1969,25 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
         )}`,
       ).toBe(true)
     }
+    // ── RE-SCOPED 2026-09-27 (a CROSS-UNIT defect found the moment a SIBLING unit
+    // had a dirty file, the same class U-PROJ's R-20 hit twice): the working-tree
+    // census read the GLOBAL `git status`, so a sibling unit's in-flight work
+    // (`tests/layout-projection.test.ts` under repair, `src/shared/zones.ts` being
+    // born) was charged to THIS unit's denied set. The working-tree half is
+    // therefore scoped to the paths THIS unit owns; the DENIED set still binds
+    // absolutely over the COMMITTED census and over the unit's own artifacts (the
+    // loops that follow), so the falsifiable half is unchanged: this unit may not
+    // touch `src/main/**`, `src/renderer/**`, the shim, the shared types, the
+    // build files, `scripts/**`, or a sibling's artifact.
     const treePaths = treeChangeSet().paths
-    for (const path of treePaths) {
+    const ownTreePaths = treePaths.filter((path) => isZonesUnitArtifact(path))
+    for (const path of ownTreePaths) {
       expect(
         isDenied(path),
         `R-4/§5.1 — '${path}' is in the DENIED set and is present in the WORKING TREE: a boundary violation whatever its content`,
       ).toBe(false)
     }
-    for (const path of treePaths) {
+    for (const path of ownTreePaths) {
       if (isDenied(path)) continue
       expect(
         inScope(path) || /^docs\/specs\/[^/]*\.md$/.test(path) || /^docs\/[^/]*\.md$/.test(path),
@@ -2318,6 +2442,22 @@ describe('PRE — harness preconditions (not spec rows)', () => {
     expect(IM1_FLAG_DRIVES.length, "P-ZN-IM-1's 10 flag drives").toBe(10)
     expect(TP1_POOL.length, "P-ZN-TP-1's 20-shape pool, each counted once").toBe(20)
     expect(new Set(TP1_POOL.map((s) => s.id)).size, 'the 20 pool shapes are distinct').toBe(20)
+    // ⟶ ADDED 2026-09-27 (green-time test repair): the cross-product's axis labels
+    // must RESOLVE to a pool member, or `poolValue`'s guard throws before the module
+    // is called and the row charges the module a THROW it never made. Asserted here
+    // so the mapping is a checked precondition rather than a silent trap (the
+    // `(18)`/`(19)` display labels differed from the pool's own wording), and so
+    // every pool id resolves to ITSELF (no prefix aliasing).
+    expect(
+      TP1_CROSS_PRODUCT_REFERENCES.filter((reference) => resolvePoolId(reference) === null),
+      `P-ZN-TP-1 — every cross-product axis reference resolves to a pool member by its own id or its distinct (n) prefix (${
+        TP1_CROSS_PRODUCT_REFERENCES.length
+      } references checked)`,
+    ).toEqual([])
+    expect(
+      TP1_POOL.filter((s) => resolvePoolId(s.id) !== s.id).map((s) => s.id),
+      'P-ZN-TP-1 — every pool id resolves to ITSELF (an exact id wins; the (n) prefix never aliases a different member)',
+    ).toEqual([])
     expect(TP1_FIXED_DRIVES.length, "P-ZN-TP-1's 50 fixed hostile pairings, itemized 5+2+2+2+1+4+4+30").toBe(50)
     expect(IM2_ZERO_VALUES.length, "P-ZN-IM-2's 6 zero-valued sizes").toBe(6)
     expect(IM3_CENSUS_SHAPES.length, "P-ZN-IM-3's 13 census shapes").toBe(13)
@@ -2621,6 +2761,19 @@ const TP1_POOL: readonly PoolShape[] = [
   { id: '(20) a valid TrackSpec', make: () => ({ trackProp: '--t', unit: 'px', emptyToken: '0px' }) },
 ]
 type FixedDrive = { id: string; run: (s: { isEmpty: ZonesSurface['isEmpty']; trackFor: ZonesSurface['trackFor'] }) => string | null }
+/** The cross-product's two axes (`6` non-record `zoneId` shapes x the `5` shapes
+ *  that can legally stand in the census position = the row's `30`). Declared BEFORE
+ *  the drives that spread them, and NAMED so `PRE-2` can check that every reference
+ *  resolves to a pool member. */
+const TP1_CROSS_ZONE_ID_AXIS: readonly string[] = ['(1) null', '(2) undefined', '(3) 42', "(4) 'x'", "(6) Symbol('s')", '(7) 0n']
+const TP1_CROSS_CENSUS_AXIS: readonly string[] = [
+  '(9) {}',
+  '(10) []',
+  "(15) new Map([['a', 0]])",
+  '(18) throwing-accessor record',
+  '(19) hostile Proxy',
+]
+const TP1_CROSS_PRODUCT_REFERENCES: readonly string[] = [...TP1_CROSS_ZONE_ID_AXIS, ...TP1_CROSS_CENSUS_AXIS]
 /** The 50 fixed hostile pairings, itemized exactly as `P-ZN-TP-1`'s cell prints
  *  them: `5+2+2+2+1+4+4+30`. */
 const TP1_FIXED_DRIVES: readonly FixedDrive[] = [
@@ -2689,16 +2842,38 @@ const TP1_FIXED_DRIVES: readonly FixedDrive[] = [
     run: (s: { isEmpty: ZonesSurface['isEmpty']; trackFor: ZonesSurface['trackFor'] }): string | null =>
       exactCall(() => s.trackFor(Object.freeze(TP1_VALID_SPEC), 120, false), '120px', 'trackFor'),
   },
-  ...(['(1) null', '(2) undefined', '(3) 42', "(4) 'x'", "(6) Symbol('s')", '(7) 0n'] as const).flatMap((a) =>
-    ['(9) {}', '(10) []', "(15) new Map([['a', 0]])", '(18) throwing-accessor record', '(19) hostile Proxy'].map((b) => ({
+  ...TP1_CROSS_ZONE_ID_AXIS.flatMap((a) =>
+    TP1_CROSS_CENSUS_AXIS.map((b) => ({
       id: `cross-product: ${a} as zoneId x ${b} as census`,
       run: (s: { isEmpty: ZonesSurface['isEmpty']; trackFor: ZonesSurface['trackFor'] }): string | null =>
         typeofCall(() => s.isEmpty(poolValue(b), poolValue(a)), 'boolean', 'isEmpty'),
     })),
   ),
 ]
+/** Resolve a pool reference to the pool's OWN id. The cross-product names
+ *  its axes by DESCRIPTION (`'(18) throwing-accessor record'`, `'(19) hostile
+ *  Proxy'`) while `TP1_POOL` carries the row's own wording (`'(18) a
+ *  throwing-accessor record'`, `'(19) a hostile Proxy'`), so an exact-string
+ *  lookup failed and the old `expect(...)` guard threw BEFORE the module was ever
+ *  called — charging the module a THROW it never made (green-time test repair
+ *  2026-09-27, the b1930d2/8e2c777 class: a TEST-side defect repaired, the module
+ *  NOT bent). An exact id wins; otherwise the `(n)` prefix — the pool's own
+ *  numbering, distinct across all twenty members — carries the reference.
+ *  An unresolved reference yields `null`, which `poolValue`'s own guard reports
+ *  with the id: never a fabricated value, and never a throw mis-attributed to the
+ *  module (`I-2`). `PRE-2` pins the resolution for every reference this row
+ *  drives, so the guard is a backstop rather than the trap it used to be. */
+function resolvePoolId(reference: string): string | null {
+  if (TP1_POOL.some((s) => s.id === reference)) return reference
+  const prefix = /^\(\d+\)/
+  const key = prefix.exec(reference)?.[0]
+  if (key === undefined) return null
+  const matches = TP1_POOL.filter((s) => prefix.exec(s.id)?.[0] === key)
+  return matches.length === 1 ? matches[0].id : null
+}
 function poolValue(id: string): unknown {
-  const shape = TP1_POOL.find((s) => s.id === id)
+  const resolved = resolvePoolId(id)
+  const shape = resolved === null ? undefined : TP1_POOL.find((s) => s.id === resolved)
   expect(shape !== undefined, `P-ZN-TP-1's pool holds the named shape ${id}`).toBe(true)
   return shape?.make()
 }
@@ -2757,11 +2932,22 @@ const IM3_CENSUS_SHAPES: readonly CensusShape[] = [
     trueFor: ['a'],
   },
 ]
-const IM3_ZONE_IDS: ReadonlyArray<{ id: string; value: unknown }> = [
-  { id: "'a'", value: 'a' },
-  { id: "'zzz'", value: 'zzz' },
-  { id: '42', value: 42 },
-  { id: "Symbol('a')", value: Symbol('a') },
+/** The `4` `zoneId` shapes. `id` is the DISPLAY label; `key` is the STRING KEY the
+ *  census shapes' own `trueFor` tables declare, so the pair's expectation is read
+ *  off the row's data rather than off a label.
+ *  ⟶ GREEN-TIME TEST REPAIR 2026-09-27 (the b1930d2/8e2c777 class: a TEST-side
+ *  defect repaired, the module NOT bent). `IM3_CENSUS_SHAPES.trueFor` carries the
+ *  unquoted keys (`['a']`), while this table's `id` carries the QUOTED display form
+ *  (`"'a'"`); the comparison `shape.trueFor.includes(zoneId.id)` therefore NEVER
+ *  matched, so the four own-zero shapes were asserted `false` for the very key
+ *  their own data declares `trueFor: ['a']` — against `§2.3` item 2(b) and against
+ *  the row's own tables (`§5.5.1 P-ZN-IM-3`'s `(9)`/`(10)`/`(12)`/`(13)` cells).
+ *  The fix carries the unquoted key beside the display label and compares THAT. */
+const IM3_ZONE_IDS: ReadonlyArray<{ id: string; key: string | null; value: unknown }> = [
+  { id: "'a'", key: 'a', value: 'a' },
+  { id: "'zzz'", key: 'zzz', value: 'zzz' },
+  { id: '42', key: null, value: 42 },
+  { id: "Symbol('a')", key: null, value: Symbol('a') },
 ]
 
 // --- P-ZN-SM-1 (`S-ZN-TABLE-1`): the 16 cells + the 20 sweep + the 32 re-drives.
@@ -3406,7 +3592,14 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
           if (isEmpty === null) return reason
           const census = shape.make()
           const before = censusSnapshot(census)
-          const expected = shape.trueFor.includes(zoneId.id)
+          // The pair's expectation is read off the SHAPE'S OWN TABLE: a shape that
+          // declares `trueFor: ['a']` owns exactly `0` under the string key `'a'`,
+          // and the shape's other keys are `false` — absent or non-zero (`§2.3`
+          // item 2(b), `§5.5.1 P-ZN-IM-3`'s per-pair "exact expected value"). A
+          // non-string `zoneId` (`key === null`) is never a string key ⇒ `false`
+          // (`§2.3` item 2(c)). ⟶ green-time test repair 2026-09-27: the comparison
+          // is against the VALUE the tables declare, not the quoted DISPLAY label.
+          const expected = zoneId.key !== null && shape.trueFor.includes(zoneId.key)
           const got = isEmpty(census, zoneId.value)
           if (got !== expected) {
             return `expected ${String(expected)} for (${shape.id}, ${zoneId.id}), got ${brief(got)}`

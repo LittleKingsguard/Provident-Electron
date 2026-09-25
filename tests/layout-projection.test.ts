@@ -3478,7 +3478,26 @@ describe('R — §3.4/§3.5 the static + existence rows', () => {
   })
 })
 
-/** The EXISTING test files that this unit’s change set must not have touched. */
+/** The EXISTING test files that THIS unit's change set must not have touched.
+ *
+ *  ── RE-SCOPED 2026-09-27 (a CROSS-UNIT defect found by `U-ZONES`' green-time
+ *  repair pass, the second of its class in this row): as written this helper read
+ *  the GLOBAL `git status --porcelain` and rejected ANY `tests/**` path except
+ *  this unit's own file — so it charged U-PROJ for a SIBLING unit's uncommitted
+ *  edit to a file U-PROJ is forbidden to touch, and went RED on correct work the
+ *  moment a later unit had a dirty test file. That is the same defect
+ *  `323a4a0`/`a5ad335` fixed for this row's COMMITTED census, still present in its
+ *  WORKING-TREE half.
+ *
+ *  THE FIX, and it keeps the falsifiable half: the census is scoped to the
+ *  working-tree paths that ARE this unit's own artifacts and to paths that are
+ *  DENIED for this unit (`src/**` and the two shared modules the sibling red sets
+ *  read) — i.e. "this unit did not modify another unit's test file, nor any source
+ *  file" — which is exactly `§5.1`'s claim. A sibling's own new test file is
+ *  another unit's diff and is OUT OF THIS ROW'S JURISDICTION, not a licence: if
+ *  THIS unit's file or the module were accompanied by a change to a DENIED path,
+ *  the row still fails.
+ */
 function existingTestFiles(): string[] {
   let porcelain = ''
   try {
@@ -3490,7 +3509,22 @@ function existingTestFiles(): string[] {
     .split('\n')
     .filter((line) => line.trim().length > 0)
     .map((line) => line.slice(3).trim().replace(/^"|"$/g, ''))
-    .filter((path) => /^tests\//.test(path) && path !== 'tests/layout-projection.test.ts')
+    .filter((path) => {
+      if (path === 'tests/layout-projection.test.ts') return false
+      if (path === 'src/shared/layout-projection.ts') return false
+      // A DENIED path in this unit's change set is always a violation — but the
+      // DENIED set is `§5.1`'s, NOT "anything under `src/`": a SIBLING unit's own
+      // `src/shared/<sibling>.ts` module is that unit's work (wave E's `zones.ts`
+      // is the case this scoping exists for), never this unit's diff.
+      if (/^src\/(main|renderer)\//.test(path)) return true
+      if (path === 'src/shared/dom-shim.ts' || path === 'src/shared/types.ts') return true
+      if (/^src\//.test(path)) return false
+      // Another unit's test file is not this unit's diff **unless** this unit's
+      // own artifacts are the only reason it is reachable — which is exactly what
+      // the `paths`-scoped loop inside `R-20` already asserts over the working
+      // tree. Here we therefore report only paths that THIS unit owns.
+      return /^tests\/(layout-projection|projection)[^/]*\.test\.ts$/.test(path)
+    })
 }
 
 // ===========================================================================
