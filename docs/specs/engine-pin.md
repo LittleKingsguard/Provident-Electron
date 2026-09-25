@@ -1775,7 +1775,7 @@ above still holds (`package.json:25-31`, read: the `devDependencies` key set is 
 **NO register row is affected** — stated explicitly because the change looks like it could
 touch `P-IM-2`: the new contract is a **plain state row** (`§3.2`'s `value` rows; the
 `R-10`-style sibling row in `tests/dom-shim-remove-attribute.test.ts`, §5.2), so the register
-stays at **8 rows — 4 `P-IM`, 3 `P-SM`, 2 `P-TP`; 7 executed deterministically, 1
+stays at **8 rows — *the split this cell carried (`4` `P-IM` + `3` `P-SM` + `2` `P-TP`) sums to `9` against the stated `8` and double-counts the absorbed `P-IM-3`; the counted split is **`3` live `P-IM` + `3` `P-SM` + `2` `P-TP` = `8`*** **⟶ CORRECTED 2026-09-27 (the `U-PROJ` per-unit documentation review, finding `F-12` of `archive/reviews/2026-09-27-U-PROJ-doc-review.md`; a status/annotation note in this file's own convention — it amends no clause of THIS unit's contract)**; 7 executed deterministically, 1
 (`P-TP-1`) `NOT EXECUTED`** (unchanged). The `value` case's **idempotence** half, if a later
 pass wants it in a table, is an **extension of `P-IM-2`'s fixed key set** (above), not a new
 row: `P-IM-2`'s property already covers "any key". **No row may be reported as executed if it
