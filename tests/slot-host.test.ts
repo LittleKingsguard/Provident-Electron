@@ -5,20 +5,30 @@
 // Contract: docs/specs/slothost.md (FILED + amended 2026-09-27) — its `§2.1`
 // (the new module `src/shared/slot-host.ts` and its **EXACTLY SEVEN exports**,
 // each signature, return shape, refusal pattern, the widened
-// `SlotHostRefusal.key: unknown` and the refusal-code domain: **3 EMITTED,
-// 1 DECLARED-BUT-NOT-EMITTED**), `§2.2` (the six prohibitions, which are the
-// static rows' source), `§2.3` (the declared-key typed refusal), `§2.4`
+// `SlotHostRefusal.key: unknown`, the refusal-code domain — **3 EMITTED,
+// 1 DECLARED-BUT-NOT-EMITTED** — and the **CONTAINER-SOURCE clause: the
+// injected `containerFactory` seam is the SOLE container source, with its
+// fifth named safe default**), `§2.2` (the six prohibitions, which are the
+// static rows' source, prohibitions 1/2 carrying the **TIGHTENED
+// anti-assembly ban**), `§2.3` (the declared-key typed refusal), `§2.4`
 // (own-node ownership — the `V-7` hard row: a foreign sibling survives BY
 // REFERENCE), `§2.5` (order-and-attributes as projection), `§3.1`
-// (`M-1`..`M-18`), `§3.2` (`F-1`..`F-11`, incl. the amended `F-6`/`F-7`
+// (`M-1`..`M-19`, incl. the amended `M-1`/`M-18` whose containers come FROM
+// the factory, and the NEW row `M-19` — a caller-detached node is NOT
+// re-appended), `§3.2` (`F-1`..`F-12`, incl. the amended `F-6`/`F-7`
 // per-method container-state table, the amended `F-9` whose `removed`
 // membership is **PINNED**, the amended `F-10` whose four injected-callback
-// SAFE DEFAULTS are now contract, and the negative row `F-11`),
+// SAFE DEFAULTS are now contract, the negative row `F-11`, and the NEW row
+// `F-12` — the five factory drives and their two negatives),
 // `§3.3` (`I-1`..`I-10`), `§4.1`/`§4.2` (the red set and its authoring order),
-// `§4.4` (`S-1`..`S-7`), `§5.1` (diff scope: this file + the module ONLY),
-// `§5.2` (leg 1 — the node suite), `§5.3` (the DONE row, incl. item 10),
-// `§5.5.1` (the typed property register executed in THIS file), `§7`, `§7a`
-// (the ambiguity report) and **`§7a.1` (its nine RULINGS)**.
+// `§4.4` (`S-1`..`S-7`; `S-2`/`S-4` **RE-SCOPED AND STRENGTHENED**), `§5.1`
+// (diff scope: this file + the module ONLY), `§5.2` (leg 1 — the node suite,
+// with the **harness clause: leg 1's harness supplies the injected factory**),
+// `§5.3` (the DONE row, incl. item 10), `§5.5.1` (the typed property register
+// executed in THIS file), `§7`, `§7a` (the ambiguity report), **`§7a.1` (its
+// nine RULINGS)** and **`§3b`/`§3b`-1/`§3b`-3 (the adversarial pass's fifteen
+// findings, the six REMANDED red rows and the three strategy gaps — every one
+// ruled TEST-SIDE)**.
 //
 // LAYER: **[T] — the repo's node suite against `src/shared/dom-shim.ts` ONLY.**
 // No real DOM, no `window`, no IPC, no assembled app, no rendered geometry, no
@@ -28,6 +38,19 @@
 // row (anchor 2). The optional `[U]` real-DOM identity row of `§5.2` is **NOT
 // taken** (it needs the `ui` leg and is precondition-gated), and no row here
 // depends on it.
+//
+// **ANCHOR 3 IS NOW AN ASSERTION THIS FILE CAN FAIL, NOT A DESCRIPTION OF THE
+// CODE**: the containers come from the **injected `containerFactory`** (the
+// harness supplies it on every drive — `§5.2`'s harness clause) and the module
+// may read **no ambient global and no assembled/computed member lookup**
+// (`ADV-SH-1`'s evasion, `ADV-SH-4`'s two now-false claims). `installShim()`
+// stays in `beforeAll` for ONE reason, stated so it is not read as reliance:
+// **the realm must be PRESENT, or a host that still falls back to
+// `globalThis['doc'+'ument']` would silently DEGRADE into the `F-6` class and
+// pass `F-12` as a false green.** No row depends on the global for its own
+// container: `mountEl()` needs no realm, `F-12`'s no-realm control DELETES the
+// global and drives the seam with it absent, and the static rows `S-2`/`S-4`
+// now fail the assembled lookup itself.
 //
 // THE PROPERTY LAYER IS `§5.5.1`'s REGISTER — **6 rows** (`P-SH-IM-1`,
 // `P-SH-IM-2`, `P-SH-IM-3`, `P-SH-SM-1`, `P-SH-SM-2`, `P-SH-TP-1`), authored
@@ -50,11 +73,33 @@
 // neither is a proof of its unbounded universal.
 //
 // **THIS FILE IS THE UNIT'S RED SET (`§4.1`) AND NOTHING ELSE.** It is authored
-// FIRST and RUN before any implementation: `src/shared/slot-host.ts` does not
-// exist, so every clause row, every static row and every register row fails on
-// the module-absent boundary, and the failing set is reported to the supervisor
-// verbatim. No `src/**` file is created or modified by this pass, and the
-// implementation module was never read (it does not exist).
+// FIRST and RUN before any implementation, and it is now the **POST-AMENDMENT**
+// red set: the six rows the adversarial pass remanded (`M-14`, `M-17`, `F-7`,
+// `P-SH-SM-1`, `P-SH-SM-2` sequence 5, `S-5` — ALL SIX ruled TEST-SIDE, no code
+// defect among them) are fixed per their own rulings, the THREE strategy gaps
+// (`ADV-SH-7` `P-SH-IM-1`, `ADV-SH-8` `P-SH-IM-3`, `ADV-SH-14` `M-17`) are
+// closed without touching a row's statement, strategy id or attempt count, and
+// the amendment's NEW behaviour is authored RED-first: `§3.2 F-12` (the five
+// `containerFactory` drives × the seven methods, with the two negatives and the
+// no-realm control) and `§3.1 M-19`. `§4.4`'s `S-2`/`S-4` are STRENGTHENED (an
+// assembled/computed member lookup fails the scan) and `S-5` now asserts the
+// LIVE seams (`VALID_GROUPS` from `src/main/security.ts`, plus `ALL_TOOLS`,
+// `ALL_RESOURCES`, `MUTATING_METHODS`, `RpcMethod`) instead of counting literals
+// inline in a sibling test file (`ADV-SH-5`). **The module does NOT yet carry
+// the seam** (`src/shared/slot-host.ts` still obtains containers through the
+// DELETED ambient read), so the factory rows and the tightened static rows are
+// EXPECTED RED and are reported as such. No `src/**` file is created or
+// modified by this pass.
+//
+// **THE HARNESS SUPPLIES THE FACTORY (`§5.2`).** `resolveSurface()` hands every
+// row a **seam-wired** `create` (`seamCreate`/`withContainerSeam`: the factory
+// is injected on any options object that does not already carry one, returning
+// the shim's element-factory product `mountEl()` — a value offering
+// `appendChild`, `§2.1`'s accepted shape), plus the module's **`bare`**
+// `createSlotHost` for the drives that must supply (or omit) the factory
+// themselves (`F-12`'s five drives, `F-11`'s amended enumeration). A row that
+// asserts the containers ARE the factory's values (`M-1`, `M-18`) or tracks the
+// per-key calls passes its own factory and the harness keeps it.
 //
 // THE IMPORT BOUNDARY (the repo's established technique — a structural type
 // plus a computed specifier at RUN time, so Vite cannot fail this whole file's
@@ -62,14 +107,17 @@
 // fails as an **ASSERTION** whose message names the absent module / missing
 // export, not as a module-collection error that would take the whole red set
 // with it. `PRE-1` proves the boundary mechanism itself resolves, against an
-// EXISTING module.
+// EXISTING module, and `S-5` imports the two existing seam modules through the
+// SAME technique (never a static import, so neither enters this file's
+// standalone typecheck graph).
 //
-// AUTHORED ORDER (`§4.2` item 1): `I-1..I-10`, `M-1..M-18`, `F-1..F-11`, then
+// AUTHORED ORDER (`§4.2` item 1): `I-1..I-10`, `M-1..M-19`, `F-1..F-12`, then
 // the `§2.2`/`§4.4` static rows and `§5.5.1`'s register. The describe blocks
-// below are in that order and NOTHING is renumbered. `F-11` appends after
-// `F-10`, exactly as `§3.2` writes the id set — and `F-9`/`F-10` are authored
-// from their **AMENDED** text (`removed` membership pinned; the four named safe
-// defaults), never from the superseded cells.
+// below are in that order and NOTHING is renumbered. `F-12` appends after
+// `F-11` and `M-19` after `M-18`, exactly as `§3.1`/`§3.2` write the id sets —
+// and `F-9`/`F-10` are authored from their **AMENDED** text (`removed`
+// membership pinned; the four named safe defaults), never from the superseded
+// cells.
 // ===========================================================================
 import { describe, it, expect, beforeAll } from 'vitest'
 import { existsSync, readFileSync } from 'node:fs'
@@ -77,6 +125,11 @@ import { fileURLToPath } from 'node:url'
 import { installShim, mountEl, ShimElement } from '../src/shared/dom-shim.js'
 
 beforeAll(() => {
+  // The realm is installed so the DELETED ambient path (if a host still takes
+  // it) is caught rather than silently degraded into the `F-6` class and passing
+  // `F-12` as a false green — see the layer note above. No row depends on it for
+  // its own container: the harness supplies the injected factory (`§5.2`) and
+  // `F-12`'s no-realm control deletes this global while driving the seam.
   installShim()
 })
 
@@ -111,6 +164,16 @@ interface SlotHostOptions {
   readonly classNameOf?: (key: SlotKey, node: unknown) => string | null | undefined
   readonly attributesOf?: (key: SlotKey, node: unknown) => readonly SlotAttribute[] | null | undefined
   readonly refuse?: (refusal: SlotHostRefusal) => void
+  /** `§2.1`'s **container-source clause** (⟶ ADDED 2026-09-27, the architect's
+   *  option-(a) ruling on `ADV-SH-1`): **the SOLE container source** — the
+   *  caller's element factory, called once per declared key that needs a
+   *  container; the value it returns IS that key's container. The accepted shape
+   *  is **"offers `appendChild`"** (the same predicate the module uses for
+   *  `isNodeShaped`). **Absent / non-callable / throwing / returning an unusable
+   *  value ⇒ the EXISTING `F-6`-CLASS degradation** — a valid no-op, `refused`
+   *  `[]`, `ok === true`, `placed` `[]`, `containerFor(k)` `null` — the FIFTH
+   *  named safe default beside `F-10`'s four (`§3.2 F-12`). */
+  readonly containerFactory?: (key: SlotKey) => unknown
 }
 
 interface SlotHostRefusal {
@@ -172,7 +235,19 @@ const MODULE_SRC = new URL('../src/shared/slot-host.ts', import.meta.url)
  *  absent (the repo's `.js` → `.ts` resolution still applies at run time). */
 const MODULE_SPECIFIER = ['..', 'src', 'shared', 'slot-host.js'].join('/')
 
-type Surface = { create: CreateSlotHost | null; mod: Record<string, unknown> | null; reason: string | null }
+type Surface = {
+  /** The SEAM-WIRED `createSlotHost` of `§5.2`'s harness clause: the injected
+   *  `containerFactory` is added to every options object that does not carry one
+   *  (`§2.1`'s container-source clause). Every container-dependent row drives
+   *  THIS one, so no row relies on the DELETED ambient read. */
+  create: CreateSlotHost | null
+  /** The module's OWN `createSlotHost`, untouched — `F-12`'s five factory drives
+   *  and `F-11`'s amended enumeration must supply (or omit) the factory
+   *  themselves, so they use this one. */
+  bare: CreateSlotHost | null
+  mod: Record<string, unknown> | null
+  reason: string | null
+}
 let surfaceCache: Surface | null = null
 
 /** Resolves `§2.1`'s surface WITHOUT throwing: the reason a row is red is data,
@@ -183,6 +258,7 @@ async function resolveSurface(): Promise<Surface> {
   if (!existsSync(MODULE_SRC)) {
     surfaceCache = {
       create: null,
+      bare: null,
       mod: null,
       reason: `the module of §2.1/§5.1 row 1 does not exist yet (${fileURLToPath(MODULE_SRC)})`,
     }
@@ -193,19 +269,26 @@ async function resolveSurface(): Promise<Surface> {
     const create = mod['createSlotHost']
     surfaceCache =
       typeof create === 'function'
-        ? { create: create as CreateSlotHost, mod, reason: null }
-        : { create: null, mod, reason: "§2.1's `createSlotHost` is not exported (or is not a function)" }
+        ? { create: seamCreate(create as CreateSlotHost), bare: create as CreateSlotHost, mod, reason: null }
+        : {
+            create: null,
+            bare: null,
+            mod,
+            reason: "§2.1's `createSlotHost` is not exported (or is not a function)",
+          }
   } catch (e) {
-    surfaceCache = { create: null, mod: null, reason: `the module does not resolve: ${String(e)}` }
+    surfaceCache = { create: null, bare: null, mod: null, reason: `the module does not resolve: ${String(e)}` }
   }
   return surfaceCache
 }
 
 /** The clause rows' boundary. Fails as an ASSERTION carrying the row's label, so
  *  the red message is about the absent module/method, never an import type. */
-async function surface(label: string): Promise<{ create: CreateSlotHost; mod: Record<string, unknown> }> {
+async function surface(
+  label: string,
+): Promise<{ create: CreateSlotHost; bare: CreateSlotHost; mod: Record<string, unknown> }> {
   const s = await resolveSurface()
-  if (s.create === null) {
+  if (s.create === null || s.bare === null) {
     expect(
       s.create,
       `RED — U-SLOTHOST red set (§4.1): ${s.reason ?? 'the module surface is unavailable'}. ` +
@@ -213,7 +296,35 @@ async function surface(label: string): Promise<{ create: CreateSlotHost; mod: Re
     ).not.toBe(null)
     throw new Error(`U-SLOTHOST red set — module absent: ${s.reason ?? 'unavailable'} [${label}]`)
   }
-  return { create: s.create, mod: s.mod ?? {} }
+  return { create: s.create, bare: s.bare, mod: s.mod ?? {} }
+}
+
+// ===========================================================================
+// THE INJECTED CONTAINER SOURCE (`§2.1`'s container-source clause + `§5.2`'s
+// harness clause). **The harness SUPPLIES the factory**: every host built
+// through the harness's `create` carries a `containerFactory` returning the
+// shim's own element-factory product (`mountEl()`, "any value offering
+// `appendChild`"), so the module never needs the realm and no row depends on
+// the DELETED ambient read. A row that needs its own factory (`M-1`/`M-18`,
+// which assert the containers ARE the factory's values; `F-12`, which supplies
+// or omits it) passes one and the harness KEEPS it.
+// ===========================================================================
+/** The harness's injected element factory: one fresh shim element per call. */
+function seamFactory(): (key: SlotKey) => unknown {
+  return () => mountEl()
+}
+
+/** `§5.2`: the harness's options carry the factory unless the row supplies one. */
+function withContainerSeam(options: SlotHostOptions): SlotHostOptions {
+  const supplied = options as unknown as Record<string, unknown>
+  if (supplied === null || typeof supplied !== 'object') return options
+  if (Object.prototype.hasOwnProperty.call(supplied, 'containerFactory')) return options
+  return { ...options, containerFactory: seamFactory() }
+}
+
+/** The seam-wired form of `§2.1`'s `createSlotHost` (`§5.2`). */
+function seamCreate(create: CreateSlotHost): CreateSlotHost {
+  return (options: SlotHostOptions) => create(withContainerSeam(options))
 }
 
 // ===========================================================================
@@ -536,6 +647,38 @@ describe('PRE — harness preconditions (not spec rows)', () => {
       TP_DRAW_INDICES.slice(0, 3),
       'one LCG step per draw: the first three pool indices are state₁₋₃ mod 20',
     ).toEqual([s1 % TP_POOL.length, s2 % TP_POOL.length, s3 % TP_POOL.length])
+  })
+
+  it('PRE-3 (harness, not a spec row) — §5.2\'s seam wiring injects the factory and KEEPS a row-supplied one', () => {
+    // The instrument every container-dependent row depends on (`§2.1`'s
+    // container-source clause, `§5.2`'s harness clause): asserted here so a red
+    // container row cannot be a wiring artefact.
+    const captured: SlotHostOptions[] = []
+    const probe: CreateSlotHost = (options) => {
+      captured.push(options)
+      return {} as SlotHost
+    }
+    const wired = seamCreate(probe)
+    wired({ container: mountEl(), keys: ['a'] })
+    expect(typeof captured[0].containerFactory, 'PRE-3: the harness injects a containerFactory on a plain options object').toBe('function')
+    const made = (captured[0].containerFactory as (key: SlotKey) => unknown)('a')
+    expect(
+      typeof (made as { appendChild?: unknown }).appendChild,
+      'PRE-3 / §2.1: the harness\'s factory returns a value offering `appendChild` — the accepted shape',
+    ).toBe('function')
+    expect(sameRef(made, (captured[0].containerFactory as (key: SlotKey) => unknown)('a')), 'PRE-3: …a FRESH element per call').toBe(false)
+    // A row's OWN factory is kept, never overwritten: `M-1`/`M-18` assert the
+    // containers ARE the factory's values, and `F-12`'s drives supply or omit it
+    // themselves (they use the module's `bare` create).
+    const mine = (): unknown => 'mine'
+    wired({ container: mountEl(), keys: ['a'], containerFactory: mine })
+    expect(captured[1].containerFactory, 'PRE-3: a row-supplied factory is respected').toBe(mine)
+    wired({ container: mountEl(), keys: ['a'], containerFactory: undefined })
+    expect(
+      Object.prototype.hasOwnProperty.call(captured[2], 'containerFactory'),
+      'PRE-3: an EXPLICIT `undefined` factory is respected (F-12 drive (2)), never replaced',
+    ).toBe(true)
+    expect(captured[2].containerFactory, 'PRE-3: …and it stays undefined').toBe(undefined)
   })
 })
 
@@ -1227,16 +1370,37 @@ describe('I — §3.3 the every-state invariants', () => {
 })
 
 // ===========================================================================
-// M-1..M-18 — §3.1, the valid / happy states. One row per state, each row's
+// M-1..M-19 — §3.1, the valid / happy states. One row per state, each row's
 // drive and its expected observable taken from the row's own text (with the
 // `§7a` re-pins applied: the per-step child-reference sequence, reference
-// identity, and the `containerFor` anti-vacuity observables).
+// identity, and the `containerFor` anti-vacuity observables), and with the
+// 2026-09-27 amendment applied to `M-1`/`M-18`: **the containers COME FROM THE
+// INJECTED `containerFactory`** — that is what a host that ignores the seam (or
+// falls back to a realm-created element) FAILS.
 // ===========================================================================
 describe('M — §3.1 the valid states', () => {
-  it('M-1 §3.1 — declared keys ⇒ one container each, in keys order (containerFor observable 1 + 2)', async () => {
+  it("M-1 §3.1 — declared keys ⇒ one container each, in keys order (the containerFor observables + the INJECTED factory)", async () => {
     const { create } = await surface('M-1')
     const container = mountEl()
-    const h = create({ container, keys: ['a', 'b', 'c'] })
+    // ⟶ AMENDED 2026-09-27 (the architect's option-(a) ruling on the container
+    // source; `ADV-SH-1`): the three containers are the three values the
+    // INJECTED factory returned for 'a'/'b'/'c' — the host creates none of them
+    // itself and reads no ambient global to obtain one (§2.1's container-source
+    // clause, §2.2 prohibition 2). The reference-identity observables below are
+    // UNCHANGED; the drive gains the seam, and the factory's per-key returns are
+    // tracked so a realm fallback FAILS this row.
+    const factoryValues = new Map<SlotKey, unknown>()
+    const factoryCalls: SlotKey[] = []
+    const h = create({
+      container,
+      keys: ['a', 'b', 'c'],
+      containerFactory: (key) => {
+        factoryCalls.push(key)
+        const el = mountEl()
+        factoryValues.set(key, el)
+        return el
+      },
+    })
     const r = asResult(drive(() => h.render(), 'M-1 render()'), 'M-1 render()')
     expect(r.ok, 'M-1: ok === true').toBe(true)
     expect(r.order, "M-1: order === ['a','b','c']").toEqual(['a', 'b', 'c'])
@@ -1257,7 +1421,22 @@ describe('M — §3.1 the valid states', () => {
       const kIds = childrenOf(h.containerFor(k))
       expect(kIds, `M-1: containerFor('${k}') holds no caller node yet`).toEqual([])
       expect((h.containerFor(k) as ShimElement).textContent, `M-1: containerFor('${k}') holds NO text`).toBe('')
+      // ⟶ AMENDED 2026-09-27: the container IS the INJECTED factory's value —
+      // §2.1's container-source clause item 2 ("called once per declared key
+      // that needs a container … the value it returns IS that key's container").
+      // A host that ignores the seam, or manufactures the element from anything
+      // else (a realm read, an assembled/computed member lookup), FAILS here.
+      expect(
+        factoryValues.has(k),
+        `M-1: the injected containerFactory was called for the declared key '${k}' (§2.1's container-source clause item 2)`,
+      ).toBe(true)
+      expect(
+        h.containerFor(k),
+        `M-1: containerFor('${k}') IS the value the injected factory returned for '${k}' — the seam is the SOLE container source`,
+      ).toBe(factoryValues.get(k))
     }
+    expect(factoryCalls.length, 'M-1: the factory is called exactly once per declared key that needs a container').toBe(3)
+    expect(new Set(factoryCalls).size, 'M-1: …once per KEY, never twice for the same key').toBe(3)
     expect(r.placed, 'M-1: placed is []').toEqual([])
   })
 
@@ -1505,16 +1684,32 @@ describe('M — §3.1 the valid states', () => {
     expect(childrenOf(container), 'M-13: the second dispose() changed nothing (no state retained — I-5)').toEqual([foreign])
   })
 
-  it('M-14 §3.1 — a null/absent/malformed container ⇒ every operation a NO-OP with a valid state', async () => {
+  it('M-14 §3.1 — a null/absent/malformed container ⇒ every operation a NO-OP with a valid state (the reads driven AS reads)', async () => {
     const { create } = await surface('M-14')
-    const variants: Array<[string, unknown]> = [
-      ['null', null],
-      ['undefined', undefined],
-      ['{}', {}],
-      ['42', 42],
-      ["'div'", 'div'],
+    // §2.1's container-source clause item 5: an absent container AND a supplied
+    // factory together give the SAME no-op state (once, not two degradations
+    // stacked) — the harness injects the factory (§5.2) and nothing is placeable
+    // because there is no mount to project onto.
+    //
+    // TWO CLASSES, ONE DRIVE LIST: M-14's own trigger names `null`/`undefined`/
+    // `{}`/`42`/`'div'`. `null`/`undefined`/`42`/`'div'` are the ABSENT class of
+    // the per-method table (column (a): no refusal, `ok === true`, everything a
+    // no-op). **`{}` is NOT that class**: `F-6`'s own text ("`container-not-appendable`
+    // therefore fires only when a container is present but refused by the
+    // environment (e.g. an object with no `appendChild`)") and the per-method
+    // table's column (b) classify that very value as PRESENT-BUT-UNUSABLE, so this
+    // variant asserts the observables COMMON to both classes plus `containerFor(k)
+    // === null` (column (b)'s own value), never "ok === true". ⟶ REPORTED, never
+    // fixed here: the M-14 cell and the table disagree for `{}` (see this row's
+    // report; the row drives every variant it names rather than dropping one).
+    const variants: Array<[string, unknown, boolean]> = [
+      ['null', null, true],
+      ['undefined', undefined, true],
+      ['42', 42, true],
+      ["'div'", 'div', true],
+      ['{} (the F-7 class by F-6’s own example)', {}, false],
     ]
-    for (const [id, v] of variants) {
+    for (const [id, v, absentClass] of variants) {
       const h = create({ container: v as unknown, keys: ['a', 'b'] })
       const n = nodeEl('n')
       const calls: Array<[string, () => unknown]> = [
@@ -1523,7 +1718,6 @@ describe('M — §3.1 the valid states', () => {
         ["remove('a')", () => h.remove('a')],
         ['render()', () => h.render()],
         ["setNode('nope', n)", () => h.setNode('nope', n)],
-        ["containerFor('a')", () => h.containerFor('a')],
       ]
       for (const [callId, fn] of calls) {
         const raw = drive(fn, `M-14 container: ${id} — ${callId}`)
@@ -1532,15 +1726,38 @@ describe('M — §3.1 the valid states', () => {
         if (callId.includes('nope')) {
           expect(r.ok, `M-14 container: ${id} — ${callId}: an UNDECLARED key is still refused`).toBe(false)
           expect(r.refused[0].code, `M-14 container: ${id} — ${callId}: code === 'unknown-key' (F-1)`).toBe('unknown-key')
-        } else {
+        } else if (absentClass) {
           expect(r.ok, `M-14 container: ${id} — ${callId}: ok === true — nothing is refused (F-6)`).toBe(true)
           expect(r.refused, `M-14 container: ${id} — ${callId}: refused is []`).toEqual([])
+        } else {
+          // The F-7-class value: `I-1` still holds, and every refusal it produces
+          // is the EMITTED 'container-not-appendable' — never 'no-container'
+          // (F-11's negative) and never a fifth code.
+          expect(r.ok, `M-14 container: ${id} — ${callId}: I-1 (ok === (refused.length === 0)) holds on this class too`).toBe(
+            r.refused.length === 0,
+          )
+          expect(
+            r.refused.every((ref) => ref.code === 'container-not-appendable'),
+            `M-14 container: ${id} — ${callId}: every refusal on this value is the EMITTED 'container-not-appendable' (F-11: never 'no-container')`,
+          ).toBe(true)
         }
         expect(r.order.length, `M-14 container: ${id} — ${callId}: order is still valid`).toBe(2)
       }
-      expect(h.keys(), `M-14 container: ${id}: keys() still reports the DECLARED keys`).toEqual(['a', 'b'])
-      expect(h.containerFor('a'), `M-14 container: ${id}: containerFor(k) returns null, and NOT undefined`).toBe(null)
-      expect(h.containerFor('b') === null, `M-14 container: ${id}: containerFor(k) is null for every key`).toBe(true)
+      // ⟶ THE READ, DRIVEN AS A READ (`§2.1`, the per-method table, `I-8`'s scope
+      // clause): `containerFor` returns `unknown | null`, carries NO `ok` and NO
+      // `refused`, and is NEVER funnelled through the `SlotHostResult` helper.
+      // The value is pinned BY VALUE: `null` exactly (both container-state
+      // columns), never `undefined`.
+      const readA = drive(() => h.containerFor('a'), `M-14 container: ${id} — containerFor('a') (a READ)`)
+      expect(readA, `M-14 container: ${id}: containerFor(k) returns null, and NOT undefined (both columns of the per-method table)`).toBe(null)
+      expect(readA === undefined, `M-14 container: ${id}: the read never returns undefined`).toBe(false)
+      expect(h.containerFor('b'), `M-14 container: ${id}: containerFor(k) is null for EVERY key`).toBe(null)
+      // The drive's own `setOrder(['b','a'])` updates the PROJECTION (the table's
+      // setOrder row: "the projection is updated and reported — the projection is
+      // the host's own state, not the tree"), so `keys()` reads the projected
+      // order; the DECLARED SET is what M-14 pins, and it is intact.
+      expect(h.keys(), `M-14 container: ${id}: keys() reports the DECLARED keys in the projected order (setOrder was driven)`).toEqual(['b', 'a'])
+      expect([...h.keys()].sort(), `M-14 container: ${id}: keys() still reports the DECLARED key set`).toEqual(['a', 'b'])
       expect(drive(() => h.dispose(), `M-14 container: ${id} — dispose()`), `M-14 container: ${id}: dispose() returns void`).toBe(undefined)
     }
   })
@@ -1588,7 +1805,7 @@ describe('M — §3.1 the valid states', () => {
     expect(after[after.length - 1], 'M-16: the last-positioned host container is unchanged').toBe(before[before.length - 1])
   })
 
-  it('M-17 §3.1 — the refusal listener is notified ONCE per refusal, in order, and its return value is ignored', async () => {
+  it('M-17 §3.1 — the refusal listener is notified ONCE per refusal, in order, its return value is ignored, and its rejected promise is NEVER observed', async () => {
     const { create } = await surface('M-17')
     const seen: SlotHostRefusal[] = []
     const container = mountEl()
@@ -1597,22 +1814,30 @@ describe('M — §3.1 the valid states', () => {
       keys: ['a'],
       refuse: (refusal) => {
         seen.push(refusal)
-        // A hostile listener: a REJECTED PROMISE and a bogus return value. §2.1:
-        // the host NEVER awaits it and IGNORES its return value and any promise.
-        void Promise.reject(new Error('M-17: the listener rejected')).catch(() => undefined)
+        // A hostile listener: a BOGUS RETURN VALUE. §2.1: the host ignores its
+        // return value, so `ok` and the outcome are unchanged. (The rejected
+        // promise is driven SEPARATELY below — `ADV-SH-14` remanded the old
+        // self-catching form precisely because it could never surface.)
         return { nonsense: true } as unknown as void
       },
     })
-    h.setNode('a', null)
+    // ONE call, ONE refusal, ONE notification — §2.1 scopes `refused` to "this
+    // call's refusals", and `refuse` is notified once PER refusal, so the count
+    // is read as this call's DELTA, never as a cumulative total across calls.
     const r = asResult(
       drive(() => h.setNode('nope', nodeEl('x')), 'M-17 setNode(undeclared, nodeEl)'),
       'M-17 setNode(undeclared, nodeEl)',
     )
     expect(r.refused.length, 'M-17: the call produced ONE refusal').toBe(1)
     expect(seen.length, 'M-17: refuse was called exactly once for that refusal').toBe(1)
-    expect(seen[0], 'M-17: the notified object is deepEqual to its entry in the returned refused list').toEqual(r.refused[0])
-    expect(seen[0].code, "M-17: and it is the 'unknown-key' refusal").toBe('unknown-key')
-    // Encounter order over a call producing TWO refusals.
+    expect(seen[seen.length - 1], 'M-17: the notified object is deepEqual to its entry in the returned refused list').toEqual(r.refused[0])
+    expect(seen[seen.length - 1].code, "M-17: and it is the 'unknown-key' refusal").toBe('unknown-key')
+    // ── ENCOUNTER ORDER, AND `refused` IS PER-CALL ──────────────────────────
+    // ⟶ REMANDED TEST-SIDE (`§3b`-3 / the M-17 red row): §2.1 scopes `refused`
+    // to "THIS call's refusals, in encounter order", so two calls carry ONE
+    // refusal EACH. The row asserts each call's own single refusal, and keeps
+    // the listener-count assertion separate (the listener is notified across
+    // calls, the returned list is not cumulative).
     const seen2: SlotHostRefusal[] = []
     const h2 = create({
       container: mountEl(),
@@ -1622,37 +1847,114 @@ describe('M — §3.1 the valid states', () => {
         return undefined
       },
     })
-    const r2 = asResult(
-      drive(
-        () => {
-          h2.setNode('nope1', nodeEl('x'))
-          return h2.setNode('nope2', nodeEl('y'))
-        },
-        'M-17 two refusals in one drive',
-      ),
-      'M-17 two refusals in one drive',
-    )
-    expect(r2.refused.length, 'M-17: two refusals were produced').toBe(2)
-    expect(seen2.length, 'M-17: refuse was called exactly twice').toBe(2)
+    const r2a = asResult(drive(() => h2.setNode('nope1', nodeEl('x')), 'M-17 call 1'), 'M-17 call 1')
+    expect(r2a.refused.length, "M-17 call 1: THIS call's refused list holds exactly ONE entry (never a cumulative count)").toBe(1)
+    expect(r2a.refused[0].key, 'M-17 call 1: …the FIRST refusal, in encounter order').toBe('nope1')
+    expect(r2a.ok, 'M-17 call 1: ok === false (I-1)').toBe(false)
+    expect(seen2.length, 'M-17 call 1: the listener has been notified ONCE so far').toBe(1)
+    const r2b = asResult(drive(() => h2.setNode('nope2', nodeEl('y')), 'M-17 call 2'), 'M-17 call 2')
+    expect(r2b.refused.length, "M-17 call 2: the SECOND call's list holds exactly ONE entry too — refused is per call").toBe(1)
+    expect(r2b.refused[0].key, 'M-17 call 2: …the second refusal').toBe('nope2')
+    expect(r2b.ok, 'M-17 call 2: the listener\'s return value changed nothing — ok is still decided by refused.length').toBe(false)
+    expect(seen2.length, 'M-17: the listener was notified exactly twice across the two calls').toBe(2)
     expect(seen2.map((x) => x.code), 'M-17: both notifications carry the same code').toEqual(['unknown-key', 'unknown-key'])
     expect(seen2[0].key, 'M-17: the first notification is the FIRST refusal, in encounter order').toBe('nope1')
     expect(seen2[1].key, 'M-17: the second notification is the second refusal').toBe('nope2')
-    expect(seen2[0], 'M-17: notification 1 is deepEqual to refused[0]').toEqual(r2.refused[0])
-    expect(seen2[1], 'M-17: notification 2 is deepEqual to refused[1]').toEqual(r2.refused[1])
-    expect(r2.ok, 'M-17: the listener\'s return value changed nothing — ok is still decided by refused.length').toBe(false)
+    expect(seen2[0], 'M-17: notification 1 is deepEqual to the FIRST call\'s refused[0]').toEqual(r2a.refused[0])
+    expect(seen2[1], 'M-17: notification 2 is deepEqual to the SECOND call\'s refused[0]').toEqual(r2b.refused[0])
+    // ── THE REJECTED-PROMISE DRIVE (`ADV-SH-14`, `§3b`-1) ───────────────────
+    // §2.1: `refuse` "is NOTIFIED, never awaited … the host … ignores its return
+    // value and any promise it returns". The old drive fired
+    // `void Promise.reject(...).catch(...)` INSIDE the listener, so the rejection
+    // was handled by the test's own callback and a host that awaited, chained or
+    // re-threw it still passed — the clause was UNFALSIFIED. This drive hands the
+    // host a GENUINELY REJECTED promise through an instrumented thenable: every
+    // `then`/`catch`/`finally` OBSERVATION the host makes is counted, so a host
+    // that awaits or chains it FAILS. The inner rejection is settled and handled
+    // OUTSIDE the listener (so the drive itself leaves no unhandled rejection),
+    // which is what makes "ignored" observable rather than assumed.
+    let observations = 0
+    let settledRejected = false
+    const inner: Promise<never> = Promise.reject(new Error('M-17: the listener returned a rejected promise'))
+    const thenable = {
+      then(onFulfilled?: (v: unknown) => unknown, onRejected?: (e: unknown) => unknown): unknown {
+        observations += 1
+        return inner.then(onFulfilled, onRejected)
+      },
+      catch(onRejected?: (e: unknown) => unknown): unknown {
+        observations += 1
+        return inner.catch(onRejected)
+      },
+      finally(fn?: () => void): unknown {
+        observations += 1
+        return inner.finally(fn)
+      },
+    }
+    const h3 = create({
+      container: mountEl(),
+      keys: ['a'],
+      refuse: () => thenable as unknown as void,
+    })
+    const d3 = tryDrive('M-17 the rejected-promise drive', () => h3.setNode('nope', nodeEl('x')))
+    // Handled HERE, outside the listener: the rejection is real and settled, and
+    // the host's own observation of it stays countable.
+    inner.catch(() => {
+      settledRejected = true
+    })
+    // Flush the microtask queue (and a macrotask) so a LAZILY chained observation
+    // — `Promise.resolve(thenable)` schedules `then` in a microtask — is counted
+    // too, before the assertion runs.
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(
+      d3.thrown,
+      `M-17 / §2.1: the method does not throw and does not re-throw the listener's rejection (threw: ${describeThrown(d3.thrown)})`,
+    ).toBe(null)
+    expect(
+      observations,
+      "M-17 / §2.1 + ADV-SH-14: the host NEVER awaits, chains or otherwise observes the listener's returned promise — any then/catch/finally call FAILS this row",
+    ).toBe(0)
+    expect(settledRejected, 'M-17 / ADV-SH-14: the promise handed to the listener was GENUINELY REJECTED (a resolved stub could not be ignored)').toBe(true)
+    const r3 = asResult(d3.value, 'M-17 the rejected-promise drive')
+    expect(r3.ok, 'M-17: the rejection changed no outcome — ok === false (I-1)').toBe(false)
+    expect(r3.refused.length, 'M-17: the refusal was already recorded before/independently of the listener').toBe(1)
+    expect(r3.refused[0].code, "M-17: …with its own code 'unknown-key', never one invented for the listener").toBe('unknown-key')
   })
 
-  it('M-18 §3.1 — the key set is allocated to the CONTAINER, not to the caller node (order vs placed differ)', async () => {
+  it('M-18 §3.1 — the key set is allocated to the CONTAINER, not to the caller node (order vs placed differ; the containers ARE the factory\'s)', async () => {
     const { create } = await surface('M-18')
     const container = mountEl()
     const n = nodeEl('n')
-    const h = create({ container, keys: ['a', 'b'] })
+    // ⟶ AMENDED 2026-09-27 (same amendment as `M-1`): both containers COME FROM
+    // THE INJECTED `containerFactory` — one call per declared key, the returned
+    // value IS that key's container — so `containerFor('b')` is the FACTORY's
+    // value for 'b' observed as the injected container's `children[1]`, not a
+    // realm-created element. The `!==`/`toBe` observables are unchanged.
+    const factoryValues = new Map<SlotKey, unknown>()
+    const h = create({
+      container,
+      keys: ['a', 'b'],
+      containerFactory: (key) => {
+        const el = mountEl()
+        factoryValues.set(key, el)
+        return el
+      },
+    })
     const r = asResult(drive(() => h.setNode('a', n), 'M-18 setNode(a, n)'), 'M-18 setNode(a, n)')
     const kids = childrenOf(container)
     expect(kids, "M-18: BOTH containers exist").toHaveLength(2)
     // §7a item 7 observable 1 + 2 (never "is an element", which cannot fail).
     expect(h.containerFor('b'), "M-18: containerFor('b') IS the injected container's children[1]").toBe(kids[1])
     expect(h.containerFor('b') === h.containerFor('a'), "M-18: containerFor('b') is an OBJECT distinct from containerFor('a')").toBe(false)
+    for (const k of ['a', 'b']) {
+      expect(
+        factoryValues.has(k),
+        `M-18: the injected containerFactory was called for the declared key '${k}' (§2.1's container-source clause item 2)`,
+      ).toBe(true)
+      expect(
+        h.containerFor(k),
+        `M-18: containerFor('${k}') IS the value the injected factory returned — the seam is the SOLE container source`,
+      ).toBe(factoryValues.get(k))
+    }
     const kidsB = childrenOf(h.containerFor('b'))
     expect(kidsB, "M-18: containerFor('b') holds NO node — the container exists without a placement").toEqual([])
     expect(childrenOf(h.containerFor('a')), "M-18: containerFor('a') holds n").toEqual([n])
@@ -1660,12 +1962,263 @@ describe('M — §3.1 the valid states', () => {
     expect(r.order, "M-18: order === ['a','b']").toEqual(['a', 'b'])
     expect(r.placed.length === r.order.length, 'M-18: the two fields are defined differently (a row asserts the difference)').toBe(false)
   })
+
+  it('M-19 §3.1 (NEW — judgment call #17, pinned) — render() does NOT re-append a caller-DETACHED node: the detach is PERMANENT', async () => {
+    const { create } = await surface('M-19')
+    const container = mountEl()
+    const h = create({ container, keys: ['a', 'b'] })
+    const n = nodeEl('n')
+    const r1 = asResult(drive(() => h.setNode('a', n), 'M-19 setNode(a, n)'), 'M-19 setNode(a, n)')
+    expect(r1.placed, "M-19: 'a' is placed").toEqual(['a'])
+    const cA = h.containerFor('a')
+    expect(childrenOf(cA), 'M-19: the container holds n by reference').toEqual([n])
+    // The CALLER detaches its own node (no `remove(key)` call runs in this row).
+    n.remove()
+    expect(childrenOf(cA), 'M-19: the caller detached n from its container').toEqual([])
+    const before = snapshotChildren(container)
+    for (let i = 1; i <= 3; i += 1) {
+      // Any number of render() calls: `render()` is NOT an undo for a node the
+      // caller took back.
+      const r = asResult(drive(() => h.render(), `M-19 render() #${i}`), `M-19 render() #${i}`)
+      expect(r.ok, `M-19 render() #${i}: ok === true (nothing is refused — a caller detach is not a refusal)`).toBe(true)
+      expect(r.refused, `M-19 render() #${i}: refused is []`).toEqual([])
+      expect(
+        containsRef(childrenOf(cA), n),
+        `M-19 render() #${i}: render() does NOT re-append the caller-detached node — the detach is PERMANENT (a host that re-appends it FAILS this row)`,
+      ).toBe(false)
+      expect(childrenOf(cA), `M-19 render() #${i}: the key's container stays empty of n`).toEqual([])
+      // M-16's observable: the injected container's child-reference sequence is
+      // unchanged by the render() (per index, by reference).
+      expectRefsEqual(snapshotChildren(container), before, `M-19 render() #${i}: the injected container's child-reference sequence is unchanged`)
+      expect(r.order, `M-19 render() #${i}: order is unchanged`).toEqual(['a', 'b'])
+      // §2.4 item 1 + `I-7`: the ownership RECORD is unchanged by a caller
+      // detach, so `placed` may still report 'a' — this row asserts only that
+      // `placed` stays a SUBSET of `order` (the row pins render()'s policy, not
+      // the bookkeeping), and never that 'a' was silently dropped.
+      for (const k of r.placed) expect(r.order.includes(k), `M-19 render() #${i}: placed ⊆ order (I-7)`).toBe(true)
+    }
+    expect(h.keys(), "M-19: 'a' stays DECLARED after every render()").toEqual(['a', 'b'])
+    expect(h.containerFor('a'), "M-19: containerFor('a') is still the same container").toBe(cA)
+    expect(containsRef(snapshotChildren(container), cA), "M-19: the container is still projected onto the injected container").toBe(true)
+    // §7 item 9's surviving half: this row asserts NOTHING about `removed` (no
+    // `remove(key)` call ran) — `F-9` owns that membership.
+  })
 })
 
 // ===========================================================================
-// F-1..F-11 — §3.2, the documented fail-states / refusals. `F-9` and `F-10` are
-// authored from their AMENDED text (`§7a.1` items 6 and 4), and `F-11` is the
-// negative row appended after `F-10`.
+// F-1..F-12 — §3.2, the documented fail-states / refusals. `F-9` and `F-10` are
+// authored from their AMENDED text (`§7a.1` items 6 and 4), `F-11` is the
+// negative row appended after `F-10` (whose enumeration the amendment EXTENDS
+// with `F-12`'s five factory drives), and `F-12` is the container-source row the
+// architect's option-(a) ruling added after `F-11`.
+//
+// `F-12` SHARED MACHINERY — the five ways `containerFactory` may be supplied,
+// and the one seven-method drive both `F-12` and `F-11` use. Every configuration
+// runs against a VALID injected shim mount, so the mount is NEVER the reason
+// nothing is placed (`F-12`'s own trigger clause).
+// ===========================================================================
+type F12Config = {
+  /** The drive's own label (which of the five ways this entry is). */
+  id: string
+  /** `false` ⇒ the factory property is OMITTED ENTIRELY (drive (1)). */
+  present: boolean
+  factory: unknown
+}
+
+/** ⟶ ADDED 2026-09-27 (the architect's option-(a) ruling; `F-12`, `§2.1`'s
+ *  container-source clause). The FIVE drives, with the trigger's own values:
+ *  (1) omitted · (2) `undefined` · (3) present but NOT CALLABLE (4 values) ·
+ *  (4) callable but THROWING · (5) callable, returning an UNUSABLE value
+ *  (6 values). */
+const F12_CONFIGS: readonly F12Config[] = [
+  { id: 'drive (1) · the factory is OMITTED entirely', present: false, factory: undefined },
+  { id: 'drive (2) · containerFactory: undefined', present: true, factory: undefined },
+  { id: 'drive (3a) · containerFactory: 42 (not callable)', present: true, factory: 42 },
+  { id: 'drive (3b) · containerFactory: \'div\' (not callable)', present: true, factory: 'div' },
+  { id: 'drive (3c) · containerFactory: {} (not callable)', present: true, factory: {} },
+  { id: 'drive (3d) · containerFactory: null (not callable)', present: true, factory: null },
+  {
+    id: 'drive (4) · the factory THROWS (§2.1\'s fifth named safe default)',
+    present: true,
+    factory: () => {
+      throw new Error('F-12: the injected element factory threw')
+    },
+  },
+  { id: 'drive (5a) · the factory returns {} (no appendChild)', present: true, factory: () => ({}) },
+  { id: 'drive (5b) · the factory returns {appendChild: 42}', present: true, factory: () => ({ appendChild: 42 }) },
+  { id: 'drive (5c) · the factory returns 42', present: true, factory: () => 42 },
+  { id: 'drive (5d) · the factory returns \'div\'', present: true, factory: () => 'div' },
+  { id: 'drive (5e) · the factory returns null', present: true, factory: () => null },
+  { id: 'drive (5f) · the factory returns undefined', present: true, factory: () => undefined },
+]
+
+const F12_KEYS: readonly SlotKey[] = ['a', 'b']
+
+/** The options of one `F-12` configuration: a VALID shim mount + the supplied
+ *  (or omitted) factory. §2.1: the seam is optional, and an explicitly supplied
+ *  `undefined` is the SAME absence as an omitted property — never a
+ *  harness-substituted factory (the drives use the module's `bare` create, so
+ *  nothing re-injects one). */
+function f12Options(mount: unknown, cfg: F12Config): SlotHostOptions {
+  const base: SlotHostOptions = { container: mount, keys: F12_KEYS }
+  if (!cfg.present) return base
+  return { ...base, containerFactory: cfg.factory as (key: SlotKey) => unknown }
+}
+
+type F12DriveResult = { breaks: string[]; refusals: SlotHostRefusal[] }
+
+/** The `F-12` drive: **all seven methods** (`setNode` on a declared key with a
+ *  valid node, `setNode` on an undeclared key, `remove` on a declared key,
+ *  `setOrder`, `render()`, `keys()`, `containerFor(k)`, `dispose()`) against the
+ *  `F-6`-CLASS DEGRADATION, plus the row's TWO NEGATIVES:
+ *  **(i)** no container-state refusal is produced — in particular
+ *  `'no-container'` is NOT emitted, and neither is `'container-not-appendable'`
+ *  (the CONTAINER is not present-but-unusable here; the SOURCE is absent);
+ *  **(ii)** NO container is manufactured by any other means — the injected
+ *  mount's child count is UNCHANGED from before the drive for EVERY method (a
+ *  host that falls back to a realm read FAILS this, and `S-2`/`S-4` fail the
+ *  assembled lookup itself).
+ *  Returns every break as DATA (this row reports the whole drive, never aborts
+ *  on the first failure). */
+function f12Drive(create: CreateSlotHost, cfg: F12Config, label: string): F12DriveResult {
+  const breaks: string[] = []
+  const refusals: SlotHostRefusal[] = []
+  const mount = mountEl()
+  const node = nodeEl('f12-node')
+  const before = childCountOf(mount)
+  let h: SlotHost | null = null
+  try {
+    h = create({ ...f12Options(mount, cfg), refuse: (r) => refusals.push(r) })
+  } catch (e) {
+    return { breaks: [`${label}: createSlotHost THREW ${describeThrown(e)} — F-4: it never throws`], refusals }
+  }
+  // NEGATIVE (ii) — no container may be manufactured by ANY means, for every
+  // method of the drive.
+  const noManufacture = (step: string): void => {
+    const after = childCountOf(mount)
+    if (after !== before) {
+      breaks.push(
+        `${label} · ${step}: the injected container's child count changed from ${before} to ${after} — ` +
+          `F-12 negative (ii): NO container may be manufactured by any other means (a realm read, an ambient factory, a fallback element)`,
+      )
+    }
+  }
+  const step = (name: string, fn: () => unknown): unknown => {
+    const d = tryDrive(`${label} · ${name}`, fn)
+    noManufacture(name)
+    if (d.thrown !== null) {
+      breaks.push(`${label} · ${name}: THREW ${describeThrown(d.thrown)} — §2.1's totality universal (no method throws, for any input)`)
+      return undefined
+    }
+    return d.value
+  }
+  const softResult = (name: string, value: unknown): SlotHostResult | null => {
+    if (value === undefined) return null // `step` already recorded the throw
+    if (value === null || typeof value !== 'object') {
+      breaks.push(`${label} · ${name}: returned ${brief(value)} — §2.1 declares a SlotHostResult`)
+      return null
+    }
+    const r = value as SlotHostResult
+    const fields = Object.keys(r).sort()
+    if (JSON.stringify(fields) !== JSON.stringify(RESULT_KEYS)) {
+      breaks.push(`${label} · ${name}: the field set is ${JSON.stringify(fields)}, not §2.1's {ok, order, placed, removed, refused}`)
+      return null
+    }
+    for (const f of ['order', 'placed', 'removed', 'refused'] as const) {
+      if (!Array.isArray(r[f])) {
+        breaks.push(`${label} · ${name}: '${f}' is not an array (§2.1)`)
+        return null
+      }
+    }
+    if (r.ok !== (r.refused.length === 0)) {
+      breaks.push(`${label} · ${name}: I-1 broke — ok=${String(r.ok)} with refused.length=${r.refused.length}`)
+      return null
+    }
+    refusals.push(...r.refused)
+    return r
+  }
+  // 1 · setNode on a DECLARED key with a valid node.
+  const declaredSet = softResult('setNode(declared, node)', step('setNode(declared, node)', () => h === null ? undefined : h.setNode('a', node)))
+  if (declaredSet !== null) {
+    if (declaredSet.ok !== true) breaks.push(`${label} · setNode(declared): ok === ${String(declaredSet.ok)} — the degradation refuses NOTHING for a valid input (F-6 class)`)
+    if (declaredSet.refused.length !== 0) breaks.push(`${label} · setNode(declared): refused is ${JSON.stringify(declaredSet.refused)} — F-12 negative (i)`)
+    if (declaredSet.placed.length !== 0) breaks.push(`${label} · setNode(declared): placed === ${JSON.stringify(declaredSet.placed)} — nothing is placeable`)
+    if (JSON.stringify(declaredSet.order) !== JSON.stringify(F12_KEYS)) {
+      breaks.push(`${label} · setNode(declared): order === ${JSON.stringify(declaredSet.order)} (expected the DECLARED keys ${JSON.stringify(F12_KEYS)})`)
+    }
+  }
+  // 2 · setNode on an UNDECLARED key: still the 'unknown-key' refusal (F-1/F-3 —
+  // the factory's absence never disables the contract's central refusal).
+  const unknownSet = softResult('setNode(undeclared, node)', step('setNode(undeclared, node)', () => h === null ? undefined : h.setNode('nope', nodeEl('f12-nope'))))
+  if (unknownSet !== null) {
+    if (unknownSet.ok !== false) breaks.push(`${label} · setNode(undeclared): ok === true — an undeclared key is ALWAYS refused (F-1)`)
+    if (unknownSet.refused.length !== 1 || unknownSet.refused[0].code !== 'unknown-key') {
+      breaks.push(`${label} · setNode(undeclared): refused === ${JSON.stringify(unknownSet.refused)} (expected ONE 'unknown-key')`)
+    }
+    if (unknownSet.placed.length !== 0) breaks.push(`${label} · setNode(undeclared): placed is not []`)
+  }
+  // 3 · remove on a declared key — no refusal, no ownership ever existed here.
+  const removed = softResult("remove('a')", step("remove('a')", () => h === null ? undefined : h.remove('a')))
+  if (removed !== null) {
+    if (removed.ok !== true) breaks.push(`${label} · remove('a'): ok === false — no node was ever placeable, so no ownership can be relinquished`)
+    if (removed.refused.length !== 0) breaks.push(`${label} · remove('a'): refused is not [] — F-12 negative (i)`)
+    if (removed.placed.length !== 0) breaks.push(`${label} · remove('a'): placed is not []`)
+  }
+  // 4 · setOrder — write-free: the projection is updated and reported.
+  const ordered = softResult("setOrder(['b','a'])", step("setOrder(['b','a'])", () => h === null ? undefined : h.setOrder(['b', 'a'])))
+  if (ordered !== null) {
+    if (ordered.ok !== true || ordered.refused.length !== 0) breaks.push(`${label} · setOrder: it is write-free and NEVER refuses on a container-SOURCE state`)
+    if (JSON.stringify(ordered.order) !== JSON.stringify(['b', 'a'])) {
+      breaks.push(`${label} · setOrder: order === ${JSON.stringify(ordered.order)} — the projection must reflect setOrder even with no factory`)
+    }
+  }
+  // 5 · render() — nothing is written and NOTHING is manufactured.
+  const rendered = softResult('render()', step('render()', () => h === null ? undefined : h.render()))
+  if (rendered !== null) {
+    if (rendered.ok !== true || rendered.refused.length !== 0) breaks.push(`${label} · render(): ok/refused — the degradation refuses nothing (F-6 class)`)
+    if (rendered.placed.length !== 0) breaks.push(`${label} · render(): placed is not []`)
+    if (JSON.stringify(rendered.order) !== JSON.stringify(['b', 'a'])) breaks.push(`${label} · render(): order is no longer valid (${JSON.stringify(rendered.order)})`)
+  }
+  // 6 · keys() — a READ: the declared keys in the projected order, no ok/refused.
+  const declaredRead = step('keys()', () => h === null ? undefined : h.keys())
+  if (JSON.stringify(declaredRead) !== JSON.stringify(['b', 'a'])) {
+    breaks.push(`${label} · keys(): ${brief(declaredRead)} — the DECLARED keys must survive an absent factory, in the projected order`)
+  }
+  // 7 · containerFor(k) — `null` BY VALUE for EVERY key: a declared key, a key a
+  // broken factory was called for, and an undeclared key alike; never undefined.
+  for (const k of ['a', 'b', 'nope']) {
+    const value = step(`containerFor('${k}')`, () => h === null ? undefined : h.containerFor(k))
+    if (value !== null) {
+      breaks.push(`${label} · containerFor('${k}'): ${brief(value)} — F-12: null for EVERY key (never undefined, never a manufactured container)`)
+    }
+  }
+  // 8 · dispose() — void, idempotent, retains nothing (I-5).
+  const first = step('dispose()', () => h === null ? undefined : h.dispose())
+  if (first !== undefined) breaks.push(`${label} · dispose(): returned ${brief(first)} — §2.1 declares void`)
+  const second = step('dispose() (idempotent)', () => h === null ? undefined : h.dispose())
+  if (second !== undefined) breaks.push(`${label} · the second dispose(): returned ${brief(second)} — idempotent`)
+  const afterDispose = step('keys() after dispose()', () => h === null ? undefined : h.keys())
+  if (JSON.stringify(afterDispose) !== JSON.stringify([])) {
+    breaks.push(`${label} · keys() after dispose(): ${brief(afterDispose)} — I-5: no key, no container reference, no state survives`)
+  }
+  // NEGATIVE (i), over EVERY refusal observed in the drive (result lists AND the
+  // injected listener — M-17).
+  for (const ref of refusals) {
+    if (ref.code === NOT_EMITTED_CODE) {
+      breaks.push(`${label}: a refusal carries '${NOT_EMITTED_CODE}' — F-11: that member is DECLARED-BUT-NOT-EMITTED, and F-12 emits NO container-state refusal`)
+    }
+    if (ref.code === 'container-not-appendable') {
+      breaks.push(`${label}: a refusal carries 'container-not-appendable' — wrong CLASS: the injected container is present and usable; the SOURCE is absent (F-6's class, never F-7's)`)
+    }
+    if (!EMITTED_CODES.includes(ref.code)) {
+      breaks.push(`${label}: a refusal carries '${ref.code}', outside the three EMITTED members (§2.1)`)
+    }
+  }
+  return { breaks, refusals }
+}
+
+// ===========================================================================
+// F — §3.2 the documented fail-states / refusals
 // ===========================================================================
 describe('F — §3.2 the documented fail-states / refusals', () => {
   it("F-1 §3.2 — an UNDECLARED key is refused with 'unknown-key' and creates NOTHING", async () => {
@@ -1854,19 +2407,38 @@ describe('F — §3.2 the documented fail-states / refusals', () => {
       expect(rs.refused.length, `F-7 setNode (${shapeId}): ONE refusal per attempted placement`).toBe(1)
       expect(rs.refused[0].code, `F-7 setNode (${shapeId}): code === 'container-not-appendable'`).toBe('container-not-appendable')
       expect(rs.placed, `F-7 setNode (${shapeId}): placed is []`).toEqual([])
-      // render — one refusal per key the call attempts to place.
+      // ⟶ THE CHILD COUNT ON THIS CLASS (remanded TEST-SIDE, `§3b`-3): **no
+      // container is created AT ALL** here — `containerFor(k)` is `null` for
+      // every key (the table's `containerFor` row) — so `I-10`'s `keys.length`
+      // clause, scoped to a **SUCCESSFUL** `render()`, does NOT apply to this
+      // shape. The falsifiable clause is ZERO host children: a host that
+      // manufactured a container despite the unusable mount FAILS.
+      expect(
+        childCountOf(bad),
+        `F-7 (${shapeId}): NO container is created on this class — the child count is 0, never keys.length (I-10 is scoped to a successful render())`,
+      ).toBe(0)
+      // render — ONE refusal per key the call ATTEMPTS to place: 'a' holds the
+      // caller's node (the declaration stands — §2.4 item 1; the table's
+      // `remove` row reads the same ownership), 'b' holds none — so ONE, never
+      // one per DECLARED key (the remanded count).
       const rr = asResult(drive(() => h.render(), `F-7 render (${shapeId})`), `F-7 render (${shapeId})`)
       expect(rr.ok, `F-7 render (${shapeId}): ok === false`).toBe(false)
-      expect(rr.refused.length, `F-7 render (${shapeId}): one refusal per key the call attempts to place (2 declared keys)`).toBe(2)
+      expect(
+        rr.refused.length,
+        `F-7 render (${shapeId}): ONE refusal — "once per attempted node write" (§7a items 2/3), so one for the ONE key this call attempts to place, never one per declared key`,
+      ).toBe(1)
       for (const ref of rr.refused) {
         expect(ref.code, `F-7 render (${shapeId}): every refusal is 'container-not-appendable'`).toBe('container-not-appendable')
       }
       expect(rr.placed, `F-7 render (${shapeId}): placed is []`).toEqual([])
-      // remove on a key with NO host-owned node — a NO-OP on this shape too
-      // (the unifying clause: the call attempts no node write).
-      const rNoop = asResult(drive(() => h.remove('a'), `F-7 remove (${shapeId}) with nothing owned`), `F-7 remove (${shapeId}) with nothing owned`)
-      expect(rNoop.ok, `F-7 remove (${shapeId}) with nothing owned: ok === true`).toBe(true)
-      expect(rNoop.refused, `F-7 remove (${shapeId}) with nothing owned: refused is []`).toEqual([])
+      // remove on a DECLARED key with NO host-owned node — a NO-OP on this shape
+      // too (the unifying clause: the call attempts no node write). Driven on 'b'
+      // — 'a' DOES hold the caller's declaration, and that branch is the row's
+      // second half below.
+      const rNoop = asResult(drive(() => h.remove('b'), `F-7 remove('b') (${shapeId}) with nothing owned`), `F-7 remove('b') (${shapeId}) with nothing owned`)
+      expect(rNoop.ok, `F-7 remove('b') (${shapeId}) with nothing owned: ok === true`).toBe(true)
+      expect(rNoop.refused, `F-7 remove('b') (${shapeId}) with nothing owned: refused is []`).toEqual([])
+      expect(h.keys(), `F-7 remove('b') (${shapeId}): the key stays DECLARED`).toEqual(['a', 'b'])
       // setOrder — RESULT-returning but WRITE-FREE: never refuses on either state.
       const ro = asResult(drive(() => h.setOrder(['b', 'a']), `F-7 setOrder (${shapeId})`), `F-7 setOrder (${shapeId})`)
       expect(ro.ok, `F-7 setOrder (${shapeId}): ok === true — setOrder attempts NO node write (§3.2's per-method table)`).toBe(true)
@@ -1874,7 +2446,9 @@ describe('F — §3.2 the documented fail-states / refusals', () => {
       expect(ro.order, `F-7 setOrder (${shapeId}): the projection IS updated and reported`).toEqual(['b', 'a'])
       // The READS return their declared shape, never refuse and never throw.
       expect(h.keys(), `F-7 keys() (${shapeId}): the declared keys in the projected order`).toEqual(['b', 'a'])
-      expect(h.containerFor('a'), `F-7 containerFor (${shapeId}): null for every key, never undefined`).toBe(null)
+      for (const k of ['a', 'b', 'nope']) {
+        expect(h.containerFor(k), `F-7 containerFor('${k}') (${shapeId}): null for EVERY key — never undefined`).toBe(null)
+      }
       expect(drive(() => h.dispose(), `F-7 dispose() (${shapeId})`), `F-7 dispose() (${shapeId}): void, idempotent, no throw`).toBe(undefined)
     }
     // remove() on a key WHERE THE HOST OWNS A NODE on this shape.
@@ -2020,7 +2594,7 @@ describe('F — §3.2 the documented fail-states / refusals', () => {
   })
 
   it("F-11 §3.2 (the negative row) — 'no-container' is NEVER emitted, and the same enumeration DOES observe the other three", async () => {
-    const { create } = await surface('F-11')
+    const { create, bare } = await surface('F-11')
     const allRefusals: SlotHostRefusal[] = []
     const noThrow: string[] = []
     const driveAll = (label: string, fn: () => unknown): unknown => {
@@ -2080,6 +2654,22 @@ describe('F — §3.2 the documented fail-states / refusals', () => {
         seenFromResults.push(...(value as SlotHostResult).refused)
       }
     }
+    // (iii) ⟶ ADDED 2026-09-27 (the architect's option-(a) ruling on the
+    // container source): **`F-12`'s five factory drives are INSIDE this
+    // negative's enumeration** — "plus `F-12`'s five factory drives" is the
+    // amended F-11 trigger. They are driven through the module's BARE
+    // `createSlotHost` so each configuration supplies (or omits) the factory
+    // itself; both surfaces of the domain are read (`refuse` attached, M-17).
+    for (const cfg of F12_CONFIGS) {
+      const value = driveAll(`F-12 ${cfg.id} · setNode(declared) + render()`, () => {
+        const h = bare({ ...f12Options(mountEl(), cfg), refuse: (r) => allRefusals.push(r) })
+        h.setNode('a', nodeEl('f12-n'))
+        return h.render()
+      })
+      if (value !== null && typeof value === 'object' && Array.isArray((value as SlotHostResult).refused)) {
+        seenFromResults.push(...(value as SlotHostResult).refused)
+      }
+    }
     expect(noThrow, 'F-11: no call in the enumeration throws (the negative row is asserted over completed calls)').toEqual([])
     const everything = refusalsSeen({ ok: true, order: [], placed: [], removed: [], refused: seenFromResults }, allRefusals)
     expect(everything.length, 'F-11: the enumeration OBSERVED refusals (non-vacuous — a host that emitted nothing at all FAILS the control half below)').toBeGreaterThan(0)
@@ -2094,6 +2684,87 @@ describe('F — §3.2 the documented fail-states / refusals', () => {
     for (const code of EMITTED_CODES) {
       expect(codes.has(code), `F-11 control: the enumeration DOES observe '${code}' (a host that emitted nothing fails this row)`).toBe(true)
     }
+  })
+
+  it('F-12 §3.2 (NEW — the container-source seam) — the five factory drives × the seven methods: the F-6-class degradation, its TWO negatives, and the no-realm control', async () => {
+    const { bare } = await surface('F-12')
+    // ── THE FIVE DRIVES (`F-12`'s trigger), each through ALL SEVEN METHODS ────
+    // ⟶ ADDED 2026-09-27 (the architect's option-(a) ruling on the container
+    // source; appended after `F-11`, renumbering nothing). `F-12`: the container
+    // source is absent (drive (1) omitted · (2) `undefined`) or
+    // present-but-broken ((3) not callable · (4) throwing · (5) returning an
+    // unusable value), and EVERY one of them is the EXISTING `F-6`-class
+    // degradation — the SAME behaviour for all five, with a VALID injected mount
+    // so the mount is not the reason nothing is placed.
+    const breaks: string[] = []
+    let refusalsInsideTheDrives = 0
+    for (const cfg of F12_CONFIGS) {
+      const d = f12Drive(bare, cfg, `F-12 ${cfg.id}`)
+      refusalsInsideTheDrives += d.refusals.length
+      breaks.push(...d.breaks)
+    }
+    // The negative is not vacuous: the drives DO observe refusals — the
+    // `'unknown-key'` refusal of the undeclared-key step, which the factory's
+    // absence never disables (F-1/F-3) — and every one of them is in the EMITTED
+    // domain (checked inside each drive).
+    expect(
+      refusalsInsideTheDrives,
+      'F-12: the enumeration observed refusals only inside the EMITTED domain (the undeclared-key step is the non-vacuity control)',
+    ).toBeGreaterThan(0)
+    // ── THE NO-REALM CONTROL (`§5.2`'s harness clause; `F-12`'s negative (ii)) ─
+    // The harness's own container supply is the INJECTED factory (`mountEl()`
+    // needs no realm), so this control DELETES the ambient global and drives the
+    // seam with the realm ABSENT: a host whose container source is still the
+    // realm cannot place anything, and a host that manufactured a container by
+    // any OTHER means fails the reference/count halves. This is the drive that
+    // shows **the harness can run without the shim global installed** where the
+    // contract allows it. The global is restored in a `finally`.
+    const realm = globalThis as { document?: unknown }
+    const savedRealm = realm.document
+    const controlBreaks: string[] = []
+    try {
+      delete realm.document
+      const mount = mountEl()
+      const factoryEl = mountEl()
+      const controlNode = nodeEl('f12-control-node')
+      const h = bare({ container: mount, keys: ['a'], containerFactory: () => factoryEl })
+      const placed = h.setNode('a', controlNode)
+      if (placed.ok !== true || placed.refused.length !== 0) {
+        controlBreaks.push(`setNode refused something (${JSON.stringify(placed.refused)}) — the factory is the SOLE source and no realm exists`)
+      }
+      if (JSON.stringify(placed.placed) !== JSON.stringify(['a'])) {
+        controlBreaks.push(`placed === ${JSON.stringify(placed.placed)} (expected ['a']) — with the realm absent the INJECTED factory must still supply the container`)
+      }
+      if (h.containerFor('a') !== factoryEl) {
+        controlBreaks.push("containerFor('a') is NOT the injected factory's value — a host reaching for the realm (or any other source) FAILS this control")
+      }
+      if (!containsRef(childrenOf(mount), factoryEl)) {
+        controlBreaks.push("the factory's container is not projected onto the injected mount")
+      }
+      if (childCountOf(mount) !== 1) {
+        controlBreaks.push(`the injected container holds ${childCountOf(mount)} host children (expected exactly 1 — the factory's)`)
+      }
+      if (!containsRef(childrenOf(factoryEl), controlNode)) {
+        controlBreaks.push("the caller's node is not in the factory-supplied container BY REFERENCE")
+      }
+    } catch (e) {
+      controlBreaks.push(`the no-realm control THREW ${describeThrown(e)} — §2.1's totality universal`)
+    } finally {
+      realm.document = savedRealm
+    }
+    // ── THE COMBINED VERDICT: the drives' breaks AND the control's ───────────
+    // Reported TOGETHER so the failure names both halves: a host without the
+    // seam breaks the five drives (it manufactures containers from the realm and
+    // places the valid node) AND the control (with the realm absent it places
+    // nothing at all).
+    const reported = [...breaks.slice(0, 6), ...controlBreaks]
+    expect(
+      reported,
+      `F-12 (the F-6-class degradation for all five factory drives — negative (i) NO container-state refusal, ` +
+        `negative (ii) NO container manufactured by any other means — plus the no-realm control of §5.2's harness clause): ` +
+        `${breaks.length} break(s) across the five drives; ${controlBreaks.length} in the no-realm control: ${JSON.stringify(reported)}`,
+    ).toEqual([])
+    expect(realm.document, 'F-12: the ambient global is restored — the control leaves no trace for the rows that follow').toBe(savedRealm)
   })
 })
 
@@ -2129,7 +2800,7 @@ describe('S — §2.1 the surface + §2.2/§4.4 the static rows over the module'
     }
   })
 
-  it('S-2 §2.2 prohibition 1 — NO consumer vocabulary anywhere (zone/pane/tab/region/is-*/status), comments included', () => {
+  it('S-2 §2.2 prohibition 1 (STRENGTHENED 2026-09-27) — NO consumer vocabulary anywhere, AND no ASSEMBLED/computed member lookup', () => {
     const raw = moduleSource('S-2 §2.2 prohibition 1')
     const hits = staticHits(raw, /(\bzones?\b|\bpanes?\b|\btabs?\b|\bregions?\b|is-empty|is-minimized|is-revealed|\bstatus\b)/i)
     expect(
@@ -2140,6 +2811,25 @@ describe('S — §2.1 the surface + §2.2/§4.4 the static rows over the module'
     ).toEqual([])
     expect(staticHits(raw, /\bdocument\b/), '§2.2 prohibition 1 / §1: no `document` reference anywhere').toEqual([])
     expect(staticHits(raw, /['"](empty|minimized|revealed)['"]/), '§2.2 prohibition 1: no mirror-class literal').toEqual([])
+    // ⟶ RE-SCOPED AND STRENGTHENED 2026-09-27 (`§4.4 S-2`'s amendment; the
+    // architect's option-(a) ruling on the container source, `ADV-SH-1`, HIGH):
+    // **a property name assembled from literals is the SAME violation as the
+    // literal token.** `globalThis['doc' + 'ument'].createElement('div')` did the
+    // banned thing while defeating the `/document/i` scan above, so the scan now
+    // rejects the ASSEMBLY (and the two neighbouring construction forms) too.
+    // This row must FAIL on that shape — a token-only scan is an INCOMPLETE row.
+    expectNoStaticHits(
+      raw,
+      [
+        {
+          what: "an ASSEMBLED property name (a bracketed member lookup built from string literals — the exact `globalThis['doc' + 'ument']` evasion)",
+          re: /\[\s*(?:'[^'\n]*'|"[^"\n]*")\s*\+/,
+        },
+        { what: 'a TEMPLATE-LITERAL property name (an assembled member lookup)', re: /\[\s*`/ },
+        { what: 'an eval/Function-constructed access (§2.2 prohibition 1 tightened: the same violation as the token)', re: /\b(eval|Function)\s*\(/ },
+      ],
+      'S-2 §2.2 prohibition 1 (the anti-assembly clause)',
+    )
   })
 
   it('S-3 §2.2 prohibition 2 — the host authors NO content: no text/attribute/class/style write, no default node, no publish', () => {
@@ -2155,12 +2845,17 @@ describe('S — §2.1 the surface + §2.2/§4.4 the static rows over the module'
         { what: 'a publish-shaped export (ruling 1: the publisher half is DECLINED)', re: /\b(publish|setText|defaultLabel)\b/ },
         { what: 'innerHTML/outerHTML authorship', re: /\b(inner|outer)HTML\b/ },
         { what: 'cloneNode (the host never clones a caller node — §2.4 item 4)', re: /\bcloneNode\b/ },
+        // ⟶ ADDED 2026-09-27 (the same ruling; `§2.2` prohibition 2's static half
+        // gains the source-of-containers negative): the host creates NO element of
+        // its own — the containers come FROM the injected `containerFactory` — so
+        // ANY element construction in the module is a violation.
+        { what: 'an element construction of the host\'s own (the containers come from the injected factory only)', re: /\b(createElement|createElementNS|createTextNode|new\s+ShimElement)\b/ },
       ],
       'S-3 §2.2 prohibition 2',
     )
   })
 
-  it('S-4 §2.2 prohibitions 4/6 + §1 — no store, no persistence, no module-level mutable state, no ambient global', () => {
+  it('S-4 §2.2 prohibitions 4/6 + §1 (STRENGTHENED 2026-09-27) — no store, no persistence, no module-level mutable state, no ambient global AND no assembled/computed lookup', () => {
     const code = stripComments(moduleSource('S-4 §2.2 prohibition 4/6'))
     expectNoStaticHits(
       code,
@@ -2171,13 +2866,24 @@ describe('S — §2.1 the surface + §2.2/§4.4 the static rows over the module'
         { what: 'a module-level `let`/`var` (no state survives the host instance)', re: /^(?:export\s+)?(?:let|var)\s/m },
         { what: 'randomness (the mechanism is deterministic)', re: /\bMath\.random\b/ },
         { what: 'a network/IPC surface', re: /\b(fetch|XMLHttpRequest|ipcRenderer|ipcMain|require\s*\()\b/ },
-        { what: 'an ambient document/window/matchMedia/getElementById reference (§1: the container is injected)', re: /\b(document|window|matchMedia|getElementById|activeElement|getComputedStyle|querySelector|querySelectorAll|closest)\b/ },
+        {
+          what:
+            'an ambient-global / realm reference (§1, the Layer declaration anchor 3, §2.2 prohibition 1: the container is INJECTED — `globalThis`/`window` are banned outright, an aliased or re-derived global with them)',
+          re: /\b(document|window|globalThis|global|self|matchMedia|getElementById|activeElement|getComputedStyle|querySelector|querySelectorAll|closest)\b/,
+        },
+        // ⟶ RE-SCOPED AND STRENGTHENED 2026-09-27 (`§4.4 S-4`'s amendment, the
+        // same ruling): the ambient-vocabulary scan must reject the
+        // ASSEMBLED/COMPUTED member lookup too — that is precisely the shape that
+        // evaded this word-boundary list. No rejection above is dropped.
+        { what: 'an ASSEMBLED property name (a bracketed member lookup built from string literals)', re: /\[\s*(?:'[^'\n]*'|"[^"\n]*")\s*\+/ },
+        { what: 'a TEMPLATE-LITERAL property name (an assembled member lookup)', re: /\[\s*`/ },
+        { what: 'an eval/Function-constructed access', re: /\b(eval|Function)\s*\(/ },
       ],
       'S-4 §2.2 prohibition 4/6',
     )
   })
 
-  it('S-5 §2.2 prohibition 5 + §1 — the five-seam negative: `ALL_TOOLS` stays 21 and this module adds no MCP surface', () => {
+  it('S-5 §2.2 prohibition 5 + §1 (FIXED 2026-09-27, ADV-SH-5) — the five-seam negative asserted against the LIVE sources of truth: `VALID_GROUPS`, `ALL_TOOLS`, `ALL_RESOURCES`, `MUTATING_METHODS`, `RpcMethod`', async () => {
     const code = stripComments(moduleSource('S-5 §2.2 prohibition 5'))
     expectNoStaticHits(
       code,
@@ -2191,14 +2897,107 @@ describe('S — §2.1 the surface + §2.2/§4.4 the static rows over the module'
       ],
       'S-5 §2.2 prohibition 5',
     )
-    // The pin the prohibition itself names: the 21-member census still passes
-    // UNCHANGED in that file — asserted HERE as a static census (this unit does
-    // not edit that file: `§5.1` puts every existing test file out of scope).
-    const pin = readFileSync(new URL('./engine-pin-version.test.ts', import.meta.url), 'utf8')
+    // =======================================================================
+    // ⟶ FIXED 2026-09-27 (`§3b`-1 `ADV-SH-5` / the `S-5` red row; the
+    // brittle line-regex over `tests/engine-pin-version.test.ts` — which counted
+    // GROUP LITERALS that file merely holds inline, and read 0 on this tree — is
+    // GONE). The prohibition's real assertion is unchanged: **no new group, tool,
+    // resource, `RpcMethod` member or `MUTATING_METHODS` entry**, `ALL_TOOLS`
+    // stays `21` — and it is now asserted against each seam's OWN source of truth,
+    // read (never edited: `§5.1` puts `src/main/**` out of this unit's diff
+    // scope). `VALID_GROUPS` is module-local in `src/main/security.ts` (not
+    // exported), so the live set is read from its declaration and then probed
+    // BEHAVIOURALLY through the exported `applyPatch`, which accepts exactly the
+    // live members.
+    // =======================================================================
+    const PINNED_GROUPS: readonly string[] = ['read', 'dispatch', 'graph', 'code', 'module']
+    expect([...PINNED_GROUPS].sort(), 'S-5: the pinned group set of §1/§2.2 is the five the spec names').toEqual([
+      'code',
+      'dispatch',
+      'graph',
+      'module',
+      'read',
+    ])
+    const securitySrc = readFileSync(new URL('../src/main/security.ts', import.meta.url), 'utf8')
+    const groupsDecl = /const\s+VALID_GROUPS\s*:[^=]*=\s*new\s+Set\(\s*\[([^\]]*)\]\s*\)/.exec(securitySrc)
     expect(
-      (pin.match(/^\s*'(read|dispatch|graph|code|module)'\s*,?\s*$/gm) ?? []).length,
-      "§2.2 prohibition 5: `tests/engine-pin-version.test.ts`'s 21-member census must still pass UNCHANGED — its five VALID_GROUPS members are untouched by this unit",
-    ).toBe(5)
+      groupsDecl !== null,
+      'S-5: `VALID_GROUPS` is declared in src/main/security.ts — the row asserts the LIVE set, never a literal count inside a sibling test file',
+    ).toBe(true)
+    const liveGroups = (groupsDecl?.[1].match(/'[^']*'|"[^"]*"/g) ?? []).map((s) => s.slice(1, -1)).sort()
+    expect(
+      liveGroups,
+      "S-5 / §2.2 prohibition 5 / §1's five-seam negative: the LIVE `VALID_GROUPS` set (src/main/security.ts) is EXACTLY the pinned five — a NEW group member FAILS this row",
+    ).toEqual([...PINNED_GROUPS].sort())
+    const security = (await import(/* @vite-ignore */ ['..', 'src', 'main', 'security.js'].join('/'))) as {
+      applyPatch: (
+        config: { token: string | null; enabled: string[] },
+        patch: { groups?: string[]; disable?: string[] },
+      ) => { token: string | null; enabled: string[] }
+      groupForTool: (toolName: string) => string | null
+    }
+    for (const group of PINNED_GROUPS) {
+      const patched = security.applyPatch({ token: null, enabled: [] }, { groups: [group] })
+      expect(patched.enabled, `S-5: the LIVE gate ACCEPTS the pinned group '${group}' (the set is read behaviourally, not just textually)`).toEqual([group])
+    }
+    const probed = security.applyPatch({ token: null, enabled: [] }, { groups: ['no-such-group-probe'] })
+    expect(probed.enabled, 'S-5: a group OUTSIDE the live set is REJECTED — the probe above is not vacuous').toEqual([])
+    // The tool seam: `ALL_TOOLS` stays 21, and every tool still resolves into the
+    // pinned group domain (a new tool bound to a NEW group fails both halves).
+    const mcp = (await import(/* @vite-ignore */ ['..', 'src', 'main', 'mcp-server.js'].join('/'))) as {
+      ProvidentMcpServer: {
+        ALL_TOOLS: string[]
+        ALL_RESOURCES: Array<{ uri?: string; uriTemplate?: string }>
+      }
+    }
+    const allTools = mcp.ProvidentMcpServer.ALL_TOOLS
+    expect(Array.isArray(allTools), 'S-5: the LIVE `ALL_TOOLS` list is reachable').toBe(true)
+    expect(allTools.length, 'S-5 / §2.2 prohibition 5: `ALL_TOOLS` STAYS 21 (src/main/mcp-server.ts:281-303)').toBe(21)
+    for (const tool of allTools) {
+      const group = security.groupForTool(tool)
+      expect(
+        PINNED_GROUPS.includes(group as string),
+        `S-5: the live tool '${tool}' resolves into the pinned group domain (got ${String(group)}) — no tool may acquire a NEW group`,
+      ).toBe(true)
+    }
+    // The resource seam: no new resource member.
+    const allResources = mcp.ProvidentMcpServer.ALL_RESOURCES
+    expect(allResources.length, 'S-5 / §1\'s five-seam negative: the resource seam gains NO member').toBe(3)
+    expect(
+      allResources.map((r) => r.uri ?? r.uriTemplate).sort(),
+      'S-5: the live resources are exactly the pinned three',
+    ).toEqual(['mcp://provident/app', 'mcp://provident/node/{nodeId}', 'mcp://provident/targets'])
+    // The renderer's mutating-method seam (module-local, so read from its source).
+    const rendererSrc = readFileSync(new URL('../src/renderer/renderer.ts', import.meta.url), 'utf8')
+    const mutDecl = /const\s+MUTATING_METHODS\s*=\s*new\s+Set\(\s*\[([^\]]*)\]\s*\)/.exec(rendererSrc)
+    expect(mutDecl !== null, 'S-5: `MUTATING_METHODS` is declared in src/renderer/renderer.ts').toBe(true)
+    const liveMutating = (mutDecl?.[1].match(/'[^']*'|"[^"]*"/g) ?? []).map((s) => s.slice(1, -1)).sort()
+    expect(
+      liveMutating,
+      'S-5 / §2.2 prohibition 5: `MUTATING_METHODS` stays the pinned SEVEN (src/renderer/renderer.ts:12) — no new IPC method is mutating',
+    ).toEqual(['code.load', 'code.loadBatch', 'dispatch', 'journal', 'load', 'op', 'teardown'])
+    // The renderer RPC union (type-only, so read from its source declaration).
+    const typesSrc = readFileSync(new URL('../src/shared/types.ts', import.meta.url), 'utf8')
+    const unionAt = typesSrc.indexOf('export type RpcMethod =')
+    expect(unionAt, 'S-5: `RpcMethod` is declared in src/shared/types.ts').toBeGreaterThan(-1)
+    const unionLines = typesSrc.slice(unionAt).split('\n')
+    const memberLines = [unionLines[0]]
+    for (let i = 1; i < unionLines.length; i += 1) {
+      if (!/^\s*\|/.test(unionLines[i])) break
+      memberLines.push(unionLines[i])
+    }
+    expect(
+      (memberLines.join('\n').match(/'[^']*'/g) ?? []).length,
+      'S-5 / §2.2 prohibition 5: `RpcMethod` stays 21 members (src/shared/types.ts:259-281) — no new IPC method',
+    ).toBe(21)
+    // …and the sibling census that pins the same five seams must still exist and
+    // run in the same suite (`§2.2` prohibition 5 names it; this unit may not
+    // edit it, `§5.1`). Its PASSING is that file's own business — this row asserts
+    // the LIVE values above instead of re-counting its inline literals.
+    expect(
+      existsSync(new URL('./engine-pin-version.test.ts', import.meta.url)),
+      "S-5: `tests/engine-pin-version.test.ts`'s census is still present and part of the same node suite (it is NOT re-parsed for group literals — ADV-SH-5)",
+    ).toBe(true)
   })
 
   it('S-6 §4.4 S-7 (+ §2.5 item 3, §7a item 9) — ZERO graph seam: no dispatch/op/applyCommand/load, no renderer import', () => {
@@ -2316,12 +3115,28 @@ describe('§5.5.1 — the typed property register (6 rows, executed deterministi
         }
         if (new Set(r.order).size !== keys.length) return `order repeats a key: ${JSON.stringify(r.order)}`
         const seq = containerChildSequence(h, container, keys)
-        // The child-sequence half for these drives: the SURVIVING keys keep the
-        // requested RELATIVE order (a host that re-appends in array order fails).
-        const got = seq.map((child) => keys.find((k) => sameRef(h.containerFor(k), child))).filter((k) => k !== undefined) as SlotKey[]
-        const gotSurvivors = got.filter((k) => survivors.includes(k))
-        if (JSON.stringify(gotSurvivors) !== JSON.stringify(survivors)) {
-          return `the child sequence's surviving keys read ${JSON.stringify(gotSurvivors)} (expected the requested relative order ${JSON.stringify(survivors)})`
+        // ⟶ STRATEGY FIXED 2026-09-27 (`§3b`-1 `ADV-SH-7`; the row's STATEMENT,
+        // its `33` attempts and its strategy id are UNCHANGED): the child-sequence
+        // half is read over the **WHOLE PROJECTED SEQUENCE** — the declared key
+        // set in the requested relative order, undeclared/duplicate keys ignored,
+        // i.e. `M-15`'s own expected `order` — and NOT filtered to the keys the
+        // caller happened to list. A host that ignores `setOrder`'s request and
+        // keeps the DECLARED order therefore FAILS these three drives (the old
+        // survivor-filtered reading let it pass).
+        const projected = expected.map((k) => h.containerFor(k))
+        if (seq.length !== keys.length) {
+          return `the child-reference sequence holds ${seq.length} host containers (expected the FULL projected sequence, ${keys.length} — one per declared key)`
+        }
+        for (let i = 0; i < projected.length; i += 1) {
+          if (!sameRef(seq[i], projected[i])) {
+            return `the child sequence's index ${i} is not containerFor('${expected[i]}') — the WHOLE projected sequence must read ${JSON.stringify(expected)} in child order (declaration order is not the projection)`
+          }
+        }
+        for (const k of keys) {
+          const kids = childrenOf(h.containerFor(k))
+          if (kids.length !== 1 || !sameRef(kids[0], nodes[k])) {
+            return `containerFor('${k}') does not hold exactly the node placed for it, by reference (a setOrder must not re-parent a caller node)`
+          }
         }
         return null
       })
@@ -2509,6 +3324,7 @@ describe('§5.5.1 — the typed property register (6 rows, executed deterministi
     for (const shape of shapes) {
       let host: SlotHost | null = null
       let firstRes: SlotHostResult | null = null
+      let outerContainer: unknown = null
       let firstChildren: unknown[] = []
       let firstInner: unknown[][] = []
       rec.run(`${shape.id} · call #1`, () => {
@@ -2517,6 +3333,7 @@ describe('§5.5.1 — the typed property register (6 rows, executed deterministi
         host = built.host
         const r = host.render()
         firstRes = r
+        outerContainer = built.container
         firstChildren = snapshotChildren(built.container)
         const ks = host.keys()
         firstInner = ks.map((k) => snapshotChildren(host === null ? null : host.containerFor(k)))
@@ -2534,6 +3351,21 @@ describe('§5.5.1 — the typed property register (6 rows, executed deterministi
         if (r.ok !== true) return 'ok === false on a repeat with unchanged inputs'
         if (JSON.stringify(r.order) !== JSON.stringify(first.order)) return `order changed: ${JSON.stringify(r.order)} vs ${JSON.stringify(first.order)}`
         if (JSON.stringify(r.placed) !== JSON.stringify(first.placed)) return `placed changed: ${JSON.stringify(r.placed)} vs ${JSON.stringify(first.placed)}`
+        // ⟶ STRATEGY FIXED 2026-09-27 (`§3b`-1 `ADV-SH-8`; the row's statement,
+        // its `8` attempts and its strategy id are UNCHANGED): the **OUTER**
+        // snapshot — the INJECTED container's own child-reference sequence, per
+        // index, BY REFERENCE (`M-16`'s per-step child-reference sequence, `§7a`
+        // item 8). Without it a host that detaches and RE-APPENDS its containers
+        // on an unchanged `render()` passed the inner-only comparison.
+        const outerAfter = snapshotChildren(outerContainer)
+        if (outerAfter.length !== firstChildren.length) {
+          return `the injected container's child count changed: ${outerAfter.length} vs ${firstChildren.length} — a repeat with unchanged inputs mutates NOTHING`
+        }
+        for (let i = 0; i < firstChildren.length; i += 1) {
+          if (!sameRef(outerAfter[i], firstChildren[i])) {
+            return `the injected container's children[${i}] is not reference-identical — the host RE-APPENDED its own container (a re-append moves it to the end)`
+          }
+        }
         // No node is re-appended: the child-reference sequence is unchanged.
         const ks = h.keys()
         for (let i = 0; i < ks.length; i += 1) {
@@ -2563,8 +3395,11 @@ describe('§5.5.1 — the typed property register (6 rows, executed deterministi
     /** The per-attempt assertions of the cell: `ok === (refused.length === 0)`,
      *  the refusal's code is EXACTLY the class under test, `refuse` was notified
      *  once with a `deepEqual` object whose return value changed nothing (M-17),
-     *  the container child count equals the declared key count (the
-     *  no-silent-create half, REQUIRED), and `order` is the declared set once each. */
+     *  **the container child count of THE CLASS AT HAND** (the no-silent-create
+     *  half — `I-10`'s `keys.length` clause applies only where a container EXISTS,
+     *  i.e. to a SUCCESSFUL `render()`; the unusable-container class creates NO
+     *  container, so its falsifiable clause is ZERO host children), and `order` is
+     *  the declared set once each. */
     const assertRefusedStep = (
       h: SlotHost,
       container: unknown,
@@ -2579,7 +3414,21 @@ describe('§5.5.1 — the typed property register (6 rows, executed deterministi
       if (r.refused[0].code !== expectedCode) return `${label}: code === '${r.refused[0].code}' (expected exactly '${expectedCode}')`
       if (notified.length !== 1) return `${label}: refuse was notified ${notified.length} times (expected once — M-17)`
       if (JSON.stringify(notified[0]) !== JSON.stringify(r.refused[0])) return `${label}: the notified object is not deepEqual to the recorded refusal`
-      if (childCountOf(container) !== declared.length) {
+      // ⟶ RE-ANCHORED 2026-09-27 (`§3b`-3's `P-SH-SM-1` red row — `11/12`, ruled
+      // TEST-SIDE): the child-count clause is CLASS-SCOPED, never one blanket
+      // `I-10` reading over both classes. On the `'container-not-appendable'`
+      // class NO container is created at all (`containerFor(k)` is `null` for
+      // every key — `F-7`'s own `containerFor` row), so the clause there is
+      // ZERO host children; on the classes where a container exists it is
+      // `keys.length` after the successful `render()` (`I-10`).
+      if (expectedCode === 'container-not-appendable') {
+        if (childCountOf(container) !== 0) {
+          return `${label}: the injected container holds ${childCountOf(container)} host children (expected 0 — this class creates NO container: F-7's containerFor row; I-10 is scoped to a SUCCESSFUL render())`
+        }
+        for (const k of declared) {
+          if (h.containerFor(k) !== null) return `${label}: containerFor('${k}') is not null on the unusable-container class (F-7)`
+        }
+      } else if (childCountOf(container) !== declared.length) {
         return `${label}: the container holds ${childCountOf(container)} host children (expected exactly ${declared.length} — the DECLARED keys, so the refused input created nothing: I-10)`
       }
       if (r.order.length !== declared.length || new Set(r.order).size !== declared.length) {
@@ -2613,14 +3462,16 @@ describe('§5.5.1 — the typed property register (6 rows, executed deterministi
         host = create({ container: bad as unknown, keys: declared, refuse: (r) => notified.push(r) })
         const h = host
         h.render()
-        const before = childCountOf(container)
+        // The child-count clause is measured on the INJECTED container (`bad` —
+        // which IS the mount on the two present-container classes).
+        const before = childCountOf(bad)
         const r =
           code === 'unknown-key'
             ? h.setNode('nope', nodeEl('n'))
             : code === 'malformed-node'
               ? h.setNode('a', null)
               : h.setNode('a', nodeEl('n'))
-        const brk = assertRefusedStep(h, container, declared, notified, r, code, `${id} step 1`)
+        const brk = assertRefusedStep(h, bad as unknown, declared, notified, r, code, `${id} step 1`)
         if (brk !== null) return brk
         if (bad === container && childCountOf(container) !== before) return `${id} step 1: the child count changed on a refused input`
         return null
@@ -2851,8 +3702,20 @@ describe('§5.5.1 — the typed property register (6 rows, executed deterministi
             if (r.refused.length !== 0 || r.ok !== true) return `sequence 5 ${id}: an absent container refused something (F-6: refused is [], ok === true for valid inputs)`
             if (r.placed.length !== 0) return `sequence 5 ${id}: placed === ${JSON.stringify(r.placed)} (nothing is placeable)`
           }
+          // ⟶ FIXED 2026-09-27 (`§3b`-3's `P-SH-SM-2` red row — `7/8`, ruled
+          // TEST-SIDE): the PRE-`dispose()` read is kept EXACTLY as it was (the
+          // projection the drive's `setOrder(['b','a'])` reported), and the
+          // POST-`dispose()` expectation is `[]` — `I-5`/`M-13` and the register's
+          // own note fix `keys()` at `[]` after `dispose()`. The row's statement,
+          // its `8` sequences and the register's `155` total are UNCHANGED.
           const after = h.keys()
-          if (JSON.stringify(after) !== JSON.stringify(['b', 'a'])) return 'sequence 5: keys() is not valid after dispose() plus the prior projection'
+          if (JSON.stringify(after) !== JSON.stringify([])) {
+            return `sequence 5: keys() after dispose() is ${brief(after)} — I-5/M-13 fix it at [] (no declared key, no container reference, no state survives dispose())`
+          }
+          if (h.containerFor('a') !== null) return 'sequence 5: containerFor(a) is not null after dispose() (I-5)'
+          if (drive(() => h.dispose(), 'sequence 5 · a second dispose() after the first') !== undefined) {
+            return 'sequence 5: the second dispose() did not return void (idempotent)'
+          }
           return null
         },
       },
