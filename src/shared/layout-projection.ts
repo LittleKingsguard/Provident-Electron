@@ -104,6 +104,14 @@ function isObjectLike(value: unknown): value is Record<string, unknown> {
   return value !== null && (typeof value === 'object' || typeof value === 'function')
 }
 
+/** The `values` POSITION's own restriction (§2.4 item 3 clause (iii)): a callable
+ *  is a NON-RECORD `values` — it holds no own keys for this contract's purposes,
+ *  so the language's own incidental members are never read as caller data. The
+ *  other object-like positions stay duck-typed. */
+function isCallable(value: unknown): boolean {
+  return typeof value === 'function'
+}
+
 /** Own-property membership over caller data — never a prototype-chain read, so
  *  an inherited member is never mistaken for the caller's own data. */
 function owns(record: object, key: string): boolean {
@@ -160,12 +168,17 @@ type ReadOutcome =
   | { readonly kind: 'threw' }
   | { readonly kind: 'read'; readonly value: unknown }
 
-/** The ONE read of a key's value, with own-property semantics. An accessor that
- *  throws is caught HERE, per key: one bad key never ends a projection. */
+/** The ONE read of a key's value, with own-property semantics. The own-property
+ *  question and the read sit inside the SAME totality boundary: an accessor that
+ *  throws, or a `values` whose own-property question itself throws (a revoked
+ *  Proxy), is caught HERE, per key — one bad key never ends a projection, and the
+ *  throw is never propagated (`I-7`, `§2.4` item 2). The key is still read
+ *  THROUGH its accessor, exactly once, so a successful read is the caller's own
+ *  value (`F-4B`, `P-PJ-IM-3`). */
 function readValue(values: unknown, key: string): ReadOutcome {
-  if (!isObjectLike(values)) return { kind: 'missing' }
-  if (!owns(values, key)) return { kind: 'missing' }
+  if (!isObjectLike(values) || isCallable(values)) return { kind: 'missing' }
   try {
+    if (!owns(values, key)) return { kind: 'missing' }
     return { kind: 'read', value: values[key] }
   } catch {
     return { kind: 'threw' }
@@ -351,8 +364,24 @@ export function applyProjection(projection: unknown, sink: unknown): ApplyResult
   // A malformed PROJECTION decides NOTHING: it is an input record, and a
   // non-record holds no keys. (A malformed SINK decides EVERY key, below.)
   if (!isObjectLike(projection)) return { applied, skipped, ok: true }
-  const writes = plannedWrites(projection['applied'])
-  const carried = readableSkips(projection['skipped'])
+  // The two FIELD reads are inside the same totality boundary: a field that
+  // cannot be read at all (a throwing accessor, a revoked Proxy) is treated as
+  // ABSENT — no planned writes, no carried entries — so this call decides
+  // nothing and throws nothing (`§2.3` item 4's asymmetry, `M-11`'s shape).
+  let appliedField: unknown
+  try {
+    appliedField = projection['applied']
+  } catch {
+    appliedField = undefined
+  }
+  let skippedField: unknown
+  try {
+    skippedField = projection['skipped']
+  } catch {
+    skippedField = undefined
+  }
+  const writes = plannedWrites(appliedField)
+  const carried = readableSkips(skippedField)
   const setter = resolveSetter(sink)
   // An unusable sink is a TOTAL skip: no write is attempted, and one reason
   // member applies to every key of the projection.

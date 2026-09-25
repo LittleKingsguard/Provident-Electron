@@ -4841,8 +4841,16 @@ describe('ADV — the adversarial pass’s regression rows (§3b-1, the OWED hos
         drive(() => apply(projection, sink.sink), `ADV-PJ-2 ${shape} — applyProjection must not throw`),
         `ADV-PJ-2 ${shape}`,
       )
+      // THE ASSERTED SHAPE IS THE RECORD, not its key list: `applied` is the
+      // ApplyResult field (§2.1) and `asPlain` of an empty null-prototype record
+      // is `{}`, which is the M-11 shape. (Test-authorship repair, 2026-09-27:
+      // this expression read `asPlain(Object.keys(r.applied))` — an ARRAY — and
+      // compared it against the record literal `EMPTY_RESULT`, so `toEqual`
+      // could not hold for ANY module behaviour. The intent, the clause citation
+      // and the row's other three assertion groups (zero sink calls,
+      // `hostileDrives === 3`, the two controls) are unchanged.)
       expect(
-        { applied: asPlain(Object.keys(r.applied)), skipped: asPlain(skipPairs(r)), ok: r.ok },
+        { applied: asPlain(r.applied), skipped: asPlain(skipPairs(r)), ok: r.ok },
         `ADV-PJ-2 ${shape}: the M-11 shape — a field that cannot be read is treated as ABSENT, so NOTHING is decided: applied {}, skipped [], ok === true (§2.3 item 4’s asymmetry; no ninth reason)`,
       ).toEqual(EMPTY_RESULT)
     }
