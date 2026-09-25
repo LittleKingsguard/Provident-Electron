@@ -666,7 +666,15 @@ function isZonesUnitArtifact(path: string): boolean {
  *  unit-scoped partition applied: `files` holds only the files of the commits
  *  that touched at least one of THIS unit's artifacts, and the counts are
  *  reported so the census cannot be vacuous silently. */
-function unitScopedCommitted(anchor: string, range: string): { commitsInRange: number; unitCommits: number; files: string[] } {
+function unitScopedCommitted(
+  anchor: string,
+  range: string,
+): {
+  commitsInRange: number
+  unitCommits: number
+  files: string[]
+  allFilesOfUnitCommits: string[]
+} {
   const listed = [
     ...(gitOrNull(['show', '--name-only', '--format=@@%H', anchor]) ?? []),
     ...(gitOrNull(['log', '--format=@@%H', '--name-only', range]) ?? []),
