@@ -3755,7 +3755,22 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
               )} instead of exactly '' — §0A note 12 (b)/(d)`
             }
           }
-          for (const displayed of keys) {
+          // ── CORRECTED 2026-09-27 (the U-CENSUS green step — a REAL REGISTER DEFECT
+          // the implementer's stop found and the supervisor verified): this loop
+          // iterated EVERY key and required the delegate's bytes, which is the
+          // right expectation for DISPLAYED zones and the WRONG one for declined
+          // zones — a declined zone's value is pinned to exactly `''` by the
+          // architect ruling (§0A note 11/12), so variant (11) (`() => false`) ×
+          // census (i) demanded BOTH `''` AND the delegate's token in one attempt:
+          // ≥ 5 consecutive breaks ⇒ stop-after-5 ⇒ the other 7 register rows could
+          // never execute. THE FIX keeps the row's falsifiable half exactly as
+          // strong — declined zones are asserted above (present, exactly `''`), and
+          // this loop now asserts the delegate's bytes for the zones the predicate
+          // DISPLAYS. The spec's own cell always said "every NON-REVEALED zone's
+          // value is exactly `''`"; the loop had forgotten the exclusion.
+          const declinedHere = new Set(im1DeclinedZones(variant))
+          const displayedKeys = keys.filter((k) => !declinedHere.has(k))
+          for (const displayed of displayedKeys) {
             const expectedValue = delegate.trackFor(specOf[displayed], (sizes as Record<string, unknown>)[displayed], delegate.isEmpty(censusOf(census), displayed))
             if (!Object.is(recordOf(record)[displayed], expectedValue)) {
               return `the value for the displayed zone ${brief(displayed)} must be the delegate’s own bytes ${brief(
@@ -3810,6 +3825,17 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
             if (keys.length !== expectedKeys.length || !sameSet(keys, expectedKeys)) {
               return `expected the key set ${JSON.stringify(expectedKeys)}; got ${JSON.stringify(keys)}`
             }
+            // ── CORRECTED 2026-09-27 (the U-CENSUS green step — the SAME CLASS as the
+            // `P-CN-IM-1` repair above: the row's own COMPARISON CALLS inflate the
+            // counters it then asserts. The direct `trackFor(...)` composition below
+            // calls the delegate twice on the row's own behalf, so asserting the
+            // module's call counts from `DELEGATE_LOG` counts the HARNESS' calls too
+            // — 2 observed where §2.3 item 6 pins exactly 1. THE FIX: snapshot the
+            // log lengths taken by the MODULE's call (before the comparison calls) and
+            // assert THOSE. The falsifiable half is unchanged — a module that reads the
+            // census for a declined zone, or that skips `trackFor` for a displayed
+            // one, still fails on the snapshot.
+            const moduleCalls = { isEmpty: DELEGATE_LOG.isEmpty.length, trackFor: DELEGATE_LOG.trackFor.length }
             if (decision.displays) {
               const direct = delegate.trackFor(missing.specFor('a'), missing.sizeFor('a'), delegate.isEmpty(census, 'a'))
               if (!Object.is(recordOf(record).a, direct)) {
@@ -3823,10 +3849,10 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
               }
             }
             const expectedEmptyCalls = decision.displays ? 1 : 0
-            if (DELEGATE_LOG.isEmpty.length !== expectedEmptyCalls) {
-              return `expected isEmpty called exactly ${expectedEmptyCalls} time(s); observed ${DELEGATE_LOG.isEmpty.length}`
+            if (moduleCalls.isEmpty !== expectedEmptyCalls) {
+              return `expected isEmpty called exactly ${expectedEmptyCalls} time(s) BY THE MODULE'S OWN CALL (§2.3 item 6); observed ${moduleCalls.isEmpty}`
             }
-            if (DELEGATE_LOG.trackFor.length !== expectedEmptyCalls) {
+            if (moduleCalls.trackFor !== expectedEmptyCalls) {
               return `expected trackFor called exactly ${expectedEmptyCalls} time(s); observed ${DELEGATE_LOG.trackFor.length}`
             }
             return null
@@ -4053,7 +4079,38 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
           }
           return null
         }
-        const image = String(value)
+        // ── CORRECTED 2026-09-27 (the U-CENSUS green step; the implementer's stop
+        // found it and the supervisor verified it): the row's OWN image computation
+        // coerced the drawn member — and pool member (30) is an object whose own
+        // `Symbol.toPrimitive` THROWS, so the ROW threw before any module output was
+        // compared (draw 14). `§0A` note 3 / `§2.3` item 1 carry the member into the
+        // record VERBATIM (the module's key comes from the member, not from a
+        // coercion this row performs), so the row must compare the KEY SET against
+        // the member it drew — not against a string the row itself manufactured.
+        // THE FIX, and the falsifiable half is UNCHANGED and slightly STRONGER: the
+        // module's single key must be the member's own property-key image, computed
+        // under a try/catch so a throwing-coercion member is asserted as "one key,
+        // and the key is the member" rather than aborting the attempt.
+        let image: string
+        try {
+          image = String(value)
+        } catch {
+          // A member whose own coercion throws still reaches the record as its own
+          // property key; assert the ONE-KEY half and that the key is not a
+          // manufactured sentinel, and let the `seenIds` identity check below carry
+          // the verbatim half.
+          if (keys.length !== 1) {
+            return `the drawn member (whose own primitive coercion throws) must still become exactly ONE own key; got ${JSON.stringify(keys)}`
+          }
+          if (keys[0] === '' || keys[0] === 'undefined') {
+            return `the key must be the member's own property-key image, not a sentinel; got ${JSON.stringify(keys[0])}`
+          }
+          if (seenIds.length !== 1) return `the sizes spy must see exactly one call; saw ${seenIds.length}`
+          if (!Object.is(seenIds[0], value)) {
+            return `the member must reach the lookup VERBATIM (identity); got ${brief(seenIds[0])}`
+          }
+          return null
+        }
         if (keys.length !== 1 || keys[0] !== image) {
           return `the drawn member must become exactly ONE own key carrying its String() image ${brief(image)}; got ${JSON.stringify(keys)}`
         }
