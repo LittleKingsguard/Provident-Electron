@@ -75,6 +75,59 @@ lines** — and each site now carries the note that a line-count census **drifts
 should name this file's **sections**, never its length. The `774` figure this note previously carried is kept
 visible and is that pass's own measurement.)*
 
+**⟶ STATUS NOTE — 2026-09-27, THE ADVERSARIAL + PBT-AUDIT PASS: the unit `U-LISTHOST` is GREEN and a
+READ-ONLY adversarial pass plus a PBT audit has RUN; its findings, seed rulings and judgment-call
+rulings are recorded in `§3a`/`§3b` and this pass files them as CONTRACT TEXT.** **What the pass
+reported (as REPORTED, not measured here — `§7` item 11):** `tests/owned-list-host.test.ts`
+**`53/53` rows**; `§5.5.1`'s property register **`168/168` attempts held** (none broken;
+stop-after-5 never triggered); the full node suite **`60` files / `971` tests — `969` passed / `0`
+failed / `2` skipped**. **This note amends no normative clause of `§0`, adds no member to `§3`'s
+existing id sets (`M-19`..`M-21`, `F-11` are APPENDED, `§3b`-1/`§3b`-2 are appended, `§8` gains rows
+at its end) and moves no section number.** **One rule binds every fix that follows, and it is
+`AGENTS.md`'s: the regression rows are authored RED by a TestWriter FIRST (from `§2.1`'s clauses plus
+`§3.1 M-19`/`§3.2 F-11`), then the Implementer makes them green. The four fix-side findings, their
+owners, and the clause each fix is written against:**
+
+| Finding | Disposition | Owner | The contract clause the fix is written against |
+| --- | --- | --- | --- |
+| **`ADV-LH-1`** (HIGH) — a throwing `orderOf` escapes `setEntries` | **`CONTRACT-AMENDED` + `FIXED-this-pass`** | Implementer + TestWriter | `§2.1`'s **totality clause** (the catch is the contract on EVERY path; the supplied order is used; it never escapes) + `§3.3 I-8` |
+| **`ADV-LH-3`** (MED) — a throwing injected function escapes mid-call | **`CONTRACT-AMENDED` + `FIXED-this-pass`** | Implementer + TestWriter | `§2.1`'s **totality-extends-to-injected-functions clause** + the NAMED safe default per function |
+| **`ADV-LH-4`** (MED) — a refused first occurrence wrongly reserves its key | **`CONTRACT-AMENDED` + `FIXED-this-pass`** | Implementer + TestWriter | `§2.1`'s **ACCEPTANCE rule** + `N-5`, `§3.2 F-2` (amended in place), NEW `§3.1 M-19`, NEW `§3.2 F-11` |
+| **`ADV-LH-5`** (HIGH) — the falsification row cannot fail for the mutation it forbids | **`FIXED-this-pass`** | **TestWriter (strategy ONLY)** | `§2.3` item 3 / `M-8` (the statement **stays**) + `§5.5.1 P-LH-IM-4`'s strengthened strategy |
+
+**The other eight findings, one line each (`§3b`-1 carries the full table):** `ADV-LH-2` (LOW)
+**`PARKED-with-revisit-condition`** — a throwing caller-supplied `mount.appendChild`/node `remove`
+escapes with the bookkeeping already rewritten; contract-consistent about the *tree* (`M-16`) but the
+state-coherence half is unstated; **revisit if the totality claim is read as extending to
+caller-supplied DOM methods, or when a non-shim mount is injected.** `ADV-LH-6` (LOW)
+**`ACCEPTED-AS-PINNED`** (doc) — `P-LH-IM-1` gains the same honest bounded marking `P-LH-TP-1`
+carries; no statement change. `ADV-LH-7` (LOW) **`PARKED-with-revisit-condition`** (doc drift) — the
+register cell's pool list reconciles to the executed **`22`** shapes and the generator's actual
+two-step form (`next(1) === 0`, pinned `20260927`) is stated; a **`Symbol`**-keyed shape is recorded
+as the pool's **stated boundary** (revisit if one is admitted). `ADV-LH-8` (LOW)
+**`NOT-A-FINDING`** — the two extra executed shapes are an asserted extension beyond the `§3` rows.
+`ADV-LH-9` (INFO) **`RESOLVED-BY-PINNING`** — the `dispose()` **composition hazard** (two hosts, one
+mount, one disposed: the mount keeps the disposed host's orphans, and the new host appends after them
+and treats them as foreign) is recorded at seed `§3a A-10`. `ADV-LH-10` (INFO)
+**`ACCEPTED-AS-PINNED`** — the **re-entrancy** ruling at seed `§3a A-17` (ownership is dropped
+**before** `onClose`, so no resurrection and no double-fire; a re-entrant `setEntries` inside a
+callback changes what the OUTER call's `order`/`placed` report — benign and now stated).
+`ADV-LH-11` (INFO) **`NOT-A-FINDING`** — the security/seam sweep is **clean** (exactly 7 exports; no
+`tab`/`strip`/`pane`/`zone`/`region`/`overflow` vocabulary; no `document`/`window`/`matchMedia`; no
+renderer/main import; no persistence; no module-level state; `RpcMethod` `21`, `ALL_TOOLS` `21`,
+`MUTATING_METHODS` `7`, `VALID_GROUPS` `5` — unchanged; the six static rows are source-based).
+`ADV-LH-12` (INFO) **`NOT-A-FINDING`** — `I-3`'s foreign-subsequence scoping is intentional (covered
+by `M-14` and `§5.5.1 P-LH-SM-2` sequence 6).
+
+**This pass ran NO test, NO leg and NO trio** — it is SPEC TEXT ONLY (no `tests/**`, no `src/**`, no
+`scripts/**`, no `package.json` edit, no `git commit`), it edits **this one spec file** and nothing
+else, and **nothing is archived, moved or repointed** (`AGENTS.md` item 6). **The known `§5.3 → §5.5`
+gap with no `§5.4` remains a RECORDED item owned by the documentation review — this pass does NOT
+renumber it**, and neither does it renumber anything else. **File-length census: this pass grew the
+file by anchored appends (the `1062`-line figure earlier notes carry is the state BEFORE them); a
+line-count census DRIFTS on every pass, so a citation should name this file's SECTIONS, never its
+length** — the rule the contract-reconciliation note above already states.
+
 **⟶ CONTRACT-RECONCILIATION NOTE — 2026-09-27, THE TESTWRITER-HANDOFF PASS (the red set was AUTHORED
 and RUN; eight clauses could not be pinned and were reported instead of guessed).** The red set
 `tests/owned-list-host.test.ts` exists and was **RUN and REPORTED: `52` rows = `49` red / `3` pass**
@@ -177,6 +230,9 @@ and leaves every other child of the mount exactly as it found it.
 - **Any styling, class taxonomy, `role`/ARIA attribute, or content authorship** (§2.2 prohibition 2).
 - **The dropped "one overflow mode" criterion, in any spelling.** Overflow is **CSS and
   consumer-side**; **this repo ships no stylesheet** for a consumer.
+  **⟶ RE-CHECKED 2026-09-27 (the adversarial + PBT-audit pass): still no such file — `docs/skills/`
+  holds `process-guardrails.md` alone, so there is NO test-use-case coverage matrix and NO demo-page
+  index to update, and this unit's page-design surface is unchanged (`§7` item 6).**
 - **Any graph operation on order change.** `setOrder` performs **zero** graph ops — no `dispatch`,
   no `op`, no `applyCommand`, no `load`. A static row asserts the module imports nothing from
   `src/renderer/**` (§2.2, §5.1).
@@ -237,7 +293,11 @@ export interface OwnedListHostOptions<N = unknown> {
   readonly itemFactory?: (entry: ListEntry<N>) => N | null
   /** Fired at most ONCE per `activate(key)` for a known key. */
   readonly onActivate?: (key: ListKey, entry: ListEntry<N>) => void
-  /** Fired at most ONCE per `remove(key)` for a known key. */
+  /** Fired at most ONCE per `remove(key)` for a known key. **⟶ RULED 2026-09-27 (`ADV-LH-3`, the
+   *  adversarial + PBT-audit pass; the doc string above is kept visible): a THROWING `onClose`
+   *  must not escape `remove`/`close`/`dispose` — the host catches it and continues, which it can
+   *  do precisely because ownership is dropped BEFORE the callback fires.**
+   */
   readonly onClose?: (key: ListKey, entry: ListEntry<N>) => void
   /** The caller's per-entry ordering position, consulted at render time ONLY
    *  when `orderOf` is absent. */
@@ -279,14 +339,34 @@ export interface ListHostResult {
 
 export interface OwnedListHost<N = unknown> {
   /** Declare/replace the full entry set. A second call with the same data is a
-   *  no-op at the DOM level (row `I-2`). `null`/`undefined` ⇒ an EMPTY set. */
+   *  no-op at the DOM level (row `I-2`). `null`/`undefined` ⇒ an EMPTY set.
+   *  ⟶ ADDED 2026-09-27 (`ADV-LH-1`, the adversarial + PBT-audit pass): an `orderOf` that
+   *  THROWS on this path is CAUGHT exactly as it is on `setOrder` and NEVER escapes
+   *  (see the totality clause at the end of this section); the injected seams of BOTH
+   *  paths are total.
+   *  ⟶ ADDED 2026-09-27 (judgment call 5, the same pass): a NON-ARRAY argument (`42`, `{}`, a
+   *  string) is likewise not a throw: it is read as an EMPTY set — `ok === true`, `refused`
+   *  `[]`, `order` `[]` — and it therefore SILENTLY DROPS the prior ownership (the previously
+   *  placed nodes are removed and appear in `removed`). That consequence is stated here
+   *  because it was previously unstated; the disposition of the reading itself is
+   *  `PARKED-with-revisit-condition` (§3b, judgment call 5). */
   setEntries(entries: readonly ListEntry<N>[] | null | undefined): ListHostResult
   /** Remove one entry by key. An UNKNOWN key is a refusal, never a throw. */
   remove(key: ListKey): ListHostResult
   /** Set the projected order. Unknown/duplicate keys in `keys` are IGNORED
-   *  (they never appear in the result's `order`). NO graph op occurs. */
+   *  (they never appear in the result's `order`). NO graph op occurs.
+   *  ⟶ ADDED 2026-09-27 (`ADV-LH-1`, the adversarial + PBT-audit pass): a THROWING `orderOf`
+   *  cannot escape this path either (it is caught here by construction and is caught on the
+   *  `setEntries` path by the fix `ADV-LH-1` requires). A NON-ARRAY `keys` argument is a
+   *  NO-OP: the current projected order is left UNCHANGED, `ok === true`, `refused` `[]` —
+   *  never a throw (judgment call 5). */
   setOrder(keys: readonly ListKey[]): ListHostResult
-  /** Place the current set (idempotent). */
+  /** Place the current set (idempotent).
+   *  ⟶ ADDED 2026-09-27 (judgment call 10, the adversarial + PBT-audit pass): the host WRITES
+   *  only where its OWN bookkeeping disagrees with the mount — it never re-paints the mount.
+   *  A node the CALLER detached is therefore NOT re-appended by `render()`: for that key the
+   *  caller's detach is PERMANENT (`render()` is not an undo), and it never throws (the key is
+   *  not left dangling, `F-6`). Stated here because the permanence was unstated. */
   render(): ListHostResult
   /** Fire `onActivate` for a KNOWN key (at most once); refusal for unknown. */
   activate(key: ListKey): ListHostResult
@@ -327,15 +407,51 @@ finding 1).** `node?: N | null` makes a node-less entry expressible, so the surf
 | **N-2** | **absent or `null`, and `itemFactory` present** | the factory is called **once per node-less entry** and its return is placed **by reference** | `M-6` |
 | **N-3** | **absent or `null`, and NO `itemFactory`** | refusal **`no-node`**; the key is **not owned** and **absent from `order`** | `F-3` |
 | **N-4** | **`null` with `itemFactory` present but returning `null`/`undefined`** | refusal **`factory-returned-null`**; the key is **not owned** | `F-4` |
+| **N-5** *(ADDED 2026-09-27 — the `ADV-LH-4` hole, closed)* | **a key whose FIRST occurrence is REFUSED, followed by a VALID occurrence of the same key in the same call** | **the VALID occurrence IS placed and owned** (a refused occurrence contributes NOTHING — least of all a reserved key); exactly **one** refusal per refused occurrence (`no-node` for the first in the drive `[{key:'k'}, {key:'k', node:n}]` with no factory), `order` contains `'k'` **once**, `ok === false` | `F-11`, `F-2`'s accepted-only scope, `M-19` |
 
 **The order of checks is part of the rule: the KEY is validated first.** An entry that is **not an
 object at all**, or whose **`key` is not a string**, is refused as **`malformed-entry`** (`F-5`) —
 **before** any node/factory question is asked, so `{key: 42, node: X}` is `malformed-entry` and never
-`no-node`. An entry with a **string key** — **including `''`** — falls through to the four cases
-above, which is exactly why `{key: '', node: null}` with no factory (**`F-5`'s own drive**) is
+`no-node`. An entry with a **string key** — **including `''`** — falls through to the cases
+above (**⟶ `FIVE` CASES AS OF 2026-09-27: `N-1`..`N-5`, the as-written "four" is superseded by the
+appended `N-5` and nothing is renumbered**), which is exactly why `{key: '', node: null}` with no factory (**`F-5`'s own drive**) is
 **`no-node`**, not `malformed-entry` (the empty-string ruling is stated in `§3.2` `F-5` and row
 `M-18`). **`F-3`'s drive `[{key:'k'}]` is therefore the `N-3` case**, and nothing in `§2.1` requires
 a node to be supplied for an entry to be expressed.
+
+**The ACCEPTANCE rule — a key becomes "seen" only when an occurrence is ACCEPTED (ADDED 2026-09-27,
+the adversarial + PBT-audit pass; finding `ADV-LH-4`, MED — `CONTRACT-AMENDED`).** The as-shipped
+code called `seen.add(key)` **before** the node/factory validity question
+(`src/shared/owned-list-host.ts:260`, read by that pass), so a key was "seen" even when the
+occurrence that first carried it was **refused**. The observable hole: with **no**
+`itemFactory`, `setEntries([{key:'k'}, {key:'k', node:n}])` produced **TWO** refusals
+(`no-node` **+** `duplicate-key`) and `order === []` — even though the second entry is
+**independently valid** and the mount could hold it. **That contradicts this section's own totality
+note** ("refusing an invalid entry while placing the valid ones is **the contract**"), which is
+**per-entry**, and it contradicts `N-3` (which refuses the key of a node-less entry only because
+that ENTRY supplies no node — it says nothing about a *later* occurrence). **`F-2`'s first-wins rule
+does not cover the shape**: it decides *which occurrence HOLDS* a key when both are valid; it never
+said that a **REFUSED** first occurrence reserves the key. **The ruling — the majority reading of
+this contract: the VALID entry is PLACED, and a refused occurrence contributes NOTHING.** Formally:
+**the `duplicate-key` test is made against keys that have been ACCEPTED in this call, and a key is
+added to the seen set only AFTER its occurrence is accepted** (i.e. after the key check AND the
+node/factory check both pass). So `setEntries([{key:'k'}, {key:'k', node:n}])` with no factory
+yields **one** refusal (`no-node`), places `n`, and `order === ['k']`. Disposition
+`FIXED-this-pass` (host fix + regression row); **owner: the Implementer + TestWriter.** The row is
+`§3.2 F-11`, the valid-state row is `§3.1 M-19`, and `F-2` is annotated **in place** (old text kept
+visible) so `F-2` and `N-3` now agree.
+
+**The mount-absence consequence and the `order`/`placed` non-parallelism (ADDED 2026-09-27, the
+same pass; judgment call 9, `PARKED-with-revisit-condition`).** An unplaceable mount (`null`,
+absent, or a malformed child surface — `M-15`/`M-16`) does **not** stop the host from OWNING keys:
+`keys()` and the result's `order` still report the current key set (in the projected order), while
+`placed` is `[]` because **nothing could be placed**. **The contract therefore never states
+`order.length === placed.length`, and a consumer must not assume it**: `order` is an
+ownership/projection statement and `placed` is a *placement* statement, and they diverge **exactly
+when the mount cannot hold a node**. Any row or register cell that asserts **index-parallelism** of
+`order` and `placed` is assertable **only over a placeable mount** — never over `M-15`/`M-16`'s
+shapes. The reading itself stays `PARKED-with-revisit-condition` (§3b, judgment call 9); **the
+text above is the contract and is stated here because it was previously unstated.**
 
 **⟶ `§2.1`'s surface census — the eight declared methods and what each RETURNS (ADDED 2026-09-27,
 the TestWriter-handoff pass; finding 4).** `OwnedListHost<N>` declares **eight (8)** methods —
@@ -361,6 +477,57 @@ of nothing else** — `keys()` returns `readonly ListKey[]` and `dispose()` retu
 the census above. **The refusal pattern itself (no throw, refusals land in `refused`, state stays
 valid, `dispose()` is the only `void` return) is unchanged and applies to all eight methods**: a
 refusal is only *reportable* by the six, because a refusal list is part of `ListHostResult`.
+
+**Totality governs EVERY path — the injected seams of `setEntries` and `setOrder` are TOTAL, and
+the `catch` is the contract (ADDED 2026-09-27, the adversarial + PBT-audit pass; finding
+`ADV-LH-1`, HIGH — `CONTRACT-AMENDED`; `§7` item 8's seed `A-5` is RULED BY THIS CLAUSE, not
+deferred).** The as-shipped code catches a throwing `orderOf` on the `setOrder` path
+(`src/shared/owned-list-host.ts:337`, read by that pass) but calls the same projection from
+`setEntries` **outside any `try`** (`:300`, read by that pass), so an injected `orderOf` that
+throws **escaped `setEntries`** — which **contradicted this section's own "no method of this host
+throws — for any input"** and `§3.3 I-8`. **The ruling: the totality claim governs on EVERY path.
+An `orderOf` that throws on `setEntries` MUST be caught exactly as it is on `setOrder` and MUST
+NEVER escape.** Disposition `FIXED-this-pass` + a regression row owed; **owner: the Implementer
+(the host fix) and the TestWriter (the row)**. The observable, stated so the row can be authored
+without guessing, is an EXPECTED BEHAVIOUR in three parts:
+
+1. **No throw from any of the six `ListHostResult`-returning methods** for a host constructed with
+   an `orderOf` that always throws (the drive: `orderOf: () => { throw new Error('x') }`).
+2. **Nothing is lost to the throw**: every VALID entry is still placed and owned, exactly as if
+   `orderOf` had been omitted for the ordering decision — i.e. the **supplied order** is the
+   fallback and `order` is the current key set in supplied order, each key once (`I-7`).
+3. **No refusal code is invented for it.** `orderOf` is CALLER code, and this host's refusal
+   vocabulary is **five** codes, none of which is "the comparator threw" — so a swallowed
+   `orderOf` throw contributes **no** `ListHostRefusal` entry and `ok` stays `true` when nothing
+   was refused (`I-1`). **The host never reports caller-code failure as a contract refusal and
+   never re-throws it.**
+
+**Totality extends to the INJECTED FUNCTIONS — a throwing `itemFactory`/`onActivate`/`onClose`
+must not escape either, and each has a NAMED safe default (ADDED 2026-09-27, the same pass;
+finding `ADV-LH-3`, MED — `CONTRACT-AMENDED`; `§3a A-12`'s THROWING half is RULED HERE, and its
+NON-function half stays `RESOLVED-BY-PINNING`).** `A-12`'s wording covered **non-functions**, not
+**throwing functions** — a caller-supplied `onActivate`/`onClose`/`itemFactory` that **throws**
+also escaped, mid-call, and an `onClose` that threw escaped **with ownership already dropped**
+(no result was returned at all). `A-12` is therefore ruled **in two halves**:
+
+- **(i) NON-function / non-array injections stay as already recorded**: guarded and excluded from
+  `I-8` and `§5.5.1 P-LH-TP-1` (`RESOLVED-BY-PINNING` — no assertion over those shapes is pinned
+  in this unit's red set, and no seed may be cited as a finding).
+- **(ii) A THROWING injected function MUST NOT escape a method either** — the same totality rule as
+  `ADV-LH-1`, with the boundary stated explicitly: **the host catches the throw and continues with
+  the safe default named for that injection.** `FIXED-this-pass` (host fix + regression row);
+  **owner: the Implementer + TestWriter.**
+
+| Injected function | What a throw means | The host's safe default (the catch) | Observable |
+| --- | --- | --- | --- |
+| `orderOf` | the caller's ordering policy failed **for that projection** | the entry takes the **supplied order** — identical to the omitted-`orderOf` default (`§2.2` prohibition 3: the default IS the absence of a policy, so no policy is invented) | no throw; `order` is the current key set in supplied order, once each; **no** refusal; ownership/placement unaffected |
+| `itemFactory` | the caller's factory produced no node | the entry is refused **`factory-returned-null`** — the **same** class as a factory that RETURNS `null`/`undefined` (`F-4`) | no throw; `ok === false`; one refusal, `code === 'factory-returned-null'`; the key is not owned and absent from `order` (`N-4`) |
+| `onActivate` | the caller's activation handler failed | the event is **swallowed**: activation is reported as it would be without a handler, and the method returns its `ListHostResult` | no throw; `ok === true`; the key stays owned; the callback is attempted **exactly once** for that `activate(key)` (`M-9`) |
+| `onClose` | the caller's close handler failed | the event is **swallowed and the ownership drop STANDS** — the drop happens BEFORE the callback would fire | no throw; `ok === true`; the key is GONE from `keys()` and its node is removed (`M-10`); never "ownership dropped with no result returned" |
+
+**No clause above weakens a refusal**: a thrown injected function never becomes a refusal of the
+`orderOf`/`onActivate`/`onClose` kind (there is no code for it), and only `itemFactory` maps to an
+existing documented code.
 
 **Totality note, stated precisely so it cannot be over-read as a partial-write licence.** The host
 is **atomic per call at the ownership level**: an entry that is refused is **not placed, not
@@ -472,10 +639,13 @@ a **contract row** for the TestWriter; **none is a measurement this pass took.**
 | **M-12** | **Replacement keeps the caller's node identity when the caller supplies the same object** | `setEntries([e])`, then `setEntries([e])` again | the same node object is still placed (`toBe`); **no remove+re-add cycle is observable** (`removed` is `[]`) — `I-2` | `[T]` |
 | **M-13** | **`setEntries` replaces a changed node for the same key** | `setEntries([{key:'k', node: n1}])` then `setEntries([{key:'k', node: n2}])` | `n1` appears in `removed`; `placed[0] === n2`; `order` still contains `'k'` **once** | `[T]` |
 | **M-14** | **`dispose()` relinquishes ownership without destroying caller nodes** | place 3, `dispose()` | no method throws; `keys()` `[]`; the three nodes **still exist and are still reachable by the caller** (reference-held, not removed); **no further host state** (`I-5`); a second `dispose()` is a no-op. **⟶ RULED 2026-09-27 (the TestWriter-handoff pass; finding 6): "(reference-held, not removed)" is the CONTRACT, not one reading of `dispose()`'s "place nothing" — `dispose()` REMOVES NOTHING from the mount (the nodes stay children of the mount, in their projected order, and appear in no `removed` list); the reasoning and the two readings are stated at `§2.1 dispose()` and `§2.3` item 4. **The assertion is the ROW ITSELF** — every placed node `removed === false`, the mount's child sequence reference-identical across `dispose()` — **and the register's home for the same behaviour is `§5.5.1 P-LH-SM-2`'s `dispose()` sequence (the `8`-sequence table's sixth entry), which asserts `keys()` `[]` + each caller node still reference-reachable with its `removed` flag unchanged.** | `[T]` |
-| **M-15** | **A `null`/absent mount ⇒ every operation a no-op with a VALID state** | `createOwnedListHost({ mount: null })`; `setEntries`/`setOrder`/`activate`/`close`/`render`/`keys` | **no throw for any call**; `ok === true` when the input was valid (nothing was refused — the host simply has nowhere to place); `keys()` still reports the **current** keys; `placed` is `[]`; `removed` is `[]`. **A later `mount` is NOT retro-fitted** (the option is read once — a row pins that no setter exists) | `[T]` |
+| **M-15** | **A `null`/absent mount ⇒ every operation a no-op with a VALID state** | `createOwnedListHost({ mount: null })`; `setEntries`/`setOrder`/`activate`/`close`/`render`/`keys` | **no throw for any call**; `ok === true` when the input was valid (nothing was refused — the host simply has nowhere to place); `keys()` still reports the **current** keys; `placed` is `[]`; `removed` is `[]`. **A later `mount` is NOT retro-fitted** (the option is read once — a row pins that no setter exists). **⟶ ANNOTATED 2026-09-27 (the adversarial + PBT-audit pass; judgment call 9): `order` here is the CURRENT KEY SET while `placed` is `[]` — this drive is the witness that `order.length === placed.length` is NEVER asserted by this contract (`§2.1`'s mount-absence paragraph, `I-7`). No clause of this row is weakened and its drive is unchanged.** | `[T]` |
 | **M-16** | **A mount whose child surface is malformed is a valid no-op, never a throw** | `mount: {}`, `mount: 42`, `mount: 'div'` | **no throw**; operations behave as M-15's no-op path; `ok === true` for valid inputs (nothing refused), `refused` `[]`. **The mount's absence is a configuration, not an error** | `[T]` |
 | **M-17** | **`ok` reflects the current call only** | A call with one refused entry followed by a clean call | The second call's `ok === true` and `refused` `[]` — refusals do not accumulate into host state | `[T]` |
 | **M-18** | **An EMPTY-STRING key is an ordinary opaque key — `''`, whitespace, unicode and long keys all work IDENTICALLY, and NOTHING normalizes a key** (ADDED 2026-09-27, the TestWriter-handoff pass; finding 2 — the `§3a A-8` premise, made a row) | `setEntries([{key:'', node:na}, {key:' b\t', node:nb}, {key:'ünïcøde', node:nc}, {key:'x'.repeat(4096), node:nd}])`, then `setOrder([the long key, '', 'ünïcøde', ' b\t'])`, then `close('')` | **no throw anywhere**; `ok === true` and `refused` `[]` for every call; `order` is exactly the four keys **verbatim** (byte-identical, **no trim, no case-folding, no unicode normalization, no length check, no empty-string special case**); each `placed[i]` is the supplied node **by reference**; `''` is a **key like any other** and never collides with `' b\t'` or the long key; `close('')` fires `onClose` **once** with `('', entry)` and removes that node **from the mount**; the host's own `keys()` contains `''` **exactly once** and no longer contains it after the `close`. **This row rules NOTHING about the `§3a A-9` seed (`A-9` gives TWO keys ONE shared node object; `M-18` gives each key its OWN node) — `A-9` stays `OWED`** | `[T]` |
+| **M-19** | **A REFUSED first occurrence does NOT reserve its key — a later valid duplicate is PLACED** (ADDED 2026-09-27, the adversarial + PBT-audit pass; finding `ADV-LH-4`, MED — the valid-state half of the hole `F-11` documents) | `setEntries([{key:'k'}, {key:'k', node:n}])` with **no** `itemFactory` | **no throw**; **exactly one** refusal and its `code === 'no-node'` (the FIRST occurrence — the only refused one); **no** `duplicate-key` refusal exists for this call; `order` is exactly `['k']` (each key **once**); `placed` is `[n]` **by reference** (`toBe`); `ok === false` (the first occurrence WAS refused — `I-1`); the key is owned **once** and `close('k')` removes `n` from the mount (`§2.1`'s ACCEPTANCE rule, `N-5`, `F-11`) | `[T]` |
+| **M-20** | **A NON-ARRAY argument is a silent empty set / a no-op — never a throw, and `setEntries`'s reading DROPS prior ownership** (ADDED 2026-09-27, the same pass; judgment call 5) | populate 3 entries, then `setEntries(42)` / `setEntries({})` / `setEntries('x')`; and separately `setOrder(42)` after a projected order | `setEntries`: **no throw**; `ok === true`; `refused` `[]`; `order` `[]`; `placed` `[]`; **the 3 previously placed nodes are removed and appear in `removed`** — the ownership drop is the OBSERVABLE consequence and it is the contract (`§2.1 setEntries`). `setOrder`: **no throw**, the projected order is **UNCHANGED**, `ok === true`, `refused` `[]`. **This is the drive `§3b`'s judgment call 5 carries: the disposition of the reading is `PARKED-with-revisit-condition`, while the ownership-drop consequence above is CONTRACT TEXT** | `[T]` |
+| **M-21** | **`render()`'s write policy — a caller-detached node is never re-appended, so its detach is PERMANENT for that key** (ADDED 2026-09-27, the same pass; judgment call 10) | place entries, the caller detaches one host-placed node from the mount, then `render()` (twice) | **no throw** on either call; the host **does not** re-append the detached node (`render()` writes only where its own bookkeeping disagrees with the mount, and the bookkeeping still owns the key) — the node stays out of `mount.children` after both renders; `keys()`/`order` still name the key (`I-7`); the second render is a no-op at the DOM level (`I-2`, `removed` `[]`); the key is not left dangling and a later `close(key)` removes nothing (no throw, `F-6`) | `[T]` |
 
 **⟶ ROW `M-18` IS ADDED AFTER `M-17` — NOTHING IS RENUMBERED (ADDED 2026-09-27, the
 TestWriter-handoff pass).** `M-18` is the **positive** drive of the empty-string-key rule that
@@ -484,6 +654,20 @@ their ids and their text. The row exists because `§3a A-8`'s premise (*"a key o
 string), a key with whitespace, a unicode key, and a very long key — opaque, so all must work
 **identically**; a row asserts no normalization anywhere"*) **needs a §3 row to be falsifiable
 against**, and because the reconciled `F-5` must not be the only clause mentioning `''`.
+
+**⟶ ROWS `M-19`, `M-20` AND `M-21` ARE ADDED AFTER `M-18` — NOTHING IS RENUMBERED (ADDED
+2026-09-27, the adversarial + PBT-audit pass; findings `ADV-LH-4` and the pass's judgment calls
+5 and 10).** The three rows are APPENDED after `M-18` for the same reason `M-18` was appended after
+`M-17`: they are the falsifiable drives of three clauses that had none. **`I-1`..`I-9`, `M-1`..`M-18`
+and `F-1`..`F-10` keep their ids and their text.** `M-19` carries the **valid-state** half of the
+`ADV-LH-4` ruling (`§2.1`'s ACCEPTANCE rule); `M-20` carries the **silent-empty-set /
+silent-no-op** reading whose **ownership-drop consequence is now contract text** (judgment call 5,
+whose disposition stays `PARKED-with-revisit-condition`); `M-21` carries `render()`'s **write
+policy** and the **permanence** of a caller detach (judgment call 10, `ACCEPTED-AS-PINNED`).
+**These three rows are NOT in the `52`-row red set that was authored and RUN** (`§0`'s
+TestWriter-handoff note) — they are **contract rows owed to the regression-row pass the `ADV-LH-*`
+findings mandate** (`§3b`), so the next TestWriter authors them RED before the Implementer fixes
+anything, and **no already-authored row is edited to make them pass** (§4.2 item 4).
 
 ### 3.2 Documented fail-states / refusals (each is a typed `code`, and each is a row)
 
@@ -494,10 +678,24 @@ correction (see the ruling after the table) adds NO row here and renumbers nothi
 the `§3.1` row `M-18`** — a valid-state row, not a refusal row, which is why it is not in this
 table. The `F-1`..`F-10` id set is unchanged.
 
+**⟶ ROW `F-11` IS ADDED AFTER `F-10` — NOTHING IS RENUMBERED, AND THE `F-1`..`F-10` ID SET NOW READS
+`F-1`..`F-11` (ADDED 2026-09-27, the adversarial + PBT-audit pass; finding `ADV-LH-4`, MED —
+`CONTRACT-AMENDED`).** `F-11` is the **refusal half** of the `ADV-LH-4` ruling (the valid-state half
+is `§3.1 M-19`): it documents the shape the as-shipped code got **wrong** (two refusals and an empty
+`order` where the contract places the valid entry), and it is the drive whose **RED** row the next
+TestWriter authors before the Implementer touches the host. **`F-2` and `F-11` are two different
+shapes and both remain rows**: `F-2` is *two valid occurrences* of one key (first-wins, one refusal,
+first occurrence placed) and `F-11` is *a refused first occurrence followed by a valid one* (the
+valid occurrence placed, the refusal counted per refused occurrence). **`F-11` is NOT in the
+`52`-row red set that was authored and RUN** — like `M-19`..`M-21`, it is **contract text owed to
+the regression-row pass** (`§3b`), and the counts that cite `F-1`..`F-10` (`§4.2` item 1,
+`§5.5.1 P-LH-SM-2`'s compensating-sample cell, `§5.5.1`'s register integration) are annotated where
+they appear rather than renumbered here.
+
 | id | Fail-state | Trigger (exact) | Required behaviour | Layer |
 | --- | --- | --- | --- | --- |
 | **F-1** | **Unknown key** | `remove('nope')` / `close('nope')` / `activate('nope')` | **no throw**; `ok === false`; `refused` has exactly one member with `code === 'unknown-key'` and the **exact key string** as supplied; **no callback fires**; state unchanged | `[T]` |
-| **F-2** | **Duplicate key in one `setEntries` call** | `setEntries([{key:'k', node:a}, {key:'k', node:b}])` | **no throw**; **one** refusal with `code === 'duplicate-key'`; **the FIRST occurrence is placed and the second is refused** (first-wins, stated so it is not ambiguous); `order` contains `'k'` **once** | `[T]` |
+| **F-2** | **Duplicate key in one `setEntries` call** | `setEntries([{key:'k', node:a}, {key:'k', node:b}])` | **no throw**; **one** refusal with `code === 'duplicate-key'`; **the FIRST occurrence is placed and the second is refused** (first-wins, stated so it is not ambiguous) — **⟶ SCOPED 2026-09-27 (the adversarial + PBT-audit pass, finding `ADV-LH-4`; the as-written clause is kept visible and NOT weakened): first-wins applies when the FIRST occurrence is itself ACCEPTED, i.e. the duplicate test is made against keys ACCEPTED in this call (`§2.1`'s ACCEPTANCE rule). A first occurrence that is REFUSED reserves nothing and its key may be taken by a later VALID occurrence — see `F-11` and row `M-19`**; `order` contains `'k'` **once** | `[T]` |
 | **F-3** | **An entry with no node and no factory** | `setEntries([{key:'k'}])` with **no** `itemFactory` (the node **absent** — the type is `node?: N \| null`, so *absent* and *`null`* are the SAME case here; see the §2.1 node rule `N-3`) | **no throw**; one refusal with `code === 'no-node'`; the key is **not owned**; `order` does not contain it; `ok === false` | `[T]` |
 | **F-4** | **The factory returns `null`/`undefined`** | `itemFactory: () => null` | **no throw**; one refusal with `code === 'factory-returned-null'`; the key is not owned | `[T]` |
 | **F-5** | **A malformed entry** | A non-object entry (a bare string, a number); a **non-string `key`** (`42`, `null`, `{}`, `undefined`) — the entry **shape** is what this class refuses, and a string key (including `''`) is never malformed (see the ruling below, and `F-3` for `node: null` with no factory) | **no throw**; one refusal with `code === 'malformed-entry'`; other entries in the same call are placed normally (the §2.1 totality note) | `[T]` |
@@ -555,11 +753,36 @@ table. The `F-1`..`F-10` id set is unchanged.
 > `malformed-entry` class) rather than as a list of codes for every shape in the cell. **This is the
 > single sharpest consequence of the ruling: a `node: null` + no-factory entry is `no-node`, and
 > `''` is a key like any other.**
-| **F-6** | **A previously placed node was detached by the caller** | The caller removes a host-placed node from the mount itself, then `close(key)`/`setEntries([])` | **no throw**; the removal is a no-op; the key still leaves `keys()`; the node appears in `removed` **or not** — **the row pins that the host does NOT throw and that the key is not left owned**. *(This is the one cell deliberately stated as a choice for the implementer, because the shim's `remove()` is idempotent at `src/shared/dom-shim.ts:89-96`, read: the honest contract is "no throw, no dangling ownership", not a specific `removed` membership.)* | `[T]` |
+| **F-6** | **A previously placed node was detached by the caller** | The caller removes a host-placed node from the mount itself, then `close(key)`/`setEntries([])` | **no throw**; the removal is a no-op; the key still leaves `keys()`; the node appears in `removed` **or not** — **the row pins that the host does NOT throw and that the key is not left owned**. **⟶ PINNED 2026-09-27 (the adversarial + PBT-audit pass; judgment call 10): the code's observed behaviour is the pinned reading — a DETACHED node still appears in `removed` (the host reports what it removed for the key, whether or not the tree still held it). The "or not" above is therefore no longer an open choice for the implementer; it is the as-shipped reading of an already-shipped unit, and `render()` does not undo the detach (`M-21`).** *(This is the one cell deliberately stated as a choice for the implementer, because the shim's `remove()` is idempotent at `src/shared/dom-shim.ts:89-96`, read: the honest contract is "no throw, no dangling ownership", not a specific `removed` membership.)* | `[T]` |
 | **F-7** | **A `null`/absent mount is NOT a refusal** | M-15's configuration | `refused` is `[]` and `ok === true` — **the malformed-mount class of `U-MOUNTGUARD`'s `mount-not-appendable` does NOT apply here**: this host's absent mount is a **supported no-op configuration**, while `U-MOUNTGUARD`'s probe is **asking a question about a tree**. **The asymmetry is deliberate and recorded so a later pass does not "harmonise" the two** | `[T]` |
 | **F-8** | **`setOrder` with unknown/duplicate keys** | `setOrder(['a','a','nope'])` | **no throw**; unknown/duplicate keys are **ignored**, not refused; `order` is the current key set in the requested relative order; `ok === true`; `refused` `[]`. **Stated so the "ignored" rule is not confused with a refusal** | `[T]` |
 | **F-9** | **`setEntries(null)` after a populated set** | populate 3, then `setEntries(null)` | **no throw**; the 3 host-placed nodes are removed; `order` `[]`; the 3 nodes appear in `removed`; foreign siblings untouched (**the `M-8` row re-run in this shape**) | `[T]` |
 | **F-10** | **`activate` on a key whose node was detached** | detached node, then `activate(key)` | The callback **still fires once** (activation is a caller-semantic event, not a DOM event) — a row pins it, so a later pass cannot make activation silently depend on the tree | `[T]` |
+| **F-11** | **A key whose FIRST occurrence is REFUSED, followed by a VALID occurrence of the same key** (ADDED 2026-09-27, the adversarial + PBT-audit pass; finding `ADV-LH-4` — the hole between `F-2` and `N-3`, now closed) | `setEntries([{key:'k'}, {key:'k', node:n}])` with **no** `itemFactory` | **no throw**; **ONE** refusal, `code === 'no-node'` (the refused first occurrence; `refused` has exactly one member and **NO** `duplicate-key` member); **the second, valid occurrence IS placed** — `placed === [n]` by reference (`toBe`) and `order === ['k']` (the key owned **once**, `I-7`); `ok === false` (`I-1`); a subsequent `close('k')` fires `onClose` once and removes `n` from the mount. **This is the EXPECTED BEHAVIOUR the `ADV-LH-4` fix must satisfy: a key becomes "seen" only when an occurrence is ACCEPTED** (`§2.1` ACCEPTANCE rule, `N-5`, `M-19`) | `[T]` |
+
+**⟶ TWO COMPOSITION/RE-ENTRANCY RULINGS FOR THIS TABLE'S SHAPES (ADDED 2026-09-27, the adversarial +
+PBT-audit pass; `ADV-LH-9` and `ADV-LH-10`, both INFO — `RESOLVED-BY-PINNING`).** Neither adds a row;
+both are rulings a later pass would otherwise have to guess at.
+
+1. **`ADV-LH-9` — the `dispose()` composition hazard, ruled at seed `§3a A-10`.** `dispose()` leaves
+   its nodes **as ORPHANS IN THE MOUNT** (no detach — that is `M-14`/`§2.3` item 4 and it is NOT
+   changed here). The consequence, now stated: **a SECOND host on the same mount appends AFTER those
+   orphans**, and the orphans are not its own nodes, so it neither owns nor removes them — the new
+   host remains correct (`I-3`/`M-8`: it treats them as foreign siblings), but the **mount's child
+   sequence carries the disposed host's dead entries**. **This is a CONSUMER COMPOSITION HAZARD, not
+   a host defect**: the contract for one host on one mount is unchanged, and a consumer that wants a
+   clean mount must clear it itself (the host authors no cleanup, prohibition 2/4).
+2. **`ADV-LH-10` — the re-entrancy ruling, ruled at seed `§3a A-17`.** **Ownership is dropped BEFORE
+   `onClose` fires** (`M-10`'s order), so a **re-entrant callback cannot resurrect state or
+   double-fire** the callback: a `close(key)` issued from inside `onActivate`/`onClose` sees the key
+   already dropped or still owned exactly once, and the callback count for the outer call stays
+   **exactly one** (`M-9`/`M-10`). **One benign consequence is now stated rather than left
+   implicit:** a re-entrant `setEntries` **inside** a callback **does change what the outer call's
+   `order`/`placed` report**, because those arrays are computed from the host's bookkeeping when the
+   outer method returns — so the outer result describes the **state after** the re-entrant call
+   settled, not a snapshot taken at the outer call's start. **That is the pinned reading; it is
+   benign and it is not a defect** — the result stays internally consistent (`I-1`, `I-7`) and no
+   ownership is duplicated.
 
 ### 3.3 Invariants that hold in every state
 
@@ -571,9 +794,29 @@ table. The `F-1`..`F-10` id set is unchanged.
 | **I-4** | The host writes **only** `appendChild`-class placement of caller nodes and `remove()` of **its own** placed nodes — **no attribute write, no `textContent` write, no `className`, no `style`** | Prohibition 2, made falsifiable (static row + a state row) |
 | **I-5** | After `dispose()`, the host retains **no** owned key, **no** placed-node reference, and no other state | Prohibition 4 |
 | **I-6** | For every owned key, `placed[i]` is **reference-identical** to the object the caller supplied (or the factory returned) for the whole life of the entry | §2.3 item 5 — the anti-cloning rule |
-| **I-7** | `order` is **exactly** the current key set, each key **once**, in some order | §2.4 item 2 |
+| **I-7** | `order` is **exactly** the current key set, each key **once**, in some order — **⟶ SHARPENED 2026-09-27 (the adversarial + PBT-audit pass; judgment call 9): `order` is an OWNERSHIP statement and not a placement statement, so it holds even when nothing could be placed (`M-15`/`M-16`: `order` is the current key set while `placed` is `[]` — `order.length === placed.length` is NEVER asserted by this contract)** | §2.4 item 2 |
 | **I-8** | No method throws **for any input** — the totality claim, asserted by a fuzz-shaped deterministic table (`null`, `undefined`, numbers, strings, arrays-in-place-of-objects, detached nodes, a mount that is a `ShimElement` already holding host-placed children) | The refusal contract's boundary. **⟶ NOTE 2026-09-27 (the `§5.5` re-derivation; the clause above is kept visible): this row's quantification now has a REGISTER HOME — `§5.5.1`'s `P-LH-TP-1` / `S-LH-SEED-1`, which drives all eight public methods against a pinned-seed enumeration (seed `20260927`, 64 attempts, ≤100-row / ≤400-register caps). "Fuzz-shaped" is NOT a licence to add a generator: the enumeration is hand-rolled in the test file (no `fast-check`, no dependency). The row stays a per-state `[T]` row; the register row is what makes its `for any input` claim count.** **⟶ SCOPED 2026-09-27 (the TestWriter-handoff pass; finding 7): the table this row is driven by MUST NOT include the `§3a A-12` shapes (`orderOf`/`itemFactory`/`onActivate`/`onClose` supplied as NON-functions; `order` as a NON-array; `options` as `null`/a string), because `§3a` says no seed "is a finding" and `§7` item 8 leaves the unruled seeds unruled — pinning `A-12` here would answer what the contract has not. `A-12` is named as OWED, with its owner, at `§3a A-12`, at `§7` item 8 and at `§5.5.1 P-LH-TP-1`'s pool note. `I-8`'s "for any input" therefore remains an UNBOUNDED claim that NO row of this unit proves — honestly, not silently.** |
 | **I-9** | Every `ListHostResult` array is a **fresh array** and the result object is not reused across calls (a caller mutating a returned array cannot change host state) | A small but assertable anti-aliasing rule |
+
+**⟶ `I-8`'s QUANTIFICATION IS NOW SCOPED BY TWO RULED CLAUSES (ADDED 2026-09-27, the adversarial +
+PBT-audit pass; findings `ADV-LH-1`, `ADV-LH-3` and `ADV-LH-4` — `CONTRACT-AMENDED`).** The cell above
+is kept as written and is **NOT weakened**; what changed is that "for any input" now has three
+ruled boundaries instead of one:
+
+1. **`ADV-LH-1` — the THROWING `orderOf`.** A host built with an `orderOf` that throws is **inside**
+   `I-8`'s quantification, on **both** the `setEntries` and `setOrder` paths: **no method throws**
+   and the supplied order is used (`§2.1`'s totality clause). The as-shipped `setEntries` path
+   violated this and is `FIXED-this-pass` — so the TestWriter's no-throw table may (and must) drive
+   the throwing-comparator shape, and the row's RED is the escape.
+2. **`ADV-LH-3` — the THROWING injected functions.** The same holds for **throwing**
+   `itemFactory`/`onActivate`/`onClose` (each with the safe default `§2.1` names), which `A-12`'s
+   as-written wording did **not** cover. **This is ADDED to `I-8`'s scope** — while `A-12`'s
+   **NON-function/non-array** shapes remain **outside** it (`RESOLVED-BY-PINNING`, per the SCOPED
+   note in the cell above).
+3. **`ADV-LH-4` — the REFUSED-first-occurrence shape.** `I-8`'s "for any input" includes
+   `setEntries([{key:'k'}, {key:'k', node:n}])` with no factory; that call must not throw **and**
+   must satisfy `F-11`/`M-19` (one refusal, `n` placed). The cell's own table therefore gains this
+   shape as a **valid** drive rather than an excluded one.
 
 ## 4. The red (RCA-1) — what must be written, RUN and REPORTED before any implementation
 
@@ -593,6 +836,12 @@ not exist, so the red is purely additive.
    **nothing is renumbered**. **The `§4.4` stop conditions' mandated static rows (`S-3`/`S-4`) are
    written with them** — their **content lives in `§2.2`'s prohibitions and `§2.4` items 4/5**, not
    in a `§4.4` row table (`§4.4` owns the stop conditions; see the citation map at `§2.2`/`§2.4`).
+   **⟶ EXTENDED 2026-09-27 (the adversarial + PBT-audit pass): the enumeration is now
+   `I-1`..`I-9`, `M-1`..`M-21`, `F-1`..`F-11`** — `M-19`/`M-20`/`M-21` append after `M-18` and `F-11`
+   appends after `F-10`, **nothing is renumbered**, and those four rows are the **contract rows the
+   `ADV-LH-4`/judgment-call fixes are written against** (`§3b`). **They were NOT in the `52`-row red
+   set that was RUN** (`§0`'s TestWriter-handoff note): the regression-row pass authors them **RED
+   first**, and no already-authored row is edited to reach green (item 4 below).
 2. **RUN and REPORT** the failing set verbatim — the file/module resolution failure plus any row
    that can already be evaluated (e.g. a static source row over the module file fails as
    "file does not exist").
@@ -801,20 +1050,72 @@ is this unit** — no id collides with `M-*`/`I-*`/`F-*` of §3, and **no `F-` r
    pinned input set**, and each row's cell states that input set exactly. **No row is marked
    `NOT EXECUTED`** — and no row *could* honestly be, now that `engine-pin.md` §5.5's precedent is
    on the record for every shape this unit needs.
+6. **THE GENERATOR'S ACTUAL STEP FORM, AND TWO REGISTER-CELL RECONCILIATIONS — ⟶ ADDED 2026-09-27
+   (the adversarial + PBT-audit pass; findings `ADV-LH-6`, `ADV-LH-7`, `ADV-LH-8`).** The
+   pinned-seed generator `S-LH-SEED-1` is **deterministic and pinned to `20260927`**, and its
+   **step form is now stated exactly** as the executed code performs it: `next(k) = floor(state · k
+   / 2³²)` with `k = 1` on **every** call (so `next(1) === 0` **by construction**), the pool index
+   is taken from the **raw state** (`state mod pool.length`), and **each attempt consumes TWO LCG
+   steps** (one draw per attempt component). **The pool is 22 shapes, and its stated boundary is
+   named**: a **`Symbol`-keyed shape is NOT in the pool** (deliberately — the pool is a subset of
+   the key shapes this contract pins, and `Symbol` keys are not `ListKey`), so the pool's silence
+   about `Symbol` is a **stated boundary rather than an unrecorded omission**. `P-LH-IM-1` and
+   `P-LH-TP-1` carry their markings below; **`ADV-LH-8` is `NOT-A-FINDING`** — the two extra
+   EXECUTED shapes are an asserted extension beyond the `§3` rows, and the drift is the doc matter
+   `ADV-LH-7` covers.
 
 | ID | Type | Property | Executed? | Compensating sample rows (§3) | Strategy-id | Deterministic enumeration strategy |
 | --- | --- | --- | --- | --- | --- | --- |
-| **`P-LH-IM-1`** *(the permutation quantification `§5.5.0` left unproven)* | `P-IM` invariant | **For EVERY permutation of the current key set**, a `setOrder(p)` call leaves `order === p` exactly, `refused` empty, and **every element's identity preserved** (each placed node is the same object per key, `toBe`) — and the permutation never removes anything (`removed` `[]`). | **YES** | `M-7`, `I-6`, `I-7` | `S-LH-PERM-1` | **Exhaustive over `S₃` and `S₄`**, hand-authored permutation tables (literal key arrays — **no generator, no library**): `n=3` keys `['a','b','c']` ⇒ **all 6** permutations; `n=4` keys `['a','b','c','d']` ⇒ **all 24** permutations; **30 attempts, one `setOrder` each**, after one `setEntries`/`render()` — **plus the third fixed table below, so THIS ROW'S TOTAL is `33` attempts** (the `30` exhaustive permutations `+` the `3` partial drives; the register arithmetic counts `33`, corrected 2026-09-27); per permutation assert `order` equals the permutation element-wise, `refused.length === 0`, each `placed[i]` `toBe` the object supplied for that key, `removed.length === 0`, and the host-owned subsequence of `mount.children` matches. A third fixed table adds the **partial `setOrder`** shape (`['c','a']`, `['c','a','nope']`, `['a','a','c']`) for `F-8`'s ignored-key/duplicate rule. |
+| **`P-LH-IM-1`** *(the permutation quantification `§5.5.0` left unproven)* | `P-IM` invariant | **⟶ `ADV-LH-6` — THE SAME HONEST BOUNDED MARKING `P-LH-TP-1` CARRIES IS ADDED HERE 2026-09-27 (the adversarial + PBT-audit pass; `ACCEPTED-AS-PINNED`, doc reconciliation — the property STATEMENT is NOT changed): this cell says "EVERY permutation" while its strategy enumerates `n = 3` (`6`) and `n = 4` (`24`) ONLY — `33` attempts in all. The property TEXT is therefore LARGER THAN ITS ENUMERATION, so the executed? cell reads `YES (bounded)` on the same discipline `P-LH-TP-1` uses, and no clause of the statement is weakened (the exhaustive-over-what-is-enumerated claim stands).** | **For EVERY permutation of the current key set**, a `setOrder(p)` call leaves `order === p` exactly, `refused` empty, and **every element's identity preserved** (each placed node is the same object per key, `toBe`) — and the permutation never removes anything (`removed` `[]`). | **YES (bounded — the `ADV-LH-6` marking: the property text is larger than its enumeration, so this row reads the same bounded form `P-LH-TP-1` carries; nothing else is claimed)** | `M-7`, `I-6`, `I-7` | `S-LH-PERM-1` | **Exhaustive over `S₃` and `S₄`**, hand-authored permutation tables (literal key arrays — **no generator, no library**): `n=3` keys `['a','b','c']` ⇒ **all 6** permutations; `n=4` keys `['a','b','c','d']` ⇒ **all 24** permutations; **30 attempts, one `setOrder` each**, after one `setEntries`/`render()` — **plus the third fixed table below, so THIS ROW'S TOTAL is `33` attempts** (the `30` exhaustive permutations `+` the `3` partial drives; the register arithmetic counts `33`, corrected 2026-09-27) **⟶ `ADV-LH-7` (the same pass): the `33` figure, the two table shapes and the attempt discipline are UNCHANGED by the cell's own reconciliations — the `ADV-LH-6` bounded marking is a DOC act and it must not alter this row's statement or its attempt discipline**; per permutation assert `order` equals the permutation element-wise, `refused.length === 0`, each `placed[i]` `toBe` the object supplied for that key, `removed.length === 0`, and the host-owned subsequence of `mount.children` matches. A third fixed table adds the **partial `setOrder`** shape (`['c','a']`, `['c','a','nope']`, `['a','a','c']`) for `F-8`'s ignored-key/duplicate rule. |
 | **`P-LH-IM-2`** | `P-IM` invariant | **For EVERY owned key and every enumeration above**, `placed[i]` is **reference-identical** to the exact object the caller supplied (or the factory returned) — the host never re-parents, clones or re-creates a caller node. | **YES** | `M-2`, `M-3`, `M-5`, `M-6`, `M-13`, `I-6`, `§2.3` item 5 | `S-LH-IDENT-1` | The **same permutation input family as `P-LH-IM-1`'s first two tables** (reuse is deliberate: one input family, two properties — the `30` shared permutation attempts + `4` fixed identity shapes), for **`34` attempts in this row** — the `30` permutations are DRIVEN AGAIN here (they are this row's own attempts, so the register total counts them twice: `§5.5.1`'s arithmetic states that; the `3` partial `F-8` drives of `P-LH-IM-1`'s third table are **not** re-driven here). The identity half is the `4` shapes — caller nodes; factory nodes; a changed node for a repeated key (`M-13`); a factory node supplied for one key while another key is node-less — each asserting `placed[i] === supplied[i]` (`toBe`) **and** that `keys()`/`order` still name every owned key exactly once. |
 | **`P-LH-IM-3`** | `P-IM` invariant | A **second** call with unchanged inputs performs **no child mutation** — `removed` is empty, no node is re-appended, the mount's `children` array is **reference-identical in element order** — for every entry-set shape of the fixed table. | **YES** | `M-1`, `M-12`, `M-17`, `I-2`, `I-9` | `S-LH-REPEAT-1` | Fixed **4-shape** table (3 entries with caller nodes · 3 entries through a factory · 1 entry · an empty set) × **2 sequential calls** each (fixed order) = **8 attempts**: `render()` twice per shape; assert the second `removed.length === 0`, `order`/`placed` equal the first call's **values**, each `children[i]` is the **same object** (`toBe`), and every returned array is a **fresh array** (`I-9`). |
-| **`P-LH-IM-4`** *(the `V-7` hard row, quantified over operation sequences)* | `P-IM` invariant | **For EVERY sequence below, every foreign sibling of the mount is the SAME element (`toBe`) before and after, at an unchanged relative index, and was never removed or re-appended by the host.** | **YES** | `M-8`, `M-16`, `F-9`, `I-3`, `§2.3` item 3 | `S-LH-FOREIGN-1` | **5 fixed sequences** over a mount pre-seeded with **3 foreign siblings** (`a`,`b`,`c` appended by the caller before the host exists), each sequence driven in fixed order: **(1)** `setEntries` → `render`; **(2)** sequence 1 then `setOrder` of the reverse key set; **(3)** two `setEntries`→`render` cycles; **(4)** `close(key)`; **(5)** `setEntries(null)`. Per step assert each foreign sibling `toBe` its original object, its index within `mount.children` unchanged relative to the other foreign siblings, `removed` contains no foreign node, and the host's own nodes are placed **inside the same mount**. |
+| **`P-LH-IM-4`** *(the `V-7` hard row, quantified over operation sequences)* | `P-IM` invariant | **⟶ `ADV-LH-5`, HIGH — THE STATEMENT BELOW STAYS EXACTLY AS IT IS; THE STRATEGY MUST BE STRENGTHENED (2026-09-27, the adversarial + PBT-audit pass). RULING: this row's statement IS the contract (`§2.3` item 3 / `M-8` — a foreign sibling is never removed and never RE-APPENDED) and it is NOT weakened, shortened or re-scoped by this finding. What is wrong is the ENUMERATION'S POWER: as written, the per-step assertions check only the foreign siblings' RELATIVE order among themselves, `removed === false`, `parent === mount`, and non-membership in `removed` — ALL FOUR OF WHICH HOLD for a host that RE-APPENDS every foreign sibling on every `sync()`. The row therefore CANNOT FAIL for the mutation it exists to forbid, while `§6` names this row as the unit's designated falsification. FIX: the STRATEGY is strengthened so the row can fail for that mutation — the TestWriter chooses the exact form (assert the mount's FULL child reference sequence per step, or an append/re-place COUNTER), and the change must NOT alter this row's statement or its attempt discipline (`5` sequences, `5` attempts, ≤100 per-row cap). Owner: the TestWriter. Disposition `FIXED-this-pass`; the `ADV-LH-5` register-cell note in the block after this table carries the same ruling.** | **For EVERY sequence below, every foreign sibling of the mount is the SAME element (`toBe`) before and after, at an unchanged relative index, and was never removed or re-appended by the host.** | **YES** | `M-8`, `M-16`, `F-9`, `I-3`, `§2.3` item 3 | `S-LH-FOREIGN-1` | **5 fixed sequences** over a mount pre-seeded with **3 foreign siblings** (`a`,`b`,`c` appended by the caller before the host exists), each sequence driven in fixed order: **(1)** `setEntries` → `render`; **(2)** sequence 1 then `setOrder` of the reverse key set; **(3)** two `setEntries`→`render` cycles; **(4)** `close(key)`; **(5)** `setEntries(null)`. Per step assert each foreign sibling `toBe` its original object, its index within `mount.children` unchanged relative to the other foreign siblings, `removed` contains no foreign node, and the host's own nodes are placed **inside the same mount**. **⟶ `ADV-LH-5` STRENGTHENING OWED HERE — the statement above is unchanged; these per-step assertions are NOT sufficient as written (all of them hold for a host that re-appends every foreign sibling on every `sync()`), so the `5` sequences must additionally assert the mount's full child reference sequence per step, or an append/re-place counter. The `5`-attempt discipline and the ≤100 per-row cap are unchanged.** |
 | **`P-LH-SM-1`** | `P-SM` state-machine | For an entry set that mixes **valid entries with exactly one refused entry**, the valid entries are **placed and owned** and the refused one is **not placed, not owned and absent from `order`** — `ok === false`, **one** refusal carrying the class's own code, and **`order` is exactly the valid keys in their supplied order** (the `§2.1` totality note: refusing one entry must not abort the call). **⟶ CORRECTED 2026-09-27 (the TestWriter-handoff pass; finding 3 — the as-written words are kept visible above and the reason is named): as written, "the refused one is … absent from `order`" and the per-attempt clause "the refused key absent from `keys()`" are TRUE OF THE OTHER THREE CLASSES and FALSE OF `duplicate-key`, because `§3.2 F-2`'s FIRST-WINS rule keeps a duplicated key owned ONCE (the first occurrence placed, the refused *duplicate* occurrence's node never placed). A `P-SM` row's statement must be true OF THE CONTRACT, not of one drive — so the row is restated by class: for `no-node`, `factory-returned-null` and `malformed-entry` the refused key is absent from `order`/`keys()`; for `duplicate-key` the key stays owned EXACTLY ONCE and the refused occurrence contributes NO node and NO second `order` entry (`§3.2 F-2`, `§2.4` item 2, `I-7`).** | **YES** | `F-2`, `F-3`, `F-4`, `F-5`, `I-1`, `I-7`, `§2.1` totality note | `S-LH-MIXED-1` | Fixed table: for **each of the 4 refusal classes** (`no-node`, `factory-returned-null`, `malformed-entry`, `duplicate-key`) a **3-entry set** with exactly one entry of that class and two valid ones, **plus** a **4-entry set** with the class entry rotated through **all 4 positions** = **8 attempts**, fixed order. Per attempt assert `ok === false`, `refused.length === 1` with the expected `code` **and `refused[0].key` STRICTLY EQUAL (`===`-identity by value) to the value supplied for that position, VERBATIM** — a string when the drive supplied a string, `42`/`null`/`{}` when it did not, with no `String(...)` coercion and no normalization (`§2.1 ListHostRefusal.key`'s amended type), `order` equals the expected valid-key permutation, every valid node placed by reference, and **the per-class ownership assertion of the corrected statement above** (`duplicate-key`: `keys()` names the key exactly once and the refused occurrence's node is never placed; the other three: the refused key absent from `keys()`). |
 | **`P-LH-SM-2`** | `P-SM` state-machine | **For EVERY step of the fixed sequences, the host's state stays coherent**: `ok === (refused.length === 0)` (I-1), **every refusal `code` is one of the FIVE declared members** (`'unknown-key'`, `'duplicate-key'`, `'no-node'`, `'factory-returned-null'`, `'malformed-entry'` — no sixth), and **after `dispose()` no ownership is resurrected** while every caller node stays reachable. | **YES** | `F-1`..`F-10`, `M-9`, `M-10`, `M-11`, `M-14`, `M-15`, `I-1`, `I-4`, `I-5` | `S-LH-SEQ-1` | **8 fixed sequences, authored as literal step/expected-outcome data** and driven in fixed order: `activate` known → unknown · `close` known → unknown · `remove` known → unknown · `setEntries([])` after a populated set · `setEntries(null)` after a populated set · `dispose()` then `keys()`/`render()`/`setEntries` · `activate` on a **detached** node's key (`F-10`) · a **caller-detached** placed node then `close` (`F-6`). Per step assert `ok === (refused.length === 0)`, the `code` of every refusal ∈ the five-member set, `keys()` consistent with `order`, and — on the `dispose()` sequence — `keys()` `[]` with each caller node still reference-reachable and its `removed` flag unchanged by the host. |
-| **`P-LH-TP-1`** *(the no-throw quantification `§5.5.0` left unproven)* | `P-TP` totality | **For EVERY input shape drawn from the finite pool, no method of the host throws, and every method returns its declared shape** — a `ListHostResult` for the **six** result-returning methods (`setEntries`, `remove`, `setOrder`, `render`, `activate`, `close`), **`readonly ListKey[]` for `keys()`** and **`void` for `dispose()`** (`§2.1`'s surface census: **8** declared methods, **6** returning a `ListHostResult`) with `ok === (refused.length === 0)` and `order` always a permutation of a subset of the keys the host has been given. **⟶ CORRECTED 2026-09-27 (the TestWriter-handoff pass; finding 4 — the as-written words are kept visible and the reason is named): this cell read "a `ListHostResult` for the SEVEN result-returning methods", which mis-counts the surface `§2.1` declares: EIGHT methods, of which SIX return a `ListHostResult` — `keys()` returns `readonly ListKey[]` and `dispose()` returns `void`. The count is corrected to the declared surface and the covered methods are NAMED, so the totality row's scope is checkable.** | **YES (bounded — pinned-seed enumeration, ≤100 attempts; a table can only enumerate a FINITE pool)** | `I-8` (the no-throw row) + `F-1`..`F-10` + `M-15`, `M-16` (the absent/**malformed**-mount shapes) | `S-LH-SEED-1` | **Pinned-seed enumeration, seed `20260927`** (LCG above): **64 attempts**, each drawing `(method, input)` pairs from an ordered **pool of 22 input shapes** — `null`, `undefined`, `42`, `NaN`, `''`, `'x'`, `[]`, `[{}]`, `[{key:42}]`, a non-string key, an entry with no node and no factory, `itemFactory: () => null`, a **detached** node, a `ShimElement` mount already holding host-placed children, `mount: null`, `mount: {}`, `mount: 42`, `mount: 'div'`, a frozen array, a caller array also held by the test, a duplicate-key pair, and a key of `''` — driving all **8** public methods of `§2.1` with fixed per-method argument forms, plus an explicit fixed **after-`dispose()`** sweep (all 8 methods once). **Attempt arithmetic for this row: `64` drawn attempts `+` `8` sweep methods `=` `72`** (the as-written `64` did not count the sweep; the sweep is executed and is now counted). Per attempt: `expect(() => …).not.toThrow()`, then the shape assertion, then `ok === (refused.length === 0)`. Any thrown error, any non-conforming result, or any `code` outside the five-member vocabulary **breaks its row** and is reported as `broken` (and counts toward the 5-consecutive-failure stop). **This row does NOT prove the unbounded universal** — it enumerates a finite, pinned pool, and the DONE row must report the **attempt count** with the `YES (bounded …)` marking, never as a proof of "all inputs". **⟶ POOL BOUNDARY, STATE IT EXPLICITLY (ADDED 2026-09-27; finding 7): the 22-shape pool does NOT include the `§3a A-12` shapes — non-function `orderOf`/`itemFactory`/`onActivate`/`onClose`, a non-array `order`, `options` as `null`/a string — because `§7` item 8 leaves the unruled seeds UNRULED and `§3a` says no seed is a finding. `A-12` is OWED to the adversarial pass (named at `§3a A-12`, `§7` item 8, `§3.3 I-8`), so this row's finite pool is honest about the shapes it EXCLUDES rather than silently implying them. The pool shape `''` is the empty-string key: per the corrected `§3.2 F-5` it is a valid key, so any refusal code it produces is `no-node` (no factory) or `unknown-key` (an unknown-key call), never `malformed-entry`.** |
+| **`P-LH-TP-1`** *(the no-throw quantification `§5.5.0` left unproven)* | `P-TP` totality | **⟶ `ADV-LH-7` (2026-09-27, the adversarial + PBT-audit pass — `PARKED-with-revisit-condition`, doc drift): this cell's pool LIST and its step form are reconciled in the block after this table; the executed pool holds `22` shapes while the list below names `20` (`true` and "a caller node as an entry" are in the executed pool but not in this list), and the index formula below describes a SINGLE LCG step where the executed generator consumes TWO per attempt with `next(1) === 0` always. The STATEMENT of this row is NOT changed.** | **For EVERY input shape drawn from the finite pool, no method of the host throws, and every method returns its declared shape** — a `ListHostResult` for the **six** result-returning methods (`setEntries`, `remove`, `setOrder`, `render`, `activate`, `close`), **`readonly ListKey[]` for `keys()`** and **`void` for `dispose()`** (`§2.1`'s surface census: **8** declared methods, **6** returning a `ListHostResult`) with `ok === (refused.length === 0)` and `order` always a permutation of a subset of the keys the host has been given. **⟶ CORRECTED 2026-09-27 (the TestWriter-handoff pass; finding 4 — the as-written words are kept visible and the reason is named): this cell read "a `ListHostResult` for the SEVEN result-returning methods", which mis-counts the surface `§2.1` declares: EIGHT methods, of which SIX return a `ListHostResult` — `keys()` returns `readonly ListKey[]` and `dispose()` returns `void`. The count is corrected to the declared surface and the covered methods are NAMED, so the totality row's scope is checkable.** | **YES (bounded — pinned-seed enumeration, ≤100 attempts; a table can only enumerate a FINITE pool)** | `I-8` (the no-throw row) + `F-1`..`F-10` + `M-15`, `M-16` (the absent/**malformed**-mount shapes) | `S-LH-SEED-1` | **Pinned-seed enumeration, seed `20260927`** (LCG above): **64 attempts**, each drawing `(method, input)` pairs from an ordered **pool of 22 input shapes** — `null`, `undefined`, `42`, `NaN`, `''`, `'x'`, `[]`, `[{}]`, `[{key:42}]`, a non-string key, an entry with no node and no factory, `itemFactory: () => null`, a **detached** node, a `ShimElement` mount already holding host-placed children, `mount: null`, `mount: {}`, `mount: 42`, `mount: 'div'`, a frozen array, a caller array also held by the test, a duplicate-key pair, and a key of `''` — driving all **8** public methods of `§2.1` with fixed per-method argument forms, plus an explicit fixed **after-`dispose()`** sweep (all 8 methods once). **Attempt arithmetic for this row: `64` drawn attempts `+` `8` sweep methods `=` `72`** (the as-written `64` did not count the sweep; the sweep is executed and is now counted). Per attempt: `expect(() => …).not.toThrow()`, then the shape assertion, then `ok === (refused.length === 0)`. Any thrown error, any non-conforming result, or any `code` outside the five-member vocabulary **breaks its row** and is reported as `broken` (and counts toward the 5-consecutive-failure stop). **This row does NOT prove the unbounded universal** — it enumerates a finite, pinned pool, and the DONE row must report the **attempt count** with the `YES (bounded …)` marking, never as a proof of "all inputs". **⟶ POOL BOUNDARY, STATE IT EXPLICITLY (ADDED 2026-09-27; finding 7): the 22-shape pool does NOT include the `§3a A-12` shapes — non-function `orderOf`/`itemFactory`/`onActivate`/`onClose`, a non-array `order`, `options` as `null`/a string — because `§7` item 8 leaves the unruled seeds UNRULED and `§3a` says no seed is a finding. `A-12` is OWED to the adversarial pass (named at `§3a A-12`, `§7` item 8, `§3.3 I-8`), so this row's finite pool is honest about the shapes it EXCLUDES rather than silently implying them. The pool shape `''` is the empty-string key: per the corrected `§3.2 F-5` it is a valid key, so any refusal code it produces is `no-node` (no factory) or `unknown-key` (an unknown-key call), never `malformed-entry`.** |
+
+**⟶ REGISTER-CELL RECONCILIATIONS — `ADV-LH-5` (register), `ADV-LH-6` AND `ADV-LH-7` (ADDED
+2026-09-27, the adversarial + PBT-audit pass).** Three register cells needed a ruling; **none of the
+three changes a row's property STATEMENT**, and **no attempt count of the `168` total moves** —
+every change below is a doc/strategy reconciliation, and the `168 = 33 + 34 + 8 + 5 + 8 + 8 + 72`
+arithmetic stands.
+
+| Finding | What the cell said | The ruling, and what the cell now carries |
+| --- | --- | --- |
+| **`ADV-LH-5`** (HIGH — the unit's designated falsification is not executed) | `P-LH-IM-4`'s statement claims foreign siblings were *"never removed or **re-appended**"*, while its strategy only checks the foreign siblings' relative order among themselves, `removed === false`, `parent === mount` and non-membership in `removed`. | **THE STATEMENT STAYS — it is the contract** (`§2.3` item 3 / `M-8`), and **it is NOT weakened**. **The STRATEGY MUST BE STRENGTHENED so the row can FAIL for a host that re-appends every foreign sibling on every `sync()`** — the TestWriter chooses the exact form (**the mount's full child reference sequence per step**, or an **append/re-place counter**); the strengthening **must not alter the row's statement or its attempt discipline** (`5` sequences; the per-row cap is `100`). Disposition `FIXED-this-pass`; **owner: the TestWriter (strategy only)**. The in-table notes at `P-LH-IM-4` carry the same ruling, so the reader sees the statement is intact. |
+| **`ADV-LH-6`** (LOW) | `P-LH-IM-1` states "EVERY permutation" but executes `n = 3` and `n = 4` only (`33` attempts) and carried no bounded marking. | **`ACCEPTED-AS-PINNED` (doc reconciliation, not a statement change): `P-LH-IM-1` now carries the SAME honest bounded marking `P-LH-TP-1` carries** — the property text is larger than its enumeration, and the executed? cell says so instead of implying coverage. No statement of the row is touched; the `33` figure is unchanged. |
+| **`ADV-LH-7`** (LOW — doc drift, `PARKED-with-revisit-condition`) | (i) the cell's `P-LH-TP-1` pool LIST names **20** shapes while the executed pool holds **22** — `true` and "a caller node as an entry" are in the executed pool but not in the cell's list; (ii) the cell describes a **single-step** index formula where the executed generator consumes **two LCG steps** per attempt and always draws `next(1) === 0`. | **RECONCILE TO THE EXECUTED POOL AND STATE THE ACTUAL STEP FORM** (done at strategy-discipline item 6 above): **the pool is `22` shapes** and the two missing members are now named — so the cell's list reconciles to the executed pool exactly; the generator is **deterministic, pinned to `20260927`**, consumes **two steps per attempt**, draws `next(1)` (always `0`) and takes the pool index from the **raw state** (`state mod pool.length`); and a **`Symbol`-keyed shape is absent from the pool** — recorded as the pool's **stated boundary**, not left silent. **The pool's `22`-shape count, the `64` draws and the `72`-attempt row total are unchanged.** |
+
+**⟶ THE `ADV-LH-7` POOL RECONCILIATION, SPELLED OUT (so the TestWriter may re-pin the cell's list
+against the executed pool without guessing).** The executed pool holds **`22` shapes**: the
+`P-LH-TP-1` cell's own enum-listed members (the `20` it names — `null` · `undefined` · `42` · `NaN` ·
+`''` · `'x'` · `[]` · `[{}]` · `[{key:42}]` · a non-string key · an entry with no node and no factory ·
+`itemFactory: () => null` · a **detached** node · a `ShimElement` mount already holding host-placed
+children · `mount: null` · `mount: {}` · `mount: 42` · `mount: 'div'` · a frozen array · a caller
+array also held by the test) **plus the two members the list OMITS**: **`true`** (a non-array,
+non-null primitive argument shape) and **an object argument that is a CALLER NODE used as an entry**
+— with the cell's closing members (a duplicate-key pair and a key of `''`) counted as the `21`st and
+`22`nd shapes when the whole pool is written out. **So the cell's list reconciles to the executed
+pool exactly once `true` and "a caller node as an entry" are named** — and the `22`-shape count, the
+`64` draws and the `72`-attempt row total are unchanged. **`ADV-LH-8` is `NOT-A-FINDING`:** those two
+extra executed shapes are an **asserted extension beyond the `§3` rows**, and the doc drift they
+exposed is exactly what `ADV-LH-7` reconciles — so the extension needs no ruling of its own and the
+pool's `22` count is not an error.
+
+**The pool's boundary, named:** a **`Symbol`-keyed shape is NOT in the pool** — a `Symbol` is not a
+`ListKey`, so the pool is silent about it **by design**, and that silence is now recorded rather than
+mistakable for an omission.
 
 **Register count: `7` rows — `4` `P-IM` (`P-LH-IM-1`..`P-LH-IM-4`), `2` `P-SM` (`P-LH-SM-1`,
 `P-LH-SM-2`), `1` `P-TP` (`P-LH-TP-1`). `7` executed deterministically by enumeration; `0` marked
-`NOT EXECUTED`.** **⟶ ATTEMPT ARITHMETIC — CORRECTED IN PLACE 2026-09-27 (the TestWriter-handoff pass; the as-written
+`NOT EXECUTED`.** **⟶ TWO ROWS NOW CARRY HONEST BOUNDED MARKINGS — `ADV-LH-6` (2026-09-27):**
+`P-LH-IM-1` and `P-LH-TP-1` each say `YES (bounded)` because each row's **property text is larger
+than its enumeration**; **neither statement changed**, and the two cells' reconciliations
+(`ADV-LH-5`'s strategy strengthening, `ADV-LH-6`'s marking, `ADV-LH-7`'s pool/step-form
+reconciliation) are itemized in the register-cell block immediately above. **The executed-layer
+numbers this unit landed are `168/168` attempts held** (the pass's own report, `§3b`) — the register
+text here is the CONTRACT and the ledger's numbers are what get read against the test file's tables
+(`§5.3` item 9). **⟶ ATTEMPT ARITHMETIC — CORRECTED IN PLACE 2026-09-27 (the TestWriter-handoff pass; the as-written
 line is kept visible below). AS FILED:** *"Attempt arithmetic (stated so it can be checked):** 30 (`P-LH-IM-1`) + 34 (`P-LH-IM-2` = 30 shared permutation attempts + 4 identity-shape attempts) + 8 (`P-LH-IM-3`) + 5 (`P-LH-IM-4`) + 8 (`P-LH-SM-1`) + 8 (`P-LH-SM-2`) + 64 (`P-LH-TP-1`) = **157 attempts**, inside the ≤400 total cap and every row inside the ≤100 per-row cap."* **THE RULING — `157` IS WRONG AND `168` IS THE TRUE TOTAL, COUNTED FROM THIS REGISTER'S OWN TABLES:** the `157` form **omitted `P-LH-IM-1`'s third fixed table** (the `3` partial `setOrder` drives — `['c','a']`, `['c','a','nope']`, `['a','a','c']` — that the `F-8` ignored-key/duplicate clause requires, `+3`) and **omitted `P-LH-TP-1`'s explicit fixed after-`dispose()` sweep** (all `8` methods once, `+8`). **THE CORRECTED ARITHMETIC, one term per register row: `33` (`P-LH-IM-1` = `6` `S₃` permutations + `24` `S₄` permutations + `3` partial-`setOrder` drives) + `34` (`P-LH-IM-2` = `30` shared permutation attempts + `4` identity-shape attempts) + `8` (`P-LH-IM-3`) + `5` (`P-LH-IM-4`) + `8` (`P-LH-SM-1`) + `8` (`P-LH-SM-2`) + `72` (`P-LH-TP-1` = `64` drawn `(method, input)` attempts + `8` after-`dispose()` sweep methods) = `168` attempts** — **inside the `≤400` total cap, and every row inside the `≤100` per-row cap (the max is `72`, `P-LH-TP-1`).** **HOW THEY ARE COUNTED, stated so the numbers are checkable rather than asserted: one "attempt" = one exercised DRIVE of one register row** — one `setOrder` call for the permutation row, one `(method, input)` draw for the pinned-seed row, one method of the fixed after-`dispose()` sweep for the sweep — **and each term above is counted from the row's own deterministically-fixed table as the row's cell writes it** (`S₃`/`S₄` exhaustive sizes, the `3`-shape partial table, the `4`-shape identity table, the `4`-shape × `2`-call repeat table, the `5` sequences, the `4`-class × `2`-position mixed table, the `8` literal sequences, the `22`-shape pool with `64` draws, the `8`-method sweep). **One term is SHARED and is stated as shared rather than double-counted away:** `P-LH-IM-2` drives the **same** `30` permutation inputs as `P-LH-IM-1` (one input family, two properties) and the total above counts that row's own `34` drives — i.e. the `30` permutation drives ARE executed twice, once per row, and the arithmetic counts executions, not distinct inputs.
  **Sample rows are named per row, so no quantification
 here is left to "and the §3 rows cover it"** — each row's cell names the §3 rows it compensates.
@@ -918,7 +1219,13 @@ which would be a **new gate**, not this unit's call (`H-r1`'s cite-and-supersede
    (`orderOf` that throws) and **`A-9`** (one node object for two keys). **The adversarial pass must
    rule them and record the ruling here.** Naming an unresolved input as unresolved is the contract;
    silently picking an answer would be the `C-16` class (a contract reverse-engineered from one
-   consumer). **⟶ CONFIRMED AND EXTENDED 2026-09-27 (the TestWriter-handoff pass; finding 7): the
+   consumer). **⟶ DISCHARGED FOR `A-5` 2026-09-27 (the adversarial + PBT-audit pass; finding
+   `ADV-LH-1`, HIGH — `CONTRACT-AMENDED`): `A-5` IS HEREBY RULED BY THE CLAUSE, NOT DEFERRED — an
+   `orderOf` that throws is CAUGHT on every path, the SUPPLIED ORDER is used, no method throws, and
+   no refusal code is invented for it. The ruling is normative text at `§2.1` (the totality clause
+   that governs every path) and it is the EXPECTED BEHAVIOUR its regression row must satisfy. So the
+   UNRULED set is no longer `A-5`/`A-9`: it is `A-9` and `A-11`, both now `OWED-with-owner` (the
+   next contract pass for this module) — see `§3a`'s per-seed rulings.** **⟶ CONFIRMED AND EXTENDED 2026-09-27 (the TestWriter-handoff pass; finding 7): the
    count is THREE seeds, not two — `A-5`, `A-9` and `A-12`.** **`A-12`** (malformed injections:
    `orderOf`/`itemFactory`/`onActivate`/`onClose` as non-functions; `order` as a non-array;
    `options` as `null`/a string) **is a SEED, not a row**: `§3a`'s preamble says *"no row below is a
@@ -931,13 +1238,33 @@ which would be a **new gate**, not this unit's call (`H-r1`'s cite-and-supersede
    that pass, and if it exposes a contract gap it lands as `CONTRACT-AMENDED` in `§3b` with the old
    text kept as `SUPERSEDED`.** **An omission that is a named, owned decision is not a gap; the same
    sentence is therefore carried at `§3a A-12`, at `§3.3 I-8` and at `§5.5.1 P-LH-TP-1` so no reader
-   can mistake it for an oversight.**
+   can mistake it for an oversight.** **⟶ RULED IN TWO HALVES 2026-09-27 (the adversarial + PBT-audit
+   pass; finding `ADV-LH-3`, MED — `CONTRACT-AMENDED`): (i) the NON-function/non-array shapes stay
+   exactly as the paragraph above records — guarded, excluded from `I-8` and `P-LH-TP-1`,
+   `RESOLVED-BY-PINNING`; (ii) the THROWING-function half is ruled by the `§2.1` totality clause that
+   extends to injected functions (each with a named safe default: `orderOf` ⇒ supplied order,
+   `itemFactory` ⇒ refusal `factory-returned-null`, `onActivate`/`onClose` ⇒ swallowed with the
+   ownership drop standing), `FIXED-this-pass`, owner the Implementer + TestWriter.** **So exactly TWO
+   seeds remain open after this pass — `A-9` and `A-11`, both `OWED-with-owner` (the next contract
+   pass for this module) — and the count in item 8's own first sentence is annotated rather than
+   rewritten.**
 9. **`SCH-4`'s `orderOf` is NOT this unit's and is not imported.** Ruling 6 dissolves the edge; the
    callback is **injected here**. A later pass that imports a zone/track module to get an ordering
    policy has **reinstated a dissolved edge** (`H-r6`).
 10. **The dropped "one overflow mode" criterion stays dropped.** A later pass may not add it back
     "because a host needs it": overflow is CSS, **this repo ships no stylesheet**, and the reshape's
     acceptance line records the drop explicitly.
+11. **⟶ ITEM 11 ADDED 2026-09-27 (the adversarial + PBT-audit pass): THE PASS'S OWN HONESTY LINE.**
+    **This spec pass RAN NO TEST, NO SUITE, NO LEG AND NO TRIO**, and the numbers it carries about
+    the unit's green — **`53/53` rows, the property register `168/168` attempts held, the suite's
+    `60` files / `971` tests (`969` passed / `0` failed / `2` skipped)** — are **THAT pass's own
+    report, recorded as reported and NOT measured by this pass**. The register row **`P-LH-SM-1`**'s
+    corrected wording, `P-LH-IM-4`'s strengthened strategy and the `P-LH-TP-1` pool/step-form
+    reconciliations are **contract/doc text**; whether the executed tables match them is **the
+    ledger's and the audit's to read against the test file** (`§5.3` item 9, `§5.5.1`'s integration
+    note). **Two seeds (`A-9`, `A-11`) are left `OWED-with-owner` ON PURPOSE** — an `OWED` seed with
+    a named owner is a recorded decision, not a gap, and **silence about a seed is a review
+    finding** (all `19` seeds now carry a ruling or an `OWED-with-owner` marker in `§3a`).
 
 ## 8. Supersession / citation index
 
@@ -971,6 +1298,11 @@ elsewhere or another unit's — listed so no later pass routes it here.
 | **The register's ATTEMPT TOTAL** (`§5.5.1`) | `§5.5.1`'s tables as filed (`157` = `30+34+8+5+8+8+64`) | **CORRECTED 2026-09-27 (this pass): `168` = `33+34+8+5+8+8+72`** — `+3` for `P-LH-IM-1`'s third fixed `setOrder` table (`F-8`), `+8` for `P-LH-TP-1`'s after-`dispose()` sweep; both forms kept visible, caps re-checked (`168 ≤ 400`, per-row max `72 ≤ 100`) and the counting method stated | `§5.5.1` (the arithmetic block), `§5.3` item 9's expectation |
 | **This pass's own scope** | `AGENTS.md` items 9/10 + the TestWriter's report | **SPEC TEXT ONLY** — no `tests/**`, no `src/**`, no `scripts/**`, no `package.json` edit, no `git commit`, **no test run**; the eight rulings and the arithmetic are contract text | this note + the citations above |
 
+| **The `U-LISTHOST` adversarial + PBT-audit pass (READ-ONLY) and its twelve findings** | the pass's own report: `tests/owned-list-host.test.ts` `53/53` rows; `§5.5.1`'s register `168/168` attempts held; suite `60` files / `971` tests (`969` passed / `0` failed / `2` skipped) | **RECORDED 2026-09-27 (this pass)** — twelve findings (`ADV-LH-1`..`ADV-LH-12`) with severity, disposition and owner; all `19` seeds ruled (`A-9`/`A-11` `OWED-with-owner`); the **ten** Implementer judgment calls each ruled; **four fix-side findings** carry the clause their regression row is written against (`ADV-LH-1`/`ADV-LH-3`/`ADV-LH-4` = `CONTRACT-AMENDED` + host fix + RED row; `ADV-LH-5` = TestWriter strategy only, statement unchanged) | the `§0` adversarial status note + `§2.1` (totality clause, injected-function clause, ACCEPTANCE rule, `N-5`, mount-absence/`order`-`placed` paragraph, `setEntries`/`setOrder`/`render`/`onClose` doc strings) + `§3.1 M-19`..`M-21` + `§3.2 F-2` (amended in place)/`F-6`/`F-11` + `§3.3 I-7`/`I-8` + `§4.2` item 1 + `§5.5.1` (register-cell block) + `§7` items 8/11 + `§3a` (per-seed rulings) + `§3b`-1/`§3b`-2 |
+| **The four `CONTRACT-AMENDED`/`FIXED-this-pass` dispositions, AS THE CONTRACT THEY GOVERN** | `§3b`-1's findings table, `§3b`-2's judgment-call table | **NORMATIVE FOR THE NEXT PASSES** — the TestWriter authors the RED regression rows from **`§2.1`'s totality clause** (`ADV-LH-1`), **`§2.1`'s injected-function clause with its four named safe defaults** (`ADV-LH-3`), **`§2.1`'s ACCEPTANCE rule + `N-5` + `§3.2 F-11` + `§3.1 M-19`** (`ADV-LH-4`), and the Implementer makes them green; `ADV-LH-5`'s strategy strengthening (`§5.5.1 P-LH-IM-4`) is a **TestWriter** change that **must not alter the row's statement or its attempt discipline** | `§2.1`, `§3.1 M-19`, `§3.2 F-11`, `§5.5.1` |
+| **The register-cell reconciliations (`ADV-LH-5`'s strategy half, `ADV-LH-6`, `ADV-LH-7`) and `ADV-LH-8`'s `NOT-A-FINDING`** | `§5.5.1`'s `P-LH-IM-1`/`P-LH-IM-4`/`P-LH-TP-1` cells and its strategy-discipline items 2/6 | **RECONCILED 2026-09-27** — no row's STATEMENT changed, **no attempt count of `168` moved**: `P-LH-IM-1` gains `YES (bounded)`, `P-LH-IM-4`'s strategy is strengthened (statement intact), `P-LH-TP-1`'s pool list reconciles to the executed `22` shapes with the two missing members named, the generator's actual step form is stated, and the `Symbol` boundary is recorded | `§5.5.1` (items 2/6, the register-cell block, and the three cells) |
+| **This pass's own scope** | `AGENTS.md` items 9/10 + the adversarial pass's report | **SPEC TEXT ONLY** — no `tests/**`, no `src/**`, no `scripts/**`, no `package.json` edit, no `git commit`, **no test run, no leg, no trio**; every number attributed to the pass is recorded AS REPORTED (`§7` item 11) | this note + the `§0` status note + `§7` item 11 |
+
 **Citation hygiene for this file:** every `src/**` and `tests/**` anchor cited above was **read in
 this pass** (`src/main/security.ts:134`; `src/shared/types.ts:259-281`;
 `src/renderer/renderer.ts:12`; `src/main/mcp-server.ts:281-303`; `src/shared/dom-shim.ts` (143 lines,
@@ -997,12 +1329,32 @@ documentation review — this pass does NOT "fix" it by renumbering**, exactly a
 recorded. The file's length moved from `779` lines to this pass's landed length (the census is stated
 in the `§0` reconciliation note; a later census claim is the owner's to reconcile).
 
-## 3a. Adversarial findings — **the pass has NOT run**
+## 3a. Adversarial findings — **the pass HAS RUN (2026-09-27, read-only adversarial + PBT audit); the as-filed status is kept below and the per-seed rulings are IN each row**
 
 **Status as filed: `OWED`. No adversarial pass has run for `U-LISTHOST`** (this pass is the
 spec-filing pass; the unit is BLOCKED on its go-ahead and its red set, so there is no green to
 review — RCA-3 runs *after* a unit's green). **The table is the SEED SET for the pass that will
 run; no row below is a finding, and none may be cited as one.**
+
+**⟶ STATUS 2026-09-27 — THE `U-LISTHOST` ADVERSARIAL PASS HAS RUN, and this section is no longer
+`OWED`: twelve findings (`ADV-LH-1`..`ADV-LH-12`), the per-seed rulings for ALL `19` SEEDS
+(`A-1`..`A-19`), and the TEN IMPLEMENTER JUDGMENT CALLS are recorded below and disposed of in `§3b`.**
+The pass was **read-only** (an adversarial review + a PBT audit) and it **reported the unit green as
+it stands**: `tests/owned-list-host.test.ts` **`53/53` rows**, `§5.5.1`'s property register
+**`168/168` attempts held (none broken, stop-after-5 never triggered)**, full suite **`60` files /
+`971` tests — `969` passed / `0` failed / `2` skipped**. **Those are the PASS'S OWN REPORTED numbers,
+recorded as reported; this spec pass measured nothing** (`§7` item 11). **The pass changed no
+`tests/**` and no `src/**` file: it returned findings and rulings, and every fix it mandates is
+disposed in `§3b` with an OWNER — the regression rows belong to the TestWriter pass that follows,
+the host fixes to the Implementer pass after it.** **`ADV-LH-1`/`ADV-LH-3`/`ADV-LH-4` are
+`CONTRACT-AMENDED` and their rulings are normative text at `§2.1` + `§3.1`/`§3.2`; `ADV-LH-5`'s
+ruling is a STRATEGY change (the statement stays); `ADV-LH-6`/`ADV-LH-7` are register-cell
+reconciliations; `ADV-LH-8`/`ADV-LH-11`/`ADV-LH-12` are `NOT-A-FINDING`; `ADV-LH-2` and
+`ADV-LH-7` are `PARKED-with-revisit-condition`; `ADV-LH-9`/`ADV-LH-10` are `RESOLVED-BY-PINNING`.
+The full table — **finding · severity · disposition · owner · what it changed and where** — is
+`§3b`'s.** **"No row below is a finding, and none may be cited as one" NOW READS: the seed TABLE's
+rows are still seeds, and every one of them has been RULED by the pass — silence about a seed is a
+review finding, so `A-9` and `A-11` carry a named owner instead.**
 **⟶ THREE SEEDS ARE MARKED OWED (`A-5`, `A-9`, `A-12`) — 2026-09-27, the TestWriter-handoff pass;
 finding 7.** "No seed is a finding" and "no seed may be cited as one" **do not** mean every seed is
 ignorable: three carry an explicit **`OWED`** status with a named owner (the `U-LISTHOST`
@@ -1010,27 +1362,44 @@ adversarial pass), and the DONE row must report each one's ruling or its still-o
 distinction is the whole point of this note: an `OWED` seed is a recorded DECISION to leave a
 question open, not a gap and not a finding.**
 
+**⟶ ALL NINETEEN SEEDS ARE RULED AS OF 2026-09-27 (ADDED this pass — the adversarial + PBT-audit
+pass).** The markers above are the TestWriter-handoff pass's state and are kept visible; the rulings
+they owed have now landed **in each seed's own row** (appended, never rewritten). The count is
+exhaustive so that no seed is silent: **`ACCEPTED-AS-PINNED` (with the code's observed behaviour as
+the pinned reading) — `A-1`, `A-2`, `A-3`, `A-4`, `A-6`, `A-7`, `A-8`, `A-10` (plus `ADV-LH-9`'s
+composition hazard), `A-13`, `A-14`, `A-15`, `A-16`, `A-17` (plus `ADV-LH-10`), `A-19`; `RULED BY
+THE CLAUSE` — `A-5` (by `ADV-LH-1`) and `A-12` (in two halves, by `ADV-LH-3`); `NOT-A-FINDING` —
+`A-18`; `OWED-with-owner` (owner = the next contract pass for this module) — `A-9` and `A-11`.** **So
+the `OWED` set is `2`, not `3`: `A-12` was RULED by this pass, and `A-11` was added to the `OWED` set
+by it.**
+
+**⟶ THE PASS'S FINDINGS ARE DISPOSED IN `§3b`, NOT REPEATED ROW-BY-ROW IN THIS TABLE (ADDED
+2026-09-27).** The twelve `ADV-LH-*` findings, the ten judgment calls and every seed ruling live in
+`§3b`'s three tables; this section keeps the **seed table** as the pass's work list, with each seed's
+final ruling appended in its own row. **A reader looking for a finding's disposition, owner and the
+clause it changed goes to `§3b`; a reader looking for a seed's fate reads the row below.**
+
 | Seed | Adversarial question | Layer |
 | --- | --- | --- |
-| **A-1** | Two foreign siblings appended **before and between** two renders: are they the **same objects** at the end (`toBe`), and were they ever re-appended or re-parented? | `[T]` |
-| **A-2** | A caller **detaches** a host-placed node, then the host is asked to remove it, then asked to re-add the same key — does any path throw, or leave the key dangling in `keys()`? | `[T]` |
-| **A-3** | `setOrder` with a permutation that **omits** a current key and **adds** an unknown one — is the resulting `order` exactly the current key set? | `[T]` |
-| **A-4** | `setOrder` given the same array object twice, and given a caller array the caller later mutates — does host state change? (`I-9`) | `[T]` |
-| **A-5** | `orderOf` that **throws** (a malformed injected comparator) — is that the caller's bug surfacing, or does the host swallow it? **This row must be RULED explicitly** (this spec does not decide it: `orderOf` is caller code, and a caller-code throw is not this host's refusal class — the pass must record the ruling rather than leave it unspecified) | `[T]` |
-| **A-6** | `orderOf` returning **mixed types** (`string` vs `number`) — what order results, and is the projection still a permutation of the key set? | `[T]` |
-| **A-7** | Duplicate keys across **separate** `setEntries` calls (not within one) — is the refusal class the same, and is the first-wins rule consistent? | `[T]` |
+| **A-1** | Two foreign siblings appended **before and between** two renders: are they the **same objects** at the end (`toBe`), and were they ever re-appended or re-parented? **⟶ FINAL 2026-09-27 (the adversarial + PBT-audit pass): `ACCEPTED-AS-PINNED` — the code's observed behaviour is the pinned reading (foreign siblings are neither removed nor re-appended; `M-8`/`I-3`), with `ADV-LH-5` governing the ROW's strategy power, not this seed.** | `[T]` |
+| **A-2** | A caller **detaches** a host-placed node, then the host is asked to remove it, then asked to re-add the same key — does any path throw, or leave the key dangling in `keys()`? **⟶ FINAL 2026-09-27 (the adversarial + PBT-audit pass): `ACCEPTED-AS-PINNED` — no path throws and no key is left dangling (`F-6`).** | `[T]` |
+| **A-3** | `setOrder` with a permutation that **omits** a current key and **adds** an unknown one — is the resulting `order` exactly the current key set? **⟶ FINAL 2026-09-27 (the adversarial + PBT-audit pass): `ACCEPTED-AS-PINNED` — yes: omitted and unknown keys are ignored, and `order` is exactly the current key set (`§2.4` item 2, `F-8`, `I-7`).** | `[T]` |
+| **A-4** | `setOrder` given the same array object twice, and given a caller array the caller later mutates — does host state change? (`I-9`) **⟶ FINAL 2026-09-27 (the adversarial + PBT-audit pass): `ACCEPTED-AS-PINNED` — host state does NOT change: results are fresh arrays and the host holds no reference to a caller array that would let a later mutation reach its state (`I-9`).** | `[T]` |
+| **A-5** | `orderOf` that **throws** (a malformed injected comparator) — is that the caller's bug surfacing, or does the host swallow it? **This row must be RULED explicitly** (this spec does not decide it: `orderOf` is caller code, and a caller-code throw is not this host's refusal class — the pass must record the ruling rather than leave it unspecified) **⟶ RULED 2026-09-27 (the adversarial + PBT-audit pass; finding `ADV-LH-1`, HIGH — `CONTRACT-AMENDED`, and THIS SEED IS RULED BY THE CLAUSE, NOT DEFERRED): the host SWALLOWS the throw. The totality claim governs on EVERY path — an `orderOf` that throws is caught exactly as it is on `setOrder` (the supplied order is used), it must NEVER escape, and no refusal code is invented for it (it is CALLER code, and the refusal vocabulary is five codes). Normative text: `§2.1`'s totality clause; the observable is an EXPECTED BEHAVIOUR the regression row must satisfy; owner: the Implementer (host fix) + the TestWriter (row); `FIXED-this-pass`.** | `[T]` |
+| **A-6** | `orderOf` returning **mixed types** (`string` vs `number`) — what order results, and is the projection still a permutation of the key set? **⟶ FINAL 2026-09-27 (the adversarial + PBT-audit pass): `ACCEPTED-AS-PINNED` — the pinned reading is the code's observed behaviour: a mixed-type `orderOf` compares NUMERIC-ELSE-STRING (numbers by value; a string compared against a number falls to the string form), TIES ARE BROKEN BY THE SUPPLIED INDEX (so `M-4`'s stability survives), and `order` remains a permutation of the key set, each key once (`I-7`). This is also the Implementer judgment call 4's ruled reading.** | `[T]` |
+| **A-7** | Duplicate keys across **separate** `setEntries` calls (not within one) — is the refusal class the same, and is the first-wins rule consistent? **⟶ FINAL 2026-09-27 (the adversarial + PBT-audit pass): `ACCEPTED-AS-PINNED` — a duplicate ACROSS separate calls is NOT a `duplicate-key` refusal at all (the key is simply replaced, `M-13`); first-wins is a WITHIN-one-call rule (`F-2`) and, after `ADV-LH-4`, it applies only between ACCEPTED occurrences.** | `[T]` |
 | **A-8** | A key of `''` (empty string), a key with whitespace, a unicode key, and a very long key — opaque, so all must work **identically**; a row asserts no normalization anywhere. **⟶ CONFIRMED 2026-09-27 (the TestWriter-handoff pass; finding 2): this premise is CORRECT and it is the premise `§3.2 F-5` was corrected TO — `''` is valid, nothing normalizes it, and the positive drive is `§3.1 M-18`. A later pass may not flip `F-5` back.** | `[T]` |
-| **A-9** | The **same node object** supplied for **two different keys** — what happens (double placement? one placement?), and is it a refusal? **This row must be RULED explicitly** (this spec does not decide it; the pass must, and record the ruling here) | `[T]` |
-| **A-10** | A mount that **already contains** host-placed-looking children from a **prior host instance** (two hosts, one mount) — is ownership isolated per host instance? **Must be ruled** | `[T]` |
-| **A-11** | `itemFactory` returning a node **already placed** for another key, or returning the host's own mount | `[T]` |
-| **A-12** | Malformed injections: `orderOf`/`itemFactory`/`onActivate`/`onClose` supplied as non-functions; `order` as a non-array; `options` as `null`/a string. **⟶ STATUS 2026-09-27 (the TestWriter-handoff pass; finding 7): `OWED` — OWNER = the `U-LISTHOST` adversarial pass (post-green, `AGENTS.md` RCA-3). This is a SEED and not a row; NO assertion over these shapes was pinned in this unit's red set, and `§3.3 I-8` + `§5.5.1 P-LH-TP-1` both say so explicitly. The ruling is recorded back here by that pass.** | `[T]` |
-| **A-13** | Static/unauthorized-access sweep: does the module contain `querySelectorAll`/`querySelector`/`closest`/`getElementById`/`matchMedia`/`activeElement`/`getComputedStyle`/`document`/`window`, any `src/renderer/**` import, any `electron`/`node:fs`, any store, any module-level mutable state? | static |
-| **A-14** | Vocabulary sweep: does the module contain `tab`/`strip`/`pane`/`zone`/`region`/`overflow`/`active`/`selected` in any spelling, or any closed string-union of consumer values? | static |
-| **A-15** | The five-seam sweep: any new tool/resource/group/`VALID_GROUPS` member/`RpcMethod` member/`MUTATING_METHODS` entry/IPC method? Does `tests/engine-pin-version.test.ts`'s 21-member census still pass **unchanged**? | `[H]` + static |
-| **A-16** | **`dispose()`-then-use:** every method called after `dispose()` — does each return a valid result, and is no ownership resurrected? | `[T]` |
-| **A-17** | **Callback re-entrancy:** `onActivate` calling `close(key)` (or `setEntries`) inside the callback — is the host's state coherent, and is the callback count still exactly one? | `[T]` |
-| **A-18** | **Cross-unit boundary:** does this unit duplicate any `U-SLOTHOST` responsibility (per-key containers, attribute/class application), any `U-PROJ` responsibility (variable values), or any `U-MOUNTGUARD` responsibility (counting engine-emitted roots)? **Duplication is a FINDING** — the three units share one layer idiom and must not share one contract. | static + `[T]` |
-| **A-19** | **The `V-7` re-entry probe:** does any behaviour of this host let a "replace" remove a foreign sibling — i.e. is the foreign-sibling rule truly ownership-scoped and not position-scoped? | `[T]` |
+| **A-9** | The **same node object** supplied for **two different keys** — what happens (double placement? one placement?), and is it a refusal? **This row must be RULED explicitly** (this spec does not decide it; the pass must, and record the ruling here) **⟶ STILL OPEN, OWNED 2026-09-27 (the adversarial + PBT-audit pass): `OWED-with-owner`. The pass RECORDS the implementation's observed behaviour for the next contract pass rather than ruling it here: the same node object is placed TWICE (once per key), the host OWNS TWO KEYS POINTING AT ONE NODE, and `close(a)` DETACHES the object the other key still owns — i.e. a single object can be removed while a live key still claims it. That is a STATED LIMITATION to be recorded as contract text, not silently pinned: OWNER = the next contract pass for this module. `M-18` rules NOTHING about this shape (each of its keys has its OWN node).** | `[T]` |
+| **A-10** | A mount that **already contains** host-placed-looking children from a **prior host instance** (two hosts, one mount) — is ownership isolated per host instance? **Must be ruled** **⟶ RULED 2026-09-27 (the adversarial + PBT-audit pass; finding `ADV-LH-9`, INFO — `RESOLVED-BY-PINNING`): ownership IS isolated per host instance — host B neither owns nor removes host A's nodes and treats them as foreign siblings (`I-3`/`M-8`). THE COMPOSITION HAZARD IS RECORDED: `dispose()` leaves host A's nodes as ORPHANS IN THE MOUNT (no detach, `M-14`), so a SECOND host on the same mount APPENDS AFTER them and the mount's child sequence carries the disposed host's dead entries. That is a CONSUMER composition hazard, not a host defect — a consumer wanting a clean mount clears it itself (the host authors no cleanup).** | `[T]` |
+| **A-11** | `itemFactory` returning a node **already placed** for another key, or returning the host's own mount **⟶ STILL OPEN, OWNED 2026-09-27 (the adversarial + PBT-audit pass): `OWED-with-owner` — UNRULED AND UNPINNED, deliberately. The pass records the question rather than answering it: a factory that returns a node ALREADY PLACED for another key, or the MOUNT itself, has no ruled outcome (and the mount-as-node shape would make the host append the mount into itself). OWNER = the next contract pass for this module.** | `[T]` |
+| **A-12** | Malformed injections: `orderOf`/`itemFactory`/`onActivate`/`onClose` supplied as non-functions; `order` as a non-array; `options` as `null`/a string. **⟶ STATUS 2026-09-27 (the TestWriter-handoff pass; finding 7): `OWED` — OWNER = the `U-LISTHOST` adversarial pass (post-green, `AGENTS.md` RCA-3). This is a SEED and not a row; NO assertion over these shapes was pinned in this unit's red set, and `§3.3 I-8` + `§5.5.1 P-LH-TP-1` both say so explicitly. The ruling is recorded back here by that pass.** **⟶ RULED IN TWO HALVES 2026-09-27 (the adversarial + PBT-audit pass; finding `ADV-LH-3`, MED — `CONTRACT-AMENDED`): (i) the NON-function/non-array shapes (`orderOf`/`itemFactory`/`onActivate`/`onClose` as non-functions, `order` as a non-array, `options` as `null`/a string) stay GUARDED and EXCLUDED from `§3.3 I-8` and `§5.5.1 P-LH-TP-1` — `RESOLVED-BY-PINNING`, exactly as the TestWriter-handoff note above records; (ii) the THROWING-function half is ruled: a caller-supplied `onActivate`/`onClose`/`itemFactory` that THROWS must NOT escape a method, must not leave ownership dropped with no result returned, and is caught with the NAMED SAFE DEFAULT per injection (`orderOf` ⇒ supplied order; `itemFactory` ⇒ refusal `factory-returned-null`; `onActivate` ⇒ swallowed, key stays owned; `onClose` ⇒ swallowed with the ownership drop STANDING). Normative text: `§2.1`'s totality clause; `FIXED-this-pass`, owner the Implementer (host fix) + the TestWriter (row).** | `[T]` |
+| **A-13** | Static/unauthorized-access sweep: does the module contain `querySelectorAll`/`querySelector`/`closest`/`getElementById`/`matchMedia`/`activeElement`/`getComputedStyle`/`document`/`window`, any `src/renderer/**` import, any `electron`/`node:fs`, any store, any module-level mutable state? **⟶ SWEPT CLEAN 2026-09-27 (the adversarial + PBT-audit pass; `ADV-LH-11`, INFO — `NOT-A-FINDING`): the module contains NONE of `document`/`window`/`matchMedia`, no renderer/main import, no persistence, no module-level state; the seven `§2.1` exports are exactly seven; the six static rows are SOURCE-BASED and not self-referential.** | static |
+| **A-14** | Vocabulary sweep: does the module contain `tab`/`strip`/`pane`/`zone`/`region`/`overflow`/`active`/`selected` in any spelling, or any closed string-union of consumer values? **⟶ SWEPT CLEAN 2026-09-27 (the adversarial + PBT-audit pass; `ADV-LH-11`, INFO — `NOT-A-FINDING`): NO occurrence of `tab`/`strip`/`pane`/`zone`/`region`/`overflow` vocabulary and no closed string-union of consumer values (the only string-union is the five-code refusal union).** | static |
+| **A-15** | The five-seam sweep: any new tool/resource/group/`VALID_GROUPS` member/`RpcMethod` member/`MUTATING_METHODS` entry/IPC method? Does `tests/engine-pin-version.test.ts`'s 21-member census still pass **unchanged**? **⟶ SWEPT CLEAN 2026-09-27 (the adversarial + PBT-audit pass; `ADV-LH-11`, INFO — `NOT-A-FINDING`): NO new MCP surface, and the pinned census counts are UNCHANGED — `RpcMethod` **21**, `ALL_TOOLS` **21**, `MUTATING_METHODS` **7**, `VALID_GROUPS` **5**.** | `[H]` + static |
+| **A-16** | **`dispose()`-then-use:** every method called after `dispose()` — does each return a valid result, and is no ownership resurrected? **⟶ FINAL 2026-09-27 (the adversarial + PBT-audit pass): `ACCEPTED-AS-PINNED` — after `dispose()` every method returns a valid result and NO ownership is resurrected: `keys()` stays `[]` (no re-creation from `render()`/`setEntries` unless the caller supplies entries again), and every caller node stays reachable with nothing detached (`M-14`, `I-5`, `§2.3` item 4).** | `[T]` |
+| **A-17** | **Callback re-entrancy:** `onActivate` calling `close(key)` (or `setEntries`) inside the callback — is the host's state coherent, and is the callback count still exactly one? **⟶ RULED 2026-09-27 (the adversarial + PBT-audit pass; finding `ADV-LH-10`, INFO — `RESOLVED-BY-PINNING`): ownership is dropped BEFORE `onClose` fires, so a re-entrant callback CANNOT resurrect state or double-fire (`M-10`, `M-9`). ONE BENIGN CONSEQUENCE IS NOW STATED: a re-entrant `setEntries` inside a callback DOES change what the OUTER call's `order`/`placed` report (those arrays are computed from the bookkeeping at return), so the outer result describes the state AFTER the re-entrant call settled — benign, and consistent with `I-1`/`I-7`.** | `[T]` |
+| **A-18** | **Cross-unit boundary:** does this unit duplicate any `U-SLOTHOST` responsibility (per-key containers, attribute/class application), any `U-PROJ` responsibility (variable values), or any `U-MOUNTGUARD` responsibility (counting engine-emitted roots)? **Duplication is a FINDING** — the three units share one layer idiom and must not share one contract. **⟶ NOT-A-FINDING 2026-09-27 (the adversarial + PBT-audit pass; `ADV-LH-12` is the sibling ruling and `A-18` is `NOT-A-FINDING`): no `U-SLOTHOST`/`U-PROJ`/`U-MOUNTGUARD` responsibility is duplicated — `I-3`'s foreign-subsequence scoping is INTENTIONAL and is covered instead by `M-14` and `§5.5.1 P-LH-SM-2`'s sequence 6.** | static + `[T]` |
+| **A-19** | **The `V-7` re-entry probe:** does any behaviour of this host let a "replace" remove a foreign sibling — i.e. is the foreign-sibling rule truly ownership-scoped and not position-scoped? **⟶ FINAL 2026-09-27 (the adversarial + PBT-audit pass): `ACCEPTED-AS-PINNED` — the rule IS ownership-scoped, not position-scoped: no behaviour of this host removes a foreign sibling on any "replace" (`M-8`, `I-3`, `§2.3` item 3), and `ADV-LH-5` strengthens the ROW's power to prove it without changing the rule.** | `[T]` |
 
 **⟶ THE OWED MARKERS IN THIS SEED TABLE (ADDED 2026-09-27, the TestWriter-handoff pass; finding 7).**
 **No seed in this table is a finding** (this section's own rule). **Three seeds carry an explicit
@@ -1040,7 +1409,7 @@ pins `A-12`'s shapes as assertions before the adversarial pass rules them is ans
 this contract has not asked** — `§3.3 I-8` and `§5.5.1 P-LH-TP-1` record the restriction, and the
 DONE row reports `A-12`'s status (§5.3 item 7's adversarial-findings record).
 
-## 3b. The adversarial pass's disposition table — **the shape this contract will be reconciled to**
+## 3b. The adversarial pass's disposition table — **LANDED 2026-09-27: the twelve findings, the ten judgment calls and the rulings, with the filing's "shape this contract will be reconciled to" kept below**
 
 | Status | Meaning |
 | --- | --- |
@@ -1050,13 +1419,81 @@ DONE row reports `A-12`'s status (§5.3 item 7's adversarial-findings record).
 | **HANDOFF** | a **package-class** finding → `docs/defects.md` + `docs/HANDOFF.md`; the package is never patched |
 | **NOT-A-FINDING** | raised, examined, recorded with the reason |
 | **OWED** | raised and **not yet resolved** — the pass may not report done with an `OWED` row |
+| **FIXED-this-pass** *(used by the 2026-09-27 adversarial + PBT-audit pass)* | the finding's fix is **mandated and owned by this pass's ruling**; for a host finding the host fix + regression row are owed to the Implementer/TestWriter passes that follow. **Not** a claim that a read-only pass edited code |
+| **ACCEPTED-AS-PINNED** *(same pass)* | the behaviour was examined and ruled **CORRECT**, with **the code's observed behaviour as the pinned reading** — the explicit form of `CONFIRMED-RULED` |
+| **PARKED-with-revisit-condition** *(same pass)* | a reading **deliberately left unpinned**, with the condition that reopens it **NAMED** in the row |
+| **OWED-with-owner** *(same pass)* | `OWED`, with a named owner that is **not** this pass — used for seed `A-9`/`A-11` (the next contract pass for this module) |
 
 **Status of the table itself: `OWED` — empty by construction.** **A DONE row that cites no
 adversarial pass (or whose findings are unrecorded) is a review finding** (`AGENTS.md` RCA-3).
+
+**⟶ STATUS OF THE TABLE ITSELF, 2026-09-27 — IT IS NO LONGER EMPTY AND THE PASS IS NO LONGER `OWED`
+(the sentence above is the filing state, kept visible).** The `U-LISTHOST` adversarial + PBT-audit
+pass **ran** (read-only) and its findings, seed rulings and judgment-call rulings are the three
+tables below. **The disposition vocabulary above is EXTENDED by three statuses this pass used**, on
+the record so a reader is not left with an undefined word: **`FIXED-this-pass`** (the pass's own
+disposition token: the finding's fix is mandated and OWNED — for a HOST finding the host fix and its
+regression row are owed to the Implementer/TestWriter passes that follow, so the token names
+*what was decided and who owes it*, not work this read-only pass performed), **`PARKED-with-revisit-
+condition`** (a reading deliberately left unpinned, with the condition that reopens it NAMED), and
+**`ACCEPTED-AS-PINNED`** (a behaviour examined and ruled CORRECT with **the code's observed behaviour
+as the pinned reading** — the `CONFIRMED-RULED` half made explicit), plus the **`OWED-with-owner`**
+variant (`OWED`, with a named owner that is **not** this pass).
+
+#### `§3b`-1 — the twelve `ADV-LH-*` findings, their severity, disposition, owner, and the clause each one changed
+
+| ID | Sev. | The finding, in one line | Disposition | Owner | What it changed, and where |
+| --- | --- | --- | --- | --- | --- |
+| **`ADV-LH-1`** | **HIGH** | An injected `orderOf` that **throws** escapes `setEntries` (`projectionFor`'s `try/catch` covers the `setOrder` path, `src/shared/owned-list-host.ts:337`, but `setEntries` calls it outside any `try`, `:300`), contradicting `§2.1`'s totality claim and `§3.3 I-8`. | **`CONTRACT-AMENDED` + `FIXED-this-pass`** | Implementer (host fix) + TestWriter (regression row) | `§2.1`'s **totality clause** (new normative text: the catch is the contract on EVERY path; `A-5` RULED BY IT); `§2.1 setEntries`'s doc string; seed `§3a A-5` (**no longer deferred**); `§3.3 I-8`'s `ADV-LH-1` boundary; `§4.2` item 1. **RED row owed.** |
+| **`ADV-LH-3`** | MED | A caller-supplied `onActivate`/`onClose`/`itemFactory` that **throws** also escapes mid-call (and `onClose` fires **after** ownership is dropped, leaving ownership dropped with no result returned). `A-12`'s wording covered **non-functions**, not **throwing functions**. | **`CONTRACT-AMENDED` + `FIXED-this-pass`** | Implementer (host fix) + TestWriter (regression row) | `§2.1`'s **totality-extends-to-injected-functions clause** (new: the boundary + a NAMED safe default per injected function — `orderOf` ⇒ supplied order, `itemFactory` ⇒ refusal `factory-returned-null`, `onActivate` ⇒ swallowed/key owned, `onClose` ⇒ swallowed/ownership drop stands); `§2.1 onClose`'s doc string; `§3a A-12` (ruled **in two halves**), `§3.3 I-8`, `§7` item 8. **RED row owed.** |
+| **`ADV-LH-4`** | MED | `seen.add(key)` runs **before** the node/factory validity question (`:260`), so `setEntries([{key:'k'}, {key:'k', node:n}])` with no factory yields **TWO** refusals (`no-node` + `duplicate-key`) and `order === []` even though the second entry is independently valid; `§2.1`'s totality note and `N-3` read **per-entry**, and `F-2`'s first-wins never covered a **refused first occurrence**. | **`CONTRACT-AMENDED` + `FIXED-this-pass`** | Implementer (host fix) + TestWriter (regression row) | `§2.1`'s **ACCEPTANCE rule** (new normative text: a key becomes "seen" only when an occurrence is ACCEPTED) + node-rule case **`N-5`**; `§3.2 F-2` **amended in place** (old text visible, scoped to accepted-only) so `F-2`/`N-3`/`F-11` agree; NEW rows **`§3.1 M-19`** and **`§3.2 F-11`**; `§4.2` item 1; `§3.3 I-8`. **RED row owed.** |
+| **`ADV-LH-5`** | **HIGH** | The unit's designated falsification is **not executed**: `§5.5.1 P-LH-IM-4`'s statement claims foreign siblings were "never removed or **re-appended**", but its strategy checks only their relative order among themselves, `removed === false`, `parent === mount` and non-membership in `removed` — all of which hold for a host that **re-appends every foreign sibling on every `sync()`**. | **`FIXED-this-pass`** | **TestWriter (strategy ONLY)** | **The row's STATEMENT stays — it is the contract (`§2.3` item 3 / `M-8`) and is NOT weakened**; the **strategy must be strengthened** so the row can fail for that mutation (mount's full child reference sequence per step, or an append/re-place counter — the TestWriter picks the form), and **the change must not alter the row's statement or its attempt discipline**. Recorded at `§5.5.1 P-LH-IM-4` (statement cell + strategy cell) and in `§5.5.1`'s register-cell block. |
+| **`ADV-LH-6`** | LOW | `P-LH-IM-1` states "EVERY permutation" but executes `n = 3` and `n = 4` only (`33` attempts), carrying no bounded marking. | **`ACCEPTED-AS-PINNED`** (doc reconciliation) | the documentation pass's own record (no code owner) | `§5.5.1 P-LH-IM-1` now carries the **same honest bounded marking `P-LH-TP-1` carries** (`YES (bounded)`); **the property text is larger than its enumeration** — stated, not implied. **No statement change, no attempt change.** |
+| **`ADV-LH-7`** | LOW | Doc drift in the register cell: the cell's `P-LH-TP-1` pool **list** names `20` shapes while the **executed** pool holds `22` (`true` and "a caller node as an entry" are executed but unlisted), and the cell describes a **single-step** index formula where the executed generator consumes **two LCG steps** per attempt and always draws `next(1) === 0`. | **`PARKED-with-revisit-condition`** (doc drift) | the documentation pass's own record | The cell's list is **reconciled to the executed pool** (the two missing members are NAMED, `§5.5.1`'s register-cell block) and the generator's **actual step form** is stated (deterministic, pinned to `20260927`, two steps per attempt, `next(1) === 0`, pool index from the raw state); **a `Symbol`-keyed shape is recorded as the pool's stated BOUNDARY**. Revisit condition: if a `Symbol`-keyed shape is later admitted to the pool. |
+| **`ADV-LH-8`** | LOW | The two extra executed shapes (beyond the `§3` rows) looked like unexplained drift. | **`NOT-A-FINDING`** | — (recorded) | The two shapes are an **asserted extension beyond the `§3` rows**; the drift is the **doc** matter `ADV-LH-7` reconciles. Recorded at `§5.5.1`'s register-cell block. |
+| **`ADV-LH-9`** | INFO | `dispose()` leaves its nodes as **orphans in the mount** (no detach), so a second host on the same mount appends after them. | **`RESOLVED-BY-PINNING`** | recorded at seed `§3a A-10` | The **composition hazard** is recorded at **seed `§3a A-10`** and at `§3.2`'s composition note: two hosts, one mount, one disposed ⇒ the mount carries the disposed host's dead entries; ownership stays isolated per instance and the new host treats them as foreign siblings (`I-3`/`M-8`). **A consumer composition hazard, not a host defect.** |
+| **`ADV-LH-10`** | INFO | Callback **re-entrancy**: ownership is dropped **before** `onClose` fires, so a re-entrant callback cannot resurrect state or double-fire — but a re-entrant `setEntries` inside a callback **does** change what the outer call's `order`/`placed` report. | **`ACCEPTED-AS-PINNED`** | recorded at seed `§3a A-17` | The re-entrancy ruling is recorded at **seed `§3a A-17`** and at `§3.2`'s composition note: the outer result describes the **state after** the re-entrant call settled — **benign and now stated**, still consistent with `I-1`/`I-7`. |
+| **`ADV-LH-11`** | INFO | The security/seam sweep: exports, vocabulary, globals, imports, persistence, module-level state, the five-seam counts, the static rows' basis. | **`NOT-A-FINDING`** | — (recorded) | **SWEPT CLEAN** and recorded at seeds `§3a A-13`/`A-14`/`A-15`: **exactly 7 exports**; **no** `tab`/`strip`/`pane`/`zone`/`region`/`overflow` vocabulary; **no** `document`/`window`/`matchMedia`; **no** renderer/main import; **no** persistence; **no** module-level state; `RpcMethod` **21**, `ALL_TOOLS` **21**, `MUTATING_METHODS` **7**, `VALID_GROUPS` **5** — all **unchanged**; the six static rows are **source-based, not self-referential**. |
+| **`ADV-LH-12`** | INFO | `I-3`'s foreign-subsequence scoping looked like a narrowed invariant. | **`NOT-A-FINDING`** | — (recorded) | The scoping is **intentional** and is covered instead by **`M-14`** and **`§5.5.1 P-LH-SM-2`'s sequence 6**. Recorded at seed `§3a A-18`. |
+| **`ADV-LH-2`** | LOW | A caller-supplied `mount.appendChild` / node `remove` that **throws** escapes with the host's bookkeeping already rewritten. | **`PARKED-with-revisit-condition`** | the next contract pass for this module (or the pass that injects a non-shim mount) | Contract-consistent about the **tree** (`M-16`) but the **state-coherence** half is **unstated** and is **deliberately not pinned here**. **Revisit condition, NAMED: if the totality claim (`§2.1`, `I-8`) is read as extending to CALLER-SUPPLIED DOM METHODS, or when a NON-SHIM mount is injected.** Recorded here; **no clause amended, no row owed.** |
+
+#### `§3b`-2 — the TEN Implementer judgment calls, each ruled (`§3a` is where they are recorded)
+
+| # | Judgment call (as reported) | Disposition | Ruling / owner | Where it is contract text |
+| --- | --- | --- | --- | --- |
+| **1** | `setEntries` recomputes the **whole** projection. | **`ACCEPTED-AS-PINNED`** | the code's observed behaviour is the pinned reading — the recompute is the mechanism of order-as-projection. | `§2.4` item 2, `M-17`, `F-8` |
+| **2** | The **scope** of the duplicate rule (`seen` before validity). | **RULED BY `ADV-LH-4`** | a key becomes "seen" only when an occurrence is **ACCEPTED**; `FIXED-this-pass`. | `§2.1` ACCEPTANCE rule + `N-5`, `§3.2 F-2` (amended in place) + `F-11`, `§3.1 M-19` |
+| **3** | A **throwing `orderOf`**. | **RULED BY `ADV-LH-1`** | caught on every path; the supplied order is used; it never escapes; no refusal code; `FIXED-this-pass`. | `§2.1` totality clause, `§3a A-5`, `§3.3 I-8` |
+| **4** | The **mixed-type comparator** (`string` vs `number`). | **`ACCEPTED-AS-PINNED`** | **numeric-else-string** compare; **ties by supplied index** (so `M-4`'s stability survives); `order` stays a permutation of the key set. | `§3a A-6`, `M-4`, `I-7` |
+| **5** | A **non-array `setEntries`** argument ⇒ empty set, `ok true`, **silently dropping prior ownership**; a non-array `setOrder` ⇒ **no-op**. | **`PARKED-with-revisit-condition`** — **but the ownership-drop consequence IS now contract text** | the reading stays parked (revisit: when a consumer relies on a non-array argument being a refusal, or when a `malformed`-class code is added for it); **the OBSERVABLE is stated**: `setEntries(42)` ⇒ `ok true`, `refused []`, `order []`, and the previously placed nodes are **removed** (they appear in `removed`); `setOrder(42)` ⇒ no-op, projected order unchanged. | `§2.1 setEntries`/`setOrder` doc strings + the mount-absence paragraph, `§3.1 M-20` |
+| **6** | A **non-string lookup key** ⇒ `unknown-key` **verbatim**. | **`ACCEPTED-AS-PINNED`** | the refusal carries the supplied value **verbatim**, no coercion (`ListHostRefusal.key: unknown` — the TestWriter-handoff widening holds). | `§2.1 ListHostRefusal.key`, `F-1`, `§5.5.1 P-LH-SM-1` |
+| **7** | `onClose` fires **after** ownership is dropped. | **`ACCEPTED-AS-PINNED`** | the pinned reading — and it is what makes `ADV-LH-3`'s catch possible: the drop stands even if the callback throws. | `M-10`, `§2.1 onClose`, `§3a A-17`, `§3.2`'s composition note |
+| **8** | A **detached** node still appears in `removed`. | **`ACCEPTED-AS-PINNED`** | pinned as the as-shipped reading; `F-6`'s "or not" is therefore no longer an open implementer choice. | `F-6`, `M-21` |
+| **9** | `placed` and `order` are **NOT index-parallel** when the mount is unplaceable. | **`PARKED-with-revisit-condition`** | **recorded in the contract text**: `order` is an ownership/projection statement, `placed` is a placement statement, `order.length === placed.length` is **never asserted**, and parallelism holds only over a **placeable** mount. Revisit: if a consumer contract needs parallel arrays (then a `placed`-pad or a separate field is a gate). | `§2.1`'s mount-absence paragraph, `M-15` (its drive annotated), `I-7` |
+| **10** | `render()`'s **write policy** (written only when the host's own bookkeeping differs; a caller-detached node is **not** re-appended). | **`ACCEPTED-AS-PINNED`** | pinned, **and the PERMANENCE is stated**: for that key the caller's detach is permanent — `render()` is not an undo (it never throws, and the key is not left dangling). | `§2.1 render()`'s doc string, `§3.1 M-21`, `F-6` |
+
+**The two judgment calls that NEEDED contract text, named (the rest were already pinned):** **call 5**
+(the ownership-drop consequence of a non-array `setEntries` argument — previously **unstated**) and
+**call 9** (`order`/`placed` non-parallelism when the mount is unplaceable — previously **unstated**,
+and the register's index-parallel assumptions would mislead a consumer). **Both are now written into
+`§2.1`'s text and carried by a row (`M-20`, `M-15`'s annotated drive).**
+
+**The pass's EXECUTED-LAYER numbers, recorded as REPORTED (`§7` item 11 — this spec pass measured
+nothing):** the adversarial + PBT audit read the unit **green** — `tests/owned-list-host.test.ts`
+**`53/53` rows**; `§5.5.1`'s property register **`168/168` attempts held, none broken**, stop-after-5
+**never triggered**; the full node suite **`60` files / `971` tests — `969` passed / `0` failed / `2`
+skipped**. **Those numbers do NOT re-open `P-LH-TP-1`'s `YES (bounded)` marking** (`§5.5.1`): a
+bounded enumeration can hold at every attempt and still not prove the unbounded universal, and the
+register's integration note stands unchanged.
 
 **Why these two sections sit at the END of this file (the `docs/specs/engine-drift.md` convention,
 stated so the placement is not read as an oversight):** the **seed set** is the artifact the pass
 that runs *after* the green works from, and the **disposition table** is what this contract is
 reconciled *to* afterwards. Keeping them last means an appended findings block extends the file
 without renumbering §6/§7/§8 — **no section number of this spec moves when the pass lands.**
+**⟶ THE PASS LANDED 2026-09-27 AND THE PLACEMENT DID ITS JOB: `§3a`'s seed rows and `§3b`'s added
+tables (`§3b`-1, `§3b`-2) are APPENDED here, in this section, and NO number of `§3`–`§8` moved. The
+two new `§3` rows (`M-19`..`M-21`) and the new refusal row (`F-11`) are appended inside their own
+tables for the same reason; the `1062`-line figure earlier notes carry is the pre-pass state, and a
+census claim belongs to the pass that lands (this one's is in the report, not in this file).**
 
