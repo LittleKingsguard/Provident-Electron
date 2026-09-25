@@ -8,6 +8,8 @@ part of this filing** — it is `§5.5.1` below (**8 rows**, seed `20260927`, ca
 total · stop-after-5, **no new dependency**), and **this unit is CODE-BEARING**, so **no zero-row
 exemption is available** (`docs/decisions.md` `PBT-REGISTER-REQUIRED-FOR-CODE-UNITS`, ACTIVE).
 
+**⟶ FIRST STATUS NOTE — 2026-09-27, THE SPEC-GATE CLOSURE PASS (the supervisor's gate-2 check; a STATUS + ARITHMETIC note, and it amends ONE figure and no clause).** **What it found, and it is the exact defect this repo's newest ACTIVE rule names:** the filing printed the register total as **`400` = `30+90+36+68+52+12+15+66`**, whose true sum is **`369`** — a **mis-sum**, caught by the gate-2 arithmetic check **before any red set was authored** (`docs/decisions.md` `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`). **What changed: the TOTAL only** — `369` is now the declared total at `§5.5`'s banner, `§5.5.1`'s total row, `§5.3` item 10, `§7`'s honest statement and the red-run sentence in `§4.2`, with the as-filed `400` **kept visible at every site** and the correction dated. **NO per-row term moved, no row's design, id, strategy or marking changed, and no clause was weakened** — the caps are `≤100`/row (max declared `90`) and `≤400` total (`369`, now **under** the cap rather than at it). **What this note does NOT do:** it rules no new clause, moves no section number, renumbers nothing, adds no `§5.4`, and answers no `§7a` item (all six remain ruled as filed). **The delegation gate is UNCHANGED and STILL CLOSED:** the red set is the next step (`AGENTS.md` item 9 — red RUN and REPORTED before any implementation). **And the honest lesson, recorded because the class keeps recurring:** the register arithmetic has now been caught wrong at the filing pass in **three sibling units in a row** (`U-LISTHOST` `157`→`168`, `U-PROJ` `239`→`231`, `U-ZONES` `400`→`369`) — **a spec-writer pass that prints a total must print it as the SUM OF ITS OWN TERMS and verify the addition before filing**; the rule exists, and this note is its third worked example.
+
 **Go-ahead state — stated plainly: this unit is `BLOCKED` on two things only — the architect's
 go-ahead for the wave-E plan and its own red set.** *(The wave-D go-ahead was given 2026-09-27 and is
 **spent**; wave **E** is authorised by no ruling currently on the record, so this unit's red set may
@@ -610,7 +612,7 @@ particular, at the end of this cycle the module is still imported by NO `src/**`
    **The register's own stop rule binds the red run**: rows are evaluated **sequentially in register
    order** with **STOP AFTER 5 CONSECUTIVE FAILURES**, so a red run of a module-absent unit **is
    expected to stop early**, and **the un-run rows must be REPORTED AS FAILURES rather than silently
-   omitted** — **a red run that reports all `400` attempts as executed is the finding, not the
+   omitted** — **a red run that reports all `369` attempts as executed is the finding, not the
    expectation.**
 3. **RUN and REPORT** the failing set verbatim — the module-resolution failure, plus every static and
    existence row that can already be evaluated.
@@ -742,7 +744,7 @@ The DONE row (`docs/next-steps.md`, the supervisor's pass) must carry, **in this
     **a read-only PBT audit may not accept this spec's table alone**: it reads the counts here and the
     TestWriter's tables in `tests/zones.test.ts`.
 11. **The register's ARITHMETIC and its DUAL COUNT.** The DONE row must print the **total WITH its per-row
-    terms** — **`400` = `30+90+36+68+52+12+15+66`** — and must **reconcile that figure against the
+    terms** — **`369` = `30+90+36+68+52+12+15+66`** *(as filed: `400` — a mis-sum of these terms)* — and must **reconcile that figure against the
     tables the test file actually produces**: **a total that is not the sum of its own terms is a
     review finding** (`docs/decisions.md` `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`, ACTIVE). **Where
     a row's attempts are several assertions over ONE execution, or a count of DISTINCT inputs rather
@@ -891,13 +893,13 @@ prefix is **`S-ZN-*`, one per row**, and the one **pinned-seed generator** carri
 6. **No register row resolves a `§7a` item.** Every `§7a` item is **already ruled** in `§0A`/`§7a.1`
    as contract text, so a register row **may** be read as resolving **the half its ruling decides** —
    **but no register row is ADDED by a ruling, no row's `YES` marking changes, no strategy id moves,
-   no per-row term moves and the `400` total is unchanged** (`§5.3` item 11's arithmetic is the
+   no per-row term moves and the `369` total is unchanged** (`400` was the as-filed mis-sum) (`§5.3` item 11's arithmetic is the
    authority).
 
 **Attempt arithmetic — STATED SO A READER CAN CHECK IT AGAINST THE TABLES (one term per register row,
 counted from the tables above).** **`30` (`P-ZN-IM-1`) + `90` (`P-ZN-TP-1`) + `36` (`P-ZN-IM-2`) +
 `68` (`P-ZN-SM-1`) + `52` (`P-ZN-IM-3`) + `12` (`P-ZN-SM-2`) + `15` (`P-ZN-IM-4`) + `66` (`P-ZN-TP-2`)
-= `400` attempts.**
+= `369` attempts. *(**CORRECTED 2026-09-27 by the SPEC-GATE CLOSURE pass: the filing printed `400` as the total of `30+90+36+68+52+12+15+66`, whose true sum is `369` — the exact `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS` defect the ACTIVE rule names, caught by the supervisor's gate-2 arithmetic check before the red set was authored. The as-filed `400` is kept visible at every site with the corrected `369` beside it; NO per-row term changed, so no row's design changes.**)***
 
 | Row | Attempts | What counts as one attempt | Its terms |
 | --- | --- | --- | --- |
@@ -909,13 +911,13 @@ counted from the tables above).** **`30` (`P-ZN-IM-1`) + `90` (`P-ZN-TP-1`) + `3
 | `P-ZN-SM-2` | **12** | one access pattern on one caller object in one twin form | `3` caller objects × `2` access patterns × `2` twin forms = **12** |
 | `P-ZN-IM-4` | **15** | one `(spec shape, size)` pair | `3` spec shapes × `5` size values = **15** |
 | `P-ZN-TP-2` | **66** | one pinned-seed draw | `66` draws (`S-ZN-SEED-1`, `state₀ = 20260927`, one LCG step per draw, `index = stateₙ₊₁ mod 28`) |
-| **TOTAL** | **`400`** | — | **`400 ≤ 400` (the register total cap — at the cap, not under it); per-row maximum `90` (`P-ZN-TP-1`) `≤ 100`** |
+| **TOTAL** | **`400`** ⟶ **`369`** | — | **`369 ≤ 400` (under the register total cap); per-row maximum `90` (`P-ZN-TP-1`) `≤ 100`** — *(the as-filed `400` was the terms' mis-sum; corrected to the counted `369`, no term moved)* |
 
 **How the counting works, so the numbers are checkable rather than asserted.** **One "attempt" = one
 exercised DRIVE of one register row** — for the empty row one `trackFor` call on one class, for the
 totality row one call of one function, for the table row one cell or one fixed drive, for the pool row
 one draw. **Setup is NOT counted** (constructing a census, freezing a twin, snapshotting a value is
-precondition, not attempt). **The DECLARED total is `400` and the caps are compared against it.**
+precondition, not attempt). **The DECLARED total is `369` (`= 30+90+36+68+52+12+15+66`; as filed `400`) and the caps are compared against it.**
 **A DONE row reporting a total other than the one the test file's tables produce is a review finding**
 (`§5.3` items 10/11): **the ledger's numbers are read against the test file's tables, exactly as
 `§5.3` item 10 requires**, and **`docs/decisions.md` `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`
@@ -1049,7 +1051,7 @@ NO such row**: every claim in this file is arithmetic over arguments.
 12. **The property register's `YES` markings are execution DESIGN, not results** (`§5.5.1`): this pass
     ran nothing, and **a row that is `YES` in `§5.5.1` but broken when the red runs is a SPEC FINDING,
     reported rather than tuned to green.** The register's arithmetic is printed **with its terms** —
-    **`30+90+36+68+52+12+15+66 = 400`** — and the one term this filing had to reconcile
+    **`30+90+36+68+52+12+15+66 = 369`** *(as filed: `400` — corrected at the spec-gate closure; the terms never moved)* — and the one term this filing had to reconcile
     (`P-ZN-SM-1`'s earlier `36`-cell phrasing against its counted `4 × 4 = 16`) is recorded **in
     place** at that row's cell rather than papered over.
 
@@ -1120,7 +1122,7 @@ file.**
 | `docs/next-steps.md`'s `## OPEN` row **`E1`** | **Its spec cell is discharged by this filing; the row stays `BLOCKED`** (blocked on the wave-E go-ahead and its own red set). **Its permanent scoping clause: the census is `U-CENSUS`'s and the geometry boundary is this unit's own** | §4.5, §1 items 6/7 |
 | `docs/next-steps.md`'s `## OPEN` row **`E2`** (`U-CENSUS`) | **NOT THIS UNIT — but this unit is ITS dependency.** The delegate surface it may call is `§2.1`'s delegate clause | §1 item 6, §5.3 item 9 |
 | **`PBT-REGISTER-REQUIRED-FOR-CODE-UNITS`** (gate 11's mandatory typed register for CODE-BEARING units) | **DISCHARGED BY THIS FILING — `§5.5.1`** is `U-ZONES`'s register: **`8` typed rows**, **`400` attempts** printed **with their terms**, **no `F-` row**, **no `§6`/`FS-n` citation as a row**, **no new dependency**, **no fourth leg**, seed `20260927`, caps `≤100`/row · `≤400` total · stop-after-5. **The read-only PBT audit is OWED to this unit's adversarial pass** | §5.5, §5.5.1, §5.3 items 10/11, §4.2 item 2 |
-| **`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`** (`docs/decisions.md`, ACTIVE) | **CARRIED** — the total is printed with its per-row terms (**`30+90+36+68+52+12+15+66 = 400`**), the one reconciled term is recorded in place, and **a total that is not the sum of its own terms is a review finding** | §5.5.1's Attempt-arithmetic block, §5.3 item 11 |
+| **`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`** (`docs/decisions.md`, ACTIVE) | **CARRIED** — the total is printed with its per-row terms (**`30+90+36+68+52+12+15+66 = 369`** *(as filed: `400` — corrected at the spec-gate closure; the terms never moved)*), the one reconciled term is recorded in place, and **a total that is not the sum of its own terms is a review finding** | §5.5.1's Attempt-arithmetic block, §5.3 item 11 |
 | `H-r5` / `S-d3` (no shim expansion) | **INHERITED-ONLY** — this unit touches no shim and needs no member | §0 ruling 8, §2.2 (P-6), §3.4 `R-6` |
 | `SHELL-CHROME-CARVE-OUT-FUNCTIONAL` + `UI-RENDERED-WITH-PROVIDENT` | **CARRIED** — a mechanism is outside the constraint because it is not a UI element; this unit authors no content | §0 ruling 11, §2.2 (P-2), §7 item 5 |
 | `RK-19` (geometry "proved" from a node-green — the recurring false-green class) | **CARRIED as the clause this unit exists to prevent** | §2.3 item 7, `I-10`, `R-7`, §5.2, §6 |
