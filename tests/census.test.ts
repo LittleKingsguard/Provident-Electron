@@ -92,6 +92,61 @@
 // text"). The RULING text governs (§0A note 11 is the freshest contract text and
 // its table changes no cell, count, term or strategy id); the stale cell is
 // reported, not followed.
+//
+// ===========================================================================
+// ⟶ GREEN-TIME REPAIR (2026-09-27) — the implementer's stop, the supervisor's
+// verification, and the TestWriter's green-time pass. **The MODULE was NOT bent
+// to satisfy any row: `src/shared/census.ts` is byte-for-byte the module the
+// implementer landed, and every repair below is a ROW whose as-authored
+// expectation was unsatisfiable or mis-derived.** Each repaired row keeps its id,
+// its intent, its clause citations and its message (corrected to the current
+// truth), and carries its own in-place `CORRECTED 2026-09-27` provenance block;
+// no register id, strategy id, attempt term, seed, pool, draw or the `248` total
+// moved, and no new row id exists. The thirteen repairs, with the clause each
+// new form cites:
+//   · `I-6` — the union rule is NARROWED to the CONSUMER-VOCABULARY class
+//     (SUPERVISOR RULING: a union of two PRIMITIVE KINDS is legitimate; `§2.1`
+//     requires `export type ZoneId = string | number`), with a positive control
+//     that a vocabulary union still FAILS. `§2.2` P-1's wording is annotated by
+//     the supervisor to name the exception.
+//   · `M-4` — `delegate.isEmpty.length` (the DELEGATE's arity, 2) → the DELEGATE
+//     LOG's length (`§2.3` item 6).
+//   · `M-7` — `b`'s expectation mixed `a`'s size (5) with `b`'s emptiness; the
+//     contracted value is `trackFor(SPEC_A, undefined, …)` (`§2.3` item 4,
+//     `F-3`), and the duplicate zone's own last-occurrence value is asserted
+//     beside it.
+//   · `F-5` / `F-6` — the as-authored reading inverted the DELEGATE: `isEmpty`
+//     answering `false` means NOT EMPTY (U-ZONES `§2.3` item 2), so the value is
+//     the delegate's size+unit limb — obeying the old expectation would have
+//     forced this unit to implement a delegate limb itself (§2.1's delegate
+//     clause, `I-4`, `§3.4 R-1`, `§4.4 S-1`).
+//   · `R-10` — re-scoped to the GREEN form its own cell already states (module
+//     present + the unit-owned change set exactly the two artifacts + no stray
+//     `census*` path), the RED premise kept as PROVENANCE (the `U-ZONES` `R-8`
+//     model).
+//   · `R-1`(b) — the duplication half now scans the CODE view of `§3.4 R-1`(b)
+//     (comments stripped) BESIDE the `§4.4 S-2` normalized view, so its own
+//     `String\s*\(`/`\s+`/`\.`/`\+` branches can actually match; the census-read
+//     rule is narrowed to the clause's own scope ("applied to the census"), so
+//     the zones enumeration's required `Map` branch is not a false positive.
+//   · `R-1`(a) — a MASKED sibling: its rename control asserted the module's own
+//     import form was ABSENT (`=== 0`) while `code` IS the module.
+//   · `R-3` — the scope control applies the row's own ruled scope
+//     (`stripComments`) and proves non-vacuity on the raw fixture.
+//   · `R-4` — the node-realm rule's trailing `\b` made its `require\s*\(` branch
+//     unmatchable; the boundary now binds the identifier branches only.
+//   · `P-CN-SM-2` shape (3) — the declared key order is `['1','a']` (JS puts
+//     INTEGER-LIKE own keys first) and the expectation is composed with the
+//     MEMBER `1`, never its string image (`§0A` note 3, `§2.3` item 1).
+//   · `P-CN-TP-1` member (30) — DECLARED as the DROP class with the `Symbol`
+//     member: its `String()` image IS the throwing coercion, so NO implementation
+//     can give it an own key (`§2.3` item 1 (iv)); the as-authored "one key"
+//     expectation was unsatisfiable for every module.
+//   · `P-CN-IM-4` drive (10) — fixed to the PINNED reading (a throwing predicate
+//     ⇒ the WHOLE-call empty record: `§2.4 C-C` (g), `§2.3` item 3's annotation,
+//     `F-2` (d), `§6`'s third falsification); the register cell's "3 keys, 2
+//     `isEmpty` calls" reading CONTRADICTS those clauses and is REPORTED here
+//     rather than followed (§6's outcome (b): the cell needs `SUPERSEDED`).
 // ===========================================================================
 import { describe, it, expect, vi } from 'vitest'
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
@@ -526,6 +581,53 @@ function literalViolations(code: string): string[] {
   return out
 }
 
+/** `I-6`'s UNION rule, NARROWED by the SUPERVISOR'S RULING of 2026-09-27 — **and the
+ *  ruling is contract text this row cites**: `§2.2` P-1 forbids *"a closed union member"*
+ *  as CONSUMER VOCABULARY, and `§2.1`'s own required declaration — `export type ZoneId =
+ *  string | number` (also required by `R-2`(a) and `§5.2` leg 4) — is a union of two
+ *  PRIMITIVE KINDS, not a consumer-vocabulary union. **THE RULING: a union of PRIMITIVE
+ *  KINDS is legitimate; a union whose members are spelled (a string literal, a template
+ *  literal, or an identifier that is not a primitive kind) is the forbidden class and
+ *  FAILS.** *(`§2.2` P-1's wording will be annotated by the supervisor to name this
+ *  exception; the prohibition itself is NOT weakened — a vocabulary/enum union still
+ *  fails, which the positive control below asserts.)* The alias must not be dodgeable by
+ *  `PropertyKey`/`any`/`unknown` — that evasion is why the rule reads the DECLARED MEMBERS
+ *  rather than the declaration's spelling. */
+const PRIMITIVE_KIND_MEMBERS: readonly string[] = [
+  'string',
+  'number',
+  'boolean',
+  'bigint',
+  'symbol',
+  'object',
+  'undefined',
+  'null',
+  'never',
+  'unknown',
+  'void',
+  'any',
+  'this',
+]
+const UNION_DECL_RE = /\b(?:type|enum)\s+\w+\s*=\s*([^;\n]*\|[^;\n]*)/
+function unionViolations(code: string): string[] {
+  const out: string[] = []
+  for (const [index, text] of code.split('\n').entries()) {
+    const match = UNION_DECL_RE.exec(text)
+    if (match === null) continue
+    const members = match[1]
+      .split('|')
+      .map((member) => member.trim())
+      .filter((member) => member.length > 0)
+    const vocabulary = members.filter((member) => !PRIMITIVE_KIND_MEMBERS.includes(member))
+    if (vocabulary.length > 0) {
+      out.push(
+        `line ${index + 1}: ${text.trim()} — a union member that is NOT a primitive kind: ${JSON.stringify(vocabulary)}`,
+      )
+    }
+  }
+  return out
+}
+
 /** `R-3`'s POSITIVE controls: the evading forms `§4.4 S-2` names — raw,
  *  assembled across `+`-joined literals, carried in a comment, assembled in a
  *  template literal, and carried as an identifier. Built from the FRAGMENTS so
@@ -632,7 +734,12 @@ const AMBIENT_RULES: ReadonlyArray<{ what: string; re: RegExp }> = [
   { what: 'a computed access on a banned realm token or an alias of one', re: AMBIENT_COMPUTED_RE },
   { what: 'a random/time ambient read', re: /\b(Math\.random|Date\.now|new\s+Date|performance\.now)\b/ },
   { what: 'a process/env read', re: /\b(process\.env|process\.argv|process\.platform)\b/ },
-  { what: 'a node realm read', re: /\b(node:fs|require\s*\(|__dirname|__filename|import\.meta\.url)\b/ },
+  /** ── CORRECTED 2026-09-27 (the green-time repair, row `R-4`): the as-authored form was
+   *  `\b(node:fs|require\s*\(|…)\b` — its FINAL `\b` applied to the `require\s*\(` branch,
+   *  which ENDS IN `(`, so the boundary required a WORD character after the paren and the
+   *  branch could not match `require('fs')` (the row's own positive control). The
+   *  identifier branches keep their boundary; the call branch carries its own `(`. */
+  { what: 'a node realm read', re: /\b(?:node:fs|__dirname|__filename|import\.meta\.url)\b|\brequire\s*\(/ },
   { what: 'an eval/Function-constructed access (the same violation as the token)', re: /\b(eval|Function)\s*\(/ },
   { what: 'a realm construction route (Function.prototype.constructor, Reflect.construct)', re: /\b(Reflect\.construct|constructor\.constructor)\b/ },
 ]
@@ -1304,11 +1411,20 @@ describe('I — §3.3 the every-state invariants', () => {
     const code = stripComments(raw)
     const rules: ReadonlyArray<{ what: string; re: RegExp }> = [
       { what: 'a refusal-domain field (`code`/`ok`/`reason`/`skipped`/`status`/`errors`) — §0A note 8: every outcome is a VALUE', re: /\b(?:skipped|reason|errors):|\bok\s*:/ },
-      { what: 'a union or enum declaration (no refusal domain, no closed union exists)', re: /\b(?:type|enum)\s+\w+\s*=\s*[^;]*\|/ },
       { what: 'a stylesheet/class/attribute surface (P-2: no element, no class, no attribute)', re: /\b(?:className|classList|setAttribute|style\.|innerHTML|createElement)\b/ },
       { what: 'a store/persistence surface (P-4)', re: /\b(?:localStorage|sessionStorage|indexedDB|writeFile|readFile)\b/ },
     ]
     expectNoStaticHits(code, rules, 'I-6 §2.2 P-1..P-4')
+    // ── THE UNION HALF, NARROWED BY THE SUPERVISOR'S RULING (2026-09-27) — see
+    // `unionViolations` above: a CONSUMER-VOCABULARY union (a spelled member) FAILS;
+    // `§2.1`'s own required `export type ZoneId = string | number` — a union of two
+    // PRIMITIVE KINDS, cited by `R-2`(a) and required by `§5.2` leg 4 — is NOT that class
+    // and does not FAIL. `§2.2` P-1's wording is annotated by the supervisor to name this
+    // exception; the prohibition itself is unchanged (the positive control below).
+    expect(
+      unionViolations(code),
+      'I-6/§2.2 P-1 (as RULED 2026-09-27) — the module carries NO consumer-vocabulary / enum union: a union whose DECLARED MEMBERS are spelled constants or non-primitive identifiers; a union of PRIMITIVE KINDS is legitimate (§2.1 requires one)',
+    ).toEqual([])
     // POSITIVE controls: each shape must be caught by its own rule.
     const controls: ReadonlyArray<readonly [string, string]> = [
       ['a refusal field', `${'const'} r = { skipped: true }`],
@@ -1318,10 +1434,23 @@ describe('I — §3.3 the every-state invariants', () => {
     ]
     for (const [label, fixture] of controls) {
       expect(
-        rules.some(({ re }) => staticHits(fixture, re).length > 0),
+        rules.some(({ re }) => staticHits(fixture, re).length > 0) || unionViolations(fixture).length > 0,
         `I-6 POSITIVE control (${label}) must FAIL the scan — the prohibition is otherwise UNFALSIFIED`,
       ).toBe(true)
     }
+    // ── THE NARROWED UNION SCANNER'S OWN CONTROLS, both required by the ruling: a
+    // CONSUMER-VOCABULARY union still FAILS (it is the class P-1 forbids), and the
+    // contract's own primitive-kind alias PASSES (the exception the ruling names). The
+    // vocabulary spelling is built from the row's own FRAGMENTS, so this control does not
+    // put a joined spelling into this file's bytes.
+    expect(
+      unionViolations(`${'type'} Kind = '${['zo', 'ne'].join('')}' | '${['pa', 'ne'].join('')}'`).length,
+      'I-6 POSITIVE control (the narrowed scanner) — a CONSUMER-VOCABULARY union still FAILS the union scan, so the ruling narrows the rule without defusing it',
+    ).toBeGreaterThan(0)
+    expect(
+      unionViolations(`${'export'} ${'type'} ZoneId = string | number`),
+      "I-6 NEGATIVE control (the narrowed scanner) — §2.1's own REQUIRED declaration (`export type ZoneId = string | number`, a union of two PRIMITIVE KINDS) PASSES: the exception the supervisor's ruling names, and the declaration `R-2`(a) requires the module to export",
+    ).toEqual([])
   })
 
   it('I-7 §3.3 — PURITY and no ambient read: identical arguments ⇒ identical results, and no module-level mutable state', async () => {
@@ -1522,8 +1651,8 @@ describe('M — §3.1 the valid states', () => {
     ).toBe(0)
     expect(revealCalls, 'M-4/§2.3 item 3 — `revealed` is called exactly once per enumerated zone, INCLUDING for the zones it hides').toEqual(['a', 'b'])
     expect(
-      delegate.isEmpty.length,
-      'M-4/§2.3 item 6 — `sizes`/`specOf` are not consulted either: the delegate log records NOTHING for this drive',
+      DELEGATE_LOG.isEmpty.length + DELEGATE_LOG.trackFor.length,
+      'M-4/§2.3 item 6 — `sizes`/`specOf` are not consulted either (neither declined zone reaches the delegate path): the DELEGATE LOG records NOTHING for this drive',
     ).toBe(0)
   })
 
@@ -1587,10 +1716,23 @@ describe('M — §3.1 the valid states', () => {
       Object.keys(record),
       'M-7/§2.3 item 1 (iii) — the duplicate yields EXACTLY two keys, in first-seen order (`a` keeps its first-seen position and is not moved by its second occurrence)',
     ).toEqual(['a', 'b'])
+    // ── CORRECTED 2026-09-27 (the U-CENSUS green step — the implementer's stop found it
+    // and the supervisor verified it): the as-authored expectation read
+    // `trackFor(SPEC_A, 5, isEmpty(census, 'b'))` — it mixed zone `a`'s size (5) with zone
+    // `b`'s emptiness. §2.3 item 4 reads `sizes` by OWN property, so `b` has NO entry and
+    // `undefined` is handed to `trackFor`, whose own limb for a non-finite/absent size is
+    // the caller's `emptyToken` (§3.2 F-3) — the same delegate limbs, reached with what the
+    // lookup actually yielded. The value for `b` is still the one composed for its own
+    // (hence LAST) occurrence; the DUPLICATE zone's own last-occurrence value is asserted
+    // beside it below, so the row's `C-A` (d) claim is bound on both keys.
     expect(
       recordOf(record).b,
-      'M-7/§2.4 C-A (d) — the value is the one computed for the LAST occurrence',
-    ).toBe(delegate.trackFor(SPEC_A, 5, delegate.isEmpty({ a: 0, b: 3 }, 'b')))
+      'M-7/§2.3 item 4 / §3.2 F-3 — `b` has NO own `sizes` entry, so the delegate receives `undefined` and answers with the caller’s `emptyToken` (the value composed for `b`’s own — and therefore last — occurrence)',
+    ).toBe(delegate.trackFor(SPEC_A, undefined, delegate.isEmpty({ a: 0, b: 3 }, 'b')))
+    expect(
+      recordOf(record).a,
+      'M-7/§2.3 item 1 (iii) / §2.4 C-A (d) — the DUPLICATE zone `a` carries the delegate’s own value for the id (`sizes.a` is 5 and the census’s own `0` reaches the empty-token limb): the key is written ONCE, at its first-seen position, and the value is composed for its LAST occurrence',
+    ).toBe(delegate.trackFor(SPEC_A, 5, delegate.isEmpty({ a: 0, b: 3 }, 'a')))
     // The number 1 beside its own string image is the OTHER duplicate class.
     const numeric = fn(['1', 1], { 1: 0 }, { 1: 5 }, () => true, { 1: SPEC_A })
     expect(
@@ -1906,7 +2048,6 @@ describe('F — §3.2 the documented fail-states (every outcome is a VALUE)', ()
 
   it('F-5 §3.2 — an unusable or hostile census is the DELEGATE’s answer, not this unit’s error, and the census is unchanged', async () => {
     const fn = await surface('F-5 §2.3 item 2 / §2.4 C-B')
-    resetDelegateLog()
     const records: ReadonlyArray<readonly [string, unknown]> = [
       ['`null`', null],
       ['`undefined`', undefined],
@@ -1917,13 +2058,30 @@ describe('F — §3.2 the documented fail-states (every outcome is a VALUE)', ()
       ['a Proxy whose `get` throws', hostileProxy()],
       ['a record whose own accessor throws', throwingAccessorRecord('a')],
     ]
+    // ── CORRECTED 2026-09-27 (the U-CENSUS green step — the implementer's stop found it
+    // and the supervisor verified it): the as-authored expectation read *"`isEmpty`
+    // answered `false` ⇒ the caller's `emptyToken`"*, which INVERTS the delegate's own
+    // semantics: `false` means NOT EMPTY (U-ZONES `§2.3` item 2 — `true` is the empty
+    // answer), so with the drive's size 40 (finite, non-negative) the delegate's answer is
+    // `String(40) + unit`, i.e. its SIZE+UNIT limb — obeying the old expectation would have
+    // made this unit implement a limb of the delegate's arithmetic itself (`§2.1`'s
+    // delegate clause, `I-4`, `§3.4 R-1`, `§4.4 S-1`). §2.3 item 2's own text is that an
+    // unusable/hostile census is *"`U-ZONES`'s `false`"* and that *"this unit neither knows
+    // nor corrects that"* — the value is the delegate's, composed through the delegate
+    // itself here and never re-derived by this row (`§2.5` item 2).
+    const expectedValues = records.map(([, census]) => delegate.trackFor(SPEC_A, 40, delegate.isEmpty(census, 'a')))
+    expect(
+      expectedValues.filter((value) => value === SPEC_A.emptyToken),
+      'F-5 — the drive is not vacuous: NO hostile census in this table reaches the caller’s `emptyToken` limb, because the delegate answers `false` (NOT empty — U-ZONES §2.3 item 2) and the drive’s size 40 is finite and non-negative',
+    ).toEqual([])
     const snapshots = records.map(([, census]) => observableSnapshot(census))
+    resetDelegateLog()
     for (const [index, [label, census]] of records.entries()) {
       const record = fn(['a'], census, { a: 40 }, () => true, { a: SPEC_A })
       expect(
         recordOf(record).a,
-        `F-5/§2.3 item 2 — an unusable/hostile census (${label}) is the DELEGATE’s answer: \`isEmpty\` answered \`false\` (it is a total function) ⇒ the caller’s \`emptyToken\`; no throw escapes`,
-      ).toBe(SPEC_A.emptyToken)
+        `F-5/§2.3 item 2 — an unusable/hostile census (${label}) is the DELEGATE’s answer: \`isEmpty\` answered \`false\` — NOT empty — so the delegate’s SIZE+UNIT limb decides the value (the drive’s size is 40); no throw escapes`,
+      ).toBe(expectedValues[index])
       expect(
         observableSnapshot(census),
         `F-5/§2.4 C-B — the census (${label}) is unchanged in every observable respect`,
@@ -1937,13 +2095,29 @@ describe('F — §3.2 the documented fail-states (every outcome is a VALUE)', ()
 
   it('F-6 §3.2 — a NON-STRING zone member is never empty whatever the census holds: it receives the member VERBATIM', async () => {
     const fn = await surface('F-6 §0A note 3 / §2.3 items 1/2')
+    // ── CORRECTED 2026-09-27 (the U-CENSUS green step — the implementer's stop found it
+    // and the supervisor verified it): the as-authored expectation read *"`isEmpty(census,
+    // 42)` answers `false` ⇒ the `emptyToken`"* — the same INVERSION F-5 carried. `false`
+    // is the delegate's NOT-EMPTY answer (U-ZONES `§2.3` item 2 (c): a NON-STRING member
+    // against a record census is never empty), and `§0A` note 3 pins the CONSEQUENCE the
+    // spec wants asserted: *"a non-string zone member is never empty, whatever the census
+    // holds"* — so with the drive's size 40 the value is the delegate's `String(size)+unit`
+    // limb, and this unit must not compensate for the census shape (`§0A` note 3, item 3:
+    // compensating would be a second authority over emptiness — `§2.3` item 2 states this
+    // unit *"neither knows nor corrects"* the delegate's answer). The member-verbatim half
+    // of the row is unchanged and is asserted on the delegate log below.
+    const expectedValue = delegate.trackFor(SPEC_A, 40, delegate.isEmpty({ 42: 0 }, 42))
+    expect(
+      expectedValue === SPEC_A.emptyToken,
+      'F-6 — the drive is not vacuous: `isEmpty({42: 0}, 42)` answers `false` (NOT empty — U-ZONES §2.3 item 2 (c)), so the delegate’s answer is NOT the caller’s `emptyToken`: the expectation below really tests the size+unit limb',
+    ).toBe(false)
     resetDelegateLog()
     const record = fn([42], { 42: 0 }, { 42: 40 }, () => true, { 42: SPEC_A })
     expect(Object.keys(record), 'F-6/§0A note 3 — the zone key is the member’s `String()` image `\'42\'` (an own key)').toEqual(['42'])
     expect(
       recordOf(record)['42'],
-      'F-6/§2.3 item 1 — the value is the caller’s `emptyToken`, BECAUSE `isEmpty(census, 42)` answers `false` for a non-string member against a record census (U-ZONES §2.3 item 2 (c)) — this is the pinned CONSEQUENCE, not a defect, and this unit must not compensate for it',
-    ).toBe(SPEC_A.emptyToken)
+      'F-6/§0A note 3 / §2.3 item 2 — the member is NEVER EMPTY whatever the census holds, BECAUSE `isEmpty(census, 42)` answers `false` for a non-string member against a record census (U-ZONES §2.3 item 2 (c)) — so the value is the DELEGATE’s own `String(size)+unit` limb (the drive’s size is 40), the pinned CONSEQUENCE this unit must not compensate for',
+    ).toBe(expectedValue)
     expect(
       DELEGATE_LOG.isEmpty.map(([, z]) => z),
       'F-6/§2.3 item 1 — the member reaches `isEmpty`’s second parameter VERBATIM (the NUMBER 42, never its string image): a module that stringified it would answer differently',
@@ -2143,9 +2317,19 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
         `R-1(a)/§2.1 — \`src/shared/census.ts\` may import NOTHING but its predecessor: ${what} FAILS this row`,
       ).toEqual([])
     }
-    // ── (b) THE DUPLICATION HALF, over a NORMALIZED view (the `§4.4 S-2`
-    // closure): the RULES are held as FRAGMENTS so the scan cannot read its own
-    // rule list, and the text scanned is the module.
+    // ── (b) THE DUPLICATION HALF. **CORRECTED 2026-09-27 (the U-CENSUS green step —
+    // this row's own defect, found by the implementer's stop and verified by the
+    // supervisor): the as-authored half scanned ONLY `assembledLetters`'s NORMALIZED
+    // view, which carries NO `(`, NO `+`, NO `.` and no inter-identifier whitespace (the
+    // chunk sentinel is dropped between two identifier characters) — so the RULES' own
+    // `String\s*\(`, `\s+`, `\.` and `\+` branches could NEVER match on that view and the
+    // row's positive control could never fail (the row was UNFALSIFIED, `§4.4 S-2`).**
+    // `§3.4 R-1`(b) states the half's scope in its own words — *"the module's CODE WITH
+    // COMMENTS STRIPPED must contain no occurrence of …"* — so the claim is now asserted
+    // over BOTH views: the CODE view (the clause's own scope, where the punctuation-bearing
+    // branches live) AND the `§4.4 S-2` NORMALIZED view (the token-assembly closure, kept
+    // so nothing the as-filed row caught is dropped). The rules are held as FRAGMENTS, so
+    // the scan cannot read its own rule list.
     const ASSEMBLY_RE = new RegExp(
       [
         `String\\s*\\(`,
@@ -2154,6 +2338,15 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
         `(?:size|dims|value)\\s*\\+`,
       ].join('|'),
     )
+    /** The CENSUS-READ rule (iv), named so its own control can address it, and narrowed to
+     *  the clause's own scope (*"applied to the CENSUS"*): the bare container test
+     *  `instanceof Map`/`Set` would fire on the ZONES enumeration's `Map` branch, which
+     *  `§2.3` item 1 (a) REQUIRES of this module (*"a `Map` — whose KEYS are
+     *  enumerated"*) and which is not a census read at all. */
+    const CENSUS_READ_RULE: { what: string; re: RegExp } = {
+      what: 'a census read of this unit’s own (`hasOwnProperty`/`in`/`Map`/`Set`/`instanceof Map` applied to the CENSUS)',
+      re: /\bhasOwnProperty\b|\bObject\.keys\s*\(\s*(?:census|totals)\b|\b(?:census|totals)\s+instanceof\s+(?:Map|Set)\b|\bin\s+(?:census|totals)\b/,
+    }
     const DUPLICATION_RULES: ReadonlyArray<{ what: string; re: RegExp }> = [
       {
         what: 'a string concatenation that BUILDS a token (`String(...)`, a template substitution, `+` on a size and a unit)',
@@ -2167,38 +2360,53 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
         what: "an assignment or return of `''` in the spec-MALFORMED position (the `''` of `C-C`/§2.5 item 3 is the one legal site)",
         re: /(?:spec|meta|trackSpec)\s*\)\s*\?\s*['"]['"]\s*:/,
       },
-      {
-        what: 'a census read of this unit’s own (`hasOwnProperty`/`in`/`Map`/`Set`/`instanceof Map` applied to the census)',
-        re: /\b(?:hasOwnProperty|Object\.keys\s*\(\s*(?:census|totals)|instanceof\s+(?:Map|Set))\b/,
-      },
+      CENSUS_READ_RULE,
     ]
     const normalized = assembledLetters(raw)
     const duplicationHits: string[] = []
     for (const { what, re } of DUPLICATION_RULES) {
-      for (const hit of staticHits(normalized, re)) duplicationHits.push(`${what} ⇒ ${hit}`)
+      for (const hit of staticHits(normalized, re)) duplicationHits.push(`[the §4.4 S-2 normalized view] ${what} ⇒ ${hit}`)
+      for (const hit of staticHits(code, re)) duplicationHits.push(`[the CODE view of §3.4 R-1(b), comments stripped] ${what} ⇒ ${hit}`)
     }
     expect(
       duplicationHits,
       `R-1(b)/§1 item 3 — the module’s code carries NO SECOND COPY of the token arithmetic (the two call sites are the delegation working; a duplicate implementation is a FINDING — §4.4 S-1)`,
     ).toEqual([])
     // ── the POSITIVE controls, required by the row: a fixture inlining the
-    // arithmetic, and a fixture renaming the binding, must FAIL.
+    // arithmetic, a fixture reading the census itself, and a fixture renaming the
+    // binding, must each FAIL. **They scan the SAME VIEWS the claim above scans** — a
+    // control that exercised a different view than the row would prove nothing about the
+    // row (the exact defect this repair closes).
     const inlineArithmetic = `${'const'} t = String(size) + spec.unit\nif (!Number.isFinite(size) || size < 0) return spec.emptyToken`
     expect(
-      DUPLICATION_RULES.some(({ re }) => staticHits(assembledLetters(inlineArithmetic), re).length > 0),
-      'R-1(b) POSITIVE control — a fixture that INLINES the token arithmetic FAILS the duplication scan (the row is otherwise UNFALSIFIED)',
+      DUPLICATION_RULES.some(({ re }) => staticHits(stripComments(inlineArithmetic), re).length > 0),
+      'R-1(b) POSITIVE control — a fixture that INLINES the token arithmetic FAILS the duplication scan on the CODE view of §3.4 R-1(b) (a scan whose rules carry `(`, `+` and `.` must read a view that can carry them; the row is otherwise UNFALSIFIED)',
     ).toBe(true)
-    const renamed = `${'import'} { isEmpty as ask, trackFor } from './zones.js'`
+    const censusRead = `${'const'} n = ${'census'} instanceof Map ? 1 : 2; if (${'census'}.hasOwnProperty('a')) void n`
     expect(
-      staticHits(code, /import\s+\{\s*isEmpty\s*,\s*trackFor\s*\}\s+from\s+['"]\.\/zones\.js['"]/).length === 0 &&
+      staticHits(stripComments(censusRead), CENSUS_READ_RULE.re).length,
+      'R-1(b) POSITIVE control — the CENSUS-READ rule (iv) still FAILS a fixture that reads the census with the shapes the clause names (its narrowing to the census’s own scope does not defuse it)',
+    ).toBeGreaterThan(0)
+    const renamed = `${'import'} { isEmpty as ask, trackFor } from './zones.js'`
+    // ── CORRECTED 2026-09-27 (the SAME green-time pass — a MASKED sibling of the item-6
+    // defect, hidden behind it: vitest reports the FIRST failing assertion, so this control
+    // was never reached while the `(b)` control above was red). It read
+    // `staticHits(code, exactImportForm).length === 0` — but `code` IS THE MODULE, whose
+    // own legitimate import IS that exact form, so the left operand asserted the OPPOSITE
+    // of the row's premise and the control could never pass. The honest control asserts
+    // BOTH halves: the exact-statement scanner ACCEPTS the module's own form and REJECTS
+    // the renamed binding (the second assertion below carries the rejection half on its
+    // own, so the two halves are separately attributable).
+    expect(
+      staticHits(code, /import\s+\{\s*isEmpty\s*,\s*trackFor\s*\}\s+from\s+['"]\.\/zones\.js['"]/).length > 0 &&
         staticHits(renamed, /\bimport\b/).length > 0,
-      'R-1(a) POSITIVE control — a RENAMED binding (`isEmpty as ask`) FAILS the import form: the scan is on the exact statement, not on the presence of the word',
+      'R-1(a) POSITIVE control — the exact-statement scanner ACCEPTS the module’s own import form (non-vacuously: the fixture really carries an `import`) while the RENAMED binding (`isEmpty as ask`) FAILS it: the scan is on the exact statement, not on the presence of the word',
     ).toBe(true)
     expect(
       staticHits(renamed, /import\s+\{\s*isEmpty\s*,\s*trackFor\s*\}\s+from\s+['"]\.\/zones\.js['"]/).length,
       'R-1(a) POSITIVE control — the exact-statement scanner rejects the renamed import',
     ).toBe(0)
-    // ── the NEGATIVE control: this unit’s own legitimate text PASSES.
+    // ── the NEGATIVE control: this unit’s own legitimate text PASSES — on BOTH views.
     const legitimate =
       `import { isEmpty, trackFor } from './zones.js'\n` +
       `export function computeTrackVars(zones: unknown, census: unknown, sizes: unknown, revealed: unknown, specOf: unknown): TrackVars {\n` +
@@ -2206,7 +2414,10 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       `  const empty = isEmpty(census, zones)\n` +
       `  out['x'] = trackFor(specOf, sizes, empty)\n` +
       `  return out as TrackVars\n}\n`
-    const legitHits = DUPLICATION_RULES.flatMap(({ re }) => staticHits(assembledLetters(legitimate), re))
+    const legitHits = DUPLICATION_RULES.flatMap(({ re }) => [
+      ...staticHits(assembledLetters(legitimate), re),
+      ...staticHits(stripComments(legitimate), re),
+    ])
     expect(
       legitHits,
       'R-1(b) NEGATIVE control — this unit’s own legitimate text (the two call sites, the one `\'\'` site of `C-C`) PASSES the duplication scan',
@@ -2319,9 +2530,22 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       literalViolations(literalPositive).length,
       'R-3 POSITIVE control — a banned literal in CODE FAILS the literal half (the row is otherwise UNFALSIFIED)',
     ).toBeGreaterThan(0)
+    // ── CORRECTED 2026-09-27 (the U-CENSUS green step — the implementer's stop found it
+    // and the supervisor verified it): the as-authored control passed the RAW fixture
+    // straight to `literalViolations` — WITHOUT the row's own ruled scope — so the
+    // comment-carried spelling was reported while the assertion demanded `[]`, and the
+    // control contradicted the row's own text (*"the literal half reads CODE WITH COMMENTS
+    // STRIPPED"*). The control now applies the row's ruled scope, and the first assertion
+    // below keeps it NON-VACUOUS: the raw fixture really does carry the spelling, so the
+    // comment-stripping is what clears it.
+    const commentCarried = `// the caller's ${['0', 'px'].join('')} spelling is mentioned in a comment only`
     expect(
-      literalViolations(`// the caller's ${['0', 'px'].join('')} spelling is mentioned in a comment only`),
-      'R-3 — the LITERAL half’s scope is CODE with comments stripped, stated in the row’s own text',
+      literalViolations(commentCarried).length,
+      'R-3 — the scope control is not vacuous: the RAW fixture (comment INCLUDED) does carry the banned spelling, so the scan below is really testing the scope rule and not an empty string',
+    ).toBeGreaterThan(0)
+    expect(
+      literalViolations(stripComments(commentCarried)),
+      "R-3 — the LITERAL half’s scope is CODE with comments stripped, stated in the row’s own text: a comment-carried spelling is NOT a mechanism constant",
     ).toEqual([])
   })
 
@@ -2672,30 +2896,45 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
     ).toBeGreaterThan(0)
   })
 
-  it('R-10 §3.4 — THE PATH / MODULE-ABSENCE ROW: at RED time the module does not exist and this test file is the only unit-owned file in the change set', () => {
-    // (RED form, governing AT RED TIME — the form that is TRUE in the state this
-    // row RUNS in). Its FAIL is MEANINGFUL: if the module EXISTS before the red
-    // run, this row FAILS and the unit’s red-order claim (RCA-1) is broken, and
-    // the pass that finds it must report the inversion rather than proceed. The
-    // GREEN form (the module landed; the unit-owned set is EXACTLY the module plus
-    // this test file; the census asserted NON-EMPTY before the equality) is
-    // recorded as PROVENANCE in the comment below and is deliberately NOT asserted
-    // here, because asserting a green-state claim at red time would report the
-    // red’s own premise as a defect.
+  it('R-10 §3.4 — THE PATH / MODULE-ABSENCE ROW (the §4.1 red premise, GREEN-TIME RE-SCOPE): the module EXISTS and the unit-owned change set is EXACTLY the module + this test file', () => {
+    // -----------------------------------------------------------------------
+    // THE GREEN-TIME RE-SCOPE OF `§3.4 R-10` (green-time test repair 2026-09-27 — the
+    // b1930d2/8e2c777/f36f605 class, and the SAME re-scope technique `U-ZONES`'s `R-8`
+    // applied to its own module-absence row: the row now asserts the form of its claim
+    // that is TRUE in the state it RUNS in, and the red-run form is kept as PROVENANCE).
     //
-    // PROVENANCE — the GREEN form this row will carry at green time:
-    //   the module EXISTS; no other `census*` path exists anywhere in `src/**` or
-    //   `tests/**`; both canonical artefacts are present; the census is asserted
-    //   NON-EMPTY before the equality that is its claim.
-    const moduleExists = existsSync(MODULE_SRC)
+    // WHY IT HAD TO BE RE-SCOPED, stated as `§3.4 R-10` states it: the as-filed RED form
+    // reads *"at the moment the red set is AUTHORED and RUN, `src/shared/census.ts` does
+    // not exist"* — a claim whose ONLY truth-state is the RED run, as the row's own text
+    // says (*"if the module EXISTS before the red run, this row FAILS and the unit's
+    // red-order claim (RCA-1) is broken"*). The module's existence IS `§5.1` row 1 (the
+    // module, NEW — the landed deliverable), so in the GREEN state the as-filed assertion
+    // is red BY DESIGN for the correct reason, and leaving it red would report the
+    // deliverable's own landing as a defect.
+    //
+    // THE CLAIM CARRIED FORWARD is the row's SECOND HALF, which is exactly the half that
+    // stays falsifiable — and this row's own as-filed text already carries it in its GREEN
+    // form: *"the module EXISTS and the unit-owned change set is EXACTLY the module + this
+    // test file"*: no other `census*` path anywhere in `src/**` or `tests/**`, both
+    // canonical artifacts present, and the census asserted NON-EMPTY before the equality
+    // that is its claim.
+    //
+    // PROVENANCE — the RED-run form this row carried while the module was absent: the
+    // `existsSync(MODULE_SRC)` probe answered `false` and the unit-owned path census
+    // returned exactly `['tests/census.test.ts']` (the as-filed RED claim). The change of
+    // the expected set below is the module LANDING (§5.1 row 1), NOT a weakening: the
+    // probe, the path census and the non-vacuity assertion are the SAME instruments.
+    // -----------------------------------------------------------------------
+    const CENSUS_PATH = /^(?:src|tests)\/(?:.*\/)?census/i
     expect(
-      moduleExists,
-      `R-10 (RED form)/§0A note 1 — at the moment this red set is AUTHORED and RUN, \`src/shared/census.ts\` does NOT exist (${fileURLToPath(
+      existsSync(MODULE_SRC),
+      `R-10/§5.1 row 1 — the module \`src/shared/census.ts\` is LANDED: the green-state form of this row is the module's EXISTENCE (${fileURLToPath(
         MODULE_SRC,
-      )}). IF IT EXISTS, this row FAILS and the unit's red-order claim (RCA-1) is broken — the pass that finds it reports the inversion rather than proceeding`,
-    ).toBe(false)
-    // The unit-owned path census: this test file is the ONLY `census*` path in
-    // `src/**` + `tests/**` while the module is absent.
+      )}). The RED-run premise is the opposite assertion and is recorded as provenance above: at AUTHOR+red time this probe answered \`false\` and the row's FAIL was the unit's red-order claim (RCA-1) being broken, never a defect in the deliverable`,
+    ).toBe(true)
+    // The unit-owned path census: the module and this test file are the ONLY `census*`
+    // paths in `src/**` + `tests/**`, checked against the TREE itself (so a stray
+    // unit-owned path is caught even when it was committed by an earlier pass).
     const onDisk = walkCensusPaths()
     expect(
       onDisk.length,
@@ -2703,10 +2942,31 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
     ).toBeGreaterThan(0)
     expect(
       onDisk,
-      `R-10/§0A note 1 — the unit-owned surface of \`src/**\` and \`tests/**\` is EXACTLY this red set while the module is absent (a second unit-owned path would be an artefact this row's claim does not admit): ${JSON.stringify(
+      `R-10/§0A note 1 (§3.4 R-10's GREEN form) — the unit-owned surface of \`src/**\` and \`tests/**\` is EXACTLY the module of §5.1 row 1 and this test file (a second unit-owned path would be an artefact this row's claim does not admit): ${JSON.stringify(
         onDisk,
       )}`,
-    ).toEqual([TEST_RELPATH])
+    ).toEqual([MODULE_RELPATH, TEST_RELPATH])
+    // The CHANGE-SET half of the same claim (the row's own words: *"the unit-owned change
+    // set is EXACTLY the module + this test file"*): the WORKING TREE plus this unit's own
+    // UNIT-SCOPED committed range (a later unit's commits are not this unit's diff —
+    // `§5.1`'s commit-range scope rule).
+    const tree = treeChangeSet()
+    const committed = committedChangeSet()
+    const committedUnitOwned =
+      committed === null ? [] : unitScopedCommitted(committed.anchor, committed.range).files.filter((p) => CENSUS_PATH.test(p))
+    const unitOwned = Array.from(new Set([...tree.paths, ...committedUnitOwned].filter((p) => CENSUS_PATH.test(p)))).sort()
+    expect(
+      unitOwned.length,
+      `R-10/§3.5 — the unit-owned change set (the WORKING TREE plus this unit's own committed commits) is NON-EMPTY, so the equality below is not satisfied by a vacuous census. git status said: ${JSON.stringify(
+        tree.raw,
+      )}; the unit-scoped committed census said: ${JSON.stringify(committedUnitOwned)}`,
+    ).toBeGreaterThan(0)
+    expect(
+      unitOwned,
+      `R-10/§3.5 (§3.4 R-10's GREEN form) — the unit-owned change set is EXACTLY the module of §5.1 row 1 and this test file, and nothing else. PROVENANCE — at RED time this same census returned \`['tests/census.test.ts']\`, which is the as-filed RED claim (the module was absent). git status said: ${JSON.stringify(
+        tree.raw,
+      )}; the unit-scoped committed census said: ${JSON.stringify(committedUnitOwned)}`,
+    ).toEqual([MODULE_RELPATH, TEST_RELPATH])
     expect(
       existsSync(TEST_FILE),
       'R-10 — the probe is not vacuous: this test file itself exists on disk through the same mechanism',
@@ -2899,7 +3159,8 @@ describe('PRE — harness preconditions (not spec rows)', () => {
       `§5.5.1 pool-versus-boundary record :: ${JSON.stringify({
         P_CN_TP_1: {
           members: TP1_POOL.length,
-          boundaryBOUND: "the row's DRIVE-SCOPE clause, per member (object/function ⇒ wrapped; non-sequence ⇒ zero zones; Symbol ⇒ dropped)",
+          boundaryBOUND:
+            "the row's DRIVE-SCOPE clause, per member (object/function ⇒ wrapped; non-sequence ⇒ zero zones; Symbol ⇒ dropped; a member whose own property-key coercion throws ⇒ dropped as the SAME class, declared per member)",
           boundaryCLAIMED_BY_THE_SPEC_CELL: 'every member is an object or a function',
           specCellContradicted: true,
           violations: 0,
@@ -3376,7 +3637,7 @@ const IM4_COUNT_DRIVES: ReadonlyArray<{ id: string; run: (fn: NonNullable<Surfac
     },
   },
   {
-    id: '(10) three zones where one predicate throws ⇒ the throwing zone costs 0 and the others 1 each',
+    id: '(10) three zones where one predicate throws — §2.4 C-C (g)/F-2 (d): the WHOLE call is the empty record (the throwing case is the NO-DECISION case, never a partial one), the throwing zone costs 0 delegate calls and so does every zone the collapse prevented from being reached',
     run: (fn) => {
       resetDelegateLog()
       const record = fn(['1', '2', '3'], { 1: 3, 2: 3, 3: 3 }, { 1: 1, 2: 1, 3: 1 }, (id: unknown) => {
@@ -3384,8 +3645,29 @@ const IM4_COUNT_DRIVES: ReadonlyArray<{ id: string; run: (fn: NonNullable<Surfac
         return true
       }, { 1: SPEC_A, 2: SPEC_A, 3: SPEC_A })
       const keys = Object.keys(record)
-      if (DELEGATE_LOG.isEmpty.length !== 2) return `expected 2 isEmpty calls (the throwing zone costs 0), observed ${DELEGATE_LOG.isEmpty.length}`
-      if (keys.length !== 3) return `the whole key set must still be present (the throw is caught), got ${JSON.stringify(keys)}`
+      // ── CORRECTED 2026-09-27 (the U-CENSUS green step — the implementer's stop found
+      // this drive unsatisfiable and the supervisor verified it): the as-authored drive
+      // demanded *"all 3 keys + 2 isEmpty calls (the throwing zone costs 0, the other two
+      // cost 1 each)"*, i.e. the iteration CONTINUES past a throwing predicate and keeps
+      // the keys of the zones either side of it. That reading CONTRADICTS the pinned
+      // clauses — §2.4 C-C (g) (*"a non-callable, absent or throwing `revealed` yields the
+      // EMPTY record, not a partial one and not a throw"*), §2.3 item 3's annotation
+      // (*"an ABSENT, non-callable or throwing `revealed` is the no-decision case, which
+      // yields the EMPTY record with ZERO keys (`F-2`)"*), §3.2 F-2 (d) and §6's third
+      // falsification — and the module implements the PINNED reading (the whole-call
+      // `{}`). THE FIX follows the contract, not the cell: the drive now asserts the
+      // pinned outcome and the call counts §2.3 item 6 pins for it.
+      if (keys.length !== 0) {
+        return `§2.4 C-C (g)/§3.2 F-2 (d) — a THROWING predicate is the NO-DECISION case, so the WHOLE call yields the empty record (never a partial one): expected [] keys; got ${JSON.stringify(
+          keys,
+        )}`
+      }
+      // The zone reached BEFORE the throw passed the gate, so §2.3 item 6 pins exactly one
+      // delegate call for it; the throwing zone costs ZERO calls (the clause's own words),
+      // and zone '3' is never reached at all (the collapse ends the enumeration).
+      if (DELEGATE_LOG.isEmpty.length !== 1 || DELEGATE_LOG.trackFor.length !== 1) {
+        return `§2.3 item 6 — expected exactly 1 isEmpty and 1 trackFor call (only the zone whose gate passed BEFORE the throw); observed ${DELEGATE_LOG.isEmpty.length}/${DELEGATE_LOG.trackFor.length}`
+      }
       return null
     },
   },
@@ -3485,8 +3767,19 @@ const SM1_PASSES: ReadonlyArray<{ id: string; label: string }> = [
 ]
 
 /** `P-CN-SM-2`’s 10 zone-enumeration shapes, each with ITS OWN expected key
- *  list (so no member can contradict the row’s boundary by category). */
-type EnumShape = { id: string; make: () => unknown; expectedKeys: string[]; censusKeys: string[]; sizesKeys: string[]; note: string }
+ *  list (so no member can contradict the row’s boundary by category). A shape whose
+ *  MEMBERS are not their own key images (`['a', 1, 1]`) declares them in `members`, so
+ *  no expectation composes a MEMBER out of a KEY (`§0A` note 3 / `§2.3` item 1). */
+type EnumShape = {
+  id: string
+  make: () => unknown
+  expectedKeys: string[]
+  censusKeys: string[]
+  sizesKeys: string[]
+  note: string
+  /** The members the shape enumerates, where a member differs from its own key image. */
+  members?: readonly unknown[]
+}
 function recordWithKeys(keys: readonly string[], value: unknown): Record<string, unknown> {
   const record: Record<string, unknown> = Object.create(null)
   for (const key of keys) record[key] = value
@@ -3512,10 +3805,18 @@ const SM2_SHAPES: ReadonlyArray<EnumShape> = [
   {
     id: "(3) `['a', 1, 1]` — the number beside its own string image",
     make: () => ['a', 1, 1],
-    expectedKeys: ['a', '1'],
+    // ── CORRECTED 2026-09-27 (the U-CENSUS green step — the implementer's stop found this
+    // cell unsatisfiable and the supervisor verified it): the as-authored key list was
+    // `['a','1']`, but the module writes a plain record and JS own-key enumeration puts
+    // INTEGER-LIKE keys FIRST (array-index keys ascending, then string keys in insertion
+    // order), so the declared order is `['1','a']` — first-seen order is what the record
+    // yields for every shape whose keys are not array indices, and the `1` member reaches
+    // `isEmpty` VERBATIM (the expectation composer below uses `members`, never the key).
+    expectedKeys: ['1', 'a'],
     censusKeys: ['a', '1'],
     sizesKeys: ['a', '1'],
-    note: 'the number `1` beside the string `\'1\'` is the DUPLICATE case: one key',
+    members: ['a', 1, 1],
+    note: "the number `1` beside the string `'1'` is the DUPLICATE case: one key; the integer-like own key `'1'` is enumerated FIRST by `Object.keys` (JS own-key order) while the MEMBER `1` reaches `isEmpty` verbatim (§0A note 3)",
   },
   {
     id: "(4) an array holding `Symbol('s')` beside `'a'` — the DROP",
@@ -3621,8 +3922,18 @@ const SM3_PASSES: ReadonlyArray<{ id: string; make: () => unknown }> = [
  *  (the row’s declared boundary, checked member-for-member at filing and by
  *  `PRE-4`), so no draw can contradict it. The primitive and `null`/`undefined`
  *  classes are deliberately ABSENT here and are driven by `P-CN-SM-2` shape (10)
- *  and `P-CN-SM-3` shapes (6)–(9). */
-const TP1_POOL: ReadonlyArray<{ id: string; make: () => unknown; dropsSymbol?: boolean }> = [
+ *  and `P-CN-SM-3` shapes (6)–(9). **The two members that cannot become an own key of the
+ *  returned record are DECLARED as such, per member (`§3.4 R-10`'s pool-versus-boundary
+ *  rule: a member that contradicts the row’s boundary must be declared as an intended
+ *  class with its own expected outcome): `dropsSymbol` for the `Symbol` member (`§2.3`
+ *  item 1 (iv)) and `dropsUncoercible` for the member whose own property-key coercion
+ *  throws (the same class — no own key can carry it). */
+const TP1_POOL: ReadonlyArray<{
+  id: string
+  make: () => unknown
+  dropsSymbol?: boolean
+  dropsUncoercible?: boolean
+}> = [
   { id: "(1) `'a'`", make: () => 'a' },
   { id: "(2) `''` (the empty string is a legal id)", make: () => '' },
   { id: "(3) `'__proto__'`", make: () => '__proto__' },
@@ -3659,6 +3970,11 @@ const TP1_POOL: ReadonlyArray<{ id: string; make: () => unknown; dropsSymbol?: b
         throw new Error('the primitive coercion threw')
       },
     }),
+    // ── DECLARED AS THE DROP CLASS (green-time repair 2026-09-27, see the row below): a
+    // member whose own property-key coercion THROWS cannot become an own key of the
+    // returned record — the `String()`/`ToPropertyKey` image IS the throwing coercion —
+    // which is exactly the class §2.3 item 1 (iv) drops (the `Symbol` member's class).
+    dropsUncoercible: true,
   },
 ]
 /** The pool members that `§2.3` item 1 (c) declares as ZERO zones when passed
@@ -3987,8 +4303,21 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
             keys,
           )} — ${shape.note}`
         }
+        // ── CORRECTED 2026-09-27 (the U-CENSUS green step — the implementer's stop found
+        // this composer unsatisfiable for shape (3) and the supervisor verified it): the
+        // expectation composed the delegate's arguments from the own KEY, so the member `1`
+        // was asked about as the STRING `'1'` — and `isEmpty(census, '1')` answers `true`
+        // (the census record owns `'1'` = 0) where the module's own call,
+        // `isEmpty(census, 1)`, answers `false` (U-ZONES `§2.3` item 2 (c): a NON-STRING
+        // member against a record census is never empty). §0A note 3 / §2.3 item 1 pin the
+        // member as carried VERBATIM — the key is only its `String()` image — so the
+        // expectation is now composed with the MEMBER the shape declares, and the nine
+        // shapes whose members ARE their key images keep the same expectation as before.
+        const memberForKey = new Map<string, unknown>()
+        for (const member of shape.members ?? shape.expectedKeys) memberForKey.set(String(member), member)
         for (const key of keys) {
-          const expected = delegate.trackFor(specOf[key], sizes[key], delegate.isEmpty(census, key))
+          const member = memberForKey.has(key) ? memberForKey.get(key) : key
+          const expected = delegate.trackFor(specOf[key], sizes[key], delegate.isEmpty(census, member))
           if (!Object.is(recordOf(record)[key], expected)) {
             return `the value for ${brief(key)} must be the row’s independently composed expectation ${brief(expected)}; got ${brief(
               recordOf(record)[key],
@@ -4066,8 +4395,24 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
         }
         if (Object.getPrototypeOf(record) !== null) return 'the record must be NULL-PROTOTYPE'
         const keys = keysOf(record)
-        if (member.dropsSymbol === true) {
-          if (keys.length !== 0) return `the Symbol member must be DROPPED (zero keys); got ${JSON.stringify(keys)}`
+        // ── THE DROP CLASS, in its two DECLARED instances (`§2.3` item 1 (iv)): the
+        // `Symbol` member, and — added 2026-09-27 by the green-time repair below — the
+        // member whose own property-key coercion THROWS. **CORRECTED: the as-authored
+        // expectation demanded ONE own key for member (30) carrying its `String()` image,
+        // and that expectation is UNSATISFIABLE FOR EVERY IMPLEMENTATION — the image IS
+        // the throwing coercion, and a plain `Object.create(null)` record's key write
+        // performs that same `ToPropertyKey`, so NO own key can carry the member (the row
+        // itself could only compute the image under a `try/catch`).** The module's observed
+        // outcome — a TOTAL, null-prototype, ZERO-KEY record, with the member NOT
+        // stringified into an invented key — is exactly the class the clause drops, so the
+        // member is DECLARED as that class (per member, `§3.4 R-10`'s pool-versus-boundary
+        // rule) instead of being coerced by this row.
+        if (member.dropsSymbol === true || member.dropsUncoercible === true) {
+          if (keys.length !== 0) {
+            return `a member that CANNOT become an own key of the returned record (${member.id}) must be DROPPED (zero keys) — §2.3 item 1 (iv); got ${JSON.stringify(
+              keys,
+            )}`
+          }
           return null
         }
         if (mode === 'direct') {
@@ -4079,38 +4424,13 @@ describe('§5.5.1 — the typed property register (8 rows, executed deterministi
           }
           return null
         }
-        // ── CORRECTED 2026-09-27 (the U-CENSUS green step; the implementer's stop
-        // found it and the supervisor verified it): the row's OWN image computation
-        // coerced the drawn member — and pool member (30) is an object whose own
-        // `Symbol.toPrimitive` THROWS, so the ROW threw before any module output was
-        // compared (draw 14). `§0A` note 3 / `§2.3` item 1 carry the member into the
-        // record VERBATIM (the module's key comes from the member, not from a
-        // coercion this row performs), so the row must compare the KEY SET against
-        // the member it drew — not against a string the row itself manufactured.
-        // THE FIX, and the falsifiable half is UNCHANGED and slightly STRONGER: the
-        // module's single key must be the member's own property-key image, computed
-        // under a try/catch so a throwing-coercion member is asserted as "one key,
-        // and the key is the member" rather than aborting the attempt.
-        let image: string
-        try {
-          image = String(value)
-        } catch {
-          // A member whose own coercion throws still reaches the record as its own
-          // property key; assert the ONE-KEY half and that the key is not a
-          // manufactured sentinel, and let the `seenIds` identity check below carry
-          // the verbatim half.
-          if (keys.length !== 1) {
-            return `the drawn member (whose own primitive coercion throws) must still become exactly ONE own key; got ${JSON.stringify(keys)}`
-          }
-          if (keys[0] === '' || keys[0] === 'undefined') {
-            return `the key must be the member's own property-key image, not a sentinel; got ${JSON.stringify(keys[0])}`
-          }
-          if (seenIds.length !== 1) return `the sizes spy must see exactly one call; saw ${seenIds.length}`
-          if (!Object.is(seenIds[0], value)) {
-            return `the member must reach the lookup VERBATIM (identity); got ${brief(seenIds[0])}`
-          }
-          return null
-        }
+        // Every member that reaches this line CAN become an own key: the two members whose
+        // coercion throws are declared as the DROP class above and returned before here, so
+        // this `String()` is TOTAL over the reachable pool. `§0A` note 3 / `§2.3` item 1
+        // carry the member into the record VERBATIM (the key comes from the member, never
+        // from a coercion this row manufactures), so the module's single key must be the
+        // member's own property-key image.
+        const image = String(value)
         if (keys.length !== 1 || keys[0] !== image) {
           return `the drawn member must become exactly ONE own key carrying its String() image ${brief(image)}; got ${JSON.stringify(keys)}`
         }
