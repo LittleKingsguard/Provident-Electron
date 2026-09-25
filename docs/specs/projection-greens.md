@@ -589,3 +589,542 @@ scenario**, and neither is the unit's contract.
 caller-supplied fake sinks — **69 PASS / 2 FAIL / 4 NOT-BLIND-RUNNABLE**, the register at 231/231 held and
 both FAILs attributed to doc/spec drift — a node green, never assembled-app evidence, and the `[U]` row is
 not taken.*
+
+---
+
+# ADDENDUM (§12) — TARGETED RE-VERIFICATION, after the three host fixes (`e16ee8e`) and the spec amendment (`d959c4c`)
+
+**Status: `BLIND RE-VERIFICATION ADDENDUM — 47 executed scenario rows: 42 PASS / 3 FAIL / 2 NOT-BLIND-RUNNABLE`.**
+
+**Why this addendum exists.** The 75 rows above (§1–§11) were authored and run against the **pre-fix**
+module. THREE HOST FIXES have since landed (`e16ee8e`: `ADV-PJ-1` totality for a `values` whose own-property
+question throws, `ADV-PJ-2` totality for a projection whose `applied`/`skipped` field read throws,
+`FUNCTION-VALUES-1` the callable-`values` ruling) and the spec was amended (`d959c4c` + the
+four-cell re-derivation). **A green artifact that predates a behavioural change to the module it validates is
+a review finding unless it is re-verified** — so the affected territory was re-authored **from the amended
+documentation**, re-run, and is recorded here. **NOTHING above this line was rewritten, renumbered or
+re-scored; this is an append (§12).**
+
+| | |
+| --- | --- |
+| **Gate** | 5 (blind greens) — the **re-verification pass** after `e16ee8e` / `d959c4c` |
+| **Tree state (HEAD)** | **`e16ee8e`** (`e16ee8e3c785159c9c8c5f5e5e2c2fe871b826bd`) — `U-PROJ gate 4 GREEN (host fixes + coupled test repair): ADV-PJ-1/-2 totality guards + FUNCTION-VALUES-1 callable-values ruling` |
+| **Authored from** | **THE DOCUMENTATION ONLY, as amended**: `docs/specs/projection.md` (§2.3, §2.4 items 2/3/5/6/8, §2.5 item 4 **as corrected**, §3.2 `F-1`/`F-2`/`F-4A`/`F-4B`/`F-9`/`F-10`/`F-11`/`F-12` **cell (c) as corrected**, §3.3 `I-7`/`I-9`, §3.4 `R-17`..`R-20`, §3.5 `R-22`/`R-23`, §5.1, §5.2 **leg 4**, §5.5.1 **all eight cells** incl. the pool enumeration and the two re-derived binding cells, §3b-1's `ADV-PJ-1`/`ADV-PJ-2`/`ADV-PJ-3`/`ADV-PJ-5`/`ADV-PJ-6`/`ADV-PJ-9`/`ADV-PJ-11`/`ADV-PJ-12`/`ADV-PJ-17` cells, §3b-2's `(e)`/`(h)`/`(m)` rulings, §3b-3's corrections, §0/§0A, and `scripts`/`package.json`/`vitest.config.ts` only to construct a runnable runner) |
+| **Implementation read?** | **NO.** `src/shared/layout-projection.ts` was **never opened, never read, never printed** — imported as a black box (four documented value exports) and exercised through fake sinks. |
+| **Red set read?** | **NO.** `tests/layout-projection.test.ts` was **never read**: it was **run twice for its count only**, and only the summary lines were inspected (grep filter above the failure detail) — no assertion, row id or fixture of it reached this session. |
+| **Line-number citations** | The §2.5/§8 **citation rule** (`§8`'s closing note: *cite sections, never lengths*) is honoured as the **primary** form; a `projection.md:NNNN` figure is added only where this task requires `file:line`, and is a **convenience for the reviewer at HEAD `e16ee8e`**, never the contract's own citation form. |
+
+---
+
+## §12.1 The scenario rows
+
+**Format as §4's: `Doc clause` cites by section + row id; `Observed` quotes the runner's verbatim printed
+`console.log` payload (JSON as printed, abridged with `…` only where long, every fragment a verbatim prefix).**
+
+### §12.1.1 The `ADV-PJ-1` territory — a `values` whose own-property question throws (7 rows: 6 PASS / 1 FAIL)
+
+| Id | Doc clause (row) | Drive (exact) | Observed (verbatim) | Verdict |
+| --- | --- | --- | --- | --- |
+| **PJ-R-01** | §2.4 item 2 + §3.3 `I-7` + §3b-1 `ADV-PJ-1` (`projection.md:852-857`, `:1192`, `:2444`) | `Proxy.revocable({k1:1,k2:2})` + `revoke()`, then `project(values, {k1:…,--k1/k2 px})` | `{"err":null,"skipped":[["--k1","accessor-threw"],["--k2","accessor-threw"]],"applied":[],"decisions":2,"specEntries":2,"reasonDomainOk":true,"proto":"null"}` | **PASS on the TOTALLITY half** — `project` did **not** throw, exactly one decision per spec entry, every reason ∈ the **eight-member** domain (**no ninth reason**), `applied` a null-prototype record |
+| **PJ-R-02** | §2.4 items 2/3 (2) + `ADV-PJ-1` | a `Proxy` whose **`getOwnPropertyDescriptor` trap throws** | `{"err":null,"skipped":[["--k1","accessor-threw"],["--k2","accessor-threw"]],"applied":[],"decisions":2,"specEntries":2,"reasonDomainOk":true}` | **PASS** (same assertions) |
+| **PJ-R-03** | §2.4 item 2 + `I-7` + `ADV-PJ-1` | a `Proxy` whose **`ownKeys` trap throws** | `{"err":null,"skipped":[],"applied":[["--k1","1px"],["--k2","2px"]],"decisions":2,"reasonDomainOk":true}` | **PASS** — no throw; both entries **applied** (the own-property test does not consult `ownKeys`); the keys are **accounted for** |
+| **PJ-R-04** | §2.4 item 3's `'accessor-threw'` trigger clause + `F-4B` | a `Proxy` whose **`get` trap throws for `k1` only** | `{"err":null,"skipped":[["--k1","accessor-threw"]],"applied":[["--k2","2px"]],"reasonDomainOk":true}` | **PASS** — per-key decision, the read-failure key recorded, the neighbour still applied, no bail-out |
+| **PJ-R-05** | §2.4 item 3 (2) own-property read — **control** | a **healthy** `Proxy({k1:1,k2:0})` vs the equivalent plain object | `{"plainApplied":[["--k1","1px"],["--k2","0px"]],"proxyApplied":[["--k1","1px"],["--k2","0px"]],"plainSkipped":[],"proxySkipped":[],"equal":true}` | **PASS** — the healthy Proxy is **indistinguishable** from the plain object |
+| **PJ-R-06** | **§3b-1 `ADV-PJ-1`'s remedy cell** (`projection.md:2444`): *"a `values` whose own-property test throws yields … the decision the module can honestly make (**`missing-value` — the key could not be established as an own key**)"* | the same revoked-Proxy drive as `PJ-R-01`, asserted against the **cell's stated reason** | `{"observed":[["--k1","accessor-threw"]],"cellStatedReason":"missing-value","holds":false}` | **FAIL — doc/spec drift (§12.4.1).** The module records **`accessor-threw`**; the cell states **`missing-value`** |
+| **PJ-R-42** | §3b-1 `ADV-PJ-1`'s **regression-row drive shapes** (a `Proxy` with a throwing `has` trap; an object whose `hasOwnProperty` access throws) | both shapes, one `project` call each | `{"throwing has trap":{"err":null,"skipped":[],"applied":[["--k1","1px"],["--k2","2px"]],"decisions":2,"reasonDomainOk":true},"throwing own hasOwnProperty access":{…same…}}` | **PASS** — no throw, one decision per entry, reasons in-domain (both shapes are **applied**: the own-property read used does not consult `[[HasProperty]]` nor an own `hasOwnProperty` shadow) |
+
+### §12.1.2 The `ADV-PJ-2` territory — a projection whose field read throws (5 rows: 4 PASS / 1 FAIL)
+
+| Id | Doc clause (row) | Drive (exact) | Observed (verbatim) | Verdict |
+| --- | --- | --- | --- | --- |
+| **PJ-R-07** | §3b-1 `ADV-PJ-2` (`projection.md:2445`) + §2.3 item 4 + `M-11` | a projection whose **`applied` is a throwing own accessor** (`skipped: []` readable) | `{"err":null,"applied":[],"skipped":[],"ok":true,"calls":0,"reasonDomainOk":true}` | **PASS** — the cell's result holds exactly: `{applied:{}, skipped:[], ok:true}` and **zero sink calls**, no throw, no ninth reason |
+| **PJ-R-08** | **§3b-1 `ADV-PJ-2`'s concluding sentence** (`projection.md:2445`): *"so the call returns `ApplyResult{ applied: {}, skipped: [], ok: true }`"* | a projection whose **`skipped` is a throwing own accessor** and whose **`applied` is readable** (`{'--a':'1','--b':'2'}`) | `{"err":null,"applied":[["--a","1"],["--b","2"]],"skipped":[],"ok":true,"calls":[["--a","1"],["--b","2"]]}` | **FAIL — doc/spec drift (§12.4.2).** The cell's **per-field** first half holds (the unreadable `skipped` contributes no carried entries); its **concluding blanket sentence** does not (the readable `applied` half **is** written) |
+| **PJ-R-09** | §3b-1 `ADV-PJ-2` + §3.3 `I-7` | a **revoked-Proxy** projection (`{applied:{'--a':'1'}, skipped:[]}` in the target) | `{"err":null,"applied":[],"skipped":[],"ok":true,"calls":0,"reasonDomainOk":true}` | **PASS** — exact `M-11` shape, zero sink calls, nothing throws |
+| **PJ-R-10** | §2.3 item 1 (the projection is an INPUT record) — **control** | a projection whose **`applied` is a NON-throwing own accessor** returning `{'--a':'1','--b':'2'}` | `{"applied":[["--a","1"],["--b","2"]],"skipped":[],"ok":true,"calls":[["--a","1"],["--b","2"]]}` | **PASS** — a non-throwing accessor-bearing `applied` is **honoured normally**; the write proceeds |
+| **PJ-R-11** | §2.3 items 2/3 + §3.2 `F-10` (an unreadable/coercible value ⇒ `write-refused`) — **control** | a well-formed projection whose `applied['--a']` is a **value-level throwing accessor**, with a good neighbour `--b` | `{"err":null,"applied":[["--b","2"]],"skipped":[["--a","write-refused"]],"ok":false,"calls":[["--b","2"]]}` | **PASS** — per-key **`write-refused`**, the neighbour still written, the run did not abort, no throw |
+
+### §12.1.3 The `FUNCTION-VALUES-1` ruling and its three controls (5 rows)
+
+| Id | Doc clause (row) | Drive (exact) | Observed (verbatim) | Verdict |
+| --- | --- | --- | --- | --- |
+| **PJ-R-12** | **§2.4 item 3 clause (iii) `FUNCTION-VALUES-1`** (b)/(c) (`projection.md:971`) | `function f(a){}` as `values`, with spec **keys literally named `length`/`name`/`prototype`** | `{"err":null,"applied":[],"skipped":[["--len","missing-value"],["--nm","missing-value"],["--proto","missing-value"]],"proto":"null","reasonDomainOk":true}` | **PASS** — a function is a **NON-RECORD `values`**: every entry `missing-value` (including the function's own real `length`/`name`/`prototype` properties), `applied {}`, nothing throws |
+| **PJ-R-13** | clause (iii)(d)(1) — the **sink** position stays duck-typed | a **function** `sink` carrying a callable `setProperty` on its own `style` | `{"applied":[["--k1","1px"],["--k2","2px"]],"skipped":[],"ok":true,"calls":[["--k1","1px"],["--k2","2px"]]}` | **PASS** — **USABLE**, the write proceeds |
+| **PJ-R-14** | clause (iii)(d)(1) + §2.3 item 4 / `F-6` | a **function** `sink` with no `style` path | `{"applied":[],"skipped":[["--k1","sink-unusable"],["--k2","sink-unusable"]],"ok":false}` | **PASS** — **`sink-unusable` for every key**, `applied {}`, `ok false` |
+| **PJ-R-15** | clause (iii)(d)(2) + `F-10` | a **function** as a hand-built `applied` field, with own `'--a'='1'`, `'--b'='2'`, `'--c'={}` | `{"applied":[["--a","1"],["--b","2"]],"skipped":[["--c","write-refused"]],"ok":false,"calls":[["--a","1"],["--b","2"]]}` | **PASS** — duck-typed by the same own-key rule; the non-primitive value is `write-refused` |
+| **PJ-R-16** | clause (iii)(d)(3) | a **function** as the **projection argument**, carrying own `applied`/`skipped` | `{"applied":[["--a","1"]],"skipped":[],"ok":true,"calls":[["--a","1"]]}` | **PASS** — object-like and **NOT** a non-record: `M-11`'s no-op does **not** apply; the write proceeds |
+
+### §12.1.4 The re-derived `P-PJ-IM-3` variant (b) (1 row)
+
+| Id | Doc clause (row) | Drive (exact) | Observed (verbatim) | Verdict |
+| --- | --- | --- | --- | --- |
+| **PJ-R-17** | **§5.5.1 `P-PJ-IM-3` variant (b) re-derived** (`ADV-PJ-5`; `projection.md:1690`) + §2.4 item 3 clause (c) | a 4-key spec where `k2`'s own accessor **succeeds on the FIRST read and would throw on a SECOND** (read counter) | `{"err":null,"reads":1,"applied":[["--k1","1"],["--k2","2"],["--k3","3"],["--k4","4"]],"skipped":[],"hasAccessorThrewEntry":false}` | **PASS** — the key is **APPLIED** with the first read's formatted value, the read count is **exactly `1`**, and there is **no `'accessor-threw'` entry** |
+
+### §12.1.5 The two corrected doc-drift cells — the two gate-5 FAILs re-driven (3 rows)
+
+| Id | Doc clause (row) | Drive (exact) | Observed (verbatim) | Verdict |
+| --- | --- | --- | --- | --- |
+| **PJ-R-18** | **§2.5 item 4 AS CORRECTED** (`projection.md:1065-1091`) + §0A note 3 consequence 3 — *this is the drive of the gate-5 FAIL `PJ-G-58`* | `p = project({k:1},{k:{name:'__proto__',unit:''}})`; then `{...p.applied}`, `Object.assign({}, …)`, `Object.assign(Object.create(null), …)` | `{"sourceKeys":["__proto__"],"sourceProto":"null","spreadKeys":["__proto__"],"spreadHasOwn":true,"spreadRead":"1","spreadProto":"object","assignKeys":[],"assignHasOwn":false,"assignProto":"object","nullTargetKeys":["__proto__"],"nullTargetHasOwn":true,"nullTargetValue":"1"}` | **PASS (was FAIL) — `PJ-G-58`'s new verdict.** The corrected cell's three per-method claims hold **exactly**: spread **KEEPS** the own `'__proto__'` key (and destroys the null prototype); `Object.assign({}, …)` loses **both**; the null-prototype recipe keeps the key |
+| **PJ-R-19** | **§3.2 `F-12` cell (c.1) AS CORRECTED** (`projection.md:1178`) — the printed tuple `(--dup, --k2, --dup, --k4)` with the **second** entry's value a throwing own accessor — *this is the drive of the gate-5 FAIL `PJ-G-75`* | the printed tuple, in its own order | `{"driveTuple":["--dup","--k2","--dup","--k4"],"applied":[["--dup","1"]],"skipped":[["--k2","accessor-threw"],["--dup","duplicate-name"],["--k4","missing-value"]],"correctedCellList":[[…same…]]}` | **PASS (was FAIL) — `PJ-G-75`'s new verdict.** The corrected cell's (c.1) list is **exactly** the module's output (spec-entry order) |
+| **PJ-R-20** | §3.2 `F-12` cell **(c.2)** — the arrangement the as-written list actually describes | the two `--dup` entries adjacent, the throwing entry **third** | `{"applied":[["--dup","1"]],"skipped":[["--dup","duplicate-name"],["--k2","accessor-threw"],["--k4","missing-value"]]}` | **PASS** — exactly (c.2)'s stated list, and exactly that arrangement's spec-entry order |
+
+### §12.1.6 Further amended-cell rows a first-time reader derives differently now (13 rows)
+
+**Every row below is derived from a clause that the amendment **ADDED, PINNED or RE-DERIVED** — i.e. a row a
+reader of the pre-amendment text **could not** have authored in this form.**
+
+| Id | Doc clause (row) | Drive (exact) | Observed (verbatim) | Verdict |
+| --- | --- | --- | --- | --- |
+| **PJ-R-21** | **`§3.2 F-1` + `SKIP-NAME-1` (1)/(iii)** (`projection.md:1162-1163`) | six entries whose `name` is unusable: `42`, `null`, `{}`, `['--x']`, missing, `null` entry | `{"skipped":[["","malformed-spec"],["","malformed-spec"],["","malformed-spec"],["","malformed-spec"],["","malformed-spec"],["","malformed-spec"]],"applied":[]}` | **PASS** — the name is **`""`** for every shape that declares none, **never invented** (not the `specOf` key, not a coercion) |
+| **PJ-R-22** | **`SKIP-NAME-1` (1) (ii)** | `{a:{name:'--dup', unit:7}}` (usable name, malformed `unit`) | `{"skipped":[["--dup","malformed-spec"]],"applied":[]}` | **PASS** — a declared usable string `name` is kept **verbatim** |
+| **PJ-R-23** | **§2.4 item 3 clause (iv) `SKIP-ACCEPT-1` (A)** (`projection.md:985`) | `project({a:1,b:2}, {a:{name:'--dup'}, b:{name:'--dup',unit:''}})` | `{"applied":[["--dup","2"]],"skipped":[["--dup","malformed-spec"]],"hasDuplicateName":false}` | **PASS** — the malformed `a` **reserves nothing**; `b` is **APPLIED**; **no `duplicate-name` entry exists** |
+| **PJ-R-24** | **`SKIP-ACCEPT-1` (B)** (the non-vacuous control) | the same with **two VALID** entries naming `'--dup'` | `{"applied":[["--dup","1"]],"skipped":[["--dup","duplicate-name"]]}` | **PASS** — the set **is still written** for accepted entries (the row cannot pass by never writing it) |
+| **PJ-R-25** | **`SKIP-ACCEPT-1` (C)** + `§3.2 SKIP-THREW-1` | the FIRST entry's own `specOf` read throws; the second valid entry names `'--dup'` | `{"err":null,"applied":[["--dup","2"]],"skipped":[["","malformed-spec"]],"hasDuplicateName":false}` | **PASS** — the throwing entry read is `malformed-spec` with `name: ""`, the throw never propagates, and nothing is reserved |
+| **PJ-R-26** | **`§3.2 SKIP-THREW-1`** (`projection.md:1164`) — the two-layer clause | (i) a `specOf` whose own key read throws; (ii) a `values` whose own key read throws | `{"specLayer":[["","malformed-spec"]],"valuesLayer":[["--v","accessor-threw"]]}` | **PASS** — the **SPEC-MAP layer** ⇒ `malformed-spec` with `name:""`; the **CALLER-DATA layer** ⇒ `accessor-threw` with the key's **own emitted name** |
+| **PJ-R-27** | **§3.2 `F-2` (KEY AND ORDER)** + §2.4 item 8 (1)/(2) | `project({b:2},{a:{name:'--dup'},b:{name:'--dup'}})` then the applier | `{"applied":[],"projSkipped":[["--dup","missing-value"],["--dup","duplicate-name"]],"resultSkipped":[…same…],"calls":[]}` | **PASS** — the first occurrence's **own** reason first, the second `duplicate-name`, in **spec-entry order**; the applier carries the list **unchanged** |
+| **PJ-R-28** | **§3b-2 (e)** + §2.3 items 4/8 (2) (`projection.md:2472`) — the `sink-unusable` re-labelling of CARRIED entries | a hand-built projection: 2 applied keys + 2 carried skip entries, against `null` | `{"applied":[],"skipped":[["--a","sink-unusable"],["--b","sink-unusable"],["--s1","sink-unusable"],["--s2","sink-unusable"]],"ok":false}` | **PASS** — **every** applied key **and every carried entry** appears with `sink-unusable`, the carried order preserved, `applied {}`, `ok false` |
+| **PJ-R-29** | **§3b-2 (h)** (`projection.md:2475`) — a non-record `applied` FIELD | `{applied:'nope', skipped:[]}` and `{applied:'nope', skipped:[1 entry]}` | `{"err":null,"emptySkips":{"applied":[],"skipped":[],"ok":true},"carried":{"skipped":[["--s","missing-value"]],"ok":false},"calls":0}` | **PASS** — zero planned writes; `ok` computed from the **emitted** list (`true` when empty, `false` when one entry is carried); no throw |
+| **PJ-R-30** | **§2.4 item 8 (2)** + §3.3 `I-2`/`I-3` (the applier-side assembly no pre-amendment row drove) | a hand-built projection (3 applied keys, 2 carried entries) against a sink refusing the **second** write | `{"applied":[["--a","1"],["--c","3"]],"skipped":[["--b","write-refused"],["--s1","missing-value"],["--s2","not-a-number"]],"calls":[["--a","1"],["--b","2"],["--c","3"]]}` | **PASS** — **its own refusals first (in `applied` order), then the carried entries in input order**; neither sub-list re-sorted; never interleaved |
+| **PJ-R-31** | **§3.3 `I-9`'s NARROWED form (2)** (`§7a.1` item 7) + §2.4 item 4 | `NaN`,`±Infinity`,`-1`,`-0`,`0`,`1e21` with `unit:'px'` | `{"applied":[["--zero","0px"],["--pz","0px"],["--e21","1e+21px"]],"skipped":[["--nan","not-a-number"],["--inf","not-a-number"],["--ninf","not-a-number"],["--neg","negative"]],"literalHits":[],"allStrings":true}` | **PASS** — exact strings, every applied value a **string**, **no applied value equals `'NaN'`/`'Infinity'`/`'-Infinity'`**, and **no bare `'-'`-prefix test was used** |
+| **PJ-R-32** | **§2.3 item 4's pinned ASYMMETRY** (`projection.md:761-770`) | 4 malformed **projections** (`null`/`undefined`/`'nope'`/`42`) vs 5 unusable **sinks** over a well-formed projection | `{"malformedProjection":{"42":{"applied":0,"skipped":0,"ok":true},…all four…},"unusable":{"42":{"applied":0,"skipped":[["--k1","sink-unusable"],["--k2","sink-unusable"]],"ok":false},…all five…}}` | **PASS** — a malformed **projection decides NOTHING**; a malformed **sink decides EVERY key** (one `sink-unusable` per key), `ok false`; **no ninth reason** |
+| **PJ-R-33** | **§2.5 item 4 AS CORRECTED**, second half | the same record with a **non-dangerous** neighbour key `'--b'` as well | `{"spreadKeys":["__proto__","--b"],"spreadProto":"object","assignedKeys":["--b"],"assignedProto":"object","nullTargetKeys":["__proto__","--b"],"nullTargetValue":"1","resultProto":"null"}` | **PASS** — spread keeps **every** own key; `Object.assign({}, …)` loses **only** the own `'__proto__'` key; the null-prototype recipe keeps every key; the module's own record stays null-prototype |
+
+### §12.1.7 The 8 register rows re-driven from the amended `§5.5.1` (8 scenario rows)
+
+**Each row below is ONE scenario recording this pass's own execution of that register row's property text
+(`§5.5.1`), driven from the **amended** cells** — including the re-derived `P-PJ-TP-1` binding
+(`half = shape.axis`, `sink = SINKS[i mod 5]`) and the re-derived `P-PJ-IM-3` variant (b). The **statement,
+type, strategy id and attempt count** columns quote the register as it now stands.
+
+| Id · register row | Type · stated marking | Register's stated statement (abridged to its quantifier) | Strategy id · stated attempts | This run's drive | **Observed (this run)** | Result vs statement |
+| --- | --- | --- | --- | --- | --- | --- |
+| **PJ-R-34** · `P-PJ-IM-1` | `P-IM` · `YES (bounded)` | exactly one decision per spec entry over the enumerated decision classes (`I-1`) | `S-PJ-DECISION-1` · **23** | the 23 fixed classes, one `project` call each | `{"attempts":23,"held":23,"broken":0,"firstBroken":null}` | **HELD (bounded) — 23/23**; unchanged from the earlier blind run |
+| **PJ-R-35** · `P-PJ-IM-2` | `P-IM` · `YES` | every caller-supplied name is an OWN key; null prototype; nothing dropped/renamed/misdiagnosed | `S-PJ-OWNKEY-1` · **22** (`6×3+4`) | 6 dangerous names × 3 host shapes + 4 fixed shapes | `{"attempts":22,"held":22,"broken":0,"brokenList":[]}` | **HELD — 22/22** |
+| **PJ-R-36** · `P-PJ-IM-3` | `P-IM` · `YES` | one bad key never aborts; the key is `accessor-threw` (variant (a)/(c)); **variant (b) is the APPLIED case** | `S-PJ-ACCESSOR-1` · **36** (`3×4×3`) | variants (a) always-throws · (b) second-read-only · (c) frozen + always-throws × 4 positions × 3 dispositions, with a fresh-fixture repeat call per attempt | `{"attempts":36,"held":36,"broken":0,"brokenList":[]}` | **HELD — 36/36** on the **re-derived** reading (variant (b) applied, read count asserted `1`) |
+| **PJ-R-37** · `P-PJ-IM-5` | `P-IM` · `YES (bounded)` | no non-finite/negative value reaches `applied`; the reason is exact; `-0` is neither | `S-PJ-NUMERIC-1` · **52** (`26×2`) | the 26-entry table × 2 format drives, **exact-string** assertions | `{"attempts":52,"held":52,"broken":0,"appliedStringCount":20,"nonFiniteHits":[]}` | **HELD (bounded) — 52/52**; 20 applied values, all strings, no non-finite literal |
+| **PJ-R-38** · `P-PJ-IM-6` | `P-IM` · `YES` | one write-or-skip decision per key; `applied` iff written; at most once per key per call; a throwing write is `write-refused` and absent | `S-PJ-WRITELOG-1` · **16** (`4+4+5+3`) | (a) 4 assertions over ONE `K=4` execution (the **`ADV-PJ-9` honest reading**) · (b) 4 failing sink shapes · (c) 5 unusable sinks · (d) 3 re-entrant sinks | `{"attempts":16,"held":16,"broken":0,"pUnchanged":true}` | **HELD — 16/16**; the stated boundary (well-formed projections only) respected |
+| **PJ-R-39** · `P-PJ-IM-7` | `P-IM` · `YES` | for any spec set with a throwing accessor — **including every key throwing** — the per-key catch is not a first-key bail-out | `S-PJ-THROW-1` · **12** (`3×4`) | 3 table rows × 4 drives (plain · `format:'number'` · duplicate-name · frozen), expected reasons derived per entry from §2.4 item 3's precedence + `SKIP-ACCEPT-1` | `{"attempts":12,"held":12,"broken":0,"brokenList":[]}` | **HELD — 12/12**; incl. the all-keys-throw row and the duplicate-name drive (the second occurrence of a shared name is `duplicate-name`, the first keeps `accessor-threw`) |
+| **PJ-R-40** · `P-PJ-IM-8` | `P-IM` · `YES` | every call with the same projection is equivalent to a first call with that value; call-local results; one write per key **per call**; the projection observably unchanged and unconsumed; **no guard** | `S-PJ-REUSE-1` · **10** | the 10 named shapes (same sink twice · two sinks · `A,B,A` · `applyVarsToRoot` twice + identity · empty `applied` · `write-refused` skip list · inner from the first key · inner to the same sink · inner with a different projection · a frozen projection) | `{"attempts":10,"held":10,"broken":0,"pUnchanged":true}` | **HELD — 10/10** |
+| **PJ-R-41** · `P-PJ-TP-1` | `P-TP` · `YES (bounded)` | both halves total over the **20**-shape pool; `ok === (skipped.length === 0)`; the partition holds | `S-PJ-POOL-1` + `S-PJ-SEED-1` · **60** draws (`state₀ = 20260927`, one LCG step per draw, `index = stateₙ₊₁ mod 20`; `half = shape.axis`; `sink = SINKS[i mod 5]`) | the same seed/step/index form; the pool enumerated **member by member** from the amended cell; both halves driven; 5 sink shapes | `{"seed":20260927,"draws":60,"poolSize":20,"attempts":60,"held":60,"broken":0,"distinctShapesSeen":19,"missingMembers":[20],"sinksSeen":["null","{style:{}}","throwing","counting","recording"],"axesSeen":["project","apply"],"reasonViolations":[],"shapeCheckFailures":[]}` | **HELD (bounded) — 60/60**; **19 of the 20 pool members reached** — the undrawn member is the doc's **(20)**, `a 3-key spec with two keys naming the SAME --dup` (**identical to the earlier blind run's `O-8` finding**; the draw is a pinned-seed draw, **NOT a 20-of-20 sweep**) |
+| **TOTAL** | **7 `P-IM` + 1 `P-TP` = 8 rows** | — | **`231`** (`23+60+22+36+52+16+12+10`) | — | **`231` driven / `231` held / `0` broken**; stop-after-5 **not triggered**; per-row maximum `60 ≤ 100`, total `231 ≤ 400` | **ALL 8 ROWS HELD — no change from the earlier blind run's `231/231`** |
+
+**The three `YES (bounded)` rows are bounded here too, and this addendum says so plainly:** `P-PJ-IM-1`
+enumerates **23 classes**, `P-PJ-TP-1` draws **60** times over a **20**-member pool (reaching **19**), and
+`P-PJ-IM-5` enumerates **26** values. **None is a proof of its unbounded universal**, and none of the three
+is reported as one. **`P-PJ-TP-1`'s undrawn member protects nothing** — recorded, per the re-derived cell's
+own coverage obligation.
+
+### §12.1.8 The re-derived STATIC rows (5 scenario rows: 2 PASS / 1 FAIL / 2 NOT-BLIND-RUNNABLE)
+
+| Id | Doc clause (row) | Drive (exact) | Observed (verbatim) | Verdict |
+| --- | --- | --- | --- | --- |
+| **PJ-R-43** | **§3.4 `R-20`** (`projection.md:1233`) + §5.1, in the **leg-independent (committed-range) form** the `ADV-PJ-12` finding names (`projection.md:2455`) | `git rev-parse HEAD` + `git diff --name-only 58c7feb HEAD` + `git status --porcelain` + the `devDependencies` key set | `{"head":"e16ee8e3c785159c9c8c5f5e5e2c2fe871b826bd","committedChangeSet":["docs/next-steps.md","docs/specs/projection-greens.md","docs/specs/projection.md","src/shared/layout-projection.ts","tests/layout-projection.test.ts"],"outsideTheAllowList":["docs/specs/projection-greens.md"],"worktreeStatus":["M docs/next-steps.md","?? tests/blind-projection-reverify-a.tmp.test.ts","?? tests/blind-projection-reverify-b.tmp.test.ts","?? tests/blind-projection-reverify-c.tmp.test.ts"],"devDependencyKeys":["@types/node","electron","esbuild","typescript","vitest"]}` | **FAIL — doc/spec drift (§12.4.3).** The committed change set carries **one file outside the row's allow-list**: `docs/specs/projection-greens.md` (the workflow's own mandatory gate-5 artifact) |
+| **PJ-R-44** | §3.5 `R-22` **(a) — SET EQUALITY, not a count** (`projection.md:1252`) | the imported namespace's own keys vs the four documented value exports, **with a fifth-export control** | `{"runtimeKeys":["project","projectVar","applyProjection","applyVarsToRoot"],"valueNamesSorted":["applyProjection","applyVarsToRoot","project","projectVar"],"setEqual":true,"controlFailsOnAFifthExport":true,"countOnlyWouldPass":true}` | **PASS** — set equality holds and the control **does** fail on a fifth export |
+| **PJ-R-45** | §3.5 `R-23` + §7 item 9 — the absent-page-design probe (a probe, not a timeless claim) | `existsSync('docs/skills/designing-pages.md')` + a `readdirSync` of `docs/skills` | `{"pageDesignExists":false,"skillsDir":["process-guardrails.md"]}` | **PASS at this tree state** — the conditional obligation (a coverage-matrix row + a demo-page index entry) does **not** trigger |
+| **PJ-R-46** | §3.4 `R-17` **re-derived** (`VOCAB-SCAN-1`, `ADV-PJ-11`; `projection.md:1229-1230`) | **not driven** | `{"verdictKind":"NOT-BLIND-RUNNABLE","why":"The re-derived R-17 is a normalized source-text scan (raw + assembled + comments) over src/shared/layout-projection.ts plus its own controlled corpora, with a camel-half word-boundary rule (ADV-PJ-11). No runtime drive substitutes for a vocabulary/identifier-boundary absence, and the blind rule forbids reading the module. NOT SCORED AS A PASS."}` | **NOT-BLIND-RUNNABLE** |
+| **PJ-R-47** | §3.4 `R-18` **re-derived** (the NO-TOKEN realm route, `ADV-PJ-17`; `projection.md:1231`) | **not driven** | `{"verdictKind":"NOT-BLIND-RUNNABLE","why":"The re-derived R-18 (ADV-PJ-17) adds the NO-TOKEN realm route (a constructor-chain call, reflection APIs, code-constructing calls) plus an extended token list including global. It is a source-semantic row; a runtime observation cannot distinguish \"never reaches a realm\" from \"would reach it on a path this drive did not take\". The blind rule forbids reading the module and the red set. NOT SCORED AS A PASS."}` | **NOT-BLIND-RUNNABLE** |
+
+**`R-17`/`R-18` remain `NOT-BLIND-RUNNABLE` after their re-derivation** — the re-derivation changed the
+**scan rules** (a camel-token word boundary; the no-token realm route), and a **rule change inside a
+source-reading row is still a source-reading row**. **No reader may infer from this addendum that the
+module carries no banned vocabulary, no realm-rooted access and no no-token realm route** — those stay
+**owed** to a source-reading pass. **`R-19` and `R-22`(b) also stay `NOT-BLIND-RUNNABLE`** (unchanged from
+§6 above); **§5.2's new LEG 4** (the standalone strict `tsc` over the unit's test file) is the leg that
+closes `R-22`(b), and it is **not a blind scenario** — it is recorded here as the **documented leg this
+addendum did not run** (it is a leg, and running it would compile the unit's own file, not this pass's).
+
+---
+
+## §12.2 The row arithmetic, so it closes — 47 rows = 42 PASS + 3 FAIL + 2 NOT-BLIND-RUNNABLE
+
+| Group | Ids | Rows | PASS | FAIL | NBR |
+| --- | --- | --- | --- | --- | --- |
+| §12.1.1 `ADV-PJ-1` territory (`values` own-property question throws) | `PJ-R-01`..`PJ-R-06`, `PJ-R-42` | 7 | 6 | **1** | 0 |
+| §12.1.2 `ADV-PJ-2` territory (projection field read throws) | `PJ-R-07`..`PJ-R-11` | 5 | 4 | **1** | 0 |
+| §12.1.3 `FUNCTION-VALUES-1` ruling + its three controls | `PJ-R-12`..`PJ-R-16` | 5 | 5 | 0 | 0 |
+| §12.1.4 re-derived `P-PJ-IM-3` variant (b) | `PJ-R-17` | 1 | 1 | 0 | 0 |
+| §12.1.5 corrected doc-drift cells (both gate-5 FAILs re-driven) | `PJ-R-18`..`PJ-R-20` | 3 | 3 | 0 | 0 |
+| §12.1.6 further amended-cell rows | `PJ-R-21`..`PJ-R-33` | 13 | 13 | 0 | 0 |
+| §12.1.7 the 8 register rows re-driven | `PJ-R-34`..`PJ-R-41` | 8 | 8 | 0 | 0 |
+| §12.1.8 re-derived static rows | `PJ-R-43`..`PJ-R-47` | 5 | 2 | **1** | **2** |
+| **total** | | **47** | **42** | **3** | **2** |
+
+**No FAIL was converted, no row was re-scoped or softened to reach a pass, and no `NOT-BLIND-RUNNABLE` row
+was scored as a pass.** **The register is `231/231` held — unchanged from the earlier blind run.**
+
+---
+
+## §12.3 Exact commands (as run) and the run's arithmetic
+
+```bash
+node_modules/.bin/vitest run tests/blind-projection-reverify-a.tmp.test.ts \
+                        tests/blind-projection-reverify-b.tmp.test.ts \
+                        tests/blind-projection-reverify-c.tmp.test.ts   # the 47 scenario rows (final run)
+node_modules/.bin/vitest run tests/layout-projection.test.ts            # the unit's OWN row file — COUNT ONLY, never read
+node_modules/.bin/vitest run                                          # the node suite (COUNT ONLY)
+git rev-parse HEAD ; git status --porcelain                           # tree state
+rm -f tests/blind-projection-reverify-{a,b,c}.tmp.test.ts             # deletion
+```
+
+| Leg / artifact | Command | Verbatim result | Exit |
+| --- | --- | --- | --- |
+| the scenario set (§12.1) | `vitest run` over the three temp runners | **`Test Files 2 failed \| 1 passed (3)`** · **`Tests 3 failed \| 44 passed (47)`** (47 scenario rows; the failures are `PJ-R-06`, `PJ-R-08`, `PJ-R-43`) | `1` |
+| the unit's own row file, **while the temp files existed** (count only) | `vitest run tests/layout-projection.test.ts` | `Test Files 1 failed (1)` · **`Tests 1 failed \| 79 passed (80)`** | `1` |
+| node suite, **while the temp files existed** (count only) | `vitest run` | `Test Files 2 failed \| 62 passed (64)` · **`Tests 3 failed \| 1158 passed \| 2 skipped (1163)`** | `1` |
+| the unit's own row file, **AFTER deletion** (count only) | `vitest run tests/layout-projection.test.ts` | **`Test Files 1 passed (1)` · `Tests 80 passed (80)`** | `0` |
+| node suite, **AFTER deletion** (count only) | `vitest run` | **`Test Files 62 passed (62)` · `Tests 1119 passed \| 2 skipped (1121)`** | `0` |
+| the unit's own row file, **FINAL state** of this pass — this addendum present and **uncommitted**, `M docs/next-steps.md` also present (count only) | `vitest run tests/layout-projection.test.ts` | **`Test Files 1 passed (1)` · `Tests 80 passed (80)`** | `0` |
+| node suite, **FINAL state** of this pass (count only) | `vitest run` | **`Test Files 62 passed (62)` · `Tests 1119 passed \| 2 skipped (1121)`** | `0` |
+| **this record** | all of the above | **47 rows — 42 PASS / 3 FAIL / 2 NOT-BLIND-RUNNABLE**; register `231/231` | — |
+
+**The one red in the unit's own row file is attributed by CONTROLLED CHECK, not by reading it:** with the
+three temporary runners present the file reads `1 failed | 79 passed (80)`; **after deleting them the same
+command reads `80 passed (80)`** and the suite reads `62 passed (62)`. So the single failure is **this
+pass's own out-of-scope footprint** (the same `R-20` diff-scope probe the earlier blind pass recorded at
+§7.3), **not a module or contract defect** — and, as §12.1.8's `PJ-R-43` shows, **the committed form of that
+same probe fires on the gate-5 artifact itself** (§12.4.3). **No failure text from the red set was read:
+only the two summary lines were taken (grep-filtered above the failure detail), which is why no row id or
+assertion of that file appears in this addendum.**
+
+---
+
+## §12.4 The FAIL rows — attribution and exact reproduction
+
+**Three FAILs. Each is attributed below with its input, its expected value, its observed value, and the
+clause site the expectation was derived from. NOTHING was fixed by this pass; this pass may write only this
+addendum and its temporary runners.**
+
+### §12.4.1 `PJ-R-06` — the `ADV-PJ-1` cell's **stated reason** does not match the module's recorded reason
+
+**Doc clause cited:** **§3b-1 `ADV-PJ-1`'s remedy cell** — *"a `values` whose own-property test throws yields,
+for that key, the decision the module can honestly make (**`missing-value` — the key could not be established
+as an own key**, per `§2.4` item 3 clause (i)/(2) and `§2.5` item 2)"* — **`docs/specs/projection.md:2444`**
+(section form: `§3b-1`, `ADV-PJ-1`).
+
+**Reproduction (exact):**
+
+```ts
+const { proxy, revoke } = Proxy.revocable({ k1: 1, k2: 2 }, {})
+revoke()
+project(proxy, { k1: { name: '--k1', unit: 'px' }, k2: { name: '--k2', unit: 'px' } })
+```
+
+**Expected per the cell:** `skipped === [['--k2','missing-value']]`-style entries — i.e. **each key
+`missing-value`**, and (in the single-key form) `skipped === [['--k1','missing-value']]`.
+**Observed (verbatim):** `{"observed":[["--k1","accessor-threw"]],"cellStatedReason":"missing-value","holds":false}`
+(single-key form) and `{"skipped":[["--k1","accessor-threw"],["--k2","accessor-threw"]], …, "reasonDomainOk":true}`
+(two-key form, `PJ-R-01`).
+
+| Observable | Expected from the cell | Observed | Clause |
+| --- | --- | --- | --- |
+| `project` throws? | **no** | **no** (`err:null`) — **this half HOLDS** | `§2.4` item 2 (`projection.md:852-857`), `§3.3 I-7` (`:1192`) |
+| one decision per spec entry? | **yes** | **yes** (`decisions:2`, `specEntries:2`) — **HOLDS** | `§3.3 I-1`/`I-7` |
+| reason ∈ the eight-member domain, no ninth? | **yes** | **yes** (`reasonDomainOk:true`) — **HOLDS** | `§2.1`'s union (`:570-581`) |
+| **the reason itself** | **`missing-value`** (the key could not be established as an own key) | **`accessor-threw`** — **FAILS** | `§3b-1` `ADV-PJ-1` (`:2444`) |
+
+**Attribution: DOC/SPEC DRIFT — the cell's stated reason is the only clause that pins this reason, and the
+module records a different (also documented) member.** Two readings, both stated so the supervisor rules
+rather than this pass:
+
+1. **The cell is the clause and it is wrong** (my primary attribution): `§2.4` item 3's `'accessor-threw'`
+   trigger is pinned **precisely** and requires *"the entry's value is a PRESENT OWN PROPERTY OF `values` and
+   the ACT OF READING IT THREW"* (`:883-887`) — for a **revoked Proxy** or a throwing `getOwnPropertyDescriptor`
+   trap the **presence test itself** threw, so nothing established that the value was present, and
+   `accessor-threw`'s meaning (*"the value's accessor THREW while it was being read"*, `§2.1`'s union comment
+   `:576`) is not literally satisfied. Under this reading the **cell** should state `accessor-threw` (a
+   one-cell documentation edit), OR `§2.4` item 3's trigger clause should name the throwing-presence-test
+   shape explicitly.
+2. **The module over-reports** (the alternative): if the cell's `missing-value` is the contract, the module
+   folds the presence-test throw into the read's `try`/`catch` and reports a reason the trigger clause does
+   not authorise for this shape. That would be a **host finding** (an un-hardened reason classification), not
+   a missing guard: **the totality half — the thing `ADV-PJ-1` was filed about — is GREEN** (`PJ-R-01`,
+   `-02`, `-42`: no throw, one decision per entry, reasons in-domain).
+
+**Either way this is NOT a pass and NOT a totality regression.** **The clause that would have to move is
+`§3b-1`'s `ADV-PJ-1` cell (and, at most, `§2.4` item 3's trigger clause); the module's guards are in place
+and green.** **No fix was made by this pass.**
+
+### §12.4.2 `PJ-R-08` — the `ADV-PJ-2` cell is **self-inconsistent** about which field was unreadable
+
+**Doc clause cited:** **§3b-1 `ADV-PJ-2`'s remedy cell** — *"a field that cannot be read is treated as
+**ABSENT**: an unreadable `applied` contributes **no planned writes**, an unreadable `skipped` contributes
+**no carried entries**, so the call returns **`ApplyResult{ applied: {}, skipped: [], ok: true }`** (the
+`M-11` shape for a projection that decided nothing) and nothing throws"* — **`docs/specs/projection.md:2445`**
+(section form: `§3b-1`, `ADV-PJ-2`).
+
+**Reproduction (exact):**
+
+```ts
+const p: any = { }
+const applied = { '--a': '1', '--b': '2' }      // READABLE, intended to be written
+Object.defineProperty(p, 'skipped', {
+  get() { throw new Error('hostile-skipped') }, enumerable: true, configurable: true,
+})
+p.applied = applied
+applyProjection(p, recordingSink())              // ⇒ 2 writes are attempted and land
+```
+
+**Expected per the cell's concluding sentence:** `{applied:{}, skipped:[], ok:true}` with **zero sink calls**.
+**Observed (verbatim):**
+`{"err":null,"applied":[["--a","1"],["--b","2"]],"skipped":[],"ok":true,"calls":[["--a","1"],["--b","2"]]}`.
+
+| Observable | Expected from the cell | Observed | Clause |
+| --- | --- | --- | --- |
+| unreadable `skipped` contributes no carried entries? | **yes** | **yes** (`skipped:[]`) — **HOLDS** | the cell's **per-field** sentence, `F-9`/`I-10` |
+| `ok` computed from the emitted list? | **`true`** | **`true`** — **HOLDS** | `§3.3 I-10` (`:1195`) |
+| nothing throws? | **yes** | **yes** (`err:null`) — **HOLDS** | `§3.3 I-7` |
+| **the readable `applied` half** | **`{}` and zero sink calls** (the cell's blanket result shape) | **`{'--a':'1','--b':'2'}` written to the sink (2 calls)** — **FAILS** | the cell's concluding sentence (`:2445`) |
+
+**The two halves of that one cell cannot both hold for this shape**, and the module follows the **per-field**
+half — which is also the half that agrees with `§2.3` item 1 (the projection is read as an **input record**
+whose readable fields are honoured) and with the `ADV-PJ-2` cell's own first clause. **Attribution: DOC/SPEC
+DRIFT — a self-inconsistent cell (the same class as the gate-5 `F-12` (c) finding), NOT a module
+regression.** **Note the propagation: the gate-4 landing record repeats the blanket form** ("a projection
+whose `applied`/`skipped` read throws ⇒ `{applied:{},skipped:[],ok:true}` with zero sink calls"), so **the
+record and the cell must be reconciled in the same pass as the cell.** **The unreadable-`applied` shape and
+the wholly-unreadable (revoked-Proxy) shape both satisfy the blanket sentence exactly** (`PJ-R-07`, `PJ-R-09`:
+`{applied:{},skipped:[],ok:true}`, `calls:0`) — **the drift is confined to the case where only `skipped` is
+unreadable.** **No fix was made by this pass.**
+
+### §12.4.3 `PJ-R-43` — the diff-scope allow-list does not name the workflow's own gate-5 artifact
+
+**Doc clause cited:** **§3.4 `R-20`** — *"Only `src/shared/layout-projection.ts` (NEW),
+`tests/layout-projection.test.ts` (NEW) and this spec (plus the trackers, the SUPERVISOR's pass) are touched
+by this unit … **A changed file outside that list FAILS the row**"* — **`docs/specs/projection.md:1233`**
+(section form: `§3.4`, `R-20`), read with **§5.1**'s diff scope and the `ADV-PJ-12` finding's named
+**leg-independent form** (`:2455`).
+
+**Reproduction (exact):** `git diff --name-only 58c7feb HEAD` at HEAD `e16ee8e` (the unit's own gate-2 → HEAD
+change set), plus `git status --porcelain`.
+
+**Expected per the row:** every entry ∈ {`src/shared/layout-projection.ts`, `tests/layout-projection.test.ts`,
+`docs/specs/projection.md`, the trackers}.
+**Observed (verbatim):** `["docs/next-steps.md","docs/specs/projection-greens.md","docs/specs/projection.md","src/shared/layout-projection.ts","tests/layout-projection.test.ts"]`
+⇒ **one entry outside the list: `docs/specs/projection-greens.md`.**
+
+**Attribution: DOC/SPEC DRIFT in the allow-list (a documentation/scope defect), with the counter-reading
+recorded rather than hidden:**
+
+1. **Literal reading (my expectation, and the FAIL):** the row names three unit paths + *"the trackers, the
+   SUPERVISOR's pass"*; a **`*-greens.md` artifact is authored by the blind writer and is neither**. Under
+   the literal list the committed change set **does** carry a file outside it — and it will **always** do so
+   for any unit that ran its **mandatory** gate-5 blind pass (`AGENTS.md` item 10a/RCA-4) and committed its
+   artifact at the gate boundary (RCA-8a), which this unit did (`b952597`). **The remedy is a scope wording
+   that names the gate artifacts** (`docs/specs/*-greens.md`, and the review records) **or an explicit
+   statement that the row's allow-list binds the unit's own edits rather than the unit's landing commit
+   range.**
+2. **The counter-reading:** if *"the SUPERVISOR's pass"* is read to cover every **mandatory gate artifact**
+   of the unit's pass — the greens set, the gate records, the doc-review record — then the observation is
+   **inside** the allow-list and this row would **PASS**. **That reading is defensible**, and this pass
+   records it explicitly. **If the supervisor rules that reading, `PJ-R-43` is a row whose expectation was
+   too narrow and the FAIL is mine, not the spec's — it is reported as a FAIL under the literal text because
+   that is the only text this blind pass could derive an assertion from.**
+
+**Neither reading makes this a module regression.** **It IS the corroboration the `ADV-PJ-12` finding asked
+for:** the committed-range form of the row is **not vacuous** (it fires), while the predecessor's
+**worktree** form (`git status --porcelain`) was vacuous here — the worktree carried no unit file at all once
+the artifact was committed. **`PJ-G-62`'s worktree-form PASS therefore does not substitute for this row**, and
+**the `R-20`-vs-gate-artifact interaction is now recorded in both forms** (the predecessor's §7.3 for the
+worktree form; this row for the committed form). **No fix was made by this pass.**
+
+**OBSERVED CORROBORATION FOR READING 2, added after the fact and NOT guessed at (count-only, no failure text
+read):** in this pass's **final state** — **this addendum present and uncommitted**, and
+`M docs/next-steps.md` also present — the unit's **own** `R-20` row reads
+**`Tests 80 passed (80)`** (§12.3), i.e. **the landed row's own probe does NOT flag
+`docs/specs/projection-greens.md` as out of scope** once that artifact is **tracked**. **That is a measured
+observation about the landed row's allow-list and it supports Reading 2** (the artifact is treated as
+belonging to the pass). **It does not settle the question for the *committed-range* form this addendum drove**
+— a probe over `git diff --name-only <base> HEAD` and a `git status`-based probe can carry different
+allow-lists, and this pass may not read the red set to find out which. **Reported so the supervisor rules on
+evidence: under Reading 2 `PJ-R-43` PASSES and this FAIL is attributable to my too-narrow expectation; under
+Reading 1 the spec's allow-list needs a wording that names the gate artifacts.**
+
+---
+
+## §12.5 Checker defects of MY OWN, recorded so none is read as a finding (the §9 class)
+
+**Six defects in this addendum's drives/checkers were found and corrected before the final run; none of the
+three FAILs above is one of them, and no expectation was relaxed to match an observation.**
+
+1. **`PJ-R-32`** — my first drive asserted **one** `sink-unusable` entry for a projection that actually
+   carried **one applied key AND one carried skip** (2 decisions). Corrected to derive the expected count
+   from the projection itself; the row then held on both halves of §2.3 item 4's asymmetry.
+2. **`PJ-R-34`** — my per-name XOR guard fired on the **`F-2` duplicate class**, where one name legitimately
+   appears in `applied` **and** in `skipped` (`I-1` partitions **entries**, not names — the same
+   self-correction the earlier blind run recorded at its §9 item 4). Corrected to apply the XOR check only
+   where the emitted names are **distinct**; the row then held 23/23.
+3. **`PJ-R-37`** — my first drive never wired the **drive's own `format`** into the spec (only the entry's),
+   so seven `number`-format attempts were asserted against `unit`-format output. Corrected; the row then
+   held 52/52 with **20** applied values.
+4. **`PJ-R-39`** — my duplicate-pair fixture picked keys `1`/`3` and, for the *"keys 2/4 throw"* row, selected
+   an undefined key (both of that row's chosen indices were throwing). Corrected to choose the row's first two
+   **finite** keys; the row then held 12/12.
+5. **`PJ-R-40`** — check shape (6) compared its projection against **another projection's** snapshot.
+   Corrected to snapshot the projection under test; the row then held 10/10.
+6. **`PJ-R-43`'s first form** — I initially asserted a **four-path** allow-list and then re-read the row's
+   own parenthetical (*"plus the trackers, the SUPERVISOR's pass"*). The expectation was **not** relaxed to
+   reach a pass: the row is filed as a **FAIL** with **both readings stated** (§12.4.3), and the ambiguity
+   is recorded rather than resolved in my favour.
+
+---
+
+## §12.6 Ambiguities this addendum could NOT resolve into one falsifiable row
+
+| # | The clause(s) | Why one row cannot decide it | What this pass did instead (and observed) |
+| --- | --- | --- | --- |
+| **`O-10`** | **§3b-1 `ADV-PJ-1`'s cell** (`:2444`) vs **§2.4 item 3's `'accessor-threw'` trigger clause** (`:883-887`) | The cell names `missing-value` for a *presence-test* throw; the trigger clause authorises `accessor-threw` **only** for a *value read* that threw. Neither clause covers "the presence test threw", so **two different reasons are each derivable** | Drove the shape four ways (`PJ-R-01`, `-02`, `-42`, `-06`) and recorded the reason the module emits; reported the mismatch as a **FAIL** (§12.4.1) rather than choosing a reading |
+| **`O-11`** | **§3b-1 `ADV-PJ-2`'s cell** (`:2445`) — per-field sentence vs concluding result sentence | For a projection whose **`skipped` alone** is unreadable the two sentences give **different** results (`{applied:{},skipped:[],ok:true}` vs "the readable half is honoured") | Drove both the unreadable-`applied`, the unreadable-`skipped` and the wholly-unreadable shapes and reported the divergence as a **FAIL** (§12.4.2) |
+| **`O-12`** | **§3.4 `R-20` + §5.1** (`:1233`, `:1385-1398`) — *"plus the trackers, the SUPERVISOR's pass"* | Whether a **`*-greens.md` gate artifact** is inside that parenthetical is not stated by any clause; the two readings give opposite verdicts **and** the workflow makes the artifact mandatory | Filed the **literal** reading as a **FAIL** and stated the counter-reading in full (§12.4.3), **with the measured corroboration that the landed row's own probe stays green (`80 passed (80)`) while this addendum is present and uncommitted** — i.e. the observable supports the counter-reading while the committed-range form this addendum drove still fires |
+| **`O-13`** | **§5.5.1 `P-PJ-TP-1`'s pool** — the enumeration lists **what** each member is, but **not each member's `axis` value** | The re-derived binding is `half = shape.axis`, and the axis is a property the enumerated cell does not print per member, so a blind reader must **infer** it (input-shaped members ⇒ `project`; projection-shaped members ⇒ `apply`) | Inferred the axis from each member's own description (`projection.md:1688`'s enumeration tail): members (1)…(10) and (19)/(20) are `values`/`specOf` shapes ⇒ `project`; (11)…(18) are projection arguments ⇒ `apply`. **Recorded, not scored**: the draws, the distinct-member count and the held/broken counts are unaffected either way for the 60 draws driven here |
+
+**One clause this addendum deliberately did NOT drive:** **§5.2's LEG 4** (`:1406`, the standalone strict
+`tsc` over `tests/layout-projection.test.ts`) — it is a **leg**, and running a compiler over the unit's own
+file is not a blind scenario. **`R-22`(b) therefore stays owed to that leg**, exactly as §6 above and the
+`ADV-PJ-16` finding state.
+
+---
+
+## §12.7 The temporary runners — exact paths, and proof of deletion
+
+**Paths used (all temporary, all now deleted):**
+
+- **`tests/blind-projection-reverify-a.tmp.test.ts`** — the 34 territory / re-derived-cell / amended-clause
+  rows (`PJ-R-01`…`PJ-R-33`, `PJ-R-42`).
+- **`tests/blind-projection-reverify-b.tmp.test.ts`** — the 8 register rows (`PJ-R-34`…`PJ-R-41`), 231
+  attempts.
+- **`tests/blind-projection-reverify-c.tmp.test.ts`** — the 5 re-derived static rows (`PJ-R-43`…`PJ-R-47`).
+
+**Deletion proof, exactly:** `ls tests/ | grep -c tmp` prints **`0`**; `git status --porcelain` after
+deletion prints exactly one line — **`M docs/next-steps.md`** — and **no `tests/**` entry at all**. **Final
+state, stated honestly: that tracker modification is NOT this pass's** (see §12.8 item 5). **The only file
+this pass leaves behind is this addendum** (`docs/specs/projection-greens.md`, tracked and modified by this
+append).
+
+**This pass edited no other file**: not the spec, not the module, not the red set, not the trackers, not
+`package.json`, not `scripts/**`, and it never touched `node_modules/provident-ssr/` or
+`../Preempt-Providence/`.
+
+**Blindness, exactly:** `src/shared/layout-projection.ts` was **never opened, never read, never printed** —
+it was imported as a black box through the four documented value exports and driven only through
+caller-supplied fake sinks. `tests/layout-projection.test.ts` was **never read**: it was **run twice for its
+count only**, with the output **grep-filtered to the two summary lines** so that no failure text, row id or
+assertion could enter this session — **a strictly narrower exposure than the earlier blind pass recorded at
+its §7.3.**
+
+---
+
+## §12.8 Honesty — exactly what this addendum does and does NOT prove
+
+**May rest on this addendum:**
+
+1. **the three landed host fixes, driven black-box on their own territory and green on totality**:
+   `ADV-PJ-1` — no `project` throw for a **revoked Proxy**, a throwing **`getOwnPropertyDescriptor`** trap, a
+   throwing **`ownKeys`** trap, a throwing **`get`** trap, a throwing **`has`** trap and a throwing own
+   `hasOwnProperty` access, **with one decision per spec entry and every reason inside the eight-member
+   domain** (`PJ-R-01`…`-04`, `-42`); `ADV-PJ-2` — **`{applied:{},skipped:[],ok:true}` with zero sink calls**
+   for an unreadable **`applied`** field and for a **revoked-Proxy** projection (`PJ-R-07`, `-09`), with both
+   controls green (`PJ-R-10` honoured accessor; `PJ-R-11` per-key `write-refused`); `FUNCTION-VALUES-1` —
+   a **function `values` yields `missing-value` for every entry** including spec keys named
+   `'length'`/`'name'`/`'prototype'`, `applied {}`, no throw (`PJ-R-12`), **and clause (iii)(d)'s three
+   positions stay deliberately duck-typed** (`PJ-R-13`/`-14`/`-15`/`-16`);
+2. **both gate-5 FAILs have NEW verdicts and both are PASSES against the corrected text**: `PJ-G-58` ⇒
+   `PJ-R-18` (`§2.5` item 4 as corrected, all three per-method claims exact) and `PJ-G-75` ⇒ `PJ-R-19`/`-20`
+   (both arrangements of `F-12` cell (c) exact). **Neither FAIL's remedy changed the module, and the module
+   satisfies both corrected cells as written**;
+3. **the four new pinned clauses are green as drives**: `SKIP-NAME-1` (`PJ-R-21`, `-22`), `SKIP-ACCEPT-1`
+   (A)/(B)/(C) (`PJ-R-23`, `-24`, `-25`), `SKIP-THREW-1`'s two-layer clause (`PJ-R-26`) and
+   `FUNCTION-VALUES-1` (`PJ-R-12`, `-13`, `-14`, `-15`, `-16`);
+4. **the re-derived cells hold**: `P-PJ-IM-3` variant (b) is the **APPLIED** case with read count exactly `1`
+   and no `'accessor-threw'` entry (`PJ-R-17`), and `P-PJ-TP-1`'s binding `half = shape.axis`,
+   `sink = SINKS[i mod 5]` reproduces the earlier pass's `60 draws / 19 of 20 members` exactly (`PJ-R-41`);
+5. **the register re-driven from the amended cells: `231` attempts driven / `231` held / `0` broken**,
+   term-by-term against the eight stated counts, with the three `YES (bounded)` rows still marked bounded
+   (§12.1.7). **No register row's statement, type, strategy id, attempt count or total moved, and the pinned
+   seed `20260927` is unchanged**;
+6. **the run corroboration, with its exact tree states**: the unit's own row file **`80 passed (80)`** and
+   the node suite **`62 passed (62)` / `1119 passed | 2 skipped (1121)`** — both measured **after the three
+   temporary runners were deleted**; and the controlled attribution of the one red seen while they existed
+   (§12.3);
+7. **two further documented fail-states from the amended rows are green with controls**: the
+   `sink-unusable` **re-labelling** of carried entries (`PJ-R-28`, `ADV-PJ-8`'s owed row), the applier-side
+   **assembly order** (`PJ-R-30`, `ADV-PJ-7`'s owed row), the non-record `applied` field (`PJ-R-29`), the
+   pinned asymmetry (`PJ-R-32`) and `I-9`'s narrowed form (`PJ-R-31`).
+
+**May NOT rest on this addendum:**
+
+1. **the three FAILs as anything but doc/spec drift or an ambiguity** — `PJ-R-06` and `PJ-R-08` are
+   **cell-vs-module divergences in `§3b-1`'s `ADV-PJ-1`/`ADV-PJ-2` cells** and `PJ-R-43` is a **scope-wording
+   divergence in `§3.4 R-20`/`§5.1`** (§12.4). **A DONE row may NOT read the unit as doc-clean until those
+   sites are edited by the pass that owns them; no module change is owed for `PJ-R-08` or `PJ-R-43` by this
+   pass's evidence, and `PJ-R-06`'s classification is a supervisor ruling** (`O-10`);
+2. **any source-level prohibition** — `R-17`, `R-18` (both **re-derived**, `PJ-R-46`/`-47`), `R-19` and
+   `R-22`(b) stay **`NOT-BLIND-RUNNABLE`** and **ungreen here**;
+3. **`§5.2` LEG 4** — **not run by this pass**; `R-22`(b) remains owed to that leg;
+4. **any CSS, layout, paint, geometry or rendered-value claim** — every sink here is a **fake sink**, so the
+   greens are **the exact strings the sink was handed**, never that a browser would accept them. **No `[U]`
+   row was taken**; no window was booted, no IPC round-trip ran, no transport was exercised, and no real DOM
+   was touched. The module is still imported by **no** `src/**` file, so **nothing here is assembled-app
+   evidence**;
+5. **a clean working tree** — the tree carried **one pre-existing modification** at this pass's close,
+   **`M docs/next-steps.md`**, which **this pass neither made nor touched**: at this pass's **entry** the
+   tree was **clean** (the pass's first `git status --short` printed nothing), and the modification appeared
+   **during** the pass from **outside** it (a concurrent tracker/gate pass). **Every file this pass wrote is
+   listed in §12.7**; the tracker's changed content is **not** this pass's to attribute or to commit;
+6. **the three bounded register rows as proofs** — `P-PJ-IM-1` (`23` classes), `P-PJ-TP-1` (`60` draws,
+   **19 of 20** members) and `P-PJ-IM-5` (`26` values) are **bounded enumerations**, and the register's own
+   honesty block is what binds them.
+
+---
+
+## §12.9 Is the earlier 75-scenario set (§1–§11, `75 = 69 PASS / 2 FAIL / 4 NOT-BLIND-RUNNABLE`) still valid for the AMENDED territory?
+
+**Answer, stated precisely — NOT a blanket yes and NOT a blanket no: the earlier set is PARTIALLY valid. Its
+observed values were not falsified by the three host fixes for the ~68 rows whose drives contain no
+Proxy / throwing-presence-test `values`, no field-read-throwing projection and no function `values`; but
+FOUR things about it are now stale, and a reader must not treat it as covering the amended territory.**
+
+1. **TWO ROWS' VERDICTS ARE SUPERSEDED OUTRIGHT.** `PJ-G-58` and `PJ-G-75` are recorded as **FAIL** against
+   the **pre-correction** text. The corrected text is driven in §12.1.5 and **both now PASS**
+   (`PJ-R-18`, `PJ-R-19`, `PJ-R-20`). **A reader must read those two rows' verdicts as superseded, not as a
+   live red on the module.**
+2. **THREE ROWS MUST BE RE-DERIVED because the amendment WIDENED their territory — their drives do not reach
+   the amended shapes, so their PASS is evidence about the OLD territory only:**
+   - **`PJ-G-45`** (`§3.3 I-7`'s no-throw table: *"16 `project`-shaped inputs … × 45 `applyProjection`
+     shapes"*): the amended `I-7`/`§2.4` item 2 territory now **includes a `values` whose own-property
+     question throws** and (via `ADV-PJ-2`) a **projection whose field read throws** — neither shape is in
+     that table, so **the row's green says nothing about the amended shapes** (this addendum's
+     `PJ-R-01`…`-09` are that re-derivation);
+   - **`PJ-G-34`** (`F-11` both halves): its non-record-`values` drives are `null`/`undefined`/`'x'`/`42`/`[]`
+     — the amendment **added a FUNCTION to that class** (`FUNCTION-VALUES-1`), which the earlier row does
+     not drive (**`PJ-R-12` is the added drive**);
+   - **`PJ-G-23`** (`F-1`'s eleven malformed shapes): it asserted the **reason only**, with the skip's `name`
+     recorded as **unpinned** (`O-1`). **`O-1` is now PINNED** (`SKIP-NAME-1`), so the row is **weaker than
+     the contract** — its PASS is not falsified, but the **name** half must be asserted
+     (**`PJ-R-21`/`-22` are that re-derivation**).
+3. **TWO ROWS' METHOD STATEMENTS ARE SUPERSEDED while their observed values REPRODUCE EXACTLY** — they stay
+   valid as counts and must not be quoted as methods:
+   - **`PJ-G-68`** (`P-PJ-TP-1`): its recorded `60/60` and `distinctShapesSeen:19` reproduce term-for-term in
+     `PJ-R-41`, **but the binding it names (`HALVES[d mod 2]`)** is the **`SUPERSEDED`** form — the amended
+     cell binds `half = shape.axis`, `sink = SINKS[i mod 5]` (`ADV-PJ-6`). **The row's numbers stand; its
+     description of the drive does not.**
+   - **`PJ-G-70`** (`P-PJ-IM-3`): its `36/36` reproduces in `PJ-R-36`, and its variant (b) reading is
+     **already the re-derived one** (the earlier pass recorded `O-4` and drove the APPLIED case). **The row
+     stands as written by that pass; the register's contradicting parenthetical is what moved.**
+4. **EVERYTHING ELSE IN §1–§11 THAT IS NOT `NOT-BLIND-RUNNABLE` REMAINS VALID EVIDENCE**, and its
+   `NOT-BLIND-RUNNABLE` rows (`PJ-G-59`, `-60`, `-61`, `-65`) remain NBR here — with the **re-derived**
+   `R-17`/`R-18` now recorded as `PJ-R-46`/`-47` and `R-19`, `R-22`(b) still owed to a source-reading pass
+   and to §5.2's **LEG 4** respectively.
+
+**The four earlier `FAIL`/`NBR`-adjacent rows NOT affected, stated so the list is not read as a purge:** of
+the earlier 75, **68 rows** (all `M`/`F`/`I`/surface rows whose drives stay outside the three fixes'
+territory, plus the 8 register rows as counts, plus `PJ-G-62`/`-63`/`-64`/`-66` as probes) are **unchanged
+and remain valid**; **2** have superseded verdicts (item 1); **3** owe re-derivation (item 2); **2** have
+superseded method statements with reproducing numbers (item 3). **This addendum supersedes nothing above
+this line and rewrites nothing above this line** — it records the re-verification, the new verdicts and the
+staleness so the next pass can act on it.
+
+**One-line layer honesty:** *47 node-layer `[T]`/`[H]`/`[S]` re-verification rows, authored and run from the
+**amended** `docs/specs/projection.md` alone against `src/shared/layout-projection.ts` imported as a black box
+over caller-supplied fake sinks — **42 PASS / 3 FAIL / 2 NOT-BLIND-RUNNABLE**, the register re-driven
+**231/231 held** with **19 of 20** pool members reached, the two gate-5 FAILs' territory now **PASS**, and the
+three FAILs all doc/spec-level or ambiguity-level (never a totality regression) — a node green, never
+assembled-app evidence, and the `[U]` row is not taken.*
