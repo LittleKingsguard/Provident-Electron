@@ -212,6 +212,16 @@ export function createOwnedListHost<N = unknown>(
         })
         return scored.map((row) => row.key)
       } catch {
+        // `orderOf` is CALLER code and its throw is the contract's to swallow on
+        // EVERY path. This catch is the ONLY guard needed because the comparator
+        // has exactly ONE invocation site — the line above — and only
+        // `setEntries` reaches it (through its single `projectionFor` call);
+        // `setOrder` never invokes the comparator at all. (The earlier wording of
+        // this comment claimed `setOrder` also reached it; corrected 2026-09-27
+        // after the `ADV-LH-1` false-positive reversal — a comment-only change.)
+        // So the caller's ordering policy simply did not supply an order for this
+        // projection: the supplied order stands (exactly the omitted-`orderOf`
+        // default) and no refusal code is invented for it.
         return keys.slice()
       }
     }
@@ -257,11 +267,17 @@ export function createOwnedListHost<N = unknown>(
         refused.push({ key, code: 'duplicate-key', message: 'That key was supplied more than once in this call; its first occurrence holds it.' })
         continue
       }
-      seen.add(key)
       let node: unknown = (raw as ListEntry<N>).node
       if (node === undefined || node === null) {
         if (typeof factory === 'function') {
-          node = factory(raw as ListEntry<N>)
+          try {
+            node = factory(raw as ListEntry<N>)
+          } catch {
+            // The factory is CALLER code: a throw means it produced no node, so
+            // it takes the same safe default as a factory returning null/N-4.
+            refused.push({ key, code: 'factory-returned-null', message: 'The factory returned no node for that entry.' })
+            continue
+          }
           if (node === undefined || node === null) {
             refused.push({ key, code: 'factory-returned-null', message: 'The factory returned no node for that entry.' })
             continue
@@ -271,6 +287,9 @@ export function createOwnedListHost<N = unknown>(
           continue
         }
       }
+      // The key becomes SEEN only now that this occurrence is ACCEPTED: a
+      // REFUSED occurrence contributes nothing, least of all a reserved key.
+      seen.add(key)
       pending.set(key, { entry: raw as ListEntry<unknown>, node })
       keys.push(key)
     }
@@ -319,7 +338,16 @@ export function createOwnedListHost<N = unknown>(
       removed.push(record.node)
     }
     sync()
-    if (fireClose && typeof onCloseCb === 'function') onCloseCb(key, record.entry as ListEntry<N>)
+    if (fireClose && typeof onCloseCb === 'function') {
+      // The drop has already STOOD above (the key is deleted, the node detached,
+      // the run synced), so a throw from the caller's handler is swallowed and
+      // the declared result is still returned.
+      try {
+        onCloseCb(key, record.entry as ListEntry<N>)
+      } catch {
+        // swallowed by contract: the event is reported as it would be without a handler
+      }
+    }
     return result(removed, refused)
   }
 
@@ -349,7 +377,15 @@ export function createOwnedListHost<N = unknown>(
     if (record === undefined) {
       return result([], [{ key, code: 'unknown-key', message: 'No entry is owned for that key.' }])
     }
-    if (typeof onActivateCb === 'function') onActivateCb(key, record.entry as ListEntry<N>)
+    if (typeof onActivateCb === 'function') {
+      // Swallowed: the activation is reported exactly as it would be without a
+      // handler, and the key stays owned.
+      try {
+        onActivateCb(key, record.entry as ListEntry<N>)
+      } catch {
+        // swallowed by contract
+      }
+    }
     return result([], [])
   }
 

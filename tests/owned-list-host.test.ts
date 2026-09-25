@@ -2455,20 +2455,18 @@ describe('ADV-LH — the adversarial regression rows (§2.1 totality, per-seam s
     })
 
     const r1 = tryDrive('setEntries([a,b])', () => h.setEntries([{ key: 'a', node: a }, { key: 'b', node: b }]))
-    const r2 = tryDrive('render()', () => h.render())
-    const r3 = tryDrive("setOrder(['b','a'])", () => h.setOrder(['b', 'a']))
-    const r4 = tryDrive("activate('zzz') (an UNKNOWN key — the only refusal in this sequence)", () => h.activate('zzz'))
-    const r5 = tryDrive("close('b')", () => h.close('b'))
-    const r6 = tryDrive("remove('a')", () => h.remove('a'))
-    const drives = [r1, r2, r3, r4, r5, r6]
 
-    const escaped = firstEscape(drives)
-    expect(
-      escaped,
-      `ADV-LH-1: the throws that escaped (each is a §2.1 totality violation):\n${escapeReport(drives)}`,
-    ).toBe(null)
-    expect(comparatorCalls, 'ADV-LH-1: the injected comparator really IS called (its throw is swallowed, never avoided by not calling it)').toBeGreaterThan(0)
-
+    // -----------------------------------------------------------------------
+    // THE `setEntries`-TIME ASSERTIONS. Everything below is asserted BEFORE the
+    // row's remaining drives run, because those drives MOVE the state it talks
+    // about: `r5` `close('b')` and `r6` `remove('a')` are exactly the two
+    // methods that drop ownership and take the host's node back out of the
+    // mount (`§3.1 M-10`/`M-11`). Asserting these three claims after the whole
+    // six-drive sequence would contradict the row's own later assertions
+    // (`['a']` after the close, `[]` after the remove) and could only pass for a
+    // host that ignored its own `close`/`remove` — `§2.1 keys()` + `§3.1 M-10`.
+    // -----------------------------------------------------------------------
+    expect(h.keys(), 'ADV-LH-1: the keys are OWNED, in the supplied order').toEqual(['a', 'b'])
     const s1 = asResult(r1.value, 'ADV-LH-1 setEntries([a,b]) with a throwing orderOf')
     expect(s1.refused, 'ADV-LH-1: NO refusal is invented for the comparator throw (a swallowed orderOf throw contributes no ListHostRefusal)').toEqual([])
     expect(s1.ok, 'ADV-LH-1: ok === true — nothing was refused (I-1)').toBe(true)
@@ -2476,35 +2474,53 @@ describe('ADV-LH — the adversarial regression rows (§2.1 totality, per-seam s
     expect(s1.placed, 'ADV-LH-1: every VALID entry is still placed — nothing is lost to the throw').toHaveLength(2)
     expect(s1.placed[0], 'ADV-LH-1: placed[0] is the supplied node for a, by reference').toBe(a)
     expect(s1.placed[1], 'ADV-LH-1: placed[1] is the supplied node for b, by reference').toBe(b)
-    expect(h.keys(), 'ADV-LH-1: the keys are OWNED, in the supplied order').toEqual(['a', 'b'])
     expect(childrenOf(mount)[0], 'ADV-LH-1: the foreign sibling is still the first child (§2.3 item 3)').toBe(foreign)
     expect(containsRef(childrenOf(mount), a), 'ADV-LH-1: the valid entry a is really placed in the mount').toBe(true)
     expect(containsRef(childrenOf(mount), b), 'ADV-LH-1: the valid entry b is really placed in the mount').toBe(true)
+
+    const r2 = tryDrive('render()', () => h.render())
     const s2 = asResult(r2.value, 'ADV-LH-1 render() with a throwing orderOf')
     expect(s2.refused, 'ADV-LH-1: render() refuses nothing').toEqual([])
     expect(s2.ok, 'ADV-LH-1: render() is ok').toBe(true)
     expect(s2.order, 'ADV-LH-1: render() keeps the supplied order').toEqual(['a', 'b'])
 
+    const r3 = tryDrive("setOrder(['b','a'])", () => h.setOrder(['b', 'a']))
     const s3 = asResult(r3.value, "ADV-LH-1 setOrder(['b','a']) with a throwing orderOf")
     expect(s3.refused, 'ADV-LH-1: setOrder refuses nothing — the caught comparator falls back to the supplied order').toEqual([])
     expect(s3.ok, 'ADV-LH-1: setOrder is ok').toBe(true)
     expect(s3.order, "ADV-LH-1: setOrder(['b','a']) projects the requested order even though the comparator threw").toEqual(['b', 'a'])
 
+    const r4 = tryDrive("activate('zzz') (an UNKNOWN key — the only refusal in this sequence)", () => h.activate('zzz'))
     const s4 = asResult(r4.value, "ADV-LH-1 activate('zzz') on an unknown key")
     expect(s4.refused, "ADV-LH-1: the ONLY refusal in this sequence is the unknown key's — never the comparator's").toHaveLength(1)
     expect(s4.refused[0].code, "ADV-LH-1: and its class is unknown-key (the five-code vocabulary has no comparator-threw member)").toBe('unknown-key')
     expect(keyIsVerbatim('zzz', s4.refused[0].key), 'ADV-LH-1: the refusal holds the supplied key verbatim').toBe(true)
     expect(s4.ok, 'ADV-LH-1: ok === false for the refused call (I-1)').toBe(false)
 
+    // `close('b')` and its ownership claim are asserted TOGETHER: the claim is
+    // about the state THIS call leaves (b dropped, a still owned), so it is read
+    // before `remove('a')` — the very next drive — drops the rest.
+    const r5 = tryDrive("close('b')", () => h.close('b'))
     const s5 = asResult(r5.value, "ADV-LH-1 close('b')")
     expect(s5.refused, 'ADV-LH-1: close on a KNOWN key refuses nothing').toEqual([])
     expect(s5.ok, 'ADV-LH-1: close is ok').toBe(true)
     expect(h.keys(), "ADV-LH-1: close('b') dropped b, and a is still owned").toEqual(['a'])
 
+    const r6 = tryDrive("remove('a')", () => h.remove('a'))
     const s6 = asResult(r6.value, "ADV-LH-1 remove('a')")
     expect(s6.refused, 'ADV-LH-1: remove on a KNOWN key refuses nothing').toEqual([])
     expect(s6.ok, 'ADV-LH-1: remove is ok').toBe(true)
     expect(h.keys(), 'ADV-LH-1: the host ends owned-empty, with no throw anywhere').toEqual([])
+
+    // The six-drive sequence's own report, read last: every drive is asserted
+    // above on its own state, and this is the whole-sequence totality check.
+    const drives = [r1, r2, r3, r4, r5, r6]
+    const escaped = firstEscape(drives)
+    expect(
+      escaped,
+      `ADV-LH-1: the throws that escaped (each is a §2.1 totality violation):\n${escapeReport(drives)}`,
+    ).toBe(null)
+    expect(comparatorCalls, 'ADV-LH-1: the injected comparator really IS called (its throw is swallowed, never avoided by not calling it)').toBeGreaterThan(0)
   })
 
   it('ADV-LH-3 · seam 1 — a THROWING orderOf is caught with the NAMED safe default: the SUPPLIED order, and no refusal', async () => {
@@ -2532,28 +2548,39 @@ describe('ADV-LH — the adversarial regression rows (§2.1 totality, per-seam s
         throw new Error('orderOf')
       },
     })
-    const drives = [
-      tryDrive('setEntries([a,b])', () => h.setEntries([{ key: 'a', node: a }, { key: 'b', node: b }])),
-      tryDrive("setOrder(['b','a'])", () => h.setOrder(['b', 'a'])),
-      tryDrive('render()', () => h.render()),
-      tryDrive("close('b')", () => h.close('b')),
-      tryDrive("remove('a')", () => h.remove('a')),
-    ]
-    expect(firstEscape(drives), `ADV-LH-3 orderOf: the throws that escaped:\n${escapeReport(drives)}`).toBe(null)
-    expect(calls, 'ADV-LH-3 orderOf: the comparator is CALLED — the safe default is a CATCH, not an avoidance').toBeGreaterThan(0)
-    const s1 = asResult(drives[0].value, 'ADV-LH-3 orderOf setEntries')
+    const d1 = tryDrive('setEntries([a,b])', () => h.setEntries([{ key: 'a', node: a }, { key: 'b', node: b }]))
+
+    // -----------------------------------------------------------------------
+    // THE `setEntries`-TIME ASSERTIONS — the seam's ownership/placement half,
+    // asserted on `d1`'s own state BEFORE the remaining drives run. The drives
+    // below END in `close('b')`/`remove('a')`, which are exactly the two methods
+    // that drop ownership and take the host's node back out of the mount
+    // (`§3.1 M-10`/`M-11`): `keys()` is `['a','b']` HERE and `[]` after them, so
+    // the claim can only be pinned at this moment — asserted after the sequence
+    // it would contradict the ownership-EMPTY assertion below and could only
+    // pass for a host that ignored its own `close`/`remove` (`§2.1 keys()`).
+    // -----------------------------------------------------------------------
+    expect(h.keys(), 'ADV-LH-3 orderOf: the keys ARE owned after the setEntries path (the as-shipped escape loses them)').toEqual(['a', 'b'])
+    const s1 = asResult(d1.value, 'ADV-LH-3 orderOf setEntries')
     expect(s1.refused, 'ADV-LH-3 orderOf: no refusal — the throw is not a contract refusal class').toEqual([])
     expect(s1.ok, 'ADV-LH-3 orderOf: ok === true').toBe(true)
     expect(s1.order, 'ADV-LH-3 orderOf: order is the current key set in SUPPLIED order, once each').toEqual(['a', 'b'])
     expect(s1.placed, 'ADV-LH-3 orderOf: ownership/placement unaffected — both entries placed').toHaveLength(2)
     expect(s1.placed[0], 'ADV-LH-3 orderOf: placed[0] is the supplied node by reference').toBe(a)
     expect(s1.placed[1], 'ADV-LH-3 orderOf: placed[1] is the supplied node by reference').toBe(b)
-    expect(h.keys(), 'ADV-LH-3 orderOf: the keys ARE owned after the setEntries path (the as-shipped escape loses them)').toEqual(['a', 'b'])
     expect(containsRef(childrenOf(mount), a), 'ADV-LH-3 orderOf: nothing is lost to the throw — a is really placed').toBe(true)
-    const s2 = asResult(drives[1].value, "ADV-LH-3 orderOf setOrder(['b','a'])")
+
+    const d2 = tryDrive("setOrder(['b','a'])", () => h.setOrder(['b', 'a']))
+    const d3 = tryDrive('render()', () => h.render())
+    const d4 = tryDrive("close('b')", () => h.close('b'))
+    const d5 = tryDrive("remove('a')", () => h.remove('a'))
+    const drives = [d1, d2, d3, d4, d5]
+    expect(firstEscape(drives), `ADV-LH-3 orderOf: the throws that escaped:\n${escapeReport(drives)}`).toBe(null)
+    expect(calls, 'ADV-LH-3 orderOf: the comparator is CALLED — the safe default is a CATCH, not an avoidance').toBeGreaterThan(0)
+    const s2 = asResult(d2.value, "ADV-LH-3 orderOf setOrder(['b','a'])")
     expect(s2.refused, 'ADV-LH-3 orderOf: setOrder refuses nothing').toEqual([])
     expect(s2.order, 'ADV-LH-3 orderOf: the requested projection is applied').toEqual(['b', 'a'])
-    expect(h.keys(), 'ADV-LH-3 orderOf: the host state stays valid to the end').toEqual([])
+    expect(h.keys(), 'ADV-LH-3 orderOf: the sequence ends owned-EMPTY — close(b) and remove(a) dropped the rest (§3.1 M-10/M-11)').toEqual([])
   })
 
   it('ADV-LH-3 · seam 2 — a THROWING itemFactory is caught with the NAMED safe default: ONE factory-returned-null refusal, the key not owned', async () => {
