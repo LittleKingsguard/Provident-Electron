@@ -2038,6 +2038,88 @@ function gutterImporters(): string[] {
   }
   return importers
 }
+/** **⟶ TIME-SCOPED 2026-09-27 (THE OWNER-SCOPING REPAIR, RULING B).**
+ *
+ *  **THE DEFECT, MEASURED.** The companion claim *"`src/shared/gutter.ts` is imported by NO
+ *  `src/**` file"* was asserted over a walk of the LIVE tree, so it read a LATER unit's
+ *  legitimate work as a `E3` finding. The authority for the repair is `E3`'s OWN contract:
+ *  `docs/specs/gutter.md` `§3.4 R-4` — *"**A later unit that legitimately imports THIS module is
+ *  not a violation of it** — the row binds THIS module's own imports, and the *'imported by no
+ *  `src/**` file'* claim is `R-6`'s"* — together with `§5.1`'s commit-range scope rule (*"a
+ *  census may not read … a sibling's … file … as this unit's diff"*). **AND THE LATER IMPORTER IS
+ *  RULED LEGITIMATE BY NAME:** `docs/specs/gutter-ui.md` `§2.1` clause 2 / `§3.4 R-8` / `§R.3`
+ *  and `docs/decisions.md`'s `E10-MODULE-IMPORTS-THE-CONTROLLER-FACTORY` rule that `E10`'s module
+ *  VALUE-IMPORTS `createResizeController` from `./gutter.js` (a supervisor ruling of 2026-09-27),
+ *  and `§5.1` rows `10`/`11` admit the renderer wiring which imports `E10`'s module — so the live
+ *  importer census is non-empty BY CONSTRUCTION once the sibling lands.
+ *
+ *  **THE REPAIRED READING.** The claim is asserted **IN ITS TIME-SCOPED FORM — *the module was
+ *  imported by NO `src/**` file at `E3`'s own red/green time***, read **over the TRACKED TREE AS
+ *  IT STOOD AT `E3`'s ANCHOR COMMIT** (the commit that ADDED `tests/gutter.test.ts`, the same
+ *  anchor `R-12`'s diff-scope arm already computes): a path is in that tree iff it is TRACKED at
+ *  the anchor. The **CURRENT** importer census is then reported as its own NAMED reading —
+ *  the importing paths plus the unit each one belongs to — **and never as a FAIL**, because a
+ *  later unit's legitimate importer is not a violation of this row. **THE CLAIM KEEPS A
+ *  FALSIFIABLE CONTROL:** an importer that is one of `E3`'s OWN attributed artifacts (`E3`'s
+ *  module, this test file, this spec, its `*-greens.md` and its `archive/reviews/**` record) or
+ *  a `gutter*` path no unit's allow-list claims STILL FAILS the row, in both readings.
+ *
+ *  **THE HONEST BOUND, stated rather than hidden:** the time-scoped reading is a claim about the
+ *  TRACKED tree at the anchor — an importer that was UNTRACKED at that instant is invisible to
+ *  it, exactly as it is invisible to `R-12`'s committed arm. That bound does not weaken the row:
+ *  the CURRENT reading below names every importer on the live tree, so nothing can hide. */
+type ImporterAttribution = {
+  /** The `src/**` files importing the module in the TRACKED tree at the anchor commit. */
+  readonly atAnchor: string[]
+  /** The `src/**` files importing the module in the LIVE tree, tracked or not. */
+  readonly current: string[]
+  /** Each CURRENT importer with the unit that owns it (`E3` / a sibling unit / nobody). */
+  readonly currentOwners: Array<{ path: string; owner: string }>
+  readonly anchor: string | null
+  readonly anchorRange: string | null
+}
+function ownerOfImporter(path: string): string {
+  if (isE3OwnArtifact(path)) return 'E3 (THIS unit)'
+  if (isSiblingUnitArtifact(path)) return 'the SIBLING unit (E10 / U-GUTTER-UI)'
+  return 'NO unit’s allow-list claims it'
+}
+/** Read the importer census of `MODULE_RELPATH` at `E3`'s ANCHOR COMMIT, over the TRACKED tree. */
+function gutterImportersAtAnchor(anchor: string): string[] {
+  const listed = gitOrNull(['ls-tree', '-r', '--name-only', anchor])
+  if (listed === null) return []
+  const importers: string[] = []
+  for (const rel of listed) {
+    if (!/^src\/.*\.tsx?$/.test(rel)) continue
+    if (rel === MODULE_RELPATH) continue
+    const src = gitOrNull(['show', `${anchor}:${rel}`])
+    if (src === null || src.length === 0) continue
+    for (const statement of importStatements(src.join('\n'))) {
+      if (statement.specifier !== null && /(^|\/)gutter(\.js)?$/.test(statement.specifier)) importers.push(rel)
+    }
+  }
+  return Array.from(new Set(importers)).sort()
+}
+function importerAttribution(): ImporterAttribution {
+  const committed = committedChangeSet()
+  const anchor = committed === null ? null : committed.anchor
+  const current = Array.from(new Set(gutterImporters())).sort()
+  return {
+    atAnchor: anchor === null ? [] : gutterImportersAtAnchor(anchor),
+    current,
+    currentOwners: current.map((path) => ({ path, owner: ownerOfImporter(path) })),
+    anchor,
+    anchorRange: committed === null ? null : committed.range,
+  }
+}
+const IMPORTER_ATTRIBUTION: ImporterAttribution = importerAttribution()
+/** **THE ROW'S OWN CONTROL — AN IMPORTER THIS ROW MUST STILL FAIL ON.** `E3`'s own attributed
+ *  artifacts and any `gutter*` path no unit's allow-list claims. Driven on a synthetic list so
+ *  no file is created (`R-12`'s own rule: the synthetic controls never touch `src/**`). */
+const IMPORTER_CONTROL_E3_OWN = ['src/shared/gutter.ts', 'tests/gutter.test.ts', 'docs/specs/gutter.md']
+const IMPORTER_CONTROL_UNCLAIMED = ['src/shared/gutter-stray.ts', 'src/shared/gutter-affordance-orphan.ts']
+function isUnclaimedGutterImporter(path: string): boolean {
+  return /^src\/.*gutter[^/]*\.tsx?$/.test(path) && !isE3OwnArtifact(path) && !isSiblingUnitArtifact(path)
+}
 
 // ===========================================================================
 // §5.5.1 — THE REGISTER'S EXECUTION MACHINERY.
@@ -2832,13 +2914,70 @@ describe('R-16/R-17/R-18 — §3.5 the existence rows (the red’s own premise)'
         prunedCandidates,
       )}`,
     ).toEqual([])
-    // (a) NOT IMPORTED BY ANY `src/**` FILE (`§1` item 8; the companion claim of `R-6`/`R-12`).
+    // (a) **⟶ TIME-SCOPED 2026-09-27 (THE OWNER-SCOPING REPAIR, RULING B).** The as-filed
+    //     reading is kept visible above and superseded: it asserted *"`${MODULE_RELPATH}` is
+    //     imported by NO `src/**` file AT GREEN TIME EITHER"* over a walk of the LIVE tree, which
+    //     reads a LATER unit's legitimate work as an `E3` finding.
+    //
+    //     **THE AUTHORITY — `E3`'s OWN CONTRACT SAYS THIS IS NOT A VIOLATION:**
+    //     `docs/specs/gutter.md` `§3.4 R-4` — *"A later unit that legitimately imports THIS module
+    //     is not a violation of it — the row binds THIS module's own imports, and the 'imported by
+    //     no `src/**` file' claim is `R-6`'s"* — together with `§5.1`'s commit-range scope rule (a
+    //     census may not read a later unit's work as this unit's diff). **AND THE LATER IMPORTER IS
+    //     RULED LEGITIMATE BY NAME:** `docs/specs/gutter-ui.md` `§2.1` clause 2 / `§3.4 R-8` /
+    //     `§R.3` and `docs/decisions.md`'s `E10-MODULE-IMPORTS-THE-CONTROLLER-FACTORY` rule that
+    //     `E10`'s module value-imports `createResizeController` from `./gutter.js` (a supervisor
+    //     ruling of 2026-09-27), and `§5.1` rows `10`/`11` admit the renderer wiring that imports
+    //     `E10`'s module.
+    //
+    //     **THE REPAIRED READING: the claim asserted IN ITS TIME-SCOPED FORM — *the module was
+    //     imported by NO `src/**` file at `E3`'s OWN red/green time* — read over the TRACKED TREE
+    //     AS IT STOOD AT `E3`'s ANCHOR COMMIT, with the CURRENT importer census REPORTED as its own
+    //     NAMED reading (never as a FAIL).**
+    console.log(
+      `R-16 §3.5 (GREEN BRANCH) — THE TIME-SCOPED IMPORTER CENSUS MEASURED :: ${JSON.stringify({
+        anchor: IMPORTER_ATTRIBUTION.anchor,
+        anchorRange: IMPORTER_ATTRIBUTION.anchorRange,
+        importersAtAnchor: IMPORTER_ATTRIBUTION.atAnchor,
+        currentImporters: IMPORTER_ATTRIBUTION.current,
+        currentImportersByOwner: IMPORTER_ATTRIBUTION.currentOwners,
+        clause: 'docs/specs/gutter.md §3.4 R-4 + §5.1; docs/specs/gutter-ui.md §2.1 clause 2 / §3.4 R-8 / §R.3',
+      })}`,
+    )
     expect(
-      gutterImporters(),
-      `R-16 §3.5 (GREEN BRANCH) — \`${MODULE_RELPATH}\` is imported by NO \`src/**\` file at green time either: the unit ships a module with no in-tree consumer, and an importer appearing is a FINDING (the esbuild bundle census would move with it). Read: ${JSON.stringify(
-        gutterImporters(),
-      )}`,
+      IMPORTER_ATTRIBUTION.anchor,
+      `R-16 §3.5 (GREEN BRANCH) — \`E3\`'s ANCHOR COMMIT is readable: the commit that ADDED \`${TEST_RELPATH}\` is the ONLY defensible instant at which "no \`src/**\` file imports this module" was this unit's own claim. Read: \`${String(
+        IMPORTER_ATTRIBUTION.anchor,
+      )}\` (range \`${String(IMPORTER_ATTRIBUTION.anchorRange)}\`)`,
+    ).not.toBe(null)
+    expect(
+      IMPORTER_ATTRIBUTION.atAnchor,
+      `R-16 §3.5 (GREEN BRANCH — **THE TIME-SCOPED CLAIM**) — at \`E3\`'s ANCHOR COMMIT \`${String(
+        IMPORTER_ATTRIBUTION.anchor,
+      )}\` the module was imported by NO \`src/**\` file IN THE TRACKED TREE. This is the row's claim in its time-scoped form (\`docs/specs/gutter.md\` \`§3.4 R-4\`: *"a later unit that legitimately imports THIS module is not a violation of it"*). Read: ${JSON.stringify(
+        IMPORTER_ATTRIBUTION.atAnchor,
+      )} — the CURRENT reading is reported separately below and is NEVER a FAIL here. **AN IMPORTER AMONG \`E3\`'s OWN ATTRIBUTED ARTIFACTS STILL FAILS THIS ROW** (control (a-1))`,
     ).toEqual([])
+    // (a-1) **THE FALSIFIABLE CONTROL — AN IMPORTER AMONG `E3`'S OWN ATTRIBUTED ARTIFACTS MUST
+    //       STILL FAIL THIS ROW.** The row's OWN attribution predicate (`isE3OwnArtifact`, the one
+    //       `R-12`/`R-16` already drive) is asserted over `E3`'s canonical three, and an UNCLAIMED
+    //       `gutter*` importer is asserted to be nobody's — so the time-scoping cannot be read as
+    //       "any importer is now acceptable".
+    expect(
+      IMPORTER_CONTROL_E3_OWN.filter((path) => isE3OwnArtifact(path)),
+      `R-16 §3.5 (GREEN BRANCH, control a-1) — every one of \`E3\`'s OWN attributed artifacts still answers \`isE3OwnArtifact === true\` (an importer among them FAILS this row in BOTH readings). Read: ${JSON.stringify(
+        IMPORTER_CONTROL_E3_OWN.map((path) => [path, isE3OwnArtifact(path)]),
+      )}`,
+    ).toEqual(IMPORTER_CONTROL_E3_OWN)
+    expect(
+      IMPORTER_CONTROL_UNCLAIMED.filter(isUnclaimedGutterImporter),
+      `R-16 §3.5 (GREEN BRANCH, control a-1, THE NEGATIVE DIRECTION) — an UNCLAIMED \`gutter*\` importer is NOBODY's artifact (\`isE3OwnArtifact === false\` AND \`isSiblingUnitArtifact === false\`), so the time-scoping cannot excuse it. Read: ${JSON.stringify(
+        IMPORTER_CONTROL_UNCLAIMED.map((path) => [
+          path,
+          { e3: isE3OwnArtifact(path), sibling: isSiblingUnitArtifact(path), unclaimed: isUnclaimedGutterImporter(path) },
+        ]),
+      )}`,
+    ).toEqual(IMPORTER_CONTROL_UNCLAIMED)
     // (b) THE EXPORT CENSUS HOLDS — `§2.1`'s `2 + 10 = 12` names, asserted BY NAME (`R-5`'s
     // own set-equality form; a bare COUNT would be satisfiable by renaming, `§4.4 S-7`).
     const censusSrc = moduleBytes()
@@ -3114,9 +3253,42 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
         groups,
       )}`,
     ).toEqual(['read', 'dispatch', 'graph', 'code', 'module'])
+    // **⟶ TIME-SCOPED 2026-09-27 (THE OWNER-SCOPING REPAIR, RULING B).** The as-filed reading is
+    // kept visible above and superseded: `'R-6 §3.4 / R-12 §3.4 — the companion claim: at the time
+    // this unit's red set runs, `src/shared/gutter.ts` is imported by NO `src/**` file (an
+    // import-graph probe). A hit FAILS this row'` was asserted over a walk of the LIVE tree, so a
+    // LATER unit's legitimate importer would have FAILED it. **`E3`'s OWN CONTRACT SAYS THAT IS NOT
+    // A VIOLATION: `docs/specs/gutter.md` `§3.4 R-4` — *"a later unit that legitimately imports THIS
+    // module is not a violation of it"* — and `§5.1`'s commit-range scope rule.** The claim is now
+    // asserted IN ITS TIME-SCOPED FORM (*at `E3`'s own red/green time*: the TRACKED tree at `E3`'s
+    // ANCHOR COMMIT), and the CURRENT census is REPORTED with each importer's owning unit — never
+    // as a FAIL. **THE FALSIFIABLE CONTROL (an `E3`-own or unclaimed importer) STILL FAILS.**
+    console.log(
+      `R-6 §3.4 (TIME-SCOPED COMPANION) MEASURED :: ${JSON.stringify({
+        anchor: IMPORTER_ATTRIBUTION.anchor,
+        importersAtAnchor: IMPORTER_ATTRIBUTION.atAnchor,
+        currentImporters: IMPORTER_ATTRIBUTION.current,
+        currentImportersByOwner: IMPORTER_ATTRIBUTION.currentOwners,
+        clause: 'docs/specs/gutter.md §3.4 R-4/§3.4 R-6 + §5.1; docs/specs/gutter-ui.md §2.1 clause 2',
+      })}`,
+    )
     expect(
-      gutterImporters(),
-      'R-6 §3.4 / R-12 §3.4 — the companion claim: at the time this unit’s red set runs, `src/shared/gutter.ts` is imported by NO `src/**` file (an import-graph probe). A hit FAILS this row',
+      IMPORTER_ATTRIBUTION.atAnchor,
+      `R-6 §3.4 / R-12 §3.4 — **THE COMPANION CLAIM IN ITS TIME-SCOPED FORM: at \`E3\`'s OWN red/green time — the TRACKED tree at the ANCHOR COMMIT \`${String(
+        IMPORTER_ATTRIBUTION.anchor,
+      )}\` — \`${MODULE_RELPATH}\` is imported by NO \`src/**\` file.** The CURRENT census (\`${JSON.stringify(
+        IMPORTER_ATTRIBUTION.current,
+      )}\`) is REPORTED separately and is NEVER a FAIL: a LATER unit's legitimate importer is not a violation of this claim (\`docs/specs/gutter.md\` \`§3.4 R-4\`). Read: ${JSON.stringify(
+        IMPORTER_ATTRIBUTION.atAnchor,
+      )}`,
+    ).toEqual([])
+    expect(
+      IMPORTER_ATTRIBUTION.currentOwners.filter(
+        (importer) => isE3OwnArtifact(importer.path) || isUnclaimedGutterImporter(importer.path),
+      ),
+      `R-6 §3.4 — **THE FALSIFIABLE CONTROL, DRIVEN ON THE LIVE READING: NO CURRENT IMPORTER IS AN \`E3\`-OWN ARTIFACT OR AN UNCLAIMED \`gutter*\` PATH.** Those are the two classes that STILL FAIL this claim in either reading; a later unit's own declared importer is the third class and is legitimate by \`§3.4 R-4\`. Read: ${JSON.stringify(
+        IMPORTER_ATTRIBUTION.currentOwners,
+      )}`,
     ).toEqual([])
   })
 
@@ -3452,9 +3624,30 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
           e3OwnDirty,
         )}. RAW dirty set: ${JSON.stringify(dirtySplit.raw)}`,
       ).toContain(TEST_RELPATH)
+      // **⟶ TIME-SCOPED 2026-09-27 (THE OWNER-SCOPING REPAIR, RULING B).** The as-filed reading is
+      // kept visible above and superseded: `'R-12 §3.4 — the companion claim: `src/shared/gutter.ts`
+      // is imported by NO `src/**` file at red time'` was asserted over a walk of the LIVE tree, so a
+      // LATER unit's legitimate importer would have FAILED it. **`docs/specs/gutter.md` `§3.4 R-4`:
+      // *"a later unit that legitimately imports THIS module is not a violation of it"*; `§5.1`'s
+      // commit-range scope rule.** The claim is asserted IN ITS TIME-SCOPED FORM and the CURRENT
+      // census is REPORTED with each importer's owning unit — never as a FAIL.
       expect(
-        gutterImporters(),
-        'R-12 §3.4 — the companion claim: `src/shared/gutter.ts` is imported by NO `src/**` file at red time',
+        IMPORTER_ATTRIBUTION.atAnchor,
+        `R-12 §3.4 — **THE COMPANION CLAIM IN ITS TIME-SCOPED FORM: at \`E3\`'s own red time — the TRACKED tree at the ANCHOR COMMIT \`${String(
+          IMPORTER_ATTRIBUTION.anchor,
+        )}\` — \`${MODULE_RELPATH}\` is imported by NO \`src/**\` file.** The CURRENT census is reported separately: ${JSON.stringify(
+          IMPORTER_ATTRIBUTION.currentOwners,
+        )} — a later unit's legitimate importer is NOT a FAIL here (\`§3.4 R-4\`). Read: ${JSON.stringify(
+          IMPORTER_ATTRIBUTION.atAnchor,
+        )}`,
+      ).toEqual([])
+      expect(
+        IMPORTER_ATTRIBUTION.currentOwners.filter(
+          (importer) => isE3OwnArtifact(importer.path) || isUnclaimedGutterImporter(importer.path),
+        ),
+        `R-12 §3.4 — **THE FALSIFIABLE CONTROL (RED-TIME ARM): NO CURRENT IMPORTER IS AN \`E3\`-OWN ARTIFACT OR AN UNCLAIMED \`gutter*\` PATH.** Those two classes STILL FAIL this claim in either reading. Read: ${JSON.stringify(
+          IMPORTER_ATTRIBUTION.currentOwners,
+        )}`,
       ).toEqual([])
       return
     }
@@ -3715,9 +3908,43 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       ],
       `R-12 §3.4 — and the two readings are DISTINCT BY DESIGN: present in the leaked set, ABSENT from \`E3\`'s own (the repair, as a measurement rather than a claim)`,
     ).toEqual([true, true, false, false])
+    // **⟶ TIME-SCOPED 2026-09-27 (THE OWNER-SCOPING REPAIR, RULING B).** The as-filed reading is
+    // kept visible above and superseded: `'R-12 §3.4 — the companion claim: `src/shared/gutter.ts`
+    // is imported by NO `src/**` file'` was asserted over a walk of the LIVE tree, which reads a
+    // LATER unit's legitimate work as an `E3` finding. **`docs/specs/gutter.md` `§3.4 R-4`: *"a
+    // later unit that legitimately imports THIS module is not a violation of it"*; `§5.1`'s
+    // commit-range scope rule; and the later importer is RULED LEGITIMATE BY NAME at
+    // `docs/specs/gutter-ui.md` `§2.1` clause 2 / `§3.4 R-8` / `§R.3` +
+    // `docs/decisions.md`'s `E10-MODULE-IMPORTS-THE-CONTROLLER-FACTORY`.** The claim is asserted
+    // IN ITS TIME-SCOPED FORM, and the CURRENT census is REPORTED with each importer's owner.
+    console.log(
+      `R-12 §3.4 (TIME-SCOPED COMPANION) MEASURED :: ${JSON.stringify({
+        anchor: IMPORTER_ATTRIBUTION.anchor,
+        importersAtAnchor: IMPORTER_ATTRIBUTION.atAnchor,
+        currentImporters: IMPORTER_ATTRIBUTION.current,
+        currentImportersByOwner: IMPORTER_ATTRIBUTION.currentOwners,
+        clause: 'docs/specs/gutter.md §3.4 R-4 + §5.1; docs/specs/gutter-ui.md §2.1 clause 2 / §3.4 R-8 / §R.3',
+      })}`,
+    )
     expect(
-      gutterImporters(),
-      'R-12 §3.4 — the companion claim: `src/shared/gutter.ts` is imported by NO `src/**` file',
+      IMPORTER_ATTRIBUTION.atAnchor,
+      `R-12 §3.4 — **THE COMPANION CLAIM IN ITS TIME-SCOPED FORM: at \`E3\`'s OWN red/green time — the TRACKED tree at the ANCHOR COMMIT \`${String(
+        IMPORTER_ATTRIBUTION.anchor,
+      )}\` — \`${MODULE_RELPATH}\` is imported by NO \`src/**\` file.** This is the SAME anchor this row's diff-scope arm already computes. **THE CURRENT CENSUS IS REPORTED, NAMED BY OWNER, AND IS NEVER A FAIL:** ${JSON.stringify(
+        IMPORTER_ATTRIBUTION.currentOwners,
+      )} (a later unit's legitimate importer is not a violation of this claim, \`§3.4 R-4\`). Read: ${JSON.stringify(
+        IMPORTER_ATTRIBUTION.atAnchor,
+      )}`,
+    ).toEqual([])
+    expect(
+      IMPORTER_ATTRIBUTION.currentOwners.filter(
+        (importer) => isE3OwnArtifact(importer.path) || isUnclaimedGutterImporter(importer.path),
+      ),
+      `R-12 §3.4 — **THE FALSIFIABLE CONTROL (GREEN-TIME ARM): NO CURRENT IMPORTER IS AN \`E3\`-OWN ARTIFACT OR AN UNCLAIMED \`gutter*\` PATH.** An importer among \`E3\`'s own attributed artifacts (\`${JSON.stringify(
+        IMPORTER_CONTROL_E3_OWN,
+      )}\`) or a \`gutter*\` path no unit's allow-list claims STILL FAILS this row in either reading. Read: ${JSON.stringify(
+        IMPORTER_ATTRIBUTION.currentOwners,
+      )}`,
     ).toEqual([])
     // =======================================================================
     // (i)/(j)/(k) — **⟶ ADDED 2026-09-27 (THE `R-12` DIFF-SCOPE REPAIR PASS, the ONE-ARM
@@ -4493,9 +4720,44 @@ describe('I — §3.3 the every-state invariants', () => {
   })
 
   it('I-15 §3.3 — `[U]` IS NOT OFFERED AND `[D]` IS NOT CLAIMED, AND BOTH REFUSALS ARE STRUCTURAL: no importer and no coordinate read', () => {
+    // **⟶ TIME-SCOPED 2026-09-27 (THE OWNER-SCOPING REPAIR, RULING B).** The as-filed reading is
+    // kept visible above and superseded: `'I-15 §3.3 — the structural reason (a): the module is
+    // imported by NO `src/**` file, so there is NO RENDERED SURFACE TO OBSERVE'` was asserted over
+    // a walk of the LIVE tree, so a LATER unit's legitimate importer — the RULED one, `E10`'s
+    // module value-importing `createResizeController` from `./gutter.js`, plus the renderer wiring
+    // that imports `E10`'s module — made a STRUCTURAL refusal read as a defect. **THE AUTHORITY:
+    // `docs/specs/gutter.md` `§3.4 R-4` (*"a later unit that legitimately imports THIS module is
+    // not a violation of it"*) and `§5.1`'s commit-range scope rule.** The refusal is asserted IN
+    // ITS TIME-SCOPED FORM (*at `E3`'s own red/green time*) and the CURRENT census is REPORTED with
+    // each importer's owning unit — never as a FAIL. **NOTE what does NOT move: `[U]`'s own absence
+    // is a claim about THIS unit's red set (asserted below, on the `[U]`-leg files) and the
+    // coordinate-read half is asserted over the MODULE's bytes — neither reads another unit's work.
+    console.log(
+      `I-15 §3.3 (TIME-SCOPED STRUCTURAL REASON) MEASURED :: ${JSON.stringify({
+        anchor: IMPORTER_ATTRIBUTION.anchor,
+        importersAtAnchor: IMPORTER_ATTRIBUTION.atAnchor,
+        currentImporters: IMPORTER_ATTRIBUTION.current,
+        currentImportersByOwner: IMPORTER_ATTRIBUTION.currentOwners,
+        clause: 'docs/specs/gutter.md §3.4 R-4 + §3.3 I-15 + §5.1; docs/specs/gutter-ui.md §2.1 clause 2 / §R.3',
+      })}`,
+    )
     expect(
-      gutterImporters(),
-      'I-15 §3.3 — the structural reason (a): the module is imported by NO `src/**` file, so there is NO RENDERED SURFACE TO OBSERVE',
+      IMPORTER_ATTRIBUTION.atAnchor,
+      `I-15 §3.3 — **THE STRUCTURAL REASON (a), IN ITS TIME-SCOPED FORM: at \`E3\`'s OWN red/green time — the TRACKED tree at the ANCHOR COMMIT \`${String(
+        IMPORTER_ATTRIBUTION.anchor,
+      )}\` — the module is imported by NO \`src/**\` file, so THERE WAS NO RENDERED SURFACE TO OBSERVE and the \`[U]\` refusal was structural.** The CURRENT census is REPORTED, NAMED BY OWNER: ${JSON.stringify(
+        IMPORTER_ATTRIBUTION.currentOwners,
+      )} — a later unit's legitimate importer does NOT make this unit a \`[U]\` subject (\`§3.4 R-4\`), because the \`[U]\` leg's subject is THIS unit's own red set. Read: ${JSON.stringify(
+        IMPORTER_ATTRIBUTION.atAnchor,
+      )}`,
+    ).toEqual([])
+    expect(
+      IMPORTER_ATTRIBUTION.currentOwners.filter(
+        (importer) => isE3OwnArtifact(importer.path) || isUnclaimedGutterImporter(importer.path),
+      ),
+      `I-15 §3.3 — **THE FALSIFIABLE CONTROL: NO CURRENT IMPORTER IS AN \`E3\`-OWN ARTIFACT OR AN UNCLAIMED \`gutter*\` PATH.** An \`E3\`-own importer or an unclaimed \`gutter*\` importer STILL FAILS this refusal in either reading. Read: ${JSON.stringify(
+        IMPORTER_ATTRIBUTION.currentOwners,
+      )}`,
     ).toEqual([])
     const source = moduleBytes()
     expect(

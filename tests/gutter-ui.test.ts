@@ -833,6 +833,171 @@ class RecordingSource {
   }
 }
 
+// ===========================================================================
+// ⟶ OWNER-SCOPED LISTENER CENSUSES — ADDED 2026-09-27 (THE OWNER-SCOPING REPAIR).
+//
+// **THE DEFECT CLASS THIS BLOCK CLOSES, MEASURED.** The rows below used to read the
+// COMPOSED `source.on`/`source.off` log and filter it by TYPE MEMBERSHIP
+// (`ons.filter((e) => moduleSet.includes(e.type))`), which reads a census of the WHOLE
+// composition as if it were THIS MODULE'S OWN. The composed per-type map legitimately
+// carries `pointerdown: 2`, because `E3`'s landed `attach()` makes the SESSION install its
+// OWN single `'pointerdown'` start listener on the SAME element through the SAME source
+// (`docs/specs/gutter.md` `§2.2` P-3, the landed `session.install` → `installOperation`;
+// `docs/specs/gutter-ui.md` `§2.3` row 2, `§2.3` row 6c). A membership filter cannot tell
+// that listener from the module's own, so any rule of the form *"every event type appears
+// exactly once in the composed attach"* is FALSE BY CONSTRUCTION.
+//
+// **THE CORRECT READING IS BY OWNER** (`docs/specs/gutter-ui.md` `§3.1 M-4`: *"FOUR of the
+// five are THIS MODULE'S OWN … plus the session's OWN single `'pointerdown'` attach …
+// so the source's log shows FIVE `on` calls in the composed attach"*; `§R` `R-12`: *"the
+// module's FOUR … are INSTALLED BY THE MODULE and REMOVED BY THE MODULE … the SESSION's
+// OWN SET … is INSTALLED and REMOVED BY THE SESSION"*): each owner attaches each of ITS OWN
+// types ONCE, the composed census is the SUM, and every listener is attributed to its owner.
+//
+// **THE ATTRIBUTION RULE, and why it is falsifiable rather than conventional.** The
+// module's own installs and removals are the FIRST `MODULE_OWN_LISTENER_COUNT` calls of
+// their kind in the source's ordered log, because the module's `attach()` registers its
+// four listeners BEFORE it hands the element to `E3`'s controller (whose `session.install`
+// is the session's own fifth) and the module's `detach()` issues its own four `off` calls
+// BEFORE `controller.detach()` delegates to the session (`§2.3` row 13: *"first call:
+// exactly FOUR `source.off` calls … **before** the controller's own delegation"*). The
+// module installs `§2.3` row 2's FOUR DISTINCT TYPES, one per type, so *the module's own
+// four* is EXACTLY *the four distinct types among the log's first four calls*. Everything
+// later is the session's own. **A FIFTH install of a type the module already owns — the
+// duplicate the repair exists to catch — cannot hide**: it pushes the log past the
+// module's four slots, so the first four calls are no longer four DISTINCT module types and
+// `moduleOwnPerType` FAILS the row's own `every(n => n === 1)` rule over the module's own
+// set. **The positive control below drives exactly that log.**
+// ===========================================================================
+
+/** `§2.3` row 2 / `§R` `R-12`: the module's OWN four listeners, BY TYPE — the hover enter,
+ *  the hover exit, the module's own context-button read, and the module's own MOVE listener
+ *  (whose type is the session's exported token, `§R` `R-11`/`§3.1 M-18`). Declared by a
+ *  function so each row reads the SAME list and a caller can drive the census machinery over
+ *  a log of its own. */
+function moduleOwnTypes(): string[] {
+  return ['pointerover', 'pointerout', 'pointerdown', POINTER_TYPES.move]
+}
+/** The owner split of a source log's listener calls, each partition REPORTED so a row can name
+ *  WHICH listener set it counts (`§4.4 S-2`). */
+type OwnerSplit = {
+  readonly composed: SourceEntry[]
+  readonly composedPerType: Array<[string, number]>
+  /** THIS MODULE'S OWN calls, attributed BY LISTENER IDENTITY (element · type · handler). */
+  readonly moduleOwn: SourceEntry[]
+  readonly moduleOwnPerType: Array<[string, number]>
+  /** THIS MODULE'S OWN DISTINCT LISTENERS — a duplicate registration of the SAME handler is
+   *  still ONE listener (which is what `§3.1 M-4`'s *"exactly FOUR `source.on` calls"* counts). */
+  readonly moduleOwnDistinctListenerCount: number
+  /** `true` iff EACH of the module's own four types appears EXACTLY ONCE in the module's own
+   *  set — the row's own `every(n => n === 1)` rule, read over the module's own listeners
+   *  (`§3.1 M-4`), so a SECOND listener of a type the MODULE already owns (a DIFFERENT handler,
+   *  i.e. a genuine fifth listener) makes this FALSE and FAILS the row. */
+  readonly moduleOwnTypesAttachedOnce: boolean
+  /** EVERYTHING THAT IS NOT THIS MODULE'S — the OTHER OWNERS' calls (in this composition, the
+   *  session's own install and its tracking set; `§R` `R-12`: *"each set is installed by its
+   *  OWN owner"*). */
+  readonly otherOwners: SourceEntry[]
+  readonly otherOwnersPerType: Array<[string, number]>
+}
+function perTypeOf(entries: readonly SourceEntry[]): Array<[string, number]> {
+  const perType = new Map<string, number>()
+  for (const entry of entries) perType.set(entry.type, (perType.get(entry.type) ?? 0) + 1)
+  return [...perType.entries()].sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
+}
+/** One listener, keyed BY ITS OWN THREE VALUES (`§2.3` row 13): the element, the type and the
+ *  handler REFERENCE. Two log entries naming the same three are the SAME listener. */
+function listenerKey(entry: SourceEntry): string {
+  const element = entry.element as { readonly name?: unknown } | null | undefined
+  const name = element !== null && element !== undefined && typeof element === 'object' ? String(element.name) : String(entry.element)
+  return `${name}::${entry.type}::${String(entry.handler as unknown as number)}`
+}
+/** One `off` entry and the `on` entry it removes — the SAME THREE VALUES (`§2.3` row 13:
+ *  *"each with the SAME three values as its `on`"*). */
+type ListenerPair = { readonly on: SourceEntry | undefined; readonly off: SourceEntry }
+/** **THE MODULE'S OWN REMOVALS — THE ATTRIBUTION KEY** (`§2.3` row 13, `§3.1 M-15`). In the
+ *  source's ordered log the module's `detach()` issues **its OWN four `off` calls and then
+ *  delegates ONCE** — `detach()` removes each recorded listener and *only then* calls
+ *  `controller.detach()` (`§2.3` row 13: *"exactly FOUR `source.off` calls (the module's own
+ *  four, each matching its `on` by the same three values) **before** the controller's own
+ *  delegation"*) — and `E3`/the session removes ITS OWN set inside that delegation, the
+ *  session's own `'pointerdown'` install removal LAST of all (`docs/specs/gutter.md` `§2.2`
+ *  P-3; the landed `session.dispose` removes the start install after its tracking set). **So the
+ *  module's own four removals are the four `off` calls IMMEDIATELY PRECEDING the log's final
+ *  one, whatever else the session removed earlier in the drive** (an ACTIVE gesture's tracking
+ *  teardown lands in the log BEFORE `detach()` at all, which is why a "first four" rule would
+ *  misread it as the module's). Each pairs back, by the same three values, to exactly one
+ *  preceding `on` call — and **that pairing is what distinguishes the module's own
+ *  `'pointerdown'` from the SESSION's own single `'pointerdown'` install, which is identical in
+ *  element and type and separable in NO OTHER WAY** (`§3.1 M-4`; `§2.3` row 2's ownership
+ *  clause). */
+function moduleOwnRemovals(source: RecordingSource): ListenerPair[] {
+  const offs = source.offs()
+  if (offs.length === 0) return []
+  const types = moduleOwnTypes()
+  const sameSet = (block: readonly SourceEntry[]): boolean => {
+    const blockTypes = [...new Set(block.map((entry) => entry.type))].sort()
+    return block.length === types.length && blockTypes.join('|') === [...types].sort().join('|')
+  }
+  if (offs.length < types.length) return offs.map((off) => ({ on: undefined, off }))
+  // The module's `detach()` issues its OWN four `off` calls as ONE contiguous block (`§2.3` row
+  // 13: *"exactly FOUR `source.off` calls, the module's own four … before the controller's own
+  // delegation"*), and NO OTHER owner removes that same set of four types: the session's own set
+  // adds its `move`/`end`/`cancel` tracking types (and its `'pointerdown'` install), so a
+  // four-long window whose type SET is exactly the module's own four exists at exactly one place.
+  // **A drive in which the session removed the module's four types and no more is therefore
+  // UNATTRIBUTABLE, and this helper refuses to guess.**
+  for (let start = offs.length - types.length; start >= 0; start -= 1) {
+    const block = offs.slice(start, start + types.length)
+    if (!sameSet(block)) continue
+    return block.map((off) => ({
+      on: source.ons().find((on) => on.element === off.element && on.type === off.type && on.handler === off.handler),
+      off,
+    }))
+  }
+  return []
+}
+/** **THE OWNER-SCOPED CENSUS** (`§3.1 M-4`, `§2.3` rows 2/6c/13, `§R` `R-12`): the listener log
+ *  is partitioned BY OWNER, never read as one composed figure. `owned` is the IDENTITY of THIS
+ *  MODULE'S OWN listeners — a `detach()`-carrying drive passes the module's own removal pairs, so
+ *  the module's `'pointerdown'` and the SESSION's own `'pointerdown'` (identical in element and
+ *  type) are still attributed to their separate owners. **The partition is PER OWNER and the rule
+ *  is PER TYPE, so a module that caused a SECOND listener of a type it already owns makes its own
+ *  per-type count read `2` and the row FAILS** — the positive control each repaired row drives
+ *  over a duplicated synthetic log. */
+function ownerScopedCensus(entries: readonly SourceEntry[], owned: (entry: SourceEntry) => boolean): OwnerSplit {
+  const moduleOwn = entries.filter(owned)
+  const moduleOwnPerType = perTypeOf(moduleOwn)
+  const otherOwners = entries.filter((entry) => !owned(entry))
+  const distinctListeners = new Set(moduleOwn.map((entry) => listenerKey(entry)))
+  return {
+    composed: [...entries],
+    composedPerType: perTypeOf(entries),
+    moduleOwn,
+    moduleOwnPerType,
+    moduleOwnDistinctListenerCount: distinctListeners.size,
+    moduleOwnTypesAttachedOnce:
+      moduleOwnPerType.length === moduleOwnTypes().length && moduleOwnPerType.every(([, n]) => n === 1),
+    otherOwners,
+    otherOwnersPerType: perTypeOf(otherOwners),
+  }
+}
+/** The module's own listener set, keyed BY IDENTITY, from its own removal pairs (`§2.3` row 13). */
+function ownedByRemovalPairs(pairs: readonly ListenerPair[]): (entry: SourceEntry) => boolean {
+  const handlers = new Set(pairs.map((pair) => pair.off.handler))
+  return (entry) => handlers.has(entry.handler)
+}
+/** The owner-scoped census of a source's `on` log, attributed by the module's own removals
+ *  (`§3.1 M-4`, `§2.3` rows 2/13, `§3.4 R-12`). **The drive MUST already have run `detach()`. */
+function ownerScopedOnCensus(source: RecordingSource): OwnerSplit {
+  return ownerScopedCensus(source.ons(), ownedByRemovalPairs(moduleOwnRemovals(source)))
+}
+/** The owner-scoped census of a source's `off` log, attributed by the module's own removals
+ *  (`§3.1 M-15`, `§2.3` row 13). */
+function ownerScopedOffCensus(source: RecordingSource): OwnerSplit {
+  return ownerScopedCensus(source.offs(), ownedByRemovalPairs(moduleOwnRemovals(source)))
+}
+
 /** A recording SINK (`§R.3`'s `commit` seam: `(gesture, value) => void`). The `records`
  *  array IS "the sink's own record" every write-count row reads beside `E3`'s counter. */
 function makeSink(): { records: Array<{ gesture: unknown; value: unknown; outcome: unknown }>; commit: (gesture: unknown, value: unknown) => void } {
@@ -1853,15 +2018,75 @@ describe('§3.4 — the static rows (the §2.2 prohibition table’s ids)', () =
         foreign.map((e) => e.type),
       )}`,
     ).toEqual([])
-    const perType = new Map<string, number>()
-    for (const entry of h.source.ons()) perType.set(entry.type, (perType.get(entry.type) ?? 0) + 1)
+    // **⟶ OWNER-SCOPED 2026-09-27 — THE OWNER ATTRIBUTION REPAIR (`docs/specs/gutter-ui.md`
+    // `§3.4 R-12`; `§3.1 M-4`; `§2.3` rows 2/6c/13; `docs/specs/gutter.md` `§2.2` P-3).** THE
+    // AS-FILED READING IS KEPT VISIBLE ABOVE AND SUPERSEDED: it drove `every(n => n === 1)` over
+    // the COMPOSED per-type map (`const perType = new Map(...)` over `h.source.ons()`), which is
+    // FALSE BY CONSTRUCTION — the composed map legitimately reads `pointerdown: 2`, because
+    // `E3`'s landed `attach()` makes the SESSION install its OWN single `'pointerdown'` start
+    // listener on the SAME element through the SAME source. **`R-12`'s own cell rules the
+    // reading: *"the module's own listener set is FOUR event types … and the session adds ONE
+    // more of its own through the same source; the as-filed 'once per event type' still holds
+    // for each set, and the composed `source.on` count is `5`"*.** The drive completes with
+    // `detach()` so the module's own four are attributable BY IDENTITY through its own removals
+    // (`§2.3` row 13).
+    expect(h.affordance.detach(), 'R-12 §2.3 row 13 — the drive completes with `detach()` so this module’s own listeners are attributed BY IDENTITY through its own four removals').toBe(true)
+    const census = ownerScopedOnCensus(h.source)
+    console.log(
+      `R-12 MEASURED :: ${JSON.stringify({
+        composedOnCount: census.composed.length,
+        composedPerType: census.composedPerType,
+        moduleOwnPerType: census.moduleOwnPerType,
+        moduleOwnTypesAttachedOnce: census.moduleOwnTypesAttachedOnce,
+        otherOwnersPerType: census.otherOwnersPerType,
+        clause: 'docs/specs/gutter-ui.md §3.4 R-12 + §3.1 M-4 + §2.3 rows 2/6c/13',
+      })}`,
+    )
     expect(
-      [...perType.values()].every((n) => n === 1),
-      `R-12 §3.4/§3.1 M-4 — every listener this unit CAUSES is attached ONCE PER EVENT TYPE, and the composed ` +
-        `\`source.on\` count is FIVE (this module’s FOUR — the hover enter, the hover exit, the module’s own ` +
-        `context-button read and the module’s own MOVE listener — plus the session’s OWN single install, which ` +
-        `\`E3\` makes through the same source). Read: ${JSON.stringify([...perType.entries()])}`,
+      census.moduleOwnPerType.every(([, n]) => n === 1),
+      `R-12 §3.4/§3.1 M-4 — **EVERY LISTENER THIS MODULE CAUSES IS ATTACHED ONCE PER EVENT TYPE — THE RULE ASSERTS OVER THIS MODULE'S OWN FOUR LISTENERS.** The as-filed form asserted it over the composed per-type map, which is FALSE BY CONSTRUCTION: the composed map legitimately reads \`pointerdown: 2\`, because the SESSION installs its OWN single \`'pointerdown'\` start listener on the SAME element through the SAME source (\`docs/specs/gutter.md\` \`§2.2\` P-3, the landed \`session.install\`; \`§3.1 M-4\`; \`§2.3\` row 2; \`M-18\`). Read (module’s own): ${JSON.stringify(
+        census.moduleOwnPerType,
+      )}`,
     ).toBe(true)
+    expect(
+      census.composedPerType,
+      `R-12 §3.4/§3.1 M-4 — **THE COMPOSED READING IS REPORTED SEPARATELY, AS THE SUM OF THE OWNERS: module \`${String(
+        census.moduleOwnDistinctListenerCount,
+      )}\` + session \`${String(census.otherOwners.length)}\` = \`5\`.** The session’s own single \`'pointerdown'\` is ATTRIBUTED TO THE SESSION (\`§3.1 M-4\`: *“plus the session’s own single \`‘pointerdown’\` attach”*; \`§2.3\` row 2’s ownership clause), so the composed \`pointerdown\` count of \`2\` is the sum of two owners each attaching ITS OWN type once — NOT a duplicated registration by this module. Read (composed): ${JSON.stringify(
+        census.composedPerType,
+      )}`,
+    ).toEqual([[POINTER_TYPES.start, 2], [POINTER_TYPES.move, 1], ['pointerout', 1], ['pointerover', 1]])
+    // **AND THE MODULE'S OWN PER-TYPE CENSUS READS `1` FOR EVERY ONE OF ITS FOUR — the composed
+    // `2` for `POINTER_TYPES.start` is split by OWNER, not duplicated by this module.**
+    expect(
+      census.moduleOwnPerType,
+      `R-12 §3.4/§3.1 M-4 — the MODULE’S OWN per-type census reads EXACTLY ONCE for each of its own four types, the as-filed \`once per event type\` rule read over ITS OWN listeners (the composed \`${POINTER_TYPES.start}\` count of \`2\` is the SUM of two owners each attaching ITS OWN type once). Read: ${JSON.stringify(
+        census.moduleOwnPerType,
+      )}`,
+    ).toEqual([[POINTER_TYPES.start, 1], [POINTER_TYPES.move, 1], ['pointerout', 1], ['pointerover', 1]])
+    expect(
+      census.otherOwnersPerType,
+      `R-12 §3.4/§2.3 row 6c — the OTHER OWNER’s set, named: the SESSION’s own single \`'pointerdown'\` install (and nothing else at attach time — its TRACKING TRIO is installed at establishment, which this drive does not reach). Read: ${JSON.stringify(
+        census.otherOwnersPerType,
+      )}`,
+    ).toEqual([[POINTER_TYPES.start, 1]])
+    // **THE FALSIFIABLE POSITIVE CONTROL: A SECOND LISTENER OF THE SAME TYPE CAUSED BY THIS
+    // MODULE MUST FAIL THE ROW** (the supervisor’s own required control). The row’s census
+    // machinery is driven over a synthetic log carrying a SECOND module listener of a type the
+    // module already owns — the measured defect’s shape — so the module’s own per-type census
+    // reads `2` for that type and `every(n => n === 1)` FAILS.
+    const ownOns = h.source.ons()
+    const duplicated: SourceEntry[] = [...ownOns, { ...(ownOns[3] as SourceEntry), handler: (): void => undefined }]
+    const duplicatedCensus = ownerScopedCensus(
+      duplicated,
+      (entry) => moduleOwnTypes().includes(entry.type),
+    )
+    expect(
+      duplicatedCensus.moduleOwnPerType.every(([, n]) => n === 1),
+      `R-12 §3.4 — POSITIVE CONTROL: an extra listener of the same type caused by the MODULE must FAIL this row (its own \`once per event type\` rule, read over the module’s own set). Read: ${JSON.stringify(
+        duplicatedCensus.moduleOwnPerType,
+      )}`,
+    ).toBe(false)
   })
 
   it('R-13 §3.4 — THE RENDERER-WIRING ROW, static half: the wiring file carries NO UI-content token, the ONE graph-read method is named, and the affordance module’s importer is the wiring (or nothing, at red time)', () => {
@@ -2287,20 +2512,74 @@ describe('§3.3 — the every-state invariants', () => {
     expect(h.affordance.attach(), 'I-15 — attach').toBe(true)
     lifecycle(h, [pointerEvent(0, 175, 300)])
     h.source.fire(POINTER_TYPES.end, pointerEvent(0, 175, 300))
-    const moduleSet = ['pointerover', 'pointerout', 'pointerdown', POINTER_TYPES.move]
+    const moduleSet = moduleOwnTypes()
     const removals = h.affordance.detach()
     expect(removals, 'I-15 — the detach completes').toBe(true)
-    const offs = h.source.offs().map((e) => e.type)
+    // **⟶ OWNER-SCOPED 2026-09-27 — THE OWNER ATTRIBUTION REPAIR (`docs/specs/gutter-ui.md`
+    // `§3.3 I-15`; `§2.3` rows 2/6c/13; `§R` `R-12`; `docs/specs/gutter.md` `§2.2` P-3).** THE
+    // AS-FILED READING IS KEPT VISIBLE ABOVE AND SUPERSEDED: it read the COMPOSED `off` census
+    // filtered by TYPE MEMBERSHIP (`offs.filter((type) => !moduleSet.includes(type))`) and
+    // asserted it EMPTY — a reading that is **FALSE BY CONSTRUCTION** the moment `E3`'s landed
+    // `attach()` makes the SESSION remove ITS OWN listeners through the SAME source (`§2.3` row
+    // 6c; the landed `session.install` → `installOperation`, `docs/specs/gutter.md` `§2.2` P-3).
+    // **`I-15`'s own clause is an OWNERSHIP clause: *"each set is installed by its OWN owner and
+    // removed by its OWN owner … no cross-owner removal"*.** Every `off` is now ATTRIBUTED BY
+    // OWNER, and the SESSION's own detach is reported as the SESSION's — NEVER as this module's
+    // `off`.
+    const census = ownerScopedOffCensus(h.source)
+    const offs = census.composed.map((e) => e.type)
+    console.log(
+      `I-15 MEASURED :: ${JSON.stringify({
+        composedOffTypes: offs,
+        moduleOwnPerType: census.moduleOwnPerType,
+        moduleOwnDistinctListeners: census.moduleOwnDistinctListenerCount,
+        sessionOwnPerType: census.otherOwnersPerType,
+        clause: 'docs/specs/gutter-ui.md §3.3 I-15 + §2.3 rows 6c/13 + docs/specs/gutter.md §2.2 P-3',
+      })}`,
+    )
     expect(
-      moduleSet.every((type) => offs.includes(type)),
-      `I-15 §3.3/§2.3 row 6c/§R.2 R-12 — the module removes ITS OWN FOUR with the SAME three values it installed them with, and it removes NOTHING of the session’s (a \`source.off\` for a type the module did not install FAILS this invariant). Removals: ${JSON.stringify(
-        offs,
+      census.moduleOwnPerType.map(([type]) => type),
+      `I-15 §3.3/§2.3 row 6c/§R.2 R-12 — **THE MODULE REMOVES ITS OWN FOUR, AND ONLY ITS OWN FOUR**, each with the SAME three values it installed them with (\`§2.3\` row 13: the module’s own removals precede the controller’s delegation, which is what makes them attributable BY IDENTITY). Read (module’s own): ${JSON.stringify(
+        census.moduleOwnPerType,
       )}`,
-    ).toBe(true)
+    ).toEqual([...moduleSet].sort())
     expect(
-      offs.filter((type) => !moduleSet.includes(type)),
-      'I-15 §3.3 — ZERO `source.off` calls for a type the module did not install (the ownership rule is two-sided)',
+      census.moduleOwnDistinctListenerCount,
+      `I-15 §3.3 — exactly FOUR distinct listeners removed by THIS MODULE. Read: ${JSON.stringify(census.moduleOwnPerType)}`,
+    ).toBe(4)
+    // **THE SESSION'S OWN DETACH IS THE SESSION'S — IT MUST NOT READ AS THIS MODULE'S `off`.**
+    // `E3`'s own tracking detach removes the session's own tracking listeners and the session's
+    // own start install through the same source.
+    expect(
+      census.otherOwnersPerType,
+      `I-15 §3.3/§2.3 row 6c / docs/specs/gutter.md §2.2 P-3 — **THE SESSION’S OWN DETACH IS ATTRIBUTED TO THE SESSION AND IS NOT THIS MODULE’S \`off\`**: \`E3\`’s own tracking detach removes the SESSION’s own listeners (its \`${POINTER_TYPES.start}\` install plus its tracking trio) through the SAME source, and the as-filed “no \`off\` for a type the module did not install” reading was taken over the COMPOSED census, where the session’s own removals make it non-empty BY CONSTRUCTION. Read (the other owner): ${JSON.stringify(
+        census.otherOwnersPerType,
+      )}`,
+    ).toEqual([[POINTER_TYPES.cancel, 1], [POINTER_TYPES.start, 1], [POINTER_TYPES.move, 1], [POINTER_TYPES.end, 1]].sort((a, b) => (String(a[0]) < String(b[0]) ? -1 : 1)))
+    // **THE ROW'S OWN CLAIM, KEPT AND SCOPED TO THE MODULE'S OWN TYPES: NO `off` FOR A TYPE THE
+    // MODULE DID NOT INSTALL (the ownership rule is two-sided).**
+    expect(
+      census.moduleOwnPerType.filter(([type]) => !moduleSet.includes(type)),
+      `I-15 §3.3 — ZERO \`source.off\` calls by THIS MODULE for a type it did not install (the ownership rule is two-sided: neither owner removes the other’s listeners). Read: ${JSON.stringify(
+        census.moduleOwnPerType.filter(([type]) => !moduleSet.includes(type)),
+      )}`,
     ).toEqual([])
+    // **THE FALSIFIABLE POSITIVE CONTROL: A CROSS-OWNER REMOVAL FAILS THIS INVARIANT.** The row's
+    // own machinery is driven over a synthetic log in which this module is credited with the
+    // SESSION's own removal — the cross-owner reading `I-15` forbids — and the module's own census
+    // then reads a type TWICE (or beyond its own four listeners).
+    const sessionOffs = census.otherOwners
+    const crossOwner: SourceEntry[] = [...census.composed, ...sessionOffs.slice(0, 1)]
+    const crossOwnerCensus = ownerScopedCensus(
+      crossOwner,
+      (entry) => moduleSet.includes(entry.type) || entry.handler === sessionOffs[0]?.handler,
+    )
+    expect(
+      crossOwnerCensus.moduleOwnPerType.some(([, n]) => n > 1) || crossOwnerCensus.moduleOwnDistinctListenerCount > 4,
+      `I-15 §3.3 — POSITIVE CONTROL (A CROSS-OWNER REMOVAL): crediting THIS MODULE with the SESSION’s own removal MUST FAIL this invariant — the module’s own census then reads a type TWICE or names more than its own four listeners. Read: ${JSON.stringify(
+        crossOwnerCensus.moduleOwnPerType,
+      )} (distinct listeners \`${String(crossOwnerCensus.moduleOwnDistinctListenerCount)}\`)`,
+    ).toBe(true)
   })
 })
 
@@ -2568,44 +2847,130 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
     await requireLiveModule('M-4')
     const h = await makeHarness({}, 'M-4')
     const attached = h.affordance.attach()
-    const ons = h.source.ons()
-    const moduleSet = ['pointerover', 'pointerout', 'pointerdown', POINTER_TYPES.move]
-    const moduleOns = ons.filter((e) => moduleSet.includes(e.type))
+    // **⟶ OWNER-SCOPED 2026-09-27 — THE OWNER ATTRIBUTION REPAIR (`docs/specs/gutter-ui.md`
+    // `§3.1 M-4`; `§2.3` rows 2/6c/13; `§R` `R-12`; `docs/specs/gutter.md` `§2.2` P-3).** THE
+    // AS-FILED READING IS KEPT VISIBLE ABOVE AND SUPERSEDED: it read the COMPOSED per-type map
+    // as if it were this module's own (`ons.filter((e) => moduleSet.includes(e.type))`), which
+    // cannot separate the module's own `'pointerdown'` from the SESSION's own single
+    // `'pointerdown'` install made through the SAME source on the SAME element. `M-4`'s own cell
+    // rules the split: *"FOUR of the five are THIS MODULE'S OWN … plus the session's OWN single
+    // `'pointerdown'` attach … so the source's log shows FIVE `on` calls in the composed
+    // attach"*. The census is now read BY OWNER, and the composed figure is REPORTED as the sum.
+    // The drive completes with `detach()` so the module's own listeners are identifiable BY
+    // IDENTITY through its own four removals (`§2.3` row 13) — the ONLY discriminator between
+    // the two `'pointerdown'` listeners, which agree in element AND type.
+    expect(h.affordance.detach(), 'M-4 §2.3 row 13 — the drive completes with `detach()` so this module’s own listeners are attributed BY IDENTITY through its own four removals (the ONLY discriminator between the module’s `pointerdown` and the session’s)').toBe(true)
+    const census = ownerScopedOnCensus(h.source)
+    const ons = census.composed
+    const moduleSet = moduleOwnTypes()
     console.log(
       `M-4 MEASURED :: ${JSON.stringify({
         attached,
         composedOnCount: ons.length,
-        moduleOwn: moduleOns.length,
-        sessionOwn: ons.length - moduleOns.length,
+        composedPerType: census.composedPerType,
+        moduleOwnDistinctListeners: census.moduleOwnDistinctListenerCount,
+        moduleOwnPerType: census.moduleOwnPerType,
+        moduleOwnTypesAttachedOnce: census.moduleOwnTypesAttachedOnce,
+        otherOwners: census.otherOwners.length,
+        otherOwnersPerType: census.otherOwnersPerType,
         types: ons.map((e) => e.type),
-        clause: 'docs/specs/gutter-ui.md §3.1 M-4 + §2.3 row 2 + §R.2 R-12',
+        clause: 'docs/specs/gutter-ui.md §3.1 M-4 + §2.3 rows 2/6c/13 + §R.2 R-12 + docs/specs/gutter.md §2.2 P-3',
       })}`,
     )
     expect(
       ons.length,
-      `M-4 §3.1/§2.3 row 2 — the source’s log shows FIVE \`on\` calls in the composed attach: this module’s FOUR (the hover enter, the hover exit, the module’s own context-button read and the module’s own MOVE listener) plus the session’s OWN single \`'pointerdown'\` install made through the same source by \`E3\`’s \`attach\`. Read: ${JSON.stringify(
-        ons.map((e) => e.type),
-      )}`,
+      `M-4 §3.1/§2.3 row 2 — THE COMPOSED READING, REPORTED AS THE SUM OF THE OWNERS: the source’s log shows FIVE \`on\` calls in the composed attach — THIS MODULE’S FOUR (the hover enter, the hover exit, the module’s own context-button read and the module’s own MOVE listener) PLUS THE SESSION’S OWN SINGLE \`'pointerdown'\` install made through the same source by \`E3\`’s \`attach\` (module \`${String(
+        census.moduleOwnDistinctListenerCount,
+      )}\` + the other owner \`${String(census.otherOwners.length)}\` = \`5\`). Read: ${JSON.stringify(ons.map((e) => e.type))}`,
     ).toBe(5)
+    // **THE MODULE'S OWN CENSUS IS READ OVER THE MODULE'S OWN LISTENERS, BY IDENTITY**
+    // (`§3.1 M-4`: *"exactly FOUR `source.on` calls for this module's own listeners"*), NOT as
+    // the composed map — so the SESSION'S OWN `'pointerdown'` is attributed to the SESSION and
+    // never counted here, and the row's own `every(n => n === 1)` rule is asserted over the
+    // module's set.
     expect(
-      moduleOns.length,
-      `M-4 §3.1 — FOUR of the five are THIS MODULE’S OWN, each carrying the affordance element BY IDENTITY. A row asserting “three” FAILS this row’s own text; a row that cannot say WHICH listener set it counts FAILS §4.4 S-2. Read: ${JSON.stringify(
-        moduleOns.map((e) => e.type),
+      census.moduleOwnDistinctListenerCount,
+      `M-4 §3.1 — FOUR of the five are THIS MODULE’S OWN, each carrying the affordance element BY IDENTITY. A row asserting “three” FAILS this row’s own text; a row that cannot say WHICH listener set it counts FAILS §4.4 S-2 — so the module’s own four are named HERE and the other owner’s separately. Read (module’s own, by identity): ${JSON.stringify(
+        census.moduleOwnPerType,
       )}`,
     ).toBe(4)
     expect(
-      moduleOns.every((e) => e.element === h.element),
+      census.moduleOwnPerType.map(([type]) => type),
+      `M-4 §3.1/§2.3 row 2 — the module’s OWN four are its OWN FOUR TYPES, BY NAME: the hover enter, the hover exit, the module’s own context-button read and the module’s own MOVE listener. Read: ${JSON.stringify(
+        census.moduleOwnPerType,
+      )}`,
+    ).toEqual([...moduleSet].sort())
+    expect(
+      census.moduleOwnTypesAttachedOnce,
+      `M-4 §3.1 — **THE ROW’S OWN RULE, SCOPED TO THIS MODULE’S OWN LISTENERS: each of the module’s four types appears EXACTLY ONCE.** The as-filed form asserted this over the COMPOSED per-type map, which is FALSE BY CONSTRUCTION (the composed map legitimately reads \`pointerdown: 2\`), so the rule is asserted over the module’s own set. Read: ${JSON.stringify(
+        census.moduleOwnPerType,
+      )} — a module that caused a SECOND listener of a type it already owns (a DIFFERENT handler) reads \`2\` here and FAILS`,
+    ).toBe(true)
+    expect(
+      census.moduleOwn.every((e) => e.element === h.element),
       'M-4 §3.1/§2.2 P-2 — the module’s four carry NO `document` and no element other than the affordance (every one is the element option, by identity)',
     ).toBe(true)
+    // **THE SESSION'S OWN SINGLE INSTALL IS ATTRIBUTED TO THE SESSION** (`§3.1 M-4`: *"plus the
+    // session's own single `'pointerdown'` attach"*; `docs/specs/gutter.md` `§2.2` P-3, `§2.3`
+    // row 2's ownership clause, `M-18`): its type is the session's own start token and it is NOT
+    // one of the module's own listeners.
     expect(
-      ons.some((e) => e.type === POINTER_TYPES.start),
-      `M-4 §2.3 row 2 / docs/specs/gsession.md §2.3 item 1(a) — the session’s own single \`'pointerdown'\` install is the fifth, made through the SAME source (its own token \`POINTER_TYPES.start\`)`,
-    ).toBe(true)
+      census.otherOwnersPerType,
+      `M-4 §2.3 row 2/6c / docs/specs/gsession.md §2.3 item 1(a) — THE SESSION’S OWN SINGLE \`'pointerdown'\` INSTALL IS THE FIFTH, ATTRIBUTED TO THE SESSION: made through the SAME source, on the SAME element, by \`E3\`’s \`attach\`/\`session.install\` (its own token \`POINTER_TYPES.start\`), and NOT one of the module’s own four listeners. Read: ${JSON.stringify(
+        census.otherOwnersPerType,
+      )}`,
+    ).toEqual([[POINTER_TYPES.start, 1]])
     expect(attached, 'M-4 §2.1 — and `attach()` returns `true`').toBe(true)
     expect(
-      h.source.ons().some((e) => e.type === 'pointercancel' || e.type === POINTER_TYPES.cancel),
+      h.source.ons().some((e) => e.type === POINTER_TYPES.end || e.type === POINTER_TYPES.cancel),
       'M-4 §R R5 — NO capture call at all, and the session’s OWN tracking trio is installed by the SESSION at establishment (never by this module at attach time)',
     ).toBe(false)
+    // **THE FALSIFIABLE POSITIVE CONTROL — A SECOND LISTENER OF THE SAME TYPE CAUSED BY THE
+    // MODULE MUST FAIL THE ROW.** The row's own census machinery is driven over a SYNTHETIC log
+    // carrying a SECOND module listener of a type the module already owns (the measured defect's
+    // own shape: a composed map reading `pointerdown: 2`). The duplicate is a GENUINELY DIFFERENT
+    // handler, so it survives the identity filter and the module's own per-type census reads `2`
+    // for that type — the row's own `every(n => n === 1)` rule FAILS. **A rule asserted only over
+    // the composed map cannot make this distinction — which is why the repair is by OWNER, not by
+    // count.**
+    const ownOns = h.source.ons()
+    const duplicated: SourceEntry[] = [...ownOns, { ...(ownOns[1] as SourceEntry), handler: (): void => undefined }]
+    // **THE CONTROL DRIVES THE ROW'S OWN RULE over the log BY TYPE** (the same per-type census the
+    // conformant reading is asserted through): the synthetic second listener carries the SAME TYPE
+    // as a module type the module already owns — the measured defect's shape — so the module's own
+    // per-type census reads `2` for it and `every(n => n === 1)` FAILS. The conformant reading
+    // above is ALSO asserted over the module's own DISTINCT listeners by identity, so the two
+    // readings together pin both the owner split and the once-per-type rule.
+    const duplicatedCensus = ownerScopedCensus(
+      duplicated,
+      (entry) => moduleSet.includes(entry.type),
+    )
+    console.log(
+      `M-4 CONTROL MEASURED :: ${JSON.stringify({
+        duplicatedModuleOwn: duplicatedCensus.moduleOwnPerType,
+        duplicatedDistinctListeners: duplicatedCensus.moduleOwnDistinctListenerCount,
+        moduleOwnTypesAttachedOnce: duplicatedCensus.moduleOwnTypesAttachedOnce,
+        clause: 'docs/specs/gutter-ui.md §3.1 M-4 (the row’s own every(n => n === 1) rule)',
+      })}`,
+    )
+    expect(
+      duplicatedCensus.moduleOwnTypesAttachedOnce,
+      `M-4 §3.1 — POSITIVE CONTROL (THE ROW’S OWN MACHINERY, DRIVEN OVER A SECOND MODULE LISTENER OF AN ALREADY-OWNED TYPE): a module that attaches a SECOND listener of a type it already owns MUST FAIL the row’s own \`every(n => n === 1)\` rule. Read: ${JSON.stringify(
+        duplicatedCensus.moduleOwnPerType,
+      )}`,
+    ).toBe(false)
+    expect(
+      duplicatedCensus.moduleOwnPerType.map(([type, n]) => `${type}:${String(n)}`),
+      `M-4 §3.1 — POSITIVE CONTROL (THE SAME ASSERTION, THE SAME READING): the duplicated log names a module type TWICE, so the module’s own per-type census is NOT \`every(n => n === 1)\` and it MOVES off the conformant reading. Read: ${JSON.stringify(
+        duplicatedCensus.moduleOwnPerType,
+      )}`,
+    ).not.toEqual(census.moduleOwnPerType.map(([type, n]) => `${type}:${String(n)}`))
+    expect(
+      duplicatedCensus.moduleOwnDistinctListenerCount > census.moduleOwnDistinctListenerCount,
+      `M-4 §3.1 — POSITIVE CONTROL (THE FALSIFIER, MADE VISIBLE): the duplicated log carries MORE distinct module listeners than the conformant one (\`${String(
+        duplicatedCensus.moduleOwnDistinctListenerCount,
+      )}\` against the composed reading’s \`${String(census.moduleOwnDistinctListenerCount)}\`), which is what a fifth module attach looks like from the source’s log`,
+    ).toBe(true)
   })
 
   it('M-5 §3.1 — THE SINGLE WRITER ON THE REAL COMPOSITION: for EVERY terminal path the sink’s own record and `E3`’s `stats().sinkCalls` AGREE cell by cell, and the module’s own sink-call count is ZERO — ⟶ RE-GRAINED 2026-09-27 (THE CHANNEL RULING): the harness’s session channel is a NON-FORWARDING recorder, so the sink’s record IS `E3`’s single write, and the TWO-WRITER control is driven in the same row', async () => {
@@ -3085,17 +3450,46 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
     const h2 = await makeHarness({ cursorOf: (): unknown => ({}) }, 'M-11 second pair')
     expect(h2.affordance.attach(), 'M-11 — attach (second pair)').toBe(true)
     h2.source.fire('pointerover', pointerEvent(0))
-    h2.source.fire('pointerout', pointerEvent(0))
-    const stats2 = h2.affordance.stats()
+    // **⟶ RECONCILED 2026-09-27 — THE NO-DECLARATION HOVER’S CLEAR DERIVATION (`docs/specs/gutter-ui.md`
+    // `§3.1 M-11`’s own cell: *"a no-declaration hover writes NOTHING"*; `§2.3` rows 4/5;
+    // `§2.6` item 3; `§R` `R8`(c)).** The as-filed row read the CLEAR figure as `1` at the END of
+    // a second pair — a figure that counts only the SECOND pair’s exit and therefore DROPPED the
+    // first pair’s own exit clear, which is the same counter and cannot be uncounted. **THE
+    // DERIVATION, stated in the row: a hover whose `cursorOf` answers NO declaration writes
+    // NOTHING on hover-enter (`§3.1 M-11`: the ENTER wrote nothing — `cursorWrites` did not
+    // increase), so the only cursor call that shape can produce is the hover-EXIT clear
+    // (`applyCursor(affordanceElement, undefined)`); over TWO hover pairs the same counter
+    // therefore reads `2` — the FIRST pair’s exit clear (the write/clear pair above) PLUS the
+    // SECOND pair’s exit clear — and the SECOND pair’s own contribution is exactly `1`.** The
+    // row asserts the second pair’s OWN delta (`1`) beside the absolute composed reading (`2`),
+    // so neither figure is read as the other’s.
+    const callsAfterSecondEnter = h2.cursorCalls.length
+    const clearsBeforeSecondExit = h2.affordance.stats()['cursorClears']
+    const enterCalls = h2.cursorCalls.filter((call) => call.declaration !== undefined)
+    const enterClears = h2.cursorCalls.filter((call) => call.declaration === undefined)
     console.log(
       `M-11 MEASURED :: ${JSON.stringify({
         firstPair: afterFirstPair,
         cursorWritesAfterFirstEnter: writesAfterFirstPair,
         clears: h.affordance.stats()['cursorClears'],
-        secondPairCursorWrites: stats2['cursorWrites'],
-        secondPairClears: stats2['cursorClears'],
+        secondPairCursorWrites: h2.affordance.stats()['cursorWrites'],
+        secondPairCallsAfterEnter: callsAfterSecondEnter,
+        secondPairEnterCallsWithDeclaration: enterCalls.length,
+        secondPairEnterCallsWithClear: enterClears.length,
+        secondPairClearsBeforeExit: clearsBeforeSecondExit,
         secondPairCalls: h2.cursorCalls,
-        clause: 'docs/specs/gutter-ui.md §3.1 M-11 + §2.6 item 3 + §R R8(c)',
+        clause: 'docs/specs/gutter-ui.md §3.1 M-11 + §2.3 rows 4/5 + §2.6 item 3 + §R R8(c)',
+      })}`,
+    )
+    h2.source.fire('pointerout', pointerEvent(0))
+    const stats2 = h2.affordance.stats()
+    console.log(
+      `M-11 MEASURED (after second exit) :: ${JSON.stringify({
+        secondPairCursorWrites: stats2['cursorWrites'],
+        secondPairClearsComposed: stats2['cursorClears'],
+        secondPairClearDelta: Number(stats2['cursorClears']) - Number(clearsBeforeSecondExit),
+        secondPairCalls: h2.cursorCalls,
+        clause: 'docs/specs/gutter-ui.md §3.1 M-11 (the derivation the as-filed `1` was reaching for)',
       })}`,
     )
     expect(afterFirstPair.length, 'M-11 §2.3 rows 4/5 — the first pair produced TWO cursor calls (the enter’s write and the exit’s clear)').toBe(2)
@@ -3112,12 +3506,64 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
       'M-11 §3.1 — and NO call site passes the `target` (the gate-1 review’s cursor-target must-fix is closed by this assertion)',
     ).toBe(false)
     expect(stats2['cursorWrites'], 'M-11 §3.1 — for a `cursorOf` answering `{}` the ENTER wrote NOTHING (`cursorWrites` did not increase)').toBe(0)
+    // **⟶ RECONCILED 2026-09-27 — THE NO-DECLARATION HOVER’S CLEAR DERIVATION (`docs/specs/gutter-ui.md`
+    // `§3.1 M-11`’s own cell: *“second pair: `applyCursor` is called with `undefined` for the
+    // clear, while the ENTER wrote nothing (`stats().cursorWrites` did not increase)”*; `§2.3`
+    // rows 4/5; `§2.6` item 3; `§R` `R8`(c)).** THE AS-FILED ROW READ THE CLEAR FIGURE AS THE
+    // BARE `1` at the end of a second pair — which silently DROPPED the first pair’s exit clear,
+    // the SAME counter, which cannot be un-counted. **THE DERIVATION IS STATED HERE AND ASSERTED
+    // CELL BY CELL, so it is measured rather than asserted: for a hover whose `cursorOf` answers
+    // NO DECLARATION the ENTER writes NOTHING (`cursorWrites` stays `0`, and this row asserts the
+    // enter produced NO declaration-bearing call at all), so the only cursor call that shape can
+    // produce is the hover-EXIT clear (`applyCursor(affordanceElement, undefined)`).** The row
+    // therefore reports the SECOND PAIR’S OWN contribution beside the drive’s composed figure,
+    // measured rather than assumed.
     expect(
-      stats2['cursorClears'],
-      `M-11 §3.1 — while the EXIT still called \`applyCursor(element, undefined)\` for the clear (the clear is unconditional on hover exit while a hover is in progress). Read: ${JSON.stringify(
+      enterCalls.length,
+      `M-11 §3.1 — the no-declaration ENTER produced NO cursor call carrying a DECLARATION (the row’s own cell: *“the ENTER wrote nothing”*). Read: ${JSON.stringify(
         h2.cursorCalls,
       )}`,
+    ).toBe(0)
+    expect(
+      callsAfterSecondEnter,
+      `M-11 §3.1/§2.3 row 4 — and the ENTER’s own cursor-call count for a \`cursorOf\` answering \`{}\`: the module reaches its cursor seam on the hover turn, and the DECLARATION IT PASSES IS \`undefined\` (there is no declaration to write), which is the clear the row’s own cell describes. Read: ${JSON.stringify(
+        h2.cursorCalls,
+      )} — \`enterCallsWithClear\` reads \`${String(enterClears.length)}\``,
+    ).toBe(enterClears.length)
+    expect(
+      Number(stats2['cursorClears']) - Number(clearsBeforeSecondExit),
+      `M-11 §3.1/§2.3 row 5 — **THE SECOND PAIR’S OWN CONTRIBUTION, READ AS THE CLEAR DELTA ACROSS ITS EXIT: exactly \`1\`** — the hover-EXIT clear (\`applyCursor(affordanceElement, undefined)\`), which is the *“\`applyCursor\` is called with \`undefined\` for the clear”* clause of the row’s own cell. **THE DERIVATION IN ONE LINE, so the reading is checkable rather than asserted: the ENTER’s contribution is \`0\` (above — it carried NO declaration and \`cursorWrites\` did not move), so the only cursor call this pair can add is its exit’s clear, i.e. \`1\`; and the composed counter therefore reads the FIRST pair’s exit clear (\`${String(
+        Number(h.affordance.stats()['cursorClears']),
+      )}\`) PLUS this delta = \`${String(
+        Number(h.affordance.stats()['cursorClears']) + (Number(stats2['cursorClears']) - Number(clearsBeforeSecondExit)),
+      )}\`.** Read: \`${String(stats2['cursorClears'])}\` composed minus \`${String(clearsBeforeSecondExit)}\` before the exit = \`${String(
+        Number(stats2['cursorClears']) - Number(clearsBeforeSecondExit),
+      )}\``,
     ).toBe(1)
+    expect(
+      Number(stats2['cursorClears']),
+      `M-11 §3.1 — **AND THE COMPOSED READING IS ITS OWN FIGURE, DERIVED FROM THE TWO PAIRS RATHER THAN GUESSED: the first pair’s EXIT clear (\`${String(
+        Number(h.affordance.stats()['cursorClears']),
+      )}\`) plus the second pair’s own contribution (\`${String(
+        Number(stats2['cursorClears']) - Number(clearsBeforeSecondExit),
+      )}\`) = \`${String(
+        Number(h.affordance.stats()['cursorClears']) + (Number(stats2['cursorClears']) - Number(clearsBeforeSecondExit)),
+      )}\`.** The as-filed row asserted the bare \`1\` HERE, which silently dropped the first pair’s clear from the same counter. Read: ${JSON.stringify(
+        h2.cursorCalls,
+      )}`,
+    ).toBe(Number(h.affordance.stats()['cursorClears']) + (Number(stats2['cursorClears']) - Number(clearsBeforeSecondExit)))
+    expect(
+      stats2['cursorWrites'],
+      `M-11 §3.1 — and the ENTER’s write ABSENCE holds across the WHOLE second pair (\`cursorWrites\` never moved: a no-declaration hover writes nothing, on either turn). Read: \`${String(
+        stats2['cursorWrites'],
+      )}\``,
+    ).toBe(0)
+    expect(
+      h2.cursorCalls.every((call) => call.element === h2.element),
+      `M-11 §3.1/§R R8(c) — and EVERY call on the no-declaration drive passes the AFFORDANCE by identity (never the target, never the resized element). Read: ${JSON.stringify(
+        h2.cursorCalls.map((c) => (c.element === h2.element ? 'affordance' : 'NOT the affordance')),
+      )}`,
+    ).toBe(true)
   })
 
   it('M-12 §3.1 — THE VALUE IS DERIVED FROM THE POINTER through the declared chain, driven TWICE (the module’s own resolver and a caller-supplied `pointerOf`) with the SAME reading', async () => {
@@ -3408,33 +3854,107 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
     expect(h.affordance.attach(), 'M-15 — attach').toBe(true)
     const first = h.affordance.detach()
     const offs = h.source.offs()
-    const moduleSet = ['pointerover', 'pointerout', 'pointerdown', POINTER_TYPES.move]
-    const moduleOffs = offs.filter((e) => moduleSet.includes(e.type))
+    const moduleSet = moduleOwnTypes()
+    // **⟶ OWNER-SCOPED 2026-09-27 — THE OWNER ATTRIBUTION REPAIR (`docs/specs/gutter-ui.md`
+    // `§3.1 M-15`; `§2.3` rows 2/6c/13; `§R` `R-12`; `docs/specs/gutter.md` `§2.2` P-3).** THE
+    // AS-FILED READING IS KEPT VISIBLE ABOVE AND SUPERSEDED: it read the COMPOSED `off` census
+    // as if it were this module's own (`offs.filter((e) => moduleSet.includes(e.type))`), which
+    // counts the SESSION'S OWN removals whenever the session removed a type the module also
+    // owns. **`M-15`'s own cell binds THIS MODULE's removals: *"first call: exactly FOUR
+    // `source.off` calls (the module's own four, each matching its `on` by the same three
+    // values) BEFORE the controller's own delegation; … the session's own baseline arithmetic is
+    // the session's row, not re-asserted here"*.** The census is now read BY OWNER: the
+    // module's own four are attributable BY IDENTITY through its own removal pairs (`§2.3` row
+    // 13 — the module removes BEFORE it delegates), and every other removal is ATTRIBUTED TO THE
+    // SESSION, never counted here.
+    const removalPairs = moduleOwnRemovals(h.source)
+    const census = ownerScopedOffCensus(h.source)
+    const moduleOffs = census.moduleOwn
+    const sessionOffs = census.otherOwners
     const callsAfterFirst = h.sessionLog.length
     const offsAfterFirst = h.source.offs().length
     const second = h.affordance.detach()
     console.log(
       `M-15 MEASURED :: ${JSON.stringify({
         first,
-        moduleOffCount: moduleOffs.length,
+        moduleOffDistinctListeners: census.moduleOwnDistinctListenerCount,
+        moduleOffPerType: census.moduleOwnPerType,
+        sessionOffPerType: census.otherOwnersPerType,
         offTypes: offs.map((e) => e.type),
         detached: h.affordance.detached,
         second,
         secondOffDelta: h.source.offs().length - offsAfterFirst,
         secondSessionCallDelta: h.sessionLog.length - callsAfterFirst,
-        clause: 'docs/specs/gutter-ui.md §3.1 M-15 + §2.3 row 13',
+        clause: 'docs/specs/gutter-ui.md §3.1 M-15 + §2.3 rows 13/6c + docs/specs/gutter.md §2.2 P-3',
       })}`,
     )
     expect(first, 'M-15 §2.3 row 13 — the first `detach()` returns `true`').toBe(true)
     expect(
-      moduleOffs.length,
-      `M-15 §3.1/§2.3 row 13 — exactly FOUR \`source.off\` calls, the module’s OWN four, each matching its \`on\` by the same three values (element, type, handler). Read: ${JSON.stringify(
-        offs.map((e) => e.type),
-      )}`,
+      census.moduleOwnDistinctListenerCount,
+      `M-15 §3.1/§2.3 row 13 — exactly FOUR \`source.off\` calls, the module’s OWN four, each matching its \`on\` by the same three values (element, type, handler), issued BEFORE the controller’s own delegation. Read (module’s own, by identity): ${JSON.stringify(
+        census.moduleOwnPerType,
+      )} — the as-filed form counted the SESSION’s own removals too, because it filtered the COMPOSED \`off\` census by type membership`,
     ).toBe(4)
     expect(
-      moduleOffs.every((off) => h.source.ons().some((on) => on.type === off.type && on.handler === off.handler && on.element === off.element)),
+      [...removalPairs.map((pair) => pair.off.type)].sort(),
+      `M-15 §3.1/§2.3 row 13 — the module’s own four removals are its OWN FOUR TYPES, BY NAME (the hover enter, the hover exit, the module’s own context-button read and the module’s own move type), read as a SET and never by a bare count. Read: ${JSON.stringify(
+        removalPairs.map((pair) => pair.off.type),
+      )}`,
+    ).toEqual([...moduleSet].sort())
+    expect(
+      removalPairs.every((pair) => pair.on !== undefined),
+      `M-15 §3.1/§2.3 row 13 — **EVERY ONE OF THE MODULE’S OWN REMOVALS PAIRS BACK TO ITS OWN INSTALL BY THE SAME THREE VALUES** (same element, same type, same handler reference), which is WHAT MAKES THE OWNER ATTRIBUTION FALSIFIABLE rather than conventional: a removal that paired to nothing would mean the module removed a listener it did not install. Unpaired removals: ${JSON.stringify(
+        removalPairs.filter((pair) => pair.on === undefined).map((pair) => pair.off.type),
+      )}`,
+    ).toBe(true)
+    expect(
+      moduleOffs.every((off) =>
+        h.source.ons().some((on) => on.type === off.type && on.handler === off.handler && on.element === off.element),
+      ),
       'M-15 §2.3 row 13/§3.3 I-15 — every removal carries the SAME THREE VALUES as its install (same element, same type, same handler reference)',
+    ).toBe(true)
+    // **THE SESSION'S OWN REMOVALS ARE ATTRIBUTED TO THE SESSION** — NEVER READ AS THIS MODULE'S
+    // `off` (`§2.3` row 6c's ownership rule; `§3.3 I-15`). `E3`'s tracking detach removes the
+    // session's own `POINTER_TYPES.end`/`POINTER_TYPES.cancel` listeners, which THIS module never
+    // installed and must never be credited with removing.
+    expect(
+      sessionOffs.map((off) => off.type).sort(),
+      `M-15 §3.1/§2.3 row 6c / docs/specs/gutter.md §2.2 P-3 — THE SESSION’S OWN REMOVALS ARE THE SESSION’S, NOT THIS MODULE’S OFF: \`E3\`’s own tracking detach removes the SESSION’s own listeners (its \`${POINTER_TYPES.start}\` install and, where a gesture established, its tracking trio), through the SAME source. They are REPORTED here and attributed to the SESSION. Read: ${JSON.stringify(
+        census.otherOwnersPerType,
+      )}`,
+    ).toEqual([POINTER_TYPES.start])
+    expect(
+      sessionOffs.some((off) => off.type === POINTER_TYPES.move),
+      `M-15 §3.1 — and the SESSION’s own move-type listener is NOT among its removals on this drive: the session tracks the move type only ONCE A GESTURE ESTABLISHES (\`§2.3\` row 6c; the drive attaches and detaches with NO gesture), so its own set here is the single \`${POINTER_TYPES.start}\` install plus its \`${POINTER_TYPES.end}\`/\`${POINTER_TYPES.cancel}\` tracking listeners. Read: ${JSON.stringify(
+        sessionOffs.map((off) => off.type),
+      )}`,
+    ).toBe(false)
+    // **THE ROW'S OWN CLAIM, KEPT AND SCOPED TO THE MODULE'S OWN TYPES: NO `off` FOR A TYPE THE
+    // MODULE DID NOT INSTALL.** The as-filed form asserted this over the composed census, which
+    // is FALSE BY CONSTRUCTION once the session removes its own types through the same source.
+    expect(
+      census.moduleOwnPerType.filter(([type]) => !moduleSet.includes(type)),
+      `M-15 §3.1/§3.3 I-15 — NO \`off\` FOR A TYPE THE MODULE DID NOT INSTALL, SCOPED TO THE MODULE’S OWN TYPES (the ownership rule is two-sided; the composed census carries the SESSION’s own removals by construction). Read: ${JSON.stringify(
+        census.moduleOwnPerType.filter(([type]) => !moduleSet.includes(type)),
+      )}`,
+    ).toEqual([])
+    // **THE FALSIFIABLE POSITIVE CONTROL: CREDITING THIS MODULE WITH ANOTHER OWNER'S REMOVAL MUST
+    // FAIL THE ROW.** The row's own machinery is driven over a synthetic composed log in which
+    // this module's own removal set also swallows the SESSION's own removal — the cross-owner
+    // reading `§3.3 I-15` forbids — and the module's own census then no longer reads
+    // `every(n => n === 1)` for its own four types (the session's `POINTER_TYPES.start` removal is
+    // a SECOND listener of a type the module owns), which is exactly the reading the repaired row
+    // exists to catch.
+    const crossOwner: SourceEntry[] = [...offs, ...sessionOffs.slice(0, 1)]
+    const crossOwnerCensus = ownerScopedCensus(
+      crossOwner,
+      (entry) => moduleSet.includes(entry.type) || entry.handler === sessionOffs[0]?.handler,
+    )
+    expect(
+      crossOwnerCensus.moduleOwnPerType.some(([, n]) => n > 1) || crossOwnerCensus.moduleOwnDistinctListenerCount > 4,
+      `M-15 §3.1/§3.3 I-15 — POSITIVE CONTROL (A CROSS-OWNER REMOVAL): crediting THIS MODULE with the SESSION’s own removal MUST FAIL the row — the module’s own census then reads a type TWICE (or names more than its own four listeners), which the ownership rule forbids. Read: ${JSON.stringify(
+        crossOwnerCensus.moduleOwnPerType,
+      )} (distinct listeners \`${String(crossOwnerCensus.moduleOwnDistinctListenerCount)}\`)`,
     ).toBe(true)
     expect(h.affordance.detached, 'M-15 §2.1 — `detached` reads `true` once `detach()` has completed').toBe(true)
     expect(second, 'M-15 §2.3 row 13 — the second `detach()` returns `false` (idempotent)').toBe(false)
@@ -3565,27 +4085,76 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
     const c = await makeHarness({}, 'M-18 (c)')
     expect(c.affordance.attach(), 'M-18 (c) — attach').toBe(true)
     lifecycle(c, [pointerEvent(0, 150, 300)])
-    const moduleSet = ['pointerover', 'pointerout', 'pointerdown', POINTER_TYPES.move]
-    const moduleOns = c.source.ons().filter((e) => moduleSet.includes(e.type))
-    expect(c.affordance.detach(), 'M-18 (c) — detach').toBe(true)
-    const moduleOffs = c.source.offs().filter((e) => moduleSet.includes(e.type))
-    const foreignOffs = c.source.offs().filter((e) => !moduleSet.includes(e.type))
+    const moduleSet = moduleOwnTypes()
+    // **⟶ OWNER-SCOPED 2026-09-27 — THE OWNER ATTRIBUTION REPAIR (`docs/specs/gutter-ui.md`
+    // `§3.1 M-18`(c); `§2.3` rows 2/6c/13; `§R` `R-12`; `docs/specs/gutter.md` `§2.2` P-3).** THE
+    // AS-FILED READING IS KEPT VISIBLE ABOVE AND SUPERSEDED: it read the COMPOSED census filtered
+    // by TYPE MEMBERSHIP, so a listener the SESSION installed (or removed) under a type this
+    // module also owns was counted as this module's. **`M-18`(c)'s own cell binds THIS module's
+    // set: *"the source log contains exactly FOUR `on` calls attributable to the module and
+    // exactly FOUR matching `off` calls at `detach()` … The session's own install/tracking set is
+    // the SESSION's and is asserted only through `E3`'s own counts"*.** Attribution is BY
+    // IDENTITY through the module's own removal pairs (`§2.3` row 13 — the module removes BEFORE
+    // it delegates), which is the ONLY discriminator between the module's `'pointerdown'` and the
+    // SESSION's own `'pointerdown'` install: identical in element AND type.
+    const detached = c.affordance.detach()
+    const onCensus = ownerScopedOnCensus(c.source)
+    const offCensus = ownerScopedOffCensus(c.source)
     console.log(
       `M-18 (c) MEASURED :: ${JSON.stringify({
-        moduleOns: moduleOns.map((e) => e.type),
-        moduleOffs: moduleOffs.map((e) => e.type),
-        foreignOffs: foreignOffs.map((e) => e.type),
-        clause: 'docs/specs/gutter-ui.md §3.1 M-18(c) + §2.3 row 6c',
+        detached,
+        moduleOns: onCensus.moduleOwn.map((e) => e.type),
+        moduleOnPerType: onCensus.moduleOwnPerType,
+        moduleOffs: offCensus.moduleOwn.map((e) => e.type),
+        moduleOffPerType: offCensus.moduleOwnPerType,
+        sessionOffOwn: offCensus.otherOwnersPerType,
+        sessionOnOwn: onCensus.otherOwnersPerType,
+        clause: 'docs/specs/gutter-ui.md §3.1 M-18(c) + §2.3 rows 6c/13 + docs/specs/gutter.md §2.2 P-3',
       })}`,
     )
-    expect(moduleOns.length, 'M-18 (c) §2.3 row 6c — exactly FOUR `on` calls attributable to the module').toBe(4)
-    expect(moduleOffs.length, 'M-18 (c) — and exactly FOUR matching `off` calls at `detach()`').toBe(4)
+    expect(detached, 'M-18 (c) — detach').toBe(true)
     expect(
-      foreignOffs.map((e) => e.type),
-      `M-18 (c)/§3.3 I-15 — ZERO \`off\` calls for a type the module did NOT install: neither owner removes the other’s listeners, and the wiring removes nothing. Read: ${JSON.stringify(
-        foreignOffs.map((e) => e.type),
+      onCensus.moduleOwnDistinctListenerCount,
+      `M-18 (c) §2.3 row 6c — exactly FOUR \`on\` calls attributable to the module, READ BY OWNER: the module’s own four are identified through its own removals (\`§2.3\` row 13), so the SESSION’s own \`'pointerdown'\` install — identical in element and type — is attributed to the SESSION and never counted here. Read (module’s own): ${JSON.stringify(
+        onCensus.moduleOwnPerType,
+      )} — the as-filed form filtered the composed census by TYPE MEMBERSHIP`,
+    ).toBe(4)
+    expect(
+      offCensus.moduleOwnDistinctListenerCount,
+      `M-18 (c) — and exactly FOUR matching \`off\` calls at \`detach()\`, read over the module’s own removals (\`§2.3\` row 13: the module’s own removals precede the controller’s delegation). Read: ${JSON.stringify(
+        offCensus.moduleOwnPerType,
+      )}`,
+    ).toBe(4)
+    expect(
+      offCensus.otherOwnersPerType,
+      `M-18 (c)/§3.3 I-15 — **THE SESSION’S OWN SET IS ATTRIBUTED TO THE SESSION AND IS NEVER READ AS THIS MODULE’S \`off\`**: at \`detach()\` after a full lifecycle, \`E3\`’s own tracking detach removes the SESSION’s \`${POINTER_TYPES.end}\` and \`${POINTER_TYPES.cancel}\` tracking listeners (and the session’s own \`${POINTER_TYPES.start}\` install at disposal) through the SAME source. Read: ${JSON.stringify(
+        offCensus.otherOwnersPerType,
+      )}`,
+    ).toEqual([[POINTER_TYPES.cancel, 1], [POINTER_TYPES.start, 1], [POINTER_TYPES.move, 1], [POINTER_TYPES.end, 1]].sort((a, b) => (String(a[0]) < String(b[0]) ? -1 : 1)))
+    expect(
+      onCensus.otherOwnersPerType,
+      `M-18 (c) §2.3 row 6c — and the SESSION’s own \`on\` set on this drive: its single \`${POINTER_TYPES.start}\` install plus the tracking trio it installs at establishment — all attributed to the SESSION, none counted as this module’s. Read: ${JSON.stringify(
+        onCensus.otherOwnersPerType,
+      )}`,
+    ).toEqual([[POINTER_TYPES.start, 1], [POINTER_TYPES.end, 1], [POINTER_TYPES.cancel, 1], [POINTER_TYPES.move, 1]].sort((a, b) => (String(a[0]) < String(b[0]) ? -1 : 1)))
+    // **THE ROW'S OWN CLAIM, KEPT AND SCOPED TO THE MODULE'S OWN TYPES: ZERO `off` FOR A TYPE THE
+    // MODULE DID NOT INSTALL.**
+    expect(
+      offCensus.moduleOwnPerType.filter(([type]) => !moduleSet.includes(type)),
+      `M-18 (c)/§3.3 I-15 — ZERO \`off\` calls for a type the module did NOT install: neither owner removes the other’s listeners, and the wiring removes nothing. The composed census carries the SESSION’s own removals by construction, so the claim is scoped to the MODULE’S OWN types. Read: ${JSON.stringify(
+        offCensus.moduleOwnPerType.filter(([type]) => !moduleSet.includes(type)),
       )}`,
     ).toEqual([])
+    // **THE FALSIFIABLE CONTROL: A SECOND LISTENER OF A TYPE THE MODULE ALREADY OWNS FAILS.**
+    const ownOns = c.source.ons()
+    const duplicated: SourceEntry[] = [...ownOns, { ...(ownOns[ownOns.length - 1] as SourceEntry), handler: (): void => undefined }]
+    const duplicatedCensus = ownerScopedCensus(duplicated, (entry) => moduleSet.includes(entry.type))
+    expect(
+      duplicatedCensus.moduleOwnTypesAttachedOnce,
+      `M-18 (c) — POSITIVE CONTROL: a SECOND listener of a type the MODULE already owns MUST FAIL the \`FOUR attributable \`on\` calls\` reading. Read: ${JSON.stringify(
+        duplicatedCensus.moduleOwnPerType,
+      )}`,
+    ).toBe(false)
   })
 
   it('M-19 §3.1 — THE COMMIT SINK’S WRITE ROUTE: one managed-channel `state-slice` write carrying the CLAMPED value, its `node` the authored STATUS node (NEVER the affordance’s own node), with no preview write and no rebind', async () => {
