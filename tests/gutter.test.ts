@@ -26,7 +26,7 @@
 // `§4.5` the delegation gate), `§5.1` (diff scope + the DENIED set, `C5`), `§5.2` (the
 // FOUR legs + the three-part `[U]` refusal + the `[D]` non-claim + gate 6),
 // `§5.3` (the DONE row's ELEVEN items), **`§5.5.1` (the typed Property register — ALL
-// THIRTEEN rows, executed here in register order: `314` =
+// THIRTEEN rows, executed here in register order: `299` =
 // `60+11+10+18+20+22+28+20+15+5+12+60+18`, one pinned-seed generator `S-GT-TOTAL-1`
 // (`20260927`, ONE LCG step per draw, `pool.length = 20`), caps `≤100`/row · `≤400`
 // total · stop-after-5-consecutive-failures)**, `§5.5.2` (the honesty block, the
@@ -36,6 +36,38 @@
 // defaults are driven here and each is cited in place**), `§8`, and `§3a`/`§3b` at the
 // END (the adversarial SEED set — the `A-*` rows belong to the LATER pass and NONE is
 // authored here; `§3b` is EMPTY BY CONSTRUCTION).
+//
+// ⟶ RECONCILED 2026-09-27 (THE GATE-3 REALIGNMENT PASS, after the spec amendment): this
+// file was REALIGNED to the amended contract, and the items it carries are named once so a
+// reader does not have to diff the two passes:
+//   (1) THE DECLARED REGISTER TOTAL IS `299` — the sum of the register's own THIRTEEN
+//       printed terms. The as-filed `314` is kept visible ONLY as a dated
+//       CORRECTED-MIS-SUM note (`REGISTER_AS_FILED_TOTAL_DEFECT`) and is NEVER a live
+//       expected value anywhere in this file; the caps are compared against `299`.
+//   (2) THE `reset` RESULT-CODE TABLE (`§2.3` item 4, the amendment's item 2): the
+//       SESSION's SEVEN codes verbatim PLUS the TWO declared controller-local codes
+//       `'unusable-default'` and `'not-resizable'` — a NINE-member CONTROLLER domain
+//       (`R-15`, `I-14`). **THE SESSION's OWN SEVEN-member domain is UNTOUCHED** and is
+//       asserted as its own claim (`gsession.md` `§2.2`/`§4.4 S-9`): no eighth member
+//       enters it, and neither local code is ever passed INTO the session.
+//   (3) `F-13`: the amended refusal `{ok: false, code: 'not-resizable', committed: false}`
+//       for an ESTABLISHED gesture on a non-resizable element, with zero sink writes; the
+//       `'unusable-default'` limb (`F-12`) and the idle `'no-gesture'` limb (`M-16`) stay.
+//   (4) `P-GT-SM-4`: the `isResizable === false` case (`'not-resizable'`) is ADDED as a
+//       drive of the row's shape `(6)` surface WITHOUT moving the declared term `12`; the
+//       honest distinct figure the extra drive yields is REPORTED beside the declared one.
+//   (5) `P-GT-SM-3`: shape `(5)` — a consumer's own `onEnd` calling the sink — is driven
+//       explicitly, and the two readings are asserted as DISTINCT BY DESIGN (the
+//       single-writer shape reads `1` on both counters; the two-writer shape's SINK OWN
+//       RECORD reads `2` while the controller's counter still reads `1`, and that
+//       divergence is the falsifier).
+//   (6) `M-20` (`detach()`'s MULTI-ELEMENT limb) is carried by `M-13`'s arm, as an
+//       explicit assertion citing the row and `§7a.1` item 2's WORKING-DEFAULT status —
+//       which the spec STILL labels unruled.
+//   (7) The `P-GT-SM-2` title carries NO `bounded` label (the register's `(bounded)` set is
+//       `P-GT-PU-2` · `P-GT-IM-2` · `P-GT-TP-1`, and `P-GT-SM-2` is NOT one), and the
+//       register-order list below names the spec's CURRENT cells, including the term-less
+//       clause cell `P-GT-SM-5`, WITHOUT moving any declared term.
 //
 // LAYER: **[T] + static — the NODE ENVELOPE ONLY.** This unit touches no DOM at all —
 // not even `src/shared/dom-shim.ts` (layer declaration anchor 2): **the ELEMENT is an
@@ -78,9 +110,17 @@
 // return-type rows), then the invariants `I-1`..`I-15`, then `M-1`/`M-3`..`M-18`, then
 // `F-9`..`F-19`, then the `§5.5.1` register rows IN REGISTER ORDER
 // (`P-GT-PU-1` · `P-GT-PU-2` · `P-GT-PU-3` · `P-GT-IM-1` · `P-GT-IM-2` · `P-GT-IM-3` ·
-// `P-GT-IM-4` · `P-GT-SM-1` · `P-GT-SM-2` · `P-GT-SM-3` · `P-GT-SM-4` · `P-GT-TP-1` ·
-// `P-GT-TP-2`), then the register's own status row. The `describe` blocks below are in
-// that order; NOTHING is renumbered.
+// `P-GT-IM-4` · `P-GT-SM-1` · `P-GT-SM-2` · `P-GT-SM-3` · `P-GT-SM-4` · `P-GT-SM-5` ·
+// `P-GT-TP-1` · `P-GT-TP-2`), then the register's own status row. The `describe` blocks
+// below are in that order; NOTHING is renumbered.
+//
+// **THE REGISTER-ORDER LIST NAMES THE SPEC'S CURRENT CELLS.** `§5.5.1`'s `SM` family now
+// prints FIVE cells (`P-GT-SM-1`..`P-GT-SM-5`), of which FOUR are attempt-bearing — and
+// **`P-GT-SM-5` is the `detach()` MULTI-ELEMENT limb's `§3.1`-CLASS CLAUSE CELL, carrying
+// NO ATTEMPT TERM**: it is deliberately OUTSIDE the thirteen-term arithmetic and the
+// `≤400`-cap comparison (`§5.5.1`'s own cell; the amendment's item (5) confirmation (i)).
+// Its drive lives inside `M-13`'s row below (`M-20` is the clause row that declares it),
+// so **no declared term moves and no attempt term is invented for it.**
 //
 // **THIS FILE IS THE UNIT'S RED SET (`§4.1`) AND NOTHING ELSE.** It is authored FIRST and
 // RUN before any implementation: `src/shared/gutter.ts` does not exist, so every clause
@@ -90,13 +130,16 @@
 //
 // ⟶ THE `§7a.1` DEFAULTS DRIVEN HERE, named once so no reader has to reconstruct them
 // (each is a WORKING DEFAULT, not contract — a later pass that changes one must open a
-// gate): **(1)** the reset entry point's unusable-default refusal is the
-// CONTROLLER-LOCAL code `'unusable-default'`, never a session code and never passed into
-// the session (`§2.1`'s note, `I-14`, `F-12`, `M-17`); **(2)** `detach()` takes NO
-// argument and refuses (`false`, ZERO session calls) when MORE THAN ONE element is
-// attached here, because the session is shared (`§2.1` item 4, `M-13`); **(3)** the
-// module has EXACTLY ONE import statement, a TYPE-ONLY import from `./gesture-session.js`
-// (`§0A` note 2, `R-4`).
+// gate): **(1)** the reset entry point's refusals are the CONTROLLER-LOCAL codes
+// `'unusable-default'` (the unusable default) and — RULED by the 2026-09-27 red-run
+// amendment pass — `'not-resizable'` (an ESTABLISHED gesture whose `isResizable` decision
+// was falsy), never session codes and never passed into the session (`§2.1`'s note,
+// `§2.3` item 4's reset result-code table, `I-14`, `F-12`, `F-13`, `M-17`); **(2)**
+// `detach()` takes NO argument and refuses (`false`, ZERO session calls) when MORE THAN ONE
+// element is attached here, because the session is shared (`§2.1` item 4, `§7a.1` item 2,
+// the clause row `M-20`, driven inside `M-13` — **the spec still labels this default
+// UNRULED: `§7a.1` item 2 STAYS OPEN**); **(3)** the module has EXACTLY ONE import
+// statement, a TYPE-ONLY import from `./gesture-session.js` (`§0A` note 2, `R-4`).
 // ===========================================================================
 import { describe, it, expect } from 'vitest'
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
@@ -1484,9 +1527,19 @@ function gutterImporters(): string[] {
 // FAILURES (the running row's remaining attempts are abandoned and no further row
 // starts). **An un-run row FAILS — it never looks green.**
 // ===========================================================================
-/** **`§5.5.1`/`§5.5.3`’s DECLARED TOTAL AS PRINTED — `314`.** It is kept as the spec prints it
- *  and is NEVER replaced by a re-total (see the ARITHMETIC FINDING at `PRE-2`). */
-const REGISTER_PRINTED_TOTAL = 314
+/** **`§5.5.1`/`§5.5.3`’s DECLARED TOTAL — `299`, the sum of the register's own THIRTEEN
+ *  printed terms** (`60 → 71 → 81 → 99 → 119 → 141 → 169 → 189 → 204 → 209 → 221 → 281 →
+ *  299`). The caps are compared against this figure. */
+const REGISTER_PRINTED_TOTAL = 299
+/** **THE AS-FILED `314`, KEPT VISIBLE AS A DATED CORRECTED-MIS-SUM NOTE ONLY — NEVER a
+ *  live expected value.** The spec's `⟶ CORRECTED 2026-09-27 (THE RED-RUN AMENDMENT PASS —
+ *  THE ARITHMETIC MIS-SUM, the FIFTH consecutive sibling to hit the class)` records the
+ *  as-filed `314` as a MIS-SUM of the very same thirteen terms, whose sum is `299`; it is
+ *  cited here so the provenance stays attributable and is asserted NOWHERE as a total
+ *  (`docs/specs/gutter.md`, the status block's item 3 and `§5.5.3`). */
+const REGISTER_AS_FILED_TOTAL_DEFECT = 314
+const REGISTER_AS_FILED_TOTAL_DEFECT_NOTE =
+  'CORRECTED 2026-09-27 by the red-run amendment pass: the as-filed total `314` is a MIS-SUM of the register’s own thirteen printed terms, whose sum is `299` (U-GUTTER is the fifth consecutive sibling in the class). Kept visible as provenance; NOT a live expected value.'
 const REGISTER_ROW_CAP = 100
 const REGISTER_TOTAL_CAP = 400
 const CONSECUTIVE_FAILURE_CAP = 5
@@ -1497,7 +1550,8 @@ const LCG_MOD = 4294967296
 
 /** **`§5.5.1`'s THIRTEEN DECLARED ROWS** — `(row id, strategy id, declared term,
  *  honest DISTINCT figure, bounded)` in REGISTER ORDER, as `§5.5.3` prints them:
- *  `314` = `60+11+10+18+20+22+28+20+15+5+12+60+18`. Declared ONCE, at module scope, so
+ *  `299` = `60+11+10+18+20+22+28+20+15+5+12+60+18` (NO term moved in the amendment; only
+ *  the TOTAL was corrected from the as-filed `314`). Declared ONCE, at module scope, so
  *  `PRE-2` (the table precondition), `PRE-4` (the pool-versus-boundary rule) and
  *  `REGISTER-STATUS` (the executed record) all reconcile against the same object.
  *
@@ -1924,11 +1978,13 @@ const PU1_CROSS_BOUNDS: ReadonlyArray<{ label: string; bounds: unknown; answer: 
 ]
 
 /** The `P-GT-SM-3` shapes: `5` DISTINCT compositions, each driven through one full
- *  `'end'` lifecycle. Returns the two READINGS the row asserts. */
+ *  `'end'` lifecycle. Returns the two READINGS the row asserts (the sink's own record and
+ *  the controller's counter), the session's terminal, and the consumer-side write count. */
 interface WriterReadings {
   readonly sinkRecord: number
   readonly controllerCount: number | null
   readonly sessionCommitted: boolean
+  readonly consumerSideWrites: number
   readonly note: string
 }
 async function writerShape(shape: 1 | 2 | 3 | 4 | 5): Promise<WriterReadings> {
@@ -1994,6 +2050,7 @@ async function writerShape(shape: 1 | 2 | 3 | 4 | 5): Promise<WriterReadings> {
     sinkRecord: sink.records.length,
     controllerCount: controller.stats().sinkCalls,
     sessionCommitted,
+    consumerSideWrites: extraWrites,
     note: `shape ${shape}: sinkRecord=${sink.records.length}, controllerCount=${String(
       controller.stats().sinkCalls,
     )}, consumerSideWrites=${extraWrites}, sessionCommitted=${String(sessionCommitted)}`,
@@ -2633,14 +2690,32 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
     ).toEqual([])
   })
 
-  it('R-15 §3.4 — THE CODE-PROPAGATION ROW: the session’s own code is returned VERBATIM, and the module’s own code literals are the SEVEN session members PLUS `\'unusable-default\'` and NOTHING ELSE', async () => {
-    const declared = ['ok', 'not-installed', 'busy', 'disposed', 'disconnected', 'stale', 'no-gesture', 'unusable-default']
+  it('R-15 §3.4 — THE CODE-PROPAGATION ROW: the session’s own code is returned VERBATIM, and the module’s own code literals are the SEVEN session members PLUS the TWO controller-local codes `\'unusable-default\'` and `\'not-resizable\'` — the NINE-member controller domain — and NOTHING ELSE', async () => {
+    // **THE AMENDED `§2.3` item 4 RESET RESULT-CODE TABLE (2026-09-27):** the SESSION's
+    // SEVEN codes propagate VERBATIM, and the controller's OWN domain adds EXACTLY TWO
+    // DECLARED CODES that are NEVER passed into the session — `'unusable-default'` (an
+    // unusable default) and `'not-resizable'` (an ESTABLISHED gesture whose `isResizable`
+    // decision was falsy). **NINE members in the CONTROLLER's domain; the SESSION's own
+    // seven-member union is UNTOUCHED** (`gsession.md` `§2.2`/`§4.4 S-9`; the must-not
+    // list). The SESSION-domain half of this claim is asserted SEPARATELY, as the session's
+    // own contract, in the arm below.
+    const sessionCodes = ['ok', 'not-installed', 'busy', 'disposed', 'disconnected', 'stale', 'no-gesture']
+    const controllerLocalCodes = ['unusable-default', 'not-resizable']
+    const declared = [...sessionCodes, ...controllerLocalCodes]
+    expect(
+      declared.length,
+      'R-15 §3.4 — the controller’s code domain is NINE members: the session’s SEVEN, verbatim, plus the TWO controller-local codes (the amendment’s reset result-code table)',
+    ).toBe(9)
     const literals = resultCodeLiterals(moduleSource('R-15'))
     expect(
       literals.filter((code) => !declared.includes(code)),
-      `R-15 §3.4 — the module’s own code literals are exactly the seven session members PLUS \`'unusable-default'\` and NOTHING ELSE: an EIGHTH session member appearing in the module FAILS (I-14; the must-not list). Read from the bytes: ${JSON.stringify(
+      `R-15 §3.4 — the module’s own code literals are exactly the seven session members PLUS \`'unusable-default'\` and \`'not-resizable'\`, and NOTHING ELSE: an EIGHTH SESSION member appearing in the module FAILS (I-14; the must-not list). Read from the bytes: ${JSON.stringify(
         literals,
       )}`,
+    ).toEqual([])
+    expect(
+      controllerLocalCodes.filter((code) => sessionCodes.includes(code)),
+      'R-15 §3.4 — the SESSION’s own SEVEN-member domain is UNTOUCHED: neither controller-local code is a session member, and an EIGHTH session member would FAIL this arm',
     ).toEqual([])
     // THE PAIR’S RUNTIME HALF: a session-refusal table, and the code that reaches the caller is
     // byte-identical to the one the session returned.
@@ -2679,7 +2754,13 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
     const refused = second.controller.reset(element)
     expect(
       declared.includes(refused.code),
-      `R-15 §3.4 — every code the controller returns is a member of the closed declared domain (the session’s seven plus the one entry-point code); a code outside it FAILS. Returned: ${brief(
+      `R-15 §3.4 — every code the controller returns is a member of the closed declared domain (the session’s seven plus the TWO controller-local codes); a code outside it FAILS. Returned: ${brief(
+        refused.code,
+      )}`,
+    ).toBe(true)
+    expect(
+      sessionCodes.includes(refused.code),
+      `R-15 §3.4 — the refusal returned for a DISPOSED session is the SESSION’s own code (\`'disposed'\`), propagated VERBATIM and not renamed, wrapped or re-lexed. Returned: ${brief(
         refused.code,
       )}`,
     ).toBe(true)
@@ -3077,18 +3158,28 @@ describe('I — §3.3 the every-state invariants', () => {
     ).toEqual([])
   })
 
-  it('I-14 §3.3 — THE CODE DOMAIN IS CLOSED: no eighth SESSION member exists, and no controller code is ever passed INTO the session', () => {
+  it('I-14 §3.3 — THE CODE DOMAIN IS CLOSED: the controller’s NINE-member domain is the session’s SEVEN (whose own union takes no eighth member) plus the TWO controller-local codes, and no controller code is ever passed INTO the session', () => {
     const source = moduleSource('I-14')
     const literals = resultCodeLiterals(source)
     expect(
       literals,
-      `I-14 §3.3 — the module’s own code literals are EXACTLY the seven session members plus \`'unusable-default'\` (an eighth SESSION member, or a controller code passed INTO the session, FAILS). Read: ${JSON.stringify(
+      `I-14 §3.3 — the module’s own code literals are EXACTLY the seven session members plus the TWO controller-local codes \`'unusable-default'\` and \`'not-resizable'\` (an eighth SESSION member, or a controller code passed INTO the session, FAILS). Read: ${JSON.stringify(
         literals,
       )}`,
-    ).toEqual(['busy', 'disconnected', 'disposed', 'no-gesture', 'not-installed', 'ok', 'stale', 'unusable-default'])
+    ).toEqual([
+      'busy',
+      'disconnected',
+      'disposed',
+      'no-gesture',
+      'not-installed',
+      'not-resizable',
+      'ok',
+      'stale',
+      'unusable-default',
+    ])
     expect(
-      /session\s*\.\s*reset\s*\([^)]*['"]unusable-default['"]/.test(source),
-      'I-14 §3.3 — the controller NEVER passes its own code into `session.reset` (the code is emitted for a path where the session is not called at all)',
+      /session\s*\.\s*reset\s*\([^)]*['"](?:unusable-default|not-resizable)['"]/.test(source),
+      'I-14 §3.3 — the controller NEVER passes either of its own codes into `session.reset` (both are emitted for paths where the session is not called at all)',
     ).toBe(false)
   })
 
@@ -3500,10 +3591,16 @@ describe('M — §3.1 the valid states', () => {
     expect(second, 'M-13 §3.1 — the SECOND call makes ZERO session calls and returns `false`').toBe(false)
     expect(h.sessionLog.filter((call) => call === 'dispose').length, 'M-13 §3.1 — still exactly one `dispose` in the log').toBe(1)
     expect(controller.detached, 'M-13 §3.1 — `detached` reads `true` forever after').toBe(true)
-    // **`§7a.1` item 2'S WORKING DEFAULT, driven as its own arm** (the `detach()` SCOPE when
-    // the session is shared): `detach()` takes NO argument and refuses with ZERO session calls
-    // while MORE THAN ONE element is attached here, because the session's baseline restore is
-    // SESSION-wide and detaching it on behalf of one control would detach the others.
+    // **THE CLAUSE ROW `M-20`, CARRIED BY THIS ROW (`M-13`) — `detach()`'s MULTI-ELEMENT
+    // LIMB, driven as an EXPLICIT assertion** (`§3.1 M-20`; the row names `M-13` as the red
+    // set's CARRIER and `§5.5.1 P-GT-SM-5` as its register-space clause cell, which carries
+    // NO attempt term). **`§7a.1` item 2'S WORKING DEFAULT — NOT A RULED CLAUSE: the spec
+    // STILL LABELS THIS DEFAULT UNRULED and item 2 STAYS OPEN** (a later pass that changes
+    // it must open a gate). The limb: `detach()` takes NO argument and refuses with ZERO
+    // session calls of ANY KIND while MORE THAN ONE element is attached here, because the
+    // session is shared and detaching it on behalf of one control would detach the other
+    // control's listeners; **NOTHING IS HALF-DETACHED** (both ledger entries stay intact),
+    // and **`detached` does NOT read `true` on a refusal**.
     const double = makeSessionDouble()
     const shared = await createController({
       session: double.session,
@@ -3515,18 +3612,72 @@ describe('M — §3.1 the valid states', () => {
     })
     shared.controller.attach({ control: 'M-13-shared-a' }, {})
     shared.controller.attach({ control: 'M-13-shared-b' }, {})
-    const before = double.log.filter((call) => call === 'dispose').length
+    const before = double.log.length
     const refused = shared.controller.detach()
     expect(
       refused,
-      'M-13 §3.1 (§7a.1 item 2’s WORKING DEFAULT) — `detach()` refuses (`false`) while MORE THAN ONE element is attached, because the session is shared',
+      'M-13 §3.1 / M-20 — `detach()` REFUSES (`false`) while MORE THAN ONE element is attached to this controller, because the session is shared (§7a.1 item 2’s WORKING DEFAULT, not a ruled clause; `§5.5.1 P-GT-SM-5` drive (2))',
     ).toBe(false)
     expect(
-      double.log.filter((call) => call === 'dispose').length - before,
-      `M-13 §3.1 — the refusal makes ZERO session calls (no \`dispose\` reached the session). Recorded log: ${JSON.stringify(
-        double.log,
+      double.log.slice(before),
+      `M-13 §3.1 / M-20 — the refusal makes ZERO session calls of ANY KIND (no \`dispose\`, no read, nothing). Recorded log slice: ${JSON.stringify(
+        double.log.slice(before),
       )}`,
+    ).toEqual([])
+    expect(
+      double.log.filter((call) => call === 'dispose').length,
+      'M-13 §3.1 / M-20 — no `dispose` EVER reached the session: the refusal is not a half-detach',
     ).toBe(0)
+    expect(
+      shared.controller.stats().attached,
+      'M-13 §3.1 / M-20 — nothing is half-detached: BOTH ledger entries stay intact, so the controller still reports `attached === 2` through `stats()`',
+    ).toBe(2)
+    expect(
+      shared.controller.detached,
+      'M-13 §3.1 / M-20 — `detached` does NOT read `true` on a refusal',
+    ).toBe(false)
+    const refusedAgain = shared.controller.detach()
+    expect(
+      refusedAgain,
+      'M-13 §3.1 / M-20 — a LATER `detach()` still refuses while two elements remain (the limb is not a one-shot)',
+    ).toBe(false)
+    expect(
+      double.log.slice(before),
+      'M-13 §3.1 / M-20 — the second refusal makes ZERO session calls too',
+    ).toEqual([])
+    expect(
+      shared.controller.stats().attached,
+      'M-13 §3.1 / M-20 — the second refusal drops nothing either: the ledger still holds BOTH entries',
+    ).toBe(2)
+    expect(
+      shared.controller.detached,
+      'M-13 §3.1 / M-20 — `detached` still reads `false` after the second refusal',
+    ).toBe(false)
+    // **THE ROW'S OWN CONTROL DRIVE (`M-20`):** `attach(elA)` ALONE, then `detach()`,
+    // returns `true` with exactly ONE `session.dispose()` — so the refusal above is not a
+    // `detach()` that can never succeed.
+    const soloDouble = makeSessionDouble()
+    const solo = await createController({
+      session: soloDouble.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 100 }),
+      isResizable: (): unknown => true,
+      sizeFor: (): unknown => 2,
+      commit: makeSink(),
+    })
+    solo.controller.attach({ control: 'M-20-control' }, {})
+    expect(
+      solo.controller.detach(),
+      'M-13 §3.1 / M-20 — THE CONTROL DRIVE: with EXACTLY ONE element attached, `detach()` returns `true`',
+    ).toBe(true)
+    expect(
+      soloDouble.log.filter((call) => call === 'dispose').length,
+      'M-13 §3.1 / M-20 — and the control drive delegates exactly ONE `session.dispose()`',
+    ).toBe(1)
+    expect(
+      solo.controller.detached,
+      'M-13 §3.1 / M-20 — the control drive leaves `detached` reading `true`',
+    ).toBe(true)
   })
 
   it('M-14 §3.1 — `reset(element)` commits the CLAMPED supplied default, ONCE, through the session’s own reset terminal', async () => {
@@ -4012,9 +4163,10 @@ describe('F — §3.2 the documented fail-states (every outcome is a VALUE)', ()
     }
   })
 
-  it('F-13 §3.2 — a reset with NO `isResizable` decision (an ESTABLISHED, non-resizable gesture) makes ZERO session calls and reports `committed: false`', async () => {
+  it('F-13 §3.2 — a reset with NO `isResizable` decision (an ESTABLISHED, non-resizable gesture) refuses `\'not-resizable\'` with ZERO session calls, zero writes and `committed: false`', async () => {
     const double = makeSessionDouble()
     const element: Record<string, unknown> = { control: 'F-13' }
+    const sink = makeSink()
     const defaultSeam = seam<unknown>(500)
     const { controller } = await createController({
       session: double.session,
@@ -4023,7 +4175,7 @@ describe('F — §3.2 the documented fail-states (every outcome is a VALUE)', ()
       defaultSizeFor: defaultSeam,
       isResizable: (): unknown => false,
       sizeFor: (): unknown => 2,
-      commit: makeSink(),
+      commit: sink,
     })
     controller.attach(element, {})
     const began = double.begin(element)
@@ -4037,12 +4189,39 @@ describe('F — §3.2 the documented fail-states (every outcome is a VALUE)', ()
       )}`,
     ).toEqual([])
     expect(defaultSeam.calls.length, 'F-13 §3.2 — `defaultSizeFor` is called ZERO times').toBe(0)
+    // **⟶ THE AMENDED REFUSAL (RULED 2026-09-27, THE RED-RUN AMENDMENT PASS).** As filed,
+    // this cell read *"the refusal is `'no-gesture'`-shaped only if no gesture is active,
+    // otherwise it is `'ok'` with `committed: false`"* — the ruling replaces that
+    // two-branch reading with ONE declared CONTROLLER-LOCAL code, `'not-resizable'`,
+    // because **the SESSION IS NEVER ASKED on this path** (so no session code is honest
+    // for it) and an `'ok'`-shaped success would mis-report a refusal. **THE CODE IS
+    // NOW DERIVABLE FROM THE SPEC AND IS ASSERTED.**
     expect(
-      result.committed,
-      `F-13 §3.2 — the result is \`'ok'\`-shaped with \`committed: false\` and zero writes (the row asserts the DECLARED pair: no session call, no write). Read: ${JSON.stringify(
+      result.code,
+      `F-13 §3.2 — the refusal is the CONTROLLER-LOCAL \`'not-resizable'\` (\`§2.3\` item 4's reset result-code table, row 9; \`§2.5\` item 5 clause 4; ruling 10). Read: ${JSON.stringify(
+        result,
+      )}`,
+    ).toBe('not-resizable')
+    expect(
+      result.ok,
+      `F-13 §3.2 — the amended refusal is NOT an \`'ok'\`-shaped success: \`ok\` reads \`false\`. Read: ${JSON.stringify(
         result,
       )}`,
     ).toBe(false)
+    expect(
+      result.committed,
+      `F-13 §3.2 — \`committed: false\`, with zero writes: the row asserts the DECLARED triple \`{ok: false, code: 'not-resizable', committed: false}\`. Read: ${JSON.stringify(
+        result,
+      )}`,
+    ).toBe(false)
+    expect(
+      sink.records.length,
+      `F-13 §3.2 — the sink is NOT written on this path (zero sink writes). Recorded: ${JSON.stringify(sink.records)}`,
+    ).toBe(0)
+    expect(
+      controller.stats().sinkCalls,
+      'F-13 §3.2 — the controller’s own `sinkCalls` counter also reads `0` for the refusal',
+    ).toBe(0)
   })
 
   it('F-14 §3.2 — a reset whose BOUNDS are unusable calls `session.reset` ONCE with `NaN`, writes NOTHING, and reports `committed: false` while the session’s own result reads `committed: true`', async () => {
@@ -4298,12 +4477,17 @@ describe('F — §3.2 the documented fail-states (every outcome is a VALUE)', ()
 // REGISTER ORDER, with the caps, the stop-after-5 rule, the pinned seed and the
 // `§5.3` item 10 record lines.
 //
-// THE ARITHMETIC, printed WITH its terms and asserted as the sum of its own terms:
-//   `314` = `60` (`P-GT-PU-1`) + `11` (`P-GT-PU-2`) + `10` (`P-GT-PU-3`) + `18`
+// THE ARITHMETIC, printed WITH its terms and asserted as the sum of its own terms (the
+// DECLARED total IS the term sum — the as-filed `314` was a corrected mis-sum, kept
+// visible as provenance only, never as a live expected value):
+//   `299` = `60` (`P-GT-PU-1`) + `11` (`P-GT-PU-2`) + `10` (`P-GT-PU-3`) + `18`
 //   (`P-GT-IM-1`) + `20` (`P-GT-IM-2`) + `22` (`P-GT-IM-3`) + `28` (`P-GT-IM-4`) + `20`
 //   (`P-GT-SM-1`) + `15` (`P-GT-SM-2`) + `5` (`P-GT-SM-3`) + `12` (`P-GT-SM-4`) + `60`
 //   (`P-GT-TP-1`) + `18` (`P-GT-TP-2`); family subtotals `PU 81` · `IM 88` · `SM 52` ·
-//   `TP 78`.
+//   `TP 78` (`81 + 88 + 52 + 78 = 299`). The term-by-term addition is
+//   `60 → 71 → 81 → 99 → 119 → 141 → 169 → 189 → 204 → 209 → 221 → 281 → 299`.
+//   **`P-GT-SM-5` (the `detach()` multi-element limb's clause cell) carries NO TERM and is
+//   NOT part of this arithmetic.**
 // ===========================================================================
 describe('PRE — the register’s own preconditions and controls', () => {
   it('PRE-2 (harness) — the §5.5.1 register tables are the ones the spec specifies (seed, terms, caps, arithmetic, the pinned LCG step, the pool length)', () => {
@@ -4322,35 +4506,39 @@ describe('PRE — the register’s own preconditions and controls', () => {
       'PRE-2/§5.5.1/§5.5.3 — the thirteen DECLARED terms, in register order, EXACTLY as the spec prints them (they are NOT re-totalled silently: the spec’s declared figures are what the caps are compared against)',
     ).toEqual([60, 11, 10, 18, 20, 22, 28, 20, 15, 5, 12, 60, 18])
     const termSum = terms.reduce((sum, n) => sum + n, 0)
-    // **⟶ SPEC FINDING (`§5.5.3`), REPORTED HERE RATHER THAN SILENTLY RECONCILED.** The spec
-    // prints the total as `314` and prints its own term-by-term addition table arriving at
-    // `314`; the thirteen terms it names SUM TO `299` (`60+11+10+18+20+22+28+20+15+5+12+60+18
-    // = 299`). **`§5.5.3`’s own sentence governs: *"a total that is not the sum of its own
-    // terms is a review finding"*** — so the DECLARED total is asserted as the SPEC’S PRINTED
-    // FIGURE (`314`), the TERM SUM is measured and PRINTED as its own finding, and the
-    // disagreement is asserted as a FACT of this file rather than tuned to agreement. It is
-    // also inside the `≤400` register cap whichever figure is used.
+    // **⟶ CORRECTED 2026-09-27 BY THE RED-RUN AMENDMENT PASS, AND REALIGNED HERE.** The
+    // spec's thirteen printed terms SUM TO `299`; the as-filed total `314` was a MIS-SUM
+    // (`§5.5.3`'s own governing sentence: *"a total that is not the sum of its own terms is
+    // a review finding"*). **THE AMENDED SPEC RULES THE TOTAL: the DECLARED total IS `299`**,
+    // so the declared total and the term sum now AGREE by construction, and **the as-filed
+    // `314` is kept visible ONLY as a dated corrected-mis-sum note**
+    // (`REGISTER_AS_FILED_TOTAL_DEFECT`) — never as a live expected value.
     console.log(
-      `§5.5.1 ARITHMETIC FINDING :: ${JSON.stringify({
-        specPrintedTotal: 314,
+      `§5.5.1 ARITHMETIC (AMENDED 2026-09-27) :: ${JSON.stringify({
+        declaredTotal: REGISTER_PRINTED_TOTAL,
         measuredTermSum: termSum,
+        asFiledTotalDefect: REGISTER_AS_FILED_TOTAL_DEFECT,
+        note: REGISTER_AS_FILED_TOTAL_DEFECT_NOTE,
         terms: REGISTER_DECLARED.map((r) => `${r.row}=${r.term}`),
-        clause: 'docs/specs/gutter.md §5.5.3 — a total that is not the sum of its own terms is a review finding',
-        disposition: 'REPORTED, not reconciled: the row keeps the spec’s declared figures',
+        clause: 'docs/specs/gutter.md §5.5.3 — the declared total is the sum of its own terms',
       })}`,
     )
     expect(
       REGISTER_PRINTED_TOTAL,
-      `PRE-2/§5.5.1 — the register’s DECLARED total is the spec’s printed figure (314); it is inside the ≤400 register cap`,
-    ).toBe(314)
+      `PRE-2/§5.5.1 — the register’s DECLARED total is the AMENDED figure (299), the sum of its own thirteen printed terms; it is inside the ≤400 register cap. The as-filed 314 is a corrected mis-sum and is NOT a live expected value`,
+    ).toBe(299)
     expect(
       REGISTER_PRINTED_TOTAL,
-      'PRE-2/§5.5.1 — the declared total is inside the `≤400` register cap',
+      'PRE-2/§5.5.1 — the declared total is inside the `≤400` register cap (`299 ≤ 400`, the AMENDED comparison)',
     ).toBeLessThanOrEqual(REGISTER_TOTAL_CAP)
     expect(
       termSum,
-      `PRE-2/§5.5.3 SPEC FINDING — the spec prints the total as \`314\` AND prints a term-by-term addition reaching \`314\`, while its thirteen named terms sum to \`${termSum}\` (\`60+11+10+18+20+22+28+20+15+5+12+60+18\`). §5.5.3’s own sentence makes this a finding to REPORT; the DECLARED figures are kept unreconciled`,
+      `PRE-2/§5.5.3 — the DECLARED total and the term sum are the SAME figure: the register’s thirteen printed terms (\`60+11+10+18+20+22+28+20+15+5+12+60+18\`) sum to \`${termSum}\`, and §5.5.3’s term-by-term addition reaches it (60 → 71 → 81 → 99 → 119 → 141 → 169 → 189 → 204 → 209 → 221 → 281 → 299)`,
     ).toBe(299)
+    expect(
+      termSum,
+      'PRE-2/§5.5.1 — THE TERM-SUM CHECK PASSES: the declared total is exactly the sum of its own terms (the ACTIVE rule `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS` is SATISFIED, not reported as a finding)',
+    ).toBe(REGISTER_PRINTED_TOTAL)
     expect(REGISTER_DECLARED.length, 'PRE-2/§5.5.1 — the register declares THIRTEEN rows').toBe(13)
     for (const { row, term } of REGISTER_DECLARED) {
       expect(term, `PRE-2/§5.5.1 — row ${row} is inside the ≤100 per-row cap`).toBeLessThanOrEqual(REGISTER_ROW_CAP)
@@ -5118,7 +5306,7 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
     ).toBe(19)
   })
 
-  it('P-GT-SM-2 (S-GT-WINDOW-1, bounded) — the NO-WRITE-BEFORE-ESTABLISHMENT / NO-SECOND-WRITE / NO-RETAINED-SINK quantification: 5 stages × 3 slot shapes = 15', async () => {
+  it('P-GT-SM-2 (S-GT-WINDOW-1) — the NO-WRITE-BEFORE-ESTABLISHMENT / NO-SECOND-WRITE / NO-RETAINED-SINK quantification: 5 stages × 3 slot shapes = 15', async () => {
     const row = new RegisterRow('P-GT-SM-2', 'S-GT-WINDOW-1')
     const stages = ['(1) after attach, before establishment', '(2) during the gesture', '(3) at the terminal', '(4) after the terminal', '(5) after two sequential gestures'] as const
     const slots = ['(1) a gesture that terminated by an end', '(2) a gesture that terminated by a cancel', '(3) a gesture that NEVER established'] as const
@@ -5191,7 +5379,7 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
     expect(row.attemptsRunPublic() <= REGISTER_ROW_CAP, 'P-GT-SM-2 — inside the ≤100 per-row cap').toBe(true)
   })
 
-  it('P-GT-SM-3 (S-GT-WRITER-1) — THE SINGLE-WRITER / DOUBLE-WRITE quantification: 5 DISTINCT composition shapes, with both positive controls DECLARED TO FAIL', async () => {
+  it('P-GT-SM-3 (S-GT-WRITER-1) — THE SINGLE-WRITER / DOUBLE-WRITE quantification: 5 DISTINCT composition shapes, BOTH READINGS asserted as DISTINCT BY DESIGN, with both positive controls DECLARED TO FAIL', async () => {
     const row = new RegisterRow('P-GT-SM-3', 'S-GT-WRITER-1')
     const declared: ReadonlyArray<{ shape: number; label: string; sinkRecord: number; controllerCount: number }> = [
       { shape: 1, label: '(1) the CORRECT single-writer composition', sinkRecord: 1, controllerCount: 1 },
@@ -5200,25 +5388,85 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
       { shape: 4, label: '(4) a consumer whose own `onMove` calls the sink', sinkRecord: 2, controllerCount: 1 },
       { shape: 5, label: '(5) a consumer whose own `onEnd` calls the sink', sinkRecord: 2, controllerCount: 1 },
     ]
+    // **THE ROW'S DECLARED TERM IS `5` COMPOSITION SHAPES, AND THE ROW'S OWN CELL REQUIRES
+    // BOTH READINGS TO BE ASSERTED (`§5.5.1 P-GT-SM-3`: *“the two readings the row asserts
+    // for EVERY shape are DISTINCT BY DESIGN”*).** Each shape therefore performs **ONE
+    // attempt that asserts BOTH READINGS in turn** — the sink's own recorded call count FIRST,
+    // then the controller's `stats().sinkCalls` — so the row runs `5` attempts, exactly as §5.5.1
+    // and §5.5.3 declare, and the register's `299`-attempt arithmetic is untouched. **A row
+    // that asserted only one reading would be satisfiable by a composition that never wired
+    // the channel, so neither reading may be dropped.**
     const measured: WriterReadings[] = []
     for (const cell of declared) {
       const readings = await writerShape(cell.shape as 1 | 2 | 3 | 4 | 5)
       measured.push(readings)
-      await row.run(cell.label, () => {
+      await row.run(`${cell.label} × both readings`, () => {
+        // READING 1 — THE SINK'S OWN RECORD (exactly the declared figure, never "at least").
         if (readings.sinkRecord !== cell.sinkRecord) {
-          return `the SINK's own record reads ${readings.sinkRecord}, the declared count is ${cell.sinkRecord}`
+          return `the SINK's own record reads ${readings.sinkRecord}, the declared count is ${cell.sinkRecord} — the DECLARED figure, never “at least”`
         }
+        // READING 2 — THE CONTROLLER'S OWN COUNTER.
         if (readings.controllerCount !== cell.controllerCount) {
           return `the controller's own \`stats().sinkCalls\` reads ${String(readings.controllerCount)}, the declared count is ${cell.controllerCount}`
         }
+        // SHAPE (3)'s OWN CLAUSE — the `C1` sentence, IN THE SAME CELL.
         if (cell.shape === 3 && !readings.sessionCommitted) {
-          return 'the slot-empty composition must be recorded with the session reporting `committed: true` WHILE NOTHING WAS WRITTEN (the C1 sentence)'
+          return 'the slot-empty composition must be recorded with the session reporting `committed: true` WHILE NOTHING WAS WRITTEN (the C1 sentence, in the same cell)'
+        }
+        // **THE DISTINCT-BY-DESIGN DIVERGENCE, ASSERTED IN THE TWO-WRITER SHAPE'S OWN
+        // ATTEMPT** (RULED 2026-09-27, THE RED-RUN AMENDMENT PASS; `§3.2 F-9`, `§3.4 R-13`):
+        // the sink's OWN record reads `2` while the controller's counter STILL reads `1`,
+        // because a second writer's call does not pass through this controller's one call
+        // site. **That divergence is the falsifier** — a composition cannot pass by trusting a
+        // single reading, and this arm refuses a composition whose two readings AGREE at `2`.
+        if (cell.shape === 2 && !(readings.sinkRecord === 2 && readings.controllerCount === 1)) {
+          return `the DIVERGENCE is the falsifier of the two-writer positive control: the sink's OWN record must read \`2\` while the controller's counter still reads \`1\`. Measured: sink ${readings.sinkRecord}, controller ${String(readings.controllerCount)}`
+        }
+        // **THE CORRECT (SINGLE-WRITER) COMPOSITION'S AGREEMENT AT `1`** — the amended cell's
+        // first ruled reading, asserted here so the AGREEMENT and the DIVERGENCE are each
+        // falsifiable at their own shape.
+        if (cell.shape === 1 && !(readings.sinkRecord === 1 && readings.controllerCount === 1)) {
+          return `the CORRECT single-writer composition must read \`1\` on BOTH readings — the amended cell's ruled AGREEMENT. Measured: sink ${readings.sinkRecord}, controller ${String(readings.controllerCount)}`
+        }
+        // **THE TWO CONSUMER-SIDE WRITE CLASSES `(4)`/`(5)`** (shape `(5)` completed by the
+        // amendment: a consumer's own `onEnd` calling the sink): a consumer-side write is NOT
+        // this composition's write, but the TOTAL for one gesture must still read `2` against
+        // the composition's own `1`.
+        if (cell.shape === 4 || cell.shape === 5) {
+          if (!(readings.sinkRecord === 2 && readings.controllerCount === 1)) {
+            return `the consumer-side write class (${cell.shape === 4 ? '`onMove`' : '`onEnd`'}) must read \`2\` on the sink's own record while the composition's own counter reads \`1\`. Measured: sink ${readings.sinkRecord}, controller ${String(readings.controllerCount)}`
+          }
+          if (readings.consumerSideWrites !== 1) {
+            return `the consumer's own hook must have performed EXACTLY ONE consumer-side write for this gesture (shape (${cell.shape}) is the ${cell.shape === 4 ? 'first' : 'second'} consumer-side write class). Measured: ${readings.consumerSideWrites}`
+          }
         }
         return null
       })
     }
     row.finish()
-    expect(row.attemptsRunPublic(), `P-GT-SM-3 — the declared term is ${declaredPair('P-GT-SM-3').term} (5 DISTINCT drives, not five assertions over one execution)`).toBe(5)
+    expect(
+      row.attemptsRunPublic(),
+      `P-GT-SM-3 — the declared term is ${declaredPair('P-GT-SM-3').term} composition shapes; each performs ONE attempt asserting BOTH readings (5 × 1 = 5), exactly as §5.5.1/§5.5.3 declare`,
+    ).toBe(5)
+    expect(
+      declaredPair('P-GT-SM-3').term,
+      'P-GT-SM-3 — the DECLARED term is `5` and it does NOT move (the amendment moves no attempt term); the shapes `(1)`–`(5)` are the completed list the amendment states',
+    ).toBe(5)
+    expect(
+      declared.map((cell) => cell.shape),
+      'P-GT-SM-3 — the FIVE shapes the amended cell states COMPLETELY and IN ORDER: (1) correct single-writer · (2) two-writer · (3) no-writer (slot-empty) · (4) consumer-side write from `onMove` · (5) consumer-side write from `onEnd`',
+    ).toEqual([1, 2, 3, 4, 5])
+    console.log(
+      `§5.5.1 P-GT-SM-3 drives :: ${JSON.stringify({
+        declaredShapes: 5,
+        attemptsRun: row.attemptsRunPublic(),
+        readingsAssertedPerShape: 2,
+        shapes: declared.map((cell) => `${cell.shape}:sinkRecord=${cell.sinkRecord}/controllerCount=${cell.controllerCount}`),
+        agreement: 'shape (1): both readings read 1',
+        divergenceFalsifier: 'shape (2): sink own record 2 vs controller counter 1',
+        consumerSideClasses: ['(4) onMove', '(5) onEnd'],
+      })}`,
+    )
     expect(
       measured.filter((reading) => reading.sinkRecord === 2).length,
       'P-GT-SM-3 — THREE of the five shapes carry a total write count of 2 (the two-writer composition and the two consumer-side-write shapes), so a composition cannot pass by counting only its own calls',
@@ -5240,18 +5488,34 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
       { label: '(4) an unusable `defaultSizeFor` (throwing)', declaredCode: 'unusable-default', sessionCalls: 0, writes: 0 },
       { label: '(5) an unusable BOUNDS pair (the clamp answers NaN)', declaredCode: 'ok', sessionCalls: 1, writes: 0 },
       { label: '(6) a DISPOSED session', declaredCode: 'disposed', sessionCalls: 1, writes: 0 },
+      // **⟶ THE `isResizable === false` CASE, ADDED BY THE GATE-3 REALIGNMENT PASS AS THE
+      // AMENDED `§2.3` item 4 / `§5.5.1 P-GT-SM-4` SURFACE’S `'not-resizable'` SHAPE — driven
+      // as a CASE WITHIN SHAPE `(6)`’S SURFACE, NOT as a new shape and NOT as a new term.**
+      // The amended cell’s own text: *“(6) … and the DISPOSED-session case, where the code is
+      // the session’s own `'disposed'` propagated VERBATIM”*, with the cell’s second variant
+      // *“a DISPOSED session (or `isResizable` falsy — driven as this shape’s second variant,
+      // each asserted separately)”*. It is carried by the SESSION-RECORDING reading arm of
+      // this shape (the arm that asserts the session-side counts and the sink’s own record),
+      // so **the DECLARED term `12` does not move, `5`+`1` shapes × `2` readings = `12`
+      // attempts hold, and the register’s `299`-attempt arithmetic is untouched.** The
+      // declared reading for the limb: **ZERO session calls, ZERO writes, the controller-local
+      // `'not-resizable'`, `committed: false`.**
+      { label: '(6-b) `isResizable === false` on an ESTABLISHED gesture (shape (6)’s second variant)', declaredCode: 'not-resizable', sessionCalls: 0, writes: 0 },
     ]
     for (const shape of shapes) {
       for (const reading of ['the controller’s result record', 'the session’s recorded call/response'] as const) {
         await row.run(`${shape.label} × ${reading}`, () => {
+          const notResizable = shape.declaredCode === 'not-resizable'
           const double = makeSessionDouble({ disposed: shape.label.includes('DISPOSED') })
           const sink = makeSink()
-          const element = { control: `SM-4-${shape.label.slice(0, 4)}-${reading.slice(0, 4)}` }
+          const element = { control: `SM-4-${shapes.indexOf(shape)}-${reading.slice(0, 4)}` }
           const options: Record<string, unknown> = {
             session: double.session,
             axisFor: (): unknown => undefined,
             boundsFor: (): unknown => (shape.label.includes('unusable BOUNDS') ? {} : { min: 0, max: 100 }),
-            isResizable: (): unknown => true,
+            // The non-resizable limb drives a FALSY decision; every other cell keeps the
+            // truthy decision the rest of the table declares.
+            isResizable: (): unknown => !notResizable,
             sizeFor: (): unknown => 9,
             commit: sink,
           }
@@ -5269,18 +5533,29 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
             }
             const before = double.log.length
             const result = created.controller.reset(element)
-            const sessionCallsAfter = double.log.slice(before).filter((call) => call === 'reset').length
+            // **A REFUSAL PATH MAKES NO SESSION CALL OF ANY KIND** — so the non-resizable cell
+            // counts EVERY logged call, not only `reset` (the refusal must not even READ the
+            // session on the way to its answer).
+            const loggedAfter = double.log.slice(before)
+            const sessionCallsAfter = notResizable
+              ? loggedAfter.length
+              : loggedAfter.filter((call) => call === 'reset').length
             if (reading.startsWith('the controller')) {
               if (result.code !== shape.declaredCode) {
-                return `the result code is ${brief(result.code)}, the declared code is ${brief(shape.declaredCode)}`
+                return `the result code is ${brief(result.code)}, the declared code is ${brief(shape.declaredCode)}${notResizable ? ' (the AMENDED controller-local code for an ESTABLISHED non-resizable gesture)' : ''}`
               }
               if (result.committed !== (shape.writes === 1)) {
                 return `\`committed\` is ${String(result.committed)}; the declared value is ${String(shape.writes === 1)} (the composition’s own count, never a session-side guess)`
               }
+              if (notResizable && result.ok !== false) {
+                return `the non-resizable refusal must be \`ok: false\` — a refusal may never be reported as an \`'ok'\`-shaped success. Read: ${JSON.stringify(result)}`
+              }
               return null
             }
             if (sessionCallsAfter !== shape.sessionCalls) {
-              return `\`session.reset\` was called ${sessionCallsAfter} times, the declared count is ${shape.sessionCalls}`
+              return notResizable
+                ? `the non-resizable refusal logged ${sessionCallsAfter} session calls; the declared count is ZERO — the decision was made once, at establishment, and is NOT re-evaluated. Recorded: ${JSON.stringify(loggedAfter)}`
+                : `\`session.reset\` was called ${sessionCallsAfter} times, the declared count is ${shape.sessionCalls}`
             }
             if (sink.records.length !== shape.writes) {
               return `the sink write count is ${sink.records.length}, the declared count is ${shape.writes}`
@@ -5290,12 +5565,46 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
         })
       }
     }
+    // **THE HONEST DISTINCT-FIGURE RECKONING, REPORTED.** The DECLARED term is `12` and the
+    // spec’s DISTINCT figure is `11` — **BOTH ARE THE SPEC’S DECLARED FIGURES AND NEITHER
+    // MOVES** (the amendment’s confirmation (ii): no distinct figure moved; a distinct figure
+    // is REPORTED, never substituted). **WHAT THE ADDED LIMB DOES MOVE, STATED PLAINLY: the
+    // table now drives a reading the six-cell table had no cell for, so the table’s own honest
+    // distinct figure with the added case is `12`, not `11`** — reported here as this row’s
+    // own figure and NOT folded into any declared total or term. `§5.5.1 P-GT-SM-4` reports
+    // exactly this state (the missing limb was a TEST-SIDE residue; the declared term and the
+    // distinct figure are unchanged).
+    const shapeReadings = new Set(shapes.map((shape) => `${shape.declaredCode}|${shape.sessionCalls}|${shape.writes}`))
+    console.log(
+      `§5.5.1 P-GT-SM-4 figures :: ${JSON.stringify({
+        declaredTerm: declaredPair('P-GT-SM-4').term,
+        specDistinctFigure: declaredPair('P-GT-SM-4').distinct,
+        shapesDriven: shapes.length,
+        attemptsRun: row.attemptsRunPublic(),
+        tableLevelDistinctShapeReadings: shapeReadings.size,
+        honestDistinctFigureWithTheAddedCase: shapeReadings.size * 2,
+        addedCase: '(6-b) `isResizable === false` on an ESTABLISHED gesture ⇒ `not-resizable`, ZERO session calls, ZERO writes — carried by shape (6)’s second variant, within the declared term',
+        note: 'the declared term 12 and the spec’s distinct figure 11 are UNMOVED; the honest distinct figure this table now yields is reported here (12) rather than folded into a declared figure',
+      })}`,
+    )
     row.finish()
-    expect(row.attemptsRunPublic(), `P-GT-SM-4 — the declared term is ${declaredPair('P-GT-SM-4').term}`).toBe(12)
+    expect(row.attemptsRunPublic(), `P-GT-SM-4 — the declared term is ${declaredPair('P-GT-SM-4').term} (6 shapes × 2 readings); the added ` + '`isResizable === false`' + ` case rides inside shape (6) and adds NO attempt`).toBe(12)
+    expect(
+      declaredPair('P-GT-SM-4').term,
+      'P-GT-SM-4 — the DECLARED term is `12` (6 shapes × 2 readings) and it does NOT move: the `isResizable === false` limb is a CASE WITHIN shape (6)’s surface',
+    ).toBe(12)
     expect(
       declaredPair('P-GT-SM-4').distinct,
-      `P-GT-SM-4 — the honest DISTINCT entry-point observations are ${declaredPair('P-GT-SM-4').distinct}: the two THROWING limbs (a throwing \`defaultSizeFor\`, and the throwing bounds-at-default variant) are declared as ONE unusable-default class with a single observable`,
+      `P-GT-SM-4 — the spec’s declared DISTINCT figure is ${declaredPair('P-GT-SM-4').distinct} and it is NOT moved here; the table’s own honest figure with the added case is REPORTED beside it (see the \`P-GT-SM-4 figures\` record)`,
     ).toBe(11)
+    expect(
+      shapeReadings.has('not-resizable|0|0'),
+      'P-GT-SM-4 — the added `isResizable === false` case IS one of the driven readings: the `not-resizable` refusal with ZERO session calls and ZERO writes (so the limb is driven, not merely mentioned)',
+    ).toBe(true)
+    expect(
+      shapeReadings.size * 2,
+      'P-GT-SM-4 — THE HONEST DISTINCT FIGURE this table’s readings yield with the added case (each shape read twice: the controller’s record and the session’s record), reported here so the added limb is never silently absorbed into a declared figure',
+    ).toBe(12)
   })
 
   it('P-GT-TP-1 (S-GT-TOTAL-1, bounded) — the SEVEN-SEAM TOTALITY universal over the pinned-seed pool: 30 draws × 2 configurations = 60 drives', async () => {
@@ -5407,15 +5716,22 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
     expect(row.attemptsRunPublic(), `P-GT-TP-2 — the declared term is ${declaredPair('P-GT-TP-2').term}`).toBe(18)
   })
 
-  it('REGISTER-STATUS — the executed record: per-row attempts/held/broken, the 314 total against its terms and the caps, the seed and step form, and the stop-after-5 status', async () => {
+  it('REGISTER-STATUS — the executed record: per-row attempts/held/broken, the 299 total against its terms and the caps, the seed and step form, and the stop-after-5 status', async () => {
     const records = registerRecords
     const rowsRun = records.filter((record) => record.attemptsRun > 0)
     const executedTotal = rowsRun.reduce((sum, record) => sum + record.attemptsRun, 0)
     const terms = REGISTER_DECLARED.map((row) => `${row.term} (${row.row})`).join(' + ')
     console.log(
       `§5.5.1 REGISTER SUMMARY :: ${JSON.stringify({
-        declaredTotal: 314,
+        declaredTotal: REGISTER_PRINTED_TOTAL,
         declaredTerms: terms,
+        declaredTermSum: REGISTER_DECLARED.reduce((sum, row) => sum + row.term, 0),
+        declaredTotalEqualsItsOwnTerms: REGISTER_PRINTED_TOTAL === REGISTER_DECLARED.reduce((sum, row) => sum + row.term, 0),
+        totalCapComparison: `${REGISTER_PRINTED_TOTAL} <= ${REGISTER_TOTAL_CAP}`,
+        asFiledTotalDefect: {
+          figure: REGISTER_AS_FILED_TOTAL_DEFECT,
+          status: REGISTER_AS_FILED_TOTAL_DEFECT_NOTE,
+        },
         executedTotal,
         attemptsCap: registerState.attempts,
         rowCap: REGISTER_ROW_CAP,
@@ -5434,12 +5750,12 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
     )
     expect(
       REGISTER_PRINTED_TOTAL,
-      `REGISTER-STATUS — the total is printed WITH ITS TERMS, as the spec prints it: 314 = ${terms}`,
-    ).toBe(314)
+      `REGISTER-STATUS — the AMENDED declared total is printed WITH ITS TERMS and IS their sum: 299 = ${terms}`,
+    ).toBe(299)
     expect(
       REGISTER_DECLARED.reduce((sum, row) => sum + row.term, 0),
-      `REGISTER-STATUS — the SPEC FINDING of PRE-2 stands here too: the thirteen named terms sum to 299, while §5.5.3 prints 314 and prints its own addition reaching 314. The declared figures are reported, never silently re-totalled (docs/specs/gutter.md §5.5.3)`,
-    ).toBe(299)
+      `REGISTER-STATUS — THE TERM-SUM CHECK PASSES: the thirteen named terms sum to the DECLARED total (299), as the amended §5.5.1/§5.5.3 rule (the as-filed 314 is a corrected mis-sum, kept visible as a dated note only)`,
+    ).toBe(REGISTER_PRINTED_TOTAL)
     expect(registerState.attempts, 'REGISTER-STATUS — the total attempts reported against the ≤400 register cap').toBeLessThanOrEqual(
       REGISTER_TOTAL_CAP,
     )
@@ -5470,7 +5786,7 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
     ).toBe(0)
     expect(
       records.reduce((sum, record) => sum + record.attemptsRun, 0),
-      `REGISTER-STATUS — the attempts the LANDED tables actually ran are reconciled against the terms the spec names (299, the measurable half of the arithmetic finding). Ran: ${executedTotal}`,
+      `REGISTER-STATUS — the attempts the LANDED tables actually ran are reconciled against the register's own thirteen declared terms (299, the AMENDED declared total AND its term sum). Ran: ${executedTotal}`,
     ).toBe(299)
     expect(
       registerState.stoppedAtRow,
