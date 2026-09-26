@@ -444,6 +444,30 @@ export function createGestureSession(options?: SessionOptions): GestureSession {
         throw error
       }
     }
+    // ⟶ ADV-GS-30 (2026-09-27): THE MID-CALL DISPOSAL IS RE-CHECKED HERE — at the END of the
+    // establishment order and ABOVE the counter increment the two dated notes below pin. Two
+    // of the four establishment steps ABOVE run CONSUMER code: the opt-in capture call (item
+    // 6(b), which runs BEFORE `onStart`) and `onStart` itself — so a consumer can call
+    // `dispose()` on the very session that is still inside `begin` (`§2.3` item 1(d)'s
+    // establishment order, which item 7.7 cites). THE DISPOSAL GOVERNS THAT CALL (`§2.3` item
+    // 7.7): it must NOT report success, so the attempt REFUSES with the EXISTING closed-domain
+    // code `'disposed'` (no EIGHTH member is invented — `§2.2`/`§4.4` S-9), and the refused
+    // attempt consumes NOTHING. The disposal has ALREADY discarded the record, marked it
+    // inactive and emptied the ledger (item 7.3), so this refusal does not resurrect either:
+    // `slot` stays `null`, the record stays inactive, `gesture()` stays `null`,
+    // `stats().active` stays `false`, and the baseline stays restored (item 7.2, `I-5` —
+    // `dispose()` detached the three tracking listeners AND the start listener, so nothing of
+    // this attempt's comes back). `slot !== record` is the same order's OTHER discard shape —
+    // consumer code that ends this attempt's own record while the call is still open (a
+    // `cancel` of the same element needs no handle) — and it reports the same refusal, because
+    // a call may not report success on a record that no longer exists; neither half is
+    // reachable on an established path (`slot` is assigned this `record` above, and only a
+    // terminal, a disposal, or this order's own re-entrancy can move it). `refuseBegin` sets
+    // `counters.lastCode` the way this module's other refusals set their codes: `§2.1`'s
+    // `lastCode` cell reads "the LAST result code this session produced", while item 7.7
+    // records that it pins NO `lastCode` cell for this path — so the code set here is that
+    // cell's DERIVATION and not an invented cell.
+    if (ended || slot !== record) return refuseBegin('disposed')
     // ⟶ ADV-GS-15 (2026-09-27): the GESTURE COUNTER — and the id it feeds — is incremented
     // only by a `begin` that ESTABLISHES, i.e. AFTER the tracking-attach check above. The
     // counter previously moved before that check, so a REFUSED `begin` counted as a gesture
