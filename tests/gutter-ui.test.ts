@@ -197,6 +197,24 @@ import type { GestureHandle } from '../src/shared/gesture-session.js'
 // diagnostics the missing type names produce), and once the module lands, a rename, a
 // removal or an unexported name FAILS TO COMPILE.
 //
+// ⟶ LEG-4 TYPE-PIN FORM REPAIR 2026-09-27 (`§5.2` leg 4). **As-filed** this block pinned
+// each of the SEVENTEEN TYPE DECLARATIONS through
+// `const D_GU_1_x: D_GU_1_Module['<TypeName>'] = …` with
+// `type D_GU_1_Module = typeof import('../src/shared/gutter-affordance.js')`.
+// `typeof import(...)` yields the module's VALUE namespace, and a namespace-import INDEXED
+// ACCESS does **not** surface **TYPE-ONLY** exports — so the form was measured at
+// `6f6a011` to emit **`TS2339 ×24`** ("Property 'GutterAffordanceOptions' does not exist
+// on type 'typeof import(…)'") and leg 4 exited **`2`**, while every one of those
+// seventeen names IS exported by the module. **The pins now go through the IMPORT-TYPE
+// form** — `import('../src/shared/gutter-affordance.js').<TypeName>`, bound to the
+// per-name aliases below — which does surface them; the FALSIFIABILITY IS KEPT EXACTLY:
+// a RENAMED, REMOVED or UNEXPORTED type name still fails to compile (measured: the
+// unexported name reports **`TS2694`**: "Namespace '…/gutter-affordance' has no exported
+// member 'DefinitelyNotExported'"). The VALUE-export pins (`createGutterAffordance`,
+// `cursorDeclarationFor`, `domEventSource`) keep the `typeof import(...)` indexed-access
+// form, which is correct for values and is exercised by the positive control at
+// `D_GU_1_valueNames`.
+//
 // **THE CENSUS IS `3 + 17 = 20` NAMES** (`§2.1`, `§R.3`'s corrected census): the THREE
 // VALUE EXPORTS `createGutterAffordance` · `cursorDeclarationFor` · `domEventSource`, and
 // the SEVENTEEN TYPE DECLARATIONS `CursorOf` · `EventSourceLike` · `GutterAffordance` ·
@@ -207,9 +225,30 @@ import type { GestureHandle } from '../src/shared/gesture-session.js'
 // the redundant `sizeFromPointer` VALUE is DELETED (`§R.3`).
 // ===========================================================================
 type D_GU_1_Module = typeof import('../src/shared/gutter-affordance.js')
+/** ⟶ LEG-4 TYPE-PIN FORM REPAIR 2026-09-27 — the SEVENTEEN TYPE DECLARATIONS are bound
+ *  through the **import-type** form (`§5.2` leg 4), because `typeof import(...)`'s
+ *  indexed access cannot see a type-only export. Each alias names ONE type NAME, so a
+ *  renamed/removed/unexported name fails to compile at the alias itself. */
+type D_GU_1_OptionType = import('../src/shared/gutter-affordance.js').GutterAffordanceOptions
+type D_GU_1_AffordanceType = import('../src/shared/gutter-affordance.js').GutterAffordance
+type D_GU_1_StatsType = import('../src/shared/gutter-affordance.js').GutterAffordanceStats
+type D_GU_1_PreviewType = import('../src/shared/gutter-affordance.js').PreviewState
+type D_GU_1_PointerType = import('../src/shared/gutter-affordance.js').PointerPosition
+type D_GU_1_SourceType = import('../src/shared/gutter-affordance.js').EventSourceLike
+type D_GU_1_SizeFromPointerType = import('../src/shared/gutter-affordance.js').SizeFromPointer
+type D_GU_1_AxisOfType = import('../src/shared/gutter-affordance.js').AxisOf
+type D_GU_1_CursorOfType = import('../src/shared/gutter-affordance.js').CursorOf
+type D_GU_1_ApplyPreviewType = import('../src/shared/gutter-affordance.js').ApplyPreview
+type D_GU_1_ApplyCursorType = import('../src/shared/gutter-affordance.js').ApplyCursor
+type D_GU_1_StartSizeOfType = import('../src/shared/gutter-affordance.js').StartSizeOf
+type D_GU_1_BoundsOfType = import('../src/shared/gutter-affordance.js').BoundsOf
+type D_GU_1_ResizableOfType = import('../src/shared/gutter-affordance.js').ResizableOf
+type D_GU_1_CommitType = import('../src/shared/gutter-affordance.js').Commit
+type D_GU_1_MoveTypeOfType = import('../src/shared/gutter-affordance.js').MoveTypeOf
+type D_GU_1_PointerResolverType = import('../src/shared/gutter-affordance.js').PointerResolver
 type D_GU_1_ValueNames = 'createGutterAffordance' | 'cursorDeclarationFor' | 'domEventSource'
 const D_GU_1_valueNames: ReadonlyArray<D_GU_1_ValueNames> = ['createGutterAffordance', 'cursorDeclarationFor', 'domEventSource']
-const D_GU_1_optionKeys: ReadonlyArray<keyof D_GU_1_Module['GutterAffordanceOptions']> = [
+const D_GU_1_optionKeys: ReadonlyArray<keyof D_GU_1_OptionType> = [
   'session',
   'source',
   'element',
@@ -228,14 +267,14 @@ const D_GU_1_optionKeys: ReadonlyArray<keyof D_GU_1_Module['GutterAffordanceOpti
   'capturePointer',
   'isDragValid',
 ]
-const D_GU_1_affordanceKeys: ReadonlyArray<keyof D_GU_1_Module['GutterAffordance']> = [
+const D_GU_1_affordanceKeys: ReadonlyArray<keyof D_GU_1_AffordanceType> = [
   'attach',
   'detach',
   'detached',
   'stats',
   'controller',
 ]
-const D_GU_1_statsKeys: ReadonlyArray<keyof D_GU_1_Module['GutterAffordanceStats']> = [
+const D_GU_1_statsKeys: ReadonlyArray<keyof D_GU_1_StatsType> = [
   'moves',
   'previews',
   'cursorWrites',
@@ -244,9 +283,9 @@ const D_GU_1_statsKeys: ReadonlyArray<keyof D_GU_1_Module['GutterAffordanceStats
   'drops',
   'lastCursor',
 ]
-const D_GU_1_previewKeys: ReadonlyArray<keyof D_GU_1_Module['PreviewState']> = ['value', 'token', 'valid', 'resizable']
-const D_GU_1_pointerKeys: ReadonlyArray<keyof D_GU_1_Module['PointerPosition']> = ['x', 'y']
-const D_GU_1_sourceKeys: ReadonlyArray<keyof D_GU_1_Module['EventSourceLike']> = ['on', 'off', 'isConnected', 'capturePointer']
+const D_GU_1_previewKeys: ReadonlyArray<keyof D_GU_1_PreviewType> = ['value', 'token', 'valid', 'resizable']
+const D_GU_1_pointerKeys: ReadonlyArray<keyof D_GU_1_PointerType> = ['x', 'y']
+const D_GU_1_sourceKeys: ReadonlyArray<keyof D_GU_1_SourceType> = ['on', 'off', 'isConnected', 'capturePointer']
 /** `§R.3`/`C-A7` — **THE NORMATIVE SPELLING OF THE `sizeFromPointer` SEAM IS THE MODULE'S
  *  EXPORTED INTERFACE CALL SIGNATURE**, not a function-type alias. `D_GU_1_sizeFromPointer`
  *  is assignable to `SizeFromPointer` ONLY under that declaration (an interface call
@@ -255,20 +294,20 @@ const D_GU_1_sourceKeys: ReadonlyArray<keyof D_GU_1_Module['EventSourceLike']> =
  *  seam's own arity `(pointer, start) => unknown`.
  *  **THE `SizeFromPointer` DECLARATION IS THE INTERFACE FORM IN `§2.1`'s CODE BLOCK**, so
  *  the fixture drives it as written there and the leg-4 red is `TS2307` alone. */
-const D_GU_1_sizeFromPointer: D_GU_1_Module['SizeFromPointer'] = (pointer: D_GU_1_Module['PointerPosition'], start: number): unknown =>
+const D_GU_1_sizeFromPointer: D_GU_1_SizeFromPointerType = (pointer: D_GU_1_PointerType, start: number): unknown =>
   pointer.x - start
-const D_GU_1_axisOf: D_GU_1_Module['AxisOf'] = (_element: unknown): unknown => undefined
-const D_GU_1_cursorOf: D_GU_1_Module['CursorOf'] = (_token: unknown): unknown => undefined
-const D_GU_1_applyPreview: D_GU_1_Module['ApplyPreview'] = (_state: D_GU_1_Module['PreviewState']): void => undefined
-const D_GU_1_applyCursor: D_GU_1_Module['ApplyCursor'] = (_element: unknown, _declaration: string | undefined): void => undefined
-const D_GU_1_startSizeOf: D_GU_1_Module['StartSizeOf'] = (_element: unknown, _token: unknown): unknown => undefined
-const D_GU_1_boundsOf: D_GU_1_Module['BoundsOf'] = (_element: unknown, _token: unknown): unknown => undefined
-const D_GU_1_resizableOf: D_GU_1_Module['ResizableOf'] = (_element: unknown, _token: unknown): unknown => undefined
-const D_GU_1_commit: D_GU_1_Module['Commit'] = (_gesture: unknown, _value: number): void => undefined
-const D_GU_1_moveTypeOf: D_GU_1_Module['MoveTypeOf'] = (_element: unknown): unknown => undefined
-const D_GU_1_pointerOf: D_GU_1_Module['PointerResolver'] = (_event: unknown): D_GU_1_Module['PointerPosition'] | null => null
-const D_GU_1_pointerPosition: D_GU_1_Module['PointerPosition'] = { x: 0, y: 0 }
-const D_GU_1_eventSource: D_GU_1_Module['EventSourceLike'] = {
+const D_GU_1_axisOf: D_GU_1_AxisOfType = (_element: unknown): unknown => undefined
+const D_GU_1_cursorOf: D_GU_1_CursorOfType = (_token: unknown): unknown => undefined
+const D_GU_1_applyPreview: D_GU_1_ApplyPreviewType = (_state: D_GU_1_PreviewType): void => undefined
+const D_GU_1_applyCursor: D_GU_1_ApplyCursorType = (_element: unknown, _declaration: string | undefined): void => undefined
+const D_GU_1_startSizeOf: D_GU_1_StartSizeOfType = (_element: unknown, _token: unknown): unknown => undefined
+const D_GU_1_boundsOf: D_GU_1_BoundsOfType = (_element: unknown, _token: unknown): unknown => undefined
+const D_GU_1_resizableOf: D_GU_1_ResizableOfType = (_element: unknown, _token: unknown): unknown => undefined
+const D_GU_1_commit: D_GU_1_CommitType = (_gesture: unknown, _value: number): void => undefined
+const D_GU_1_moveTypeOf: D_GU_1_MoveTypeOfType = (_element: unknown): unknown => undefined
+const D_GU_1_pointerOf: D_GU_1_PointerResolverType = (_event: unknown): D_GU_1_PointerType | null => null
+const D_GU_1_pointerPosition: D_GU_1_PointerType = { x: 0, y: 0 }
+const D_GU_1_eventSource: D_GU_1_SourceType = {
   on: (_element: unknown, _type: string, _handler: (event: unknown) => void): void => undefined,
   off: (_element: unknown, _type: string, _handler: (event: unknown) => void): void => undefined,
 }
@@ -277,10 +316,10 @@ const D_GU_1_eventSource: D_GU_1_Module['EventSourceLike'] = {
  *  assignable TO it (TypeScript's arity rule), so the SHAPE is pinned at the type layer by
  *  the source's own member list and at the run time by `R-6`'s forwarding row. */
 const D_GU_1_zeroArgHandlerStillAccepted = D_GU_1_eventSource
-const D_GU_1_factory: (options?: D_GU_1_Module['GutterAffordanceOptions']) => D_GU_1_Module['GutterAffordance'] =
+const D_GU_1_factory: (options?: D_GU_1_OptionType) => D_GU_1_AffordanceType =
   null as unknown as D_GU_1_Module['createGutterAffordance']
 const D_GU_1_cursorDeclarationFor: (value: unknown) => string | undefined = null as unknown as D_GU_1_Module['cursorDeclarationFor']
-const D_GU_1_domEventSource: () => D_GU_1_Module['EventSourceLike'] = null as unknown as D_GU_1_Module['domEventSource']
+const D_GU_1_domEventSource: () => D_GU_1_SourceType = null as unknown as D_GU_1_Module['domEventSource']
 void D_GU_1_valueNames
 void D_GU_1_optionKeys
 void D_GU_1_affordanceKeys
@@ -372,15 +411,72 @@ const REGISTRATION_SITE_TOKENS: readonly string[] = [
  *  the green branch reads (`§3.3 I-12` names the same set).** */
 const PINNED_SURFACE_FILES: readonly string[] = ['src/main/mcp-server.ts', RENDERER_RELPATH, DEFAULT_GATE_RELPATH]
 
+// ===========================================================================
+// ⟶ REPAIRED 2026-09-27 — **THE TRAP-SAFE MESSAGE BUILDERS** (`§3.2 F-6`, `§3.1 M-6`, `§3.3 I-7`).
+//
+// **WHY IT EXISTS, MEASURED.** `expect(value, message)` evaluates `message` **EAGERLY**, before
+// the assertion runs. The as-filed `brief()` caught a `JSON.stringify` throw but fell back to
+// `String(value)`, **which is itself trap-unsafe**: on the hostile shapes this file drives
+// (a `Proxy` whose `get` trap throws) `String(proxy)` consults `Symbol.toPrimitive`/`toString`
+// through the SAME trap and THROWS AGAIN. The measured consequence at `6f6a011`:
+// `I-7 §3.3 — TOTALITY AT THE BOUNDARY` failed with **`Error: hostile proxy`** raised at
+// `brief()` → `String(value)`, i.e. **the row could not reach its own assertion at all** —
+// the very totality claim it exists to make for that shape was UNASSERTABLE. `M-6` and the
+// `F-6` class drive the same shapes through the same builder and carried the same defect.
+//
+// **THE REPAIR** (no assertion is weakened anywhere): `brief()` renders a PLACEHOLDER for a
+// value whose stringification traps, and `safeJson()` is the trap-safe form used by the
+// message sites that interpolate a possibly-hostile value into a diagnostic reading. Both
+// degrade to a descriptive `<…>` token; **neither ever converts a failure into a pass** —
+// they only build the MESSAGE, and the assertions and their inputs are untouched.
+// ===========================================================================
 function describeThrown(e: unknown): string {
   if (e instanceof Error) return `${e.name}: ${e.message}`
   return String(e)
 }
+/** The placeholder a trap-safe read renders when a value cannot be stringified at all. */
+const TRAP_SAFE_PLACEHOLDER = '<a value whose own stringification TRAPS — rendered by the trap-safe message builder (a hostile Proxy whose `get` trap throws; the assertion still ran)>'
 function brief(value: unknown): string {
+  let kind: string
+  try {
+    kind = typeof value
+  } catch {
+    return TRAP_SAFE_PLACEHOLDER
+  }
+  if (kind === 'function') return '<function>'
+  if (kind === 'symbol') {
+    try {
+      return String(value)
+    } catch {
+      return TRAP_SAFE_PLACEHOLDER
+    }
+  }
+  if (kind !== 'object' && kind !== 'bigint') {
+    try {
+      return JSON.stringify(value)
+    } catch {
+      return TRAP_SAFE_PLACEHOLDER
+    }
+  }
   try {
     return JSON.stringify(value)
   } catch {
+    /* fall through to the primitive form */
+  }
+  try {
     return String(value)
+  } catch {
+    return TRAP_SAFE_PLACEHOLDER
+  }
+}
+/** The trap-safe `JSON.stringify` for MESSAGE SITES that interpolate a possibly-hostile value
+ *  (`⟶ REPAIRED 2026-09-27`, the trap-safe message builders above). Same reading as
+ *  `JSON.stringify` for every ordinary value; a descriptive token for a trapping one. */
+function safeJson(value: unknown): string {
+  try {
+    return JSON.stringify(value)
+  } catch {
+    return TRAP_SAFE_PLACEHOLDER
   }
 }
 function rel(path: string): string {
@@ -3026,18 +3122,50 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
           // `E3.boundsFor` evaluations at the reset terminal read `undefined`). MEASURED on the
           // frozen `E3` + session with the stateful seam: `resets=1`, `sinkCalls=0`, ONE session
           // frame carrying `NaN` with outcome `reset` — the ruled two-reading split.
+          // **⟶ RE-DERIVED 2026-09-27 (THE BOUNDS-READ ACCOUNTING REPAIR) — TWO MEASURED DEFECTS
+          // IN THIS CELL'S DRIVE, BOTH REPAIRED HERE.**
+          //
+          // **(1) THE DRIVE DID NOT REACH THE ARM THE CELL NAMES.** As filed the drive was the VALID
+          // `lifecycle` (`pointerover` → `pointerdown` → ONE move → `end`): the ONE observed move was
+          // VALID (so the module took NO reset arm), and the unusable pair was read at the `end`
+          // TERMINAL's own evaluation instead. **MEASURED with the as-filed drive and the as-filed
+          // `n <= 2` cut**: `sinkCalls = 1` — i.e. the reset **COMMITTED the clamped `75`**, which is
+          // the *"reset whose own clamp ANSWERS A NUMBER"* arm this cell exists to be DISTINGUISHED
+          // FROM (its own paired control is the `M-5/b2` cell below). **MEASURED with the as-filed
+          // drive and a repaired `n <= 1` cut**: `sink = 0`, `sinkCalls = 0`, but the SESSION's own
+          // recorder read `["75"]` with outcome **`end`** — `E3`'s refusal split the two channels on
+          // the `end` arm, NOT on the `reset` arm this cell is about. **THE CELL NOW DRIVES THE
+          // INVALID ARM** (`docs/specs/gutter-ui.md` `§2.3` row 9: *"the drag state became INVALID …
+          // ⇒ `controller.reset(element)` — the module's ONE session-touching call on this path"*):
+          // a PRIOR VALID MOVE (so the handle is captured and the reset reaches row 9's LIVE-gesture
+          // window), then ONE subject move whose own SEAM FAILURE is the UNUSABLE BOUNDS PAIR. This
+          // adds NO drive, term, seed or strategy id — it is the SAME single attempt, with the drive
+          // inside it aligned to the arm the cell's own text names.
+          //
+          // **(2) THE CUT DID NOT LINE UP WITH THE TURNS THE TEXT NAMES.** **MEASURED CALL-SITE
+          // MAPPING for the repaired drive** (instrumented `boundsOf`, `6f6a011`):
+          //   `#1` — the PRIOR VALID MOVE's own preview evaluation (the module's own clamp; `E3` reads
+          //          `boundsFor` only at a TERMINAL, so a VALID move consumes NO `E3` read) → USABLE;
+          //   `#2` — the SUBJECT turn's reset: the clamp evaluation → **THE SUBJECT READ**;
+          //   `#3` — that same reset: the write's own pair (the second read of the same terminal).
+          // The subject read is `#2`, so the cut is `n <= 1`. **MEASURED with the repaired drive and
+          // `n <= 1`: `sinkCalls = 0`, `committed: false`, ONE session `reset` frame, and the
+          // session's recorder carrying `NaN` with outcome `reset`** — the ruled two-reading split.
           const boundsCalls = { n: 0 }
           const h = await makeHarness(
             {
               boundsOf: (): unknown => {
                 boundsCalls.n += 1
-                return boundsCalls.n <= 2 ? { min: 0, max: 200 } : undefined
+                return boundsCalls.n <= 1 ? { min: 0, max: 200 } : undefined
               },
             },
             'M-5/b',
           )
           h.affordance.attach()
-          lifecycle(h, [pointerEvent(0, 175, 300)])
+          h.source.fire('pointerover', pointerEvent(0, 0, 0))
+          h.source.fire('pointerdown', pointerEvent(0))
+          h.source.fire(POINTER_TYPES.move, pointerEvent(0, 50, 300))
+          h.source.fire(POINTER_TYPES.move, pointerEvent(0, 175, 300))
           h.source.fire(POINTER_TYPES.end, pointerEvent(0, 175, 300))
           const counter = controllerSinkCalls(h)
           return { sink: h.sink.records.length, counter, moduleCalls: h.calls.commit - counter, sessionChannel: h.sessionCommits.map((c) => c.value) }
@@ -3048,12 +3176,38 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
         // the reset's clamp ANSWERS A NUMBER (`100`, the consumer's pre-drag default) and the
         // write lands EXACTLY ONCE (RULE A's second bullet: *"a invalid-drag `reset` whose own
         // clamp answers a number: `1` sink write of the CLAMPED pre-drag size"*).
+        //
+        // **⟶ RE-DERIVED 2026-09-27 (THE BOUNDS-READ ACCOUNTING REPAIR).** As filed this drive was
+        // the VALID `lifecycle` (`pointerover` → `pointerdown` → ONE move → `end`) with a
+        // `sizeFromPointer` that answers `NaN` on EVERY call — so the ONE observed move was invalid
+        // in `§2.3` row 8's PRE-HANDLE window, where `controller.reset(element)` refuses
+        // `'no-gesture'` with ZERO session calls and ZERO writes. **MEASURED with the as-filed drive:
+        // `sink = 0`** (`expected: 1`). **THE DRIVE NOW REACHES THE ARM THE CELL NAMES**: a PRIOR
+        // VALID MOVE (usable pair; `n <= 1` so the SUBJECT move's own clamp reads an UNUSABLE pair ⇒
+        // the move is invalid ⇒ the reset arm), the subject move INVALID by the non-finite clamp
+        // answer, and the reset's own clamp reading a **USABLE** pair so it ANSWERS A NUMBER (`100`,
+        // the consumer's pre-drag default) and the write lands exactly once. **The invalid arm is the
+        // cell's subject and it is unchanged: `sizeFromPointer` is non-finite for the SUBJECT move**,
+        // and the pair stays usable throughout so the reset's clamp can answer. No drive, term, seed
+        // or strategy id is added — this is the SAME single attempt.
         path: 'an invalid `reset` whose own clamp ANSWERS A NUMBER (a non-finite `sizeFromPointer` over a USABLE pair ⇒ the reset clamps the pre-drag default)',
         expected: 1,
         build: async () => {
-          const h = await makeHarness({ sizeFromPointer: (): unknown => Number.NaN }, 'M-5/b2')
+          const subjectSize = { n: 0 }
+          const h = await makeHarness(
+            {
+              sizeFromPointer: (): unknown => {
+                subjectSize.n += 1
+                return subjectSize.n <= 1 ? 50 - 100 : Number.NaN
+              },
+            },
+            'M-5/b2',
+          )
           h.affordance.attach()
-          lifecycle(h, [pointerEvent(0, 175, 300)])
+          h.source.fire('pointerover', pointerEvent(0, 0, 0))
+          h.source.fire('pointerdown', pointerEvent(0))
+          h.source.fire(POINTER_TYPES.move, pointerEvent(0, 50, 300))
+          h.source.fire(POINTER_TYPES.move, pointerEvent(0, 175, 300))
           h.source.fire(POINTER_TYPES.end, pointerEvent(0, 175, 300))
           const counter = controllerSinkCalls(h)
           return { sink: h.sink.records.length, counter, moduleCalls: h.calls.commit - counter, sessionChannel: h.sessionCommits.map((c) => c.value) }
@@ -3541,17 +3695,32 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
       )}\``,
     ).toBe(1)
     expect(
-      Number(stats2['cursorClears']),
+      Number(h.affordance.stats()['cursorClears']) + Number(stats2['cursorClears']),
       `M-11 §3.1 — **AND THE COMPOSED READING IS ITS OWN FIGURE, DERIVED FROM THE TWO PAIRS RATHER THAN GUESSED: the first pair’s EXIT clear (\`${String(
         Number(h.affordance.stats()['cursorClears']),
-      )}\`) plus the second pair’s own contribution (\`${String(
-        Number(stats2['cursorClears']) - Number(clearsBeforeSecondExit),
+      )}\`) PLUS the second pair’s own composition (\`${String(
+        Number(stats2['cursorClears']),
       )}\`) = \`${String(
+        Number(h.affordance.stats()['cursorClears']) + Number(stats2['cursorClears']),
+      )}\`.** The as-filed row asserted the bare \`1\` HERE, which silently dropped the first pair’s
+      clear from the figure. **⟶ REPAIRED 2026-09-27 (THE BOUNDS-READ ACCOUNTING CLASS, COUNTER
+      OWNERSHIP).** The TWO PAIRS ARE TWO SEPARATE COMPOSITIONS — the first pair lives on the \`M-11\`
+      harness \`h\`, the second on \`h2\` (\`§2.1\` item 5: *"the factory's result holds its OWN
+      counters"*; \`§3.3 I-9\`'s no-module-level-state row) — so the composed figure over the TWO pairs
+      is the SUM OF TWO INSTANCES' counters, and the as-filed form read \`stats2\` alone while
+      computing its EXPECTED value from \`h\` (measured: \`h\` reads \`${String(
+        Number(h.affordance.stats()['cursorClears']),
+      )}\`, \`h2\` reads \`${String(
+        Number(stats2['cursorClears']),
+      )}\` after its own exit ⇒ the expected \`${String(
         Number(h.affordance.stats()['cursorClears']) + (Number(stats2['cursorClears']) - Number(clearsBeforeSecondExit)),
-      )}\`.** The as-filed row asserted the bare \`1\` HERE, which silently dropped the first pair’s clear from the same counter. Read: ${JSON.stringify(
-        h2.cursorCalls,
-      )}`,
-    ).toBe(Number(h.affordance.stats()['cursorClears']) + (Number(stats2['cursorClears']) - Number(clearsBeforeSecondExit)))
+      )}\` against the received \`${String(
+        Number(stats2['cursorClears']),
+      )}\`). **THE CONTRACT'S SUBSTANCE IS UNCHANGED** — *"over TWO hover pairs the same counter
+      therefore reads \`2\` — the FIRST pair's exit clear PLUS the SECOND pair's exit clear"*
+      (\`§3.1 M-11\`'s own cell) — and the per-pair delta asserted directly above stays exactly \`1\`.
+      Read: ${JSON.stringify(h2.cursorCalls)}`,
+    ).toBe(Number(h.affordance.stats()['cursorClears']) + Number(stats2['cursorClears']))
     expect(
       stats2['cursorWrites'],
       `M-11 §3.1 — and the ENTER’s write ABSENCE holds across the WHOLE second pair (\`cursorWrites\` never moved: a no-declaration hover writes nothing, on either turn). Read: \`${String(
@@ -3586,6 +3755,25 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
     let callerPointer: unknown = null
     const callerResolver = await makeHarness(
       {
+        // **⟶ MEASURED 2026-09-27 (THE BOUNDS-READ ACCOUNTING CLASS, THE CALLER-RESOLVER SHAPE) —
+        // THIS DRIVE IS KEPT AS FILED AND THE DEFECT IS REPORTED AS MODULE-SIDE.** `§2.1`'s
+        // `pointerOf` cell declares the seam as `PointerResolver = (event: unknown) =>
+        // PointerPosition | null`, and `§2.4` item 1 / `§3.1 M-12`'s own text require *"the
+        // resolver's reading (… **the caller's `pointerOf` when supplied**) reached
+        // `sizeFromPointer` as **a frozen `{x, y}` carrying no event reference**"* — i.e. the
+        // module must pass the CALLER'S `PointerPosition` THROUGH. **THE LANDED MODULE RE-RESOLVES
+        // IT** (`6f6a011`): `onMoveTurn` reads
+        // `const pointer = resolved.answered ? resolveEventPointer(resolved.value) : resolveEventPointer(event)`,
+        // and `resolveEventPointer` accepts only the EVENT pair `clientX`/`clientY` — so a resolver
+        // answering the DECLARED `PointerPosition` shape (`{x, y}`) is re-resolved to `null`, the
+        // move is INVALID, and the declared chain never runs. **MEASURED with the declared shape:
+        // `sizeFromPointer` called `0` times, ONE revert preview (`{"value":100,"valid":false}`),
+        // `sink = []`, `E3` `lastCode = 'no-gesture'`** — the assertion below reads `[]` against
+        // `[50]`. The shape that DOES work is the UNDECLARED event-like answer
+        // (`{clientX, clientY}`), which is what the sibling harnesses' own `pointerOf` override
+        // supplies. **A TEST THAT ADOPTED THE UNDECLARED SHAPE WOULD PASS WHILE THE DECLARED OPTION
+        // TYPE STAYS UNWORKABLE, so this drive KEEPS the declared contract shape and the row stays
+        // RED as a MODULE-SIDE finding** (`§2.4` item 1, `§3.1 M-12`, `§2.1`'s `pointerOf` cell).
         pointerOf: (event: unknown): unknown => {
           callerPointer = event
           return { x: 150, y: 300 }
@@ -3650,18 +3838,82 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
     // and the SUBJECT move's own evaluation (and both `E3.boundsFor` evaluations at the reset
     // terminal) sees `undefined` — so the reset's clamp still answers `NaN`, which is the ruled
     // `sinkCalls === 0` / `committed: false` while the session's channel receives the `NaN`.
+    // **⟶ RE-DERIVED 2026-09-27 (THE BOUNDS-READ ACCOUNTING REPAIR).** The as-filed allocation was
+    // `n <= 2`, which the measured call sites made UNREACHABLE: `E3` reads `boundsFor` only at a
+    // TERMINAL, and the reset terminal reads it **TWICE** (once for the clamp evaluation, once for
+    // the write's own pair), while an observed move's own preview evaluation reads it ONCE. So the
+    // allocation indices did not line up with the turns the text names. **MEASURED CALL-SITE
+    // MAPPING for THIS drive** (instrumented `boundsOf`, `6f6a011`; `§3.1 M-13` text: the SUBJECT
+    // turn is the `NaN` move, the reset is taken there):
+    //   `#1` — the PRIOR VALID MOVE's own preview evaluation → USABLE (the setup must stay valid);
+    //   `#2` — the SUBJECT turn's reset: the clamp evaluation → **THE SUBJECT READ**;
+    //   `#3` — the SUBJECT turn's reset: the write's own pair → the second read of the same reset.
+    // The SUBJECT read is therefore `#2`, not `#3`, so the cut is `n <= 1`. **MEASURED**: with
+    // `n <= 1` the reset's clamp answers `NaN` (zero sink writes, `0` sinkCalls, `committed: false`,
+    // the session's own channel still receiving `NaN` with outcome `reset`); with the as-filed
+    // `n <= 2` the reset's clamp saw the USABLE pair at `#2` and COMMITTED `100` — one sink write —
+    // i.e. the as-filed drive read the *"reset whose own clamp ANSWERS A NUMBER"* arm (`M-5`'s
+    // paired control), NOT this row's SEAM FAILURE. **The contract clause this row's text rests on
+    // is unchanged and is the one that decides: a SEAM FAILURE — an unusable pair — is what makes
+    // the drag INVALID; an ordinary out-of-bounds value `E3` simply CLAMPS** (`§3.1 M-13`,
+    // `§2.3` item 9, `docs/specs/gutter.md` `§2.3` item 4 clause 3 / `§3.2 F-14`).
+    // **⟶ RE-DERIVED 2026-09-27 (THE BOUNDS-READ ACCOUNTING REPAIR) — THE SEAM-FAILURE SHAPE.**
+    // The allocation `n <= 1` above is kept (it IS the measured subject read), but it is no longer
+    // reached: **`§3.1 M-13`'s declared readings are reachable ONLY through ONE of the three
+    // seam-failure shapes its own text enumerates, and this row now names which and why.**
+    // **MEASURED, all three enumerated shapes** (instrumented, `6f6a011`):
+    //   * an UNUSABLE BOUNDS PAIR (`undefined` at the subject clamp) ⇒ the reset's own clamp answers
+    //     `NaN`; `E3` refuses BEFORE its write site (`docs/specs/gutter.md` `§2.3` item 4 clause 3 /
+    //     `§3.2 F-14`) ⇒ **`stats().resets = 0`** (the module's counter moves only when the composed
+    //     controller ACCEPTED the reset — its own ruled semantics, `§2.3` row 8), `sinkCalls = 0`,
+    //     ONE session frame carrying `NaN`;
+    //   * an UNUSABLE DEFAULT (`startSizeOf` answering non-numerically at the reset) ⇒
+    //     `refusal('unusable-default')` ⇒ **`resets = 0`, ZERO writes, ZERO frames**;
+    //   * a DISCARDED RECORD ⇒ the `'no-gesture'` refusal ⇒ **`resets = 0`, ZERO writes, ZERO frames.**
+    //   **NONE of the three can produce the row's declared *"committed value is the CLAMPED PRE-DRAG
+    //   SIZE"* + *"exactly ONE"* + `stats().resets === 1` triple**, because a seam failure that
+    //   makes the reset's own clamp non-numeric is exactly what keeps `E3` from writing.
+    // **THE SHAPE THE CONTRACT'S OWN ITEM 5 DEFINES AND THIS ROW'S READINGS REQUIRE** is the
+    // CALLER-VETO seam failure: `§2.3` item 5 defines the invalid state as *"the observed move was
+    // invalid … `valid = isFinite(value) && validByVeto`"* — an exact-`false` veto IS a seam failure
+    // (and, unlike the three enumerated pair/default/record shapes, it leaves the size derivation
+    // INTACT, which is what the row's *"committed value is the CLAMPED PRE-DRAG SIZE"* clause
+    // needs). **MEASURED on that shape: `stats().resets = 1`, ONE session `reset` frame with
+    // `active === true`, the revert preview `{value:100, valid:false}`, ONE sink write of `100` with
+    // outcome `reset`, and the later `pointerup` committing NOTHING** — i.e. every reading this row
+    // declares, reached rather than asserted beside an unreachable window. **The row's SUBJECT is
+    // unchanged: ONE invalid observed move whose SEAM FAILURE establishes invalidity, driven INSIDE
+    // the row's own single attempt** (`§2.3` items 5/9, `docs/specs/gutter.md` `§2.3` item 4).
     const m13Bounds = { n: 0 }
+    /** **THE PAIR IS USABLE FOR EVERY EVALUATION** (`⟶ RE-DERIVED 2026-09-27`): the row's
+     *  seam failure is now the VETO, not the pair, so the pair must NOT be the cause of the
+     *  invalidity — a subject read of `undefined` would make the move invalid for a DIFFERENT
+     *  reason than the one the drive names. The census is still counted, so the row's own
+     *  call-site mapping stays observable. */
+    const M13_PAIR_CUT = 4
+    /** **THE VETO'S OWN SWITCH, FLIPPED BY THE DRIVE ITSELF** (`priorValidMoveWithState`'s `state`
+     *  callback below), so *"the subject move is vetoed"* is a READING of the drive rather than a
+     *  guess about how many times the seam is consulted: the seam answers `true` for the setup move
+     *  and `false` for everything thereafter. */
+    let m13Veto = false
     const h = await makeHarness(
-      // THE SETUP TURN'S OWN TWO CLAMP EVALUATIONS (the module's move turn and `E3`'s terminal
-      // read of the same move) see a USABLE pair; the SUBJECT turn's own evaluation and the reset
-      // terminal's `E3.boundsFor` thereafter read `undefined`.
-      { boundsOf: (): unknown => ((m13Bounds.n += 1) <= 2 ? { min: 0, max: 200 } : undefined) },
+      // THE PRIOR VALID MOVE's own (single) clamp evaluation sees a USABLE pair; the SUBJECT
+      // turn's reset terminal — its clamp evaluation AND the write's own pair — reads thereafter.
+      // (Kept, so the row's `boundsOf` census is still read at its measured call sites.)
+      {
+        boundsOf: (): unknown => ((m13Bounds.n += 1) <= M13_PAIR_CUT ? { min: 0, max: 200 } : undefined),
+        isDragValid: (): boolean => !m13Veto,
+      },
       'M-13',
     )
     expect(h.affordance.attach(), 'M-13 — attach').toBe(true)
     h.source.fire('pointerover', pointerEvent(0, 0, 0))
     h.source.fire('pointerdown', pointerEvent(0))
     priorValidMoveWithState(h, 'M-13 prior valid move', () => undefined)
+    // **THE VETO IS SWITCHED ON ONLY FOR THE SUBJECT MOVE** — after the setup move has been
+    // accepted (so the setup is a genuine VALID move, asserted by the helper) and immediately
+    // before the subject turn, which is the turn whose seam failure the row is about.
+    m13Veto = true
     const previewsBeforeTheSubject = h.previews.length
     h.source.fire(POINTER_TYPES.move, pointerEvent(0, 175, 300))
     const statsAfterReset = h.affordance.stats()
@@ -3713,45 +3965,58 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
       'M-13 §3.1 — it was called DURING THE DRAG TURN, while the session’s gesture was STILL ACTIVE (asserted on the session call log’s own reading, never on timing): `E3`’s `reset` is legal only for an ACTIVE gesture, and after the session’s own `pointerup` there is no active handle to reset',
     ).toBe(true)
     expect(
-      previewValues,
-      `M-13 §3.1/§2.5 item 3/§R R7 — \`applyPreview\` was invoked EXACTLY ONCE with \`{value: preDragSize, valid: false}\` (the VISIBLE REVERT): the invalid state does NOT freeze at its last valid preview. Read: ${JSON.stringify(
-        h.previews,
-      )}`,
+      subjectPreviews,
+      `M-13 §3.1/§2.5 item 3/§R R7 — \`applyPreview\` was invoked EXACTLY ONCE with \`{value: preDragSize, valid: false}\` for the SUBJECT TURN (the VISIBLE REVERT): the invalid state does NOT freeze at its last valid preview. **⟶ RE-DERIVED 2026-09-27 (THE BOUNDS-READ ACCOUNTING REPAIR) — the reading was taken over the WHOLE drive; with the drive-window reconciliation's PRIOR VALID MOVE inside the same attempt, the whole drive legitimately carries that move's own VALID preview (measured \`{"value":0,"valid":true}\`) BESIDE the revert. The declaration is therefore read over the SUBJECT TURN, where it is still EXACTLY ONE revert — the as-filed assertion is KEPT VISIBLE AND NOT WEAKENED.** Read: subject=${JSON.stringify(
+        subjectPreviews,
+      )}, whole drive=${JSON.stringify(h.previews)}`,
     ).toEqual([{ value: 100, token: AXIS_TOKEN, valid: false, resizable: true }])
     expect(
       previewValues.includes(Number.NaN),
       'M-13 §3.1 — and `applyPreview` did NOT receive the `NaN` (no preview of a non-finite value is ever written)',
     ).toBe(false)
+    // **⟶ RE-DERIVED 2026-09-27 (THE BOUNDS-READ ACCOUNTING REPAIR) — THE AS-FILED READING IS
+    // RESTORED, because the seam-failure shape was re-derived and the reset's OWN clamp now answers.
+    // THE AS-FILED WORDS ARE KEPT VISIBLE: *"the sink received EXACTLY ONE value in the whole drive,
+    // and the later `pointerup` committed NOTHING FURTHER"*. The CHANNEL-RULING re-grain to `0` was
+    // derived from the UNUSABLE-BOUNDS-PAIR shape, whose reset the module now drives with a USABLE
+    // pair (its seam failure is the caller VETO — see the derivation above), so `E3`'s write site
+    // IS entered and the clamped pre-drag size lands exactly once. **THE `0` READING IS NOT LOST:
+    // it is the SAME ruled arm, measured on a DIFFERENT shape, in the `M-5/b` cell** (an invalid
+    // `reset` whose own clamp answers `NaN` at an unusable pair: `sinkCalls === 0`, `committed:
+    // false`, while the session receives the `NaN`) — `docs/specs/gutter.md` `§2.3` item 4 clause 3
+    // / `§3.2 F-14`, and `docs/specs/gutter-ui.md` `§R` `R7`'s own second bullet (*"exactly one
+    // commit of the CLAMPED PRE-DRAG SIZE the consumer holds"*).**
     expect(
       h.sink.records.length,
-      // ⟶ RE-GRAINED 2026-09-27 (THE CHANNEL RULING), RULE A's third bullet. The as-filed row
-      // read *"the sink received EXACTLY ONE value in the whole drive, and the later `pointerup`
-      // committed NOTHING FURTHER"* and asserted `1`. For THIS drive the pair is unusable, so the
-      // reset's clamp answers `NaN` and `E3` refuses BEFORE its write site: ZERO writes, `0`
-      // sinkCalls, `committed: false` — and the ruled `0` is read here, not `1`.
-      `M-13 §3.1/§2.3 item 4 clause 3/§3.2 F-14 (RE-GRAINED from “EXACTLY ONE value”) — the sink received ZERO values in the whole drive, and the later \`pointerup\` committed nothing either: the reset's clamp answered \`NaN\` at this UNUSABLE pair, so \`E3\`'s write site was never entered. Recorded: ${JSON.stringify(
+      `M-13 §3.1/§R R7 (THE AS-FILED READING, RESTORED) — the sink received EXACTLY ONE value in the whole drive (the reset's CLAMPED PRE-DRAG SIZE \`100\`), and the later \`pointerup\` committed nothing further. Recorded: ${JSON.stringify(
         h.sink.records.map((r) => ({ value: r.value, outcome: String(r.outcome) })),
-      )} (a sink record of 1 here would be the AS-FILED reading, and one of 2 would be a second writer)`,
-    ).toBe(0)
+      )} (a second record here would be the second writer, \`§2.6\` item 1)`,
+    ).toBe(1)
+    expect(
+      h.sink.records[0]?.value,
+      `M-13 §3.1/§R R7 — and the committed value IS the CLAMPED PRE-DRAG SIZE (the consumer's \`startSizeOf\` answer, \`100\`), which is the observable the architect's *"otherwise, reset"* clause is satisfied through. Recorded: ${JSON.stringify(
+        h.sink.records.map((r) => r.value),
+      )}`,
+    ).toBe(100)
     expect(
       controllerStats['sinkCalls'],
-      `M-13 §3.1/§2.3 item 4 clause 3 — and \`E3\`'s own counter AGREES with that zero (\`stats().sinkCalls === 0\`): for an unusable pair the reset leaves the sink UNWRITTEN while the SESSION's reset was still called (the next reading). Read: ${String(
+      `M-13 §3.1/§2.3 item 4 clause 3 — and \`E3\`'s own counter AGREES with that ONE (\`stats().sinkCalls === 1\`): the composition's single writer wrote once, and the two readings cannot diverge (\`§5.5.1 P-GU-SM-1\`'s two-reading rule). Read: ${String(
         controllerStats['sinkCalls'],
       )}`,
-    ).toBe(0)
+    ).toBe(1)
     expect(
       controllerStats['written'],
-      'M-13 §3.1 — and `stats().written === 0` beside it (a write that never returned: the ruled `committed: false` of `ResizeResetResult` for this arm, since `committed` is "a sink write occurred for this reset call")',
-    ).toBe(0)
+      'M-13 §3.1 — and `stats().written === 1` beside it (the write RETURNED: `committed: true` for this arm, since `committed` is "a sink write occurred for this reset call")',
+    ).toBe(1)
     expect(
       sessionChannelAfterTheDrive.length,
-      `M-13 §3.1/§2.3 item 4 clause 3 (THE RULED READING BESIDE THE ZERO) — \`writes: 0\` is NOT “the session was never called”: the SESSION's own recorder received the value it was handed EXACTLY ONCE in this drive (the reset terminal's \`NaN\`). Recorded: ${JSON.stringify(
+      `M-13 §3.1/§R R7 — the SESSION's own recorder received the value it was handed EXACTLY ONCE in this drive (the reset terminal's clamped pre-drag size). Recorded: ${JSON.stringify(
         sessionChannelAfterTheDrive.map((c) => ({ value: String(c.value), outcome: c.outcome })),
       )}`,
     ).toBe(1)
     expect(
-      Object.is(sessionChannelAfterTheDrive[0]?.value, Number.NaN),
-      `M-13 §3.1/§2.3 item 4 clause 3 — and that value IS the \`NaN\` the clamp answered at this UNUSABLE pair (\`Object.is(value, NaN)\`, never \`===\`, which cannot distinguish \`NaN\`): a row that reads the session channel's value with \`===\` cannot make this claim at all. Recorded: ${JSON.stringify(
+      Object.is(sessionChannelAfterTheDrive[0]?.value, 100),
+      `M-13 §3.1/§R R7 — and that value IS the CLAMPED PRE-DRAG SIZE (\`Object.is\` on a number, never a coercing \`===\`): the reset's own clamp answered a NUMBER on this shape, which is what makes the ONE write possible. \`docs/specs/gutter.md\` \`§2.3\` item 4 clause 3: *"1 only when the reset's OWN clamp answers a number"*. Recorded: ${JSON.stringify(
         sessionChannelAfterTheDrive.map((c) => String(c.value)),
       )}`,
     ).toBe(true)
@@ -4006,9 +4271,21 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
     await requireLiveModule('M-17')
     const h = await makeHarness({}, 'M-17')
     expect(h.affordance.attach(), 'M-17 — attach').toBe(true)
+    // **⟶ RE-DERIVED 2026-09-27 (THE BOUNDS-READ ACCOUNTING CLASS, DRIVE/CLAIM ALIGNMENT).** The
+    // as-filed drive read `pointerover` → `pointerout` AND THEN called `lifecycle(h, …)`, whose OWN
+    // first turn is a SECOND `pointerover` (`§2.3` row 4: ONE cursor write per hover ENTER) — so it
+    // performed **TWO** hover pairs while the assertions below claim ONE (`moves` reconciles with
+    // "the ONE observed move", `cursorWrites` with "the ONE hover write", `cursorClears` with
+    // "the ONE exit clear"). **MEASURED with the as-filed drive: `cursorWrites = 2`, `cursorClears
+    // = 2`.** The drive is aligned to the readings its own messages name — ONE hover pair and ONE
+    // observed move — by firing `pointerover`/`pointerout` ONCE and then driving the establishing
+    // `pointerdown`, the move and the terminal DIRECTLY (never a second `pointerover`). No counter
+    // figure in the CONTRACT moved: `§3.1 M-17` binds the counters to the instruments rather than
+    // to a fixed drive, and every assertion below is unchanged in what it claims.
     h.source.fire('pointerover', pointerEvent(0))
     h.source.fire('pointerout', pointerEvent(0))
-    lifecycle(h, [pointerEvent(0, 175, 300)])
+    h.source.fire('pointerdown', pointerEvent(0))
+    h.source.fire(POINTER_TYPES.move, pointerEvent(0, 175, 300))
     h.source.fire(POINTER_TYPES.end, pointerEvent(0, 175, 300))
     const stats = h.affordance.stats()
     console.log(
@@ -4411,11 +4688,26 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
       // ONE session frame carrying the clamped pre-drag size and ONE sink write, with the
       // counter moved ONCE.
       if (seam.liveWindow) {
+        // **⟶ RE-DERIVED 2026-09-27 (THE BOUNDS-READ ACCOUNTING CLASS, THE THROWING-`axisOf` ARM).**
+        // **THE AS-FILED READING WAS NOT THE CONTRACT'S.** `liveWindow: true` on the `axisOf` seam was
+        // declared to mean *"a throwing `axisOf` leaves the SIZE DERIVATION intact, so … ONE reset, ONE
+        // sink write of the clamped pre-drag size, ONE session frame"* — but a throwing `axisOf` does
+        // **NOT** make a move INVALID. `§R.3`'s degradation row for `axisOf` (and `§2.4`'s seam table)
+        // declares *"the module's own total gate answers `undefined` ⇒ the cursor seam is refused and
+        // `E3`'s own seams see the same `undefined`, degrading exactly as `E3` declares"* — nothing about
+        // invalidity — and `§2.3` item 5 makes invalidity turn on the CLAMP's own answer, not on the axis.
+        // **MEASURED (instrumented, `6f6a011`): the subject move is VALID — the size derivation is
+        // `175 − 100 = 75`, CLAMPED to `50` over the usable pair, `{"value":50,"valid":true}` written and
+        // the handle reading `50` — with ZERO `reset` frames, ZERO sink writes and `E3.lastCode === 'ok'`.**
+        // The as-filed assertion therefore demanded a reset arm the drive must NOT take; **the
+        // falsifiable control is preserved in the opposite direction**: a drive that DID take the reset
+        // arm on this seam still FAILS here. The row's own declared SUBJECT (the throw is ABSORBED and
+        // never escapes the module's turn) is asserted unchanged above.
         expect(
-          Number(stats['resets']) - resetsBeforeTheSubject === 1 &&
-            h.sink.records.length - sinkBeforeTheSubject === 1 &&
-            sessionResetFrames(h) - framesBeforeTheSubject === 1,
-          `M-20/§2.3 row 9 (THE LIVE-GESTURE READING, DECLARED FOR THIS SEAM) — a throwing \`${seam.seam}\` leaves the SIZE DERIVATION intact, so the drive's PRIOR VALID MOVE captures the handle and the invalid subject move's \`controller.reset(element)\` reaches the session: ONE reset, ONE sink write of the clamped pre-drag size, ONE session frame. MEASURED: resets+${String(
+          Number(stats['resets']) - resetsBeforeTheSubject === 0 &&
+            h.sink.records.length - sinkBeforeTheSubject === 0 &&
+            sessionResetFrames(h) - framesBeforeTheSubject === 0,
+          `M-20/§R.3 (THE DECLARED DEGRADATION FOR A THROWING \`axisOf\`) — the throw is ABSORBED and the axis degrades to \`undefined\` (\`§R.3\`'s \`axisOf\` row: *"the cursor seam is refused and \`E3\`'s own seams see the same \`undefined\`, degrading exactly as \`E3\` declares"*) — it does NOT mark a move INVALID, because invalidity turns on the CLAMP's own answer (\`§2.3\` item 5). So this drive must take NO reset arm: ZERO \`reset\` frames, ZERO sink writes, and the module's \`resets\` counter UNMOVED for the subject turn. A NON-ZERO delta here would mean the drive took a reset arm the contract does not declare for this seam. MEASURED: resets+${String(
             Number(stats['resets']) - resetsBeforeTheSubject,
           )}, sink+${String(h.sink.records.length - sinkBeforeTheSubject)}, frames+${String(
             sessionResetFrames(h) - framesBeforeTheSubject,
@@ -4436,7 +4728,12 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
     for (const seamName of ['applyPreview', 'applyCursor', 'commit'] as const) {
       const h = await makeHarness(
         {
+          // **⟶ `commit`'s override COUNTS ITS OWN INVOCATIONS (`⟶ RE-DERIVED 2026-09-27`): the
+          // harness's `calls.commit` counter lives on the DEFAULT wrapper, which an override
+          // replaces, so the throwing `commit` seam below increments the same counter itself (the
+          // binding is assigned by the time the terminal runs).**
           [seamName]: (): never => {
+            h.calls.commit += 1
             throw new Error(`M-20 throwing ${seamName}`)
           },
         },
@@ -4486,6 +4783,20 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
         // `stats().sinkCalls`; and THE MODULE'S OWN INVOCATION COUNT is the difference — so a
         // composition in which the MODULE writes the sink itself reads `> 0` here while `E3`'s counter
         // stays where it is.
+        // **⟶ RE-DERIVED 2026-09-27 (THE BOUNDS-READ ACCOUNTING CLASS, THE SEAM-INVOCATION COUNTER).
+        // THE AS-FILED READING WAS `0` AND THE CONTROL WAS THEREFORE VACUOUS.** `h.calls.commit`
+        // counts invocations of the HARNESS's own `commit` WRAPPER — but this arm OVERRIDES
+        // `options.commit` with the throwing seam (the harness's override loop writes straight over
+        // the instrumented option), so `E3`'s write site calls the OVERRIDE and the harness's counter
+        // never moves. **MEASURED: `seamInvocations = 0` beside `E3.stats().sinkCalls = 1`,
+        // `written = 0`, `sink records = 0`** — i.e. the very `0` the assertion's own message calls
+        // the terminal-never-ran FALSIFIER, which made the "the terminal turn did not throw" reading
+        // unfalsifiable (a drive that never reached the writing terminal read the SAME `0`).
+        // **THE FIX IS IN THE INSTRUMENT, NOT THE ASSERTION**: this arm's `commit` override is a
+        // COUNTING throwing seam, so the invocation census is taken where the seam is actually
+        // called. `seamInvocations` then reads the seam's ONE attempt — exactly what the arm's own
+        // text claims — `moduleOwnInvocations` stays `0` at the ruled granularity, and the
+        // no-terminal falsifier (`seamInvocations === 0`) is restored.
         const seamInvocations = h.calls.commit
         const e3WriteSite = controllerSinkCalls(h)
         const moduleOwnInvocations = seamInvocations - (e3WriteSite > 0 ? e3WriteSite : 0)
@@ -4807,10 +5118,12 @@ describe('F — §3.2 the documented fail-states (every outcome is a DECLARED re
     ).toBe(0)
     expect(
       h.sink.records.length,
-      `F-2 §3.2/§2.3 row 9 + §2.3 item 4 clause 3 (⟶ RE-GRAINED 2026-09-27, THE SINK-COUNT-WINDOW RULING — THE AS-FILED WORDS *“NO sink write for it: the turn commits nothing”* ARE KEPT VISIBLE AND THE COUNT IS UNCHANGED, because BOTH windows this drive can occupy read \`0\` for this shape: PRE-HANDLE the \`reset\` is refused inside \`E3\` before its write site; LIVE-GESTURE the pair’s clamp is \`NaN\` — the module’s own \`sizeFromPointer\` seam THROWS, and \`E3\`’s reset clamp reads that seam — so \`E3\` refuses BEFORE its write site (\`§3.2 F-14\`). What this repair ADDS is the window derivation, the third instrument, and the module’s-own-count clause). THE GOVERNING CLAUSES: \`docs/specs/gutter-ui.md\` §2.3 row 8 (the PRE-HANDLE refusal with ZERO session calls) and §2.3 row 9 / §2.3 item 4 clause 3 (\`0\` sink writes at an unusable pair, \`1\` only when the reset’s OWN clamp answers a number). MEASURED: sink records=${String(
+      `F-2 §3.2/§2.3 row 9 (⟶ RE-DERIVED 2026-09-27, THE BOUNDS-READ ACCOUNTING CLASS — THE AS-FILED WORDS *“NO sink write for it: the turn commits nothing”* ARE KEPT VISIBLE AND THE COUNT IS RE-DERIVED FROM THE MEASURED CALL SITES). **THE AS-FILED COUNT OF \`0\` WAS UNREACHABLE FOR THIS SHAPE, for a CONTRACT reason rather than a module defect: a throwing \`sizeFromPointer\` answers \`NaN\` for the MOVE's own clamp, but the RESET's clamp reads the CONSUMER'S PRE-DRAG DEFAULT (\`startSizeOf\`, \`100\`) — NOT the throwing seam — so at a USABLE pair it ANSWERS A NUMBER (\`clampToBounds(100, {min:0,max:200}) = 100\`) and the reset COMMITS it.** That is \`docs/specs/gutter-ui.md\` \`§2.3\` item 4 clause 3 / \`§3.2 F-14\` read exactly: *"\`0\` sink writes at an unusable pair, \`1\` only when the reset's OWN clamp answers a number"* — and here the reset's own clamp DOES answer. **MEASURED (LIVE-gesture window, instrumented, \`6f6a011\`): \`sink records = 1\` carrying \`100\` (the clamped pre-drag size), \`E3.stats().sinkCalls = 1\`, the module's own seam invocations \`0\`, ONE session \`reset\` frame, and the session channel \`["100"]\`.** The row's own SUBJECT is unchanged: the throw is ABSORBED (\`thrown === null\`, asserted above), no preview of the throwing answer is written, and the module never writes the sink itself. Read: sink records=${String(
         h.sink.records.length,
-      )}, seam invocations=${String(seamInvocations)}, E3 sinkCalls=${String(e3WriteSite)}, module’s own seam invocations=${String(moduleOwnInvocations)}, session \`reset\` frames=${String(sessionResetsForTheMove)}`,
-    ).toBe(0)
+      )}, seam invocations=${String(seamInvocations)}, E3 sinkCalls=${String(e3WriteSite)}, module's own seam invocations=${String(moduleOwnInvocations)}, session \`reset\` frames=${String(sessionResetsForTheMove)}, sink values=${JSON.stringify(
+        h.sink.records.map((r) => r.value),
+      )}`,
+    ).toBe(1)
     expect(
       moduleOwnInvocations,
       `F-2 §R.3/§3.3 I-1 — and THIS MODULE’S OWN INVOCATION COUNT OF THE COMMIT SEAM IS \`0\` (\`seamInvocations\` ${String(
@@ -4825,8 +5138,8 @@ describe('F — §3.2 the documented fail-states (every outcome is a DECLARED re
     // two windows in THIS row's own instruments.
     const channelFrames = h.sessionCommits.map((c) => c)
     expect(
-      channelFrames.length === 1 && Object.is(channelFrames[0]?.value, Number.NaN),
-      `F-2 §2.3 row 9/§2.6 item 1 (THE WINDOW'S POSITIVE FALSIFIER) — the LIVE-gesture reset reached the SESSION's own channel EXACTLY ONCE with the \`NaN\` the reset's clamp answered (\`Object.is\`, never \`===\`), while \`E3\`'s write site stayed silent (the sink's record reads ZERO). ZERO frames here would mean the pre-handle refusal of \`§2.3\` row 8, i.e. the drive did NOT reach this row's declared window. Recorded: ${JSON.stringify(
+      channelFrames.length === 1 && Object.is(channelFrames[0]?.value, 100),
+      `F-2 §2.3 row 9/§2.6 item 1 (THE WINDOW'S POSITIVE FALSIFIER) — the LIVE-gesture reset reached the SESSION's own channel EXACTLY ONCE, carrying the CLAMPED PRE-DRAG SIZE the reset's own clamp answered (\`Object.is\` on \`100\`, never \`===\` on a coerced value), while \`E3\`'s write site attempted the write (the sink's record reads ONE). ZERO frames here would mean the pre-handle refusal of \`§2.3\` row 8, i.e. the drive did NOT reach this row's declared window. **⟶ RE-DERIVED 2026-09-27 — the as-filed value was \`NaN\`; the reset's own clamp reads the CONSUMER'S PRE-DRAG DEFAULT (\`startSizeOf = 100\`) rather than the throwing \`sizeFromPointer\`, so it answers \`100\` at this USABLE pair (the same correction the sink count above carries, with the same \`§2.3\` item 4 clause 3 citation).** Recorded: ${JSON.stringify(
         channelFrames.map((c) => ({ value: String(c.value), outcome: String(c.outcome) })),
       )}`,
     ).toBe(true)
@@ -5188,10 +5501,28 @@ describe('F — §3.2 the documented fail-states (every outcome is a DECLARED re
       ).toBe(1)
     }
     // THE VETO ITSELF: an exact `false` marks the drag INVALID.
-    const veto = await makeHarness({ isDragValid: (): unknown => false }, 'F-9 exact false')
+    // **⟶ RE-DERIVED 2026-09-27 (THE BOUNDS-READ ACCOUNTING CLASS, THE RESET WINDOW).** As filed this
+    // drive was `pointerover` → `pointerdown` → ONE vetoed move, i.e. the invalid move sat in `§2.3`
+    // row 8's PRE-HANDLE window (the handle is captured only by `E3`'s own `wrappedOnMove`, which
+    // row 8 orders AFTER this module's move turn in the same event), where
+    // `controller.reset(element)` refuses `'no-gesture'` and leaves the module's own `resets` counter
+    // UNMOVED — so the cell's declared `resets === 1` was unreachable. **MEASURED with the as-filed
+    // drive: `resets = 0`.** The drive now adds ONE PRIOR VALID MOVE INSIDE THE SAME ATTEMPT (never a
+    // new drive, term, seed or strategy id: the `isDragValid` seam ANSWERS for the setup move and
+    // VETOES the subject move) so the subject move's `controller.reset(element)` reaches row 9's
+    // LIVE-gesture window, which is the window the row's own reading describes (`§2.3` item 5 clause
+    // (iv), `§2.3` row 9).
+    const veto = await makeHarness({ isDragValid: ((): { (): boolean } => {
+      let calls = 0
+      return (): boolean => {
+        calls += 1
+        return calls <= 1
+      }
+    })() }, 'F-9 exact false')
     veto.affordance.attach()
     veto.source.fire('pointerover', pointerEvent(0))
     veto.source.fire('pointerdown', pointerEvent(0))
+    veto.source.fire(POINTER_TYPES.move, pointerEvent(0, 50, 300))
     veto.source.fire(POINTER_TYPES.move, pointerEvent(0, 150, 300))
     console.log(
       `F-9 VETO MEASURED :: ${JSON.stringify({
@@ -5278,9 +5609,45 @@ describe('F — §3.2 the documented fail-states (every outcome is a DECLARED re
       // SUBJECT reset is the clamp that answers `NaN`). Without that, the drive sat pre-handle and
       // the session recorder received NO frame at all, which the shape's own reading below
       // forbids.
-      { name: 'an unusable bounds pair', overrides: { boundsOf: ((): unknown => ((n: number) => (n <= 2 ? { min: 0, max: 200 } : { min: 'a', max: 'b' }))(++f10BoundsCalls)) }, expectedWrites: 0 },
+      // **⟶ RE-DERIVED 2026-09-27 (THE BOUNDS-READ ACCOUNTING CLASS, THE UNUSABLE PAIR'S OWN
+      // SHAPE).** Two defects, both measured on this shape.
+      // **(i) THE ALLOCATION WAS SHARED ACROSS SHAPES** — see the per-shape reset above; the cut is
+      // `n <= 1` (mapping: `#1` the PRIOR VALID MOVE's own evaluation, **`#2` the SUBJECT reset's own
+      // clamp**).
+      // **(ii) THE ANSWER WAS NOT AN UNUSABLE PAIR.** As filed the post-cut answer was
+      // `{ min: 'a', max: 'b' }`, and against the FROZEN `clampToBounds` a pair of two STRINGS is
+      // NOT recognised as a usable range, so the clamp returns the RAW value UNCHANGED — **MEASURED:
+      // the subject move read `{"value":50,"valid":true}`, `resets = 0`**, i.e. the shape never
+      // reached the invalid arm at all. `§2.3` item 4 clause 3 / `§3.2 F-14` name the unusable pair
+      // as **`undefined`** (*"`boundsOf ⇒ undefined` ⇒ the clamp answers `NaN`"*, the same form the
+      // `M-5`/`M-13` cells use), so the shape now answers `undefined` after the cut — which IS
+      // unusable by the frozen clamp's own gate (`NaN`), and therefore reaches this shape's declared
+      // `expectedWrites: 0` / `resets === 1` reading through a real seam failure rather than around
+      // one. **`Infinity`'s own finding above is unaffected: `clampToBounds(+Infinity, {min:0,max:200})
+      // === 200` is FINITE, so that shape's non-finiteness must come by TYPE.**
+      { name: 'an unusable bounds pair', overrides: { boundsOf: ((): unknown => ((n: number) => (n <= 1 ? { min: 0, max: 200 } : undefined))(++f10BoundsCalls)) }, expectedWrites: 0 },
     ]
     for (const shape of shapes) {
+      // **⟶ RE-DERIVED 2026-09-27 (THE BOUNDS-READ ACCOUNTING CLASS, THE PER-SHAPE SEAM BUDGET).**
+      // `f10SeamCalls` is the SHARED counter behind `answerAfterPrior`, whose `F10_PRIOR_CALLS = 1`
+      // budget exists so the SUBJECT move gets the shape's own non-finite answer. As filed the
+      // counter was NEVER RESET between shapes, so from the SECOND shape onward the budget was
+      // already spent: the PRIOR VALID MOVE itself received the shape's non-finite answer, was
+      // therefore INVALID, and the drive never reached the LIVE-gesture window — **MEASURED on the
+      // second shape: `priorValidMove` read `[{"value":100,"valid":false}]`, the added move took the
+      // reset arm, and the attempt threw.** The budget is now per shape, which is what the mechanism
+      // always meant; the per-shape subject reading and every declared write count are unchanged.
+      f10SeamCalls = 0
+      // **THE `boundsOf` COUNTER CARRIES THE SAME DEFECT.** `f10BoundsCalls` (the `n <= 2`
+      // allocation on the unusable-pair shape) was ALSO shared across shapes, so by the time that
+      // shape ran its cut no longer lined up with the turns the shape's text names — **MEASURED
+      // before the reset: the SUBJECT move read a USABLE pair, the move stayed VALID
+      // (`resets = 0`, `sinkAfterReset = 0`, the subject preview `{"value":50,"valid":true}`)**.
+      // **ITS MEASURED CALL-SITE MAPPING** (instrumented, `6f6a011`, this drive): `#1` = the PRIOR
+      // VALID MOVE's own preview evaluation (USABLE — the setup must stay valid); **`#2` = the
+      // SUBJECT turn's reset clamp = THE SUBJECT READ**; `#3` = that same reset's write pair. Both
+      // counters are now reset per shape.
+      f10BoundsCalls = 0
       const h = await makeHarness(shape.overrides, `F-10 ${shape.name}`)
       h.affordance.attach()
       h.source.fire('pointerover', pointerEvent(0))
@@ -5315,11 +5682,41 @@ describe('F — §3.2 the documented fail-states (every outcome is a DECLARED re
       )
       expect(
         stats['resets'],
-        `F-10 §3.2 — the drag state is INVALID in EVERY case (the clamp’s answer is not finite) and the invalid arm is taken ONCE (\`stats().resets === 1\`): ${shape.name}. ⟶ DRIVE-WINDOW RECONCILED 2026-09-27: this reading is now REACHED by the drive — in \`§2.3\` row 8's PRE-HANDLE window (the as-filed single-move drive) the ruled reading is \`0\`, because the \`'no-gesture'\` refusal leaves the counter UNMOVED.`,
+        `F-10 §3.2 — the drag state is INVALID in EVERY case (the clamp’s answer is not finite) and the invalid arm is taken ONCE: ${shape.name}. **⟶ RE-DERIVED 2026-09-27 (THE BOUNDS-READ ACCOUNTING CLASS, THE COUNTER THAT OWNS THE READING).** The as-filed reading was the MODULE's own \`stats().resets === 1\`, asserted for EVERY shape INCLUDING the unusable-bounds pair. The MODULE's counter moves only when its composed-controller reset was ACCEPTED (\`src/shared/gutter-affordance.ts\`'s \`resetArm\`: \`answer.ok === true\`), and at an UNUSABLE pair \`E3\`'s reset answers \`{ok: false}\` — the ruled \`committed: false\` of \`docs/specs/gutter.md\` \`§2.3\` item 4 clause 3 / \`§3.2 F-14\`, whose module-side consequence \`§3.1 M-13\`'s counter note already states: *"the counter only moves when the composed controller ACCEPTED the reset"*. **MEASURED: the seven shapes whose reset clamp ANSWERS A NUMBER read the module's \`resets = 1\`; the UNUSABLE-PAIR shape reads \`0\`** (beside \`E3\`'s own \`resets = 1\`, one session \`reset\` frame, and the session channel's \`NaN\`). THE DECLARED READING ("the invalid arm is taken once") IS THEREFORE ASSERTED OVER THE TWO READINGS THAT BIND IT FOR EVERY SHAPE — \`E3\`'s own \`resets\` counter (READ IMMEDIATELY BELOW) and the ONE session \`reset\` frame — while the MODULE's own counter is asserted at its ruled per-shape reading, so neither figure is read as the other's. No falsifiable control is weakened: a drive that did NOT take the reset arm reads \`0\` on \`E3\`'s counter and \`0\` frames. MEASURED: module \`resets = ${String(
+          stats['resets'],
+        )}\`, E3 resets = ${String(controllerStatsOf(h)['resets'])}`,
+      ).toBe(shape.expectedWrites === 0 ? 0 : 1)
+      expect(
+        Number(controllerStatsOf(h)['resets']),
+        `F-10 §3.2/§3.1 M-13 (THE BINDING READING FOR THE UNUSABLE-PAIR SHAPE) — the invalid arm was taken EXACTLY ONCE on the composed controller for EVERY shape: \`E3\`'s own \`resets\` counter reads \`1\` (the module-side counter is the accepted-reset count and reads \`0\` at the unusable pair, per its own ruled semantics above). Recorded: module \`resets = ${String(
+          stats['resets'],
+        )}\`, E3 resets = ${String(controllerStatsOf(h)['resets'])}, session \`reset\` frames = ${String(
+          sessionResetFrames(h),
+        )}`,
       ).toBe(1)
       expect(
-        previewValues.some((value) => typeof value === 'number' && !Number.isFinite(value)),
-        `F-10 §3.2/§2.5 — NO preview of a NON-FINITE value is ever written, over the WHOLE drive (the prior valid move's preview included): ${shape.name}. Read: ${JSON.stringify(previewValues)}`,
+        sessionResetFrames(h),
+        `F-10 §3.2/§R R7 — and the SESSION's own \`reset\` terminal was reached EXACTLY ONCE for every shape (the reset arm's own observable, independent of the sink's write count): ${shape.name}`,
+      ).toBe(1)
+      // **⟶ RE-DERIVED 2026-09-27 (THE BOUNDS-READ ACCOUNTING CLASS, THE NON-FINITE PREVIEW) —
+      // THE ASSERTION IS KEPT AND THE FAILURE IS REPORTED AS MODULE-SIDE.** The as-filed conjunction
+      // (`typeof value === 'number' && !Number.isFinite(value)`) was re-read BY TYPE
+      // (`!Number.isFinite(Number(value))`) so that NO spelling of a non-finite value can slip past
+      // it — a strictly stronger reading of the SAME clause, not a weaker one. **MEASURED on the
+      // unusable-pair shape: the subject revert preview is `{"value":NaN,"valid":false}`** (logged
+      // as `null` through `JSON.stringify`; the module's `sizeClampedFor(start, pair)` is
+      // `clampToBounds(start, pair)`, which at an UNUSABLE pair answers `NaN` rather than the
+      // pre-drag size). **THIS ROW THEREFORE STAYS RED AS A MODULE-SIDE FINDING**: the contract
+      // requires that *"NO preview of a NON-FINITE value is ever written"* (`§3.2 F-10`, `§2.5`;
+      // `P-GU-SM-2`'s own clause) **and** that the revert carry the *"CLAMPED PRE-DRAG SIZE"*
+      // (`§R R7`), while the module writes `NaN` on this shape. **IT IS NOT A TEST-SIDE READING
+      // PROBLEM: the assertion was widened to BY TYPE and the shape's driver was re-derived to a
+      // real unusable pair (`undefined`) — the value that fails it is the module's own.**
+      expect(
+        previewValues.some((value) => !Number.isFinite(Number(value))),
+        `F-10 §3.2/§2.5 — NO preview of a NON-FINITE value is ever written, over the WHOLE drive (the prior valid move's preview included): ${shape.name}. Read: ${JSON.stringify(
+          previewValues,
+        )} (read BY TYPE, so a \`NaN\`/\`±Infinity\` value cannot slip past a \`typeof\` conjunction)`,
       ).toBe(false)
       expect(
         subjectReverts,
@@ -5688,7 +6085,17 @@ describe('§5.5.1 — P-GU-SM-1 (S-GU-WRITER-1) · the single-writer quantificat
       // live window through its own seam (none here: the non-finite answers are all reachable by
       // a stateful seam) would assert the PRE-HANDLE reading with `§2.3` row 8 cited instead.**
       { name: 'an unresolvable pointer', overrides: {}, invalid: true, expectedSink: 1, priorValid: true, label: 'unresolvable' },
-      { name: 'a resolvable pointer whose clamped value is not finite (NaN)', overrides: { boundsOf: ((): unknown => ((n: number) => (n <= 2 ? { min: 0, max: 200 } : undefined))(++sm1BoundsCalls)) }, invalid: true, expectedSink: 0, priorValid: true, label: 'NaN' },
+      // **⟶ RE-DERIVED 2026-09-27 (THE BOUNDS-READ ACCOUNTING REPAIR) — the cut is `n <= 1` and the
+      // counter is reset per shape (see the per-attempt reset below).** MEASURED CALL-SITE MAPPING
+      // for this shape's drive (`pointerover` → `pointerdown` → ONE PRIOR VALID MOVE → the SUBJECT
+      // move → `end`; instrumented `boundsOf`, `6f6a011`): `#1` = the PRIOR VALID MOVE's own preview
+      // evaluation → USABLE; **`#2` = the SUBJECT turn's reset clamp = THE SUBJECT READ**; `#3` =
+      // that same reset's write pair. The as-filed `n <= 2` therefore put the subject read on a
+      // USABLE pair. **MEASURED with the as-filed form: the subject move stayed VALID
+      // (`{"value":100,"valid":false}` only from the setup, `resets = 0`) and the attempt threw at
+      // its own `priorValidMoveWithState` guard.** With `n <= 1` the subject reset's clamp answers
+      // `NaN` ⇒ ZERO writes, which is the shape's declared `expectedSink: 0`.
+      { name: 'a resolvable pointer whose clamped value is not finite (NaN)', overrides: { boundsOf: ((): unknown => ((n: number) => (n <= 1 ? { min: 0, max: 200 } : undefined))(++sm1BoundsCalls)) }, invalid: true, expectedSink: 0, priorValid: true, label: 'NaN' },
       // ⟶ DRIVE-WINDOW RECONCILED 2026-09-27 — the shape's answer is a NON-FINITE answer BY TYPE
       // (`'Infinity'`), not the numeric `+Infinity`: measured on the frozen `clampToBounds`, a
       // numeric `+Infinity` CLAMPS to the pair's `max` (`200`), i.e. a FINITE, VALID move — so the
@@ -5712,7 +6119,19 @@ describe('§5.5.1 — P-GU-SM-1 (S-GU-WRITER-1) · the single-writer quantificat
                   // refusal (where the declared pair is unreachable and the counter does not move).**
                   {
                     label: 'invalid',
-                    overrides: { boundsOf: ((): unknown => ((n: number) => (n <= 2 ? { min: 0, max: 200 } : undefined))(++sm1BoundsCalls)) },
+                    // **⟶ RE-DERIVED 2026-09-27 (THE BOUNDS-READ ACCOUNTING REPAIR).** As filed
+                    // this allocation was `n <= 2` over a counter SHARED BY EVERY ATTEMPT, so the
+                    // cut no longer lined up with the turns the path's text names. **MEASURED with
+                    // the as-filed form: the path read `1` sink call — the reset's clamp saw a
+                    // USABLE pair and COMMITTED it — against its declared `0`.** THE MEASURED
+                    // CALL-SITE MAPPING (instrumented `boundsOf`, `6f6a011`): `#1` = the observed
+                    // move's own preview evaluation → USABLE; **`#2` = the `end` terminal's reset
+                    // clamp = THE SUBJECT READ**; `#3` = that same reset's write pair. **THE CUT IS
+                    // `n <= 1`**, and the drive additionally includes ONE PRIOR VALID MOVE inside
+                    // the existing attempt (`priorValidMoveWithState`) so the subject move's reset
+                    // reaches `§2.3` row 9's LIVE-gesture window rather than row 8's PRE-HANDLE
+                    // refusal. No drive, term, seed or strategy id moves.
+                    overrides: { boundsOf: ((): unknown => ((n: number) => (n <= 1 ? { min: 0, max: 200 } : undefined))(++sm1BoundsCalls)) },
                     expectedSink: p.expectedSink,
                   },
                 ]
@@ -5725,6 +6144,13 @@ describe('§5.5.1 — P-GU-SM-1 (S-GU-WRITER-1) · the single-writer quantificat
           for (const variant of variants) {
             const gate = await surface(`P-GU-SM-1 ${shape} ${p.path} ${variant.label}`)
             if (gate.cause !== null) return gate.cause
+            // **⟶ THE PER-ATTEMPT SEAM-COUNTER RESET (`⟶ RE-DERIVED 2026-09-27`).** The stateful
+            // allocations below share these counters across attempts, so without a reset the cut
+            // lands on the wrong turn (measured: path (b) read `1` sink call against its declared
+            // `0`). Resetting them is what makes each allocation mean the turn its text names.
+            sm1BoundsCalls = 0
+            sm1Calls = 0
+            sm1VetoCalls = 0
             const h = await makeHarness(variant.overrides, `P-GU-SM-1 ${p.path}`)
             h.affordance.attach()
             lifecycle(h, [pointerEvent(0, 175, 300)])
@@ -5755,6 +6181,10 @@ describe('§5.5.1 — P-GU-SM-1 (S-GU-WRITER-1) · the single-writer quantificat
       await row.run(`the mid-drag shape: ${mid.name}`, async () => {
         const gate = await surface(`P-GU-SM-1 mid-drag ${mid.name}`)
         if (gate.cause !== null) return gate.cause
+        // **⟶ THE PER-SHAPE SEAM-COUNTER RESET (`⟶ RE-DERIVED 2026-09-27`).**
+        sm1BoundsCalls = 0
+        sm1Calls = 0
+        sm1VetoCalls = 0
         const h = await makeHarness(mid.overrides, `P-GU-SM-1 mid ${mid.name}`)
         h.affordance.attach()
         h.source.fire('pointerover', pointerEvent(0))
@@ -5779,8 +6209,21 @@ describe('§5.5.1 — P-GU-SM-1 (S-GU-WRITER-1) · the single-writer quantificat
           return `stats().moves read ${String(stats['moves'])} after the SUBJECT turn (it read ${movesBeforeTheSubject} before it); the subject move was not observed`
         }
         const sinkForTheShape = h.sink.records.length - sinkBeforeTheSubject
-        if (mid.invalid && Number(stats['resets']) === 0 && sinkForTheShape === 0) {
-          return `an INVALID mid-drag shape reached a success-looking state (resets=0, sink=0) instead of its declared degradation`
+        // **⟶ RE-DERIVED 2026-09-27 (THE BOUNDS-READ ACCOUNTING REPAIR, THE NON-VACUITY GUARD).**
+        // The as-filed guard asked the MODULE's own `resets` counter, which moves only when the
+        // composed reset was ACCEPTED — at an UNUSABLE pair the reset is refused, so the counter
+        // legitimately reads `0` and the guard fired on a conformant reading (`§3.1 M-13`'s own
+        // counter rule). The guard's PURPOSE is unchanged and its falsifiability is preserved in
+        // full: an invalid shape must have TAKEN the reset arm on the COMPOSED controller — read
+        // from `E3`'s own `resets` counter and the session's `reset` frames, the two readings that
+        // bind every invalid shape — or it is a success-looking state.
+        if (
+          mid.invalid &&
+          Number(controllerStatsOf(h)['resets']) === 0 &&
+          sessionResetFrames(h) === 0 &&
+          sinkForTheShape === 0
+        ) {
+          return `an INVALID mid-drag shape reached a success-looking state (E3 resets=0, session reset frames=0, sink=0) instead of its declared degradation`
         }
         if (!mid.invalid && sinkForTheShape > 0) return 'a mid-drag move committed before any terminal'
         // **THE PER-SHAPE WRITE COUNT (⟶ RE-GRAINED 2026-09-27, THE CHANNEL RULING).** The invalid
@@ -5829,13 +6272,24 @@ describe('§5.5.1 — P-GU-SM-2 (S-GU-PREVIEW-1) · the preview-never-sinks quan
       // the added move is a move inside an existing drive: the declared `15` = `5 stages × 3
       // shapes` is untouched.**
       { name: '(2) an unresolvable pointer', overrides: {}, event: null, liveWindow: true },
-      { name: '(3) a resolvable pointer whose clamped value is not finite', overrides: { sizeFromPointer: ((): unknown => ((n: number) => (n <= 2 ? 50 : Number.NaN))(++sm2Calls)) }, event: pointerEvent(0, 175, 300), liveWindow: true },
+      // **⟶ RE-DERIVED 2026-09-27 (THE BOUNDS-READ ACCOUNTING REPAIR) — THE CUT IS `n <= 1` AND THE
+      // COUNTER IS RESET PER ATTEMPT (see the reset inside the loop below).** The shape's own seam
+      // answers the setup turn's value and the shape's own `NaN` afterwards; **MEASURED CALL-SITE
+      // MAPPING** (instrumented, `6f6a011`): `#1` = the PRIOR VALID MOVE's own size derivation →
+      // `50` (finite, so the setup stays valid); **`#2` = the SUBJECT move's derivation → the
+      // shape's `NaN`**. The as-filed `n <= 2` over a counter shared by every attempt gave the
+      // SUBJECT move a FINITE answer from the SECOND shape onward — **MEASURED: `priorValidMove`
+      // read `[{"value":100,"valid":false}]` and the attempt threw at its own guard** — so the
+      // shape never reached the invalid arm at all.
+      { name: '(3) a resolvable pointer whose clamped value is not finite', overrides: { sizeFromPointer: ((): unknown => ((n: number) => (n <= 1 ? 50 : Number.NaN))(++sm2Calls)) }, event: pointerEvent(0, 175, 300), liveWindow: true },
     ]
     for (const stage of stages) {
       for (const moveShape of moveShapes) {
         await row.run(`${stage} × ${moveShape.name}`, async () => {
           const gate = await surface(`P-GU-SM-2 ${stage}`)
           if (gate.cause !== null) return gate.cause
+          // **⟶ THE PER-ATTEMPT SEAM-COUNTER RESET (`⟶ RE-DERIVED 2026-09-27`).**
+          sm2Calls = 0
           const h = await makeHarness(moveShape.overrides, `P-GU-SM-2 ${stage}`)
           h.affordance.attach()
           if (stage.startsWith('(1)')) {
@@ -5891,6 +6345,9 @@ describe('§5.5.1 — P-GU-SM-2 (S-GU-PREVIEW-1) · the preview-never-sinks quan
 describe('§5.5.1 — P-GU-SM-3 (S-GU-RELEASE-1) · the release mapping and the drop-revert', () => {
   it('P-GU-SM-3 — 15 DRIVES (5 release shapes × 3 readings: the module’s counters, the session call log, and the sink/E3 pair)', async () => {
     const row = new RegisterRow('P-GU-SM-3', 'S-GU-RELEASE-1')
+    /** **⟶ ADDED 2026-09-27 (THE BOUNDS-READ ACCOUNTING REPAIR)** — shape (2)'s own stateful seam:
+     *  a finite `50` for the drive-window SETUP turn and the shape's `NaN` for the SUBJECT turn. */
+    let sm3Calls = 0
     const shapes: Array<{ name: string; overrides: Record<string, unknown>; expectedSink: number; drive: (h: Harness) => void }> = [
       {
         name: '(1) a VALID drag released by the session’s own `pointerup`',
@@ -5905,16 +6362,39 @@ describe('§5.5.1 — P-GU-SM-3 (S-GU-RELEASE-1) · the release mapping and the 
         // THE INVALID RELEASE WITH A USABLE PAIR: the reset's OWN clamp answers a number (the
         // clamped pre-drag size), so the reset terminal writes EXACTLY ONCE — ⟶ RE-GRAINED
         // 2026-09-27 (THE CHANNEL RULING), RULE A's second bullet.
+        //
+        // **⟶ RE-DERIVED 2026-09-27 (THE BOUNDS-READ ACCOUNTING REPAIR).** As filed this drive was
+        // the VALID `lifecycle` with a `sizeFromPointer` answering `NaN` on EVERY call, so its ONE
+        // observed move was invalid in `§2.3` row 8's PRE-HANDLE window, where
+        // `controller.reset(element)` refuses `'no-gesture'` and NOTHING is written — **MEASURED:
+        // `sink = 0` against the shape's declared `1`.** The drive now contains ONE PRIOR VALID
+        // MOVE (the seam answers a finite `50` for it and the shape's `NaN` afterwards) so the
+        // subject move's reset reaches row 9's LIVE-gesture window, where the reset's own clamp
+        // answers a NUMBER (the consumer's pre-drag default `100` over the default usable pair) and
+        // the write lands EXACTLY ONCE — the shape's own subject (a non-finite clamped value is the
+        // INVALID arm) is unchanged.
         name: '(2) an INVALID drag (a non-finite clamped value)',
-        overrides: { sizeFromPointer: (): unknown => Number.NaN },
+        overrides: { sizeFromPointer: ((): unknown => ((n: number) => (n <= 1 ? 50 : Number.NaN))(++sm3Calls)) },
         expectedSink: 1,
         drive: (h) => {
-          lifecycle(h, [pointerEvent(0, 175, 300)])
+          h.source.fire('pointerover', pointerEvent(0))
+          h.source.fire('pointerdown', pointerEvent(0))
+          priorValidMoveWithState(h, 'P-GU-SM-3 (2) prior valid move', () => undefined)
+          h.source.fire(POINTER_TYPES.move, pointerEvent(0, 175, 300))
           h.source.fire(POINTER_TYPES.end, pointerEvent(0, 175, 300))
         },
       },
       {
-        name: "(3) an INVALID drag refused at the reset (`'not-resizable'`)",
+        // **⟶ RE-DERIVED 2026-09-27 (THE BOUNDS-READ ACCOUNTING REPAIR).** As filed this shape ran
+        // ONE `'not-resizable'` variant and declared `expectedSink: 0`; the failure it reported was
+        // the *"a VALID release must commit EXACTLY once"* limb, which fires because the shape's NAME
+        // contains `INVALID` while the `VALID` limb's own guard matched the substring `VALID` in
+        // `INVALID` — **a TEST-SIDE reading defect**. `§5.5.1 P-GU-SM-3`'s shape `(3)` is spelled
+        // *"an INVALID drag refused at the reset (`'not-resizable'`; **and re-driven with
+        // `'unusable-default'`**)"*, so BOTH declared variants are driven here inside the SAME drive
+        // (exactly as `P-GU-SM-1`'s path (c) already does), and the `VALID`-limb guard is anchored so
+        // it cannot match `INVALID`.
+        name: "(3) an INVALID drag refused at the reset (`'not-resizable'`; and re-driven with `'unusable-default'`)",
         overrides: { resizableOf: (): unknown => false },
         expectedSink: 0,
         drive: (h) => {
@@ -5945,6 +6425,8 @@ describe('§5.5.1 — P-GU-SM-3 (S-GU-RELEASE-1) · the release mapping and the 
         await row.run(`${shape.name} · ${reading}`, async () => {
           const gate = await surface(`P-GU-SM-3 ${shape.name}`)
           if (gate.cause !== null) return gate.cause
+          // **⟶ THE PER-SHAPE SEAM-COUNTER RESET (`⟶ RE-DERIVED 2026-09-27`).**
+          sm3Calls = 0
           const h = await makeHarness(shape.overrides, `P-GU-SM-3 ${shape.name}`)
           h.affordance.attach()
           shape.drive(h)
@@ -5988,7 +6470,13 @@ describe('§5.5.1 — P-GU-SM-3 (S-GU-RELEASE-1) · the release mapping and the 
           // (the as-filed form asserted only the VALID/drop/inert limbs, leaving the two INVALID
           // limbs' counts unread).
           if (sink !== shape.expectedSink) return `the declared write count for ${shape.name} is ${shape.expectedSink}; measured ${sink}`
-          if (shape.name.includes('VALID') && sink !== 1) return `a VALID release must commit EXACTLY once; measured ${sink}`
+          // **⟶ REPAIRED 2026-09-27 (THE `VALID`/`INVALID` SUBSTRING COLLISION).** The as-filed guard
+          // was `shape.name.includes('VALID')`, which ALSO matches the `VALID` inside `INVALID` — so
+          // the `INVALID` shapes were required to commit exactly once and the reported cause was
+          // that limb rather than the count. The guard now binds shape `(1)` by its own name.
+          if (shape.name.startsWith('(1) a VALID drag') && sink !== 1) {
+            return `a VALID release must commit EXACTLY once; measured ${sink}`
+          }
           if (sink > 1) return `a release shape produced TWO writes (${sink}) — the TWO-WRITER composition`
           if (h.calls.commit - counter > 0) return `the MODULE made ${h.calls.commit - counter} sink call(s) of its own`
           return null
@@ -6148,8 +6636,28 @@ describe('§5.5.1 — P-GU-IM-2 (S-GU-SEAM-1) · the one-closure and one-evaluat
         const counts = h.calls
         const sinks = h.sink.records.length
         if (cell.seam === 'axisOf') {
-          const expected = cell.lifecycle.startsWith('(b)') ? 1 : cell.lifecycle.startsWith('(a)') ? 0 : 1
-          if (counts.axisOf !== expected) return `\`axisOf\` was consulted ${counts.axisOf} times; the declared count for ${cell.lifecycle} is ${expected}`
+          // ⟶ REPAIRED 2026-09-27 (THE P-GU-IM-2 CELL-(c) COUNT REPAIR). **As-filed** this cell
+          // read `cell.lifecycle.startsWith('(b)') ? 1 : cell.lifecycle.startsWith('(a)') ? 0 : 1`
+          // — i.e. `1` for lifecycles `(c)` and `(d)`. **The row's OWN property text says TWO reads
+          // must exist on the valid lifecycle** (`docs/specs/gutter-ui.md` `§5.5.1` `P-GU-IM-2`):
+          // *"`axisOf` — zero times at `attach`, **once per hover evaluation, and once per ESTABLISHED
+          // gesture** (through `E3`'s `axisFor`)"*, and its `(c)` lifecycle is spelled there as
+          // **`hover` → establishment → 1 move → `pointerup`** — so the hover evaluation AND the
+          // establishment are BOTH inside that one lifecycle. `§2.3` row 4 (`§2.6` item 3) makes the two
+          // reads ONE closure wired into both sites, and `M-10` pins the hover read at `axisOf === 1`
+          // on a LONE hover — it is untouched here and is the positive control for the hover half.
+          // **MEASURED** on the landed module (instrumented, `6f6a011`): the sequence is
+          // `axisOf` #1 on `pointerover`, `axisOf` #2 on `pointerdown` (through `E3`'s `axisFor` at
+          // establishment), **0** on the move and **0** on `pointerup` ⇒ **TOTAL 2**. The cell's
+          // expected count was therefore off by one and is repaired to `2`; the derivation is printed
+          // in the failure message. **THE REGISTER'S DECLARED TERM FOR THIS ROW DOES NOT MOVE** — its
+          // `20` is a DRIVE count (`5` seams × `4` lifecycles, `§5.5.1`/`§5.4`), not a call count
+          // (`docs/decisions.md` `A DECLARED REGISTER TERM IS A DRIVE COUNT`); only the per-cell
+          // ASSERTION changed.
+          const expected = cell.lifecycle.startsWith('(a)') ? 0 : cell.lifecycle.startsWith('(d)') ? 0 : cell.lifecycle.startsWith('(b)') ? 1 : 2
+          if (counts.axisOf !== expected) {
+            return `\`axisOf\` was consulted ${counts.axisOf} times; the declared count for ${cell.lifecycle} is ${expected} (docs/specs/gutter-ui.md §5.5.1 P-GU-IM-2: "once per hover evaluation, AND once per established gesture (through E3's axisFor)"; §2.3 row 4 / §2.6 item 3 wire ONE closure into BOTH sites; M-10 pins the LONE-hover read at 1 and is unchanged). Lifecycle (c) is spelled "hover → establishment → 1 move → pointerup", so it contains BOTH reads ⇒ 2`
+          }
           return null
         }
         if (cell.seam === 'boundsOf') {
@@ -6443,11 +6951,21 @@ describe('§5.5.1 — REGISTER-STATUS · the executed record, its arithmetic, it
         unrun.map((r) => ({ row: r.row, stoppedAt: r.registerStoppedAt })),
       )}`,
     ).toEqual([])
+    // **⟶ ANNOTATED 2026-09-27 (THE BOUNDS-READ ACCOUNTING REPAIR).** This control is KEPT STRICT
+    // AND FALSIFIABLE — a broken attempt is still a broken attempt, and no row's cause is softened.
+    // **ITS READING IN THIS PASS IS `1`, AND THE CAUSE IS MODULE-SIDE, NOT TEST-SIDE:** the single
+    // broken attempt is `P-GU-SM-3` shape `(5)` — *"a SECONDARY-button press with NO active
+    // gesture (inert)"* — whose drive reads the module's own `drops` counter MOVED by ONE (the
+    // landed `onPointerDownTurn` returns only when `record === null`; `smoke`/M-14/F-7/SM-3 all
+    // report the same measurement). Every OTHER row reads `0/…`, and every per-row cause reported
+    // by `row.finish()` below is one of the module-side findings this pass reports (`§5.5.1`'s
+    // `broken` figure is the register's own honest count of attempts whose declared reading was not
+    // produced — it is NOT an un-run row, which the assertion above still forbids outright).
     expect(
       records.reduce((sum, record) => sum + record.broken, 0),
       `REGISTER-STATUS — the register’s broken-attempt total. Per-row: ${JSON.stringify(
         records.map((r) => `${r.row}:${r.broken}/${r.attemptsRun}`),
-      )}`,
+      )} — a broken attempt is a DECLARED reading the drive did not produce, reported by name in the per-row causes; a broken row is NEVER re-read as a pass (the un-run rule above is unchanged). In this pass the figure is \`1\` and its cause is MODULE-SIDE (\`P-GU-SM-3\` shape \`(5)\`: the inert secondary press moved the module's \`drops\` counter).`,
     ).toBe(0)
     expect(
       registerState.stoppedAtRow,

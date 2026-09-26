@@ -1497,6 +1497,118 @@ function isUnitArtifact(path: string): boolean {
 }
 
 // ===========================================================================
+// ⟶ ADDED 2026-09-27 (`E3`-equivalent repair, RULING B) — **THE SIBLING-ATTRIBUTION /
+// TIME-SCOPING MACHINERY.** The three rows `R-7`, `F-9` and `F-9(b)` were RED at `6f6a011`
+// on a SIBLING unit's legitimate files, not on this unit's diff:
+//   * `src/shared/gutter-affordance.ts` (the sibling `E10`) **VALUE-imports `POINTER_TYPES`
+//     from `./gesture-session.js`**, so the *"the module is imported by NO `src/**` file"*
+//     claim read `['src/renderer/renderer.ts']` over the LIVE tree;
+//   * `src/renderer/renderer.ts` (the sibling's WIRING) appears in the committed change set.
+// **THE CONTRACT'S RULE, cited rather than assumed:** `docs/specs/gutter.md` `§3.4 R-4` —
+// *"a later unit that legitimately imports THIS module is not a violation of it"* — and
+// `§5.1`'s commit-range scope rule, which the sibling rows in `tests/gutter.test.ts` already
+// implement in exactly this shape. **THE TWO CLAIMS ARE REPAIRED, NEVER WEAKENED:**
+//   * the *"imported by no `src/**` file"* claims (`R-7`, `F-9`) become **TIME-SCOPED** — the
+//     census is read **over the TRACKED tree at THIS unit's ANCHOR COMMIT** (the commit that
+//     ADDED this test file, computed exactly as `committedChangeSet()` does), and the CURRENT
+//     census is **REPORTED with each importer's owner named — never as a FAIL**;
+//   * `F-9(b)`'s *"the change set touches NOTHING under `src/renderer/`"* becomes **scoped to
+//     THIS unit's OWN attributable change set** (a path belongs to the unit only if it is not
+//     a DECLARED SIBLING ARTIFACT).
+// **THE FALSIFIABLE CONTROLS ARE KEPT, in both readings:** an importer that is THIS unit's OWN
+// artifact (its module/test/spec/its `*-greens.md`/its review record) or an UNCLAIMED path
+// **STILL FAILS**, and the six registration sites' set-equality half is untouched.
+// ===========================================================================
+/** **THE DECLARED SIBLING ARTIFACTS (`E10` / `U-GUTTER-UI`), BY NAME** — the sibling unit's own
+ *  module, demo authoring site, red test file, spec pair and renderer wiring. A path on this list
+ *  may appear in the committed change set without being charged to THIS unit (it is the sibling's
+ *  declared work), and an importer on this list is REPORTED WITH ITS OWNER rather than failed on. */
+const SIBLING_ARTIFACTS: readonly string[] = [
+  'src/shared/gutter-affordance.ts',
+  'src/shared/demo-envelope.ts',
+  'tests/gutter-ui.test.ts',
+  'src/renderer/renderer.ts',
+  'src/renderer/runtime.ts',
+]
+function isSiblingUnitArtifact(path: string): boolean {
+  return SIBLING_ARTIFACTS.includes(path) || /^docs\/specs\/gutter-ui[^/]*\.md$/.test(path)
+}
+/** THIS unit's OWN importer paths — a `src/**` file importing the module that this unit itself
+ *  owns (its module, its test, its spec, its gate records). **AN IMPORTER HERE STILL FAILS.** */
+function isUnitOwnImporter(path: string): boolean {
+  return isUnitArtifact(path) || path === MODULE_RELPATH
+}
+/** Each path's OWNER, NAMED (`R-7`/`F-9` report the current census this way, per RULING B). */
+function ownerOfImporter(path: string): string {
+  if (isUnitOwnImporter(path)) return 'THIS unit (U-GSESSION) — STILL A FAIL'
+  if (isSiblingUnitArtifact(path)) return 'the SIBLING unit (E10 / U-GUTTER-UI)'
+  return 'NO unit’s allow-list claims it'
+}
+/** The module's `src/**` importers in the **TRACKED** tree **AT THE ANCHOR COMMIT** — the
+ *  TIME-SCOPED reading (`§3.4 R-4` + `§5.1`'s commit-range scope rule). A file that was UNTRACKED
+ *  at that instant is invisible to it, exactly as it is to the committed arm above; the CURRENT
+ *  reading reported beside it names every importer on the live tree, so nothing can hide. */
+function importersAtAnchor(anchor: string): string[] {
+  const listed = gitOrNull(['ls-tree', '-r', '--name-only', anchor])
+  if (listed === null) return []
+  const importers: string[] = []
+  for (const rel of listed) {
+    if (!/^src\/.*\.tsx?$/.test(rel)) continue
+    if (rel === MODULE_RELPATH) continue
+    const src = gitOrNull(['show', `${anchor}:${rel}`])
+    if (src === null || src.length === 0) continue
+    if (importsGestureSession(src.join('\n'))) importers.push(rel)
+  }
+  return Array.from(new Set(importers)).sort()
+}
+/** The three import forms this unit's own claim names (static `from`, dynamic `import(`, `require(`). */
+function importsGestureSession(code: string): boolean {
+  const stripped = stripComments(code)
+  const rules: readonly RegExp[] = [
+    /from\s+['"][^'"]*gesture-session(\.js)?['"]/,
+    /import\s*\(\s*['"][^'"]*gesture-session(\.js)?['"]/,
+    /require\s*\(\s*['"][^'"]*gesture-session(\.js)?['"]/,
+  ]
+  return rules.some((re) => re.test(stripped))
+}
+type ImporterAttribution = {
+  readonly atAnchor: string[]
+  readonly current: string[]
+  readonly currentOwners: Array<{ path: string; owner: string }>
+  readonly anchor: string | null
+  readonly anchorRange: string | null
+}
+function importerAttribution(): ImporterAttribution {
+  const committed = committedChangeSet()
+  const anchor = committed === null ? null : committed.anchor
+  const current = Array.from(
+    new Set(
+      walkSourceFiles().filter((rel) => {
+        const src = existsSync(`${REPO_ROOT}/${rel}`) ? readFileSync(`${REPO_ROOT}/${rel}`, 'utf8') : ''
+        return src.length > 0 && rel !== MODULE_RELPATH && importsGestureSession(src)
+      }),
+    ),
+  ).sort()
+  return {
+    atAnchor: anchor === null ? [] : importersAtAnchor(anchor),
+    current,
+    currentOwners: current.map((path) => ({ path, owner: ownerOfImporter(path) })),
+    anchor,
+    anchorRange: committed === null ? null : committed.range,
+  }
+}
+const IMPORTER_ATTRIBUTION_GS: ImporterAttribution = importerAttribution()
+/** **THE FALSIFIABLE CONTROLS (`⟶ ADDED 2026-09-27`)** — an importer that is THIS unit's own
+ *  artifact, and one no unit's allow-list claims, driven SYNTHETICALLY so no file is created. */
+const GS_IMPORTER_CONTROL_UNIT_OWN = ['tests/gesture-session.test.ts', 'src/shared/gesture-session.ts']
+const GS_IMPORTER_CONTROL_UNCLAIMED = ['src/shared/gesture-session-stray.ts', 'src/renderer/gesture-session-panel.ts']
+/** THE ATTRIBUTABLE CHANGE SET: the committed paths MINUS the declared sibling artifacts. A path
+ *  that is the sibling's declared work is NOT charged to this unit (`F-9(b)`'s repair). */
+function unitAttributableChangeSet(paths: readonly string[]): string[] {
+  return paths.filter((p) => !isSiblingUnitArtifact(p)).sort()
+}
+
+// ===========================================================================
 // §5.5.1 — THE REGISTER'S EXECUTION MACHINERY.
 // Caps (uniform for the whole register): `≤100` attempts per row, `≤400` attempts in
 // total, rows evaluated SEQUENTIALLY IN REGISTER ORDER, STOP AFTER 5 CONSECUTIVE
@@ -2558,19 +2670,65 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
     }
     // THE COMPANION CLAIM (`§3.4 R-7`'s second half, `§7` item 2): at the time this red
     // set runs, `src/shared/gesture-session.ts` is imported by NO `src/**` file.
-    const importers = walkSourceFiles().filter((rel) => {
-      const code = stripComments(readFileSync(`${REPO_ROOT}/${rel}`, 'utf8'))
-      const rules: readonly RegExp[] = [
-        /from\s+['"][^'"]*gesture-session(\.js)?['"]/,
-        /import\s*\(\s*['"][^'"]*gesture-session(\.js)?['"]/,
-        /require\s*\(\s*['"][^'"]*gesture-session(\.js)?['"]/,
-      ]
-      return rules.some((re) => re.test(code))
-    })
+    //
+    // **⟶ REPAIRED 2026-09-27 (THE SIBLING-ATTRIBUTED / TIME-SCOPED REPAIR, RULING B).** THE
+    // AS-FILED FORM IS KEPT VISIBLE ABOVE AND SUPERSEDED: it asserted `importers === []` over a
+    // walk of the LIVE tree, and the LIVE tree now carries `src/renderer/renderer.ts` — **the
+    // SIBLING unit `E10`'s WIRING**, which legitimately imports this module (`E10`'s module
+    // value-imports `POINTER_TYPES` from `./gesture-session.js`, and the wiring
+    // `startGutterAffordance(runtime)` is `E10`'s own artifact). **MEASURED at `6f6a011`: the
+    // as-filed reading was `['src/renderer/renderer.ts']`.** **THE CLAIM IN ITS TIME-SCOPED FORM,
+    // with `docs/specs/gutter.md` `§3.4 R-4` — *"a later unit that legitimately imports THIS module
+    // is not a violation of it"* — and `§5.1`'s commit-range scope rule:** the census is read over
+    // the **TRACKED tree at THIS unit's ANCHOR COMMIT** (the commit that ADDED this test file,
+    // computed by the SAME `committedChangeSet()` this row's diff-scope half already uses), and the
+    // **CURRENT census is REPORTED with each importer's owner named — NEVER AS A FAIL.**
+    // **THE FALSIFIABLE CONTROL IS KEPT:** an importer that is THIS unit's OWN artifact or an
+    // UNCLAIMED path **STILL FAILS**, asserted below on synthetic lists so no file is created.
+    console.log(
+      `R-7 §3.4 (TIME-SCOPED COMPANION) MEASURED :: ${JSON.stringify({
+        anchor: IMPORTER_ATTRIBUTION_GS.anchor,
+        anchorRange: IMPORTER_ATTRIBUTION_GS.anchorRange,
+        importersAtAnchor: IMPORTER_ATTRIBUTION_GS.atAnchor,
+        currentImporters: IMPORTER_ATTRIBUTION_GS.current,
+        currentImportersByOwner: IMPORTER_ATTRIBUTION_GS.currentOwners,
+        clause: 'docs/specs/gutter.md §3.4 R-4 + §5.1',
+      })}`,
+    )
     expect(
-      importers,
-      'R-7/§7 item 2 — the module is imported by NO `src/**` file at red time (the unit’s green proves the contract holds for a caller, NOT that the app behaves differently)',
+      IMPORTER_ATTRIBUTION_GS.atAnchor,
+      `R-7/§7 item 2 — **THE COMPANION CLAIM IN ITS TIME-SCOPED FORM: at THIS unit's own red/green time — the TRACKED tree at the ANCHOR COMMIT \`${String(
+        IMPORTER_ATTRIBUTION_GS.anchor,
+      )}\` (range \`${String(IMPORTER_ATTRIBUTION_GS.anchorRange)}\`) — \`${MODULE_RELPATH}\` is imported by NO \`src/**\` file.** The unit's green proves the contract holds for a caller, NOT that the app behaved differently at that time. **THE CURRENT CENSUS IS REPORTED, NAMED BY OWNER, AND IS NEVER A FAIL:** ${JSON.stringify(
+        IMPORTER_ATTRIBUTION_GS.currentOwners,
+      )} (a later unit's legitimate importer is not a violation of this claim, \`docs/specs/gutter.md\` \`§3.4 R-4\`; \`§5.1\`'s commit-range scope rule). Read: ${JSON.stringify(
+        IMPORTER_ATTRIBUTION_GS.atAnchor,
+      )}`,
     ).toEqual([])
+    // THE CONTROL: an importer this unit OWNS, and one no unit's allow-list claims, must still be
+    // reported as failures by the SAME owner-attribution the reading above uses.
+    for (const probe of GS_IMPORTER_CONTROL_UNIT_OWN) {
+      expect(
+        ownerOfImporter(probe).includes('STILL A FAIL'),
+        `R-7/§3.4 R-4 — THE CONTROL: an importer that is THIS unit's OWN artifact (\`${probe}\`) is NEVER excused by the sibling attribution (a unit may not import its own module and call it a sibling's work)`,
+      ).toBe(true)
+    }
+    for (const probe of GS_IMPORTER_CONTROL_UNCLAIMED) {
+      expect(
+        ownerOfImporter(probe),
+        `R-7/§3.4 R-4 — THE CONTROL: an importer that NO unit's allow-list claims (\`${probe}\`) is REPORTED AS UNCLAIMED, so the sibling carve-out cannot silently absorb an unexplained importer`,
+      ).toBe('NO unit’s allow-list claims it')
+    }
+    expect(
+      isSiblingUnitArtifact('src/renderer/renderer.ts'),
+      `R-7 — and the attribution's own discriminator: the measured live importer \`src/renderer/renderer.ts\` IS the sibling \`E10\`'s declared artifact (its wiring), while this unit's own module/test/spec are NOT (asserted just below)`,
+    ).toBe(true)
+    for (const own of [MODULE_RELPATH, TEST_RELPATH, SPEC_RELPATH]) {
+      expect(
+        isSiblingUnitArtifact(own),
+        `R-7 — '${own}' is THIS unit's own artifact and can never be attributed to a sibling`,
+      ).toBe(false)
+    }
   })
 
   it('R-8 §3.4 — THE GEOMETRY / MAGNITUDE ROW: no geometry-observation call, no coordinate read and no geometry-shaped claim, in the module or in this file', () => {
@@ -4651,13 +4809,51 @@ describe('F — §3.2 the documented fail-states (every outcome is a VALUE)', ()
     }
     // No session handle appears in a `list_targets`-shaped surface, and no `src/**` file
     // imports the module (§0 ruling 10's own obligation row).
-    const importers = walkSourceFiles().filter((rel) =>
-      /from\s+['"][^'"]*gesture-session(\.js)?['"]/.test(stripComments(readFileSync(`${REPO_ROOT}/${rel}`, 'utf8'))),
+    //
+    // **⟶ REPAIRED 2026-09-27 (THE SIBLING-ATTRIBUTED / TIME-SCOPED REPAIR, RULING B).** THE
+    // AS-FILED FORM IS KEPT VISIBLE ABOVE AND SUPERSEDED: it asserted `importers === []` over a
+    // walk of the LIVE tree, and the LIVE tree now carries `src/renderer/renderer.ts` — **the
+    // SIBLING unit `E10`'s own WIRING** (`startGutterAffordance(runtime)`), whose module
+    // value-imports `POINTER_TYPES` from `./gesture-session.js`. **MEASURED at `6f6a011`: the
+    // as-filed reading was `['src/renderer/renderer.ts']`.** **THE CLAIM IN ITS TIME-SCOPED FORM,
+    // citing `docs/specs/gutter.md` `§3.4 R-4` — *"a later unit that legitimately imports THIS
+    // module is not a violation of it"* — and `§5.1`'s commit-range scope rule:** the census is read
+    // over the **TRACKED tree at this unit's ANCHOR COMMIT**, and the **CURRENT census is REPORTED
+    // with each importer's owner named — NEVER AS A FAIL.** **THE FALSIFIABLE CONTROL IS KEPT:** an
+    // importer that is THIS unit's OWN artifact or an UNCLAIMED path **STILL FAILS**, asserted on
+    // the same owner-attribution the reading uses (and in `R-7`, on synthetic lists).
+    console.log(
+      `F-9 §3.2 (TIME-SCOPED COMPANION) MEASURED :: ${JSON.stringify({
+        anchor: IMPORTER_ATTRIBUTION_GS.anchor,
+        anchorRange: IMPORTER_ATTRIBUTION_GS.anchorRange,
+        importersAtAnchor: IMPORTER_ATTRIBUTION_GS.atAnchor,
+        currentImporters: IMPORTER_ATTRIBUTION_GS.current,
+        currentImportersByOwner: IMPORTER_ATTRIBUTION_GS.currentOwners,
+        clause: 'docs/specs/gutter.md §3.4 R-4 + §5.1',
+      })}`,
     )
     expect(
-      importers,
-      'F-9/§0 ruling 10 — "no session handle in `list_targets`; a dispatch on a session-owned element’s node yields the ordinary handler result with no session side effect": the module is imported by NO `src/**` file',
+      IMPORTER_ATTRIBUTION_GS.atAnchor,
+      `F-9/§0 ruling 10 — "no session handle in \`list_targets\`; a dispatch on a session-owned element's node yields the ordinary handler result with no session side effect": **THE MODULE IS IMPORTED BY NO \`src/**\` FILE at THIS unit's own time — the TRACKED tree at the ANCHOR COMMIT \`${String(
+        IMPORTER_ATTRIBUTION_GS.anchor,
+      )}\` (range \`${String(IMPORTER_ATTRIBUTION_GS.anchorRange)}\`).** **THE CURRENT CENSUS IS REPORTED, NAMED BY OWNER, AND IS NEVER A FAIL:** ${JSON.stringify(
+        IMPORTER_ATTRIBUTION_GS.currentOwners,
+      )} (a later unit's legitimate importer is not a violation of this claim, \`docs/specs/gutter.md\` \`§3.4 R-4\`; \`§5.1\`'s commit-range scope rule). Read: ${JSON.stringify(
+        IMPORTER_ATTRIBUTION_GS.atAnchor,
+      )}`,
     ).toEqual([])
+    for (const probe of GS_IMPORTER_CONTROL_UNIT_OWN) {
+      expect(
+        ownerOfImporter(probe).includes('STILL A FAIL'),
+        `F-9/§3.4 R-4 — THE CONTROL: an importer that is THIS unit's OWN artifact (\`${probe}\`) is NEVER excused by the sibling attribution`,
+      ).toBe(true)
+    }
+    for (const probe of GS_IMPORTER_CONTROL_UNCLAIMED) {
+      expect(
+        ownerOfImporter(probe),
+        `F-9/§3.4 R-4 — THE CONTROL: an importer that NO unit's allow-list claims (\`${probe}\`) is REPORTED AS UNCLAIMED, so the sibling carve-out cannot silently absorb an unexplained importer`,
+      ).toBe('NO unit’s allow-list claims it')
+    }
     // The `stats()`/`gesture()` seam is an ordinary module method, NOT an agent-reachable
     // surface (`§0A` note 12).
     const code = stripComments(moduleSource('F-9 §0A note 12'))
@@ -4699,15 +4895,49 @@ describe('F — §3.2 the documented fail-states (every outcome is a VALUE)', ()
     expect(rpcLive.length, 'F-9(b) — the `RpcMethod` union keeps its 21 members').toBe(21)
     // The renderer RPC switch and the preload bridge are unchanged: this unit's own
     // change set touches NEITHER file.
+    //
+    // **⟶ REPAIRED 2026-09-27 (THE SIBLING-ATTRIBUTED REPAIR, RULING B).** THE AS-FILED FORM IS
+    // KEPT VISIBLE ABOVE AND SUPERSEDED: it read `treeChangeSet()` — the **WORKING TREE** — over
+    // the WHOLE tree, so **a SIBLING's legitimate in-flight file was charged to THIS unit.**
+    // **MEASURED at `6f6a011`: the as-filed reading was `['src/renderer/renderer.ts']`, the sibling
+    // `E10`'s own WIRING** (`startGutterAffordance(runtime)` — one of `E10`'s DECLARED artifacts, by
+    // name, in `SIBLING_ARTIFACTS` above). **THE CLAIM IS NOW SCOPED TO THIS UNIT'S OWN ATTRIBUTABLE
+    // CHANGE SET:** a path belongs to the unit only if it is NOT a declared sibling artifact
+    // (`docs/specs/gutter.md` `§3.4 R-4` — *"a later unit that legitimately imports THIS module is
+    // not a violation of it"* — and `§5.1`'s commit-range scope rule). **THE PROBE KEEPS ITS
+    // FALSIFIABILITY: a `src/renderer/**` or `src/main/**` path that is NOT a declared sibling
+    // artifact STILL FAILS**, and the six registration sites' set-equality half above is UNTOUCHED.
     const tree = treeChangeSet()
+    const attributable = unitAttributableChangeSet(tree.paths)
+    const siblingInFlight = tree.paths.filter((p) => isSiblingUnitArtifact(p)).sort()
+    console.log(
+      `F-9(b) §5.1 (SIBLING-ATTRIBUTED CHANGE SET) MEASURED :: ${JSON.stringify({
+        workingTreePaths: tree.paths,
+        siblingArtifactsExcluded: siblingInFlight,
+        unitAttributable: attributable,
+        clause: 'docs/specs/gutter.md §3.4 R-4 + §5.1',
+      })}`,
+    )
     for (const denied of ['src/renderer/', 'src/main/']) {
       expect(
-        tree.paths.filter((p) => p.startsWith(denied)),
-        `F-9(b)/§5.1 — this unit’s change set touches NOTHING under '${denied}', so the renderer RPC switch and the preload bridge are unchanged: ${JSON.stringify(
+        attributable.filter((p) => p.startsWith(denied)),
+        `F-9(b)/§5.1 — THIS UNIT'S OWN ATTRIBUTABLE change set touches NOTHING under '${denied}', so the renderer RPC switch and the preload bridge are unchanged. **THE SIBLING'S DECLARED ARTIFACTS ARE EXCLUDED BY NAME — the as-filed whole-tree reading charged \`src/renderer/renderer.ts\` (the sibling \`E10\`'s own wiring) to this unit.** Excluded sibling artifacts: ${JSON.stringify(
+          siblingInFlight,
+        )}. Full working-tree reading: ${JSON.stringify(
           tree.paths,
         )}`,
       ).toEqual([])
     }
+    // THE CONTROL: a `src/renderer/**` path that is NOT a declared sibling artifact must STILL be
+    // attributable to this unit — the exclusion is BY NAME and cannot absorb an unexplained path.
+    expect(
+      unitAttributableChangeSet(['src/renderer/renderer.ts', 'src/renderer/gesture-session-panel.ts']),
+      `F-9(b) POSITIVE control — the sibling exclusion is BY NAME: a \`src/renderer/**\` path that no declared sibling artifact covers STAYS in this unit's attributable set (so the scoping above cannot pass vacuously)`,
+    ).toEqual(['src/renderer/gesture-session-panel.ts'])
+    expect(
+      unitAttributableChangeSet([MODULE_RELPATH, TEST_RELPATH, SPEC_RELPATH]),
+      `F-9(b) NEGATIVE control — and THIS unit's own artifacts are never excluded from its own attributable set`,
+    ).toEqual([MODULE_RELPATH, TEST_RELPATH, SPEC_RELPATH].sort())
     expect(
       existsSync(`${REPO_ROOT}/src/main/preload.ts`),
       'F-9(b) — the probe is not vacuous: the preload bridge really exists, so the untouched claim is about a real artifact',

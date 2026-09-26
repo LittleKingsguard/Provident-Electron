@@ -1849,13 +1849,30 @@ const SIBLING_UNIT_ARTIFACT_PATHS: readonly string[] = [
  *  naming convention: `docs/specs/gutter-ui*.md`), so the exclusion is correct for
  *  `docs/specs/gutter-ui-greens.md` the moment `E10`'s gate-5 artifact lands. */
 const SIBLING_UNIT_ARTIFACT_PROBE = /^docs\/specs\/gutter-ui[^/]*\.md$/
+/** **⟶ ADDED 2026-09-27 (THE SIBLING-ATTRIBUTED REPAIR, RULING B) — A SECOND UNIT'S OWN RED SET,
+ *  BY NAME.** `tests/gesture-session.test.ts` is **`U-GSESSION`'s** artifact, not `E10`'s and not
+ *  `E3`'s: `E3`'s own `testChangeSet`/commit narrative records that `tests/gutter.test.ts` *"is this
+ *  unit's own file"* while the session's test file **"was committed beside `E3`'s"** — i.e. by a
+ *  sibling — and `docs/specs/gutter.md` `§5.1`'s DENIED set names it as a path `E3` must not touch.
+ *  **THE MEASURED CAUSE OF THIS ADDITION:** a SIBLING unit's legitimate repair pass to that file
+ *  (its own `⟶ SIBLING-ATTRIBUTED / TIME-SCOPED 2026-09-27` notes) put it in `git status`, so
+ *  `E3`'s dirty arm charged a sibling's working-tree file to `E3` — **exactly the class `§5.1`'s
+ *  commit-range scope rule forbids: *"must NOT read … a sibling's dirty working-tree file … as this
+ *  unit's diff"*.** The exclusion is BY NAME (`isDeniedPath` stays byte-identical, so this path is
+ *  still denied in the RAW reading), and `E3`'s own module `src/shared/gesture-session.ts` **is NOT
+ *  on this list** — the row's own positive control (i) keeps driving it as an `E3`-OWN denied path. */
+const OTHER_UNIT_ARTIFACT_PATHS: readonly string[] = ['tests/gesture-session.test.ts']
 /** **THE SIBLING-UNIT-ARTIFACT PREDICATE (`R-12`'s per-path seam and `R-16`'s census
  *  exclusion).** `true` means: this path is `E10`'s (`U-GUTTER-UI`) declared artifact,
  *  so it is **OUT OF SCOPE BY CONSTRUCTION** for every `E3` clause — never `E3`'s own
  *  change, never `E3`'s own finding. Driven both ways by `R-12` (control (h): the
  *  sibling's DECLARED paths answer `true`, `E3`'s canonical three answer `false`). */
 function isSiblingUnitArtifact(path: string): boolean {
-  return SIBLING_UNIT_ARTIFACT_PATHS.includes(path) || SIBLING_UNIT_ARTIFACT_PROBE.test(path)
+  return (
+    SIBLING_UNIT_ARTIFACT_PATHS.includes(path) ||
+    SIBLING_UNIT_ARTIFACT_PROBE.test(path) ||
+    OTHER_UNIT_ARTIFACT_PATHS.includes(path)
+  )
 }
 /** **`R-16`'s ASSERTED CENSUS = THE RAW WALK MINUS THE SIBLING'S ARTIFACTS.** The
  *  subject of the row is `E3`'s OWN `gutter*` paths, so the sibling's
@@ -3887,18 +3904,39 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       { hash: 'CONTROL-LEAK-EA1D695', paths: ['docs/specs/gutter-ui.md', 'docs/specs/gutter-ui-review.md'] },
     ])
     const leakedOutsideAllow = leakedReading.paths.filter((p) => !isUnitArtifact(p))
+    // **⟶ REPAIRED 2026-09-27 (THE NON-VACUITY CONTROL'S FORM, RULING A).** The as-filed control
+    // pinned the leaked set's EXACT membership with `toEqual([...two paths...])`, and that set
+    // **LEGITIMATELY GROWS** whenever a SIBLING unit commits another artifact — measured at
+    // `6f6a011`: it read `["docs/specs/gutter-ui-review.md","docs/specs/gutter-ui.md",
+    // "tests/gutter-ui.test.ts"]` (the sibling's own red test file joined `E10`'s spec pair), so a
+    // SIBLING'S LEGITIMATE WORK FAILED THIS ROW. The control is now a NON-EMPTINESS **AND
+    // CONTAINMENT** control: it asserts the leaked set is NON-EMPTY and that it CONTAINS the sibling
+    // artifacts it names (the `E10` spec pair), and it REPORTS the full leaked set in the message;
+    // **never an equality against a set that legitimately grows.** **THE ASSERTION STAYS
+    // FALSIFIABLE — AND IN THE DIRECTION THAT MATTERS: a leaked set that becomes EMPTY STILL FAILS
+    // THIS CONTROL**, because then the live repo no longer exercises the per-path exclusion and the
+    // green arm above proves nothing about it (`§3.4 R-4`: a later unit that legitimately imports
+    // this module is not a violation of it; `§5.1`'s commit-range scope rule).
     expect(
-      leakedOutsideAllow,
-      `R-12 §3.4 — NON-VACUITY OF THE EXCLUSION'S EFFECT: WITHOUT the per-path exclusion the leaked set is NON-EMPTY — exactly the two paths the failing run reported at \`HEAD\` \`9195669\` (\`ea1d695\`, \`E10\`'s own spec pair, committed beside \`E3\`'s clause rulings in \`docs/specs/gutter.md\`). If this control ever reads \`[]\`, the live repo no longer exercises the exclusion and the green above proves nothing about it. Leaked (unexcluded) reading: ${JSON.stringify(
+      leakedOutsideAllow.length > 0,
+      `R-12 §3.4 — NON-VACUITY OF THE EXCLUSION'S EFFECT: WITHOUT the per-path exclusion the leaked set must be NON-EMPTY (it removes real, live sibling paths and is NOT a no-op that happens to read green). A leaked set of \`[]\` means the live repo no longer exercises the exclusion. Full leaked (unexcluded) reading: ${JSON.stringify(
         leakedOutsideAllow,
       )}`,
-    ).toEqual(['docs/specs/gutter-ui-review.md', 'docs/specs/gutter-ui.md'])
+    ).toBe(true)
+    for (const siblingPath of ['docs/specs/gutter-ui.md', 'docs/specs/gutter-ui-review.md']) {
+      expect(
+        leakedOutsideAllow,
+        `R-12 §3.4 — and the leaked set CONTAINS the sibling \`E10\` artifact it names (\`${siblingPath}\`) — reported, never an equality against a set that legitimately grows as a sibling unit commits. Full leaked (unexcluded) reading: ${JSON.stringify(
+          leakedOutsideAllow,
+        )}`,
+      ).toContain(siblingPath)
+    }
     expect(
       leakedReading.paths.filter((p) => isSiblingUnitArtifact(p)),
-      `R-12 §3.4 — and the PER-PATH EXCLUSION is what closes it, DRIVEN ON THE SAME READING rather than asserted: the sibling's two leaked paths are the only members of the leaked set the predicate claims. Leaked set: ${JSON.stringify(
+      `R-12 §3.4 — and the PER-PATH EXCLUSION is what closes it, DRIVEN ON THE SAME READING rather than asserted: the sibling's own leaked paths are members of the leaked set the predicate claims (CONTAINMENT, not equality — the sibling may add artifacts). Full leaked set: ${JSON.stringify(
         leakedReading.paths,
       )}`,
-    ).toEqual(['docs/specs/gutter-ui-review.md', 'docs/specs/gutter-ui.md'])
+    ).toContain('docs/specs/gutter-ui.md')
     expect(
       [
         leakedReading.paths.includes('docs/specs/gutter-ui.md'),
