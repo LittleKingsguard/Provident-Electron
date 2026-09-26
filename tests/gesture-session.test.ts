@@ -4918,7 +4918,7 @@ describe('ADV-GS-2 — the tracking-attach refusal (the gate-4 regression row)',
     expect(h.session.stats().commits, 'ADV-GS-2/(iii) — and the SESSION’S OWN counter reads zero (`§0A` note 12: the count seam is the module’s own)').toBe(0)
     expect(
       h.session.stats().gestures,
-      'ADV-GS-2/(iii)/`ADV-GS-15` — **THE CLAUSE GOVERNS, NOT THE BYTES:** `§2.1`’s `SessionStats.gestures` cell declares the field as *“Successful `begin` calls, instance-lifetime”*, and `§2.3`’s refusal clauses create NO gesture — so a REFUSED `begin` leaves the counter at `0`. **⟶ RECORDED 2026-09-27 (`ADV-GS-17`, the gate-4 closure): THIS LIMB IS GREEN AGAINST THE LANDED MODULE** — the module-side fix `ADV-GS-15` asked for has LANDED (`src/shared/gesture-session.ts`: the increment of `counters.gestures`, and the `record.id` it feeds, sit AFTER the tracking-attach check and beside the capture call), so a refused `begin` consumes neither the counter nor the id. The as-filed text read *“**THIS IS THE ROW’S INTENTIONAL RED** … the landed module increments it BEFORE that check, so this assertion reads `1` today”* and is kept here as the as-filed form; the row was never re-tuned to the measured figure, and it does not need to be — the fix landed under it',
+      'ADV-GS-2/(iii)/`ADV-GS-15` — **THE CLAUSE GOVERNS, NOT THE BYTES:** `§2.1`’s `SessionStats.gestures` cell declares the field as *“Successful `begin` calls, instance-lifetime”*, and `§2.3`’s refusal clauses create NO gesture — so a REFUSED `begin` leaves the counter at `0`. **⟶ RECORDED 2026-09-27 (`ADV-GS-17`, the gate-4 closure): THIS LIMB IS GREEN AGAINST THE LANDED MODULE** — the module-side fix `ADV-GS-15` asked for has LANDED (`src/shared/gesture-session.ts`: the increment of `counters.gestures`, and the `record.id` it feeds, sit AFTER the tracking-attach check and AFTER the `onStart` try/catch, immediately before `counters.lastCode = \'ok\'` and the `{ok:true}` return — so both refusals leave the counter and the id untouched), so a refused `begin` consumes neither the counter nor the id. The as-filed text read *“**THIS IS THE ROW’S INTENTIONAL RED** … the landed module increments it BEFORE that check, so this assertion reads `1` today”* and is kept here as the as-filed form; the row was never re-tuned to the measured figure, and it does not need to be — the fix landed under it',
     ).toBe(0)
     expect(
       h.session.stats().active,
@@ -4948,7 +4948,7 @@ describe('ADV-GS-2 — the tracking-attach refusal (the gate-4 regression row)',
     ).toBe(1)
     expect(
       handle.id,
-      'ADV-GS-2/(iv)/`ADV-GS-15` — and the id proves it: the first gesture’s handle carries `id === 1` (`M-2`’s *“the handle’s `id === 1`”`, `§2.4` item 4 — *“`id` starts at `1`, increments on every SUCCESSFUL `begin`”*; a refused `begin` is not a successful one, so it must not consume an id). **⟶ RECORDED 2026-09-27 (`ADV-GS-17`, the gate-4 closure): THE FIX HAS LANDED AND THIS LIMB IS GREEN.** The as-filed text read *“The landed module increments the counter before the tracking-attach check and derives `record.id` from it, so it hands this handle `id: 2` — **the second half of the same intentional red** (`ADV-GS-15`)”; the increment now sits AFTER that check (beside the capture call), so the first successful gesture is handed `id: 1` and the pre-fix reading is kept here as provenance only',
+      'ADV-GS-2/(iv)/`ADV-GS-15` — and the id proves it: the first gesture’s handle carries `id === 1` (`M-2`’s *“the handle’s `id === 1`”`, `§2.4` item 4 — *“`id` starts at `1`, increments on every SUCCESSFUL `begin`”*; a refused `begin` is not a successful one, so it must not consume an id). **⟶ RECORDED 2026-09-27 (`ADV-GS-17`, the gate-4 closure): THE FIX HAS LANDED AND THIS LIMB IS GREEN.** The as-filed text read *“The landed module increments the counter before the tracking-attach check and derives `record.id` from it, so it hands this handle `id: 2` — **the second half of the same intentional red** (`ADV-GS-15`)”; the increment now sits AFTER that check AND AFTER the `onStart` try/catch, immediately before `counters.lastCode = \'ok\'` and the `{ok:true}` return, so the first successful gesture is handed `id: 1` and the pre-fix reading is kept here as provenance only',
     ).toBe(1)
     expect(
       h.source.log
@@ -4989,13 +4989,18 @@ describe('ADV-GS-2 — the tracking-attach refusal (the gate-4 regression row)',
 // Three seam states had NO row before this pass. They are §3/`§2.1` clause rows (not
 // register rows): none of them is a `§5.5.1` attempt, and the declared register terms,
 // the `396` total, the seed and the caps are UNTOUCHED by this block.
-//   · `ADV-GS-16` — **THE RED OF THIS PASS.** `§2.1`'s `SessionStats.gestures` cell reads
+//   · `ADV-GS-16` — the `onStart`-throws path of the SAME counter clause (AS FILED, THE RED
+//     OF THIS PASS). `§2.1`'s `SessionStats.gestures` cell reads
 //     *"Successful `begin` calls, instance-lifetime"*, `§2.4` item 4 has the handle `id`
 //     *"start at `1`, increment on every **successful** `begin`"*, and `M-2` puts the first
-//     gesture's handle at `id === 1` — while the LANDED module consummates the counter and
-//     the id BEFORE `onStart` runs, so a `begin` whose `onStart` throws (it cleans up and
-//     RETHROWS, `§2.3` item 1(d)) still counts as a gesture and consumes an id. The row
-//     asserts the CLAUSE and is therefore RED until the module side moves the increment.
+//     gesture's handle at `id === 1` — while the module AS FILED consummated the counter and
+//     the id BEFORE `onStart` ran, so a `begin` whose `onStart` throws (it cleans up and
+//     RETHROWS, `§2.3` item 1(d)) still counted as a gesture and consumed an id. The row
+//     asserts the CLAUSE, so it was RED until the module side moved the increment.
+//     **⟶ RECORDED 2026-09-27 (`ADV-GS-16`'s module fix): THE ROW IS GREEN** — the increment
+//     now sits AFTER the tracking-attach check AND AFTER the `onStart` try/catch,
+//     immediately before `counters.lastCode = 'ok'` and the `{ok:true}` return, so the
+//     throwing attempt consumes neither the counter nor the id.
 //   · `ADV-GS-26` — the SOURCE-SUPPLIED capture member's throw. `§2.1`'s
 //     `EventSource.capturePointer` doc is explicit that a throw from it is SWALLOWED like
 //     the source's other callables (`§2.4` item 6), and `§2.3` item 6's count is unchanged
@@ -5097,10 +5102,15 @@ describe('ADV-GS-16 / ADV-GS-26 / ADV-GS-22(a) — the gate-4 closure rows of th
     // reading after the throw is `0`, and the SAME element’s next successful establishment is
     // the session’s FIRST gesture, reading `1` with `handle.id === 1`.
     //
-    // **THIS IS THE RED OF THIS PASS.** The landed module increments `counters.gestures`
-    // before `onStart` runs and feeds `record.id` from it, so the measured triple is
+    // **AS FILED, THIS WAS THE RED OF THIS PASS.** The module AS FILED incremented
+    // `counters.gestures` before `onStart` ran and fed `record.id` from it, so the measured
+    // triple then read
     // `{gesturesAfterTheThrow: 1, gesturesAfterTheRetry: 2, retryHandleId: 2}` — the clause,
     // not the bytes, is what this row asserts, and the row is NOT to be re-tuned.
+    // **⟶ RECORDED 2026-09-27 (`ADV-GS-16`'s module fix): the increment now sits AFTER the
+    // `onStart` try/catch, immediately before `counters.lastCode = 'ok'` and the `{ok:true}`
+    // return, so the landed bytes measure the clause itself — the triple below reads
+    // `{0, 1, 1}` and the row is GREEN.**
     expect(
       {
         gesturesAfterTheThrow,
@@ -8265,6 +8275,10 @@ describe('§6 — the unit’s three falsifications (each asserted, never narrat
 // incremented only by a `begin` that ESTABLISHES** — after the tracking-attach check,
 // beside the capture call. **This row therefore asserts the CLAUSE and is INTENTIONALLY
 // RED until that fix lands: the red is a PINNED CONTRACT VIOLATION, NOT a broken test.**
+// ⟶ RECORDED 2026-09-27 (`ADV-GS-16`, the module fix): this paragraph is AS-FILED and is
+// the requirement as stated for the refused-attach path; the increment now sits after the
+// `onStart` try/catch AS WELL, immediately before `counters.lastCode = 'ok'` and the
+// `{ok:true}` return, and **the row is GREEN — the increment no longer precedes the hook.**
 // A reader who sees this row fail must read it as *the module owes the fix*, never as
 // *the expectation is stale* — and must NOT re-tune the row to the measured figure.
 //
@@ -8272,13 +8286,14 @@ describe('§6 — the unit’s three falsifications (each asserted, never narrat
 // HAS LANDED, AND THE ADV-GS-2 ROW IS GREEN.** The as-filed text above is kept verbatim as
 // the record of what was owed; the landed module
 // (`src/shared/gesture-session.ts`) now increments `counters.gestures` — and derives
-// `record.id` from it — AFTER the three tracking `on` results are checked and beside the
-// capture call, so a REFUSED `begin` reads `gestures: 0`, the next real gesture reads `1`
+// `record.id` from it — AFTER the three tracking `on` results are checked AND AFTER the
+// `onStart` try/catch, immediately before `counters.lastCode = 'ok'` and the `{ok:true}`
+// return — so a REFUSED `begin` reads `gestures: 0`, the next real gesture reads `1`
 // and is handed `id: 1`. **No row was re-tuned to the pre-fix measured figures**; the red
 // was discharged by the module-side fix, which is the only way it was ever allowed to
 // clear. (The SAME clause, on the `onStart`-throws path rather than the refused-attach
-// path, is `ADV-GS-16`'s row — and THAT one is still red, because the increment still
-// precedes the `onStart` hook.)
+// path, is `ADV-GS-16`'s row — and `ADV-GS-16`'s module fix has since LANDED the same
+// way: the increment no longer precedes the `onStart` hook, so THAT row is GREEN too.)
 //
 // Tracked in `docs/pending.md` §H with this reasoning.
 
@@ -8378,21 +8393,24 @@ describe('§6 — the unit’s three falsifications (each asserted, never narrat
 //     gesture was handed id `2`. **THE ROW ASSERTS THE CLAUSE — `gestures === 0` after the
 //     refusal, `gestures === 1` and `handle.id === 1` after the retry — AND IS NOW GREEN: THE
 //     MODULE-SIDE FIX LANDED** (`⟶ ADV-GS-17`, the gate-4 closure: the increment, and the
-//     `record.id` it feeds, sit after the tracking-attach check beside the capture call).
+//     `record.id` it feeds, sit after the tracking-attach check AND after the `onStart`
+//     try/catch, immediately before `counters.lastCode = 'ok'`).
 //     The former text of this bullet asserted the MEASURED figure *beside* the clause, which
 //     codified the violation instead of pinning the contract; that is the defect this remand
 //     removes, and the red was discharged by the fix rather than by re-tuning the row. (The
 //     same finding, stated at the row: the `ADV-GS-15` block above
 //     `describe('ADV-GS-2 …')`.)
-//   · **`ADV-GS-16` — THE SAME CLAUSE ON THE `onStart`-THROWS PATH, AND IT IS STILL RED.**
-//     The refused-attach path is fixed, but `counters.gestures` is ALSO incremented before the
-//     consumer’s `onStart` hook runs, so a `begin` whose `onStart` throws (it rolls the
-//     tracking listeners back and RETHROWS) still counts as a gesture and consumes an id. The
-//     row authored by this pass asserts the clause — measured on the landed bytes:
-//     `{gestures after the throw: 1, gestures after the retry: 2, retry handle id: 2}` against
-//     the required `{0, 1, 1}`. **This is the ONE red this pass reports**, and it is a PINNED
-//     CONTRACT VIOLATION, not a broken test: the increment must move after the `onStart` call
-//     (or the hook must run before the counters move) for the clause to hold.
+//   · **`ADV-GS-16` — THE SAME CLAUSE ON THE `onStart`-THROWS PATH, AND IT IS GREEN (the
+//     `onStart` fix has LANDED).** The refused-attach path was fixed first, and this pass's
+//     module fix carried the SAME clause onto the hook path: `counters.gestures` no longer
+//     moves before the consumer's `onStart` hook runs, so a `begin` whose `onStart` throws
+//     (it rolls the tracking listeners back and RETHROWS) counts as NO gesture and consumes
+//     NO id. The row authored by this pass asserts the clause, and the landed bytes now
+//     measure `{gestures after the throw: 0, gestures after the retry: 1, retry handle id:
+//     1}` against the required `{0, 1, 1}`. **This was the ONE red this pass reported, and
+//     it is now discharged by the module fix** — the increment moved after the `onStart`
+//     try/catch (immediately before `counters.lastCode = 'ok'` and the `{ok:true}` return),
+//     so the clause holds rather than the row being re-tuned to it.
 //   · **`ADV-GS-2`'s roll-back LOG IS BALANCED, and that is measured not assumed:** the
 //     recorder logs an `on` ATTEMPT before its configured throw, so the two detaches for
 //     never-completed attaches still pair with their own recorded attempts (`pairOnOffCalls`
