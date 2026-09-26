@@ -14,6 +14,14 @@ export interface EventSource {
   on(element: GestureElement, type: string, handler: () => void): void
   off(element: GestureElement, type: string, handler: () => void): void
   isConnected?(element: GestureElement): boolean
+  /** OPTIONAL — THE SOURCE'S CAPTURE CAPABILITY. Invoked AT MOST ONCE per gesture, only
+   *  inside `begin`, only after the gesture is established (after the three tracking
+   *  attaches), and only for a control that opted in with a truthy `capture`. ITS ABSENCE
+   *  IS THE DECLARED DEGRADATION: zero calls, no throw and no diagnostic, and the gesture
+   *  still establishes and still terminates normally. A throw from it is swallowed by the
+   *  same valid-state rule as the source's other callables — it never reaches the
+   *  consumer boundary and never fails a gesture. */
+  capturePointer?(element: GestureElement): void
 }
 
 export interface GestureOptionsInput {
@@ -379,9 +387,8 @@ export function createGestureSession(options?: SessionOptions): GestureSession {
     const entry = attachedEntry(element)
     if (entry === null) return refuseBegin('not-installed')
     if (!connected(element)) return refuseBegin('disconnected')
-    counters.gestures += 1
     const record: GestureRecord = {
-      id: counters.gestures,
+      id: counters.gestures + 1,
       element,
       options: entry.options,
       handle: null as unknown as GestureHandle,
@@ -425,6 +432,14 @@ export function createGestureSession(options?: SessionOptions): GestureSession {
       counters.lastCode = 'not-installed'
       return { ok: false, code: 'not-installed' }
     }
+    // ⟶ ADV-GS-15 (2026-09-27): the GESTURE COUNTER — and the id it feeds — is incremented
+    // only by a `begin` that ESTABLISHES, i.e. AFTER the tracking-attach check above. The
+    // counter previously moved before that check, so a REFUSED `begin` counted as a gesture
+    // and consumed the id the next real gesture was handed. `§2.1`'s `SessionStats.gestures`
+    // counts "Successful `begin` calls", and §2.4 item 4 has the id start at `1` and
+    // increment on every SUCCESSFUL `begin` — a refusal creates no gesture (its record is
+    // discarded above). Ids stay consecutive for successful gestures.
+    counters.gestures += 1
     if (record.options.capture) capturePointer(element)
     const startHook = record.options.onStart
     if (startHook !== undefined) {
