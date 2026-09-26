@@ -569,6 +569,13 @@ interface SessionDouble {
    *  option, wired by the composition — never a fifth hook). One per installed controller,
    *  so a two-writer drive lands both sinks on ONE terminal. */
   registerCommit(element: GestureElement, handler: (gesture: GestureHandle, written: unknown) => void): void
+  /** **THE HANDLE ARGUMENTS THE COMPOSITION PASSED WITH `reset`** (the `[T]` reading
+   *  `§5.5.1 P-GT-SM-4`'s per-attempt assert requires: *"the identity of the handle passed to
+   *  `session.reset` (the one the session gave at establishment)"*). The landed session
+   *  accepts a handle only when its own `id` AND `element` match the active record
+   *  (`src/shared/gesture-session.ts`'s `handleIsCurrent`), so this double honours the SAME
+   *  rule: a wrapper-CAPTURED real handle is therefore usable, and a SYNTHESISED one is not. */
+  readonly resetHandles: GestureHandle[]
   fireTerminal(outcome: 'end' | 'cancel'): void
   fireMove(): void
 }
@@ -598,6 +605,7 @@ function makeSessionDouble(config: DoubleConfig = {}): SessionDouble {
    *  composition's sink — which is exactly what makes the two-writer and consumer-side
    *  shapes of `P-GT-SM-3`/`F-9`/`F-19` land on ONE sink record. */
   const commitsByElement = new Map<unknown, Array<(gesture: GestureHandle, value: unknown) => void>>()
+  const resetHandles: GestureHandle[] = []
   const invokeCommit = (element: unknown, gesture: GestureHandle, written: unknown): void => {
     for (const handler of commitsByElement.get(element) ?? []) handler(gesture, written)
   }
@@ -605,6 +613,7 @@ function makeSessionDouble(config: DoubleConfig = {}): SessionDouble {
     log,
     installArgs,
     handles,
+    resetHandles,
     value,
     started,
     get session(): SessionLike & Record<string, unknown> {
@@ -724,11 +733,24 @@ function makeSessionDouble(config: DoubleConfig = {}): SessionDouble {
     },
     reset(element: GestureElement, gesture: GestureHandle, supplied: unknown): TerminalResult {
       log.push('reset')
+      resetHandles.push(gesture)
       if (disposed) return { ok: false, code: 'disposed', committed: false }
       if (config.resetCode !== undefined && config.resetCode !== null) {
         return { ok: false, code: config.resetCode, committed: false }
       }
-      if (active === null || gesture !== active.handle) return { ok: false, code: 'stale', committed: false }
+      // **THE LANDED SESSION'S OWN CURRENCY RULE, HONOURED HERE (`src/shared/gesture-session.ts`
+      // `handleIsCurrent`: `id === record.id && owned === element && element === record.element`).**
+      // The frozen session accepts a handle by ID AND ELEMENT identity, so a
+      // WRAPPER-CAPTURED real handle is usable while a SYNTHESISED one is not — which is what
+      // makes `M-6`/`M-15`/`P-GT-SM-4` shape `(1)` assertable against the real channel
+      // (`E3`-BLOCK-5).
+      if (active === null || gesture !== active.handle) {
+        const id = (gesture as unknown as { id?: unknown } | null | undefined)?.id
+        const owned = (gesture as unknown as { element?: unknown } | null | undefined)?.element
+        const matchesActiveRecord = active !== null && id === active.id && owned === element && element === active.element
+        if (!matchesActiveRecord) return { ok: false, code: 'stale', committed: false }
+      }
+      if (active === null) return { ok: false, code: 'stale', committed: false }
       const record = active
       record.outcome = 'reset'
       record.value = supplied
@@ -896,7 +918,14 @@ interface LandedHarness {
   readonly installArgs: Array<{ element: unknown; keys: string[] }>
 }
 /** The landed session, wrapped so every call the CONTROLLER makes into it is counted
- *  (`R-14`'s `[T]` half) while the session's own behaviour is the landed module's. */
+ *  (`R-14`'s `[T]` half) while the session's own behaviour is the landed module's.
+ *
+ *  **⟶ ALIGNED TO THE AMENDED `§2.5` item 4 (THE PINNED SINGLE WIRING), 2026-09-27 —
+ *  `E3`-BLOCK-3.** The session's `commit` option is wired to EXACTLY ONE callback, and the
+ *  rows that read the sink's own record hand THIS harness the SAME sink they hand the
+ *  composition — so the harness's channel and the composition's write site are ONE writer,
+ *  never two. A row that needs the TWO-writer shape supplies a DIFFERENT writer (`writerShape`
+ *  shape `(2)` does exactly that, and it is declared to fail). */
 async function landedHarness(options: {
   withCapture?: boolean
   commit?: ((gesture: unknown, value: unknown) => void) | undefined
@@ -915,24 +944,32 @@ async function landedHarness(options: {
     options.noCommit === true
       ? undefined
       : (gesture: unknown, value: unknown): void => {
+          // **THIS IS THE RECORDED SESSION `commit` CHANNEL, AND THE COMPOSITION'S OWN
+          // SINGLE WRITE SITE IS THE SINK IT WAS HANDED** (`§2.5` item 4's ONE wiring):
+          // routing the sink again from here would be a SECOND writer (`§4.4 S-11`). The
+          // channel's job in this harness is to RECORD what the session invoked.
           const handle = gesture as GestureHandle
           commits.push({ gesture, value, outcome: handle.outcome })
           if (options.commit !== undefined) options.commit(gesture, value)
         }
   const raw = factory({ source, commit } as Record<string, unknown>)
   const session: SessionLike & Record<string, unknown> = raw
+  const rawInstall = raw['install'] as (e: unknown, o?: unknown) => unknown
   const wrappedInstall = (element: unknown, installOptions?: unknown): unknown => {
     sessionLog.push('install')
     const record = (installOptions ?? {}) as Record<string, unknown>
     installArgs.push({ element, keys: Object.keys(record).sort() })
-    return (raw['install'] as (e: unknown, o?: unknown) => unknown).call(raw, element, installOptions)
+    return rawInstall.call(raw, element, installOptions)
   }
   ;(session as unknown as Record<string, unknown>)['install'] = wrappedInstall
   for (const name of ['reset', 'dispose', 'stats', 'gesture'] as const) {
-    const original = raw[name]
+    // **THE ORIGINAL IS BOUND ONCE, BEFORE THE REPLACEMENT IS INSTALLED** — wrapping the
+    // already-replaced member would make the wrapper call itself (a harness defect, and one
+    // that would surface as a `RangeError` rather than as a labelled row assertion).
+    const original = (raw[name] as (...a: unknown[]) => unknown).bind(raw)
     ;(session as unknown as Record<string, unknown>)[name] = (...args: unknown[]): unknown => {
       sessionLog.push(name)
-      return (original as (...a: unknown[]) => unknown).apply(raw, args)
+      return original(...args)
     }
   }
   return { session, source, commits, sessionLog, installArgs }
@@ -1414,15 +1451,40 @@ function importStatements(src: string): Array<{ statement: string; specifier: st
   }
   return out
 }
-/** The controller's own result-code string literals (`R-15`'s closed-set half). */
+/** **THE CONTROLLER'S OWN CODE-STRING LITERALS — WIDENED 2026-09-27 (THE REPAIR CYCLE,
+ *  `E3`-BLOCK-2).** The as-landed helper kept a literal only when it contained `-` or was
+ *  exactly `'ok'`, so it could NEVER collect `'busy'`, `'disconnected'`, `'disposed'` or
+ *  `'stale'` (measured: `5` of `9` from a corpus carrying all nine) — the row's own
+ *  mechanism, not the clause, was wrong (`§3.3 I-14` is sound; `§2.3` item 4's NINE-member
+ *  controller domain is the contract).
+ *
+ *  **THE WIDENED FORM, stated so it is checkable rather than assumed:** a candidate is a
+ *  single- or double-quoted string literal, entirely lowercase with optional `-` separators
+ *  (`'ok'`, `'no-gesture'`, `'unusable-default'`, …). The following NON-CODE classes are
+ *  HELD APART from the code set, and each for its own stated reason — **`'end'`/`'reset'`/
+ *  `'cancel'` are the session's OUTCOMES (a `GestureHandle.outcome` comparison, `§2.3` item
+ *  4 clause 7), never a result code** — while `'min'`/`'max'`/`'value'`/`'code'`/`'written'`
+ *  are FIELD names of the caller's bounds pair / the controller's own records and `'stats'`
+ *  is a SESSION MEMBER the controller reads. None of them is ever returned as a code, and
+ *  the row asserts the code set against the NINE-member domain with the non-code class
+ *  named IN THE SAME MESSAGE, so a genuinely new CODE literal still FAILS while a field
+ *  name does not. **THE COLLECTED SET IS ASSERTED BY NAME, NEVER BY A COUNT** (`S-7`). */
+const NON_CODE_LITERALS: readonly string[] = ['cancel', 'code', 'end', 'max', 'min', 'reset', 'stats', 'value', 'written']
 function resultCodeLiterals(src: string): string[] {
   const found = new Set<string>()
   const re = /'([a-z][a-z-]*)'/g
   let match = re.exec(src)
   while (match !== null) {
-    if (match[1].includes('-') || match[1] === 'ok') found.add(match[1])
+    found.add(match[1])
     match = re.exec(src)
   }
+  const dbl = /"([a-z][a-z-]*)"/g
+  match = dbl.exec(src)
+  while (match !== null) {
+    found.add(match[1])
+    match = dbl.exec(src)
+  }
+  for (const literal of NON_CODE_LITERALS) found.delete(literal)
   return [...found].sort()
 }
 /** A LIVE exported-name census read from the module's bytes (the type half of `R-5`),
@@ -1555,9 +1617,15 @@ const LCG_MOD = 4294967296
  *  `PRE-2` (the table precondition), `PRE-4` (the pool-versus-boundary rule) and
  *  `REGISTER-STATUS` (the executed record) all reconcile against the same object.
  *
- *  **THE DISTINCT FIGURES ARE `§5.5.2` item 3's, and the FOUR rows where the two figures
- *  DIFFER are `P-GT-PU-2` (`11`/`2`), `P-GT-IM-2` (`20`/`18`), `P-GT-SM-1` (`20`/`19`) and
- *  `P-GT-SM-4` (`12`/`11`).** The DECLARED figures are what the caps are compared
+ *  **THE DISTINCT FIGURES ARE `§5.5.2` item 3's, and the THREE rows where the two figures
+ *  DIFFER are `P-GT-PU-2` (`11`/`2`), `P-GT-IM-2` (`20`/`18`) and `P-GT-SM-1` (`20`/`19`)** —
+ *  *(**⟶ CORRECTED 2026-09-27 BY THE ARCHITECT-RULING AMENDMENT PASS (ruling `8`(c)): the
+ *  as-landed table carried `P-GT-SM-4`'s distinct figure as the as-filed `11`, which made it a
+ *  FOURTH differing row. The amended spec corrects that figure to `12` (the
+ *  `isResizable === false` limb is GENUINELY DRIVEN, so its observable is a distinct reading),
+ *  so `P-GT-SM-4` now reports the SAME figure twice and only THREE rows still carry two
+ *  DIFFERING figures. **THE DECLARED TERM `12`, every other term and the `299` total DO NOT
+ *  MOVE.**)* The DECLARED figures are what the caps are compared
  *  against; the distinct figures are REPORTED BESIDE them and are NEVER substituted
  *  (`docs/decisions.md` `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`, sub-rule 2). */
 const REGISTER_DECLARED: ReadonlyArray<{
@@ -1577,7 +1645,7 @@ const REGISTER_DECLARED: ReadonlyArray<{
   { row: 'P-GT-SM-1', strategy: 'S-GT-COMMIT-1', term: 20, distinct: 19, bounded: false },
   { row: 'P-GT-SM-2', strategy: 'S-GT-WINDOW-1', term: 15, distinct: 15, bounded: false },
   { row: 'P-GT-SM-3', strategy: 'S-GT-WRITER-1', term: 5, distinct: 5, bounded: false },
-  { row: 'P-GT-SM-4', strategy: 'S-GT-RESET-1', term: 12, distinct: 11, bounded: false },
+  { row: 'P-GT-SM-4', strategy: 'S-GT-RESET-1', term: 12, distinct: 12, bounded: false },
   { row: 'P-GT-TP-1', strategy: 'S-GT-TOTAL-1', term: 60, distinct: 60, bounded: true },
   { row: 'P-GT-TP-2', strategy: 'S-GT-SHAPES-1', term: 18, distinct: 18, bounded: false },
 ]
@@ -1990,7 +2058,15 @@ interface WriterReadings {
 async function writerShape(shape: 1 | 2 | 3 | 4 | 5): Promise<WriterReadings> {
   const sink = makeSink()
   const element: Record<string, unknown> = { control: `writer-${shape}` }
+  const secondElement: Record<string, unknown> = { control: `writer-2-${shape}` }
   const double = makeSessionDouble()
+  // **⟶ ALIGNED TO THE AMENDED `§2.5` item 4 (THE PINNED SINGLE WIRING), 2026-09-27 —
+  // `E3`-BLOCK-3.** There is EXACTLY ONE WIRING here, never two: the composition wires the
+  // SESSION's `commit` option to the composition's SINGLE SINK WRITER, and this harness's
+  // `registerCommit` IS that one channel (the double's stand-in for the session's own
+  // `commit` invocation — `gsession.md` `§2.1`'s `SessionOptions.commit`). **No cell below
+  // forwards the sink through a SECOND channel while the composition's own writer is live**
+  // — that shape is `§4.4 S-11`'s second-writer class, and it is driven as shape `(2)`.
   const { controller } = await createController({
     session: double.session,
     axisFor: (): unknown => undefined,
@@ -2001,28 +2077,29 @@ async function writerShape(shape: 1 | 2 | 3 | 4 | 5): Promise<WriterReadings> {
     commit: shape === 3 ? undefined : sink,
   })
   let extraWrites = 0
+  /** Shape `(2)`'s SECOND WRITER, invoked once at the gesture's terminal point. */
+  let secondWriter: ((gesture: unknown) => void) | null = null
   const consumerHook = (): void => {
     if (shape === 4 || shape === 5) {
       extraWrites += 1
-      const live = double.handles[double.handles.length - 1]
+      const live = double.value.current as GestureHandle | undefined
       if (live !== undefined) sink(live, 999)
     }
   }
   controller.attach(element, shape === 4 ? { onMove: consumerHook } : shape === 5 ? { onEnd: consumerHook } : {})
-  // **THE SESSION'S OWN COMMIT OPTION.** The composition wires the session's `commit`
-  // callback to this controller's own one call site; the double is handed that same
-  // channel after the composition is built, exactly as the landed session receives it at
-  // construction (`gsession.md` §2.1's `SessionOptions.commit`). A composition that
-  // supplies NO sink wires nothing, which is shape `(3)`'s declared state.
-  if (shape !== 3) {
-    double.registerCommit(element, (gesture: GestureHandle, written: unknown): void => {
-      sink(gesture, typeof written === 'number' ? written : ((gesture as GestureHandle).value as number))
-    })
-  }
+  // **⟶ ONE WIRING, ONE WRITE SITE (THE AMENDED `§2.5` item 4; `E3`-BLOCK-3).** The
+  // composition's SINGLE SINK WRITER is the `commit` seam handed to it above, and it is
+  // invoked at the gesture's terminal — so the sink's own record and the controller's
+  // counter are the TWO READINGS of that ONE write, never two channels. No forwarding
+  // channel is registered for shape `(1)`, `(4)` or `(5)`: `P-GT-SM-1`'s cell states the
+  // same thing, and a second forwarding channel would be `§4.4 S-11`'s second-writer class
+  // (driven below as shape `(2)` alone).
   if (shape === 2) {
-    // **THE SECOND WRITER**: a second COMPOSITION over the SAME session and the SAME sink,
-    // on its own control (the `U-RELOCATE` successor note's "two controllers = two writers
-    // on different sinks" case, driven so that BOTH land on this ONE record).
+    // **THE SECOND WRITER** — a writer that writes the SAME SINK for the SAME gesture
+    // through a channel OTHER than the composition's single wiring (`§4.4 S-11`'s own
+    // definition; `§5.5.1 P-GT-SM-3` shape `(2)`). It is a SECOND COMPOSITION over the SAME
+    // session, writing the same sink, on its OWN control — so the divergence between the
+    // SINK'S OWN RECORD and THIS controller's counter is what the row reads.
     const second = await createController({
       session: double.session,
       axisFor: (): unknown => undefined,
@@ -2032,19 +2109,39 @@ async function writerShape(shape: 1 | 2 | 3 | 4 | 5): Promise<WriterReadings> {
       sizeFor: (): unknown => 2,
       commit: sink,
     })
-    const secondElement: Record<string, unknown> = { control: `writer-2-${shape}` }
     second.controller.attach(secondElement, {})
-    double.registerCommit(secondElement, (gesture: GestureHandle, written: unknown): void => {
-      sink(gesture, typeof written === 'number' ? written : ((gesture as GestureHandle).value as number))
-    })
+    // **THE SECOND WRITER** writes the SAME SINK for the SAME gesture through a channel OTHER
+    // than the composition's single wiring (`§4.4 S-11`'s own definition): invoked with the
+    // SAME session handle, it makes the SINK's own record read `2` while THIS controller's
+    // counter still reads `1` — the divergence `P-GT-SM-3` shape `(2)` asserts.
+    secondWriter = (gesture: unknown): void => {
+      try {
+        sink(gesture as GestureHandle, Number((gesture as GestureHandle).value))
+      } catch {
+        // swallowed by the session's own commit seam, as above.
+      }
+    }
   }
   const began = double.begin(element)
   let sessionCommitted = false
   if (began.ok) {
     double.value.current = began.gesture
     began.gesture.set(2)
+    // **THE MOVE TURN IS FIRED** (⟶ 2026-09-27, `E3`-BLOCK-5): every shape's terminal is
+    // reached with the handle the controller's own `onMove` WRAPPER captured, and the
+    // session's `onStart` carries no handle (`session.begin` is forbidden here). Without
+    // this turn, shapes `(1)`/`(2)`/`(5)` could only read ZERO writes. **AND IT IS THE ONLY
+    // CALLER OF THE `onMove` HOOK**, so shape `(4)`'s consumer-side write happens here and
+    // nowhere else (`E3`-BLOCK-6(a): a shape declaring a consumer-side write without a fired
+    // move could only read `0`; a SECOND fired turn would count the write twice).
+    double.fireMove()
     double.fireTerminal('end')
     sessionCommitted = true
+    if (shape === 2 && secondWriter !== null) {
+      // **THE SECOND WRITER'S OWN WRITE**, on the SAME sink for the SAME gesture: the sink's
+      // own record then reads `2` while THIS controller's counter still reads `1`.
+      secondWriter(began.gesture)
+    }
   }
   return {
     sinkRecord: sink.records.length,
@@ -2074,19 +2171,82 @@ describe('R-16/R-17/R-18 — §3.5 the existence rows (the red’s own premise)'
     ).toBe('function')
   })
 
-  it('R-16 §3.5 (RED FORM) — the module-absence row: `src/shared/gutter.ts` does NOT exist at red time, and `tests/gutter.test.ts` is the only unit-owned file in the change set', () => {
-    expect(
-      existsSync(MODULE_SRC),
-      `R-16 §3.5 (RED FORM) — at the moment the red set is AUTHORED and RUN, \`${MODULE_RELPATH}\` does not exist (${fileURLToPath(
-        MODULE_SRC,
-      )}). If it EXISTS, this row FAILS and the RCA-1 red order is broken: the pass that finds it must REPORT the inversion rather than proceed`,
-    ).toBe(false)
+  it('R-16 §3.5 — the module-absence row, BOTH BRANCHES: RED (module absent ⇒ assert ABSENCE + no unit paths) and GREEN (module present ⇒ assert it EXISTS, that no `src/**` file imports it, and that the `2 + 10 = 12` census holds)', () => {
+    // **⟶ REPAIRED 2026-09-27 (THE REPAIR CYCLE, `E3`-BLOCK-1; the amended `§3.5 R-16`).**
+    // The amended clause names TWO forms with their governing branches: **the RED BRANCH
+    // governs AT RED TIME and the GREEN BRANCH governs AT GREEN TIME**, and **the row MUST
+    // BRANCH ON THE MODULE'S PRESENCE** rather than assert the red form unconditionally —
+    // otherwise it would fail BECAUSE THE WORK WAS DONE, which is exactly the contradiction
+    // `E3`-BLOCK-1 filed. The branch taken is named in every message below.
+    const modulePresent = existsSync(MODULE_SRC)
     const unitPaths = walkUnitPaths()
     expect(
       unitPaths,
-      'R-16 §3.5 — the unit-owned census is asserted NON-EMPTY before the equality, and at RED time it is EXACTLY this test file (`tests/gutter.test.ts`)',
+      `R-16 §3.5 — the unit-owned census is asserted NON-EMPTY BEFORE the branch's equality (a vacuous empty read must FAIL here, not pass): this test file is \`${TEST_RELPATH}\``,
     ).toContain(TEST_RELPATH)
-    expect(unitPaths.filter((p) => p !== TEST_RELPATH), 'R-16 §3.5 — no OTHER `gutter*` path exists under `src/**` or `tests/**` at red time').toEqual([])
+    if (!modulePresent) {
+      // ---------------------------------------------------------------- THE RED BRANCH
+      expect(
+        modulePresent,
+        `R-16 §3.5 (RED BRANCH — module ABSENT at red time) — at the moment the red set is AUTHORED and RUN \`${MODULE_RELPATH}\` does not exist (${fileURLToPath(
+          MODULE_SRC,
+        )}). If it EXISTS, the GREEN BRANCH governs and this branch is not the live one — and if it exists BEFORE a red run has been reported, the pass that finds it must REPORT the RCA-1 inversion rather than proceed`,
+      ).toBe(false)
+      expect(
+        unitPaths.filter((p) => p !== TEST_RELPATH),
+        `R-16 §3.5 (RED BRANCH) — no OTHER \`gutter*\` path exists under \`src/**\` or \`tests/**\` at red time: \`${TEST_RELPATH}\` is the only unit-owned file in the change set. Read: ${JSON.stringify(
+          unitPaths,
+        )}`,
+      ).toEqual([])
+      return
+    }
+    // ------------------------------------------------------------------ THE GREEN BRANCH
+    expect(
+      modulePresent,
+      `R-16 §3.5 (GREEN BRANCH — module PRESENT at green time) — \`${MODULE_RELPATH}\` EXISTS. THIS BRANCH governs once the work is done, and it is why this row can PASS at green time instead of failing because the module landed`,
+    ).toBe(true)
+    expect(
+      unitPaths,
+      `R-16 §3.5 (GREEN BRANCH) — the unit-owned census at green time is EXACTLY the module and this test file (plus the unit's own \`gutter*\` artifacts if any): a \`gutter*\` path under \`src/**\` or \`tests/**\` that is neither is a FINDING. Read: ${JSON.stringify(
+        unitPaths,
+      )}`,
+    ).toEqual([MODULE_RELPATH, TEST_RELPATH].sort())
+    // (a) NOT IMPORTED BY ANY `src/**` FILE (`§1` item 8; the companion claim of `R-6`/`R-12`).
+    expect(
+      gutterImporters(),
+      `R-16 §3.5 (GREEN BRANCH) — \`${MODULE_RELPATH}\` is imported by NO \`src/**\` file at green time either: the unit ships a module with no in-tree consumer, and an importer appearing is a FINDING (the esbuild bundle census would move with it). Read: ${JSON.stringify(
+        gutterImporters(),
+      )}`,
+    ).toEqual([])
+    // (b) THE EXPORT CENSUS HOLDS — `§2.1`'s `2 + 10 = 12` names, asserted BY NAME (`R-5`'s
+    // own set-equality form; a bare COUNT would be satisfiable by renaming, `§4.4 S-7`).
+    const censusSrc = moduleBytes()
+    const censusedValues = (censusSrc.match(/^export\s+(?:async\s+)?(?:function|const|let|var)\s+([A-Za-z_$][A-Za-z0-9_$]*)/gm) ?? [])
+      .map((line) => line.replace(/^export\s+(?:async\s+)?(?:function|const|let|var)\s+/, ''))
+      .sort()
+    expect(
+      censusedValues,
+      `R-16 §3.5 (GREEN BRANCH) — the module's VALUE export census HOLDS: exactly \`clampToBounds\` and \`createResizeController\` (§2.1's census: TWO value exports and TEN type declarations, 2 + 10 = 12). Read from the bytes: ${JSON.stringify(
+        censusedValues,
+      )}`,
+    ).toEqual(['clampToBounds', 'createResizeController'])
+    expect(
+      exportedTypeNames(censusSrc),
+      `R-16 §3.5 (GREEN BRANCH) — and the TEN TYPE declarations hold, asserted BY NAME: the census is 2 + 10 = 12 and NOTHING ELSE (a THIRTEENTH or FOURTEENTH exported name FAILS — \`ResizeCode\` and \`ResizeResetResult\` are NON-EXPORTED module-local declarations). Read from the bytes: ${JSON.stringify(
+        exportedTypeNames(censusSrc),
+      )}`,
+    ).toEqual([
+      'AxisFor',
+      'BoundsFor',
+      'ClampBounds',
+      'CommitSink',
+      'DefaultSizeFor',
+      'IsResizable',
+      'ResizeController',
+      'ResizeControllerHandle',
+      'ResizeControllerOptions',
+      'ResizeStats',
+    ])
   })
 
   it('R-17 §3.5 — the `[D]`-precondition row: the extended divergence harness (`U-DIVERGENCE-EXT`, ledger row `C2`) does NOT exist, so no `[D]` row is claimed or runnable here', () => {
@@ -2709,8 +2869,14 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
     const literals = resultCodeLiterals(moduleSource('R-15'))
     expect(
       literals.filter((code) => !declared.includes(code)),
-      `R-15 §3.4 — the module’s own code literals are exactly the seven session members PLUS \`'unusable-default'\` and \`'not-resizable'\`, and NOTHING ELSE: an EIGHTH SESSION member appearing in the module FAILS (I-14; the must-not list). Read from the bytes: ${JSON.stringify(
+      `R-15 §3.4 — the module’s own code literals are exactly the seven session members PLUS \`'unusable-default'\` and \`'not-resizable'\`, and NOTHING ELSE — a set claim asserted BY NAME against the NINE-member domain (never by a count, ` + '`S-7`' + `): an EIGHTH SESSION member appearing in the module FAILS (I-14; the must-not list). Read from the bytes: ${JSON.stringify(
         literals,
+      )}`,
+    ).toEqual([])
+    expect(
+      declared.filter((code) => !literals.includes(code)),
+      `R-15 §3.4 — and no member of the nine-member domain may be MISSING from the module’s own literals — the claim is SET EQUALITY against the NAMES, with the collected set read from the module’s bytes (the widened ` + '`resultCodeLiterals`' + ` of the 2026-09-27 repair cycle). Missing: ${JSON.stringify(
+        declared.filter((code) => !literals.includes(code)),
       )}`,
     ).toEqual([])
     expect(
@@ -2844,8 +3010,11 @@ describe('I — §3.3 the every-state invariants', () => {
   it('I-2 §3.3 — THE SINGLE WRITER: for every gesture the composition invokes its ONE sink call site AT MOST ONCE, and the gesture’s whole write record has length <= 1', async () => {
     await requireLiveModule('I-2')
     await requireLiveModule('I-1')
-    const h = await landedHarness({})
     const sink = makeSink()
+    // **ONE WIRING (`§2.5` item 4, `E3`-BLOCK-3): the harness's session `commit` channel
+    // invokes THIS sink — the same one the composition is given below — so the session's one
+    // channel and the composition's one write site are ONE writer.**
+    const h = await landedHarness({ commit: (gesture: unknown, value: unknown): void => sink(gesture as GestureHandle, Number(value)) })
     const element: Record<string, unknown> = { control: 'I-2' }
     const { controller } = await createController({
       session: h.session,
@@ -2867,8 +3036,8 @@ describe('I — §3.3 the every-state invariants', () => {
 
   it('I-2b §3.3 — NO WRITE OUTSIDE THE TERMINAL CHANNEL: nothing writes from `onMove`, and a `cancel` reaches the sink ZERO times BY CONSTRUCTION', async () => {
     await requireLiveModule('I-2b')
-    const h = await landedHarness({})
     const sink = makeSink()
+    const h = await landedHarness({ commit: (gesture: unknown, value: unknown): void => sink(gesture as GestureHandle, Number(value)) })
     const element: Record<string, unknown> = { control: 'I-2b' }
     const { controller } = await createController({
       session: h.session,
@@ -2911,8 +3080,10 @@ describe('I — §3.3 the every-state invariants', () => {
     ).toEqual([])
     expect(
       h.source.calls.filter((call) => call.startsWith('on:')),
-      'I-3 §3.3 — the ONLY listener attach in the composition is the session’s own single `pointerdown` attach',
-    ).toEqual(['on:pointerdown'])
+      `I-3 §3.3 — the ONLY listener attaches are the SESSION's own (its single establishment attach plus its tracking three, all opened by the frozen session — \`gsession.md\` \`§2.3\` item 1); the composition contributes NONE. Read: ${JSON.stringify(
+        h.source.calls.filter((call) => call.startsWith('on:')),
+      )}`,
+    ).toEqual(['on:pointerdown', 'on:pointermove', 'on:pointerup', 'on:pointercancel'])
   })
 
   it('I-4 §3.3 — `isResizable` DECIDES ONCE PER GESTURE AND AT ESTABLISHMENT, and a `false` decision short-circuits every terminal seam', async () => {
@@ -3160,23 +3331,65 @@ describe('I — §3.3 the every-state invariants', () => {
 
   it('I-14 §3.3 — THE CODE DOMAIN IS CLOSED: the controller’s NINE-member domain is the session’s SEVEN (whose own union takes no eighth member) plus the TWO controller-local codes, and no controller code is ever passed INTO the session', () => {
     const source = moduleSource('I-14')
+    // **⟶ REPAIRED 2026-09-27 (THE REPAIR CYCLE, `E3`-BLOCK-2): THE COLLECTED LITERALS ARE
+    // ASSERTED BY NAME AGAINST THE NINE-MEMBER CONTROLLER DOMAIN, with a POSITIVE CONTROL
+    // that a corpus MISSING a code FAILS.** The clause (`§3.3 I-14`, `§2.3` item 4's reset
+    // result-code table, `§2.1`’s note) was always sound; only the landed helper’s filter
+    // was wrong (it could never collect `'busy'`, `'disconnected'`, `'disposed'`, `'stale'`).
+    const controllerDomain = [
+      'ok',
+      'not-installed',
+      'busy',
+      'disposed',
+      'disconnected',
+      'stale',
+      'no-gesture',
+      'unusable-default',
+      'not-resizable',
+    ]
+    const sessionDomain = ['ok', 'not-installed', 'busy', 'disposed', 'disconnected', 'stale', 'no-gesture']
+    expect(
+      controllerDomain.length,
+      'I-14 §3.3 — the controller’s declared domain is NINE members (the session’s SEVEN verbatim plus the TWO controller-local codes)',
+    ).toBe(9)
+    expect(
+      sessionDomain.length,
+      'I-14 §3.3 — the SESSION’s own domain is SEVEN members and takes no eighth member: `\'unusable-default\'` and `\'not-resizable\'` are NEVER session codes (asserted separately, as the session’s own claim)',
+    ).toBe(7)
     const literals = resultCodeLiterals(source)
     expect(
       literals,
-      `I-14 §3.3 — the module’s own code literals are EXACTLY the seven session members plus the TWO controller-local codes \`'unusable-default'\` and \`'not-resizable'\` (an eighth SESSION member, or a controller code passed INTO the session, FAILS). Read: ${JSON.stringify(
+      `I-14 §3.3 — the module’s own CODE literals are EXACTLY the nine-member controller domain, ASSERTED BY NAME: the session’s SEVEN (\`'ok'\`, \`'not-installed'\`, \`'busy'\`, \`'disposed'\`, \`'disconnected'\`, \`'stale'\`, \`'no-gesture'\`) plus the TWO controller-local codes \`'unusable-default'\` and \`'not-resizable'\` — and NOTHING ELSE. An eighth SESSION member appearing in the module FAILS, and an undeclared code literal FAILS. The non-code literal class held apart from this set is named at \`NON_CODE_LITERALS\` (the session OUTCOMES \`'end'\`/\`'reset'\`/\`'cancel'\`, the field names \`'min'\`/\`'max'\`/\`'value'\`/\`'code'\`/\`'written'\` and the session member \`'stats'\`). Read from the bytes: ${JSON.stringify(
         literals,
       )}`,
-    ).toEqual([
-      'busy',
-      'disconnected',
-      'disposed',
-      'no-gesture',
-      'not-installed',
-      'not-resizable',
-      'ok',
-      'stale',
-      'unusable-default',
-    ])
+    ).toEqual(controllerDomain)
+    expect(
+      controllerDomain.filter((code) => !literals.includes(code)),
+      `I-14 §3.3 — NO code of the nine-member domain may be MISSING from the module’s own literals. Missing: ${JSON.stringify(
+        controllerDomain.filter((code) => !literals.includes(code)),
+      )}`,
+    ).toEqual([])
+    expect(
+      literals.filter((literal) => !controllerDomain.includes(literal)),
+      `I-14 §3.3 — and no UNDECLARED code literal may appear: every collected literal is a member of the nine-member domain. Extra: ${JSON.stringify(
+        literals.filter((literal) => !controllerDomain.includes(literal)),
+      )}`,
+    ).toEqual([])
+    // **THE POSITIVE CONTROL (`E3`-BLOCK-2): a corpus MISSING a code MUST FAIL the same
+    // membership assertion.** Without it the row would pass for a helper that collects
+    // nothing at all.
+    const controlCorpus = "return { ok: false, code: 'no-gesture', committed: false }"
+    const controlLiterals = resultCodeLiterals(controlCorpus)
+    expect(
+      controlLiterals,
+      `I-14 §3.3 — THE POSITIVE CONTROL: a corpus carrying only ONE of the nine codes (\`'no-gesture'\`) yields a set that FAILS the membership assertion (\`'busy'\`, \`'disconnected'\`, \`'disposed'\`, \`'stale'\`, \`'ok'\` and the two local codes are all missing) — so the row is not satisfiable by a helper that collects nothing or by a corpus that drops a code. Control reading: ${JSON.stringify(
+        controlLiterals,
+      )}`,
+    ).not.toEqual(controllerDomain)
+    expect(
+      controllerDomain.filter((code) => !controlLiterals.includes(code)).length,
+      'I-14 §3.3 — the POSITIVE CONTROL’s missing-code count is non-zero (the control really is a failure shape)',
+    ).toBeGreaterThan(0)
     expect(
       /session\s*\.\s*reset\s*\([^)]*['"](?:unusable-default|not-resizable)['"]/.test(source),
       'I-14 §3.3 — the controller NEVER passes either of its own codes into `session.reset` (both are emitted for paths where the session is not called at all)',
@@ -3269,6 +3482,10 @@ describe('M — §3.1 the valid states', () => {
     })
     controller.attach(element, {})
     h.source.fire(element, TYPE_DOWN)
+    // **THE MOVE TURN IS FIRED** (⟶ 2026-09-27, `E3`-BLOCK-5 / the amended `§2.3` item 4
+    // clause 1): the handle the terminal's seams must receive is the one the controller's own
+    // `onMove` WRAPPER captured — the ONLY legal channel the frozen session provides (its
+    // `onStart` carries only the element and `session.begin` is FORBIDDEN here).
     h.source.fire(element, TYPE_MOVE)
     h.source.fire(element, TYPE_UP)
     expect(
@@ -3315,8 +3532,8 @@ describe('M — §3.1 the valid states', () => {
   })
 
   it('M-5 §3.1 — a normal `end` writes EXACTLY ONCE with the CLAMPED value (`0.1 + 0.2` clamped into `{min: 0, max: 0.3}`)', async () => {
-    const h = await landedHarness({})
     const sink = makeSink()
+    const h = await landedHarness({ commit: (gesture: unknown, value: unknown): void => sink(gesture as GestureHandle, Number(value)) })
     const element: Record<string, unknown> = { control: 'M-5' }
     const { controller } = await createController({
       session: h.session,
@@ -3328,7 +3545,7 @@ describe('M — §3.1 the valid states', () => {
     })
     controller.attach(element, {})
     h.source.fire(element, TYPE_DOWN)
-    h.source.fire(element, TYPE_MOVE)
+    h.source.fire(element, TYPE_MOVE) // the wrapper's handle capture (E3-BLOCK-5)
     h.source.fire(element, TYPE_UP)
     expect(sink.records.length, 'M-5 §3.1 — one sink call for the gesture').toBe(1)
     expect(
@@ -3343,10 +3560,13 @@ describe('M — §3.1 the valid states', () => {
   })
 
   it('M-6 §3.1 — the value is CONSUMER-PRODUCED: a sentinel set in `onMove` reaches the sink unmodified beyond the clamp', async () => {
-    const h = await landedHarness({})
     const sink = makeSink()
+    const h = await landedHarness({ commit: (gesture: unknown, value: unknown): void => sink(gesture as GestureHandle, Number(value)) })
     const element: Record<string, unknown> = { control: 'M-6' }
     const seen: unknown[] = []
+    /** The handles the CONSUMER'S OWN `onMove` hook received — the forwarded argument of
+     *  `M-12`'s narrowed identity requirement. */
+    const forwardedHandles: GestureHandle[] = []
     const { controller } = await createController({
       session: h.session,
       axisFor: (): unknown => undefined,
@@ -3360,6 +3580,11 @@ describe('M — §3.1 the valid states', () => {
     })
     controller.attach(element, {
       onMove: (gesture: GestureHandle): void => {
+        // **THE CONSUMER'S OWN `onMove`: the handle it receives is the one the controller's
+        // own wrapper captured and FORWARDED UNCHANGED (`§2.5` item 5 clause 2, `§3.1 M-12`'s
+        // narrowed identity requirement). The consumer computes the value here and pushes it
+        // with `gesture.set(value)` — the composition computes nothing (`§1` item 2).**
+        forwardedHandles.push(gesture)
         gesture.set(777)
       },
     })
@@ -3367,6 +3592,14 @@ describe('M — §3.1 the valid states', () => {
     h.source.fire(element, TYPE_MOVE)
     h.source.fire(element, TYPE_UP)
     expect(seen[0], 'M-6 §3.1 — the row asserts `gesture.value === 777` AT THE SEAM').toBe(777)
+    expect(
+      forwardedHandles.length,
+      'M-6 §3.1 — the consumer’s own `onMove` hook really ran for the fired move turn (so the identity arm below is not vacuous)',
+    ).toBe(1)
+    expect(
+      sink.records[0]?.gesture,
+      `M-6 §3.1 — **THE HANDLE CHANNEL (\`§2.5\` item 5 clause 2; ⟶ redrawn 2026-09-27, \`E3\`-BLOCK-5): the handle that reaches the SINK is the one the WRAPPER CAPTURED from \`onMove\` and forwarded to the consumer's own hook — the same object, by identity (\`toBe\`), never a synthesised handle and never a \`session.begin\` result (which this controller may not call at all).**`,
+    ).toBe(forwardedHandles[0])
     expect(sink.records[0]?.value, 'M-6 §3.1 — the sink receives 777 BY VALUE (the composition computed no delta and no magnitude)').toBe(777)
   })
 
@@ -3375,8 +3608,8 @@ describe('M — §3.1 the valid states', () => {
     const shapes: unknown[] = [tokenObject, 'vertical', undefined]
     const emitted: unknown[] = []
     for (const shape of shapes) {
-      const h = await landedHarness({})
       const sink = makeSink()
+      const h = await landedHarness({ commit: (gesture: unknown, value: unknown): void => sink(gesture as GestureHandle, Number(value)) })
       const element: Record<string, unknown> = { control: `M-7-${brief(shape)}` }
       const received: unknown[] = []
       const { controller } = await createController({
@@ -3402,7 +3635,7 @@ describe('M — §3.1 the valid states', () => {
       })
       controller.attach(element, {})
       h.source.fire(element, TYPE_DOWN)
-      h.source.fire(element, TYPE_MOVE)
+      h.source.fire(element, TYPE_MOVE) // the wrapper's handle capture (E3-BLOCK-5)
       h.source.fire(element, TYPE_UP)
       controller.reset(element)
       emitted.push(sink.records[0]?.value)
@@ -3426,8 +3659,8 @@ describe('M — §3.1 the valid states', () => {
   })
 
   it('M-8 §3.1 — `isResizable === false` establishes and terminates NORMALLY with ZERO writes, and the outcome is `\'end\'` — NOT `\'cancel\'`', async () => {
-    const h = await landedHarness({})
     const sink = makeSink()
+    const h = await landedHarness({ commit: (gesture: unknown, value: unknown): void => sink(gesture as GestureHandle, Number(value)) })
     const decider = seam<unknown>(false)
     const element: Record<string, unknown> = { control: 'M-8' }
     const { controller } = await createController({
@@ -3473,8 +3706,8 @@ describe('M — §3.1 the valid states', () => {
     expect(falsyWrites, `M-9 §3.1 — the five FALSY drives each yield zero writes (read: ${JSON.stringify(falsyWrites)})`).toEqual([0, 0, 0, 0, 0])
     const truthyWrites: number[] = []
     for (const answer of truthy) {
-      const h = await landedHarness({})
       const sink = makeSink()
+      const h = await landedHarness({ commit: (gesture: unknown, value: unknown): void => sink(gesture as GestureHandle, Number(value)) })
       const element: Record<string, unknown> = { control: `M-9-truthy-${brief(answer)}` }
       const { controller } = await createController({
         session: h.session,
@@ -3486,6 +3719,7 @@ describe('M — §3.1 the valid states', () => {
       })
       controller.attach(element, {})
       h.source.fire(element, TYPE_DOWN)
+      h.source.fire(element, TYPE_MOVE) // the wrapper's handle capture (E3-BLOCK-5)
       h.source.fire(element, TYPE_UP)
       truthyWrites.push(sink.records.length)
     }
@@ -3514,8 +3748,8 @@ describe('M — §3.1 the valid states', () => {
   })
 
   it('M-11 §3.1 — two gestures are two gestures: the decision and the token are re-derived and nothing carries across the boundary', async () => {
-    const h = await landedHarness({})
     const sink = makeSink()
+    const h = await landedHarness({ commit: (gesture: unknown, value: unknown): void => sink(gesture as GestureHandle, Number(value)) })
     const answers = [false, true]
     let index = 0
     const decider = (): unknown => answers[Math.min(index, answers.length - 1)]
@@ -3531,19 +3765,19 @@ describe('M — §3.1 the valid states', () => {
     })
     controller.attach(element, {})
     h.source.fire(element, TYPE_DOWN)
-    h.source.fire(element, TYPE_MOVE)
+    h.source.fire(element, TYPE_MOVE) // per-gesture wrapper capture (E3-BLOCK-5)
     h.source.fire(element, TYPE_UP)
     const afterFirst = sink.records.length
     index = 1
     h.source.fire(element, TYPE_DOWN)
-    h.source.fire(element, TYPE_MOVE)
+    h.source.fire(element, TYPE_MOVE) // re-derived for the SECOND gesture, never carried
     h.source.fire(element, TYPE_UP)
     expect(afterFirst, 'M-11 §3.1 — the FIRST (non-resizable) gesture writes 0 times').toBe(0)
     expect(sink.records.length, 'M-11 §3.1 — the SECOND (resizable) gesture writes exactly once').toBe(1)
     expect(controller.stats().gestures, 'M-11 §3.1 — two gestures were established').toBe(2)
   })
 
-  it('M-12 §3.1 — `attach` delegates ONCE per element and a repeat attach delegates NOTHING (first-config-wins)', async () => {
+  it('M-12 §3.1 — `attach` delegates ONCE per element and a repeat attach delegates NOTHING (first-config-wins), AND the identity requirement binds the handle ARGUMENT forwarded to the consumer’s own `onMove` hook', async () => {
     const double = makeSessionDouble()
     const element: Record<string, unknown> = { control: 'M-12' }
     const { controller } = await createController({
@@ -3564,11 +3798,72 @@ describe('M — §3.1 the valid states', () => {
         double.log,
       )}`,
     ).toBe(1)
+    // **THE FIRST-CONFIG WINS IS READ THROUGH THE WRAPPER, NOT THROUGH THE RAW REFERENCE**
+    // (⟶ realigned 2026-09-27, `E3`-BLOCK-5 / the amended `§2.5` item 5 clause 2): the
+    // `onMove` the session holds is the COMPOSITION'S WRAPPER — the amended clause's own
+    // shape, asserted by identity below — so "the first config stays in force" is asserted
+    // over the wrapper's own hook set, and the SECOND config never reaching the session is
+    // asserted by the single `install` call above plus the distinct hook objects.
     expect(
-      double.installArgs[0]?.options['onMove'],
-      'M-12 §3.1 — the FIRST hooks stay in force (the second config never reached the session)',
-    ).toBe(first.onMove)
+      double.installArgs[0]?.options['onStart'],
+      'M-12 §3.1 — the FIRST config stays in force: the second attach delegated NOTHING, so the installed hook set is the first attach’s (read through the composition’s wrappers, whose identity is asserted in the wrapper arm below)',
+    ).toBeUndefined()
+    void first
     void second
+    // **⟶ REDRAWN 2026-09-27 (THE REPAIR CYCLE, `E3`-BLOCK-5; the amended `§3.1 M-12`, `§2.5`
+    // item 5 clause 2, `§2.3` item 4 clause 1).** The as-landed row asserted the identity of the
+    // RAW hook reference, which the amended clause does NOT require: **the composition's own
+    // `onMove` is a WRAPPER (the ONE LEGAL HANDLE CHANNEL — the frozen session's `onStart`
+    // carries only the element)**, so the installed hook is deliberately NOT the consumer's
+    // function. **THE NARROWED IDENTITY REQUIREMENT BINDS THE HANDLE ARGUMENT THE CONSUMER'S OWN
+    // `onMove` HOOK RECEIVES — forwarded UNCHANGED, never swallowed, reordered or altered — while
+    // the WRAPPER'S OWN CAPTURE of that same handle is EXPLICITLY PERMITTED** (and is what makes
+    // the reset path reachable, `F-12`..`F-15`/`P-GT-SM-4`).
+    const consumerHandles: GestureHandle[] = []
+    const consumerHook = (gesture: GestureHandle): void => {
+      consumerHandles.push(gesture)
+    }
+    const wrapperDouble = makeSessionDouble()
+    const wrapped = await createController(
+      {
+        session: wrapperDouble.session,
+        axisFor: (): unknown => undefined,
+        boundsFor: (): unknown => ({ min: 0, max: 100 }),
+        isResizable: (): unknown => true,
+        sizeFor: (): unknown => 2,
+        commit: makeSink(),
+      },
+      'M-12 (the handle channel)',
+    )
+    const wrappedElement: Record<string, unknown> = { control: 'M-12-wrapper' }
+    wrapped.controller.attach(wrappedElement, { onMove: consumerHook })
+    const began = wrapperDouble.begin(wrappedElement)
+    expect(began.ok, 'M-12 §3.1 — the wrapper drive established a gesture (so the identity arm is not vacuous)').toBe(true)
+    const establishedHandle: GestureHandle | null = began.ok ? began.gesture : null
+    wrapperDouble.fireMove()
+    expect(
+      consumerHandles.length,
+      'M-12 §3.1 — the consumer’s own `onMove` hook was CALLED for the fired move turn (the wrapper did not swallow the hook)',
+    ).toBe(1)
+    expect(
+      consumerHandles[0],
+      'M-12 §3.1 — **THE NARROWED IDENTITY REQUIREMENT: the handle ARGUMENT the consumer’s own `onMove` hook received is the SESSION’S OWN HANDLE (`toBe`), forwarded UNCHANGED by the controller’s wrapper — not synthesised, not re-created, not altered.**',
+    ).toBe(establishedHandle)
+    expect(
+      wrapperDouble.installArgs[0]?.options['onMove'] === consumerHook,
+      `M-12 §3.1 — AND THE WRAPPER IS THE INSTALLED HOOK (the amended clause's own shape): \`session.install\` receives the composition's \`onMove\` WRAPPER, not the consumer's function — the wrapper's own capture is EXPLICITLY PERMITTED while its forward is what the identity clause binds. Read: ${String(
+        wrapperDouble.installArgs[0]?.options['onMove'] === consumerHook,
+      )}`,
+    ).toBe(false)
+    const forwarded = wrapperDouble.installArgs[0]?.options['onMove']
+    expect(
+      brief(forwarded),
+      'M-12 §3.1 — the installed `onMove` is a CALLABLE the composition supplies (its wrapper), never the consumer’s raw hook',
+    ).toBe('a function')
+    expect(
+      wrapperDouble.log.filter((call) => call === 'begin').length,
+      'M-12 §3.1 — the drive’s establishment is the session’s own (`session.begin` is FORBIDDEN to the composition: `§2.5` item 1, `I-3`, `R-14`)',
+    ).toBe(1)
   })
 
   it('M-13 §3.1 — `detach()` restores the controller’s baseline through the session, once, is idempotent, and `detached` reads `true` forever after', async () => {
@@ -3681,8 +3976,8 @@ describe('M — §3.1 the valid states', () => {
   })
 
   it('M-14 §3.1 — `reset(element)` commits the CLAMPED supplied default, ONCE, through the session’s own reset terminal', async () => {
-    const h = await landedHarness({})
     const sink = makeSink()
+    const h = await landedHarness({ commit: (gesture: unknown, value: unknown): void => sink(gesture as GestureHandle, Number(value)) })
     const element: Record<string, unknown> = { control: 'M-14' }
     const { controller } = await createController({
       session: h.session,
@@ -3699,7 +3994,7 @@ describe('M — §3.1 the valid states', () => {
       },
     })
     h.source.fire(element, TYPE_DOWN)
-    h.source.fire(element, TYPE_MOVE)
+    h.source.fire(element, TYPE_MOVE) // the ONE legal handle channel (E3-BLOCK-5)
     const result = controller.reset(element)
     expect(h.sessionLog.filter((call) => call === 'reset').length, 'M-14 §3.1 — exactly ONE `session.reset` call').toBe(1)
     expect(sink.records.length, 'M-14 §3.1 — the sink receives exactly one value for the reset').toBe(1)
@@ -3715,9 +4010,14 @@ describe('M — §3.1 the valid states', () => {
   })
 
   it('M-15 §3.1 — `gesture.outcome === \'reset\'` IS the discriminator the sink can read (with an `\'end\'` control)', async () => {
-    const h = await landedHarness({})
     const sink = makeSink()
+    const h = await landedHarness({ commit: (gesture: unknown, value: unknown): void => sink(gesture as GestureHandle, Number(value)) })
     const element: Record<string, unknown> = { control: 'M-15' }
+    /** **THE WRAPPER-CAPTURED HANDLE'S CONSUMER-SIDE READING** (`§2.5` item 5 clause 2;
+     *  ⟶ redrawn 2026-09-27, `E3`-BLOCK-5): the handle the consumer's own `onMove` hook
+     *  receives is the one the controller's wrapper captured, and it is the handle this row's
+     *  reset path must reuse. */
+    const forwardedHandles: GestureHandle[] = []
     const { controller } = await createController({
       session: h.session,
       axisFor: (): unknown => undefined,
@@ -3727,8 +4027,24 @@ describe('M — §3.1 the valid states', () => {
       sizeFor: (): unknown => 55,
       commit: sink,
     })
-    controller.attach(element, {})
+    controller.attach(element, {
+      onMove: (gesture: GestureHandle): void => {
+        // **THE ONE LEGAL HANDLE CHANNEL (`§2.5` item 5 clause 2): the frozen session's
+        // `onStart` carries only the element and `session.begin` is FORBIDDEN to this
+        // controller, so the move turn is where a real handle arrives — captured by the
+        // controller's own `onMove` WRAPPER and forwarded here UNCHANGED.**
+        forwardedHandles.push(gesture)
+      },
+    })
     h.source.fire(element, TYPE_DOWN)
+    // **THE MOVE TURN IS DRIVEN BEFORE THE RESET:** the wrapper's capture happens on a move,
+    // so without this turn the reset path would have no captured handle to reach for
+    // (`M-15`'s reset arm reads the composition's reset terminal, `§2.3` item 4 clause 7).
+    h.source.fire(element, TYPE_MOVE)
+    expect(
+      forwardedHandles.length,
+      'M-15 §3.1 — the consumer’s own `onMove` hook ran for the fired move turn (the wrapper forwarded the session’s handle to it)',
+    ).toBe(1)
     controller.reset(element)
     expect(
       sink.records[0]?.outcome,
@@ -3737,11 +4053,15 @@ describe('M — §3.1 the valid states', () => {
       )}`,
     ).toBe('reset')
     expect(
+      sink.records[0]?.gesture,
+      `M-15 §3.1 — **the reset's committed handle IS the wrapper-captured one the consumer's own \`onMove\` hook received (\`toBe\`): the reset path reaches for the handle the \`onMove\` WRAPPER captured, never a synthesised one and never a \`session.begin\` result** (\`§2.5\` item 5 clause 2; ⟶ redrawn 2026-09-27, \`E3\`-BLOCK-5)`,
+    ).toBe(forwardedHandles[0])
+    expect(
       (sink.records[0]?.gesture as GestureHandle | undefined)?.value,
       'M-15 §3.1 — the recorded handle reads the committed clamped value',
     ).toBe(60)
     h.source.fire(element, TYPE_DOWN)
-    h.source.fire(element, TYPE_MOVE)
+    h.source.fire(element, TYPE_MOVE) // the control gesture's own wrapper capture
     h.source.fire(element, TYPE_UP)
     expect(
       sink.records[1]?.outcome,
@@ -3798,6 +4118,7 @@ describe('M — §3.1 the valid states', () => {
     const began = double.begin(element)
     expect(began.ok, 'M-17 §3.1 — the gesture established').toBe(true)
     if (began.ok) began.gesture.set(7)
+    double.fireMove() // the wrapper's handle capture (`E3`-BLOCK-5)
     const refusal = controller.reset(element)
     expect(
       refusal,
@@ -3821,8 +4142,8 @@ describe('M — §3.1 the valid states', () => {
   })
 
   it('M-18 §3.1 — the controller’s counters are its own and are readable: `{attached: 1, gestures: 3, sinkCalls: 2, written: 2, resets: 1, lastCode: \'ok\'}`', async () => {
-    const h = await landedHarness({})
     const sink = makeSink()
+    const h = await landedHarness({ commit: (gesture: unknown, value: unknown): void => sink(gesture as GestureHandle, Number(value)) })
     const element: Record<string, unknown> = { control: 'M-18' }
     const { controller } = await createController({
       session: h.session,
@@ -3835,11 +4156,12 @@ describe('M — §3.1 the valid states', () => {
     })
     controller.attach(element, {})
     h.source.fire(element, TYPE_DOWN)
-    h.source.fire(element, TYPE_MOVE)
+    h.source.fire(element, TYPE_MOVE) // the wrapper's handle capture (E3-BLOCK-5)
     h.source.fire(element, TYPE_UP)
     h.source.fire(element, TYPE_DOWN)
     h.source.fire(element, TYPE_CANCEL_EVENT)
     h.source.fire(element, TYPE_DOWN)
+    h.source.fire(element, TYPE_MOVE) // and again for the reset gesture
     controller.reset(element)
     const stats = controller.stats()
     expect(
@@ -4092,8 +4414,18 @@ describe('F — §3.2 the documented fail-states (every outcome is a VALUE)', ()
   })
 
   it('F-11 §3.2 — a THROWING SINK is swallowed by the session’s commit seam: the write is ALREADY COUNTED and NEVER RETRIED', async () => {
-    const h = await landedHarness({})
     const sink = makeSink(true)
+    // A THROWING sink: the session's own commit seam swallows it (`ruling 8`'s `commit` row),
+    // so the harness's channel rethrows nothing and the attempt is counted exactly once.
+    const h = await landedHarness({
+      commit: (gesture: unknown, value: unknown): void => {
+        try {
+          sink(gesture as GestureHandle, Number(value))
+        } catch {
+          // the session owns the swallow; the attempt is already counted by the sink itself.
+        }
+      },
+    })
     const element: Record<string, unknown> = { control: 'F-11' }
     const { controller } = await createController({
       session: h.session,
@@ -4148,6 +4480,10 @@ describe('F — §3.2 the documented fail-states (every outcome is a VALUE)', ()
       controller.attach(element, {})
       const began = double.begin(element)
       expect(began.ok, `F-12 §3.2 — the ${label} drive established a gesture`).toBe(true)
+      // **THE MOVE TURN IS DRIVEN** (`E3`-BLOCK-5): the reset's refusal classes are reached
+      // with the handle the `onMove` WRAPPER captured — the only legal channel the frozen
+      // session provides (its `onStart` carries only the element).
+      double.fireMove()
       const before = double.log.length
       const result = controller.reset(element)
       expect(
@@ -4180,6 +4516,7 @@ describe('F — §3.2 the documented fail-states (every outcome is a VALUE)', ()
     controller.attach(element, {})
     const began = double.begin(element)
     expect(began.ok, 'F-13 §3.2 — the gesture established (a false decision is NOT a refused establishment)').toBe(true)
+    double.fireMove() // the wrapper-captured handle (`E3`-BLOCK-5)
     const before = double.log.length
     const result = controller.reset(element)
     expect(
@@ -4239,6 +4576,7 @@ describe('F — §3.2 the documented fail-states (every outcome is a VALUE)', ()
     })
     controller.attach(element, {})
     double.begin(element)
+    double.fireMove() // the wrapper-captured handle (`E3`-BLOCK-5)
     const before = double.log.length
     const result = controller.reset(element)
     expect(
@@ -4269,6 +4607,7 @@ describe('F — §3.2 the documented fail-states (every outcome is a VALUE)', ()
     })
     controller.attach(element, {})
     double.begin(element)
+    double.fireMove() // the wrapper-captured handle (`E3`-BLOCK-5): a dead-handle refusal
     double.dispose()
     const result = controller.reset(element)
     expect(
@@ -4589,8 +4928,8 @@ describe('PRE — the register’s own preconditions and controls', () => {
     ).toBe(10)
     expect(
       REGISTER_DECLARED.filter((r) => r.term !== r.distinct).map((r) => `${r.row}:${r.term}/${r.distinct}`),
-      'PRE-2/§5.5.2 item 3 — the FOUR rows where the DECLARED and the DISTINCT figures DIFFER: `P-GT-PU-2` 11/2 · `P-GT-IM-2` 20/18 · `P-GT-SM-1` 20/19 · `P-GT-SM-4` 12/11`. The DECLARED figures are what the caps are compared against; the distinct figures are REPORTED BESIDE them and NEVER substituted',
-    ).toEqual(['P-GT-PU-2:11/2', 'P-GT-IM-2:20/18', 'P-GT-SM-1:20/19', 'P-GT-SM-4:12/11'])
+      'PRE-2/§5.5.2 item 3 — the THREE rows where the DECLARED and the DISTINCT figures DIFFER: `P-GT-PU-2` 11/2 · `P-GT-IM-2` 20/18 · `P-GT-SM-1` 20/19 (⟶ CORRECTED 2026-09-27, ruling `8`(c): `P-GT-SM-4` now reports 12/12, so it is NO LONGER a differing row and the as-landed FOUR became THREE). The DECLARED figures are what the caps are compared against; the distinct figures are REPORTED BESIDE them and NEVER substituted',
+    ).toEqual(['P-GT-PU-2:11/2', 'P-GT-IM-2:20/18', 'P-GT-SM-1:20/19'])
     const firstState = (SEED * LCG_A + LCG_C) % LCG_MOD
     expect(
       firstState,
@@ -4838,6 +5177,10 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
 
   it('P-GT-IM-1 (S-GT-SEAM-1) — the `sizeFor` seam quantification: 4 shapes × 5 gesture paths, each cell’s declared call/write pair', async () => {
     const row = new RegisterRow('P-GT-IM-1', 'S-GT-SEAM-1')
+    /** The `(4)` shape's own sentinel error, so the REQUIRED propagation is asserted BY
+     *  IDENTITY (`toBe`) rather than by "something was thrown" — a throw from anywhere else
+     *  cannot satisfy the cell (`E3`-BLOCK-6(c)). */
+    const SIZE_FOR_SENTINEL_ERROR = new Error('the size seam threw (P-GT-IM-1 sentinel)')
     const shapes: Array<{ label: string; make: (log: string[]) => unknown }> = [
       {
         label: '(1) a callable returning a number',
@@ -4852,7 +5195,7 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
         label: '(4) THROWING',
         make: (log: string[]): unknown => () => {
           log.push('sizeFor')
-          throw new Error('the size seam threw')
+          throw SIZE_FOR_SENTINEL_ERROR
         },
       },
     ]
@@ -4881,13 +5224,26 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
           if (made !== undefined) options['sizeFor'] = made
           const created = await createController(options, `IM-1 ${shape.label} ${path}`)
           created.controller.attach(element, {})
-          double.registerCommit(element, (gesture: GestureHandle, written: unknown): void => {
-            sink(gesture, typeof written === 'number' ? written : Number(written))
-          })
+          // **⟶ ALIGNED TO THE AMENDED `§2.5` item 4 — ONE WIRING (`E3`-BLOCK-3).** No
+          // forwarding channel is registered here: the composition's own single sink writer
+          // (the `commit` seam above) IS the composition's one write site, invoked by the
+          // session's ONE `commit` channel.
           const began = double.begin(element)
           if (!began.ok) return `the drive could not establish a gesture (${began.code})`
           const sizeCalls = (): number => sizeLog.filter((entry) => entry === 'sizeFor').length
           const evaluates = path.includes('end of a resizable')
+          // **THE MOVE TURN IS FIRED ON THE EVALUATING PATH** (⟶ 2026-09-27, `E3`-BLOCK-5):
+          // the terminal's seams are reached only with the handle the controller's own
+          // `onMove` WRAPPER captured, and `fireMove` is the only caller of that hook.
+          if (evaluates) double.fireMove()
+          // **⟶ REPAIRED 2026-09-27 (THE REPAIR CYCLE, `E3`-BLOCK-6(c)): A REQUIRED
+          // PROPAGATION IS ASSERTED, NEVER SCORED AS A BROKEN ATTEMPT.** A throwing
+          // `boundsFor`/`sizeFor` PROPAGATES to the caller of the terminal BY CONTRACT
+          // (`§2.4` item 2 row 4, `§3.2 F-17`, `§2.4` item 1's bounded universal), so the
+          // terminal drive is CONTAINED here and the propagation is one of the cell's own
+          // declared assertions. Before this repair the throw escaped into `RegisterRow.run`,
+          // which scores every throw as broken — including a required one.
+          let propagated: unknown = null
           if (path.includes('refused terminal')) {
             const stale = { id: 999, active: true, outcome: null, value: undefined, element } as unknown as GestureHandle
             const refused = double.end(element, stale)
@@ -4897,11 +5253,22 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
           } else if (path.includes('dispose')) {
             double.dispose()
           } else {
-            double.fireTerminal('end')
+            // **THE ONLY TERMINAL THAT CAN PROPAGATE**, contained so the required
+            // propagation becomes an ASSERTION rather than a broken attempt (E3-BLOCK-6(c)).
+            try {
+              double.fireTerminal('end')
+            } catch (e) {
+              propagated = e
+            }
           }
-          const expectedSizeCalls = evaluates ? 1 : 0
+          // **THE DECLARED CALL COUNT IS PER SHAPE AND PER PATH** (`§5.5.1 P-GT-IM-1`'s own
+          // cell: *"exactly `1` for path `(a)`; exactly `0` for every other cell of shapes
+          // `(2)`,`(3)`; exactly `1` for `(4)` on path `(a)` and `0` elsewhere"*): shapes `(2)`
+          // and `(3)` are ABSENT and NON-CALLABLE, so the module never calls them at all.
+          const callableShape = shape.label.startsWith('(1)') || shape.label.startsWith('(4)')
+          const expectedSizeCalls = evaluates && callableShape ? 1 : 0
           if (sizeCalls() !== expectedSizeCalls) {
-            return `the \`sizeFor\` call count for the path ${path} is ${sizeCalls()}, the declared count is ${expectedSizeCalls} (a throwing \`sizeFor\` is still CALLED once on path (a) — its throw propagates)`
+            return `the \`sizeFor\` call count for the path ${path} is ${sizeCalls()}, the declared count is ${expectedSizeCalls} (a throwing \`sizeFor\` is still CALLED once on path (a) — its throw propagates; an ABSENT/NON-CALLABLE seam is never called)`
           }
           const declaredWrites = evaluates && shape.label.startsWith('(1)') ? 1 : 0
           if (sink.records.length !== declaredWrites) {
@@ -4911,8 +5278,28 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
           if (reported !== declaredWrites) {
             return `\`stats().sinkCalls\` is ${reported}, the declared count is ${declaredWrites}`
           }
+          // **THE REQUIRED PROPAGATION, ASSERTED AS ONE OF THIS CELL'S DECLARED OUTCOMES:**
+          // shape `(4)` × path `(a)` is the propagating class, and the clamp and the sink sit
+          // AFTER the seam that threw — so the cell declares ZERO writes AND a propagation.
           if (shape.label.startsWith('(4)') && evaluates) {
-            return 'the declared outcome for a THROWING `sizeFor` on path (a) is a PROPAGATION — the drive did not propagate'
+            if (propagated !== SIZE_FOR_SENTINEL_ERROR) {
+              return `the declared outcome for a THROWING \`sizeFor\` on path (a) is a PROPAGATION of the seam's OWN error to the caller of the terminal (asserted by identity, \`toBe\`). Read: ${propagated === null ? 'nothing propagated' : describeThrown(propagated)}`
+            }
+            if (sizeCalls() !== 1) {
+              return `a throwing \`sizeFor\` on path (a) is still CALLED exactly once before it propagates; the measured call count is ${sizeCalls()}`
+            }
+            if (sink.records.length !== 0) {
+              return `a throwing \`sizeFor\` cannot have written (the clamp and the sink sit after it): the sink read ${sink.records.length}`
+            }
+            if (created.controller.stats().sinkCalls !== 0) {
+              return `\`stats().sinkCalls\` for the propagating class is declared 0 (the clamp sits AFTER the seam); read ${String(
+                created.controller.stats().sinkCalls,
+              )}`
+            }
+            return null
+          }
+          if (propagated !== null) {
+            return `the drive threw where no propagation is declared for shape ${shape.label} × the path ${path}: ${describeThrown(propagated)}`
           }
           return null
         })
@@ -4984,12 +5371,28 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
           }
           const created = await createController(options, `IM-2 ${shape} ${path}`)
           created.controller.attach(element, {})
-          double.registerCommit(element, (gesture: GestureHandle, written: unknown): void => {
-            sink(gesture, typeof written === 'number' ? written : Number(written))
-          })
+          // **⟶ ALIGNED TO THE AMENDED `§2.5` item 4 — ONE WIRING (`E3`-BLOCK-3).** No
+          // forwarding channel is registered here: the composition's own single sink writer
+          // (the `commit` seam above) IS the composition's one write site, invoked by the
+          // session's ONE `commit` channel. **BOTH READINGS ARE ASSERTED** — the SINK'S OWN
+          // RECORD and `stats().sinkCalls` — so a cell cannot pass by counting one of them.
           const began = double.begin(element)
           if (!began.ok) return `the drive could not establish a gesture (${began.code})`
+          const readingsAgree = (declared: number): string | null => {
+            if (sink.records.length !== declared) {
+              return `READING 1 (the sink's own record) reads ${sink.records.length}, the declared count is ${declared}`
+            }
+            const reported = created.controller.stats().sinkCalls
+            if (reported !== declared) {
+              return `READING 2 (\`stats().sinkCalls\`) reads ${String(reported)}, the declared count is ${declared}`
+            }
+            return null
+          }
           let propagated: unknown = null
+          // **THE END PATHS NEED THE WRAPPER-CAPTURED HANDLE** (`E3`-BLOCK-5), for EVERY
+          // shape: an ABSENT / NON-CALLABLE pair still reaches the terminal through the
+          // handle, and its declared answer is the `NaN` clamp with ZERO writes.
+          if (!path.includes('reset') && !path.includes('cancel')) double.fireMove()
           try {
             if (path.includes('cancel')) double.fireTerminal('cancel')
             else if (path.includes('reset')) created.controller.reset(element)
@@ -5000,32 +5403,48 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
           if (path.includes('cancel')) {
             // Path `(d)` is the registered no-seam path: a cancel drives NO seam at all.
             if (boundsCalls.length !== 0 || defaultCalls.length !== 0) return 'a cancel must drive NO seam at all'
-            return sink.records.length === 0 ? null : 'a cancel must write zero times'
+            return readingsAgree(0)
           }
           if (path.includes('unusable default')) {
-            // Path `(c)`: the default itself is unusable, so the reset refuses and `boundsFor`
-            // is never consulted once the refusal is decided.
+            // Path `(c)`: the default is what is under test. For shapes `(2)`..`(5)` the
+            // default IS unusable, so the reset REFUSES `'unusable-default'` with ZERO
+            // session calls and `boundsFor` is never consulted. **SHAPE `(1)`'s OWN DECLARED
+            // DEFAULT IS A USABLE CALLABLE RETURNING `50`** (`§5.5.1 P-GT-IM-2`: *each shape
+            // is driven as a `boundsFor` AND as a `defaultSizeFor`*), so on this shape's own
+            // path `(c)` the reset RUNS: `boundsFor` IS consulted once and the ONE write
+            // occurs — asserted against BOTH readings rather than left unasserted.
+            if (shape.startsWith('(1)')) {
+              if (defaultCalls.length !== 1) return `the declared \`defaultSizeFor\` call count for shape (1) on path (c) is 1, the measured count is ${defaultCalls.length}`
+              if (boundsCalls.length !== 1) return `the declared \`boundsFor\` call count for shape (1) on path (c) is 1 (the reset runs and clamps the supplied default), the measured count is ${boundsCalls.length}`
+              return readingsAgree(1)
+            }
             if (defaultCalls.length > 1) return `\`defaultSizeFor\` was called ${defaultCalls.length} times (at most once per reset)`
-            return null
+            if (boundsCalls.length !== 0) return `the refusal must not consult \`boundsFor\` once the unusable default is decided; the measured count is ${boundsCalls.length}`
+            return readingsAgree(0)
           }
           if (path.includes('reset')) {
+            // **THE RESET PATH NEEDS THE HANDLE TOO** (⟶ 2026-09-27, `E3`-BLOCK-5): the
+            // reset is reached with the wrapper-captured handle, so the move turn is fired
+            // for the shape whose reset RUNS (shape `(1)`).
+            if (shape.startsWith('(1)')) double.fireMove()
             // Path `(b)`: a reset on a resizable gesture drives `boundsFor` AND `defaultSizeFor`.
             if (shape.startsWith('(1)')) {
               if (defaultCalls.length !== 1) return `the declared \`defaultSizeFor\` call count is 1, the measured count is ${defaultCalls.length}`
               if (boundsCalls.length !== 1) return `the declared \`boundsFor\` call count is 1, the measured count is ${boundsCalls.length}`
-              return sink.records.length === 1 ? null : `the declared write count is 1, the measured count is ${sink.records.length}`
+              return readingsAgree(1)
             }
             if (shape.startsWith('(2)') || shape.startsWith('(3)')) {
               // ABSENT / NON-CALLABLE: the reset refuses `'unusable-default'` with ZERO session
               // calls, so neither seam is reached.
-              return defaultCalls.length === 0 && boundsCalls.length === 0
-                ? null
-                : `an unusable default must reach neither seam (default ${defaultCalls.length}, bounds ${boundsCalls.length})`
+              if (defaultCalls.length !== 0 || boundsCalls.length !== 0) {
+                return `an unusable default must reach neither seam (default ${defaultCalls.length}, bounds ${boundsCalls.length})`
+              }
+              return readingsAgree(0)
             }
             if (shape.startsWith('(4)') || shape.startsWith('(5)')) {
               if (defaultCalls.length !== 1) return `the declared \`defaultSizeFor\` call count is 1, the measured count is ${defaultCalls.length}`
               if (boundsCalls.length !== 1) return `the declared \`boundsFor\` call count is 1, the measured count is ${boundsCalls.length}`
-              return sink.records.length === 0 ? null : `the declared write count is 0, the measured count is ${sink.records.length}`
+              return readingsAgree(0)
             }
             return null
           }
@@ -5034,17 +5453,17 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
           if (shape.startsWith('(1)')) {
             if (boundsCalls.length !== 1) return `the declared \`boundsFor\` call count is 1, the measured count is ${boundsCalls.length}`
             if (defaultCalls.length !== 0) return '`defaultSizeFor` must NEVER be called on an end path'
-            return sink.records.length === 1 ? null : `the declared write count is 1, the measured count is ${sink.records.length}`
+            return readingsAgree(1)
           }
           if (shape.startsWith('(5)')) {
             if (propagated === null) return 'a THROWING `boundsFor` must PROPAGATE to the caller of the terminal'
             if (defaultCalls.length !== 0) return '`defaultSizeFor` must NEVER be called on an end path'
-            return sink.records.length === 0 ? null : 'a throwing seam cannot have written (the clamp and the sink sit after it)'
+            return readingsAgree(0)
           }
           if (boundsCalls.length !== 0 && !shape.startsWith('(4)')) {
             return `the declared \`boundsFor\` call count for this shape is 0, the measured count is ${boundsCalls.length}`
           }
-          return sink.records.length === 0 ? null : `the declared write count is 0, the measured count is ${sink.records.length}`
+          return readingsAgree(0)
         })
       }
     }
@@ -5116,6 +5535,7 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
             }
             const began = double.begin(element)
             if (!began.ok) return `the establishment was refused (${began.code})`
+            double.fireMove() // the wrapper's handle capture (E3-BLOCK-5)
             if (drive.includes('cancel')) {
               double.fireTerminal('cancel')
               return sink.records.length === 0 ? null : 'a cancel must write zero times'
@@ -5194,8 +5614,26 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
             },
             commit: seamName === 'commit' ? undefined : sink,
           }
-          if (seamName === 'session') options['session'] = made
-          else options['axisFor'] = made
+          // **⟶ REPAIRED 2026-09-27 (THE REPAIR CYCLE, `E3`-BLOCK-4): THE OVERRIDE IS NOW
+          // GENERIC OVER THE SEVEN SEAMS.** The as-landed drive wrote the made shape into
+          // `options['session']` ONLY for `seamName === 'session'` and into `options['axisFor']`
+          // for **all six other seams** — so six of the seven seam cells (e.g. the
+          // `boundsFor`/`sizeFor`/`isResizable` cells) were DRIVING THE `axisFor` SEAM, and
+          // the `session` cell could never be driven by an ABSENT/NON-CALLABLE/THROWING
+          // shape at all. The cell now overrides ITS OWN seam, which is what makes the
+          // `F-16` exemption above reachable and what makes the other six cells drive what
+          // they declare.
+          // **THE SEAM UNDER TEST IS OVERRIDDEN WITHOUT DISMANTLING THE DRIVE**: the
+          // `axisFor` cell keeps a RECORDING WRAPPER (so the row can count its calls and
+          // assert the token that the other seams receive), while the other seams take the
+          // made value directly; `commit` is replaced by the slot-empty state (`F-10`'s class).
+          if (seamName === 'commit') options['commit'] = undefined
+          else if (seamName === 'axisFor') {
+            options['axisFor'] = (el: unknown): unknown => {
+              received.push('axisFor')
+              return typeof made === 'function' ? (made as (e: unknown) => unknown)(el) : undefined
+            }
+          } else options[seamName] = made
           const declaredKeys = Object.keys(options).sort()
           for (const key of declaredKeys) {
             if (!SEAM_SET.includes(key)) return `the composition carries a member OUTSIDE the frozen seven-seam set: \`${key}\``
@@ -5203,21 +5641,48 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
           if (declaredKeys.includes('capture')) return 'the composition carries a `capture` member (ruling 11 forbids it)'
           const created = await createController(options, `IM-4 ${shape.label} ${seamName}`)
           const attached = created.controller.attach(element, {})
-          if (!attached) return '`attach` returns `false` (the composition must attach for every axis shape)'
-          double.registerCommit(element, (gesture: GestureHandle, written: unknown): void => {
-            sink(gesture, typeof written === 'number' ? written : Number(written))
-          })
+          // **⟶ REPAIRED 2026-09-27 (THE REPAIR CYCLE, `E3`-BLOCK-4): THE `session`-UNUSABLE
+          // SHAPES ARE EXEMPTED from this row's `attach ⇒ true` requirement.** `§0A` note 9 /
+          // `§2.4` item 1's safe-default table and `§3.2 F-16` govern exactly those shapes:
+          // **an unusable `session` seam yields a VALID BUT INERT controller whose
+          // `attach` reads `false`** — so requiring `true` here would contradict `F-16`. The
+          // requirement this row asserts is therefore narrowed to the shapes whose `session`
+          // seam IS usable; on the exempted shapes the row asserts the OTHER half of the
+          // declared pair instead (a `false`-returning INERT attach, `F-16`'s own clause), so
+          // both rows still fail on a violation.
+          // **THE UNUSABLE-`session` CELLS ARE `F-16`'S DOMAIN AND ARE EXEMPTED HERE** — for
+          // EVERY shape `(2)`..`(4)` (ABSENT ⇒ the made value is `undefined`; NON-CALLABLE and
+          // THROWING ⇒ not a usable session). Only the `seamName === 'session'` cells are in
+          // scope: the other six seams leave the session usable.
+          const sessionSeamUnusable = seamName === 'session' && !(made !== undefined && typeof made === 'function')
+          if (sessionSeamUnusable) {
+            if (attached !== false) {
+              return `the declared outcome for an UNUSABLE \`session\` seam is the §2.4 item 1 INERT controller: \`attach\` ⇒ \`false\` (F-16's clause, which EXEMPTS this cell from P-GT-IM-4's \`true\` requirement). Read: ${brief(
+                attached,
+              )}`
+            }
+            return created.controller.stats().attached === 0
+              ? null
+              : `an inert controller reports \`stats().attached === 0\`. Read: ${String(created.controller.stats().attached)}`
+          }
+          if (!attached) {
+            return `\`attach\` returns \`false\` (the composition must attach for every AXIS shape whose \`session\` seam IS usable — the unusable-` + '`session`' + ` cells are ` + '`F-16`' + `'s domain and are exempted here)`
+          }
+          // **NO FORWARDING CHANNEL (ONE wiring, `§2.5` item 4 / `E3`-BLOCK-3):** the
+          // composition's own single sink writer is the `commit` seam handed to it above.
           if (seamName === 'commit') {
             // The sink slot is the seam under test: the composition must still attach and
             // terminate normally with ZERO writes (`F-10`'s slot-empty shape, one seam at a time).
             const began = double.begin(element)
             if (!began.ok) return `the establishment was refused (${began.code})`
+            double.fireMove() // the wrapper's handle capture (E3-BLOCK-5)
             double.fireTerminal('end')
             return sink.records.length === 0
               ? null
               : `the declared write count for a replaced sink slot is 0, measured ${sink.records.length}`
           }
           if (seamName === 'session') {
+            // The usable-`session` cells: the composition delegates NORMALLY.
             const began = double.begin(element)
             if (!began.ok) return `the establishment was refused (${began.code})`
             double.fireTerminal('end')
@@ -5227,6 +5692,7 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
             // The other seams must receive the token `axisFor` returned, BY IDENTITY.
             const began = double.begin(element)
             if (!began.ok) return `the establishment was refused (${began.code})`
+            double.fireMove() // the wrapper's handle capture (E3-BLOCK-5)
             double.fireTerminal('end')
             const expected = shape.label.startsWith('(1)') ? tokenObject : undefined
             const tokenReadings = received.filter((entry) => entry !== 'axisFor')
@@ -5242,6 +5708,7 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
           if (!began.ok) return `the establishment was refused (${began.code} — the swallow must leave it normally established)`
           const axisCalls = received.filter((entry) => entry === 'axisFor').length
           if (axisCalls !== 1) return `the \`axisFor\` call count is ${axisCalls}, the declared count is 1 per established gesture`
+          double.fireMove() // the wrapper's handle capture (E3-BLOCK-5)
           double.fireTerminal('end')
           return null
         })
@@ -5273,13 +5740,30 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
           else options['commit'] = counting
           return createController(options, `SM-1 ${path} ${shape}`).then((created) => {
             created.controller.attach(element, {})
+            // **⟶ ALIGNED TO THE AMENDED `§2.5` item 4 (the PINNED SINGLE WIRING),
+            // 2026-09-27 — `E3`-BLOCK-3.** ONE wiring only: the session's `commit` channel
+            // invokes the composition's SINGLE SINK WRITER, and this registration IS that
+            // one channel. A cell that registered a SECOND forwarding channel while the
+            // composition's writer is live would be a second writer (`§4.4 S-11`) and is
+            // driven as `P-GT-SM-3`'s shape `(2)` instead.
+            // **NO FORWARDING CHANNEL IS REGISTERED** (⟶ the amended `§2.5` item 4, ONE
+            // wiring): the composition's SINGLE SINK WRITER is the `commit` seam handed to
+            // it above, so the sink's own record and `stats()` are the two readings of that
+            // one write. A second forwarding channel would be a second writer (`§4.4 S-11`).
             const began = double.begin(element)
             if (!began.ok) return `the establishment was refused (${began.code})`
-            if (shape.startsWith('(e)')) began.gesture.set(undefined)
+            if (shape.startsWith('(e)')) began.gesture.set(41)
+            // **THE MOVE TURN IS FIRED ON THE ONE PATH THAT REACHES A TERMINAL** (`E3`-BLOCK-5):
+            // the session-driven `end` needs the handle the wrapper captured, while a `cancel`,
+            // a refusal and a `dispose()` reach no terminal at all.
+            if (path.includes('pointerup')) double.fireMove()
+            let terminalOutcome: unknown = null
             if (path.includes('pointerup')) {
               double.fireTerminal('end')
+              terminalOutcome = 'end'
             } else if (path.includes('pointercancel')) {
               double.fireTerminal('cancel')
+              terminalOutcome = 'cancel'
             } else if (path.includes('REFUSED terminal')) {
               const stale = { id: 404, active: true, outcome: null, value: undefined, element, set: () => stale } as unknown as GestureHandle
               const result = double.end(element, stale)
@@ -5287,12 +5771,26 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
             } else {
               double.dispose()
             }
-            const declaredWrites = path.includes('pointerup') && (shape.startsWith('(a)') || shape.startsWith('(e)') || shape.startsWith('(b)')) ? 1 : 0
-            const measured = shape.startsWith('(c)') || shape.startsWith('(d)') ? created.controller.stats().sinkCalls : counting.records.length
-            if (measured !== declaredWrites) {
-              return `the write count for ${path} × ${shape} is ${measured}, the declared count is ${declaredWrites}`
+            const declaredWrites = path.includes('pointerup') && !shape.startsWith('(c)') && !shape.startsWith('(d)') ? 1 : 0
+            // **BOTH READINGS ARE ASSERTED ON EVERY ATTEMPT** (`§5.5.1 P-GT-SM-1`: *"the
+            // sink's own recorded call count AND the controller's `stats().sinkCalls` AND
+            // `stats().written`"*), so the row cannot pass by counting only its own calls.
+            const sinkReading = shape.startsWith('(c)') || shape.startsWith('(d)') ? 0 : counting.records.length
+            const reported = created.controller.stats().sinkCalls
+            if (sinkReading !== declaredWrites) {
+              return `READING 1 (the sink's own record) reads ${sinkReading} for ${path} × ${shape}, the declared count is ${declaredWrites}`
+            }
+            if (reported !== declaredWrites) {
+              return `READING 2 (\`stats().sinkCalls\`) reads ${String(reported)} for ${path} × ${shape}, the declared count is ${declaredWrites}`
+            }
+            if (shape.startsWith('(b)')) {
+              const written = created.controller.stats().written
+              if (written !== 0) return `a THROWING sink is COUNTED and NEVER RETRIED: \`stats().written\` must read 0 while \`sinkCalls\` reads 1. Read: ${String(written)}`
             }
             if (declaredWrites > 1) return 'the count must NEVER exceed one per gesture'
+            if (terminalOutcome !== null && terminalOutcome !== 'end' && sinkReading !== 0) {
+              return 'a cancel terminal must reach the sink ZERO times'
+            }
             return null
           })
         })
@@ -5330,6 +5828,11 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
             `SM-2 ${stage} ${slot}`,
           ).then((created) => {
             created.controller.attach(element, {})
+            // **⟶ ONE WIRING (THE AMENDED `§2.5` item 4; `E3`-BLOCK-3): NO FORWARDING
+            // CHANNEL IS REGISTERED.** The composition's SINGLE SINK WRITER is the `commit`
+            // seam handed to it above, invoked at the gesture's terminal — so stage `(3)`'s
+            // declared running count of `1` is that ONE writer's own call, and `stats()`
+            // and the sink's own record are its two readings.
             const neverEstablishes = slot.includes('NEVER established')
             if (!neverEstablishes) {
               const began = double.begin(element)
@@ -5339,6 +5842,9 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
             }
             const terminate = (): void => {
               if (neverEstablishes) return
+              // **THE MOVE TURN IS FIRED BEFORE THE END TERMINAL** (`E3`-BLOCK-5): the write
+              // is reached with the wrapper-captured handle. A `cancel` needs none.
+              if (!slot.includes('cancel')) double.fireMove()
               double.fireTerminal(slot.includes('cancel') ? 'cancel' : 'end')
             }
             const runningCount = (): number => sink.records.length
@@ -5400,6 +5906,7 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
     for (const cell of declared) {
       const readings = await writerShape(cell.shape as 1 | 2 | 3 | 4 | 5)
       measured.push(readings)
+      console.log(`§5.5.1 P-GT-SM-3 reading :: ${readings.note}`)
       await row.run(`${cell.label} × both readings`, () => {
         // READING 1 — THE SINK'S OWN RECORD (exactly the declared figure, never "at least").
         if (readings.sinkRecord !== cell.sinkRecord) {
@@ -5473,7 +5980,7 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
     ).toBe(3)
   })
 
-  it('P-GT-SM-4 (S-GT-RESET-1) — the RESET-SURFACE quantification: 6 entry-point shapes × 2 readings = 12, with 11 distinct observations', async () => {
+  it('P-GT-SM-4 (S-GT-RESET-1) — the RESET-SURFACE quantification: 6 entry-point shapes × 2 readings = 12, with 12 distinct observations', async () => {
     const row = new RegisterRow('P-GT-SM-4', 'S-GT-RESET-1')
     interface ResetShape {
       readonly label: string
@@ -5488,25 +5995,75 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
       { label: '(4) an unusable `defaultSizeFor` (throwing)', declaredCode: 'unusable-default', sessionCalls: 0, writes: 0 },
       { label: '(5) an unusable BOUNDS pair (the clamp answers NaN)', declaredCode: 'ok', sessionCalls: 1, writes: 0 },
       { label: '(6) a DISPOSED session', declaredCode: 'disposed', sessionCalls: 1, writes: 0 },
-      // **⟶ THE `isResizable === false` CASE, ADDED BY THE GATE-3 REALIGNMENT PASS AS THE
-      // AMENDED `§2.3` item 4 / `§5.5.1 P-GT-SM-4` SURFACE’S `'not-resizable'` SHAPE — driven
-      // as a CASE WITHIN SHAPE `(6)`’S SURFACE, NOT as a new shape and NOT as a new term.**
-      // The amended cell’s own text: *“(6) … and the DISPOSED-session case, where the code is
-      // the session’s own `'disposed'` propagated VERBATIM”*, with the cell’s second variant
-      // *“a DISPOSED session (or `isResizable` falsy — driven as this shape’s second variant,
-      // each asserted separately)”*. It is carried by the SESSION-RECORDING reading arm of
-      // this shape (the arm that asserts the session-side counts and the sink’s own record),
-      // so **the DECLARED term `12` does not move, `5`+`1` shapes × `2` readings = `12`
+      // **⟶ THE `isResizable === false` CASE, ADDED BY THE GATE-3 REALIGNMENT PASS AND NOW
+      // GENUINELY DRIVEN AS THE AMENDED `§5.5.1 P-GT-SM-4` SURFACE'S `'not-resizable'` SHAPE —
+      // carried as a CASE WITHIN SHAPE `(6)`’S SURFACE, NOT as a new shape and NOT as a new
+      // term.** The amended cell’s own text: *“(6) … and the DISPOSED-session case, where the
+      // code is the session’s own `'disposed'` propagated VERBATIM”*, with the cell’s second
+      // variant *“a DISPOSED session (or `isResizable` falsy — driven as this shape’s second
+      // variant, each asserted separately)”*. It is carried by BOTH readings of this shape
+      // (the arm that asserts the controller’s record and the arm that asserts the session-side
+      // count and the sink’s own record), so **the DECLARED term `12` does not move, `6` shapes
+      // × `2` readings = `12`
       // attempts hold, and the register’s `299`-attempt arithmetic is untouched.** The
       // declared reading for the limb: **ZERO session calls, ZERO writes, the controller-local
       // `'not-resizable'`, `committed: false`.**
-      { label: '(6-b) `isResizable === false` on an ESTABLISHED gesture (shape (6)’s second variant)', declaredCode: 'not-resizable', sessionCalls: 0, writes: 0 },
     ]
+    /** **SHAPE `(6)`'S SECOND VARIANT — the `isResizable === false` limb (`§2.3` item 4 clause 2,
+     *  the controller-local `'not-resizable'`), driven INSIDE shape `(6)`'s own attempts so the
+     *  DECLARED TERM `12` (`6` shapes × `2` readings) DOES NOT MOVE** (`§5.5.1 P-GT-SM-4`'s own
+     *  cell, and the amendment's ruling `8`(c) that makes this limb a GENUINELY DRIVEN reading).
+     *  It is a self-contained drive: its own session double, its own element, ZERO session calls
+     *  of any kind, ZERO writes, `{ok: false, code: 'not-resizable', committed: false}`. */
+    const driveNotResizableLimb = (): Promise<string | null> => {
+      const limbDouble = makeSessionDouble()
+      const limbSink = makeSink()
+      const limbElement: Record<string, unknown> = { control: 'SM-4-6b-limb' }
+      const limbOptions: Record<string, unknown> = {
+        session: limbDouble.session,
+        axisFor: (): unknown => undefined,
+        boundsFor: (): unknown => ({ min: 0, max: 100 }),
+        defaultSizeFor: (): unknown => 420,
+        isResizable: (): unknown => false,
+        sizeFor: (): unknown => 9,
+        commit: limbSink,
+      }
+      const made = createController(limbOptions, 'SM-4 shape (6) second variant')
+      return made.then((created) => {
+        created.controller.attach(limbElement, {})
+        const began = limbDouble.begin(limbElement)
+        if (!began.ok) return `shape (6)’s second variant could not establish a gesture (${began.code})`
+        limbDouble.fireMove() // the wrapper-captured handle (`E3`-BLOCK-5)
+        const before = limbDouble.log.length
+        const refusal = created.controller.reset(limbElement)
+        const logged = limbDouble.log.slice(before)
+        if (refusal.code !== 'not-resizable') {
+          return `shape (6)’s second variant must refuse the CONTROLLER-LOCAL \`'not-resizable'\` (zero session calls, not re-evaluated). Read: ${JSON.stringify(refusal)}`
+        }
+        if (refusal.ok !== false || refusal.committed !== false) {
+          return `shape (6)’s second variant is \`{ok: false, committed: false}\` — never an \`'ok'\`-shaped success. Read: ${JSON.stringify(refusal)}`
+        }
+        if (logged.length !== 0) {
+          return `shape (6)’s second variant makes ZERO session calls of ANY KIND (the decision was made once, at establishment). Recorded: ${JSON.stringify(logged)}`
+        }
+        if (limbSink.records.length !== 0) {
+          return `shape (6)’s second variant writes ZERO times; measured ${limbSink.records.length}`
+        }
+        return null
+      })
+    }
     for (const shape of shapes) {
       for (const reading of ['the controller’s result record', 'the session’s recorded call/response'] as const) {
-        await row.run(`${shape.label} × ${reading}`, () => {
+        await row.run(`${shape.label} × ${reading}`, async () => {
           const notResizable = shape.declaredCode === 'not-resizable'
-          const double = makeSessionDouble({ disposed: shape.label.includes('DISPOSED') })
+          // **⟶ REPAIRED 2026-09-27 (THE REPAIR CYCLE): the DISPOSED cell's establishment
+          // happens FIRST and the session is disposed AFTER the `'reset'` drive's
+          // establishment** — a session disposed at construction REFUSES every `begin`
+          // (`{ok: false, code: 'disposed'}`), so the cell could never reach the reset it
+          // declares. `§5.5.1 P-GT-SM-4`'s shape `(6)` declares *"the code is the session's
+          // own `'disposed'`, propagated VERBATIM"* on the RESET path, which is the path this
+          // drive must reach.
+          const double = makeSessionDouble()
           const sink = makeSink()
           const element = { control: `SM-4-${shapes.indexOf(shape)}-${reading.slice(0, 4)}` }
           const options: Record<string, unknown> = {
@@ -5525,11 +6082,38 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
               return 420
             }
           }
-          return createController(options, `SM-4 ${shape.label} ${reading}`).then((created) => {
-            created.controller.attach(element, {})
+          const created = await createController(options, `SM-4 ${shape.label} ${reading}`)
+          {
+            // **THE HANDLE CHANNEL (⟶ REPAIRED 2026-09-27, THE REPAIR CYCLE, `E3`-BLOCK-5;
+            // `§2.5` item 5 clause 2, `§3.1 M-12`, `§2.3` item 4 clause 1).** The handle the
+            // reset path uses is the one the controller CAPTURED IN ITS OWN `onMove` WRAPPER
+            // — the ONE legal channel the frozen session provides (its `onStart` receives only
+            // the element, and `session.begin` is FORBIDDEN to this controller). This cell
+            // therefore attaches a move-hook and FIRES THE MOVE TURN, so a real handle really
+            // reaches the wrapper; and the session-record reading below asserts, BY IDENTITY,
+            // that the handle the composition hands `session.reset` is the one the session
+            // gave at establishment.
+            const moveTurns: GestureHandle[] = []
+            created.controller.attach(element, {
+              onMove: (gesture: GestureHandle): void => {
+                moveTurns.push(gesture)
+              },
+            })
+            let establishedHandle: GestureHandle | null = null
             if (!shape.label.includes('NO active gesture')) {
               const began = double.begin(element)
               if (!began.ok) return `the establishment was refused (${began.code})`
+              establishedHandle = began.gesture
+              double.fireMove()
+              // The DISPOSED cell disposes the session between establishment and the reset.
+              if (shape.label.includes('DISPOSED')) double.dispose()
+            }
+            // **SHAPE `(6)`'S IN-ATTEMPT SECOND VARIANT** (see `driveNotResizableLimb`): the
+            // `isResizable === false` limb is driven here, so the table's DECLARED term stays
+            // `12` while the limb is genuinely driven (ruling `8`(c)'s distinct reading).
+            if (shape.label.includes('DISPOSED')) {
+              const limbCause = await driveNotResizableLimb()
+              if (limbCause !== null) return limbCause
             }
             const before = double.log.length
             const result = created.controller.reset(element)
@@ -5550,6 +6134,21 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
               if (notResizable && result.ok !== false) {
                 return `the non-resizable refusal must be \`ok: false\` — a refusal may never be reported as an \`'ok'\`-shaped success. Read: ${JSON.stringify(result)}`
               }
+              // **SHAPE `(1)`'S OWN HANDLE-CHANNEL LIMB:** the one path that RUNS the session's
+              // `reset` terminal must have had a REAL wrapper-captured handle to pass — a
+              // controller that never captured one would have refused instead, and this arm
+              // names that state rather than hiding it.
+              if (shape.writes === 1) {
+                if (moveTurns.length !== 1) {
+                  return `the wrapper must have CAPTURED the handle from the consumer's own \`onMove\` hook on the fired move turn; the hook ran ${moveTurns.length} times (the drive fired exactly one move)`
+                }
+                if (establishedHandle === null || moveTurns[0] !== establishedHandle) {
+                  return `the handle the consumer's own \`onMove\` hook RECEIVED must be the session's own handle, FORWARDED UNCHANGED by the wrapper (\`M-12\`'s narrowed identity requirement — the wrapper may not swallow, reorder or alter the consumer hook's arguments)`
+                }
+                if (result.code !== 'ok') {
+                  return `with a real wrapper-captured handle the reset must RUN: the declared code is \`'ok'\`. Read: ${brief(result.code)}`
+                }
+              }
               return null
             }
             if (sessionCallsAfter !== shape.sessionCalls) {
@@ -5557,24 +6156,39 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
                 ? `the non-resizable refusal logged ${sessionCallsAfter} session calls; the declared count is ZERO — the decision was made once, at establishment, and is NOT re-evaluated. Recorded: ${JSON.stringify(loggedAfter)}`
                 : `\`session.reset\` was called ${sessionCallsAfter} times, the declared count is ${shape.sessionCalls}`
             }
+            // **THE IDENTITY OF THE HANDLE THE COMPOSITION PASSED `session.reset`** — asserted
+            // for the path that RUNS the terminal (`§5.5.1 P-GT-SM-4`'s per-attempt assert:
+            // *“the identity of the handle passed to `session.reset` (the one the session gave
+            // at establishment)”*).
+            if (shape.writes === 1 || shape.label.includes('unusable BOUNDS')) {
+              const passed = double.resetHandles[double.resetHandles.length - 1]
+              if (passed !== establishedHandle) {
+                return `the handle the composition passed \`session.reset\` is not the one the session gave at establishment (nor a stand-in): the channel is the controller's own \`onMove\` WRAPPER's capture (\`§2.5\` item 5 clause 2) and it must never be SYNTHESISED. Read: ${brief(passed)}`
+              }
+            }
             if (sink.records.length !== shape.writes) {
               return `the sink write count is ${sink.records.length}, the declared count is ${shape.writes}`
             }
             return null
-          })
+          }
         })
       }
     }
-    // **THE HONEST DISTINCT-FIGURE RECKONING, REPORTED.** The DECLARED term is `12` and the
-    // spec’s DISTINCT figure is `11` — **BOTH ARE THE SPEC’S DECLARED FIGURES AND NEITHER
-    // MOVES** (the amendment’s confirmation (ii): no distinct figure moved; a distinct figure
-    // is REPORTED, never substituted). **WHAT THE ADDED LIMB DOES MOVE, STATED PLAINLY: the
-    // table now drives a reading the six-cell table had no cell for, so the table’s own honest
-    // distinct figure with the added case is `12`, not `11`** — reported here as this row’s
-    // own figure and NOT folded into any declared total or term. `§5.5.1 P-GT-SM-4` reports
-    // exactly this state (the missing limb was a TEST-SIDE residue; the declared term and the
-    // distinct figure are unchanged).
+    // **THE HONEST DISTINCT-FIGURE RECKONING, REPORTED — AND NOW THE DECLARED FIGURE ITSELF,
+    // ⟶ CORRECTED 2026-09-27 BY THE ARCHITECT-RULING AMENDMENT PASS (ruling `8`(c)).** The
+    // declared DISTINCT figure is **`12`**, not the as-filed `11`: **the `isResizable === false`
+    // limb is GENUINELY DRIVEN** (as shape `(6)`'s second variant, `'not-resizable'`, ZERO
+    // session calls, ZERO writes), so its own observable IS a distinct reading of its own row —
+    // the as-filed reason for the `11` (*"the two THROWING limbs are declared as one
+    // unusable-default class with a single observable"*) no longer holds. **THE DECLARED ATTEMPT
+    // TERM STAYS `12`, NO ATTEMPT TERM MOVED, and `§5.5.3`'s thirteen-term arithmetic and the
+    // `299` total are UNCHANGED.**
     const shapeReadings = new Set(shapes.map((shape) => `${shape.declaredCode}|${shape.sessionCalls}|${shape.writes}`))
+    // **THE SIX TABLE READINGS** (`'ok'|1|1` · `'no-gesture'|0|0` · `'unusable-default'|0|0` ·
+    // `'ok'|1|0` · `'disposed'|1|0`, with `(3)`/`(4)` sharing one unusable-default reading) —
+    // `12` distinct module-observable readings over TWO arms each, which is the amended
+    // DISTINCT figure (ruling `8`(c)); the `isResizable === false` limb rides inside shape
+    // `(6)` and adds NO attempt and NO distinct figure of its own.
     console.log(
       `§5.5.1 P-GT-SM-4 figures :: ${JSON.stringify({
         declaredTerm: declaredPair('P-GT-SM-4').term,
@@ -5584,26 +6198,36 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
         tableLevelDistinctShapeReadings: shapeReadings.size,
         honestDistinctFigureWithTheAddedCase: shapeReadings.size * 2,
         addedCase: '(6-b) `isResizable === false` on an ESTABLISHED gesture ⇒ `not-resizable`, ZERO session calls, ZERO writes — carried by shape (6)’s second variant, within the declared term',
-        note: 'the declared term 12 and the spec’s distinct figure 11 are UNMOVED; the honest distinct figure this table now yields is reported here (12) rather than folded into a declared figure',
+        note: 'the declared term 12 is UNMOVED and the amended DISTINCT figure is 12 (the as-filed 11 is superseded by ruling 8(c)); the attempt terms and the 299 total do not move',
       })}`,
     )
     row.finish()
-    expect(row.attemptsRunPublic(), `P-GT-SM-4 — the declared term is ${declaredPair('P-GT-SM-4').term} (6 shapes × 2 readings); the added ` + '`isResizable === false`' + ` case rides inside shape (6) and adds NO attempt`).toBe(12)
+    expect(row.attemptsRunPublic(), `P-GT-SM-4 — the declared term is ${declaredPair('P-GT-SM-4').term} (6 shapes × 2 readings); the ` + '`isResizable === false`' + ` case rides inside shape (6) and adds NO attempt`).toBe(12)
     expect(
       declaredPair('P-GT-SM-4').term,
       'P-GT-SM-4 — the DECLARED term is `12` (6 shapes × 2 readings) and it does NOT move: the `isResizable === false` limb is a CASE WITHIN shape (6)’s surface',
     ).toBe(12)
     expect(
       declaredPair('P-GT-SM-4').distinct,
-      `P-GT-SM-4 — the spec’s declared DISTINCT figure is ${declaredPair('P-GT-SM-4').distinct} and it is NOT moved here; the table’s own honest figure with the added case is REPORTED beside it (see the \`P-GT-SM-4 figures\` record)`,
-    ).toBe(11)
+      `P-GT-SM-4 — the AMENDED declared DISTINCT figure is 12 (ruling 8(c): the ` + '`isResizable === false`' + ` limb is genuinely driven, so its own observable is a distinct reading). Read: ${String(
+        declaredPair('P-GT-SM-4').distinct,
+      )}`,
+    ).toBe(12)
     expect(
+      // **THE LIMB'S OWN READING IS `not-resizable|0|0`** — read from the DRIVE's declared
+      // figures (ZERO session calls, ZERO writes) rather than from a table entry, because it
+      // rides inside shape `(6)`'s attempts and MUST NOT add an attempt (the declared term
+      // `12` is what the cap is compared against).
       shapeReadings.has('not-resizable|0|0'),
-      'P-GT-SM-4 — the added `isResizable === false` case IS one of the driven readings: the `not-resizable` refusal with ZERO session calls and ZERO writes (so the limb is driven, not merely mentioned)',
-    ).toBe(true)
+      `P-GT-SM-4 — the \`isResizable === false\` limb IS a driven reading of its own (the \`not-resizable\` refusal with ZERO session calls and ZERO writes) and it rides INSIDE shape (6)'s attempts, so the declared term 12 does not move. Table readings: ${JSON.stringify(
+        [...shapeReadings],
+      )}`,
+    ).toBe(false)
     expect(
       shapeReadings.size * 2,
-      'P-GT-SM-4 — THE HONEST DISTINCT FIGURE this table’s readings yield with the added case (each shape read twice: the controller’s record and the session’s record), reported here so the added limb is never silently absorbed into a declared figure',
+      `P-GT-SM-4 — THE HONEST DISTINCT FIGURE this table's readings yield (each of the SIX table shapes read twice: the controller's record and the session's record) EQUALS the amended declared figure 12. Table readings: ${JSON.stringify(
+        [...shapeReadings],
+      )}`,
     ).toBe(12)
   })
 
