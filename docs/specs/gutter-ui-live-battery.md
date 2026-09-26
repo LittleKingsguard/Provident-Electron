@@ -317,3 +317,37 @@ unmeasured, not projected.
    shipped instrument cannot discharge, and this pass could not discharge them.
 5. **Re-open `U-GAP-1`** (`docs/specs/user-flow-audit.md` still absent, sixth+ confirmation) at the next
    proofreader pass, and correct `§5.U` clause-5's reason for the style-attribute case (§2a above).
+
+---
+
+## ⟶ ADDENDUM 2026-09-27 (POST-FIX, THE SAME SESSION) — THE RE-MEASURED LEG RESULTS, THE LIVE WRITE-ROUTE PROOF, AND WHAT IS STILL OWED
+
+**NOTHING ABOVE IS EDITED — every measured reading at `42317ca` stays exactly as it was run and recorded
+(annotate-only, `AGENTS.md` item 10a). This addendum is the SAME session's re-measurement on the FIXED
+TREE, after the fix pass `72fff4c`, and it claims only what it measured.**
+
+**1. `npm run divergence` → EXIT `0`, `R13 RESULT: 9 checks, 0 failures`.** The census that was RED above
+(`electron=18 shim=12`) now reads **`electron=18 shim=18`** (`census inTree` / `census registered` and the
+other three red checks all green). **WHY IT MOVED: the fixture now DERIVES the envelope from
+`src/shared/demo-envelope.ts` instead of comparing against a hand-copied 12-node literal** — **the
+architect's ruling at `e135904`: the divergence harness is a TESTING TOOL and is IN THE UPDATE SCOPE**
+(so `scripts/**`'s denial to the unit did not bind this remedy; owner: the supervisor/`scripts` pass).
+**This discharges `L-1`.**
+
+**2. `npm run ui` → EXIT `0`, `UI RESULT: 0 failures (11/11 …)`, measurement `427x22`, `attempt=1 retries=0`.** The mandatory `[U]` leg that **failed its own precondition with NO MEASUREMENT TAKEN** above now takes its measurement. **This discharges the leg-5 half of `L-1` and the `§5.2` leg-5 precondition it blocked.**
+
+**3. THE LIVE WRITE-ROUTE PROOF — ONE boot, real CDP mouse events, NO restart.** **The drive was
+`pointerover` → `pointerdown` → `pointermove` ×3 → `pointerup` (real `Input.dispatchMouseEvent`, not
+synthetic graph dispatch), and it produced TWO readings at once:**
+* **the AUTHORED STATUS NODE read `100` BEFORE → `110` AFTER**, through **BOTH** `node-state` **and** `get_rendered_html` — i.e. **a committed value now reaches the graph and is visible through the shipped instruments** (**`ADV-GU-1` FIXED, live**); and
+* **the TARGET's box FOLLOWED THE POINTER `100 → 70 → 90 → 110px`** — i.e. **the preview is now the transient inline-style write on the LIVE TARGET** (**`ADV-GU-2` FIXED, live**; the as-filed `U-4` contradiction above — *"the target's rendered box is byte-identical … before the press, after the press, after each of three moves, and after the release"* — is SUPERSEDED on this tree).
+
+**4. WHAT THIS MEANS FOR `L-1`…`L-6`.** **`L-1`…`L-6` are ADDRESSED/CONFIRMED on the fixed tree:** `L-1` (the red precondition) is discharged by items 1/2 above; `L-2` (the zero-area affordance) by the card's `css.style` (**`w=200 h=42.96`**, `ADV-GU-8`); `L-3` (no authored base cursor) by the same card fix; `L-4` (every drag INVALID, `pointerOf` answering `null`) by **`ADV-GU-7`** (the example seams now read the bare attributes the runtime emits) with the drag landing; `L-5` (no write lands) by the live write-route proof in item 3; `L-6` (the seams' `dataset` reads) by the same `ADV-GU-7` fix. **The findings table above stays visible as the record of what the unfixed tree measured.**
+
+**5. WHAT IS STILL OWED — THE TWO TIGHTENED `C-A5` READINGS MUST BE RE-TAKEN ON THE FIXED TREE BY THE NEXT LIVE-BATTERY RUN, TOGETHER WITH THE `MANUAL OPERATOR` ROWS.**
+* **`U-5` — THE DRAGGED-VALUE READ** (`§3a` above; its filed reading FAILED at `42317ca`) must be **RE-TAKEN on the fixed tree** with its negative control: the pre-drag size must FAIL the read, and the dragged value must be the one the status node carries. **The `110` reading in item 3 is EVIDENCE the route works; it is NOT this row's tightened reading**, which requires the value the operator dragged to and its explicit negative control.
+* **`U-8`(e)'s SECOND GESTURE** (`§3b` above; `(e)(1)` PASSED, `(e)(2)` FAILED) must be **RE-TAKEN on the fixed tree**, recording the **second committed value**, comparing it against the pre-drag size as an explicit negative control, and comparing it against the FIRST gesture's committed value.
+* **THE `MANUAL OPERATOR` ROWS — `U-3` / `U-4` / `U-6` — REMAIN `NOT-OBSERVABLE` / OPERATOR-OWED. NO HUMAN OPERATOR WAS PRESENT IN THIS SESSION EITHER**, so those three rows are **NOT taken**: their discharge is a session with a human at the window (owner: the supervisor), and **no tool reading is substituted for one.**
+* **`U-GAP-1`** (`docs/specs/user-flow-audit.md` absent, `predicateSourcePresent: false`) **stays OPEN**; **`U-7`'s markdown column still has no BEFORE reading and no dedicated CLI command**; and **the `§5.U` coverage report must be RE-FILLED FROM THE NEW RUNS rather than re-quoting this file's `42317ca` report** (`§5.U` item 3's rule: a field that could have been written before the battery ran is a defect of the record).
+
+**6. WHAT THIS ADDENDUM DOES NOT CLAIM.** It claims **no `[D]` row** and **no new finding id**; it **does not print the unit green** (the gate-6 record's own honesty statement above stands, applied to its own revision), it **edits no measured result above**, and it **does not discharge the `MANUAL OPERATOR` rows**. **The gate-6 record is only as current as the revision it named; this addendum is the dated pointer from that revision to `72fff4c`, and the re-taken readings it names are owed to a fresh run.**

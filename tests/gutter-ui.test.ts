@@ -3151,12 +3151,46 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
           // The subject read is `#2`, so the cut is `n <= 1`. **MEASURED with the repaired drive and
           // `n <= 1`: `sinkCalls = 0`, `committed: false`, ONE session `reset` frame, and the
           // session's recorder carrying `NaN` with outcome `reset`** — the ruled two-reading split.
+          //
+          // **⟶ RECALIBRATED 2026-09-27 (THE ESTABLISHMENT READ ORDER) — THE AS-FILED CUT IS
+          // `n <= 1`, AND IT IS NOW `n <= 2`.** **THE GOVERNING CLAUSES** (the contract, not the
+          // module's convenience): `docs/specs/gutter-ui.md` `§2.4` item 3 — *"`startSizeOf(element,
+          // token)` is called **exactly once per gesture, in `onStart`**"* — and the same pass's
+          // `§0A` note 5 (*"the per-gesture record is the module's own, is ESTABLISHED IN `onStart`"*),
+          // read together with `§2.3` row 7 (`preDragSize = startSizeOf(element, token)` is stored in
+          // the record **at establishment**). The module's own establishment turn therefore also
+          // SEEDS the visible revert from the gesture's own pair (`§R` `R7`/`R8`(d)): **the
+          // establishment turn reads `boundsOf` ONCE**, before any move.
+          // **MEASURED CALL-SITE MAPPING FOR THIS DRIVE (instrumented seams + turn markers, this
+          // pass — the sequence is PRINTED, not inferred):** the establishment turn runs
+          // `axisOf` → `resizableOf` → `startSizeOf` → **`boundsOf` `#1` (THE ESTABLISHMENT READ)**;
+          // the PRIOR VALID MOVE's own preview evaluation is **`#2`**; the SUBJECT move's own
+          // preview evaluation is **`#3`**; **`#4` = the SUBJECT turn's reset clamp = THE SUBJECT
+          // READ**; `#5` = that same reset's write pair; `#6` = the `end` terminal's own evaluation.
+          // **The as-filed `n <= 1` therefore put the cut on the ESTABLISHMENT read** — the setup
+          // move received `undefined`, was INVALID, and the drive read
+          // `sink = 0 / resets = 0 / sessionChannel = ["undefined"]` against its declared
+          // `sessionChannel = [NaN]` — i.e. the cell's declaration was measured against the OLD
+          // lazy-on-first-move read order and no longer lands on the turns its own text names.
+          // **AND THE `n <= 3` INTERMEDIATE IS MEASURED AND REJECTED, so the allocation is not a
+          // guess:** at `n <= 3` the SUBJECT reset's clamp still read a USABLE pair and the reset
+          // COMMITTED `100` (`sinkCalls = 1`, session channel `["100"]`, outcome `reset`) — the
+          // `M-5/b2` arm below, not this cell's. **THE ALLOCATION IS THEREFORE RE-DERIVED FROM THE
+          // MEASURED CALL SITES, with the cell's SUBJECT unchanged**: the establishment read, the
+          // setup move's read AND the subject move's read stay USABLE, and the SUBJECT reset's clamp
+          // + write pair (`#4`/`#5`) read the UNUSABLE pair. **MEASURED with `n <= 2`:**
+          // `sinkCalls = 0`, `E3 resets = 1`, `committed: false`, ONE session `reset` frame, session
+          // recorder `[NaN]` with outcome `reset` — the ruled two-reading split, exactly as this
+          // cell declares. **NO register term, no `134` arithmetic, no row id, no seed and no
+          // strategy id moves; the control stays falsifiable** (a drive that did not take the
+          // subject reset reads `0` frames and no `NaN`, and `M-5/b2` below is the same arm over a
+          // USABLE pair reading ONE write — the two cells still bind each other).
           const boundsCalls = { n: 0 }
           const h = await makeHarness(
             {
               boundsOf: (): unknown => {
                 boundsCalls.n += 1
-                return boundsCalls.n <= 1 ? { min: 0, max: 200 } : undefined
+                return boundsCalls.n <= 2 ? { min: 0, max: 200 } : undefined
               },
             },
             'M-5/b',
@@ -5625,7 +5659,29 @@ describe('F — §3.2 the documented fail-states (every outcome is a DECLARED re
       // `expectedWrites: 0` / `resets === 1` reading through a real seam failure rather than around
       // one. **`Infinity`'s own finding above is unaffected: `clampToBounds(+Infinity, {min:0,max:200})
       // === 200` is FINITE, so that shape's non-finiteness must come by TYPE.**
-      { name: 'an unusable bounds pair', overrides: { boundsOf: ((): unknown => ((n: number) => (n <= 1 ? { min: 0, max: 200 } : undefined))(++f10BoundsCalls)) }, expectedWrites: 0 },
+      // **⟶ RECALIBRATED 2026-09-27 (THE ESTABLISHMENT READ ORDER) — THE AS-FILED CUT IS `n <= 1`,
+      // AND IT IS NOW `n <= 2`.** **THE GOVERNING CLAUSES:** `docs/specs/gutter-ui.md` `§2.4` item 3
+      // (*"`startSizeOf(element, token)` is called **exactly once per gesture, in `onStart`**"*) and
+      // `§0A` note 5 (the per-gesture record *"is ESTABLISHED IN `onStart`"*), with `§2.3` row 7 —
+      // so the module's establishment turn ALSO seeds the visible revert from the gesture's own pair
+      // (`§R` `R7`/`R8`(d)) and **reads `boundsOf` ONCE before any move**. **MEASURED CALL-SITE
+      // MAPPING for this shape's drive (instrumented seams + turn markers, this pass):**
+      // **`#1` = the ESTABLISHMENT turn's read**; `#2` = the PRIOR VALID MOVE's own preview
+      // evaluation (USABLE — the setup must stay valid); **`#3` = the SUBJECT turn's reset clamp =
+      // THE SUBJECT READ**; `#4` = the `end` terminal's own evaluation. **With the as-filed `n <= 1`
+      // the cut landed on the ESTABLISHMENT read instead**: the setup move received `undefined` and
+      // the attempt THREW at its own `priorValidMove` guard — **MEASURED:
+      // `[{"value":100,"valid":false}]`, `stats = {"moves":1,"previews":1,"resets":0}`**, i.e. the
+      // drive never reached the live window and the shape's declared `expectedWrites: 0` reading was
+      // never produced. **THE ALLOCATION IS RE-DERIVED FROM THE MEASURED CALL SITES, with the shape's
+      // SUBJECT untouched** (the SUBJECT reset still clamps an UNUSABLE pair): establishment + setup
+      // USABLE, subject clamp + terminal UNUSABLE. **MEASURED with `n <= 2`:** the setup preview is
+      // `{"value":0,…,"valid":true}`, the SUBJECT revert is
+      // `{"value":100,"token":"gutter-axis","valid":false,"resizable":true}`, module `resets = 0`,
+      // `E3 resets = 1`, ONE session `reset` frame, `sinkCalls = 0` — this shape's declared reading.
+      // **NO term, row id, seed or strategy id moves; the control stays falsifiable** (`n <= 3`
+      // measured a VALID subject move with ONE `end` write, so a mis-aligned cut cannot pass).
+      { name: 'an unusable bounds pair', overrides: { boundsOf: ((): unknown => ((n: number) => (n <= 2 ? { min: 0, max: 200 } : undefined))(++f10BoundsCalls)) }, expectedWrites: 0 },
     ]
     for (const shape of shapes) {
       // **⟶ RE-DERIVED 2026-09-27 (THE BOUNDS-READ ACCOUNTING CLASS, THE PER-SHAPE SEAM BUDGET).**
@@ -6095,7 +6151,33 @@ describe('§5.5.1 — P-GU-SM-1 (S-GU-WRITER-1) · the single-writer quantificat
       // (`{"value":100,"valid":false}` only from the setup, `resets = 0`) and the attempt threw at
       // its own `priorValidMoveWithState` guard.** With `n <= 1` the subject reset's clamp answers
       // `NaN` ⇒ ZERO writes, which is the shape's declared `expectedSink: 0`.
-      { name: 'a resolvable pointer whose clamped value is not finite (NaN)', overrides: { boundsOf: ((): unknown => ((n: number) => (n <= 1 ? { min: 0, max: 200 } : undefined))(++sm1BoundsCalls)) }, invalid: true, expectedSink: 0, priorValid: true, label: 'NaN' },
+      // **⟶ RECALIBRATED 2026-09-27 (THE ESTABLISHMENT READ ORDER) — THE AS-FILED CUT IS `n <= 1`,
+      // AND IT IS NOW `n <= 2`.** **THE GOVERNING CLAUSES:** `docs/specs/gutter-ui.md` `§2.4` item 3
+      // (*"`startSizeOf(element, token)` is called **exactly once per gesture, in `onStart`**"*) and
+      // `§0A` note 5 (the per-gesture record *"is ESTABLISHED IN `onStart`"*) with `§2.3` row 7: the
+      // establishment turn ALSO seeds the visible revert from the gesture's own pair (`§R`
+      // `R7`/`R8`(d)), so it **reads `boundsOf` ONCE before any move**. **MEASURED CALL-SITE MAPPING
+      // for this shape's drive (`pointerover` → `pointerdown` → the PRIOR VALID MOVE → the SUBJECT
+      // move; instrumented seams + turn markers, this pass):** **`#1` = the ESTABLISHMENT turn's
+      // read** (after `axisOf`/`resizableOf`/`startSizeOf`); `#2` = the PRIOR VALID MOVE's own
+      // preview evaluation and `#3` = the SUBJECT move's own preview evaluation (both must stay
+      // USABLE so the shape is about the RESET — and `#3` is ALSO the clamp whose `NaN` makes the
+      // move INVALID); **`#4` = the SUBJECT turn's reset clamp = THE SUBJECT READ**; `#5` = that same
+      // reset's write pair (the `startSizeOf`/`defaultSizeFor` read at `#11`'s own site clamps over
+      // the SAME pair). **With the as-filed `n <= 1` the cut landed on the ESTABLISHMENT read
+      // instead — MEASURED: the prior valid move read `[{"value":100,"valid":false}]` and the attempt
+      // THREW at its own `priorValidMoveWithState` guard** (the register's `broken 1/15` cause, and
+      // this register row's own failure). **AND THE `n <= 3` INTERMEDIATE IS MEASURED AND REJECTED:**
+      // at `n <= 3` the subject move's own clamp read an UNUSABLE pair, so the move was invalid in
+      // the PRE-HANDLE window (the module's record had no valid value to push) and the reset's own
+      // clamp then read a USABLE pair and COMMITTED `100` (`sinkCalls = 1`, session channel
+      // `["100"]`) — the `Infinity`/veto shapes' arm, not this one. **THE ALLOCATION IS RE-DERIVED
+      // FROM THE MEASURED CALL SITES, with the shape's SUBJECT untouched** (the SUBJECT move's own
+      // clamp still reads an UNUSABLE pair; the reset's pair does too). **MEASURED with `n <= 2`:**
+      // `E3 resets = 1`, ONE session `reset` frame carrying `NaN`, `sinkCalls = 0` — the shape's
+      // declared `expectedSink: 0`. **No drive, term, seed or strategy id moves; the control stays
+      // falsifiable** (`n <= 4` measured a USABLE subject reset arm with ONE write).
+      { name: 'a resolvable pointer whose clamped value is not finite (NaN)', overrides: { boundsOf: ((): unknown => ((n: number) => (n <= 2 ? { min: 0, max: 200 } : undefined))(++sm1BoundsCalls)) }, invalid: true, expectedSink: 0, priorValid: true, label: 'NaN' },
       // ⟶ DRIVE-WINDOW RECONCILED 2026-09-27 — the shape's answer is a NON-FINITE answer BY TYPE
       // (`'Infinity'`), not the numeric `+Infinity`: measured on the frozen `clampToBounds`, a
       // numeric `+Infinity` CLAMPS to the pair's `max` (`200`), i.e. a FINITE, VALID move — so the
@@ -6131,7 +6213,33 @@ describe('§5.5.1 — P-GU-SM-1 (S-GU-WRITER-1) · the single-writer quantificat
                     // the existing attempt (`priorValidMoveWithState`) so the subject move's reset
                     // reaches `§2.3` row 9's LIVE-gesture window rather than row 8's PRE-HANDLE
                     // refusal. No drive, term, seed or strategy id moves.
-                    overrides: { boundsOf: ((): unknown => ((n: number) => (n <= 1 ? { min: 0, max: 200 } : undefined))(++sm1BoundsCalls)) },
+                    // **⟶ RECALIBRATED 2026-09-27 (THE ESTABLISHMENT READ ORDER) — THE AS-FILED CUT
+                    // IS `n <= 1`, AND IT IS NOW `n <= 2`.** **THE GOVERNING CLAUSES:**
+                    // `docs/specs/gutter-ui.md` `§2.4` item 3 (*"`startSizeOf(element, token)` is
+                    // called **exactly once per gesture, in `onStart`**"*) and `§0A` note 5 (the
+                    // per-gesture record *"is ESTABLISHED IN `onStart`"*) with `§2.3` row 7: the
+                    // establishment turn also seeds the visible revert from the gesture's own pair
+                    // (`§R` `R7`/`R8`(d)) and therefore **reads `boundsOf` ONCE before any move**.
+                    // **MEASURED CALL-SITE MAPPING** (instrumented seams + turn markers, this
+                    // pass): **`#1` = the ESTABLISHMENT turn's read**; `#2` = the PRIOR VALID MOVE's
+                    // own preview evaluation (USABLE); `#3` = the SUBJECT move's own preview
+                    // evaluation; **`#4` = the SUBJECT turn's reset clamp = THE SUBJECT READ**; `#5` =
+                    // that same reset's write pair (`startSizeOf`/`defaultSizeFor` clamps over the
+                    // same pair at `#11`); `#6` = the `end` terminal's own evaluation. **With the
+                    // as-filed `n <= 1` the cut landed on the ESTABLISHMENT read — MEASURED: the
+                    // setup move received `undefined`, was INVALID, and the attempt threw at its own
+                    // `priorValidMoveWithState` guard.** **AND THE `n <= 3` INTERMEDIATE IS MEASURED
+                    // AND REJECTED:** at `n <= 3` the reset's own clamp read a USABLE pair and
+                    // COMMITTED `75` (`sinkCalls = 1`, session channel `["75"]`) — the VALID `end`
+                    // arm, not this path's. **THE ALLOCATION IS RE-DERIVED FROM THE MEASURED CALL
+                    // SITES, with the path's SUBJECT untouched** (the reset still clamps an UNUSABLE
+                    // pair): establishment + setup + subject-move reads USABLE, the reset's clamp and
+                    // write pair UNUSABLE. **MEASURED with `n <= 2`:** `E3 resets = 1`, ONE session
+                    // `reset` frame carrying `NaN`, `sinkCalls = 0` — this path's declared pair.
+                    // **No drive, term, seed or strategy id moves; the control stays falsifiable**
+                    // (`n <= 4` measured a USABLE reset terminal with ONE `end` write, against the
+                    // declared `0`).
+                    overrides: { boundsOf: ((): unknown => ((n: number) => (n <= 2 ? { min: 0, max: 200 } : undefined))(++sm1BoundsCalls)) },
                     expectedSink: p.expectedSink,
                   },
                 ]
@@ -6608,11 +6716,42 @@ describe('§5.5.1 — P-GU-IM-2 (S-GU-SEAM-1) · the one-closure and one-evaluat
         if (gate.cause !== null) return gate.cause
         const h = await makeHarness({}, `P-GU-IM-2 ${cell.seam}`)
         h.affordance.attach()
-        if (cell.lifecycle.startsWith('(b)')) h.source.fire('pointerover', pointerEvent(0))
+        // **⟶ RECALIBRATED 2026-09-27 (THE ESTABLISHMENT READ ORDER) — THE `(c)` LIFECYCLE IS
+        // DRIVEN IN PHASES, SO THE DECLARED `boundsOf` BUDGET IS A DERIVED READING RATHER THAN A
+        // LITERAL.** **THE GOVERNING CLAUSES:** `docs/specs/gutter-ui.md` `§2.4` item 3
+        // (*"`startSizeOf(element, token)` is called **exactly once per gesture, in `onStart`**"*)
+        // and `§0A` note 5 (the per-gesture record *"is ESTABLISHED IN `onStart`"*) with `§2.3`
+        // row 7: the establishment turn ALSO seeds the visible revert from the gesture's own pair
+        // (`§R` `R7`/`R8`(d)), which is **a `boundsOf` read of its own, before any move** — and
+        // `§2.4` item 2's value chain then reads the pair again in the module's observed-move turn
+        // and once more at the terminal that evaluates a value. **MEASURED CALL-SITE MAPPING for
+        // this lifecycle (instrumented seams + turn markers, this pass):** the establishment turn
+        // runs `axisOf` → `resizableOf` → `startSizeOf` → `boundsOf` `#1`; the observed move reads
+        // `boundsOf` `#2`; the `pointerup` terminal reads `boundsOf` `#3` — **the establishment read
+        // is the one this recalibration exists for** (the as-filed guard `counts.boundsOf > 2`
+        // admitted the gesture read and the composition's terminal read but not the establishment
+        // read, so it FAILED a conformant module: MEASURED `broken 1/20`, cause `boundsOf × (c) a
+        // full VALID gesture — \`boundsOf\` was consulted 3 times`). **THE DECLARED BUDGET IS
+        // THEREFORE `((b) 0) + 1 (establishment) + 1 (the observed move) + 1 (the terminal) = 3`,
+        // and BOTH directions stay falsifiable:** a FOURTH read anywhere in the lifecycle FAILS the
+        // total, a MISSING establishment read FAILS the phase assertion below, and the per-phase
+        // deltas name which read was which rather than assuming a cumulative count.
+        let establishmentDelta = -1
+        let moveDelta = -1
+        let terminalDelta = -1
         if (cell.lifecycle.startsWith('(c)')) {
-          lifecycle(h, [pointerEvent(0, 175, 300)])
+          const beforeEstablishment = h.calls.boundsOf
+          h.source.fire('pointerover', pointerEvent(0))
+          h.source.fire('pointerdown', pointerEvent(0))
+          const afterEstablishment = h.calls.boundsOf
+          h.source.fire(POINTER_TYPES.move, pointerEvent(0, 175, 300))
+          const afterMove = h.calls.boundsOf
           h.source.fire(POINTER_TYPES.end, pointerEvent(0, 175, 300))
-        }
+          const afterTerminal = h.calls.boundsOf
+          establishmentDelta = afterEstablishment - beforeEstablishment
+          moveDelta = afterMove - afterEstablishment
+          terminalDelta = afterTerminal - afterMove
+        } else if (cell.lifecycle.startsWith('(b)')) h.source.fire('pointerover', pointerEvent(0))
         if (cell.lifecycle.startsWith('(d)')) {
           const invalid = await makeHarness({ boundsOf: (): unknown => undefined }, `P-GU-IM-2 ${cell.seam} invalid`)
           invalid.affordance.attach()
@@ -6662,7 +6801,34 @@ describe('§5.5.1 — P-GU-IM-2 (S-GU-SEAM-1) · the one-closure and one-evaluat
         }
         if (cell.seam === 'boundsOf') {
           if (cell.lifecycle.startsWith('(a)') && counts.boundsOf !== 0) return '`boundsOf` was consulted before any gesture'
-          if (counts.boundsOf > 2) return `\`boundsOf\` was consulted ${counts.boundsOf} times; at most once per gesture (plus the composition’s own terminal read)`
+          // **⟶ RECALIBRATED 2026-09-27 (THE ESTABLISHMENT READ ORDER) — THE DECLARED BUDGET IS
+          // `((b) 0) + 1 (ESTABLISHMENT, the gesture's own pair for the visible revert, `§2.4`
+          // item 3 / `§0A` note 5 / `§2.3` row 7) + 1 (THE OBSERVED MOVE's own value-chain clamp,
+          // `§2.4` item 2) + 1 (THE TERMINAL that evaluates a value) = `3`, and the as-filed `> 2`
+          // therefore FAILED a conformant module (MEASURED: `broken 1/20`, the establishment read
+          // unaccounted).** The declaration is now a per-phase reading with the SAME upper-bound
+          // falsifier the cell always had — a consultation beyond the declared budget still FAILS —
+          // and it gains the opposite direction: on the `(c)` lifecycle the establishment read MUST
+          // have happened (`§2.4` item 3's "exactly once per gesture, in `onStart`"), so a module
+          // that read the pair lazily on its first move instead (the read order this recalibration
+          // exists for) FAILS here too.
+          const declaredBudget = cell.lifecycle.startsWith('(c)') ? 3 : cell.lifecycle.startsWith('(d)') ? 2 : 0
+          if (cell.lifecycle.startsWith('(c)')) {
+            if (establishmentDelta !== 1) {
+              return `\`boundsOf\` was consulted ${String(
+                establishmentDelta,
+              )} time(s) in the ESTABLISHMENT turn; the contract reads the gesture's own pair EXACTLY ONCE there (\`§2.4\` item 3 "exactly once per gesture, in onStart"; \`§0A\` note 5; \`§2.3\` row 7 seeds the visible revert from it) — a module that reads it lazily on the first move reads 0 here and FAILS. MEASURED per phase: establishment=${String(
+                establishmentDelta,
+              )}, the observed move=${String(moveDelta)}, the terminal=${String(terminalDelta)}`
+            }
+            if (moveDelta > 1) return `\`boundsOf\` was consulted ${String(moveDelta)} time(s) in the OBSERVED-MOVE turn; the value chain reads the pair ONCE per observed move (\`§2.4\` item 2)`
+            if (terminalDelta > 1) return `\`boundsOf\` was consulted ${String(terminalDelta)} time(s) at the TERMINAL; at most one terminal evaluation is declared`
+          }
+          if (counts.boundsOf !== declaredBudget) {
+            return `\`boundsOf\` was consulted ${counts.boundsOf} times on ${cell.lifecycle}; the declared budget is ${declaredBudget} (the establishment read + the observed move's value-chain read + the terminal's own evaluation; \`§2.4\` items 2/3, \`§0A\` note 5, \`§2.3\` row 7). MEASURED per phase: establishment=${String(
+              establishmentDelta,
+            )}, move=${String(moveDelta)}, terminal=${String(terminalDelta)}`
+          }
           return null
         }
         if (cell.seam === 'startSizeOf') {

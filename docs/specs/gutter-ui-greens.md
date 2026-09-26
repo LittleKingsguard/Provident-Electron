@@ -329,3 +329,33 @@ evidenced rather than folded into prose. **VERDICT: as F-3/F-4 — `un-hardened 
 RUN (`45` scenarios: **`36` PASS / `9` FAIL**, plus `6` recorded `NOT-BLIND-RUNNABLE`), the module was
 reached only through its documented exported surface, the demo's card was reached only as legacy-JSON data,
 and no source file of the unit, no implementation byte and no red-set file was read by this pass.**
+
+---
+
+## ⟶ ADDENDUM 2026-09-27 (POST-GREEN) — THIS GREENS SET PREDATES THE MODULE/WIRING IT DESCRIBES AND IS A REVIEW FINDING UNTIL A BLIND RE-RUN RE-DRIVES ITS AFFECTED SCENARIOS
+
+**NOTHING ABOVE IS EDITED — every measured result at `42317ca` stays exactly as it was run and recorded
+(annotate-only, `AGENTS.md` item 10a/RCA-4). This addendum only states the set's REVISION RELATIONSHIP and
+what it OWES.**
+
+**1. THE REVISION FACT, STATED PLAINLY.** This greens set was authored and RUN **BEFORE** the live-gate
+fixes landed at **`72fff4c`** (its run revision is recorded above as `42317ca`). **IT THEREFORE PREDATES
+THE MODULE/WIRING IT DESCRIBES, and is a REVIEW FINDING until a BLIND RE-RUN re-drives its affected
+scenarios.** A greens set is evidence about the revision it ran on and about nothing later (`AGENTS.md`
+item 10's blind-test → review loop; the `U-PROJ` §12 addendum is the shape to copy).
+
+**2. WHICH OF ITS FAILURES THE `72fff4c` FIXES HAVE SINCE ADDRESSED — its `F-1`/`F-3`/`F-4`/`F-5`/`F-6`/`F-7`/`F-8` CLASSES:**
+* **the VALIDITY CLAUSE** — `F-1`/`F-8` (and `F-7`'s second half, `F-2`'s own class) are the pointer-resolution clause's absence: **`ADV-GU-3` FIXED** (validity clause (i) is in the landed expression).
+* **the RESET ARM** — `F-3`/`F-4`/`F-5`/`F-6` are the invalid arm's missing reset/commit: **`ADV-GU-6` FIXED** (the pre-drag read is taken at ESTABLISHMENT per `§2.4` item 3 / `§0A` note 5, which is the read order the invalid arm's reset depends on), with the five rows it shifted **being RECALIBRATED — `OWED — TEST-SIDE`**.
+* **the PRE-DRAG READ ORDER** — the same `ADV-GU-6` ruling.
+* **the WIRING'S WRITE ROUTE** — the class behind the live `F-4`-shaped absence of a commit: **`ADV-GU-1` FIXED** (the one write route now passes the authored status node's ID and records the runtime's answer; live: the status node read `100` → `110`).
+* **NOT ADDRESSED BY `72fff4c`, and therefore still OPEN on the re-run:** `F-9` was never a finding (a harness mis-statement, recorded above), and **`F-5`'s *"throwing value-reading seam does not reach the `reset` arm"* reading must be RE-DRIVEN to be closed** — the fix class is landed, but this set's measured reading was taken at `42317ca`.
+
+**3. WHICH SCENARIO GROUPS MUST BE RE-DRIVEN (a NEW BLIND greens set, authored by an agent who did not write the fixes):**
+* **`§5.U`'s `U-5`** — the dragged-value reading (its `[U]` half lives in the live battery; the `[T]` half re-drives here).
+* **`§5.U`'s `U-8`(e)** — the second gesture (both `(e)(1)`'s element identity and `(e)(2)`'s committed value).
+* **THE PREVIEW** — every scenario that read the preview channel (`§2.5`'s transient inline-style write on the LIVE TARGET), because `ADV-GU-2` moved the preview off the affordance's own node to the target: **live, the target's box followed the pointer `100 → 70 → 90 → 110px`**.
+* **THE REGISTER PROPERTY TEXTS** — `§5.5.1`'s seven rows, whose audit remedies are all `OWED — TEST-SIDE` (`docs/specs/gutter-ui.md`'s gate-4 `⟶ RECORDED` block, table (c): `P-GU-SM-3` counts readings as drives, the `P-GU-SM-1`/`SM-2`/`IM-1` label-only factors, `IM-2`'s under-assertion, `TP-1`'s un-invoked drive (b), `TP-2`'s missing prototype-inherited-`cursor` shape).
+* **THE CARD-READING SCENARIOS** — `ADV-GU-7`/`ADV-GU-8` changed what the authored card emits (bare attributes; the affordance's `css.style`), so any scenario that read the card's data keys or the affordance's style must be re-driven against the fixed tree.
+
+**4. WHAT THIS ADDENDUM DOES NOT DO.** It **changes no measured result, no PASS/FAIL verdict, no scenario id and no `NOT-BLIND-RUNNABLE` entry** above; it **claims no gate**; and it **does not convert any FAIL into a pass.** The set stays a **review finding** until a blind re-run replaces it.

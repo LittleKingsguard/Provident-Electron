@@ -3375,6 +3375,77 @@ describe('R — §3.4/§3.5 the static + existence rows', () => {
       ).toBe(false)
     }
     // …and this unit's own artifacts are not themselves denied.
+    // ── **⟶ DECLARED 2026-09-27 (THE SIBLING-ATTRIBUTION DECLARATION, control (s-1)) — THE
+    // `E10`/`U-GUTTER-UI` ARTIFACTS, NAMED, SO THIS ROW'S ATTRIBUTION IS A DECLARATION RATHER
+    // THAN A COINCIDENCE.** The `E10` unit's declared allow-list (`docs/specs/gutter-ui.md` `§5.1`
+    // rows 1–5, 10–12) reaches paths this row's DENIED set names FIRST — `src/shared/
+    // gutter-affordance.ts`, `src/shared/demo-envelope.ts`, `tests/gutter-ui.test.ts`,
+    // `docs/specs/gutter-ui*.md`, `src/renderer/renderer.ts`, `src/renderer/runtime.ts`, and the
+    // divergence-harness fixture `scripts/electron-divergence.mjs` (a TESTING tool, ruled into the
+    // sibling's update scope by the architect's `e135904` ruling). **THE AUTHORITY:**
+    // `docs/specs/gutter.md` `§3.4 R-4` (a later unit's legitimate use of a sibling's contract is
+    // not a violation of it) and `§5.1`'s commit-range scope rule (*"must NOT read a later unit's
+    // commits, a sibling's dirty working-tree file, or a sibling unit's artifact as this unit's
+    // diff"*). **WHAT THIS ROW'S RE-SCOPE ALREADY DOES WITH THEM, MEASURED AND STATED:** the
+    // unit-scoped commit partition above keeps only the commits that TOUCH THIS UNIT'S OWN
+    // ARTIFACTS, so the sibling's commit `72fff4c` (which touches `src/renderer/**`,
+    // `scripts/electron-divergence.mjs`, `src/shared/demo-envelope.ts` and
+    // `src/shared/gutter-affordance.ts` and NONE of this unit's paths) is OUT OF THIS ROW'S
+    // JURISDICTION — the DENIED predicate is never consulted for it and stays BYTE-IDENTICAL for
+    // the paths that ARE this unit's own. **THE DECLARATION IS THEREFORE ADDITIVE AND
+    // FALSIFIABLE BOTH WAYS:** every declared sibling path must read
+    // `isSiblingUnitArtifactOfThisRow === true`; this unit's own three canonical artifacts must
+    // read `false`; and the DENIED predicate must still deny every sibling path (so the exclusion
+    // is about SUBJECT, never about the boundary).
+    const SIBLING_UNIT_ARTIFACT_PATHS: readonly string[] = [
+      'src/shared/gutter-affordance.ts',
+      'src/shared/demo-envelope.ts',
+      'tests/gutter-ui.test.ts',
+      'docs/specs/gutter-ui.md',
+      'docs/specs/gutter-ui-greens.md',
+      'src/renderer/renderer.ts',
+      'src/renderer/runtime.ts',
+      'scripts/electron-divergence.mjs',
+    ]
+    const SIBLING_UNIT_ARTIFACT_PROBE = /^docs\/specs\/gutter-ui[^/]*\.md$/
+    const isSiblingUnitArtifactOfThisRow = (p: string): boolean =>
+      SIBLING_UNIT_ARTIFACT_PATHS.includes(p) || SIBLING_UNIT_ARTIFACT_PROBE.test(p)
+    expect(
+      SIBLING_UNIT_ARTIFACT_PATHS.filter((p) => !isSiblingUnitArtifactOfThisRow(p)),
+      `R-20/§5.1 (control s-1, THE \`E10\` DECLARATION): every declared \`E10\`/\`U-GUTTER-UI\` artifact must read \`isSiblingUnitArtifactOfThisRow === true\` — the list is EMPTY when they do. AUTHORITY: \`docs/specs/gutter.md\` \`§3.4 R-4\` + \`§5.1\`'s commit-range scope rule; \`docs/specs/gutter-ui.md\` \`§5.1\` rows 1–5/10–12 and the architect's \`e135904\` ruling (the divergence harness is a TESTING tool in the sibling's update scope). READS: ${JSON.stringify(
+        SIBLING_UNIT_ARTIFACT_PATHS.map((p) => [p, isSiblingUnitArtifactOfThisRow(p), isDenied(p)]),
+      )}`,
+    ).toEqual([])
+    expect(
+      CANONICAL.filter((p) => isSiblingUnitArtifactOfThisRow(p)),
+      `R-20/§5.1 (control s-1, THE NEGATIVE DIRECTION): this UNIT's own three canonical artifacts must NOT read as a sibling's — a predicate that claimed them would make the denial scoping vacuous. READS: ${JSON.stringify(
+        CANONICAL.map((p) => [p, isSiblingUnitArtifactOfThisRow(p)]),
+      )}`,
+    ).toEqual([])
+    // **THE BOUNDARY HALF, SCOPED TO THE PATHS THIS ROW'S DENIED SET ACTUALLY NAMES, WITH THE
+    // MEASURED PARTITION STATED RATHER THAN ASSUMED:** of the declared sibling paths, the
+    // `src/renderer/**` pair and the divergence-harness fixture ARE denied by `DENIED` (the
+    // measured reading is printed below), and the sibling's `docs/specs/gutter-ui-greens.md` is
+    // denied by `DENIED_PATTERNS` (another unit's `*-greens.md`); the sibling's own
+    // `src/shared/gutter-affordance.ts`, `src/shared/demo-envelope.ts`, `tests/gutter-ui.test.ts`
+    // and `docs/specs/gutter-ui.md` are NOT in this row's denied set **by construction — R-20's
+    // DENIED list is `§5.1`'s "outside the scope, always" list for THIS unit, and `§5.1`'s
+    // commit-range scope rule makes a sibling's own artifact OUT OF JURISDICTION rather than
+    // denied**. Asserting otherwise would be a row FAILING a sibling for work its own spec
+    // admits. **The declaration therefore changes whose change set is read, never what is
+    // denied: a path in the DENIED set still FAILS whatever its content.**
+    const SIBLING_DENIED_BY_THIS_ROWS_LIST = [
+      'src/renderer/renderer.ts',
+      'src/renderer/runtime.ts',
+      'scripts/electron-divergence.mjs',
+      'docs/specs/gutter-ui-greens.md',
+    ]
+    expect(
+      SIBLING_DENIED_BY_THIS_ROWS_LIST.filter((p) => !isDenied(p)),
+      `R-20/§5.1 (control s-1, THE BOUNDARY IS UNAFFECTED BY SUBJECT SCOPING): every sibling path THIS ROW'S DENIED SET NAMES must still read \`isDenied === true\` — the sibling declaration changes whose change set is read, never what is denied. A path that read \`false\` here would mean the declaration had weakened the boundary. READS (the whole declared set, with the partition measured): ${JSON.stringify(
+        SIBLING_UNIT_ARTIFACT_PATHS.map((p) => [p, isDenied(p)]),
+      )}`,
+    ).toEqual([])
     for (const path of UNIT_ARTIFACTS) {
       expect(
         isDenied(path),

@@ -1862,6 +1862,53 @@ const SIBLING_UNIT_ARTIFACT_PROBE = /^docs\/specs\/gutter-ui[^/]*\.md$/
  *  still denied in the RAW reading), and `E3`'s own module `src/shared/gesture-session.ts` **is NOT
  *  on this list** — the row's own positive control (i) keeps driving it as an `E3`-OWN denied path. */
 const OTHER_UNIT_ARTIFACT_PATHS: readonly string[] = ['tests/gesture-session.test.ts']
+/** **⟶ ADDED 2026-09-27 (THE SIBLING-ATTRIBUTION DECLARATION, `U-PROJ`'s RED SET) — A THIRD
+ *  UNIT'S OWN TEST FILE, BY NAME.** `tests/layout-projection.test.ts` is **`U-PROJ`'s** artifact
+ *  (its own red set and its own diff-scope row `R-20`), not `E3`'s and not `E10`'s. **THE MEASURED
+ *  CAUSE OF THIS ADDITION:** a SIBLING pass's legitimate edit to that file put it in
+ *  `git status --porcelain`, and this row's dirty arm then charged a sibling's working-tree file to
+ *  `E3` — **the exact class `docs/specs/gutter.md` `§5.1`'s commit-range scope rule forbids:
+ *  *"must NOT read … a sibling's dirty working-tree file … as this unit's diff"***, and the same
+ *  class `docs/specs/gutter.md` `§3.4 R-4` relieves a later unit of. **VERBATIM MEASURED READ
+ *  (before this declaration):** `E3-OWN DENIED DIRTY PATHS: ["tests/layout-projection.test.ts"]` —
+ *  a denied path in `E3`'s own dirty set, i.e. this row FAILING `E3` for a sibling's work. The
+ *  exclusion is BY NAME (`isDeniedPath` stays byte-identical, so the path is still denied in the
+ *  RAW reading), and `E3`'s own `tests/gutter.test.ts` is NOT on this list — the row's positive
+ *  control (i) keeps driving an `E3`-own denied path. */
+const OTHER_UNIT_TEST_FILES: readonly string[] = ['tests/layout-projection.test.ts']
+/** **⟶ DECLARED 2026-09-27 (THE SIBLING-ATTRIBUTION DECLARATION, THE `E10`/`U-GUTTER-UI` PASS) —
+ *  THE SIBLING'S `src/renderer/**`, `scripts/**` AND TESTS FILES, BY NAME, SO THE ATTRIBUTION IS A
+ *  DECLARATION RATHER THAN A COINCIDENCE.**
+ *
+ *  **WHY THIS LIST EXISTS, AND WHAT IT DOES NOT DO.** The `E10`/`U-GUTTER-UI` unit's declared
+ *  allow-list (`docs/specs/gutter-ui.md` `§5.1` rows 1–5, 10–12) reaches paths that the list above
+ *  does NOT name: the `E10` **renderer wiring** (`src/renderer/renderer.ts`, `src/renderer/runtime.ts`),
+ *  its **divergence-harness fixture** (`scripts/electron-divergence.mjs` — a TESTING tool, ruled into
+ *  the unit's update scope by the architect's `e135904` ruling), and its own **test/spec surface**
+ *  (`tests/gutter-ui.test.ts`, `docs/specs/gutter-ui*.md`). Those are not `gutter*`-named, so the
+ *  `R-16` census never had to exclude them — but `R-12`'s DENIED set does: it names `src/renderer/**`
+ *  and `scripts/**` FIRST, and a SIBLING's legitimate pass to them puts them in `git status` and in
+ *  a later commit range. **THIS LIST MAKES THAT ATTRIBUTION EXPLICIT AND DRIVEN.**
+ *
+ *  **THE RULE IT IS READ UNDER — `docs/specs/gutter.md` `§3.4 R-4` AND `§5.1`'s commit-range scope
+ *  rule, quoted because it is the authority:** *"a diff-scope row asserted over a commit range must
+ *  scope its allow-list census to THIS UNIT'S OWN ARTIFACTS … and **must NOT read a later unit's
+ *  commits, a sibling's dirty working-tree file, or a sibling unit's artifact as this unit's
+ *  diff**"*; and `§5.1`'s companion reading (reconciled into `docs/specs/gutter-ui.md` `§3.4 R-9` this
+ *  pass): the sibling scoping applies to the **ALLOW-LIST/census subject**, while the DENIED predicate
+ *  stays **byte-identical, exception-free and binding over the unit's OWN attributable set**.
+ *
+ *  **WHAT IT DOES NOT WEAKEN.** `isDeniedPath` is untouched by this list; `isSiblingUnitArtifact`
+ *  can only ever REMOVE a path from `E3`'s subject, never add one; `E3`'s own five artifacts are
+ *  asserted NOT sibling by `R-12` control (h); an UNCLAIMED path still counts as `E3`'s own (control
+ *  (a-1)'s negative direction, `isUnclaimedGutterImporter`); and the synthetic `E3`-own denied path
+ *  (`src/shared/gesture-session.ts`) is still driven as `E3`'s own by `R-12`'s positive control (i),
+ *  so a denied path among `E3`'s own changes still FAILS. */
+const SIBLING_RENDERER_AND_HARNESS_PATHS: readonly string[] = [
+  'src/renderer/renderer.ts', // `gutter-ui.md` §5.1 row 10 — the bounded renderer wiring (`E10`)
+  'src/renderer/runtime.ts', // row 11 — `Runtime.elementForNodeId` and nothing else
+  'scripts/electron-divergence.mjs', // the divergence leg (R13) — a TESTING TOOL, ruled into the unit's scope at `e135904`
+]
 /** **THE SIBLING-UNIT-ARTIFACT PREDICATE (`R-12`'s per-path seam and `R-16`'s census
  *  exclusion).** `true` means: this path is `E10`'s (`U-GUTTER-UI`) declared artifact,
  *  so it is **OUT OF SCOPE BY CONSTRUCTION** for every `E3` clause — never `E3`'s own
@@ -1871,7 +1918,17 @@ function isSiblingUnitArtifact(path: string): boolean {
   return (
     SIBLING_UNIT_ARTIFACT_PATHS.includes(path) ||
     SIBLING_UNIT_ARTIFACT_PROBE.test(path) ||
-    OTHER_UNIT_ARTIFACT_PATHS.includes(path)
+    OTHER_UNIT_ARTIFACT_PATHS.includes(path) ||
+    // **⟶ ADDED 2026-09-27 (THE SIBLING-ATTRIBUTION DECLARATION) — a THIRD unit's own test file
+    // (`U-PROJ`), DECLARED BY NAME above, for the same measured class the `gesture-session`
+    // entry closes.** This clause can only REMOVE a path from `E3`'s subject; `isDeniedPath` is
+    // untouched and the RAW reading still reports the path as denied.
+    OTHER_UNIT_TEST_FILES.includes(path) ||
+    // **⟶ ADDED 2026-09-27 (THE SIBLING-ATTRIBUTION DECLARATION) — the `E10` renderer/harness
+    // paths, DECLARED BY NAME above.** This clause can only REMOVE a path from `E3`'s subject
+    // (it is an OR inside a predicate that is only ever used as an exclusion), and the DENIED
+    // predicate that binds `E3`'s OWN set is untouched.
+    SIBLING_RENDERER_AND_HARNESS_PATHS.includes(path)
   )
 }
 /** **`R-16`'s ASSERTED CENSUS = THE RAW WALK MINUS THE SIBLING'S ARTIFACTS.** The
@@ -3831,6 +3888,38 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       `R-12 §3.4 — POSITIVE CONTROL (THE PREDICATE'S NEGATIVE DIRECTION, so the exclusion cannot be vacuous): \`E3\`'s OWN three canonical artifacts must read \`isSiblingUnitArtifact === false\` — a predicate that excluded them too would make arms (a)/(b) and \`R-16\`'s census pass by construction. Reads: ${JSON.stringify(
         SIBLING_CONTROL_E3.map((p) => [p, isSiblingUnitArtifact(p)]),
       )}`,
+    ).toEqual([])
+    // **⟶ ADDED 2026-09-27 (THE SIBLING-ATTRIBUTION DECLARATION, control (h-2)) — THE `E10`
+    // RENDERER/HARNESS PATHS, DRIVEN BOTH WAYS.** The declared list
+    // (`SIBLING_RENDERER_AND_HARNESS_PATHS`) is the sibling's `src/renderer/**`, its
+    // divergence-harness fixture and its own test/spec surface — the paths a SIBLING's legitimate
+    // pass touches and a later commit range carries, which `R-12`'s DENIED set names FIRST
+    // (`src/renderer/**`, `scripts/**`). **THE AUTHORITY:** `docs/specs/gutter.md` `§3.4 R-4` (a
+    // later unit's legitimate use of `E3`'s module is not a violation of `E3`'s contract) and
+    // `§5.1`'s commit-range scope rule (*"must NOT read … a sibling's dirty working-tree file …
+    // as this unit's diff"*). **THE CONTROL IS FALSIFIABLE BOTH WAYS:** every declared path must
+    // read `isSiblingUnitArtifact === true`, AND `E3`'s own three + the synthetic unclaimed
+    // `gutter*` path must read `false` — so a predicate that claimed everything, or one that
+    // claimed nothing, FAILS here. **A DENIED PATH THAT IS `E3`'S OWN IS STILL FAILED** (the
+    // `SIBLING_DENIED_OWN` control just below drives `src/shared/gesture-session.ts`).
+    const SIBLING_DECLARED_E10 = [
+      ...SIBLING_RENDERER_AND_HARNESS_PATHS,
+      'src/renderer/renderer.ts',
+      'src/renderer/runtime.ts',
+      'scripts/electron-divergence.mjs',
+    ]
+    expect(
+      SIBLING_DECLARED_E10.filter((p) => !isSiblingUnitArtifact(p)),
+      `R-12 §3.4 — POSITIVE CONTROL (h-2, THE \`E10\` RENDERER/HARNESS DECLARATION): every one of these paths IS the sibling unit's declared artifact and must read \`isSiblingUnitArtifact === true\` — the list is EMPTY when they do. **READS:** ${JSON.stringify(
+        SIBLING_DECLARED_E10.map((p) => [p, isSiblingUnitArtifact(p)]),
+      )}. AUTHORITY: \`docs/specs/gutter.md\` \`§3.4 R-4\` + \`§5.1\`'s commit-range scope rule; \`docs/specs/gutter-ui.md\` \`§5.1\` rows 10/11 and the architect's \`e135904\` ruling (the divergence harness is a TESTING tool in the unit's update scope)`,
+    ).toEqual([])
+    const SIBLING_DENIED_OWN = ['src/shared/gesture-session.ts', 'src/main/main.ts', 'package.json', 'scripts/electron-ui.mjs']
+    expect(
+      SIBLING_DENIED_OWN.filter((p) => isSiblingUnitArtifact(p)),
+      `R-12 §3.4 — POSITIVE CONTROL (h-2, THE NEGATIVE DIRECTION, so the declaration cannot swallow \`E3\`'s own denied set): \`E3\`'s OWN denied paths and the harness files this unit does NOT claim must read \`isSiblingUnitArtifact === false\` — a path that claimed one of them would excuse a real \`E3\` boundary violation. **READS:** ${JSON.stringify(
+        SIBLING_DENIED_OWN.map((p) => [p, isSiblingUnitArtifact(p), isDeniedPath(p)]),
+      )}. The DENIED predicate itself is UNTOUCHED by this pass: every one of these still reads \`isDeniedPath === true\`, so a denied path among \`E3\`'s OWN changes still FAILS the arm`,
     ).toEqual([])
     expect(
       SIBLING_CONTROL.map((c) => c.path).filter((p) => isE3GreensArtifact(p) || isE3ReviewArtifact(p)),
