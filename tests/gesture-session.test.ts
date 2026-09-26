@@ -213,10 +213,18 @@ import type { GestureStats as ModuleGestureStats } from '../src/shared/gesture-s
 //
 // The `TS2307`/excess-property diagnostics this produces are NOT suppressed
 // anywhere (the `R-6(b)` rule at the head of this file): a `@ts-ignore` here would
-// make the declaration claim unfalsifiable. At RED time — before the Implementer
-// lands the member — the expected diagnostic is
-// `error TS2353: Object literal may only specify known properties, and
-// 'capturePointer' does not exist in type 'EventSource'`.
+// make the declaration claim unfalsifiable.
+//
+// **⟶ RECORDED 2026-09-27 (`ADV-GS-17`, THE GATE-4 CLOSURE): THE TYPE-LEVEL RED HAS
+// FLIPPED GREEN.** As filed this block read *"At RED time — before the Implementer lands
+// the member — the expected diagnostic is `error TS2353: Object literal may only specify
+// known properties, and 'capturePointer' does not exist in type 'EventSource'`"*. **THE
+// MODULE NOW DECLARES THE MEMBER** (`src/shared/gesture-session.ts`'s `EventSource` carries
+// `capturePointer?(element: GestureElement): void`, and the module's own capture read is
+// `readMember(seam, 'capturePointer')`), so the standalone strict `tsc` leg over THIS file
+// is **EXIT `0` WITH ZERO DIAGNOSTICS** — the `TS2353` above is KEPT VISIBLE as the
+// as-filed form and is no longer the expected outcome. The as-filed sentence is kept, as
+// this file's `⟶` convention requires, and the record now matches the landed bytes.
 //
 // The fixture is HARNESS-side (`[T]`): every call it records is a CALL THE SESSION
 // MADE against an argument-supplied source, never a fact about a browser
@@ -410,6 +418,17 @@ interface SourceOptions {
    *  built (so its `log`/`attached` containers, created above, still record), and the
    *  freeze is MEASURED by `isGenuinelyFrozen` rather than trusted. */
   readonly frozen?: boolean
+  /** ⟶ ADDED 2026-09-27 (the `ADV-GS-26` regression row, the gate-4 closure): configure the
+   *  recorder's SOURCE-SUPPLIED capture member to THROW on its one call. `§2.1`'s
+   *  `EventSource.capturePointer` doc is explicit — *"A throw from it is swallowed by the
+   *  same valid-state rule as the source's other callables (`§2.4` item 6) — a throwing
+   *  capture member never reaches the consumer boundary and never fails a gesture"* — and
+   *  the capture member is the ONE seam entry point whose throw had no row before this
+   *  pass. The symmetric form of `failOn`/`failOff`: the recorder logs the ATTEMPT and
+   *  THEN throws (the documented order), so a row can measure the attempt count, the
+   *  swallowed throw (through `threwAt`) and the gesture's normal termination on the SAME
+   *  drive. */
+  readonly failCapture?: boolean
 }
 interface RecorderSource extends EventSource {
   /** The source-SUPPLIED capture entry point (`§2.3` item 6's RULED form): the session
@@ -531,6 +550,15 @@ function makeSource(options: SourceOptions = {}): RecorderSource {
   const withCapture = source as unknown as Record<string, unknown>
   withCapture['capturePointer'] = (element: unknown): void => {
     record('capture', element, 'capturePointer', undefined, true)
+    // ⟶ ADDED 2026-09-27 (the `ADV-GS-26` regression row): the ATTEMPT is recorded FIRST,
+    // then the configured fault fires — the same order `on`/`off` use, so the row can
+    // assert "exactly ONE capture ATTEMPT was made" from the recorder's own `captures`
+    // array while the throw itself is measured from `threwAt` (`§2.1`'s `capturePointer`
+    // doc: the throw is SWALLOWED, the gesture still establishes and still terminates).
+    if (options.failCapture === true) {
+      threwAt.add(seq - 1)
+      throw new Error('the recorder source was configured to fail this capture call')
+    }
   }
   // ⟶ `D-12`(b): **THE ABSENT-MEMBER SHAPE IS A PROPERTY-ABSENCE, NOT A PROPERTY SET TO
   // `undefined`.** An explicitly-supplied `isConnected: undefined` therefore DELETES the
@@ -726,6 +754,19 @@ function probeOwnNames(value: unknown): string[] {
     return Object.getOwnPropertyNames(value)
   } catch {
     return []
+  }
+}
+
+/** **THE HOSTILITY PROBE** (`ADV-GS-24`): does THIS body really throw? Used by `PRE-4`'s
+ *  narrowed hostile-pool limb to MEASURE each hostile pool member's hostility (a
+ *  coordinate getter that throws, a `Proxy` whose traps throw, a `valueOf` that throws)
+ *  instead of declaring it — so the limb can fail. */
+function throwsOn(body: () => unknown): boolean {
+  try {
+    body()
+    return false
+  } catch {
+    return true
   }
 }
 
@@ -1807,6 +1848,23 @@ function composeHook<A extends unknown[]>(
     recorder(...args)
     custom(...args)
   }
+}
+
+/** **⟶ `ADV-GS-18` (the gate-4 closure): A GENUINELY SINGLE-HOOK INPUT.** `P-GS-IM-1`'s
+ *  configurations `(6)`–`(10)` declare *"`{onStart: fn}` only"* … *"all five hooks"*, and as
+ *  filed ALL FIVE were built by `hookOptions(makeHookLog(), {})` — the same ALL-HOOKS-PRESENT
+ *  input — so four of the five ids described nothing they built (measured: the module's
+ *  resolved input for `(6)`…`(10)` was byte-identical). Each id now builds what it names:
+ *  exactly ONE callable hook for `(6)`–`(9)`, and the full set for `(10)`. The hook is a real
+ *  callable, so its presence is an input the module reads (`§2.1`
+ *  `GestureOptionsInput.onStart?: unknown` — read for callability) rather than an annotation. */
+function singleHookOptions(hook: 'onStart' | 'onMove' | 'onEnd' | 'onCancel'): GestureOptionsInput {
+  const called: string[] = []
+  const record = (): void => void called.push(hook)
+  if (hook === 'onStart') return { onStart: record }
+  if (hook === 'onMove') return { onMove: record }
+  if (hook === 'onEnd') return { onEnd: record }
+  return { onCancel: record }
 }
 function hookOptions(log: HookLog, extra: GestureOptionsInput = {}): GestureOptionsInput {
   return {
@@ -3908,40 +3966,147 @@ describe('M — §3.1 the valid states', () => {
   // rather than passing vacuously.
   // -------------------------------------------------------------------------
   it('M-18 §3.1 — THE `P-4` RULE SET’S RUNTIME HALF (the pair with `R-12`): a full lifecycle authors NO UI content — the element’s own recorded write log stays EMPTY and no prohibited write token is in the session’s change set', async () => {
-    // THE WRITE-RECORDING SURFACE (`§3.1 M-18`'s own words): the element is a PLAIN
-    // OBJECT whose write surfaces are real members with a recording body, so a write the
-    // session authored would land in the element's own log. The surface is NAMED here
-    // (the row's spy triple) while the SCAN's spellings are held as fragments — a bound
-    // token elsewhere in this file does not weaken `R-12`, whose scope is the module plus
-    // this row's controlled corpora.
+    // -------------------------------------------------------------------------
+    // **⟶ `ADV-GS-23` (THE GATE-4 CLOSURE, 2026-09-27): THE RECORDING SURFACE NOW COVERS
+    // EVERY `R-12` TOKEN FAMILY.** As filed this instrument carried THREE members
+    // (`set${'Attribute'}`, `classList.add`, `textContent`) while the row's own claim — and
+    // `§2.2 P-4`/`§3.4 R-12` — covers *"no attribute write, no class write, no text write,
+    // no markup write, no insert/append, no `style` write"*: a module doing a markup
+    // assignment, a child append or a stylesheet write on the element it was handed would
+    // have PASSED this row. The surface below carries every family `R-12` enumerates — the
+    // attribute/class/text family, the markup family (`innerHTML`-style / `outerHTML`-style /
+    // the two `insertAdjacent*` inserts), the node family (`appendChild` / `insertBefore` /
+    // `removeChild` / `replaceChildren`), the factory family (`createElement` /
+    // `createTextNode`) and the THREE stylesheet-write shapes (a member write through the
+    // style object, a plain-style-attribute write and a `cssText` write) — and the style
+    // object is a `Proxy` so a DIRECT property write (the shape a plain function triple
+    // cannot see) is recorded too.
+    //
+    // **EVERY SPELLING IS ASSEMBLED AT RUN TIME FROM FRAGMENTS**, because this file's own
+    // raw bytes are scanned by `R-8` (a member-access spelling of the markup or stylesheet
+    // tokens here would fail `R-8`(b)), and because `R-12`'s own scope rule drops a
+    // whole-file negative over this file precisely so its controls may carry the spellings.
+    // -------------------------------------------------------------------------
     const attempts: Array<{ surface: string; wrote: true }> = []
-    const writeSurface = (): Record<string, unknown> => ({
-      setAttribute: (name: string, value: unknown): void => {
-        void value
-        attempts.push({ surface: `set${'Attribute'}(${name})`, wrote: true })
+    const write = (surface: string): void => void attempts.push({ surface, wrote: true })
+    const W = {
+      attrSet: ['set', 'Attribute'].join(''),
+      attrRemove: ['remove', 'Attribute'].join(''),
+      classFamily: ['class', 'List'].join(''),
+      classProp: ['class', 'Name'].join(''),
+      textProp: ['text', 'Content'].join(''),
+      textPropAlt: ['inner', 'Text'].join(''),
+      markupInner: ['inner', 'HTML'].join(''),
+      markupOuter: ['outer', 'HTML'].join(''),
+      insMarkup: ['insert', 'Adjacent', 'HTML'].join(''),
+      insText: ['insert', 'Adjacent', 'Text'].join(''),
+      makeElement: ['create', 'Element'].join(''),
+      makeTextNode: ['create', 'Text', 'Node'].join(''),
+      addChild: ['append', 'Child'].join(''),
+      insBefore: ['insert', 'Before'].join(''),
+      dropChild: ['remove', 'Child'].join(''),
+      replaceKids: ['replace', 'Children'].join(''),
+      cssWrite: ['css', 'Text'].join(''),
+      styleRoot: ['st', 'yle'].join(''),
+      styleSet: ['set', 'Property'].join(''),
+      styleRemove: ['remove', 'Property'].join(''),
+    } as const
+    // THE METHOD FAMILY (a call records a write).
+    const methodSurface: Record<string, unknown> = {
+      [W.attrSet]: (name: string): void => write(`${W.attrSet}(${name})`),
+      [W.attrRemove]: (name: string): void => write(`${W.attrRemove}(${name})`),
+      [W.classFamily]: {
+        add: (name: string): void => write(`${W.classFamily}.add(${name})`),
+        remove: (name: string): void => write(`${W.classFamily}.remove(${name})`),
+        toggle: (name: string): void => write(`${W.classFamily}.toggle(${name})`),
       },
-      classList: { add: (name: string): void => void attempts.push({ surface: `classList.add(${name})`, wrote: true }) },
-      textContent: (value: unknown): void => {
-        void value
-        attempts.push({ surface: 'textContent', wrote: true })
+      [W.insMarkup]: (position: string): void => write(`${W.insMarkup}(${position})`),
+      [W.insText]: (position: string): void => write(`${W.insText}(${position})`),
+      [W.makeElement]: (tag: string): void => write(`${W.makeElement}(${tag})`),
+      [W.makeTextNode]: (): void => write(W.makeTextNode),
+      [W.addChild]: (): void => write(W.addChild),
+      [W.insBefore]: (): void => write(W.insBefore),
+      [W.dropChild]: (): void => write(W.dropChild),
+      [W.replaceKids]: (): void => write(W.replaceKids),
+    }
+    const el: Record<string, unknown> = { id: 'a' }
+    for (const key of Object.keys(methodSurface)) el[key] = methodSurface[key]
+    // THE PROPERTY-WRITE FAMILY (an ASSIGNMENT records a write; a read records nothing).
+    for (const prop of [W.textProp, W.textPropAlt, W.markupInner, W.markupOuter, W.classProp]) {
+      Object.defineProperty(el, prop, {
+        configurable: true,
+        enumerable: true,
+        get: (): undefined => undefined,
+        set: (): void => write(`${prop} =`),
+      })
+    }
+    // THE STYLESHEET FAMILY: a `Proxy` so BOTH a member write (the `setProperty`-shaped and
+    // `removeProperty`-shaped calls) and a DIRECT property write through the style object
+    // land in the same log.
+    const styleRoot = new Proxy({} as Record<string, unknown>, {
+      get: (_target, prop): unknown => {
+        if (typeof prop !== 'string') return undefined
+        if (prop === W.styleSet || prop === W.styleRemove) {
+          return (name: string): void => write(`${W.styleRoot}.${prop}(${name})`)
+        }
+        return undefined
+      },
+      set: (_target, prop): boolean => {
+        write(`${W.styleRoot}.${String(prop)} =`)
+        return true
       },
     })
-    const surface = writeSurface()
-    const el: Record<string, unknown> = { id: 'a', ...surface }
-    // NOT VACUOUS: the recorder really records a write — a direct write into the surface
-    // lands in the log, so the empty log the row asserts below is a MEASUREMENT.
-    const { setAttribute, classList, textContent } = surface as {
-      setAttribute: (name: string, value: unknown) => void
-      classList: { add: (name: string) => void }
-      textContent: (value: unknown) => void
+    el[W.styleRoot] = styleRoot
+    const styleObject = styleRoot as Record<string, unknown>
+    // NOT VACUOUS — THE "RECORD THEN CLEAR" PROBE (`ADV-GS-23`'s own requirement: the
+    // instrument must be PROVABLY LIVE), run over EVERY family the row now claims: one
+    // direct write per family lands in the element's own log, the count is asserted, and
+    // the log is then CLEARED so the emptiness asserted below is a MEASUREMENT.
+    const methodMember = (token: string): ((...args: unknown[]) => void) => el[token] as (...args: unknown[]) => void
+    const classMember = el[W.classFamily] as Record<string, (...args: unknown[]) => void>
+    const probes: ReadonlyArray<readonly [string, () => void]> = [
+      [`${W.attrSet} family`, () => methodMember(W.attrSet)('probe', 'x')],
+      [`${W.attrRemove} family`, () => methodMember(W.attrRemove)('probe')],
+      [`${W.classFamily}.add family`, () => classMember.add('probe')],
+      [`${W.classFamily}.remove family`, () => classMember.remove('probe')],
+      [`${W.classFamily}.toggle family`, () => classMember.toggle('probe')],
+      [`${W.classProp} write`, () => void (el[W.classProp] = 'probe')],
+      [`${W.textProp} write`, () => void (el[W.textProp] = 'probe')],
+      [`${W.textPropAlt} write`, () => void (el[W.textPropAlt] = 'probe')],
+      [`${W.markupInner} write`, () => void (el[W.markupInner] = '<i></i>')],
+      [`${W.markupOuter} write`, () => void (el[W.markupOuter] = '<i></i>')],
+      [`${W.insMarkup} family`, () => methodMember(W.insMarkup)('beforeend')],
+      [`${W.insText} family`, () => methodMember(W.insText)('beforeend')],
+      [`${W.makeElement} family`, () => methodMember(W.makeElement)('div')],
+      [`${W.makeTextNode} family`, () => methodMember(W.makeTextNode)('x')],
+      [`${W.addChild} family`, () => methodMember(W.addChild)({})],
+      [`${W.insBefore} family`, () => methodMember(W.insBefore)({}, {})],
+      [`${W.dropChild} family`, () => methodMember(W.dropChild)({})],
+      [`${W.replaceKids} family`, () => methodMember(W.replaceKids)({})],
+      [`a ${W.styleRoot}-object member write (the 'setProperty' shape)`, () => (styleObject[W.styleSet] as (n: string) => void)('color')],
+      [`a ${W.styleRoot}-object member write (the 'removeProperty' shape)`, () => (styleObject[W.styleRemove] as (n: string) => void)('color')],
+      [`a DIRECT property write through the ${W.styleRoot} object`, () => void (styleObject['color'] = 'red')],
+      [`a ${W.cssWrite} write through the ${W.styleRoot} object`, () => void (styleObject[W.cssWrite] = 'color: red')],
+    ]
+    for (const [family, probe] of probes) {
+      try {
+        probe()
+      } catch (e) {
+        throw new Error(`M-18 — the write-recording surface could not be probed for the ${family}: ${describeThrown(e)}`)
+      }
     }
-    setAttribute('probe', 'x')
-    classList.add('probe')
-    textContent('probe')
+    expect(
+      probes.length,
+      'M-18/`ADV-GS-23` — the PROBE covers every family the row claims, so the surface cannot be live for one family and inert for the rest',
+    ).toBe(22)
     expect(
       attempts.length,
-      'M-18 — the write-recording surface is LIVE: a direct write lands in the element’s own log, so the empty log asserted below is measured and not a fixture that cannot record',
-    ).toBe(3)
+      `M-18 — the write-recording surface is LIVE in EVERY family the row claims: a direct write per family lands in the element’s own log (${probes.length} probes, ${probes.length} recorded writes), so the EMPTY log the row asserts below is measured and not a fixture that cannot record`,
+    ).toBe(probes.length)
+    expect(
+      new Set(attempts.map((a) => a.surface)).size,
+      'M-18 — and each probe recorded a DISTINCT surface spelling (a probe pair that collapsed onto one member would leave a family unmeasured)',
+    ).toBe(probes.length)
     attempts.length = 0
     // THE LIFECYCLE (`§3.1 M-18`: install → begin → pointermove → end) over a recording
     // source. No `capture` opt-in is used: the capture path is `M-7`/`M-7b`'s, and this row
@@ -3967,17 +4132,32 @@ describe('M — §3.1 the valid states', () => {
       attempts,
       'M-18/§2.2 P-4 — over the WHOLE lifecycle (install → begin → pointermove → end) the session authors NO UI content: no attribute write, no class write, no text write, no markup write, no insert/append and no style write reached the element it was handed — the element’s own recorded write log stays EMPTY',
     ).toEqual([])
-    // THE SESSION'S OWN CHANGE SET, read from the run: the source log names every call the
-    // session made, and NONE of them is a write surface (the recorder's `on`/`off`/capture/
-    // isConnected are the only entries by construction).
+    // THE SESSION'S OWN CHANGE SET, read from the run — **RE-WORDED BY `ADV-GS-23`**: the
+    // as-filed limb filtered the recorder's log against the very op set the recorder can
+    // emit (`['on','off','capture','isConnected']`), so it could not fail and stood as a
+    // claim it was not. The claim is now asserted in a FALSIFIABLE form: the source half of
+    // the change set is EXACTLY the declared lifecycle op multiset — `4` attaches (the start
+    // listener plus the three tracking attaches), `3` detaches (the tracking three at the
+    // `end` terminal) and `1` connectivity reading (the recorder supplies a callable
+    // `isConnected` returning `true`, `§2.4` item 5) — so an EXTRA operation of any kind,
+    // or a missing one, FAILS here. (The write half is the empty log asserted above; the two
+    // halves together are the session's whole change set.)
+    const opCounts = h.source.log.reduce<Record<string, number>>((acc, rec) => {
+      acc[rec.op] = (acc[rec.op] ?? 0) + 1
+      return acc
+    }, {})
     expect(
-      h.source.log.map((rec) => rec.op).filter((op) => !['on', 'off', 'capture', 'isConnected'].includes(op)),
-      'M-18 — the session’s change set names NO operation beyond the source’s own contract (`on`/`off`/capture/connectivity): there is no write call of any kind in it',
-    ).toEqual([])
+      Object.keys(opCounts).sort(),
+      'M-18 — the source half of the change set names NO operation beyond the four the source’s own contract exposes (`on`/`off`/`isConnected` here, no capture: this row uses no opt-in) — measured against the DECLARED lifecycle multiset below, so a fifth operation of any kind fails both limbs',
+    ).toEqual(['isConnected', 'off', 'on'])
+    expect(
+      opCounts,
+      'M-18 — and the measured multiset EQUALS the declared lifecycle multiset (`on` × 4 = the start listener + the three tracking attaches; `off` × 3 = the tracking detaches at the `end` terminal; `isConnected` × 1 = the one connectivity reading per `begin`): an extra or missing call fails here, which is what makes this limb a claim rather than a tautology',
+    ).toEqual({ on: 4, off: 3, isConnected: 1 })
     expect(
       h.source.log.length,
       'M-18 — the lifecycle really made calls, so the change-set reading above is over a non-empty log',
-    ).toBeGreaterThan(3)
+    ).toBe(8)
     // THE PAIR (`§3.4 R-12`: "and the pair is the row", `R-3`'s form): the static half is
     // asserted by the row above, and this runtime half is what a text scan cannot prove.
     expect(
@@ -4738,7 +4918,7 @@ describe('ADV-GS-2 — the tracking-attach refusal (the gate-4 regression row)',
     expect(h.session.stats().commits, 'ADV-GS-2/(iii) — and the SESSION’S OWN counter reads zero (`§0A` note 12: the count seam is the module’s own)').toBe(0)
     expect(
       h.session.stats().gestures,
-      'ADV-GS-2/(iii)/`ADV-GS-15` — **THE CLAUSE GOVERNS, NOT THE BYTES:** `§2.1`’s `SessionStats.gestures` cell declares the field as *“Successful `begin` calls, instance-lifetime”*, and `§2.3`’s refusal clauses create NO gesture — so a REFUSED `begin` must leave the counter at `0`. **THIS IS THE ROW’S INTENTIONAL RED** until the Implementer’s module-side fix lands (the counter increment must move AFTER the tracking-attach check, beside the capture call): the landed module increments it BEFORE that check, so this assertion reads `1` today. **The expected value is the SPEC’S; the row is NOT to be re-tuned to the measured figure** (see `ADV-GS-15` in the block comment above this `describe`, and the same finding at the file’s foot)',
+      'ADV-GS-2/(iii)/`ADV-GS-15` — **THE CLAUSE GOVERNS, NOT THE BYTES:** `§2.1`’s `SessionStats.gestures` cell declares the field as *“Successful `begin` calls, instance-lifetime”*, and `§2.3`’s refusal clauses create NO gesture — so a REFUSED `begin` leaves the counter at `0`. **⟶ RECORDED 2026-09-27 (`ADV-GS-17`, the gate-4 closure): THIS LIMB IS GREEN AGAINST THE LANDED MODULE** — the module-side fix `ADV-GS-15` asked for has LANDED (`src/shared/gesture-session.ts`: the increment of `counters.gestures`, and the `record.id` it feeds, sit AFTER the tracking-attach check and beside the capture call), so a refused `begin` consumes neither the counter nor the id. The as-filed text read *“**THIS IS THE ROW’S INTENTIONAL RED** … the landed module increments it BEFORE that check, so this assertion reads `1` today”* and is kept here as the as-filed form; the row was never re-tuned to the measured figure, and it does not need to be — the fix landed under it',
     ).toBe(0)
     expect(
       h.session.stats().active,
@@ -4768,7 +4948,7 @@ describe('ADV-GS-2 — the tracking-attach refusal (the gate-4 regression row)',
     ).toBe(1)
     expect(
       handle.id,
-      'ADV-GS-2/(iv)/`ADV-GS-15` — and the id proves it: the first gesture’s handle carries `id === 1` (`M-2`’s *“the handle’s `id === 1`”`, `§2.4` item 4 — *“`id` starts at `1`, increments on every SUCCESSFUL `begin`”*; a refused `begin` is not a successful one, so it must not consume an id). The landed module increments the counter before the tracking-attach check and derives `record.id` from it, so it hands this handle `id: 2` — **the second half of the same intentional red** (`ADV-GS-15`)',
+      'ADV-GS-2/(iv)/`ADV-GS-15` — and the id proves it: the first gesture’s handle carries `id === 1` (`M-2`’s *“the handle’s `id === 1`”`, `§2.4` item 4 — *“`id` starts at `1`, increments on every SUCCESSFUL `begin`”*; a refused `begin` is not a successful one, so it must not consume an id). **⟶ RECORDED 2026-09-27 (`ADV-GS-17`, the gate-4 closure): THE FIX HAS LANDED AND THIS LIMB IS GREEN.** The as-filed text read *“The landed module increments the counter before the tracking-attach check and derives `record.id` from it, so it hands this handle `id: 2` — **the second half of the same intentional red** (`ADV-GS-15`)”; the increment now sits AFTER that check (beside the capture call), so the first successful gesture is handed `id: 1` and the pre-fix reading is kept here as provenance only',
     ).toBe(1)
     expect(
       h.source.log
@@ -4800,6 +4980,295 @@ describe('ADV-GS-2 — the tracking-attach refusal (the gate-4 regression row)',
     expect(
       h.source.listenerCount(el),
       'ADV-GS-2/(iv) — the terminal restored the baseline to `1` (`§2.3` item 2(c)): the whole refuse → retry → terminal cycle is balanced',
+    ).toBe(1)
+  })
+})
+// ===========================================================================
+// **⟶ THE GATE-4 CLOSURE ROWS (2026-09-27) — `ADV-GS-16`, `ADV-GS-26`, `ADV-GS-22(a)`.**
+//
+// Three seam states had NO row before this pass. They are §3/`§2.1` clause rows (not
+// register rows): none of them is a `§5.5.1` attempt, and the declared register terms,
+// the `396` total, the seed and the caps are UNTOUCHED by this block.
+//   · `ADV-GS-16` — **THE RED OF THIS PASS.** `§2.1`'s `SessionStats.gestures` cell reads
+//     *"Successful `begin` calls, instance-lifetime"*, `§2.4` item 4 has the handle `id`
+//     *"start at `1`, increment on every **successful** `begin`"*, and `M-2` puts the first
+//     gesture's handle at `id === 1` — while the LANDED module consummates the counter and
+//     the id BEFORE `onStart` runs, so a `begin` whose `onStart` throws (it cleans up and
+//     RETHROWS, `§2.3` item 1(d)) still counts as a gesture and consumes an id. The row
+//     asserts the CLAUSE and is therefore RED until the module side moves the increment.
+//   · `ADV-GS-26` — the SOURCE-SUPPLIED capture member's throw. `§2.1`'s
+//     `EventSource.capturePointer` doc is explicit that a throw from it is SWALLOWED like
+//     the source's other callables (`§2.4` item 6), and `§2.3` item 6's count is unchanged
+//     by it. No row drove it.
+//   · `ADV-GS-22(a)` — the `commit`-ABSENT terminal. **THE ADJUDICATED READING (carried by
+//     this pass and by the parallel SpecWriter pass): `committed` is the
+//     COMMITTING-TERMINAL discriminator — `true` for `end`/`reset`, `false` for `cancel` —
+//     and it is INDEPENDENT of whether a `commit` callback was installed; `stats().commits`
+//     counts the session's actual `commit` invocations and therefore stays `0` when no
+//     callback exists** (`§2.1`'s `TerminalResult` cell, corrected to this reading).
+// ===========================================================================
+describe('ADV-GS-16 / ADV-GS-26 / ADV-GS-22(a) — the gate-4 closure rows of the `§2.1`/`§2.3` seam', () => {
+  it('ADV-GS-16 — a THROWING `onStart`: `begin` cleans up and RETHROWS, and the attempt consumes NO gesture counter and NO id (the §2.1 `gestures` clause vs the landed bytes) — THE RED OF THIS PASS', async () => {
+    // STATES ENUMERATED BEFORE THE ROW (the file’s own convention):
+    //  (1) a control installed whose `onStart` THROWS (it throws only on its FIRST call, so
+    //      the SAME element can be re-established afterwards — the retry limb of state (4));
+    //  (2) the `begin` whose `onStart` throws: the CALLER observes the throw (`§2.3` item 1(d));
+    //  (3) the post-throw reading: the tracking three rolled back, idle again, `gesture() ===
+    //      null`, and — THE CLAUSE — NO gesture counted and NO id consumed;
+    //  (4) the SAME element’s next successful `begin`, which must therefore be the session’s
+    //      FIRST gesture: `stats().gestures === 1` and `handle.id === 1` (`M-2`, `§2.4` item 4).
+    // NO `capture` OPT-IN IS DRIVEN, deliberately: `§2.1` does NOT adjudicate whether an
+    // opted-in control's capture call is made on this (un-established) path — the capture
+    // clause places the call *"AFTER the gesture is established"*, and this path establishes
+    // no gesture — so this row does not invent a reading for it (see the report).
+    const sentinel = 'the consumer’s `onStart` hook threw'
+    let onStartCalls = 0
+    const h = await makeHarness({
+      installOptions: {
+        capture: false,
+        onStart: (): never => {
+          onStartCalls += 1
+          if (onStartCalls === 1) throw new Error(sentinel)
+          return undefined as never
+        },
+      },
+      label: 'ADV-GS-16 §2.1 SessionStats.gestures · §2.4 item 4 · M-2',
+    })
+    const el: Record<string, unknown> = { id: 'a' }
+    expect(
+      h.sessionInstall(el),
+      'ADV-GS-16 STATE (1) — the control installs with the throwing `onStart` (so the refusal below is the HOOK path, not an install refusal)',
+    ).toBe(true)
+    expect(
+      h.source.listenerCount(el),
+      'ADV-GS-16 STATE (1) — the start listener is live before the attempt (the element is installed)',
+    ).toBe(1)
+    // STATE (2) — THE CALLER OBSERVES THE THROW. `§2.3` item 1(d) has the session’s own
+    // handler call `begin(element)`; `§2.1`’s `onStart` cell has a throw *"propagate to the
+    // caller of `begin`"* and leave NO listener behind.
+    const began = beginResult(h, el)
+    expect(
+      began,
+      'ADV-GS-16 STATE (2) — `begin` does NOT return a result: the `onStart` throw PROPAGATES to the caller (§2.1’s `onStart` cell, §2.3 item 1(d) — a consumer hook’s error is never swallowed)',
+    ).toBe(undefined)
+    expect(h.thrown.length, 'ADV-GS-16 STATE (2) — exactly ONE throw escaped the `begin` call').toBe(1)
+    expect(
+      describeThrown(h.thrown[0]),
+      'ADV-GS-16 STATE (2) — and it is the CONSUMER’S throw (the session adds nothing to it)',
+    ).toContain(sentinel)
+    expect(onStartCalls, 'ADV-GS-16 STATE (2) — the hook really ran (the throw came from the consumer’s `onStart`, not from a refusal before it)').toBe(1)
+    // STATE (3) — THE CLEANUP HALF, all of it asserted from the recorder and the session’s
+    // OWN readings (never from the exception alone).
+    expect(
+      h.source.listenerCount(el),
+      'ADV-GS-16 STATE (3) — the three tracking attaches are ROLLED BACK by the throwing path: the control holds its ONE start listener again and nothing else',
+    ).toBe(1)
+    expect(h.source.typeMultiset(el), 'ADV-GS-16 STATE (3) — and the retained type is the start listener’s').toEqual([TYPE_START])
+    expect(h.session.stats().active, 'ADV-GS-16 STATE (3) — no gesture is left active by the throwing path').toBe(false)
+    expect(h.session.gesture(), 'ADV-GS-16 STATE (3) — `gesture()` reports `null` (no half-built record survives)').toBe(null)
+    expect(
+      h.session.stats().gestureId,
+      'ADV-GS-16 STATE (3) — `stats().gestureId` is `0` (the session is IDLE — §2.1’s `gestureId`: "the active gesture id, or `0` when idle")',
+    ).toBe(0)
+    // **THE CLAUSE’S FIRST READING, taken here and ASSERTED TOGETHER WITH THE SECOND** (so a
+    // reader sees BOTH violations of the one clause in a single verbatim failure rather than
+    // only the first one reached): `§2.1`’s `SessionStats.gestures` cell declares the field as
+    // *"Successful `begin` calls, instance-lifetime"*, and a `begin` whose `onStart` throws is
+    // NOT a successful one — it returns NO result, cleans up, and rethrows.
+    const gesturesAfterTheThrow = h.session.stats().gestures
+    // STATE (4) — THE SAME ELEMENT’S NEXT SUCCESSFUL `begin` (the hook throws only once, so
+    // this establishment really succeeds).
+    expect(
+      h.session.stats().installed,
+      'ADV-GS-16 STATE (4) — the element is STILL INSTALLED after the throwing path (the refusal/throw must not brick the control)',
+    ).toBe(1)
+    const retry = beginResult(h, el)
+    expect(
+      retry?.ok,
+      'ADV-GS-16 STATE (4) — the SAME element establishes NORMALLY on the next attempt (the throwing path left the control usable)',
+    ).toBe(true)
+    const handle = (retry as { ok: true; gesture: GestureHandle }).gesture
+    // **THE CLAUSE, ASSERTED AS ONE READING SO BOTH OF ITS VIOLATIONS ARE REPORTED TOGETHER.**
+    // `§2.1`’s `SessionStats.gestures` cell reads *"Successful `begin` calls,
+    // instance-lifetime"*; `§2.4` item 4 reads *"`id` starts at `1`, increments on every
+    // **successful** `begin`"*; and `M-2` puts the first gesture’s handle at `id === 1`. A
+    // `begin` whose `onStart` threw was NOT successful — it returned no result, cleaned up and
+    // rethrew — so the throwing attempt must consume neither the counter nor the id: the
+    // reading after the throw is `0`, and the SAME element’s next successful establishment is
+    // the session’s FIRST gesture, reading `1` with `handle.id === 1`.
+    //
+    // **THIS IS THE RED OF THIS PASS.** The landed module increments `counters.gestures`
+    // before `onStart` runs and feeds `record.id` from it, so the measured triple is
+    // `{gesturesAfterTheThrow: 1, gesturesAfterTheRetry: 2, retryHandleId: 2}` — the clause,
+    // not the bytes, is what this row asserts, and the row is NOT to be re-tuned.
+    expect(
+      {
+        gesturesAfterTheThrow,
+        gesturesAfterTheRetry: h.session.stats().gestures,
+        retryHandleId: handle.id,
+      },
+      'ADV-GS-16 STATE (3)/(4) — **THE CLAUSE GOVERNING, NOT THE BYTES:** a `begin` whose `onStart` THROWS is not a successful `begin` (§2.1’s `SessionStats.gestures` — *"Successful `begin` calls, instance-lifetime"*; §2.4 item 4 — *"`id` starts at `1`, increments on every SUCCESSFUL `begin`"*; M-2 — *"the handle’s `id === 1`"* for the session’s first gesture), so the throwing attempt consumes NEITHER the counter nor the id and the retry is the FIRST gesture',
+    ).toEqual({ gesturesAfterTheThrow: 0, gesturesAfterTheRetry: 1, retryHandleId: 1 })
+    // The retry’s own terminal, so the row’s lifecycle is closed rather than left in flight.
+    endCall(h, el, handle)
+    expect(
+      h.commits.length,
+      'ADV-GS-16 STATE (4) — the retry’s `end` terminal commits exactly once (the throwing attempt contributed no commit, it never reached a terminal)',
+    ).toBe(1)
+  })
+
+  it('ADV-GS-26 — a THROWING `capturePointer` is SWALLOWED: exactly ONE capture attempt, the throw never reaches the consumer boundary, and the gesture still establishes and still terminates normally', async () => {
+    // STATES ENUMERATED BEFORE THE ROW:
+    //  (1) an OPTED-IN install: ZERO capture attempts at install time (`§2.3` item 6(a));
+    //  (2) the `begin` whose ONE capture attempt THROWS — the attempt is recorded, the throw
+    //      is swallowed, `begin` still reports `ok:true` and the three tracking listeners open;
+    //  (3) the lifecycle to its `end` terminal: the hooks all run in order, the declared commit
+    //      count happens, NO second capture attempt and NO release call is invented, and the
+    //      baseline is restored to ONE listener;
+    //  (4) the consumer boundary: nothing observed an error — no throw escaped any call, and no
+    //      hook saw one.
+    const hookLog = makeHookLog()
+    const h = await makeHarness({
+      sourceOptions: { failCapture: true },
+      installOptions: hookOptions(hookLog, { capture: true }),
+      label: 'ADV-GS-26 §2.1 EventSource.capturePointer · §2.4 item 6 · §2.3 item 6(b)',
+    })
+    const el: Record<string, unknown> = { id: 'a' }
+    expect(
+      h.sessionInstall(el),
+      'ADV-GS-26 STATE (1) — the opted-in control installs (the opt-in is the input; the source’s capture member is the capability)',
+    ).toBe(true)
+    expect(
+      h.source.captures.length,
+      'ADV-GS-26 STATE (1) — ZERO capture attempts at `install`: the capture entry point is never called before the gesture is established (`§2.3` item 6(a), `I-7`)',
+    ).toBe(0)
+    // STATE (2) — THE ONE ATTEMPT WHOSE THROW IS SWALLOWED.
+    const began = beginResult(h, el)
+    expect(
+      began?.ok,
+      'ADV-GS-26 STATE (2) — the capture member’s THROW IS SWALLOWED: `begin` still reports `{ok:true, gesture}` and nothing reaches the caller (`§2.1`’s `capturePointer` doc — *"a throwing capture member never reaches the consumer boundary and never fails a gesture"*; `§2.4` item 6)',
+    ).toBe(true)
+    expect(
+      h.source.captures.length,
+      'ADV-GS-26 STATE (2) — EXACTLY ONE capture ATTEMPT was made (the recorder logs the attempt and THEN throws, `makeSource`’s documented order): the count `§2.3` item 6(b) declares is a count of attempts, and a swallowed throw does not change it',
+    ).toBe(1)
+    expect(
+      h.source.captures[0].element,
+      'ADV-GS-26 STATE (2) — and the attempt carried the gesture’s OWN element (identity, `§2.3` item 6(b))',
+    ).toBe(el)
+    expect(
+      [...h.source.threwAt].length,
+      'ADV-GS-26 STATE (2) — THE DISCRIMINATING EVIDENCE: the configured fault really FIRED (exactly one logged call was configured to throw), so the swallow above is measured against a throw that happened and not against a fixture that never threw',
+    ).toBe(1)
+    expect(
+      h.source.threwAt.has(h.source.captures[0].seq),
+      'ADV-GS-26 STATE (2) — and the call that threw is the CAPTURE attempt itself (its own log sequence is in `threwAt`), not some other member’s',
+    ).toBe(true)
+    expect(
+      h.thrown.length,
+      'ADV-GS-26 STATE (2)/(4) — NOTHING reached the consumer boundary: the swallowed throw was not re-thrown, wrapped or reported through any call',
+    ).toBe(0)
+    const tracking = h.source.log.filter((rec) => rec.op === 'on' && rec.type !== TYPE_START)
+    expect(
+      tracking.map((rec) => rec.type),
+      'ADV-GS-26 STATE (2) — the gesture STILL ESTABLISHES: the three tracking listeners were attached, in the pinned order (`§2.3` item 2(a))',
+    ).toEqual([TYPE_MOVE, TYPE_END, TYPE_CANCEL])
+    expect(
+      hookLog.start.length,
+      'ADV-GS-26 STATE (2) — and `onStart` ran exactly once (the capture path precedes it and its failure changed nothing about the establishment)',
+    ).toBe(1)
+    // STATE (3) — THE LIFECYCLE TERMINATES NORMALLY AT ITS DECLARED COMMIT COUNT.
+    h.source.fire(el, TYPE_MOVE, PLACEHOLDER_EVENT)
+    h.source.fire(el, TYPE_END, PLACEHOLDER_EVENT)
+    expect(
+      [hookLog.move.length, hookLog.end.length, hookLog.cancel.length],
+      'ADV-GS-26 STATE (3) — the consumer’s hooks ran on the declared path: ONE `pointermove` delivery, ONE `onEnd`, ZERO `onCancel`',
+    ).toEqual([1, 1, 0])
+    expect(
+      h.commits.length,
+      'ADV-GS-26 STATE (3) — the DECLARED COMMIT COUNT still happens: an `end` terminal commits exactly once (`§2.3` item 4)',
+    ).toBe(1)
+    expect(h.session.stats().commits, 'ADV-GS-26 STATE (3) — the session’s own counter agrees with the sink (no spy-only count)').toBe(1)
+    expect(
+      h.source.captures.length,
+      'ADV-GS-26 STATE (3) — and NO second capture attempt (nor any invented release call): the gesture’s capture count is ZERO-or-ONE, and an opted-in gesture that threw still made exactly ONE attempt',
+    ).toBe(1)
+    expect(
+      h.source.listenerCount(el),
+      'ADV-GS-26 STATE (3) — the terminal restored the baseline to ONE listener (the start listener remains)',
+    ).toBe(1)
+    expect(h.session.gesture(), 'ADV-GS-26 STATE (3) — the session is idle again after the terminal (the swallowed throw left no latch)').toBe(null)
+    expect(h.session.disposed, 'ADV-GS-26 STATE (4) — and the session is not disposed or otherwise degraded by the swallowed throw').toBe(false)
+  })
+
+  it('ADV-GS-22(a) — with NO `commit` callback installed, `committed` is the COMMITTING-TERMINAL discriminator (`true` for `end`/`reset`, `false` for `cancel`) and `stats().commits` stays `0`', async () => {
+    // STATES ENUMERATED BEFORE THE ROW (the three terminals, all on sessions created with NO
+    // `commit` callback at all):
+    //  (1) `end`   ⇒ `{ok:true, code:'ok', committed:true}`  · `stats().commits === 0`;
+    //  (2) `reset` ⇒ `{ok:true, code:'ok', committed:true}`  · `stats().commits === 0`;
+    //  (3) `cancel`⇒ `{ok:true, code:'ok', committed:false}` · `stats().commits === 0`.
+    // THE ADJUDICATED READING (`§2.1`’s `TerminalResult` cell, corrected): `committed` is the
+    // session’s record of WHICH TERMINAL ran — the committing-terminal discriminator — and it
+    // is INDEPENDENT of whether a callback was installed; `stats().commits` counts the
+    // session’s ACTUAL `commit` invocations, so with no callback it stays `0`.
+    const create = await valueExport<(o?: SessionOptions) => GestureSessionMirror>(
+      'createGestureSession',
+      'ADV-GS-22(a) §2.1 TerminalResult · §2.3 item 4',
+    )
+    const source = makeSource({})
+    const sessionOptions: SessionOptions = { source }
+    expect(
+      Object.keys(sessionOptions),
+      'ADV-GS-22(a) STATE (0) — the drive really installs NO callback: the options object carries `source` and NOTHING else (no `commit` key at all, not one set to `undefined`)',
+    ).toEqual(['source'])
+    const session = create(sessionOptions)
+    const el: Record<string, unknown> = { id: 'a' }
+    expect(session.install(el, {}), 'ADV-GS-22(a) STATE (0) — the control installs on the callback-less session').toBe(true)
+    // (1) THE `end` TERMINAL.
+    const first = session.begin(el)
+    expect(first.ok, 'ADV-GS-22(a) STATE (1) — a gesture establishes on the callback-less session').toBe(true)
+    const firstHandle = (first as { ok: true; gesture: GestureHandle }).gesture
+    const ended = session.end(el, firstHandle, 'v')
+    expect(
+      ended,
+      'ADV-GS-22(a) STATE (1) — `end` on a callback-less session reports `{ok:true, code:\'ok\', committed:true}`: `committed` is the COMMITTING-TERMINAL discriminator and does NOT depend on a callback being installed',
+    ).toEqual({ ok: true, code: 'ok', committed: true })
+    expect(
+      session.stats().commits,
+      'ADV-GS-22(a) STATE (1) — and `stats().commits` counts ACTUAL `commit` invocations: with no callback there were none, so the counter stays `0` while `committed` is `true`',
+    ).toBe(0)
+    expect(session.gesture(), 'ADV-GS-22(a) STATE (1) — the gesture is over (`gesture()` is `null`)').toBe(null)
+    // (2) THE `reset` TERMINAL — the other committing terminal.
+    const second = session.begin(el)
+    expect(second.ok, 'ADV-GS-22(a) STATE (2) — the second gesture establishes').toBe(true)
+    const secondHandle = (second as { ok: true; gesture: GestureHandle }).gesture
+    expect(
+      session.reset(el, secondHandle, 'default'),
+      'ADV-GS-22(a) STATE (2) — `reset` reports `committed:true` too (it is the OTHER committing terminal), still with no callback installed',
+    ).toEqual({ ok: true, code: 'ok', committed: true })
+    expect(
+      session.stats().commits,
+      'ADV-GS-22(a) STATE (2) — and the lifetime `commit` count is STILL `0` (no callback exists to invoke)',
+    ).toBe(0)
+    // (3) THE `cancel` TERMINAL — the NON-committing one.
+    const third = session.begin(el)
+    expect(third.ok, 'ADV-GS-22(a) STATE (3) — the third gesture establishes').toBe(true)
+    expect(
+      session.cancel(el),
+      'ADV-GS-22(a) STATE (3) — `cancel` reports `{ok:true, code:\'ok\', committed:false}`: the discriminator reads `false` for the non-committing terminal, which is the SAME answer it gives on a session that HAS a callback',
+    ).toEqual({ ok: true, code: 'ok', committed: false })
+    expect(
+      session.stats().commits,
+      'ADV-GS-22(a) STATE (3) — and the lifetime count is still `0` after all three terminals',
+    ).toBe(0)
+    expect(
+      session.stats().gestures,
+      'ADV-GS-22(a) STATE (3) — three successful `begin` calls ran, so the gesture counter reads `3` (the callback’s absence changes no gesture fact)',
+    ).toBe(3)
+    expect(session.gesture(), 'ADV-GS-22(a) STATE (3) — idle after the third terminal').toBe(null)
+    expect(
+      source.listenerCount(el),
+      'ADV-GS-22(a) STATE (3) — the start listener remains for the next gesture: no terminal of the three touched it',
     ).toBe(1)
   })
 })
@@ -4901,11 +5370,16 @@ describe('PRE — harness preconditions (not spec rows)', () => {
       'PRE-2/§5.5.1 — every drawn index is inside the pool (`index = state mod 30`)',
     ).toBe(true)
     // **A DRAW IS NOT A SWEEP (`§5.5.2` item 3).** The DISTINCT-MEMBER count is a REPORTED
-    // figure (`§5.3` item 11), never a coverage claim: no row may assert "all 30".
+    // figure (`§5.3` item 11), never a coverage claim: no row may assert "all 30". **⟶
+    // `ADV-GS-28` (the gate-4 closure): the figure is now PINNED EXACTLY (`=== 26`) rather
+    // than bounded (`> 0` / `<= 30`)**, because the tracker's and the spec's *"`26` of `30`"*
+    // record otherwise had no failure mode anywhere in this file — a draw-sequence change
+    // that moved the coverage would have been silently accepted here while every record
+    // still printed `26`.
     expect(
       DISTINCT_DRAWN_POOL_MEMBERS,
-      `PRE-2/§5.5.2 item 3 — the 60 pinned draws hit ${DISTINCT_DRAWN_POOL_MEMBERS} of the pool's 30 members; this is a REPORTED EXECUTION FIGURE (a draw is not a sweep), and NO row may assert that every member was drawn`,
-    ).toBeGreaterThan(0)
+      `PRE-2/§5.5.2 item 3 — the 60 pinned draws hit EXACTLY ${DISTINCT_DRAWN_POOL_MEMBERS} of the pool's 30 members, which is the \`26\` of \`30\` figure the record prints; this is a REPORTED EXECUTION FIGURE (a draw is not a sweep), and NO row may assert that every member was drawn`,
+    ).toBe(26)
     expect(DISTINCT_DRAWN_POOL_MEMBERS, 'PRE-2/§5.5.2 item 3 — the reported figure is a real count of the fixed pool').toBeLessThanOrEqual(30)
     console.log(
       `§5.5.1 P-GS-TP-2 pool-draw record :: ${JSON.stringify({
@@ -4972,12 +5446,21 @@ describe('PRE — harness preconditions (not spec rows)', () => {
       REGISTER_DECLARED[0].term,
       'PRE-4/P-GS-IM-1 — the declared `58` is at or below what the drive performs (never above it)',
     ).toBeLessThanOrEqual(im1StageCounts.reduce((sum, n) => sum + n, 0))
-    // Every configuration's declared opt-in agrees with its own boundary text.
+    // Every configuration's declared opt-in agrees with the input its own `make` BUILDS —
+    // **⟶ NARROWED BY `ADV-GS-24` (the gate-4 closure):** the as-filed limb asserted
+    // `typeof configuration.capture === 'boolean'`, a property the interface types as
+    // `boolean`, so it was TRUE FOR ALL TWENTY BY CONSTRUCTION and could not fail. The claim
+    // is now the RESOLVED flag the module itself reads — `Boolean(capture)`, `§2.1`
+    // `GestureOptionsInput.capture` — computed FROM THE BUILT OPTIONS, so a configuration
+    // whose declaration and built input disagree FAILS here.
     for (const configuration of IM1_CONFIGURATIONS) {
+      const built = configuration.make(makeSource(configuration.sourceOptions ?? {})) as GestureOptionsInput
       expect(
-        typeof configuration.capture === 'boolean',
-        `PRE-4/P-GS-IM-1/§5.5.1 — configuration ${configuration.id} declares its capture opt-in as a resolved BOOLEAN (the boundary the row asserts is per-stage, so the flag must be unambiguous for every member)`,
-      ).toBe(true)
+        Boolean(built.capture),
+        `PRE-4/P-GS-IM-1/§5.5.1 — configuration ${configuration.id} DECLARES the resolved opt-in \`${String(
+          configuration.capture,
+        )}\` and its own \`make\` BUILDS \`${JSON.stringify(built.capture)}\`: \`capture\` is read for truthiness (\`Boolean(capture)\`), so the declaration must agree with the input the row really drives`,
+      ).toBe(configuration.capture)
     }
     // **⟶ `D-12`(b)/`ADV-GS-9`: THE TWO FIXTURES THE SPEC NAMES AS MISSING, ASSERTED AS
     // BUILT VALUES RATHER THAN AS ANNOTATIONS.** As filed, `(16)`'s `isConnected`-less shape
@@ -5053,6 +5536,23 @@ describe('PRE — harness preconditions (not spec rows)', () => {
     expect(IM3_CALL_SHAPES.length * IM3_STATE_SHAPES.length, 'PRE-4/P-GS-IM-3 — `4` call shapes × `9` states = `36`').toBe(36)
     expect(IM4_TERMINALS.length * IM4_STAGES.length, 'PRE-4/P-GS-IM-4 — `6` terminals × `5` stages = `30`').toBe(30)
     expect(IM5_FLAGS.length * IM5_STAGES.length, 'PRE-4/P-GS-IM-5 — `4` flag values × `6` stages = `24`').toBe(24)
+    // **⟶ `ADV-GS-19` (the gate-4 closure): THE DISTINCT FIGURE IS DERIVED FROM THE TABLE.**
+    // `§5.5.1` names TWO aliased stage pairs in prose; the register row derives its distinct
+    // figure from `IM5_STAGE_ALIAS_PAIRS` (positions less pairs), so this row checks the
+    // pairs are REAL positions of the stage table and that the derived arithmetic is the one
+    // the register row prints — the declared `24` counts stage POSITIONS and is UNMOVED.
+    expect(
+      IM5_STAGE_ALIAS_PAIRS.every(([earlier, later]) => earlier < later && later < IM5_STAGES.length && earlier >= 0),
+      'PRE-4/P-GS-IM-5 — every declared aliased pair names two in-range stage positions of `IM5_STAGES`, in order (a stale index would make the derived distinct figure wrong rather than failing loudly)',
+    ).toBe(true)
+    expect(
+      new Set(IM5_STAGE_ALIAS_PAIRS.flat()).size,
+      'PRE-4/P-GS-IM-5 — the declared pairs are DISJOINT (each position is aliased with at most one other, which is what makes "positions less pairs" the correct derivation)',
+    ).toBe(2 * IM5_STAGE_ALIAS_PAIRS.length)
+    expect(
+      IM5_FLAGS.length * (IM5_STAGES.length - IM5_STAGE_ALIAS_PAIRS.length),
+      'PRE-4/P-GS-IM-5 — the DERIVED distinct-observation figure `4` flags × (`6` positions − `2` aliased pairs) = `16`, printed BESIDE the declared `24` and never substituted for it (`ADV-GS-19`)',
+    ).toBe(16)
     expect(
       IM6_SHAPES.length * IM6_STATES.length * IM6_OPERATIONS.length,
       'PRE-4/P-GS-IM-6 — `3` session shapes × `2` gesture states × `5` operations = `30`',
@@ -5080,13 +5580,59 @@ describe('PRE — harness preconditions (not spec rows)', () => {
     // pool member satisfies the row's declared boundary ("the session reads no field of
     // the event object"), because the boundary is an ABSENCE of reading — and the members'
     // hostility is what makes that absence falsifiable rather than assumed.
+    //
+    // **⟶ NARROWED BY `ADV-GS-24` (the gate-4 closure):** the as-filed limb asserted
+    // `typeof member.make === 'function'` for all THIRTY members (true by construction for
+    // every table entry) and said nothing about hostility. The claim is now MEASURED, per
+    // hostile member, by driving the very refusal the no-read claim rests on: `(15)`'s
+    // coordinate getter really throws, `(16)`'s traps really throw, `(17)` really answers
+    // `undefined` for every property, `(26)`'s mutating getter really moves its counter
+    // (so the probe measures reads rather than assuming them), `(27)`'s `valueOf` really
+    // throws and `(28)`'s `toString` really returns a banned vocabulary spelling.
     const hostileMembers = [15, 16, 17, 26, 27, 28].map((n) => EVENT_POOL[n - 1])
-    for (const member of hostileMembers) {
-      expect(
-        typeof member.make,
-        `PRE-4/P-GS-TP-2 — the hostile member ${member.id} satisfies its own row's boundary (its hostility is what falsifies a read, never what contradicts the boundary)`,
-      ).toBe('function')
-    }
+    expect(
+      hostileMembers.map((m) => m.id.split(' ')[0]),
+      'PRE-4/P-GS-TP-2 — the six hostile members are the DECLARED ones, selected by index from the pinned pool order (a reorder of the pool would otherwise leave this limb measuring other members than it names)',
+    ).toEqual(['(15)', '(16)', '(17)', '(26)', '(27)', '(28)'])
+    const coordinateSpelling = COORD_FRAGMENTS[0].join('')
+    const bannedVocabulary = ['thres', 'hold'].join('')
+    const hostileEvidence: ReadonlyArray<readonly [string, () => boolean]> = [
+      [
+        '(15)',
+        () =>
+          throwsOn(() => (hostileMembers[0].make() as Record<string, unknown>)[coordinateSpelling]) &&
+          !throwsOn(() => (EVENT_POOL[10].make() as Record<string, unknown>)[coordinateSpelling]),
+      ],
+      [
+        '(16)',
+        () =>
+          throwsOn(() => (hostileMembers[1].make() as Record<string, unknown>)['anything']) &&
+          throwsOn(() => 'anything' in (hostileMembers[1].make() as object)),
+      ],
+      ['(17)', () => (hostileMembers[2].make() as Record<string, unknown>)['anything'] === undefined],
+      [
+        '(26)',
+        () => {
+          const counter = hostileMembers[3].make() as { probe?: unknown; readCount: number }
+          const before = counter.readCount
+          void counter.probe
+          return before === 0 && counter.readCount === 1
+        },
+      ],
+      [
+        '(27)',
+        () =>
+          throwsOn(() => Number(hostileMembers[4].make() as { valueOf(): number })) &&
+          !throwsOn(() => Number(EVENT_POOL[10].make() as object)),
+      ],
+      ['(28)', () => String(hostileMembers[5].make()).includes(bannedVocabulary)],
+    ]
+    expect(
+      hostileEvidence.filter(([, evidence]) => !evidence()).map(([id]) => id),
+      `PRE-4/P-GS-TP-2 — EVERY hostile member’s hostility is MEASURED, not declared: the members whose own falsification does not actually fire are named here (measured: ${hostileEvidence
+        .map(([id, evidence]) => `${id}=${evidence() ? 'hostile' : 'NOT-hostile'}`)
+        .join(', ')})`,
+    ).toEqual([])
     expect(hostileMembers.length, 'PRE-4/P-GS-TP-2 — the hostile-accessor/Proxy/mutating-getter/valueOf members are really in the pool (the no-read claim is falsifiable)').toBe(6)
   })
 
@@ -5302,11 +5848,11 @@ const IM1_CONFIGURATIONS: ReadonlyArray<Im1Configuration> = [
     distinctKey: 'capture=true',
   },
   { id: '(5) `{capture: 0}` (falsy non-boolean)', capture: false, make: () => ({ capture: 0 }), distinctKey: 'capture=false' },
-  { id: '(6) `{onStart: fn}` only', capture: false, make: () => hookOptions(makeHookLog(), {}), distinctKey: 'hooks=resolved' },
-  { id: '(7) `{onMove: fn}` only', capture: false, make: () => hookOptions(makeHookLog(), {}), distinctKey: 'hooks=resolved' },
-  { id: '(8) `{onEnd: fn}` only', capture: false, make: () => hookOptions(makeHookLog(), {}), distinctKey: 'hooks=resolved' },
-  { id: '(9) `{onCancel: fn}` only', capture: false, make: () => hookOptions(makeHookLog(), {}), distinctKey: 'hooks=resolved' },
-  { id: '(10) all five hooks', capture: false, make: () => hookOptions(makeHookLog(), {}), distinctKey: 'hooks=resolved' },
+  { id: '(6) `{onStart: fn}` only', capture: false, make: () => singleHookOptions('onStart'), distinctKey: 'hooks=onStart' },
+  { id: '(7) `{onMove: fn}` only', capture: false, make: () => singleHookOptions('onMove'), distinctKey: 'hooks=onMove' },
+  { id: '(8) `{onEnd: fn}` only', capture: false, make: () => singleHookOptions('onEnd'), distinctKey: 'hooks=onEnd' },
+  { id: '(9) `{onCancel: fn}` only', capture: false, make: () => singleHookOptions('onCancel'), distinctKey: 'hooks=onCancel' },
+  { id: '(10) all five hooks', capture: false, make: () => hookOptions(makeHookLog(), {}), distinctKey: 'hooks=onStart+onMove+onEnd+onCancel' },
   {
     id: '(11) hooks present but NON-callable',
     capture: false,
@@ -5403,6 +5949,54 @@ const IM1_CONFIGURATIONS: ReadonlyArray<Im1Configuration> = [
  *  `P-GS-IM-5`'s per-stage flags, NOT by this row"*. The third stage below IS that `end`
  *  terminal, and nothing in this row claims a `reset` or a `cancel` count. */
 const IM1_STAGES = ['after `install`', 'during the gesture', 'after the `end` terminal'] as const
+/** **⟶ `ADV-GS-18` (the gate-4 closure): THE MODULE-OBSERVABLE INPUT KEY, DERIVED FROM THE
+ *  FIXTURE THE DRIVE REALLY BUILDS.** The `distinctKey` LABEL each configuration carries is
+ *  the configuration's OWN name for the input it declares — and two of those labels
+ *  (`source=class-instance` for `(17)`, `source=frozen` for `(18)`) name properties the
+ *  MODULE CANNOT OBSERVE at all: `§2.1`'s `EventSource` names `on`/`off`/`isConnected?`/
+ *  `capturePointer?` and nothing else, so a class-instance source with a callable
+ *  `isConnected` returning `true` presents the same input as `(12)`'s object literal, and a
+ *  frozen source presents the same input as an unfrozen one for every member the module
+ *  reads. This helper is the honest figure: it BUILDS each configuration's source and
+ *  options exactly as the drive does and projects only what the module can read —
+ *
+ *   (a) the RESOLVED capture flag (`Boolean(built.capture)`, `§2.1` `GestureOptionsInput`),
+ *   (b) the set of hook members that are present AND CALLABLE,
+ *   (c) the CONNECTIVITY shape: `absent` (no callable member — `§2.4` item 5's "no contrary
+ *       evidence" seam state) or the OUTCOME of one reading (`returns-true` / `returns-
+ *       undefined` / `returns-null` / `throws`),
+ *   (d) whether `commit` was supplied (`(19)`'s input), and
+ *   (e) whether a SECOND control is installed (`(20)`'s input).
+ *
+ *  Fixture-only properties are deliberately NOT part of the key. The row prints this derived
+ *  figure BESIDE the declared `15`, the declared `20` configurations and the `58` term —
+ *  never substituted for any of them. */
+function im1ObservableKey(configuration: Im1Configuration): string {
+  const source = configuration.sourceClass === true ? new Im1ClassSource() : makeSource(configuration.sourceOptions ?? {})
+  const built = configuration.make(source) as Record<string, unknown>
+  const connectMember = (source as unknown as Record<string, unknown>)['isConnected']
+  let connect: string
+  if (typeof connectMember !== 'function') {
+    connect = 'absent'
+  } else {
+    let outcome: string
+    try {
+      const reading = (connectMember as (element: unknown) => unknown).call(source, { probe: true })
+      outcome = reading === true ? 'returns-true' : reading === undefined ? 'returns-undefined' : reading === null ? 'returns-null' : `returns-${String(reading)}`
+    } catch {
+      outcome = 'throws'
+    }
+    connect = outcome
+  }
+  const hooks = (['onStart', 'onMove', 'onEnd', 'onCancel'] as const).filter((name) => typeof built[name] === 'function')
+  return [
+    `capture=${String(Boolean(built.capture))}`,
+    `connect=${connect}`,
+    `hooks=${hooks.length === 0 ? 'none' : hooks.join('+')}`,
+    `commit=${configuration.commitAbsent === true ? 'absent' : 'present'}`,
+    `second=${configuration.secondElement === true ? 'installed' : 'none'}`,
+  ].join(';')
+}
 /** `P-GS-IM-2` — the `8` caller-supplied start shapes and the `4` re-start attempts. */
 const IM2_START_SHAPES = [
   '(1) `begin(el)` called directly (idle → active)',
@@ -5524,6 +6118,20 @@ const IM5_STAGES = [
   "after the terminal's detach",
   "after the terminal's `commit`",
 ] as const
+/** `P-GS-IM-5` — **THE TWO ALIASED STAGE PAIRS, DECLARED (`⟶ ADV-GS-19`, the gate-4
+ *  closure).** `§5.5.1`'s cell names them in its own prose — *"the two `pointermove`
+ *  stages and the two post-terminal stages read the SAME cumulative capture count"* — while
+ *  this file hard-coded `5` distinct stages per flag, a figure its own printed aliasing
+ *  list CONTRADICTED (two named pairs subtract TWO positions, not one: `6 − 2 = 4`). Each
+ *  pair is `[earlierPosition, laterPosition]`; the register row asserts the equality
+ *  MEASURED (the later position's cumulative count equals the earlier one's on every
+ *  drive, inside the stage loop) and DERIVES its distinct figure from THIS table, so the
+ *  row can no longer print a figure its own data contradicts.
+ *  **THE DECLARED TERM `24` IS UNMOVED** — it counts stage POSITIONS (`4` flags × `6`). */
+const IM5_STAGE_ALIAS_PAIRS: ReadonlyArray<readonly [number, number]> = [
+  [2, 3],
+  [4, 5],
+]
 /** `P-GS-IM-6` — the `3` session shapes, `2` gesture states and `5` operations. */
 const IM6_SHAPES = [
   '(1) two controls installed, no gesture',
@@ -5669,6 +6277,18 @@ describe('§5.5.1 — the typed property register (11 rows, executed determinist
           const el: Record<string, unknown> = configuration.sourceClass === true ? {} : { control: true }
           const options = configuration.make(source)
           if (!session.install(el, options)) return `the install of configuration ${configuration.id} returned \`false\``
+          // **⟶ `ADV-GS-18` (the gate-4 closure): CONFIGURATION `(20)` REALLY INSTALLS ITS
+          // SECOND ELEMENT.** The row declares `(20)` as *"a session with a SECOND element
+          // also installed"* and drives it for `2` stages rather than `3` (its terminal
+          // belongs to the FIRST element) — but as filed the `secondElement` flag was
+          // DECLARED AND NEVER USED, so `(20)`'s input was `(3)`'s and its own second
+          // observation stage had no motive. The second control is now installed here, so the
+          // configuration's id, its stage count and its module-observable input key all agree.
+          if (configuration.secondElement === true) {
+            if (!session.install({ control: true, second: true }, options)) {
+              return `configuration ${configuration.id} declares a SECOND element and its install returned \`false\``
+            }
+          }
           // Stage 1 — AFTER INSTALL: exactly ONE listener, of type 'pointerdown'.
           const afterInstall = footprint(source, el)
           if (source.listenerCount(el) !== 1 || source.typeMultiset(el).join(',') !== TYPE_START) {
@@ -5714,7 +6334,7 @@ describe('§5.5.1 — the typed property register (11 rows, executed determinist
     // produces it — **no figure is silently substituted for the other**.
     expect(
       declaredTermOf('P-GS-IM-1'),
-      'P-GS-IM-1/§5.5.3 — the DECLARED term is `58` (`20` configurations × `3` stages, less `2` for configuration `(20)`’s unreachable third stage): the declared figure is what the `≤100`/row and `≤400` register caps are compared against',
+      'P-GS-IM-1/§5.5.3 — the DECLARED term is `58` (`20` configurations × `3` stages, less `1` for configuration `(20)`’s unreachable third stage — `19 × 3 + 1 × 2 = 59` enumerated observations, one BELOW which the declared `58` is stated conservatively; the as-filed message printed “less `2`”, which contradicted this row’s own next assertion and has been corrected at this site — `ADV-GS-27`): the declared figure is what the `≤100`/row and `≤400` register caps are compared against',
     ).toBe(58)
     expect(
       rec.attemptsRunPublic(),
@@ -5729,44 +6349,119 @@ describe('§5.5.1 — the typed property register (11 rows, executed determinist
       59,
       'P-GS-IM-1 — the MEASURED drive is `20` configurations × `3` stages less configuration `(20)`’s unreachable third stage = `59` observations; the DECLARED term remains `58`',
     )
-    // **⟶ `D-12`(b): THE DECLARED DISTINCT-INPUT FIGURE, PRINTED BESIDE THE DERIVED ONE.**
-    // `§5.5.1`'s corrected cell states the honest distinct-input figure as `15` and names the
-    // three duplications it can see. The table's OWN figure is derived here from the
-    // `distinctKey` each configuration carries (the input the module observes), and BOTH are
-    // reported — the DECLARED figure is never substituted, and the derived one is never
-    // suppressed. The arithmetic is printed term by term so the difference is auditable.
+    // **⟶ `D-12`(b), RE-DERIVED BY `ADV-GS-18` (the gate-4 closure): THE THREE HONEST
+    // FIGURES, EACH DERIVED FROM THE TABLE, PRINTED BESIDE THE DECLARED `58`.** `§5.5.1`'s
+    // cell states the honest distinct-input figure as `15` and names the duplications it can
+    // see. This row now prints THREE figures, each COMPUTED here rather than hard-coded:
+    //   (1) the DECLARED `20` configurations (the domain the `58` term rests on);
+    //   (2) the distinct `distinctKey` LABEL count, exactly as the table defines the labels
+    //       — the labels include the two FIXTURE-ONLY shapes (`(17)`'s class instance,
+    //       `(18)`'s freeze) which the module cannot observe;
+    //   (3) the distinct MODULE-OBSERVABLE input count, DERIVED by building each
+    //       configuration's source/options as the drive does and projecting only what the
+    //       module can read (`im1ObservableKey`) — under which `(17)` and `(18)` read as
+    //       `(12)`-shaped inputs, because a class-instance source with a callable
+    //       `isConnected` returning `true`, and a frozen source for every member the module
+    //       reads, are the same input.
+    // The arithmetic is printed term by term, per configuration, so the difference between
+    // the three is auditable and no figure is silently substituted for another.
     const distinctKeys = [...new Set(IM1_CONFIGURATIONS.map((c) => c.distinctKey))]
-    const aliasCount = IM1_CONFIGURATIONS.length - distinctKeys.length
-    const im1TermArithmetic = IM1_CONFIGURATIONS.map((c) => `${c.id.split(' ')[0]}→${c.distinctKey}`)
+    const labelAliasCount = IM1_CONFIGURATIONS.length - distinctKeys.length
+    const observableKeys = IM1_CONFIGURATIONS.map((c) => im1ObservableKey(c))
+    const distinctObservable = [...new Set(observableKeys)]
+    const observableAliasCount = IM1_CONFIGURATIONS.length - distinctObservable.length
+    const im1TermArithmetic = IM1_CONFIGURATIONS.map(
+      (c) => `${c.id.split(' ')[0]}→label[${c.distinctKey}] observable[${im1ObservableKey(c)}]`,
+    )
     console.log(
       `§5.5.1 P-GS-IM-1 distinct-input record :: ${JSON.stringify({
-        declaredConfigurations: 20,
+        declaredConfigurations: IM1_CONFIGURATIONS.length,
         specDeclaredDistinctInputs: 15,
         specNamedAliases: 5,
-        tableDerivedDistinctInputs: distinctKeys.length,
-        tableDerivedAliases: aliasCount,
-        derivedKeys: distinctKeys,
+        tableDerivedDistinctLabels: distinctKeys.length,
+        tableDerivedLabelAliases: labelAliasCount,
+        tableDerivedDistinctModuleObservableInputs: distinctObservable.length,
+        tableDerivedObservableAliases: observableAliasCount,
+        derivedLabels: distinctKeys,
+        derivedObservableKeys: distinctObservable,
         perConfiguration: im1TermArithmetic,
         declaredTerm: declaredTermOf('P-GS-IM-1'),
         measuredObservations: rec.attemptsRunPublic(),
-        note: 'the DECLARED 15 and the DECLARED term 58 are the figures the caps are compared against (REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS, ACTIVE); the derived figure is reported BESIDE them and never substituted',
+        definitions: {
+          declaredConfigurations: 'the table’s OWN members (§5.5.1’s declared `20`)',
+          label: 'the configuration’s own declared `distinctKey` label, INCLUDING the two fixture-only shapes the module cannot observe',
+          observable: 'DERIVED by `im1ObservableKey`: the resolved capture flag, the callable hook set, the connectivity outcome, `commit`-absent and second-element — the input the MODULE can read',
+        },
+        note: 'the DECLARED 15 and the DECLARED term 58 are the figures the caps are compared against (REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS, ACTIVE); the derived figures are reported BESIDE them and never substituted',
       })}`,
     )
     expect(
       IM1_CONFIGURATIONS.length,
-      'P-GS-IM-1/§5.5.1 — the domain is the DECLARED `20` configurations (no configuration is removed or added: the declared term `58` rests on it)',
+      'P-GS-IM-1/§5.5.1 — figure (1): the domain is the DECLARED `20` configurations (no configuration is removed or added: the declared term `58` rests on it)',
     ).toBe(20)
     expect(
       distinctKeys.length,
-      `P-GS-IM-1/§5.5.1 — the table's OWN distinct-input figure, DERIVED from the twenty configurations' \`distinctKey\`s (the input the module observes): the DECLARED figure is \`15\` and the DERIVED figure is \`${distinctKeys.length}\`. Both are reported — the declared \`15\` is NOT substituted into this assertion and the derived figure is NOT suppressed — and the variance is a FINDING reported to the supervisor (see the RED-RUN FINDINGS block)`,
-    ).toBe(12)
+      `P-GS-IM-1/§5.5.1 — figure (2): the TABLE’S OWN distinct-\`distinctKey\`-LABEL count, DERIVED from the twenty configurations (never hard-coded: this assertion pins the figure the record above prints), beside the DECLARED \`15\` and the declared term \`58\` — every label is the configuration’s own name for its input, including the two fixture-only shapes`,
+    ).toBe(16)
     expect(
-      distinctKeys.length + aliasCount,
-      'P-GS-IM-1/§5.5.1 — the arithmetic closes on the table: derived distinct + derived aliases = 20 configurations',
+      distinctObservable.length,
+      `P-GS-IM-1/§5.5.1 — figure (3): the DISTINCT MODULE-OBSERVABLE INPUT count, DERIVED by \`im1ObservableKey\` from the sources and options the drive really builds (\`${distinctObservable.length}\` distinct observable inputs + \`${observableAliasCount}\` observable aliases = \`${IM1_CONFIGURATIONS.length}\` configurations), printed BESIDE the declared \`15\` and the label figure — never substituted for either`,
+    ).toBe(13)
+    // THE ADVERSARIAL PASS'S OWN TWO LABEL-ONLY CLAIMS, MEASURED RATHER THAN NARRATED: `(17)`
+    // (a class-instance source with a callable `isConnected` returning `true`) reads as `(12)`,
+    // and `(18)` (a frozen source) reads as an unfrozen one for every member the module reads.
+    const im1IndexOf = (prefix: string): number => {
+      const at = IM1_CONFIGURATIONS.findIndex((c) => c.id.startsWith(prefix))
+      expect(at, `P-GS-IM-1/\`ADV-GS-18\` — the table really carries configuration ${prefix}`).toBeGreaterThanOrEqual(0)
+      return at
+    }
+    expect(
+      observableKeys[im1IndexOf('(17)')],
+      'P-GS-IM-1/`ADV-GS-18` — `(17)`’s class-instance source reads as `(12)`’s input for every member the module can observe (the class-ness is a FIXTURE-ONLY key, which is why the label figure and the observable figure differ)',
+    ).toBe(observableKeys[im1IndexOf('(12)')])
+    expect(
+      observableKeys[im1IndexOf('(18)')],
+      'P-GS-IM-1/`ADV-GS-18` — and `(18)`’s frozen source reads as an UNFROZEN one: the freeze is invisible to the module’s own reads, so its label is fixture-only too',
+    ).toBe(observableKeys[im1IndexOf('(12)')])
+    // THE FIVE SINGLE-HOOK CONFIGURATIONS ARE FIVE GENUINELY DISTINCT INPUTS (`ADV-GS-18`):
+    // as filed all five built the ALL-HOOKS input, so four of the five ids described nothing.
+    const singleHookIndices = ['(6)', '(7)', '(8)', '(9)'].map(im1IndexOf)
+    expect(
+      singleHookIndices.map((at) => observableKeys[at]),
+      'P-GS-IM-1/`ADV-GS-18` — `(6)`–`(9)` build four GENUINELY DIFFERENT single-hook inputs (each carries exactly one callable hook, so the five members’ ids describe what they build)',
+    ).toEqual([
+      'capture=false;connect=returns-true;hooks=onStart;commit=present;second=none',
+      'capture=false;connect=returns-true;hooks=onMove;commit=present;second=none',
+      'capture=false;connect=returns-true;hooks=onEnd;commit=present;second=none',
+      'capture=false;connect=returns-true;hooks=onCancel;commit=present;second=none',
+    ])
+    const hookFamilyKeys = ['(6)', '(7)', '(8)', '(9)', '(10)'].map((prefix) => observableKeys[im1IndexOf(prefix)])
+    const hookCountOf = (key: string): number => key.split('hooks=')[1].split(';')[0].split('+').length
+    expect(
+      hookFamilyKeys.map(hookCountOf),
+      `P-GS-IM-1/\`ADV-GS-18\` — the five hook-family members \`(6)\`–\`(10)\` build FIVE DISTINCT inputs whose callable-hook counts are \`1,1,1,1,4\` (four genuinely single-hook inputs plus the all-hooks member): as filed all five built the ALL-HOOKS input, so four of their ids described nothing they built (measured keys: ${JSON.stringify(
+        hookFamilyKeys,
+      )})`,
+    ).toEqual([1, 1, 1, 1, 4])
+    expect(
+      new Set(hookFamilyKeys).size,
+      'P-GS-IM-1/`ADV-GS-18` — and the five keys are five DISTINCT strings, so each member’s observable input really differs from its siblings’',
+    ).toBe(5)
+    expect(
+      observableKeys[im1IndexOf('(20)')],
+      'P-GS-IM-1/`ADV-GS-18` — and `(20)` REALLY installs its second element, so its observable key differs from the single-control shapes (measured, not annotated)',
+    ).toBe('capture=false;connect=returns-true;hooks=none;commit=present;second=installed')
+    expect(
+      distinctKeys.length + labelAliasCount,
+      'P-GS-IM-1/§5.5.1 — figure (2)’s arithmetic closes on the table: derived distinct labels + derived label aliases = 20 configurations',
+    ).toBe(20)
+    expect(
+      distinctObservable.length + observableAliasCount,
+      'P-GS-IM-1/§5.5.1 — figure (3)’s arithmetic closes on the table too: derived distinct observable inputs + derived observable aliases = 20 configurations',
     ).toBe(20)
     expect(
       declaredTermOf('P-GS-IM-1'),
-      'P-GS-IM-1/§5.5.1 — the DECLARED term `58` is UNMOVED, and the distinct-input figure is a REPORTED figure beside it (never a substitute: `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`, ACTIVE)',
+      'P-GS-IM-1/§5.5.1 — the DECLARED term `58` is UNMOVED, and all three derived figures are REPORTED figures beside it (never a substitute: `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`, ACTIVE)',
     ).toBe(58)
   })
 
@@ -6138,7 +6833,7 @@ describe('§5.5.1 — the typed property register (11 rows, executed determinist
     reconcile(rec, 30, 'P-GS-IM-4 — the declared term is `30` (`6` terminals × `5` stages)')
   })
 
-  it('P-GS-IM-5 [S-GS-CAPTURE-1] — EVERY flag value × stage: ZERO capture before establishment, EXACTLY ONE after it iff truthy, at the gesture’s `end` terminal (24 declared attempts; 20 distinct observations) — YES (bounded)', async () => {
+  it('P-GS-IM-5 [S-GS-CAPTURE-1] — EVERY flag value × stage: ZERO capture before establishment, EXACTLY ONE after it iff truthy, at the gesture’s `end` terminal (24 declared attempts; 16 distinct observations, DERIVED) — YES (bounded)', async () => {
     const rec = new RegisterRow('P-GS-IM-5', 'S-GS-CAPTURE-1')
     const moduleState = await resolveModule()
     for (const flag of IM5_FLAGS) {
@@ -6191,6 +6886,15 @@ describe('§5.5.1 — the typed property register (11 rows, executed determinist
           if (observed !== expectedPerStage[index]) {
             return `for the flag ${flag.id} the capture count at stage ${stage} must be ${expectedPerStage[index]}; got ${observed} (readings ${JSON.stringify(readings)})`
           }
+          // **⟶ `ADV-GS-19`: THE DECLARED ALIASING IS MEASURED, NOT MERELY ASSERTED.** The
+          // two pairs `IM5_STAGE_ALIAS_PAIRS` names read the SAME cumulative count, so the
+          // later position of a pair must equal its earlier one on EVERY drive. This is the
+          // check that makes the derived distinct figure (`6 − 2 = 4` readings per flag)
+          // something the table PROVES rather than something the row declares.
+          const aliasPair = IM5_STAGE_ALIAS_PAIRS.find(([, later]) => later === index)
+          if (aliasPair !== undefined && readings[aliasPair[1]] !== readings[aliasPair[0]]) {
+            return `the stage positions ${aliasPair[0]} and ${aliasPair[1]} are a DECLARED ALIASED PAIR (§5.5.1’s own two named pairs: the two 'pointermove' stages and the two post-terminal stages): they must read the SAME cumulative capture count; got ${readings[aliasPair[0]]} and ${readings[aliasPair[1]]} (readings ${JSON.stringify(readings)})`
+          }
           if (source.captures.length > 1) return `an opted-in gesture produced MORE than one capture call (${source.captures.length})`
           // Every capture call carries the gesture's OWN element and a real log position —
           // read from the SNAPSHOT taken at the establishment stage, never from the live
@@ -6217,36 +6921,47 @@ describe('§5.5.1 — the typed property register (11 rows, executed determinist
     }
     rec.finish()
     reconcile(rec, 24, 'P-GS-IM-5 — the declared term is `24` (`4` flag values × `6` stages)')
-    // **⟶ `D-12`(c)/`ADV-GS-10`: THE DECLARED TERM BESIDE THE HONEST DISTINCT-DRIVE FIGURE,
-    // AND THE `end`-ONLY TERMINAL CLAIM MADE EXPLICIT.** `§5.5.1`'s corrected cell states it
-    // in its own words: *"the DECLARED term `24` stands and the HONEST DISTINCT-DRIVE figure
-    // is `5` DISTINCT STAGES PER FLAG value (the two `pointermove` stages and the two
-    // post-terminal stages read the SAME cumulative capture count, so the row drives `6`
-    // stage POSITIONS whose DISTINCT observations are `5` per flag — `4` flags × `5` = `20`
-    // distinct observations, beside the declared `24`) — the declared figure is what the caps
-    // are compared against, and the `4` flag values are `4` DISTINCT inputs"*, and *"the
-    // row's drive terminates with `end`"* (the three-terminal counts are `P-GS-IM-4`'s).
-    const im5DistinctStagesPerFlag = 5
+    // **⟶ `D-12`(c)/`ADV-GS-10`, CORRECTED BY `ADV-GS-19` (the gate-4 closure): THE DECLARED
+    // TERM BESIDE THE HONEST DISTINCT-DRIVE FIGURE — NOW DERIVED FROM THE TABLE.** `§5.5.1`'s
+    // cell states it in its own words: *"the DECLARED term `24` stands and the HONEST
+    // DISTINCT-DRIVE figure is `5` DISTINCT STAGES PER FLAG value (the two `pointermove`
+    // stages and the two post-terminal stages read the SAME cumulative capture count, so the
+    // row drives `6` stage POSITIONS whose DISTINCT observations are `5` per flag …"*, and
+    // *"the row's drive terminates with `end`"*. **THE CELL'S OWN ARITHMETIC AND ITS OWN
+    // ALIASING LIST DISAGREE: two named pairs subtract TWO positions, not one, so the honest
+    // figure per flag is `6 − 2 = 4` — and this row now DERIVES it from the table rather than
+    // hard-coding a figure its printed aliasing list contradicts.** The DECLARED `24` is
+    // UNMOVED (it counts stage POSITIONS) and remains the figure the caps are compared
+    // against.
+    const im5DistinctStagesPerFlag = IM5_STAGES.length - IM5_STAGE_ALIAS_PAIRS.length
+    const im5DistinctObservations = IM5_FLAGS.length * im5DistinctStagesPerFlag
     console.log(
       `§5.5.1 P-GS-IM-5 distinct-drive record :: ${JSON.stringify({
         declaredTerm: 24,
         declaredTerms: '4 flag values x 6 stage positions',
         distinctFlagValues: IM5_FLAGS.length,
         distinctStagesPerFlag: im5DistinctStagesPerFlag,
-        distinctObservations: IM5_FLAGS.length * im5DistinctStagesPerFlag,
+        distinctObservations: im5DistinctObservations,
         stagePositions: IM5_STAGES.length,
-        aliasingStagePositions: ['after the second `pointermove` reads the SAME cumulative count as the first', 'the two post-terminal stages read the SAME cumulative count'],
+        aliasingStagePositions: IM5_STAGE_ALIAS_PAIRS.map(
+          ([earlier, later]) => `${IM5_STAGES[earlier]} ≡ ${IM5_STAGES[later]} (the same cumulative capture count)`,
+        ),
+        derivation: 'DERIVED from the table: stage POSITIONS (6) less the TWO declared aliased pairs (2) = 4 distinct readings per flag; 4 flags x 4 = 16 distinct observations',
         terminalDriveReaches: 'the `end` terminal only (the `reset`/`cancel` counts are P-GS-IM-4s and P-GS-IM-5s per-stage flags)',
         attemptsRun: rec.attemptsRunPublic(),
       })}`,
     )
     expect(
-      IM5_FLAGS.length * im5DistinctStagesPerFlag,
-      'P-GS-IM-5/§5.5.1 — the HONEST DISTINCT-DRIVE figure: `4` distinct flag values × `5` distinct stages per flag = `20` distinct observations, reported BESIDE the declared `24` and never substituted for it',
-    ).toBe(20)
+      IM5_STAGE_ALIAS_PAIRS.length,
+      'P-GS-IM-5/§5.5.1 — the table declares the TWO aliased pairs `§5.5.1`’s own prose names ("the two `pointermove` stages and the two post-terminal stages read the SAME cumulative capture count"), which is what makes the derived figure `4` per flag rather than the hard-coded `5`',
+    ).toBe(2)
+    expect(
+      im5DistinctObservations,
+      `P-GS-IM-5/§5.5.1 — the HONEST DISTINCT-DRIVE figure, DERIVED from the table: \`${IM5_FLAGS.length}\` distinct flag values × \`${im5DistinctStagesPerFlag}\` distinct stage readings per flag (\`${IM5_STAGES.length}\` stage POSITIONS less the \`${IM5_STAGE_ALIAS_PAIRS.length}\` declared aliased pairs) = \`${im5DistinctObservations}\` distinct observations, reported BESIDE the declared \`24\` and never substituted for it`,
+    ).toBe(16)
     expect(
       IM5_STAGES.length,
-      'P-GS-IM-5/§5.5.1 — the row drives `6` stage POSITIONS (the declared `24` rests on them), of which `5` are DISTINCT observations per flag',
+      `P-GS-IM-5/§5.5.1 — the row drives \`${IM5_STAGES.length}\` stage POSITIONS (the declared \`24\` rests on them), of which \`${im5DistinctStagesPerFlag}\` are DISTINCT readings per flag`,
     ).toBe(6)
     // The per-stage assertion ITSELF is now the extracted predicate the `PRE-5` control
     // runs (`D-13`), so the control and the row cannot drift apart.
@@ -6374,6 +7089,53 @@ describe('§5.5.1 — the typed property register (11 rows, executed determinist
     }
     rec.finish()
     reconcile(rec, 30, 'P-GS-IM-6 — the declared term is `30` (`3` session shapes × `2` gesture states × `5` operations)')
+    // -----------------------------------------------------------------------
+    // **⟶ `ADV-GS-20` (THE GATE-4 CLOSURE, 2026-09-27): THE HONEST DISTINCT-DRIVE FIGURE IS
+    // DERIVED FROM THIS TABLE, NOT HARD-CODED.** `§5.5.2`'s DECLARED-VERSUS-DISTINCT ledger
+    // prints `P-GS-IM-6 — DECLARED 30, DISTINCT DRIVES 26 (shape (1)'s redundant gesture
+    // state)`, and NEITHER HALF is what the table does: the drive's ONLY shape-dependent
+    // branch is its own `(3)`-class selector (`shape.startsWith('(3)')`), which means shapes
+    // `(1)` and `(2)` are BYTE-IDENTICAL DRIVES over ALL TEN of their cells (both states × five
+    // operations), and the signature below is derived by running THAT SAME classifier over the
+    // table. The derivation is therefore `2` drive classes × `2` gesture states × `5`
+    // operations = `20` DISTINCT DRIVES — an EXACT figure, not a bound, because the drive is a
+    // pure function of (class, state, operation) — against the declared `30` attempt term,
+    // which counts CELLS and is what the caps are compared against (the DECLARED term `30` is
+    // UNMOVED).
+    const im6DriveSignature = (shape: string, gestureState: string, operation: string): string =>
+      `${shape.startsWith('(3)') ? 'the `(3)`-class shape' : 'the (1)/(2) class (its only branch is the `(3)` selector)'} × ${gestureState} × ${operation}`
+    const im6Signatures = IM6_SHAPES.flatMap((shape) =>
+      IM6_STATES.flatMap((gestureState) => IM6_OPERATIONS.map((operation) => im6DriveSignature(shape, gestureState, operation))),
+    )
+    const im6DistinctDrives = new Set(im6Signatures).size
+    console.log(
+      `§5.5.1 P-GS-IM-6 distinct-drive record :: ${JSON.stringify({
+        declaredTerm: 30,
+        declaredTerms: '3 session shapes x 2 gesture states x 5 operations',
+        specDeclaredDistinctDrives: 26,
+        specNamedReason: 'shape (1)’s redundant gesture state',
+        tableDerivedDistinctDrives: im6DistinctDrives,
+        tableDerivedKind: 'EXACT (the drive is a pure function of the shape class, the gesture state and the operation)',
+        tableDerivedReason:
+          'the drive’s ONLY shape-dependent branch is its own `(3)`-class selector, so shapes (1) and (2) are BYTE-IDENTICAL drives over ALL TEN of their cells — the redundancy is not confined to “shape (1)’s redundant gesture state”',
+        aliasedCells: im6Signatures.length - im6DistinctDrives,
+        measuredCells: im6Signatures.length,
+      })}`,
+    )
+    expect(
+      im6Signatures.length,
+      'P-GS-IM-6/§5.5.3 — the derived census covers every DECLARED cell (`3` shapes × `2` states × `5` operations = `30`), so the derived distinct figure is a statement about the whole table',
+    ).toBe(30)
+    expect(
+      im6DistinctDrives,
+      `P-GS-IM-6/§5.5.1 — the HONEST DISTINCT-DRIVE figure, DERIVED by running the drive’s OWN shape classifier over the table: \`2\` drive classes × \`2\` gesture states × \`5\` operations = \`${im6DistinctDrives}\` DISTINCT drives (EXACT, not a bound), printed BESIDE the declared \`30\` and never substituted for it. The spec’s \`26\` and its reason ("shape (1)’s redundant gesture state") are what the table DERIVES as \`${
+        im6Signatures.length - im6DistinctDrives
+      }\` aliased cells over the \`(1)\`/\`(2)\` pair in BOTH states`,
+    ).toBe(20)
+    expect(
+      new Set(IM6_SHAPES.map((shape) => shape.startsWith('(3)'))).size,
+      'P-GS-IM-6/`ADV-GS-20` — the table really holds TWO drive classes (one `(3)`-class member and two `(1)`/`(2)`-class members whose only distinguishing text is their id), which is the premise of the derivation above',
+    ).toBe(2)
   })
 
   it('P-GS-SM-1 [S-GS-STATE-1] — EVERY state × op: the declared transition or refusal, with monotonic counters (40 attempts)', async () => {
@@ -6674,6 +7436,11 @@ describe('§5.5.1 — the typed property register (11 rows, executed determinist
     const rec = new RegisterRow('P-GS-TP-1', 'S-GS-TOTAL-1')
     const moduleState = await resolveModule()
     let assertions = 0
+    /** `ADV-GS-24`: the source value each PHASE-A seam drive really handed to
+     *  `installGestureListeners` — recorded so the four drives can be shown to be four
+     *  DIFFERENT calls rather than the four copies of `installGestureListeners(undefined, …)`
+     *  the as-filed arm performed. */
+    const phaseASeamSources: Array<{ shape: string; source: unknown }> = []
     for (const phase of TP1_PHASES) {
       for (const shape of phase.shapes) {
         for (const fn of ['the returned SESSION', 'the module-level seam'] as const) {
@@ -6708,13 +7475,26 @@ describe('§5.5.1 — the typed property register (11 rows, executed determinist
                 }
                 return null
               }
+              // **⟶ THE SHAPE IS DRIVEN, NOT DISCARDED (`ADV-GS-24`, the gate-4 closure).**
+              // As filed this arm called `installGestureListeners(undefined, element, …)` for
+              // ALL FOUR Phase-A shapes, so four of the twenty-four DRIVES were the same call
+              // and the shape under test never reached the seam. The seam's own totality input
+              // is its SOURCE argument, so the drive now hands it a value DERIVED FROM THE
+              // SHAPE: the shape itself, except where the shape carries a `source` member
+              // (`(4) {source: null}`), in which case that member is the source argument. The
+              // four drives therefore carry four DISTINCT source values (asserted below).
+              const seamSource =
+                made !== null && typeof made === 'object' && 'source' in (made as Record<string, unknown>)
+                  ? (made as Record<string, unknown>)['source']
+                  : made
               let returned: unknown = null
               try {
-                returned = install(undefined, element, () => undefined)
+                returned = install(seamSource as never, element, () => undefined)
               } catch (e) {
-                return `\`installGestureListeners\` threw for the factory option ${shape.id}: ${describeThrown(e)}`
+                return `\`installGestureListeners\` threw for the source derived from the Phase-A shape ${shape.id}: ${describeThrown(e)}`
               }
               assertions += 3
+              phaseASeamSources.push({ shape: shape.id, source: seamSource })
               return returned === null || typeof returned === 'function' ? null : `the seam returned ${brief(returned)}`
             }
             if (phase.id.startsWith('PHASE B')) {
@@ -6858,6 +7638,76 @@ describe('§5.5.1 — the typed property register (11 rows, executed determinist
         assertions,
         'P-GS-TP-1/§5.3 item 11 — the DUAL COUNT’s second figure: the per-call assertions the 24 DRIVES performed (the as-filed `94` counted ASSERTIONS rather than drives; `§5.5.3` records that reconciliation and the declared count is `24`)',
       ).toBeGreaterThanOrEqual(24 * 3)
+      // **⟶ `ADV-GS-24` (the gate-4 closure), ARM 1 — THE PHASE-A SEAM DRIVES THE SHAPE.**
+      // The claim: the four PHASE-A seam drives are four DIFFERENT calls, each carrying the
+      // source value DERIVED FROM ITS OWN SHAPE (the as-filed arm handed all four the same
+      // `undefined`). Neither this assertion nor the reach-drive below is an ATTEMPT — the
+      // declared term `24` is UNMOVED (the DUAL COUNT rule); they are gate-4 closure
+      // controls, and they are gated on the module's presence exactly as the assertions
+      // figure above is.
+      expect(
+        phaseASeamSources.map((d) => d.shape),
+        'P-GS-TP-1/`ADV-GS-24` — the PHASE-A seam arm ran once per declared shape (four drives, not four copies of one call)',
+      ).toHaveLength(4)
+      const distinctSeamSources = new Set(phaseASeamSources.map((d) => String(d.source)))
+      expect(
+        distinctSeamSources.size,
+        `P-GS-TP-1/\`ADV-GS-24\` — the four PHASE-A seam drives hand the seam FOUR DISTINCT source values (measured: ${JSON.stringify(
+          phaseASeamSources.map((d) => `${d.shape.split(' ')[0]}→${String(d.source)}`),
+        )}); the as-filed arm passed \`undefined\` four times, so the shape under test never reached the function`,
+      ).toBe(4)
+      // **⟶ `ADV-GS-24`, ARM 2 — PHASE C's SHAPE `(4)` REACHES ITS DISTINCTIVE MEMBER.**
+      // Shape `(4)` is *"a session whose `commit` THROWS"*, and as filed its drive created a
+      // session with NO usable source: `install` returned `false`, `begin` reported
+      // `not-installed`, no terminal ever ran — so the throwing commit never fired and the
+      // shape's own distinctive member was decorative. The drive below ESTABLISHES a gesture
+      // on a usable recorder source and drives the `end` terminal, so the consumer's throw is
+      // really reached, and asserts the four clause facts that go with it (`§2.3` items 4/5,
+      // `§3.2 F-3`(c), `I-3c`): the throw PROPAGATES to the caller, the tracking listeners are
+      // ALREADY detached, the gesture is no longer active, and the commit still counts as the
+      // gesture's ONE commit (never retried).
+      const commitSentinel = 'the consumer commit callback threw'
+      const reachSource = makeSource({})
+      const reachElement: Record<string, unknown> = { id: 'phase-c-shape-4' }
+      const createReach = moduleState.mod['createGestureSession'] as (o?: unknown) => GestureSessionMirror
+      const reachSession = createReach({
+        source: reachSource,
+        commit: (): never => {
+          throw new Error(commitSentinel)
+        },
+      })
+      expect(
+        reachSession.install(reachElement, {}),
+        'P-GS-TP-1/`ADV-GS-24` — the shape `(4)` reach-drive installs on a USABLE source, so the terminal below can really reach the throwing commit',
+      ).toBe(true)
+      const reachBegan = reachSession.begin(reachElement)
+      expect(
+        reachBegan.ok,
+        'P-GS-TP-1/`ADV-GS-24` — and it really establishes a gesture (a refused `begin` would leave the throwing commit unreachable, which is the defect this arm closes)',
+      ).toBe(true)
+      const reachHandle = (reachBegan as { ok: true; gesture: GestureHandle }).gesture
+      let reachCaught: unknown = null
+      try {
+        reachSession.end(reachElement, reachHandle)
+      } catch (e) {
+        reachCaught = e
+      }
+      expect(
+        reachCaught === null ? null : describeThrown(reachCaught).includes(commitSentinel),
+        `P-GS-TP-1/\`ADV-GS-24\` — shape \`(4)\`'s DISTINCTIVE member really fired: the \`end\` terminal invoked the consumer’s throwing \`commit\` and the throw PROPAGATED to the caller (\`§2.3\` item 5, \`§3.2 F-3\`(c) — the session swallows its OWN seam errors, never the consumer’s); got ${reachCaught === null ? 'no throw at all' : describeThrown(reachCaught)}`,
+      ).toBe(true)
+      expect(
+        reachSource.listenerCount(reachElement),
+        'P-GS-TP-1/`ADV-GS-24` — and the tracking three were ALREADY detached when the consumer’s throw ran (`§2.3` item 2(c)): the baseline is back to its ONE start listener',
+      ).toBe(1)
+      expect(
+        reachSession.stats().commits,
+        'P-GS-TP-1/`ADV-GS-24` — a throwing commit is still the gesture’s ONE commit and is NEVER retried (`I-3c`)',
+      ).toBe(1)
+      expect(
+        reachSession.gesture(),
+        'P-GS-TP-1/`ADV-GS-24` — and the gesture is no longer active after the terminal (no half-terminated record survives the consumer’s throw)',
+      ).toBe(null)
     }
   })
 
@@ -6951,8 +7801,8 @@ describe('§5.5.1 — the typed property register (11 rows, executed determinist
     ).toBe(60)
     expect(
       DISTINCT_DRAWN_POOL_MEMBERS,
-      `P-GS-TP-2/§5.5.2 item 3 — the REPORTED distinct-pool-member figure for the 60 draws over the 30-member pool is ${DISTINCT_DRAWN_POOL_MEMBERS}; a DRAW IS NOT A SWEEP, and no row here asserts that every member was drawn`,
-    ).toBeGreaterThan(0)
+      `P-GS-TP-2/§5.5.2 item 3 — the REPORTED distinct-pool-member figure for the 60 draws over the 30-member pool is EXACTLY ${DISTINCT_DRAWN_POOL_MEMBERS} (the \`26\` of \`30\` the record prints, pinned here — \`ADV-GS-28\`): a DRAW IS NOT A SWEEP, and no row here asserts that every member was drawn`,
+    ).toBe(26)
     if (moduleState.mod !== null) {
       // The three figures below are only MEANINGFUL once a module exists: at red time no
       // draw reaches the session at all, so their assertions are gated on the module's
@@ -6960,10 +7810,37 @@ describe('§5.5.1 — the typed property register (11 rows, executed determinist
       // reported as extra breaks of this row.
       expect(baseline.commits, 'P-GS-TP-2 — the no-op placeholder baseline established the declared commit count the draws are compared against').toBe(1)
       expect(baseline.listeners, 'P-GS-TP-2 — the no-op placeholder baseline attached the declared three tracking listeners').toBe(3)
+      // **⟶ `ADV-GS-28`: THE REASON NAMES A DISCRIMINATING EVIDENCE, NOT A BARE NON-ZERO
+      // COUNT.** Pool member `(26)` is *"an object whose getter MUTATES a counter"*, so the
+      // no-read claim is measurable: the counter must still read `0` after the session's own
+      // drive. `readsObserved` counts the attempts that reached that probe, and the
+      // DISCRIMINATING figure is how many times the pinned draw sequence ACTUALLY DREW member
+      // `(26)` — DERIVED from `DRAWN_INDICES`, never hard-coded. The two must be EQUAL, which
+      // proves both that the member was drawn and that every one of its draws left the counter
+      // untouched (a module that read the event would have moved it).
+      const member26Index = EVENT_POOL.findIndex((m) => m.id.startsWith('(26)'))
+      const member26Draws = DRAWN_INDICES.filter((i) => i === member26Index).length
       expect(
         readsObserved,
-        'P-GS-TP-2/§5.5.1 — the mutating-getter pool member (26) was really driven, so the "read at most zero times" claim is measured rather than assumed',
+        `P-GS-TP-2/§5.5.1 — the mutating-getter pool member (26) was really driven: the pinned draw sequence draws it ${member26Draws} time(s) (derived from \`DRAWN_INDICES\`: index ${member26Index} occurs at draws ${JSON.stringify(
+          DRAWN_INDICES.map((i, at) => (i === member26Index ? at + 1 : null)).filter((at) => at !== null),
+        )}), and EVERY one of those draws reached the probe with its counter still \`0\` — so the "read at most zero times" claim is measured rather than assumed (\`ADV-GS-28\`)`,
+      ).toBe(member26Draws)
+      expect(
+        member26Draws,
+        'P-GS-TP-2/`ADV-GS-28` — and that discriminating figure is non-zero: a zero would make the equality above vacuous and would mean the no-read claim was never really probed',
       ).toBeGreaterThan(0)
+      // THE PROBE'S OWN POSITIVE CONTROL: the counter instrument really MOVES when a read
+      // happens — ONE direct read of member `(26)`'s mutating getter takes its counter from `0`
+      // to `1`, which is the discriminating evidence that a session read would have been
+      // CAUGHT by the equality above rather than silently missed.
+      const controlMember = EVENT_POOL[member26Index].make() as { probe?: unknown; readCount: number }
+      const beforeControl = controlMember.readCount
+      void controlMember.probe
+      expect(
+        [beforeControl, controlMember.readCount],
+        'P-GS-TP-2/`ADV-GS-28` — the mutating-getter probe is LIVE: ONE direct read moves its counter from `0` to `1`, so a session read would have failed the equality above instead of passing unnoticed',
+      ).toEqual([0, 1])
     }
   })
 
@@ -7309,15 +8186,26 @@ describe('§6 — the unit’s three falsifications (each asserted, never narrat
 //  fail a module whose bytes name the token), and `PRE-5` is the POSITIVE CONTROL that
 //  the count rows still fail a module that SKIPS the capture.
 //
-//  **THE ONE REMAINING RED IS MODULE-SIDE, AND IT IS NOT MINE TO FIX.** The landed
-//  module discovers the supplied capture method by the DOM method's own NAME —
-//  `readMember(seam, 'setPointerCapture')` (`src/shared/gesture-session.ts` line 276) —
-//  which is the token `R-3`(2) and `F-11` must reject, and which no source-supplied
-//  surface in this harness provides. **The fix is ONE identifier on the module side**:
-//  discover it under the source-supplied name the ruling implies (`'capturePointer'` —
-//  or any module-neutral name the implementer prefers, in which case this harness's
-//  recorder and `F-10`'s one asserted log entry must use that same name; `PRE-5` prints
-//  both ends). **NOTHING in `src/**` was edited by this pass.**
+//  **⟶ RECORDED 2026-09-27 (`ADV-GS-17`, THE GATE-4 CLOSURE): THE MODULE-SIDE FIX LANDED.**
+//  The as-filed paragraph read: *"**THE ONE REMAINING RED IS MODULE-SIDE, AND IT IS NOT MINE
+//  TO FIX.** The landed module discovers the supplied capture method by the DOM method's own
+//  NAME — `readMember(seam, 'setPointerCapture')` (`src/shared/gesture-session.ts` line 276)
+//  — which is the token `R-3`(2) and `F-11` must reject … **The fix is ONE identifier on the
+//  module side** … **NOTHING in `src/**` was edited by this pass.**"* **THE FIX HAS LANDED:
+//  the module now discovers the capability by the module-neutral, source-supplied name
+//  (`readMember(seam, 'capturePointer')`), so `R-3`(2)/`F-11` keep their scans intact and the
+//  capture rows drive a real, source-supplied capability.** The as-filed text is kept here as
+//  provenance; **this pass edited nothing in `src/**` either.**
+//
+// (The full as-filed paragraph, kept verbatim so nothing is silently rewritten: *"THE ONE
+// REMAINING RED IS MODULE-SIDE, AND IT IS NOT MINE TO FIX. The landed module discovers the
+// supplied capture method by the DOM method's own NAME — `readMember(seam,
+// 'setPointerCapture')` — which is the token `R-3`(2) and `F-11` must reject, and which no
+// source-supplied surface in this harness provides. The fix is ONE identifier on the module
+// side: discover it under the source-supplied name the ruling implies (`'capturePointer'` —
+// or any module-neutral name the implementer prefers, in which case this harness's recorder
+// and `F-10`'s one asserted log entry must use that same name; `PRE-5` prints both ends).
+// NOTHING in `src/**` was edited by this pass."*)
 // ===========================================================================
 
 // ===========================================================================
@@ -7380,6 +8268,18 @@ describe('§6 — the unit’s three falsifications (each asserted, never narrat
 // A reader who sees this row fail must read it as *the module owes the fix*, never as
 // *the expectation is stale* — and must NOT re-tune the row to the measured figure.
 //
+// **⟶ RECORDED 2026-09-27 LATER THE SAME DAY (`ADV-GS-17`, THE GATE-4 CLOSURE): THE FIX
+// HAS LANDED, AND THE ADV-GS-2 ROW IS GREEN.** The as-filed text above is kept verbatim as
+// the record of what was owed; the landed module
+// (`src/shared/gesture-session.ts`) now increments `counters.gestures` — and derives
+// `record.id` from it — AFTER the three tracking `on` results are checked and beside the
+// capture call, so a REFUSED `begin` reads `gestures: 0`, the next real gesture reads `1`
+// and is handed `id: 1`. **No row was re-tuned to the pre-fix measured figures**; the red
+// was discharged by the module-side fix, which is the only way it was ever allowed to
+// clear. (The SAME clause, on the `onStart`-throws path rather than the refused-attach
+// path, is `ADV-GS-16`'s row — and THAT one is still red, because the increment still
+// precedes the `onStart` hook.)
+//
 // Tracked in `docs/pending.md` §H with this reasoning.
 
 // ===========================================================================
@@ -7405,11 +8305,21 @@ describe('§6 — the unit’s three falsifications (each asserted, never narrat
 //     GENUINELY FROZEN source) now exist and are asserted in `PRE-4`; `(17)` is a real class
 //     instance; the table carries a `distinctKey` per configuration so the distinct-input
 //     figure is DERIVED (printed) rather than restated, and the DECLARED `15` is printed
-//     BESIDE the derived figure in the register row.
+//     BESIDE the derived figure in the register row. **⟶ CARRIED FURTHER BY `ADV-GS-18`
+//     (the gate-4 closure):** the as-filed row still HARD-CODED its derived figure (`12`) and
+//     built all five "single-hook" configurations from ONE all-hooks fixture; the row now
+//     computes three figures from the table (the `20` declared configurations, the `16`
+//     distinct LABELS, the `13` distinct MODULE-OBSERVABLE inputs via `im1ObservableKey`) and
+//     `(6)`–`(10)` plus `(20)` really build/install what their ids say.
 //   · **`D-12`(`c`)** — `P-GS-IM-1`'s row/stage/message text now reads the `end`-terminal drive
 //     (the `reset`/`cancel` counts named as `P-GS-IM-4`'s), and `P-GS-IM-5`'s declarations and
-//     messages now read `6` stage POSITIONS / `5` distinct observations per flag = `20`
-//     distinct observations, BESIDE the declared `24`.
+//     messages read `6` stage POSITIONS beside the declared `24`. **⟶ CORRECTED BY
+//     `ADV-GS-19` (the gate-4 closure):** the as-filed text continued *"`/ `5` distinct
+//     observations per flag = `20` distinct observations"*, a figure hard-coded in the row
+//     while `§5.5.1`'s own prose names TWO aliased stage pairs — so the derived figure is now
+//     `6 − 2 = 4` readings per flag × `4` flags = **`16`**, DERIVED from the declared
+//     `IM5_STAGE_ALIAS_PAIRS` table and measured inside the stage loop. The declared `24` is
+//     UNMOVED.
 //   · **`D-13` — THE THREE MISSING CONTROLS, each inside the row it belongs to:** `R-5`'s
 //     runtime-ownership control (a stand-in that hands the source an element which was NOT
 //     the argument FAILS the row's own check); `F-11`'s ASSEMBLED-TOKEN positive control (a
@@ -7428,51 +8338,72 @@ describe('§6 — the unit’s three falsifications (each asserted, never narrat
 //     from a completed gesture), asserted before the four terminals.
 //
 // FINDINGS THIS PASS MEASURED AND DID NOT BEND (each carried, not smoothed over):
-//   · **`D-1`'s TYPE-LEVEL RED IS REAL AND STILL RED.** `§5.2` leg 4
-//     (`npx tsc --noEmit --strict --target ES2022 --module ESNext --moduleResolution bundler
-//     --lib ES2022,DOM,DOM.Iterable --skipLibCheck --types node tests/gesture-session.test.ts`)
-//     reports EXACTLY ONE diagnostic — `error TS2353: Object literal may only specify known
-//     properties, and 'capturePointer' does not exist in type 'EventSource'` — because the
-//     module's `EventSource` (`src/shared/gesture-session.ts`) declares only `on`, `off` and
-//     `isConnected?`. **The row's runtime half is GREEN against the LANDED module** (the
-//     module's own `capturePointer` read already exists, `§2.1`'s `EventSource` doc block
-//     notwithstanding), so the member has a real red/green cycle whose ONLY red is the
-//     declaration. **The fix is one member on the MODULE side and is not this pass's to make.**
-//   · **`P-GS-IM-1`'s DECLARED DISTINCT-INPUT FIGURE IS `15`; THE TABLE DERIVES `12`.** The
-//     spec names FIVE aliases (the two capture pairs, `(16)`≡`(12)`, plus the frozen shape
-//     that "is NEVER ACTUALLY FROZEN"), and the two missing fixtures are now real. Deriving
-//     the figure from the INPUT the module observes still yields `12` DISTINCT inputs and `8`
-//     aliases, because the module's `resolveOptions` resolves the FIVE single-hook
-//     configurations `(6)`…`(10)` to ONE resolved-options input (they differ only in the hook
-//     PRESENT, never in the session's observable input) and because `(11)`'s non-callable
-//     hooks resolve to the same `undefined` hooks as `(3)`'s absent ones. **20 = 12 distinct +
-//     8 aliases.** Both figures are printed (the declared `15`, the derived `12`) and the
-//     DECLARED term `58` is unmoved; the arithmetic is printed per configuration so a later
-//     pass can audit it. **This is a register-cell-vs-table disagreement, reported rather
-//     than tuned green.**
+//   · **`D-1`'s TYPE-LEVEL RED HAS FLIPPED GREEN (`⟶ ADV-GS-17`, the gate-4 closure).**
+//     The as-filed bullet read: *"`D-1`'s TYPE-LEVEL RED IS REAL AND STILL RED. `§5.2` leg 4
+//     (…) reports EXACTLY ONE diagnostic — `error TS2353: Object literal may only specify
+//     known properties, and 'capturePointer' does not exist in type 'EventSource'` — because
+//     the module's `EventSource` (`src/shared/gesture-session.ts`) declares only `on`, `off`
+//     and `isConnected?`. … The fix is one member on the MODULE side and is not this pass's
+//     to make."* **THE FIX LANDED: the module's `EventSource` now declares
+//     `capturePointer?(element: GestureElement): void`, and the module's capture read is
+//     `readMember(seam, 'capturePointer')`.** The standalone strict `tsc` leg over THIS file
+//     is **EXIT `0` with ZERO diagnostics** (re-run by this pass — `ADV-GS-17`), so the
+//     member's red/green cycle is complete and the `TS2353` above is kept only as the
+//     as-filed record. **Nothing in `src/**` was edited by this pass.**
+//   · **`P-GS-IM-1`'s DECLARED DISTINCT-INPUT FIGURE IS `15`; THE TABLE NOW DERIVES
+//     `16` LABELS AND `13` MODULE-OBSERVABLE INPUTS (`⟶ ADV-GS-18`, the gate-4 closure).**
+//     The as-filed bullet read *"THE TABLE DERIVES `12` … 20 = 12 distinct + 8 aliases"*, and
+//     that `12` was BOTH hard-coded in the assertion and contradicted by the table's own
+//     printed aliasing list, because the FIVE "single-hook" configurations `(6)`…`(10)` were
+//     all built from the SAME all-hooks fixture (so their ids described nothing they built)
+//     and because `(20)`'s `secondElement` flag was declared and never used. **Three figures
+//     are now COMPUTED in the row from the table:** the `20` declared configurations; the `16`
+//     distinct `distinctKey` LABELS the table defines (including the two FIXTURE-ONLY labels
+//     `(17)`'s class instance and `(18)`'s freeze); and the `13` distinct MODULE-OBSERVABLE
+//     inputs, derived by building each configuration's source/options exactly as the drive
+//     does and projecting only what the module can read (`im1ObservableKey` — under which
+//     `(17)` and `(18)` read as `(12)`-shaped inputs, asserted as such). `(6)`–`(9)` now build
+//     four GENUINELY single-hook inputs, `(10)` builds the all-hooks input, and `(20)` really
+//     installs its second element. **The DECLARED `15` and the DECLARED term `58` are unmoved**
+//     and the derived figures are printed BESIDE them (never substituted); this remains a
+//     register-cell-vs-table disagreement, reported rather than tuned green.
 //   · **`ADV-GS-15` — `ADV-GS-2`/`stats().gestures`: A REFUSED `begin` MUST NOT CONSUME A
 //     GESTURE (the finding this pass measured, and the remand that CORRECTED THE ROW).** The
 //     clause: `§2.1` declares `SessionStats.gestures` as *"Successful `begin` calls,
 //     instance-lifetime"* (`§2.4` item 4: *"`id` starts at `1`, increments on every SUCCESSFUL
 //     `begin`"*; `M-2`: *"the handle's `id === 1`"* for the first gesture) and `§2.3`'s refusal
-//     clauses create NO gesture. The bytes: the landed module increments its gesture counter
-//     BEFORE its tracking-attach check (and derives `record.id` from it), so a refused `begin`
-//     reads `gestures: 1`, a single real gesture then reads `2`, and the first REAL gesture is
-//     handed id `2`. **THE ROW NOW ASSERTS THE CLAUSE — `gestures === 0` after the refusal,
-//     `gestures === 1` and `handle.id === 1` after the retry — AND IS THEREFORE INTENTIONALLY
-//     RED until the Implementer's module-side fix lands (the increment moves after the
-//     tracking-attach check, beside the capture call).** The former text of this bullet
-//     asserted the MEASURED figure *beside* the clause, which codified the violation instead of
-//     pinning the contract; that is the defect this remand removes. A reader must read the red
-//     as *the module owes the fix*, never as *the test is broken* — and must NOT re-tune the
-//     row back to the measured figure. (The same finding, stated at the row: the `ADV-GS-15`
-//     block above `describe('ADV-GS-2 …')`.)
+//     clauses create NO gesture. The bytes THEN: the landed module incremented its gesture
+//     counter BEFORE its tracking-attach check (and derived `record.id` from it), so a refused
+//     `begin` read `gestures: 1`, a single real gesture then read `2`, and the first REAL
+//     gesture was handed id `2`. **THE ROW ASSERTS THE CLAUSE — `gestures === 0` after the
+//     refusal, `gestures === 1` and `handle.id === 1` after the retry — AND IS NOW GREEN: THE
+//     MODULE-SIDE FIX LANDED** (`⟶ ADV-GS-17`, the gate-4 closure: the increment, and the
+//     `record.id` it feeds, sit after the tracking-attach check beside the capture call).
+//     The former text of this bullet asserted the MEASURED figure *beside* the clause, which
+//     codified the violation instead of pinning the contract; that is the defect this remand
+//     removes, and the red was discharged by the fix rather than by re-tuning the row. (The
+//     same finding, stated at the row: the `ADV-GS-15` block above
+//     `describe('ADV-GS-2 …')`.)
+//   · **`ADV-GS-16` — THE SAME CLAUSE ON THE `onStart`-THROWS PATH, AND IT IS STILL RED.**
+//     The refused-attach path is fixed, but `counters.gestures` is ALSO incremented before the
+//     consumer’s `onStart` hook runs, so a `begin` whose `onStart` throws (it rolls the
+//     tracking listeners back and RETHROWS) still counts as a gesture and consumes an id. The
+//     row authored by this pass asserts the clause — measured on the landed bytes:
+//     `{gestures after the throw: 1, gestures after the retry: 2, retry handle id: 2}` against
+//     the required `{0, 1, 1}`. **This is the ONE red this pass reports**, and it is a PINNED
+//     CONTRACT VIOLATION, not a broken test: the increment must move after the `onStart` call
+//     (or the hook must run before the counters move) for the clause to hold.
 //   · **`ADV-GS-2`'s roll-back LOG IS BALANCED, and that is measured not assumed:** the
 //     recorder logs an `on` ATTEMPT before its configured throw, so the two detaches for
 //     never-completed attaches still pair with their own recorded attempts (`pairOnOffCalls`
 //     reports no unmatched `off`); the `attached` MAP, however, holds only the start listener.
 //     `I-5`'s sentence is therefore NOT contradicted by this path, and the row says so.
-//   · **`P-GS-IM-6`'s declared `30` / distinct `26`, and `P-GS-IM-1`'s declared `58` /
-//     meas. `59` / `P-GS-IM-5`'s declared `24` / distinct `20`, are UNMOVED.** No register id,
-//     term, strategy id, the `396` total, the seed or any cap moved in this pass.
+//   · **`P-GS-IM-6`'s declared `30` / distinct `20` (DERIVED), `P-GS-IM-1`'s declared `58` /
+//     meas. `59` / labels `16` / module-observable `13`, and `P-GS-IM-5`'s declared `24` /
+//     distinct `16` (DERIVED), are the figures this file prints.** The `⟶ ADV-GS-18/19/20`
+//     closure replaced the as-filed hard-coded distinct figures (`12`, `5`, `26`) with
+//     DERIVED ones and recorded the reasons, so no row prints a figure its own table
+//     contradicts. **No register id, term, strategy id, the `396` total, the seed or any cap
+//     moved in this pass** — the DECLARED terms (`58`/`24`/`30`) are unmoved and are what the
+//     caps are compared against.
 // ===========================================================================
