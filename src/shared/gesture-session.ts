@@ -432,14 +432,6 @@ export function createGestureSession(options?: SessionOptions): GestureSession {
       counters.lastCode = 'not-installed'
       return { ok: false, code: 'not-installed' }
     }
-    // ⟶ ADV-GS-15 (2026-09-27): the GESTURE COUNTER — and the id it feeds — is incremented
-    // only by a `begin` that ESTABLISHES, i.e. AFTER the tracking-attach check above. The
-    // counter previously moved before that check, so a REFUSED `begin` counted as a gesture
-    // and consumed the id the next real gesture was handed. `§2.1`'s `SessionStats.gestures`
-    // counts "Successful `begin` calls", and §2.4 item 4 has the id start at `1` and
-    // increment on every SUCCESSFUL `begin` — a refusal creates no gesture (its record is
-    // discarded above). Ids stay consecutive for successful gestures.
-    counters.gestures += 1
     if (record.options.capture) capturePointer(element)
     const startHook = record.options.onStart
     if (startHook !== undefined) {
@@ -452,6 +444,21 @@ export function createGestureSession(options?: SessionOptions): GestureSession {
         throw error
       }
     }
+    // ⟶ ADV-GS-15 (2026-09-27): the GESTURE COUNTER — and the id it feeds — is incremented
+    // only by a `begin` that ESTABLISHES, i.e. AFTER the tracking-attach check above. The
+    // counter previously moved before that check, so a REFUSED `begin` counted as a gesture
+    // and consumed the id the next real gesture was handed. `§2.1`'s `SessionStats.gestures`
+    // counts "Successful `begin` calls", and §2.4 item 4 has the id start at `1` and
+    // increment on every SUCCESSFUL `begin` — a refusal creates no gesture (its record is
+    // discarded above). Ids stay consecutive for successful gestures.
+    // ⟶ ADV-GS-16 (2026-09-27): the SAME clause covers the hook path, so the increment now
+    // sits after the `onStart` try/catch as well — a `begin` whose `onStart` THROWS is not a
+    // successful `begin` (`§2.1`'s `gestures` cell, §2.4 item 4, M-2, §2.3 item 1(d)): it
+    // returns no result and rethrows, so it consumes neither the counter nor the id. The
+    // record's own `id` is still read at record-build time as `counters.gestures + 1` — the
+    // id establishment WILL be given — so the ids handed to successful gestures stay
+    // consecutive (`1, 2, 3…`) and this path's unused one is not consumed.
+    counters.gestures += 1
     counters.lastCode = 'ok'
     return { ok: true, gesture: record.handle }
   }
