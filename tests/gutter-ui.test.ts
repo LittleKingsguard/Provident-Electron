@@ -85,21 +85,29 @@
 // pin: it compiles ONLY if the module exports all seventeen type names AND the three
 // value exports with the declared signatures.
 //
-// **THE REGISTER (`§5.5.1`): SEVEN rows, declared total `134` = `15 + 15 + 15 + 45 + 20 +
-// 12 + 12`** (chain `15 → 30 → 45 → 90 → 110 → 122 → 134`; subtotals `SM 45` · `IM 65` ·
-// `TP 24`), executed in register order with per-row strategy ids (`S-GU-*`), caps
+// **THE REGISTER (`§5.5.1`): SEVEN rows, declared total `131` = `13 + 20 + 7 + 45 + 20 +
+// 12 + 14`** (chain `13 → 33 → 40 → 85 → 105 → 117 → 131`; subtotals `SM 40` · `IM 65` ·
+// `TP 26`), executed in register order with per-row strategy ids (`S-GU-*`), caps
 // `≤100`/row · `≤400` total · stop-after-5-consecutive-failures, and the discipline that
-// **an un-run row is REPORTED AS A FAILURE.** **The assertion figure (`P-GU-SM-1`'s `12`
-// mid-drag assertions) and the reading figure (`P-GU-TP-1`'s `6` entry-point readings) are
+// **an un-run row is REPORTED AS A FAILURE.**
+// **⟶ RE-GRAINED 2026-09-27 (THE GATE-4 RE-GRAIN PASS).** The four terms the gate-4 PBT
+// remedies MEASURED became the declared ones — `P-GU-SM-1` `15 → 13`, `P-GU-SM-2` `15 → 20`,
+// `P-GU-SM-3` `15 → 7`, `P-GU-TP-2` `12 → 14` — while `P-GU-IM-1`'s `45`, `P-GU-IM-2`'s `20`
+// and `P-GU-TP-1`'s `12` are UNCHANGED, because their drives are real drives. **THE
+// PRE-RE-GRAIN `E-3` PRINT (`134` = `15 + 15 + 15 + 45 + 20 + 12 + 12`, chain
+// `15 → 30 → 45 → 90 → 110 → 122 → 134`, subtotals `SM 45` · `IM 65` · `TP 24`) IS SUPERSEDED
+// and must not be printed as live.**
+// **The assertion and reading figures (`P-GU-SM-1`'s `12` mid-drag assertions,
+// `P-GU-SM-3`'s `21` readings, `P-GU-TP-1`'s `6` entry-point readings) are
 // printed BESIDE their terms and are NEVER counted in them** (`docs/decisions.md`
 // `A DECLARED REGISTER TERM IS A DRIVE COUNT`; `§5.3` item 11).
 //
 // ⟶ **ONE SPEC NOTE, REPORTED AND NOT USED AS AN EXPECTATION.** `§5.5.1`'s `P-GU-SM-1`
-// cell prints a DERIVATION sentence (`10` path × composition drives + `5` mid-drag
-// shapes = `15`) AND an instruction that the `22` "must not be derived as `10` drives +
-// `12` assertions". Neither is used here: the DECLARED TERM this file asserts is the
-// `E-3` re-grain's ruled `15` — the figure `§5.5.3`'s chain, the `134` total and `§5.3`
-// item 11 all print — so **no derivation formula below feeds a constant.**
+// cell prints a DERIVATION sentence for its own term AND an instruction that the superseded
+// figures "must not be derived as `10` drives + `12` assertions". Neither is used here: the
+// DECLARED TERM this file asserts is the GATE-4 re-grain's ruled `13` — the figure
+// `§5.5.1`'s cell, `§5.5.3`'s chain, the `131` total and `§5.3` item 11 all print — so
+// **no derivation formula below feeds a constant.**
 //
 // ---------------------------------------------------------------------------
 // ⟶ **DRIVE-WINDOW RECONCILIATION, 2026-09-27 (the supervisor's drive-window ruling).** The
@@ -113,9 +121,9 @@
 // reading (row 9: `session.reset` exactly once, ONE sink write of the clamped pre-drag size,
 // `resets` moved once) MUST include a PRIOR VALID MOVE, which establishes the drag state and
 // lets the module push the value through `handle.set` BEFORE the invalid move/drop/reset the row
-// is about. **This is a change INSIDE an existing drive — never a new drive:** the register's
-// declared terms stay `15/45/12/12`, the `134` total and every strategy id are untouched, and
-// no row id, section number, seed or `§5.U` row moves. Each changed row carries a dated
+// is about. **This is a change INSIDE an existing drive — never a new drive:** no register term
+// (the declared terms this pass moved were moved by the LATER GATE-4 RE-GRAIN, not here), no
+// strategy id, and no row id, section number, seed or `§5.U` row moves. Each changed row carries a dated
 // `⟶ DRIVE-WINDOW RECONCILED 2026-09-27` annotation BESIDE its as-filed wording, and the added
 // move is asserted to have been VALID (`priorValidMove`/`priorValidMoveWithState`) so the window
 // is a READING rather than a claim.
@@ -1537,7 +1545,7 @@ describe('§3.5 — the existence and precondition rows (the red’s own premise
     expect(typeof mod['clampToBounds'], 'PRE-1 — and the second value export of that module is readable too').toBe('function')
   })
 
-  it('PRE-2 (harness) — the §5.5.1 register tables are the ones the spec prints (the seven ids, the seven strategy ids, the seven terms, the `134` total, the caps and the two beside-the-term figures)', () => {
+  it('PRE-2 (harness) — the §5.5.1 register tables are the ones the spec prints (the seven ids, the seven strategy ids, the seven terms, the `131` total, the caps and the three beside-the-term figures)', () => {
     expect(REGISTER_ROW_CAP, 'PRE-2/§5.5.1 — the per-row cap is `≤100`').toBe(100)
     expect(REGISTER_TOTAL_CAP, 'PRE-2/§5.5.1 — the total cap is `≤400`').toBe(400)
     expect(CONSECUTIVE_FAILURE_CAP, 'PRE-2/§5.5.1 — the stop rule is 5 consecutive failures').toBe(5)
@@ -1552,27 +1560,31 @@ describe('§3.5 — the existence and precondition rows (the red’s own premise
     const terms = REGISTER_DECLARED.map((r) => r.term)
     expect(
       terms,
-      'PRE-2/§5.5.1/§5.5.3 — the seven DECLARED terms, in register order, EXACTLY as the spec prints them (they are NOT re-totalled silently: the spec’s declared figures are what the caps are compared against)',
-    ).toEqual([15, 15, 15, 45, 20, 12, 12])
+      'PRE-2/§5.5.1/§5.5.3 — the seven DECLARED terms, in register order, EXACTLY as the spec prints them (they are NOT re-totalled silently: the spec’s declared figures are what the caps are compared against). ⟶ RE-GRAINED 2026-09-27 (THE GATE-4 RE-GRAIN PASS): `13/20/7/45/20/12/14`; the `E-3` terms `15/15/15/45/20/12/12` are SUPERSEDED',
+    ).toEqual([13, 20, 7, 45, 20, 12, 14])
     const termSum = terms.reduce((sum, n) => sum + n, 0)
     console.log(
       `§5.5.1 ARITHMETIC :: ${JSON.stringify({
         declaredTotal: REGISTER_PRINTED_TOTAL,
         measuredTermSum: termSum,
         terms: REGISTER_DECLARED.map((r) => `${r.row}=${r.term}`),
-        chain: '15 → 30 → 45 → 90 → 110 → 122 → 134',
-        subtotals: { SM: 45, IM: 65, TP: 24 },
-        besideTheTerms: { 'P-GU-SM-1': '12 mid-drag ASSERTIONS (never counted in the term)', 'P-GU-TP-1': '6 entry-point READINGS (never counted in the term)' },
+        chain: '13 → 33 → 40 → 85 → 105 → 117 → 131',
+        subtotals: { SM: 40, IM: 65, TP: 26 },
+        besideTheTerms: {
+          'P-GU-SM-1': '12 mid-drag ASSERTIONS (never counted in the term)',
+          'P-GU-SM-3': '21 READINGS, 3 per drive (never counted in the term)',
+          'P-GU-TP-1': '6 entry-point READINGS (never counted in the term)',
+        },
         clause: 'docs/specs/gutter-ui.md §5.5.3 — the declared total is the sum of its own terms',
       })}`,
     )
     expect(
       REGISTER_PRINTED_TOTAL,
-      'PRE-2/§5.5.1/§5.5.3 — the register’s DECLARED total is the E-3 re-grain’s figure, `134` (the as-filed `142`/`140`/`127` figures are SPENT and must NOT be printed as live: a DONE row printing `140`, `142` or `147` is a review finding, §5.3 item 11)',
-    ).toBe(134)
+      'PRE-2/§5.5.1/§5.5.3 — the register’s DECLARED total is the GATE-4 re-grain’s figure, `131` (the as-filed `142`/`140`/`127` figures and the `E-3` print `134` are SPENT and must NOT be printed as live: a DONE row printing any of them is a review finding, §5.3 item 11)',
+    ).toBe(131)
     expect(
       termSum,
-      `PRE-2/§5.5.3 — THE TERM-SUM CHECK: the seven printed terms (\`15+15+15+45+20+12+12\`) sum to \`${termSum}\`, and the ruled chain is \`15 → 30 → 45 → 90 → 110 → 122 → 134\`. A total that is not the sum of its own terms is a REVIEW FINDING`,
+      `PRE-2/§5.5.3 — THE TERM-SUM CHECK: the seven printed terms (\`13+20+7+45+20+12+14\`) sum to \`${termSum}\`, and the ruled chain is \`13 → 33 → 40 → 85 → 105 → 117 → 131\`. A total that is not the sum of its own terms is a REVIEW FINDING`,
     ).toBe(REGISTER_PRINTED_TOTAL)
     const chain: number[] = []
     let running = 0
@@ -1586,17 +1598,17 @@ describe('§3.5 — the existence and precondition rows (the red’s own premise
       ).toBeGreaterThan(previous)
       previous = running
     }
-    expect(chain, 'PRE-2/§5.5.3 — the ruled chain `15 → 30 → 45 → 90 → 110 → 122 → 134`, term by term').toEqual([
-      15, 30, 45, 90, 110, 122, 134,
+    expect(chain, 'PRE-2/§5.5.3 — the ruled chain `13 → 33 → 40 → 85 → 105 → 117 → 131`, term by term').toEqual([
+      13, 33, 40, 85, 105, 117, 131,
     ])
     expect(
       [terms[0] + terms[1] + terms[2], terms[3] + terms[4], terms[5] + terms[6]],
-      'PRE-2/§5.5.3 — the ruled FAMILY SUBTOTALS: `SM` = 15+15+15 = 45 · `IM` = 45+20 = 65 · `TP` = 12+12 = 24, and 45 + 65 + 24 = 134',
-    ).toEqual([45, 65, 24])
+      'PRE-2/§5.5.3 — the ruled FAMILY SUBTOTALS: `SM` = 13+20+7 = 40 · `IM` = 45+20 = 65 · `TP` = 12+14 = 26, and 40 + 65 + 26 = 131',
+    ).toEqual([40, 65, 26])
     for (const row of REGISTER_DECLARED) {
       expect(row.term, `PRE-2/§5.5.1 — row ${row.row} is inside the ≤100 per-row cap`).toBeLessThanOrEqual(REGISTER_ROW_CAP)
     }
-    expect(REGISTER_PRINTED_TOTAL, 'PRE-2/§5.5.1 — the declared total is inside the `≤400` register cap (`134 ≤ 400`)').toBeLessThanOrEqual(
+    expect(REGISTER_PRINTED_TOTAL, 'PRE-2/§5.5.1 — the declared total is inside the `≤400` register cap (`131 ≤ 400`)').toBeLessThanOrEqual(
       REGISTER_TOTAL_CAP,
     )
     expect(
@@ -1605,12 +1617,12 @@ describe('§3.5 — the existence and precondition rows (the red’s own premise
     ).toEqual(['P-GU-SM-1', 'P-GU-SM-2', 'P-GU-IM-1', 'P-GU-TP-1'])
     expect(
       REGISTER_DECLARED.filter((r) => r.term !== r.distinct).map((r) => `${r.row}:${r.term}/${r.distinct}`),
-      'PRE-2/§5.5.2 item 4 — THE DISTINCT FIGURES WHERE THEY DIFFER: `P-GU-IM-1` declares `45` with a `15` distinct value-class figure, and `P-GU-TP-2` declares `12` with a `10` distinct answer-shape figure. The DECLARED figures are what the caps compare; the distinct figures are reported BESIDE them and never substituted',
-    ).toEqual(['P-GU-IM-1:45/15', 'P-GU-TP-2:12/10'])
+      'PRE-2/§5.5.2 item 4 — THE DISTINCT FIGURES WHERE THEY DIFFER (⟶ RE-GRAINED 2026-09-27: THREE rows now carry two differing figures): `P-GU-SM-1` declares `13` with a `15` distinct-drive figure, `P-GU-IM-1` declares `45` with a `15` distinct value-class figure, and `P-GU-TP-2` declares `14` with a `12` distinct answer-shape figure. The DECLARED figures are what the caps compare; the distinct figures are reported BESIDE them and never substituted',
+    ).toEqual(['P-GU-SM-1:13/15', 'P-GU-IM-1:45/15', 'P-GU-TP-2:14/12'])
     expect(
       REGISTER_DECLARED.reduce((sum, r) => sum + r.beside, 0),
-      'PRE-2/§5.5.1/§5.5.3 — the two figures printed BESIDE their terms (`P-GU-SM-1`’s `12` mid-drag ASSERTIONS and `P-GU-TP-1`’s `6` entry-point READINGS) are carried as their own field and are NEVER counted in a term',
-    ).toBe(18)
+      'PRE-2/§5.5.1/§5.5.3 — the three figures printed BESIDE their terms (`P-GU-SM-1`’s `12` mid-drag ASSERTIONS, `P-GU-SM-3`’s `21` READINGS and `P-GU-TP-1`’s `6` entry-point READINGS = 39) are carried as their own field and are NEVER counted in a term',
+    ).toBe(39)
   })
 
   it('R-8x §3.5 — the module-absence row, BOTH BRANCHES: RED (module absent ⇒ assert ABSENCE + the `3 + 17 = 20` census’s precondition) and GREEN (module present ⇒ assert it EXISTS, that the renderer wiring imports it, that NO other `src/**` file does, and that the `3 + 17 = 20` census holds BY NAME)', () => {
@@ -6503,6 +6515,433 @@ describe('ADV-GU-* — the gate-4 regression rows (one per fixed host finding, e
       'ADV-GU-12b CONTROL — and `E3`’s counter AGREES with the sink’s record at ONE (the two-reading rule)',
     ).toBe(1)
   })
+
+  // =========================================================================
+  // ⟶ ADDED 2026-09-27 (THE GATE-4 RCA-3 REGRESSION ROWS) — ONE ROW PER HOST FINDING THE
+  // GATE-4 FIX PASS LANDED, EACH BUILT SO IT **FAILS IF THE FIX IS REVERTED**. Every row
+  // below names, in its own header comment, **the mutation it can fail on** (invert the
+  // expectation · measure · restore): an `expect` that cannot fail on a revert is paperwork,
+  // not a regression row (`AGENTS.md` RCA-3, `§4.4 S-7`'s non-vacuity rule).
+  //
+  // **⟶ AND THE MUTATION EVIDENCE IS *OWED*, NOT CLAIMED.** These four rows were AUTHORED in a
+  // pass with **NO SHELL** (no `vitest`, no `tsc`, no `git`), so **NOTHING BELOW WAS EXECUTED and
+  // no mutation was APPLIED**: each row's mutation paragraph is written in the **CONDITIONAL**
+  // (“the mutation *that would* fail this row”) and states exactly which expectation would move.
+  // **OWED — TEST-SIDE: the supervisor's next pass must APPLY each mutation (invert · run ·
+  // measure · restore) and record the measured red beside these rows.** A row whose mutation was
+  // applied is evidence; a row whose mutation is only predicted is a plan.
+  //
+  // **THE CLAUSES THEY PIN, one per row:** `§2.4` item 3 / `§5.5.1 P-GU-IM-2` (`startSizeOf`
+  // EXACTLY ONCE per gesture — the pre-drag seam, INCLUDING on the INVALID path);
+  // `§2.3` row 5 / `§3.1 M-11` (a no-declaration hover ENTER writes NOTHING while the EXIT
+  // still clears ONCE); `§2.1` item 9 / `§R.3`'s `moveTypeOf` degradation row (a non-STRING
+  // token attaches NO move listener — and the fallback literal stays ILLEGAL);
+  // `§2.1`'s `attach()` cell / the `§R.3` refusal discipline and the `src/shared/gutter-affordance.ts`
+  // rollback (*"A REFUSED `attach()` LEAVES NO OWNER BEHIND"*).
+  // =========================================================================
+
+  it('ADV-GU-6b — THE PRE-DRAG SEAM IS READ EXACTLY ONCE PER GESTURE, INCLUDING ON THE INVALID PATH: over establishment → a valid move → an invalid move → the terminal, `startSizeOf` reads `1` (the landed reuse; the reverted form read `1/1/2/2`)', async () => {
+    // **THE FINDING THIS ROW CLOSES.** The as-filed controller closure consulted the caller's
+    // `startSizeOf` seam AT THE RESET TERMINAL as well as at establishment, so the invalid path read
+    // the pre-drag size a SECOND time (**MEASURED over a full invalid path: `1` read at
+    // establishment, `1` after a valid move, `2` after the INVALID move, `2` after the terminal**).
+    // The landed form reuses the gesture's own already-taken reading
+    // (`src/shared/gutter-affordance.ts`'s `defaultSizeFor`: *"THE GESTURE'S ALREADY-TAKEN PRE-DRAG
+    // READING IS REUSED HERE"*).
+    // **THE CLAUSES:** `§2.4` item 3 (*"`startSizeOf(element, token)` is called **exactly once per
+    // gesture, in `onStart`** … the two readings cannot disagree"*), `§0A` note 5, `§2.3` row 7 (the
+    // establishment turn), `§2.3` row 8 (the PRE-HANDLE window, which the drive-window helper below
+    // gets the invalid move OUT of), `§2.3` row 9 (the invalid arm's own reset), and
+    // `§5.5.1 P-GU-IM-2` (*"`startSizeOf` — EXACTLY ONCE per gesture, at establishment"*).
+    //
+    // **THE MUTATION THIS ROW CAN FAIL ON** (not applied in this pass — see the block header's
+    // OWED — TEST-SIDE note): reverting the module's `defaultSizeFor` to the as-filed
+    // `seamAnswer(startSizeOf, [el, token])` (dropping the record reuse) makes THIS row read
+    // `1/1/1/2` — the terminal's own reset clamp is the second read — so the decisive
+    // `invalidReadsAfterTheTerminal === 1` assertion would FAIL while every other reading stays
+    // as it is. **THE MUTATION, ITS MEASURED RED AND ITS RESTORE ARE OWED TO THE NEXT PASS.**
+    await requireLiveModule('ADV-GU-6b')
+    let reads = 0
+    const h = await makeHarness(
+      {
+        startSizeOf: (): unknown => {
+          reads += 1
+          return 100
+        },
+      },
+      'ADV-GU-6b',
+    )
+    expect(h.affordance.attach(), 'ADV-GU-6b — attach').toBe(true)
+    h.source.fire('pointerover', pointerEvent(0, 0, 0))
+    const readsAfterTheHover = reads
+    h.source.fire('pointerdown', pointerEvent(0))
+    const readsAtEstablishment = reads
+    h.source.fire(POINTER_TYPES.move, pointerEvent(0, 150, 300))
+    const readsAfterTheValidMove = reads
+    // **THE SUBJECT MOVE IS INVALID (clause (ii): `clampToBounds`'s answer is not finite), and the
+    // drive window is reconciled so it reaches row 9's LIVE arm rather than row 8's PRE-HANDLE
+    // refusal**: the size seam answers a FINITE value for the setup turn and `NaN` for the subject
+    // turn (the same stateful-seam technique `F-2`/`F-10`/`P-GU-SM-1` use).
+    let subjectCalls = 0
+    const hInvalid = await makeHarness(
+      {
+        startSizeOf: (): unknown => {
+          reads += 1
+          return 100
+        },
+        sizeFromPointer: ((): unknown => ((n: number) => (n <= 1 ? 50 : Number.NaN))(++subjectCalls)),
+      },
+      'ADV-GU-6b subject',
+    )
+    expect(hInvalid.affordance.attach(), 'ADV-GU-6b — attach (invalid path)').toBe(true)
+    hInvalid.source.fire('pointerover', pointerEvent(0, 0, 0))
+    hInvalid.source.fire('pointerdown', pointerEvent(0))
+    const invalidReadsAtEstablishment = reads
+    priorValidMove(hInvalid, 'ADV-GU-6b invalid path — the setup move')
+    const invalidReadsAfterTheValidMove = reads
+    hInvalid.source.fire(POINTER_TYPES.move, pointerEvent(0, 175, 300))
+    const invalidReadsAfterTheInvalidMove = reads
+    hInvalid.source.fire(POINTER_TYPES.end, pointerEvent(0, 175, 300))
+    const invalidReadsAfterTheTerminal = reads
+    const invalidStats = hInvalid.affordance.stats()
+    console.log(
+      `ADV-GU-6b MEASURED :: ${JSON.stringify({
+        validPath: { readsAfterTheHover, readsAtEstablishment, readsAfterTheValidMove, reads },
+        invalidPath: {
+          readsAtEstablishment: invalidReadsAtEstablishment,
+          readsAfterTheValidMove: invalidReadsAfterTheValidMove,
+          readsAfterTheInvalidMove: invalidReadsAfterTheInvalidMove,
+          readsAfterTheTerminal: invalidReadsAfterTheTerminal,
+        },
+        invalidPathStats: invalidStats,
+        clause:
+          'docs/specs/gutter-ui.md §2.4 item 3 + §0A note 5 + §2.3 rows 7/8/9 + §5.5.1 P-GU-IM-2 (the pre-drag seam, EXACTLY ONCE per gesture — the invalid path included)',
+      })}`,
+    )
+    expect(readsAfterTheHover, 'ADV-GU-6b/§2.4 item 3 — the pre-drag size is NOT read on a hover path (zero reads before establishment)').toBe(0)
+    expect(
+      readsAtEstablishment,
+      'ADV-GU-6b/§2.4 item 3/§2.3 row 7 — the pre-drag size IS read AT ESTABLISHMENT (before any observed move)',
+    ).toBe(1)
+    expect(
+      readsAfterTheValidMove,
+      `ADV-GU-6b/§2.4 item 3 — the VALID observed-move turn adds NO read (the record already holds the establishment answer). MEASURED after the valid move: ${String(
+        reads,
+      )}`,
+    ).toBe(1)
+    expect(
+      reads,
+      'ADV-GU-6b/§5.5.1 P-GU-IM-2 — the whole VALID gesture reads the pre-drag seam EXACTLY ONCE',
+    ).toBe(1)
+    expect(
+      invalidReadsAtEstablishment,
+      'ADV-GU-6b — the invalid path reads the pre-drag seam ONCE at establishment, exactly as the valid path does (the read site is the establishment turn, not the terminal and not the kind of move)',
+    ).toBe(1)
+    expect(
+      invalidReadsAfterTheValidMove,
+      `ADV-GU-6b — the DRIVE-WINDOW SETUP move adds NO read (a valid move consumes the record's own value). MEASURED: ${String(
+        invalidReadsAfterTheValidMove,
+      )}`,
+    ).toBe(1)
+    expect(
+      invalidReadsAfterTheInvalidMove,
+      `ADV-GU-6b/§2.3 row 9/§2.4 item 3 — **THE DECISIVE INVALID-PATH READING: the INVALID move's own reset arm adds NO read of the caller's seam**, because the reset's clamp reuses the gesture's already-taken pre-drag reading. MEASURED after the invalid move: ${String(
+        invalidReadsAfterTheInvalidMove,
+      )} (a \`2\` here is the REVERTED form, where the reset's clamp consulted the caller's seam again)`,
+    ).toBe(1)
+    expect(
+      invalidReadsAfterTheTerminal,
+      `ADV-GU-6b/§5.5.1 P-GU-IM-2 (*"startSizeOf — EXACTLY ONCE per gesture, at establishment"*) — the TERMINAL adds no read either, so the invalid gesture's WHOLE count is ONE. MEASURED over establishment → a valid move → an invalid move → the terminal: ${String(
+        invalidReadsAfterTheTerminal,
+      )} — the reverted module reads \`2\` HERE and FAILS this row`,
+    ).toBe(1)
+    expect(
+      Number(invalidStats['resets']),
+      'ADV-GU-6b — the subject move really took the INVALID arm (`stats().resets === 1`), so the readings above describe the invalid path and not a valid gesture',
+    ).toBe(1)
+    expect(
+      Number(hInvalid.affordance.stats()['moves']),
+      'ADV-GU-6b — and the gesture observed TWO moves (the setup and the subject), so the drive is a live drag',
+    ).toBe(2)
+  })
+
+  it('ADV-GU-9b — A NO-DECLARATION HOVER ENTER CALLS `applyCursor` ZERO TIMES AND THE EXIT CLEARS ONCE: `cursorOf` answering no declaration ⇒ enter calls `0`, exit calls `1` carrying `undefined`, `stats().cursorWrites 0`, `stats().cursorClears 1`', async () => {
+    // **THE CLAUSES:** `§2.3` row 4 (the hover ENTER writes **`applyCursor(element,
+    // declaration)`** — *"the AFFORDANCE, not the target"*), `§2.3` row 5 (the hover EXIT writes
+    // **`applyCursor(element, undefined)`** — *"the same AFFORDANCE"*), `§2.6` item 3 and
+    // `§3.1 M-11` (*"for a `cursorOf` answering `{}` the ENTER wrote NOTHING (`cursorWrites` did not
+    // increase)"*), with `§R` `R8`(c) for the call site and `§R.3`'s `cursorOf` row for the
+    // total resolution that produces the no-declaration answer.
+    // **THE READING IS TAKEN AS A DELTA OVER ONE PAIR, so the assertion cannot be satisfied by a
+    // counter that was already non-zero for another reason.**
+    //
+    // **THE MUTATIONS THIS ROW CAN FAIL ON** (not applied in this pass — see the block header's
+    // OWED — TEST-SIDE note): making the hover ENTER call `applyCursor` unconditionally (writing
+    // `undefined` as if it were a declaration — the *"write even when nothing resolved"* shape)
+    // would FAIL the enter-side assertion at `1` while the exit-side one still reads `1`; and
+    // making the EXIT clear conditional on a declaration having been written (the as-filed reading
+    // this row exists to forbid) would make `cursorClears` read `0` and FAIL the exit-side
+    // assertion. **THE MUTATIONS, THEIR MEASURED REDS AND THEIR RESTORES ARE OWED TO THE NEXT PASS.**
+    await requireLiveModule('ADV-GU-9b')
+    const h = await makeHarness({ cursorOf: (): unknown => undefined }, 'ADV-GU-9b')
+    expect(h.affordance.attach(), 'ADV-GU-9b — attach').toBe(true)
+    const callsBefore = h.cursorCalls.length
+    const writesBefore = Number(h.affordance.stats()['cursorWrites'])
+    const clearsBefore = Number(h.affordance.stats()['cursorClears'])
+    h.source.fire('pointerover', pointerEvent(0))
+    const enterCalls = h.cursorCalls.slice(callsBefore)
+    const writesAfterTheEnter = Number(h.affordance.stats()['cursorWrites'])
+    h.source.fire('pointerout', pointerEvent(0))
+    const pairCalls = h.cursorCalls.slice(callsBefore)
+    const stats = h.affordance.stats()
+    const clearsAfterTheExit = Number(stats['cursorClears'])
+    console.log(
+      `ADV-GU-9b MEASURED :: ${JSON.stringify({
+        enterCalls: enterCalls.length,
+        pairCalls,
+        cursorWritesDelta: writesAfterTheEnter - writesBefore,
+        cursorClearsDelta: clearsAfterTheExit - clearsBefore,
+        lastCursor: stats['lastCursor'],
+        clause: 'docs/specs/gutter-ui.md §2.3 rows 4/5 + §2.6 item 3 + §3.1 M-11 + §R R8(c) + §R.3 (cursorOf)',
+      })}`,
+    )
+    expect(
+      enterCalls.length,
+      `ADV-GU-9b/§2.3 row 4/§3.1 M-11 — a hover whose \`cursorOf\` answers NO declaration makes the ENTER write NOTHING: ZERO \`applyCursor\` invocations on \`pointerover\`. MEASURED enter calls: ${JSON.stringify(
+        enterCalls,
+      )}`,
+    ).toBe(0)
+    expect(
+      writesAfterTheEnter - writesBefore,
+      'ADV-GU-9b/§3.1 M-11 — and `stats().cursorWrites` does NOT increase for it (the counter is the same reading as the seam\'s own record)',
+    ).toBe(0)
+    expect(
+      pairCalls.length,
+      `ADV-GU-9b/§2.3 row 5 — the EXIT still clears ONCE: exactly ONE \`applyCursor\` invocation over the pair (the enter wrote nothing, so the pair's single call is the exit's). MEASURED pair calls: ${JSON.stringify(
+        pairCalls,
+      )}`,
+    ).toBe(1)
+    expect(
+      pairCalls[0]?.declaration,
+      'ADV-GU-9b/§2.3 row 5 — that single call CARRIES `undefined` (the clear), never a declaration',
+    ).toBe(undefined)
+    expect(
+      pairCalls[0]?.element === h.element,
+      `ADV-GU-9b/§R R8(c) — and the clear targets the AFFORDANCE by identity (never the \`target\`): the cursor is a property of the element the pointer is OVER`,
+    ).toBe(true)
+    expect(
+      stats['cursorClears'],
+      'ADV-GU-9b/§2.3 row 5 — `stats().cursorClears` reads EXACTLY ONE for the pair',
+    ).toBe(1)
+    expect(
+      stats['cursorWrites'],
+      'ADV-GU-9b/§3.1 M-11 — `stats().cursorWrites` reads ZERO: a no-declaration hover writes NOTHING (and the clear is counted on its OWN counter, never as a write)',
+    ).toBe(0)
+    expect(
+      stats['lastCursor'],
+      'ADV-GU-9b/§R.3 (the `cursorOf` row) — with no write ever made, `stats().lastCursor` stays the empty string',
+    ).toBe('')
+  })
+
+  it('ADV-GU-9c — A NON-STRING `moveTypeOf` TOKEN ATTACHES NO MOVE LISTENER: `42`, `{}`, `\'\'` and absent each ⇒ ZERO move registrations and ZERO moves, while a non-empty caller string still registers under ITS OWN token (the positive control)', async () => {
+    // **THE CLAUSES:** `§2.1` item 9 (*"the module reads the answer through its `typeof`/non-empty-string
+    // gate and attaches nothing otherwise (the declared degradation)"*) and `§R.3`'s `moveTypeOf` row
+    // (*"a non-string or empty token ⇒ **NO move listener is attached**"*), with `§2.3` row 8 (the
+    // session's own wrapped `onMove` is then the only move turn) and `§3.1 M-18`/`§3.4 R-14`'s
+    // type-match discipline on the OTHER side of the same gate. **The as-filed body FELL BACK to the
+    // session's own token for every non-string answer** (measured: `42`, `{}` and an absent seam each
+    // registered `"pointermove"` with the drag half reading `moves 1`), which is the fallback this row
+    // makes illegal.
+    //
+    // **THE MUTATIONS THIS ROW CAN FAIL ON** (not applied in this pass — see the block header's
+    // OWED — TEST-SIDE note): restoring the as-filed fallback (a non-string answer ⇒ register
+    // `POINTER_TYPES.move`) would make the `42`/`{}`/absent drives register ONE module listener and
+    // observe `moves 1`, so both the `moves === 0` and the `POINTER_TYPES.move ∉ registered`
+    // assertions would FAIL; and dropping the non-empty-string gate entirely (registering an EMPTY
+    // type) would FAIL the `''` drive's own registration count.
+    // **THE MUTATIONS, THEIR MEASURED REDS AND THEIR RESTORES ARE OWED TO THE NEXT PASS.**
+    await requireLiveModule('ADV-GU-9c')
+    const tokenShapes: Array<{ name: string; overrides: Record<string, unknown>; registered: string | null }> = [
+      { name: '`42` (a number)', overrides: { moveTypeOf: (): unknown => 42 }, registered: null },
+      { name: '`{}` (an object)', overrides: { moveTypeOf: (): unknown => ({}) }, registered: null },
+      { name: "`''` (the EMPTY string)", overrides: { moveTypeOf: (): unknown => '' }, registered: null },
+      { name: 'an ABSENT `moveTypeOf` seam', overrides: { moveTypeOf: undefined }, registered: null },
+      { name: "`'caller-move-token'` (a NON-EMPTY caller string — THE POSITIVE CONTROL)", overrides: { moveTypeOf: (): unknown => 'caller-move-token' }, registered: 'caller-move-token' },
+    ]
+    const readings: Array<{ shape: string; registeredTypes: string[]; moveListenerType?: string; movesOnTheSessionToken: number; movesOnTheOwnToken: number; sizeFromPointerCalls: number; subjectMoves: number }> = []
+    for (const shape of tokenShapes) {
+      const h = await makeHarness(shape.overrides, `ADV-GU-9c ${shape.name}`)
+      expect(h.affordance.attach(), `ADV-GU-9c — attach (${shape.name})`).toBe(true)
+      h.source.fire('pointerover', pointerEvent(0, 0, 0))
+      h.source.fire('pointerdown', pointerEvent(0))
+      const sizeCallsBefore = h.calls.sizeFromPointer
+      const movesBefore = Number(h.affordance.stats()['moves'])
+      // THE SESSION'S OWN TOKEN, fired FIRST: only a registrant of THAT type hears it, and for the
+      // shapes that attach nothing the session's own wrapper is the only move turn (`§2.3` row 8).
+      const onTheSessionToken = h.source.fire(POINTER_TYPES.move, pointerEvent(0, 150, 300))
+      const movesOnTheSessionToken = Number(h.affordance.stats()['moves']) - movesBefore
+      const sizeCallsAfterTheSessionToken = h.calls.sizeFromPointer
+      // A SECOND, DIFFERENT TYPE: a module that registers a listener under its OWN caller token
+      // hears this one, and a module that attached nothing hears neither.
+      const onTheOwnToken = h.source.fire('caller-move-token', pointerEvent(0, 175, 300))
+      const registeredTypes = h.source.ons().map((e) => e.type)
+      readings.push({
+        shape: shape.name,
+        registeredTypes,
+        moveListenerType: registeredTypes.find((t) => t !== 'pointerover' && t !== 'pointerout' && t !== 'pointerdown'),
+        movesOnTheSessionToken,
+        movesOnTheOwnToken: Number(h.affordance.stats()['moves']) - movesBefore - movesOnTheSessionToken,
+        sizeFromPointerCalls: sizeCallsAfterTheSessionToken - sizeCallsBefore,
+        subjectMoves: Number(h.affordance.stats()['moves']) - movesBefore,
+      })
+      const expectedMoves = shape.registered === null ? 0 : 1
+      console.log(
+        `ADV-GU-9c MEASURED :: ${JSON.stringify({
+          shape: shape.name,
+          registeredTypes,
+          firesOnTheSessionToken: onTheSessionToken.calls,
+          firesOnTheOwnToken: onTheOwnToken.calls,
+          subjectMoves: readings[readings.length - 1]?.subjectMoves,
+          clause:
+            'docs/specs/gutter-ui.md §2.1 item 9 + §R.3 (the moveTypeOf degradation row) + §2.3 row 8 + §3.1 M-20 (the non-string/absent class)',
+        })}`,
+      )
+      expect(
+        registeredTypes.includes(POINTER_TYPES.move),
+        `ADV-GU-9c/§2.1 item 9/§R.3 — for ${shape.name} the module attached NO move listener under the SESSION'S OWN token (the as-filed fallback literal is ILLEGAL). MEASURED registrations: ${JSON.stringify(
+          registeredTypes,
+        )}`,
+      ).toBe(shape.registered === null)
+      expect(
+        readings[readings.length - 1]?.subjectMoves,
+        `ADV-GU-9c/§R.3 — and NOTHING moved: the module's own \`stats().moves\` is ZERO over this drive for ${shape.name} (a non-empty caller token is the positive control and must observe EXACTLY ONE). MEASURED: ${JSON.stringify(
+          readings[readings.length - 1],
+        )}`,
+      ).toBe(expectedMoves)
+      expect(
+        readings[readings.length - 1]?.sizeFromPointerCalls,
+        `ADV-GU-9c/§2.3 row 8 — the module's own observed-move turn did not run, so the caller's \`sizeFromPointer\` was not consulted for ${shape.name}`,
+      ).toBe(0)
+      if (shape.registered !== null) {
+        expect(
+          registeredTypes.filter((t) => t === shape.registered).length,
+          `ADV-GU-9c — the positive control's listener is registered under Its OWN caller token \`${String(
+            shape.registered,
+          )}\` (never under a fallback literal). MEASURED: ${JSON.stringify(registeredTypes)}`,
+        ).toBe(1)
+      }
+    }
+    expect(
+      readings.map((r) => r.subjectMoves),
+      'ADV-GU-9c/§2.1 item 9 — the four non-string/empty/absent shapes each read ZERO moves and the non-empty caller string reads EXACTLY ONE (the control that makes the zeros a degradation and not a stalled harness)',
+    ).toEqual([0, 0, 0, 0, 1])
+    expect(
+      readings.map((r) => r.registeredTypes.filter((t) => t === POINTER_TYPES.move).length),
+      'ADV-GU-9c/§R.3 — the SESSION\'S OWN move type appears ZERO times in the module\'s registrations for every non-string/absent shape',
+    ).toEqual([0, 0, 0, 0, 0])
+  })
+
+  it('ADV-GU-5b — A REFUSED `attach()` LEAVES NO LISTENER OF THE MODULE\'S BEHIND AND `detach()` RECOVERS: a source that accepts the session\'s `install` but refuses the module\'s registrations ⇒ `attach()` `false`, residual module listeners `0`, `detach()` `true`, the module\'s `detached` `true`', async () => {
+    // **THE CLAUSES:** `§2.1`'s `attach()` cell (*"`true` iff every delegation succeeded"*, with the
+    // landed module's own obligation *"A REFUSED `attach()` LEAVES NO OWNER BEHIND"*), `§2.3` row 2's
+    // listener ownership, `§2.3` row 13/`§3.1 M-15` (the module removes its OWN set), and
+    // `§R.3`'s refusal discipline (*"never a silent no-op"*).
+    // **THE DRIVE:** the session's own `install` is ACCEPTED (the source refuses only the MODULE'S
+    // first registration, `pointerover`, so the composition is genuinely half-attached); the module's
+    // rollback must then remove its OWN three registrations, leave ZERO net module listeners on the
+    // element, and still admit `detach()` — which is the other half of the same obligation.
+    //
+    // **THE CONTROLLER'S OWN `attached` READING IS DELIBERATELY NOT ASSERTED HERE** — `ADV-GU-5`
+    // pins that measurement (`stats().attached === 1` at the refusal instant, because
+    // `controller.attach` already succeeded when the module's own registration was refused), and
+    // re-asserting it here would pin the same state twice.
+    //
+    // **THE MUTATION THIS ROW CAN FAIL ON** (not applied in this pass — see the block header's
+    // OWED — TEST-SIDE note): restoring the as-filed body (which DISCARDED its `registerListener`
+    // results and returned `false` while KEEPING the listeners it had already registered) would make
+    // `residualModuleOwnListeners` read `3` and `onNetModuleOwn` read `3`, so those assertions would
+    // FAIL while the module's own `detached` would stay `false` (`detach()` refuses on the unset
+    // flag). **THE MUTATION, ITS MEASURED RED AND ITS RESTORE ARE OWED TO THE NEXT PASS.**
+    await requireLiveModule('ADV-GU-5b')
+    const moduleOwn = new Set(['pointerover', 'pointerout', 'pointerdown', POINTER_TYPES.move])
+    const refused = {
+      accepted: [] as string[],
+      removed: [] as string[],
+      on(_element: unknown, type: string): void {
+        if (type === 'pointerover') {
+          throw new Error('ADV-GU-5b the source refuses the module’s first registration')
+        }
+        refused.accepted.push(type)
+      },
+      off(_element: unknown, type: string): void {
+        refused.removed.push(type)
+      },
+      isConnected(): boolean {
+        return true
+      },
+    }
+    const h = await makeHarness({ source: refused }, 'ADV-GU-5b')
+    const attached = h.affordance.attach()
+    const residualModuleOwnListeners = refused.accepted.filter((t) => moduleOwn.has(t)).length
+    const onNetModuleOwn: Array<[string, number]> = [...moduleOwn]
+      .map((t) => [t, refused.accepted.filter((x) => x === t).length - refused.removed.filter((x) => x === t).length] as [string, number])
+      .filter(([, n]) => n !== 0)
+    const detachedAnswer = h.affordance.detach()
+    const detachedFlag = h.affordance.detached
+    const residualAfterDetach: Array<[string, number]> = [...moduleOwn]
+      .map((t) => [t, refused.accepted.filter((x) => x === t).length - refused.removed.filter((x) => x === t).length] as [string, number])
+      .filter(([, n]) => n !== 0)
+    console.log(
+      `ADV-GU-5b MEASURED :: ${JSON.stringify({
+        attached,
+        accepted: refused.accepted,
+        removed: refused.removed,
+        residualModuleOwnListeners,
+        onNetModuleOwn,
+        detachedAnswer,
+        detachedFlag,
+        residualAfterDetach,
+        harnessRecordingSourceFrames: h.source.ons().map((e) => e.type),
+        sessionLog: h.sessionLog.map((c) => c.call),
+        clause:
+          'docs/specs/gutter-ui.md §2.1 (the attach() cell) + §2.3 rows 2/13 + §3.1 M-15 + §R.3 (a refusal is never a silent no-op)',
+      })}`,
+    )
+    expect(
+      refused.accepted.length,
+      `ADV-GU-5b — THE DRIVE'S OWN GATE: the source ACCEPTED the session's \`install\` and REFUSED the module's first registration, so the composition really is half-attached (a drive that refused everything would not exercise the rollback). MEASURED accepted: ${JSON.stringify(
+        refused.accepted,
+      )}`,
+    ).toBeGreaterThan(0)
+    expect(
+      attached,
+      `ADV-GU-5b/§2.1 — \`attach()\` is \`true\` IFF EVERY delegation succeeded: a refused registration means \`false\` (an \`attach()\` reading \`true\` here is the REVERTED fix)`,
+    ).toBe(false)
+    expect(
+      residualModuleOwnListeners,
+      `ADV-GU-5b — **THE DECISIVE READING: with the module's own registration REFUSED, the module's own listener set is LEFT EMPTY — the rollback removes every registration it had already made.** MEASURED accepted: ${JSON.stringify(
+        refused.accepted,
+      )}, removed: ${JSON.stringify(refused.removed)}`,
+    ).toBe(0)
+    expect(
+      onNetModuleOwn,
+      `ADV-GU-5b — and the NET census of the module's own listener types is EMPTY: for every type the module owns, installs === removals. MEASURED net: ${JSON.stringify(
+        onNetModuleOwn,
+      )}`,
+    ).toEqual([])
+    expect(
+      detachedAnswer,
+      'ADV-GU-5b/§2.3 row 13 — `detach()` RECOVERS on a refused attach (the other half of *"leaves no owner behind"*), answering `true` rather than stranding the composition',
+    ).toBe(true)
+    expect(
+      detachedFlag,
+      'ADV-GU-5b/§2.3 row 14 — and the affordance\'s own `detached` reads `true` after that recovery',
+    ).toBe(true)
+    expect(
+      residualAfterDetach,
+      'ADV-GU-5b/§3.1 M-15 — after `detach()` the module owns NOTHING on the element (no listener of the module\'s own survives either turn)',
+    ).toEqual([])
+  })
 })
 
 // ===========================================================================
@@ -6527,54 +6966,66 @@ describe('ADV-GU-* — the gate-4 regression rows (one per fixed host finding, e
 // "the rows this unit deliberately does not carry": NO rendered-fact row, NO `[D]`-shaped
 // row, NO row for `E3`'s own arithmetic, NO row for the session's lifecycle).
 // ===========================================================================
-const REGISTER_PRINTED_TOTAL = 134
+const REGISTER_PRINTED_TOTAL = 131
 const REGISTER_ROW_CAP = 100
 const REGISTER_TOTAL_CAP = 400
 const CONSECUTIVE_FAILURE_CAP = 5
 const REGISTER_DECLARED: ReadonlyArray<{ row: string; strategy: string; term: number; distinct: number; bounded: boolean; beside: number }> = [
   // `§5.5.1` P-GU-SM-1 — the single-writer quantification over every terminal path.
-  // **THE DECLARED TERM IS THE `E-3` RE-GRAIN'S `15`** (`§5.5.3`'s chain and the `134`
-  // total), and the `12` mid-drag ASSERTIONS ride in the `beside` field.
-  { row: 'P-GU-SM-1', strategy: 'S-GU-WRITER-1', term: 15, distinct: 15, bounded: true, beside: 12 },
-  { row: 'P-GU-SM-2', strategy: 'S-GU-PREVIEW-1', term: 15, distinct: 15, bounded: true, beside: 0 },
-  { row: 'P-GU-SM-3', strategy: 'S-GU-RELEASE-1', term: 15, distinct: 15, bounded: false, beside: 0 },
+  // **⟶ RE-GRAINED 2026-09-27 (THE GATE-4 RE-GRAIN PASS): THE DECLARED TERM IS `13`** — the
+  // loop's own drive count (`6` path drives + `5` mid-drag shapes + the `2` REAL composition
+  // drives) — and the `12` mid-drag ASSERTIONS ride in the `beside` field. The `E-3` term `15`
+  // and the as-filed `22` are SUPERSEDED and must not be printed as live.
+  { row: 'P-GU-SM-1', strategy: 'S-GU-WRITER-1', term: 13, distinct: 15, bounded: true, beside: 12 },
+  // **⟶ RE-GRAINED 2026-09-27: `5` stages × `4` move shapes (the 4th = the absent-`applyPreview`
+  // WIRING this pass's loops drive in every stage). The `E-3` term `15` is SUPERSEDED.**
+  { row: 'P-GU-SM-2', strategy: 'S-GU-PREVIEW-1', term: 20, distinct: 20, bounded: true, beside: 0 },
+  // **⟶ RE-GRAINED 2026-09-27: the audit's `COUNTS READINGS AS DRIVES` class. `7` real drives
+  // (the `5` shapes with shape `(3)` re-cut into its three arms), with the `21` READINGS printed
+  // BESIDE the term (`beside: 21`) and never counted in it. The `E-3` term `15` is SUPERSEDED.**
+  { row: 'P-GU-SM-3', strategy: 'S-GU-RELEASE-1', term: 7, distinct: 7, bounded: false, beside: 21 },
   { row: 'P-GU-IM-1', strategy: 'S-GU-POINTER-1', term: 45, distinct: 15, bounded: true, beside: 0 },
   { row: 'P-GU-IM-2', strategy: 'S-GU-SEAM-1', term: 20, distinct: 20, bounded: false, beside: 0 },
-  // `§5.5.1` P-GU-TP-1 — the module's totality over hostile arguments. **THE DECLARED TERM
-  // IS THE `E-3` RE-GRAIN'S `12`**, and the `6` entry-point READINGS ride in `beside`.
+  // `§5.5.1` P-GU-TP-1 — the module's totality over hostile arguments. **THE DECLARED TERM IS THE
+  // `E-3` RE-GRAIN'S `12`**, and the `6` entry-point READINGS ride in `beside`.
   { row: 'P-GU-TP-1', strategy: 'S-GU-TOTAL-1', term: 12, distinct: 12, bounded: true, beside: 6 },
-  { row: 'P-GU-TP-2', strategy: 'S-GU-CURSOR-1', term: 12, distinct: 10, bounded: false, beside: 0 },
+  // **⟶ RE-GRAINED 2026-09-27: `12` answer shapes (the `10` declared + the `2` prototype-carried
+  // members the own-property gate needs) × `1` drive + the `2` cursor-absence drives = `14`. The
+  // `E-3` term `12` and its `10` distinct-answer-shape figure are SUPERSEDED.**
+  { row: 'P-GU-TP-2', strategy: 'S-GU-CURSOR-1', term: 14, distinct: 12, bounded: false, beside: 0 },
 ]
 
-/** **⟶ ADDED 2026-09-27 (GATE 4 — THE READ-ONLY PBT AUDIT’S DRIVE-COUNT REMEDIES).** The HONEST
- *  DRIVE COUNT each register row’s loop now executes, with the derivation that produces it. **IT IS
- *  REPORTED BESIDE THE DECLARED TERMS AND IS NEVER SUBSTITUTED FOR THEM** (`§5.5.3`: *"the DECLARED
- *  figures are what the caps are compared against; the distinct-drive figures … are reported BESIDE
- *  them and never substituted"*), because the declared terms and the `134` arithmetic are SPEC
- *  CONSTANTS this test-side pass may not move: the block appended after `§5.5.1`(d) rules *"no
- *  `§5.5.1` statement, id, strategy id or attempt term may change for any of them"*, and `§5.5.3`’s
- *  ruled chain is `15 → 30 → 45 → 90 → 110 → 122 → 134`. **THE DEBT IS THEREFORE REPORTED, NOT
- *  HIDDEN**: where a measured figure differs from its declared term the ledger says so in
- *  `declaredVsMeasured`, and the discrepancy is a SPEC-AMENDMENT item for the supervisor (this file
- *  holds the spec’s figures so the spec-pinned arithmetic assertions stay green and falsifiable).
- *  **NOTHING HERE WEAKENS A CONTROL**: every count below is what the loops actually run. */
+/** **⟶ ADDED 2026-09-27 (GATE 4 — THE READ-ONLY PBT AUDIT’S DRIVE-COUNT REMEDIES), AND
+ *  ⟶ RE-GRAINED 2026-09-27 (THE GATE-4 RE-GRAIN PASS).** The HONEST
+ *  DRIVE COUNT each register row’s loop now executes, with the derivation that produces it. **AFTER
+ *  THE RE-GRAIN THE DECLARED TERM `IS` THAT COUNT** (`docs/decisions.md` `A DECLARED REGISTER TERM IS
+ *  A DRIVE COUNT`): the gate-4 remedies were MEASURED by the loops, and the spec’s declared terms
+ *  moved to those measured figures — `P-GU-SM-1` `15 → 13`, `P-GU-SM-2` `15 → 20`, `P-GU-SM-3`
+ *  `15 → 7`, `P-GU-TP-2` `12 → 14` — so `declared` and `measured` AGREE in EVERY row of this ledger
+ *  and the total is `131` (`13 + 20 + 7 + 45 + 20 + 12 + 14`, chain `13 → 33 → 40 → 85 → 105 → 117 →
+ *  131`, subtotals `SM 40` · `IM 65` · `TP 26`). **THE FIGURES BESIDE THE TERMS** (`P-GU-SM-1`’s `12`
+ *  mid-drag ASSERTIONS · `P-GU-TP-1`’s `6` entry-point READINGS · `P-GU-SM-3`’s `21` READINGS) are
+ *  carried in `REGISTER_DECLARED`’s own `beside` field and are **NEVER counted in a term**. **THE
+ *  LEDGER’S OWN DISCIPLINE IS UNCHANGED**: every count below is what the loops ACTUALLY run, and a
+ *  future drift between a loop and its term is a SPEC-AMENDMENT item reported in `declaredVsMeasured`
+ *  rather than a silent re-total. */
 const REGISTER_MATERIAL_DRIVES: ReadonlyArray<{ row: string; declared: number; measured: number; derivation: string }> = [
   {
     row: 'P-GU-SM-1',
-    declared: 15,
+    declared: 13,
     measured: 13,
     derivation:
       'the RULED single-writer composition × the path drives (one per path — `(a)`, `(b)`, `(d)`, `(e)` — plus path `(c)`’s TWO declared refusal variants = 6) + 5 distinct mid-drag move shapes (the fifth being the PRE-HANDLE cell this pass adds) + the 2 REAL composition drives (two-writer, sink-omitted) that replace the label-only second composition',
   },
   {
     row: 'P-GU-SM-2',
-    declared: 15,
+    declared: 20,
     measured: 20,
     derivation: '5 stages × 4 move shapes (the fourth being the absent-`applyPreview` shape this pass adds)',
   },
   {
     row: 'P-GU-SM-3',
-    declared: 15,
+    declared: 7,
     measured: 7,
     derivation:
       'the 5 declared release shapes (shape (3) re-cut into its three declared/landed arms: the landed non-resizable VALID drag, plus the two refusal variants the cell NAMES) — one real drive each, with the 3 readings printed BESIDE the term',
@@ -6582,7 +7033,7 @@ const REGISTER_MATERIAL_DRIVES: ReadonlyArray<{ row: string; declared: number; m
   { row: 'P-GU-IM-1', declared: 45, measured: 45, derivation: '15 event classes × 3 REAL drive forms (own resolver · caller `pointerOf` · prototype-carried)' },
   { row: 'P-GU-IM-2', declared: 20, measured: 20, derivation: '5 seams × 4 lifecycles, now with argument identity and exact per-cell counts' },
   { row: 'P-GU-TP-1', declared: 12, measured: 12, derivation: '6 argument shapes × 2 drives, drive (b) now INVOKING the source’s `on`/`off`/`isConnected` per shape' },
-  { row: 'P-GU-TP-2', declared: 12, measured: 14, derivation: '12 answer shapes (the 10 declared + the 2 prototype-carried members) × 1 drive + 2 cursor-absence drives' },
+  { row: 'P-GU-TP-2', declared: 14, measured: 14, derivation: '12 answer shapes (the 10 declared + the 2 prototype-carried members) × 1 drive + 2 cursor-absence drives' },
 ]
 const REGISTER_MATERIAL_DRIVES_TOTAL = REGISTER_MATERIAL_DRIVES.reduce((sum, r) => sum + r.measured, 0)
 
@@ -6744,7 +7195,7 @@ function declaredTermOf(row: string): number {
  *  attempt is one DRIVE of that row's own table, and a missing module is a break CAUSE (a
  *  sentence), never a harness throw. */
 describe('§5.5.1 — P-GU-SM-1 (S-GU-WRITER-1) · the single-writer quantification over the terminal paths', () => {
-  it('P-GU-SM-1 — ⟶ RE-GRAINED 2026-09-27 (GATE 4, THE PBT AUDIT’S LABEL-ONLY FACTOR): the `5` terminal paths are driven over the RULED single-writer composition (with path `(c)`’s two declared refusal variants inside one attempt) plus `5` distinct mid-drag move shapes — the declared `15` — and the SECOND composition label is replaced by TWO REAL COMPOSITION DRIVES (the two-writer and sink-omitted falsifiers), each a real session/source/element/controller, never a relabel; the `12` mid-drag ASSERTIONS are printed BESIDE the term and never counted in it', async () => {
+  it('P-GU-SM-1 — ⟶ RE-GRAINED 2026-09-27 (GATE 4, THE PBT AUDIT’S LABEL-ONLY FACTOR, AND THEN THE TERM): the `5` terminal paths are driven over the RULED single-writer composition (with path `(c)`’s two declared refusal variants inside one attempt) plus `5` distinct mid-drag move shapes plus the `2` REAL COMPOSITION DRIVES — the declared `13` — and the SECOND composition label is replaced by those TWO REAL COMPOSITION DRIVES (the two-writer and sink-omitted falsifiers), each a real session/source/element/controller, never a relabel; the `12` mid-drag ASSERTIONS are printed BESIDE the term and never counted in it', async () => {
     const row = new RegisterRow('P-GU-SM-1', 'S-GU-WRITER-1')
     /** **⟶ ADDED 2026-09-27 (THE DRIVE-WINDOW RULING)** — the per-shape seam censuses: each shape's
      *  own seam answers a VALID value for the drive-window SETUP turn (one call) and the shape's own
@@ -6976,8 +7427,12 @@ describe('§5.5.1 — P-GU-SM-1 (S-GU-WRITER-1) · the single-writer quantificat
     // five of the row’s declared `10` path × composition cells were relabelled re-runs.
     //
     // **THE REPAIR.** The first label's drives stay EXACTLY as filed (`10` path × composition cells
-    // + `5` distinct mid-drag move shapes = the declared `15`), and the SECOND label is replaced by
-    // the TWO compositions the row’s own property text names as the live falsifiers
+    // + `5` distinct mid-drag move shapes = `15` of the `E-3` accounting), and the SECOND label is
+    // replaced by the TWO compositions the row’s own property text names as the live falsifiers
+    // **⟶ AND THE DECLARED TERM IS NOW `13` (THE GATE-4 RE-GRAIN PASS): the two REAL composition
+    // drives below REPLACED the relabel, so the loop’s own count is `6` path drives (one per path,
+    // plus path `(c)`’s two refusal variants) + `5` mid-drag shapes + those `2` composition drives,
+    // and the spec’s declared term moved to that figure (the `E-3` `15` is SUPERSEDED).**
     // (`§5.5.1 P-GU-SM-1`, ruled 2026-09-27 by the CHANNEL/FACTORY repair pass, verbatim): *"the
     // sink’s `commit` seam belongs to `E3`’s controller and the SESSION’s `commit` option is a
     // NON-FORWARDING recorder (or absent); a harness that gives the sink to BOTH channels reads
@@ -7215,11 +7670,11 @@ describe('§5.5.1 — P-GU-SM-1 (S-GU-WRITER-1) · the single-writer quantificat
     console.log(
       `§5.5.1 P-GU-SM-1 HONEST-DRIVE LEDGER :: ${JSON.stringify({
         declaredTerm: declaredTermOf('P-GU-SM-1'),
-        declaredTermsDerivation: '5 terminal paths × 2 composition shapes + 5 distinct mid-drag move shapes = 15 (§5.5.1’s cell, the E-3 re-grain)',
-        honestDrives: 'the loop’s own count, printed as `attemptsRun` in REGISTER-STATUS’s per-row record',
+        declaredTermsDerivation: '13 = 6 path drives (one per path — (a), (b), (d), (e) — plus path (c)’s two declared refusal variants) + 5 distinct mid-drag move shapes + the 2 REAL composition drives (§5.5.1’s cell, the GATE-4 re-grain; the E-3 term 15 is SUPERSEDED)',
+        honestDrives: 'the loop’s own count, printed as `attemptsRun` in REGISTER-STATUS’s per-row record — and it IS the declared term after the re-grain',
         honestDerivation: 'the RULED single-writer composition × the path drives (one per path, plus path (c)’s two declared refusal variants) + 5 distinct mid-drag move shapes + the 2 REAL composition drives (two-writer, sink-omitted) that replace the label-only second composition',
         besideTheTerm: '12 mid-drag ASSERTIONS + 2 composition divergence assertions, printed BESIDE the term and NEVER counted in it',
-        debt: 'THE DECLARED TERM 15 IS A SPEC CONSTANT THIS PASS MUST NOT MOVE (§5.5.3’s chain and the block after §5.5.1(d)); the measured count is reported here and in REGISTER-STATUS’s REGISTER_MATERIAL_DRIVES ledger',
+        debt: 'NONE — the GATE-4 re-grain made this row’s declared term its own measured drive count (15 → 13), so `REGISTER_MATERIAL_DRIVES` carries no declared/measured discrepancy for it',
       })}`,
     )
     row.finish()
@@ -7424,12 +7879,12 @@ describe('§5.5.1 — P-GU-SM-2 (S-GU-PREVIEW-1) · the preview-never-sinks quan
     console.log(
       `§5.5.1 P-GU-SM-2 HONEST-DRIVE LEDGER :: ${JSON.stringify({
         declaredTerm: declaredTermOf('P-GU-SM-2'),
-        declaredTermsDerivation: '5 stages × 3 move shapes = 15 (§5.5.1’s cell)',
-        honestDrives: '5 stages × 4 move shapes = 20 (the fourth shape being the absent-`applyPreview` cell this pass adds)',
+        declaredTermsDerivation: '20 = 5 stages × 4 move shapes (§5.5.1’s cell, the GATE-4 re-grain; the E-3 term 15 and its 3-shape table are SUPERSEDED)',
+        honestDrives: '5 stages × 4 move shapes = 20 (the fourth shape being the absent-`applyPreview` cell this pass adds) — the declared term after the re-grain',
         honestDerivation: 'a resolvable finite value · an unresolvable pointer · a non-finite clamped value · the preview seam ABSENT — one REAL drive per stage',
         perAttemptReadingsNowTaken: 'stats().previews against the seam instrument (the two-reading rule), stats().moves per subject turn, the PreviewState the callback received, and the sink’s own record — asserted EXACTLY, never `at most`',
         deadClauseRemoved: 'the as-filed `afterMove > 1` conjunct on the converse clause is REMOVED, so the single-preview case is now tested for a same-turn sink write',
-        debt: 'THE DECLARED TERM 15 IS A SPEC CONSTANT THIS PASS MUST NOT MOVE (§5.5.3’s chain; the block after §5.5.1(d)); the measured 20 is REPORTED here and in REGISTER-STATUS’s REGISTER_MATERIAL_DRIVES ledger',
+        debt: 'NONE — the GATE-4 re-grain made this row’s declared term its own measured drive count (15 → 20), so `REGISTER_MATERIAL_DRIVES` carries no declared/measured discrepancy for it',
       })}`,
     )
     row.finish()
@@ -7467,14 +7922,14 @@ describe('§5.5.1 — P-GU-SM-3 (S-GU-RELEASE-1) · the release mapping and the 
     //       reset) the reset REFUSES `'unusable-default'` with `resets 0`, `sink 0` and NO session
     //       `reset` frame — the two refusal arms the row’s reading `(b)` exists to distinguish.
     //
-    // **THE HONEST DRIVE COUNT IS PRINTED BESIDE THE DECLARED TERM AND IS NOT SUBSTITUTED FOR IT**
-    // (`§5.5.3`: *"the DECLARED figures are what the caps are compared against; the distinct-drive
-    // figures … are reported BESIDE them and never substituted"*). **THE DECLARED `15` IS A SPEC
-    // CONSTANT THIS PASS MAY NOT MOVE** (§5.5.3’s ruled chain `15 → 30 → 45 → 90 → 110 → 122 → 134`
-    // and the block appended after `§5.5.1`(d): *"no `§5.5.1` statement, id, strategy id or attempt
-    // term may change for any of them"*), so this row REPORTS the measured `7` and the arithmetic
-    // debt explicitly rather than silently re-totalling the register. **The debt is REPORTED, not
-    // hidden**: it is named in `REGISTER-STATUS`’s own `REGISTER_MATERIAL_DRIVES` ledger below.
+    // **THE HONEST DRIVE COUNT *IS* THE DECLARED TERM AFTER THE GATE-4 RE-GRAIN** (`§5.5.3`;
+    // `docs/decisions.md` `A DECLARED REGISTER TERM IS A DRIVE COUNT`). **THIS ROW’S DECLARED TERM IS
+    // NOW `7` — the figure its loop actually runs — because the gate-4 re-grain moved the term to the
+    // measured drive count (`15 → 7`), and the SPEC’s `§5.5.3` chain moved with it
+    // (`13 → 33 → 40 → 85 → 105 → 117 → 131`).** The `3` READINGS per drive (`21` in all) and the
+    // `12`/`6` figures of the other rows are printed BESIDE their terms and are NEVER counted in
+    // them; the ledger below (`REGISTER_MATERIAL_DRIVES`) now carries NO declared/measured
+    // discrepancy, which is the observable effect of the re-grain.
     // ===========================================================================
     /** **⟶ ADDED 2026-09-27 (THE BOUNDS-READ ACCOUNTING REPAIR)** — shape (2)'s own stateful seam:
      *  a finite `50` for the drive-window SETUP turn and the shape's `NaN` for the SUBJECT turn. */
@@ -7709,13 +8164,13 @@ describe('§5.5.1 — P-GU-SM-3 (S-GU-RELEASE-1) · the release mapping and the 
     console.log(
       `§5.5.1 P-GU-SM-3 HONEST-DRIVE LEDGER :: ${JSON.stringify({
         declaredTerm: declaredTermOf('P-GU-SM-3'),
-        declaredTermsDerivation: '5 release shapes × 3 readings, ONE DRIVE EACH (§5.5.1, the superseded form this pass re-grains)',
+        declaredTermsDerivation: '7 = the 5 declared release shapes with shape (3) re-cut into its three declared/landed arms, one drive each (§5.5.1’s cell, the GATE-4 re-grain; the E-3 term 15, which counted the 3 readings per shape as drives, is SUPERSEDED)',
         honestDrives: 7,
         honestDerivation: '5 declared release shapes (shape (3) re-cut into its three declared/landed arms: the landed non-resizable VALID drag, plus the two refusal variants the cell NAMES — (3a)/(3b)/(3c)) — each driven ONCE',
         readingsPrintedBeside: 3,
-        readingsDerivation: '(a) the module’s counters · (b) the module-originated session call census · (c) the sink/E3 pair — asserted INSIDE each drive and NEVER counted in it',
-        attemptsRun: 'see REGISTER-STATUS (the loop runs one attempt per shape)',
-        debt: 'THE DECLARED TERM 15 IS A SPEC CONSTANT THIS PASS MUST NOT MOVE (§5.5.3’s chain and the block after §5.5.1(d)); the measured 7 is REPORTED here and in REGISTER-STATUS’s REGISTER_MATERIAL_DRIVES ledger',
+        readingsDerivation: '(a) the module’s counters · (b) the module-originated session call census · (c) the sink/E3 pair — asserted INSIDE each drive and NEVER counted in it (21 readings over the 7 drives, printed BESIDE the term)',
+        attemptsRun: 'see REGISTER-STATUS (the loop runs one attempt per shape — 7 in all)',
+        debt: 'NONE — the GATE-4 re-grain made this row’s declared term its own measured drive count (15 → 7), which is exactly what the PBT audit’s `COUNTS READINGS AS DRIVES` finding required',
       })}`,
     )
     row.finish()
@@ -8362,7 +8817,7 @@ describe('§5.5.1 — P-GU-TP-1 (S-GU-TOTAL-1) · the module’s totality over h
 })
 
 describe('§5.5.1 — P-GU-TP-2 (S-GU-CURSOR-1) · the cursor resolution’s totality and the cursor-literal absence', () => {
-  it('P-GU-TP-2 — ⟶ RE-GRAINED 2026-09-27 (GATE 4, THE PBT AUDIT’S MISSING PROTOTYPE MEMBER): `12` answer shapes × `1` drive (the `10` declared shapes PLUS the two prototype-carried `cursor` shapes the own-property gate `ADV-GU-9` needs a register member to see) + `2` cursor-absence drives, the declared term `12` reported BESIDE the measured `14`', async () => {
+  it('P-GU-TP-2 — ⟶ RE-GRAINED 2026-09-27 (GATE 4, THE PBT AUDIT’S MISSING PROTOTYPE MEMBER): `12` answer shapes × `1` drive (the `10` declared shapes PLUS the two prototype-carried `cursor` shapes the own-property gate `ADV-GU-9` needs a register member to see) + `2` cursor-absence drives — and after the re-grain THE DECLARED TERM IS `14`, which IS the loop’s own count (the `E-3` term `12` is SUPERSEDED)', async () => {
     const row = new RegisterRow('P-GU-TP-2', 'S-GU-CURSOR-1')
     const throwingProxy = new Proxy(
       { cursor: 'col-resize' },
@@ -8415,7 +8870,9 @@ describe('§5.5.1 — P-GU-TP-2 (S-GU-CURSOR-1) · the cursor resolution’s tot
     // two prototype-carried members above. `§5.5.1 P-GU-TP-2`’s cell names *"the `10` shapes"* as
     // its declared domain, so **the honest drive count is `12` shapes × `1` drive + `2`
     // cursor-absence drives = `14`**, reported in `REGISTER-STATUS`’s `REGISTER_MATERIAL_DRIVES`
-    // ledger; the declared term stays the spec’s `12` (§5.5.3, and the block after `§5.5.1`(d)).
+    // ledger. **⟶ AND THE GATE-4 RE-GRAIN PASS MADE THAT HONEST COUNT THE DECLARED TERM:** this
+    // loop runs `14` attempts, so `§5.5.1`/`§5.5.3` now declare `14` for this row (the `E-3` term
+    // `12` is SUPERSEDED) and `REGISTER_MATERIAL_DRIVES` carries NO discrepancy for it.
     for (const shape of shapes) {
       await row.run(`cursorDeclarationFor · ${shape.name}`, async () => {
         const gate = await surface(`P-GU-TP-2 ${shape.name}`)
@@ -8486,12 +8943,14 @@ describe('§5.5.1 — P-GU-TP-2 (S-GU-CURSOR-1) · the cursor resolution’s tot
 })
 
 describe('§5.5.1 — REGISTER-STATUS · the executed record, its arithmetic, its caps and the un-run rule', () => {
-  it('REGISTER-STATUS — per-row attempts/held/broken, the 134 total WITH its seven terms, the caps, the beside-the-term figures, and the un-run FAILURE discipline', () => {
+  it('REGISTER-STATUS — per-row attempts/held/broken, the 131 total WITH its seven terms, the caps, the beside-the-term figures, and the un-run FAILURE discipline', () => {
     const records = registerRecords
     const terms = REGISTER_DECLARED.map((r) => `${r.term} (${r.row})`).join(' + ')
     const termSum = REGISTER_DECLARED.reduce((sum, r) => sum + r.term, 0)
     const unrun = records.filter((record) => record.notStarted)
-    const besideTheTerms = REGISTER_DECLARED.filter((r) => r.beside > 0).map((r) => `${r.row}: ${r.beside} ${r.row === 'P-GU-SM-1' ? 'mid-drag ASSERTIONS' : 'entry-point READINGS'} beside the term`)
+    const besideTheTerms = REGISTER_DECLARED.filter((r) => r.beside > 0).map(
+      (r) => `${r.row}: ${r.beside} ${r.row === 'P-GU-SM-1' ? 'mid-drag ASSERTIONS' : r.row === 'P-GU-SM-3' ? 'READINGS (3 per drive)' : 'entry-point READINGS'} beside the term`,
+    )
     console.log(
       `§5.5.1 REGISTER MATERIAL-DRIVES LEDGER :: ${JSON.stringify({
         declaredTotal: REGISTER_PRINTED_TOTAL,
@@ -8499,9 +8958,9 @@ describe('§5.5.1 — REGISTER-STATUS · the executed record, its arithmetic, it
         perRow: REGISTER_MATERIAL_DRIVES.map((r) => `${r.row}: declared=${r.declared} measured=${r.measured}`),
         declaredVsMeasured: REGISTER_MATERIAL_DRIVES.filter((r) => r.declared !== r.measured).map((r) => `${r.row}:${r.declared}→${r.measured}`),
         clause:
-          'docs/specs/gutter-ui.md §5.5.3 — the DECLARED terms are the cap comparison and are printed WITH their terms; the MEASURED drive counts are reported BESIDE them and never substituted (a declared register term IS a drive count, docs/decisions.md)',
+          'docs/specs/gutter-ui.md §5.5.3 — the DECLARED terms ARE the drive counts (docs/decisions.md `A DECLARED REGISTER TERM IS A DRIVE COUNT`); the MEASURED figures of this ledger are the loops’ own counts and, after the gate-4 re-grain, AGREE with the declared terms in every row',
         debt:
-          'WHERE `measured` DIFFERS FROM `declared` THE DISCREPANCY IS A SPEC-AMENDMENT ITEM: the declared terms and the `134` chain are spec constants (the block after §5.5.1(d): "no §5.5.1 statement, id, strategy id or attempt term may change for any of them"), so the honest figures are REPORTED here for the supervisor rather than silently re-totalled into this file',
+          'NONE — after the gate-4 re-grain every declared term IS its loop’s measured drive count, so `declaredVsMeasured` is EMPTY; a future drift between a loop and its term is a SPEC-AMENDMENT item reported here rather than hidden',
       })}`,
     )
     expect(
@@ -8512,15 +8971,27 @@ describe('§5.5.1 — REGISTER-STATUS · the executed record, its arithmetic, it
       REGISTER_MATERIAL_DRIVES.map((r) => r.row),
       'REGISTER-STATUS — the ledger’s rows are the register’s seven rows, IN REGISTER ORDER, so nothing is reported under a name the register does not carry',
     ).toEqual(REGISTER_DECLARED.map((r) => r.row))
+    expect(
+      REGISTER_MATERIAL_DRIVES.filter((r) => r.declared !== r.measured).map((r) => `${r.row}:${r.declared}→${r.measured}`),
+      'REGISTER-STATUS — **⟶ RE-GRAINED 2026-09-27 (THE GATE-4 RE-GRAIN PASS): EVERY DECLARED TERM IS ITS LOOP’S MEASURED DRIVE COUNT**, so this ledger carries NO discrepancy (the pre-re-grain figures `15→13`, `15→20`, `15→7` and `12→14` are SUPERSEDED and are pinned in the SPEC’s own arithmetic, not here)',
+    ).toEqual([])
+    expect(
+      REGISTER_MATERIAL_DRIVES_TOTAL,
+      'REGISTER-STATUS — and the measured drive total IS the declared total (`131`), which is the whole point of the re-grain',
+    ).toBe(REGISTER_PRINTED_TOTAL)
     for (const entry of REGISTER_MATERIAL_DRIVES) {
       expect(
         entry.measured,
-        `REGISTER-STATUS — the MEASURED drive count for ${entry.row} must be POSITIVE and inside the ≤100/row cap (it is a real loop count, reported beside the declared ${entry.declared})`,
+        `REGISTER-STATUS — the MEASURED drive count for ${entry.row} must be POSITIVE and inside the ≤100/row cap (it is a real loop count, and it now IS the declared ${entry.declared})`,
       ).toBeGreaterThan(0)
       expect(
         entry.measured,
         `REGISTER-STATUS — ${entry.row}’s measured drive count (${entry.measured}) is inside the ≤100/row cap`,
       ).toBeLessThanOrEqual(REGISTER_ROW_CAP)
+      expect(
+        entry.measured,
+        `REGISTER-STATUS — ${entry.row}’s MEASURED drive count (${entry.measured}) EQUALS its DECLARED term (${entry.declared}): a declared register term IS a drive count, so a difference is a SPEC-AMENDMENT item and not a silent re-total`,
+      ).toBe(entry.declared)
     }
     console.log(
       `§5.5.1 REGISTER SUMMARY :: ${JSON.stringify({
@@ -8528,8 +8999,8 @@ describe('§5.5.1 — REGISTER-STATUS · the executed record, its arithmetic, it
         declaredTerms: terms,
         declaredTermSum: termSum,
         declaredTotalEqualsItsOwnTerms: REGISTER_PRINTED_TOTAL === termSum,
-        chain: '15 → 30 → 45 → 90 → 110 → 122 → 134',
-        subtotals: { SM: 45, IM: 65, TP: 24 },
+        chain: '13 → 33 → 40 → 85 → 105 → 117 → 131',
+        subtotals: { SM: 40, IM: 65, TP: 26 },
         totalCapComparison: `${REGISTER_PRINTED_TOTAL} <= ${REGISTER_TOTAL_CAP}`,
         largestRow: `${Math.max(...REGISTER_DECLARED.map((r) => r.term))} <= ${REGISTER_ROW_CAP}`,
         besideTheTerms,
@@ -8545,11 +9016,11 @@ describe('§5.5.1 — REGISTER-STATUS · the executed record, its arithmetic, it
     )
     expect(
       REGISTER_PRINTED_TOTAL,
-      `REGISTER-STATUS — the declared total is printed WITH ITS TERMS and IS their sum: 134 = ${terms}`,
-    ).toBe(134)
+      `REGISTER-STATUS — the declared total is printed WITH ITS TERMS and IS their sum: 131 = ${terms}`,
+    ).toBe(131)
     expect(
       termSum,
-      'REGISTER-STATUS — THE TERM-SUM CHECK: the seven named terms sum to the DECLARED total (134), so the ACTIVE rule `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS` is SATISFIED, not reported as a finding',
+      'REGISTER-STATUS — THE TERM-SUM CHECK: the seven named terms sum to the DECLARED total (131), so the ACTIVE rule `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS` is SATISFIED, not reported as a finding',
     ).toBe(REGISTER_PRINTED_TOTAL)
     expect(
       REGISTER_DECLARED.length,
@@ -8562,7 +9033,7 @@ describe('§5.5.1 — REGISTER-STATUS · the executed record, its arithmetic, it
       Math.max(...REGISTER_DECLARED.map((r) => r.term)),
       'REGISTER-STATUS — the LARGEST row is `45` (`P-GU-IM-1`), inside the `≤100`/row cap',
     ).toBe(45)
-    expect(REGISTER_PRINTED_TOTAL, 'REGISTER-STATUS — the total is inside the `≤400` register cap (`134 ≤ 400`)').toBeLessThanOrEqual(REGISTER_TOTAL_CAP)
+    expect(REGISTER_PRINTED_TOTAL, 'REGISTER-STATUS — the total is inside the `≤400` register cap (`131 ≤ 400`)').toBeLessThanOrEqual(REGISTER_TOTAL_CAP)
     expect(
       records.map((record) => record.row),
       `REGISTER-STATUS — every declared row produced a record, IN REGISTER ORDER (an un-run row is REPORTED, never omitted). Records: ${JSON.stringify(
@@ -8610,11 +9081,16 @@ describe('§5.5.1 — REGISTER-STATUS · the executed record, its arithmetic, it
     // move (`!current.moved` — `§2.3` row 6, `§3.1 M-14`, `§3.2 F-7`), so the inert secondary press
     // leaves `drops` at `0`.** **THE CONTROL IS KEPT STRICT AND FALSIFIABLE UNCHANGED — a broken
     // attempt is still a broken attempt and no row's cause is softened.**
+    // **⟶ AND RE-GRAINED 2026-09-27 (THE GATE-4 RE-GRAIN PASS): the `broken 0/134` reading above is
+    // kept as THAT pass's measurement, and the register it described is now `131` executed drives —
+    // `P-GU-SM-1:0/13 · P-GU-SM-2:0/20 · P-GU-SM-3:0/7 · P-GU-IM-1:0/45 · P-GU-IM-2:0/20 ·
+    // P-GU-TP-1:0/12 · P-GU-TP-2:0/14` — because the four re-grained terms ARE the loop counts. The
+    // assertion below is the same one and it still demands `0` over whatever the loops RUN.**
     expect(
       records.reduce((sum, record) => sum + record.broken, 0),
       `REGISTER-STATUS — the register’s broken-attempt total. Per-row: ${JSON.stringify(
         records.map((r) => `${r.row}:${r.broken}/${r.attemptsRun}`),
-      )} — a broken attempt is a DECLARED reading the drive did not produce, reported by name in the per-row causes; a broken row is NEVER re-read as a pass (the un-run rule above is unchanged). **MEASURED 2026-09-27 (GATE 4's REPAIR, finding \`ADV-GU-15\`): the figure is \`0\` over the \`134\` executed drives — every per-row record reads \`0/…\` — and the cause the as-filed annotation named no longer exists: the landed \`onPointerDownTurn\` returns before the drop arm unless the gesture's OWN record has observed a move (\`!current.moved\`, \`§2.3\` row 6 / \`§3.1 M-14\` / \`§3.2 F-7\`), so the inert secondary press leaves \`drops\` at \`0\`. The AS-FILED text — "in this pass the figure is \`1\` and its cause is MODULE-SIDE (\`P-GU-SM-3\` shape \`(5)\`: the inert secondary press moved the module's \`drops\` counter)" — is KEPT VISIBLE above as its own paragraph and is SUPERSEDED by this measurement.**`,
+      )} — a broken attempt is a DECLARED reading the drive did not produce, reported by name in the per-row causes; a broken row is NEVER re-read as a pass (the un-run rule above is unchanged). **MEASURED 2026-09-27 (GATE 4's REPAIR, finding \`ADV-GU-15\`): the figure is \`0\` over the \`134\` drives the register then ran — every per-row record reads \`0/…\` — and the cause the as-filed annotation named no longer exists: the landed \`onPointerDownTurn\` returns before the drop arm unless the gesture's OWN record has observed a move (\`!current.moved\`, \`§2.3\` row 6 / \`§3.1 M-14\` / \`§3.2 F-7\`), so the inert secondary press leaves \`drops\` at \`0\`. ⟶ AND AFTER THE GATE-4 RE-GRAIN THE REGISTER RUNS \`131\` DRIVES (the four re-grained terms ARE the loop counts: \`0/13 · 0/20 · 0/7 · 0/45 · 0/20 · 0/12 · 0/14\`), and this assertion demands the same \`0\` over whatever the loops actually run. The AS-FILED text — "in this pass the figure is \`1\` and its cause is MODULE-SIDE (\`P-GU-SM-3\` shape \`(5)\`: the inert secondary press moved the module's \`drops\` counter)" — is KEPT VISIBLE above as its own paragraph and is SUPERSEDED by this measurement.**`,
     ).toBe(0)
     expect(
       registerState.stoppedAtRow,
