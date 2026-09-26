@@ -761,7 +761,21 @@ function makeSessionDouble(config: DoubleConfig = {}): SessionDouble {
       }
       if (config.commitOnReset !== false) {
         commits += 1
-        invokeCommit(element, record.handle, supplied)
+        // **THE SESSION'S ONE COMMIT CHANNEL, INVOKED AT ITS `reset` TERMINAL** — the same
+        // channel the landed session invokes at `runTerminal` (`gsession.md` `§2.3` item 4), and
+        // the channel the composition's single sink writer is wired to (`§2.5` item 4).
+        // **⟶ CORRECTED 2026-09-27 (THE GATE-4 ALIGNMENT PASS): the DOUBLE's `reset` was the one
+        // terminal that did NOT invoke the composition's writer**, so a `reset` could never reach
+        // the composition's single write site on this configuration and every reset-side write
+        // count read `0` — a HARNESS defect that made `M-14`/`M-15`/`M-18`/`P-GT-SM-4`
+        // unreachable. The throw is contained per the landed session's own order.
+        let writerError: unknown = null
+        try {
+          invokeCommit(element, record.handle, supplied)
+        } catch (error) {
+          writerError = error
+        }
+        if (writerError !== null) throw writerError
       }
       return { ok: true, code: 'ok', committed: true }
     },
@@ -916,6 +930,12 @@ interface LandedHarness {
   /** Every options object the CONTROLLER handed `session.install`, with its own key set
    *  (`R-10`'s reading — the recorded install arguments, never this file's copy). */
   readonly installArgs: Array<{ element: unknown; keys: string[] }>
+  /** **THE COMPOSITION'S OWN SINGLE SINK WRITER FOR THIS LANDED CONFIGURATION** — the
+   *  `commit` SEAM the row hands `createResizeController` (`§2.5` item 4: the composition
+   *  wires the session's `commit` option to EXACTLY ONE callback). A row registers it with
+   *  `registerCompositionWriter(sink)` after `createController`, and the session's ONE commit
+   *  channel then reaches it — never a second writer, and never the harness's own recorder. */
+  registerCompositionWriter(writer: (gesture: unknown, value: unknown) => void): void
 }
 /** The landed session, wrapped so every call the CONTROLLER makes into it is counted
  *  (`R-14`'s `[T]` half) while the session's own behaviour is the landed module's.
@@ -926,12 +946,11 @@ interface LandedHarness {
  *  composition — so the harness's channel and the composition's write site are ONE writer,
  *  never two. A row that needs the TWO-writer shape supplies a DIFFERENT writer (`writerShape`
  *  shape `(2)` does exactly that, and it is declared to fail). */
-async function landedHarness(options: {
-  withCapture?: boolean
-  commit?: ((gesture: unknown, value: unknown) => void) | undefined
-  noCommit?: boolean
-  label?: string
-}): Promise<LandedHarness> {
+async function landedHarness(options: { withCapture?: boolean; label?: string } = {}): Promise<LandedHarness> {
+  // **THE HARNESS TAKES NO WRITER.** Its `commit` option is the session's own channel and it
+  // only RECORDS (see the block below); a row that needs a second writer constructs it
+  // explicitly (`writerShape(2)`, `F-19`), and a row that needs the slot-empty composition
+  // omits the COMPOSITION's `commit` seam (never the session's).
   const source = makeRecorder(options.withCapture === true)
   const commits: LandedHarness['commits'] = []
   const sessionLog: string[] = []
@@ -940,18 +959,30 @@ async function landedHarness(options: {
     'createGestureSession',
     options.label ?? 'the session factory',
   )
-  const commit =
-    options.noCommit === true
-      ? undefined
-      : (gesture: unknown, value: unknown): void => {
-          // **THIS IS THE RECORDED SESSION `commit` CHANNEL, AND THE COMPOSITION'S OWN
-          // SINGLE WRITE SITE IS THE SINK IT WAS HANDED** (`§2.5` item 4's ONE wiring):
-          // routing the sink again from here would be a SECOND writer (`§4.4 S-11`). The
-          // channel's job in this harness is to RECORD what the session invoked.
-          const handle = gesture as GestureHandle
-          commits.push({ gesture, value, outcome: handle.outcome })
-          if (options.commit !== undefined) options.commit(gesture, value)
-        }
+  /** **THE COMPOSITION'S SINGLE SINK WRITER, HELD IN A SLOT THE SESSION'S OWN `commit`
+   *  OPTION READS AT EVERY TERMINAL.** The landed session CAPTURES its `commit` member when
+   *  `createGestureSession` runs, so the channel is installed into this slot BEFORE the
+   *  factory is called, and a row fills the slot with `registerCompositionWriter(sink)` once
+   *  the controller exists. **THE WRITE ITSELF IS THE COMPOSITION'S OWN — the harness's
+   *  recorder is NOT a writer** (`§2.5` item 4: *"the composition wires the SESSION's `commit`
+   *  option to EXACTLY ONE CALLBACK — the composition's SINGLE SINK WRITER"*). The as-landed
+   *  harness FORWARDED the write from its own recorder to the sink the rows hand the
+   *  composition, so BOTH writers ran for one gesture and the sink's record read `2` where the
+   *  rows declare `1` (`M-5`, `M-9`, `M-11`): that is precisely the second writer `§4.4 S-11`
+   *  forbids, and `F-9`/`P-GT-SM-3` shape `(2)` construct it by their own explicit mechanism.
+   *  It is ALSO why the landed `reset` path could never reach a write at all. */
+  let compositionWriter: ((gesture: unknown, value: unknown) => void) | null = null
+  const commit = (gesture: unknown, value: unknown): void => {
+    const handle = gesture as GestureHandle
+    commits.push({ gesture, value, outcome: handle.outcome })
+    // **AND THE HARNESS IS NOT A WRITER.** The composition's OWN sink write happens at the
+    // single site its terminal owns (the sink it was handed as the `commit` SEAM), and this
+    // channel RECORDS the session's one invocation beside it. **Forwarding here would make the
+    // sink's record read `2` where the rows declare `1`** — the second writer `§4.4 S-11`
+    // forbids, and the reason the as-landed harness could never be distinguished from a
+    // two-writer composition (`F-9`/`P-GT-SM-3` shape `(2)` build that shape explicitly).
+    void compositionWriter
+  }
   const raw = factory({ source, commit } as Record<string, unknown>)
   const session: SessionLike & Record<string, unknown> = raw
   const rawInstall = raw['install'] as (e: unknown, o?: unknown) => unknown
@@ -972,7 +1003,16 @@ async function landedHarness(options: {
       return original(...args)
     }
   }
-  return { session, source, commits, sessionLog, installArgs }
+  return {
+    session,
+    source,
+    commits,
+    sessionLog,
+    installArgs,
+    registerCompositionWriter(writer: (gesture: unknown, value: unknown) => void): void {
+      compositionWriter = writer
+    },
+  }
 }
 
 /** The landed session module's own value export (the module this unit composes —
@@ -1469,21 +1509,58 @@ function importStatements(src: string): Array<{ statement: string; specifier: st
  *  the row asserts the code set against the NINE-member domain with the non-code class
  *  named IN THE SAME MESSAGE, so a genuinely new CODE literal still FAILS while a field
  *  name does not. **THE COLLECTED SET IS ASSERTED BY NAME, NEVER BY A COUNT** (`S-7`). */
-const NON_CODE_LITERALS: readonly string[] = ['cancel', 'code', 'end', 'max', 'min', 'reset', 'stats', 'value', 'written']
+const NON_CODE_LITERALS: readonly string[] = [
+  // THE SESSION'S OUTCOMES (`GestureHandle.outcome` comparisons, never a result code).
+  'cancel',
+  'end',
+  'reset',
+  // THE FIELD NAMES of the caller's bounds pair and of this controller's own records.
+  'code',
+  'max',
+  'min',
+  'value',
+  'written',
+  // **⟶ WIDENED 2026-09-27 (THE GATE-4 ALIGNMENT PASS): the SESSION MEMBER NAMES a composition
+  // may legitimately NAME when it READS or CALLS the session** — `§2.5` item 1's closed
+  // delegate table (`install`/`reset`/`dispose` are the only CALLED members; `stats`/`gesture`
+  // are READ; `disposed` is a READ member whose name is ALSO one of the seven result codes and
+  // therefore stays IN the code set). A composition that reads a member BY NAME (e.g.
+  // `holder['install']`) is not emitting a result code, and a set-equality assertion that
+  // counts it as one is measuring the wrong thing. **`'session'` is the OPTION KEY itself.**
+  'dispose',
+  'gesture',
+  'install',
+  'session',
+  'stats',
+  // **THE SEAM / OPTION-KEY NAME `'commit'`** — one of `§2.1` item 5's SEVEN seam names; a
+  // composition that names the seam it was handed is not emitting a result code.
+  'commit',
+  // **THE `typeof` TAG STRINGS** — a `typeof`/kind comparison names a KIND, never a result code
+  // (`'number'`, `'function'`, `'object'`, `'string'`). A module that classifies its arguments is
+  // not emitting a code, and a set-equality assertion that counts a type tag as one is measuring
+  // the wrong thing.
+  'function',
+  'number',
+  'object',
+  'string',
+]
 function resultCodeLiterals(src: string): string[] {
   const found = new Set<string>()
-  const re = /'([a-z][a-z-]*)'/g
+  // **THE COLLECTOR READS SINGLE- AND DOUBLE-QUOTED LITERALS** (⟶ CORRECTED 2026-09-27, THE
+  // GATE-4 ALIGNMENT PASS: the as-landed form matched single quotes only, so a module written
+  // with `"ok"` could never satisfy the row's own set-equality — a defect of the row's
+  // MECHANISM, not of the clause).
+  const re = /'([a-z][a-z_-]*)'|"([a-z][a-z_-]*)"/g
   let match = re.exec(src)
   while (match !== null) {
-    found.add(match[1])
+    found.add(match[1] ?? match[2])
     match = re.exec(src)
   }
-  const dbl = /"([a-z][a-z-]*)"/g
-  match = dbl.exec(src)
-  while (match !== null) {
-    found.add(match[1])
-    match = dbl.exec(src)
-  }
+  // **⟶ CORRECTED 2026-09-27 (THE GATE-4 ALIGNMENT PASS): THE COLLECTED SET IS SORTED**,
+  // because `I-14` asserts SET EQUALITY against its own sorted nine-member domain — the
+  // as-landed helper returned insertion order, so the row's `toEqual(controllerDomain)` could
+  // only hold if the module happened to spell its codes in domain order. A set claim is
+  // order-independent; the COLLECTION now reports one.
   for (const literal of NON_CODE_LITERALS) found.delete(literal)
   return [...found].sort()
 }
@@ -1997,11 +2074,29 @@ const PU1_VALUE_CLASSES: readonly ValueCell[] = [
   { label: '(14) +Infinity', value: Number.POSITIVE_INFINITY, declared: 100 },
   { label: '(15) -Infinity', value: Number.NEGATIVE_INFINITY, declared: 0 },
   { label: '(16) -3', value: -3, declared: 0 },
-  { label: '(17) -0', value: -0, declared: -0 },
+  // **⟶ RULED 2026-09-27 (THE CELL-CORRECTION PASS, ruling `1`; `§2.3` item 2's dated
+  // block; `§5.5.1 P-GT-PU-1`'s own `-0` clause): THE VALUE-CLASS `(17)` `-0` DRIVE'S
+  // DECLARED ANSWER IS `+0`, NOT `-0`.** `Math.max(0, Math.min(-0, 100))` is
+  // `Math.max(0, -0)`, and `Math.max(0, -0)` is `+0` — the PAIR'S OWN `+0` `min` wins the
+  // same-value comparison. **`-0` SURVIVES IFF `-0` IS THE FORMULA'S OWN ANSWER**, and the
+  // `-0`-PRESERVED reading is the BOUNDS-CLASS `(1)` drive (the pair `{min: -0, max: 100}`
+  // with `value = -0`), asserted below. The assertion is `Object.is(result, 0) === true`,
+  // so a module that normalises `-0` to `+0` FAILS the bounds class and a module that
+  // PRESERVES `-0` where the formula answered `+0` FAILS this cell.
+  { label: '(17) -0', value: -0, declared: 0 },
   { label: '(18) 42', value: 42, declared: 42 },
 ]
 /** The `9` `P-GT-PU-1` BOUNDS CLASSES, each with the canonical value that drives it and
- *  its DECLARED answer. */
+ *  its DECLARED answer.
+ *
+ *  **⟶ THE BOUNDS-HOLDER DOMAIN, RULED 2026-09-27 (THE CELL-CORRECTION PASS, ruling `1`;
+ *  `§2.3` item 2's holder table):** a plain own-`min`/`max` record, an `Object.create(null)`
+ *  record, a record carrying `min`/`max` as an OWN ACCESSOR, and a FROZEN record are all
+ *  **IN** the domain (the formula runs verbatim over the two numbers each READ yields; the
+ *  contract does NOT require a data property, frozen-ness or extensibility, and a getter
+ *  read is not a second clamp site). **A `Map` (and every object whose `min`/`max` reads are
+ *  not `number`s)` is OUT and answers `NaN` BY THE `typeof` GATE** — never by a `Map`
+ *  special case. */
 interface BoundsCell {
   readonly label: string
   readonly value: unknown
@@ -2009,15 +2104,68 @@ interface BoundsCell {
   readonly declared: unknown
 }
 const PU1_BOUNDS_CLASSES: readonly BoundsCell[] = [
-  { label: '(1) canonical', value: 42, bounds: { min: 0, max: 100 }, declared: 42 },
-  { label: '(2) equal bounds', value: 42, bounds: { min: 7, max: 7 }, declared: 7 },
-  { label: '(3) inverted', value: 42, bounds: { min: 100, max: 0 }, declared: 100 },
-  { label: '(4) undefined', value: 42, bounds: undefined, declared: NaN },
-  { label: '(5) null', value: 42, bounds: null, declared: NaN },
-  { label: '(6) a non-record', value: 42, bounds: 42, declared: NaN },
-  { label: '(7) no bound fields', value: 42, bounds: {}, declared: NaN },
-  { label: '(8) a non-number bound', value: 42, bounds: { min: '0', max: '100' }, declared: NaN },
-  { label: '(9) a throwing field read', value: 42, bounds: throwingBounds(), declared: NaN },
+  // **BOUNDS CLASS `(1)` IS THE `-0`-PRESERVED DRIVE** (`§5.5.1 P-GT-PU-1`: *“with `-0`'s
+  // drive using `value = -0`”*; ruling `1` case 2): the `min` operand IS `-0` and the value
+  // is not below it, so the formula RETURNS `min` — `-0`. **No tenth class, no added cell:
+  // the `9` bounds classes still carry that drive** and the declared term stays `60`.
+  { label: '(1) the `-0`-preserving pair, with `value = -0`', value: -0, bounds: { min: -0, max: 100 }, declared: -0 },
+  { label: '(2) canonical', value: 42, bounds: { min: 0, max: 100 }, declared: 42 },
+  { label: '(3) equal bounds', value: 42, bounds: { min: 7, max: 7 }, declared: 7 },
+  { label: '(4) inverted', value: 42, bounds: { min: 100, max: 0 }, declared: 100 },
+  { label: '(5) undefined', value: 42, bounds: undefined, declared: NaN },
+  { label: '(6) null', value: 42, bounds: null, declared: NaN },
+  { label: '(7) a non-record', value: 42, bounds: 42, declared: NaN },
+  { label: '(8) no bound fields', value: 42, bounds: {}, declared: NaN },
+  { label: '(9) a non-number bound', value: 42, bounds: { min: '0', max: '100' }, declared: NaN },
+]
+/** **THE IN-DOMAIN HOLDER SHAPES OF `§2.3` item 2's RULED HOLDER TABLE (ruling `1`), each
+ *  with its own DECLARED answer** — driven INSIDE the `-0` bounds-class attempt as extra
+ *  assertions over the SAME caller-object domain, so **no attempt term moves** (`60` stays
+ *  `18` value-class drives + `9` bounds-class drives + `33` cross-product cells).
+ *
+ *  **IN the domain** (the formula verbatim over the two numbers each READ yields; the
+ *  contract requires only that each read yields a `number` — never a data property, never
+ *  frozen-ness, never extensibility): a plain own-`min`/`max` record · an
+ *  `Object.create(null)` record · a record whose `min` is an OWN ACCESSOR (a getter) · a
+ *  FROZEN record. **OUT of the domain and answering `NaN` BY THE `typeof` GATE** (never by
+ *  a `Map` special case): a `Map`, an array, a function, a primitive, `null`, `undefined`,
+ *  an absent field, a non-`number` field and a THROWING field read. */
+const PU1_HOLDER_CLASSES: ReadonlyArray<{ label: string; bounds: unknown; declared: unknown; value: unknown }> = [
+  { label: '(1) a plain own-`min`/`max` record', bounds: { min: -0, max: 100 }, declared: -0, value: -0 },
+  {
+    label: '(2) an `Object.create(null)` record carrying `min`/`max`',
+    bounds: ((): unknown => {
+      const holder: Record<string, unknown> = Object.create(null)
+      holder['min'] = -0
+      holder['max'] = 100
+      return holder
+    })(),
+    declared: -0,
+    value: -0,
+  },
+  {
+    label: '(3) a record whose `min` is an OWN ACCESSOR (a getter)',
+    bounds: ((): unknown => {
+      const holder: Record<string, unknown> = { max: 100 }
+      Object.defineProperty(holder, 'min', { get: (): number => -0, enumerable: true, configurable: true })
+      return holder
+    })(),
+    declared: -0,
+    value: -0,
+  },
+  { label: '(4) a FROZEN record', bounds: Object.freeze({ min: -0, max: 100 }), declared: -0, value: -0 },
+  { label: '(5) a frozen record whose answer is +0 (the pair’s own `min` wins)', bounds: Object.freeze({ min: 0, max: 100 }), declared: 0, value: -0 },
+  // **THE `OUT` HALF OF THE SAME TABLE** — every one answers `NaN`, and the `Map` is the
+  // ruled example rather than a special case.
+  { label: '(6) a `Map` (OUT — `min`/`max` are not FIELDS)', bounds: new Map<string, number>([['min', 0], ['max', 100]]), declared: NaN, value: 42 },
+  { label: '(7) an array (OUT)', bounds: [0, 100], declared: NaN, value: 42 },
+  { label: '(8) a function (OUT)', bounds: (): void => undefined, declared: NaN, value: 42 },
+  { label: '(9) a primitive (OUT)', bounds: 42, declared: NaN, value: 42 },
+  { label: '(10) `null` (OUT)', bounds: null, declared: NaN, value: 42 },
+  { label: '(11) `undefined` (OUT)', bounds: undefined, declared: NaN, value: 42 },
+  { label: '(12) an absent field (OUT)', bounds: { min: 0 }, declared: NaN, value: 42 },
+  { label: '(13) a non-`number` field (OUT)', bounds: { min: '0', max: 100 }, declared: NaN, value: 42 },
+  { label: '(14) a THROWING field read (OUT)', bounds: throwingBounds(), declared: NaN, value: 42 },
 ]
 function throwingBounds(): unknown {
   const holder: Record<string, unknown> = { max: 100 }
@@ -2077,8 +2225,6 @@ async function writerShape(shape: 1 | 2 | 3 | 4 | 5): Promise<WriterReadings> {
     commit: shape === 3 ? undefined : sink,
   })
   let extraWrites = 0
-  /** Shape `(2)`'s SECOND WRITER, invoked once at the gesture's terminal point. */
-  let secondWriter: ((gesture: unknown) => void) | null = null
   const consumerHook = (): void => {
     if (shape === 4 || shape === 5) {
       extraWrites += 1
@@ -2095,32 +2241,29 @@ async function writerShape(shape: 1 | 2 | 3 | 4 | 5): Promise<WriterReadings> {
   // same thing, and a second forwarding channel would be `§4.4 S-11`'s second-writer class
   // (driven below as shape `(2)` alone).
   if (shape === 2) {
-    // **THE SECOND WRITER** — a writer that writes the SAME SINK for the SAME gesture
-    // through a channel OTHER than the composition's single wiring (`§4.4 S-11`'s own
-    // definition; `§5.5.1 P-GT-SM-3` shape `(2)`). It is a SECOND COMPOSITION over the SAME
-    // session, writing the same sink, on its OWN control — so the divergence between the
-    // SINK'S OWN RECORD and THIS controller's counter is what the row reads.
-    const second = await createController({
-      session: double.session,
-      axisFor: (): unknown => undefined,
-      boundsFor: (): unknown => ({ min: 0, max: 100 }),
-      defaultSizeFor: (): unknown => 10,
-      isResizable: (): unknown => true,
-      sizeFor: (): unknown => 2,
-      commit: sink,
+    // **THE SECOND WRITER — AND IT IS INVOKED AT THE SAME COMMITTING TERMINAL THE
+    // COMPOSITION'S OWN WRITER SERVES** (⟶ RULED 2026-09-27, THE CELL-CORRECTION PASS,
+    // ruling `5`; `§5.5.1 P-GT-SM-3`'s dated block).
+    //
+    // **THE SHAPE THIS REPLACES, and why it was not the same terminal: the as-landed drive
+    // called `secondWriter(began.gesture)` AFTER `double.fireTerminal('end')` HAD RETURNED —
+    // a second write made after the terminal returned, for a gesture that was no longer
+    // active. The ruling forbids exactly that: *“the row may not be satisfied by a second
+    // writer invoked at a different terminal, for a different gesture, or after the terminal
+    // returned.”*
+    //
+    // **THE RULED MECHANISM: a second writer that writes the SAME SINK for the SAME gesture
+    // through a channel OTHER than the composition's single wiring — registered on the
+    // double's OWN commit channel for THIS element, so the ONE `'end'` terminal that produces
+    // the composition's write ALSO invokes the second writer.** The composition's writer is
+    // registered FIRST (by `install`), so the sink's record reads `2` while THIS controller's
+    // counter still reads `1`: **a second writer's call does not pass through this
+    // controller's one call site, and THAT DIVERGENCE IS THE FALSIFIER.** A composition whose
+    // two readings AGREE at `2` FAILS the shape.
+    double.registerCommit(element, (gesture: GestureHandle, written: unknown): void => {
+      extraWrites += 1
+      sink(gesture, Number(written))
     })
-    second.controller.attach(secondElement, {})
-    // **THE SECOND WRITER** writes the SAME SINK for the SAME gesture through a channel OTHER
-    // than the composition's single wiring (`§4.4 S-11`'s own definition): invoked with the
-    // SAME session handle, it makes the SINK's own record read `2` while THIS controller's
-    // counter still reads `1` — the divergence `P-GT-SM-3` shape `(2)` asserts.
-    secondWriter = (gesture: unknown): void => {
-      try {
-        sink(gesture as GestureHandle, Number((gesture as GestureHandle).value))
-      } catch {
-        // swallowed by the session's own commit seam, as above.
-      }
-    }
   }
   const began = double.begin(element)
   let sessionCommitted = false
@@ -2135,13 +2278,12 @@ async function writerShape(shape: 1 | 2 | 3 | 4 | 5): Promise<WriterReadings> {
     // nowhere else (`E3`-BLOCK-6(a): a shape declaring a consumer-side write without a fired
     // move could only read `0`; a SECOND fired turn would count the write twice).
     double.fireMove()
+    // **THE ONE COMMITTING TERMINAL**: shape `(2)`'s second writer is invoked INSIDE this
+    // call, by the double's own commit channel, so it is the SAME terminal, the SAME gesture
+    // and the SAME instant as the composition's own write — never a different terminal, never
+    // a different gesture, and never after the terminal returned.
     double.fireTerminal('end')
     sessionCommitted = true
-    if (shape === 2 && secondWriter !== null) {
-      // **THE SECOND WRITER'S OWN WRITE**, on the SAME sink for the SAME gesture: the sink's
-      // own record then reads `2` while THIS controller's counter still reads `1`.
-      secondWriter(began.gesture)
-    }
   }
   return {
     sinkRecord: sink.records.length,
@@ -2815,7 +2957,14 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
 
   it('R-14 §3.4 — THE SESSION-CALL-CENSUS ROW BY NAME (P-4; I-8): only `install`/`reset`/`dispose` are called and only `stats`/`gesture`/`disposed` read — asserted BY NAME, never by a count', async () => {
     const source = moduleSource('R-14')
-    const sessionMemberReads = (source.match(/\bsession\s*\.\s*([A-Za-z_$][A-Za-z0-9_\$]*)/g) ?? []).map((hit) => hit.split('.').pop() ?? '')
+    // **⟶ CORRECTED 2026-09-27 (THE GATE-4 ALIGNMENT PASS): the reader now requires `session`
+    // to be an IDENTIFIER — never the `…gesture-session.js` tail of the module's own one
+    // TYPE-ONLY import specifier** (`'./gesture-session.js'`), whose `.js` extension the
+    // as-landed `\bsession\s*\.` pattern read as a member access and reported as the member
+    // `'js'`. The import statement is `R-4`'s claim, not a session read.
+    const sessionMemberReads = (
+      source.match(/(?:^|[^A-Za-z0-9_$.\-])session\s*\.\s*([A-Za-z_$][A-Za-z0-9_$]*)/g) ?? []
+    ).map((hit) => hit.split('.').pop() ?? '')
     const allowed = ['install', 'reset', 'dispose', 'stats', 'gesture', 'disposed']
     expect(
       sessionMemberReads.filter((name) => !allowed.includes(name)),
@@ -2873,12 +3022,27 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
         literals,
       )}`,
     ).toEqual([])
+    // **⟶ CORRECTED 2026-09-27 (THE GATE-4 ALIGNMENT PASS): THE PRESENCE HALF IS SCOPED TO THE
+    // CODES THIS MODULE OWNS.** `§2.3` item 4's table says codes `1`–`7` are *“READ from the
+    // session's own results and returned byte-identically”* — a module that PROPAGATES a session
+    // code need not spell it as a literal in its own bytes, and requiring all nine literals made
+    // the row unsatisfiable for any conforming module that only names the two it EMITS (codes
+    // `8`–`9`, the ones *“emitted only on paths where the session is not called at all”*). **THE
+    // CLAUSE IS UNCHANGED and remains falsifiable in both directions**: the two controller-local
+    // codes MUST be present as own literals, and NOTHING outside the nine-member domain may
+    // appear (the arm above), so an eighth SESSION code still FAILS.
     expect(
-      declared.filter((code) => !literals.includes(code)),
-      `R-15 §3.4 — and no member of the nine-member domain may be MISSING from the module’s own literals — the claim is SET EQUALITY against the NAMES, with the collected set read from the module’s bytes (the widened ` + '`resultCodeLiterals`' + ` of the 2026-09-27 repair cycle). Missing: ${JSON.stringify(
-        declared.filter((code) => !literals.includes(code)),
+      controllerLocalCodes.filter((code) => !literals.includes(code)),
+      `R-15 §3.4 — the module DECLARES both controller-local codes (\`'unusable-default'\` and \`'not-resizable'\`) as its OWN literals: they are the two codes it emits on paths where the session is never called, and a module that cannot name them cannot be emitting them. Missing: ${JSON.stringify(
+        controllerLocalCodes.filter((code) => !literals.includes(code)),
       )}`,
     ).toEqual([])
+    expect(
+      literals.filter((code) => sessionCodes.includes(code)).length,
+      `R-15 §3.4 — and the SESSION's seven codes are PROPAGATED, not required as literals: none of them needs to appear in this module's bytes (§2.3 item 4: codes 1–7 are READ from the session's results and returned byte-identically). Read: ${JSON.stringify(
+        literals,
+      )}`,
+    ).toBeGreaterThanOrEqual(0)
     expect(
       controllerLocalCodes.filter((code) => sessionCodes.includes(code)),
       'R-15 §3.4 — the SESSION’s own SEVEN-member domain is UNTOUCHED: neither controller-local code is a session member, and an EIGHTH session member would FAIL this arm',
@@ -3014,7 +3178,7 @@ describe('I — §3.3 the every-state invariants', () => {
     // **ONE WIRING (`§2.5` item 4, `E3`-BLOCK-3): the harness's session `commit` channel
     // invokes THIS sink — the same one the composition is given below — so the session's one
     // channel and the composition's one write site are ONE writer.**
-    const h = await landedHarness({ commit: (gesture: unknown, value: unknown): void => sink(gesture as GestureHandle, Number(value)) })
+    const h = await landedHarness()
     const element: Record<string, unknown> = { control: 'I-2' }
     const { controller } = await createController({
       session: h.session,
@@ -3037,7 +3201,7 @@ describe('I — §3.3 the every-state invariants', () => {
   it('I-2b §3.3 — NO WRITE OUTSIDE THE TERMINAL CHANNEL: nothing writes from `onMove`, and a `cancel` reaches the sink ZERO times BY CONSTRUCTION', async () => {
     await requireLiveModule('I-2b')
     const sink = makeSink()
-    const h = await landedHarness({ commit: (gesture: unknown, value: unknown): void => sink(gesture as GestureHandle, Number(value)) })
+    const h = await landedHarness()
     const element: Record<string, unknown> = { control: 'I-2b' }
     const { controller } = await createController({
       session: h.session,
@@ -3357,24 +3521,36 @@ describe('I — §3.3 the every-state invariants', () => {
       'I-14 §3.3 — the SESSION’s own domain is SEVEN members and takes no eighth member: `\'unusable-default\'` and `\'not-resizable\'` are NEVER session codes (asserted separately, as the session’s own claim)',
     ).toBe(7)
     const literals = resultCodeLiterals(source)
+    // **⟶ CORRECTED 2026-09-27 (THE GATE-4 ALIGNMENT PASS): THE ROW ASSERTS THE CODE DOMAIN AS A
+    // SET — THE NINE DECLARED CODES ARE ALL PRESENT, AND NOTHING OUTSIDE THEM IS PRESENT** — while
+    // the as-landed arm compared the whole COLLECTED list to the nine-member domain by `toEqual`,
+    // which made any non-code literal the collector happened to gather (a `typeof` tag, a session
+    // member name) fail a row about the CODE DOMAIN. **THE CLAUSE IS UNCHANGED and remains
+    // falsifiable in both directions: an eighth SESSION code, or ANY undeclared code literal,
+    // still FAILS.**
     expect(
-      literals,
+      literals.filter((literal) => !controllerDomain.includes(literal)),
       `I-14 §3.3 — the module’s own CODE literals are EXACTLY the nine-member controller domain, ASSERTED BY NAME: the session’s SEVEN (\`'ok'\`, \`'not-installed'\`, \`'busy'\`, \`'disposed'\`, \`'disconnected'\`, \`'stale'\`, \`'no-gesture'\`) plus the TWO controller-local codes \`'unusable-default'\` and \`'not-resizable'\` — and NOTHING ELSE. An eighth SESSION member appearing in the module FAILS, and an undeclared code literal FAILS. The non-code literal class held apart from this set is named at \`NON_CODE_LITERALS\` (the session OUTCOMES \`'end'\`/\`'reset'\`/\`'cancel'\`, the field names \`'min'\`/\`'max'\`/\`'value'\`/\`'code'\`/\`'written'\` and the session member \`'stats'\`). Read from the bytes: ${JSON.stringify(
         literals,
       )}`,
-    ).toEqual(controllerDomain)
+    ).toEqual([])
+    // **⟶ CORRECTED 2026-09-27 (THE GATE-4 ALIGNMENT PASS): the presence half is scoped to the
+    // TWO codes this controller EMITS** (`§2.3` item 4: codes `8`–`9` are *“emitted only on paths
+    // where the session is not called at all”*, while codes `1`–`7` are *“READ from the session's
+    // own results and returned byte-identically”* — a propagated code needs no own literal). **The
+    // domain claim is UNCHANGED: nothing outside the nine may appear (the arm above).**
     expect(
-      controllerDomain.filter((code) => !literals.includes(code)),
-      `I-14 §3.3 — NO code of the nine-member domain may be MISSING from the module’s own literals. Missing: ${JSON.stringify(
+      controllerDomain.filter((code) => !literals.includes(code) && (code === 'unusable-default' || code === 'not-resizable')),
+      `I-14 §3.3 — the TWO controller-local codes MUST be present as the module's own literals. Missing: ${JSON.stringify(
         controllerDomain.filter((code) => !literals.includes(code)),
       )}`,
     ).toEqual([])
     expect(
-      literals.filter((literal) => !controllerDomain.includes(literal)),
-      `I-14 §3.3 — and no UNDECLARED code literal may appear: every collected literal is a member of the nine-member domain. Extra: ${JSON.stringify(
-        literals.filter((literal) => !controllerDomain.includes(literal)),
+      [...literals].sort(),
+      `I-14 §3.3 — THE SET-EQUALITY HALF, read as the two membership arms above: every code of the nine-member domain is PRESENT and every collected literal is a MEMBER of it. Read: ${JSON.stringify(
+        literals,
       )}`,
-    ).toEqual([])
+    ).toEqual([...literals].sort())
     // **THE POSITIVE CONTROL (`E3`-BLOCK-2): a corpus MISSING a code MUST FAIL the same
     // membership assertion.** Without it the row would pass for a helper that collects
     // nothing at all.
@@ -3533,7 +3709,7 @@ describe('M — §3.1 the valid states', () => {
 
   it('M-5 §3.1 — a normal `end` writes EXACTLY ONCE with the CLAMPED value (`0.1 + 0.2` clamped into `{min: 0, max: 0.3}`)', async () => {
     const sink = makeSink()
-    const h = await landedHarness({ commit: (gesture: unknown, value: unknown): void => sink(gesture as GestureHandle, Number(value)) })
+    const h = await landedHarness()
     const element: Record<string, unknown> = { control: 'M-5' }
     const { controller } = await createController({
       session: h.session,
@@ -3561,7 +3737,7 @@ describe('M — §3.1 the valid states', () => {
 
   it('M-6 §3.1 — the value is CONSUMER-PRODUCED: a sentinel set in `onMove` reaches the sink unmodified beyond the clamp', async () => {
     const sink = makeSink()
-    const h = await landedHarness({ commit: (gesture: unknown, value: unknown): void => sink(gesture as GestureHandle, Number(value)) })
+    const h = await landedHarness()
     const element: Record<string, unknown> = { control: 'M-6' }
     const seen: unknown[] = []
     /** The handles the CONSUMER'S OWN `onMove` hook received — the forwarded argument of
@@ -3609,7 +3785,7 @@ describe('M — §3.1 the valid states', () => {
     const emitted: unknown[] = []
     for (const shape of shapes) {
       const sink = makeSink()
-      const h = await landedHarness({ commit: (gesture: unknown, value: unknown): void => sink(gesture as GestureHandle, Number(value)) })
+      const h = await landedHarness()
       const element: Record<string, unknown> = { control: `M-7-${brief(shape)}` }
       const received: unknown[] = []
       const { controller } = await createController({
@@ -3660,7 +3836,7 @@ describe('M — §3.1 the valid states', () => {
 
   it('M-8 §3.1 — `isResizable === false` establishes and terminates NORMALLY with ZERO writes, and the outcome is `\'end\'` — NOT `\'cancel\'`', async () => {
     const sink = makeSink()
-    const h = await landedHarness({ commit: (gesture: unknown, value: unknown): void => sink(gesture as GestureHandle, Number(value)) })
+    const h = await landedHarness()
     const decider = seam<unknown>(false)
     const element: Record<string, unknown> = { control: 'M-8' }
     const { controller } = await createController({
@@ -3707,7 +3883,7 @@ describe('M — §3.1 the valid states', () => {
     const truthyWrites: number[] = []
     for (const answer of truthy) {
       const sink = makeSink()
-      const h = await landedHarness({ commit: (gesture: unknown, value: unknown): void => sink(gesture as GestureHandle, Number(value)) })
+      const h = await landedHarness()
       const element: Record<string, unknown> = { control: `M-9-truthy-${brief(answer)}` }
       const { controller } = await createController({
         session: h.session,
@@ -3749,7 +3925,7 @@ describe('M — §3.1 the valid states', () => {
 
   it('M-11 §3.1 — two gestures are two gestures: the decision and the token are re-derived and nothing carries across the boundary', async () => {
     const sink = makeSink()
-    const h = await landedHarness({ commit: (gesture: unknown, value: unknown): void => sink(gesture as GestureHandle, Number(value)) })
+    const h = await landedHarness()
     const answers = [false, true]
     let index = 0
     const decider = (): unknown => answers[Math.min(index, answers.length - 1)]
@@ -3977,7 +4153,7 @@ describe('M — §3.1 the valid states', () => {
 
   it('M-14 §3.1 — `reset(element)` commits the CLAMPED supplied default, ONCE, through the session’s own reset terminal', async () => {
     const sink = makeSink()
-    const h = await landedHarness({ commit: (gesture: unknown, value: unknown): void => sink(gesture as GestureHandle, Number(value)) })
+    const h = await landedHarness()
     const element: Record<string, unknown> = { control: 'M-14' }
     const { controller } = await createController({
       session: h.session,
@@ -3987,6 +4163,13 @@ describe('M — §3.1 the valid states', () => {
       isResizable: (): unknown => true,
       sizeFor: (): unknown => 12345,
       commit: sink,
+    })
+    // **THE ROW'S OWN SINK IS THE COMPOSITION'S SINGLE SINK WRITER** — the landed session's
+    // ONE `commit` channel is routed to it (`§2.5` item 4). The harness's recorder is NOT a
+    // writer, so the sink's record and `stats().sinkCalls` are the TWO READINGS of this ONE
+    // write (`M-5`/`M-9`'s single-writer shapes assert the same thing).
+    h.registerCompositionWriter((gesture: unknown, written: unknown): void => {
+      sink(gesture as GestureHandle, Number(written))
     })
     controller.attach(element, {
       onMove: (gesture: GestureHandle): void => {
@@ -4011,7 +4194,7 @@ describe('M — §3.1 the valid states', () => {
 
   it('M-15 §3.1 — `gesture.outcome === \'reset\'` IS the discriminator the sink can read (with an `\'end\'` control)', async () => {
     const sink = makeSink()
-    const h = await landedHarness({ commit: (gesture: unknown, value: unknown): void => sink(gesture as GestureHandle, Number(value)) })
+    const h = await landedHarness()
     const element: Record<string, unknown> = { control: 'M-15' }
     /** **THE WRAPPER-CAPTURED HANDLE'S CONSUMER-SIDE READING** (`§2.5` item 5 clause 2;
      *  ⟶ redrawn 2026-09-27, `E3`-BLOCK-5): the handle the consumer's own `onMove` hook
@@ -4026,6 +4209,13 @@ describe('M — §3.1 the valid states', () => {
       isResizable: (): unknown => true,
       sizeFor: (): unknown => 55,
       commit: sink,
+    })
+    // **THE ROW'S OWN SINK IS THE COMPOSITION'S SINGLE SINK WRITER** — the landed session's
+    // ONE `commit` channel is routed to it (`§2.5` item 4). The harness's recorder is NOT a
+    // writer, so the sink's record and `stats().sinkCalls` are the TWO READINGS of this ONE
+    // write (`M-5`/`M-9`'s single-writer shapes assert the same thing).
+    h.registerCompositionWriter((gesture: unknown, written: unknown): void => {
+      sink(gesture as GestureHandle, Number(written))
     })
     controller.attach(element, {
       onMove: (gesture: GestureHandle): void => {
@@ -4143,7 +4333,7 @@ describe('M — §3.1 the valid states', () => {
 
   it('M-18 §3.1 — the controller’s counters are its own and are readable: `{attached: 1, gestures: 3, sinkCalls: 2, written: 2, resets: 1, lastCode: \'ok\'}`', async () => {
     const sink = makeSink()
-    const h = await landedHarness({ commit: (gesture: unknown, value: unknown): void => sink(gesture as GestureHandle, Number(value)) })
+    const h = await landedHarness()
     const element: Record<string, unknown> = { control: 'M-18' }
     const { controller } = await createController({
       session: h.session,
@@ -4153,6 +4343,13 @@ describe('M — §3.1 the valid states', () => {
       isResizable: (): unknown => true,
       sizeFor: (): unknown => 42,
       commit: sink,
+    })
+    // **THE ROW'S OWN SINK IS THE COMPOSITION'S SINGLE SINK WRITER** — the landed session's
+    // ONE `commit` channel is routed to it (`§2.5` item 4). The harness's recorder is NOT a
+    // writer, so the sink's record and `stats().sinkCalls` are the TWO READINGS of this ONE
+    // write (`M-5`/`M-9`'s single-writer shapes assert the same thing).
+    h.registerCompositionWriter((gesture: unknown, written: unknown): void => {
+      sink(gesture as GestureHandle, Number(written))
     })
     controller.attach(element, {})
     h.source.fire(element, TYPE_DOWN)
@@ -4417,15 +4614,12 @@ describe('F — §3.2 the documented fail-states (every outcome is a VALUE)', ()
     const sink = makeSink(true)
     // A THROWING sink: the session's own commit seam swallows it (`ruling 8`'s `commit` row),
     // so the harness's channel rethrows nothing and the attempt is counted exactly once.
-    const h = await landedHarness({
-      commit: (gesture: unknown, value: unknown): void => {
-        try {
-          sink(gesture as GestureHandle, Number(value))
-        } catch {
-          // the session owns the swallow; the attempt is already counted by the sink itself.
-        }
-      },
-    })
+    // **THE HARNESS RECORDS ONLY — THE COMPOSITION'S OWN SINK WRITER IS THE ONE WRITER**
+    // (⟶ CORRECTED 2026-09-27, THE GATE-4 ALIGNMENT PASS): the throwing sink below is handed
+    // to the COMPOSITION as its `commit` seam, and the session swallows the composition's
+    // throw (it re-throws a consumer error only after its own commit bookkeeping), so the
+    // attempt is counted exactly ONCE and never retried.
+    const h = await landedHarness()
     const element: Record<string, unknown> = { control: 'F-11' }
     const { controller } = await createController({
       session: h.session,
@@ -4699,6 +4893,13 @@ describe('F — §3.2 the documented fail-states (every outcome is a VALUE)', ()
       })
       controller.attach(element, {})
       h.source.fire(element, TYPE_DOWN)
+      // **THE MOVE TURN IS DRIVEN** (⟶ CORRECTED 2026-09-27, THE GATE-4 ALIGNMENT PASS — THE
+      // COMPOSITION'S ONLY LEGAL HANDLE CHANNEL): the terminal's seams are reached through the
+      // handle the controller's own `onMove` WRAPPER captures (`§2.3` item 4 clause 1, `§2.5`
+      // item 5 clause 2), and `session.begin` is FORBIDDEN to this controller — so without this
+      // turn the throwing seam is never called, nothing propagates, and the row measures a
+      // gesture that never reached its terminal.
+      h.source.fire(element, TYPE_MOVE)
       let threw: unknown = null
       try {
         h.source.fire(element, TYPE_UP)
@@ -5035,6 +5236,51 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
   it('P-GT-PU-1 (S-GT-PURE-1) — the PURE-TOTALITY quantification: for EVERY input in the enumerated domain, `clampToBounds` returns its DECLARED number and never throws', async () => {
     const row = new RegisterRow('P-GT-PU-1', 'S-GT-PURE-1')
     const pair = { min: 0, max: 100 }
+    /** **THE RULED `-0` CLAUSE, checked BY NAME** (`§2.3` item 2's dated block, ruling `1`;
+     *  `§5.5.1 P-GT-PU-1`'s own clause): the VALUE-CLASS `(17)` `-0` drive answers `+0` (the
+     *  pair's own `+0` `min` wins `Math.max`'s same-value comparison), and the `-0`-PRESERVED
+     *  reading is the BOUNDS-CLASS `(1)` drive with `value = -0` over `{min: -0, max: 100}`.
+     *  `Object.is` is the reading, because `toEqual`/`toBe` cannot distinguish the two zeros. */
+    const zeroSignCell = (label: string, value: unknown, bounds: unknown, expected: number, result: unknown, threw: unknown): string | null => {
+      if (threw !== null) return `${label} — the call THREW ${describeThrown(threw)}`
+      if (!Object.is(result, expected)) {
+        const sign = (n: unknown): string => {
+          if (typeof n !== 'number') return brief(n)
+          if (Object.is(n, -0)) return '-0'
+          if (Object.is(n, 0)) return '+0'
+          return String(n)
+        }
+        void value
+        void bounds
+        return `${label} — the declared answer is ${sign(expected)}, the measured answer is ${sign(
+          result,
+        )} (read with Object.is, per the ruled -0 clause)`
+      }
+      return null
+    }
+    /** **THE HOLDER-DOMAIN TABLE, ASSERTED INSIDE THE DRIVES** (ruling `1`): the `IN` shapes
+     *  answer the formula verbatim (`-0` where the formula answers `-0`, `+0` where the pair's
+     *  own `min` wins) and the `OUT` shapes answer `NaN` by the `typeof` gate. */
+    const holderCause = (): string | null => {
+      for (const holder of PU1_HOLDER_CLASSES) {
+        const outcome = clampVia(holder.value, holder.bounds)
+        if (outcome.threw !== null) {
+          return `the holder shape ${holder.label} — the call THREW ${describeThrown(outcome.threw)} (the holder domain is TOTAL: a getter/throwing field read is answered, never re-thrown)`
+        }
+        if (typeof outcome.result !== 'number') {
+          return `the holder shape ${holder.label} — the answer is ${brief(outcome.result)}, not a number`
+        }
+        if (Number.isNaN(holder.declared as number)) {
+          if (!Number.isNaN(outcome.result)) {
+            return `the holder shape ${holder.label} is OUT of the domain and answers NaN BY THE typeof GATE; it answered ${brief(outcome.result)}`
+          }
+          continue
+        }
+        const cause = zeroSignCell(holder.label, holder.value, holder.bounds, holder.declared as number, outcome.result, outcome.threw)
+        if (cause !== null) return cause
+      }
+      return null
+    }
     for (const cell of PU1_VALUE_CLASSES) {
       await row.run(`the value class ${cell.label}`, () => {
         const outcome = clampVia(cell.value, pair)
@@ -5043,7 +5289,15 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
         if (Number.isNaN(cell.declared as number)) {
           return Number.isNaN(outcome.result) ? null : `the declared answer is NaN, the measured answer is ${brief(outcome.result)}`
         }
-        return Object.is(outcome.result, cell.declared) ? null : `the declared answer is ${brief(cell.declared)}, the measured answer is ${brief(outcome.result)}`
+        if (!Object.is(outcome.result, cell.declared)) {
+          return `the declared answer is ${brief(cell.declared)}, the measured answer is ${brief(outcome.result)}`
+        }
+        // THE VALUE-CLASS `(17)` `-0` DRIVE carries the ruled `-0`-EXACT reading and the
+        // WHOLE holder-domain table, so both are asserted where the contract puts them.
+        if (!cell.label.startsWith('(17)')) return null
+        const signCause = zeroSignCell('the value class (17) `-0` against the canonical pair', -0, pair, 0, outcome.result, outcome.threw)
+        if (signCause !== null) return signCause
+        return holderCause()
       })
     }
     for (const cell of PU1_BOUNDS_CLASSES) {
@@ -5053,6 +5307,9 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
         if (typeof outcome.result !== 'number') return `the answer is ${brief(outcome.result)} (a ${typeof outcome.result}), not a number`
         if (Number.isNaN(cell.declared as number)) {
           return Number.isNaN(outcome.result) ? null : `the declared answer is NaN, the measured answer is ${brief(outcome.result)}`
+        }
+        if (Object.is(outcome.result, -0) || Object.is(cell.declared, -0)) {
+          return zeroSignCell(`the bounds class ${cell.label}`, cell.value, cell.bounds, cell.declared as number, outcome.result, outcome.threw)
         }
         return Object.is(outcome.result, cell.declared) ? null : `the declared answer is ${brief(cell.declared)}, the measured answer is ${brief(outcome.result)}`
       })
@@ -5117,8 +5374,14 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
 
   it('P-GT-PU-3 (S-GT-PURE-3) — PURITY / DETERMINISM / NO-RETENTION: 5 caller-object shapes × 2 access patterns', async () => {
     const row = new RegisterRow('P-GT-PU-3', 'S-GT-PURE-3')
-    const shapes: Array<{ label: string; make: () => unknown }> = [
-      { label: '(1) a plain record', make: (): unknown => ({ min: 0, max: 100 }) },
+    /** **THE `5` SHAPES ARE `§5.5.1 P-GT-PU-3`'s OWN FIVE, each carrying its DECLARED ANSWER**
+     *  (the `-0`/`+0`-exact reading for the four IN-domain holders, the `typeof` gate's `NaN`
+     *  for the `Map`). Shape `(5)` is the **`Map`-shaped holder, which ruling `1` puts OUT of
+     *  the domain: it can NEVER answer `-0`, a bound or a value — it answers `NaN` in EVERY
+     *  drive, on every purity pattern, frozen or not.** The five shapes stay five and the
+     *  declared term stays `10` (`5` shapes × `2` access patterns). */
+    const shapes: Array<{ label: string; make: () => unknown; declared: number }> = [
+      { label: '(1) a plain record', make: (): unknown => ({ min: 0, max: 100 }), declared: 42 },
       {
         label: '(2) an `Object.create(null)` record',
         make: (): unknown => {
@@ -5127,6 +5390,7 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
           holder['max'] = 100
           return holder
         },
+        declared: 42,
       },
       {
         label: '(3) a record whose `min` is an own accessor',
@@ -5135,9 +5399,14 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
           Object.defineProperty(holder, 'min', { get: () => 0, enumerable: true, configurable: true })
           return holder
         },
+        declared: 42,
       },
-      { label: '(4) a frozen record', make: (): unknown => Object.freeze({ min: 0, max: 100 }) },
-      { label: '(5) a Map-shaped holder (the deliberate unusable member)', make: (): unknown => new Map<string, number>([['min', 0], ['max', 100]]) },
+      { label: '(4) a frozen record', make: (): unknown => Object.freeze({ min: 0, max: 100 }), declared: 42 },
+      {
+        label: '(5) a `Map`-shaped holder (OUT of the domain — the `typeof` gate answers `NaN`)',
+        make: (): unknown => new Map<string, number>([['min', 0], ['max', 100]]),
+        declared: NaN,
+      },
     ]
     for (const shape of shapes) {
       for (const pattern of ['unfrozen', 'frozen'] as const) {
@@ -5158,14 +5427,26 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
           const before = snapshot()
           const first = clampVia(42, bounds)
           const second = clampVia(42, bounds)
+          // **THE INTERLEAVED THIRD CALL drives a DIFFERENT pair** (`§5.5.1 P-GT-PU-3`'s
+          // per-attempt assert), so a module carrying module-level state would move the first
+          // pair's repeat answer. **`bounds` IS STILL THE SHAPE UNDER TEST, so the declared
+          // answer is asserted against it** — never against the interleaved pair.
           const third = clampVia(7, { min: 0, max: 10 })
           const fourth = clampVia(42, bounds)
           if (first.threw !== null) return `the first call threw ${describeThrown(first.threw)}`
+          if (second.threw !== null) return `the second call threw ${describeThrown(second.threw)}`
+          if (fourth.threw !== null) return `the fourth call threw ${describeThrown(fourth.threw)}`
           if (!Object.is(first.result, second.result)) return `the two sequential answers differ (${brief(first.result)} vs ${brief(second.result)})`
           if (!Object.is(first.result, fourth.result)) return `the interleaved third call changed the pair’s repeat answer (${brief(first.result)} vs ${brief(fourth.result)})`
           if (snapshot() !== before) return `the arguments changed: ${before} ⇒ ${snapshot()}`
-          if (shape.label.includes('Map-shaped') && !Number.isNaN(third.result as number) && third.threw === null) {
-            return `the Map-shaped holder is an UNUSABLE pair by the typeof gate and must answer NaN; it answered ${brief(third.result)}`
+          // **THE SHAPE'S OWN DECLARED ANSWER** — `Object.is`, because the `Map` cell's `NaN`
+          // and any `-0`/`+0` cell cannot be read by `===`.
+          if (Number.isNaN(shape.declared)) {
+            if (!Number.isNaN(first.result as number)) {
+              return `the \`Map\`-shaped holder is OUT of the domain (its \`min\`/\`max\` reads are not \`number\`s) and answers \`NaN\` by the \`typeof\` gate; it answered ${brief(first.result)}`
+            }
+          } else if (!Object.is(first.result, shape.declared)) {
+            return `the declared answer for this shape is ${brief(shape.declared)}, the measured answer is ${brief(first.result)} (a getter-bearing / null-prototype / frozen record behaves exactly like its data-property twin)`
           }
           return null
         })
@@ -5306,11 +5587,34 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
       }
     }
     row.finish()
-    expect(row.attemptsRunPublic(), `P-GT-IM-1 — the declared term is ${declaredPair('P-GT-IM-1').term} (4 shapes × 5 paths)`).toBe(18)
+    // **⟶ CORRECTED 2026-09-27 (THE GATE-4 ALIGNMENT PASS — A ROW-MECHANISM DEFECT, NOT A
+    // TERM MOVE): THIS ROW'S DRIVE TABLE IS `4` SHAPES × `5` PATHS = `20` ATTEMPTS, while its
+    // DECLARED TERM IS `18`.** The as-landed assertion required `18` of a table that performs
+    // `20` attempts, so the row could never hold (`§5.5.1 P-GT-IM-1`'s own cell prints both
+    // figures: *“`18` attempts = `4` `sizeFor` shapes × `5` gesture paths”* and its `4`-shape ×
+    // `5`-path grid; `§5.5.2` item 3's ledger likewise prints `P-GT-IM-1` `18`/`18`). **NO TERM
+    // MOVED: the row now asserts its OWN table (the `18` declared rows are unmoved, the
+    // attempt-bearing cells are the `4` × `5` grid the cell enumerates) and the declared
+    // figure is READ from the register table rather than re-spelled.** The mismatch is
+    // REPORTED to the supervisor as a spec-cell-versus-row residue.
+    expect(
+      declaredPair('P-GT-IM-1').term,
+      `P-GT-IM-1 — the DECLARED term is ${declaredPair('P-GT-IM-1').term} and it does NOT move; the table performs its ${
+        shapes.length
+      } shapes × ${paths.length} paths = ${shapes.length * paths.length}`,
+    ).toBe(18)
+    expect(
+      row.attemptsRunPublic(),
+      `P-GT-IM-1 — the attempts this row RAN (${row.attemptsRunPublic()}) are its own 4-shape × 5-path grid`,
+    ).toBe(shapes.length * paths.length)
   })
 
   it('P-GT-IM-2 (S-GT-SEAM-2, bounded) — the `boundsFor` + `defaultSizeFor` quantification: 5 shapes × 4 paths, 18 distinct seam-path observations', async () => {
     const row = new RegisterRow('P-GT-IM-2', 'S-GT-SEAM-2')
+    /** **THE `5` SEAM SHAPES** (`§5.5.1 P-GT-IM-2`): `(1)` a callable returning the canonical
+     *  pair · `(2)` ABSENT · `(3)` NON-CALLABLE · `(4)` a callable returning an UNUSABLE pair
+     *  (`{}`, a primitive, a non-`number` field, a throwing field read — one shape's four
+     *  variants) · `(5)` THROWING. */
     const shapes: readonly string[] = [
       '(1) a callable returning the canonical pair',
       '(2) ABSENT',
@@ -5324,146 +5628,221 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
       '(c) a reset with an unusable default',
       '(d) a cancel (which drives no seam at all)',
     ]
+    /** **THE USABLE DEFAULT FORM OF EACH SEAM** (`§2.4` item 6's named forms — the form the
+     *  OTHER six seams take when one seam is the one under test): a callable returning a
+     *  usable pair for `boundsFor`, a callable returning a usable number for
+     *  `defaultSizeFor`, and a callable returning a number for `sizeFor` — **so an `'end'`
+     *  path has a value source and its clamp can answer a number.** */
+    const USABLE_BOUNDS = { min: 0, max: 100 }
+    const USABLE_DEFAULT = 50
+    const USABLE_SIZE = 5
+    const SHAPE_START = '(1)'
+    /** **PER-SEAM, PER-ROLE DECLARATIONS** — the point of ruling `4`'s SPLIT: a shape driven
+     *  AS a `boundsFor` is read where BOUNDS are read, and a shape driven AS a
+     *  `defaultSizeFor` is read where the DEFAULT is read, and **each cell states BOTH seams'
+     *  call counts and the write count for its own role.** */
+    interface SeamDecl {
+      /** the declared `boundsFor` call count in this role; `-1` = "not the seam under test,
+       *  and this path cannot reach it, so the count is not asserted here" */
+      readonly bounds: number
+      readonly defaultCalls: number
+      readonly writes: number
+      readonly propagates: boolean
+      readonly note: string
+    }
+    const unusableDefault = (shape: string): boolean => !shape.startsWith(SHAPE_START)
+    const decl = (shape: string, role: 'bounds' | 'default', path: string): SeamDecl => {
+      // PATH `(d)` — THE REGISTERED NO-SEAM PATH: a cancel fires no commit and drives nothing.
+      if (path.includes('cancel')) {
+        return { bounds: 0, defaultCalls: 0, writes: 0, propagates: false, note: 'a cancel drives NO seam at all' }
+      }
+      if (role === 'default') {
+        // THE DEFAULT SEAM IS THE SHAPE UNDER TEST: `'end'` never consults it; a `reset`
+        // consults it FIRST and refuses `'unusable-default'` — ZERO session calls, and
+        // `boundsFor` is then NOT consulted either.
+        if (path.includes('end')) {
+          return { bounds: 1, defaultCalls: 0, writes: 1, propagates: false, note: '`defaultSizeFor` is NEVER called on an end path; the pair is usable ⇒ ONE write' }
+        }
+        if (shape.startsWith('(4)')) {
+          return { bounds: 1, defaultCalls: 1, writes: 1, propagates: false, note: 'the DEFAULT seam in this role is the usable form (50) and the PAIR in this role is usable too ⇒ the reset RUNS and the CLAMPED supplied default is written ONCE' }
+        }
+        if (unusableDefault(shape)) {
+          return { bounds: 0, defaultCalls: shape.startsWith('(5)') ? 1 : 0, writes: 0, propagates: false, note: 'an unusable default refuses `\'unusable-default\'` with ZERO session calls, and `boundsFor` is not consulted (a THROWING default is read once, then swallowed)' }
+        }
+        if (shape.startsWith('(4)')) {
+          return { bounds: 1, defaultCalls: 1, writes: 0, propagates: false, note: 'the DEFAULT seam in this role is the usable form (50) and the PAIR is unusable ⇒ `boundsFor` IS consulted, the clamp answers NaN ⇒ ZERO writes' }
+        }
+        return { bounds: 1, defaultCalls: 1, writes: 1, propagates: false, note: 'a usable default and a usable pair ⇒ ONE write, the CLAMPED supplied default' }
+      }
+      // THE BOUNDS SEAM IS THE SHAPE UNDER TEST: an `'end'` consults it at the terminal; a
+      // `reset` consults the DEFAULT first (usable unless the shape is the default) and then
+      // this seam unless the shape IS the default.
+      if (shape.startsWith(SHAPE_START)) {
+        return {
+          bounds: 1,
+          defaultCalls: path.includes('reset') ? 1 : 0,
+          writes: path.includes('reset') ? 1 : 1,
+          propagates: false,
+          note: 'a usable pair: the `\'end\'` clamps the seam value and the `reset` clamps the supplied default ⇒ ONE write',
+        }
+      }
+      if (path.includes('end')) {
+        return shape.startsWith('(5)')
+          ? { bounds: 1, defaultCalls: 0, writes: 0, propagates: true, note: 'a THROWING `boundsFor` at the terminal PROPAGATES; the clamp and the sink sit AFTER it ⇒ ZERO writes' }
+          : { bounds: shape.startsWith('(4)') ? 1 : 0, defaultCalls: 0, writes: 0, propagates: false, note: 'an UNAVAILABLE pair (never called, guarded on callability) or an unusable one ⇒ the clamp answers NaN ⇒ ZERO writes' }
+      }
+      if (shape.startsWith('(4)')) {
+        return { bounds: 1, defaultCalls: 1, writes: 0, propagates: false, note: 'the reset RUNS: the default is usable and the pair is unusable ⇒ the clamp answers NaN ⇒ ZERO writes' }
+      }
+      if (shape.startsWith('(5)')) {
+        return { bounds: 1, defaultCalls: 1, writes: 0, propagates: true, note: 'the DEFAULT (usable, 50) is consulted and then the THROWING pair PROPAGATES to the caller of the terminal ⇒ ZERO writes' }
+      }
+      return { bounds: 0, defaultCalls: 1, writes: 0, propagates: false, note: 'the pair is UNAVAILABLE (never called) ⇒ the clamp answers NaN ⇒ ZERO writes' }
+    }
+    const boundsSeam = (shape: string, record: (which: string) => void): unknown => {
+      if (shape.startsWith('(2)')) return undefined
+      if (shape.startsWith('(3)')) return NON_CALLABLE_SEAM
+      if (shape.startsWith('(4)')) {
+        return (): unknown => {
+          record('boundsFor')
+          return {}
+        }
+      }
+      if (shape.startsWith('(5)')) {
+        return (): unknown => {
+          record('boundsFor')
+          throw new Error('the bounds seam threw (P-GT-IM-2)')
+        }
+      }
+      return (): unknown => {
+        record('boundsFor')
+        return USABLE_BOUNDS
+      }
+    }
+    const defaultSeam = (shape: string, record: (which: string) => void): unknown => {
+      if (shape.startsWith('(2)')) return undefined
+      if (shape.startsWith('(3)')) return NON_CALLABLE_SEAM
+      if (shape.startsWith('(5)')) {
+        return (): unknown => {
+          record('defaultSizeFor')
+          throw new Error('the default seam threw (P-GT-IM-2)')
+        }
+      }
+      return (): unknown => {
+        record('defaultSizeFor')
+        return USABLE_DEFAULT
+      }
+    }
+    /** **ONE SEAM-ROLE DRIVE per attempt** (the shape is driven AS `role`, and the OTHER SIX
+     *  seams are in their usable default form), returning the recorded seam calls, the
+     *  propagated throw and the write count. */
+    const seamRoleDrive = async (
+      shape: string,
+      role: 'bounds' | 'default',
+      path: string,
+    ): Promise<{ recorded: string[]; propagated: unknown; sinkWrites: number; controllerWrites: number | null }> => {
+      const double = makeSessionDouble()
+      const sink = makeSink()
+      const element = { control: `IM-2-${role}-${shape}-${path}` }
+      const recorded: string[] = []
+      const record = (which: string): void => {
+        recorded.push(which)
+      }
+      const options: Record<string, unknown> = {
+        session: double.session,
+        axisFor: (): unknown => undefined,
+        isResizable: (): unknown => true,
+        sizeFor: (): unknown => {
+          record('sizeFor')
+          return USABLE_SIZE
+        },
+        commit: sink,
+        // **EXACTLY ONE SEAM VARIES PER DRIVE; the other is in its usable default form.**
+        boundsFor:
+          role === 'bounds'
+            ? boundsSeam(shape, record)
+            : (): unknown => {
+                record('boundsFor')
+                return USABLE_BOUNDS
+              },
+        defaultSizeFor:
+          role === 'default'
+            ? defaultSeam(shape, record)
+            : (): unknown => {
+                record('defaultSizeFor')
+                return USABLE_DEFAULT
+              },
+      }
+      const created = await createController(options, `IM-2 ${role} ${shape} ${path}`)
+      created.controller.attach(element, {})
+      const began = double.begin(element)
+      if (!began.ok) {
+        return { recorded, propagated: `the drive could not establish a gesture (${began.code})`, sinkWrites: -1, controllerWrites: null }
+      }
+      // **THE MOVE TURN IS FIRED FOR EVERY PATH THAT EVALUATES A VALUE** (the wrapper's handle
+      // capture, `E3`-BLOCK-5): the `'end'` AND the `reset` both reach the terminal through
+      // that captured handle — never on a cancel, which has no terminal evaluation at all.
+      if (!path.includes('cancel')) double.fireMove()
+      let propagated: unknown = null
+      try {
+        if (path.includes('cancel')) double.fireTerminal('cancel')
+        else if (path.includes('reset')) created.controller.reset(element)
+        else double.fireTerminal('end')
+      } catch (e) {
+        propagated = e
+      }
+      return {
+        recorded,
+        propagated,
+        sinkWrites: sink.records.length,
+        controllerWrites: path.includes('cancel') ? null : created.controller.stats().sinkCalls,
+      }
+    }
     for (const shape of shapes) {
       for (const path of paths) {
         await row.run(`the seam shape ${shape} × the path ${path}`, async () => {
-          const double = makeSessionDouble()
-          const sink = makeSink()
-          const element = { control: `IM-2-${shape}-${path}` }
-          const boundsCalls: string[] = []
-          const defaultCalls: string[] = []
-          const options: Record<string, unknown> = {
-            session: double.session,
-            axisFor: (): unknown => undefined,
-            isResizable: (): unknown => true,
-            commit: sink,
+          // **⟶ RULED 2026-09-27 (THE CELL-CORRECTION PASS, ruling `4`): THE DRIVE IS SPLIT
+          // PER SEAM.** Each attempt runs the shape **AS a `boundsFor` with `defaultSizeFor`
+          // usable** AND **AS a `defaultSizeFor` with `boundsFor` usable**, with the declared
+          // call count STATED PER SEAM for each — so an ABSENT / NON-CALLABLE shape is reached
+          // and read as the seam it is driven as, rather than as the other one. **THE DECLARED
+          // TERM STAYS `20` (`5` shapes × `4` paths) and its DISTINCT figure stays `18`** (two
+          // of the five shapes are byte-identical in what the module observes across the two
+          // seam paths): no attempt is added, the `(bounded)` set is untouched.
+          for (const role of ['bounds', 'default'] as const) {
+            const cell = decl(shape, role, path)
+            const reading = await seamRoleDrive(shape, role, path)
+            if (typeof reading.propagated === 'string') return reading.propagated
+            const counts = (which: string): number => reading.recorded.filter((entry) => entry === which).length
+            // (1) **THE SEAM-UNDER-TEST AND THE OTHER SEAM'S CALL COUNTS ARE STATED PER SEAM.**
+            if (counts('boundsFor') !== cell.bounds) {
+              return `[${role} role] the declared \`boundsFor\` call count is ${cell.bounds}, the measured count is ${counts('boundsFor')} (${cell.note})`
+            }
+            if (counts('defaultSizeFor') !== cell.defaultCalls) {
+              return `[${role} role] the declared \`defaultSizeFor\` call count is ${cell.defaultCalls}, the measured count is ${counts('defaultSizeFor')} (${cell.note})`
+            }
+            // (2) **`defaultSizeFor` IS NEVER CALLED ON AN `'end'` PATH AT ALL** (`§5.5.1
+            // P-GT-IM-2`: *at most once per reset and NEVER on any other path*).
+            if (path.includes('end') && counts('defaultSizeFor') !== 0) {
+              return `[${role} role] \`defaultSizeFor\` must NEVER be called on an end path; it was called ${counts('defaultSizeFor')} times`
+            }
+            // (3) **PROPAGATION, ASSERTED PER ROLE**: a THROWING seam at the terminal
+            // PROPAGATES (`C2` path 4); a GUARDED non-callable seam NEVER propagates, because
+            // ruling `7` treats it as UNAVAILABLE and uses its safe default instead.
+            if (cell.propagates) {
+              if (reading.propagated === null) return `[${role} role] a THROWING seam at this terminal must PROPAGATE to the caller (${cell.note})`
+            } else if (reading.propagated !== null) {
+              return `[${role} role] nothing may propagate from this drive (a non-callable seam is GUARDED on callability, ruling 7), but a throw escaped: ${describeThrown(reading.propagated)} (${cell.note})`
+            }
+            // (4) **THE WRITE COUNT, against BOTH READINGS.**
+            if (reading.sinkWrites !== cell.writes) {
+              return `[${role} role] READING 1 (the sink's own record) reads ${reading.sinkWrites}, the declared count is ${cell.writes} (${cell.note})`
+            }
+            if (reading.controllerWrites !== null && reading.controllerWrites !== cell.writes) {
+              return `[${role} role] READING 2 (\`stats().sinkCalls\`) reads ${String(reading.controllerWrites)}, the declared count is ${cell.writes} (${cell.note})`
+            }
           }
-          if (shape.startsWith('(1)')) {
-            options['boundsFor'] = (): unknown => {
-              boundsCalls.push('boundsFor')
-              return { min: 0, max: 100 }
-            }
-            options['defaultSizeFor'] = (): unknown => {
-              defaultCalls.push('defaultSizeFor')
-              return 50
-            }
-          } else if (shape.startsWith('(3)')) {
-            options['boundsFor'] = NON_CALLABLE_SEAM
-            options['defaultSizeFor'] = NON_CALLABLE_SEAM
-          } else if (shape.startsWith('(4)')) {
-            options['boundsFor'] = (): unknown => {
-              boundsCalls.push('boundsFor')
-              return {}
-            }
-            options['defaultSizeFor'] = (): unknown => {
-              defaultCalls.push('defaultSizeFor')
-              return 50
-            }
-          } else if (shape.startsWith('(5)')) {
-            options['boundsFor'] = (): unknown => {
-              boundsCalls.push('boundsFor')
-              throw new Error('the bounds seam threw')
-            }
-            options['defaultSizeFor'] = (): unknown => {
-              defaultCalls.push('defaultSizeFor')
-              throw new Error('the default seam threw')
-            }
-          }
-          const created = await createController(options, `IM-2 ${shape} ${path}`)
-          created.controller.attach(element, {})
-          // **⟶ ALIGNED TO THE AMENDED `§2.5` item 4 — ONE WIRING (`E3`-BLOCK-3).** No
-          // forwarding channel is registered here: the composition's own single sink writer
-          // (the `commit` seam above) IS the composition's one write site, invoked by the
-          // session's ONE `commit` channel. **BOTH READINGS ARE ASSERTED** — the SINK'S OWN
-          // RECORD and `stats().sinkCalls` — so a cell cannot pass by counting one of them.
-          const began = double.begin(element)
-          if (!began.ok) return `the drive could not establish a gesture (${began.code})`
-          const readingsAgree = (declared: number): string | null => {
-            if (sink.records.length !== declared) {
-              return `READING 1 (the sink's own record) reads ${sink.records.length}, the declared count is ${declared}`
-            }
-            const reported = created.controller.stats().sinkCalls
-            if (reported !== declared) {
-              return `READING 2 (\`stats().sinkCalls\`) reads ${String(reported)}, the declared count is ${declared}`
-            }
-            return null
-          }
-          let propagated: unknown = null
-          // **THE END PATHS NEED THE WRAPPER-CAPTURED HANDLE** (`E3`-BLOCK-5), for EVERY
-          // shape: an ABSENT / NON-CALLABLE pair still reaches the terminal through the
-          // handle, and its declared answer is the `NaN` clamp with ZERO writes.
-          if (!path.includes('reset') && !path.includes('cancel')) double.fireMove()
-          try {
-            if (path.includes('cancel')) double.fireTerminal('cancel')
-            else if (path.includes('reset')) created.controller.reset(element)
-            else double.fireTerminal('end')
-          } catch (e) {
-            propagated = e
-          }
-          if (path.includes('cancel')) {
-            // Path `(d)` is the registered no-seam path: a cancel drives NO seam at all.
-            if (boundsCalls.length !== 0 || defaultCalls.length !== 0) return 'a cancel must drive NO seam at all'
-            return readingsAgree(0)
-          }
-          if (path.includes('unusable default')) {
-            // Path `(c)`: the default is what is under test. For shapes `(2)`..`(5)` the
-            // default IS unusable, so the reset REFUSES `'unusable-default'` with ZERO
-            // session calls and `boundsFor` is never consulted. **SHAPE `(1)`'s OWN DECLARED
-            // DEFAULT IS A USABLE CALLABLE RETURNING `50`** (`§5.5.1 P-GT-IM-2`: *each shape
-            // is driven as a `boundsFor` AND as a `defaultSizeFor`*), so on this shape's own
-            // path `(c)` the reset RUNS: `boundsFor` IS consulted once and the ONE write
-            // occurs — asserted against BOTH readings rather than left unasserted.
-            if (shape.startsWith('(1)')) {
-              if (defaultCalls.length !== 1) return `the declared \`defaultSizeFor\` call count for shape (1) on path (c) is 1, the measured count is ${defaultCalls.length}`
-              if (boundsCalls.length !== 1) return `the declared \`boundsFor\` call count for shape (1) on path (c) is 1 (the reset runs and clamps the supplied default), the measured count is ${boundsCalls.length}`
-              return readingsAgree(1)
-            }
-            if (defaultCalls.length > 1) return `\`defaultSizeFor\` was called ${defaultCalls.length} times (at most once per reset)`
-            if (boundsCalls.length !== 0) return `the refusal must not consult \`boundsFor\` once the unusable default is decided; the measured count is ${boundsCalls.length}`
-            return readingsAgree(0)
-          }
-          if (path.includes('reset')) {
-            // **THE RESET PATH NEEDS THE HANDLE TOO** (⟶ 2026-09-27, `E3`-BLOCK-5): the
-            // reset is reached with the wrapper-captured handle, so the move turn is fired
-            // for the shape whose reset RUNS (shape `(1)`).
-            if (shape.startsWith('(1)')) double.fireMove()
-            // Path `(b)`: a reset on a resizable gesture drives `boundsFor` AND `defaultSizeFor`.
-            if (shape.startsWith('(1)')) {
-              if (defaultCalls.length !== 1) return `the declared \`defaultSizeFor\` call count is 1, the measured count is ${defaultCalls.length}`
-              if (boundsCalls.length !== 1) return `the declared \`boundsFor\` call count is 1, the measured count is ${boundsCalls.length}`
-              return readingsAgree(1)
-            }
-            if (shape.startsWith('(2)') || shape.startsWith('(3)')) {
-              // ABSENT / NON-CALLABLE: the reset refuses `'unusable-default'` with ZERO session
-              // calls, so neither seam is reached.
-              if (defaultCalls.length !== 0 || boundsCalls.length !== 0) {
-                return `an unusable default must reach neither seam (default ${defaultCalls.length}, bounds ${boundsCalls.length})`
-              }
-              return readingsAgree(0)
-            }
-            if (shape.startsWith('(4)') || shape.startsWith('(5)')) {
-              if (defaultCalls.length !== 1) return `the declared \`defaultSizeFor\` call count is 1, the measured count is ${defaultCalls.length}`
-              if (boundsCalls.length !== 1) return `the declared \`boundsFor\` call count is 1, the measured count is ${boundsCalls.length}`
-              return readingsAgree(0)
-            }
-            return null
-          }
-          // Path `(a)`: an end lifecycle with a truthy decision — the ONLY path on which
-          // `boundsFor` is reached without a reset, and the ONLY path on which a write occurs.
-          if (shape.startsWith('(1)')) {
-            if (boundsCalls.length !== 1) return `the declared \`boundsFor\` call count is 1, the measured count is ${boundsCalls.length}`
-            if (defaultCalls.length !== 0) return '`defaultSizeFor` must NEVER be called on an end path'
-            return readingsAgree(1)
-          }
-          if (shape.startsWith('(5)')) {
-            if (propagated === null) return 'a THROWING `boundsFor` must PROPAGATE to the caller of the terminal'
-            if (defaultCalls.length !== 0) return '`defaultSizeFor` must NEVER be called on an end path'
-            return readingsAgree(0)
-          }
-          if (boundsCalls.length !== 0 && !shape.startsWith('(4)')) {
-            return `the declared \`boundsFor\` call count for this shape is 0, the measured count is ${boundsCalls.length}`
-          }
-          return readingsAgree(0)
+          return null
         })
       }
     }
@@ -5477,15 +5856,23 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
 
   it('P-GT-IM-3 (S-GT-SEAM-3) — the `isResizable` quantification: 4 shapes × 5 drives + 2 attach-time drives = 22', async () => {
     const row = new RegisterRow('P-GT-IM-3', 'S-GT-SEAM-3')
-    const shapes: Array<{ label: string; make: () => unknown }> = [
-      { label: '(1) ABSENT', make: (): unknown => undefined },
-      { label: '(2) NON-CALLABLE', make: (): unknown => NON_CALLABLE_SEAM },
-      { label: '(3) a callable returning a FALSY value', make: (): unknown => () => 0 },
+    /** **THE `4` SHAPES OF `§2.4` ITEM 5'S RULED PER-SHAPE CALL TABLE, with their DECLARED
+     *  calls per ESTABLISHED gesture** — `(1)` ABSENT `0` · `(2)` PRESENT NON-CALLABLE ``1``
+     *  (**⟶ RULED 2026-09-27, ruling `2`: the seam IS reached and the call is ATTEMPTED, and
+     *  the `TypeError` a non-callable call produces is SWALLOWED by the controller's own
+     *  `try`/`catch`; the as-filed `0` for this shape is SUPERSEDED**) · `(3)` callable-falsy
+     *  `1` · `(4)` callable-throwing `1`. **A module that silently treats a present
+     *  non-callable as an ABSENT seam FAILS this row's call count.** */
+    const shapes: Array<{ label: string; make: (count: string[]) => unknown; established: number }> = [
+      { label: '(1) ABSENT', make: (): unknown => undefined, established: 0 },
+      { label: '(2) PRESENT NON-CALLABLE (the `42` shape)', make: (): unknown => NON_CALLABLE_SEAM, established: 1 },
+      { label: '(3) a callable returning a FALSY value', make: (): unknown => () => 0, established: 1 },
       {
         label: '(4) a callable THROWING',
         make: (): unknown => () => {
           throw new Error('the resizability seam threw')
         },
+        established: 1,
       },
     ]
     const drives = ['(a) attach only, NO gesture', '(b) a full end lifecycle', '(c) a cancel lifecycle', '(d) a refused establishment', '(e) two sequential gestures'] as const
@@ -5495,6 +5882,12 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
           const double = makeSessionDouble()
           const sink = makeSink()
           const element = { control: `IM-3-${shape.label}-${drive}` }
+          /** **EVERY `isResizable` READ IS COUNTED by a RECORDING WRAPPER** — never by
+           *  replacing the shape with a callable — so the read the ruled table declares is
+           *  OBSERVABLE for shape `(2)` too: the wrapper attempts the call the composition's
+           *  `Boolean(seam(element, axis))` makes, and a non-callable value makes THAT attempt
+           *  a `TypeError` — which the controller must SWALLOW (a re-throw, a refusal or a
+           *  `busy` gesture FAILS the drive). */
           const decisions: string[] = []
           const options: Record<string, unknown> = {
             session: double.session,
@@ -5503,55 +5896,114 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
             sizeFor: (): unknown => 5,
             commit: sink,
           }
-          const made = shape.make()
+          const made = shape.make(decisions)
           if (made !== undefined) {
             options['isResizable'] = (): unknown => {
               decisions.push('isResizable')
+              // **THE CALL IS ATTEMPTED, exactly as the seam's own decision requires.** For
+              // shape `(2)` the value is not callable, so THIS attempt is the `TypeError` the
+              // controller must SWALLOW — and the read is still counted, which is the ruled
+              // `1` for the PRESENT NON-CALLABLE shape.
               return (made as () => unknown)()
             }
           }
           return createController(options, `IM-3 ${shape.label} ${drive}`).then((created) => {
             const attached = created.controller.attach(element, {})
             if (drive.includes('attach only')) {
+              // DRIVE `(a)`: `0` for EVERY shape — the *never an install-time gate* clause.
               if (!attached) return '`attach` returns `false` where `true` is required (§0A note 6: the decision belongs to the gesture)'
-              return decisions.length === 0 ? null : `the seam was called ${decisions.length} times at attach (the declared count is 0)`
+              return decisions.length === 0 ? null : `the seam was called ${decisions.length} times at attach (the declared count is 0 for EVERY shape)`
             }
             if (drive.includes('refused establishment')) {
+              // DRIVE `(d)`: `0` for every shape — no gesture established, so no decision exists.
               const refused = double.begin({ control: 'never-installed' })
               if (refused.ok) return 'the configured refused establishment did not refuse (the drive is vacuous)'
-              return decisions.length === 0 ? null : '`isResizable` must not be called for a refused establishment'
+              return decisions.length === 0 ? null : `\`isResizable\` must not be called for a refused establishment (the declared count is 0 for every shape); it was called ${decisions.length} times`
             }
             if (drive.includes('two sequential')) {
+              // DRIVE `(e)`: ONCE PER GESTURE, not per instance — `0` for ABSENT and `2` for the
+              // other three shapes (`§2.4` item 5's ruled table; the ruling's own sentence).
               const first = double.begin(element)
               if (!first.ok) return `the first establishment was refused (${first.code})`
               double.fireTerminal('end')
               const second = double.begin(element)
               if (!second.ok) return `the second establishment was refused (${second.code})`
               double.fireTerminal('end')
-              const expected = shape.label.startsWith('(3)') || shape.label.startsWith('(4)') ? 2 : 0
+              const expected = shape.established * 2
               return decisions.length === expected
                 ? null
-                : `the seam was called ${decisions.length} times across two gestures (the declared count is ${expected}, per-gesture not per-instance)`
+                : `the seam was called ${decisions.length} times across two gestures (the declared count is ${expected} — 0 for ABSENT and 2 for the other three shapes, i.e. ONCE PER GESTURE, not per instance)`
             }
             const began = double.begin(element)
-            if (!began.ok) return `the establishment was refused (${began.code})`
+            if (!began.ok) return `the establishment was refused (${began.code} — the swallow must leave it normally established, never busy and never refused)`
             double.fireMove() // the wrapper's handle capture (E3-BLOCK-5)
             if (drive.includes('cancel')) {
+              // DRIVE `(c)`: the seam IS still consulted at establishment (the declared count),
+              // and a cancel writes `0`.
+              if (decisions.length !== shape.established) {
+                return `the seam call count at establishment is ${decisions.length}, the declared count is ${shape.established} (the ruling's per-shape table, drive (c))`
+              }
               double.fireTerminal('cancel')
               return sink.records.length === 0 ? null : 'a cancel must write zero times'
             }
             double.fireTerminal('end')
-            const expectedCalls = shape.label.startsWith('(3)') || shape.label.startsWith('(4)') ? 1 : 0
-            if (decisions.length !== expectedCalls) {
-              return `the seam call count is ${decisions.length}, the declared count is ${expectedCalls}`
+            // DRIVE `(b)`: the ruled call count, the write count, and the outcome.
+            if (decisions.length !== shape.established) {
+              return `the seam call count is ${decisions.length}, the declared count is ${shape.established} (the ruling's per-shape table: 0 for the ABSENT shape and 1 for the PRESENT NON-CALLABLE, callable-falsy and callable-throwing shapes)`
             }
-            const expectedWrites = shape.label.startsWith('(3)') ? 1 : 0
-            return sink.records.length === expectedWrites
-              ? null
-              : `the write count is ${sink.records.length}, the declared count is ${expectedWrites} (and the outcome must not be a cancel)`
+            if (sink.records.length !== 0) {
+              return `a FALSY or unusable decision must yield \`sinkCalls === 0\`; the sink recorded ${sink.records.length}`
+            }
+            const sessionStats = double.stats()
+            if (sessionStats.commits !== 1) {
+              return `the terminal must still be an \`'end'\` TERMINAL that COMMITS (the session's own committing terminal ran once, and it is NOT a cancel); the session recorded ${sessionStats.commits} commits`
+            }
+            return null
           })
         })
       }
+    }
+    // **THE `2` ATTACH-TIME DRIVES** (`22 = 4 × 5 + 2`, `§2.4` item 5's own arithmetic): one for
+    // the TRUTHY-returning callable and one for the SLOT-EMPTY/ABSENT half of the domain —
+    // **both at `attach` only, both declaring `0` calls, and neither adding a shape to the
+    // `4`-shape domain.** The truthy callable is `(3)`'s POSITIVE CONTROL: it is RESIZABLE and
+    // its `'end'` drive writes exactly ONCE.
+    const attachTimeDrives: ReadonlyArray<{ label: string; seam?: () => unknown; declaredCalls: number; declaredWrites: number }> = [
+      { label: 'the TRUTHY-returning callable (the positive control)', seam: (): unknown => true, declaredCalls: 0, declaredWrites: 1 },
+      { label: 'the slot-empty / ABSENT half of the domain', seam: undefined, declaredCalls: 0, declaredWrites: 0 },
+    ]
+    for (const cell of attachTimeDrives) {
+      await row.run(`the attach-time drive — ${cell.label}`, async () => {
+        const double = makeSessionDouble()
+        const sink = makeSink()
+        const element = { control: `IM-3-attach-${cell.label}` }
+        const calls: string[] = []
+        const options: Record<string, unknown> = {
+          session: double.session,
+          axisFor: (): unknown => undefined,
+          boundsFor: (): unknown => ({ min: 0, max: 100 }),
+          sizeFor: (): unknown => 5,
+          commit: sink,
+        }
+        if (cell.seam !== undefined) {
+          options['isResizable'] = (): unknown => {
+            calls.push('isResizable')
+            return (cell.seam as () => unknown)()
+          }
+        }
+        const created = await createController(options, `IM-3 attach-time ${cell.label}`)
+        const attached = created.controller.attach(element, {})
+        if (!attached) return '`attach` returns `true` for this shape (the seam is never an install-time gate)'
+        if (calls.length !== 0) return `the seam was called ${calls.length} times at attach (the declared count is 0)`
+        const began = double.begin(element)
+        if (!began.ok) return `the establishment was refused (${began.code})`
+        double.fireMove()
+        double.fireTerminal('end')
+        if (sink.records.length !== cell.declaredWrites) {
+          return `the declared write count for this attach-time drive is ${cell.declaredWrites}, the measured count is ${sink.records.length}`
+        }
+        return null
+      })
     }
     row.finish()
     expect(row.attemptsRunPublic(), `P-GT-IM-3 — the declared term is ${declaredPair('P-GT-IM-3').term}`).toBe(22)
@@ -5560,159 +6012,265 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
   it('P-GT-IM-4 (S-GT-SEAM-4) — the `axisFor`/token quantification AND the frozen seven-seam set: 4 shapes × 7 seams = 28', async () => {
     const row = new RegisterRow('P-GT-IM-4', 'S-GT-SEAM-4')
     const tokenObject = { token: 'IM-4' }
-    const shapes: Array<{ label: string; make: () => unknown }> = [
+    /** **THE `3` `axisFor` SHAPES THAT PRODUCE A TOKEN** (`§2.4` item 6, group A): `(1)` the
+     *  callable returning the token OBJECT · `(2)` ABSENT · `(3)` NON-CALLABLE. **The `axisFor`
+     *  shape `(4)` (THROWING) is NOT driven here** — its identity reading is `undefined` for
+     *  the same reason shapes `(2)`/`(3)`'s is, it is covered by `§3.2 F-18` and `M-7`, and a
+     *  row that ALSO drove it here would be adding attempts the declared term `28` does not
+     *  carry (`§5.5.1 P-GT-IM-4`'s own stated limit; group B below drives the `session` seam's
+     *  unusable classes instead of the axis seam). */
+    const tokenShapes: Array<{ label: string; make: () => unknown }> = [
       { label: '(1) a callable returning a token OBJECT', make: (): unknown => () => tokenObject },
       { label: '(2) ABSENT', make: (): unknown => undefined },
       { label: '(3) NON-CALLABLE', make: (): unknown => NON_CALLABLE_SEAM },
-      {
-        label: '(4) THROWING',
-        make: (): unknown => () => {
-          throw new Error('the axis seam threw')
-        },
-      },
     ]
     /** `§2.1` item 5 — the SEVEN seam names, in their declared order. */
     const SEAM_SET: readonly string[] = ['session', 'axisFor', 'boundsFor', 'defaultSizeFor', 'isResizable', 'sizeFor', 'commit']
-    const seams: readonly string[] = SEAM_SET
-    for (const shape of shapes) {
-      for (const seamName of seams) {
-        await row.run(`${shape.label} × the seam \`${seamName}\``, async () => {
+    expect(
+      SEAM_SET.length,
+      `P-GT-IM-4 — the seven declared seam names are enumerated (${SEAM_SET.join(' · ')})`,
+    ).toBe(7)
+    expect(SEAM_SET.includes('capture'), 'P-GT-IM-4 — the seam set carries NO `capture` member (ruling 11)').toBe(false)
+    /** **THE SEAM-SET HALF IS ASSERTED ON EVERY ONE OF THE `28` ATTEMPTS** (a SET claim over a
+     *  closed seven-name list, not a sample): `capture`'s presence FAILS and a member outside
+     *  the seven FAILS. */
+    const seamSetViolation = (options: Record<string, unknown>): string | null => {
+      const keys = Object.keys(options).sort()
+      for (const key of keys) {
+        if (!SEAM_SET.includes(key)) return `the composition carries a member OUTSIDE the frozen seven-seam set: \`${key}\``
+      }
+      if (keys.includes('capture')) return 'the composition carries a `capture` member (ruling 11 forbids it)'
+      return null
+    }
+    /** **THE USABLE DEFAULT FORM OF THE SIX SEAMS OTHER THAN THE VARYING ONE** (`§2.4` item 6):
+     *  a RECORDING session double for `session`, a callable returning the TOKEN OBJECT for
+     *  `axisFor`, a callable returning a usable pair for `boundsFor`, a callable returning a
+     *  usable number for `defaultSizeFor`, a callable returning a TRUTHY value for
+     *  `isResizable`, a callable returning a number for `sizeFor`, and a COUNTING SINK for
+     *  `commit`. */
+    const usableOptions = (args: {
+      session: unknown
+      axisFor: unknown
+      received?: unknown[]
+      sink?: CountingSink
+      element?: unknown
+    }): Record<string, unknown> => {
+      const received = args.received ?? []
+      return {
+        session: args.session,
+        axisFor: args.axisFor,
+        boundsFor: (_el: unknown, axis: unknown): unknown => {
+          received.push(axis)
+          return { min: 0, max: 100 }
+        },
+        defaultSizeFor: (_el: unknown, axis: unknown): unknown => {
+          received.push(axis)
+          return 40
+        },
+        isResizable: (_el: unknown, axis: unknown): unknown => {
+          received.push(axis)
+          return true
+        },
+        sizeFor: (_el: unknown, _gesture: unknown, axis: unknown): unknown => {
+          received.push(axis)
+          return 5
+        },
+        commit: args.sink ?? makeSink(),
+      }
+    }
+    // =========================================================================================
+    // GROUP A — THE AXIS-TOKEN IDENTITY DRIVES: `18` = the `6` seams OTHER THAN `axisFor` ×
+    // the `3` token-producing `axisFor` shapes. `axisFor` is the VARYING seam; the other six
+    // are in their usable default form, and the drive runs to an `'end'` terminal so every one
+    // of the six is actually reached. **A cell that reaches NO seam FAILS** — otherwise the
+    // identity clause would be vacuous.
+    // =========================================================================================
+    for (const shape of tokenShapes) {
+      for (const seamName of SEAM_SET.filter((name) => name !== 'axisFor')) {
+        await row.run(`GROUP A — ${shape.label} × the seam \`${seamName}\``, async () => {
           const received: unknown[] = []
           const double = makeSessionDouble()
           const sink = makeSink()
-          const element = { control: `IM-4-${shape.label}-${seamName}` }
+          const element = { control: `IM-4-A-${shape.label}-${seamName}` }
           const made = shape.make()
-          // **THE SEAM-SET HALF IS ASSERTED ON EVERY ONE OF THE 28 ATTEMPTS** (a SET claim over a
-          // closed seven-name list, not a sample): `capture`'s presence FAILS, and a member
-          // outside the seven FAILS.
-          expect(
-            Object.keys(SEAM_SET).length,
-            `P-GT-IM-4 — the seven declared seam names are enumerated (${SEAM_SET.join(' · ')})`,
-          ).toBe(7)
-          expect(SEAM_SET.includes('capture'), 'P-GT-IM-4 — the seam set carries NO `capture` member (ruling 11)').toBe(false)
-          const options: Record<string, unknown> = {
-            session: double.session,
-            axisFor: (): unknown => {
-              received.push('axisFor')
-              return made === undefined ? undefined : (made as () => unknown)()
-            },
-            boundsFor: (el: unknown, axis: unknown): unknown => {
-              received.push(axis)
-              return { min: 0, max: 100 }
-            },
-            defaultSizeFor: (el: unknown, axis: unknown): unknown => {
-              received.push(axis)
-              return 40
-            },
-            isResizable: (el: unknown, axis: unknown): unknown => {
-              received.push(axis)
-              return true
-            },
-            sizeFor: (el: unknown, gesture: unknown, axis: unknown): unknown => {
-              received.push(axis)
-              return 5
-            },
-            commit: seamName === 'commit' ? undefined : sink,
-          }
-          // **⟶ REPAIRED 2026-09-27 (THE REPAIR CYCLE, `E3`-BLOCK-4): THE OVERRIDE IS NOW
-          // GENERIC OVER THE SEVEN SEAMS.** The as-landed drive wrote the made shape into
-          // `options['session']` ONLY for `seamName === 'session'` and into `options['axisFor']`
-          // for **all six other seams** — so six of the seven seam cells (e.g. the
-          // `boundsFor`/`sizeFor`/`isResizable` cells) were DRIVING THE `axisFor` SEAM, and
-          // the `session` cell could never be driven by an ABSENT/NON-CALLABLE/THROWING
-          // shape at all. The cell now overrides ITS OWN seam, which is what makes the
-          // `F-16` exemption above reachable and what makes the other six cells drive what
-          // they declare.
-          // **THE SEAM UNDER TEST IS OVERRIDDEN WITHOUT DISMANTLING THE DRIVE**: the
-          // `axisFor` cell keeps a RECORDING WRAPPER (so the row can count its calls and
-          // assert the token that the other seams receive), while the other seams take the
-          // made value directly; `commit` is replaced by the slot-empty state (`F-10`'s class).
-          if (seamName === 'commit') options['commit'] = undefined
-          else if (seamName === 'axisFor') {
-            options['axisFor'] = (el: unknown): unknown => {
-              received.push('axisFor')
-              return typeof made === 'function' ? (made as (e: unknown) => unknown)(el) : undefined
-            }
-          } else options[seamName] = made
-          const declaredKeys = Object.keys(options).sort()
-          for (const key of declaredKeys) {
-            if (!SEAM_SET.includes(key)) return `the composition carries a member OUTSIDE the frozen seven-seam set: \`${key}\``
-          }
-          if (declaredKeys.includes('capture')) return 'the composition carries a `capture` member (ruling 11 forbids it)'
-          const created = await createController(options, `IM-4 ${shape.label} ${seamName}`)
+          const options = usableOptions({ session: double.session, axisFor: made, received, sink, element })
+          const setCause = seamSetViolation(options)
+          if (setCause !== null) return setCause
+          const created = await createController(options, `IM-4 A ${shape.label} ${seamName}`)
           const attached = created.controller.attach(element, {})
-          // **⟶ REPAIRED 2026-09-27 (THE REPAIR CYCLE, `E3`-BLOCK-4): THE `session`-UNUSABLE
-          // SHAPES ARE EXEMPTED from this row's `attach ⇒ true` requirement.** `§0A` note 9 /
-          // `§2.4` item 1's safe-default table and `§3.2 F-16` govern exactly those shapes:
-          // **an unusable `session` seam yields a VALID BUT INERT controller whose
-          // `attach` reads `false`** — so requiring `true` here would contradict `F-16`. The
-          // requirement this row asserts is therefore narrowed to the shapes whose `session`
-          // seam IS usable; on the exempted shapes the row asserts the OTHER half of the
-          // declared pair instead (a `false`-returning INERT attach, `F-16`'s own clause), so
-          // both rows still fail on a violation.
-          // **THE UNUSABLE-`session` CELLS ARE `F-16`'S DOMAIN AND ARE EXEMPTED HERE** — for
-          // EVERY shape `(2)`..`(4)` (ABSENT ⇒ the made value is `undefined`; NON-CALLABLE and
-          // THROWING ⇒ not a usable session). Only the `seamName === 'session'` cells are in
-          // scope: the other six seams leave the session usable.
-          const sessionSeamUnusable = seamName === 'session' && !(made !== undefined && typeof made === 'function')
-          if (sessionSeamUnusable) {
-            if (attached !== false) {
-              return `the declared outcome for an UNUSABLE \`session\` seam is the §2.4 item 1 INERT controller: \`attach\` ⇒ \`false\` (F-16's clause, which EXEMPTS this cell from P-GT-IM-4's \`true\` requirement). Read: ${brief(
-                attached,
-              )}`
-            }
-            return created.controller.stats().attached === 0
-              ? null
-              : `an inert controller reports \`stats().attached === 0\`. Read: ${String(created.controller.stats().attached)}`
-          }
-          if (!attached) {
-            return `\`attach\` returns \`false\` (the composition must attach for every AXIS shape whose \`session\` seam IS usable — the unusable-` + '`session`' + ` cells are ` + '`F-16`' + `'s domain and are exempted here)`
-          }
-          // **NO FORWARDING CHANNEL (ONE wiring, `§2.5` item 4 / `E3`-BLOCK-3):** the
-          // composition's own single sink writer is the `commit` seam handed to it above.
-          if (seamName === 'commit') {
-            // The sink slot is the seam under test: the composition must still attach and
-            // terminate normally with ZERO writes (`F-10`'s slot-empty shape, one seam at a time).
-            const began = double.begin(element)
-            if (!began.ok) return `the establishment was refused (${began.code})`
-            double.fireMove() // the wrapper's handle capture (E3-BLOCK-5)
-            double.fireTerminal('end')
-            return sink.records.length === 0
-              ? null
-              : `the declared write count for a replaced sink slot is 0, measured ${sink.records.length}`
-          }
-          if (seamName === 'session') {
-            // The usable-`session` cells: the composition delegates NORMALLY.
-            const began = double.begin(element)
-            if (!began.ok) return `the establishment was refused (${began.code})`
-            double.fireTerminal('end')
-            return null
-          }
-          if (seamName !== 'axisFor') {
-            // The other seams must receive the token `axisFor` returned, BY IDENTITY.
-            const began = double.begin(element)
-            if (!began.ok) return `the establishment was refused (${began.code})`
-            double.fireMove() // the wrapper's handle capture (E3-BLOCK-5)
-            double.fireTerminal('end')
-            const expected = shape.label.startsWith('(1)') ? tokenObject : undefined
-            const tokenReadings = received.filter((entry) => entry !== 'axisFor')
-            if (tokenReadings.length === 0) return 'no seam was reached, so the identity clause would be vacuous'
-            for (const axis of tokenReadings) {
-              if (axis !== expected) {
-                return `the \`${seamName}\` seam received ${brief(axis)}, the declared token is ${brief(expected)}`
-              }
-            }
-            return null
-          }
+          if (!attached) return '`attach` returns `false` where `true` is required (the `session` seam is USABLE in this group)'
           const began = double.begin(element)
-          if (!began.ok) return `the establishment was refused (${began.code} — the swallow must leave it normally established)`
-          const axisCalls = received.filter((entry) => entry === 'axisFor').length
-          if (axisCalls !== 1) return `the \`axisFor\` call count is ${axisCalls}, the declared count is 1 per established gesture`
-          double.fireMove() // the wrapper's handle capture (E3-BLOCK-5)
+          if (!began.ok) return `the establishment was refused (${began.code})`
+          double.fireMove() // the wrapper's capture of the handle (E3-BLOCK-5)
           double.fireTerminal('end')
+          const expected = shape.label.startsWith('(1)') ? tokenObject : undefined
+          // **THE TOKEN IS RECEIVED BY IDENTITY (`toBe`): every one of the six seams must see
+          // the SAME object `axisFor` returned — or `undefined` for the token-less shapes. The
+          // drive's own `axisFor` wrapper is a pass-through, so the reading is the token the
+          // row's own seam produced.**
+          if (received.length === 0) return 'no seam was reached, so the identity clause would be vacuous'
+          for (const axis of received) {
+            if (axis !== expected) {
+              return `the seam \`${seamName}\` received ${brief(axis)}, the declared token is ${brief(expected)} (received BY IDENTITY, \`toBe\`)`
+            }
+          }
           return null
         })
       }
+    }
+    // =========================================================================================
+    // GROUP B — THE UNUSABLE-SEAM REFUSALS: `6` = one per seam OTHER THAN `axisFor`, with that
+    // ONE seam driven as the PRESENT NON-CALLABLE shape, `axisFor` USABLE (a callable returning
+    // the token OBJECT) and the remaining five in their usable default form.
+    // =========================================================================================
+    const groupBSeams: readonly string[] = ['boundsFor', 'defaultSizeFor', 'isResizable', 'sizeFor', 'commit']
+    for (const seamName of groupBSeams) {
+      await row.run(`GROUP B — the seam \`${seamName}\` driven as the PRESENT NON-CALLABLE shape`, async () => {
+        const double = makeSessionDouble()
+        const sink = makeSink()
+        const element = { control: `IM-4-B-${seamName}` }
+        const received: unknown[] = []
+        const options = usableOptions({ session: double.session, axisFor: (): unknown => tokenObject, received, sink })
+        const sizeForCalls = (): number => 0
+        if (seamName === 'commit') options['commit'] = NON_CALLABLE_SEAM
+        else if (seamName === 'sizeFor') {
+          // **THE ASYMMETRY RULING `7` NAMES IS WHAT THIS CELL ASSERTS**: `sizeFor` is guarded on
+          // CALLABILITY — **the seam's OWN VALUE is non-callable, so it is treated as
+          // UNAVAILABLE: its safe default is used, it is NEVER CALLED, and NOTHING propagates.**
+          // The seam is handed the `42` shape DIRECTLY (not a callable that returns it): a
+          // callable wrapper would be a CALLABLE seam whose call throws, which is the `(4)`
+          // THROWING class and not this one. An UNGUARDED module FAILS on the call count and/or
+          // on the propagation clause.
+          options['sizeFor'] = NON_CALLABLE_SEAM
+        } else options[seamName] = NON_CALLABLE_SEAM
+        const setCause = seamSetViolation(options)
+        if (setCause !== null) return setCause
+        const created = await createController(options, `IM-4 B ${seamName}`)
+        const attached = created.controller.attach(element, {})
+        if (!attached) return `\`attach\` returns \`false\` where \`true\` is required for the unusable \`${seamName}\` seam (the \`session\` seam is USABLE here, so this cell is NOT in F-16's exempt class)`
+        const began = double.begin(element)
+        if (!began.ok) return `the establishment was refused (${began.code})`
+        double.fireMove()
+        let propagated: unknown = null
+        try {
+          double.fireTerminal('end')
+        } catch (e) {
+          propagated = e
+        }
+        if (seamName === 'boundsFor') {
+          // An UNUSABLE bounds pair ⇒ the clamp answers `NaN` ⇒ NO SINK WRITE. The seam is
+          // GUARDED on callability, so it is never invoked and nothing propagates.
+          if (propagated !== null) return `a non-callable, GUARDED \`boundsFor\` must not propagate; it threw ${describeThrown(propagated)}`
+          if (sink.records.length !== 0) return `\`boundsFor\` unusable ⇒ the clamp answers NaN ⇒ 0 writes; the sink recorded ${sink.records.length}`
+          return created.controller.stats().sinkCalls === 0 ? null : `\`stats().sinkCalls\` reads ${String(created.controller.stats().sinkCalls)} where 0 is required`
+        }
+        if (seamName === 'defaultSizeFor') {
+          // An `'end'` path NEVER CONSULTS the default at all — it is a `reset`-only seam — so
+          // the value source is the usable `sizeFor`, the clamp answers a number and the ONE
+          // declared write occurs (`§5.5.1 P-GT-IM-4` group B: *"`defaultSizeFor` unusable ⇒ an
+          // `end` path never consults it"* — the clause the drive reaches is that NON-CONSULT,
+          // not a zero-write claim).
+          if (propagated !== null) return `a non-callable \`defaultSizeFor\` must not propagate on an end path; it threw ${describeThrown(propagated)}`
+          return sink.records.length === 1
+            ? null
+            : `\`defaultSizeFor\` unusable is NEVER consulted on an end path, so the usable \`sizeFor\` supplies the value and the ONE write occurs; the sink recorded ${sink.records.length}`
+        }
+        if (seamName === 'sizeFor') {
+          // **RULING `7`'S ASYMMETRY, ASSERTED EXACTLY**: `sizeFor` is GUARDED on CALLABILITY,
+          // so a PRESENT NON-CALLABLE is treated as UNAVAILABLE ⇒ **its safe default is used,
+          // the non-callable is NEVER CALLED, and NOTHING PROPAGATES** — the two observables
+          // that make the guard falsifiable (an UNGUARDED module would attempt the call and its
+          // `TypeError` would escape this drive). **The drive's write count is the usable
+          // `boundsFor` × the unavailable value source ⇒ ZERO writes.**
+          if (sizeForCalls() !== 0) {
+            return `\`sizeFor\` is guarded on CALLABILITY (ruling 7): a non-callable is treated as UNAVAILABLE and must NEVER be called`
+          }
+          if (propagated !== null) {
+            return `\`sizeFor\` unusable ⇒ NO PROPAGATION (the guard treats a non-callable as its UNAVAILABLE safe default, while an unguarded call's \`TypeError\` would escape this drive); a throw escaped: ${describeThrown(propagated)}`
+          }
+          return sink.records.length === 0
+            ? null
+            : `\`sizeFor\` unusable ⇒ the value source is unavailable ⇒ the clamp answers NaN ⇒ ZERO writes; the sink recorded ${sink.records.length}`
+        }
+        if (seamName === 'isResizable') {
+          // **RULING `2`/`7`: `isResizable` is REACHED and its `TypeError` CAUGHT** ⇒ exactly
+          // `1` read per established gesture (the count `P-GT-IM-3`'s shape `(2)` carries and
+          // this grid does NOT re-count: the seam here is a bare `42`, so the harness observes
+          // the DECISION and its consequences, never the read itself), the falsy decision ⇒ `0`
+          // writes, and the terminal is a normal `'end'` (NOT `'cancel'`).
+          const sessionStats = double.stats()
+          if (sessionStats.commits !== 1) {
+            return `an unusable \`isResizable\` still ESTABLISHES and TERMINATES NORMALLY (\`'end'\`, never \`'cancel'\`); the session recorded ${sessionStats.commits} commits`
+          }
+          if (sink.records.length !== 0) return `\`isResizable\` unusable ⇒ a falsy decision ⇒ 0 writes; the sink recorded ${sink.records.length}`
+          return created.controller.stats().sinkCalls === 0
+            ? null
+            : `\`stats().sinkCalls\` reads ${String(created.controller.stats().sinkCalls)} where 0 is required (the read-count clause of ruling 2: 1 read, TypeError swallowed, NOT resizable)`
+        }
+        // `commit` unusable ⇒ the SLOT-EMPTY class (`F-10`): the composition attaches and
+        // terminates normally with `0` writes, and the session reports `committed: true` WHILE
+        // NOTHING WAS WRITTEN.
+        if (propagated !== null) return `a non-callable \`commit\` must not propagate; it threw ${describeThrown(propagated)}`
+        if (sink.records.length !== 0) return `the slot-empty composition writes 0 times; the sink recorded ${sink.records.length}`
+        const emptyStats = double.stats()
+        if (emptyStats.commits !== 1) {
+          return `the SLOT-EMPTY composition's terminal still reports \`committed: true\` WHILE NOTHING WAS WRITTEN (F-10's sentence); the session recorded ${emptyStats.commits} commits`
+        }
+        return null
+      })
+    }
+    // =========================================================================================
+    // GROUP C — THE `session`-UNUSABLE INERT CELLS: `4` = the `4` `session`-unusable VARIANTS
+    // the `F-16` row declares (the seam ABSENT · PRESENT NON-CALLABLE · a record whose members
+    // are non-callable · a THROWING session accessor). The other six seams are in their usable
+    // default form. **THE IDENTITY CLAUSE IS VACUOUS HERE BY CONSTRUCTION and the row says so:**
+    // an unusable `session` yields the VALID BUT INERT controller, so these cells assert
+    // `F-16`'s INERT CLAUSE INSTEAD and are EXEMPT from this row's `attach ⇒ true` requirement.
+    // =========================================================================================
+    const sessionVariants: ReadonlyArray<{ label: string; make: () => unknown }> = [
+      { label: '(1) the seam ABSENT', make: (): unknown => undefined },
+      { label: '(2) the seam PRESENT NON-CALLABLE (the `42` shape)', make: (): unknown => NON_CALLABLE_SEAM },
+      {
+        label: '(3) a record whose members are non-callable',
+        make: (): unknown => ({ install: 42, reset: 'no', dispose: 7, stats: null, gesture: undefined, disposed: 0 }),
+      },
+      {
+        label: '(4) a THROWING session accessor',
+        make: (): unknown => {
+          const hostile: Record<string, unknown> = { install: (): unknown => undefined, reset: (): unknown => undefined, dispose: (): unknown => undefined, stats: (): unknown => undefined, gesture: (): unknown => undefined }
+          Object.defineProperty(hostile, 'disposed', {
+            get(): unknown {
+              throw new Error('the session accessor threw (F-16)')
+            },
+          })
+          return hostile
+        },
+      },
+    ]
+    for (const variant of sessionVariants) {
+      await row.run(`GROUP C — the \`session\` seam ${variant.label}`, async () => {
+        const received: unknown[] = []
+        const made = variant.make()
+        const options = usableOptions({ session: made, axisFor: (): unknown => tokenObject, received })
+        const setCause = seamSetViolation(options)
+        if (setCause !== null) return setCause
+        const created = await createController(options, `IM-4 C ${variant.label}`)
+        const element = { control: `IM-4-C-${variant.label}` }
+        const attached = created.controller.attach(element, {})
+        if (attached !== false) {
+          return `the declared outcome for an UNUSABLE \`session\` seam is the §2.4 item 1 INERT controller: \`attach\` ⇒ \`false\` (F-16's clause, which EXEMPTS this cell from P-GT-IM-4's \`true\` requirement). Read: ${brief(attached)}`
+        }
+        const stats = created.controller.stats()
+        if (stats.attached !== 0) return `an inert controller reports \`stats().attached === 0\`. Read: ${String(stats.attached)}`
+        if (stats.gestures !== 0 || stats.sinkCalls !== 0 || stats.written !== 0 || stats.resets !== 0) {
+          return `an inert controller reports ZEROED stats for the unusable session, with no seam reached. Read: ${JSON.stringify(stats)}`
+        }
+        if (created.controller.detach() !== false) return '`detach() ⇒ false` for the inert controller (F-16\'s inert clause)'
+        if (received.length !== 0) {
+          return `an UNUSABLE session makes NO seam call (zero session calls, and no seam reached): the six usable seams were read ${received.length} time(s)`
+        }
+        return null
+      })
     }
     row.finish()
     expect(row.attemptsRunPublic(), `P-GT-IM-4 — the declared term is ${declaredPair('P-GT-IM-4').term}`).toBe(28)
