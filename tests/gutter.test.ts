@@ -7635,3 +7635,637 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
     ).toBe(null)
   })
 })
+
+// ===========================================================================
+// ⟶ ADDED 2026-09-27 (THE `E3`-HOST REGRESSION PASS) — **THE THREE HOST-DEFECT
+// REGRESSION ROWS**, authored FROM THE CONTRACT (`docs/specs/gutter.md`) AGAINST the
+// landed module (`src/shared/gutter.ts`) and RUN before any fix (`RCA-1`: the red set
+// is RUN and REPORTED before the Implementer's pass).
+//
+// **THE THREE DEFECTS ARE THE `docs/pending.md` §I-sexies `E3`-HOST-1/2/3 ROWS**, found
+// INDEPENDENTLY by the gate-4 adversarial pass (`ADV-GT-1`/`ADV-GT-2`/`ADV-GT-3`/
+// `ADV-GT-4`) and by the gate-5 blind pass (`docs/specs/gutter-greens.md`, the FAILs
+// `GT-G-66` / `GT-G-93` / `GT-G-94`). **EACH ROW BELOW ASSERTS THE CONTRACT'S OWN CLAUSE**
+// — never the defect's description — **and EACH CARRIES THE DRIVE WHOSE RECORDED LOG IS
+// THE EVIDENCE**: every row reads the RECORDING session's own call log, the sink's own
+// call record, or the session member-read record the double itself keeps. **WHERE THE
+// DEFECT IS AN ABSENCE (or the falsifier is a count), THE ROW CARRIES A POSITIVE CONTROL
+// that must FAIL if the scanner/recorder is dead**, so no row below can pass vacuously.
+//
+// **THE THREE ROWS, THEIR CLAUSES AND THEIR DRIVES — stated once so a reader does not
+// have to reconstruct them:**
+//
+//   **(1) `E3-HOST-1` — the per-gesture record must be DISCARDED at the terminal.**
+//   *Clause:* `§2.5` item 6 — *"The controller clears its per-gesture record at the
+//   terminal … so a later `reset(element)` cannot reach for a dead handle"* — with `§3.3`
+//   `I-9` (*"the per-gesture record … is DISCARDED at every terminal"*) and `§2.5` item 5
+//   clause 3's **ZERO-session-call rule** for the refusal that follows. *Drive:* a full
+//   gesture (down → move → up, so a REAL handle is captured through the composition's own
+//   `onMove` wrapper — the one legal handle channel) then `reset(element)`; **the evidence
+//   is `landedHarness`'s own recording session log, sliced at the terminal**. **THE ROW IS
+//   DRIVEN TWICE — once with a THROWING consumer `onEnd` and once with a NON-throwing one —
+//   so it can fail in BOTH directions**, and **MEASURED on the landed module both arms
+//   record ONE `session.reset` carrying the dead handle** (the retained-record path is not
+//   confined to the throwing hook: the module restores `entry.gesture` after the
+//   consumer hook and clears it only on the reset path that the session has by then
+//   refused — `§2.1` item 4's `detach` block's *"a handle past a terminal is never used"*,
+//   `§3.3 I-9`). **The refusal's CODE is deliberately NOT pinned** (the two honest readings
+//   are the session's `'stale'` on the double and `'no-gesture'` on the landed session —
+//   `docs/specs/gutter-greens.md` FAIL 2's two instruments): **the violated half is the
+//   CALL COUNT and the retention**, which is what this row asserts.
+//
+//   **(2) `E3-HOST-2` — the module must read NO session member outside the CLOSED SET.**
+//   *Clause:* `§2.5` item 1 — the controller *"READS the session only through `stats()`,
+//   `gesture()` and `disposed`, and CALLS only `install`, `reset` and `dispose`"* — with
+//   `§3.4 R-7` and `§3.4 R-14` (*"asserted BY NAME, not by a count"*). **THE SPEC STATES
+//   NO SIXTH MEMBER, so the row's closed set is those SIX NAMES and NOTHING ELSE**: the
+//   module's own bytes are read through a by-name scanner, and the two invented names the
+//   landed module probes (`registerCompositionWriter`, `registerCommit` — members **no
+//   spec and no frozen session surface provides**) are named as the ABSENCE claim, with a
+//   POSITIVE CONTROL CORPUS that carries one of them and MUST FAIL. *Runtime half:* a
+//   session double that **EXPOSES BOTH invented members** must be consulted for NEITHER,
+//   and the gesture's write count stays exactly `1` with the CLAMPED value (`100`) and
+//   never the RAW default (`500`).
+//
+//   **(3) `E3-HOST-3` — `detached` must honour the session's own disposal, and
+//   `attach`/`detach` must short-circuit on a disposed session.** *Clause:* `§2.1`'s
+//   `ResizeController` doc block — *"`true` FOREVER once `detach()` has completed, **or
+//   once the session reads `disposed === true`**"* — read with `§3.4 R-14`/`§3.3 I-8`,
+//   which pin `disposed` as one of this module's three allowed READINGS and `install`
+//   as a call this composition makes **once per distinct element** (so a disposed session
+//   must not be delegated to at all: `§2.1` item 3's attach block lists *"the session is
+//   unusable or disposed"* under *"delegating NOTHING"*). *Drive:* the session is disposed
+//   directly through its OWN documented call (`dispose()` — `§2.5` item 1's table), then
+//   `detached`, `attach(el2)`, `detach()` and `reset(el)` are asserted against the SAME
+//   recording log, slice by slice; **the control drive is the UNDISPOSED session, which
+//   must still attach and detach normally.**
+//
+//   **THE CONTRACT CONFLICT THIS PASS MET (REPORTED, NOT GUESSED):** `§2.5` item 5
+//   clause 3 requires a record-less refusal to make **ZERO** session calls *"no `reset`,
+//   no `stats()`, no `dispose()`"* **AND** `§2.3` item 4's code table row 5 gives the
+//   disposed path the session's own `'disposed'` — two readings that cannot both hold if
+//   a refusal must reach the session to obtain that code. **THE READING CHOSEN** (and the
+//   reason): the ZERO-call rule is asserted as the falsifiable half, and the code is
+//   asserted as a **member of the closed NINE-member domain** (`§2.1`'s note, `§2.3` item
+//   4's table, `I-14`) rather than pinned to `'disposed'` — so the row exposes the defect
+//   it was ordered for (`attach` DELEGATING to a disposed session) without forcing the
+//   Implementer into a session call the same contract forbids.
+// ===========================================================================
+describe('E3-HOST-1/2/3 — the THREE HOST-DEFECT regression rows (contract-derived, RED against the landed module; `docs/pending.md` §I-sexies)', () => {
+  /** `§2.1`'s note / `§2.3` item 4's table / `I-14`: THE CLOSED NINE-MEMBER CONTROLLER
+   *  CODE DOMAIN — the session's SEVEN members plus this controller's TWO entry-point
+   *  codes. It is used as a SET membership claim (where the contract offers a choice of
+   *  two readings) and never as a count. */
+  const NINE_MEMBER_DOMAIN: readonly string[] = [
+    'ok',
+    'not-installed',
+    'busy',
+    'disposed',
+    'disconnected',
+    'stale',
+    'no-gesture',
+    'unusable-default',
+    'not-resizable',
+  ]
+  /** `§2.5` item 1's table, BY NAME: the three members this module may CALL and the three
+   *  it may READ. **The row's closed set is these SIX and nothing else.** */
+  const CLOSED_SESSION_MEMBERS: readonly string[] = ['install', 'reset', 'dispose', 'stats', 'gesture', 'disposed']
+  /** **THE TWO INVENTED NAMES**, held as FRAGMENTS (`chunked`) because THIS FILE is one of
+   *  the two files `§3.4 R-8`'s bound (b) scans and because `R-1`'s scan reads the module
+   *  plus **this row's own controlled corpora**. */
+  const INVENTED_SESSION_MEMBERS: readonly string[] = [
+    chunked(['registerComposition', 'Writer']),
+    chunked(['register', 'Commit']),
+  ]
+
+  /** `§3.4 R-7`/`R-14` read by name over the MODULE's bytes: every `<identifier>.<member>`
+   *  read whose receiver is the module's own `session` binding. The positive control below
+   *  proves the scanner is not dead. */
+  function sessionMemberNames(src: string): string[] {
+    const names: string[] = []
+    const re = /(?:^|[^A-Za-z0-9_$.\-])session\s*\.\s*([A-Za-z_$][A-Za-z0-9_$]*)/g
+    let match = re.exec(src)
+    while (match !== null) {
+      names.push(match[1] ?? '')
+      match = re.exec(src)
+    }
+    return names
+  }
+  /** The two invented names' OCCURRENCE COUNT over a source text (`hitsOf`'s `S-6` join
+   *  rule, so a `'register' + 'Commit'` split is still read as ONE token). */
+  function inventedMemberHits(src: string): string[] {
+    const found: string[] = []
+    for (const name of INVENTED_SESSION_MEMBERS) {
+      const count = boundedOccurrences(normalizedView(src), name)
+      if (count > 0) found.push(`${name} ×${count}`)
+    }
+    return found
+  }
+
+  /** **THE RECORDER SOURCE for the closed-read-set row's own gesture drive** — a minimal
+   *  element-keyed source (`makeRecorder`'s shape, `on`/`off` by `(element, type)`), so the
+   *  row drives a real establishment → move → terminal sequence through the composition. */
+  function makeLocalSource(): { source: RecorderSource; fire: (element: unknown, type: string) => void } {
+    const attached = new Map<unknown, Map<string, () => void>>()
+    const calls: string[] = []
+    const source: RecorderSource = {
+      calls,
+      captures: [],
+      attached,
+      on(element: unknown, type: string, handler: () => void): void {
+        calls.push(`on:${type}`)
+        const per = attached.get(element) ?? new Map<string, () => void>()
+        per.set(type, handler)
+        attached.set(element, per)
+      },
+      off(element: unknown, type: string, handler: () => void): void {
+        void handler
+        calls.push(`off:${type}`)
+        attached.get(element)?.delete(type)
+      },
+      fire(element: unknown, type: string): void {
+        const handler = attached.get(element)?.get(type)
+        if (typeof handler !== 'function') return
+        handler()
+      },
+    }
+    return { source, fire: source.fire }
+  }
+
+  /** **THE CLOSED-SET SESSION DOUBLE (`E3-HOST-2`'s runtime half): a session that EXPOSES
+   *  BOTH invented members and keeps a RECORD OF EVERY MEMBER NAME READ FROM IT.** The
+   *  invented members are deliberately NON-THROWING and are NOT forwarded into the landed
+   *  session's commit channel — so a module that probes one is caught by the READ RECORD
+   *  (the falsifier named for this defect), never by a harness throw. **AND THE DOUBLE IS
+   *  NOT A SECOND WRITER OF ITS OWN: it invokes a REGISTERED writer only when a writer was
+   *  actually registered**, so a conforming module (which registers nothing) is unaffected
+   *  by this harness. */
+  function makeClosedSetDouble(): {
+    session: Record<string, unknown>
+    readLog: string[]
+    registeredCalls: string[]
+    sinkWrites: unknown[]
+    installKeys: string[]
+  } {
+    const readLog: string[] = []
+    const registeredCalls: string[] = []
+    const sinkWrites: unknown[] = []
+    const installKeys: string[] = []
+    const slot = { current: null as Record<string, unknown> | null }
+    const disposedBox = { current: false }
+    let writer: ((gesture: unknown, value: unknown) => void) | null = null
+    let hooks: Record<string, unknown> = {}
+    const invokeHook = (key: string, ...args: unknown[]): void => {
+      const hook = hooks[key]
+      if (typeof hook === 'function') (hook as (...a: unknown[]) => void)(...args)
+    }
+    const dispatchMove = (): void => {
+      const record = slot.current
+      if (record === null) return
+      invokeHook('onMove', record['handle'])
+    }
+    const dispatchEnd = (raw: unknown): void => {
+      const record = slot.current
+      if (record === null) return
+      slot.current = null
+      invokeHook('onEnd', record['element'], raw)
+      // **THE SESSION'S OWN ONE COMMIT CHANNEL, AT ITS `end` TERMINAL** (`gsession.md` `§2.3`
+      // item 4): the RAW default is what THIS channel carries — never the clamped value, which
+      // is the composition's own arithmetic. **A registered WRITER is a DIFFERENT channel**
+      // (`§2.5` item 4's *"the harness's channel is a DIFFERENT channel"*): its invocation is
+      // recorded only if it is reached, so the readings stay distinguishable.
+      if (writer !== null && sinkWrites.length === 0) sinkWrites.push(raw)
+    }
+    /** The double's own `commit` option (`§2.5` item 4): it records what the SESSION's one
+     *  channel receives — `E3-HOST-2`'s raw limb, should the composition route through it. */
+    const commit = (_gesture: unknown, value: unknown): void => {
+      if (sinkWrites.length === 0) sinkWrites.push(value)
+    }
+    const members: Record<string, unknown> = {
+      install(element: unknown, options?: unknown): boolean {
+        const record = (options ?? {}) as Record<string, unknown>
+        installKeys.length = 0
+        installKeys.push(...Object.keys(record).sort())
+        hooks = record
+        return true
+      },
+      begin(element: unknown): unknown {
+        const record: Record<string, unknown> = {
+          id: 1,
+          element,
+          outcome: null,
+          handle: null,
+        }
+        // **THE HANDLE IS THE SESSION'S OWN SHAPE** (`gsession.md` `§2.5` item 9): the
+        // consumer's own `onMove` is the ONE legal value channel, so the double's handle
+        // carries `set`, `id`, `element` and `outcome` exactly as the landed session's does.
+        record['handle'] = {
+          id: 1,
+          element,
+          outcome: null,
+          set(value: unknown): unknown {
+            record['value'] = value
+            return record['handle']
+          },
+        }
+        slot.current = record
+        invokeHook('onStart', element)
+        return { ok: true, gesture: record['handle'] }
+      },
+      end(element: unknown, _gesture: unknown, raw: unknown): unknown {
+        dispatchEnd(raw)
+        return { ok: true, code: 'ok', committed: true }
+      },
+      reset(): unknown {
+        return { ok: false, code: 'no-gesture', committed: false }
+      },
+      dispose(): unknown {
+        disposedBox.current = true
+        return { removed: 1, complete: true }
+      },
+      stats(): unknown {
+        return { installed: 1, sourceCalls: 0, gestures: 1, commits: 0, active: false, gestureId: 0, lastCode: 'ok' }
+      },
+      gesture(): unknown {
+        return slot.current
+      },
+      commit,
+      registerCompositionWriter(handler: (gesture: unknown, value: unknown) => void): void {
+        writer = handler
+        registeredCalls.push('registerCompositionWriter')
+      },
+      registerCommit(handler: (gesture: unknown, value: unknown) => void): void {
+        writer = handler
+        registeredCalls.push('registerCommit')
+      },
+    }
+    const session: Record<string, unknown> = {}
+    for (const name of Object.keys(members)) {
+      // **EVERY MEMBER IS AN ACCESSOR, SO EVERY READ LANDS IN `readLog`** — including a read
+      // that merely tests a member's presence, which is the whole shape of this defect.
+      Object.defineProperty(session, name, {
+        enumerable: true,
+        configurable: true,
+        get(): unknown {
+          readLog.push(name)
+          return members[name]
+        },
+      })
+    }
+    Object.defineProperty(session, 'disposed', {
+      enumerable: true,
+      configurable: true,
+      get(): unknown {
+        readLog.push('disposed')
+        return disposedBox.current
+      },
+    })
+    Object.defineProperty(session, 'dispatchMove', { value: dispatchMove })
+    return { session, readLog, registeredCalls, sinkWrites, installKeys }
+  }
+
+  it('E3-HOST-1 — the per-gesture record is DISCARDED at the terminal, so a later `reset(element)` refuses with ZERO session calls — driven TWICE, with a THROWING consumer `onEnd` and with a NON-throwing one, so the row can fail in BOTH directions', async () => {
+    const drive = async (
+      label: string,
+      consumerEnd: (element: unknown, value: unknown) => void,
+    ): Promise<{
+      thrown: unknown
+      code: string
+      ok: boolean
+      committed: boolean
+      afterTerminal: string[]
+      sinkCount: number
+      sinkValue: unknown
+    }> => {
+      await requireLiveModule(`E3-HOST-1 ${label}`)
+      const h = await landedHarness({ label: `E3-HOST-1 ${label}` })
+      const sink = makeSink()
+      const element: Record<string, unknown> = { control: `E3-HOST-1-${label}` }
+      const { controller } = await createController(
+        {
+          session: h.session,
+          axisFor: (): unknown => undefined,
+          boundsFor: (): unknown => ({ min: 0, max: 100 }),
+          defaultSizeFor: (): unknown => 100,
+          isResizable: (): unknown => true,
+          sizeFor: (): unknown => 100,
+          commit: sink,
+        },
+        `E3-HOST-1 ${label}`,
+      )
+      controller.attach(element, {
+        // The consumer's own `onMove` is the value channel (`§2.3` item 1, ruling 7) — AND it
+        // is the composition's ONE legal handle channel (`§2.5` item 5 clause 2), so the drive
+        // reaches its terminal with a REAL captured handle: without a move turn there is no
+        // handle to retain, and the row would be vacuous.
+        onMove: (gesture: GestureHandle): void => {
+          gesture.set(777)
+        },
+        onEnd: consumerEnd,
+      })
+      h.source.fire(element, TYPE_DOWN)
+      h.source.fire(element, TYPE_MOVE)
+      let thrown: unknown = null
+      try {
+        h.source.fire(element, TYPE_UP)
+      } catch (error) {
+        // A THROWING consumer hook reaches the consumer boundary (§2.4 item 3 / `M-17`'s
+        // shape). It is contained HERE so the row fails on its OWN labelled assertion
+        // rather than as a harness throw.
+        thrown = error
+      }
+      const afterTerminal = h.sessionLog.length
+      const record = controller.reset(element)
+      return {
+        thrown,
+        code: record.code,
+        ok: record.ok,
+        committed: record.committed,
+        afterTerminal: h.sessionLog.slice(afterTerminal),
+        sinkCount: sink.records.length,
+        sinkValue: sink.records.length === 0 ? undefined : sink.records[0]?.value,
+      }
+    }
+
+    // **BOTH ARMS ARE MEASURED BEFORE ANY ASSERTION**, so ONE failure carries the whole
+    // reading (`§2.5` item 6's discard is the property, and the throwing hook is only one of
+    // the two ways the terminal is reached).
+    const clean = await drive('a NON-throwing consumer `onEnd`', (): void => undefined)
+    const throwing = await drive('a THROWING consumer `onEnd`', (): void => {
+      throw new Error('the consumer’s own onEnd threw')
+    })
+    expect(
+      { control: clean.afterTerminal, throwing: throwing.afterTerminal },
+      `E3-HOST-1 §2.5 item 6 + §3.3 I-9 — *"the controller clears its per-gesture record at the terminal … so a later \`reset(element)\` cannot reach for a dead handle"*, and \`§2.5\` item 5 clause 3 refuses with **ZERO session calls** (no \`reset\`, no \`stats()\`, no \`dispose()\`). The RECORDING session’s own log, sliced at each terminal, is the evidence: the control drive’s reading beside the throwing arm’s — ${JSON.stringify(
+        { control: clean.afterTerminal, throwing: throwing.afterTerminal },
+      )}`,
+    ).toEqual({ control: [], throwing: [] })
+    expect(
+      { control: clean.sinkCount, throwing: throwing.sinkCount },
+      `E3-HOST-1 — the gesture’s OWN write is the drive’s positive evidence that the terminal really ran (the composition’s single write site; the write count is NOT the clause under test): ${JSON.stringify(
+        { control: clean.sinkCount, throwing: throwing.sinkCount },
+      )}`,
+    ).toEqual({ control: 1, throwing: 1 })
+    expect(
+      clean.ok === false && clean.committed === false,
+      `E3-HOST-1 §2.5 item 5 clause 3/9 — the control drive’s refusal is a refusal RECORD and changes nothing (read: ${JSON.stringify(
+        { ok: clean.ok, code: clean.code, committed: clean.committed },
+      )})`,
+    ).toBe(true)
+    expect(
+      [clean.code, throwing.code].every((code) => NINE_MEMBER_DOMAIN.includes(code)),
+      `E3-HOST-1 §2.3 item 4’s table / I-14 — each refusal’s code is a member of the closed NINE-member domain, whichever honest reading the session’s own answer takes (\`'stale'\` on the double, \`'no-gesture'\` on the landed session — the two readings \`docs/specs/gutter-greens.md\` FAIL 2 measured). Read: ${JSON.stringify(
+        [clean.code, throwing.code],
+      )}`,
+    ).toBe(true)
+    expect(
+      throwing.thrown instanceof Error,
+      `E3-HOST-1 §2.5 item 6 / §2.4 item 3 — the throwing arm’s own drive DID reach the consumer boundary (the drive’s error record; read: ${brief(
+        throwing.thrown,
+      )})`,
+    ).toBe(true)
+  })
+
+  it('E3-HOST-2 — the module reads NO session member outside the CLOSED SET (the by-name census over the MODULE’s bytes with a positive-control corpus that MUST FAIL), and a session EXPOSING the two invented members is never consulted: ONE write, the CLAMPED value', async () => {
+    const source = moduleSource('E3-HOST-2')
+    const outsideSet = sessionMemberNames(source).filter((name) => !CLOSED_SESSION_MEMBERS.includes(name))
+    expect(
+      outsideSet,
+      `E3-HOST-2 §2.5 item 1 / §3.4 R-7 + R-14 — asserted BY NAME over the MODULE’s bytes: the ONLY session members READ are ${JSON.stringify(
+        CLOSED_SESSION_MEMBERS,
+      )}, and NOTHING ELSE. Names read outside the closed set: ${JSON.stringify(outsideSet)} (all names read: ${JSON.stringify(sessionMemberNames(source))})`,
+    ).toEqual([])
+    const invented = inventedMemberHits(source)
+    const inventedNamesRaw = INVENTED_SESSION_MEMBERS.map((name) => name.split(JOIN_MARKER).join(''))
+    expect(
+      invented.map((hit) => hit.split(JOIN_MARKER).join('')).map((hit) => hit.replace(/ ×\d+$/, '')),
+      `E3-HOST-2 §2.5 item 1 — the two INVENTED names (${JSON.stringify(
+        inventedNamesRaw,
+      )} — members no clause of \`docs/specs/gutter.md\` and no item of the frozen session surface provide) occur NOWHERE in the module, in ANY form (the \`S-6\` join rule reads a split spelling as one token). Hits: ${JSON.stringify(
+        invented,
+      )}`,
+    ).toEqual([])
+    // **THE POSITIVE CONTROL — the scanner is not dead.** A corpus whose bytes carry the
+    // invented names, the module's own legitimate reads and its own writes together MUST
+    // be caught, so the two assertions above are falsifiable rather than vacuous.
+    const positiveCorpus = [
+      'session.' + inventedNamesRaw[0] + '(write)',
+      'session.' + inventedNamesRaw[1] + '(write)',
+      'session.install(element, wrapped)',
+      'session.reset(element, gesture, narrowed)',
+      'session.dispose()',
+      'session.stats()',
+      'session.gesture()',
+      'session.disposed',
+    ].join('\n')
+    const controlOutside = sessionMemberNames(positiveCorpus).filter((name) => !CLOSED_SESSION_MEMBERS.includes(name))
+    expect(
+      controlOutside,
+      `E3-HOST-2 POSITIVE CONTROL — a corpus carrying the invented member names MUST be reported outside the closed set (and it carries the five legitimate names too, so the scan is not merely matching everything): a scanner that returns \`[]\` here is dead and the row above would be vacuous. Read: ${JSON.stringify(
+        controlOutside,
+      )}`,
+    ).toEqual(inventedNamesRaw)
+    expect(
+      inventedMemberHits(positiveCorpus).length,
+      `E3-HOST-2 POSITIVE CONTROL — the absence scanner DETECTS both invented names in the control corpus: a corpus carrying them must fail the assertion above. Hits: ${JSON.stringify(
+        inventedMemberHits(positiveCorpus),
+      )}`,
+    ).toBe(INVENTED_SESSION_MEMBERS.length)
+    expect(
+      inventedMemberHits('const a = session.stats()\nconst b = session.disposed\nconst c = session.install(e, o)'),
+      'E3-HOST-2 NEGATIVE CONTROL — the module’s own legitimate text (the six closed-set names) carries NEITHER invented name',
+    ).toEqual([])
+
+    // **THE RUNTIME HALF — a session that EXPOSES both invented members, with EVERY member
+    // read recorded by the double itself.** **THE MEASUREMENT ON THE LANDED MODULE IS
+    // RECORDED HERE SO THE ROW IS NOT READ AS A TWO-WRITER CLAIM IT DID NOT MEASURE: the
+    // construction-time probe IS performed (`registerCompositionWriter` appears in the read
+    // log and in the double's own call record, carrying the composition's `write` function —
+    // the `callableMember` presence test is what reads it, which is exactly why a mere READ is
+    // the falsifier this row asserts on), while `registerCommit` is never reached because the
+    // first probe succeeds; and the composition's SINGLE write site still writes, so the sink's
+    // record reads ONE clamped call. THE TWO-WRITER DIVERGENCE `§2.5` item 4 and `P-GT-SM-3`
+    // quantify belongs to a session that INVOKES the registered writer, and it is `F-9`/
+    // `P-GT-SM-3` shape `(2)`'s own drive — this row's falsifiers are the READ LOG and the
+    // write COUNT, both of which the probe above breaks.**
+    await requireLiveModule('E3-HOST-2 runtime')
+    const double = makeClosedSetDouble()
+    const sink = makeSink()
+    const element: Record<string, unknown> = { control: 'E3-HOST-2' }
+    const { controller } = await createController(
+      {
+        session: double.session,
+        axisFor: (): unknown => undefined,
+        boundsFor: (): unknown => ({ min: 0, max: 100 }),
+        defaultSizeFor: (): unknown => 500,
+        isResizable: (): unknown => true,
+        sizeFor: (): unknown => 500,
+        commit: sink,
+      },
+      'E3-HOST-2 runtime',
+    )
+    // **THE RUNTIME FALSIFIER, COLLECTED AS ONE RECORD SO BOTH READINGS SURVIVE INTO THE
+    // FAILURE MESSAGE** (an earlier assertion must not hide a later one): every member name the
+    // composition READ from the session during CONSTRUCTION, and every name it read once the
+    // composition ATTACHED — a construction-time PROBE of an invented member lands in the first
+    // list, an attach-time or terminal-time one in the second.
+    const constructionReads = [...new Set(double.readLog)].sort()
+    controller.attach(element, {
+      onMove: (gesture: GestureHandle): void => {
+        gesture.set(777)
+      },
+    })
+    const attachedReads = [...new Set(double.readLog)].sort()
+    const outsideReads = [...new Set([...constructionReads, ...attachedReads])].filter(
+      (name) => !CLOSED_SESSION_MEMBERS.includes(name),
+    )
+    expect(
+      outsideReads,
+      `E3-HOST-2 §2.5 item 1 / R-14 — a session that EXPOSES both invented members is consulted for NEITHER: the recorded member-read log contains no name outside ${JSON.stringify(
+        CLOSED_SESSION_MEMBERS,
+      )}. Names read outside the closed set: ${JSON.stringify(
+        outsideReads,
+      )}; the invented members' own recorded CALLS: ${JSON.stringify(double.registeredCalls)}`,
+    ).toEqual([])
+    const installedKeys = double.installKeys
+    expect(
+      installedKeys,
+      `E3-HOST-2 §2.1 item 5 — the object handed to \`install\` is the four hooks and NOTHING else (no \`capture\`, no fifth key): the double’s own recorded key set. Recorded: ${JSON.stringify(
+        installedKeys,
+      )}`,
+    ).toEqual(['onCancel', 'onEnd', 'onMove', 'onStart'])
+    // The drive reaches its terminal through the double’s own documented acts: `begin`
+    // (establishment), the move dispatch (the composition’s ONE legal handle channel), then
+    // `end` with the RAW default `500` — the value the registered-writer path would commit
+    // INSTEAD of the clamped one.
+    const begin = (double.session['begin'] as (e: unknown) => unknown)(element)
+    expect(begin, 'E3-HOST-2 — the drive establishes (the double’s own `begin` answered `{ok: true, …}`)').toMatchObject({ ok: true })
+    ;(double.session['dispatchMove'] as () => void)() // held as a non-enumerable member by the double (see `makeClosedSetDouble`)
+    ;(double.session['end'] as (e: unknown, g: unknown, raw: unknown) => unknown)(element, null, 500)
+    expect(
+      sink.records.length,
+      `E3-HOST-2 §2.3 item 3 / I-2 — EXACTLY ONE sink call for the gesture, whatever the session EXPOSES: a session carrying the invented seam must not turn the composition into a two-writer one. Recorded: ${sink.records.length} (values: ${JSON.stringify(
+        sink.records.map((record) => record.value),
+      )})`,
+    ).toBe(1)
+    expect(
+      sink.records[0]?.value,
+      `E3-HOST-2 §2.5 item 5 clause 5 / §2.3 item 4 — the committed value is the CLAMPED default (\`100\`), NEVER the RAW default (\`500\`): the registered-writer path would commit the raw one. Recorded: ${brief(
+        sink.records[0]?.value,
+      )}`,
+    ).toBe(100)
+    expect(
+      double.sinkWrites,
+      `E3-HOST-2 — and the double’s own session-channel record stays EMPTY: no writer was ever registered through the invented seam, so the composition’s single write site is the only writer. Recorded: ${JSON.stringify(
+        double.sinkWrites,
+      )}`,
+    ).toEqual([])
+    expect(
+      controller.stats().written,
+      'E3-HOST-2 — the controller’s own counter agrees: exactly one write returned',
+    ).toBe(1)
+  })
+
+  it('E3-HOST-3 — `detached` honours the session’s own disposal, and `attach`/`detach`/`reset` short-circuit on a DISPOSED session with ZERO session calls (with the UNDISPOSED control drive)', async () => {
+    await requireLiveModule('E3-HOST-3')
+    const h = await landedHarness({ label: 'E3-HOST-3' })
+    const sink = makeSink()
+    const element: Record<string, unknown> = { control: 'E3-HOST-3' }
+    const { controller } = await createController(
+      {
+        session: h.session,
+        axisFor: (): unknown => undefined,
+        boundsFor: (): unknown => ({ min: 0, max: 100 }),
+        defaultSizeFor: (): unknown => 100,
+        isResizable: (): unknown => true,
+        sizeFor: (): unknown => 100,
+        commit: sink,
+      },
+      'E3-HOST-3',
+    )
+    // **THE DISPOSAL IS THE SESSION’S OWN DOCUMENTED CALL** (`§2.5` item 1’s table:
+    // `session.dispose()`), not the controller’s `detach()`.
+    const disposed = (h.session['dispose'] as () => unknown)()
+    expect(
+      (disposed as { readonly complete?: unknown } | null)?.complete,
+      `E3-HOST-3 §2.1 item 4 — the session’s own disposal completed (\`complete === true\`), which is the state \`detached\`’s second limb is written against. Read: ${brief(
+        disposed,
+      )}`,
+    ).toBe(true)
+    expect(
+      controller.detached,
+      'E3-HOST-3 §2.1 item 4 (`ResizeController.detached`) — `detached` reads `true` FOREVER once the session reads `disposed === true`, with NO `detach()` call of any kind',
+    ).toBe(true)
+
+    const before = h.sessionLog.length
+    const second: Record<string, unknown> = { control: 'E3-HOST-3-second' }
+    const attached = controller.attach(second)
+    expect(
+      attached,
+      `E3-HOST-3 §2.1 item 3 — \`attach\` returns \`false\` for a DISPOSED session (the attach block lists “the session is unusable or disposed” under DELEGATING NOTHING). Read: ${brief(
+        attached,
+      )}`,
+    ).toBe(false)
+    const refusedDetach = controller.detach()
+    expect(
+      refusedDetach,
+      `E3-HOST-3 §2.1 item 3 — \`detach()\` returns \`false\` on a session that is ALREADY disposed (it holds no attached element and the session is already disposed). Read: ${brief(
+        refusedDetach,
+      )}`,
+    ).toBe(false)
+    const resetRecord = controller.reset(element)
+    expect(
+      NINE_MEMBER_DOMAIN.includes(resetRecord.code) && resetRecord.ok === false && resetRecord.committed === false,
+      `E3-HOST-3 §2.3 item 4’s table / I-14 + §2.5 item 5 clauses 3/9 — the refused reset reports \`ok: false\` and \`committed: false\` with a code that is a member of the closed NINE-member domain (\`'disposed'\` and \`'no-gesture'\` are the two honest readings). Read: ${JSON.stringify(
+        resetRecord,
+      )}`,
+    ).toBe(true)
+    expect(
+      h.sessionLog.slice(before),
+      `E3-HOST-3 §2.5 item 1 / §2.1 item 3 — against a session that reads \`disposed === true\` NOTHING is DELEGATED: no \`install\`, no \`dispose\`, no \`reset\`, no \`stats()\` after the disposal. The recording session’s own log, sliced at the disposal, is the evidence. Recorded: ${JSON.stringify(
+        h.sessionLog.slice(before),
+      )}`,
+    ).toEqual([])
+    expect(sink.records.length, 'E3-HOST-3 — and the disposed drive writes nothing').toBe(0)
+
+    // **THE CONTROL DRIVE — the row cannot pass vacuously:** an UNDISPOSED session still
+    // attaches and detaches normally, with exactly ONE `dispose` in its own log.
+    const control = await landedHarness({ label: 'E3-HOST-3 control' })
+    const controlElement: Record<string, unknown> = { control: 'E3-HOST-3-control' }
+    const created = await createController(
+      {
+        session: control.session,
+        axisFor: (): unknown => undefined,
+        boundsFor: (): unknown => ({ min: 0, max: 100 }),
+        defaultSizeFor: (): unknown => 100,
+        isResizable: (): unknown => true,
+        sizeFor: (): unknown => 100,
+        commit: makeSink(),
+      },
+      'E3-HOST-3 control',
+    )
+    expect(
+      created.controller.detached,
+      'E3-HOST-3 CONTROL — a fresh controller over an UNDISPOSED session reads `detached === false` (so `true` above is the disposal’s reading, never a constant)',
+    ).toBe(false)
+    expect(
+      created.controller.attach(controlElement, {}),
+      'E3-HOST-3 CONTROL — an UNDISPOSED session still attaches normally (`true`)',
+    ).toBe(true)
+    expect(
+      control.sessionLog.filter((call) => call === 'dispose').length,
+      'E3-HOST-3 CONTROL — and the attach delegates NO `dispose`',
+    ).toBe(0)
+    expect(
+      created.controller.detach(),
+      'E3-HOST-3 CONTROL — `detach()` still returns `true` on an UNDISPOSED session reporting `complete: true`',
+    ).toBe(true)
+    expect(
+      control.sessionLog.filter((call) => call === 'dispose').length,
+      `E3-HOST-3 CONTROL — with exactly ONE \`session.dispose()\` in the control drive’s own log. Recorded: ${JSON.stringify(
+        control.sessionLog,
+      )}`,
+    ).toBe(1)
+    expect(created.controller.detached, 'E3-HOST-3 CONTROL — and `detached` reads `true` after that completed detach').toBe(true)
+  })
+})
