@@ -3298,18 +3298,211 @@ describe('R — §3.4/§3.5 the static + existence rows', () => {
     const isDenied = (path: string): boolean =>
       DENIED.some((d) => path === d || path.startsWith(d)) ||
       DENIED_PATTERNS.some((re) => re.test(path))
+    /** **⟶ ADDED 2026-09-27 (THE OVER-BROAD DENIED-ARM REPAIR) — THE POSITIVE CONTROL'S OWN DENIED
+     *  PATH, CHOSEN FROM THIS UNIT'S DENIED SET AND NOT FROM ANY SIBLING'S.** `src/shared/types.ts`
+     *  is named FIRST in `§5.1`'s "Outside the scope, always" list for **THIS** unit (the shared
+     *  types: no member may be added for the projection), it is denied by the byte-identical
+     *  predicate, and it is **NOT on the sibling declaration** — so a synthetic commit carrying it
+     *  TOGETHER WITH one of this unit's own artifacts must STILL FAIL the scoped arm. **IT IS
+     *  DELIBERATELY NOT A SIBLING PATH** (`src/renderer/renderer.ts`, the harness fixture, another
+     *  unit's `*-greens.md`): a control driven on a path the declaration excludes would prove
+     *  nothing about the predicate. */
+    const CONTROL_OWN_DENIED_PATH = 'src/shared/types.ts'
     const SCOPE_TEXT = `${ALLOWED.join(
       ' + ',
     )} + this unit's own docs/specs/*-greens.md + this unit's own gate-7 review record under archive/reviews/`
+    // ── **⟶ DECLARED 2026-09-27 (THE SIBLING-ATTRIBUTION DECLARATION, control (s-1)) — MOVED ABOVE THE ALLOW-LIST/DENIED BLOCK 2026-09-27** (the OVER-BROAD DENIED-ARM REPAIR declared the attribution BEFORE the predicate it scopes, so the row's own `isDenied`/`ownerOfPath` reads see it; the as-filed text is unchanged below this first line) — THE
+    // `E10`/`U-GUTTER-UI` ARTIFACTS, NAMED, SO THIS ROW'S ATTRIBUTION IS A DECLARATION RATHER
+    // THAN A COINCIDENCE.** The `E10` unit's declared allow-list (`docs/specs/gutter-ui.md` `§5.1`
+    // rows 1–5, 10–12) reaches paths this row's DENIED set names FIRST — `src/shared/
+    // gutter-affordance.ts`, `src/shared/demo-envelope.ts`, `tests/gutter-ui.test.ts`,
+    // `docs/specs/gutter-ui*.md`, `src/renderer/renderer.ts`, `src/renderer/runtime.ts`, and the
+    // divergence-harness fixture `scripts/electron-divergence.mjs` (a TESTING tool, ruled into the
+    // sibling's update scope by the architect's `e135904` ruling). **THE AUTHORITY:**
+    // `docs/specs/gutter.md` `§3.4 R-4` (a later unit's legitimate use of a sibling's contract is
+    // not a violation of it) and `§5.1`'s commit-range scope rule (*"must NOT read a later unit's
+    // commits, a sibling's dirty working-tree file, or a sibling unit's artifact as this unit's
+    // diff"*). **WHAT THIS ROW'S RE-SCOPE ALREADY DOES WITH THEM, MEASURED AND STATED:** the
+    // unit-scoped commit partition above keeps only the commits that TOUCH THIS UNIT'S OWN
+    // ARTIFACTS, so the sibling's commit `72fff4c` (which touches `src/renderer/**`,
+    // `scripts/electron-divergence.mjs`, `src/shared/demo-envelope.ts` and
+    // `src/shared/gutter-affordance.ts` and NONE of this unit's paths) is OUT OF THIS ROW'S
+    // JURISDICTION — the DENIED predicate is never consulted for it and stays BYTE-IDENTICAL for
+    // the paths that ARE this unit's own. **THE DECLARATION IS THEREFORE ADDITIVE AND
+    // FALSIFIABLE BOTH WAYS:** every declared sibling path must read
+    // `isSiblingUnitArtifactOfThisRow === true`; this unit's own three canonical artifacts must
+    // read `false`; and the DENIED predicate must still deny every sibling path (so the exclusion
+    // is about SUBJECT, never about the boundary).
+    const SIBLING_UNIT_ARTIFACT_PATHS: readonly string[] = [
+      'src/shared/gutter-affordance.ts', // `docs/specs/gutter-ui.md` §5.1 allow-list row 1 (NEW — the affordance module)
+      'src/shared/demo-envelope.ts', // row 2 — the authoring site (the authored gutter card is provident envelope DATA, never code)
+      'tests/gutter-ui.test.ts', // row 3 (NEW — the sibling's red set)
+      'docs/specs/gutter-ui.md', // row 4 — the sibling's spec (the DENIED-pattern reading in `docs/specs/gutter.md` §5.1 item 11: "not this unit's file")
+      // ── **⟶ SIBLING-ATTRIBUTED 2026-09-27 (THE OVER-BROAD DENIED-ARM REPAIR): THE SIBLING'S GATE
+      // ARTIFACTS — THE PATHS THE MEASURED RED ACTUALLY READ.** The as-filed row reached the red
+      // AT `befe9c6` on the FIRST of these: `'docs/specs/gutter-ui-greens.md' was COMMITTED … and
+      // is in the DENIED set`, where `DENIED_PATTERNS`'s other-unit-`*-greens.md` arm — which the
+      // sibling spec's own row 5 ADMITS as its gate-5 artifact — read it as `U-PROJ`'s diff. The
+      // live-battery record is admitted by the SAME row 5 clause (`gutter-ui.md` §5.1 row 9,
+      // `§5.2` leg 6: the mandatory battery's record) and is in the measured committed set too.
+      //
+      //   **⟶ SIBLING-ATTRIBUTED 2026-09-27:** the declaration now also names the SIBLING's
+      //   `docs/specs/gutter-ui-greens.md` — the greens set ITS OWN spec's allow-list row 5 admits
+      //   to it — and the live-battery record, each cited to `docs/specs/gutter-ui.md` §5.1, so the
+      //   row can no longer read a sibling's gate artifact as THIS unit's diff (`docs/specs/gutter.md`
+      //   §5.1's commit-range scope rule + `§3.4 R-4`). **THE EXCLUSION IS ABOUT SUBJECT ONLY:**
+      //   `isDenied` still denies the greens set (the RAW reading below says so), and this unit's own
+      //   denied paths still FAIL.
+      'docs/specs/gutter-ui-greens.md', // row 5 — the sibling's gate-5 blind-greens artifact
+      'docs/specs/gutter-ui-live-battery.md', // row 5's clause ("any other `docs/specs/gutter-ui-*.md` of this unit") — the mandatory live battery's record
+      'src/renderer/renderer.ts', // row 10 — the bounded renderer wiring
+      'src/renderer/runtime.ts', // row 11 — `Runtime.elementForNodeId` and nothing else
+      'scripts/electron-divergence.mjs', // the architect's `e135904` ruling — the divergence leg is a TESTING tool in the sibling's update scope
+    ]
+    const SIBLING_UNIT_ARTIFACT_PROBE = /^docs\/specs\/gutter-ui[^/]*\.md$/
+    const isSiblingUnitArtifactOfThisRow = (p: string): boolean =>
+      SIBLING_UNIT_ARTIFACT_PATHS.includes(p) ||
+      SIBLING_UNIT_ARTIFACT_PROBE.test(p) ||
+      OTHER_UNIT_ARTIFACT_PATHS.includes(p)
+    /** **⟶ SIBLING-ATTRIBUTED 2026-09-27 (THE OVER-BROAD DENIED-ARM REPAIR) — A SECOND AND A THIRD
+     *  UNIT'S OWN ARTIFACTS, BY NAME, DECLARED FOR THE SAME MEASURED CLASS.** The live committed
+     *  set of `b8bd4688..HEAD` (measured, not assumed) carries `tests/gutter.test.ts` (`E3`'s red
+     *  set) and `tests/gesture-session.test.ts` (`U-GSESSION`'s, FROZEN) from range commits that
+     *  also touched THIS unit's own test file, plus `tests/zones.test.ts` / `docs/specs/zones.md`
+     *  (`U-ZONES`) and `docs/specs/census.md` (`U-CENSUS`) from the docs-compaction commits. Each
+     *  is ANOTHER unit's artifact — `docs/specs/gutter-ui.md` §5.1's DENIED items 0/1/2/3/7/8 name
+     *  them as paths the sibling may not touch either — so none may be read as this unit's diff
+     *  (`docs/specs/gutter.md` §5.1's commit-range scope rule: *"must NOT read … a sibling unit's
+     *  artifact as this unit's diff"*; `§3.4 R-4`). **THIS LIST IS BY NAME AND CLOSED** — the same
+     *  shape `tests/gutter.test.ts` `R-12` uses for `tests/gesture-session.test.ts` — and it can
+     *  only ever REMOVE a path from this row's subject. */
+    const OTHER_UNIT_ARTIFACT_PATHS: readonly string[] = [
+      'tests/gutter.test.ts', // `E3`/U-GUTTER's red set — `gutter-ui.md` §5.1 DENIED item 2
+      'tests/gesture-session.test.ts', // `U-GSESSION`'s red set, FROZEN — DENIED item 0/1
+      'tests/zones.test.ts', // `U-ZONES`'s red set — DENIED item 7 ("every existing test file of another unit")
+      'docs/specs/zones.md', // `U-ZONES`'s spec — DENIED item 8 ("every sibling unit's artifact")
+      'docs/specs/census.md', // `U-CENSUS`'s spec — DENIED item 8
+    ]
+    /** **THE DECLARATION WITH ITS AUTHORITY, ONE ROW PER PATH** — the single source both the
+     *  driven control (s-1) and the RAW-reading report read, so a path cannot be excluded in the
+     *  report and unclaimed in the predicate (or vice versa). Every entry cites the spec row or the
+     *  architect ruling that admits it. */
+    const SIBLING_UNIT_ARTIFACT_PATHS_WITH_AUTHORITY: ReadonlyArray<{
+      readonly path: string
+      readonly owner: string
+      readonly authority: string
+    }> = [
+      { path: 'src/shared/gutter-affordance.ts', owner: 'the SIBLING unit (E10 / U-GUTTER-UI)', authority: '`docs/specs/gutter-ui.md` §5.1 allow-list row 1 (NEW — the affordance module)' },
+      { path: 'src/shared/demo-envelope.ts', owner: 'the SIBLING unit (E10 / U-GUTTER-UI)', authority: 'allow-list row 2 (the authoring site)' },
+      { path: 'tests/gutter-ui.test.ts', owner: 'the SIBLING unit (E10 / U-GUTTER-UI)', authority: 'allow-list row 3 (NEW — the red set)' },
+      { path: 'docs/specs/gutter-ui.md', owner: 'the SIBLING unit (E10 / U-GUTTER-UI)', authority: 'allow-list row 4 (`docs/specs/gutter.md` §5.1 DENIED item 11 — "not this unit\'s file")' },
+      { path: 'docs/specs/gutter-ui-greens.md', owner: 'the SIBLING unit (E10 / U-GUTTER-UI)', authority: 'allow-list row 5 (the gate-5 blind-greens artifact)' },
+      { path: 'docs/specs/gutter-ui-live-battery.md', owner: 'the SIBLING unit (E10 / U-GUTTER-UI)', authority: 'allow-list row 5 ("any other `docs/specs/gutter-ui-*.md` of this unit")' },
+      { path: 'src/renderer/renderer.ts', owner: 'the SIBLING unit (E10 / U-GUTTER-UI)', authority: 'allow-list row 10 (the bounded renderer wiring)' },
+      { path: 'src/renderer/runtime.ts', owner: 'the SIBLING unit (E10 / U-GUTTER-UI)', authority: 'allow-list row 11 (`Runtime.elementForNodeId`)' },
+      { path: 'scripts/electron-divergence.mjs', owner: 'the SIBLING unit (E10 / U-GUTTER-UI)', authority: 'the architect\'s `e135904` ruling (a TESTING tool in the sibling\'s update scope)' },
+      { path: 'tests/gutter.test.ts', owner: 'E3 / U-GUTTER', authority: '`docs/specs/gutter-ui.md` §5.1 DENIED item 2' },
+      { path: 'tests/gesture-session.test.ts', owner: 'U-GSESSION (FROZEN)', authority: '`docs/specs/gutter-ui.md` §5.1 DENIED items 0/1' },
+      { path: 'tests/zones.test.ts', owner: 'U-ZONES', authority: '`docs/specs/gutter-ui.md` §5.1 DENIED item 7' },
+      { path: 'docs/specs/zones.md', owner: 'U-ZONES', authority: '`docs/specs/gutter-ui.md` §5.1 DENIED item 8' },
+      { path: 'docs/specs/census.md', owner: 'U-CENSUS', authority: '`docs/specs/gutter-ui.md` §5.1 DENIED item 8' },
+      { path: 'docs/specs/gutter-ui-review.md', owner: 'the SIBLING unit (E10 / U-GUTTER-UI)', authority: 'allow-list row 5 / the `gutter-ui` pattern (the closed gate-1 record; not in the measured committed set today)' },
+    ]
+    expect(
+      SIBLING_UNIT_ARTIFACT_PATHS_WITH_AUTHORITY.filter(
+        (c) => !isSiblingUnitArtifactOfThisRow(c.path),
+      ).map((c) => c.path),
+      `R-20/§5.1 (control s-1b, THE AUTHORITY TABLE AND THE PREDICATE AGREE): every path named in the WITH-AUTHORITY table must read \`isSiblingUnitArtifactOfThisRow === true\` — the list is EMPTY when they do (a table entry the predicate does not claim would be a silent drop from the scoping, and a predicate claim the table does not carry would be an uncited exclusion). READS: ${JSON.stringify(
+        SIBLING_UNIT_ARTIFACT_PATHS_WITH_AUTHORITY.map((c) => [c.path, c.owner, isSiblingUnitArtifactOfThisRow(c.path), isDenied(c.path)]),
+      )}`,
+    ).toEqual([])
+    expect(
+      SIBLING_UNIT_ARTIFACT_PATHS.filter((p) => !isSiblingUnitArtifactOfThisRow(p)),
+      `R-20/§5.1 (control s-1, THE \`E10\` DECLARATION): every declared \`E10\`/\`U-GUTTER-UI\` artifact must read \`isSiblingUnitArtifactOfThisRow === true\` — the list is EMPTY when they do. AUTHORITY: \`docs/specs/gutter.md\` \`§3.4 R-4\` + \`§5.1\`'s commit-range scope rule; \`docs/specs/gutter-ui.md\` \`§5.1\` rows 1–5/10–12 and the architect's \`e135904\` ruling (the divergence harness is a TESTING tool in the sibling's update scope). READS: ${JSON.stringify(
+        SIBLING_UNIT_ARTIFACT_PATHS.map((p) => [p, isSiblingUnitArtifactOfThisRow(p), isDenied(p)]),
+      )}`,
+    ).toEqual([])
+
     // THE SCOPE ASSERTIONS OVER THE COMMITTED SET — the falsifiable half.
-    for (const path of committed) {
-      expect(
-        isDenied(path),
-        `R-20/§5.1 (ADV-PJ-12; the O-12 ruling + §5.1's row 5): '${path}' was COMMITTED inside this unit's range ${range} and is in the DENIED set — a boundary violation whatever its content (§5.1's "Outside the scope, always" list). The committed change set was: ${JSON.stringify(
-          committed,
-        )}`,
-      ).toBe(false)
+    //
+    // ── **⟶ SIBLING-ATTRIBUTED 2026-09-27 (THE OVER-BROAD DENIED-ARM REPAIR — the measured red
+    // AT `befe9c6`).** **THE AS-FILED CELL ABOVE IS KEPT VISIBLE AND THE DENIED PREDICATE IT
+    // NAMES IS UNTOUCHED:** this loop was written as *"for every path in the unit-scoped
+    // committed set: `isDenied(path)` must be `false`"*, and it was measured FAILING on the
+    // sibling's OWN legitimate artifact:
+    //
+    //   `R-20/§5.1 …: 'docs/specs/gutter-ui-greens.md' was COMMITTED inside this unit's range
+    //    b8bd4688…HEAD and is in the DENIED set — a boundary violation whatever its content`
+    //
+    // **THE CAUSE, MEASURED:** this row's range anchors at `b8bd4688` (the commit that ADDED this
+    // file) and HEAD moves through LATER units' commits, so a single range commit that carried
+    // THIS unit's file TOGETHER WITH a sibling's artifacts (measured: `befe9c6`, whose file list
+    // is `docs/next-steps.md`, `docs/pending.md`, `docs/specs/gutter-ui-greens.md`,
+    // `docs/specs/gutter-ui-live-battery.md`, `docs/specs/gutter-ui.md`, `docs/specs/gutter.md`,
+    // `tests/gutter-ui.test.ts`, `tests/gutter.test.ts`, `tests/layout-projection.test.ts`) pulled
+    // the `E10`/`U-GUTTER-UI` unit's own spec, greens set and live-battery record INTO this row's
+    // subject — where `DENIED_PATTERNS` (another unit's `*-greens.md`) then FAILED them. **A
+    // sibling's legitimate artifact is NOT this unit's diff**, which is `docs/specs/gutter.md`
+    // `§5.1`'s commit-range scope rule VERBATIM: *"a diff-scope row asserted over a commit range
+    // must scope its allow-list census to THIS UNIT'S OWN ARTIFACTS … and **must NOT read a later
+    // unit's commits, a sibling's dirty working-tree file, or a sibling unit's artifact as this
+    // unit's diff**"*, plus `§3.4 R-4` (*a later unit that legitimately imports/uses THIS module is
+    // not a violation of it*). **THIS IS THE SAME OVER-BROAD CLASS ALREADY REPAIRED IN
+    // `tests/gutter.test.ts`'s `R-12`, `tests/gesture-session.test.ts`'s `R-7` AND (TWICE) IN
+    // `tests/gutter.test.ts`'s CENSUS ROWS, and the repair copies their shape: a per-PATH
+    // attribution split, `splitBySiblingAttribution`, the DENIED predicate byte-identical for this
+    // unit's OWN paths, the RAW full-range denied reading REPORTED rather than dropped, and the
+    // exclusion driven by falsifiable controls.**
+    //
+    // **WHAT MOVES AND WHAT DOES NOT: THE SUBJECT, NOT THE PREDICATE.** `isDenied` is
+    // byte-identical to the as-filed predicate and still denies every path it named before — the
+    // RAW reading over the whole unit-scoped committed set is computed and PRINTED below
+    // (`RAW_DENIED_COMMITTED`), each path named with its owning unit — but the check now binds
+    // **`U-PROJ`'s OWN attributable committed paths** (a path counts as this unit's own **iff it
+    // is NOT a declared sibling artifact**). **A DENIED PATH AMONG THIS UNIT'S OWN CHANGES STILL
+    // FAILS** — kept as a driven control below (`CONTROL_OWN_DENIED_PATH` = `src/shared/types.ts`).
+    // **THE SAME RULE IS ALSO STATED IN `docs/specs/gutter-ui.md` `§3.4 R-9`** (*"the sibling
+    // scoping applies to … subject …, the DENIED predicate is byte-identical and exception-free"*),
+    // the sibling spec this repair's authority quotes.
+    const splitBySiblingAttribution = (
+      paths: readonly string[],
+    ): { raw: string[]; own: string[]; sibling: string[] } => ({
+      raw: [...paths],
+      own: paths.filter((p) => !isSiblingUnitArtifactOfThisRow(p)),
+      sibling: paths.filter((p) => isSiblingUnitArtifactOfThisRow(p)),
+    })
+    const ownerOfPath = (p: string): string => {
+      const declared = SIBLING_UNIT_ARTIFACT_PATHS_WITH_AUTHORITY.find((c) => c.path === p)
+      return declared !== undefined ? declared.owner : 'a sibling unit'
     }
+    const committedAttribution = splitBySiblingAttribution(committed)
+    const RAW_DENIED_COMMITTED = committed.filter(isDenied)
+    const scopedDenied = committedAttribution.own.filter(isDenied)
+    expect(
+      scopedDenied,
+      `R-20/§5.1 — THE DENIED SET BINDS THIS UNIT'S OWN COMMITTED PATHS (the subject-scoping repair of the over-broad as-filed arm, cited to \`docs/specs/gutter.md\` \`§5.1\`'s commit-range scope rule + \`§3.4 R-4\`): \`${scopedDenied.join('`, `')}\` was COMMITTED inside this unit's range ${range} AMONG THIS UNIT'S OWN ATTRIBUTABLE PATHS and is in the DENIED set — a boundary violation whatever its content (§5.1's "Outside the scope, always" list). **THE PREDICATE IS BYTE-IDENTICAL AND UNWEAKENED** for this unit's own paths (\`src/renderer/\`, \`src/main/\`, the shim, the shared types, \`package.json\`/\`package-lock.json\`, \`scripts/\`, \`node_modules/\`, \`../Preempt-Providence/\`, a foreign \`*-greens.md\`) — a denied path among this unit's own changes (control: \`${CONTROL_OWN_DENIED_PATH}\`) STILL FAILS. **THE RAW FULL-RANGE DENIED READING (reported, never a FAIL — each path belongs to the row of the unit that committed it):** ${JSON.stringify(
+        RAW_DENIED_COMMITTED.map((p) => [p, ownerOfPath(p)]),
+      )}. **THE DENIED predicate is NOT weakened — the raw reading still denies every one of those paths** (\`isDenied\` is the as-filed predicate). This unit's own attributable committed paths: ${JSON.stringify(
+        committedAttribution.own,
+      )}. Sibling-attributed (excluded by declaration, not by a weaker predicate): ${JSON.stringify(
+        committedAttribution.sibling,
+      )}. The committed change set was: ${JSON.stringify(committed)}`,
+    ).toEqual([])
+    // **THE EXCLUSION'S NON-VACUITY, MEASURED AS A DELTA RATHER THAN ASSERTED (copied from
+    // `tests/gutter.test.ts` `R-12`'s non-vacuity arm):** the RAW reading is STRICTLY LARGER than
+    // the scoped one, and the delta is EXACTLY the sibling artifacts the declaration removes —
+    // each one denied by the byte-identical predicate and each one named, with its owning unit. A
+    // declaration that classified nothing would make this list EMPTY and this row FAIL; a
+    // declaration that also claimed this unit's own artifacts would move the scoped reading and
+    // FAIL the controls below.
+    expect(
+      RAW_DENIED_COMMITTED.filter((p) => !scopedDenied.includes(p)),
+      `R-20/§5.1 — THE EXCLUSION'S NON-VACUITY: on the live committed set the RAW denied reading is STRICTLY LARGER than this unit's own denied reading, and the delta is EXACTLY the sibling artifacts \`isSiblingUnitArtifactOfThisRow\` removed (each still \`isDenied === true\` and each NAMED, never silently dropped). A predicate that classified nothing leaves this list EMPTY and FAILS here. **THE MEASURED DELTA (each with its owning unit and the spec row that admits it):** ${JSON.stringify(
+        RAW_DENIED_COMMITTED.filter((p) => !scopedDenied.includes(p)).map((p) => [p, ownerOfPath(p), isDenied(p)]),
+      )}. **RAW reading:** ${JSON.stringify(RAW_DENIED_COMMITTED)}. **THIS UNIT'S OWN reading:** ${JSON.stringify(
+        scopedDenied,
+      )}.`,
+    ).not.toEqual([])
     // ── THE SECOND CROSS-UNIT RE-SCOPE (2026-09-27, the U-ZONES adversarial gate —
     // ADV-ZN-12; the same class as `323a4a0`, one layer deeper). The previous form
     // required EVERY file in the unit-scoped committed set to be in THIS unit's
@@ -3368,54 +3561,23 @@ describe('R — §3.4/§3.5 the static + existence rows', () => {
     // §5.1's named OUT-OF-SCOPE paths are untouched by this unit's change set —
     // asserted through the DENIED set over the UNIT-SCOPED committed files, so the
     // row fails on ANY of them (not only on the three an earlier draft named).
-    for (const path of committed) {
+    // **⟶ SIBLING-ATTRIBUTED 2026-09-27 (THE OVER-BROAD DENIED-ARM REPAIR):** this SECOND
+    // DENIED loop read the WHOLE unit-scoped committed set exactly as the first one did (the
+    // as-filed wording is kept above), so it is scoped by the SAME per-path attribution —
+    // `committedAttribution.own` — and its distinct claim (the shim, the shared types, the
+    // main/renderer trees, the build surface and a sibling unit's artifacts) is kept with it. The
+    // predicate is byte-identical, the scope rule cited is `docs/specs/gutter.md` `§5.1` (+
+    // `§3.4 R-4`), and both loops' subject is the same `own` set, so no path can be read by one
+    // arm and not the other.
+    for (const path of committedAttribution.own) {
       expect(
         isDenied(path),
-        `R-20: '${path}' is outside the scope — the shim, the shared types, the main/renderer trees, the build surface and a sibling unit's artifacts are UNTOUCHED`,
+        `R-20: '${path}' is outside the scope — the shim, the shared types, the main/renderer trees, the build surface and a sibling unit's artifacts are UNTOUCHED. **THE SUBJECT HERE IS THIS UNIT'S OWN ATTRIBUTABLE COMMITTED PATHS** (a sibling's legitimate artifact is OUT OF THIS ROW'S SCOPE BY CONSTRUCTION, \`docs/specs/gutter.md\` \`§5.1\`'s commit-range scope rule + \`§3.4 R-4\`), **and the RAW full-range denied reading is reported beside it**: ${JSON.stringify(
+          RAW_DENIED_COMMITTED.map((p) => [p, ownerOfPath(p)]),
+        )}. Committed set: ${JSON.stringify(committed)}`,
       ).toBe(false)
     }
     // …and this unit's own artifacts are not themselves denied.
-    // ── **⟶ DECLARED 2026-09-27 (THE SIBLING-ATTRIBUTION DECLARATION, control (s-1)) — THE
-    // `E10`/`U-GUTTER-UI` ARTIFACTS, NAMED, SO THIS ROW'S ATTRIBUTION IS A DECLARATION RATHER
-    // THAN A COINCIDENCE.** The `E10` unit's declared allow-list (`docs/specs/gutter-ui.md` `§5.1`
-    // rows 1–5, 10–12) reaches paths this row's DENIED set names FIRST — `src/shared/
-    // gutter-affordance.ts`, `src/shared/demo-envelope.ts`, `tests/gutter-ui.test.ts`,
-    // `docs/specs/gutter-ui*.md`, `src/renderer/renderer.ts`, `src/renderer/runtime.ts`, and the
-    // divergence-harness fixture `scripts/electron-divergence.mjs` (a TESTING tool, ruled into the
-    // sibling's update scope by the architect's `e135904` ruling). **THE AUTHORITY:**
-    // `docs/specs/gutter.md` `§3.4 R-4` (a later unit's legitimate use of a sibling's contract is
-    // not a violation of it) and `§5.1`'s commit-range scope rule (*"must NOT read a later unit's
-    // commits, a sibling's dirty working-tree file, or a sibling unit's artifact as this unit's
-    // diff"*). **WHAT THIS ROW'S RE-SCOPE ALREADY DOES WITH THEM, MEASURED AND STATED:** the
-    // unit-scoped commit partition above keeps only the commits that TOUCH THIS UNIT'S OWN
-    // ARTIFACTS, so the sibling's commit `72fff4c` (which touches `src/renderer/**`,
-    // `scripts/electron-divergence.mjs`, `src/shared/demo-envelope.ts` and
-    // `src/shared/gutter-affordance.ts` and NONE of this unit's paths) is OUT OF THIS ROW'S
-    // JURISDICTION — the DENIED predicate is never consulted for it and stays BYTE-IDENTICAL for
-    // the paths that ARE this unit's own. **THE DECLARATION IS THEREFORE ADDITIVE AND
-    // FALSIFIABLE BOTH WAYS:** every declared sibling path must read
-    // `isSiblingUnitArtifactOfThisRow === true`; this unit's own three canonical artifacts must
-    // read `false`; and the DENIED predicate must still deny every sibling path (so the exclusion
-    // is about SUBJECT, never about the boundary).
-    const SIBLING_UNIT_ARTIFACT_PATHS: readonly string[] = [
-      'src/shared/gutter-affordance.ts',
-      'src/shared/demo-envelope.ts',
-      'tests/gutter-ui.test.ts',
-      'docs/specs/gutter-ui.md',
-      'docs/specs/gutter-ui-greens.md',
-      'src/renderer/renderer.ts',
-      'src/renderer/runtime.ts',
-      'scripts/electron-divergence.mjs',
-    ]
-    const SIBLING_UNIT_ARTIFACT_PROBE = /^docs\/specs\/gutter-ui[^/]*\.md$/
-    const isSiblingUnitArtifactOfThisRow = (p: string): boolean =>
-      SIBLING_UNIT_ARTIFACT_PATHS.includes(p) || SIBLING_UNIT_ARTIFACT_PROBE.test(p)
-    expect(
-      SIBLING_UNIT_ARTIFACT_PATHS.filter((p) => !isSiblingUnitArtifactOfThisRow(p)),
-      `R-20/§5.1 (control s-1, THE \`E10\` DECLARATION): every declared \`E10\`/\`U-GUTTER-UI\` artifact must read \`isSiblingUnitArtifactOfThisRow === true\` — the list is EMPTY when they do. AUTHORITY: \`docs/specs/gutter.md\` \`§3.4 R-4\` + \`§5.1\`'s commit-range scope rule; \`docs/specs/gutter-ui.md\` \`§5.1\` rows 1–5/10–12 and the architect's \`e135904\` ruling (the divergence harness is a TESTING tool in the sibling's update scope). READS: ${JSON.stringify(
-        SIBLING_UNIT_ARTIFACT_PATHS.map((p) => [p, isSiblingUnitArtifactOfThisRow(p), isDenied(p)]),
-      )}`,
-    ).toEqual([])
     expect(
       CANONICAL.filter((p) => isSiblingUnitArtifactOfThisRow(p)),
       `R-20/§5.1 (control s-1, THE NEGATIVE DIRECTION): this UNIT's own three canonical artifacts must NOT read as a sibling's — a predicate that claimed them would make the denial scoping vacuous. READS: ${JSON.stringify(
@@ -3446,6 +3608,81 @@ describe('R — §3.4/§3.5 the static + existence rows', () => {
         SIBLING_UNIT_ARTIFACT_PATHS.map((p) => [p, isDenied(p)]),
       )}`,
     ).toEqual([])
+    // **⟶ ADDED 2026-09-27 (THE OVER-BROAD DENIED-ARM REPAIR) — THE FALSIFIABLE CONTROLS, DRIVEN
+    // THROUGH THE SPLIT FUNCTION THIS ROW USES RATHER THAN RE-DESCRIBED** (the shape copied from
+    // `tests/gutter.test.ts` `R-12`'s positive controls (f)/(g)/(h) and
+    // `tests/gesture-session.test.ts` `R-7`'s).
+    //
+    // (c-1) **A SYNTHETIC UNIT-OWN COMMIT CARRYING A DENIED PATH STILL FAILS.** The drive is THIS
+    // unit's real committed set PLUS `CONTROL_OWN_DENIED_PATH` (`src/shared/types.ts` — denied by
+    // the byte-identical predicate and NOT a sibling artifact), and the reading that must change is
+    // the SCORED one: `splitBySiblingAttribution([...committed, CONTROL_OWN_DENIED_PATH]).own`
+    // must now contain it, whereupon `isDenied` reports it and the DENIED arm FAILS. **THE READING
+    // IS THE CONTROL'S OWN DELTA, so it is exact rather than loose.**
+    const CONTROL_OWN_SET = [...committed, 'src/shared/types.ts']
+    const controlOwnScopedDenied = splitBySiblingAttribution(CONTROL_OWN_SET).own.filter(isDenied)
+    expect(
+      controlOwnScopedDenied.filter((p) => !scopedDenied.includes(p)),
+      `R-20/§5.1 — POSITIVE CONTROL (c-1, THE REPAIRED ROW CAN STILL FAIL): a DENIED path appearing AMONG THIS UNIT'S OWN COMMITTED PATHS is reported by the scoped DENIED arm, so the row FAILS — and it fails for the RIGHT reason, naming the path. **THE DENIED PREDICATE IS NOT WEAKENED BY THE SUBJECT SCOPING.** Control drive: this unit's real committed set + \`${CONTROL_OWN_DENIED_PATH}\` (\`isDenied\` ⇒ ${String(
+        isDenied(CONTROL_OWN_DENIED_PATH),
+      )}; \`isSiblingUnitArtifactOfThisRow\` ⇒ ${String(
+        isSiblingUnitArtifactOfThisRow(CONTROL_OWN_DENIED_PATH),
+      )}). Full scoped reading: ${JSON.stringify(controlOwnScopedDenied)}`,
+    ).toEqual([CONTROL_OWN_DENIED_PATH])
+    expect(
+      isDenied(CONTROL_OWN_DENIED_PATH),
+      `R-20/§5.1 — POSITIVE CONTROL (c-1, THE CONTROL IS NOT VACUOUS): \`${CONTROL_OWN_DENIED_PATH}\` is genuinely denied by the byte-identical predicate (a control on a path the predicate did not deny would prove nothing)`,
+    ).toBe(true)
+    expect(
+      isSiblingUnitArtifactOfThisRow(CONTROL_OWN_DENIED_PATH),
+      `R-20/§5.1 — POSITIVE CONTROL (c-1, THE CONTROL IS NOT A SIBLING PATH): \`${CONTROL_OWN_DENIED_PATH}\` must read \`isSiblingUnitArtifactOfThisRow === false\`, or the control would be driving a path the declaration already excludes and would prove nothing about this unit's own set`,
+    ).toBe(false)
+    // (c-2) **A SIBLING-ONLY COMMIT CONTRIBUTES NOTHING** — a drive set made ONLY of the sibling's
+    // declared artifacts (a denied one among them: the sibling's `*-greens.md` and the harness
+    // fixture) splits to an EMPTY `own` and a non-empty `sibling`, so it cannot fail the scoped arm
+    // while the RAW reading still denies it. **BOTH DIRECTIONS ARE MEASURED.**
+    const CONTROL_SIBLING_ONLY: readonly string[] = [
+      ...SIBLING_UNIT_ARTIFACT_PATHS,
+      'docs/specs/gutter-ui-greens.md',
+    ]
+    const controlSiblingOnly = splitBySiblingAttribution(CONTROL_SIBLING_ONLY)
+    expect(
+      controlSiblingOnly.own,
+      `R-20/§5.1 — POSITIVE CONTROL (c-2, DIRECTION 1): a set made ONLY of the sibling's declared artifacts contributes NOTHING to this unit's own committed paths — which is exactly why the range commit that carried THIS unit's test file TOGETHER WITH the sibling's spec, greens set and live-battery record can no longer FAIL this row. Control set: ${JSON.stringify(
+        CONTROL_SIBLING_ONLY,
+      )}`,
+    ).toEqual([])
+    expect(
+      controlSiblingOnly.sibling.length,
+      `R-20/§5.1 — POSITIVE CONTROL (c-2, DIRECTION 2, THE PATHS ARE NAMED RATHER THAN DROPPED): the same set is attributed WHOLE to the sibling — every path named, each still denied by the byte-identical predicate where the DENIED set names it. READS: ${JSON.stringify(
+        CONTROL_SIBLING_ONLY.map((p) => [p, isSiblingUnitArtifactOfThisRow(p), isDenied(p)]),
+      )}`,
+    ).toBe(CONTROL_SIBLING_ONLY.length)
+    // (c-3) **THE SPLIT IS EXACT ON THE LIVE SET (raw = own ⊕ sibling), so no path is silently
+    // dropped by the exclusion** — the same drive `R-12`/`R-7` assert on their own readings.
+    const committedSplit = splitBySiblingAttribution(committed)
+    expect(
+      [...committedSplit.raw].sort(),
+      `R-20/§5.1 — THE SPLIT IS DRIVEN ON THE LIVE COMMITTED SET RATHER THAN ASSUMED: (1) the raw committed set is partitioned EXACTLY (raw = own ⊕ sibling), (2) every excluded path really answers \`isSiblingUnitArtifactOfThisRow === true\`, and (3) every \`U-PROJ\`-own path really answers \`false\` — a predicate that claimed everything (or nothing) FAILS here. READS: ${JSON.stringify(
+        [...committedSplit.own, ...committedSplit.sibling].sort(),
+      )} · sibling drives: ${JSON.stringify(
+        committedSplit.sibling.map((p) => [p, isSiblingUnitArtifactOfThisRow(p)]),
+      )} · own drives: ${JSON.stringify(
+        committedSplit.own.map((p) => [p, isSiblingUnitArtifactOfThisRow(p)]),
+      )}`,
+    ).toEqual([...committedSplit.own, ...committedSplit.sibling].sort())
+    expect(
+      committedSplit.own.every((p) => !isSiblingUnitArtifactOfThisRow(p)),
+      `R-20/§5.1 (THE PREDICATE'S FALSE DIRECTION, so the exclusion cannot be vacuous): THIS unit's own attributable committed paths must read \`isSiblingUnitArtifactOfThisRow === false\` — a predicate that claimed them too would make the DENIED arm pass by construction. READS: ${JSON.stringify(
+        committedSplit.own.map((p) => [p, isSiblingUnitArtifactOfThisRow(p)]),
+      )}`,
+    ).toBe(true)
+    expect(
+      committedSplit.sibling.length,
+      `R-20/§5.1 (NON-VACUITY OF THE EXCLUSION, ON THE LIVE SET): the committed range must NON-VACUOUSLY contain sibling-attributed artifacts, or the declaration was never exercised here and every control above is a rubber stamp. Sibling-attributed: ${JSON.stringify(
+        committedSplit.sibling,
+      )}`,
+    ).toBeGreaterThan(0)
     for (const path of UNIT_ARTIFACTS) {
       expect(
         isDenied(path),
