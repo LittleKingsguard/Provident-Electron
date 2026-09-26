@@ -7370,9 +7370,18 @@ describe('§5.5.1 — the typed property register (11 rows, executed determinist
           readings.push(source.captures.length)
           // Stage 6 — "after the terminal's `commit`": the commit callback has run (it is
           // synchronous and inside the terminal), so the reading is taken once more at the
-          // stage the row names. **Stages 5 and 6 read the SAME cumulative count** — that
-          // aliasing is what makes the honest DISTINCT figure `5` per flag, not `6`
-          // (`D-12`(c)/`ADV-GS-10`), and it is printed rather than hidden.
+          // stage the row names. **Stages 5 and 6 read the SAME cumulative count**, and so do
+          // stages 3 and 4 — the TWO alias pairs `IM5_STAGE_ALIAS_PAIRS` declares and this row
+          // MEASURES (below), both of them real and DISJOINT, so the honest DISTINCT figure is
+          // `6` stage POSITIONS less `2` aliased pairs = **`4` distinct readings per flag × `4`
+          // flag values = `16` distinct observations**, while the DECLARED term `24` (`4` flags ×
+          // `6` positions) stays UNMOVED and remains the figure the caps are compared against.
+          // **⟶ CORRECTED 2026-09-27 (`D-12`, the gate-8 documentation review):** the as-filed
+          // sentence read *"that aliasing is what makes the honest DISTINCT figure `5` per flag,
+          // not `6` (`D-12`(c)/`ADV-GS-10`)"* — the SUPERSEDED reasoning, which counted ONE
+          // alias pair while `§5.5.1`'s own prose names TWO (`ADV-GS-19` corrected the code at
+          // this site to derive `16`; the sentence above still narrated the `5`). Kept visible
+          // as provenance so no later pass re-derives the `5`/`20` pair as current.
           readings.push(source.captures.length)
           const observed = readings[index]
           if (observed !== expectedPerStage[index]) {
