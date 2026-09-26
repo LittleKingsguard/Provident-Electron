@@ -4458,8 +4458,8 @@ describe('ADV-GS-2 — the tracking-attach refusal (the gate-4 regression row)',
     expect(h.session.stats().commits, 'ADV-GS-2/(iii) — and the SESSION’S OWN counter reads zero (`§0A` note 12: the count seam is the module’s own)').toBe(0)
     expect(
       h.session.stats().gestures,
-      'ADV-GS-2/(iii) — **MEASURED, AND REPORTED AS A FINDING RATHER THAN BENT:** the module increments its `gestures` counter BEFORE the tracking-attach check, so a REFUSED `begin` still counts `1` here, while `§2.1`’s `SessionStats.gestures` cell declares it as “Successful `begin` calls” and `§2.3` item 1(b) declares the refusal creates NO gesture. The row asserts the MEASURED figure; the disagreement between the clause and the bytes is carried as a finding (see the RED-RUN FINDINGS block). It costs nothing observable: `gesture()` is `null`, nothing is active, and no commit was made',
-    ).toBe(1)
+      'ADV-GS-2/(iii)/`ADV-GS-15` — **THE CLAUSE GOVERNS, NOT THE BYTES:** `§2.1`’s `SessionStats.gestures` cell declares the field as *“Successful `begin` calls, instance-lifetime”*, and `§2.3`’s refusal clauses create NO gesture — so a REFUSED `begin` must leave the counter at `0`. **THIS IS THE ROW’S INTENTIONAL RED** until the Implementer’s module-side fix lands (the counter increment must move AFTER the tracking-attach check, beside the capture call): the landed module increments it BEFORE that check, so this assertion reads `1` today. **The expected value is the SPEC’S; the row is NOT to be re-tuned to the measured figure** (see `ADV-GS-15` in the block comment above this `describe`, and the same finding at the file’s foot)',
+    ).toBe(0)
     expect(
       h.session.stats().active,
       'ADV-GS-2/(iii) — the session is NOT left active by the refusal (the latch the gate-4 finding pinned)',
@@ -4483,6 +4483,14 @@ describe('ADV-GS-2 — the tracking-attach refusal (the gate-4 regression row)',
     ).toBe(true)
     const handle = (retried as { ok: true; gesture: GestureHandle }).gesture
     expect(
+      h.session.stats().gestures,
+      'ADV-GS-2/(iv)/`ADV-GS-15` — THE REFUSAL CONSUMED NO GESTURE: the SAME element’s establishment after the refusal is the session’s **FIRST** gesture, so the lifetime counter reads `1` (`§2.1`’s `SessionStats.gestures` — *“Successful `begin` calls, instance-lifetime”*; the refused `begin` was not one, and `§2.3`’s refusal clauses create no gesture)',
+    ).toBe(1)
+    expect(
+      handle.id,
+      'ADV-GS-2/(iv)/`ADV-GS-15` — and the id proves it: the first gesture’s handle carries `id === 1` (`M-2`’s *“the handle’s `id === 1`”`, `§2.4` item 4 — *“`id` starts at `1`, increments on every SUCCESSFUL `begin`”*; a refused `begin` is not a successful one, so it must not consume an id). The landed module increments the counter before the tracking-attach check and derives `record.id` from it, so it hands this handle `id: 2` — **the second half of the same intentional red** (`ADV-GS-15`)',
+    ).toBe(1)
+    expect(
       h.source.log
         .slice(callsBeforeRetry + 1, callsBeforeRetry + 4)
         .map((rec) => rec.type),
@@ -4502,8 +4510,8 @@ describe('ADV-GS-2 — the tracking-attach refusal (the gate-4 regression row)',
     expect(h.session.stats().commits, 'ADV-GS-2/(iv) — the session’s own counter agrees with the sink (no spy-only count)').toBe(1)
     expect(
       h.session.stats().gestures,
-      'ADV-GS-2/(iv) — and the `gestures` counter reads TWO for ONE real gesture, because the REFUSED `begin` incremented it (the finding recorded at (iii) above): the measured figure is asserted, and the clause-vs-bytes disagreement is carried as a finding rather than smoothed over',
-    ).toBe(2)
+      'ADV-GS-2/(iv)/`ADV-GS-15` — the lifetime counter STILL reads ONE after the retry’s terminal (`§2.1`’s `SessionStats.gestures`: exactly ONE successful `begin` happened in this row, and the refused one was no gesture) — asserted BESIDE the terminal too, so the corrected contract holds across the whole refuse → retry → terminal cycle rather than at a single point',
+    ).toBe(1)
     expect(
       h.session.stats().active,
       'ADV-GS-2/(iv) — and the gesture terminated normally (the session is idle again, not latched in `busy`)',
@@ -7067,16 +7075,30 @@ describe('§6 — the unit’s three falsifications (each asserted, never narrat
 // terms, the seed, the caps and every strategy id are unchanged**.
 //
 // TWO FINDINGS THE AUTHORED ROW MEASURED AND REPORTED (neither bent):
-//   · `stats().gestures` reads `1` after a REFUSED `begin` (and `2` after the successful
-//     retry for ONE real gesture), while `§2.1`'s `SessionStats.gestures` cell declares
-//     the field as *"Successful `begin` calls, instance-lifetime"* and `§2.3` item 1(b)
-//     declares the refusal creates NO gesture: the module increments its gesture counter
-//     BEFORE the tracking-attach check. The row asserts the MEASURED figure beside the
-//     clause and bends neither.
 //   · the recorder logs an `on` ATTEMPT before the configured throw, so the roll-back's
 //     two detaches for never-completed attaches still pair with their own recorded
 //     attempts — the log stays BALANCED (`I-5`'s sentence is NOT contradicted here),
 //     while the `attached` map holds only the start listener. Asserted, not over-claimed.
+//   · the refused `begin`'s counter consumption — **now `ADV-GS-15` below, and the row
+//     asserts the CLAUSE, not the measured figure** (the remand of 2026-09-27).
+//
+// **⟶ `ADV-GS-15` — THE REFUSED `begin` MUST NOT CONSUME A GESTURE (RECORDED
+// 2026-09-27, the remand that CORRECTS THIS ROW).** THE CONTRADICTION, NAMED: **the
+// clause** — `§2.1`'s `SessionStats.gestures` doc cell reads *"Successful `begin` calls,
+// instance-lifetime"* and `§2.3`'s refusal clauses (`§2.3` item 1(b) for a repeat/refused
+// path, and the refusal of a `begin` whose tracking attach cannot be made) create **NO**
+// gesture — while **the measured module (`src/shared/gesture-session.ts`, READ-ONLY in
+// this pass) increments `counters.gestures` BEFORE the three tracking `on` attaches are
+// checked and BEFORE the capture call**, so a REFUSED `begin` reads `gestures: 1` and one
+// real gesture thereafter reads `2` (and the refused attempt consumes the gesture id, so
+// the first REAL gesture is handed id `2` — against `M-2`'s *"the handle's `id === 1`"*
+// for the session's first gesture). **THE FIX IS MODULE-SIDE AND IS OWED TO THE
+// IMPLEMENTER'S NEXT PASS: the gesture counter (and the id it feeds) must be
+// incremented only by a `begin` that ESTABLISHES** — after the tracking-attach check,
+// beside the capture call. **This row therefore asserts the CLAUSE and is INTENTIONALLY
+// RED until that fix lands: the red is a PINNED CONTRACT VIOLATION, NOT a broken test.**
+// A reader who sees this row fail must read it as *the module owes the fix*, never as
+// *the expectation is stale* — and must NOT re-tune the row to the measured figure.
 //
 // Tracked in `docs/pending.md` §H with this reasoning.
 
@@ -7148,13 +7170,23 @@ describe('§6 — the unit’s three falsifications (each asserted, never narrat
 //     DECLARED term `58` is unmoved; the arithmetic is printed per configuration so a later
 //     pass can audit it. **This is a register-cell-vs-table disagreement, reported rather
 //     than tuned green.**
-//   · **`ADV-GS-2`/`stats().gestures`: A REFUSED `begin` STILL INCREMENTS THE COUNTER.** `§2.1`
-//     declares `SessionStats.gestures` as *"Successful `begin` calls, instance-lifetime"* and
-//     `§2.3` item 1(b) declares the refusal creates NO gesture — but the landed module
-//     increments the gesture counter BEFORE its tracking-attach check, so a refused `begin`
-//     reads `gestures: 1` and a single real gesture reads `2` after one refusal. The row
-//     asserts the MEASURED figures beside the clause; nothing observable is corrupted
-//     (`gesture()` is `null`, nothing active, no commit).
+//   · **`ADV-GS-15` — `ADV-GS-2`/`stats().gestures`: A REFUSED `begin` MUST NOT CONSUME A
+//     GESTURE (the finding this pass measured, and the remand that CORRECTED THE ROW).** The
+//     clause: `§2.1` declares `SessionStats.gestures` as *"Successful `begin` calls,
+//     instance-lifetime"* (`§2.4` item 4: *"`id` starts at `1`, increments on every SUCCESSFUL
+//     `begin`"*; `M-2`: *"the handle's `id === 1`"* for the first gesture) and `§2.3`'s refusal
+//     clauses create NO gesture. The bytes: the landed module increments its gesture counter
+//     BEFORE its tracking-attach check (and derives `record.id` from it), so a refused `begin`
+//     reads `gestures: 1`, a single real gesture then reads `2`, and the first REAL gesture is
+//     handed id `2`. **THE ROW NOW ASSERTS THE CLAUSE — `gestures === 0` after the refusal,
+//     `gestures === 1` and `handle.id === 1` after the retry — AND IS THEREFORE INTENTIONALLY
+//     RED until the Implementer's module-side fix lands (the increment moves after the
+//     tracking-attach check, beside the capture call).** The former text of this bullet
+//     asserted the MEASURED figure *beside* the clause, which codified the violation instead of
+//     pinning the contract; that is the defect this remand removes. A reader must read the red
+//     as *the module owes the fix*, never as *the test is broken* — and must NOT re-tune the
+//     row back to the measured figure. (The same finding, stated at the row: the `ADV-GS-15`
+//     block above `describe('ADV-GS-2 …')`.)
 //   · **`ADV-GS-2`'s roll-back LOG IS BALANCED, and that is measured not assumed:** the
 //     recorder logs an `on` ATTEMPT before its configured throw, so the two detaches for
 //     never-completed attaches still pair with their own recorded attempts (`pairOnOffCalls`
