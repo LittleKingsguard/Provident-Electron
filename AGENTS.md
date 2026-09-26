@@ -185,6 +185,39 @@ f. **Commits are scoped, not bulk.** One commit per gate boundary with a
 9. **Delegation gate (imported)**: a code unit is only delegable once (a) its
    `docs/specs/*.md` contract exists, (b) a TestWriter unit has run and
    reported the red set. Reviewer sub-agents are read-only.
+10a. **AUTONOMY AFTER SPEC APPROVAL — THE ONLY TWO RETURN POINTS (`2026-09-27`, the
+    architect's ruling: *"stop asking me for permission to advance to greens or
+    post-greens docs review; after spec is approved, return to the user only on final
+    unit close-out, or if a blocker requires a user decision"*).** Once a unit's
+   **spec gate is approved** (the contract is FILED and the architect has approved it,
+   or the architect has given a blanket go-ahead for the unit), the orchestrator
+   **PROCEEDS WITHOUT FURTHER PERMISSION** through the whole remaining chain —
+   `TestWriter red → Implementer green → adversarial + PBT audit (gate 4) → blind
+   greens (gate 5) → live/UI battery (gate 6) → proofreader (gate 7) → per-unit
+   documentation review (gate 8) → trio (gate 9) → DONE row + ledger move (gate 10)` —
+   **including every repair/remand cycle those gates force** (a red that exposes a
+   contract defect, an adversarial finding, a doc-review drift, a doc sweep, a cell
+   re-grain): the orchestrator amends the contract, re-runs the red, re-delegates the
+   Implementer and re-runs the affected gates **on its own authority**, committing at
+   each gate boundary (`RCA-8(a)`). **THE ORCHESTRATOR RETURNS TO THE USER ONLY
+   WHEN:** **(1) the unit reaches FINAL CLOSE-OUT** (its DONE row is written, its
+   trackers are reconciled, the trio is green and the ledger moved), reported
+   outcome-first as a completion summary; **or (2) a BLOCKER REQUIRES A USER
+   DECISION** — a genuine architect/design question the contract cannot answer, a
+   scope change, an admission of a new unit, a budget/priority fork, an irreversible
+   action needing consent, or a contradiction that no pass may resolve on its own
+   (e.g. an unsatisfiable clause pair, a frozen-contract change, a fork-facing
+   compatibility break). **A blocker report must be concrete and minimal:** what is
+   blocked, the evidence (measurements/commits), the two or three options with a
+   recommendation, and what each blocks. **NEVER ASK** for permission to advance a
+   gate, to fix a defect the gate found, to re-grain a register, to sweep stale doc
+   cells, to re-run the red/trio, or to write the DONE row; **never ask twice about
+   the same decision** — once an architect ruling is recorded (`docs/decisions.md`),
+   it is settled and is applied without further confirmation. **This item supersedes
+   the older `PAUSE and get the user's go-ahead` steps at every gate AFTER the spec
+   gate** (the spec gate itself still needs the architect's approval — that is the
+   one approval the chain waits for); the gate-supervisor instructions' pause clause
+   is read as applying to the SPEC gate only.
 10. **Blind-test → subagent review loop (imported, upstream AGENTS.md item 10;
     RCA-4 2026-08-23)**: after a feature/behavior change ships, its
     documentation + test claims are verified by agents who did NOT write them:
