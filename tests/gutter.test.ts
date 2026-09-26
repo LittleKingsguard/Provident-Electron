@@ -1694,14 +1694,19 @@ const LCG_MOD = 4294967296
  *  `PRE-2` (the table precondition), `PRE-4` (the pool-versus-boundary rule) and
  *  `REGISTER-STATUS` (the executed record) all reconcile against the same object.
  *
- *  **THE DISTINCT FIGURES ARE `§5.5.2` item 3's, and the THREE rows where the two figures
- *  DIFFER are `P-GT-PU-2` (`11`/`2`), `P-GT-IM-2` (`20`/`18`) and `P-GT-SM-1` (`20`/`19`)** —
- *  *(**⟶ CORRECTED 2026-09-27 BY THE ARCHITECT-RULING AMENDMENT PASS (ruling `8`(c)): the
- *  as-landed table carried `P-GT-SM-4`'s distinct figure as the as-filed `11`, which made it a
- *  FOURTH differing row. The amended spec corrects that figure to `12` (the
- *  `isResizable === false` limb is GENUINELY DRIVEN, so its observable is a distinct reading),
- *  so `P-GT-SM-4` now reports the SAME figure twice and only THREE rows still carry two
- *  DIFFERING figures. **THE DECLARED TERM `12`, every other term and the `299` total DO NOT
+ *  **THE DISTINCT FIGURES ARE `§5.5.2` item 3's, and the FOUR rows where the two figures
+ *  DIFFER are `P-GT-PU-2` (`11`/`2`), `P-GT-IM-2` (`20`/`18`), `P-GT-SM-1` (`20`/`19`) and
+ *  `P-GT-SM-4` (`12`/`10`)** —
+ *  *(**⟶ CORRECTED 2026-09-27 BY THE ARCHITECT-RULING ALIGNMENT PASS: the as-landed table made
+ *  `P-GT-SM-4` report the SAME figure twice (`12`/`12`), on the reason that the
+ *  `isResizable === false` limb's observable is a distinct reading of its own. THAT REASON HOLDS
+ *  — the limb IS genuinely driven, inside shape `(6)`'s attempts — BUT IT DOES NOT FOLLOW THAT
+ *  THE TABLE YIELDS `12` DISTINCT READINGS. The limb adds NO shape to the table (the drive table
+ *  holds SIX shapes, not seven), and two of those six (`(3)` and `(4)`) collapse to the single
+ *  `'unusable-default'` reading, so the table's own readings are FIVE classes × TWO arms = `10`.
+ *  The row's distinct figure is therefore `10`, it is now a differing row again, and the as-landed
+ *  `FOUR → THREE` correction is REVERSED to `FOUR` — with the reason recorded rather than the
+ *  figure asserted. **THE DECLARED TERM `12`, every other term and the `299` total DO NOT
  *  MOVE.**)* The DECLARED figures are what the caps are compared
  *  against; the distinct figures are REPORTED BESIDE them and are NEVER substituted
  *  (`docs/decisions.md` `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`, sub-rule 2). */
@@ -1722,7 +1727,17 @@ const REGISTER_DECLARED: ReadonlyArray<{
   { row: 'P-GT-SM-1', strategy: 'S-GT-COMMIT-1', term: 20, distinct: 19, bounded: false },
   { row: 'P-GT-SM-2', strategy: 'S-GT-WINDOW-1', term: 15, distinct: 15, bounded: false },
   { row: 'P-GT-SM-3', strategy: 'S-GT-WRITER-1', term: 5, distinct: 5, bounded: false },
-  { row: 'P-GT-SM-4', strategy: 'S-GT-RESET-1', term: 12, distinct: 12, bounded: false },
+  // **`P-GT-SM-4`'s DISTINCT FIGURE IS `10` — ⟶ CORRECTED 2026-09-27 BY THE ARCHITECT-RULING
+  // ALIGNMENT PASS.** The declared ATTEMPT term is `12` (`6` shapes × `2` readings) and DOES NOT
+  // MOVE; the DISTINCT figure is what the row's OWN drive table yields: the six table shapes
+  // produce **FIVE** distinct `(declared code, session-call count, write count)` reading triples
+  // (`(3)` and `(4)` share the single `'unusable-default'` reading) and each is read twice — the
+  // controller's own record and the session's recorded call/response — so the honest distinct
+  // count is **`5 × 2 = 10`**. The as-landed `12` asserted a figure the row's own table cannot
+  // reach (it multiplied the SIX ATTEMPTS by two instead of the FIVE READING CLASSES by two), and
+  // the message now NAMES the five reading classes rather than asserting an unreachable number.
+  // The `isResizable === false` limb rides INSIDE shape `(6)`'s attempts and adds NO attempt.
+  { row: 'P-GT-SM-4', strategy: 'S-GT-RESET-1', term: 12, distinct: 10, bounded: false },
   { row: 'P-GT-TP-1', strategy: 'S-GT-TOTAL-1', term: 60, distinct: 60, bounded: true },
   { row: 'P-GT-TP-2', strategy: 'S-GT-SHAPES-1', term: 18, distinct: 18, bounded: false },
 ]
@@ -3384,6 +3399,15 @@ describe('I — §3.3 the every-state invariants', () => {
   })
 
   it('I-9 §3.3 — NOTHING CARRIES ACROSS A GESTURE: the per-gesture record is DISCARDED at every terminal, and no element-keyed map exists', async () => {
+    // **⟶ RESIDUAL NOTE 2026-09-27 (THE ARCHITECT-RULING ALIGNMENT PASS) — REPORTED, NOT DROPPED.
+    // THE THROWAWAY PROTOTYPE OF A CONFORMING MODULE NAMED THIS AS ITS OWN DEFECT, NOT A ROW
+    // DEFECT: after the terminal the per-gesture record was still reachable, so the `reset` below
+    // found a handle where the contract says there is none. **A CONFORMING MODULE MUST SATISFY
+    // THIS ROW AS WRITTEN**: `§3.3 I-9` requires the record to be DISCARDED at every terminal —
+    // `gsession.md` `§0A` note 11's *"the session has ALREADY detached the tracking three, marked
+    // the gesture inactive and discarded its record"* — so a later `reset` MUST refuse
+    // `'no-gesture'` with ZERO session calls. A prototype that returns any other code here is
+    // showing a MODULE defect; the assertion is NOT relaxed for it.**
     const source = moduleSource('I-9')
     expect(
       /new\s+(?:Weak)?Map\s*\(/.test(source) && /keyed/i.test(source),
@@ -3964,6 +3988,15 @@ describe('M — §3.1 the valid states', () => {
       sizeFor: (): unknown => 2,
       commit: makeSink(),
     })
+    // **⟶ RESIDUAL NOTE 2026-09-27 (THE ARCHITECT-RULING ALIGNMENT PASS) — REPORTED, NOT DROPPED.
+    // THE THROWAWAY PROTOTYPE OF A CONFORMING MODULE NAMED THIS AS ITS OWN DEFECT, NOT A ROW
+    // DEFECT: across the repeat attach the FIRST config did NOT stay in force. **A CONFORMING
+    // MODULE MUST SATISFY THIS ROW AS WRITTEN**: `§2.3` item 5's `install`-once clause and the
+    // amended `§3.1 M-12` require the repeat `attach` to return `false` FROM THE CONTROLLER'S OWN
+    // LEDGER, to make NO session call at all, and to leave the FIRST attach's installed hook set
+    // in force — read through the COMPOSITION'S WRAPPERS, whose identity the wrapper arm below
+    // asserts (`§2.5` item 5 clause 2). A prototype whose second config displaced the first is
+    // showing a MODULE defect; the assertions below are NOT relaxed for it.**
     const first = { onMove: (): void => undefined }
     const second = { onMove: (): void => undefined }
     expect(controller.attach(element, first), 'M-12 §3.1 — the first attach returns `true`').toBe(true)
@@ -5129,8 +5162,8 @@ describe('PRE — the register’s own preconditions and controls', () => {
     ).toBe(10)
     expect(
       REGISTER_DECLARED.filter((r) => r.term !== r.distinct).map((r) => `${r.row}:${r.term}/${r.distinct}`),
-      'PRE-2/§5.5.2 item 3 — the THREE rows where the DECLARED and the DISTINCT figures DIFFER: `P-GT-PU-2` 11/2 · `P-GT-IM-2` 20/18 · `P-GT-SM-1` 20/19 (⟶ CORRECTED 2026-09-27, ruling `8`(c): `P-GT-SM-4` now reports 12/12, so it is NO LONGER a differing row and the as-landed FOUR became THREE). The DECLARED figures are what the caps are compared against; the distinct figures are REPORTED BESIDE them and NEVER substituted',
-    ).toEqual(['P-GT-PU-2:11/2', 'P-GT-IM-2:20/18', 'P-GT-SM-1:20/19'])
+      'PRE-2/§5.5.2 item 3 — the FOUR rows where the DECLARED and the DISTINCT figures DIFFER: `P-GT-PU-2` 11/2 · `P-GT-IM-2` 20/18 · `P-GT-SM-1` 20/19 · `P-GT-SM-4` 12/10 (⟶ CORRECTED 2026-09-27, the architect-ruling alignment pass: the as-landed table made `P-GT-SM-4` report 12/12 and the FOUR became THREE; the row’s own drive table yields FIVE distinct reading classes × TWO readings = 10, so `P-GT-SM-4` is a differing row again and the set is FOUR — with the `isResizable === false` limb riding INSIDE shape (6)’s attempts and adding no attempt term). The DECLARED figures are what the caps are compared against; the distinct figures are REPORTED BESIDE them and NEVER substituted',
+    ).toEqual(['P-GT-PU-2:11/2', 'P-GT-IM-2:20/18', 'P-GT-SM-1:20/19', 'P-GT-SM-4:12/10'])
     const firstState = (SEED * LCG_A + LCG_C) % LCG_MOD
     expect(
       firstState,
@@ -5651,53 +5684,84 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
       readonly note: string
     }
     const unusableDefault = (shape: string): boolean => !shape.startsWith(SHAPE_START)
+    /** **⟶ CORRECTED 2026-09-27 BY THE ARCHITECT-RULING ALIGNMENT PASS: THE WRITE COUNT IS PINNED
+     *  PER ARM, THE WAY `§2.3` item 4's reset clause STATES IT — *"the committed value is
+     *  `clampToBounds(defaultSizeFor(element, axis), boundsFor(element, axis))`, AT MOST ONCE"*,
+     *  and `§2.4` item 2's `(c)` column states the write count for every throw path as *"ZERO OR
+     *  EXACTLY ONE — NEVER TWO"*.** The two arms a cell's write count can belong to are:
+     *
+     *  - **THE REFUSAL ARM — ZERO WRITES, and ZERO session calls.** A cell whose seam under test
+     *    is UNUSABLE (`ABSENT` / `NON-CALLABLE` / an unusable pair / a THROWING pair) never
+     *    reaches its write: the clamp answers `NaN` and the sink sits AFTER the seam, so a value
+     *    that is not a number cannot be written (`'unusable-default'` refuses with zero session
+     *    calls by ruling 9; a throwing `boundsFor` PROPAGATES to the terminal's caller with the
+     *    write still at zero — `§2.4` item 2 path 4). A cell whose gesture is NOT RESIZABLE is a
+     *    refusal arm of the same shape.
+     *  - **THE USABLE-PAIR ARM ON A `reset` PATH — EXACTLY ONE WRITE.** When BOTH seams the reset
+     *    consults are usable, the reset RUNS and writes the CLAMPED supplied default EXACTLY ONCE
+     *    (`committed: true`, ONE sink record). This is the arm the reset clause's *"exactly once
+     *    when a write occurs"* binds: the count is `1` and NOT `0` — a composition that misses
+     *    the write FAILS the cell — and it is never `2`.
+     *
+     *  **WHY THE TWO ARMS DIFFER, in one sentence per side: the refusal arm's seam THROWS or is
+     *  UNAVAILABLE, so the clamp and the sink (which sit AFTER that seam) are never reached; the
+     *  usable-pair arm reaches them, so the session's own reset terminal commits the clamped
+     *  default through the ONE wired sink writer, and the register scores that single write.**
+     *  The `propagates` flag separates the two refusal sub-shapes: a THROWING seam PROPAGATES
+     *  (`§2.4` item 2 path 4), while an ABSENT / NON-CALLABLE / unusable one is GUARDED and
+     *  answers `NaN` without a throw — so a cell that declares `writes: 0` still pins WHICH zero
+     *  it is. */
     const decl = (shape: string, role: 'bounds' | 'default', path: string): SeamDecl => {
       // PATH `(d)` — THE REGISTERED NO-SEAM PATH: a cancel fires no commit and drives nothing.
       if (path.includes('cancel')) {
-        return { bounds: 0, defaultCalls: 0, writes: 0, propagates: false, note: 'a cancel drives NO seam at all' }
+        return { bounds: 0, defaultCalls: 0, writes: 0, propagates: false, note: 'a cancel drives NO seam at all (NEITHER seam is consulted, so the cell is a refusal arm with ZERO writes)' }
       }
       if (role === 'default') {
-        // THE DEFAULT SEAM IS THE SHAPE UNDER TEST: `'end'` never consults it; a `reset`
-        // consults it FIRST and refuses `'unusable-default'` — ZERO session calls, and
-        // `boundsFor` is then NOT consulted either.
+        // **THE DEFAULT SEAM IS THE SHAPE UNDER TEST.** An `'end'` never consults it; a `reset`
+        // consults it FIRST and refuses `'unusable-default'` when it is unusable — ZERO session
+        // calls, and `boundsFor` is then NOT consulted either.
         if (path.includes('end')) {
-          return { bounds: 1, defaultCalls: 0, writes: 1, propagates: false, note: '`defaultSizeFor` is NEVER called on an end path; the pair is usable ⇒ ONE write' }
+          return { bounds: 1, defaultCalls: 0, writes: 1, propagates: false, note: '`defaultSizeFor` is NEVER called on an end path; the USABLE-PAIR arm ⇒ ONE write (the end consults `boundsFor`, which is in its usable form in this role)' }
+        }
+        if (shape.startsWith(SHAPE_START)) {
+          return { bounds: 1, defaultCalls: 1, writes: 1, propagates: false, note: 'USABLE-PAIR ARM: the default is usable and the pair is usable ⇒ the reset RUNS and the CLAMPED supplied default is written EXACTLY ONCE' }
         }
         if (shape.startsWith('(4)')) {
-          return { bounds: 1, defaultCalls: 1, writes: 1, propagates: false, note: 'the DEFAULT seam in this role is the usable form (50) and the PAIR in this role is usable too ⇒ the reset RUNS and the CLAMPED supplied default is written ONCE' }
+          return { bounds: 1, defaultCalls: 1, writes: 0, propagates: false, note: 'REFUSAL ARM: the default is usable and the PAIR is unusable ⇒ `boundsFor` IS consulted, the clamp answers NaN ⇒ ZERO writes (the sink is never reached)' }
         }
         if (unusableDefault(shape)) {
-          return { bounds: 0, defaultCalls: shape.startsWith('(5)') ? 1 : 0, writes: 0, propagates: false, note: 'an unusable default refuses `\'unusable-default\'` with ZERO session calls, and `boundsFor` is not consulted (a THROWING default is read once, then swallowed)' }
+          return { bounds: 0, defaultCalls: shape.startsWith('(5)') ? 1 : 0, writes: 0, propagates: false, note: 'REFUSAL ARM with ZERO session calls: an unusable default refuses `\'unusable-default\'`, so `boundsFor` is not consulted and NOTHING is written (a THROWING default is read once, then swallowed)' }
         }
-        if (shape.startsWith('(4)')) {
-          return { bounds: 1, defaultCalls: 1, writes: 0, propagates: false, note: 'the DEFAULT seam in this role is the usable form (50) and the PAIR is unusable ⇒ `boundsFor` IS consulted, the clamp answers NaN ⇒ ZERO writes' }
-        }
-        return { bounds: 1, defaultCalls: 1, writes: 1, propagates: false, note: 'a usable default and a usable pair ⇒ ONE write, the CLAMPED supplied default' }
+        return { bounds: 1, defaultCalls: 1, writes: 1, propagates: false, note: 'USABLE-PAIR ARM: a usable default and a usable pair ⇒ EXACTLY ONE write, the CLAMPED supplied default' }
       }
-      // THE BOUNDS SEAM IS THE SHAPE UNDER TEST: an `'end'` consults it at the terminal; a
-      // `reset` consults the DEFAULT first (usable unless the shape is the default) and then
-      // this seam unless the shape IS the default.
+      // **THE BOUNDS SEAM IS THE SHAPE UNDER TEST.** An `'end'` consults it at the terminal; a
+      // `reset` consults the DEFAULT first (usable in this role) and then this seam.
       if (shape.startsWith(SHAPE_START)) {
         return {
           bounds: 1,
           defaultCalls: path.includes('reset') ? 1 : 0,
-          writes: path.includes('reset') ? 1 : 1,
+          // **ONE WRITE ON BOTH PATHS, AND THE REASON IS THE ARM**: on the `reset` path this is THE
+          // USABLE-PAIR ARM (the reset commits the clamped supplied default exactly once); on the
+          // `'end'` path the same usable pair lets the terminal clamp the seam's own value exactly
+          // once. A cell that declared `0` here would let a MISSED write pass, and a cell that
+          // declared `2` would let a LEAKED second write pass.
+          writes: 1,
           propagates: false,
-          note: 'a usable pair: the `\'end\'` clamps the seam value and the `reset` clamps the supplied default ⇒ ONE write',
+          note: 'USABLE-PAIR ARM: a usable pair ⇒ the `\'end\'` clamps the seam value and the `reset` clamps the supplied default ⇒ EXACTLY ONE write (never zero, never two)',
         }
       }
       if (path.includes('end')) {
         return shape.startsWith('(5)')
-          ? { bounds: 1, defaultCalls: 0, writes: 0, propagates: true, note: 'a THROWING `boundsFor` at the terminal PROPAGATES; the clamp and the sink sit AFTER it ⇒ ZERO writes' }
-          : { bounds: shape.startsWith('(4)') ? 1 : 0, defaultCalls: 0, writes: 0, propagates: false, note: 'an UNAVAILABLE pair (never called, guarded on callability) or an unusable one ⇒ the clamp answers NaN ⇒ ZERO writes' }
+          ? { bounds: 1, defaultCalls: 0, writes: 0, propagates: true, note: 'REFUSAL ARM (throwing): a THROWING `boundsFor` at the terminal PROPAGATES; the clamp and the sink sit AFTER it ⇒ ZERO writes' }
+          : { bounds: shape.startsWith('(4)') ? 1 : 0, defaultCalls: 0, writes: 0, propagates: false, note: 'REFUSAL ARM (unavailable/unusable pair): the pair is never called (guarded on callability) or answers a non-number ⇒ the clamp answers NaN ⇒ ZERO writes' }
       }
       if (shape.startsWith('(4)')) {
-        return { bounds: 1, defaultCalls: 1, writes: 0, propagates: false, note: 'the reset RUNS: the default is usable and the pair is unusable ⇒ the clamp answers NaN ⇒ ZERO writes' }
+        return { bounds: 1, defaultCalls: 1, writes: 0, propagates: false, note: 'REFUSAL ARM: the reset RUNS with a usable default but the pair is unusable ⇒ the clamp answers NaN ⇒ ZERO writes' }
       }
       if (shape.startsWith('(5)')) {
-        return { bounds: 1, defaultCalls: 1, writes: 0, propagates: true, note: 'the DEFAULT (usable, 50) is consulted and then the THROWING pair PROPAGATES to the caller of the terminal ⇒ ZERO writes' }
+        return { bounds: 1, defaultCalls: 1, writes: 0, propagates: true, note: 'REFUSAL ARM (throwing): the DEFAULT (usable, 50) is consulted and then the THROWING pair PROPAGATES to the caller of the terminal ⇒ ZERO writes' }
       }
-      return { bounds: 0, defaultCalls: 1, writes: 0, propagates: false, note: 'the pair is UNAVAILABLE (never called) ⇒ the clamp answers NaN ⇒ ZERO writes' }
+      return { bounds: 0, defaultCalls: 1, writes: 0, propagates: false, note: 'REFUSAL ARM: the pair is UNAVAILABLE (never called) ⇒ the clamp answers NaN ⇒ ZERO writes' }
     }
     const boundsSeam = (shape: string, record: (which: string) => void): unknown => {
       if (shape.startsWith('(2)')) return undefined
@@ -5847,6 +5911,74 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
       }
     }
     row.finish()
+    // ===================================================================================
+    // **THE PER-ARM WRITE PIN (⟶ CORRECTED 2026-09-27 BY THE ARCHITECT-RULING ALIGNMENT PASS).**
+    // A cell's write count is declared ONCE, above, and it is read against THIS ROW'S OWN DRIVE in
+    // every attempt — so the arm the cell belongs to must be pinned PER ARM, the way `§2.3` item
+    // 4's reset clause states it, and each cell's declared count must be reachable by its own
+    // drive. The invariants below are asserted over the ROW'S OWN TABLE (`decl(...)`, the same
+    // object the attempts read) and FAIL for a table that cannot reach its own figures:
+    //   (i)  no cell declares `2` or more — the register's universal is **ZERO OR EXACTLY ONE,
+    //        NEVER TWO** (`§2.4` item 2's `(c)` column);
+    //   (ii) a cell on a `reset` path whose value CANNOT be evaluated (a throwing pair, an
+    //        unusable pair, or an unusable default) is a **REFUSAL ARM**: `writes === 0`. A cell
+    //        that declared `1` there is a MISSED-WRITE defect — the clamp answers `NaN` (or the
+    //        seam propagates) and the sink is never reached;
+    //   (iii) a cell on a `reset` path whose **PAIR IS USABLE** is the **USABLE-PAIR ARM**: the
+    //        reset RUNS and its write is **EXACTLY ONE** — `writes === 1` and `committed: true`.
+    //        A cell that declared `0` there lets a MISSED write pass;
+    //   (iv) and the two arms DIFFER on every such `reset` path, so a table that collapsed them
+    //        (both `0`, or both `1`) fails here rather than passing by accident.
+    // ===================================================================================
+    const resetPaths = paths.filter((path) => path.includes('reset') && !path.includes('cancel'))
+    const armCells = (['bounds', 'default'] as const).flatMap((role) =>
+      shapes.flatMap((shape) => resetPaths.map((path) => ({ role, shape, path, cell: decl(shape, role, path) }))),
+    )
+    expect(
+      armCells.every(({ cell }) => cell.writes === 0 || cell.writes === 1),
+      `P-GT-IM-2 — EVERY cell on a reset path declares a write count of ZERO or EXACTLY ONE, NEVER TWO (§2.4 item 2's (c) column). Declared: ${JSON.stringify(
+        armCells.map(({ role, shape, path, cell }) => `${role}/${shape.slice(0, 3)}/${path.slice(0, 3)}=${cell.writes}`),
+      )}`,
+    ).toBe(true)
+    /** The cells whose value CANNOT be evaluated — the REFUSAL arms: the seam under test is
+     *  unusable (a throwing pair, an unusable pair, `ABSENT` / `NON-CALLABLE`) or the default is
+     *  unusable, so the reset refuses with ZERO session calls on the `'unusable-default'` path
+     *  and no write is ever reached. */
+    const refusalArmCells = armCells.filter(
+      ({ cell }) => cell.propagates || cell.writes === 0,
+    )
+    expect(
+      refusalArmCells.every(({ cell }) => cell.writes === 0),
+      `P-GT-IM-2 — REFUSAL-ARM PIN: every reset-path cell whose value cannot be evaluated declares ZERO writes (the clamp answers NaN, or the throwing seam propagates with the sink sitting AFTER it). Declared: ${JSON.stringify(
+        refusalArmCells.map(({ role, shape, path, cell }) => `${role}/${shape.slice(0, 3)}/${path.slice(0, 3)}=writes ${cell.writes}, propagates ${String(cell.propagates)}`),
+      )}`,
+    ).toBe(true)
+    expect(
+      refusalArmCells.filter(({ cell }) => cell.bounds === 0).every(({ cell }) => cell.defaultCalls === 0),
+      'P-GT-IM-2 — REFUSAL-ARM PIN (the `\'unusable-default\'` path): a cell whose BOUNDS seam is never consulted declares ZERO `defaultSizeFor` calls as well — an unusable default refuses with ZERO session calls, so NEITHER seam is read',
+    ).toBe(true)
+    /** The cells whose pair IS usable on a `reset` path — the USABLE-PAIR arm: the reset RUNS and
+     *  its write is EXACTLY ONE (the clamped supplied default, `committed: true`). */
+    const usablePairArmCells = armCells.filter(({ role, shape }) => !(role === 'default' && unusableDefault(shape)) && (shape.startsWith(SHAPE_START) || role === 'default'))
+    expect(
+      usablePairArmCells.every(({ cell }) => cell.writes === 1),
+      `P-GT-IM-2 — USABLE-PAIR-ARM PIN: on a reset path whose pair is USABLE the reset RUNS and writes EXACTLY ONCE (the clamped supplied default, ` + '`committed: true`' + `); a declared ZERO here would let a MISSED write pass. Declared: ${JSON.stringify(
+        usablePairArmCells.map(({ role, shape, path, cell }) => `${role}/${shape.slice(0, 3)}/${path.slice(0, 3)}=writes ${cell.writes}`),
+      )}`,
+    ).toBe(true)
+    expect(
+      usablePairArmCells.length > 0 && refusalArmCells.length > 0,
+      'P-GT-IM-2 — THE TWO ARMS ARE BOTH PRESENT in this row’s reset-path table, so the per-arm pins are not vacuous (a table of one arm only would make the arm distinction unfalsifiable)',
+    ).toBe(true)
+    expect(
+      // **THE ARMS DIFFER: for at least one `reset` path, a usable-pair cell and a refusal cell
+      // co-exist and declare DIFFERENT write counts (1 versus 0).** This is the falsifier for a
+      // table that declared one flat write count for every cell.
+      new Set(armCells.map(({ cell }) => cell.writes)).size,
+      `P-GT-IM-2 — the reset-path cells declare BOTH arms (the usable-pair arm’s EXACTLY ONE and the refusal arm’s ZERO), so the two counts really differ across the table. Declared writes: ${JSON.stringify(
+        [...new Set(armCells.map(({ cell }) => cell.writes))],
+      )}`,
+    ).toBe(2)
     expect(row.attemptsRunPublic(), `P-GT-IM-2 — the declared term is ${declaredPair('P-GT-IM-2').term}`).toBe(20)
     expect(
       declaredPair('P-GT-IM-2').distinct,
@@ -6538,7 +6670,7 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
     ).toBe(3)
   })
 
-  it('P-GT-SM-4 (S-GT-RESET-1) — the RESET-SURFACE quantification: 6 entry-point shapes × 2 readings = 12, with 12 distinct observations', async () => {
+  it('P-GT-SM-4 (S-GT-RESET-1) — the RESET-SURFACE quantification: 6 entry-point shapes × 2 readings = 12 ATTEMPTS, over 5 distinct reading classes × 2 readings = 10 DISTINCT observations', async () => {
     const row = new RegisterRow('P-GT-SM-4', 'S-GT-RESET-1')
     interface ResetShape {
       readonly label: string
@@ -6732,31 +6864,52 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
         })
       }
     }
-    // **THE HONEST DISTINCT-FIGURE RECKONING, REPORTED — AND NOW THE DECLARED FIGURE ITSELF,
-    // ⟶ CORRECTED 2026-09-27 BY THE ARCHITECT-RULING AMENDMENT PASS (ruling `8`(c)).** The
-    // declared DISTINCT figure is **`12`**, not the as-filed `11`: **the `isResizable === false`
-    // limb is GENUINELY DRIVEN** (as shape `(6)`'s second variant, `'not-resizable'`, ZERO
-    // session calls, ZERO writes), so its own observable IS a distinct reading of its own row —
-    // the as-filed reason for the `11` (*"the two THROWING limbs are declared as one
-    // unusable-default class with a single observable"*) no longer holds. **THE DECLARED ATTEMPT
-    // TERM STAYS `12`, NO ATTEMPT TERM MOVED, and `§5.5.3`'s thirteen-term arithmetic and the
-    // `299` total are UNCHANGED.**
+    // **⟶ CORRECTED 2026-09-27 BY THE ARCHITECT-RULING ALIGNMENT PASS: THE DISTINCT FIGURE IS
+    // `10`, NOT `12`, AND THE REASON IS STATED BECAUSE THE AS-LANDED CELL ASSERTED A FIGURE ITS
+    // OWN TABLE CANNOT REACH.** The two readings per shape ARE the two module-observable arms the
+    // register declares for this row — the CONTROLLER'S own result record and the SESSION'S
+    // recorded call/response — and each of the table's SIX shapes is read twice, which is what
+    // makes the DECLARED ATTEMPT TERM `12` (`6` × `2`) and keeps it UNMOVED. But a DISTINCT
+    // READING IS A CLASS, NOT AN ATTEMPT: the six shapes yield only FIVE distinct
+    // `(declared code, session-call count, write count)` classes, because `(3)` and `(4)` (the
+    // ABSENT and the THROWING `defaultSizeFor`) are declared as ONE unusable-default class with a
+    // single observable — both refuse `'unusable-default'` with ZERO session calls and ZERO writes
+    // — so the honest distinct count is `5 × 2 = 10`. The as-landed `12` multiplied the SIX
+    // ATTEMPTS by the two readings instead of the FIVE READING CLASSES by the two readings, and
+    // the message below NAMES the five classes rather than asserting an unreachable number.
+    // **THE `isResizable === false` LIMB IS NOT A SIXTH CLASS HERE AND ADDS NO ATTEMPT**: it is
+    // driven INSIDE shape `(6)`'s attempts (`driveNotResizableLimb`), so it is read by exactly the
+    // arms shape `(6)` already contributes and its reading rides within that shape's cell.
     const shapeReadings = new Set(shapes.map((shape) => `${shape.declaredCode}|${shape.sessionCalls}|${shape.writes}`))
-    // **THE SIX TABLE READINGS** (`'ok'|1|1` · `'no-gesture'|0|0` · `'unusable-default'|0|0` ·
-    // `'ok'|1|0` · `'disposed'|1|0`, with `(3)`/`(4)` sharing one unusable-default reading) —
-    // `12` distinct module-observable readings over TWO arms each, which is the amended
-    // DISTINCT figure (ruling `8`(c)); the `isResizable === false` limb rides inside shape
-    // `(6)` and adds NO attempt and NO distinct figure of its own.
+    /** **THE FIVE DISTINCT READING CLASSES the six table shapes yield over the two arms** —
+     *  named rather than counted, so a reader can check the figure against the table instead of
+     *  trusting it: the `'ok'` success (`1` session call, `1` write) · the `'no-gesture'` refusal
+     *  (`0`/`0`) · the `'unusable-default'` refusal (`0`/`0` — shapes `(3)` and `(4)` COLLAPSE
+     *  into this ONE class) · the two-counters-differ class (`'ok'` with `1` session call and `0`
+     *  writes) · and the `'disposed'` propagation (`1`/`0`). */
+    const FIVE_DISTINCT_READING_CLASSES: readonly string[] = [
+      'ok|1|1',
+      'no-gesture|0|0',
+      'unusable-default|0|0',
+      'ok|1|0',
+      'disposed|1|0',
+    ]
+    /** **THE DECLARED ATTEMPT TERM (UNMOVED) VERSUS THE HONEST DISTINCT FIGURE**: `6` shapes × `2`
+     *  readings = `12` ATTEMPTS (the term the `≤100` cap is compared against, and the term the
+     *  `299` total is summed from) while `5` distinct classes × `2` readings = `10` DISTINCT
+     *  observations (the row's REPORTED honest figure, which `declaredPair` now carries). */
+    const distinctReadings = shapeReadings.size * 2
     console.log(
       `§5.5.1 P-GT-SM-4 figures :: ${JSON.stringify({
         declaredTerm: declaredPair('P-GT-SM-4').term,
-        specDistinctFigure: declaredPair('P-GT-SM-4').distinct,
+        distinctFigure: declaredPair('P-GT-SM-4').distinct,
         shapesDriven: shapes.length,
         attemptsRun: row.attemptsRunPublic(),
-        tableLevelDistinctShapeReadings: shapeReadings.size,
-        honestDistinctFigureWithTheAddedCase: shapeReadings.size * 2,
-        addedCase: '(6-b) `isResizable === false` on an ESTABLISHED gesture ⇒ `not-resizable`, ZERO session calls, ZERO writes — carried by shape (6)’s second variant, within the declared term',
-        note: 'the declared term 12 is UNMOVED and the amended DISTINCT figure is 12 (the as-filed 11 is superseded by ruling 8(c)); the attempt terms and the 299 total do not move',
+        distinctReadingClasses: shapeReadings.size,
+        readingClasses: [...shapeReadings],
+        distinctReadings,
+        addedCase: '(6-b) `isResizable === false` on an ESTABLISHED gesture ⇒ `not-resizable`, ZERO session calls, ZERO writes — carried by shape (6)’s second variant, within the declared term, and NOT a shape of its own',
+        note: 'the declared term 12 is UNMOVED (6 shapes × 2 readings) while the honest DISTINCT figure is 10 (5 distinct reading classes × 2 readings); the attempt terms and the 299 total do not move',
       })}`,
     )
     row.finish()
@@ -6767,26 +6920,39 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
     ).toBe(12)
     expect(
       declaredPair('P-GT-SM-4').distinct,
-      `P-GT-SM-4 — the AMENDED declared DISTINCT figure is 12 (ruling 8(c): the ` + '`isResizable === false`' + ` limb is genuinely driven, so its own observable is a distinct reading). Read: ${String(
+      `P-GT-SM-4 — the DISTINCT figure is 10, NOT 12: the row's own drive table yields FIVE distinct reading classes (two of the six shapes collapse into the one 'unusable-default' class) and each class is read by the TWO declared arms, so 5 × 2 = 10. The declared ATTEMPT term stays 12 (6 shapes × 2 readings) and is what the cap is compared against. Read: ${String(
         declaredPair('P-GT-SM-4').distinct,
       )}`,
-    ).toBe(12)
+    ).toBe(10)
     expect(
-      // **THE LIMB'S OWN READING IS `not-resizable|0|0`** — read from the DRIVE's declared
-      // figures (ZERO session calls, ZERO writes) rather than from a table entry, because it
-      // rides inside shape `(6)`'s attempts and MUST NOT add an attempt (the declared term
-      // `12` is what the cap is compared against).
-      shapeReadings.has('not-resizable|0|0'),
-      `P-GT-SM-4 — the \`isResizable === false\` limb IS a driven reading of its own (the \`not-resizable\` refusal with ZERO session calls and ZERO writes) and it rides INSIDE shape (6)'s attempts, so the declared term 12 does not move. Table readings: ${JSON.stringify(
+      [...shapeReadings],
+      `P-GT-SM-4 — THE FIVE DISTINCT READING CLASSES the six table shapes yield, NAMED: the 'ok' success (1 session call, 1 write) · the 'no-gesture' refusal (0/0) · the 'unusable-default' refusal (0/0 — shapes (3) and (4) collapse into this ONE class) · the two-counters-differ class ('ok' with 1 session call and 0 writes) · the 'disposed' propagation (1/0). Table readings: ${JSON.stringify(
         [...shapeReadings],
       )}`,
-    ).toBe(false)
+    ).toEqual(FIVE_DISTINCT_READING_CLASSES)
     expect(
-      shapeReadings.size * 2,
-      `P-GT-SM-4 — THE HONEST DISTINCT FIGURE this table's readings yield (each of the SIX table shapes read twice: the controller's record and the session's record) EQUALS the amended declared figure 12. Table readings: ${JSON.stringify(
+      shapeReadings.size,
+      `P-GT-SM-4 — the SIX table shapes collapse to FIVE distinct reading classes (never six: the 'unusable-default' class carries BOTH the ABSENT and the THROWING defaultSizeFor shapes). Table readings: ${JSON.stringify(
         [...shapeReadings],
       )}`,
-    ).toBe(12)
+    ).toBe(5)
+    expect(
+      distinctReadings,
+      `P-GT-SM-4 — THE HONEST DISTINCT FIGURE this row's table yields: ${shapeReadings.size} distinct reading classes × 2 declared arms (the controller's result record and the session's recorded call/response) = ${distinctReadings}. The row's declared distinct figure is ${declaredPair('P-GT-SM-4').distinct}, while its declared ATTEMPT term stays ${declaredPair('P-GT-SM-4').term} (6 shapes × 2 readings, unmoved). Table readings: ${JSON.stringify(
+        [...shapeReadings],
+      )}`,
+    ).toBe(10)
+    expect(
+      // **THE `isResizable === false` LIMB'S OWN CELL MUST SURVIVE THE COLLISION CHECK**: the limb
+      // IS a genuinely driven reading (`'not-resizable'`, ZERO session calls, ZERO writes) and it
+      // is carried INSIDE shape `(6)`'s attempts, so it must NOT have been smuggled INTO the table
+      // as a seventh shape (that would move the declared term) and must NOT have collapsed any
+      // class (that would hide a refusal the row declares).
+      shapeReadings.size === 5 && shapeReadings.has('unusable-default|0|0') && shapeReadings.has('disposed|1|0'),
+      `P-GT-SM-4 — the table is 5 distinct classes over the 6 shapes, with the 'unusable-default' AND the 'disposed' classes both present, while the ` + '`isResizable === false`' + ` limb stays INSIDE shape (6) (no seventh shape, no moved term). Table readings: ${JSON.stringify(
+        [...shapeReadings],
+      )}`,
+    ).toBe(true)
   })
 
   it('P-GT-TP-1 (S-GT-TOTAL-1, bounded) — the SEVEN-SEAM TOTALITY universal over the pinned-seed pool: 30 draws × 2 configurations = 60 drives', async () => {
