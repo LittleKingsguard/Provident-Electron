@@ -51,7 +51,13 @@ the register's declared total is `299` (item 3's as-filed `314` is a corrected m
    exporting **TWO value exports and TEN type declarations = TWELVE exported names** (`§2.1`), whose
    factory options carry **EXACTLY SEVEN injected seams, NAMED and ORDERED, with `capture` ABSENT**
    (`§2.1` item 3), with **exactly one import statement** — a type-only import of the landed session
-   module (`§0A` note 2) — and with **no module-level mutable state**.
+   module (`§0A` note 2) — and with **no module-level mutable state**. — **⟶ CORRECTED 2026-09-27 (THE
+   ARCHITECT-RULING AMENDMENT PASS — ruling `8`(a)): the census is `2 + 10 = 12` EXACTLY, and the code
+   block beside it now AGREES with it. `ResizeCode` and `ResizeResetResult`, which the block AS FILED
+   also declared with an `export` keyword, are ruled **NON-EXPORTED module-local declarations** (the
+   as-filed forms are kept visible at their own sites in `§2.1`), so the export space is TWELVE names
+   and no fourteenth name exists. `§3.4 R-5` is unchanged and remains the row that FAILS for a third
+   value export or an extra exported type name.**
 3. **THE REGISTER (`§5.5.1`): `13` typed rows in FOUR families** — `P-GT-PU-1`..`P-GT-PU-3` ·
    `P-GT-IM-1`..`P-GT-IM-4` · `P-GT-SM-1`..`P-GT-SM-4` · `P-GT-TP-1`..`P-GT-TP-2` — **`299` declared
    attempts, printed with their thirteen terms and a term-by-term addition at `§5.5.3`**, one pinned-seed
@@ -142,6 +148,96 @@ families.
 **THE UNIT REMAINS NOT GREEN.** **Its red set has RUN and REPORTED — `90` rows, `71` failed / `19`
 passed — and the Implementer's green is the NEXT STEP, not this pass's.** **This pass claims NO green,
 takes NO gate, and writes NO DONE claim.**
+
+**⟶ RECORDED 2026-09-27 (THE ARCHITECT-RULING AMENDMENT PASS) — THIS PASS'S AMENDMENTS, LISTED SO THEY
+ARE ATTRIBUTABLE AND BOUNDED.** **WHAT PROMPTED IT: the architect supplied the INTENDED GUTTER BEHAVIOUR
+and RULED THE SCOPE QUESTION, which pins the decisions the gate-3 red set found missing. THE PASS'S OWN
+EXTENT: THIS FILE ONLY** — **no `src/**`, no `tests/**`, no tracker, no sibling spec, no
+`docs/specs/gutter-review.md` and no `src/shared/gesture-session.ts` touched, no commit and no writing git
+command of any kind.**
+
+**(1) THE VALUE IS CONSUMER-PRODUCED, STATED AS A CLAUSE** — landed at `§1` item 2 (`§2.3` item 1,
+`§2.3` item 3's preview rule): *the drag's value is produced by the CONSUMER and pushed with
+`gesture.set(value)` in its own `onMove`; `sizeFor(element, gesture, axis)` reads that
+consumer-produced value AT THE TERMINAL, at most once; the module reads neither a coordinate nor an event
+object; and **NO CLAUSE OF THIS UNIT MAY CLAIM A DRAG PRODUCES A SIZE**.* This resolves
+`E3`-BLOCK-5's premise and the gate-1 "no gesture-computable input" finding. **The intended-behaviour
+note it serves is `§0A` note 13 (NON-NORMATIVE), whose OWNER is ledger row `E10`**
+(`NOT THIS UNIT / PROPOSED`).
+**(2) THE PREVIEW CHANNEL RULE** — landed at `§2.3` item 3, at `§2.3` item 1's falsifiable clauses and at
+`§2.6` item `4b`: *the live drag feedback is a TRANSIENT VIEW channel the CONSUMER owns — never the
+SINK; the sink is written AT MOST ONCE PER GESTURE and only at a terminal, so a preview write that
+reaches the sink is a VIOLATION the write-count rows must be able to fail.* **This is what keeps *"cancel
+⇒ zero sink writes"* meaningful in the presence of live feedback.**
+**(3) THE RELEASE MAPPING** — landed at `§2.3` item 4 (a new clause block above its numbered clauses) and
+at `§2.5` item 5 clause `1b`: *VALID dragged state ⇒ the session's `end` terminal ⇒ EXACTLY ONE commit of
+the CLAMPED DRAGGED VALUE; INVALID ⇒ the session's `reset` terminal with the SUPPLIED DEFAULT, which for
+this behaviour is THE PRE-DRAG SIZE THE CONSUMER HOLDS (the session holds no cross-gesture state) ⇒
+EXACTLY ONE commit of the CLAMPED SUPPLIED DEFAULT; RIGHT-CLICK / DROP ⇒ the session's `cancel` terminal
+⇒ ZERO COMMITS AND ZERO SINK WRITES, with the visible revert belonging to the CONSUMER's preview channel
+and NOT to the sink.* **`gesture.outcome` (`'end'` vs `'reset'` vs a cancel's no-commit) is how the
+consumer distinguishes them, and `controller.reset(element)` is the surface for the invalid-release and
+drop-revert paths.** The existing reset clauses are kept consistent: no second writer, and no session
+call without an active gesture (`'no-gesture'`, clause 3).
+**(4) CAPTURE OWNERSHIP** — landed at `§2.1` item 5 and `§0A` note 7 (cross-referenced): *any capture a
+real drag affordance needs is `E10`'s decision and `E10`'s install path, not this unit's; `capture` stays
+ABSENT from `attach`'s options and the controller has no `capture` option; the session's PARKED
+release-after-failed-establishment note KEEPS ITS EXISTING TRIGGER.*
+**(5) THE HANDLE CHANNEL** — landed at `§2.5` item 5 clause 2, `§2.3` item 4 clause 1 and `§2.1` item 5
+(the wrapper), with `§3.1 M-12` NARROWED: *the frozen session's `onStart` receives ONLY THE ELEMENT, so
+the controller CAPTURES THE HANDLE IN ITS OWN `onMove` WRAPPER, never synthesises one and never retains
+it past a terminal; `M-12`'s identity requirement binds the handle ARGUMENT the CONSUMER's own `onMove`
+hook receives (forwarded unchanged; not swallowed, reordered or altered), while THE WRAPPER'S OWN CAPTURE
+of that same handle for the controller's reset path is EXPLICITLY PERMITTED — because `session.begin` is
+forbidden to the controller, `onMove` is the ONLY legal channel.* Resolves `E3`-BLOCK-5.
+**(6) WHO INVOKES THE SINK** — landed at `§2.5` item 4 (the pinned wiring), `§2.3` item 3 and `§5.5.1`'s
+`P-GT-SM-1` and `P-GT-SM-3` cells: *the composition wires the SESSION's `commit` option to EXACTLY ONE
+CALLBACK — the composition's SINGLE SINK WRITER — invoked at most once per gesture, only at an
+`end`/`reset` terminal and never on a `cancel`; the controller writes NOTHING from any hook; when a
+harness registers its own commit channel the composition's wiring is STILL THE SINGLE WRITER, and the two
+recorded readings are the SINK'S OWN CALL RECORD vs the CONTROLLER'S COUNTER — they DIVERGE exactly when
+a second writer exists, and that divergence is the falsifier.* **`§5.5.1`'s `P-GT-SM-1`/`P-GT-SM-3` and
+the `P-GT-IM-1`/`P-GT-IM-2` cells are therefore read against ONE wiring.** Resolves `E3`-BLOCK-3.
+**(7) THE `R-16` GREEN FORM** — landed at `§3.5 R-16` (both branches named, with the RED branch and the
+GREEN branch explicit) and at `§5.3` item 10: *RED branch (module absent at red time) ⇒ assert ABSENCE +
+no unit paths; GREEN branch (module present at green time) ⇒ assert the module EXISTS, that it is NOT
+IMPORTED BY ANY `src/**` FILE, and that the export census holds — and the row MUST BRANCH on the module's
+presence rather than fail because the work was done.* Resolves `E3`-BLOCK-1.
+**(8) THE TWO MEASURED CORRECTIONS** — **(a)** at `§2.1`'s EXPORT CENSUS, at the census cell of the
+`CURRENT STATE` block and at `§5.3` item 3: `ResizeCode` and `ResizeResetResult` are ruled
+**NON-EXPORTED module-local declarations**, so the block AGREES with the census — **`2 + 10 = 12`, the
+same twelve names, and no fourteenth name**; **(b)** the `clampToBounds` MECHANISM sentence is corrected:
+the required mechanism is a **`typeof` GATE ON `value` AS WELL AS ON THE TWO BOUNDS** (the as-filed
+claim that *"a non-number `value` falls out as `NaN` by the arithmetic"* is FALSE for the verbatim
+formula — `Math.min(null, 100) = 0`, `true → 1`, `[] → 0`, `'12' → 12`, and `12n`/a `Symbol` THROW),
+**with the fail-state table's declared answers UNCHANGED**; **(c)** `P-GT-SM-4`'s declared DISTINCT figure
+is corrected from `11` to **`12`** at `§5.5.1`'s cell, `§5.5.2` item 3's ledger and `§5.3` item 11 —
+because the `isResizable === false` limb is GENUINELY DRIVEN — **while the declared ATTEMPT TERM `12`,
+the `299` total and every other term do NOT move** (`§5.5.3`).
+**(9) THE STOP CONDITIONS AND THE CITATION INDEX** — landed at `§4.4` (the three new classes, each as a
+dated `⟶` clause INSIDE the row whose class it belongs to: **a preview write reaching the sink** at
+`S-10`, **a second writer** at `S-11`, **a clause claiming a coordinate or a magnitude** at `S-9`/`S-10`)
+and at `§8` (the INTENDED-BEHAVIOUR row — owner `E10`, `NOT THIS UNIT / PROPOSED` — and the SCOPE RULING
+(A) row).
+
+**THE FOUR CONFIRMATIONS THIS PASS OWES, stated so they bind the reader:** **(i) NO REGISTER ROW WAS
+ADDED OR REMOVED** — the register is still the same `13` ATTEMPT-BEARING rows in the same FOUR families
+(`3` + `4` + `4` + `2`), and the term-less clause cell `P-GT-SM-5` stays OUTSIDE the arithmetic and the
+`≤400`-cap comparison; **(ii) NO ATTEMPT TERM MOVED** — not one of the thirteen terms, no family subtotal
+component, not the pinned seed `20260927`, not the caps, not the `(bounded)` set (`P-GT-PU-2` ·
+`P-GT-IM-2` · `P-GT-TP-1`, still `3` rows); **(iii) THE TOTAL REMAINS `299`, THE SUM OF ITS THIRTEEN
+TERMS** (`60 + 11 + 10 + 18 + 20 + 22 + 28 + 20 + 15 + 5 + 12 + 60 + 18 = 299`, the addition table at
+`§5.5.3`), and the only figure this pass corrected in that ledger is a **DISTINCT** figure that is REPORTED
+and never substituted (`P-GT-SM-4` `11` → `12`); and **(iv) NO SECTION WAS RENUMBERED AND NO COUNT
+MOVED** — no `§`-number was added or moved, the `§5.3 → §5.5` gap (no `§5.4`) and the absent `§5.5.0`
+stay exactly as recorded at `§5.3`'s note, **`§4.4`'s stop-condition table still carries THIRTEEN rows
+(its three new classes ride INSIDE `S-9`/`S-10`/`S-11`)**, and the only ids this pass adds anywhere are
+the two dated sub-ids **`§2.5` item 5 clause `1b`** and **`§2.6` item `4b`**, which are in-place
+additions that move no existing id.
+
+**THE UNIT REMAINS NOT GREEN.** **Its red set has RUN and REPORTED — `90` rows, `71` failed / `19`
+passed — and the TESTWRITER'S REPAIR of the landed rows and the IMPLEMENTER'S GREEN are the NEXT STEPS,
+not this pass's.** **This pass claims NO green, writes NO DONE claim and takes NO gate.**
 
 ---
 
@@ -297,6 +393,26 @@ thirteen-row register, and the red/green legs.** **No DONE row, no greens artifa
 describe this unit as having argued or answered the mechanism-vs-UI-element classification**
 (`docs/decisions.md` `GUTTER-WARRANT-IS-THE-RULING-PLUS-ITS-CLAUSE-ROWS`; the record's §3 counter-case).
 
+**Note 13 — THE INTENDED GUTTER BEHAVIOUR (NON-NORMATIVE), AND THE SCOPE RULING IT COMES WITH.**
+*(**⟶ ADDED 2026-09-27 BY THE ARCHITECT-RULING AMENDMENT PASS.**)* **This note is a NON-NORMATIVE
+INTERFACE NOTE — a RECORD of the architect's intent that the clauses of this file SERVE — and its OWNER
+is ledger row `E10` (`U-GUTTER-UI`), which is `NOT THIS UNIT / PROPOSED`, awaiting the architect's
+admission.** **THE NOTE'S STATUS IS STATED SO IT CANNOT BE MISREAD: the normative content of this file
+is its clause rows, not this note; every clause of this unit is FALSIFIABLE WITHOUT it, and a later pass
+that changes the intent amends `E10`'s own spec rather than this unit's contract.** **THE INTENDED
+BEHAVIOUR, in the architect's own sequence: ON MOUSEOVER THE CURSOR CHANGES TO THE VERTICAL/HORIZONTAL
+ADJUST SHAPE; ON CLICK THE GESTURE STARTS; ON DRAG THE RESIZED STATE IS SHOWN **LIVE FROM THE CURRENT
+CURSOR POSITION**; ON RELEASE A **VALID** DRAGGED STATE IS **COMMITTED** AND AN **INVALID** ONE IS
+**RESET**; ON **RIGHT-CLICK** THE DRAG IS **DROPPED AND RESET**.** **THE SCOPE RULING THAT PINS THE
+MISSING DECISIONS: `U-GUTTER` (`E3`) REMAINS THE POLICY-FREE CLAMP + COMMIT-DISCIPLINE LAYER, and the UI
+unit (`E10`) — ledger row, `PROPOSED — awaiting admission` — OWNS the cursor, the coordinates, the live
+preview, the capture decision and the drop-revert.** **`E3` READS NO COORDINATE AND NO EVENT FIELD, and
+the FROZEN SESSION IS NOT REOPENED by this ruling.** **What this note lands, and where: it is the
+intended behaviour the clauses at `§2.3` item 3 (the preview channel), `§2.3` item 4 (the release
+mapping), `§2.5` item 5 (the handle channel and the consumer's own `onMove`) and `§1` item 2 (the
+consumer-produced value) serve — and **none of those clauses may claim a drag produces a size**
+(`§4.4 S-10`).**
+
 **No item of `§7a` is decided here.** `§7a`/`§7a.1` report the clauses this filing could **not** derive
 from the record, each with a working default, a recommendation and the clause it blocks.
 
@@ -360,7 +476,13 @@ default**, and **no capture before establishment (inherited and OBSERVED)**.
    (`gsession.md` `§2.3` item 5/7, `I-11`), and **NO pass may claim agent-drivable drags, and no pass may
    claim this unit's committed value is magnitude-equivalent to `provident.op`'s `state-slice`.**
    **The value is CONSUMER-PRODUCED**: the consumer computes it in its own `onMove` and hands it back
-   with `gesture.set(value)`.
+   with `gesture.set(value)` — **and this is a CLAUSE, not an implication: `sizeFor(element, gesture,
+   axis)` reads that consumer-produced value at the terminal (at most once), this module reads NEITHER a
+   coordinate NOR an event object, and NO CLAUSE OF THIS UNIT MAY CLAIM THAT A DRAG PRODUCES A SIZE**
+   **(the intended-behaviour note this clause serves is `§0A` note 13, NON-NORMATIVE, whose owner is
+   ledger row `E10`, `PROPOSED — awaiting admission`; `§4.4 S-10` is the stop condition).** **The live
+   drag feedback — the resized state shown from the cursor — is the CONSUMER's TRANSIENT VIEW channel
+   and is NEVER the sink** (`§2.3` item 3's preview rule).
 3. **What the unit is NOT — no policy of its own.** **No default bound, no default size, no axis
    vocabulary, no threshold, no unit string, no token, no store, no census read and no second writer.**
    Every one of those is the **consumer's** and arrives **as an injected seam or an injected argument**
@@ -427,15 +549,40 @@ owned by this census, not a runtime row claim).
 
 **A row asserting only a COUNT without NAMING the names FAILS `R-5`'s own text** (`§4.4 S-7`).
 
+**⟶ CORRECTED 2026-09-27 (THE ARCHITECT-RULING AMENDMENT PASS — ruling `8`(a), a MEASURED
+census/block disagreement): the code block beside this census ALSO declared `export type ResizeCode`
+and `export interface ResizeResetResult`, so as filed the block declared FOURTEEN exported names while
+the census pinned `2 + 10 = 12`. THE RULING: `ResizeCode` and `ResizeResetResult` are **NON-EXPORTED
+module-local declarations**, and the block now AGREES with this census — the module's export space is
+**EXACTLY TWELVE exported names, TWO value exports + TEN type declarations, and NOTHING ELSE.** The
+as-filed two-`export`-keyword forms are kept visible AT THEIR OWN SITES in the block below (each now
+carrying its own dated `⟶` clause), because annotate-never-rewrite binds a code block as it binds a
+table. **CONSEQUENCE, stated so no TestWriter infers an unexported name:** a consumer reads the reset
+record and `lastCode` through the value surface (`reset(element)`'s inferred return and `stats()`'s
+`ResizeStats.lastCode`) and asserts the codes as STRING LITERALS; neither `ResizeCode` nor
+`ResizeResetResult` may be imported by a row, and `§3.4 R-5`'s two halves are the row that FAILS if a
+third value export or a fourteenth name ever lands.**
+
 **1. `clampToBounds` — THE PURE TOTAL FUNCTION (ruling 12; `§0A` note 8).**
 
 ```ts
 /** THE CLAMP — PURE and TOTAL, with NO REFUSAL DOMAIN (§0A note 8).
  *
- *  `bounds` is read through a `typeof` GATE: when EITHER bound is not a `number`
+ *  ⟶ CORRECTED 2026-09-27 (THE ARCHITECT-RULING AMENDMENT PASS — ruling `8`(b)): the
+ *  `value` operand is read through a `typeof` GATE OF ITS OWN, and this sentence replaces
+ *  the as-filed mechanism claim ("a non-number `value` falls out as `NaN` by the
+ *  arithmetic"), which is FALSE for the verbatim formula: `Math.min(null, 100)` is `0`,
+ *  `true` coerces to `1`, `[]` to `0`, `'12'` to `12`, and `12n`/a `Symbol` THROW.
+ *  RULED: a `value` that is not a `number` answers `NaN` BY THE GATE, never by the
+ *  arithmetic — and the fail-state table (`§2.3` item 2) with `F-1`/`P-GT-PU-1`'s declared
+ *  answers are UNCHANGED, because the gate is what they already demand. The as-filed
+ *  sentence is kept visible above; the gates now stand on BOTH operands.
+ *
+ *  THE MECHANISM, in full: `value` is `typeof`-gated FIRST (not a `number` ⇒ `NaN`);
+ *  then `bounds` is read through a `typeof` GATE — when EITHER bound is not a `number`
  *  — absent, `undefined`, a primitive, a non-record, a record whose bound field is
- *  unreadable OR THROWS — the answer is `NaN`. When BOTH bounds are numbers the
- *  answer is the FORMULA VERBATIM:
+ *  unreadable OR THROWS — the answer is `NaN`. When `value` AND BOTH bounds are
+ *  numbers the answer is the FORMULA VERBATIM:
  *
  *      Math.max(min, Math.min(value, max))
  *
@@ -578,7 +725,10 @@ export interface ResizeController {
   /** RESET — the entry point ruling 9 gives this controller (`§2.5` item 5). Commits
    *  `clampToBounds(defaultSizeFor(element, axis), boundsFor(element, axis))` AT MOST
    *  ONCE, through the session's own `reset` terminal, for an ACTIVE gesture.
-   *  Refusals are returned, NEVER thrown. TOTAL: never throws. */
+   *  Refusals are returned, NEVER thrown. TOTAL: never throws.
+   *  `ResizeResetResult` is NON-EXPORTED (`§2.1`'s census; `⟶ CORRECTED 2026-09-27`),
+   *  and the shape is `{ok: boolean, code: string, committed: boolean}` — a consumer
+   *  reads it through THIS inferred return type and asserts codes as string literals. */
   reset(element: unknown): ResizeResetResult
   /** The controller's own counters (`§0A` note 10). NOT MCP-visible. NEVER throws. */
   stats(): ResizeStats
@@ -590,8 +740,13 @@ export interface ResizeController {
 /** THE RESET RESULT — a discriminated record, and the code domain is the session's own
  *  SEVEN-MEMBER union PLUS this controller's one entry-point code (see the note below
  *  the block). `committed === true` IFF a sink write occurred for this reset call, which
- *  is what the composition's own counts say — never a session-side guess. */
-export interface ResizeResetResult {
+ *  is what the composition's own counts say — never a session-side guess.
+ *  ⟶ CORRECTED 2026-09-27 (THE ARCHITECT-RULING AMENDMENT PASS — ruling `8`(a)): the
+ *  `export` keyword AS FILED on this declaration is SUPERSEDED — `ResizeResetResult` is
+ *  NON-EXPORTED, for the same reason `ResizeCode` is: the census pins exactly TEN type
+ *  declarations and this is not one of them. The SHAPE is unchanged and is read through
+ *  `reset(element)`'s inferred return type. */
+interface ResizeResetResult {
   readonly ok: boolean
   readonly code: ResizeCode
   readonly committed: boolean
@@ -624,8 +779,14 @@ export interface ResizeStats {
  *  ⟶ RECORDED 2026-09-27 (THE RED-RUN AMENDMENT PASS): the as-filed union carried ONE
  *  controller-local code (`'unusable-default'`); the ruling declares a SECOND,
  *  `'not-resizable'`, for the established-but-non-resizable reset path — the two are the
- *  COMPLETE controller-local set, and the session's seven-member domain is untouched. */
-export type ResizeCode =
+ *  COMPLETE controller-local set, and the session's seven-member domain is untouched.
+ *  ⟶ CORRECTED 2026-09-27 (THE ARCHITECT-RULING AMENDMENT PASS — ruling `8`(a)): the
+ *  `export` keyword AS FILED on this declaration is SUPERSEDED — `ResizeCode` is
+ *  NON-EXPORTED, because `§2.1`'s census pins EXACTLY TWO value exports plus TEN type
+ *  declarations and this is an eleventh type name. Its NINE members are a CONTRACT
+ *  DOMAIN, not an exported name: the codes are read through `stats().lastCode` and the
+ *  `reset(element)` record, and asserted as string literals. */
+type ResizeCode =
   | 'ok'
   | 'not-installed'
   | 'busy'
@@ -699,10 +860,21 @@ observables the write-count clause and the register read (`§2.3` item 3, `§5.5
 The object this module hands the session is `{onStart, onMove, onEnd, onCancel}` **and nothing else**.
 **The controller's own `onStart` is a WRAPPER the controller supplies** (it calls the consumer's
 `onStart` if one was given, then evaluates `axisFor`/`isResizable` in its own `try`/`catch`); **the
-consumer's `onMove`, `onEnd` and `onCancel` are forwarded BY REFERENCE, unwrapped**, so the session's own
-call semantics (`gsession.md` `§2.3` item 2, `§0A` note 11) are exactly the consumer's. **`capture` is
-ABSENT — not `false`, ABSENT** — which is ruling 11's *"the composition never opts in"* read at the byte
-level.
+controller's own `onMove` is ALSO a WRAPPER — the ONE LEGAL HANDLE CHANNEL** (ruling `5`, 2026-09-27:
+**the frozen session's `onStart` receives ONLY THE ELEMENT**, so the handle can arrive through
+`onMove(gesture)` and nowhere else; **the wrapper captures it for the controller's own reset path, then
+forwards the handle to the consumer's `onMove` UNCHANGED and may not swallow, reorder or alter the
+consumer hook's arguments** — `M-12` is narrowed to exactly that identity requirement, and the
+wrapper's own capture is EXPLICITLY PERMITTED); **the consumer's `onEnd` and `onCancel` are forwarded BY
+REFERENCE, unwrapped**, so the session's own call semantics (`gsession.md` `§2.3` item 2, `§0A` note 11)
+are exactly the consumer's. **`capture` is ABSENT — not `false`, ABSENT** — which is ruling 11's *"the
+composition never opts in"* read at the byte level. — **⟶ ADDED 2026-09-27 (THE ARCHITECT-RULING
+AMENDMENT PASS — CAPTURE OWNERSHIP, ruling `4`): ANY CAPTURE A REAL DRAG AFFORDANCE NEEDS IS `E10`'s
+DECISION AND `E10`'s INSTALL PATH, NOT THIS UNIT's.** **`E3` ships no `capture` member, no `capture`
+field and no install path for one** (`R-10`'s positive control is unchanged), **and the session's PARKED
+release-after-failed-establishment note KEEPS ITS EXISTING TRIGGER** (`gsession.md` `§2.3` item 6's
+parked note; `docs/pending.md` §I) — **this ruling neither releases it nor re-opens it: `E3` produces no
+capture at all, and the affordance that would is `E10`'s.**
 
 ---
 
@@ -738,12 +910,24 @@ one id that exists in `§3.4`.**
 
 ### 2.3 The arithmetic and value rules — stated falsifiably
 
-**Item 1 — THE VALUE-SOURCE CHAIN, and there is exactly ONE path through it.**
+**Item 1 — THE VALUE-SOURCE CHAIN, and there is exactly ONE path through it.** *(**⟶ ADDED 2026-09-27
+BY THE ARCHITECT-RULING AMENDMENT PASS — ruling `1`: the value is CONSUMER-PRODUCED, and this module
+reads NO coordinate and NO event object.** **The consumer — the UI, which is the only party that sees
+the pointer — computes the value in its own `onMove` and pushes it with `gesture.set(value)`; the
+terminal's `sizeFor(element, gesture, axis)` READS that consumer-produced value, AT MOST ONCE; and NO
+CLAUSE OF THIS UNIT MAY CLAIM THAT A DRAG PRODUCES A SIZE.** **The intended-behaviour note this clause
+serves is `§0A` note 13, which is NON-NORMATIVE and whose OWNER is ledger row `E10` (`NOT THIS UNIT /
+PROPOSED`); `§4.4 S-10` is the stop condition that catches a clause claiming a coordinate or a
+magnitude.** **The live PREVIEW is the consumer's own transient view channel and is NEVER the sink —
+see the preview block above this item's falsifiable clauses.**)*
 
 ```
 the consumer's own onMove  ──▶  gesture.set(value)          (consumer code; the value is CONSUMER-PRODUCED)
         … the session's terminal …                                  (end / reset / cancel)
-the controller's own onStart captured THE HANDLE                (never synthesised, never retained past the terminal)
+the controller's own onMove WRAPPER captured THE HANDLE  (never synthesised, never retained past the terminal)
+        (⟶ CORRECTED 2026-09-27, THE ARCHITECT-RULING AMENDMENT PASS: this line AS FILED read "the controller's
+         own onStart captured THE HANDLE", which the FROZEN session cannot support — its onStart receives only
+         the ELEMENT, so onMove is the sole legal channel; §2.3 item 4 clause 1, §2.5 item 5 clause 2)
         at the terminal (inside the composition's sink callback, which the session invokes):
    gesture.outcome === 'reset'  ──▶  raw = clampToBounds(defaultSizeFor(element, axis), boundsFor(element, axis))
    gesture.outcome === 'end'    ──▶  raw = sizeFor(element, gesture, axis)
@@ -752,6 +936,19 @@ the controller's own onStart captured THE HANDLE                (never synthesis
                                      clamped is NaN       ──▶  NO sink write
    a cancel terminal            ──▶  the sink callback is NEVER INVOKED  ⇒  ZERO writes
 ```
+
+**The consumer-owned preview channel, named so the live feedback is not mistaken for a write.** *(**⟶
+ADDED 2026-09-27 BY THE ARCHITECT-RULING AMENDMENT PASS** — this is what keeps *"cancel ⇒ zero sink
+writes"* meaningful in the presence of live drag feedback, and it is stated at `§2.3` item 1's chain and
+`§2.6` item `4b` as a rule, with its stop condition at `§4.4 S-10`/`S-11`/`S-9`; its session-side
+sibling statement is `§2.5` item 4's pinned wiring, where THE SESSION'S `commit` OPTION IS WIRED TO
+EXACTLY ONE CALLBACK.)* **The drag's live
+feedback — showing the resized state as the cursor moves — belongs to a TRANSIENT VIEW channel the
+CONSUMER owns: the rendered graph, or a provident update the consumer dispatches. THAT CHANNEL IS
+NEVER THE SINK.** **The sink is written AT MOST ONCE PER GESTURE and ONLY AT A TERMINAL**, so **a
+preview write that reaches the sink is a VIOLATION, and the write-count rows (`M-4`, `M-5`, `F-9`,
+`§5.5.1 P-GT-SM-1`/`P-GT-SM-3`) must be able to FAIL for it** — a preview that wrote the sink would
+make a `cancel`'s count non-zero, which is exactly the state those rows declare impossible.
 
 **Three clauses make the chain falsifiable, and each is a row:** **(i)** **the value is read AT MOST
 ONCE, at the terminal** — never from `onMove`, never from a start turn, never from `stats()`; **(ii)**
@@ -809,6 +1006,24 @@ writing from ITS OWN channel, which is not the sink this unit's rows count** (`F
   evidence that a write happened.** **A row that counts sink calls can therefore be satisfied by a
   composition that never wired the channel — which is exactly why `F-11` exists as a control.**
 
+**THE VALUE IS CONSUMER-PRODUCED, STATED AS A CLAUSE RATHER THAN AN IMPLICATION (ruling `1` of the
+ARCHITECT-RULING AMENDMENT PASS, 2026-09-27; it resolves `E3`-BLOCK-5's premise and the gate-1
+"no gesture-computable input" finding).** **The drag's value is produced by the CONSUMER — the UI, which
+is the only party that sees the pointer — and pushed with `gesture.set(value)` in the consumer's own
+`onMove`; `sizeFor(element, gesture, axis)` READS that consumer-produced value AT THE TERMINAL, AT MOST
+ONCE; and this module reads NEITHER a coordinate NOR an event object anywhere.** **THEREFORE NO CLAUSE
+OF THIS UNIT MAY CLAIM THAT A DRAG PRODUCES A SIZE** — a drag is an ORIGIN the consumer turns into a
+value, and **the composition is value-blind until the terminal.** **The intended-behaviour note this
+clause serves is `§0A` note 13** (NON-NORMATIVE; **its OWNER is ledger row `E10`, `NOT THIS UNIT /
+PROPOSED`**), and **`§4.4 S-10` is the stop condition that catches a clause claiming a coordinate or a
+magnitude.**
+
+**THE PREVIEW-WRITE RULE AT THE CHAIN (see the preview block above `§2.3` item 1's falsifiable
+clauses): the consumer's live preview is a TRANSIENT VIEW channel it owns and is NEVER the sink.** **The
+sink is written at most once per gesture and only at an `end`/`reset` terminal**, so **a preview write
+that reaches the sink FAILS the write-count rows** — and **a `cancel`'s ZERO writes are asserted over
+the SAME sink record the preview never appears in.**
+
 **Item 4 — THE RESET CLAUSE (ruling 9), stated in full.**
 
 > **`reset(element)`: when the controller holds the handle of an ACTIVE gesture for that element and
@@ -821,8 +1036,44 @@ writing from ITS OWN channel, which is not the sink this unit's rows count** (`F
 
 **The reset contract's clauses, each in its own line so no TestWriter has to infer one:**
 
-1. **The handle is the one the controller captured in its own `onStart`**, **NEVER synthesised** and
-   **NEVER retained past the terminal** (`§2.5` items 5/6).
+**⟶ ADDED 2026-09-27 (THE ARCHITECT-RULING AMENDMENT PASS) — THE RELEASE MAPPING, the composition
+contract the architect's intent resolves to, stated before the clauses because it maps the release onto
+the session's own three terminals (the intended-behaviour note it serves is `§0A` note 13, owner `E10`):**
+
+> **A VALID dragged state — a FINITE value, WITHIN THE CLAMPED BOUNDS, on a RESIZABLE element — reaches
+> the session's `end` terminal and yields EXACTLY ONE commit of the CLAMPED DRAGGED VALUE. AN INVALID
+> dragged state reaches the session's `reset` terminal with the SUPPLIED DEFAULT, whose value FOR THIS
+> BEHAVIOUR is the PRE-DRAG SIZE THE CONSUMER HOLDS — the session holds NO cross-gesture state, so the
+> pre-drag value cannot come from the session and must be supplied by the consumer through
+> `defaultSizeFor` (or its own `onMove`/`gesture.set` feed) — yielding EXACTLY ONE COMMIT OF THE
+> CLAMPED SUPPLIED DEFAULT. A RIGHT-CLICK / DROP reaches the session's `cancel` terminal and yields
+> ZERO COMMITS AND ZERO SINK WRITES, with the VISIBLE REVERT belonging to the CONSUMER'S PREVIEW
+> CHANNEL and NOT to the sink (`§2.3` item 3's preview rule).** **`gesture.outcome` — `'end'` versus
+> `'reset'` versus a cancel's NO COMMIT AT ALL — is HOW THE CONSUMER DISTINGUISHES THE THREE**, and
+> **`controller.reset(element)` is the SURFACE for the invalid-release and drop-revert paths** (clause
+> `5` below: no active gesture ⇒ `'no-gesture'` with ZERO session calls).
+
+**THE SAME MAPPING, STATED SO IT CANNOT CONTRADICT THIS ITEM'S OWN REFUSAL CLAUSES** (clauses `2` and `4`
+below, which are UNWEAKENED): **the invalid-release arm's ONE commit of the CLAMPED SUPPLIED DEFAULT
+holds IFF the element is RESIZABLE and the consumer's `defaultSizeFor` seam is USABLE.** **A
+NON-resizable element refuses with the controller-local `'not-resizable'` — ZERO session calls, ZERO
+commits — and an ABSENT / non-callable / throwing default refuses with `'unusable-default'` — likewise
+ZERO session calls and ZERO commits.** **So the invalid arm's commit is exactly ONE OR ZERO, and the
+`'not-resizable'`/`'unusable-default'` refusals are the ZERO cases; the right-click / drop arm is ALWAYS
+ZERO and never reaches a session terminal at all.** **No clause of this item requires a session call
+without an active resizable gesture (`§2.5` item 5 clauses 3/4/6).**
+
+1. **The handle is the one the controller captured in its own `onMove` WRAPPER**, **NEVER synthesised**
+   and **NEVER retained past the terminal** (`§2.5` items 5/6). — **⟶ CORRECTED 2026-09-27 (THE
+   ARCHITECT-RULING AMENDMENT PASS — the HANDLE CHANNEL, ruling `5`, resolving `E3`-BLOCK-5): this
+   clause AS FILED read *"the one the controller captured in its own `onStart`"*, which is
+   UNIMPLEMENTABLE — the FROZEN session's `onStart` receives **ONLY THE ELEMENT** and carries no handle,
+   while `session.begin` (whose result carries one) is FORBIDDEN to the controller. **THE ONLY LEGAL
+   HANDLE CHANNEL IS `onMove(gesture)`**: the controller therefore **captures the handle inside its OWN
+   `onMove` WRAPPER** — the wrapper the composition already supplies so the consumer's own hook can run
+   — **never synthesises a handle, and never retains it past a terminal.** The as-filed wording is kept
+   visible here; `§2.5` item 5 clause 2 states the same ruling in full and narrows `M-12`'s identity
+   requirement to the handle ARGUMENT the consumer's own hook receives.**
 2. **An `isResizable === false` gesture takes ZERO session calls from `reset`** — the decision was made
    once, at establishment, and **it is not re-evaluated here** (ruling 10). — **⟶ RULED 2026-09-27 (THE
    RED-RUN AMENDMENT PASS): THE REFUSAL'S CODE IS THE CONTROLLER-LOCAL `'not-resizable'` — `{ok: false,
@@ -1008,13 +1259,53 @@ no disposal order**; and it **never becomes a second writer on a channel the ses
 > `stats().sinkCalls`, **so a two-writer composition is caught by a COUNT rather than by a check.**
 > **A row asserting that this module "detects" a second controller is `§4.4 S-8` and does not land.**
 
+**THE SESSION'S `commit` OPTION HAS EXACTLY ONE WIRING, PINNED IN THE SESSION'S OWN WORDS (ruling `6`
+of the ARCHITECT-RULING AMENDMENT PASS, 2026-09-27 — `E3`-BLOCK-3's decision).** **The composition wires
+the SESSION's `commit` option to EXACTLY ONE CALLBACK — the composition's SINGLE SINK WRITER — which the
+session invokes AT MOST ONCE PER GESTURE, ONLY AT AN `end`/`reset` TERMINAL and NEVER ON A `cancel`.** **When
+a harness registers its own commit channel, the COMPOSITION'S wiring is STILL THE SINGLE WRITER — the
+harness's channel is a DIFFERENT channel and is not a second writer of this composition — and the two
+recorded readings are (i) THE SINK'S OWN CALL RECORD versus (ii) THE CONTROLLER'S COUNTER
+(`stats().sinkCalls`).** **THE TWO READINGS DIVERGE EXACTLY WHEN A SECOND WRITER EXISTS, AND THAT
+DIVERGENCE IS THE FALSIFIER** — which is why `§5.5.1 P-GT-SM-1`/`P-GT-SM-3` and the `P-GT-IM-1`/
+`P-GT-IM-2` cells are stated against ONE wiring, and not two. **THE CONTROLLER WRITES NOTHING FROM ANY
+HOOK** (no write from `onStart`/`onMove`/`onEnd`/`onCancel`), and **`§2.3` item 3's write-count clause is
+the clause this item pins.**
+
+**THE CONSUMER'S OWN `onMove` IS WHERE THE VALUE IS INVOKED INTO (the handle channel's consumer half).**
+The session calls the consumer's `onMove(gesture)` for every real `pointermove` of the active gesture,
+with **the handle the wrapper passed through UNCHANGED** — and **the consumer's own `onMove` is where it
+computes its value and calls `gesture.set(value)`** (ruling `1`, `§1` item 2). **This composition calls
+`gesture.set` NOWHERE** (`§2.5` item 1), and **the consumer's own hook is the only writer of the
+gesture's value.**
+
 **Item 5 — THE RESET ENTRY POINT'S FULL CONTRACT (ruling 9), in nine falsifiable clauses.**
 
 1. **`reset(element)` takes the ELEMENT** (`§0A` note 5) and derives the axis token itself, once, via
    `axisFor` — **the caller never supplies a token.**
-2. **The handle is the one captured in the controller's own `onStart`**, for the gesture that is
+1b. **THE SUPPLIED DEFAULT'S VALUE IS THE CONSUMER'S PRE-DRAG SIZE (`§2.3` item 4's release mapping,
+   ruling `3` of the ARCHITECT-RULING AMENDMENT PASS, 2026-09-27).** **For the invalid-release and
+   drop-revert paths, the "supplied default" this entry point clamps is the PRE-DRAG SIZE THE CONSUMER
+   HOLDS** — **the session holds NO cross-gesture state**, so the pre-drag value cannot come from the
+   session and **must arrive through the consumer's own `defaultSizeFor` seam** (or the consumer's own
+   `gesture.set` feed). **The caller is never a token-supplier and never a value-supplier: it names the
+   ELEMENT, and the value comes from the consumer's seam.**
+2. **The handle is the one captured in the controller's own `onMove` WRAPPER**, for the gesture that is
    ACTIVE now. **It is NEVER synthesised** (the controller cannot construct a `GestureHandle` and must
    not pretend to) and **NEVER retained past a terminal** (`gsession.md` `§2.5` item 3's handle clause).
+   — **⟶ CORRECTED 2026-09-27 (THE ARCHITECT-RULING AMENDMENT PASS — THE HANDLE CHANNEL, ruling `5`,
+   resolving `E3`-BLOCK-5): the FROZEN SESSION's `onStart` receives ONLY THE ELEMENT, and the ONLY
+   consumer-visible handle is `onMove(gesture)`, so `onMove` is the ONE legal channel and the
+   controller CAPTURES THE HANDLE IN ITS OWN `onMove` WRAPPER rather than synthesising one — it never
+   retains it past a terminal. This clause AS FILED said *"captured in the controller's own `onStart`"*
+   and is kept visible above. THE REASON, stated because it is what makes the choice forced:
+   `session.begin` (whose result carries a handle) is FORBIDDEN to this controller (`§2.5` item 1,
+   `I-3`, `R-14`), so `onMove` is the ONLY legal channel the frozen session provides. AND `M-12`'s
+   IDENTITY REQUIREMENT IS NARROWED ACCORDINGLY: identity is required for the handle ARGUMENT THE
+   CONSUMER'S OWN `onMove` HOOK RECEIVES (the wrapper forwards it UNCHANGED and may not swallow,
+   reorder or alter the consumer hook's arguments), **while the WRAPPER'S OWN CAPTURE of that same
+   handle for the controller's reset path is EXPLICITLY PERMITTED.** The as-filed `M-12` text is kept
+   visible at `§3.1`.**
 3. **No active gesture ⇒ refuse `'no-gesture'` with ZERO session calls.** The refusal is **`{ok: false,
    code: 'no-gesture', committed: false}`** and **the session is not touched** — no `reset`, no
    `stats()`, no `dispose()`.
@@ -1061,6 +1352,7 @@ that cannot be expressed.**
 | **2** | **`cancel` ⇒ ZERO commits and ZERO sink writes** | `cancel` ⇒ `committed:false` and **the commit callback is invoked zero times** (`gsession.md` `§2.3` item 4), so **the sink is unreachable by construction on that path** | **`M-4`**, **`F-2`**, `I-2b`, `§5.5.1 P-GT-SM-1` |
 | **3** | **`reset` ⇒ AT MOST ONE commit OF THE CLAMPED SUPPLIED DEFAULT** | the session's own `reset` terminal's one commit of the caller's value with `outcome:'reset'` (`gsession.md` `§2.3` item 4, `§2.5` item 5, `§0A` note 6), **plus this unit's clamp** (`§2.3` item 4) | **`M-14`**..**`M-17`**, **`F-12`**..**`F-15`**, **`§5.5.1 P-GT-SM-4`** |
 | **4** | **no capture before establishment — INHERITED and OBSERVED** | `gsession.md` `§2.3` item 6: capture is one call inside `begin`, after the tracking listeners open, and ONLY for a control that opted in — **and this composition never opts in** (ruling 11) | **`R-10`** (with its positive control), **`§5.5.1 P-GT-SM-2`** |
+| **4b** | **THE PREVIEW CHANNEL IS NEVER THE SINK — the live feedback the intended behaviour needs** *(**⟶ ADDED 2026-09-27 BY THE ARCHITECT-RULING AMENDMENT PASS**, ruling `2`; the clause it serves is `§0A` note 13, NON-NORMATIVE, owner `E10`)* | **the "show the resized state from the cursor" feedback is a TRANSIENT VIEW channel the CONSUMER owns — the rendered graph / a provident update — and the session's own surface exposes no such channel** (`gsession.md` `§2.5`'s frozen list), **so the consumer writes it directly and the SINK stays a terminal-only, at-most-once channel. THIS is what keeps *"cancel ⇒ zero sink writes"* meaningful in the presence of live feedback.** | **`M-4`**, **`M-5`**, **`F-9`**, **`§5.5.1 P-GT-SM-1`**/**`P-GT-SM-3`**, `I-2b`, **`§4.4 S-10`**/**`S-11`** |
 | **5** | **an interrupt leaves NO retained sink and NO listener** | `gsession.md` `§2.3` item 2(c)/item 7 detaches **before** any consumer code, and the session retains no sink of its own; **this unit retains no sink either — it holds the consumer's sink as a construction argument and drops its per-gesture record at the terminal** | **`M-4`**, **`M-13`**, `I-9`, `§2.5` item 6 |
 | **6** | **NO SECOND GESTURE AUTHORITY — and NO SECOND WRITER** | `gsession.md` `§2.3` item 3 (one active gesture per instance, `'busy'` on a second start, no consumer-callable `commit()`) **plus ruling 6's single-writer discipline**: this unit calls `session.begin`/`end`/`cancel` **never**, and owns exactly one write site | **`I-2`**, **`I-8`**, **`F-9`**/**`F-10`**, `§5.5.1 P-GT-SM-3` |
 | **7** | **the GUTTER UI IS NOT THIS UNIT** | ruling 12: the real gutter UI is **ledger row `E10`, `PROPOSED — awaiting admission`**, the only place a coordinate source or a `[U]` row could legitimately live, and **`E3` does NOT owe it** | **`R-8`**, `§1` item 5, `§5.2`, `§8` (the `E10` row) |
@@ -1103,7 +1395,7 @@ carries an id and a `Pinned by` citation.**
 | **M-9** | **A falsy `isResizable` of ANY kind is not resizable; a truthy one of any kind is** | `isResizable` driven as `() => 0`, `() => ''`, `() => null`, `() => undefined`, `() => false`; then as `() => 1`, `() => 'no'`, `() => new Object()`, `() => []` | the five falsy drives each yield **zero writes and a normal `'end'`**; the four truthy drives each yield **exactly one write**; **truthiness decides, and nothing else does** | ruling 10, `§2.4` item 1, `§5.5.1 P-GT-IM-3` | `[T]` |
 | **M-10** | **`isResizable` is NEVER an install-time gate** | `attach(elA)` with an `isResizable` that would return `false`, then `attach(elB)` **with no gesture at all** | **both attaches return `true`**, both delegate to `session.install`, and **`isResizable` is called ZERO times during either attach** — the decision belongs to the gesture | ruling 10, `§2.3` item 2(b), `§2.1` item 3 | `[T]` |
 | **M-11** | **Two gestures are two gestures: the decision and the token are re-derived, and nothing carries** | two full lifecycles on the same element, with `isResizable` returning `false` then `true` | `axisFor` and `isResizable` are called **once per gesture (2 each)**; the FIRST writes `0` times and the second writes **exactly once**; **no value, token or decision carries across the boundary** | ruling 10, `§2.3` item 2(b), `I-9` | `[T]` |
-| **M-12** | **`attach` delegates ONCE per element and a repeat attach delegates NOTHING** | `attach(elA)` then `attach(elA)` again (with DIFFERENT hooks) | the first returns `true`; the second returns **`false`**; **`session.install` is called exactly ONCE in total**; **the first hooks stay in force** (the driver fires the recorded start and asserts the FIRST `onMove` ran, not the second) | `§2.3` item 5 (`C4`), `gsession.md` `§2.4` item 2, `I-3` | `[T]` |
+| **M-12** | **`attach` delegates ONCE per element and a repeat attach delegates NOTHING** | `attach(elA)` then `attach(elA)` again (with DIFFERENT hooks) | the first returns `true`; the second returns **`false`**; **`session.install` is called exactly ONCE in total**; **the first hooks stay in force** (the driver fires the recorded start and asserts the FIRST `onMove` ran, not the second) — **⟶ NARROWED 2026-09-27 (THE ARCHITECT-RULING AMENDMENT PASS — the HANDLE CHANNEL, ruling `5`): `M-12`'s IDENTITY REQUIREMENT APPLIES TO THE HANDLE ARGUMENT THE CONSUMER'S OWN `onMove` HOOK RECEIVES, and to nothing else.** The wrapper must **forward that handle UNCHANGED and must not swallow, reorder or alter the consumer hook's arguments** — **while the WRAPPER'S OWN CAPTURE of the same handle for the controller's reset path is EXPLICITLY PERMITTED** (`§2.5` item 5 clause 2; the as-filed *"forwarded by reference / no capture wrapper"* reading is kept visible at `§2.1` item 5). **The reason the choice is forced, in one sentence: `session.begin` — whose result carries a handle — is FORBIDDEN to the controller (`§2.5` item 1, `I-3`, `R-14`), so `onMove` is the ONLY legal channel the frozen session provides.** | `§2.3` item 5 (`C4`), `§2.5` item 5 clause 2, `gsession.md` `§2.4` item 2, `I-3` | `[T]` |
 | **M-13** | **`detach()` restores the controller's baseline through the session, once** | `attach(elA)`; `detach()`; `detach()` again | the FIRST call delegates **`session.dispose()` exactly once** and returns `true` when the session reports `complete: true`; the SECOND makes **ZERO session calls** and returns `false`; **`detached` reads `true` forever after**; the session's own detach arithmetic is the session's row (`gsession.md` `M-13`), not re-asserted here. — **⟶ RECORDED 2026-09-27 (THE RED-RUN AMENDMENT PASS): THIS ROW IS THE RED SET'S CARRIER FOR THE MULTI-ELEMENT LIMB — the landed test drives `attach(elA)`, `attach(elB)`, `detach()` ⇒ `false` with ZERO session calls as an arm INSIDE `M-13` — and the limb now also has an EXPLICIT row, `M-20`, appended below in this family. `M-13`'s own clauses are unchanged; the limb's declaration is `M-20`'s.** | `§2.5` item 1, `§2.1` item 4, `I-9`, **`M-20`** | `[T]` |
 | **M-14** | **`reset(element)` commits the CLAMPED supplied default, ONCE, through the session's reset terminal** | attach; establish (with `isResizable` true); `onMove` sets a sentinel user value `12345`; `boundsFor` ⇒ `{min: 0, max: 100}`; `defaultSizeFor` ⇒ `420`; then `reset(el)` | **exactly ONE `session.reset` call**, carrying **the exact handle the session gave at establishment**, the element, and **`100`** — the CLAMPED value, **not `420` and not the user's `12345`**; the sink receives **`100`** once; `stats().resets === 1`; `stats().sinkCalls === 1` | `§2.3` item 4, `§0A` note 5, `§5.5.1 P-GT-SM-4` | `[T]` |
 | **M-15** | **`gesture.outcome === 'reset'` IS the discriminator, and the sink can read it** | the same drive as `M-14`, with a sink that records `gesture.outcome` and `gesture.value` | the recorded outcome is **`'reset'`** (not `'end'`); the recorded handle's `value` reads the committed **`100`**; and — the control — the same sink driven by an ordinary `end` records **`'end'`** | `gsession.md` `§2.5` item 10 (**the corrected site**), `§2.3` item 4, `§0A` note 5 | `[T]` |
@@ -1146,7 +1438,7 @@ DOMAIN, so every outcome in that block is a VALUE, not an error** (ruling 12; `�
 | --- | --- | --- | --- |
 | **I-1** | **`clampToBounds` is TOTAL, PURE and FORMULA-EXACT**: it returns a `number` for EVERY input, throws for NONE, mutates nothing, retains nothing, and its answer is **either** the `typeof`-gate's `NaN` **or** `Math.max(min, Math.min(value, max))` **verbatim** with both bounds `number`s | Ruling 12's whole content | `§2.3` item 2, `F-1`..`F-8`, `M-2`, `§5.5.1 P-GT-PU-1` |
 | **I-2** | **THE SINGLE WRITER: for every gesture, the composition invokes its ONE sink call site AT MOST ONCE, and the gesture's whole write record has length `≤ 1`** | Ruling 6; the `C1` clause | `§2.3` item 3, `M-5`, `F-9`, `§5.5.1 P-GT-SM-3` |
-| **I-2b** | **NO WRITE OUTSIDE THE TERMINAL CHANNEL: nothing in this module writes from `onMove`, `onStart`, `onEnd` or `onCancel`, and a `cancel` reaches the sink ZERO times BY CONSTRUCTION** | Ruling 6; the sibling property 2 | `§2.3` item 3, `M-4`, `F-10`, `§2.6` item 2 |
+| **I-2b** | **NO WRITE OUTSIDE THE TERMINAL CHANNEL: nothing in this module writes from `onMove`, `onStart`, `onEnd` or `onCancel`, and a `cancel` reaches the sink ZERO times BY CONSTRUCTION** — *(**⟶ AMENDED 2026-09-27, THE ARCHITECT-RULING AMENDMENT PASS: the invariant ALSO rules the PREVIEW CHANNEL — the live "show the resized state from the cursor" feedback is the CONSUMER's TRANSIENT VIEW channel, is NEVER the sink, and a preview write that reaches the sink FAILS the write-count rows. This is what keeps *"cancel ⇒ ZERO sink writes"* meaningful in the presence of live feedback** — `§2.3` item 3's preview rule, `§2.6` item `4b`, `§4.4 S-10`)* | Ruling 6; the sibling property 2; **the preview-channel amendment** | `§2.3` item 3, `§2.6` items 2/`4b`, `M-4`, `F-10`, `§5.5.1 P-GT-SM-1`/`P-GT-SM-3` |
 | **I-3** | **THE SESSION IS THE SOLE GESTURE AUTHORITY, AND THE CONTROLLER OWNS NO LIFECYCLE**: the controller never attaches a listener, never calls `session.begin`/`end`/`cancel`, and never writes a channel the session owns beyond its one sink | Ruling 3 — the `SECOND-GESTURE-AUTHORITY` objection's answer; `V-13`'s remedy | `§2.5` items 1/3/6, `R-7`, `R-14`, `§2.6` item 6 |
 | **I-4** | **`isResizable` DECIDES ONCE PER GESTURE AND AT ESTABLISHMENT**: called at most once for a gesture, never at install, never at a terminal, never re-consulted; a `false` decision short-circuits every terminal seam for that gesture | Ruling 10 | `§2.3` item 2(b), `§0A` note 6, `M-8`..`M-11`, `§5.5.1 P-GT-IM-3` |
 | **I-5** | **THE TOKEN IS OPAQUE**: no member of this module interprets the axis token — it is not compared, stringified, tested, used as a map key, or spelled as a literal anywhere | Ruling 8 | `§2.2` P-5, `M-7`, `R-1` |
@@ -1197,7 +1489,7 @@ statement, type, strategy id or attempt count** (`§5.5.1`).
 
 | id | Row (a TestWriter authors this) | Pinned by | Layer |
 | --- | --- | --- | --- |
-| **R-16** | **The module-absence row (`§4.1`'s red premise) — TWO FORMS, and BOTH are the row.** **THE RED FORM (governing AT RED TIME):** *at the moment the red set is AUTHORED and RUN, `src/shared/gutter.ts` does not exist and `tests/gutter.test.ts` is the only unit-owned file in the change set* — an `fs.existsSync`-style probe; **if the module EXISTS before the red run, this row FAILS and the `RCA-1` red order is broken — the pass that finds it must REPORT the inversion rather than proceed.** **THE GREEN FORM (governing AT GREEN TIME, added so the row survives the cycle):** *in the state where `§5.1` row 1 (the module, NEW) has LANDED, the module EXISTS, the unit-owned change set is EXACTLY the module + this test file (no OTHER `gutter*` path anywhere in `src/**` or `tests/**`), both canonical artifacts are present, the census is asserted NON-EMPTY before the equality, and the red-run census recorded the red form.* | `§4.1`, `RCA-1`, `§4.2` item 1 | static |
+| **R-16** | **The module-absence row (`§4.1`'s red premise) — TWO FORMS, and BOTH are the row.** **THE RED FORM (governing AT RED TIME):** *at the moment the red set is AUTHORED and RUN, `src/shared/gutter.ts` does not exist and `tests/gutter.test.ts` is the only unit-owned file in the change set* — an `fs.existsSync`-style probe; **if the module EXISTS before the red run, this row FAILS and the `RCA-1` red order is broken — the pass that finds it must REPORT the inversion rather than proceed.** **THE GREEN FORM (governing AT GREEN TIME, added so the row survives the cycle) — AND THE TWO BRANCHES ARE EXPLICIT, because the landed red set implements the RED form unconditionally and therefore FAILS BECAUSE THE WORK WAS DONE (`E3`-BLOCK-1).** **THE RED BRANCH (module absent at red time):** *assert the module's ABSENCE (`existsSync` ⇒ `false`) AND that no unit path other than this test file exists under `src/**`/`tests/**`.* **THE GREEN BRANCH (module present at green time):** *assert that the module EXISTS, that it is **NOT IMPORTED BY ANY `src/**` FILE**, and that the EXPORT CENSUS HOLDS (`§2.1`'s exact `2 + 10 = 12` names, `§3.4 R-5`)* — **and the row MUST BRANCH ON THE MODULE'S PRESENCE rather than assert the red form unconditionally.** *(**⟶ RULED 2026-09-27 BY THE ARCHITECT-RULING AMENDMENT PASS**: as filed this cell declared both forms but named no branch condition, so the landed red set asserts absence alone and fails once `§5.1` row 1 lands — the GREEN form is now named as the branch that governs, and the DONE row's shape carries it at `§5.3` item 10.)* | `§4.1`, `RCA-1`, `§4.2` item 1 | static |
 | **R-17** | **The `[D]`-precondition row (`§2.6`'s named precondition, probe-able).** *At the time this unit's red set is authored, the extended divergence harness DOES NOT EXIST* — a probe on the `H-r10` deliverable (`U-DIVERGENCE-EXT`, ledger row `C2`: the scenario-envelope channel + the attribute-presence extractor), whose row is `BLOCKED`. **Its FAIL is meaningful and welcome: if the harness HAS landed, a `[D]`-shaped row becomes runnable and this unit MAY then take it — with that harness's own spec as its authority and its own preconditions stated.** **Until then `[D]` stays unclaimed and no pass may claim it** (`§5.2`). | ruling 11, `§2.6`, `§5.2`, `§8` | static |
 | **R-18** | **The session-precondition row (the composition's own premise, probe-able).** *At the time this unit's red set is authored, `src/shared/gesture-session.ts` EXISTS and exports the four value exports `createGestureSession`, `installGestureListeners`, `detachGestureListeners` and `POINTER_TYPES`, and its `EventSource` declares the optional `capturePointer` member* — an import-and-key probe **BY NAME**, with **a positive control that a namespace missing one of those names FAILS**. **Its FAIL is meaningful: this unit composes that surface, and a missing name would mean the frozen delegate surface moved** (`§8`'s `GSESSION-DELEGATE…` row) — **which is a finding to REPORT, never a licence to edit the session's module or its spec** (`§5.1`'s DENIED set). | ruling 5, `§2.5`, `§5.1`, `§8` | static |
 
@@ -1294,7 +1586,12 @@ when run is a SPEC FINDING, reported rather than tuned to green.**
 
 **The first five are ruling 12's `S-PURE-1..5`, derived VERBATIM in substance; the rest are the classes
 the gate-1 record and this filing's own surface require.** **All thirteen bind the red set, the
-implementation and the gates.**
+implementation and the gates.** — **⟶ AMENDED 2026-09-27 (THE ARCHITECT-RULING AMENDMENT PASS): THE
+TABLE STILL CARRIES THIRTEEN ROWS, and this pass adds the THREE NEW STOP-CONDITION CLASSES the
+amendment creates — *a preview write reaching the sink*, *a second writer*, and *a clause claiming a
+coordinate or a magnitude* — as dated `⟶` clauses INSIDE the three rows whose class each belongs to
+(`S-9`, `S-10`, `S-11`), so **NO ROW ID IS ADDED, NO ROW IS RENUMBERED and the count stays `13`.** The
+as-filed row texts are kept visible in place.**
 
 | # | Stop condition | Required behaviour |
 | --- | --- | --- |
@@ -1306,9 +1603,9 @@ implementation and the gates.**
 | **S-6** | A row is only satisfiable by a **token scan** (a word list, a regex over source) | **The row must be closed against TOKEN ASSEMBLY and COMMENT-CARRYING before it is authored**: it scans a **NORMALIZED** view in which string-literal concatenation is joined **and it scans COMMENTS as code**. **A row that passes for a module spelling a banned token in either form is UNFALSIFIED and must not be filed** (the architect's `SLOTHOST-CONTAINER-SOURCE-IS-INJECTED` rule: *a static prohibition satisfiable by splitting a token is not satisfied*). The row forms are `R-1`/`R-11`. |
 | **S-7** | A row asserts a prohibition by a **bare COUNT** (*"`ALL_TOOLS` stays 21"*, *"two exported values"*) or claims an existence/absence about the repo **with no probe** | **A count is satisfiable by renaming and passes whether or not the change added a seam.** The row must assert **SET EQUALITY AGAINST THE NAMES** or be replaced by the **import/diff row** that can actually fail (`R-4`/`R-5`/`R-6`/`R-12`/`R-14`), and an existence claim must be an `fs.existsSync`-style **probe whose FAIL is meaningful** (`R-9`/`R-16`/`R-17`/`R-18`). |
 | **S-8** | A test needs a **real DOM**, a real element, **a `document`**, a shim member, or a **second controller's private state** to express a row — or a row asserts that this module **DETECTS a second controller** | **Violates the layer declaration's anchor 2, `§2.5` item 4's stated LIMIT and `R-2`'s stated limit.** The row is re-written against the **recorded session doubles and the sink spy** (`M-1`'s form). **A row that needs a DOM, or that claims a detection the mechanism does not have, is a row this unit cannot have.** |
-| **S-9** | A row asserts a **rendered-geometry, coordinate, layout, paint, applied-CSS, capture-in-a-renderer or magnitude** property — or a `[T]` green is to be reported as one | **Violates `A-d4`'s mandatory clause, `I-11` and `R-8`** — the claim is **DELETED**; this spec offers **no `[U]` row and no `[D]` row**, and `§5.2` states why. **The row MAY NOT BE MOVED TO THE `ui` LEG SILENTLY** — `docs/specs/zones.md` `§4.4 S-6`'s own words, which this unit's `[U]` clause carries (`§5.2`). |
-| **S-10** | A row is only satisfiable if the **session COMPUTES, CLAMPS, DEFAULTS or VALIDATES a value**, or if the **controller re-expresses the session's lifecycle** — a start listener of its own, a `session.begin` call, a gesture guard, a listener window, a disposal order, a second commit channel | **Violates rulings 3/6 and `§2.5` item 3** — the session is the single gesture authority and `A-d3`'s shape is the composition's premise. **Stop and report: it is a contract change needing its own gate, not an implementation choice.** |
-| **S-11** | A row proposes **an EIGHTH session result code**, a **fourth session outcome**, a **fifth hook**, a `selectors`/`threshold`/`unit` parameter, an **options field that could smuggle a policy default in**, or a **second writer** | **Each is a contract change.** The session's SEVEN-member union (`gsession.md` `§4.4 S-9`), the frozen delegate surface and ruling 6's single sink are the contract; **stop and report to the supervisor.** **This unit's own `'unusable-default'` is NOT an eighth session code — it never enters the session** (`§2.1`'s note, `I-14`). |
+| **S-9** | A row asserts a **rendered-geometry, coordinate, layout, paint, applied-CSS, capture-in-a-renderer or magnitude** property — or a `[T]` green is to be reported as one | **Violates `A-d4`'s mandatory clause, `I-11` and `R-8`** — the claim is **DELETED**; this spec offers **no `[U]` row and no `[D]` row**, and `§5.2` states why. **The row MAY NOT BE MOVED TO THE `ui` LEG SILENTLY** — `docs/specs/zones.md` `§4.4 S-6`'s own words, which this unit's `[U]` clause carries (`§5.2`). — **⟶ AMENDED 2026-09-27 (THE ARCHITECT-RULING AMENDMENT PASS): A ROW — OR A CLAUSE — THAT CLAIMS A COORDINATE OR A MAGNITUDE IS THIS ROW'S SECOND CLASS AND IS STOPPED THE SAME WAY.** **`E3` reads NO coordinate and NO event field and ships NO magnitude (`§0A` note 13's scope ruling, `§1` item 2, `I-11`); the coordinate source belongs to ledger row `E10` (`NOT THIS UNIT / PROPOSED`), and a clause that needs one is DELETED rather than relocated.** This is the class `E3`-BLOCK-5's premise and the gate-1 "no gesture-computable input" finding came from.** |
+| **S-10** | A row is only satisfiable if the **session COMPUTES, CLAMPS, DEFAULTS or VALIDATES a value**, or if the **controller re-expresses the session's lifecycle** — a start listener of its own, a `session.begin` call, a gesture guard, a listener window, a disposal order, a second commit channel | **Violates rulings 3/6 and `§2.5` item 3** — the session is the single gesture authority and `A-d3`'s shape is the composition's premise. **Stop and report: it is a contract change needing its own gate, not an implementation choice.** — **⟶ AMENDED 2026-09-27 (THE ARCHITECT-RULING AMENDMENT PASS): TWO CLASSES ARE ADDED TO THIS ROW.** **(a) A CLAUSE (or a row) THAT CLAIMS A COORDINATE, A DELTA OR A MAGNITUDE — *"the drag produces a size"* — is STOPPED HERE**: `E3` reads no coordinate and no event field, the value is CONSUMER-PRODUCED and pushed with `gesture.set(value)`, and `sizeFor` only READS it at the terminal (`§0A` note 13's scope ruling, `§1` item 2, `S-9`). **(b) A PREVIEW WRITE THAT REACHES THE SINK IS STOPPED HERE**: the live "show the resized state from the cursor" feedback is the CONSUMER's TRANSIENT VIEW channel, the sink is written AT MOST ONCE PER GESTURE and ONLY AT A TERMINAL, and the write-count rows must be able to FAIL for a preview that wrote it (`§2.3` item 3's preview rule, `§2.6` item `4b`, `M-4`/`M-5`/`F-9`). **(c) A ROW THAT DRIVES A HARNESS-REGISTERED COMMIT CHANNEL *AND* THE COMPOSITION'S OWN WRITER FOR THE SAME GESTURE IS STOPPED HERE TOO — it is a SECOND-WRITER shape by definition** (`§2.5` item 4's pinned wiring, `S-11`).** |
+| **S-11** | A row proposes **an EIGHTH session result code**, a **fourth session outcome**, a **fifth hook**, a `selectors`/`threshold`/`unit` parameter, an **options field that could smuggle a policy default in**, or a **second writer** | **Each is a contract change.** The session's SEVEN-member union (`gsession.md` `§4.4 S-9`), the frozen delegate surface and ruling 6's single sink are the contract; **stop and report to the supervisor.** **This unit's own `'unusable-default'` is NOT an eighth session code — it never enters the session** (`§2.1`'s note, `I-14`). — **⟶ AMENDED 2026-09-27 (THE ARCHITECT-RULING AMENDMENT PASS): "A SECOND WRITER" IS THIS ROW'S OWN CLASS, AND IT IS STATED PRECISELY.** **A second writer is a writer that writes the SAME SINK for the SAME gesture through a channel OTHER than the composition's single wiring — the divergence between the sink's own call record and the controller's counter is what catches it (`§2.5` item 4, `M-1`'s sink shapes, `P-GT-SM-3` shape `(2)`).** **IT DOES NOT MEAN *"a second writer INSIDE this composition"*: the composition wires the session's `commit` option to EXACTLY ONE callback, and the CONTROLLER writes NOTHING from any hook — so a clause that asks the composition for a second write site is stopped, while the CONSUMER's own preview channel (`S-10`'s class (b)) is EXPLICITLY PERMITTED and is NOT this composition's write.** |
 | **S-12** | A row needs a **sibling import**, a **census read**, a `zones`/`revealed`/`specOf`/`sizes` parameter of this module's own, a **store**, a **persistence channel**, or a **shim change** | **Violates ruling 14, `census.md` `§1` item 7 and `P-9`/`P-10`** — **a dependency edge asserted toward `U-CENSUS` would be a FABRICATED EDGE** (`H-r6`'s dissolved-edge class). **Stop and route the row to its owner** (`U-CENSUS`, the consumer, or the session). |
 | **S-13** | A row (or the implementation) **authors UI content** — a class write, an attribute write, a style write, a text or markup write, a created element, an appended node — or claims a rendered affordance | **Violates `§1` item 5** (`E3` ships no UI; the real gutter UI is `E10`, `PROPOSED`) **and the `AGENTS.md` project-wide provident-rendered-UI constraint**: a UI element authored outside the provident graph is a review finding. **The row is deleted, and the obligation is routed to `E10`** — **`R-11` is the row that FAILS for a write.** |
 
@@ -1438,7 +1735,10 @@ items**:
    `ClampBounds`, `CommitSink`, `DefaultSizeFor`, `IsResizable`, `ResizeController`,
    `ResizeControllerHandle`, `ResizeControllerOptions`, `ResizeStats`) — **`2 + 10 = 12` names** — its
    factory options carry **exactly SEVEN seams** with **`capture` ABSENT**, and it is **imported by NO
-   `src/**` file**."* **The census is `§2.1`'s and `R-5` is its row.**
+   `src/**` file**."* **The census is `§2.1`'s and `R-5` is its row.** — **⟶ CORRECTED 2026-09-27 (THE
+   ARCHITECT-RULING AMENDMENT PASS — ruling `8`(a)): the census is `2 + 10 = 12` EXACTLY, and
+   `ResizeCode`/`ResizeResetResult` are NON-EXPORTED module-local declarations.** **A DONE row that
+   prints a THIRTEENTH or FOURTEENTH exported name, or that omits this census, is a review finding.**
 4. **The code/test delta**: the module + the test file, named.
 5. **The red, per `§4.1`** — the failing set as **RUN and REPORTED, verbatim**, **including which
    register rows ran and which were reported un-run** (`§4.2`'s stop rule).
@@ -1478,7 +1778,11 @@ items**:
     compared against `299`, with the as-filed `314` named as the corrected mis-sum (`§5.5.3`).** **Two
     cells carry NO attempt term and MUST NOT appear in this item's arithmetic: the register-space clause
     cell `P-GT-SM-5` (the `detach()` multi-element limb) and the `§3.1` row `M-20` it points at — both
-    added by this pass, neither counted.**
+    added by this pass, neither counted.** — **⟶ ADDED 2026-09-27 (THE ARCHITECT-RULING AMENDMENT PASS):
+    THIS ITEM ALSO CARRIES `R-16`'s GREEN BRANCH.** **The DONE row must state that the module-absence row
+    `R-16` was driven in its **GREEN BRANCH** — the module EXISTS, is **imported by no `src/**` file**, and
+    the `2 + 10 = 12` export census holds — **and not by the red form**, which governs only at red time
+    (`§3.5 R-16`).**
 11. **The register's ARITHMETIC and its DUAL COUNT.** The DONE row must print the **total WITH its
     per-row terms** — **`299` = `60` (`P-GT-PU-1`) + `11` (`P-GT-PU-2`) + `10` (`P-GT-PU-3`) + `18`
     (`P-GT-IM-1`) + `20` (`P-GT-IM-2`) + `22` (`P-GT-IM-3`) + `28` (`P-GT-IM-4`) + `20` (`P-GT-SM-1`) +
@@ -1493,10 +1797,20 @@ items**:
     row's attempts
     are several assertions over ONE execution, or a count of DISTINCT inputs rather than of DRIVES, the
     DONE row must report BOTH the declared attempts and the honest DISTINCT-DRIVE figure** — here
-    **FOUR rows carry both**: `P-GT-PU-2` (`11` declared / `2` distinct `(value, bounds)` pairs — **and it
+    **FOUR rows carry both** — *(**⟶ CORRECTED 2026-09-27, THE ARCHITECT-RULING AMENDMENT PASS: with
+    `P-GT-SM-4`'s distinct figure corrected to `12` (= its declared `12`), only **THREE** rows still
+    carry two DIFFERING figures — `P-GT-PU-2`, `P-GT-IM-2` and `P-GT-SM-1` — and `P-GT-SM-4` now reports
+    the SAME figure twice. The as-filed `FOUR` is kept visible here; the obligation this sentence
+    carries is UNCHANGED: the DONE row reports BOTH figures per row.)*: `P-GT-PU-2` (`11` declared / `2` distinct `(value, bounds)` pairs — **and it
     declares its `(bounded)` marking for exactly that reason**), `P-GT-IM-2` (`20` declared / `18`
     distinct seam-path observations), `P-GT-SM-1` (`20` declared / `19` distinct path×shape pairs), and
-    `P-GT-SM-4` (`12` declared / `11` distinct entry-point observations) — **while `P-GT-SM-3`'s `5` is
+    `P-GT-SM-4` (`12` declared / `12` distinct entry-point observations — **⟶ CORRECTED 2026-09-27, THE
+    ARCHITECT-RULING AMENDMENT PASS: this item AS FILED printed the DISTINCT figure `11` for
+    `P-GT-SM-4`; the `isResizable === false` limb is now GENUINELY DRIVEN, so its honest distinct figure
+    is `12`. THE DECLARED TERM `12` DOES NOT MOVE, NO ATTEMPT TERM MOVED, and the total stays the sum of
+    the register's own thirteen printed terms; the landed test file's `declaredPair` table carries the
+    as-filed `11` and is a TEST-SIDE residue this pass may not edit (`§5.1`'s DENIED set)**) — **while
+    `P-GT-SM-3`'s `5` is
     `5` distinct drives, not five assertions over one execution.** **The DECLARED figures are what the
     caps are compared against; the distinct-drive figures are reported BESIDE them and never substituted
     for them.** **A DONE row that quotes the total alone, or that substitutes a distinct-drive figure in
@@ -1615,10 +1929,10 @@ invariant · **`P-SM`** = state-machine · **`P-TP`** = totality.
 | **`P-GT-IM-2`** *(the `boundsFor` + `defaultSizeFor` SEAM quantification — the ONE bounds channel and the reset default's source)* | `P-IM` invariant | **For EVERY seam shape in the row's `5`-shape domain and every path in its `4`-path domain, the two seams' CALL COUNTS and the WRITE COUNT are EXACTLY the declared ones: `boundsFor` is called AT MOST ONCE per gesture, ONLY at a terminal that evaluates a value (an `'end'` of a resizable gesture, or a `reset`), and it RECEIVES THE SAME TOKEN `axisFor` returned; `defaultSizeFor` is called AT MOST ONCE per reset and NEVER on any other path; an unusable `boundsFor` (absent / non-callable / a non-record / a throwing pair) makes the clamp answer `NaN` and therefore yields `sinkCalls === 0`; and a THROWING `boundsFor` PROPAGATES to the caller of the terminal while still leaving `sinkCalls` at `0` — so the write count is ZERO or EXACTLY ONE, NEVER TWO.** | **YES (bounded — the property text quantifies over "EVERY seam shape and EVERY path", while the table drives `5` shapes × `4` paths; the universal is NOT proven. Its DECLARED term is `20` and its honest DISTINCT seam-path observations are `18`, because `2` of the `5` shapes are byte-identical in what the module can observe across the `bounds` and `default` paths)** | `M-3`, `M-14`, `F-14`, `F-17`, `I-1`, `§2.3` items 2/4, `§2.4` item 2 | `S-GT-SEAM-2` | **`20` attempts** = **`5` seam shapes × `4` drive paths**, driven in fixed order. **The `5` shapes (each driven as a `boundsFor` AND as a `defaultSizeFor`):** **(1)** a callable returning the canonical pair · **(2)** ABSENT · **(3)** NON-CALLABLE · **(4)** a callable returning an UNUSABLE pair (`{}`, a primitive, a non-number field, a throwing field read — driven as one shape's four variants) · **(5)** THROWING. **The `4` drive paths:** **(a)** an `'end'` lifecycle with `isResizable` truthy (drives `boundsFor` only) · **(b)** a `reset` on a resizable gesture (drives `boundsFor` AND `defaultSizeFor`) · **(c)** a `reset` where the default is what is under test (drives `defaultSizeFor` first) · **(d)** a `cancel` lifecycle (drives NEITHER). **Per attempt assert:** the exact call count for each seam (`0` for path `(d)` in every cell; `1` for `boundsFor` on `(a)`/`(b)`; `1` for `defaultSizeFor` on `(b)`/`(c)`), `stats().sinkCalls` against the declared pair, the token identity the seam received (`toBe`), the propagation for shape `(5)` on `(a)`/`(b)`, and — for shape `(4)` — the `NaN`-answer path with `sinkCalls === 0`. |
 | **`P-GT-IM-3`** *(the `isResizable` quantification — ONE evaluation per gesture, at establishment, and the `false` path)* | `P-IM` invariant | **For EVERY `isResizable` shape in the row's `4`-shape domain, the seam is called EXACTLY ONCE for an ESTABLISHED gesture and ZERO times for a gesture that never established, it is NEVER called at `attach`, and its TRUTHINESS is the whole decision: a falsy answer (including ABSENT and THROWING, which are the `not-resizable` default) makes the gesture ESTABLISH and TERMINATE NORMALLY with `sinkCalls === 0` AND AN OUTCOME THAT IS NOT `'cancel'`, while a truthy answer lets the terminal seams run and the write count become `1`.** | **YES** *(the `4` shapes are the whole declared domain — `4` DISTINCT module-observable shapes, exactly as `§0A` note 6 requires: not callable, callable-and-falsy, callable-and-truthy, throwing)* | `M-8`, `M-9`, `M-10`, `M-11`, `F-18`, `I-4`, `§0A` note 6 | `S-GT-SEAM-3` | **`22` attempts** = **`4` shapes × `5` drives + `2` attach-time drives**. **The `4` shapes:** **(1)** ABSENT · **(2)** NON-CALLABLE · **(3)** a callable returning a FALSY value (driven as `false`, `0`, `''`, `null`, `undefined`, `NaN` — one shape, its variants asserted inside the drive) · **(4)** a callable THROWING. **The `5` drives per shape:** **(a)** `attach` only, NO gesture — asserts `isResizable` was called **ZERO** times and `attach` still returned `true` (the *never an install-time gate* clause) · **(b)** a full `'end'` lifecycle — asserts the call count (`1` for `(3)`/`(4)`; `0` for `(1)`/`(2)`), `sinkCalls` (`1` for `(3)`, `0` for `(1)`/`(2)`/`(4)`), and the outcome (**not `'cancel'`**) · **(c)** a `cancel` lifecycle · **(d)** a `refused` establishment (`begin` on an uninstalled element — asserts `isResizable` was NOT called) · **(e)** two sequential gestures — asserts the seam is called **once PER gesture** (**`2`** for `(3)`/`(4)`), which is what falsifies *"once, and per gesture rather than per instance"*. **The `2` attach-time drives:** a truthy and a falsy `isResizable` at `attach` time, both asserting **zero** seam calls during the attach. **Per attempt assert:** the exact call count, `stats().gestures`, `stats().sinkCalls`, and the terminal `outcome`. |
 | **`P-GT-IM-4`** *(the `axisFor` / token quantification AND the frozen seven-seam set)* | `P-IM` invariant | **For EVERY seam shape in the row's `4`-shape domain, BOTH halves hold: (i) `axisFor` — the seam is called AT MOST ONCE per ESTABLISHED gesture, its ABSENT / NON-CALLABLE / THROWING shapes yield the token `undefined` and are SWALLOWED (the gesture still establishes and still terminates normally, and never becomes `busy`), and the value it returned reaches `isResizable`/`boundsFor`/`sizeFor`/`defaultSizeFor` BY IDENTITY; and (ii) THE SEAM SET IS FROZEN — the factory's options object carries EXACTLY the SEVEN declared members, NAMED and ORDERED, `capture` is ABSENT, no eighth member is honoured, and no policy default exists.** | **YES** *(the `4` shapes are the whole declared `axisFor` domain, and the seam-set half is a SET claim over a closed list, not a sample)* | `M-3`, `M-7`, `F-18`, `I-5`, `R-1`, `R-10`, `§2.1` items 3/5, `§0A` note 5 | `S-GT-SEAM-4` | **`28` attempts** = **`4` `axisFor` shapes × `7` SEAMS**. **The `4` shapes:** **(1)** a callable returning a token OBJECT (identity-asserted) · **(2)** ABSENT · **(3)** NON-CALLABLE · **(4)** THROWING. **The `7` seams** are `§2.1` item 3's set, driven one per attempt: `session` · `axisFor` · `boundsFor` · `defaultSizeFor` · `isResizable` · `sizeFor` · `commit`. **Per attempt assert:** for **`axisFor`** itself — the call count (`1` per established gesture; `0` for `(2)`/`(3)`), and for `(4)` the swallow + normal establishment; for **the other six seams** — that the seam's received `axis` argument **IS the object `axisFor` returned** (`toBe`, the identity clause that makes the token's opacity falsifiable) or is `undefined` for shapes `(2)`..`(4)`; and, for the **seam-set half**, the options object's own key set read BY NAME — **asserted on every one of the `28` attempts**, so an eighth member added to any drive FAILS, and `capture`'s presence FAILS. |
-| **`P-GT-SM-1`** *(the COMMIT-COUNT quantification per terminal path — required rows (ii) and (iii))* | `P-SM` state-machine | **For EVERY terminal path in the row's `4`-path domain and EVERY sink shape in its `5`-shape domain, the `commit` channel's behaviour is EXACTLY the declared pair: an `'end'` terminal of a resizable gesture with a usable bounds pair invokes the sink EXACTLY ONCE; a `cancel` terminal (including a `pointercancel`, a consumer abort and a `dispose()` mid-gesture) invokes it ZERO times; a REFUSED terminal invokes it ZERO times; a `reset` is `P-GT-SM-4`'s domain and is driven here only as a control; and the count NEVER exceeds one per gesture — whatever the value states and whatever the consumer's hooks do.** **The converse clauses asserted in the same row: an `end` whose seam value clamps to `NaN` writes ZERO times (and is still an `'end'`), and a `cancel` writes ZERO times even when the consumer set a value on the gesture.** | **YES** *(the `4` paths × `5` shapes IS the declared domain; `19` of the `20` cells are distinct module-observable path×shape pairs, because one refusal path and one cancel path read the same observable — a `dispose()` mid-gesture produces the same terminal evidence as a `cancel` under a non-writing sink shape, and that is recorded as the row's declared-vs-distinct figure rather than asserted as distinct)* | `M-4`, `M-5`, `M-6`, `F-11`, `I-2`, `I-2b`, `§2.3` item 3, `§5.3` item 11 | `S-GT-COMMIT-1` | **`20` attempts** = **`4` terminal paths × `5` sink shapes**, driven in fixed order (path-major). **The `4` paths:** **(1)** the recorded `'pointerup'` handler (a real session-driven end) · **(2)** the recorded `'pointercancel'` handler · **(3)** a REFUSED terminal (the session refuses a stale handle) · **(4)** a `dispose()` arriving mid-gesture (through `detach()` or the session's own dispose). **The `5` sink shapes:** **(a)** a normal counting sink · **(b)** a sink that THROWS · **(c)** NO sink at all (the slot-empty composition — `committed: true` with nothing written, `F-10`) · **(d)** a NON-CALLABLE sink value · **(e)** a counting sink with the consumer setting a value on the gesture via `gesture.set`. **Per attempt assert:** the sink's own recorded call count AND the controller's `stats().sinkCalls` AND `stats().written` (**both readings, so the row cannot pass by counting only its own calls**), the session's terminal `committed`, and the terminal `outcome` where a terminal exists. |
+| **`P-GT-SM-1`** *(the COMMIT-COUNT quantification per terminal path — required rows (ii) and (iii))* | `P-SM` state-machine | **For EVERY terminal path in the row's `4`-path domain and EVERY sink shape in its `5`-shape domain, the `commit` channel's behaviour is EXACTLY the declared pair: an `'end'` terminal of a resizable gesture with a usable bounds pair invokes the sink EXACTLY ONCE; a `cancel` terminal (including a `pointercancel`, a consumer abort and a `dispose()` mid-gesture) invokes it ZERO times; a REFUSED terminal invokes it ZERO times; a `reset` is `P-GT-SM-4`'s domain and is driven here only as a control; and the count NEVER exceeds one per gesture — whatever the value states and whatever the consumer's hooks do.** **The converse clauses asserted in the same row: an `end` whose seam value clamps to `NaN` writes ZERO times (and is still an `'end'`), and a `cancel` writes ZERO times even when the consumer set a value on the gesture.** — **⟶ RULED 2026-09-27 (THE ARCHITECT-RULING AMENDMENT PASS — WHO INVOKES THE SINK, ruling `6`): THIS ROW IS DRIVEN AGAINST ONE WIRING, NOT TWO.** **The composition wires the SESSION's `commit` option to EXACTLY ONE CALLBACK — the composition's single sink writer — and it is THAT callback whose invocation this row counts; the session invokes it AT MOST ONCE PER GESTURE, ONLY at an `end`/`reset` terminal, and NEVER on a `cancel`** (`§2.5` item 4's pinned paragraph; `§2.3` item 1's chain). **When a harness registers its own commit channel, the composition's wiring is STILL the single writer, and the two recorded readings are the SINK'S OWN CALL RECORD versus the CONTROLLER'S counter — they diverge EXACTLY when a second writer exists, and that divergence is the falsifier this row and `P-GT-SM-3` share.** **A row that drives BOTH a harness-registered forwarding channel AND the composition's own writer for the same gesture is asserting a SECOND WRITER and is caught by `§4.4 S-11`; a row that expects the sink record to read `1` while the controller's counter reads `0` is reading the harness's channel, not this composition's.** | **YES** *(the `4` paths × `5` shapes IS the declared domain; `19` of the `20` cells are distinct module-observable path×shape pairs, because one refusal path and one cancel path read the same observable — a `dispose()` mid-gesture produces the same terminal evidence as a `cancel` under a non-writing sink shape, and that is recorded as the row's declared-vs-distinct figure rather than asserted as distinct)* | `M-4`, `M-5`, `M-6`, `F-11`, `I-2`, `I-2b`, `§2.3` item 3, `§5.3` item 11 | `S-GT-COMMIT-1` | **`20` attempts** = **`4` terminal paths × `5` sink shapes**, driven in fixed order (path-major). **The `4` paths:** **(1)** the recorded `'pointerup'` handler (a real session-driven end) · **(2)** the recorded `'pointercancel'` handler · **(3)** a REFUSED terminal (the session refuses a stale handle) · **(4)** a `dispose()` arriving mid-gesture (through `detach()` or the session's own dispose). **The `5` sink shapes:** **(a)** a normal counting sink · **(b)** a sink that THROWS · **(c)** NO sink at all (the slot-empty composition — `committed: true` with nothing written, `F-10`) · **(d)** a NON-CALLABLE sink value · **(e)** a counting sink with the consumer setting a value on the gesture via `gesture.set`. **Per attempt assert:** the sink's own recorded call count AND the controller's `stats().sinkCalls` AND `stats().written` (**both readings, so the row cannot pass by counting only its own calls**), the session's terminal `committed`, and the terminal `outcome` where a terminal exists. |
 | **`P-GT-SM-2`** *(the NO-WRITE-BEFORE-ESTABLISHMENT / NO-SECOND-WRITE / NO-RETAINED-SINK quantification — required row (v))* | `P-SM` state-machine | **For EVERY stage in the row's `5`-stage domain and EVERY slot shape in its `3`-shape domain: the sink is invoked ZERO times before a gesture's terminal, it is NEVER invoked twice for one gesture, it is NEVER invoked for an unestablished gesture, and NOTHING IS RETAINED across the boundary — after the terminal `stats().sinkCalls` holds its count but the controller's per-gesture record (handle, token, resizability decision) is GONE, a subsequent `reset` finds no handle (and refuses `'no-gesture'`), and no element-keyed value, cache or memo exists.** **The capture clause is asserted in the same row: ZERO capture calls at every stage, and the `install` options object carries no `capture` field.** | **YES (bounded — the property text names "EVERY stage and EVERY slot shape" while the table drives `5` stages × `3` slot shapes; the universal is NOT proven, and the two zero-write clauses are asserted over the whole enumerated grid rather than derived)** | `M-4`, `M-13`, `M-16`, `I-7`, `I-9`, `R-10`, `§2.3` item 5, `§2.5` item 6 | `S-GT-WINDOW-1` | **`15` attempts** = **`5` stages × `3` slot shapes**, driven in fixed order. **The `5` stages:** **(1)** after `attach`, before any establishment · **(2)** during the gesture, after a consumer `gesture.set` · **(3)** at the terminal (the frame in which any write occurs) · **(4)** after the terminal (a `reset` attempted on the now-idle controller) · **(5)** after two full sequential gestures. **The `3` slot shapes:** **(1)** a gesture that terminated by `'end'` · **(2)** a gesture that terminated by `'cancel'` · **(3)** a gesture that NEVER established (only an `attach` happened). **Per attempt assert:** `stats().sinkCalls` and the sink's own record at that stage (**exactly the declared running count, never "at least"**), `stats().attached`, the refusal code from stage `(4)`'s `reset` (**`'no-gesture'`**), `gesture()`'s returned record being **discarded** where the row can observe it, the recorded **capture count being `0` at every stage**, and the recorded `install` options' own key set containing **no `capture`**. |
-| **`P-GT-SM-3`** *(THE SINGLE-WRITER / DOUBLE-WRITE quantification — required row (ii) at its sharpest)* | `P-SM` state-machine | **For EVERY composition shape in the row's `5`-shape domain, the write channel's behaviour is EXACTLY the declared one: ONE CORRECT COMPOSITION writes exactly once per resizable `'end'` gesture and the sink's record and the controller's `stats().sinkCalls` AGREE at `1`; A TWO-WRITER COMPOSITION FAILS (the sink's record reads `2` for one gesture) while the controller's own count still reads `1` — WHICH IS WHY BOTH READINGS ARE ASSERTED; A NO-WRITER COMPOSITION (SLOT-EMPTY) FAILS (the count reads `0` where `1` is required) AND THE SESSION REPORTS `committed: true` WHILE NOTHING WAS WRITTEN; A CONSUMER-SIDE WRITE from the consumer's own hook is NOT this composition's write — but a composition whose TOTAL write count for one gesture is `2` FAILS; and NOTHING that never reached a terminal writes at all.** | **YES** *(the `5` shapes are `5` DISTINCT drives, not five assertions over one execution — each drives a different composition and each has its own falsifiable expected count)* | `F-9`, `F-10`, `F-19`, `I-2`, `I-2b`, `R-13`, `§2.3` item 3, `§2.5` item 4 | `S-GT-WRITER-1` | **`5` attempts** = **`5` composition shapes**, one full `'end'` lifecycle each. **The `5` shapes:** **(1)** the CORRECT single-writer composition (one sink, wired to the session's commit channel by this controller) · **(2)** the TWO-WRITER composition (a second writer also calls the sink for the same gesture) — **declared to FAIL the row** · **(3)** the NO-WRITER composition (`commit` absent — the slot-empty shape) — **declared to FAIL the row**, and the row states, in this cell, **that the session reports `committed: true` while nothing was written** · **(4)** a consumer whose own `onMove` calls the sink, **and, in the SAME consumer-side WRITE CLASS (4)/(5)**, **(5)** a consumer whose own `onEnd` calls the sink — **THE SECOND CONSUMER-SIDE WRITE CLASS, completed here** *(**⟶ CORRECTED 2026-09-27, THE RED-RUN AMENDMENT PASS: this cell AS FILED was TRUNCATED mid-word at *"a composit…"*, so the `5`-shape list was not fully stated and shape `(5)` had no text at all; the ruling completes it to the SECOND consumer-side write class — a consumer's own `onEnd` calling the sink — which is the wording the red set authored. The shapes `(1)`–`(5)` are now stated COMPLETELY, in order and with no gap: `(1)` correct single-writer · `(2)` two-writer · `(3)` no-writer (slot-empty) · `(4)` consumer-side write from `onMove` · `(5)` consumer-side write from `onEnd`.)* — and **the two readings the row asserts for EVERY shape are DISTINCT BY DESIGN** *(**⟶ CORRECTED 2026-09-27, THE RED-RUN AMENDMENT PASS: this cell AS FILED said the two readings *"AGREE at `1`"* for shape `(1)` while also saying the controller's own count reads `1` BECAUSE the sink's record reads `2` — the two could not both hold for the two-writer shape, so the row as worded was not falsifiable. The RULED reading: for the CORRECT (single-writer) composition the sink's record and the controller's `stats().sinkCalls` BOTH read `1`; for the TWO-WRITER composition the SINK'S OWN RECORD reads `2` while the CONTROLLER'S COUNTER still reads `1` — and THAT DIVERGENCE is what makes the row falsifiable. The same distinction is stated at `§3.2 F-9` and `§3.4 R-13`.**)*: **the `5` shapes are `5` DISTINCT drives, and THREE of them carry a total write count of `2`** — the two-writer composition and the two consumer-side-write shapes — **so a composition cannot pass by counting only its own calls, and a row that asserted a single reading would be satisfiable by a composition that never wired the channel.** **Per attempt assert:** the sink's own recorded call count (exactly the declared figure, never *"at least"*), the controller's `stats().sinkCalls`, and — for shape `(3)` — **that the session reports `committed: true` while nothing was written** (the `C1` sentence, in the same cell). · **(5)** a composition whose gesture never reaches a terminal (a `cancel`) — the count is `0`. **Per attempt assert:** the sink's own record length for the gesture, `stats().sinkCalls`, `stats().written`, the session's terminal `committed`, and — for shape `(2)` — that the controller's own count is `1` **while** the sink's record is `2`, so a pass cannot be obtained by trusting one reading. |
-| **`P-GT-SM-4`** *(the RESET-SURFACE quantification — code propagation and the CLAMPED default; required row (iv))* | `P-SM` state-machine | **For EVERY reset entry-point shape in the row's `6`-shape domain, the reset surface behaves EXACTLY as ruling 9 declares: with an ACTIVE resizable gesture and a usable default the controller calls `session.reset(element, handle, value)` exactly once with THE CLAMPED DEFAULT (never the raw default, never a user-set value), writes the sink exactly once, and the value the sink receives is the clamped one; with NO active gesture the refusal is `'no-gesture'` with ZERO session calls; with an unusable `defaultSizeFor` the refusal is `'unusable-default'` with ZERO session calls; with an unusable BOUNDS pair the session's reset IS called once with `NaN` and the sink is NOT written; with `isResizable` FALSE the reset makes ZERO session calls; and on a DISPOSED session the code is the session's own `'disposed'`, propagated VERBATIM — the session's SEVEN codes are never renamed, wrapped or re-lexed, and NO code of this controller's is ever passed INTO the session.** | **YES** *(the `6` shapes are the declared domain of the entry point — every refusal class and every success class, each with its own declared code and call count: `11` DISTINCT module-observable readings, because the two THROWING `defaultSizeFor`/`boundsFor`-at-default limbs are declared as one unusable-default class with a single observable)* | `M-14`, `M-15`, `M-16`, `M-17`, `F-12`, `F-13`, `F-14`, `F-15`, `R-15`, `§2.3` item 4, `§2.5` item 5 | `S-GT-RESET-1` | **`12` attempts** = **`6` reset entry-point shapes × `2` readings** (the **controller's** result record, and the **session's** recorded call/response), driven in fixed order. **The `6` shapes:** **(1)** an ACTIVE resizable gesture, usable default (`defaultSizeFor` ⇒ `420`), usable bounds (`{min: 0, max: 100}`) ⇒ **one session call, value `100`, one sink write, `{ok:true, code:'ok', committed:true}`** — **⟶ COMPLETED 2026-09-27 (THE RED-RUN AMENDMENT PASS): the `6` shapes AS FILED were stated as *"every refusal class and every success class"* but the enumerating cell ran out at shape `(1)`, so the ruling's own shape list is stated HERE COMPLETELY and in the row's declared order: `(1)` an ACTIVE resizable gesture with a usable default and a usable bounds pair ⇒ ONE session call with the CLAMPED value, ONE sink write, `committed: true` · `(2)` NO active gesture ⇒ the session's own `'no-gesture'`, ZERO session calls, ZERO writes · `(3)` an unusable `defaultSizeFor` (ABSENT) ⇒ `'unusable-default'`, ZERO session calls, ZERO writes · `(4)` an unusable `defaultSizeFor` (THROWING) ⇒ `'unusable-default'`, ZERO session calls, ZERO writes, **and `(3)`/`(4)` are declared as ONE unusable-default class (the reason the distinct figure is `11`)** · `(5)` an unusable BOUNDS pair (the clamp answers `NaN`) ⇒ ONE session call carrying `NaN`, ZERO sink writes, controller-side `committed: false` WHILE the session's own `TerminalResult.committed` reads `true` (THE TWO-COUNTERS-DIFFER CLASS) · `(6)` **`isResizable` FALSE on an ESTABLISHED gesture ⇒ ZERO session calls and the controller-local `'not-resizable'`, `committed: false`, ZERO writes** — **and the DISPOSED-session case, where the code is the session's own `'disposed'` propagated VERBATIM.** **THE RED-RUN DIVERGENCE, REPORTED NOT INVENTED: the landed `tests/gutter.test.ts` drives `P-GT-SM-4` with SIX shapes whose list is `(1)` active/usable · `(2)` no active gesture · `(3)` unusable default (absent) · `(4)` unusable default (throwing) · `(5)` unusable BOUNDS · `(6)` DISPOSED — so its shape `(6)` is the DISPOSED case and the **`isResizable`-FALSE limb is NOT among the six driven cells** (`isResizable` is hard-wired truthy in that table). THE DECLARED TERM (`12` = `6` × `2`) AND THE DISTINCT FIGURE (`11`) ARE UNCHANGED AND THIS PASS MAY NOT EDIT THE TEST FILE (`§5.1`'s DENIED set): the missing limb is a TEST-SIDE residue, and `F-13`/`M-17`'s own rows drive the non-resizable refusal at their sites.** · **(2)** NO active gesture ⇒ **`'no-gesture'`, zero session calls** · **(3)** `defaultSizeFor` ABSENT ⇒ **`'unusable-default'`, zero session calls** · **(4)** `defaultSizeFor` THROWING ⇒ **`'unusable-default'`, zero session calls** · **(5)** an unusable BOUNDS pair (`{}`) ⇒ **one session call carrying `NaN`, `sinkCalls === 0`, the controller reporting `committed: false` while the session's `TerminalResult.committed` reads `true`** · **(6)** a DISPOSED session (or `isResizable` falsy — driven as this shape's second variant, each asserted separately) ⇒ **the session's own `'disposed'` / zero session calls respectively, propagated verbatim**. **Per attempt assert:** the exact session-call count and the exact value the session received (`Object.is` for the `NaN` drive), the sink's own record, the controller's result record and its `committed`, the terminal `outcome` at the sink (**`'reset'`** for shape `(1)` — the discriminator clause), the identity of the handle passed to `session.reset` (**the one the session gave at establishment**), and, for shapes `(2)`..`(4)`, that the recording session's log gained **NOTHING** and that `defaultSizeFor`/`boundsFor` were called the declared number of times. |
+| **`P-GT-SM-3`** *(THE SINGLE-WRITER / DOUBLE-WRITE quantification — required row (ii) at its sharpest)* | `P-SM` state-machine | **For EVERY composition shape in the row's `5`-shape domain, the write channel's behaviour is EXACTLY the declared one: ONE CORRECT COMPOSITION writes exactly once per resizable `'end'` gesture and the sink's record and the controller's `stats().sinkCalls` AGREE at `1`; A TWO-WRITER COMPOSITION FAILS (the sink's record reads `2` for one gesture) while the controller's own count still reads `1` — WHICH IS WHY BOTH READINGS ARE ASSERTED; A NO-WRITER COMPOSITION (SLOT-EMPTY) FAILS (the count reads `0` where `1` is required) AND THE SESSION REPORTS `committed: true` WHILE NOTHING WAS WRITTEN; A CONSUMER-SIDE WRITE from the consumer's own hook is NOT this composition's write — but a composition whose TOTAL write count for one gesture is `2` FAILS; and NOTHING that never reached a terminal writes at all.** — **⟶ RULED 2026-09-27 (THE ARCHITECT-RULING AMENDMENT PASS — WHO INVOKES THE SINK, ruling `6`, resolving `E3`-BLOCK-3): THE `5` SHAPES ARE DRIVEN AGAINST **ONE WIRING**, AND THE DIVERGENCE IS THE FALSIFIER.** **The composition wires the SESSION's `commit` option to EXACTLY ONE CALLBACK — the composition's SINGLE SINK WRITER — invoked AT MOST ONCE PER GESTURE, ONLY at an `end`/`reset` terminal, NEVER on a `cancel`; the CONTROLLER WRITES NOTHING FROM ANY HOOK.** **Shape `(1)`'s two readings therefore BOTH read `1` (the sink's own record AND `stats().sinkCalls`); shape `(2)`'s SINK RECORD reads `2` while the CONTROLLER'S COUNTER still reads `1` — THE DIVERGENCE — because a second writer's call does not pass this controller's one call site; and when a harness registers its own commit channel, **THAT WIRING IS STILL THE SINGLE WRITER**, so a shape that drives the harness's forwarding channel AND a composition-supplied writer for the same gesture is a SECOND WRITER by definition and must be declared as shape `(2)`'s class, never as shape `(1)`.** | **YES** *(the `5` shapes are `5` DISTINCT drives, not five assertions over one execution — each drives a different composition and each has its own falsifiable expected count)* | `F-9`, `F-10`, `F-19`, `I-2`, `I-2b`, `R-13`, `§2.3` item 3, `§2.5` item 4 | `S-GT-WRITER-1` | **`5` attempts** = **`5` composition shapes**, one full `'end'` lifecycle each. **The `5` shapes:** **(1)** the CORRECT single-writer composition (one sink, wired to the session's commit channel by this controller) · **(2)** the TWO-WRITER composition (a second writer also calls the sink for the same gesture) — **declared to FAIL the row** · **(3)** the NO-WRITER composition (`commit` absent — the slot-empty shape) — **declared to FAIL the row**, and the row states, in this cell, **that the session reports `committed: true` while nothing was written** · **(4)** a consumer whose own `onMove` calls the sink, **and, in the SAME consumer-side WRITE CLASS (4)/(5)**, **(5)** a consumer whose own `onEnd` calls the sink — **THE SECOND CONSUMER-SIDE WRITE CLASS, completed here** *(**⟶ CORRECTED 2026-09-27, THE RED-RUN AMENDMENT PASS: this cell AS FILED was TRUNCATED mid-word at *"a composit…"*, so the `5`-shape list was not fully stated and shape `(5)` had no text at all; the ruling completes it to the SECOND consumer-side write class — a consumer's own `onEnd` calling the sink — which is the wording the red set authored. The shapes `(1)`–`(5)` are now stated COMPLETELY, in order and with no gap: `(1)` correct single-writer · `(2)` two-writer · `(3)` no-writer (slot-empty) · `(4)` consumer-side write from `onMove` · `(5)` consumer-side write from `onEnd`.)* — and **the two readings the row asserts for EVERY shape are DISTINCT BY DESIGN** *(**⟶ CORRECTED 2026-09-27, THE RED-RUN AMENDMENT PASS: this cell AS FILED said the two readings *"AGREE at `1`"* for shape `(1)` while also saying the controller's own count reads `1` BECAUSE the sink's record reads `2` — the two could not both hold for the two-writer shape, so the row as worded was not falsifiable. The RULED reading: for the CORRECT (single-writer) composition the sink's record and the controller's `stats().sinkCalls` BOTH read `1`; for the TWO-WRITER composition the SINK'S OWN RECORD reads `2` while the CONTROLLER'S COUNTER still reads `1` — and THAT DIVERGENCE is what makes the row falsifiable. The same distinction is stated at `§3.2 F-9` and `§3.4 R-13`.**)*: **the `5` shapes are `5` DISTINCT drives, and THREE of them carry a total write count of `2`** — the two-writer composition and the two consumer-side-write shapes — **so a composition cannot pass by counting only its own calls, and a row that asserted a single reading would be satisfiable by a composition that never wired the channel.** **Per attempt assert:** the sink's own recorded call count (exactly the declared figure, never *"at least"*), the controller's `stats().sinkCalls`, and — for shape `(3)` — **that the session reports `committed: true` while nothing was written** (the `C1` sentence, in the same cell). · **(5)** a composition whose gesture never reaches a terminal (a `cancel`) — the count is `0`. **Per attempt assert:** the sink's own record length for the gesture, `stats().sinkCalls`, `stats().written`, the session's terminal `committed`, and — for shape `(2)` — that the controller's own count is `1` **while** the sink's record is `2`, so a pass cannot be obtained by trusting one reading. |
+| **`P-GT-SM-4`** *(the RESET-SURFACE quantification — code propagation and the CLAMPED default; required row (iv))* | `P-SM` state-machine | **For EVERY reset entry-point shape in the row's `6`-shape domain, the reset surface behaves EXACTLY as ruling 9 declares: with an ACTIVE resizable gesture and a usable default the controller calls `session.reset(element, handle, value)` exactly once with THE CLAMPED DEFAULT (never the raw default, never a user-set value), writes the sink exactly once, and the value the sink receives is the clamped one; with NO active gesture the refusal is `'no-gesture'` with ZERO session calls; with an unusable `defaultSizeFor` the refusal is `'unusable-default'` with ZERO session calls; with an unusable BOUNDS pair the session's reset IS called once with `NaN` and the sink is NOT written; with `isResizable` FALSE the reset makes ZERO session calls; and on a DISPOSED session the code is the session's own `'disposed'`, propagated VERBATIM — the session's SEVEN codes are never renamed, wrapped or re-lexed, and NO code of this controller's is ever passed INTO the session.** | **YES** *(the `6` shapes are the declared domain of the entry point — every refusal class and every success class, each with its own declared code and call count: `11` DISTINCT module-observable readings — **⟶ CORRECTED 2026-09-27, THE ARCHITECT-RULING AMENDMENT PASS (ruling `8`(c)): the honest DISTINCT figure is `12`**, because the `isResizable === false` limb is now GENUINELY DRIVEN as shape `(6)`'s second variant (the controller-local `'not-resizable'` refusal, ZERO session calls, ZERO writes) and is a distinct reading of its own. **THE DECLARED ATTEMPT TERM STAYS `12`** (`6` shapes × `2` readings), **NO ATTEMPT TERM MOVED**, and `§5.5.3`'s thirteen-term arithmetic is UNCHANGED. The as-filed reason — *"the two THROWING `defaultSizeFor`/`boundsFor`-at-default limbs are declared as one unusable-default class with a single observable"* — is kept visible here and at `§5.5.2` item 3's ledger; the landed test file's `declaredPair` table still carries `11` and is a `TEST-SIDE` residue THIS PASS MAY NOT EDIT (`§5.1`'s DENIED set)* | `M-14`, `M-15`, `M-16`, `M-17`, `F-12`, `F-13`, `F-14`, `F-15`, `R-15`, `§2.3` item 4, `§2.5` item 5 | `S-GT-RESET-1` | **`12` attempts** = **`6` reset entry-point shapes × `2` readings** (the **controller's** result record, and the **session's** recorded call/response), driven in fixed order. **The `6` shapes:** **(1)** an ACTIVE resizable gesture, usable default (`defaultSizeFor` ⇒ `420`), usable bounds (`{min: 0, max: 100}`) ⇒ **one session call, value `100`, one sink write, `{ok:true, code:'ok', committed:true}`** — **⟶ COMPLETED 2026-09-27 (THE RED-RUN AMENDMENT PASS): the `6` shapes AS FILED were stated as *"every refusal class and every success class"* but the enumerating cell ran out at shape `(1)`, so the ruling's own shape list is stated HERE COMPLETELY and in the row's declared order: `(1)` an ACTIVE resizable gesture with a usable default and a usable bounds pair ⇒ ONE session call with the CLAMPED value, ONE sink write, `committed: true` · `(2)` NO active gesture ⇒ the session's own `'no-gesture'`, ZERO session calls, ZERO writes · `(3)` an unusable `defaultSizeFor` (ABSENT) ⇒ `'unusable-default'`, ZERO session calls, ZERO writes · `(4)` an unusable `defaultSizeFor` (THROWING) ⇒ `'unusable-default'`, ZERO session calls, ZERO writes, **and `(3)`/`(4)` are declared as ONE unusable-default class (the reason the distinct figure is `11`)** · `(5)` an unusable BOUNDS pair (the clamp answers `NaN`) ⇒ ONE session call carrying `NaN`, ZERO sink writes, controller-side `committed: false` WHILE the session's own `TerminalResult.committed` reads `true` (THE TWO-COUNTERS-DIFFER CLASS) · `(6)` **`isResizable` FALSE on an ESTABLISHED gesture ⇒ ZERO session calls and the controller-local `'not-resizable'`, `committed: false`, ZERO writes** — **and the DISPOSED-session case, where the code is the session's own `'disposed'` propagated VERBATIM.** **THE RED-RUN DIVERGENCE, REPORTED NOT INVENTED: the landed `tests/gutter.test.ts` drives `P-GT-SM-4` with SIX shapes whose list is `(1)` active/usable · `(2)` no active gesture · `(3)` unusable default (absent) · `(4)` unusable default (throwing) · `(5)` unusable BOUNDS · `(6)` DISPOSED — so its shape `(6)` is the DISPOSED case and the **`isResizable`-FALSE limb is NOT among the six driven cells** (`isResizable` is hard-wired truthy in that table). THE DECLARED TERM (`12` = `6` × `2`) AND THE DISTINCT FIGURE (`11`) ARE UNCHANGED AND THIS PASS MAY NOT EDIT THE TEST FILE (`§5.1`'s DENIED set): the missing limb is a TEST-SIDE residue, and `F-13`/`M-17`'s own rows drive the non-resizable refusal at their sites.** · **(2)** NO active gesture ⇒ **`'no-gesture'`, zero session calls** · **(3)** `defaultSizeFor` ABSENT ⇒ **`'unusable-default'`, zero session calls** · **(4)** `defaultSizeFor` THROWING ⇒ **`'unusable-default'`, zero session calls** · **(5)** an unusable BOUNDS pair (`{}`) ⇒ **one session call carrying `NaN`, `sinkCalls === 0`, the controller reporting `committed: false` while the session's `TerminalResult.committed` reads `true`** · **(6)** a DISPOSED session (or `isResizable` falsy — driven as this shape's second variant, each asserted separately) ⇒ **the session's own `'disposed'` / zero session calls respectively, propagated verbatim**. **Per attempt assert:** the exact session-call count and the exact value the session received (`Object.is` for the `NaN` drive), the sink's own record, the controller's result record and its `committed`, the terminal `outcome` at the sink (**`'reset'`** for shape `(1)` — the discriminator clause), the identity of the handle passed to `session.reset` (**the one the session gave at establishment**), and, for shapes `(2)`..`(4)`, that the recording session's log gained **NOTHING** and that `defaultSizeFor`/`boundsFor` were called the declared number of times. |
 | **`P-GT-SM-5`** *(the `detach()` MULTI-ELEMENT limb — **⟶ ADDED 2026-09-27 BY THE RED-RUN AMENDMENT PASS**; a `§3.1`-CLASS CLAUSE CELL carrying **NO ATTEMPT TERM**, appended in place AFTER `P-GT-SM-4` and OUTSIDE the register's `299` total and `≤400`-cap comparison)* | **`P-SM` clause cell** *(no attempt term — NOT one of the `13` attempt-bearing rows)* | **`detach()` is ZERO-ARGUMENT and CONTROLLER-WIDE: it REFUSES — returning `false` with ZERO session calls — while MORE THAN ONE element is attached to THIS controller, because the session is shared and detaching it on behalf of one control would detach every OTHER control's listeners; with EXACTLY ONE element attached it delegates `session.dispose()` exactly once and returns `true` iff the session reports `complete === true`; the refusal makes NO session call of any kind, leaves every attached element's ledger entry intact (nothing is half-detached), and `detached` does NOT read `true` on a refusal.** **THE DEFAULT'S STATUS IS STATED WITH IT: this is the `§7a.1` item 2 WORKING DEFAULT, NOT a ruled clause — `§7a.1` item 2 STAYS OPEN, and a later pass that changes it MUST open a gate.** | **NOT APPLICABLE — clause cell, NO ATTEMPT TERM** *(its drives are named in the cell to its right; no cap comparison, no `(bounded)` marking and no distinct figure attach to it)* | `M-13` (**the red set's CARRIER for this limb**), `M-20` (**the `§3.1` clause row this pass adds**), `§2.1` item 4 (the `detach` doc block), `§7a.1` item 2, `§2.5` item 4 (the one-controller-per-session requirement's practical form) | **NONE** *(no strategy id: this cell is not executed by a register strategy, and inventing an `S-GT-*` id for it would imply an attempt term it does not carry)* | **NO enumeration strategy — the cell names its drives and nothing more.** **Its drives (for the TestWriter's clause row, `M-20`):** **(1)** `attach(elA)`, `detach()` ⇒ `true`, exactly ONE `session.dispose()` call, `detached` reads `true`; **(2)** `attach(elA)`, `attach(elB)`, `detach()` ⇒ **`false`** with **ZERO session calls** and **nothing dropped** (both ledger entries intact, `detached` still `false`); **(3)** `attach(elA)`, `detach()`, `detach()` ⇒ the second call makes ZERO session calls and returns `false` (**`M-13`'s idempotence limb**), and `detached` reads `true` forever after. **NO ATTEMPT IS COUNTED FOR THIS CELL, so NOTHING here may be added to the thirteen terms, to the `299` total or to any cap comparison.** | — ruling 8's universal, with its BOUND in its own words, over a pinned-seed pool)* | `P-TP` totality | **For EVERY seam shape drawn from the pinned `20`-member pool and driven through EITHER of the row's `2` composition configurations: NO METHOD OF THE CONTROLLER THROWS, and `createResizeController` itself never throws, for ANY argument — AND `A THROWING INJECTED SEAM IS EXCLUDED FROM THAT UNIVERSAL ONLY WHERE `§2.4` item 1's SEVEN-SEAM TABLE NAMES A DIFFERENT, EXPLICIT OUTCOME FOR IT`: an absent, non-callable or throwing `session`/`axisFor`/`isResizable`/`defaultSizeFor`/`commit` is CAUGHT and mapped to its named safe default, while a throwing `boundsFor`/`sizeFor` PROPAGATES to the caller of the terminal that invoked the session.** **Every drawn drive returns its declared shape: a controller with `attach`/`detach`/`reset`/`stats`/`detached` all present and callable, a `reset` returning a `{ok, code, committed}` record, and a `stats()` returning the six declared fields.** | **YES (bounded — the property text says "EVERY seam shape" while the pool holds `20` and the drive performs `60` draws; the universal is NOT proven, and no reader may read this row as its proof. THE BOUND IS STATED IN THIS CELL'S OWN WORDS, which is what ruling 8 requires of it)** | `F-16`, `F-17`, `F-18`, `I-10`, `§2.4` items 1/2/3, `§0A` note 9 | `S-GT-TOTAL-1` | **`60` attempts** = **`30` pinned-seed DRAWS × `2` composition configurations**, where **one attempt is one totality DRIVE (one drawn shape passed as one seam of one configuration, with every method then called once)** and **the per-call ASSERTIONS (`≥ 3` each: did-not-throw · declared kind · declared members callable) are reported as the row's `assertions` figure, NEVER as attempts.** **The `30` draws**
 | **`P-GT-TP-1`** *(the SEVEN-SEAM TOTALITY universal — ruling 8's universal, with its BOUND in its own words, over a pinned-seed pool)* | `P-TP` totality | **For EVERY seam shape drawn from the pinned `20`-member pool and driven through EITHER of the row's `2` composition configurations: NO METHOD OF THE CONTROLLER THROWS, and `createResizeController` itself never throws, for ANY argument — AND `A THROWING INJECTED SEAM IS EXCLUDED FROM THAT UNIVERSAL ONLY WHERE `§2.4` item 1's SEVEN-SEAM TABLE NAMES A DIFFERENT, EXPLICIT OUTCOME FOR IT`: an absent, non-callable or throwing `session`/`axisFor`/`isResizable`/`defaultSizeFor`/`commit` is CAUGHT and mapped to its named safe default, while a throwing `boundsFor`/`sizeFor` PROPAGATES to the caller of the terminal that invoked the session.** **Every drawn drive returns its declared shape: a controller with `attach`/`detach`/`reset`/`stats`/`detached` all present and callable, a `reset` returning a `{ok, code, committed}` record, and a `stats()` returning the six declared fields.** | **YES (bounded — the property text says "EVERY seam shape" while the pool holds `20` and the drive performs `60` draws; the universal is NOT proven, and no reader may read this row as its proof. THE BOUND IS STATED IN THIS CELL'S OWN WORDS, which is what ruling 8 requires of it)** | `F-16`, `F-17`, `F-18`, `I-10`, `§2.4` items 1/2/3, `§0A` note 9 | `S-GT-TOTAL-1` | **`60` attempts** = **`30` pinned-seed DRAWS × `2` composition configurations**, where **one attempt is one totality DRIVE (one drawn shape passed as one seam of one configuration, with every method then called once)** and **the per-call ASSERTIONS (`≥ 3` each: did-not-throw · declared kind · declared members callable) are reported as the row's `assertions` figure, NEVER as attempts.** **The `30` draws come from the `20`-member pool by the pinned LCG (`state₀ = 20260927`, ONE step per draw, `index = stateₙ₊₁ mod 20`) — **so the same pool member may be drawn more than once and NO claim of pool coverage is made**; **the pool's `20` members (fixed, in this order):** **(1)** `undefined` · **(2)** `null` · **(3)** `0` · **(4)** `''` · **(5)** `NaN` · **(6)** a function · **(7)** `{}` · **(8)** `[]` · **(9)** a frozen `{}` · **(10)** a bare primitive object `Object.create(null)` · **(11)** a record whose every member is a THROWING getter · **(12)** a `Proxy` whose `get`/`has`/`getOwnPropertyDescriptor` traps THROW · **(13)** a `Proxy` that returns `undefined` for every property · **(14)** a `Symbol('s')` · **(15)** `true` · **(16)** a `Map` instance · **(17)** a `Set` instance · **(18)** a `Date` instance · **(19)** `{on: 1, off: 2}` (non-callable members) · **(20)** a `Promise.resolve()`. **The `2` configurations:** **(A)** the drawn shape passed as `session` · **(B)** the drawn shape passed as one of the six seam members (`axisFor` on even draws, `commit` on odd draws — a fixed in-loop binding, no extra state). **Per attempt assert:** construction returned a controller with all five members present and callable; `attach`, `detach`, `reset`, `stats` each returned their declared shape **without throwing**; and **for configuration (A) specifically, all five members were still callable and `stats()` still reported the six declared fields.** |
 | **`P-GT-TP-2`** *(the DECLARED-SHAPE-OVER-HOSTILE-ARGUMENTS quantification — totality of the four entry points)* | `P-TP` totality | **For EVERY argument shape in the row's `6`-shape domain, EVERY controller entry point is TOTAL: `createResizeController(arg)` returns a controller (never throws, never returns `null`/`undefined`/a primitive), `attach(element, hooks)` returns a `boolean`, `reset(element)` returns a `{ok, code, committed}` record, `detach()` returns a `boolean` and `stats()` returns the six declared fields — for EVERY one of the row's argument shapes, INCLUDING a hostile `Proxy`, a throwing accessor, a `Symbol`, a `BigInt`, a function, an array and an absent argument.** **The converse clauses asserted in the same row: no entry point leaves a state a later call cannot read (a `stats()` after any of them is readable and totals-consistent), and a refusal is always a RECORD or a `boolean`, never a throw.** | **YES** *(the `6` argument shapes × the `3` entry-point drives IS the declared grid; every cell has its own declared return kind)* | `F-16`, `I-10`, `M-16`, `§2.4` item 3, `§2.1` item 4 | `S-GT-SHAPES-1` | **`18` attempts** = **`6` argument shapes × `3` entry-point drives**, one call each. **The `6` argument shapes:** **(1)** `undefined` (the argument omitted) · **(2)** `null` · **(3)** `42` · **(4)** `'x'` · **(5)** a `Proxy` whose traps THROW · **(6)** a record with a throwing accessor on `session` (and the same shape re-driven with the throwing accessor on `commit`). **The `3` entry-point drives per shape:** **(a)** the FACTORY as the argument it is built for (`createResizeController(shape)`) ⇒ asserts a controller is returned and its five members are callable · **(b)** the RESULTING controller's `attach(shape)` and `attach(shape, shape)` ⇒ asserts a `boolean` in both drives and no throw · **(c)** the resulting controller's `reset(shape)`, `detach()` and `stats()` ⇒ asserts the `{ok, code, committed}` record, a `boolean`, and the six fields — **and then one MORE `stats()` to assert the state stayed readable.** **Per attempt assert:** the returned kind (`typeof`/field-presence), the did-not-throw assertion, the declared code from the closed set (`I-14`), and the totals-consistency of `stats()` (`sinkCalls ≥ written`, `attached ≥ 0`, every counter a finite non-negative integer). |
@@ -1673,7 +1987,7 @@ ones are always the cap comparison.**
 | `P-GT-SM-1` | `20` | **`19`** | one refusal path and one cancel path under a non-writing sink shape read the same terminal evidence — the collision is named in the row's own cell |
 | `P-GT-SM-2` | `15` | **`15`** | five stages × three slot shapes, each a distinct stage observation |
 | `P-GT-SM-3` | `5` | **`5`** | **five distinct compositions**, not five assertions over one execution |
-| `P-GT-SM-4` | `12` | **`11`** | the two THROWING limbs (`defaultSizeFor` throwing, and the throwing bounds-at-default variant) are declared as **one** unusable-default class with a single observable |
+| `P-GT-SM-4` | `12` | **`12`** — *(**⟶ CORRECTED 2026-09-27, THE ARCHITECT-RULING AMENDMENT PASS: this cell AS FILED read `11`, for the reason that the two THROWING limbs were declared as one unusable-default class with a single observable. That reason NO LONGER HOLDS — the `isResizable === false` limb is GENUINELY DRIVEN (the `'not-resizable'` case, added by the red-run amendment pass as shape `(6)`'s second variant), so the limb's own observable is a distinct reading and the honest distinct figure is `12`. The DECLARED term stays `12` and NO ATTEMPT TERM MOVED; the as-filed `11` is kept visible in this cell and in the landed test file's `declaredPair` table, which is a TEST-SIDE residue this pass may not edit — `§5.5.1 P-GT-SM-4` is the same correction's other site.)* | the `isResizable === false` limb's `'not-resizable'` refusal (ZERO session calls, ZERO writes) is now a DRIVEN reading of its own, so the table's `12` attempts yield `12` distinct module-observable readings |
 | `P-GT-TP-1` | `60` | **`60` DRAWS** — and **the DISTINCT-MEMBER count is a REPORTED figure, never asserted** | **a DRAW IS NOT A SWEEP**: `30` draws over a `20`-member pool do **not** guarantee that every member is drawn, **and NO row may assert "all 20"** — **a DONE row claiming full pool coverage is a review finding** |
 | `P-GT-TP-2` | `18` | **`18`** | six argument shapes × three entry-point drives, each distinct |
 
@@ -1701,7 +2015,15 @@ ACTIVE rules pin.**
 audit that quotes *"one commit per gesture"*, *"cancel ⇒ zero writes"* or *"the two positive controls"*
 MUST cite `P-GT-SM-3`** (with `P-GT-SM-1` for the per-path counts), and **no other register row may be
 read as carrying them.** **`P-GT-PU-1` carries the pure function's TOTALITY; `P-GT-TP-1` carries the
-seven-seam totality universal.**
+seven-seam totality universal.** — **⟶ ADDED 2026-09-27 (THE ARCHITECT-RULING AMENDMENT PASS — ruling
+`6`): THE SEAM-COUNT ROWS `P-GT-IM-1` AND `P-GT-IM-2` ARE ALSO READ AGAINST THE SAME ONE WIRING.**
+**Their write-count clauses are counted over the composition's ONE sink writer — the single callback the
+composition wires to the session's `commit` option, invoked at most once per gesture, only at an
+`end`/`reset` terminal, never on a `cancel` — and the CONTROLLER writes NOTHING from any hook.** **A cell
+that registers a SECOND commit channel (a harness forwarding channel) for the same gesture while the
+composition's own writer is live is driving a TWO-WRITER shape: it belongs to `P-GT-SM-3`'s shape `(2)`
+and `§4.4 S-11`, and it may not be scored as a single-writer cell of `P-GT-IM-1`/`P-GT-IM-2`**
+(`§2.5` item 4's pinned wiring; `§5.5.1 P-GT-SM-1`/`P-GT-SM-3`).
 
 **Item 7 — THE POOL-VERSUS-BOUNDARY CHECK, RUN BEFORE FILING (ruling 10; the check
 `docs/specs/gsession.md` `§5.5.2` item 7 runs, and the class that was unsatisfiable in two sibling
@@ -2045,6 +2367,8 @@ are appended), so its rows are cited **by NAME**. **This spec writes no line-cou
 | **`docs/skills/designing-pages.md` and the page-design layer** | **NOT THIS UNIT, and the file DOES NOT EXIST** — so no coverage matrix and no demo-page index to update; **`R-9` is the probe** | `§1` item 6, `§3.5 R-9`, `§7` item 7 |
 | **`docs/specs/gutter.md` (this file)** | **LANDED BY THIS FILING** (`OWED — not filed` → FILED). **The tracker cell is the SUPERVISOR's to flip** — this pass edits no tracker | this file, `§5.1` item 5, `§7` item 15 |
 | **`docs/specs/gutter-greens.md`** | **OWED** — this unit's **gate-5 blind-greens artifact** (`AGENTS.md` item 10a), named in the diff scope so it is not discovered later | `§5.1` row 4, `§5.3` item 8 |
+| **THE INTENDED GUTTER BEHAVIOUR (mouseover ⇒ the adjust cursor · click ⇒ the gesture starts · drag ⇒ the resized state shown LIVE from the cursor · release ⇒ a VALID dragged state committed and an INVALID one reset · right-click ⇒ dropped and reset) — a NON-NORMATIVE interface note** *(**⟶ ADDED 2026-09-27 BY THE ARCHITECT-RULING AMENDMENT PASS**)* | **RECORDED, NOT THIS UNIT's — its OWNER is ledger row `E10` (`NOT THIS UNIT / PROPOSED`)**, and **the normative content of this file is its CLAUSE ROWS, not the note.** The note is the intent the clauses SERVE, and the clauses are falsifiable without it: **`§2.3` item 3 (the preview channel), `§2.3` item 4 (the release mapping), `§2.5` item 5 clause 2 (the handle channel), `§1` item 2 (the consumer-produced value)**, plus `§2.6` item `4b` | `§0A` note 13, `§1` item 2, `§2.3` items 2/3/4, `§2.5` item 5, `§2.6` item `4b`, `§4.4 S-9`/`S-10`/`S-11`, `§8` (this row) |
+| **THE `U-GUTTER` SCOPE RULING (A) — `U-GUTTER` (`E3`) REMAINS THE POLICY-FREE CLAMP + COMMIT-DISCIPLINE LAYER; the UI unit (`E10`, ledger row, `PROPOSED — awaiting admission`) OWNS the cursor, the coordinates, the live preview, the capture decision and the drop-revert** *(**⟶ ADDED 2026-09-27 BY THE ARCHITECT-RULING AMENDMENT PASS**)* | **ADOPTED as the boundary that pins this amendment's missing decisions.** **`E3` READS NO COORDINATE AND NO EVENT FIELD, and THE FROZEN SESSION IS NOT REOPENED.** What it resolves, clause by clause: **`E3`-BLOCK-5's premise** (the value is consumer-produced; the handle arrives only through the controller's own `onMove` wrapper), **the capture decision** (`E10`'s, not `E3`'s), **the live preview** (the consumer's transient view channel, never the sink), and **the release mapping** (valid ⇒ one commit of the clamped dragged value · invalid ⇒ one commit of the clamped supplied default · drop ⇒ zero commits and zero sink writes). **`E10` is NOT owed by `E3`** (ruling 12) | `§0A` note 13, `§0A` notes 3/7, `§1` items 2/5/6, `§2.3` items 1/3/4, `§2.5` item 4/clause 2, `§5.1` item 11, `§5.2`'s `[U]` clause, `§7` item 14, `§8` (this row and the `E10` row) |
 | **`docs/specs/gutter-ui.md`** | **OWED — NOT this unit's file**; it belongs to `E10`, `PROPOSED`, if and when the architect admits that unit | `§1` item 5, `§5.1` item 11 |
 | **`docs/specs/gutter-review.md`** | **ADOPTED (the authority) and FROZEN (not editable by this unit)** — this filing derives it and does not amend it | `§0`, `§5.1` DENIED item 10 |
 | **The gate-3 RED RUN's findings (2026-09-27), as landed by the RED-RUN AMENDMENT PASS** | **CARRIED IN PLACE, each with its as-filed form kept visible**: **the `314` → `299` arithmetic correction** (the register's own thirteen terms; `U-GUTTER` is the FIFTH consecutive sibling in the class — `docs/decisions.md` `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`) · **the `reset` result-code table with the TWO controller-local codes** (`§2.1`'s note, `§2.3` item 4, `§2.5` item 5 clause 4, `F-13`, `R-15`, `I-14`) · **the `P-GT-SM-3` two-writer reading divergence** (`§5.5.1`, `F-9`, `R-13`) · **the `detach()` multi-element limb's explicit cells** (`M-20`, `P-GT-SM-5`) · **the completed `P-GT-SM-3` shape list** — and **the pass's `⟶ RECORDED` block at the file's top status area**, which states that **NO REGISTER ROW WAS ADDED OR REMOVED, the ONLY arithmetic change is the total's correction to `299`, NO ATTEMPT TERM MOVED, NO SECTION WAS RENUMBERED, and THE UNIT REMAINS NOT GREEN** (`90` rows run, `71` failed / `19` passed) | `§3.2 F-13`, `§3.1 M-13`/`M-20`, `§3.4 R-15`, `§3.3 I-14`, `§5.5.1`, `§5.5.2`, `§5.5.3`, `§7a.1`, and the top status block |
