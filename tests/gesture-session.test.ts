@@ -5021,7 +5021,9 @@ describe('ADV-GS-2 — the tracking-attach refusal (the gate-4 regression row)',
 // register rows): none of them is a `§5.5.1` attempt, and the declared register terms,
 // the `396` total, the seed and the caps are UNTOUCHED by this block.
 //   · `ADV-GS-16` — the `onStart`-throws path of the SAME counter clause (AS FILED, THE RED
-//     OF THIS PASS). `§2.1`'s `SessionStats.gestures` cell reads
+//     OF THIS PASS — the as-filed phrase is kept visible; see the `⟶ RECORDED` correction at
+//     the end of this bullet, where **THE ROW IS GREEN**). `§2.1`'s `SessionStats.gestures`
+//     cell reads
 //     *"Successful `begin` calls, instance-lifetime"*, `§2.4` item 4 has the handle `id`
 //     *"start at `1`, increment on every **successful** `begin`"*, and `M-2` puts the first
 //     gesture's handle at `id === 1` — while the module AS FILED consummated the counter and
@@ -5044,7 +5046,7 @@ describe('ADV-GS-2 — the tracking-attach refusal (the gate-4 regression row)',
 //     callback exists** (`§2.1`'s `TerminalResult` cell, corrected to this reading).
 // ===========================================================================
 describe('ADV-GS-16 / ADV-GS-26 / ADV-GS-22(a) — the gate-4 closure rows of the `§2.1`/`§2.3` seam', () => {
-  it('ADV-GS-16 — a THROWING `onStart`: `begin` cleans up and RETHROWS, and the attempt consumes NO gesture counter and NO id (the §2.1 `gestures` clause vs the landed bytes) — THE RED OF THIS PASS', async () => {
+  it('ADV-GS-16 — a THROWING `onStart`: `begin` cleans up and RETHROWS, and the attempt consumes NO gesture counter and NO id (the §2.1 `gestures` clause vs the landed bytes) — GREEN SINCE THE 2026-09-27 MODULE FIX (the as-filed title read `THE RED OF THIS PASS`)', async () => {
     // STATES ENUMERATED BEFORE THE ROW (the file’s own convention):
     //  (1) a control installed whose `onStart` THROWS (it throws only on its FIRST call, so
     //      the SAME element can be re-established afterwards — the retry limb of state (4));
@@ -6202,7 +6204,9 @@ describe('PRE — harness preconditions (not spec rows)', () => {
  *  shape `(16)` duplicating `(12)` *("the recorder supplies a callable `isConnected`
  *  returning `true` in both")*, and the *"FROZEN-source shape `(18)` [that] is NEVER
  *  ACTUALLY FROZEN"*. **The DECLARED term and the DECLARED distinct figure are the
- *  spec's and are asserted as declarations**; what this pass owes is that the two shapes
+ *  spec's and are asserted as declarations**; what this pass owes — AS FILED, and **⟶
+ *  DISCHARGED 2026-09-27, see the dated note at the end of this paragraph** — is that the two
+ *  shapes
  *  it names as MISSING FIXTURES (`(16)`'s ABSENT-MEMBER source and `(18)`'s GENUINELY
  *  FROZEN source) really exist, and that the table's OWN distinct figure is derivable from
  *  the table rather than asserted as a slogan. Each configuration therefore carries
@@ -6211,7 +6215,10 @@ describe('PRE — harness preconditions (not spec rows)', () => {
  *  the connectivity shape, whether `commit` is absent, whether a second control is
  *  installed — plus the source's own behavioural shape). `PRE-4` asserts the fixtures and
  *  prints the arithmetic; the register row prints the THREE `§5.5.1` figures BESIDE the
- *  derived one.
+ *  derived one. **⟶ DISCHARGED 2026-09-27 (`D-12`(`b`), the test-side owed-items pass whose
+ *  record is at the file's end): the two MISSING FIXTURES now EXIST and are asserted in
+ *  `PRE-4`, and the table's own distinct figure is COMPUTED from the table — so the
+ *  obligation this paragraph states in the present tense is met, not outstanding.**
  *
  *  **⟶ CORRECTED 2026-09-27 (`ADV-GS-33`, the gate-4 closure): THE BARE `15` AT THIS SITE
  *  WAS A SPEC FIGURE THAT NO LONGER EXISTS.** `§5.5.1`'s cell now states its figures WITH
@@ -8555,6 +8562,10 @@ describe('§6 — the unit’s three falsifications (each asserted, never narrat
 // Its GREEN form ("the module EXISTS and the unit-owned change set is EXACTLY the module
 // + this test file") is recorded as PROVENANCE in the row, to be re-scoped by the
 // green-time pass exactly as the sibling units' module-absence rows were.
+// **⟶ RECORDED 2026-09-27 (the green-time red-set-repair pass, repair `N`): THE RE-SCOPING HAS
+// HAPPENED** — the row now reads `R-10 §3.5 (GREEN FORM)` (module PRESENT), the as-filed RED form
+// and the red-run census are kept as PROVENANCE at the row, and the future tense of the sentence
+// above is therefore SUPERSEDED. **No assertion moved for this correction.**
 //
 // FINDING 3 — `§5.5.1 P-GS-TP-1`'s strategy cell states its `24` as `3 phases × 4 shapes
 // × 2 functions` and then ALSO states that "`4 + 4 + 4 = 12` phase-shape drives; `12 × 2`
@@ -8756,6 +8767,9 @@ describe('§6 — the unit’s three falsifications (each asserted, never narrat
 // `{ok:true}` return, and **the row is GREEN — the increment no longer precedes the hook.**
 // A reader who sees this row fail must read it as *the module owes the fix*, never as
 // *the expectation is stale* — and must NOT re-tune the row to the measured figure.
+// ⟶ RECORDED 2026-09-27 LATER THE SAME DAY (`ADV-GS-17`, the gate-4 closure): THAT READING IS NOW
+// HISTORICAL — the fix HAS landed (the paragraph below records it), so a failure at this row is a
+// REGRESSION against the landed module and **NOT** a fix still owed.
 //
 // **⟶ RECORDED 2026-09-27 LATER THE SAME DAY (`ADV-GS-17`, THE GATE-4 CLOSURE): THE FIX
 // HAS LANDED, AND THE ADV-GS-2 ROW IS GREEN.** The as-filed text above is kept verbatim as
@@ -8771,6 +8785,14 @@ describe('§6 — the unit’s three falsifications (each asserted, never narrat
 // way: the increment no longer precedes the `onStart` hook, so THAT row is GREEN too.)
 //
 // Tracked in `docs/pending.md` §H with this reasoning.
+// ⟶ RECORDED 2026-09-27: THE CITATION ABOVE IS MIS-POINTED AND THE TRACKER ROW IS STALE — the
+// `ADV-GS-15`/`ADV-GS-16` counter reasoning is NOT in `docs/pending.md` §H (that section is the
+// `U-PROJ` DONE pass's residues and carries no `ADV-GS-15`/`ADV-GS-16` text at all), and §H's
+// `U-GSESSION` row still describes `D-2`'s row as OWED and `§3b` as unlanded. The landed sites of
+// this reasoning are `docs/specs/gsession.md`'s `§2.1` `SessionStats.gestures`/`gestureId` cells,
+// `§2.3` item 1(d) and the module's own dated notes; the adjacent `onStart`-path observation is
+// PARKED at `§2.3` item 6(c) with its revisit condition. **The tracker staleness is REPORTED and
+// not fixed here: this file may not edit the trackers.**
 
 // ===========================================================================
 // **⟶ RECORDED 2026-09-27 — THE TEST-SIDE OWED ITEMS PASS (`D-1`, `D-2`,
@@ -8913,8 +8935,9 @@ describe('§6 — the unit’s three falsifications (each asserted, never narrat
 //     caps are compared against.
 //   · **⟶ `ADV-GS-30`/`ADV-GS-32`/`ADV-GS-33`/`ADV-GS-37` — THE GATE-4 CLOSURE'S FOUR
 //     TEST-SIDE ITEMS (2026-09-27, this pass).**
-//     **`ADV-GS-30` (MED — THE RED OF THIS PASS).** A `begin` whose session is disposed
-//     DURING the call reported `{ok:true, gesture}` on an inert instance. The row added by
+//     **`ADV-GS-30` (MED — AS FILED, THE RED OF THIS PASS; ⟶ RECORDED 2026-09-27: THE ROW IS
+//     GREEN — see the correction at the end of this bullet).** A `begin` whose session is
+//     disposed DURING the call reported `{ok:true, gesture}` on an inert instance. The row added by
 //     this pass (`describe('ADV-GS-30 — a \`begin\` whose session is disposed MID-CALL …')`)
 //     drives BOTH windows the establishment order leaves open — the disposal from inside
 //     `capturePointer` and from inside `onStart` — and asserts, per window, the `§2.3` item
@@ -8932,6 +8955,13 @@ describe('§6 — the unit’s three falsifications (each asserted, never narrat
 //     this row (`SourceOptions.capturePointer`, the mid-call hook inside the recorder's
 //     capture call) — the window cannot be reached otherwise, because it is opened by the
 //     session's own call order.
+//     **⟶ RECORDED 2026-09-27 (the gate-4 closure's module fix): THE ROW IS GREEN.** The landed
+//     module carries the liveness re-check `if (ended || slot !== record) return
+//     refuseBegin('disposed')` at the END of the establishment order and ABOVE the counter
+//     increment, so BOTH windows this row drives (the disposal from inside `capturePointer`
+//     and from inside `onStart`) refuse on the landed bytes instead of reporting
+//     `{ok:true, gesture}` on an inert instance — the red was discharged by that fix, whose
+//     row is this one, and NOT by re-tuning the row.
 //     **`ADV-GS-32`.** `PRE-2`'s bounded-set assertion compared four literals to the same
 //     four literals (unfalsifiable) and printed *"the FOUR rows … (the other SEVEN are
 //     `YES`)"* while `§5.5.1` marks FIVE (`P-GS-IM-2` joined, `ADV-GS-25`). The register table
