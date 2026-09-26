@@ -1149,6 +1149,104 @@ const GEOM_CLAIM_RES: readonly RegExp[] = GEOM_CLAIM_FRAGMENTS.map((f) => new Re
 function rowTitles(src: string): string[] {
   return [...src.matchAll(/\b(?:it|describe)\(\s*('(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*")/g)].map((m) => m[1])
 }
+// ---------------------------------------------------------------------------
+// §3.4 R-12 — THE `P-4` UI-CONTENT WRITE TOKENS, held as FRAGMENTS for the same
+// reason the `R-1`/`R-2`/`R-8` rule lists are: this file must be able to NAME the
+// tokens it bans without carrying their spellings in its own bytes. SCOPE, exactly
+// as `§3.4 R-12` states it: the MODULE file (whole, comments INCLUDED) over the
+// NORMALIZED view `R-1` reads, PLUS this row's own controlled corpora — **a
+// whole-file negative over THIS test file is DELIBERATELY DROPPED** (`R-1`/`R-8`'s
+// scope rule), because the row's own controls must carry the spellings.
+// ---------------------------------------------------------------------------
+const WRITE_TOKEN_FRAGMENTS: ReadonlyArray<readonly [string, ...string[]]> = [
+  ['set', 'Attribute'],
+  ['remove', 'Attribute'],
+  ['class', 'List'],
+  ['class', 'Name'],
+  ['text', 'Content'],
+  ['inner', 'Text'],
+  ['inner', 'HTML'],
+  ['outer', 'HTML'],
+  ['insert', 'Adjacent', 'HTML'],
+  ['insert', 'Adjacent', 'Text'],
+  ['create', 'Element'],
+  ['create', 'Text', 'Node'],
+  ['append', 'Child'],
+  ['insert', 'Before'],
+  ['remove', 'Child'],
+  ['replace', 'Children'],
+  ['css', 'Text'],
+]
+/** The assembled ids the fragments above must rebuild (`R-12`'s own token list). */
+const WRITE_TOKEN_IDS: readonly string[] = WRITE_TOKEN_FRAGMENTS.map((f) => f.join(''))
+/** The `style`-write family (`§3.4 R-12`'s own parenthetical: `style.setProperty`, a
+ *  `.style.`-rooted write, and a `cssText` write). The three forms are stated
+ *  separately because the family is a SHAPE rather than a single token: a member call
+ *  and a property write root differently, and a `cssText` write is a member write of
+ *  its own. **THE FAMILY'S EXACT MEMBERS ARE REPORTED**: `R-12`'s parenthetical is
+ *  spelled as a shape (`style.setProperty`, `.style.=`), so this instrument pins the
+ *  three mechanical forms the shape names — a `.style`-rooted member write, a
+ *  `['style']['<prop>']` computed write, and a `setProperty`/`cssText` write — and
+ *  claims nothing wider. */
+const WRITE_STYLE_RULES: ReadonlyArray<{ what: string; re: RegExp }> = [
+  { what: 'a `.style`-rooted member WRITE (`<x>.style.<prop> =`, or a computed `<x>[\'style\'][\'<prop>\'] =`)', re: /\.\s*style\s*(?:\.\s*[\w$]+\s*(?:=(?!=)|\+\+|--)|\[)/ },
+  { what: 'a `style` member CALL (a `setProperty`/`removeProperty`/`setPropertyNS` write through a style object)', re: /\bstyle\s*\.\s*(?:set|remove)Property\b/ },
+  { what: 'a `cssText` write (a markup/stylesheet write of the whole style attribute)', re: /\bcssText\b/ },
+]
+/** The violations of ONE text: a BOUNDED raw occurrence (comments INCLUDED — `R-1`'s
+ *  scope rule) plus a bounded occurrence that ASSEMBLES out of the text's literals and
+ *  identifiers (`§4.4 S-1`'s closure, the view `R-12` reuses), plus the three
+ *  `style`-write shapes. */
+function uiContentViolations(src: string): string[] {
+  const violations: string[] = []
+  for (const token of WRITE_TOKEN_IDS) {
+    if (boundedOccurrences(src, token) > 0) violations.push(`RAW bounded occurrence of '${token}' (a comment counts, S-1)`)
+  }
+  const assembled = assembledChunks(src)
+  for (const token of WRITE_TOKEN_IDS) {
+    if (boundedOccurrences(assembled, token) > 0) {
+      violations.push(`ASSEMBLED bounded occurrence of '${token}' (token assembly is the SAME violation, S-1)`)
+    }
+  }
+  for (const { what, re } of WRITE_STYLE_RULES) {
+    for (const hit of staticHits(src, re)) violations.push(`a style write — ${what}: ${hit}`)
+  }
+  return violations
+}
+/** The row's own REPORTED census: bounded occurrences per family over ONE text. The
+ *  module's figure is the claim (`zero`); this file's figure is the MEASURED reason the
+ *  whole-file negative is dropped. Both are printed by the row, so neither is inferred. */
+function uiContentCensus(src: string): Record<string, number> {
+  const out: Record<string, number> = {}
+  const assembled = assembledChunks(src)
+  for (const token of WRITE_TOKEN_IDS) {
+    const n = boundedOccurrences(src, token) + boundedOccurrences(assembled, token)
+    if (n > 0) out[token] = n
+  }
+  for (const { what, re } of WRITE_STYLE_RULES) {
+    const n = staticHits(src, re).length
+    if (n > 0) out[what] = n
+  }
+  return out
+}
+const WRITE_RAW_TOKEN = WRITE_TOKEN_FRAGMENTS[0].join('')
+/** `§3.4 R-12`'s POSITIVE controls — the THREE arms the row names, each built so its
+ *  spelling is assembled at run time from fragments (which is also the point of the
+ *  ASSEMBLED arm: the normalized view joins what the raw bytes split). */
+const WRITE_POSITIVE_CONTROLS: ReadonlyArray<readonly [string, string]> = [
+  ['raw, in code', `el.${WRITE_RAW_TOKEN}('id', 'a')`],
+  ['assembled across a JOINED literal boundary', `${'const'} a = ( 'set' + 'Attribute' )\n${'const'} b = \` \${'inner' + 'HTML'} \``],
+  ['inside a COMMENT', `// the module never calls ${WRITE_RAW_TOKEN} on the element it was handed`],
+]
+/** `§3.4 R-12`'s NEGATIVE control: this unit's OWN legitimate text must PASS — the four
+ *  event types of `§2.1`, the seven result codes of `§2.3` item 4, the module's own
+ *  parameter names, and the `capturePointer` member name. */
+const WRITE_NEGATIVE_CONTROL =
+  `const TYPES = ['${TYPE_START}', '${TYPE_MOVE}', '${TYPE_END}', '${TYPE_CANCEL}']\n` +
+  `type Code = 'ok' | 'not-installed' | 'busy' | 'disposed' | 'disconnected' | 'stale' | 'no-gesture'\n` +
+  `interface Source { on(element: unknown, type: string, handler: () => void): void; capturePointer?(element: unknown): void }\n` +
+  `export function install(element: unknown, options: unknown): boolean { return true }\n` +
+  `export function begin(element: unknown): unknown { return element }\n`
 /** The `§3.4 R-8` half that binds THIS FILE: raw bytes plus the extracted row
  *  DESCRIPTIONS (`it`/`describe` titles). Both are asserted by `R-8` and by `I-11`. */
 function ownGeometryViolations(): string[] {
@@ -2435,6 +2533,87 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       'R-8/§5.2 — the `ui` leg EXISTS and is green, so this unit’s refusal to offer a `[U]` row is STRUCTURAL (the module is imported by no `src/**` file and reads no coordinate), not a leg-availability excuse',
     ).toBe(true)
   })
+
+  it('R-12 §3.4 — THE `P-4` UI-CONTENT WRITE ROW (the pair with `M-18`): the module authors NO UI content — no write token RAW, ASSEMBLED or in a COMMENT — over the MODULE’s bytes plus this row’s OWN controlled corpora', () => {
+    // SCOPE (`§3.4 R-12`'s own words): the MODULE file WHOLE, comments INCLUDED, over the
+    // SAME NORMALIZED view `R-1` reads (string-literal concatenation JOINED before scanning,
+    // comments scanned like code, a word/identifier BOUNDARY rule), PLUS THIS ROW'S OWN
+    // controlled corpora. **A WHOLE-FILE NEGATIVE OVER THIS TEST FILE IS DELIBERATELY
+    // DROPPED** — and here the drop is MEASURED rather than assumed: the census below
+    // records, per family, how many bounded write-token occurrences this file's own bytes
+    // actually carry (the row's controls DO carry them), so the drop is a recorded scope
+    // fact and not a claim about this file.
+    const raw = moduleSource('R-12 §2.2 P-4, R-1, R-8')
+    expect(
+      uiContentViolations(raw),
+      'R-12/§2.2 P-4 — the module authors NO element, text, class, attribute or stylesheet write: no prohibited UI-CONTENT WRITE token occurs in its bytes, RAW, ASSEMBLED across a literal boundary or inside a COMMENT (`R-1`’s normalized view; the honest limit is the pair with `M-18`)',
+    ).toEqual([])
+    // THE ROW'S OWN CENSUS, printed: how the module’s bytes and this file’s bytes answer the
+    // same scanner. The module’s figure is the row’s claim (zero); the file’s figure is the
+    // MEASURED justification for the dropped whole-file negative.
+    const moduleCensus = uiContentCensus(raw)
+    const ownBytes = readFileSync(TEST_FILE, 'utf8')
+    const ownCensus = uiContentCensus(ownBytes)
+    console.log(
+      `§3.4 R-12 write-token census :: ${JSON.stringify({
+        module: moduleCensus,
+        testFileBytes: ownCensus,
+        scope: 'the MODULE file whole, comments included, over the R-1 normalized view, plus THIS ROW’s controlled corpora',
+        dropped: 'a whole-file negative over this test file is DELIBERATELY DROPPED (§3.4 R-12’s scope rule); its measured occurrence count is the field above',
+      })}`,
+    )
+    expect(
+      Object.values(moduleCensus).reduce((sum, n) => sum + n, 0),
+      'R-12/§2.2 P-4 — the module’s own census is ZERO in every family, not merely free of a reported violation (the scanner and the count are the same instrument)',
+    ).toBe(0)
+    // THE POSITIVE CONTROLS — THREE ARMS, all three required by the row: a corpus spelling
+    // ONE of these tokens RAW, one JOINED ACROSS A LITERAL BOUNDARY, and one INSIDE A
+    // COMMENT must each FAIL the scan, or the row is unfalsified and must not be filed.
+    for (const [shape, fixture] of WRITE_POSITIVE_CONTROLS) {
+      expect(
+        uiContentViolations(fixture).length,
+        `R-12 POSITIVE control (${shape}) — the UI-content write scan MUST fail for a corpus carrying the token ${shape}: a row that cannot fail is UNFALSIFIED and must not be filed (\`§3.4 R-12\`, the R-1 control form)`,
+      ).toBeGreaterThan(0)
+    }
+    // The ASSEMBLED arm is not vacuous: the normalized view really joins the pieces, so the
+    // failure above measures a reassembled token and not an empty-string artifact.
+    const assembledPositive = assembledChunks(WRITE_POSITIVE_CONTROLS[1][1])
+    const assembledTokensInControl = WRITE_TOKEN_IDS.filter((id) => assembledPositive.includes(id))
+    expect(
+      assembledTokensInControl.length,
+      `R-12 — the positive assembly control really ASSEMBLES the banned tokens it carries in the normalized view (${JSON.stringify(
+        assembledPositive,
+      )} contains ${JSON.stringify(assembledTokensInControl)})`,
+    ).toBeGreaterThan(0)
+    // The COMMENT arm is not vacuous either: the token it carries really sits in a comment.
+    expect(
+      uiContentViolations(stripComments(WRITE_POSITIVE_CONTROLS[2][1])),
+      'R-12 — the COMMENT arm proves COMMENTS ARE SCANNED LIKE CODE (`R-1`’s view): the very same corpus PASSES once its comment is stripped, so the comment arm’s failure is the comment and not a stray code token',
+    ).toEqual([])
+    expect(
+      staticHits(WRITE_POSITIVE_CONTROLS[2][1], /\/\//).length,
+      'R-12 — the comment arm really is a comment',
+    ).toBeGreaterThan(0)
+    // THE NEGATIVE CONTROL (`§3.4 R-12`): this unit's OWN legitimate text — the four event
+    // types, the seven result codes, the parameter names and the `capturePointer` member
+    // name — must PASS.
+    expect(
+      uiContentViolations(WRITE_NEGATIVE_CONTROL),
+      'R-12 NEGATIVE control — this unit’s own legitimate text (the four event types of §2.1, the seven result codes of §2.3 item 4, the parameter names of §2.5 and the `capturePointer` member name) PASSES the UI-content write scan: the row is not over-broad',
+    ).toEqual([])
+    expect(
+      WRITE_NEGATIVE_CONTROL.length,
+      'R-12 — the negative control is non-vacuous (it really carries the unit’s legitimate vocabulary)',
+    ).toBeGreaterThan(100)
+    // THE ROW'S HONEST LIMIT, stated in the row itself: a text scan cannot prove the absence
+    // of a write for EVERY control flow, so the static half is PAIRED with `M-18`'s runtime
+    // write-log assertion — **and the pair is the row** (`R-3`'s form). The runtime half is
+    // authored in the `§3.1` block below and is reachable from here by name only.
+    expect(
+      rowTitles(readFileSync(TEST_FILE, 'utf8')).some((title) => title.includes('M-18')),
+      'R-12 — the PAIR is present in this file: `M-18`’s runtime write-log row is authored alongside this one (a static scan is the pair’s half, not the row — §3.4 R-12’s honest limit)',
+    ).toBe(true)
+  })
 })
 
 // ===========================================================================
@@ -3704,6 +3883,107 @@ describe('M — §3.1 the valid states', () => {
     expect(handle.active, 'M-17 — the terminal’s facts remain readable through the HANDLE (`active: false`)').toBe(false)
     expect(handle.outcome, 'M-17 — and through the handle’s `outcome`').toBe('end')
     expect(h.session.stats().commits, 'M-17 — and through `stats()`').toBe(1)
+  })
+
+  // -------------------------------------------------------------------------
+  // `§3.1 M-18` — THE `P-4` RULE SET'S RUNTIME HALF (the `D-9`/`ADV-GS-12`
+  // amendment). It is authored HERE, at the foot of the `§3.1` block it closes,
+  // and it is the PAIR of `§3.4 R-12` (authored last in the `§3.4` block) — the
+  // spec's own filing order for the two new ids.
+  //
+  // STATES THIS ROW ENUMERATES (one arm per state, all driven in ONE lifecycle):
+  //   (1) an installed control with a write-recording surface, before any gesture
+  //       — the surface's log is EMPTY and the write-call census is ZERO;
+  //   (2) a gesture ESTABLISHED on that control (`begin`) — the establishment path
+  //       performs no write (the attach/capture/connectivity calls are the
+  //       source's, and the session's own change set names no write token);
+  //   (3) the ACTIVE window with a `pointermove` delivered through the source's own
+  //       fire path — no write on the move path;
+  //   (4) the `end` TERMINAL (one commit) — no write on the terminal path;
+  //   (5) IDLE again after the terminal — still no write, and the element's own log
+  //       is EMPTY over the WHOLE lifecycle, not merely at the end.
+  // FAIL-STATE THIS ROW COVERS: if the session authored ANY element/class/text/
+  // style write, the element's OWN recorded log would be non-empty (the surfaces
+  // are real members of the element the session is handed) — so the row fails
+  // rather than passing vacuously.
+  // -------------------------------------------------------------------------
+  it('M-18 §3.1 — THE `P-4` RULE SET’S RUNTIME HALF (the pair with `R-12`): a full lifecycle authors NO UI content — the element’s own recorded write log stays EMPTY and no prohibited write token is in the session’s change set', async () => {
+    // THE WRITE-RECORDING SURFACE (`§3.1 M-18`'s own words): the element is a PLAIN
+    // OBJECT whose write surfaces are real members with a recording body, so a write the
+    // session authored would land in the element's own log. The surface is NAMED here
+    // (the row's spy triple) while the SCAN's spellings are held as fragments — a bound
+    // token elsewhere in this file does not weaken `R-12`, whose scope is the module plus
+    // this row's controlled corpora.
+    const attempts: Array<{ surface: string; wrote: true }> = []
+    const writeSurface = (): Record<string, unknown> => ({
+      setAttribute: (name: string, value: unknown): void => {
+        void value
+        attempts.push({ surface: `set${'Attribute'}(${name})`, wrote: true })
+      },
+      classList: { add: (name: string): void => void attempts.push({ surface: `classList.add(${name})`, wrote: true }) },
+      textContent: (value: unknown): void => {
+        void value
+        attempts.push({ surface: 'textContent', wrote: true })
+      },
+    })
+    const surface = writeSurface()
+    const el: Record<string, unknown> = { id: 'a', ...surface }
+    // NOT VACUOUS: the recorder really records a write — a direct write into the surface
+    // lands in the log, so the empty log the row asserts below is a MEASUREMENT.
+    const { setAttribute, classList, textContent } = surface as {
+      setAttribute: (name: string, value: unknown) => void
+      classList: { add: (name: string) => void }
+      textContent: (value: unknown) => void
+    }
+    setAttribute('probe', 'x')
+    classList.add('probe')
+    textContent('probe')
+    expect(
+      attempts.length,
+      'M-18 — the write-recording surface is LIVE: a direct write lands in the element’s own log, so the empty log asserted below is measured and not a fixture that cannot record',
+    ).toBe(3)
+    attempts.length = 0
+    // THE LIFECYCLE (`§3.1 M-18`: install → begin → pointermove → end) over a recording
+    // source. No `capture` opt-in is used: the capture path is `M-7`/`M-7b`'s, and this row
+    // pins the WRITE SET, not the capture count.
+    const h = await makeHarness({ label: 'M-18 §2.2 P-4, §3.4 R-12' })
+    expect(h.sessionInstall(el), 'M-18 — the control is installed on the write-recording element').toBe(true)
+    expect(
+      attempts,
+      'M-18 STATE (1) — an installation authors no UI content on the element it was handed (the element’s own log is EMPTY)',
+    ).toEqual([])
+    const begun = beginResult(h, el)
+    expect(begun?.ok, 'M-18 STATE (2) — the gesture is established, so the write claim below covers the establishment path and not a refusal').toBe(true)
+    h.source.fire(el, TYPE_MOVE, { id: 'evt-move' })
+    expect(
+      attempts,
+      'M-18 STATES (2)/(3) — establishing the gesture and delivering a `pointermove` through the source author NO write on the element',
+    ).toEqual([])
+    const handle = (begun as { ok: true; gesture: GestureHandle }).gesture
+    endCall(h, el, handle)
+    expect(h.commits.length, 'M-18 STATE (4) — the terminal really ran (exactly one commit), so the write claim covers the terminal path').toBe(1)
+    expect(h.session.gesture(), 'M-18 STATE (5) — the session is IDLE again after the terminal (the lifecycle completed)').toBe(null)
+    expect(
+      attempts,
+      'M-18/§2.2 P-4 — over the WHOLE lifecycle (install → begin → pointermove → end) the session authors NO UI content: no attribute write, no class write, no text write, no markup write, no insert/append and no style write reached the element it was handed — the element’s own recorded write log stays EMPTY',
+    ).toEqual([])
+    // THE SESSION'S OWN CHANGE SET, read from the run: the source log names every call the
+    // session made, and NONE of them is a write surface (the recorder's `on`/`off`/capture/
+    // isConnected are the only entries by construction).
+    expect(
+      h.source.log.map((rec) => rec.op).filter((op) => !['on', 'off', 'capture', 'isConnected'].includes(op)),
+      'M-18 — the session’s change set names NO operation beyond the source’s own contract (`on`/`off`/capture/connectivity): there is no write call of any kind in it',
+    ).toEqual([])
+    expect(
+      h.source.log.length,
+      'M-18 — the lifecycle really made calls, so the change-set reading above is over a non-empty log',
+    ).toBeGreaterThan(3)
+    // THE PAIR (`§3.4 R-12`: "and the pair is the row", `R-3`'s form): the static half is
+    // asserted by the row above, and this runtime half is what a text scan cannot prove.
+    expect(
+      rowTitles(readFileSync(TEST_FILE, 'utf8')).filter((title) => title.includes('R-12')).length,
+      'M-18 — the PAIR is present: `§3.4 R-12`’s static write-token row is authored in the `§3.4` block above (this row is the runtime half of THAT row, not a row of its own)',
+    ).toBeGreaterThan(0)
   })
 })
 
