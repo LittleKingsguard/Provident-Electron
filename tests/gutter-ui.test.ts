@@ -343,7 +343,13 @@ let moduleCache: { mod: Record<string, unknown> | null; reason: string | null } 
 
 async function resolveModule(): Promise<{ mod: Record<string, unknown> | null; reason: string | null }> {
   if (moduleCache !== null) return moduleCache
-  if (!existsSync(MODULE_SRC.href)) {
+  // **⟶ REPAIRED 2026-09-27 (RULE C(c)) — `existsSync(fileURLToPath(...))`, NEVER
+  // `existsSync(url.href)`.** A `URL`'s `href` is a `file://…` STRING, which a path-exists
+  // call cannot resolve (measured: `existsSync(url.href) === false` for a file that EXISTS,
+  // while the `fileURLToPath` form reads `true`), so every one of these sites read `false`
+  // regardless of the module's presence — a latent trap that today distinguishes nothing
+  // because the module is absent.
+  if (!existsSync(fileURLToPath(MODULE_SRC))) {
     moduleCache = { mod: null, reason: `the module of §2.1/§5.1 row 1 does not exist yet (${fileURLToPath(MODULE_SRC)})` }
     return moduleCache
   }
@@ -379,7 +385,7 @@ async function requireModule(label: string): Promise<Record<string, unknown>> {
 async function requireLiveModule(label: string): Promise<Record<string, unknown>> {
   const mod = await requireModule(label)
   expect(
-    existsSync(MODULE_SRC.href),
+    existsSync(fileURLToPath(MODULE_SRC)),
     `RED — U-GUTTER-UI red set (§4.1): this row's declared values would ALSO be satisfied by an inert stand-in, so it asserts the module's EXISTENCE before its own clause (an absent-module green here would be a vacuous pass). [${label}]`,
   ).toBe(true)
   return mod
@@ -425,20 +431,32 @@ async function surface(label: string): Promise<{ mod: Record<string, unknown> | 
 // closed against the evasion class — token assembly, comment-carrying, realm-rooted
 // computed access — by `§4.4 S-1`).
 // ===========================================================================
-const JOIN_MARKER = '\u0000'
-/** The NORMALIZED view: string-literal concatenation is JOINED (`a + 'x'` and `'a' + 'x'`
- *  become one token) and comments are KEPT (a token inside a comment is a HIT, `§2.1`
- *  item 6: "comments included, token-assembly joined"). */
+/** **⟶ REPAIRED 2026-09-27 (`⟶ RE-GRAINED 2026-09-27 (THE SCAN-HELPER RULING) — RULE C`).**
+ *  The NORMALIZED view: a `+`-CHAIN of adjacent string literals is consumed into **ONE token**
+ *  (`node['class' + 'List']` ⇒ `node[classList]`, `event['page' + 'X']` ⇒ `event[pageX]`) and
+ *  comments are KEPT (a token inside a comment is a HIT, `§2.1` item 6: "comments included,
+ *  token-assembly joined"). **THE AS-FILED FORM APPENDED A MARKER AROUND EVERY LITERAL AND THEN
+ *  DELETED THE MARKERS, so a token assembled across a literal boundary was emitted as
+ *  `node[class + List]` and matched NOTHING — the boundary rule below could never see it, and
+ *  `R-1(c)`/`R-3`'s assembled positive controls could never fail the scan (a dead control, and a
+ *  row that cannot fail is not a row).** The comment-carrying arm is untouched: comments are
+ *  scanned as CODE, so a joined spelling inside a comment is a hit. */
 function normalizedView(src: string): string {
   let out = ''
   let i = 0
-  const marks: string[] = []
   while (i < src.length) {
     const ch = src[i]
-    if (ch === '"' || ch === "'" || ch === '`') {
-      const quote = ch
-      let part = ''
+    if (ch !== '"' && ch !== "'" && ch !== '`') {
+      out += ch
       i += 1
+      continue
+    }
+    let part = ''
+    let quote = ch
+    i += 1
+    // THE JOIN LOOP: consume this literal; then, if the very next non-whitespace bytes are
+    // `+` followed by ANOTHER literal's opening quote, keep consuming into the SAME `part`.
+    for (;;) {
       while (i < src.length && src[i] !== quote) {
         if (src[i] === '\\') {
           part += src[i] + (src[i + 1] ?? '')
@@ -448,21 +466,21 @@ function normalizedView(src: string): string {
         part += src[i]
         i += 1
       }
+      if (i >= src.length) break
       i += 1
-      part += src.slice(i).startsWith(quote) ? '' : ''
-      if (part.length > 0) {
-        out += JOIN_MARKER + part + JOIN_MARKER
-        marks.push(part)
-      }
-      continue
+      let j = i
+      while (j < src.length && /\s/.test(src[j])) j += 1
+      if (src[j] !== '+') break
+      j += 1
+      while (j < src.length && /\s/.test(src[j])) j += 1
+      const opener = src[j]
+      if (opener !== '"' && opener !== "'" && opener !== '`') break
+      quote = opener
+      i = j + 1
     }
-    out += ch
-    i += 1
+    out += part
   }
-  // The markers are dropped on the way out: a spelling whose pieces the source JOINS via
-  // the concatenation operator is matched as ONE token (the boundary rule below), and the
-  // markers would be a third byte the rule would have to reason about.
-  return out.split(JOIN_MARKER).join('')
+  return out
 }
 /** A BOUNDED occurrence: the spelling must not be adjacent to a word character, so
  *  `clientX` inside `aclientXb` is not a hit while a bare `clientX` is. */
@@ -605,7 +623,13 @@ function accessViolations(src: string): string[] {
  *  reads a property called `cursor`; it does not carry a VALUE). */
 const CURSOR_LITERALS: readonly string[] = ['col-resize', 'row-resize', 'ew-resize', 'ns-resize']
 const AXIS_LITERALS: readonly string[] = ['horizontal', 'vertical']
-const UNIT_LITERALS: readonly string[] = ['px']
+/** **⟶ RE-GRAINED 2026-09-27 (THE SCAN-HELPER RULING) — RULE C(b): THE UNIT RULE IS A
+ *  SUBSTRING RULE.** `§3.4 R-7` forbids a **unit string** (`'12px'`, `'0px'`), so the unit
+ *  spelling must be found INSIDE the literal (`'12px'` CONTAINS `'px'`) — unlike the identifier
+ *  rules above, whose BOUNDARY form is deliberate (`classList` inside `aclassListb` is not a
+ *  hit). The as-filed boundary rule over `'px'` matched NOTHING, so `R-7`'s `"const u = '12px'"`
+ *  control could never fail the scan. **THE UNIT LIST IS KEPT WITH BOTH SPELLINGS.** */
+const UNIT_LITERALS: readonly string[] = ['px', '0px']
 const POLICY_POSITIVE_CONTROLS: readonly string[] = [
   "return { cursor: 'col-resize' }",
   "const c = 'row-resize'",
@@ -615,21 +639,44 @@ const POLICY_POSITIVE_CONTROLS: readonly string[] = [
   "const axis = 'vertical'",
   "const u = '12px'",
 ]
+/** **⟶ ADDED 2026-09-27 (THE SCAN-HELPER RULING) — RULE C(b): the SUBSTRING form of the
+ *  occurrence count**, used by the unit-literal rule alone (`§3.4 R-7` forbids a unit STRING,
+ *  so `'12px'` must count). Non-overlapping, and reported as `×N (substring rule)` so a reading
+ *  never has to be re-derived to know which rule produced it. */
+function substringOccurrences(text: string, spelling: string): number {
+  if (spelling.length === 0) return 0
+  let count = 0
+  let at = text.indexOf(spelling)
+  while (at !== -1) {
+    count += 1
+    at = text.indexOf(spelling, at + spelling.length)
+  }
+  return count
+}
+function unitHitsOf(text: string, spellings: readonly string[]): string[] {
+  const view = normalizedView(text)
+  const found: string[] = []
+  for (const spelling of spellings) {
+    const count = substringOccurrences(view, spelling)
+    if (count > 0) found.push(`${spelling} ×${count} (substring rule)`)
+  }
+  return found
+}
 function policyViolations(src: string): string[] {
-  return [...hitsOf(src, CURSOR_LITERALS), ...hitsOf(src, AXIS_LITERALS), ...hitsOf(src, UNIT_LITERALS)].sort()
+  return [...hitsOf(src, CURSOR_LITERALS), ...hitsOf(src, AXIS_LITERALS), ...unitHitsOf(src, UNIT_LITERALS)].sort()
 }
 
 function moduleSource(label: string): string {
   expect(
-    existsSync(MODULE_SRC.href),
+    existsSync(fileURLToPath(MODULE_SRC)),
     `RED — U-GUTTER-UI red set (§4.1): the static rows of §3.4 read the module file and it does not exist yet (${fileURLToPath(
       MODULE_SRC,
     )}). [${label}]`,
   ).toBe(true)
-  return existsSync(MODULE_SRC.href) ? readFileSync(MODULE_SRC, 'utf8') : ''
+  return existsSync(fileURLToPath(MODULE_SRC)) ? readFileSync(MODULE_SRC, 'utf8') : ''
 }
 function moduleBytes(): string {
-  return existsSync(MODULE_SRC.href) ? readFileSync(MODULE_SRC, 'utf8') : ''
+  return existsSync(fileURLToPath(MODULE_SRC)) ? readFileSync(MODULE_SRC, 'utf8') : ''
 }
 function exportedValueNames(src: string): string[] {
   return (src.match(/^export\s+(?:async\s+)?(?:function|const|let|var|declare\s+function)\s+([A-Za-z_$][A-Za-z0-9_$]*)/gm) ?? [])
@@ -878,12 +925,20 @@ type Harness = {
   readonly source: RecordingSource
   readonly session: SessionLikeSurface
   readonly sessionLog: CallFrame[]
+  /** **THE SESSION'S OWN CHANNEL'S RECORD — AND IT IS NOT THE SINK.**
+   *  `⟶ RE-GRAINED 2026-09-27 (THE CHANNEL RULING)`: the session's `commit` option is wired to
+   *  a NON-FORWARDING RECORDER, so `E3`'s `commit` seam is the composition's SINGLE sink writer
+   *  (`docs/specs/gutter-ui.md` `§2.6` item 1, `§R.3`'s `commit` row: *"no second writer
+   *  exists"*). A row that needs the ruled reading *"the SESSION's recorder still receives the
+   *  value it was handed"* reads THIS array; a row that needs the sink's own record reads
+   *  `sink.records`. */
+  readonly sessionCommits: Array<{ gesture: unknown; value: unknown; outcome: unknown }>
   readonly sink: ReturnType<typeof makeSink>
   readonly previews: Array<Record<string, unknown>>
   readonly cursorCalls: Array<{ element: unknown; declaration: string | undefined }>
   readonly element: Record<string, unknown>
   readonly target: Record<string, unknown>
-  readonly calls: { axisOf: number; cursorOf: number; sizeFromPointer: number; startSizeOf: number; boundsOf: number; resizableOf: number }
+  readonly calls: { axisOf: number; cursorOf: number; sizeFromPointer: number; startSizeOf: number; boundsOf: number; resizableOf: number; commit: number }
   readonly options: Record<string, unknown>
 }
 
@@ -892,15 +947,36 @@ const TARGET: Record<string, unknown> = { name: 'gutter-target' }
 
 /** `§2.1` item 3's ONE-CLOSURE WIRING: the caller's `axisOf` reaches both `E3`'s `axisFor`
  *  and the module's own hover read from ONE closure, and `boundsOf`/`startSizeOf`/
- *  `resizableOf`/`commit` feed both `E3`'s options and the module's own options. */
+ *  `resizableOf`/`commit` feed both `E3`'s options and the module's own options.
+ *
+ *  **THE SINGLE SINK CHANNEL — `⟶ RE-GRAINED 2026-09-27 (THE CHANNEL RULING).** The session is
+ *  constructed with its `commit` option wired to **`sessionCommits.push` — A NON-FORWARDING
+ *  RECORDER** — and the sink is handed to the composition ONLY, as the module's `commit` SEAM
+ *  (`E3`'s single write site). **THE AS-FILED HARNESS HANDED THE SAME FUNCTION TO BOTH CHANNELS,
+ *  which is the TWO-WRITER composition `E3`'s `F-9`/`§5.5.1 P-GT-SM-3` shape `(2)` exists to
+ *  fail**: one valid `end` then made the sink's own record read `2` while `E3`'s
+ *  `stats().sinkCalls` read `1`, so every ruled count of `1` was unreachable and the sink's
+ *  record was NOT *"the composition's own write"* (authority: `docs/specs/gutter-ui.md` `§2.6`
+ *  item 1 / `§R.3`'s `commit` row, `docs/specs/gutter.md` `§2.1` seam 6 + the landed
+ *  `src/shared/gutter.ts`'s `write()` = *"this module's only call site of the sink"*, and the
+ *  landed `tests/gutter.test.ts` harness's own non-forwarding `commits` recorder). */
 async function makeHarness(overrides: Record<string, unknown> = {}, label = 'harness'): Promise<Harness> {
   const createGutterAffordance = await factoryOf<(options?: Record<string, unknown>) => AffordanceLike>(label)
   const source = new RecordingSource()
   const sink = makeSink()
   const previews: Array<Record<string, unknown>> = []
   const cursorCalls: Array<{ element: unknown; declaration: string | undefined }> = []
-  const calls = { axisOf: 0, cursorOf: 0, sizeFromPointer: 0, startSizeOf: 0, boundsOf: 0, resizableOf: 0 }
-  const raw = createGestureSession({ source: source as never, commit: sink.commit as never })
+  const sessionCommits: Array<{ gesture: unknown; value: unknown; outcome: unknown }> = []
+  const calls = { axisOf: 0, cursorOf: 0, sizeFromPointer: 0, startSizeOf: 0, boundsOf: 0, resizableOf: 0, commit: 0 }
+  // **THE SESSION'S CHANNEL RECORDS AND WRITES NOTHING** — it is NOT a writer, so a row can
+  // still read *"what the session was handed"* (`M-13`'s `NaN` reading) beside the sink's record
+  // without a second write existing.
+  const raw = createGestureSession({
+    source: source as never,
+    commit: ((gesture: unknown, value: unknown): void => {
+      sessionCommits.push({ gesture, value, outcome: (gesture as GestureHandle | null | undefined)?.outcome ?? null })
+    }) as never,
+  })
   const instrumented = instrumentSession(raw)
   const element = (overrides['element'] ?? ELEMENT) as Record<string, unknown>
   const target = (overrides['target'] ?? TARGET) as Record<string, unknown>
@@ -958,7 +1034,15 @@ async function makeHarness(overrides: Record<string, unknown> = {}, label = 'har
       calls.resizableOf += 1
       return (resizableOf as (e: unknown, t: unknown) => unknown)(el, token)
     },
-    commit: (gesture: unknown, value: number): void => (sink.commit as (g: unknown, v: number) => void)(gesture, value),
+    // **THE MODULE'S `commit` SEAM IS THE COMPOSITION'S SINGLE SINK WRITER** (`E3`'s write site
+    // is its only caller). `calls.commit` counts EVERY invocation of this seam, so a row can
+    // read *"the MODULE's own invocations"* as `calls.commit - E3.stats().sinkCalls` (the
+    // ruled `I-1` reading): a composition that invoked the seam itself would raise this count
+    // while `E3`'s counter stayed at its own single write, and the two readings would DIVERGE.
+    commit: (gesture: unknown, value: number): void => {
+      calls.commit += 1
+      return (sink.commit as (g: unknown, v: number) => void)(gesture, value)
+    },
     moveTypeOf: (el: unknown): unknown => (moveTypeOf as (e: unknown) => unknown)(el),
   }
   for (const key of Object.keys(overrides)) {
@@ -970,6 +1054,7 @@ async function makeHarness(overrides: Record<string, unknown> = {}, label = 'har
     source,
     session: instrumented.session,
     sessionLog: instrumented.log,
+    sessionCommits,
     sink,
     previews,
     cursorCalls,
@@ -1093,7 +1178,7 @@ describe('§3.5 — the existence and precondition rows (the red’s own premise
   })
 
   it('R-8x §3.5 — the module-absence row, BOTH BRANCHES: RED (module absent ⇒ assert ABSENCE + the `3 + 17 = 20` census’s precondition) and GREEN (module present ⇒ assert it EXISTS, that the renderer wiring imports it, that NO other `src/**` file does, and that the `3 + 17 = 20` census holds BY NAME)', () => {
-    const modulePresent = existsSync(MODULE_SRC.href)
+    const modulePresent = existsSync(fileURLToPath(MODULE_SRC))
     const unitPaths = walkUnitPaths()
     expect(
       unitPaths,
@@ -1556,7 +1641,7 @@ describe('§3.4 — the static rows (the §2.2 prohibition table’s ids)', () =
     // absence reading, GREEN asserts THIS row's own claim (the pinned surface set is
     // UNCHANGED by the module's arrival). A deleted conjunct would have made the row
     // vacuous at green time (`§4.4 S-7`), so BOTH branches carry a reading.
-    const modulePresent = existsSync(MODULE_SRC.href)
+    const modulePresent = existsSync(fileURLToPath(MODULE_SRC))
     if (!modulePresent) {
       expect(
         modulePresent,
@@ -1652,7 +1737,7 @@ describe('§3.4 — the static rows (the §2.2 prohibition table’s ids)', () =
       renderer.length > 0 && runtime.length > 0,
       `R-13 §3.4/§5.1 rows 10/11 — the two admitted wiring files exist (\`${RENDERER_RELPATH}\`, \`${RUNTIME_RELPATH}\`)`,
     ).toBe(true)
-    if (!existsSync(MODULE_SRC.href)) {
+    if (!existsSync(fileURLToPath(MODULE_SRC))) {
       // RED BRANCH — the wiring has not landed either, which is why `§4.1` item 1(b) names
       // this row as red at red time for the same reason the module-absence row is.
       expect(
@@ -1705,18 +1790,51 @@ function gitChangeSet(): string[] | null {
 // §3.3 — THE INVARIANTS THAT HOLD IN EVERY STATE (`I-*`).
 // ===========================================================================
 describe('§3.3 — the every-state invariants', () => {
-  it('I-1 §3.3 — ONE WRITER, ONE CALL SITE: the module writes to the sink ZERO times and passes the caller’s `commit` into `E3`’s factory only', async () => {
+  it('I-1 §3.3 — ONE WRITER, ONE CALL SITE: the module writes to the sink ZERO times and passes the caller’s `commit` into `E3`’s factory only — ⟶ RE-GRAINED 2026-09-27 (THE CHANNEL RULING): the row reports the MODULE’s own invocation count of the `commit` seam (`0`) and the SINK’s record (`1`, `E3`’s single write) as TWO readings', async () => {
     await requireLiveModule('I-1')
     const h = await makeHarness({}, 'I-1')
     expect(h.affordance.attach(), 'I-1 — attach over the composition the wiring builds').toBe(true)
     lifecycle(h, [pointerEvent(0, 250, 300)])
     h.source.fire(POINTER_TYPES.end, pointerEvent(0, 250, 300))
+    // **THE ROW'S TWO READINGS, SEPARATED BECAUSE THE AS-FILED ROW CONFLATED THEM.**
+    // ⟶ RE-GRAINED 2026-09-27 (THE CHANNEL RULING), RULE B.1: the as-filed row asserted
+    // `h.sink.records.length === 0` after a FULL VALID LIFECYCLE INCLUDING THE `end` — while its
+    // own cell (`docs/specs/gutter-ui.md` §3.1 `I-1`) says *"the module writes to the sink ZERO
+    // times … it passes the caller's `commit` into `E3`'s factory and never invokes it"*. Those
+    // are two different subjects: (i) THE MODULE's OWN invocations of the `commit` seam — which
+    // is what the cell's ZERO is about, and which is measured here as the seam's total
+    // invocations MINUS `E3`'s own single write site (`E3` is the module's delegate, not the
+    // module); and (ii) THE SINK's own record — which reads `1`, because `E3`'s write site wrote
+    // ONCE at the valid `end`. A module that invoked the seam ITSELF would make (i) `> 0` while
+    // `E3`'s counter stayed at `1` — the two readings would DIVERGE, which is the falsifier.
+    const seamInvocations = h.calls.commit
+    const e3WriteSite = controllerSinkCalls(h)
+    const moduleOwnInvocations = seamInvocations - (e3WriteSite > 0 ? e3WriteSite : 0)
+    console.log(
+      `I-1 MEASURED :: ${JSON.stringify({
+        moduleOwnCommitSeamInvocations: moduleOwnInvocations,
+        commitSeamInvocationsTotal: seamInvocations,
+        e3WriteSiteCalls: e3WriteSite,
+        sinkRecords: h.sink.records.length,
+        clause: 'docs/specs/gutter-ui.md §3.1 I-1 + §2.6 item 1',
+      })}`,
+    )
+    expect(
+      moduleOwnInvocations,
+      `I-1 §3.3/§2.6 item 1/§0A note 9 — the MODULE ITSELF invoked the \`commit\` seam ZERO times in a full valid lifecycle: it passes the caller’s \`commit\` into \`E3\`’s factory and lets \`E3\`’s ONE write site be the single writer. READINGS: the seam was invoked ${String(
+        seamInvocations,
+      )} time(s) in total and \`E3\`’s own \`stats().sinkCalls\` reads ${String(e3WriteSite)} — so the module’s own share is ${String(moduleOwnInvocations)} (a module that invoked the seam itself would make this reading positive while \`E3\`’s counter stayed where it is).`,
+    ).toBe(0)
     expect(
       h.sink.records.length,
-      `I-1 §3.3/§2.6 item 1/§0A note 9 — the MODULE ITSELF made ZERO sink calls in a full valid lifecycle: it passes the caller’s \`commit\` into \`E3\`’s factory and lets \`E3\` be the single writer. The sink’s own record is the evidence: ${JSON.stringify(
+      `I-1 §3.3 — and THE SINK’S OWN RECORD reads EXACTLY ONE, which is \`E3\`’s single write at the valid \`end\` (a sink record of 2 is the TWO-WRITER composition, \`E3\`’s \`F-9\`/\`§5.5.1 P-GT-SM-3\` shape \`(2)\`). Recorded: ${JSON.stringify(
         h.sink.records.map((r) => ({ value: r.value, outcome: String(r.outcome) })),
       )}`,
-    ).toBe(0)
+    ).toBe(1)
+    expect(
+      h.sink.records.length,
+      'I-1 §2.6 item 1 — and the sink’s own record AGREES with `E3`’s single write-site counter in the same cell (the two-reading rule; a divergence between them is the second writer)',
+    ).toBe(e3WriteSite)
   })
 
   it('I-2 §3.3 — ONE COORDINATE READ: `resolveEventPointer` is the family’s only coordinate read, called AT MOST ONCE per observed pointer move', async () => {
@@ -1938,7 +2056,7 @@ describe('§3.3 — the every-state invariants', () => {
     // `§3.5 R-8x`'s BRANCH form — RED keeps the "no BEFORE/AFTER reading exists yet"
     // reading, GREEN asserts that the DEBT IS STILL OWED TO `U-7` and is NOT discharged
     // by the module's arrival (a projection is still not a measurement).
-    const modulePresent = existsSync(MODULE_SRC.href)
+    const modulePresent = existsSync(fileURLToPath(MODULE_SRC))
     if (!modulePresent) {
       expect(
         modulePresent,
@@ -2086,7 +2204,18 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
     const createGutterAffordance = await factoryOf<(options?: Record<string, unknown>) => AffordanceLike>('M-1 (runtime half)')
     const recordingSource = new RecordingSource()
     const sink = makeSink()
-    const raw = createGestureSession({ source: recordingSource as never, commit: sink.commit as never })
+    // **⟶ RE-GRAINED 2026-09-27 (THE CHANNEL RULING) — RULE A, APPLIED TO THIS ROW'S OWN LOCAL
+    // HARNESS.** The session is constructed with a NON-FORWARDING recorder (the ruled channel
+    // shape); the sink rides ONLY the composition's `commit` seam below. As filed, the SAME
+    // function sat on both channels, so a valid `end` produced TWO sink records and this row's
+    // declared `1` was unreachable.
+    const sessionChannel: Array<{ gesture: unknown; value: unknown }> = []
+    const raw = createGestureSession({
+      source: recordingSource as never,
+      commit: ((gesture: unknown, value: unknown): void => {
+        sessionChannel.push({ gesture, value })
+      }) as never,
+    })
     const { session, reads } = makeReadRecordingSession(raw)
     const element: Record<string, unknown> = { name: 'M-1-element' }
     const affordance = createGutterAffordance({
@@ -2130,22 +2259,32 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
         runtimeHalfInventedMemberReads: inventedReads.length,
         sinkValue: sink.records.map((r) => r.value),
         sinkWrites: sink.records.length,
+        sessionChannelValue: sessionChannel.map((c) => c.value),
+        sessionChannelWrites: sessionChannel.length,
         asFiledMeasuredCounts: 'the invented probe was PRESENT in the module and READ by it (E3-HOST-2); the fix at cc7fba5 deletes the probe',
         clause: 'docs/specs/gutter-ui.md §3.1 M-1 + §R.4 C-A2',
       })}`,
     )
     expect(
       sink.records.length,
-      `M-1 half (iii)/§2.3 rows 11/14 — ONE sink call for ONE gesture, over the session double that exposes the two invented names: a session exposing either name and yielding TWO sink calls for one gesture FAILS this row. Recorded: ${JSON.stringify(
+      `M-1 half (iii)/§2.3 rows 11/14 — ONE sink call for ONE gesture, over the session double that exposes the two invented names: a session exposing either name and yielding TWO sink calls for one gesture FAILS this row (the SESSION's own channel is the non-forwarding recorder, so it adds no record here). Recorded: ${JSON.stringify(
         sink.records.map((r) => ({ value: r.value, outcome: String(r.outcome) })),
-      )}`,
+      )} — and the session's own recorder received ${JSON.stringify(sessionChannel.map((c) => c.value))}`,
     ).toBe(1)
     expect(
       sink.records[0]?.value,
-      `M-1 half (iii)/§2.3 row 11/§R R6 — and the committed value is the CLAMPED DRAGGED value (\`100 + (150 - 100) = 150\`, inside the \`{min: 0, max: 200}\` pair): a fallback committing the RAW default FAILS this row. Recorded: ${JSON.stringify(
+      // **⟶ RE-GRAINED 2026-09-27 (THE CHAIN RULING) — RULE B.2.** The as-filed message read
+      // `100 + (150 - 100) = 150`, which is the DELTA-ADDED-TO-START reading the harness's
+      // declared chain does NOT have: `sizeFromPointer(pointer, start)` answers the new SIZE
+      // (`docs/specs/gutter-ui.md` §2.4 item 2 — it is called once with `(pointer, preDragSize)`
+      // and its answer is what `E3` clamps), the harness drives `(pointer, start) => pointer.x -
+      // start` with `startSizeOf ⇒ 100` and a move carrying `clientX 150`, so the declared chain
+      // is `150 - 100 = 50`, well inside the `{min: 0, max: 200}` pair. `M-12` follows the SAME
+      // choice (its own failure text already printed `150 - 100 = 50`).
+      `M-1 half (iii)/§2.3 row 11/§R R6 — and the committed value is the CLAMPED value of the DECLARED CHAIN (\`sizeFromPointer({x: 150, y: 300}, 100) = 150 - 100 = 50\`, inside the \`{min: 0, max: 200}\` pair): a fallback committing the RAW default (\`100\`) FAILS this row, and so does a delta-added-to-start composition (\`150\`). Recorded: ${JSON.stringify(
         sink.records.map((r) => r.value),
       )}`,
-    ).toBe(150)
+    ).toBe(50)
   })
 
   it('M-2 §3.1 — THE DISPOSED-SESSION SHORT-CIRCUIT: `attach()` ⇒ `false`, `detach()` ⇒ `false`, `detached` ⇒ `true`, `stats()` readable and ZERO session calls — the module honours a disposed session rather than delegating to a dead one', async () => {
@@ -2335,9 +2474,20 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
     ).toBe(false)
   })
 
-  it('M-5 §3.1 — THE SINGLE WRITER ON THE REAL COMPOSITION: for EVERY terminal path the sink’s own record and `E3`’s `stats().sinkCalls` AGREE cell by cell, and the module’s own sink-call count is ZERO', async () => {
+  it('M-5 §3.1 — THE SINGLE WRITER ON THE REAL COMPOSITION: for EVERY terminal path the sink’s own record and `E3`’s `stats().sinkCalls` AGREE cell by cell, and the module’s own sink-call count is ZERO — ⟶ RE-GRAINED 2026-09-27 (THE CHANNEL RULING): the harness’s session channel is a NON-FORWARDING recorder, so the sink’s record IS `E3`’s single write, and the TWO-WRITER control is driven in the same row', async () => {
     await requireLiveModule('M-5')
-    const cases: Array<{ path: string; expected: number; build: () => Promise<{ sink: number; counter: number; moduleCalls: number }> }> = [
+    /** The composed `E3` controller's own `sinkCalls`, over any composition (the two-writer
+     *  control below is not a `Harness`, so it reads the same counter directly). */
+    const sinkCallsOf = (affordance: AffordanceLike): number => {
+      const stats = (affordance.controller as { stats?: () => Record<string, unknown> } | null | undefined)?.stats?.()
+      const value = stats?.['sinkCalls']
+      return typeof value === 'number' ? value : -1
+    }
+    const cases: Array<{
+      path: string
+      expected: number
+      build: () => Promise<{ sink: number; counter: number; moduleCalls: number; sessionChannel: unknown[] }>
+    }> = [
       {
         path: 'a VALID `end`',
         expected: 1,
@@ -2346,18 +2496,45 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
           h.affordance.attach()
           lifecycle(h, [pointerEvent(0, 175, 300)])
           h.source.fire(POINTER_TYPES.end, pointerEvent(0, 175, 300))
-          return { sink: h.sink.records.length, counter: controllerSinkCalls(h), moduleCalls: 0 }
+          const counter = controllerSinkCalls(h)
+          // THE MODULE'S OWN INVOCATIONS = every invocation of its `commit` seam MINUS `E3`'s own
+          // single write site (a real reading, never a hard-coded zero).
+          return { sink: h.sink.records.length, counter, moduleCalls: h.calls.commit - counter, sessionChannel: h.sessionCommits.map((c) => c.value) }
         },
       },
       {
-        path: 'an invalid `reset` (a SEAM FAILURE: an unusable bounds pair ⇒ a non-finite clamp answer)',
-        expected: 1,
+        // **⟶ RE-GRAINED 2026-09-27 (THE CHANNEL RULING) — RULE A's third bullet, and THE
+        // AS-FILED READING IS KEPT VISIBLE: the as-filed cell declared `expected: 1` for THIS
+        // drive, which is the drive whose OWN LABEL names the unusable bounds pair. For an
+        // UNUSABLE PAIR the reset's clamp answers `NaN`, so `E3`'s write site returns BEFORE an
+        // attempt exists — `docs/specs/gutter.md` `§2.3` item 4 clause 3 / `§3.2 F-14`: *"the
+        // sink is NOT written (`sinkCalls` stays `0`) while `ResizeResetResult.committed` reports
+        // `false`"* — while the SESSION's own recorder still receives the `NaN` it was handed.**
+        path: 'an invalid `reset` at an UNUSABLE bounds pair (`boundsOf ⇒ undefined` ⇒ the clamp answers `NaN`; the as-filed `1` is SUPERSEDED by `0` — `E3` refuses before its write site)',
+        expected: 0,
         build: async () => {
           const h = await makeHarness({ boundsOf: (): unknown => undefined }, 'M-5/b')
           h.affordance.attach()
           lifecycle(h, [pointerEvent(0, 175, 300)])
           h.source.fire(POINTER_TYPES.end, pointerEvent(0, 175, 300))
-          return { sink: h.sink.records.length, counter: controllerSinkCalls(h), moduleCalls: 0 }
+          const counter = controllerSinkCalls(h)
+          return { sink: h.sink.records.length, counter, moduleCalls: h.calls.commit - counter, sessionChannel: h.sessionCommits.map((c) => c.value) }
+        },
+      },
+      {
+        // THE PAIRED CONTROL FOR THE CELL ABOVE: the SAME invalid arm, with a USABLE pair, so
+        // the reset's clamp ANSWERS A NUMBER (`100`, the consumer's pre-drag default) and the
+        // write lands EXACTLY ONCE (RULE A's second bullet: *"a invalid-drag `reset` whose own
+        // clamp answers a number: `1` sink write of the CLAMPED pre-drag size"*).
+        path: 'an invalid `reset` whose own clamp ANSWERS A NUMBER (a non-finite `sizeFromPointer` over a USABLE pair ⇒ the reset clamps the pre-drag default)',
+        expected: 1,
+        build: async () => {
+          const h = await makeHarness({ sizeFromPointer: (): unknown => Number.NaN }, 'M-5/b2')
+          h.affordance.attach()
+          lifecycle(h, [pointerEvent(0, 175, 300)])
+          h.source.fire(POINTER_TYPES.end, pointerEvent(0, 175, 300))
+          const counter = controllerSinkCalls(h)
+          return { sink: h.sink.records.length, counter, moduleCalls: h.calls.commit - counter, sessionChannel: h.sessionCommits.map((c) => c.value) }
         },
       },
       {
@@ -2368,7 +2545,8 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
           h.affordance.attach()
           lifecycle(h, [pointerEvent(0, 175, 300)])
           h.source.fire(POINTER_TYPES.end, pointerEvent(0, 175, 300))
-          return { sink: h.sink.records.length, counter: controllerSinkCalls(h), moduleCalls: 0 }
+          const counter = controllerSinkCalls(h)
+          return { sink: h.sink.records.length, counter, moduleCalls: h.calls.commit - counter, sessionChannel: h.sessionCommits.map((c) => c.value) }
         },
       },
       {
@@ -2379,7 +2557,8 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
           h.affordance.attach()
           lifecycle(h, [pointerEvent(0, 175, 300)])
           h.source.fire(POINTER_TYPES.cancel, pointerEvent(0, 175, 300))
-          return { sink: h.sink.records.length, counter: controllerSinkCalls(h), moduleCalls: 0 }
+          const counter = controllerSinkCalls(h)
+          return { sink: h.sink.records.length, counter, moduleCalls: h.calls.commit - counter, sessionChannel: h.sessionCommits.map((c) => c.value) }
         },
       },
       {
@@ -2391,7 +2570,8 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
           lifecycle(h, [pointerEvent(0, 175, 300)])
           h.source.fire('pointerdown', pointerEvent(2, 175, 300))
           h.source.fire(POINTER_TYPES.cancel, pointerEvent(2, 175, 300))
-          return { sink: h.sink.records.length, counter: controllerSinkCalls(h), moduleCalls: 0 }
+          const counter = controllerSinkCalls(h)
+          return { sink: h.sink.records.length, counter, moduleCalls: h.calls.commit - counter, sessionChannel: h.sessionCommits.map((c) => c.value) }
         },
       },
     ]
@@ -2410,11 +2590,94 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
         ).toBe(testCase.expected)
         expect(
           readings.moduleCalls,
-          `M-5 §3.1/§2.6 item 1 — and the MODULE’S OWN sink-call count is ZERO in every cell: it passes \`commit\` to \`E3\` only. [${testCase.path}]`,
+          `M-5 §3.1/§2.6 item 1 — and the MODULE’S OWN sink-call count is ZERO in every cell: it passes \`commit\` to \`E3\` only, and every invocation of that seam is \`E3\`’s own write site. [${testCase.path}] MEASURED: module’s own invocations = ${readings.moduleCalls}`,
         ).toBe(0)
+        if (testCase.path.includes('UNUSABLE bounds pair')) {
+          // **THE RULED READING BESIDE THE ZERO: `writes: 0` IS NOT *"THE SINK WAS NEVER
+          // REACHED"*** (`docs/specs/gutter.md` `§2.3` item 3's counting rule + `§2.3` item 4
+          // clause 3): the SESSION is still called once with the `NaN` the clamp answered.
+          console.log(
+            `M-5 §3.1 unusable-pair cell :: ${JSON.stringify({ sink: readings.sink, counter: readings.counter, sessionChannel: readings.sessionChannel.map((v) => String(v)) })}`,
+          )
+          expect(
+            readings.sessionChannel.length === 1 && Object.is(readings.sessionChannel[0], Number.NaN),
+            `M-5 §3.1/§2.3 item 4 clause 3 — and the SESSION’s own recorder STILL received the value it was handed (\`NaN\` at that pair), even though the sink was written ZERO times: ${JSON.stringify(
+              readings.sessionChannel.map((v) => String(v)),
+            )}. A row that reads \`writes: 0\` as “the session was never called” FAILS this reading. [${shape}]`,
+          ).toBe(true)
+        }
+        if (testCase.path.includes('cancel') || testCase.path.includes('DROP')) {
+          // **RULE A's FOURTH BULLET: `cancel`/`pointercancel` (and the DROP path that rides the
+          // session's own `cancel` terminal) write `0` ON BOTH CHANNELS** — the sink AND the
+          // session's recorder. A row reading only the sink cannot distinguish “no write” from
+          // “the session was handed a value nobody wrote”.
+          expect(
+            readings.sessionChannel.length,
+            `M-5 §3.1/§2.3 item 3 — the cancel/drop path writes NOTHING ON EITHER CHANNEL: the session's own recorder reads ZERO beside the sink's ZERO (\`commit\` is invoked ZERO times on a \`cancel\` terminal). Recorded: ${JSON.stringify(
+              readings.sessionChannel.map((v) => String(v)),
+            )} [${shape}] [${testCase.path}]`,
+          ).toBe(0)
+        }
       }
     }
-    console.log(`M-5 MEASURED :: ${JSON.stringify({ cells: measured, clause: 'docs/specs/gutter-ui.md §3.1 M-5 + §R R8(e)' })}`)
+    // =====================================================================================
+    // **THE TWO-WRITER CONTROL (`C1`, `E3`'s `F-9` / `§5.5.1 P-GT-SM-3` shape `(2)`) — THE
+    // FALSIFIER THAT MAKES THE AGREEMENT ABOVE NON-VACUOUS.** The SAME function is placed on BOTH
+    // channels: the session's `commit` OPTION and the module's `commit` SEAM. For that shape the
+    // sink's own record MUST DIVERGE from `E3`'s counter (the second writer's call never passes
+    // through `E3`'s one call site), while the SINGLE-writer composition above agrees cell by
+    // cell. This control cannot pass vacuously: if the harness's session channel still forwarded
+    // to the sink, this reading would be `sink === counter` and the control would FAIL.
+    // =====================================================================================
+    const twoWriterFactory = await factoryOf<(options?: Record<string, unknown>) => AffordanceLike>('M-5 two-writer control')
+    const twoWriterSource = new RecordingSource()
+    const twoWriterSink = makeSink()
+    const twoWriterRaw = createGestureSession({ source: twoWriterSource as never, commit: twoWriterSink.commit as never })
+    const twoWriterSession = instrumentSession(twoWriterRaw)
+    const twoWriterAffordance = twoWriterFactory({
+      session: twoWriterSession.session,
+      source: twoWriterSource,
+      element: { name: 'M-5-two-writer-element' },
+      target: { name: 'M-5-two-writer-target' },
+      sizeFromPointer: (pointer: { x: number }, start: number): unknown => pointer.x - start,
+      axisOf: (): unknown => AXIS_TOKEN,
+      cursorOf: (): unknown => undefined,
+      applyPreview: (): void => undefined,
+      applyCursor: (): void => undefined,
+      startSizeOf: (): unknown => 100,
+      boundsOf: (): unknown => ({ min: 0, max: 200 }),
+      resizableOf: (): unknown => true,
+      commit: twoWriterSink.commit,
+      moveTypeOf: (): unknown => POINTER_TYPES.move,
+    })
+    expect(twoWriterAffordance.attach(), 'M-5 §3.1 — the TWO-WRITER control composition attaches like any other (the second writer is a WIRING fact, not an attach-time failure)').toBe(true)
+    twoWriterSource.fire('pointerover', pointerEvent(0, 0, 0))
+    twoWriterSource.fire('pointerdown', pointerEvent(0))
+    twoWriterSource.fire(POINTER_TYPES.move, pointerEvent(0, 175, 300))
+    twoWriterSource.fire(POINTER_TYPES.end, pointerEvent(0, 175, 300))
+    const twoWriterRecord = twoWriterSink.records.length
+    const twoWriterCounter = sinkCallsOf(twoWriterAffordance)
+    console.log(
+      `M-5 MEASURED :: ${JSON.stringify({
+        cells: measured,
+        twoWriterControl: { sinkRecord: twoWriterRecord, e3Counter: twoWriterCounter, diverges: twoWriterRecord !== twoWriterCounter },
+        clause: 'docs/specs/gutter-ui.md §3.1 M-5 + §R R8(e) + docs/specs/gutter.md §3.2 F-9/§5.5.1 P-GT-SM-3 shape (2)',
+      })}`,
+    )
+    expect(
+      twoWriterRecord,
+      `M-5 §3.1/§5.5.1 P-GT-SM-3 shape (2)/C1 — THE TWO-WRITER COMPOSITION'S SINK RECORD reads TWO for the ONE valid \`end\` it drove (one write from \`E3\`'s single write site, one from the session's own \`commit\` channel): the shape the single-writer discipline exists to catch. Recorded: ${JSON.stringify(
+        twoWriterSink.records.map((r) => ({ value: r.value, outcome: String(r.outcome) })),
+      )}`,
+    ).toBe(2)
+    expect(
+      twoWriterCounter,
+      'M-5 §3.1/§5.5.1 P-GT-SM-3 shape (2) — and the TWO-WRITER composition’s `E3` counter STILL reads ONE: the second writer’s call never passes through `E3`’s one call site, so the sink’s record and the counter DIVERGE. A composition that counted only its own calls would pass every count-based row, which is why this row reads BOTH.',
+    ).toBe(1)
+    expect(
+      twoWriterRecord,
+      'M-5 §3.1 — THE DIVERGENCE ITSELF, asserted as an inequality: `sink !== counter` in the two-writer cell (where the single-writer cells above assert `sink === counter`). A harness whose session channel FORWARDED to the sink would make this control read `sink === counter` and FAIL here — so this control cannot pass vacuously.',
+    ).not.toBe(twoWriterCounter)
   })
 
   it('M-6 §3.1 — THE FACTORY IS TOTAL and builds the CONTROLLER exactly once (the session is the WIRING’s, never the module’s)', async () => {
@@ -2752,8 +3015,17 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
     ).not.toBe(null)
     expect(
       ownReading.sunk,
-      'M-12 §3.1 — both drives must produce the SAME reading: the sink’s record from the own resolver',
-    ).toEqual([150])
+      // **⟶ RE-GRAINED 2026-09-27 (THE CHAIN RULING) — RULE B.2.** The as-filed expectation was
+      // `[150]`, which is the DELTA-ADDED-TO-START reading (`100 + (150 - 100)`) — a chain this
+      // drive does not have, and one the row's own failure text already contradicted (it printed
+      // `150 - 100 = 50`). THE DECLARED CHAIN, stated once and read by BOTH rows: `startSizeOf`
+      // answers `100` (the pre-drag size `sizeFromPointer` RECEIVES as its second argument), the
+      // harness's `sizeFromPointer(pointer, start) = pointer.x - start` answers its argument's
+      // SIZE — `150 - 100 = 50` — and that answer is what `E3` clamps over the default
+      // `{min: 0, max: 200}` pair, so the committed reading is `50`. `M-1`'s runtime half follows
+      // the SAME choice (`50`) and cites this note.
+      `M-12 §3.1 — both drives must produce the SAME reading: the sink’s record from the own resolver (the declared chain \`150 - 100 = 50\`, clamped inside \`{min: 0, max: 200}\`)`,
+    ).toEqual([50])
     expect(
       callerReading.sunk,
       'M-12 §3.1 — and from the caller-supplied `pointerOf` (`150 - 100 = 50` over the default pair… the SAME clamped reading, so a fork’s own resolver yields the identical chain)',
@@ -2773,16 +3045,29 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
     const sinkAfterReset = h.sink.records.length
     h.source.fire(POINTER_TYPES.end, pointerEvent(0, 175, 300))
     const controllerStats = controllerStatsOf(h)
+    // **⟶ RE-GRAINED 2026-09-27 (THE CHANNEL RULING) — RULE A's THIRD BULLET + `M-13`'s OWN
+    // RULED READINGS.** This drive's `boundsOf` answers `undefined`, so the pair is UNUSABLE and
+    // the reset's clamp answers `NaN` (`docs/specs/gutter.md` `§2.3` item 4 clause 3 / `§3.2`
+    // `F-14`): `E3`'s write site returns BEFORE an attempt exists, so the SINK is written ZERO
+    // times and `stats().sinkCalls === 0` with `committed === false`, **WHILE the SESSION's own
+    // recorder still receives the value it was handed (`NaN` at that pair)**. THE AS-FILED
+    // READINGS ARE KEPT VISIBLE: *"the sink received EXACTLY ONE value in the whole drive"* and
+    // *"the committed value is the CLAMPED PRE-DRAG SIZE"* — both SUPERSEDED for this drive (the
+    // clamped pre-drag size is what the MODULE's own revert PREVIEW carries, and what a reset
+    // with a USABLE pair writes; it is not what THIS pair's reset can write).
+    const sessionChannelAfterTheDrive = h.sessionCommits.map((c) => ({ value: c.value, outcome: String(c.outcome) }))
     console.log(
       `M-13 MEASURED :: ${JSON.stringify({
         resets: statsAfterReset['resets'],
-        resetFrames: resetFrames.map((f) => ({ call: f.call, gestureActiveAtTheCall: f.active, value: f.value })),
+        resetFrames: resetFrames.map((f) => ({ call: f.call, gestureActiveAtTheCall: f.active, value: String(f.value) })),
         previews: previewValues,
         sinkAfterReset,
         sinkAfterLaterPointerup: h.sink.records.length,
         controllerResets: controllerStats['resets'],
+        controllerSinkCalls: controllerStats['sinkCalls'],
         sinkValues: h.sink.records.map((r) => r.value),
-        clause: 'docs/specs/gutter-ui.md §3.1 M-13 + §R R7 + §2.3 item 9',
+        sessionChannel: sessionChannelAfterTheDrive,
+        clause: 'docs/specs/gutter-ui.md §3.1 M-13 + §R R7 + §2.3 item 9 + docs/specs/gutter.md §2.3 item 4 clause 3',
       })}`,
     )
     expect(
@@ -2813,18 +3098,88 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
     ).toBe(false)
     expect(
       h.sink.records.length,
-      `M-13 §3.1 — the sink received EXACTLY ONE value in the whole drive, and the later \`pointerup\` committed NOTHING FURTHER (the handle was cleared by the reset). Recorded: ${JSON.stringify(
+      // ⟶ RE-GRAINED 2026-09-27 (THE CHANNEL RULING), RULE A's third bullet. The as-filed row
+      // read *"the sink received EXACTLY ONE value in the whole drive, and the later `pointerup`
+      // committed NOTHING FURTHER"* and asserted `1`. For THIS drive the pair is unusable, so the
+      // reset's clamp answers `NaN` and `E3` refuses BEFORE its write site: ZERO writes, `0`
+      // sinkCalls, `committed: false` — and the ruled `0` is read here, not `1`.
+      `M-13 §3.1/§2.3 item 4 clause 3/§3.2 F-14 (RE-GRAINED from “EXACTLY ONE value”) — the sink received ZERO values in the whole drive, and the later \`pointerup\` committed nothing either: the reset's clamp answered \`NaN\` at this UNUSABLE pair, so \`E3\`'s write site was never entered. Recorded: ${JSON.stringify(
         h.sink.records.map((r) => ({ value: r.value, outcome: String(r.outcome) })),
+      )} (a sink record of 1 here would be the AS-FILED reading, and one of 2 would be a second writer)`,
+    ).toBe(0)
+    expect(
+      controllerStats['sinkCalls'],
+      `M-13 §3.1/§2.3 item 4 clause 3 — and \`E3\`'s own counter AGREES with that zero (\`stats().sinkCalls === 0\`): for an unusable pair the reset leaves the sink UNWRITTEN while the SESSION's reset was still called (the next reading). Read: ${String(
+        controllerStats['sinkCalls'],
+      )}`,
+    ).toBe(0)
+    expect(
+      controllerStats['written'],
+      'M-13 §3.1 — and `stats().written === 0` beside it (a write that never returned: the ruled `committed: false` of `ResizeResetResult` for this arm, since `committed` is "a sink write occurred for this reset call")',
+    ).toBe(0)
+    expect(
+      sessionChannelAfterTheDrive.length,
+      `M-13 §3.1/§2.3 item 4 clause 3 (THE RULED READING BESIDE THE ZERO) — \`writes: 0\` is NOT “the session was never called”: the SESSION's own recorder received the value it was handed EXACTLY ONCE in this drive (the reset terminal's \`NaN\`). Recorded: ${JSON.stringify(
+        sessionChannelAfterTheDrive.map((c) => ({ value: String(c.value), outcome: c.outcome })),
       )}`,
     ).toBe(1)
     expect(
-      h.sink.records[0]?.value,
-      'M-13 §3.1/§2.3’s terminal write table — the committed value is the CLAMPED PRE-DRAG SIZE the consumer holds (`startSizeOf` answered `100`, inside the default pair)',
-    ).toBe(100)
+      Object.is(sessionChannelAfterTheDrive[0]?.value, Number.NaN),
+      `M-13 §3.1/§2.3 item 4 clause 3 — and that value IS the \`NaN\` the clamp answered at this UNUSABLE pair (\`Object.is(value, NaN)\`, never \`===\`, which cannot distinguish \`NaN\`): a row that reads the session channel's value with \`===\` cannot make this claim at all. Recorded: ${JSON.stringify(
+        sessionChannelAfterTheDrive.map((c) => String(c.value)),
+      )}`,
+    ).toBe(true)
     expect(
-      h.sink.records[0]?.outcome,
-      'M-13 §3.1 — and the terminal that carried it is the `reset` arm, read from `gesture.outcome` (`docs/specs/gsession.md` §2.5 item 10)',
+      sessionChannelAfterTheDrive[0]?.outcome,
+      'M-13 §3.1/§2.3 item 4 clause 3 — and the terminal that carried it is the `reset` arm, read from `gesture.outcome` at the session’s own commit invocation (`docs/specs/gsession.md` §2.5 item 10): THE OUTCOME DISCRIMINATOR IS READ FROM THE SESSION’S CHANNEL HERE, because the sink has no record to read it from on this arm',
     ).toBe('reset')
+    // **THE `committed: false` READING — MEASURED ON A PAIRED CONTROL DRIVE, because the MODULE's
+    // own call site's RESULT is not part of the module's observable surface (`stats()` reports
+    // counters, not the `ResizeResetResult`).** The control drives the SAME reset entry point
+    // (`controller.reset(element)`) over the SAME unusable pair, with the handle already captured
+    // (one valid move first, over a bounds answer that turns unusable afterwards), so the result
+    // record is the one this arm produces.
+    let pairCalls = 0
+    const committedControl = await makeHarness(
+      {
+        boundsOf: (): unknown => {
+          pairCalls += 1
+          return pairCalls <= 1 ? { min: 0, max: 200 } : undefined
+        },
+      },
+      'M-13 committed control',
+    )
+    expect(committedControl.affordance.attach(), 'M-13 CONTROL — attach').toBe(true)
+    committedControl.source.fire('pointerover', pointerEvent(0, 0, 0))
+    committedControl.source.fire('pointerdown', pointerEvent(0))
+    committedControl.source.fire(POINTER_TYPES.move, pointerEvent(0, 175, 300))
+    const resetEntry = (committedControl.affordance.controller as { reset?: (element: unknown) => unknown } | null | undefined)?.reset
+    const resetResult = (resetEntry as ((element: unknown) => unknown) | undefined)?.(committedControl.element) as
+      | { readonly ok?: unknown; readonly committed?: unknown; readonly code?: unknown }
+      | undefined
+    console.log(
+      `M-13 CONTROL MEASURED :: ${JSON.stringify({
+        resetResult: resetResult === undefined ? null : { ok: resetResult.ok, committed: resetResult.committed, code: resetResult.code },
+        controlSinkWrites: committedControl.sink.records.length,
+        controlControllerSinkCalls: controllerStatsOf(committedControl)['sinkCalls'],
+        controlSessionChannel: committedControl.sessionCommits.map((c) => String(c.value)),
+        clause: 'docs/specs/gutter.md §2.3 item 4 clause 3 / §3.2 F-14',
+      })}`,
+    )
+    expect(
+      resetResult?.committed,
+      `M-13 §3.1/§2.3 item 4 clause 3 (THE RULED READING) — the reset's OWN result record reports \`committed: false\` for this pair (\`ResizeResetResult.committed\` is "a sink write occurred for this call", so a zero-write arm MUST report \`false\`). Recorded: ${JSON.stringify(
+        resetResult === undefined ? null : { ok: resetResult.ok, committed: resetResult.committed, code: resetResult.code },
+      )}`,
+    ).toBe(false)
+    expect(
+      Object.is(committedControl.sessionCommits[0]?.value, Number.NaN),
+      'M-13 CONTROL — and the same control drive’s SESSION recorder received the `NaN` beside that `false` (the two rulings agree on one drive: `sinkCalls === 0`, `committed === false`, the session handed `NaN`)',
+    ).toBe(true)
+    expect(
+      committedControl.sink.records.length,
+      'M-13 CONTROL — with ZERO sink writes on the control drive too',
+    ).toBe(0)
     expect(controllerStats['resets'], 'M-13 §3.1 — `E3`’s own resets counter agrees (`1`)').toBe(1)
   })
 
@@ -3073,7 +3428,18 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
     const h = await makeHarness({}, 'M-19')
     const createGutterAffordance = await factoryOf<(options?: Record<string, unknown>) => AffordanceLike>('M-19')
     const source = new RecordingSource()
-    const raw = createGestureSession({ source: source as never, commit: sink.commit as never })
+    // **⟶ RE-GRAINED 2026-09-27 (THE CHANNEL RULING) — RULE A, ON THIS ROW'S OWN LOCAL HARNESS.**
+    // The session's `commit` OPTION is a NON-FORWARDING recorder (it stands in for the wiring's
+    // own channel), and `sink.commit` rides ONLY the composition's `commit` SEAM below. As filed
+    // the SAME function sat on both channels, so this row's declared `writes.length === 1` was
+    // unreachable (the drive produced 2).
+    const sessionChannel: unknown[] = []
+    const raw = createGestureSession({
+      source: source as never,
+      commit: ((_gesture: unknown, value: unknown): void => {
+        sessionChannel.push(value)
+      }) as never,
+    })
     const instrumented = instrumentSession(raw)
     const element: Record<string, unknown> = { name: 'M-19-affordance' }
     const affordance = createGutterAffordance({
@@ -3120,8 +3486,14 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
     expect(mutation?.[0]?.['mode'], 'M-19 — with `mode: \'replace\'`').toBe('replace')
     expect(
       mutation?.[0]?.['value'],
-      'M-19 §3.1/§R.4 C-A5 — and the value it carries is the CLAMPED value as a STRING, never the raw pre-drag size: the write’s own payload names the value a `U-5` read-back would have to find',
-    ).toBe('175')
+      // **⟶ RE-GRAINED 2026-09-27 (THE CHAIN RULING) — THE SAME CHOICE `M-1`/`M-12` FOLLOW.**
+      // The as-filed `'175'` was the MOVE's raw `clientX`, which the declared chain never
+      // commits: this row's own `sizeFromPointer(pointer, start) = pointer.x - start` answers the
+      // new SIZE — `175 - 100 = 75` — and `E3` clamps THAT over `{min: 0, max: 200}`, so the
+      // managed-channel write carries `'75'` (and the RAW PRE-DRAG size would be `'100'`, which is
+      // the reading this assertion exists to exclude).
+      `M-19 §3.1/§R.4 C-A5 (RE-GRAINED from the raw \`'175'\`) — the value it carries is the CLAMPED value of the DECLARED CHAIN (\`sizeFromPointer({x: 175, …}, 100) = 175 - 100 = 75\`) as a STRING, never the raw \`clientX\` and never the raw pre-drag size (\`'100'\`): the write’s own payload names the value a \`U-5\` read-back would have to find`,
+    ).toBe('75')
     expect(
       writes[0]?.['node'],
       `M-19 §3.1/§2.5 item 5/§R.2 R-13 — the write’s \`node\` is the AUTHORED STATUS/READOUT node, DELIBERATELY OUTSIDE the affordance’s own node: a write whose \`node\` resolves to the AFFORDANCE’s own node, or a \`mutation\` that ADDS/REMOVES/MOVES it, FAILS this row (the E-2 reuse ruling covers a PATCH only)`,
@@ -3262,11 +3634,30 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
         continue
       }
       h.source.fire('pointerdown', pointerEvent(0))
-      const fired = h.source.fire(POINTER_TYPES.move, pointerEvent(0, 150, 300))
-      record(`§R.3 ${seamName}-throwing`, `threwAt=${String(fired.threwAt)}, threw=${String(fired.thrown !== null)}`)
+      // **⟶ RE-GRAINED 2026-09-27 (THE SEAM-REACH RULING) — RULE B.3.** The as-filed drive for
+      // the `commit` arm fired only `pointerover`/`pointerdown`/`pointermove` and demanded a
+      // throw, but **NO `commit` CAN OCCUR ON THAT DRIVE: `E3`'s write is reached ONLY from its
+      // TERMINAL hook**, so the sink seam was never invoked and the capture could not see it. The
+      // terminal is therefore driven **IN THE SAME `fired` CAPTURE**, exactly as its two siblings
+      // in this loop do (the `applyCursor` arm fires a second `pointerover`, the `applyPreview`
+      // arm fires the terminal below).
+      let fired: { calls: number; threwAt: number; thrown: unknown }
+      if (seamName === 'commit') {
+        h.source.fire(POINTER_TYPES.move, pointerEvent(0, 150, 300))
+        fired = h.source.fire(POINTER_TYPES.end, pointerEvent(0, 150, 300))
+        record(
+          `§R.3 ${seamName}-throwing`,
+          `threwAt=${String(fired.threwAt)}, threw=${String(fired.thrown !== null)}, e3SinkCalls=${String(controllerStatsOf(h)['sinkCalls'])}, e3Written=${String(controllerStatsOf(h)['written'])}, sessionChannel=${JSON.stringify(h.sessionCommits.map((c) => String(c.value)))}`,
+        )
+      } else {
+        fired = h.source.fire(POINTER_TYPES.move, pointerEvent(0, 150, 300))
+        record(`§R.3 ${seamName}-throwing`, `threwAt=${String(fired.threwAt)}, threw=${String(fired.thrown !== null)}`)
+      }
       expect(
         fired.thrown !== null,
-        `M-20/§R.3/F-8 — a THROWING \`${seamName}\` PROPAGATES to the caller of the module’s own listener turn: a module that SWALLOWS a presentation seam’s throw FAILS F-8`,
+        `M-20/§R.3/F-8 — a THROWING \`${seamName}\` PROPAGATES to the caller of the turn that REACHES it — for \`commit\` that is the TERMINAL turn (\`E3\`'s write site is reached only from its terminal hook): a module that SWALLOWS a presentation/sink seam’s throw FAILS F-8. MEASURED: threw=${String(
+          fired.thrown !== null,
+        )}, E3 sinkCalls=${String(controllerStatsOf(h)['sinkCalls'])}, E3 written=${String(controllerStatsOf(h)['written'])}`,
       ).toBe(true)
       if (seamName === 'applyPreview') {
         const before = h.sessionLog.length
@@ -3777,17 +4168,24 @@ describe('F — §3.2 the documented fail-states (every outcome is a DECLARED re
     ).toBe(1)
   })
 
-  it('F-10 §3.2 — A NON-FINITE CLAMP ANSWER OF ANY ORIGIN is the INVALID arm: one reset, ONE revert preview with the pre-drag size, no non-finite preview, and the later `pointerup` commits nothing', async () => {
+  it('F-10 §3.2 — A NON-FINITE CLAMP ANSWER OF ANY ORIGIN is the INVALID arm: one reset, ONE revert preview with the pre-drag size, no non-finite preview, and the later `pointerup` commits nothing — ⟶ RE-GRAINED 2026-09-27 (THE CHANNEL RULING): the WRITE COUNT is declared PER SHAPE, because the last shape’s unusable pair makes the reset’s own clamp answer `NaN` (ZERO writes)', async () => {
     await requireLiveModule('F-10')
-    const shapes: Array<{ name: string; overrides: Record<string, unknown> }> = [
-      { name: 'NaN via sizeFromPointer', overrides: { sizeFromPointer: (): unknown => Number.NaN } },
-      { name: 'Infinity via sizeFromPointer', overrides: { sizeFromPointer: (): unknown => Number.POSITIVE_INFINITY } },
-      { name: '-Infinity via sizeFromPointer', overrides: { sizeFromPointer: (): unknown => Number.NEGATIVE_INFINITY } },
-      { name: "'12' via sizeFromPointer", overrides: { sizeFromPointer: (): unknown => '12' } },
-      { name: 'null via sizeFromPointer', overrides: { sizeFromPointer: (): unknown => null } },
-      { name: 'true via sizeFromPointer', overrides: { sizeFromPointer: (): unknown => true } },
-      { name: 'an object via sizeFromPointer', overrides: { sizeFromPointer: (): unknown => ({}) } },
-      { name: 'an unusable bounds pair', overrides: { boundsOf: (): unknown => ({ min: 'a', max: 'b' }) } },
+    const shapes: Array<{ name: string; overrides: Record<string, unknown>; expectedWrites: number }> = [
+      { name: 'NaN via sizeFromPointer', overrides: { sizeFromPointer: (): unknown => Number.NaN }, expectedWrites: 1 },
+      { name: 'Infinity via sizeFromPointer', overrides: { sizeFromPointer: (): unknown => Number.POSITIVE_INFINITY }, expectedWrites: 1 },
+      { name: '-Infinity via sizeFromPointer', overrides: { sizeFromPointer: (): unknown => Number.NEGATIVE_INFINITY }, expectedWrites: 1 },
+      { name: "'12' via sizeFromPointer", overrides: { sizeFromPointer: (): unknown => '12' }, expectedWrites: 1 },
+      { name: 'null via sizeFromPointer', overrides: { sizeFromPointer: (): unknown => null }, expectedWrites: 1 },
+      { name: 'true via sizeFromPointer', overrides: { sizeFromPointer: (): unknown => true }, expectedWrites: 1 },
+      { name: 'an object via sizeFromPointer', overrides: { sizeFromPointer: (): unknown => ({}) }, expectedWrites: 1 },
+      // **⟶ RE-GRAINED 2026-09-27 (THE CHANNEL RULING) — RULE A's THIRD BULLET.** The as-filed
+      // row declared `1` for EVERY shape, which is right for the seven shapes whose reset CLAMPS
+      // THE PRE-DRAG DEFAULT over a USABLE pair (`clampToBounds(100, {min: 0, max: 200}) = 100` ⇒
+      // ONE write) and WRONG for this one: at an UNUSABLE pair the reset's own clamp answers
+      // `NaN`, so `E3`'s write site is never entered (`docs/specs/gutter.md` `§2.3` item 4 clause
+      // 3 / `§3.2 F-14`) — ZERO writes, `sinkCalls === 0`, `committed: false`, WHILE the
+      // SESSION's recorder still receives the `NaN` it was handed.
+      { name: 'an unusable bounds pair', overrides: { boundsOf: (): unknown => ({ min: 'a', max: 'b' }) }, expectedWrites: 0 },
     ]
     for (const shape of shapes) {
       const h = await makeHarness(shape.overrides, `F-10 ${shape.name}`)
@@ -3802,11 +4200,14 @@ describe('F — §3.2 the documented fail-states (every outcome is a DECLARED re
       console.log(
         `F-10 MEASURED :: ${JSON.stringify({
           shape: shape.name,
+          expectedWrites: shape.expectedWrites,
           resets: stats['resets'],
           previewValues,
           sinkAfterReset,
           sinkAfterLaterPointerup: h.sink.records.length,
-          clause: 'docs/specs/gutter-ui.md §3.2 F-10 + §R R7',
+          e3SinkCalls: controllerStatsOf(h)['sinkCalls'],
+          sessionChannel: h.sessionCommits.map((c) => String(c.value)),
+          clause: 'docs/specs/gutter-ui.md §3.2 F-10 + §R R7 + docs/specs/gutter.md §2.3 item 4 clause 3',
         })}`,
       )
       expect(
@@ -3825,12 +4226,34 @@ describe('F — §3.2 the documented fail-states (every outcome is a DECLARED re
       ).toEqual([{ value: 100, token: AXIS_TOKEN, valid: false, resizable: true }])
       expect(
         h.sink.records.length,
-        `F-10 §3.2 — the committed value is the CLAMPED PRE-DRAG SIZE, written EXACTLY once, and the later \`pointerup\` commits NOTHING further: ${shape.name}. Read: ${JSON.stringify(
+        `F-10 §3.2 (RE-GRAINED: the write count is PER SHAPE) — the reset's own clamp decides the write count: for a USABLE pair the committed value is the CLAMPED PRE-DRAG SIZE (\`100\`), written EXACTLY once; for the UNUSABLE pair the clamp answers \`NaN\` and \`E3\` writes ZERO times. This shape's declared count is ${shape.expectedWrites}, and the later \`pointerup\` commits NOTHING further: ${shape.name}. Read: ${JSON.stringify(
           h.sink.records.map((r) => r.value),
         )}`,
-      ).toBe(1)
-      expect(h.sink.records[0]?.value, `F-10 §3.2 — and that value IS the pre-drag size (\`100\`): ${shape.name}`).toBe(100)
-      expect(sinkAfterReset, `F-10 §3.2 — the reset’s own write had already landed before the release: ${shape.name}`).toBe(1)
+      ).toBe(shape.expectedWrites)
+      if (shape.expectedWrites === 1) {
+        expect(h.sink.records[0]?.value, `F-10 §3.2 — and that value IS the pre-drag size (\`100\`): ${shape.name}`).toBe(100)
+        expect(
+          sinkAfterReset,
+          `F-10 §3.2 — the reset’s own write had already landed before the release: ${shape.name}`,
+        ).toBe(1)
+      } else {
+        expect(
+          controllerStatsOf(h)['sinkCalls'],
+          `F-10 §3.2/§2.3 item 4 clause 3 — and \`E3\`'s own counter reads ZERO for the unusable pair (\`stats().sinkCalls === 0\`): the composition refuses before entering its write site, so \`writes: 0\` here does NOT mean “the sink was never reached by the reset” in the sense that would excuse a missing session call — the next reading shows the session WAS handed the \`NaN\`. ${shape.name}`,
+        ).toBe(0)
+        expect(
+          sinkAfterReset === 0 && h.sink.records.length === 0,
+          `F-10 §3.2 — ZERO writes at the reset AND at the later \`pointerup\` (the handle was cleared): ${shape.name}. Read: afterReset=${String(
+            sinkAfterReset,
+          )}, total=${String(h.sink.records.length)}`,
+        ).toBe(true)
+        expect(
+          h.sessionCommits.length === 1 && Object.is(h.sessionCommits[0]?.value, Number.NaN),
+          `F-10 §3.2/§2.3 item 4 clause 3 (THE RULED READING BESIDE THE ZERO) — the SESSION's own recorder still received the value it was handed (\`NaN\`) exactly once, so the zero-write reading is NOT a stalled drive: ${shape.name}. Recorded: ${JSON.stringify(
+            h.sessionCommits.map((c) => String(c.value)),
+          )}`,
+        ).toBe(true)
+      }
     }
   })
 
@@ -4126,37 +4549,50 @@ function declaredTermOf(row: string): number {
  *  attempt is one DRIVE of that row's own table, and a missing module is a break CAUSE (a
  *  sentence), never a harness throw. */
 describe('§5.5.1 — P-GU-SM-1 (S-GU-WRITER-1) · the single-writer quantification over the terminal paths', () => {
-  it('P-GU-SM-1 — 15 DRIVES (5 terminal paths × 2 composition shapes + 5 distinct mid-drag move shapes), with its 12 mid-drag ASSERTIONS printed BESIDE the term and never counted in it', async () => {
+  it('P-GU-SM-1 — 15 DRIVES (5 terminal paths × 2 composition shapes + 5 distinct mid-drag move shapes), with its 12 mid-drag ASSERTIONS printed BESIDE the term and never counted in it — ⟶ RE-GRAINED 2026-09-27 (THE DRIVE-COUNT RULING): the LOOP now runs the declared `15` (`5 × 2 + 5`) instead of `17`, by driving path (c)’s two declared refusal variants INSIDE one attempt', async () => {
     const row = new RegisterRow('P-GU-SM-1', 'S-GU-WRITER-1')
+    // **⟶ RE-GRAINED 2026-09-27 (THE CHANNEL RULING + THE DRIVE-COUNT RULING).** Two changes,
+    // kept apart: (i) path (b)'s drive is an UNUSABLE bounds pair, so ITS declared pair is `0`
+    // (the as-filed `1` is superseded — `E3` refuses before its write site); (ii) the declared
+    // derivation `5` terminal paths × `2` composition shapes + `5` distinct mid-drag move shapes
+    // = `15` is now the LOOP's own count, because path (c)'s TWO declared refusal variants ride
+    // INSIDE one attempt (both are still asserted — nothing was dropped to reach the term).
     const paths: Array<{ path: string; expectedSink: number; kind: 'end' | 'invalid' | 'refused' | 'cancel' | 'dispose' }> = [
       { path: '(a) a VALID `end`', expectedSink: 1, kind: 'end' },
-      { path: '(b) an invalid `reset` with a usable default and a resizable gesture', expectedSink: 1, kind: 'invalid' },
+      { path: '(b) an invalid `reset` at an UNUSABLE bounds pair (⇒ the reset’s own clamp answers `NaN`; the as-filed `1` is SUPERSEDED by `0`)', expectedSink: 0, kind: 'invalid' },
       { path: "(c) a REFUSED reset (`'not-resizable'` and `'unusable-default'`)", expectedSink: 0, kind: 'refused' },
       { path: '(d) a `cancel` via `pointercancel`', expectedSink: 0, kind: 'cancel' },
       { path: '(e) a `cancel` via a mid-gesture `dispose()`', expectedSink: 0, kind: 'dispose' },
     ]
-    const midDragShapes: Array<{ name: string; overrides: Record<string, unknown>; invalid: boolean }> = [
-      { name: 'a resolvable pointer with a finite clamped value', overrides: {}, invalid: false },
-      { name: 'an unresolvable pointer', overrides: {}, invalid: true },
-      { name: 'a resolvable pointer whose clamped value is not finite (NaN)', overrides: { boundsOf: (): unknown => undefined }, invalid: true },
-      { name: 'a resolvable pointer whose clamped value is Infinity', overrides: { sizeFromPointer: (): unknown => Number.POSITIVE_INFINITY }, invalid: true },
-      { name: 'an exact-false `isDragValid` veto', overrides: { isDragValid: (): unknown => false }, invalid: true },
+    const midDragShapes: Array<{ name: string; overrides: Record<string, unknown>; invalid: boolean; expectedSink: number }> = [
+      { name: 'a resolvable pointer with a finite clamped value', overrides: {}, invalid: false, expectedSink: 0 },
+      // AN INVALID MOVE OVER A USABLE PAIR reaches the `reset` arm, whose OWN clamp answers a
+      // number (the clamped pre-drag default ⇒ ONE write); the unusable-pair shape below cannot
+      // write at all. (⟶ RE-GRAINED 2026-09-27, THE CHANNEL RULING, RULE A's second/third
+      // bullets: these per-shape counts are declared and read instead of a loose inequality.)
+      { name: 'an unresolvable pointer', overrides: {}, invalid: true, expectedSink: 1 },
+      { name: 'a resolvable pointer whose clamped value is not finite (NaN)', overrides: { boundsOf: (): unknown => undefined }, invalid: true, expectedSink: 0 },
+      { name: 'a resolvable pointer whose clamped value is Infinity', overrides: { sizeFromPointer: (): unknown => Number.POSITIVE_INFINITY }, invalid: true, expectedSink: 1 },
+      { name: 'an exact-false `isDragValid` veto', overrides: { isDragValid: (): unknown => false }, invalid: true, expectedSink: 1 },
     ]
     for (const shape of ['the single-writer composition', 'both readings in the same cell']) {
       for (const p of paths) {
-        for (const variant of p.kind === 'refused' ? ['not-resizable', 'unusable-default'] : ['single'] as const) {
-          await row.run(`${shape} · ${p.path} · ${variant}`, async () => {
-            const overrides: Record<string, unknown> =
-              p.kind === 'invalid'
-                ? { boundsOf: (): unknown => undefined }
-                : variant === 'not-resizable'
-                  ? { resizableOf: (): unknown => false }
-                  : variant === 'unusable-default'
-                    ? { startSizeOf: (): unknown => 'not-a-number' }
-                    : {}
-            const gate = await surface(`P-GU-SM-1 ${shape} ${p.path}`)
+        await row.run(`${shape} · ${p.path}`, async () => {
+          // THE ATTEMPT'S OWN DRIVE LIST: path (c) drives BOTH of its declared refusal variants
+          // here, so the declared term is the loop's count without losing either reading.
+          const variants: Array<{ label: string; overrides: Record<string, unknown>; expectedSink: number }> =
+            p.kind === 'invalid'
+              ? [{ label: 'invalid', overrides: { boundsOf: (): unknown => undefined }, expectedSink: p.expectedSink }]
+              : p.kind === 'refused'
+                ? [
+                    { label: "'not-resizable'", overrides: { resizableOf: (): unknown => false }, expectedSink: 0 },
+                    { label: "'unusable-default'", overrides: { startSizeOf: (): unknown => 'not-a-number' }, expectedSink: 0 },
+                  ]
+                : [{ label: p.kind, overrides: {}, expectedSink: p.expectedSink }]
+          for (const variant of variants) {
+            const gate = await surface(`P-GU-SM-1 ${shape} ${p.path} ${variant.label}`)
             if (gate.cause !== null) return gate.cause
-            const h = await makeHarness(overrides, `P-GU-SM-1 ${p.path}`)
+            const h = await makeHarness(variant.overrides, `P-GU-SM-1 ${p.path}`)
             h.affordance.attach()
             lifecycle(h, [pointerEvent(0, 175, 300)])
             if (p.kind === 'end') h.source.fire(POINTER_TYPES.end, pointerEvent(0, 175, 300))
@@ -4167,13 +4603,18 @@ describe('§5.5.1 — P-GU-SM-1 (S-GU-WRITER-1) · the single-writer quantificat
             const sink = h.sink.records.length
             const counter = controllerSinkCalls(h)
             if (sink !== counter) return `THE TWO READINGS DIVERGE: the sink's own record reads ${sink} while E3's stats().sinkCalls reads ${counter}`
-            if (sink !== p.expectedSink) return `the declared pair for ${p.path} is ${p.expectedSink} sink calls; measured ${sink}`
+            if (sink !== variant.expectedSink) return `the declared pair for ${p.path} [${variant.label}] is ${variant.expectedSink} sink calls; measured ${sink}`
             if (sink > 1) return `a path produced TWO writes (${sink})`
+            if (h.calls.commit - counter > 0) return `the MODULE made ${h.calls.commit - counter} sink call(s) of its own on ${p.path} [${variant.label}]`
+            // **RULE A's FOURTH BULLET: the CANCEL paths write `0` ON BOTH CHANNELS.**
+            if ((p.kind === 'cancel' || p.kind === 'dispose') && h.sessionCommits.length !== 0) {
+              return `the ${p.kind} path wrote to the SESSION's channel ${h.sessionCommits.length} time(s); the declared reading is ZERO on BOTH channels (commit is invoked zero times on a \`cancel\` terminal)`
+            }
             const previews = Number(h.affordance.stats()['previews'])
             if (previews > 0 && sink > 0 && previews > 1) return `the preview count (${previews}) exceeded one write for a single observed move`
-            return null
-          })
-        }
+          }
+          return null
+        })
       }
     }
     // The FIVE distinct MID-DRAG move shapes — real drives in their own right.
@@ -4195,6 +4636,16 @@ describe('§5.5.1 — P-GU-SM-1 (S-GU-WRITER-1) · the single-writer quantificat
           return `an INVALID mid-drag shape reached a success-looking state (resets=0, sink=0) instead of its declared degradation`
         }
         if (!mid.invalid && h.sink.records.length > 0) return 'a mid-drag move committed before any terminal'
+        // **THE PER-SHAPE WRITE COUNT (⟶ RE-GRAINED 2026-09-27, THE CHANNEL RULING).** The invalid
+        // arm's `reset` writes exactly once when its OWN clamp answers a number and zero times at
+        // an unusable pair — declared per shape above, so a mid-drag move can no longer pass with
+        // any count at all.
+        if (h.sink.records.length !== mid.expectedSink) {
+          return `the mid-drag shape's declared write count is ${mid.expectedSink}; measured ${h.sink.records.length}`
+        }
+        if (h.sink.records.length !== controllerSinkCalls(h)) {
+          return `the sink's record (${h.sink.records.length}) and E3's counter (${controllerSinkCalls(h)}) DIVERGE`
+        }
         return null
       })
     }
@@ -4268,18 +4719,23 @@ describe('§5.5.1 — P-GU-SM-2 (S-GU-PREVIEW-1) · the preview-never-sinks quan
 describe('§5.5.1 — P-GU-SM-3 (S-GU-RELEASE-1) · the release mapping and the drop-revert', () => {
   it('P-GU-SM-3 — 15 DRIVES (5 release shapes × 3 readings: the module’s counters, the session call log, and the sink/E3 pair)', async () => {
     const row = new RegisterRow('P-GU-SM-3', 'S-GU-RELEASE-1')
-    const shapes: Array<{ name: string; overrides: Record<string, unknown>; drive: (h: Harness) => void }> = [
+    const shapes: Array<{ name: string; overrides: Record<string, unknown>; expectedSink: number; drive: (h: Harness) => void }> = [
       {
         name: '(1) a VALID drag released by the session’s own `pointerup`',
         overrides: {},
+        expectedSink: 1,
         drive: (h) => {
           lifecycle(h, [pointerEvent(0, 175, 300)])
           h.source.fire(POINTER_TYPES.end, pointerEvent(0, 175, 300))
         },
       },
       {
+        // THE INVALID RELEASE WITH A USABLE PAIR: the reset's OWN clamp answers a number (the
+        // clamped pre-drag size), so the reset terminal writes EXACTLY ONCE — ⟶ RE-GRAINED
+        // 2026-09-27 (THE CHANNEL RULING), RULE A's second bullet.
         name: '(2) an INVALID drag (a non-finite clamped value)',
         overrides: { sizeFromPointer: (): unknown => Number.NaN },
+        expectedSink: 1,
         drive: (h) => {
           lifecycle(h, [pointerEvent(0, 175, 300)])
           h.source.fire(POINTER_TYPES.end, pointerEvent(0, 175, 300))
@@ -4288,6 +4744,7 @@ describe('§5.5.1 — P-GU-SM-3 (S-GU-RELEASE-1) · the release mapping and the 
       {
         name: "(3) an INVALID drag refused at the reset (`'not-resizable'`)",
         overrides: { resizableOf: (): unknown => false },
+        expectedSink: 0,
         drive: (h) => {
           lifecycle(h, [pointerEvent(0, 175, 300)])
           h.source.fire(POINTER_TYPES.end, pointerEvent(0, 175, 300))
@@ -4296,6 +4753,7 @@ describe('§5.5.1 — P-GU-SM-3 (S-GU-RELEASE-1) · the release mapping and the 
       {
         name: '(4) a SECONDARY-button press during the drag (the drop)',
         overrides: {},
+        expectedSink: 0,
         drive: (h) => {
           lifecycle(h, [pointerEvent(0, 175, 300)])
           h.source.fire('pointerdown', pointerEvent(2, 175, 300))
@@ -4304,6 +4762,7 @@ describe('§5.5.1 — P-GU-SM-3 (S-GU-RELEASE-1) · the release mapping and the 
       {
         name: '(5) a SECONDARY-button press with NO active gesture (inert)',
         overrides: {},
+        expectedSink: 0,
         drive: (h) => {
           h.source.fire('pointerdown', pointerEvent(2))
         },
@@ -4336,17 +4795,30 @@ describe('§5.5.1 — P-GU-SM-3 (S-GU-RELEASE-1) · the release mapping and the 
             if (shape.name.includes('INVALID') && resetFrames.length > 0 && !resetFrames.every((f) => f.active)) {
               return 'the reset was called while the gesture was NOT active (the reset arm must be taken DURING the drag)'
             }
-            if (shape.name.includes('NO active gesture') && h.sessionLog.length !== 0) {
-              return 'the module made a session call for a secondary press with no active gesture'
+            // **⟶ RE-GRAINED 2026-09-27 (THE MODULE-ORIGINATED-CENSUS RULING) — RULE B.4.** The
+            // as-filed reading was `h.sessionLog.length !== 0`, which can NEVER hold: `attach()`
+            // ITSELF causes ONE `install` frame, so this shape was unsatisfiable for any module.
+            // The ruled reading is the MODULE-ORIGINATED census — the same form `M-9` uses.
+            if (
+              shape.name.includes('NO active gesture') &&
+              h.sessionLog.filter((c) => c.call !== 'install').length !== 0
+            ) {
+              return `the module made a session call of its own for a secondary press with no active gesture: ${JSON.stringify(
+                h.sessionLog.map((c) => c.call),
+              )}`
             }
             if (shape.name.includes('drop') && resetFrames.length !== 0) return 'the drop path called a session reset'
             if (shape.name.includes('drop') && terminals.length !== 0) return 'the module itself dispossessed the session on the drop path'
             return null
           }
           if (sink !== counter) return `the sink's record (${sink}) and E3's counter (${counter}) DIVERGE`
+          // ⟶ RE-GRAINED 2026-09-27 (THE CHANNEL RULING): EVERY shape's write count is declared
+          // (the as-filed form asserted only the VALID/drop/inert limbs, leaving the two INVALID
+          // limbs' counts unread).
+          if (sink !== shape.expectedSink) return `the declared write count for ${shape.name} is ${shape.expectedSink}; measured ${sink}`
           if (shape.name.includes('VALID') && sink !== 1) return `a VALID release must commit EXACTLY once; measured ${sink}`
-          if (shape.name.includes('drop') && sink !== 0) return `the drop path commits NOTHING; measured ${sink}`
-          if (shape.name.includes('NO active gesture') && sink !== 0) return `an inert secondary press commits nothing; measured ${sink}`
+          if (sink > 1) return `a release shape produced TWO writes (${sink}) — the TWO-WRITER composition`
+          if (h.calls.commit - counter > 0) return `the MODULE made ${h.calls.commit - counter} sink call(s) of its own`
           return null
         })
       }
@@ -4403,12 +4875,16 @@ describe('§5.5.1 — P-GU-IM-1 (S-GU-POINTER-1) · the coordinate uniqueness an
       '(3) through the event object’s own other-field guard',
     ]
     for (const cls of classes) {
+      // **⟶ RE-GRAINED 2026-09-27 (THE DRIVE-COUNT RULING).** The declared term is `45` = `15`
+      // event classes × `3` drive forms, so the LOOP runs the declared `45` (the as-filed form
+      // pushed TWO extra variants — `(14b)` and `(15b)` — and ran `51`). The two extra readings
+      // are NOT dropped: they are asserted INSIDE their parent class's attempt, per drive form.
       const variants: Array<{ name: string; event: unknown; expected: { x: number; y: number } | null }> = [cls]
       if (cls.name.startsWith('(14)')) variants.push({ name: '(14b) the string variant', event: 'x', expected: null })
       if (cls.name.startsWith('(15)')) variants.push({ name: '(15b) a throwing accessor', event: throwingAccessor, expected: null })
-      for (const variant of variants) {
-        for (const form of driveForms) {
-          await row.run(`${cls.name} · ${form}`, async () => {
+      for (const form of driveForms) {
+        await row.run(`${cls.name} · ${form}`, async () => {
+          for (const variant of variants) {
             const gate = await surface(`P-GU-IM-1 ${cls.name}`)
             if (gate.cause !== null) return gate.cause
             let seen: { pointer: unknown; start: unknown } | null = null
@@ -4429,7 +4905,7 @@ describe('§5.5.1 — P-GU-IM-1 (S-GU-POINTER-1) · the coordinate uniqueness an
             if (Number(h.affordance.stats()['moves']) !== 1) return 'the move was not observed by the module’s own turn'
             if (variant.expected === null) {
               if (h.previews.some((p) => p['valid'] === true)) return 'an unusable pair produced a VALID preview'
-              return null
+              continue
             }
             if (seen === null) return 'the caller’s `sizeFromPointer` was never invoked for a resolvable coordinate'
             const pointer = seen as { pointer: { x: number; y: number }; start: unknown }
@@ -4443,9 +4919,9 @@ describe('§5.5.1 — P-GU-IM-1 (S-GU-POINTER-1) · the coordinate uniqueness an
             if (seen && (seen as { pointer: unknown }).pointer === variant.event) {
               return 'the PointerPosition IS the event object (a caller could re-read a coordinate from it)'
             }
-            return null
-          })
-        }
+          }
+          return null
+        })
       }
     }
     row.finish()
@@ -4483,7 +4959,14 @@ describe('§5.5.1 — P-GU-IM-2 (S-GU-SEAM-1) · the one-closure and one-evaluat
           lifecycle(invalid, [pointerEvent(0, 175, 300)])
           const counts = invalid.calls
           const sinks = invalid.sink.records.length
-          if (cell.seam === 'commit' && sinks > 1) return `the commit seam was invoked ${sinks} times for one gesture (\`E3\` at most once)`
+          if (cell.seam === 'commit') {
+            // The SAME module-originated census on the INVALID lifecycle (⟶ RE-GRAINED
+            // 2026-09-27, THE CHANNEL RULING): the module's own invocations of the seam are ZERO,
+            // and `E3` writes at most once (at an unusable pair: zero).
+            const moduleOwn = counts.commit - controllerSinkCalls(invalid)
+            if (moduleOwn !== 0) return `the MODULE invoked the commit seam ${moduleOwn} time(s) of its own on the INVALID lifecycle; the property allows ZERO`
+            if (sinks > 1) return `the commit seam was invoked ${sinks} times for one gesture (\`E3\` at most once)`
+          }
           if (cell.seam === 'startSizeOf' && counts.startSizeOf !== 1) return `\`startSizeOf\` was consulted ${counts.startSizeOf} times; the contract is EXACTLY ONCE per gesture, at establishment`
           if (cell.seam === 'resizableOf' && counts.resizableOf !== 1) {
             return `\`resizableOf\` was consulted ${counts.resizableOf} times; the contract is ONE evaluation per gesture (the module's \`PreviewState.resizable\` READS that same decision and must not add a second call)`
@@ -4514,6 +4997,18 @@ describe('§5.5.1 — P-GU-IM-2 (S-GU-SEAM-1) · the one-closure and one-evaluat
           if ((cell.lifecycle.startsWith('(c)') || cell.lifecycle.startsWith('(d)')) && counts.resizableOf !== 1) {
             return `\`resizableOf\` was consulted ${counts.resizableOf} times; ONE evaluation per gesture is the contract (a second call FAILS this row)`
           }
+          return null
+        }
+        if (cell.seam === 'commit') {
+          // **⟶ RE-GRAINED 2026-09-27 (THE CHANNEL RULING) — THE COMMIT CELLS NOW READ THE
+          // MODULE-ORIGINATED CENSUS.** `sinks` is the SINK's own record (= `E3`'s writes, the
+          // ruled single-writer channel); the MODULE's own invocations of the seam are
+          // `calls.commit - E3.stats().sinkCalls`, which must be ZERO in every lifecycle — the
+          // property's *"by the module ZERO times"* limb, previously only implied.
+          const moduleOwn = counts.commit - controllerSinkCalls(h)
+          if (moduleOwn !== 0) return `the MODULE invoked the commit seam ${moduleOwn} time(s) of its own for one gesture; the property allows ZERO (E3 is the only writer)`
+          if (sinks > 1) return `the commit seam was invoked ${sinks} times for one gesture (at most once per gesture)`
+          if (cell.lifecycle.startsWith('(a)') && sinks !== 0) return 'the commit seam was invoked without any gesture'
           return null
         }
         if (sinks > 1) return `the commit seam was invoked ${sinks} times for one gesture (at most once per gesture)`
@@ -4556,9 +5051,13 @@ describe('§5.5.1 — P-GU-TP-1 (S-GU-TOTAL-1) · the module’s totality over h
       { name: '(6) a record with throwing accessors', shape: throwingAccessors },
     ]
     for (const entry of shapes) {
-      // DRIVE (a)/(b): the FACTORY, then the affordance's attach/attach/detach.
-      await row.run(`${entry.name} · the factory drive and the attach/detach drive`, async () => {
-        const gate = await surface(`P-GU-TP-1 ${entry.name}`)
+      // **⟶ RE-GRAINED 2026-09-27 (THE DRIVE-COUNT RULING).** The declared derivation is `12` =
+      // `6` argument shapes × `2` DRIVES, and the as-filed loop ran ONE attempt per shape (`6`).
+      // The two drives are the two the row's own title names: **(a) the FACTORY + the
+      // attach/attach/detach drive**, and **(b) the other two entry points' totality drive**
+      // (`cursorDeclarationFor` + `domEventSource` over the same shape). No reading was dropped.
+      await row.run(`${entry.name} · drive (a) the factory and the attach/detach drive`, async () => {
+        const gate = await surface(`P-GU-TP-1 ${entry.name} (a)`)
         if (gate.cause !== null) return gate.cause
         const mod = gate.mod as Record<string, unknown>
         const factory = mod['createGutterAffordance'] as (options?: unknown) => Record<string, unknown>
@@ -4583,6 +5082,12 @@ describe('§5.5.1 — P-GU-TP-1 (S-GU-TOTAL-1) · the module’s totality over h
         } catch (e) {
           return `an entry point THREW for ${entry.name}: ${describeThrown(e)}`
         }
+        return null
+      })
+      await row.run(`${entry.name} · drive (b) the other two entry points' totality drive`, async () => {
+        const gate = await surface(`P-GU-TP-1 ${entry.name} (b)`)
+        if (gate.cause !== null) return gate.cause
+        const mod = gate.mod as Record<string, unknown>
         // The totality of the other two entry points over the same shape domain.
         const cursorFn = mod['cursorDeclarationFor'] as ((value: unknown) => unknown) | undefined
         const domSource = mod['domEventSource'] as (() => unknown) | undefined
@@ -4636,21 +5141,28 @@ describe('§5.5.1 — P-GU-TP-2 (S-GU-CURSOR-1) · the cursor resolution’s tot
       { name: '(9) an ARRAY `[\'cursor\']`', value: arrayShape, expected: undefined },
       { name: '(10) a `Proxy` whose `get` trap throws / a throwing accessor', value: throwingProxy, expected: undefined },
     ]
-    const extended = [...shapes, { name: '(10b) a throwing accessor on `cursor`', value: throwingAccessor, expected: undefined }]
-    for (const shape of extended) {
+    // **⟶ RE-GRAINED 2026-09-27 (THE DRIVE-COUNT RULING).** The declared derivation is `12` =
+    // `10` answer shapes × `1` drive + `2` cursor-absence drives, so the shape loop must run `10`
+    // attempts (the as-filed form ran `11` + `2` = `13`). The `(10b)` throwing-accessor reading is
+    // NOT dropped: it is asserted INSIDE shape `(10)`'s own attempt, beside the throwing `Proxy`.
+    for (const shape of shapes) {
       await row.run(`cursorDeclarationFor · ${shape.name}`, async () => {
         const gate = await surface(`P-GU-TP-2 ${shape.name}`)
         if (gate.cause !== null) return gate.cause
         const mod = gate.mod as Record<string, unknown>
         const cursorFn = mod['cursorDeclarationFor'] as (value: unknown) => unknown
-        let answer: unknown
-        try {
-          answer = cursorFn(shape.value)
-        } catch (e) {
-          return `cursorDeclarationFor THREW for ${shape.name}: ${describeThrown(e)}`
-        }
-        if (answer !== shape.expected) {
-          return `the reading for ${shape.name} is ${JSON.stringify(answer)}; the declared reading is ${JSON.stringify(shape.expected)}`
+        const readings: Array<{ name: string; value: unknown; expected: string | undefined }> =
+          shape.name.startsWith('(10)') ? [shape, { name: '(10b) a throwing accessor on `cursor`', value: throwingAccessor, expected: undefined }] : [shape]
+        for (const reading of readings) {
+          let answer: unknown
+          try {
+            answer = cursorFn(reading.value)
+          } catch (e) {
+            return `cursorDeclarationFor THREW for ${reading.name}: ${describeThrown(e)}`
+          }
+          if (answer !== reading.expected) {
+            return `the reading for ${reading.name} is ${JSON.stringify(answer)}; the declared reading is ${JSON.stringify(reading.expected)}`
+          }
         }
         return null
       })
