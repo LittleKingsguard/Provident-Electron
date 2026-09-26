@@ -6523,13 +6523,20 @@ describe('ADV-GU-* — the gate-4 regression rows (one per fixed host finding, e
   // expectation · measure · restore): an `expect` that cannot fail on a revert is paperwork,
   // not a regression row (`AGENTS.md` RCA-3, `§4.4 S-7`'s non-vacuity rule).
   //
-  // **⟶ AND THE MUTATION EVIDENCE IS *OWED*, NOT CLAIMED.** These four rows were AUTHORED in a
-  // pass with **NO SHELL** (no `vitest`, no `tsc`, no `git`), so **NOTHING BELOW WAS EXECUTED and
-  // no mutation was APPLIED**: each row's mutation paragraph is written in the **CONDITIONAL**
-  // (“the mutation *that would* fail this row”) and states exactly which expectation would move.
-  // **OWED — TEST-SIDE: the supervisor's next pass must APPLY each mutation (invert · run ·
-  // measure · restore) and record the measured red beside these rows.** A row whose mutation was
-  // applied is evidence; a row whose mutation is only predicted is a plan.
+  // **⟶ 2026-09-27, THE GATE-4 ROW-REPAIR PASS: THE MUTATION EVIDENCE IS NO LONGER OWED.** The
+  // as-authored block was written in a pass with NO SHELL, so its four rows were never EXECUTED.
+  // Driven at HEAD, **THREE OF THE FOUR FAILED** (`ADV-GU-6b`, `ADV-GU-9c`, `ADV-GU-5b`: `Tests 3
+  // failed | 81 passed`, one file failed of 67). The cause was in the ROWS and not in the module —
+  // each row drove a conformant module through a harness usage or a reading that could not hold, and
+  // each is corrected here to what the module MEASURES (`ADV-GU-6b`: ONE read counter per gesture,
+  // not one shared across two harnesses; `ADV-GU-9c`: the registration census scoped to the MODULE'S
+  // OWN registrations, because the composed source's census also carries the session's four — and
+  // the positive control's own token is `'caller-move-token'`, not `POINTER_TYPES.move`;
+  // `ADV-GU-5b`: the DECISIVE reading is the NET census `accepted − removed`, which is `0`, while
+  // the as-authored form asserted the RAW accepted count, which is `2`). **NO ROW WAS REMOVED AND NO
+  // ROW'S SEMANTICS WAS WEAKENED: each corrected row still FAILS if its fix is reverted, and the
+  // reverts were APPLIED AND MEASURED (the pre-fix `src/shared/gutter-affordance.ts` from commit
+  // `0c44628`, restored byte-exactly afterwards — see each row's own header comment).**
   //
   // **THE CLAUSES THEY PIN, one per row:** `§2.4` item 3 / `§5.5.1 P-GU-IM-2` (`startSizeOf`
   // EXACTLY ONCE per gesture — the pre-drag seam, INCLUDING on the INVALID path);
@@ -6554,18 +6561,29 @@ describe('ADV-GU-* — the gate-4 regression rows (one per fixed host finding, e
     // gets the invalid move OUT of), `§2.3` row 9 (the invalid arm's own reset), and
     // `§5.5.1 P-GU-IM-2` (*"`startSizeOf` — EXACTLY ONCE per gesture, at establishment"*).
     //
-    // **THE MUTATION THIS ROW CAN FAIL ON** (not applied in this pass — see the block header's
-    // OWED — TEST-SIDE note): reverting the module's `defaultSizeFor` to the as-filed
-    // `seamAnswer(startSizeOf, [el, token])` (dropping the record reuse) makes THIS row read
-    // `1/1/1/2` — the terminal's own reset clamp is the second read — so the decisive
-    // `invalidReadsAfterTheTerminal === 1` assertion would FAIL while every other reading stays
-    // as it is. **THE MUTATION, ITS MEASURED RED AND ITS RESTORE ARE OWED TO THE NEXT PASS.**
+    // **THE MUTATION THIS ROW CAN FAIL ON — ⟶ MEASURED 2026-09-27 (THE GATE-4 ROW-REPAIR PASS).**
+    // The pre-fix body (`git show 0c44628:src/shared/gutter-affordance.ts`, restored in place for
+    // the measurement and then restored byte-exactly) was driven against THIS row and the row
+    // FAILED: the invalid path read `1/1/2/2` (the reset's clamp consulted the caller's seam a
+    // second time) and the terminal assertion below read `2` where it wants `1`. **MEASURED, not
+    // predicted.**
+    //
+    // **THE HARNESS USAGE THIS ROW HAD TO CORRECT — AND WHY.** The row drives TWO harnesses (a
+    // VALID lifecycle and the INVALID subject lifecycle), and the as-authored form shared ONE
+    // `reads` counter across both. **A SECOND HARNESS IS A SECOND GESTURE, and `startSizeOf` is
+    // consulted once PER GESTURE (`§2.4` item 3, `§5.5.1 P-GU-IM-2`) — so the shared counter made
+    // the VALID path's total read `2` (one establishment read for each harness) even though each
+    // harness read the seam exactly once.** The landed reuse reads `1/1/1/1` PER GESTURE; the
+    // counter is therefore taken PER HARNESS below, which is what the clause's own unit is. The
+    // readings are still a live drag's: `stats().resets === 1` for the invalid arm and TWO observed
+    // moves. **NOTHING ELSE MOVED — no row id, no drive, no seed, no declared term.**
     await requireLiveModule('ADV-GU-6b')
-    let reads = 0
+    // ---- THE VALID-PATH HARNESS (its OWN establishment counter) ----------------------------
+    let validReads = 0
     const h = await makeHarness(
       {
         startSizeOf: (): unknown => {
-          reads += 1
+          validReads += 1
           return 100
         },
       },
@@ -6573,20 +6591,28 @@ describe('ADV-GU-* — the gate-4 regression rows (one per fixed host finding, e
     )
     expect(h.affordance.attach(), 'ADV-GU-6b — attach').toBe(true)
     h.source.fire('pointerover', pointerEvent(0, 0, 0))
-    const readsAfterTheHover = reads
+    const readsAfterTheHover = validReads
     h.source.fire('pointerdown', pointerEvent(0))
-    const readsAtEstablishment = reads
+    const readsAtEstablishment = validReads
     h.source.fire(POINTER_TYPES.move, pointerEvent(0, 150, 300))
-    const readsAfterTheValidMove = reads
+    const readsAfterTheValidMove = validReads
+    // The WHOLE valid gesture INCLUDING its own terminal (`§2.4` item 3's *"exactly once per
+    // gesture"*): the frozen session's own `pointerup` is the end terminal, and the landed form
+    // adds no read there either. The `end` was not driven in the as-authored row at all, so this
+    // reading is ADDED without touching the invalid-path drive.
+    h.source.fire(POINTER_TYPES.end, pointerEvent(0, 150, 300))
+    const readsAfterTheValidTerminal = validReads
+    // ---- THE INVALID-PATH HARNESS (its own counter, so the two gestures cannot be conflated) --
     // **THE SUBJECT MOVE IS INVALID (clause (ii): `clampToBounds`'s answer is not finite), and the
     // drive window is reconciled so it reaches row 9's LIVE arm rather than row 8's PRE-HANDLE
     // refusal**: the size seam answers a FINITE value for the setup turn and `NaN` for the subject
     // turn (the same stateful-seam technique `F-2`/`F-10`/`P-GU-SM-1` use).
+    let invalidReads = 0
     let subjectCalls = 0
     const hInvalid = await makeHarness(
       {
         startSizeOf: (): unknown => {
-          reads += 1
+          invalidReads += 1
           return 100
         },
         sizeFromPointer: ((): unknown => ((n: number) => (n <= 1 ? 50 : Number.NaN))(++subjectCalls)),
@@ -6595,25 +6621,28 @@ describe('ADV-GU-* — the gate-4 regression rows (one per fixed host finding, e
     )
     expect(hInvalid.affordance.attach(), 'ADV-GU-6b — attach (invalid path)').toBe(true)
     hInvalid.source.fire('pointerover', pointerEvent(0, 0, 0))
+    const invalidReadsAfterTheHover = invalidReads
     hInvalid.source.fire('pointerdown', pointerEvent(0))
-    const invalidReadsAtEstablishment = reads
+    const invalidReadsAtEstablishment = invalidReads
     priorValidMove(hInvalid, 'ADV-GU-6b invalid path — the setup move')
-    const invalidReadsAfterTheValidMove = reads
+    const invalidReadsAfterTheValidMove = invalidReads
     hInvalid.source.fire(POINTER_TYPES.move, pointerEvent(0, 175, 300))
-    const invalidReadsAfterTheInvalidMove = reads
+    const invalidReadsAfterTheInvalidMove = invalidReads
     hInvalid.source.fire(POINTER_TYPES.end, pointerEvent(0, 175, 300))
-    const invalidReadsAfterTheTerminal = reads
+    const invalidReadsAfterTheTerminal = invalidReads
     const invalidStats = hInvalid.affordance.stats()
     console.log(
       `ADV-GU-6b MEASURED :: ${JSON.stringify({
-        validPath: { readsAfterTheHover, readsAtEstablishment, readsAfterTheValidMove, reads },
+        validPath: { readsAfterTheHover, readsAtEstablishment, readsAfterTheValidMove, readsAfterTheValidTerminal },
         invalidPath: {
+          readsAfterTheHover: invalidReadsAfterTheHover,
           readsAtEstablishment: invalidReadsAtEstablishment,
           readsAfterTheValidMove: invalidReadsAfterTheValidMove,
           readsAfterTheInvalidMove: invalidReadsAfterTheInvalidMove,
           readsAfterTheTerminal: invalidReadsAfterTheTerminal,
         },
         invalidPathStats: invalidStats,
+        counterScope: 'ONE counter PER HARNESS — a second harness is a second gesture, and the seam is read once PER GESTURE',
         clause:
           'docs/specs/gutter-ui.md §2.4 item 3 + §0A note 5 + §2.3 rows 7/8/9 + §5.5.1 P-GU-IM-2 (the pre-drag seam, EXACTLY ONCE per gesture — the invalid path included)',
       })}`,
@@ -6626,13 +6655,17 @@ describe('ADV-GU-* — the gate-4 regression rows (one per fixed host finding, e
     expect(
       readsAfterTheValidMove,
       `ADV-GU-6b/§2.4 item 3 — the VALID observed-move turn adds NO read (the record already holds the establishment answer). MEASURED after the valid move: ${String(
-        reads,
+        readsAfterTheValidMove,
       )}`,
     ).toBe(1)
     expect(
-      reads,
-      'ADV-GU-6b/§5.5.1 P-GU-IM-2 — the whole VALID gesture reads the pre-drag seam EXACTLY ONCE',
+      readsAfterTheValidTerminal,
+      'ADV-GU-6b/§5.5.1 P-GU-IM-2 — the whole VALID gesture (establishment → a valid move → its own terminal) reads the pre-drag seam EXACTLY ONCE, and the counter is PER HARNESS (the as-authored row shared it across two harnesses and read `2`)',
     ).toBe(1)
+    expect(
+      invalidReadsAfterTheHover,
+      'ADV-GU-6b — the invalid path does not read the seam on its hover either (both gestures take their ONE read at establishment)',
+    ).toBe(0)
     expect(
       invalidReadsAtEstablishment,
       'ADV-GU-6b — the invalid path reads the pre-drag seam ONCE at establishment, exactly as the valid path does (the read site is the establishment turn, not the terminal and not the kind of move)',
@@ -6653,7 +6686,7 @@ describe('ADV-GU-* — the gate-4 regression rows (one per fixed host finding, e
       invalidReadsAfterTheTerminal,
       `ADV-GU-6b/§5.5.1 P-GU-IM-2 (*"startSizeOf — EXACTLY ONCE per gesture, at establishment"*) — the TERMINAL adds no read either, so the invalid gesture's WHOLE count is ONE. MEASURED over establishment → a valid move → an invalid move → the terminal: ${String(
         invalidReadsAfterTheTerminal,
-      )} — the reverted module reads \`2\` HERE and FAILS this row`,
+      )} — the pre-fix module read \`2\` HERE (MEASURED) and FAILS this row`,
     ).toBe(1)
     expect(
       Number(invalidStats['resets']),
@@ -6675,13 +6708,17 @@ describe('ADV-GU-* — the gate-4 regression rows (one per fixed host finding, e
     // **THE READING IS TAKEN AS A DELTA OVER ONE PAIR, so the assertion cannot be satisfied by a
     // counter that was already non-zero for another reason.**
     //
-    // **THE MUTATIONS THIS ROW CAN FAIL ON** (not applied in this pass — see the block header's
-    // OWED — TEST-SIDE note): making the hover ENTER call `applyCursor` unconditionally (writing
-    // `undefined` as if it were a declaration — the *"write even when nothing resolved"* shape)
-    // would FAIL the enter-side assertion at `1` while the exit-side one still reads `1`; and
-    // making the EXIT clear conditional on a declaration having been written (the as-filed reading
-    // this row exists to forbid) would make `cursorClears` read `0` and FAIL the exit-side
-    // assertion. **THE MUTATIONS, THEIR MEASURED REDS AND THEIR RESTORES ARE OWED TO THE NEXT PASS.**
+    // **THE MUTATIONS THIS ROW CAN FAIL ON — ⟶ MEASURED 2026-09-27 (THE GATE-4 ROW-REPAIR
+    // PASS).** The pre-fix body made the hover ENTER call `applyCursor` unconditionally, writing
+    // `undefined` as if it were a declaration. Driving THAT body against this row (the pre-fix
+    // `src/shared/gutter-affordance.ts` from commit `0c44628`, restored byte-exactly afterwards)
+    // made the row FAIL with **`enterCalls 1` (wanting `0`) while the exit-side reading stayed
+    // `1`** — the enter-side assertion, exactly as predicted. **MEASURED, not predicted.** The
+    // converse mutation (making the EXIT's clear conditional on a declaration having been written)
+    // is NOT reachable from a landed commit — no commit in this repo carries that shape — so it is
+    // NOT claimed as evidence here: the row's exit-side assertions (`pairCalls.length === 1`,
+    // `cursorClears === 1`) still pin the reading, but their mutation evidence is UNMEASURED and is
+    // reported as such rather than implied.
     await requireLiveModule('ADV-GU-9b')
     const h = await makeHarness({ cursorOf: (): unknown => undefined }, 'ADV-GU-9b')
     expect(h.affordance.attach(), 'ADV-GU-9b — attach').toBe(true)
@@ -6743,52 +6780,90 @@ describe('ADV-GU-* — the gate-4 regression rows (one per fixed host finding, e
     ).toBe('')
   })
 
-  it('ADV-GU-9c — A NON-STRING `moveTypeOf` TOKEN ATTACHES NO MOVE LISTENER: `42`, `{}`, `\'\'` and absent each ⇒ ZERO move registrations and ZERO moves, while a non-empty caller string still registers under ITS OWN token (the positive control)', async () => {
+  it('ADV-GU-9c — A NON-STRING `moveTypeOf` TOKEN ATTACHES NO MOVE LISTENER: `42`, `{}`, `\'\'` and an `undefined` answer each ⇒ ZERO move registrations (read over the MODULE\'S OWN registrations) and ZERO moves, while a non-empty caller string still registers under ITS OWN token (the positive control)', async () => {
     // **THE CLAUSES:** `§2.1` item 9 (*"the module reads the answer through its `typeof`/non-empty-string
     // gate and attaches nothing otherwise (the declared degradation)"*) and `§R.3`'s `moveTypeOf` row
     // (*"a non-string or empty token ⇒ **NO move listener is attached**"*), with `§2.3` row 8 (the
     // session's own wrapped `onMove` is then the only move turn) and `§3.1 M-18`/`§3.4 R-14`'s
     // type-match discipline on the OTHER side of the same gate. **The as-filed body FELL BACK to the
-    // session's own token for every non-string answer** (measured: `42`, `{}` and an absent seam each
-    // registered `"pointermove"` with the drag half reading `moves 1`), which is the fallback this row
-    // makes illegal.
+    // session's own token for every non-string answer** (⟶ **MEASURED on this pass against the
+    // pre-fix body: `42`, `{}`, `''` and an `undefined` ANSWER each registered `"pointermove"` — the
+    // module's own registration set read `[…,'pointermove']` with the drag half reading `moves 1`**),
+    // which is the fallback this row makes illegal.
     //
-    // **THE MUTATIONS THIS ROW CAN FAIL ON** (not applied in this pass — see the block header's
-    // OWED — TEST-SIDE note): restoring the as-filed fallback (a non-string answer ⇒ register
-    // `POINTER_TYPES.move`) would make the `42`/`{}`/absent drives register ONE module listener and
-    // observe `moves 1`, so both the `moves === 0` and the `POINTER_TYPES.move ∉ registered`
-    // assertions would FAIL; and dropping the non-empty-string gate entirely (registering an EMPTY
-    // type) would FAIL the `''` drive's own registration count.
-    // **THE MUTATIONS, THEIR MEASURED REDS AND THEIR RESTORES ARE OWED TO THE NEXT PASS.**
+    // **THE MUTATIONS THIS ROW CAN FAIL ON — ⟶ MEASURED 2026-09-27 (THE GATE-4 ROW-REPAIR
+    // PASS).** The pre-fix body FELL BACK to the session's own token for every non-string answer
+    // (`registerListener(typeof registered === 'string' ? registered : POINTER_TYPES.move, …)`).
+    // Driving THAT body against this row (commit `0c44628`'s `src/shared/gutter-affordance.ts`,
+    // restored byte-exactly afterwards) made the row FAIL on the `42`/`{}`/absent drives: each
+    // registered ONE module listener under `POINTER_TYPES.move` and observed `moves 1` where the
+    // row wants `0`. **MEASURED, not predicted.**
+    //
+    // **THE TWO HARNESS-USAGE DEFECTS THIS ROW HAD TO CORRECT — AND WHY.**
+    // **(1) THE REGISTRATION CENSUS WAS NOT SCOPED TO THE MODULE.** The as-authored form read
+    // `h.source.ons()` — the COMPOSED source's WHOLE registration log — and asked whether
+    // `POINTER_TYPES.move` appeared in it. **That log ALWAYS contains `'pointermove'`, because the
+    // frozen SESSION registers its own move listener through the same source** (`§2.3` row 8's
+    // wrapped `onMove`, installed by `E3`'s own `attach`), so the positive control read `true` where
+    // the row wanted `false` and FAILED — even though the module itself had registered NOTHING under
+    // the session's token. The census is therefore taken over **the module's OWN registrations**,
+    // read as the delta of the source's `on` log across `attach()` (the session's install predates
+    // it, and nothing else registers during it).
+    // **(2) THE POSITIVE CONTROL'S TOKEN ASSERTION NAMED THE WRONG STRING.** The control asserts
+    // that the module registered under **ITS OWN caller token**, and the control's own token is
+    // `'caller-move-token'` — never the session's `POINTER_TYPES.move`, which is the very token the
+    // module must NOT fall back to. The as-authored form filtered for `POINTER_TYPES.move` and
+    // read `0` where it wanted `1`.
+    // **NO DRIVE, SHAPE, ROW ID, SEED OR DECLARED TERM MOVED: the four degradation shapes and the
+    // positive control are the same five drives, and every assertion they carried is still made.**
+    //
+    // **THE `moveTypeOf: undefined` SHAPE, STATED EXACTLY.** The harness's `options` object always
+    // carries a `moveTypeOf` KEY (`makeHarness` wires one closure per seam, defaulting to
+    // `POINTER_TYPES.move`), so the shape this row drives is **THE SEAM ANSWERING `undefined`** —
+    // NOT a key that is absent from the options object. The distinction is REAL and was MEASURED
+    // (`§2.1`'s `moveTypeOf?` cell is OPTIONAL, so a TRULY absent key falls back to the declared
+    // default `POINTER_TYPES.move` and registers ONE listener, while a seam that ANSWERS
+    // `undefined` is the non-string degradation and registers NONE); this row drives the ANSWERING
+    // form, which is what its own `0` reading and `§R.3`'s *"a non-string … token ⇒ NO move
+    // listener"* are about. No new row, drive or term is added for the absent-KEY form.
     await requireLiveModule('ADV-GU-9c')
     const tokenShapes: Array<{ name: string; overrides: Record<string, unknown>; registered: string | null }> = [
       { name: '`42` (a number)', overrides: { moveTypeOf: (): unknown => 42 }, registered: null },
       { name: '`{}` (an object)', overrides: { moveTypeOf: (): unknown => ({}) }, registered: null },
       { name: "`''` (the EMPTY string)", overrides: { moveTypeOf: (): unknown => '' }, registered: null },
-      { name: 'an ABSENT `moveTypeOf` seam', overrides: { moveTypeOf: undefined }, registered: null },
+      { name: 'a `moveTypeOf` seam answering `undefined` (a non-string, non-empty answer)', overrides: { moveTypeOf: undefined }, registered: null },
       { name: "`'caller-move-token'` (a NON-EMPTY caller string — THE POSITIVE CONTROL)", overrides: { moveTypeOf: (): unknown => 'caller-move-token' }, registered: 'caller-move-token' },
     ]
-    const readings: Array<{ shape: string; registeredTypes: string[]; moveListenerType?: string; movesOnTheSessionToken: number; movesOnTheOwnToken: number; sizeFromPointerCalls: number; subjectMoves: number }> = []
+    const readings: Array<{ shape: string; registeredTypes: string[]; moduleOwnRegisteredTypes: string[]; moduleOwnMoveType?: string; movesOnTheSessionToken: number; movesOnTheOwnToken: number; sizeFromPointerCalls: number; subjectMoves: number }> = []
     for (const shape of tokenShapes) {
       const h = await makeHarness(shape.overrides, `ADV-GU-9c ${shape.name}`)
+      // **THE MODULE-OWN BASELINE, TAKEN BEFORE `attach()`**: the session's own install predates
+      // this point (the affordance factory performs it), so every frame logged AFTER the baseline
+      // is one of the MODULE'S OWN registrations.
+      const framesBeforeAttach = h.source.log.filter((e) => e.kind === 'on').length
       expect(h.affordance.attach(), `ADV-GU-9c — attach (${shape.name})`).toBe(true)
+      const moduleOwnRegisteredTypes = h.source.log
+        .filter((e) => e.kind === 'on')
+        .slice(framesBeforeAttach)
+        .map((e) => e.type)
       h.source.fire('pointerover', pointerEvent(0, 0, 0))
       h.source.fire('pointerdown', pointerEvent(0))
-      const sizeCallsBefore = h.calls.sizeFromPointer
-      const movesBefore = Number(h.affordance.stats()['moves'])
+      const registeredTypes = h.source.ons().map((e) => e.type)
       // THE SESSION'S OWN TOKEN, fired FIRST: only a registrant of THAT type hears it, and for the
       // shapes that attach nothing the session's own wrapper is the only move turn (`§2.3` row 8).
+      const sizeCallsBefore = h.calls.sizeFromPointer
+      const movesBefore = Number(h.affordance.stats()['moves'])
       const onTheSessionToken = h.source.fire(POINTER_TYPES.move, pointerEvent(0, 150, 300))
       const movesOnTheSessionToken = Number(h.affordance.stats()['moves']) - movesBefore
       const sizeCallsAfterTheSessionToken = h.calls.sizeFromPointer
       // A SECOND, DIFFERENT TYPE: a module that registers a listener under its OWN caller token
       // hears this one, and a module that attached nothing hears neither.
       const onTheOwnToken = h.source.fire('caller-move-token', pointerEvent(0, 175, 300))
-      const registeredTypes = h.source.ons().map((e) => e.type)
       readings.push({
         shape: shape.name,
         registeredTypes,
-        moveListenerType: registeredTypes.find((t) => t !== 'pointerover' && t !== 'pointerout' && t !== 'pointerdown'),
+        moduleOwnRegisteredTypes,
+        moduleOwnMoveType: moduleOwnRegisteredTypes.find((t) => t !== 'pointerover' && t !== 'pointerout' && t !== 'pointerdown'),
         movesOnTheSessionToken,
         movesOnTheOwnToken: Number(h.affordance.stats()['moves']) - movesBefore - movesOnTheSessionToken,
         sizeFromPointerCalls: sizeCallsAfterTheSessionToken - sizeCallsBefore,
@@ -6799,6 +6874,8 @@ describe('ADV-GU-* — the gate-4 regression rows (one per fixed host finding, e
         `ADV-GU-9c MEASURED :: ${JSON.stringify({
           shape: shape.name,
           registeredTypes,
+          moduleOwnRegisteredTypes,
+          moduleOwnMoveType: readings[readings.length - 1]?.moduleOwnMoveType,
           firesOnTheSessionToken: onTheSessionToken.calls,
           firesOnTheOwnToken: onTheOwnToken.calls,
           subjectMoves: readings[readings.length - 1]?.subjectMoves,
@@ -6806,39 +6883,78 @@ describe('ADV-GU-* — the gate-4 regression rows (one per fixed host finding, e
             'docs/specs/gutter-ui.md §2.1 item 9 + §R.3 (the moveTypeOf degradation row) + §2.3 row 8 + §3.1 M-20 (the non-string/absent class)',
         })}`,
       )
+      // **THE DECISIVE CENSUS, SCOPED TO THE MODULE'S OWN REGISTRATIONS** (the composed source's
+      // whole log ALWAYS carries the session's own `'pointermove'`, so the as-authored form could
+      // not read this at all).
       expect(
-        registeredTypes.includes(POINTER_TYPES.move),
-        `ADV-GU-9c/§2.1 item 9/§R.3 — for ${shape.name} the module attached NO move listener under the SESSION'S OWN token (the as-filed fallback literal is ILLEGAL). MEASURED registrations: ${JSON.stringify(
-          registeredTypes,
+        moduleOwnRegisteredTypes.filter((t) => t === POINTER_TYPES.move).length,
+        `ADV-GU-9c/§2.1 item 9/§R.3 — for ${shape.name} the module attached NO move listener under the SESSION'S OWN token (the as-filed fallback literal is ILLEGAL). MEASURED the MODULE'S OWN registrations: ${JSON.stringify(
+          moduleOwnRegisteredTypes,
+        )} (the composed log, for context: ${JSON.stringify(registeredTypes)})`,
+      ).toBe(0)
+      // **AND THE MODULE'S OWN MOVE REGISTRATION COUNT IS `0` FOR THE FOUR DEGRADATION SHAPES AND
+      // `1` FOR THE POSITIVE CONTROL** — the zero has to be a MISSING registration, not a listener
+      // that is registered and merely not heard.
+      const moduleOwnMoveTypes = moduleOwnRegisteredTypes.filter((t) => !['pointerover', 'pointerout', 'pointerdown'].includes(t))
+      expect(
+        moduleOwnMoveTypes.length,
+        `ADV-GU-9c/§R.3 — the module's OWN move registrations number ${String(
+          expectedMoves,
+        )} for ${shape.name} (the four degradation shapes register NONE; the non-empty caller string registers EXACTLY ONE). MEASURED the module's own move-type registrations: ${JSON.stringify(
+          moduleOwnMoveTypes,
         )}`,
-      ).toBe(shape.registered === null)
+      ).toBe(expectedMoves)
+      if (shape.registered !== null) {
+        expect(
+          moduleOwnMoveTypes.filter((t) => t === shape.registered).length,
+          `ADV-GU-9c — **THE POSITIVE CONTROL: the module's listener is registered under ITS OWN caller token \`${String(
+            shape.registered,
+          )}\` — never under the session's \`${POINTER_TYPES.move}\` fallback literal.** MEASURED the module's own move-type registrations: ${JSON.stringify(
+            moduleOwnMoveTypes,
+          )}`,
+        ).toBe(1)
+      }
+      expect(
+        readings[readings.length - 1]?.movesOnTheSessionToken,
+        `ADV-GU-9c/§2.1 item 9/§R.3 — firing the SESSION'S OWN token moves the module's own observed-move turn ZERO times for ${shape.name}: the module holds no listener of that type (the session's own wrapper still fires — it is not the module's turn, and \`stats().moves\` is the MODULE'S counter). MEASURED: ${String(
+          readings[readings.length - 1]?.movesOnTheSessionToken,
+        )}`,
+      ).toBe(0)
+      if (shape.registered !== null) {
+        expect(
+          readings[readings.length - 1]?.movesOnTheOwnToken,
+          `ADV-GU-9c — and the POSITIVE CONTROL's own token is the ONLY channel that moves the module: exactly ONE observed move when \`${String(
+            shape.registered,
+          )}\` is fired. MEASURED: ${String(readings[readings.length - 1]?.movesOnTheOwnToken)}`,
+        ).toBe(1)
+      }
       expect(
         readings[readings.length - 1]?.subjectMoves,
-        `ADV-GU-9c/§R.3 — and NOTHING moved: the module's own \`stats().moves\` is ZERO over this drive for ${shape.name} (a non-empty caller token is the positive control and must observe EXACTLY ONE). MEASURED: ${JSON.stringify(
+        `ADV-GU-9c/§R.3 — the module's own \`stats().moves\` over this drive is ${String(
+          expectedMoves,
+        )} for ${shape.name} (ZERO for the degradation shapes — a non-empty caller token is the positive control and must observe EXACTLY ONE). MEASURED: ${JSON.stringify(
           readings[readings.length - 1],
         )}`,
       ).toBe(expectedMoves)
       expect(
         readings[readings.length - 1]?.sizeFromPointerCalls,
-        `ADV-GU-9c/§2.3 row 8 — the module's own observed-move turn did not run, so the caller's \`sizeFromPointer\` was not consulted for ${shape.name}`,
+        `ADV-GU-9c/§2.3 row 8 — the module's own observed-move turn did not run on the SESSION'S OWN token for ${shape.name}, so the caller's \`sizeFromPointer\` was not consulted by it (only the session's own wrapper heard that fire). MEASURED: ${String(
+          readings[readings.length - 1]?.sizeFromPointerCalls,
+        )}`,
       ).toBe(0)
-      if (shape.registered !== null) {
-        expect(
-          registeredTypes.filter((t) => t === shape.registered).length,
-          `ADV-GU-9c — the positive control's listener is registered under Its OWN caller token \`${String(
-            shape.registered,
-          )}\` (never under a fallback literal). MEASURED: ${JSON.stringify(registeredTypes)}`,
-        ).toBe(1)
-      }
     }
     expect(
       readings.map((r) => r.subjectMoves),
-      'ADV-GU-9c/§2.1 item 9 — the four non-string/empty/absent shapes each read ZERO moves and the non-empty caller string reads EXACTLY ONE (the control that makes the zeros a degradation and not a stalled harness)',
+      'ADV-GU-9c/§2.1 item 9 — the four non-string/empty/`undefined` shapes each read ZERO moves and the non-empty caller string reads EXACTLY ONE (the control that makes the zeros a degradation and not a stalled harness)',
     ).toEqual([0, 0, 0, 0, 1])
     expect(
-      readings.map((r) => r.registeredTypes.filter((t) => t === POINTER_TYPES.move).length),
-      'ADV-GU-9c/§R.3 — the SESSION\'S OWN move type appears ZERO times in the module\'s registrations for every non-string/absent shape',
+      readings.map((r) => r.moduleOwnRegisteredTypes.filter((t) => t === POINTER_TYPES.move).length),
+      'ADV-GU-9c/§R.3 — the SESSION\'S OWN move type appears ZERO times in the MODULE\'S OWN registrations for every shape, the positive control included (it registers under its own token and never falls back)',
     ).toEqual([0, 0, 0, 0, 0])
+    expect(
+      readings.map((r) => r.moduleOwnMoveType ?? null),
+      'ADV-GU-9c — and the module\'s OWN move listener TYPE per shape: NONE for the four degradation shapes, and the CALLER\'S OWN TOKEN for the positive control (a single reading, so a fallback literal cannot hide behind a count)',
+    ).toEqual([null, null, null, null, 'caller-move-token'])
   })
 
   it('ADV-GU-5b — A REFUSED `attach()` LEAVES NO LISTENER OF THE MODULE\'S BEHIND AND `detach()` RECOVERS: a source that accepts the session\'s `install` but refuses the module\'s registrations ⇒ `attach()` `false`, residual module listeners `0`, `detach()` `true`, the module\'s `detached` `true`', async () => {
@@ -6852,16 +6968,35 @@ describe('ADV-GU-* — the gate-4 regression rows (one per fixed host finding, e
     // element, and still admit `detach()` — which is the other half of the same obligation.
     //
     // **THE CONTROLLER'S OWN `attached` READING IS DELIBERATELY NOT ASSERTED HERE** — `ADV-GU-5`
-    // pins that measurement (`stats().attached === 1` at the refusal instant, because
-    // `controller.attach` already succeeded when the module's own registration was refused), and
-    // re-asserting it here would pin the same state twice.
+    // pins that measurement at `1` on ITS drive and re-asserting it would pin the same state twice.
+    // **⟶ AND ON THIS ROW'S DRIVE IT IS A DIFFERENT NUMBER: MEASURED `0`.** This drive refuses the
+    // module's FIRST registration, and the landed body returns from its three-registration check
+    // BEFORE it ever reaches `controller.attach(element, …)` — so the composed controller records
+    // NO attach here. The spec's own sentence for this row (*"`ADV-GU-5` pins it at `1` at the
+    // refusal instant"*) therefore describes `ADV-GU-5`'s drive — which refuses the module's LAST
+    // registration, `POINTER_TYPES.move` — and NOT this one. The row asserts the reading it does
+    // want (`attach()` `false`, rollback complete, `detach()` `true`) and REPORTS the controller's
+    // reading rather than pinning it, which is exactly what the row's own clause requires.
     //
-    // **THE MUTATION THIS ROW CAN FAIL ON** (not applied in this pass — see the block header's
-    // OWED — TEST-SIDE note): restoring the as-filed body (which DISCARDED its `registerListener`
-    // results and returned `false` while KEEPING the listeners it had already registered) would make
-    // `residualModuleOwnListeners` read `3` and `onNetModuleOwn` read `3`, so those assertions would
-    // FAIL while the module's own `detached` would stay `false` (`detach()` refuses on the unset
-    // flag). **THE MUTATION, ITS MEASURED RED AND ITS RESTORE ARE OWED TO THE NEXT PASS.**
+    // **THE MUTATION THIS ROW CAN FAIL ON — ⟶ MEASURED 2026-09-27 (THE GATE-4 ROW-REPAIR PASS).**
+    // The pre-fix body (`git show 0c44628:src/shared/gutter-affordance.ts`, restored in place and
+    // then restored byte-exactly) DISCARDED its `registerListener` results and returned `false`
+    // while KEEPING the listeners it had already made, and its `detach()` short-circuited on the
+    // unset `attached` flag. Driving it against this row FAILED it: the DECISIVE reading
+    // `accepted − removed` read **`2`** (not `0`), the net census was **`[['pointerout',1],
+    // ['pointerdown',1]]`** (not `[]`), `detach()` answered **`false`** (not `true`) and the
+    // module's own `detached` stayed **`false`**. **MEASURED, not predicted.**
+    //
+    // **THE READING THIS ROW HAD TO CORRECT — AND WHY.** The as-authored form asserted
+    // `residualModuleOwnListeners` = `refused.accepted.filter(…).length`, i.e. the RAW COUNT OF
+    // REGISTRATIONS THE SOURCE ACCEPTED — which is **`2`** on the landed module (the module
+    // registers three non-move listeners, refuses the first, and the rollback REMOVES the two it
+    // had taken). That reading cannot be `0` for ANY conformant body: a ROLLBACK removes listeners,
+    // it does not un-accept them, and `accepted` is the source's own log of the `on` calls it took.
+    // **THE DECISIVE READING IS THE NET ONE — `accepted − removed`, the module's residual OWNER
+    // SET — and it is `0`**, exactly as the clause *"A REFUSED `attach()` LEAVES NO OWNER BEHIND"*
+    // requires. The raw count is asserted TOO, at its measured `2`, so the rollback's own
+    // *"something was taken and then removed"* shape cannot silently become a no-op drive.
     await requireLiveModule('ADV-GU-5b')
     const moduleOwn = new Set(['pointerover', 'pointerout', 'pointerdown', POINTER_TYPES.move])
     const refused = {
@@ -6882,10 +7017,16 @@ describe('ADV-GU-* — the gate-4 regression rows (one per fixed host finding, e
     }
     const h = await makeHarness({ source: refused }, 'ADV-GU-5b')
     const attached = h.affordance.attach()
-    const residualModuleOwnListeners = refused.accepted.filter((t) => moduleOwn.has(t)).length
+    const acceptedModuleOwn = refused.accepted.filter((t) => moduleOwn.has(t)).length
+    // **THE DECISIVE READING: the residual OWNER SET, i.e. what the module still owns after the
+    // rollback — one `removed` per `accepted` for every type the module took.**
+    const residualModuleOwnListeners = acceptedModuleOwn - refused.removed.filter((t) => moduleOwn.has(t)).length
     const onNetModuleOwn: Array<[string, number]> = [...moduleOwn]
       .map((t) => [t, refused.accepted.filter((x) => x === t).length - refused.removed.filter((x) => x === t).length] as [string, number])
       .filter(([, n]) => n !== 0)
+    const controllerAttachedAtTheRefusal = Number(
+      ((h.affordance.controller as unknown as Record<string, unknown>)['stats'] as () => Record<string, unknown>)().attached,
+    )
     const detachedAnswer = h.affordance.detach()
     const detachedFlag = h.affordance.detached
     const residualAfterDetach: Array<[string, number]> = [...moduleOwn]
@@ -6896,8 +7037,10 @@ describe('ADV-GU-* — the gate-4 regression rows (one per fixed host finding, e
         attached,
         accepted: refused.accepted,
         removed: refused.removed,
+        acceptedModuleOwn,
         residualModuleOwnListeners,
         onNetModuleOwn,
+        controllerAttachedAtTheRefusal,
         detachedAnswer,
         detachedFlag,
         residualAfterDetach,
@@ -6909,19 +7052,25 @@ describe('ADV-GU-* — the gate-4 regression rows (one per fixed host finding, e
     )
     expect(
       refused.accepted.length,
-      `ADV-GU-5b — THE DRIVE'S OWN GATE: the source ACCEPTED the session's \`install\` and REFUSED the module's first registration, so the composition really is half-attached (a drive that refused everything would not exercise the rollback). MEASURED accepted: ${JSON.stringify(
+      `ADV-GU-5b — THE DRIVE'S OWN GATE: the source ACCEPTED registrations and REFUSED the module's first one, so the refusal really is PARTIAL (a drive that refused everything leaves \`accepted\` empty, exercises no rollback, and FAILS here). MEASURED accepted: ${JSON.stringify(
         refused.accepted,
       )}`,
     ).toBeGreaterThan(0)
+    expect(
+      acceptedModuleOwn,
+      `ADV-GU-5b — the drive's own shape, asserted so the rollback cannot be a no-op: the source took the module's SECOND and THIRD registrations (\`pointerout\`, \`pointerdown\`) before the refusal and the rollback has to remove exactly those. MEASURED accepted: ${JSON.stringify(
+        refused.accepted,
+      )}`,
+    ).toBe(2)
     expect(
       attached,
       `ADV-GU-5b/§2.1 — \`attach()\` is \`true\` IFF EVERY delegation succeeded: a refused registration means \`false\` (an \`attach()\` reading \`true\` here is the REVERTED fix)`,
     ).toBe(false)
     expect(
       residualModuleOwnListeners,
-      `ADV-GU-5b — **THE DECISIVE READING: with the module's own registration REFUSED, the module's own listener set is LEFT EMPTY — the rollback removes every registration it had already made.** MEASURED accepted: ${JSON.stringify(
+      `ADV-GU-5b — **THE DECISIVE READING: after the refused \`attach()\`, the module's RESIDUAL OWNER SET IS EMPTY — \`accepted − removed\` is zero, because the rollback removes every registration it had already taken.** (NOT the raw accepted count, which is \`2\` by construction: a rollback removes listeners, it does not un-accept them.) MEASURED accepted: ${JSON.stringify(
         refused.accepted,
-      )}, removed: ${JSON.stringify(refused.removed)}`,
+      )}, removed: ${JSON.stringify(refused.removed)}, acceptedModuleOwn: ${String(acceptedModuleOwn)}`,
     ).toBe(0)
     expect(
       onNetModuleOwn,
