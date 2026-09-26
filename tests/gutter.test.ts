@@ -753,7 +753,18 @@ function makeSessionDouble(config: DoubleConfig = {}): SessionDouble {
       if (active === null) return { ok: false, code: 'stale', committed: false }
       const record = active
       record.outcome = 'reset'
-      record.value = supplied
+      // **⟶ CORRECTED 2026-09-27 (THE ESTABLISHMENT-SEAM AMENDMENT PASS — RULING `2`, and the
+      // HARNESS defect it exposed): THIS DOUBLE NO LONGER STORES THE TERMINAL'S VALUE ON THE
+      // RECORD.** The FROZEN session (`src/shared/gesture-session.ts`'s `runTerminal`) fires the
+      // consumer's `onEnd` hook BEFORE it stores anything and **never stores the terminal's value
+      // on the record at all** — the value reaches the composition as the `commit` seam's ARGUMENT.
+      // The as-landed double assigned `record.value = supplied` BEFORE firing `onEnd`, so on this
+      // harness the handle appeared to read back a committed value at the terminal while the real
+      // session reads `undefined` — a HARNESS divergence that would have let a row assert a
+      // handle-side value reading the frozen session cannot support (`§3.1 M-15`, `§2.3` item 4
+      // clause 8, `§5.5.1 P-GT-SM-4` shape `(1)`). A value reaches the record here by exactly the
+      // same route as in the real session: the composition's own `gesture.set(narrowed)` on the
+      // reset path (while the record is still `active`).
       active = null
       const resetHooks = hooksByElement.get(element)
       if (resetHooks !== undefined && typeof resetHooks.onEnd === 'function') {
@@ -3977,7 +3988,7 @@ describe('M — §3.1 the valid states', () => {
     expect(controller.stats().gestures, 'M-11 §3.1 — two gestures were established').toBe(2)
   })
 
-  it('M-12 §3.1 — `attach` delegates ONCE per element and a repeat attach delegates NOTHING (first-config-wins), AND the identity requirement binds the handle ARGUMENT forwarded to the consumer’s own `onMove` hook', async () => {
+  it('M-12 §3.1 — `attach` delegates ONCE per element and a repeat attach delegates NOTHING (first-config-wins, the WRAPPERS INCLUDED), the composition OWNS AND INSTALLS its own `onStart` wrapper (the establishment seam), AND the identity requirement binds the handle ARGUMENT forwarded to the consumer’s own `onMove` hook', async () => {
     const double = makeSessionDouble()
     const element: Record<string, unknown> = { control: 'M-12' }
     const { controller } = await createController({
@@ -3997,8 +4008,18 @@ describe('M — §3.1 the valid states', () => {
     // in force — read through the COMPOSITION'S WRAPPERS, whose identity the wrapper arm below
     // asserts (`§2.5` item 5 clause 2). A prototype whose second config displaced the first is
     // showing a MODULE defect; the assertions below are NOT relaxed for it.**
-    const first = { onMove: (): void => undefined }
-    const second = { onMove: (): void => undefined }
+    const firstHookRan = { count: 0 }
+    const secondHookRan = { count: 0 }
+    const first = {
+      onMove: (): void => {
+        firstHookRan.count += 1
+      },
+    }
+    const second = {
+      onMove: (): void => {
+        secondHookRan.count += 1
+      },
+    }
     expect(controller.attach(element, first), 'M-12 §3.1 — the first attach returns `true`').toBe(true)
     expect(controller.attach(element, second), 'M-12 §3.1 — the repeat attach returns `false`').toBe(false)
     expect(
@@ -4013,10 +4034,71 @@ describe('M — §3.1 the valid states', () => {
     // shape, asserted by identity below — so "the first config stays in force" is asserted
     // over the wrapper's own hook set, and the SECOND config never reaching the session is
     // asserted by the single `install` call above plus the distinct hook objects.
+    //
+    // **⟶ AMENDED 2026-09-27 (THE ESTABLISHMENT-SEAM AMENDMENT PASS — RULING `1`; `§3.1 M-12`'s
+    // SECOND NARROWING, `§2.1` item 5's dated establishment-seam ruling, `§2.5` item 5 clause 2).
+    // THE AS-FILED READING OF THIS ARM IS SUPERSEDED — AND IT IS KEPT VISIBLE HERE: this row
+    // formerly asserted `double.installArgs[0]?.options['onStart']` was `undefined`, i.e. it
+    // required the composition to install **NO `onStart` HOOK**. THE RULED FORM, verbatim in
+    // substance: *"THE IDENTITY AND FORWARDING REQUIREMENT BINDS THE **CONSUMER-SUPPLIED**
+    // HOOKS, AND `onStart` IS NOT ONE OF THEM — THE COMPOSITION **OWNS AND INSTALLS ITS OWN
+    // `onStart` WRAPPER** (the establishment seam)."* THREE CASES ARE RULED: (i) where the
+    // consumer SUPPLIED `onStart`/`onMove`/`onEnd`/`onCancel`, the composition forwards EACH
+    // UNCHANGED; (ii) where the consumer supplied NONE, the composition's own wrapper is what
+    // the session sees and there is NO CONSUMER HOOK TO FORWARD; and (iii) `onStart` is the
+    // composition's OWN wrapper in BOTH cases — because `I-4`/`I-5`/`F-18`/`P-GT-IM-3`/
+    // `P-GT-IM-4` require the axis token and the `isResizable` decision to be DERIVED AT
+    // ESTABLISHMENT, and the frozen session's `onStart(element)` is its ONLY establishment seam
+    // (`session.begin` is FORBIDDEN to this composition: `§2.5` item 1, `I-3`, `R-14`).
+    // **THE MEASUREMENT IS THE REASON AND IT IS DECISIVE: `84/90` WITH the wrapper installed,
+    // `56/90` WITHOUT it.** **THE REPEAT-ATTACH HALF STANDS UNCHANGED: the second attach
+    // returns `false`, `session.install` is called exactly ONCE, and the FIRST config —
+    // WRAPPERS INCLUDED — stays in force.**
+    const installedHookSet = double.installArgs[0]?.options ?? {}
     expect(
-      double.installArgs[0]?.options['onStart'],
-      'M-12 §3.1 — the FIRST config stays in force: the second attach delegated NOTHING, so the installed hook set is the first attach’s (read through the composition’s wrappers, whose identity is asserted in the wrapper arm below)',
-    ).toBeUndefined()
+      typeof installedHookSet['onStart'],
+      `M-12 §3.1 — **THE COMPOSITION OWNS AND INSTALLS ITS OWN \`onStart\` WRAPPER (the establishment seam, the ruled form): \`session.install\` receives a CALLABLE \`onStart\` — the token-and-decision derivation lives there and there is no other establishment seam (\`§3.1 M-12\`'s second narrowing, \`§2.1\` item 5). The as-filed "NO \`onStart\` HOOK" reading is SUPERSEDED — measured \`84/90\` with the wrapper, \`56/90\` without — and it is kept visible in the note above rather than re-asserted.** Read: ${brief(
+        installedHookSet['onStart'],
+      )}`,
+    ).toBe('function')
+    // **THE INSTALLED HOOK SET IS THE FIRST ATTACH'S** — read over the composition's own
+    // wrappers: every member is a callable the composition supplies, and NO member is a raw
+    // consumer hook reference (`M-12`'s narrowed identity clause binds the ARGUMENT a consumer
+    // hook receives, never the installed reference). The repeat attach's NOTHING-delegated half
+    // is the single `install` call above plus the driven reading below.
+    expect(
+      Object.keys(installedHookSet).sort(),
+      'M-12 §3.1 — the installed options carry the FOUR hook members (`§2.1` item 5’s frozen seam set: no `capture`, no fifth key)',
+    ).toEqual(['onCancel', 'onEnd', 'onMove', 'onStart'])
+    // **THE DRIVEN READING OF THE SAME FACT** (`§3.1 M-12`'s own clause: *"the driver fires the
+    // recorded start and asserts the FIRST `onMove` ran, not the second"*): a gesture is driven
+    // through the WRAPPER the FIRST attach installed, and the FIRST config's `onMove` is the
+    // hook that runs while the SECOND config's never does. **This is what makes "first-config-wins"
+    // falsifiable rather than a restatement of the ledger.**
+    const repeatBegan = double.begin(element)
+    expect(
+      repeatBegan.ok,
+      'M-12 §3.1 — the repeat-attach drive established a gesture through the FIRST attach’s installed hooks (so the first-config-wins reading below is not vacuous)',
+    ).toBe(true)
+    double.fireMove()
+    expect(
+      firstHookRan.count,
+      'M-12 §3.1 — **THE FIRST CONFIG’S `onMove` IS THE HOOK IN FORCE: it ran for the fired move turn** (`§3.1 M-12`: the first config stays in force, wrappers included)',
+    ).toBe(1)
+    expect(
+      secondHookRan.count,
+      'M-12 §3.1 — **THE SECOND CONFIG’S `onMove` NEVER RAN: the repeat attach delegated NOTHING, so the second config is not in force** (a controller whose second config displaced the first fails HERE)',
+    ).toBe(0)
+    for (const hookName of ['onStart', 'onMove', 'onEnd', 'onCancel'] as const) {
+      expect(
+        brief(installedHookSet[hookName]),
+        `M-12 §3.1 — the installed \`${hookName}\` is a CALLABLE the composition supplies (its own wrapper): the FIRST config stays in force through the WRAPPERS — the second config’s \`onMove\` never reached the session`,
+      ).toBe('a function')
+      expect(
+        installedHookSet[hookName] === first.onMove || installedHookSet[hookName] === second.onMove,
+        `M-12 §3.1 — the installed \`${hookName}\` is NOT a raw consumer hook reference (\`M-12\`’s narrowed identity clause binds the ARGUMENT the consumer hook RECEIVES, never the installed reference)`,
+      ).toBe(false)
+    }
     void first
     void second
     // **⟶ REDRAWN 2026-09-27 (THE REPAIR CYCLE, `E3`-BLOCK-5; the amended `§3.1 M-12`, `§2.5`
@@ -4279,10 +4361,33 @@ describe('M — §3.1 the valid states', () => {
       sink.records[0]?.gesture,
       `M-15 §3.1 — **the reset's committed handle IS the wrapper-captured one the consumer's own \`onMove\` hook received (\`toBe\`): the reset path reaches for the handle the \`onMove\` WRAPPER captured, never a synthesised one and never a \`session.begin\` result** (\`§2.5\` item 5 clause 2; ⟶ redrawn 2026-09-27, \`E3\`-BLOCK-5)`,
     ).toBe(forwardedHandles[0])
+    // **⟶ AMENDED 2026-09-27 (THE ESTABLISHMENT-SEAM AMENDMENT PASS — RULING `2`; `§3.1 M-15`,
+    // `§2.3` item 4 clause 8, `§5.5.1 P-GT-SM-4` shape `(1)`). THE VALUE READING IS RE-POINTED AT
+    // THE SINK'S OWN ARGUMENT, AND THE AS-FILED HANDLE-SIDE READING OF THIS ARM IS WITHDRAWN — IT
+    // IS KEPT VISIBLE HERE: this row formerly asserted
+    // `(sink.records[0]?.gesture as GestureHandle)?.value === 60`, i.e. it read the committed value
+    // back THROUGH THE HANDLE AT THE TERMINAL. **THE RULED FORM: THE COMMITTED VALUE IS CARRIED BY
+    // THE SINK'S OWN ARGUMENT — `commit(gesture, clamped)` is where the composition reads it,
+    // EXACTLY AS `M-14` READS IT — and the handle is used for the OUTCOME (and for its identity),
+    // NOT as a value channel.** **THE REASON, in the frozen session's own order: its terminal fires
+    // the consumer's `onEnd` BEFORE it stores anything, and it never stores the terminal's value on
+    // the record at all — the value reaches the composition as the `commit` seam's ARGUMENT.**
+    // **THEREFORE NO ROW MAY ASSERT THE HANDLE'S `value` AT THE TERMINAL, and a handle-side value
+    // reading must be taken AFTER the terminal (where the session's record is discarded and
+    // `gesture()` is `null`, so the post-terminal path exposes NO readable value at all) OR BE
+    // WITHDRAWN — the honest ruling is WITHDRAWAL, and that is what this arm does.** `gesture.outcome`
+    // REMAINS READABLE AT THE TERMINAL (the session sets `record.outcome` before it runs any
+    // consumer code), so this row's discriminator clause is UNTOUCHED.
     expect(
-      (sink.records[0]?.gesture as GestureHandle | undefined)?.value,
-      'M-15 §3.1 — the recorded handle reads the committed clamped value',
+      sink.records[0]?.value,
+      `M-15 §3.1 — **THE COMMITTED VALUE IS READ FROM THE SINK'S OWN ARGUMENT (the one legal reading, as \`M-14\` reads it): the sink received the CLAMPED supplied default \`60\` — the reset path's \`clampToBounds(defaultSizeFor(element, axis), boundsFor(element, axis))\` — and NOT through the handle, which cannot read the committed value back at the terminal.** Read: ${brief(
+        sink.records[0]?.value,
+      )}`,
     ).toBe(60)
+    expect(
+      (sink.records[0]?.gesture as GestureHandle | undefined)?.outcome,
+      'M-15 §3.1 — **AND THE HANDLE REMAINS THE OUTCOME CHANNEL (not a value channel): the handle that reached the sink reads `outcome === \'reset\'` at the terminal — the discriminator stays handle-readable while the value reading is the sink’s argument** (`§2.3` item 4 clause 7/8)',
+    ).toBe('reset')
     h.source.fire(element, TYPE_DOWN)
     h.source.fire(element, TYPE_MOVE) // the control gesture's own wrapper capture
     h.source.fire(element, TYPE_UP)
@@ -4901,11 +5006,39 @@ describe('F — §3.2 the documented fail-states (every outcome is a VALUE)', ()
     }
   })
 
-  it('F-17 §3.2 — a THROWING `boundsFor`/`sizeFor` at the terminal (C2 path 4) PROPAGATES, the gesture ends `idle` (not `busy`), and the write count is ZERO or EXACTLY ONE — NEVER TWO', async () => {
-    for (const which of ['boundsFor', 'sizeFor'] as const) {
+  it('F-17 §3.2 — a THROWING `boundsFor`/`sizeFor` at the terminal (C2 path 4) PROPAGATES in DRIVE 1 and the element re-establishes to a NON-THROWING terminal in DRIVE 2, each with its OWN `fire`; the gate ends `idle` (not `busy`); the write count is ZERO or EXACTLY ONE — NEVER TWO', async () => {
+    // **⟶ REWRITTEN 2026-09-27 (THE ESTABLISHMENT-SEAM AMENDMENT PASS — RULING `3`, resolving
+    // `docs/pending.md` §I-quater's `E3`-RES-3; `§3.2 F-17`'s two-drive cell, `§2.4` item 2(4),
+    // `§2.4` item 6 group `B`'s cross-reference, `§5.5.1 P-GT-IM-2`).**
+    //
+    // **THE AS-FILED / FUSED FORM IS SUPERSEDED AND KEPT VISIBLE HERE: this row formerly read the
+    // two limbs as ONE drive — the SAME `fire(element, pointerup)` was required BOTH to propagate
+    // the throwing seam's error AND, later in the same drive, to reach a non-throwing outcome with
+    // that same throwing seam still installed. MEASURED, that fused drive's second gesture
+    // PROPAGATES out of the source's own `fire(...)` — a call the fused row did not contain — so
+    // the row never reached its own count assertion and failed on a THROW instead of on a value.**
+    //
+    // **THE RULED FORM, verbatim in substance: *"THE TWO LIMBS ARE NEVER FUSED: no single `fire`
+    // call carries both a required propagation and a required non-propagation — the propagation
+    // limb and the non-propagation limb are SEPARATE DRIVES, each containing its own terminal
+    // `fire`, its own drive and its own source instance."* DRIVE `1` (THE PROPAGATION LIMB) reaches
+    // its terminal through the source's own `fire(element, pointerup)` and the throw is CONTAINED by
+    // that drive's OWN `try`/`catch` around its OWN `fire` call; DRIVE `2` (THE NON-PROPAGATION
+    // LIMB) reaches a terminal with a NON-throwing seam — its own `fire` call, its own drive, its
+    // own source instance — and asserts the count WITHOUT requiring the throwing seam to have
+    // stopped throwing; and the control sub-drive in which the sink ALSO throws contains its own
+    // `fire` too.**
+    const DRIVE_DOWN = TYPE_DOWN
+    const DRIVE_MOVE = TYPE_MOVE
+    const DRIVE_UP = TYPE_UP
+    /** **DRIVE `1` — THE PROPAGATION LIMB.** Its own harness, its own source instance, its own
+     *  terminal `fire`, and its own `try`/`catch` AROUND that `fire` call. It asserts that the
+     *  throwing seam propagates, that the gesture is `idle` (not `busy`), and that the throwing
+     *  gesture's sink write count is `0` (the clamp and the sink sit AFTER the seam that threw). */
+    const propagationDrive = async (which: 'boundsFor' | 'sizeFor'): Promise<void> => {
       const h = await landedHarness({})
       const sink = makeSink()
-      const element: Record<string, unknown> = { control: `F-17-${which}` }
+      const element: Record<string, unknown> = { control: `F-17-propagation-${which}` }
       const { controller } = await createController({
         session: h.session,
         axisFor: (): unknown => undefined,
@@ -4925,40 +5058,119 @@ describe('F — §3.2 the documented fail-states (every outcome is a VALUE)', ()
         commit: sink,
       })
       controller.attach(element, {})
-      h.source.fire(element, TYPE_DOWN)
+      h.source.fire(element, DRIVE_DOWN)
       // **THE MOVE TURN IS DRIVEN** (⟶ CORRECTED 2026-09-27, THE GATE-4 ALIGNMENT PASS — THE
       // COMPOSITION'S ONLY LEGAL HANDLE CHANNEL): the terminal's seams are reached through the
       // handle the controller's own `onMove` WRAPPER captures (`§2.3` item 4 clause 1, `§2.5`
       // item 5 clause 2), and `session.begin` is FORBIDDEN to this controller — so without this
-      // turn the throwing seam is never called, nothing propagates, and the row measures a
+      // turn the throwing seam is never called, nothing propagates, and the drive measures a
       // gesture that never reached its terminal.
-      h.source.fire(element, TYPE_MOVE)
+      h.source.fire(element, DRIVE_MOVE)
+      // **THIS DRIVE'S OWN TERMINAL `fire`, CONTAINED BY THIS DRIVE'S OWN `try`/`catch`** — the
+      // ruled shape: no other call in this row is required to propagate anything.
       let threw: unknown = null
       try {
-        h.source.fire(element, TYPE_UP)
+        h.source.fire(element, DRIVE_UP)
       } catch (e) {
         threw = e
       }
       expect(
         threw,
-        `F-17 §3.2 — a throwing \`${which}\` PROPAGATES to the caller of the terminal (the composition swallows only its OWN seams’ errors in the two establishment cases)`,
+        `F-17 §3.2 — DRIVE 1 (the propagation limb) — a throwing \`${which}\` PROPAGATES to the caller of the terminal (the composition swallows only its OWN seams’ errors in the two establishment cases)`,
       ).not.toBe(null)
       expect(
         sink.records.length,
-        `F-17 §3.2 — the sink write count for the throwing gesture is 0 (the clamp and the sink sit AFTER the seam that threw)`,
+        `F-17 §3.2 — DRIVE 1 (the propagation limb) — the sink write count for the throwing gesture is 0 (the clamp and the sink sit AFTER the seam that threw)`,
       ).toBe(0)
       expect(
         (h.session['stats'] as () => SessionStats)().active,
-        `F-17 §3.2 — the gesture is \`idle\`, NOT \`busy\` (the session already detached and discarded its record)`,
+        `F-17 §3.2 — DRIVE 1 (the propagation limb) — the gesture is \`idle\`, NOT \`busy\` (the session already detached and discarded its record)`,
       ).toBe(false)
-      // The element stays installed and a new gesture establishes normally.
-      h.source.fire(element, TYPE_DOWN)
-      h.source.fire(element, TYPE_MOVE)
-      h.source.fire(element, TYPE_UP)
+    }
+    /** **DRIVE `2` — THE NON-PROPAGATION LIMB.** Its own harness, its own source instance, its own
+     *  terminal `fire`, and a NON-throwing seam — so this drive reaches a terminal and asserts the
+     *  write count **without requiring the throwing seam to have stopped throwing** (the two limbs
+     *  are never fused). It carries the row's *"the element stays installed and a new gesture
+     *  establishes normally"* clause. */
+    const nonPropagationDrive = async (which: 'boundsFor' | 'sizeFor'): Promise<void> => {
+      const h = await landedHarness({})
+      const sink = makeSink()
+      const element: Record<string, unknown> = { control: `F-17-non-propagation-${which}` }
+      const { controller } = await createController({
+        session: h.session,
+        axisFor: (): unknown => undefined,
+        boundsFor: (): unknown => ({ min: 0, max: 100 }),
+        isResizable: (): unknown => true,
+        sizeFor: (): unknown => 5,
+        commit: sink,
+      })
+      controller.attach(element, {})
+      h.source.fire(element, DRIVE_DOWN)
+      h.source.fire(element, DRIVE_MOVE)
+      let threw: unknown = null
+      try {
+        h.source.fire(element, DRIVE_UP)
+      } catch (e) {
+        threw = e
+      }
       expect(
-        sink.records.length <= 1,
-        `F-17 §3.2 — the count is ZERO or EXACTLY ONE, NEVER TWO (read: ${sink.records.length})`,
-      ).toBe(true)
+        threw,
+        `F-17 §3.2 — DRIVE 2 (the non-propagation limb, a NON-throwing \`${which}\`) — nothing propagates from this drive's OWN terminal: the two limbs are NEVER fused, so a fused row that required one call both to propagate and not to fails HERE`,
+      ).toBe(null)
+      expect(
+        sink.records.length,
+        `F-17 §3.2 — DRIVE 2 (the non-propagation limb) — the element stays installed and a new gesture establishes normally: the reaching terminal writes EXACTLY ONE value. Read: ${sink.records.length}`,
+      ).toBe(1)
+      expect(
+        (h.session['stats'] as () => SessionStats)().active,
+        'F-17 §3.2 — DRIVE 2 (the non-propagation limb) — the reaching terminal leaves the session `idle` again (its record is discarded as the terminal runs)',
+      ).toBe(false)
+    }
+    for (const which of ['boundsFor', 'sizeFor'] as const) {
+      await propagationDrive(which)
+      await nonPropagationDrive(which)
+    }
+    // **THE CONTROL SUB-DRIVE WHERE THE SINK ALSO THROWS** — its own `fire` too (`§3.2 F-17`'s
+    // own cell: *"in the control drive where the sink ALSO throws, it is `1` attempt and NOT
+    // retried"*), so the row's *"ZERO or EXACTLY ONE, NEVER TWO"* count is read over BOTH of its
+    // declared counts: `0` in DRIVE 1 and `1` here — and never `2`.
+    {
+      const h = await landedHarness({})
+      const throwingSink = makeSink(true)
+      const element: Record<string, unknown> = { control: 'F-17-control-throwing-sink' }
+      const { controller } = await createController({
+        session: h.session,
+        axisFor: (): unknown => undefined,
+        boundsFor: (): unknown => ({ min: 0, max: 100 }),
+        isResizable: (): unknown => true,
+        sizeFor: (): unknown => 5,
+        commit: throwingSink,
+      })
+      controller.attach(element, {})
+      h.source.fire(element, DRIVE_DOWN)
+      h.source.fire(element, DRIVE_MOVE)
+      let threw: unknown = null
+      try {
+        h.source.fire(element, DRIVE_UP)
+      } catch (e) {
+        threw = e
+      }
+      expect(
+        threw,
+        'F-17 §3.2 — THE CONTROL SUB-DRIVE fires its own terminal under a THROWING sink; the sink’s throw is CONTAINED by the composition’s own write seam (`stats().sinkCalls` already counts the attempt), so NOTHING reaches the caller of this drive’s `fire`',
+      ).toBe(null)
+      expect(
+        throwingSink.attempts.count,
+        `F-17 §3.2 — **THE CONTROL: the sink that ALSO throws is ATTEMPTED exactly ONCE and NEVER retried** (\`F-11\`'s attempt-vs-return distinction). Attempts: ${throwingSink.attempts.count}`,
+      ).toBe(1)
+      expect(
+        controller.stats().sinkCalls,
+        'F-17 §3.2 — THE CONTROL: `stats().sinkCalls === 1` (it counts ATTEMPTS, including one that threw)',
+      ).toBe(1)
+      expect(
+        controller.stats().written,
+        'F-17 §3.2 — THE CONTROL: `stats().written === 0` (it counts RETURNS, and this sink returned nothing)',
+      ).toBe(0)
     }
   })
 
@@ -5620,26 +5832,67 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
       }
     }
     row.finish()
-    // **⟶ CORRECTED 2026-09-27 (THE GATE-4 ALIGNMENT PASS — A ROW-MECHANISM DEFECT, NOT A
-    // TERM MOVE): THIS ROW'S DRIVE TABLE IS `4` SHAPES × `5` PATHS = `20` ATTEMPTS, while its
-    // DECLARED TERM IS `18`.** The as-landed assertion required `18` of a table that performs
-    // `20` attempts, so the row could never hold (`§5.5.1 P-GT-IM-1`'s own cell prints both
-    // figures: *“`18` attempts = `4` `sizeFor` shapes × `5` gesture paths”* and its `4`-shape ×
-    // `5`-path grid; `§5.5.2` item 3's ledger likewise prints `P-GT-IM-1` `18`/`18`). **NO TERM
-    // MOVED: the row now asserts its OWN table (the `18` declared rows are unmoved, the
-    // attempt-bearing cells are the `4` × `5` grid the cell enumerates) and the declared
-    // figure is READ from the register table rather than re-spelled.** The mismatch is
-    // REPORTED to the supervisor as a spec-cell-versus-row residue.
+    // **⟶ AMENDED 2026-09-27 (THE ESTABLISHMENT-SEAM AMENDMENT PASS — RULING `5`, resolving
+    // `docs/pending.md` §I-quater's `E3`-RES-5/6; `§5.5.1 P-GT-IM-1`'s cell, `§5.5.2` item 3's
+    // ledger, `§5.5.3`'s arithmetic, `docs/decisions.md`
+    // `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS` sub-rule 2).**
+    //
+    // **THIS ROW CARRIES AN HONEST DUAL FIGURE: DECLARED `18` · MEASURED DRIVE COUNT `20`.** The
+    // DECLARED `18` IS THE FIGURE THE CAPS ARE COMPARED AGAINST AND IT DOES NOT MOVE; the MEASURED
+    // `20` is what the landed grid actually drives. **THE REASONS ARE STATED, NOT IMPLIED: the
+    // landed `4`-shape × `5`-path loop enumerates ALL `20` COMBINATIONS, while the DECLARED `18` is
+    // the CONSERVATIVE ENUMERATION — the `4` shapes × the `4` paths whose per-cell pair the cell
+    // declares (`(a)` an evaluating `'end'` · `(b)` a non-resizable `'end'` · `(c)` a `cancel` ·
+    // `(d)` a refused terminal) = `16`, PLUS the TWO path-`(e)` cells the cell's own per-attempt
+    // clause declares — shape `(1)` × path `(e)` and shape `(4)` × path `(e)` — = `2`; `16 + 2 = 18`.
+    // The TWO COMBINATIONS the full grid counts and the declared enumeration EXCLUDES (they reach
+    // no seam and declare exactly what their `(d)` cells declare) are shape `(2)` ABSENT × path
+    // `(e)` and shape `(3)` NON-CALLABLE × path `(e)`, which is why the measured count exceeds the
+    // declared term by exactly `2`.**
+    //
+    // **AND A DECLARED-VERSUS-MEASURED DIFFERENCE IS REPORTED, NEVER SILENTLY RE-TOTALLED: the
+    // register's `299` total remains the sum of its THIRTEEN DECLARED TERMS, and this row's
+    // measured `20` neither replaces that total nor is added into it.**
+    //
+    // **THE AS-LANDED FORM OF THIS ASSERTION IS KEPT VISIBLE: it asserted the DECLARED term `18`
+    // against the row's own `4` × `5` grid — i.e. it required `18` of a table that performs `20`
+    // attempts, so the row could never hold — and it did NOT print the two figures side by side.
+    // Both figures are now printed and each is asserted at its OWN figure.**
+    const declaredTermIM1 = declaredPair('P-GT-IM-1').term
+    const declaredDistinctIM1 = declaredPair('P-GT-IM-1').distinct
+    const measuredDriveCountIM1 = row.attemptsRunPublic()
+    console.log(
+      `§5.5.1 P-GT-IM-1 DUAL FIGURE :: ${JSON.stringify({
+        declaredTerm: declaredTermIM1,
+        declaredDistinct: declaredDistinctIM1,
+        measuredDriveCount: measuredDriveCountIM1,
+        grid: `${shapes.length} shapes × ${paths.length} paths = ${shapes.length * paths.length}`,
+        reason:
+          'the landed grid enumerates all 20 combinations and the declared 18 is the conservative enumeration (4 shapes × the 4 paths whose per-cell pair the cell declares = 16, plus the two path-(e) cells = 2); the two excluded combinations are shape (2) ABSENT × path (e) and shape (3) NON-CALLABLE × path (e)',
+        totalDisposition:
+          'the declared 18 is what the caps are compared against and what the 299 total is summed from; the measured 20 is REPORTED beside it and is NOT added into that total',
+      })}`,
+    )
     expect(
-      declaredPair('P-GT-IM-1').term,
-      `P-GT-IM-1 — the DECLARED term is ${declaredPair('P-GT-IM-1').term} and it does NOT move; the table performs its ${
-        shapes.length
-      } shapes × ${paths.length} paths = ${shapes.length * paths.length}`,
+      declaredTermIM1,
+      `P-GT-IM-1 — **THE DECLARED TERM IS 18 AND IT DOES NOT MOVE** (\`§5.5.1 P-GT-IM-1\`'s cell, \`§5.5.3\`): it is the figure the caps are compared against and the term the \`299\` total is summed from. The measured drive count is REPORTED beside it at \`${String(
+        measuredDriveCountIM1,
+      )}\` — and the two DIFFER, which is REPORTED rather than reconciled: the landed \`4\` × \`5\` grid enumerates all \`20\` combinations while the declared \`18\` is the CONSERVATIVE enumeration of the cells the cell declares. Read: ${String(
+        declaredTermIM1,
+      )} vs ${String(measuredDriveCountIM1)}`,
     ).toBe(18)
     expect(
-      row.attemptsRunPublic(),
-      `P-GT-IM-1 — the attempts this row RAN (${row.attemptsRunPublic()}) are its own 4-shape × 5-path grid`,
-    ).toBe(shapes.length * paths.length)
+      declaredDistinctIM1,
+      `P-GT-IM-1 — the DECLARED DISTINCT figure is ${String(declaredDistinctIM1)} and it does NOT move either (\`§5.5.2\` item 3's ledger; a distinct figure is REPORTED and never substituted, sub-rule 2)`,
+    ).toBe(18)
+    expect(
+      measuredDriveCountIM1,
+      `P-GT-IM-1 — **THE MEASURED DRIVE COUNT (\`${
+        shapes.length
+      }\` shapes × \`${paths.length}\` paths = \`${shapes.length * paths.length}\`) IS ASSERTED AT ITS OWN FIGURE** — reported BESIDE the unmoved declared term \`18\` rather than silently re-totalled into it. The two combinations the grid drives and the declared enumeration excludes are shape (2) ABSENT × path (e) and shape (3) NON-CALLABLE × path (e). Read: ${String(
+        measuredDriveCountIM1,
+      )}`,
+    ).toBe(20)
   })
 
   it('P-GT-IM-2 (S-GT-SEAM-2, bounded) — the `boundsFor` + `defaultSizeFor` quantification: 5 shapes × 4 paths, 18 distinct seam-path observations', async () => {
@@ -5667,6 +5920,40 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
      *  `defaultSizeFor`, and a callable returning a number for `sizeFor` — **so an `'end'`
      *  path has a value source and its clamp can answer a number.** */
     const USABLE_BOUNDS = { min: 0, max: 100 }
+    /** **THE UNUSABLE PAIR OF SHAPE `(4)`** (`§5.5.1 P-GT-IM-2`: *"`(4)` a callable returning an
+     *  UNUSABLE pair (`{}`, a primitive, a non-number field, a throwing field read)"*). `{}` is the
+     *  shape's first listed variant: `clampToBounds`'s `typeof` gate sees two non-`number` fields
+     *  and answers `NaN`, so the clamp's answer cannot be written (`§2.3` item 3, `§2.3` item 4
+     *  clause 8). */
+    const UNUSABLE_BOUNDS_PAIR = {}
+    /** **THE ATTEMPT READING OF AN UNUSABLE-PAIR `reset` ARM** — the SEPARATE fact `§2.3` item 3's
+     *  counting rule names beside a cell's `writes` figure, read from the DECLARED SIDE (the
+     *  ruling's own figure) so the two figures are compared rather than conflated.
+     *
+     *  **THE RULED PAIR IS `writes: 0` WITH `attempts: 0`** — *"the honest declared pair for an
+     *  unusable-pair `reset` arm is `attempts: 0` and `writes: 0`"* (`§5.5.1 P-GT-IM-2`'s cell as
+     *  corrected; `§2.3` item 3's ATTEMPT-VERSUS-WRITE COUNTING RULE as corrected): **FOR AN
+     *  UNUSABLE PAIR THE COMPOSITION REFUSES BEFORE ENTERING THE WRITE SITE** — the seam is
+     *  consulted, the clamp answers `NaN`, the reset refuses `'unusable-default'` with ZERO
+     *  session calls and ZERO writes, and **the sink's own attempt counter is NEVER INCREMENTED**.
+     *  **THE RULE: AN ATTEMPT IS COUNTED ONLY WHEN THE SINGLE WRITE SITE IS ENTERED WITH A USABLE,
+     *  NARROWABLE `number` VALUE AND A `commit` SEAM PRESENT** — which is why the ONLY `attempts: 1`
+     *  site in the spec is `F-11`'s THROWING SINK (a write that REACHES the sink and then throws:
+     *  `stats().sinkCalls === 1` beside `stats().written === 0`, counted once and never retried).
+     *
+     *  **THE SUPERSEDED FORM IS KEPT VISIBLE, WITH THE REASON IT WAS STALE — IT IS NOT RE-DERIVED
+     *  HERE:** the as-filed ruling declared this arm `writes: 0` WITH **`attempts: 1`**
+     *  (*"an unusable-pair `reset` arm therefore declares `writes: 0` WITH `attempts: 1`"*), and that
+     *  figure came from a **STALE MEASUREMENT taken while the harness still carried its OWN
+     *  REGISTERED COMMIT CHANNEL — A SECOND WRITER — a channel that NO LONGER EXISTS** and that the
+     *  landed single-writer wiring does not contain. On the landed wiring the drive MEASURES `0`
+     *  (confirmed by this file's red run: both shape-`(4)` × `reset` arms read `sinkAttempts: 0`
+     *  beside `writes: 0`), so this declaration is aligned to **`0`**. **THE DECLARED FIGURE IS THE
+     *  RULING'S AND IT IS NOT RETOTALLED** — no attempt term moves (`20`/`18` are unmoved and the
+     *  register's `299` total is the sum of its thirteen printed terms); the DRIVE's own measured
+     *  attempt counter is asserted against this declaration in every refusal cell, and any
+     *  difference is REPORTED in the failure message rather than reconciled. */
+    const UNUSABLE_PAIR_ARM_SINK_ATTEMPTS = 0
     const USABLE_DEFAULT = 50
     const USABLE_SIZE = 5
     const SHAPE_START = '(1)'
@@ -5727,7 +6014,7 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
           return { bounds: 1, defaultCalls: 1, writes: 1, propagates: false, note: 'USABLE-PAIR ARM: the default is usable and the pair is usable ⇒ the reset RUNS and the CLAMPED supplied default is written EXACTLY ONCE' }
         }
         if (shape.startsWith('(4)')) {
-          return { bounds: 1, defaultCalls: 1, writes: 0, propagates: false, note: 'REFUSAL ARM: the default is usable and the PAIR is unusable ⇒ `boundsFor` IS consulted, the clamp answers NaN ⇒ ZERO writes (the sink is never reached)' }
+          return { bounds: 1, defaultCalls: 1, writes: 0, propagates: false, note: 'REFUSAL ARM: the default is usable and the PAIR is unusable ⇒ `boundsFor` IS consulted, the clamp answers NaN ⇒ ZERO writes AND ZERO ATTEMPTS, because **the refusal precedes the write site** (the reset refuses `\'unusable-default\'` with zero session calls, so the sink’s own attempt counter is never incremented) — the superseded `attempts: 1` reading came from a stale measurement taken while the harness still carried its own registered commit channel, a second writer that no longer exists' }
         }
         if (unusableDefault(shape)) {
           return { bounds: 0, defaultCalls: shape.startsWith('(5)') ? 1 : 0, writes: 0, propagates: false, note: 'REFUSAL ARM with ZERO session calls: an unusable default refuses `\'unusable-default\'`, so `boundsFor` is not consulted and NOTHING is written (a THROWING default is read once, then swallowed)' }
@@ -5804,7 +6091,18 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
       shape: string,
       role: 'bounds' | 'default',
       path: string,
-    ): Promise<{ recorded: string[]; propagated: unknown; sinkWrites: number; controllerWrites: number | null }> => {
+    ): Promise<{
+      recorded: string[]
+      propagated: unknown
+      sinkWrites: number
+      controllerWrites: number | null
+      /** **THE ATTEMPT READING — A SEPARATE FACT FROM THE WRITE READING** (`§2.3` item 3's
+       *  attempt-versus-write counting rule, `F-11`'s distinction): the injected sink's OWN
+       *  attempt counter, beside its own call RECORD. */
+      sinkAttempts: number
+      /** The controller's own `stats().written` — the RETURNS counter (`F-11`). */
+      controllerWritten: number | null
+    }> => {
       const double = makeSessionDouble()
       const sink = makeSink()
       const element = { control: `IM-2-${role}-${shape}-${path}` }
@@ -5822,13 +6120,29 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
         },
         commit: sink,
         // **EXACTLY ONE SEAM VARIES PER DRIVE; the other is in its usable default form.**
+        // **⟶ CORRECTED 2026-09-27 (THE ESTABLISHMENT-SEAM AMENDMENT PASS — RULING `4`, resolving
+        // `docs/pending.md` §I-quater's `E3`-RES-4; `§5.5.1 P-GT-IM-2`'s cell, `§2.3` item 3's
+        // attempt-versus-write rule).** In the `default` ROLE the cell under test is
+        // `defaultSizeFor`; the PAIR belongs to the SHAPE — so when the shape under test IS the
+        // unusable-pair shape `(4)`, the pair driven here is that SHAPE'S OWN unusable pair rather
+        // than a usable one. **THE AS-LANDED DRIVE SUPPLIED `USABLE_BOUNDS` HERE, WHICH MADE THE
+        // CELL A USABLE-PAIR ARM (the reset RAN and its clamped value — `50` — reached the sink)
+        // WHILE THE CELL DECLARED THE UNUSABLE-PAIR ARM'S `0`; MEASURED, the cell read `1`. That
+        // was a DRIVE defect, not a cell defect: the cell's own note (`the default is usable and
+        // the PAIR is unusable ⇒ the clamp answers NaN ⇒ ZERO writes`) is the contract's reading
+        // and the drive now reaches it.**
         boundsFor:
           role === 'bounds'
             ? boundsSeam(shape, record)
-            : (): unknown => {
-                record('boundsFor')
-                return USABLE_BOUNDS
-              },
+            : shape.startsWith('(4)') && path.includes('reset')
+              ? (): unknown => {
+                  record('boundsFor')
+                  return UNUSABLE_BOUNDS_PAIR
+                }
+              : (): unknown => {
+                  record('boundsFor')
+                  return USABLE_BOUNDS
+                },
         defaultSizeFor:
           role === 'default'
             ? defaultSeam(shape, record)
@@ -5841,7 +6155,14 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
       created.controller.attach(element, {})
       const began = double.begin(element)
       if (!began.ok) {
-        return { recorded, propagated: `the drive could not establish a gesture (${began.code})`, sinkWrites: -1, controllerWrites: null }
+        return {
+          recorded,
+          propagated: `the drive could not establish a gesture (${began.code})`,
+          sinkWrites: -1,
+          controllerWrites: null,
+          sinkAttempts: -1,
+          controllerWritten: null,
+        }
       }
       // **THE MOVE TURN IS FIRED FOR EVERY PATH THAT EVALUATES A VALUE** (the wrapper's handle
       // capture, `E3`-BLOCK-5): the `'end'` AND the `reset` both reach the terminal through
@@ -5860,6 +6181,12 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
         propagated,
         sinkWrites: sink.records.length,
         controllerWrites: path.includes('cancel') ? null : created.controller.stats().sinkCalls,
+        // **THE SECOND INSTRUMENT (`§2.3` item 3): the sink's own ATTEMPT counter and the
+        // controller's `written` (RETURNS).** A write that is skipped before the sink call reads
+        // `0` on BOTH counters; a write that REACHES the sink and is contained by a consumer throw
+        // reads `1` attempt with `0` returns (`F-11`'s exact distinction).
+        sinkAttempts: sink.attempts.count,
+        controllerWritten: path.includes('cancel') ? null : created.controller.stats().written,
       }
     }
     for (const shape of shapes) {
@@ -5904,6 +6231,51 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
             }
             if (reading.controllerWrites !== null && reading.controllerWrites !== cell.writes) {
               return `[${role} role] READING 2 (\`stats().sinkCalls\`) reads ${String(reading.controllerWrites)}, the declared count is ${cell.writes} (${cell.note})`
+            }
+            // (5) **⟶ ADDED 2026-09-27 (THE ESTABLISHMENT-SEAM AMENDMENT PASS — RULING `4`;
+            // `§2.3` item 3's ATTEMPT-VERSUS-WRITE COUNTING RULE, `F-11`'s distinction).** **A
+            // cell's WRITES figure counts WRITES — SINK RETURNS — and the recorded sink ATTEMPT is
+            // a SEPARATE READING, read over the TWO instruments `C1` requires: the injected sink's
+            // own ATTEMPT counter beside its own call RECORD, and the controller's
+            // `stats().sinkCalls`/`written`. A row may NOT read `writes: 0` as *"the sink was never
+            // reached"* — the two figures are REPORTED BESIDE EACH OTHER here rather than
+            // conflated.**
+            //
+            // **THE MEASURED PAIR FOR THIS ARM, stated so the superseded `attempts: 1` form is
+            // REPORTED and not hidden: on an unusable-pair `reset` arm the landed composition SKIPS
+            // the write before the sink call (`src/shared/gutter.ts`'s single write site returns on a
+            // `NaN` clamp, which is what "the clamp answers `NaN`" means), so the sink's attempt
+            // counter reads `0` and `stats().sinkCalls` reads `0` BESIDE the declared `writes: 0`.
+            // THE DECLARED `writes` FIGURE IS UNMOVED (`0`) and the attempt reading is asserted at
+            // its MEASURED value — the attempt-versus-return distinction `F-11` draws only where a
+            // write REACHES the sink (the throwing-sink control sub-drive of `§3.2 F-17` is that
+            // reading: `sinkCalls === 1` beside `written === 0`).**
+            // **THE ATTEMPT READING IS THE RULING'S OWN FIGURE FOR THE UNUSABLE-PAIR `reset` ARM
+            // AND THE DRIVE'S OWN MEASURED FIGURE EVERYWHERE ELSE**: only the arm whose PAIR is
+            // unusable while its DEFAULT is usable — shape `(4)` driven in the `default` ROLE on a
+            // `reset` path — carries the ruled attempt reading; every other refusal cell declares
+            // `0` attempts, because a skipped write (`NaN` clamp, unavailable seam, throwing seam,
+            // a cancel that drives no seam) never reaches the sink at all.
+            // **⟶ CORRECTED 2026-09-27 (THE ATTEMPT-READING CORRECTION PASS): THE UNUSABLE-PAIR
+            // `reset` ARM DECLARES `attempts: 0` BESIDE `writes: 0`, exactly like every other
+            // refusal cell — THE REFUSAL PRECEDES THE WRITE SITE, so no attempt is counted.** The
+            // superseded `attempts: 1` form (the as-filed ruling) came from a STALE MEASUREMENT
+            // taken while the harness still carried its OWN REGISTERED COMMIT CHANNEL — A SECOND
+            // WRITER — a channel the landed single-writer wiring DOES NOT CONTAIN; on that wiring
+            // the arm MEASURES `0`, which is why this file's two shape-`(4)` × `reset` arms were the
+            // red set before this alignment. **THE ONE SITE WHERE `attempts: 1` REMAINS CORRECT IS
+            // `F-11`'s THROWING SINK** (`stats().sinkCalls === 1` beside `stats().written === 0`),
+            // and that row is unchanged.
+            const isUnusablePairResetArm =
+              role === 'default' && shape.startsWith('(4)') && path.includes('reset')
+            const attemptsExpected = isUnusablePairResetArm
+              ? UNUSABLE_PAIR_ARM_SINK_ATTEMPTS
+              : cell.writes
+            if (reading.sinkAttempts !== attemptsExpected) {
+              return `[${role} role] THE ATTEMPT READING (the sink's own attempt counter — a SEPARATE fact from its RETURN record, §2.3 item 3) reads ${reading.sinkAttempts}, the declared reading is ${attemptsExpected}: an attempt is counted ONLY where the write site is entered with a usable, narrowable value and a \`commit\` seam present, and on an unusable-pair \`reset\` arm the refusal precedes the write site (the clamp’s \`NaN\` never reaches the sink, so the sink’s attempt counter is NEVER incremented) (${cell.note})`
+            }
+            if (reading.controllerWritten !== null && reading.controllerWritten !== cell.writes) {
+              return `[${role} role] THE RETURN READING (\`stats().written\`) reads ${String(reading.controllerWritten)}, the declared write count is ${cell.writes} (${cell.note})`
             }
           }
           return null
@@ -5953,9 +6325,49 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
         refusalArmCells.map(({ role, shape, path, cell }) => `${role}/${shape.slice(0, 3)}/${path.slice(0, 3)}=writes ${cell.writes}, propagates ${String(cell.propagates)}`),
       )}`,
     ).toBe(true)
+    // **⟶ CORRECTED 2026-09-27 (THE ESTABLISHMENT-SEAM AMENDMENT PASS — RULING `4`): THIS PIN'S
+    // SCOPE IS MADE EXPLICIT, AND THE REASON IS THE DRIVE CORRECTION BESIDE IT.** The pin read
+    // *"a cell whose `boundsFor` count is `0` declares `defaultSizeFor` `0` as well"* over the
+    // WHOLE refusal set — which is the `'unusable-default'` clause read as if it covered the
+    // `bounds` ROLE too. In the `bounds` role the DEFAULT is in its usable form BY CONSTRUCTION
+    // (that is what *"exactly one seam varies per drive"* means), so `bounds === 0` there is the
+    // CALLABILITY GUARD's reading, not the unusable-default refusal's: shape `(3)` NON-CALLABLE
+    // and shape `(4)` UNUSABLE-PAIR each declare `bounds: 0` with `defaultCalls: 1` because the
+    // reset consults the usable default FIRST and only then finds the pair unusable. **The clause
+    // is therefore scoped to the cells it is about — the `default` ROLE — and each unusable-class
+    // shape's declared read is DERIVED from `§2.4` item 2's callability asymmetry rather than
+    // asserted flat: an ABSENT default is not there to call (`0`), a PRESENT NON-CALLABLE default
+    // is GUARDED ON CALLABILITY and never invoked (`0` — `§2.4` item 2 clause (i), the same guard
+    // `boundsFor`/`sizeFor` carry), and a THROWING default IS invoked once before its throw is
+    // swallowed (`1` — clause (iii)). On every one of those cells `boundsFor` is NOT consulted
+    // (its own count is `0`): an unusable default refuses `'unusable-default'` with ZERO session
+    // calls, so the pair is never reached.** Never two reads on any side.
+    const declaredDefaultReadsOnUnusableDefaultPath = (shape: string): number => {
+      if (shape.startsWith('(2)')) return 0 // ABSENT — there is no seam to invoke
+      if (shape.startsWith('(3)')) return 0 // NON-CALLABLE — guarded on callability: never invoked
+      if (shape.startsWith('(5)')) return 1 // THROWING — invoked once, the throw swallowed
+      return 1 // `(4)` UNUSABLE-pair: this shape's DEFAULT is usable, so it IS consulted once
+    }
+    const unusableDefaultPathCells = refusalArmCells.filter(
+      ({ role, shape }) => role === 'default' && unusableDefault(shape),
+    )
     expect(
-      refusalArmCells.filter(({ cell }) => cell.bounds === 0).every(({ cell }) => cell.defaultCalls === 0),
-      'P-GT-IM-2 — REFUSAL-ARM PIN (the `\'unusable-default\'` path): a cell whose BOUNDS seam is never consulted declares ZERO `defaultSizeFor` calls as well — an unusable default refuses with ZERO session calls, so NEITHER seam is read',
+      unusableDefaultPathCells.every(
+        ({ shape, cell }) =>
+          cell.defaultCalls === declaredDefaultReadsOnUnusableDefaultPath(shape) &&
+          // **SHAPE `(4)` IS THE ONE CLASS WHERE THE PAIR *IS* REACHED** (its default is usable
+          // and its PAIR is the unusable part): it declares `bounds: 1` and the clamp's `NaN`
+          // answer is what stops the write (`§5.5.1 P-GT-IM-2`'s own shape-`(4)` sentence). Every
+          // other unusable-default cell declares `bounds: 0` — *"an unusable default refuses
+          // `'unusable-default'` with ZERO session calls, so the pair is never reached"*.
+          (shape.startsWith('(4)') ? cell.bounds === 1 : cell.bounds === 0),
+      ),
+      `P-GT-IM-2 — REFUSAL-ARM PIN (the \`'unusable-default'\` path, DEFAULT role): each unusable-class shape declares its OWN read from \`§2.4\` item 2's callability asymmetry — ABSENT \`(2)\` \`0\`, NON-CALLABLE \`(3)\` \`0\` (GUARDED: never invoked), THROWING \`(5)\` \`1\` (invoked once, swallowed) — NEVER TWO, and \`boundsFor\` is not consulted at all on this path (\`0\` in the same cell). Declared: ${JSON.stringify(
+        unusableDefaultPathCells.map(
+          ({ role, shape, path, cell }) =>
+            `${role}/${shape.slice(0, 3)}/${path.slice(0, 3)}=defaultCalls ${cell.defaultCalls} (declared ${declaredDefaultReadsOnUnusableDefaultPath(shape)}), bounds ${cell.bounds}`,
+        ),
+      )}`,
     ).toBe(true)
     /** The cells whose pair IS usable on a `reset` path — the USABLE-PAIR arm: the reset RUNS and
      *  its write is EXACTLY ONE (the clamped supplied default, `committed: true`). */
@@ -6405,7 +6817,58 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
       })
     }
     row.finish()
-    expect(row.attemptsRunPublic(), `P-GT-IM-4 — the declared term is ${declaredPair('P-GT-IM-4').term}`).toBe(28)
+    // **⟶ AMENDED 2026-09-27 (THE ESTABLISHMENT-SEAM AMENDMENT PASS — RULING `5`, resolving
+    // `docs/pending.md` §I-quater's `E3`-RES-5/6; `§5.5.1 P-GT-IM-4`'s cell, `docs/decisions.md`
+    // `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`).**
+    //
+    // **THIS ROW CARRIES AN HONEST DUAL FIGURE: DECLARED `28` · MEASURED DRIVE COUNT `27`.** The
+    // DECLARED `28` IS THE FIGURE THE CAPS ARE COMPARED AGAINST AND IT DOES NOT MOVE; the MEASURED
+    // `27` is what the landed drives execute. **THE REASON IS STATED, NOT IMPLIED: the `4`
+    // `axisFor` shapes × the `7` seams is `28`, but the axis shape `(4)` (THROWING) IDENTITY CELL
+    // IS NOT DRIVEN BY THIS ROW — it is COVERED BY `§3.2 F-18` AND `M-7`, and this cell's own
+    // stated limit says so, so a TestWriter that ALSO drove it here would be adding an attempt the
+    // declared term does not carry.** The `27` the landed drives execute are GROUP A's `6` seams
+    // OTHER THAN `axisFor` × the `3` token-producing `axisFor` shapes (`18`) + GROUP B's `5` seams
+    // driven as the PRESENT NON-CALLABLE shape (`5`) + GROUP C's `4` `session`-unusable variants
+    // (`4`).
+    //
+    // **AND A DECLARED-VERSUS-MEASURED DIFFERENCE IS REPORTED, NEVER SILENTLY RE-TOTALLED: the
+    // register's `299` total remains the sum of its THIRTEEN DECLARED TERMS, and this row's
+    // measured `27` neither replaces that total nor is added into it.**
+    const declaredTermIM4 = declaredPair('P-GT-IM-4').term
+    const declaredDistinctIM4 = declaredPair('P-GT-IM-4').distinct
+    const measuredDriveCountIM4 = row.attemptsRunPublic()
+    console.log(
+      `§5.5.1 P-GT-IM-4 DUAL FIGURE :: ${JSON.stringify({
+        declaredTerm: declaredTermIM4,
+        declaredDistinct: declaredDistinctIM4,
+        measuredDriveCount: measuredDriveCountIM4,
+        reason:
+          'the axis shape (4) identity cell is covered by §3.2 F-18 and M-7 and is not among the 27; the 27 are group A 18 (6 seams other than axisFor × the 3 token-producing axisFor shapes) + group B 5 + group C 4',
+        totalDisposition:
+          'the declared 28 is what the caps are compared against and what the 299 total is summed from; the measured 27 is REPORTED beside it and is NOT added into that total',
+      })}`,
+    )
+    expect(
+      declaredTermIM4,
+      `P-GT-IM-4 — **THE DECLARED TERM IS 28 AND IT DOES NOT MOVE** (\`§5.5.1 P-GT-IM-4\`'s cell, \`§5.5.3\`): it is the figure the caps are compared against and the term the \`299\` total is summed from. The measured drive count is REPORTED beside it at \`${String(
+        measuredDriveCountIM4,
+      )}\`, and the two DIFFER — the axis shape \`(4)\` identity cell is covered by \`F-18\`/\`M-7\` and is not among the \`27\`. Read: ${String(
+        declaredTermIM4,
+      )} vs ${String(measuredDriveCountIM4)}`,
+    ).toBe(28)
+    expect(
+      declaredDistinctIM4,
+      `P-GT-IM-4 — the DECLARED DISTINCT figure is ${String(declaredDistinctIM4)} and it does NOT move either (\`§5.5.2\` item 3's ledger)`,
+    ).toBe(28)
+    expect(
+      measuredDriveCountIM4,
+      `P-GT-IM-4 — **THE MEASURED DRIVE COUNT (\`${String(
+        measuredDriveCountIM4,
+      )}\` = GROUP A's \`18\` + GROUP B's \`5\` + GROUP C's \`4\`) IS ASSERTED AT ITS OWN FIGURE** — reported BESIDE the unmoved declared term \`28\` rather than silently re-totalled into it. Read: ${String(
+        measuredDriveCountIM4,
+      )}`,
+    ).toBe(27)
   })
 
   it('P-GT-SM-1 (S-GT-COMMIT-1) — the COMMIT-COUNT quantification: 4 terminal paths × 5 sink shapes = 20, with 19 distinct path×shape pairs', async () => {
@@ -6859,6 +7322,30 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
             if (sink.records.length !== shape.writes) {
               return `the sink write count is ${sink.records.length}, the declared count is ${shape.writes}`
             }
+            // **⟶ AMENDED 2026-09-27 (THE ESTABLISHMENT-SEAM AMENDMENT PASS — RULING `2`;
+            // `§5.5.1 P-GT-SM-4` shape `(1)`'s cell, `§2.3` item 4 clause 8, `§3.1 M-15`).**
+            // **THE COMMITTED VALUE IS READ FROM THE SINK'S OWN `value` ARGUMENT, NEVER THROUGH THE
+            // HANDLE.** The frozen session fires the consumer's `onEnd` BEFORE it stores anything
+            // and never stores the terminal's value on the record at all — MEASURED, the sink's
+            // handle reads `value === undefined` where the committed value is declared — so shape
+            // `(1)`'s `100` is asserted on the argument the sink received, and the handle-side
+            // reading is asserted as `undefined` so the ruling is falsifiable IN PLACE rather than
+            // merely absent: a future driver that (illegally) reads the value back through the
+            // handle fails HERE. **NO ATTEMPT TERM OF THIS ROW MOVES for it (`12` declared, `6`
+            // shapes × `2` readings).**
+            if (shape.writes === 1) {
+              if (sink.records[0]?.value !== 100) {
+                return `shape (1)’s committed value must be read from the SINK’S OWN \`value\` ARGUMENT — the CLAMPED default (\`clampToBounds(420, {min:0,max:100}) = 100\`), never the raw default and never through the handle. The sink received ${brief(sink.records[0]?.value)}`
+              }
+              const handleSideValue = (sink.records[0]?.gesture as GestureHandle | undefined)?.value
+              if (handleSideValue !== undefined) {
+                return `the handle’s \`value\` is NOT a terminal value channel in the frozen session: this cell may not read the committed value through the handle at the terminal (the session fires the consumer’s \`onEnd\` BEFORE it stores anything and never stores the terminal’s value on the record). Read: ${brief(handleSideValue)}`
+              }
+              const terminalOutcome = (sink.records[0]?.gesture as GestureHandle | undefined)?.outcome
+              if (terminalOutcome !== 'reset') {
+                return `the handle REMAINS the OUTCOME channel (not a value channel): the handle that reached the sink must read \`outcome === 'reset'\` at the terminal. Read: ${brief(terminalOutcome)}`
+              }
+            }
             return null
           }
         })
@@ -7134,7 +7621,13 @@ describe('§5.5.1 — the thirteen-row typed register (executed in register orde
     ).toBe(0)
     expect(
       records.reduce((sum, record) => sum + record.attemptsRun, 0),
-      `REGISTER-STATUS — the attempts the LANDED tables actually ran are reconciled against the register's own thirteen declared terms (299, the AMENDED declared total AND its term sum). Ran: ${executedTotal}`,
+      `REGISTER-STATUS — **THE LANDED TABLES' TOTAL IS ASSERTED AT ITS OWN MEASURED FIGURE (\`${
+        records.reduce((sum, record) => sum + record.attemptsRun, 0)
+      }\`) AND REPORTED BESIDE THE DECLARED \`299\`, NEVER RE-TOTALLED INTO IT** (\`§5.5.1 P-GT-IM-1\`/\`P-GT-IM-4\`'s dual figures, \`§5.5.3\`'s arithmetic, \`docs/decisions.md\` \`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS\` sub-rule 2). **THE DIFFERENCE IS EXACTLY THE TWO REGISTER RESIDUES, and it is REPORTED here rather than resolved: \`P-GT-IM-1\` runs \`20\` against its declared \`18\` (the landed grid enumerates all \`20\` combinations while the declared \`18\` is the conservative enumeration) and \`P-GT-IM-4\` runs \`27\` against its declared \`28\` (the axis shape \`(4)\` identity cell is covered by \`§3.2 F-18\`/\`M-7\` and is not among the \`27\`) — so \`20 + 27 = 47\` measured stands at \`18 + 28 = 46\` declared and the measured total is \`300\` against the declared \`299\`. THE \`299\` REMAINS THE SUM OF THE THIRTEEN DECLARED TERMS (asserted immediately above) AND THE CAPS ARE COMPARED AGAINST IT. Ran: ${executedTotal}`,
+    ).toBe(300)
+    expect(
+      REGISTER_PRINTED_TOTAL,
+      'REGISTER-STATUS — **AND THE MEASURED TOTAL DOES NOT REPLACE THE DECLARED ONE: the declared `299` is still printed as the sum of its own thirteen terms and is still what the `≤400` cap is compared against** (a declared-vs-measured difference is REPORTED, never silently re-totalled)',
     ).toBe(299)
     expect(
       registerState.stoppedAtRow,
