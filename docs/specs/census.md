@@ -390,6 +390,21 @@ token byte to `U-ZONES`**.
    `U-RELOCATE`'s reveal set existing** (`§1` item 10: `U-RELOCATE` stays `NOT THIS UNIT`, and this unit
    duplicates none of its responsibility — `§3.4 R-5`). **Neither consequence adds a parameter, a field, a
    value domain or a row to this unit: both are what the ruled mechanism honestly does.**
+   **⟶ ANNOTATED 2026-09-27 (THE `U-GUTTER` / `E3` GATE-1 PASS — an ANNOTATION BESIDE item 7's
+   as-written clauses, which are KEPT VERBATIM and are NOT weakened): THE LEDGER'S `E3` DEPENDENCY EDGE ON
+   THIS UNIT IS DISSOLVED.** **`U-GUTTER` does NOT import this module — not even type-only** (item 7's own
+   forbidden-direction clause above: *"It may **not** import this module"*; a dependency edge asserted the
+   other way is the `H-r6` dissolved-edge class), and **the `sizes` VALUE arrives as an argument to the
+   CONSUMER's own injected callbacks** — the `U-GUTTER` surface's `boundsFor` / `sizeFor` /
+   `defaultSizeFor` — **never through an import, never as a parameter of this module's, and never by any
+   read of this unit.** **WHAT THE DISSOLUTION TOUCHES AND WHAT IT DOES NOT:** it touches the **LEDGER** —
+   `docs/next-steps.md`'s `## OPEN` row `E3`'s `Blocked on` cell named **two** dependencies (`U-CENSUS` and
+   `U-GSESSION`), and the `U-CENSUS` half is now **dissolved** (recorded in that cell in the same pass,
+   its as-written text kept visible), leaving the **landed `U-GSESSION`** as the unit's only dependency.
+   **It does NOT touch this item's own successor clause:** item 7's *"the `sizes` VALUE it already injects,
+   and the token strings the record carries — and NOTHING ELSE"* is the **VALUE relationship the
+   dissolution RESTS ON**, and it stays in force, unweakened and unrewritten. **The successor's contract,
+   red set, gates and geometry clause remain its own** (`docs/specs/gutter-review.md` §4 rulings 9 and 12).
 8. **Two dependencies EXPLICITLY ABSENT, recorded so a later pass does not assume them.** **(a)** The
    engine pin (`A-d2`) is **SPENT** — this module imports nothing from the engine, not even a type.
    **(b)** The adopted node-local interaction session **`U-GSESSION`** (`A-d3`/`S-d9`) is **NOT a
