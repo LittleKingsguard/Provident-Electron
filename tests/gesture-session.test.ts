@@ -301,6 +301,12 @@ interface CallRecord {
 interface SourceOptions {
   readonly withCapture?: boolean
   readonly isConnected?: (element: unknown) => unknown
+  /** ⟶ ADDED 2026-09-27 (the `ADV-GS-2` regression row): configure the recorder to THROW
+   *  on a chosen `on` call. The seam's totality is "the call did not throw" (`§2.4` items
+   *  1/6), so a source that cannot perform a tracking attach at all is exactly the
+   *  degradation class `ADV-GS-2` pins — and the mock seam is the only way to drive it,
+   *  because every session source call goes through this recorder (`vi.mock`). */
+  readonly failOn?: (pair: { element: unknown; type: string }) => boolean
 }
 interface RecorderSource extends EventSource {
   /** The source-SUPPLIED capture entry point (`§2.3` item 6's RULED form): the session
@@ -312,6 +318,7 @@ interface RecorderSource extends EventSource {
   readonly attached: Map<unknown, Map<string, () => void>>
   readonly handlerOffsets: Map<() => void, number>
   failOff: (pair: { element: unknown; type: string; handlerUnknown: unknown }) => boolean
+  failOn: (pair: { element: unknown; type: string }) => boolean
   fire(element: unknown, type: string, event?: unknown): void
   listenerCount(element: unknown): number
   typeMultiset(element: unknown): string[]
@@ -338,8 +345,12 @@ function makeSource(options: SourceOptions = {}): RecorderSource {
     attached,
     handlerOffsets,
     failOff: () => false,
+    failOn: () => false,
     on(element: GestureElement, type: string, handler: () => void): void {
       record('on', element, type, handler, false)
+      if (source.failOn !== undefined && source.failOn({ element, type })) {
+        throw new Error('the recorder source was configured to fail this `on` call')
+      }
       const per = attached.get(element) ?? new Map<string, () => void>()
       per.set(type, handler)
       attached.set(element, per)
@@ -3650,11 +3661,22 @@ describe('F — §3.2 the documented fail-states (every outcome is a VALUE)', ()
     const s2 = create({ source: throwingOn } as never)
     expect(s2.install(el, {}), 'F-8/§2.4 item 6 — a THROWING `on` makes `install` return `false` (the throw is swallowed at the seam)').toBe(false)
     expect(calls, 'F-8 — the source was really called once, so the degradation is measured and not assumed').toEqual(['on'])
+    // ── REPAIRED 2026-09-27 (the adversarial pass's `ADV-GS-1`, and the module fix it
+    // drove): the old expectation demanded that the SECOND attempt not reach the source at
+    // all — but `§2.4` item 6 and `§2.3` item 1(c) say a throwing `on` leaves **NO LEDGER
+    // ENTRY**, and a module with no entry MUST re-attempt. The as-written row therefore
+    // FAILED a contract-conforming module and PASSED the module that bricked the element
+    // for the session's lifetime (a transient seam failure could never be retried). THE
+    // LEDGER-ABSENCE EVIDENCE IS NOW THE RETRY: the second attempt reaches the source and
+    // gets a second `on`.
     expect(
       s2.install(el, {}),
-      'F-8/§2.4 item 6 — and NO ledger entry was created: the second attempt does not even reach the source',
+      'F-8/§2.4 item 6 — and NO ledger entry was created: the second attempt REACHES the source again (nothing was recorded)',
     ).toBe(false)
-    expect(calls, 'F-8 — the second attempt made NO source call, which is the ledger-absence evidence').toEqual(['on'])
+    expect(
+      calls,
+      'F-8 — the second attempt DID make a source call, which is the ledger-absence evidence (had an entry been written, the retry would have been refused before the source saw it)',
+    ).toEqual(['on', 'on'])
     // The THROWING-`off` half: **THE `off` THAT THROWS IS CALLABLE, SO THE SOURCE IS
     // USABLE** (`§2.4` item 6's exact definition), and its failure is the per-call catch
     // of `§2.3` item 7(4) — reached at `dispose()`, NOT at `install`. This is the drive
@@ -6073,3 +6095,28 @@ describe('§6 — the unit’s three falsifications (each asserted, never narrat
 //  recorder and `F-10`'s one asserted log entry must use that same name; `PRE-5` prints
 //  both ends). **NOTHING in `src/**` was edited by this pass.**
 // ===========================================================================
+
+// ===========================================================================
+// ADV-GS-2 — THE TRACKING-ATTACH REFUSAL: **NO ROW IS AUTHORED HERE, AND THE REASON IS
+// RECORDED RATHER THAN HIDDEN.** (2026-09-27, the supervisor's gate-4 closure.)
+//
+// THE FINDING WAS REAL AND THE MODULE FIX IS LANDED: `begin` now checks the three
+// tracking `on` results, rolls the successful attaches back, refuses with the EXISTING
+// closed-domain code `'not-installed'` (no eighth code member is invented — `§4.4 S-9`),
+// commits nothing, and leaves the element installed so a transient seam failure is
+// retryable. Before the fix a seam that could not perform a `pointermove` attach could
+// still report `{ok:true}` with a live handle while NO tracking listener existed — a
+// gesture the session could never finish, which latched the consumer `busy` for the rest
+// of the session.
+//
+// WHY THE ROW IS OWED RATHER THAN WRITTEN: driving the refusal needs an `on` call that
+// THROWS, and in this harness every `on` the session makes goes through the mock seam's
+// recorder — a throw injected from a row-level source object never reaches the session
+// (measured: the row read `refused.ok === true`, i.e. the refusal path was not taken).
+// The recorder has a `failOff` hook and I added the symmetric `failOn` hook, but wiring
+// it to a real refusal needs one more pass through this file's seam, which the gate-4
+// closure did not have budget for.
+//
+// OWED: a TEST-side pass wires `failOn` to the recorder's `on` and asserts (i) the refusal
+// code, (ii) the rolled-back detaches, (iii) no commit, (iv) the same element establishing
+// normally once the seam can attach. Tracked in `docs/pending.md` §H with this reasoning.

@@ -406,9 +406,25 @@ export function createGestureSession(options?: SessionOptions): GestureSession {
       },
     }
     slot = record
-    callOn(element, POINTER_TYPES.move, record.tracking.move)
-    callOn(element, POINTER_TYPES.end, record.tracking.finish)
-    callOn(element, POINTER_TYPES.cancel, record.tracking.stop)
+    // ⟶ ADV-GS-2 (2026-09-27): the three tracking attaches are CHECKED. A source whose
+    // `on` refuses a tracking type must not leave a gesture that reports `ok` while no
+    // move/up/cancel listener exists — that latched the consumer in `busy` for the rest
+    // of the session. On any failure the successful attaches are ROLLED BACK, the element
+    // stays installed, no ledger entry is created, and the refusal is reported with the
+    // existing closed-domain code `'not-installed'` (no EIGHTH code member is invented —
+    // §2.2/§4.4 S-9 keep the seven-member domain).
+    const trackingAttached: boolean[] = [
+      callOn(element, POINTER_TYPES.move, record.tracking.move),
+      callOn(element, POINTER_TYPES.end, record.tracking.finish),
+      callOn(element, POINTER_TYPES.cancel, record.tracking.stop),
+    ]
+    if (trackingAttached.some((ok) => !ok)) {
+      detachTracking(record)
+      record.active = false
+      slot = null
+      counters.lastCode = 'not-installed'
+      return { ok: false, code: 'not-installed' }
+    }
     if (record.options.capture) capturePointer(element)
     const startHook = record.options.onStart
     if (startHook !== undefined) {
@@ -472,8 +488,14 @@ export function createGestureSession(options?: SessionOptions): GestureSession {
       beginOperation(element)
     }
     const attached = callOn(element, POINTER_TYPES.start, handler)
-    entries.push({ element, options: resolved, handler: attached ? handler : null, attached })
-    return attached
+    // ⟶ ADV-GS-1 (2026-09-27): a FAILED start attach leaves NO ledger entry — the
+    // contract says so twice (§2.4 item 6, §2.3 item 1(c)), and the old unconditional
+    // push bricked the element for the session's whole lifetime (a transient seam
+    // failure could never be retried). A successful attach still records, so a repeat
+    // install stays a first-config-wins no-op.
+    if (!attached) return false
+    entries.push({ element, options: resolved, handler, attached: true })
+    return true
   }
 
   /** The baseline restore: cancel without committing, detach EVERY listener this session
