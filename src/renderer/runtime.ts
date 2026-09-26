@@ -294,6 +294,44 @@ export class Runtime {
       .find((n) => !n.destroyed && n.isInTree && (n.props as { id?: string })?.id === id)
   }
 
+  /** REQ-GAP-3 — THE ONE GRAPH READ the renderer-side affordance wiring owes: resolve the
+   *  DOM ELEMENT the engine emitted for a graph node, from the AUTHORED id. The id space is
+   *  the one the index already builds: an engine `nodeId` first, then an authored `css.id`,
+   *  then an authored `props.id` — and the element is found by walking the live mount's own
+   *  `data-node-id` attributes (the opt-in attribute every emitted element carries). TOTAL:
+   *  an unresolvable id, a mount that is not a node and a child list that is not array-like
+   *  all answer `null`, and neither the graph nor the mount is touched. */
+  elementForNodeId(id: string): unknown | null {
+    if (typeof id !== 'string' || id.length === 0) return null
+    const resolved = this.resolveTarget(id)
+    if (resolved === null) return null
+    const holder = this.mount as unknown as { children?: unknown } | null | undefined
+    const roots = holder === null || holder === undefined ? undefined : holder.children
+    if (roots === null || roots === undefined || typeof (roots as ArrayLike<unknown>).length !== 'number') return null
+    const queue: unknown[] = []
+    const list = roots as ArrayLike<unknown>
+    for (let i = 0; i < list.length; i += 1) queue.push(list[i])
+    while (queue.length > 0) {
+      const candidate = queue.shift()
+      if (candidate === null || candidate === undefined || typeof candidate !== 'object') continue
+      const element = candidate as { getAttribute?: unknown; children?: unknown }
+      if (typeof element.getAttribute === 'function') {
+        let carried: unknown
+        try {
+          carried = (element.getAttribute as (name: string) => unknown)('data-node-id')
+        } catch {
+          carried = undefined
+        }
+        if (carried === resolved) return candidate
+      }
+      const kids = element.children
+      if (kids === null || kids === undefined || typeof (kids as ArrayLike<unknown>).length !== 'number') continue
+      const childList = kids as ArrayLike<unknown>
+      for (let i = 0; i < childList.length; i += 1) queue.push(childList[i])
+    }
+    return null
+  }
+
   // ---- host capabilities (runtime-host.md §2/§3) --------------------------
 
   /** A2 — replace the current graph from a legacy envelope. Tears down the
