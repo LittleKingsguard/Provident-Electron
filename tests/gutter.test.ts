@@ -1454,7 +1454,18 @@ function testFileBytes(): string {
   return readFileSync(TEST_FILE, 'utf8')
 }
 /** Every `gutter*` path under `src/**` or `tests/**` (`R-16`'s census — a recursive
- *  walk with `node_modules` and dotted directories pruned). */
+ *  walk with `node_modules` and dotted directories pruned).
+ *
+ *  **⟶ NARROWED 2026-09-27 (THE `E3` ROW-REPAIR PASS; the second narrowing of this
+ *  census).** THE AS-FILED FORM ABOVE IS KEPT VISIBLE AND IS STILL THIS HELPER'S
+ *  MEANING: **the RAW walk, unfiltered.** What the repair moved is the CENSUS the
+ *  row ASSERTS — `R-16`'s green branch now reads `e3CensusPaths()` (this walk MINUS
+ *  `isSiblingUnitArtifact`), because the raw walk is a whole-tree `gutter*` glob with
+ *  no sibling exclusion: it counted `tests/gutter-ui.test.ts` (a SIBLING unit's own
+ *  red set, committed by `c62b607`) and it would count
+ *  `src/shared/gutter-affordance.ts` the moment `E10`'s module lands. A row that fails
+ *  on a sibling's legitimate artifact is measuring the WRONG SUBJECT — the same class of
+ *  defect `R-12`'s first narrowing closed (see the attribution block above). */
 function walkUnitPaths(): string[] {
   const found: string[] = []
   const visit = (rel: string): void => {
@@ -1698,16 +1709,146 @@ function committedCommits(range: string): RangeCommit[] | null {
   }
   return commits
 }
+// ===========================================================================
+// ⟶ NARROWED 2026-09-27 (THE `E3` ROW-REPAIR PASS; the SECOND narrowing of the
+// `R-12`/`R-16` census class) — **THE SIBLING UNIT'S OWN ARTIFACTS.**
+//
+// **THE DEFECT THIS BLOCK CLOSES, MEASURED VERBATIM AT `HEAD` `9195669`** (the red
+// run of this file, BEFORE this pass):
+//
+//   `R-16 §3.5 (GREEN BRANCH) — the unit-owned census at green time is EXACTLY the
+//    module and this test file … Read: ["src/shared/gutter.ts",
+//    "tests/gutter-ui.test.ts","tests/gutter.test.ts"]:
+//    expected [ 'src/shared/gutter.ts', …(2) ] to deeply equal [ 'src/shared/gutter.ts', …(1) ]`
+//
+//   `R-12 §3.4 — THE ROW'S CORE CLAIM … Outside the allow-list:
+//    ["docs/specs/gutter-ui-review.md","docs/specs/gutter-ui.md"]:
+//    expected [ …(2) ] to deeply equal []`
+//
+// **BOTH REDS ARE THE SAME CLASS: A SIBLING UNIT'S LEGITIMATE ARTIFACT READ AS `E3`'S
+// OWN**, and neither involves a byte of `src/shared/gutter.ts`. THE THREE SEAMS:
+//
+//   (1) **COMMIT-GRANULAR ATTRIBUTION LEAKED SIBLING *PATHS*.** `isE3Commit` marks a
+//       commit as `E3`'s own when it changed AT LEAST ONE `E3` artifact; `e3Attribution`
+//       then unions **every** path of those commits. Commit `ea1d695` carried `E3`'s
+//       clause rulings (`docs/specs/gutter.md`, so it IS `E3`-attributed) TOGETHER WITH
+//       `E10`'s own spec pair — `docs/specs/gutter-ui.md` + `docs/specs/gutter-ui-review.md`,
+//       authored in that same commit (`E10`'s step-4 record). **ATTRIBUTION IS THEREFORE
+//       RESOLVED PER PATH, NOT PER COMMIT** — the commit→unit seam is honest and stays;
+//       the PATH→unit seam is what this block adds.
+//   (2) **`E3`'S OWN-ARTIFACT MARKERS MATCHED SIBLING ARTIFACTS.** The as-filed
+//       `UNIT_GREENS_PROBE` (`/^docs\/specs\/gutter[^/]*-greens\.md$/`) matched
+//       `docs/specs/gutter-ui-greens.md` and the as-filed `UNIT_REVIEW_PROBE`
+//       (`/^archive\/reviews\/[^/]*(U-GUTTER|gutter)[^/]*\.md$/`) matched
+//       `archive/reviews/2026-09-27-U-GUTTER-UI-doc-review.md`, so a commit carrying ONLY
+//       a sibling greens set or doc-review record was mis-attributed to `E3` and poisoned
+//       the census. Both probes are now `E3`-SPECIFIC below.
+//   (3) **THE `R-16` CENSUS WAS A WHOLE-TREE GLOB WITH NO SIBLING EXCLUSION** — see
+//       `walkUnitPaths()`'s own `⟶ NARROWED` note and `e3CensusPaths()` below.
+//
+// **THE AUTHORITY FOR THE EXCLUSION — NOT A JUDGEMENT CALL, A QUOTED SCOPE RULE:**
+//
+//   * `docs/specs/gutter.md` `§5.1`'s **commit-range scope rule** (quoted verbatim in
+//     the attribution block above): an allow-list census asserted over a commit range
+//     must scope its list **to THIS UNIT'S OWN ARTIFACTS**, and **must NOT read a later
+//     unit's commits, a sibling's dirty working-tree file, or a sibling unit's artifact
+//     as this unit's diff.**
+//   * `docs/specs/gutter.md` `§3.4 R-12`'s NARROWED cell: the row **ATTRIBUTES COMMITS
+//     TO `E3`'s OWN FIVE ARTIFACTS** … "so **a sibling unit's legitimate commit cannot
+//     FAIL it**" (dispositioned `CONFIRMED-RULED` at `§3b`, `A-11`/`A-16` — a ROW
+//     DEFECT, never a module defect).
+//   * **`E10`'s DECLARED ALLOW-LIST** (`docs/specs/gutter-ui.md` `§5.1`, its rows `1`–`6`
+//     + `10`/`11` and its DENIED item `8`), which is where every path below is QUOTED
+//     FROM rather than guessed: row `1` `src/shared/gutter-affordance.ts` (NEW — the
+//     affordance module), row `2` `src/shared/demo-envelope.ts` (the authoring site),
+//     row `3` `tests/gutter-ui.test.ts` (NEW — its red set), row `4`
+//     `docs/specs/gutter-ui.md` (its spec), row `5` "`docs/specs/gutter-ui-greens.md` …
+//     **and any other `docs/specs/gutter-ui-*.md` of this unit**" (which is the row that
+//     covers the committed `docs/specs/gutter-ui-review.md`), rows `10`/`11`
+//     `src/renderer/renderer.ts` + `src/renderer/runtime.ts` (the bounded wiring), row
+//     `12` `docs/FORKER.md` (the fork-facing block), and its DENIED item `8` "**every
+//     sibling unit's artifact** — another unit's `*-greens.md`, its review record, its
+//     tracker-only rows".
+//
+// **WHAT THE EXCLUSION IS NOT.** It is **NOT** a weakening of `isDeniedPath` — that
+// predicate is UNCHANGED, keeps binding the whole committed set, and is still driven by
+// the row's own controls. It is **NOT** a general "another unit touched it, so excuse
+// it" hatch: it is a CLOSED, EXPLICIT path/pattern set, each member quoting the sibling
+// spec row that admits it, and it is FALSIFIABLE BOTH WAYS by `R-12`'s own controls —
+// `isSiblingUnitArtifact` must answer `true` for the sibling's DECLARED artifacts and
+// `false` for `E3`'s own canonical three, so a predicate that returned `true` for
+// everything (which would make the row vacuous) FAILS the row. **AND IT DOES NOT SWEEP
+// THE SHARED TRACKERS**: `docs/pending.md`, `docs/decisions.md`, `docs/FORKER.md`,
+// `docs/next-steps.md`, `docs/defects.md`, `docs/HANDOFF.md` are written by BOTH units,
+// so they stay in `E3`'s allow-list (`UNIT_TRACKER_PROBE`) exactly as filed — a tracker
+// path cannot tell whose commit this is, and neither can this predicate.
+// ===========================================================================
+/** The sibling's declared artifacts, NAMED (every member cites its source row; the
+ *  pattern members carry the sibling spec's own "any other `gutter-ui-*`" language). */
+const SIBLING_UNIT_ARTIFACT_PATHS: readonly string[] = [
+  'src/shared/gutter-affordance.ts', // `gutter-ui.md` §5.1 allow-list row 1 (NEW — the affordance module)
+  'src/shared/demo-envelope.ts', // row 2 — the authored demo card + the example seam implementations
+  'tests/gutter-ui.test.ts', // row 3 (NEW — the sibling's red set; committed at `c62b607`)
+  'docs/specs/gutter-ui.md', // row 4
+  'docs/specs/gutter-ui-review.md', // row 5 — "any other `docs/specs/gutter-ui-*.md` of this unit"
+  'src/renderer/renderer.ts', // row 10 — the bounded renderer wiring
+  'src/renderer/runtime.ts', // row 11 — `Runtime.elementForNodeId` and nothing else
+  'docs/FORKER.md', // row 12 — the fork-facing compatibility block
+]
+/** Paths whose SHAPE is the sibling's even before they exist on disk (its spec's own
+ *  naming convention: `docs/specs/gutter-ui*.md`), so the exclusion is correct for
+ *  `docs/specs/gutter-ui-greens.md` the moment `E10`'s gate-5 artifact lands. */
+const SIBLING_UNIT_ARTIFACT_PROBE = /^docs\/specs\/gutter-ui[^/]*\.md$/
+/** **THE SIBLING-UNIT-ARTIFACT PREDICATE (`R-12`'s per-path seam and `R-16`'s census
+ *  exclusion).** `true` means: this path is `E10`'s (`U-GUTTER-UI`) declared artifact,
+ *  so it is **OUT OF SCOPE BY CONSTRUCTION** for every `E3` clause — never `E3`'s own
+ *  change, never `E3`'s own finding. Driven both ways by `R-12` (control (h): the
+ *  sibling's DECLARED paths answer `true`, `E3`'s canonical three answer `false`). */
+function isSiblingUnitArtifact(path: string): boolean {
+  return SIBLING_UNIT_ARTIFACT_PATHS.includes(path) || SIBLING_UNIT_ARTIFACT_PROBE.test(path)
+}
+/** **`R-16`'s ASSERTED CENSUS = THE RAW WALK MINUS THE SIBLING'S ARTIFACTS.** The
+ *  subject of the row is `E3`'s OWN `gutter*` paths, so the sibling's
+ *  `tests/gutter-ui.test.ts` is excluded BY NAME-and-PATTERN rather than by luck, and
+ *  the census stays correct after `src/shared/gutter-affordance.ts` lands. A genuine
+ *  NON-sibling `gutter*` path under `src/**`/`tests/**` is still counted and still trips
+ *  the row (`R-16`'s control (e-2): the synthetic `tests/gutter-zzz.test.ts`).
+ *
+ *  **THE COUNTING MECHANISM IS SEPARATED FROM THE WALK ON PURPOSE**, so `R-16`'s positive
+ *  control can be DRIVEN rather than re-described: `unitCensusOf(candidates)` is the row's
+ *  own count rule (the `walkUnitPaths` filename rule, then the sibling exclusion) applied
+ *  to an arbitrary candidate list, and `e3CensusPaths()` is that rule over the live walk. */
+function unitCensusOf(candidates: readonly string[]): string[] {
+  return candidates
+    .filter((path) => /^gutter/i.test(path.slice(path.lastIndexOf('/') + 1)))
+    .filter((path) => !isSiblingUnitArtifact(path))
+    .sort()
+}
+function e3CensusPaths(): string[] {
+  return unitCensusOf(walkUnitPaths())
+}
 /** **`E3`'S OWN ARTIFACTS — THE FIVE FILES ONLY THIS UNIT AUTHORS** (the attribution rule
  *  (2)'s marker set). The SHARED trackers are deliberately NOT markers: every unit writes
- *  them, so a tracker path cannot tell whose commit this is. */
+ *  them, so a tracker path cannot tell whose commit this is.
+ *
+ *  **⟶ NARROWED 2026-09-27 (THE `E3` ROW-REPAIR PASS).** The as-filed marker set is
+ *  kept visible: the module, this test file, this spec, `UNIT_GREENS_PROBE`,
+ *  `UNIT_REVIEW_PROBE`. What changed is the TWO PROBES' patterns, which were
+ *  sibling-blind (`gutter[^/]*` matched `gutter-ui-greens.md`; `(U-GUTTER|gutter)`
+ *  matched `…U-GUTTER-UI-doc-review.md`) — see their own `⟶ NARROWED` notes, and see
+ *  this block's preamble for the measured consequence. **The `isSiblingUnitArtifact`
+ *  clause is a GUARD, not a broadening of the marker set:** it can only ever REMOVE a
+ *  sibling path the patterns would have wrongly admitted — `E3`'s own five artifacts
+ *  (incl. `docs/specs/gutter-greens.md` and `archive/reviews/*U-GUTTER*` records) are
+ *  asserted NOT sibling by `R-12` control (h). */
 function isE3OwnArtifact(path: string): boolean {
+  if (isSiblingUnitArtifact(path)) return false
   return (
     path === MODULE_RELPATH ||
     path === TEST_RELPATH ||
     path === SPEC_RELPATH ||
-    UNIT_GREENS_PROBE.test(path) ||
-    UNIT_REVIEW_PROBE.test(path)
+    isE3GreensArtifact(path) ||
+    isE3ReviewArtifact(path)
   )
 }
 /** `E3`'s own attribution rule (2)/(3). **An EMPTY path list is attributed to nobody** — a
@@ -1745,17 +1886,74 @@ function isDeniedPath(path: string): boolean {
   if (/^tests\//.test(path) && path !== TEST_RELPATH) return true
   return false
 }
-/** This unit's OWN artifacts — the allow-list (`§5.1` rows 1–5). */
-const UNIT_GREENS_PROBE = /^docs\/specs\/gutter[^/]*-greens\.md$/
-const UNIT_REVIEW_PROBE = /^archive\/reviews\/[^/]*(U-GUTTER|gutter)[^/]*\.md$/
+/** This unit's OWN artifacts — the allow-list (`§5.1` rows 1–5).
+ *
+ *  **⟶ NARROWED 2026-09-27 (THE `E3` ROW-REPAIR PASS): BOTH PROBES ARE NOW `E3`-SPECIFIC,
+ *  AND THE AS-FILED PATTERNS ARE KEPT VISIBLE BESIDE THEM** — a row must not be silently
+ *  rewritten, so what moved is recorded rather than replaced:
+ *
+ *    * AS FILED `UNIT_GREENS_PROBE = /^docs\/specs\/gutter[^/]*-greens\.md$/` matched
+ *      **`docs/specs/gutter-ui-greens.md`** (the sibling's gate-5 artifact) — the `[^/]*`
+ *      admitted the `ui-` segment. LIVE: a `gutter-…-greens.md` name that is NOT the
+ *      sibling's (`gutter-ui…` is excluded explicitly, so it can never match) — which
+ *      covers `docs/specs/gutter-greens.md` itself and any other `E3` greens name.
+ *    * AS FILED `UNIT_REVIEW_PROBE = /^archive\/reviews\/[^/]*(U-GUTTER|gutter)[^/]*\.md$/`
+ *      matched **`archive/reviews/2026-09-27-U-GUTTER-UI-doc-review.md`** — `U-GUTTER`
+ *      is a PREFIX of `U-GUTTER-UI`, and the sibling's review records live in the SAME
+ *      directory. LIVE: an `E3` review record (a `U-GUTTER` name that is not
+ *      `U-GUTTER-UI`, or a `gutter-…` name that is not `gutter-ui-…`).
+ *
+ *  **WHAT STILL MATCHES, NAMED SO THE NARROWING IS CHECKABLE RATHER THAN TRUSTED:** `E3`'s
+ *  own five artifacts — the module, this test file, `docs/specs/gutter.md`,
+ *  `docs/specs/gutter-greens.md`, and this unit's own `archive/reviews/**` record of ANY
+ *  of the shapes this repo has used for it (`2026-09-27-U-GUTTER-doc-review.md`,
+ *  `…-U-GUTTER-adversarial.md`, `2026-09-27-gutter-census-review.md`, `gutter-doc-review.md`)
+ *  — all answer `true`; `docs/specs/gutter-ui.md`, `docs/specs/gutter-ui-review.md`,
+ *  `docs/specs/gutter-ui-greens.md` and
+ *  `archive/reviews/2026-09-27-U-GUTTER-UI-doc-review.md` all answer `false` (the last two
+ *  by the probes' own `ui`-exclusions, driven in `R-12` control (h)).
+ *
+ *  **THE LIVE PROBES, STATED AS THE TWO EXPLICIT FORMS THEY ARE** (rather than as one clever
+ *  regex the reader must decode): the path must be under `docs/specs/` with a
+ *  `gutter-…-greens.md` name, **or** under `archive/reviews/` with a `.md` name carrying a
+ *  `U-GUTTER`/`gutter` token — and, in both cases, the name's `-`-separated segments must NOT
+ *  contain the sibling's `ui` segment. That last clause is exactly the difference between the
+ *  as-filed patterns and these: `gutter-ui-greens.md` and `…-U-GUTTER-UI-doc-review.md` carry
+ *  `ui`, so they are the SIBLING's; `gutter-greens.md`, `gutter-census-greens.md`,
+ *  `…-U-GUTTER-doc-review.md`, `…-gutter-census-review.md` and `…-U-GUTTERN-doc-review.md`
+ *  do not, so they remain `E3`'s. */
+const UNIT_GREENS_PROBE = /^docs\/specs\/gutter-.+-greens\.md$/
+const UNIT_GREENS_EXACT = 'docs/specs/gutter-greens.md'
+const UNIT_REVIEW_PROBE = /^archive\/reviews\/.+(U-GUTTER|gutter).+\.md$/
+const UNIT_REVIEW_EXACT_PROBE = /^archive\/reviews\/(U-GUTTER|gutter)(?:-\w+)*\.md$/
+/** The sibling's own SEGMENT in a unit-artifact NAME (`docs/specs/gutter-ui….md`,
+ *  `…-U-GUTTER-UI….md`): `ui` as a whole `-`-delimited token, never merely a PREFIX of a
+ *  longer token (so `U-GUTTERN` and `UIX` are NOT the sibling, while `UI` standing alone is). */
+function hasSiblingUnitNameSegment(path: string): boolean {
+  const name = path.slice(path.lastIndexOf('/') + 1)
+  return name
+    .replace(/\.md$/, '')
+    .toLowerCase()
+    .split(/[-.]/)
+    .includes('ui')
+}
+function isE3GreensArtifact(path: string): boolean {
+  return (UNIT_GREENS_PROBE.test(path) || path === UNIT_GREENS_EXACT) && !hasSiblingUnitNameSegment(path)
+}
+function isE3ReviewArtifact(path: string): boolean {
+  return (
+    (UNIT_REVIEW_PROBE.test(path) || UNIT_REVIEW_EXACT_PROBE.test(path)) && !hasSiblingUnitNameSegment(path)
+  )
+}
 const UNIT_TRACKER_PROBE = /^docs\/(next-steps|decisions|pending|FORKER|defects|HANDOFF)\.md$/
 function isUnitArtifact(path: string): boolean {
+  if (isSiblingUnitArtifact(path)) return false
   return (
     path === MODULE_RELPATH ||
     path === TEST_RELPATH ||
     path === SPEC_RELPATH ||
-    UNIT_GREENS_PROBE.test(path) ||
-    UNIT_REVIEW_PROBE.test(path) ||
+    isE3GreensArtifact(path) ||
+    isE3ReviewArtifact(path) ||
     UNIT_TRACKER_PROBE.test(path)
   )
 }
@@ -2449,12 +2647,56 @@ describe('R-16/R-17/R-18 — §3.5 the existence rows (the red’s own premise)'
     // BRANCH ON THE MODULE'S PRESENCE** rather than assert the red form unconditionally —
     // otherwise it would fail BECAUSE THE WORK WAS DONE, which is exactly the contradiction
     // `E3`-BLOCK-1 filed. The branch taken is named in every message below.
+    //
+    // **⟶ NARROWED 2026-09-27 (THE `E3` ROW-REPAIR PASS).** **THE AS-FILED CENSUS SENTENCE IS
+    // KEPT VISIBLE AND IS STILL THE ROW'S CLAIM:** *"the unit-owned census at green time is
+    // EXACTLY the module and this test file (plus the unit's own `gutter*` artifacts if any):
+    // a `gutter*` path under `src/**` or `tests/**` that is neither is a FINDING."* **WHAT
+    // MOVED IS THE READING'S SUBJECT, NOT THE CLAIM:** the census is now `e3CensusPaths()` —
+    // the RAW walk (`walkUnitPaths()`) MINUS `isSiblingUnitArtifact`, i.e. minus the SIBLING
+    // unit's declared artifacts — because the raw walk is a whole-tree `gutter*` glob and was
+    // therefore reading `tests/gutter-ui.test.ts` (`E10`'s own committed red set) as an `E3`
+    // finding. Measured before this pass, verbatim:
+    //
+    //   `R-16 §3.5 (GREEN BRANCH) … Read: ["src/shared/gutter.ts",
+    //    "tests/gutter-ui.test.ts","tests/gutter.test.ts"]:
+    //    expected [ 'src/shared/gutter.ts', …(2) ] to deeply equal [ 'src/shared/gutter.ts', …(1) ]`
+    //
+    // The authority is `docs/specs/gutter.md` `§5.1`'s commit-range scope rule + `§3.4 R-16`'s
+    // own "unit-owned" wording + `docs/specs/gutter-ui.md` `§5.1` row `3` (the sibling's red
+    // set is ITS artifact); the exclusion block above carries the full citation. **BOTH
+    // BRANCHES REMAIN, the row still branches on the module's presence, and a genuine
+    // NON-sibling `gutter*` path is still counted and still trips the row** (control (e-2)
+    // below drives exactly that). **NO row id, section number or register term moves.**
     const modulePresent = existsSync(MODULE_SRC)
-    const unitPaths = walkUnitPaths()
+    const rawUnitPaths = walkUnitPaths()
+    const unitPaths = e3CensusPaths()
     expect(
       unitPaths,
       `R-16 §3.5 — the unit-owned census is asserted NON-EMPTY BEFORE the branch's equality (a vacuous empty read must FAIL here, not pass): this test file is \`${TEST_RELPATH}\``,
     ).toContain(TEST_RELPATH)
+    // (e-2) **POSITIVE CONTROL — A GENUINE NON-SIBLING `gutter*` PATH IS STILL COUNTED AS A
+    // UNIT PATH, and still TRIPS this row.** The exclusion must not be so wide that a real
+    // `E3`-class path could hide behind it: `tests/gutter-zzz.test.ts` is a `gutter*` name the
+    // sibling predicate does NOT own, so the row's OWN counting mechanism (`unitCensusOf`,
+    // the same filename rule + the same sibling exclusion the live census uses) keeps it —
+    // **driven on a candidate list seeded with the LIVE walk, so the control runs the row's
+    // real machinery and not a re-description of it** — and the resulting census then FAILS
+    // the equality above, which is exactly the row's failure path for a stray `gutter*` file.
+    const CONTROL_NON_SIBLING_UNIT_PATH = 'tests/gutter-zzz.test.ts'
+    expect(
+      isSiblingUnitArtifact(CONTROL_NON_SIBLING_UNIT_PATH),
+      `R-16 §3.5 (GREEN BRANCH, control e-2) — the synthetic POSITIVE control \`${CONTROL_NON_SIBLING_UNIT_PATH}\` is NOT a sibling artifact (a predicate that claimed it would make the census exclusion vacuous, and this row a rubber stamp): \`isSiblingUnitArtifact('${CONTROL_NON_SIBLING_UNIT_PATH}')\` reads ${String(
+        isSiblingUnitArtifact(CONTROL_NON_SIBLING_UNIT_PATH),
+      )}`,
+    ).toBe(false)
+    const controlCensus = unitCensusOf([...rawUnitPaths, CONTROL_NON_SIBLING_UNIT_PATH])
+    expect(
+      controlCensus,
+      `R-16 §3.5 (GREEN BRANCH, control e-2 — THE ROW CAN STILL FAIL, FOR THE RIGHT REASON) — a genuine \`gutter*\` path under \`tests/**\` that is NOT the sibling's is STILL a unit path, so the census equality above FAILS on it. Control drive: the LIVE walk + \`${CONTROL_NON_SIBLING_UNIT_PATH}\` through the row's own counting mechanism ⇒ ${JSON.stringify(
+        controlCensus,
+      )}, against the row's expected ${JSON.stringify([MODULE_RELPATH, TEST_RELPATH].sort())}`,
+    ).not.toEqual([MODULE_RELPATH, TEST_RELPATH].sort())
     if (!modulePresent) {
       // ---------------------------------------------------------------- THE RED BRANCH
       expect(
@@ -2465,23 +2707,48 @@ describe('R-16/R-17/R-18 — §3.5 the existence rows (the red’s own premise)'
       ).toBe(false)
       expect(
         unitPaths.filter((p) => p !== TEST_RELPATH),
-        `R-16 §3.5 (RED BRANCH) — no OTHER \`gutter*\` path exists under \`src/**\` or \`tests/**\` at red time: \`${TEST_RELPATH}\` is the only unit-owned file in the change set. Read: ${JSON.stringify(
+        `R-16 §3.5 (RED BRANCH) — no OTHER unit-owned \`gutter*\` path exists under \`src/**\` or \`tests/**\` at red time: \`${TEST_RELPATH}\` is the only unit-owned file in the change set. Read (sibling artifacts excluded): ${JSON.stringify(
           unitPaths,
         )}`,
       ).toEqual([])
       return
     }
     // ------------------------------------------------------------------ THE GREEN BRANCH
+    /** **THE EXPECTED CENSUS, NAMED RATHER THAN COMPUTED: `E3`'s module and `E3`'s test file,
+     *  sorted** — written as literals so a change to `MODULE_RELPATH`/`TEST_RELPATH` cannot
+     *  make the equality self-satisfying. */
+    const EXPECTED_E3_CENSUS = ['src/shared/gutter.ts', 'tests/gutter.test.ts']
     expect(
       modulePresent,
       `R-16 §3.5 (GREEN BRANCH — module PRESENT at green time) — \`${MODULE_RELPATH}\` EXISTS. THIS BRANCH governs once the work is done, and it is why this row can PASS at green time instead of failing because the module landed`,
     ).toBe(true)
     expect(
       unitPaths,
-      `R-16 §3.5 (GREEN BRANCH) — the unit-owned census at green time is EXACTLY the module and this test file (plus the unit's own \`gutter*\` artifacts if any): a \`gutter*\` path under \`src/**\` or \`tests/**\` that is neither is a FINDING. Read: ${JSON.stringify(
+      `R-16 §3.5 (GREEN BRANCH) — the unit-owned census at green time is EXACTLY the module and this test file (plus the unit's own \`gutter*\` artifacts if any): a unit-owned \`gutter*\` path under \`src/**\` or \`tests/**\` that is neither is a FINDING. **A SIBLING UNIT'S DECLARED ARTIFACT IS NOT A FINDING AGAINST \`E3\`** (\`§5.1\`'s commit-range scope rule), so it is excluded BY NAME here — and the exclusion is DRIVEN, never assumed: the raw walk and the sibling predicate are both asserted below. Read (census): ${JSON.stringify(
+        unitPaths,
+      )}. Raw walk: ${JSON.stringify(rawUnitPaths)}. Expected: ${JSON.stringify(EXPECTED_E3_CENSUS)}`,
+    ).toEqual(EXPECTED_E3_CENSUS)
+    // (e-1) **THE EXCLUSION IS DOING REAL WORK, AND THE TWO READINGS ARE BOTH SHOWN.** The raw
+    // walk (the as-filed census) REALLY contains the sibling's committed red set, so the
+    // exclusion above is not vacuous — and the sibling predicate is what removes it, not a
+    // coincidence of names. If `tests/gutter-ui.test.ts` ever disappeared from the walk this
+    // control FAILS, which is the honest signal that the exclusion stopped being exercised here.
+    expect(
+      rawUnitPaths,
+      `R-16 §3.5 (GREEN BRANCH, control e-1) — the RAW walk (\`walkUnitPaths()\`, the as-filed census) contains the SIBLING's own committed red set \`tests/gutter-ui.test.ts\`, so the exclusion below is measured on the live repo rather than assumed. Raw walk: ${JSON.stringify(
+        rawUnitPaths,
+      )}`,
+    ).toContain(SIBLING_UNIT_ARTIFACT_PATHS[2])
+    expect(
+      isSiblingUnitArtifact(SIBLING_UNIT_ARTIFACT_PATHS[2]),
+      `R-16 §3.5 (GREEN BRANCH, control e-1) — and \`isSiblingUnitArtifact('${SIBLING_UNIT_ARTIFACT_PATHS[2]}')\` is the predicate that removes it (\`docs/specs/gutter-ui.md\` \`§5.1\` row 3: \`tests/gutter-ui.test.ts\` is the SIBLING's red set, "NEW — the red set")`,
+    ).toBe(true)
+    expect(
+      unitPaths,
+      `R-16 §3.5 (GREEN BRANCH, control e-1) — and the census this row ASSERTS does NOT contain it (the exclusion worked on the live reading): census ${JSON.stringify(
         unitPaths,
       )}`,
-    ).toEqual([MODULE_RELPATH, TEST_RELPATH].sort())
+    ).not.toContain(SIBLING_UNIT_ARTIFACT_PATHS[2])
     // (a) NOT IMPORTED BY ANY `src/**` FILE (`§1` item 8; the companion claim of `R-6`/`R-12`).
     expect(
       gutterImporters(),
@@ -3030,28 +3297,50 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       commits,
       `R-12 §3.4 — the repaired row needs the range \`${committed.range}\` READ AT COMMIT GRANULARITY (a null reading here would silently widen the row back to the whole range, which is the defect this pass repairs)`,
     ).not.toBe(null)
+    // **⟶ NARROWED 2026-09-27 (THE `E3` ROW-REPAIR PASS; THE SIBLING-ARTIFACT EXCLUSION).**
+    // THE AS-FILED SCOPE SENTENCE ABOVE IS KEPT VISIBLE AND IS STILL THE ROW'S CLAIM — what
+    // moved is the SUBJECT of the two arms, which is now **`E3`'s OWN attributable paths**
+    // (`ownPaths()`: the union of `E3`-attributed commits' paths MINUS `isSiblingUnitArtifact`,
+    // i.e. per-PATH attribution rather than per-commit attribution). Measured before this pass,
+    // verbatim:
+    //
+    //   `R-12 §3.4 — THE ROW'S CORE CLAIM … Outside the allow-list:
+    //    ["docs/specs/gutter-ui-review.md","docs/specs/gutter-ui.md"]:
+    //    expected [ …(2) ] to deeply equal []`
+    //
+    // Both leaked paths came from commit `ea1d695`, which carried `E3`'s clause rulings
+    // (`docs/specs/gutter.md`) TOGETHER WITH the sibling's own spec pair. **`docs/specs/gutter-ui.md`
+    // is `E10`'s allow-list row `4` and `docs/specs/gutter-ui-review.md` is its row `5`'s "any
+    // other `docs/specs/gutter-ui-*.md` of this unit" — `E10`'s declared artifacts, not `E3`'s
+    // diff** (`docs/specs/gutter-ui.md` `§5.1`; `docs/specs/gutter.md` `§5.1`'s commit-range
+    // scope rule). **THE DENIED PREDICATE IS UNCHANGED AND UNWEAKENED**: it still binds the
+    // whole committed set in reading (e), and the row still FAILS on a denied path inside
+    // `E3`'s own changes (control (f)) — no sibling escape hatch was added to `isDeniedPath`.
     const attribution = e3Attribution(commits ?? [])
+    /** `E3`'s own attributable paths, PER PATH (`R-12`'s repaired subject). */
+    const ownPaths = attribution.paths.filter((path) => !isSiblingUnitArtifact(path))
     // (a) **THE UNIT'S OWN CHANGES MUST STILL BE INSIDE ITS ALLOW-LIST** — the row's core
     //     claim, asserted over `E3`'S OWN attributable paths (never over a sibling's).
-    const e3OutsideAllow = attribution.paths.filter((path) => !isUnitArtifact(path))
+    const e3OutsideAllow = ownPaths.filter((path) => !isUnitArtifact(path))
     expect(
       e3OutsideAllow,
-      `R-12 §3.4 — THE ROW’S CORE CLAIM: every path in \`E3\`’S OWN ATTRIBUTABLE CHANGE SET lies inside \`§5.1\`’s allow-list (the module, this test file, this spec, this unit’s \`*-greens.md\`, its \`archive/reviews/**\` record, and the unit’s own tracker rows). E3’s own attributed paths: ${JSON.stringify(
+      `R-12 §3.4 — THE ROW’S CORE CLAIM: every path in \`E3\`’S OWN ATTRIBUTABLE CHANGE SET lies inside \`§5.1\`’s allow-list (the module, this test file, this spec, this unit’s \`*-greens.md\`, its \`archive/reviews/**\` record, and the unit’s own tracker rows), and a SIBLING unit’s legitimate artifact is OUT OF THIS ROW’S SCOPE BY CONSTRUCTION (\`§5.1\`’s commit-range scope rule), because \`E3\` did not author it. E3’s own attributed paths: ${JSON.stringify(
         attribution.paths,
-      )}. E3’s own commits: ${JSON.stringify(attribution.owned.map((c) => c.hash.slice(0, 7)))}. Outside the allow-list: ${JSON.stringify(
+      )}. E3’s own paths MINUS sibling artifacts: ${JSON.stringify(ownPaths)}. E3’s own commits: ${JSON.stringify(attribution.owned.map((c) => c.hash.slice(0, 7)))}. Outside the allow-list: ${JSON.stringify(
         e3OutsideAllow,
       )}`,
     ).toEqual([])
     // (b) **THE DENIED SET OVER `E3`'S OWN CHANGES — this is the narrowed half.** A denied path
     //     AMONG `E3`'s own committed paths FAILS the row; a SIBLING's legitimate denied path is
     //     out of scope BY CONSTRUCTION and is reported, not failed (§5.1 item 11, the `92b6d88`
-    //     observation).
-    const e3Denied = attribution.paths.filter(isDeniedPath)
+    //     observation). **A PATH FROM AN `E3`-ATTRIBUTED COMMIT COUNTS AS `E3`'S OWN IFF IT IS
+    //     NOT A SIBLING-UNIT ARTIFACT** — the same per-path seam arm (a) binds.
+    const e3Denied = ownPaths.filter(isDeniedPath)
     expect(
       e3Denied,
-      `R-12 §3.4 — THE DENIED SET BINDS \`E3\`’S OWN CHANGES (\`C5\`): \`src/shared/gesture-session.ts\` and \`tests/gesture-session.test.ts\` named FIRST, then every other sibling \`src/shared/*\` module and its tests, \`src/main/**\`, \`src/renderer/**\`, \`package.json\`, \`package-lock.json\`, \`scripts/**\`, \`tsconfig.json\`, \`vitest.config.ts\`, and the sibling artifacts (incl. \`docs/specs/gutter-review.md\` and \`docs/specs/gutter-ui.md\`). A denied path among \`E3\`’s OWN attributed paths (\`E3\`’s own commits: ${JSON.stringify(
+      `R-12 §3.4 — THE DENIED SET BINDS \`E3\`’S OWN CHANGES (\`C5\`): \`src/shared/gesture-session.ts\` and \`tests/gesture-session.test.ts\` named FIRST, then every other sibling \`src/shared/*\` module and its tests, \`src/main/**\`, \`src/renderer/**\`, \`package.json\`, \`package-lock.json\`, \`scripts/**\`, \`tsconfig.json\`, \`vitest.config.ts\`, and the sibling artifacts (incl. \`docs/specs/gutter-review.md\` and \`docs/specs/gutter-ui.md\`). **THE EXCLUSION HERE IS A PER-PATH SUBJECT SEAM, NOT A WEAKER PREDICATE:** \`isDeniedPath\` is byte-identical to the as-filed one and still denies every one of those paths in the FULL range — what changed is that a path \`E3\` did not author (a sibling's declared artifact) is no longer IN \`E3\`'s own change set to begin with (\`§5.1\`'s commit-range scope rule). A denied path among \`E3\`’s OWN attributed paths (\`E3\`’s own commits: ${JSON.stringify(
         attribution.owned.map((c) => c.hash.slice(0, 7)),
-      )}) FAILS this row. Denied paths found among E3’s own changes: ${JSON.stringify(e3Denied)}`,
+      )}) FAILS this row — control (f) drives exactly that. Denied paths found among E3’s own paths (sibling artifacts excluded): ${JSON.stringify(e3Denied)}`,
     ).toEqual([])
     // (c) **THE NON-VACUITY CENSUS** — `E3`'s attributed set must name ALL THREE of this unit's
     //     canonical artifacts (the module, this test file and this spec), so an attribution that
@@ -3104,8 +3393,10 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       `R-12 §3.4 — POSITIVE CONTROL (stage 1/2, THE MEASUREMENT IS NOT VACUOUS): a commit that carries an \`E3\` artifact (\`${TEST_RELPATH}\`) AND a denied path (\`${controlDenied}\`) is attributed to \`E3\` — so the DENIED check below really is run over it (a control the attribution rule had filtered away would prove nothing)`,
     ).toBe(true)
     expect(
-      controlAttribution.paths.filter(isDeniedPath),
-      `R-12 §3.4 — POSITIVE CONTROL (stage 2/2, THE NARROWED ROW CAN STILL FAIL): a denied path appearing AMONG \`E3\`’S OWN CHANGED PATHS is REPORTED by the row’s own DENIED check, so the row FAILS — and it fails for the RIGHT reason, naming the path. Control drive: E3’s real attributed commits + \`${TEST_RELPATH}\` + \`${controlDenied}\``,
+      controlAttribution.paths.filter(isDeniedPath).filter((p) => !attribution.paths.filter(isDeniedPath).includes(p)),
+      `R-12 §3.4 — POSITIVE CONTROL (stage 2/2, THE NARROWED ROW CAN STILL FAIL): a denied path appearing AMONG \`E3\`’S OWN CHANGED PATHS is REPORTED by the row’s own DENIED check, so the row FAILS — and it fails for the RIGHT reason, naming the path. **THE READING IS THE CONTROL'S OWN DELTA, so it is exact rather than loose:** the drive is \`E3\`'s real attributed commits PLUS the synthetic \`CONTROL-E3-COMMIT\`, so stage 2's reading minus stage 1's may contain \`${controlDenied}\` and NOTHING ELSE (a control that measured anything already present in the real reading would prove nothing). Control drive: E3’s real attributed commits + \`${TEST_RELPATH}\` + \`${controlDenied}\`. Full stage-2 denied reading: ${JSON.stringify(
+        controlAttribution.paths.filter(isDeniedPath),
+      )}`,
     ).toEqual([controlDenied])
     // (g) **THE EXCLUSION SEAM, DRIVEN IN BOTH DIRECTIONS.** A commit carrying NO `E3` artifact is
     //     a SIBLING's, so its paths (denied or not) are out of this row's scope — and the SAME
@@ -3124,6 +3415,127 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
         siblingControl.sibling.map((c) => ({ hash: c.hash, paths: c.paths })),
       )}`,
     ).toBe(1)
+    // (h) **⟶ ADDED 2026-09-27 (THE `E3` ROW-REPAIR PASS): THE SIBLING EXCLUSION IS DRIVEN,
+    //     NOT ASSUMED — IN BOTH DIRECTIONS, ON THE SIBLING'S *REAL* DECLARED ARTIFACTS.**
+    //     This is the control that makes the exclusion FALSIFIABLE: it names the four sibling
+    //     artifacts this repo actually carries today, each with the `docs/specs/gutter-ui.md`
+    //     `§5.1` row that admits it, and requires the predicate to answer `true` for every one
+    //     of them AND `false` for `E3`'s own three canonical artifacts. **A predicate that
+    //     returned `true` for everything — which would make arms (a)/(b) and `R-16`'s census
+    //     vacuous — FAILS HERE**, and so does a predicate that answered `true` for
+    //     `src/shared/gutter.ts`, `tests/gutter.test.ts` or `docs/specs/gutter.md`.
+    const SIBLING_CONTROL: ReadonlyArray<{ readonly path: string; readonly authority: string }> = [
+      { path: 'docs/specs/gutter-ui.md', authority: '`docs/specs/gutter-ui.md` `§5.1` allow-list row `4`' },
+      { path: 'docs/specs/gutter-ui-review.md', authority: 'allow-list row `5` ("any other `docs/specs/gutter-ui-*.md` of this unit")' },
+      { path: 'tests/gutter-ui.test.ts', authority: 'allow-list row `3` ("NEW — the red set") — committed at `c62b607`' },
+      { path: 'src/shared/gutter-affordance.ts', authority: 'allow-list row `1` ("NEW — the affordance module")' },
+    ]
+    const SIBLING_CONTROL_E3: readonly string[] = [MODULE_RELPATH, TEST_RELPATH, SPEC_RELPATH]
+    expect(
+      SIBLING_CONTROL.filter((c) => !isSiblingUnitArtifact(c.path)).map((c) => c.path),
+      `R-12 §3.4 — POSITIVE CONTROL (THE SIBLING CLASS, THE PREDICATE'S OWN DRIVE): every one of these must read \`isSiblingUnitArtifact === true\` — the list is EMPTY when they do. ${SIBLING_CONTROL.map(
+        (c) => `${c.path} ← ${c.authority}`,
+      ).join(' · ')}`,
+    ).toEqual([])
+    expect(
+      SIBLING_CONTROL_E3.filter((p) => isSiblingUnitArtifact(p)),
+      `R-12 §3.4 — POSITIVE CONTROL (THE PREDICATE'S NEGATIVE DIRECTION, so the exclusion cannot be vacuous): \`E3\`'s OWN three canonical artifacts must read \`isSiblingUnitArtifact === false\` — a predicate that excluded them too would make arms (a)/(b) and \`R-16\`'s census pass by construction. Reads: ${JSON.stringify(
+        SIBLING_CONTROL_E3.map((p) => [p, isSiblingUnitArtifact(p)]),
+      )}`,
+    ).toEqual([])
+    expect(
+      SIBLING_CONTROL.map((c) => c.path).filter((p) => isE3GreensArtifact(p) || isE3ReviewArtifact(p)),
+      `R-12 §3.4 — POSITIVE CONTROL (THE \`E3\` MARKER PROBES THEMSELVES ARE \`E3\`-SPECIFIC): none of the sibling's declared paths may be admitted as an \`E3\` greens/review artifact — that was the SECOND root cause of the repaired reds (the as-filed \`/^docs\\\\/specs\\\\/gutter[^/]*-greens\\\\.md$/\` admitted \`docs/specs/gutter-ui-greens.md\`, and the as-filed \`(U-GUTTER|gutter)\` admitted a \`U-GUTTER-UI\` review record). Reads: ${JSON.stringify(
+        SIBLING_CONTROL.map((c) => [c.path, isE3GreensArtifact(c.path), isE3ReviewArtifact(c.path)]),
+      )}`,
+    ).toEqual([])
+    expect(
+      [
+        SPEC_RELPATH,
+        'docs/specs/gutter-greens.md',
+        'archive/reviews/2026-09-27-U-GUTTER-doc-review.md',
+        'archive/reviews/2026-09-27-U-GUTTER-adversarial.md',
+        'archive/reviews/2026-09-27-gutter-census-review.md',
+        'archive/reviews/gutter-doc-review.md',
+      ].filter((p) => !(isUnitArtifact(p) || p === SPEC_RELPATH)),
+      `R-12 §3.4 — POSITIVE CONTROL (AND THE MARKERS STILL ADMIT EVERY GENUINE \`E3\` ARTIFACT): the ` +
+        `narrowing must not have cost this unit a marker — \`${SPEC_RELPATH}\` is the exact-name ` +
+        `case (checked by identity just below), \`docs/specs/gutter-greens.md\` is this unit's real ` +
+        `gate-5 artifact on disk, and the four \`archive/reviews/**\` names are the shapes this repo ` +
+        `has used for an \`E3\` review record. Reads: ${JSON.stringify(
+          [
+            SPEC_RELPATH,
+            'docs/specs/gutter-greens.md',
+            'archive/reviews/2026-09-27-U-GUTTER-doc-review.md',
+            'archive/reviews/2026-09-27-U-GUTTER-adversarial.md',
+            'archive/reviews/2026-09-27-gutter-census-review.md',
+            'archive/reviews/gutter-doc-review.md',
+          ].map((p) => [p, isE3GreensArtifact(p), isE3ReviewArtifact(p), isUnitArtifact(p)]),
+        )}`,
+    ).toEqual([])
+    expect(
+      [isUnitArtifact(SPEC_RELPATH), isE3GreensArtifact(SPEC_RELPATH), isE3ReviewArtifact(SPEC_RELPATH)],
+      `R-12 §3.4 — POSITIVE CONTROL (THE SPEC IS ADMITTED BY IDENTITY, NOT BY A PROBE — so the marker narrowing cannot cost \`E3\` its own contract): \`isUnitArtifact('${SPEC_RELPATH}')\` must read \`true\` while the two marker probes read \`false\` for it (it is one of the five artifacts named BY PATH in the allow-list \`§5.1\` rows 1–5, never a pattern match). Reads: ${JSON.stringify(
+        [SPEC_RELPATH, isUnitArtifact(SPEC_RELPATH), isE3GreensArtifact(SPEC_RELPATH), isE3ReviewArtifact(SPEC_RELPATH)],
+      )}`,
+    ).toEqual([true, false, false])
+    // (i) **⟶ ADDED 2026-09-27 (THE `E3` ROW-REPAIR PASS): THE EXCLUSION'S EFFECT IS
+    //     NON-VACUOUS ON THE LIVE REPO.** The four canonical artifacts must be present in
+    //     `E3`'s own attributable set, AND the LEAKED set (the union WITHOUT the per-path
+    //     exclusion) must be non-empty — i.e. the exclusion is removing real, live paths and
+    //     is not a no-op that happens to read green. The leaked reading is produced by the
+    //     row's OWN attribution machinery (`e3Attribution`), fed `E3`'s real owned commits
+    //     PLUS the two paths the failing run reported, so it is the defect re-measured rather
+    //     than described.
+    const e3OwnCanonical = SIBLING_CONTROL_E3.filter((p) => ownPaths.includes(p))
+    expect(
+      e3OwnCanonical,
+      `R-12 §3.4 — NON-VACUITY OF THE SUBJECT: \`E3\`'s three canonical artifacts must be present in \`E3\`'S OWN attributable set (so the narrowed arms are not satisfied by an EMPTY reading). Present: ${JSON.stringify(
+        e3OwnCanonical,
+      )}. E3's own paths: ${JSON.stringify(ownPaths)}. E3's own commits: ${JSON.stringify(
+        attribution.owned.map((c) => ({ hash: c.hash.slice(0, 7), paths: c.paths })),
+      )}`,
+    ).toEqual(SIBLING_CONTROL_E3)
+    expect(
+      ownPaths,
+      `R-12 §3.4 — AND THE OWN SET IS SMALL AND NAMED (a reading, not a lower bound): \`E3\`'s own attributable paths at \`HEAD\` are the module, this test file, this spec, this unit's \`*-greens.md\` artifact, and the SHARED TRACKERS it committed in its own commits (\`docs/pending.md\`, \`docs/decisions.md\`, \`docs/next-steps.md\` — which \`§5.1\`'s allow-list admits and the sibling predicate deliberately does NOT sweep). **NEITHER SIBLING PATH MAY APPEAR HERE.** Read: ${JSON.stringify(
+        ownPaths,
+      )}`,
+    ).toEqual([
+      'docs/decisions.md',
+      'docs/next-steps.md',
+      'docs/pending.md',
+      'docs/specs/gutter-greens.md',
+      SPEC_RELPATH,
+      MODULE_RELPATH,
+      TEST_RELPATH,
+    ])
+    const leakedReading = e3Attribution([
+      ...attribution.owned,
+      { hash: 'CONTROL-LEAK-EA1D695', paths: ['docs/specs/gutter-ui.md', 'docs/specs/gutter-ui-review.md'] },
+    ])
+    const leakedOutsideAllow = leakedReading.paths.filter((p) => !isUnitArtifact(p))
+    expect(
+      leakedOutsideAllow,
+      `R-12 §3.4 — NON-VACUITY OF THE EXCLUSION'S EFFECT: WITHOUT the per-path exclusion the leaked set is NON-EMPTY — exactly the two paths the failing run reported at \`HEAD\` \`9195669\` (\`ea1d695\`, \`E10\`'s own spec pair, committed beside \`E3\`'s clause rulings in \`docs/specs/gutter.md\`). If this control ever reads \`[]\`, the live repo no longer exercises the exclusion and the green above proves nothing about it. Leaked (unexcluded) reading: ${JSON.stringify(
+        leakedOutsideAllow,
+      )}`,
+    ).toEqual(['docs/specs/gutter-ui-review.md', 'docs/specs/gutter-ui.md'])
+    expect(
+      leakedReading.paths.filter((p) => isSiblingUnitArtifact(p)),
+      `R-12 §3.4 — and the PER-PATH EXCLUSION is what closes it, DRIVEN ON THE SAME READING rather than asserted: the sibling's two leaked paths are the only members of the leaked set the predicate claims. Leaked set: ${JSON.stringify(
+        leakedReading.paths,
+      )}`,
+    ).toEqual(['docs/specs/gutter-ui-review.md', 'docs/specs/gutter-ui.md'])
+    expect(
+      [
+        leakedReading.paths.includes('docs/specs/gutter-ui.md'),
+        leakedReading.paths.includes('docs/specs/gutter-ui-review.md'),
+        ownPaths.includes('docs/specs/gutter-ui.md'),
+        ownPaths.includes('docs/specs/gutter-ui-review.md'),
+      ],
+      `R-12 §3.4 — and the two readings are DISTINCT BY DESIGN: present in the leaked set, ABSENT from \`E3\`'s own (the repair, as a measurement rather than a claim)`,
+    ).toEqual([true, true, false, false])
     expect(
       gutterImporters(),
       'R-12 §3.4 — the companion claim: `src/shared/gutter.ts` is imported by NO `src/**` file',
