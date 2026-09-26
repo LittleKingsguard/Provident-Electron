@@ -22,10 +22,12 @@
  *  (the axis producer, the bounds producer and the resizability producer) are read by the
  *  CONTROLLER's own evaluation and merely OBSERVED here: the per-gesture record reads the
  *  decision the controller made instead of asking a second time, so the module's own
- *  `PreviewState` never adds a call. The pre-drag size, which the controller reads only at a
- *  refused-or-committing terminal, is read here ONCE per gesture when the drag state becomes
- *  usable, and the bounds pair is kept from that same evaluation so the visible revert never
- *  needs a second read of it.
+ *  `PreviewState` never adds a call. The pre-drag size, which the composed controller needs
+ *  only at a reset terminal, is read here ONCE per gesture at establishment, and the bounds
+ *  pair is kept from that same evaluation so the visible revert never needs a second read of
+ *  it — and the controller's own default-size seam REUSES the establishment answer the record
+ *  already holds rather than consulting the caller's seam again, so a gesture that takes the
+ *  INVALID path reads the pre-drag seam EXACTLY ONCE, as the clause requires.
  *
  *  THE EVENT-SOURCE TYPE IS DECLARED LOCALLY rather than imported, so the module's imports stay
  *  the three statements the contract pins. */
@@ -427,6 +429,11 @@ export function createGutterAffordance(options?: GutterAffordanceOptions): Gutte
   let hovered = false
   let attached = false
   let detached = false
+  /** **THE HALF-ATTACHED STATE A REFUSED `attach()` MAY LEAVE** (`§2.1`'s `attach` cell): `true`
+   *  only while the module's OWN registration set was refused AFTER some of it was taken, so
+   *  `detach()` still has a delegation to complete. It is cleared by every completed `attach()`
+   *  and by `detach()` itself, and it never stands in for the `attached` flag. */
+  let recoverable = false
   const listeners: Array<{ readonly type: string; readonly handler: (event: unknown) => void }> = []
 
   /** **THE VISIBLE REVERT OF ONE GESTURE IS THE PRE-DRAG READING** (`§2.5` item 3's
@@ -636,18 +643,21 @@ export function createGutterAffordance(options?: GutterAffordanceOptions): Gutte
   }
 
   /** THE HOVER ENTER (`§2.3` row 4): the axis producer ONCE, the cursor mapping ONCE, the total
-   *  resolution, and ONE cursor call carrying the resolved declaration — `undefined` when the
-   *  resolution carries none (a hover that declares nothing writes no declaration). ZERO session
-   *  calls, ZERO controller calls. */
+   *  resolution, and ONE cursor call carrying the resolved declaration.
+   *
+   *  **A HOVER THAT DECLARES NOTHING WRITES NOTHING HERE** (`§2.3` row 5: the exit's clear happens
+   *  *"iff a declaration was written for this hover"*; `§3.1 M-11`: *"a no-declaration hover writes
+   *  NOTHING and clears NOTHING"*). The as-filed form called `applyCursor` with `undefined` on the
+   *  ENTER as well as on the EXIT, so the caller's cursor seam was invoked TWICE for a hover that
+   *  declared nothing and one of the two calls could not be told from a write. THERE IS NO ENTER
+   *  CALL WHEN THERE IS NO DECLARATION TO WRITE; the EXIT's clear — the ONE call such a hover
+   *  legitimately produces — is untouched. ZERO session calls, ZERO controller calls. */
   const onHoverEnter = (): void => {
     hovered = true
     const token = seamAnswer(axisOf, [element])
     const mapped = seamAnswer(cursorOf, [token.value])
     const declaration = cursorDeclarationFor(mapped.answered ? mapped.value : undefined)
-    if (declaration === undefined) {
-      if (typeof applyCursor === 'function') (applyCursor as (el: unknown, d: string | undefined) => void)(element, undefined)
-      return
-    }
+    if (declaration === undefined) return
     counters.cursorWrites += 1
     counters.lastCursor = declaration
     if (typeof applyCursor === 'function') (applyCursor as (el: unknown, d: string | undefined) => void)(element, declaration)
@@ -725,7 +735,18 @@ export function createGutterAffordance(options?: GutterAffordanceOptions): Gutte
       const answer = seamAnswer(boundsOf, [el, token])
       return answer.answered ? answer.value : undefined
     },
+    /** **THE GESTURE'S ALREADY-TAKEN PRE-DRAG READING IS REUSED HERE** (`§2.4` item 3:
+     *  *"`startSizeOf(element, token)` is called EXACTLY ONCE per gesture, in `onStart`"*; `§5.5.1`
+     *  `P-GU-IM-2`: *"`startSizeOf` — EXACTLY ONCE per gesture, at establishment"*). The composed
+     *  controller reads this seam at a RESET terminal, and the as-filed closure consulted the
+     *  caller's seam THERE — a second read on the invalid path (**MEASURED over a full invalid
+     *  path: `1` read at establishment, `1` after a valid move, `2` after the INVALID move**). The
+     *  record already holds that establishment answer, and the two readings cannot disagree
+     *  (`§2.4` item 3's closing clause), so the record's own value IS what the reset clamps. The
+     *  one fallback below serves only a gesture that never took an establishment reading at all
+     *  (there is then nothing to reuse); it reuses nothing and hides nothing. */
     defaultSizeFor: (el: unknown, token: unknown) => {
+      if (record !== null && record.started) return record.start
       const answer = seamAnswer(startSizeOf, [el, token])
       return answer.answered ? answer.value : undefined
     },
@@ -762,6 +783,25 @@ export function createGutterAffordance(options?: GutterAffordanceOptions): Gutte
     return true
   }
 
+  /** **THE MODULE'S OWN LISTENERS ARE REMOVED AS ONE CONTIGUOUS BLOCK** (`§2.3` row 13: *"exactly
+   *  FOUR `source.off` calls, the module's own four, each matching its `on` by the same three
+   *  values … **before** the controller's own delegation"*). It is ONE body because it has TWO
+   *  callers with the SAME obligation: `detach()`, and the ROLLBACK a refused `attach()` owes so no
+   *  owner is left behind. A source that refuses the removal keeps the module's own record honest
+   *  either way (the block is cleared regardless). */
+  const removeOwnListeners = (): void => {
+    const give = source === null || source === undefined ? undefined : (source as { off?: unknown })['off']
+    for (const listener of listeners) {
+      if (typeof give !== 'function') break
+      try {
+        ;(source as EventSourceLike).off(element, listener.type, listener.handler)
+      } catch {
+        continue
+      }
+    }
+    listeners.length = 0
+  }
+
   const attach = (): boolean => {
     if (attached || detached) return false
     if (element === null || element === undefined || typeof element !== 'object') return false
@@ -775,36 +815,64 @@ export function createGutterAffordance(options?: GutterAffordanceOptions): Gutte
     const hoverEnterRegistered = registerListener('pointerover', onHoverEnter)
     const hoverExitRegistered = registerListener('pointerout', onHoverExit)
     const pointerDownRegistered = registerListener('pointerdown', onPointerDownTurn)
-    if (!hoverEnterRegistered || !hoverExitRegistered || !pointerDownRegistered) return false
+    // **A REFUSED `attach()` LEAVES NO OWNER BEHIND** (`§2.1`'s `attach` cell: *"`true` iff every
+    // delegation succeeded"*). The as-filed body returned `false` while KEEPING the listeners it had
+    // already registered AND the controller's delegation, so the instance was half-attached,
+    // `detach()` refused, and NOBODY removed the listeners (MEASURED: `attach()` `false` with
+    // `attached: 1` on the controller, `3` residual listeners, `detach()` `false`). A refusal of the
+    // module's OWN FOUR rollbacks its own registrations here, and marks the instance so that
+    // `detach()` — the other half of the same obligation — can still complete the recovery.
+    if (!hoverEnterRegistered || !hoverExitRegistered || !pointerDownRegistered) {
+      removeOwnListeners()
+      recoverable = true
+      return false
+    }
     const controllerAttached = controller.attach(element, {
       onStart: onStartHook,
       onMove: onMoveHook,
       onEnd: onTerminal,
       onCancel: onCancelHook,
     })
-    if (!controllerAttached) return false
+    if (!controllerAttached) {
+      removeOwnListeners()
+      return false
+    }
+    // **THE MOVE LISTENER IS ATTACHED ONLY FOR A NON-EMPTY STRING TOKEN** (`§2.1` item 9, `§R.3`'s
+    // degradation row: *"a non-string or empty token ⇒ **NO move listener is attached**"*). The
+    // as-filed gate admitted the EMPTY string through its `typeof` read and FELL BACK to the
+    // session's own token for every NON-string answer, so a number, an object, a boolean and an
+    // ABSENT seam each attached a listener under the fallback literal (MEASURED: `42`, `{}` and an
+    // absent seam all registered `"pointermove"` with the drag half reading `moves 1`) — a drag half
+    // the wiring never asked for, indistinguishable from a working one. A token that is not a
+    // non-empty string now registers NOTHING AT ALL (never a fallback literal), and that declared
+    // degradation is NOT a failed delegation: the three registrations above and the composed
+    // controller's own delegation stand, and the session's own wrapped move turn is then the only
+    // move turn (`§2.3` row 8).
     const moveType = seamAnswer(moveTypeOf, [element])
-    const registered = moveType.answered ? moveType.value : undefined
-    const moveRegistered = registerListener(typeof registered === 'string' ? registered : POINTER_TYPES.move, onMoveTurn)
-    if (!moveRegistered) return false
+    const token = moveType.answered ? moveType.value : undefined
+    if (typeof token === 'string' && token.length > 0) {
+      if (!registerListener(token, onMoveTurn)) {
+        removeOwnListeners()
+        recoverable = true
+        return false
+      }
+    }
     attached = true
+    recoverable = false
     return true
   }
 
   const detach = (): boolean => {
-    if (!attached || detached) return false
-    const give = source === null || source === undefined ? undefined : (source as { off?: unknown })['off']
-    for (const listener of listeners) {
-      if (typeof give !== 'function') break
-      try {
-        ;(source as EventSourceLike).off(element, listener.type, listener.handler)
-      } catch {
-        continue
-      }
-    }
-    listeners.length = 0
+    // **`detach()` COMPLETES A REFUSED `attach()`'s RECOVERY** (`§2.1`'s `attach` cell). A refused
+    // attach is not a completed delegation, so the module's own `attached` flag is unset — but the
+    // controller may already be attached, and refusing to detach there would strand its listeners
+    // with no owner. The flag below admits exactly that state and nothing else: an instance that
+    // never reached `attach()` still answers `false` (`§2.3` row 14's short-circuit).
+    if ((!attached && !recoverable) || detached) return false
+    removeOwnListeners()
     const reported = controller.detach()
     detached = true
+    recoverable = false
     return reported === true
   }
 
