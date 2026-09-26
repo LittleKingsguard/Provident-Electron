@@ -5538,6 +5538,179 @@ describe('ADV-GS-30 — a `begin` whose session is disposed MID-CALL (the `§2.3
     })
   })
 })
+
+// ===========================================================================
+// **⟶ THE `ADV-GS-30` SECOND LIMB (2026-09-27) — THE ATTEMPT'S OWN RECORD DISCARDED
+// DURING THE ESTABLISHMENT ORDER, WITH THE SESSION NOT DISPOSED: the same refusal, driven
+// on the shape the DISPOSAL limb does NOT reach.**
+//
+// **THE RULING THE ROW IS AUTHORED FROM (the CLAUSE as the parallel spec pass states it,
+// never the module's current bytes).** `§2.3` item 7.7 — the clause `ADV-GS-30` stated for
+// the MID-CALL DISPOSAL — is stated as an EXTENSION covering the order's OTHER discard
+// shape: *"a `begin` whose OWN record is discarded during the establishment order (consumer
+// code inside the order — e.g. `cancel(element)` from `onStart` — ending this attempt
+// before the counter increment) must NOT report `{ok:true}` either: the attempt refuses
+// with the closed-domain `'disposed'` — the same refusal the disposal shape uses, because
+// the seven-member domain offers no more specific member; the counter and the id are NOT
+// consumed, `gesture()` stays `null`, and `lastCode` reads `'disposed'`. A re-lex of that
+// code for the discard-only shape would need its own gate (`§4.4 S-8`/`S-9`)."*
+// Two limbs of ONE clause, and the CLAUSE'S OWN TEXT is what separates them:
+//   · THE DISPOSAL LIMB — the session is DISPOSED inside the order (`dispose()` from
+//     `capturePointer` or from `onStart`). `session.disposed === true` afterwards, which is
+//     the reading that DRIVES the guard's `ended` half. Covered by the `ADV-GS-30` row above.
+//   · THE DISCARD-ONLY LIMB — **the session is NEVER disposed**; consumer code inside the
+//     order calls `cancel(element)`, which ends THIS attempt's own record and discards it
+//     (`§2.3` item 8's terminal, `§0A` note 8: the record is one gesture deep and every
+//     terminal discards it) **before the counter increment**. This is the guard's OTHER
+//     half (`slot !== record`), and it is the limb this row exists to pin.
+// **`cancel(element)` NEEDS NO HANDLE** (`§2.5` item 8's `gesture?` is OPTIONAL), which is
+// exactly why the window is reachable from consumer code that has never seen the handle
+// the in-flight `begin` has not yet returned — the establishment order (`§2.3` item 1(d))
+// opens it without any handle being passed to the consumer.
+//
+// **THE CLOSED-DOMAIN JUSTIFICATION, stated at the reading it explains.** `§2.3` item 4's
+// result-code union has SEVEN members (`'ok'`, `'not-installed'`, `'busy'`, `'disposed'`,
+// `'disconnected'`, `'stale'`, `'no-gesture'`) and the ruling refuses to invent an EIGHTH
+// (`§2.2`/`§4.4 S-9`; the `ADV-GS-2` row above keeps the same line). None of the other six
+// fits: the session is NOT `busy` (`slot` was discarded, so the `busy` check that opens the
+// next `begin` reads `null`), the control IS installed (the ledger entry and its start
+// listener are untouched), the element IS connected, no handle was presented (so not
+// `'stale'`), and there is no gesture to have (so not `'no-gesture'`). The RULED reading is
+// therefore the `'disposed'` refusal — the code that says the thing the refusal actually
+// means: **the record this call would have established no longer exists**, so the call may
+// not report success on it.
+//
+// **WHAT IS DRIVEN.** The refusal (`{ok:false, code:'disposed'}`), the DISCRIMINATING FACT
+// that this limb is NOT the disposal limb (`session.disposed === false`), `stats().gestures
+// === 0`, `stats().gestureId === 0`, `gesture() === null`, `stats().active === false`,
+// `stats().lastCode === 'disposed'`, plus the two supporting readings that show the
+// element's own state was NOT destroyed by the discard (`stats().installed === 1`, the
+// install-time start-listener footprint `1` untouched — `§2.3` item 1(a)) and the
+// non-vacuity evidence that the window really opened (`theCancel` was the SUCCESSFUL
+// terminal `{ok:true, code:'ok', committed:false}` and `onStart` ran exactly once).
+// **SILENCE, reported rather than invented:** `lastCode` is read as the DERIVATION `§2.3`
+// item 7.7 itself records (`§2.1`'s `lastCode` cell — *"the LAST result code this session
+// produced"* — is the only cell for it; the clause pins NO cell for a `'disposed'` refusal),
+// which is the same derivation the `ADV-GS-30` row above reports as its `S-1`.
+//
+// **THE ROW IS GREEN ON LANDING, AND THAT IS STATED PLAINLY RATHER THAN DRESSED AS A RED.**
+// The module's guard already reads `if (ended || slot !== record) return
+// refuseBegin('disposed')`, so BOTH limbs are satisfied by the landed bytes and **this pass
+// adds NO red and must not manufacture one** (manufacturing a red here would mean asserting
+// a reading the clause does not rule). **ITS VALUE IS THE MISSING CLAUSE COVERAGE:** the
+// disposal limb is driven by the row above, while the discard limb is driven by NOTHING —
+// so before this row, a future pass could NARROW the guard (`ended` kept, `slot !== record`
+// removed) and the whole suite would still pass, leaving the clause's second limb unpinned
+// and the narrowing invisible. This row is the failing row that narrowing now hits: the
+// discard window would then report `{ok:true}` and every reading above breaks.
+// **No register attempt moves for this row:** it is a `§2.3` clause row, NOT a `§5.5.1`
+// register row — no row id, strategy id, attempt term, the `396` total, the seed or the caps
+// is touched, and the register still declares ELEVEN rows.
+// ===========================================================================
+describe('ADV-GS-30 (second limb) — a `begin` whose OWN record is discarded during the establishment order by consumer code inside it, with the session NOT disposed', () => {
+  it('ADV-GS-30 (discard limb) — `cancel(element)` from inside `onStart`: `begin` REFUSES the closed-domain `disposed` while `session.disposed === false`, and the counter, the id and the record are NOT consumed', async () => {
+    // STATES ENUMERATED BEFORE THE ROW (the file's own convention):
+    //  (1) `install(el)` with an `onStart` that will discard this attempt from INSIDE it →
+    //      the control is installed, ONE start listener (the install-time footprint), no
+    //      gesture yet, the session NOT disposed.
+    //  (2) `begin(el)` → the establishment order runs; `onStart` (the ORDER'S LAST CONSUMER
+    //      STEP, `§2.3` item 1(d)) calls `cancel(el)`, which ends and DISCARDS this attempt's
+    //      own record BEFORE the counter increment; the order then reaches the liveness
+    //      re-check and THE CLAUSE rules the refusal `'disposed'`.
+    //  (3) the post-refusal reading: `disposed === false` (this is NOT the disposal limb),
+    //      `gestures === 0`, `gestureId === 0`, `gesture() === null`, `active === false`,
+    //      `lastCode === 'disposed'`, and the element's own state intact
+    //      (`installed === 1`, the ONE start listener still attached).
+    // NO reading is asserted that no clause pins: the `lastCode` limb is the derivation
+    // `§2.3` item 7.7 records, reported as one in the block header above.
+    const el: Record<string, unknown> = { id: 'a' }
+    let startRuns = 0
+    const cancels: TerminalResult[] = []
+    let sessionRef: GestureSessionMirror | null = null
+    const h = await makeHarness({
+      installOptions: {
+        capture: false,
+        onStart: (element: unknown): void => {
+          // **THE WINDOW, DRIVEN BY CONSUMER CODE INSIDE THE ESTABLISHMENT ORDER.** The
+          // element is the argument the hook receives and NO HANDLE IS NEEDED: `cancel`'s
+          // handle parameter is OPTIONAL (`§2.5` item 8), so this call is exactly the shape
+          // the clause names — *"consumer code inside the order — e.g. `cancel(element)`
+          // from `onStart`"*. The session reference is read (never captured) so the call is
+          // provably the SESSION's own `cancel`, and the terminal's result is kept so the
+          // row can show the discard SUCCEEDED rather than assume it.
+          startRuns += 1
+          cancels.push((sessionRef as GestureSessionMirror).cancel(element))
+        },
+      },
+    })
+    sessionRef = h.session
+    // STATE (1) — THE INSTALL-TIME FOOTPRINT, so every reading below has a measured baseline.
+    expect(
+      h.sessionInstall(el),
+      'ADV-GS-30 (discard limb) STATE (1) — the control installs (so the refusal below is the DISCARD and not an install refusal)',
+    ).toBe(true)
+    expect(
+      h.source.listenerCount(el),
+      'ADV-GS-30 (discard limb) STATE (1) — the install-time footprint the post-refusal reading is compared against is ONE listener (the start listener, §2.3 item 1(a))',
+    ).toBe(1)
+    expect(
+      h.session.disposed,
+      'ADV-GS-30 (discard limb) STATE (1) — the session is NOT disposed before the attempt: THIS limb is the discard-only shape, so the disposal limb cannot be what the refusal below reports',
+    ).toBe(false)
+    // STATE (2) — THE DISCARD, driven from INSIDE the call and by consumer code only.
+    const began = h.session.begin(el)
+    expect(
+      startRuns,
+      'ADV-GS-30 (discard limb) STATE (2) — the window REALLY OPENED: the consumer code inside the establishment order ran exactly ONCE inside the `begin` call',
+    ).toBe(1)
+    expect(
+      cancels,
+      'ADV-GS-30 (discard limb) STATE (2) — the discard SUCCEEDED, which is what makes the refusal below governed by the DISCARD rather than by a refusal the consumer made itself: `cancel(element)` returned the terminal `{ok:true, code:\'ok\', committed:false}` (§2.3 item 4: a cancel commits ZERO times)',
+    ).toEqual([{ ok: true, code: 'ok', committed: false }])
+    expect(
+      h.session.disposed,
+      'ADV-GS-30 (discard limb) STATE (2) — **THE DISCRIMINATING FACT OF THIS LIMB: `session.disposed === false` AFTER the refusal.** `§2.1` `GestureSession.disposed` is "`true` forever once `dispose()` has run" — `dispose()` NEVER ran here, so the refusal below is the establishment order\'s OWN DISCARD (`slot !== record`) and NOT the disposal (`ended`). Without this reading the row could be satisfied by the disposal limb and would pin nothing new',
+    ).toBe(false)
+    // THE CLAUSE, ASSERTED AS ONE READING (the `ADV-GS-16`/`ADV-GS-30` convention).
+    expect(
+      began,
+      `ADV-GS-30 (discard limb) STATE (2) — **THE CLAUSE GOVERNING, NOT THE BYTES: §2.3 item 7.7 discard limb — a begin whose OWN record is discarded during the establishment order (consumer code inside the order — the clause names cancel(element) from onStart — ending this attempt before the counter increment) must NOT report success either: the attempt refuses with the closed-domain 'disposed', the same refusal the disposal shape uses, because the seven-member domain offers no more specific member — and a re-lex of that code for the discard-only shape would need its own gate (§4.4 S-8/S-9)** — so a begin whose own record no longer exists when the establishment order ends REFUSES with that same closed-domain 'disposed' and never reports success on a record that was discarded; got ${JSON.stringify(
+        began,
+        (_k: unknown, v: unknown) => (typeof v === 'function' ? 'a function' : v),
+      )}`,
+    ).toEqual({ ok: false, code: 'disposed' })
+    // STATE (3) — THE POST-REFUSAL READING of the session's OWN seam (`§0A` note 12).
+    expect(
+      h.session.stats().gestures,
+      'ADV-GS-30 (discard limb) STATE (3) — the gesture COUNTER is NOT consumed: §2.1\'s `SessionStats.gestures` counts "Successful `begin` calls", and a `begin` that refused is not one (§2.4 item 4: the id increments "on every SUCCESSFUL `begin`"; the same clause the `ADV-GS-15`/`ADV-GS-16`/`ADV-GS-30` rows pin for the other refusal paths) — the lifetime counter stays `0`',
+    ).toBe(0)
+    expect(
+      h.session.stats().gestureId,
+      'ADV-GS-30 (discard limb) STATE (3) — the gesture ID is NOT consumed (`0` — the idle reading, §2.1\'s `gestureId` cell): the discarded record\'s id is not spent, and the next successful `begin` still takes id `1` (§2.4 item 4 — ids stay consecutive for SUCCESSFUL gestures)',
+    ).toBe(0)
+    expect(
+      h.session.gesture(),
+      'ADV-GS-30 (discard limb) STATE (3) — `gesture()` is `null`: the DISCARDED record stayed discarded and the refused `begin` resurrects nothing (§2.1\'s `gesture()` cell — "the active gesture\'s reading, or `null` when idle"; §2.3 item 8\'s terminal discards the record, §0A note 8)',
+    ).toBe(null)
+    expect(
+      h.session.stats().active,
+      'ADV-GS-30 (discard limb) STATE (3) — `stats().active === false`: the record was ended by the consumer cancel call itself (§2.3 item 4, the `active → installed-idle` transition; item 8) and the refused `begin` never made it active',
+    ).toBe(false)
+    expect(
+      h.session.stats().lastCode,
+      'ADV-GS-30 (discard limb) STATE (3) — `stats().lastCode` reads `\'disposed\'`, reported as the DERIVATION §2.3 item 7.7 itself records (the clause pins NO `lastCode` cell for a `\'disposed\'` refusal): §2.1\'s `lastCode` cell reads "the LAST result code this session produced", and the ONE result code this call produced is the refusal above — the same derivation the `ADV-GS-30` disposal row reports as its `S-1`',
+    ).toBe('disposed')
+    expect(
+      h.session.stats().installed,
+      'ADV-GS-30 (discard limb) STATE (3) — `stats().installed` is still `1`: the DISCARD is not a DISPOSAL — the ledger was NOT emptied (contrast the disposal clause of §2.3 item 7.3, which empties it: the `ADV-GS-30` row above asserts `installed === 0` there), so the element\'s own install survives the refused attempt',
+    ).toBe(1)
+    expect(
+      h.source.listenerCount(el),
+      'ADV-GS-30 (discard limb) STATE (3) — THE BASELINE IS UNTOUCHED: the post-refusal footprint equals the install-time footprint asserted in STATE (1) (`1`), because the discard detaches the attempt\'s three TRACKING listeners (§2.3 item 2(c)) and never the start listener of the control itself (§2.3 item 1(a)) — and the refused `begin` adds none',
+    ).toBe(1)
+  })
+})
+
 // ===========================================================================
 // §5.5.1 — PRE harness preconditions (NOT spec rows). `§4.2` item 2 requires the
 // un-run register rows to be REPORTED AS FAILURES; these rows exist so a red run's
