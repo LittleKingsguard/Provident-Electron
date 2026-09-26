@@ -274,6 +274,53 @@ const RENDERER_RELPATH = 'src/renderer/renderer.ts'
 const RUNTIME_RELPATH = 'src/renderer/runtime.ts'
 const DEMO_RELPATH = 'src/shared/demo-envelope.ts'
 
+// ===========================================================================
+// `§3.4 R-11`’S NAME-COMPLETE PINNED SURFACE (`§2.2` P-7, `§3.3 I-12;` the same
+// `21`-name set `tests/engine-pin-version.test.ts`’s `PINNED_TOOL_SET` asserts BY
+// SET EQUALITY). The names are carried here so `R-11`’s green branch can ask
+// whether THE MODULE ADDS ONE — a bare count would answer the wrong question.
+// ===========================================================================
+const ENGINE_PIN_RELPATH = 'tests/engine-pin-version.test.ts'
+const DEFAULT_GATE_RELPATH = 'src/main/security.ts'
+const PINNED_TOOL_NAMES: readonly string[] = [
+  'provident.dispatch',
+  'provident.get_rendered_html',
+  'provident.get_markdown',
+  'provident.list_targets',
+  'provident.get_node_state',
+  'provident.code.get',
+  'provident.code.validate',
+  'provident.load',
+  'provident.op',
+  'provident.export',
+  'provident.validate',
+  'provident.teardown',
+  'provident.journal',
+  'provident.code.set',
+  'provident.code.create',
+  'provident.code.delete',
+  'provident.code.load',
+  'provident.code.loadBatch',
+  'module.install',
+  'module.update',
+  'module.list',
+]
+const PINNED_GROUP_NAMES: readonly string[] = ['read', 'dispatch', 'graph', 'code', 'module']
+/** The registration-site vocabulary: a module carrying ANY of these has added a
+ *  pinned-surface member or a registration site (`§2.2` P-7, `§3.3 I-12`). */
+const REGISTRATION_SITE_TOKENS: readonly string[] = [
+  'ALL_TOOLS',
+  'RpcMethod',
+  'MUTATING_METHODS',
+  'VALID_GROUPS',
+  'ipcRenderer',
+  'ipcMain',
+  'createElement',
+]
+/** **`§3.4 R-11`’s POSITIVE CONTROL: the pinned-surface files whose own declarations
+ *  the green branch reads (`§3.3 I-12` names the same set).** */
+const PINNED_SURFACE_FILES: readonly string[] = ['src/main/mcp-server.ts', RENDERER_RELPATH, DEFAULT_GATE_RELPATH]
+
 function describeThrown(e: unknown): string {
   if (e instanceof Error) return `${e.name}: ${e.message}`
   return String(e)
@@ -1490,19 +1537,84 @@ describe('§3.4 — the static rows (the §2.2 prohibition table’s ids)', () =
   })
 
   it('R-11 §3.4 — THE NO-NEW-SURFACE ROW: `ALL_TOOLS` (21) · `RpcMethod` (21) · `MUTATING_METHODS` (7) · `VALID_GROUPS` (5) are UNCHANGED', () => {
-    const enginePin = readRel('tests/engine-pin-version.test.ts')
+    const enginePin = readRel(ENGINE_PIN_RELPATH)
     expect(
       enginePin.length,
-      'R-11 §3.4/§3.3 I-12 — the name-complete pin exists (`tests/engine-pin-version.test.ts`’s `PINNED_TOOL_SET`), which is what makes this row a SET EQUALITY rather than a bare count',
+      `R-11 §3.4/§3.3 I-12 — the name-complete pin exists (\`${ENGINE_PIN_RELPATH}\`’s \`PINNED_TOOL_SET\`), which is what makes this row a SET EQUALITY rather than a bare count`,
     ).toBeGreaterThan(0)
     expect(
       /PINNED_TOOL_SET/.test(enginePin),
       'R-11 §3.4 — the pinned tool SET exists and is read BY NAME by that row, never by a bare count',
     ).toBe(true)
+    // ---------------------------------------------------------------- THE TWO BRANCHES
+    // ⟶ REPAIRED 2026-09-27 (THE RED-RUN REPAIR PASS, gate 3): the as-filed row ended in an
+    // UNCONDITIONAL `expect(!existsSync(MODULE_SRC.href)).toBe(true)` — a conjunct that
+    // `§3.4 R-11` does NOT pin (the cell pins the pinned-surface SET EQUALITY and nothing
+    // else) and that flips RED the moment the unit's work is done: the DEFECTIVE-ROW class
+    // (`docs/specs/gutter.md` §3.5 R-16, the `E3`-BLOCK-1 precedent). `§3.4 R-11` is now
+    // annotated and the row takes `§3.5 R-8x`'s BRANCH form instead — RED keeps the
+    // absence reading, GREEN asserts THIS row's own claim (the pinned surface set is
+    // UNCHANGED by the module's arrival). A deleted conjunct would have made the row
+    // vacuous at green time (`§4.4 S-7`), so BOTH branches carry a reading.
+    const modulePresent = existsSync(MODULE_SRC.href)
+    if (!modulePresent) {
+      expect(
+        modulePresent,
+        'R-11 §3.4 (RED BRANCH — module ABSENT at red time) — the affordance module does not exist yet, so this unit has added NO registration site: its arrival changes no `ALL_TOOLS`/`RpcMethod`/`MUTATING_METHODS`/`VALID_GROUPS` member (§2.2 P-7, §7 item 11). If the module EXISTS, the GREEN BRANCH governs and this branch is not the live one',
+      ).toBe(false)
+      return
+    }
+    // ---------------------------------------------------------------- THE GREEN BRANCH
+    // THIS ROW'S OWN CLAIM, and nothing more: the module's arrival leaves the pinned
+    // surface set UNCHANGED — it adds no `ALL_TOOLS` member, no `RpcMethod`, no
+    // `MUTATING_METHODS` entry, no `VALID_GROUPS` member and no registration site.
     expect(
-      !existsSync(MODULE_SRC.href),
-      'R-11 §3.4 — and this unit adds NO registration site: the affordance module does not exist yet and its arrival changes no `ALL_TOOLS`/`RpcMethod`/`MUTATING_METHODS`/`VALID_GROUPS` member (§2.2 P-7, §7 item 11)',
-    ).toBe(true)
+      moduleBytes().length,
+      `R-11 §3.4 (GREEN BRANCH — module PRESENT) — \`${MODULE_RELPATH}\` EXISTS, so this branch governs; the green-branch claims below are read over ITS OWN bytes, which is why the scan is asserted NON-EMPTY first (a scan over \`''\` would pass vacuously)`,
+    ).toBeGreaterThan(0)
+    // (i) NOT ONE member of the name-complete pin is added: none of the `21` tool names
+    //     appears in this module's bytes, and the module exports no tool descriptor.
+    const toolNamesAdded = hitsOf(moduleBytes(), PINNED_TOOL_NAMES)
+    expect(
+      toolNamesAdded,
+      `R-11 §3.4 (GREEN BRANCH)/§2.2 P-7 — the module adds NO \`ALL_TOOLS\` member: NOT ONE of the \`21\` pinned tool names (§3.4 R-11's name-complete set, \`tests/engine-pin-version.test.ts\`'s \`PINNED_TOOL_SET\`, read BY NAME and never by a bare count) appears in ITS OWN bytes. Hits: ${JSON.stringify(
+        toolNamesAdded,
+      )}`,
+    ).toEqual([])
+    // (ii) NO registration site of any kind: the four declaration names, the IPC/bridge
+    //      access tokens and element creation are all absent (`§2.2` P-2/P-7).
+    const registrationSites = hitsOf(moduleBytes(), REGISTRATION_SITE_TOKENS)
+    expect(
+      registrationSites,
+      `R-11 §3.4 (GREEN BRANCH)/§2.2 P-7/§3.3 I-12 — the module carries NO registration site: no \`ALL_TOOLS\`, no \`RpcMethod\`, no \`MUTATING_METHODS\`, no \`VALID_GROUPS\`, no \`ipcRenderer\`/\`ipcMain\` bridge access and no element creation. Hits: ${JSON.stringify(
+        registrationSites,
+      )}`,
+    ).toEqual([])
+    // (iii) THE POSITIVE SIDE OF THE SET EQUALITY, asserted UNCHANGED AND NON-VACUOUSLY:
+    //       the four pinned surfaces still DECLARE their names in their own files, so the
+    //       "unchanged" reading is over surfaces that exist and are still named.
+    expect(
+      hitsOf(enginePin, [...PINNED_TOOL_NAMES.slice(0, 3), 'PINNED_TOOL_SET']),
+      'R-11 §3.4 (GREEN BRANCH) — THE POSITIVE CONTROL for (i): the name-complete pin still carries its own tool names and its `PINNED_TOOL_SET`, so the empty scan above is the MODULE’s reading and never a constant of the corpus',
+    ).not.toEqual([])
+    const surfaceDeclarations = PINNED_SURFACE_FILES.map((p) => readRel(p)).join('\n')
+    expect(
+      hitsOf(surfaceDeclarations, ['ALL_TOOLS', 'MUTATING_METHODS', 'VALID_GROUPS']).map((h) => h.replace(/ ×\d+$/, '')),
+      `R-11 §3.4 (GREEN BRANCH) — the pinned surface SET is UNCHANGED: the engine’s \`ALL_TOOLS\` (\`${PINNED_SURFACE_FILES[0]}\`), the renderer’s \`MUTATING_METHODS\` (\`${RENDERER_RELPATH}\`) and the default gate’s \`VALID_GROUPS\` (\`${DEFAULT_GATE_RELPATH}\`) all still exist BY NAME in their own files, so this row reads a surface that is still there (§3.4 R-11/§3.3 I-12). Read: ${JSON.stringify(
+        PINNED_SURFACE_FILES.map((p) => [p, readRel(p).length]),
+      )}`,
+    ).toEqual(['ALL_TOOLS', 'MUTATING_METHODS', 'VALID_GROUPS'])
+    const groupMembers = [
+      ...new Set(
+        hitsOf(surfaceDeclarations, PINNED_GROUP_NAMES).map((h) => h.replace(/ ×\d+$/, '')),
+      ),
+    ].sort()
+    expect(
+      groupMembers,
+      `R-11 §3.4 (GREEN BRANCH) — and the \`VALID_GROUPS\` domain is still exactly the \`5\` pinned names (\`read\`/\`dispatch\`/\`graph\`/\`code\`/\`module\`), read BY NAME and never by a bare count: a SIXTH group name anywhere in the surface files FAILS this row. Read: ${JSON.stringify(
+        groupMembers,
+      )}`,
+    ).toEqual([...PINNED_GROUP_NAMES].sort())
   })
 
   it('R-12 §3.4 — THE NODE-LOCAL LISTENER ROW: every listener this unit causes is attached through the INJECTED SOURCE, to the AFFORDANCE element it was given, once per event type, with ZERO on `document`/`window`/an ancestor', async () => {
@@ -1817,10 +1929,60 @@ describe('§3.3 — the every-state invariants', () => {
       /U-7/.test(spec),
       'I-11 §3.3/§5.U U-7 — the drift is carried by `U-7`’s BEFORE/AFTER census and HTML readings: a projected delta has not measured one (§7 item 9)',
     ).toBe(true)
+    // ---------------------------------------------------------------- THE TWO BRANCHES
+    // ⟶ REPAIRED 2026-09-27 (THE RED-RUN REPAIR PASS, gate 3): the as-filed row ended in an
+    // UNCONDITIONAL `expect(existsSync(MODULE_SRC.href)).toBe(false)` — a conjunct no clause
+    // pins (`§3.3 I-11`'s claim is THE DRIFT IS MEASURED, discharged by `§5.U U-7`'s
+    // BEFORE/AFTER readings) and which flips RED the moment the module lands: the
+    // DEFECTIVE-ROW class (`docs/specs/gutter.md` §3.5 R-16). The row now takes
+    // `§3.5 R-8x`'s BRANCH form — RED keeps the "no BEFORE/AFTER reading exists yet"
+    // reading, GREEN asserts that the DEBT IS STILL OWED TO `U-7` and is NOT discharged
+    // by the module's arrival (a projection is still not a measurement).
+    const modulePresent = existsSync(MODULE_SRC.href)
+    if (!modulePresent) {
+      expect(
+        modulePresent,
+        `I-11 §3.3 (RED BRANCH — the affordance module is ABSENT at red time) — no BEFORE/AFTER reading exists yet: the authored card has NOT landed, so this unit projects NOTHING and the drift is OWED to the live battery (§5.U U-1/U-7, item 2’s \`before\` field), which MEASURES it rather than projecting it. If the module EXISTS, the GREEN BRANCH governs and this branch is not the live one`,
+      ).toBe(false)
+      return
+    }
+    // ---------------------------------------------------------------- THE GREEN BRANCH
+    // THIS ROW'S OWN CLAIM, and nothing more: the module's arrival does NOT discharge the
+    // drift debt — `U-7` still owes its BEFORE/AFTER readings, taken by the live battery.
+    console.log(
+      `I-11 GREEN-BRANCH READING :: ${JSON.stringify({
+        modulePresent,
+        debt: 'STILL OWED TO U-7 (the live battery, §5.U item 2’s `before` field)',
+        clause: 'docs/specs/gutter-ui.md §3.3 I-11 + §5.U U-7',
+      })}`,
+    )
     expect(
-      existsSync(MODULE_SRC.href),
-      `I-11 §3.3 (RED BRANCH) — at red time the authored card has NOT landed (the affordance module does not exist), so no BEFORE/AFTER reading exists and this unit projects nothing: the drift is OWED to the live battery (§5.U U-1/U-7, item 2’s \`before\` field), which MEASURES it rather than projecting it`,
-    ).toBe(false)
+      spec.includes('the PRE-change reading, **taken before the authored card landed**'),
+      'I-11 §3.3 (GREEN BRANCH) — the debt is STILL OWED: `§5.U` item 2’s field table still pins the `before` field for `U-7` alone, as the PRE-change reading TAKEN BEFORE the authored card landed. The module’s arrival does NOT fill it — only the live battery’s readings can',
+    ).toBe(true)
+    const beforeLine = spec
+      .split('\n')
+      .find((line) => line.includes('for `U-7` only')) ?? ''
+    expect(
+      /PRE-change reading/.test(beforeLine) && /before the authored card landed/.test(beforeLine),
+      `I-11 §3.3 (GREEN BRANCH) — and \`§5.U\` item 2’s \`before\`-field rule SURVIVES THE REPAIR VERBATIM: a delta with no recorded before still FAILS the record. Read: ${JSON.stringify(
+        beforeLine.slice(0, 240),
+      )}`,
+    ).toBe(true)
+    expect(
+      spec.includes('recorded as deltas rather than projected'),
+      'I-11 §3.3 (GREEN BRANCH) — and `U-7`’s AFTER cell still requires the readings `recorded as deltas rather than projected`: a projection has still not measured one, so the module landing measures NOTHING by itself',
+    ).toBe(true)
+    expect(
+      hitsOf(spec, ['U-7']),
+      `I-11 §3.3 (GREEN BRANCH) — the instrument that owes the reading is still NAMED in the contract (\`U-7\`, whose \`[U]\`+\`[H]\` instrument is the live battery; \`U-1\` is its shipped-tool companion). Read: ${JSON.stringify(
+        hitsOf(spec, ['U-7', 'U-1']),
+      )}`,
+    ).not.toEqual([])
+    expect(
+      /U-7. delta is a measurement rather than a projection/.test(spec),
+      'I-11 §3.3 (GREEN BRANCH) — and `§5.U` item 3(c)’s read-only audit still requires that the `U-7` delta BE a measurement rather than a projection: the module landing is not a measurement',
+    ).toBe(true)
   })
 
   it('I-12 §3.3 — NO NEW MCP SURFACE AND NO SHELL CHANGE: the pinned surface files are UNCHANGED by this unit', () => {
@@ -3191,8 +3353,24 @@ describe('F — §3.2 the documented fail-states (every outcome is a DECLARED re
     }
   })
 
-  it('F-2 §3.2 — A THROWING `sizeFromPointer`: the throw PROPAGATES to the caller of the module’s listener turn, NO preview and NO sink write happen for that turn', async () => {
+  it('F-2 §3.2 — A THROWING `sizeFromPointer` IS ABSORBED BY THE MODULE’S OWN TOTAL GATE: the throw does NOT propagate (`thrown === null`), the move is INVALID ⇒ the `reset` arm, NO preview and NO sink write happen for that turn — ⟶ REMANDED 2026-09-27 (THE RED-RUN REPAIR PASS): the as-filed reading was “the throw PROPAGATES to the caller of the module’s listener turn, NO preview and NO sink write happen for that turn”', async () => {
     await requireLiveModule('F-2')
+    // ⟶ REMANDED 2026-09-27 (THE RED-RUN REPAIR PASS, gate 3): the as-filed row asserted the
+    // as-filed cell’s *“the throw PROPAGATES”* reading. THAT READING IS SUPERSEDED in
+    // `docs/specs/gutter-ui.md` §3.2 F-2 (annotated, as-filed text kept visible) because
+    // THREE NORMATIVE SITES rule the opposite for a VALUE-READING seam: (i) §2.4’s seam
+    // table’s *throwing-seam* row — the throw PROPAGATES for the THREE `void`
+    // PRESENTATION/SINK SEAMS (`applyPreview`, `applyCursor`, `commit`) and is ABSORBED by
+    // the module’s own total gate for the VALUE-READING seams (`pointerOf`,
+    // `sizeFromPointer`, `axisOf`, `boundsOf`, `startSizeOf`, `resizableOf`); (ii) §R.3’s
+    // degradation table (the same sentence); (iii) §3.1 M-20 class 3, which drives THE SAME
+    // life cycle with THE SAME seam and asserts `thrown === null` ⇒ the `reset` arm. The
+    // as-filed cell cited `docs/specs/gutter.md` §2.4 item 2 row 4 — `E3`’s behaviour for a
+    // consumer seam AT A TERMINAL — for a seam this module reads DURING A MOVE, inside the
+    // turn `§3.3 I-7` and `M-20`’s own title (*“NO throw out of a turn that must stay
+    // total”*) require to be total. THE ROW’S OWN SUBJECT AND ITS OWN MEASURED READINGS ARE
+    // KEPT (one throwing seam, one life cycle, the module’s own `stats()`/preview/sink
+    // record); only the disposition is remanded.
     const h = await makeHarness(
       {
         sizeFromPointer: (): never => {
@@ -3204,14 +3382,46 @@ describe('F — §3.2 the documented fail-states (every outcome is a DECLARED re
     h.affordance.attach()
     h.source.fire('pointerover', pointerEvent(0))
     h.source.fire('pointerdown', pointerEvent(0))
+    const callsBeforeMove = h.sessionLog.length
     const fire = h.source.fire(POINTER_TYPES.move, pointerEvent(0, 150, 300))
-    console.log(`F-2 MEASURED :: ${JSON.stringify({ threw: fire.thrown === null ? null : describeThrown(fire.thrown), previews: h.previews.length, sink: h.sink.records.length })}`)
+    const stats = h.affordance.stats()
+    console.log(`F-2 MEASURED :: ${JSON.stringify({ threw: fire.thrown === null ? null : describeThrown(fire.thrown), resets: stats['resets'], previews: h.previews.length, sink: h.sink.records.length, sessionCallsForTheTurn: h.sessionLog.length - callsBeforeMove })}`)
     expect(
       fire.thrown,
-      `F-2 §3.2/§0A note 5 — the throw PROPAGATES to the caller of the module’s listener turn (it is CONSUMER CODE, exactly as \`E3\`’s own seam throws behave at a terminal): ${fire.thrown === null ? 'it did not throw' : describeThrown(fire.thrown)}`,
-    ).not.toBe(null)
-    expect(h.previews.length, 'F-2 §3.2 — NO preview write for that turn').toBe(0)
-    expect(h.sink.records.length, 'F-2 §3.2 — and NO sink write for it').toBe(0)
+      `F-2 §3.2/§2.4/§R.3/M-20 class 3 — a THROWING \`sizeFromPointer\` is ABSORBED by the module’s own total gate: the clamp answers \`NaN\` ⇒ the move is INVALID and the throw NEVER escapes the module’s listener turn (a module that lets a value seam’s throw escape FAILS this row, \`F-1\`/\`F-6\`/\`I-7\`). Measured: ${fire.thrown === null ? 'it did not throw' : describeThrown(fire.thrown)}`,
+    ).toBe(null)
+    expect(
+      stats['resets'],
+      'F-2 §3.2/M-20 class 3 — the absorbed throw reaches its DECLARED degradation rather than a silent success: the INVALID move takes the `reset` arm (`stats().resets === 1`), never a stale preview and never a committed value',
+    ).toBe(1)
+    expect(
+      h.previews.filter((p) => p['valid'] === true).length,
+      `F-2 §3.2/§2.4 item 1 — NO VALID preview write for that turn (the invalid arm writes no live value). Read: ${JSON.stringify(
+        h.previews,
+      )}`,
+    ).toBe(0)
+    expect(h.sink.records.length, 'F-2 §3.2 — and NO sink write for it: the turn commits nothing').toBe(0)
+    // THE RECORD IS DISCARDED IN THE `finally`: a LATER drive for the same gesture finds NO
+    // active gesture of this module’s and makes ZERO session calls of its own.
+    const callsAfterTheThrow = h.sessionLog.length
+    const later = h.source.fire(POINTER_TYPES.move, pointerEvent(0, 160, 300))
+    console.log(
+      `F-2 LATER DRIVE :: ${JSON.stringify({
+        threw: later.thrown === null ? null : describeThrown(later.thrown),
+        sessionCallsForTheLaterDrive: h.sessionLog.length - callsAfterTheThrow,
+        sessionCallsForTheWholeDrive: h.sessionLog.map((c) => c.call),
+      })}`,
+    )
+    expect(
+      later.thrown,
+      'F-2 §3.2/§0A note 5 — the later drive’s turn never throws either: the refusal is a DECLARED reading',
+    ).toBe(null)
+    expect(
+      h.sessionLog.length - callsAfterTheThrow,
+      `F-2 §3.2 (REMANDED READING) — a later drive makes ZERO session calls of this module’s own: the invalid arm’s record was DISCARDED in the module’s \`finally\`, so the later drive finds no active gesture of this module’s. Read: ${JSON.stringify(
+        h.sessionLog.slice(callsAfterTheThrow).map((c) => c.call),
+      )}`,
+    ).toBe(0)
   })
 
   it('F-3 §3.2 — A `dispose()` OR A `pointercancel` MID-GESTURE: the module’s `onCancel` runs once, `applyPreview` reverts once, the sink reads `0`, and the DROP counter does NOT move', async () => {
