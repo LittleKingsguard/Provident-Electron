@@ -50,6 +50,32 @@ function resolveEventPointer(event: unknown): PointerPosition | null {
   } catch {
     return null
   }
+  return pointerPair(x, y)
+}
+
+/** **THE SAME TOTAL GATE READ OVER THE DECLARED PAIR** (`§2.1`'s `PointerResolver` cell): a
+ *  caller-supplied `pointerOf` answers a `PointerPosition` — `{x, y}`, carrying no event
+ *  reference — so its answer is read by the SAME rule the event reading uses, member by member.
+ *  The gate is a `typeof` gate on BOTH members with a finite-number requirement on each, so a
+ *  hostile holder whose traps throw, a throwing accessor, a BigInt, a Symbol, `NaN`, `Infinity`,
+ *  a string, a missing member and a non-object all answer `null`; a usable pair is frozen. */
+function resolvePointerPosition(value: unknown): PointerPosition | null {
+  if (value === null || value === undefined) return null
+  if (typeof value !== 'object' && typeof value !== 'function') return null
+  const holder = value as Record<string, unknown>
+  let x: unknown
+  let y: unknown
+  try {
+    x = holder['x']
+    y = holder['y']
+  } catch {
+    return null
+  }
+  return pointerPair(x, y)
+}
+
+/** THE ONE PAIR GATE both readings above end in. */
+function pointerPair(x: unknown, y: unknown): PointerPosition | null {
   if (typeof x !== 'number' || typeof y !== 'number') return null
   if (!Number.isFinite(x) || !Number.isFinite(y)) return null
   return Object.freeze({ x, y })
@@ -276,6 +302,23 @@ interface DragRecord {
   pair: unknown
   paired: boolean
   value: number | null
+  /** `true` iff THIS GESTURE has had a move observed by this module's own turn. It is the drop
+   *  path's own precondition (`§2.3` row 6's "no gesture is active" versus row 10's "while a
+   *  gesture is active"): the frozen session opens a gesture attempt on a `pointerdown` of ANY
+   *  button, so a bare secondary press settles a record with no drag existing behind it. It is
+   *  PER GESTURE — never the instance-wide `moves` counter, which a second gesture would inherit
+   *  from the first. */
+  moved: boolean
+  /** THE VISIBLE REVERT — the PRE-DRAG SIZE the DROP and CANCEL terminals write back (`§2.5`
+   *  item 3's `{value: preDragSize, …}` rule, `§R` `R7`/`R8`(d)). It is a property of the
+   *  GESTURE rather than of one move, so a drag whose every observed move is VALID still carries
+   *  it — which is what lets `§3.1 M-9`'s drop (a press that observes no move of its own) revert
+   *  visibly. `null` when the pre-drag size itself is not a finite number: a non-finite preview is
+   *  never written (`§2.5`, `§3.2 F-10`). */
+  preRevert: PreviewState | null
+  /** THE INVALID ARM'S OWN REVERT — the RESET terminal's reading, which is the clamp the
+   *  composed reset itself applies (`§2.3` item 9, `§3.1 M-13`). `null` when that clamp's answer
+   *  is not finite. */
   revert: PreviewState | null
 }
 
@@ -295,6 +338,28 @@ function seamAnswer(seam: unknown, args: readonly unknown[]): { readonly answere
  *  own exported clamp is the ONE clamp in the family; nothing is computed here. */
 function sizeClampedFor(start: unknown, pair: unknown): number {
   return clampToBounds(start, pair)
+}
+
+/** **THE PRE-DRAG SIZE THE VISIBLE REVERT CARRIES** (`§2.5` item 3's `{value: preDragSize, …}`
+ *  rule, `§3.1 M-9`/`M-13`, `§R` `R8`(d)). The pre-drag size is CLAMPED over the gesture's own
+ *  pair through the family's one clamp; when that pair is UNUSABLE the clamp answers `NaN` and
+ *  the reading FALLS BACK TO THE PRE-DRAG SIZE ITSELF — the value the caller's own
+ *  `startSizeOf` seam answered — because a revert is a DECLARED state and the ruled reading on
+ *  that shape is the pre-drag size (`§3.2 F-10`'s subject revert is `{value: 100, valid: false}`
+ *  at an unusable pair). A fallback that is itself not a finite number yields `null`: no revert
+ *  is carried at all rather than a non-finite one. */
+function preDragReading(start: unknown, pair: unknown): unknown {
+  const clamped = clampToBounds(start, pair)
+  return Number.isFinite(clamped) ? clamped : start
+}
+
+/** **ONE REVERT STATE, OR NONE.** A revert is only ever constructed around a FINITE number:
+ *  `§2.5`/`§3.2 F-10`/`§5.5.1 P-GU-SM-2` forbid a non-finite preview of ANY origin, so an answer
+ *  that is not a finite number yields `null` (no revert) rather than a `NaN` one — the
+ *  presentation channel carries declared states only. */
+function revertStateFor(value: unknown, token: unknown, resizable: boolean): PreviewState | null {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null
+  return { value, token, valid: false, resizable }
 }
 
 /** THE FACTORY. TOTAL: NEVER THROWS, for ANY argument — including a hostile options object, a
@@ -336,9 +401,22 @@ export function createGutterAffordance(options?: GutterAffordanceOptions): Gutte
   let detached = false
   const listeners: Array<{ readonly type: string; readonly handler: (event: unknown) => void }> = []
 
+  /** **THE VISIBLE REVERT OF ONE GESTURE IS THE PRE-DRAG READING** (`§2.5` item 3's
+   *  `{value: preDragSize, …}` rule, `§R` `R7`/`R8`(d), `§3.1 M-9`/`M-13`). It is taken through
+   *  the family's ONE pure clamp and NEVER re-reads a caller seam (`§5.5.1 P-GU-IM-2`'s
+   *  per-gesture budget: the pre-drag size is the answer this gesture's first observed move
+   *  already obtained). `null` before that move, and `null` when the reading is not a finite
+   *  number — a non-finite preview is never written (`§2.5`, `§3.2 F-10`; `§5.5.1 P-GU-SM-2`). */
+  const revertFor = (current: DragRecord, pair: unknown): PreviewState | null =>
+    current.started ? revertStateFor(preDragReading(current.start, pair), current.token, current.resizable) : null
+
   /** ONE preview call; a throw from it PROPAGATES, while this module's own counter has already
-   *  moved (the invocation is counted, `§2.5` item 3). */
+   *  moved (the invocation is counted, `§2.5` item 3). **A NON-FINITE VALUE IS NEVER WRITTEN**
+   *  (`§2.5`, `§3.2 F-10`, `§5.5.1 P-GU-SM-2`): `applyPreview` is a presentation channel and a
+   *  non-finite value is not a declared state, so the write — and the counter that counts THIS
+   *  module's own presentations — is skipped rather than degraded. */
   const writePreview = (state: PreviewState): void => {
+    if (!Number.isFinite(state.value)) return
     counters.previews += 1
     if (typeof applyPreview !== 'function') return
     ;(applyPreview as (s: PreviewState) => void)(state)
@@ -361,10 +439,11 @@ export function createGutterAffordance(options?: GutterAffordanceOptions): Gutte
 
   /** THE DROP PATH (`§2.3` row 10): a secondary press observed while a gesture is ACTIVE. This
    *  module calls NO session terminal — it writes the revert and lets the session's own cancel
-   *  terminate the gesture (zero commits on that terminal). */
+   *  terminate the gesture (zero commits on that terminal). The revert it writes is the
+   *  PRE-DRAG reading (`§2.5` item 3, `§3.1 M-9`), never the last live dragged value. */
   const dropArm = (current: DragRecord): void => {
     counters.drops += 1
-    const revert = current.revert
+    const revert = current.preRevert
     record = null
     if (revert !== null) writePreview(revert)
   }
@@ -378,12 +457,23 @@ export function createGutterAffordance(options?: GutterAffordanceOptions): Gutte
     counters.moves += 1
     const current = record
     if (current === null) return
+    current.moved = true
     if (!current.started) {
       current.start = seamAnswer(startSizeOf, [element, current.token]).value
       current.started = true
     }
-    const resolved = seamAnswer(pointerOf, [event])
-    const pointer = resolved.answered ? resolveEventPointer(resolved.value) : resolveEventPointer(event)
+    // **A CALLER-SUPPLIED `pointerOf` IS THE SITE THE COORDINATE IS OBTAINED FROM** (`§2.1`'s
+    // `pointerOf` cell, `§2.4` item 1, `§3.1 M-12): when it is supplied this module's own
+    // resolver STANDS DOWN, and the caller's answer passes this module's ONE total gate — so a
+    // resolver answering the DECLARED `PointerPosition` shape (`{x, y}`, carrying no event
+    // reference) is accepted as filed, while a non-object, a partial pair, a `NaN`, an
+    // `Infinity`, a throwing accessor or a throw from the seam itself still yields `null` and
+    // makes the move INVALID.
+    const resolvePointer = (): PointerPosition | null =>
+      typeof pointerOf === 'function'
+        ? resolvePointerPosition(seamAnswer(pointerOf, [event]).value)
+        : resolveEventPointer(event)
+    const pointer = resolvePointer()
     const pairs = seamAnswer(boundsOf, [element, current.token])
     const pair = pairs.answered ? pairs.value : undefined
     const sizes = seamAnswer(sizeFromPointer, [pointer, current.start])
@@ -393,13 +483,15 @@ export function createGutterAffordance(options?: GutterAffordanceOptions): Gutte
     const veto = typeof isDragValid === 'function' ? (isDragValid as (s: PreviewState) => unknown)(state) : undefined
     const valid = Number.isFinite(value) && veto !== false
     current.value = null
+    // **BOTH REVERT READINGS ARE TAKEN FROM THIS GESTURE'S OWN PRE-DRAG EVALUATION.** The
+    // PRE-DRAG reading is a property of the GESTURE, not of one move, so a drag whose every
+    // observed move is VALID still carries it — which is what lets `§3.1 M-9`'s drop (a press
+    // that observes no move of its own) revert visibly. The invalid arm's own reading is the
+    // same clamp applied at the same evaluation (`§3.1 M-13`). Either reading is `null` when the
+    // clamp's answer is not finite, so no non-finite preview is ever written (`§3.2 F-10`).
+    current.preRevert = revertFor(current, pair)
+    current.revert = revertFor(current, pair)
     if (!valid) {
-      current.revert = {
-        value: sizeClampedFor(current.start, pair),
-        token: current.token,
-        valid: false,
-        resizable: current.resizable,
-      }
       resetArm(current)
       return
     }
@@ -439,12 +531,12 @@ export function createGutterAffordance(options?: GutterAffordanceOptions): Gutte
     record = null
   }
 
-  /** THE CANCEL TERMINAL (`§2.3` row 12): the visible revert, the record discarded, no sink
-   *  write. */
+  /** THE CANCEL TERMINAL (`§2.3` row 12): the visible revert to the PRE-DRAG SIZE, the record
+   *  discarded, no sink write. */
   const onCancelHook = (): void => {
     const current = record
     if (current === null) return
-    const revert = current.revert
+    const revert = current.preRevert
     record = null
     if (revert !== null) writePreview(revert)
   }
@@ -478,7 +570,17 @@ export function createGutterAffordance(options?: GutterAffordanceOptions): Gutte
 
   /** THE MODULE'S OWN CONTEXT-BUTTON TURN (`§2.3` row 6b): the button read comes from the
    *  FORWARDED event through a `typeof` gate. Only a SECONDARY press on an ACTIVE record takes
-   *  the drop path; every other shape is INERT — no session call, no terminal, no swallow. */
+   *  the drop path; every other shape is INERT — no session call, no terminal, no swallow.
+   *
+   *  WHETHER A GESTURE EXISTS TO DROP IS THIS MODULE'S OWN READING, NOT THE SESSION'S. The
+   *  frozen session's own `'pointerdown'` install opens a gesture attempt on ANY button, so a
+   *  bare secondary press makes the session's `begin` seed this module's record through the
+   *  composed controller's establishment observer — a settled record therefore does NOT mean a
+   *  drag exists. The drag exists once this module has OBSERVED a move of THAT GESTURE (the
+   *  record's own `moved` reading, never the instance-wide `moves` counter): an inert secondary
+   *  press (`§2.3` row 6, `§3.1 M-14`) and the secondary press arriving before the first observed
+   *  move (`§2.3` row 14, `§3.2 F-7`) both read ZERO drops, while a press during an observed drag
+   *  (`§2.3` row 10, `§3.1 M-9`) takes the drop path. */
   const onPointerDownTurn = (event: unknown): void => {
     let button: unknown
     try {
@@ -489,6 +591,7 @@ export function createGutterAffordance(options?: GutterAffordanceOptions): Gutte
     if (typeof button !== 'number' || button !== 2) return
     const current = record
     if (current === null) return
+    if (!current.moved) return
     dropArm(current)
   }
 
@@ -507,6 +610,8 @@ export function createGutterAffordance(options?: GutterAffordanceOptions): Gutte
       pair: undefined,
       paired: false,
       value: null,
+      moved: false,
+      preRevert: null,
       revert: null,
     }
     return token
