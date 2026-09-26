@@ -23,17 +23,36 @@ const MUTATING_METHODS = new Set(['dispatch', 'load', 'op', 'teardown', 'code.lo
  *       element;
  *   (iii) `createGutterAffordance(...)` + `.attach()` with the eleven seams of THIS REPO'S ONE
  *       EXAMPLE IMPLEMENTATION (`demo-envelope.ts`'s `gutterSeamExample`);
- *   (iv) the PREVIEW write: the pane's authored size reading is patched through the same
- *       managed channel, one `state-slice` write carrying the clamped value;
+ *   (iv) the PREVIEW write: the DECLARED TRANSIENT INLINE-STYLE WRITE ON THE LIVE TARGET
+ *       (`§2.5` item 4 — the target's rendered geometry follows the pointer during a drag and
+ *       reverts on every revert arm), never a graph write and never the affinity's own node;
  *   (v) the CURSOR write: the handle's own style member, with the declaration the module
  *       resolved (never a vocabulary of the wiring's own).
  *  The `commit` route is EXACTLY ONE `Runtime.applyCommand` `state-slice` write to the AUTHORED
  *  STATUS NODE carrying the CLAMPED value — no preview write, no style write, no handler
  *  dispatch and no rebind. */
-export function startGutterAffordance(runtime: Runtime): { readonly attached: boolean } {
+/** ONE RECORDED COMMIT WRITE — the reading this wiring keeps so a REFUSED write is never a silent
+ *  no-op (see `startGutterAffordance`'s own return contract below). */
+export interface GutterWriteReading {
+  /** The authored node the op names, as the id string the runtime resolves. */
+  readonly node: string
+  /** The carried value, in the same string form the `state-slice` mutation writes. */
+  readonly value: string
+  /** The RUNTIME'S OWN ANSWER (`applyCommand`'s `{status}`), never an assumption: `'applied'` is
+   *  the only success reading, and a `'rejected'` one is the visible refusal L-5 required. */
+  readonly status: string
+}
+
+export function startGutterAffordance(runtime: Runtime): {
+  readonly attached: boolean
+  /** **EVERY COMMIT WRITE THIS WIRING MADE, WITH THE RUNTIME'S OWN ANSWER** — the recorded reading
+   *  that makes a refused write VISIBLE instead of silent (`§2.1` item 8(v); L-5/ADV-GU-1: the
+   *  as-filed `write()` discarded `applyCommand`'s returned status outright). The live MCP-visible
+   *  reading of a successful write is the authored status node's own `content` in the graph. */
+  readonly writes: readonly GutterWriteReading[]
+} {
   const element = runtime.elementForNodeId(GUTTER_AFFORDANCE_ID)
   const target = runtime.elementForNodeId(GUTTER_TARGET_ID)
-  const status = runtime.elementForNodeId(GUTTER_STATUS_ID)
   const seams = gutterSeamExample()
   const source = domEventSource()
   const session = createGestureSession({
@@ -42,13 +61,54 @@ export function startGutterAffordance(runtime: Runtime): { readonly attached: bo
     // no second writer exists (`docs/specs/gutter.md` §0 ruling 1, `§4.4` S-11).
     commit: (): void => undefined,
   })
-  const write = (node: unknown, value: unknown): void => {
-    if (node === null || node === undefined) return
-    runtime.applyCommand({
+  /** **THE COMMIT ROUTE — ONE `state-slice` WRITE ON THE AUTHORED STATUS NODE, AND ITS REFUSAL IS
+   *  NEVER DISCARDED** (`§2.1` item 8(v), `§2.5` item 5, `§3.1` M-19; L-5/ADV-GU-1). The as-filed
+   *  form passed the DOM ELEMENT it had resolved as `applyCommand`'s `node`, so the runtime's F5
+   *  guard (`typeof cmd.node === 'object' && !this.isRegisteredNode(cmd.node)`) refused the op
+   *  WHOLE with `{status:'rejected'}` — and the returned status was thrown away, so NO write ever
+   *  landed on the graph and nothing said so. THE FIX IS TWO HALVES: (a) the `node` handed to
+   *  `applyCommand` is the AUTHORED STATUS NODE'S OWN ID, resolved through the same graph-read
+   *  surface the elements were resolved through (`Runtime.elementForNodeId`'s own id space, never
+   *  a selector, a lookup or a created element); (b) the returned reading is KEPT on the record
+   *  below, so a refusal is a visible reading instead of a silent no-op. The write stays ONE
+   *  `state-slice` write to the authored status node carrying the CLAMPED value, with no preview
+   *  write, no style write, no rebind and no second writer. */
+  const writes: Array<{ readonly node: string; readonly value: string; readonly status: string }> = []
+  const write = (value: unknown): string => {
+    const carried = typeof value === 'string' ? value : String(value)
+    const answer = runtime.applyCommand({
       kind: 'state-slice',
-      node: node as never,
-      mutation: [{ targetProp: 'content', mode: 'replace', value: typeof value === 'string' ? value : String(value) }],
-    } as never)
+      node: GUTTER_STATUS_ID,
+      mutation: [{ targetProp: 'content', mode: 'replace', value: carried }],
+    })
+    const status = answer.status
+    writes.push({ node: GUTTER_STATUS_ID, value: carried, status })
+    if (status !== 'applied') {
+      // A REFUSAL IS A RECORDED READING, NEVER A SILENT NO-OP (L-5/ADV-GU-1). The demo's MCP
+      // surface is the app graph itself (`provident.get_rendered_html`, `get_node_state`), so
+      // this console reading is the operator/Debug-pane half of the same fact.
+      console.error(`[provident-renderer] gutter commit REFUSED (status=${status}) for node ${GUTTER_STATUS_ID}`)
+    }
+    return status
+  }
+  /** **THE PREVIEW — THE DECLARED TRANSIENT INLINE-STYLE WRITE ON THE LIVE TARGET** (`§2.5` item 4,
+   *  `§3.1` M-12; ADV-GU-2). The as-filed form dispatched the affordance's OWN node through
+   *  `write(element, …)` — a GRAPH WRITE on the handle the pointer is over, which is the NAMED
+   *  HAZARD of `§2.5` item 5 (a preview-by-dispatch re-renders the graph mid-gesture), and it made
+   *  the `target` option of this module read by NOTHING. The ruled form: one transient `style`
+   *  declaration on the target element, so the target's rendered geometry follows the pointer
+   *  during a drag; a non-finite value is never written (the module's own gate answers `null`
+   *  before this seam is reached) and every revert arm (`reset`, `cancel`, the drop) calls the
+   *  same seam with the PRE-DRAG size, so the target's geometry reverts with it. No element is
+   *  created, no provident data is authored and the graph is not re-rendered. */
+  const applyPreview = (state: unknown): void => {
+    const holder = target as { readonly style?: { setProperty?: unknown } } | null | undefined
+    if (holder === null || holder === undefined || holder.style === null || holder.style === undefined) return
+    const set = holder.style.setProperty
+    if (typeof set !== 'function') return
+    const value = (state as { readonly value?: unknown } | null | undefined)?.value
+    if (typeof value !== 'number' || !Number.isFinite(value)) return
+    ;(set as (property: string, text: string) => void).call(holder.style, 'width', `${String(value)}px`)
   }
   const affordance = createGutterAffordance({
     session: session as never,
@@ -56,9 +116,10 @@ export function startGutterAffordance(runtime: Runtime): { readonly attached: bo
     element,
     target,
     sizeFromPointer: seams.sizeFromPointer,
+    pointerOf: seams.pointerOf,
     axisOf: seams.axisOf,
     cursorOf: seams.cursorOf,
-    applyPreview: (state): void => write(element, state.value),
+    applyPreview,
     applyCursor: (el, declaration): void => {
       const holder = el as { readonly style?: Record<string, unknown> } | null | undefined
       if (holder === null || holder === undefined || holder.style === null || holder.style === undefined) return
@@ -70,9 +131,12 @@ export function startGutterAffordance(runtime: Runtime): { readonly attached: bo
     moveTypeOf: (): unknown => POINTER_TYPES.move,
     // (v) THE COMPOSITION'S SINGLE SINK WRITER — one managed-channel write to the AUTHORED
     // STATUS node, and nothing else.
-    commit: (_gesture, value): void => write(status, value),
+    commit: (_gesture, value): void => {
+      write(value)
+    },
   })
-  return { attached: affordance.attach() }
+  const attached = affordance.attach()
+  return { attached, writes }
 }
 
 export function handleRequest(runtime: Runtime, req: RpcRequest, notify: (p: { uri: string }) => void): Promise<RpcReply> {

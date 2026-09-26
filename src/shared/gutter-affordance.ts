@@ -134,12 +134,21 @@ export type CursorOf = (token: unknown) => unknown
 
 /** THE TOTAL RESOLUTION OF A CURSOR PRODUCER'S ANSWER: a trimmed non-empty string, or
  *  `undefined`. It NEVER throws, and it touches no element, no style object and no global
- *  scope. */
+ *  scope.
+ *
+ *  **THE `cursor` MEMBER MUST BE AN *OWN* PROPERTY** (`§2.6` item 3, `§0A` note 8;
+ *  ADV-GU-9). The as-filed read was a plain `value['cursor']` MEMBER READ, which walks the
+ *  PROTOTYPE CHAIN — so a producer whose declaration rides on a PROTOTYPE (rather than on the
+ *  answer object itself) resolved a declaration it never authored on that object, and the
+ *  module's own "an own `cursor` string property" rule was not the rule its bytes implemented.
+ *  `Object.hasOwn` is read through the same `try` as the member read, so a hostile holder's
+ *  traps are still absorbed by the module's total gate. */
 export function cursorDeclarationFor(value: unknown): string | undefined {
   if (value === null || value === undefined) return undefined
   if (typeof value !== 'object' && typeof value !== 'function') return undefined
   let declaration: unknown
   try {
+    if (!Object.hasOwn(value, 'cursor')) return undefined
     declaration = (value as { readonly cursor?: unknown })['cursor']
   } catch {
     return undefined
@@ -170,7 +179,12 @@ export function domEventSource(): EventSourceLike {
   return {
     on(element: unknown, type: string, handler: (event: unknown) => void): void {
       if (element === null || element === undefined || typeof element !== 'object') return
-      const attach = (element as { addEventListener?: unknown })['addEventListener']
+      let attach: unknown
+      try {
+        attach = (element as { addEventListener?: unknown })['addEventListener']
+      } catch {
+        return
+      }
       if (typeof attach !== 'function') return
       try {
         attach.call(element, type, handler)
@@ -180,7 +194,12 @@ export function domEventSource(): EventSourceLike {
     },
     off(element: unknown, type: string, handler: (event: unknown) => void): void {
       if (element === null || element === undefined || typeof element !== 'object') return
-      const detach = (element as { removeEventListener?: unknown })['removeEventListener']
+      let detach: unknown
+      try {
+        detach = (element as { removeEventListener?: unknown })['removeEventListener']
+      } catch {
+        return
+      }
       if (typeof detach !== 'function') return
       try {
         detach.call(element, type, handler)
@@ -299,9 +318,18 @@ interface DragRecord {
   started: boolean
   establish: boolean
   resizable: boolean
+  value: number | null
+  /** THE BOUNDS PAIR this gesture's LAST evaluation obtained, kept so the record's own revert
+   *  readings (`preRevert`/`revert`) never need a second read of the caller's seam. */
   pair: unknown
   paired: boolean
-  value: number | null
+  /** **THE GESTURE'S VALIDITY, ESTABLISHED BY THE MOVE TURN AND STICKY FOR THE GESTURE**
+   *  (`§2.3` item 5's closing clause: "INVALID IS STICKY FOR THAT GESTURE … no later valid move
+   *  un-invalidates it"). The as-filed record carried the validity of ONE OBSERVED MOVE only
+   *  (it lived in the move turn's own local), so the record itself could not answer "was this
+   *  gesture's state valid" — the reading the `finally` obligation and the end terminal both
+   *  want. It starts `false` (no state observed yet) and is only ever set, never cleared. */
+  valid: boolean
   /** `true` iff THIS GESTURE has had a move observed by this module's own turn. It is the drop
    *  path's own precondition (`§2.3` row 6's "no gesture is active" versus row 10's "while a
    *  gesture is active"): the frozen session opens a gesture attempt on a `pointerdown` of ANY
@@ -414,18 +442,21 @@ export function createGutterAffordance(options?: GutterAffordanceOptions): Gutte
    *  moved (the invocation is counted, `§2.5` item 3). **A NON-FINITE VALUE IS NEVER WRITTEN**
    *  (`§2.5`, `§3.2 F-10`, `§5.5.1 P-GU-SM-2`): `applyPreview` is a presentation channel and a
    *  non-finite value is not a declared state, so the write — and the counter that counts THIS
-   *  module's own presentations — is skipped rather than degraded. */
+   *  module's own presentations — is skipped rather than degraded. **⟶ ADV-GU-12: the counter
+   *  counts INVOCATIONS, so it moves only where the seam is actually invoked: the as-filed form
+   *  incremented BEFORE the callability check, so a `stats().previews` reading disagreed with
+   *  the seam's own recorded call count whenever `applyPreview` was absent or non-callable.** */
   const writePreview = (state: PreviewState): void => {
     if (!Number.isFinite(state.value)) return
-    counters.previews += 1
     if (typeof applyPreview !== 'function') return
+    counters.previews += 1
     ;(applyPreview as (s: PreviewState) => void)(state)
   }
 
   /** THE INVALID ARM (`§2.3` row 9): the reset terminal is taken from the DRAG while the gesture
    *  is still ACTIVE, then the VISIBLE REVERT to the pre-drag size, then the record discarded.
    *  The counter moves only when the composed controller ACCEPTED the reset; a refusal (the
-   *  pre-handle window's own reading, `§2.3` row 8) leaves it UNMOVED. The entry point is the
+   *  pre-handle refusal's own reading, `§2.3` row 8) leaves it UNMOVED. The entry point is the
    *  composed controller's own RESET PROTOCOL member, read ONCE at construction so this module's
    *  bytes carry no session-member reference and reach the session through the controller. */
   const resetArm = (current: DragRecord): void => {
@@ -445,7 +476,16 @@ export function createGutterAffordance(options?: GutterAffordanceOptions): Gutte
     counters.drops += 1
     const revert = current.preRevert
     record = null
-    if (revert !== null) writePreview(revert)
+    // **`§0A` note 5 / `§3.1 M-3`: THE RECORD IS DISCARDED AROUND THE CONSUMER HOOK.** The record
+    // is already dropped above; the `finally` is what makes the discard UNCONDITIONAL, so a
+    // throwing `applyPreview` cannot leave a retained record behind.
+    if (revert !== null) {
+      try {
+        writePreview(revert)
+      } finally {
+        record = null
+      }
+    }
   }
 
   /** THE MODULE'S OWN OBSERVED-MOVE TURN (`§2.3` row 8). It runs BEFORE the session's wrapped
@@ -458,6 +498,11 @@ export function createGutterAffordance(options?: GutterAffordanceOptions): Gutte
     const current = record
     if (current === null) return
     current.moved = true
+    // **THE PRE-DRAG SIZE IS THE RECORD'S, READ AT ESTABLISHMENT** (`§2.4` item 3, `§2.3` row 7,
+    // `§0A` note 5; ADV-GU-6). The as-filed form read `startSizeOf` HERE, lazily, on the FIRST
+    // OBSERVED MOVE — so the pre-drag size's site was the move turn and not the establishment
+    // turn the contract names. The record is seeded in `onStartHook`; this turn only ensures a
+    // gesture that somehow reached a move without an establishment reading still gets one.
     if (!current.started) {
       current.start = seamAnswer(startSizeOf, [element, current.token]).value
       current.started = true
@@ -474,6 +519,9 @@ export function createGutterAffordance(options?: GutterAffordanceOptions): Gutte
         ? resolvePointerPosition(seamAnswer(pointerOf, [event]).value)
         : resolveEventPointer(event)
     const pointer = resolvePointer()
+    // **THE BOUNDS PAIR THIS MOVE CLAMPS AGAINST** (`§2.4` item 2's value chain: `raw +
+    // boundsOf(element, token) ⇒ clampToBounds(raw, bounds)`): read AT MOST ONCE per observed move
+    // and over the SAME opaque token the axis producer answered for this gesture.
     const pairs = seamAnswer(boundsOf, [element, current.token])
     const pair = pairs.answered ? pairs.value : undefined
     const sizes = seamAnswer(sizeFromPointer, [pointer, current.start])
@@ -481,7 +529,17 @@ export function createGutterAffordance(options?: GutterAffordanceOptions): Gutte
     const value = clampToBounds(raw, pair)
     const state: PreviewState = { value, token: current.token, valid: true, resizable: current.resizable }
     const veto = typeof isDragValid === 'function' ? (isDragValid as (s: PreviewState) => unknown)(state) : undefined
-    const valid = Number.isFinite(value) && veto !== false
+    // **THE VALIDITY RULE HAS FOUR CLAUSES AND THIS EXPRESSION CARRIES ALL FOUR** (`§2.3` item 5;
+    // ADV-GU-3). The as-filed form implemented THREE: (ii)/(iii) as `Number.isFinite(value)` and
+    // (iv) as the exact-`false` veto — and it had DROPPED clause (i), *"`resolveEventPointer` (or
+    // the caller's `pointerOf`) answered a `PointerPosition`"*. The missing clause is observable
+    // whenever the size seam is POINTER-INDEPENDENT (it answers a finite number for a `null`
+    // pointer): the as-filed expression then called the move VALID, pushed a value through the
+    // handle, previewed it and committed it at the `end` terminal — a drag whose pointer was
+    // never resolved at all. THE RULE: an unresolved pointer makes the move INVALID, and the
+    // invalid arm (the reset) is what a null pointer has always been declared to take.
+    const pointerResolved = pointer !== null
+    const valid = pointerResolved && Number.isFinite(value) && veto !== false
     current.value = null
     // **BOTH REVERT READINGS ARE TAKEN FROM THIS GESTURE'S OWN PRE-DRAG EVALUATION.** The
     // PRE-DRAG reading is a property of the GESTURE, not of one move, so a drag whose every
@@ -495,11 +553,21 @@ export function createGutterAffordance(options?: GutterAffordanceOptions): Gutte
       resetArm(current)
       return
     }
-    current.pair = pair
-    current.paired = true
+    current.valid = true
     current.value = value
     if (!current.resizable) return
-    writePreview({ value, token: current.token, valid, resizable: current.resizable })
+    // **THE PREVIEW IS THE ONE CONSUMER HOOK THIS TURN CALLS, AND A THROW FROM IT MUST NOT LEAVE A
+    // RETAINED RECORD** (`§0A` note 5, `§3.1 M-3`). The discard is therefore taken on the THROW
+    // path of this turn's own hook invocation, while the SUCCESS path keeps the record: the SAME
+    // event's session-owned wrapper (`E3`'s `onMove`, which `§2.3` row 8 orders AFTER this turn)
+    // still has to read the value this turn observed through the handle, so a record discarded on
+    // success would break the value channel (`§R` `R6`) outright.
+    try {
+      writePreview({ value, token: current.token, valid, resizable: current.resizable })
+    } catch (thrown) {
+      record = null
+      throw thrown
+    }
   }
 
   /** THE VALUE CHANNEL (`§R` R6): the composed controller's wrapped move turn is the ONLY legal
@@ -518,11 +586,32 @@ export function createGutterAffordance(options?: GutterAffordanceOptions): Gutte
    *  producer and the resizability producer are read by the CONTROLLER's own establishment
    *  evaluation for this gesture, and the per-gesture record is SEEDED by those closure calls
    *  and READS their answers here instead of asking again (`§2.6` item 4: a second resizability
-   *  evaluation FAILS `§5.5.1 P-GU-IM-2`). */
+   *  evaluation FAILS `§5.5.1 P-GU-IM-2`).
+   *
+   *  **AND IT IS WHERE THE PRE-DRAG SIZE IS CAPTURED** (`§2.4` item 3: *"`startSizeOf(element,
+   *  token)` is called exactly once per gesture, in `onStart`"*; `§2.3` row 7; ADV-GU-6). The
+   *  as-filed module read it LAZILY on the first observed move, which is not the site the
+   *  contract names and leaves the establishment turn with no pre-drag reading at all — so a
+   *  gesture whose first move never arrives carries none. This turn is `E3`'s `onStart` hook, so
+   *  the read happens at ESTABLISHMENT and the answer is stored in the record. */
   const onStartHook = (): void => {
     const current = record
     if (current === null) return
     current.establish = true
+    const preDragSize = seamAnswer(startSizeOf, [element, current.token])
+    current.start = preDragSize.value
+    current.started = true
+    const pairs = seamAnswer(boundsOf, [element, current.token])
+    const pair = pairs.answered ? pairs.value : undefined
+    // The visible revert is taken here, over THIS gesture's own pair, so a drag whose every
+    // observed move is VALID still carries one (`§3.1 M-9`'s drop of a press that observes no move
+    // of its own). **THE PAIR IS THE MOVE TURN'S OWN READ** (it is the value the clamp in
+    // `§2.4` item 2's chain consumes), so this turn stores it for the record's own revert readings
+    // and does not ask the caller for it a second time.
+    current.pair = pair
+    current.paired = true
+    current.preRevert = revertFor(current, pair)
+    current.revert = current.preRevert
   }
 
   /** THE TERMINAL DISCARD (`§0A` note 5): the per-gesture record is dropped at EVERY terminal,
@@ -537,8 +626,13 @@ export function createGutterAffordance(options?: GutterAffordanceOptions): Gutte
     const current = record
     if (current === null) return
     const revert = current.preRevert
-    record = null
-    if (revert !== null) writePreview(revert)
+    // `§0A` note 5 / `§3.1 M-3` — THE DISCARD IS UNCONDITIONAL, in a `finally` around the
+    // consumer hook, so a throwing `applyPreview` cannot leave a retained record.
+    try {
+      if (revert !== null) writePreview(revert)
+    } finally {
+      record = null
+    }
   }
 
   /** THE HOVER ENTER (`§2.3` row 4): the axis producer ONCE, the cursor mapping ONCE, the total
@@ -607,9 +701,10 @@ export function createGutterAffordance(options?: GutterAffordanceOptions): Gutte
       started: false,
       establish: true,
       resizable: false,
+      value: null,
       pair: undefined,
       paired: false,
-      value: null,
+      valid: false,
       moved: false,
       preRevert: null,
       revert: null,
@@ -670,6 +765,17 @@ export function createGutterAffordance(options?: GutterAffordanceOptions): Gutte
   const attach = (): boolean => {
     if (attached || detached) return false
     if (element === null || element === undefined || typeof element !== 'object') return false
+    // **`attach()` RETURNS `true` IFF EVERY DELEGATION SUCCEEDED** (`§2.1`'s `attach` cell,
+    // `§2.3` row 2; ADV-GU-5). The as-filed body DISCARDED the four `registerListener` results,
+    // so a source that refuses them yielded `attach() === true` with ZERO module listeners — a
+    // green that says "attached" about an affordance that hears nothing. The three non-move
+    // registrations are therefore checked BEFORE the controller is attached, and the move
+    // registration (which must stay registered AFTER the controller's, `§2.3` row 8's ordering
+    // clause) is checked after it.
+    const hoverEnterRegistered = registerListener('pointerover', onHoverEnter)
+    const hoverExitRegistered = registerListener('pointerout', onHoverExit)
+    const pointerDownRegistered = registerListener('pointerdown', onPointerDownTurn)
+    if (!hoverEnterRegistered || !hoverExitRegistered || !pointerDownRegistered) return false
     const controllerAttached = controller.attach(element, {
       onStart: onStartHook,
       onMove: onMoveHook,
@@ -677,12 +783,10 @@ export function createGutterAffordance(options?: GutterAffordanceOptions): Gutte
       onCancel: onCancelHook,
     })
     if (!controllerAttached) return false
-    registerListener('pointerover', onHoverEnter)
-    registerListener('pointerout', onHoverExit)
-    registerListener('pointerdown', onPointerDownTurn)
     const moveType = seamAnswer(moveTypeOf, [element])
     const registered = moveType.answered ? moveType.value : undefined
-    registerListener(typeof registered === 'string' ? registered : POINTER_TYPES.move, onMoveTurn)
+    const moveRegistered = registerListener(typeof registered === 'string' ? registered : POINTER_TYPES.move, onMoveTurn)
+    if (!moveRegistered) return false
     attached = true
     return true
   }

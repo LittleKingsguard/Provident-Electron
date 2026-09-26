@@ -324,7 +324,15 @@ export class Runtime {
         }
         if (carried === resolved) return candidate
       }
-      const kids = element.children
+      // The children container is read INSIDE a gate too: this method is pinned TOTAL (`§R.2`
+      // R-9 — "TOTAL (never throws)"), and a throwing `children` accessor (a hosted object, a
+      // Proxied holder) would otherwise escape the walk.
+      let kids: unknown
+      try {
+        kids = element.children
+      } catch {
+        kids = undefined
+      }
       if (kids === null || kids === undefined || typeof (kids as ArrayLike<unknown>).length !== 'number') continue
       const childList = kids as ArrayLike<unknown>
       for (let i = 0; i < childList.length; i += 1) queue.push(childList[i])

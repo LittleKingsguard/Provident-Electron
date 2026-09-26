@@ -41,40 +41,29 @@ async function call(client, name, args = {}) {
   return JSON.parse(r.content[0].text)
 }
 
-// The SAME demo envelope both hosts bootstrap (the renderer's demoEnvelope —
-// 12 nodes: root + h1 + counter-card + h2 + counter + 3 buttons + echo-card +
-// h2 + input + echo-out).
-function demoEnvelope() {
-  const INC = `function (ctx) { const all = ctx.tree.allNodes(); const n = all.find(function (x) { return x && x.props && x.props.id === 'counter'; }); if (!n) return; const c = Number(n.content ?? 0); ctx.clientAPI.apply(n.id, [{ targetProp: 'content', mode: 'replace', value: String(c + 1) }]); }`
-  const DEC = `function (ctx) { const all = ctx.tree.allNodes(); const n = all.find(function (x) { return x && x.props && x.props.id === 'counter'; }); if (!n) return; const c = Number(n.content ?? 0); ctx.clientAPI.apply(n.id, [{ targetProp: 'content', mode: 'replace', value: String(c - 1) }]); }`
-  const RESET = `function (ctx) { const all = ctx.tree.allNodes(); const n = all.find(function (x) { return x && x.props && x.props.id === 'counter'; }); if (!n) return; ctx.clientAPI.apply(n.id, [{ targetProp: 'content', mode: 'replace', value: '0' }]); }`
-  const ECHO = `function (ctx, value) { const all = ctx.tree.allNodes(); const n = all.find(function (x) { return x && x.props && x.props.id === 'echo-out'; }); if (!n) return; const t = value == null ? '' : String(value); ctx.clientAPI.apply(n.id, [{ targetProp: 'content', mode: 'replace', value: t }]); }`
-  return {
-    template: {
-      root: {
-        type: 'div',
-        css: { classes: ['demo-shell'] },
-        children: [
-          { type: 'h1', content: 'Provident-Electron — MCP endpoint demo' },
-          { type: 'section', css: { id: 'counter-card', classes: ['card'] }, children: [
-            { type: 'h2', content: 'Counter' },
-            { type: 'div', css: { id: 'counter', classes: ['counter-value'] }, props: { id: 'counter' }, content: '0' },
-            { type: 'button', css: { id: 'inc', classes: ['btn'] }, content: 'Increment (+1)', handlers: [{ name: 'inc', event: 'click', body: INC }] },
-            { type: 'button', css: { id: 'dec', classes: ['btn'] }, content: 'Decrement (-1)', handlers: [{ name: 'dec', event: 'click', body: DEC }] },
-            { type: 'button', css: { id: 'reset', classes: ['btn'] }, content: 'Reset', handlers: [{ name: 'reset', event: 'click', body: RESET }] },
-          ]},
-          { type: 'section', css: { id: 'echo-card', classes: ['card'] }, children: [
-            { type: 'h2', content: 'Echo (input -> echo-out)' },
-            { type: 'input', css: { id: 'echo-input' }, props: { id: 'echo-input' }, handlers: [{ name: 'echo', event: 'input', body: ECHO }] },
-            { type: 'div', css: { id: 'echo-out', classes: ['echo-out'] }, props: { id: 'echo-out' }, content: '(nothing yet)' },
-          ]},
-        ],
-      },
-    },
-    content: [],
-    clientConfig: { runInstantiation: true, runRendering: true },
-  }
-}
+// The SAME demo envelope both hosts bootstrap — DERIVED, never restated.
+//
+// FIXTURE-ONLY UPDATE (architect ruling, docs/decisions.md: "Divergence is
+// fundamentally a testing tool, include it in the update scope"; the N = 9
+// check set, the spawn discipline, the {0,1,2,3} exit-code contract and the
+// honest-limits prose are NOT touched by it). This function used to carry a
+// HAND-COPIED 12-node literal ("12 nodes: root + h1 + counter-card + …") while
+// `src/shared/demo-envelope.ts` grew to 18 nodes with its authored gutter card —
+// so the SHIM booted a different app than the REAL one and the leg read
+// `census inTree matches (shim = real) (electron=18 shim=12)` plus four more
+// failures. THE FIX IS DERIVATION, NOT A BIGGER LITERAL: the ONE source of
+// truth is the authored envelope the renderer itself bootstraps
+// (`src/shared/demo-envelope.ts`'s exported `demoEnvelope()`), imported here
+// directly. A drift is therefore IMPOSSIBLE BY CONSTRUCTION — there is no
+// second copy left to fall out of step — which is the stronger form of the
+// "a check that fails loudly when they drift" requirement.
+//
+// WHY THE DIRECT `.ts` IMPORT IS SAFE: Node >= 22.18 (this repo runs v24) strips
+// types from a directly-imported `.ts` module by default, and the authored file
+// is type-annotation-only TypeScript (no `enum`, no parameter properties, no
+// non-erasable syntax) — verified by running this very leg. The authored module
+// imports NOTHING, so the specifier resolves with no extra loader or flag.
+import { demoEnvelope } from '../src/shared/demo-envelope.ts'
 
 // ---- collect one host's (census, ssr, dirtied, renderedIdSet) --------------
 // NOTE: minted node ids are not a parity surface — the shim battery host is
@@ -148,7 +137,7 @@ let electronOut
 try {
   await eClient.connect(eTransport)
   electronOut = await drive(eClient)
-  ok('electron: dispatch renderedNonEmpty', electronOut.renderedNonEmpty ?? true)
+  ok('electron: dispatch renderedNonEmpty', electronOut.renderedNonEmpty === true)
 } catch (e) {
   failures += 1
   console.error(`  ✗ electron connect/drive failed: ${e.message}`)
