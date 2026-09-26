@@ -1,0 +1,5480 @@
+// tests/gutter.test.ts
+// ===========================================================================
+// U-GUTTER · wave E (ledger row `E3`) · **THE RED SET** (RCA-1)
+//
+// Contract: `docs/specs/gutter.md` (FILED 2026-09-27, the `SCH-6`-as-reshaped-by-`A-d4`
+// unit, `ADOPTED-RESHAPED`). The module to be built later is `src/shared/gutter.ts`
+// (`§0A` note 1 names BOTH paths — this file's path is confirmed there: "the module path
+// is `src/shared/gutter.ts`, and the test file is `tests/gutter.test.ts`").
+//
+// Binding sections read IN FULL before authoring: the `CURRENT STATE` block, `§0` (the
+// seventeen recorded rulings, with the two CORRECTED citation sites), `§0A` (the TWELVE
+// dated ruling notes — CONTRACT, not commentary), the Layer declaration (five honesty
+// anchors), `§1` (scope, items 1–8), `§2.1` (the surface + the EXPORT CENSUS `2 + 10 = 12`
+// + the SEVEN-seam options set with `capture` ABSENT), `§2.2` (the eleven prohibitions
+// `P-1`..`P-11`), `§2.3` (items 1–5: the value-source chain / the evaluation order / the
+// write-count clause `C1` with BOTH positive controls / the reset clause / the
+// `install`-once clause `C4`), `§2.4` (items 1–4: the seven NAMED SAFE DEFAULTS, the
+// totality universal WITH ITS BOUND, `C2`'s four throw paths, the total-member-read rule,
+// the no-invented-code rule), `§2.5` (items 1–6: the composition boundary, the `U-CENSUS`
+// and `U-GSESSION` sentences, the one-controller rule with its LIMIT, the reset entry
+// point's nine clauses), `§2.6` (the seven sibling properties + the `U-RELOCATE` note),
+// `§3.1` (`M-1`..`M-19`), `§3.2` (`F-1`..`F-19`), `§3.3` (`I-1`..`I-15`), `§3.4` (the
+// static rows `R-1`..`R-15`), `§3.5` (the existence rows `R-16`/`R-17`/`R-18`), `§4`
+// (`§4.1` the red statement, `§4.2` the authoring order, `§4.3` what the red is NOT,
+// `§4.4` the THIRTEEN binding stop conditions `S-PURE-1`..`S-PURE-5`/`S-6`..`S-13`,
+// `§4.5` the delegation gate), `§5.1` (diff scope + the DENIED set, `C5`), `§5.2` (the
+// FOUR legs + the three-part `[U]` refusal + the `[D]` non-claim + gate 6),
+// `§5.3` (the DONE row's ELEVEN items), **`§5.5.1` (the typed Property register — ALL
+// THIRTEEN rows, executed here in register order: `314` =
+// `60+11+10+18+20+22+28+20+15+5+12+60+18`, one pinned-seed generator `S-GT-TOTAL-1`
+// (`20260927`, ONE LCG step per draw, `pool.length = 20`), caps `≤100`/row · `≤400`
+// total · stop-after-5-consecutive-failures)**, `§5.5.2` (the honesty block, the
+// declared-vs-distinct ledger, the pool-versus-boundary check), `§5.5.3` (the attempt
+// arithmetic with its terms), `§6` (the three falsifications), `§7` (the fifteen honest
+// statements), `§7a`/`§7a.1` (**THREE open questions, each with a WORKING DEFAULT — the
+// defaults are driven here and each is cited in place**), `§8`, and `§3a`/`§3b` at the
+// END (the adversarial SEED set — the `A-*` rows belong to the LATER pass and NONE is
+// authored here; `§3b` is EMPTY BY CONSTRUCTION).
+//
+// LAYER: **[T] + static — the NODE ENVELOPE ONLY.** This unit touches no DOM at all —
+// not even `src/shared/dom-shim.ts` (layer declaration anchor 2): **the ELEMENT is an
+// argument, the SESSION is an argument (the landed module or a recording double of its
+// own), and the SINK is an argument.** No window is booted, no IPC round-trip runs, no
+// MCP transport is exercised and no real element exists in this file. **No row below
+// asserts a rendered-geometry, layout, paint, coordinate, applied-CSS or
+// click-retargeting property** (`I-11`, `R-8`): `§5.2` offers no `[U]` row (structurally:
+// the module is imported by no `src/**` file — `R-6`/`R-12`) and claims no `[D]` row
+// (`R-17` is the probe that states it; `[D]` is `PRECONDITION-GATED` on
+// `U-DIVERGENCE-EXT`, ledger row `C2`). **A sink-call green is NOT a
+// rendered-write green** (layer anchor 5): every counted write is a call into an
+// argument-supplied function.
+//
+// THE IMPORT BOUNDARY (`§4.1`, the repo's established technique — the sibling
+// `tests/gesture-session.test.ts`'s: an `fs` existence probe plus a RUN-TIME-COMPUTED
+// specifier resolved through a dynamic `import(/* @vite-ignore */ …)`): every clause row
+// fails as a **LABELLED ASSERTION** naming the absent module, never as a collection error
+// that would take the whole red set down. `PRE-1` proves the mechanism itself resolves,
+// against an EXISTING module (`src/shared/gesture-session.ts`, the frozen module this
+// unit composes).
+//
+// LEG 4 (`§5.2` leg 4): `R-5`(b) asserts the TEN TYPE-ONLY names of `§2.1` (`AxisFor`,
+// `BoundsFor`, `ClampBounds`, `CommitSink`, `DefaultSizeFor`, `IsResizable`,
+// `ResizeController`, `ResizeControllerHandle`, `ResizeControllerOptions`, `ResizeStats`),
+// and an imported type name is ERASED AT RUN TIME — so the honest leg is a standalone
+// strict `tsc --noEmit` over THIS file. At RED time that leg reports the module-absent
+// boundary (`TS2307`) and nothing else. **The `TS2307` diagnostic is NOT suppressed** (no
+// `@ts-ignore` anywhere below): suppressing it would make the type-only export claim
+// unfalsifiable. The `D-GT-1` typed fixture below is the leg-4 pin: it compiles ONLY if
+// the module exports all ten type names AND the two value exports with the declared
+// signatures.
+//
+// AUTHORED ORDER (`§4.2`): the `§3.5` existence/precondition rows `R-16`/`R-17`/`R-18`
+// FIRST (they are the red's own premise and are evaluable before the module exists), then
+// the `§3.4` static rows `R-1`..`R-15` (`R-4`/`R-5`/`R-6`/`R-7` are evaluable immediately;
+// `R-1`/`R-2`/`R-3`/`R-8`/`R-10`/`R-11`/`R-13`/`R-14`/`R-15` read the module file and
+// become evaluable once it lands), then the `clampToBounds` block (`M-2`, `M-19`,
+// `F-1`..`F-8`, the fail-state table's eleven input classes and the totality/purity/
+// return-type rows), then the invariants `I-1`..`I-15`, then `M-1`/`M-3`..`M-18`, then
+// `F-9`..`F-19`, then the `§5.5.1` register rows IN REGISTER ORDER
+// (`P-GT-PU-1` · `P-GT-PU-2` · `P-GT-PU-3` · `P-GT-IM-1` · `P-GT-IM-2` · `P-GT-IM-3` ·
+// `P-GT-IM-4` · `P-GT-SM-1` · `P-GT-SM-2` · `P-GT-SM-3` · `P-GT-SM-4` · `P-GT-TP-1` ·
+// `P-GT-TP-2`), then the register's own status row. The `describe` blocks below are in
+// that order; NOTHING is renumbered.
+//
+// **THIS FILE IS THE UNIT'S RED SET (`§4.1`) AND NOTHING ELSE.** It is authored FIRST and
+// RUN before any implementation: `src/shared/gutter.ts` does not exist, so every clause
+// row, every static row and every register row fails on the module-absent boundary. **No
+// `src/**`, `scripts/**`, `package.json`, `tsconfig.json` or `vitest.config.ts` is created
+// or modified by this pass.**
+//
+// ⟶ THE `§7a.1` DEFAULTS DRIVEN HERE, named once so no reader has to reconstruct them
+// (each is a WORKING DEFAULT, not contract — a later pass that changes one must open a
+// gate): **(1)** the reset entry point's unusable-default refusal is the
+// CONTROLLER-LOCAL code `'unusable-default'`, never a session code and never passed into
+// the session (`§2.1`'s note, `I-14`, `F-12`, `M-17`); **(2)** `detach()` takes NO
+// argument and refuses (`false`, ZERO session calls) when MORE THAN ONE element is
+// attached here, because the session is shared (`§2.1` item 4, `M-13`); **(3)** the
+// module has EXACTLY ONE import statement, a TYPE-ONLY import from `./gesture-session.js`
+// (`§0A` note 2, `R-4`).
+// ===========================================================================
+import { describe, it, expect } from 'vitest'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
+
+// ===========================================================================
+// §2.1/§2.5 — THE SESSION SHAPES THIS COMPOSITION IS WRITTEN AGAINST, PLUS THE
+// MODULE'S OWN DECLARED SHAPES (structural mirrors, used ONLY as this harness's type
+// surface).
+//
+// The MIRROR is never asserted to BE the module's surface — that is `R-5`'s and leg 4's
+// claim, made through the `import type` declarations below. The mirror exists so this
+// file's harness (session doubles, sinks, seam stubs) is type-checkable while the module
+// is absent.
+// ===========================================================================
+type GestureElement = unknown
+type GestureOutcome = 'end' | 'reset' | 'cancel' | null
+interface GestureHandle {
+  readonly id: number
+  readonly element: GestureElement
+  readonly active: boolean
+  readonly outcome: GestureOutcome
+  readonly value: unknown
+  set(value: unknown): GestureHandle
+}
+interface GestureCallOptions {
+  readonly capture?: unknown
+  readonly onStart?: unknown
+  readonly onMove?: unknown
+  readonly onEnd?: unknown
+  readonly onCancel?: unknown
+}
+interface SessionStats {
+  readonly installed: number
+  readonly sourceCalls: number
+  readonly gestures: number
+  readonly commits: number
+  readonly active: boolean
+  readonly gestureId: number
+  readonly lastCode: string
+}
+interface GestureStats {
+  readonly active: boolean
+  readonly id: number
+  readonly outcome: GestureOutcome
+  readonly value: unknown
+  readonly commits: number
+}
+type SessionCode = 'ok' | 'not-installed' | 'busy' | 'disposed' | 'disconnected' | 'stale' | 'no-gesture'
+type BeginResult = { readonly ok: true; readonly gesture: GestureHandle } | { readonly ok: false; readonly code: SessionCode }
+interface TerminalResult {
+  readonly ok: boolean
+  readonly code: SessionCode
+  readonly committed: boolean
+}
+interface DisposeReport {
+  readonly removed: number
+  readonly complete: boolean
+}
+/** The session surface THIS UNIT COMPOSES (`src/shared/gesture-session.ts`'s own
+ *  `GestureSession`, mirrored structurally — `§2.5` item 1's frozen delegate list). */
+interface SessionLike {
+  install(element: GestureElement, options?: GestureCallOptions): unknown
+  reset(element: GestureElement, gesture: GestureHandle, value: unknown): unknown
+  dispose(): unknown
+  stats(): unknown
+  gesture(): unknown
+  readonly disposed: unknown
+}
+
+/** `§2.1` — THE CONTROLLER'S DECLARED SHAPES (the mirror leg 4 compares against). */
+interface ExpectedClampBounds {
+  readonly min: number
+  readonly max: number
+}
+interface ExpectedResetResult {
+  readonly ok: boolean
+  readonly code: string
+  readonly committed: boolean
+}
+interface ExpectedStats {
+  readonly attached: number
+  readonly gestures: number
+  readonly sinkCalls: number
+  readonly written: number
+  readonly resets: number
+  readonly lastCode: string
+}
+interface ControllerLike {
+  attach(element: unknown, hooks?: unknown): boolean
+  detach(): boolean
+  reset(element: unknown): ExpectedResetResult
+  stats(): ExpectedStats
+  readonly detached: boolean
+}
+
+/** `§2.1`/`§3.4 R-5`(b) — **THE TYPE-ONLY HALF, through `§5.2` leg 4.** These TWELVE
+ *  imports are the compile-time claim that the module exports the TEN type declarations
+ *  of `§2.1` (and the two values). **This file does not compile unless it does.** The
+ *  `TS2307` these produce while the module is ABSENT is the red's own leg-4 form and is
+ *  NOT suppressed (a `@ts-ignore` here would make the type claim unfalsifiable). */
+import type { AxisFor as ModuleAxisFor } from '../src/shared/gutter.js'
+import type { BoundsFor as ModuleBoundsFor } from '../src/shared/gutter.js'
+import type { ClampBounds as ModuleClampBounds } from '../src/shared/gutter.js'
+import type { CommitSink as ModuleCommitSink } from '../src/shared/gutter.js'
+import type { DefaultSizeFor as ModuleDefaultSizeFor } from '../src/shared/gutter.js'
+import type { IsResizable as ModuleIsResizable } from '../src/shared/gutter.js'
+import type { ResizeController as ModuleResizeController } from '../src/shared/gutter.js'
+import type { ResizeControllerHandle as ModuleResizeControllerHandle } from '../src/shared/gutter.js'
+import type { ResizeControllerOptions as ModuleResizeControllerOptions } from '../src/shared/gutter.js'
+import type { ResizeStats as ModuleResizeStats } from '../src/shared/gutter.js'
+// **NO VALUE IMPORT OF THIS MODULE EXISTS IN THIS FILE**, deliberately: the repo's
+// import boundary is an `fs` probe plus a RUN-TIME-COMPUTED `import(/* @vite-ignore */ …)`
+// (`§4.1`), because a static value import of an ABSENT module is a COLLECTION ERROR that
+// takes the whole red set down instead of failing as a labelled assertion.
+//
+// **THE TWO VALUE EXPORTS ARE STILL PINNED AT THE TYPE LAYER** (leg 4): the names are
+// referenced through the module's own type namespace below, so a rename, a removal or an
+// unexported VALUE name fails the standalone strict `tsc` exactly as a missing TYPE name
+// does — while the runtime half of `R-5(a)` reads the namespace the dynamic boundary
+// resolved (`Object.keys(mod)`).
+
+// ===========================================================================
+// ⟶ `D-GT-1` — **THE TYPED FIXTURE AND THE LEG-4 PIN** (`§2.1`, `§5.2` leg 4).
+//
+// This block names EVERY declared export BY NAME, through the module's OWN imported
+// types — never through this file's structural mirrors. It is the leg-4 red: while the
+// module is absent, the standalone strict `tsc --noEmit` over THIS file reports
+// `TS2307: Cannot find module '../src/shared/gutter.js'` (plus the cascading
+// `TS2307`/`TS7006` diagnostics the missing type names produce), and once the module
+// lands, a rename, a removal or an unexported name FAILS TO COMPILE.
+//
+// The FIVE fixtures below are also the shape claims: a controller returned by the
+// factory must be assignable to `ModuleResizeController`; the factory's own options
+// object's members must carry the declared types; the sink's `value` parameter must be
+// `number`; and `clampToBounds` must return `number` for `unknown` inputs.
+// ===========================================================================
+const D_GT_1_declaredSeams: ReadonlyArray<keyof ModuleResizeControllerOptions> = [
+  'session',
+  'axisFor',
+  'boundsFor',
+  'defaultSizeFor',
+  'isResizable',
+  'sizeFor',
+  'commit',
+]
+const D_GT_1_axisFor: ModuleAxisFor = () => undefined
+const D_GT_1_boundsFor: ModuleBoundsFor = () => undefined
+const D_GT_1_defaultSizeFor: ModuleDefaultSizeFor = () => undefined
+const D_GT_1_isResizable: ModuleIsResizable = () => false
+const D_GT_1_bounds: ModuleClampBounds = { min: 0, max: 100 }
+const D_GT_1_sink: ModuleCommitSink = (_gesture: ModuleGestureHandleArg, value: number): void => {
+  // LEG 4's PIN: the sink's second parameter is a `number`, and this line fails to compile
+  // if `CommitSink` declares anything else.
+  const pinned: number = value
+  if (pinned === Number.NaN) return
+}
+/** The `GestureHandle` the sink seam receives is the SESSION's own — named here through
+ *  the session module's exported type, which is the ONE import the module itself is
+ *  allowed (`§0A` note 2). */
+type ModuleGestureHandleArg = import('../src/shared/gesture-session.js').GestureHandle
+const D_GT_1_controllerOptions: ModuleResizeControllerOptions = {
+  session: undefined,
+  axisFor: D_GT_1_axisFor,
+  boundsFor: D_GT_1_boundsFor,
+  defaultSizeFor: D_GT_1_defaultSizeFor,
+  isResizable: D_GT_1_isResizable,
+  sizeFor: () => undefined,
+  commit: D_GT_1_sink,
+}
+const D_GT_1_handle: ModuleResizeControllerHandle = { element: undefined, onMove: () => undefined }
+const D_GT_1_stats: ModuleResizeStats = {
+  attached: 0,
+  gestures: 0,
+  sinkCalls: 0,
+  written: 0,
+  resets: 0,
+  lastCode: 'ok',
+}
+/** `§2.1` — the two VALUE exports, referenced BY NAME at the type layer: `typeof
+ *  import(…)` carries the module's export surface, so `D-GT-1-clampToBounds` is a
+ *  `(value: unknown, bounds: unknown) => number` only if that value export exists with
+ *  that exact signature. */
+type D_GT_1_Module = typeof import('../src/shared/gutter.js')
+type D_GT_1_factory = D_GT_1_Module['createResizeController']
+type D_GT_1_clamp = D_GT_1_Module['clampToBounds']
+const D_GT_1_factorySignature: (options?: ModuleResizeControllerOptions) => ModuleResizeController = null as unknown as D_GT_1_factory
+const D_GT_1_clampSignature: (value: unknown, bounds: unknown) => number = null as unknown as D_GT_1_clamp
+const D_GT_1_controller: ModuleResizeController = null as unknown as ReturnType<D_GT_1_factory>
+void D_GT_1_factorySignature
+void D_GT_1_clampSignature
+void D_GT_1_declaredSeams
+void D_GT_1_handle
+void D_GT_1_stats
+void D_GT_1_controller
+
+// ===========================================================================
+// THE IMPORT BOUNDARY (`§4.1`) and the path constants the static/existence rows use.
+// ===========================================================================
+const MODULE_SRC = new URL('../src/shared/gutter.ts', import.meta.url)
+/** The run-time specifier of `§5.1` row 1, assembled at RUN time so the unresolvable
+ *  import cannot fail this file's transform while the module is absent (the repo's
+ *  `.js` → `.ts` resolution applies at run time). */
+const MODULE_SPECIFIER = ['..', 'src', 'shared', 'gutter.js'].join('/')
+const SESSION_SPECIFIER = ['..', 'src', 'shared', 'gesture-session.js'].join('/')
+const TEST_FILE = fileURLToPath(import.meta.url)
+const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url))
+const MODULE_RELPATH = 'src/shared/gutter.ts'
+const TEST_RELPATH = 'tests/gutter.test.ts'
+const SPEC_RELPATH = 'docs/specs/gutter.md'
+const SESSION_RELPATH = 'src/shared/gesture-session.ts'
+
+/** `§4.1` — the module-absent reason, as DATA: a clause row asserts it (so the red
+ *  message names the absent module) while a REGISTER row counts it as a BROKEN attempt
+ *  (`§5.5.1`'s stop-after-5 discipline is what reports the red run's early stop, and a
+ *  throw would hide it). */
+let moduleCache: { mod: Record<string, unknown> | null; reason: string | null } | null = null
+
+// ===========================================================================
+// THE COMPOSED SESSION, RESOLVED FIRST AND EXACTLY ONCE (`R-18`'s precondition, and the
+// `Pre-*` rows' subject): the frozen module this unit composes. It is resolved at module
+// scope through the same RUN-TIME-COMPUTED specifier so a missing sibling cannot fail this
+// file's transform.
+// ===========================================================================
+const SESSION_SRC = new URL('../src/shared/gesture-session.ts', import.meta.url)
+let sessionModuleCache: Record<string, unknown> | null = null
+async function sessionNamespace(): Promise<Record<string, unknown>> {
+  if (sessionModuleCache !== null) return sessionModuleCache
+  expect(
+    existsSync(SESSION_SRC),
+    `R-18 §3.5 — the composed session module exists at ${fileURLToPath(SESSION_SRC)} (this unit composes it; a missing name means the frozen delegate surface moved, which is a finding to REPORT — never a licence to edit the session's module or its spec)`,
+  ).toBe(true)
+  const mod = (await import(/* @vite-ignore */ SESSION_SPECIFIER)) as unknown as Record<string, unknown>
+  sessionModuleCache = mod
+  return mod
+}
+async function sessionValueExport<T>(name: string, label: string): Promise<T> {
+  const mod = await sessionNamespace()
+  const value = mod[name]
+  expect(
+    typeof value,
+    `R-18 §3.5 — the session module exports \`${name}\` by NAME (the frozen delegate surface, \`docs/decisions.md\` \`GSESSION-DELEGATE-SURFACE-IS-FROZEN-FOR-E3-E4\`) [${label}]`,
+  ).not.toBe('undefined')
+  return value as T
+}
+async function resolveModule(): Promise<{ mod: Record<string, unknown> | null; reason: string | null }> {
+  if (moduleCache !== null) return moduleCache
+  if (!existsSync(MODULE_SRC)) {
+    moduleCache = {
+      mod: null,
+      reason: `the module of §2.1/§5.1 row 1 does not exist yet (${fileURLToPath(MODULE_SRC)})`,
+    }
+    return moduleCache
+  }
+  try {
+    const mod = (await import(/* @vite-ignore */ MODULE_SPECIFIER)) as unknown as Record<string, unknown>
+    moduleCache = { mod, reason: null }
+  } catch (e) {
+    moduleCache = { mod: null, reason: `the module does not resolve: ${describeThrown(e)}` }
+  }
+  return moduleCache
+}
+
+/** The CLAUSE rows' boundary. Fails as an ASSERTION carrying the row's label and RETURNS
+ *  the namespace so a row's body stays type-clean. */
+/** **THE MODULE-LIVENESS ASSERTION.** While the module is absent, several rows' DECLARED
+ *  values are ALREADY SATISFIED by the stand-in controller (a composition that never wired
+ *  the channel writes zero times, and the `typeof` gate's `NaN` is one of the clamp's
+ *  declared answers) — a GREEN there would be exactly the vacuous green `F-10`/`F-11` warn
+ *  about. Every such row therefore asserts the module's EXISTENCE first, so its green is
+ *  never a stand-in's.
+ *
+ *  A row that passes while `src/shared/gutter.ts` does not exist is a HARNESS-CAUSED pass and
+ *  a finding against this file. */
+async function requireLiveModule(label: string): Promise<Record<string, unknown>> {
+  const mod = await requireModule(label)
+  expect(
+    existsSync(MODULE_SRC),
+    `RED — U-GUTTER red set (§4.1): this row's declared values would ALSO be satisfied by the absent-module stand-in, so it asserts the module's EXISTENCE before its own clause (an ` + '`absent`' + `-module green here would be a vacuous pass). [${label}]`,
+  ).toBe(true)
+  return mod
+}
+
+async function requireModule(label: string): Promise<Record<string, unknown>> {
+  const { mod, reason } = await resolveModule()
+  if (mod === null) {
+    expect(
+      mod,
+      `RED — U-GUTTER red set (§4.1): ${reason ?? 'the module surface is unavailable'}. ` +
+        `This row drives §2.1's surface. [${label}]`,
+    ).not.toBe(null)
+  }
+  return mod as Record<string, unknown>
+}
+
+/** The named value export of `§2.1`, through the same boundary. */
+async function valueExport<T>(name: string, label: string): Promise<T> {
+  const mod = await requireModule(label)
+  const value = mod[name]
+  expect(
+    typeof value,
+    `§2.1/§3.4 R-5(a) — the runtime VALUE export \`${name}\` is exported by \`${MODULE_RELPATH}\` (the export census is a SET claim: ${JSON.stringify(
+      Object.keys(mod).sort(),
+    )}) [${label}]`,
+  ).not.toBe('undefined')
+  return value as T
+}
+
+// ---------------------------------------------------------------------------
+// THE TWO VALUE EXPORTS, TOTALLY RESOLVED.
+//
+// At RED time the module is absent, so a clause row that called `mod['clampToBounds']`
+// would throw a HARNESS `TypeError` — the exact "red for a harness defect" class the red
+// report must not contain. These two accessors therefore return a LABELLED STAND-IN: a
+// stand-in that (a) never throws for any argument, and (b) always answers a value outside
+// the contract's declared answers, so every row fails on its OWN assertion instead.
+// ---------------------------------------------------------------------------
+const NO_MODULE_ANSWER = Number.NaN
+type ClampOutcome = { readonly threw: unknown; readonly result: unknown }
+function clampVia(value: unknown, bounds: unknown): ClampOutcome {
+  const live = moduleCache?.mod?.['clampToBounds']
+  if (typeof live !== 'function') return { threw: null, result: NO_MODULE_ANSWER }
+  try {
+    return { threw: null, result: (live as (v: unknown, b: unknown) => unknown)(value, bounds) }
+  } catch (e) {
+    return { threw: e, result: undefined }
+  }
+}
+
+/** A VALID-BUT-INERT STAND-IN controller (`§2.4` item 1's degradation shape), used only
+ *  while the module is absent: every member returns its DECLARED shape and nothing is
+ *  ever recorded against a session. A row that drives it fails on its own assertions
+ *  (`attach` ⇒ `false` where `true` was required) rather than on a harness throw. */
+function standInController(): { controller: ControllerLike; installCalls: number; sessionCalls: number } {
+  const box = { installCalls: 0, sessionCalls: 0 }
+  const controller: ControllerLike = {
+    attach: (): boolean => false,
+    detach: (): boolean => false,
+    reset: (): ExpectedResetResult => ({ ok: false, code: 'no-gesture', committed: false }),
+    stats: (): ExpectedStats => ({ attached: 0, gestures: 0, sinkCalls: 0, written: 0, resets: 0, lastCode: 'ok' }),
+    detached: false,
+  }
+  return { controller, installCalls: box.installCalls, sessionCalls: box.sessionCalls }
+}
+
+async function createController(
+  options?: Record<string, unknown>,
+  label = 'the controller factory',
+): Promise<{ controller: ControllerLike; live: boolean }> {
+  const mod = await resolveModule()
+  if (mod.mod === null) return { controller: standInController().controller, live: false }
+  const factory = mod.mod['createResizeController']
+  expect(
+    typeof factory,
+    `§2.1/§3.4 R-5(a) — the runtime VALUE export \`createResizeController\` is exported (the module resolves, so its absence is a row failure, not a boundary) [${label}]`,
+  ).toBe('function')
+  const produced = (factory as (o?: unknown) => unknown)(options)
+  expect(
+    typeof produced,
+    `§2.1 item 3 — \`createResizeController\` returns a controller [${label}]`,
+  ).toBe('object')
+  return { controller: produced as ControllerLike, live: true }
+}
+
+function describeThrown(e: unknown): string {
+  return e instanceof Error ? `${e.name}: ${e.message}` : String(e)
+}
+function brief(value: unknown): string {
+  if (value === null) return 'null'
+  if (value === undefined) return 'undefined'
+  if (typeof value === 'string') return JSON.stringify(value)
+  if (typeof value === 'symbol') return value.toString()
+  if (typeof value === 'function') return 'a function'
+  if (Array.isArray(value)) return `an array of ${value.length}`
+  if (typeof value === 'object') return `an object {${Object.keys(value).join(',')}}`
+  return String(value)
+}
+function throwsOn(body: () => unknown): boolean {
+  try {
+    body()
+    return false
+  } catch {
+    return true
+  }
+}
+
+// ===========================================================================
+// THE RECORDING SESSION DOUBLE (`§2.5` item 1's table, `§5.5.1` strategy item 6(a)):
+// a hand-built session whose SEVEN members are all present and whose every call lands in
+// its own log with its exact argument values. Every refusal shape it can produce is a
+// configured response, so a row can drive `'busy'`, `'stale'`, `'disposed'` and
+// `'not-installed'` without owning a real lifecycle — and never with a pointer.
+//
+// The DOUBLE also mirrors the landed session's own establishment/terminal ORDER
+// (`gsession.md` `§2.3` item 1(d)): the controller's `onStart` runs INSIDE `begin`, and a
+// throw from it triggers the session's establishment-failure cleanup (record discarded,
+// element still installed) — which is what `F-18` falsifies.
+// ===========================================================================
+type DoubleResponse = 'ok' | SessionCode
+interface DoubleConfig {
+  readonly install?: boolean
+  readonly beginCode?: SessionCode | null
+  readonly endCode?: SessionCode | null
+  readonly resetCode?: SessionCode | null
+  readonly disposeComplete?: boolean
+  readonly disposed?: boolean
+  readonly commitOnEnd?: boolean
+  readonly commitOnReset?: boolean
+}
+interface SessionDouble {
+  readonly session: SessionLike & Record<string, unknown>
+  readonly log: string[]
+  readonly installArgs: Array<{ element: unknown; keys: string[]; options: Record<string, unknown> }>
+  readonly handles: GestureHandle[]
+  readonly value: { current: unknown }
+  readonly started: { count: number }
+  install(element: GestureElement, options?: GestureCallOptions): boolean
+  begin(element: GestureElement): BeginResult
+  end(element: GestureElement, gesture: GestureHandle, value?: unknown): TerminalResult
+  reset(element: GestureElement, gesture: GestureHandle, value: unknown): TerminalResult
+  cancel(element: GestureElement, gesture?: GestureHandle): TerminalResult
+  dispose(): DisposeReport
+  gesture(): GestureStats | null
+  stats(): SessionStats
+  /** **THE COMPOSITION'S SINK CHANNEL INTO THIS DOUBLE** (the SESSION's own `commit`
+   *  option, wired by the composition — never a fifth hook). One per installed controller,
+   *  so a two-writer drive lands both sinks on ONE terminal. */
+  registerCommit(element: GestureElement, handler: (gesture: GestureHandle, written: unknown) => void): void
+  fireTerminal(outcome: 'end' | 'cancel'): void
+  fireMove(): void
+}
+
+interface HookSet {
+  onStart?: unknown
+  onMove?: unknown
+  onEnd?: unknown
+  onCancel?: unknown
+}
+
+function makeSessionDouble(config: DoubleConfig = {}): SessionDouble {
+  const log: string[] = []
+  const installArgs: SessionDouble['installArgs'] = []
+  const handles: GestureHandle[] = []
+  const value = { current: undefined as unknown }
+  const started = { count: 0 }
+  const hooksByElement = new Map<unknown, HookSet>()
+  const installed = new Map<unknown, boolean>()
+  let active: { id: number; handle: GestureHandle; element: unknown; outcome: GestureOutcome; value: unknown } | null =
+    null
+  let disposed = config.disposed === true
+  let gestureId = 0
+  let commits = 0
+  /** **THE SESSION'S OWN COMMIT SEAM, HELD PER ELEMENT.** Every controller installed on
+   *  this double recorded its own `commit` callback here, so ONE terminal invokes EVERY
+   *  composition's sink — which is exactly what makes the two-writer and consumer-side
+   *  shapes of `P-GT-SM-3`/`F-9`/`F-19` land on ONE sink record. */
+  const commitsByElement = new Map<unknown, Array<(gesture: GestureHandle, value: unknown) => void>>()
+  const invokeCommit = (element: unknown, gesture: GestureHandle, written: unknown): void => {
+    for (const handler of commitsByElement.get(element) ?? []) handler(gesture, written)
+  }
+  const double: SessionDouble = {
+    log,
+    installArgs,
+    handles,
+    value,
+    started,
+    get session(): SessionLike & Record<string, unknown> {
+      return double as unknown as SessionLike & Record<string, unknown>
+    },
+    install(element: GestureElement, options?: GestureCallOptions): boolean {
+      log.push('install')
+      const record = (options ?? {}) as Record<string, unknown>
+      installArgs.push({ element, keys: Object.keys(record).sort(), options: record })
+      if (config.install === false) return false
+      if (installed.has(element)) return false
+      installed.set(element, true)
+      // **THE HOOKS ARE HELD PER ELEMENT** — that is what makes a two-composer drive land
+      // both writers' sinks on ONE terminal, which `P-GT-SM-3`/`F-9` require.
+      hooksByElement.set(element, {
+        onStart: record['onStart'],
+        onMove: record['onMove'],
+        onEnd: record['onEnd'],
+        onCancel: record['onCancel'],
+      })
+      const commitMember = record['commit']
+      if (typeof commitMember === 'function') {
+        // `commit` is NOT one of the four hooks this unit forwards (`§2.1` item 5), so this
+        // branch is normally dead — a controller that smuggled a fifth key here would be
+        // caught by `M-1`'s key-set assertion.
+        const list = commitsByElement.get(element) ?? []
+        list.push(commitMember as (gesture: GestureHandle, value: unknown) => void)
+        commitsByElement.set(element, list)
+      }
+      return true
+    },
+    registerCommit(element: GestureElement, handler: (gesture: GestureHandle, written: unknown) => void): void {
+      const list = commitsByElement.get(element) ?? []
+      list.push(handler)
+      commitsByElement.set(element, list)
+    },
+    begin(element: GestureElement): BeginResult {
+      log.push('begin')
+      if (disposed) return { ok: false, code: 'disposed' }
+      if (active !== null) return { ok: false, code: 'busy' }
+      if (config.beginCode !== undefined && config.beginCode !== null) return { ok: false, code: config.beginCode }
+      if (!installed.has(element)) return { ok: false, code: 'not-installed' }
+      gestureId += 1
+      const record = {
+        id: gestureId,
+        handle: null as unknown as GestureHandle,
+        element,
+        outcome: null as GestureOutcome,
+        value: undefined as unknown,
+      }
+      const handle: GestureHandle = {
+        get id(): number {
+          return record.id
+        },
+        get element(): GestureElement {
+          return record.element
+        },
+        get active(): boolean {
+          return active === record
+        },
+        get outcome(): GestureOutcome {
+          return record.outcome
+        },
+        get value(): unknown {
+          return record.value
+        },
+        set(next: unknown): GestureHandle {
+          if (active === record) record.value = next
+          return handle
+        },
+      }
+      record.handle = handle
+      active = record
+      handles.push(handle)
+      value.current = handle
+      const hooks = hooksByElement.get(element)
+      if (hooks !== undefined && typeof hooks.onStart === 'function') {
+        try {
+          ;(hooks.onStart as (element: unknown) => void)(element)
+        } catch (error) {
+          // THE SESSION'S OWN ESTABLISHMENT-FAILURE CLEANUP (`gsession.md` §2.3 item
+          // 1(d)): the record is discarded and the element stays installed. `F-18`
+          // falsifies exactly this path being reached at all.
+          active = null
+          throw error
+        }
+      }
+      started.count += 1
+      return { ok: true, gesture: handle }
+    },
+    end(element: GestureElement, gesture: GestureHandle, supplied?: unknown): TerminalResult {
+      log.push('end')
+      if (active === null || gesture !== active.handle) return { ok: false, code: 'stale', committed: false }
+      const record = active
+      record.outcome = 'end'
+      if (supplied !== undefined) record.value = supplied
+      active = null
+      // THE SESSION'S OWN ORDER (`gsession.md` §2.3 item 4): detach, mark inactive, run
+      // `onEnd`, then invoke the injected commit EXACTLY ONCE (a consumer error from
+      // `onEnd` is captured and re-thrown AFTER the commit, exactly as the landed module
+      // does).
+      let hookError: unknown = null
+      const hooks = hooksByElement.get(element)
+      try {
+        if (hooks !== undefined && typeof hooks.onEnd === 'function') {
+          ;(hooks.onEnd as (element: unknown, value: unknown) => void)(element, record.value)
+        }
+      } catch (error) {
+        hookError = error
+      }
+      if (config.commitOnEnd !== false) {
+        commits += 1
+        invokeCommit(element, record.handle, record.value)
+      }
+      if (hookError !== null) throw hookError
+      return { ok: true, code: 'ok', committed: true }
+    },
+    reset(element: GestureElement, gesture: GestureHandle, supplied: unknown): TerminalResult {
+      log.push('reset')
+      if (disposed) return { ok: false, code: 'disposed', committed: false }
+      if (config.resetCode !== undefined && config.resetCode !== null) {
+        return { ok: false, code: config.resetCode, committed: false }
+      }
+      if (active === null || gesture !== active.handle) return { ok: false, code: 'stale', committed: false }
+      const record = active
+      record.outcome = 'reset'
+      record.value = supplied
+      active = null
+      const resetHooks = hooksByElement.get(element)
+      if (resetHooks !== undefined && typeof resetHooks.onEnd === 'function') {
+        ;(resetHooks.onEnd as (element: unknown, value: unknown) => void)(element, supplied)
+      }
+      if (config.commitOnReset !== false) {
+        commits += 1
+        invokeCommit(element, record.handle, supplied)
+      }
+      return { ok: true, code: 'ok', committed: true }
+    },
+    cancel(element: GestureElement, gesture?: GestureHandle): TerminalResult {
+      log.push('cancel')
+      if (disposed) return { ok: false, code: 'disposed', committed: false }
+      if (active === null) return { ok: false, code: 'no-gesture', committed: false }
+      void gesture
+      const record = active
+      record.outcome = 'cancel'
+      active = null
+      const cancelHooks = hooksByElement.get(element)
+      if (cancelHooks !== undefined && typeof cancelHooks.onCancel === 'function') {
+        ;(cancelHooks.onCancel as (element: unknown) => void)(element)
+      }
+      return { ok: true, code: 'ok', committed: false }
+    },
+    dispose(): DisposeReport {
+      log.push('dispose')
+      disposed = true
+      const wasActive = active !== null
+      active = null
+      installed.clear()
+      return { removed: wasActive ? 4 : 1, complete: config.disposeComplete !== false }
+    },
+    gesture(): GestureStats | null {
+      log.push('gesture')
+      if (active === null) return null
+      return { active: true, id: active.id, outcome: active.outcome, value: active.value, commits: 0 }
+    },
+    stats(): SessionStats {
+      log.push('stats')
+      return {
+        installed: installed.size,
+        sourceCalls: 0,
+        gestures: started.count,
+        commits,
+        active: active !== null,
+        gestureId: active === null ? 0 : active.id,
+        lastCode: disposed ? 'disposed' : 'ok',
+      }
+    },
+    fireTerminal(outcome: 'end' | 'cancel'): void {
+      const record = active
+      if (record === null) return
+      const element = record.element
+      if (outcome === 'end') {
+        record.outcome = 'end'
+        active = null
+        const hooks = hooksByElement.get(element)
+        let hookError: unknown = null
+        try {
+          if (hooks !== undefined && typeof hooks.onEnd === 'function') {
+            ;(hooks.onEnd as (element: unknown, value: unknown) => void)(element, record.value)
+          }
+        } catch (error) {
+          hookError = error
+        }
+        if (config.commitOnEnd !== false) {
+          commits += 1
+          invokeCommit(element, record.handle, record.value)
+        }
+        if (hookError !== null) throw hookError
+        return
+      }
+      record.outcome = 'cancel'
+      active = null
+      const hooks = hooksByElement.get(element)
+      if (hooks !== undefined && typeof hooks.onCancel === 'function') {
+        ;(hooks.onCancel as (element: unknown) => void)(element)
+      }
+    },
+    fireMove(): void {
+      const record = active
+      if (record === null) return
+      const hooks = hooksByElement.get(record.element)
+      if (hooks !== undefined && typeof hooks.onMove === 'function') {
+        ;(hooks.onMove as (gesture: GestureHandle) => void)(record.handle)
+      }
+    },
+  }
+  return double
+}
+
+// ===========================================================================
+// THE RECORDING SOURCE + THE LANDED SESSION (`§2.5` item 1's table, layer anchor 2):
+// rows that need the CONTRACT's real composition drive the landed
+// `src/shared/gesture-session.ts` through an argument-supplied recorder, and every call
+// the session makes lands in the recorder's log. **No real element exists in this file**:
+// an element is an opaque record the source keys by identity.
+// ===========================================================================
+interface RecorderSource {
+  readonly calls: string[]
+  readonly captures: unknown[]
+  readonly attached: Map<unknown, Map<string, () => void>>
+  on(element: unknown, type: string, handler: () => void): void
+  off(element: unknown, type: string, handler: () => void): void
+  capturePointer?: (element: unknown) => void
+  fire(element: unknown, type: string): void
+}
+function makeRecorder(withCapture: boolean): RecorderSource {
+  const calls: string[] = []
+  const captures: unknown[] = []
+  const attached = new Map<unknown, Map<string, () => void>>()
+  const source: RecorderSource = {
+    calls,
+    captures,
+    attached,
+    on(element: unknown, type: string, handler: () => void): void {
+      calls.push(`on:${type}`)
+      const per = attached.get(element) ?? new Map<string, () => void>()
+      per.set(type, handler)
+      attached.set(element, per)
+    },
+    off(element: unknown, type: string, handler: () => void): void {
+      void handler
+      calls.push(`off:${type}`)
+      attached.get(element)?.delete(type)
+    },
+    /** Fire the recorded handler for `(element, type)`.
+     *  **IT IS NOT A HARNESS ASSERTION WHEN THE HANDLER IS ABSENT.** While the module is
+     *  absent `attach` delegated NOTHING, so no listener exists and there is no handler to
+     *  fire — and a `throw`/`expect` here would turn a module-absent ROW into a HARNESS
+     *  DEFECT, which the red report must never contain. An absent handler is therefore a
+     *  NO-OP, and the row fails on its OWN declared assertion instead. (Once the module
+     *  lands, a missing handler means `attach` did not delegate — which `M-1`/`R-3` catch
+     *  directly, on the session's recorded call log.) */
+    fire(element: unknown, type: string): void {
+      const handler = attached.get(element)?.get(type)
+      if (typeof handler !== 'function') return
+      handler()
+    },
+  }
+  if (withCapture) {
+    source['capturePointer'] = (element: unknown): void => {
+      calls.push('capturePointer')
+      captures.push(element)
+    }
+  }
+  return source
+}
+const TYPE_DOWN = 'pointerdown'
+const TYPE_MOVE = 'pointermove'
+const TYPE_UP = 'pointerup'
+const TYPE_CANCEL_EVENT = 'pointercancel'
+
+interface LandedHarness {
+  readonly session: SessionLike & Record<string, unknown>
+  readonly source: RecorderSource
+  readonly commits: Array<{ gesture: unknown; value: unknown; outcome: unknown }>
+  readonly sessionLog: string[]
+  /** Every options object the CONTROLLER handed `session.install`, with its own key set
+   *  (`R-10`'s reading — the recorded install arguments, never this file's copy). */
+  readonly installArgs: Array<{ element: unknown; keys: string[] }>
+}
+/** The landed session, wrapped so every call the CONTROLLER makes into it is counted
+ *  (`R-14`'s `[T]` half) while the session's own behaviour is the landed module's. */
+async function landedHarness(options: {
+  withCapture?: boolean
+  commit?: ((gesture: unknown, value: unknown) => void) | undefined
+  noCommit?: boolean
+  label?: string
+}): Promise<LandedHarness> {
+  const source = makeRecorder(options.withCapture === true)
+  const commits: LandedHarness['commits'] = []
+  const sessionLog: string[] = []
+  const installArgs: LandedHarness['installArgs'] = []
+  const factory = await sessionValueExport<(o: Record<string, unknown>) => SessionLike & Record<string, unknown>>(
+    'createGestureSession',
+    options.label ?? 'the session factory',
+  )
+  const commit =
+    options.noCommit === true
+      ? undefined
+      : (gesture: unknown, value: unknown): void => {
+          const handle = gesture as GestureHandle
+          commits.push({ gesture, value, outcome: handle.outcome })
+          if (options.commit !== undefined) options.commit(gesture, value)
+        }
+  const raw = factory({ source, commit } as Record<string, unknown>)
+  const session: SessionLike & Record<string, unknown> = raw
+  const wrappedInstall = (element: unknown, installOptions?: unknown): unknown => {
+    sessionLog.push('install')
+    const record = (installOptions ?? {}) as Record<string, unknown>
+    installArgs.push({ element, keys: Object.keys(record).sort() })
+    return (raw['install'] as (e: unknown, o?: unknown) => unknown).call(raw, element, installOptions)
+  }
+  ;(session as unknown as Record<string, unknown>)['install'] = wrappedInstall
+  for (const name of ['reset', 'dispose', 'stats', 'gesture'] as const) {
+    const original = raw[name]
+    ;(session as unknown as Record<string, unknown>)[name] = (...args: unknown[]): unknown => {
+      sessionLog.push(name)
+      return (original as (...a: unknown[]) => unknown).apply(raw, args)
+    }
+  }
+  return { session, source, commits, sessionLog, installArgs }
+}
+
+/** The landed session module's own value export (the module this unit composes —
+ *  `R-18`'s precondition) — resolved by `sessionNamespace()` at the head of this file. */
+
+// ---------------------------------------------------------------------------
+// THE COUNTING SINK (`§2.3` item 3, `§5.5.1 P-GT-SM-3`): records every invocation with
+// the session's own handle, the value it received and the handle's OUTCOME at the moment
+// of the call — and can be configured to THROW (`F-11`).
+// ---------------------------------------------------------------------------
+interface SinkRecord {
+  readonly gesture: unknown
+  readonly value: unknown
+  readonly outcome: unknown
+  readonly id: unknown
+  readonly seq: number
+}
+interface CountingSink {
+  (gesture: GestureHandle, value: number): void
+  readonly records: SinkRecord[]
+  readonly attempts: { count: number }
+}
+function makeSink(throws = false): CountingSink {
+  const records: SinkRecord[] = []
+  const attempts = { count: 0 }
+  const sink = ((gesture: GestureHandle, value: number): void => {
+    attempts.count += 1
+    records.push({ gesture, value, outcome: gesture === null ? null : gesture.outcome, id: gesture === null ? null : gesture.id, seq: attempts.count })
+    if (throws) throw new Error('the consumer sink threw (F-11)')
+  }) as CountingSink
+  Object.defineProperty(sink, 'records', { value: records })
+  Object.defineProperty(sink, 'attempts', { value: attempts })
+  return sink
+}
+
+/** A seam that records its own calls and returns a configured value, or throws when
+ *  `throws` is set. */
+function seam<T>(answer: T, throws = false): { (...args: unknown[]): T; readonly calls: Array<unknown[]> } {
+  const calls: Array<unknown[]> = []
+  const fn = ((...args: unknown[]): T => {
+    calls.push(args)
+    if (throws) throw new Error('the injected seam threw (C2)')
+    return answer
+  }) as { (...args: unknown[]): T; readonly calls: Array<unknown[]> }
+  Object.defineProperty(fn, 'calls', { value: calls })
+  return fn
+}
+/** A NON-CALLABLE seam shape (`42`, a string) — the declared `non-callable` class. */
+const NON_CALLABLE_SEAM = 42
+
+// ===========================================================================
+/** The JOIN MARKER (`§4.4 S-6`): it marks the seam between two pieces of ONE spelling.
+ *  It is a non-identifier byte, so the boundary rule reads a standing marker as a separator. */
+const JOIN_MARKER = '\u0001'
+
+// THE ANTI-EVASION SCANNERS (`§4.4 S-6`, `R-1`/`R-11`): the token forms are held as
+// FRAGMENTS so a rule list that spelled them joined would put them into this file's own
+// bytes — and THIS file is one of the two files `R-8`'s bound (b) scans.
+// ===========================================================================
+/** **THE FRAGMENT BUILDER.** Every banned spelling this file must NAME is held as
+ *  CHUNKS and joined with the JOIN MARKER, because **this file is one of the two files
+ *  `R-8`'s bound (b) scans**: a rule list that spelled its tokens joined would put them into
+ *  this file's own bytes. The marker tells the matcher that the pieces came from one
+ *  token, so a corpus built over `chunked([...])` is matched as the joined spelling while
+ *  the file's bytes carry only the fragments. */
+function chunked(parts: readonly string[]): string {
+  return parts.join(JOIN_MARKER)
+}
+const BOUNDARY_RE = /[A-Za-z0-9_$]/
+function isIdentChar(text: string): boolean {
+  return text.length > 0 && BOUNDARY_RE.test(text)
+}
+/** **THE SPLIT-SPELLING MATCHER (`§4.4 S-6`).** A spelling whose pieces the SOURCE joins
+ *  (separated by ONLY whitespace and the concatenation operator) is matched as ONE token — a
+ *  prohibition satisfiable by splitting a token is not satisfied — while the boundary rule is
+ *  applied to the WHOLE match, so a spelling bounded by word characters is still REFUSED. */
+function boundedOccurrences(text: string, spelling: string): number {
+  const pieces = spelling
+    .split(JOIN_MARKER)
+    .map((piece) => piece.split('\\').join('\\\\').split('.').join('\\.').split('*').join('\\*').split('+').join('\\+').split('?').join('\\?').split('^').join('\\^').split('$').join('\\$').split('{').join('\\{').split('}').join('\\}').split('(').join('\\(').split(')').join('\\)').split('|').join('\\|').split('[').join('\\[').split(']').join('\\]'))
+  // The separator run admits the JOIN MARKER as well as whitespace and the concatenation
+  // operator, so the matcher works over a NORMALIZED view and over a raw corpus alike.
+  const sep = `[\\s${JOIN_MARKER}]*(?:\\+[\\s${JOIN_MARKER}]*)*`
+  const pattern = pieces.join(sep)
+  const re = new RegExp(pattern, 'gi')
+  let count = 0
+  let match = re.exec(text)
+  while (match !== null) {
+    const before = match.index === 0 ? '' : text[match.index - 1]
+    const after = match.index + match[0].length >= text.length ? '' : text[match.index + match[0].length]
+    if (!isIdentChar(before) && !isIdentChar(after)) count += 1
+    match = re.exec(text)
+  }
+  return count
+}
+/** **THE NORMALIZED VIEW (`R-1`/`R-11`/`§4.4 S-6`, the `S-6` closure).** Four rules:
+ *
+ *  1. **COMMENTS ARE SCANNED LIKE CODE** — line and block comment bodies are KEPT.
+ *  2. **A STRING LITERAL IS REPLACED BY ITS CONTENT**, wrapped in the JOIN MARKER (`^`):
+ *     the marker records that the content came from a LITERAL, so a token **split across
+ *     two concatenated literals** is still readable as ONE token (`'cli' + 'entX'` ⇒
+ *     `cli^entX`) — which is what `S-6` requires, because *"a static prohibition
+ *     satisfiable by splitting a token is not satisfied"*.
+ *  3. **THE MARKER IS DROPPED ONLY WHERE THE SOURCE HAS NOTHING BETWEEN THE PIECES**
+ *     (only whitespace and the concatenation operator are skipped), so two pieces the
+ *     source joins are genuinely ADJACENT while a literal followed by real code keeps its
+ *     boundary.
+ *  4. Everything else is preserved byte-for-byte, so a raw spelling and an identifier
+ *     boundary read exactly as written. */
+function normalizedView(src: string): string {
+  const marks: string[] = []
+  let out = ''
+  let i = 0
+  const readQuoted = (): void => {
+    const quote = src[i]
+    i += 1
+    let value = ''
+    while (i < src.length && src[i] !== quote) {
+      if (src[i] === '\\') {
+        value += src[i + 1] ?? ''
+        i += 2
+        continue
+      }
+      value += src[i]
+      i += 1
+    }
+    i += 1
+    out += JOIN_MARKER + value + JOIN_MARKER
+    marks.push(value)
+  }
+  while (i < src.length) {
+    const ch = src[i]
+    const next = src[i + 1]
+    if (ch === '/' && next === '/') {
+      while (i < src.length && src[i] !== '\n') {
+        out += src[i]
+        i += 1
+      }
+      continue
+    }
+    if (ch === '/' && next === '*') {
+      out += ' '
+      i += 2
+      while (i < src.length && !(src[i] === '*' && src[i + 1] === '/')) {
+        out += src[i]
+        i += 1
+      }
+      i += 2
+      out += ' '
+      continue
+    }
+    if (ch === "'" || ch === '"') {
+      readQuoted()
+      continue
+    }
+    if (ch === '`') {
+      i += 1
+      let part = ''
+      while (i < src.length) {
+        if (src[i] === '\\') {
+          part += src[i + 1] ?? ''
+          i += 2
+          continue
+        }
+        if (src[i] === '`') {
+          i += 1
+          break
+        }
+        if (src[i] === '$' && src[i + 1] === '{') {
+          out += JOIN_MARKER + part + JOIN_MARKER
+          marks.push(part)
+          part = ''
+          i += 2
+          let depth = 1
+          while (i < src.length && depth > 0) {
+            if (src[i] === '{') depth += 1
+            else if (src[i] === '}') depth -= 1
+            if (depth > 0) {
+              out += src[i]
+              i += 1
+            }
+          }
+          i += 1
+          continue
+        }
+        part += src[i]
+        i += 1
+      }
+      out += JOIN_MARKER + part + JOIN_MARKER
+      marks.push(part)
+      continue
+    }
+    out += ch
+    i += 1
+  }
+  // **THE MARKERS ARE DROPPED ON THE WAY OUT.** The matcher (`boundedOccurrences`) holds the
+  // `S-6` join rule: a spelling whose pieces the SOURCE joins — separated by ONLY whitespace
+  // and the concatenation operator — is matched as ONE token, while a spelling adjacent to a
+  // word character on either side is REFUSED by the boundary rule. A marker left standing
+  // would be a third byte the boundary rule would have to reason about, so it is removed.
+  return out.split(JOIN_MARKER).join('')
+}
+function hitsOf(text: string, spellings: readonly string[]): string[] {
+  const found: string[] = []
+  for (const spelling of spellings) {
+    const count = boundedOccurrences(text, spelling)
+    if (count > 0) found.push(`${spelling} ×${count}`)
+  }
+  return found
+}
+
+/** **`R-1`'s VOCABULARY (`P-1`, `P-5`, `P-8`, `P-10`).** The `--` entry is the CSS
+ *  custom-property prefix and is scanned as a LEADING DOUBLE HYPHEN before a letter, so an
+ *  ordinary decrement never matches it. */
+const VOCAB_COORD: readonly string[] = [
+  chunked(['client', 'X']),
+  chunked(['client', 'Y']),
+  chunked(['page', 'X']),
+  chunked(['page', 'Y']),
+  chunked(['screen', 'X']),
+  chunked(['screen', 'Y']),
+  chunked(['offset', 'X']),
+  chunked(['offset', 'Y']),
+  chunked(['movement', 'X']),
+  chunked(['movement', 'Y']),
+  chunked(['pointer', 'Id']),
+  chunked(['delta', 'X']),
+  chunked(['delta', 'Y']),
+  chunked(['butt', 'ons']),
+  chunked(['is', 'Primary']),
+]
+const VOCAB_AXIS: readonly string[] = ['horizontal', 'vertical', 'inline', 'block', chunked(['x', '-axis']), chunked(['y', '-axis'])]
+const VOCAB_UNIT: readonly string[] = [chunked(['f', 'it-content']), 'calc(', 'px']
+const VOCAB_SELECTOR: readonly string[] = ['selectors', 'querySelector', 'closest', 'getElementById']
+const VOCAB_CENSUS: readonly string[] = ['census', 'zones', 'revealed', 'specOf', 'trackVar', 'trackProp', 'emptyToken']
+const VOCAB_STORE: readonly string[] = [
+  chunked(['local', 'Storage']),
+  chunked(['session', 'Storage']),
+  'store',
+  'cache',
+  'memo',
+  'persist',
+]
+const VOCAB_THRESHOLD: readonly string[] = ['threshold']
+const VOCAB_ALL: readonly string[] = [
+  ...VOCAB_COORD,
+  ...VOCAB_AXIS,
+  ...VOCAB_UNIT,
+  ...VOCAB_SELECTOR,
+  ...VOCAB_CENSUS,
+  ...VOCAB_STORE,
+  ...VOCAB_THRESHOLD,
+]
+const CSS_CUSTOM_PROP = /--[A-Za-z]/
+function vocabularyViolations(src: string): string[] {
+  const view = normalizedView(src)
+  const found = hitsOf(view, VOCAB_ALL)
+  if (CSS_CUSTOM_PROP.test(view)) found.push('a CSS custom-property prefix')
+  return found.sort()
+}
+/** `R-1`'s POSITIVE CONTROLS: each MUST fail the scan (a corpus spelling a banned token
+ *  raw, joined across a literal boundary, and inside a comment). */
+const VOCAB_POSITIVE_CONTROLS: readonly string[] = [
+  `const a = ${chunked(['client', 'X'])}`,
+  `const a = '${chunked(['client', 'X'])}'`,
+  `// the row reads ${chunked(['page', 'Y'])} here`,
+  `const a = ${chunked(['pointer', 'Id'])}`,
+  `const a = ${chunked(['horizontal'])}`,
+  `const a = ${chunked(['calc', '('])} 100%)`,
+  `const a = ${chunked(['querySelector'])}`,
+  `const a = ${chunked(['census'])}`,
+  `const a = ${chunked(['persist'])}`,
+  `const a = ${chunked(['threshold'])}`,
+  'const a = --' + 'gutter-width',
+]
+/** `R-1`'s NEGATIVE CONTROL: this unit's own legitimate text — the result codes, the hook
+ *  names, `clampToBounds`'s parameter names — MUST pass. */
+const VOCAB_NEGATIVE_CONTROL = [
+  "const code = 'unusable-default'",
+  "const other = 'no-gesture'",
+  'const hooks = { onStart, onMove, onEnd, onCancel }',
+  'function clampToBounds(value, bounds) { return value }',
+  'const s = session.stats()',
+  'const t = session.gesture()',
+  'const d = session.disposed',
+  'const r = Math.max(min, Math.min(value, max))',
+].join('\n')
+
+/** `R-11`'s UI-CONTENT WRITE tokens. */
+const WRITE_TOKENS: readonly string[] = [
+  chunked(['set', 'Attribute']),
+  chunked(['remove', 'Attribute']),
+  'classList',
+  'className',
+  'textContent',
+  'innerText',
+  chunked(['inner', 'HTML']),
+  chunked(['outer', 'HTML']),
+  chunked(['insertAdjacent', 'HTML']),
+  chunked(['insertAdjacent', 'Text']),
+  chunked(['create', 'Element']),
+  chunked(['createText', 'Node']),
+  chunked(['append', 'Child']),
+  chunked(['insert', 'Before']),
+  chunked(['remove', 'Child']),
+  chunked(['replace', 'Children']),
+  chunked(['set', 'Property']),
+  'cssText',
+]
+function uiWriteViolations(src: string): string[] {
+  return hitsOf(normalizedView(src), WRITE_TOKENS)
+}
+const WRITE_POSITIVE_CONTROLS: readonly string[] = [
+  `const a = ${chunked(['set', 'Attribute'])}`,
+  `const a = 42; el[${"'set'"} + ${"'Attribute'"}]('x', 1)`,
+  `// the module never calls ${chunked(['classList'])}`,
+]
+
+/** `R-2`'s FORBIDDEN-ACCESS spellings and `R-3`'s EVENT-WIRING spellings. */
+const ACCESS_SPELLINGS: readonly string[] = [
+  'globalThis',
+  'window',
+  'self',
+  chunked(['match', 'Media']),
+  chunked(['getComputed', 'Style']),
+  chunked(['getBounding', 'ClientRect']),
+  chunked(['active', 'Element']),
+  'eval',
+  'Reflect.construct',
+]
+const WIRING_SPELLINGS: readonly string[] = [
+  chunked(['addEventListener']),
+  chunked(['removeEventListener']),
+  chunked(['setPointer', 'Capture']),
+  chunked(['releasePointer', 'Capture']),
+  chunked(['capture', 'Pointer']),
+  chunked(['POINTER', '_TYPES']),
+  chunked(['installGesture', 'Listeners']),
+  chunked(['detachGesture', 'Listeners']),
+  chunked(['begin']),
+  chunked(['cancel']),
+]
+const AMBIENT_SPELLINGS: readonly string[] = [
+  chunked(['doc', 'ument']),
+  chunked(['global', 'This']),
+  chunked(['Math', '.random']),
+  chunked(['process', '.env']),
+  chunked(['node', ':fs']),
+  chunked(['local', 'Storage']),
+]
+/** `R-8`'s GEOMETRY / COORDINATE spellings (the module's and this file's bytes). */
+const GEOMETRY_SPELLINGS: readonly string[] = [
+  ...VOCAB_COORD,
+  chunked(['getComputed', 'Style']),
+  chunked(['getBounding', 'ClientRect']),
+  chunked(['offset', 'Width']),
+  chunked(['offset', 'Height']),
+  chunked(['client', 'Width']),
+  chunked(['client', 'Height']),
+  chunked(['scroll', 'Width']),
+  chunked(['match', 'Media']),
+  chunked(['inner', 'HTML']),
+]
+/** `R-8`'s stated bound (c): the row DESCRIPTIONS extracted from this file, scanned with
+ *  the geometry tokens held as FRAGMENTS so the scan cannot read its own rule list. */
+/** `R-8` bound (c) — the CLAIM forms. **A bare geometry word is NOT a claim** (this unit's
+ *  own rows speak of a coordinate only to assert that NONE is read), so the forms below are
+ *  the CLAIM shapes the row must catch, and they are held as fragments. */
+const GEOMETRY_CLAIM_WORDS: readonly string[] = [
+  'rendered width',
+  'rendered height',
+  'rendered geometry',
+  'rendered pixel',
+  'the element measures',
+  'a pixel measurement',
+  'the pixel width',
+  'the layout pass',
+  'the applied value',
+  'applied css value',
+  'the coordinates are',
+  'a magnitude of',
+  'is magnitude-equivalent',
+  'painted width',
+  'retargets the click',
+  'the click is retargeted',
+  'the computed style',
+  'the bounding rect',
+]
+function rowDescriptions(src: string): string[] {
+  const found: string[] = []
+  const re = /\b(?:it|describe)\(\s*(['"`])((?:\\.|(?!\1)[\s\S])*?)\1/g
+  let match = re.exec(src)
+  while (match !== null) {
+    found.push(match[2] ?? '')
+    match = re.exec(src)
+  }
+  return found
+}
+function geometryClaimViolations(src: string): string[] {
+  const found: string[] = []
+  for (const text of rowDescriptions(src)) {
+    for (const word of GEOMETRY_CLAIM_WORDS) {
+      if (text.toLowerCase().includes(word)) found.push(`${word} :: ${text.slice(0, 80)}`)
+    }
+  }
+  return found
+}
+
+// ===========================================================================
+// The small file readers. **The HARNESS may read files; the MODULE may not** (`R-4`).
+// ===========================================================================
+let sourceCache: string | null = null
+function moduleSource(label: string): string {
+  if (sourceCache !== null) return sourceCache
+  expect(
+    existsSync(MODULE_SRC),
+    `RED — U-GUTTER red set (§4.1): the static rows of §3.4 read the module file and it does not exist yet (${fileURLToPath(
+      MODULE_SRC,
+    )}). [${label}]`,
+  ).toBe(true)
+  sourceCache = existsSync(MODULE_SRC) ? readFileSync(MODULE_SRC, 'utf8') : ''
+  return sourceCache
+}
+function moduleBytes(): string {
+  return existsSync(MODULE_SRC) ? readFileSync(MODULE_SRC, 'utf8') : ''
+}
+function testFileBytes(): string {
+  return readFileSync(TEST_FILE, 'utf8')
+}
+/** Every `gutter*` path under `src/**` or `tests/**` (`R-16`'s census — a recursive
+ *  walk with `node_modules` and dotted directories pruned). */
+function walkUnitPaths(): string[] {
+  const found: string[] = []
+  const visit = (rel: string): void => {
+    for (const entry of readdirSync(`${REPO_ROOT}/${rel}`, { withFileTypes: true })) {
+      const child = `${rel}/${String(entry.name)}`
+      if (entry.isDirectory()) {
+        if (String(entry.name) === 'node_modules' || String(entry.name).startsWith('.')) continue
+        visit(child)
+        continue
+      }
+      if (/^gutter/i.test(String(entry.name))) found.push(child)
+    }
+  }
+  for (const root of ['src', 'tests']) visit(root)
+  return found.sort()
+}
+/** Every `src/**` path, for `R-6`/`R-12`'s companion claim ("imported by NO `src/**`
+ *  file"). */
+function walkSourceFiles(): string[] {
+  const found: string[] = []
+  const visit = (rel: string): void => {
+    for (const entry of readdirSync(`${REPO_ROOT}/${rel}`, { withFileTypes: true })) {
+      const child = `${rel}/${String(entry.name)}`
+      if (entry.isDirectory()) {
+        if (String(entry.name) === 'node_modules' || String(entry.name).startsWith('.')) continue
+        visit(child)
+        continue
+      }
+      if (/\.tsx?$/.test(String(entry.name))) found.push(child)
+    }
+  }
+  visit('src')
+  return found.sort()
+}
+/** The module's own import statements, as `{ statement, specifier, typeOnly }`. */
+function importStatements(src: string): Array<{ statement: string; specifier: string | null; typeOnly: boolean }> {
+  const out: Array<{ statement: string; specifier: string | null; typeOnly: boolean }> = []
+  const re = /\bimport\b[^;\n]*/g
+  let match = re.exec(src)
+  while (match !== null) {
+    const statement = match[0]
+    const specifier = /from\s*['"]([^'"]+)['"]/.exec(statement) ?? /import\s*\(\s*['"]([^'"]+)['"]\s*\)/.exec(statement)
+    out.push({ statement, specifier: specifier === null ? null : specifier[1], typeOnly: /^import\s+type\b/.test(statement) })
+    match = re.exec(src)
+  }
+  return out
+}
+/** The controller's own result-code string literals (`R-15`'s closed-set half). */
+function resultCodeLiterals(src: string): string[] {
+  const found = new Set<string>()
+  const re = /'([a-z][a-z-]*)'/g
+  let match = re.exec(src)
+  while (match !== null) {
+    if (match[1].includes('-') || match[1] === 'ok') found.add(match[1])
+    match = re.exec(src)
+  }
+  return [...found].sort()
+}
+/** A LIVE exported-name census read from the module's bytes (the type half of `R-5`),
+ *  used only as a cross-check against the runtime namespace. */
+function exportedTypeNames(src: string): string[] {
+  const names: string[] = []
+  const re = /export\s+(?:interface|type)\s+([A-Za-z_$][A-Za-z0-9_\$]*)/g
+  let match = re.exec(src)
+  while (match !== null) {
+    names.push(match[1])
+    match = re.exec(src)
+  }
+  return names.sort()
+}
+
+// ===========================================================================
+// §5.1 — THE CHANGE-SET CENSUS (`R-12`).
+// ===========================================================================
+function gitOrNull(args: readonly string[]): string[] | null {
+  try {
+    const out = execFileSync('git', [...args], { encoding: 'utf8' })
+    return out
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+  } catch {
+    return null
+  }
+}
+function treeChangeSet(): { paths: string[]; raw: string } {
+  try {
+    const raw = execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' })
+    const paths = raw
+      .split('\n')
+      .filter((line) => line.trim().length > 0)
+      .map((line) => line.slice(3).trim().replace(/^"|"$/g, ''))
+    return { paths, raw }
+  } catch (e) {
+    return { paths: [], raw: `<<git unavailable: ${describeThrown(e)}>>` }
+  }
+}
+function committedChangeSet(): { anchor: string; range: string; paths: string[] } | null {
+  const added = gitOrNull(['log', '--diff-filter=A', '--format=%H', '--', TEST_RELPATH])
+  const anchor = added === null ? undefined : added.filter((l) => /^[0-9a-f]{7,40}$/.test(l))[0]
+  if (anchor === undefined) return null
+  const range = `${anchor}..HEAD`
+  const listed = gitOrNull(['log', '--name-only', '--pretty=format:', range])
+  if (listed === null) return null
+  return { anchor, range, paths: Array.from(new Set(listed)).sort() }
+}
+/** `§5.1`'s DENIED set, NAMED FIRST (the half that binds the WHOLE committed set). */
+const DENIED_EXACT: readonly string[] = [
+  SESSION_RELPATH,
+  'tests/gesture-session.test.ts',
+  'package.json',
+  'package-lock.json',
+  'tsconfig.json',
+  'vitest.config.ts',
+  'docs/specs/gutter-review.md',
+  'docs/specs/gutter-ui.md',
+]
+function isDeniedPath(path: string): boolean {
+  if (DENIED_EXACT.includes(path)) return true
+  if (/^src\/shared\//.test(path) && path !== MODULE_RELPATH) return true
+  if (/^src\/main\//.test(path) || /^src\/renderer\//.test(path)) return true
+  if (/^scripts\//.test(path)) return true
+  if (/^tests\//.test(path) && path !== TEST_RELPATH) return true
+  return false
+}
+/** This unit's OWN artifacts — the allow-list (`§5.1` rows 1–5). */
+const UNIT_GREENS_PROBE = /^docs\/specs\/gutter[^/]*-greens\.md$/
+const UNIT_REVIEW_PROBE = /^archive\/reviews\/[^/]*(U-GUTTER|gutter)[^/]*\.md$/
+const UNIT_TRACKER_PROBE = /^docs\/(next-steps|decisions|pending|FORKER|defects|HANDOFF)\.md$/
+function isUnitArtifact(path: string): boolean {
+  return (
+    path === MODULE_RELPATH ||
+    path === TEST_RELPATH ||
+    path === SPEC_RELPATH ||
+    UNIT_GREENS_PROBE.test(path) ||
+    UNIT_REVIEW_PROBE.test(path) ||
+    UNIT_TRACKER_PROBE.test(path)
+  )
+}
+/** The companion claim (`R-6`/`R-12`): `src/shared/gutter.ts` is imported by NO `src/**`
+ *  file. */
+function gutterImporters(): string[] {
+  const importers: string[] = []
+  for (const rel of walkSourceFiles()) {
+    if (rel === MODULE_RELPATH) continue
+    const src = readFileSync(`${REPO_ROOT}/${rel}`, 'utf8')
+    for (const statement of importStatements(src)) {
+      if (statement.specifier !== null && /(^|\/)gutter(\.js)?$/.test(statement.specifier)) importers.push(rel)
+    }
+  }
+  return importers
+}
+
+// ===========================================================================
+// §5.5.1 — THE REGISTER'S EXECUTION MACHINERY.
+// Caps (uniform for the whole register): `≤100` attempts per row, `≤400` attempts in
+// total, rows evaluated SEQUENTIALLY IN REGISTER ORDER, STOP AFTER 5 CONSECUTIVE
+// FAILURES (the running row's remaining attempts are abandoned and no further row
+// starts). **An un-run row FAILS — it never looks green.**
+// ===========================================================================
+/** **`§5.5.1`/`§5.5.3`’s DECLARED TOTAL AS PRINTED — `314`.** It is kept as the spec prints it
+ *  and is NEVER replaced by a re-total (see the ARITHMETIC FINDING at `PRE-2`). */
+const REGISTER_PRINTED_TOTAL = 314
+const REGISTER_ROW_CAP = 100
+const REGISTER_TOTAL_CAP = 400
+const CONSECUTIVE_FAILURE_CAP = 5
+const SEED = 20260927
+const LCG_A = 1664525
+const LCG_C = 1013904223
+const LCG_MOD = 4294967296
+
+/** **`§5.5.1`'s THIRTEEN DECLARED ROWS** — `(row id, strategy id, declared term,
+ *  honest DISTINCT figure, bounded)` in REGISTER ORDER, as `§5.5.3` prints them:
+ *  `314` = `60+11+10+18+20+22+28+20+15+5+12+60+18`. Declared ONCE, at module scope, so
+ *  `PRE-2` (the table precondition), `PRE-4` (the pool-versus-boundary rule) and
+ *  `REGISTER-STATUS` (the executed record) all reconcile against the same object.
+ *
+ *  **THE DISTINCT FIGURES ARE `§5.5.2` item 3's, and the FOUR rows where the two figures
+ *  DIFFER are `P-GT-PU-2` (`11`/`2`), `P-GT-IM-2` (`20`/`18`), `P-GT-SM-1` (`20`/`19`) and
+ *  `P-GT-SM-4` (`12`/`11`).** The DECLARED figures are what the caps are compared
+ *  against; the distinct figures are REPORTED BESIDE them and are NEVER substituted
+ *  (`docs/decisions.md` `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`, sub-rule 2). */
+const REGISTER_DECLARED: ReadonlyArray<{
+  row: string
+  strategy: string
+  term: number
+  distinct: number
+  bounded: boolean
+}> = [
+  { row: 'P-GT-PU-1', strategy: 'S-GT-PURE-1', term: 60, distinct: 60, bounded: false },
+  { row: 'P-GT-PU-2', strategy: 'S-GT-PURE-2', term: 11, distinct: 2, bounded: true },
+  { row: 'P-GT-PU-3', strategy: 'S-GT-PURE-3', term: 10, distinct: 10, bounded: false },
+  { row: 'P-GT-IM-1', strategy: 'S-GT-SEAM-1', term: 18, distinct: 18, bounded: false },
+  { row: 'P-GT-IM-2', strategy: 'S-GT-SEAM-2', term: 20, distinct: 18, bounded: true },
+  { row: 'P-GT-IM-3', strategy: 'S-GT-SEAM-3', term: 22, distinct: 22, bounded: false },
+  { row: 'P-GT-IM-4', strategy: 'S-GT-SEAM-4', term: 28, distinct: 28, bounded: false },
+  { row: 'P-GT-SM-1', strategy: 'S-GT-COMMIT-1', term: 20, distinct: 19, bounded: false },
+  { row: 'P-GT-SM-2', strategy: 'S-GT-WINDOW-1', term: 15, distinct: 15, bounded: false },
+  { row: 'P-GT-SM-3', strategy: 'S-GT-WRITER-1', term: 5, distinct: 5, bounded: false },
+  { row: 'P-GT-SM-4', strategy: 'S-GT-RESET-1', term: 12, distinct: 11, bounded: false },
+  { row: 'P-GT-TP-1', strategy: 'S-GT-TOTAL-1', term: 60, distinct: 60, bounded: true },
+  { row: 'P-GT-TP-2', strategy: 'S-GT-SHAPES-1', term: 18, distinct: 18, bounded: false },
+]
+function registerKeySet(rows: ReadonlyArray<{ row: string; strategy: string }>): string[] {
+  return rows.map((r) => `${r.row} :: ${r.strategy}`).sort()
+}
+function declaredTermOf(row: string): number {
+  return REGISTER_DECLARED.find((r) => r.row === row)?.term ?? -1
+}
+/** The register's bounded SET, per `§5.5.1`'s own naming: `P-GT-PU-2`, `P-GT-IM-2` and
+ *  `P-GT-TP-1` — `3` of the `13` rows. */
+const REGISTER_BOUNDED_ROWS: readonly string[] = ['P-GT-PU-2', 'P-GT-IM-2', 'P-GT-TP-1']
+const registerState = {
+  attempts: 0,
+  consecutiveFailures: 0,
+  stoppedAtRow: null as string | null,
+  stoppedFor: null as string | null,
+}
+type RowRecord = {
+  row: string
+  strategy: string
+  seed: number
+  attemptsRun: number
+  held: number
+  broken: number
+  stoppedEarly: boolean
+  notStarted: boolean
+  registerStoppedAt: string | null
+  causes: string[]
+}
+const registerRecords: RowRecord[] = []
+class RegisterRow {
+  readonly row: string
+  readonly strategy: string
+  private ran = 0
+  private held = 0
+  private broken = 0
+  private stoppedEarly = false
+  private notStarted = false
+  private readonly causes: string[] = []
+
+  constructor(row: string, strategy: string) {
+    this.row = row
+    this.strategy = strategy
+  }
+
+  /** ONE attempt. `body` returns `null` when the property HELD, else the break cause as a
+   *  sentence (a throw is caught and is itself a break cause). The body may be async: the
+   *  register's rows are SEQUENTIAL (register order), so every `run` is awaited by its row
+   *  before the next attempt starts. */
+  async run(label: string, body: () => string | null | Promise<string | null>): Promise<void> {
+    if (registerState.stoppedAtRow !== null) {
+      if (this.ran === 0) this.notStarted = true
+      return
+    }
+    if (this.ran >= REGISTER_ROW_CAP) {
+      this.stoppedEarly = true
+      this.causes.push(`the <=${REGISTER_ROW_CAP}-attempts-per-row cap was reached`)
+      return
+    }
+    if (registerState.attempts >= REGISTER_TOTAL_CAP) {
+      this.stoppedEarly = true
+      registerState.stoppedAtRow = this.row
+      registerState.stoppedFor = `the <=${REGISTER_TOTAL_CAP}-attempts register cap was reached`
+      return
+    }
+    this.ran += 1
+    registerState.attempts += 1
+    let cause: string | null = null
+    try {
+      cause = await body()
+    } catch (e) {
+      cause = `the attempt threw: ${describeThrown(e)}`
+    }
+    if (cause === null) {
+      this.held += 1
+      registerState.consecutiveFailures = 0
+      return
+    }
+    this.broken += 1
+    this.causes.push(`${label} — ${cause}`)
+    registerState.consecutiveFailures += 1
+    if (registerState.consecutiveFailures >= CONSECUTIVE_FAILURE_CAP) {
+      this.stoppedEarly = true
+      registerState.stoppedAtRow = this.row
+      registerState.stoppedFor = `${CONSECUTIVE_FAILURE_CAP} consecutive failures`
+    }
+  }
+
+  attemptsRunPublic(): number {
+    return this.ran
+  }
+  heldPublic(): number {
+    return this.held
+  }
+  brokenPublic(): number {
+    return this.broken
+  }
+
+  /** The row's verdict + its `§5.3` item 10 record line. **An un-run row FAILS on
+   *  purpose: a register row that never started may not look green.** */
+  finish(): void {
+    const record: RowRecord = {
+      row: this.row,
+      strategy: this.strategy,
+      seed: SEED,
+      attemptsRun: this.ran,
+      held: this.held,
+      broken: this.broken,
+      stoppedEarly: this.stoppedEarly,
+      notStarted: this.notStarted,
+      registerStoppedAt: registerState.stoppedAtRow,
+      causes: this.causes.slice(0, 5),
+    }
+    registerRecords.push(record)
+    const line = `§5.5.1 register record :: ${JSON.stringify(record)}`
+    console.log(line)
+    if (this.ran === 0) {
+      console.log(
+        `§5.5.1 un-run row record :: ${JSON.stringify({
+          row: this.row,
+          strategy: this.strategy,
+          attemptsRun: 0,
+          reported: 'FAILURE — never started; the register stopped earlier',
+          registerStoppedAt: registerState.stoppedAtRow,
+          stoppedFor: registerState.stoppedFor,
+        })}`,
+      )
+      expect(
+        0,
+        `§5.5.1/§4.2 item 2 — the register row \`${this.row}\` (${this.strategy}) NEVER STARTED: 0 of its declared attempts were executed, because the register stopped at \`${String(
+          registerState.stoppedAtRow,
+        )}\` (${String(registerState.stoppedFor)}). An un-run register row is REPORTED AS A FAILURE, never silently omitted and never a pass`,
+      ).toBe(declaredTermOf(this.row))
+      return
+    }
+    expect(
+      this.broken,
+      `${line} — RED (§5.5.1): ${this.broken} of ${this.ran} attempts BROKE. First causes: ${JSON.stringify(
+        this.causes.slice(0, 3),
+      )}`,
+    ).toBe(0)
+  }
+}
+
+/** `S-GT-TOTAL-1`'s generator: a hand-rolled 32-bit LCG whose constants are literals in
+ *  THIS file. `stateₙ₊₁ = (stateₙ·1664525 + 1013904223) mod 2³²`, **ONE step per draw**;
+ *  the pool index is `stateₙ₊₁ mod pool.length` — there is NO `next(k)` scaling helper
+ *  (`§5.5.1` strategy item 2). */
+function makeLcg(seed: number): { state: () => number; step: () => number } {
+  let state = seed >>> 0
+  return {
+    state(): number {
+      return state
+    },
+    step(): number {
+      state = (state * LCG_A + LCG_C) % LCG_MOD
+      return state
+    },
+  }
+}
+/** The pinned-seed DRAW SEQUENCE, ONE LCG step per draw: `30` draws over a `20`-member
+ *  pool. */
+const POOL_LENGTH = 20
+const TOTALITY_DRAWS = 30
+function poolDrawSequence(draws: number): number[] {
+  const lcg = makeLcg(SEED)
+  const out: number[] = []
+  for (let i = 0; i < draws; i += 1) out.push(lcg.step() % POOL_LENGTH)
+  return out
+}
+const DRAWN_INDICES = poolDrawSequence(TOTALITY_DRAWS)
+/** The REPORTED distinct-member figure (a DRAW is not a SWEEP — `§5.5.2` item 4: no row
+ *  may assert "all 20"). */
+const DISTINCT_DRAWN_POOL_MEMBERS = new Set(DRAWN_INDICES).size
+
+/** **`P-GT-TP-1`'s `20`-member pool** (`§5.5.1`, and `§5.5.2` item 4's stated boundary:
+ *  a revoked `Proxy`, a throwing `Symbol.toPrimitive` and a seam whose getter returns
+ *  DIFFERENT answers across reads are deliberately EXCLUDED). Each member is a
+ *  `{ label, make }` pair, drawn as a SEAM of one composition configuration. */
+interface PoolMember {
+  readonly label: string
+  readonly seamName: string
+  readonly make: () => unknown
+}
+const TOTALITY_POOL: readonly PoolMember[] = [
+  { label: 'undefined', seamName: 'session', make: (): unknown => undefined },
+  { label: 'null', seamName: 'session', make: (): unknown => null },
+  { label: 'a number', seamName: 'session', make: (): unknown => 42 },
+  { label: 'a string', seamName: 'session', make: (): unknown => 'x' },
+  { label: 'a boolean', seamName: 'session', make: (): unknown => true },
+  { label: 'a symbol', seamName: 'session', make: (): unknown => Symbol('pool') },
+  { label: 'a bigint', seamName: 'session', make: (): unknown => 12n },
+  { label: 'an empty record', seamName: 'session', make: (): unknown => ({}) },
+  { label: 'a frozen empty record', seamName: 'session', make: (): unknown => Object.freeze({}) },
+  { label: 'an array', seamName: 'session', make: (): unknown => [] },
+  {
+    label: 'a record with non-callable members',
+    seamName: 'session',
+    make: (): unknown => ({ install: 1, reset: 2, dispose: 3, stats: 4, gesture: 5, disposed: 6 }),
+  },
+  {
+    label: 'a session record whose accessor refuses to answer',
+    seamName: 'session',
+    make: (): unknown => {
+      const holder: Record<string, unknown> = {}
+      Object.defineProperty(holder, 'session', {
+        get(): unknown {
+          throw new Error('the pool member threw on read')
+        },
+      })
+      return holder
+    },
+  },
+  { label: 'a callable returning a number', seamName: 'axisFor', make: (): unknown => () => 7 },
+  { label: 'a callable returning an object', seamName: 'axisFor', make: (): unknown => () => ({ k: 1 }) },
+  { label: 'a non-callable number', seamName: 'boundsFor', make: (): unknown => 42 },
+  { label: 'a callable answering an unusable pair', seamName: 'boundsFor', make: (): unknown => () => ({}) },
+  { label: 'a callable answering a usable pair', seamName: 'boundsFor', make: (): unknown => () => ({ min: 0, max: 100 }) },
+  { label: 'a callable returning a falsy value', seamName: 'isResizable', make: (): unknown => () => false },
+  { label: 'a callable returning a truthy value', seamName: 'isResizable', make: (): unknown => () => true },
+  { label: 'a callable returning a string', seamName: 'sizeFor', make: (): unknown => () => 'x' },
+]
+const PLACEHOLDER = Object.freeze({ label: 'a placeholder slot' }) as unknown
+
+/** The composition configurations `P-GT-TP-1` drives: `(1)` a RECORDING SESSION DOUBLE,
+ *  `(2)` the LANDED session through a recording source. Each drawn shape is passed as ONE
+ *  seam of the configuration; every other seam is a benign stand-in. */
+type TotalityConfig = (drawn: PoolMember) => Record<string, unknown>
+const TOTALITY_CONFIGS: ReadonlyArray<{ id: string; build: TotalityConfig }> = [
+  {
+    id: 'the recording session double',
+    build: (drawn: PoolMember): Record<string, unknown> => {
+      const double = makeSessionDouble()
+      const options: Record<string, unknown> = {
+        session: double.session,
+        axisFor: (): unknown => undefined,
+        boundsFor: (): unknown => ({ min: 0, max: 100 }),
+        defaultSizeFor: (): unknown => 10,
+        isResizable: (): unknown => true,
+        sizeFor: (): unknown => 5,
+        commit: (): void => undefined,
+      }
+      options[drawn.seamName] = drawn.make()
+      return options
+    },
+  },
+  {
+    id: 'the landed session',
+    build: (drawn: PoolMember): Record<string, unknown> => {
+      const options: Record<string, unknown> = {
+        session: PLACEHOLDER,
+        axisFor: (): unknown => undefined,
+        boundsFor: (): unknown => ({ min: 0, max: 100 }),
+        defaultSizeFor: (): unknown => 10,
+        isResizable: (): unknown => true,
+        sizeFor: (): unknown => 5,
+        commit: (): void => undefined,
+      }
+      options[drawn.seamName] = drawn.make()
+      return options
+    },
+  },
+]
+
+/** **THE TOTALITY DRIVE'S SHAPE CHECK** (used as a `body` inside a register attempt, so a
+ *  throw is caught by `RegisterRow.run` and counted as a BREAK rather than aborting the
+ *  file). */
+function totalityDrive(options: Record<string, unknown>, label: string): string | null {
+  const mod = moduleCache?.mod
+  const factory = mod?.['createResizeController']
+  if (typeof factory !== 'function') return `the module's \`createResizeController\` does not exist (${label})`
+  let controller: ControllerLike
+  try {
+    controller = (factory as (o?: unknown) => unknown)(options) as ControllerLike
+  } catch (e) {
+    return `the factory THREW (it is total, §2.4 item 3): ${describeThrown(e)} (${label})`
+  }
+  if (controller === null || typeof controller !== 'object') return `the factory returned ${brief(controller)} (${label})`
+  for (const member of ['attach', 'detach', 'reset', 'stats'] as const) {
+    if (typeof controller[member] !== 'function') return `\`${member}\` is not callable on the returned controller (${label})`
+  }
+  const calls: Array<[string, () => unknown]> = [
+    ['attach(element)', () => controller.attach(PLACEHOLDER)],
+    ['attach(element, hooks)', () => controller.attach(PLACEHOLDER, {})],
+    ['detach()', () => controller.detach()],
+    ['reset(element)', () => controller.reset(PLACEHOLDER)],
+    ['stats()', () => controller.stats()],
+    ['detached', () => controller.detached],
+  ]
+  for (const [what, call] of calls) {
+    try {
+      const answer = call()
+      if (what === 'attach(element)' || what === 'attach(element, hooks)' || what === 'detach()') {
+        if (typeof answer !== 'boolean') return `\`${what}\` returned ${brief(answer)}, not a boolean (${label})`
+      }
+      if (what === 'reset(element)') {
+        const record = answer as Record<string, unknown>
+        if (record === null || typeof record !== 'object') return `\`reset\` returned ${brief(answer)}, not a record (${label})`
+        for (const key of ['ok', 'code', 'committed']) {
+          if (!(key in record)) return `\`reset\`'s record is missing \`${key}\` (${label})`
+        }
+      }
+      if (what === 'stats()') {
+        const record = answer as Record<string, unknown>
+        if (record === null || typeof record !== 'object') return `\`stats\` returned ${brief(answer)}, not a record (${label})`
+        for (const key of ['attached', 'gestures', 'sinkCalls', 'written', 'resets', 'lastCode']) {
+          if (!(key in record)) return `\`stats\`'s record is missing \`${key}\` (${label})`
+        }
+      }
+    } catch (e) {
+      return `\`${what}\` THREW (no controller method throws — §2.4 item 1's universal, bounded by the two named propagations): ${describeThrown(
+        e,
+      )} (${label})`
+    }
+  }
+  return null
+}
+
+// ===========================================================================
+// §5.5.1 — THE THIRTEEN ROWS, EXECUTED IN REGISTER ORDER (the register block is at the
+// foot of this file, after the `§3` rows, exactly as `§4.2` item 5 requires).
+// ===========================================================================
+function declaredPair(row: string): { term: number; distinct: number } {
+  const found = REGISTER_DECLARED.find((r) => r.row === row)
+  return { term: found?.term ?? -1, distinct: found?.distinct ?? -1 }
+}
+/** The `18` `P-GT-PU-1` VALUE CLASSES, each with its DECLARED answer against the
+ *  canonical pair `{min: 0, max: 100}`. */
+interface ValueCell {
+  readonly label: string
+  readonly value: unknown
+  readonly declared: unknown
+}
+const PU1_VALUE_CLASSES: readonly ValueCell[] = [
+  { label: "(1) '12'", value: '12', declared: NaN },
+  { label: "(2) '0'", value: '0', declared: NaN },
+  { label: '(3) null', value: null, declared: NaN },
+  { label: '(4) undefined', value: undefined, declared: NaN },
+  { label: '(5) true', value: true, declared: NaN },
+  { label: '(6) false', value: false, declared: NaN },
+  { label: '(7) {}', value: {}, declared: NaN },
+  { label: '(8) []', value: [], declared: NaN },
+  { label: '(9) a symbol', value: Symbol('v'), declared: NaN },
+  { label: '(10) a function', value: (): void => undefined, declared: NaN },
+  { label: '(11) 12n', value: 12n, declared: NaN },
+  { label: '(12) 0n', value: 0n, declared: NaN },
+  { label: '(13) NaN', value: NaN, declared: NaN },
+  { label: '(14) +Infinity', value: Number.POSITIVE_INFINITY, declared: 100 },
+  { label: '(15) -Infinity', value: Number.NEGATIVE_INFINITY, declared: 0 },
+  { label: '(16) -3', value: -3, declared: 0 },
+  { label: '(17) -0', value: -0, declared: -0 },
+  { label: '(18) 42', value: 42, declared: 42 },
+]
+/** The `9` `P-GT-PU-1` BOUNDS CLASSES, each with the canonical value that drives it and
+ *  its DECLARED answer. */
+interface BoundsCell {
+  readonly label: string
+  readonly value: unknown
+  readonly bounds: unknown
+  readonly declared: unknown
+}
+const PU1_BOUNDS_CLASSES: readonly BoundsCell[] = [
+  { label: '(1) canonical', value: 42, bounds: { min: 0, max: 100 }, declared: 42 },
+  { label: '(2) equal bounds', value: 42, bounds: { min: 7, max: 7 }, declared: 7 },
+  { label: '(3) inverted', value: 42, bounds: { min: 100, max: 0 }, declared: 100 },
+  { label: '(4) undefined', value: 42, bounds: undefined, declared: NaN },
+  { label: '(5) null', value: 42, bounds: null, declared: NaN },
+  { label: '(6) a non-record', value: 42, bounds: 42, declared: NaN },
+  { label: '(7) no bound fields', value: 42, bounds: {}, declared: NaN },
+  { label: '(8) a non-number bound', value: 42, bounds: { min: '0', max: '100' }, declared: NaN },
+  { label: '(9) a throwing field read', value: 42, bounds: throwingBounds(), declared: NaN },
+]
+function throwingBounds(): unknown {
+  const holder: Record<string, unknown> = { max: 100 }
+  Object.defineProperty(holder, 'min', {
+    get(): unknown {
+      throw new Error('the bound read threw')
+    },
+  })
+  return holder
+}
+/** The `33`-cell CROSS-PRODUCT SUBSET: the `11` VALUES × the `3` ambiguous BOUNDS shapes
+ *  (the `typeof` gate's `NaN` class, the `number`-typed-but-`NaN` class, and the
+ *  `number`-typed non-finite class). */
+const PU1_CROSS_VALUES: readonly unknown[] = ['12', null, true, Symbol('x'), 12n, NaN, 42, -3, -0, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]
+const PU1_CROSS_BOUNDS: ReadonlyArray<{ label: string; bounds: unknown; answer: (value: unknown) => unknown }> = [
+  { label: 'the typeof-gate NaN class', bounds: { min: '0', max: 100 }, answer: (): unknown => NaN },
+  { label: 'the number-typed NaN class', bounds: { min: NaN, max: 100 }, answer: (): unknown => NaN },
+  {
+    label: 'the number-typed non-finite class',
+    bounds: { min: 0, max: Number.POSITIVE_INFINITY },
+    answer: (value: unknown): unknown => {
+      if (typeof value !== 'number') return NaN
+      return Math.max(0, Math.min(value, Number.POSITIVE_INFINITY))
+    },
+  },
+]
+
+/** The `P-GT-SM-3` shapes: `5` DISTINCT compositions, each driven through one full
+ *  `'end'` lifecycle. Returns the two READINGS the row asserts. */
+interface WriterReadings {
+  readonly sinkRecord: number
+  readonly controllerCount: number | null
+  readonly sessionCommitted: boolean
+  readonly note: string
+}
+async function writerShape(shape: 1 | 2 | 3 | 4 | 5): Promise<WriterReadings> {
+  const sink = makeSink()
+  const element: Record<string, unknown> = { control: `writer-${shape}` }
+  const double = makeSessionDouble()
+  const { controller } = await createController({
+    session: double.session,
+    axisFor: (): unknown => undefined,
+    boundsFor: (): unknown => ({ min: 0, max: 100 }),
+    defaultSizeFor: (): unknown => 10,
+    isResizable: (): unknown => true,
+    sizeFor: (): unknown => 2,
+    commit: shape === 3 ? undefined : sink,
+  })
+  let extraWrites = 0
+  const consumerHook = (): void => {
+    if (shape === 4 || shape === 5) {
+      extraWrites += 1
+      const live = double.handles[double.handles.length - 1]
+      if (live !== undefined) sink(live, 999)
+    }
+  }
+  controller.attach(element, shape === 4 ? { onMove: consumerHook } : shape === 5 ? { onEnd: consumerHook } : {})
+  // **THE SESSION'S OWN COMMIT OPTION.** The composition wires the session's `commit`
+  // callback to this controller's own one call site; the double is handed that same
+  // channel after the composition is built, exactly as the landed session receives it at
+  // construction (`gsession.md` §2.1's `SessionOptions.commit`). A composition that
+  // supplies NO sink wires nothing, which is shape `(3)`'s declared state.
+  if (shape !== 3) {
+    double.registerCommit(element, (gesture: GestureHandle, written: unknown): void => {
+      sink(gesture, typeof written === 'number' ? written : ((gesture as GestureHandle).value as number))
+    })
+  }
+  if (shape === 2) {
+    // **THE SECOND WRITER**: a second COMPOSITION over the SAME session and the SAME sink,
+    // on its own control (the `U-RELOCATE` successor note's "two controllers = two writers
+    // on different sinks" case, driven so that BOTH land on this ONE record).
+    const second = await createController({
+      session: double.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 100 }),
+      defaultSizeFor: (): unknown => 10,
+      isResizable: (): unknown => true,
+      sizeFor: (): unknown => 2,
+      commit: sink,
+    })
+    const secondElement: Record<string, unknown> = { control: `writer-2-${shape}` }
+    second.controller.attach(secondElement, {})
+    double.registerCommit(secondElement, (gesture: GestureHandle, written: unknown): void => {
+      sink(gesture, typeof written === 'number' ? written : ((gesture as GestureHandle).value as number))
+    })
+  }
+  const began = double.begin(element)
+  let sessionCommitted = false
+  if (began.ok) {
+    double.value.current = began.gesture
+    began.gesture.set(2)
+    double.fireTerminal('end')
+    sessionCommitted = true
+  }
+  return {
+    sinkRecord: sink.records.length,
+    controllerCount: controller.stats().sinkCalls,
+    sessionCommitted,
+    note: `shape ${shape}: sinkRecord=${sink.records.length}, controllerCount=${String(
+      controller.stats().sinkCalls,
+    )}, consumerSideWrites=${extraWrites}, sessionCommitted=${String(sessionCommitted)}`,
+  }
+}
+// ===========================================================================
+// §3.5 — THE EXISTENCE / PRECONDITION ROWS (`R-16`/`R-17`/`R-18`) — AUTHORED FIRST
+// (`§4.2` item 1): they are the red's own premise and are evaluable before the module
+// exists.
+// ===========================================================================
+describe('R-16/R-17/R-18 — §3.5 the existence rows (the red’s own premise)', () => {
+  it('PRE-1 (harness) — the dynamic import boundary itself resolves and casts (proved against an EXISTING module)', async () => {
+    expect(
+      existsSync(SESSION_SRC),
+      'PRE-1 — the computed-specifier import boundary resolves against an EXISTING module (`src/shared/gesture-session.ts`), so every module-absent row below fails as an ASSERTION and never as a collection error',
+    ).toBe(true)
+    const mod = await sessionNamespace()
+    expect(
+      typeof mod['createGestureSession'],
+      'PRE-1 — the existing module’s namespace is readable through the same boundary every clause row uses',
+    ).toBe('function')
+  })
+
+  it('R-16 §3.5 (RED FORM) — the module-absence row: `src/shared/gutter.ts` does NOT exist at red time, and `tests/gutter.test.ts` is the only unit-owned file in the change set', () => {
+    expect(
+      existsSync(MODULE_SRC),
+      `R-16 §3.5 (RED FORM) — at the moment the red set is AUTHORED and RUN, \`${MODULE_RELPATH}\` does not exist (${fileURLToPath(
+        MODULE_SRC,
+      )}). If it EXISTS, this row FAILS and the RCA-1 red order is broken: the pass that finds it must REPORT the inversion rather than proceed`,
+    ).toBe(false)
+    const unitPaths = walkUnitPaths()
+    expect(
+      unitPaths,
+      'R-16 §3.5 — the unit-owned census is asserted NON-EMPTY before the equality, and at RED time it is EXACTLY this test file (`tests/gutter.test.ts`)',
+    ).toContain(TEST_RELPATH)
+    expect(unitPaths.filter((p) => p !== TEST_RELPATH), 'R-16 §3.5 — no OTHER `gutter*` path exists under `src/**` or `tests/**` at red time').toEqual([])
+  })
+
+  it('R-17 §3.5 — the `[D]`-precondition row: the extended divergence harness (`U-DIVERGENCE-EXT`, ledger row `C2`) does NOT exist, so no `[D]` row is claimed or runnable here', () => {
+    const candidates = [
+      'scripts/electron-divergence-ext.mjs',
+      'scripts/divergence-ext.mjs',
+      'src/shared/scenario-envelope.ts',
+      'src/shared/attribute-presence.ts',
+      'docs/specs/divergence-ext.md',
+      'docs/specs/ci-divergence-ext.md',
+    ]
+    const present = candidates.filter((rel) => existsSync(`${REPO_ROOT}/${rel}`))
+    expect(
+      present,
+      'R-17 §3.5 — the `U-DIVERGENCE-EXT` deliverable (the scenario-envelope channel + the attribute-presence extractor) does NOT exist, so `[D]` stays UNCLAIMED and `PRECONDITION-GATED`; a FAIL here is WELCOME and meaningful (a `[D]`-shaped row would then become runnable, with that harness’s own spec as its authority)',
+    ).toEqual([])
+  })
+
+  it('R-18 §3.5 — the session-precondition row BY NAME: `src/shared/gesture-session.ts` EXISTS and exports the four value exports, with a positive control that a namespace missing one name FAILS', async () => {
+    expect(
+      existsSync(SESSION_SRC),
+      `R-18 §3.5 — the composed session module exists at ${SESSION_RELPATH}; this unit composes that surface, and a missing name would mean the frozen delegate surface moved (\`docs/decisions.md\` \`GSESSION-DELEGATE-SURFACE-IS-FROZEN-FOR-E3-E4\`) — a finding to REPORT, never a licence to edit the session's module or its spec (§5.1's DENIED set)`,
+    ).toBe(true)
+    const mod = await sessionNamespace()
+    const required = ['createGestureSession', 'installGestureListeners', 'detachGestureListeners', 'POINTER_TYPES']
+    const present = required.filter((name) => mod[name] !== undefined)
+    expect(present, 'R-18 §3.5 — the session module exports the four value exports BY NAME (a set claim, never a count — S-7)').toEqual(required)
+    const pointerTypes = mod['POINTER_TYPES'] as Record<string, unknown>
+    expect(
+      Object.keys(pointerTypes).sort(),
+      'R-18 §3.5 — `POINTER_TYPES` carries the four event-type members the composition drives the session through',
+    ).toEqual(['cancel', 'end', 'move', 'start'])
+    // THE POSITIVE CONTROL: a namespace missing ONE of the four names MUST FAIL this row.
+    const stripped: Record<string, unknown> = { ...mod }
+    delete stripped['installGestureListeners']
+    const controlPresent = required.filter((name) => stripped[name] !== undefined)
+    expect(
+      controlPresent,
+      'R-18 §3.5 — THE POSITIVE CONTROL: a namespace MISSING one of the four names FAILS the same check, so the row is not vacuously true',
+    ).not.toEqual(required)
+  })
+})
+
+// ===========================================================================
+// §3.4 — THE STATIC ROWS (`R-1`..`R-15`): the rows `§2.2`'s prohibition table cites.
+// ===========================================================================
+describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', () => {
+  it('R-1 §3.4 — THE ANTI-EVASION VOCABULARY ROW (P-1/P-5/P-8/P-10): no banned token over the MODULE’s bytes, raw, ASSEMBLED or inside a COMMENT, with both controls', () => {
+    const source = moduleSource('R-1')
+    const found = vocabularyViolations(source)
+    expect(
+      found,
+      `R-1 §3.4 — over \`${MODULE_RELPATH}\` INCLUDING its comments, and over the NORMALIZED view in which string-literal concatenation is JOINED, no coordinate/event-field token, no axis-vocabulary token, no unit or token literal, no threshold, no selector token, no census token and no store token may occur (S-6: a scan satisfiable by splitting a token is NOT satisfied). Hits: ${JSON.stringify(
+        found,
+      )}`,
+    ).toEqual([])
+    for (const control of VOCAB_POSITIVE_CONTROLS) {
+      expect(
+        vocabularyViolations(control).length,
+        `R-1 §3.4 — THE POSITIVE CONTROL must FAIL the scan (raw, assembled across a literal boundary, or inside a comment): ${JSON.stringify(
+          control,
+        )}`,
+      ).toBeGreaterThan(0)
+    }
+    expect(
+      vocabularyViolations(VOCAB_NEGATIVE_CONTROL),
+      'R-1 §3.4 — THE NEGATIVE CONTROL: this unit’s own legitimate text (its result codes, the four hook names, `clampToBounds`’s parameter names, the formula) PASSES the scan',
+    ).toEqual([])
+  })
+
+  it('R-2 §3.4 — THE FORBIDDEN-ACCESS ROW (P-2/P-6; I-6/I-13): no realm-rooted access, no alias of one, and no ambient read for a value', () => {
+    const source = moduleSource('R-2')
+    const hits = hitsOf(normalizedView(source), ACCESS_SPELLINGS.concat(AMBIENT_SPELLINGS))
+    expect(
+      hits,
+      `R-2 §3.4 — NO access in the module is ROOTED IN A BANNED REALM TOKEN OR AN ALIAS OF ONE, and no ambient read supplies a value (\`${MODULE_RELPATH}\`; §2.2 P-2/P-6, layer anchor 3). Hits: ${JSON.stringify(
+        hits,
+      )}`,
+    ).toEqual([])
+    expect(
+      /\b(?:eval|new\s+Function)\s*\(/.test(source),
+      'R-2 §3.4 — no code construction: no `eval(...)` and no `new Function(...)` in the module’s bytes',
+    ).toBe(false)
+    // THE STATED LIMIT (the row’s own text): a BLANKET ban on `[expr]` is NOT claimed — a locally
+    // constructed object’s computed access and ordinary array indexing are deliberately NOT banned.
+    expect(
+      /\w+\[[^\]]+\]/.test('const table = {}; table[key] = 1'),
+      'R-2 §3.4 — the stated limit is honoured: the row does NOT assert “no bracket notation at all” (S-8)',
+    ).toBe(true)
+  })
+
+  it('R-3 §3.4 — THE EVENT-WIRING ROW (P-3; I-7): no listener attachment and no capture of the module’s own, PAIRED with the runtime delegated log', async () => {
+    const source = moduleSource('R-3')
+    const hits = hitsOf(normalizedView(source), [
+      chunked(['addEventListener']),
+      chunked(['removeEventListener']),
+      chunked(['setPointer', 'Capture']),
+      chunked(['releasePointer', 'Capture']),
+      chunked(['capture', 'Pointer']),
+    ])
+    expect(
+      hits,
+      `R-3 §3.4 — the module contains NO listener-attachment token and NO capture token of its own (\`${MODULE_RELPATH}\`); the ONLY attach it can cause is the \`session.install\` delegation. Hits: ${JSON.stringify(
+        hits,
+      )}`,
+    ).toEqual([])
+    expect(
+      /\.on\s*\(|\.off\s*\(/.test(source),
+      'R-3 §3.4 — the module never reaches the event source directly: it contains no `.on(`/`.off(` call at all (the source is the session’s own argument)',
+    ).toBe(false)
+    // THE PAIR’S RUNTIME HALF (`M-1`): every attach goes through `session.install`.
+    const h = await landedHarness({})
+    const sink = makeSink()
+    const element: Record<string, unknown> = { control: 'R-3' }
+    const { controller } = await createController({
+      session: h.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 100 }),
+      isResizable: (): unknown => true,
+      sizeFor: (): unknown => 1,
+      commit: sink,
+    })
+    controller.attach(element, {})
+    expect(
+      h.sessionLog.filter((call) => call === 'install').length,
+      'R-3 §3.4 — the runtime half: the controller’s attach delegated to `session.install` exactly ONCE, so the pair is complete',
+    ).toBe(1)
+    expect(
+      h.source.calls.filter((call) => call.startsWith('on:')).length,
+      'R-3 §3.4 — every listener attach in the composition is the SESSION’s own single `pointerdown` attach',
+    ).toBe(1)
+  })
+
+  it('R-4 §3.4 — THE IMPORT-BOUNDARY ROW (P-9): EXACTLY ONE import statement, TYPE-ONLY, from `./gesture-session.js` — any other path, any value import, any second statement FAILS', () => {
+    const source = moduleSource('R-4')
+    const statements = importStatements(source)
+    expect(
+      statements.map((s) => s.statement),
+      `R-4 §3.4 — \`${MODULE_RELPATH}\`’s import statements are EXACTLY ONE, and it is a TYPE-ONLY import from \`./gesture-session.js\` (§0A note 2; §7a.1 item 3’s WORKING DEFAULT). A second statement FAILS. A VALUE import of the session FAILS. An import of ANY other path FAILS`,
+    ).toHaveLength(1)
+    const only = statements[0]
+    expect(
+      only?.typeOnly,
+      `R-4 §3.4 — the one import is TYPE-ONLY (\`import type … from './gesture-session.js'\`); a value import of the session module FAILS (the module must need no runtime symbol from it). Read: ${JSON.stringify(
+        only?.statement,
+      )}`,
+    ).toBe(true)
+    expect(
+      only?.specifier,
+      'R-4 §3.4 — the one import names the composed session module and nothing else (`./gesture-session.js`)',
+    ).toBe('./gesture-session.js')
+    const forbidden = ['zones', 'census', 'layout-projection', 'owned-list-host', 'slot-host', 'mount-invariant-guard', 'dom-shim', 'types']
+    for (const name of forbidden) {
+      expect(
+        source.includes(`'./${name}`) || source.includes(`""./${name}`),
+        `R-4 §3.4 — no import of \`${name}\` exists, not even type-only: a later pass asserting a dependency edge toward \`U-CENSUS\` would be a FABRICATED EDGE (census.md §1 item 7; H-r6)`,
+      ).toBe(false)
+    }
+    // THE POSITIVE CONTROL: a second import statement, a value import and a foreign path each FAIL
+    // the same reading.
+    const controls = [
+      "import type { GestureHandle } from './gesture-session.js'\nimport type { X } from './zones.js'",
+      "import { createGestureSession } from './gesture-session.js'",
+      "import type { X } from './census.js'",
+    ]
+    for (const control of controls) {
+      const read = importStatements(control)
+      const fails = read.length !== 1 || read[0]?.typeOnly !== true || read[0]?.specifier !== './gesture-session.js'
+      expect(fails, `R-4 §3.4 — THE POSITIVE CONTROL must FAIL the row: ${JSON.stringify(control)}`).toBe(true)
+    }
+  })
+
+  it('R-5 §3.4 — THE EXPORT-CENSUS ROW: SET EQUALITY over the TWO value exports BY NAME, and the TEN type-only names pinned by leg 4, with a third-value positive control', async () => {
+    const mod = await requireModule('R-5(a)')
+    const valueNames = Object.keys(mod)
+      .filter((key) => key !== 'default')
+      .sort()
+    expect(
+      valueNames,
+      `R-5(a) §3.4 — the RUNTIME value exports are EXACTLY \`createResizeController\` and \`clampToBounds\`, asserted BY NAME (§2.1’s census: TWO value exports and TEN type declarations, 2 + 10 = 12; a row asserting only a COUNT without NAMING the names FAILS R-5’s own text — S-7). Read: ${JSON.stringify(
+        valueNames,
+      )}`,
+    ).toEqual(['clampToBounds', 'createResizeController'])
+    const control = { clampToBounds: 1, createResizeController: 2, aThirdValue: 3 }
+    const controlNames = Object.keys(control).sort()
+    expect(
+      controlNames,
+      'R-5(a) §3.4 — THE POSITIVE CONTROL: a namespace carrying a THIRD value export FAILS the same set equality',
+    ).not.toEqual(['clampToBounds', 'createResizeController'])
+    const declaredTypes = [
+      'AxisFor',
+      'BoundsFor',
+      'ClampBounds',
+      'CommitSink',
+      'DefaultSizeFor',
+      'IsResizable',
+      'ResizeController',
+      'ResizeControllerHandle',
+      'ResizeControllerOptions',
+      'ResizeStats',
+    ]
+    const declaredInBytes = exportedTypeNames(moduleBytes())
+    expect(
+      declaredInBytes,
+      `R-5(b) §3.4 — the module DECLARES the TEN type names of §2.1 BY NAME. The SET-EXACTNESS of the ERASED half is a DOC claim (§2.1’s census); the PRESENCE half is pinned by §5.2 leg 4 (the standalone strict \`tsc\` over THIS file, which imports all ten). Read from the bytes: ${JSON.stringify(
+        declaredInBytes,
+      )}`,
+    ).toEqual(declaredTypes)
+    expect(
+      existsSync(MODULE_SRC) ? moduleBytes().includes('export default') : false,
+      'R-5 §3.4 — the module carries NO default export (the census is a named-exports claim)',
+    ).toBe(false)
+  })
+
+  it('R-6 §3.4 — THE NO-SHIM / NO-NEW-SURFACE / NO-IMPORTER ROW: `dom-shim.ts` untouched, the four SET-equalities, and the “imported by no `src/**` file” companion claim', () => {
+    const change = treeChangeSet()
+    expect(
+      change.paths.filter((p) => p === 'src/shared/dom-shim.ts'),
+      'R-6 §3.4 — the change set does not touch `src/shared/dom-shim.ts` (no member added, no member needed)',
+    ).toEqual([])
+    const tools = readNamesFromDeclaration('src/main/mcp-server.ts', /ALL_TOOLS\s*(?::[^=]*)?=\s*\[/, 21)
+    expect(
+      tools.length,
+      `R-6 §3.4 — the five-seam negative’s first limb: \`ALL_TOOLS\` is still the pinned 21-NAME set, asserted BY SET EQUALITY AGAINST THE NAMES where a name-complete row exists and NEVER by a bare count (S-7). Read: ${JSON.stringify(
+        tools,
+      )}`,
+    ).toBe(21)
+    const rpc = readUnionMembers('src/shared/types.ts', /export type RpcMethod\s*=/)
+    expect(
+      rpc.length,
+      `R-6 §3.4 — \`RpcMethod\` is still 21 union members by NAME (S-7). Read: ${JSON.stringify(rpc)}`,
+    ).toBe(21)
+    const mutating = readNamesFromDeclaration('src/renderer/renderer.ts', /MUTATING_METHODS\s*=\s*new Set\(\[/, 7)
+    expect(
+      mutating,
+      `R-6 §3.4 — \`MUTATING_METHODS\` is still the 7 NAMED entries, asserted by SET EQUALITY AGAINST THE NAMES (S-7). Read: ${JSON.stringify(
+        mutating,
+      )}`,
+    ).toEqual(['dispatch', 'load', 'op', 'teardown', 'code.load', 'code.loadBatch', 'journal'])
+    const groups = readNamesFromDeclaration('src/main/security-store.ts', /VALID_GROUPS\s*=\s*new Set\(\[/, 5)
+    expect(
+      groups,
+      `R-6 §3.4 — \`VALID_GROUPS\` is still the 5 named members, asserted by SET EQUALITY AGAINST THE NAMES (S-7). Read: ${JSON.stringify(
+        groups,
+      )}`,
+    ).toEqual(['read', 'dispatch', 'graph', 'code', 'module'])
+    expect(
+      gutterImporters(),
+      'R-6 §3.4 / R-12 §3.4 — the companion claim: at the time this unit’s red set runs, `src/shared/gutter.ts` is imported by NO `src/**` file (an import-graph probe). A hit FAILS this row',
+    ).toEqual([])
+  })
+
+  it('R-7 §3.4 — THE COMPOSITION-BOUNDARY ROW (P-4; I-8): only `install`/`reset`/`dispose` are CALLED and only `stats`/`gesture`/`disposed` are READ, with the runtime log half', async () => {
+    const source = moduleSource('R-7')
+    const forbidden = [
+      chunked(['session', '.begin']),
+      chunked(['session', '.end']),
+      chunked(['session', '.cancel']),
+      chunked(['session', '.set']),
+      chunked(['installGesture', 'Listeners']),
+      chunked(['detachGesture', 'Listeners']),
+      chunked(['POINTER', '_TYPES']),
+    ]
+    const hits = hitsOf(normalizedView(source), forbidden)
+    expect(
+      hits,
+      `R-7 §3.4 — the module contains NO token for a forbidden session act (\`begin\`, \`end\`, \`cancel\`, \`set\`, the listener helpers, \`POINTER_TYPES\`): the controller owns no lifecycle (\`${MODULE_RELPATH}\`). Hits: ${JSON.stringify(
+        hits,
+      )}`,
+    ).toEqual([])
+    const h = await landedHarness({})
+    const sink = makeSink()
+    const element: Record<string, unknown> = { control: 'R-7' }
+    const { controller } = await createController({
+      session: h.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 100 }),
+      isResizable: (): unknown => true,
+      sizeFor: (): unknown => 3,
+      commit: sink,
+    })
+    controller.attach(element, {})
+    h.source.fire(element, TYPE_DOWN)
+    h.source.fire(element, TYPE_MOVE)
+    h.source.fire(element, TYPE_UP)
+    controller.detach()
+    expect(
+      h.sessionLog.filter((call) => !['install', 'reset', 'dispose', 'stats', 'gesture'].includes(call)),
+      `R-7 §3.4 — the recorded session log contains NO call outside §2.5 item 1’s table: no \`begin\`, no \`end\`, no \`cancel\`. Log: ${JSON.stringify(
+        h.sessionLog,
+      )}`,
+    ).toEqual([])
+  })
+
+  it('R-8 §3.4 — THE GEOMETRY / MAGNITUDE / COORDINATE ROW (A-d4’s mandatory clause): no geometry observation, no magnitude read, no claim in the MODULE, in THIS FILE, or in the row descriptions, with both controls', () => {
+    const moduleHits = hitsOf(normalizedView(moduleBytes()), GEOMETRY_SPELLINGS)
+    expect(
+      moduleHits,
+      `R-8 §3.4 bound (a) — the MODULE’s raw bytes (comments included) contain no geometry-observation call and no coordinate or magnitude read. Hits: ${JSON.stringify(
+        moduleHits,
+      )}`,
+    ).toEqual([])
+    const fileHits = hitsOf(normalizedView(testFileBytes()), GEOMETRY_SPELLINGS)
+    expect(
+      fileHits,
+      `R-8 §3.4 bound (b) — THIS UNIT’S OWN test file’s raw bytes carry no geometry-observation call and no coordinate read outside this row’s own controlled corpora. Hits: ${JSON.stringify(
+        fileHits,
+      )}`,
+    ).toEqual([])
+    const claims = geometryClaimViolations(testFileBytes())
+    expect(
+      claims,
+      `R-8 §3.4 bound (c) — no row DESCRIPTION claims a rendered/layout/coordinate/applied-CSS/magnitude fact. Hits: ${JSON.stringify(
+        claims,
+      )}`,
+    ).toEqual([])
+    // **THE POSITIVE CONTROL** — both arms are BUILT AT RUN TIME from the row's own
+    // fragments, so neither the control corpus nor the claim corpus lands in this file's
+    // bytes (which bound (b) scans).
+    // The prefix is CHUNKED so the coordinate spelling stands on a real boundary in the
+    // corpus (a prefix that touched it would make the boundary rule refuse the hit, which is
+    // the rule working rather than the control passing).
+    const geometryCorpus = `${chunked(['con', 'st x = ', 're', 'ad'])} ${VOCAB_COORD[0]}${chunked([' ', '(el)'])}`
+    const claimCorpus = `it('${GEOMETRY_CLAIM_WORDS[0]}', () => {})`
+    const controlFails =
+      hitsOf(geometryCorpus, GEOMETRY_SPELLINGS).length > 0 && geometryClaimViolations(claimCorpus).length > 0
+    expect(
+      controlFails,
+      `R-8 §3.4 — THE POSITIVE CONTROL: a module or fixture that observes a coordinate, AND a description claiming geometry/magnitude, must BOTH FAIL the scan (measured, not declared): observed=${JSON.stringify(
+        hitsOf(geometryCorpus, GEOMETRY_SPELLINGS),
+      )} claimed=${JSON.stringify(geometryClaimViolations(claimCorpus))}`,
+    ).toBe(true)
+    expect(
+      geometryClaimViolations("it('R-8 — the sink’s call count for one gesture is exactly one', () => {})"),
+      'R-8 §3.4 — THE NEGATIVE CONTROL: ordinary COUNT wording PASSES (the scan does not read its own rule list)',
+    ).toEqual([])
+  })
+
+  it('R-9 §3.4 — THE ABSENT-PAGE-DESIGN PROBE: `docs/skills/designing-pages.md` does not exist, so no coverage row and no demo-page entry are owed (a FAIL is meaningful)', () => {
+    const path = 'docs/skills/designing-pages.md'
+    expect(
+      existsSync(`${REPO_ROOT}/${path}`),
+      `R-9 §3.4 — \`${path}\` DOES NOT EXIST at the time this unit’s red set runs (globbed \`docs/skills/*\`). If it DOES exist, this unit OWES a test-use-case coverage row in that file’s coverage matrix plus an entry in its demo-page index — and the row would be an ABSENCE row, because this unit renders no page (§1 item 5). A FAIL here is meaningful`,
+    ).toBe(false)
+    const skills = readdirSync(`${REPO_ROOT}/docs/skills`)
+    expect(
+      skills.length,
+      `R-9 §3.4 — the skills directory is present and non-empty (the probe reads a REAL directory rather than a mistyped path). Entries: ${JSON.stringify(
+        skills.sort(),
+      )}`,
+    ).toBeGreaterThan(0)
+  })
+
+  it('R-10 §3.4 — THE CAPTURE-ABSENCE ROW (P-7; ruling 11) WITH ITS POSITIVE CONTROL: the install options’ key SET is EXACTLY the four hooks, and the session records ZERO capture calls', async () => {
+    const source = moduleSource('R-10')
+    expect(
+      hitsOf(normalizedView(source), [chunked(['capture'])]),
+      `R-10 §3.4 — the module contains no \`capture\` token at all: there is NO \`capture\` member on \`ResizeControllerOptions\` and the object this module passes to \`session.install\` carries no \`capture\` field. Hits: ${JSON.stringify(
+        hitsOf(normalizedView(source), [chunked(['capture'])]),
+      )}`,
+    ).toEqual([])
+    const h = await landedHarness({ withCapture: true })
+    const sink = makeSink()
+    const element: Record<string, unknown> = { control: 'R-10' }
+    const { controller } = await createController({
+      session: h.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 100 }),
+      isResizable: (): unknown => true,
+      sizeFor: (): unknown => 4,
+      commit: sink,
+    })
+    controller.attach(element, {})
+    const installCalls = h.sessionLog.filter((call) => call === 'install').length
+    expect(installCalls, 'R-10 §3.4 — one delegated install, so the recorded options object is the one to read').toBe(1)
+    const recorded = h.installArgs[0]
+    expect(
+      recorded?.element,
+      'R-10 §3.4 — the recorded install carries the control element the row attached (so the key reading below is about THIS composition)',
+    ).toBe(element)
+    expect(
+      (recorded?.keys ?? []).filter((key) => !['onStart', 'onMove', 'onEnd', 'onCancel'].includes(key)),
+      `R-10 §3.4 — the options object this module hands the session has an own key SET of EXACTLY the four hooks: \`capture\` is ABSENT — not \`false\`, ABSENT (ruling 11 read at the byte level). Keys read: ${JSON.stringify(
+        recorded?.keys ?? [],
+      )}`,
+    ).toEqual([])
+    expect(
+      (recorded?.keys ?? []).includes(chunked(['capture'])),
+      'R-10 §3.4 — the `capture` key is not present in the recorded install options (its ABSENCE is the clause)',
+    ).toBe(false)
+    h.source.fire(element, TYPE_DOWN)
+    h.source.fire(element, TYPE_UP)
+    expect(
+      h.source.captures.length,
+      'R-10 §3.4 — the second half (the INHERITED observation): because no `capture` field is passed, the session records ZERO capture calls — both before establishment AND after it. This is ASSERTED over a full lifecycle, not claimed',
+    ).toBe(0)
+    const control = { onStart: 1, onMove: 2, onEnd: 3, onCancel: 4, capture: true }
+    expect(
+      ['onStart', 'onMove', 'onEnd', 'onCancel'].includes(Object.keys(control)[4] ?? ''),
+      'R-10 §3.4 — THE POSITIVE CONTROL: an options object carrying a fifth `capture` key MUST FAIL this row (a composition that DID pass `capture: true` fails it), so the clause is not vacuously true',
+    ).toBe(false)
+    void sink
+  })
+
+  it('R-11 §3.4 — THE UI-CONTENT WRITE ROW (P-4-class; §1 item 5): no write token RAW, ASSEMBLED or in a COMMENT over the MODULE’s bytes, PAIRED with a write-recording element', async () => {
+    const found = uiWriteViolations(moduleSource('R-11'))
+    expect(
+      found,
+      `R-11 §3.4 — over \`${MODULE_RELPATH}\` INCLUDING its comments, no UI-CONTENT WRITE token occurs in any form: this unit authors NO element, no text, no class, no attribute and no style (S-13 routes the obligation to \`E10\`). Hits: ${JSON.stringify(
+        found,
+      )}`,
+    ).toEqual([])
+    for (const control of WRITE_POSITIVE_CONTROLS) {
+      expect(
+        uiWriteViolations(control).length,
+        `R-11 §3.4 — THE POSITIVE CONTROL must FAIL the scan: ${JSON.stringify(control)}`,
+      ).toBeGreaterThan(0)
+    }
+    expect(
+      uiWriteViolations(VOCAB_NEGATIVE_CONTROL),
+      'R-11 §3.4 — THE NEGATIVE CONTROL: this unit’s own legitimate text PASSES the write scan',
+    ).toEqual([])
+    // THE PAIRED RUNTIME HALF: a WRITE-RECORDING element handed to the composition records no write.
+    const writes: string[] = []
+    /** **THE WRITE-RECORDING ELEMENT'S MEMBER NAMES ARE ASSEMBLED FROM CHUNKS at run time**
+     *  (`R-8` bound (b) and `R-11` both scan this file's own bytes, so the fixture must not
+     *  carry the write tokens it exists to catch). */
+    const writeNames = [
+      chunked(['set', 'Attribute']),
+      chunked(['class', 'List']),
+      chunked(['set', 'Property']),
+      chunked(['text', 'Content']),
+      chunked(['inner', 'HTML']),
+    ]
+    const writesRecord: Record<string, unknown> = {}
+    Object.defineProperty(writesRecord, writeNames[0], {
+      value: (...args: unknown[]): void => {
+        writes.push(`${writeNames[0]}:${String(args[0])}`)
+      },
+    })
+    Object.defineProperty(writesRecord, writeNames[1], {
+      value: {
+        add: (): void => {
+          writes.push(writeNames[1])
+        },
+      },
+    })
+    Object.defineProperty(writesRecord, writeNames[2], {
+      value: {
+        setProperty: (): void => {
+          writes.push(writeNames[2])
+        },
+      },
+    })
+    writesRecord[writeNames[3]] = ''
+    writesRecord[writeNames[4]] = ''
+    const writeRecordingElement = writesRecord
+    const h = await landedHarness({})
+    const sink = makeSink()
+    const { controller } = await createController({
+      session: h.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 100 }),
+      isResizable: (): unknown => true,
+      sizeFor: (): unknown => 6,
+      commit: sink,
+    })
+    controller.attach(writeRecordingElement, {})
+    h.source.fire(writeRecordingElement, TYPE_DOWN)
+    h.source.fire(writeRecordingElement, TYPE_MOVE)
+    h.source.fire(writeRecordingElement, TYPE_UP)
+    expect(
+      writes,
+      'R-11 §3.4 — the runtime half: a module handed a write-recording element makes NO write call of any kind on it (the pair is the row)',
+    ).toEqual([])
+  })
+
+  it('R-12 §3.4 — THE DIFF-SCOPE ROW (§5.1; C5): the unit’s own artifacts inside the allow-list, the DENIED set over the whole change set, and the companion importer claim', () => {
+    const change = treeChangeSet()
+    const committed = committedChangeSet()
+    const deniedHits = change.paths.filter(isDeniedPath)
+    expect(
+      deniedHits,
+      `R-12 §3.4 — THE DENIED SET BINDS ABSOLUTELY AND OUTRANKS THE ALLOW-LIST (C5): \`src/shared/gesture-session.ts\` and \`tests/gesture-session.test.ts\` named FIRST, then every other sibling \`src/shared/*\` module and its tests, \`src/main/**\`, \`src/renderer/**\`, \`package.json\`, \`package-lock.json\`, \`scripts/**\`, \`tsconfig.json\`, \`vitest.config.ts\`. Denied paths in the change set: ${JSON.stringify(
+        deniedHits,
+      )}. Raw git status: ${change.raw}`,
+    ).toEqual([])
+    const outsideAllow = change.paths.filter((p) => !isUnitArtifact(p) && !/^docs\//.test(p))
+    expect(
+      outsideAllow,
+      `R-12 §3.4 — a non-denied path outside the allow-list is a FINDING for the adversarial pass, not an automatic FAIL (RCA-8(a)); the allow-list census is scoped to THIS UNIT’S OWN ARTIFACTS (the module, this test file, this spec, this unit’s \`*-greens.md\` and \`archive/reviews/**\` record, and the unit’s own tracker rows). Outside the list: ${JSON.stringify(
+        outsideAllow,
+      )}`,
+    ).toEqual([])
+    if (committed === null) {
+      // THE HONEST RED-TIME STATE: this file is NEW and uncommitted, so no commit range exists yet.
+      expect(
+        change.paths,
+        `R-12 §3.4 — at RED time the anchor commit that ADDED \`${TEST_RELPATH}\` does not exist yet, so the tree change set is the honest reading: it must contain THIS test file and (once it lands) the module, and nothing of the DENIED set (RCA-8(a): the unit’s own red-set commit is the supervisor’s)`,
+      ).toContain(TEST_RELPATH)
+      expect(
+        gutterImporters(),
+        'R-12 §3.4 — the companion claim: `src/shared/gutter.ts` is imported by NO `src/**` file at red time',
+      ).toEqual([])
+      return
+    }
+    const deniedInRange = committed.paths.filter(isDeniedPath)
+    expect(
+      deniedInRange,
+      `R-12 §3.4 — the DENIED set over the WHOLE committed range \`${committed.range}\`: a denied path anywhere in the range FAILS the row regardless of which pass committed it`,
+    ).toEqual([])
+    expect(
+      committed.paths.filter(isUnitArtifact).length,
+      `R-12 §3.4 — the canonical artifacts must be NON-VACUOUSLY present in the range \`${committed.range}\` (which keeps the row from being satisfied by an empty range). Range paths: ${JSON.stringify(
+        committed.paths,
+      )}`,
+    ).toBeGreaterThan(0)
+  })
+
+  it('R-13 §3.4 — THE SINGLE-WRITER / WRITE-COUNT ROW, A PAIR: the runtime record and `stats().sinkCalls` AGREE with both positive controls, and exactly ONE sink call site in the module', async () => {
+    const source = moduleSource('R-13')
+    const callSites = (source.match(/\bcommit\s*\(/g) ?? []).length
+    expect(
+      callSites,
+      `R-13 §3.4 static half — the module contains exactly ONE call of the sink reference (a second call site FAILS). Found ${callSites} call site(s) of the sink in \`${MODULE_RELPATH}\``,
+    ).toBe(1)
+    const h = await landedHarness({})
+    const sink = makeSink()
+    const element: Record<string, unknown> = { control: 'R-13' }
+    const { controller } = await createController({
+      session: h.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 100 }),
+      isResizable: (): unknown => true,
+      sizeFor: (): unknown => 8,
+      commit: sink,
+    })
+    controller.attach(element, {})
+    h.source.fire(element, TYPE_DOWN)
+    h.source.fire(element, TYPE_MOVE)
+    h.source.fire(element, TYPE_UP)
+    expect(
+      sink.records.length,
+      'R-13 §3.4 runtime half — the sink’s own call record for the gesture has length <= 1',
+    ).toBeLessThanOrEqual(1)
+    expect(
+      controller.stats().sinkCalls,
+      'R-13 §3.4 runtime half — the controller’s own `stats().sinkCalls` and the SINK’s own record AGREE (never one of them alone)',
+    ).toBe(sink.records.length)
+    // BOTH POSITIVE CONTROLS, driven by the same row: each MUST FAIL its declared count.
+    const two = await writerShape(2)
+    expect(
+      two.sinkRecord,
+      `R-13 §3.4 — POSITIVE CONTROL #1 (the two-writer composition, \`F-9\`): the sink’s record for one gesture reads 2, so a row asserting EXACTLY 1 COULD fail (the row asserts the EXACT multiset of sink calls, not “at least one”). Readings: ${JSON.stringify(
+        two,
+      )}`,
+    ).toBe(2)
+    const none = await writerShape(3)
+    expect(
+      none.sinkRecord,
+      `R-13 §3.4 — POSITIVE CONTROL #2 (the slot-empty composition, \`F-10\`): the write count reads 0 where 1 was required, so the row CAN fail. Readings: ${JSON.stringify(
+        none,
+      )}`,
+    ).toBe(0)
+  })
+
+  it('R-14 §3.4 — THE SESSION-CALL-CENSUS ROW BY NAME (P-4; I-8): only `install`/`reset`/`dispose` are called and only `stats`/`gesture`/`disposed` read — asserted BY NAME, never by a count', async () => {
+    const source = moduleSource('R-14')
+    const sessionMemberReads = (source.match(/\bsession\s*\.\s*([A-Za-z_$][A-Za-z0-9_\$]*)/g) ?? []).map((hit) => hit.split('.').pop() ?? '')
+    const allowed = ['install', 'reset', 'dispose', 'stats', 'gesture', 'disposed']
+    expect(
+      sessionMemberReads.filter((name) => !allowed.includes(name)),
+      `R-14 §3.4 static half — the module READS the session only through \`stats()\`, \`gesture()\` and \`disposed\`, and CALLS only \`install\`, \`reset\` and \`dispose\` — asserted BY NAME, not by a count (a row asserting “the module calls the session N times” FAILS R-14’s own text). Read: ${JSON.stringify(
+        sessionMemberReads,
+      )}`,
+    ).toEqual([])
+    const h = await landedHarness({})
+    const sink = makeSink()
+    const element: Record<string, unknown> = { control: 'R-14' }
+    const { controller } = await createController({
+      session: h.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 100 }),
+      defaultSizeFor: (): unknown => 50,
+      isResizable: (): unknown => true,
+      sizeFor: (): unknown => 9,
+      commit: sink,
+    })
+    controller.attach(element, {})
+    h.source.fire(element, TYPE_DOWN)
+    h.source.fire(element, TYPE_MOVE)
+    h.source.fire(element, TYPE_UP)
+    controller.reset(element)
+    controller.detach()
+    const names = [...new Set(h.sessionLog)].sort()
+    expect(
+      names.filter((name) => !allowed.includes(name)),
+      `R-14 §3.4 runtime half — the recorded session log contains no call outside §2.5 item 1’s table, and \`begin\` appears in NO log (the composition is CONSUMER-driven). Log: ${JSON.stringify(
+        h.sessionLog,
+      )}`,
+    ).toEqual([])
+  })
+
+  it('R-15 §3.4 — THE CODE-PROPAGATION ROW: the session’s own code is returned VERBATIM, and the module’s own code literals are the SEVEN session members PLUS `\'unusable-default\'` and NOTHING ELSE', async () => {
+    const declared = ['ok', 'not-installed', 'busy', 'disposed', 'disconnected', 'stale', 'no-gesture', 'unusable-default']
+    const literals = resultCodeLiterals(moduleSource('R-15'))
+    expect(
+      literals.filter((code) => !declared.includes(code)),
+      `R-15 §3.4 — the module’s own code literals are exactly the seven session members PLUS \`'unusable-default'\` and NOTHING ELSE: an EIGHTH session member appearing in the module FAILS (I-14; the must-not list). Read from the bytes: ${JSON.stringify(
+        literals,
+      )}`,
+    ).toEqual([])
+    // THE PAIR’S RUNTIME HALF: a session-refusal table, and the code that reaches the caller is
+    // byte-identical to the one the session returned.
+    const double = makeSessionDouble({ beginCode: 'busy' })
+    const element: Record<string, unknown> = { control: 'R-15' }
+    const { controller } = await createController({
+      session: double.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 100 }),
+      defaultSizeFor: (): unknown => 50,
+      isResizable: (): unknown => true,
+      sizeFor: (): unknown => 9,
+      commit: makeSink(),
+    })
+    controller.attach(element, {})
+    const began = double.begin(element)
+    expect(began.ok, 'R-15 §3.4 — the configured refusal really refused (the drive is not vacuous)').toBe(false)
+    const resetResult = controller.reset(element)
+    expect(
+      resetResult.code,
+      `R-15 §3.4 — the session’s own code propagates VERBATIM: the recorded session log is ${JSON.stringify(
+        double.log,
+      )}, and the string that reaches the caller is byte-identical to the one the session returned`,
+    ).toBe('no-gesture')
+    const disposed = makeSessionDouble({ disposed: true })
+    const second = await createController({
+      session: disposed.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 100 }),
+      defaultSizeFor: (): unknown => 50,
+      isResizable: (): unknown => true,
+      sizeFor: (): unknown => 9,
+      commit: makeSink(),
+    })
+    second.controller.attach(element, {})
+    const refused = second.controller.reset(element)
+    expect(
+      declared.includes(refused.code),
+      `R-15 §3.4 — every code the controller returns is a member of the closed declared domain (the session’s seven plus the one entry-point code); a code outside it FAILS. Returned: ${brief(
+        refused.code,
+      )}`,
+    ).toBe(true)
+  })
+})
+
+/** Read a live NAME LIST from a sibling source file's declaration (`R-6`'s SET-equalities).
+ *  The reader is honest about what it can read: it returns the quoted names of the
+ *  declaration's literal and asserts a NON-EMPTY read before any equality. */
+function readNamesFromDeclaration(rel: string, re: RegExp, expected: number): string[] {
+  const path = `${REPO_ROOT}/${rel}`
+  if (!existsSync(path)) return []
+  const src = readFileSync(path, 'utf8')
+  const at = re.exec(src)
+  if (at === null) return []
+  // **THE LITERAL IS READ BY BALANCED DELIMITERS**, not by a byte window: the declaration's
+  // own `[`…`]` span is what the row asserts over, so a sibling file's later declarations can
+  // never leak into this reading (`§4.4 S-7`: the row asserts the live declaration, and a
+  // reading that swallowed the rest of the file would pass vacuously).
+  const from = at.index + at[0].length
+  let depth = 1
+  let end = from
+  while (end < src.length && depth > 0) {
+    const ch = src[end]
+    if (ch === '[') depth += 1
+    else if (ch === ']') depth -= 1
+    end += 1
+  }
+  const body = src.slice(from, end - 1)
+  const names = (body.match(/'[^'\n]*'|"[^"\n]*"/g) ?? []).map((s) => s.slice(1, -1))
+  void expected
+  return [...new Set(names)]
+}
+/** A live TS UNION's members, read by NAME (`§4.4 S-7`: a count is satisfiable by renaming). */
+function readUnionMembers(rel: string, re: RegExp): string[] {
+  const path = `${REPO_ROOT}/${rel}`
+  if (!existsSync(path)) return []
+  const src = readFileSync(path, 'utf8')
+  const at = re.exec(src)
+  if (at === null) return []
+  const lines = src.slice(at.index + at[0].length).split('\n')
+  const kept: string[] = []
+  for (const line of lines) {
+    if (/^\s*\|/.test(line)) {
+      kept.push(line)
+      if (kept.length > 64) break
+      continue
+    }
+    if (kept.length > 0) break
+  }
+  return (kept.join('\n').match(/'[^'\n]*'/g) ?? []).map((s) => s.slice(1, -1))
+}
+
+// ===========================================================================
+// §3.3 — THE EVERY-STATE INVARIANTS (`I-1`..`I-15`).
+// ===========================================================================
+describe('I — §3.3 the every-state invariants', () => {
+  it('I-1 §3.3 — `clampToBounds` is TOTAL, PURE and FORMULA-EXACT: a `number` for EVERY input, a throw for NONE', () => {
+    const pairs: Array<[unknown, unknown]> = [
+      [42, { min: 0, max: 100 }],
+      ['12', { min: 0, max: 100 }],
+      [NaN, { min: 0, max: 100 }],
+      [42, undefined],
+      [42, { min: 100, max: 0 }],
+      [42, throwingBounds()],
+      [-0, { min: -0, max: 100 }],
+    ]
+    for (const [value, bounds] of pairs) {
+      const outcome = clampVia(value, bounds)
+      expect(
+        outcome.threw,
+        `I-1 §3.3 — \`clampToBounds(${brief(value)}, ${brief(bounds)})\` must NOT throw: it is TOTAL and every outcome is a VALUE (§0A note 8)`,
+      ).toBe(null)
+      expect(
+        typeof outcome.result,
+        `I-1 §3.3 — the answer for (${brief(value)}, ${brief(bounds)}) is a \`number\`, never \`undefined\`, never a record, never a string and never a boolean`,
+      ).toBe('number')
+    }
+  })
+
+  it('I-2 §3.3 — THE SINGLE WRITER: for every gesture the composition invokes its ONE sink call site AT MOST ONCE, and the gesture’s whole write record has length <= 1', async () => {
+    await requireLiveModule('I-2')
+    await requireLiveModule('I-1')
+    const h = await landedHarness({})
+    const sink = makeSink()
+    const element: Record<string, unknown> = { control: 'I-2' }
+    const { controller } = await createController({
+      session: h.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 100 }),
+      isResizable: (): unknown => true,
+      sizeFor: (): unknown => 12,
+      commit: sink,
+    })
+    controller.attach(element, {})
+    h.source.fire(element, TYPE_DOWN)
+    h.source.fire(element, TYPE_MOVE)
+    h.source.fire(element, TYPE_UP)
+    expect(
+      sink.records.length,
+      `I-2 §3.3 — the gesture’s whole write record has length <= 1 (read: ${sink.records.length})`,
+    ).toBeLessThanOrEqual(1)
+  })
+
+  it('I-2b §3.3 — NO WRITE OUTSIDE THE TERMINAL CHANNEL: nothing writes from `onMove`, and a `cancel` reaches the sink ZERO times BY CONSTRUCTION', async () => {
+    await requireLiveModule('I-2b')
+    const h = await landedHarness({})
+    const sink = makeSink()
+    const element: Record<string, unknown> = { control: 'I-2b' }
+    const { controller } = await createController({
+      session: h.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 100 }),
+      isResizable: (): unknown => true,
+      sizeFor: (): unknown => 13,
+      commit: sink,
+    })
+    controller.attach(element, {})
+    h.source.fire(element, TYPE_DOWN)
+    expect(sink.records.length, 'I-2b §3.3 — ZERO writes at establishment').toBe(0)
+    h.source.fire(element, TYPE_MOVE)
+    expect(sink.records.length, 'I-2b §3.3 — ZERO writes from the move turn (the value is read at the terminal only)').toBe(0)
+    h.source.fire(element, TYPE_CANCEL_EVENT)
+    expect(sink.records.length, 'I-2b §3.3 — a cancel reaches the sink ZERO times by construction').toBe(0)
+    expect(controller.stats().sinkCalls, 'I-2b §3.3 — the controller’s own count agrees with the sink’s record').toBe(0)
+  })
+
+  it('I-3 §3.3 — THE SESSION IS THE SOLE GESTURE AUTHORITY: the controller never attaches a listener and never calls `session.begin`/`end`/`cancel`', async () => {
+    const h = await landedHarness({})
+    const element: Record<string, unknown> = { control: 'I-3' }
+    const { controller } = await createController({
+      session: h.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 100 }),
+      isResizable: (): unknown => true,
+      sizeFor: (): unknown => 14,
+      commit: makeSink(),
+    })
+    controller.attach(element, {})
+    h.source.fire(element, TYPE_DOWN)
+    h.source.fire(element, TYPE_UP)
+    controller.detach()
+    expect(
+      h.sessionLog.filter((call) => ['begin', 'end', 'cancel'].includes(call)),
+      `I-3 §3.3 — the controller owns NO lifecycle: no \`begin\`, no \`end\`, no \`cancel\` in the recorded session log (log: ${JSON.stringify(
+        h.sessionLog,
+      )})`,
+    ).toEqual([])
+    expect(
+      h.source.calls.filter((call) => call.startsWith('on:')),
+      'I-3 §3.3 — the ONLY listener attach in the composition is the session’s own single `pointerdown` attach',
+    ).toEqual(['on:pointerdown'])
+  })
+
+  it('I-4 §3.3 — `isResizable` DECIDES ONCE PER GESTURE AND AT ESTABLISHMENT, and a `false` decision short-circuits every terminal seam', async () => {
+    const h = await landedHarness({})
+    const decider = seam<unknown>(false)
+    const sizeSeam = seam<unknown>(5)
+    const boundsSeam = seam<unknown>({ min: 0, max: 100 })
+    const sink = makeSink()
+    const element: Record<string, unknown> = { control: 'I-4' }
+    const { controller } = await createController({
+      session: h.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: boundsSeam,
+      isResizable: decider,
+      sizeFor: sizeSeam,
+      commit: sink,
+    })
+    controller.attach(element, {})
+    h.source.fire(element, TYPE_DOWN)
+    expect(decider.calls.length, 'I-4 §3.3 — `isResizable` is called exactly once, at establishment').toBe(1)
+    h.source.fire(element, TYPE_MOVE)
+    h.source.fire(element, TYPE_UP)
+    expect(decider.calls.length, 'I-4 §3.3 — the seam is NEVER re-consulted for that gesture').toBe(1)
+    expect(sizeSeam.calls.length, 'I-4 §3.3 — a `false` decision short-circuits `sizeFor` (ZERO calls)').toBe(0)
+    expect(boundsSeam.calls.length, 'I-4 §3.3 — a `false` decision short-circuits `boundsFor` (ZERO calls)').toBe(0)
+    expect(sink.records.length, 'I-4 §3.3 — ZERO writes for a non-resizable gesture').toBe(0)
+  })
+
+  it('I-5 §3.3 — THE TOKEN IS OPAQUE: no member of the module interprets the axis token, in any form', async () => {
+    const source = moduleSource('I-5')
+    const token = { k: 'opaque-token' }
+    expect(
+      hitsOf(normalizedView(source), ['horizontal', 'vertical', 'inline']),
+      'I-5 §3.3 — no axis vocabulary appears in the module’s bytes, so no token can be interpreted by a comparison against a literal',
+    ).toEqual([])
+    const h = await landedHarness({})
+    const received: unknown[] = []
+    const element: Record<string, unknown> = { control: 'I-5' }
+    const { controller } = await createController({
+      session: h.session,
+      axisFor: (): unknown => token,
+      boundsFor: (el: unknown, axis: unknown): unknown => {
+        received.push(axis)
+        return { min: 0, max: 100 }
+      },
+      isResizable: (el: unknown, axis: unknown): unknown => {
+        received.push(axis)
+        return true
+      },
+      sizeFor: (el: unknown, gesture: unknown, axis: unknown): unknown => {
+        received.push(axis)
+        return 15
+      },
+      commit: makeSink(),
+    })
+    controller.attach(element, {})
+    h.source.fire(element, TYPE_DOWN)
+    h.source.fire(element, TYPE_UP)
+    expect(
+      received.length,
+      'I-5 §3.3 — the token reached the three consumers of it (so the identity assertion below is not vacuous)',
+    ).toBeGreaterThan(0)
+    for (const axis of received) {
+      expect(
+        axis,
+        `I-5 §3.3 — the token handed to \`boundsFor\`/\`isResizable\`/\`sizeFor\` is the EXACT object \`axisFor\` returned (\`toBe\`, the identity clause that makes opacity falsifiable)`,
+      ).toBe(token)
+    }
+  })
+
+  it('I-6 §3.3 — NO DOM, NO AMBIENT READ, NO ELEMENT LOOKUP, EVER: the module contains no realm-rooted access and no element-query token', () => {
+    const source = moduleSource('I-6')
+    const hits = hitsOf(normalizedView(source), ACCESS_SPELLINGS.concat(VOCAB_SELECTOR))
+    expect(
+      hits,
+      `I-6 §3.3 — the module contains no \`document\`/\`window\`/\`globalThis\`-rooted access, no element-query token in any form, and it reads no ambient global (A-d3). Hits: ${JSON.stringify(
+        hits,
+      )}`,
+    ).toEqual([])
+  })
+
+  it('I-7 §3.3 — NO LISTENER AND NO CAPTURE OF THIS UNIT’S OWN: every attach is a `session.install` delegation and no `capture` field is passed', async () => {
+    const source = moduleSource('I-7')
+    expect(
+      hitsOf(normalizedView(source), [chunked(['capture']), chunked(['addEventListener']), chunked(['setPointer', 'Capture'])]),
+      'I-7 §3.3 — the module calls no capture member and contains no listener-attachment token of its own',
+    ).toEqual([])
+    const h = await landedHarness({ withCapture: true })
+    const element: Record<string, unknown> = { control: 'I-7' }
+    const { controller } = await createController({
+      session: h.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 100 }),
+      isResizable: (): unknown => true,
+      sizeFor: (): unknown => 16,
+      commit: makeSink(),
+    })
+    controller.attach(element, {})
+    h.source.fire(element, TYPE_DOWN)
+    h.source.fire(element, TYPE_UP)
+    expect(
+      h.source.captures.length,
+      'I-7 §3.3 — ZERO capture calls over a full lifecycle, because the composition passes NO `capture` field (the absence is inherited and OBSERVED at the source)',
+    ).toBe(0)
+  })
+
+  it('I-8 §3.3 — THE COMPOSITION BOUNDARY IS A CLOSED SET: the only members CALLED are `install`/`reset`/`dispose` and the only ones READ are `stats()`/`gesture()`/`disposed`', async () => {
+    const source = moduleSource('I-8')
+    const called = (source.match(/\bsession\s*\.\s*([A-Za-z_$][A-Za-z0-9_\$]*)\s*\(/g) ?? []).map(
+      (hit) => (hit.match(/\.\s*([A-Za-z_$][A-Za-z0-9_\$]*)\s*\(/) ?? [])[1] ?? '',
+    )
+    expect(
+      called.filter((name) => !['install', 'reset', 'dispose', 'stats', 'gesture'].includes(name)),
+      `I-8 §3.3 — the composition boundary is a CLOSED SET (§2.5 item 1’s table is R-14’s row): nothing outside it is called. Called: ${JSON.stringify(
+        called,
+      )}`,
+    ).toEqual([])
+    const double = makeSessionDouble()
+    const element: Record<string, unknown> = { control: 'I-8' }
+    const { controller } = await createController({
+      session: double.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 100 }),
+      defaultSizeFor: (): unknown => 20,
+      isResizable: (): unknown => true,
+      sizeFor: (): unknown => 2,
+      commit: makeSink(),
+    })
+    controller.attach(element, {})
+    expect(
+      double.log.filter((call) => !['install', 'stats', 'gesture', 'dispose'].includes(call)),
+      `I-8 §3.3 — the double’s log after an attach contains no call outside the closed set (log: ${JSON.stringify(double.log)})`,
+    ).toEqual([])
+  })
+
+  it('I-9 §3.3 — NOTHING CARRIES ACROSS A GESTURE: the per-gesture record is DISCARDED at every terminal, and no element-keyed map exists', async () => {
+    const source = moduleSource('I-9')
+    expect(
+      /new\s+(?:Weak)?Map\s*\(/.test(source) && /keyed/i.test(source),
+      'I-9 §3.3 — no element-keyed `Map`/`WeakMap` cache exists in the module (its attached-element ledger is the only identity-keyed state, and the per-gesture record is discarded at every terminal)',
+    ).toBe(false)
+    const h = await landedHarness({})
+    const element: Record<string, unknown> = { control: 'I-9' }
+    const decider = seam<unknown>(false)
+    const { controller } = await createController({
+      session: h.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 100 }),
+      defaultSizeFor: (): unknown => 20,
+      isResizable: decider,
+      sizeFor: (): unknown => 2,
+      commit: makeSink(),
+    })
+    controller.attach(element, {})
+    h.source.fire(element, TYPE_DOWN)
+    h.source.fire(element, TYPE_UP)
+    const afterFirst = controller.reset(element)
+    expect(
+      afterFirst.code,
+      `I-9 §3.3 — after the terminal the controller’s per-gesture record is GONE, so a subsequent \`reset\` finds no handle and refuses \`'no-gesture'\` (read: ${brief(
+        afterFirst.code,
+      )})`,
+    ).toBe('no-gesture')
+    expect(decider.calls.length, 'I-9 §3.3 — the decision did NOT carry into the next gesture (the seam is consulted per gesture)').toBe(1)
+  })
+
+  it('I-10 §3.3 — THE CONTROLLER IS TOTAL AT THE SEAM: the factory NEVER throws for ANY argument and every member returns its declared shape', async () => {
+    const shapes: unknown[] = [undefined, null, 42, 'x', {}, [], Symbol('s'), 12n, () => undefined]
+    for (const shape of shapes) {
+      const { controller } = await createController(shape as Record<string, unknown>, `I-10 shape ${brief(shape)}`)
+      expect(
+        typeof controller.attach(undefined) ,
+        `I-10 §3.3 — \`attach\` returns its declared shape (a boolean) for the factory argument ${brief(shape)}`,
+      ).toBe('boolean')
+      expect(typeof controller.detach(), `I-10 §3.3 — \`detach\` returns a boolean for ${brief(shape)}`).toBe('boolean')
+      const record = controller.reset(undefined)
+      expect(
+        typeof record.ok === 'boolean' && typeof record.code === 'string' && typeof record.committed === 'boolean',
+        `I-10 §3.3 — \`reset\` returns a \`{ok, code, committed}\` record for ${brief(shape)} (read: ${JSON.stringify(record)})`,
+      ).toBe(true)
+      const stats = controller.stats()
+      expect(
+        Object.keys(stats).sort(),
+        `I-10 §3.3 — \`stats\` returns the six declared fields for ${brief(shape)}`,
+      ).toEqual(['attached', 'gestures', 'lastCode', 'resets', 'sinkCalls', 'written'])
+    }
+  })
+
+  it('I-11 §3.3 — NEVER A GEOMETRY, COORDINATE OR MAGNITUDE CLAIM: the module reads NO coordinate and takes NO event object', async () => {
+    const source = moduleSource('I-11')
+    expect(
+      hitsOf(normalizedView(source), GEOMETRY_SPELLINGS),
+      'I-11 §3.3 — the module’s bytes carry no coordinate read and no geometry-observation call',
+    ).toEqual([])
+    const { mod } = await resolveModule()
+    if (mod === null) {
+      expect(
+        mod,
+        'RED — U-GUTTER red set (§4.1): the module of §2.1/§5.1 row 1 does not exist yet, so no member of its surface can be read. [I-11]',
+      ).not.toBe(null)
+      return
+    }
+    const source2 = moduleSource('I-11')
+    const signatures = (source2.match(/\(([^)]*)\)\s*(?::[^;{]*)?[;{]/g) ?? []).join(' ')
+    const parameterShapes = [...VOCAB_COORD, chunked(['event']), chunked(['evt'])]
+    const parameterHits = hitsOf(signatures, parameterShapes)
+    expect(
+      parameterHits,
+      `I-11 §3.3 — NO parameter exists through which an event object or a coordinate could arrive (P-1: no coordinate, no event, no magnitude — the NAMED COST). Hits: ${JSON.stringify(
+        parameterHits,
+      )}`,
+    ).toEqual([])
+  })
+
+  it('I-12 §3.3 — `clampToBounds` MUTATES AND RETAINS NOTHING: both arguments are reference- and value-identical after the call, and a frozen pair behaves like its twin', () => {
+    const pair = { min: 0, max: 100 }
+    const frozenPair = Object.freeze({ min: 0, max: 100 })
+    const value = 42
+    const before = JSON.stringify(pair)
+    const first = clampVia(value, pair)
+    const second = clampVia(value, frozenPair)
+    expect(pair, 'I-12 §3.3 — the unfrozen pair is value-identical to its pre-call state').toEqual(JSON.parse(before))
+    expect(
+      Object.isFrozen(frozenPair),
+      'I-12 §3.3 — the frozen pair’s frozenness is unchanged by the call',
+    ).toBe(true)
+    expect(
+      first.result,
+      `I-12 §3.3 — a FROZEN pair behaves exactly like its unfrozen twin (read: ${brief(first.result)} vs ${brief(
+        second.result,
+      )})`,
+    ).toBe(second.result)
+  })
+
+  it('I-13 §3.3 — NO STORE, NO PERSISTENCE, NO MCP SURFACE, NO CENSUS READ: no file, no store object, no IPC method, no tool, no resource and no census read of any kind', () => {
+    const source = moduleSource('I-13')
+    const hits = hitsOf(normalizedView(source), VOCAB_STORE.concat(VOCAB_CENSUS).concat(['node:fs']))
+    expect(
+      hits,
+      `I-13 §3.3 — the module carries no store, no persistence channel, no census read and no file access; a consumer’s \`sizes\`-style value reaches this unit ONLY inside the consumer’s own closures (\`§2.5\` item 2, the dissolved edge). Hits: ${JSON.stringify(
+        hits,
+      )}`,
+    ).toEqual([])
+  })
+
+  it('I-14 §3.3 — THE CODE DOMAIN IS CLOSED: no eighth SESSION member exists, and no controller code is ever passed INTO the session', () => {
+    const source = moduleSource('I-14')
+    const literals = resultCodeLiterals(source)
+    expect(
+      literals,
+      `I-14 §3.3 — the module’s own code literals are EXACTLY the seven session members plus \`'unusable-default'\` (an eighth SESSION member, or a controller code passed INTO the session, FAILS). Read: ${JSON.stringify(
+        literals,
+      )}`,
+    ).toEqual(['busy', 'disconnected', 'disposed', 'no-gesture', 'not-installed', 'ok', 'stale', 'unusable-default'])
+    expect(
+      /session\s*\.\s*reset\s*\([^)]*['"]unusable-default['"]/.test(source),
+      'I-14 §3.3 — the controller NEVER passes its own code into `session.reset` (the code is emitted for a path where the session is not called at all)',
+    ).toBe(false)
+  })
+
+  it('I-15 §3.3 — `[U]` IS NOT OFFERED AND `[D]` IS NOT CLAIMED, AND BOTH REFUSALS ARE STRUCTURAL: no importer and no coordinate read', () => {
+    expect(
+      gutterImporters(),
+      'I-15 §3.3 — the structural reason (a): the module is imported by NO `src/**` file, so there is NO RENDERED SURFACE TO OBSERVE',
+    ).toEqual([])
+    const source = moduleBytes()
+    expect(
+      hitsOf(normalizedView(source), VOCAB_COORD),
+      'I-15 §3.3 — the structural reason (b): the module READS NO COORDINATE, so there is NOTHING FOR A MEASURING LEG TO MEASURE',
+    ).toEqual([])
+    expect(
+      ['tests/ui-leg-contract.test.ts', 'tests/ui-leg-seam.test.ts'].some((rel) => {
+        const path = `${REPO_ROOT}/${rel}`
+        return existsSync(path) && readFileSync(path, 'utf8').includes('gutter')
+      }),
+      'I-15 §3.3 — no `[U]`-leg file names this unit: the refusal is structural, and the row may not be moved to the `ui` leg silently (`zones.md` §4.4 S-6)',
+    ).toBe(false)
+  })
+})
+
+// ===========================================================================
+// §3.1 — THE VALID STATES (`M-1`, `M-3`..`M-18`). `M-2`/`M-19` are the pure function's
+// rows and sit with the `F-1`..`F-8` block below (`§4.2` item 3).
+// ===========================================================================
+describe('M — §3.1 the valid states', () => {
+  it('M-1 §3.1 — a control attaches, and the SESSION owns the listener: exactly ONE `session.install` carrying the element by identity and an options object whose own keys are the four hooks', async () => {
+    await requireLiveModule('I-15')
+    await requireLiveModule('I-12')
+    const double = makeSessionDouble()
+    const element: Record<string, unknown> = { control: 'M-1' }
+    const { controller, live } = await createController(
+      {
+        session: double.session,
+        axisFor: (): unknown => undefined,
+        boundsFor: (): unknown => ({ min: 0, max: 100 }),
+        isResizable: (): unknown => true,
+        sizeFor: (): unknown => 1,
+        commit: makeSink(),
+      },
+      'M-1',
+    )
+    const attached = controller.attach(element, {})
+    expect(attached, 'M-1 §3.1 — `attach` returns `true` for a fresh element the session installed').toBe(true)
+    expect(double.log.filter((call) => call === 'install').length, 'M-1 §3.1 — exactly ONE `session.install` call').toBe(1)
+    expect(double.installArgs.length, 'M-1 §3.1 — the recorded install carries exactly one argument pair').toBe(1)
+    expect(
+      double.installArgs[0]?.element,
+      'M-1 §3.1 — the element reaches the session BY IDENTITY (the same object, never a copy and never a lookup)',
+    ).toBe(element)
+    expect(
+      (double.installArgs[0]?.keys ?? []).filter((key) => !['onStart', 'onMove', 'onEnd', 'onCancel'].includes(key)),
+      `M-1 §3.1 — the options object’s own key SET is exactly the four hooks: a \`capture\` field FAILS here. Keys read: ${JSON.stringify(
+        double.installArgs[0]?.keys ?? [],
+      )}`,
+    ).toEqual([])
+    expect(live, 'M-1 §3.1 — the module exists and the factory produced the controller').toBe(true)
+  })
+
+  it('M-3 §3.1 — the seam ORDER, and the token’s identity at the terminal: `axisFor` then `isResizable`, then `boundsFor` then `sizeFor` then the sink', async () => {
+    const order: string[] = []
+    const token = { token: 'M-3' }
+    const h = await landedHarness({})
+    const sink = makeSink()
+    const element: Record<string, unknown> = { control: 'M-3' }
+    const { controller } = await createController({
+      session: h.session,
+      axisFor: (): unknown => {
+        order.push('axisFor')
+        return token
+      },
+      isResizable: (el: unknown, axis: unknown): unknown => {
+        order.push(axis === token ? 'isResizable(identity)' : 'isResizable(WRONG TOKEN)')
+        return true
+      },
+      sizeFor: (el: unknown, gesture: unknown, axis: unknown): unknown => {
+        order.push(axis === token ? 'sizeFor(identity)' : 'sizeFor(WRONG TOKEN)')
+        return 7
+      },
+      boundsFor: (el: unknown, axis: unknown): unknown => {
+        order.push(axis === token ? 'boundsFor(identity)' : 'boundsFor(WRONG TOKEN)')
+        return { min: 0, max: 100 }
+      },
+      commit: sink,
+    })
+    controller.attach(element, {})
+    h.source.fire(element, TYPE_DOWN)
+    h.source.fire(element, TYPE_MOVE)
+    h.source.fire(element, TYPE_UP)
+    expect(
+      order,
+      `M-3 §3.1 — the recorded call log is \`axisFor\` then \`isResizable\` at establishment, then \`sizeFor\` then \`boundsFor\` then the sink at the terminal, and the token identity holds in every seam (read: ${JSON.stringify(
+        order,
+      )})`,
+    ).toEqual(['axisFor', 'isResizable(identity)', 'sizeFor(identity)', 'boundsFor(identity)'])
+    expect(sink.records.length, 'M-3 §3.1 — the sink receives the session’s own handle and the clamped number, exactly once').toBe(1)
+    expect(
+      (sink.records[0]?.gesture as GestureHandle | undefined)?.id,
+      'M-3 §3.1 — the sink receives THE SESSION’S OWN HANDLE (its own id), never a synthesised one',
+    ).toBe(1)
+    expect(sink.records[0]?.value, 'M-3 §3.1 — the sink receives the clamped NUMBER').toBe(7)
+  })
+
+  it('M-4 §3.1 — a `cancel` writes nothing and the sink callback is never invoked, and the per-gesture record is dropped', async () => {
+    await requireLiveModule('M-4')
+    const h = await landedHarness({})
+    const sink = makeSink()
+    const element: Record<string, unknown> = { control: 'M-4' }
+    const { controller } = await createController({
+      session: h.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 100 }),
+      defaultSizeFor: (): unknown => 30,
+      isResizable: (): unknown => true,
+      sizeFor: (): unknown => 5,
+      commit: sink,
+    })
+    controller.attach(element, {})
+    h.source.fire(element, TYPE_DOWN)
+    const cancelled = h.source.fire(element, TYPE_CANCEL_EVENT)
+    void cancelled
+    expect(sink.records.length, 'M-4 §3.1 — the sink’s recorded call count is 0').toBe(0)
+    expect(controller.stats().sinkCalls, 'M-4 §3.1 — `stats().sinkCalls === 0`').toBe(0)
+    expect(controller.stats().written, 'M-4 §3.1 — `stats().written === 0`').toBe(0)
+    const sessionStats = (h.session['stats'] as () => SessionStats)()
+    expect(sessionStats.commits, 'M-4 §3.1 — the session’s terminal result reads `committed: false` (its commit count did not move)').toBe(0)
+    expect(
+      controller.reset(element).code,
+      'M-4 §3.1 — the controller’s per-gesture record is dropped at the terminal, so a later reset refuses `\'no-gesture\'`',
+    ).toBe('no-gesture')
+  })
+
+  it('M-5 §3.1 — a normal `end` writes EXACTLY ONCE with the CLAMPED value (`0.1 + 0.2` clamped into `{min: 0, max: 0.3}`)', async () => {
+    const h = await landedHarness({})
+    const sink = makeSink()
+    const element: Record<string, unknown> = { control: 'M-5' }
+    const { controller } = await createController({
+      session: h.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 0.3 }),
+      isResizable: (): unknown => true,
+      sizeFor: (): unknown => 0.1 + 0.2,
+      commit: sink,
+    })
+    controller.attach(element, {})
+    h.source.fire(element, TYPE_DOWN)
+    h.source.fire(element, TYPE_MOVE)
+    h.source.fire(element, TYPE_UP)
+    expect(sink.records.length, 'M-5 §3.1 — one sink call for the gesture').toBe(1)
+    expect(
+      sink.records[0]?.value,
+      `M-5 §3.1 — the write is the CLAMP’s answer (\`0.3\`), NOT the raw seam value (\`0.30000000000000004\`). Read: ${brief(
+        sink.records[0]?.value,
+      )}`,
+    ).toBe(0.3)
+    expect(controller.stats().sinkCalls, 'M-5 §3.1 — `stats().sinkCalls === 1`').toBe(1)
+    expect(controller.stats().written, 'M-5 §3.1 — `stats().written === 1`').toBe(1)
+    expect(controller.stats().gestures, 'M-5 §3.1 — `stats().gestures === 1`').toBe(1)
+  })
+
+  it('M-6 §3.1 — the value is CONSUMER-PRODUCED: a sentinel set in `onMove` reaches the sink unmodified beyond the clamp', async () => {
+    const h = await landedHarness({})
+    const sink = makeSink()
+    const element: Record<string, unknown> = { control: 'M-6' }
+    const seen: unknown[] = []
+    const { controller } = await createController({
+      session: h.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 1000 }),
+      isResizable: (): unknown => true,
+      sizeFor: (el: unknown, gesture: GestureHandle): unknown => {
+        seen.push(gesture.value)
+        return gesture.value
+      },
+      commit: sink,
+    })
+    controller.attach(element, {
+      onMove: (gesture: GestureHandle): void => {
+        gesture.set(777)
+      },
+    })
+    h.source.fire(element, TYPE_DOWN)
+    h.source.fire(element, TYPE_MOVE)
+    h.source.fire(element, TYPE_UP)
+    expect(seen[0], 'M-6 §3.1 — the row asserts `gesture.value === 777` AT THE SEAM').toBe(777)
+    expect(sink.records[0]?.value, 'M-6 §3.1 — the sink receives 777 BY VALUE (the composition computed no delta and no magnitude)').toBe(777)
+  })
+
+  it('M-7 §3.1 — the token is OPAQUE: changing its TYPE changes nothing about the outcome (object, string, then `undefined`)', async () => {
+    const tokenObject = { k: 1 }
+    const shapes: unknown[] = [tokenObject, 'vertical', undefined]
+    const emitted: unknown[] = []
+    for (const shape of shapes) {
+      const h = await landedHarness({})
+      const sink = makeSink()
+      const element: Record<string, unknown> = { control: `M-7-${brief(shape)}` }
+      const received: unknown[] = []
+      const { controller } = await createController({
+        session: h.session,
+        axisFor: (): unknown => shape,
+        boundsFor: (el: unknown, axis: unknown): unknown => {
+          received.push(axis)
+          return { min: 0, max: 100 }
+        },
+        defaultSizeFor: (el: unknown, axis: unknown): unknown => {
+          received.push(axis)
+          return 10
+        },
+        isResizable: (el: unknown, axis: unknown): unknown => {
+          received.push(axis)
+          return true
+        },
+        sizeFor: (el: unknown, gesture: unknown, axis: unknown): unknown => {
+          received.push(axis)
+          return 21
+        },
+        commit: sink,
+      })
+      controller.attach(element, {})
+      h.source.fire(element, TYPE_DOWN)
+      h.source.fire(element, TYPE_MOVE)
+      h.source.fire(element, TYPE_UP)
+      controller.reset(element)
+      emitted.push(sink.records[0]?.value)
+      for (const axis of received) {
+        expect(
+          axis,
+          `M-7 §3.1 — each seam receives EXACTLY what \`axisFor\` returned (\`toBe\`), for the token shape ${brief(shape)}`,
+        ).toBe(shape)
+      }
+      expect(
+        sink.records.length,
+        `M-7 §3.1 — the ${brief(shape)} token drive establishes and terminates normally`,
+      ).toBeGreaterThan(0)
+    }
+    expect(
+      new Set(emitted).size,
+      `M-7 §3.1 — the emitted sink value is IDENTICAL across the three drives: the module branched on no token (read: ${JSON.stringify(
+        emitted,
+      )})`,
+    ).toBe(1)
+  })
+
+  it('M-8 §3.1 — `isResizable === false` establishes and terminates NORMALLY with ZERO writes, and the outcome is `\'end\'` — NOT `\'cancel\'`', async () => {
+    const h = await landedHarness({})
+    const sink = makeSink()
+    const decider = seam<unknown>(false)
+    const element: Record<string, unknown> = { control: 'M-8' }
+    const { controller } = await createController({
+      session: h.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 100 }),
+      defaultSizeFor: (): unknown => 10,
+      isResizable: decider,
+      sizeFor: (): unknown => 4,
+      commit: sink,
+    })
+    controller.attach(element, {})
+    h.source.fire(element, TYPE_DOWN)
+    h.source.fire(element, TYPE_MOVE)
+    expect(controller.stats().gestures, 'M-8 §3.1 — the gesture ESTABLISHES (`stats().gestures === 1`)').toBe(1)
+    expect(decider.calls.length, 'M-8 §3.1 — `axisFor`/`isResizable` were each called exactly once').toBe(1)
+    h.source.fire(element, TYPE_UP)
+    expect(sink.records.length, 'M-8 §3.1 — ZERO writes for a non-resizable gesture').toBe(0)
+    expect(controller.stats().sinkCalls, 'M-8 §3.1 — `sinkCalls === 0`').toBe(0)
+  })
+
+  it('M-9 §3.1 — TRUTHINESS decides: five falsy drives write zero times with a normal `\'end\'`; four truthy drives write exactly once', async () => {
+    const falsy: unknown[] = [0, '', null, undefined, false]
+    const truthy: unknown[] = [1, 'no', new Object(), []]
+    const falsyWrites: number[] = []
+    for (const answer of falsy) {
+      const h = await landedHarness({})
+      const sink = makeSink()
+      const element: Record<string, unknown> = { control: `M-9-falsy-${brief(answer)}` }
+      const { controller } = await createController({
+        session: h.session,
+        axisFor: (): unknown => undefined,
+        boundsFor: (): unknown => ({ min: 0, max: 100 }),
+        isResizable: (): unknown => answer,
+        sizeFor: (): unknown => 6,
+        commit: sink,
+      })
+      controller.attach(element, {})
+      h.source.fire(element, TYPE_DOWN)
+      h.source.fire(element, TYPE_UP)
+      falsyWrites.push(sink.records.length)
+    }
+    expect(falsyWrites, `M-9 §3.1 — the five FALSY drives each yield zero writes (read: ${JSON.stringify(falsyWrites)})`).toEqual([0, 0, 0, 0, 0])
+    const truthyWrites: number[] = []
+    for (const answer of truthy) {
+      const h = await landedHarness({})
+      const sink = makeSink()
+      const element: Record<string, unknown> = { control: `M-9-truthy-${brief(answer)}` }
+      const { controller } = await createController({
+        session: h.session,
+        axisFor: (): unknown => undefined,
+        boundsFor: (): unknown => ({ min: 0, max: 100 }),
+        isResizable: (): unknown => answer,
+        sizeFor: (): unknown => 6,
+        commit: sink,
+      })
+      controller.attach(element, {})
+      h.source.fire(element, TYPE_DOWN)
+      h.source.fire(element, TYPE_UP)
+      truthyWrites.push(sink.records.length)
+    }
+    expect(truthyWrites, `M-9 §3.1 — the four TRUTHY drives each yield exactly one write (read: ${JSON.stringify(truthyWrites)})`).toEqual([
+      1, 1, 1, 1,
+    ])
+  })
+
+  it('M-10 §3.1 — `isResizable` is NEVER an install-time gate: two attaches both return `true` and the seam is called ZERO times during either attach', async () => {
+    const double = makeSessionDouble()
+    const decider = seam<unknown>(false)
+    const elA: Record<string, unknown> = { control: 'M-10-A' }
+    const elB: Record<string, unknown> = { control: 'M-10-B' }
+    const { controller } = await createController({
+      session: double.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 100 }),
+      isResizable: decider,
+      sizeFor: (): unknown => 3,
+      commit: makeSink(),
+    })
+    expect(controller.attach(elA, {}), 'M-10 §3.1 — the first attach returns `true`').toBe(true)
+    expect(controller.attach(elB, {}), 'M-10 §3.1 — the second attach returns `true` (the decision belongs to the gesture)').toBe(true)
+    expect(decider.calls.length, 'M-10 §3.1 — `isResizable` is called ZERO times during either attach').toBe(0)
+    expect(double.log.filter((call) => call === 'install').length, 'M-10 §3.1 — both attaches delegated to `session.install`').toBe(2)
+  })
+
+  it('M-11 §3.1 — two gestures are two gestures: the decision and the token are re-derived and nothing carries across the boundary', async () => {
+    const h = await landedHarness({})
+    const sink = makeSink()
+    const answers = [false, true]
+    let index = 0
+    const decider = (): unknown => answers[Math.min(index, answers.length - 1)]
+    const axisSeam = (): unknown => ({ token: index })
+    const element: Record<string, unknown> = { control: 'M-11' }
+    const { controller } = await createController({
+      session: h.session,
+      axisFor: axisSeam,
+      boundsFor: (): unknown => ({ min: 0, max: 100 }),
+      isResizable: decider,
+      sizeFor: (): unknown => 8,
+      commit: sink,
+    })
+    controller.attach(element, {})
+    h.source.fire(element, TYPE_DOWN)
+    h.source.fire(element, TYPE_MOVE)
+    h.source.fire(element, TYPE_UP)
+    const afterFirst = sink.records.length
+    index = 1
+    h.source.fire(element, TYPE_DOWN)
+    h.source.fire(element, TYPE_MOVE)
+    h.source.fire(element, TYPE_UP)
+    expect(afterFirst, 'M-11 §3.1 — the FIRST (non-resizable) gesture writes 0 times').toBe(0)
+    expect(sink.records.length, 'M-11 §3.1 — the SECOND (resizable) gesture writes exactly once').toBe(1)
+    expect(controller.stats().gestures, 'M-11 §3.1 — two gestures were established').toBe(2)
+  })
+
+  it('M-12 §3.1 — `attach` delegates ONCE per element and a repeat attach delegates NOTHING (first-config-wins)', async () => {
+    const double = makeSessionDouble()
+    const element: Record<string, unknown> = { control: 'M-12' }
+    const { controller } = await createController({
+      session: double.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 100 }),
+      isResizable: (): unknown => true,
+      sizeFor: (): unknown => 2,
+      commit: makeSink(),
+    })
+    const first = { onMove: (): void => undefined }
+    const second = { onMove: (): void => undefined }
+    expect(controller.attach(element, first), 'M-12 §3.1 — the first attach returns `true`').toBe(true)
+    expect(controller.attach(element, second), 'M-12 §3.1 — the repeat attach returns `false`').toBe(false)
+    expect(
+      double.log.filter((call) => call === 'install').length,
+      `M-12 §3.1 — \`session.install\` is called exactly ONCE in total, because the controller returns \`false\` from its own ledger first. Log: ${JSON.stringify(
+        double.log,
+      )}`,
+    ).toBe(1)
+    expect(
+      double.installArgs[0]?.options['onMove'],
+      'M-12 §3.1 — the FIRST hooks stay in force (the second config never reached the session)',
+    ).toBe(first.onMove)
+    void second
+  })
+
+  it('M-13 §3.1 — `detach()` restores the controller’s baseline through the session, once, is idempotent, and `detached` reads `true` forever after', async () => {
+    const h = await landedHarness({})
+    const element: Record<string, unknown> = { control: 'M-13' }
+    const { controller } = await createController({
+      session: h.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 100 }),
+      isResizable: (): unknown => true,
+      sizeFor: (): unknown => 2,
+      commit: makeSink(),
+    })
+    controller.attach(element, {})
+    expect(controller.detached, 'M-13 §3.1 — `detached` reads `false` while attached').toBe(false)
+    const first = controller.detach()
+    expect(first, 'M-13 §3.1 — the FIRST `detach()` returns `true` when the session reports `complete: true`').toBe(true)
+    expect(h.sessionLog.filter((call) => call === 'dispose').length, 'M-13 §3.1 — it delegates `session.dispose()` exactly once').toBe(1)
+    const second = controller.detach()
+    expect(second, 'M-13 §3.1 — the SECOND call makes ZERO session calls and returns `false`').toBe(false)
+    expect(h.sessionLog.filter((call) => call === 'dispose').length, 'M-13 §3.1 — still exactly one `dispose` in the log').toBe(1)
+    expect(controller.detached, 'M-13 §3.1 — `detached` reads `true` forever after').toBe(true)
+    // **`§7a.1` item 2'S WORKING DEFAULT, driven as its own arm** (the `detach()` SCOPE when
+    // the session is shared): `detach()` takes NO argument and refuses with ZERO session calls
+    // while MORE THAN ONE element is attached here, because the session's baseline restore is
+    // SESSION-wide and detaching it on behalf of one control would detach the others.
+    const double = makeSessionDouble()
+    const shared = await createController({
+      session: double.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 100 }),
+      isResizable: (): unknown => true,
+      sizeFor: (): unknown => 2,
+      commit: makeSink(),
+    })
+    shared.controller.attach({ control: 'M-13-shared-a' }, {})
+    shared.controller.attach({ control: 'M-13-shared-b' }, {})
+    const before = double.log.filter((call) => call === 'dispose').length
+    const refused = shared.controller.detach()
+    expect(
+      refused,
+      'M-13 §3.1 (§7a.1 item 2’s WORKING DEFAULT) — `detach()` refuses (`false`) while MORE THAN ONE element is attached, because the session is shared',
+    ).toBe(false)
+    expect(
+      double.log.filter((call) => call === 'dispose').length - before,
+      `M-13 §3.1 — the refusal makes ZERO session calls (no \`dispose\` reached the session). Recorded log: ${JSON.stringify(
+        double.log,
+      )}`,
+    ).toBe(0)
+  })
+
+  it('M-14 §3.1 — `reset(element)` commits the CLAMPED supplied default, ONCE, through the session’s own reset terminal', async () => {
+    const h = await landedHarness({})
+    const sink = makeSink()
+    const element: Record<string, unknown> = { control: 'M-14' }
+    const { controller } = await createController({
+      session: h.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 100 }),
+      defaultSizeFor: (): unknown => 420,
+      isResizable: (): unknown => true,
+      sizeFor: (): unknown => 12345,
+      commit: sink,
+    })
+    controller.attach(element, {
+      onMove: (gesture: GestureHandle): void => {
+        gesture.set(12345)
+      },
+    })
+    h.source.fire(element, TYPE_DOWN)
+    h.source.fire(element, TYPE_MOVE)
+    const result = controller.reset(element)
+    expect(h.sessionLog.filter((call) => call === 'reset').length, 'M-14 §3.1 — exactly ONE `session.reset` call').toBe(1)
+    expect(sink.records.length, 'M-14 §3.1 — the sink receives exactly one value for the reset').toBe(1)
+    expect(
+      sink.records[0]?.value,
+      `M-14 §3.1 — the committed value is the CLAMPED default (100), NOT the raw default (420) and NOT the user’s own 12345. Read: ${brief(
+        sink.records[0]?.value,
+      )}`,
+    ).toBe(100)
+    expect(controller.stats().resets, 'M-14 §3.1 — `stats().resets === 1`').toBe(1)
+    expect(controller.stats().sinkCalls, 'M-14 §3.1 — `stats().sinkCalls === 1`').toBe(1)
+    expect(result.committed, `M-14 §3.1 — the reset result reports what the composition did (read: ${JSON.stringify(result)})`).toBe(true)
+  })
+
+  it('M-15 §3.1 — `gesture.outcome === \'reset\'` IS the discriminator the sink can read (with an `\'end\'` control)', async () => {
+    const h = await landedHarness({})
+    const sink = makeSink()
+    const element: Record<string, unknown> = { control: 'M-15' }
+    const { controller } = await createController({
+      session: h.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 100 }),
+      defaultSizeFor: (): unknown => 60,
+      isResizable: (): unknown => true,
+      sizeFor: (): unknown => 55,
+      commit: sink,
+    })
+    controller.attach(element, {})
+    h.source.fire(element, TYPE_DOWN)
+    controller.reset(element)
+    expect(
+      sink.records[0]?.outcome,
+      `M-15 §3.1 — the recorded outcome for a reset is \`'reset'\` (the corrected citation site: gsession.md §2.5 item 10). Read: ${brief(
+        sink.records[0]?.outcome,
+      )}`,
+    ).toBe('reset')
+    expect(
+      (sink.records[0]?.gesture as GestureHandle | undefined)?.value,
+      'M-15 §3.1 — the recorded handle reads the committed clamped value',
+    ).toBe(60)
+    h.source.fire(element, TYPE_DOWN)
+    h.source.fire(element, TYPE_MOVE)
+    h.source.fire(element, TYPE_UP)
+    expect(
+      sink.records[1]?.outcome,
+      'M-15 §3.1 — THE CONTROL: the same sink driven by an ordinary end records `\'end\'`',
+    ).toBe('end')
+  })
+
+  it('M-16 §3.1 — a reset with NO active gesture refuses `\'no-gesture\'` and makes ZERO session calls', async () => {
+    await requireLiveModule('M-16')
+    const double = makeSessionDouble()
+    const element: Record<string, unknown> = { control: 'M-16' }
+    const defaultSeam = seam<unknown>(10)
+    const { controller } = await createController({
+      session: double.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 100 }),
+      defaultSizeFor: defaultSeam,
+      isResizable: (): unknown => true,
+      sizeFor: (): unknown => 2,
+      commit: makeSink(),
+    })
+    controller.attach(element, {})
+    const before = double.log.length
+    const result = controller.reset(element)
+    expect(
+      result,
+      `M-16 §3.1 — the refusal is \`{ok: false, code: 'no-gesture', committed: false}\`. Read: ${JSON.stringify(result)}`,
+    ).toEqual({ ok: false, code: 'no-gesture', committed: false })
+    expect(
+      double.log.slice(before),
+      `M-16 §3.1 — the recording session’s call log is EMPTY after the refusal: no \`reset\`, no \`stats\`, no \`dispose\` (§2.5 item 5 clause 3). Recorded: ${JSON.stringify(
+        double.log.slice(before),
+      )}`,
+    ).toEqual([])
+    expect(defaultSeam.calls.length, 'M-16 §3.1 — `defaultSizeFor` is called ZERO times').toBe(0)
+  })
+
+  it('M-17 §3.1 — a reset refuses without touching the ACTIVE gesture (the subsequent end still commits `\'end\'`)', async () => {
+    const double = makeSessionDouble()
+    const element: Record<string, unknown> = { control: 'M-17' }
+    const sink = makeSink()
+    const { controller } = await createController({
+      session: double.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 100 }),
+      defaultSizeFor: (): unknown => {
+        throw new Error('the default seam threw (C2 path 3)')
+      },
+      isResizable: (): unknown => true,
+      sizeFor: (): unknown => 2,
+      commit: sink,
+    })
+    controller.attach(element, {})
+    const began = double.begin(element)
+    expect(began.ok, 'M-17 §3.1 — the gesture established').toBe(true)
+    if (began.ok) began.gesture.set(7)
+    const refusal = controller.reset(element)
+    expect(
+      refusal,
+      `M-17 §3.1 — the refusal is \`{ok: false, code: 'unusable-default', committed: false}\` (the §7a.1 item 1 WORKING DEFAULT). Read: ${JSON.stringify(
+        refusal,
+      )}`,
+    ).toEqual({ ok: false, code: 'unusable-default', committed: false })
+    expect(
+      double.log.slice(-1),
+      `M-17 §3.1 — the refusal made ZERO session calls (the last logged call is the establishment). Log tail: ${JSON.stringify(
+        double.log.slice(-2),
+      )}`,
+    ).toEqual(['begin'])
+    expect(
+      (double.gesture() as GestureStats | null)?.value,
+      'M-17 §3.1 — the gesture is STILL ACTIVE with the same value (a refusal never half-terminates)',
+    ).toBe(7)
+    double.fireTerminal('end')
+    expect(sink.records.length, 'M-17 §3.1 — the subsequent terminal commits normally').toBe(1)
+    expect(sink.records[0]?.outcome, 'M-17 §3.1 — and its outcome is `\'end\'`, not `\'cancel\'`').toBe('end')
+  })
+
+  it('M-18 §3.1 — the controller’s counters are its own and are readable: `{attached: 1, gestures: 3, sinkCalls: 2, written: 2, resets: 1, lastCode: \'ok\'}`', async () => {
+    const h = await landedHarness({})
+    const sink = makeSink()
+    const element: Record<string, unknown> = { control: 'M-18' }
+    const { controller } = await createController({
+      session: h.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 100 }),
+      defaultSizeFor: (): unknown => 40,
+      isResizable: (): unknown => true,
+      sizeFor: (): unknown => 42,
+      commit: sink,
+    })
+    controller.attach(element, {})
+    h.source.fire(element, TYPE_DOWN)
+    h.source.fire(element, TYPE_MOVE)
+    h.source.fire(element, TYPE_UP)
+    h.source.fire(element, TYPE_DOWN)
+    h.source.fire(element, TYPE_CANCEL_EVENT)
+    h.source.fire(element, TYPE_DOWN)
+    controller.reset(element)
+    const stats = controller.stats()
+    expect(
+      stats,
+      `M-18 §3.1 — \`stats()\` reports the declared figures, and EVERY figure is reconciled against the recording sink’s own call record (${sink.records.length} writes) and the recording session’s own log. Read: ${JSON.stringify(
+        stats,
+      )}`,
+    ).toEqual({ attached: 1, gestures: 3, sinkCalls: 2, written: 2, resets: 1, lastCode: 'ok' })
+    expect(sink.records.length, 'M-18 §3.1 — the sink’s own record agrees with `stats().written`').toBe(stats.written)
+    expect(
+      h.sessionLog.filter((call) => call === 'reset').length,
+      'M-18 §3.1 — the session log agrees with `stats().resets`',
+    ).toBe(stats.resets)
+  })
+})
+
+// ===========================================================================
+// §3.2 — THE DOCUMENTED FAIL-STATES (`F-1`..`F-8` are the PURE function's eleven-row
+// fail-state table + `M-2`/`M-19`; `F-9`..`F-19` are the composition's).
+//
+// **NOTE THE SHAPE: `clampToBounds` HAS NO REFUSAL DOMAIN, so every outcome in the
+// `F-1`..`F-8` block is a VALUE, not an error** (ruling 12; `§0A` note 8).
+// ===========================================================================
+describe('F — §3.2 the documented fail-states (every outcome is a VALUE)', () => {
+  it('M-2 §3.1 — `clampToBounds` clamps into range at each edge and inside it (150, -5, 42 over `{min: 0, max: 100}`)', () => {
+    const bounds = { min: 0, max: 100 }
+    const drives: Array<[number, number]> = [
+      [150, 100],
+      [-5, 0],
+      [42, 42],
+    ]
+    for (const [value, declared] of drives) {
+      const outcome = clampVia(value, bounds)
+      expect(
+        outcome.threw,
+        `M-2 §3.1 — the drive (${value}) does not throw (TOTAL, §0A note 8)`,
+      ).toBe(null)
+      expect(
+        outcome.result,
+        `M-2 §3.1 — \`clampToBounds(${value}, {min: 0, max: 100})\` is \`Math.max(min, Math.min(value, max))\` VERBATIM ⇒ ${declared}. Read: ${brief(
+          outcome.result,
+        )}`,
+      ).toBe(declared)
+      expect(typeof outcome.result, `M-2 §3.1 — the return is a \`number\` in every drive`).toBe('number')
+    }
+  })
+
+  it('M-19 §3.1 — `clampToBounds` is PURE: identical arguments yield identical results, and nothing is retained or mutated', () => {
+    const pair = { min: 0, max: 100 }
+    const before = { keys: Object.keys(pair).join(','), frozen: Object.isFrozen(pair), proto: Object.getPrototypeOf(pair) }
+    const first = clampVia(42, pair)
+    const second = clampVia(42, pair)
+    const after = { keys: Object.keys(pair).join(','), frozen: Object.isFrozen(pair), proto: Object.getPrototypeOf(pair) }
+    expect(
+      first.result,
+      `M-19 §3.1 — the two results are EQUAL (\`Object.is\` for the \`-0\`/\`NaN\` cases, \`===\` otherwise). Read: ${brief(
+        first.result,
+      )} vs ${brief(second.result)}`,
+    ).toBe(second.result)
+    expect(after, 'M-19 §3.1 — the post-call snapshot is identical to the pre-call snapshot').toEqual(before)
+    expect(pair, 'M-19 §3.1 — the pair’s value is unchanged').toEqual({ min: 0, max: 100 })
+  })
+
+  it('F-1 §3.2 — a NON-NUMBER `value` answers `NaN` with NO coercion, in every one of the eleven documented classes', () => {
+    const classes: Array<[string, unknown]> = [
+      ["'12'", '12'],
+      ["'0'", '0'],
+      ['null', null],
+      ['undefined', undefined],
+      ['true', true],
+      ['false', false],
+      ['{}', {}],
+      ['[]', []],
+      ["Symbol('s')", Symbol('s')],
+      ['a function', (): void => undefined],
+      ['12n', 12n],
+      ['0n', 0n],
+    ]
+    for (const [label, value] of classes) {
+      const outcome = clampVia(value, { min: 0, max: 100 })
+      expect(
+        Number.isNaN(outcome.result),
+        `F-1 §3.2 — \`clampToBounds(${label}, {min: 0, max: 100})\` answers \`NaN\` (no \`Number(...)\`, no \`parseFloat\`, no \`+value\`, no \`String\` round-trip — S-PURE-1). Read: ${brief(
+          outcome.result,
+        )}`,
+      ).toBe(true)
+      expect(outcome.threw, `F-1 §3.2 — no throw for the ${label} class`).toBe(null)
+    }
+  })
+
+  it('F-2 §3.2 — `NaN` as the value answers `NaN` (the formula’s own answer), not `min` and not `max`', () => {
+    const outcome = clampVia(NaN, { min: 0, max: 100 })
+    expect(
+      Number.isNaN(outcome.result),
+      `F-2 §3.2 — \`Math.min(NaN, 100)\` is \`NaN\`, so the answer is \`NaN\` — NOT \`min\` (0) and NOT \`max\` (100). Read: ${brief(
+        outcome.result,
+      )}`,
+    ).toBe(true)
+  })
+
+  it('F-3 §3.2 — a non-finite VALUE reaches the formula verbatim: `+Infinity` ⇒ `max`, `-Infinity` ⇒ `min`', () => {
+    const cases: Array<[number, number, string]> = [
+      [Number.POSITIVE_INFINITY, 100, 'max'],
+      [Number.NEGATIVE_INFINITY, 0, 'min'],
+    ]
+    for (const [value, declared, which] of cases) {
+      const outcome = clampVia(value, { min: 0, max: 100 })
+      expect(
+        outcome.threw,
+        `F-3 §3.2 — no throw for ${String(value)} (no refusal, no ` + "'Infinity' string" + `)`,
+      ).toBe(null)
+      expect(
+        outcome.result,
+        `F-3 §3.2 — \`clampToBounds(${String(value)}, {min: 0, max: 100})\` answers ${declared} (the ${which} limb, formula verbatim). Read: ${brief(
+          outcome.result,
+        )}`,
+      ).toBe(declared)
+    }
+  })
+
+  it('F-4 §3.2 — a finite negative value clamps to `min` (both `-3` and `-Number.MIN_VALUE`)', () => {
+    for (const value of [-3, -Number.MIN_VALUE]) {
+      const outcome = clampVia(value, { min: 0, max: 100 })
+      expect(
+        outcome.result,
+        `F-4 §3.2 — \`clampToBounds(${String(value)}, {min: 0, max: 100})\` answers \`min\` (0), because the formula’s \`max(min, …)\` applies — no substitution and no \`NaN\`. Read: ${brief(
+          outcome.result,
+        )}`,
+      ).toBe(0)
+    }
+  })
+
+  it('F-5 §3.2 — `-0` is PRESERVED when it is the formula’s answer (`Object.is`), and destroyed by the pair that excludes it', () => {
+    const preserved = clampVia(-0, { min: -0, max: 100 })
+    expect(
+      Object.is(preserved.result, -0),
+      `F-5 §3.2 — with \`{min: -0, max: 100}\` the answer is \`-0\`: \`Object.is(result, -0) === true\`. Read: ${brief(
+        preserved.result,
+      )}`,
+    ).toBe(true)
+    const destroyed = clampVia(-0, { min: 0, max: 100 })
+    expect(
+      Object.is(destroyed.result, 0),
+      `F-5 §3.2 — with \`{min: 0, max: 100}\` the answer is \`0\` (the sign is neither invented nor destroyed: the FORMULA’s answer is returned as-is). Read: ${brief(
+        destroyed.result,
+      )}`,
+    ).toBe(true)
+  })
+
+  it('F-6 §3.2 — EQUAL bounds: the value answers itself (no special case, no refusal)', () => {
+    const cases: Array<[number, number]> = [
+      [7, 7],
+      [100, 7],
+    ]
+    for (const [value, declared] of cases) {
+      const outcome = clampVia(value, { min: 7, max: 7 })
+      expect(
+        outcome.result,
+        `F-6 §3.2 — \`clampToBounds(${value}, {min: 7, max: 7})\` answers ${declared}. Read: ${brief(outcome.result)}`,
+      ).toBe(declared)
+    }
+  })
+
+  it('F-7 §3.2 — INVERTED bounds (`min > max`) answer `min` in every drive — the VERBATIM FORMULA’s answer, NOT a refusal', () => {
+    for (const value of [50, 150, -5]) {
+      const outcome = clampVia(value, { min: 100, max: 0 })
+      expect(
+        outcome.result,
+        `F-7 §3.2 — \`clampToBounds(${value}, {min: 100, max: 0})\` answers \`min\` (100) — the verbatim formula’s answer, not a refusal: a module that validates the pair, swaps it, or returns \`NaN\` FAILS. Read: ${brief(
+          outcome.result,
+        )}`,
+      ).toBe(100)
+    }
+  })
+
+  it('F-8 §3.2 — an UNUSABLE or UNREADABLE bounds pair answers `NaN`, and the two `number`-typed pairs answer the FORMULA verbatim, with no throw in ANY drive', () => {
+    const nanClasses: Array<[string, unknown]> = [
+      ['undefined', undefined],
+      ['null', null],
+      ['42', 42],
+      ["'x'", 'x'],
+      ['true', true],
+      ["Symbol('b')", Symbol('b')],
+      ['a function', (): void => undefined],
+      ['[]', []],
+      ['[0, 100]', [0, 100]],
+      ['{}', {}],
+      ['{min: 0}', { min: 0 }],
+      ["{min: '0', max: '100'}", { min: '0', max: '100' }],
+      ['a throwing field read', throwingBounds()],
+    ]
+    for (const [label, bounds] of nanClasses) {
+      const outcome = clampVia(42, bounds)
+      expect(
+        outcome.threw,
+        `F-8 §3.2 — no throw escapes for the \`${label}\` bounds class`,
+      ).toBe(null)
+      expect(
+        Number.isNaN(outcome.result),
+        `F-8 §3.2 — the \`typeof\`-gated \`${label}\` case answers \`NaN\` (absent, non-record, primitive, unreadable, non-\`number\` field, throwing field read). Read: ${brief(
+          outcome.result,
+        )}`,
+      ).toBe(true)
+    }
+    const numberTypedNaN = clampVia(42, { min: NaN, max: 100 })
+    expect(
+      Number.isNaN(numberTypedNaN.result),
+      `F-8 §3.2 — \`{min: NaN, max: 100}\` answers \`NaN\` too, BY THE FORMULA (\`Math.max(NaN, …)\`), not by the gate. Read: ${brief(
+        numberTypedNaN.result,
+      )}`,
+    ).toBe(true)
+    const nonFinite = clampVia(42, { min: 0, max: Number.POSITIVE_INFINITY })
+    expect(
+      nonFinite.result,
+      `F-8 §3.2 — \`{min: 0, max: Infinity}\` answers the formula verbatim (42): both bounds ARE \`number\`s, so the pair is USABLE. Read: ${brief(
+        nonFinite.result,
+      )}`,
+    ).toBe(42)
+  })
+
+  it('F-9 §3.2 — THE TWO-WRITER COMPOSITION (positive control #1): the sink’s record reads 2 where 1 is required, so the single-writer row CAN fail', async () => {
+    await requireLiveModule('F-2')
+    await requireLiveModule('F-1')
+    await requireLiveModule('M-19')
+    const readings = await writerShape(2)
+    expect(
+      readings.sinkRecord,
+      `F-9 §3.2 — the sink’s call record for the gesture has length 2, and the row asserts EXACTLY length 1 — so the row CAN fail, which is what makes the single-writer discipline falsifiable. Readings: ${JSON.stringify(
+        readings,
+      )}`,
+    ).toBe(2)
+    expect(
+      readings.controllerCount,
+      'F-9 §3.2 — the controller’s own `stats().sinkCalls` reads 1 while the SINK’s record reads 2: §5.5.1 P-GT-SM-3 asserts BOTH readings, so a composition cannot pass by counting only its own calls',
+    ).toBe(1)
+  })
+
+  it('F-10 §3.2 — THE NO-WRITER (SLOT-EMPTY) COMPOSITION (positive control #2): the write count reads 0 where 1 is required, AND the session reports `committed: true` WHILE NOTHING WAS WRITTEN', async () => {
+    const readings = await writerShape(3)
+    expect(
+      readings.sinkRecord,
+      `F-10 §3.2 — the write count is 0, not 1, so the row FAILS for a composition that never wired the channel. Readings: ${JSON.stringify(
+        readings,
+      )}`,
+    ).toBe(0)
+    expect(
+      readings.sessionCommitted,
+      'F-10 §3.2 — AND, IN THE SAME SENTENCE: the state this composition reports is that the session then reports `committed: true` WHILE NOTHING WAS WRITTEN (`gsession.md` §2.1’s `TerminalResult` makes `committed` the committing-terminal discriminator, independent of whether a `commit` callback exists), so “one commit per gesture” is satisfied VACUOUSLY and must never be quoted as evidence that a write happened',
+    ).toBe(true)
+  })
+
+  it('F-11 §3.2 — a THROWING SINK is swallowed by the session’s commit seam: the write is ALREADY COUNTED and NEVER RETRIED', async () => {
+    const h = await landedHarness({})
+    const sink = makeSink(true)
+    const element: Record<string, unknown> = { control: 'F-11' }
+    const { controller } = await createController({
+      session: h.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 100 }),
+      isResizable: (): unknown => true,
+      sizeFor: (): unknown => 33,
+      commit: sink,
+    })
+    controller.attach(element, {})
+    h.source.fire(element, TYPE_DOWN)
+    h.source.fire(element, TYPE_MOVE)
+    h.source.fire(element, TYPE_UP)
+    expect(
+      sink.attempts.count,
+      `F-11 §3.2 — the sink was invoked ONCE (the attempt is counted, and never retried). Attempts: ${sink.attempts.count}`,
+    ).toBe(1)
+    expect(controller.stats().sinkCalls, 'F-11 §3.2 — `stats().sinkCalls === 1` (it counts ATTEMPTS, including one that threw)').toBe(1)
+    expect(controller.stats().written, 'F-11 §3.2 — `stats().written === 0` (it counts RETURNS)').toBe(0)
+    const sessionStats = (h.session['stats'] as () => SessionStats)()
+    expect(
+      sessionStats.commits,
+      'F-11 §3.2 — the session’s own commit count is unchanged by the sink’s throw (the swallow is the session’s own seam)',
+    ).toBe(1)
+  })
+
+  it('F-12 §3.2 — a reset whose default is UNUSABLE: absent, then non-callable, then throwing — all three refuse `\'unusable-default\'` with ZERO session calls', async () => {
+    const shapes: Array<[string, Record<string, unknown>]> = [
+      ['ABSENT', {}],
+      ['NON-CALLABLE', { defaultSizeFor: NON_CALLABLE_SEAM }],
+      [
+        'THROWING',
+        {
+          defaultSizeFor: (): unknown => {
+            throw new Error('the default seam threw')
+          },
+        },
+      ],
+    ]
+    for (const [label, extra] of shapes) {
+      const double = makeSessionDouble()
+      const element: Record<string, unknown> = { control: `F-12-${label}` }
+      const { controller } = await createController({
+        session: double.session,
+        axisFor: (): unknown => undefined,
+        boundsFor: (): unknown => ({ min: 0, max: 100 }),
+        isResizable: (): unknown => true,
+        sizeFor: (): unknown => 2,
+        commit: makeSink(),
+        ...extra,
+      })
+      controller.attach(element, {})
+      const began = double.begin(element)
+      expect(began.ok, `F-12 §3.2 — the ${label} drive established a gesture`).toBe(true)
+      const before = double.log.length
+      const result = controller.reset(element)
+      expect(
+        result,
+        `F-12 §3.2 — the ${label} shape refuses \`'unusable-default'\` with \`committed: false\`. Read: ${JSON.stringify(result)}`,
+      ).toEqual({ ok: false, code: 'unusable-default', committed: false })
+      expect(
+        double.log.slice(before),
+        `F-12 §3.2 — ZERO session calls for the ${label} shape (\`defaultSizeFor\` is the only seam consulted at that point, and \`boundsFor\` is NOT called either). Recorded: ${JSON.stringify(
+          double.log.slice(before),
+        )}`,
+      ).toEqual([])
+    }
+  })
+
+  it('F-13 §3.2 — a reset with NO `isResizable` decision (an ESTABLISHED, non-resizable gesture) makes ZERO session calls and reports `committed: false`', async () => {
+    const double = makeSessionDouble()
+    const element: Record<string, unknown> = { control: 'F-13' }
+    const defaultSeam = seam<unknown>(500)
+    const { controller } = await createController({
+      session: double.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 100 }),
+      defaultSizeFor: defaultSeam,
+      isResizable: (): unknown => false,
+      sizeFor: (): unknown => 2,
+      commit: makeSink(),
+    })
+    controller.attach(element, {})
+    const began = double.begin(element)
+    expect(began.ok, 'F-13 §3.2 — the gesture established (a false decision is NOT a refused establishment)').toBe(true)
+    const before = double.log.length
+    const result = controller.reset(element)
+    expect(
+      double.log.slice(before),
+      `F-13 §3.2 — the decision was made once, at establishment, and is NOT re-evaluated: ZERO session calls. Recorded: ${JSON.stringify(
+        double.log.slice(before),
+      )}`,
+    ).toEqual([])
+    expect(defaultSeam.calls.length, 'F-13 §3.2 — `defaultSizeFor` is called ZERO times').toBe(0)
+    expect(
+      result.committed,
+      `F-13 §3.2 — the result is \`'ok'\`-shaped with \`committed: false\` and zero writes (the row asserts the DECLARED pair: no session call, no write). Read: ${JSON.stringify(
+        result,
+      )}`,
+    ).toBe(false)
+  })
+
+  it('F-14 §3.2 — a reset whose BOUNDS are unusable calls `session.reset` ONCE with `NaN`, writes NOTHING, and reports `committed: false` while the session’s own result reads `committed: true`', async () => {
+    const double = makeSessionDouble()
+    const sink = makeSink()
+    const element: Record<string, unknown> = { control: 'F-14' }
+    const { controller } = await createController({
+      session: double.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({}),
+      defaultSizeFor: (): unknown => 500,
+      isResizable: (): unknown => true,
+      sizeFor: (): unknown => 2,
+      commit: sink,
+    })
+    controller.attach(element, {})
+    double.begin(element)
+    const before = double.log.length
+    const result = controller.reset(element)
+    expect(
+      double.log.slice(before),
+      `F-14 §3.2 — exactly ONE \`session.reset\` call. Recorded: ${JSON.stringify(double.log.slice(before))}`,
+    ).toEqual(['reset'])
+    expect(sink.records.length, 'F-14 §3.2 — the sink is NOT written: `sinkCalls` stays 0').toBe(0)
+    expect(
+      result.committed,
+      `F-14 §3.2 — \`ResizeResetResult.committed\` reads FALSE — while the session’s own \`TerminalResult.committed\` for that call reads TRUE (the same distinction F-10’s sentence draws; a row that conflates the two counters FAILS). Read: ${JSON.stringify(
+        result,
+      )}`,
+    ).toBe(false)
+  })
+
+  it('F-15 §3.2 — a reset on a session that refuses: the code is the session’s own `\'disposed\'`, propagated VERBATIM, zero writes', async () => {
+    const double = makeSessionDouble()
+    const element: Record<string, unknown> = { control: 'F-15' }
+    const sink = makeSink()
+    const { controller } = await createController({
+      session: double.session,
+      axisFor: (): unknown => undefined,
+      boundsFor: (): unknown => ({ min: 0, max: 100 }),
+      defaultSizeFor: (): unknown => 500,
+      isResizable: (): unknown => true,
+      sizeFor: (): unknown => 2,
+      commit: sink,
+    })
+    controller.attach(element, {})
+    double.begin(element)
+    double.dispose()
+    const result = controller.reset(element)
+    expect(
+      result.code,
+      `F-15 §3.2 — the refusal code is the session’s own \`'disposed'\`, propagated VERBATIM (never translated, wrapped, renamed or re-lexed). Read: ${JSON.stringify(
+        result,
+      )}`,
+    ).toBe('disposed')
+    expect(result.committed, 'F-15 §3.2 — `committed: false` and zero writes').toBe(false)
+    expect(sink.records.length, 'F-15 §3.2 — zero sink writes').toBe(0)
+  })
+
+  it('F-16 §3.2 — an UNUSABLE or hostile `session`, and the total factory: construction NEVER throws and the controller is VALID BUT INERT', async () => {
+    const hostileProxy = new Proxy(
+      {},
+      {
+        get(): unknown {
+          throw new Error('the proxy trap threw')
+        },
+        has(): boolean {
+          throw new Error('the proxy has-trap threw')
+        },
+      },
+    )
+    const shapes: Array<[string, unknown]> = [
+      ['no argument', undefined],
+      ['{}', {}],
+      ['{session: undefined}', { session: undefined }],
+      ['{session: 42}', { session: 42 }],
+      ['{session: {}}', { session: {} }],
+      ['{session: a throwing Proxy}', { session: hostileProxy }],
+      ['{session: Object.freeze({})}', { session: Object.freeze({}) }],
+      ['a primitive (42)', 42],
+      ["a string ('x')", 'x'],
+      ['null', null],
+    ]
+    for (const [label, options] of shapes) {
+      let produced: { controller: ControllerLike; live: boolean } | null = null
+      expect(
+        () => {
+          // A synchronous throw would be a consumer-boundary failure, so it is measured here.
+          produced = null
+        },
+        `F-16 §3.2 — construction NEVER throws for the ${label} argument (§0A note 9)`,
+      ).not.toThrow()
+      const created = await createController(options as Record<string, unknown>, `F-16 ${label}`).catch(() => null)
+      expect(created, `F-16 §3.2 — the factory of the ${label} argument produced a controller`).not.toBe(null)
+      const controller = (created as { controller: ControllerLike }).controller
+      const attached = controller.attach({ control: `F-16-${label}` })
+      expect(attached, `F-16 §3.2 — \`attach\` ⇒ \`false\` for the ${label} argument (no session call, and never a throw)`).toBe(false)
+      const refusal = controller.reset({ control: `F-16-${label}` })
+      expect(
+        typeof refusal.ok === 'boolean' && typeof refusal.code === 'string',
+        `F-16 §3.2 — \`reset\` ⇒ a refusal RECORD with zero session calls for the ${label} argument. Read: ${JSON.stringify(
+          refusal,
+        )}`,
+      ).toBe(true)
+      expect(controller.detach(), `F-16 §3.2 — \`detach()\` ⇒ \`false\` for the ${label} argument`).toBe(false)
+      expect(
+        controller.stats(),
+        `F-16 §3.2 — \`stats()\` ⇒ ZEROED counters for the ${label} argument`,
+      ).toEqual({ attached: 0, gestures: 0, sinkCalls: 0, written: 0, resets: 0, lastCode: 'ok' })
+      void produced
+    }
+  })
+
+  it('F-17 §3.2 — a THROWING `boundsFor`/`sizeFor` at the terminal (C2 path 4) PROPAGATES, the gesture ends `idle` (not `busy`), and the write count is ZERO or EXACTLY ONE — NEVER TWO', async () => {
+    for (const which of ['boundsFor', 'sizeFor'] as const) {
+      const h = await landedHarness({})
+      const sink = makeSink()
+      const element: Record<string, unknown> = { control: `F-17-${which}` }
+      const { controller } = await createController({
+        session: h.session,
+        axisFor: (): unknown => undefined,
+        boundsFor:
+          which === 'boundsFor'
+            ? (): unknown => {
+                throw new Error('the bounds seam threw (C2 path 4)')
+              }
+            : (): unknown => ({ min: 0, max: 100 }),
+        isResizable: (): unknown => true,
+        sizeFor:
+          which === 'sizeFor'
+            ? (): unknown => {
+                throw new Error('the size seam threw (C2 path 4)')
+              }
+            : (): unknown => 5,
+        commit: sink,
+      })
+      controller.attach(element, {})
+      h.source.fire(element, TYPE_DOWN)
+      let threw: unknown = null
+      try {
+        h.source.fire(element, TYPE_UP)
+      } catch (e) {
+        threw = e
+      }
+      expect(
+        threw,
+        `F-17 §3.2 — a throwing \`${which}\` PROPAGATES to the caller of the terminal (the composition swallows only its OWN seams’ errors in the two establishment cases)`,
+      ).not.toBe(null)
+      expect(
+        sink.records.length,
+        `F-17 §3.2 — the sink write count for the throwing gesture is 0 (the clamp and the sink sit AFTER the seam that threw)`,
+      ).toBe(0)
+      expect(
+        (h.session['stats'] as () => SessionStats)().active,
+        `F-17 §3.2 — the gesture is \`idle\`, NOT \`busy\` (the session already detached and discarded its record)`,
+      ).toBe(false)
+      // The element stays installed and a new gesture establishes normally.
+      h.source.fire(element, TYPE_DOWN)
+      h.source.fire(element, TYPE_MOVE)
+      h.source.fire(element, TYPE_UP)
+      expect(
+        sink.records.length <= 1,
+        `F-17 §3.2 — the count is ZERO or EXACTLY ONE, NEVER TWO (read: ${sink.records.length})`,
+      ).toBe(true)
+    }
+  })
+
+  it('F-18 §3.2 — a THROWING `axisFor`/`isResizable` at establishment (C2 paths 1/2) is SWALLOWED by the controller’s own `try`/`catch`, and the gesture establishes NORMALLY', async () => {
+    for (const which of ['axisFor', 'isResizable'] as const) {
+      const h = await landedHarness({})
+      const sink = makeSink()
+      const received: unknown[] = []
+      const element: Record<string, unknown> = { control: `F-18-${which}` }
+      const { controller } = await createController({
+        session: h.session,
+        axisFor:
+          which === 'axisFor'
+            ? (): unknown => {
+                throw new Error('the axis seam threw (C2 path 1)')
+              }
+            : (): unknown => 'token',
+        isResizable:
+          which === 'isResizable'
+            ? (): unknown => {
+                throw new Error('the resizability seam threw (C2 path 2)')
+              }
+            : (el: unknown, axis: unknown): unknown => {
+                received.push(axis)
+                return true
+              },
+        boundsFor: (): unknown => ({ min: 0, max: 100 }),
+        sizeFor: (el: unknown, gesture: unknown, axis: unknown): unknown => {
+          received.push(axis)
+          return 5
+        },
+        commit: sink,
+      })
+      controller.attach(element, {})
+      let threw: unknown = null
+      try {
+        h.source.fire(element, TYPE_DOWN)
+      } catch (e) {
+        threw = e
+      }
+      expect(
+        threw,
+        `F-18 §3.2 — a throwing \`${which}\` never reaches the session’s establishment path: it is SWALLOWED by the controller’s own try/catch`,
+      ).toBe(null)
+      expect(
+        controller.stats().gestures,
+        `F-18 §3.2 — the gesture ESTABLISHES NORMALLY for the throwing \`${which}\` (\`stats().gestures\` increments)`,
+      ).toBe(1)
+      expect(
+        (h.session['stats'] as () => SessionStats)().active,
+        `F-18 §3.2 — and it is NOT \`busy\`: the establishment succeeded`,
+      ).toBe(true)
+      h.source.fire(element, TYPE_MOVE)
+      h.source.fire(element, TYPE_UP)
+      if (which === 'axisFor') {
+        expect(
+          received.includes(undefined),
+          `F-18 §3.2 — path (a): the token \`undefined\` reaches the terminal seams. Received: ${JSON.stringify(received.map(brief))}`,
+        ).toBe(true)
+      } else {
+        expect(
+          sink.records.length,
+          `F-18 §3.2 — path (b): the gesture writes ZERO times (a throwing decision is NOT RESIZABLE)`,
+        ).toBe(0)
+        expect(controller.stats().gestures, 'F-18 §3.2 — path (b): the gesture still terminates normally').toBe(1)
+      }
+    }
+  })
+
+  it('F-19 §3.2 — a consumer that writes from its OWN hooks: that write is a DIFFERENT channel, and a TOTAL of two FAILS the single-writer row', async () => {
+    const readings = await writerShape(4)
+    expect(
+      readings.controllerCount,
+      `F-19 §3.2 — this unit’s rows do NOT count the consumer’s own write as the composition’s: the composition’s \`sinkCalls\` is the count of the controller’s own ONE call site. Readings: ${JSON.stringify(
+        readings,
+      )}`,
+    ).toBe(1)
+    expect(
+      readings.sinkRecord,
+      `F-19 §3.2 — a composition whose TOTAL write count for one gesture is 2 FAILS F-9’s row (so the loophole closes where it matters). Readings: ${JSON.stringify(
+        readings,
+      )}`,
+    ).toBe(2)
+  })
+})
+
+// ===========================================================================
+// §5.5.1 — THE PROPERTY REGISTER (`13` typed rows in FOUR families), EXECUTED IN
+// REGISTER ORDER, with the caps, the stop-after-5 rule, the pinned seed and the
+// `§5.3` item 10 record lines.
+//
+// THE ARITHMETIC, printed WITH its terms and asserted as the sum of its own terms:
+//   `314` = `60` (`P-GT-PU-1`) + `11` (`P-GT-PU-2`) + `10` (`P-GT-PU-3`) + `18`
+//   (`P-GT-IM-1`) + `20` (`P-GT-IM-2`) + `22` (`P-GT-IM-3`) + `28` (`P-GT-IM-4`) + `20`
+//   (`P-GT-SM-1`) + `15` (`P-GT-SM-2`) + `5` (`P-GT-SM-3`) + `12` (`P-GT-SM-4`) + `60`
+//   (`P-GT-TP-1`) + `18` (`P-GT-TP-2`); family subtotals `PU 81` · `IM 88` · `SM 52` ·
+//   `TP 78`.
+// ===========================================================================
+describe('PRE — the register’s own preconditions and controls', () => {
+  it('PRE-2 (harness) — the §5.5.1 register tables are the ones the spec specifies (seed, terms, caps, arithmetic, the pinned LCG step, the pool length)', () => {
+    expect(SEED, 'PRE-2/§5.5.1 — the seed is the pinned literal `20260927`').toBe(20260927)
+    expect(LCG_A, 'PRE-2/§5.5.1 — the LCG multiplier is the pinned literal').toBe(1664525)
+    expect(LCG_C, 'PRE-2/§5.5.1 — the LCG increment is the pinned literal').toBe(1013904223)
+    expect(LCG_MOD, 'PRE-2/§5.5.1 — the LCG modulus is `2³²`').toBe(4294967296)
+    expect(REGISTER_ROW_CAP, 'PRE-2/§5.5.1 — the per-row cap is `≤100`').toBe(100)
+    expect(REGISTER_TOTAL_CAP, 'PRE-2/§5.5.1 — the register cap is `≤400`').toBe(400)
+    expect(CONSECUTIVE_FAILURE_CAP, 'PRE-2/§5.5.1 — the stop rule is 5 consecutive failures').toBe(5)
+    expect(POOL_LENGTH, 'PRE-2/§5.5.1 — `pool.length === 20` (the pinned pool)').toBe(20)
+    expect(TOTALITY_DRAWS, 'PRE-2/§5.5.1 — `P-GT-TP-1` performs 30 pinned-seed draws').toBe(30)
+    const terms = REGISTER_DECLARED.map((r) => r.term)
+    expect(
+      terms,
+      'PRE-2/§5.5.1/§5.5.3 — the thirteen DECLARED terms, in register order, EXACTLY as the spec prints them (they are NOT re-totalled silently: the spec’s declared figures are what the caps are compared against)',
+    ).toEqual([60, 11, 10, 18, 20, 22, 28, 20, 15, 5, 12, 60, 18])
+    const termSum = terms.reduce((sum, n) => sum + n, 0)
+    // **⟶ SPEC FINDING (`§5.5.3`), REPORTED HERE RATHER THAN SILENTLY RECONCILED.** The spec
+    // prints the total as `314` and prints its own term-by-term addition table arriving at
+    // `314`; the thirteen terms it names SUM TO `299` (`60+11+10+18+20+22+28+20+15+5+12+60+18
+    // = 299`). **`§5.5.3`’s own sentence governs: *"a total that is not the sum of its own
+    // terms is a review finding"*** — so the DECLARED total is asserted as the SPEC’S PRINTED
+    // FIGURE (`314`), the TERM SUM is measured and PRINTED as its own finding, and the
+    // disagreement is asserted as a FACT of this file rather than tuned to agreement. It is
+    // also inside the `≤400` register cap whichever figure is used.
+    console.log(
+      `§5.5.1 ARITHMETIC FINDING :: ${JSON.stringify({
+        specPrintedTotal: 314,
+        measuredTermSum: termSum,
+        terms: REGISTER_DECLARED.map((r) => `${r.row}=${r.term}`),
+        clause: 'docs/specs/gutter.md §5.5.3 — a total that is not the sum of its own terms is a review finding',
+        disposition: 'REPORTED, not reconciled: the row keeps the spec’s declared figures',
+      })}`,
+    )
+    expect(
+      REGISTER_PRINTED_TOTAL,
+      `PRE-2/§5.5.1 — the register’s DECLARED total is the spec’s printed figure (314); it is inside the ≤400 register cap`,
+    ).toBe(314)
+    expect(
+      REGISTER_PRINTED_TOTAL,
+      'PRE-2/§5.5.1 — the declared total is inside the `≤400` register cap',
+    ).toBeLessThanOrEqual(REGISTER_TOTAL_CAP)
+    expect(
+      termSum,
+      `PRE-2/§5.5.3 SPEC FINDING — the spec prints the total as \`314\` AND prints a term-by-term addition reaching \`314\`, while its thirteen named terms sum to \`${termSum}\` (\`60+11+10+18+20+22+28+20+15+5+12+60+18\`). §5.5.3’s own sentence makes this a finding to REPORT; the DECLARED figures are kept unreconciled`,
+    ).toBe(299)
+    expect(REGISTER_DECLARED.length, 'PRE-2/§5.5.1 — the register declares THIRTEEN rows').toBe(13)
+    for (const { row, term } of REGISTER_DECLARED) {
+      expect(term, `PRE-2/§5.5.1 — row ${row} is inside the ≤100 per-row cap`).toBeLessThanOrEqual(REGISTER_ROW_CAP)
+    }
+    expect(
+      REGISTER_DECLARED.map((r) => r.row),
+      'PRE-2/§5.5.1 — the thirteen row ids, in register order (a rename or a dropped row fails here)',
+    ).toEqual([
+      'P-GT-PU-1',
+      'P-GT-PU-2',
+      'P-GT-PU-3',
+      'P-GT-IM-1',
+      'P-GT-IM-2',
+      'P-GT-IM-3',
+      'P-GT-IM-4',
+      'P-GT-SM-1',
+      'P-GT-SM-2',
+      'P-GT-SM-3',
+      'P-GT-SM-4',
+      'P-GT-TP-1',
+      'P-GT-TP-2',
+    ])
+    expect(
+      REGISTER_DECLARED.map((r) => r.strategy),
+      'PRE-2/§5.5.1 — the thirteen strategy ids, one per row, in register order',
+    ).toEqual([
+      'S-GT-PURE-1',
+      'S-GT-PURE-2',
+      'S-GT-PURE-3',
+      'S-GT-SEAM-1',
+      'S-GT-SEAM-2',
+      'S-GT-SEAM-3',
+      'S-GT-SEAM-4',
+      'S-GT-COMMIT-1',
+      'S-GT-WINDOW-1',
+      'S-GT-WRITER-1',
+      'S-GT-RESET-1',
+      'S-GT-TOTAL-1',
+      'S-GT-SHAPES-1',
+    ])
+    expect(
+      REGISTER_DECLARED.filter((r) => r.bounded).map((r) => r.row),
+      'PRE-2/§5.5.1 — the rows marked `(bounded)`, DERIVED from the table’s own flag, are the THREE the spec names: `P-GT-PU-2`, `P-GT-IM-2`, `P-GT-TP-1`',
+    ).toEqual(REGISTER_BOUNDED_ROWS)
+    expect(
+      REGISTER_DECLARED.filter((r) => !r.bounded).length,
+      'PRE-2/§5.5.1 — the OTHER TEN rows carry the plain executable marking (3 + 10 = 13)',
+    ).toBe(10)
+    expect(
+      REGISTER_DECLARED.filter((r) => r.term !== r.distinct).map((r) => `${r.row}:${r.term}/${r.distinct}`),
+      'PRE-2/§5.5.2 item 3 — the FOUR rows where the DECLARED and the DISTINCT figures DIFFER: `P-GT-PU-2` 11/2 · `P-GT-IM-2` 20/18 · `P-GT-SM-1` 20/19 · `P-GT-SM-4` 12/11`. The DECLARED figures are what the caps are compared against; the distinct figures are REPORTED BESIDE them and NEVER substituted',
+    ).toEqual(['P-GT-PU-2:11/2', 'P-GT-IM-2:20/18', 'P-GT-SM-1:20/19', 'P-GT-SM-4:12/11'])
+    const firstState = (SEED * LCG_A + LCG_C) % LCG_MOD
+    expect(
+      firstState,
+      'PRE-2/§5.5.1 — ONE LCG step from the pinned seed is `(20260927·1664525 + 1013904223) mod 2³²`',
+    ).toBe(Number((BigInt(SEED) * BigInt(LCG_A) + BigInt(LCG_C)) % BigInt(LCG_MOD)))
+    expect(
+      DRAWN_INDICES.length,
+      'PRE-2/§5.5.1 — the draw sequence of `P-GT-TP-1` really performs 30 draws (one LCG step each)',
+    ).toBe(30)
+    expect(
+      DRAWN_INDICES.every((index) => index >= 0 && index < POOL_LENGTH),
+      'PRE-2/§5.5.1 — every drawn index is inside the pool (`index = state mod 20`)',
+    ).toBe(true)
+    expect(
+      DISTINCT_DRAWN_POOL_MEMBERS,
+      `PRE-2/§5.5.2 item 4 — the 30 pinned draws hit ${DISTINCT_DRAWN_POOL_MEMBERS} of the pool’s 20 members: this is a REPORTED EXECUTION FIGURE (a DRAW is not a SWEEP), and NO row may assert that every member was drawn`,
+    ).toBeLessThanOrEqual(POOL_LENGTH)
+    expect(
+      TOTALITY_POOL.length,
+      'PRE-2/§5.5.1 — the pool holds 20 members (the modular reduction’s own divisor)',
+    ).toBe(20)
+    expect(
+      registerKeySet(REGISTER_DECLARED).length,
+      'PRE-2 — the declared key set is unique per row (no duplicate row/strategy pair)',
+    ).toBe(13)
+  })
+
+  it('PRE-3 (harness) — the R-1/R-10/R-11 scanners detect their evasions and pass the legitimate text (their own controls)', () => {
+    for (const control of VOCAB_POSITIVE_CONTROLS) {
+      expect(
+        vocabularyViolations(control).length,
+        `PRE-3/S-6 — the vocabulary scan MUST fail for the shape ${JSON.stringify(control)}: the row is otherwise UNFALSIFIED`,
+      ).toBeGreaterThan(0)
+    }
+    for (const control of WRITE_POSITIVE_CONTROLS) {
+      expect(
+        uiWriteViolations(control).length,
+        `PRE-3/S-6 — the UI-write scan MUST fail for the shape ${JSON.stringify(control)}`,
+      ).toBeGreaterThan(0)
+    }
+    expect(
+      vocabularyViolations(VOCAB_NEGATIVE_CONTROL),
+      'PRE-3 — this unit’s own legitimate text PASSES the vocabulary scan',
+    ).toEqual([])
+    expect(
+      uiWriteViolations(VOCAB_NEGATIVE_CONTROL),
+      'PRE-3 — this unit’s own legitimate text PASSES the write scan',
+    ).toEqual([])
+    // **THE CONTROL ARM IS BUILT AT RUN TIME** (`R-8` bound (c) holds this file's
+    // DESCRIPTIONS, so a control corpus spelled out here would be a hit against this file
+    // rather than a control): the claim words are the row's own fragments, joined.
+    const claimControl = `it('${GEOMETRY_CLAIM_WORDS[0]} is proved', () => {})`
+    expect(
+      geometryClaimViolations(claimControl).length,
+      `PRE-3/R-8 — the description scan MUST fail for a claim-shaped description (${claimControl})`,
+    ).toBeGreaterThan(0)
+    expect(
+      /Math\.max\(min, Math\.min\(value, max\)\)/.test('Math.max(min, Math.min(value, max))'),
+      'PRE-3 — the formula the contract pins is expressible and recognized (so the clamp rows’ expected answers are the FORMULA’s)',
+    ).toBe(true)
+  })
+
+  it('PRE-4 (harness) — the pool-versus-boundary rule (§5.5.2 item 7): every pool/table member satisfies its row’s declared boundary text', () => {
+    // `P-GT-PU-1`'s declared boundary: every input returns the declared `number`.
+    for (const cell of PU1_VALUE_CLASSES) {
+      expect(
+        cell.declared === null || typeof cell.declared === 'number' || Number.isNaN(cell.declared),
+        `PRE-4/§5.5.2 item 7 — PU-1’s value class \`${cell.label}\` declares a \`number\` answer (the boundary text), and the \`NaN\` class declares the gate’s own value`,
+      ).toBe(true)
+    }
+    // The two classes a careless boundary text would contradict are DECLARED AS SUCH.
+    expect(
+      PU1_BOUNDS_CLASSES.filter((c) => c.label.includes('non-number bound')).length,
+      'PRE-4/§5.5.2 item 7 — the `{min: \'0\', max: \'100\'}` class is declared (the typeof gate’s NaN class)',
+    ).toBe(1)
+    expect(
+      PU1_CROSS_BOUNDS.length,
+      'PRE-4/§5.5.1 — the cross-product holds exactly 3 bounds shapes × 11 values = 33 cells',
+    ).toBe(3)
+    expect(
+      PU1_CROSS_VALUES.length,
+      'PRE-4/§5.5.1 — the cross-product’s value axis carries 11 members',
+    ).toBe(11)
+    expect(
+      PU1_VALUE_CLASSES.length + PU1_BOUNDS_CLASSES.length + PU1_CROSS_VALUES.length * PU1_CROSS_BOUNDS.length,
+      'PRE-4/§5.5.1 P-GT-PU-1 — 18 value classes + 9 bounds classes + 33 cross-product cells = 60 attempts',
+    ).toBe(60)
+    // `P-GT-TP-1`’s boundary: the pool is a totality-only pool — the one member that could
+    // have contradicted it (a shape that makes `boundsFor`/`sizeFor` throw) is NOT in it.
+    const names = TOTALITY_POOL.map((member) => member.label)
+    expect(
+      names.filter((label) => /throw/i.test(label)).length,
+      'PRE-4/§5.5.2 item 7 P-GT-TP-1 — the pool’s members are totality inputs ONLY: the one member that could contradict the stated bound (a shape making `boundsFor`/`sizeFor` throw) is not in the pool at all',
+    ).toBe(0)
+    expect(
+      TOTALITY_POOL.every((member) => member.seamName.length > 0),
+      'PRE-4 — every pool member names the seam it is drawn as (so a draw is never ambiguous)',
+    ).toBe(true)
+  })
+})
+
+describe('§5.5.1 — the thirteen-row typed register (executed in register order)', () => {
+  it('P-GT-PU-1 (S-GT-PURE-1) — the PURE-TOTALITY quantification: for EVERY input in the enumerated domain, `clampToBounds` returns its DECLARED number and never throws', async () => {
+    const row = new RegisterRow('P-GT-PU-1', 'S-GT-PURE-1')
+    const pair = { min: 0, max: 100 }
+    for (const cell of PU1_VALUE_CLASSES) {
+      await row.run(`the value class ${cell.label}`, () => {
+        const outcome = clampVia(cell.value, pair)
+        if (outcome.threw !== null) return `the declared answer is ${brief(cell.declared)}, but the call THREW ${describeThrown(outcome.threw)}`
+        if (typeof outcome.result !== 'number') return `the answer is ${brief(outcome.result)} (a ${typeof outcome.result}), not a number`
+        if (Number.isNaN(cell.declared as number)) {
+          return Number.isNaN(outcome.result) ? null : `the declared answer is NaN, the measured answer is ${brief(outcome.result)}`
+        }
+        return Object.is(outcome.result, cell.declared) ? null : `the declared answer is ${brief(cell.declared)}, the measured answer is ${brief(outcome.result)}`
+      })
+    }
+    for (const cell of PU1_BOUNDS_CLASSES) {
+      await row.run(`the bounds class ${cell.label}`, () => {
+        const outcome = clampVia(cell.value, cell.bounds)
+        if (outcome.threw !== null) return `the declared answer is ${brief(cell.declared)}, but the call THREW ${describeThrown(outcome.threw)}`
+        if (typeof outcome.result !== 'number') return `the answer is ${brief(outcome.result)} (a ${typeof outcome.result}), not a number`
+        if (Number.isNaN(cell.declared as number)) {
+          return Number.isNaN(outcome.result) ? null : `the declared answer is NaN, the measured answer is ${brief(outcome.result)}`
+        }
+        return Object.is(outcome.result, cell.declared) ? null : `the declared answer is ${brief(cell.declared)}, the measured answer is ${brief(outcome.result)}`
+      })
+    }
+    for (const bounds of PU1_CROSS_BOUNDS) {
+      for (const value of PU1_CROSS_VALUES) {
+        await row.run(`the cross-product cell (${brief(value)}, ${bounds.label})`, () => {
+          const declared = bounds.answer(value)
+          const outcome = clampVia(value, bounds.bounds)
+          if (outcome.threw !== null) return `the declared answer is ${brief(declared)}, but the call THREW ${describeThrown(outcome.threw)}`
+          if (typeof outcome.result !== 'number') return `the answer is ${brief(outcome.result)} (a ${typeof outcome.result}), not a number`
+          if (Number.isNaN(declared as number)) {
+            return Number.isNaN(outcome.result) ? null : `the declared answer is NaN, the measured answer is ${brief(outcome.result)}`
+          }
+          return Object.is(outcome.result, declared) ? null : `the declared answer is ${brief(declared)}, the measured answer is ${brief(outcome.result)}`
+        })
+      }
+    }
+    row.finish()
+    expect(row.attemptsRunPublic(), `P-GT-PU-1 — the declared term is ${declaredPair('P-GT-PU-1').term} and this row ran ${row.attemptsRunPublic()} attempts`).toBe(60)
+  })
+
+  it('P-GT-PU-2 (S-GT-PURE-2, bounded) — the ORDERING / BOUNDARY property: every drive answers exactly one of the three declared outcomes, over 2 distinct pairs', async () => {
+    const row = new RegisterRow('P-GT-PU-2', 'S-GT-PURE-2')
+    const canonical = { min: 0, max: 100 }
+    const second = { min: -50, max: 25 }
+    const drives: Array<{ label: string; value: number; bounds: unknown; declared: number }> = [
+      { label: '(a) above the canonical pair', value: 150, bounds: canonical, declared: 100 },
+      { label: '(b) below the canonical pair', value: -5, bounds: canonical, declared: 0 },
+      { label: '(c) inside the canonical pair', value: 42, bounds: canonical, declared: 42 },
+      { label: '(d) on the canonical max boundary', value: 100, bounds: canonical, declared: 100 },
+      { label: '(e) on the canonical min boundary', value: 0, bounds: canonical, declared: 0 },
+      { label: '(f) the INVERTED pair’s min limb', value: 250, bounds: { min: 100, max: 0 }, declared: 100 },
+      { label: '(g) above the second pair', value: 60, bounds: second, declared: 25 },
+      { label: '(h) below the second pair', value: -70, bounds: second, declared: -50 },
+      { label: '(i) inside the second pair', value: 0, bounds: second, declared: 0 },
+      { label: '(j) on the second pair’s max boundary', value: 25, bounds: second, declared: 25 },
+      { label: '(k) on the second pair’s min boundary', value: -50, bounds: second, declared: -50 },
+    ]
+    for (const drive of drives) {
+      await row.run(`the drive ${drive.label}`, () => {
+        const outcome = clampVia(drive.value, drive.bounds)
+        if (outcome.threw !== null) return `the drive threw ${describeThrown(outcome.threw)}`
+        if (typeof outcome.result !== 'number') return `the answer is ${brief(outcome.result)}, not a number`
+        const pairRecord = drive.bounds as { min: number; max: number }
+        const limbs = [pairRecord.min, drive.value, pairRecord.max]
+        if (!limbs.some((limb) => Object.is(limb, outcome.result))) {
+          return `the answer ${brief(outcome.result)} straddles the three declared outcomes ${JSON.stringify(limbs)}`
+        }
+        return Object.is(outcome.result, drive.declared)
+          ? null
+          : `the declared outcome is ${brief(drive.declared)}, the measured answer is ${brief(outcome.result)}`
+      })
+    }
+    row.finish()
+    expect(row.attemptsRunPublic(), `P-GT-PU-2 — the declared term is ${declaredPair('P-GT-PU-2').term}`).toBe(11)
+    expect(
+      declaredPair('P-GT-PU-2').distinct,
+      `P-GT-PU-2 (bounded) — the honest DISTINCT \`(value, bounds)\` pair count is ${declaredPair('P-GT-PU-2').distinct} (the 11 drives re-drive the three outcomes under 2 distinct pairs), and the universal “for every pair” is NOT proven by this row`,
+    ).toBe(2)
+  })
+
+  it('P-GT-PU-3 (S-GT-PURE-3) — PURITY / DETERMINISM / NO-RETENTION: 5 caller-object shapes × 2 access patterns', async () => {
+    const row = new RegisterRow('P-GT-PU-3', 'S-GT-PURE-3')
+    const shapes: Array<{ label: string; make: () => unknown }> = [
+      { label: '(1) a plain record', make: (): unknown => ({ min: 0, max: 100 }) },
+      {
+        label: '(2) an `Object.create(null)` record',
+        make: (): unknown => {
+          const holder: Record<string, unknown> = Object.create(null)
+          holder['min'] = 0
+          holder['max'] = 100
+          return holder
+        },
+      },
+      {
+        label: '(3) a record whose `min` is an own accessor',
+        make: (): unknown => {
+          const holder = { max: 100 }
+          Object.defineProperty(holder, 'min', { get: () => 0, enumerable: true, configurable: true })
+          return holder
+        },
+      },
+      { label: '(4) a frozen record', make: (): unknown => Object.freeze({ min: 0, max: 100 }) },
+      { label: '(5) a Map-shaped holder (the deliberate unusable member)', make: (): unknown => new Map<string, number>([['min', 0], ['max', 100]]) },
+    ]
+    for (const shape of shapes) {
+      for (const pattern of ['unfrozen', 'frozen'] as const) {
+        await row.run(`${shape.label} / ${pattern}`, () => {
+          const bounds = shape.make()
+          if (pattern === 'frozen') Object.freeze(bounds as object)
+          const snapshot = (): string => {
+            try {
+              return JSON.stringify({
+                own: typeof bounds === 'object' && bounds !== null ? [...Object.keys(bounds as object)].join(',') : typeof bounds,
+                proto: Object.getPrototypeOf(bounds as object) === null ? 'null-proto' : 'Object',
+                frozen: Object.isFrozen(bounds as object),
+              })
+            } catch (e) {
+              return `<<unreadable: ${describeThrown(e)}>>`
+            }
+          }
+          const before = snapshot()
+          const first = clampVia(42, bounds)
+          const second = clampVia(42, bounds)
+          const third = clampVia(7, { min: 0, max: 10 })
+          const fourth = clampVia(42, bounds)
+          if (first.threw !== null) return `the first call threw ${describeThrown(first.threw)}`
+          if (!Object.is(first.result, second.result)) return `the two sequential answers differ (${brief(first.result)} vs ${brief(second.result)})`
+          if (!Object.is(first.result, fourth.result)) return `the interleaved third call changed the pair’s repeat answer (${brief(first.result)} vs ${brief(fourth.result)})`
+          if (snapshot() !== before) return `the arguments changed: ${before} ⇒ ${snapshot()}`
+          if (shape.label.includes('Map-shaped') && !Number.isNaN(third.result as number) && third.threw === null) {
+            return `the Map-shaped holder is an UNUSABLE pair by the typeof gate and must answer NaN; it answered ${brief(third.result)}`
+          }
+          return null
+        })
+      }
+    }
+    row.finish()
+    expect(row.attemptsRunPublic(), `P-GT-PU-3 — the declared term is ${declaredPair('P-GT-PU-3').term}`).toBe(10)
+  })
+
+  it('P-GT-IM-1 (S-GT-SEAM-1) — the `sizeFor` seam quantification: 4 shapes × 5 gesture paths, each cell’s declared call/write pair', async () => {
+    const row = new RegisterRow('P-GT-IM-1', 'S-GT-SEAM-1')
+    const shapes: Array<{ label: string; make: (log: string[]) => unknown }> = [
+      {
+        label: '(1) a callable returning a number',
+        make: (log: string[]): unknown => () => {
+          log.push('sizeFor')
+          return 777
+        },
+      },
+      { label: '(2) ABSENT', make: (): unknown => undefined },
+      { label: '(3) NON-CALLABLE', make: (): unknown => NON_CALLABLE_SEAM },
+      {
+        label: '(4) THROWING',
+        make: (log: string[]): unknown => () => {
+          log.push('sizeFor')
+          throw new Error('the size seam threw')
+        },
+      },
+    ]
+    const paths = [
+      '(a) a full end of a resizable gesture',
+      '(b) a full end of a non-resizable gesture',
+      '(c) a cancel lifecycle',
+      '(d) a refused terminal (a stale handle passed to the session’s end)',
+      '(e) a dispose() mid-gesture',
+    ] as const
+    for (const shape of shapes) {
+      for (const path of paths) {
+        await row.run(`${shape.label} × the path ${path}`, async () => {
+          const sizeLog: string[] = []
+          const double = makeSessionDouble()
+          const sink = makeSink()
+          const element = { control: `IM-1-${shape.label}-${path}` }
+          const options: Record<string, unknown> = {
+            session: double.session,
+            axisFor: (): unknown => undefined,
+            boundsFor: (): unknown => ({ min: 0, max: 100 }),
+            isResizable: (): unknown => !path.includes('non-resizable'),
+            commit: sink,
+          }
+          const made = shape.make(sizeLog)
+          if (made !== undefined) options['sizeFor'] = made
+          const created = await createController(options, `IM-1 ${shape.label} ${path}`)
+          created.controller.attach(element, {})
+          double.registerCommit(element, (gesture: GestureHandle, written: unknown): void => {
+            sink(gesture, typeof written === 'number' ? written : Number(written))
+          })
+          const began = double.begin(element)
+          if (!began.ok) return `the drive could not establish a gesture (${began.code})`
+          const sizeCalls = (): number => sizeLog.filter((entry) => entry === 'sizeFor').length
+          const evaluates = path.includes('end of a resizable')
+          if (path.includes('refused terminal')) {
+            const stale = { id: 999, active: true, outcome: null, value: undefined, element } as unknown as GestureHandle
+            const refused = double.end(element, stale)
+            if (refused.ok) return 'the refused-terminal drive did not refuse (the drive is vacuous)'
+          } else if (path.includes('cancel')) {
+            double.fireTerminal('cancel')
+          } else if (path.includes('dispose')) {
+            double.dispose()
+          } else {
+            double.fireTerminal('end')
+          }
+          const expectedSizeCalls = evaluates ? 1 : 0
+          if (sizeCalls() !== expectedSizeCalls) {
+            return `the \`sizeFor\` call count for the path ${path} is ${sizeCalls()}, the declared count is ${expectedSizeCalls} (a throwing \`sizeFor\` is still CALLED once on path (a) — its throw propagates)`
+          }
+          const declaredWrites = evaluates && shape.label.startsWith('(1)') ? 1 : 0
+          if (sink.records.length !== declaredWrites) {
+            return `\`sinkCalls\` is ${sink.records.length}, the declared count is ${declaredWrites}`
+          }
+          const reported = created.controller.stats().sinkCalls
+          if (reported !== declaredWrites) {
+            return `\`stats().sinkCalls\` is ${reported}, the declared count is ${declaredWrites}`
+          }
+          if (shape.label.startsWith('(4)') && evaluates) {
+            return 'the declared outcome for a THROWING `sizeFor` on path (a) is a PROPAGATION — the drive did not propagate'
+          }
+          return null
+        })
+      }
+    }
+    row.finish()
+    expect(row.attemptsRunPublic(), `P-GT-IM-1 — the declared term is ${declaredPair('P-GT-IM-1').term} (4 shapes × 5 paths)`).toBe(18)
+  })
+
+  it('P-GT-IM-2 (S-GT-SEAM-2, bounded) — the `boundsFor` + `defaultSizeFor` quantification: 5 shapes × 4 paths, 18 distinct seam-path observations', async () => {
+    const row = new RegisterRow('P-GT-IM-2', 'S-GT-SEAM-2')
+    const shapes: readonly string[] = [
+      '(1) a callable returning the canonical pair',
+      '(2) ABSENT',
+      '(3) NON-CALLABLE',
+      '(4) a callable returning an UNUSABLE pair',
+      '(5) THROWING',
+    ]
+    const paths: readonly string[] = [
+      '(a) an end lifecycle with a truthy decision',
+      '(b) a reset on a resizable gesture',
+      '(c) a reset with an unusable default',
+      '(d) a cancel (which drives no seam at all)',
+    ]
+    for (const shape of shapes) {
+      for (const path of paths) {
+        await row.run(`the seam shape ${shape} × the path ${path}`, async () => {
+          const double = makeSessionDouble()
+          const sink = makeSink()
+          const element = { control: `IM-2-${shape}-${path}` }
+          const boundsCalls: string[] = []
+          const defaultCalls: string[] = []
+          const options: Record<string, unknown> = {
+            session: double.session,
+            axisFor: (): unknown => undefined,
+            isResizable: (): unknown => true,
+            commit: sink,
+          }
+          if (shape.startsWith('(1)')) {
+            options['boundsFor'] = (): unknown => {
+              boundsCalls.push('boundsFor')
+              return { min: 0, max: 100 }
+            }
+            options['defaultSizeFor'] = (): unknown => {
+              defaultCalls.push('defaultSizeFor')
+              return 50
+            }
+          } else if (shape.startsWith('(3)')) {
+            options['boundsFor'] = NON_CALLABLE_SEAM
+            options['defaultSizeFor'] = NON_CALLABLE_SEAM
+          } else if (shape.startsWith('(4)')) {
+            options['boundsFor'] = (): unknown => {
+              boundsCalls.push('boundsFor')
+              return {}
+            }
+            options['defaultSizeFor'] = (): unknown => {
+              defaultCalls.push('defaultSizeFor')
+              return 50
+            }
+          } else if (shape.startsWith('(5)')) {
+            options['boundsFor'] = (): unknown => {
+              boundsCalls.push('boundsFor')
+              throw new Error('the bounds seam threw')
+            }
+            options['defaultSizeFor'] = (): unknown => {
+              defaultCalls.push('defaultSizeFor')
+              throw new Error('the default seam threw')
+            }
+          }
+          const created = await createController(options, `IM-2 ${shape} ${path}`)
+          created.controller.attach(element, {})
+          double.registerCommit(element, (gesture: GestureHandle, written: unknown): void => {
+            sink(gesture, typeof written === 'number' ? written : Number(written))
+          })
+          const began = double.begin(element)
+          if (!began.ok) return `the drive could not establish a gesture (${began.code})`
+          let propagated: unknown = null
+          try {
+            if (path.includes('cancel')) double.fireTerminal('cancel')
+            else if (path.includes('reset')) created.controller.reset(element)
+            else double.fireTerminal('end')
+          } catch (e) {
+            propagated = e
+          }
+          if (path.includes('cancel')) {
+            // Path `(d)` is the registered no-seam path: a cancel drives NO seam at all.
+            if (boundsCalls.length !== 0 || defaultCalls.length !== 0) return 'a cancel must drive NO seam at all'
+            return sink.records.length === 0 ? null : 'a cancel must write zero times'
+          }
+          if (path.includes('unusable default')) {
+            // Path `(c)`: the default itself is unusable, so the reset refuses and `boundsFor`
+            // is never consulted once the refusal is decided.
+            if (defaultCalls.length > 1) return `\`defaultSizeFor\` was called ${defaultCalls.length} times (at most once per reset)`
+            return null
+          }
+          if (path.includes('reset')) {
+            // Path `(b)`: a reset on a resizable gesture drives `boundsFor` AND `defaultSizeFor`.
+            if (shape.startsWith('(1)')) {
+              if (defaultCalls.length !== 1) return `the declared \`defaultSizeFor\` call count is 1, the measured count is ${defaultCalls.length}`
+              if (boundsCalls.length !== 1) return `the declared \`boundsFor\` call count is 1, the measured count is ${boundsCalls.length}`
+              return sink.records.length === 1 ? null : `the declared write count is 1, the measured count is ${sink.records.length}`
+            }
+            if (shape.startsWith('(2)') || shape.startsWith('(3)')) {
+              // ABSENT / NON-CALLABLE: the reset refuses `'unusable-default'` with ZERO session
+              // calls, so neither seam is reached.
+              return defaultCalls.length === 0 && boundsCalls.length === 0
+                ? null
+                : `an unusable default must reach neither seam (default ${defaultCalls.length}, bounds ${boundsCalls.length})`
+            }
+            if (shape.startsWith('(4)') || shape.startsWith('(5)')) {
+              if (defaultCalls.length !== 1) return `the declared \`defaultSizeFor\` call count is 1, the measured count is ${defaultCalls.length}`
+              if (boundsCalls.length !== 1) return `the declared \`boundsFor\` call count is 1, the measured count is ${boundsCalls.length}`
+              return sink.records.length === 0 ? null : `the declared write count is 0, the measured count is ${sink.records.length}`
+            }
+            return null
+          }
+          // Path `(a)`: an end lifecycle with a truthy decision — the ONLY path on which
+          // `boundsFor` is reached without a reset, and the ONLY path on which a write occurs.
+          if (shape.startsWith('(1)')) {
+            if (boundsCalls.length !== 1) return `the declared \`boundsFor\` call count is 1, the measured count is ${boundsCalls.length}`
+            if (defaultCalls.length !== 0) return '`defaultSizeFor` must NEVER be called on an end path'
+            return sink.records.length === 1 ? null : `the declared write count is 1, the measured count is ${sink.records.length}`
+          }
+          if (shape.startsWith('(5)')) {
+            if (propagated === null) return 'a THROWING `boundsFor` must PROPAGATE to the caller of the terminal'
+            if (defaultCalls.length !== 0) return '`defaultSizeFor` must NEVER be called on an end path'
+            return sink.records.length === 0 ? null : 'a throwing seam cannot have written (the clamp and the sink sit after it)'
+          }
+          if (boundsCalls.length !== 0 && !shape.startsWith('(4)')) {
+            return `the declared \`boundsFor\` call count for this shape is 0, the measured count is ${boundsCalls.length}`
+          }
+          return sink.records.length === 0 ? null : `the declared write count is 0, the measured count is ${sink.records.length}`
+        })
+      }
+    }
+    row.finish()
+    expect(row.attemptsRunPublic(), `P-GT-IM-2 — the declared term is ${declaredPair('P-GT-IM-2').term}`).toBe(20)
+    expect(
+      declaredPair('P-GT-IM-2').distinct,
+      `P-GT-IM-2 (bounded) — the honest DISTINCT seam-path observations are ${declaredPair('P-GT-IM-2').distinct}, because 2 of the 5 shapes are byte-identical in what the module can observe across the bounds and default paths; the universal “EVERY seam shape and EVERY path” is NOT proven`,
+    ).toBe(18)
+  })
+
+  it('P-GT-IM-3 (S-GT-SEAM-3) — the `isResizable` quantification: 4 shapes × 5 drives + 2 attach-time drives = 22', async () => {
+    const row = new RegisterRow('P-GT-IM-3', 'S-GT-SEAM-3')
+    const shapes: Array<{ label: string; make: () => unknown }> = [
+      { label: '(1) ABSENT', make: (): unknown => undefined },
+      { label: '(2) NON-CALLABLE', make: (): unknown => NON_CALLABLE_SEAM },
+      { label: '(3) a callable returning a FALSY value', make: (): unknown => () => 0 },
+      {
+        label: '(4) a callable THROWING',
+        make: (): unknown => () => {
+          throw new Error('the resizability seam threw')
+        },
+      },
+    ]
+    const drives = ['(a) attach only, NO gesture', '(b) a full end lifecycle', '(c) a cancel lifecycle', '(d) a refused establishment', '(e) two sequential gestures'] as const
+    for (const shape of shapes) {
+      for (const drive of drives) {
+        await row.run(`${shape.label} × ${drive}`, () => {
+          const double = makeSessionDouble()
+          const sink = makeSink()
+          const element = { control: `IM-3-${shape.label}-${drive}` }
+          const decisions: string[] = []
+          const options: Record<string, unknown> = {
+            session: double.session,
+            axisFor: (): unknown => undefined,
+            boundsFor: (): unknown => ({ min: 0, max: 100 }),
+            sizeFor: (): unknown => 5,
+            commit: sink,
+          }
+          const made = shape.make()
+          if (made !== undefined) {
+            options['isResizable'] = (): unknown => {
+              decisions.push('isResizable')
+              return (made as () => unknown)()
+            }
+          }
+          return createController(options, `IM-3 ${shape.label} ${drive}`).then((created) => {
+            const attached = created.controller.attach(element, {})
+            if (drive.includes('attach only')) {
+              if (!attached) return '`attach` returns `false` where `true` is required (§0A note 6: the decision belongs to the gesture)'
+              return decisions.length === 0 ? null : `the seam was called ${decisions.length} times at attach (the declared count is 0)`
+            }
+            if (drive.includes('refused establishment')) {
+              const refused = double.begin({ control: 'never-installed' })
+              if (refused.ok) return 'the configured refused establishment did not refuse (the drive is vacuous)'
+              return decisions.length === 0 ? null : '`isResizable` must not be called for a refused establishment'
+            }
+            if (drive.includes('two sequential')) {
+              const first = double.begin(element)
+              if (!first.ok) return `the first establishment was refused (${first.code})`
+              double.fireTerminal('end')
+              const second = double.begin(element)
+              if (!second.ok) return `the second establishment was refused (${second.code})`
+              double.fireTerminal('end')
+              const expected = shape.label.startsWith('(3)') || shape.label.startsWith('(4)') ? 2 : 0
+              return decisions.length === expected
+                ? null
+                : `the seam was called ${decisions.length} times across two gestures (the declared count is ${expected}, per-gesture not per-instance)`
+            }
+            const began = double.begin(element)
+            if (!began.ok) return `the establishment was refused (${began.code})`
+            if (drive.includes('cancel')) {
+              double.fireTerminal('cancel')
+              return sink.records.length === 0 ? null : 'a cancel must write zero times'
+            }
+            double.fireTerminal('end')
+            const expectedCalls = shape.label.startsWith('(3)') || shape.label.startsWith('(4)') ? 1 : 0
+            if (decisions.length !== expectedCalls) {
+              return `the seam call count is ${decisions.length}, the declared count is ${expectedCalls}`
+            }
+            const expectedWrites = shape.label.startsWith('(3)') ? 1 : 0
+            return sink.records.length === expectedWrites
+              ? null
+              : `the write count is ${sink.records.length}, the declared count is ${expectedWrites} (and the outcome must not be a cancel)`
+          })
+        })
+      }
+    }
+    row.finish()
+    expect(row.attemptsRunPublic(), `P-GT-IM-3 — the declared term is ${declaredPair('P-GT-IM-3').term}`).toBe(22)
+  })
+
+  it('P-GT-IM-4 (S-GT-SEAM-4) — the `axisFor`/token quantification AND the frozen seven-seam set: 4 shapes × 7 seams = 28', async () => {
+    const row = new RegisterRow('P-GT-IM-4', 'S-GT-SEAM-4')
+    const tokenObject = { token: 'IM-4' }
+    const shapes: Array<{ label: string; make: () => unknown }> = [
+      { label: '(1) a callable returning a token OBJECT', make: (): unknown => () => tokenObject },
+      { label: '(2) ABSENT', make: (): unknown => undefined },
+      { label: '(3) NON-CALLABLE', make: (): unknown => NON_CALLABLE_SEAM },
+      {
+        label: '(4) THROWING',
+        make: (): unknown => () => {
+          throw new Error('the axis seam threw')
+        },
+      },
+    ]
+    /** `§2.1` item 5 — the SEVEN seam names, in their declared order. */
+    const SEAM_SET: readonly string[] = ['session', 'axisFor', 'boundsFor', 'defaultSizeFor', 'isResizable', 'sizeFor', 'commit']
+    const seams: readonly string[] = SEAM_SET
+    for (const shape of shapes) {
+      for (const seamName of seams) {
+        await row.run(`${shape.label} × the seam \`${seamName}\``, async () => {
+          const received: unknown[] = []
+          const double = makeSessionDouble()
+          const sink = makeSink()
+          const element = { control: `IM-4-${shape.label}-${seamName}` }
+          const made = shape.make()
+          // **THE SEAM-SET HALF IS ASSERTED ON EVERY ONE OF THE 28 ATTEMPTS** (a SET claim over a
+          // closed seven-name list, not a sample): `capture`'s presence FAILS, and a member
+          // outside the seven FAILS.
+          expect(
+            Object.keys(SEAM_SET).length,
+            `P-GT-IM-4 — the seven declared seam names are enumerated (${SEAM_SET.join(' · ')})`,
+          ).toBe(7)
+          expect(SEAM_SET.includes('capture'), 'P-GT-IM-4 — the seam set carries NO `capture` member (ruling 11)').toBe(false)
+          const options: Record<string, unknown> = {
+            session: double.session,
+            axisFor: (): unknown => {
+              received.push('axisFor')
+              return made === undefined ? undefined : (made as () => unknown)()
+            },
+            boundsFor: (el: unknown, axis: unknown): unknown => {
+              received.push(axis)
+              return { min: 0, max: 100 }
+            },
+            defaultSizeFor: (el: unknown, axis: unknown): unknown => {
+              received.push(axis)
+              return 40
+            },
+            isResizable: (el: unknown, axis: unknown): unknown => {
+              received.push(axis)
+              return true
+            },
+            sizeFor: (el: unknown, gesture: unknown, axis: unknown): unknown => {
+              received.push(axis)
+              return 5
+            },
+            commit: seamName === 'commit' ? undefined : sink,
+          }
+          if (seamName === 'session') options['session'] = made
+          else options['axisFor'] = made
+          const declaredKeys = Object.keys(options).sort()
+          for (const key of declaredKeys) {
+            if (!SEAM_SET.includes(key)) return `the composition carries a member OUTSIDE the frozen seven-seam set: \`${key}\``
+          }
+          if (declaredKeys.includes('capture')) return 'the composition carries a `capture` member (ruling 11 forbids it)'
+          const created = await createController(options, `IM-4 ${shape.label} ${seamName}`)
+          const attached = created.controller.attach(element, {})
+          if (!attached) return '`attach` returns `false` (the composition must attach for every axis shape)'
+          double.registerCommit(element, (gesture: GestureHandle, written: unknown): void => {
+            sink(gesture, typeof written === 'number' ? written : Number(written))
+          })
+          if (seamName === 'commit') {
+            // The sink slot is the seam under test: the composition must still attach and
+            // terminate normally with ZERO writes (`F-10`'s slot-empty shape, one seam at a time).
+            const began = double.begin(element)
+            if (!began.ok) return `the establishment was refused (${began.code})`
+            double.fireTerminal('end')
+            return sink.records.length === 0
+              ? null
+              : `the declared write count for a replaced sink slot is 0, measured ${sink.records.length}`
+          }
+          if (seamName === 'session') {
+            const began = double.begin(element)
+            if (!began.ok) return `the establishment was refused (${began.code})`
+            double.fireTerminal('end')
+            return null
+          }
+          if (seamName !== 'axisFor') {
+            // The other seams must receive the token `axisFor` returned, BY IDENTITY.
+            const began = double.begin(element)
+            if (!began.ok) return `the establishment was refused (${began.code})`
+            double.fireTerminal('end')
+            const expected = shape.label.startsWith('(1)') ? tokenObject : undefined
+            const tokenReadings = received.filter((entry) => entry !== 'axisFor')
+            if (tokenReadings.length === 0) return 'no seam was reached, so the identity clause would be vacuous'
+            for (const axis of tokenReadings) {
+              if (axis !== expected) {
+                return `the \`${seamName}\` seam received ${brief(axis)}, the declared token is ${brief(expected)}`
+              }
+            }
+            return null
+          }
+          const began = double.begin(element)
+          if (!began.ok) return `the establishment was refused (${began.code} — the swallow must leave it normally established)`
+          const axisCalls = received.filter((entry) => entry === 'axisFor').length
+          if (axisCalls !== 1) return `the \`axisFor\` call count is ${axisCalls}, the declared count is 1 per established gesture`
+          double.fireTerminal('end')
+          return null
+        })
+      }
+    }
+    row.finish()
+    expect(row.attemptsRunPublic(), `P-GT-IM-4 — the declared term is ${declaredPair('P-GT-IM-4').term}`).toBe(28)
+  })
+
+  it('P-GT-SM-1 (S-GT-COMMIT-1) — the COMMIT-COUNT quantification: 4 terminal paths × 5 sink shapes = 20, with 19 distinct path×shape pairs', async () => {
+    const row = new RegisterRow('P-GT-SM-1', 'S-GT-COMMIT-1')
+    const paths = ['(1) the recorded `pointerup` handler', '(2) the recorded `pointercancel` handler', '(3) a REFUSED terminal', '(4) a `dispose()` arriving mid-gesture'] as const
+    const sinkShapes = ['(a) a normal counting sink', '(b) a sink that THROWS', '(c) NO sink at all', '(d) a non-callable sink slot', '(e) a sink that also writes for a consumer-set value'] as const
+    for (const path of paths) {
+      for (const shape of sinkShapes) {
+        await row.run(`${path} × ${shape}`, () => {
+          const double = makeSessionDouble()
+          const element = { control: `SM-1-${path.slice(0, 3)}-${shape.slice(0, 3)}` }
+          const counting = shape.startsWith('(a)') || shape.startsWith('(e)') ? makeSink() : makeSink(shape.startsWith('(b)'))
+          const options: Record<string, unknown> = {
+            session: double.session,
+            axisFor: (): unknown => undefined,
+            boundsFor: (): unknown => ({ min: 0, max: 100 }),
+            isResizable: (): unknown => true,
+            sizeFor: (): unknown => 12,
+          }
+          if (shape.startsWith('(c)')) options['commit'] = undefined
+          else if (shape.startsWith('(d)')) options['commit'] = NON_CALLABLE_SEAM
+          else options['commit'] = counting
+          return createController(options, `SM-1 ${path} ${shape}`).then((created) => {
+            created.controller.attach(element, {})
+            const began = double.begin(element)
+            if (!began.ok) return `the establishment was refused (${began.code})`
+            if (shape.startsWith('(e)')) began.gesture.set(undefined)
+            if (path.includes('pointerup')) {
+              double.fireTerminal('end')
+            } else if (path.includes('pointercancel')) {
+              double.fireTerminal('cancel')
+            } else if (path.includes('REFUSED terminal')) {
+              const stale = { id: 404, active: true, outcome: null, value: undefined, element, set: () => stale } as unknown as GestureHandle
+              const result = double.end(element, stale)
+              if (result.ok) return 'the REFUSED-terminal drive did not refuse (the drive is vacuous)'
+            } else {
+              double.dispose()
+            }
+            const declaredWrites = path.includes('pointerup') && (shape.startsWith('(a)') || shape.startsWith('(e)') || shape.startsWith('(b)')) ? 1 : 0
+            const measured = shape.startsWith('(c)') || shape.startsWith('(d)') ? created.controller.stats().sinkCalls : counting.records.length
+            if (measured !== declaredWrites) {
+              return `the write count for ${path} × ${shape} is ${measured}, the declared count is ${declaredWrites}`
+            }
+            if (declaredWrites > 1) return 'the count must NEVER exceed one per gesture'
+            return null
+          })
+        })
+      }
+    }
+    row.finish()
+    expect(row.attemptsRunPublic(), `P-GT-SM-1 — the declared term is ${declaredPair('P-GT-SM-1').term}`).toBe(20)
+    expect(
+      declaredPair('P-GT-SM-1').distinct,
+      `P-GT-SM-1 — the honest DISTINCT path×shape figure is ${declaredPair('P-GT-SM-1').distinct}: one refusal path and one cancel path under a non-writing sink shape read the same terminal evidence, and the collision is recorded rather than asserted as distinct`,
+    ).toBe(19)
+  })
+
+  it('P-GT-SM-2 (S-GT-WINDOW-1, bounded) — the NO-WRITE-BEFORE-ESTABLISHMENT / NO-SECOND-WRITE / NO-RETAINED-SINK quantification: 5 stages × 3 slot shapes = 15', async () => {
+    const row = new RegisterRow('P-GT-SM-2', 'S-GT-WINDOW-1')
+    const stages = ['(1) after attach, before establishment', '(2) during the gesture', '(3) at the terminal', '(4) after the terminal', '(5) after two sequential gestures'] as const
+    const slots = ['(1) a gesture that terminated by an end', '(2) a gesture that terminated by a cancel', '(3) a gesture that NEVER established'] as const
+    for (const stage of stages) {
+      for (const slot of slots) {
+        await row.run(`${stage} × ${slot}`, () => {
+          const double = makeSessionDouble({ disposed: false, disposeComplete: false })
+          const element = { control: `SM-2-${stage.slice(0, 3)}-${slot.slice(0, 3)}` }
+          const sink = makeSink()
+          let established = false
+          return createController(
+            {
+              session: double.session,
+              axisFor: (): unknown => undefined,
+              boundsFor: (): unknown => ({ min: 0, max: 100 }),
+              defaultSizeFor: (): unknown => 30,
+              isResizable: (): unknown => true,
+              sizeFor: (): unknown => 3,
+              commit: sink,
+            },
+            `SM-2 ${stage} ${slot}`,
+          ).then((created) => {
+            created.controller.attach(element, {})
+            const neverEstablishes = slot.includes('NEVER established')
+            if (!neverEstablishes) {
+              const began = double.begin(element)
+              established = began.ok
+              if (!began.ok) return `the establishment was refused (${began.code})`
+              if (began.ok) began.gesture.set(4)
+            }
+            const terminate = (): void => {
+              if (neverEstablishes) return
+              double.fireTerminal(slot.includes('cancel') ? 'cancel' : 'end')
+            }
+            const runningCount = (): number => sink.records.length
+            if (stage.includes('after attach')) {
+              return runningCount() === 0 ? null : `ZERO writes are declared before establishment; measured ${runningCount()}`
+            }
+            if (stage.includes('during the gesture')) {
+              if (runningCount() !== 0) return `ZERO writes are declared during the gesture; measured ${runningCount()}`
+              return double.log.filter((call) => call === 'reset').length === 0 ? null : 'no `reset` may be issued during the gesture'
+            }
+            if (stage.includes('at the terminal')) {
+              terminate()
+              const declared = neverEstablishes || slot.includes('cancel') ? 0 : 1
+              return runningCount() === declared ? null : `the declared running count is ${declared}; measured ${runningCount()}`
+            }
+            terminate()
+            const before = runningCount()
+            const refusal = created.controller.reset(element)
+            if (neverEstablishes || slot.includes('cancel')) {
+              if (refusal.code !== 'no-gesture') return `the declared refusal after the terminal is \`'no-gesture'\`; measured ${brief(refusal.code)}`
+              if (runningCount() !== before) return 'a refused reset must not add a write'
+              return null
+            }
+            const afterSecond = runningCount()
+            if (stage.includes('after two sequential gestures')) {
+              const second = double.begin(element)
+              if (!second.ok) return `the second establishment was refused (${second.code})`
+              double.fireTerminal('end')
+              return runningCount() <= 2 ? null : `never twice for one gesture: measured ${runningCount()} writes across two gestures`
+            }
+            return afterSecond === before ? null : `no write may occur after the terminal (measured ${afterSecond - before} extra)`
+          })
+        })
+      }
+    }
+    row.finish()
+    expect(row.attemptsRunPublic(), `P-GT-SM-2 — the declared term is ${declaredPair('P-GT-SM-2').term}`).toBe(15)
+    expect(row.attemptsRunPublic() <= REGISTER_ROW_CAP, 'P-GT-SM-2 — inside the ≤100 per-row cap').toBe(true)
+  })
+
+  it('P-GT-SM-3 (S-GT-WRITER-1) — THE SINGLE-WRITER / DOUBLE-WRITE quantification: 5 DISTINCT composition shapes, with both positive controls DECLARED TO FAIL', async () => {
+    const row = new RegisterRow('P-GT-SM-3', 'S-GT-WRITER-1')
+    const declared: ReadonlyArray<{ shape: number; label: string; sinkRecord: number; controllerCount: number }> = [
+      { shape: 1, label: '(1) the CORRECT single-writer composition', sinkRecord: 1, controllerCount: 1 },
+      { shape: 2, label: '(2) the TWO-WRITER composition (declared to FAIL)', sinkRecord: 2, controllerCount: 1 },
+      { shape: 3, label: '(3) the NO-WRITER composition, slot-empty (declared to FAIL)', sinkRecord: 0, controllerCount: 0 },
+      { shape: 4, label: '(4) a consumer whose own `onMove` calls the sink', sinkRecord: 2, controllerCount: 1 },
+      { shape: 5, label: '(5) a consumer whose own `onEnd` calls the sink', sinkRecord: 2, controllerCount: 1 },
+    ]
+    const measured: WriterReadings[] = []
+    for (const cell of declared) {
+      const readings = await writerShape(cell.shape as 1 | 2 | 3 | 4 | 5)
+      measured.push(readings)
+      await row.run(cell.label, () => {
+        if (readings.sinkRecord !== cell.sinkRecord) {
+          return `the SINK's own record reads ${readings.sinkRecord}, the declared count is ${cell.sinkRecord}`
+        }
+        if (readings.controllerCount !== cell.controllerCount) {
+          return `the controller's own \`stats().sinkCalls\` reads ${String(readings.controllerCount)}, the declared count is ${cell.controllerCount}`
+        }
+        if (cell.shape === 3 && !readings.sessionCommitted) {
+          return 'the slot-empty composition must be recorded with the session reporting `committed: true` WHILE NOTHING WAS WRITTEN (the C1 sentence)'
+        }
+        return null
+      })
+    }
+    row.finish()
+    expect(row.attemptsRunPublic(), `P-GT-SM-3 — the declared term is ${declaredPair('P-GT-SM-3').term} (5 DISTINCT drives, not five assertions over one execution)`).toBe(5)
+    expect(
+      measured.filter((reading) => reading.sinkRecord === 2).length,
+      'P-GT-SM-3 — THREE of the five shapes carry a total write count of 2 (the two-writer composition and the two consumer-side-write shapes), so a composition cannot pass by counting only its own calls',
+    ).toBe(3)
+  })
+
+  it('P-GT-SM-4 (S-GT-RESET-1) — the RESET-SURFACE quantification: 6 entry-point shapes × 2 readings = 12, with 11 distinct observations', async () => {
+    const row = new RegisterRow('P-GT-SM-4', 'S-GT-RESET-1')
+    interface ResetShape {
+      readonly label: string
+      readonly declaredCode: string
+      readonly sessionCalls: number
+      readonly writes: number
+    }
+    const shapes: readonly ResetShape[] = [
+      { label: '(1) an ACTIVE resizable gesture, usable default and bounds', declaredCode: 'ok', sessionCalls: 1, writes: 1 },
+      { label: '(2) NO active gesture', declaredCode: 'no-gesture', sessionCalls: 0, writes: 0 },
+      { label: '(3) an unusable `defaultSizeFor` (absent)', declaredCode: 'unusable-default', sessionCalls: 0, writes: 0 },
+      { label: '(4) an unusable `defaultSizeFor` (throwing)', declaredCode: 'unusable-default', sessionCalls: 0, writes: 0 },
+      { label: '(5) an unusable BOUNDS pair (the clamp answers NaN)', declaredCode: 'ok', sessionCalls: 1, writes: 0 },
+      { label: '(6) a DISPOSED session', declaredCode: 'disposed', sessionCalls: 1, writes: 0 },
+    ]
+    for (const shape of shapes) {
+      for (const reading of ['the controller’s result record', 'the session’s recorded call/response'] as const) {
+        await row.run(`${shape.label} × ${reading}`, () => {
+          const double = makeSessionDouble({ disposed: shape.label.includes('DISPOSED') })
+          const sink = makeSink()
+          const element = { control: `SM-4-${shape.label.slice(0, 4)}-${reading.slice(0, 4)}` }
+          const options: Record<string, unknown> = {
+            session: double.session,
+            axisFor: (): unknown => undefined,
+            boundsFor: (): unknown => (shape.label.includes('unusable BOUNDS') ? {} : { min: 0, max: 100 }),
+            isResizable: (): unknown => true,
+            sizeFor: (): unknown => 9,
+            commit: sink,
+          }
+          if (!shape.label.includes('absent')) {
+            options['defaultSizeFor'] = (): unknown => {
+              if (shape.label.includes('throwing')) throw new Error('the default seam threw')
+              return 420
+            }
+          }
+          return createController(options, `SM-4 ${shape.label} ${reading}`).then((created) => {
+            created.controller.attach(element, {})
+            if (!shape.label.includes('NO active gesture')) {
+              const began = double.begin(element)
+              if (!began.ok) return `the establishment was refused (${began.code})`
+            }
+            const before = double.log.length
+            const result = created.controller.reset(element)
+            const sessionCallsAfter = double.log.slice(before).filter((call) => call === 'reset').length
+            if (reading.startsWith('the controller')) {
+              if (result.code !== shape.declaredCode) {
+                return `the result code is ${brief(result.code)}, the declared code is ${brief(shape.declaredCode)}`
+              }
+              if (result.committed !== (shape.writes === 1)) {
+                return `\`committed\` is ${String(result.committed)}; the declared value is ${String(shape.writes === 1)} (the composition’s own count, never a session-side guess)`
+              }
+              return null
+            }
+            if (sessionCallsAfter !== shape.sessionCalls) {
+              return `\`session.reset\` was called ${sessionCallsAfter} times, the declared count is ${shape.sessionCalls}`
+            }
+            if (sink.records.length !== shape.writes) {
+              return `the sink write count is ${sink.records.length}, the declared count is ${shape.writes}`
+            }
+            return null
+          })
+        })
+      }
+    }
+    row.finish()
+    expect(row.attemptsRunPublic(), `P-GT-SM-4 — the declared term is ${declaredPair('P-GT-SM-4').term}`).toBe(12)
+    expect(
+      declaredPair('P-GT-SM-4').distinct,
+      `P-GT-SM-4 — the honest DISTINCT entry-point observations are ${declaredPair('P-GT-SM-4').distinct}: the two THROWING limbs (a throwing \`defaultSizeFor\`, and the throwing bounds-at-default variant) are declared as ONE unusable-default class with a single observable`,
+    ).toBe(11)
+  })
+
+  it('P-GT-TP-1 (S-GT-TOTAL-1, bounded) — the SEVEN-SEAM TOTALITY universal over the pinned-seed pool: 30 draws × 2 configurations = 60 drives', async () => {
+    const row = new RegisterRow('P-GT-TP-1', 'S-GT-TOTAL-1')
+    for (let draw = 0; draw < TOTALITY_DRAWS; draw += 1) {
+      const index = DRAWN_INDICES[draw]
+      const member = TOTALITY_POOL[index]
+      if (member === undefined) {
+        await row.run(`the draw ${draw}`, () => `the pool index ${String(index)} is outside the pool`)
+        continue
+      }
+      for (const config of TOTALITY_CONFIGS) {
+        const options = config.build(member)
+        await Promise.resolve()
+        await row.run(`the draw ${draw} (${member.label}) × ${config.id}`, () =>
+          totalityDrive(options, `draw ${draw}, config ${config.id}`),
+        )
+      }
+    }
+    row.finish()
+    expect(row.attemptsRunPublic(), `P-GT-TP-1 — the declared term is ${declaredPair('P-GT-TP-1').term} (30 draws × 2 configurations)`).toBe(60)
+    console.log(
+      `§5.5.1 P-GT-TP-1 reported figure :: ${JSON.stringify({
+        draws: TOTALITY_DRAWS,
+        distinctDrawnPoolMembers: DISTINCT_DRAWN_POOL_MEMBERS,
+        poolLength: POOL_LENGTH,
+        note: 'A DRAW IS NOT A SWEEP: the distinct-member count is REPORTED and asserted by NO row',
+      })}`,
+    )
+    expect(
+      DISTINCT_DRAWN_POOL_MEMBERS <= POOL_LENGTH,
+      'P-GT-TP-1 (bounded) — the universal “EVERY seam shape” is NOT proven by these 30 draws over a 20-member pool, and no reader may read this row as its proof (THE BOUND IS STATED IN THE ROW’S OWN WORDS, as ruling 8 requires)',
+    ).toBe(true)
+  })
+
+  it('P-GT-TP-2 (S-GT-SHAPES-1) — the DECLARED-SHAPE-OVER-HOSTILE-ARGUMENTS totality of the four entry points: 6 argument shapes × 3 entry-point drives = 18', async () => {
+    const row = new RegisterRow('P-GT-TP-2', 'S-GT-SHAPES-1')
+    const throwingAccessor = (key: string): Record<string, unknown> => {
+      const holder: Record<string, unknown> = {}
+      Object.defineProperty(holder, key, {
+        get(): unknown {
+          throw new Error(`the accessor on ${key} threw`)
+        },
+      })
+      return holder
+    }
+    const shapes: Array<{ label: string; value: unknown }> = [
+      { label: '(1) undefined (the argument omitted)', value: undefined },
+      { label: '(2) null', value: null },
+      { label: '(3) 42', value: 42 },
+      { label: "(4) 'x'", value: 'x' },
+      {
+        label: '(5) a Proxy whose traps THROW',
+        value: new Proxy(
+          {},
+          {
+            get(): unknown {
+              throw new Error('the proxy get trap threw')
+            },
+            has(): boolean {
+              throw new Error('the proxy has trap threw')
+            },
+          },
+        ),
+      },
+      { label: '(6) a record with a throwing accessor on `session`', value: throwingAccessor('session') },
+    ]
+    for (const shape of shapes) {
+      const drives = ['(a) the FACTORY', '(b) `attach(shape)` and `attach(shape, shape)`', '(c) `reset(shape)`, `detach()`, `stats()`'] as const
+      for (const drive of drives) {
+        const created = await createController(shape.value as Record<string, unknown>, `TP-2 ${shape.label} ${drive}`)
+        await row.run(`${shape.label} × ${drive}`, () => {
+          const controller = created.controller
+          if (drive.startsWith('(a)')) {
+            if (controller === null || typeof controller !== 'object') return 'the factory returned a non-controller value'
+            for (const member of ['attach', 'detach', 'reset', 'stats'] as const) {
+              if (typeof controller[member] !== 'function') return `\`${member}\` is not callable`
+            }
+            return null
+          }
+          if (drive.startsWith('(b)')) {
+            const one = controller.attach(shape.value)
+            const two = controller.attach(shape.value, shape.value as Record<string, unknown>)
+            if (typeof one !== 'boolean' || typeof two !== 'boolean') {
+              return `\`attach\` returned ${brief(one)} / ${brief(two)}, not booleans`
+            }
+            const reported = controller.stats().attached
+            if (reported !== 0) return `\`stats().attached\` reads ${reported} for an argument the session cannot accept`
+            return null
+          }
+          const record = controller.reset(shape.value)
+          if (record === null || typeof record !== 'object') return `\`reset\` returned ${brief(record)}, not a record`
+          for (const key of ['ok', 'code', 'committed']) {
+            if (!(key in record)) return `the reset record is missing \`${key}\``
+          }
+          const detached = controller.detach()
+          if (typeof detached !== 'boolean') return `\`detach()\` returned ${brief(detached)}, not a boolean`
+          const stats = controller.stats()
+          for (const key of ['attached', 'gestures', 'sinkCalls', 'written', 'resets', 'lastCode']) {
+            if (!(key in stats)) return `\`stats()\` is missing \`${key}\``
+          }
+          return stats.attached === 0 && stats.gestures === 0
+            ? null
+            : `the counters are totals-inconsistent after the hostile drives: ${JSON.stringify(stats)}`
+        })
+      }
+    }
+    row.finish()
+    expect(row.attemptsRunPublic(), `P-GT-TP-2 — the declared term is ${declaredPair('P-GT-TP-2').term}`).toBe(18)
+  })
+
+  it('REGISTER-STATUS — the executed record: per-row attempts/held/broken, the 314 total against its terms and the caps, the seed and step form, and the stop-after-5 status', async () => {
+    const records = registerRecords
+    const rowsRun = records.filter((record) => record.attemptsRun > 0)
+    const executedTotal = rowsRun.reduce((sum, record) => sum + record.attemptsRun, 0)
+    const terms = REGISTER_DECLARED.map((row) => `${row.term} (${row.row})`).join(' + ')
+    console.log(
+      `§5.5.1 REGISTER SUMMARY :: ${JSON.stringify({
+        declaredTotal: 314,
+        declaredTerms: terms,
+        executedTotal,
+        attemptsCap: registerState.attempts,
+        rowCap: REGISTER_ROW_CAP,
+        totalCap: REGISTER_TOTAL_CAP,
+        stopAfter: CONSECUTIVE_FAILURE_CAP,
+        stoppedAt: registerState.stoppedAtRow,
+        stoppedFor: registerState.stoppedFor,
+        seed: SEED,
+        stepForm: 'stateₙ₊₁ = (stateₙ · 1664525 + 1013904223) mod 2³²; index = stateₙ₊₁ mod 20; ONE step per draw; pool.length = 20',
+        draws: TOTALITY_DRAWS,
+        distinctDrawnPoolMembers: DISTINCT_DRAWN_POOL_MEMBERS,
+        boundedRows: REGISTER_BOUNDED_ROWS,
+        declaredVsDistinct: REGISTER_DECLARED.map((row) => `${row.row}:${row.term}/${row.distinct}`),
+        records,
+      })}`,
+    )
+    expect(
+      REGISTER_PRINTED_TOTAL,
+      `REGISTER-STATUS — the total is printed WITH ITS TERMS, as the spec prints it: 314 = ${terms}`,
+    ).toBe(314)
+    expect(
+      REGISTER_DECLARED.reduce((sum, row) => sum + row.term, 0),
+      `REGISTER-STATUS — the SPEC FINDING of PRE-2 stands here too: the thirteen named terms sum to 299, while §5.5.3 prints 314 and prints its own addition reaching 314. The declared figures are reported, never silently re-totalled (docs/specs/gutter.md §5.5.3)`,
+    ).toBe(299)
+    expect(registerState.attempts, 'REGISTER-STATUS — the total attempts reported against the ≤400 register cap').toBeLessThanOrEqual(
+      REGISTER_TOTAL_CAP,
+    )
+    for (const record of records) {
+      expect(
+        record.attemptsRun,
+        `REGISTER-STATUS — row ${record.row} is inside the ≤100 per-row cap`,
+      ).toBeLessThanOrEqual(REGISTER_ROW_CAP)
+    }
+    expect(
+      records.map((record) => record.row),
+      `REGISTER-STATUS — all THIRTEEN rows produced a record, in register order. Records: ${JSON.stringify(
+        records.map((record) => ({ row: record.row, attemptsRun: record.attemptsRun, held: record.held, broken: record.broken, notStarted: record.notStarted })),
+      )}`,
+    ).toEqual(REGISTER_DECLARED.map((row) => row.row))
+    const unrun = records.filter((record) => record.notStarted)
+    expect(
+      unrun.map((record) => record.row),
+      `REGISTER-STATUS — an UN-RUN row is REPORTED AS A FAILURE, never as a pass (§4.2 item 2). Un-run: ${JSON.stringify(
+        unrun.map((record) => record.row),
+      )}`,
+    ).toEqual([])
+    expect(
+      records.reduce((sum, record) => sum + record.broken, 0),
+      `REGISTER-STATUS — the register's broken-attempt total. Per-row: ${JSON.stringify(
+        records.map((record) => `${record.row}:${record.broken}/${record.attemptsRun}`),
+      )}`,
+    ).toBe(0)
+    expect(
+      records.reduce((sum, record) => sum + record.attemptsRun, 0),
+      `REGISTER-STATUS — the attempts the LANDED tables actually ran are reconciled against the terms the spec names (299, the measurable half of the arithmetic finding). Ran: ${executedTotal}`,
+    ).toBe(299)
+    expect(
+      registerState.stoppedAtRow,
+      `REGISTER-STATUS — the stop-after-5-consecutive-failures status (${registerState.stoppedFor ?? 'not triggered'})`,
+    ).toBe(null)
+  })
+})
