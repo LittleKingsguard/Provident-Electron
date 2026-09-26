@@ -261,6 +261,13 @@ function typedEventSourceRecord(withCapture: boolean): {
     },
     // ⟶ `D-1`: THE DECLARED MEMBER. If the module's `EventSource` does not carry it yet,
     // THIS line is the leg-4 compile failure — the red this pass exists to report.
+    // **⟶ CORRECTED 2026-09-27 (`ADV-GS-37`, the gate-4 closure): THE MODULE NOW CARRIES IT.**
+    // The sentence above is kept as the as-filed form (it governed at RED time). MEASURED: the
+    // module's own `EventSource` DECLARES `capturePointer?(element: GestureElement): void`
+    // (`src/shared/gesture-session.ts`, `§2.1`), so this line is no longer a compile failure —
+    // the standalone strict `tsc` leg over THIS file (`§5.2` leg 4) is **EXIT `0` with ZERO
+    // diagnostics**, and the red was the `TS2353` the as-filed record names (`ADV-GS-17`).
+    // Prose only: no assertion in this file moves for this correction.
     capturePointer(element: ModuleGestureElement): void {
       capturePointerCalls.push(element)
       calls.push('capturePointer')
@@ -429,6 +436,15 @@ interface SourceOptions {
    *  swallowed throw (through `threwAt`) and the gesture's normal termination on the SAME
    *  drive. */
   readonly failCapture?: boolean
+  /** ⟶ ADDED 2026-09-27 (the `ADV-GS-30` regression row): a HOOK that runs **INSIDE the
+   *  recorder's capture call**, after the ATTEMPT is recorded and before the configured
+   *  fault (and before the recorded call returns) — i.e. exactly in the window `§2.3` item
+   *  6(b) places the capture call in ("inside `begin`, after the gesture is established").
+   *  The row needs the window, not a new seam: a consumer's `capturePointer` may do
+   *  ANYTHING, including disposing the session it is mid-`begin` on, and the disposal
+   *  must govern (`§2.3` item 7.3). No other option can reach this window, because the
+   *  window is opened by the session's own call order. */
+  readonly capturePointer?: (element: unknown) => void
 }
 interface RecorderSource extends EventSource {
   /** The source-SUPPLIED capture entry point (`§2.3` item 6's RULED form): the session
@@ -550,6 +566,11 @@ function makeSource(options: SourceOptions = {}): RecorderSource {
   const withCapture = source as unknown as Record<string, unknown>
   withCapture['capturePointer'] = (element: unknown): void => {
     record('capture', element, 'capturePointer', undefined, true)
+    // ⟶ ADDED 2026-09-27 (`ADV-GS-30`): THE MID-CALL WINDOW, driven by the CONSUMER OWN
+    // member — the recorded attempt lands FIRST, so a row can assert that the window really
+    // opened (the call happened) while the hook's own effect (a `dispose()`) runs before the
+    // call returns.
+    if (options.capturePointer !== undefined) options.capturePointer(element)
     // ⟶ ADDED 2026-09-27 (the `ADV-GS-26` regression row): the ATTEMPT is recorded FIRST,
     // then the configured fault fires — the same order `on`/`off` use, so the row can
     // assert "exactly ONE capture ATTEMPT was made" from the recorder's own `captures`
@@ -1493,24 +1514,34 @@ const LCG_A = 1664525
 const LCG_C = 1013904223
 const LCG_MOD = 4294967296
 
-/** **`§5.5.1`'s ELEVEN DECLARED ROWS** — `(row id, strategy id, term)`, in REGISTER
+/** **`§5.5.1`'s ELEVEN DECLARED ROWS** — `(row id, strategy id, term, bounded)`, in REGISTER
  *  ORDER, as `§5.5.3` prints them: `396` = `58+32+36+30+24+30+40+30+32+24+60`. Declared
  *  ONCE, at module scope, so `PRE-2` (the table precondition), `PRE-4` (the
  *  pool-versus-boundary rule) and `REGISTER-STATUS` (the executed record) all reconcile
  *  against the same object — which is what makes this file's tables machine-comparable
- *  for the later read-only PBT audit (`§3a A-15`). */
-const REGISTER_DECLARED: ReadonlyArray<{ row: string; strategy: string; term: number }> = [
-  { row: 'P-GS-IM-1', strategy: 'S-GS-LISTENERS-1', term: 58 },
-  { row: 'P-GS-IM-2', strategy: 'S-GS-BUSY-1', term: 32 },
-  { row: 'P-GS-IM-3', strategy: 'S-GS-CODES-1', term: 36 },
-  { row: 'P-GS-IM-4', strategy: 'S-GS-WINDOW-1', term: 30 },
-  { row: 'P-GS-IM-5', strategy: 'S-GS-CAPTURE-1', term: 24 },
-  { row: 'P-GS-IM-6', strategy: 'S-GS-DISPOSE-1', term: 30 },
-  { row: 'P-GS-SM-1', strategy: 'S-GS-STATE-1', term: 40 },
-  { row: 'P-GS-SM-2', strategy: 'S-GS-IDENTITY-1', term: 30 },
-  { row: 'P-GS-SM-3', strategy: 'S-GS-COMMIT-1', term: 32 },
-  { row: 'P-GS-TP-1', strategy: 'S-GS-TOTAL-1', term: 24 },
-  { row: 'P-GS-TP-2', strategy: 'S-GS-SEED-1 + S-GS-POOL-1', term: 60 },
+ *  for the later read-only PBT audit (`§3a A-15`).
+ *
+ *  **`bounded` — ADDED 2026-09-27 (`ADV-GS-32`, the gate-4 closure): THE PER-ROW
+ *  `YES (bounded)` FLAG, so `PRE-2` DERIVES the bounded set from this table instead of
+ *  restating four literals against the same four literals (an assertion with no failure
+ *  mode).** The flag is the table's own copy of `§5.5.1`'s marking: `true` for the FIVE rows
+ *  whose property TEXT quantifies over an unbounded universal while the row drives a bounded
+ *  domain (`P-GS-IM-1`, `P-GS-IM-2`, `P-GS-IM-5`, `P-GS-TP-1`, `P-GS-TP-2` — `ADV-GS-25`
+ *  moved `P-GS-IM-2` into that set), `false` for the SIX whose `YES` is over a fully
+ *  enumerated domain. **NO declared term, row id or strategy id moves for the flag**: it is
+ *  metadata BESIDE the declared triple, and the `396` total is still the sum of the terms. */
+const REGISTER_DECLARED: ReadonlyArray<{ row: string; strategy: string; term: number; bounded: boolean }> = [
+  { row: 'P-GS-IM-1', strategy: 'S-GS-LISTENERS-1', term: 58, bounded: true },
+  { row: 'P-GS-IM-2', strategy: 'S-GS-BUSY-1', term: 32, bounded: true },
+  { row: 'P-GS-IM-3', strategy: 'S-GS-CODES-1', term: 36, bounded: false },
+  { row: 'P-GS-IM-4', strategy: 'S-GS-WINDOW-1', term: 30, bounded: false },
+  { row: 'P-GS-IM-5', strategy: 'S-GS-CAPTURE-1', term: 24, bounded: true },
+  { row: 'P-GS-IM-6', strategy: 'S-GS-DISPOSE-1', term: 30, bounded: false },
+  { row: 'P-GS-SM-1', strategy: 'S-GS-STATE-1', term: 40, bounded: false },
+  { row: 'P-GS-SM-2', strategy: 'S-GS-IDENTITY-1', term: 30, bounded: false },
+  { row: 'P-GS-SM-3', strategy: 'S-GS-COMMIT-1', term: 32, bounded: false },
+  { row: 'P-GS-TP-1', strategy: 'S-GS-TOTAL-1', term: 24, bounded: true },
+  { row: 'P-GS-TP-2', strategy: 'S-GS-SEED-1 + S-GS-POOL-1', term: 60, bounded: true },
 ]
 function registerKeySet(rows: ReadonlyArray<{ row: string; strategy: string }>): string[] {
   return rows.map((r) => `${r.row} :: ${r.strategy}`).sort()
@@ -5282,6 +5313,231 @@ describe('ADV-GS-16 / ADV-GS-26 / ADV-GS-22(a) — the gate-4 closure rows of th
     ).toBe(1)
   })
 })
+
+// ===========================================================================
+// **⟶ THE GATE-4 CLOSURE ROW (2026-09-27) — `ADV-GS-30`: A `begin` WHOSE SESSION IS
+// DISPOSED **DURING THE CALL** MUST REFUSE `'disposed'`.**
+//
+// **THE RULING THE ROW IS AUTHORED FROM (the CLAUSE, never the module's current bytes).**
+// `§2.3` item 7.7 (_"THE DISPOSAL GOVERNS A `begin` WHOSE SESSION IS DISPOSED DURING THAT
+// CALL"_, added by the `ADV-GS-30` amendment; the same rule stood at item 7.3 before it was
+// re-stated as `7.7`, and **item 7.3** remains the clause for the general inert-session
+// reading this row cites): *"A `begin` whose session is disposed during the call must NOT
+// report success: it refuses `{ok:false, code:'disposed'}` — the EXISTING SEVEN-MEMBER
+// closed-domain code, with NO EIGHTH MEMBER added — and the refused attempt consumes NOTHING:
+// the discarded record stays DISCARDED (`gesture()` stays `null`), the gesture COUNTER is NOT
+// consumed (`stats().gestures` stays at its pre-call value, `0` on a fresh session), the
+// handle ID is NOT consumed (`stats().gestureId` stays `0`), `stats().active` stays `false`,
+// the ledger stays EMPTIED (`stats().installed === 0`) and the baseline stays restored."*
+// `§2.3` item 7.3 supplies the same readings from the other direction: *"mark the instance
+// **`disposed = true` FOREVER**: `install` returns `false` without a source call, **`begin`
+// reports `'disposed'`**, every terminal reports `'disposed'` **without detaching or
+// committing**, `stats()` reports `{installed: 0, active: false}`, `gesture()` returns
+// `null`, and **the counters keep their last values** (they are not reset — `§0A` note 8)."*
+// The clause binds the SESSION's state, not the CALLER's path into it. `§2.1`'s
+// `SessionStats.gestures` cell (*"Successful `begin` calls, instance-lifetime"*) and `§2.4`
+// item 4 (*"`id` starts at `1`, increments on every **successful** `begin`"*) therefore leave
+// a refused `begin` — the `'disposed'` refusal among them — owing the counter and the id
+// NOTHING, and `§2.3` item 8's `any → disposed` transition makes the disposal the governing
+// fact.
+//
+// **THE TWO WINDOWS THE CLAUSE LEAVES OPEN, BOTH DRIVEN.** The establishment order `§2.3`
+// item 1(d) pins is: the establishment checks (`§2.4` item 5) → the three tracking attaches
+// (item 2(a)) → the capture call iff opted in (item 6(b)) → `onStart`. Two of those four
+// steps run CONSUMER code, so two windows exist in which a session can be disposed mid-`begin`:
+//   · WINDOW A — **dispose from `capturePointer`** (the consumer's own capture member);
+//   · WINDOW B — **dispose from `onStart`**.
+// The ruling covers both ("from `capturePointer`, from `onStart`, or any consumer code
+// running in that window"): the disposal governs, so the call REFUSES with
+// `{ok:false, code:'disposed'}`, the discarded record stays discarded, `gesture()` stays
+// `null`, and the gesture counter and id are NOT consumed.
+//
+// **WHAT IS DRIVEN PER WINDOW, AND WHAT IS DELIBERATELY NOT.** Driven: the refusal
+// (`{ok:false, code:'disposed'}`), `session.disposed === true`, `stats().gestures === 0`,
+// `stats().gestureId === 0`, `gesture() === null`, `stats().active === false`, the listener
+// baseline back to the install-time footprint (`0` — `§2.3` item 7.2 detaches everything this
+// session attached, `I-5`: *"after `dispose()` the session's own contribution is ZERO
+// listeners"*), and `stats().installed === 0` (`§2.3` item 7.3's own reading). **NOT driven,
+// and reported rather than invented** — see the silence notes inside the row:
+//   (S-1) `stats().lastCode` is asserted as the DERIVED reading of the ONE code the call
+//         produced (`§2.1`'s `lastCode` cell: *"the LAST result code this session produced"*),
+//         because the spec pins NO cell for `lastCode` after a `dispose()`-governed refusal —
+//         **`§2.3` item 7.7 records this SILENCE explicitly** (*"this clause pins NO `lastCode`
+//         cell for a dispose-governed refusal … a row that asserts `lastCode === 'disposed'`
+//         after this refusal is DERIVING it from that cell rather than citing a clause written
+//         for this path"*), and `§0A` note 8's *"counters keep their last values"* names the
+//         counters and says nothing about `lastCode`; the limb is the DERIVATION and not a
+//         cited cell.
+//   (S-2) `stats().disposed` is NOT asserted as a reading of `SessionStats`: `§2.1`'s
+//         `SessionStats` block declares SEVEN fields (`installed`, `sourceCalls`, `gestures`,
+//         `commits`, `active`, `gestureId`, `lastCode`) and NO `disposed` field — the disposal
+//         reading is `session.disposed` (`§2.1`'s `GestureSession`: *"`true` forever once
+//         `dispose()` has run"*, `§2.5` item 8). The row therefore asserts the key SET of
+//         `stats()` BESIDE the disposal reading, so a spec that later adds the field has a
+//         failing row here rather than a silent one.
+// No register attempt moves for this row: it is a `§2.3` clause row, not a `§5.5.1`
+// attempt, and the declared terms, the `396` total, the seed and the caps are untouched.
+// ===========================================================================
+describe('ADV-GS-30 — a `begin` whose session is disposed MID-CALL (the `§2.3` item 7.7 / item 7.3 disposal rule)', () => {
+  it('ADV-GS-30 — disposing the session from inside `capturePointer` and from inside `onStart`: `begin` REFUSES `{ok:false, code:\'disposed\'}`, and the counter, the id and the record are NOT consumed', async () => {
+    // STATES ENUMERATED BEFORE THE ROW (the file's own convention):
+    //  WINDOW A — the session is disposed from inside the SOURCE'S CAPTURE CALL, i.e. after the
+    //    three tracking attaches and the `isConnected` reading, before `onStart`:
+    //    (A1) `install(el, {capture:true})` → the control is installed, ONE start listener, no
+    //         capture attempt yet (`§2.3` item 6(a));
+    //    (A2) `begin(el)` → the attempt runs; the capture call disposes the session mid-call;
+    //         THE CLAUSE: the call REFUSES `'disposed'` and consumes nothing;
+    //    (A3) the post-refusal reading: `disposed`, `installed === 0`, `active === false`,
+    //         `gestures === 0`, `gestureId === 0`, `gesture() === null`, and the listener
+    //         baseline back to `0` (the session's own contribution — item 7.2/I-5).
+    //  WINDOW B — the same, with the disposal coming from inside the consumer's `onStart`
+    //    (the LAST consumer step of the establishment order, so the refusal must still govern):
+    //    (B1) `install(el, {capture:false})` (so the window driven is unambiguously `onStart`);
+    //    (B2) `begin(el)` → `onStart` disposes the session mid-call; THE SAME CLAUSE applies;
+    //    (B3) the same post-refusal reading as (A3).
+    // NO reading is asserted that no clause pins: the two silences met here are reported in the
+    // block's header comments (S-1 `lastCode`, S-2 `SessionStats.disposed`).
+    const runWindow = async (
+      windowName: string,
+      options: {
+        sourceOptions: SourceOptions
+        installOptions: GestureOptionsInput
+        disposals: DisposeReport[]
+        /** The window's consumer code, bound to the session the drive creates: it must call
+         *  `dispose()` from INSIDE the establishment order and push the report into
+         *  `options.disposals`. */
+        bindWindow: (session: GestureSessionMirror) => void
+      },
+    ): Promise<void> => {
+      // **THE WINDOW IS A CONSUMER'S OWN CODE INSIDE THE CALL.** The session reference is bound
+      // before the drive (the consumer code needs the instance it disposes), and the window
+      // closes before the call returns. `disposals` is filled by the window itself, which is how
+      // the row measures that the window REALLY OPENED — a window that never fired would make
+      // every reading below vacuous.
+      const source = makeSource(options.sourceOptions)
+      const session = await makeSession(
+        { source, commit: (): void => undefined } as SessionOptions,
+        `ADV-GS-30 window ${windowName}`,
+      )
+      options.bindWindow(session)
+      const el: Record<string, unknown> = { id: 'a' }
+      expect(
+        session.install(el, options.installOptions),
+        `ADV-GS-30 WINDOW ${windowName} STATE (1) — the control installs (so the refusal below is the DISPOSAL and not an install refusal)`,
+      ).toBe(true)
+      expect(
+        source.listenerCount(el),
+        `ADV-GS-30 WINDOW ${windowName} STATE (1) — the install-time footprint the baseline must be restored to is ONE listener (the start listener, §2.3 item 1(a))`,
+      ).toBe(1)
+      expect(
+        session.disposed,
+        `ADV-GS-30 WINDOW ${windowName} STATE (1) — the session is NOT disposed before the attempt (otherwise the drive would be vacuous)`,
+      ).toBe(false)
+      // STATE (2) — THE MID-CALL DISPOSAL, driven from INSIDE the call.
+      const began = session.begin(el)
+      expect(
+        options.disposals.length,
+        `ADV-GS-30 WINDOW ${windowName} STATE (2) — the window REALLY OPENED: the consumer code that disposes the session ran exactly ONCE inside the \`begin\` call`,
+      ).toBe(1)
+      expect(
+        session.disposed,
+        `ADV-GS-30 WINDOW ${windowName} STATE (2) — the disposal landed: \`session.disposed === true\` (§2.1's \`GestureSession.disposed\` — \`true\` forever once \`dispose()\` has run; §2.3 item 7.3 — \`disposed = true\` FOREVER)`,
+      ).toBe(true)
+      expect(
+        options.disposals[0]?.complete,
+        `ADV-GS-30 WINDOW ${windowName} STATE (2) — the disposal reported the baseline restore of this session's own listeners and reported it COMPLETE (§2.3 items 7.2/7.4: no \`off\` threw in this window, so the \`complete: false\` limb must not be reported)`,
+      ).toBe(true)
+      // THE CLAUSE, ASSERTED AS ONE READING (the `ADV-GS-16` convention): the RETURNED result of
+      // the call whose session was disposed mid-call, together with the state it governed.
+      expect(
+        began,
+        `ADV-GS-30 WINDOW ${windowName} STATE (2) — **THE CLAUSE GOVERNING, NOT THE BYTES: §2.3 item 7.7 — "a \`begin\` whose session is disposed during the call must NOT report success: it refuses \`{ok:false, code:'disposed'}\`" (the same rule as item 7.3's "\`begin\` reports \`'disposed'\`" on a disposed session)** — so a \`begin\` whose session is disposed DURING the call REFUSES \`{ok:false, code:'disposed'}\` and never reports \`{ok:true, gesture}\` on an inert instance (the disposal governs the call, however late in the establishment order it lands); got ${JSON.stringify(
+          began,
+          (_k, v: unknown) => (typeof v === 'function' ? 'a function' : v),
+        )}`,
+      ).toEqual({ ok: false, code: 'disposed' })
+      expect(
+        session.stats().lastCode,
+        `ADV-GS-30 WINDOW ${windowName} STATE (2) — SILENCE (S-1), DRIVEN AS A DERIVATION: §2.1's \`lastCode\` cell reads "the LAST result code this session produced", and the ONE result code this call produced is the \`'disposed'\` refusal above — the spec pins NO cell for \`lastCode\` after a dispose-governed refusal, so this limb is the derivation and is reported as one (see the block header)`,
+      ).toBe('disposed')
+      // STATE (3) — THE POST-REFUSAL READING, ALL OF IT FROM THE SESSION'S OWN SEAM.
+      expect(
+        session.stats().gestures,
+        `ADV-GS-30 WINDOW ${windowName} STATE (3) — the gesture COUNTER is NOT consumed: §2.1's \`SessionStats.gestures\` counts "Successful \`begin\` calls", and a \`begin\` that refused \`'disposed'\` is not one (the same clause \`ADV-GS-15\`/\`ADV-GS-16\` pin for the other refusal paths) — the lifetime counter stays \`0\``,
+      ).toBe(0)
+      expect(
+        session.stats().gestureId,
+        `ADV-GS-30 WINDOW ${windowName} STATE (3) — the gesture ID is NOT consumed (\`0\` — the idle reading, §2.1's \`gestureId\` cell; a \`begin\` that never established may not spend the discarded record's id, §2.4 item 4)`,
+      ).toBe(0)
+      expect(
+        session.gesture(),
+        `ADV-GS-30 WINDOW ${windowName} STATE (3) — \`gesture()\` is \`null\`: the DISPOSED record stayed discarded (§2.1's \`gesture()\` cell — "the active gesture's reading, or \`null\` when idle"; §2.3 item 7.3 — "gesture() returns null")`,
+      ).toBe(null)
+      expect(
+        session.stats().active,
+        `ADV-GS-30 WINDOW ${windowName} STATE (3) — \`stats().active === false\` (the state is \`disposed\`, §2.3 items 7.3/8: "any state → disposed")`,
+      ).toBe(false)
+      expect(
+        session.stats().installed,
+        `ADV-GS-30 WINDOW ${windowName} STATE (3) — \`stats().installed === 0\`: the ledger was EMPTIED by the disposal (§2.3 item 7.3's own reading — "\`stats()\` reports \`{installed: 0, active: false}\`") and the refused \`begin\` restored nothing`,
+      ).toBe(0)
+      expect(
+        source.listenerCount(el),
+        `ADV-GS-30 WINDOW ${windowName} STATE (3) — THE BASELINE IS RESTORED: the install-time footprint (\`1\`, asserted in STATE (1)) minus the session's own detach is \`0\` — §2.3 item 7.2 detaches "every start listener of every installed control", and \`I-5\` reads "after \`dispose()\` the session's own contribution is ZERO listeners"; a \`begin\` that reported success after the disposal would be the only way listeners could come back, so this reading is the listener half of the same clause`,
+      ).toBe(0)
+      expect(
+        source.typeMultiset(el),
+        `ADV-GS-30 WINDOW ${windowName} STATE (3) — and no listener of ANY type survives the disposal (the empty multiset, not a count-only claim)`,
+      ).toEqual([])
+      expect(
+        Object.keys(session.stats()).sort(),
+        `ADV-GS-30 WINDOW ${windowName} STATE (3) — SILENCE (S-2), ASSERTED SO A LATER SPEC CHANGE FAILS HERE RATHER THAN PASSING SILENTLY: §2.1's \`SessionStats\` block declares SEVEN fields and NO \`disposed\` field, so the disposal reading is \`session.disposed\` (§2.1's \`GestureSession\`, §2.5 item 8) — NOT \`stats().disposed\`; this row asserts the key set it reads so a spec that adds the field has a failing row at this site`,
+      ).toEqual(['active', 'commits', 'gestureId', 'gestures', 'installed', 'lastCode', 'sourceCalls'])
+    }
+    // ---- WINDOW A: the disposal comes from inside the SOURCE'S CAPTURE CALL.
+    // The two windows drive the seam directly with the SAME `makeSource`/`makeSession` pair
+    // `makeHarness` composes (the harness's own shape is shared by 85 rows and is not extended
+    // here), which is also what makes the window's disposal report readable.
+    const disposalsA: DisposeReport[] = []
+    let windowA: (() => void) | null = null
+    await runWindow('A (`capturePointer`)', {
+      installOptions: { capture: true },
+      disposals: disposalsA,
+      bindWindow: (session: GestureSessionMirror): void => {
+        windowA = (): void => {
+          disposalsA.push(session.dispose())
+        }
+      },
+      sourceOptions: {
+        capturePointer: (): void => {
+          // The consumer code the session invokes inside `begin`, after establishment
+          // (`§2.3` item 6(b)); its disposal must govern the call that is still running.
+          const disposeWindow = windowA
+          if (disposeWindow !== null) disposeWindow()
+        },
+      },
+    })
+    // ---- WINDOW B: the disposal comes from inside the consumer's `onStart`.
+    const disposalsB: DisposeReport[] = []
+    let windowB: (() => void) | null = null
+    await runWindow('B (`onStart`)', {
+      sourceOptions: {},
+      disposals: disposalsB,
+      bindWindow: (session: GestureSessionMirror): void => {
+        windowB = (): void => {
+          disposalsB.push(session.dispose())
+        }
+      },
+      installOptions: {
+        capture: false,
+        onStart: (): void => {
+          const disposeWindow = windowB
+          if (disposeWindow !== null) disposeWindow()
+        },
+      },
+    })
+  })
+})
 // ===========================================================================
 // §5.5.1 — PRE harness preconditions (NOT spec rows). `§4.2` item 2 requires the
 // un-run register rows to be REPORTED AS FAILURES; these rows exist so a red run's
@@ -5361,11 +5617,30 @@ describe('PRE — harness preconditions (not spec rows)', () => {
       'S-GS-SEED-1 + S-GS-POOL-1',
     ])
     // The four `YES (bounded)` rows (`§5.5.1`'s own list) are NAMED so the audit does not
-    // have to infer which rows are bounded.
+    // have to infer which rows are bounded. **⟶ CORRECTED 2026-09-27 (`ADV-GS-32`, the
+    // gate-4 closure): THE SET IS DERIVED FROM THE REGISTER TABLE ABOVE (`REGISTER_DECLARED`'s
+    // per-row `bounded` flag), NOT RESTATED AS FOUR LITERALS COMPARED AGAINST THE SAME FOUR
+    // LITERALS** — the as-filed form was `expect(['P-GS-IM-1','P-GS-IM-5','P-GS-TP-1',
+    // 'P-GS-TP-2']).toEqual(['P-GS-IM-1','P-GS-IM-5','P-GS-TP-1','P-GS-TP-2'])`, an assertion
+    // that cannot FAIL, whose message said *"the FOUR rows … (the other SEVEN are `YES`)"* while
+    // `§5.5.1`'s own count note marks **FIVE** rows `YES (bounded)` (`P-GS-IM-2` joined the set —
+    // `ADV-GS-25`) and `P-GS-IM-2`'s own row title says so. The derivation below therefore has a
+    // real failure mode: a row whose flag moves, a row added or dropped from the table, or a
+    // rename all change the derived set.
+    const boundedRows = REGISTER_DECLARED.filter((r) => r.bounded).map((r) => r.row)
+    const unboundedRows = REGISTER_DECLARED.filter((r) => !r.bounded).map((r) => r.row)
     expect(
-      ['P-GS-IM-1', 'P-GS-IM-5', 'P-GS-TP-1', 'P-GS-TP-2'],
-      'PRE-2/§5.5.1 — the FOUR rows marked `YES (bounded)` are named exactly (the other SEVEN are `YES` over fully enumerated domains)',
-    ).toEqual(['P-GS-IM-1', 'P-GS-IM-5', 'P-GS-TP-1', 'P-GS-TP-2'])
+      boundedRows,
+      'PRE-2/§5.5.1 — the rows the table marks `YES (bounded)`, DERIVED from the table’s own per-row flag and compared to the FIVE `§5.5.1` names in register order (`P-GS-IM-1`, `P-GS-IM-2`, `P-GS-IM-5`, `P-GS-TP-1`, `P-GS-TP-2` — `ADV-GS-25` moved `P-GS-IM-2` into the bounded set, so the count is FIVE and the other SIX are `YES` over fully enumerated domains)',
+    ).toEqual(['P-GS-IM-1', 'P-GS-IM-2', 'P-GS-IM-5', 'P-GS-TP-1', 'P-GS-TP-2'])
+    expect(
+      boundedRows.length + unboundedRows.length,
+      'PRE-2/§5.5.1 — the FIVE `YES (bounded)` rows plus the SIX `YES` rows account for ALL ELEVEN register rows (the derivation above is over the whole table, not over a subset of it)',
+    ).toBe(11)
+    expect(
+      unboundedRows,
+      'PRE-2/§5.5.1 — the SIX rows whose `YES` is over a fully enumerated domain, DERIVED from the same flag (the as-filed message read “the other SEVEN”, the count that was true while the bounded set was FOUR)',
+    ).toEqual(['P-GS-IM-3', 'P-GS-IM-4', 'P-GS-IM-6', 'P-GS-SM-1', 'P-GS-SM-2', 'P-GS-SM-3'])
     // The pinned one-step LCG form, recomputed from the pinned literals.
     expect(
       FIRST_LCG_STATE,
@@ -5762,7 +6037,23 @@ describe('PRE — harness preconditions (not spec rows)', () => {
  *  properties) and `distinctKey` (the INPUT the module observes: the resolved capture flag,
  *  the connectivity shape, whether `commit` is absent, whether a second control is
  *  installed — plus the source's own behavioural shape). `PRE-4` asserts the fixtures and
- *  prints the arithmetic; the register row prints DECLARED 15 BESIDE the derived figure.
+ *  prints the arithmetic; the register row prints the THREE `§5.5.1` figures BESIDE the
+ *  derived one.
+ *
+ *  **⟶ CORRECTED 2026-09-27 (`ADV-GS-33`, the gate-4 closure): THE BARE `15` AT THIS SITE
+ *  WAS A SPEC FIGURE THAT NO LONGER EXISTS.** `§5.5.1`'s cell now states its figures WITH
+ *  THEIR DEFINITIONS AND DERIVATIONS (`ADV-GS-18`), so this block cites them as they now
+ *  read: **DECLARED CONFIGURATIONS `20`** (the domain the `58`-attempt term rests on) ·
+ *  **DISTINCT `distinctKey` LABELS `16`** (the `20` declared less the `4` label duplicates —
+ *  the capture pairs `(4)`→`(1)` and `(3)`/`(5)`/`(11)`→`(2)`; *see the SILENCE REPORTED at
+ *  this row's `PRE-4` site: `§5.5.1 P-GS-IM-1`'s cell still prints the `16` as `20 − 5 + 1`*)
+ *  · **DISTINCT MODULE-OBSERVABLE INPUTS `13`** (the `16` labels less the `3` the module
+ *  cannot distinguish — `(17)` and `(18)` both read as `(12)`, and `(12)` itself reads as the
+ *  `capture=false` group's input), which is the figure the table derives (`ADV-GS-18`
+ *  measured `16` LABELS and `13` MODULE-OBSERVABLE INPUTS). **The superseded as-filed `15`
+ *  is kept visible in the sentence above so no later pass re-derives it as current.** The
+ *  row's DERIVED/asserted figures (`16` labels / `13` observable) are UNCHANGED: only the
+ *  prose figures moved.
  *
  *  **NO configuration is removed, added or renumbered** and the declared `58` does not move. */
 interface Im1Configuration {
@@ -5979,7 +6270,9 @@ const IM1_STAGES = ['after `install`', 'during the gesture', 'after the `end` te
  *   (e) whether a SECOND control is installed (`(20)`'s input).
  *
  *  Fixture-only properties are deliberately NOT part of the key. The row prints this derived
- *  figure BESIDE the declared `15`, the declared `20` configurations and the `58` term —
+ *  figure BESIDE the `§5.5.1` `P-GS-IM-1` figures as they now read — DECLARED CONFIGURATIONS
+ *  `20` · DISTINCT `distinctKey` LABELS `16` · DISTINCT MODULE-OBSERVABLE INPUTS `13`
+ *  (the three superseding the stale bare `15`; `ADV-GS-33`) — and BESIDE the `58` term,
  *  never substituted for any of them. */
 function im1ObservableKey(configuration: Im1Configuration): string {
   const source = configuration.sourceClass === true ? new Im1ClassSource() : makeSource(configuration.sourceOptions ?? {})
@@ -6361,8 +6654,10 @@ describe('§5.5.1 — the typed property register (11 rows, executed determinist
     )
     // **⟶ `D-12`(b), RE-DERIVED BY `ADV-GS-18` (the gate-4 closure): THE THREE HONEST
     // FIGURES, EACH DERIVED FROM THE TABLE, PRINTED BESIDE THE DECLARED `58`.** `§5.5.1`'s
-    // cell states the honest distinct-input figure as `15` and names the duplications it can
-    // see. This row now prints THREE figures, each COMPUTED here rather than hard-coded:
+    // cell states its figures WITH THEIR DEFINITIONS (`ADV-GS-18`; the bare `15` this comment
+    // used to cite is a spec figure that no longer exists — `ADV-GS-33`) and names the
+    // duplications it can see. This row now prints THREE figures, each COMPUTED here rather
+    // than hard-coded:
     //   (1) the DECLARED `20` configurations (the domain the `58` term rests on);
     //   (2) the distinct `distinctKey` LABEL count, exactly as the table defines the labels
     //       — the labels include the two FIXTURE-ONLY shapes (`(17)`'s class instance,
@@ -6386,7 +6681,12 @@ describe('§5.5.1 — the typed property register (11 rows, executed determinist
     console.log(
       `§5.5.1 P-GS-IM-1 distinct-input record :: ${JSON.stringify({
         declaredConfigurations: IM1_CONFIGURATIONS.length,
-        specDeclaredDistinctInputs: 15,
+        specDeclaredDistinctInputs: 20,
+        specFigures: {
+          declaredConfigurations: 20,
+          distinctDistinctKeyLabels: 16,
+          distinctModuleObservableInputs: 13,
+        },
         specNamedAliases: 5,
         tableDerivedDistinctLabels: distinctKeys.length,
         tableDerivedLabelAliases: labelAliasCount,
@@ -6398,11 +6698,13 @@ describe('§5.5.1 — the typed property register (11 rows, executed determinist
         declaredTerm: declaredTermOf('P-GS-IM-1'),
         measuredObservations: rec.attemptsRunPublic(),
         definitions: {
-          declaredConfigurations: 'the table’s OWN members (§5.5.1’s declared `20`)',
-          label: 'the configuration’s own declared `distinctKey` label, INCLUDING the two fixture-only shapes the module cannot observe',
+          declaredConfigurations: 'the table’s OWN members (§5.5.1’s DECLARED CONFIGURATIONS `20` — the domain the `58` term rests on)',
+          distinctDistinctKeyLabels: '§5.5.1’s DISTINCT `distinctKey` LABELS `16` (the declared `20` less the `4` label duplicates), derived here from the table’s own `distinctKey` values',
+          distinctModuleObservableInputs: '§5.5.1’s DISTINCT MODULE-OBSERVABLE INPUTS `13` (the `16` labels less the `3` the module cannot distinguish — `(17)`/`(18)` read as `(12)`, and `(12)` reads as the `capture=false` group’s input), derived here by `im1ObservableKey`',
+          label: 'the configuration’s own declared `distinctKey` label, INCLUDING the fixture-only shapes the module cannot observe',
           observable: 'DERIVED by `im1ObservableKey`: the resolved capture flag, the callable hook set, the connectivity outcome, `commit`-absent and second-element — the input the MODULE can read',
         },
-        note: 'the DECLARED 15 and the DECLARED term 58 are the figures the caps are compared against (REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS, ACTIVE); the derived figures are reported BESIDE them and never substituted',
+        note: 'the DECLARED CONFIGURATIONS 20 and the DECLARED term 58 are the figures the caps are compared against (REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS, ACTIVE); the DISTINCT figures 16 (labels) and 13 (module-observable) are the derived ones, reported BESIDE them and never substituted — the stale bare `15` this record used to print is superseded (`ADV-GS-33`)',
       })}`,
     )
     expect(
@@ -6411,11 +6713,11 @@ describe('§5.5.1 — the typed property register (11 rows, executed determinist
     ).toBe(20)
     expect(
       distinctKeys.length,
-      `P-GS-IM-1/§5.5.1 — figure (2): the TABLE’S OWN distinct-\`distinctKey\`-LABEL count, DERIVED from the twenty configurations (never hard-coded: this assertion pins the figure the record above prints), beside the DECLARED \`15\` and the declared term \`58\` — every label is the configuration’s own name for its input, including the two fixture-only shapes`,
+      `P-GS-IM-1/§5.5.1 — figure (2): the TABLE’S OWN distinct-\`distinctKey\`-LABEL count, DERIVED from the twenty configurations (never hard-coded: this assertion pins the figure the record above prints), beside §5.5.1’s DISTINCT \`distinctKey\` LABELS \`16\` and the declared term \`58\` — every label is the configuration’s own name for its input, including the fixture-only shapes (the stale bare \`15\` this message used to print is superseded, \`ADV-GS-33\`)`,
     ).toBe(16)
     expect(
       distinctObservable.length,
-      `P-GS-IM-1/§5.5.1 — figure (3): the DISTINCT MODULE-OBSERVABLE INPUT count, DERIVED by \`im1ObservableKey\` from the sources and options the drive really builds (\`${distinctObservable.length}\` distinct observable inputs + \`${observableAliasCount}\` observable aliases = \`${IM1_CONFIGURATIONS.length}\` configurations), printed BESIDE the declared \`15\` and the label figure — never substituted for either`,
+      `P-GS-IM-1/§5.5.1 — figure (3): the DISTINCT MODULE-OBSERVABLE INPUT count, DERIVED by \`im1ObservableKey\` from the sources and options the drive really builds (\`${distinctObservable.length}\` distinct observable inputs + \`${observableAliasCount}\` observable aliases = \`${IM1_CONFIGURATIONS.length}\` configurations), printed BESIDE §5.5.1’s DISTINCT MODULE-OBSERVABLE INPUTS \`13\` and the label figure \`16\` — never substituted for either (the stale bare \`15\` is superseded, \`ADV-GS-33\`)`,
     ).toBe(13)
     // THE ADVERSARIAL PASS'S OWN TWO LABEL-ONLY CLAIMS, MEASURED RATHER THAN NARRATED: `(17)`
     // (a class-instance source with a callable `isConnected` returning `true`) reads as `(12)`,
@@ -8319,13 +8621,17 @@ describe('§6 — the unit’s three falsifications (each asserted, never narrat
 //   · **`D-12`(`b`)** — the two MISSING FIXTURES (`(16)`'s ABSENT-MEMBER source, `(18)`'s
 //     GENUINELY FROZEN source) now exist and are asserted in `PRE-4`; `(17)` is a real class
 //     instance; the table carries a `distinctKey` per configuration so the distinct-input
-//     figure is DERIVED (printed) rather than restated, and the DECLARED `15` is printed
+//     figure is DERIVED (printed) rather than restated, and the declared figures are printed
 //     BESIDE the derived figure in the register row. **⟶ CARRIED FURTHER BY `ADV-GS-18`
 //     (the gate-4 closure):** the as-filed row still HARD-CODED its derived figure (`12`) and
 //     built all five "single-hook" configurations from ONE all-hooks fixture; the row now
 //     computes three figures from the table (the `20` declared configurations, the `16`
 //     distinct LABELS, the `13` distinct MODULE-OBSERVABLE inputs via `im1ObservableKey`) and
-//     `(6)`–`(10)` plus `(20)` really build/install what their ids say.
+//     `(6)`–`(10)` plus `(20)` really build/install what their ids say. **⟶ AND `ADV-GS-33`
+//     (the gate-4 closure): the as-filed `15` this line printed as "the DECLARED figure" is
+//     superseded — `§5.5.1` now states DECLARED CONFIGURATIONS `20` · DISTINCT
+//     `distinctKey` LABELS `16` · DISTINCT MODULE-OBSERVABLE INPUTS `13`, and the row's
+//     DERIVED/asserted figures stay `16`/`13`.**
 //   · **`D-12`(`c`)** — `P-GS-IM-1`'s row/stage/message text now reads the `end`-terminal drive
 //     (the `reset`/`cancel` counts named as `P-GS-IM-4`'s), and `P-GS-IM-5`'s declarations and
 //     messages read `6` stage POSITIONS beside the declared `24`. **⟶ CORRECTED BY
@@ -8367,6 +8673,12 @@ describe('§6 — the unit’s three falsifications (each asserted, never narrat
 //     as-filed record. **Nothing in `src/**` was edited by this pass.**
 //   · **`P-GS-IM-1`'s DECLARED DISTINCT-INPUT FIGURE IS `15`; THE TABLE NOW DERIVES
 //     `16` LABELS AND `13` MODULE-OBSERVABLE INPUTS (`⟶ ADV-GS-18`, the gate-4 closure).**
+//     **⟶ SUPERSEDED 2026-09-27 (`ADV-GS-33`, the gate-4 closure): the `15` in this line's
+//     own title is a spec figure that NO LONGER EXISTS — `§5.5.1 P-GS-IM-1` now states its
+//     figures WITH THEIR DEFINITIONS, DECLARED CONFIGURATIONS `20` · DISTINCT `distinctKey`
+//     LABELS `16` · DISTINCT MODULE-OBSERVABLE INPUTS `13` — and this bullet's title is kept
+//     visible as the as-filed form while the body below already carries the landed `16`/`13`
+//     pair. The row's DERIVED/asserted figures are unchanged.**
 //     The as-filed bullet read *"THE TABLE DERIVES `12` … 20 = 12 distinct + 8 aliases"*, and
 //     that `12` was BOTH hard-coded in the assertion and contradicted by the table's own
 //     printed aliasing list, because the FIVE "single-hook" configurations `(6)`…`(10)` were
@@ -8379,7 +8691,9 @@ describe('§6 — the unit’s three falsifications (each asserted, never narrat
 //     does and projecting only what the module can read (`im1ObservableKey` — under which
 //     `(17)` and `(18)` read as `(12)`-shaped inputs, asserted as such). `(6)`–`(9)` now build
 //     four GENUINELY single-hook inputs, `(10)` builds the all-hooks input, and `(20)` really
-//     installs its second element. **The DECLARED `15` and the DECLARED term `58` are unmoved**
+//     installs its second element. **The DECLARED CONFIGURATIONS `20` and the DECLARED term
+//     `58` are unmoved** (`ADV-GS-33`: the as-filed `15` of this sentence is superseded by
+//     `§5.5.1`'s three defined figures)
 //     and the derived figures are printed BESIDE them (never substituted); this remains a
 //     register-cell-vs-table disagreement, reported rather than tuned green.
 //   · **`ADV-GS-15` — `ADV-GS-2`/`stats().gestures`: A REFUSED `begin` MUST NOT CONSUME A
@@ -8424,4 +8738,49 @@ describe('§6 — the unit’s three falsifications (each asserted, never narrat
 //     contradicts. **No register id, term, strategy id, the `396` total, the seed or any cap
 //     moved in this pass** — the DECLARED terms (`58`/`24`/`30`) are unmoved and are what the
 //     caps are compared against.
+//   · **⟶ `ADV-GS-30`/`ADV-GS-32`/`ADV-GS-33`/`ADV-GS-37` — THE GATE-4 CLOSURE'S FOUR
+//     TEST-SIDE ITEMS (2026-09-27, this pass).**
+//     **`ADV-GS-30` (MED — THE RED OF THIS PASS).** A `begin` whose session is disposed
+//     DURING the call reported `{ok:true, gesture}` on an inert instance. The row added by
+//     this pass (`describe('ADV-GS-30 — a \`begin\` whose session is disposed MID-CALL …')`)
+//     drives BOTH windows the establishment order leaves open — the disposal from inside
+//     `capturePointer` and from inside `onStart` — and asserts, per window, the `§2.3` item
+//     7.3 refusal `{ok:false, code:'disposed'}`, `session.disposed === true`, the counter
+//     `stats().gestures === 0`, `stats().gestureId === 0`, `gesture() === null`,
+//     `stats().active === false`, `stats().installed === 0`, and the listener baseline back
+//     to `0` (`I-5`). **It is authored from the CLAUSE, never from the module's bytes.** Two
+//     silences are reported in the row's own comments rather than invented:
+//     **S-1** — `stats().lastCode` after a dispose-governed refusal has NO pinned cell
+//     (`§0A` note 8 names the counters and says nothing of `lastCode`), so the row asserts the
+//     refusal's own code as a DERIVATION and says so; **S-2** — `stats().disposed` is NOT a
+//     `SessionStats` field (`§2.1` declares SEVEN), so the row asserts the disposal through
+//     `session.disposed` and, beside it, the exact key set of `stats()` so a spec that adds
+//     the field fails HERE rather than passing silently. The harness gained ONE option for
+//     this row (`SourceOptions.capturePointer`, the mid-call hook inside the recorder's
+//     capture call) — the window cannot be reached otherwise, because it is opened by the
+//     session's own call order.
+//     **`ADV-GS-32`.** `PRE-2`'s bounded-set assertion compared four literals to the same
+//     four literals (unfalsifiable) and printed *"the FOUR rows … (the other SEVEN are
+//     `YES`)"* while `§5.5.1` marks FIVE (`P-GS-IM-2` joined, `ADV-GS-25`). The register table
+//     `REGISTER_DECLARED` now carries a per-row `bounded` flag, and `PRE-2` DERIVES the
+//     bounded and unbounded sets from it (and asserts they account for all ELEVEN rows), with
+//     the message corrected to FIVE / SIX. **No declared term, row id or strategy id moved
+//     for the flag** (`396` = `58+32+36+30+24+30+40+30+32+24+60` is still the sum of the
+//     terms).
+//     **`ADV-GS-33`.** The `P-GS-IM-1` row's own messages and log record printed the stale
+//     bare `15` (*"beside the DECLARED `15`"*) — a spec figure that no longer exists. They now
+//     cite `§5.5.1`'s three defined figures: DECLARED CONFIGURATIONS `20` · DISTINCT
+//     `distinctKey` LABELS `16` · DISTINCT MODULE-OBSERVABLE INPUTS `13`, with the as-filed
+//     `15` kept visible as provenance at each corrected site. **The row's DERIVED/asserted
+//     figures (`16` labels / `13` observable, computed from the table) are UNCHANGED.**
+//     **`ADV-GS-37`.** The typed-`EventSource` fixture's comment still framed its
+//     `capturePointer` member as *"the leg-4 compile failure — the red this pass exists to
+//     report"* with no adjacent correction; the dated `⟶` correction now stands beside it
+//     (the module declares the member, leg 4 is exit `0`, the red was `TS2353`). Prose only —
+//     **no assertion moved for it.**
+//     **WHAT DID NOT MOVE:** no register row id, no row count (still ELEVEN), no attempt term,
+//     the `396` total and its eleven printed terms, the seed `20260927`, the caps
+//     (`≤100`/row · `≤400` total · stop-after-5), the strategy ids, the `26`-of-`30` figure,
+//     and no existing green row was weakened or re-tuned. **`src/**` was NOT touched by this
+//     pass**, and nothing was committed.
 // ===========================================================================
