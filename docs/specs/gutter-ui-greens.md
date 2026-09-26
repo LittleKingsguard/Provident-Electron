@@ -359,3 +359,293 @@ item 10's blind-test → review loop; the `U-PROJ` §12 addendum is the shape to
 * **THE CARD-READING SCENARIOS** — `ADV-GU-7`/`ADV-GU-8` changed what the authored card emits (bare attributes; the affordance's `css.style`), so any scenario that read the card's data keys or the affordance's style must be re-driven against the fixed tree.
 
 **4. WHAT THIS ADDENDUM DOES NOT DO.** It **changes no measured result, no PASS/FAIL verdict, no scenario id and no `NOT-BLIND-RUNNABLE` entry** above; it **claims no gate**; and it **does not convert any FAIL into a pass.** The set stays a **review finding** until a blind re-run replaces it.
+
+---
+
+## ⟶ RE-RUN 2026-09-27 (POST-FIX) — THE BLIND RE-DRIVE THE ADDENDUM OWED: `33` SCENARIOS **AUTHORED FRESH FROM THE DOCUMENTATION** AND RUN AT `83eb471`
+
+**WHY THIS BLOCK EXISTS, AND WHAT IT IS NOT.** The block above states the relationship: the first run's `42317ca`
+readings **PREDATE the module/wiring they describe** (`72fff4c`, `befe9c6`, `83eb471` landed after it) and the
+set is a **review finding until a blind re-run re-drives its affected scenarios**. **THIS IS THAT RE-RUN** —
+**nothing above is edited, and no earlier PASS/FAIL verdict, scenario id, measured reading or
+`NOT-BLIND-RUNNABLE` entry is touched** (annotate-only, `AGENTS.md` item 10a / RCA-4 gate 5). **The scenarios
+below are NEW ids (`R1`–`R34`) authored from the DOCUMENTATION ALONE and run NOW**; where a re-run scenario
+re-drives a group the addendum named, **the original scenario's id is cited in its clause column so the two
+readings stand side by side rather than one overwriting the other.**
+
+**THE REVISION.** `git rev-parse --short HEAD` → **`83eb471`** (`U-PROJ`'s `R-20` DENIED arm scoped to its OWN
+attributable changes — the commit that carries this unit's `docs/specs/gutter-ui-greens.md`,
+`src/shared/gutter-affordance.ts` and `tests/gutter-ui.test.ts` inside its range). **The live tree was NOT
+clean when this pass started**: `tests/zz-probe.test.ts`, `tests/zz-probe2.test.ts` and `tests/zz-probe3.test.ts`
+are **UNTRACKED and NOT mine** — another session's probe files, **named here because they are the measured
+cause of this pass's one suite red** (`docs/specs/gutter.md` `§3.4 R-12`'s diff-scope row reads `git status`
+and is `FAIL` on them). **This pass wrote NO file in the repo except this document: the driver, the envelope
+and the steps files all live under `/tmp` and were deleted/left there, never committed.**
+
+**DOCUMENTS READ (the whole input set, unchanged from the first run):** `docs/specs/gutter-ui.md` (all of it,
+including `§0`, `§R`–`§R.3`, `§0A`, the Layer declaration, `§1`–`§8`, `§5.U` and **all six `⟶ RECORDED` blocks
+including the GATE-4 one**) · `docs/specs/gutter.md` `§0`, `§0A`, `§2.1`, `§2.3`, `§2.4`, `§2.5` ·
+`docs/specs/gsession.md` `§0`, `§0A`, `§2.1`, `§2.3`, `§2.5` · `docs/decisions.md`'s
+`DEMO-HANDLER-CONVENTION`, `MCP-ENDPOINT`, `ADOPT-0.1.1-SHARED-SURFACES` rows · `docs/specs/mcp-endpoint.md`
+`§4` · `scripts/mcp-cli.mjs`'s own usage header · `package.json`/`tsconfig.json`. **`docs/specs/user-flow-audit.md`
+STILL DOES NOT EXIST** — `§5.U`'s `U-GAP-1` remains open and is **not** re-recorded as new.
+
+**WHAT THIS PASS DID *NOT* READ.** **No implementation byte and no test file.** `src/shared/gutter-affordance.ts`,
+`src/renderer/*.ts`, `src/shared/demo-envelope.ts` and **`tests/gutter-ui.test.ts` were NEVER opened** — not to
+derive a scenario, not to calibrate an expectation. **The module was reached ONLY through its documented
+exported surface** (`createGutterAffordance` · `cursorDeclarationFor` · `domEventSource`, the options object,
+`attach`/`detach`/`stats`/`controller`) **and the session module's `POINTER_TYPES` value**; the battery target
+**only** through the documented CLI. **Two consequence-readings are quoted below from a `console.log` line the
+suite itself prints** (the `§3.1 M-4` composed-`on` count and the `§5.5.3` arithmetic) — **that output is a
+run's stdout, not a test file read.**
+
+**THE RUN — every command with its exact exit code:**
+
+| # | Command (exact) | Exit | What it produced |
+| --- | --- | --- | --- |
+| **C-1** | `esbuild /tmp/e10-greens/final.ts --bundle --platform=node --format=esm --target=es2022 --outfile=/tmp/e10-greens/final.mjs` then `node /tmp/e10-greens/final.mjs` | **1** | the re-run driver: **34 scenarios — `30` PASS / `3` FAIL / `1` NOT-BLIND-RUNNABLE** (`R34` is authored as `NOT-BLIND-RUNNABLE` and can never be a PASS; the driver's own `SPLIT` line reads `30 / 4` because it counts that scenario's `false` verdict) |
+| **C-2** | `npx vitest run` | **1** | the repository suite as the run's control: **`70` files — `1522` passed / `2` skipped / `1` failed (`1525`)**; the ONE red is **`tests/gutter.test.ts` `§3.4 R-12`'s diff-scope row**, failing on the three untracked `zz-probe*.test.ts` files named above. **`tests/gutter-ui.test.ts` PASSES in this run** — the unit's own red set is now green on this tree (the five rows `ADV-GU-6` shifted were recalibrated at `befe9c6`) |
+| **C-3** | `npm run --silent build` | **0** | the bundles the battery target runs on: **FIVE artifacts — four esbuild outputs (`main.cjs`, `preload.cjs`, `standalone.mjs`, `battery-host.mjs`) in `dist/main/` plus the copied `dist/renderer/renderer.js` + `index.html`**, i.e. `§5.2` leg 3's censused set is UNCHANGED |
+| **C-4** | `node scripts/mcp-cli.mjs --target battery run /tmp/e10-greens/steps-card.json` | **0** | the `§5.U` `U-1`/`U-2`(a)/`U-8`(a)–(d) readings — `load` + `targets` + `html` + `dispatch` + `html`, in ONE host process |
+| **C-5** | `node scripts/mcp-cli.mjs --target battery run /tmp/e10-greens/steps-u7.json` | **0** | the `U-7` BEFORE/AFTER delta — a bare envelope first, then the authored card, with `targets` + `html` + `markdown` around each |
+
+**NUMBERS, PLAINLY: `PASS 30 / FAIL 3 / NOT-BLIND-RUNNABLE 1`** (34 authored scenarios; the
+`NOT-BLIND-RUNNABLE` entry keeps its structural reason below and is **never counted as a pass**).
+
+**THE DELTA FROM THE FIRST RUN, STATED WITHOUT FLATTERY.** The first run executed **45** scenarios
+(`36` PASS / `9` FAIL) plus `6` `NOT-BLIND-RUNNABLE`; this re-run executes **33** (`30` PASS / `3` FAIL) plus
+`1` `NOT-BLIND-RUNNABLE`. **The sets are NOT the same size and are NOT a one-to-one mapping** — the first run's
+`S1`–`S45` were authored against the as-filed contract, and this pass re-authored the groups the addendum named
+**plus the validity/reset/write-route/preview properties the fixes imply**, so the honest delta is **per class**:
+
+| Class the addendum named | First run | This re-run | Delta |
+| --- | --- | --- | --- |
+| **THE VALIDITY CLAUSE (i)** (`§2.3` item 5(i), `ADV-GU-3`) | `F-1`/`F-8` (a `NULL` pointer handed to the mapping; two mapping calls per unresolvable move) — **FAIL** | **PASS** (`R3`: a null pointer ⇒ INVALID *even with a finite-answer seam* ⇒ the invalid arm, the visible revert, `resets 1`, sink `[100]`; `R4`: the mapping is called **once per observed move**) | **the class is CLOSED by measurement** |
+| **THE RESET ARM** (`§2.3` rows 8/9, `ADV-GU-6`) | `F-3`/`F-4`/`F-5`/`F-6` (the invalid arm committed nothing; the refusal reached no session) — **FAIL** | **PASS** (`R8`: the LIVE-window invalid arm calls `reset` once while the gesture is ACTIVE, commits the CLAMPED PRE-DRAG size **once**, `e3 sinkCalls 1 / written 1`, the later `pointerup` commits nothing; `R9`: no second reset; `R11`: the PRE-HANDLE window still refuses with the counters unmoved; `R21`: the throwing value seam lands in the same arm) | **the commit half is CLOSED**; **a residual drift remains on the read count — `R7` FAIL, below** |
+| **THE PRE-DRAG READ ORDER** (`§2.4` item 3, `§0A` note 5) | part of the same class | **PASS on the positive half** (`R6`: read **0** after attach, **1** immediately after establishment, **1** through a valid move and the terminal) — **FAIL on the invalid half** (`R7`) | **partially closed** — see `F-1` |
+| **THE PREVIEW** (`§2.5` item 4, `ADV-GU-2`: now a transient write on the LIVE TARGET) | the first run read the preview at the affordance's own node | **the module side PASSES** (`R14`: one preview per observed move, the clamped value, the gesture token by identity, never the sink); **the TARGET-ELEMENT half is `NOT-BLIND-RUNNABLE`** (`R34`'s reason: the seam is handed no element) and **the live target box reading is owed to a real window** | **the module half is CLOSED; the wiring half is owed to a live run, not asserted here** |
+| **THE WIRING'S WRITE ROUTE** (`§2.1` item 8(v), `§2.5` item 5, `ADV-GU-1`) | `F-4`'s live absence of a commit | **PASS** (`R15`: ONE `state-slice` write, `targetProp content`, `mode replace`, the CLAMPED value `"150"` **as a string**, naming the **STATUS** node and not the affordance node, with the preview count unaffected) | **CLOSED at the payload level; the runtime's own acceptance is owed to a live run** (`ADV-GU-1`'s live confirmation is the battery's, not this pass's) |
+| **THE `§5.U` READINGS** | `U-1`/`U-2`/`U-5`/`U-7`/`U-8`(a)–(d) taken on the battery target with the first run's own envelope | **the same instrument family, taken again** — `R28`/`R29`/`R30`/`R31`/`R32`/`R33` **PASS** with **my own independently authored** legacy-JSON card; `U-5`/`U-8`(e) `NOT-BLIND-RUNNABLE` (`R34`) | **the instrument + data-authoring claims are re-confirmed; the demo's own census and every live-window reading stay owed** |
+| **THE REGISTER'S SEVEN PROPERTY TEXTS** (`§5.5.1`) | driven at the property-text level, `1` of `5` `P-GU-SM-1` cells + `2` of `5` `P-GU-SM-3` shapes FAIL | **(1)** the register's own arithmetic is re-read from the suite's stdout: `declaredTotal 134 = measuredTermSum 134`, terms `15/15/15/45/20/12/12`, chain `15 → 30 → 45 → 90 → 110 → 122 → 134`, subtotals `SM 45 · IM 65 · TP 24` — **the print now IS the sum of its own terms**; **(2)** the seven **property TEXTS** are re-driven inside `R8`/`R9`/`R10`/`R11`/`R16`/`R17`/`R18`/`R21`/`R26`; **`R7` FAILs on `P-GU-IM-2`'s "exactly once per gesture"** | **improved, not clean** — the gate-4 audit's seven `OWED — TEST-SIDE` generator remedies are the TestWriter's and this pass does not audit the red set's tables |
+| **THE CARD-READING SCENARIOS** (`ADV-GU-7`/`ADV-GU-8`: bare attributes; the affordance's `css.style`) | the first run read the card's data keys | **PASS** (`R29`: the affordance's rendered markup carries `axis="vertical"` **as a bare attribute** and `style="cursor: col-resize; width: 200px;"`; `R32`: the card is data with a function-STRING body) | **CLOSED for the authoring contract, on the battery target** |
+
+---
+
+## K. THE RE-RUN'S SCENARIOS — `§2.1`–`§2.6`, `§3.1`–`§3.3` SURFACE, STATES, VALIDITY, RESET AND WRITE ROUTE
+
+**THE SHARED MEASUREMENT BASE** (identical to the first run's, so the readings are comparable): pre-drag size
+**100**, `boundsOf` → `{min: 0, max: 200}`, `sizeFromPointer: (pointer, start) => pointer.x`, a move to
+`clientX: 150` ⇒ `raw 150` ⇒ `clamped 150`; the session is `createGestureSession({source, commit})` with a
+**NON-FORWARDING recorder** on the session's own channel (`§R` `R-13` / `§2.1` clause 4) and the caller's
+`commit` seam — **the recording double standing in for `Runtime.applyCommand`** — as the composition's ONE sink;
+the release is **the session's own `pointerup` listener**; the source double is the documented `EventSourceLike`
+shape **with event forwarding** (`§R.2` `R-10`).
+
+| id | Clause(s) (with the first run's id where it re-drives one) | Drive | PASS criterion | Result / MEASURED |
+| --- | --- | --- | --- | --- |
+| **R1** | `§2.1`(a) / `§R.3` / `§3.4 R-1`(a) — *re-drives `S1`* | `Object.keys(namespace)` | exactly the **three** value names, no fourth | **PASS** — `["createGutterAffordance","cursorDeclarationFor","domEventSource"]` |
+| **R2** | `§2.1` item 5 / `§3.4 R-2` — *re-drives `S2`* | the affordance's own key set + `stats()` | the **five** members, the **seven** stats fields, `lastCursor === ''` | **PASS** — `["attach","controller","detach","detached","stats"]` · `["cursorClears","cursorWrites","drops","lastCursor","moves","previews","resets"]` · `""` |
+| **R3** | `§2.3` item 5 **clause (i)** (`ADV-GU-3`) — **NEW** | a caller `pointerOf` that answers `{x:150,y:0}` for one move and then **`null`** (the seam still answers a finite number) | the **null pointer ⇒ the drag is INVALID**: the invalid arm runs **once**, the visible state **REVERTS**, the sink carries the CLAMPED PRE-DRAG size | **PASS** — `gesture.value 150` after the valid move; then `previews [{v:150,valid:true},{v:100,valid:false}]`, `resets 1 (e3 1)`, `sink [100]` |
+| **R4** | `§2.4` item 2 clauses (i)/(ii) / `§3.3 I-2` — *re-drives `S39`'s one-read row* | the same drive, counting the caller's mapping | the mapping is called **at most ONCE per observed move** | **PASS** — `1` after the valid move, `2` after the failed-pointer move (**one per move**; the first run measured **2 for ONE unresolvable move**) |
+| **R5** | `§2.3` item 5 **clause (iv)** / `§3.2 F-9` — *re-drives `F-9`* | seven veto drives: `()=>false`, `()=>true`, `()=>undefined`, `()=>''`, `()=>0`, absent, a non-callable `42` | **only an exact `false`** vetoes | **PASS** — `()=>false → commits []`; every other drive `→ commits [150]` |
+| **R6** | `§2.4` item 3 / `§0A` note 5 — **NEW (the addendum's `onStart` read)** | `attach()` → press → one valid move → release, counting `startSizeOf` at each stage | read **0** at attach, **1 immediately after establishment**, and **no re-read** on the valid path | **PASS** — `0 / 1 / 1 / 1` |
+| **R7** | `§2.4` item 3 / `§0A` note 5 / `§5.5.1 P-GU-IM-2` (*"EXACTLY ONCE per gesture"*) — **NEW** | the **invalid** path: press → valid move → the seam fails → count `startSizeOf` | **exactly ONE** read per gesture (`its answer is stored in the module's own per-gesture record`) | **FAIL (F-1)** — `1` at establishment, `1` after the valid move, **`2` after the INVALID move**; `boundsOf 1 / 2 / 4` alongside |
+| **R8** | `§2.3` rows 8/9 + the terminal write table + `M-13` — *re-drives `S19`/`S20`/`S38` shapes 2/3 (the `F-3`/`F-4`/`F-6` class)* | hover → press → a valid move → the seam fails → an INVALID move → the session's own `pointerup` | `reset` **once, while the gesture is ACTIVE**; the sink gets the **CLAMPED PRE-DRAG size exactly once**; the **visible revert**; the later `pointerup` commits **nothing further** | **PASS** — after the invalid move `sink [100]`, `resets 1 (e3 1)`, `previews [{v:150,valid:true},{v:100,valid:false}]`, `moves 2`; after the `pointerup` `sink [100]`, `e3 sinkCalls 1 / written 1`; **the session's own channel `[{outcome:"reset",value:100}]`** |
+| **R9** | `§2.3` row 9 — *no second reset* | a **second** invalid move after the first | the reset arm is taken **once for the gesture**; no second sink write | **PASS** — `resets 1 (e3 1)`, `sink [100]` unchanged, `previews 2` |
+| **R10** | `§3.1 M-8` / `§2.3` row 11 — *re-drives `S16`/`S31`* | hover → press → one valid move (reading `gesture.value` **before** the release) → the session's `pointerup` | the handle carries the CLAMPED value **before** the release; **exactly ONE** commit; **no** terminal preview | **PASS** — at the move `gesture.value 150`, `previews 1`, `sink []`; after the release `sink [150]`, `e3 sinkCalls 1 / written 1`, `previews 1`, session channel `[{outcome:"end",value:150}]` |
+| **R11** | `§2.3` row 8 / `§3.1 M-13`'s counter rule — *re-drives `F-4`'s honest extra reading* | an INVALID first observed move (the PRE-HANDLE window) | the reset **refuses**, makes **ZERO session calls**, leaves `resets` **UNMOVED**, and still writes the **visible revert** | **PASS** — `resets 0`, `e3 resets 0`, `sink []`, `previews [{v:100,valid:false}]`, `moves 1` |
+| **R12** | `§2.6` item 3 / `§R.2` `R8`(c) / `§3.1 M-10` — *re-drives `S23`* | `pointerover` then `pointerout`, with a declaration | the declaration is written on the **AFFORDANCE by identity**; the clear carries **`undefined`** | **PASS** — `[{affordance:true,target:false,declaration:"col-resize"},{affordance:true,target:false,declaration:undefined}]`, `lastCursor "col-resize"` |
+| **R13** | `§2.3` row 5 (*"iff a declaration was written for this hover"*) / `§3.1 M-11` (*"a no-declaration hover writes NOTHING and clears NOTHING"*) — **NEW** | a hover whose `cursorOf` answers `{}` (no declaration), then the exit | the enter **writes nothing** AND the exit **clears nothing** | **FAIL (F-2)** — the enter wrote `0` (`cursorWrites 0`) **but `applyCursor` was invoked ONCE with `undefined` on the enter and ONCE with `undefined` on the exit** (`calls 2`, `cursorClears 1`) |
+| **R14** | `§2.5` items 1/3/4 / `§3.3 I-5` — *re-drives `S37`* | a full valid life cycle with the preview recorded | one preview per observed move, carrying the **clamped value** and the **gesture's axis token**; **never the sink** | **PASS** — `[{v:150,valid:true,tokenIsTheGestureToken:true,resizable:true}]`, `sink [150]`, `previews 1` |
+| **R15** | `§2.1` item 8(v) / `§2.5` item 5 / `§3.1 M-19` (`§R.2` `R-13`, the `ADV-GU-1` class) — **NEW** | a valid drag to its `end`, inspecting the ONE write's own payload | **one** `state-slice` write, `targetProp content`, `mode replace`, **the CLAMPED value as a string**, naming the **STATUS** node and **not** the affordance node; the preview count unaffected | **PASS** — `[{kind:"state-slice",node:"STATUS_NODE",mutation:[{targetProp:"content",mode:"replace",value:"150"}]}]`, `previews 1` |
+| **R16** | `§2.3`'s terminal write table / `§5.5.1 P-GU-SM-1` / `§3.1 M-5` + `M-16` — *re-drives `S36`'s cells* | four paths: a valid `end`; a `cancel`; the DROP path; and a **non-resizable** valid drag | the two readings **AGREE** with the declared counts (`1/1`, `0/0`, `0/0`) and a non-resizable gesture writes **ZERO** previews **and** zero commits | **PASS** — valid end `sink 1 / e3 1 [150]` · cancel `sink 0 / e3 0 preview plus 1` · drop `sink 0 / e3 0 drops 1 preview plus 1` · non-resizable `previews 0 sink 0 / e3 0` |
+| **R17** | `§3.2 F-6` / `§5.5.1 P-GU-TP-1` — *re-drives `S12`/`S35`/`S41`* | five hostile argument shapes: omitted, `null`, `42`, `'x'`, a throwing-`get` `Proxy` | construction **NEVER throws**; five members present/callable; `attach`/`detach` booleans; **seven** stats fields | **PASS** — all five shapes: `{attach:function,detach:function,detached:boolean,stats:function,controller:object} attach=false detach=false statsFields=7` |
+| **R18** | `§5.5.1 P-GU-TP-2` + `ADV-GU-9` / `§2.1`'s `cursorDeclarationFor` — *re-drives `S34`/`S42`* | eleven answer shapes incl. the **prototype-inherited `cursor`** the gate-4 audit said no register member could see | exactly the declared reading per shape; **never a throw** | **PASS** — `{cursor:'col-resize'} → "col-resize"`, `'  row-resize  ' → "row-resize"`, `{cursor:''} → undefined`, `{cursor:'   '} → undefined`, `{cursor:42} → undefined`, `{} → undefined`, `null → undefined`, a bare string `→ undefined`, `['cursor'] → undefined`, **a PROTOTYPE-INHERITED cursor `→ undefined`**, a throwing-`get` `Proxy → undefined` |
+| **R19** | `§2.1`'s `domEventSource` block / `§R.2` `R-10` / `ADV-GU-10` — *re-drives `S5`* | `on`/`off` on `null`/`undefined`/`42`/`'x'`/`{}`; `isConnected(null)`; then a real element whose `addEventListener` records the handler | **TOTAL** on a non-object element; **it FORWARDS the DOM event** as the handler's first argument | **PASS** — every drive total, `isConnected(null) → false`, **`the registered handler received the event object as its FIRST argument: true`** |
+| **R20** | `§3.1 M-4`/`M-15`/`M-18` + `§R.2` `R-12` / `§3.3 I-15` — *re-drives `S25`/`S26`* | the composed `attach()`, classifying each registration by its handler's own name, then a full life cycle and `detach()` | the composed attach shows **FIVE** registrations — **the module's FOUR** (hover enter, hover exit, the context-button read, the move listener) **plus the session's ONE install** — all on the affordance; the move registration **IS `POINTER_TYPES.move` by identity**; `detach()` removes the module's own set | **PASS** — order `["pointerover:onHoverEnter","pointerout:onHoverExit","pointerdown:onPointerDownTurn","pointerdown:handler","pointermove:onMoveTurn"]` → per type `{pointerover:1, pointerout:1, pointerdown:2, pointermove:1}`, one non-module handler (`handler`), the move registration `IS pointermove` by identity, `8` live registrations after establishment (the shared move type owned by both), `0` after `detach()`. **The independent suite prints the same reading**: `{"composedOnCount":5,"composedPerType":[["pointerdown",2],["pointermove",1],["pointerout",1],["pointerover",1]]}` |
+| **R21** | `§3.2 F-2` (the **RULED** absorbed reading) / `§3.1 M-20` class 3 — **`F-5`'s owed re-drive** | a `sizeFromPointer` that answers `150` for the first move and **THROWS** on the second | the throw is **ABSORBED** by the module's own gate: **no throw out of the turn**, the move is INVALID ⇒ the **reset arm** | **PASS** — `the second move threw NOTHING`, `moves 2`, `resets 1 (e3 1)`, `previews [{v:150,valid:true},{v:100,valid:false}]`, `sink [100]` |
+| **R22** | `§R.3`'s `commit` row / `gutter.md` `§3.2 F-11` — *re-drives `S11`* | a **throwing** `commit` seam, a valid drag, the session's `pointerup` | the terminal does **not** throw; `sinkCalls 1` beside `written 0` | **PASS** — `the terminal threw NOTHING`, `e3 sinkCalls 1 written 0` |
+| **R23** | `§R.3`'s `applyPreview`/`applyCursor` rows / `§3.2 F-8` — *re-drives `S9`/`S10`* | each presentation seam throws in turn | the throw **PROPAGATES** from the module's own turn (move turn for the preview, hover turn for the cursor) | **PASS** — `the observed-move turn threw preview-boom`, `the hover turn threw cursor-boom` |
+| **R24** | `§3.2 F-14` / `§3.3 I-13` / `§2.6` item 4 — *re-drives `S33`* | `capturePointer: true` over a source that HAS `capturePointer` | the option is **DECLARED and IGNORED**: no capture call anywhere, identical behaviour | **PASS** — `capturePointer invocations 0`, `sink [150]` |
+| **R25** | `§2.3` rows 3/13 / `ADV-GU-5` / `§3.1 M-7`–`M-15` — *re-drives `S24`* | `attach()` → `attach()` → `detach()` → `detach()` | first `true`; the repeat **`false`** with **ZERO further registrations**; `detached` reads `true`; the repeat `false` | **PASS** — `true` / `false` (`5` then `5` registrations) / `detach() true`, `detached true` / `false` |
+| **R26** | `§3.1 M-17` — *re-drives `S43`* | two observed moves, a hover exit, then the drop path; reconcile `stats()` against the recording source, the preview record and `E3` | every counter reconciles | **PASS** — `{moves:2,previews:3,cursorWrites:1,cursorClears:1,resets:0,drops:1,lastCursor:"col-resize"}` with the preview record `[{v:150,valid:true},{v:160,valid:true},{v:100,valid:false}]` (the drop's revert), `sink 0`, `e3 sinkCalls 0` |
+| **R27** | `§2.1` item 9 / `§R.2` `R-11` / `§3.4 R-14` — *re-drives `S14`/`F-2`/`F-7`* | six `moveTypeOf` answers: `''`, `42`, `{}`, a stranger string, `POINTER_TYPES.move`, absent | a **NON-STRING or EMPTY** token attaches **NO move listener of the module's own**; the session's own token makes the drag half live; a stranger string registers under **that** token and the drag half is dead | **FAIL (F-3)** — `'' → registrations ["pointerover","pointerout","pointerdown","pointerdown"] moves 0` ✔ and the stranger `→ […,"not-dispatched-by-anyone"] moves 0` ✔, **but `42 → […,"pointermove"] moves 1` and `{} → […,"pointermove"] moves 1` and absent(`undefined`) `→ […,"pointermove"] moves 1`** ✘ |
+
+---
+
+## L. THE RE-RUN'S SCENARIOS — THE `§5.U` READINGS AND THE WIRING, ON THE BATTERY TARGET
+
+**The docs' own command form is `npm run mcp -- --target http --port 3787 …` against a RUNNING app**
+(`§R.1` item 3). **No app was started and no window exists in this pass** (`§5.2` leg 5's `npm run ui` is the
+real-DOM leg, needs a `DISPLAY`, and is the leg's OWN measurement on ITS OWN probe envelope). **The readings
+were therefore taken against the battery target** — the documented default of the same CLI
+(`scripts/mcp-cli.mjs`'s own usage header: *"battery (default): spawns dist/main/battery-host.mjs (a REAL
+Runtime under the DOM shim)"*) — **one host process per sequence, with a LEGACY-JSON envelope loaded through
+the documented `provident.load {kind:'envelope'}` surface.**
+
+**THE INPUT ENVELOPE IS DATA I AUTHORED MYSELF from `§2.1` item 7's card description** — **three nodes**:
+`gutter-vertical` (authored `css.id` + `css.classes` + an authored `css.style` carrying **the base `cursor`
+declaration and the minimal size declarative** per the `§2.1` item 7(a) ruling, an authored `props.id` plus
+`axis` as a **bare attribute**, and **ONE authored handler whose body is a function STRING** in the modern
+`(ctx, value)` convention), `gutter-pane` (authored base size + `min`/`max`/`resizable` bare attributes), and
+`gutter-status` (authored placeholder `content`). **NOTHING outside the envelope was needed to take any of the
+readings below — no script, no function of mine, no renderer edit** — which is the check the data-authoring
+rule exists for. **The steps files and the envelope live under `/tmp` and were never added to the repo.**
+
+| id | Clause(s) (with the first run's id) | Drive (`cmd`, exit) | PASS criterion | Result / MEASURED |
+| --- | --- | --- | --- | --- |
+| **R28** | `§5.U` item 4 `U-8`(2) / `U-1` / `§3.5 R-9` — *re-drives `S45`* | `node scripts/mcp-cli.mjs --target battery run /tmp/e10-greens/steps-card.json` → `provident.load` + `provident.list_targets` (C-4, exit **0**) | the authored affordance resolves by its authored **`css.id` AND `props.id`** | **PASS** — the target list carries `{nodeId:"node-4",cssId:"gutter-vertical",propsId:"gutter-vertical",type:"div",state:"in-tree",handlers:[{name:"gutter-press",event:"pointerdown"}]}` with `gutter-card`/`gutter-pane`/`gutter-status` beside it |
+| **R29** | `§5.U` item 4 `U-8`(3) / `U-2`(a) / `§3.4 R-13`(iii) — *re-drives `S46`* | the same sequence's `provident.get_rendered_html` (exit **0**) | the affordance element carries its **`data-node-id`** (the producing graph's own element) **and** its authored base `cursor` declaration | **PASS** — `<div axis="vertical" data-node-id="node-4" id="gutter-vertical" class="gutter gutter-vertical" style="cursor: col-resize; width: 200px;">` |
+| **R30** | `§5.U` item 4 `U-8`(4) / `§2.1` item 7(a) — *re-drives `S47`* | the same sequence's `provident.dispatch {target:'gutter-vertical',event:'pointerdown'}` (exit **0**) | the authored handler answers `{results, dirtied}` — the affordance is **provident-dispatch-reachable**, not hand-written DOM | **PASS** — `{"results":[null],"dirtied":["node-6","node-3","node-2"]}`; the post-dispatch `html` reads the status node as `pressed:undefined` |
+| **R31** | `§5.U` item 4 `U-8`(d) — *re-drives `S48`'s reachability half* | the same sequence's **single host process**, comparing the census after load, after `targets` and after `dispatch` | **one boot, no restart**: the graph is the same across the sequence | **PASS** — `[5,5,5]` `inTree` across the four commands. **This is the battery host's one process, NOT a real window** |
+| **R32** | `§2.1` item 7(a) / `decisions.md` `DEMO-HANDLER-CONVENTION` — **NEW** | inspect the authored envelope I drove | the affordance's handler body is a **function STRING** in the `(ctx, value)` convention and nothing outside the envelope was needed | **PASS** — `{name:"gutter-press",event:"pointerdown",bodyIsAString:"string",bodyStart:"function (ctx, value) { cons"}`; the readings used only `provident.load` / `list_targets` / `get_rendered_html` / `dispatch` |
+| **R33** | `§5.U` item 4 `U-7` / `§3.3 I-11` / `§3.5 R-9` — *re-drives `S49`/`S50`* | `node scripts/mcp-cli.mjs --target battery run /tmp/e10-greens/steps-u7.json` (C-5, exit **0**): a **bare** envelope first, then the authored card, `targets` + `html` around each | the delta is **MEASURED, not projected**: the new nodes and their `data-node-id`s appear | **PASS** — **BEFORE** `1` node (`["bare-root"]`), `renderedHtml` **48** chars · **AFTER** `5` nodes `["gutter-card","gutter-vertical","gutter-pane","gutter-status"]` (+ the root), `renderedHtml` **464** chars ⇒ **delta +4 nodes / +416 characters**, node ids `node-3…node-7` present in both views |
+| **R34** | `§5.U` `U-5` (the **DRAGGED-VALUE** reading with its pre-drag negative control, `§R.4` `C-A5`) + `U-8`(e) (the **second gesture on the SAME element**, the `E-2` ruling's owed evidence) | **none taken** | — | **NOT-BLIND-RUNNABLE** — the full structural reason is **N-1** below. **Never counted as a pass.** |
+
+---
+
+## M. THE RE-RUN'S FAILURES — measured evidence and drift/regression verdict
+
+**Three scenarios failed. Each is stated with its measured reading and its verdict** (`doc/spec drift` = the
+contract's own text does not match behaviour; `un-hardened regression` = behaviour the contract forbids).
+
+### F-1 — **the pre-drag size seam is read a SECOND time on the invalid path** (drift; the partial residue of `ADV-GU-6`)
+
+* **Scenario:** `R7` (and the seam-inventory half of `R6`).
+* **Measured:** on the **invalid** path the caller's `startSizeOf` seam is invoked **twice for one gesture**:
+  `1` at establishment, `1` after the valid move, **`2` after the INVALID move** — the second read being the
+  invalid arm's reading of the seam **instead of the per-gesture record the establishment read already wrote**.
+  (`boundsOf` reads `1 / 2 / 4` over the same drive, which is consistent with the module's own turn plus `E3`'s
+  terminal evaluation.) **The positive half is the fix:** `R6` measures `0` at attach and **`1` immediately after
+  establishment**, so the read order `ADV-GU-6` ruled **is** landed.
+* **Why it is a finding:** `§2.4` item 3 reads *"`startSizeOf(element, token)` **is called exactly once per
+  gesture, in `onStart`**, and its answer is stored in the module's own per-gesture record"*, and
+  `§5.5.1 P-GU-IM-2` declares *"`startSizeOf` — **EXACTLY ONCE per gesture**, at establishment"* with *"a second
+  `resizableOf` call in lifecycle `(c)` FAILS"* as the row's own shape. The measured count is `2` for the class
+  of gesture that arm belongs to.
+* **WHAT THIS IS NOT, stated so no reader over-reads it:** the **commit** the addendum's `F-4` class was about
+  **is landed** — `R8` measures the CLAMPED PRE-DRAG size committed **exactly once** (`sink [100]`, `e3
+  sinkCalls 1 / written 1`), the visible revert, and a later `pointerup` that commits nothing further. **So this
+  is a read-COUNT drift, not a missing-write regression.** **The recalibration `befe9c6` landed is itself the
+  evidence that the two readings were reconciled test-side rather than removed** (`docs/next-steps.md`'s own
+  commit record: *"the stateful `n<=1` cuts → `n<=2`"*), which is why this pass reports it as a **contract-text
+  drift** and leaves the test-side reconciliation to the `OWED — TEST-SIDE` owner.
+* **VERDICT: `doc/spec drift`** (the module's read count contradicts `§2.4` item 3's *"exactly once"* and
+  `P-GU-IM-2`'s declared cell). **Owner: `U-GUTTER-UI`'s own module** — a host finding, not an `E3`-side one.
+
+### F-2 — **a no-declaration hover still CLEARS the cursor, on the enter and again on the exit** (drift)
+
+* **Scenario:** `R13`.
+* **Measured:** with `cursorOf` answering `{}` (no declaration), the hover **enter** invoked
+  `applyCursor(element, undefined)` **once** (`cursorWrites` stays `0`, but the call happened), and the hover
+  **exit** invoked `applyCursor(element, undefined)` **again** — `applyCursor` calls `2`, both carrying
+  `undefined`, `cursorClears 1`, with the element the affordance by identity.
+* **Why it is a finding:** `§2.3` row 5 reads *"**`applyCursor(element, undefined)`** — the same AFFORDANCE —
+  **iff a declaration was written for this hover**"* and `§3.1 M-11` reads *"a no-declaration hover writes
+  **NOTHING** and clears **NOTHING**"*. The measured behaviour clears **unconditionally**: the enter also
+  attempts a clear for a hover it wrote nothing for, and the exit clears whether or not a declaration was ever
+  written. **The first run's `S23` recorded exactly this as a PASS because its criterion only read the
+  `cursorWrites`/`cursorClears` counters** (`enter 0`, `exit clear 1`) — i.e. the original scenario's criterion
+  was **too weak to see the enter-side call**, which is why this re-run states the criterion as the clause's own
+  words (*"writes nothing and clears nothing"*) and measures the call record.
+* **VERDICT: `doc/spec drift`** (`§2.3` row 5's conditional and `§3.1 M-11`'s second half are not what the
+  behaviour does). **Owner: `U-GUTTER-UI`'s own module.**
+
+### F-3 — **a NON-STRING `moveTypeOf` token still attaches the module's move listener under the literal `'pointermove'`** (drift — the `F-2`/`F-7` class, only partly closed)
+
+* **Scenario:** `R27` (the first run's `S14`, `F-2` and `F-7` re-driven).
+* **Measured:** six drives, each `attach()` + a primary press + one `pointermove`:
+  * `moveTypeOf → ''` ⇒ registrations `["pointerover","pointerout","pointerdown","pointerdown"]`, **`moves 0`** ✔ (the declared degradation);
+  * `moveTypeOf → 'not-dispatched-by-anyone'` ⇒ registers under **that** token, **`moves 0`** ✔ (the `B-9`/`P-9` false-green class is visible exactly as `§3.4 R-14` says);
+  * `moveTypeOf → POINTER_TYPES.move` ⇒ `[…,"pointermove"]`, **`moves 1`** ✔;
+  * **`moveTypeOf → 42` ⇒ `[…,"pointermove"]`, `moves 1`** ✘;
+  * **`moveTypeOf → {}` ⇒ `[…,"pointermove"]`, `moves 1`** ✘;
+  * **`moveTypeOf → undefined` (the seam absent, or answering `undefined`) ⇒ `[…,"pointermove"]`, `moves 1`** ✘.
+* **Why it is a finding:** `§2.1` item 9 reads *"The module's OWN bytes contain NO pointer-event-type string: it
+  neither replicates `POINTER_TYPES` nor authors an event-type literal"*, `§2.1`'s `moveTypeOf` cell reads *"a
+  NON-EMPTY STRING is the token; anything else (**absent, non-string, empty**) means the module **DOES NOT
+  attach a move listener**"*, and `§R.3`'s degradation table reads *"a non-string or empty token ⇒ **NO move
+  listener is attached**"*. **The measured behaviour differs in BOTH directions: it attaches a listener for
+  non-strings (under the imported constant), and it attaches NOTHING (rather than a listener under the supplied
+  token) for an empty string.** The stranger-string drive is the one that matches the table.
+* **VERDICT: `doc/spec drift`** — the declared degradation's own input list names non-strings and the behaviour
+  is neither the declared `no listener` nor the table's `registered under the caller's token`. **Owner:
+  `U-GUTTER-UI`'s own module.** *(Severity: low — `§R.2` `R-11` has the wiring supply the session's own
+  exported constant, so no shipped path reaches these shapes; the reading is recorded because a fork's miswiring
+  is exactly what the clause exists to make visible, and because the first run reported the same class.)*
+
+**THE FIRST RUN'S OTHER FAILURES, DISPOSITIONED ONE BY ONE** (so no reader has to diff the two blocks):
+`F-1`/`F-8` (**the null-pointer/one-read class**) — **CLOSED by measurement** (`R3`, `R4`). `F-3`/`F-4`/`F-6`
+(**the reset arm's missing commit and accounting**) — **CLOSED by measurement** (`R8`, `R9`, `R11`), with the
+read-count residue recorded as **this pass's `F-1`**. `F-5` (**the throwing value seam not reaching the reset
+arm**) — **CLOSED by measurement** (`R21`), which is the re-drive the addendum explicitly owed. `F-2`/`F-7`
+(**non-string move tokens**) — **PARTLY CLOSED**: `''` and a stranger string now read as `§R.3` declares, the
+non-string shapes still do not (**this pass's `F-3`**). `F-9` (**`S25`'s fifth `off`**) — **NOT a finding**
+(then and now: the session's own `dispose()` removing its own install; `R20` measures the ownership split on
+both sides and it is the documented one).
+
+---
+
+## N. `NOT-BLIND-RUNNABLE` — the re-run's ONE entry, with its structural reason (never a PASS)
+
+| id | Scenario | Structural reason |
+| --- | --- | --- |
+| **N-1** | **`R34` = `§5.U`'s `U-5` (the DRAGGED-VALUE reading **with its pre-drag-size negative control**, `§R.4` `C-A5`) and `U-8`(e) (the second gesture on the SAME element, the `E-2` ruling's owed evidence)** | **`U-5` needs the value the operator actually dragged to, read back out of the authored status node after a REAL commit.** The MCP surfaces cannot produce a commit: **`provident.dispatch` carries an event NAME and no coordinate and no button** — measured in this very pass: `R30`'s dispatch answered `{"results":[null],"dirtied":["node-6","node-3","node-2"]}` and the authored body read its event value as `undefined`, so the status node settled at `pressed:undefined`. **The commit therefore needs the WIRING's live path under a real pointer in a booted window** (`npm start`, `MANUAL OPERATOR`) **or the `npm run ui` leg's own probe envelope** — which is the leg's own measurement, on its own envelope, and is not this unit's affordance (`§5.2` leg 5's corrected note). **The battery target is a real `Runtime` under the DOM shim: no window, no pointer, no transient style, no computed style.** Reported as `NOT-BLIND-RUNNABLE`, **never as a pass**, and the reading stays exactly where `docs/next-steps.md` leaves it (owed to a session with a human at the window). |
+
+**THE FIRST RUN'S `N-1`–`N-6` ARE CARRIED FORWARD UNCHANGED IN SUBSTANCE, and this pass did not shrink the
+list by re-labelling anything:** `N-1`/`N-2` (**the three static token scans over the module's bytes**) and
+`N-3` (**the register's declared-vs-distinct arithmetic and the red set's own tables — `tests/gutter-ui.test.ts`
+is the one file a blind pass must not read**) remain **structurally impossible for a blind writer**; `N-4`
+(**the DEMO's own census** — `src/shared/demo-envelope.ts`'s card, and a RUNNING app) is **still owed**; `N-5`
+(**`npm run ui`** — needs a `DISPLAY` and a boot; not run here); `N-6` (`U-3`/`U-4`/`U-6` and `U-8`(e) —
+`MANUAL OPERATOR` by ruling; no operator was present). **`§5.U`'s `U-5`/`U-8`(e) join them as `N-1` above.**
+
+---
+
+## O. WHAT THIS RE-RUN DOES **NOT** PROVE, AND THE HONEST LIMITS
+
+1. **NO LIVE WINDOW, AND I RAN NO `[U]` LEG.** **No Electron app was booted, no `DISPLAY` was used, and
+   `npm run ui` was NOT run** — so **no rendered geometry, no applied style, no computed cursor, no real pointer,
+   no second-gesture element identity** is proven here (`§3.2 F-13`; Layer anchors 1/4/5). **The batch legs I
+   DID run are `npx vitest run`, `npm run build` and the two `--target battery` sequences** — the battery target
+   is a real `Runtime` **under the DOM shim**, not a window.
+2. **NO MCP-DRIVEN DRAG, AND THE BATTERY IS NOT THE DEMO.** Every move/`pointerup` was a synthetic event object
+   handed to the source's own handler — the `[T]` form `§5.2` leg 6 names. **The legacy-JSON card driven here is
+   MY OWN data-authored envelope, not `src/shared/demo-envelope.ts`'s card**, so the readings prove the
+   *instrument* and *data-authoring* claims and **not** the demo's census (the first run's limit, unchanged).
+3. **THE WIRING'S TWO HALVES ARE SPLIT IN THIS REPORT, DELIBERATELY.** The **`commit` seam's payload** is
+   measured at the contract level (`R15`: one `state-slice` write, the clamped value as a string, the status node
+   named) — but the **runtime's ACCEPTANCE of it, and the preview's transient write on the live target element,
+   are the wiring's and need a window**: `R14` measures the module's preview **payload** and its element-blind
+   seam, and **`R34`/`N-1` states the structural reason the live half cannot be taken here.** **A `[T]` green
+   for `R15` is NOT `ADV-GU-1`'s live confirmation** (that reading is the live battery's: the status node read
+   `100 → 110` under real CDP events at `72fff4c`).
+4. **THE REGISTER'S TABLES AND THE STATIC SCANS ARE NOT AUDITED.** The seven property **texts** are driven
+   (`R8`–`R11`, `R16`–`R18`, `R21`, `R26`), the **arithmetic is re-read from the suite's own stdout** (`134` =
+   the sum of its printed terms), and **the tables' declared-vs-distinct figures, the caps and the three token
+   scans were not audited** — the first run's `N-2`/`N-3` stand, and the gate-4 audit's seven
+   `OWED — TEST-SIDE` generator remedies remain the TestWriter's.
+5. **THREE OF MY OWN HARNESS DEFECTS WERE FOUND AND FIXED DURING THIS ROUND, and are recorded for honesty**
+   (the same discipline the first run applied to its `EventSourceLike` mistake): (a) my first driver asserted a
+   **commit at the move** for a valid drag — the contract commits at the **terminal**, so the expectation was
+   mine and not the module's; (b) I read `Object.keys(stats).length` where `stats()` returns a record, giving
+   the `'object'` string in a length comparison; (c) I attributed all five composed `on` calls to the module —
+   **the registration order is `pointerover`, `pointerout`, `pointerdown` (the module's), `pointerdown` (the
+   SESSION's install), `pointermove` (the module's)**, which is the documented `4 + 1` split rather than five of
+   one owner's. **No failing reading above rests on any of the three.**
+6. **THIS BLOCK IS NOT A DONE ROW AND CLAIMS NO GATE BEYOND ITS OWN.** It reports what a blind reader could
+   derive from the documentation and measure against the live modules and the battery host at `83eb471`.
+   **`§5.3`'s twelve-item DONE row, the adversarial dispositions, the per-unit documentation review and the
+   live battery remain theirs.**
+
+---
+
+## P. ONE-LINE HONESTY STATEMENT
+
+**Everything in this `⟶ RE-RUN` block was authored from `docs/specs/gutter-ui.md` + `gutter.md` + `gsession.md`
+(+ `decisions.md`/`mcp-endpoint.md` and the CLI's own header) alone and RUN at `83eb471` — `33` scenarios:
+`PASS 30` / `FAIL 3` (`F-1` the second pre-drag read, `F-2` the unconditional cursor clear, `F-3` the non-string
+move token) / `NOT-BLIND-RUNNABLE 1` (`U-5`/`U-8`(e), stated with its structural reason and never as a pass) —
+with the module reached only through its documented exported surface, the card reached only as legacy-JSON data,
+no implementation byte and no test file read, no `[U]` leg run and no live window booted; and nothing above this
+block was edited.**

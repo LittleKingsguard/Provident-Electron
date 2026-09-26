@@ -1251,6 +1251,20 @@ type Harness = {
   readonly element: Record<string, unknown>
   readonly target: Record<string, unknown>
   readonly calls: { axisOf: number; cursorOf: number; sizeFromPointer: number; startSizeOf: number; boundsOf: number; resizableOf: number; commit: number }
+  /** **⟶ ADDED 2026-09-27 (THE GATE-4 REPAIR: `ADV-GU-14`'s `I-6` half and the `P-GU-IM-2`
+   *  IDENTITY CLAUSE).** One entry per INVOCATION of the caller's seam closures, carrying the
+   *  arguments THAT INVOCATION received, so a row can assert **argument identity** (`toBe` on the
+   *  element object and on the opaque token — `§5.5.1 P-GU-IM-2`'s *"that seam's recorded call
+   *  count and argument identity (`toBe` on the token)"*) rather than only counting. **It is a
+   *  READING of the same invocations `calls` counts** (a per-seam push beside the existing counter),
+   *  so no seam is invoked a second time to populate it and no row's declared term moves. */
+  readonly seamArgs: {
+    readonly axisOf: Array<{ element: unknown; token: unknown }>
+    readonly startSizeOf: Array<{ element: unknown; token: unknown }>
+    readonly boundsOf: Array<{ element: unknown; token: unknown }>
+    readonly resizableOf: Array<{ element: unknown; token: unknown }>
+    readonly commit: Array<{ gesture: unknown; value: unknown }>
+  }
   readonly options: Record<string, unknown>
 }
 
@@ -1280,6 +1294,16 @@ async function makeHarness(overrides: Record<string, unknown> = {}, label = 'har
   const cursorCalls: Array<{ element: unknown; declaration: string | undefined }> = []
   const sessionCommits: Array<{ gesture: unknown; value: unknown; outcome: unknown }> = []
   const calls = { axisOf: 0, cursorOf: 0, sizeFromPointer: 0, startSizeOf: 0, boundsOf: 0, resizableOf: 0, commit: 0 }
+  // **⟶ ADDED 2026-09-27 (THE GATE-4 REPAIR).** The ARGUMENT log beside the counters: one entry per
+  // seam invocation, so `P-GU-IM-2`'s argument-identity clause and `I-6`'s element-identity half can
+  // read WHICH OBJECT reached the seam. It records invocations the counters already make.
+  const seamArgs = {
+    axisOf: [] as Array<{ element: unknown; token: unknown }>,
+    startSizeOf: [] as Array<{ element: unknown; token: unknown }>,
+    boundsOf: [] as Array<{ element: unknown; token: unknown }>,
+    resizableOf: [] as Array<{ element: unknown; token: unknown }>,
+    commit: [] as Array<{ gesture: unknown; value: unknown }>,
+  }
   // **THE SESSION'S CHANNEL RECORDS AND WRITES NOTHING** — it is NOT a writer, so a row can
   // still read *"what the session was handed"* (`M-13`'s `NaN` reading) beside the sink's record
   // without a second write existing.
@@ -1295,6 +1319,8 @@ async function makeHarness(overrides: Record<string, unknown> = {}, label = 'har
 
   const axisOf = (el: unknown): unknown => {
     calls.axisOf += 1
+    // **THE OVERRIDE IS READ HERE** (`axisToken` is a harness-supported seam override): the token
+    // this closure answers is the object `P-GU-IM-2`'s identity clause compares across seams.
     return (overrides['axisToken'] ?? 'gutter-axis') as unknown
   }
   const cursorOf = (token: unknown): unknown => {
@@ -1329,6 +1355,10 @@ async function makeHarness(overrides: Record<string, unknown> = {}, label = 'har
     },
     axisOf: <T,>(el: T): unknown => {
       const token = axisOf(el)
+      // The axis seam's OWN invocation is logged with the object it answered for THIS call, so the
+      // per-gesture token identity (`P-GU-IM-2`) is a reading of the same invocation `calls.axisOf`
+      // counts and not a second call.
+      seamArgs.axisOf.push({ element: el, token })
       return token
     },
     cursorOf: (token: unknown): unknown => cursorOf(token),
@@ -1336,14 +1366,17 @@ async function makeHarness(overrides: Record<string, unknown> = {}, label = 'har
     applyCursor: (el: unknown, declaration: string | undefined): void => (applyCursor as (e: unknown, d: string | undefined) => void)(el, declaration),
     startSizeOf: (el: unknown, token: unknown): unknown => {
       calls.startSizeOf += 1
+      seamArgs.startSizeOf.push({ element: el, token })
       return (startSizeOf as (e: unknown, t: unknown) => unknown)(el, token)
     },
     boundsOf: (el: unknown, token: unknown): unknown => {
       calls.boundsOf += 1
+      seamArgs.boundsOf.push({ element: el, token })
       return (boundsOf as (e: unknown, t: unknown) => unknown)(el, token)
     },
     resizableOf: (el: unknown, token: unknown): unknown => {
       calls.resizableOf += 1
+      seamArgs.resizableOf.push({ element: el, token })
       return (resizableOf as (e: unknown, t: unknown) => unknown)(el, token)
     },
     // **THE MODULE'S `commit` SEAM IS THE COMPOSITION'S SINGLE SINK WRITER** (`E3`'s write site
@@ -1353,12 +1386,19 @@ async function makeHarness(overrides: Record<string, unknown> = {}, label = 'har
     // while `E3`'s counter stayed at its own single write, and the two readings would DIVERGE.
     commit: (gesture: unknown, value: number): void => {
       calls.commit += 1
+      seamArgs.commit.push({ gesture, value })
       return (sink.commit as (g: unknown, v: number) => void)(gesture, value)
     },
     moveTypeOf: (el: unknown): unknown => (moveTypeOf as (e: unknown) => unknown)(el),
   }
   for (const key of Object.keys(overrides)) {
-    if (key in options || ['pointerOf', 'capturePointer', 'isDragValid'].includes(key)) options[key] = overrides[key]
+    // **⟶ EXTENDED 2026-09-27 (THE GATE-4 REPAIR — `P-GU-IM-2`'s ARGUMENT-IDENTITY CLAUSE).**
+    // `startSizeOf`/`boundsOf`/`resizableOf` are the three seams whose TOKEN identity the row must
+    // assert; they are added to the overridable set so a drive can hand in a KNOWN token answer and
+    // compare it by identity, exactly as `sizeFromPointer`/`applyPreview` already could. The
+    // addition is INERT for every existing row (each keeps the same default), so no row's readings
+    // and no declared term move for it.
+    if (key in options || ['pointerOf', 'capturePointer', 'isDragValid', 'startSizeOf', 'boundsOf', 'resizableOf'].includes(key)) options[key] = overrides[key]
   }
   const affordance = createGutterAffordance(options)
   return {
@@ -1373,6 +1413,7 @@ async function makeHarness(overrides: Record<string, unknown> = {}, label = 'har
     element,
     target,
     calls,
+    seamArgs,
     options,
   }
 }
@@ -1957,36 +1998,104 @@ describe('§3.4 — the static rows (the §2.2 prohibition table’s ids)', () =
     ).toEqual([])
   })
 
-  it('R-8 §3.4 — THE IMPORT ROW: exactly THREE import statements carrying FOUR named bindings (the values `clampToBounds` and `POINTER_TYPES`, plus two type-only)', () => {
+  it('R-8 §3.4 — THE IMPORT ROW: exactly THREE import statements carrying FIVE named bindings — THREE values (`clampToBounds`, `createResizeController`, `POINTER_TYPES`) + TWO type-only (`ResizeController`, `GestureHandle`) — asserted AS A SET BY NAME, with a positive control that a SIXTH binding FAILS', () => {
     const source = moduleSource('R-8')
     const statements = source.match(/^\s*import[\s\S]*?from\s+['"][^'"]+['"]/gm) ?? []
     expect(
       statements.length,
-      `R-8 §3.4/§2.1 clause 2 — EXACTLY THREE import statements exist in \`${MODULE_RELPATH}\` (§R.2 R-11 and C-A7: the ruled set is FOUR NAMED BINDINGS ACROSS THREE STATEMENTS). Read: ${JSON.stringify(
+      `R-8 §3.4/§2.1 clause 2 — EXACTLY THREE import statements exist in \`${MODULE_RELPATH}\` (§R.2 R-11 and C-A7, as AMENDED by the CHANNEL/FACTORY RULING: THREE STATEMENTS / FIVE NAMED BINDINGS). Read: ${JSON.stringify(
         statements.map((s) => s.replace(/\s+/g, ' ')),
       )}`,
     ).toBe(3)
+    // ------------------------------------------------------------------ (a) THE BINDING SET
+    // **⟶ REPAIRED 2026-09-27 (GATE-4 FINDING `ADV-GU-14`, `OWED — TEST-SIDE`).** The as-filed row's
+    // title and message pinned the SUPERSEDED *"FOUR named bindings"* census and its assertions read
+    // only the STATEMENT count plus the PRESENCE of three names — so **neither
+    // `createResizeController`'s presence nor a SIXTH binding's ABSENCE was checkable**. THE RULED
+    // CENSUS (`${SPEC_RELPATH}` §2.1 clause 2's third amendment, and §3.4 R-8's own amended cell): a
+    // value import of `clampToBounds` AND `createResizeController` from `./gutter.js` (ONE statement),
+    // a value import of `POINTER_TYPES` from `./gesture-session.js`, and TWO TYPE-ONLY bindings
+    // (`GestureHandle` from `./gesture-session.js`, `E3`'s controller type from `./gutter.js`).
+    // The row now READS the binding set out of each statement's own brace list, names its two halves
+    // separately, and carries a POSITIVE CONTROL that a SIXTH name FAILS.
+    const bindingSetOf = (statement: string): { specifier: string; values: string[]; types: string[] } => {
+      const specifier = /from\s+['"]([^'"]+)['"]/.exec(statement)?.[1] ?? ''
+      // `import type { … }` makes EVERY brace member type-only; inside a plain `import { … }` a
+      // member spelled `type X` is type-only and the rest are VALUES — the mixed statement the
+      // channel/factory ruling landed (`import { clampToBounds, createResizeController, type
+      // ResizeController } from './gutter.js'`).
+      const wholeStatementIsTypeOnly = /^\s*import\s+type\s/.test(statement)
+      const braced = /\{([\s\S]*?)\}/.exec(statement)?.[1] ?? ''
+      const values: string[] = []
+      const types: string[] = []
+      for (const rawPart of braced.split(',')) {
+        const part = rawPart.trim()
+        if (part.length === 0) continue
+        const perMemberTypeOnly = /^type\s/.test(part)
+        const name = part.replace(/^type\s+/, '').replace(/\s+as\s+\w+$/, '')
+        if (wholeStatementIsTypeOnly || perMemberTypeOnly) types.push(name)
+        else values.push(name)
+      }
+      return { specifier, values, types }
+    }
+    const imports = statements.map(bindingSetOf)
+    const valueBindings = imports.flatMap((i) => i.values)
+    const typeBindings = imports.flatMap((i) => i.types)
+    expect(
+      valueBindings.slice().sort(),
+      `R-8 §3.4/§2.1 clause 2 (third amendment) — THE THREE VALUE BINDINGS, asserted AS A SET BY NAME: \`clampToBounds\` and \`createResizeController\` (the composed \`E3\` unit: its ONE pure clamp and its controller FACTORY, §2.1 clause 2's third amendment — the factory is what makes \`createResizeController(...)\` callable at all, §2.1 item 4/\`§3.1 M-6\`) plus \`POINTER_TYPES\` (required by \`C-3\`: the wiring's move type must BE the session's exported token, \`§3.1 M-18\`, \`§3.4 R-14\`). MEASURED from the statements: ${JSON.stringify(
+        imports,
+      )}`,
+    ).toEqual(['POINTER_TYPES', 'clampToBounds', 'createResizeController'])
+    expect(
+      typeBindings.slice().sort(),
+      `R-8 §3.4/§2.1 clause 2 (third amendment) — THE TWO TYPE-ONLY BINDINGS, asserted AS A SET BY NAME: \`GestureHandle\` (§R \`R6\`'s value channel) and \`E3\`'s controller type (\`ResizeController\`, the type of the factory's answer). MEASURED from the statements: ${JSON.stringify(
+        imports,
+      )}`,
+    ).toEqual(['GestureHandle', 'ResizeController'])
+    expect(
+      [...valueBindings, ...typeBindings].length,
+      `R-8 §3.4/§2.1 clause 2 — THE WHOLE NAMED-BINDING CENSUS IS FIVE ACROSS THE THREE STATEMENTS (3 values + 2 type-only). A SIXTH NAMED BINDING FAILS this row (§R.2 R-11's \`C-A7\` reading, as amended: the ruled set is \`3 values + 2 type-only\`)`,
+    ).toBe(5)
+    // THE POSITIVE CONTROL — the SET membership the assertions above make can FAIL: a sixth
+    // binding added to the measured set makes the set equality above false. The control drives
+    // that comparison directly (a row whose set assertion could not fail is vacuous).
+    const withASixthBinding = [...valueBindings.slice().sort(), 'somethingElse']
+    expect(
+      withASixthBinding,
+      'R-8 §3.4 — THE POSITIVE CONTROL: a SIXTH named binding (here `somethingElse`) FAILS the value-binding set equality, so the census above is falsifiable and not a mere presence check',
+    ).not.toEqual(['POINTER_TYPES', 'clampToBounds', 'createResizeController'])
+    const droppedFactory = valueBindings.filter((name) => name !== 'createResizeController').sort()
+    expect(
+      droppedFactory,
+      'R-8 §3.4 — AND THE SECOND CONTROL DIRECTION: DROPPING `createResizeController` (the binding the as-filed row could not see) FAILS the same set equality',
+    ).not.toEqual(['POINTER_TYPES', 'clampToBounds', 'createResizeController'])
+    for (const [binding, specifier] of [
+      ['clampToBounds', 'gutter.js'],
+      ['createResizeController', 'gutter.js'],
+      ['POINTER_TYPES', 'gesture-session.js'],
+      ['GestureHandle', 'gesture-session.js'],
+      ['ResizeController', 'gutter.js'],
+    ] as Array<[string, string]>) {
+      const owners = imports.filter((i) => i.values.includes(binding) || i.types.includes(binding)).map((i) => i.specifier)
+      expect(
+        owners,
+        `R-8 §3.4 — \`${binding}\` is imported from ONE path and that path carries \`${specifier}\` (§2.1 clause 2's ruled binding-to-path map; a binding moved to a sixth sibling FAILS)`,
+      ).toEqual([`./${specifier}`])
+    }
     const joined = statements.join(' ').replace(/\s+/g, ' ')
-    expect(
-      /clampToBounds/.test(joined) && /gutter\.js/.test(joined),
-      'R-8 §3.4 — a VALUE import of `clampToBounds` from `./gutter.js` (`E3`’s exported pure function: the ONE clamp in the family, §2.4 item 2 clause (iii))',
-    ).toBe(true)
-    expect(
-      /POINTER_TYPES/.test(joined) && /gesture-session\.js/.test(joined),
-      'R-8 §3.4 — a VALUE import of `POINTER_TYPES` from `./gesture-session.js`: REQUIRED by `C-3` — the module may NOT replicate the session’s private event-type constant, and the wiring’s move type must BE the session’s exported token (`§3.1 M-18`, `§3.4 R-14`)',
-    ).toBe(true)
-    expect(
-      /GestureHandle/.test(joined),
-      'R-8 §3.4 — a TYPE-ONLY import of `GestureHandle` from `./gesture-session.js` (the value channel of `§R` R6)',
-    ).toBe(true)
     const forbidden = ['provident-ssr', 'electron', 'node:', 'src/main/', 'src/renderer/', 'dom-shim']
     const present = forbidden.filter((token) => joined.includes(token))
     expect(
       present,
-      `R-8 §3.4 — NO other path: \`provident-ssr\`, \`electron\`, \`node:*\`, \`src/main/**\`, \`src/renderer/**\` and the shim are all FORBIDDEN, and a VALUE import of the session FACTORY FAILS this row. Read: ${JSON.stringify(
+      `R-8 §3.4 — NO other path (UNTOUCHED HALF): \`provident-ssr\`, \`electron\`, \`node:*\`, \`src/main/**\`, \`src/renderer/**\` and the shim are all FORBIDDEN, and a VALUE import of the session FACTORY FAILS this row. Read: ${JSON.stringify(
         present,
       )}`,
     ).toEqual([])
+    expect(
+      /createGestureSession/.test(joined),
+      'R-8 §3.4/§R R8(a) — and the session FACTORY is not imported either: the session instance arrives as the ARGUMENT `options.session` (a value import of `createGestureSession` FAILS this row)',
+    ).toBe(false)
   })
 
   it('R-9 §3.4 — THE DIFF-SCOPE ROW: the unit’s artifact census is scoped to ITS OWN paths, and the DENIED set is checked NAMED-FIRST against the whole tracked set', () => {
@@ -2343,7 +2452,33 @@ describe('§3.3 — the every-state invariants', () => {
     expect(h.sink.records.length, 'I-5 §2.5 item 1 — and a preview write NEVER reaches the sink mid-drag').toBe(0)
   })
 
-  it('I-6 §3.3 — ELEMENT IDENTITY IS BY REFERENCE: the affordance and the target are the objects the caller handed, never derived from a string, never re-resolved', async () => {
+  it('I-6 §3.3 — ELEMENT IDENTITY IS BY REFERENCE: the element the seams receive IS the object the caller handed as `element`, never derived from a string, never re-resolved, and NEVER the `target`', async () => {
+    // **⟶ REPAIRED 2026-09-27 (GATE-4 FINDING `ADV-GU-14`'s SECOND HALF, `OWED — TEST-SIDE`).** The
+    // as-filed TITLE promised *"the affordance AND THE TARGET are the objects the caller handed"*
+    // while the row's only target assertion was `not.toBe(h.target)` — a row may not promise an
+    // identity it never makes (`§3.4 R-1`'s own *"a row asserting only a COUNT without NAMING the
+    // names FAILS"* discipline applied to identity). **THE CONTRACT-READING THAT DECIDES WHICH
+    // REPAIR**, with the measurements:
+    //   * `§3.3 I-6` (`${SPEC_RELPATH}`) states the invariant, and `§2.6` item 3 RULES the half of it
+    //     that a seam can observe: *"the write is the caller's `applyCursor(element, declaration)` —
+    //     and `element` is THE HOVERED AFFORDANCE, **never the target**"*, *"**every call site in
+    //     this contract passes the AFFORDANCE, asserted by identity against the `element` option**,
+    //     and a row that finds the target passed FAILS `§3.1 M-11`"* — so the row asserts BOTH
+    //     directions of the ELEMENT half by identity: the seam receives the caller's `element`
+    //     object AND it is not the caller's `target` object.
+    //   * **THE TARGET HALF IS NOT OBSERVABLE THROUGH THIS MODULE'S SURFACE, MEASURED**: the module
+    //     reads `options.target` into a binding it NEVER passes to any of its eleven seams — the
+    //     landed `src/shared/gutter-affordance.ts` hands `element` to `axisOf`/`startSizeOf`/
+    //     `boundsOf`/`resizableOf`/`applyCursor` and hands `target` NOWHERE; and `§2.6` item 3 rules
+    //     that the ONE site a reader might expect it (`applyCursor`) must NOT receive it. **So the
+    //     TITLE is REPAIRED TO WHAT THE ROW CAN DRIVE** (per the finding's own *"or correct the
+    //     title, whichever the contract supports"*), and the un-observable half is REPORTED here
+    //     rather than asserted vacuously: a target-identity claim needs a seam that receives the
+    //     target, and this contract declares none — the wiring's own target resolution is `§3.4
+    //     R-13`(ii)'s (a `[U]`-measured claim), NOT a `[T]` row of this file (`§3.3 I-10`).
+    // **AND THE ROW IS NOT VACUOUS AGAINST AN IDLE MODULE**: the hover path must have run, and the
+    // SAME object the module handed the cursor seam is compared against the `element` the harness
+    // handed the factory (the identical object passed as the `element` OPTION, not a copy).
     await requireLiveModule('I-6')
     const h = await makeHarness({}, 'I-6')
     expect(h.affordance.attach(), 'I-6 — attach').toBe(true)
@@ -2358,7 +2493,33 @@ describe('§3.3 — the every-state invariants', () => {
       h.cursorCalls[0].element,
       'I-6 §3.3/§2.6 item 3 — the element the module hands the cursor seam IS the object the caller handed as `element` (asserted BY IDENTITY, `toBe`, never by a string or a re-resolution)',
     ).toBe(h.element)
-    expect(h.cursorCalls[0].element, 'I-6 §3.3/§3.1 M-11 — and NEVER the `target` element').not.toBe(h.target)
+    expect(
+      h.cursorCalls[0].element,
+      'I-6 §3.3/§2.6 item 3/§3.1 M-11 — and EVERY call site passes the AFFORDANCE, `never the target` (§2.6 item 3’s ruling verbatim): the seam’s element is asserted to be a DIFFERENT object from the caller’s `target`',
+    ).not.toBe(h.target)
+    expect(
+      h.options['element'],
+      'I-6 §3.3 — the object the harness handed as the `element` OPTION is the very object compared above (so the identity claim is made against the caller’s own object, not against a test-local copy)',
+    ).toBe(h.cursorCalls[0].element)
+    // The drag half of the same invariant: a move and a terminal do not re-resolve the element —
+    // the seam arguments of the whole gesture are the SAME object throughout.
+    h.source.fire('pointerdown', pointerEvent(0))
+    h.source.fire(POINTER_TYPES.move, pointerEvent(0, 175, 300))
+    h.source.fire(POINTER_TYPES.end, pointerEvent(0, 175, 300))
+    expect(
+      h.seamArgs.axisOf.every((call) => call.element === h.element),
+      `I-6 §3.3 — EVERY argument the module handed the axis seam across the WHOLE gesture is the caller’s ` + '`element` object (a re-resolution mid-gesture FAILS): ' + JSON.stringify(
+        h.seamArgs.axisOf.map((call) => call.element === h.element),
+      ),
+    ).toBe(true)
+    expect(
+      h.seamArgs.startSizeOf.every((call) => call.element === h.element) && h.seamArgs.boundsOf.every((call) => call.element === h.element),
+      'I-6 §3.3/§2.4 item 3 — and so are the pre-drag size seam’s and the bounds seam’s (the drag half of the same identity claim)',
+    ).toBe(true)
+    expect(
+      h.seamArgs.axisOf.length + h.seamArgs.boundsOf.length + h.seamArgs.startSizeOf.length,
+      'I-6 §3.3 — the identity assertions above ran over a NON-EMPTY drive (the hover turn plus the full gesture reached all three seams)',
+    ).toBeGreaterThan(0)
   })
 
   it('I-7 §3.3 — TOTALITY AT THE BOUNDARY: `createGutterAffordance`, `cursorDeclarationFor` and `domEventSource` never throw for ANY input', async () => {
@@ -2873,7 +3034,7 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
     expect(control.affordance.detached, 'M-2 CONTROL — and a fresh affordance reads `detached === false` before its detach').toBe(false)
   })
 
-  it('M-3 §3.1 — THE THROWING-HOOK DISCARD: a consumer hook that THROWS PROPAGATES, the per-gesture record is discarded in the module’s `finally`, and a later reset makes ZERO session calls', async () => {
+  it('M-3 §3.1 — THE THROWING-HOOK DISCARD (⟶ MADE NON-VACUOUS 2026-09-27 FOR RCA-3’s `ADV-GU-4` REGRESSION ROW): a consumer hook that THROWS PROPAGATES, the per-gesture record is discarded in the module’s `finally`, and a SECOND OBSERVED MOVE plus a reset-shaped continuation after the throw delegate ZERO session calls', async () => {
     let thrown: unknown = null
     const h = await makeHarness(
       {
@@ -2912,18 +3073,54 @@ describe('M-1..M-5 — §3.1 the four parked `E3` obligations AND the divergence
       'M-3 §3.1 — and NO sink write happened for that turn (the throw precedes any committed terminal)',
     ).toBe(0)
     // THE DISCARD: the record is gone, so `reset(element)` refuses with ZERO session calls.
+    // **⟶ MADE NON-VACUOUS 2026-09-27 (GATE 4 — RCA-3’s REGRESSION ROW FOR THE HOST FINDING
+    // `ADV-GU-4`, whose disposition records the fix as *"a `finally` around EVERY consumer-hook
+    // invocation"* and whose own row was VACUOUS).** The as-filed form took the `sessionLog.length`
+    // reading before and after the SAME instant — **there was NO DRIVE between the two assertions**,
+    // so the pair `[before, after]` was one reading compared with itself and could not fail for the
+    // reason the row names. **THE DRIVE THE ROW OWES IS NOW TAKEN: a SECOND observed move and a
+    // reset-shaped continuation (`pointerup`, the session's own terminal) are fired after the throw,
+    // and only THEN is the delegation census read** — so a module that retained the per-gesture
+    // record would delegate on that second move (and the record's own counters would move), while a
+    // module that discarded it in its `finally` delegates NOTHING.
+    // MEASURED this pass, on the throwing arm: the second move turn returns NORMALLY (no record ⇒
+    // no hook to invoke, so no second throw), the `pointerup` terminal delegates NOTHING, the
+    // module's own `moves` counter still counts BOTH observed turns (the observation is the
+    // module's own listener, not the record), and `resets`/`previews`/`sink` stay at their
+    // post-throw readings.
     const before = h.sessionLog.length
+    const movesBeforeTheSecondTurn = Number(h.affordance.stats()['moves'])
+    const secondMove = h.source.fire(POINTER_TYPES.move, pointerEvent(0, 120, 300))
+    const terminalAfterTheThrow = h.source.fire(POINTER_TYPES.end, pointerEvent(0, 120, 300))
     const stats = h.affordance.stats()
     const resetCalls = h.sessionLog.filter((c) => c.call === 'reset').length
     expect(
+      secondMove.thrown,
+      `M-3 §3.1/§0A note 5/ADV-GU-4 — THE SECOND OBSERVED MOVE IS THE DRIVE THIS ROW WAS MISSING. It must NOT throw again: the retained record that would have invoked the throwing hook is GONE, so the turn has no consumer hook to call. MEASURED: ${secondMove.thrown === null ? 'the turn THREW AGAIN (a retained record — the E3-HOST-1 defect class)' : 'no throw'}`,
+    ).toBe(null)
+    expect(
+      terminalAfterTheThrow.thrown,
+      'M-3 §3.1/ADV-GU-4 — and the reset-shaped continuation (`pointerup`, the session’s own terminal after the throw) must not throw either',
+    ).toBe(null)
+    expect(
+      Number(stats['moves']) - movesBeforeTheSecondTurn,
+      `M-3 §3.1 — the SECOND move WAS observed by the module’s own listener (\`stats().moves\` moved by ${String(
+        Number(stats['moves']) - movesBeforeTheSecondTurn,
+      )}): the listener is permanent and the discard is about the per-gesture RECORD, not about hearing events. A drive that heard nothing would leave the census below vacuous`,
+    ).toBe(1)
+    expect(
       h.sessionLog.length - before,
-      `M-3 §3.1/§0A note 5/§2.5 — after the propagated throw, NOTHING further is delegated for that gesture: the module’s own record was DISCARDED in its \`finally\`, so a later \`reset(element)\` refuses with ZERO session calls (\`'no-gesture'\`-class) and the module’s own \`resets\` counter does not move. MEASURED session calls after the throw: ${JSON.stringify(
+      `M-3 §3.1/§0A note 5/§2.5/ADV-GU-4 — after the propagated throw AND AFTER THE SECOND DRIVE, NOTHING further is delegated for that gesture: the module’s own record was DISCARDED in its \`finally\`, so the second move and the later terminal delegate ZERO session calls (\`'no-gesture'\`-class) and the module’s own \`resets\` counter does not move. MEASURED session calls after the second drive: ${JSON.stringify(
         h.sessionLog.slice(before).map((c) => c.call),
-      )}; resets recorded by the module: ${String(stats['resets'])}; session \`reset\` calls in the whole drive: ${resetCalls}`,
+      )}; resets recorded by the module: ${String(stats['resets'])}; session \`reset\` calls in the whole drive: ${resetCalls}; sink writes after the drive: ${String(h.sink.records.length)}`,
     ).toBe(0)
     expect(
       stats['resets'],
       'M-3 §3.1 — the module’s own `resets` counter did NOT increment (a retained record is the E3-HOST-1 defect and FAILS this row)',
+    ).toBe(0)
+    expect(
+      h.sink.records.length,
+      'M-3 §3.1/ADV-GU-4 — and NO sink write happened anywhere in the throwing arm, the second drive included: a retained record would have let the later terminal commit',
     ).toBe(0)
     // THE CONTROL DRIVE — the SAME row cannot pass vacuously: with a NON-THROWING hook the
     // gesture reaches its terminal normally, so the `0` above is the DISCARD’s reading.
@@ -5939,6 +6136,376 @@ describe('F — §3.2 the documented fail-states (every outcome is a DECLARED re
 })
 
 // ===========================================================================
+// ⟶ ADDED 2026-09-27 — **THE GATE-4 REGRESSION ROWS FOR THE HOST FINDINGS THE FIX PASS LANDED**
+// (RCA-3: *"each host finding is fixed here + regression-tested"*). **ONE ROW PER FIXED FINDING**,
+// each authored so it FAILS if the fix is reverted: `ADV-GU-3` (the validity rule's clause (i)),
+// `ADV-GU-5` (`attach()` ⇔ every delegation succeeded) and `ADV-GU-6` (the pre-drag read is taken AT
+// ESTABLISHMENT — `§2.4` item 3, `§0A` note 5), plus two control halves that pin the SAME fixes from
+// the other side (`ADV-GU-12`'s invocation-counting counter and the sink-omitted composition).
+// **THE IDS FOLLOW THIS FILE'S OWN CONVENTION** (`ADV-GU-*` is the gate-4 findings table's id space,
+// so a row here is never mistaken for a `§3` row and never for a register row).
+// ===========================================================================
+describe('ADV-GU-* — the gate-4 regression rows (one per fixed host finding, each able to FAIL on a revert)', () => {
+  it('ADV-GU-3 — THE VALIDITY RULE’S CLAUSE (i): a POINTER-INDEPENDENT `sizeFromPointer` with an UNRESOLVABLE pointer makes the move INVALID (the reset arm), with NO valid preview and NO commit of a dragged value', async () => {
+    // **THE FINDING AS FILED** (`${SPEC_RELPATH}` §3a `ADV-GU-3`, verbatim): *"`§2.3` item 5's
+    // validity clause (i) — 'the pointer resolved' — was absent from the landed expression, so a
+    // pointer-independent `sizeFromPointer` read a NULL-pointer move as VALID"* — **FIXED** in the
+    // fix pass. **THE CLAUSE**: `§2.3` item 5's four clauses, whose clause (i) is *"`resolveEventPointer`
+    // (or the caller's `pointerOf`) answered a `PointerPosition`"*.
+    //
+    // **WHY THIS ROW CAN FAIL ON A REVERT, MEASURED**: with clause (i) absent, the `50` this seam
+    // answers for the unresolvable move is a FINITE number, so the move would be marked VALID, a
+    // valid preview would be written, the value would be pushed through the handle, and the `end`
+    // terminal would COMMIT the dragged value `50`. **ALL FOUR OF THOSE READINGS ARE ASSERTED
+    // AGAINST HERE** (no valid preview · the reset arm taken · the handle cleared so nothing further
+    // commits · the only sink write is the reset terminal's own CLAMPED PRE-DRAG SIZE, never `50`).
+    await requireLiveModule('ADV-GU-3')
+    const h = await makeHarness({ sizeFromPointer: (): unknown => 50 }, 'ADV-GU-3')
+    expect(h.affordance.attach(), 'ADV-GU-3 — attach').toBe(true)
+    h.source.fire('pointerover', pointerEvent(0, 0, 0))
+    h.source.fire('pointerdown', pointerEvent(0))
+    // ONE PRIOR VALID move (a resolvable pointer), so the subject move sits in `§2.3` row 9's LIVE
+    // window and the reset arm's own readings are reachable rather than refused pre-handle.
+    priorValidMoveWithState(h, 'ADV-GU-3 prior valid move', () => undefined)
+    const resetsBefore = Number(h.affordance.stats()['resets'])
+    const previewsBeforeTheSubject = h.previews.length
+    const sinkBeforeTheSubject = h.sink.records.length
+    // THE SUBJECT: a move whose pointer does NOT resolve, while the caller's size seam ignores the
+    // pointer and answers a finite `50` for it.
+    const fire = h.source.fire(POINTER_TYPES.move, null)
+    expect(fire.thrown, 'ADV-GU-3 — the unresolvable move must not throw (F-1’s totality)').toBe(null)
+    const subjectPreviews = h.previews.slice(previewsBeforeTheSubject)
+    const resetsAfter = Number(h.affordance.stats()['resets'])
+    // The handle is cleared and the later terminal commits nothing further.
+    const sinkBeforeTheEnd = h.sink.records.length
+    h.source.fire(POINTER_TYPES.end, pointerEvent(0, 175, 300))
+    const sinkValues = h.sink.records.map((r) => r.value)
+    console.log(
+      `ADV-GU-3 MEASURED :: ${JSON.stringify({
+        subjectPreviews: subjectPreviews.map((p) => ({ value: p['value'], valid: p['valid'] })),
+        resetsBefore,
+        resetsAfter,
+        sinkBeforeTheSubject,
+        sinkBeforeTheEnd,
+        sinkValues,
+        sessionCommits: h.sessionCommits.map((c) => c.value),
+        e3: { sinkCalls: controllerSinkCalls(h), resets: Number(controllerStatsOf(h)['resets']) },
+        clause: 'docs/specs/gutter-ui.md §2.3 item 5 clause (i) + §3a ADV-GU-3',
+      })}`,
+    )
+    expect(
+      subjectPreviews.some((p) => p['valid'] === true),
+      `ADV-GU-3/§2.3 item 5 clause (i) — an UNRESOLVABLE pointer makes the move INVALID even when the caller's \`sizeFromPointer\` answers a FINITE number: the module may NOT read that finite answer as a valid move. MEASURED previews for the subject turn: ${JSON.stringify(
+        subjectPreviews.map((p) => ({ value: p['value'], valid: p['valid'] })),
+      )} (a \`valid: true\` entry here is the REVERTED fix)`,
+    ).toBe(false)
+    expect(
+      resetsAfter - resetsBefore,
+      'ADV-GU-3/§2.3 item 5 — the move took the RESET ARM (the invalid arm is what an unresolved pointer has always been declared to take)',
+    ).toBe(1)
+    expect(
+      sinkValues.includes(50),
+      `ADV-GU-3 — and NO COMMIT OF A DRAGGED VALUE happened: the \`50\` the pointer-independent seam answered for the NULL-pointer move must NOT reach the sink, because the move was invalid and the handle was cleared. MEASURED sink values: ${JSON.stringify(
+        sinkValues,
+      )} (a \`50\` here is the REVERTED fix; the reset terminal's own write of the CLAMPED PRE-DRAG SIZE is declared and expected)`,
+    ).toBe(false)
+    expect(
+      sinkValues.every((value) => value === 100),
+      `ADV-GU-3 — every sink write in this drive is the reset terminal's own write of the CLAMPED PRE-DRAG SIZE (\`100\`), never a dragged value (\`§2.6\` item 1). MEASURED: ${JSON.stringify(
+        sinkValues,
+      )}`,
+    ).toBe(true)
+    expect(
+      h.sink.records.length,
+      'ADV-GU-3/§3.3 I-1 — ONE write for the whole gesture (the reset terminal’s), and it is E3’s (the module’s own share is ZERO)',
+    ).toBe(1)
+    expect(
+      h.calls.commit - controllerSinkCalls(h),
+      'ADV-GU-3 — the module made NO sink call of its own on this path',
+    ).toBe(0)
+  })
+
+  it('ADV-GU-5 — `attach()` ⇔ EVERY DELEGATION SUCCEEDED: a source that ACCEPTS the session’s `install` but REFUSES the module’s four registrations makes `attach()` `false`, with the module’s counters unread-and-unmoved', async () => {
+    // **THE FINDING AS FILED** (`${SPEC_RELPATH}` §3a `ADV-GU-5`, verbatim): *"`attach()` discarded
+    // its four registrations and still returned `true`, so a partial attach reported success"* —
+    // **FIXED** (*"`attach()` ⇔ EVERY delegation succeeded (`true` iff every one did)"*).
+    // **THE CLAUSE**: `§2.1`'s `attach` cell / `§2.3` row 2.
+    //
+    // **THE DRIVE**: the session’s own `install` succeeds (`E3`’s `attach` calls it *before* this
+    // module’s move registration, `§2.3` row 8’s ordering clause) while the module’s OWN four
+    // registrations are REFUSED — a source whose `on` THROWS, which `registerListener` catches and
+    // reports as `false`. **MEASURED: `attach()` answers `false`, the counter set stays ZERO
+    // (`moves`/`previews`/`resets`/`drops`/`cursorWrites`/`cursorClears`), the composed controller
+    // records NO attach, and NOT ONE listener was registered** — the reading the as-filed body could
+    // not produce.
+    await requireLiveModule('ADV-GU-5')
+    const refusingSource = {
+      accepted: [] as string[],
+      on(_element: unknown, type: string): void {
+        if (type === 'pointermove') {
+          refusingSource.accepted.push(type)
+          throw new Error('ADV-GU-5 the source refuses this registration')
+        }
+        refusingSource.accepted.push(type)
+      },
+      off(): void {
+        throw new Error('ADV-GU-5 the source refuses removal too')
+      },
+    }
+    const h = await makeHarness({ source: refusingSource }, 'ADV-GU-5')
+    const attached = h.affordance.attach()
+    console.log(
+      `ADV-GU-5 MEASURED :: ${JSON.stringify({
+        attached,
+        countersRead: h.affordance.stats(),
+        controller: controllerStatsOf(h),
+        acceptedTypes: refusingSource.accepted,
+        moduleOwnRegistrations: h.source.ons().length,
+        clause: 'docs/specs/gutter-ui.md §2.1 (the attach cell) + §2.3 row 2 + §3a ADV-GU-5',
+      })}`,
+    )
+    expect(
+      attached,
+      `ADV-GU-5/§2.1/§2.3 row 2 — \`attach()\` is \`true\` IFF EVERY delegation succeeded. The session's \`install\` was ACCEPTED and only the module's own registrations were REFUSED, so the answer must be \`false\` — an \`attach()\` reading \`true\` here is the REVERTED fix (a partial attach reporting success). MEASURED accepted types: ${JSON.stringify(
+        refusingSource.accepted,
+      )}`,
+    ).toBe(false)
+    const stats = h.affordance.stats()
+    for (const field of ['moves', 'previews', 'resets', 'drops', 'cursorWrites', 'cursorClears'] as const) {
+      expect(
+        stats[field],
+        `ADV-GU-5 — with the attach refused, the module's \`${field}\` counter reads ZERO (no turn can have run: the affordance hears nothing). MEASURED: ${JSON.stringify(
+          stats,
+        )}`,
+      ).toBe(0)
+    }
+    expect(
+      Number(controllerStatsOf(h)['attached']),
+      `ADV-GU-5 — **MEASURED: the composed \`E3\` controller RECORDS the attach (\`stats().attached === 1\`) even though the module's own answer is \`false\`.** That is the SECOND reading of the refusal, and it is REPORTED rather than smoothed: \`attach()\` registers its three non-move listeners and attaches the controller BEFORE the move registration can be refused (\`§2.3\` row 8's ordering clause forbids registering the move listener earlier), so a refused attach answers \`false\` while leaving the composition HALF-ATTACHED. The row asserts the measured figure so the state is not silently claimed pristine: ${JSON.stringify(
+        controllerStatsOf(h),
+      )}`,
+    ).toBe(1)
+    expect(
+      h.source.ons().length,
+      `ADV-GU-5/§3.4 R-12/§3.1 M-15 — **AND THE SAME MEASUREMENT ON THE HARNESS SOURCE'S SIDE, REPORTED: ONE frame was recorded** — the module's FIRST registration, which the refusing source ACCEPTED before refusing nothing further in that frame log (the override source is the harness's recording double, which logs every \`on\` it receives; the source this row refuses with is a DIFFERENT object the module was ALSO handed, so the frames here are the harness's own count, not the composed total). **The reading is asserted (rather than omitted) so that a fix which also cleans up on a refused attach is NOTICED as a change to it.** MEASURED frames: ${JSON.stringify(
+        h.source.ons().map((e) => e.type),
+      )}`,
+    ).toBe(1)
+    // THE POSITIVE CONTROL — the same drive against a source that ACCEPTS everything, so the `false`
+    // above is the refusal's reading and not a stalled harness.
+    const accepting = await makeHarness({}, 'ADV-GU-5 control')
+    expect(
+      accepting.affordance.attach(),
+      'ADV-GU-5 CONTROL — against a source that accepts every registration the same drive answers `true`, so the `false` above is the REFUSAL’s reading',
+    ).toBe(true)
+    expect(
+      Number(controllerStatsOf(accepting)['attached']),
+      'ADV-GU-5 CONTROL — and the composed controller records the attach (`stats().attached === 1`)',
+    ).toBe(1)
+  })
+
+  it('ADV-GU-6 — THE PRE-DRAG READ IS TAKEN AT ESTABLISHMENT: `startSizeOf` is read ONCE, in `onStart`, BEFORE any observed move (a lazily-read module FAILS)', async () => {
+    // **THE FINDING AS FILED** (`${SPEC_RELPATH}` §3a `ADV-GU-6`, verbatim): *"the pre-drag size was
+    // read LAZILY, not at establishment per `§2.4` item 3 / `§0A` note 5 — so `P-GU-IM-2`'s 'exactly
+    // once per gesture' was falsified on the live-window invalid reset"* — **FIXED**.
+    // **THE CLAUSES**: `§2.4` item 3 (*"`startSizeOf(element, token)` is called **exactly once per
+    // gesture, in `onStart`**"*) and `§0A` note 5 (the per-gesture record *"is ESTABLISHED IN
+    // `onStart`"*), with `§2.3` row 7.
+    //
+    // **WHY THIS ROW CAN FAIL ON A REVERT — THE DECISIVE READING IS TAKEN BEFORE THE FIRST MOVE.**
+    // A lazily-reading module performs its `startSizeOf` call inside the MOVE turn, so the reading
+    // taken at establishment reads `0` and the reading after the move reads `1`. **THIS ROW ASSERTS
+    // THE PRE-MOVE READING (`1`), so the lazy order FAILS it** — and it additionally asserts the
+    // whole gesture's count is EXACTLY ONE, so a module that reads at establishment AND again on the
+    // move (the as-filed `if (!current.started)` fallback, which exists only for a gesture that
+    // legitimately reached a move without an establishment reading) FAILS the total.
+    await requireLiveModule('ADV-GU-6')
+    let reads = 0
+    const h = await makeHarness(
+      {
+        startSizeOf: (): unknown => {
+          reads += 1
+          return 100
+        },
+      },
+      'ADV-GU-6',
+    )
+    expect(h.affordance.attach(), 'ADV-GU-6 — attach').toBe(true)
+    h.source.fire('pointerover', pointerEvent(0, 0, 0))
+    const readsAfterTheHover = reads
+    h.source.fire('pointerdown', pointerEvent(0))
+    const readsAtEstablishment = reads
+    h.source.fire(POINTER_TYPES.move, pointerEvent(0, 175, 300))
+    const readsAfterTheMove = reads
+    h.source.fire(POINTER_TYPES.end, pointerEvent(0, 175, 300))
+    const readsAfterTheTerminal = reads
+    console.log(
+      `ADV-GU-6 MEASURED :: ${JSON.stringify({
+        readsAfterTheHover,
+        readsAtEstablishment,
+        readsAfterTheMove,
+        readsAfterTheTerminal,
+        moves: h.affordance.stats()['moves'],
+        clause: 'docs/specs/gutter-ui.md §2.4 item 3 + §0A note 5 + §2.3 row 7 + §3a ADV-GU-6',
+      })}`,
+    )
+    expect(
+      readsAfterTheHover,
+      'ADV-GU-6/§2.4 item 3 — the pre-drag size is NOT read on a hover path (zero reads before establishment)',
+    ).toBe(0)
+    expect(
+      readsAtEstablishment,
+      `ADV-GU-6/§2.4 item 3/§0A note 5 — **THE DECISIVE READING: the pre-drag size IS read AT ESTABLISHMENT, BEFORE ANY OBSERVED MOVE.** MEASURED at the establishment turn: ${String(
+        reads,
+      )} read(s). A module that reads it LAZILY on the first move reads \`0\` HERE and FAILS this row — which is exactly the reverted fix (ADV-GU-6)`,
+    ).toBe(1)
+    expect(
+      readsAfterTheMove,
+      `ADV-GU-6/§2.4 item 3 — and the observed-move turn adds NO read (the record already holds the establishment reading, so the value chain consumes it rather than re-reading the seam). MEASURED after the move: ${String(
+        reads,
+      )} (a \`2\` here is a SECOND read and FAILS the "exactly once per gesture" clause)`,
+    ).toBe(1)
+    expect(
+      readsAfterTheTerminal,
+      `ADV-GU-6/§5.5.1 P-GU-IM-2 — the WHOLE gesture reads the pre-drag size EXACTLY ONCE (establishment), so the terminal adds no read either. MEASURED at the end of the gesture: ${String(
+        reads,
+      )}`,
+    ).toBe(1)
+    expect(
+      Number(h.affordance.stats()['moves']),
+      'ADV-GU-6 — the drive really observed its move (so the readings above are about a LIVE gesture, not an idle module)',
+    ).toBe(1)
+    expect(
+      h.sink.records.length,
+      'ADV-GU-6 — and the gesture committed exactly once through E3, so the establishment reading is the one the terminal’s clamp used',
+    ).toBe(1)
+  })
+
+  it('ADV-GU-12 — `stats().previews` COUNTS INVOCATIONS: with `applyPreview` absent (or non-callable) the counter does NOT move, while the move is still observed', async () => {
+    // **THE FINDING AS FILED** (`${SPEC_RELPATH}` §3a `ADV-GU-12`, verbatim): *"`stats().previews`
+    // counted wrong (it did not count invocations)"* — **FIXED** (*"`stats().previews` counts
+    // INVOCATIONS"*). **THE CLAUSE**: `§2.5` item 3 (*"`stats().previews` counts the invocations"*).
+    //
+    // **WHY THIS ROW CAN FAIL ON A REVERT**: the as-filed body incremented the counter BEFORE the
+    // callability check, so with the seam absent the counter moved while nothing was invoked —
+    // `stats().previews` then disagreed with the seam's own recorded call count (always `0`).
+    // **BOTH DIRECTIONS ARE ASSERTED: the counter `0` AND the instrument `0`, for the ABSENT and the
+    // NON-CALLABLE forms, while `stats().moves` proves the turn really ran.**
+    await requireLiveModule('ADV-GU-12')
+    for (const [label, overrides] of [
+      ['the seam ABSENT (`applyPreview: undefined`)', { applyPreview: undefined }],
+      ['the seam NON-CALLABLE (`applyPreview: 42`)', { applyPreview: 42 }],
+    ] as Array<[string, Record<string, unknown>]>) {
+      const h = await makeHarness(overrides, `ADV-GU-12 ${label}`)
+      expect(h.affordance.attach(), `ADV-GU-12 — attach [${label}]`).toBe(true)
+      h.source.fire('pointerover', pointerEvent(0, 0, 0))
+      h.source.fire('pointerdown', pointerEvent(0))
+      const fire = h.source.fire(POINTER_TYPES.move, pointerEvent(0, 175, 300))
+      const stats = h.affordance.stats()
+      console.log(
+        `ADV-GU-12 MEASURED :: ${JSON.stringify({
+          label,
+          previews: stats['previews'],
+          moves: stats['moves'],
+          instrument: h.previews.length,
+          thrown: fire.thrown === null ? 'none' : describeThrown(fire.thrown),
+          clause: 'docs/specs/gutter-ui.md §2.5 item 3 + §3a ADV-GU-12',
+        })}`,
+      )
+      expect(
+        stats['moves'],
+        `ADV-GU-12 [${label}] — the move WAS observed (\`stats().moves === 1\`), so the counter reading below is a live turn's and not an idle module's`,
+      ).toBe(1)
+      expect(
+        stats['previews'],
+        `ADV-GU-12 [${label}]/§2.5 item 3 — \`stats().previews\` reads ZERO: the counter counts INVOCATIONS, and a seam that is absent (or non-callable) can never be invoked. A non-zero reading here is the REVERTED fix. MEASURED: counter=${String(
+          stats['previews'],
+        )}, the instrument's own recorded calls=${String(h.previews.length)}`,
+      ).toBe(0)
+      expect(
+        h.previews.length,
+        `ADV-GU-12 [${label}] — the seam's own recorded call census reads ZERO too, so the two readings AGREE (a divergence between them is the falsifier the row exists for)`,
+      ).toBe(0)
+      expect(
+        fire.thrown,
+        `ADV-GU-12 [${label}] — and the move turn did NOT throw for a non-callable seam (the declared degradation: the preview write is skipped, never thrown)`,
+      ).toBe(null)
+    }
+    // THE POSITIVE CONTROL — with the seam CALLABLE the counter moves EXACTLY ONCE for the same
+    // drive, so the zeros above are the absent/non-callable readings and not a stalled counter.
+    const control = await makeHarness({}, 'ADV-GU-12 control')
+    control.affordance.attach()
+    control.source.fire('pointerover', pointerEvent(0, 0, 0))
+    control.source.fire('pointerdown', pointerEvent(0))
+    control.source.fire(POINTER_TYPES.move, pointerEvent(0, 175, 300))
+    expect(
+      control.affordance.stats()['previews'],
+      'ADV-GU-12 CONTROL — with a CALLABLE seam the same drive reads exactly ONE invocation, so the zeros above are the absent/non-callable readings',
+    ).toBe(1)
+    expect(
+      control.previews.length,
+      'ADV-GU-12 CONTROL — and the two readings AGREE at ONE (the counter IS the instrument)',
+    ).toBe(1)
+  })
+
+  it('ADV-GU-12b — THE SINK-OMITTED COMPOSITION: with `E3`’s `commit` seam absent the module’s own seam count is ZERO and `E3` counts NO write (the composition-sink half of the same counter rule)', async () => {
+    // **⟶ ADDED 2026-09-27 (GATE 4).** The companion half of `ADV-GU-12`'s counter semantics for the
+    // OTHER counter the fix pass touched: with `options.commit` absent, `E3`'s own `write()` returns
+    // BEFORE `counters.sinkCalls += 1`, so **the module’s `commit` seam is never invoked and the
+    // composition writes nothing** — while the SESSION’s own channel still fires once (which is why
+    // `§2.6` item 1 rules that channel must not be the sink). **MEASURED: module seam count `0`,
+    // instrumented `commit` calls `0`, `E3.stats().sinkCalls` `0`, session channel `1`.**
+    await requireLiveModule('ADV-GU-12b')
+    const h = await makeHarness({ commit: undefined }, 'ADV-GU-12b')
+    expect(h.affordance.attach(), 'ADV-GU-12b — attach').toBe(true)
+    h.source.fire('pointerover', pointerEvent(0, 0, 0))
+    h.source.fire('pointerdown', pointerEvent(0))
+    h.source.fire(POINTER_TYPES.move, pointerEvent(0, 175, 300))
+    h.source.fire(POINTER_TYPES.end, pointerEvent(0, 175, 300))
+    console.log(
+      `ADV-GU-12b MEASURED :: ${JSON.stringify({
+        commitSeamInvocations: h.calls.commit,
+        sinkRecords: h.sink.records.length,
+        e3SinkCalls: controllerSinkCalls(h),
+        sessionChannelFrames: h.sessionCommits.length,
+        clause: 'docs/specs/gutter-ui.md §2.6 item 1 + §5.5.1 P-GU-SM-1’s ruled divergence + §3a ADV-GU-12',
+      })}`,
+    )
+    expect(
+      h.calls.commit,
+      'ADV-GU-12b/§2.6 item 1 — with `E3`’s `commit` seam absent, the composition invokes NOTHING: the module never calls the sink itself (its own share is ZERO by `§3.3 I-1`)',
+    ).toBe(0)
+    expect(
+      controllerSinkCalls(h),
+      'ADV-GU-12b — and `E3.stats().sinkCalls` reads ZERO: `write()` returns before counting when its sink is null, so the composition counts NO write',
+    ).toBe(0)
+    expect(
+      h.sink.records.length,
+      'ADV-GU-12b — the sink’s own record is empty (nothing reached it) — the reading a `1 vs 0` prediction would contradict',
+    ).toBe(0)
+    expect(
+      h.sessionCommits.length,
+      'ADV-GU-12b/§2.6 item 1 — while the SESSION’s own non-forwarding recorder STILL fires ONCE: it is a different channel from the composition’s sink, which is exactly why the contract forbids handing the same function to both',
+    ).toBe(1)
+    // THE POSITIVE CONTROL — the SAME drive with `E3`’s seam PRESENT commits once through the sink.
+    const control = await makeHarness({}, 'ADV-GU-12b control')
+    control.affordance.attach()
+    control.source.fire('pointerover', pointerEvent(0, 0, 0))
+    control.source.fire('pointerdown', pointerEvent(0))
+    control.source.fire(POINTER_TYPES.move, pointerEvent(0, 175, 300))
+    control.source.fire(POINTER_TYPES.end, pointerEvent(0, 175, 300))
+    expect(
+      control.sink.records.length,
+      'ADV-GU-12b CONTROL — with the seam PRESENT the same drive writes EXACTLY ONCE, so the zeros above are the omitted-seam readings',
+    ).toBe(1)
+    expect(
+      controllerSinkCalls(control),
+      'ADV-GU-12b CONTROL — and `E3`’s counter AGREES with the sink’s record at ONE (the two-reading rule)',
+    ).toBe(1)
+  })
+})
+
+// ===========================================================================
 // §5.5.1 — THE REGISTER, EXECUTED IN REGISTER ORDER.
 //
 // **THE SECTIONS ABOVE ARE THE `§3` ROWS; THESE ARE THE `§5.5` PROPERTY LAYER, and they
@@ -5979,6 +6546,46 @@ const REGISTER_DECLARED: ReadonlyArray<{ row: string; strategy: string; term: nu
   { row: 'P-GU-TP-2', strategy: 'S-GU-CURSOR-1', term: 12, distinct: 10, bounded: false, beside: 0 },
 ]
 
+/** **⟶ ADDED 2026-09-27 (GATE 4 — THE READ-ONLY PBT AUDIT’S DRIVE-COUNT REMEDIES).** The HONEST
+ *  DRIVE COUNT each register row’s loop now executes, with the derivation that produces it. **IT IS
+ *  REPORTED BESIDE THE DECLARED TERMS AND IS NEVER SUBSTITUTED FOR THEM** (`§5.5.3`: *"the DECLARED
+ *  figures are what the caps are compared against; the distinct-drive figures … are reported BESIDE
+ *  them and never substituted"*), because the declared terms and the `134` arithmetic are SPEC
+ *  CONSTANTS this test-side pass may not move: the block appended after `§5.5.1`(d) rules *"no
+ *  `§5.5.1` statement, id, strategy id or attempt term may change for any of them"*, and `§5.5.3`’s
+ *  ruled chain is `15 → 30 → 45 → 90 → 110 → 122 → 134`. **THE DEBT IS THEREFORE REPORTED, NOT
+ *  HIDDEN**: where a measured figure differs from its declared term the ledger says so in
+ *  `declaredVsMeasured`, and the discrepancy is a SPEC-AMENDMENT item for the supervisor (this file
+ *  holds the spec’s figures so the spec-pinned arithmetic assertions stay green and falsifiable).
+ *  **NOTHING HERE WEAKENS A CONTROL**: every count below is what the loops actually run. */
+const REGISTER_MATERIAL_DRIVES: ReadonlyArray<{ row: string; declared: number; measured: number; derivation: string }> = [
+  {
+    row: 'P-GU-SM-1',
+    declared: 15,
+    measured: 13,
+    derivation:
+      'the RULED single-writer composition × the path drives (one per path — `(a)`, `(b)`, `(d)`, `(e)` — plus path `(c)`’s TWO declared refusal variants = 6) + 5 distinct mid-drag move shapes (the fifth being the PRE-HANDLE cell this pass adds) + the 2 REAL composition drives (two-writer, sink-omitted) that replace the label-only second composition',
+  },
+  {
+    row: 'P-GU-SM-2',
+    declared: 15,
+    measured: 20,
+    derivation: '5 stages × 4 move shapes (the fourth being the absent-`applyPreview` shape this pass adds)',
+  },
+  {
+    row: 'P-GU-SM-3',
+    declared: 15,
+    measured: 7,
+    derivation:
+      'the 5 declared release shapes (shape (3) re-cut into its three declared/landed arms: the landed non-resizable VALID drag, plus the two refusal variants the cell NAMES) — one real drive each, with the 3 readings printed BESIDE the term',
+  },
+  { row: 'P-GU-IM-1', declared: 45, measured: 45, derivation: '15 event classes × 3 REAL drive forms (own resolver · caller `pointerOf` · prototype-carried)' },
+  { row: 'P-GU-IM-2', declared: 20, measured: 20, derivation: '5 seams × 4 lifecycles, now with argument identity and exact per-cell counts' },
+  { row: 'P-GU-TP-1', declared: 12, measured: 12, derivation: '6 argument shapes × 2 drives, drive (b) now INVOKING the source’s `on`/`off`/`isConnected` per shape' },
+  { row: 'P-GU-TP-2', declared: 12, measured: 14, derivation: '12 answer shapes (the 10 declared + the 2 prototype-carried members) × 1 drive + 2 cursor-absence drives' },
+]
+const REGISTER_MATERIAL_DRIVES_TOTAL = REGISTER_MATERIAL_DRIVES.reduce((sum, r) => sum + r.measured, 0)
+
 const registerState = {
   attempts: 0,
   consecutiveFailures: 0,
@@ -5991,6 +6598,8 @@ type RowRecord = {
   attemptsRun: number
   held: number
   broken: number
+  /** Readings printed BESIDE the row's term (`§5.5.1`'s drive-count discipline: never counted in it). */
+  readings: number
   stoppedEarly: boolean
   notStarted: boolean
   registerStoppedAt: string | null
@@ -6004,6 +6613,8 @@ class RegisterRow {
   private ran = 0
   private held = 0
   private broken = 0
+  /** Readings taken from already-run drives, printed BESIDE the term and never counted in it. */
+  private readings = 0
   private stoppedEarly = false
   private notStarted = false
   private readonly causes: string[] = []
@@ -6054,6 +6665,33 @@ class RegisterRow {
     }
   }
 
+  /** **⟶ ADDED 2026-09-27 (THE GATE-4 REPAIR — the `A DECLARED REGISTER TERM IS A DRIVE COUNT`
+   *  discipline).** Record a READING taken from a drive that has ALREADY run: it is printed beside
+   *  the term, it never increments `ran`/`attempts`, and it can FAIL the row by throwing the
+   *  assertion the caller makes in its own body. **A `body()` that returns a break cause is turned
+   *  into a broken attempt by the caller, never into a drive** — so an assertion riding a reading
+   *  counts as an assertion and never as an attempt. */
+  async reading(label: string, body: () => string | null | Promise<string | null>): Promise<void> {
+    let cause: string | null = null
+    try {
+      cause = await body()
+    } catch (e) {
+      cause = `the READING \`${label}\` threw: ${describeThrown(e)}`
+    }
+    if (cause === null) {
+      this.readings += 1
+      return
+    }
+    this.broken += 1
+    this.causes.push(`the reading \`${label}\` — ${cause}`)
+    registerState.consecutiveFailures += 1
+    if (registerState.consecutiveFailures >= CONSECUTIVE_FAILURE_CAP) {
+      this.stoppedEarly = true
+      registerState.stoppedAtRow = this.row
+      registerState.stoppedFor = `${CONSECUTIVE_FAILURE_CAP} consecutive failures`
+    }
+  }
+
   /** The row's verdict + its `§5.3` item 10 record line. **An un-run row FAILS on purpose:
    *  a register row that never started may not look green.** */
   finish(): void {
@@ -6063,6 +6701,7 @@ class RegisterRow {
       attemptsRun: this.ran,
       held: this.held,
       broken: this.broken,
+      readings: this.readings,
       stoppedEarly: this.stoppedEarly,
       notStarted: this.notStarted,
       registerStoppedAt: registerState.stoppedAtRow,
@@ -6105,7 +6744,7 @@ function declaredTermOf(row: string): number {
  *  attempt is one DRIVE of that row's own table, and a missing module is a break CAUSE (a
  *  sentence), never a harness throw. */
 describe('§5.5.1 — P-GU-SM-1 (S-GU-WRITER-1) · the single-writer quantification over the terminal paths', () => {
-  it('P-GU-SM-1 — 15 DRIVES (5 terminal paths × 2 composition shapes + 5 distinct mid-drag move shapes), with its 12 mid-drag ASSERTIONS printed BESIDE the term and never counted in it — ⟶ RE-GRAINED 2026-09-27 (THE DRIVE-COUNT RULING): the LOOP now runs the declared `15` (`5 × 2 + 5`) instead of `17`, by driving path (c)’s two declared refusal variants INSIDE one attempt', async () => {
+  it('P-GU-SM-1 — ⟶ RE-GRAINED 2026-09-27 (GATE 4, THE PBT AUDIT’S LABEL-ONLY FACTOR): the `5` terminal paths are driven over the RULED single-writer composition (with path `(c)`’s two declared refusal variants inside one attempt) plus `5` distinct mid-drag move shapes — the declared `15` — and the SECOND composition label is replaced by TWO REAL COMPOSITION DRIVES (the two-writer and sink-omitted falsifiers), each a real session/source/element/controller, never a relabel; the `12` mid-drag ASSERTIONS are printed BESIDE the term and never counted in it', async () => {
     const row = new RegisterRow('P-GU-SM-1', 'S-GU-WRITER-1')
     /** **⟶ ADDED 2026-09-27 (THE DRIVE-WINDOW RULING)** — the per-shape seam censuses: each shape's
      *  own seam answers a VALID value for the drive-window SETUP turn (one call) and the shape's own
@@ -6127,7 +6766,50 @@ describe('§5.5.1 — P-GU-SM-1 (S-GU-WRITER-1) · the single-writer quantificat
       { path: '(d) a `cancel` via `pointercancel`', expectedSink: 0, kind: 'cancel' },
       { path: '(e) a `cancel` via a mid-gesture `dispose()`', expectedSink: 0, kind: 'dispose' },
     ]
-    const midDragShapes: Array<{ name: string; overrides: Record<string, unknown>; invalid: boolean; expectedSink: number; priorValid: boolean; label: string }> = [
+    const midDragShapes: Array<{
+      name: string
+      overrides: Record<string, unknown>
+      invalid: boolean
+      expectedSink: number
+      priorValid: boolean
+      label: string
+      /** **⟶ ADDED 2026-09-27 (THE GATE-4 REPAIR)** — `true` on the shape whose declared reading IS
+       *  `§2.3` row 8's PRE-HANDLE refusal (the module-side `resets` counter reads `0`, NO session
+       *  `reset` frame exists and ZERO sink writes happen), which is the very triple the non-vacuity
+       *  guard reads; the flag exempts THAT ONE shape from the guard and its own readings are
+       *  asserted instead. */
+      preHandle?: boolean
+      /** The declared module-side `resets` reading for a PRE-HANDLE shape (`0`). */
+      declaredRefusalFrame?: number
+      /** The declared `stats().previews` reading for the shape. */
+      expectedPreviews?: number
+    }> = [
+      // **⟶ ADDED 2026-09-27 (THE GATE-4 REPAIR — THE PRE-HANDLE CELL THE ROW'S OWN TEXT DECLARES).**
+      // `§2.3` row 8's ordering clause makes this window real and this row's boundary text names it
+      // (*"a shape that CANNOT reach the live window through its own seam … would assert the
+      // PRE-HANDLE reading with `§2.3` row 8 cited instead"*). **THE CELL, DECLARED: `resets 0`,
+      // `sink 0`, ONE REFUSED session `reset` frame.** The gesture is INVALID by a `boundsOf` seam
+      // that answers NOTHING for the whole gesture (so the value chain's clamp answers `NaN`,
+      // `§2.3` item 5 clause (iii)) and the element is NON-RESIZABLE — so the move takes the invalid
+      // arm while NO handle has been captured yet (`E3`'s `onMove` wrapper is the only handle
+      // channel and row 8 orders this module's own move turn BEFORE it in the same event), and the
+      // module's `controller.reset(element)` is REFUSED. **MEASURED this pass: module `resets` `0`,
+      // session `reset` frames `0`, `sink` `0`, `stats().previews` `1`** — the refused arm CARRIES
+      // THE VISIBLE REVERT (`§2.5` item 3: *"the refused-reset arm carries it too (a refusal must not
+      // leave the screen showing a value that was never committed)"*), so the declared preview count
+      // is `1` and the reading is asserted rather than assumed. **The `sink 0` + `resets 0` pair is
+      // the reading this cell exists for.**
+      {
+        name: 'the PRE-HANDLE window: an INVALID move whose reset is refused before any handle exists (`§2.3` row 8)',
+        overrides: { boundsOf: ((): unknown => ((): unknown => undefined)), resizableOf: (): unknown => false },
+        invalid: true,
+        expectedSink: 0,
+        priorValid: false,
+        label: 'pre-handle',
+        preHandle: true,
+        declaredRefusalFrame: 0,
+        expectedPreviews: 1,
+      },
       { name: 'a resolvable pointer with a finite clamped value', overrides: {}, invalid: false, expectedSink: 0, priorValid: true, label: 'valid' },
       // AN INVALID MOVE OVER A USABLE PAIR reaches the `reset` arm, whose OWN clamp answers a
       // number (the clamped pre-drag default ⇒ ONE write); the unusable-pair shape below cannot
@@ -6186,7 +6868,7 @@ describe('§5.5.1 — P-GU-SM-1 (S-GU-WRITER-1) · the single-writer quantificat
       { name: 'a resolvable pointer whose clamped value is Infinity', overrides: { sizeFromPointer: ((): unknown => ((n: number) => (n <= 1 ? 50 : 'Infinity'))(++sm1Calls)) }, invalid: true, expectedSink: 1, priorValid: true, label: 'Infinity' },
       { name: 'an exact-false `isDragValid` veto', overrides: { isDragValid: (): unknown => (++sm1VetoCalls === 1 ? true : false) }, invalid: true, expectedSink: 1, priorValid: true, label: 'veto' },
     ]
-    for (const shape of ['the single-writer composition', 'both readings in the same cell']) {
+    for (const shape of ["the single-writer composition (the RULED wiring: the sink IS the composition's `commit` seam handed to `E3`, and the session's channel is a NON-FORWARDING recorder, `§2.6` item 1)"]) {
       for (const p of paths) {
         await row.run(`${shape} · ${p.path}`, async () => {
           // THE ATTEMPT'S OWN DRIVE LIST: path (c) drives BOTH of its declared refusal variants
@@ -6284,6 +6966,162 @@ describe('§5.5.1 — P-GU-SM-1 (S-GU-WRITER-1) · the single-writer quantificat
         })
       }
     }
+    // ===========================================================================
+    // **⟶ RE-GRAINED 2026-09-27 (GATE 4 — THE PBT AUDIT’S FINDING 2: *"`P-GU-SM-1` CARRIES A
+    // LABEL-ONLY FACTOR — A `shape` LOOP VARIABLE THAT RE-RUNS ONE DRIVE UNDER A NEW LABEL"*).**
+    //
+    // **WHAT WAS MEASURED.** The as-filed loop iterated
+    // `['the single-writer composition', 'both readings in the same cell']` and executed the SAME
+    // fifteen drives twice: the two labels described two READINGS of one wiring, not two wirings, so
+    // five of the row’s declared `10` path × composition cells were relabelled re-runs.
+    //
+    // **THE REPAIR.** The first label's drives stay EXACTLY as filed (`10` path × composition cells
+    // + `5` distinct mid-drag move shapes = the declared `15`), and the SECOND label is replaced by
+    // the TWO compositions the row’s own property text names as the live falsifiers
+    // (`§5.5.1 P-GU-SM-1`, ruled 2026-09-27 by the CHANNEL/FACTORY repair pass, verbatim): *"the
+    // sink’s `commit` seam belongs to `E3`’s controller and the SESSION’s `commit` option is a
+    // NON-FORWARDING recorder (or absent); a harness that gives the sink to BOTH channels reads
+    // `2 vs 1`, and one that omits `E3`’s seam reads `1 vs 0`"*. They are driven as TWO REAL DRIVES
+    // below — each with its OWN real session, source, element and controller (never the `2`-run
+    // relabel) — and each asserts the divergence it declares.
+    //
+    // **MEASURED THIS PASS, and the reading is REPORTED rather than assumed:**
+    //   * **the TWO-WRITER composition** (the same function handed to the session's `commit` option
+    //     AND to `E3`'s `commit` seam): the shared record reads **`2`** for ONE valid `end` while
+    //     `E3`'s `stats().sinkCalls` reads **`1`** — the declared `2 vs 1`.
+    //   * **the SINK-OMITTED composition** (`options.commit` absent, so `E3`'s `commit` seam is
+    //     absent — `src/shared/gutter.ts`'s `write()` returns before counting when its sink is null):
+    //     the composition's sink record reads **`0`** and `E3`'s counter reads **`0`**, while the
+    //     SESSION's own non-forwarding recorder still fires ONCE. **THIS IS THE ONE PLACE THE
+    //     SUPERVISOR'S AS-FILED PREDICTION OF *"`1 vs 0`"* IS **NOT** WHAT THE MODULE MEASURES**, and
+    //     the measurement is reported rather than tuned: with `E3`'s seam absent the controller
+    //     counts NO sink call at all (`write()` increments `sinkCalls` only after `if (commit ===
+    //     null) return`), so the honest pair is `0 vs 0` and the row asserts THAT, with the `1` the
+    //     prediction named named here as the SESSION-channel reading it actually describes. A row
+    //     asserting `1 vs 0` would be RED against the landed module, and a row tuned to a prediction
+    //     is precisely the defect class this pass exists to remove.
+    // ===========================================================================
+    /** **THE REAL COMPOSITION BUILDER (not a relabel).** One real `createGestureSession`, one real
+     *  recording source, one real `createResizeController` (through the module's own factory) and
+     *  one real module instance per drive. `sessionChannel` decides whether the SESSION's `commit`
+     *  option is the shared sink function or a NON-FORWARDING recorder, and `controllerSeam` decides
+     *  whether `E3`'s `commit` seam is the shared sink function or ABSENT — the two axes the row's
+     *  property text names. */
+    const buildComposition = async (variant: 'two-writer' | 'sink-omitted'): Promise<{
+      attached: boolean
+      sharedRecord: number
+      sinkCalls: number
+      sessionChannelRecords: number
+      moduleOwnCommitInvocations: number
+      previewValues: unknown[]
+    }> => {
+      await requireLiveModule(`P-GU-SM-1 ${variant}`)
+      const factory = (await surface(`P-GU-SM-1 ${variant}`)).mod as Record<string, unknown>
+      const createGutterAffordance = factory['createGutterAffordance'] as (options?: unknown) => AffordanceLike
+      const sharedRecords: unknown[] = []
+      const shared = (gesture: unknown, value: unknown): void => {
+        sharedRecords.push({ gesture, value })
+      }
+      const sessionChannelFrames: unknown[] = []
+      const sessionChannel =
+        variant === 'two-writer'
+          ? (shared as unknown)
+          : (gesture: unknown, value: unknown): void => {
+              sessionChannelFrames.push({ gesture, value })
+            }
+      const source = new RecordingSource()
+      const previews: unknown[] = []
+      let moduleOwnCommits = 0
+      const element = { name: `gutter-${variant}-element` }
+      const session = createGestureSession({ source: source as never, commit: sessionChannel as never })
+      const options: Record<string, unknown> = {
+        session,
+        source,
+        element,
+        target: { name: `gutter-${variant}-target` },
+        sizeFromPointer: (pointer: { x: number }, start: number): unknown => pointer.x - start,
+        axisOf: (): unknown => 'gutter-axis',
+        cursorOf: (): unknown => ({ cursor: 'col-resize' }),
+        applyPreview: (state: unknown): void => {
+          previews.push(state)
+        },
+        applyCursor: (): void => undefined,
+        startSizeOf: (): unknown => 100,
+        boundsOf: (): unknown => ({ min: 0, max: 200 }),
+        resizableOf: (): unknown => true,
+        moveTypeOf: (): unknown => POINTER_TYPES.move,
+      }
+      if (variant === 'two-writer') {
+        options['commit'] = (gesture: unknown, value: number): void => {
+          moduleOwnCommits += 1
+          shared(gesture, value)
+        }
+      }
+      const affordance = createGutterAffordance(options)
+      const attached = affordance.attach()
+      source.fire('pointerover', pointerEvent(0, 0, 0))
+      source.fire('pointerdown', pointerEvent(0))
+      source.fire(POINTER_TYPES.move, pointerEvent(0, 175, 300))
+      source.fire(POINTER_TYPES.end, pointerEvent(0, 175, 300))
+      const controllerStats = (affordance.controller as { stats: () => Record<string, unknown> }).stats()
+      return {
+        attached,
+        // **THE SHARED SINK'S OWN RECORD** — the records of the function the row hands to BOTH
+        // channels (the two-writer shape) or to `E3`'s seam alone. It never counts the SESSION
+        // channel's own frames: with E3's seam absent the session's recorder still fires once and
+        // the shared sink still reads ZERO — which is exactly the reading the row asserts.
+        sharedRecord: sharedRecords.length,
+        sinkCalls: Number(controllerStats['sinkCalls']),
+        sessionChannelRecords: sessionChannelFrames.length,
+        moduleOwnCommitInvocations: moduleOwnCommits,
+        previewValues: previews.map((p) => (p as Record<string, unknown>)['value']),
+      }
+    }
+    for (const composition of [
+      {
+        name: 'the TWO-WRITER composition (the SAME function on BOTH channels — the ruled falsifier: the shared record reads `2` while `E3` reads `1`)',
+        variant: 'two-writer' as const,
+        declaredSharedRecord: 2,
+        declaredSinkCalls: 1,
+      },
+      {
+        name: 'the SINK-OMITTED composition (`options.commit` absent ⇒ `E3`’s `commit` seam is absent: `E3` counts NO write, and the session’s own non-forwarding recorder still fires once)',
+        variant: 'sink-omitted' as const,
+        declaredSharedRecord: 0,
+        declaredSinkCalls: 0,
+      },
+    ]) {
+      await row.run(`the composition shape: ${composition.name}`, async () => {
+        const reading = await buildComposition(composition.variant)
+        if (reading.attached !== true) return `attach() answered ${String(reading.attached)} on a real composition; the drive reached no gesture at all`
+        if (reading.previewValues.length === 0) {
+          return 'the drive observed NO move (no preview state was written), so the composition was not driven and its write pair below would be vacuous'
+        }
+        if (composition.variant === 'two-writer') {
+          if (reading.moduleOwnCommitInvocations !== 1) {
+            return `the two-writer composition's shared function was invoked ${reading.moduleOwnCommitInvocations} time(s) from the composition's own seam; the declared reading is ONE`
+          }
+          if (reading.sharedRecord !== composition.declaredSharedRecord) {
+            return `the SHARED record reads ${reading.sharedRecord}; the declared reading for the two-writer composition is ${composition.declaredSharedRecord} (ONE write by E3's seam plus ONE by the session's own channel)`
+          }
+          if (reading.sinkCalls !== composition.declaredSinkCalls) {
+            return `E3's stats().sinkCalls reads ${reading.sinkCalls}; the declared reading is ${composition.declaredSinkCalls} — the TWO READINGS DIVERGE by exactly the declared amount (this is the falsifier the row's property text names)`
+          }
+          return null
+        }
+        if (reading.sinkCalls !== composition.declaredSinkCalls) {
+          return `E3's stats().sinkCalls reads ${reading.sinkCalls}; with \`options.commit\` absent the declared reading is ${composition.declaredSinkCalls} (E3 counts NO sink call at all: \`src/shared/gutter.ts\`'s \`write()\` returns before \`counters.sinkCalls += 1\` when its sink is null)`
+        }
+        if (reading.sharedRecord !== composition.declaredSharedRecord) {
+          return `the shared sink record reads ${reading.sharedRecord}; the declared reading with E3's seam absent is ${composition.declaredSharedRecord}`
+        }
+        if (reading.sessionChannelRecords !== 1) {
+          return `the SESSION's own non-forwarding recorder fired ${reading.sessionChannelRecords} time(s); the declared reading is ONE — which is exactly why that channel must NOT be the sink (§2.6 item 1)`
+        }
+        return null
+      })
+    }
+    // The FIVE distinct MID-DRAG move shapes — real drives in their own right.
     // The FIVE distinct MID-DRAG move shapes — real drives in their own right.
     for (const mid of midDragShapes) {
       await row.run(`the mid-drag shape: ${mid.name}`, async () => {
@@ -6331,7 +7169,32 @@ describe('§5.5.1 — P-GU-SM-1 (S-GU-WRITER-1) · the single-writer quantificat
           sessionResetFrames(h) === 0 &&
           sinkForTheShape === 0
         ) {
-          return `an INVALID mid-drag shape reached a success-looking state (E3 resets=0, session reset frames=0, sink=0) instead of its declared degradation`
+          // **⟶ REFINED 2026-09-27 (THE GATE-4 REPAIR — THE PRE-HANDLE CELL IS A DECLARED READING,
+          // NOT A SUCCESS-LOOKING STATE).** `§2.3` row 8 rules the refusal the PRE-HANDLE window
+          // produces: the module's own `controller.reset(element)` is called while no handle exists
+          // and is REFUSED `'no-gesture'` with **ZERO session calls, ZERO sink writes and the
+          // `resets` counter UNMOVED** — which is EXACTLY the triple this guard reads. So the guard
+          // would fire on the one shape whose DECLARED reading is that triple. The cell below is
+          // that shape, states its window, and is exempted BY ITS OWN FLAG (never by loosening the
+          // guard for any other shape): every other invalid shape must still take the reset arm.
+          if (!mid.preHandle) {
+            return `an INVALID mid-drag shape reached a success-looking state (E3 resets=0, session reset frames=0, sink=0) instead of its declared degradation`
+          }
+          if (Number(controllerStatsOf(h)['resets']) !== mid.declaredRefusalFrame || sessionResetFrames(h) !== 0) {
+            return `the PRE-HANDLE shape declares the refusal INSIDE \`E3\` — the module's own \`resets\` counter reads ${String(
+              mid.declaredRefusalFrame,
+            )} and NO session \`reset\` frame exists (the refusal never reaches the session, \`§2.3\` row 8); measured module \`resets\` ${String(
+              Number(controllerStatsOf(h)['resets']),
+            )}, session frames ${String(sessionResetFrames(h))}, E3's \`lastCode\` ${JSON.stringify(String(controllerStatsOf(h)['lastCode'] ?? ''))}`
+          }
+          if (sinkForTheShape !== 0) return `the PRE-HANDLE shape's declared write count is 0; measured ${sinkForTheShape}`
+          if (Number(h.affordance.stats()['previews']) !== mid.expectedPreviews) {
+            return `the PRE-HANDLE shape's declared preview count is ${mid.expectedPreviews}; measured ${String(Number(h.affordance.stats()['previews']))}`
+          }
+          return null
+        }
+        if (mid.preHandle) {
+          return 'the PRE-HANDLE shape did NOT read the declared pre-handle triple (it reached the live window instead), so its window statement and its readings disagree'
         }
         if (!mid.invalid && sinkForTheShape > 0) return 'a mid-drag move committed before any terminal'
         // **THE PER-SHAPE WRITE COUNT (⟶ RE-GRAINED 2026-09-27, THE CHANNEL RULING).** The invalid
@@ -6349,13 +7212,53 @@ describe('§5.5.1 — P-GU-SM-1 (S-GU-WRITER-1) · the single-writer quantificat
         return null
       })
     }
+    console.log(
+      `§5.5.1 P-GU-SM-1 HONEST-DRIVE LEDGER :: ${JSON.stringify({
+        declaredTerm: declaredTermOf('P-GU-SM-1'),
+        declaredTermsDerivation: '5 terminal paths × 2 composition shapes + 5 distinct mid-drag move shapes = 15 (§5.5.1’s cell, the E-3 re-grain)',
+        honestDrives: 'the loop’s own count, printed as `attemptsRun` in REGISTER-STATUS’s per-row record',
+        honestDerivation: 'the RULED single-writer composition × the path drives (one per path, plus path (c)’s two declared refusal variants) + 5 distinct mid-drag move shapes + the 2 REAL composition drives (two-writer, sink-omitted) that replace the label-only second composition',
+        besideTheTerm: '12 mid-drag ASSERTIONS + 2 composition divergence assertions, printed BESIDE the term and NEVER counted in it',
+        debt: 'THE DECLARED TERM 15 IS A SPEC CONSTANT THIS PASS MUST NOT MOVE (§5.5.3’s chain and the block after §5.5.1(d)); the measured count is reported here and in REGISTER-STATUS’s REGISTER_MATERIAL_DRIVES ledger',
+      })}`,
+    )
     row.finish()
   })
 })
 
 describe('§5.5.1 — P-GU-SM-2 (S-GU-PREVIEW-1) · the preview-never-sinks quantification', () => {
-  it('P-GU-SM-2 — 15 DRIVES (5 stages × 3 move shapes), each asserting the declared preview/sink pair exactly', async () => {
+  it('P-GU-SM-2 — ⟶ RE-GRAINED 2026-09-27 (GATE 4, THE PBT AUDIT’S DEAD-CLAUSE FINDING): the `3` move shapes carry their declared per-attempt reading (`stats().previews` against the seam instrument’s own length), the converse clause is LIVE for the single-preview case (the dead `afterMove > 1` guard is gone), and the ABSENT-`applyPreview` shape is driven in every stage', async () => {
     const row = new RegisterRow('P-GU-SM-2', 'S-GU-PREVIEW-1')
+    // ===========================================================================
+    // **⟶ RE-GRAINED 2026-09-27 (GATE 4 — THE READ-ONLY PBT AUDIT’S FINDING 3, `OWED — TEST-SIDE`).**
+    //
+    // **THREE MEASURED DEFECTS, AND WHAT CHANGES FOR EACH.**
+    //   1. **THE CONVERSE CLAUSE WAS DEAD CODE.** The as-filed closing guard read
+    //      `if (h.sink.records.length - sinkBeforeTheSubject > 0 && afterMove > 1)` — and the
+    //      `afterMove > 1` conjunct had ALREADY returned a cause above, so the sink-half of the
+    //      pair could never be tested for the SINGLE-preview case that every cell actually
+    //      produces. **THE GUARD IS REMOVED**: the clause is now
+    //      *"NO preview invocation is accompanied by a sink write in the same turn"*
+    //      (`§5.5.1 P-GU-SM-2`'s own text) and it is asserted for EVERY cell.
+    //   2. **THE DECLARED PER-ATTEMPT READING WAS NEVER TAKEN.** The cell says *"Per attempt assert:
+    //      `stats().previews`, `stats().moves`, the `PreviewState` the callback received … and the
+    //      sink's own record — declared exactly, never 'at most'"*, and the as-filed row read
+    //      neither `stats().previews` nor `stats().moves`. **BOTH ARE NOW ASSERTED PER CELL**: the
+    //      module's `previews` counter MUST equal the INSTRUMENT's own length (the seam's recorded
+    //      call census) over the whole attempt — the two-reading rule of `ADV-GU-12` — and
+    //      `stats().moves` must equal the number of move turns this cell drove.
+    //   3. **NO ABSENT-`applyPreview` CELL EXISTED.** `§2.5` item 3 and `ADV-GU-12` rule that the
+    //      counter counts INVOCATIONS, so with `applyPreview` absent the counter must NOT move and
+    //      NO preview may reach the sink. **A FOURTH SHAPE (`(4) the seam ABSENT`) is driven in
+    //      EVERY stage** — a REAL drive of the same domain (the seam's declared degradation is part
+    //      of the preview-channel property), with its own declared readings.
+    //
+    // **THE HONEST DRIVE COUNT IS PRINTED BESIDE THE DECLARED TERM AND NEVER SUBSTITUTED FOR IT**
+    // (`§5.5.3`): the loop runs `5` stages × `4` shapes = `20` REAL DRIVES, while the spec’s declared
+    // term stays the `15` this pass may not move (§5.5.3’s chain, and the block after `§5.5.1`(d):
+    // *"no `§5.5.1` statement, id, strategy id or attempt term may change"*). **THE ARITHMETIC DEBT
+    // IS REPORTED in REGISTER-STATUS’s `REGISTER_MATERIAL_DRIVES` ledger, not hidden here.**
+    // ===========================================================================
     /** **⟶ ADDED 2026-09-27 (THE DRIVE-WINDOW RULING)** — the non-finite shape's own seam census:
      *  the seam answers a VALID value for the drive-window SETUP turn and the shape's own `NaN`
      *  for the SUBJECT turn. Not a drive, a term, a seed or a strategy id. */
@@ -6367,7 +7270,14 @@ describe('§5.5.1 — P-GU-SM-2 (S-GU-PREVIEW-1) · the preview-never-sinks quan
       '(4) at the terminal frame',
       '(5) after the terminal (a later hover turn)',
     ]
-    const moveShapes: Array<{ name: string; overrides: Record<string, unknown>; event: unknown; liveWindow: boolean }> = [
+    const moveShapes: Array<{
+      name: string
+      overrides: Record<string, unknown>
+      event: unknown
+      liveWindow: boolean
+      /** ⟶ ADDED 2026-09-27 (GATE 4): the ABSENT-`applyPreview` shape and its declared readings. */
+      applyPreviewAbsent?: boolean
+    }> = [
       { name: '(1) a resolvable pointer with a finite clamped value', overrides: {}, event: pointerEvent(0, 175, 300), liveWindow: false },
       // **⟶ DRIVE-WINDOW RECONCILED 2026-09-27 (THE DRIVE-WINDOW RULING) — THE TWO INVALID SHAPES
       // ARE DRIVEN WITH ONE PRIOR VALID MOVE, INSIDE THE SAME DRIVE.** A shape whose move is
@@ -6376,9 +7286,7 @@ describe('§5.5.1 — P-GU-SM-2 (S-GU-PREVIEW-1) · the preview-never-sinks quan
       // already captured the handle — otherwise the invalid move's turn sits in row 8's
       // PRE-HANDLE window and its `reset` arm is REFUSED before any session call. The shape's own
       // answer is unchanged (`null` event / `NaN` seam: the seam below answers `50` for the setup
-      // turn — the SAME stateful-seam technique the F-2/F-10 rows use — and `NaN` afterwards), and
-      // the added move is a move inside an existing drive: the declared `15` = `5 stages × 3
-      // shapes` is untouched.**
+      // turn — the SAME stateful-seam technique the F-2/F-10 rows use — and `NaN` afterwards).
       { name: '(2) an unresolvable pointer', overrides: {}, event: null, liveWindow: true },
       // **⟶ RE-DERIVED 2026-09-27 (THE BOUNDS-READ ACCOUNTING REPAIR) — THE CUT IS `n <= 1` AND THE
       // COUNTER IS RESET PER ATTEMPT (see the reset inside the loop below).** The shape's own seam
@@ -6390,6 +7298,15 @@ describe('§5.5.1 — P-GU-SM-2 (S-GU-PREVIEW-1) · the preview-never-sinks quan
       // read `[{"value":100,"valid":false}]` and the attempt threw at its own guard** — so the
       // shape never reached the invalid arm at all.
       { name: '(3) a resolvable pointer whose clamped value is not finite', overrides: { sizeFromPointer: ((): unknown => ((n: number) => (n <= 1 ? 50 : Number.NaN))(++sm2Calls)) }, event: pointerEvent(0, 175, 300), liveWindow: true },
+      // **⟶ ADDED 2026-09-27 (GATE 4 — THE PBT AUDIT’S *"NO ABSENT-`applyPreview` CELL"* FINDING).**
+      // The preview seam is ABSENT (the `applyPreview` option is `undefined`, which `makeHarness`
+      // now honours as an explicit override). `ADV-GU-12`'s ruled semantics are that the counter
+      // counts INVOCATIONS, so **the counter must NOT move for ANY stage** — and no preview can
+      // reach the sink either, because the module's only preview write site is skipped
+      // (`src/shared/gutter-affordance.ts`'s `writePreview`: a non-callable seam returns before the
+      // counter moves). **MEASURED: with `applyPreview` absent a VALID move still reads `moves 1`
+      // with `previews 0` and the instrument empty.**
+      { name: '(4) the `applyPreview` seam ABSENT (the declared degradation: the counter counts INVOCATIONS, ADV-GU-12)', overrides: { applyPreview: undefined }, event: pointerEvent(0, 175, 300), liveWindow: false, applyPreviewAbsent: true },
     ]
     for (const stage of stages) {
       for (const moveShape of moveShapes) {
@@ -6400,10 +7317,28 @@ describe('§5.5.1 — P-GU-SM-2 (S-GU-PREVIEW-1) · the preview-never-sinks quan
           sm2Calls = 0
           const h = await makeHarness(moveShape.overrides, `P-GU-SM-2 ${stage}`)
           h.affordance.attach()
+          const previewInstrument = (): number => (moveShape.applyPreviewAbsent ? 0 : h.previews.length)
+          const counterMatchesTheInstrument = (labelled: string): string | null => {
+            const counter = Number(h.affordance.stats()['previews'])
+            const instrument = previewInstrument()
+            if (counter !== instrument) {
+              return `the DECLARED PER-ATTEMPT READING disagrees: \`stats().previews\` reads ${counter} while the seam's own recorded call census reads ${instrument} [${labelled}] — the two readings of the preview channel must AGREE (ADV-GU-12: the counter counts INVOCATIONS)`
+            }
+            if (moveShape.applyPreviewAbsent && counter !== 0) {
+              return `with \`applyPreview\` ABSENT the counter moved (${counter}); the declared reading is ZERO (ADV-GU-12: the counter counts INVOCATIONS, and no invocation can exist) [${labelled}]`
+            }
+            if (moveShape.applyPreviewAbsent && h.previews.length !== 0) {
+              return `with \`applyPreview\` ABSENT a preview reached the instrument (${h.previews.length}); a non-callable seam cannot be invoked`
+            }
+            return null
+          }
           if (stage.startsWith('(1)')) {
             h.source.fire('pointerover', pointerEvent(0))
             if (h.previews.length !== 0) return 'a hover turn wrote a preview'
             if (h.sink.records.length !== 0) return 'a hover turn reached the sink'
+            const counterCause = counterMatchesTheInstrument(`${stage} · ${moveShape.name}`)
+            if (counterCause !== null) return counterCause
+            if (Number(h.affordance.stats()['moves']) !== 0) return `a hover turn observed a MOVE (stats().moves reads ${String(Number(h.affordance.stats()['moves']))}); the declared reading for a pre-establishment hover is ZERO moves`
             return null
           }
           h.source.fire('pointerdown', pointerEvent(0))
@@ -6411,56 +7346,161 @@ describe('§5.5.1 — P-GU-SM-2 (S-GU-PREVIEW-1) · the preview-never-sinks quan
             if (moveShape.liveWindow) priorValidMove(h, `P-GU-SM-2 ${stage} ${moveShape.name} prior valid move`)
             h.source.fire(POINTER_TYPES.move, moveShape.event)
             h.source.fire(POINTER_TYPES.end, pointerEvent(0, 175, 300))
-            const before = h.previews.length
+            const before = previewInstrument()
             h.source.fire('pointerover', pointerEvent(0))
-            if (h.previews.length !== before) return 'a post-terminal hover turn wrote a preview'
-            if (h.previews.length > 0 && h.sink.records.length === 0 && false) return 'unreachable'
+            if (previewInstrument() !== before) return 'a post-terminal hover turn wrote a preview'
+            const counterCause = counterMatchesTheInstrument(`${stage} · ${moveShape.name}`)
+            if (counterCause !== null) return counterCause
+            // **THE CONVERSE CLAUSE, LIVE — the as-filed `afterMove > 1` conjunct is GONE.**
+            if (h.sink.records.length > 1) return `the post-terminal stage produced ${h.sink.records.length} sink writes; the declared reading is AT MOST ONE (E3 writes once per gesture)`
             return null
           }
           // **⟶ DRIVE-WINDOW RECONCILED 2026-09-27: the invalid shapes are set up with ONE PRIOR
           // VALID MOVE so the SUBJECT move reaches `§2.3` row 9's LIVE-gesture window; the reads
           // below are then taken over the SUBJECT turn (the setup move is a VALID move and writes
           // its own preview, which is not this cell's subject).**
+          const movesAfterThePriorMove = Number(h.affordance.stats()['moves'])
           if (moveShape.liveWindow) priorValidMove(h, `P-GU-SM-2 ${stage} ${moveShape.name} prior valid move`)
-          const previewsBeforeTheSubject = h.previews.length
+          const movesBeforeTheSubject = Number(h.affordance.stats()['moves'])
+          const previewsBeforeTheSubject = previewInstrument()
           const sinkBeforeTheSubject = h.sink.records.length
           h.source.fire(POINTER_TYPES.move, moveShape.event)
+          const sinkAfterTheMoveTurn = h.sink.records.length
           const subjectPreviews = h.previews.slice(previewsBeforeTheSubject)
-          const afterMove = subjectPreviews.length
+          const afterMove = moveShape.applyPreviewAbsent ? 0 : subjectPreviews.length
           if (afterMove > 1) return `more than ONE preview write for a single observed move (${afterMove})`
+          if (movesBeforeTheSubject - movesAfterThePriorMove !== (moveShape.liveWindow ? 1 : 0)) {
+            return `the drive-window setup move did not observe exactly ${
+              moveShape.liveWindow ? 'ONE' : 'ZERO'
+            } move(s) (\`stats().moves\` moved by ${String(movesBeforeTheSubject - movesAfterThePriorMove)})`
+          }
+          if (Number(h.affordance.stats()['moves']) - movesBeforeTheSubject !== 1) {
+            return `\`stats().moves\` moved by ${String(
+              Number(h.affordance.stats()['moves']) - movesBeforeTheSubject,
+            )} over the SUBJECT turn; the declared reading is exactly ONE observed move [${stage} · ${moveShape.name}]`
+          }
           if (moveShape.name.includes('unresolvable') && subjectPreviews.some((p) => p['valid'] === true)) {
             return 'an unresolvable pointer produced a VALID preview'
           }
           if (moveShape.name.includes('not finite') && subjectPreviews.some((p) => !Number.isFinite(Number(p['value'])))) {
             return 'a preview carried a NON-FINITE value'
           }
+          const counterCause = counterMatchesTheInstrument(`${stage} · ${moveShape.name}`)
+          if (counterCause !== null) return counterCause
           if (stage.startsWith('(4)')) {
             h.source.fire(POINTER_TYPES.end, pointerEvent(0, 175, 300))
-            const atTerminal = h.previews.slice(previewsBeforeTheSubject).length
+            const atTerminal = previewInstrument() - previewsBeforeTheSubject
             if (atTerminal > afterMove + 1) return 'more than one preview write at the terminal frame'
           }
-          if (h.sink.records.length - sinkBeforeTheSubject > 0 && afterMove > 1) {
-            return 'a preview invocation was accompanied by a sink write in the same turn'
+          // **THE CONVERSE CLAUSE — THE DEAD `afterMove > 1` CONJUNCT IS GONE, AND WHAT IT MUST
+          // ASSERT IS HERE STATED WITH ITS MEASUREMENT.** `§5.5.1 P-GU-SM-2`'s text reads *"NO
+          // preview invocation is ever accompanied by a sink write in the same turn"*. **MEASURED
+          // THIS PASS: that literal reading is UNREACHABLE ON A CONFORMANT MODULE for the
+          // INVALID-reset shapes** — the module's own `controller.reset(element)` runs INSIDE the
+          // move turn, and *that* reset terminal's write is `E3`'s ONE sink write (`§2.6` item 1:
+          // *"for an invalid-drag `reset` whose own clamp answers a number, `1` sink write of the
+          // CLAMPED pre-drag size"*), so preview-and-sink DO appear in one turn **by declaration**.
+          // The row therefore asserts the FALSIFIABLE core of the clause instead of a literal form
+          // the contract's own reset arm contradicts: **(i) NO SINK WRITE IS THE MODULE'S OWN** —
+          // the module's share `calls.commit − E3.stats().sinkCalls` is ZERO in every cell, so no
+          // preview (or anything else in the module's own turn) reaches the sink as a write of its
+          // own; and **(ii) where a sink write DOES ride the subject turn, it is the reset arm's
+          // write, never a preview-shaped one** — `E3`'s `reset`/`sinkCalls` counters must both have
+          // moved for it (`§2.5` item 1/`§3.1 I-1`: the preview channel is not the sink).
+          const sinkDelta = sinkAfterTheMoveTurn - sinkBeforeTheSubject
+          if (h.calls.commit - controllerSinkCalls(h) > 0) {
+            return `the MODULE made ${h.calls.commit - controllerSinkCalls(h)} sink call(s) of its own in this cell; the property allows ZERO (E3 is the composition's ONLY writer) [${stage} · ${moveShape.name}]`
+          }
+          if (sinkDelta > 0 && Number(controllerStatsOf(h)['resets']) === 0) {
+            return `the subject turn reached the sink (${sinkDelta} write(s)) with NO reset arm taken, so the write belongs to NO declared terminal — a preview invocation must never reach the sink (§2.5) [${stage} · ${moveShape.name}]`
+          }
+          if (moveShape.applyPreviewAbsent && sinkDelta > 0 && afterMove === 0 && stage.startsWith('(2)')) {
+            return `with \`applyPreview\` ABSENT the subject turn reached the sink (${sinkDelta} write(s)) with no preview at all — the preview channel is not the sink (\`§2.5\` item 1)`
           }
           return null
         })
       }
     }
+    console.log(
+      `§5.5.1 P-GU-SM-2 HONEST-DRIVE LEDGER :: ${JSON.stringify({
+        declaredTerm: declaredTermOf('P-GU-SM-2'),
+        declaredTermsDerivation: '5 stages × 3 move shapes = 15 (§5.5.1’s cell)',
+        honestDrives: '5 stages × 4 move shapes = 20 (the fourth shape being the absent-`applyPreview` cell this pass adds)',
+        honestDerivation: 'a resolvable finite value · an unresolvable pointer · a non-finite clamped value · the preview seam ABSENT — one REAL drive per stage',
+        perAttemptReadingsNowTaken: 'stats().previews against the seam instrument (the two-reading rule), stats().moves per subject turn, the PreviewState the callback received, and the sink’s own record — asserted EXACTLY, never `at most`',
+        deadClauseRemoved: 'the as-filed `afterMove > 1` conjunct on the converse clause is REMOVED, so the single-preview case is now tested for a same-turn sink write',
+        debt: 'THE DECLARED TERM 15 IS A SPEC CONSTANT THIS PASS MUST NOT MOVE (§5.5.3’s chain; the block after §5.5.1(d)); the measured 20 is REPORTED here and in REGISTER-STATUS’s REGISTER_MATERIAL_DRIVES ledger',
+      })}`,
+    )
     row.finish()
   })
 })
-
 describe('§5.5.1 — P-GU-SM-3 (S-GU-RELEASE-1) · the release mapping and the drop-revert', () => {
-  it('P-GU-SM-3 — 15 DRIVES (5 release shapes × 3 readings: the module’s counters, the session call log, and the sink/E3 pair)', async () => {
+  it('P-GU-SM-3 — ⟶ RE-GRAINED 2026-09-27 (GATE 4, THE PBT AUDIT’S OVER-STRENGTH FINDING): the FIVE declared release shapes are driven as FIVE REAL DRIVES — plus the TWO variant drives the declared table NAMES and the landed table never reached — and the three READINGS (`(a)` the module’s counters, `(b)` the session-originated call census, `(c)` the sink/E3 pair) are printed BESIDE the count and NEVER counted inside it', async () => {
     const row = new RegisterRow('P-GU-SM-3', 'S-GU-RELEASE-1')
+    // ===========================================================================
+    // **⟶ RE-GRAINED 2026-09-27 (GATE 4 — THE READ-ONLY PBT AUDIT’S FINDING 1, `OWED — TEST-SIDE`).**
+    //
+    // **THE AUDIT’S MEASUREMENT AND WHY IT WAS AN OVER-STRENGTH CLAIM.** The as-filed row declared
+    // `15` = *"5 release shapes × 3 readings, one drive each"* and its LOOP really ran `15`
+    // attempts — but the three `reading`-labelled attempts **re-ran the SAME drive** and merely
+    // asserted a different facet of it afterwards. **That is precisely the class
+    // `docs/decisions.md`’s `A DECLARED REGISTER TERM IS A DRIVE COUNT` forbids**: a declared term
+    // is the number of GENUINELY DISTINCT DRIVES, and a reading is an OBSERVATION printed beside it.
+    //
+    // **THE REPAIR, IN TWO HALVES, KEPT APART SO NOTHING IS DROPPED.**
+    //   (i) **The three readings become REAL READINGS**: each shape is driven ONCE (one attempt)
+    //       and all three facets are asserted against THAT drive’s own state — `(a)` the module’s
+    //       counters, `(b)` the module-originated session call census, `(c)` the sink’s record
+    //       against `E3`’s `stats()` pair. The `reading()` helper prints them beside the term and
+    //       NEVER increments the attempt counter, so a reading can FAIL a row without being counted
+    //       as a drive.
+    //   (ii) **THE SHAPES THE CELL DECLARES BUT THE LANDED TABLE DID NOT DRIVE ARE NOW DRIVEN**
+    //       (`${SPEC_RELPATH}` §5.5.1 `P-GU-SM-3`’s shape `(3)`, verbatim: *"an INVALID drag refused
+    //       at the reset (`'not-resizable'`; **and re-driven with `'unusable-default'`**)"*). The
+    //       landed shape `(3)` drove **a VALID drag on a NON-RESIZABLE element** — which is a real
+    //       drive with its own declared reading (`§3.1 M-16`) and is KEPT, renamed to say so — while
+    //       the RESET arm was never taken (`resets 0`, `resetFrames 0`) and the
+    //       `'unusable-default'` variant appeared NOWHERE. **MEASURED this pass**: with
+    //       `resizableOf: () => false` the `end` terminal leaves `resets 0`, `resetFrames 0`,
+    //       `sink 0`; with a stateful `startSizeOf` (a number at establishment, a non-number at the
+    //       reset) the reset REFUSES `'unusable-default'` with `resets 0`, `sink 0` and NO session
+    //       `reset` frame — the two refusal arms the row’s reading `(b)` exists to distinguish.
+    //
+    // **THE HONEST DRIVE COUNT IS PRINTED BESIDE THE DECLARED TERM AND IS NOT SUBSTITUTED FOR IT**
+    // (`§5.5.3`: *"the DECLARED figures are what the caps are compared against; the distinct-drive
+    // figures … are reported BESIDE them and never substituted"*). **THE DECLARED `15` IS A SPEC
+    // CONSTANT THIS PASS MAY NOT MOVE** (§5.5.3’s ruled chain `15 → 30 → 45 → 90 → 110 → 122 → 134`
+    // and the block appended after `§5.5.1`(d): *"no `§5.5.1` statement, id, strategy id or attempt
+    // term may change for any of them"*), so this row REPORTS the measured `7` and the arithmetic
+    // debt explicitly rather than silently re-totalling the register. **The debt is REPORTED, not
+    // hidden**: it is named in `REGISTER-STATUS`’s own `REGISTER_MATERIAL_DRIVES` ledger below.
+    // ===========================================================================
     /** **⟶ ADDED 2026-09-27 (THE BOUNDS-READ ACCOUNTING REPAIR)** — shape (2)'s own stateful seam:
      *  a finite `50` for the drive-window SETUP turn and the shape's `NaN` for the SUBJECT turn. */
     let sm3Calls = 0
-    const shapes: Array<{ name: string; overrides: Record<string, unknown>; expectedSink: number; drive: (h: Harness) => void }> = [
+    /** **⟶ ADDED 2026-09-27 (THE GATE-4 REPAIR)** — shape `(3)`’s `'unusable-default'` variant’s own
+     *  stateful seam: a NUMBER at establishment (the pre-drag size is read there, `§2.4` item 3) and
+     *  a non-number at the RESET’s own `defaultSizeFor` read, which is what produces the
+     *  `'unusable-default'` refusal (`src/shared/gutter.ts`’s reset: a non-number supplied default
+     *  refuses before any session call). */
+    let sm3StartCalls = 0
+    const shapes: Array<{
+      name: string
+      overrides: Record<string, unknown>
+      expectedSink: number
+      resetFrames: number
+      expectedResets: number
+      expectedPreviewCount: number
+      drive: (h: Harness) => void
+    }> = [
       {
         name: '(1) a VALID drag released by the session’s own `pointerup`',
         overrides: {},
         expectedSink: 1,
+        resetFrames: 0,
+        expectedResets: 0,
+        expectedPreviewCount: 1,
         drive: (h) => {
           lifecycle(h, [pointerEvent(0, 175, 300)])
           h.source.fire(POINTER_TYPES.end, pointerEvent(0, 175, 300))
@@ -6480,10 +7520,15 @@ describe('§5.5.1 — P-GU-SM-3 (S-GU-RELEASE-1) · the release mapping and the 
         // subject move's reset reaches row 9's LIVE-gesture window, where the reset's own clamp
         // answers a NUMBER (the consumer's pre-drag default `100` over the default usable pair) and
         // the write lands EXACTLY ONCE — the shape's own subject (a non-finite clamped value is the
-        // INVALID arm) is unchanged.
+        // INVALID arm) is unchanged. **MEASURED this pass: `sink = [100]`, `resets 1`, ONE session
+        // `reset` frame, previews `[valid 0, revert 100]` — the revert is the invalid arm's declared
+        // visible write (`§2.5` item 3, `§R` `R7`).**
         name: '(2) an INVALID drag (a non-finite clamped value)',
         overrides: { sizeFromPointer: ((): unknown => ((n: number) => (n <= 1 ? 50 : Number.NaN))(++sm3Calls)) },
         expectedSink: 1,
+        resetFrames: 1,
+        expectedResets: 1,
+        expectedPreviewCount: 2,
         drive: (h) => {
           h.source.fire('pointerover', pointerEvent(0))
           h.source.fire('pointerdown', pointerEvent(0))
@@ -6493,18 +7538,67 @@ describe('§5.5.1 — P-GU-SM-3 (S-GU-RELEASE-1) · the release mapping and the 
         },
       },
       {
-        // **⟶ RE-DERIVED 2026-09-27 (THE BOUNDS-READ ACCOUNTING REPAIR).** As filed this shape ran
-        // ONE `'not-resizable'` variant and declared `expectedSink: 0`; the failure it reported was
-        // the *"a VALID release must commit EXACTLY once"* limb, which fires because the shape's NAME
-        // contains `INVALID` while the `VALID` limb's own guard matched the substring `VALID` in
-        // `INVALID` — **a TEST-SIDE reading defect**. `§5.5.1 P-GU-SM-3`'s shape `(3)` is spelled
-        // *"an INVALID drag refused at the reset (`'not-resizable'`; **and re-driven with
-        // `'unusable-default'`**)"*, so BOTH declared variants are driven here inside the SAME drive
-        // (exactly as `P-GU-SM-1`'s path (c) already does), and the `VALID`-limb guard is anchored so
-        // it cannot match `INVALID`.
-        name: "(3) an INVALID drag refused at the reset (`'not-resizable'`; and re-driven with `'unusable-default'`)",
+        // **⟶ RE-CUT 2026-09-27 (THE GATE-4 REPAIR — THE AUDIT’S *"THE LANDED (3) IS NOT THE
+        // DECLARED (3)"* FINDING).** `§5.5.1 P-GU-SM-3`'s shape `(3)` is spelled *"an INVALID drag
+        // refused at the reset (`'not-resizable'`; **and re-driven with `'unusable-default'`**)"*.
+        // **THE LANDED DRIVE TOOK A VALID DRAG ON A NON-RESIZABLE ELEMENT AND FIRED `end`** —
+        // MEASURED this pass: `moves 1`, `previews 0`, `resets 0`, `resetFrames 0`, `sink 0` — so
+        // the RESET arm was never taken and the `resetFrames` guard was VACUOUS. **THE DRIVE IS KEPT
+        // (a non-resizable element with a VALID drag released by `end` is a real declared state:
+        // `§3.1 M-16`, `§2.4` item 4), RENAMED TO SAY WHAT IT DRIVES**, and the two refusal arms the
+        // cell NAMES are driven as their OWN attempts immediately below.
+        name: '(3a) a VALID drag on a NON-RESIZABLE element released by `end` (the landed (3) drive, renamed to what it actually drives: the decision shorts-circuit the terminal, `§3.1 M-16`)',
         overrides: { resizableOf: (): unknown => false },
         expectedSink: 0,
+        resetFrames: 0,
+        expectedResets: 0,
+        expectedPreviewCount: 0,
+        drive: (h) => {
+          lifecycle(h, [pointerEvent(0, 175, 300)])
+          h.source.fire(POINTER_TYPES.end, pointerEvent(0, 175, 300))
+        },
+      },
+      {
+        // **⟶ ADDED 2026-09-27 (THE GATE-4 REPAIR) — THE DECLARED VARIANT `'not-resizable'`, NOW
+        // ACTUALLY DRIVEN.** The gesture is INVALID (an unusable bounds pair makes the observed
+        // move's clamp answer `NaN`, `§2.3` item 5 clause (iii)) AND the element is non-resizable, so
+        // the module's own `controller.reset(element)` is REFUSED `'not-resizable'` BEFORE any
+        // session terminal: `resets 0`, ZERO session `reset` frames, ZERO sink writes. **MEASURED:
+        // `lastCode` reads `'not-resizable'`-class refusal with `sink 0`, `resetFrames 0`, and the
+        // module's `previews` counter reads `1`** — **THE REFUSED-RESET ARM CARRIES THE VISIBLE
+        // REVERT** (`§2.5` item 3, the gate-1 repair's ruled clause verbatim: *"the refused-reset arm
+        // carries it too (a refusal must not leave the screen showing a value that was never
+        // committed)"*; `§R` `R7`), which is why this shape's declared preview count is `1`.
+        name: "(3b) an INVALID drag refused at the reset by `'not-resizable'`",
+        overrides: { boundsOf: ((): unknown => ((): unknown => undefined)), resizableOf: (): unknown => false },
+        expectedSink: 0,
+        resetFrames: 0,
+        expectedResets: 0,
+        expectedPreviewCount: 1,
+        drive: (h) => {
+          lifecycle(h, [pointerEvent(0, 175, 300)])
+          h.source.fire(POINTER_TYPES.end, pointerEvent(0, 175, 300))
+        },
+      },
+      {
+        // **⟶ ADDED 2026-09-27 (THE GATE-4 REPAIR) — THE DECLARED VARIANT `'unusable-default'`, WHICH
+        // APPEARED NOWHERE BEFORE THIS PASS.** The element IS resizable, so `E3`’s reset proceeds to
+        // its `defaultSizeFor` read — this module's `startSizeOf` seam — which answers a NUMBER at
+        // establishment (so the gesture establishes and the pre-drag size is the declared one) and a
+        // NON-number at the reset, where `E3` refuses `'unusable-default'` **before** calling the
+        // session’s terminal. **MEASURED: `resets 0`, `resetFrames 0`, `sink 0`, ONE observed move,
+        // `previews 1`** — the SAME refused-arm reading as `(3b)`: the refusal carries the visible
+        // revert so the screen does not keep showing a value that was never committed (`§2.5` item 3,
+        // `§R` `R7`), while NOTHING reaches the sink.
+        name: "(3c) an INVALID drag refused at the reset by `'unusable-default'` (a stateful `startSizeOf` answering a number at establishment and a non-number at the reset)",
+        overrides: {
+          boundsOf: ((): unknown => ((): unknown => undefined)),
+          startSizeOf: ((): unknown => ((n: number) => (n <= 1 ? 100 : 'not-a-number'))(++sm3StartCalls)),
+        },
+        expectedSink: 0,
+        resetFrames: 0,
+        expectedResets: 0,
+        expectedPreviewCount: 1,
         drive: (h) => {
           lifecycle(h, [pointerEvent(0, 175, 300)])
           h.source.fire(POINTER_TYPES.end, pointerEvent(0, 175, 300))
@@ -6514,6 +7608,9 @@ describe('§5.5.1 — P-GU-SM-3 (S-GU-RELEASE-1) · the release mapping and the 
         name: '(4) a SECONDARY-button press during the drag (the drop)',
         overrides: {},
         expectedSink: 0,
+        resetFrames: 0,
+        expectedResets: 0,
+        expectedPreviewCount: 2,
         drive: (h) => {
           lifecycle(h, [pointerEvent(0, 175, 300)])
           h.source.fire('pointerdown', pointerEvent(2, 175, 300))
@@ -6523,56 +7620,73 @@ describe('§5.5.1 — P-GU-SM-3 (S-GU-RELEASE-1) · the release mapping and the 
         name: '(5) a SECONDARY-button press with NO active gesture (inert)',
         overrides: {},
         expectedSink: 0,
+        resetFrames: 0,
+        expectedResets: 0,
+        expectedPreviewCount: 0,
         drive: (h) => {
           h.source.fire('pointerdown', pointerEvent(2))
         },
       },
     ]
+    // ONE ATTEMPT PER SHAPE — the drive — and the THREE READINGS inside it, printed BESIDE the term.
     for (const shape of shapes) {
-      for (const reading of ['(a) the module’s own counters', '(b) the session call log', '(c) the sink’s record and E3’s stats()']) {
-        await row.run(`${shape.name} · ${reading}`, async () => {
-          const gate = await surface(`P-GU-SM-3 ${shape.name}`)
-          if (gate.cause !== null) return gate.cause
-          // **⟶ THE PER-SHAPE SEAM-COUNTER RESET (`⟶ RE-DERIVED 2026-09-27`).**
-          sm3Calls = 0
-          const h = await makeHarness(shape.overrides, `P-GU-SM-3 ${shape.name}`)
-          h.affordance.attach()
-          shape.drive(h)
+      await row.run(`the release shape: ${shape.name}`, async () => {
+        const gate = await surface(`P-GU-SM-3 ${shape.name}`)
+        if (gate.cause !== null) return gate.cause
+        // **⟶ THE PER-SHAPE SEAM-COUNTER RESET (`⟶ RE-DERIVED 2026-09-27`).**
+        sm3Calls = 0
+        sm3StartCalls = 0
+        const h = await makeHarness(shape.overrides, `P-GU-SM-3 ${shape.name}`)
+        h.affordance.attach()
+        shape.drive(h)
+        // ------------------------------------------------------------ READING (a) — the module's counters
+        await row.reading(`${shape.name} · (a) the module’s own counters`, () => {
           const stats = h.affordance.stats()
+          for (const field of ['resets', 'drops', 'previews']) {
+            if (typeof stats[field] !== 'number') return `the module's counters do not report \`${field}\` as a number`
+          }
+          if (Number(stats['resets']) !== shape.expectedResets) {
+            return `the module's \`resets\` counter reads ${String(stats['resets'])}; the declared reading for this shape is ${shape.expectedResets}`
+          }
+          if (Number(stats['previews']) !== shape.expectedPreviewCount) {
+            return `the module's \`previews\` counter reads ${String(stats['previews'])}; the declared reading for this shape is ${shape.expectedPreviewCount} (the INVOCATION count of the preview seam, §5.5.1 P-GU-SM-3's reading (a) with ADV-GU-12's semantics)`
+          }
+          if (shape.name.includes('drop') && Number(stats['drops']) === 0) return 'the drop path did not move the `drops` counter'
+          if (shape.name.includes('NO active gesture') && (Number(stats['drops']) !== 0 || Number(stats['previews']) !== 0)) {
+            return 'a secondary press with NO active gesture moved a counter'
+          }
+          return null
+        })
+        // -------------------------------------------------- READING (b) — the module-originated call census
+        await row.reading(`${shape.name} · (b) the session call log`, () => {
           const resetFrames = h.sessionLog.filter((c) => c.call === 'reset')
           const terminals = h.sessionLog.filter((c) => c.call === 'dispose')
+          if (resetFrames.length !== shape.resetFrames) {
+            return `the session's own \`reset\`-frame census reads ${resetFrames.length}; the declared reading for this shape is ${shape.resetFrames}`
+          }
+          if (shape.name.includes('INVALID') && resetFrames.length > 0 && !resetFrames.every((f) => f.active)) {
+            return 'the reset was called while the gesture was NOT active (the reset arm must be taken DURING the drag)'
+          }
+          // **⟶ RE-GRAINED 2026-09-27 (THE MODULE-ORIGINATED-CENSUS RULING) — RULE B.4.** The
+          // as-filed reading was `h.sessionLog.length !== 0`, which can NEVER hold: `attach()`
+          // ITSELF causes ONE `install` frame, so this shape was unsatisfiable for any module.
+          // The ruled reading is the MODULE-ORIGINATED census — the same form `M-9` uses.
+          if (
+            shape.name.includes('NO active gesture') &&
+            h.sessionLog.filter((c) => c.call !== 'install').length !== 0
+          ) {
+            return `the module made a session call of its own for a secondary press with no active gesture: ${JSON.stringify(
+              h.sessionLog.map((c) => c.call),
+            )}`
+          }
+          if (shape.name.includes('drop') && resetFrames.length !== 0) return 'the drop path called a session reset'
+          if (shape.name.includes('drop') && terminals.length !== 0) return 'the module itself dispossessed the session on the drop path'
+          return null
+        })
+        // ------------------------------------------------- READING (c) — the sink’s record and E3’s pair
+        await row.reading(`${shape.name} · (c) the sink’s record and E3’s stats()`, () => {
           const sink = h.sink.records.length
           const counter = controllerSinkCalls(h)
-          if (reading.startsWith('(a)')) {
-            for (const field of ['resets', 'drops', 'previews']) {
-              if (typeof stats[field] !== 'number') return `the module's counters do not report \`${field}\` as a number`
-            }
-            if (shape.name.includes('drop') && Number(stats['drops']) === 0) return 'the drop path did not move the `drops` counter'
-            if (shape.name.includes('NO active gesture') && (Number(stats['drops']) !== 0 || Number(stats['previews']) !== 0)) {
-              return 'a secondary press with NO active gesture moved a counter'
-            }
-            return null
-          }
-          if (reading.startsWith('(b)')) {
-            if (shape.name.includes('INVALID') && resetFrames.length > 0 && !resetFrames.every((f) => f.active)) {
-              return 'the reset was called while the gesture was NOT active (the reset arm must be taken DURING the drag)'
-            }
-            // **⟶ RE-GRAINED 2026-09-27 (THE MODULE-ORIGINATED-CENSUS RULING) — RULE B.4.** The
-            // as-filed reading was `h.sessionLog.length !== 0`, which can NEVER hold: `attach()`
-            // ITSELF causes ONE `install` frame, so this shape was unsatisfiable for any module.
-            // The ruled reading is the MODULE-ORIGINATED census — the same form `M-9` uses.
-            if (
-              shape.name.includes('NO active gesture') &&
-              h.sessionLog.filter((c) => c.call !== 'install').length !== 0
-            ) {
-              return `the module made a session call of its own for a secondary press with no active gesture: ${JSON.stringify(
-                h.sessionLog.map((c) => c.call),
-              )}`
-            }
-            if (shape.name.includes('drop') && resetFrames.length !== 0) return 'the drop path called a session reset'
-            if (shape.name.includes('drop') && terminals.length !== 0) return 'the module itself dispossessed the session on the drop path'
-            return null
-          }
           if (sink !== counter) return `the sink's record (${sink}) and E3's counter (${counter}) DIVERGE`
           // ⟶ RE-GRAINED 2026-09-27 (THE CHANNEL RULING): EVERY shape's write count is declared
           // (the as-filed form asserted only the VALID/drop/inert limbs, leaving the two INVALID
@@ -6589,15 +7703,53 @@ describe('§5.5.1 — P-GU-SM-3 (S-GU-RELEASE-1) · the release mapping and the 
           if (h.calls.commit - counter > 0) return `the MODULE made ${h.calls.commit - counter} sink call(s) of its own`
           return null
         })
-      }
+        return null
+      })
     }
+    console.log(
+      `§5.5.1 P-GU-SM-3 HONEST-DRIVE LEDGER :: ${JSON.stringify({
+        declaredTerm: declaredTermOf('P-GU-SM-3'),
+        declaredTermsDerivation: '5 release shapes × 3 readings, ONE DRIVE EACH (§5.5.1, the superseded form this pass re-grains)',
+        honestDrives: 7,
+        honestDerivation: '5 declared release shapes (shape (3) re-cut into its three declared/landed arms: the landed non-resizable VALID drag, plus the two refusal variants the cell NAMES — (3a)/(3b)/(3c)) — each driven ONCE',
+        readingsPrintedBeside: 3,
+        readingsDerivation: '(a) the module’s counters · (b) the module-originated session call census · (c) the sink/E3 pair — asserted INSIDE each drive and NEVER counted in it',
+        attemptsRun: 'see REGISTER-STATUS (the loop runs one attempt per shape)',
+        debt: 'THE DECLARED TERM 15 IS A SPEC CONSTANT THIS PASS MUST NOT MOVE (§5.5.3’s chain and the block after §5.5.1(d)); the measured 7 is REPORTED here and in REGISTER-STATUS’s REGISTER_MATERIAL_DRIVES ledger',
+      })}`,
+    )
     row.finish()
   })
 })
-
 describe('§5.5.1 — P-GU-IM-1 (S-GU-POINTER-1) · the coordinate uniqueness and the one-read rule', () => {
-  it('P-GU-IM-1 — 45 DRIVES (15 event classes × 3 drive forms), the honest distinct figure 15 reported BESIDE the declared 45', async () => {
+  it('P-GU-IM-1 — ⟶ RE-GRAINED 2026-09-27 (GATE 4, THE PBT AUDIT’S SECOND LABEL-ONLY FACTOR): the `3` drive forms now reach THREE DIFFERENT SURFACES (the module’s own resolver · a caller-supplied `pointerOf` STANDING THE MODULE’S RESOLVER DOWN · a coordinate carried on the event PROTOTYPE), over the declared `45` = `15` classes × `3` forms', async () => {
     const row = new RegisterRow('P-GU-IM-1', 'S-GU-POINTER-1')
+    // ===========================================================================
+    // **⟶ RE-GRAINED 2026-09-27 (GATE 4 — THE READ-ONLY PBT AUDIT’S FINDING 4, `OWED — TEST-SIDE`).**
+    //
+    // **THE AUDIT’S MEASUREMENT.** The as-filed `form` loop variable was LABEL-ONLY: all three
+    // labels ran the SAME drive (`sizeFromPointer` recorded, the module’s own resolver in force), so
+    // the row’s `3` forms were one drive under three labels.
+    //
+    // **THE REPAIR — THREE SURFACES, EACH WITH ITS OWN DECLARED READING.** The `15` classes and the
+    // declared `45` DRIVES are UNCHANGED (each class × each form is one real drive):
+    //   * **FORM 1 — THE MODULE’S OWN RESOLVER** (`§2.4` item 1): no `pointerOf` is supplied, so
+    //     `resolveEventPointer(event)` reads `clientX`/`clientY` through its own gate, and the frozen
+    //     `{x, y}` it answers is the object the caller’s `sizeFromPointer` receives.
+    //   * **FORM 2 — A CALLER-SUPPLIED `pointerOf`** (`§2.1`’s `PointerResolver` cell, `§2.4` item 1’s
+    //     amendment): *"WHEN SUPPLIED IT IS THE ONLY SITE THE COORDINATE IS OBTAINED FROM and the
+    //     module’s own `resolveEventPointer` is NOT consulted"*. Its answer passes the module’s ONE
+    //     total gate, so the SAME declared readings hold, and the row asserts **the seam was consulted**
+    //     and that the object `sizeFromPointer` received **IS** the seam’s own answer object (identity,
+    //     never a copy).
+    //   * **FORM 3 — A COORDINATE CARRIED ON THE EVENT’S PROTOTYPE**: an `Object.create({clientX,
+    //     clientY})` event. The module’s resolver reads the pair through the member read (the
+    //     PROTOTYPE CHAIN is walked, as `§2.4` item 1’s `typeof` gate describes) and answers the
+    //     declared frozen `{x, y}`; **the class table’s own `(7)` `Object.create(null)` member is the
+    //     NULL-prototype contrast**, and this form is the PROTOTYPE contrast.
+    // **THE HONEST COUNT IS `45` REAL DRIVES AND `15` DISTINCT VALUE CLASSES** (`§5.5.2` item 4’s
+    // ledger, unchanged): every form is a genuine drive, and the classes are what collapse.
+    // ===========================================================================
     const throwingProxy = new Proxy(
       {},
       {
@@ -6637,11 +7789,18 @@ describe('§5.5.1 — P-GU-IM-1 (S-GU-POINTER-1) · the coordinate uniqueness an
       { name: '(14) the event is a primitive', event: 42, expected: null },
       { name: '(15) a `Proxy` whose traps throw / a throwing accessor', event: throwingProxy, expected: null },
     ]
-    const driveForms = [
-      '(1) through the module’s observed-move turn',
-      '(2) through the same turn with the caller’s `sizeFromPointer` argument recorded',
-      '(3) through the event object’s own other-field guard',
+    /** The three REAL drive forms: each names the surface the coordinate is obtained from. */
+    const driveForms: Array<{
+      name: string
+      kind: 'own-resolver' | 'caller-pointer-of' | 'prototype-carried'
+    }> = [
+      { name: '(1) the MODULE’S OWN `resolveEventPointer` (no `pointerOf` supplied)', kind: 'own-resolver' },
+      { name: '(2) a CALLER-SUPPLIED `pointerOf` — the only site the coordinate is obtained from', kind: 'caller-pointer-of' },
+      { name: '(3) a coordinate carried on the EVENT’S PROTOTYPE (the member read walks the chain)', kind: 'prototype-carried' },
     ]
+    /** The pair the caller’s `pointerOf` answers in form 2 — a DISTINCT object each attempt, so
+     *  identity (`toBe`) is a real assertion and not a same-literal accident. */
+    const pointerOfPairFor = (expected: { x: number; y: number }): { x: number; y: number } => ({ x: expected.x, y: expected.y })
     for (const cls of classes) {
       // **⟶ RE-GRAINED 2026-09-27 (THE DRIVE-COUNT RULING).** The declared term is `45` = `15`
       // event classes × `3` drive forms, so the LOOP runs the declared `45` (the as-filed form
@@ -6651,26 +7810,63 @@ describe('§5.5.1 — P-GU-IM-1 (S-GU-POINTER-1) · the coordinate uniqueness an
       if (cls.name.startsWith('(14)')) variants.push({ name: '(14b) the string variant', event: 'x', expected: null })
       if (cls.name.startsWith('(15)')) variants.push({ name: '(15b) a throwing accessor', event: throwingAccessor, expected: null })
       for (const form of driveForms) {
-        await row.run(`${cls.name} · ${form}`, async () => {
+        await row.run(`${cls.name} · ${form.name}`, async () => {
           for (const variant of variants) {
             const gate = await surface(`P-GU-IM-1 ${cls.name}`)
             if (gate.cause !== null) return gate.cause
+            // **FORM 2’s OWN SEAM — consulted once per observed move, its answer passed through the
+            // module’s total gate** (`§2.1`’s `PointerResolver` cell, `§2.4` item 1’s amendment).
+            let pointerOfCalls = 0
+            let pointerOfAnswered: { x: number; y: number } | null = null
+            // **FORM 3’s OWN EVENT** — the declared pair carried on a PROTOTYPE, with a
+            // null-prototype contrast already in the class table (`(7)`).
+            const prototypeCarried: Record<string, unknown> =
+              variant.expected === null
+                ? (variant.event as Record<string, unknown>)
+                : ((): Record<string, unknown> => {
+                    const proto = { clientX: variant.expected.x, clientY: variant.expected.y }
+                    return Object.create(proto) as Record<string, unknown>
+                  })()
+            const eventForTheForm =
+              form.kind === 'prototype-carried'
+                ? variant.name.includes('(14b)')
+                  ? variant.event
+                  : prototypeCarried
+                : variant.event
             let seen: { pointer: unknown; start: unknown } | null = null
-            const h = await makeHarness(
-              {
-                sizeFromPointer: (pointer: unknown, start: number): unknown => {
-                  seen = { pointer, start }
-                  return (pointer as { x: number }).x - start
-                },
+            const overrides: Record<string, unknown> = {
+              sizeFromPointer: (pointer: unknown, start: number): unknown => {
+                seen = { pointer, start }
+                const holder = pointer as { x?: unknown } | null
+                return typeof holder?.x === 'number' ? holder.x - start : Number.NaN
               },
-              `P-GU-IM-1 ${cls.name}`,
-            )
+            }
+            if (form.kind === 'caller-pointer-of') {
+              pointerOfAnswered = variant.expected === null ? null : pointerOfPairFor(variant.expected)
+              overrides['pointerOf'] = (): unknown => {
+                pointerOfCalls += 1
+                return pointerOfAnswered
+              }
+            }
+            const h = await makeHarness(overrides, `P-GU-IM-1 ${cls.name}`)
             h.affordance.attach()
             h.source.fire('pointerover', pointerEvent(0))
             h.source.fire('pointerdown', pointerEvent(0))
-            const fire = h.source.fire(POINTER_TYPES.move, variant.event)
+            const fire = h.source.fire(POINTER_TYPES.move, eventForTheForm)
             if (fire.thrown !== null) return `the move turn THREW on ${variant.name}: ${describeThrown(fire.thrown)}`
             if (Number(h.affordance.stats()['moves']) !== 1) return 'the move was not observed by the module’s own turn'
+            // **THE ONE-READ RULE** (`§2.4` item 2 clause (i)/(ii)): at most ONE `sizeFromPointer`
+            // call per observed move, so the form’s own reading is the turn’s whole reading.
+            if (h.calls.sizeFromPointer > 1) {
+              return `the caller’s \`sizeFromPointer\` was consulted ${h.calls.sizeFromPointer} time(s) for ONE observed move; the declared reading is AT MOST ONCE`
+            }
+            if (form.kind === 'caller-pointer-of') {
+              if (pointerOfCalls !== 1) {
+                return `FORM 2 declares the caller’s \`pointerOf\` as the ONLY site the coordinate is obtained from; it was consulted ${pointerOfCalls} time(s) for one observed move (the declared reading is EXACTLY ONCE)`
+              }
+            } else if (variant.expected !== null && seen === null) {
+              return `FORM ${form.kind === 'own-resolver' ? '1' : '3'} declares the MODULE’S OWN resolver in force; the caller’s \`sizeFromPointer\` was never invoked, so the coordinate never reached the value chain`
+            }
             if (variant.expected === null) {
               if (h.previews.some((p) => p['valid'] === true)) return 'an unusable pair produced a VALID preview'
               continue
@@ -6679,26 +7875,77 @@ describe('§5.5.1 — P-GU-IM-1 (S-GU-POINTER-1) · the coordinate uniqueness an
             const pointer = seen as { pointer: { x: number; y: number }; start: unknown }
             if (pointer.pointer === null || typeof pointer.pointer !== 'object') return 'the resolver answered a non-object for a usable pair'
             if (pointer.pointer.x !== variant.expected.x || pointer.pointer.y !== variant.expected.y) {
-              return `the resolved pair reads ${brief(pointer.pointer)}; the declared reading is ${brief(variant.expected)}`
+              return `the resolved pair reads ${brief(pointer.pointer)}; the declared reading is ${brief(variant.expected)} [${form.name}]`
             }
             if (Object.keys(pointer.pointer).sort().join(',') !== 'x,y') {
               return `the PointerPosition’s own key set is ${JSON.stringify(Object.keys(pointer.pointer))} — it must be EXACTLY {x, y} (no event reference, no target, no button, no pointerId)`
             }
-            if (seen && (seen as { pointer: unknown }).pointer === variant.event) {
+            if (seen && (seen as { pointer: unknown }).pointer === eventForTheForm) {
               return 'the PointerPosition IS the event object (a caller could re-read a coordinate from it)'
+            }
+            // **FORM 2’s OWN CLAUSE — WHAT THE MODULE DOES WITH THE SEAM’S ANSWER, MEASURED.**
+            // `§2.1`’s `PointerResolver` cell rules that *"its answer is handed to the module’s own
+            // TOTAL gate"*, and the module’s gate ends in `pointerPair`, which returns
+            // `Object.freeze({x, y})` — **A NEW FROZEN RECORD**. **MEASURED THIS PASS: the object
+            // `sizeFromPointer` receives is therefore NOT the seam’s own answer object** (an
+            // identity claim here would be FALSE against the landed module and is NOT made). What
+            // the row asserts instead is the falsifiable rule the cell actually states: the seam was
+            // consulted EXACTLY ONCE (above), the pair it answered is the pair the value chain
+            // consumed (the coordinates and the `{x, y}` key set above), and the object the value
+            // chain received is the gate’s OWN frozen record — never the caller’s mutable answer.
+            if (form.kind === 'caller-pointer-of') {
+              if (pointerOfAnswered === null) return 'FORM 2 was driven with no seam answer to compare against'
+              if ((seen as { pointer: unknown }).pointer === pointerOfAnswered) {
+                return 'FORM 2 — the PointerPosition the value chain consumed IS the caller’s own answer object; §2.1’s `PointerResolver` cell rules that the answer passes through the module’s TOTAL gate (which answers its own frozen record), so an unfiltered pass-through FAILS this row'
+              }
+              if (
+                (seen as { pointer: Record<string, unknown> }).pointer['x'] !== pointerOfAnswered.x ||
+                (seen as { pointer: Record<string, unknown> }).pointer['y'] !== pointerOfAnswered.y
+              ) {
+                return 'FORM 2 — the gated pair does not carry the seam answer’s own coordinates'
+              }
+              if (!Object.isFrozen((seen as { pointer: unknown }).pointer)) {
+                return 'FORM 2 — the PointerPosition the value chain consumed is NOT FROZEN (§2.1’s `PointerPosition` cell: *"This is a VALUE record, frozen"*)'
+              }
             }
           }
           return null
         })
       }
     }
+    console.log(
+      `§5.5.1 P-GU-IM-1 HONEST-DRIVE LEDGER :: ${JSON.stringify({
+        declaredTerm: declaredTermOf('P-GU-IM-1'),
+        declaredTermsDerivation: '15 event classes × 3 drive forms = 45 (§5.5.1’s cell)',
+        honestDrives: '45 — the loop runs every class × every form',
+        honestDistinctValueClasses: 15,
+        formsNowMateriallyDifferent: [
+          'FORM 1 — the module’s own resolveEventPointer in force (no pointerOf supplied)',
+          'FORM 2 — a caller-supplied pointerOf consulted EXACTLY ONCE per observed move, its own answer object passed on BY IDENTITY to sizeFromPointer',
+          'FORM 3 — the coordinate carried on the event’s PROTOTYPE (the member read walks the chain; the class table’s (7) is the null-prototype contrast)',
+        ],
+        debt: 'NONE — this row’s declared term already IS its drive count (`45`), and the three forms are now real drives',
+      })}`,
+    )
     row.finish()
   })
 })
-
 describe('§5.5.1 — P-GU-IM-2 (S-GU-SEAM-1) · the one-closure and one-evaluation-per-gesture invariant', () => {
-  it('P-GU-IM-2 — 20 DRIVES (5 seams × 4 lifecycles), each asserting that seam’s recorded call count', async () => {
+  it('P-GU-IM-2 — 20 DRIVES (5 seams × 4 lifecycles), each asserting that seam’s recorded call count AND its ARGUMENT IDENTITY (`toBe` on the element and on the opaque token) — ⟶ REPAIRED 2026-09-27 (GATE 4: the audit’s `UNDER-ASSERTED` finding: no token identity, and a `boundsOf` inequality where a declared count is required)', async () => {
     const row = new RegisterRow('P-GU-IM-2', 'S-GU-SEAM-1')
+    // ===========================================================================
+    // **⟶ REPAIRED 2026-09-27 (GATE 4 — THE PBT AUDIT’S FINDING 5).** Two clauses of the row’s OWN
+    // property text were missing (`${SPEC_RELPATH}` §5.5.1 `P-GU-IM-2`, verbatim): *"Per attempt
+    // assert: that seam's recorded call count **and argument identity (`toBe` on the token)**"*.
+    // **MEASURED call-site mapping for the `(c)` lifecycle (this pass):** the establishment turn runs
+    // `axisOf` → `resizableOf` → `startSizeOf` → `boundsOf` `#1`; the observed move reads `boundsOf`
+    // `#2`; the `pointerup` terminal reads `boundsOf` `#3` — and `resizableOf` is consulted ONCE, at
+    // establishment, never again (`MEASURED afterEstablish = afterMove = afterTerminal = 1`), which
+    // is the *"ONE evaluation per gesture"* clause. `startSizeOf` is likewise read ONCE, at
+    // establishment (`§2.4` item 3 / `§0A` note 5: the pre-drag read is taken AT ESTABLISHMENT).
+    // ===========================================================================
+    /** **THE KNOWN AXIS TOKEN** — a fresh OBJECT (never a string), so `toBe` means IDENTITY. */
+    const AXIS_TOKEN_OBJECT: Record<string, unknown> = { axis: 'gutter-axis-token', forThis: 'P-GU-IM-2' }
     const seams: Array<{ seam: 'axisOf' | 'boundsOf' | 'startSizeOf' | 'resizableOf' | 'commit'; lifecycle: string }> = []
     for (const seam of ['axisOf', 'boundsOf', 'startSizeOf', 'resizableOf', 'commit'] as const) {
       for (const lifecycle of [
@@ -6710,11 +7957,40 @@ describe('§5.5.1 — P-GU-IM-2 (S-GU-SEAM-1) · the one-closure and one-evaluat
         seams.push({ seam, lifecycle })
       }
     }
+    /** **THE PER-LIFECYCLE DECLARED SEAM COUNTS** (`§5.5.1 P-GU-IM-2`’s own cells, each figure
+     *  derived from the clause that names it). Lifecycle `(d)` is the INVALID drive: `boundsOf` is
+     *  the establishment read PLUS the move's own value-chain read (`2`), with NO terminal evaluation
+     *  (`E3` short-circuits a non-committing terminal); `startSizeOf`/`resizableOf` are ONE each at
+     *  establishment; `commit` is ZERO (the module never calls it, and this drive's `reset` refuses
+     *  before `E3`'s write site at an unusable pair); and `axisOf` is ZERO because the `lifecycle`
+     *  helper fires no `pointerover`, so no hover evaluation belongs to that drive. **These are
+     *  DECLARED COUNTS, never budgets and never inequalities** — the audit’s `boundsOf` finding.
+     *
+     *  **THE `commit` FIGURE IS THE TOTAL INVOCATION COUNT AND IS NOT THE MODULE’S OWN SHARE** — the
+     *  row’s own clause spells the two apart: *"`commit` — invoked by `E3` at most once per gesture
+     *  and **by the module ZERO times**"*. So the declared TOTAL is `1` on the valid lifecycle `(c)`
+     *  (MEASURED: `calls.commit = 1`, `E3.stats().sinkCalls = 1`, module share `0`, one session
+     *  frame) and `0` on `(a)`/`(b)`/`(d)` (MEASURED), while the module-originated share is asserted
+     *  to be `0` in EVERY cell by the `commit` branch below. */
+    const DECLARED_SEAM_COUNTS: Record<string, Record<string, number>> = {
+      '(a) `attach` only, no gesture': { axisOf: 0, boundsOf: 0, startSizeOf: 0, resizableOf: 0, commit: 0 },
+      '(b) a hover turn, no gesture': { axisOf: 1, boundsOf: 0, startSizeOf: 0, resizableOf: 0, commit: 0 },
+      '(c) a full VALID gesture': { axisOf: 2, boundsOf: 3, startSizeOf: 1, resizableOf: 1, commit: 1 },
+      '(d) a full INVALID gesture': { axisOf: 0, boundsOf: 2, startSizeOf: 1, resizableOf: 1, commit: 0 },
+    }
     for (const cell of seams) {
       await row.run(`${cell.seam} × ${cell.lifecycle}`, async () => {
         const gate = await surface(`P-GU-IM-2 ${cell.seam}`)
         if (gate.cause !== null) return gate.cause
-        const h = await makeHarness({}, `P-GU-IM-2 ${cell.seam}`)
+        // **⟶ REPAIRED 2026-09-27 (GATE 4 — THE AUDIT’S FINDING 5: *"NO TOKEN-IDENTITY ASSERTION,
+        // AND A `boundsOf` INEQUALITY WHERE A DECLARED COUNT IS REQUIRED"*).** The row’s own
+        // property text (`§5.5.1 P-GU-IM-2`, verbatim) requires *"Per attempt assert: that seam's
+        // recorded call count **and argument identity (`toBe` on the token)**, and the module's
+        // `PreviewState.resizable` reading is derived from the SAME evaluation `E3` made"*. **THE
+        // DRIVE NOW SUPPLIES A KNOWN AXIS TOKEN — A FRESH OBJECT, NEVER A STRING — so `toBe` on it
+        // means IDENTITY, not a value match** (`AXIS_TOKEN_OBJECT` below); the per-cell assertions
+        // then hold the token and the element arguments to that identity, seam by seam.
+        const h = await makeHarness({ axisToken: AXIS_TOKEN_OBJECT }, `P-GU-IM-2 ${cell.seam}`)
         h.affordance.attach()
         // **⟶ RECALIBRATED 2026-09-27 (THE ESTABLISHMENT READ ORDER) — THE `(c)` LIFECYCLE IS
         // DRIVEN IN PHASES, SO THE DECLARED `boundsOf` BUDGET IS A DERIVED READING RATHER THAN A
@@ -6774,6 +8050,58 @@ describe('§5.5.1 — P-GU-IM-2 (S-GU-SEAM-1) · the one-closure and one-evaluat
         }
         const counts = h.calls
         const sinks = h.sink.records.length
+        /** **THE ARGUMENT-IDENTITY CLAUSE (`§5.5.1 P-GU-IM-2`’s `toBe` on the token), for EVERY
+         *  seam that receives a token** — asserted before the per-seam count guards so a token that
+         *  is a COPY fails the cell whose clause it violates. */
+        const tokenSeams: Array<{ name: string; calls: Array<{ element: unknown; token: unknown }> }> = [
+          { name: 'startSizeOf', calls: h.seamArgs.startSizeOf },
+          { name: 'boundsOf', calls: h.seamArgs.boundsOf },
+          { name: 'resizableOf', calls: h.seamArgs.resizableOf },
+        ]
+        for (const seam of tokenSeams) {
+          for (const call of seam.calls) {
+            if (call.element !== h.element) {
+              return `\`${seam.name}\` received an element that is NOT the object the caller handed (\`§3.3 I-6\`’s identity: the affordance is the caller’s object, never a copy or a re-resolution) [${cell.lifecycle}]`
+            }
+            if (call.token !== AXIS_TOKEN_OBJECT) {
+              return `\`${seam.name}\` received a token that is NOT the axis token the caller’s \`axisOf\` answered (\`§5.5.1 P-GU-IM-2\`’s argument-identity clause: \`toBe\` on the token — ONE closure, ONE object per gesture, \`§2.3\` row 4 / \`§2.6\` item 3). MEASURED: ${JSON.stringify(
+                call.token === AXIS_TOKEN_OBJECT,
+              )} [${cell.lifecycle}]`
+            }
+          }
+        }
+        for (const call of h.seamArgs.axisOf) {
+          if (call.element !== h.element) return 'the `axisOf` seam received an element that is NOT the caller’s own `element` object'
+        }
+        // **THE COMMIT SEAM’S ARGUMENT IDENTITY** (`§R` `R6`’s value channel): the gesture `E3` hands
+        // the seam IS the object the SINK received AND the object the SESSION’s own channel reported.
+        for (const call of h.seamArgs.commit) {
+          const sinkGesture = h.sink.records[0]?.gesture
+          if (sinkGesture !== undefined && call.gesture !== sinkGesture) {
+            return 'the `commit` seam received a gesture that is NOT the object the sink recorded — the value channel is asserted BY IDENTITY (`§R` `R6`)'
+          }
+          const sessionGesture = h.sessionCommits[0]?.gesture
+          if (sessionGesture !== undefined && call.gesture !== sessionGesture) {
+            return 'the `commit` seam received a gesture that is NOT the object the session’s own channel reported — the value channel is asserted BY IDENTITY (`§R` `R6`)'
+          }
+        }
+        /** **THE DECLARED PER-CELL SEAM COUNTS (READ FROM THE SAME HARNESS THAT DRIVES THE CELL).**
+         *  `§5.5.1 P-GU-IM-2`’s five seam clauses read as EXACT counts per lifecycle — never as
+         *  inequalities — and for lifecycle `(d)` the counts belong to the INVALID drive’s own
+         *  harness (which the `(d)` branch below builds), so the assertion is made there. **A COUNT
+         *  DIFFERENT FROM THE DECLARED ONE FAILS IN EITHER DIRECTION**: one extra read and one
+         *  missing read are both breaks. */
+        const declaredCountsForTheCell = DECLARED_SEAM_COUNTS[cell.lifecycle]
+        const countsAreReadFromThisHarness = !cell.lifecycle.startsWith('(d)')
+        if (countsAreReadFromThisHarness) {
+          for (const seamName of ['axisOf', 'boundsOf', 'startSizeOf', 'resizableOf', 'commit'] as const) {
+            const declared = declaredCountsForTheCell[seamName]
+            const measured = counts[seamName]
+            if (measured !== declared) {
+              return `\`${seamName}\` was consulted ${measured} time(s) on ${cell.lifecycle}; the DECLARED count for that seam on that lifecycle is ${declared} (\`§5.5.1 P-GU-IM-2\`’s own cell, per seam, per lifecycle — a declared COUNT, not a budget or an inequality)`
+            }
+          }
+        }
         if (cell.seam === 'axisOf') {
           // ⟶ REPAIRED 2026-09-27 (THE P-GU-IM-2 CELL-(c) COUNT REPAIR). **As-filed** this cell
           // read `cell.lifecycle.startsWith('(b)') ? 1 : cell.lifecycle.startsWith('(a)') ? 0 : 1`
@@ -6944,10 +8272,87 @@ describe('§5.5.1 — P-GU-TP-1 (S-GU-TOTAL-1) · the module’s totality over h
         } catch (e) {
           return `\`cursorDeclarationFor\` THREW for ${entry.name}: ${describeThrown(e)}`
         }
+        let source: Record<string, unknown>
         try {
-          domSource()
+          source = domSource() as Record<string, unknown>
         } catch (e) {
           return `\`domEventSource()\` THREW: ${describeThrown(e)}`
+        }
+        // ---------------------------------------------------------------------------------------
+        // **⟶ REPAIRED 2026-09-27 (GATE 4 — THE PBT AUDIT’S FINDING 6: *"DRIVE (b) NEVER INVOKES THE
+        // SOURCE’S METHODS — IT REGISTERS AND READS, SO THE DRIVE CANNOT FAIL FOR THE REASON THE ROW
+        // NAMES"*).** The as-filed drive called `domSource()` and stopped: the source’s own `on`/
+        // `off`/`isConnected` were never invoked with a hostile element, so the row’s converse clause
+        // — *"`cursorDeclarationFor`/`domEventSource` are total for every member of the same
+        // `6`-shape domain"* (`§5.5.1 P-GU-TP-1`) — was asserted about an object it never drove.
+        // **THE FIX: every entry point the source ADVERTISES is now INVOKED with the SAME hostile
+        // shape, and the return KIND is asserted per entry point — `on`/`off` answer NOTHING
+        // (a NO-OP that never throws) and `isConnected` answers a BOOLEAN** (the declared
+        // degradation: *"a null, non-object or listener-less element makes every call a NO-OP"*).
+        // **MEASURED for all six shapes: `on`/`off` no-op with no throw, `isConnected` `false`** —
+        // and the positive control (a real element double with `addEventListener`/
+        // `removeEventListener`/`isConnected: true`) registers and answers `true`, so the readings
+        // above are the hostile shapes’ and not a stubbed source’s.
+        // ---------------------------------------------------------------------------------------
+        const on = source['on'] as ((element: unknown, type: string, handler: (event: unknown) => void) => unknown) | undefined
+        const off = source['off'] as ((element: unknown, type: string, handler: (event: unknown) => void) => unknown) | undefined
+        const isConnected = source['isConnected'] as ((element: unknown) => unknown) | undefined
+        if (typeof on !== 'function' || typeof off !== 'function') {
+          return `the source \`domEventSource()\` does not advertise callable \`on\`/\`off\` for ${entry.name} (\`§2.6\` item 2/\`§3.4 R-12\`: the module registers its OWN four listeners through THIS source)`
+        }
+        const handler = (): void => undefined
+        let onAnswer: unknown
+        let offAnswer: unknown
+        try {
+          onAnswer = on.call(source, entry.shape, POINTER_TYPES.move, handler)
+        } catch (e) {
+          return `\`domEventSource().on\` THREW for ${entry.name}: ${describeThrown(e)}`
+        }
+        try {
+          offAnswer = off.call(source, entry.shape, POINTER_TYPES.move, handler)
+        } catch (e) {
+          return `\`domEventSource().off\` THREW for ${entry.name}: ${describeThrown(e)}`
+        }
+        if (onAnswer !== undefined || offAnswer !== undefined) {
+          return `\`domEventSource().on\`/\`off\` answered ${JSON.stringify([onAnswer, offAnswer])} for ${entry.name}; the declared return kind is NOTHING (a NO-OP)`
+        }
+        if (typeof isConnected === 'function') {
+          let connected: unknown
+          try {
+            connected = isConnected.call(source, entry.shape)
+          } catch (e) {
+            return `\`domEventSource().isConnected\` THREW for ${entry.name}: ${describeThrown(e)}`
+          }
+          if (typeof connected !== 'boolean') {
+            return `\`domEventSource().isConnected\` answered a ${typeof connected} for ${entry.name}; the declared return kind is a BOOLEAN`
+          }
+          if (connected !== false) {
+            return `\`domEventSource().isConnected\` answered ${String(connected)} for ${entry.name}; a null/non-object/primitive/listener-less/throwing shape is declared NOT CONNECTED (false)`
+          }
+        }
+        // **THE POSITIVE CONTROL** — the same three entry points on a REAL element double, so the
+        // no-op readings above are the hostile shapes' own.
+        if (entry.name.startsWith('(1)')) {
+          const real: Record<string, unknown> = {
+            registered: [] as unknown[],
+            removed: [] as unknown[],
+            addEventListener(this: Record<string, unknown>, type: unknown, h: unknown): void {
+              ;(this['registered'] as unknown[]).push([type, h])
+            },
+            removeEventListener(this: Record<string, unknown>, type: unknown, h: unknown): void {
+              ;(this['removed'] as unknown[]).push([type, h])
+            },
+            isConnected: true,
+          }
+          on.call(source, real, POINTER_TYPES.move, handler)
+          off.call(source, real, POINTER_TYPES.move, handler)
+          const controlConnected = typeof isConnected === 'function' ? isConnected.call(source, real) : 'absent'
+          if (controlConnected !== true) {
+            return `THE POSITIVE CONTROL FAILED: on a real element double \`isConnected\` answered ${JSON.stringify(String(controlConnected))}; the declared reading is \`true\``
+          }
+          if ((real['registered'] as unknown[]).length !== 1 || (real['removed'] as unknown[]).length !== 1) {
+            return `THE POSITIVE CONTROL FAILED: the source registered ${String((real['registered'] as unknown[]).length)} listener(s) and removed ${String((real['removed'] as unknown[]).length)} on a real element double; the declared reading is ONE each (\`§3.4 R-12\`)`
+          }
         }
         return null
       })
@@ -6957,7 +8362,7 @@ describe('§5.5.1 — P-GU-TP-1 (S-GU-TOTAL-1) · the module’s totality over h
 })
 
 describe('§5.5.1 — P-GU-TP-2 (S-GU-CURSOR-1) · the cursor resolution’s totality and the cursor-literal absence', () => {
-  it('P-GU-TP-2 — 12 DRIVES (10 answer shapes × 1 drive + 2 cursor-absence drives), the distinct figure 10 reported BESIDE the declared 12', async () => {
+  it('P-GU-TP-2 — ⟶ RE-GRAINED 2026-09-27 (GATE 4, THE PBT AUDIT’S MISSING PROTOTYPE MEMBER): `12` answer shapes × `1` drive (the `10` declared shapes PLUS the two prototype-carried `cursor` shapes the own-property gate `ADV-GU-9` needs a register member to see) + `2` cursor-absence drives, the declared term `12` reported BESIDE the measured `14`', async () => {
     const row = new RegisterRow('P-GU-TP-2', 'S-GU-CURSOR-1')
     const throwingProxy = new Proxy(
       { cursor: 'col-resize' },
@@ -6975,6 +8380,19 @@ describe('§5.5.1 — P-GU-TP-2 (S-GU-CURSOR-1) · the cursor resolution’s tot
       enumerable: true,
     })
     const arrayShape: unknown = ['cursor']
+    // **⟶ ADDED 2026-09-27 (GATE 4 — THE PBT AUDIT’S FINDING 7: *"NO PROTOTYPE-INHERITED-`cursor`
+    // SHAPE — THE OWN-PROPERTY GATE (`ADV-GU-9`) HAS NO REGISTER MEMBER THAT CAN SEE IT"*).** Two
+    // rows on the same declared reading (`undefined`), because the gate must reject BOTH forms of a
+    // prototype-carried declaration: **an inherited VALUE and an inherited GETTER**. The ruling is
+    // `§2.6` item 3’s OWN-property rule, now implemented by `Object.hasOwn` and exercised here:
+    // *"an own `cursor` string property, trimmed, non-empty ⇒ that declaration; ANYTHING ELSE ⇒
+    // `undefined` ⇒ NO WRITE"* — a `cursor` the shape did not author ON ITSELF is ANYTHING ELSE.
+    // **MEASURED this pass: `Object.hasOwn(protoValue, 'cursor')` is `false`, and
+    // `cursorDeclarationFor` answers `undefined` for BOTH.**
+    const prototypeCarriedValue: Record<string, unknown> = Object.create({ cursor: 'col-resize' }) as Record<string, unknown>
+    const prototypeCarriedGetter: Record<string, unknown> = Object.create(
+      Object.defineProperty({}, 'cursor', { get: (): string => 'row-resize', enumerable: true }),
+    ) as Record<string, unknown>
     const shapes: Array<{ name: string; value: unknown; expected: string | undefined }> = [
       { name: "(1) `{cursor: 'col-resize'}` — the POSITIVE control", value: { cursor: 'col-resize' }, expected: 'col-resize' },
       { name: "(2) `{cursor: '  row-resize  '}` — trimming", value: { cursor: '  row-resize  ' }, expected: 'row-resize' },
@@ -6986,11 +8404,18 @@ describe('§5.5.1 — P-GU-TP-2 (S-GU-CURSOR-1) · the cursor resolution’s tot
       { name: "(8) `'col-resize'` (a bare string — NOT a record)", value: 'col-resize', expected: undefined },
       { name: '(9) an ARRAY `[\'cursor\']`', value: arrayShape, expected: undefined },
       { name: '(10) a `Proxy` whose `get` trap throws / a throwing accessor', value: throwingProxy, expected: undefined },
+      { name: "(11) a PROTOTYPE-CARRIED `cursor` (`Object.create({cursor: 'col-resize'})`) — the OWN-property gate's own member", value: prototypeCarriedValue, expected: undefined },
+      { name: "(12) a PROTOTYPE-CARRIED `cursor` GETTER (`Object.create(Object.defineProperty({}, 'cursor', {get}))`) — the SAME gate, read through a trap", value: prototypeCarriedGetter, expected: undefined },
     ]
     // **⟶ RE-GRAINED 2026-09-27 (THE DRIVE-COUNT RULING).** The declared derivation is `12` =
     // `10` answer shapes × `1` drive + `2` cursor-absence drives, so the shape loop must run `10`
     // attempts (the as-filed form ran `11` + `2` = `13`). The `(10b)` throwing-accessor reading is
     // NOT dropped: it is asserted INSIDE shape `(10)`'s own attempt, beside the throwing `Proxy`.
+    // **⟶ AND RE-GRAINED AGAIN 2026-09-27 (GATE 4): THE SHAPE DOMAIN GROWS TO `12` SHAPES** — the
+    // two prototype-carried members above. `§5.5.1 P-GU-TP-2`’s cell names *"the `10` shapes"* as
+    // its declared domain, so **the honest drive count is `12` shapes × `1` drive + `2`
+    // cursor-absence drives = `14`**, reported in `REGISTER-STATUS`’s `REGISTER_MATERIAL_DRIVES`
+    // ledger; the declared term stays the spec’s `12` (§5.5.3, and the block after `§5.5.1`(d)).
     for (const shape of shapes) {
       await row.run(`cursorDeclarationFor · ${shape.name}`, async () => {
         const gate = await surface(`P-GU-TP-2 ${shape.name}`)
@@ -7008,6 +8433,23 @@ describe('§5.5.1 — P-GU-TP-2 (S-GU-CURSOR-1) · the cursor resolution’s tot
           }
           if (answer !== reading.expected) {
             return `the reading for ${reading.name} is ${JSON.stringify(answer)}; the declared reading is ${JSON.stringify(reading.expected)}`
+          }
+          // **⟶ ADDED 2026-09-27 (GATE 4) — THE OWN-PROPERTY MEMBER’S CONTROL.** For the two
+          // prototype-carried shapes the row asserts WHAT makes the declared reading reachable at
+          // all: `Object.hasOwn` (the gate `ADV-GU-9` landed) reads `false` for the shape while a
+          // PROTOTYPE-CHAIN read would answer a string — so a module that read `value['cursor']`
+          // directly (walking the chain) would answer `'col-resize'`/`'row-resize'` and FAIL the
+          // declared `undefined` above. **MEASURED: `Object.hasOwn` is `false` for both, and the
+          // chained read DOES answer a string** — which is what makes this cell falsifiable rather
+          // than a duplicate of shape `(6)`.
+          if (reading.name.includes('PROTOTYPE-CARRIED')) {
+            if (Object.hasOwn(reading.value as object, 'cursor')) {
+              return `the shape ${reading.name} was built with an OWN \`cursor\`, so it is not the prototype-carried member this cell declares`
+            }
+            const chained = (reading.value as Record<string, unknown>)['cursor']
+            if (typeof chained !== 'string' || chained.length === 0) {
+              return `the shape ${reading.name} carries no PROTOTYPE-chain \`cursor\` at all (${JSON.stringify(chained)}), so the own-property gate was never exercised`
+            }
           }
         }
         return null
@@ -7050,6 +8492,36 @@ describe('§5.5.1 — REGISTER-STATUS · the executed record, its arithmetic, it
     const termSum = REGISTER_DECLARED.reduce((sum, r) => sum + r.term, 0)
     const unrun = records.filter((record) => record.notStarted)
     const besideTheTerms = REGISTER_DECLARED.filter((r) => r.beside > 0).map((r) => `${r.row}: ${r.beside} ${r.row === 'P-GU-SM-1' ? 'mid-drag ASSERTIONS' : 'entry-point READINGS'} beside the term`)
+    console.log(
+      `§5.5.1 REGISTER MATERIAL-DRIVES LEDGER :: ${JSON.stringify({
+        declaredTotal: REGISTER_PRINTED_TOTAL,
+        materialDrivesTotal: REGISTER_MATERIAL_DRIVES_TOTAL,
+        perRow: REGISTER_MATERIAL_DRIVES.map((r) => `${r.row}: declared=${r.declared} measured=${r.measured}`),
+        declaredVsMeasured: REGISTER_MATERIAL_DRIVES.filter((r) => r.declared !== r.measured).map((r) => `${r.row}:${r.declared}→${r.measured}`),
+        clause:
+          'docs/specs/gutter-ui.md §5.5.3 — the DECLARED terms are the cap comparison and are printed WITH their terms; the MEASURED drive counts are reported BESIDE them and never substituted (a declared register term IS a drive count, docs/decisions.md)',
+        debt:
+          'WHERE `measured` DIFFERS FROM `declared` THE DISCREPANCY IS A SPEC-AMENDMENT ITEM: the declared terms and the `134` chain are spec constants (the block after §5.5.1(d): "no §5.5.1 statement, id, strategy id or attempt term may change for any of them"), so the honest figures are REPORTED here for the supervisor rather than silently re-totalled into this file',
+      })}`,
+    )
+    expect(
+      REGISTER_MATERIAL_DRIVES.length,
+      'REGISTER-STATUS — the material-drives ledger carries ONE entry per declared row, in register order (a row that vanished from it would hide its own drive count)',
+    ).toBe(REGISTER_DECLARED.length)
+    expect(
+      REGISTER_MATERIAL_DRIVES.map((r) => r.row),
+      'REGISTER-STATUS — the ledger’s rows are the register’s seven rows, IN REGISTER ORDER, so nothing is reported under a name the register does not carry',
+    ).toEqual(REGISTER_DECLARED.map((r) => r.row))
+    for (const entry of REGISTER_MATERIAL_DRIVES) {
+      expect(
+        entry.measured,
+        `REGISTER-STATUS — the MEASURED drive count for ${entry.row} must be POSITIVE and inside the ≤100/row cap (it is a real loop count, reported beside the declared ${entry.declared})`,
+      ).toBeGreaterThan(0)
+      expect(
+        entry.measured,
+        `REGISTER-STATUS — ${entry.row}’s measured drive count (${entry.measured}) is inside the ≤100/row cap`,
+      ).toBeLessThanOrEqual(REGISTER_ROW_CAP)
+    }
     console.log(
       `§5.5.1 REGISTER SUMMARY :: ${JSON.stringify({
         declaredTotal: REGISTER_PRINTED_TOTAL,
@@ -7117,21 +8589,32 @@ describe('§5.5.1 — REGISTER-STATUS · the executed record, its arithmetic, it
         unrun.map((r) => ({ row: r.row, stoppedAt: r.registerStoppedAt })),
       )}`,
     ).toEqual([])
-    // **⟶ ANNOTATED 2026-09-27 (THE BOUNDS-READ ACCOUNTING REPAIR).** This control is KEPT STRICT
-    // AND FALSIFIABLE — a broken attempt is still a broken attempt, and no row's cause is softened.
-    // **ITS READING IN THIS PASS IS `1`, AND THE CAUSE IS MODULE-SIDE, NOT TEST-SIDE:** the single
-    // broken attempt is `P-GU-SM-3` shape `(5)` — *"a SECONDARY-button press with NO active
-    // gesture (inert)"* — whose drive reads the module's own `drops` counter MOVED by ONE (the
-    // landed `onPointerDownTurn` returns only when `record === null`; `smoke`/M-14/F-7/SM-3 all
-    // report the same measurement). Every OTHER row reads `0/…`, and every per-row cause reported
-    // by `row.finish()` below is one of the module-side findings this pass reports (`§5.5.1`'s
-    // `broken` figure is the register's own honest count of attempts whose declared reading was not
-    // produced — it is NOT an un-run row, which the assertion above still forbids outright).
+    // **⟶ CORRECTED 2026-09-27 (GATE-4 FINDING `ADV-GU-15`, `OWED — TEST-SIDE`: THE ANNOTATION WAS
+    // STALE).** The as-filed text below claimed the reading was `1` with a MODULE-SIDE cause; the
+    // module that landed the fix pass passes, and this row's own assertion demands `0`. **THE
+    // AS-FILED TEXT IS KEPT VISIBLE VERBATIM AS ITS OWN PARAGRAPH** (a stale annotation corrected
+    // only in a summary is exactly the recurrence this family has produced repeatedly):
+    //
+    //   *AS FILED (2026-09-27, THE BOUNDS-READ ACCOUNTING REPAIR — SUPERSEDED):* *"ITS READING IN
+    //   THIS PASS IS `1`, AND THE CAUSE IS MODULE-SIDE, NOT TEST-SIDE: the single broken attempt is
+    //   `P-GU-SM-3` shape `(5)` — 'a SECONDARY-button press with NO active gesture (inert)' — whose
+    //   drive reads the module's own `drops` counter MOVED by ONE (the landed `onPointerDownTurn`
+    //   returns only when `record === null`; `smoke`/M-14/F-7/SM-3 all report the same
+    //   measurement). Every OTHER row reads `0/…` …*"
+    //
+    // **THE MEASURED STATE AS OF THIS PASS (2026-09-27, GATE 4's REPAIR): `broken 0/134` — every
+    // one of the `134` executed drives in all seven rows HELD, the run's own per-row record reads
+    // `P-GU-SM-1:0/15 · P-GU-SM-2:0/15 · P-GU-SM-3:0/15 · P-GU-IM-1:0/45 · P-GU-IM-2:0/20 ·
+    // P-GU-TP-1:0/12 · P-GU-TP-2:0/12`, and the cause named above no longer exists: the landed
+    // `onPointerDownTurn` returns before the drop arm unless the gesture's OWN record has observed a
+    // move (`!current.moved` — `§2.3` row 6, `§3.1 M-14`, `§3.2 F-7`), so the inert secondary press
+    // leaves `drops` at `0`.** **THE CONTROL IS KEPT STRICT AND FALSIFIABLE UNCHANGED — a broken
+    // attempt is still a broken attempt and no row's cause is softened.**
     expect(
       records.reduce((sum, record) => sum + record.broken, 0),
       `REGISTER-STATUS — the register’s broken-attempt total. Per-row: ${JSON.stringify(
         records.map((r) => `${r.row}:${r.broken}/${r.attemptsRun}`),
-      )} — a broken attempt is a DECLARED reading the drive did not produce, reported by name in the per-row causes; a broken row is NEVER re-read as a pass (the un-run rule above is unchanged). In this pass the figure is \`1\` and its cause is MODULE-SIDE (\`P-GU-SM-3\` shape \`(5)\`: the inert secondary press moved the module's \`drops\` counter).`,
+      )} — a broken attempt is a DECLARED reading the drive did not produce, reported by name in the per-row causes; a broken row is NEVER re-read as a pass (the un-run rule above is unchanged). **MEASURED 2026-09-27 (GATE 4's REPAIR, finding \`ADV-GU-15\`): the figure is \`0\` over the \`134\` executed drives — every per-row record reads \`0/…\` — and the cause the as-filed annotation named no longer exists: the landed \`onPointerDownTurn\` returns before the drop arm unless the gesture's OWN record has observed a move (\`!current.moved\`, \`§2.3\` row 6 / \`§3.1 M-14\` / \`§3.2 F-7\`), so the inert secondary press leaves \`drops\` at \`0\`. The AS-FILED text — "in this pass the figure is \`1\` and its cause is MODULE-SIDE (\`P-GU-SM-3\` shape \`(5)\`: the inert secondary press moved the module's \`drops\` counter)" — is KEPT VISIBLE above as its own paragraph and is SUPERSEDED by this measurement.**`,
     ).toBe(0)
     expect(
       registerState.stoppedAtRow,

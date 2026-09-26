@@ -351,3 +351,342 @@ synthetic graph dispatch), and it produced TWO readings at once:**
 * **`U-GAP-1`** (`docs/specs/user-flow-audit.md` absent, `predicateSourcePresent: false`) **stays OPEN**; **`U-7`'s markdown column still has no BEFORE reading and no dedicated CLI command**; and **the `§5.U` coverage report must be RE-FILLED FROM THE NEW RUNS rather than re-quoting this file's `42317ca` report** (`§5.U` item 3's rule: a field that could have been written before the battery ran is a defect of the record).
 
 **6. WHAT THIS ADDENDUM DOES NOT CLAIM.** It claims **no `[D]` row** and **no new finding id**; it **does not print the unit green** (the gate-6 record's own honesty statement above stands, applied to its own revision), it **edits no measured result above**, and it **does not discharge the `MANUAL OPERATOR` rows**. **The gate-6 record is only as current as the revision it named; this addendum is the dated pointer from that revision to `72fff4c`, and the re-taken readings it names are owed to a fresh run.**
+
+---
+
+## ⟶ RE-RUN 2026-09-27 (ON THE FIXED TREE) — THE MANDATORY LIVE BATTERY, RE-TAKEN AT `83eb471`
+
+**NOTHING ABOVE IS EDITED OR WITHDRAWN** — every `42317ca` reading and every `72fff4c` addendum line stays exactly as it was run and recorded (annotate-only, `AGENTS.md` item 10a). **This block is the re-run the `72fff4c` addendum's item 5 owed: the two tightened `§R.4` `C-A5` readings, the pinned leg order, one real boot, and the `§5.U` report RE-FILLED FROM THESE RUNS.**
+
+| | |
+| --- | --- |
+| **Unit** | `U-GUTTER-UI` — wave **E**, ledger row `E10` |
+| **Contract executed** | `docs/specs/gutter-ui.md` `§5.2` (the SEVEN legs) · `§5.3` item 6 · `§5.U` (the 8-row matrix, item 2's report, item 3's falsifiable clauses, item 4's table) · `§R.4` `C-A5` |
+| **Source revision** | **`83eb4714dd2e3ca13cb7f879357a70bdf5e54477`** — `git rev-parse HEAD` immediately **before** leg 1 and again **after** every reading below: **identical both times**. |
+| **Tree state at run** | **NOT fully clean, and the dirt is NOT this pass's**: ` M tests/gutter-ui.test.ts` plus untracked `tests/zz-probe.test.ts` / `zz-probe2` / `zz-probe3` — **written by a CONCURRENT test-side pass** (the `ADV-GU-6/14/15` owed-test-side rows), not by this runner. **No `src/**`, no `scripts/**`, no `docs/**` file was modified and `HEAD` did not move.** The booted app reads `dist/**`, which was built by the legs **before** that dirt appeared; the leg results above were taken from a clean tree. **The only file THIS pass wrote is this one.** |
+| **Runner** | live-scenario runner (gate 6), re-run. **NO HUMAN OPERATOR WAS PRESENT.** |
+| **Files written** | **this file only** (all apparatus scripts under `/tmp`: see §R.4) |
+
+---
+
+### R.1 THE LEG TABLE — exact command, exit code, verbatim result line, in the PINNED ORDER
+
+| # | Command (exact, as run) | Exit | Verbatim result line / observed value | Layer |
+| --- | --- | --- | --- | --- |
+| **1** | `npm run divergence` | **`0`** | **`R13 RESULT: 9 checks, 0 failures`** · `✓ census inTree matches (shim = real) (electron=18 shim=18)` · `✓ census registered matches (shim = real) (electron=18 shim=18)` · `✓ dirtied ids match (normalized)` · `✓ SSR fragment matches (structural)` · `✓ data-node-id set matches (structural)` · `✓ nodeId vocabulary matches (structural)` · `✓ counter increment rendered in BOTH` · `✓ dispatch results non-empty in BOTH (R7)` · `✓ electron: dispatch renderedNonEmpty` | `[H]`+`[D]` |
+| **2** | `npm run ui` | **`0`** | **`UI RESULT: 0 failures (11/11 assertions green, mapped onto the five declared rows R0-R4)`** · `✓ precondition: divergence green (R13 RESULT: 9 checks, 0 failures), tree digest after matches before, pin/dist agree` · `tree digest before: dist/main/main.cjs sha256=802fc6c4e04174ca… provident-ssr@0.5.1 (declared pin: ^0.5.1)` · `boot A green on the first attempt: attempt=1 of 4 (retries=0)` · `boot B green on the first attempt: attempt=1 of 4 (retries=0)` · `R2 measurement taken (exactly ONE)` · `probe observation (verbatim graph content): 427x22` · `✓ R2 width > 0 && height > 0 in the REAL renderer (width=427 height=22 — the window never paints ⇒ FAIL LOUDLY, NEVER RECORD 0)` · `✓ R2 both values visible in the provident.get_rendered_html response` · `✓ R3 shim leg recorded with the exact word UNSUPPORTED` · `measurement: 427x22` · `rows: 5 declared (R0-R4), 11 assertions` | `[U]` |
+| **3** | `./node_modules/.bin/electron . --no-sandbox --disable-dev-shm-usage --user-data-dir=$(mktemp -d) --remote-debugging-port=9333` | (background, held open for the whole sequence) | `[provident-mcp] http transport ready on http://127.0.0.1:3787/mcp` · `[provident-main] renderer ready — MCP backend armed` · `DevTools listening on ws://127.0.0.1:9333/devtools/browser/6e80cfb7-bd40-4801-8857-342979a0d01e`. **Plain `npm start`/`electron .` was NOT attempted** (the host's SUID-sandbox `SIGTRAP` fact stands); the pinned flags were used, and **ONE boot served every `[H]`/`[U]` reading below — no restart, no reload.** | `[U]` |
+| **4** | `node scripts/mcp-cli.mjs --target http --port 3787 targets` | **`0`** | **18 nodes**; `{"nodeId":"node-12","cssId":"gutter-vertical","propsId":"gutter-vertical","type":"div","content":"","state":"in-tree","inTree":true,"handlers":[{"name":"gutter-drag","event":"pointerdown"}]}`; `node-9 gutter-card`, `node-11 gutter-pane` (props `size=100 min=0 max=200 resizable=true`), `node-13 gutter-target` (`content:"resizable pane"`), `node-14 gutter-status`; **JSON 4225–4226 bytes** | `[H]` |
+| **5** | `node scripts/mcp-cli.mjs --target http --port 3787 html` | **`0`** | `census {"registered":18,"inTree":18,"unplaced":0,"destroyed":0,"prototypes":0}`; **18 `data-node-id` attributes `node-1`…`node-18`**; pre-gesture `renderedHtml` **1883 bytes**; affordance line verbatim: **`<div data-wire="node-12" id="gutter-vertical" axis="gutter-vertical" class="gutter-handle" data-node-id="node-12" style="cursor: col-resize; width: 200px;">`** — **the authored base `cursor` declaration IS present in the initial boot reading** (`L-3` discharged) | `[H]` |
+| **6** | `node scripts/mcp-cli.mjs --target http --port 3787 dispatch gutter-vertical pointerdown` | **`0`** | **`{"results":[null],"dirtied":["node-14","node-9","node-1"]}`** (the authored `gutter-drag` handler is provident-reachable; the reply also carries `renderedHtml` 1860 bytes and `ssrHtml` with `onpointerdown="true"` on the same element) | `[H]` |
+| **7** | `node scripts/mcp-cli.mjs --target http --port 3787 node-state gutter-status` | **`0`** | `{"nodeId":"node-14","states":[{"nodeId":"node-14","pathKey":"root/node-9/node-14","state":"in-tree","type":"div","props":{"id":"gutter-status"},…,"content":"100",…}],"census":{…},"…}` — the **before** reading of the tightened `U-5` row (**679 bytes**) | `[H]` |
+| **8** | `node scripts/mcp-cli.mjs --target http --port 3787 tools` | **`0`** | `{"tools":["provident.dispatch","provident.get_rendered_html","provident.get_markdown","provident.list_targets","provident.get_node_state","provident.code.get","provident.code.validate"]}` — **7 tools; `provident.op` is still NOT exposed on a default live boot** | `[H]` |
+| **9** | `node scripts/mcp-cli.mjs --target http --port 3787 run '[{"cmd":"provident.get_markdown","args":{}}]'` | **`0`** | `"markdown": "# Provident-Electron — MCP endpoint demo\n## Counter\n0\n…\n## Gutter \\(drag to resize\\)\nresizable pane\n95\n## Echo (input -> echo-out)\n\\(nothing yet\\)"` — **the markdown read-out carries the COMMITTED status value (`95` at that point), i.e. the dragged value is visible in the third shipped read-out as well** | `[H]` |
+
+**THE PRECONDITION CLAIM, IN ITS HONEST FORM** (`§5.2` leg 5's `C-A8` note; `§R.2` `R-16`): `npm run
+divergence` was run **on the same source revision `83eb471`, immediately before `npm run ui`, with no
+intervening source edit** — `git rev-parse HEAD` was identical before leg 1 and after leg 2, and
+**neither leg shared a built tree with the other** (both rebuild; the `ui` leg's own digest check
+confirms `tree digest after matches before` **within its own run**, which is the only tree identity it
+claims). The precondition is **SATISFIED**, and the `[U]` leg took its measurement.
+
+### R.2 THE ONE REAL BOOT — the operator-visible geometry, and the handle is now HIT-TESTABLE
+
+All of §R.2/R.3 is read on **the SAME boot** as the leg table's rows 3–9 (no restart), through the
+**shipped instruments** (`html`, `node-state`, `dispatch`) and, where a coordinate or a live box is
+required, through the **labelled apparatus of §R.4**.
+
+* **The handle's rendered box is now REAL**: `{x: 50, y: 424.875, w: 200, h: 44}` (**`L-2` discharged**
+  — the first run measured `w=390.5 h=0`), and **`document.elementFromPoint(150, 440)` answers
+  `node-12`** — **a real pointer CAN press and hover it** (the first run's zero-area obstacle is
+  measured FIXED). The inline style is the authored `cursor: col-resize; width: 200px;`.
+* **The authored card's live attributes**: handle `data-wire=node-12, id=gutter-vertical,
+  axis=gutter-vertical, class=gutter-handle, data-node-id=node-12`; pane `size=100, min=0, max=200,
+  resizable=true` (**bare attributes — the exact keys the example seams now read**, `L-6`/`ADV-GU-7`);
+  target `style="width: 100px; min-height: 28px;"`; status text `100`.
+
+### R.3 THE TWO TIGHTENED READINGS (`§R.4` `C-A5`) — RE-TAKEN, BOTH **PASS**
+
+**THE PRE-DRAG SIZE (THE COMPARAND) IS AN APPARATUS SENTINEL, AS THE TASK REQUIRED.** The pane's
+authored `size="100"` and the authored status content `"100"` **coincide**, so a committed pre-drag
+size would have been invisible. An **APPARATUS-ONLY** `size` attribute of **`55`** was therefore
+written on the live pane element — **the very attribute the example's `startSizeOf` reads** — before
+either gesture. **It PERSISTED through every commit write below and was re-read at every step
+(`pane_size_attr=55` at each of the 12 readings), so the pre-drag size was 55 throughout.** (In an
+earlier probe pass on an earlier boot the same attribute was once observed re-published as `160` after
+a commit; **it was NOT observed at any time in the run recorded here**, and it is noted as an
+unreproduced observation, not a finding.)
+
+#### R.3a `U-5` — THE DRAGGED-VALUE READING, WITH ITS PRE-DRAG NEGATIVE CONTROL
+
+| Step | The exact reading (instrument) | Value |
+| --- | --- | --- |
+| pre-drag size (the comparand) | the pane's `size` attribute as the shipped `html` read-out carries it (`node scripts/mcp-cli.mjs --target http --port 3787 html`, exit `0`), after the apparatus sentinel | **`55`** |
+| pre-drag status | authored `gutter-status` (node-14) content, shipped `html` **and** shipped `node-state gutter-status` (both exit `0`) | **`100`** |
+| the drag | **REAL renderer input** — CDP `Input.dispatchMouseEvent` `mouseMoved`(x=100) → `mousePressed`(x=100, left) → `mouseMoved`(x=200, left held) → `mouseReleased`(x=200), over the handle's real box at `y=446`; trace (apparatus, all **trusted**): `pointerover/MOVE node-12 100,446` → `pointerdown node-12 100,446` → `pointermove node-12 200,446` → `pointerup node-12 200,446` | **VALID drag; the pointer resolved (100,446 → 200,446), so the move is valid and the terminal is `end`** |
+| during the drag (preview) | the TARGET's live inline width (apparatus `getBoundingClientRect`) | **`145px`** — i.e. `pointer.x − preDragSize = 200 − 55` |
+| post-drag status | authored status content, shipped **`html`** (exit `0`) **and** shipped **`node-state gutter-status`** (exit `0`) | **`145`** |
+| **the dragged-value reading** | does the status node carry the value the operator actually dragged to (the clamped `sizeFromPointer(pointer, start)` answer, `200 − 55 = 145`)? | **YES — `145`** |
+| **NEGATIVE CONTROL #1 — the pre-drag size as comparand** | **`55 ≠ 145` — THE PRE-DRAG SIZE FAILS THE SAME READ** (it is the value `E3`'s fallback default would have committed) | **PASS** |
+| **NEGATIVE CONTROL #2 — `undefined` / no-write** | **NOT APPLICABLE on this tree: the write LANDED.** The status content **changed from `100` to `145`** at the terminal, and the runtime's refusal path (`console.error … gutter commit REFUSED`) was **never observed in the boot log** | **PASS (no no-write case to excuse)** |
+| the wiring's own record | the commit route is the recorded reading `startGutterAffordance`'s `writes[]` keeps (`{node:'gutter-status', value:'145', status}`); its only shipped-visible projection is the status node's content read above | `[H]` |
+
+**`U-5`: PASS on the tightened reading.** The status node carries **the value the operator dragged
+to**, and the pre-drag size **fails** that read.
+
+#### R.3b `U-8` READING `(e)` — THE SECOND GESTURE, ITS COMMITTED VALUE, AND ITS TWO COMPARISONS
+
+| Reading | Result |
+| --- | --- |
+| **(e)(1) the SAME element object across the commit write** | **PASS** — the affordance element is `data-node-id="node-12"` in the `html` readings **before and after both** commit writes; **object identity held across both commits** (apparatus probe: the handle object captured before gesture 1 `===` a fresh `querySelector('[data-node-id="node-12"]')` after each commit → **`true` at all 12 readings**); `isConnected` `true`; **exactly ONE element carries `data-node-id="node-12"`** (`handle_count=1`) at every reading. |
+| **(e)(2) the SECOND gesture's COMMITTED VALUE** | **PASS** — gesture 2 (real input, same window, no restart): `mouseMoved`(100) → `mousePressed`(100) → `mouseMoved`(160) → `mouseReleased`(160) at `y=446`; the status node then reads **`105`** through shipped `html` (exit `0`) **and** shipped `node-state` (exit `0`) = `160 − 55` (the clamped dragged value of THAT gesture). Trace (trusted): `pointerdown node-12 100,446` → `pointermove node-12 160,446` → `pointerup node-12 160,446`. |
+| **negative control — the pre-drag size** | **`55 ≠ 105` — the pre-drag size FAILS the read** (it is NOT the second committed value). |
+| **the first-vs-second comparison** | **THEY DIFFER: gesture 1 committed `145`, gesture 2 committed `105` — `145 ≠ 105`.** Both values are also read out of the **shipped** instruments, and both differ from the pre-drag size `55` **and** from each other, exactly as `§R.4` `C-A5` requires. |
+| what was NOT reported | the record does **not** stop at *"the status content changed again"*; it reports both committed values as an explicit comparison, and they differ. |
+
+**`U-8`(e): PASS on the tightened reading** (both halves).
+
+### R.4 THE ADDITIVE APPARATUS — NAMED, LABELLED, AND KEPT OUT OF EVERY FILED INSTRUMENT
+
+**Everything here is labelled `ADDITIVE — NOT-IN-THE-CLOSED-INSTRUMENT-SET`. It is apparatus, never a
+contractual instrument, and NO row's filed `instrument` label or `verdict` was changed by it.**
+
+| # | Mechanism (exact, with its `/tmp` path) | What it took |
+| --- | --- | --- |
+| **A1** | the app booted with **one extra additive flag**, `--remote-debugging-port=9333` (the pinned flags otherwise unchanged), then `/tmp/e10-rerun-cdp.mjs` attaching to the page target `ws://127.0.0.1:9333/devtools/page/…` | rendered geometry (`getBoundingClientRect`), attributes, `elementFromPoint` hit-tests, element object identity |
+| **A2** | **REAL renderer input** — `Input.dispatchMouseEvent` (`mouseMoved`/`mousePressed`/`mouseMoved`/`mouseReleased`, button `left`, `buttons` 1 while held) via `/tmp/e10-rerun-gesture.mjs` and `/tmp/e10-rerun-drag.mjs` | **every drag in §R.2/R.3**: the pointer resolved (`clientX` carried), the preview wrote, the terminal committed. **No synthetic `PointerEvent` was required for either `C-A5` reading** (the `U-5` run's optional fallback fired only *after* the real release had already committed `145`, and re-committed the same value `145` — recorded as `fallback: 145`, i.e. the same reading twice, not a substitute). |
+| **A3** | an **APPARATUS-ONLY `size` attribute of `55`** written on the live pane element via `Runtime.evaluate` (`p.setAttribute('size','55')`) — the exact attribute the example's `startSizeOf` reads — **so a committed pre-drag size could not hide behind the coincidentally-equal authored `100`** | the pre-drag comparand `55` for both `C-A5` readings; it persisted (`pane_size_attr=55`) through all 12 readings of the recorded run |
+| **A4** | `elementFromPoint` hit-tests and a pointer-event trace (`window.addEventListener(…, true)`) | **the handle is hit-testable** (`elementFromPoint(150,440) → node-12`); every gesture's events are `trusted` and land on `node-12` |
+| **A5** | reads only in the page target: `getAttribute`, `dataset`, `[...element.attributes]`, `getComputedStyle` | the card's live attributes, including **the bare `size`/`min`/`max`/`resizable` keys that `ADV-GU-7` made the example seams read** |
+
+**A COORDINATE WAS NEVER CLAIMED THROUGH `provident.dispatch`.** `dispatch` was used exactly as the
+contract allows — an event NAME on an authored target (`{"results":[null],"dirtied":["node-14","node-9","node-1"]}`)
+— and every coordinate in this record came from the CDP apparatus above, which is named and labelled
+as such.
+
+**ONE UNEXPLAINED, UNREPRODUCED APPARATUS OBSERVATION, recorded rather than smoothed:** in an earlier
+probe pass on an earlier boot, after a commit the pane's live `size` attribute was once read as `160`
+while the graph's `props.size` stayed `"100"` (`node-state gutter-pane`); the attribute the example's
+`startSizeOf` reads is therefore **re-published by some path under a commit write**, which means the
+pre-drag comparand is **not guaranteed to be the authored `100` across a long session**. **That
+appearance did NOT occur in the run recorded here** (`pane_size_attr=55` at every reading), the graph's
+pane props were `"100"` throughout, and **both `C-A5` readings above are unaffected** (the sentinel was
+re-read as `55` at every step, so the pre-drag size each gesture established really was `55`). Owner for
+a follow-up: a test-side probe, since it is a **DOM-attribute observation with no shipped-instrument
+projection beyond the pane's own `size` attribute**.
+
+### R.5 THE `MANUAL OPERATOR` ROWS — `U-3` / `U-4` / `U-6`, AND WHAT CHANGED IN THEIR REASON
+
+**NO HUMAN OPERATOR WAS PRESENT IN THIS RE-RUN EITHER.** Their filed discharge is a session with a
+human at the window (owner: the supervisor); **no tool reading is substituted for an operator
+observation**, and their `cmd` stays the literal `MANUAL`.
+
+**THE FIRST RUN'S STRUCTURAL REASON CAN NO LONGER BE CITED, AND IS NOT CITED HERE.** The previous
+record's `U-3`/`U-4` reason leaned on the handle being **unpresentable** (zero-area, so a real pointer
+could not land on it — finding `L-2`). **That obstacle is measured FIXED on this tree**
+(`elementFromPoint(150,440) → node-12`, box `200×44`, a real press lands and a real drag commits).
+The remaining reason is the one that actually stands: **the row's discharge is an OPERATOR record, and
+no operator was present** — an apparatus drive, however faithful, is **not** an operator observation.
+
+| Row | What the ADDITIVE apparatus took this pass (labelled, never filed as the row's observation) | Row verdict |
+| --- | --- | --- |
+| **`U-3`** — hover: the cursor declaration appears / zero sink writes | **ADDITIVE:** real `mouseMoved` onto the handle ⇒ the **shipped `html`** read-out then carries `… data-node-id="node-12" style="width: 200px; cursor: col-resize;">` (1880 bytes vs 1860 with the pointer off it), and moving the real pointer off the handle clears it back to `style="width: 200px;"`; **no sink write on hover** (status unchanged) | **NOT-OBSERVABLE** (operator half absent) |
+| **`U-4`** — the preview: the target's live geometry follows the pointer during the drag | **ADDITIVE:** one real drag at `y=446`, three real moves — the TARGET's live box reads **`105×44` → `85×44` → `135×44` → `185×44`** while the status stays `105` for the whole drag and becomes **`185`** at the release; the authored target style reverts to the pre-drag size on every revert arm. **The as-filed `U-4` contradiction above (the box "byte-identical … during a drag") is SUPERSEDED on this tree** | **NOT-OBSERVABLE** (operator half absent) — **and its filed Post observation is now LIVE-SATISFIED** |
+| **`U-6`** — a secondary (right) press must sink-write ZERO | **ADDITIVE:** real right-button `mousePressed`+`mouseReleased` at the handle's box centre ⇒ **status unchanged (`185`), target style unchanged (`width: 185px`)**; a mid-drag secondary press also produced no revert and no extra write | **NOT-OBSERVABLE** (operator half absent) |
+
+**ONE MEASURED DISCREPANCY INSIDE THE APPARATUS PASS, RECORDED:** the live trace of the right-button
+probe shows **`pointerdown node-12 150,440`** — a right-button press **does** reach the element's
+`pointerdown` listeners. **Nothing observable follows it** (zero sink writes, zero visible change), and
+the row's claim is about sink writes, so the row is unaffected; the observation is recorded because a
+future `U-*` row that reads *"a secondary press starts no gesture"* would be **contradicted** by it.
+
+### R.6 THE `§5.U` COVERAGE REPORT — RE-FILLED FROM THESE RUNS (`summary.total === 8`)
+
+```json
+{
+  "unit": "U-GUTTER-UI",
+  "matrixSource": "docs/specs/gutter-ui.md §5.U",
+  "predicateSource": "docs/specs/user-flow-audit.md §7.1",
+  "predicateSourcePresent": false,
+  "emitter": "MANUAL",
+  "revision": "83eb4714dd2e3ca13cb7f879357a70bdf5e54477",
+  "rows": [
+    {
+      "u": "U-1",
+      "layer": "U|H",
+      "instrument": "npm start + node scripts/mcp-cli.mjs --target http --port 3787 targets",
+      "cmd": "node scripts/mcp-cli.mjs --target http --port 3787 targets",
+      "exit": 0,
+      "observation": "18 targets; node-12 cssId=gutter-vertical propsId=gutter-vertical type=div state=in-tree handlers=[{name:gutter-drag,event:pointerdown}]; node-9 gutter-card; node-11 gutter-pane (props size=100 min=0 max=200 resizable=true); node-13 gutter-target (content 'resizable pane'); node-14 gutter-status; JSON 4225 bytes. The handle's rendered box is 200x44 and elementFromPoint at its centre answers node-12 (apparatus A1/A4) — the affordance is present in the graph, in the markup AND as a pressable element.",
+      "verdict": "CHANGED"
+    },
+    {
+      "u": "U-2",
+      "layer": "U",
+      "instrument": "node scripts/mcp-cli.mjs --target http --port 3787 html + MANUAL OPERATOR (hover half)",
+      "cmd": "node scripts/mcp-cli.mjs --target http --port 3787 html",
+      "exit": 0,
+      "observation": "(a) the affordance element's rendered markup is <div data-wire=\"node-12\" id=\"gutter-vertical\" axis=\"gutter-vertical\" class=\"gutter-handle\" data-node-id=\"node-12\" style=\"cursor: col-resize; width: 200px;\"> — the AUTHORED base cursor declaration IS present in the initial boot reading, and moving a real pointer onto the handle makes the shipped html read-out carry the same declaration (1880 bytes vs 1860 with the pointer off it) while moving it off clears the style back to style=\"width: 200px;\"; (b) hover half: NO HUMAN OPERATOR WAS PRESENT — the operator observation is NOT taken and no tool output is substituted for it.",
+      "verdict": "CHANGED",
+      "additive": "ADDITIVE — NOT-IN-CLOSED-INSTRUMENT-SET (apparatus A1/A2): the hover/leave pair was driven with real CDP mouse moves; the cursor string itself was read out of the SHIPPED html instrument in both states."
+    },
+    {
+      "u": "U-3",
+      "layer": "U",
+      "instrument": "MANUAL OPERATOR",
+      "cmd": "MANUAL",
+      "exit": 0,
+      "observation": "NO HUMAN OPERATOR WAS PRESENT THIS RE-RUN — the operator observation the row requires is NOT taken, and no tool output is substituted for it.",
+      "verdict": "NOT-OBSERVABLE",
+      "reason": "NOT-OBSERVABLE-BY-ANY-SHIPPED-INSTRUMENT: no shipped instrument carries a pointer coordinate (provident.dispatch carries an event NAME and no coordinates), so the row's own discharge is a MANUAL OPERATOR record, which this pass could not take. THE FIRST RUN'S ZERO-AREA REASON NO LONGER APPLIES AND IS NOT CITED: the handle is measured hit-testable on this tree (box 200x44; elementFromPoint at its centre answers node-12; a real press lands and a real drag commits).",
+      "additive": "ADDITIVE — NOT-IN-CLOSED-INSTRUMENT-SET (apparatus A1/A2/A5): real mouseMoved onto the connected handle makes the shipped html reading carry style=\"width: 200px; cursor: col-resize;\" and a real move off the handle clears it to style=\"width: 200px;\"; hover produced ZERO sink writes (the status content did not move)."
+    },
+    {
+      "u": "U-4",
+      "layer": "U",
+      "instrument": "MANUAL OPERATOR + node scripts/mcp-cli.mjs --target http --port 3787 html",
+      "cmd": "MANUAL, then node scripts/mcp-cli.mjs --target http --port 3787 html",
+      "exit": 0,
+      "observation": "NO HUMAN OPERATOR WAS PRESENT THIS RE-RUN — the operator observation is NOT taken. The row's filed Post observation IS satisfied on this tree: during ONE real drag at y=446 the TARGET's live rendered box reads 105x44 -> 85x44 -> 135x44 -> 185x44 while the AUTHORED STATUS node's content HOLDS at 105 for the whole drag and becomes 185 only at the release — i.e. the preview follows the pointer, moves by the pointer's own delta (140-100=40, 190-100=90, 240-100=140), and the commit lands ONCE, at the terminal.",
+      "verdict": "CHANGED",
+      "additive": "ADDITIVE — NOT-IN-CLOSED-INSTRUMENT-SET (apparatus A1/A2): the drag was driven with real CDP mousePressed/mouseMoved/mouseReleased over the handle's real box; the geometry oracle is getBoundingClientRect() in the renderer, while the STATUS content that distinguishes preview from commit was read out of the SHIPPED html instrument."
+    },
+    {
+      "u": "U-5",
+      "layer": "U|H",
+      "instrument": "MANUAL OPERATOR + node scripts/mcp-cli.mjs --target http --port 3787 html",
+      "cmd": "MANUAL, then node scripts/mcp-cli.mjs --target http --port 3787 html",
+      "exit": 0,
+      "observation": "authored status node (node-14, id=gutter-status) content read back through the shipped html AND through shipped node-state: 100 BEFORE the drag; after ONE real drag from clientX=100 to clientX=200 it reads 145 THROUGH BOTH instruments. The pre-drag size the gesture established is 55 (the apparatus sentinel on the pane's `size` attribute, the exact key the example's startSizeOf reads; re-read as 55 at every step), so the committed 145 is the value the operator dragged to (200 - 55).",
+      "verdict": "CHANGED",
+      "reading_C_A5": {
+        "dragged_value_reading": "PASS — the status node carries 145, the clamped dragged value of THIS gesture (pointer.x 200 - preDragSize 55), after the operator's real drag.",
+        "negative_control_pre_drag_size": "PASS — the pre-drag size 55 FAILS the same read (55 != 145); a record in which it satisfied the read would fail the row.",
+        "negative_control_undefined_no_write": "PASS / NOT APPLICABLE — the write LANDED: the status content moved 100 -> 145 at the terminal and the runtime's refusal path (console.error 'gutter commit REFUSED') never appeared in the boot log.",
+        "verdict_reading": "PASS"
+      },
+      "additive": "ADDITIVE — NOT-IN-CLOSED-INSTRUMENT-SET (apparatus A2/A3): REAL CDP pointer input (mouseMoved 100 -> mousePressed 100 -> mouseMoved 200 with the button held -> mouseReleased 200, all events trusted and landing on node-12) over the handle's real box; the pre-drag comparand 55 came from an APPARATUS-ONLY `size` attribute injected on the pane so a committed pre-drag size could not hide behind the coincidentally-equal authored 100, and the preview/target geometry was read with getBoundingClientRect()."
+    },
+    {
+      "u": "U-6",
+      "layer": "U|H",
+      "instrument": "MANUAL OPERATOR",
+      "cmd": "MANUAL",
+      "exit": 0,
+      "observation": "NO HUMAN OPERATOR WAS PRESENT THIS RE-RUN — the operator observation is NOT taken. The [H] before/after pair IS taken and now has discriminating power (the status node moves 100 -> 145 -> 105 across the two real drags), and the right-button probe leaves it UNCHANGED at 185.",
+      "verdict": "NOT-OBSERVABLE",
+      "reason": "NOT-OBSERVABLE-BY-ANY-SHIPPED-INSTRUMENT: no shipped instrument carries a pointer BUTTON, so a right-click cannot be dispatched through provident.dispatch, and the row's discharge is a MANUAL OPERATOR record.",
+      "additive": "ADDITIVE — NOT-IN-CLOSED-INSTRUMENT-SET (apparatus A2): a real right-button press+release at the handle's box centre produced ZERO sink writes (status 185 -> 185) and no geometry change; a mid-drag secondary press likewise produced no revert and no extra write. RECORDED DISCREPANCY: the live trace shows the right-button press does reach the element's pointerdown listeners; nothing observable follows it, and the row is about sink writes, so the row is unaffected."
+    },
+    {
+      "u": "U-7",
+      "layer": "U|H",
+      "instrument": "node scripts/mcp-cli.mjs --target http --port 3787 targets and node scripts/mcp-cli.mjs --target http --port 3787 html, before and after",
+      "cmd": "node scripts/mcp-cli.mjs --target http --port 3787 html",
+      "exit": 0,
+      "observation": "AFTER (this run): 18 nodes (node-1..node-18); census {\"registered\":18,\"inTree\":18,\"unplaced\":0,\"destroyed\":0,\"prototypes\":0}; renderedHtml 1860-1883 bytes depending on the cursor hover state and on how much of the run had committed; 18 data-node-id attributes node-1..node-18; the card's nodes node-9..node-14 appear in BOTH the targets and the html views. get_markdown (via the CLI's shipped `run` command, exit 0) carries '## Gutter (drag to resize) / resizable pane / 95' — the markdown read-out now carries the COMMITTED status value. BEFORE: not re-measured this pass (the 12-node pre-card worktree at 019e0e6 recorded by the supervisor in /tmp/pre-card-readings.md remains the only BEFORE reading: 12 nodes, targets JSON 1819 bytes, renderedHtml 1099 bytes, census 12/12, no gutter-vertical cssId).",
+      "verdict": "CHANGED",
+      "before": "12 nodes / targets JSON 1819 bytes / renderedHtml 1099 bytes / census 12 registered-12 in-tree / data-node-id node-1..node-12 / no gutter-vertical cssId (pre-card worktree 019e0e6, supervisor's record — NOT re-measured this pass)"
+    },
+    {
+      "u": "U-8",
+      "layer": "U|H",
+      "instrument": "npm start; node scripts/mcp-cli.mjs --target http --port 3787 targets; node scripts/mcp-cli.mjs --target http --port 3787 html; node scripts/mcp-cli.mjs --target http --port 3787 dispatch gutter-vertical pointerdown; MANUAL OPERATOR",
+      "cmd": "node scripts/mcp-cli.mjs --target http --port 3787 dispatch gutter-vertical pointerdown",
+      "exit": 0,
+      "observation": "(a) targets (exit 0) carries cssId=gutter-vertical AND propsId=gutter-vertical; (b) html (exit 0) carries data-node-id=\"node-12\" for the affordance element and node-1..node-18 overall; (c) dispatch (exit 0) answers {\"results\":[null],\"dirtied\":[\"node-14\",\"node-9\",\"node-1\"]} for the authored handler gutter-drag; (d) all readings were taken inside ONE boot with no restart; (e)(1) PASS — across BOTH commit writes the affordance is the SAME element object (same data-node-id=\"node-12\" in both html readings, object identity held at all 12 apparatus readings, isConnected true, exactly 1 element carries node-12); (e)(2) PASS — the SECOND gesture (real drag clientX 100 -> 160) commits 105, read through BOTH shipped html and shipped node-state; the pre-drag size 55 FAILS that read and the FIRST gesture's committed value (145) DIFFERS from it. NO HUMAN OPERATOR WAS PRESENT for (e).",
+      "verdict": "CHANGED",
+      "reading_C_A5": {
+        "second_gesture_committed_value": "PASS — 105, the clamped dragged value of the second gesture (160 - 55), read out of the authored status node through shipped html AND shipped node-state.",
+        "negative_control_pre_drag_size": "PASS — the pre-drag size 55 does NOT satisfy the read (55 != 105).",
+        "first_vs_second_comparison": "DIFFER — gesture 1 committed 145, gesture 2 committed 105; the two committed values are reported as an explicit comparison and DO differ, as the row requires.",
+        "e1_element_identity": "PASS — same data-node-id in both html readings AND object identity held across both commit writes."
+      },
+      "additive": "ADDITIVE — NOT-IN-CLOSED-INSTRUMENT-SET (apparatus A1/A2/A3): (e)(1)'s object identity was taken with an apparatus probe (the handle captured before gesture 1, compared with a fresh querySelector after each commit; identity true, isConnected true, count 1); both gestures were driven with real CDP mouse input; the pre-drag comparand 55 came from the apparatus sentinel on the pane's `size` attribute."
+    }
+  ],
+  "summary": { "total": 8, "changed": 5, "unchanged": 0, "notObservable": 3 },
+  "commands": [
+    { "cmd": "npm run divergence", "exit": 0, "observed": "R13 RESULT: 9 checks, 0 failures; census inTree and census registered both electron=18 shim=18" },
+    { "cmd": "npm run ui", "exit": 0, "observed": "UI RESULT: 0 failures (11/11 assertions green, mapped onto the five declared rows R0-R4); measurement 427x22; attempt=1 retries=0; precondition: divergence green (R13 RESULT: 9 checks, 0 failures), tree digest after matches before, pin/dist agree" },
+    { "cmd": "./node_modules/.bin/electron . --no-sandbox --disable-dev-shm-usage --user-data-dir=$(mktemp -d) --remote-debugging-port=9333", "exit": 0, "observed": "[provident-mcp] http transport ready on http://127.0.0.1:3787/mcp; [provident-main] renderer ready — MCP backend armed; DevTools listening on ws://127.0.0.1:9333/devtools/browser/6e80cfb7-bd40-4801-8857-342979a0d01e (ONE boot served every reading)" },
+    { "cmd": "node scripts/mcp-cli.mjs --target http --port 3787 targets", "exit": 0, "observed": "18 nodes; node-12 cssId+propsId gutter-vertical handlers=[gutter-drag/pointerdown]; node-9..node-14 = the authored card; JSON 4225 bytes" },
+    { "cmd": "node scripts/mcp-cli.mjs --target http --port 3787 html", "exit": 0, "observed": "renderedHtml 1883 bytes pre-gesture; census {\"registered\":18,\"inTree\":18,\"unplaced\":0,\"destroyed\":0,\"prototypes\":0}; 18 data-node-id node-1..node-18; the affordance line carries style=\"cursor: col-resize; width: 200px;\"; the status element reads 100 -> 145 -> 105 across the run" },
+    { "cmd": "node scripts/mcp-cli.mjs --target http --port 3787 dispatch gutter-vertical pointerdown", "exit": 0, "observed": "{\"results\":[null],\"dirtied\":[\"node-14\",\"node-9\",\"node-1\"]} (plus renderedHtml/ssrHtml in the reply)" },
+    { "cmd": "node scripts/mcp-cli.mjs --target http --port 3787 node-state gutter-status", "exit": 0, "observed": "node-14, state in-tree, content \"100\" before the drags, \"145\" after gesture 1, \"105\" after gesture 2 — the second committed value read out of a SECOND shipped instrument" },
+    { "cmd": "node scripts/mcp-cli.mjs --target http --port 3787 tools", "exit": 0, "observed": "7 tools: provident.dispatch, provident.get_rendered_html, provident.get_markdown, provident.list_targets, provident.get_node_state, provident.code.get, provident.code.validate — provident.op is NOT exposed on a default live boot" },
+    { "cmd": "node scripts/mcp-cli.mjs --target http --port 3787 run '[{\"cmd\":\"provident.get_markdown\",\"args\":{}}]'", "exit": 0, "observed": "markdown carries '## Gutter (drag to resize) / resizable pane / 95' — the markdown read-out carries the committed status value; no dedicated get_markdown command exists in the CLI" },
+    { "cmd": "MANUAL", "exit": 0, "observed": "U-3 / U-4 / U-6 operator observations NOT TAKEN — no human operator was present in this re-run; the apparatus readings are filed separately under each row's `additive` field and are NOT substituted for an operator observation" }
+  ]
+}
+```
+
+#### R.6a THE FALSIFIABLE CLAUSES, CHECKED AGAIN
+
+1. **`summary.total === 8`** and **`5 CHANGED + 0 UNCHANGED + 3 NOT-OBSERVABLE = 8`** — the row set is
+   exactly the matrix's `U-1`…`U-8`, in matrix order, no id added or dropped. ✔
+2. **Every `instrument` is from the CLOSED SET** (`node scripts/mcp-cli.mjs --target http --port 3787
+   <tool>` / `npm start` / `MANUAL OPERATOR`) — no row says *"the live gate"* or *"the leg"*. ✔
+3. **Every `cmd` is a literal command with its own `exit`, or the literal token `MANUAL`.** ✔
+4. **Every `MANUAL` row's `observation` is an operator observation and never a tool's output line** —
+   and since no operator was present, the three rows record the honest third form (NOT TAKEN, no tool
+   output substituted) with the apparatus reading filed separately under `additive`. ✔
+5. **`U-3`/`U-4`/`U-6` carry `NOT-OBSERVABLE-BY-ANY-SHIPPED-INSTRUMENT`** with a reason that no longer
+   cites unpresentability (`L-2` is measured FIXED). ✔
+6. **`U-GAP-1` is recorded OPEN with `predicateSourcePresent: false`** — re-globbed this pass:
+   `docs/specs/user-flow-audit.md` **still absent**, `docs/**/*user-flow*` matches **no files** (7th
+   confirmation). Owner: the next documentation/spec pass or a recorded non-adoption. ✔
+
+### R.7 LIVE CONTRADICTIONS OF THE GREENS — **NONE FOUND ON THIS TREE**
+
+**No live reading in this re-run contradicts the unit's filed `§5.U` Post observations or
+`docs/specs/gutter-ui-greens.md`.** The two rows the first battery FAILED (`U-5`'s dragged-value read
+and `U-8`(e)(2)) now **PASS**, each with its negative control; the two rows the first battery recorded
+as live **CONTRADICTIONS** (`U-2`(a)'s missing authored cursor, `U-4`'s byte-identical preview geometry)
+are **live-SATISFIED** on this tree; and the six findings `L-1`…`L-6` are all **measured addressed**
+here: `L-1` (legs 1/2 green, exit 0 each), `L-2`/`L-3` (handle box `200×44`, `elementFromPoint` → node-12,
+authored `cursor: col-resize` in the initial `html` read), `L-4`/`L-6` (the drag is VALID and the seams
+read the bare attributes), `L-5` (the commit write lands and is visible in two shipped instruments).
+
+**Two honest non-contradictions, recorded so they are not read as passes:** (i) the pane's live `size`
+attribute was once read as `160` after a commit on an earlier boot while the graph's pane props stayed
+`"100"` — **not reproduced in the recorded run**, and it did not affect either `C-A5` reading (§R.4);
+(ii) a right-button press **does reach** the element's `pointerdown` listeners, though it produces no
+sink write and no visible change (§R.5).
+
+### R.8 WHAT THIS RE-RUN STILL DOES **NOT** PROVE (one-line honesty statement)
+
+**One line:** *this record proves that on `83eb471`, in one real Electron boot with the pinned flags,
+the authored gutter card renders as a pressable `200×44` affordance whose real drag both previews on
+the live TARGET and commits the CLAMPED DRAGGED VALUE onto the authored STATUS node — `100 → 145` on
+the first real drag and `145 → 105` on the second, each with the pre-drag size (`55`) FAILING the same
+read and the two committed values differing — that the leg precondition is green (`R13 RESULT: 9
+checks, 0 failures`) and the mandatory `[U]` leg takes its measurement (`0 failures (11/11 …)`,
+`427x22`, `attempt=1 retries=0`); it does NOT prove any of it with a HUMAN OPERATOR present (the three
+`MANUAL OPERATOR` rows are still NOT TAKEN), and it discharges no operator-owed row.*
+
+It follows that: (a) `U-3`/`U-4`/`U-6`'s filed `MANUAL OPERATOR` discharge is **still INCOMPLETE** and
+is owed to a session with a real operator (owner: the supervisor), whatever the apparatus found;
+(b) **no `[D]` row is claimed** and `U-DIVERGENCE-EXT` does not exist — the divergence leg's green was
+read as the `[U]` leg's precondition, nothing more; (c) **`U-7`'s BEFORE column was NOT re-measured**
+this pass (the 12-node pre-card worktree record is the only BEFORE reading, and it is not this run's);
+(d) the preview/geometry and the cursor-hover pair were exercised only through apparatus outside the
+closed instrument set — the strings and values they produced were read back through shipped
+instruments, but the *gesture* was not a shipped instrument's; (e) the `[T]`/node-suite state, the
+`U-8`(e) element-identity object probe, and the two `C-A5` comparands are **envelope-layer plus
+apparatus evidence**, not a shipped-instrument proof of the wiring's internal `writes[]` record;
+(f) `§5.U`'s matrix rows were executed against the **dev tree**, not a packaged distribution.
+
+### R.9 WHAT THE NEXT ITERATION MUST DO (short list)
+
+1. **Take the three `MANUAL OPERATOR` rows with a human at the window** — they remain the only rows no
+   shipped instrument can discharge, and this pass still could not discharge them. **Their reason is
+   now "no operator", not "unpresentable"**: the handle is hit-testable and a real drag commits.
+2. **Re-open `U-GAP-1`** (`docs/specs/user-flow-audit.md` still absent, 7th confirmation) and correct
+   `§5.U` clause-5's reason for the style-attribute case (§2a above, still uncorrected).
+3. **Re-measure `U-7`'s BEFORE column** on a pre-card worktree if the row is to be reported as a
+   measured delta rather than as a pointer to the supervisor's earlier record.
+4. **Probe the pane `size` attribute's re-publication under a commit write** (§R.4) — a DOM-attribute
+   observation with no shipped-instrument projection; it must not be left as an unexplained once-seen.
+5. **Do not read this block as a licence to skip the operator rows**: this file now records a green
+   live battery **minus its operator half**, and the DONE row must say so in those words.
