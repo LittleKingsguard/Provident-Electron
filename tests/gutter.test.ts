@@ -1466,6 +1466,15 @@ function testFileBytes(): string {
  *  `src/shared/gutter-affordance.ts` the moment `E10`'s module lands. A row that fails
  *  on a sibling's legitimate artifact is measuring the WRONG SUBJECT — the same class of
  *  defect `R-12`'s first narrowing closed (see the attribution block above). */
+/** **⟶ DOCUMENTED BOUND 2026-09-27 (`R-12` DIFF-SCOPE REPAIR PASS): THIS WALK CANNOT SEE A
+ *  `gutter*` FILE INSIDE A DOTTED OR `node_modules` DIRECTORY** (`String(entry.name) ===
+ *  'node_modules' || String(entry.name).startsWith('.') ⇒ continue` above). That is a
+ *  DELIBERATE PRUNE — `node_modules/**` is installed third-party code and dotted directories
+ *  are tooling/VCS state, neither of which is a unit artifact — and it is bounded rather than
+ *  rewritten. The bound is FALSIFIABLE on the live repo by
+ *  `prunedGutterCandidates()`, asserted `[]` in `R-16`'s green branch (control e-3): if a
+ *  such a path ever appears where the census would claim to be exhaustive, that assertion
+ *  NAMES it instead of letting the census read green on a silent blind spot. */
 function walkUnitPaths(): string[] {
   const found: string[] = []
   const visit = (rel: string): void => {
@@ -1480,6 +1489,47 @@ function walkUnitPaths(): string[] {
     }
   }
   for (const root of ['src', 'tests']) visit(root)
+  return found.sort()
+}
+/** **⟶ ADDED 2026-09-27 (`R-12` DIFF-SCOPE REPAIR PASS): THE CENSUS'S STATED BLIND SPOT,
+ *  MEASURED.** `walkUnitPaths()` prunes `node_modules` and dotted directories, so a `gutter*`
+ *  file inside one of those is invisible to `R-16`'s census. This helper reads exactly those
+ *  pruned roots and returns every `gutter*` FILE path beneath them — expected `[]` on this
+ *  repo, and named rather than assumed when it is not (the bound is stated in the walk's own
+ *  `⟶ DOCUMENTED BOUND` note). **It creates NO file**: it only walks what already exists, so
+ *  the one-file diff scope of this pass is preserved. */
+function prunedGutterCandidates(): string[] {
+  const found: string[] = []
+  const visitPruned = (rel: string): void => {
+    let entries
+    try {
+      entries = readdirSync(`${REPO_ROOT}/${rel}`, { withFileTypes: true })
+    } catch {
+      return
+    }
+    for (const entry of entries) {
+      const child = `${rel}/${String(entry.name)}`
+      if (entry.isDirectory()) {
+        visitPruned(child)
+        continue
+      }
+      if (/^gutter/i.test(String(entry.name))) found.push(child)
+    }
+  }
+  for (const root of ['src', 'tests']) {
+    let entries
+    try {
+      entries = readdirSync(`${REPO_ROOT}/${root}`, { withFileTypes: true })
+    } catch {
+      continue
+    }
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue
+      const name = String(entry.name)
+      if (name !== 'node_modules' && !name.startsWith('.')) continue
+      visitPruned(`${root}/${name}`)
+    }
+  }
   return found.sort()
 }
 /** Every `src/**` path, for `R-6`/`R-12`'s companion claim ("imported by NO `src/**`
@@ -1826,6 +1876,24 @@ function unitCensusOf(candidates: readonly string[]): string[] {
 }
 function e3CensusPaths(): string[] {
   return unitCensusOf(walkUnitPaths())
+}
+/** **`R-12`'s DIRTY (tree/staged) ARM, AS A SPLIT — ⟶ ADDED 2026-09-27 (THE `R-12`
+ *  DIFF-SCOPE REPAIR PASS, the ONE-ARM remand of the `E3` row-repair commit
+ *  `1dbb521`).** The arm's SUBJECT is the working-tree change set (`git status
+ *  --porcelain`), and the SAME per-path sibling attribution the committed arm binds
+ *  decides it: **a dirty path counts as `E3`'s own iff it is NOT
+ *  `isSiblingUnitArtifact(path)`.** The split is RETURNED rather than recomputed so
+ *  `R-12` can report **both readings separately** (the RAW dirty set, and the
+ *  sibling-excluded `E3`-own set) and so its controls can be DRIVEN **through this
+ *  function** rather than re-describing its rule. **`isDeniedPath` is NOT applied
+ *  here and is NOT weakened** — the row applies the byte-identical predicate to
+ *  `own` alone. */
+function splitBySiblingAttribution(paths: readonly string[]): { raw: string[]; own: string[]; sibling: string[] } {
+  return {
+    raw: [...paths],
+    own: paths.filter((path) => !isSiblingUnitArtifact(path)),
+    sibling: paths.filter((path) => isSiblingUnitArtifact(path)),
+  }
 }
 /** **`E3`'S OWN ARTIFACTS — THE FIVE FILES ONLY THIS UNIT AUTHORS** (the attribution rule
  *  (2)'s marker set). The SHARED trackers are deliberately NOT markers: every unit writes
@@ -2749,6 +2817,21 @@ describe('R-16/R-17/R-18 — §3.5 the existence rows (the red’s own premise)'
         unitPaths,
       )}`,
     ).not.toContain(SIBLING_UNIT_ARTIFACT_PATHS[2])
+    // (e-3) **⟶ ADDED 2026-09-27 (`R-12` DIFF-SCOPE REPAIR PASS): THE WALK'S STATED BLIND SPOT
+    //     IS MEASURED, NOT ASSUMED.** `walkUnitPaths()` prunes `node_modules` and dotted
+    //     directories, so a `gutter*` file inside one of them is invisible to this census. That
+    //     bound is DELIBERATE (installed third-party code / tooling state, never a unit
+    //     artifact) and is documented in the walk's own `⟶ DOCUMENTED BOUND` note; the
+    //     assertion below drives the pruned roots on the LIVE repo so the census's own limit is
+    //     a reading. **It creates no file** — `prunedGutterCandidates()` only walks what already
+    //     exists.
+    const prunedCandidates = prunedGutterCandidates()
+    expect(
+      prunedCandidates,
+      `R-16 §3.5 (GREEN BRANCH, control e-3 — THE CENSUS'S BLIND SPOT, MEASURED) — \`walkUnitPaths()\` prunes \`node_modules\` and dotted directories; a \`gutter*\` file inside one would be INVISIBLE to the census above. On this repo there is none, so the bound is inert here and is stated rather than hidden (the walk's \`⟶ DOCUMENTED BOUND\` note). If a path appears here, IT IS NAMED and the census's exhaustiveness claim must be re-read. Pruned \`gutter*\` files found: ${JSON.stringify(
+        prunedCandidates,
+      )}`,
+    ).toEqual([])
     // (a) NOT IMPORTED BY ANY `src/**` FILE (`§1` item 8; the companion claim of `R-6`/`R-12`).
     expect(
       gutterImporters(),
@@ -3265,25 +3348,109 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
   it('R-12 §3.4 — THE DIFF-SCOPE ROW (§5.1; C5), ⟶ NARROWED 2026-09-27 TO E3’S OWN ATTRIBUTABLE CHANGES: the unit’s own changes inside the allow-list, the DENIED set over the unit’s OWN change set (with a positive control that a denied path among them FAILS), and the companion importer claim', () => {
     const change = treeChangeSet()
     const committed = committedChangeSet()
-    const deniedHits = change.paths.filter(isDeniedPath)
+    // **⟶ NARROWED 2026-09-27 (THE `R-12` DIFF-SCOPE REPAIR PASS — the ONE-ARM REMAND of
+    // `1dbb521`; THE DIRTY/TREE ARM).** THE AS-FILED FORM IS KEPT VISIBLE BELOW AND IS STILL
+    // THE ARM'S CLAIM — *"THE DENIED SET BINDS ABSOLUTELY AND OUTRANKS THE ALLOW-LIST (C5) …
+    // Denied paths in the change set: …"* over the RAW `git status --porcelain` reading — and
+    // the reason it is narrowed is the SAME `§5.1` sentence the committed arm was narrowed by:
+    //
+    //   *"a diff-scope row asserted over a commit range must scope its allow-list census to
+    //   THIS UNIT'S OWN ARTIFACTS … and **must NOT read a later unit's commits, a sibling's
+    //   dirty working-tree file, or a sibling unit's artifact as this unit's diff.**"*
+    //
+    // **THE DEFECT THIS ARM STILL CARRIED AFTER `1dbb521` (measured, not hypothesised):** the
+    // committed arm had been narrowed per PATH, but the dirty arm still read the WHOLE dirty
+    // set — so a SIBLING unit's legitimate in-flight work (`E10`: the NEW
+    // `src/shared/gutter-affordance.ts`, the edited `src/shared/demo-envelope.ts`,
+    // `src/renderer/renderer.ts`, `src/renderer/runtime.ts`, its own red set and its own spec)
+    // appears in `git status --porcelain`, every one of those paths is denied to `E3` by
+    // `isDeniedPath` (`src/shared/*` other than `E3`'s module, `src/renderer/**`, `tests/*`
+    // other than `E3`'s file), and the arm therefore FAILED `E3` for a sibling's work while
+    // `E3` was not dirty at all. `§5.1`'s DENIED-set exception ("the half that binds the WHOLE
+    // committed set") is a statement about the COMMITTED range; `§5.1`'s commit-range scope
+    // rule above forbids reading a **sibling's dirty working-tree file** as `E3`'s diff.
+    //
+    // **THE REPAIRED RULE:** `splitBySiblingAttribution(change.paths)` — **a dirty path is
+    // `E3`'s own IFF it is NOT `isSiblingUnitArtifact(path)`** — and the row's DENIED check
+    // runs over `e3OwnDirty` alone, with `isDeniedPath` BYTE-IDENTICAL to the as-filed
+    // predicate (a denied path among E3's OWN dirty changes still FAILS the arm; controls (i)
+    // and (j) drive exactly that). **BOTH READINGS ARE REPORTED IN THIS ROW'S OWN MESSAGES**
+    // (the raw dirty set and the sibling-excluded `E3`-own set), so the narrowing is visible
+    // as a measurement rather than as an absence. **NO skip, NO try/catch, NO
+    // `if (dirty) return`**: the arm's evaluation is unconditional.
+    const dirtySplit = splitBySiblingAttribution(change.paths)
+    const e3OwnDirty = dirtySplit.own
     expect(
-      deniedHits,
-      `R-12 §3.4 — THE DENIED SET BINDS ABSOLUTELY AND OUTRANKS THE ALLOW-LIST (C5): \`src/shared/gesture-session.ts\` and \`tests/gesture-session.test.ts\` named FIRST, then every other sibling \`src/shared/*\` module and its tests, \`src/main/**\`, \`src/renderer/**\`, \`package.json\`, \`package-lock.json\`, \`scripts/**\`, \`tsconfig.json\`, \`vitest.config.ts\`. Denied paths in the change set: ${JSON.stringify(
-        deniedHits,
+      dirtySplit.sibling,
+      `R-12 §3.4 — THE RAW DIRTY READING, REPORTED (NON-FAILING): the working-tree change set read WHOLE, with the sibling unit's artifacts NAMED as the sibling's rather than dropped silently (\`§5.1\`'s commit-range scope rule; \`docs/specs/gutter-ui.md\` \`§5.1\` rows 1/2/3/4/10/11). **A sibling's dirty file is NOT \`E3\`'s diff and never FAILS this row.** RAW dirty set: ${JSON.stringify(
+        dirtySplit.raw,
+      )}. E3-OWN dirty set (sibling artifacts excluded — THE ARM'S SUBJECT): ${JSON.stringify(
+        e3OwnDirty,
+      )}. Excluded as sibling artifacts: ${JSON.stringify(dirtySplit.sibling)}. Raw git status: ${change.raw}`,
+    ).toEqual(dirtySplit.sibling)
+    const e3OwnDeniedDirty = e3OwnDirty.filter(isDeniedPath)
+    expect(
+      e3OwnDeniedDirty,
+      `R-12 §3.4 — THE DENIED SET BINDS \`E3\`'S OWN DIRTY CHANGES AND IS UNWEAKENED (\`C5\`): \`src/shared/gesture-session.ts\` and \`tests/gesture-session.test.ts\` named FIRST, then every other sibling \`src/shared/*\` module and its tests, \`src/main/**\`, \`src/renderer/**\`, \`package.json\`, \`package-lock.json\`, \`scripts/**\`, \`tsconfig.json\`, \`vitest.config.ts\`. **\`isDeniedPath\` IS APPLIED BYTE-IDENTICALLY**; what moved is the arm's SUBJECT — a path \`E3\` did not author is no longer IN \`E3\`'s own dirty set to begin with (\`§5.1\`'s commit-range scope rule: *"must NOT read … a sibling's dirty working-tree file … as this unit's diff"*). E3-OWN DENIED DIRTY PATHS: ${JSON.stringify(
+        e3OwnDeniedDirty,
+      )}. E3-own dirty set: ${JSON.stringify(
+        e3OwnDirty,
+      )}. RAW dirty set (reported, per-path attribution applied to it above): ${JSON.stringify(
+        dirtySplit.raw,
+      )}. Excluded sibling artifacts: ${JSON.stringify(
+        dirtySplit.sibling,
+      )}. RAW DENIED reading (NOT the arm's subject — a sibling's denied dirty path is that unit's row's finding): ${JSON.stringify(
+        change.paths.filter(isDeniedPath),
       )}. Raw git status: ${change.raw}`,
     ).toEqual([])
-    const outsideAllow = change.paths.filter((p) => !isUnitArtifact(p) && !/^docs\//.test(p))
+    // **NON-VACUITY OF THE EXCLUSION ON THE LIVE REPO (⟶ ADDED 2026-09-27, `R-12` repair).**
+    // The split must be REAL work on the live reading: the raw set is partitioned exactly
+    // into the sibling-excluded set and the E3-own set, and no sibling-classified path may
+    // leak into `E3`'s own subject. **AND THE ARM'S SUBJECT IS REPORTED HONESTLY AS EITHER
+    // NON-EMPTY OR VACUOUS:** the denied check above is evaluated over `E3`'s OWN dirty
+    // `E3`-class artifacts (`E3_UNIT_DIRTY_ARTIFACTS` below) — when that list is EMPTY the
+    // denied check ran over an empty subject and this row's dirty arm is **VACUOUSLY GREEN**,
+    // which the message states explicitly rather than hides; it is NOT skipped, NOT
+    // short-circuited, and the arm can still FAIL (the controls below drive it both ways).
+    const E3_UNIT_DIRTY_ARTIFACTS = [MODULE_RELPATH, TEST_RELPATH, SPEC_RELPATH].filter((p) => e3OwnDirty.includes(p))
+    expect(
+      [
+        dirtySplit.raw.length === dirtySplit.own.length + dirtySplit.sibling.length,
+        dirtySplit.sibling.every((p) => isSiblingUnitArtifact(p)),
+        dirtySplit.own.every((p) => !isSiblingUnitArtifact(p)),
+      ],
+      `R-12 §3.4 — THE SPLIT IS DRIVEN ON THE LIVE READING RATHER THAN ASSUMED: (1) the raw dirty set is partitioned EXACTLY (raw = own ⊕ sibling), (2) every excluded path really answers \`isSiblingUnitArtifact === true\`, and (3) every \`E3\`-own path really answers \`false\` — a predicate that claimed everything (or nothing) FAILS here. READS: ${JSON.stringify(
+        [
+          dirtySplit.raw.length,
+          dirtySplit.own.length,
+          dirtySplit.sibling.length,
+          dirtySplit.sibling.map((p) => [p, isSiblingUnitArtifact(p)]),
+          e3OwnDirty.map((p) => [p, isSiblingUnitArtifact(p)]),
+        ],
+      )}. RAW dirty set: ${JSON.stringify(
+        dirtySplit.raw,
+      )}. E3-OWN dirty set: ${JSON.stringify(
+        e3OwnDirty,
+      )}. E3's own UNIT-class dirty artifacts (the denied check's subject, non-empty only when one of \`${MODULE_RELPATH}\`/\`${TEST_RELPATH}\`/\`${SPEC_RELPATH}\` is dirty): ${JSON.stringify(
+        E3_UNIT_DIRTY_ARTIFACTS,
+      )}${E3_UNIT_DIRTY_ARTIFACTS.length === 0 ? ' — EMPTY: the denied check above therefore ran over a subject with NO E3 unit artifact in it, so the dirty arm is VACUOUSLY GREEN on this reading (stated, not hidden: the arm is not skipped and can still FAIL, which controls (i)/(j) drive)' : ' — NON-EMPTY: the denied check above evaluated a real E3-own subject'}`,
+    ).toEqual([true, true, true])
+    const outsideAllow = e3OwnDirty.filter((p) => !isUnitArtifact(p) && !/^docs\//.test(p))
     expect(
       outsideAllow,
-      `R-12 §3.4 — a non-denied path outside the allow-list is a FINDING for the adversarial pass, not an automatic FAIL (RCA-8(a)); the allow-list census is scoped to THIS UNIT’S OWN ARTIFACTS (the module, this test file, this spec, this unit’s \`*-greens.md\` and \`archive/reviews/**\` record, and the unit’s own tracker rows). Outside the list: ${JSON.stringify(
+      `R-12 §3.4 — a non-denied path outside the allow-list is a FINDING for the adversarial pass, not an automatic FAIL (RCA-8(a)); the allow-list census is scoped to THIS UNIT’S OWN ARTIFACTS (the module, this test file, this spec, this unit’s \`*-greens.md\` and \`archive/reviews/**\` record, and the unit’s own tracker rows), so a SIBLING unit's dirty file is out of this arm's subject by construction (\`§5.1\`'s commit-range scope rule). E3-OWN dirty paths: ${JSON.stringify(
+        e3OwnDirty,
+      )}. Outside the list: ${JSON.stringify(
         outsideAllow,
-      )}`,
+      )}. Excluded sibling artifacts: ${JSON.stringify(dirtySplit.sibling)}`,
     ).toEqual([])
     if (committed === null) {
       // THE HONEST RED-TIME STATE: this file is NEW and uncommitted, so no commit range exists yet.
       expect(
-        change.paths,
-        `R-12 §3.4 — at RED time the anchor commit that ADDED \`${TEST_RELPATH}\` does not exist yet, so the tree change set is the honest reading: it must contain THIS test file and (once it lands) the module, and nothing of the DENIED set (RCA-8(a): the unit’s own red-set commit is the supervisor’s)`,
+        e3OwnDirty,
+        `R-12 §3.4 — at RED time the anchor commit that ADDED \`${TEST_RELPATH}\` does not exist yet, so the tree change set is the honest reading: it must contain THIS test file and (once it lands) the module, and nothing of the DENIED set (RCA-8(a): the unit’s own red-set commit is the supervisor’s). **THE SUBJECT HERE IS \`E3\`'S OWN DIRTY SET** (the sibling-excluded reading, \`§5.1\`'s commit-range scope rule), so a sibling's in-flight file cannot satisfy — or fail — this limb. E3-own dirty set: ${JSON.stringify(
+          e3OwnDirty,
+        )}. RAW dirty set: ${JSON.stringify(dirtySplit.raw)}`,
       ).toContain(TEST_RELPATH)
       expect(
         gutterImporters(),
@@ -3429,11 +3596,23 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       { path: 'docs/specs/gutter-ui-review.md', authority: 'allow-list row `5` ("any other `docs/specs/gutter-ui-*.md` of this unit")' },
       { path: 'tests/gutter-ui.test.ts', authority: 'allow-list row `3` ("NEW — the red set") — committed at `c62b607`' },
       { path: 'src/shared/gutter-affordance.ts', authority: 'allow-list row `1` ("NEW — the affordance module")' },
+      // **⟶ ADDED 2026-09-27 (THE `R-12` DIFF-SCOPE REPAIR PASS): THE SIBLING'S *REAL*
+      // IN-FLIGHT SHAPE IS DRIVEN, NOT JUST ITS COMMITTED ARTIFACTS.** These are `E10`'s
+      // declared paths as they appear in `git status --porcelain` WHILE ITS PASS RUNS — the
+      // exact set that made this row FAIL for a sibling's work. Two of them
+      // (`docs/specs/gutter-ui.md`, `tests/gutter-ui.test.ts`) are already in the list above;
+      // the four below are its edited/new files.
+      { path: 'src/shared/demo-envelope.ts', authority: 'allow-list row `2` (the authoring site — edited in flight)' },
+      { path: 'src/renderer/renderer.ts', authority: 'allow-list row `10` (the bounded renderer wiring — edited in flight)' },
+      { path: 'src/renderer/runtime.ts', authority: 'allow-list row `11` (`Runtime.elementForNodeId` — edited in flight)' },
+      { path: 'docs/specs/gutter-ui-greens.md', authority: 'allow-list row `5` ("and any other `docs/specs/gutter-ui-*.md` of this unit")' },
     ]
     const SIBLING_CONTROL_E3: readonly string[] = [MODULE_RELPATH, TEST_RELPATH, SPEC_RELPATH]
     expect(
       SIBLING_CONTROL.filter((c) => !isSiblingUnitArtifact(c.path)).map((c) => c.path),
-      `R-12 §3.4 — POSITIVE CONTROL (THE SIBLING CLASS, THE PREDICATE'S OWN DRIVE): every one of these must read \`isSiblingUnitArtifact === true\` — the list is EMPTY when they do. ${SIBLING_CONTROL.map(
+      `R-12 §3.4 — POSITIVE CONTROL (THE SIBLING CLASS, THE PREDICATE'S OWN DRIVE): every one of these must read \`isSiblingUnitArtifact === true\` — the list is EMPTY when they do. **READS:** ${JSON.stringify(
+        SIBLING_CONTROL.map((c) => [c.path, isSiblingUnitArtifact(c.path)]),
+      )}. ${SIBLING_CONTROL.map(
         (c) => `${c.path} ← ${c.authority}`,
       ).join(' · ')}`,
     ).toEqual([])
@@ -3540,6 +3719,104 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       gutterImporters(),
       'R-12 §3.4 — the companion claim: `src/shared/gutter.ts` is imported by NO `src/**` file',
     ).toEqual([])
+    // =======================================================================
+    // (i)/(j)/(k) — **⟶ ADDED 2026-09-27 (THE `R-12` DIFF-SCOPE REPAIR PASS, the ONE-ARM
+    // REMAND): THE CONTROLS THAT MAKE THE *DIRTY* ARM FALSIFIABLE.** The three below are
+    // driven through the row's OWN machinery (`splitBySiblingAttribution`, the very function
+    // the arm above calls), so they measure the arm rather than describe it. **NO FILE IS
+    // CREATED FOR ANY OF THEM**: every drive is a SYNTHETIC path list, so `src/**` is
+    // untouched (`git status --porcelain` shows only this test file).
+    // =======================================================================
+    // (i) **POSITIVE CONTROL — THE DIRTY ARM CAN STILL FAIL, FOR THE RIGHT REASON.** A
+    //     synthetic dirty set carrying an `E3`-OWN DENIED path (`src/shared/gesture-session.ts`)
+    //     must STILL be reported by the arm's denied check, and that path must reach the check
+    //     through the row's own split (i.e. it is NOT excluded as a sibling artifact). The
+    //     sibling's own denied paths are driven in the SAME set, so the contrast is measured
+    //     rather than asserted: same predicate, same call, one FAILS and the others do not.
+    const CONTROL_DIRTY_E3_DENIED = SESSION_RELPATH
+    const CONTROL_DIRTY_SET: readonly string[] = [
+      TEST_RELPATH,
+      CONTROL_DIRTY_E3_DENIED,
+      'src/shared/gutter-affordance.ts',
+      'src/shared/demo-envelope.ts',
+      'src/renderer/renderer.ts',
+      'src/renderer/runtime.ts',
+      'tests/gutter-ui.test.ts',
+      'docs/specs/gutter-ui.md',
+    ]
+    const controlDirtySplit = splitBySiblingAttribution(CONTROL_DIRTY_SET)
+    const controlDirtyDenied = controlDirtySplit.own.filter(isDeniedPath)
+    expect(
+      [
+        controlDirtySplit.raw.includes(CONTROL_DIRTY_E3_DENIED),
+        controlDirtySplit.own.includes(CONTROL_DIRTY_E3_DENIED),
+        controlDirtyDenied.includes(CONTROL_DIRTY_E3_DENIED),
+      ],
+      `R-12 §3.4 — POSITIVE CONTROL (THE DIRTY ARM CAN STILL FAIL, FOR THE RIGHT REASON): a synthetic dirty set containing an \`E3\`-OWN denied path (\`${CONTROL_DIRTY_E3_DENIED}\`) is STILL reported by the arm's denied check — the path survives the split (\`own\`) and \`isDeniedPath\` denies it, so the arm above WOULD FAIL. **THE ARM IS NOT MADE GREEN BY SKIPPING THE CHECK.** Synthetic dirty set: ${JSON.stringify(
+        CONTROL_DIRTY_SET,
+      )}. Splits: own=${JSON.stringify(controlDirtySplit.own)}, sibling=${JSON.stringify(
+        controlDirtySplit.sibling,
+      )}. Denied among E3-own: ${JSON.stringify(
+        controlDirtyDenied,
+      )}`,
+    ).toEqual([true, true, true])
+    expect(
+      [controlDirtyDenied, CONTROL_DIRTY_SET.filter(isDeniedPath)],
+      `R-12 §3.4 — POSITIVE CONTROL (THE READING IS EXACT, NOT A LOWER BOUND): the synthetic set's denied reading is EXACTLY the \`E3\`-own denied path — the arm's denied check over this set names \`${CONTROL_DIRTY_E3_DENIED}\` and NOTHING ELSE, while the RAW denied reading over the same set names SEVEN paths. **THE SIX-PATH DELTA IS THE REPAIR, MEASURED:** the sibling's own five denied in-flight paths + its red set would have FAILED the as-filed arm and are ABSENT from the repaired arm's subject because \`isSiblingUnitArtifact\` claims them (\`§5.1\`: *"must NOT read … a sibling's dirty working-tree file … as this unit's diff"*). RAW denied reading: ${JSON.stringify(
+        CONTROL_DIRTY_SET.filter(isDeniedPath),
+      )}. E3-OWN denied reading (the arm's subject): ${JSON.stringify(controlDirtyDenied)}`,
+    ).toEqual([['src/shared/gesture-session.ts'], ['src/shared/gesture-session.ts', 'src/shared/gutter-affordance.ts', 'src/shared/demo-envelope.ts', 'src/renderer/renderer.ts', 'src/renderer/runtime.ts', 'tests/gutter-ui.test.ts', 'docs/specs/gutter-ui.md']])
+    // (j) **DRIVEN REAL-WORLD SHAPE — THE SIBLING'S DECLARED IN-FLIGHT SET.** The synthetic set
+    //     above IS the shape `E10` presents while its pass is uncommitted, so this control reads
+    //     the classification the DIRTY ARM depends on, path by path, through the same split.
+    //     **EVERY sibling path must land in `sibling` and NONE in `own`.**
+    expect(
+      [
+        controlDirtySplit.sibling,
+        controlDirtySplit.own.filter((p) => SIBLING_CONTROL.some((c) => c.path === p)),
+        controlDirtySplit.own.filter((p) => isDeniedPath(p) && SIBLING_CONTROL.some((c) => c.path === p)),
+      ],
+      `R-12 §3.4 — DRIVEN CLASSIFICATION CONTROL (THE SIBLING'S REAL IN-FLIGHT SHAPE): on a dirty set shaped like \`E10\`'s uncommitted pass, the row's own split classifies every declared sibling path as \`sibling\` and NONE of them as \`E3\`-own — so the sibling's in-flight work contributes NOTHING to the arm's denied subject and cannot FAIL \`E3\`'s row (\`§5.1\`: *"must NOT read … a sibling's dirty working-tree file … as this unit's diff"*). Splits: sibling=${JSON.stringify(
+        controlDirtySplit.sibling,
+      )}, E3-own=${JSON.stringify(
+        controlDirtySplit.own,
+      )}. Sibling-classified paths that leaked into E3-own: ${JSON.stringify(
+        controlDirtySplit.own.filter((p) => SIBLING_CONTROL.some((c) => c.path === p)),
+      )}`,
+    ).toEqual([['src/shared/gutter-affordance.ts', 'src/shared/demo-envelope.ts', 'src/renderer/renderer.ts', 'src/renderer/runtime.ts', 'tests/gutter-ui.test.ts', 'docs/specs/gutter-ui.md'], [], []])
+    // (k) **NON-VACUITY, STATED AS A MEASUREMENT OF THIS ARM.** The exclusion's effect on the
+    //     LIVE reading is reported (raw dirty set vs sibling-excluded set vs E3's own
+    //     unit-class artifacts), and the vacuity question is ANSWERED EXPLICITLY rather than
+    //     left to a reader: when `E3_UNIT_DIRTY_ARTIFACTS` is empty the arm's denied check ran
+    //     over a subject carrying NO `E3` unit artifact and the dirty arm is VACUOUSLY GREEN —
+    //     which the assertion below states in its message, while the `(i)` control proves the
+    //     arm still FAILS on a non-empty `E3`-own subject. **The row does NOT convert emptiness
+    //     into a pass-by-skip: the `expect(...).toEqual([])` above runs unconditionally.**
+    //     **AND THE EXCLUSION'S OWN DELTA IS READ** — the RAW denied set MINUS the `E3`-own
+    //     denied set is the set of dirty paths the narrowing removes from this arm, so the
+    //     exclusion is shown to be doing work and not to be a no-op that happens to read green.
+    expect(
+      CONTROL_DIRTY_SET.filter(isDeniedPath).filter((p) => !splitBySiblingAttribution(CONTROL_DIRTY_SET).own.filter(isDeniedPath).includes(p)),
+      `R-12 §3.4 — NON-VACUITY OF THE EXCLUSION (THIS ARM, AS A DELTA): on the sibling-shaped synthetic dirty set, the RAW denied set is STRICTLY LARGER than the \`E3\`-own denied set — the delta is exactly the sibling's denied in-flight paths, each one removed by \`isSiblingUnitArtifact\` and each one named here. **A predicate that stopped classifying them (or that claimed \`E3\`'s own artifacts too) moves THIS reading, so the narrowing is falsifiable rather than decorative.** Excluded-by-the-repair delta: ${JSON.stringify(
+        CONTROL_DIRTY_SET.filter(isDeniedPath).filter((p) => !splitBySiblingAttribution(CONTROL_DIRTY_SET).own.filter(isDeniedPath).includes(p)),
+      )}`,
+    ).toEqual(['src/shared/gutter-affordance.ts', 'src/shared/demo-envelope.ts', 'src/renderer/renderer.ts', 'src/renderer/runtime.ts', 'tests/gutter-ui.test.ts', 'docs/specs/gutter-ui.md'])
+    expect(
+      [
+        Array.isArray(dirtySplit.raw) && Array.isArray(e3OwnDirty),
+        dirtySplit.raw.length >= e3OwnDirty.length,
+        E3_UNIT_DIRTY_ARTIFACTS.every((p) => dirtySplit.raw.includes(p)),
+      ],
+      `R-12 §3.4 — NON-VACUITY OF THE EXCLUSION (THE DIRTY ARM, MEASURED): the exclusion runs over the LIVE working-tree reading and the raw/own readings are both materialised (never a placeholder), and every \`E3\` unit artifact the arm counts as its own really came from the raw set. **LIVE READINGS — RAW dirty set: ${JSON.stringify(
+        dirtySplit.raw,
+      )}; E3-OWN dirty set: ${JSON.stringify(
+        e3OwnDirty,
+      )}; excluded as sibling artifacts: ${JSON.stringify(
+        dirtySplit.sibling,
+      )}; E3's own unit-class dirty artifacts (the denied check's subject): ${JSON.stringify(
+        E3_UNIT_DIRTY_ARTIFACTS,
+      )}${E3_UNIT_DIRTY_ARTIFACTS.length === 0 ? ' — EMPTY ⇒ the arm evaluated its denied check over an EMPTY E3-own unit-artifact subject and is therefore VACUOUSLY GREEN on this reading (stated, not hidden; NOT skipped)' : ' — NON-EMPTY ⇒ the arm evaluated its denied check over a REAL E3-own subject'}**`,
+    ).toEqual([true, true, true])
   })
 
   it('R-13 §3.4 — THE SINGLE-WRITER / WRITE-COUNT ROW, A PAIR: the runtime record and `stats().sinkCalls` AGREE with both positive controls, and exactly ONE sink call site in the module', async () => {
