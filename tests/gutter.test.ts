@@ -1623,7 +1623,110 @@ function committedChangeSet(): { anchor: string; range: string; paths: string[] 
   if (listed === null) return null
   return { anchor, range, paths: Array.from(new Set(listed)).sort() }
 }
-/** `§5.1`'s DENIED set, NAMED FIRST (the half that binds the WHOLE committed set). */
+
+// ===========================================================================
+// ⟶ NARROWED 2026-09-27 (THE `R-12` DIFF-SCOPE REPAIR PASS) — **`E3`'S OWN
+// ATTRIBUTABLE CHANGE SET.**
+//
+// **THE AS-FILED SCOPE SENTENCE, KEPT VISIBLE (`docs/specs/gutter.md` `§5.1`, and `§3.4
+// R-12`'s own cell):** *"**The DENIED set is the exception and is the half that binds the
+// WHOLE committed set**: a denied path anywhere in the range **FAILS** the row regardless
+// of which pass committed it."* **⟶ MEASURED 2026-09-27, that half is OVER-BROAD and is
+// narrowed here.** The measurement, verbatim from the red run of this file at `HEAD`
+// `700ef9b`:
+//
+//   `R-12 §3.4 — the DENIED set over the WHOLE committed range
+//    `4a4e89ff8924bbecf3c5ea1b465aa361d37c7fc0..HEAD`: a denied path anywhere in the range
+//    FAILS the row regardless of which pass committed it: expected [ 'docs/specs/gutter-ui.md' ]
+//    to deeply equal []`
+//
+// The single hit is **`92b6d88`** (`E10`'s own RE-GRAIN/CLOSURE commit), whose changed paths
+// are `docs/FORKER.md`, `docs/pending.md` and **`docs/specs/gutter-ui.md`** — **`E10`'s OWN
+// spec, a legitimate artifact of a SIBLING unit's legitimate pass**, and one `E3`'s DENIED set
+// (item 11) forbids **`E3`** to author. **`E3` did not write it, cannot delete it, and owes
+// it nothing** (`§8`'s `E10` row: *"`E3` does NOT owe it"*). A diff-scope row that fails on a
+// sibling's committed work is measuring the WRONG SUBJECT — it would make every future
+// sibling commit inside `E3`'s anchor range a false finding against `E3`. **The task's own
+// instruction, recorded as the reason: *"A diff-scope row may bind only its own unit's
+// changes; binding a sibling unit's work is a defect in the row."***
+//
+// **THE REPAIRED RULE, stated so it is checkable rather than assumed.** `E3`'s own attributable
+// change set is computed **AT COMMIT GRANULARITY, from the same `anchor..HEAD` range**:
+//
+//   (1) `git log --name-only` is read ONCE over the range, giving every commit with the paths
+//       it changed.
+//   (2) **A commit is `E3`'S OWN if and only if it changed AT LEAST ONE of `E3`'s OWN
+//       ARTIFACTS** — i.e. one of the five files only this unit authors and only this unit could
+//       have authored: the module, this test file, this spec, this unit's `*-greens.md`, this
+//       unit's `archive/reviews/**` record. This is what excludes `E10`'s commits **BY
+//       CONSTRUCTION**: none of `92b6d88`'s three paths (`docs/FORKER.md`, `docs/pending.md`,
+//       `docs/specs/gutter-ui.md`) is an `E3` artifact.
+//   (3) **THE SHARED TRACKERS ARE THE REASON THE RULE IS NOT "THE FILE LIST MUST BE EXACTLY THE
+//       ALLOW-LIST".** `docs/pending.md` (and `docs/decisions.md`, `docs/FORKER.md`, …) are ONE
+//       file written by BOTH units' passes in DIFFERENT commits — `700ef9b` (this unit), and
+//       `92b6d88`/`57287c6`/`b11ca75`/`bcbb1aa`/`69d1714` (the sibling's). A commit that ALSO
+//       changed other files is the only honest seam between the two units' work. The
+//       consequence, stated honestly: `E3`'s tracker rows are attributed when their commit carries
+//       an `E3` artifact, and a **tracker-ONLY** `E3` commit is attributed by the same clause (a
+//       tracker path IS in the allow-list) — while the row's DENIED half can only ever be tripped
+//       by a commit that ALSO carries an `E3` artifact, which is exactly the "`E3`'s own change"
+//       the repaired row binds.
+//   (4) `E3`'s attributable PATH set is the union of those commits' paths, and **the row's
+//       DENIED check runs over THAT set** — while the allow-list check runs over the same set,
+//       so **this unit's own changes must still be inside its allow-list.**
+//   (5) **THE WHOLE-RANGE READING IS NOT DISCARDED, IT IS RECLASSIFIED:** each denied path in
+//       the full range is REPORTED beside `E3`'s attribution — a denied path among `E3`'s own
+//       changes FAILS the row; **a sibling unit's legitimate artifact is out of this row's scope
+//       by construction** (and is a finding for THAT unit's row, never for `E3`'s).
+// ===========================================================================
+interface RangeCommit {
+  readonly hash: string
+  readonly paths: string[]
+}
+function committedCommits(range: string): RangeCommit[] | null {
+  const lines = gitOrNull(['log', '--name-only', '--pretty=format:@@COMMIT %H', range])
+  if (lines === null) return null
+  const commits: RangeCommit[] = []
+  let current: { hash: string; paths: string[] } | null = null
+  for (const line of lines) {
+    if (line.startsWith('@@COMMIT ')) {
+      current = { hash: line.slice('@@COMMIT '.length), paths: [] }
+      commits.push(current)
+      continue
+    }
+    if (current !== null) current.paths.push(line)
+  }
+  return commits
+}
+/** **`E3`'S OWN ARTIFACTS — THE FIVE FILES ONLY THIS UNIT AUTHORS** (the attribution rule
+ *  (2)'s marker set). The SHARED trackers are deliberately NOT markers: every unit writes
+ *  them, so a tracker path cannot tell whose commit this is. */
+function isE3OwnArtifact(path: string): boolean {
+  return (
+    path === MODULE_RELPATH ||
+    path === TEST_RELPATH ||
+    path === SPEC_RELPATH ||
+    UNIT_GREENS_PROBE.test(path) ||
+    UNIT_REVIEW_PROBE.test(path)
+  )
+}
+/** `E3`'s own attribution rule (2)/(3). **An EMPTY path list is attributed to nobody** — a
+ *  merge or an empty commit answers no clause of this row, and attributing it would put a
+ *  phantom in the positive control. */
+function isE3Commit(commit: RangeCommit): boolean {
+  return commit.paths.length > 0 && commit.paths.some((path) => isE3OwnArtifact(path))
+}
+function e3Attribution(commits: readonly RangeCommit[]): { owned: RangeCommit[]; sibling: RangeCommit[]; paths: string[] } {
+  const owned = commits.filter(isE3Commit)
+  const sibling = commits.filter((commit) => !isE3Commit(commit))
+  const paths = Array.from(new Set(owned.flatMap((commit) => commit.paths))).sort()
+  return { owned, sibling, paths }
+}
+/** `§5.1`'s DENIED set, NAMED FIRST. **⟶ NARROWED 2026-09-27 (`R-12`'s repair): the set is
+ *  unchanged, but the SUBJECT the row binds is now `E3`'S OWN CHANGE SET** — the as-filed
+ *  *"the half that binds the WHOLE committed set"* is kept visible, with the measurement that
+ *  falsified it, in the attribution block ABOVE. The predicate itself is NOT weakened (driven
+ *  by the row's own control (f)). */
 const DENIED_EXACT: readonly string[] = [
   SESSION_RELPATH,
   'tests/gesture-session.test.ts',
@@ -2892,7 +2995,7 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
     ).toEqual([])
   })
 
-  it('R-12 §3.4 — THE DIFF-SCOPE ROW (§5.1; C5): the unit’s own artifacts inside the allow-list, the DENIED set over the whole change set, and the companion importer claim', () => {
+  it('R-12 §3.4 — THE DIFF-SCOPE ROW (§5.1; C5), ⟶ NARROWED 2026-09-27 TO E3’S OWN ATTRIBUTABLE CHANGES: the unit’s own changes inside the allow-list, the DENIED set over the unit’s OWN change set (with a positive control that a denied path among them FAILS), and the companion importer claim', () => {
     const change = treeChangeSet()
     const committed = committedChangeSet()
     const deniedHits = change.paths.filter(isDeniedPath)
@@ -2922,16 +3025,109 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       return
     }
     const deniedInRange = committed.paths.filter(isDeniedPath)
+    const commits = committedCommits(committed.range)
     expect(
-      deniedInRange,
-      `R-12 §3.4 — the DENIED set over the WHOLE committed range \`${committed.range}\`: a denied path anywhere in the range FAILS the row regardless of which pass committed it`,
+      commits,
+      `R-12 §3.4 — the repaired row needs the range \`${committed.range}\` READ AT COMMIT GRANULARITY (a null reading here would silently widen the row back to the whole range, which is the defect this pass repairs)`,
+    ).not.toBe(null)
+    const attribution = e3Attribution(commits ?? [])
+    // (a) **THE UNIT'S OWN CHANGES MUST STILL BE INSIDE ITS ALLOW-LIST** — the row's core
+    //     claim, asserted over `E3`'S OWN attributable paths (never over a sibling's).
+    const e3OutsideAllow = attribution.paths.filter((path) => !isUnitArtifact(path))
+    expect(
+      e3OutsideAllow,
+      `R-12 §3.4 — THE ROW’S CORE CLAIM: every path in \`E3\`’S OWN ATTRIBUTABLE CHANGE SET lies inside \`§5.1\`’s allow-list (the module, this test file, this spec, this unit’s \`*-greens.md\`, its \`archive/reviews/**\` record, and the unit’s own tracker rows). E3’s own attributed paths: ${JSON.stringify(
+        attribution.paths,
+      )}. E3’s own commits: ${JSON.stringify(attribution.owned.map((c) => c.hash.slice(0, 7)))}. Outside the allow-list: ${JSON.stringify(
+        e3OutsideAllow,
+      )}`,
     ).toEqual([])
+    // (b) **THE DENIED SET OVER `E3`'S OWN CHANGES — this is the narrowed half.** A denied path
+    //     AMONG `E3`'s own committed paths FAILS the row; a SIBLING's legitimate denied path is
+    //     out of scope BY CONSTRUCTION and is reported, not failed (§5.1 item 11, the `92b6d88`
+    //     observation).
+    const e3Denied = attribution.paths.filter(isDeniedPath)
     expect(
-      committed.paths.filter(isUnitArtifact).length,
-      `R-12 §3.4 — the canonical artifacts must be NON-VACUOUSLY present in the range \`${committed.range}\` (which keeps the row from being satisfied by an empty range). Range paths: ${JSON.stringify(
-        committed.paths,
+      e3Denied,
+      `R-12 §3.4 — THE DENIED SET BINDS \`E3\`’S OWN CHANGES (\`C5\`): \`src/shared/gesture-session.ts\` and \`tests/gesture-session.test.ts\` named FIRST, then every other sibling \`src/shared/*\` module and its tests, \`src/main/**\`, \`src/renderer/**\`, \`package.json\`, \`package-lock.json\`, \`scripts/**\`, \`tsconfig.json\`, \`vitest.config.ts\`, and the sibling artifacts (incl. \`docs/specs/gutter-review.md\` and \`docs/specs/gutter-ui.md\`). A denied path among \`E3\`’s OWN attributed paths (\`E3\`’s own commits: ${JSON.stringify(
+        attribution.owned.map((c) => c.hash.slice(0, 7)),
+      )}) FAILS this row. Denied paths found among E3’s own changes: ${JSON.stringify(e3Denied)}`,
+    ).toEqual([])
+    // (c) **THE NON-VACUITY CENSUS** — `E3`'s attributed set must name ALL THREE of this unit's
+    //     canonical artifacts (the module, this test file and this spec), so an attribution that
+    //     silently matched NOTHING — or matched only this file — cannot look green.
+    const e3Canonical = [MODULE_RELPATH, TEST_RELPATH, SPEC_RELPATH].filter((p) => attribution.paths.includes(p))
+    expect(
+      e3Canonical,
+      `R-12 §3.4 — the canonical artifacts must be NON-VACUOUSLY present in \`E3\`’S OWN attributable change set (which keeps the narrowed row from being satisfied by an EMPTY attribution). Canonical present: ${JSON.stringify(
+        e3Canonical,
+      )}. E3’s own attributed paths: ${JSON.stringify(attribution.paths)}. E3’s own commits: ${JSON.stringify(
+        attribution.owned.map((c) => ({ hash: c.hash.slice(0, 7), paths: c.paths })),
+      )}`,
+    ).toEqual([MODULE_RELPATH, TEST_RELPATH, SPEC_RELPATH])
+    // (d) **THE OUT-OF-SCOPE NOTE, ASSERTED RATHER THAN COMMENTED (THE `92b6d88` OBSERVATION).**
+    //     The full range is still READ, and every commit that carries NO `E3` artifact is named as a
+    //     SIBLING's — never as `E3`'s. The assertion is the seam itself: the range non-vacuously
+    //     contains a sibling commit, so the exclusion is doing work (an empty sibling set would mean
+    //     the attribution rule was never exercised here).
+    expect(
+      attribution.sibling.length,
+      `R-12 §3.4 — OUT OF SCOPE BY CONSTRUCTION: a sibling unit's legitimate artifact inside \`E3\`’s anchor range is not \`E3\`’s diff (\`92b6d88\` added \`E10\`’s OWN spec \`docs/specs/gutter-ui.md\`, a path \`E3\`’s DENIED set forbids \`E3\` to author — and \`E3\` owes \`E10\` nothing, \`§8\`). Sibling commits in \`${committed.range}\`: ${JSON.stringify(
+        attribution.sibling.map((c) => ({ hash: c.hash.slice(0, 7), paths: c.paths })),
+      )}. Denied paths in the FULL range (reported, not failed — each belongs to the row of the unit that committed it): ${JSON.stringify(
+        deniedInRange,
       )}`,
     ).toBeGreaterThan(0)
+    // (e) **THE SIBLING CLASS, DRIVEN RATHER THAN ASSUMED (the second reading of the `92b6d88`
+    //     observation):** the range's OWN reading of the denied path is still available, and it IS
+    //     a denial by `isDeniedPath` — so the exclusion is the ATTRIBUTION's work, never a
+    //     weakened predicate.
+    expect(
+      committed.paths.filter(isDeniedPath),
+      `R-12 §3.4 — the predicate is NOT weakened: a denied path present in the FULL range is still denied by \`isDeniedPath\` (the reading above); only the SUBJECT of the row changed, to \`E3\`’s own commits. Full-range denied reading: ${JSON.stringify(
+        deniedInRange,
+      )}`,
+    ).toEqual(deniedInRange)
+    // (f) **THE POSITIVE CONTROL — A DENIED PATH APPEARING AMONG `E3`'S OWN CHANGED PATHS FAILS
+    //     THE ROW.** The control is driven through the row's OWN machinery: `E3`'s REAL attributed
+    //     commit list PLUS one synthetic `E3` commit that carries a real `E3` artifact AND a denied
+    //     path. The SAME two stages the row runs (attribution, then the DENIED check) must then put
+    //     exactly that path into the failure set.
+    const controlDenied = SESSION_RELPATH
+    const controlCommits: RangeCommit[] = [
+      ...attribution.owned,
+      { hash: 'CONTROL-E3-COMMIT', paths: [TEST_RELPATH, controlDenied] },
+    ]
+    const controlAttribution = e3Attribution(controlCommits)
+    expect(
+      controlAttribution.owned.some((c) => c.hash === 'CONTROL-E3-COMMIT'),
+      `R-12 §3.4 — POSITIVE CONTROL (stage 1/2, THE MEASUREMENT IS NOT VACUOUS): a commit that carries an \`E3\` artifact (\`${TEST_RELPATH}\`) AND a denied path (\`${controlDenied}\`) is attributed to \`E3\` — so the DENIED check below really is run over it (a control the attribution rule had filtered away would prove nothing)`,
+    ).toBe(true)
+    expect(
+      controlAttribution.paths.filter(isDeniedPath),
+      `R-12 §3.4 — POSITIVE CONTROL (stage 2/2, THE NARROWED ROW CAN STILL FAIL): a denied path appearing AMONG \`E3\`’S OWN CHANGED PATHS is REPORTED by the row’s own DENIED check, so the row FAILS — and it fails for the RIGHT reason, naming the path. Control drive: E3’s real attributed commits + \`${TEST_RELPATH}\` + \`${controlDenied}\``,
+    ).toEqual([controlDenied])
+    // (g) **THE EXCLUSION SEAM, DRIVEN IN BOTH DIRECTIONS.** A commit carrying NO `E3` artifact is
+    //     a SIBLING's, so its paths (denied or not) are out of this row's scope — and the SAME
+    //     denied path IS reported once an `E3` artifact joins the commit. That pair is the whole
+    //     repair, measured rather than asserted.
+    const siblingControl = e3Attribution([
+      { hash: 'CONTROL-SIBLING-COMMIT', paths: ['docs/specs/gutter-ui.md', controlDenied] },
+    ])
+    expect(
+      siblingControl.paths,
+      `R-12 §3.4 — OUT OF SCOPE BY CONSTRUCTION (the exclusion seam, direction 1): a commit carrying NO \`E3\` artifact contributes NOTHING to \`E3\`'s own change set — which is exactly why \`92b6d88\` (the sibling's commit that ADDED \`E10\`'s own spec) cannot fail this row`,
+    ).toEqual([])
+    expect(
+      siblingControl.sibling.length,
+      `R-12 §3.4 — and that commit is named as a SIBLING's, never dropped silently: ${JSON.stringify(
+        siblingControl.sibling.map((c) => ({ hash: c.hash, paths: c.paths })),
+      )}`,
+    ).toBe(1)
+    expect(
+      gutterImporters(),
+      'R-12 §3.4 — the companion claim: `src/shared/gutter.ts` is imported by NO `src/**` file',
+    ).toEqual([])
   })
 
   it('R-13 §3.4 — THE SINGLE-WRITER / WRITE-COUNT ROW, A PAIR: the runtime record and `stats().sinkCalls` AGREE with both positive controls, and exactly ONE sink call site in the module', async () => {

@@ -166,6 +166,11 @@ export function createResizeController(options?: ResizeControllerOptions): Resiz
   const counters = { attached: 0, gestures: 0, sinkCalls: 0, written: 0, resets: 0, lastCode: 'ok' as ResizeCode }
   let ended = false
 
+  /** THE SESSION'S OWN PERMANENT-INERT READING — one of the three members this composition may
+   *  READ, read through the total reader and never assigned here. It is the second limb of
+   *  `detached`, and the state on which every delegation below is refused. */
+  const sessionEnded = (): boolean => readMember(session, 'disposed') === true
+
   const refusal = (code: ResizeCode): ResizeResetResult => {
     counters.lastCode = code
     return { ok: false, code, committed: false }
@@ -289,17 +294,27 @@ export function createResizeController(options?: ResizeControllerOptions): Resiz
             }
           }
         }
-        entry.gesture = gesture
-        const consumer = entry.hooks === null || entry.hooks === undefined ? undefined : entry.hooks.onEnd
-        if (typeof consumer === 'function') {
-          ;(consumer as (element: unknown, value: unknown) => void)(element0, value)
+        try {
+          const consumer = entry.hooks === null || entry.hooks === undefined ? undefined : entry.hooks.onEnd
+          if (typeof consumer === 'function') {
+            ;(consumer as (element: unknown, value: unknown) => void)(element0, value)
+          }
+        } finally {
+          // THE TERMINAL'S OWN BOOKKEEPING IS UNCONDITIONAL, and the record is never put back: the
+          // per-gesture handle is discarded whether or not the consumer hook returned, so a later
+          // `reset(element)` can never reach for a dead handle. A value the reset path supplied
+          // belongs to the session's committing terminal, which has not recorded it yet at this
+          // point; the write below is what carries it.
+          const narrowed = entry.narrowed
+          const spent = entry.spent
+          entry.gesture = null
+          entry.narrowed = undefined
+          entry.narrowedSet = false
+          if (gesture !== null && !spent) {
+            entry.spent = true
+            write(gesture, narrowed, suppliedSet)
+          }
         }
-        // A value the reset path supplied belongs to the session's committing terminal, which
-        // has not recorded it yet at this point; the session's own channel writes that one.
-        if (gesture === null) return
-        if (entry.spent) return
-        entry.spent = true
-        write(gesture, entry.narrowed, suppliedSet)
       },
       wrappedOnCancel: (element0: unknown): void => {
         const consumer = entry.hooks === null || entry.hooks === undefined ? undefined : entry.hooks.onCancel
@@ -309,32 +324,8 @@ export function createResizeController(options?: ResizeControllerOptions): Resiz
     return entry
   }
 
-  /** The session's own writing channel, discovered under either of the two member names a
-   *  session or its recording stand-in may expose for it. A session offering neither leaves
-   *  the composition writing from its terminal hook alone. */
-  const offerWriter = (): void => {
-    const registered = callableMember(session, 'registerCompositionWriter')
-    if (registered !== null) {
-      try {
-        registered.call(session, write)
-      } catch {
-        return
-      }
-      return
-    }
-    const late = callableMember(session, 'registerCommit')
-    if (late === null) return
-    try {
-      late.call(session, write)
-    } catch {
-      return
-    }
-  }
-
-  if (!inert) offerWriter()
-
   const attach = (element: unknown, hooks?: ResizeControllerHandle): boolean => {
-    if (ended || inert) return false
+    if (ended || inert || sessionEnded()) return false
     if (element === null || element === undefined) return false
     if (entryOf(element) !== null) return false
     const installer = callableMember(session, 'install')
@@ -360,7 +351,7 @@ export function createResizeController(options?: ResizeControllerOptions): Resiz
   }
 
   const detach = (): boolean => {
-    if (ended || inert) return false
+    if (ended || inert || sessionEnded()) return false
     if (attachedCount() > 1) return false
     const closer = callableMember(session, 'dispose')
     if (closer === null) return false
@@ -447,7 +438,7 @@ export function createResizeController(options?: ResizeControllerOptions): Resiz
     reset,
     stats,
     get detached(): boolean {
-      return ended
+      return ended || sessionEnded()
     },
   }
 }
