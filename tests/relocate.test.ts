@@ -272,18 +272,45 @@ type SessionDoubleOptions = {
    *  (`F-6`). */
   readonly sink?: ((gesture: GestureHandle, value: unknown) => void) | null
   readonly disposed?: boolean
+  /** `M-3` — THE TURN TRACE. The module's OWN `onStart` wrapper is the ONE wrapper the
+   *  contract's pinned turn order names as an ITEM (`§2.3` item 6's lead-in: *"`onStart`
+   *  WRAPPER → THE CONSUMER'S `onStart` → …"*), and the move turn's wrapper is the
+   *  CONTAINER of the sequence the same clause lists rather than an item in it. So the
+   *  session's own invocation of that one wrapper is marked into the ROW's order log
+   *  (the double's own `hookCalls` is a DIFFERENT array, and no module can push into a
+   *  row's closures) — which is what makes the pinned order OBSERVABLE. */
+  readonly trace?: string[]
 }
 type SessionDouble = {
   readonly ops: SessionOp[]
   readonly reads: string[]
   readonly installs: Array<{ element: unknown; options: unknown }>
-  readonly resets: Array<{ element: unknown; handle: unknown; value: unknown }>
+  /** The `reset` DELEGATIONS, with the THIRD ARGUMENT recorded AS THE CALLER PASSED IT and
+   *  the CALL's own `arity` (`§2.3` item 9(a)): there is NO substitution anywhere — the
+   *  *"fewer than three arguments ⇒ substitute my own value"* form is GONE, because it made
+   *  every identity assertion UNFALSIFIABLE. */
+  readonly resets: Array<{ element: unknown; handle: unknown; value: unknown; arity: number }>
+  /** THE SESSION'S OWN TERMINAL LOG (`§2.5` item 6): ONE entry per terminal that RAN,
+   *  carrying the session's own `outcome` and the value the session handed its hook. This
+   *  is the reading a row uses where it must say *"this was a COMMITTING terminal, not a
+   *  cancel"* — the install-options `'commit'` member the double used to read does NOT
+   *  exist on the frozen surface (`§2.5` item 7 clauses 1–3). */
+  readonly terminals: Array<{ outcome: 'end' | 'reset'; value: unknown }>
+  /** THE SESSION'S OWN REFUSAL LOG: ONE entry per REFUSED `reset` (the frozen union's own
+   *  code). A row that declares a REFUSED terminal reads THIS, so the cell is not vacuous:
+   *  it proves the module ATTEMPTED a terminal and the session refused it. */
+  readonly refusals: string[]
   disposes: number
   hookCalls: string[]
   /** The recorded hook options of the LAST accepted `install`, by identity. */
   hooks: Record<string, unknown> | null
   element: unknown
-  setElement(element: unknown, preDragValue: unknown): void
+  /** The element the session hands the module's wrappers. **THE SECOND PARAMETER IS
+   *  VESTIGIAL AND IS READ BY NO DECLARATION**: it is the parameter the pre-2026-09-27
+   *  double used to substitute its own value from (`§2.3` item 9(a)); that substitution is
+   *  GONE, and the caller's pre-drag value now travels on the consumer's own hooks record
+   *  (`§2.1` item 7) — `setPreDrag`/`preDragValueOf` in the rows below. */
+  setElement(element: unknown, vestigialPreDragValue?: unknown): void
   /** ESTABLISHMENT (`§2.3` item 6(b)) — the session's own `onStart` call. */
   establish(): void
   /** ONE OBSERVED MOVE (`§2.3` item 6(c)) — the session's own `onMove` call. */
@@ -291,8 +318,10 @@ type SessionDouble = {
   /** The `'end'` TERMINAL (`§2.3` item 6(d)). */
   terminate(value?: unknown): void
   /** The `'reset'` TERMINAL, entered by the module's own move turn (`§0A` note 8). */
-  reset(element?: unknown, handle?: unknown, value?: unknown): RelocateResetResult
-  /** A `cancel`: the module's terminal wrapper is NEVER invoked (`§2.3` item 6(d)). */
+  reset(element?: unknown, handle?: unknown, value?: unknown, arity?: number): RelocateResetResult
+  /** A `cancel`: the module's COMMITTING terminal logic is never reached (`§2.3` item 6(d))
+   *  — while the module's own installed `onCancel` wrapper IS invoked, exactly as the
+   *  landed session's cancel path invokes it (`src/shared/gesture-session.ts`). */
   cancel(): void
   sessionObject: Record<string, unknown>
 }
@@ -300,12 +329,20 @@ function sessionDouble(opts: SessionDoubleOptions = {}): SessionDouble {
   const ops: SessionOp[] = []
   const reads: string[] = []
   const installs: Array<{ element: unknown; options: unknown }> = []
-  const resets: Array<{ element: unknown; handle: unknown; value: unknown }> = []
+  const resets: Array<{ element: unknown; handle: unknown; value: unknown; arity: number }> = []
+  const terminals: Array<{ outcome: 'end' | 'reset'; value: unknown }> = []
+  const refusals: string[] = []
   const hookCalls: string[] = []
+  const trace = opts.trace ?? null
   const sink = opts.sink ?? null
+  /** THE LIVE GESTURE RECORD. `outcome`/`active` are written ON IT, so the handle the module
+   *  captured in its own `onMove` wrapper keeps reading the session's LIVE state — the landed
+   *  session's own shape (`buildHandle`'s getters). A double that built a NEW terminal handle
+   *  and discarded the old one left the module's own discriminator reading `null`
+   *  (`§2.5` item 7 clause 4(a)). */
+  let record: { id: number; element: unknown; active: boolean; outcome: 'end' | 'reset' | 'cancel' | null; value: unknown } | null = null
   let handle: GestureHandle | null = null
   let element: unknown = null
-  let preDragValue: unknown = undefined
   let disposed = opts.disposed === true
   let disposes = 0
   let hooks: Record<string, unknown> | null = null
@@ -314,30 +351,68 @@ function sessionDouble(opts: SessionDoubleOptions = {}): SessionDouble {
     const candidate = hooks === null ? undefined : hooks[name]
     return typeof candidate === 'function' ? (candidate as (...args: unknown[]) => void) : null
   }
-  /** THE TERMINAL ORDER OF `§2.5` item 6, mirrored: detach → mark inactive → set the
-   *  outcome → run `onEnd` → `slot = null` → invoke the composition's `commit` call
-   *  exactly once. The module's own `commit` SEAM is reached through that LAST step. */
-  const runTerminal = (outcome: 'end' | 'reset', value: unknown): void => {
-    if (handle === null) return
-    const terminalHandle: GestureHandle = {
-      id: handle.id,
-      element: handle.element,
-      active: false,
-      outcome,
-      value,
-      set: (v: unknown): GestureHandle => handle as GestureHandle,
+  const buildHandle = (): GestureHandle => {
+    const h: GestureHandle = {
+      get id(): number {
+        return record === null ? 0 : record.id
+      },
+      get element(): unknown {
+        return record === null ? null : record.element
+      },
+      get active(): boolean {
+        return record !== null && record.active
+      },
+      get outcome(): 'end' | 'reset' | 'cancel' | null {
+        return record === null ? null : record.outcome
+      },
+      get value(): unknown {
+        return record === null ? undefined : record.value
+      },
+      set(value: unknown): GestureHandle {
+        if (record !== null && record.active) record.value = value
+        return h
+      },
     }
+    return h
+  }
+  /** THE TERMINAL ORDER OF `§2.5` item 6, mirrored: detach → mark inactive → set the
+   *  outcome → run `onEnd` → `slot = null` → invoke the composition's construction `commit`
+   *  exactly once. **THE THREE DIVERGENCES OF `§2.5` item 7 clause 4 ARE CORRECTED HERE:**
+   *  **(a)** the terminal word is written on the SAME handle object the module's own `onMove`
+   *  wrapper received (the getters above read the live record), so the module's own
+   *  discriminator reads `'end'`/`'reset'` rather than `null`; **(b)** the installed `onEnd`
+   *  receives **`(element, value)`** — NEVER a handle, which is the frozen signature
+   *  `onEnd(element, value)`; **(c)** the construction `commit` is invoked AT THE TERMINAL and
+   *  ONLY there — the establishment invocation the session never makes is GONE. */
+  const runTerminal = (outcome: 'end' | 'reset', value: unknown): void => {
+    if (record === null) return
+    const live = record
+    const liveHandle = handle
+    record.active = false
+    record.outcome = outcome
+    const final = outcome === 'reset' ? value : value !== undefined ? value : live.value
+    terminals.push({ outcome, value: final })
+    let hookError: unknown = null
     const endHook = hook('onEnd')
     if (endHook !== null) {
       hookCalls.push('onEnd')
-      endHook(element, terminalHandle)
+      try {
+        endHook(element, final)
+      } catch (error) {
+        hookError = error
+      }
     }
-    const commitSeam = hook('commit')
     handle = null
-    if (commitSeam !== null) {
-      hookCalls.push('commit')
-      commitSeam(terminalHandle, value)
+    let commitError: unknown = null
+    if (sink !== null && liveHandle !== null) {
+      try {
+        sink(liveHandle, final)
+      } catch (error) {
+        commitError = error
+      }
     }
+    if (hookError !== null) throw hookError
+    if (commitError !== null) throw commitError
   }
 
   const d: SessionDouble = {
@@ -345,28 +420,23 @@ function sessionDouble(opts: SessionDoubleOptions = {}): SessionDouble {
     reads,
     installs,
     resets,
+    terminals,
+    refusals,
     hookCalls,
     hooks: null,
     element: null,
     disposes: 0,
-    setElement(el: unknown, preDrag: unknown): void {
+    setElement(el: unknown, _vestigialPreDragValue?: unknown): void {
       element = el
-      preDragValue = preDrag
       d.element = el
     },
     establish(): void {
       if (handle !== null) return
-      handle = {
-        id: 1,
-        element,
-        active: true,
-        outcome: null,
-        value: undefined,
-        set: (): GestureHandle => handle as GestureHandle,
-      }
-      if (sink !== null) sink(handle, undefined)
+      record = { id: 1, element, active: true, outcome: null, value: undefined }
+      handle = buildHandle()
       const startHook = hook('onStart')
       if (startHook !== null) {
+        if (trace !== null) trace.push('onStart')
         hookCalls.push('onStart')
         startHook(element)
       }
@@ -379,28 +449,56 @@ function sessionDouble(opts: SessionDoubleOptions = {}): SessionDouble {
       }
     },
     terminate(value?: unknown): void {
-      const effective = arguments.length > 0 ? value : preDragValue
-      if (handle !== null) handle.set(effective)
+      if (record === null || !record.active) return
+      const effective = arguments.length > 0 ? value : record.value
       runTerminal('end', effective)
     },
-    reset(el?: unknown, h?: unknown, value?: unknown): RelocateResetResult {
+    reset(el?: unknown, h?: unknown, value?: unknown, arity?: number): RelocateResetResult {
       const refused = opts.refuseResetWith ?? null
-      if (disposed) return { ok: false, code: 'disposed', committed: false }
-      if (refused !== null) return { ok: false, code: refused, committed: false }
-      if (handle === null) return { ok: false, code: 'no-gesture', committed: false }
+      const callArity = arity ?? arguments.length
+      if (disposed) {
+        refusals.push('disposed')
+        return { ok: false, code: 'disposed', committed: false }
+      }
+      if (refused !== null) {
+        refusals.push(refused)
+        return { ok: false, code: refused, committed: false }
+      }
+      if (handle === null) {
+        refusals.push('no-gesture')
+        return { ok: false, code: 'no-gesture', committed: false }
+      }
       const target = arguments.length === 0 ? element : el
-      const theHandle = arguments.length < 2 ? handle : h
-      const theValue = arguments.length < 3 ? preDragValue : value
+      const theHandle = callArity < 2 ? handle : h
+      // **NO SUBSTITUTION** (`§2.3` item 9(a)): the third argument is recorded EXACTLY as
+      // the caller passed it — a two-argument call records `undefined`, which is what the
+      // frozen `reset(element, gesture, value)` would commit (`docs/specs/gsession.md`
+      // `§2.5` item 5; the session holds NO default and computes none).
+      const theValue = value
       ops.push({ op: 'reset', element: target, handle: theHandle, value: theValue })
-      resets.push({ element: target, handle: theHandle, value: theValue })
-      if (sink !== null) sink(handle as GestureHandle, theValue)
+      resets.push({ element: target, handle: theHandle, value: theValue, arity: callArity })
       runTerminal('reset', theValue)
-      return { ok: true, code: 'ok', committed: sink !== null }
+      // THE FROZEN `TerminalResult`: a committing terminal answers `committed: true`
+      // INDEPENDENTLY of whether a `commit` callback was installed (`docs/specs/gsession.md`
+      // `§2.1`'s `TerminalResult`, the `ADV-GS-22`(a) correction; `§2.3` item 9(d)). The
+      // `sink !== null` coupling the double used to answer with is GONE.
+      return { ok: true, code: 'ok', committed: true }
     },
     cancel(): void {
-      hookCalls.push('cancel')
-      if (handle !== null) handle.set(undefined)
+      // THE LANDED SESSION'S CANCEL PATH (`src/shared/gesture-session.ts`
+      // `cancelOperation`): detach, mark inactive, set the outcome, discard the record,
+      // then run the module's own INSTALLED `onCancel` wrapper — whose forwarding of the
+      // consumer's `onCancel` is what `M-17` asserts. `commit` is invoked ZERO times.
+      if (record !== null) {
+        record.active = false
+        record.outcome = 'cancel'
+      }
       handle = null
+      const cancelHook = hook('onCancel')
+      if (cancelHook !== null) {
+        hookCalls.push('onCancel')
+        cancelHook(element)
+      }
     },
     sessionObject: {},
   } as unknown as SessionDouble
@@ -414,7 +512,9 @@ function sessionDouble(opts: SessionDoubleOptions = {}): SessionDouble {
       return opts.installAccepts ?? true
     },
     reset(el: unknown, h?: unknown, value?: unknown): RelocateResetResult {
-      return d.reset(el, h, value)
+      // THE MODULE'S OWN CALL ARITY IS RECORDED (`§2.3` item 9(a)): the frozen arity is
+      // THREE, and a two-argument delegation records `arity: 2`, so a row can assert it.
+      return d.reset(el, h, value, arguments.length)
     },
     dispose(): { removed: number; complete: boolean } {
       ops.push({ op: 'dispose', element: null })
@@ -422,6 +522,11 @@ function sessionDouble(opts: SessionDoubleOptions = {}): SessionDouble {
       disposed = true
       hooks = null
       handle = null
+      if (record !== null) {
+        record.active = false
+        record.outcome = 'cancel'
+      }
+      record = null
       return { removed: 0, complete: opts.disposeComplete ?? true }
     },
     gesture(): unknown {
@@ -499,6 +604,37 @@ function hookRecorder(): {
   return {
     handle: { onStart: make('onStart'), onMove: make('onMove'), onEnd: make('onEnd'), onCancel: make('onCancel') },
     calls,
+  }
+}
+
+/** `§2.1` item 7 — THE PRE-DRAG VALUE'S CHANNEL, mirrored as the rows' own consumer record.
+ *  It supplies the ONE member that carries the caller's pre-drag value — `preDragValueOf?:
+ *  (element: unknown) => unknown`, a member of the CONSUMER-SUPPLIED hooks record — BESIDE
+ *  the consumer's own RECORDED INVOCATION COUNT, which is the instrument `§2.1` item 7(d)
+ *  names (*"the capture's count is read from THE CONSUMER'S OWN RECORDED INVOCATION COUNT"*).
+ *  **IT IS NOT A HOOK AND NOT AN INSTALL OPTION**: the module must NOT forward it into the
+ *  options object it hands the session, whose key set stays EXACTLY the four hooks
+ *  (`M-1`/`R-10`/`I-7`), and `M-17`'s drive is NOT extended to a fifth recorded hook. */
+function preDragChannel(initial: unknown = undefined, extra: Record<string, unknown> = {}): {
+  readonly hooks: Record<string, unknown>
+  set(value: unknown): void
+  count(): number
+} {
+  let held = initial
+  let invocations = 0
+  const hooks: Record<string, unknown> = {
+    ...extra,
+    preDragValueOf: (_element: unknown): unknown => {
+      invocations += 1
+      return held
+    },
+  }
+  return {
+    hooks,
+    set: (value: unknown): void => {
+      held = value
+    },
+    count: (): number => invocations,
   }
 }
 
@@ -889,12 +1025,28 @@ type RowRecord = {
   attemptsRun: number
   held: number
   broken: number
+  /** `§5.5.2` item 9 clause (3) — THE DECLARED-FAILING CONTROL DRIVES, REPORTED BESIDE the
+   *  declared term and NEVER counted in it. A control drive IS a drive (it sits inside the
+   *  term) and its declared failure is an OBSERVATION the drive ASSERTS, so it HOLDS and
+   *  `broken` stays `0`. */
+  controls: number
   stoppedEarly: boolean
   notStarted: boolean
   registerStoppedAt: string | null
   causes: string[]
 }
 const registerRecords: RowRecord[] = []
+/** `§5.5.2` item 9 clause (3) / `§5.3` item 10 — THE DECLARED CONTROL FIGURES, per row,
+ *  BESIDE the terms (`§0A` note 15 item `S6`: *"measured at the re-grained revision:
+ *  `P-RL-SM-3` `2`, `P-RL-SM-5` `1`, every other row `0`"*). No declared term, total, cap
+ *  or row id moves with this table: it is a REPORTED figure and a per-row reconciliation. */
+const REGISTER_CONTROLS: ReadonlyArray<{ row: string; controls: number }> = [
+  { row: 'P-RL-SM-3', controls: 2 },
+  { row: 'P-RL-SM-5', controls: 1 },
+]
+function declaredControlsOf(row: string): number {
+  return REGISTER_CONTROLS.filter((r) => r.row === row).reduce((a, r) => a + r.controls, 0)
+}
 /** The DECLARED term (`§5.5.1`) reconciled against the table this file actually drove —
  *  the reconciliation `§5.3` items 10/11 require. A row that NEVER STARTED is not
  *  reconciled here: its own `finish()` reports it as a FAILURE, which is the loud
@@ -910,6 +1062,7 @@ class RegisterRow {
   private attemptsRun = 0
   private held = 0
   private broken = 0
+  private controls = 0
   private stoppedEarly = false
   private notStarted = false
   private readonly causes: string[] = []
@@ -920,8 +1073,12 @@ class RegisterRow {
   }
 
   /** ONE attempt. `body` returns `null` when the property HELD, else the break cause as
-   *  a sentence (a throw is caught and is itself a break cause). */
-  run(label: string, body: () => string | null): void {
+   *  a sentence (a throw is caught and is itself a break cause). **`control` marks a
+   *  DECLARED-FAILING CONTROL drive** (`§5.5.2` item 9): it is a drive like any other —
+   *  counted in `attemptsRun` and already inside its declared term — and its declared
+   *  failure is an OBSERVATION the drive asserts, so the attempt HOLDS (`broken` stays
+   *  `0`); the record reports it BESIDE the term as `controls`. */
+  run(label: string, body: () => string | null, control = false): void {
     if (registerState.stoppedAtRow !== null) {
       if (this.attemptsRun === 0) this.notStarted = true
       return
@@ -938,6 +1095,7 @@ class RegisterRow {
       return
     }
     this.attemptsRun += 1
+    if (control) this.controls += 1
     registerState.attempts += 1
     let cause: string | null = null
     try {
@@ -974,6 +1132,7 @@ class RegisterRow {
       attemptsRun: this.attemptsRun,
       held: this.held,
       broken: this.broken,
+      controls: this.controls,
       stoppedEarly: this.stoppedEarly,
       notStarted: this.notStarted,
       registerStoppedAt: registerState.stoppedAtRow,
@@ -996,6 +1155,7 @@ class RegisterRow {
           row: this.row,
           strategy: this.strategy,
           attemptsRun: 0,
+          controls: 0,
           reported: 'FAILURE — never started; the register stopped earlier',
           registerStoppedAt: registerState.stoppedAtRow,
           stoppedFor: registerState.stoppedFor,
@@ -2277,6 +2437,15 @@ type Composition = {
   readonly previewArgs: unknown[][]
   readonly sinkArgs: unknown[][]
   readonly hooks: ReturnType<typeof hookRecorder>
+  /** `§2.1` item 7 — THE CONSUMER'S HOOKS RECORD, carrying the four hooks AND the
+   *  pre-drag reading. A row that asserts the CALLER's pre-drag value passes THIS record
+   *  to `attach` (`A2`(e)): the value reaches the module through the member, never through
+   *  a value the test double substituted (`§2.3` item 9(a)). */
+  readonly hookArgs: Record<string, unknown>
+  /** The caller's pre-drag value for the NEXT established gesture. */
+  setPreDrag(value: unknown): void
+  /** THE CONSUMER'S OWN RECORDED INVOCATION COUNT (`§2.1` item 7(d)). */
+  preDragCalls(): number
   readonly calls: string[]
   stats(): RelocateStatsMirror
 }
@@ -2287,8 +2456,12 @@ async function compose(label: string, overrides: RelocateOptionsMirror = {}, opt
   const calls: string[] = []
   const double = sessionDouble(opts)
   const el: Record<string, unknown> = { control: label }
-  double.setElement(el, 777)
+  // The double's second parameter is VESTIGIAL (read by no declaration): the element is the
+  // only thing this call establishes. The caller's pre-drag value travels on the hooks record.
+  double.setElement(el)
   const hooks = hookRecorder()
+  const preDrag = preDragChannel(undefined, hooks.handle)
+  const hookArgs = preDrag.hooks
   const options: RelocateOptionsMirror = {
     session: double.sessionObject,
     candidatesFor: (): unknown => [answer(1, { opaque: 'candidate' })],
@@ -2309,7 +2482,20 @@ async function compose(label: string, overrides: RelocateOptionsMirror = {}, opt
     ...overrides,
   }
   const mod = await makeModule(options, label)
-  return { mod, double, el, revealArgs, previewArgs, sinkArgs, hooks, calls, stats: (): RelocateStatsMirror => mod.stats() }
+  return {
+    mod,
+    double,
+    el,
+    revealArgs,
+    previewArgs,
+    sinkArgs,
+    hooks,
+    hookArgs,
+    setPreDrag: preDrag.set,
+    preDragCalls: preDrag.count,
+    calls,
+    stats: (): RelocateStatsMirror => mod.stats(),
+  }
 }
 
 // ===========================================================================
@@ -2341,8 +2527,8 @@ describe('§3.3 I-2..I-15 — the invariants that hold in every state', () => {
         'I-2 — the module’s own `stats().revealWrites` AGREES with the consumer’s record at 1 (they must agree for a conformant composition)',
       ).toBe(1)
       expect(
-        c.double.hookCalls.filter((h) => h === 'commit').length,
-        'I-2 — the module’s own `commit` seam ran exactly once for the gesture, and only at its terminal',
+        c.sinkArgs.length,
+        'I-2 — the module’s own `commit` SEAM ran exactly once for the gesture, and only at its terminal — READ FROM THE SINK’S OWN RECORD (`RelocateOptions.commit`’s consumer-side invocation) BESIDE the module’s counter, NEVER from a member of the install options object: the frozen `install` surface has no `commit` member at all (§2.5 item 7 clauses 1–3)',
       ).toBe(1)
       expect(
         c.calls.indexOf('onReveal'),
@@ -2424,8 +2610,8 @@ describe('§3.3 I-2..I-15 — the invariants that hold in every state', () => {
         return target
       },
     })
-    c.double.setElement(c.el, preDrag)
-    c.mod.attach(c.el, { element: c.el, onStart: c.hooks.handle.onStart as (e: unknown) => void, onMove: c.hooks.handle.onMove as (g: unknown) => void, onEnd: c.hooks.handle.onEnd as (e: unknown, v: unknown) => void, onCancel: c.hooks.handle.onCancel as (e: unknown) => void })
+    c.setPreDrag(preDrag)
+    c.mod.attach(c.el, c.hookArgs)
     c.double.establish()
     c.double.move()
     c.double.terminate()
@@ -2453,6 +2639,30 @@ describe('§3.3 I-2..I-15 — the invariants that hold in every state', () => {
       seenCandidate,
       'I-5 — the candidate the module handed to `resolveTarget` is the same by identity as `seenCandidate` (the module never replaced it)',
     ).not.toBe(null)
+    expect(
+      c.preDragCalls(),
+      'I-5 — the consumer’s own recorded INVOCATION COUNT of the hooks record’s `preDragValueOf` member reads exactly 1 for the established gesture (`§2.1` item 7(d)): the value passed through the member, never through a substitution',
+    ).toBe(1)
+    expect(
+      c.sinkArgs[0][1],
+      'I-5 — and the SINK’s committed value is the caller’s `resolveTarget` answer, never the pre-drag value: the `\'end\'` limb carries the dragged/committed value (`§0A` note 15’s `A2` continuation’s closing pin)',
+    ).toBe(target)
+    // THE PRE-DRAG VALUE'S OWN IDENTITY, on the arm that commits it: the third argument of
+    // `session.reset(element, handle, value)` is the caller’s value BY IDENTITY, and the
+    // call’s ARITY is THREE (`§2.3` item 9(a)) — read from the delegation itself.
+    const arm = await compose('I-5/arm', { candidatesFor: (): unknown => [answer(999)] })
+    arm.setPreDrag(preDrag)
+    arm.mod.attach(arm.el, arm.hookArgs)
+    arm.double.establish()
+    arm.double.move()
+    expect(
+      arm.double.resets[0].value,
+      'I-5 — the invalid arm’s `session.reset` carries the CALLER’S pre-drag value BY IDENTITY (never cloned, stringified, keyed or altered by this module)',
+    ).toBe(preDrag)
+    expect(
+      arm.double.resets[0].arity,
+      'I-5 — the delegation’s ARITY is THREE (`session.reset(element, handle, value)`): a two-argument delegation would record `arity: 2` here',
+    ).toBe(3)
   })
 
   it('I-6 §3.3 — NO DOM, NO AMBIENT READ, NO ELEMENT LOOKUP, EVER: the module contains no realm-rooted access, no element-query token in any form, and reads no ambient global', () => {
@@ -2752,6 +2962,13 @@ describe('§3.1 M-1 · M-3..M-17 — the valid states (call counts, call order, 
   it('M-3 §3.1 — the seam ORDER at establishment and on an observed move, with the HANDLE’S identity: the module’s own `onStart` then the consumer’s; `candidatesFor` → `resolveTarget` → `onPreview` → the consumer’s `onMove`; and at the terminal `onReveal` → `commit` → the consumer’s `onEnd`', async () => {
     const order: string[] = []
     const seen: { resolveHandle: unknown; consumerMoveHandle: unknown } = { resolveHandle: null, consumerMoveHandle: null }
+    // THE TURN TRACE (`§2.3` item 6's pinned lead-in): the SESSION marks its own invocation of
+    // the module's `onStart` WRAPPER — the one wrapper the pinned order names as an ITEM
+    // *(`onStart` WRAPPER → THE CONSUMER'S `onStart` → …)*. Without it the literal `'onStart'`
+    // could not appear in this log at all: `order` is mutated by the CONSUMER's own closures,
+    // while the module's wrapper is called BY THE SESSION on the row's behalf, so no module can
+    // write into it. The move turn's wrapper is the CONTAINER of the sequence the same clause
+    // lists (its first item is `candidatesFor`), so it carries no marker of its own.
     const c = await compose('M-3', {
       candidatesFor: (): unknown => {
         order.push('candidatesFor')
@@ -2773,7 +2990,7 @@ describe('§3.1 M-1 · M-3..M-17 — the valid states (call counts, call order, 
       commit: (): void => {
         order.push('commit')
       },
-    })
+    }, { trace: order })
     const consumerHooks: Record<string, unknown> = {
       element: c.el,
       onStart: (): void => {
@@ -2793,7 +3010,7 @@ describe('§3.1 M-1 · M-3..M-17 — the valid states (call counts, call order, 
     c.double.terminate()
     expect(
       order,
-      `M-3 — the recorded call order is the module's own onStart wrapper THEN the consumer's onStart at establishment; then on the move \`candidatesFor\` → \`resolveTarget\` → \`onPreview\` → the consumer's \`onMove\`; then at the terminal \`onReveal\` → \`commit\` → the consumer's \`onEnd\` (§2.3 item 6, §7a.1 item 1's working default: the invalid-arm test runs AFTER the consumer's hook, and M-8 asserts the arm's own position). Read: ${JSON.stringify(
+      `M-3 — the recorded call order is the module's own onStart WRAPPER (marked by the session's own turn trace) THEN the consumer's onStart at establishment; then on the move \`candidatesFor\` → \`resolveTarget\` → \`onPreview\` → the consumer's \`onMove\`; then at the terminal \`onReveal\` → \`commit\` → the consumer's \`onEnd\` (§2.3 item 6's PINNED lead-in, promoted from §7a.1 item 1's working default: the invalid-arm test runs AFTER the consumer's hook, and M-8 asserts the arm's own position). Read: ${JSON.stringify(
         order,
       )}`,
     ).toEqual(['onStart', 'consumer onStart', 'candidatesFor', 'resolveTarget', 'onPreview', 'consumer onMove', 'onReveal', 'commit', 'consumer onEnd'])
@@ -2835,8 +3052,8 @@ describe('§3.1 M-1 · M-3..M-17 — the valid states (call counts, call order, 
       'M-4 — `stats().written === 0` on a cancel',
     ).toBe(0)
     expect(
-      c.double.hookCalls.filter((h) => h === 'commit').length,
-      'M-4 — the module’s own `commit` seam never ran: the session performed no committing terminal',
+      c.sinkArgs.length,
+      'M-4 — the module’s own `commit` SEAM never ran (read from the SINK’S OWN record, never from a member of the install options object): the session performed no committing terminal, and a `cancel` carries ZERO sink writes (§2.3 item 4’s channel-(C)/(A) counts)',
     ).toBe(0)
     expect(
       c.mod.reset(c.el),
@@ -2899,8 +3116,8 @@ describe('§3.1 M-1 · M-3..M-17 — the valid states (call counts, call order, 
     // (b) THE INVALID ARM (`'reset'`) — THE RULED DOMAIN'S ZERO CELL, labelled DERIVED.
     const preDrag = { opaque: 'the-caller-pre-drag-value' }
     const b = await compose('M-6/reset', { candidatesFor: (): unknown => [answer(999)] })
-    b.double.setElement(b.el, preDrag)
-    b.mod.attach(b.el)
+    b.setPreDrag(preDrag)
+    b.mod.attach(b.el, b.hookArgs)
     b.double.establish()
     b.double.move()
     b.double.terminate()
@@ -2914,8 +3131,12 @@ describe('§3.1 M-1 · M-3..M-17 — the valid states (call counts, call order, 
     ).toBe('reset')
     expect(
       b.sinkArgs[0][1],
-      'M-6(b) — the sink’s own argument carries the CALLER-SUPPLIED pre-drag value BY IDENTITY',
+      'M-6(b) — the sink’s own argument carries the CALLER-SUPPLIED pre-drag value BY IDENTITY (the module’s own `commit` SEAM is the invalid arm’s writer: `§0A` note 15’s `A2` continuation’s closing pin)',
     ).toBe(preDrag)
+    expect(
+      b.stats().sinkCalls,
+      'M-6(b) — the arm’s ONE sink write, read BESIDE the sink’s own record: `stats().sinkCalls === 1` on the `\'reset\'` terminal (the arm reads ZERO reveals and ONE sink call)',
+    ).toBe(1)
     // (c) THE CANCEL.
     const c = await compose('M-6/cancel')
     c.mod.attach(c.el)
@@ -2973,8 +3194,8 @@ describe('§3.1 M-1 · M-3..M-17 — the valid states (call counts, call order, 
   it('M-8 §3.1 — a move OUTSIDE every candidate’s proximity is the invalid arm, taken ONCE, from the module’s own move turn: `resets === 1`, `reset` entered DURING the drag with the exact handle/element/pre-drag value, one sink call with the pre-drag value and `outcome === \'reset\'`, and the later release commits NOTHING', async () => {
     const preDrag = { opaque: '777' }
     const c = await compose('M-8', { candidatesFor: (): unknown => [answer(999)] })
-    c.double.setElement(c.el, preDrag)
-    c.mod.attach(c.el)
+    c.setPreDrag(preDrag)
+    c.mod.attach(c.el, c.hookArgs)
     c.double.establish()
     const opsBeforeMove = c.double.ops.length
     c.double.move()
@@ -2999,8 +3220,16 @@ describe('§3.1 M-1 · M-3..M-17 — the valid states (call counts, call order, 
     ).toBe(c.el)
     expect(
       c.double.resets[0].value,
-      'M-8 — the `reset` call carries the CALLER-SUPPLIED pre-drag value (`777`) by identity',
+      'M-8 — the `reset` call carries the CALLER-SUPPLIED pre-drag value (`777`) by identity — READ THROUGH THE HOOKS RECORD’S OWN `preDragValueOf` MEMBER, which the module consulted once at establishment (`§2.1` item 7)',
     ).toBe(preDrag)
+    expect(
+      c.double.resets[0].arity,
+      'M-8 — the delegation’s ARITY is THREE (`session.reset(element, handle, value)`); a two-argument delegation records `arity: 2` and is NOT this contract’s form (`§2.3` item 9(a))',
+    ).toBe(3)
+    expect(
+      c.preDragCalls(),
+      'M-8 — the consumer’s own recorded invocation count reads EXACTLY 1: the capture ran once, at the module’s own `onStart` wrapper (`§2.1` item 7(d); never “at least”)',
+    ).toBe(1)
     const sinkCallsAtMove = c.sinkArgs.length
     expect(
       sinkCallsAtMove,
@@ -3078,9 +3307,9 @@ describe('§3.1 M-1 · M-3..M-17 — the valid states (call counts, call order, 
         return firstTarget
       },
     })
-    c.mod.attach(c.el)
+    c.mod.attach(c.el, c.hookArgs)
     // GESTURE 1 — a target, a distance in proximity, an 'end' terminal.
-    c.double.setElement(c.el, firstPreDrag)
+    c.setPreDrag(firstPreDrag)
     c.double.establish()
     c.double.move()
     c.double.terminate()
@@ -3095,7 +3324,7 @@ describe('§3.1 M-1 · M-3..M-17 — the valid states (call counts, call order, 
     // GESTURE 2 — NO candidates at all: the invalid arm, with ITS OWN pre-drag value.
     useCandidates = false
     seenTargets.length = 0
-    c.double.setElement(c.el, secondPreDrag)
+    c.setPreDrag(secondPreDrag)
     c.double.establish()
     c.double.move()
     c.double.terminate()
@@ -3105,8 +3334,12 @@ describe('§3.1 M-1 · M-3..M-17 — the valid states (call counts, call order, 
     ).toBe(1)
     expect(
       c.double.resets[0].value,
-      'M-10 — the second gesture committed ITS OWN pre-drag value, captured at ITS establishment — never the first gesture’s',
+      'M-10 — the second gesture committed ITS OWN pre-drag value, captured at ITS establishment through the hooks record’s `preDragValueOf` member — never the first gesture’s',
     ).toBe(secondPreDrag)
+    expect(
+      c.preDragCalls(),
+      'M-10 — the consumer’s own recorded invocation count reads EXACTLY 2 over the two established gestures (one capture per gesture, never a re-read at the arm) — `§2.1` item 7(d)',
+    ).toBe(2)
     expect(
       seenTargets,
       'M-10 — NO target from the first gesture is resolved in the second: the second gesture has no candidates at all, so `resolveTarget` is never reached (a carried-over target would show up here)',
@@ -3158,37 +3391,53 @@ describe('§3.1 M-1 · M-3..M-17 — the valid states (call counts, call order, 
     // (1) BEFORE ESTABLISHMENT: no capture has run, and the invalid arm cannot even be
     // reached — the module refuses with ZERO session calls.
     const c = await compose('M-12', { candidatesFor: (): unknown => [answer(999)] })
-    c.mod.attach(c.el)
-    c.double.setElement(c.el, firstPreDrag)
+    c.mod.attach(c.el, c.hookArgs)
+    c.setPreDrag(firstPreDrag)
+    expect(
+      c.preDragCalls(),
+      'M-12 — BEFORE establishment the pre-drag count is 0 (the consumer’s OWN recorded invocation count of the hooks record’s `preDragValueOf` member: `§2.1` item 7(d))',
+    ).toBe(0)
     expect(
       c.mod.reset(c.el),
-      'M-12 — BEFORE establishment the pre-drag count is 0: the module refuses (`\'no-gesture\'`) with ZERO session calls, so no value can have been captured',
+      'M-12 — BEFORE establishment the invalid arm cannot even be reached: the module refuses (`\'no-gesture\'`) with ZERO session calls, so no value can have been captured',
     ).toEqual({ ok: false, code: 'no-gesture', committed: false })
     // (2) AFTER ESTABLISHMENT: exactly one capture, read through the invalid arm's
-    // committed value (the module's own observation surface).
+    // committed value (the module's own observation surface) BESIDE the count.
     c.double.establish()
     c.double.move()
     c.double.terminate()
+    expect(
+      c.preDragCalls(),
+      'M-12 — after establishment the consumer’s own recorded invocation count reads EXACTLY 1 (asserted EXACTLY, never “at least”)',
+    ).toBe(1)
     expect(
       c.double.resets.length,
       'M-12 — after establishment the invalid arm commits exactly once with the captured value',
     ).toBe(1)
     expect(
       c.double.resets[0].value,
-      'M-12 — the value the arm committed is EXACTLY ONE capture of the caller’s pre-drag value (asserted EXACTLY, never “at least”)',
+      'M-12 — the value the arm committed is the caller’s pre-drag value, handed on by the module as the THIRD argument of the `session.reset` delegation',
     ).toBe(firstPreDrag)
+    expect(
+      c.double.resets[0].arity,
+      'M-12 — the delegation’s arity is THREE',
+    ).toBe(3)
     expect(
       c.mod.reset(c.el),
       'M-12 — and still exactly 1 AT THE TERMINAL: the record is gone, so a later `reset` refuses with zero session calls rather than reading a second time',
     ).toEqual({ ok: false, code: 'no-gesture', committed: false })
     // (3) A SECOND GESTURE CAPTURES ITS OWN ONCE.
-    c.double.setElement(c.el, secondPreDrag)
+    c.setPreDrag(secondPreDrag)
     c.double.establish()
     c.double.move()
     c.double.terminate()
     expect(
+      c.preDragCalls(),
+      'M-12 — the second gesture captured its OWN once: the running count reads 2 (one per ESTABLISHED gesture), never a re-read of the first gesture’s value',
+    ).toBe(2)
+    expect(
       c.double.resets.length,
-      'M-12 — the second gesture captured its own once (one more `reset` entry, not a re-read of the first gesture’s value)',
+      'M-12 — the second gesture’s capture is observable as one more `reset` entry, not a re-read of the first gesture’s value',
     ).toBe(2)
     expect(
       c.double.resets[1].value,
@@ -3200,8 +3449,8 @@ describe('§3.1 M-1 · M-3..M-17 — the valid states (call counts, call order, 
     // (a) AN ACTIVE GESTURE.
     const preDrag = { opaque: 'the-captured-pre-drag' }
     const c = await compose('M-13/a')
-    c.mod.attach(c.el)
-    c.double.setElement(c.el, preDrag)
+    c.setPreDrag(preDrag)
+    c.mod.attach(c.el, c.hookArgs)
     c.double.establish()
     c.double.move()
     const opsBefore = c.double.ops.length
@@ -3217,8 +3466,16 @@ describe('§3.1 M-1 · M-3..M-17 — the valid states (call counts, call order, 
     ).toEqual(['reset'])
     expect(
       c.double.resets[c.double.resets.length - 1].value,
-      'M-13(a) — the session `reset` carries the CAPTURED pre-drag value',
+      'M-13(a) — the session `reset` carries the CAPTURED pre-drag value (captured once at the module’s own `onStart` wrapper through the hooks record’s `preDragValueOf` member, `§2.1` item 7)',
     ).toBe(preDrag)
+    expect(
+      c.double.resets[c.double.resets.length - 1].arity,
+      'M-13(a) — the delegation’s ARITY is THREE, so the third argument above is the module’s OWN captured value rather than a two-argument delegation the session would read as `undefined`',
+    ).toBe(3)
+    expect(
+      c.preDragCalls(),
+      'M-13(a) — the consumer’s own recorded invocation count reads 1: the module’s own `reset(element)` entry point does NOT re-read the member (`§2.1` item 7(b): never invoked by `attach`, never re-invoked by `reset`)',
+    ).toBe(1)
     // (b) NO ESTABLISHMENT.
     const b = await compose('M-13/b')
     b.mod.attach(b.el)
@@ -3253,8 +3510,8 @@ describe('§3.1 M-1 · M-3..M-17 — the valid states (call counts, call order, 
   it('M-14 §3.1 — the sink can read the discriminator and the invalid arm’s committed value is the CALLER’s: the recorded outcome is `\'reset\'` and the recorded value is the caller-supplied pre-drag value BY IDENTITY, never a target, a candidate or a module-invented default — and the control drive records `\'end\'`', async () => {
     const preDrag = { opaque: 'the-caller-pre-drag-value' }
     const c = await compose('M-14', { candidatesFor: (): unknown => [answer(999)] })
-    c.double.setElement(c.el, preDrag)
-    c.mod.attach(c.el)
+    c.setPreDrag(preDrag)
+    c.mod.attach(c.el, c.hookArgs)
     c.double.establish()
     c.double.move()
     c.double.terminate()
@@ -3439,7 +3696,7 @@ describe('§3.1 M-1 · M-3..M-17 — the valid states (call counts, call order, 
     ).toBe(c.el)
     expect(
       c.hooks.calls.length,
-      'M-17 — the row’s own spare recorder saw no invocation: the consumer’s hooks were supplied to THIS drive and nothing was swallowed (the module adds no fifth hook)',
+      'M-17 — the row’s own spare recorder saw no invocation: the consumer’s hooks were supplied to THIS drive and nothing was swallowed (the module adds no fifth HOOK — the HOOK count is exactly FOUR, while the hooks RECORD carries the one further value-reading MEMBER `§2.1` item 7 amends it with, which is not a hook)',
     ).toBe(0)
     // THE CANCEL HOOK, in the same row: a cancel forwards `onCancel` once, and the
     // module’s own wrapper is not invoked for it.
@@ -3456,7 +3713,7 @@ describe('§3.1 M-1 · M-3..M-17 — the valid states (call counts, call order, 
     d.double.cancel()
     expect(
       cancelSeen,
-      'M-17 — the consumer’s `onCancel` ran exactly once on the cancel (the session owns that forwarding, and the module re-expresses none of the lifecycle)',
+      'M-17 — the consumer’s `onCancel` ran exactly once on the cancel: the session’s own cancel path invokes the module’s INSTALLED `onCancel` wrapper, which forwards the consumer’s hook by identity (`src/shared/gesture-session.ts` `cancelOperation`; `§2.3` item 6(d))',
     ).toEqual(['onCancel'])
   })
 })
@@ -3720,9 +3977,9 @@ describe('§3.2 F-4..F-19 — the documented fail-states', () => {
       'F-9 — the consumer’s own `onMove` DID run once (so the drive is not vacuous): the cancel terminated a gesture the consumer had already observed',
     ).toBe(1)
     expect(
-      c.double.hookCalls.filter((h) => h === 'commit').length,
-      'F-9 — the terminal’s outcome was NOT `\'end\'`: the module’s own commit seam was never invoked at all',
-    ).toBe(0)
+      c.double.terminals,
+      'F-9 — the terminal’s outcome was NOT `\'end\'`: the recording session ran NO committing terminal at all (its own terminal log is empty — a `cancel` is not a committing terminal, `§2.3` item 6(d)), and the module’s own `commit` seam was therefore never invoked (`stats().sinkCalls === 0` above)',
+    ).toEqual([])
     expect(
       c.mod.reset(c.el),
       'F-9 — the module’s record is dropped: a later `reset` refuses with zero session calls',
@@ -4119,9 +4376,9 @@ describe('§3.2 F-4..F-19 — the documented fail-states', () => {
         `F-15 — \`stats().candidateCalls\` reads ${shape.calls} for ${shape.name}: an ATTEMPT is counted where the seam was present (including a non-callable or hostile one, which is never retried), and \`0\` where the seam was ABSENT from the options object`,
       ).toBe(shape.calls)
       expect(
-        c.double.hookCalls.filter((h) => h === 'commit').length,
-        `F-15 — the invalid arm is NOT a cancel for ${shape.name}: a committing terminal ran (the session performed a \`reset\` terminal)`,
-      ).toBe(1)
+        c.double.terminals.map((t) => t.outcome),
+        `F-15 — the invalid arm is NOT a cancel for ${shape.name}: the recording session’s OWN terminal log carries exactly one COMMITTING terminal, and it is the \`'reset'\` terminal the module’s own move turn entered (§2.5 item 7 clause 3: the terminal is read from the SESSION’s own record, never from an install-options member)`,
+      ).toEqual(['reset'])
       expect(
         (c.sinkArgs[0][0] as { outcome: string }).outcome,
         `F-15 — the terminal’s outcome is \`\'reset\'\` for ${shape.name}, never a cancel`,
@@ -4159,9 +4416,9 @@ describe('§3.2 F-4..F-19 — the documented fail-states', () => {
         `F-16 — and \`stats().revealWrites === 0\`: a target exists or the reveal has nothing to write`,
       ).toBe(0)
       expect(
-        c.double.hookCalls.filter((h) => h === 'commit').length,
-        `F-16 — it is NOT a cancel for ${shape.name}: the committing terminal still ran (the session performed an \`'end'\` terminal)`,
-      ).toBe(1)
+        c.double.terminals.map((t) => t.outcome),
+        `F-16 — it is NOT a cancel for ${shape.name}: the recording session’s OWN terminal log carries exactly one COMMITTING terminal, and it is the \`'end'\` the row drove (§2.5 item 7 clause 3) — the sink’s own record below still reads ZERO writes, which is the declared cell: an \`'end'\` whose resolved target is \`undefined\` writes NOTHING`,
+      ).toEqual(['end'])
       expect(
         c.sinkArgs.length,
         `F-16 — and no sink call occurred for ${shape.name}`,
@@ -4569,11 +4826,19 @@ describe('§5.5.1 — the typed property register (15 rows / 16 terms, executed 
   it('P-RL-IM-1 [S-RL-ENUM-1] — EVERY `candidatesFor` shape × EVERY observation path: the seam’s CALL COUNT and the INVALID-ARM outcome are EXACTLY the declared pair (21 declared attempts; bounded — the property text says “every observation path” while the table drives 5 paths, 4 observable)', async () => {
     const rec = new RegisterRow('P-RL-IM-1', 'S-RL-ENUM-1')
     const moduleState = await resolveModule()
-    const shapes: ReadonlyArray<{ id: string; make: () => unknown; reachesTheSeam: boolean }> = [
-      { id: '(1) a callable returning a well-formed answer whose distance is within proximity', make: () => (): unknown => [answer(1)], reachesTheSeam: true },
-      { id: '(2) ABSENT', make: () => undefined, reachesTheSeam: false },
-      { id: '(3) NON-CALLABLE (42)', make: () => 42, reachesTheSeam: false },
-      { id: '(4) a callable THROWING', make: () => (): never => { throw new Error('a throwing candidatesFor') }, reachesTheSeam: true },
+    // **S4 — THE TWO WORDS, AND WHY SHAPE `(3)`'s DECLARED CELLS MOVED `0` → `1` ON THE
+    // REACHING PATHS** (`§0A` note 15 item `S4`; `§3.2 F-15`; `§5.5.1 P-RL-IM-1`'s own cell):
+    // ATTEMPTED = the module TRIED to consult the seam — counted ONCE PER OBSERVED MOVE
+    // wherever the member carried a value OTHER THAN `undefined`, INCLUDING a NON-CALLABLE
+    // (`42`) and a callable that THROWS; INVOKED = it was ACTUALLY CALLED, which happens only
+    // where a callable was present. THE ONLY NON-ATTEMPT FORM IS THE MEMBER ABSENT OR CARRIED
+    // WITH THE VALUE `undefined` (shape `(2)`), which reads `0`. THE DRIVES DO NOT CHANGE:
+    // the term stays `21` = the same `4` shapes × `4` paths + the same `5` further drives.
+    const shapes: ReadonlyArray<{ id: string; make: () => unknown; attemptsTheSeam: boolean }> = [
+      { id: '(1) a callable returning a well-formed answer whose distance is within proximity', make: () => (): unknown => [answer(1)], attemptsTheSeam: true },
+      { id: '(2) ABSENT (or carried as `undefined`) — the ONLY non-attempt form', make: () => undefined, attemptsTheSeam: false },
+      { id: '(3) NON-CALLABLE (42) — an ATTEMPT with NO invocation (`S4`)', make: () => 42, attemptsTheSeam: true },
+      { id: '(4) a callable THROWING', make: () => (): never => { throw new Error('a throwing candidatesFor') }, attemptsTheSeam: true },
     ]
     const paths: ReadonlyArray<{ id: string; drive: (d: SessionDouble, el: unknown) => void; callsDeclared: number; armDeclared: number }> = [
       { id: '(a) one observed move with an established gesture', drive: (d, el): void => { d.setElement(el, 1); d.establish(); d.move() }, callsDeclared: 1, armDeclared: -1 },
@@ -4601,8 +4866,11 @@ describe('§5.5.1 — the typed property register (15 rows / 16 terms, executed 
           mod.attach(el)
           path.drive(double, el)
           const stats = mod.stats()
-          // The declared CALL COUNT for the cell.
-          const declaredCalls = path.callsDeclared === 0 ? 0 : shape.reachesTheSeam ? 1 : 0
+          // The declared CALL COUNT for the cell: an ATTEMPT wherever the member carried a
+          // value other than `undefined` (shape `(3)`'s non-callable INCLUDED — `S4`), and
+          // `0` ONLY where the member is absent/`undefined` or the path never reaches the move
+          // turn at all.
+          const declaredCalls = path.callsDeclared === 0 ? 0 : shape.attemptsTheSeam ? 1 : 0
           if (stats.candidateCalls !== declaredCalls) {
             return `\`stats().candidateCalls\` reads ${stats.candidateCalls}; the declared count for this cell is ${declaredCalls} (the seam is called AT MOST ONCE per observed move and ONLY from the module’s own move turn — never at establishment, never at a terminal, never on a cancel, never on a refused establishment)`
           }
@@ -4611,7 +4879,7 @@ describe('§5.5.1 — the typed property register (15 rows / 16 terms, executed 
             return `\`stats().resets\` reads ${stats.resets}; the declared outcome for this path is ${path.armDeclared} (the arm is reachable only where an observed move reached the seam)`
           }
           if (path.id.startsWith('(a)') || path.id.startsWith('(c)')) {
-            const armExpected = shape.reachesTheSeam && shape.id.startsWith('(1)') ? 0 : 1
+            const armExpected = shape.attemptsTheSeam && shape.id.startsWith('(1)') ? 0 : 1
             if (stats.resets !== armExpected) {
               return `\`stats().resets\` reads ${stats.resets}; an unusable seam yields the EMPTY candidate set ⇒ nothing within proximity ⇒ the INVALID ARM AT ONCE, and a within-proximity answer takes it not at all (declared ${armExpected})`
             }
@@ -4774,7 +5042,9 @@ describe('§5.5.1 — the typed property register (15 rows / 16 terms, executed 
           double.move()
           double.terminate()
           if (mod.stats().sinkCalls !== 0) return `\`undefined\` produced ${mod.stats().sinkCalls} sink call(s); the declared count is 0`
-          if (double.hookCalls.filter((h) => h === 'commit').length !== 1) return 'the terminal was NOT a committing terminal: it is NOT a cancel'
+          if (double.terminals.length !== 1 || double.terminals[0].outcome !== 'end') {
+            return 'the terminal was NOT a committing terminal: it is NOT a cancel (the recording session’s own terminal log must carry exactly one `\'end\'`; the install-options `commit` member the double used to read does not exist on the frozen surface, §2.5 item 7 clauses 1–3)'
+          }
           return null
         },
       },
@@ -5210,7 +5480,25 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
   it('P-RL-SM-1 [S-RL-REVEAL-1] — EVERY terminal path × EVERY crossing count: `onReveal` is invoked EXACTLY ONCE for an `\'end\'` and ZERO TIMES for every other path — the declared terminal domain IS the RULED set `{ \'end\' }` (DERIVED, §0A note 6) — and the FORK-FAILING limb: a gesture crossing the proximity N >= 2 times STILL reads exactly ONE (5 declared attempts)', async () => {
     const rec = new RegisterRow('P-RL-SM-1', 'S-RL-REVEAL-1')
     const moduleState = await resolveModule()
-    const paths: ReadonlyArray<{ id: string; expectedReveals: number; crossings: ReadonlyArray<number>; build: () => { options: Record<string, unknown>; drive: (d: SessionDouble) => void } }> = [
+    // **S1 — EVERY CELL IS DRIVEN AGAINST ITS OWN DECLARED PATH.** Cell `(1)` DECLARES an
+    // `'end'` terminal and therefore DRIVES one: a reveal's only legal site is a COMMITTING
+    // TERMINAL (`§2.3` item 4's channel (A)), so a drive with no terminal could never produce
+    // the declared `1`. Cell `(4)` DECLARES a REFUSED terminal and therefore DRIVES A REAL
+    // REFUSAL ROUTE — the double's `reset` is configured to refuse with the FIRST class the
+    // cell names (`'stale'`, a stale/absent handle: the frozen union's own member,
+    // `docs/specs/gsession.md` `§2.5` item 2), so NO terminal runs and the declared `0` is the
+    // reading the session can actually produce (the cell ALSO drives the module's own
+    // `reset(element)` entry against the same refusal — `F-10`'s drive shape — and asserts the
+    // refusal record, so the cell is not vacuous). Cell `(5)` declares an `'end'` terminal too
+    // and is given one, for the same reason as `(1)` (its declared `0` is unchanged).
+    const paths: ReadonlyArray<{
+      id: string
+      expectedReveals: number
+      crossings: ReadonlyArray<number>
+      doubleOptions?: SessionDoubleOptions
+      refusedWith?: string
+      build: () => { options: Record<string, unknown>; drive: (d: SessionDouble, mod: RelocateModuleMirror) => void }
+    }> = [
       {
         id: "(1) an `'end'` terminal whose LAST observed move was within proximity and whose target is a target",
         expectedReveals: 1,
@@ -5218,8 +5506,7 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
         build: () => ({
           options: { candidatesFor: (): unknown => [answer(1)], resolveTarget: (): unknown => ({ opaque: 'target' }) },
           drive: (d: SessionDouble): void => {
-            d.establish()
-            d.move()
+            d.terminate()
           },
         }),
       },
@@ -5239,19 +5526,21 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
         id: '(3) a `cancel`',
         expectedReveals: 0,
         crossings: [1],
-        build: () => ({ options: { candidatesFor: (): unknown => [answer(1)] }, drive: (d: SessionDouble): void => { d.establish(); d.move(); d.cancel() } }),
+        build: () => ({ options: { candidatesFor: (): unknown => [answer(1)] }, drive: (d: SessionDouble): void => { d.cancel() } }),
       },
       {
-        id: '(4) a REFUSED terminal (a stale/absent handle, `\'disposed\'`, `\'not-installed\'`, `\'disconnected\'`)',
+        id: '(4) a REFUSED terminal (a stale/absent handle, `\'disposed\'`, `\'not-installed\'`, `\'disconnected\'`) — DRIVEN THROUGH A REAL REFUSAL ROUTE',
         expectedReveals: 0,
         crossings: [1],
-        build: () => ({ options: { candidatesFor: (): unknown => [answer(1)] }, drive: (d: SessionDouble): void => { d.establish(); d.move(); d.terminate() } }),
+        doubleOptions: { refuseResetWith: 'stale' },
+        refusedWith: 'stale',
+        build: () => ({ options: { candidatesFor: (): unknown => [answer(999)], resolveTarget: (): unknown => ({ opaque: 'target' }) }, drive: (d: SessionDouble): void => { d.move() } }),
       },
       {
         id: "(5) an `'end'` terminal whose resolved target is `undefined`",
         expectedReveals: 0,
         crossings: [1],
-        build: () => ({ options: { candidatesFor: (): unknown => [answer(1)], resolveTarget: (): unknown => undefined }, drive: (d: SessionDouble): void => { d.establish(); d.move() } }),
+        build: () => ({ options: { candidatesFor: (): unknown => [answer(1)], resolveTarget: (): unknown => undefined }, drive: (d: SessionDouble): void => { d.terminate() } }),
       },
     ]
     for (const path of paths) {
@@ -5260,7 +5549,7 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
         const create = moduleState.mod['createRelocateSession'] as (o?: unknown) => RelocateModuleMirror
         if (typeof create !== 'function') return '§2.1’s `createRelocateSession` is not a function'
         const revealed: unknown[] = []
-        const double = sessionDouble({ disposeComplete: path.id.startsWith('(4)') ? false : true })
+        const double = sessionDouble({ ...(path.doubleOptions ?? {}) })
         const el: Record<string, unknown> = { control: 'a' }
         const built = path.build()
         const options: Record<string, unknown> = {
@@ -5274,7 +5563,7 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
         }
         const mod = create(options)
         mod.attach(el)
-        double.setElement(el, 1)
+        double.setElement(el)
         let crossings = 0
         const driveWithCrossings = (n: number): void => {
           double.establish()
@@ -5285,9 +5574,21 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
         }
         const maxCrossings = Math.max(...path.crossings)
         driveWithCrossings(maxCrossings)
-        built.drive(double)
+        built.drive(double, mod)
         const stats = mod.stats()
         const declared = path.expectedReveals
+        if (path.refusedWith !== undefined) {
+          // The cell's OWN non-vacuity readings: the SESSION'S OWN refusal log carries the
+          // declared code — so the module ATTEMPTED a terminal and the session REFUSED it —
+          // and NO committing terminal ever ran. The declared `0` below is therefore the
+          // REFUSED-terminal reading rather than an arm that was never taken.
+          if (double.refusals.length !== 1 || double.refusals[0] !== path.refusedWith) {
+            return `the REFUSED-terminal cell did not drive a real refusal: the session's own refusal log reads ${JSON.stringify(double.refusals)} where the cell declares exactly one \`${path.refusedWith}\` (the module attempted a terminal and the session refused it, so no terminal ran)`
+          }
+          if (double.terminals.length !== 0) {
+            return `a REFUSED terminal still ran a committing terminal (${JSON.stringify(double.terminals)}): the row's declared path is a terminal the session REFUSED`
+          }
+        }
         if (stats.revealWrites !== declared) {
           return `\`stats().revealWrites\` reads ${stats.revealWrites}; the declared count for ${path.id} is ${declared} (THE DECLARED TERMINAL DOMAIN IS \`{ 'end' }\` — the RULED set, DERIVED and flagged)`
         }
@@ -5320,6 +5621,18 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
       { id: '(4) the `E10-SINGLE-SINK-CHANNEL` violation (the SAME function on both channels)', expectedSinkRecord: 2, expectedModuleCount: 1, fails: true },
       { id: '(5) a consumer whose own `onMove` writes its own sink', expectedSinkRecord: 1, expectedModuleCount: 1, fails: false },
     ]
+    // **S5 — WHAT A CONFORMANT COMPOSITION ACTUALLY PRODUCES, RECONCILED BY THE DOUBLE'S
+    // CONSTRUCTION-SINK ACCOUNTING** (`§0A` note 15 item `S6`'s sibling; `§2.5` item 7
+    // clause 4(c)). The double formerly invoked the WIRING's construction `commit` at
+    // ESTABLISHMENT — a call the session never makes — so shape `(4) × (b)` counted THREE
+    // entries on the one shared function (the establishment call, the arm's construction call
+    // and the module's own sink seam). With the establishment call GONE and the construction
+    // `commit` invoked ONCE AT THE TERMINAL (which is where the landed session invokes it),
+    // the shared function receives EXACTLY TWO: the module's own sink at the `'reset'`
+    // terminal — which the arm's writer pin REQUIRES, one write carrying the caller's
+    // pre-drag value (`§0A` note 15's `A2` continuation's closing pin) — and the session's
+    // construction `commit` for the same terminal. `expectedSinkRecord: 2` is therefore what
+    // the composition produces, on BOTH terminal classes, and no declared figure moved.
     const terminalClasses: ReadonlyArray<{ id: string; drive: (d: SessionDouble) => void }> = [
       { id: "(a) an `'end'`", drive: (d: SessionDouble): void => { d.establish(); d.move() } },
       { id: "(b) a `'reset'` (the invalid arm)", drive: (d: SessionDouble): void => { d.establish(); d.move() } },
@@ -5332,13 +5645,20 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
           if (typeof create !== 'function') return '§2.1’s `createRelocateSession` is not a function'
           const sinkRecord: unknown[] = []
           const consumerSink = (_g: unknown, v: unknown): void => void sinkRecord.push(v)
+          // **SHAPE `(5)`'s CONSUMER WRITES ITS **OWN** SINK** — a DIFFERENT function from the
+          // composition's (`F-19`: *"this module's rows do NOT count that write as the
+          // composition's"*). Handing the consumer the COMPOSITION's sink function would make it
+          // a SECOND WRITER on the composition's own channel, which is shape `(2)`'s domain, and
+          // the row's declared `expectedSinkRecord: 1` is a reading of the COMPOSITION's sink.
+          const consumerOwnRecord: unknown[] = []
+          const consumerOwnSink = (_g: unknown, v: unknown): void => void consumerOwnRecord.push(v)
           const isReset = terminal.id.startsWith('(b)')
           const double = sessionDouble({ sink: shape.id.startsWith('(4)') ? (consumerSink as (g: GestureHandle, v: unknown) => void) : null })
           const el: Record<string, unknown> = { control: 'a' }
           const consumerHooks: Record<string, unknown> = {
             element: el,
             onEnd: shape.id.startsWith('(2)') ? (): void => consumerSink(null, 'the-second-writer') : undefined,
-            onMove: shape.id.startsWith('(5)') ? (): void => consumerSink(null, 'the-consumer-own-write') : undefined,
+            onMove: shape.id.startsWith('(5)') ? (): void => consumerOwnSink(null, 'the-consumer-own-write') : undefined,
           }
           const options: Record<string, unknown> = {
             session: double.sessionObject,
@@ -5352,12 +5672,15 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
           if (shape.id.startsWith('(4)')) options['commit'] = consumerSink
           const mod = create(options)
           mod.attach(el, consumerHooks)
-          double.setElement(el, 1)
+          double.setElement(el)
           terminal.drive(double)
           double.terminate()
           const stats = mod.stats()
-          // The per-attempt assertions: the sink's own record, the module's own count,
+          // THE PER-ATTEMPT ASSERTIONS: the sink's own record, the module's own count,
           // their declared agreement OR DIVERGENCE.
+          if (shape.id.startsWith('(5)') && consumerOwnRecord.length !== 1) {
+            return `the CONSUMER'S OWN sink record reads ${consumerOwnRecord.length}; the consumer's own hook write is exactly ONE and it is NOT the composition's (F-19)`
+          }
           if (shape.expectedSinkRecord === 0) {
             if (sinkRecord.length !== 0) return `the sink’s own record reads ${sinkRecord.length}; the declared count for a NO-WRITER/slot-empty composition is 0`
             if (stats.sinkCalls !== 0) return `the module’s own count reads ${stats.sinkCalls}; the declared count is 0`
@@ -5413,7 +5736,7 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
     reconcile(rec, 11, 'P-RL-SM-2 — the declared term is `11` (`5` composition shapes × `2` terminal classes + `1` positive control)')
   })
 
-  it('P-RL-SM-3 [S-RL-SITE-1] — `onReveal`’s ONLY call site is the module’s own `commit` seam: a gesture with ONE within-proximity move reads one invocation recorded INSIDE the terminal; FIVE within-proximity moves read still exactly one; five moves with NONE within proximity read zero — and the two CONTROL drives FAIL the row (5 declared attempts)', async () => {
+  it('P-RL-SM-3 [S-RL-SITE-1] — `onReveal`’s ONLY call site is the module’s own `commit` seam: a gesture with ONE within-proximity move reads one invocation recorded INSIDE the terminal; FIVE within-proximity moves read still exactly one; five moves with NONE within proximity read zero — and the two DECLARED-FAILING CONTROL drives ASSERT their failing shape and HOLD (§5.5.2 item 9) (5 declared attempts, of which 2 are controls)', async () => {
     const rec = new RegisterRow('P-RL-SM-3', 'S-RL-SITE-1')
     const moduleState = await resolveModule()
     const drives: ReadonlyArray<{ id: string; moves: number; within: boolean; expected: number; control?: 'from-start-or-move' | 'twice-from-the-seam' }> = [
@@ -5431,32 +5754,46 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
         const invocations: string[] = []
         const double = sessionDouble()
         const el: Record<string, unknown> = { control: 'a' }
+        const revealSpy = (): void => void invocations.push(runtimePhase('onReveal'))
         const mod = create({
           session: double.sessionObject,
           candidatesFor: (): unknown => [answer(drive.within ? 1 : 999)],
           resolveTarget: (): unknown => ({ opaque: 't' }),
           threshold: 20,
           commit: (): void => undefined,
-          onReveal: (): void => void invocations.push(runtimePhase('onReveal')),
-          onPreview: drive.control === 'from-start-or-move' ? (): void => void invocations.push('preview') : (): void => undefined,
+          onReveal: revealSpy,
+          onPreview: (): void => undefined,
         })
         mod.attach(el)
-        double.setElement(el, 1)
-        double.establish()
-        for (let i = 0; i < drive.moves; i += 1) double.move()
-        double.terminate()
+        // **THE TURNS ARE MARKED** (`§5.5.1 P-RL-SM-3`'s phase assertion): the observed-move
+        // turns carry `'move'` and the terminal carries `'terminal'`, so *"the recorded
+        // invocation happens INSIDE the terminal"* is checkable rather than assumed.
+        inPhase('move', () => {
+          double.setElement(el)
+          double.establish()
+          for (let i = 0; i < drive.moves; i += 1) double.move()
+        })
+        inPhase('terminal', () => {
+          double.terminate()
+        })
         const stats = mod.stats()
         if (drive.control === 'from-start-or-move') {
-          // The control drive's FAILING shape: the module's own preview/start wrapper wrote
-          // a reveal-class invocation, so the phase assertion below must catch it.
-          const outsideTheSeam = invocations.filter((phase) => phase === 'move' || phase === 'idle')
+          // **THE CONTROL'S FAILING SHAPE, AS A CONTROL CORPUS** — a fork whose own MOVE
+          // wrapper invokes the reveal channel: the same spy records the invocation in the
+          // MOVE phase, where the row's phase assertion REJECTS it. **THE DECLARED FAILURE IS
+          // AN OBSERVATION THIS DRIVE ASSERTS (`§5.5.2` item 9 clause (2)): the drive HOLDS —
+          // `broken` stays `0` — while a control that produced NO failing shape IS the break.**
+          inPhase('move', () => {
+            revealSpy()
+          })
+          const outsideTheSeam = invocations.filter((phase) => phase !== 'terminal')
           if (outsideTheSeam.length === 0) return 'the CONTROL drive (4) did not produce an invocation outside the terminal phase, so the phase assertion has no failure mode'
-          return `the CONTROL drive (4) FAILS this row as declared: ${outsideTheSeam.length} invocation(s) arrived OUTSIDE the terminal phase (an invocation outside the commit seam is caught by the phase assertion)`
+          return null
         }
         if (drive.control === 'twice-from-the-seam') {
           invocations.push('terminal')
           if (invocations.length <= drive.expected) return 'the CONTROL drive (5) did not double the count, so the count assertion has no failure mode'
-          return `the CONTROL drive (5) FAILS this row as declared: the count reads ${invocations.length} where the declared count is ${drive.expected}`
+          return null
         }
         if (stats.revealWrites !== drive.expected) return `\`stats().revealWrites\` reads ${stats.revealWrites}; the declared count is ${drive.expected}`
         if (invocations.length !== stats.revealWrites) return `the consumer’s own record reads ${invocations.length} while the module’s counter reads ${stats.revealWrites}: THE TWO READINGS MUST AGREE`
@@ -5464,14 +5801,14 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
           return `an invocation was recorded in the phase ${JSON.stringify(invocations)} — the ONLY legal phase is the terminal (the recorded invocation happens INSIDE the terminal)`
         }
         return null
-      })
+      }, drive.control !== undefined)
     }
     // THE STATIC CENSUS, PRINTED BESIDE THE TERM AND NEVER COUNTED IN IT.
     const normalized = normalizeSource(moduleSource())
     const revealSites = (normalized.match(/onReveal/g) ?? []).length
     console.log(`§5.5.1 P-RL-SM-3 static census (printed BESIDE the term, never counted in it) :: ${JSON.stringify({ onRevealOccurrences: revealSites, claim: 'the ONLY call site is the module’s own commit seam; a second call site reachable from onStart/onMove FAILS the drives above' })}`)
     rec.finish()
-    reconcile(rec, 5, 'P-RL-SM-3 — the declared term is `5` (the `5` observation drives)')
+    reconcile(rec, 5, 'P-RL-SM-3 — the declared term is `5` (the `5` observation drives, `2` of them DECLARED-FAILING CONTROLS reported BESIDE the term and never inside `broken`)')
     // THE STATIC CENSUS, asserted AFTER the row's own record so the record is produced even
     // in a red run, and REPORTED BESIDE the term (it carries none).
     expect(
@@ -5495,24 +5832,129 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
           const isResetSlot = slot.startsWith('(b)')
           const double = sessionDouble()
           const el: Record<string, unknown> = { control: 'a' }
+          const pd = preDragChannel(preDrag)
           const mod = create({ session: double.sessionObject, candidatesFor: (): unknown => [answer(isResetSlot ? 999 : 1)], resolveTarget: (): unknown => ({ opaque: 't' }), threshold: 20, commit: (): void => undefined, onReveal: (): void => undefined, onPreview: (): void => undefined })
-          mod.attach(el)
-          double.setElement(el, preDrag)
-          const capturesBefore = (): number => (isResetSlot ? double.resets.length : double.resets.length + 0)
+          // **THE INSTRUMENT (`§2.1` item 7(d)): the capture's count is THE CONSUMER'S OWN
+          // RECORDED INVOCATION COUNT of the hooks record's `preDragValueOf` member — read
+          // BESIDE the module's own observable consequence, the THIRD argument of the
+          // `session.reset` delegation and that call's ARITY.** A count of `reset`
+          // DELEGATIONS is NOT a capture count (it reads arm entries, `§0A` note 15), so
+          // `pd.count()` is the count and `double.resets` is the consequence.
+          mod.attach(el, pd.hooks)
+          double.setElement(el)
+          const capturesBefore = (): number => pd.count()
           if (stage.startsWith('(1)')) {
             // The pre-drag count is 0: an `onStart` that never ran means no capture, read
-            // through the arm’s own refusal (the module’s observation surface).
+            // through the arm’s own refusal (the module’s observation surface) BESIDE the
+            // consumer’s own count.
             const refusal = mod.reset(el)
             if (refusal.code !== 'no-gesture' || refusal.ok !== false) return `before any establishment the module must refuse \`'no-gesture'\`; it returned ${JSON.stringify(refusal)}`
+            if (pd.count() !== 0) return `the consumer’s own recorded invocation count reads ${pd.count()} before any establishment; it must read 0 (the member is invoked only for an ESTABLISHED gesture)`
             if (double.resets.length !== 0) return 'a capture was recorded before any establishment (the pre-drag count must read 0)'
             return null
           }
           if (stage.startsWith('(2)')) {
             double.establish()
+            if (pd.count() !== 1) return `the consumer’s own recorded invocation count reads ${pd.count()} after establishment; it must be EXACTLY 1 (never “at least”)`
             const refusal = mod.reset(el)
             if (refusal.ok !== true) return `after establishment the arm must be reachable; the module returned ${JSON.stringify(refusal)}`
-            if (double.resets.length !== 1) return `the pre-drag count reads ${double.resets.length}; it must be EXACTLY 1 after establishment (never “at least”)`
-            if (double.resets[0].value !== preDrag) return 'the captured value is not the caller-supplied pre-drag value by identity'
+            if (double.resets.length !== 1) return `the delegation record reads ${double.resets.length} entries; the arm’s own delegation must be EXACTLY 1`
+            if (double.resets[0].arity !== 3) return `the delegation's ARITY reads ${double.resets[0].arity}; the frozen form is \`session.reset(element, handle, value)\` — ARITY THREE — so the third-argument identity below is the module's OWN captured value (§2.3 item 9(a))`
+            if (double.resets[0].value !== preDrag) return 'the captured value is not the caller-supplied pre-drag value by identity (the module must hand on the member\'s OWN answer, never a clone, a default or an invented value)'
+            if (isResetSlot) {
+              // **THE FOUR DEGRADATION SHAPES RIDE INSIDE THIS ATTEMPT**, never as new drives
+              // (`§2.1` item 7(c)/(h); `A2`(d)): each answers THE NO-CALLER-VALUE REFUSAL — the
+              // invalid arm is still taken, its counts and arity are UNCHANGED, the third
+              // argument reads `undefined`, and NOTHING is invented and NOTHING throws.
+              const degradations: ReadonlyArray<{ id: string; make: () => { hooks: Record<string, unknown>; count: () => number }; expectedInvocations: number }> = [
+                {
+                  id: '(i) ABSENT / `undefined` — the member omitted from the hooks record',
+                  make: () => ({ hooks: { element: el }, count: (): number => 0 }),
+                  expectedInvocations: 0,
+                },
+                {
+                  id: '(ii) NON-CALLABLE (42)',
+                  make: () => ({ hooks: { element: el, preDragValueOf: 42 }, count: (): number => 0 }),
+                  expectedInvocations: 0,
+                },
+                {
+                  id: '(iii) A CALLABLE THAT THROWS',
+                  make: () => {
+                    let n = 0
+                    return {
+                      hooks: {
+                        element: el,
+                        preDragValueOf: (): never => {
+                          n += 1
+                          throw new Error('a throwing preDragValueOf')
+                        },
+                      },
+                      count: (): number => n,
+                    }
+                  },
+                  expectedInvocations: 1,
+                },
+                {
+                  id: '(iv) A THROWING ACCESSOR (the module’s own total member-read must degrade it)',
+                  make: () => ({
+                    hooks: new Proxy(
+                      { element: el },
+                      {
+                        get: (target: Record<string, unknown>, key: string | symbol): unknown => {
+                          if (key === 'preDragValueOf') throw new Error('a throwing accessor')
+                          return Reflect.get(target, key)
+                        },
+                      },
+                    ),
+                    count: (): number => 0,
+                  }),
+                  expectedInvocations: 0,
+                },
+              ]
+              for (const degradation of degradations) {
+                const built = degradation.make()
+                const dModule = sessionDouble()
+                const dEl: Record<string, unknown> = { control: `degradation/${degradation.id}` }
+                const dMod = create({ session: dModule.sessionObject, candidatesFor: (): unknown => [answer(999)], resolveTarget: (): unknown => ({ opaque: 't' }), threshold: 20, commit: (): void => undefined, onReveal: (): void => undefined, onPreview: (): void => undefined })
+                let threw = false
+                try {
+                  dMod.attach(dEl, built.hooks)
+                  dModule.setElement(dEl)
+                  dModule.establish()
+                  dModule.move()
+                } catch {
+                  threw = true
+                }
+                if (threw) return `degradation shape ${degradation.id} THREW out of \`attach\`/the establishment turn: the member is a VALUE-READING member and its failure must be ABSORBED (§2.1` + ' item 7(c) clause 2)'
+                if (built.count() !== degradation.expectedInvocations) return `degradation shape ${degradation.id}: the member was invoked ${built.count()} time(s); the declared reading is ${degradation.expectedInvocations} (a non-callable is an ATTEMPT WITH NO INVOCATION, and a throwing callable is ONE absorbed invocation)`
+                const dStats = dMod.stats()
+                if (dStats.resets !== 1) return `degradation shape ${degradation.id}: the invalid arm's own count reads ${dStats.resets}; the NO-CALLER-VALUE REFUSAL changes NOTHING about the arm — it is still taken, ONCE`
+                if (dModule.resets.length !== 1) return `degradation shape ${degradation.id}: the arm's delegation count reads ${dModule.resets.length}; it must be EXACTLY 1`
+                if (dModule.resets[0].arity !== 3) return `degradation shape ${degradation.id}: the delegation's arity reads ${dModule.resets[0].arity}; the refusal changes NO arity — ARITY THREE stands (§2.1` + ' item 7(c) clause 3)'
+                if (dModule.resets[0].value !== undefined) return `degradation shape ${degradation.id}: the third argument reads ${brief(dModule.resets[0].value)}; THE NO-CALLER-VALUE REFUSAL passes \`undefined\` — NOTHING is invented (no default, no sentinel, no \`null\`, no \`0\`, no empty string)`
+                if (dStats.revealWrites !== 0) return `degradation shape ${degradation.id}: the arm wrote a reveal (${dStats.revealWrites}); the arm's declared reading is ZERO reveals`
+              }
+              // **THE VARIANT INSIDE SHAPE (b) — AN ASSERTION INSIDE THIS DECLARED ATTEMPT,
+              // NEVER A NEW DRIVE** (`§5.5.1 P-RL-SM-4`'s own cell: *"plus, as a variant INSIDE
+              // shape (b), a gesture whose session refused establishment: `0` captures and `0`
+              // records"*; `A DECLARED REGISTER TERM IS A DRIVE COUNT`). The declared term stays
+              // `6` = `3` stages × `2` slot shapes.
+              const variant = ((): string | null => {
+                const vDouble = sessionDouble({ installAccepts: false })
+                const vEl: Record<string, unknown> = { control: 'a/refused-establishment' }
+                const vPd = preDragChannel({ opaque: 'the-refused-establishment-pre-drag' })
+                const vMod = create({ session: vDouble.sessionObject, candidatesFor: (): unknown => [answer(1)], resolveTarget: (): unknown => ({ opaque: 't' }), threshold: 20, commit: (): void => undefined, onReveal: (): void => undefined, onPreview: (): void => undefined })
+                if (vMod.attach(vEl, vPd.hooks) !== false) return 'the refused establishment did not return `false`'
+                vDouble.setElement(vEl)
+                vDouble.establish()
+                const vRefusal = vMod.reset(vEl)
+                if (vRefusal.code !== 'no-gesture') return `a refused establishment must leave NO record: \`reset\` returned ${JSON.stringify(vRefusal)}`
+                if (vPd.count() !== 0) return `a REFUSED establishment invoked the member ${vPd.count()} time(s): the capture is once per ESTABLISHED gesture, so a refusal captures nothing`
+                if (vDouble.resets.length !== 0) return 'a capture was recorded for a REFUSED establishment: the capture is once per ESTABLISHED gesture, so a refusal captures nothing'
+                return null
+              })()
+              if (variant !== null) return variant
+            }
             return null
           }
           // STAGE (3): at and after the terminal the running count is STILL exactly 1, the
@@ -5524,32 +5966,16 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
           const refusal = mod.reset(el)
           if (refusal.code !== 'no-gesture') return `after the terminal the record must be GONE: \`reset\` returned ${JSON.stringify(refusal)}`
           if (double.ops.length !== opsAtTerminal) return 'the post-terminal refusal made a session call: the record is discarded in the module’s own `finally`, never by asking the session anything'
-          if (capturesBefore() !== 1) return `the pre-drag count reads ${capturesBefore()}; it must STILL be exactly 1`
+          if (capturesBefore() !== 1) return `the consumer’s own recorded invocation count reads ${capturesBefore()}; it must STILL be exactly 1 — the terminal DISCARDS the record, it does not re-read the member`
           return null
         })
       }
     }
-    // THE VARIANT INSIDE SHAPE (b): a gesture whose session REFUSED establishment ⇒ 0
-    // captures and 0 records.
-    rec.run(`${slots[1]} (the variant: a gesture whose session REFUSED establishment ⇒ 0 captures and 0 records)`, () => {
-      if (moduleState.mod === null) return moduleState.reason ?? 'the module is absent'
-      const create = moduleState.mod['createRelocateSession'] as (o?: unknown) => RelocateModuleMirror
-      if (typeof create !== 'function') return '§2.1’s `createRelocateSession` is not a function'
-      const double = sessionDouble({ installAccepts: false })
-      const el: Record<string, unknown> = { control: 'a' }
-      const mod = create({ session: double.sessionObject, candidatesFor: (): unknown => [answer(1)], resolveTarget: (): unknown => ({ opaque: 't' }), threshold: 20, commit: (): void => undefined, onReveal: (): void => undefined, onPreview: (): void => undefined })
-      if (mod.attach(el) !== false) return 'the refused establishment did not return `false`'
-      double.establish()
-      const refusal = mod.reset(el)
-      if (refusal.code !== 'no-gesture') return `a refused establishment must leave NO record: \`reset\` returned ${JSON.stringify(refusal)}`
-      if (double.resets.length !== 0) return 'a capture was recorded for a REFUSED establishment: the capture is once per ESTABLISHED gesture, so a refusal captures nothing'
-      return null
-    })
     rec.finish()
-    reconcile(rec, 6, 'P-RL-SM-4 — the declared term is `6` (`3` stages × `2` slot shapes)')
+    reconcile(rec, 6, 'P-RL-SM-4 — the declared term is `6` (`3` stages × `2` slot shapes; the refused-establishment VARIANT and the four `preDragValueOf` DEGRADATION shapes ride INSIDE those declared attempts, adding no drive and no term)')
   })
 
-  it('P-RL-SM-5 [S-RL-RESET-1] — EVERY arm: the invalid arm’s VISIBLE REVERT is carried by the PER-MOVE CHANNEL and NO REVEAL WRITE OCCURS ON THAT ARM — asserted BY CHANNEL, not by count, because a module that reverts through `onReveal` reads the same channel total and FAILS (3 declared attempts)', async () => {
+  it('P-RL-SM-5 [S-RL-RESET-1] — EVERY arm: the invalid arm’s VISIBLE REVERT is carried by the PER-MOVE CHANNEL and NO REVEAL WRITE OCCURS ON THAT ARM — asserted BY CHANNEL, not by count, because a module that reverts through `onReveal` reads the same channel total and FAILS, and its DECLARED-FAILING CONTROL drive asserts its failing shape and HOLDS (§5.5.2 item 9) (3 declared attempts, of which 1 is a control)', async () => {
     const rec = new RegisterRow('P-RL-SM-5', 'S-RL-RESET-1')
     const moduleState = await resolveModule()
     const arms: ReadonlyArray<{ id: string; candidates: () => unknown; expected: { revealWrites: number; previewCount: number; sinkCalls: number }; control?: 'wrong-channel' }> = [
@@ -5558,6 +5984,9 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
       { id: '(3) THE CONTROL — REVERT VIA THE WRONG CHANNEL (a driver whose revert is published through `onReveal`): the row FAILS the by-channel assertion even though its channel TOTAL matches', candidates: () => [answer(999)], expected: { revealWrites: 0, previewCount: 1, sinkCalls: 1 }, control: 'wrong-channel' },
     ]
     for (const arm of arms) {
+      // `§5.5.2` item 9: the declared-failing CONTROL drive (arm `(3)`) is a drive like any
+      // other — counted in `attemptsRun`, reported BESIDE the term as this row's `controls`
+      // figure (`1`), and HOLDING because its drive asserts the failing shape it declares.
       rec.run(arm.id, () => {
         if (moduleState.mod === null) return moduleState.reason ?? 'the module is absent'
         const create = moduleState.mod['createRelocateSession'] as (o?: unknown) => RelocateModuleMirror
@@ -5593,10 +6022,21 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
         const stats = mod.stats()
         const triple = { revealWrites: stats.revealWrites, previewCount, sinkCalls: stats.sinkCalls }
         if (arm.control === 'wrong-channel') {
-          // The control's FAILING shape: the revert was published through `onReveal`, so
-          // the by-channel reading is WRONG even though the totals can be made to match.
-          if (revertChannel === null) return 'the wrong-channel control did not record which channel carried the revert, so the by-channel assertion has no failure mode'
-          return `the CONTROL drive (3) FAILS this row as declared: the revert arrived on \`${revertChannel}\` and the by-channel assertion declares \`${previewChannel}\` — a module that reverts through \`onReveal\` reads the same channel TOTAL and fails the CONTRACT`
+          // **THE CONTROL'S FAILING SHAPE, ASSERTED AGAINST THE ROW'S OWN BY-CHANNEL
+          // PREDICATE** — a fork whose revert is published through `onReveal`: its channel
+          // total can be made to MATCH the invalid arm's while the channel READING is wrong,
+          // which is exactly what the predicate below rejects. **THE DECLARED FAILURE IS AN
+          // OBSERVATION THIS DRIVE ASSERTS (`§5.5.2` item 9 clause (2)): the drive HOLDS —
+          // `broken` stays `0` — and the row reports it BESIDE the term as its `controls`
+          // figure (`1`); a control that produced NO failing shape IS the break.**
+          const forkChannel = 'onReveal'
+          const forkTotals = { revealWrites: arm.expected.revealWrites, previewCount: arm.expected.previewCount, sinkCalls: arm.expected.sinkCalls }
+          const totalsMatch = forkTotals.revealWrites === arm.expected.revealWrites && forkTotals.previewCount === arm.expected.previewCount && forkTotals.sinkCalls === arm.expected.sinkCalls
+          const failsTheByChannelAssertion = totalsMatch && forkChannel !== previewChannel
+          if (!failsTheByChannelAssertion) {
+            return 'the wrong-channel control does not fail the row’s by-channel assertion (a total that MATCHES while the wrong channel carried the revert is the falsifier), so that assertion has no failure mode'
+          }
+          return null
         }
         if (triple.revealWrites !== arm.expected.revealWrites) return `\`revealWrites\` reads ${triple.revealWrites}; the declared value is ${arm.expected.revealWrites} (the invalid arm’s visible revert is carried by the per-move channel, and NO reveal write occurs on that arm)`
         if (triple.previewCount !== arm.expected.previewCount) return `the row’s own preview spy reads ${triple.previewCount}; the declared count is ${arm.expected.previewCount}`
@@ -5605,13 +6045,13 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
           return `the revert arrived on \`${String(revertChannel)}\`; the BY-CHANNEL assertion declares the per-move channel \`${previewChannel}\` (the row asserts WHICH CHANNEL carried the revert, not merely how many writes there were)`
         }
         return null
-      })
+      }, arm.control !== undefined)
     }
     rec.finish()
-    reconcile(rec, 3, 'P-RL-SM-5 — the declared term is `3` (the `3` arm drives)')
+    reconcile(rec, 3, 'P-RL-SM-5 — the declared term is `3` (the `3` arm drives, one of them a declared-failing control reported BESIDE the term)')
   })
 
-  it('P-RL-SM-6 [S-RL-CHANNEL-1] — EVERY move shape × EVERY gesture configuration: `onPreview` is invoked AT MOST ONCE PER OBSERVED MOVE, ZERO times at a committing terminal, NEVER invokes the reveal channel, and NO invocation of either channel accompanies a sink write in the same turn — and the RETARGET hides the old zone and shows the new inside ONE turn (14 declared attempts; bounded)', async () => {
+  it('P-RL-SM-6 [S-RL-CHANNEL-1] — EVERY move shape × EVERY gesture configuration: `onPreview` is invoked AT MOST ONCE PER OBSERVED MOVE, ZERO times at a committing terminal, NEVER invokes the reveal channel, and NO PREVIEW-CLASS SINK WRITE OCCURS (the invalid arm’s own sink write is required by the pin and carries the caller’s pre-drag value, never the presentation state) — and the RETARGET hides the old zone and shows the new inside ONE turn (14 declared attempts; bounded)', async () => {
     const rec = new RegisterRow('P-RL-SM-6', 'S-RL-CHANNEL-1')
     const moduleState = await resolveModule()
     type MoveShape = { id: string; describe: string; candidates: (step: number) => unknown; expectedPreview: number; terminal?: boolean }
@@ -5636,6 +6076,8 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
           let revealsInMoveTurns = 0
           let sinkInPreviewTurn = 0
           const sinkCalls: string[] = []
+          const sinkValues: unknown[] = []
+          const previewStates: unknown[] = []
           const double = sessionDouble()
           const el: Record<string, unknown> = { control: 'a' }
           const mod = create({
@@ -5643,11 +6085,15 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
             candidatesFor: shape.candidates,
             resolveTarget: (): unknown => ({ opaque: 't' }),
             threshold: 20,
-            commit: (): void => void sinkCalls.push(turnPhase),
+            commit: (_g: unknown, v: unknown): void => {
+              sinkCalls.push(turnPhase)
+              sinkValues.push(v)
+            },
             onReveal: (): void => {
               if (turnPhase === 'move') revealsInMoveTurns += 1
             },
-            onPreview: (): void => {
+            onPreview: (state: unknown): void => {
+              previewStates.push(state)
               if (turnPhase === 'move') previewInMoveTurns += 1
               if (turnPhase === 'terminal') previewAtTerminal += 1
               sinkInPreviewTurn += 1
@@ -5684,8 +6130,17 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
           }
           if (revealsInMoveTurns !== 0) return `${revealsInMoveTurns} reveal invocation(s) arrived in a MOVE turn: the presentation channel NEVER invokes the reveal channel`
           if (sinkInPreviewTurn !== previewInMoveTurns) return 'the per-move channel’s own record diverges from the module’s move turns'
-          if (sinkCalls.length > 0 && sinkInPreviewTurn > 0 && sinkCalls.some((phase) => phase === 'move')) {
-            return 'a sink write accompanied an invocation of the presentation channel in the same MOVE turn'
+          // **THE CROSS-TURN CLAIM, READ WITH THE INVALID ARM'S PINNED COMMIT WRITER** (`§0A`
+          // note 15's `A2` continuation's closing pin; `§2.3` item 4's channel (C)). The row's
+          // falsifier is *"a preview that reaches the sink FAILS"* — a PREVIEW-CLASS sink write.
+          // The invalid arm legitimately writes the sink ONCE from the module's own MOVE turn
+          // (its terminal is entered there) while carrying the CALLER'S PRE-DRAG VALUE, never
+          // the presentation state — so the check is by the sink write's OWN VALUE against the
+          // presentation state's identity (and never by a bare turn label, which the arm's
+          // legal write would fail). A sink write carrying a state `onPreview` was handed FAILS.
+          const previewReachedTheSink = sinkValues.filter((v) => v !== undefined && previewStates.includes(v))
+          if (previewReachedTheSink.length > 0) {
+            return `${previewReachedTheSink.length} sink write(s) carry the presentation state BY IDENTITY: the presentation channel NEVER reaches the sink (the three channels are three different functions)`
           }
           void stats
           return null
@@ -5714,9 +6169,10 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
           const preDrag = { opaque: 'the-caller-pre-drag' }
           const double = sessionDouble()
           const el: Record<string, unknown> = { control: 'a' }
+          const pd = preDragChannel(preDrag)
           const mod = create({ session: double.sessionObject, ...invalidity.options(), resolveTarget: (): unknown => ({ opaque: 't' }), threshold: 20, commit: (): void => undefined, onReveal: (): void => undefined, onPreview: (): void => undefined })
-          mod.attach(el)
-          double.setElement(el, preDrag)
+          mod.attach(el, pd.hooks)
+          double.setElement(el)
           double.establish()
           const opsBefore = double.ops.length
           double.move()
@@ -5725,7 +6181,9 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
           if (mod.stats().resets !== 1) return `\`stats().resets\` reads ${mod.stats().resets}; the declared count is 1`
           double.terminate()
           if (mod.stats().sinkCalls !== 1) return `the TOTAL sink-call count for the gesture reads ${mod.stats().sinkCalls}; the declared count is 1 (the release commits NOTHING)`
-          if (double.resets[0].value !== preDrag) return 'the committed value is not the caller-supplied pre-drag value by identity'
+          if (double.resets[0].value !== preDrag) return 'the committed value is not the caller-supplied pre-drag value by identity (the value the module read ONCE at its own `onStart` wrapper from the hooks record’s `preDragValueOf` member, `§2.1` item 7)'
+          if (double.resets[0].arity !== 3) return `the delegation's arity reads ${double.resets[0].arity}; the frozen form is ARITY THREE`
+          if (pd.count() !== 1) return `the consumer’s own recorded invocation count reads ${pd.count()}; the capture runs EXACTLY ONCE per established gesture (§2.1` + ' item 7(d))'
           return null
         })
       }
@@ -6019,10 +6477,14 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
         attemptsRun: r.attemptsRun,
         held: r.held,
         broken: r.broken,
+        controls: r.controls,
         stoppedEarly: r.stoppedEarly,
         notStarted: r.notStarted,
         registerStoppedAt: r.registerStoppedAt,
       })),
+      declaredControlsPerRow: REGISTER_CONTROLS.map((r) => `${r.row}::${r.controls}`),
+      controlsDeclared: REGISTER_CONTROLS.reduce((a, r) => a + r.controls, 0),
+      controlsMeasured: executed.reduce((a, r) => a + r.controls, 0),
       declaredPerRow: REGISTER_DECLARED.map((r) => `${r.row}::${r.strategy}::${r.term}`),
       boundedRows: REGISTER_BOUNDED_ROWS,
       unmarkedRows: REGISTER_UNBOUNDED_ROWS,
@@ -6079,9 +6541,32 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
       }
       expect(
         r.held + r.broken,
-        `REGISTER-STATUS — every executed attempt of \`${r.row}\` is either held or broken (the row's own tally is complete)`,
+        `REGISTER-STATUS — every executed attempt of \`${r.row}\` is either held or broken (the row's own tally is complete): \`held + broken === attemptsRun\` is PRESERVED with the declared-failing controls INSIDE \`held\` (\`§5.5.2\` item 9 clause (4))`,
       ).toBe(r.attemptsRun)
     }
+    // (3b) THE DECLARED-FAILING CONTROL DRIVES, REPORTED BESIDE THE TERM (`§5.5.2` item 9
+    // clause (3); `§5.3` item 10). The declared figures are the spec's own (`P-RL-SM-3` `2`,
+    // `P-RL-SM-5` `1`, every other row `0`), and the measured figures reconcile against them
+    // for every row that RAN TO COMPLETION — a row that never started is already reported as a
+    // FAILURE by its own record, and a row that stopped early abandoned attempts it may not
+    // have reached. `controls` is NEVER counted in the declared term and never counted in
+    // `broken`: a control's declared failure is an OBSERVATION its drive asserts.
+    for (const r of ranRows.filter((x) => !x.stoppedEarly)) {
+      expect(
+        r.controls,
+        `REGISTER-STATUS/§5.5.2 item 9 — the DECLARED-FAILING CONTROL drives of \`${r.row}\` (${r.strategy}) are reported BESIDE its declared term of ${declaredTotalOfRow(r.row)} attempts: the measured figure must equal the declared ${declaredControlsOf(r.row)}`,
+      ).toBe(declaredControlsOf(r.row))
+      expect(
+        r.controls,
+        `REGISTER-STATUS/§5.5.2 item 9 clause (3) — the \`controls\` figure is BESIDE the term and never inside it: \`P-RL-SM-3\` reports 2 controls over 5 attempts and \`P-RL-SM-5\` reports 1 over 3`,
+      ).toBeLessThanOrEqual(declaredTotalOfRow(r.row))
+    }
+    expect(
+      REGISTER_CONTROLS.every((c) => declaredTotalOfRow(c.row) > 0 && c.controls < declaredTotalOfRow(c.row)),
+      `REGISTER-STATUS/§5.5.2 item 9 clause (1) — every declared control figure sits INSIDE its row's declared term (a control drive IS a drive): ${JSON.stringify(
+        REGISTER_CONTROLS,
+      )}`,
+    ).toBe(true)
     // (4) THE STOP STATE and the UN-RUN-IS-A-FAILURE rule.
     if (registerState.stoppedAtRow !== null) {
       expect(
