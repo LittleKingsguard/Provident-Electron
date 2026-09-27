@@ -61,13 +61,23 @@
 //
 // THE PROPERTY LAYER IS `§5.5.1`'s REGISTER: **10 typed rows carrying 10 terms.
 // ⟶ RE-GRAINED 2026-09-27 (`§0A` note 7.2/7.3, the defect-repair amendment): the
-// DECLARED TOTAL this harness asserts is `137` (= `40 + 26 + 17 + 10 + 12 + 5 + 3
-// + 5 + 5 + 14`, the sum of its own ten terms; chain `40 → 66 → 83 → 93 → 105 →
-// 110 → 113 → 118 → 123 → 137`; subtotals `IM 110 · SM 13 · TP 14`), and the
-// AS-FILED `154` is kept VISIBLE BESIDE it as the annotated, SUPERSEDED filing
-// figure (with its named `17` excess, the `P-CT-IM-3` term its own "correction"
-// line re-added a second time).** The polarity of `declared` vs `as-filed` flipped
-// and NOTHING else moved (`§0A` note 7.3) — every term a DRIVE COUNT, with assertions printed
+// DECLARED TOTAL this harness asserts became `137` (= `40 + 26 + 17 + 10 + 12 + 5
+// + 3 + 5 + 5 + 14`; chain `40 → 66 → 83 → 93 → 105 → 110 → 113 → 118 → 123 →
+// 137`; subtotals `IM 110 · SM 13 · TP 14`), with the AS-FILED `154` kept VISIBLE
+// BESIDE it as the annotated, SUPERSEDED filing figure (its named `17` excess
+// being the `P-CT-IM-3` term its own "correction" line re-added a second time).
+// ⟶ RE-GRAINED AGAIN 2026-09-27 (`§0A` note 8.4, part D, AFTER the module landed
+// at `91311ac`): **the DECLARED TOTAL THIS HARNESS ASSERTS IS `151`** (=
+// `48 + 26 + 23 + 10 + 12 + 5 + 3 + 5 + 5 + 14`, the sum of its own ten RE-DERIVED
+// terms; chain `48 → 74 → 97 → 107 → 119 → 124 → 127 → 132 → 137 → 151`;
+// subtotals `IM 124 · SM 13 · TP 14 = 151`) — TWO terms re-derived (`P-CT-IM-1`
+// `40 → 48`, `P-CT-IM-3` `17 → 23`) because the extra executions ARE genuine drives
+// (each a `row.run` with its own state and its own assertions), and **the
+// intermediate `137` and the as-filed `154` are BOTH kept VISIBLE BESIDE `151` as
+// annotated provenance (annotate-never-rewrite: this header's own as-filed `137`
+// line above stays readable).** `151` is NOT the as-filed `154` (that was a mis-sum,
+// `137 + 17`): the two are one `3` apart and UNRELATED. The polarity of `declared`
+// vs `as-filed` flipped and NOTHING else moved (`§0A` note 7.3) — every term a DRIVE COUNT, with assertions printed
 // BESIDE it and never counted in it. Caps: `≤100`/row · `≤400` total ·
 // **STOP AFTER 5 CONSECUTIVE FAILURES**; ONE pinned-seed generator for
 // `P-CT-TP-1` (`seed = 20260927`, `stateₙ₊₁ = (stateₙ·1664525 + 1013904223) mod
@@ -2574,14 +2584,54 @@ describeC('PRE — register-harness preconditions (not spec rows)', () => {
     expect(LCG_A, 'the LCG multiplier is the pinned literal').toBe(1664525)
     expect(LCG_C, 'the LCG increment is the pinned literal').toBe(1013904223)
     expect(LCG_MOD, 'the modulus is 2**32').toBe(2 ** 32)
-    // The first three states, recomputed from the literals: a later edit of a
-    // constant reddens HERE.
+    // =====================================================================
+    // ⟶ `ADV-CT-7` (the gate-4 adversarial pass) — THE TWO SELF-SATISFYING
+    // CHECKS THIS ROW CARRIED ARE REPAIRED HERE.
+    //
+    // (1) AS AUTHORED this row recomputed `s₁…s₃` from the SAME formula the
+    // generator implements (`stateₙ₊₁ = (stateₙ·A + C) mod M`) and compared the
+    // generator against that recomputation — so it could ONLY fail for a
+    // generator that disagreed with ITSELF, and a changed modulus, step or seed
+    // moved BOTH sides together. **THE THREE STATES AND THE FOURTEEN DRAW INDICES
+    // ARE NOW PINNED AS LITERALS** (the pinned-seed form the family uses), so a
+    // changed `LCG_A`/`LCG_C`/`LCG_MOD`/`SEED`, a two-step draw, a scaling form or
+    // a different pool length FAILS HERE against a figure that did not move with
+    // it. The recomputation is KEPT BELOW, annotated, as the self-consistency
+    // companion it always was — never as the pin.
+    // =====================================================================
+    const PINNED_LCG_STATES: readonly number[] = [1750210706, 2762366665, 608622996]
+    const PINNED_DRAW_INDICES: readonly number[] = [6, 9, 2, 3, 6, 9, 2, 7, 4, 9, 12, 3, 12, 1]
+    const lcg = makeLcg(SEED)
+    expect(
+      [lcg.step(), lcg.step(), lcg.step()],
+      'ADV-CT-7 repair — the first three LCG states from seed 20260927 are the PINNED LITERALS (a changed modulus, multiplier, increment or seed FAILS here; as authored these were recomputed from the formula under test and could not fail)',
+    ).toEqual([...PINNED_LCG_STATES])
+    expect(
+      TP_DRAW_INDICES,
+      'ADV-CT-7 repair — the 14 draw INDICES are the PINNED LITERALS, one LCG step per draw over the 14-member pool: a two-step draw, a scaling form or a changed pool length FAILS here',
+    ).toEqual([...PINNED_DRAW_INDICES])
+    // THE RECOMPUTATION, KEPT VISIBLE BESIDE THE PINS (`REGISTER-ATTEMPT-TOTALS-
+    // PRINT-THEIR-TERMS` sub-rule 1's annotate-never-rewrite discipline): it is a
+    // SELF-CONSISTENCY companion only — the generator against its own formula —
+    // and it is NO LONGER the pin. A change that moved the constants moves BOTH
+    // sides of these two assertions together, which is exactly why the literal
+    // pins above exist.
     const s1 = (SEED * LCG_A + LCG_C) % LCG_MOD
     const s2 = (s1 * LCG_A + LCG_C) % LCG_MOD
     const s3 = (s2 * LCG_A + LCG_C) % LCG_MOD
-    const lcg = makeLcg(SEED)
-    expect([lcg.step(), lcg.step(), lcg.step()], 'the first three LCG states from seed 20260927 are the literals recomputed here').toEqual([s1, s2, s3])
-    expect(TP_DRAW_INDICES.slice(0, 3), 'one LCG step per draw: the first three pool indices are state₁₋₃ mod 14').toEqual([s1 % 14, s2 % 14, s3 % 14])
+    const lcgConsistency = makeLcg(SEED)
+    expect(
+      [lcgConsistency.step(), lcgConsistency.step(), lcgConsistency.step()],
+      'ADV-CT-7 (annotated companion, NOT the pin) — the first three LCG states recomputed from the file\'s own constants: this assertion is SELF-CONSISTENCY ONLY, and it also shows the recomputed states DO equal the pinned literals above',
+    ).toEqual([s1, s2, s3])
+    expect(
+      [s1, s2, s3],
+      'ADV-CT-7 — the annotated recomputation and the PINNED LITERALS are the same three states, asserted so the pin is not a second, drifting arithmetic',
+    ).toEqual([...PINNED_LCG_STATES])
+    expect(
+      TP_DRAW_INDICES.slice(0, 3),
+      'ADV-CT-7 (annotated companion, NOT the pin) — one LCG step per draw: the first three pool indices are state₁₋₃ mod 14, which also equal the pinned literals\' first three',
+    ).toEqual([s1 % 14, s2 % 14, s3 % 14])
     // THE DECLARED ARITHMETIC, checked against THIS file's own tables. The total
     // is printed WITH ITS TERMS and IS their sum (§5.5.3).
     const terms = REGISTER_TERMS.map((r) => r.declared)
@@ -2761,15 +2811,36 @@ describeC('PRE — register-harness preconditions (not spec rows)', () => {
     // A DRAW IS NOT A SWEEP: the distinct-member count is REPORTED below and
     // NOTHING is asserted about coverage (`§5.5.2` item 4). The reading is
     // printed so the audit can see that these 14 draws do not sweep the pool.
+    // ⟶ `ADV-CT-7` (the gate-4 adversarial pass): the check that stood here was
+    // `expect(distinctDrawn).toBe(new Set(TP_DRAW_INDICES).size)` — A SELF-
+    // COMPARISON that could not fail. It is REPLACED by (i) the printed reading
+    // (the reporting the "A DRAW IS NOT A SWEEP" rule asks for) and (ii) ONE
+    // assertion against a PINNED LITERAL — the distinct count the pinned literal
+    // draws actually land on, `8` of the pool's `14` members — which CAN fail for
+    // a changed seed, step, modulus or pool length.
     const distinctDrawn = new Set(TP_DRAW_INDICES).size
+    const PINNED_DISTINCT_DRAWN = 8
+    const PINNED_DRAWN_MEMBERS: readonly number[] = [1, 2, 3, 4, 6, 7, 9, 12]
     console.log(
-      `§5.5.1 register note :: the pinned 14 draws of P-CT-TP-1 land on ${distinctDrawn} DISTINCT pool members of ${TP_POOL.length} — a REPORTED figure, never asserted; ` +
+      `§5.5.1 register note :: the pinned 14 draws of P-CT-TP-1 land on ${distinctDrawn} DISTINCT pool members of ${TP_POOL.length} (indices ${JSON.stringify([...new Set(TP_DRAW_INDICES)].sort((a, b) => a - b))}) — a REPORTED figure, pinned to the literal ${PINNED_DISTINCT_DRAWN} and NEVER constrained to the pool size; ` +
         'a DONE row claiming full pool coverage is a review finding.',
     )
-    expect(distinctDrawn, "the REPORTED distinct-member count is a figure this file prints and never constrains to the pool size (A DRAW IS NOT A SWEEP)").toBe(
-      new Set(TP_DRAW_INDICES).size,
-    )
-    expect(distinctDrawn, 'the distinct count cannot exceed the pool size').toBeLessThanOrEqual(TP_POOL.length)
+    expect(
+      distinctDrawn,
+      'ADV-CT-7 repair — the REPORTED distinct-member count is pinned to the LITERAL 8 (the figure the pinned draws land on), NOT to itself: a changed seed/step/modulus/pool length moves the count and FAILS here, and NO coverage claim is made (A DRAW IS NOT A SWEEP)',
+    ).toBe(PINNED_DISTINCT_DRAWN)
+    expect(
+      [...new Set(TP_DRAW_INDICES)].sort((a, b) => a - b),
+      'ADV-CT-7 repair — the drawn members THEMSELVES are pinned as literals, so the count above is not a lone figure: these 8 of 14 indices are the ones the pinned draws land on, and the 6 undrawn indices are a REPORTED boundary (the pool\'s silence is stated, never an omission)',
+    ).toEqual([...PINNED_DRAWN_MEMBERS])
+    expect(
+      distinctDrawn,
+      'the reported distinct count cannot exceed the pool size — the ONE bound that is a bound, not a coverage claim',
+    ).toBeLessThanOrEqual(TP_POOL.length)
+    expect(
+      distinctDrawn,
+      'and it does not sweep the pool: the pinned draws land on FEWER members than the pool holds, so the row\'s universal is over the DRAWN domain and NOT over the whole input space',
+    ).toBeLessThan(TP_POOL.length)
   })
 })
 
@@ -2820,6 +2891,19 @@ describeC('§5.5.1 — the typed property register (10 rows, 10 terms, DECLARED 
           const out = tokensFor(chrome, rec.fn)
           if (out !== 0) return 'the primitive answer was not returned VERBATIM'
           if (rec.count() !== 1) return `the recorded invocation count was ${rec.count()}, not 1`
+          // ⟶ `ADV-CT-7` (the gate-4 adversarial pass) — THE REVOKED `Proxy`
+          // NEGATIVE GENERATOR, riding INSIDE this existing drive as an assertion
+          // (its own `chrome` value, its own recorder, `1` attempt — the row's
+          // declared term stays `48`). `P-CT-IM-1`'s declared `chrome` domain has
+          // NO shape gate, and `A-3`'s selector probe names a revoked `Proxy`
+          // explicitly, so the declared answer for this hostile record is: reached
+          // by identity, `0` returned verbatim, nothing thrown.
+          const revokedRec = recorder(0)
+          const revokedChrome = revokedProxy()
+          const revokedOut = tokensFor(revokedChrome, revokedRec.fn)
+          if (revokedOut !== 0) return 'a REVOKED Proxy chrome did not return the caller\'s primitive answer VERBATIM (the declared answer for a hostile record is the answer, never a throw)'
+          if (revokedRec.count() !== 1) return `with a REVOKED Proxy chrome the seam was invoked ${revokedRec.count()} time(s), not 1: the shape is a totality INPUT, never a gate`
+          if (!sameRef(revokedRec.args[0], revokedChrome)) return 'with a REVOKED Proxy chrome the seam did not receive the caller\'s value BY IDENTITY'
           return null
         },
       },
@@ -3064,6 +3148,27 @@ describeC('§5.5.1 — the typed property register (10 rows, 10 terms, DECLARED 
       row.run(`${shape.id} × (i) Object.keys deep-equals the two declared names in order`, () => {
         if (!s.ok) return s.cause
         const record = driveDeclaration(s.containerDeclarationFor, shape.make())
+        // ⟶ `ADV-CT-7` (the gate-4 adversarial pass): THE TWO SHAPE NEGATIVE
+        // GENERATORS RIDE INSIDE THIS DRIVE (same returned record, no new
+        // `row.run` — the declared term stays `12`, i.e. `6` shapes × `2`
+        // readings). (a) A NON-ENUMERABLE MEMBER: the row's census is over
+        // ENUMERABLE keys, so such a member would be INVISIBLE to `Object.keys`
+        // alone — asserted here against the FULL own-property set, so it FAILS.
+        // (b) A `Symbol` KEY: `Object.keys` never sees symbol keys either, so the
+        // row asserts their absence by name, against a reading that CAN fail.
+        const ownNames = Object.getOwnPropertyNames(record)
+        const ownSymbols = Object.getOwnPropertySymbols(record)
+        if (JSON.stringify(ownNames) !== JSON.stringify([...RECORD_KEYS])) {
+          return `the record's OWN PROPERTY NAMES (enumerable or not) were ${JSON.stringify(ownNames)}, not ${JSON.stringify([...RECORD_KEYS])}: a NON-ENUMERABLE member is a third member the enumerable census alone would not see`
+        }
+        if (ownSymbols.length !== 0) {
+          return `the record carried ${ownSymbols.length} Symbol-keyed own property(ies) (${brief(ownSymbols)}): a Symbol key is INVISIBLE to Object.keys, so the census asserts its absence BY NAME`
+        }
+        for (const name of ownNames) {
+          const d = Object.getOwnPropertyDescriptor(record, name)
+          if (d === undefined) return `the own property descriptor of '${name}' was undefined`
+          if (!d.enumerable) return `the own member '${name}' was NON-ENUMERABLE: the census is over enumerable keys, and a hidden member FAILS this row`
+        }
         return JSON.stringify(Object.keys(record)) === JSON.stringify([...RECORD_KEYS])
           ? null
           : `the own enumerable string keys were ${JSON.stringify(Object.keys(record))}, not ${JSON.stringify([...RECORD_KEYS])}`
@@ -3218,10 +3323,28 @@ describeC('§5.5.1 — the typed property register (10 rows, 10 terms, DECLARED 
     })
     row.run('(4) a NON-OBJECT answer returned VERBATIM (the anti-wrapping cell)', () => {
       if (!s.ok) return s.cause
+      // ⟶ `ADV-CT-7` (the gate-4 adversarial pass): the answers driven here were
+      // `[0, '', false, NaN]` + a Symbol + a `12n`; the row's DECLARED domain is
+      // `0` · `''` · `false` · `NaN` · a `Symbol` · a `12n`, so the FIVE the audit
+      // named were incomplete BY NAME. They are all asserted here, INSIDE this
+      // existing drive (its own attempts, the declared term stays `5`).
       const answers: unknown[] = [0, '', false, NaN]
       for (const answer of answers) {
         const out = s.tokensFor({ k: 1 }, recorder(answer).fn)
         if (!Object.is(out, answer)) return `the answer ${brief(answer)} was not returned VERBATIM (a module that wraps it into a record FAILS here)`
+      }
+      const named: ReadonlyArray<{ readonly id: string; readonly answer: unknown }> = [
+        { id: "'' (the declared EMPTY-string answer: a module that treats it as ABSENCE FAILS)", answer: '' },
+        { id: 'false (a module that treats a falsy answer as ABSENCE FAILS)', answer: false },
+        { id: 'NaN (the answer is compared with Object.is, so NaN is not read as ABSENCE)', answer: NaN },
+        { id: "Symbol('s') (an answer that is neither a string nor an object)", answer: Symbol('s') },
+        { id: '12n (a BigInt answer: neither a string nor a number)', answer: 12n },
+      ]
+      for (const drive of named) {
+        const rec = recorder(drive.answer)
+        const out = s.tokensFor({ k: 1 }, rec.fn)
+        if (!Object.is(out, drive.answer)) return `the answer ${drive.id} was not returned VERBATIM`
+        if (rec.count() !== 1) return `the seam was invoked ${rec.count()} time(s) for the answer ${drive.id}, not 1`
       }
       const sym = Symbol('answer')
       if (!Object.is(s.tokensFor({ k: 1 }, recorder(sym).fn), sym)) return 'a Symbol answer was not returned verbatim'
@@ -3273,6 +3396,14 @@ describeC('§5.5.1 — the typed property register (10 rows, 10 terms, DECLARED 
     // THE 1 IDEMPOTENCE CONTROL: ONE closure, called twice with the same edge
     // value — the two answers are the SAME VALUE by identity and the closure's
     // own recorded count is 2. A module that caches the answer reads 1 here.
+    // ⟶ `ADV-CT-7` (the gate-4 adversarial pass) adds the FRESHNESS negative
+    // generator INSIDE this same drive: ONE resolver returning a FRESH OBJECT per
+    // read, whose reads are asserted FRESHNESS-PAIRWISE (`a !== b` between two
+    // DISTINCT reads, never a read against ITSELF — the `§0A` note 8.3(b) defect
+    // class). A module that caches, memoizes or normalizes the answer into one
+    // record FAILS here; the two reads are still ONE invocation each, so the
+    // closure's own count reading stays the same instrument, and the declared term
+    // stays `5`.
     row.run('the idempotence control: one closure, two invocations, count 2 (a cache reads 1 and FAILS)', () => {
       if (!s.ok) return s.cause
       const rec = recorder('the-one-answer')
@@ -3280,6 +3411,26 @@ describeC('§5.5.1 — the typed property register (10 rows, 10 terms, DECLARED 
       const b = s.orientationFor('edge-value', rec.fn)
       if (a !== b) return 'two invocations with the same pair produced different answers'
       if (rec.count() !== 2) return `the closure's recorded count was ${rec.count()}, not 2: a module that caches the answer reads 1 here and FAILS`
+      // ⟶ `ADV-CT-7`: THE FRESH-OBJECT-PER-READ RESOLVER. One closure, two reads,
+      // each returning a newly built object: the module must hand each read's own
+      // answer back — so the two answers are DISTINCT OBJECTS (asserted PAIRWISE
+      // over the two DISTINCT reads, never one read against itself), both carry
+      // the same reading, and the closure's own attempt count is 2.
+      let freshRead = 0
+      const freshAnswers: unknown[] = []
+      const freshFn = (edge: unknown): unknown => {
+        if (!sameRef(edge, 'edge-value')) throw new Error('the resolver did not receive the edge by identity')
+        freshRead += 1
+        const made = { reading: 'fresh', read: freshRead }
+        freshAnswers.push(made)
+        return made
+      }
+      const freshA = s.orientationFor('edge-value', freshFn)
+      const freshB = s.orientationFor('edge-value', freshFn)
+      if (freshRead !== 2) return `the fresh-reading resolver was invoked ${freshRead} time(s), not 2: exactly one invocation per call, never cached`
+      if (freshAnswers.length !== 2) return `the fresh-reading resolver built ${freshAnswers.length} answer(s), not 2: a module that caches reads the SAME answer twice and FAILS this row`
+      if (sameRef(freshA, freshB)) return 'the module returned the SAME object for two reads that each built a FRESH one: the answer was cached, memoized or normalized into one record (this is the pairwise freshness assertion — two DISTINCT reads are compared, never a read against itself)'
+      if (!sameRef(freshA, freshAnswers[0]) || !sameRef(freshB, freshAnswers[1])) return 'a fresh read\'s own answer was not returned BY IDENTITY (by the read\'s own position, so the assertion is pairwise over distinct reads)'
       return null
     })
     // The static companion assertion, reported BESIDE the term.
