@@ -98,16 +98,21 @@ function ownMembers(source: object): { readonly ok: boolean; readonly names: rea
 function carries(element: unknown): CatalogEntry | null {
   if (element === null) return null
   if (typeof element !== "object" && typeof element !== "function") return null
-  if (Array.isArray(element)) {
+  const source = element as object
+  // `§3c` pin 3 / `§2.3` item 1(d): the carry guard lives INSIDE the absorbed
+  // span, so a hostile element — a REVOKED Proxy, whose `IsArray`/own-key reads
+  // throw — is SKIPPED WHOLE by the local return below, never by the outer catch
+  // of `normalizeCatalog` (which would drop the WHOLE catalog). The absorbed call
+  // sits in a `const` initializer because THIS module bans a line-initial
+  // `let`/`var` binding anywhere (`R-3`).
+  const probe = ((): { readonly ok: boolean; readonly names: readonly string[]; readonly values: readonly unknown[] } | null => {
     try {
-      Object.keys(element)
+      return ownMembers(source)
     } catch {
       return null
     }
-  }
-  const source = element as object
-  const probe = ownMembers(source)
-  if (!probe.ok) return null
+  })()
+  if (probe === null || !probe.ok) return null
   const values = new Map<string, unknown>()
   for (const key of CARRY_KEYS) {
     if (!owns(source, key)) continue
@@ -180,19 +185,15 @@ function invoke(picker: unknown, candidates: readonly CatalogEntry[]): Invocatio
 function identityItem(entry: CatalogEntry): ProjectedItem {
   const source = asRecord(entry)
   const item = Object.create(null) as Record<string, unknown>
+  // `§3c` pin 1 carries the own present index keys of an ARRAY onto the CARRIED
+  // ENTRY (the fresh record of the array itself) — never onto a PROJECTED ITEM,
+  // whose key set is EXACTLY the declared-order seven-name intersection
+  // (`§2.3` item 2, `R-12(a)` and its EXACTLY-THE-SEVEN rule).
   for (const key of CARRY_KEYS) {
     if (!owns(source, key)) continue
-    item[key] = source[key]
-  }
-  // `§3c` pin 1: a carried ARRAY keeps its own present index keys in turn, so a
-  // projected item re-carries them rather than dropping them.
-  const names = ownNames(source)
-  for (const name of names) {
-    if (!isIndexKey(name) || CARRY_KEYS.indexOf(name) >= 0) continue
-    if (!owns(source, name)) continue
-    const read = readOwn(source, name)
+    const read = readOwn(source, key)
     if (!read.ok) continue
-    item[name] = read.v
+    item[key] = read.v
   }
   return item as unknown as ProjectedItem
 }
