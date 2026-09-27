@@ -4,6 +4,8 @@
 plus `5` recorded findings (`F-1`..`F-5`), of which `F-1` is a **doc drift inside the contract's own
 register** and `F-2` is **my own harness error, corrected and re-run** — and **none is a converted FAIL.**
 
+**⟶ CLOSE-OUT ANNOTATION 2026-09-27 (GATE 10, THE `U-CONTAINER` CLOSE-OUT PASS — a DATED STATUS ANNOTATION ONLY; every figure and claim above stands, and this set is NOT re-run or re-scored by it).** **THE UNIT IS `DONE` — `E5` is the ledger's FIFTEENTH `DONE` row, wave `E`'s SEVENTH, and its authoritative record is `docs/next-steps.md`'s `## DONE — U-CONTAINER` section, whose clause (8) cites THIS artifact for gate 5.** **WHAT THIS SET IS CITED FOR, stated so it is not over-read: `24` scenarios EXECUTED — `24` PASS / `0` FAIL / `4` `NOT-BLIND-RUNNABLE`, plus `CN-G-24` (the type half, `tsc` exit `0`), authored from the documentation alone with the module and the red set NEVER READ, and with its five findings `F-1`…`F-5` dispositioned and NONE a converted FAIL.** **THE TWO `NOT-BLIND-RUNNABLE` CLASSES STAY NAMED AND STAY BINDING: (i) every STATIC byte/token census over the module, and (ii) every RENDERED/applied/computed/layout/paint/browser-acceptance fact — so this green is NOT an applied-style green, NOT an assembled-app green, and NOT a containment-boundary green** (gate 6 remains `STRUCTURAL`, `[U]` not offered, `[D]` not claimed). **WHAT REMAINS `OWED` AND IS CARRIED BY THE DONE ROW: gate 9's live run (the close-out pass held NO SHELL, so it neither re-ran nor measured anything here), the `docs/FORKER.md` container two-edge seam block + glossary (`docs/pending.md` `§L-4e`), the lone-surrogate coverage gap (`docs/specs/container.md` `CURRENT STATE` item 11 / `§5.5.2` item 10) and the six `§3b` negative generators.** **NO FIGURE, SCENARIO, FINDING OR BLINDNESS CLAIM IN THIS ARTIFACT MOVES.**
+
 **Authored from the DOCUMENTATION ONLY, and RUN against the landed module.** The sources read were:
 `docs/specs/container.md` (the contract — the `CURRENT STATE` block; `§0`'s twelve ruling rows; **`§0A`
 notes `1`–`8`** including the `7.1`–`7.6` red-run provenance, the arithmetic amendment and the four
@@ -18,7 +20,7 @@ classes), `§2.5` items `1`–`5`; `§3.1` `M-1`..`M-12`, `§3.2` `F-1`..`F-12`,
 `docs/specs/container-review.md` (the gate-1 record: its four steps, `C-1`…`C-10`, `§9.4`'s rulings,
 `§9.5`'s `G-1`…`G-3`) · `docs/decisions.md`'s ACTIVE rows for the family
 (`E5-B-1-DECLARATION-IS-RETURNED-AS-TEXT-AND-NEVER-APPLIED` ·
-`E5-B-2-EDGE-IS-AN-OPAQUE-CALLER-VALUE-UNDER-THE-REACH-CLAUSE` · the `E5-B-3` `NOTE (not DECIDED)` row ·
+`E5-B-2-EDGE-IS-AN-OPAQUE-CALLER-VALUE-UNDER-THE-NO-REACH-CLAUSE` · the `E5-B-3` `NOTE (not DECIDED)` row ·
 `SHELL-CHROME-PANES-ZONES-IN-SCOPE` · `SHELL-CHROME-CARVE-OUT-FUNCTIONAL` ·
 `GUTTER-CALLER-SEAMS-ARE-THE-FAMILY'S-DOWNSTREAM-CONTRACT` · `PBT-REGISTER-REQUIRED-FOR-CODE-UNITS` ·
 `A DECLARED REGISTER TERM IS A DRIVE COUNT` · `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`) · and, for
@@ -34,7 +36,7 @@ scenario or drive below: **every input is mine**, chosen from the contract's cla
 
 **THE REVISION.** `git rev-parse --short HEAD` → **`841c33e`** (`E5 GATE 3 GREEN — …`, whose own message
 records `src/shared/container.ts` **untouched**, landed at **`91311ac`**); `git status --porcelain` →
-**EMPTY** before this pass. **THE DATE.** The host clock reads **2026-09-27** (`date -u`), the same day as
+**EMPTY** before this pass. **⟶ ANNOTATED 2026-09-27 (GATE 8, THE PER-UNIT DOCUMENTATION REVIEW, `AGENTS.md` item 10d / RCA-6 — a DATED ANNOTATION; nothing above is rewritten and no result is changed): THIS PASS'S BASELINE IS NO LONGER THE TREE'S.** **MEASURED AT GATE 8: `tests/container.test.ts` HAS MOVED since this pass — it now carries the note-8.4 re-grain (`DECLARED_TOTAL = 151`, `INTERMEDIATE_DECLARED_TOTAL = 137`, `AS_FILED_TOTAL = 154`), the header sweep to `151`, the `ADV-CT-7` `PRE-2` repair and the `X-1` green branch — while `src/shared/container.ts` is UNCHANGED (still the `85`-line module landed at `91311ac`) and the tree now sits at a later revision.** **WHAT THAT DOES AND DOES NOT DO TO THE GREEN ABOVE: the `23` module-facing scenarios are unaffected (the module is byte-identical), `C-3`/`C-4` were baselines of their own pass, and `C-5`'s full-suite reading (`70` files / `1696` passed / `2` skipped) happens to MATCH the live gate-9 figure — but this artifact's `C-5` is ITS OWN measurement of an EARLIER tree, and a reader must not restate it as the unit's closing measurement.** **THE RE-DRIVE CLAUSE ABOVE IS THE FILE'S OWN RULE AND IT IS NOT TRIGGERED: `src/shared/container.ts` has NOT moved, so no reading here is stale on the module.** **WHAT IS OWED AT THIS PASS: gate 9's trio (the supervisor's measurement), gate 10 (the DONE row + the ledger move), the `docs/FORKER.md` container seam block and the lone-surrogate coverage gap (`docs/specs/container.md`'s status-block item 11 / `§5.5.2` item 10).** **THE DATE.** The host clock reads **2026-09-27** (`date -u`), the same day as
 the contract's dated amendment notes.
 
 **THE DRIVER.** Plain Node ESM (**Node `v24.20.0`**, whose native TypeScript type-stripping lets the module
