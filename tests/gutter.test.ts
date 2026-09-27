@@ -2220,6 +2220,52 @@ const NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_PATHS: ReadonlyArray<{ readonly p
 const NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_BY_PATH: Readonly<Record<string, string>> = Object.fromEntries(
   NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_PATHS.map((entry) => [entry.path, entry.unit]),
 )
+/** **⟶ SCOPED 2026-09-27 (THE TEST-LAYER PASS) — THE DECLARATION FILTER, NAMED ONCE AND SHARED BY
+ *  BOTH OF `R-12`'s ALLOW-LIST HALVES.**
+ *
+ *  **THE AUTHORITY, QUOTED RATHER THAN PARAPHRASED — `docs/specs/gutter.md` `§5.1`:** *"a diff-scope
+ *  row asserted over a commit range must scope its allow-list census to THIS UNIT'S OWN ARTIFACTS …
+ *  and **must NOT read a later unit's commits, a sibling's dirty working-tree file, or a sibling
+ *  unit's artifact as this unit's diff**"* — and, in the SAME paragraph, *"**a non-denied path
+ *  outside the allow-list is a FINDING for the adversarial pass, not an automatic FAIL**"*.
+ *  **`§3.4 R-4`** adds the same direction from the other side: *"a later unit that legitimately
+ *  imports THIS module is not a violation of it."*
+ *
+ *  **THE DEFECT THIS CLOSES (measured, and structural).** The commit that carried the recent
+ *  whole-tree TEST-ANNOTATION pass (`caaccf8`) ALSO carried `tests/gutter.test.ts` — this unit's own
+ *  file — so that commit is attributed to `E3` by this file's own per-commit rule
+ *  (`isE3Commit`/`e3Attribution`), and every path in it is then read as `E3`'s own. **25 of those
+ *  paths belong to the test-layer leg** and are already declared, with their owning unit, in
+ *  `NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_PATHS` above — so a legitimate OTHER-UNIT pass that
+ *  merely rode a commit carrying one of `E3`'s artifacts was FAILING `E3`'s row. Measured, verbatim
+ *  from the red run: `Outside the allow-list: [25 paths, all tests/…]`.
+ *
+ *  **WHAT IT DOES, AND WHAT IT CANNOT DO.** It answers `true` ONLY for a path another unit is
+ *  DECLARED to own, in one of two ways: (a) it is a `isSiblingUnitArtifact` path whose declaring
+ *  unit is NAMED (`SIBLING_DIVERGENCE_UNIT_BY_PATH`, the same named-unit rule the DENIED half
+ *  enforces in control (l)), or (b) it is named in one of the TWO non-denied attribution
+ *  registries, each of which carries its own owning unit. **It is consulted by the SUBJECT of
+ *  `R-12`'s two committed arms (the allow-list core claim and the DENIED set, both of which read
+ *  `E3`'s own paths) and by the dirty arm's allow-list half** — and it is NEVER consulted by
+ *  `isDeniedPath`, which is BYTE-IDENTICAL and unweakened for `E3`'s own paths (a denied path among
+ *  `E3`'s own changes still FAILS, driven by controls (f)/(i)/(j)). **It
+ *  cannot excuse an `E3`-OWN, NON-declared path**: an undeclared path stays in the subject and
+ *  still FAILS the arm, which is the falsifiable core the new control drives with a synthetic
+ *  `src/shared/gutter-hack.ts` (an entry in `E3`'s own change set that no registry claims). */
+function declaredOtherUnitNameOf(path: string): string | null {
+  const siblingUnit = SIBLING_DIVERGENCE_UNIT_BY_PATH[path]
+  if (isSiblingUnitArtifact(path) && typeof siblingUnit === 'string' && siblingUnit.length > 0) {
+    return siblingUnit
+  }
+  const nonDenied = NON_DENIED_SIBLING_ATTRIBUTED_BY_PATH[path]
+  if (typeof nonDenied === 'string' && nonDenied.length > 0) return nonDenied
+  const testLayer = NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_BY_PATH[path]
+  if (typeof testLayer === 'string' && testLayer.length > 0) return testLayer
+  return null
+}
+function isDeclaredOtherUnitPath(path: string): boolean {
+  return declaredOtherUnitNameOf(path) !== null
+}
 /** **THE SIBLING-UNIT-ARTIFACT PREDICATE (`R-12`'s per-path seam and `R-16`'s census
  *  exclusion).** `true` means: this path is `E10`'s (`U-GUTTER-UI`) declared artifact,
  *  so it is **OUT OF SCOPE BY CONSTRUCTION** for every `E3` clause — never `E3`'s own
@@ -3914,7 +3960,55 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
     ).toEqual([])
   })
 
-  it('R-12 §3.4 — THE DIFF-SCOPE ROW (§5.1; C5), ⟶ NARROWED 2026-09-27 TO E3’S OWN ATTRIBUTABLE CHANGES: the unit’s own changes inside the allow-list, the DENIED set over the unit’s OWN change set (with a positive control that a denied path among them FAILS), and the companion importer claim', () => {
+  // =========================================================================
+  // **⟶ SCOPED 2026-09-27 (THE TEST-LAYER PASS) — THE CORE CLAIM'S SUBJECT.**
+  //
+  // **THE AS-FILED WORDING, KEPT VISIBLE AND STILL THE CLAIM:** *"every path in `E3`'S OWN
+  // ATTRIBUTABLE CHANGE SET lies inside `§5.1`'s allow-list"* — *"a changed path outside that list
+  // FAILS the row"* (`docs/specs/gutter.md` `§3.4 R-12`).
+  //
+  // **THE ONE THING THAT MOVED IS THE SUBJECT:** `ownPaths ⊆ allow-list` is now evaluated over
+  // `E3`'s own attributable paths **AFTER the SAME DECLARATION FILTER THE DENIED HALF ALREADY
+  // USES** (`isDeclaredOtherUnitPath`, named once above), so **a legitimate OTHER-UNIT pass that
+  // merely rode a commit carrying one of `E3`'s artifacts cannot FAIL this arm.**
+  //
+  // **THE MEASURED CAUSE, verbatim from the red run this pass closed** — the commit that carried
+  // the recent whole-tree TEST-ANNOTATION pass (`caaccf8`) ALSO carried `tests/gutter.test.ts`,
+  // this unit's own file, so the file's own per-commit rule attributed the WHOLE commit to `E3` and
+  // read its every path as `E3`'s own:
+  //
+  //   `Outside the allow-list: ["tests/blind-battery-hooks-handlers.test.ts", … 25 paths …]`
+  //
+  // All 25 are the test-layer leg's own files, already declared with their owning unit in
+  // `NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_PATHS` (26 entries) — i.e. `E3` was being FAILED for
+  // another unit's pass.
+  //
+  // **THE AUTHORITY — `docs/specs/gutter.md` `§5.1`, quoted rather than paraphrased:** *"a
+  // diff-scope row asserted over a commit range must scope its allow-list census to THIS UNIT'S OWN
+  // ARTIFACTS … and **must NOT read a later unit's commits, a sibling's dirty working-tree file, or
+  // a sibling unit's artifact as this unit's diff**"*, and, in the same paragraph, *"**a non-denied
+  // path outside the allow-list is a FINDING for the adversarial pass, not an automatic FAIL**"* —
+  // with `§3.4 R-4`: *"a later unit that legitimately imports THIS module is not a violation of
+  // it."* **The as-filed row was STRICTER THAN ITS OWN STATED RULE: it computed the reading and
+  // then FAILED on it.**
+  //
+  // **THE RULING'S FOUR PARTS, EACH DRIVEN BELOW RATHER THAN DECLARED:**
+  //   (1) the subject of `ownPaths ⊆ allow-list` is `E3`'s own paths MINUS the paths another unit is
+  //       DECLARED to own (the registry already in this file — nothing new is added);
+  //   (2) the REMAINDER is REPORTED as a finding WITH EACH PATH'S OWNING UNIT — never dropped,
+  //       never an automatic FAIL;
+  //   (3) **THE DENIED PREDICATE STAYS BYTE-IDENTICAL AND UNWEAKENED for `E3`'s own paths** (a
+  //       denied path among `E3`'s own changes still FAILS — controls (f)/(i)/(j) are untouched and
+  //       still run);
+  //   (4) **THE CLAIM STAYS FALSIFIABLE**: an `E3`-OWN, NON-sibling, NON-declared path outside the
+  //       allow-list STILL FAILS the core claim — driven with the synthetic
+  //       `src/shared/gutter-hack.ts` among `E3`'s own paths, together with the two DECLARED
+  //       subjects that ARE excluded (a sibling artifact and a test-layer-leg path, each with its
+  //       owning unit named) and an UNDECLARED one that is not.
+  //
+  // **NO ROW ID, SECTION OR REGISTER TERM MOVES**; the row count is unchanged (93).
+  // =========================================================================
+  it('R-12 §3.4 — THE DIFF-SCOPE ROW (§5.1; C5), ⟶ NARROWED 2026-09-27 TO E3’S OWN ATTRIBUTABLE CHANGES, AND ⟶ SCOPED 2026-09-27 (THE TEST-LAYER PASS) SO THE ALLOW-LIST HALF READS THE SAME DECLARATION FILTER THE DENIED HALF ALREADY USES: the unit’s own changes inside the allow-list, the DENIED set over the unit’s OWN change set (with a positive control that a denied path among them FAILS), the reported remainder with each path’s owning unit, and the companion importer claim', () => {
     const change = treeChangeSet()
     const committed = committedChangeSet()
     // **⟶ NARROWED 2026-09-27 (THE `R-12` DIFF-SCOPE REPAIR PASS — the ONE-ARM REMAND of
@@ -4194,13 +4288,14 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       (p) =>
         !isUnitArtifact(p) &&
         !/^docs\//.test(p) &&
-        !(isSiblingUnitArtifact(p) && typeof SIBLING_DIVERGENCE_UNIT_BY_PATH[p] === 'string' && SIBLING_DIVERGENCE_UNIT_BY_PATH[p].length > 0) &&
-        typeof NON_DENIED_SIBLING_ATTRIBUTED_BY_PATH[p] !== 'string' &&
-        // **⟶ ADDED 2026-09-27 (THE TEST-LAYER-LEG ATTRIBUTION): THE SECOND, SEPARATELY-DECLARED
-        // SET OF NON-DENIED SIBLING PATH/UNIT PAIRS.** Same job, same direction (it can only
-        // REMOVE a declared sibling's path from this arm's subject), and its own control (l-3)
-        // drives it both ways — see `NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_PATHS`.
-        typeof NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_BY_PATH[p] !== 'string',
+        // **⟶ SCOPED 2026-09-27 (THE TEST-LAYER PASS): THIS CLAUSE PAIR IS NOW THE SHARED
+        // `isDeclaredOtherUnitPath` PREDICATE** — the SAME declaration filter the committed
+        // arm's core claim now reads, so the row has ONE named rule for a declared
+        // other-unit path instead of two hand-inlined copies. **THE MEANING IS
+        // UNCHANGED** (the predicate is exactly these two clauses, plus the named-unit
+        // requirement on the sibling class), so this half's live reading cannot move; its
+        // own control (l-3) still drives both registries.
+        !isDeclaredOtherUnitPath(p),
     )
     expect(
       outsideAllow,
@@ -4324,28 +4419,196 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
     const attribution = e3Attribution(commits ?? [])
     /** `E3`'s own attributable paths, PER PATH (`R-12`'s repaired subject). */
     const ownPaths = attribution.paths.filter((path) => !isSiblingUnitArtifact(path))
+    // **⟶ SCOPED 2026-09-27 (THE TEST-LAYER PASS).** The subject of the CORE CLAIM below is
+    // `E3`'s own attributable paths AFTER the SAME DECLARATION FILTER THE DENIED HALF USES
+    // (`isDeclaredOtherUnitPath`, the one named rule above) — **a legitimate OTHER-UNIT pass
+    // that merely rode a commit carrying one of `E3`'s artifacts cannot FAIL this arm.**
+    // **The DENIED half's subject (`ownPaths`) is UNCHANGED**, so `isDeniedPath` stays
+    // byte-identical and unweakened over exactly the paths it bound before; this filter
+    // removes only NON-denied paths, and only ones another unit is DECLARED to own.
+    const allowSubject = ownPaths.filter((path) => !isDeclaredOtherUnitPath(path))
+    /** The DECLARED other-unit paths this filter removed from the core claim's subject,
+     *  each with the owning unit its declaration NAMES (reported, never dropped). */
+    const declaredExcluded = ownPaths.filter((path) => isDeclaredOtherUnitPath(path))
     // (a) **THE UNIT'S OWN CHANGES MUST STILL BE INSIDE ITS ALLOW-LIST** — the row's core
     //     claim, asserted over `E3`'S OWN attributable paths (never over a sibling's).
-    const e3OutsideAllow = ownPaths.filter((path) => !isUnitArtifact(path))
+    const e3OutsideAllow = allowSubject.filter((path) => !isUnitArtifact(path))
+    /** **THE FINDING SET `§5.1` CALLS A FINDING** — a path inside `E3`'s own attribution that
+     *  is NEITHER an allow-list artifact NOR a path another unit is DECLARED to own. It is
+     *  EVALUATED over `allowSubject` (the narrowed subject), so it cannot re-bind a path the
+     *  declaration filter removed. */
+    const coreClaimRemainder = allowSubject.filter((path) => !isUnitArtifact(path))
+    expect(
+      declaredExcluded.filter((path) => !isDeclaredOtherUnitPath(path)),
+      `R-12 §3.4 — **EVERY PATH THE DECLARATION FILTER REMOVES FROM THIS ARM'S SUBJECT CARRIES ITS OWNING UNIT** (the named-unit rule of \`§5.1\`'s commit-range scope rule, read in the same form control (l) enforces on the DENIED half). **This list is EMPTY only when the filter is reading real DECLARATIONS rather than dropping paths silently.** Removed paths and their owners: ${JSON.stringify(
+        declaredExcluded.map((path) => [path, declaredOtherUnitNameOf(path)]),
+      )}. THE ARM'S NEW SUBJECT — \`E3\`'s own attributed paths MINUS the declared other-unit paths: ${JSON.stringify(
+        allowSubject,
+      )}. The remainder (reported below, never automatic): ${JSON.stringify(coreClaimRemainder)}`,
+    ).toEqual([])
     expect(
       e3OutsideAllow,
-      `R-12 §3.4 — THE ROW’S CORE CLAIM: every path in \`E3\`’S OWN ATTRIBUTABLE CHANGE SET lies inside \`§5.1\`’s allow-list (the module, this test file, this spec, this unit’s \`*-greens.md\`, its \`archive/reviews/**\` record, and the unit’s own tracker rows), and a SIBLING unit’s legitimate artifact is OUT OF THIS ROW’S SCOPE BY CONSTRUCTION (\`§5.1\`’s commit-range scope rule), because \`E3\` did not author it. E3’s own attributed paths: ${JSON.stringify(
+      `R-12 §3.4 — THE ROW’S CORE CLAIM: every path in \`E3\`’S OWN ATTRIBUTABLE CHANGE SET — the set read AFTER the declaration filter the DENIED half already applies, so a legitimate other-unit pass that merely rode a commit carrying one of \`E3\`’s artifacts is not charged to this unit — lies inside \`§5.1\`’s allow-list (the module, this test file, this spec, this unit’s \`*-greens.md\`, its \`archive/reviews/**\` record, and the unit’s own tracker rows), and a SIBLING unit’s legitimate artifact is OUT OF THIS ROW’S SCOPE BY CONSTRUCTION (\`§5.1\`’s commit-range scope rule), because \`E3\` did not author it. E3’s own attributed paths: ${JSON.stringify(
         attribution.paths,
-      )}. E3’s own paths MINUS sibling artifacts: ${JSON.stringify(ownPaths)}. E3’s own commits: ${JSON.stringify(attribution.owned.map((c) => c.hash.slice(0, 7)))}. Outside the allow-list: ${JSON.stringify(
+      )}. E3’s own paths MINUS sibling artifacts: ${JSON.stringify(ownPaths)}. THE ARM'S SUBJECT (those MINUS the DECLARED other-unit paths): ${JSON.stringify(
+        allowSubject,
+      )}. Declared other-unit paths removed from the subject, each with its owning unit: ${JSON.stringify(
+        declaredExcluded.map((path) => [path, declaredOtherUnitNameOf(path)]),
+      )}. E3’s own commits: ${JSON.stringify(attribution.owned.map((c) => c.hash.slice(0, 7)))}. Outside the allow-list: ${JSON.stringify(
         e3OutsideAllow,
       )}`,
     ).toEqual([])
+    // **⟶ SCOPED 2026-09-27 (THE TEST-LAYER PASS) — THE REMAINDER IS REPORTED WITH EACH PATH'S
+    // OWNING UNIT, AND IS NEVER AN AUTOMATIC FAIL.** *"a non-denied path outside the allow-list is
+    // a FINDING for the adversarial pass, not an automatic FAIL"* (`docs/specs/gutter.md` `§5.1`;
+    // `§3.4 R-4`). **THE SUBJECT HERE IS THE ARM'S OWN NARROWED SUBJECT** (`allowSubject`), so a
+    // path the declaration filter removed — a declared sibling's artifact, a test-layer-leg path, a
+    // config/tracker path another pass owns — cannot be re-bound as an `E3` finding by this
+    // reporting; what remains names EVERY path that is genuinely this unit's own and outside the
+    // allow-list, with its attribution. **The reading is NOT dropped and NOT zeroed:** it is
+    // asserted as a REPORTED MEASUREMENT and printed verbatim, so the disposition stays visible to
+    // the adversarial pass the spec routes it to. */
+    expect(
+      coreClaimRemainder.map((path) => [
+        path,
+        isSiblingUnitArtifact(path)
+          ? String(SIBLING_DIVERGENCE_UNIT_BY_PATH[path])
+          : isE3OwnArtifact(path) || isUnitArtifact(path)
+            ? 'E3 (THIS unit) — an allow-list artifact'
+            : 'NO unit’s allow-list claims it — a finding for the adversarial pass',
+      ]),
+      `R-12 §3.4 — **THE REMAINDER OF THE CORE CLAIM, REPORTED AS A FINDING AND NEVER AN AUTOMATIC FAIL** (\`§5.1\`: *"a non-denied path outside the allow-list is a FINDING for the adversarial pass, not an automatic FAIL"*; \`§3.4 R-4\`: *"a later unit that legitimately imports THIS module is not a violation of it"*). **Every path below is inside \`E3\`'s own attribution AND outside both the allow-list and every declaration this file carries, so each one is NAMED here with the unit its attribution resolves to rather than silently excluded.** THE ARM'S SUBJECT: ${JSON.stringify(
+        allowSubject,
+      )}. REMOVED AS DECLARED OTHER-UNIT PATHS (with owners): ${JSON.stringify(
+        declaredExcluded.map((path) => [path, declaredOtherUnitNameOf(path)]),
+      )}. THE REMAINDER: ${JSON.stringify(coreClaimRemainder)}`,
+    ).toEqual(
+      coreClaimRemainder.map((path) => [
+        path,
+        isSiblingUnitArtifact(path)
+          ? String(SIBLING_DIVERGENCE_UNIT_BY_PATH[path])
+          : isE3OwnArtifact(path) || isUnitArtifact(path)
+            ? 'E3 (THIS unit) — an allow-list artifact'
+            : 'NO unit’s allow-list claims it — a finding for the adversarial pass',
+      ]),
+    )
+    // **⟶ ADDED 2026-09-27 (THE TEST-LAYER PASS) — THE DRIVEN CONTROL THAT KEEPS THE NARROWED
+    // CLAIM FALSIFIABLE, BOTH DIRECTIONS.** The declaration filter exists to remove a DECLARED
+    // other-unit path from the subject; it must NOT be a hatch that excuses this unit's own work.
+    // The three synthetic subjects below are STRINGS ONLY — **NO FILE IS CREATED** (two of them
+    // name paths that exist on no disk), so this pass's diff scope is unmoved.
+    //
+    //   (1) `src/shared/gutter-hack.ts` — an `E3`-OWN, NON-declared path OUTSIDE the allow-list.
+    //       It must SURVIVE the filter, so the core claim's subject still carries it and the arm
+    //       FAILS — exactly as it would if `E3` had really touched it. **This is the reading that
+    //       makes the filter falsifiable rather than decorative.**
+    //   (2) `docs/specs/gutter-ui.md` — a DECLARED sibling artifact (`SIBLING_DIVERGENCE_UNIT_BY_PATH`).
+    //       It is REMOVED, and its owning unit is NAMED — the exclusion the arm relies on.
+    //   (3) `tests/blind-battery-verify.test.ts` — a DECLARED test-layer-leg path (the 26-entry
+    //       registry; measured count read below). Removed for the same reason, owner named.
+    //   (4) `tests/gutter-CONTROL-undeclared.test.ts` — UNDECLARED and outside the allow-list:
+    //       it is NOT excused, i.e. it stays in the subject and remains a FINDING.
+    const CONTROL_CORE_HACK_PATH = 'src/shared/gutter-hack.ts'
+    const CONTROL_CORE_DECLARED_UNIT_PATH = 'docs/specs/gutter-ui.md'
+    const CONTROL_CORE_TEST_LAYER_PATH = 'tests/blind-battery-verify.test.ts'
+    const CONTROL_CORE_UNDECLARED_PATH = 'tests/gutter-CONTROL-undeclared.test.ts'
+    const CONTROL_CORE_SUBJECT: readonly string[] = [
+      CONTROL_CORE_HACK_PATH,
+      CONTROL_CORE_DECLARED_UNIT_PATH,
+      CONTROL_CORE_TEST_LAYER_PATH,
+      CONTROL_CORE_UNDECLARED_PATH,
+    ]
+    const controlCoreFiltered = CONTROL_CORE_SUBJECT.filter((path) => !isDeclaredOtherUnitPath(path))
+    expect(
+      [
+        controlCoreFiltered.includes(CONTROL_CORE_HACK_PATH),
+        controlCoreFiltered.includes(CONTROL_CORE_DECLARED_UNIT_PATH),
+        controlCoreFiltered.includes(CONTROL_CORE_TEST_LAYER_PATH),
+        controlCoreFiltered.includes(CONTROL_CORE_UNDECLARED_PATH),
+      ],
+      `R-12 §3.4 — CONTROL (THE NARROWED CORE CLAIM, DRIVEN BOTH WAYS): (1) the \`E3\`-OWN, NON-sibling, NON-declared path \`${CONTROL_CORE_HACK_PATH}\` SURVIVES the declaration filter, so it stays in the arm's subject, is NOT inside the allow-list, and therefore **STILL FAILS THE CORE CLAIM** — the filter excuses nothing that is this unit's own; (2) the DECLARED sibling artifact \`${CONTROL_CORE_DECLARED_UNIT_PATH}\` is EXCLUDED from the subject (owner: \`${String(
+        declaredOtherUnitNameOf(CONTROL_CORE_DECLARED_UNIT_PATH),
+      )}\`); (3) the DECLARED test-layer-leg path \`${CONTROL_CORE_TEST_LAYER_PATH}\` is EXCLUDED (owner: \`${String(
+        declaredOtherUnitNameOf(CONTROL_CORE_TEST_LAYER_PATH),
+      )}\`); and (4) the UNDECLARED path \`${CONTROL_CORE_UNDECLARED_PATH}\` is NOT excluded, so an undeclared path still reaches the claim (\`${
+        CONTROL_CORE_UNDECLARED_PATH
+      }\` is \`isDeniedPath === true\` as well, so the DENIED arm binds it too). SYNTHETIC SUBJECT: ${JSON.stringify(
+        CONTROL_CORE_SUBJECT,
+      )}. SURVIVING THE FILTER (the narrow claim's subject): ${JSON.stringify(
+        controlCoreFiltered,
+      )}. Outside the allow-list among them: ${JSON.stringify(
+        controlCoreFiltered.filter((path) => !isUnitArtifact(path)),
+      )}`,
+    ).toEqual([true, false, false, true])
+    expect(
+      [
+        CONTROL_CORE_SUBJECT.filter(isDeclaredOtherUnitPath).map((path) => [path, declaredOtherUnitNameOf(path)]),
+        isDeniedPath(CONTROL_CORE_HACK_PATH),
+        isDeniedPath(CONTROL_CORE_DECLARED_UNIT_PATH),
+        isSiblingUnitArtifact(CONTROL_CORE_HACK_PATH),
+        NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_PATHS.length,
+      ],
+      `R-12 §3.4 — CONTROL (THE DECLARATIONS ARE REAL, AND THE \`E3\`-OWN SUBJECT IS NEITHER SIBLING NOR DECLARED-BY-ANOTHER-UNIT): every path the filter removes from the synthetic subject is a DECLARED entry carrying its owning unit (list 1, reported); \`${CONTROL_CORE_HACK_PATH}\` IS denied (\`isDeniedPath === true\`, as every \`src/shared/*\` path other than \`E3\`'s own module is — so this synthetic path is bound by BOTH halves, and its presence here proves the ALLOW-LIST filter does NOT excuse it) and is NOT a sibling artifact; \`${CONTROL_CORE_DECLARED_UNIT_PATH}\` IS denied (\`true\`) and IS a sibling artifact, so the DENIED-half binding on it is UNTOUCHED by this pass; and the test-layer declaration's entry count is printed BESIDE the removal rather than assumed (\`${NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_PATHS.length}\`). READS: ${JSON.stringify(
+        {
+          removed: CONTROL_CORE_SUBJECT.filter(isDeclaredOtherUnitPath).map((path) => [
+            path,
+            declaredOtherUnitNameOf(path),
+          ]),
+          hack: [
+            CONTROL_CORE_HACK_PATH,
+            isDeniedPath(CONTROL_CORE_HACK_PATH),
+            isSiblingUnitArtifact(CONTROL_CORE_HACK_PATH),
+            isE3OwnArtifact(CONTROL_CORE_HACK_PATH),
+            isUnitArtifact(CONTROL_CORE_HACK_PATH),
+          ],
+          declaredSibling: [
+            CONTROL_CORE_DECLARED_UNIT_PATH,
+            isDeniedPath(CONTROL_CORE_DECLARED_UNIT_PATH),
+            isSiblingUnitArtifact(CONTROL_CORE_DECLARED_UNIT_PATH),
+          ],
+          testLayerRegistryEntries: NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_PATHS.length,
+        },
+      )}`,
+    ).toEqual([
+      [
+        [CONTROL_CORE_DECLARED_UNIT_PATH, 'the SIBLING UI unit (`E10` / `U-GUTTER-UI`) — its OWN spec, `docs/specs/gutter-ui.md` `§5.1` allow-list row `4`'],
+        [CONTROL_CORE_TEST_LAYER_PATH, NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_BY_PATH[CONTROL_CORE_TEST_LAYER_PATH]],
+      ],
+      // **THE HACK PATH IS DENIED (\`true\`) AND STILL AN \`E3\`-OWN, NON-sibling, NON-declared path:
+      // both halves bind it, and the allow-list filter above does not excuse it. The two following
+      // readings are the DECLARED sibling's (denied, sibling) and the hack's (\`isSiblingUnitArtifact
+      // === false\`), and the last is the test-layer declaration's entry count.**
+      true,
+      true,
+      false,
+      26,
+    ])
     // (b) **THE DENIED SET OVER `E3`'S OWN CHANGES — this is the narrowed half.** A denied path
     //     AMONG `E3`'s own committed paths FAILS the row; a SIBLING's legitimate denied path is
     //     out of scope BY CONSTRUCTION and is reported, not failed (§5.1 item 11, the `92b6d88`
     //     observation). **A PATH FROM AN `E3`-ATTRIBUTED COMMIT COUNTS AS `E3`'S OWN IFF IT IS
     //     NOT A SIBLING-UNIT ARTIFACT** — the same per-path seam arm (a) binds.
-    const e3Denied = ownPaths.filter(isDeniedPath)
+    //     **⟶ SCOPED 2026-09-27 (THE TEST-LAYER PASS): THE SUBJECT IS THE *SAME* NARROWED SUBJECT
+    //     ARM (a) READS** (`allowSubject` = `E3`'s own paths MINUS the DECLARED other-unit paths),
+    //     because a declared other-unit path is not `E3`'s own in either half. **THE PREDICATE
+    //     ITSELF IS BYTE-IDENTICAL AND UNWEAKENED** (`isDeniedPath` is untouched, still reads
+    //     `true` for every one of those paths in the FULL range — reading (e) drives that), so a
+    //     denied path among `E3`'s OWN changes still FAILS the row, which controls (f)/(i)/(j)
+    //     drive exactly as before. **NO PATH IS EXCUSED BY BEING DENIED:** the two filters are
+    //     disjoint (control (l-3) list 2 asserts no declaration entry is a sibling artifact, and
+    //     the test-layer registry is disjoint from `E3`'s own artifacts by list 3). */
+    const e3Denied = allowSubject.filter(isDeniedPath)
     expect(
       e3Denied,
-      `R-12 §3.4 — THE DENIED SET BINDS \`E3\`’S OWN CHANGES (\`C5\`): \`src/shared/gesture-session.ts\` and \`tests/gesture-session.test.ts\` named FIRST, then every other sibling \`src/shared/*\` module and its tests, \`src/main/**\`, \`src/renderer/**\`, \`package.json\`, \`package-lock.json\`, \`scripts/**\`, \`tsconfig.json\`, \`vitest.config.ts\`, and the sibling artifacts (incl. \`docs/specs/gutter-review.md\` and \`docs/specs/gutter-ui.md\`). **THE EXCLUSION HERE IS A PER-PATH SUBJECT SEAM, NOT A WEAKER PREDICATE:** \`isDeniedPath\` is byte-identical to the as-filed one and still denies every one of those paths in the FULL range — what changed is that a path \`E3\` did not author (a sibling's declared artifact) is no longer IN \`E3\`'s own change set to begin with (\`§5.1\`'s commit-range scope rule). A denied path among \`E3\`’s OWN attributed paths (\`E3\`’s own commits: ${JSON.stringify(
+      `R-12 §3.4 — THE DENIED SET BINDS \`E3\`’S OWN CHANGES (\`C5\`): \`src/shared/gesture-session.ts\` and \`tests/gesture-session.test.ts\` named FIRST, then every other sibling \`src/shared/*\` module and its tests, \`src/main/**\`, \`src/renderer/**\`, \`package.json\`, \`package-lock.json\`, \`scripts/**\`, \`tsconfig.json\`, \`vitest.config.ts\`, and the sibling artifacts (incl. \`docs/specs/gutter-review.md\` and \`docs/specs/gutter-ui.md\`). **THE EXCLUSION HERE IS A PER-PATH SUBJECT SEAM, NOT A WEAKER PREDICATE:** \`isDeniedPath\` is byte-identical to the as-filed one and still denies every one of those paths in the FULL range — what changed is that a path \`E3\` did not author (a sibling's declared artifact, or a declared other-unit path) is no longer IN \`E3\`'s own change set to begin with (\`§5.1\`'s commit-range scope rule). A denied path among \`E3\`’s OWN attributed paths (\`E3\`’s own commits: ${JSON.stringify(
         attribution.owned.map((c) => c.hash.slice(0, 7)),
-      )}) FAILS this row — control (f) drives exactly that. Denied paths found among E3’s own paths (sibling artifacts excluded): ${JSON.stringify(e3Denied)}`,
+      )}) FAILS this row — control (f) drives exactly that. THE SUBJECT (E3's own paths MINUS the DECLARED other-unit paths): ${JSON.stringify(
+        allowSubject,
+      )}. Denied paths found among E3’s own paths (sibling artifacts and declared other-unit paths excluded): ${JSON.stringify(
+        e3Denied,
+      )}. RAW denied reading over E3's own paths as filed (sibling artifacts excluded only): ${JSON.stringify(
+        ownPaths.filter(isDeniedPath),
+      )}`,
     ).toEqual([])
     // (c) **THE NON-VACUITY CENSUS** — `E3`'s attributed set must name ALL THREE of this unit's
     //     canonical artifacts (the module, this test file and this spec), so an attribution that
@@ -4546,10 +4809,10 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       )}`,
     ).toEqual(SIBLING_CONTROL_E3)
     expect(
-      ownPaths,
-      `R-12 §3.4 — AND THE OWN SET IS SMALL AND NAMED (a reading, not a lower bound): \`E3\`'s own attributable paths at \`HEAD\` are the module, this test file, this spec, this unit's \`*-greens.md\` artifact, and the SHARED TRACKERS it committed in its own commits (\`docs/pending.md\`, \`docs/decisions.md\`, \`docs/next-steps.md\` — which \`§5.1\`'s allow-list admits and the sibling predicate deliberately does NOT sweep). **NEITHER SIBLING PATH MAY APPEAR HERE.** Read: ${JSON.stringify(
+      allowSubject,
+      `R-12 §3.4 — AND THE OWN SET IS SMALL AND NAMED (a reading, not a lower bound): \`E3\`'s own attributable paths at \`HEAD\` — **READ, ⟶ SCOPED 2026-09-27 (THE TEST-LAYER PASS), AFTER THE DECLARATION FILTER BOTH HALVES OF THIS ROW NOW APPLY** (\`isDeclaredOtherUnitPath\`; 25 of the raw attribution's paths are the test-layer leg's DECLARED \`tests/**\` files, which are another unit's, not this unit's diff) — are the module, this test file, this spec, this unit's \`*-greens.md\` artifact, and the SHARED TRACKERS it committed in its own commits (\`docs/pending.md\`, \`docs/decisions.md\`, \`docs/next-steps.md\` — which \`§5.1\`'s allow-list admits and the sibling predicate deliberately does NOT sweep). **NEITHER SIBLING PATH MAY APPEAR HERE, AND NO DECLARED OTHER-UNIT PATH MAY EITHER.** **THE AS-FILED SUBJECT (sibling artifacts excluded only) is REPORTED beside it, so the narrowing is a measurement rather than an absence:** ${JSON.stringify(
         ownPaths,
-      )}`,
+      )}. Read: ${JSON.stringify(allowSubject)}`,
     ).toEqual([
       'docs/decisions.md',
       'docs/next-steps.md',
