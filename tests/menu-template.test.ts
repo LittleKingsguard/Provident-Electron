@@ -1508,91 +1508,125 @@ describe('§3.2 F-1..F-10 and §3.3 I-1..I-12 — the failure surface', () => {
       out = s.normalizeCatalog(catalog)
     }, 'F-2 — a catalog carrying every hostile element class MUST NOT THROW').not.toThrow()
     out = s.normalizeCatalog(catalog)
-    // ⟶ REPORTED RATHER THAN BENT (`2026-09-27`, gate-3 alignment 2). **THE LENGTH
-    // THIS ROW ASSERTS IS `3`, ON `§2.3` ITEM 1(d)'s OWN SKIP** — *"a record whose
-    // accessor throws … the element is SKIPPED, the throw is ABSORBED"* — which the
-    // contract prints in the same breath as the carry pin (`§2.3` item 11's own
-    // closing line: *"`out.length === 3`, and the accessor-throwing record is
-    // SKIPPED (`§2.3` item 1(d))"*). **THE CARRY RULE AS PINNED, READ ALONE, GIVES
-    // `4`**: the accessor record OWNS a readable `label`, so `carries()` emits
-    // `{ label: 'A' }` for it and only its unreadable `id` is dropped. **THIS IS
-    // THE ONE PLACE THE TWO PINNED CLAUSES DISAGREE, AND IT IS REPORTED TO THE
-    // SUPERVISOR RATHER THAN RESOLVED HERE** — the assertion stays as the contract's
-    // own sentence states it, and the module (which emits `4`) fails it. **(THIS
-    // ASSERTION IS READ AFTER THE SHAPE READS BELOW, so the FIRST failure a reader
-    // sees is `F-2 entry 2`'s own shape reading rather than this count.)**
-    // ⟶ THE LOOP'S OWN INDEXING, ALIGNED (`2026-09-27`, gate-3 alignment 2). **THE
-    // AS-FILED LOOP READ THE ARRAY ELEMENT THROUGH `out[1]`'s OWN KEYS**, so it
-    // compared an expected seven-name array against `['0']` while a later
-    // assertion required `out[1]['0']` to BE the nested source — two readings no
-    // carry rule can satisfy at once. **THE CARRY RULE GOVERNS**: `out[1]` is a
-    // FRESH RECORD whose key set is `['0']`, and its `'0'` MEMBER is a FRESH RECORD
-    // of the nested source (`Object.keys === [...SEVEN_KEYS]`, values by identity),
-    // so `out[1]['0'] toBe(nested)` is FALSE while every MEMBER value is the
-    // source's own.
-    const arrayMember = out[1] as Record<string, unknown>
+    // ⟶ REPAIRED TO THE ROW'S OWN FIXTURE AND THE COMPOSED CARRY RULE
+    // (`2026-09-27`, E7 row-bound repair; `§3c`'s corrected worked figure). **THE
+    // AS-FILED READING WAS `out.length === 3` WITH THE ARRAY AT `out[1]`, AND IT
+    // CONTRADICTED ITS OWN CATALOG**: the catalog's FIRST carried element is the
+    // FUNCTION `() => 1` — a non-null, non-array object whose own-readable
+    // intersection with the seven declared names is EMPTY, so it is CARRIED KEYLESS
+    // (`§3c` pin 2: never dropped, and `Object.keys` reads `[]`); `protoRecord`
+    // carries `['id','label']`; the ARRAY `[nested]` is carried as `['0']` with its
+    // `'0'` member a FRESH RECORD of `nested` (`§3c` pin 1); and `valid` carries the
+    // seven — **so the FOUR carried key sets in catalog order read
+    // `[[], ['id','label'], ['0'], [seven]]`, the ARRAY IS AT INDEX 2**, and the
+    // accessor-throwing record is SKIPPED WHOLE (`§3c` pin 3, `§2.3` item 1(d)),
+    // never partially carried. **THE AS-FILED FORM, KEPT VISIBLE
+    // (annotate-never-rewrite):**
+    //     expect(out.length, '…EXACTLY the THREE usable elements are carried…').toBe(3)
+    //     const arrayMember = out[1]            // ← the array read at index 1
+    // **THE ROW'S CLAIM IS UNCHANGED AND STAYS FALSIFIABLE**: a module that DROPS
+    // the ARRAY (three entries), that DROPS the keyless empty-intersection record
+    // (three), that keeps the caller's own element BY REFERENCE
+    // (`out[2] toBe(arrayElement)`), or that emits a PARTIAL record for the
+    // accessor-throwing element (five entries, one keyed `['label']`) each FAILS the
+    // reads below.
+    // **THE COUNT AND THE FOUR KEY SETS ARE READ FIRST, so a red run prints the
+    // SHAPE the module actually produced rather than a `TypeError`.**
+    const measuredKeys: ReadonlyArray<readonly string[]> = out.map((item) => Object.keys(item))
+    expect(
+      measuredKeys,
+      'F-2 — the FOUR carried key sets IN CATALOG ORDER: the KEYLESS empty-intersection record, the null-prototype record by its own `[\'id\',\'label\']`, the ARRAY element by its own `[\'0\']` and `valid` by its seven (`§3c` pins 1/2) — a module that drops the array, drops the keyless record or emits a partial record for the accessor-throwing element FAILS here',
+    ).toEqual([[], ['id', 'label'], ['0'], [...SEVEN_KEYS]])
+    expect(
+      out.length,
+      'F-2 — EXACTLY FOUR usable elements are carried: the keyless empty-intersection record, the null-prototype record, the ARRAY element and the plain record (the six primitives, the revoked Proxy, the trap-throwing Proxy and the accessor-throwing record are all UNUSABLE and are SKIPPED)',
+    ).toBe(4)
+    const arrayMember = out[2] as Record<string, unknown>
     const nestedCarried = arrayMember['0'] as Record<string, unknown>
-    expect(Object.keys(out[0]), 'F-2 entry 1 (the loop\'s first expected read): the null-prototype record owns `id` and `label` only, so two are carried').toEqual(['id', 'label'])
-    expect(Object.keys(arrayMember), "F-2 entry 2 (the loop's second expected read): the array element's own-key set is exactly `['0']` — the intersection of the seven declared names with the array's own keys").toEqual(['0'])
+    expect(Object.keys(out[0]), 'F-2 entry 1 — the EMPTY-INTERSECTION record (`() => 1`, a function element) is CARRIED KEYLESS (`§3c` pin 2: never dropped), so its own key set is exactly `[]`').toEqual([])
+    expect(Object.keys(out[1]), 'F-2 entry 2 — the null-prototype record owns `id` and `label` only, so two are carried and no prototype member was read').toEqual(['id', 'label'])
+    expect(Object.keys(arrayMember), "F-2 entry 3 — the ARRAY element `[nested]`: its own key set is exactly `['0']` — the intersection of the seven declared names with the array's own keys is EMPTY, and the array's own PRESENT INDEX key is carried as a fresh record of its member (§3c pin 1)").toEqual(['0'])
     expect(
       Object.keys(nestedCarried),
-      'F-2 entry 2 — and the carried MEMBER is a FRESH RECORD of the nested source: it owns all SEVEN declared keys, because `nested = el({id:\'nested\'})` owns all seven',
+      'F-2 entry 3 — and the carried MEMBER is a FRESH RECORD of the nested source: it owns all SEVEN declared keys, because `nested = el({id:\'nested\'})` owns all seven',
     ).toEqual([...SEVEN_KEYS])
-    expect(Object.keys(out[2]), "F-2 entry 3 (the loop's third expected read): `valid` owns all seven, so seven are carried — the as-filed `['id','label','kind']` is SUPERSEDED").toEqual([...SEVEN_KEYS])
+    expect(Object.keys(out[3]), "F-2 entry 4 — `valid` owns all seven, so seven are carried — the as-filed `['id','label','kind']` is SUPERSEDED").toEqual([...SEVEN_KEYS])
     expect(
-      [out[0]['id'], nestedCarried['id'], out[2]['id']],
-      "F-2 — CARRIED IN CATALOG ORDER, read at EACH ENTRY'S OWN KEY rather than through a shared name: the null-prototype record by its `id`, the ARRAY element by its own `'0'` MEMBER — a fresh record of `nested` — and the plain record by its `id`",
-    ).toEqual(['proto', nested['id'], valid['id']])
+      [out[0]['id'], out[1]['id'], nestedCarried['id'], out[3]['id']],
+      "F-2 — CARRIED IN CATALOG ORDER, read at EACH ENTRY'S OWN KEY rather than through a shared name: the KEYLESS record contributes NO `id`, the null-prototype record reads `proto`, the ARRAY element reads through its own `'0'` MEMBER — a fresh record of `nested` — and the plain record reads `valid`",
+    ).toEqual([undefined, 'proto', nested['id'], valid['id']])
     expect(
-      out[1],
-      "F-2 — entry 2's FRESHNESS: `out[1]` is a fresh record (its own key set is `['0']`), so `out[1] toBe(arrayElement)` is FALSE — the array's `'0'` member is carried while the array itself is NOT the entry (§2.3 item 11 clause 1)",
+      arrayMember,
+      "F-2 — entry 3's FRESHNESS: `out[2]` is a fresh record (its own key set is `['0']`), so `out[2] toBe(arrayElement)` is FALSE — the array's `'0'` member is carried while the array itself is NOT the entry (§3c clause 1)",
     ).not.toBe(arrayElement)
-    // THE LENGTH READING, placed after the shape reads so a red run reports the
-    // SHAPE the module actually produced. **MEASURED: the module emits `3` entries —
-    // `[proto, valid, accessor]` — because it does NOT carry the ARRAY element at all
-    // (the array owns no key of the seven, so its intersection is empty and the
-    // element is DROPPED rather than carried with the `'0'` key `§2.3` item 11's own
-    // worked example names), while it DOES carry the accessor-throwing record
-    // PARTIALLY (`{ label: 'A' }`). **BOTH ARE MODULE-SIDE AND BOTH ARE REPORTED**:
-    // the array half is the contradiction this comment names, and the accessor half is
-    // `§2.3` item 1(d)'s skip clause.
-    expect(out.length, 'F-2 — EXACTLY the THREE usable elements are carried: the null-prototype record, the array element and the plain record (the six primitives, the function, the revoked Proxy, the trap-throwing Proxy and the accessor-throwing record are all UNUSABLE and are SKIPPED)').toBe(3)
-    // ⟶ ALIGNED TO THE PIN (`2026-09-27`, gate-3 row-bound defect 4/`C`;
-    // `§2.3` item 11, landed — `§0A` note 8 items (2)(C)/(4)(c)). **A PROJECTED
-    // ITEM IS A FRESH RECORD, NEVER THE CALLER'S OWN ENTRY** (clause 1), so the
-    // three as-filed `toBe(...)` reference carries are DELETED and replaced by the
-    // pin's printed assertions. **THE AS-FILED PAIR, KEPT VISIBLE
-    // (annotate-never-rewrite):** `out[0] toBe(protoRecord)`, `out[1] toBe(nested)`,
-    // `out[2] toBe(valid)` each with a FIXED key set — unsatisfiable together,
-    // because the array `[nested]` owns `['0']` while `nested` owns the seven, and
-    // `el({id:'valid'})` owns seven while the as-filed expectation read three.
-    // THE PIN'S OWN THREE ASSERTIONS, clause by clause: clause 2 (the key set is
-    // the DECLARED-ORDER INTERSECTION, not a fixed seven), clause 3 (the VALUES are
+    // THE ACCESSOR-SKIP NEGATIVE CONTROL (`§2.3` item 1(d) + `§3c` pin 3). **THE
+    // AS-FILED SENTENCE, KEPT VISIBLE (annotate-never-rewrite):** *"`out.length === 3`,
+    // and the accessor-throwing record is SKIPPED (`§2.3` item 1(d))"* — the SKIP is
+    // kept, the `3` was the arithmetic error (`§3c`'s corrected worked figure reads
+    // `4`, and the count is asserted immediately after the drive above). **AND THE
+    // SKIP IS READ BY KEY SET, NOT BY VALUE**: the accessor element's ONE readable
+    // member is `label: 'A'`, which is also `el()`'s own default `label`, so a value
+    // read could not tell a PARTIAL record from a legitimate entry — the partial
+    // record's key set, `['label']`, is what a module that carries it in part emits.
+    expect(
+      out.filter((item) => Object.keys(item).length === 1 && Object.keys(item)[0] === 'label').length,
+      "F-2 — the accessor-throwing record is SKIPPED WHOLE: NO carried entry reads the partial key set `['label']` (the throw is absorbed and the element is dropped, never emitted in part)",
+    ).toBe(0)
+    // ⟶ ALIGNED TO THE PIN AND RE-INDEXED (`2026-09-27`, E7 row-bound repair).
+    // **A CARRIED ENTRY IS A FRESH RECORD, NEVER THE CALLER'S OWN ELEMENT**
+    // (`§3c` clause 1), and **THE CATALOG ORDER IS THE FOUR ENTRIES THE DRIVE
+    // ABOVE READS** — `out[0]` the KEYLESS empty-intersection record, `out[1]` the
+    // null-prototype record, `out[2]` the ARRAY element, `out[3]` the plain record.
+    // **THE AS-FILED PAIR, KEPT VISIBLE (annotate-never-rewrite):** `out[0]
+    // toBe(protoRecord)`, `out[1] toBe(nested)`, `out[2] toBe(valid)` each with a
+    // FIXED key set — unsatisfiable together, because the array `[nested]` owns
+    // `['0']` while `nested` owns the seven, and `el({id:'valid'})` owns seven while
+    // the as-filed expectation read three.
+    // THE PIN'S OWN ASSERTIONS, clause by clause: clause 2 (the key set is the
+    // DECLARED-ORDER INTERSECTION, not a fixed seven), clause 3 (the VALUES are
     // handed on BY IDENTITY at the MEMBER level), clause 1 (the RECORD is fresh).
-    expect(out[0], 'F-2 entry 1 — the null-prototype record: `out[0]` is a FRESH RECORD that deep-equals `{ id: \'proto\', label: \'P\' }` in VALUE (clause 1: it is NOT `toBe(protoRecord)`), and its own key set is exactly `[\'id\',\'label\']` — it OWNS two, so two are carried, and no prototype member was read').toEqual({ id: 'proto', label: 'P' })
-    expect(Object.keys(out[1]), "F-2 entry 2 — the ARRAY element `[nested]`: its own key set is exactly `['0']` (clause 2), so `out[1]` is a FRESH RECORD even though the source is an array").toEqual(['0'])
-    expect(Object.keys(out[2]), "F-2 entry 3 — the plain record `valid = el({id:'valid'})` OWNS all seven, so its entry carries all SEVEN — the as-filed `['id','label','kind']` was a three-key reading of a seven-key source and is SUPERSEDED").toEqual([...SEVEN_KEYS])
+    expect(out[1], 'F-2 entry 2 — the null-prototype record: `out[1]` is a FRESH RECORD that deep-equals `{ id: \'proto\', label: \'P\' }` in VALUE (clause 1: it is NOT `toBe(protoRecord)`), and its own key set is exactly `[\'id\',\'label\']` — it OWNS two, so two are carried, and no prototype member was read').toEqual({ id: 'proto', label: 'P' })
+    expect(Object.keys(out[2]), "F-2 entry 3 — the ARRAY element `[nested]`: its own key set is exactly `['0']` (clause 2), so `out[2]` is a FRESH RECORD even though the source is an array").toEqual(['0'])
+    expect(Object.keys(out[3]), "F-2 entry 4 — the plain record `valid = el({id:'valid'})` OWNS all seven, so its entry carries all SEVEN — the as-filed `['id','label','kind']` was a three-key reading of a seven-key source and is SUPERSEDED").toEqual([...SEVEN_KEYS])
+    expect(['id' in out[0], 'label' in out[0]], 'F-2 entry 1 — and the KEYLESS record carries NO member at all: neither `id` nor `label` is present (`§3c` pin 2: absent keys are OMITTED, and the element is still emitted)').toEqual([false, false])
     const memberIdentities: ReadonlyArray<readonly [unknown, unknown]> = [
-      [nestedCarried['0'], nested['0']],
       [nestedCarried['id'], nested['id']],
-      [out[2]['id'], valid['id']],
-      [out[2]['label'], valid['label']],
-      [out[0]['id'], protoRecord['id']],
-      [out[0]['label'], protoRecord['label']],
+      [nestedCarried['label'], nested['label']],
+      [nestedCarried['kind'], nested['kind']],
+      [out[3]['id'], valid['id']],
+      [out[3]['label'], valid['label']],
+      [out[1]['id'], protoRecord['id']],
+      [out[1]['label'], protoRecord['label']],
     ]
     expect(
       memberIdentities.map(([a, b]) => Object.is(a, b)),
       'F-2 — clause 3: the VALUES are handed on BY IDENTITY (`Object.is`/`toBe`) at the MEMBER level, never copied, coerced or re-keyed — the array element carries `nested`\'s members themselves, the plain record carries its own `id`/`label`, and the null-prototype record carries its own two. Read through `Object.is` so the claim is IDENTITY and not deep equality',
-    ).toEqual([true, true, true, true, true, true])
+    ).toEqual([true, true, true, true, true, true, true])
     expect(
-      [nestedCarried['id'], out[2]['id']],
+      [nestedCarried['id'], out[3]['id']],
       'F-2 — and the same two reads beside it as values, so a reader sees WHAT was carried as well as that it is the caller\'s own',
     ).toEqual([nested['id'], valid['id']])
     expect(
-      [out[0] === protoRecord, nestedCarried === (nested as unknown), out[2] === valid],
-      'F-2 — clause 1, DRIVEN RATHER THAN ASSERTED: NO entry IS the caller\'s own element — not the fresh record that carries the array\'s `\'0\'`, and not the fresh record of `nested` inside it either — so all three reference reads are FALSE',
-    ).toEqual([false, false, false])
+      [out[1] === protoRecord, arrayMember === (arrayElement as unknown), nestedCarried === (nested as unknown), out[3] === valid],
+      'F-2 — clause 1, DRIVEN RATHER THAN ASSERTED: NO entry IS the caller\'s own element — not the fresh record that carries the array\'s `\'0\'`, not the fresh record of `nested` inside it, and not the record of `valid` — so all four reference reads are FALSE',
+    ).toEqual([false, false, false, false])
     expect(out.every((item) => !('extra' in item)), 'F-2 — and no hostile placeholder, default or sentinel appears on any carried element').toBe(true)
+    // THE ROW'S NEGATIVE CONTROLS, DRIVEN (`§4.2` item 4 — a row that cannot fail is
+    // not a row): the SAME four-key-set expectation the reads above assert is driven
+    // over three MUTANT shapes, so "a module that drops the array, that drops the
+    // keyless empty-intersection record or that emits a PARTIAL record must still
+    // FAIL" is SHOWN rather than asserted. The BY-REFERENCE mutant is the fourth
+    // control and is caught by the freshness reads above (`out[2] toBe(arrayElement)`
+    // and `nestedCarried toBe(nested)`, both FALSE in the four-reference read).
+    const fourKeySets = (keys: ReadonlyArray<readonly string[]>): boolean =>
+      keysEqual(keys.map((k) => k.join(',')), ['', 'id,label', '0', SEVEN_KEYS.join(',')])
+    const arrayDropped = [[], ['id', 'label'], [...SEVEN_KEYS]]
+    const keylessDropped = [['id', 'label'], ['0'], [...SEVEN_KEYS]]
+    const partialRecord = [[], ['id', 'label'], ['0'], [...SEVEN_KEYS], ['label']]
+    expect(
+      [fourKeySets(measuredKeys), fourKeySets(arrayDropped), fourKeySets(keylessDropped), fourKeySets(partialRecord)],
+      'F-2 — THE ROW\'S OWN CONTROL: the expectation HOLDS for the measured key sets and FAILS for EACH mutant — the ARRAY dropped, the KEYLESS empty-intersection record dropped, and the accessor-throwing record emitted as the PARTIAL `[\'label\']` record',
+    ).toEqual([true, false, false, false])
   })
 
   it('F-3 (Q2, I-1) an UNRECOGNISED or NON-STRING platform: EVERY one is the identity projection with collapsing false', async () => {
@@ -2304,7 +2338,7 @@ const POOL: ReadonlyArray<{
   { id: '(11) an array carrying a Proxy whose ownKeys/getOwnPropertyDescriptor traps THROW', make: () => [trapThrowingProxy()], expect: [], sourceKeys: 0 },
   {
     id: '(12) an array carrying Object.create(null), an array element and a record whose accessor throws',
-    make: () => [nullProtoEl(), el({ id: 'nested' }), throwingAccessorRecord()],
+    make: () => [nullProtoEl(), [el({ id: 'nested' })], throwingAccessorRecord()],
     // THE ACCESSOR-THROWING RECORD IS *SKIPPED*, not carried with a missing key:
     // `§2.3` item 1(d) names "a record whose accessor throws" as an element whose
     // own-key read THROWS, and the declared outcome of such an element is the
@@ -2353,7 +2387,22 @@ const POOL: ReadonlyArray<{
     // (kept visible in the block above): its second entry was a THREE-key reading of
     // `el`, which owns seven.
     // **No term, row id, strategy id, seed or cap moves: this shape is still ONE
-    // drive of the declared `12`, and the carried LENGTH for this shape is `2`.**
+    // drive of the declared `12`.**
+    // ⟶ FIXTURE REPAIRED TO ITS OWN DECLARED READING (`2026-09-27`, the bounded
+    // two-cell fixture repair). **THE FIXTURE WAS THE CELL THAT WAS WRONG**: the
+    // cell above read `el({ id: 'nested' })` — a SEVEN-key plain record — while
+    // this `expect` and the whole comment block beside it name an **ARRAY**
+    // element (`§3c` pin 1: *"an ARRAY IS CARRYABLE"*, `['0']` for a one-element
+    // array). Under the pinned rule the seven-key record ALSO yields `SEVEN_KEYS`,
+    // so the as-written fixture measured `2` entries whose key sets were
+    // `[SEVEN_KEYS, SEVEN_KEYS]` — it never exercised the ARRAY carrier this
+    // row's claim names, and the declared `['0']` was unsatisfiable by
+    // construction. **THE ARRAY ELEMENT IS NOW PRESENT**, so the three elements
+    // genuinely yield THREE carried entries: `nullProtoEl()` with its SEVEN (it
+    // owns all seven — the pin's own worked example owns two, this fixture owns
+    // seven), the ARRAY carried as `['0']` with its `'0'` member a FRESH
+    // SEVEN-KEY RECORD of the nested source, and the accessor-throwing record
+    // SKIPPED WHOLE (`§3c` pin 3). A module that drops an ARRAY still FAILS here.
     expect: [SEVEN_KEYS, ['0']],
     sourceKeys: 0,
   },
