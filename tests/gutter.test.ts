@@ -2121,6 +2121,61 @@ const SIBLING_DIVERGENCE_UNIT_ARTIFACTS: ReadonlyArray<{ readonly path: string; 
     // own module), which control `(n)` drives; the exclusion is one-directional (REMOVE from
     // `E3`'s subject only).
   },
+  // **⟶ THE RULE THIS ENTRY PAIR IS READ UNDER IS THE SAME SENTENCE EVERY ENTRY ABOVE CARRIES —
+  // `E3`'S DENIED PREDICATE IS KEPT BYTE-IDENTICAL AND UNWEAKENED FOR `E3`'S OWN PATHS, AND THIS
+  // REPAIR MAY ONLY *EXCLUDE A DECLARED SIBLING*, NEVER RELAX WHAT COUNTS AS DENIED:** the two
+  // paths below still read `isDeniedPath === true` (both are `tests/**`/`src/shared/*` paths that
+  // are not `E3`'s own), so the RAW reading this row reports still NAMES them; this registry can
+  // only ever REMOVE a path from `E3`'s subject, never add one; and the row's own control (h-2)
+  // keeps `E3`'s OWN denied paths reading NOT-sibling. Control `(n-2)` below drives all four
+  // directions on these very paths.
+  {
+    path: 'tests/container.test.ts',
+    unit: 'the CONTAINMENT unit (`E5` / `U-CONTAINER`) — its own red set (`docs/specs/container.md`, filed at the approved spec gate and committed at `98c8893`)',
+    // **⟶ DECLARED 2026-09-27 (THE CROSS-UNIT SIBLING-REGISTRY REPAIR — THE SECOND REPAIR OF THIS
+    // CLASS, AFTER `E4`/`U-RELOCATE`).** `tests/container.test.ts` is **`E5`'s** artifact — its own
+    // 68-row red set (49 failed / 19 passed against the absent module) — so it is **neither `E3`'s
+    // nor `E10`'s nor `E4`'s**. **THE MEASURED CAUSE, VERBATIM FROM THIS PASS'S OWN DIRTY-STATE RUN
+    // (taken by this repair pass with the path dirty, BEFORE this declaration):**
+    // `liveUnaccounted: ["tests/container.test.ts"]` against an expected `[]` — reported through
+    // this row's OWN accounting rule (`isAccountedFor`, control (m)) — i.e. **`R-12` FAILING on a
+    // SIBLING's legitimate red set merely because the registry had no entry for it**, the same class
+    // `§5.1`'s commit-range scope rule forbids (*"must NOT read … a sibling's dirty working-tree
+    // file … as this unit's diff"*). That same run read `1 failed | 92 passed (93)`, so the defect
+    // is a real red rather than a structural hypothesis.
+    // **THE LIVE STATE AT THE TIME OF THIS DECLARATION IS *CLEAN* RATHER THAN RED, and the reason is
+    // recorded rather than smoothed:** `E5`'s red set was committed by the supervisor at `98c8893`,
+    // so `git status --porcelain` is EMPTY and the dirty arm sees nothing, so this row reads `93/93`
+    // green on the committed tree. **The defect is therefore STRUCTURAL AND LATENT in that state and
+    // fires the moment `E5`'s own cycle makes either path dirty** (its Implementer's landing, or any
+    // later edit to its test file), because the registry is keyed by PATH: the path is declared NOW
+    // so a second repair pass is not owed.
+    // **WHAT IT DOES NOT WEAKEN.** `isDeniedPath` is not referenced by this list and is not edited
+    // by this pass (control `(n-2)` asserts it still reads `true` for this path), so
+    // `tests/container.test.ts` still reads denied in the RAW reading this row reports; a path can
+    // only ever be REMOVED from `E3`'s subject; and `E3`'s own five artifacts stay NOT-sibling, so
+    // **a denied path among `E3`'s own changes still FAILS.**
+  },
+  {
+    path: 'src/shared/container.ts',
+    unit: 'the CONTAINMENT unit (`E5` / `U-CONTAINER`) — its own MODULE, which lands later in that unit’s own cycle',
+    // **⟶ DECLARED 2026-09-27 (THE CROSS-UNIT SIBLING-REGISTRY REPAIR) — DECLARED BEFORE IT
+    // EXISTS, ON PURPOSE, SO A SECOND REPAIR PASS IS NOT OWED.** `docs/specs/container.md` names
+    // `src/shared/container.ts` as that unit's own artifact — its export census is `3 + 3 = 6`
+    // names: the three value exports `tokensFor`, `orientationFor` and `containerDeclarationFor`
+    // plus the three type declarations `AxisResolver`, `ChromeTokenFn` and `ContainerDeclaration`.
+    // The registry is keyed by PATH, so declaring the path now is what keeps `E5`'s Implementer
+    // landing commit from reading as `E3`'s own. **This is the SAME declaration shape the sibling
+    // registry already carries for a not-yet-landed artifact** (`SIBLING_UNIT_ARTIFACT_PROBE`
+    // admits `E10`'s `*-greens.md` *"the moment `E10`'s gate-5 artifact lands"*, and the `E4` entry
+    // above declares `src/shared/relocate.ts` before it existed). **MEASURED BEFORE THE
+    // DECLARATION:** the module does not exist on disk (`src/shared/container.ts` ⇒ ENOENT) and is
+    // in no change set, so this entry moves NO live reading today; it is the PATH-level attribution
+    // `§5.1`'s commit-range scope rule requires once it lands. **WHAT IT DOES NOT WEAKEN:**
+    // `isDeniedPath('src/shared/container.ts')` still reads `true` for it (a `src/shared/*` path
+    // other than `E3`'s own module), which control `(n-2)` drives; the exclusion is
+    // one-directional (REMOVE from `E3`'s subject only).
+  },
 ]
 /** **THE DECLARING UNITS, BY PATH** — the registry above, read as a map by the row so it can
  *  name the owning unit of every denied path it EXCLUDES. A path repeated in the registry
@@ -4855,6 +4910,98 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       CONTROL_MUTATION_E3_OWN_MEMBERS,
       CONTROL_MUTATION_SIBLING_MEMBERS,
       true,
+    ])
+    // (n-2) **⟶ ADDED 2026-09-27 (THE CROSS-UNIT SIBLING-REGISTRY REPAIR, `E5`/`U-CONTAINER`'s RED
+    //     SET) — THE `E5` DECLARATION, DRIVEN ON ITS OWN TWO DECLARED PATHS AND IN ALL FOUR
+    //     REQUIRED DIRECTIONS.** This is the SECOND drive of this class (control `(n)` above is the
+    //     first, for `E4`), and it is a SEPARATE control rather than an extension of `(n)`'s lists
+    //     for one reason: `(n)`'s expected values are LITERAL and name ONLY the `E4` paths, so
+    //     folding `E5`'s paths into `(n)` would silently widen an expectation that pins `E4`'s own
+    //     declaration. **The four directions, each ASSERTED rather than described:**
+    //
+    //       (a) both DECLARED `E5`-OWNED paths (`tests/container.test.ts`, `src/shared/container.ts`)
+    //           read **`isSiblingUnitArtifact === true`** AND carry a **NAMED owner** (`E5` /
+    //           `U-CONTAINER`) AND are **REGISTRY KEYS** AND are **EXCLUDED from the allow-list
+    //           subject** by the row's own declaration filter (`isDeclaredOtherUnitPath`);
+    //       (b) a synthetic **UNCLAIMED** path still reads **`isSiblingUnitArtifact === false`** with
+    //           NO owner — so it stays in `E3`'s subject and remains the row's FINDING path
+    //           (`§5.1`: *"a non-denied path outside the allow-list is a FINDING for the adversarial
+    //           pass, not an automatic FAIL"*). This is the direction that FAILS a predicate
+    //           claiming everything;
+    //       (c) an **`E3`-OWN denied path still reads denied/`true` and NOT-sibling** — the synthetic
+    //           `src/shared/gutter-hack.ts` — so **the DENIED half is UNTOUCHED by this
+    //           declaration**; and **the RAW reading still NAMES both declared `E5` paths as
+    //           DENIED** (the `deniedRaw !== true` list is EMPTY because both ARE denied — a list
+    //           that emptied the OTHER way would mean the predicate had been weakened);
+    //       (d) the **MUTATION-SHAPED PROBE for the `E5` declaration fires when the declarations are
+    //           removed**: the branch readings above are driven THROUGH the registry, so deleting
+    //           either entry drops its path into `own` with no owner and FAILS (a)/(list 1, list 3,
+    //           list 4, list 5) — the probe is not a tautology.
+    //
+    //     **WHAT THIS CONTROL KEEPS OUT OF THE BINDING POSITION.** Every comparison is SET-based
+    //     (sorted), never order-based: `§3.4 R-12` binds WHICH paths are declared siblings and never
+    //     the incidental order in which the registry happens to be listed — the `E4` lesson, where an
+    //     order-bound expectation FAILED on a committed clean tree because the live branch, not the
+    //     synthetic one, was the one running. **The ordered reading is REPORTED inside the message's
+    //     `READS` block and is BOUND NOWHERE.** The `E4` branch readings are printed BESIDE this
+    //     control's own so the two registrations are visible together without being compared.
+    const E5_SIBLING_DECLARED_PATHS: readonly string[] = ['tests/container.test.ts', 'src/shared/container.ts']
+    const CONTROL_UNCLAIMED_E5_PATH = 'tests/container-CONTROL-unclaimed.test.ts'
+    const e5SiblingBranch = E5_SIBLING_DECLARED_PATHS.map((path) => ({
+      path,
+      sibling: isSiblingUnitArtifact(path),
+      owner: declaredOtherUnitNameOf(path),
+      declared: Object.prototype.hasOwnProperty.call(SIBLING_DIVERGENCE_UNIT_BY_PATH, path),
+      deniedRaw: isDeniedPath(path),
+      e3Own: isE3OwnArtifact(path),
+      outsideAllowSubject: !isDeclaredOtherUnitPath(path),
+    }))
+    const controlUnclaimedE5Branch = {
+      path: CONTROL_UNCLAIMED_E5_PATH,
+      sibling: isSiblingUnitArtifact(CONTROL_UNCLAIMED_E5_PATH),
+      owner: declaredOtherUnitNameOf(CONTROL_UNCLAIMED_E5_PATH),
+      deniedRaw: isDeniedPath(CONTROL_UNCLAIMED_E5_PATH),
+    }
+    expect(
+      [
+        [...e5SiblingBranch.map((r) => r.path)].sort(),
+        e5SiblingBranch.filter((r) => r.sibling !== true).map((r) => r.path),
+        e5SiblingBranch.filter((r) => r.owner === null || r.owner.length === 0).map((r) => r.path),
+        e5SiblingBranch.filter((r) => !r.declared).map((r) => r.path),
+        e5SiblingBranch.filter((r) => r.outsideAllowSubject).map((r) => r.path),
+        e5SiblingBranch.filter((r) => r.deniedRaw !== true).map((r) => r.path),
+        e5SiblingBranch.filter((r) => r.e3Own).map((r) => r.path),
+        controlUnclaimedE5Branch.sibling,
+        controlUnclaimedE5Branch.owner,
+        [isDeniedPath(CONTROL_CORE_HACK_PATH), isSiblingUnitArtifact(CONTROL_CORE_HACK_PATH)],
+        [isSiblingUnitArtifact(TEST_RELPATH), isE3OwnArtifact(TEST_RELPATH)],
+      ],
+      `R-12 §3.4 — CONTROL (n-2, THE \`E5\`/\`U-CONTAINER\` DECLARATION DRIVEN IN ALL FOUR DIRECTIONS): (a) the DECLARED \`E5\`-OWNED paths \`${JSON.stringify(
+        E5_SIBLING_DECLARED_PATHS,
+      )}\` read \`isSiblingUnitArtifact === true\` (list 2 EMPTY) AND carry a NAMED declaring unit (list 3 EMPTY) AND are REGISTRY KEYS (list 4 EMPTY) AND are EXCLUDED from the allow-list subject (list 5 EMPTY) — **this is the exclusion the arm relies on, and the exact reading that FAILED with \`liveUnaccounted: ["tests/container.test.ts"]\` before the declaration**; (b) the synthetic UNCLAIMED path \`${CONTROL_UNCLAIMED_E5_PATH}\` still reads \`isSiblingUnitArtifact === false\` with NO owner, so it stays in the subject and remains the row's FINDING path (a predicate that claimed everything FAILS here); (c) the \`E3\`-OWN denied path \`${CONTROL_CORE_HACK_PATH}\` STILL reads \`isDeniedPath === true\` and \`isSiblingUnitArtifact === false\` — **the DENIED half is UNTOUCHED by this declaration** — \`E3\`'s OWN file \`${TEST_RELPATH}\` reads not-sibling with \`isE3OwnArtifact === true\`, and the \`deniedRaw !== true\` list (list 6) is EMPTY **because both \`E5\` paths ARE still denied by the byte-identical predicate, so the RAW reading still NAMES them**; and (d) **the probe is not a tautology: REMOVE EITHER \`E5\` REGISTRY ENTRY and this control's list 1/3/4/5 FAIL** (the path falls into \`own\` with no owner). **ALL COMPARISONS ARE SET-BASED (SORTED), NEVER ORDER-BASED** (the \`E4\` lesson: an order-bound expectation FAILED on a committed clean tree when the live branch, not the synthetic one, ran); the ordered reading is REPORTED below and BOUND NOWHERE. READS: ${JSON.stringify(
+        {
+          e5SiblingBranch: e5SiblingBranch.map((r) => [r.path, r.sibling, r.owner]),
+          e5SiblingBranchSortedPaths: [...e5SiblingBranch.map((r) => r.path)].sort(),
+          e5SiblingBranchDeclaredOrder: e5SiblingBranch.map((r) => r.path),
+          controlUnclaimedE5Branch,
+          e3OwnDeniedControl: [CONTROL_CORE_HACK_PATH, isDeniedPath(CONTROL_CORE_HACK_PATH), isSiblingUnitArtifact(CONTROL_CORE_HACK_PATH)],
+          e3OwnFileNotClaimed: [TEST_RELPATH, isSiblingUnitArtifact(TEST_RELPATH), isE3OwnArtifact(TEST_RELPATH)],
+          e4BranchBesideThis: RELOCATE_SIBLING_DECLARED_PATHS,
+          declaredRegistryEntries: SIBLING_DIVERGENCE_UNIT_ARTIFACTS.length,
+        },
+      )}`,
+    ).toEqual([
+      ['src/shared/container.ts', 'tests/container.test.ts'],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      false,
+      null,
+      [true, false],
+      [false, true],
     ])
     // (b) **THE DENIED SET OVER `E3`'S OWN CHANGES — this is the narrowed half.** A denied path
     //     AMONG `E3`'s own committed paths FAILS the row; a SIBLING's legitimate denied path is
