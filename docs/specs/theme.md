@@ -61,7 +61,11 @@ note — the placement the sibling specs use.)**
    stop-after-5, the **four DOMAINS declared by name**, and **five `(bounded)` markings**. **The register
    overshoots the `≤8` component-breakdown signal on purpose, in the ruling's own form** (`§5.5.2` item 1).
    **There is NO `§5.5.0` in this file**: it is filed **after** the gate-11 ruling and carries its register **from
-   the start**, so there is no superseded zero-row exemption to keep visible.
+   the start**, so there is no superseded zero-row exemption to keep visible. **⟶ POST-ANNOTATION (`2026-09-27`,
+   `§0A` note 8; the as-filed figures in this item are KEPT VISIBLE above): the live declaration is `103` declared
+   attempts — from `P-TH-TP-3`'s term `10 → 11`, the pre-committed `NG-2` re-grain now taken — and **six** `(bounded)`
+   markings, the sixth being `F4`'s marking of `P-TH-TP-5` (**a count of ROWS, not a term**); the arithmetic is at
+   `§5.5.3`.**
 4. **THE LEGS THIS UNIT DECLARES (none run): the node suite `[T]`** — `npm test` — plus `npm run typecheck` `[H]`
    (**`src/**` ONLY**; it never reads `tests/**`), `npm run build` `[H]` (**this unit adds a module imported by
    nobody, so the built output set must be UNCHANGED**), `npm run typecheck:tests` `[H]` (the additive fourth leg,
@@ -121,6 +125,16 @@ note — the placement the sibling specs use.)**
     ambiguities, its five self-repaired driver defects (`§F`), its `POST-GREEN` re-drive clause and its `32`-count
     census all carried at `§3c`.** **THE `NG-2` RE-GRAIN (`10→11` / `102→103`) IS PRE-COMMITTED BUT NOT TAKEN —
     `P-TH-TP-3` still declares `10` and the declared total is still `102` — and NO other figure in this file moves.**
+    **⟶ POST-ANNOTATION (`2026-09-27`, `§0A` note 8: the sentence immediately above, KEPT VISIBLE, is the as-written
+    pre-grain state and is STALE ON ITS ARITHMETIC ONLY): THE `NG-2` RE-GRAIN IS NOW TAKEN** — the TestWriter authored
+    **the inherited-`env` drive** (`Object.create({prefersDark: true})`) into `P-TH-TP-3`, so **that row's term moves
+    `10 → 11`, the DECLARED total moves `102 → 103`, the DISTINCT total moves `99 → 100`, and the `(bounded)` marked
+    set moves `5 → 6` ROWS** (`F4`'s marking of `P-TH-TP-5` — **a count of ROWS, NOT a term**). **Each figure is
+    printed with its own terms, its own chain, its own family subtotals and its own cap re-check at `§5.5.3`, with the
+    as-filed figures kept visible there; and NO TERM OTHER THAN `P-TH-TP-3`'S MOVES** — no row id, no strategy id, no
+    seed, no cap, no shape and no section number moves. **`F1`/`F4`/`F7`/`F2` are dispositioned at `§3b`'s
+    `AMEND-1`…`AMEND-4`; the seven `F1`…`F7` rows stay UNFIXED on their own sides, gate 4's and gate 5's censuses
+    stand exactly as recorded, and `E8` remains an OPEN unit at gate 3 GREEN with gates 4 and 5 RUN.**
     **STATE, PLAINLY: `E8` is GREEN at gate 3 with GATES 4 AND 5 RUN, and it is NOT `DONE`; these findings are OWED,
     not closed; the ledger is UNMOVED at `16 DONE / 5 open` = `21` units (`docs/next-steps.md`, the supervisor's);
     and the contract is FILED AND APPROVED.** **THE ORDERED NEXT ACTIONS ARE `docs/next-steps.md`'s
@@ -308,6 +322,44 @@ on them and a later author must NOT re-discover them:**
 **AND THE HONEST EXTENT OF THIS NOTE: it edits THIS FILE ONLY. It runs no leg, no suite, no `tsc` and no register
 row, changes no tracker, and adds no commit of its own** (`RCA-8`: the pass that lands it commits it).
 
+**Note 8 — THE GATE-4 CONTRACT-SIDE DISPOSITIONS AND THE `NG-2` RE-GRAIN, TAKEN (amendment of `2026-09-27`, THIRD
+DATED NOTE OF THE SAME DAY, APPENDED — NOTHING ABOVE MOVES).** **WHAT THIS NOTE IS: the contract-side half of the
+gate-4 findings (`§3b`'s `F1` and `F4`) is PINNED, and the re-grain this file PRE-COMMITTED to (`CURRENT STATE` item
+11; `§3b`'s `NG-2`) IS NOW TAKEN because the TestWriter authored the drive it waits on.** **THE FIVE DISPOSITIONS,
+each with its landing site:**
+
+1. **`F1` — THE `env` MEMBER-READ FORM IS PINNED AT `§2.3` item 2 (its new row `(13)`, plus the pinning sentence
+   beside that table).** The mechanism reads the member through its **OWN-member form**, as **the inherited-member
+   obligation (`§2.3` item 2 row `(12)`) already implied** — so **an object whose traps expose no own `prefersDark`
+   member reads the DECLARED DEGRADATION (`false`, `source: 'degraded-env'`), and a container carrying a genuine own
+   member reads THAT member.** **NO MODULE FIX IS OWED: the landed `src/shared/theme.ts` already conforms**
+   (read this pass: its `envReading` reads `Object.getOwnPropertyDescriptor` and declares the degradation when the
+   descriptor is `undefined`).
+2. **`F4` — `P-TH-TP-5` CARRIES ITS `(bounded)` MARKING (`§5.5.1`'s cell, `§5.5.2` item 2).** **THE MARKING IS A COUNT
+   OF ROWS: the marked set moves `5 → 6` rows (`5 + 7 = 12` → `6 + 6 = 12`), and it moves NO TERM.**
+3. **THE `NG-2` RE-GRAIN, TAKEN (`§5.5.1` `P-TH-TP-3`'s cell, `§5.5.2` items 2/3/11, `§5.5.3`, `§5.3` item 11,
+   `§7` item 9, `§8`).** **`P-TH-TP-3`'s term `10 → 11` — the `11`th hostile member is an INHERITED `env`
+   (`Object.create({prefersDark: true})`), driven in that row and in `F-2`'s pool — so the DECLARED total moves
+   `102 → 103` and the DISTINCT total moves `99 → 100`.** **EVERY FIGURE IS PRINTED AT `§5.5.3` WITH ITS OWN TERMS,
+   ITS OWN ELEVEN-STEP CHAIN, ITS OWN FAMILY SUBTOTALS AND ITS OWN CAP RE-CHECK (against the DECLARED figure), AND
+   THE AS-FILED FIGURES ARE KEPT VISIBLE THERE UNDER A DATED ANNOTATION.** **THE ONLY TERMS THAT MOVE ARE
+   `P-TH-TP-3`'S: no other term, no row id, no strategy id, no seed, no cap, no shape and no section number moves.**
+4. **`F7` — RECORDED, AND IT IS A TEXT-OF-METHOD NOTE, NOT A CONTRACT CHANGE:** **step 2's ledger title claimed SIX
+   differing rows while its own ledger expects ONE** (only `P-TH-IM-2`'s `12 → 9` differs; the other eleven distinct
+   figures equal their terms) — **the title is corrected to the ledger's own reading as-written at `§5.5.2` item 3,
+   with the as-written form kept visible.** **NO TERM AND NO FIGURE MOVES BY THIS CORRECTION.**
+5. **`F2` — RECORDED AS A `[T]`-SIDE OBLIGATION THE TESTWRITER OWES, NOT AS A CONTRACT CHANGE** (`§3b`'s new
+   `AMEND-1` row): **the declared invocation-count-`0` assertion of `P-TH-IM-1`/`P-TH-IM-3` is structurally zero
+   because the recorder is NEVER PASSED to the module** — **so the assertion must be re-grounded by the TestWriter
+   (red-first) before any DONE row may cite it.** **THIS FILE'S OWN TERMS, ROWS AND FIGURES ARE UNTOUCHED BY IT: a
+   contract cannot repair an instrument it does not own.**
+
+**AND THE HONEST EXTENT OF THIS NOTE, stated as note 7's was: it edits THIS FILE ONLY.** It runs **no leg, no suite,
+no `tsc` and no register row**, changes **no tracker**, and adds **no commit of its own** (`RCA-8`: the pass that
+lands it commits it). **The `11`-member pool, the `103`/`100` figures and the `6`-row marked set are CONTRACT
+DESIGN until the register rows are EXECUTED: an un-run register row is reported as a FAILURE, never as a pass**
+(`§4.2`, `§5.5.3`).
+
 ---
 
 ## Layer declaration (read this before any table below)
@@ -406,7 +458,10 @@ mechanism**, and **no write of any kind**.
    *"prefersDark"* is that it is a CALLER CLAIM ABOUT AN ENVIRONMENT, never an OS behaviour this repo can
    observe** (`§2.3` item 2; `§7` item 2). **The honest cost of the unit itself**: this spec + a **`12`-row /
    `12`-term / `102`-attempt** register + red/green **with remands** + the adversarial pass + blind greens + the
-   per-unit documentation review + a DONE row + per-gate commits (`RCA-8(f)`).
+   per-unit documentation review + a DONE row + per-gate commits (`RCA-8(f)`). **⟶ (`2026-09-27`, `§0A` note 8: the
+   `102` in that sentence is the AS-FILED figure, STALE ON THE ARITHMETIC ONLY): the `NG-2` re-grain is TAKEN, so the
+   LIVE cost figure is `103` declared / `100` distinct, with a `(bounded)` marked set of `6` ROWS — each printed with
+   its own terms, chain, subtotals and cap re-check at `§5.5.3`.**
 
 ---
 
@@ -661,10 +716,25 @@ TRUTHINESS** — **and `source` is the observable that reports whether the readi
 | **(10)** | `env` carries a **THROWING ACCESSOR** at `prefersDark` | **`false`** | **`'degraded-env'`** | **the throw is CAUGHT and ABSORBED; NOTHING ESCAPES the call** |
 | **(11)** | `env` is a **revoked `Proxy`** (or a `Proxy` whose `get`/`has`/`getOwnPropertyDescriptor` trap **throws**) | **`false`** | **`'degraded-env'`** | **the trap's throw is ABSORBED, including the `TypeError` a revoked proxy raises on ANY access** |
 | **(12)** | `env` is an object whose `prefersDark` member is an **inherited** value | **`false`** unless the member is an **OWN** `true` — **the read is BY OWN MEMBER, and an inherited `true` is NOT a reading** | **`'degraded-env'`** for the inherited case | **the own-member discipline, stated so the reading is not an ambient prototype walk** |
+| **(13)** | `env` is a **NON-THROWING DIVERGING `Proxy`** — a `Proxy` that **does not throw** and whose **`get` answers `true`, whose `has` answers `true`**, **but whose `getOwnPropertyDescriptor` answers `undefined`** so **NO OWN `prefersDark` MEMBER IS EXPOSED** (the `F1` shape) **— or any other object whose traps likewise expose NO own member** | **`false`** — **the member is not read, because no own member exists to read** | **`'degraded-env'`** | **the value the traps' `get` would literally return is NOT read: this contract's reading is the OWN-member form, and a trap-only answer is not a member** |
 
-**ITEMS (3) THROUGH (12) ARE ALL "ABSORBED PER MEMBER WITH NOTHING THROWING", AND `source` IS HOW THE DEGRADATION
+**ITEMS (3) THROUGH (13) ARE ALL "ABSORBED PER MEMBER WITH NOTHING THROWING", AND `source` IS HOW THE DEGRADATION
 BECOMES OBSERVABLE.** **A module that THROWS on any shape above FAILS `P-TH-TP-3`; a module that reads `1` or
 `'false'` as `true` FAILS `P-TH-IM-2`; a module that reports `'env'` for a degraded reading FAILS the same row.**
+
+**THE MEMBER-READ FORM IS PINNED, ONCE, IN ONE SENTENCE (`F1`'s contract disposition, `§0A` note 8 item 1): THE
+MECHANISM READS THE MEMBER THROUGH ITS OWN-MEMBER FORM — an OWN DATA OR OWN ACCESSOR MEMBER ON THE OBJECT itself (the
+reading this table's inherited-member obligation, row `(12)`, already implies) — SO AN OBJECT WHOSE TRAPS EXPOSE NO OWN
+`prefersDark` MEMBER READS AS THE DECLARED DEGRADATION (`false`, `source: 'degraded-env'`) EVEN WHEN ITS TRAPS ANSWER
+`true`, WHILE A CONTAINER CARRYING A GENUINE OWN MEMBER (`Object.assign([], {prefersDark: true})`, a `Map` with an own
+member) READS **THAT MEMBER**.** **THE FALSIFIER, NAMED SO THE PIN IS FALSIFIABLE: A MODULE THAT READS A TRAP-ONLY
+MEMBER AS `true` MUST FAIL — the row is `P-TH-TP-3`'s row `(13)` and the same shape is driven in `F-2`'s pool;
+`§4.4 S-TH-4`'s read list already names this as the strict OWN-member test of `env.prefersDark`, so this pinning adds
+NO read to the contract's declared read set.** **AND THE LANDED MODULE ALREADY CONFORMS — `src/shared/theme.ts` reads
+`Object.getOwnPropertyDescriptor(env, 'prefersDark')` and declares the degradation when that descriptor is
+`undefined`** (read this pass: the `F1` diverging `Proxy` reads `{prefersDark: false, source: 'degraded-env'}`, and
+`Object.assign([], {prefersDark: true})` and a `Map` carrying an own member each read `true`) — **so NO MODULE FIX IS
+OWED and no `F1` repair is parked here.**
 **AND THE HONEST LIMIT, stated so no row overreaches: the `source` VALUE's SPELLING WAS `A-2`'s naming question**
 (`§7a.1` item 2) — **the OBSERVABILITY is the contract, and THE SPELLING IS NOW RULED (`source`; the as-filed
 spelling was `basis`) BY THE 2026-09-27 SPEC GATE** (`§0A` note 6).
@@ -804,7 +874,7 @@ implementation FAILS**; and **`M-6`(g) is the row a `String()`-coercing implemen
 | id | Fail-state | Trigger (exact) | Required behaviour | Pinned by | Layer |
 | --- | --- | --- | --- | --- | --- |
 | **F-1** | **AN UNUSABLE SETTING — the pass-through's whole outside, driven in full** | `setting` = omitted · `null` · `''` · `0` · `-0` · `NaN` · `false` · `true` · a `Symbol` · `12n` · `{}` · `Object.create(null)` · `[]` · a `Map` · a function · a revoked `Proxy` · a trap-throwing `Proxy` · an object with a THROWING `toString` | **every drive returns `setting: null`**; **`String()`, `toString` and `valueOf` are NOT invoked** (recorded counts `0` where the object has them); **`source`/`prefersDark` are unaffected by the `setting` shape**; **NOTHING THROWS; no default token, no `''` token and no sentinel appears** | `§2.3` item 1(c)/4, `P-TH-IM-1`/`P-TH-TP-1` | `[T]` |
-| **F-2** | **A HOSTILE ENVIRONMENT — the whole hostile-shape table as its own row** | `env` = omitted · `null` · `42` · `'x'` · `true` · a `Symbol` · `12n` · `{}` (member MISSING) · `{prefersDark: undefined}` · `{prefersDark: 'true'}` · `{prefersDark: 'false'}` · `{prefersDark: 1}` · `{prefersDark: 0}` · `{prefersDark: NaN}` · `{prefersDark: []}` · `{prefersDark: {}}` · a FROZEN `{prefersDark: true}` · a record whose `prefersDark` accessor THROWS · a revoked `Proxy` · a trap-throwing `Proxy` · an object whose `prefersDark` is INHERITED | **every shape lands in the declared pair of the `§2.3` item 2 table: `false` + `'degraded-env'` for every hostile shape, EXCEPT the FROZEN `true` case which reads `true` + `'env'`**; **NOTHING THROWS in any drive, the revoked `Proxy`'s `TypeError` included**; **and no member is fabricated** | `§2.3` item 2 (all twelve rows), `P-TH-IM-2`/`P-TH-TP-3` | `[T]` |
+| **F-2** | **A HOSTILE ENVIRONMENT — the whole hostile-shape table as its own row** | `env` = omitted · `null` · `42` · `'x'` · `true` · a `Symbol` · `12n` · `{}` (member MISSING) · `{prefersDark: undefined}` · `{prefersDark: 'true'}` · `{prefersDark: 'false'}` · `{prefersDark: 1}` · `{prefersDark: 0}` · `{prefersDark: NaN}` · `{prefersDark: []}` · `{prefersDark: {}}` · a FROZEN `{prefersDark: true}` · a record whose `prefersDark` accessor THROWS · a revoked `Proxy` · a trap-throwing `Proxy` · an object whose `prefersDark` is INHERITED · **a NON-THROWING DIVERGING `Proxy`** (`get` ⇒ `true`, `has` ⇒ `true`, `getOwnPropertyDescriptor` ⇒ `undefined`: **the `F1` shape — its `get` answer is NOT a member**, `§2.3` item 2 row `(13)`) · **a CONTAINER with a GENUINE own member** (`Object.assign([], {prefersDark: true})`, and a `Map` likewise — **these read the own member, so they are the row's `true`/`'env'` arms and NOT hostiles**) | **every shape lands in the declared pair of the `§2.3` item 2 table: `false` + `'degraded-env'` for every hostile shape — the diverging `Proxy` included, which reads the DECLARED DEGRADATION and NEVER the `true` its `get` would answer — EXCEPT the FROZEN `true` case, which reads `true` + `'env'`, AND the two containers with a GENUINE own member, which read `true` + `'env'`**; **NOTHING THROWS in any drive, the revoked `Proxy`'s `TypeError` included**; **and no member is fabricated.** **THE INVERSION, NAMED AS THE FALSIFIER: a module that reads the diverging `Proxy` as `true` FAILS this row** (`§0A` note 8 item 1) | `§2.3` item 2 (all thirteen rows), `P-TH-IM-2`/`P-TH-TP-3` | `[T]` |
 | **F-3** | **THE NON-REMOVAL / REMOVAL SPLIT, driven from both sides by `resolved`** | `applyThemeDeclaration('data-x', resolved)` for `resolved` = `'dark'` · `'0'` · `'false'` · `' '` (a whitespace-only string) · `''` · `null` · `undefined` · `42` · a `Symbol` · an object | **the three non-empty STRINGS (`'dark'`, `'0'`, `'false'`, `' '`) return `removal: false` with their own value by identity — note `'false'` is a LEGAL TOKEN and must NOT be read as a boolean**; **`''`, `null`, `undefined`, `42`, a `Symbol` and an object return the REMOVAL case `{value: '', removal: true}`**; **NOTHING THROWS** | `§2.4` item 2, `P-TH-IM-4`/`P-TH-TP-4` | `[T]` |
 | **F-4** | **AN UNUSABLE ATTRIBUTE NAME, and the independence of the two arguments** | `applyThemeDeclaration(attributeName, 'dark')` for `attributeName` = `''` · omitted · `null` · `42` · `true` · a `Symbol` · `12n` · `{}` · `[]` · a function · a revoked `Proxy`; **and the CROSSED drives** `applyThemeDeclaration('', '')` and `applyThemeDeclaration('data-x', '')` | **every unusable name reads `name: null` WITHOUT throwing**; **the CROSSED drives prove the independence the contract pins: `('', '')` reads `{name: null, value: '', removal: true}` while `('data-x', '')` reads `{name: 'data-x', value: '', removal: true}`** — **so a removal with an echoed name is a NORMAL return, not a contradiction** | `§2.4` items 1/2, `P-TH-IM-3`/`P-TH-TP-4` | `[T]` |
 | **F-5** | **THE COMPOSED PATH, DRIVEN END TO END — the row that ties the two functions together** | `applyThemeDeclaration(name, resolveTheme(setting, env).setting)` over the cross-product of: `setting` ∈ {a token, `''`, `null`, `42`} × `env` ∈ {`{prefersDark: true}`, `{}`, a throwing accessor} × `name` ∈ {`'data-x'`, `''`} | **every cell returns a declared `ThemeAttributeWrite` with the `name` from the name rule and the `removal` from the resolved value** — **so `('' , resolveTheme('dark', {}).setting)` reads `{name: null, value: 'dark', removal: false}` while `('data-x', resolveTheme(null, {}).setting)` reads `{name: 'data-x', value: '', removal: true}`**; **NOTHING THROWS in any cell, the throwing-accessor env included** | `§2.1` item 2, `§2.3` items 1/2, `§2.4` items 1/2, `P-TH-TP-4`/`P-TH-TP-6` | `[T]` |
@@ -922,7 +992,9 @@ this is reachable from the app — **in particular, at the end of this cycle the
 **The register's own stop rule binds the red run**: rows are evaluated **sequentially in register order** with
 **STOP AFTER 5 CONSECUTIVE FAILURES**, so **a red run of a module-absent unit is expected to stop early**, and
 **the un-run rows must be REPORTED AS FAILURES rather than silently omitted** — **a red run that reports all `102`
-attempts as executed is the finding, not the expectation.** **The register's execution markings are DESIGN, not
+attempts as executed is the finding, not the expectation.** **⟶ (`2026-09-27`, `§0A` note 8 item 3: read that `102` as
+the LIVE `103`, the pre-committed `NG-2` re-grain having been taken — the sentence's own claim, *"every attempt
+executed"*, is UNCHANGED and is what the row tests.)** **The register's execution markings are DESIGN, not
 results**: **a row that is marked executable in `§5.5.1` but broken when run is a SPEC FINDING, reported rather
 than tuned to green.**
 
@@ -1198,21 +1270,30 @@ The DONE row (`docs/next-steps.md`, the supervisor's pass) must carry, **in this
     states.** **A DONE row that reports the register as "executed" without these per-row counts and strategy ids
     is a review finding** — the markings are **execution DESIGN**, and **a read-only PBT audit may not accept this
     spec's table alone**: it reads the counts here **and** the TestWriter's tables in `tests/theme.test.ts`.
-11. **The register's ARITHMETIC.** The DONE row must print the **total WITH its per-row terms** — **`102` = `12`
-    (`P-TH-IM-1`) + `12` (`P-TH-IM-2`) + `10` (`P-TH-IM-3`) + `8` (`P-TH-IM-4`) + `6` (`P-TH-SM-1`) + `3`
-    (`P-TH-SM-2`) + `12` (`P-TH-TP-1`) + `12` (`P-TH-TP-2`) + `10` (`P-TH-TP-3`) + `8` (`P-TH-TP-4`) + `6`
-    (`P-TH-TP-5`) + `3` (`P-TH-TP-6`)** — **and must reconcile that figure against the tables the test file
-    actually produces**: **a total that is not the sum of its own terms is a review finding**
+11. **The register's ARITHMETIC.** The DONE row must print the **total WITH its per-row terms** — **the LIVE figure
+    `103` = `12` (`P-TH-IM-1`) + `12` (`P-TH-IM-2`) + `10` (`P-TH-IM-3`) + `8` (`P-TH-IM-4`) + `6` (`P-TH-SM-1`) + `3`
+    (`P-TH-SM-2`) + `12` (`P-TH-TP-1`) + `12` (`P-TH-TP-2`) + `11` (`P-TH-TP-3`) + `8` (`P-TH-TP-4`) + `6`
+    (`P-TH-TP-5`) + `3` (`P-TH-TP-6`), whose DISTINCT sibling is `100`** — **and must reconcile that figure against
+    the tables the test file actually produces**: **a total that is not the sum of its own terms is a review finding**
     (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`). **Where a row's attempts are several assertions over ONE
     execution, or a count of DISTINCT inputs rather than of DRIVES, the DONE row must report BOTH the declared
     attempts and the honest DISTINCT-DRIVE figure** (`§5.5.2` item 3's ledger is the authority). **The DECLARED
     figures are what the caps are compared against; the distinct figures are reported BESIDE them and never
     substituted.**
-    **⟶ THE TWO FIGURES NOW HAVE A PRINTED AUTHORITY FOR BOTH HALVES (`2026-09-27` amendment, `§0A` note 7 item 1):
-    `§5.5.3` prints the DECLARED total `102` with its twelve terms and its chain, AND the DISTINCT total `99` with
-    its own twelve terms and its own chain, in one sentence that says which is which and where each is used — so a
-    DONE row that reconciles DECLARED versus DISTINCT cites `§5.5.3` (with `§5.5.2` item 3's ledger as the distinct
-    half's source) rather than deriving either figure itself.** **NO TERM, ROW ID, STRATEGY ID, SEED OR CAP MOVES,
+    **⟶ THIS ITEM'S AS-FILED FIGURES, KEPT VISIBLE (`2026-09-27`, `§0A` note 8 item 3 — the `102` and the
+    `10`-term `P-TH-TP-3` are the PRE-GRAIN figures and are STALE ON THE ARITHMETIC ONLY): *"`102` = `12`
+    (`P-TH-IM-1`) + `12` (`P-TH-IM-2`) + `10` (`P-TH-IM-3`) + `8` (`P-TH-IM-4`) + `6` (`P-TH-SM-1`) + `3`
+    (`P-TH-SM-2`) + `12` (`P-TH-TP-1`) + `12` (`P-TH-TP-2`) + `10` (`P-TH-TP-3`) + `8` (`P-TH-TP-4`) + `6`
+    (`P-TH-TP-5`) + `3` (`P-TH-TP-6`)"*.** **THE RE-GRAIN IS TAKEN: `P-TH-TP-3`'s term `10 → 11` (the inherited-`env`
+    member), so the DECLARED total is `103` and the DISTINCT total `100` — each printed with its own terms, its own
+    chain, its own family subtotals and its own cap re-check at `§5.5.3`; and **`F4`'s `(bounded)` marking of
+    `P-TH-TP-5` MOVES NO TERM (the marked set is a count of ROWS, `5 → 6` rows)** (`§5.5.2` item 2).**
+    **⟶ THE TWO FIGURES NOW HAVE A PRINTED AUTHORITY FOR BOTH HALVES (`2026-09-27` amendment, `§0A` note 7 item 1;
+    read `102`/`99` there as the as-filed pair this amendment supersedes with `103`/`100`): `§5.5.3` prints the
+    DECLARED total with its twelve terms and its chain, AND the DISTINCT total with its own twelve terms and its own
+    chain, in one sentence that says which is which and where each is used — so a DONE row that reconciles DECLARED
+    versus DISTINCT cites `§5.5.3` (with `§5.5.2` item 3's ledger as the distinct half's source) rather than deriving
+    either figure itself.** **NO TERM OTHER THAN `P-TH-TP-3`'S, NO ROW ID, NO STRATEGY ID, NO SEED AND NO CAP MOVES,
     AND THE DECLARED FIGURE REMAINS THE ONE THE CAPS ARE COMPARED AGAINST.**
 12. **The `§5.3` → `§5.5` numbering note, cited**: **there is NO `§5.4`** — the gap is DELIBERATE and is the
     family's (`docs/specs/gutter.md` `§5.3`'s own note). **This file also has NO `§5.5.0`**: it was filed **after**
@@ -1279,7 +1360,10 @@ gate-1 record's own confirmation of the declaration, its `§4.9`):
    **the module NEVER interprets a member of it** — it carries the string and declares `null` for everything else.
 2. **THE ENVIRONMENT DOMAIN** — **CLOSED AT ONE MEMBER**, `prefersDark`, with the **strict `=== true`** rule; **a
    MISSING member and every non-`true` value are DEGRADATIONS rather than members**, and **a `false` member is a
-   NORMAL reading, not a degradation**. **The domain's shape pool is the twelve rows of `§2.3` item 2.**
+   NORMAL reading, not a degradation**. **The domain's shape pool is the THIRTEEN rows of `§2.3` item 2** — **and the
+   member-read form is the OWN-member form, so a trap-only `true` is NOT a member and a container carrying a genuine
+   own member IS read** (`§2.3` item 2 rows `(12)`/`(13)` and the pinning sentence beside that table; the as-filed
+   text of this item read *"the twelve rows"*, `§0A` note 8 item 1).
 3. **THE REMOVAL / ECHO DOMAIN** — **the caller's attribute name as a NON-EMPTY STRING (echoed verbatim by
    identity) versus every non-string, every `''` and the omitted form (`name: null`), composed with the removal
    trigger set (`''`, `null`, `undefined` and every other non-string `resolved`).**
@@ -1343,9 +1427,9 @@ GENERATOR.** **EACH ROW'S OWN CELL NAMES ITS ID, THE IDS ARE DISTINCT, AND NO RO
 | **`P-TH-SM-2`** *(cross-call constancy and RECORD FRESHNESS — no cache, no drift, no shared record)* | `P-SM` state-machine | **For EVERY one of the row's `3` repeated-call shapes: five successive calls with the SAME arguments return EQUAL values (`toEqual`), each returned RECORD is a DISTINCT OBJECT (pairwise `!==` over distinct indices), the carried `setting`/`name`/`value` members are the caller's own values BY IDENTITY in every call, and NO observable state differs between the first and the fifth call.** | **YES** | `F-8`, `M-7`, `I-3`/`I-4`, `§2.4` item 4, `§5.5.1` method note 6(c) | `S-TH-CONST-1` | **`3` attempts** = **`3` repeated-call shapes, each driven FIVE times.** **The `3` shapes:** **(1)** `resolveTheme('dark', {prefersDark: true})` · **(2)** `resolveTheme('dark', {prefersDark: true})` **with a recording getter installed on the env member** (asserting the count is exactly `5` at the fifth call — a count of `6` FAILS this row for a cache) · **(3)** `applyThemeDeclaration('data-x', 'dark')` and its removal twin. **Per attempt assert:** the five values' mutual equality; the pairwise distinct-identity reading over the five returned records; the member-level identity; and the getter count on `(2)`. |
 | **`P-TH-TP-1`** *(the MODULE-WIDE TOTALITY universal — with its BOUND in its own words, over a pinned-seed pool, and NAMING both entry points and both return shapes so the row can FAIL)* | `P-TP` totality | **For EVERY hostile shape drawn from the pinned `12`-member pool: (a) NEITHER ENTRY POINT THROWS — `resolveTheme(setting, env)` returns a `{setting, prefersDark, source}` record and `applyThemeDeclaration(attributeName, resolved)` returns a `{name, value, removal}` record — for ANY argument, INCLUDING `NaN`, a `Symbol`, a `12n`, `Object.create(null)`, a revoked `Proxy`, a trap-throwing `Proxy` and a throwing accessor; AND (b) THE DECLARED RETURN SHAPES HOLD on every draw: each record's `Object.keys` reads its three declared names in declared order and each member's type is the declared one. The drawn shape is supplied as the `setting`, as the `env`, as the `attributeName` and as the `resolved` in turn INSIDE each single attempt.** **The universal is over the DRAWN domain and NOT over the whole input space.** | **YES (bounded — the property text says "EVERY hostile shape" while the pool holds `12` members and the drive performs `12` draws; the universal is NOT proven, and no reader may read this row as its proof. THE BOUND IS STATED IN THIS CELL'S OWN WORDS)** | `F-1`, `F-2`, `F-4`, `I-1`, `I-10`, `M-7`, `§2.3` items 1/2/4 | `S-TH-TOTAL-1` | **`12` attempts** = **`12` pinned-seed DRAWS, each applying EXACTLY ONE LCG step (`index = stateₙ₊₁ mod 12`), each draw driven through BOTH entry points in sequence.** **THE `12`-MEMBER POOL:** **(1)** `Object.create(null)` with own keys · **(2)** `NaN` · **(3)** a `Symbol` · **(4)** a `12n` · **(5)** a revoked `Proxy` · **(6)** a `Proxy` whose `get`/`has`/`getOwnPropertyDescriptor` traps THROW · **(7)** a record whose `prefersDark` accessor THROWS · **(8)** a self-referential record · **(9)** a `Map` · **(10)** a `Set` · **(11)** a function · **(12)** `[]` and a deeply nested array (one member, driven as both). **Per attempt assert:** every returned value's declared class; the three-member key sets in order; the member types; and that nothing threw — **including for the four POSITIONAL drives (as `setting`, as `env`, as `attributeName`, as `resolved`), which are ASSERTIONS inside the attempt and never extra drives.** |
 | **`P-TH-TP-2`** *(THE NO-PRECEDENCE / NO-DERIVED-TOKEN RULE — **step 4's `R-10` row made a register row**)* | `P-TP` totality | **For EVERY one of the row's `12` (setting, env) PAIRS: the returned `setting` member is the caller's own token BY IDENTITY or the declared `null`, and it is NEVER a value derived from `prefersDark`; no comparison, branch, transition, override or tri-state member relates the two inputs; and the same setting reads the SAME `setting` member under BOTH a strict-`true` and a degraded environment.** **THE ROW CAN FAIL: a member-pool implementation returns a pool member instead of the caller's token and FAILS EVERY ATTEMPT whose setting is a pool-shaped string.** | **YES (bounded — the property text says "EVERY (setting, env) pair" while the table drives `12` pairs)** | `M-2`, `M-3`, `F-1`, `I-2`/`I-5`, `§2.3` item 3, `P-TH-10` | `S-TH-RULE-1` | **`12` attempts** = **`3` setting shapes × `4` env shapes.** **The `3` settings:** **(1)** a pool-shaped token (`'dark'`) · **(2)** a NON-pool token (`'my-app-theme'`) · **(3)** an out-of-domain shape (`42`). **The `4` envs:** **(i)** `{prefersDark: true}` · **(ii)** `{prefersDark: false}` · **(iii)** `{}` (missing) · **(iv)** a hostile shape from the pool. **Per attempt assert:** the `setting` member's IDENTITY against the caller's own string; the ABSENCE of any pool member in the return (`'dark'` may only appear because the CALLER supplied it); the `prefersDark` report's independence; and that nothing threw. **THE DISCRIMINATING CELLS, named: `(1)`×(i) versus `(1)`×(ii) must return the SAME `setting` — a precedence implementation returns two different ones.** |
-| **`P-TH-TP-3`** *(THE HOSTILE-ENVIRONMENT ABSORPTION — the totality half of the env rule. **It asserts ABSORPTION AND ITS OBSERVABILITY, never the strict reading on a usable shape (that is `P-TH-IM-2`'s), per step 4's correction 2**)* | `P-TP` totality | **For EVERY one of the row's `10` hostile environment shapes: the reading lands on `false`, `source` reads `'degraded-env'`, NOTHING THROWS — the revoked `Proxy`'s `TypeError` and the throwing accessor's throw included — no member is fabricated, the `setting` member is unaffected, and the degradation is OBSERVABLE through `source` (so a module that silently reads `false` without reporting `'degraded-env'` FAILS this row).** | **YES (bounded — the property text says "EVERY hostile env shape" while the table drives `10`; the universal is NOT proven)** | `F-2`, `M-3`(c)/(d), `I-1`/`I-2`/`I-10`, `§2.3` item 2 rows (3)–(12) | `S-TH-ABSORB-1` | **`10` attempts** = **the `10` hostile shapes of `§2.3` item 2, ONE DRIVE EACH, each driven with a FIXED valid setting (`'dark'`).** **The `10`:** **(1)** the member MISSING (`{}`) · **(2)** `{prefersDark: undefined}` · **(3)** `{prefersDark: 'true'}` · **(4)** `{prefersDark: 'false'}` · **(5)** `{prefersDark: 1}` · **(6)** `{prefersDark: 0}` **and `NaN`** · **(7)** `{prefersDark: []}` **and `{}` and a function** · **(8)** `env` itself `undefined`/`null`/a non-object · **(9)** a record whose accessor THROWS · **(10)** a revoked `Proxy` **and** a trap-throwing `Proxy`. **Per attempt assert:** `prefersDark === false`; `source === 'degraded-env'` BY NAME; the setting's identity; the absence of a fabricated member; and that nothing threw. **THE MIRROR CONTROL, named so the row is not vacuous: the SAME drive with `{prefersDark: false}` must read `source: 'env'` — a module reporting `'degraded-env'` for a legitimate `false` FAILS `P-TH-IM-2`.** |
+| **`P-TH-TP-3`** *(THE HOSTILE-ENVIRONMENT ABSORPTION — the totality half of the env rule. **It asserts ABSORPTION AND ITS OBSERVABILITY, never the strict reading on a usable shape (that is `P-TH-IM-2`'s), per step 4's correction 2**)* | `P-TP` totality | **For EVERY one of the row's `11` hostile environment shapes: the reading lands on `false`, `source` reads `'degraded-env'`, NOTHING THROWS — the revoked `Proxy`'s `TypeError` and the throwing accessor's throw included — no member is fabricated, the `setting` member is unaffected, and the degradation is OBSERVABLE through `source` (so a module that silently reads `false` without reporting `'degraded-env'` FAILS this row).** | **YES (bounded — the property text says "EVERY hostile env shape" while the table drives `11`; the universal is NOT proven)** | `F-2`, `M-3`(c)/(d), `I-1`/`I-2`/`I-10`, `§2.3` item 2 rows (3)–(13) | `S-TH-ABSORB-1` | **`11` attempts** = **the `11` hostile shapes of `§2.3` item 2, ONE DRIVE EACH, each driven with a FIXED valid setting (`'dark'`).** **The `11`:** **(1)** the member MISSING (`{}`) · **(2)** `{prefersDark: undefined}` · **(3)** `{prefersDark: 'true'}` · **(4)** `{prefersDark: 'false'}` · **(5)** `{prefersDark: 1}` · **(6)** `{prefersDark: 0}` **and `NaN`** · **(7)** `{prefersDark: []}` **and `{}` and a function** · **(8)** `env` itself `undefined`/`null`/a non-object · **(9)** a record whose accessor THROWS · **(10)** a revoked `Proxy` **and** a trap-throwing `Proxy` · **(11)** **an INHERITED `env` — `Object.create({prefersDark: true})`** (the `NG-2` re-grain, TAKEN by the `2026-09-27` amendment, `§0A` note 8 item 3: **an inherited `true` is NOT a reading, so the pair is `false`/`'degraded-env'`**). **Per attempt assert:** `prefersDark === false`; `source === 'degraded-env'` BY NAME; the setting's identity; the absence of a fabricated member; and that nothing threw. **THE MIRROR CONTROL, named so the row is not vacuous: the SAME drive with `{prefersDark: false}` must read `source: 'env'` — a module reporting `'degraded-env'` for a legitimate `false` FAILS `P-TH-IM-2`.** |
 | **`P-TH-TP-4`** *(THE NAME AND REMOVAL DEGENERATE ARMS, AS A CROSS PRODUCT — the correction that the two arguments are independent)* | `P-TP` totality | **For EVERY cell of the row's `4 × 4` cross product (`4` attribute-name shapes × `4` resolved shapes): the returned record's `name` follows the NAME rule and its `value`/`removal` follow the RESOLVED rule, INDEPENDENTLY — so a removal with an ECHOED name and a non-removal with a `null` name are both NORMAL, declared returns; every cell's key set is exactly the three declared names; and NOTHING THROWS in any cell.** | **YES** *(the `16`-cell grid is the declared extent, and every cell has its own declared triple)* | `F-3`, `F-4`, `F-5`, `I-3`, `§2.4` items 1/2, `P-TH-12` | `S-TH-WRITE-1` | **`8` attempts** = **`4` name shapes × `4` resolved shapes (`16` cells), reported as `8` DRIVES of `2` cells each — the pairing stated so the term is checkable.** **The `4` name shapes:** **(1)** `'data-x'` · **(2)** `''` · **(3)** omitted · **(4)** a non-string (`42`). **The `4` resolved shapes:** **(a)** `'dark'` · **(b)** `''` · **(c)** `null` · **(d)** a non-string (`42`). **Per attempt assert (for both its cells):** the echoed identity or the declared `null`; the `value`'s identity or exactly `''`; the `removal` boolean; the exact three-name key set; and that nothing threw. **THE TWO CELLS THAT MUST BE PRINTED, because they are the ones a coupled implementation gets wrong: `('' , 'dark')` ⇒ `{name: null, value: 'dark', removal: false}` and `('data-x', '')` ⇒ `{name: 'data-x', value: '', removal: true}`.** |
-| **`P-TH-TP-5`** *(THE REMOVAL CASE IS DATA AND PERFORMS NO CALL — **step 4's correction 3 (c), an explicit row**)* | `P-TP` totality | **On EVERY removal drive of the whole register: (a) NO method is invoked on any argument — no `setAttribute`, no `removeAttribute`, no `classList`, no `setProperty`, no property WRITE on the caller's objects — asserted by driving each removal shape against a RECORDING PROXY/fake whose every `get`/`set`/`apply`/`has`/`deleteProperty`/`ownKeys` trap is counted; (b) the removal is represented ONLY by the `removal: true` member, never by a call, a throw, a sentinel name or an absent member; (c) the caller's own objects are byte-identical before and after; and (d) the module takes NO element parameter through which a call could be made.** | **YES** *(a closed drive set: every removal shape × the recording instrument, plus the two positive controls)* | `M-5`, `F-3`, `I-6`, `§2.4` item 3, `P-TH-9`, `H-r7` | `S-TH-NOCALL-1` | **`6` attempts** = **`3` removal shapes × `2` instrument configurations, PLUS nothing else.** **The `3` removal shapes:** **(1)** `resolved = ''` · **(2)** `resolved = null` · **(3)** `resolved` omitted. **The `2` instrument configurations:** **(i)** every argument (name AND resolved) is a recording `Proxy` whose traps count, **and** a fake element-shaped object is ALSO in scope (never passed to the module) with its own write counters; **(ii)** the same drive with the argument objects frozen. **Per attempt assert:** every trap count is `0`; the fake element's write counters are `0`; the returned record's exact three members; and that nothing threw. **THE TWO POSITIVE CONTROLS, named so the instrument is proven live: the DRIVER itself calls one method on the fake (count `1`) and writes one property on a proxy (count `1`); a run reading `0` for those FAILS this row as an INSTRUMENT failure.** |
+| **`P-TH-TP-5`** *(THE REMOVAL CASE IS DATA AND PERFORMS NO CALL — **step 4's correction 3 (c), an explicit row**)* | `P-TP` totality | **On EVERY removal drive of the whole register: (a) NO method is invoked on any argument — no `setAttribute`, no `removeAttribute`, no `classList`, no `setProperty`, no property WRITE on the caller's objects — asserted by driving each removal shape against a RECORDING PROXY/fake whose every `get`/`set`/`apply`/`has`/`deleteProperty`/`ownKeys` trap is counted; (b) the removal is represented ONLY by the `removal: true` member, never by a call, a throw, a sentinel name or an absent member; (c) the caller's own objects are byte-identical before and after; and (d) the module takes NO element parameter through which a call could be made.** | **YES — `(bounded)`** *(**`F4`'s marking, ADDED by the `2026-09-27` amendment, `§0A` note 8 item 2: the property text says "EVERY removal drive of the whole register" while the table drives `3` shapes × `2` instruments, so this contract's own rule owes the marking and the universal is NOT proven** — a closed drive set: every removal shape × the recording instrument, plus the two positive controls)* | `M-5`, `F-3`, `I-6`, `§2.4` item 3, `P-TH-9`, `H-r7` | `S-TH-NOCALL-1` | **`6` attempts** = **`3` removal shapes × `2` instrument configurations, PLUS nothing else.** **The `3` removal shapes:** **(1)** `resolved = ''` · **(2)** `resolved = null` · **(3)** `resolved` omitted. **The `2` instrument configurations:** **(i)** every argument (name AND resolved) is a recording `Proxy` whose traps count, **and** a fake element-shaped object is ALSO in scope (never passed to the module) with its own write counters; **(ii)** the same drive with the argument objects frozen. **Per attempt assert:** every trap count is `0`; the fake element's write counters are `0`; the returned record's exact three members; and that nothing threw. **THE TWO POSITIVE CONTROLS, named so the instrument is proven live: the DRIVER itself calls one method on the fake (count `1`) and writes one property on a proxy (count `1`); a run reading `0` for those FAILS this row as an INSTRUMENT failure.** **THE MARKING IS A COUNT OF ROWS AND MOVES NO TERM: this row's term stays `6`** (`§0A` note 8 item 2). |
 | **`P-TH-TP-6`** *(THE COMPOSITION REACHABILITY ROW — both entry points reachable and returning their declared shapes in ONE pass-through composition)* | `P-TP` totality | **In ONE composition — `applyThemeDeclaration(name, resolveTheme(setting, env).setting)` — for EVERY one of the row's `6` composed shapes: both entry points are reachable from the module's imported namespace BY NAME; each returns its declared record; the composed `value` is the resolver's own `setting` member BY IDENTITY; the composed removal follows the resolved rule; NO state crosses the two calls (so the applier cannot depend on the resolver having run); and NOTHING THROWS.** | **YES** *(a fixed `6`-shape composed table, every shape with its own declared triple)* | `M-7`, `F-5`, `I-3`, `§2.1` item 1, `§3.4 R-5` | `S-TH-COMPOSE-1` | **`3` attempts** = **`3` composed shapes, each driven TWICE — once as the chained composition and once with the applier called FIRST on a literal token (`2` drives per attempt).** **The `3` composed shapes:** **(1)** `('data-x', resolveTheme('dark', {prefersDark: true}).setting)` · **(2)** `('data-x', resolveTheme('', {}).setting)` (the composed REMOVAL) · **(3)** `('', resolveTheme(42, {prefersDark: 1}).setting)` (both rules degraded at once). **Per attempt assert:** both records' key sets and member types; the composed `value`'s identity with the resolver's `setting`; the `removal` boolean; the `name` rule's independence; **and the ORDER-INDEPENDENCE half: the applier's result for the same `(name, resolved)` pair is identical whether or not the resolver was called first — a module with cross-call state FAILS here.** |
 
 #### 5.5.2 The register's honesty block — what is NOT proven, and the checks this filing RAN
@@ -1359,7 +1443,10 @@ GENERATOR.** **EACH ROW'S OWN CELL NAMES ITS ID, THE IDS ARE DISTINCT, AND NO RO
    and this register carries FIVE: `P-TH-IM-1` · `P-TH-TP-1` · `P-TH-TP-2` · `P-TH-TP-3` · `P-TH-TP-4`** — `5` of
    the `12` rows (`5 + 7 = 12`, so the count is checkable rather than asserted). **THE OTHER SEVEN quantify over
    closed named lists, fixed grids or closed drive sets.** **A row marked `(bounded)` IS NOT A PROOF of the
-   unbounded universal it states, and no reader may read it as one.**
+   unbounded universal it states, and no reader may read it as one.** **⟶ POST-ANNOTATION (`2026-09-27`, `§0A` note 8
+   item 2; the as-filed `5`-row set above is KEPT VISIBLE): `F4`'s marking of `P-TH-TP-5` is ADDED, so the live set is
+   SIX rows — `P-TH-IM-1` · `P-TH-TP-1` · `P-TH-TP-2` · `P-TH-TP-3` · `P-TH-TP-4` · `P-TH-TP-5` — and **`6 + 6 = 12`**.
+   **THE MARKING IS A COUNT OF ROWS: IT MOVES NO TERM, and `P-TH-TP-5`'s term stays `6`.**
 3. **THE DECLARED-VERSUS-DISTINCT LEDGER, printed because the DONE row must reconcile both** (`§5.3` item 11):
 
    | Row | Declared term | The honest DISTINCT-drive figure | What the difference is |
@@ -1375,7 +1462,7 @@ GENERATOR.** **EACH ROW'S OWN CELL NAMES ITS ID, THE IDS ARE DISTINCT, AND NO RO
    | `P-TH-IM-3` | `10` | `10` | none |
    | `P-TH-IM-4` | `8` | `8` | none |
    | `P-TH-TP-2` | `12` | `12` | none |
-   | `P-TH-TP-3` | `10` | `10` | none |
+   | `P-TH-TP-3` | `11` | `11` | none — **the `NG-2` inherited-`env` member is a FULL drive, so the declared term and the distinct figure BOTH move `10 → 11`** (`2026-09-27` amendment, `§0A` note 8 item 3; the as-filed pair was `10`/`10`) |
    | **THE FIVE ROWS ABOVE — `P-TH-IM-1` · `P-TH-IM-3` · `P-TH-IM-4` · `P-TH-TP-2` · `P-TH-TP-3` — PLUS `P-TH-SM-1` (already carried above at `6`/`6`) ARE THE SIX ROWS THE AS-FILED FORM OF THIS LEDGER'S LAST ROW MISLABELLED `"the other five rows"`** (`2026-09-27` amendment, `§0A` note 7 item 3) — ***THE AS-WRITTEN FORM, KEPT VISIBLE: "*(the other five rows)* | — | equal to their terms | no collapsing"*** — **the count was SIX, and the six rows are `P-TH-IM-1`, `P-TH-IM-3`, `P-TH-IM-4`, `P-TH-SM-1`, `P-TH-TP-2` and `P-TH-TP-3`, each with a distinct figure equal to its term.** **THIS IS A COUNT AND A NAMING CORRECTION ONLY: NO TERM, NO ROW ID, NO STRATEGY ID, NO SEED AND NO CAP MOVES.** | — | — |
    **THE LEDGER'S OWN TWO ADDITIONS, STATED ONCE SO THE FIGURES RECONCILE** (`2026-09-27` amendment, `§0A` note 7
    items 1/2): **`P-TH-TP-5` was OMITTED from this ledger as filed although `§5.5.1` declares its term as `6` — it is
@@ -1387,6 +1474,18 @@ GENERATOR.** **EACH ROW'S OWN CELL NAMES ITS ID, THE IDS ARE DISTINCT, AND NO RO
    DECLARED TOTAL.** **The caps compare against the DECLARED figures** (`102 ≤ 400`; largest row `12 ≤ 100`) —
    **and the two figures, each with its own terms and its own sum, are printed at `§5.5.3` so a DONE row
    reconciling DECLARED versus DISTINCT has an authority for BOTH.**
+   **⟶ POST-ANNOTATION (`2026-09-27`, `§0A` note 8 items 3/4; the paragraph immediately above, KEPT VISIBLE, is the
+   AS-FILED form and is STALE ON THE TWO FIGURES IT CARRIES): the `NG-2` re-grain is TAKEN, so `TP-3`'s pair is
+   `11`/`11` and the twelve DISTINCT figures are `12` · `9` · `10` · `8` · `6` · `3` · `12` · `12` · **`11`** · `8` ·
+   `6` · `3`, whose own sum is **`100`** (`12 + 9 + 10 + 8 + 6 + 3 + 12 + 12 + 11 + 8 + 6 + 3 = 100`); and the caps
+   compare against the DECLARED figure **`103`** (`103 ≤ 400`; largest row `12 ≤ 100`).** **AND `F7`'s CORRECTION,
+   RECORDED AS A TEXT-OF-METHOD NOTE AND NOT AS A CONTRACT CHANGE (`§0A` note 8 item 4): THIS ITEM'S LAST LEDGER ROW
+   IS TITLED *"THE FIVE ROWS ABOVE … PLUS `P-TH-SM-1` … ARE THE SIX ROWS THE AS-FILED FORM … MISLABELLED `"the other
+   five rows"`"* — and **the SIX that title counts are the rows whose distinct figure EQUALS its term**, NOT rows that
+   DIFFER.** **THE LEDGER EXPECTS **ONE** DIFFERING ROW — `P-TH-IM-2`'s `12 → 9` — and the title's own `"the six rows
+   whose distinct figure DIFFERS"` READING was the AS-WRITTEN Wording this annotation CORRECTS to the ledger's own
+   reading, kept visible verbatim: *"the six rows whose distinct figure differs"*.** **NO FIGURE, TERM, ROW ID,
+   STRATEGY ID, SEED OR CAP MOVES BY THIS CORRECTION.**
 4. **THE SHAPES DELIBERATELY EXCLUDED FROM EVERY POOL — named as a STATED BOUNDARY rather than left implied:**
    **(a)** a **lone-surrogate string** as a `setting` (it would exercise no rule this contract pins, and its only
    observable is identity pass-through, which shape `(1)`–`(4)` already assert) · **(b)** a **`Symbol.toPrimitive`
@@ -1423,11 +1522,19 @@ GENERATOR.** **EACH ROW'S OWN CELL NAMES ITS ID, THE IDS ARE DISTINCT, AND NO RO
    carries them; **(3)** the "nothing threw" claim is asserted on every attempt of every row; **(4)** the
    no-module-level-mutable-binding reading is a **static companion assertion** reported beside the terms; and
    **(5)** the no-element-parameter reading is a **static** claim (`R-12`'s sibling) reported beside them.
-10. **THE ONE COVERAGE GAP THIS REGISTER RECORDS RATHER THAN HIDES:** **the `env` member's OWN-vs-INHERITED
-    distinction is driven in `P-TH-IM-2` shape `(4)` (an own member on a null-prototype record) but NOT as one
+10. **THE ONE COVERAGE GAP THIS REGISTER RECORDED RATHER THAN HID — NOW DRIVEN, SO THE OBLIGATION IS DISCHARGED
+    AND ITS AS-FILED FORM IS KEPT VISIBLE:** **the `env` member's OWN-vs-INHERITED distinction is driven in
+    `P-TH-IM-2` shape `(4)` (an own member on a null-prototype record) but NOT as one
     `P-TH-TP-3` hostile member** — **so an environment record that INHERITS `prefersDark: true` is a RECORDED
     OBLIGATION with a named owner (the TestWriter), not a silent absence.** **Its pre-committed re-grain, if a
-    later pass drives it: `P-TH-TP-3` `10 → 11`, total `102 → 103`, `TP 51 → 52`.**
+    later pass drives it: `P-TH-TP-3` `10 → 11`, total `102 → 103`, `TP 51 → 52`.** **⟶ POST-ANNOTATION
+    (`2026-09-27`, `§0A` note 8 item 3): THE OBLIGATION IS DISCHARGED — the TestWriter authored the inherited-`env`
+    drive (`Object.create({prefersDark: true})`) as `P-TH-TP-3`'s `11`th hostile member (and into `F-2`'s pool), so
+    the re-grain IS TAKEN exactly as pre-committed: `P-TH-TP-3` `10 → 11`, DECLARED total `102 → 103`, DISTINCT total
+    `99 → 100`, `TP` family subtotal `51 → 52` (both figures), and the `(bounded)` marked set of this item's sibling
+    `5 → 6` ROWS — every figure printed with its own terms, chain, subtotals and cap re-check at `§5.5.3`, and NO
+    TERM OTHER THAN `P-TH-TP-3`'S MOVED.** **THE GAP IS CLOSED; THE OWN-vs-INHERITED RULE ITSELF IS PINNED AT `§2.3`
+    item 2 (rows `(12)`/`(13)`) and its `F1` half is dispositioned at `§3b`'s `AMEND-1`.**
 
 #### 5.5.3 Attempt arithmetic — STATED SO A READER CAN CHECK IT AGAINST THE TABLES
 
@@ -1437,18 +1544,40 @@ FIGURE EVERY CAP COMPARISON USES, WHILE THE DISTINCT FIGURE `99` IS THE SUM OF T
 `§5.5.2` item 3's ledger reports and is the figure a reconciliation of DECLARED versus DISTINCT uses — the two are
 DIFFERENT FIGURES, each with its own terms and its own sum, and NEITHER substitutes for the other.** **THE AS-FILED
 FORM BELOW PRINTED ONLY THE `102` CHAIN; it is KEPT VISIBLE, and this amendment ADDS the `99` block beside it.**
-**NO TERM, ROW ID, STRATEGY ID, SEED OR CAP MOVES.**
+**NO TERM, ROW ID, STRATEGY ID, SEED OR CAP MOVES.** **⟶ POST-ANNOTATION (`2026-09-27`, `§0A` note 8 item 3: the
+sentences above are the as-written PRE-GRAIN authority and are KEPT VISIBLE): the `NG-2` re-grain is now TAKEN, so the
+LIVE pair this section carries is the DECLARED figure `103` (the sum of the twelve declared row terms — `P-TH-TP-3`'s
+term having moved `10 → 11` — and the figure every cap comparison now uses) and the DISTINCT figure `100` (the sum of
+the twelve distinct-drive figures `§5.5.2` item 3's ledger reports after the same move). EACH is printed below with its
+own terms, its own eleven-step chain, its own family subtotals and its own cap re-check, and the AS-FILED pair
+(`102`/`99`) is printed beside it. NO TERM OTHER THAN `P-TH-TP-3`'S MOVES, and NO ROW ID, STRATEGY ID, SEED OR CAP
+MOVES.**
 
-**THE DECLARED TOTAL, printed WITH its terms — and this is the figure every cap comparison uses:**
+**THE DECLARED TOTAL, printed WITH its terms — and this is the figure every cap comparison uses.** **⟶ POST-ANNOTATION
+(`2026-09-27`, `§0A` note 8 item 3): THE FIGURES PRINTED IN THIS BLOCK ARE THE **AS-FILED** FIGURES (`102`, the chain
+ending `… 99 → 102`, `P-TH-TP-3`'s term `10`), KEPT VISIBLE per annotate-never-rewrite; the LIVE figures, after the
+`NG-2` re-grain, are the block printed immediately below this one: DECLARED `103` with the amended term row.** **NO TERM
+OTHER THAN `P-TH-TP-3`'S MOVES, in either block.**
 
-**`102` = `12` + `12` + `10` + `8` + `6` + `3` + `12` + `12` + `10` + `8` + `6` + `3`**
+**AS FILED — `102` = `12` + `12` + `10` + `8` + `6` + `3` + `12` + `12` + `10` + `8` + `6` + `3`**
 
 **THE DECLARED CHAIN, the twelve terms summed as a chain of eleven steps: `12` → `24` → `34` → `42` → `48` →
 `51` → `63` → `75` → `85` → `93` → `99` → `102`.** **⚠ THE `99` THIS CHAIN PASSES THROUGH AT ITS ELEVENTH STEP IS
 A RUNNING DECLARED SUBTOTAL AND IS **NOT** THE DISTINCT FIGURE `99` OF `§5.5.2` item 3 — the two `99`s are a
 COINCIDENCE OF ARITHMETIC and must never be quoted for one another** (`§0A` note 7 item 1).
 
-| The term | Its row | The enumeration that produces it |
+**⟶ THE LIVE DECLARED TOTAL, AFTER THE `NG-2` RE-GRAIN (`2026-09-27`, `§0A` note 8 item 3) — the figure every cap
+comparison now uses:**
+
+**`103` = `12` + `12` + `10` + `8` + `6` + `3` + `12` + `12` + `11` + `8` + `6` + `3`**
+
+**THE LIVE DECLARED CHAIN: `12` → `24` → `34` → `42` → `48` → `51` → `63` → `75` → `86` → `94` → `100` → `103`**
+— **eleven steps, and the ONLY step that differs from the as-filed chain is the ninth (`75` → `86` rather than `75` →
+`85`, i.e. `P-TH-TP-3`'s `10 → 11`).** **⚠ THE `100` THIS CHAIN PASSES THROUGH AT ITS ELEVENTH STEP IS A RUNNING
+DECLARED SUBTOTAL — the same coincidence class the as-filed note above records for its own two `99`s: it is NOT
+automatically the live DISTINCT figure, which happens to read `100` as well, and neither may be quoted for the other.**
+
+| The term (AS FILED) | Its row | The enumeration that produces it |
 | --- | --- | --- |
 | **`12`** | `P-TH-IM-1` | the `12`-shape setting pool, one drive each |
 | **`12`** | `P-TH-IM-2` | `8` usable env shapes (`8`) **+ `4` further drives** |
@@ -1458,31 +1587,42 @@ COINCIDENCE OF ARITHMETIC and must never be quoted for one another** (`§0A` not
 | **`3`** | `P-TH-SM-2` | `3` repeated-call shapes, each driven five times (the repetitions are ASSERTIONS inside one attempt) |
 | **`12`** | `P-TH-TP-1` | `12` pinned-seed draws × `1` two-entry-point sweep each (the `4` positional drives are ASSERTIONS inside the attempt) |
 | **`12`** | `P-TH-TP-2` | `3` setting shapes × `4` env shapes |
-| **`10`** | `P-TH-TP-3` | the `10` hostile env shapes, one drive each |
+| **`10`** → **`11`** | `P-TH-TP-3` | **AS FILED: the `10` hostile env shapes, one drive each. LIVE (`NG-2`, `§0A` note 8 item 3): `11` — the tenth plus an INHERITED `env` (`Object.create({prefersDark: true})`), one drive each** |
 | **`8`** | `P-TH-TP-4` | `4` name shapes × `4` resolved shapes (`16` cells) **reported as `8` drives of `2` cells each** |
-| **`6`** | `P-TH-TP-5` | `3` removal shapes × `2` instrument configurations |
+| **`6`** | `P-TH-TP-5` | `3` removal shapes × `2` instrument configurations — **now `(bounded)` (`F4`), a ROW marking, term UNMOVED** |
 | **`3`** | `P-TH-TP-6` | `3` composed shapes, each driven twice (`2` drives per attempt) |
 
 **THE TERM-BY-TERM ADDITION, so the total is checkable rather than asserted** *(the order is `§5.5.1`'s row
-order)*: **`12` + `12` = `24`** · **`+ 10` = `34`** · **`+ 8` = `42`** · **`+ 6` = `48`** · **`+ 3` = `51`** ·
+order; **AS FILED**)**: **`12` + `12` = `24`** · **`+ 10` = `34`** · **`+ 8` = `42`** · **`+ 6` = `48`** · **`+ 3` = `51`** ·
 **`+ 12` = `63`** · **`+ 12` = `75`** · **`+ 10` = `85`** · **`+ 8` = `93`** · **`+ 6` = `99`** · **`+ 3` =
 `102`.** **ELEVEN steps, the first term being the chain's own first figure.**
 
-**THE FAMILY SUBTOTALS, stated consistently with that addition:** **`IM` = `12 + 12 + 10 + 8` = `42`** · **`SM` =
-`6 + 3` = `9`** · **`TP` = `12 + 12 + 10 + 8 + 6 + 3` = `51`** — and **`42 + 9 + 51 = `102` = the declared
-total.**
+**THE LIVE TERM-BY-TERM ADDITION (`NG-2`, `§0A` note 8 item 3): `12` + `12` = `24`** · **`+ 10` = `34`** ·
+**`+ 8` = `42`** · **`+ 6` = `48`** · **`+ 3` = `51`** · **`+ 12` = `63`** · **`+ 12` = `75`** · **`+ 11` = `86`** ·
+**`+ 8` = `94`** · **`+ 6` = `100`** · **`+ 3` = `103`.** **ELEVEN steps, the first term being the chain's own
+first figure.**
 
-**CAPS RE-CHECKED AGAINST IT: `102 ≤ 400` (total headroom `298`), largest row `12 ≤ 100` (headroom `88`) — both
-caps HOLD, and neither is close.** **THE CAPS ARE COMPARED AGAINST THE DECLARED FIGURE `102` AND NEVER AGAINST THE
-DISTINCT FIGURE `99`** (`§5.5.2` item 3's own sentence).
+**THE FAMILY SUBTOTALS, stated consistently with that addition.** **AS FILED: `IM` = `12 + 12 + 10 + 8` = `42`** · **`SM` =
+`6 + 3` = `9`** · **`TP` = `12 + 12 + 10 + 8 + 6 + 3` = `51`** — and **`42 + 9 + 51 = `102` = the as-filed declared
+total.** **LIVE: `IM` = `42` (UNMOVED)** · **`SM` = `9` (UNMOVED)** · **`TP` = `12 + 12 + 11 + 8 + 6 + 3` = `52`** — and
+**`42 + 9 + 52 = `103` = the live declared total.**
+
+**CAPS RE-CHECKED AGAINST IT — BOTH FIGURES, AS THE INSTRUCTION OWES (`§0A` note 8 item 3).** **AS FILED: `102 ≤ 400`
+(total headroom `298`), largest row `12 ≤ 100` (headroom `88`).** **LIVE (the figures the caps are compared against
+NOW): `103 ≤ 400`** (total headroom `297`)**, largest row `12 ≤ 100`** (headroom `88`) — **both caps HOLD under either
+figure, and neither is close.** **THE CAPS ARE COMPARED AGAINST THE DECLARED FIGURE — `103` live, `102` as filed — AND
+NEVER AGAINST THE DISTINCT FIGURE `100` (`99` as filed)** (`§5.5.2` item 3's own sentence).
 
 **⟶ THE DISTINCT TOTAL, PRINTED WITH ITS OWN TERMS AND ITS OWN CHAIN — THE SECOND FIGURE, ADDED BY THE `2026-09-27`
 AMENDMENT (`§0A` note 7 item 1; the source of every figure is `§5.5.2` item 3's DECLARED-VERSUS-DISTINCT LEDGER,
-which is the authority for the distinct half):**
+which is the authority for the distinct half).** **THE FIGURES PRINTED IN THIS BLOCK ARE THE **AS-FILED** FIGURES
+(`99`, the chain ending `… 96 → 99`, `P-TH-TP-3`'s distinct `10`), KEPT VISIBLE per annotate-never-rewrite; the LIVE
+distinct figure after the `NG-2` re-grain is **`100`**, and its terms, chain, subtotals and cap relation are printed
+in the block immediately below this one.**
 
-**`99` = `12` + `9` + `10` + `8` + `6` + `3` + `12` + `12` + `10` + `8` + `6` + `3`**
+**AS FILED — `99` = `12` + `9` + `10` + `8` + `6` + `3` + `12` + `12` + `10` + `8` + `6` + `3`**
 
-| The DISTINCT term | Its row | Where the difference from the declared term comes from |
+| The DISTINCT term (AS FILED) | Its row | Where the difference from the declared term comes from |
 | --- | --- | --- |
 | **`12`** | `P-TH-IM-1` | none (`§5.5.2` item 3: no collapsing) |
 | **`9`** | `P-TH-IM-2` | the `4` further drives share the `8` shapes' objects |
@@ -1492,40 +1632,61 @@ which is the authority for the distinct half):**
 | **`3`** | `P-TH-SM-2` | the five repetitions are assertions inside one attempt, not drives |
 | **`12`** | `P-TH-TP-1` | the four POSITIONAL drives are assertions inside one attempt |
 | **`12`** | `P-TH-TP-2` | none |
-| **`10`** | `P-TH-TP-3` | none |
+| **`10`** → **`11`** | `P-TH-TP-3` | **AS FILED: none. LIVE (`NG-2`, `§0A` note 8 item 3): the inherited-`env` member is a FULL drive, so the distinct figure moves `10 → 11` — and it still EQUALS its own term (`11`/`11`), so it is NOT a differing row** |
 | **`8`** | `P-TH-TP-4` | the `16` cells are paired into `8` drives |
 | **`6`** | `P-TH-TP-5` | none |
 | **`3`** | `P-TH-TP-6` | the second drive is inside the attempt |
 
 **THE DISTINCT CHAIN, the twelve distinct terms summed as a chain of eleven steps: `12` → `21` → `31` → `39` → `45` →
-`48` → `60` → `72` → `82` → `90` → `96` → `99`.**
+`48` → `60` → `72` → `82` → `90` → `96` → `99`.** **(AS FILED.)**
 
 **THE DISTINCT TERM-BY-TERM ADDITION, so THAT total is checkable rather than asserted** *(the order is `§5.5.1`'s row
-order)*: **`12` + `9` = `21`** · **`+ 10` = `31`** · **`+ 8` = `39`** · **`+ 6` = `45`** · **`+ 3` = `48`** ·
+order; **AS FILED**)**: **`12` + `9` = `21`** · **`+ 10` = `31`** · **`+ 8` = `39`** · **`+ 6` = `45`** · **`+ 3` = `48`** ·
 **`+ 12` = `60`** · **`+ 12` = `72`** · **`+ 10` = `82`** · **`+ 8` = `90`** · **`+ 6` = `96`** · **`+ 3` = `99`.**
 **ELEVEN steps, the first term being the chain's own first figure.**
 
-**THE TWO FIGURES' RELATION, printed so it is arithmetic rather than prose: `102 − 99 = 3`, and the difference is
-ENTIRELY `P-TH-IM-2`'s `12 → 9` collapse (`−3`) — the as-filed reading `102 − 12 + 9` names the same three attempts,
-and every other row's distinct figure equals its term, so `99` and `102` agree on eleven of the twelve terms.**
-**THE DISTINCT FAMILY SUBTOTALS, stated consistently with that addition:** **`IM` = `12 + 9 + 10 + 8` = `39`** ·
-**`SM` = `6 + 3` = `9`** · **`TP` = `12 + 12 + 10 + 8 + 6 + 3` = `51`** — and **`39 + 9 + 51 = `99` = the distinct
-total.** **THE DECLARED FAMILY SUBTOTALS ARE `42` / `9` / `51` (`§5.5.3` above); the DISTINCT ones are `39` / `9` /
-`51`, and the two sets differ ONLY in `IM` — by exactly the `3` attempts `P-TH-IM-2`'s collapse accounts for.**
+**⟶ THE LIVE DISTINCT TOTAL, AFTER THE `NG-2` RE-GRAIN (`2026-09-27`, `§0A` note 8 item 3):**
+
+**`100` = `12` + `9` + `10` + `8` + `6` + `3` + `12` + `12` + `11` + `8` + `6` + `3`**
+
+**THE LIVE DISTINCT CHAIN: `12` → `21` → `31` → `39` → `45` → `48` → `60` → `72` → `83` → `91` → `97` → `100`** —
+**eleven steps, and the ONLY step that differs from the as-filed chain is the ninth (`72` → `83` rather than `72` →
+`82`, i.e. `P-TH-TP-3`'s distinct `10 → 11`).** **⚠ THE `100` THIS CHAIN ENDS ON AND THE `100` THE LIVE DECLARED
+CHAIN PASSES THROUGH AT ITS ELEVENTH STEP ARE THE SAME NUMERAL FOR TWO DIFFERENT FIGURES — a COINCIDENCE OF
+ARITHMETIC of the exact class the as-filed `99`/`99` note records, and neither may be quoted for the other**
+
+**THE LIVE DISTINCT TERM-BY-TERM ADDITION: `12` + `9` = `21`** · **`+ 10` = `31`** · **`+ 8` = `39`** ·
+**`+ 6` = `45`** · **`+ 3` = `48`** · **`+ 12` = `60`** · **`+ 12` = `72`** · **`+ 11` = `83`** · **`+ 8` = `91`** ·
+**`+ 6` = `97`** · **`+ 3` = `100`.** **ELEVEN steps, the first term being the chain's own first figure.**
+
+**THE TWO FIGURES' RELATION, printed so it is arithmetic rather than prose — BOTH READINGS, AS THE AMENDMENT OWES:
+AS FILED, `102 − 99 = 3`; LIVE, `103 − 100 = 3`, and in EITHER reading the difference is ENTIRELY `P-TH-IM-2`'s
+`12 → 9` collapse (`−3`) — the as-filed reading `102 − 12 + 9` names the same three attempts, and now ALL TWELVE rows
+except `P-TH-IM-2` show a distinct figure equal to their term, so `100` and `103` agree on ELEVEN of the twelve terms
+and **THE LIVE LEDGER EXPECTS **ONE** DIFFERING ROW (`P-TH-IM-2`), which is `F7`'s correction, recorded at `§5.5.2`
+item 3.**
+**THE DISTINCT FAMILY SUBTOTALS, stated consistently with that addition — BOTH READINGS: AS FILED, `IM` = `12 + 9 + 10
++ 8` = `39`** · **`SM` = `6 + 3` = `9`** · **`TP` = `12 + 12 + 10 + 8 + 6 + 3` = `51`** — and **`39 + 9 + 51` = `99` =
+the as-filed distinct total.** **LIVE: `IM` = `12 + 9 + 10 + 8` = `39` (UNMOVED)** · **`SM` = `9` (UNMOVED)** · **`TP` =
+`12 + 12 + 11 + 8 + 6 + 3` = `52`** — and **`39 + 9 + 52` = `100` = the live distinct total.** **THE DECLARED FAMILY
+SUBTOTALS ARE `42` / `9` / `51` (as filed) and `42` / `9` / `52` (live, `§5.5.3` above); the DISTINCT ones are
+`39` / `9` / `51` (as filed) and `39` / `9` / `52` (live), and in EITHER reading the two sets differ ONLY in `IM` —
+by exactly the `3` attempts `P-TH-IM-2`'s collapse accounts for.**
 
 **THE DISTINCT FIGURE IS A REPORTED FIGURE AND IS NEVER SUBSTITUTED FOR THE DECLARED TOTAL; and a DONE row that
 prints one of the two WITHOUT its terms, or that prints a total that is not the sum of its own terms, is a review
 finding** (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`; `§5.3` item 11).
 
-**THE `(bounded)` SET: `5` of the `12` rows — `P-TH-IM-1` · `P-TH-TP-1` · `P-TH-TP-2` · `P-TH-TP-3` ·
-`P-TH-TP-4`** (`§5.5.2` item 2).
+**THE `(bounded)` SET: AS FILED, `5` of the `12` rows — `P-TH-IM-1` · `P-TH-TP-1` · `P-TH-TP-2` · `P-TH-TP-3` ·
+`P-TH-TP-4`; LIVE, `6` rows — those five PLUS **`P-TH-TP-5`** (`F4`'s marking, `§0A` note 8 item 2: **a ROW count, and
+its term stays `6`**)** (`§5.5.2` item 2).
 
 **THE ROW/TERM RECONCILIATION, printed so it is checkable:** **the `12` ROWS and their terms are `IM-1` (`12`) ·
 `IM-2` (`12`) · `IM-3` (`10`) · `IM-4` (`8`) · `SM-1` (`6`) · `SM-2` (`3`) · `TP-1` (`12`) · `TP-2` (`12`) ·
-`TP-3` (`10`) · `TP-4` (`8`) · `TP-5` (`6`) · `TP-6` (`3`)** — **`12` rows (`4` `IM` + `2` `SM` + `6` `TP`),
-`12` TERMS (one per row, with NO row carrying a second term), and the DECLARED total is `102` — with the DISTINCT
-total `99` printed beside it, from the same twelve rows' distinct figures, and NO term substituted for another
-(`§0A` note 7 item 1).**
+`TP-3` (`11` LIVE; `10` as filed) · `TP-4` (`8`) · `TP-5` (`6`) · `TP-6` (`3`)** — **`12` rows (`4` `IM` + `2` `SM` + `6`
+`TP`), `12` TERMS (one per row, with NO row carrying a second term), and the DECLARED total is `103` LIVE (`102` as
+filed) — with the DISTINCT total `100` LIVE (`99` as filed) printed beside it, from the same twelve rows' distinct
+figures, and NO term substituted for another** (`§0A` note 8 item 3).**
 
 **THE PINNED SEED AND ITS FORM: `20260927`**, one hand-rolled 32-bit LCG step per draw
 (`stateₙ₊₁ = (stateₙ · 1664525 + 1013904223) mod 2³²`), `index = stateₙ₊₁ mod pool.length` with **`pool.length =
@@ -1615,10 +1776,14 @@ resolution, a rendered control and any OS preference — is REFUSED at filing ti
    identifiers sit outside that scope, and `theme` is this unit's charter word** (`§2.2`(C) row 1). **The
    reconciliation is a derivation with DECLARED EXEMPTIONS and both controls — and a pass reading it either as a
    relaxation of that ban or as a ban on this unit's own name is a review finding.**
-9. **THE REGISTER'S TOTAL IS PRINTED WITH ITS TERMS, AND THE ARITHMETIC IS THE CONTRACT'S OWN.** `102` = its
-   twelve terms, with the chain, the three family subtotals and the `(bounded)` set all printed (`§5.5.3`); **a
-   total that is not the sum of its own terms, or a total quoted without its terms, is a review finding**
-   (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`).
+9. **THE REGISTER'S TOTAL IS PRINTED WITH ITS TERMS, AND THE ARITHMETIC IS THE CONTRACT'S OWN.** **AS FILED: `102` =
+   its twelve terms, with the chain, the three family subtotals and the `(bounded)` set of `5` all printed
+   (`§5.5.3`).** **⟶ (`2026-09-27`, `§0A` note 8 items 2/3; the as-filed sentence above is KEPT VISIBLE and is STALE
+   ON ITS TWO FIGURES ONLY): LIVE, the DECLARED total is `103` and the DISTINCT total is `100`** — from `P-TH-TP-3`'s
+   term `10 → 11` (the `NG-2` re-grain, taken) — **and the `(bounded)` set is `6` ROWS** (from `F4`'s marking of
+   `P-TH-TP-5`, **a count of ROWS and not a term**) — **each printed with its own terms, chain, family subtotals and
+   cap re-check at `§5.5.3`.** **A total that is not the sum of its own terms, or a total quoted without its terms,
+   is a review finding** (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`).
 10. **THE TWO WORKING DEFAULTS ARE DEFAULTS, AND NEITHER IS AN ARCHITECT'S RULING.** `A-1` (the pass-through
     resolved domain) and `A-2` (the NAME of the observable degradation) are carried at `§7a`/`§7a.1` **in the
     `E5-B-3` form**: **default stated, alternative named, blocked clause named, row carried.** **A pass that
@@ -1707,7 +1872,7 @@ or BY ROW NAME, never by line length** — `docs/decisions.md`'s rows are append
 | **`H-r8`** (the handoff record), the **six-prohibition** table | **DISCHARGED BY THIS FILING** — the six-row `§0 Contract-prohibitions` block is `§2.2`(A), **each row naming the test that pins it** | `§0` ruling 15, `§2.2`(A) |
 | **`PROHIBITION-5-IS-AN-ADOPTION-BOUND`** (`docs/decisions.md`, ACTIVE) | **CARRIED** — prohibition 5 is a NON-GOAL row here, and the pinned MCP sets are asserted as **SET claims against the names** | `§0` ruling 6, `§2.2` `P-TH-5`, `§3.3 I-9` |
 | **`GUTTER-CALLER-SEAMS-ARE-THE-FAMILY'S-DOWNSTREAM-CONTRACT`** (`docs/decisions.md`, ACTIVE) | **CARRIED FOR THE FORM, AND THIS UNIT'S SEAM SET IS EMPTY** — **a derivation, stated as one** (`§2.1` item 4) | `§0` ruling 12, `§2.1` item 4, `§8` (this row) |
-| **`PBT-REGISTER-REQUIRED-FOR-CODE-UNITS`**, **`REGISTER-ENTRY-COUNT-IS-NOT-CAPPED-AND-ARCHIVE-IS-THE-TRUTH-MECHANISM`**, **`A DECLARED REGISTER TERM IS A DRIVE COUNT`**, **`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`** (`docs/decisions.md`, ACTIVE) | **DISCHARGED BY THIS FILING** — `§5.5.1` is this unit's register: **`12` typed ROWS carrying `12` TERMS in three families, `102` attempts printed WITH their twelve terms, a chain, three family subtotals, a `(bounded)` set of `5`, one pinned-seed generator (seed `20260927`), caps `≤100`/row · `≤400` total · stop-after-5, the four domains declared by name, and NO `F-` row, NO `§6`/`FS-n` citation as a row, NO new dependency and NO extra leg** | `§5.5`, `§5.5.1`, `§5.5.2`, `§5.5.3`, `§5.3` items 10/11 |
+| **`PBT-REGISTER-REQUIRED-FOR-CODE-UNITS`**, **`REGISTER-ENTRY-COUNT-IS-NOT-CAPPED-AND-ARCHIVE-IS-THE-TRUTH-MECHANISM`**, **`A DECLARED REGISTER TERM IS A DRIVE COUNT`**, **`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`** (`docs/decisions.md`, ACTIVE) | **DISCHARGED BY THIS FILING** — `§5.5.1` is this unit's register: **`12` typed ROWS carrying `12` TERMS in three families, `102` attempts printed WITH their twelve terms, a chain, three family subtotals, a `(bounded)` set of `5`, one pinned-seed generator (seed `20260927`), caps `≤100`/row · `≤400` total · stop-after-5, the four domains declared by name, and NO `F-` row, NO `§6`/`FS-n` citation as a row, NO new dependency and NO extra leg** (**the `102` and the `5` in this cell are the AS-FILED figures — `2026-09-27`, `§0A` note 8: LIVE, the register declares `103` attempts and a `(bounded)` set of `6` ROWS, and only `P-TH-TP-3`'s term moved**) | `§5.5`, `§5.5.1`, `§5.5.2`, `§5.5.3`, `§5.3` items 10/11 |
 | **`DOC-REVIEW-GATE`** / **`BLIND-ALL-GREENS`** (`docs/decisions.md`, ACTIVE) | **CARRIED as obligations this unit's DONE row must cite**: the per-unit documentation review and the blind-greens record are owed after the greens | `§0` ruling 13, `§5.1` rows 4/5, `§5.3` item 8 |
 | **`E5-B-3`'s PRECEDENT** (`docs/decisions.md`; `docs/specs/container-review.md` `§9.5` `G-3`) and **`docs/specs/gutter-ui.md` `§7a.1`** | **CARRIED AS THE FORM** for this filing's two working defaults — *"a RECORDED WORKING DEFAULT … it does NOT gate the filing"* | `§0` ruling 14, `§0A` note 5, `§7a`/`§7a.1` (both items) |
 | **`docs/next-steps.md`'s `## OPEN` row `E8`** | **CARRIED IN SUBSTANCE at filing: its `Spec` cell (`OWED — not filed`), its chain cell (`BLOCKED` while its dependency `U-MENULIB` is `DONE`) and its `Legs` cell are listed as owed (`§7` item 11).** **THIS PASS EDITS NO TRACKER.** | `CURRENT STATE` item 7, `§4.5`, `§7` item 11 |
@@ -1727,6 +1892,7 @@ or BY ROW NAME, never by line length** — `docs/decisions.md`'s rows are append
 | **`docs/pending.md` `§K`** (the RCA's requested harness modifications) | **BACKGROUND ONLY.** Its own header reads *"REQUESTS, NOT LANDED RULINGS"*. **Its vocabulary is NOT used anywhere in this file as though it were in force** | `§5.1` item 11, `§8` (this row) |
 | **`docs/specs/theme.md` (this file)** | **LANDED BY THIS FILING** (`OWED — not filed` → FILED). **The tracker cell is the SUPERVISOR's to flip** — this pass edits no tracker | this file, `§5.1` item 3, `§7` item 11 |
 | **THE `2026-09-27` AMENDMENT — THE RED RUN'S PROVENANCE AND THE FOUR REGISTER/SCAN-EXEMPTION CORRECTIONS** (`tests/theme.test.ts`: `58` rows · `40` failed / `18` passed against the absent module · the register stopped at `P-TH-IM-1` after five consecutive failures, with the eleven un-run rows reported as FAILURES) | **RECORDED — AN ANNOTATE-NEVER-REWRITE AMENDMENT OF THIS FILE ONLY, and NOT a ruling**: it moves **no** term, row id, strategy id, seed, cap, shape, pool member or section number. **Its four fixes are `§5.5.3` (both totals printed with their own terms), `§5.5.2` item 3 (`P-TH-TP-5` added; the six mislabelled rows named), `§3.4 R-1`/`§2.2`'s exemption note (the `typeof`-tag sub-set named), and its two dated method notes (the arity-0 omitted drive; the single-member pool multiplicities)** | `§0A` note 7, `§2.2`'s exemption paragraph, `§3.4 R-1`, `§5.3` item 11, `§5.5.2` item 3, `§5.5.3` |
+| **THE `2026-09-27` AMENDMENT (SECOND OF ITS KIND) — THE GATE-4 CONTRACT-SIDE DISPOSITIONS AND THE `NG-2` RE-GRAIN, TAKEN** (`§3b`'s `F1` · `F4` · `F7` · `F2`; the `NG-2` inherited-`env` drive now authored by the TestWriter) | **RECORDED — AN ANNOTATE-NEVER-REWRITE AMENDMENT OF THIS FILE ONLY, and NOT a ruling. `F1` IS PINNED (the own-member read form: trap-only ⇒ the DECLARED DEGRADATION, a genuine own member ⇒ read, with the `true`-reading module as the FALSIFIER and the landed module already conforming); `F4`'s `(bounded)` MARKING IS ADDED to `P-TH-TP-5` (a count of ROWS: `5 → 6`, and NO term moves); the `NG-2` RE-GRAIN IS TAKEN (`P-TH-TP-3` `10 → 11`, DECLARED total `102 → 103`, DISTINCT total `99 → 100`, `TP` subtotal `51 → 52`, each printed with its own terms, chain, subtotals and cap re-check, with the as-filed figures kept visible); `F7`'s ledger-title correction is recorded (ONE differing row, `P-TH-IM-2`, as-written form visible); and `F2` is recorded as a `[T]`-SIDE obligation the TestWriter owes (the un-passed recorder making the count-`0` assertion structurally zero).** **THE ONLY TERMS THAT MOVE ARE `P-TH-TP-3`'S: no other term, row id, strategy id, seed, cap, shape, pool member or section number moves; no status beyond gate 5 advances; and the seven `F-n` rows stay UNFIXED.** | `§0A` note 8, `CURRENT STATE` items 3/11, `§2.3` item 2 (row `(13)` and the pinning sentence), `§3.2 F-2`, `§3b`'s `AMEND-1`…`AMEND-4`, `§3c` item 6, `§5.3` item 11, `§5.5.1` (`P-TH-TP-3`/`P-TH-TP-5`, the environment domain), `§5.5.2` items 2/3/10, `§5.5.3`, `§7` item 9 |
 | **`docs/specs/theme-greens.md`** | **`OWED` at filing — the gate-5 blind-greens artifact; named in the diff scope so the pass that produces it has an allowed home** | `§5.1` row 4, `§5.3` item 8 |
 
 **Archival-loop check (`AGENTS.md` item 6): this filing archives, moves and repoints NOTHING.** It creates **two new
@@ -1735,6 +1901,15 @@ citation is repointed.** **Row `E8`'s `Spec` cell therefore still reads `OWED �
 reconciliation pass flips it** — recorded here so the staleness is **attributable rather than silent**. **This pass
 ran no test, no leg and no trio, edited exactly two files, and made no commit** (`RCA-8`: **the new files are
 untracked and must be committed by the supervisor**).
+
+**⟶ THE SECOND AMENDMENT'S OWN ARCHIVAL-LOOP LINE (`2026-09-27`, `§0A` note 8): it EDITS THIS FILE AND NOTHING ELSE**
+— **no tracker row, no sibling spec, no `*-greens.md` and no `src/**` or `tests/**` byte; it archives, moves and
+repoints NOTHING** (there is nothing to repoint: **no section number, no row id and no citation target moved**), **and
+it runs no leg, no suite and no register row.** **It RE-MEASURES one thing and owns it: the landed
+`src/shared/theme.ts` reads the env member through `Object.getOwnPropertyDescriptor`, so `F1`'s pin is satisfied by the
+module as landed and NO module fix is owed** — **that reading is attributed at `§2.3` item 2's pinning sentence.**
+**The commit that carries this amendment is the supervisor's pass** (`RCA-8(a)`/`(d)`): **an append, never a whole-file
+rewrite — every pre-existing byte named in this file's own annotations was verified present after the edit.**
 
 **File-end note (placed here so an appended findings block extends the file WITHOUT renumbering
 `§6`/`§7`/`§8`).** **THE UNIT'S OWN RECORD IS `§3b` — at filing it is EMPTY BY CONSTRUCTION, with its vocabulary
@@ -1753,8 +1928,12 @@ as one.**
 
 **The pass's shape, stated so it is not improvised: READ-ONLY** (it changes no `tests/**` and no `src/**`), it
 **must also perform the gate-11 read-only PBT audit of `§5.5.1`'s executed tables** — the per-row attempts, the
-strategy ids, the `102` total against its twelve terms, the stop-after-5 rule, the pinned seed and its
-one-step-per-draw form (`pool.length = 12`), and the `(bounded)` set of `5` — **and it must RE-RUN the
+strategy ids, the `103` total against its twelve terms, the stop-after-5 rule, the pinned seed and its
+one-step-per-draw form (`pool.length = 12`), and the `(bounded)` set of `6` ROWS** *(**`2026-09-27`, `§0A` note 8: the
+figures this pass must READ are the LIVE ones — `103` declared and the six marked rows; the as-filed `102` and the
+as-filed five-row set it read at gate 4 are STALE ON THE ARITHMETIC ONLY, so an audit reading `102`/`5` against the
+live tables is itself the finding. `P-TH-TP-3`'s cell now carries the `11`th hostile member and `P-TH-TP-5` carries
+its `(bounded)` marking.)* — **and it must RE-RUN the
 pool-versus-boundary check against the LANDED tables** (`§5.5.2` item 5). **Its findings are recorded in `§3b` and a
 HOST finding is fixed here with regression rows — never in `docs/defects.md`, because a host finding is this repo's.**
 **A genuine `provident-ssr` package defect would go to `docs/defects.md` + `docs/HANDOFF.md`, and the package is
@@ -1785,7 +1964,12 @@ its owner. **The as-filed status of every seed below is `OWED`, and `OWED` is de
 | **`A-11`** | **THE STORE/PERSISTENCE PROBE:** is any store, cache, memo, module-level binding, file write or persistence channel added — **including a "remember the last setting" convenience, which `A-d6` makes a NEW GATE?** | static |
 | **`A-12`** | **THE FABRICATED-EDGE PROBE:** does any pass assert an import or composition edge between this unit and **any** sibling **or between this unit and the `F1` control** — **including reading the `resolve`/`token` overloads (`§2.2`(C) row 3) as shared dependencies, or reading `F1`'s blocked-on ordering as a dependency edge?** | static |
 | **`A-13`** | **THE `[U]`/`[D]` PROBE:** does any pass offer a `[U]` row for an applied attribute, a stylesheet, a rendered control or an OS preference; claim a `[D]` row; move an applied row to the `ui` leg (silently or not); report gate 6 as **`waived`** rather than **`STRUCTURAL` with its reason stated**; or omit the `§7.1` `DOES NOT TRIGGER` decision? | the DONE row + `§3.4 R-7`/`R-9` |
-| **`A-14`** | **THE REGISTER AUDIT (gate 11's read-only PBT audit):** do the executed tables match `§5.5.1`'s **per-row attempts, terms, strategy ids and the declared total `102` = `12 + 12 + 10 + 8 + 6 + 3 + 12 + 12 + 10 + 8 + 6 + 3`**? **In particular: is `P-TH-IM-3`'s and `P-TH-IM-4`'s separate-row claim present (step 4's correction 1), does `P-TH-IM-2` avoid asserting the same property as `P-TH-TP-3` (correction 2), and is `P-TH-TP-5`'s no-call row present WITH its two live-instrument controls (correction 3)?** Is the **stop-after-5** rule honoured, and were the **un-run rows REPORTED as failures**? Is the **pinned seed `20260927`** and the one-step-per-draw LCG form (`pool.length = 12`) what the test file actually contains? **AND: is every pool/table member still consistent with its row's declared boundary text** — `§5.5.2` item 5's check re-run against the LANDED tables? **AND: does the audit read the `(bounded)` set correctly — `5` marked of `12` ROWS?** **Any mismatch is a SPEC FINDING.** | `[T]` + the test file |
+| **`A-14`** | **THE REGISTER AUDIT (gate 11's read-only PBT audit):** do the executed tables match `§5.5.1`'s **per-row attempts, terms, strategy ids and the declared total `102` = `12 + 12 + 10 + 8 + 6 + 3 + 12 + 12 + 10 + 8 + 6 + 3`**? **In particular: is `P-TH-IM-3`'s and `P-TH-IM-4`'s separate-row claim present (step 4's correction 1), does `P-TH-IM-2` avoid asserting the same property as `P-TH-TP-3` (correction 2), and is `P-TH-TP-5`'s no-call row present WITH its two live-instrument controls (correction 3)?** Is the **stop-after-5** rule honoured, and were the **un-run rows REPORTED as failures**? Is the **pinned seed `20260927`** and the one-step-per-draw LCG form (`pool.length = 12`) what the test file actually contains? **AND: is every pool/table member still consistent with its row's declared boundary text** — `§5.5.2` item 5's check re-run against the LANDED tables? **AND: does the audit read the `(bounded)` set correctly — `5` marked of `12` ROWS?** **Any mismatch is a SPEC FINDING.** **⟶ POST-ANNOTATION (`2026-09-27`, `§0A` note 8): the totals this probe reads are
+the LIVE ones — DECLARED `103` = `12 + 12 + 10 + 8 + 6 + 3 + 12 + 12 + 11 + 8 + 6 + 3`, with the distinct
+sibling `100`, `P-TH-TP-3`'s term being `11` (the inherited-`env` member, the `NG-2` re-grain), and the `(bounded)`
+set reading `6` marked of `12` ROWS (those five plus `P-TH-TP-5`, `F4`'s marking).** **A mismatch against the AS-FILED
+figures quoted in this seed's own text above is NOT a finding: the as-filed `102`, the as-filed `10`-term `P-TH-TP-3`
+and the as-filed `5`-row marked set are the PRE-GRAIN state, kept visible at `§5.5.3` and `§5.5.2` items 2/3.** | `[T]` + the test file |
 | **`A-15`** | **THE LAYER-HONESTY PROBE:** does the DONE row (or any pass's prose) claim **applied-attribute, stylesheet, dark-mode, rendered-control or OS-preference** evidence from this unit's `[T]` green — and does it state explicitly that **the module is imported by no `src/**` file** and therefore proves **the contract holds for a caller, not that the app or any OS behaves differently**? | the DONE row |
 | **`A-16`** | **THE `F1`-BOUNDARY PROBE:** does any pass read this unit as delivering the AUTHORED control, a rendered `select`, a dispatch, a persisted preference or an MCP-visible surface — **or read the demo envelope's absence from the diff as a defect rather than as the ruling's own requirement that this unit be readable with the demo deleted?** | static + the DONE row |
 | **`A-17`** | **THE HONESTY-BLOCK PROBE:** does `§5.5.2` name the register's ONE coverage gap (the INHERITED `prefersDark` case) as an OBLIGATION rather than a silent absence, does it name the three deliberately-excluded shapes, and does the DONE row carry the gap as `OWED` rather than covered? | static + the DONE row |
@@ -1823,24 +2007,37 @@ OWN READING, quoted; it is not a measurement taken by the pass that lands this b
 | **`F5`** | **`OWED — TEST-SIDE` (LOW)** | **`P-TH-TP-5` clause (c)'s BEFORE/AFTER BYTE-IDENTITY is asserted by TRAP COUNTS ONLY** — **no snapshot exists**. | A **TestWriter red-first repair** (a caller-object snapshot; carried as `NG-2` below) |
 | **`F6`** | **`OWED — TEST-SIDE` (MED)** | **`P-TH-TP-6`'s *"applier called FIRST on a literal token"* drive RECOMPUTES THE SAME CALL AS DRIVE 1**, so a module with **cross-call state PASSES** and **order-independence is UNFALSIFIABLE**. | A **TestWriter red-first repair** (action (2)) |
 | **`F7`** | **`OWED — TEST-SIDE` (LOW)** | **`§5.5.2` item 3's ledger title says *"the six rows whose distinct figure DIFFERS"* while its ledger expects ONE differing row** — **the spec's six are the rows whose figure EQUALS the term.** | A **TestWriter-visible text repair at `§5.5.2` item 3** (action (2); the title is annotated, never silently rewritten) |
+| **`AMEND-1`** | **`CONTRACT-AMENDED` — `F1`, PINNED (`2026-09-27`, `§0A` note 8 item 1)** | **THE `env` MEMBER-READ FORM IS THE OWN-MEMBER FORM:** **an object whose traps expose no own `prefersDark` member reads the DECLARED DEGRADATION (`false`, `source: 'degraded-env'`), and a container carrying a genuine own member (`Object.assign([], {prefersDark: true})`, a `Map` with an own member) reads THAT member.** **FALSIFIER: a module that reads a trap-only member as `true` must FAIL.** **THE LANDED MODULE ALREADY CONFORMS (`src/shared/theme.ts` reads `Object.getOwnPropertyDescriptor`), SO NO MODULE FIX IS OWED.** | **LANDED: `§2.3` item 2's new row `(13)` and the pinning sentence beside that table; `F-2`'s pool; `§5.5.1`'s environment domain** |
+| **`AMEND-2`** | **`CONTRACT-AMENDED` — `F4`, MARKED (`2026-09-27`, `§0A` note 8 item 2)** | **`P-TH-TP-5` carries its `(bounded)` marking**, because its property text says *"EVERY removal drive of the whole register"* while its table drives `3` shapes × `2` instruments. **THE MARKING IS A COUNT OF ROWS, NOT A TERM: the marked set moves `5 → 6` rows (`5 + 7 = 12` → `6 + 6 = 12`) and `P-TH-TP-5`'s term stays `6`.** | **LANDED: `§5.5.1`'s `P-TH-TP-5` cell, `§5.5.2` item 2, `§5.5.3`'s `(bounded)` set, `§7` item 9** |
+| **`AMEND-3`** | **`CONTRACT-AMENDED` — THE `NG-2` RE-GRAIN, TAKEN (`2026-09-27`, `§0A` note 8 item 3)** | **`P-TH-TP-3`'s term `10 → 11`** (the `11`th hostile member is an INHERITED `env`, `Object.create({prefersDark: true})`), **so the DECLARED total moves `102 → 103`, the DISTINCT total `99 → 100` and the `TP` family subtotal `51 → 52` (both figures)** — **printed with each figure's own terms, chain, subtotals and cap re-check, with the as-filed figures kept visible. THE ONLY TERMS THAT MOVE ARE `P-TH-TP-3`'S.** | **LANDED: `§5.5.1` `P-TH-TP-3`, `§5.5.2` items 2/3/10, `§5.5.3`, `§3.2 F-2`, `§5.3` item 11, `§7` item 9, `CURRENT STATE` items 3/11** |
+| **`AMEND-4`** | **`OWED — TEST-SIDE` — `F2`, CARRIED AS AN OBLIGATION (`2026-09-27`, `§0A` note 8 item 5; `F7`'s text repair is carried with it)** | **`P-TH-IM-1`/`P-TH-IM-3`'s declared *"invocation count (`0`)"* assertion is STRUCTURALLY ZERO because the recorder (`hookRecorder()`) is NEVER PASSED to the module — the real check sits OUTSIDE the declared term** — **and `§5.5.2` item 3's ledger title is corrected to the ledger's own reading (ONE differing row: `P-TH-IM-2`'s `12 → 9`).** **THIS IS A `[T]`-SIDE OBLIGATION THE TESTWRITER OWES: NO CONTRACT TERM, ROW, FIGURE OR SHAPE MOVES FOR IT.** | A **TestWriter red-first repair** (the pass's action (2)) |
 
 **WHAT THE SAME PASS CONFIRMED, RECORDED SO IT IS NOT RE-DERIVED** (its own readings): **the ARITHMETIC independently
 — the twelve terms sum `102`, the distinct figures sum `99`, both chains are consistent, the caps are compared
 against the DECLARED figure, `5` of `12` rows carry `(bounded)`, and the seed `20260927` takes one step per draw**;
+*(**`2026-09-27`, `§0A` note 8: those four figures are GATE 4's OWN AS-FILED READINGS and are STALE ON THE ARITHMETIC
+ONLY — after the `NG-2` re-grain the live readings are the twelve terms summing `103`, the distinct figures summing
+`100`, the same two caps holding against `103`, `6` of `12` rows carrying `(bounded)`, and the seed form UNMOVED. The
+pass's CONFIRMATIONS below are unaffected — in particular the own-descriptor read is the `F1` pin's own mechanism.)*
 **that A WRITE IS STRUCTURALLY IMPOSSIBLE — the module invokes no method on any argument and the applier takes no
 element**; **that NO IMPORT BYTE EXISTS**; **that EVERY `env` READ SITS INSIDE A `try`**; and **that the only global
 touches are OWN-DESCRIPTOR READS** — **with ONE recorded limit: a patched `Object.keys` would silently degrade every
 `env` read, ruled `NOT-A-DEFECT` under `§2.5`.** **`PACKAGE DEFECTS: NONE`** (as `§7` item 2 expects).
 
 **THE PASS'S NEGATIVE-GENERATOR TASK LIST, CARRIED BECAUSE IT IS OWED — `NG-1`…`NG-3`, and `NG-2` CARRIES A
-PRE-COMMITTED RE-GRAIN THAT IS *NOT TAKEN*:**
+PRE-COMMITTED RE-GRAIN THAT IS *NOT TAKEN*:** *(**`2026-09-27`, `§0A` note 8 item 3: read this heading by its own
+POST-ANNOTATION below — `NG-2`'s re-grain IS NOW TAKEN, and the heading's *"NOT TAKEN"* is the PRE-GRAIN state kept
+visible.)*
 - **`NG-1`** — the **diverging `Proxy`** of `F1` and **a CONTAINER `env`** (`Object.assign([], {prefersDark: true})`,
   and a `Map` likewise) **into the `env` rows**.
 - **`NG-2`** — **an INHERITED `env`** (`Object.create({prefersDark: true})`) **into `P-TH-TP-3`**, under the
   contract's own **PRE-COMMITTED RE-GRAIN `10→11` / `102→103`** — **RECORDED HERE AS PRE-COMMITTED AND NOT TAKEN:
   `P-TH-TP-3` still declares `10`, the total is still `102`, and the re-grain lands only if that drive is authored**;
   **plus the whitespace-only name `' '` into `P-TH-IM-3`, and a CALLER-OBJECT SNAPSHOT for `P-TH-TP-5`(c) (the `F5`
-  remedy).**
+  remedy).** **⟶ POST-ANNOTATION (`2026-09-27`, `§0A` note 8 item 3: the as-written *"NOT TAKEN"* above is the
+  PRE-GRAIN state and is KEPT VISIBLE): THE DRIVE IS NOW AUTHORED AND THE RE-GRAIN IS TAKEN** — `P-TH-TP-3` declares
+  **`11`**, the DECLARED total is **`103`** and the DISTINCT total **`100`**, each printed with its own terms and
+  chain at `§5.5.3`; **`F5`'s snapshot and `NG-1`/`NG-3` remain owed on the `[T]` side.**
 - **`NG-3`** — for **`P-TH-TP-1`**: **assert or print the twelve drawn indices (a `Set` size of `12`)** (the `F3`
   remedy).
 
@@ -1848,7 +2045,14 @@ PRE-COMMITTED RE-GRAIN THAT IS *NOT TAKEN*:**
 `CONTRACT-AMENDED` row lacks its as-written form kept visible as `SUPERSEDED`.** **Every `F-n` row above is
 DISPOSITIONED (its side named) and NONE is CLOSED; these findings are OWED, not fixed.** **A `DONE` row that reads
 an `F-n` row as fixed, or that quotes `NG-2`'s re-grain figures `11`/`103` as the live ones, is a review finding.**
-**And `PACKAGE DEFECTS: NONE` is the expectation for this unit** — it exercises no `provident-ssr` surface, so
+**⟶ POST-ANNOTATION (`2026-09-27`, `§0A` note 8): the sentence immediately above is the PRE-GRAIN form and is KEPT
+VISIBLE, and the LIVE reading of it is the exact mirror — after this amendment the figures `11` (`P-TH-TP-3`'s term)
+and `103` (the DECLARED total) ARE the live ones, so **a `DONE` row that quotes `10`/`102` as the live pair, or that
+reads `P-TH-TP-5` as UNMARKED, is now the review finding** (`§5.5.3`, `§5.5.2` item 2).** **AND THE FIVE `AMEND-1`…`AMEND-4`
+ROWS above are the CONTRACT-side dispositions this annotation landed: **`AMEND-1`/`AMEND-2`/`AMEND-3` are LANDED
+(`CONTRACT-AMENDED`, each with its as-filed form kept visible at its own site) and `AMEND-4` carries `F2`/`F7` as a
+`[T]`-SIDE obligation the TestWriter owes** — **so the seven `F-n` rows stay UNFIXED on their own sides while their
+CONTRACT-side remedies are now recorded.** **And `PACKAGE DEFECTS: NONE` is the expectation for this unit** — it exercises no `provident-ssr` surface, so
 **`docs/defects.md` and `docs/HANDOFF.md` should receive nothing from it** (`§7` item 2).
 
 ## 3c. GATE 5 — THE BLIND GREENS, RECORDED (`2026-09-27`; the artifact is `docs/specs/theme-greens.md`, cited BY NAME)
@@ -1892,7 +2096,13 @@ BLIND-GREENS PASS'S OWN READING, quoted with that ownership (as `docs/specs/them
    `F-n` rows stay `OWED`), **it re-asserts NO register figure** (the artifact's own `§G` item 7 makes no claim
    about the register's arithmetic, seed, caps or `(bounded)` set — `TG-NB-3`), **it offers NO `[U]` and claims NO
    `[D]`** (gate 6 stays **`STRUCTURAL`, never `waived`**), and **it moves no status beyond gate 5: `E8` remains an
-   OPEN unit at gate 3 GREEN with gates 4 and 5 RUN** (`CURRENT STATE` item 11).
+   OPEN unit at gate 3 GREEN with gates 4 and 5 RUN** (`CURRENT STATE` item 11). **⟶ POST-ANNOTATION (`2026-09-27`,
+   `§0A` note 8): this record's own readings are UNTOUCHED by the amendment that follows it — the `32` PASS / `0` FAIL
+   / `7` `NOT-BLIND-RUNNABLE` census, its revision `fd70033` and its five driver defects all stand exactly as
+   recorded — and the re-grain is a CONTRACT-side declaration (terms `11`/`103`/`100`, marked set `6` rows) that
+   `TG-NB-3` expressly leaves outside this artifact's claims; the `POST-GREEN` re-drive clause (item 5) is triggered
+   only by a change to `src/shared/theme.ts`, and the `F1` pin is satisfied by the LANDED module, so NO re-drive is
+   owed by this amendment.**
 
 
 

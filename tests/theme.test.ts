@@ -16,8 +16,10 @@
 // `§2.5`, `§3.1` `M-1`..`M-7`, `§3.2` `F-1`..`F-8`, `§3.3` `I-1`..`I-11`,
 // `§3.4` `R-1`..`R-12`, `§3.5` `X-1`..`X-5`, `§4.1`..`§4.5`, `§5.1`, `§5.2`
 // (the FIVE legs), `§5.5`/`§5.5.1`/`§5.5.2`/`§5.5.3` (the typed register: 12
-// ROWS / 12 TERMS / `102` declared attempts / seed `20260927` / caps
-// `≤100`/row · `≤400` total · stop-after-5 / the FIVE `(bounded)` rows).
+// ROWS / 12 TERMS / `103` declared attempts (RE-GRAINED `102 → 103` by the
+// contract's own pre-committed `NG-2` re-grain, `§5.5.2` item 10 — see the `F2`
+// ..`F7` / `NG-1`..`NG-3` repair notes at the affected rows) / seed `20260927` / caps
+// `≤100`/row · `≤400` total · stop-after-5 / the SIX `(bounded)` rows).
 //
 // ---------------------------------------------------------------------------
 // WHAT THIS FILE IS, AND WHAT IT IS NOT
@@ -687,9 +689,9 @@ const DECLARED_REGISTER: readonly { readonly row: string; readonly type: string;
   { row: 'P-TH-SM-2', type: 'P-SM', strategy: 'S-TH-CONST-1', declared: 3, bounded: false, distinct: 3 },
   { row: 'P-TH-TP-1', type: 'P-TP', strategy: 'S-TH-TOTAL-1', declared: 12, bounded: true, distinct: 12 },
   { row: 'P-TH-TP-2', type: 'P-TP', strategy: 'S-TH-RULE-1', declared: 12, bounded: true, distinct: 12 },
-  { row: 'P-TH-TP-3', type: 'P-TP', strategy: 'S-TH-ABSORB-1', declared: 10, bounded: true, distinct: 10 },
+  { row: 'P-TH-TP-3', type: 'P-TP', strategy: 'S-TH-ABSORB-1', declared: 11, bounded: true, distinct: 11 },
   { row: 'P-TH-TP-4', type: 'P-TP', strategy: 'S-TH-WRITE-1', declared: 8, bounded: true, distinct: 8 },
-  { row: 'P-TH-TP-5', type: 'P-TP', strategy: 'S-TH-NOCALL-1', declared: 6, bounded: false, distinct: 6 },
+  { row: 'P-TH-TP-5', type: 'P-TP', strategy: 'S-TH-NOCALL-1', declared: 6, bounded: true, distinct: 6 },
   { row: 'P-TH-TP-6', type: 'P-TP', strategy: 'S-TH-COMPOSE-1', declared: 3, bounded: false, distinct: 3 },
 ]
 /** `§5.5.3` — THE DECLARED TOTAL, PRINTED WITH ITS TERMS (the twelve terms ARE
@@ -700,7 +702,9 @@ function declaredTerms(): number[] {
 function declaredTotal(): number {
   return declaredTerms().reduce((a, b) => a + b, 0)
 }
-/** The FIVE `(bounded)` rows of `§5.5.1`/`§5.5.2` item 2. */
+/** The `(bounded)` rows of `§5.5.1`/`§5.5.2` item 2: **SIX** of the twelve — the
+ *  five as filed PLUS `P-TH-TP-5` (`F4`'s marking, `§0A` note 8 item 2: a ROW
+ *  count and NOT a term — its term stays `6`). */
 function boundedRows(): string[] {
   return DECLARED_REGISTER.filter((r) => r.bounded).map((r) => r.row)
 }
@@ -870,33 +874,43 @@ const TP1_POOL: readonly { readonly id: string; readonly value: () => unknown }[
   { id: '(11) a function', value: () => function f(): void {} },
   { id: '(12) [] and a deeply nested array', value: deeplyNested },
 ]
-/** `P-TH-IM-1`'s TWELVE-SHAPE SETTING POOL (`§5.5.1`), ONE DRIVE EACH. */
-const IM1_POOL: readonly { readonly id: string; readonly setting: () => unknown; readonly carried: boolean }[] = [
-  { id: '(1) a short token', setting: () => TOKEN_A, carried: true },
-  { id: '(2) a token this mechanism could plausibly "recognize"', setting: () => TOKEN_B, carried: true },
-  { id: '(3) a CASE variant', setting: () => TOKEN_C, carried: true },
-  { id: '(4) a WHITESPACE variant', setting: () => TOKEN_D, carried: true },
-  { id: '(5) the empty string', setting: () => '', carried: false },
-  { id: '(6) the argument OMITTED', setting: () => undefined, carried: false },
-  { id: '(7) null', setting: () => null, carried: false },
-  { id: '(8) a number (0, -0, NaN, 1)', setting: () => 0, carried: false },
-  { id: '(9) a boolean (true/false)', setting: () => true, carried: false },
-  { id: '(10) a Symbol and a 12n', setting: () => Symbol('s'), carried: false },
-  { id: '(11) an object with recording toString/valueOf', setting: () => hookRecorder().value, carried: false },
-  { id: '(12) a revoked Proxy and a trap-throwing Proxy', setting: revokedProxy, carried: false },
+/** `P-TH-IM-1`'s TWELVE-SHAPE SETTING POOL (`§5.5.1`), ONE DRIVE EACH. **THE
+ *  `observe` COLUMN (`F2`): each shape's OWN argument is produced HERE together
+ *  with a recorder of ITS coercion hooks — so the declared drives' count-`0`
+ *  assertion is read on the argument the module really received, and on the shape
+ *  that genuinely CARRIES `toString`/`valueOf` (`(11)`) the claim is falsifiable
+ *  by construction rather than true-by-construction.** */
+const IM1_POOL: readonly { readonly id: string; readonly observe: () => { readonly arg: unknown; readonly hooks: { toString: number; valueOf: number } | null }; readonly carried: boolean }[] = [
+  { id: '(1) a short token', observe: () => ({ arg: TOKEN_A, hooks: null }), carried: true },
+  { id: '(2) a token this mechanism could plausibly "recognize"', observe: () => ({ arg: TOKEN_B, hooks: null }), carried: true },
+  { id: '(3) a CASE variant', observe: () => ({ arg: TOKEN_C, hooks: null }), carried: true },
+  { id: '(4) a WHITESPACE variant', observe: () => ({ arg: TOKEN_D, hooks: null }), carried: true },
+  { id: '(5) the empty string', observe: () => ({ arg: '', hooks: null }), carried: false },
+  { id: '(6) the argument OMITTED', observe: () => ({ arg: undefined, hooks: null }), carried: false },
+  { id: '(7) null', observe: () => ({ arg: null, hooks: null }), carried: false },
+  { id: '(8) a number (0, -0, NaN, 1)', observe: () => ({ arg: 0, hooks: null }), carried: false },
+  { id: '(9) a boolean (true/false)', observe: () => ({ arg: true, hooks: null }), carried: false },
+  { id: '(10) a Symbol and a 12n', observe: () => ({ arg: Symbol('s'), hooks: null }), carried: false },
+  { id: '(11) an object with recording toString/valueOf', observe: () => { const h = hookRecorder(); return { arg: h.value, hooks: h.counts } }, carried: false },
+  { id: '(12) a revoked Proxy and a trap-throwing Proxy', observe: () => ({ arg: revokedProxy(), hooks: null }), carried: false },
 ]
-/** `P-TH-IM-3`'s TEN ATTRIBUTE-NAME SHAPES, one drive each. */
-const IM3_POOL: readonly { readonly id: string; readonly name: () => unknown; readonly echoed: string | null; readonly omitted?: boolean }[] = [
-  { id: '(1) a caller spelling', name: () => NAME_A, echoed: NAME_A },
-  { id: '(2) a spelling the module must merely ECHO', name: () => NAME_B, echoed: NAME_B },
-  { id: '(3) the empty string', name: () => '', echoed: null },
-  { id: '(4) the argument OMITTED', name: () => undefined, echoed: null, omitted: true },
-  { id: '(5) null', name: () => null, echoed: null },
-  { id: '(6) a number (42, NaN)', name: () => 42, echoed: null },
-  { id: '(7) a boolean', name: () => true, echoed: null },
-  { id: '(8) a Symbol and a 12n', name: () => Symbol('n'), echoed: null },
-  { id: '(9) an object with recording toString/valueOf', name: () => hookRecorder().value, echoed: null },
-  { id: '(10) a revoked Proxy', name: revokedProxy, echoed: null },
+/** `P-TH-IM-3`'s TEN ATTRIBUTE-NAME SHAPES, one drive each. **THE `observe` COLUMN
+ *  (`F2`): each shape's OWN argument is produced HERE together with a recorder of
+ *  ITS coercion hooks, so the declared drives' `toString`/`valueOf` count-`0`
+ *  assertion is read on the argument the module really received — and on the two
+ *  shapes that genuinely CARRY `toString`/`valueOf`, the claim is falsifiable by
+ *  construction rather than true-by-construction.** */
+const IM3_POOL: readonly { readonly id: string; readonly observe: () => { readonly arg: unknown; readonly hooks: { toString: number; valueOf: number } | null }; readonly echoed: string | null; readonly omitted?: boolean }[] = [
+  { id: '(1) a caller spelling', observe: () => ({ arg: NAME_A, hooks: null }), echoed: NAME_A },
+  { id: '(2) a spelling the module must merely ECHO', observe: () => ({ arg: NAME_B, hooks: null }), echoed: NAME_B },
+  { id: '(3) the empty string', observe: () => ({ arg: '', hooks: null }), echoed: null },
+  { id: '(4) the argument OMITTED', observe: () => ({ arg: undefined, hooks: null }), echoed: null, omitted: true },
+  { id: '(5) null', observe: () => ({ arg: null, hooks: null }), echoed: null },
+  { id: '(6) a number (42, NaN)', observe: () => ({ arg: 42, hooks: null }), echoed: null },
+  { id: '(7) a boolean', observe: () => ({ arg: true, hooks: null }), echoed: null },
+  { id: '(8) a Symbol and a 12n', observe: () => ({ arg: Symbol('n'), hooks: null }), echoed: null },
+  { id: '(9) an object with recording toString/valueOf', observe: () => { const h = hookRecorder(); return { arg: h.value, hooks: h.counts } }, echoed: null },
+  { id: '(10) a revoked Proxy', observe: () => ({ arg: revokedProxy(), hooks: null }), echoed: null },
 ]
 /** `P-TH-IM-4`'s EIGHT RESOLVED-VALUE SHAPES, one drive each. */
 const IM4_POOL: readonly { readonly id: string; readonly resolved: () => unknown; readonly removal: boolean; readonly value: string | null }[] = [
@@ -909,6 +923,34 @@ const IM4_POOL: readonly { readonly id: string; readonly resolved: () => unknown
   { id: '(7) a non-string (number/boolean/Symbol/12n)', resolved: () => 42, removal: true, value: '' },
   { id: '(8) an object, an array and a function', resolved: () => ({ a: 1 }), removal: true, value: '' },
 ]
+/** `NG-1` — a **NON-THROWING DIVERGING `Proxy`** (`§3b` gate-4 list): `get` answers
+ *  `true`, `has` answers `true`, and `getOwnPropertyDescriptor` answers
+ *  `undefined` — so the three traps DISAGREE, and the module must land on the
+ *  hostile-env absorption (`false` + the degraded body, nothing thrown) rather
+ *  than on a truthiness read (`has`) or a fabricated member. */
+function divergingProxyEnv(): unknown {
+  return new Proxy(
+    {},
+    {
+      get: (): boolean => true,
+      has: (): boolean => true,
+      getOwnPropertyDescriptor: (): undefined => undefined,
+    },
+  )
+}
+/** `NG-1` — a **CONTAINER ENV**: an array carrying an OWN `prefersDark: true`
+ *  member (`§2.3` item 2's own-member reading: an array is an object, and an OWN
+ *  member on it is a normal usable reading), and a `Map` carrying an own member
+ *  (a `Map`'s entries are NOT own data properties, so the declared reading is the
+ *  hostile-env absorption). */
+function containerEnvArray(): unknown {
+  return Object.assign([], { prefersDark: true })
+}
+function containerEnvMap(): unknown {
+  const m = new Map<string, unknown>()
+  m.set('prefersDark', true)
+  return Object.assign(m, { prefersDark: true })
+}
 /** `P-TH-IM-2`'s EIGHT USABLE ENVIRONMENT SHAPES + its FOUR further drives. */
 const IM2_SHAPES: readonly { readonly id: string; readonly env: () => unknown; readonly reads: boolean }[] = [
   { id: '(1) a plain object with a true member', env: () => ({ prefersDark: true }), reads: true },
@@ -920,7 +962,14 @@ const IM2_SHAPES: readonly { readonly id: string; readonly env: () => unknown; r
   { id: '(7) a true member with a setting drawn from the IM-1 pool', env: () => ({ prefersDark: true }), reads: true },
   { id: '(8) a false member with a setting drawn from the IM-1 pool', env: () => ({ prefersDark: false }), reads: false },
 ]
-/** `P-TH-TP-3`'s TEN HOSTILE ENVIRONMENT SHAPES, one drive each. */
+/** `P-TH-TP-3`'s hostile-environment shapes, one drive each. **RE-GRAINED
+ *  `10 → 11` (`NG-2`, the contract's own PRE-COMMITTED re-grain of `§5.5.2` item
+ *  10 — *"its pre-committed re-grain, if a later pass drives it: `P-TH-TP-3`
+ *  `10 → 11`, total `102 → 103`, `TP 51 → 52`"*; the declared distinct figure
+ *  `10 → 11` and the declared distinct sum `99 → 100` follow): shape `(11)` is
+ *  the INHERITED `prefersDark` member, which `§2.3` item 2 row `(12)` declares a
+ *  hostile shape (`false` UNLESS the member is an OWN `true`; the read is BY OWN
+ *  MEMBER, so an inherited `true` is NOT a reading).** */
 const TP3_POOL: readonly { readonly id: string; readonly env: () => unknown }[] = [
   { id: '(1) the member MISSING', env: () => ({}) },
   { id: '(2) the member present as undefined', env: () => ({ prefersDark: undefined }) },
@@ -932,6 +981,7 @@ const TP3_POOL: readonly { readonly id: string; readonly env: () => unknown }[] 
   { id: '(8) env itself undefined / null / a non-object', env: () => 42 },
   { id: '(9) a record whose accessor THROWS', env: throwingAccessorEnv },
   { id: '(10) a revoked Proxy and a trap-throwing Proxy', env: revokedProxy },
+  { id: '(11) an INHERITED prefersDark member (NG-2: the re-grained eleventh shape)', env: inheritedEnv },
 ]
 /** `P-TH-TP-5`'s THREE REMOVAL SHAPES and its TWO instrument configurations. Each
  *  removal shape is driven in ITS OWN declared arity (`§2.4` item 2(c)): `''` and
@@ -943,16 +993,46 @@ const TP5_SHAPES: readonly { readonly id: string; readonly resolved: () => unkno
   { id: '(3) resolved OMITTED (arity 1, the name present)', resolved: () => undefined, mode: 'resolved-omitted' },
 ]
 const TP5_INSTRUMENTS: readonly string[] = ['(i) recording-Proxy arguments + a fake element in scope', '(ii) the same drive with the arguments FROZEN']
-/** `P-TH-TP-6`'s THREE COMPOSED SHAPES. */
-const TP6_SHAPES: readonly { readonly id: string; readonly name: string; readonly setting: unknown; readonly env: unknown; readonly echoed: string | null; readonly removal: boolean }[] = [
-  { id: "(1) a carried token with a strict-true env", name: NAME_A, setting: TOKEN_A, env: { prefersDark: true }, echoed: NAME_A, removal: false },
-  { id: '(2) the composed REMOVAL', name: NAME_A, setting: '', env: {}, echoed: NAME_A, removal: true },
-  { id: '(3) both rules degraded at once', name: '', setting: 42, env: { prefersDark: 1 }, echoed: null, removal: true },
+/** `P-TH-TP-6`'s THREE COMPOSED SHAPES. **`literal` IS THE APPLIER-FIRST DRIVE'S
+ *  OWN TOKEN (`F6`): the composed shape's `setting` when it is CARRIED as a
+ *  non-empty string, and the declaration's own `''` where the resolution is the
+ *  declared `null` — i.e. the value the applier receives on the applier-FIRST
+ *  drive has ONE declared spelling, and it is not recomputed from the resolver.** */
+const TP6_SHAPES: readonly { readonly id: string; readonly name: string; readonly setting: unknown; readonly env: unknown; readonly echoed: string | null; readonly removal: boolean; readonly literal: string }[] = [
+  { id: "(1) a carried token with a strict-true env", name: NAME_A, setting: TOKEN_A, env: { prefersDark: true }, echoed: NAME_A, removal: false, literal: TOKEN_A },
+  { id: '(2) the composed REMOVAL', name: NAME_A, setting: '', env: {}, echoed: NAME_A, removal: true, literal: '' },
+  { id: '(3) both rules degraded at once', name: '', setting: 42, env: { prefersDark: 1 }, echoed: null, removal: true, literal: '' },
 ]
+/** `P-TH-TP-5`(c) — THE CALLER-OBJECT SNAPSHOT: the caller's own objects must be
+ *  **byte-identical before and after** the call. The snapshot is the object's OWN
+ *  property names PLUS every member's own property DESCRIPTOR (value/identity,
+ *  enumerability, writability, configurability, and any accessor), serialized —
+ *  so a write, a deletion, a define, a freeze/thaw, a re-pointed member or a
+ *  changed descriptor all move the figure. A non-object argument (a string, the
+ *  omitted case) is snapshotted as its own primitive tag, so its arm is not
+ *  silently skipped. **NOTE ON THE FROZEN ARM:** where the instrument froze the
+ *  arguments, immutability is guaranteed by construction, so THIS reading is
+ *  vacuous there by the contract's own instrument choice (`§5.5.1 P-TH-TP-5`
+ *  configuration `(ii)`) — it is still asserted, and the arm that carries it is
+ *  the RECORDING-PROXY arm, where the snapshot is live. */
+function snapshotOf(value: unknown): string {
+  if (value === null || (typeof value !== 'object' && typeof value !== 'function')) return `primitive:${typeof value}:${String(value)}`
+  const o = value as object
+  const names = Object.getOwnPropertyNames(o).sort()
+  const parts = names.map((k) => {
+    const d = Object.getOwnPropertyDescriptor(o, k)
+    if (d === undefined) return `${k}:<no-descriptor>`
+    const kind = d.get !== undefined || d.set !== undefined ? `accessor(${String(d.get !== undefined)},${String(d.set !== undefined)})` : `data:${typeof d.value}:${String(d.value)}`
+    return `${k}:${kind}:e=${String(d.enumerable)}:w=${String(d.writable)}:c=${String(d.configurable)}`
+  })
+  return `keys=[${parts.join('|')}]`
+}
+
 /** A recording Proxy whose every trap counts, plus a fake element-shaped object
  *  that is NEVER passed to the module (`P-TH-TP-5`'s instrument). */
 function recordingInstrument(): {
   readonly proxy: unknown
+  readonly target: Record<string, unknown>
   readonly counts: () => number
   readonly fake: Record<string, unknown>
   readonly fakeWrites: () => number
@@ -984,7 +1064,14 @@ function recordingInstrument(): {
       return undefined
     },
   }
-  const proxy = new Proxy(function () {} as unknown as Record<string, unknown>, handler)
+  const fname = t('function')
+  // The TARGET is a function object, kept BY REFERENCE so the `P-TH-TP-5`(c)
+  // before/after snapshot can read it WITHOUT touching the proxy's own traps —
+  // `Object.getOwnPropertyNames` on the PROXY would raise `ownKeys` and inflate the
+  // very trap count the row asserts is 0. The traps see every access a MODULE makes
+  // through the proxy; the snapshot is the DRIVER's own reading of the same object.
+  const target = { [fname]: function (): void {} }[fname] as unknown as Record<string, unknown>
+  const proxy = new Proxy(target, handler)
   let writes = 0
   const fake: Record<string, unknown> = {}
   for (const m of [t('setAttribute'), t('removeAttribute'), t('classList'), t('setProperty'), t('style')]) {
@@ -996,7 +1083,7 @@ function recordingInstrument(): {
       enumerable: true,
     })
   }
-  return { proxy, counts: () => counts.n, fake, fakeWrites: () => writes }
+  return { proxy, target, counts: () => counts.n, fake, fakeWrites: () => writes }
 }
 
 // ===========================================================================
@@ -1858,28 +1945,33 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (12 rows / 12 terms, in regist
     for (const shape of IM1_POOL) {
       r.run(shape.id, () => {
         if (s === null) return `the module of §2.1 is absent (the §4.1 red fact)`
-        const setting = shape.setting()
+        // F2 — THE DECLARED DRIVE'S OWN ARGUMENT AND ITS OWN HOOK RECORDER: the
+        // argument the module receives IS the object the recorder counts, so the
+        // count-0 claim below is falsifiable on the drive it is declared in.
+        const { arg, hooks } = shape.observe()
         const omitted = shape.id === '(6) the argument OMITTED'
-        const hooks = hookRecorder()
-        const brk = resolveTry(s.resolveTheme, setting, { prefersDark: true }, shape.id, omitted)
+        const brk = resolveTry(s.resolveTheme, arg, { prefersDark: true }, shape.id, omitted)
         if (brk !== null) return brk
-        const { value } = drove(() => (omitted ? resolveOmitted(s.resolveTheme, { prefersDark: true }) : s.resolveTheme(setting, { prefersDark: true })))
+        const { value } = drove(() => (omitted ? resolveOmitted(s.resolveTheme, { prefersDark: true }) : s.resolveTheme(arg, { prefersDark: true })))
         const res = value as ThemeResolution
         if (shape.carried) {
-          if (res.setting !== setting) return `${shape.id} — the carried arm must return the CALLER'S OWN STRING BY IDENTITY; got ${JSON.stringify(res.setting)}`
+          if (res.setting !== arg) return `${shape.id} — the carried arm must return the CALLER'S OWN STRING BY IDENTITY; got ${JSON.stringify(res.setting)}`
         } else if (res.setting !== null) {
           return `${shape.id} — the declared null is required; got ${JSON.stringify(res.setting)}`
         }
-        if (hooks.counts.toString !== 0 || hooks.counts.valueOf !== 0) return `${shape.id} — a coercion hook was consulted`
+        if (hooks !== null && (hooks.toString !== 0 || hooks.valueOf !== 0)) return `${shape.id} — a coercion hook on the DECLARED drive's own argument was consulted: ${JSON.stringify(hooks)}`
         r.reading()
         return null
       })
     }
-    // The count-0 claim on a shape that really CARRIES the hooks: driven through the
-    // register's CONTROL channel and reported BESIDE the declared 12-attempt term
-    // (`§5.5.1`: the term is the 12-shape pool, one drive each — "PLUS nothing else"),
-    // so `attemptsRun` stays 12 and the claim stays falsifiable.
-    controlDrive(r, '(11) the recording-hook object passed for real', () => {
+    // THE CONTROL, kept a CONTROL and never the home of a declared claim: a FRESH
+    // recorder is passed EXPLICITLY, so the claim "the module consults no coercion
+    // hook on the argument it is handed" is falsifiable on an ARGUMENT THIS DRIVE
+    // PASSED — while the DECLARED term above reads its own count on its own
+    // argument (F2). It stays BESIDE the declared 12-attempt term (`§5.5.1`: the
+    // term is the 12-shape pool, one drive each — "PLUS nothing else"), so
+    // `attemptsRun` stays 12.
+    controlDrive(r, '(11) a fresh recording-hook object passed for real: the count is the count of an argument THIS drive passed', () => {
       const hooks = hookRecorder()
       const brk = resolveTry(s!.resolveTheme, hooks.value, { prefersDark: true }, '(11) hooks')
       if (brk !== null) return brk
@@ -1943,6 +2035,44 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (12 rows / 12 terms, in regist
       r.control()
       return null
     })
+    // NG-1 — THE THREE FURTHER ENV DRIVES, driven to the reading the contract
+    // pins (`§2.3` item 2's own-member table + `§5.5.2` item 10's own-member
+    // discipline). They are REPORTED ON THE CONTROL CHANNEL so the row's declared
+    // 12-attempt term is UNMOVED (`§5.5.1`: the term is the 8 usable shapes + 4
+    // further drives — "PLUS nothing else"), and each is a FALSIFIABLE reading of
+    // the module, not a liveness check.
+    controlDrive(r, 'NG-1 (a) a NON-THROWING DIVERGING Proxy: get⇒true, has⇒true, getOwnPropertyDescriptor⇒undefined', () => {
+      const env = divergingProxyEnv()
+      const brk = resolveTry(s!.resolveTheme, TOKEN_A, env, 'NG-1 (a) diverging Proxy')
+      if (brk !== null) return brk
+      const res = s!.resolveTheme(TOKEN_A, env) as ThemeResolution
+      if (res.prefersDark !== false) return `NG-1 (a) — the three traps DISAGREE, so no own descriptor exists: the reading must be false (a truthiness read would take the has trap's true); got ${String(res.prefersDark)}`
+      if (res.source !== t('degraded-env')) return `NG-1 (a) — source must read '${t('degraded-env')}'; got ${JSON.stringify(res.source)}`
+      if (res.setting !== TOKEN_A || Object.keys(res).length !== 3) return `NG-1 (a) — the setting is unaffected and no member is fabricated; got ${JSON.stringify(res)}`
+      return null
+    })
+    controlDrive(r, 'NG-1 (b) a CONTAINER ENV that is an ARRAY carrying an OWN prefersDark: true member', () => {
+      const env = containerEnvArray()
+      const brk = resolveTry(s!.resolveTheme, TOKEN_A, env, 'NG-1 (b) array container')
+      if (brk !== null) return brk
+      const res = s!.resolveTheme(TOKEN_A, env) as ThemeResolution
+      if (res.prefersDark !== true) return `NG-1 (b) — an ARRAY is an object and its OWN true member is a NORMAL reading; got ${String(res.prefersDark)}`
+      if (res.source !== t('env')) return `NG-1 (b) — an own true member resolves, so source reads '${t('env')}'; got ${JSON.stringify(res.source)}`
+      return null
+    })
+    controlDrive(r, 'NG-1 (c) a CONTAINER ENV that is a MAP carrying an own prefersDark member', () => {
+      const env = containerEnvMap()
+      const brk = resolveTry(s!.resolveTheme, TOKEN_A, env, 'NG-1 (c) Map container')
+      if (brk !== null) return brk
+      const res = s!.resolveTheme(TOKEN_A, env) as ThemeResolution
+      // A Map's ENTRIES are not own data properties, so the declared reading is
+      // the absorption UNLESS the member was attached as an own property.
+      const own = Object.getOwnPropertyDescriptor(env as object, 'prefersDark')
+      const expected = own !== undefined && own.value === true ? { dark: true, src: t('env') } : { dark: false, src: t('degraded-env') }
+      if (res.prefersDark !== expected.dark) return `NG-1 (c) — a Map's own-member reading must be ${String(expected.dark)}; got ${String(res.prefersDark)}`
+      if (res.source !== expected.src) return `NG-1 (c) — source must read '${expected.src}'; got ${JSON.stringify(res.source)}`
+      return null
+    })
     r.finish()
   })
 
@@ -1952,8 +2082,8 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (12 rows / 12 terms, in regist
     for (const shape of IM3_POOL) {
       r.run(shape.id, () => {
         if (s === null) return `the module of §2.1 is absent (the §4.1 red fact)`
-        const arg = shape.name()
-        const hooks = hookRecorder()
+        // F2 — THE DECLARED DRIVE'S OWN ARGUMENT AND ITS OWN HOOK RECORDER.
+        const { arg, hooks } = shape.observe()
         const mode: ApplyDrive = shape.omitted === true ? 'name-omitted' : 'args'
         const brk = applyTry(s.applyThemeDeclaration, arg, TOKEN_A, shape.id, mode)
         if (brk !== null) return brk
@@ -1961,15 +2091,17 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (12 rows / 12 terms, in regist
         const w = value as ThemeAttributeWrite
         if (w.name !== shape.echoed) return `${shape.id} — the name must read ${JSON.stringify(shape.echoed)}; got ${JSON.stringify(w.name)}`
         if (w.value !== TOKEN_A || w.removal !== false) return `${shape.id} — value/removal must be INDEPENDENT of the name's shape`
-        if (hooks.counts.toString !== 0 || hooks.counts.valueOf !== 0) return `${shape.id} — a coercion hook was consulted for the name`
+        if (hooks !== null && (hooks.toString !== 0 || hooks.valueOf !== 0)) return `${shape.id} — a coercion hook on the DECLARED drive's own argument was consulted: ${JSON.stringify(hooks)}`
         r.reading()
         return null
       })
     }
-    // The count-0 claim on a name argument that really CARRIES the hooks: the
-    // register's CONTROL channel, BESIDE the declared 10-attempt term (the ten
-    // name shapes, one drive each — "PLUS nothing else").
-    controlDrive(r, '(9) the recording-hook object passed for real', () => {
+    // THE CONTROL, kept a CONTROL: a FRESH recorder passed EXPLICITLY by this
+    // drive, so the count-0 claim is read on an argument THIS drive passed — while
+    // the DECLARED term above reads its own count on its own argument (F2). It
+    // stays BESIDE the declared 10-attempt term (the ten name shapes, one drive
+    // each — "PLUS nothing else").
+    controlDrive(r, '(9) a fresh recording-hook object passed for real: the count is the count of an argument THIS drive passed', () => {
       const hooks = hookRecorder()
       const w = s!.applyThemeDeclaration(hooks.value, TOKEN_A) as ThemeAttributeWrite
       if (w.name !== null) return `(9) — an object argument must read the declared null; got ${JSON.stringify(w.name)}`
@@ -2124,10 +2256,22 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (12 rows / 12 terms, in regist
     const r = row(definedRow('P-TH-TP-1'))
     const s = await live().catch(() => null)
     const lcg = makeLcg(SEED)
+    // F3 / NG-3 — THE DRAWN INDICES ARE PRINTED AND THE DISTINCT-MEMBER COVERAGE
+    // IS ASSERTED. The draw is WITH REPLACEMENT (`index = stateₙ₊₁ mod 12`), so a
+    // REPEAT is possible by construction and would leave a pool member UNDRIVEN
+    // while the row still reads 12/12 attempts. Therefore: (a) the twelve indices
+    // and their member ids are PRINTED; (b) the DISTINCT-INDEX (`Set`) SIZE is
+    // asserted; and (c) WHEN A REPEAT OCCURS the assertion below FAILS LOUDLY and
+    // names the undriven members — this row does NOT claim a full 12/12 MEMBER
+    // sweep from a with-replacement draw.
+    const drawnIndices: number[] = []
+    const drawnIds: string[] = []
     for (let draw = 0; draw < POOL_LENGTH; draw += 1) {
       const state = lcg.next() // EXACTLY ONE LCG STEP PER DRAW
       const index = state % POOL_LENGTH
       const member = TP1_POOL[index]
+      drawnIndices.push(index)
+      drawnIds.push(member.id)
       r.run(`draw ${draw + 1} → pool[${index}] ${member.id}`, () => {
         if (s === null) return `the module of §2.1 is absent (the §4.1 red fact)`
         const shape = member.value()
@@ -2143,6 +2287,32 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (12 rows / 12 terms, in regist
         return null
       })
     }
+    const distinctDrawn = new Set(drawnIndices)
+    const undriven = TP1_POOL.map((m, i) => ({ i, id: m.id })).filter((m) => !distinctDrawn.has(m.i)).map((m) => `pool[${m.i}] ${m.id}`)
+    // F3 — THE MEASURED DISTINCT FIGURE, PINNED AS A LITERAL SO THE PRINT AND THE
+    // ASSERTION CANNOT DRIFT APART: with seed `20260927` and `index = state mod 12`
+    // the twelve draws (WITH REPLACEMENT — the pins are §5.5.1 method note 2 /
+    // §5.5.3, and neither `NG-2` nor `NG-3` moves them) hit NINE distinct indices,
+    // so THREE pool members are NEVER driven. `9` is the measured figure; it is NOT
+    // `12`, and this row therefore makes NO 12/12-member-sweep claim (its declared
+    // `12` term is a DRAW count, and its `(bounded)` marking already says the
+    // universal is not proven).
+    const measuredDistinctDrawn = 9
+    console.log(`P-TH-TP-1 drawn indices (with replacement, seed ${SEED}) :: [${drawnIndices.join(', ')}]`)
+    console.log(`P-TH-TP-1 drawn members :: ${JSON.stringify(drawnIds)}`)
+    console.log(`P-TH-TP-1 distinct-member coverage :: Set(indices).size=${distinctDrawn.size} of pool.length=${POOL_LENGTH} — ${undriven.length === 0 ? 'ALL TWELVE members were driven' : `THE WITH-REPLACEMENT DRAW REPEATED, so these members went UNDRIVEN: ${JSON.stringify(undriven)}`}`)
+    // NG-3 — THE ASSERTION: the distinct figure is MEASURED and pinned (a change in
+    // the draw, the seed or the pool REDDENS here), and a repeat can never pass
+    // silently as a twelve-member sweep.
+    expect(
+      distinctDrawn.size,
+      `P-TH-TP-1 — the DISTINCT-MEMBER coverage of the twelve with-replacement draws must be the measured ${measuredDistinctDrawn} (drawn indices [${drawnIndices.join(', ')}]; undriven: ${JSON.stringify(undriven)}). A figure of ${POOL_LENGTH} would require a repeat-free draw, which the PINNED generator does not produce.`,
+    ).toBe(measuredDistinctDrawn)
+    expect(distinctDrawn.size, 'P-TH-TP-1 — the distinct-member figure can never exceed the pool, and a repeat only lowers it.').toBeLessThanOrEqual(POOL_LENGTH)
+    expect(
+      drawnIndices,
+      `P-TH-TP-1 — the twelve pinned draws ARE PRINTED above; this row does NOT read as a 12/12 member sweep, because ${undriven.length} of the ${POOL_LENGTH} pool members were never drawn.`,
+    ).toHaveLength(POOL_LENGTH)
     r.finish()
   })
 
@@ -2200,7 +2370,8 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (12 rows / 12 terms, in regist
       })
     }
     // THE MIRROR CONTROL — reported on the CONTROL channel, BESIDE the declared
-    // 10-attempt term (`§5.5.1` names it a CONTROL and says "PLUS nothing else").
+    // 11-attempt term (`§5.5.1` names it a CONTROL and says "PLUS nothing else";
+    // the term is RE-GRAINED `10 → 11` by the `NG-2` drive above).
     controlDrive(r, 'THE MIRROR CONTROL: the same drive with a legitimate false member reads the resolved body', () => {
       const res = s!.resolveTheme(TOKEN_A, { prefersDark: false }) as ThemeResolution
       if (res.source !== t('env')) return `the mirror — a legitimate false member must read '${t('env')}'; got ${JSON.stringify(res.source)} (a module reporting the degraded body for a legitimate false FAILS P-TH-IM-2)`
@@ -2251,7 +2422,7 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (12 rows / 12 terms, in regist
     r.finish()
   })
 
-  it('P-TH-TP-5 [S-TH-NOCALL-1] — the removal case is DATA and PERFORMS NO CALL: recording traps at 0, the fake element\'s counters at 0', async () => {
+  it('P-TH-TP-5 [S-TH-NOCALL-1] (bounded) — the removal case is DATA and PERFORMS NO CALL: recording traps at 0, the fake element\'s counters at 0', async () => {
     const r = row(definedRow('P-TH-TP-5'))
     const s = await live().catch(() => null)
     for (const shape of TP5_SHAPES) {
@@ -2266,11 +2437,31 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (12 rows / 12 terms, in regist
           const name = frozen ? Object.freeze({}) : rec.proxy
           const resolved = frozen ? Object.freeze({}) : rec.proxy
           const label = `${shape.id} × ${instrument.slice(0, 3)}`
+          // F5 — (c) THE CALLER-OBJECT SNAPSHOT, taken BEFORE the first drive, read
+          // from the caller's OWN object (the proxy's TARGET, by reference) so the
+          // driver's reading does not raise `ownKeys` and inflate the trap count the
+          // row asserts is 0.
+          const nameBefore = frozen ? snapshotOf(name) : snapshotOf(rec.target)
+          const resolvedBefore = frozen ? snapshotOf(resolved) : snapshotOf(rec.target)
           const brk = applyTry(s.applyThemeDeclaration, name, resolved, label, shape.mode)
           if (brk !== null) return brk
+          // F5 — (c) THE BEFORE/AFTER COMPARISON, asserted in BOTH arms and LIVE on
+          // the RECORDING-PROXY arm (instrument (i)); on the FROZEN arm (instrument
+          // (ii)) the contract's own instrument made the argument immutable by
+          // construction, so the reading is VACUOUS THERE by the contract's own
+          // choice — asserted anyway, and never quoted as evidence.
+          const nameAfter = frozen ? snapshotOf(name) : snapshotOf(rec.target)
+          const resolvedAfter = frozen ? snapshotOf(resolved) : snapshotOf(rec.target)
+          if (nameAfter !== nameBefore) return `${label} — the caller's OWN name object is NOT byte-identical before/after the call${frozen ? ' (vacuous arm: the frozen instrument makes this impossible by construction)' : ''}. before=${nameBefore} after=${nameAfter}`
+          if (resolvedAfter !== resolvedBefore) return `${label} — the caller's OWN resolved object is NOT byte-identical before/after the call${frozen ? ' (vacuous arm: the frozen instrument makes this impossible by construction)' : ''}. before=${resolvedBefore} after=${resolvedAfter}`
           if (rec.counts() !== 0) return `${label} — a method/property trap on the caller's argument was touched ${rec.counts()} times; NO method may be invoked (${t('setAttribute')}/${t('removeAttribute')}/${t('classList')}/${t('setProperty')}/property WRITE)`
           if (rec.fakeWrites() !== 0) return `${label} — the fake element's write counters must be 0; got ${rec.fakeWrites()}`
           const w = applyCall(s.applyThemeDeclaration, name, resolved, shape.mode) as ThemeAttributeWrite
+          // THE SNAPSHOT AFTER THE SECOND (re-entrant) CALL TOO: two calls may not
+          // drift the caller's own object either.
+          const nameAfter2 = frozen ? snapshotOf(name) : snapshotOf(rec.target)
+          const resolvedAfter2 = frozen ? snapshotOf(resolved) : snapshotOf(rec.target)
+          if (nameAfter2 !== nameBefore || resolvedAfter2 !== resolvedBefore) return `${label} — a SECOND call moved the caller's own object; the reading must be stable across calls`
           if (w.removal !== true) return `${label} — the removal is represented ONLY by the removal: true member; got ${JSON.stringify(w)}`
           if (w.value !== '') return `${label} — never an absent member and never a sentinel: value must be ''`
           r.reading()
@@ -2296,6 +2487,21 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (12 rows / 12 terms, in regist
       if (rec.fakeWrites() !== 1) return `the fake element is DEAD: a driver write must raise its counter to exactly 1; got ${rec.fakeWrites()}`
       return null
     }, false)
+    // F5 — (c)'s OWN INSTRUMENT MUST BE PROVEN LIVE, or the snapshot reading would
+    // be a tautology: a driver-made mutation MUST move the figure, and an untouched
+    // object MUST NOT.
+    controlDrive(r, 'the caller-object SNAPSHOT is live — a driver-made write and a driver-made deletion each move it, and an untouched object does not', () => {
+      const rec = recordingInstrument()
+      const before = snapshotOf(rec.target)
+      if (snapshotOf(rec.target) !== before) return 'the snapshot is UNSTABLE: two readings of an untouched object disagree'
+      rec.target['driver-wrote'] = 1
+      if (snapshotOf(rec.target) === before) return 'the snapshot is DEAD: a driver-made property write did not move it'
+      const afterWrite = snapshotOf(rec.target)
+      delete rec.target['driver-wrote']
+      if (snapshotOf(rec.target) !== before) return 'the snapshot did not return to its pre-write figure after the driver deleted its own member'
+      if (afterWrite === before) return 'the snapshot is DEAD on the write direction'
+      return null
+    }, false)
     r.finish()
   })
 
@@ -2315,9 +2521,23 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (12 rows / 12 terms, in regist
         if (w.value !== (resolution.setting ?? '')) return `${shape.id} — the composed value must be the resolver's own setting member BY IDENTITY`
         if (w.removal !== shape.removal) return `${shape.id} — the composed removal follows the resolved rule; got ${String(w.removal)}`
         if (w.name !== shape.echoed) return `${shape.id} — the name rule's independence broke; got ${JSON.stringify(w.name)}`
-        // DRIVE 2: the applier FIRST, on a literal token — ORDER INDEPENDENCE.
-        const direct = s.applyThemeDeclaration(shape.name, resolution.setting) as ThemeAttributeWrite
-        if (JSON.stringify(direct) !== JSON.stringify(w)) return `${shape.id} — the applier's result must be identical whether or not the resolver was called first (cross-call state FAILS here)`
+        // DRIVE 2 (F6) — A GENUINE APPLIER-FIRST DRIVE, on a LITERAL token, taken
+        // BEFORE the resolver has ever been called for this pair: the applier is
+        // driven first, on the shape's OWN declared literal, and its result is
+        // asserted against the shape's declared triple — so a module carrying
+        // cross-call state cannot pass by recomputing drive 1's argument (the
+        // previous form re-passed the SAME `resolution.setting` value and therefore
+        // re-ran drive 1). The composed result is then re-asserted to EQUAL this
+        // applier-first result: that equality is the declarative half, and it is
+        // now a comparison of two INDEPENDENTLY DERIVED drives.
+        const directBrk = applyTry(s.applyThemeDeclaration, shape.name, shape.literal, `${shape.id} (applier FIRST, literal token)`)
+        if (directBrk !== null) return directBrk
+        const direct = s.applyThemeDeclaration(shape.name, shape.literal) as ThemeAttributeWrite
+        if (direct.name !== shape.echoed) return `${shape.id} — the APPLIER-FIRST name rule broke; got ${JSON.stringify(direct.name)}`
+        if (direct.removal !== shape.removal) return `${shape.id} — the APPLIER-FIRST removal must follow the resolved rule for the literal token ${JSON.stringify(shape.literal)}; got ${String(direct.removal)}`
+        if (direct.value !== shape.literal) return `${shape.id} — the APPLIER-FIRST value must be the literal token itself, never a value recomputed from a prior resolver call; got ${JSON.stringify(direct.value)}`
+        if (keyBreakOf(direct, WRITE_KEYS) !== null) return `${shape.id} — the APPLIER-FIRST record's key set must be exactly the three declared names`
+        if (JSON.stringify(direct) !== JSON.stringify(w)) return `${shape.id} — the applier's result must be identical whether or not the resolver was called first (cross-call state FAILS here): applier-first ${JSON.stringify(direct)} vs composed ${JSON.stringify(w)}`
         r.reading()
         r.distinctDrive()
         return null
@@ -2345,11 +2565,11 @@ describe('§5.5.1 / §5.5.2 / §5.5.3 — the register harness: declared-vs-meas
     console.log(`§5.5.3 declared register total :: ${total} = ${terms.join(' + ')}`)
     console.log(`§5.5.3 declared chain :: ${chain.join(' → ')}`)
     console.log(`§5.5.3 family subtotals :: IM = ${terms.slice(0, 4).reduce((a, b) => a + b, 0)} · SM = ${terms.slice(4, 6).reduce((a, b) => a + b, 0)} · TP = ${terms.slice(6).reduce((a, b) => a + b, 0)}`)
-    expect(terms, 'HARNESS-1 — the twelve DECLARED TERMS, in register order (a total quoted without its terms is a review finding).').toEqual([12, 12, 10, 8, 6, 3, 12, 12, 10, 8, 6, 3])
-    expect(total, 'HARNESS-1 — the declared total IS the sum of its own terms.').toBe(102)
+    expect(terms, 'HARNESS-1 — the twelve DECLARED TERMS, in register order (a total quoted without its terms is a review finding). The NINTH term is RE-GRAINED `10 → 11` by the contract\'s own pre-committed `NG-2` re-grain (§5.5.2 item 10), which moves NO other term, row id, strategy id, seed or cap.').toEqual([12, 12, 10, 8, 6, 3, 12, 12, 11, 8, 6, 3])
+    expect(total, 'HARNESS-1 — the declared total IS the sum of its own terms (RE-GRAINED `102 → 103` by the same `NG-2` re-grain).').toBe(103)
     expect(total, 'HARNESS-1 — the declared total against the ≤400 register cap.').toBeLessThanOrEqual(REGISTER_TOTAL_CAP)
     expect(Math.max(...terms), `HARNESS-1 — every row's term against the ≤${REGISTER_ROW_CAP}-attempts-per-row cap.`).toBeLessThanOrEqual(REGISTER_ROW_CAP)
-    expect(chain, 'HARNESS-1 — the eleven-step chain of §5.5.3.').toEqual([12, 24, 34, 42, 48, 51, 63, 75, 85, 93, 99, 102])
+    expect(chain, 'HARNESS-1 — the eleven-step chain of §5.5.3, RE-GRAINED `… 93 → 99 → 102` → `… 93 → 100 → 103` (`NG-2`).').toEqual([12, 24, 34, 42, 48, 51, 63, 75, 86, 94, 100, 103])
   })
 
   it('HARNESS-2 (§5.5.1) — THE EXECUTED READINGS reconciled against the declared register, and the stop state reported', () => {
@@ -2380,14 +2600,14 @@ describe('§5.5.1 / §5.5.2 / §5.5.3 — the register harness: declared-vs-meas
     expect(REGISTER_RECORDS.reduce((a, r) => a + r.attemptsRun, 0), 'HARNESS-2 — the executed attempt count stays inside the ≤400 register cap.').toBeLessThanOrEqual(REGISTER_TOTAL_CAP)
   })
 
-  it('HARNESS-3 (§5.5.2 items 1/2) — the ROW COUNT is an EXTENT (12 rows / 12 terms), the (bounded) SET is the five declared rows, and each bounded row says so', () => {
+  it('HARNESS-3 (§5.5.2 items 1/2) — the ROW COUNT is an EXTENT (12 rows / 12 terms), the (bounded) SET is the SIX declared rows, and each bounded row says so', () => {
     expect(DECLARED_REGISTER.length, 'HARNESS-3 — 12 ROWS: the overshoot of the ≤8 breakdown signal is an OUTCOME, not a budget (§5.5.2 item 1).').toBe(12)
     expect(new Set(DECLARED_REGISTER.map((r) => r.strategy)).size, 'HARNESS-3 — TWELVE DISTINCT strategy ids (eleven enumeration strategies and ONE pinned-seed generator).').toBe(12)
     expect(DECLARED_REGISTER.filter((r) => r.type === 'P-IM').length, 'HARNESS-3 — 4 IM rows.').toBe(4)
     expect(DECLARED_REGISTER.filter((r) => r.type === 'P-SM').length, 'HARNESS-3 — 2 SM rows.').toBe(2)
     expect(DECLARED_REGISTER.filter((r) => r.type === 'P-TP').length, 'HARNESS-3 — 6 TP rows.').toBe(6)
-    expect(boundedRows(), 'HARNESS-3 — THE (bounded) SET IS FIVE ROWS, named: a row whose property text quantifies over a domain LARGER than its table, and NO reader may read a bounded row as a proof of the unbounded universal it states.').toEqual(['P-TH-IM-1', 'P-TH-TP-1', 'P-TH-TP-2', 'P-TH-TP-3', 'P-TH-TP-4'])
-    expect(boundedRows().length + DECLARED_REGISTER.filter((r) => !r.bounded).length, 'HARNESS-3 — 5 + 7 = 12, so the marking count is checkable rather than asserted (§5.5.2 item 2).').toBe(12)
+    expect(boundedRows(), 'HARNESS-3 — THE (bounded) SET IS SIX ROWS, named (§0A note 8 item 2: `F4`\'s marking of P-TH-TP-5, a ROW count and NOT a term): a row whose property text quantifies over a domain LARGER than its table, and NO reader may read a bounded row as a proof of the unbounded universal it states.').toEqual(['P-TH-IM-1', 'P-TH-TP-1', 'P-TH-TP-2', 'P-TH-TP-3', 'P-TH-TP-4', 'P-TH-TP-5'])
+    expect(boundedRows().length + DECLARED_REGISTER.filter((r) => !r.bounded).length, 'HARNESS-3 — 6 + 6 = 12, so the marking count is checkable rather than asserted (§5.5.2 item 2).').toBe(12)
     expect(
       DECLARED_REGISTER.filter((r) => r.bounded && r.declared < 1).length,
       'HARNESS-3 — every bounded row really drives attempts (a bounded marking on an EMPTY table would be over-strength).',
@@ -2397,15 +2617,15 @@ describe('§5.5.1 / §5.5.2 / §5.5.3 — the register harness: declared-vs-meas
     }
   })
 
-  it('HARNESS-4 (§5.5.2 item 3) — THE DECLARED-VERSUS-DISTINCT LEDGER: the six rows whose distinct figure differs are printed BESIDE their declared terms', () => {
+  it('HARNESS-4 (§5.5.2 item 3) — THE DECLARED-VERSUS-DISTINCT LEDGER: the ONE row whose distinct figure differs is printed BESIDE its declared term', () => {
     const ledger = DECLARED_REGISTER.filter((r) => r.distinct !== null && r.distinct !== r.declared).map((r) => ({ row: r.row, declared: r.declared, distinct: r.distinct }))
     console.log(`§5.5.2 item 3 declared-vs-distinct ledger (differing rows) :: ${JSON.stringify(ledger)}`)
-    expect(ledger, 'HARNESS-4 — the ledger §5.5.2 item 3 prints: the DISTINCT figure is reported BESIDE the declared term and is NEVER substituted for it, and the caps compare against the DECLARED figures. The §5.5.2 item 3 table names P-TH-IM-2 as its ONE collapsing row (`12` → `9`, the four further drives sharing the eight shapes\' objects).').toEqual([{ row: 'P-TH-IM-2', declared: 12, distinct: 9 }])
+    expect(ledger, 'HARNESS-4 — the ledger §5.5.2 item 3 prints: the DISTINCT figure is reported BESIDE the declared term and is NEVER substituted for it, and the caps compare against the DECLARED figures. THE TITLE SAYS ONE ROW AND THE LEDGER EXPECTS ONE ROW (F7): §5.5.2 item 3 names P-TH-IM-2 as its ONE collapsing row (`12` → `9`, the four further drives sharing the eight shapes\' objects), while the SIX rows whose distinct figure EQUALS its term — P-TH-IM-1, P-TH-IM-3, P-TH-IM-4, P-TH-SM-1, P-TH-TP-2 and P-TH-TP-3 (`§0A` note 7 item 3) — do NOT differ and are therefore not in this ledger (a title claiming six DIFFERING rows is the mislabel corrected by that note; no figure moves).').toEqual([{ row: 'P-TH-IM-2', declared: 12, distinct: 9 }])
     const declaredSum = declaredTotal()
     const declaredDistinctSum = DECLARED_REGISTER.reduce((a, r) => a + (r.distinct ?? r.declared), 0)
     const executedDistinctSum = REGISTER_RECORDS.reduce((a, r) => a + r.distinctDrives, 0)
     console.log(`§5.5.2 item 3 sums :: declared=${declaredSum} declared-distinct=${declaredDistinctSum} executed-distinct=${executedDistinctSum}`)
-    expect(declaredDistinctSum, 'HARNESS-4 — the DECLARED distinct sum is a REPORTED figure and is never substituted for the declared 102 (GAP REPORTED: §5.5.3\'s family subtotals sum to 102, while §5.5.2 item 3\'s distinct figures sum to 99 — the two figures are printed side by side here as the ledger owes).').toBe(99)
+    expect(declaredDistinctSum, 'HARNESS-4 — the DECLARED distinct sum is a REPORTED figure and is never substituted for the declared total (RE-GRAINED `99 → 100` by the same `NG-2` re-grain that moved `103`: §5.5.3\'s family subtotals sum to 103, while §5.5.2 item 3\'s distinct figures sum to 100 — the two figures are printed side by side here as the ledger owes).').toBe(100)
     expect(executedDistinctSum, 'HARNESS-4 — the EXECUTED distinct drives are measured BESIDE the declared figure (`A DECLARED REGISTER TERM IS A DRIVE COUNT`): at red time every row is broken on the module-absent boundary, so this measures what really ran.').toBeLessThanOrEqual(declaredSum)
   })
 
