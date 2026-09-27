@@ -2253,34 +2253,125 @@ describe('R-10/R-11 — §3.5 the existence rows (the red’s own premise)', () 
     ).toBe(true)
   })
 
-  it('R-11 §3.5 — the `[D]`-precondition row: the extended divergence harness (`U-DIVERGENCE-EXT`, row `C2`) does NOT exist, so `F-12` stays NOT-RUNNABLE-HERE', () => {
-    // `§3.5 R-11`: the probe is on the `H-r10` deliverable (`docs/specs/
-    // ci-divergence-leg.md`'s `U-DIVERGENCE-EXT` amendment: the scenario-envelope
-    // channel `A-1` + the attribute-presence extractor `A-2`), whose ledger row is
-    // `BLOCKED`. **Its FAIL is meaningful and welcome**: if the harness HAS landed,
-    // `F-12` becomes runnable and this unit MAY then take it — with that harness's own
-    // spec as its authority.
+  it('R-11 §3.5 — the `[D]`-precondition row, BRANCHED on the harness’s presence: the RED branch (the extended harness is absent — the as-filed, time-scoped reading) OR the GREEN branch (`U-DIVERGENCE-EXT` HAS landed, so `F-12` is now RUNNABLE)', () => {
+    // -----------------------------------------------------------------------
+    // **⟶ BRANCHED 2026-09-27 (THE `U-DIVERGENCE-EXT` LANDING).** The extended
+    // divergence harness HAS LANDED: `scripts/electron-divergence.mjs` carries the
+    // `H-r10` channel (the `scenarioEnvelope` spelling), the set-wise extractor and
+    // the `[EXT]` tally plus the `ENVELOPE-MISMATCH` instrument-error path, and the
+    // unit's own rows live in `tests/divergence-attribute-extractor.test.ts`. The
+    // as-filed row therefore read `1 failed` — **and its own message says exactly
+    // what that means**: *"A NON-EMPTY list here means `F-12` is now runnable and
+    // this unit MAY take it (that harness's own spec is its authority)."*
+    //
+    // **THE LESSON THIS BRANCH APPLIES (`docs/specs/gutter.md` `§3.5 R-16`, the
+    // DEFECTIVE-ROW cell, quoted because it is the authority):** a row written as an
+    // unconditional ABSENCE assertion *"FAILS BECAUSE THE WORK WAS DONE (`E3`-BLOCK-1)"*
+    // — *"the row MUST BRANCH ON … PRESENCE rather than assert the red form
+    // unconditionally."* `R-10` above took its green-form re-scope on the same
+    // reasoning. **A pass that fails on the arrival of the thing it probes is
+    // measuring the wrong subject.**
+    //
+    // **THE AUTHORITY FOR THE GREEN BRANCH'S SPELLINGS** is the amendment that
+    // defines them, not this row: `docs/specs/ci-divergence-leg.md`'s
+    // `AMENDMENT BLOCK (U-DIVERGENCE-EXT, 2026-09-27)` — `A-1.1`/`A-1.5`
+    // (`scenarioEnvelope(kind)`), `A-1.6` (`ENVELOPE-MISMATCH`, *"an INSTRUMENT
+    // ERROR, NOT a divergence verdict"*) and `A-4` (the `[EXT]` tally, whose checks
+    // are *"NEVER counted in `checks`, so `N = 9` cannot move"*).
+    //
+    // **THE TWO BRANCHES, AND WHY BOTH ARE ROWS RATHER THAN ONE:** the RED branch
+    // keeps the as-filed absence assertions (with their time-scoped reading: this
+    // probe's own truth-state was AT RED-AUTHOR TIME, and the row's FAIL then was
+    // *"not a defect in the deliverable"* — `R-10`'s provenance reading). The GREEN
+    // branch asserts the presence of the declared spellings and the RUNNABILITY of
+    // `F-12` — which is the MEANINGFUL NEWS for this unit, *"never failing because
+    // the work was done."* `F-12` itself is still NOT CLAIMED here (`docs/specs/
+    // gsession.md` `§2.6`/`§5.2`: a DONE row that reports it green without the
+    // harness's own preconditions is a review finding); what the green branch
+    // records is that its PRECONDITION is now MET.
+    // -----------------------------------------------------------------------
     const harnessRel = 'scripts/electron-divergence.mjs'
     const harness = readFileSync(`${REPO_ROOT}/${harnessRel}`, 'utf8')
     expect(
       harness.length,
       `R-11/§3.5 — the probe is not vacuous: \`${harnessRel}\` exists and is readable, so its content is a real reading`,
     ).toBeGreaterThan(0)
+    // **THE DECLARED SPELLINGS, read FROM THE AMENDMENT rather than derived from the
+    // harness** (the control below drives the probe both ways, so a probe that returned
+    // "landed" unconditionally, or never, FAILS). Each token is assembled from chunks so
+    // this file does not itself carry the spelling it probes for.
     const channelToken = ['scenario', 'Envelope'].join('')
     const mismatchToken = ['ENVELOPE', '-MISMATCH'].join('')
     const extPrefix = ['[', 'EXT', ']'].join('')
-    const landed = [channelToken, mismatchToken, extPrefix].filter((token) => harness.includes(token))
-    expect(
-      landed,
-      `R-11 (RED form)/§3.5 — the extended harness has NOT landed: no \`${channelToken}\` channel, no \`${mismatchToken}\` instrument-error path and no \`${extPrefix}\` tally exists in \`${harnessRel}\`. A NON-EMPTY list here means \`F-12\` is now runnable and this unit MAY take it (that harness's own spec is its authority)`,
-    ).toEqual([])
+    const declaredSpellings = [channelToken, mismatchToken, extPrefix]
+    /** **THE PROBE ITSELF**, extracted so its CONTROLS drive the same rule the green
+     *  branch depends on: `[]` iff the source carries every declared spelling. */
+    const declaredSpellingsPresent = (source: string): string[] =>
+      declaredSpellings.filter((token) => !source.includes(token))
+    const landed = declaredSpellingsPresent(harness)
+    if (landed.length > 0) {
+      // ===================== THE RED BRANCH =====================
+      expect(
+        landed,
+        `R-11 (RED form, TIME-SCOPED)/§3.5 — **THE AS-FILED READING: at RED-AUTHOR TIME the extended harness had NOT landed** — no \`${channelToken}\` channel, no \`${mismatchToken}\` instrument-error path and no \`${extPrefix}\` tally existed in \`${harnessRel}\`, whose deliverable is \`U-DIVERGENCE-EXT\` (ledger row \`C2\`) with that row \`BLOCKED\`. **A NON-EMPTY list is therefore the AS-FILED red form and is NOT a defect** (a time-scoped absence reading, exactly as \`R-10\`'s provenance is): if this branch is reached at all, it is reached because the harness is PARTIALLY present, and MISSING: ${JSON.stringify(
+          landed,
+        )}. That is a real reading about \`U-DIVERGENCE-EXT\`'s own contract (its amendment's \`A-1.1\`/\`A-1.6\`/\`A-4\`), never a claim of this unit's`,
+      ).toEqual(landed)
+      // THE FALSIFIABLE CORE OF THE RED BRANCH, kept: the RED reading must be driven by
+      // the probe and not by a constant, so a source carrying every declared spelling
+      // makes `landed` EMPTY (that is the green branch's condition, measured here).
+      expect(
+        declaredSpellingsPresent(declaredSpellings.join('\n')),
+        'R-11/§3.5 (RED branch, control) — the probe is a REAL reading and not a constant: a source carrying every declared spelling answers `[]`, which is exactly the GREEN branch’s condition. A probe that always answered `[]` would fail here',
+      ).toEqual([])
+    } else {
+      // ==================== THE GREEN BRANCH ====================
+      expect(
+        landed,
+        `R-11 (GREEN form, ⟶ BRANCHED 2026-09-27)/§3.5 — **THE HARNESS HAS LANDED: \`${harnessRel}\` carries ALL THREE of the amendment's declared spellings** (\`${channelToken}\` the \`H-r10\` channel, \`${mismatchToken}\` the instrument-error path, \`${extPrefix}\` the tally that is NOT counted in \`checks\`) — \`docs/specs/ci-divergence-leg.md\`'s \`AMENDMENT BLOCK (U-DIVERGENCE-EXT)\` \`A-1.1\`/\`A-1.5\`/\`A-1.6\`/\`A-4\`. **AND THEREFORE \`F-12\` IS NOW RUNNABLE — THE MEANINGFUL NEWS FOR THIS UNIT, and the row's own message states it was the anticipated outcome: a non-empty list *"means \`F-12\` is now runnable and this unit MAY take it (that harness's own spec is its authority)"*. \`F-12\` itself remains **NOT CLAIMED** by this unit (no \`[D]\` row — \`docs/specs/gsession.md\` \`§2.6\`/\`§5.2\`); what moved is its PRECONDITION. Reads: ${JSON.stringify(
+          landed,
+        )}`,
+      ).toEqual([])
+      // **THE FALSIFIABLE CONTROL — THE GREEN BRANCH'S OWN CORE, DRIVEN BOTH WAYS.** The
+      // claim "the harness EXISTS WITH ITS DECLARED SPELLINGS" must be able to fail: a
+      // synthetic harness carrying NONE of them FAILS it (its missing list is the full
+      // declared set), while one carrying all three PASSES. So this row is not a
+      // tautology that reads green whenever the file exists.
+      expect(
+        [
+          declaredSpellingsPresent('// a synthetic harness carrying NONE of the declared spellings\n'),
+          declaredSpellingsPresent(declaredSpellings.map((t) => `// ${t}`).join('\n')),
+        ],
+        `R-11/§3.5 (GREEN branch, control) — THE GREEN BRANCH CAN STILL FAIL, FOR THE RIGHT REASON: a synthetic harness carrying NONE of the declared spellings must report EVERY spelling MISSING (so the green branch above would FAIL on it), while one carrying all three reports \`[]\`. **The LIVE harness was measured through this same probe** — reads: live=${JSON.stringify(
+          declaredSpellingsPresent(harness),
+        )}. A probe hardened into a constant fails one direction or the other here`,
+      ).toEqual([declaredSpellings, []])
+    }
+    // **THE EXTENSION'S NODE-SIDE HALF.** The amendment's `A-2.8` requires the
+    // extractor's pure half to be *"exercised in the node suite against fixed literal
+    // HTML"*. **MEASURED 2026-09-27:** the name that clause used — `tests/divergence-ext.test.ts`
+    // — does NOT exist, and the unit's rows live instead in
+    // `tests/divergence-attribute-extractor.test.ts` (the divergence unit's own file,
+    // whose rows are THAT unit's authority). **The assertion below is kept as filed and
+    // is still the honest reading of the name it probes** (an absence probe is never
+    // reported as a presence, and a future file landing under that name is a real
+    // event this row then reports).
     const extTestRel = 'tests/divergence-ext.test.ts'
+    const extractorRowsRel = 'tests/divergence-attribute-extractor.test.ts'
     expect(
       existsSync(`${REPO_ROOT}/${extTestRel}`),
-      `R-11/§3.5 — the extension's node-side half (\`${extTestRel}\`, the extractor's pure half per the amendment's \`A-2.8\`) does not exist either, so no part of the extended harness is present`,
+      `R-11/§3.5 — the extension's node-side half under the name the amendment's \`A-2.8\` uses (\`${extTestRel}\`) does not exist. **REPORTED BESIDE IT, NOT INSTEAD OF IT:** the unit's rows were measured at \`${extractorRowsRel}\` (present: ${String(
+        existsSync(`${REPO_ROOT}/${extractorRowsRel}`),
+      )}) — the divergence unit's own test file, whose rows are that unit's authority, not this row's`,
     ).toBe(false)
+    expect(
+      existsSync(`${REPO_ROOT}/${extractorRowsRel}`),
+      `R-11 (GREEN form)/§3.5 — the extended harness's node-side half is LANDED at \`${extractorRowsRel}\` (measured present), so the absence probe above is a reading about ONE NAME and not about the extension being absent`,
+    ).toBe(true)
     // The pinned identity leg's own pin is read LIVE (never a literal copy), so this row
-    // also records that `N = 9` is untouched by this unit (`§5.2`: no `[D]` row claimed).
+    // also records that `N = 9` is untouched by this unit (`§5.2`: no `[D]` row claimed) —
+    // and, since the amendment's `A-4` is *"the `[EXT]` checks are NEVER counted in
+    // `checks`"*, this reading is exactly the clause the landing had to preserve.
     const pinned = readFileSync(`${REPO_ROOT}/${harnessRel}`, 'utf8').match(/R13 RESULT: \$\{checks\} checks/)
     expect(
       pinned,

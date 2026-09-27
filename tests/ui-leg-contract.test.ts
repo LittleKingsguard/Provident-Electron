@@ -145,7 +145,22 @@ describe('U-REALDOM-BOOT — the leg surface (§2, §3.0 R0–R4, §3.1–§3.6,
   // correct implementation, so the row pins the DELTA the spec's contract
   // really needs — exactly ONE additive key, and it is `ui`. The off-by-one in
   // the spec is reported to the supervisor; it is not silently reconciled.
-  // -------------------------------------------------------------------------
+  //
+  // ⟶ EXTENDED 2026-09-27 (THE ADDITIVE TEST-LAYER LEG — `AGENTS.md` item 4,
+  // `AN ADDITIVE FOURTH LEG LANDED 2026-09-27`). The process pass added the
+  // `typecheck:tests` key (`tsc --noEmit -p tsconfig.tests.json`) BESIDE the
+  // unchanged trio (`npm test` / `npm run typecheck` / `npm run build`), and
+  // `AGENTS.md` item 4 names this row BY NAME as the exact consequence:
+  // *"`tests/ui-leg-contract.test.ts`'s `L-1` pins the `scripts` KEY SET (the
+  // landed keys plus exactly `ui`), so ANY further script key — including this
+  // one — reddens that row until a TestWriter extends the landed set; a config
+  // change cannot satisfy it."* THE MEASURED BEFORE-READING of this row was
+  // `['typecheck:tests', 'ui']` vs `['ui']` (i.e. `1 failed`), and the repair is
+  // the one that file's own rule names: the ROW's landed set is extended, and
+  // the pinned DELTA stays exactly `['ui']`. **The key set is now pinned in
+  // BOTH directions**: the filter below (no UNEXPECTED key may appear) and the
+  // explicit set equality added beside it (the landed set is exactly these
+  // twelve), so the extension did not turn the row into a lower bound.
   const LANDED_SCRIPT_KEYS = [
     'clean',
     'build',
@@ -153,6 +168,7 @@ describe('U-REALDOM-BOOT — the leg surface (§2, §3.0 R0–R4, §3.1–§3.6,
     'start',
     'start:http',
     'typecheck',
+    'typecheck:tests', // ⟶ ADDED 2026-09-27: the additive test-layer leg (`AGENTS.md` item 4)
     'test',
     'test:watch',
     'battery',
@@ -172,11 +188,16 @@ describe('U-REALDOM-BOOT — the leg surface (§2, §3.0 R0–R4, §3.1–§3.6,
     ).toBe('npm run build && node scripts/electron-ui.mjs')
     expect(
       Object.keys(scripts).filter((k) => !LANDED_SCRIPT_KEYS.includes(k)),
-      '§2 item 3/§8 N-8: `ui` is the ONE additive key — no other script key may appear in this unit',
+      '§2 item 3/§8 N-8: `ui` is the ONE additive key — no other script key may appear in this unit. ⟶ EXTENDED 2026-09-27 (`AGENTS.md` item 4, the additive `typecheck:tests` test-layer leg): the ADDITIVE key `typecheck:tests` is now part of the LANDED set above (it was added BESIDE the unchanged trio by a separate process pass, and this row\'s own rule — quoted in `AGENTS.md` item 4 — is that the row must be extended, never that the config change is wrong). The DELTA this assertion pins is UNCHANGED: exactly `ui`',
     ).toEqual(['ui'])
     expect(
+      [...Object.keys(scripts)].sort(),
+      '§2 item 3/§8 N-8 — THE LANDED SET IS PINNED AS A SET, not as a count: the `scripts` key set is EXACTLY the landed keys (the eleven + the additive test-layer leg `typecheck:tests`, both `AGENTS.md`-cited) PLUS the one additive `ui` key — so no unexpected key can appear AND no landed key can vanish (the direction a count and the filter above cannot catch). Read (sorted): ' +
+        JSON.stringify([...Object.keys(scripts)].sort()),
+    ).toEqual([...[...LANDED_SCRIPT_KEYS, 'ui']].sort())
+    expect(
       Object.keys(scripts).length,
-      '§2 item 3: the scripts block is the landed set PLUS exactly the one `ui` key',
+      '§2 item 3: the scripts block is the landed set PLUS exactly the one `ui` key (the count is checked BESIDE the set equality above, never instead of it — `§4.4 S-7`: a bare count is satisfiable by renaming)',
     ).toBe(LANDED_SCRIPT_KEYS.length + 1)
   })
 
@@ -3465,6 +3486,35 @@ function getCount() { return measurementCount }`,
   //   divergence leg to make its flake disappear ⇒ RT-9 + PRE-4 violation.
   // -------------------------------------------------------------------------
   it('RT-9a (§3.7 RT-9(b)(c)) — the retry is LEG-LOCAL: the shared helper carries no retry and its spawns are single-shot', () => {
+    // -----------------------------------------------------------------------
+    // ⟶ DIAGNOSED 2026-09-27 (THE SHIM-INTEGRITY PRE-FLIGHT ARRIVED IN THE SHARED
+    // HELPER): **THE ROW'S PINNED CONTRACT IS INTACT AND NO REPAIR IS OWED — the
+    // helper change is case (b) of the diagnosis, NOT a violation.** The divergence
+    // pass added a pre-flight to `scripts/electron-spawn.mjs` (`assertEntryPointSpawnable`
+    // + `entryPointKind` + `readEntryHeader` + `wrapperEntryPoint`, with the constants
+    // `ENTRY_HEADER_BYTES` / `NATIVE_MAGICS` / `SHELL_SHEBANG`), called from
+    // `spawnElectron` BEFORE any child exists; on a corrupted npm shim it THROWS, and on
+    // the healthy path it is a bounded read that changes the spawn not at all.
+    // **THE MEASUREMENTS TAKEN AT THIS HEAD, against the three facts this row pins, are
+    // all UNCHANGED by that pass:**
+    //   · `spawn(...)` call sites, comments stripped: `1` BOTH at `HEAD` and in the
+    //     worktree (the RAW count moves `1 → 2` only because the pre-flight's own prose
+    //     names a spawn — the row reads the STRIPPED code, which is why the prose cannot
+    //     redden it, and the pre-flight itself creates no child: `readEntryHeader` =
+    //     `openSync`/`readSync`/`closeSync`, `wrapperEntryPoint` = `realpathSync`).
+    //   · the export census: `13` BOTH at `HEAD` and in the worktree — the four new
+    //     members are MODULE-LOCAL, so `RT-9d`'s pinned list is untouched (an added
+    //     export such as `assertEntryPointSpawnable` would have reddened THAT row).
+    //   · retry-shaped words (`retry|attempt|backoff|jitter`), comments stripped: `[]` —
+    //     the RAW reading carries hits, every one of them inside the new prose, which the
+    //     row strips (that is the row's own mechanism and it is unchanged).
+    //   · `spawnElectron`/`spawnProfile` bodies carry no `for (`/`while (`/retry token`,
+    //     so both are still SINGLE-SHOT.
+    // **WHAT WAS *NOT* DONE, stated so the honesty is checkable:** the row's pinned
+    // contract was NOT relaxed, its census was NOT widened to "name the new member", and
+    // no assertion was removed — the assertion set below is byte-identical to the one
+    // that measured the pre-flight's arrival, and it PASSES against it.
+    // -----------------------------------------------------------------------
     const helperSrc = requireHelperSource()
     const code = stripComments(helperSrc)
     expect(

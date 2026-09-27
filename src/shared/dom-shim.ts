@@ -1,11 +1,47 @@
 // A minimal DOM shim (the upstream adapters.test.ts pattern) sufficient for
 // DomAdapter + our Runtime (which reads mount.innerHTML). We do NOT need real
 // layout — only the element tree + attribute/text bookkeeping DomAdapter uses.
+
+/** **`U-DIVERGENCE-EXT` — THE `dataset` ↔ `data-*` NAME MAP (the platform's own).** A
+ *  `DOMStringMap` key is the attribute name minus its `data-` prefix with each `-x` pair
+ *  turned into `X` (`data-node-id` reads back as `dataset.nodeId`); a write goes the other
+ *  way: `nodeId` → `data-node-id`, `kebabKey` → `data-kebab-key`.
+ *
+ *  **THE BOUND, STATED SO IT IS NEVER A SILENT PARTIAL** (the shim mirrors the platform for
+ *  the forms its callers and the leg actually use, and no further):
+ *   (a) the camelCase ↔ kebab mapping is mirrored in BOTH directions (read and write);
+ *   (b) a key CONTAINING a `-` is **not** mirrored — the platform THROWS on such a write
+ *       (measured in a live Chromium page: `DOMException: Failed to set a named property
+ *       'foo-bar' on 'DOMStringMap': 'foo-bar' is not a valid property name`) while this shim
+ *       IGNORES it, which is exactly this slot's pre-change behaviour (no attribute was emitted
+ *       for such a key before either); the platform's own GETTER answers `undefined` there, and
+ *       so does this one;
+ *   (c) the attribute NAME is stored verbatim (the shim's `setAttribute` does not lowercase
+ *       HTML attribute names — an existing rule this change does not alter);
+ *   (d) only `data-*` attributes are reachable through the slot: a key's attribute always
+ *       carries the `data-` prefix, so `dataset.size` is `data-size` (the authored bare
+ *       `size=` attribute the demo card emits is NOT `dataset.size` — in the real DOM too). */
+function datasetAttributeName(key: string): string {
+  return `data-${key.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}`
+}
+
+/** The reverse map: `data-node-id` → `nodeId`. A non-`data-` name (or a bare `data-`) answers
+ *  `null` — such an attribute is not reachable through the `dataset` slot. */
+function datasetKeyOfAttribute(name: string): string | null {
+  if (!name.startsWith('data-') || name.length === 5) return null
+  return name.slice(5).replace(/-([a-z])/g, (_m, c: string) => c.toUpperCase())
+}
+
+/** Bound (b) on `datasetAttributeName`: only a hyphen-free STRING key is mappable (the platform
+ *  refuses a hyphenated key on the write and answers `undefined` on the read). */
+function datasetKeyMappable(key: PropertyKey): key is string {
+  return typeof key === 'string' && !key.includes('-')
+}
+
 export class ShimElement {
   tagName: string
   children: ShimElement[] = []
   attrs: Record<string, string> = {}
-  dataset: Record<string, string> = {}
   style: { cssText: string } = { cssText: '' }
   listeners: Record<string, Array<(e: unknown) => void>> = {}
   textContent = ''
@@ -17,6 +53,65 @@ export class ShimElement {
 
   constructor(tag: string) {
     this.tagName = tag.toUpperCase()
+  }
+
+  /** The cached `dataset` handle — the platform answers the SAME object on every read
+   *  (`el.dataset === el.dataset` is true there), so the proxy is built once per element. */
+  private datasetHandle: Record<string, string> | null = null
+
+  /** **THE `dataset` SLOT IS ATTRIBUTE-BACKED (`U-DIVERGENCE-EXT`, the `data-wire`
+   *  divergence).** It used to be a plain object, so the engine's own wire write —
+   *  `el.dataset.wire = wire` (`provident-ssr/dist/core/adapters.js:139`) — set a JS property
+   *  and emitted NO ATTRIBUTE, while the real DOM rendered `data-wire="node-N"` on every
+   *  created element. The divergence leg's set-wise extractor measured the consequence live
+   *  on both hosts: `only-on-real=[data-wire] only-on-shim=[]` at all three points
+   *  (`sameSize=false`), with the pinned `N = 9` surfaces green — a HOST-side finding, fixed
+   *  here (a red `provident.load` on the shim side is always attributed to the shim, never
+   *  reported as a real-DOM divergence).
+   *
+   *  WHAT IT MIRRORS: the platform's `DOMStringMap` for the mapped forms — a write lands in
+   *  the SAME `attrs` store `setAttribute` writes (so `outerHTML`/`innerHTML`, `getAttribute`
+   *  and `attributes`-order serialization all see it), a read answers the attribute's value or
+   *  `undefined`, `in` / `delete` / `Object.keys` / `JSON.stringify` answer the `data-*`
+   *  attributes present, and the object is cached per element. The full bound (mirrored vs
+   *  not) is stated on `datasetAttributeName` above. */
+  get dataset(): Record<string, string> {
+    if (this.datasetHandle === null) {
+      const element = this
+      // Bound (b): a key containing `-` is NOT mappable — the platform throws on the write and
+      // answers `undefined` on the read. `attributeValue` mirrors the read exactly.
+      const attributeValue = (key: PropertyKey): string | undefined => {
+        if (!datasetKeyMappable(key)) return undefined
+        return element.getAttribute(datasetAttributeName(key)) ?? undefined
+      }
+      this.datasetHandle = new Proxy({} as Record<string, string>, {
+        // A prototype member (`toString`, `constructor`, …) answers from the prototype, as it
+        // does on the platform's `DOMStringMap`; only the mapped names are the data view.
+        get: (target, key, receiver) =>
+          typeof key !== 'string' || Reflect.has(target, key) ? Reflect.get(target, key, receiver) : attributeValue(key),
+        set: (_target, key, value) => {
+          if (typeof key !== 'string') return false
+          // Bound (b): an unmappable key's write is IGNORED — no attribute is emitted for it,
+          // which is this slot's pre-change behaviour too (the platform throws here; the shim
+          // must not turn a previously silent write into a render crash). `setAttribute` carries
+          // the platform's own ToString on the value (`undefined` → the attribute VALUE
+          // `"undefined"`, never a removal).
+          if (datasetKeyMappable(key)) element.setAttribute(datasetAttributeName(key), value)
+          return true
+        },
+        has: (_target, key) => datasetKeyMappable(key) && element.getAttribute(datasetAttributeName(key)) !== null,
+        deleteProperty: (_target, key) => {
+          if (datasetKeyMappable(key)) element.removeAttribute(datasetAttributeName(key))
+          return true
+        },
+        ownKeys: () => [...new Set(Object.keys(element.attrs).map(datasetKeyOfAttribute).filter((k): k is string => k !== null))],
+        getOwnPropertyDescriptor: (_target, key) => {
+          const value = attributeValue(key)
+          return value === undefined ? undefined : { value, writable: true, enumerable: true, configurable: true }
+        },
+      })
+    }
+    return this.datasetHandle
   }
 
   appendChild(c: ShimElement): ShimElement {

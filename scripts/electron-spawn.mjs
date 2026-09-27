@@ -15,8 +15,17 @@
 // §2.1 item 4 — a spawn failure is NEVER swallowed: `spawnElectron` throws on a
 // synchronous failure and surfaces the child's `error` event; a leg that cannot
 // spawn reports its own prerequisite/fail state and never a `0`.
+// ADDED (`U-DIVERGENCE-EXT`, the harness debt inherited from `docs/pending.md`
+// §E) — THE ENTRY-POINT INTEGRITY PRE-FLIGHT: before any child is created,
+// `spawnElectron` asserts the resolved Electron entry point (and the npm
+// `.bin/electron` wrapper when it exists) is a Node script or the native
+// binary, and THROWS with the file, the observation and the fix when it is a
+// shell script (the corrupted-shim hazard: a self-re-exec loop at ~99 % CPU
+// that is indistinguishable from a wedged host). The landed argument vector,
+// env pair, stdio wiring, profile discipline and cleanup behaviour are
+// unchanged; the check is a bounded header read on the healthy path.
 import { spawn } from 'node:child_process'
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { closeSync, existsSync, mkdtempSync, openSync, readFileSync, readSync, realpathSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
@@ -205,6 +214,134 @@ process.on('exit', () => {
 })
 
 // ---- spawn -----------------------------------------------------------------
+/** THE ENTRY-POINT INTEGRITY PRE-FLIGHT (docs/pending.md §E, the harness debt
+ *  `U-DIVERGENCE-EXT` INHERITS: *"recommended, NOT implemented"*).
+ *
+ *  THE HAZARD, verbatim from the record: `node_modules/electron/cli.js` — the
+ *  file `node_modules/.bin/electron` symlinks to — was once **corrupted into a
+ *  shell script that re-execs itself** (`#!/bin/sh` … `exec …/node_modules/.bin/electron "$@"`).
+ *  Every boot then re-entered `exec` forever at **~99 % CPU printing nothing**,
+ *  a hang **indistinguishable from a wedged host**, and it cost **multiple
+ *  passes of misattribution** (`strace -f` showed an unbroken cycle of
+ *  `openat(… .bin/electron)` and `/proc/<pid>/status` read `State: R` at 99 %
+ *  CPU with no `EPERM`/`EACCES` at boot; the repaired path is an install
+ *  artifact, not repo code — `docs/decisions.md` `NPM-SHIM-INTEGRITY`).
+ *
+ *  THE CHECK, and why it is CHEAP: before ANY child is created, read the first
+ *  `ENTRY_HEADER_BYTES` bytes of (i) the entry point this helper is about to
+ *  spawn and (ii) the npm `.bin/electron` wrapper when that path exists, and
+ *  REFUSE to spawn when either is a shell script (or is unreadable / empty /
+ *  unrecognizable). Two short reads and one `realpath` — no process, no
+ *  network, no write.
+ *
+ *  NEVER A SILENT SKIP, NEVER A FALSE GREEN: a refusal THROWS with the file,
+ *  what was observed and the fix, so the leg dies at once with an actionable
+ *  message instead of hanging 30 s per retry and being reported as an app/host
+ *  failure. The pass path is silent and adds no output (`spawnElectron`'s
+ *  behaviour, vector, env, stdio wiring, profiles and cleanup are unchanged).
+ *
+ *  THE TWO ADMISSIBLE KINDS, stated so the assertion cannot be over-read: this
+ *  helper deliberately spawns the Electron **BINARY** (never the wrapper — see
+ *  `electronBin`), so a legitimate entry point is either the native binary
+ *  (ELF / Mach-O / PE magic) or a Node script (`#!…node`, or a
+ *  `.js`/`.cjs`/`.mjs` path). A shell interpreter in the shebang is the §E
+ *  hazard, and anything this probe cannot recognize is treated as hostile to
+ *  the leg rather than spawned on trust. */
+const ENTRY_HEADER_BYTES = 128
+
+/** The 4-byte magic numbers of the native executables a healthy Electron
+ *  install ships: ELF (Linux), Mach-O thin 64-bit (both endiannesses), Mach-O
+ *  universal/fat (both endiannesses). PE (`MZ`) is matched on its text prefix. */
+const NATIVE_MAGICS = ['\x7fELF', '\xcf\xfa\xed\xfe', '\xfe\xed\xfa\xcf', '\xca\xfe\xba\xbe', '\xbe\xba\xfe\xca']
+
+/** The shell interpreters a corrupted shim's shebang names. Matched as WHOLE
+ *  words inside the first line, so `#!/usr/bin/env node` never matches and
+ *  `#!/bin/bash` (and `/bin/sh`, `dash`, `zsh`, `ksh`, `busybox`) do. */
+const SHELL_SHEBANG = /(^|[^A-Za-z0-9_])(sh|bash|dash|zsh|ksh|csh|fish|busybox)(\s|$)/
+
+/** Read the first `ENTRY_HEADER_BYTES` bytes of `path` — bounded, so a 200 MB
+ *  Electron binary is never loaded — or `null` when they cannot be read. */
+function readEntryHeader(path) {
+  let fd = null
+  try {
+    fd = openSync(path, 'r')
+    const buffer = Buffer.alloc(ENTRY_HEADER_BYTES)
+    const read = readSync(fd, buffer, 0, ENTRY_HEADER_BYTES, 0)
+    return buffer.subarray(0, read)
+  } catch {
+    return null
+  } finally {
+    if (fd !== null) {
+      try {
+        closeSync(fd)
+      } catch {
+        /* already closed: nothing to report */
+      }
+    }
+  }
+}
+
+/** Classify the file a leg is about to spawn. TOTAL: never throws, and answers
+ *  one of `native-binary` / `node-script` / `shell-script` / `unrecognized` /
+ *  `empty` / `unreadable`, with the observed header as evidence. */
+function entryPointKind(path) {
+  const header = readEntryHeader(path)
+  if (header === null) return { kind: 'unreadable', evidence: 'the file could not be read' }
+  if (header.length === 0) return { kind: 'empty', evidence: 'the file is empty (0 bytes)' }
+  const text = header.toString('latin1')
+  const firstLine = text.split('\n', 1)[0].trim()
+  if (NATIVE_MAGICS.includes(text.slice(0, 4)) || text.startsWith('MZ')) {
+    return { kind: 'native-binary', evidence: `binary magic ${JSON.stringify(text.slice(0, 4))}` }
+  }
+  if (text.startsWith('#!')) {
+    if (/\bnode(js)?\b/.test(firstLine)) return { kind: 'node-script', evidence: `shebang ${JSON.stringify(firstLine)}` }
+    if (SHELL_SHEBANG.test(firstLine)) return { kind: 'shell-script', evidence: `shebang ${JSON.stringify(firstLine)}` }
+    return { kind: 'unrecognized', evidence: `shebang ${JSON.stringify(firstLine)}` }
+  }
+  if (/\.(js|cjs|mjs)$/.test(path)) return { kind: 'node-script', evidence: 'a shebang-less .js/.cjs/.mjs entry point' }
+  // A shebang-less shell script whose self-re-exec is the §E loop itself.
+  if (/\bexec\b/.test(text) && /\$0|\$\{0\}/.test(text)) {
+    return { kind: 'shell-script', evidence: 'a shebang-less script that `exec`s `$0` (the §E self-re-exec loop)' }
+  }
+  return { kind: 'unrecognized', evidence: `header ${JSON.stringify(text.slice(0, 32))}` }
+}
+
+/** THE PRE-FLIGHT ITSELF: throw — loudly, actionably, and BEFORE any child is
+ *  created — unless `path` is a Node script or the native Electron binary. */
+function assertEntryPointSpawnable(what, path) {
+  const probe = entryPointKind(path)
+  if (probe.kind === 'node-script' || probe.kind === 'native-binary') return probe
+  throw new Error(
+    [
+      `electron-spawn pre-flight: REFUSING TO SPAWN — ${what} is not a Node script or the native Electron binary (${probe.kind}).`,
+      `  what:     ${what}`,
+      `  path:     ${path}`,
+      `  observed: ${probe.evidence}`,
+      '  why:      this is the corrupted-npm-shim hazard recorded in docs/pending.md §E. A shell script here (or a wrapper that',
+      '            re-execs itself) re-enters forever at ~99% CPU printing nothing, and that hang is INDISTINGUISHABLE from a',
+      '            wedged host — it is exactly what cost multiple passes of misattribution. Spawning it cannot succeed, so this',
+      '            leg stops here with a named cause instead of a 30s hang reported as an app/host failure.',
+      '  fix:      restore the package entry point from a healthy install of the same version, then re-run this leg, e.g.',
+      '              npm install electron@44.4.5 --force        (or: copy node_modules/electron/cli.js from a healthy tree)',
+      '            Do NOT re-run the leg or the suite until this pre-flight passes: a re-run cannot fix a corrupted entry point.',
+    ].join('\n'),
+  )
+}
+
+/** The npm `.bin/electron` wrapper's REAL target, or `null` when that path does
+ *  not exist. It is checked even though this helper never spawns it: §E's
+ *  corrupted file WAS that wrapper, and a stale corruption left behind in
+ *  `node_modules` is the misattribution trap a later revert would step into. */
+function wrapperEntryPoint() {
+  const bin = join(repoRoot, 'node_modules', '.bin', 'electron')
+  if (!existsSync(bin)) return null
+  try {
+    return realpathSync(bin)
+  } catch {
+    return bin
+  }
+}
+
 /** Spawn Electron with the landed base vector + a fresh scratch profile.
  *
  *  Returns `{ child, args, env, profile }`. The child's stderr is exposed as
@@ -228,6 +365,12 @@ export function spawnProfile(name = 'provident-leg', extraArgs = []) {
 /** Spawn Electron with `extraArgs` appended to the landed base vector. The
  *  caller supplies its own arguments (a profile, an override flag, …). */
 export function spawnElectron(extraArgs = []) {
+  // THE PRE-FLIGHT, BEFORE ANY CHILD EXISTS (see the §E block above). It throws
+  // on a corrupted entry point — never a silent skip and never a false green —
+  // and is a pure read on the healthy path, so the spawn below is untouched.
+  assertEntryPointSpawnable('the Electron entry point', electronBin)
+  const wrapper = wrapperEntryPoint()
+  if (wrapper !== null) assertEntryPointSpawnable("the npm '.bin/electron' wrapper", wrapper)
   const args = [...baseArgs, ...extraArgs]
   const env = electronEnv()
   let child
