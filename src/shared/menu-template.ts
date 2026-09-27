@@ -64,20 +64,68 @@ function readOwn(value: object, key: string): { readonly ok: boolean; readonly v
   }
 }
 
+function isIndexKey(key: string): boolean {
+  if (key.length === 0) return false
+  for (let i = 0; i < key.length; i += 1) {
+    const code = key.charCodeAt(i)
+    if (code < 48 || code > 57) return false
+  }
+  return true
+}
+
+/** THE COMPOSED CARRY RULE (`docs/specs/menulib.md` `§3c`, the three pinned
+ *  sub-readings): a usable element is a non-null object — an ARRAY INCLUDED —
+ *  whose own-key enumeration (`Object.keys`) and whose read of EVERY owned
+ *  enumerable member both COMPLETE; it emits ONE FRESH RECORD whose own
+ *  enumerable string keys are the source's own keys filtered to the seven
+ *  declared names IN DECLARED ORDER plus, on an array, its own present index
+ *  keys (`length` is a non-enumerable own member and is never carried), each
+ *  value handed on BY IDENTITY with an object member CARRIED IN TURN; an EMPTY
+ *  intersection still emits a KEYLESS record (never a drop); and the moment
+ *  either the enumeration or a member read THROWS, the WHOLE element is
+ *  SKIPPED with the throw absorbed — never a partial record. */
+function ownMembers(source: object): { readonly ok: boolean; readonly names: readonly string[]; readonly values: readonly unknown[] } {
+  try {
+    const names = Object.keys(source) as readonly string[]
+    const values: unknown[] = []
+    for (const name of names) values.push((source as Record<string, unknown>)[name])
+    return { ok: true, names, values }
+  } catch {
+    return { ok: false, names: [], values: [] }
+  }
+}
+
 function carries(element: unknown): CatalogEntry | null {
   if (element === null) return null
   if (typeof element !== "object" && typeof element !== "function") return null
+  if (Array.isArray(element)) {
+    try {
+      Object.keys(element)
+    } catch {
+      return null
+    }
+  }
   const source = element as object
-  const names = ownNames(source)
-  if (names.length === 0) return null
-  const record = Object.create(null) as Record<string, unknown>
+  const probe = ownMembers(source)
+  if (!probe.ok) return null
+  const values = new Map<string, unknown>()
   for (const key of CARRY_KEYS) {
     if (!owns(source, key)) continue
     const read = readOwn(source, key)
-    if (!read.ok) continue
-    record[key] = read.v
+    if (!read.ok) return null
+    values.set(key, read.v)
   }
-  if (Object.keys(record).length === 0) return null
+  const record = Object.create(null) as Record<string, unknown>
+  for (const key of CARRY_KEYS) {
+    if (!values.has(key)) continue
+    record[key] = values.get(key)
+  }
+  for (let i = 0; i < probe.names.length; i += 1) {
+    const name = probe.names[i] as string
+    if (!isIndexKey(name)) continue
+    if (CARRY_KEYS.indexOf(name) >= 0) continue
+    record[name] = probe.values[i] === null ? null : carries(probe.values[i])
+  }
   return record as unknown as CatalogEntry
 }
 
@@ -135,6 +183,16 @@ function identityItem(entry: CatalogEntry): ProjectedItem {
   for (const key of CARRY_KEYS) {
     if (!owns(source, key)) continue
     item[key] = source[key]
+  }
+  // `§3c` pin 1: a carried ARRAY keeps its own present index keys in turn, so a
+  // projected item re-carries them rather than dropping them.
+  const names = ownNames(source)
+  for (const name of names) {
+    if (!isIndexKey(name) || CARRY_KEYS.indexOf(name) >= 0) continue
+    if (!owns(source, name)) continue
+    const read = readOwn(source, name)
+    if (!read.ok) continue
+    item[name] = read.v
   }
   return item as unknown as ProjectedItem
 }
