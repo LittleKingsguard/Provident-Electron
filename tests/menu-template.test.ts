@@ -1497,12 +1497,29 @@ describe('§3.2 F-1..F-10 and §3.3 I-1..I-12 — the failure surface', () => {
     const s = await surface('F-2')
     const valid = el({ id: 'valid' })
     const protoRecord = Object.assign(Object.create(null) as Record<string, unknown>, { id: 'proto', label: 'P' })
+    /** ⟶ THE KEYLESS CARRIER IS NOW A GENUINELY KEYLESS OBJECT (`2026-09-27`, E7
+     *  row-bound fixture amendment — `F-2` was the file's single red row). **THE
+     *  AS-FILED FIXTURE MADE THE FUNCTION `() => 1` THE KEYLESS CARRIER, WHICH
+     *  REQUIRED THAT FUNCTION TO BE *CARRIED* — AND THE CONTRACT FORBIDS EXACTLY
+     *  THAT:** `§2.3` item 1(c) + item 11 clause 4 + `§3c` pin 2 make a FUNCTION
+     *  element SKIPPED WHOLE (no entry, no throw — the FUNCTION-element row below
+     *  drives that over six function shapes), so a fixture whose keyless entry was
+     *  a function could never be satisfied by a contract-conformant module. **THE
+     *  ROW'S CLAIM IS UNCHANGED:** the keyless record is the element whose
+     *  own-readable intersection with the seven declared names is EMPTY
+     *  (`Object.keys` reads `[]`), and it is CARRIED rather than dropped (`§3c`
+     *  pin 2). `{}` is that element — a non-null, non-array OBJECT that OWNS
+     *  nothing. **THE FUNCTION STAYS IN THE CATALOG AS A HOSTILE**, now read as a
+     *  SKIP: it contributes NO entry, so the four carried key sets, the count and
+     *  every index below are IDENTICAL to the as-filed readings, while a module
+     *  that carries the function FAILS the count and key-set reads. */
+    const keylessRecord: Record<string, unknown> = {}
     const nested = el({ id: 'nested' })
     const accessor = throwingAccessorRecord()
     /** The very array element the catalog carries — so the reference reads below are
      *  driven against the caller's OWN array rather than against a rebuilt copy. */
     const arrayElement: readonly unknown[] = [nested]
-    const catalog = [null, undefined, 42, 'x', Symbol('s'), 12n, () => 1, revokedProxy(), trapThrowingProxy(), protoRecord, arrayElement, valid, accessor]
+    const catalog = [null, undefined, 42, 'x', Symbol('s'), 12n, () => 1, revokedProxy(), trapThrowingProxy(), keylessRecord, protoRecord, arrayElement, valid, accessor]
     let out: readonly Record<string, unknown>[] = []
     expect(() => {
       out = s.normalizeCatalog(catalog)
@@ -1512,9 +1529,11 @@ describe('§3.2 F-1..F-10 and §3.3 I-1..I-12 — the failure surface', () => {
     // (`2026-09-27`, E7 row-bound repair; `§3c`'s corrected worked figure). **THE
     // AS-FILED READING WAS `out.length === 3` WITH THE ARRAY AT `out[1]`, AND IT
     // CONTRADICTED ITS OWN CATALOG**: the catalog's FIRST carried element is the
-    // FUNCTION `() => 1` — a non-null, non-array object whose own-readable
+    // KEYLESS RECORD — a non-null, non-array OBJECT (`{}`) whose own-readable
     // intersection with the seven declared names is EMPTY, so it is CARRIED KEYLESS
-    // (`§3c` pin 2: never dropped, and `Object.keys` reads `[]`); `protoRecord`
+    // (`§3c` pin 2: never dropped, and `Object.keys` reads `[]`); the FUNCTION
+    // `() => 1` beside it is SKIPPED WHOLE (`§2.3` item 1(c) + item 11 clause 4) and
+    // contributes no entry; `protoRecord`
     // carries `['id','label']`; the ARRAY `[nested]` is carried as `['0']` with its
     // `'0'` member a FRESH RECORD of `nested` (`§3c` pin 1); and `valid` carries the
     // seven — **so the FOUR carried key sets in catalog order read
@@ -1539,11 +1558,11 @@ describe('§3.2 F-1..F-10 and §3.3 I-1..I-12 — the failure surface', () => {
     ).toEqual([[], ['id', 'label'], ['0'], [...SEVEN_KEYS]])
     expect(
       out.length,
-      'F-2 — EXACTLY FOUR usable elements are carried: the keyless empty-intersection record, the null-prototype record, the ARRAY element and the plain record (the six primitives, the revoked Proxy, the trap-throwing Proxy and the accessor-throwing record are all UNUSABLE and are SKIPPED)',
+      'F-2 — EXACTLY FOUR usable elements are carried: the keyless empty-intersection record, the null-prototype record, the ARRAY element and the plain record (the six primitives, the FUNCTION element `() => 1` (`§2.3` item 1(c): SKIPPED WHOLE), the revoked Proxy, the trap-throwing Proxy and the accessor-throwing record are all UNUSABLE and are SKIPPED)',
     ).toBe(4)
     const arrayMember = out[2] as Record<string, unknown>
     const nestedCarried = arrayMember['0'] as Record<string, unknown>
-    expect(Object.keys(out[0]), 'F-2 entry 1 — the EMPTY-INTERSECTION record (`() => 1`, a function element) is CARRIED KEYLESS (`§3c` pin 2: never dropped), so its own key set is exactly `[]`').toEqual([])
+    expect(Object.keys(out[0]), 'F-2 entry 1 — the EMPTY-INTERSECTION record (`{}`, a genuinely keyless OBJECT: non-null, non-array, and owning nothing) is CARRIED KEYLESS (`§3c` pin 2: never dropped), so its own key set is exactly `[]`').toEqual([])
     expect(Object.keys(out[1]), 'F-2 entry 2 — the null-prototype record owns `id` and `label` only, so two are carried and no prototype member was read').toEqual(['id', 'label'])
     expect(Object.keys(arrayMember), "F-2 entry 3 — the ARRAY element `[nested]`: its own key set is exactly `['0']` — the intersection of the seven declared names with the array's own keys is EMPTY, and the array's own PRESENT INDEX key is carried as a fresh record of its member (§3c pin 1)").toEqual(['0'])
     expect(
@@ -3640,5 +3659,276 @@ describe('§5.5.1/§5.5.2 — the register\'s status row', () => {
       REGISTER_TERMS.filter((r) => r.bounded).length,
       '§5.5.2 item 2 — the `(bounded)` set is SIX of the THIRTEEN rows, and every row whose property text quantifies over a domain larger than its table carries the marking',
     ).toBe(6)
+  })
+})
+
+// ===========================================================================
+// ⟶ THE GATE-4 / GATE-5 REGRESSION ROWS (`2026-09-27`, RED-FIRST).
+//
+// CONTRACT: `docs/specs/menulib.md` `§3d` — its `(1)` table records the four
+// host findings `A-1`…`A-4` (none fixed at that writing) and its `(2)` section
+// the gate-5 blind set's two FAILs plus the three ambiguities (`F-3`/`F-4`/`F-5`).
+// This pass read `§3d` BEFORE authoring and read the pins it needs from the
+// contract's EXISTING text: `§2.3` item 1(c) (a function is SKIPPED),
+// item 1(d) (a throwing own-key read skips the element and nothing escapes),
+// item 11 clause 4 (the same SKIP, total), `§3c` pin 1 (an ARRAY is carryable —
+// its own PRESENT INDEX keys, ascending, `length` never carried) and `§3c`
+// pin 2 (an empty intersection is CARRIED keyless, never dropped).
+//
+// THE CONTRACT'S PARALLEL AMENDMENT HAS NOT LANDED AT THIS WRITING (HEAD
+// `8cc2d23`): `§2.3` item 2/9's ENUMERABLE-ONLY own-read pin (`A-2`), `§2.4`
+// item 1's answer-unused rule (`A-4`), item 11's worked reading corrected to `4`
+// and item 1(c)'s function rule are all still the AS-FILED text. So `A-1`, the
+// FUNCTION SKIP and `A-3` are authored to the CONTRACT'S EXISTING TEXT — which
+// for the function and the two `A-1` arms ALREADY declares the reading these
+// rows assert — and the one clause the contract leaves open, `F-3`, is authored
+// to `§2.3` item 5 RULE 3's own text, the reading gate 5's driver used and the
+// one the register's own `P-ML-IM-5` boundary drive (2) is aligned to.
+//
+// NO ROW ID, STRATEGY ID, SEED, CAP OR DECLARED TERM MOVES AND NO REGISTER ROW
+// IS ADDED (`§3d`: the declared total stays `126`; a fourteenth term would move
+// it, and the `A-1` row is authored with NO OWN DRIVE — see its own note). These
+// rows ride BESIDE the register: they are clause rows, in the same form as
+// `F-1`..`F-10`, and they neither run a `RegisterRow` nor count an attempt.
+// ===========================================================================
+describe('§3d — the gate-4 / gate-5 regression rows (red-first, authored to the contract’s existing pins)', () => {
+  it('A-1 (§2.3 item 1(b)/(d), §3c pins 1/2) a NESTED HOSTILE MEMBER SKIPS THE MEMBER AND NEVER THE CATALOG, and a CYCLE does NOT THROW', async () => {
+    // =====================================================================
+    // STATES ENUMERATED BEFORE THE FIRST ASSERTION (the happy/usable states and
+    // the fail-states this row covers):
+    //   USABLE / HAPPY STATES
+    //     (1) a plain usable element beside a hostile one — the usable element
+    //         IS carried, in catalog order, and the hostile member is skipped;
+    //     (2) a NESTED ARRAY carrying a hostile member — the member is skipped
+    //         INSIDE the nested record, the nested record itself is carried;
+    //     (3) a NESTED ARRAY carrying NO hostile member — carried normally
+    //         (the baseline that makes (2)'s reading falsifiable);
+    //     (4) the same catalogs driven through `buildMenuTemplate`.
+    //   FAIL-STATES (the documented skips — each must be SKIPPED, never a throw
+    //   and never a drop of the surrounding catalog)
+    //     (F1) a REVOKED `Proxy` member beside a usable one (`A-1`'s own
+    //          measured case: the landed module returns `[]`);
+    //     (F2) a revoked `Proxy` as the only member (still a catalog, `[]`);
+    //     (F3) a revoked `Proxy` NESTED one level down (`A-1`'s second case);
+    //     (F4) a CYCLIC member (an array whose own member IS that array) — the
+    //          landed module THROWS `RangeError` here, outside any absorbed span.
+    // =====================================================================
+    const s = await surface('A-1')
+    const usable = { id: 'k' }
+    // (F1) THE HIGH FINDING: the usable element is carried and the hostile MEMBER
+    // is what gets skipped — NEVER the catalog.
+    const withHostile = [usable, revokedProxy()]
+    expect(
+      () => s.normalizeCatalog(withHostile),
+      'A-1 (F1) — `normalizeCatalog([{id:\'k\'}, revokedProxy()])` MUST NOT THROW (§2.3 item 1(d): the throw is absorbed)',
+    ).not.toThrow()
+    const carried = s.normalizeCatalog(withHostile)
+    expect(
+      carried.length,
+      'A-1 (F1) — the USABLE element is CARRIED: the catalog is NOT dropped because one MEMBER is hostile (the landed module returns `[]` here — THE RED)',
+    ).toBe(1)
+    expect(carried[0]?.['id'], 'A-1 (F1) — and the carried entry is the usable element, by its own `id`').toBe('k')
+    expect(s.normalizeCatalog([usable]), 'A-1 (1) CONTROL — a catalog of the usable element alone carries it (so a module that dropped EVERYTHING would fail the control too)').toHaveLength(1)
+    expect(s.normalizeCatalog([revokedProxy()]), 'A-1 (F2) CONTROL — a catalog of ONLY hostile elements is still a CATALOG and reads `[]`, never a throw').toEqual([])
+    // (F4) THE CYCLE: skipping the self-referential member leaves the (now empty)
+    // record CARRIED under `§3c` pin 2 — a record with no keys is NEVER dropped.
+    const cycle: unknown[] = []
+    cycle.push(cycle)
+    expect(
+      () => s.normalizeCatalog([cycle]),
+      'A-1 (F4) — an ARRAY CONTAINING ITSELF must be handled WITHOUT A THROW: the cycle is a hostile MEMBER and is SKIPPED (the landed module raises `RangeError` from the unbounded recursion — THE RED)',
+    ).not.toThrow()
+    const cyclic = s.normalizeCatalog([cycle])
+    expect(cyclic.length, 'A-1 (F4) — the cyclic ELEMENT is still one usable record: `§3c` pin 2 carries a record whose seven-name intersection is EMPTY as a record with NO keys, never a drop').toBe(1)
+    expect(Object.keys(cyclic[0] ?? {}), 'A-1 (F4) — and that record is KEYLESS: its own member was the skipped cycle').toEqual([])
+    // (F3) ONE LEVEL DOWN: the hostile member is skipped INSIDE the nested record.
+    const nestedHostile: readonly unknown[] = [revokedProxy()]
+    expect(
+      () => s.normalizeCatalog([nestedHostile]),
+      'A-1 (F3) — a NESTED array carrying a hostile member MUST NOT THROW (§2.3 item 1(d), and the member read is absorbed at the member)',
+    ).not.toThrow()
+    const nestedOut = s.normalizeCatalog([nestedHostile])
+    expect(nestedOut.length, 'A-1 (F3) — the NESTED record is CARRIED even though its own member was skipped: the landed module returns `[]` here — THE RED').toBe(1)
+    expect(Object.keys(nestedOut[0] ?? {}), "A-1 (F3) — the nested record's own key set is `['0']` (`§3c` pin 1: the array's own present index key is carried) and its value is the SKIPPED member, which is absent rather than partially carried").toEqual(['0'])
+    expect(Object.keys(nestedOut[0]?.['0'] ?? {}), 'A-1 (F3) — the nested member was SKIPPED WHOLE, so the carried slot is a keyless record rather than a partial one (`§3c` pin 3)').toEqual([])
+    // (3) THE BASELINE that makes (F3) falsifiable: the SAME shape with a usable
+    // member carries that member as a fresh seven-key record.
+    const nestedUsable: readonly unknown[] = [el({ id: 'deep' })]
+    const nestedOk = s.normalizeCatalog([nestedUsable])
+    expect(Object.keys(nestedOk[0]?.['0'] ?? {}), 'A-1 (3) CONTROL — with a USABLE nested member the nested record carries it as a FRESH seven-key record, so the reading above is not merely relaxed').toEqual([...SEVEN_KEYS])
+    // (4) THE SAME CATALOGS THROUGH THE BUILDER: one item, and the projection is
+    // the identity projection (no entry carries `kind: 'picker'`).
+    const built = s.buildMenuTemplate(withHostile, { platform: 'win32' })
+    expect(built.items.length, 'A-1 (4) — `buildMenuTemplate` carries the usable element too: the hostile member must not empty the emitted `items` (THE RED, same cause)').toBe(1)
+    expect(built.items[0]?.['id'], 'A-1 (4) — and the emitted item is the usable element').toBe('k')
+    expect(
+      [built.platform.recognized, built.platform.collapsing],
+      'A-1 (4) — the platform members are unaffected by the hostile member (the projection is a function of `platform` ALONE, §2.3 item 10)',
+    ).toEqual([true, false])
+  })
+
+  it('A-1 / FUNCTION ELEMENT (§2.3 item 1(c) + item 11 clause 4, gate 5’s F-1) a FUNCTION-typed element is SKIPPED over SIX function shapes, with no throw and no entry', async () => {
+    // =====================================================================
+    // STATES ENUMERATED BEFORE THE FIRST ASSERTION:
+    //   FUNCTION SHAPES (all SIX declared in `§3d` (2) as carried by the landed
+    //   module): a NAMED function expression · an ARROW · an ASYNC arrow · a
+    //   GENERATOR function · a CLASS · a BOUND arrow. Plus the two shapes the
+    //   register's own `P-ML-IM-1` pool drives (`() => 1`, and a function
+    //   element inside an otherwise hostile catalog).
+    //   USABLE / HAPPY STATE: a PLAIN OBJECT element beside a function element —
+    //   the object IS carried, the function contributes NOTHING.
+    //   FAIL-STATE: a function element must be SKIPPED, contributing NO entry and
+    //   NO throw (`§2.3` item 1(c): *"a function ⇒ the element is SKIPPED"*;
+    //   item 11 clause 4 restates it as TOTAL). The landed module CARRIES each
+    //   one as a KEYLESS entry and `buildMenuTemplate([fn]).items` reads `[{}]`.
+    // =====================================================================
+    const s = await surface('gate-5 F-1')
+    const named = function namedShape(): void { /* shape only */ }
+    const arrow = (): number => 1
+    const asyncArrow = async (): Promise<void> => { /* shape only */ }
+    const generator = function* generatorShape(): Generator<number> { yield 1 }
+    class ClassShape { readonly id = 'class-shape' }
+    const bound = ((): unknown => null).bind(null)
+    const fnShapes: ReadonlyArray<{ readonly id: string; readonly make: () => unknown }> = [
+      { id: 'a NAMED function', make: () => named },
+      { id: 'an ARROW', make: () => arrow },
+      { id: 'an ASYNC arrow', make: () => asyncArrow },
+      { id: 'a GENERATOR function', make: () => generator },
+      { id: 'a CLASS', make: () => ClassShape },
+      { id: 'a BOUND arrow', make: () => bound },
+    ]
+    // THE COUNT IS READ FIRST, so a red run prints the shape the module produced
+    // rather than a `TypeError` from a missing index.
+    const measured = fnShapes.map((f) => s.normalizeCatalog([f.make()]).length)
+    expect(
+      measured,
+      'FUNCTION ELEMENT — every one of the six function shapes contributes NO ENTRY (`§2.3` item 1(c): a function is SKIPPED). The landed module CARRIES each as one keyless entry — THE RED',
+    ).toEqual([0, 0, 0, 0, 0, 0])
+    for (const f of fnShapes) {
+      expect(() => s.normalizeCatalog([f.make()]), `FUNCTION ELEMENT — normalizeCatalog([${f.id}]) MUST NOT THROW (item 1(c): *"NO entry and NO throw"*)`).not.toThrow()
+      expect(
+        s.normalizeCatalog([f.make()]),
+        `FUNCTION ELEMENT — normalizeCatalog([${f.id}]) returns the declared EMPTY answer: a function element is not carryable`,
+      ).toEqual([])
+      expect(
+        s.buildMenuTemplate([f.make()], { platform: 'win32' }).items,
+        `FUNCTION ELEMENT — buildMenuTemplate([${f.id}]).items reads \`[]\`: a projected item with no member at all must not reach \`items\` (the landed module reads \`[{}]\`)`,
+      ).toEqual([])
+    }
+    // THE CONTROL: a PLAIN OBJECT element IS carried, so this row cannot pass for
+    // a module that drops every element.
+    expect(s.normalizeCatalog([{ id: 'ok' }]).length, 'FUNCTION ELEMENT CONTROL — a PLAIN OBJECT element beside the function shapes IS carried (`§2.3` item 1(b)), so the six `[]` readings above are a SKIP rather than a global drop').toBe(1)
+    expect(s.normalizeCatalog([{ id: 'ok' }])[0]?.['id'], 'FUNCTION ELEMENT CONTROL — and it is the object that is carried, by its own `id`').toBe('ok')
+    // THE MIXED DRIVE the gate-5 record measured as `3` where the contract
+    // declares `2`: two usable elements beside one function element.
+    const mixed = s.buildMenuTemplate([{ id: 'one' }, arrow, { id: 'two' }], { platform: 'win32' })
+    expect(mixed.items.length, 'FUNCTION ELEMENT — two usable elements beside one FUNCTION element emit TWO items, not three (gate 5 measured 3 — THE RED)').toBe(2)
+    expect(mixed.items.map((i) => i['id']), 'FUNCTION ELEMENT — and the two emitted ids are the caller\'s usable elements, in catalog order').toEqual(['one', 'two'])
+    expect(
+      s.normalizeCatalog([named, 42, null, revokedProxy()]),
+      'FUNCTION ELEMENT CONTROL — a catalog of the function element and the OTHER skipped classes (a primitive, `null`, a hostile member) is still a catalog and reads `[]`',
+    ).toEqual([])
+  })
+
+  it('A-3 (§3c pin 1’s index-key reading, `§3d` (1) A-3) an ARRAY-LIKE DIGIT-STRING KEY: the declared key set for `\'01\'`, a SPARSE array and a genuine MULTI-element array', async () => {
+    // =====================================================================
+    // STATES ENUMERATED BEFORE THE FIRST ASSERTION (the three shapes `A-3` owes a
+    // DECLARED KEY SET for):
+    //   (1) `Object.assign([], {'01':'x'})` — an ARRAY whose own key is the
+    //       DIGIT-STRING `'01'`, which is NOT a canonical array index;
+    //   (2) a SPARSE array `[, x]` — one present index (`'1'`), one HOLE;
+    //   (3) a genuine MULTI-element array `[a, b, c]` with three present indices.
+    //   THE DECLARED KEY SETS, read from `§3c` pin 1 (the array carries *"its own
+    //   present index keys"*, `['0','1','2'] … in ASCENDING NUMERIC order*, so a
+    //   SPARSE array is carried at its present indices only: `[,x]` yields
+    //   `['1']`*, `length` never carried): (1) `[]` — `'01'` is neither one of the
+    //   seven declared names nor an index key; (2) `['1']`; (3) `['0','1','2']`.
+    //   FAIL-STATE: a module whose index-key predicate accepts ANY ALL-DIGIT string
+    //   carries `'01'` and FAILS (1); one that materializes a hole FAILS (2).
+    // =====================================================================
+    const s = await surface('A-3')
+    // (1) THE FINDING: `isIndexKey` accepts any all-digit key, so the landed
+    // module carries `'01'`.
+    const arrayLike: readonly unknown[] = Object.assign([], { '01': 'x' }) as readonly unknown[]
+    expect(Object.keys(arrayLike), "A-3 (1) PREMISE — the shape really does own the digit-string key `'01'` (and it is not a canonical index: `length` is 0)").toEqual(['01'])
+    expect(arrayLike.length, "A-3 (1) PREMISE — `'01'` is NOT a canonical array index, so it does not contribute to `length`").toBe(0)
+    const out01 = s.normalizeCatalog([arrayLike])
+    expect(
+      Object.keys(out01[0] ?? {}),
+      "A-3 (1) — the DECLARED KEY SET for `Object.assign([], {'01':'x'})` is `[]`: `'01'` is neither one of the seven declared names nor one of the array's own PRESENT INDEX keys (§3c pin 1), so it is DROPPED. The landed module CARRIES it — THE RED",
+    ).toEqual([])
+    // (2) THE SPARSE ARRAY: present indices only.
+    const sparse: readonly unknown[] = [, el({ id: 'sparse-one' })]
+    expect(Object.keys(sparse), "A-3 (2) PREMISE — the sparse shape owns exactly ONE present index key (`'1'`); `'0'` is a HOLE").toEqual(['1'])
+    const outSparse = s.normalizeCatalog([sparse])
+    expect(Object.keys(outSparse[0] ?? {}), "A-3 (2) — a SPARSE array is carried at its PRESENT INDICES ONLY: the declared key set is `['1']` (§3c pin 1). A module that materializes the hole FAILS here").toEqual(['1'])
+    expect(outSparse[0]?.['0'], "A-3 (2) — and the HOLE is NOT materialized: there is no `'0'` member on the carried record").toBeUndefined()
+    expect(Object.keys(outSparse[0]?.['1'] ?? {}), "A-3 (2) — the present member is CARRIED IN TURN as a fresh seven-key record (§3c pin 1)").toEqual([...SEVEN_KEYS])
+    // (3) THE GENUINE MULTI-ELEMENT ARRAY: ascending numeric order.
+    const dense: readonly unknown[] = [el({ id: 'd0' }), el({ id: 'd1' }), el({ id: 'd2' })]
+    const outDense = s.normalizeCatalog([dense])
+    expect(Object.keys(outDense[0] ?? {}), "A-3 (3) — a three-element array carries `['0','1','2']` IN ASCENDING NUMERIC ORDER (§3c pin 1), and `length` is NEVER carried").toEqual(['0', '1', '2'])
+    const denseRecord = (outDense[0] ?? {}) as Record<string, Record<string, unknown>>
+    expect(
+      [denseRecord['0']?.['id'], denseRecord['1']?.['id'], denseRecord['2']?.['id']],
+      'A-3 (3) — each present member is carried in turn, in catalog order, by its own `id`',
+    ).toEqual(['d0', 'd1', 'd2'])
+    // THE CONTROLS, so the declared key sets above cannot pass vacuously: a
+    // DENSE array of one is `['0']` (the `A-3` row's own positive control), and
+    // the same shapes through the builder project to the same key sets — the
+    // projection changes NO key set for an entry that owns none of the seven.
+    expect(Object.keys(s.normalizeCatalog([[el({ id: 'solo' })]])[0] ?? {}), "A-3 CONTROL (i) — a ONE-element array is `['0']` (§3c pin 1, F-2's own reading), so the `[]` and `['1']` readings above are not a blanket refusal of index keys").toEqual(['0'])
+    expect(Object.keys(s.buildMenuTemplate([arrayLike], { platform: 'win32' }).items[0] ?? {}), "A-3 CONTROL (ii) — the projected ITEM for the `'01'` shape carries none of the seven declared names either, so the same reading holds through the builder").toEqual([])
+  })
+
+  it('§3d (2) F-3 RECONCILIATION (§2.3 item 5 rule 3) a SKIPPED ELEMENT cannot SPLIT a run — with the competing TWO-SINGLETON reading asserted to FAIL', async () => {
+    // =====================================================================
+    // THE CLAUSE PAIR AND THE READING THIS ROW TAKES: `§2.3` item 5 RULE 3
+    // (*"THE RUN IS MAXIMAL AND IT IS MEASURED ON THE NORMALIZED SEQUENCE … an
+    // element skipped by the normalizer cannot bridge or split a run"*) against
+    // `§3.2 F-5` / the register's method note (a), which drive the same shape as
+    // TWO SINGLETONS. **THE CONTRACT PINS NEITHER AS THE WINNER AT THIS WRITING**
+    // (`§3d` (2) `F-3` records gate 5's driver taking rule 3's text and its `PASS`
+    // as BOUNDED to it; the contract amendment that would settle the pair has NOT
+    // landed at HEAD `8cc2d23`) — so this row is authored to RULE 3's TEXT, the
+    // reading the register's own `P-ML-IM-5` boundary drive (2) is aligned to and
+    // the one the module implements, and it SAYS SO here rather than implying a
+    // pin. This row is therefore EXPECTED GREEN against the landed module: it is a
+    // reconciliation row, not one of the `A-1`/FUNCTION/`A-3` reds.
+    //   STATES: (1) `[pickerA, null, pickerB]` — one skipped element between two
+    //   pickers ⇒ ONE run of two ⇒ ONE collapsed parent; (2) the same with
+    //   `undefined`; (3) the competing reading's own signature (TWO singletons,
+    //   `items.length === 2`, no `submenu` array on either) asserted to FAIL.
+    // =====================================================================
+    const s = await surface('§3d F-3')
+    const pickers = [el({ id: 'p1', kind: 'picker' }), null, el({ id: 'p2', kind: 'picker' })]
+    const first = s.buildMenuTemplate(pickers, { platform: 'darwin' })
+    expect(first.items.length, 'F-3 — `[pickerA, null, pickerB]` is ONE run under §2.3 item 5 rule 3 (the run is measured on the NORMALIZED sequence, where the skipped element is absent): ONE item, not two').toBe(1)
+    expect(String(first.items[0]?.['id']), 'F-3 — and the collapsed run\'s parent is the run\'s FIRST entry').toBe('p1')
+    const sub = first.items[0]?.['submenu']
+    expect(Array.isArray(sub), 'F-3 — the parent of a run of TWO carries its rest as a `submenu` array, which is the POSITIVE half of the claim').toBe(true)
+    expect((sub as readonly Record<string, unknown>[]).map((i) => i['id']), 'F-3 — and the rest is the second picker, in catalog order').toEqual(['p2'])
+    // THE COMPETING READING, ASSERTED TO FAIL rather than merely not asserted: a
+    // module that let the skipped element split the run emits TWO singletons, and
+    // neither of those carries a `submenu` array.
+    expect(first.items.length, 'F-3 — THE COMPETING `§3.2 F-5` / method-note (a) READING (two singletons, `items.length === 2`) does NOT hold for this shape: the rule-3 reading above is discriminating rather than vacuous').not.toBe(2)
+    expect(
+      first.items.filter((i) => Array.isArray(i['submenu'])).length,
+      'F-3 — the competing reading\'s signature is absent: under it NO item carries a `submenu` array, while rule 3\'s reading requires exactly one',
+    ).toBe(1)
+    // The `undefined` arm: the same rule, and the same two readings.
+    const second = s.buildMenuTemplate([el({ id: 'p1', kind: 'picker' }), undefined, el({ id: 'p2', kind: 'picker' })], { platform: 'darwin' })
+    expect(second.items.length, 'F-3 — `[pickerA, undefined, pickerB]` reads the same: an absent element contributes no entry and cannot split the run').toBe(1)
+    expect(
+      [second.items.length, second.items.filter((i) => Array.isArray(i['submenu'])).length],
+      'F-3 — and the competing reading fails here too (two singletons, no `submenu` array anywhere)',
+    ).toEqual([1, 1])
+    // THE CONTROL: the singleton boundary itself is UNCHANGED by this row — a
+    // run of exactly ONE is not collapsed and gains no `submenu` ARRAY (`§2.3`
+    // item 5 rule 4), so rule 3 is read as the run rule and never as a licence to
+    // collapse singletons.
+    const singleton = s.buildMenuTemplate([el({ id: 'solo', kind: 'picker', submenu: 'S' })], { platform: 'darwin' })
+    expect(singleton.items.length, 'F-3 CONTROL — a run of exactly ONE is NOT collapsed: one item in, one item out (rule 4)').toBe(1)
+    expect(Array.isArray(singleton.items[0]?.['submenu']), 'F-3 CONTROL — and the mechanism authors NO `submenu` array for it (the source\'s own present member is carried verbatim, so the assertion is on the ARRAY form, never on presence)').toBe(false)
   })
 })
