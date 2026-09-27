@@ -2285,6 +2285,53 @@ NOT the `§7`(B) total re-grain, which is landed.** **`§5.5.2` item 10's lone-s
 `126 → 127`, `IM 84 → 85`) REMAINS A SEPARATE, STILL-OWED OBLIGATION, and none of the three re-grains may be
 substituted for another.** **This pass RAN NOTHING: no suite, no leg, no `tsc`, no build and no commit.**
 
+**(E) THE THIRD GATE-3 EVENT — THE SEVEN ROW-BOUND CONTRADICTIONS OF THE SECOND IMPLEMENTER PASS, EACH DISPOSITIONED
+ROW-SIDE (`2026-09-27`; annotate-never-rewrite — the as-written cells of this file stay VISIBLE, no clause is
+rewritten, no row id, section number, strategy id, seed, term or cap moves, and NOTHING IS ADDED AFTER `§3b`).**
+**Provenance: the second Implementer pass of `U-MENULIB` — `src/shared/menu-template.ts`, `221` lines, `ab9bfed` —
+reaching `35` passed / `21` failed of `56`, which reported SEVEN ROW-BOUND CONTRADICTIONS.** **The TestWriter is
+aligning those rows in parallel to the contract's ALREADY-PINNED readings** — **the CARRY RULE at `§2.3` item 11**
+(a FRESH RECORD of the INTERSECTION of the seven declared names with the source's **own** keys, values by identity,
+**no entry ever the source value**, absent keys OMITTED, non-objects SKIPPED) · **the `enabled` reading where the
+DEGRADATION GOVERNS** (`§2.4`'s dated `enabled` pin) · **the `'darwin'` collapse by MAXIMAL RUN** (`§2.3` item 5
+rules 4/5) · and **`selectCatalogItem`'s KNOWN-`id` rule** (`§2.3` item 8). **THIS NOTE RE-DERIVES NOTHING: it says
+which ROW was wrong and why, so a later author does not re-discover the same seven. NO DEFECT HERE IS CONTRACT-SIDE —
+all seven are ROW-SIDE, and a clause of this note changes NO pinned reading; it only ATTRIBUTES the seven defects to
+the rows that carry them.**
+
+**(E-1) THE SEVEN DISPOSITIONS — ONE PER ROW GROUP, EACH WITH THE CLAUSE THAT DECIDES IT.**
+
+| # | The row(s) | What the row asserted | THE CLAUSE THAT DECIDES IT | THE DISPOSITION |
+| --- | --- | --- | --- | --- |
+| 1 | **`R-13`** | **that the test file was the ONLY EXISTING own artifact of this unit — while its OWN MESSAGE named the module's presence as the `X-1` branch** | **an existence row whose two halves read the same repo state two ways is SELF-REFUTING** (`§3.5`'s existence rows; `R-9`'s branch form) | **ROW-SIDE.** The corrected form is **a BRANCH, not a flat assertion**: **the module's PRESENCE proves the contract LANDED** (the `X-1` arm), so both arms are stated and the row cannot assert a state its own message contradicts. |
+| 2 | **`F-2`** | **the loop compared the EXPECTED ARRAY'S key set against the PROJECTED ITEM'S, while a LATER assertion in the same row required the projected member to BE that array (`toBe`)** | **THE CARRY RULE — `§2.3` item 11: a projected item is a FRESH RECORD of the intersection, values by identity, and NO ENTRY IS EVER THE SOURCE VALUE** | **ROW-SIDE SELF-CONTRADICTION.** Under the carry rule the nested member is **a fresh record of the nested source** and **`toBe` on the source is FALSE** — so the key-set comparison and the identity assertion cannot both stand, and the identity assertion is the losing one. |
+| 3 | **`F-5` / `M-7`** | **that `submenu` is ABSENT from a singleton picker entry** | **THE CARRY RULE — `§2.3` item 11: a declared key the source OWNS is carried VERBATIM, present members included; and `§2.3` item 5 rule 4 creates NO `submenu` for a singleton** | **ROW-SIDE.** The fixtures' sources **DO carry `submenu`**, so the carry rule carries it; the claim these rows MAY make is exactly **that the MECHANISM AUTHORS NO NEW SUBMENU** — never that a source-carried one is absent. |
+| 4 | **`F-10` / `I-2`** | **`F-10`: RETENTION BY IDENTITY across calls. `I-2`: that `selectCatalogItem` returns the picker's RAW ANSWER** | **`F-10`: the FRESH-RECORD rule (`§2.3` item 11) together with `P-ML-IM-4`'s SECOND-CALL drive, which DECLARES A RETAINED VALUE A FAILURE. `I-2`: `selectCatalogItem`'s KNOWN-`id` rule (`§2.3` item 8), under which a non-`null` answer for an UNKNOWN `id` yields `null`** | **BOTH ROW-SIDE.** `F-10` demands what the second-call drive declares a failure; `I-2` demands the RAW answer where the pinned answer is the KNOWN-`id` one. **The pinned readings already say what each row must assert** — no contract clause moves. |
+| 5 | **`M-4`** | **THREE items for the collapsed drive** | **THE COLLAPSE BY MAXIMAL RUN — `§2.3` item 5 rules 4/5 with `§7a.1` item 3's derivation and `P-ML-IM-5`** | **ROW-SIDE.** The pinned maximal-run collapse yields **TWO** items, not three; **the call's OTHER readings stay INTACT** — the collapsed PARENT and `enabled === false` under the `§2.4` `enabled` pin. |
+| 6 | **`M-8`** | **that ONE item BOTH carried all SEVEN keys AND did not carry `role`** | **THE CARRY RULE — `§2.3` item 11: it carries exactly the source's OWN-ENUMERABLE members, so a `Symbol` key, a NON-ENUMERABLE member and an INHERITED member are NOT carried** | **ROW-SIDE SELF-CONTRADICTION.** `role` **IS one of the seven**, so "all seven carried" and "`role` not carried" cannot both hold; the row's own fixture (`catalogD[1]`'s INHERITED `role`) is what makes inheritance — not `role` itself — the not-carried case. |
+| 7 | **`F-6`** | **that its own `'dialog'` literal tested against `toBe(false)`** | **the row's own expectation is UNSATISFIABLE FOR ANY MODULE whatever its bytes** (the `§3.4 R-1`/`R-2` scan's CONTROL form: a spelled token can only be evidence when the corpus is character-code assembled) | **ROW-SIDE.** The corpus must be **CHARACTER-CODE ASSEMBLED and carry BOTH CONTROLS** (the positive spelling FAILING, the assembled one PASSING) — otherwise the row fails every possible implementation and reports a defect the module cannot have. |
+
+**(E-2) THE REGISTER'S RED-TIME `REGISTER-STATUS` ROW — THE `rowsExecuted === 13` ASSERTION CANNOT HOLD, SO IT
+BECOMES A DECLARED BRANCH.** **As written, the row asserts `rowsExecuted === 13` against a register that STOPS EARLY:
+the red run executed `56` rows against `126` declared attempts and STOPPED AT `P-ML-IM-5`** (`§4.2`'s stop rule; red
+provenance at (A) above), **so an unconditional `=== 13` is unsatisfiable at RED TIME for a reason the row's own run
+declares.** **THE ROW THEREFORE HAS TWO FORMS, BOTH DECLARED, AND NEITHER IS A RELAXATION OF THE OTHER:**
+**(i) THE RED FORM TOLERATES THE STOP — the stop state is read as the DECLARED outcome, with the UN-RUN ROWS REPORTED
+AS FAILURES, never as passes** (`§4.2`; `AGENTS.md` item 11(b)); **(ii) THE GREEN FORM REQUIRES ALL THIRTEEN ROWS
+EXECUTED, `attemptsExecuted === 126`, `broken 0` and `registerStoppedAt: null`.** **A green read off the RED form is
+a REVIEW FINDING**, and **the `126` in the green form is the corrected declared total of `§5.5.3`, printed with its
+thirteen terms** (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`). **NO ROW ID, NO TERM, NO CAP AND NO SEED MOVES BY
+THIS BRANCH.**
+
+**(E-3) THE STANDING TERM VERDICT — PRINTED, BECAUSE `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS` REQUIRES IT.**
+**THE DECLARED TOTAL REMAINS `126` = `12 + 12 + 12 + 12 + 12 + 12 + 12 + 3 + 3 + 3 + 12 + 9 + 12` — THE THIRTEEN
+TERMS, unchanged, with the same chain, the same subtotals `IM 84 · SM 9 · TP 33`, the same `6`-of-`13` `(bounded)`
+set, the same seed `20260927` and the same caps (`126 ≤ 400`; largest row `12 ≤ 100`).** **NO TERM, ROW ID, STRATEGY
+ID, SEED OR CAP MOVED, OR IS MOVED BY, ANY DISPOSITION OF THIS NOTE.** **NO CLAUSE OF THIS NOTE CHANGES A PINNED
+READING — it only ATTRIBUTES THE SEVEN DEFECTS TO THE ROWS**, and **`§5.5.2` item 10's lone-surrogate re-grain
+(`12 → 13`, `126 → 127`, `IM 84 → 85`) remains a SEPARATE, STILL-OWED obligation that neither (E-2) nor this verdict
+discharges.** **THIS PASS RAN NOTHING: no suite, no leg, no `tsc`, no build and no commit.**
+
 ### 7a. Ambiguity report — the clauses a TestWriter could NOT derive a falsifiable row from
 
 **This subsection reports, and how to read it.** **Three items** could not be derived **falsifiably** from the

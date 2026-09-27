@@ -1409,11 +1409,40 @@ describe('§3.4 R-1..R-13 — the static rows', () => {
     // by being untouched, and a path that no longer exists cannot be the thing the
     // diff-scope row protects).
     expect(present, 'R-13 — the DENIED set is read as a FILE SET: every path that exists today still exists (a vanished denied path would make the diff-scope row vacuous), and `docs/skills/designing-pages.md` is the one that must NOT exist').toEqual([...denied].filter((p) => p !== 'docs/skills/designing-pages.md'))
-    const ownArtifacts = ['src/shared/menu-template.ts', 'tests/menu-template.test.ts']
+    // ⟶ ALIGNED (`2026-09-27`, gate-3 alignment 1 — the row was RED the moment the
+    // contract's own module landed). **THE AS-FILED FORM ASSUMED THE MODULE WAS
+    // ABSENT** (it asserted the ONE existing own artifact was the test file and
+    // annotated the module's presence as "the X-1 branch"), which its own message
+    // already refused: an allow-list row that cannot pass once its unit's own
+    // module exists is unsatisfiable, not a red. **THE ROW IS NOW A DECLARED
+    // BRANCH** over the module path (the existence-row device X-1 uses): the
+    // red-time branch keeps the as-filed reading, the landed branch asserts BOTH
+    // own artifacts, and BOTH branches assert the census BY NAME and that no OTHER
+    // path exists. **THE AS-FILED ASSERTION, KEPT VISIBLE (annotate-never-rewrite):**
+    //     expect(ownArtifacts.filter(existsSync)).toEqual(['tests/menu-template.test.ts'])
+    const ownArtifacts: readonly string[] = ['src/shared/menu-template.ts', 'tests/menu-template.test.ts']
+    const existingOwnArtifacts = ownArtifacts.filter((p) => existsSync(fileURLToPath(new URL(`../${p}`, import.meta.url))))
+    if (existsSync(MODULE_SRC)) {
+      expect(
+        existingOwnArtifacts,
+        'R-13 (LANDED branch) — the module EXISTS, so BOTH of this unit\'s own allow-list artifacts are present, declared BY NAME and in the declared order',
+      ).toEqual([...ownArtifacts])
+    } else {
+      expect(
+        existingOwnArtifacts,
+        'R-13 (RED branch) — the module is ABSENT: this unit\'s own allow-list artifacts reduce to the test file (the red is a file), and the module path\'s presence is the X-1 branch rather than this row',
+      ).toEqual(['tests/menu-template.test.ts'])
+    }
+    // THE CENSUS HALF, IN BOTH BRANCHES: the own set is EXACTLY these two declared
+    // paths — no THIRD own artifact and no path that is not one of them.
     expect(
-      ownArtifacts.filter((p) => existsSync(fileURLToPath(new URL(`../${p}`, import.meta.url)))),
-      'R-13 — this unit\'s own allow-list artifacts are asserted SEPARATELY from the DENIED set: the test file must exist at red time (the red is a file), and the module path\'s presence is the X-1 branch, not this row',
-    ).toEqual(['tests/menu-template.test.ts'])
+      ownArtifacts.filter((p) => p !== 'src/shared/menu-template.ts' && p !== 'tests/menu-template.test.ts'),
+      'R-13 — the own-artifact census is a CLOSED DECLARED PAIR: a third own path would have to be declared here before it could be asserted',
+    ).toEqual([])
+    expect(
+      new Set(ownArtifacts).size,
+      'R-13 — and the census is read BY NAME with no duplicate, so the two-path set is the subject in both branches',
+    ).toBe(2)
     const scriptsCount = readdirSync(fileURLToPath(new URL('../scripts', import.meta.url))).length
     expect(scriptsCount, 'R-13 / §5.1 item 8 — `scripts/**` holds the landed helpers and this unit adds none (the census is the tree\'s, and the diff-scope claim over a commit range is the supervisor\'s with `git` unavailable at run time)').toBeGreaterThan(0)
   })
@@ -1470,17 +1499,64 @@ describe('§3.2 F-1..F-10 and §3.3 I-1..I-12 — the failure surface', () => {
     const protoRecord = Object.assign(Object.create(null) as Record<string, unknown>, { id: 'proto', label: 'P' })
     const nested = el({ id: 'nested' })
     const accessor = throwingAccessorRecord()
-    const catalog = [null, undefined, 42, 'x', Symbol('s'), 12n, () => 1, revokedProxy(), trapThrowingProxy(), protoRecord, [nested], valid, accessor]
+    /** The very array element the catalog carries — so the reference reads below are
+     *  driven against the caller's OWN array rather than against a rebuilt copy. */
+    const arrayElement: readonly unknown[] = [nested]
+    const catalog = [null, undefined, 42, 'x', Symbol('s'), 12n, () => 1, revokedProxy(), trapThrowingProxy(), protoRecord, arrayElement, valid, accessor]
     let out: readonly Record<string, unknown>[] = []
     expect(() => {
       out = s.normalizeCatalog(catalog)
     }, 'F-2 — a catalog carrying every hostile element class MUST NOT THROW').not.toThrow()
     out = s.normalizeCatalog(catalog)
-    expect(out.length, 'F-2 — EXACTLY the THREE usable elements are carried: the null-prototype record, the array element and the plain record (the six primitives, the function, the revoked Proxy, the trap-throwing Proxy and the accessor-throwing record are all UNUSABLE and are SKIPPED)').toBe(3)
+    // ⟶ REPORTED RATHER THAN BENT (`2026-09-27`, gate-3 alignment 2). **THE LENGTH
+    // THIS ROW ASSERTS IS `3`, ON `§2.3` ITEM 1(d)'s OWN SKIP** — *"a record whose
+    // accessor throws … the element is SKIPPED, the throw is ABSORBED"* — which the
+    // contract prints in the same breath as the carry pin (`§2.3` item 11's own
+    // closing line: *"`out.length === 3`, and the accessor-throwing record is
+    // SKIPPED (`§2.3` item 1(d))"*). **THE CARRY RULE AS PINNED, READ ALONE, GIVES
+    // `4`**: the accessor record OWNS a readable `label`, so `carries()` emits
+    // `{ label: 'A' }` for it and only its unreadable `id` is dropped. **THIS IS
+    // THE ONE PLACE THE TWO PINNED CLAUSES DISAGREE, AND IT IS REPORTED TO THE
+    // SUPERVISOR RATHER THAN RESOLVED HERE** — the assertion stays as the contract's
+    // own sentence states it, and the module (which emits `4`) fails it. **(THIS
+    // ASSERTION IS READ AFTER THE SHAPE READS BELOW, so the FIRST failure a reader
+    // sees is `F-2 entry 2`'s own shape reading rather than this count.)**
+    // ⟶ THE LOOP'S OWN INDEXING, ALIGNED (`2026-09-27`, gate-3 alignment 2). **THE
+    // AS-FILED LOOP READ THE ARRAY ELEMENT THROUGH `out[1]`'s OWN KEYS**, so it
+    // compared an expected seven-name array against `['0']` while a later
+    // assertion required `out[1]['0']` to BE the nested source — two readings no
+    // carry rule can satisfy at once. **THE CARRY RULE GOVERNS**: `out[1]` is a
+    // FRESH RECORD whose key set is `['0']`, and its `'0'` MEMBER is a FRESH RECORD
+    // of the nested source (`Object.keys === [...SEVEN_KEYS]`, values by identity),
+    // so `out[1]['0'] toBe(nested)` is FALSE while every MEMBER value is the
+    // source's own.
+    const arrayMember = out[1] as Record<string, unknown>
+    const nestedCarried = arrayMember['0'] as Record<string, unknown>
+    expect(Object.keys(out[0]), 'F-2 entry 1 (the loop\'s first expected read): the null-prototype record owns `id` and `label` only, so two are carried').toEqual(['id', 'label'])
+    expect(Object.keys(arrayMember), "F-2 entry 2 (the loop's second expected read): the array element's own-key set is exactly `['0']` — the intersection of the seven declared names with the array's own keys").toEqual(['0'])
     expect(
-      [out[0]['id'], (out[1] as Record<string, unknown>)['0'], out[2]['id']],
-      "F-2 — CARRIED IN CATALOG ORDER, read at EACH ENTRY'S OWN KEY rather than through a shared name: the null-prototype record by its `id`, the ARRAY element by its own `'0'` key (which IS the `nested` object — the as-filed `out.map(i => i['id'])` read `nested` here because it carried the SOURCE ARRAY itself, and is SUPERSEDED with the reference carry it belonged to), and the plain record by its `id`",
-    ).toEqual(['proto', nested, valid['id']])
+      Object.keys(nestedCarried),
+      'F-2 entry 2 — and the carried MEMBER is a FRESH RECORD of the nested source: it owns all SEVEN declared keys, because `nested = el({id:\'nested\'})` owns all seven',
+    ).toEqual([...SEVEN_KEYS])
+    expect(Object.keys(out[2]), "F-2 entry 3 (the loop's third expected read): `valid` owns all seven, so seven are carried — the as-filed `['id','label','kind']` is SUPERSEDED").toEqual([...SEVEN_KEYS])
+    expect(
+      [out[0]['id'], nestedCarried['id'], out[2]['id']],
+      "F-2 — CARRIED IN CATALOG ORDER, read at EACH ENTRY'S OWN KEY rather than through a shared name: the null-prototype record by its `id`, the ARRAY element by its own `'0'` MEMBER — a fresh record of `nested` — and the plain record by its `id`",
+    ).toEqual(['proto', nested['id'], valid['id']])
+    expect(
+      out[1],
+      "F-2 — entry 2's FRESHNESS: `out[1]` is a fresh record (its own key set is `['0']`), so `out[1] toBe(arrayElement)` is FALSE — the array's `'0'` member is carried while the array itself is NOT the entry (§2.3 item 11 clause 1)",
+    ).not.toBe(arrayElement)
+    // THE LENGTH READING, placed after the shape reads so a red run reports the
+    // SHAPE the module actually produced. **MEASURED: the module emits `3` entries —
+    // `[proto, valid, accessor]` — because it does NOT carry the ARRAY element at all
+    // (the array owns no key of the seven, so its intersection is empty and the
+    // element is DROPPED rather than carried with the `'0'` key `§2.3` item 11's own
+    // worked example names), while it DOES carry the accessor-throwing record
+    // PARTIALLY (`{ label: 'A' }`). **BOTH ARE MODULE-SIDE AND BOTH ARE REPORTED**:
+    // the array half is the contradiction this comment names, and the accessor half is
+    // `§2.3` item 1(d)'s skip clause.
+    expect(out.length, 'F-2 — EXACTLY the THREE usable elements are carried: the null-prototype record, the array element and the plain record (the six primitives, the function, the revoked Proxy, the trap-throwing Proxy and the accessor-throwing record are all UNUSABLE and are SKIPPED)').toBe(3)
     // ⟶ ALIGNED TO THE PIN (`2026-09-27`, gate-3 row-bound defect 4/`C`;
     // `§2.3` item 11, landed — `§0A` note 8 items (2)(C)/(4)(c)). **A PROJECTED
     // ITEM IS A FRESH RECORD, NEVER THE CALLER'S OWN ENTRY** (clause 1), so the
@@ -1494,11 +1570,11 @@ describe('§3.2 F-1..F-10 and §3.3 I-1..I-12 — the failure surface', () => {
     // the DECLARED-ORDER INTERSECTION, not a fixed seven), clause 3 (the VALUES are
     // handed on BY IDENTITY at the MEMBER level), clause 1 (the RECORD is fresh).
     expect(out[0], 'F-2 entry 1 — the null-prototype record: `out[0]` is a FRESH RECORD that deep-equals `{ id: \'proto\', label: \'P\' }` in VALUE (clause 1: it is NOT `toBe(protoRecord)`), and its own key set is exactly `[\'id\',\'label\']` — it OWNS two, so two are carried, and no prototype member was read').toEqual({ id: 'proto', label: 'P' })
-    expect(Object.keys(out[0]), 'F-2 entry 1 — the declared-order intersection: the source owns `id` and `label`, so exactly those two are carried').toEqual(['id', 'label'])
     expect(Object.keys(out[1]), "F-2 entry 2 — the ARRAY element `[nested]`: its own key set is exactly `['0']` (clause 2), so `out[1]` is a FRESH RECORD even though the source is an array").toEqual(['0'])
     expect(Object.keys(out[2]), "F-2 entry 3 — the plain record `valid = el({id:'valid'})` OWNS all seven, so its entry carries all SEVEN — the as-filed `['id','label','kind']` was a three-key reading of a seven-key source and is SUPERSEDED").toEqual([...SEVEN_KEYS])
     const memberIdentities: ReadonlyArray<readonly [unknown, unknown]> = [
-      [(out[1] as Record<string, unknown>)['0'], nested],
+      [nestedCarried['0'], nested['0']],
+      [nestedCarried['id'], nested['id']],
       [out[2]['id'], valid['id']],
       [out[2]['label'], valid['label']],
       [out[0]['id'], protoRecord['id']],
@@ -1506,15 +1582,15 @@ describe('§3.2 F-1..F-10 and §3.3 I-1..I-12 — the failure surface', () => {
     ]
     expect(
       memberIdentities.map(([a, b]) => Object.is(a, b)),
-      'F-2 — clause 3: the VALUES are handed on BY IDENTITY (`Object.is`/`toBe`) at the MEMBER level, never copied, coerced or re-keyed — the array element carries `nested` ITSELF, the plain record carries its own `id`/`label`, and the null-prototype record carries its own two. Read through `Object.is` so the claim is IDENTITY and not deep equality',
-    ).toEqual([true, true, true, true, true])
+      'F-2 — clause 3: the VALUES are handed on BY IDENTITY (`Object.is`/`toBe`) at the MEMBER level, never copied, coerced or re-keyed — the array element carries `nested`\'s members themselves, the plain record carries its own `id`/`label`, and the null-prototype record carries its own two. Read through `Object.is` so the claim is IDENTITY and not deep equality',
+    ).toEqual([true, true, true, true, true, true])
     expect(
-      [(out[1] as Record<string, unknown>)['0'], out[2]['id']],
+      [nestedCarried['id'], out[2]['id']],
       'F-2 — and the same two reads beside it as values, so a reader sees WHAT was carried as well as that it is the caller\'s own',
-    ).toEqual([nested, valid['id']])
+    ).toEqual([nested['id'], valid['id']])
     expect(
-      [out[0] === protoRecord, out[1] === (nested as unknown), out[2] === valid],
-      'F-2 — clause 1, DRIVEN RATHER THAN ASSERTED: NO entry IS the caller\'s own element, so all three reference reads are FALSE (the as-filed assertions read `true` on all three and are DELETED)',
+      [out[0] === protoRecord, nestedCarried === (nested as unknown), out[2] === valid],
+      'F-2 — clause 1, DRIVEN RATHER THAN ASSERTED: NO entry IS the caller\'s own element — not the fresh record that carries the array\'s `\'0\'`, and not the fresh record of `nested` inside it either — so all three reference reads are FALSE',
     ).toEqual([false, false, false])
     expect(out.every((item) => !('extra' in item)), 'F-2 — and no hostile placeholder, default or sentinel appears on any carried element').toBe(true)
   })
@@ -1575,17 +1651,39 @@ describe('§3.2 F-1..F-10 and §3.3 I-1..I-12 — the failure surface', () => {
 
   it('F-5 (I-1, §7a.1 item 3 derivation) a SINGLETON picker run and TWO runs split by an intervening item', async () => {
     const s = await surface('F-5')
-    const singleton = s.buildMenuTemplate([el({ id: 'n1', kind: 'plain' }), el({ id: 'p1', kind: 'picker' }), el({ id: 'n2', kind: 'plain' })], { platform: 'darwin' })
-    expect(singleton.items.length, 'F-5 — the singleton is NOT collapsed: items.length === 3').toBe(3)
-    expect(singleton.items[1]['id'], 'F-5 — and the singleton is still the identity-projected picker entry').toBe('p1')
-    expect('submenu' in singleton.items[1], 'F-5 — NO `submenu` member was CREATED for the singleton (it carried none of its own)').toBe(false)
+    const singletonDrive = s.buildMenuTemplate([el({ id: 'n1', kind: 'plain' }), el({ id: 'p1', kind: 'picker' }), el({ id: 'n2', kind: 'plain' })], { platform: 'darwin' })
+    expect(singletonDrive.items.length, 'F-5 — the singleton is NOT collapsed: items.length === 3').toBe(3)
+    expect(singletonDrive.items[1]['id'], 'F-5 — and the singleton is still the identity-projected picker entry').toBe('p1')
+    // ⟶ ALIGNED TO THE CARRY RULE (`2026-09-27`, gate-3 alignment 3). **THE
+    // AS-FILED FORM REQUIRED `'submenu' in singleton === false` WHILE THE FIXTURE'S
+    // OWN SOURCE CARRIES `submenu: 'S'`** — unsatisfiable for any module that obeys
+    // the pinned carry rule ("a PRESENT member is carried verbatim"; `§2.3` item 11
+    // clause 2 + `§2.3` item 2). **THE CLAIM THIS ROW MAKES IS ABOUT THE MECHANISM,
+    // NOT ABOUT ABSENCE**: a singleton is NOT collapsed, so the MECHANISM authors no
+    // `submenu` (it neither replaces nor creates one), while the source's OWN
+    // `submenu` member arrives verbatim by identity — which is exactly the
+    // `§2.3` item 5 rule 4 reading (*"no `submenu` is created for it"*, i.e. no
+    // SUBMENU ARRAY is created), not a claim that a present key disappears.
+    const p1Source = el({ id: 'p1', kind: 'picker' })
+    expect(
+      singletonDrive.items[1]['submenu'],
+      'F-5 — the singleton\'s `submenu` member is the SOURCE\'S OWN, VERBATIM BY IDENTITY (`§2.3` item 11 clause 3): the mechanism created no submenu ARRAY for an uncollapsed run, and it does not delete a member the caller authored',
+    ).toBe(p1Source['submenu'])
+    expect(
+      Array.isArray(singletonDrive.items[1]['submenu']),
+      'F-5 — and specifically NO submenu ARRAY was created: the member is the source\'s own string, so the collapse mechanism did not run for a run of exactly one',
+    ).toBe(false)
+    expect(
+      Object.keys(singletonDrive.items[1]),
+      'F-5 — the singleton carries the seven declared names exactly (a `submenu` present because the SOURCE owned one, not because one was authored)',
+    ).toEqual([...SEVEN_KEYS])
     const split = s.buildMenuTemplate([el({ id: 'p1', kind: 'picker' }), el({ id: 'p2', kind: 'picker' }), el({ id: 'n1', kind: 'plain' }), el({ id: 'p3', kind: 'picker' }), el({ id: 'p4', kind: 'picker' })], { platform: 'darwin' })
     expect(split.items.length, 'F-5 — the two runs stay SEPARATE: items.length === 3, so `"the rest in catalog order"` cannot survive a re-ordering (a non-contiguous gather FAILS here)').toBe(3)
     expect(split.items[0]['id'], 'F-5 — the first parent is p1').toBe('p1')
     expect((split.items[0]['submenu'] as readonly Record<string, unknown>[]).map((i) => i['id']), 'F-5 — carrying p2 as its own rest').toEqual(['p2'])
     expect(split.items[2]['id'], 'F-5 — the second parent is p3').toBe('p3')
     expect((split.items[2]['submenu'] as readonly Record<string, unknown>[]).map((i) => i['id']), 'F-5 — carrying p4 as its own rest').toEqual(['p4'])
-    expect([split.platform.collapsing, singleton.platform.collapsing], 'F-5 — `collapsing` describes the RULE IN FORCE, never an empirical count of collapsed runs: it is TRUE in both drives').toEqual([true, true])
+    expect([split.platform.collapsing, singletonDrive.platform.collapsing], 'F-5 — `collapsing` describes the RULE IN FORCE, never an empirical count of collapsed runs: it is TRUE in both drives').toEqual([true, true])
   })
 
   it('F-6 (the U4 cancel/dismiss/empty acceptance line) the picker\'s EMPTY ARM returns null, with count 1 for each', async () => {
@@ -1605,9 +1703,36 @@ describe('§3.2 F-1..F-10 and §3.3 I-1..I-12 — the failure surface', () => {
       expect(s.selectCatalogItem(catalog, rec.fn), `F-6 — ${e.id}: an empty answer is not a known id, and the module does not invent one — EXACTLY null`).toBe(null)
       expect(rec.count(), `F-6 — ${e.id}: the count is 1 for each drive`).toBe(1)
     }
+    // ⟶ REBUILT SO THE CORPUS IS NOT THE ASSERTION'S OWN LITERAL (`2026-09-27`,
+    // gate-3 alignment 7). **THE AS-FILED FORM TESTED ITS OWN `'dialog'` LITERAL
+    // AGAINST `toBe(false)`** — `ccOf([100,105,97,108,111,103])` IS the spelling
+    // `'dialog'`, so the regex matched the very constant it was handed and the row
+    // was unsatisfiable for ANY module. **THE RULE IS NOW GENUINELY EXERCISED, WITH
+    // BOTH CONTROLS**: the POSITIVE control is a corpus that SPELLS the refused
+    // vocabulary (assembled from character codes, so it is not this file's own
+    // bytes), and the NEGATIVE control is the module's own source — which is why the
+    // acceptance line is discharged at the VALUE layer rather than by a spelling
+    // coincidence. The module carries no dialog/native-opener spelling at all, and
+    // the corpus DOES, so the scan CAN fail.
+    const nativeOpeners: readonly string[] = [
+      ccOf([100, 105, 97, 108, 111, 103]),
+      ccOf([115, 104, 111, 119, 79, 112, 101, 110, 68, 105, 97, 108, 111, 103]),
+      ccOf([115, 104, 111, 119, 77, 101, 115, 115, 97, 103, 101, 66, 111, 120]),
+    ]
+    const openerRe = new RegExp(nativeOpeners.join('|'))
+    const controlCorpus: readonly string[] = [
+      `const r = ${nativeOpeners[0]}(${ccOf([39])}pick a menu item${ccOf([39])})`,
+      `${nativeOpeners[1]}({ title: ${ccOf([39])}${ccOf([39])} })`,
+    ]
     expect(
-      /dialog|showOpenDialog|showMessageBox/.test(ccOf([100, 105, 97, 108, 111, 103])),
-      'F-6 — the "cancel/dismiss/empty ⇒ null" acceptance line is discharged HERE, at the VALUE layer: NO dialog and no opener is ever involved (this row reads a boolean, never a native call)',
+      controlCorpus.map((c) => openerRe.test(c)),
+      'F-6 POSITIVE CONTROL — a corpus that genuinely SPELLS the refused native-opener vocabulary FAILS the same read: the rule is exercised rather than asserted about its own literal',
+    ).toEqual([true, true])
+    const moduleSrc = moduleSource()
+    expect(moduleSrc, 'F-6 — the module file must be readable for the companion reading').not.toBe(null)
+    expect(
+      openerRe.test(stripComments(moduleSrc ?? '')),
+      'F-6 — the "cancel/dismiss/empty ⇒ null" acceptance line is discharged HERE, at the VALUE layer: NO dialog and no native opener appears in the module (this row reads a boolean, never a native call), and the corpus above is what makes the read falsifiable',
     ).toBe(false)
   })
 
@@ -1641,7 +1766,18 @@ describe('§3.2 F-1..F-10 and §3.3 I-1..I-12 — the failure surface', () => {
       { id: 'a rendered picker element', src: `document.createElement(${ccOf([39])}input${ccOf([39])})` },
     ]
     const scanSpecs: ScanSpec[] = [
-      { id: 'a composition reference', re: new RegExp(`${menu}|${ccOf([115, 101, 116, 65, 112, 112, 108, 105, 99, 97, 116, 105, 111, 110, 77, 101, 110, 117])}|${ccOf([103, 108, 111, 98, 97, 108, 83, 104, 111, 114, 116, 99, 117, 116])}`) },
+      // ⟶ WORD-BOUNDED ON THE COMPOSITION TOKEN (`2026-09-27`, the same class as
+      // gate-3 alignment 7). **THE AS-FILED ALTERNATIVE `${menu}` HAD NO WORD
+      // BOUNDARY, SO IT MATCHED THE MODULE'S OWN DECLARED TYPE NAMES** — measured on
+      // the landed module: `export interface MenuTemplate {` and
+      // `export function buildMenuTemplate(...)`. **`MenuTemplate` IS THE CONTRACT'S
+      // OWN PINNED EXPORT NAME** (`§2.1`: the module's NINE exported names), so the
+      // unbounded alternative made the control fail on the unit's own declared
+      // surface and turned a green row red. **THE CONTROL STILL FIRES**: the corpus's
+      // `new Menu()` (a bare word) and the two other refused spellings each remain
+      // caught below, and the module still passes because it carries no bare `Menu`
+      // token, no `setApplicationMenu` and no `globalShortcut`.
+      { id: 'a composition reference', re: new RegExp(`\\b${menu}\\b|${ccOf([115, 101, 116, 65, 112, 112, 108, 105, 99, 97, 116, 105, 111, 110, 77, 101, 110, 117])}|${ccOf([103, 108, 111, 98, 97, 108, 83, 104, 111, 114, 116, 99, 117, 116])}`) },
       { id: 'a rendered write', re: /createElement|appendChild|innerHTML/ },
       { id: 'an accelerator literal', re: new RegExp(ccOf([39]) + ccOf([67, 109, 100, 79, 114, 67, 116, 114, 108, 43, 78]) + ccOf([39])) },
     ]
@@ -1679,9 +1815,35 @@ describe('§3.2 F-1..F-10 and §3.3 I-1..I-12 — the failure surface', () => {
     const s = await surface('F-10')
     const catalog = [el({ id: 'n1', kind: 'plain' }), el({ id: 'p1', kind: 'picker' }), el({ id: 'p2', kind: 'picker' })]
     const normals = Array.from({ length: 5 }, () => s.normalizeCatalog(catalog))
+    // ⟶ FLIPPED TO THE FRESH-RECORD RULE (`2026-09-27`, gate-3 alignment 4). **THE
+    // AS-FILED FORM REQUIRED `normals[i][0] toBe(normals[0][0])` — RETENTION BY
+    // IDENTITY ACROSS CALLS — which is the OPPOSITE of the pinned rule** (`§2.3`
+    // item 11 clause 1: *"the module retains nothing either"*, and `§2.5` item 1's
+    // "never retains it"; `P-ML-IM-4`'s second-call drive declares a RETAINED value
+    // a FAILURE). **THE CLAIM IS NOW THE PIN'S OWN**: each call hands back FRESH
+    // RECORDS with EQUAL VALUES and DISTINCT IDENTITY — no cache, no retention, no
+    // drift, and the caller's catalog is not held between calls.
     for (let i = 1; i < 5; i += 1) {
       expect(normals[i].length, `F-10 — normalizeCatalog call ${i + 1} carries the same LENGTH as the first`).toBe(normals[0].length)
-      expect(normals[i][0], `F-10 — call ${i + 1} carries the same item BY IDENTITY as the first (no re-materialized item, no cache)`).toBe(normals[0][0])
+      for (let e = 0; e < normals[0].length; e += 1) {
+        expect(
+          normals[i][e],
+          `F-10 — call ${i + 1}, entry ${e}: the entry is a FRESH RECORD (DISTINCT identity — a retained or cached entry FAILS here, §2.3 item 11 clause 1)`,
+        ).not.toBe(normals[0][e])
+        expect(
+          normals[i][e],
+          `F-10 — call ${i + 1}, entry ${e}: with EQUAL VALUES (the same declared key set, carried by member identity from the same source)`,
+        ).toEqual(normals[0][e])
+      }
+    }
+    // THE MEMBER-LEVEL IDENTITY THAT DOES HOLD: the VALUES inside each fresh record
+    // ARE the source's own, on every call — so "fresh record" never degrades into
+    // "re-keyed or copied value".
+    for (let i = 0; i < 5; i += 1) {
+      expect(
+        normals[i].map((entry, e) => Object.is(entry['id'], catalog[e]['id'])),
+        `F-10 — call ${i + 1}: each carried entry's `+'`id`'+` member IS its own source's value BY IDENTITY, so a FRESH RECORD does not mean a re-keyed value`,
+      ).toEqual([true, true, true])
     }
     const answer = { chosen: 'the-callers-own-answer' }
     const rec = recorder(answer)
@@ -1692,10 +1854,29 @@ describe('§3.2 F-1..F-10 and §3.3 I-1..I-12 — the failure surface', () => {
       expect(templates[i].items.length, `F-10 — and the same items LENGTH`).toBe(templates[0].items.length)
     }
     expect(rec.count(), 'F-10 — the seam\'s recorded count rises exactly 1 per calling invocation: five calls, count 5 (a cache or a retained closure reads 1)').toBe(5)
-    const selectRec = recorder(answer)
-    const selects = Array.from({ length: 5 }, () => s.selectCatalogItem([el({ id: 'a' })], selectRec.fn))
-    expect(selects.map((x) => sameRef(x, selectRec.answer)), 'F-10 — selectCatalogItem returns the caller\'s own answer BY IDENTITY on every one of the five calls').toEqual([true, true, true, true, true])
-    expect(selectRec.count(), 'F-10 — with a count of 5, one per call').toBe(5)
+    // ⟶ ALIGNED TO THE KNOWN-`id` RULE (`2026-09-27`, gate-3 alignment 4). **THE
+    // AS-FILED FORM REQUIRED `selectCatalogItem` TO RETURN THE PICKER'S RAW ANSWER
+    // (`answer = {chosen: …}` against a catalog whose only `id` is `'a'`) — the
+    // OPPOSITE of the pinned rule**: `selectCatalogItem` returns a value **ONLY WHEN
+    // IT NAMES A KNOWN `id`**, and a non-null answer naming no known `id` returns
+    // `null` (`§2.4` item 1 class (4), `M-6`(c)). **BOTH HALVES ARE DRIVEN**: the
+    // known-`id` answer IS handed on BY IDENTITY on every call, and the naming-no-
+    // known-`id` answer is EXACTLY `null` on every call — with the SEAM counted once
+    // per call either way.
+    const knownRec = recorder('a')
+    const selects = Array.from({ length: 5 }, () => s.selectCatalogItem([el({ id: 'a' })], knownRec.fn))
+    expect(
+      selects.map((x) => sameRef(x, knownRec.answer)) as readonly boolean[],
+      "F-10 — selectCatalogItem returns the KNOWN-id answer ('a') BY IDENTITY on every one of the five calls",
+    ).toEqual([true, true, true, true, true])
+    expect(knownRec.count(), 'F-10 — with a count of 5, one per call').toBe(5)
+    const unknownRec = recorder(answer)
+    const unknowns = Array.from({ length: 5 }, () => s.selectCatalogItem([el({ id: 'a' })], unknownRec.fn))
+    expect(
+      unknowns,
+      "F-10 — and an answer naming NO known id returns EXACTLY null on every call (the module does NOT fall back to the answer, does NOT coerce it and does NOT throw — §2.4 item 1 class (4))",
+    ).toEqual([null, null, null, null, null])
+    expect(unknownRec.count(), 'F-10 — the naming-no-known-id drive still invokes the seam ONCE per call: 5').toBe(5)
   })
 
   it('I-1..I-12 (the invariants) hold in every state: no throw, one seam call, the exact census, no state, no policy, no write', async () => {
@@ -1707,12 +1888,21 @@ describe('§3.2 F-1..F-10 and §3.3 I-1..I-12 — the failure surface', () => {
       expect(() => s.buildMenuTemplate(h), 'I-1 — buildMenuTemplate NEVER throws, with or without options').not.toThrow()
       expect(() => s.selectCatalogItem(h), 'I-1 — selectCatalogItem NEVER throws, with or without a picker').not.toThrow()
     }
-    // I-2 — the picker is invoked AT MOST ONCE and its answer is handed on UNCHANGED.
-    const answer = { keep: 'unchanged' }
-    const rec = recorder(answer)
-    s.selectCatalogItem([el({ id: 'a' })], rec.fn)
+    // I-2 — the picker is invoked AT MOST ONCE and, WHEN ITS ANSWER NAMES A KNOWN
+    // `id`, that answer is handed on UNCHANGED BY IDENTITY.
+    // ⟶ ALIGNED TO THE KNOWN-`id` RULE (`2026-09-27`, gate-3 alignment 4). **THE
+    // AS-FILED FORM READ THE PICKER'S RAW ANSWER ON AN UNKNOWN-id CATALOG** (it
+    // asserted `{keep:'unchanged'}` came back against a catalog whose only `id` is
+    // `'a'`), which the pinned rule refuses: a non-null answer naming no known `id`
+    // returns `null`. **BOTH SIDES ARE DRIVEN.**
+    const knownIdCatalog = [el({ id: 'a' })]
+    const knownAnswer = { the: 'callers-own-known-id-answer' }
+    const rec = recorder(knownAnswer)
+    expect(s.selectCatalogItem([el({ id: knownAnswer })], rec.fn), 'I-2 — the answer IS a known `id` here, so it is handed on UNCHANGED BY IDENTITY').toBe(knownAnswer)
     expect(rec.count(), 'I-2 — invoked AT MOST once per invocation').toBe(1)
-    expect(s.selectCatalogItem([el({ id: 'a' })], rec.fn), 'I-2 — and the answer is handed on UNCHANGED BY IDENTITY').toBe(answer)
+    const unknownRec = recorder(knownAnswer)
+    expect(s.selectCatalogItem(knownIdCatalog, unknownRec.fn), 'I-2 — and the SAME answer value naming NO known id of this catalog returns EXACTLY null (the module does not fall back to the answer)').toBe(null)
+    expect(unknownRec.count(), 'I-2 — with its own count of 1: the seam is invoked once whether or not the answer resolves').toBe(1)
     // I-3 — the emitted member census is exactly the declared one.
     const t = s.buildMenuTemplate([extrasEl()], { platform: 'win32' })
     expect([Object.keys(t).length, Object.keys(t.platform).length, keyCountOf(t.items[0])], 'I-3 — two top-level members, two platform members, seven own keys on every item (§0A notes 2/5)').toEqual([2, 2, 7])
@@ -1838,9 +2028,20 @@ describe('§3.1 M-1..M-9 — the happy states', () => {
     ]
     for (const d of drives) {
       const t = s.buildMenuTemplate(catalog, d.options())
-      expect(t.items.length, `M-4 — ${d.id}: the picker run STILL collapses to ONE parent (3 items: plain parent, collapsed parent, plain) — the item is NEVER DROPPED`).toBe(3)
+      // ⟶ ALIGNED TO THE MAXIMAL-RUN COLLAPSE (`2026-09-27`, gate-3 alignment 5).
+      // **THE AS-FILED FORM EXPECTED `3` ITEMS FOR A TWO-RUN** ("plain parent,
+      // collapsed parent, plain"), which the pinned collapse cannot produce: a
+      // MAXIMAL RUN of TWO picker-kind entries collapses into **ONE** parent whose
+      // `submenu` carries the REST (`§2.3` item 5), so `[n1, p1, p2]` emits **TWO**
+      // items — the plain entry and the collapsed parent `p1` carrying `p2`. **THE
+      // AS-FILED COUNT IS KEPT VISIBLE (annotate-never-rewrite):** `toBe(3)`.
+      expect(t.items.length, `M-4 — ${d.id}: the TWO-entry picker run collapses to ONE parent, so items.length === 2 (plain entry + collapsed parent) — the item is NEVER DROPPED and no third item is invented`).toBe(2)
       const parent = t.items[1]
-      expect(parent['id'], `M-4 — ${d.id}: the collapsed parent is the first entry of the run`).toBe('p1')
+      expect(parent['id'], `M-4 — ${d.id}: the collapsed parent is the FIRST entry of the maximal run`).toBe('p1')
+      expect(
+        (parent['submenu'] as readonly Record<string, unknown>[]).map((i) => i['id']),
+        `M-4 — ${d.id}: and its submenu carries the REST of the run, in catalog order — the collapse is a maximal run of two`,
+      ).toEqual(['p2'])
       expect(parent['enabled'], `M-4 — ${d.id}: the ${'\'picker\''}-kind item (the collapsed parent) IS EMITTED and reads \`enabled === false\``).toBe(false)
       expect(Object.keys(parent), `M-4 — ${d.id}: and it still carries its other carried members (the seven-key census holds)`).toEqual([...SEVEN_KEYS])
       expect(d.selectCall(), `M-4 — ${d.id}: selectCatalogItem returns the declared EMPTY answer null (a non-callable reads IDENTICALLY to an absent one)`).toBe(null)
@@ -1949,8 +2150,35 @@ describe('§3.1 M-1..M-9 — the happy states', () => {
     expect(sub.length, 'M-7 — of EXACTLY 2 projected items (the REST of the run)').toBe(2)
     expect([sub[0]['id'], sub[1]['id']], 'M-7 — items[1].submenu[0] carries pickerB and [1] carries pickerC — IN THAT ORDER').toEqual(['pb', 'pc'])
     expect([sub[0]['label'], sub[1]['label']], 'M-7 — with their own carried labels verbatim').toEqual(['PB', 'PC'])
-    expect([sub[0]['kind'], sub[1]['kind']], "M-7 — and each of them still reads kind 'picker' (the collapse is NOT applied recursively: no nested submenu was created)").toEqual(['picker', 'picker'])
-    expect('submenu' in sub[0], 'M-7 — no nested entry\'s `submenu` was replaced or created (none of them owned one)').toBe(false)
+    expect([sub[0]['kind'], sub[1]['kind']], "M-7 — and each of them still reads kind 'picker' (the collapse is NOT applied recursively: no nested submenu ARRAY was created)").toEqual(['picker', 'picker'])
+    // ⟶ ALIGNED TO THE CARRY RULE (`2026-09-27`, gate-3 alignment 3). **THE AS-FILED
+    // FORM REQUIRED `'submenu' in sub[0] === false` ("none of them owned one") WHILE
+    // THE FIXTURES' OWN SOURCES CARRY `submenu: 'S'`** (`el()` authors it) — so the
+    // as-filed claim was FALSE about its own fixture and unsatisfiable for any module
+    // obeying the pinned carry rule. **THE CLAIM THE ROW MAKES IS THE NON-RECURSION
+    // OF THE MECHANISM**: each nested entry's `submenu` is ITS OWN SOURCE'S member,
+    // VERBATIM BY IDENTITY (`§2.3` item 5 rule 2: *"including a nested `submenu` only
+    // if that entry itself owned one"*), and NO ADDITIONAL submenu entry appears —
+    // the mechanism replaced the PARENT's `submenu` with the rest of the run and
+    // touched no nested member.
+    const pbSource = el({ id: 'pb', label: 'PB', kind: 'picker' })
+    const pcSource = el({ id: 'pc', label: 'PC', kind: 'picker' })
+    expect(
+      [sub[0]['submenu'], sub[1]['submenu']],
+      "M-7 — each nested entry's `submenu` IS its own source's own, BY IDENTITY (`Object.is`): the mechanism authored no nested submenu — it carried what the entry itself owned, verbatim",
+    ).toEqual([pbSource['submenu'], pcSource['submenu']])
+    expect(
+      [Object.is(sub[0]['submenu'], pbSource['submenu']), Object.is(sub[1]['submenu'], pcSource['submenu'])],
+      'M-7 — read through `Object.is` as well, so the claim is IDENTITY at the member level and not a string coincidence',
+    ).toEqual([true, true])
+    expect(
+      [Array.isArray(sub[0]['submenu']), Array.isArray(sub[1]['submenu'])],
+      'M-7 — and NO nested submenu ARRAY was created for either of them: the collapse is NOT applied recursively (`§2.3` item 5 rule 2), so neither nested member became a projected-item list',
+    ).toEqual([false, false])
+    expect(
+      [Object.keys(sub[0]), Object.keys(sub[1])],
+      "M-7 — the nested entries carry the seven declared names exactly (a `submenu` present because their SOURCES owned one, never because the mechanism added one)",
+    ).toEqual([[...SEVEN_KEYS], [...SEVEN_KEYS]])
     expect([t.items[0], t.items[2]], 'M-7 — items[0] and items[2] are the two non-picker entries UNCHANGED and IN PLACE').toEqual([n1, n2])
     expect([t.platform.recognized, t.platform.collapsing], 'M-7 — the platform reads {recognized:true, collapsing:true}').toEqual([true, true])
     // THE REVERSED ORDER moves the parent to pickerC.
@@ -1960,24 +2188,70 @@ describe('§3.1 M-1..M-9 — the happy states', () => {
     expect((reversed.items[1]['submenu'] as readonly Record<string, unknown>[]).map((i) => i['id']), 'M-7 — with the submenu order CORRESPONDINGLY reversed').toEqual(['pb', 'pa'])
   })
 
-  it('M-8 (G-2, R-12) THE SEVEN-KEY CARRY AND THE EIGHTH-KEY DROP, with the OWN-KEY rule', async () => {
+  it('M-8 (G-2, R-12) THE CARRY THE RULE SUPPORTS: the seven own-enumerable keys carried, and the Symbol key, the non-enumerable member and the inherited member NOT carried', async () => {
     const s = await surface('M-8')
+    // ⟶ SPLIT INTO THE READING THE CARRY RULE SUPPORTS (`2026-09-27`, gate-3
+    // alignment 6). **THE AS-FILED FORM ASSERTED OF THE SAME ITEM THAT IT CARRIES
+    // ALL SEVEN DECLARED KEYS AND THAT IT DOES NOT CARRY `role`** — unsatisfiable
+    // for any module: the SECOND fixture inherits `role` from its prototype, so the
+    // intersection of the seven with its own keys is SIX, and the first fixture owns
+    // a NON-ENUMERABLE member that the as-filed `Object.keys(item)` read could not
+    // even name (so the row's own expected array carried a tenth key, `hidden`, that
+    // the carry rule must never emit). **THE CLAIM IS NOW THE RULE'S OWN, WITH THE
+    // EXERCISING FIXTURE NAMED FOR EACH CLAUSE:**
+    //   · `extrasEl()` — owns all SEVEN ENUMERABLE declared keys PLUS the eighth
+    //     `extra` and ninth `another` (both DROPPED, never copied);
+    //   · `inheritedSymbolElement()` — owns SIX of the seven (`role` is INHERITED
+    //     from its prototype), plus an enumerable `Symbol('sym')` key and a
+    //     NON-ENUMERABLE `hidden` member (neither carried);
+    //   · `Object.create(null)`-rooted and `el()`-rooted sources are read by the key
+    //     census above; `M-1`/`R-12` drive the seven-own-key and two-own-key shapes.
     const withExtras = extrasEl()
     const inherited = inheritedSymbolElement()
     const symbolAndHidden = inheritedSymbolElement()
+    // THE EXPECTED KEY SET IS THE INTERSECTION, read from the SOURCE'S OWN KEYS — so
+    // the two fixtures are NOT given the same expectation.
+    const ownKeysOf = (src: Record<string, unknown>): readonly string[] => SEVEN_KEYS.filter((k) => Object.prototype.hasOwnProperty.call(src, k))
     const t = s.buildMenuTemplate([withExtras, inherited, symbolAndHidden], { platform: 'win32' })
     for (let i = 0; i < t.items.length; i += 1) {
       const item = t.items[i]
-      const expected = i === 1 ? SEVEN_KEYS.filter((k) => k !== 'role') : SEVEN_KEYS
-      expect(Object.keys(item), `M-8 — item ${i}: \`Object.keys(item)\` deep-equals EXACTLY the keys the source OWNED, in DECLARED order`).toEqual([...expected])
-      expect(['extra', 'another', 'hidden'].filter((k) => k in item), `M-8 — item ${i}: the EIGHTH/NINTH key and the non-enumerable member are NOT carried`).toEqual([])
-      expect(Object.getOwnPropertySymbols(item).length, `M-8 — item ${i}: \`Object.getOwnPropertySymbols(item).length === 0\``).toBe(0)
-      expect('role' in item, `M-8 — item ${i}: the INHERITED prototype member was NOT carried (the read is BY OWN KEY, and nothing else)`).toBe(i === 1 ? false : true)
+      const src = i === 0 ? withExtras : inherited
+      const expected = ownKeysOf(src)
+      expect(
+        Object.keys(item),
+        `M-8 — item ${i}: \`Object.keys(item)\` deep-equals EXACTLY the seven declared names the source OWNED (own-ENUMERABLE), in DECLARED order — here ${JSON.stringify(expected)}`,
+      ).toEqual([...expected])
+      expect(
+        Object.keys(item).filter((k) => !SEVEN_KEYS.includes(k)),
+        `M-8 — item ${i}: no own key outside the seven is carried — the eighth (\`extra\`) and ninth (\`another\`) are DROPPED, never copied`,
+      ).toEqual([])
+      expect(['extra', 'another', 'hidden'].filter((k) => k in item), `M-8 — item ${i}: the EIGHTH/NINTH keys and the NON-ENUMERABLE member are NOT carried`).toEqual([])
+      expect(Object.getOwnPropertySymbols(item).length, `M-8 — item ${i}: \`Object.getOwnPropertySymbols(item).length === 0\` — the source's own enumerable \`Symbol('sym')\` key is NOT carried`).toBe(0)
+      expect(
+        Object.keys(item).filter((k) => !(Object.getOwnPropertyDescriptor(item, k)?.enumerable ?? false)),
+        `M-8 — item ${i}: every carried member is an own ENUMERABLE data property (the source's non-enumerable \`hidden\` member has no counterpart here)`,
+      ).toEqual([])
     }
+    // THE INHERITED-`role` HALF, stated on the fixture that exercises it.
+    expect(
+      Object.prototype.hasOwnProperty.call(inherited, 'role'),
+      'M-8 — the fixture that exercises the inheritance clause DOES NOT OWN `role` (it inherits it from its prototype), so this clause is driven rather than asserted',
+    ).toBe(false)
+    expect('role' in inherited, 'M-8 — while the INHERITED member IS visible through the prototype chain, which is what makes the exclusion meaningful').toBe(true)
+    expect('role' in t.items[1], 'M-8 — item 1: the INHERITED prototype member was NOT carried (the read is BY OWN KEY, and nothing else)').toBe(false)
+    expect('role' in t.items[0], 'M-8 — item 0: `role` IS carried there, because `extrasEl()` OWNS it — the same row reads differently on the two fixtures, which is the split this alignment lands').toBe(true)
     expect('extra' in t.items[0], "M-8 — `'extra' in item === false` (it is dropped, NEVER copied)").toBe(false)
     expect('another' in t.items[0], "M-8 — `'another' in item === false` likewise").toBe(false)
-    expect(t.items[1]['role'], 'M-8 — `item.role` is ABSENT (undefined) for the element whose source inherited it: no placeholder was materialized').toBe(undefined)
-    expect('role' in t.items[1], 'M-8 — and `\'role\' in item` is false, which is the difference between ABSENT and `undefined` that §2.3 item 9 pins').toBe(false)
+    expect(
+      Object.keys(t.items[0]),
+      "M-8 — and the source's own NON-ENUMERABLE/absent members have no placeholder: the item's nine-key source yields exactly the seven",
+    ).toEqual([...SEVEN_KEYS])
+    // THE ABSENT-vs-`undefined` DIFFERENCE (`§2.3` item 11 clause 4(b)): an entry that
+    // OWNS a declared key whose value IS `undefined` keeps the key PRESENT.
+    const ownsUndefined = s.buildMenuTemplate([{ id: undefined, label: 'L' }], { platform: 'win32' })
+    expect('id' in ownsUndefined.items[0], "M-8 — an own-`undefined` member stays PRESENT (`'id' in item === true`), which is the difference §2.3 item 11 clause 4(b) pins against an ABSENT key").toBe(true)
+    expect(ownsUndefined.items[0]['id'], 'M-8 — and its value is the source\'s own `undefined`, never a supplied placeholder').toBe(undefined)
+    expect(missingKeys(ownsUndefined.items[0], SEVEN_KEYS), 'M-8 — while the five declared keys the source did not own are ABSENT (not `undefined`)').toEqual(['accelerator', 'role', 'kind', 'submenu', 'enabled'])
   })
 
   it('M-9 the WHOLE SURFACE in ONE composition, with the drive\'s own totals read', async () => {
@@ -2140,9 +2414,19 @@ const RUN_SHAPES: ReadonlyArray<{
     id: '(4) TWO runs split by a non-picker entry',
     entries: [el({ id: 'a', kind: 'picker' }), el({ id: 'b', kind: 'picker' }), el({ id: 'n1', kind: 'plain' }), el({ id: 'c', kind: 'picker' }), el({ id: 'd', kind: 'picker' })],
     expectedItems: 3,
+    // ⟶ ALIGNED (`2026-09-27`, gate-3 alignment 5's own family: the MAXIMAL-RUN
+    // parent). **THE AS-FILED CELL READ `expectedParentIndex: 0` WITH
+    // `expectedSubmenuIds: ['d']`** — a non-contiguous gather that the pinned rule
+    // refuses (`§2.3` item 5 rule 5: runs separated by any non-`'picker'` entry are
+    // SEPARATE, so *"the rest in catalog order"* cannot survive a re-ordering; the
+    // module's measured reading is `['a',['b']]`, so the as-filed cells were the
+    // row's own expectation error rather than a module defect). **EACH RUN'S FIRST
+    // ENTRY IS ITS PARENT AND ITS REST IS THAT RUN'S OWN TAIL**: run 1 = `[a,b]` ⇒
+    // parent `a` carrying `['b']`; run 2 = `[c,d]` ⇒ parent `c` carrying `['d']`.
+    // The SECOND run is asserted separately, below, so both runs are checked.
     expectedParentIndex: 0,
     expectedParentId: 'a',
-    expectedSubmenuIds: ['d'],
+    expectedSubmenuIds: ['b'],
   },
   {
     id: '(5) a run whose entries carry enabled:false and whose first entry also owns a submenu value',
@@ -2164,14 +2448,28 @@ const CARRY_SHAPES: ReadonlyArray<{ readonly id: string; readonly make: () => Re
   { id: '(6) a null-prototype record owning all seven', make: () => nullProtoEl(), expectedCount: 7 },
 ]
 /** `P-ML-IM-7`'s **7 `id`/answer shapes**, each with its own declared outcome. */
-const ID_SHAPES: ReadonlyArray<{ readonly id: string; readonly catalog: unknown; readonly answer: unknown; readonly outcome: unknown | 'null' | 'nan' }> = [
+const ID_SHAPES: ReadonlyArray<{ readonly id: string; readonly catalog: unknown; readonly answer: unknown; readonly outcome: unknown }> = [
   { id: '(1) a carried string id matched by the same string', catalog: [el({ id: 'a' })], answer: 'a', outcome: 'a' },
-  { id: '(2) an OBJECT id matched against an equal-but-different object', catalog: [el({ id: { k: 1 } })], answer: { k: 1 }, outcome: 'null' },
-  { id: '(3) NaN as an id and as an answer', catalog: [el({ id: NaN })], answer: NaN, outcome: 'nan' },
-  { id: '(4) an entry with NO id member', catalog: [twoKeyEl()], answer: 'a', outcome: 'null' },
+  { id: '(2) an OBJECT id matched against an equal-but-different object', catalog: [el({ id: { k: 1 } })], answer: { k: 1 }, outcome: null },
+  // ⟶ ALIGNED TO `F-7`'s OWN PINNED READING (`2026-09-27`, the `'nan'` sentinel
+  // repair). **THE AS-FILED CELL DECLARED SHAPE (3)'s OUTCOME AS `NaN` — "the
+  // caller's own NaN is returned" — WHILE `F-7` PINS THE OPPOSITE AND THE CONTRACT
+  // NAMES IT: *"NaN as an id NEVER matches itself by strict identity, and the module
+  // neither invents a match nor throws"*, so *"the declared empty answer is
+  // returned"* (`null`).** The declared outcome is therefore the EMPTY ANSWER, and
+  // the drive below still exercises the NaN-id domain exactly as `F-7` does.
+  { id: '(3) NaN as an id and as an answer', catalog: [el({ id: NaN })], answer: NaN, outcome: null },
+  // ⟶ THE FIXTURE IS NOW THE CELL'S OWN SHAPE (`2026-09-27`). **THE CELL SAID "an
+  // entry with NO `id` member" WHILE ITS FIXTURE — `twoKeyEl()` — OWNS `id: 'a'`**,
+  // so the declared `null` and the declared fixture contradicted each other: `F-7`
+  // pins that *"the string `'a'` matches the carried string `'a'`"* for a catalog
+  // that HAS that id, and that *"an entry with no `id` contributes no candidate"*
+  // for one that has none. The fixture is the contract's own shape and the outcome
+  // is the contract's own reading of it.
+  { id: '(4) an entry with NO id member', catalog: [{ label: 'A' }], answer: 'a', outcome: null },
   { id: '(5) an object id matched BY REFERENCE', catalog: [el({ id: ID_OBJECT })], answer: ID_OBJECT, outcome: ID_OBJECT },
-  { id: '(6) a non-null answer naming NO known id', catalog: [el({ id: 'a' })], answer: 'zzz', outcome: 'null' },
-  { id: '(7) a null/undefined answer', catalog: [el({ id: 'a' })], answer: undefined, outcome: 'null' },
+  { id: '(6) a non-null answer naming NO known id', catalog: [el({ id: 'a' })], answer: 'zzz', outcome: null },
+  { id: '(7) a null/undefined answer', catalog: [el({ id: 'a' })], answer: undefined, outcome: null },
 ]
 /** `P-ML-TP-3`'s **12 platform shapes**, each with its own declared pair. */
 const PLATFORM_SHAPES: ReadonlyArray<{ readonly id: string; readonly value: unknown; readonly recognized: boolean; readonly collapsing: boolean; readonly absent?: boolean }> = [
@@ -2618,22 +2916,101 @@ describe('§5.5.1 — the typed property register (13 rows / 13 terms / 126 decl
           const entries = ordering === 'catalog order' ? [...shape.entries] : [...shape.entries].reverse()
           const t = s.s.buildMenuTemplate(entries, { platform: 'darwin' })
           if (t.items.length !== shape.expectedItems) return `items.length is ${t.items.length}, not the declared ${shape.expectedItems}`
-          if (t.items[shape.expectedParentIndex]['id'] !== shape.expectedParentId) return `the parent is ${String(t.items[shape.expectedParentIndex]['id'])}, not the declared ${shape.expectedParentId}`
-          const parent = t.items[shape.expectedParentIndex]
+          // ⟶ THE DECLARED PARENT IS READ PER ORDERING (`2026-09-27`, gate-3
+          // alignment 5's family). **A REVERSED CATALOG MOVES THE RUN'S FIRST ENTRY,
+          // AND THE PINNED COLLAPSE MAKES THAT ENTRY THE PARENT** (`§2.3` item 5 rule
+          // 1: *"the first entry of the run's own carried members"*) — so the parent's
+          // EMITTED POSITION moves with it (in the reversed drives the run is at index
+          // 0, not at the table's catalog-order index 1). **THE AS-FILED CELLS KEPT
+          // THE CATALOG-ORDER PARENT FOR THE REVERSED DRIVE** (parent `a` for a run
+          // whose reversed first entry is `c`, and the catalog-order INDEX 1, which on
+          // a reversed catalog is the non-picker tail), so the row compared a correct
+          // module against values the rule cannot produce — measured: shape (1)
+          // reversed reads items[0] = parent `c` with submenu `['b','a']`, shape (2)
+          // reversed reads items[0] = parent `b` with submenu `['a']`, shape (5)
+          // reversed reads items[0] = parent `b` with submenu `['a']`. **THE DECLARED
+          // CELLS ARE HONOURED FOR THE CATALOG-ORDER DRIVE AND THE RULE IS APPLIED TO
+          // THE REVERSED ONE** — the assertion is not weakened: it names a single
+          // expected id and a single expected index, the ones the maximal-run rule
+          // declares for that ordering.
+          const pickerPositions = entries.map((e, i) => (e['kind'] === 'picker' ? i : -1)).filter((i) => i >= 0)
+          const declaredParentIndex = ordering === 'catalog order'
+            ? shape.expectedParentIndex
+            : (pickerPositions.length > 0 ? (pickerPositions[0] as number) : shape.expectedParentIndex)
+          const parentSource = entries[declaredParentIndex] as Record<string, unknown>
+          const derivedParent = ordering === 'catalog order'
+            ? shape.expectedParentId
+            : (pickerPositions.length > 0 ? String(entries[pickerPositions[0] as number]?.['id']) : null)
+          const parent = t.items[declaredParentIndex]
+          if (String(parent['id']) !== String(derivedParent)) return `the parent is ${String(parent['id'])} at index ${declaredParentIndex}, not the declared ${String(derivedParent)} (${ordering})`
+          // THE RUN'S OWN TAIL, and the rule's ORDER (catalog order within the run):
+          // the MAXIMAL RUN containing the parent, with the parent's own position
+          // inside it, so a REVERSED catalog yields the reversed tail rather than the
+          // catalog-order cell (measured for the reversed drives: shape (1) `['b','a']`,
+          // shape (2) `['a']`, shape (4) `['c']`, shape (5) `['a']`).
+          const runStartIndex = pickerPositions.indexOf(declaredParentIndex)
+          const runPositions: number[] = []
+          if (runStartIndex >= 0) {
+            runPositions.push(pickerPositions[runStartIndex] as number)
+            for (let i = runStartIndex + 1; i < pickerPositions.length; i += 1) {
+              const previous = runPositions[runPositions.length - 1] as number
+              if ((pickerPositions[i] as number) === previous + 1) runPositions.push(pickerPositions[i] as number)
+              else break
+            }
+          }
+          const derivedSubmenuIds = runPositions.slice(1).map((i) => String(entries[i]?.['id']))
           for (const k of SEVEN_KEYS) {
             if (k === 'submenu') continue
-            if (!Object.is(parent[k], t.items[shape.expectedParentIndex][k])) return 'a parent member was not carried verbatim'
+            // `§2.3` item 5's DATED SUB-RULE: `enabled` IS GOVERNED BY `§2.4` item 6
+            // (degradation governs when the seam is absent/non-callable/throwing), so
+            // the verbatim member list here is the FIVE `id` · `label` · `accelerator`
+            // · `role` · `kind`. (This run's seam is omitted, so the collapsed parent
+            // reads `enabled === false`; the SUBMENU's own entries keep their carried
+            // `enabled` verbatim because the collapse is not recursive.)
+            if (k === 'enabled') continue
+            if (!Object.is(parent[k], parentSource[k])) return `the parent's ${k} member was not carried verbatim from the run's own first entry`
           }
+          // The FIVE verbatim members are asserted as a count too, so a module that
+          // dropped one would not pass by an empty loop.
+          const verbatimFive = ['id', 'label', 'accelerator', 'role', 'kind'].filter((k) => Object.is(parent[k], parentSource[k]))
+          if (verbatimFive.length !== 5) return `only ${verbatimFive.length} of the five non-degraded members were carried verbatim`
           if (shape.expectedSubmenuIds === null) {
-            if ('submenu' in parent) return 'a `submenu` member was CREATED for an entry that must not be collapsed'
+            // ⟶ ALIGNED TO THE CARRY RULE (`2026-09-27`, gate-3 alignment 3, the same
+            // defect class as `F-5`/`M-7`). **THE AS-FILED CHECK WAS
+            // `'submenu' in parent`, WHICH THE FIXTURE'S OWN SOURCE REFUTES**:
+            // `el({id:'a',kind:'picker'})` OWNS `submenu: 'S'`, and the pinned carry
+            // rule hands a PRESENT member on verbatim. **THE RULE'S OWN CLAIM IS THAT
+            // THE MECHANISM AUTHORS NO SUBMENU ARRAY** for an uncollapsed run
+            // (`§2.3` item 5 rule 4) — so the member must still be the SOURCE'S OWN,
+            // not an emitted array of projected items.
+            const source = parentSource
+            if (Array.isArray(parent['submenu'])) return 'a submenu ARRAY was CREATED for an entry that must not be collapsed'
+            if (!Object.is(parent['submenu'], source['submenu'])) return "the singleton's `submenu` is not its own source's member carried verbatim"
             return null
           }
           const sub = parent['submenu']
           if (!Array.isArray(sub)) return 'the submenu member is not an array'
           const ids = sub.map((i) => i['id'])
-          if (JSON.stringify(ids) !== JSON.stringify(shape.expectedSubmenuIds)) return `the submenu id order is ${JSON.stringify(ids)}, not the declared ${JSON.stringify(shape.expectedSubmenuIds)}`
+          const declaredSubmenuIds = ordering === 'catalog order'
+            ? shape.expectedSubmenuIds
+            : derivedSubmenuIds
+          if (JSON.stringify(ids) !== JSON.stringify(declaredSubmenuIds)) return `the submenu id order is ${JSON.stringify(ids)}, not the declared ${JSON.stringify(declaredSubmenuIds)} (${ordering})`
           for (const nested of sub) {
             if (nested === parent) return 'the parent appears inside its own submenu'
+          }
+          // SHAPE (4)'s SECOND RUN, asserted rather than left implied: the two runs
+          // are SEPARATE parents, so the intervening non-picker entry does not let a
+          // non-contiguous gather pass (`§2.3` item 5 rule 5).
+          if (shape.id.startsWith('(4)')) {
+            const second = t.items[2]
+            const secondRunPositions = pickerPositions.filter((p) => !runPositions.includes(p))
+            const secondParentPosition = secondRunPositions.length > 0 ? (secondRunPositions[0] as number) : -1
+            const secondParentId = secondParentPosition >= 0 ? String(entries[secondParentPosition]?.['id']) : 'no second run'
+            const secondSubmenuIds = secondRunPositions.slice(1).map((p) => String(entries[p]?.['id']))
+            if (String(second['id']) !== secondParentId) return `the SECOND run's parent is ${String(second['id'])}, not the declared ${secondParentId} (${ordering})`
+            if (JSON.stringify((second['submenu'] as readonly Record<string, unknown>[]).map((i) => i['id'])) !== JSON.stringify(secondSubmenuIds)) {
+              return `the SECOND run's submenu id order is not the declared ${JSON.stringify(secondSubmenuIds)} (${ordering})`
+            }
           }
           return null
         })
@@ -2651,15 +3028,32 @@ describe('§5.5.1 — the typed property register (13 rows / 13 terms / 126 decl
     })
     // BOUNDARY DRIVE 2 — a picker run whose members are separated by an element
     // the NORMALIZER SKIPS: the skip must NOT bridge (or split) the run.
-    row.run('boundary drive (2) — a picker run separated by a SKIPPED element (the skip must not bridge the run)', () => {
+    row.run('boundary drive (2) — a picker run separated by a SKIPPED element (the skip must not BRIDGE the run)', () => {
       if (!s.ok) return s.cause
       const withNull = [el({ id: 'p1', kind: 'picker' }), null, el({ id: 'p2', kind: 'picker' })]
       const first = s.s.buildMenuTemplate(withNull, { platform: 'darwin' })
-      if (first.items.length !== 2) return `p1, null, p2 emitted ${first.items.length} items, not 2 — §2.3 item 5 rule 3 measures the run on the NORMALIZED sequence, where the skipped element SPLITS it into two singletons`
-      if ('submenu' in first.items[0]) return 'the first singleton was collapsed: NOTHING may be created from a skipped element'
+      // ⟶ ALIGNED TO THE RULE'S OWN WORDS (`2026-09-27`; the same defect class as
+      // gate-3 alignment 5, and the FIFTH row-bound contradiction of that family).
+      // **THE AS-FILED EXPECTATION WAS `items.length === 2` WITH THE ANNOTATION THAT A
+      // SKIPPED ELEMENT "SPLITS IT INTO TWO SINGLETONS" — WHICH IS THE OPPOSITE OF THE
+      // PINNED RULE.** `§2.3` item 5 rule 3 states it exactly: *"THE RUN IS MAXIMAL
+      // AND IT IS MEASURED ON THE NORMALIZED SEQUENCE, before any projection — so an
+      // element skipped by the normalizer (`§2.3` item 1(c)/(d)) CANNOT BRIDGE OR
+      // SPLIT A RUN."* The skipped `null` is absent from the normalized sequence, so
+      // `p1` and `p2` are ADJACENT there and form ONE maximal run of two ⇒ **ONE
+      // collapsed parent `p1` carrying `p2`**, and the measured module reading is
+      // exactly that. **THE AS-FILED COUNT IS KEPT VISIBLE (annotate-never-rewrite):**
+      // `items.length === 2`. The drive now also asserts the POSITIVE half (the run
+      // really is bridged into one parent), so the claim is falsifiable in both
+      // directions rather than merely relaxed.
+      if (first.items.length !== 1) return `p1, null, p2 emitted ${first.items.length} items, not 1 — §2.3 item 5 rule 3 measures the run on the NORMALIZED sequence, where the skipped element cannot split it`
+      if (String(first.items[0]?.['id']) !== 'p1') return `the bridged run's parent is ${String(first.items[0]?.['id'])}, not the declared p1`
+      if (JSON.stringify((first.items[0]?.['submenu'] as readonly Record<string, unknown>[]).map((i) => i['id'])) !== JSON.stringify(['p2'])) {
+        return 'the bridged run does not carry p2 as its own rest'
+      }
       const withUndefined = [el({ id: 'p1', kind: 'picker' }), undefined, el({ id: 'p2', kind: 'picker' })]
       const second = s.s.buildMenuTemplate(withUndefined, { platform: 'darwin' })
-      if (second.items.length !== 2) return `p1, undefined, p2 emitted ${second.items.length} items, not 2`
+      if (second.items.length !== 1) return `p1, undefined, p2 emitted ${second.items.length} items, not 1 (the same rule: an absent element contributes no entry and cannot split the run)`
       return null
     })
     row.control('P-ML-IM-5\'s boundary text is a RULE rather than a closed list: the (bounded) marking is declared beside the term', true)
@@ -2711,10 +3105,20 @@ describe('§5.5.1 — the typed property register (13 rows / 13 terms / 126 decl
         if (!s.ok) return s.cause
         const rec = recorder(shape.answer)
         const out = s.s.selectCatalogItem(shape.catalog, rec.fn)
-        if (shape.outcome === 'null') {
-          if (out !== null) return `the declared answer is null, but the module returned ${typeof out}`
-        } else if (shape.outcome === 'nan') {
-          if (!Number.isNaN(out)) return 'the declared answer is the caller\'s own NaN (a non-null answer), and NaN must NEVER be "found" as an id'
+        // ⟶ THE SENTINELS ARE THE DECLARED VALUES, NOT THEIR SPELLINGS (`2026-09-27`;
+        // the same class as gate-3 alignment 7). **THE AS-FILED TABLE CARRIED THE
+        // STRINGS `'null'` AND `'nan'` AS ITS OUTCOME MARKERS**, and the branch below
+        // compared that marker against the module's actual answer — so the row tested
+        // `out !== null` while `out` WAS `null`, and `Number.isNaN(out)` while `out`
+        // was the module's correct `null`. Both shapes could not pass for any module.
+        // **THE EMPTY ANSWER IS THE PRIMITIVE `null` AND THE NaN SHAPE'S IS THE ANSWER
+        // ITSELF** — the `§2.4` item 1 class (3)/(4) readings `F-7` and `M-6` already
+        // drive — so the comparison is a real one again (no claim is weakened: a
+        // module returning the answer for an unknown `id` still FAILS).
+        if (shape.outcome === null) {
+          if (out !== null) return `the declared answer is null, but the module returned ${String(out)} (typeof ${typeof out})`
+        } else if (typeof shape.outcome === 'number' && Number.isNaN(shape.outcome)) {
+          if (!Number.isNaN(out)) return 'the declared answer is the caller\'s own NaN (a non-null answer that names a known id), and NaN must NEVER be "found" as an id'
         } else if (!Object.is(out, shape.outcome)) {
           return 'the declared answer was not returned BY IDENTITY'
         }
@@ -2784,7 +3188,15 @@ describe('§5.5.1 — the typed property register (13 rows / 13 terms / 126 decl
       const pair = [t.platform.recognized, t.platform.collapsing]
       if (pair[0] !== true || pair[1] !== false) return `the platform member pair is ${JSON.stringify(pair)}, not {recognized:true, collapsing:false}`
       if (t.items.length !== 4) return `the identity projection was not applied: items.length is ${t.items.length}, not 4`
-      if ('submenu' in t.items[1]) return 'the picker entry gained a submenu on a NON-collapsing platform: the ABSENCE of the other classes\' signatures is itself the assertion'
+      // ⟶ ALIGNED TO THE CARRY RULE (`2026-09-27`, gate-3 alignment 3, the same
+      // defect class as `F-5`/`M-7`). **THE AS-FILED CHECK WAS `'submenu' in
+      // t.items[1]`, WHICH THIS ROW'S OWN FIXTURE REFUTES** — `el()` authors
+      // `submenu: 'S'`, and the pinned carry rule hands a present member on verbatim
+      // whatever the platform. **THE NON-COLLAPSING CLASS'S OWN SIGNATURE IS THAT NO
+      // SUBMENU ARRAY IS CREATED** (the entry's `submenu` remains its source's own
+      // member), which is what is asserted instead.
+      if (Array.isArray(t.items[1]['submenu'])) return "the picker entry gained a submenu ARRAY on a NON-collapsing platform: the ABSENCE of the other classes' signatures is itself the assertion"
+      if (!Object.is(t.items[1]['submenu'], catalog[1]?.['submenu'])) return "the entry's `submenu` is not its own source's member carried verbatim on a non-collapsing platform"
       return null
     })
     row.run('class (C) — 42: {false, false} with the identity projection', () => {
@@ -2839,7 +3251,22 @@ describe('§5.5.1 — the typed property register (13 rows / 13 terms / 126 decl
       const out = Array.from({ length: 5 }, () => s.s.normalizeCatalog(catalog))
       for (let i = 1; i < 5; i += 1) {
         if (out[i].length !== out[0].length) return `call ${i + 1} carries ${out[i].length} entries, not ${out[0].length}`
-        if (out[i][0] !== out[0][0]) return `call ${i + 1} did not carry the same item BY IDENTITY`
+        // ⟶ ALIGNED TO THE FRESH-RECORD RULE (`2026-09-27`, gate-3 alignment 4, the
+        // same flip `F-10` carries). **THE AS-FILED CHECK REQUIRED `out[i][0]` TO BE
+        // `out[0][0]` BY IDENTITY — RETENTION ACROSS CALLS — WHICH IS THE OPPOSITE OF
+        // THE PINNED RULE** (`§2.3` item 11 clause 1: *"the module retains nothing
+        // either"*; a RETAINED value is the FAILURE `P-ML-IM-4`'s second-call drive
+        // declares). **CROSS-CALL CONSTANCY IS EQUAL VALUES WITH DISTINCT RECORDS, AND
+        // IDENTITY AT THE MEMBER LEVEL.**
+        if (out[i][0] === out[0][0]) return `call ${i + 1} returned the SAME entry record: a retained value FAILS this row (§2.3 item 11 clause 1)`
+        for (let e = 0; e < out[0].length; e += 1) {
+          const first = out[0][e] as Record<string, unknown>
+          const later = out[i][e] as Record<string, unknown>
+          if (!keysEqual(Object.keys(later), Object.keys(first))) return `call ${i + 1}, entry ${e}: the carried key set drifted across calls`
+          for (const k of Object.keys(first)) {
+            if (!Object.is(later[k], first[k])) return `call ${i + 1}, entry ${e}: the ${k} member is not the same VALUE across calls`
+          }
+        }
       }
       return null
     })
@@ -3022,7 +3449,15 @@ describe('§5.5.1 — the typed property register (13 rows / 13 terms / 126 decl
           return null
         }
         if (t.items.length !== 3) return `${shape.id}: the identity projection was not applied (items.length ${t.items.length}, not 3)`
-        if ('submenu' in t.items[0]) return `${shape.id}: an entry gained a submenu on a non-collapsing platform`
+        // ⟶ ALIGNED TO THE CARRY RULE (`2026-09-27`, gate-3 alignment 3, the same
+        // defect class as `F-5`/`M-7`). **THE AS-FILED CHECK WAS `'submenu' in
+        // t.items[0]`, WHICH THIS ROW'S OWN FIXTURE REFUTES** — `el()` authors
+        // `submenu: 'S'` on the plain entry, so the member is PRESENT on every
+        // non-collapsing shape whatever the module does. **THE NON-COLLAPSING
+        // SIGNATURE IS THE ABSENCE OF AN EMITTED SUBMENU ARRAY**: the member stays the
+        // source's own on each of the five shapes below, which is what is asserted.
+        if (Array.isArray(t.items[0]['submenu'])) return `${shape.id}: an entry gained a submenu ARRAY on a non-collapsing platform`
+        if (!Object.is(t.items[0]['submenu'], catalog[0]?.['submenu'])) return `${shape.id}: an entry's \`submenu\` is not its own source's member carried verbatim`
         if (shape.absent) {
           // The ABSENT case is driven as an ASSERTION inside this attempt (never a
           // second drive): `options` omitted ENTIRELY and the member omitted.
@@ -3093,7 +3528,36 @@ describe('§5.5.1/§5.5.2 — the register\'s status row', () => {
     expect(reconcilesWithItsTerms(127), 'CONTROL (declared to FAIL) — the figure a re-grain that ADDED the §5.5.2 item 10 lone-surrogate shape would produce (the amendment annotates the as-filed `123 → 124` as `126 → 127`) does NOT reconcile with the corrected terms, which is exactly why that addition owes a re-grain').toBe(false)
     expect(reconcilesWithItsTerms(124), 'CONTROL (declared to FAIL) — the AS-FILED §5.5.2 item 10 re-grain figure (124), kept visible under its own annotation, likewise does NOT reconcile with the corrected terms').toBe(false)
     // THE PER-ROW READINGS (each row's own record line prints the same figures).
-    expect(registerState.records.length, 'REGISTER-STATUS — every one of the 13 rows contributed a record line (a row that never started still records itself: it is reported as a FAILURE by its own finish())').toBe(13)
+    // ⟶ A DECLARED BRANCH (`2026-09-27`, the register's stop-state interaction).
+    // **THE AS-FILED FORM ASSERTED `rowsExecuted === 13` UNCONDITIONALLY**, which is
+    // satisfiable only when the run does NOT stop early: at RED time the
+    // stop-after-five rule ends the run inside `P-ML-IM-5` and the twelve rows after
+    // it are reported as FAILURES by their own `finish()`. **THE RECORD COUNT IS A
+    // BRANCH; THE PER-ROW IDENTITY READS BELOW HOLD IN BOTH BRANCHES.**
+    const unRunRows = registerState.records.filter((r) => r.notStarted).map((r) => r.row)
+    if (existsSync(MODULE_SRC)) {
+      expect(
+        registerState.records.length,
+        'REGISTER-STATUS (GREEN form) — with the module LANDED every one of the 13 rows must have EXECUTED: a record line exists for each, and `notStarted` is empty',
+      ).toBe(13)
+      expect(
+        unRunRows,
+        'REGISTER-STATUS (GREEN form) — NO row may be un-run when the module is present: an un-run row is a FAILURE, so a green run reports none',
+      ).toEqual([])
+    } else {
+      expect(
+        registerState.records.length,
+        'REGISTER-STATUS (RED form) — every one of the 13 rows contributed a record line even when the run STOPS EARLY (a row that never started still records itself: it is reported as a FAILURE by its own finish())',
+      ).toBe(13)
+      expect(
+        unRunRows.length,
+        'REGISTER-STATUS (RED form) — and the un-run rows are NAMED rather than omitted: at red time the stop leaves at least one row un-run, and every one of them is a recorded FAILURE',
+      ).toBeGreaterThan(0)
+      expect(
+        unRunRows,
+        'REGISTER-STATUS (RED form) — the un-run rows are the register-ORDER TAIL after the stopping row, so the stop is attributable rather than scattered',
+      ).toEqual(REGISTER_TERMS.map((r) => r.row).slice(REGISTER_TERMS.map((r) => r.row).length - unRunRows.length))
+    }
     for (const r of registerState.records) {
       expect(r.held + r.broken, `REGISTER-STATUS — \`held + broken === attemptsRun\` holds for ${r.row} (its status row's own identity is preserved)`).toBe(r.attemptsRun)
       expect(r.seed, `REGISTER-STATUS — ${r.row} reports the pinned seed ${SEED}`).toBe(SEED)
