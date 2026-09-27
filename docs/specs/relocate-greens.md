@@ -11,7 +11,18 @@ record is `§K`).** **`TARGETED RE-DRIVE at 0984d41 — 30 executed scenarios: 2
 (`F-1`..`F-8`). **The `23` original scenarios were RE-RUN VERBATIM and `23` still PASS; SEVEN scenarios
 (`RL-G-25`..`RL-G-31`) were ADDED for the six `§3d` pins and the three host fixes, of which SIX PASS and
 ONE (`RL-G-31`, the `ADV-RL-9` post-arm recovery) **FAILS** — a `doc/spec contradiction`, recorded as
-`F-7` with its clause named, and **neither re-scoped nor converted to a pass.** The original pass's own
+`F-7` with its clause named, and **neither re-scoped nor converted to a pass.** **⟶ THE ONE FAIL'S
+DISPOSITION, ADDED BESIDE 2026-09-27 (THE GATE-8 PER-UNIT DOCUMENTATION REVIEW — the as-filed sentence
+above is KEPT VISIBLE and its `29` PASS / `1` FAIL / `4` NOT-BLIND-RUNNABLE ARITHMETIC IS UNMOVED): THE
+FAIL STANDS AS A FAIL AND THE `29/1/4` COUNT IS STILL THE HONEST COUNT — `F-7`'s OWN `⟶ RESOLVED` block
+(§K.5) does NOT convert it to a pass. WHAT THE GATE-7 PASS SETTLED IS THE *CLAUSE*, NOT THE SCENARIO:
+`§3d` pin `ADV-RL-9` was corrected in place (the recovery reveal is a TERMINAL-DELIVERED shape,
+unreachable through the LANDED session because the arm's mid-drag `reset` detaches the tracking listeners
+and a later release reaches NO handler), and **`RL-G-31` may be re-driven ONLY against a harness that
+DELIVERS a terminal after the arm** — the real session cannot. **A reader comparing this line with
+`§K.3`'s `FAIL` cell and with `§K.5`'s `F-7` must read them as ONE disposition: the module's arm
+behaviour is CONFORMANT, the clause was the side that could not hold, and the scenario is still not a
+pass.** The original pass's own
 readings above and below stand as that pass's own measurement.**
 
 **Authored from the DOCUMENTATION ONLY, and RUN against the landed module.** The sources read were:
@@ -241,6 +252,19 @@ contract's own text does not settle the drive — reported rather than smoothed,
   the module's type surface, which this pass may not do.
 * **VERDICT: `doc/spec drift` (LOW)** — the census should either declare the ninth name or state that the
   reset record's type is deliberately local. **Owner: the contract, not the module.**
+* **⟶ CLOSED 2026-09-27 (THE GATE-8 PER-UNIT DOCUMENTATION REVIEW — the as-filed finding above is KEPT
+  VISIBLE, as this set's convention requires).** **THE LANDED MODULE ANSWERS IT, AND THE ANSWER IS THE
+  SECOND OF THE TWO READINGS THIS FINDING NAMED: `RelocateResetResult` is a MODULE-LOCAL, NON-EXPORTED
+  type.** **MEASURED THIS PASS, read-only, in `src/shared/relocate.ts`: the interface is declared at
+  `interface RelocateResetResult` — NO `export` keyword — and the file's export statements are EXACTLY
+  the ten the census names (`export function withinProximity`, `export function
+  createRelocateSession`, and the eight `export interface`/`export type` declarations); the name is
+  referenced only at the module's own `RelocateSession.reset` member declaration and at its own internal
+  `resetEntry` helper, so it is USED and NOT DECLARED-AS-EXPORTED.** **THEREFORE THE CENSUS STANDS AT
+  `2 + 8 = 10` NAMES — the `2 + 9 = 11` reading is NOT taken — and `RL-G-24`'s eight-name import list was
+  the correct drive: a fork reads the reset record's shape STRUCTURALLY (`{ok, code, committed}`) and
+  cannot import the name.** **NO CENSUS TERM MOVED, NO ROW MOVED, and this annotation claims no leg: it
+  reads the module's own bytes and the contract's own `§2.1`(b) block.**
 
 ---
 
