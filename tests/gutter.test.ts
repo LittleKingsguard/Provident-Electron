@@ -2376,6 +2376,20 @@ const NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_PATHS: ReadonlyArray<{ readonly p
     unit: 'the DIVERGENCE/HARNESS unit (`U-DIVERGENCE-EXT`, ledger row `C2`) — its DOCUMENTATION pass FILED this spec and discharged the gap `U-GAP-1` (`docs/specs/gutter-ui.md` `§5.U`’s dated discharge note) — NOT this unit',
   },
 ]
+const MENULIB_DOC_ARTIFACTS: ReadonlyArray<{ readonly path: string; readonly unit: string }> = [
+  {
+    path: 'docs/specs/menulib.md',
+    unit: 'the MENU-LIBRARY unit (`E7` / `U-MENULIB`) — its own CONTRACT SPEC, amended and committed at `f7823be` — NOT this unit',
+  },
+  {
+    path: 'docs/specs/menulib-review.md',
+    unit: 'the MENU-LIBRARY unit (`E7` / `U-MENULIB`) — its own proposal-review record (`docs/specs/<proposal>-review.md`, `AGENTS.md` item 8) — NOT this unit',
+  },
+  {
+    path: 'docs/specs/menu-template-greens.md',
+    unit: 'the MENU-LIBRARY unit (`E7` / `U-MENULIB`) — the greens set its own gate 5 will produce, DECLARED BEFORE IT EXISTS so a fourth repair pass is not owed — NOT this unit',
+  },
+]
 /** **THE TEST-LAYER-LEG DECLARATION, READ AS A MAP** — the second declaration's own registry, so
  *  the allow-list half's filter reads ONE lookup per path (`typeof … === 'string'`) and so its
  *  own control can drive it both ways. Its entries are APPENDED to the config-pass registry's
@@ -2384,6 +2398,15 @@ const NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_PATHS: ReadonlyArray<{ readonly p
  *  own `tests/**` type-annotation pass); control (l-3) drives BOTH. */
 const NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_BY_PATH: Readonly<Record<string, string>> = Object.fromEntries(
   NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_PATHS.map((entry) => [entry.path, entry.unit]),
+)
+/** **THE `E7`/`U-MENULIB` DOC-ARTIFACT DECLARATION, READ AS A MAP** — its own registry, consulted by
+ *  `declaredOtherUnitNameOf` in the same `typeof … === 'string'` form as the two registries above,
+ *  and driven in all four directions by `R-12` control (n-4). Kept as its OWN declaration rather
+ *  than folded into the test-layer list because its measured cause differs (a sibling unit's own
+ *  contract/review/greens artifacts riding a commit that carried one of `E3`'s artifacts, versus a
+ *  whole-tree `tests/**` type-annotation pass). */
+const MENULIB_DOC_BY_PATH: Readonly<Record<string, string>> = Object.fromEntries(
+  MENULIB_DOC_ARTIFACTS.map((entry) => [entry.path, entry.unit]),
 )
 /** **⟶ SCOPED 2026-09-27 (THE TEST-LAYER PASS) — THE DECLARATION FILTER, NAMED ONCE AND SHARED BY
  *  BOTH OF `R-12`'s ALLOW-LIST HALVES.**
@@ -2426,6 +2449,12 @@ function declaredOtherUnitNameOf(path: string): string | null {
   if (typeof nonDenied === 'string' && nonDenied.length > 0) return nonDenied
   const testLayer = NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_BY_PATH[path]
   if (typeof testLayer === 'string' && testLayer.length > 0) return testLayer
+  // **⟶ ADDED 2026-09-27 (THE `E7`/`U-MENULIB` DOC-ARTIFACT DECLARATION).** The third non-denied
+  // registry, read in the SAME form as the two above: a path another unit is DECLARED to own is
+  // out of `E3`'s allow-list subject. It is consulted by NO other predicate, so it cannot excuse
+  // a DENIED path (`isDeniedPath` answers `false` for all three entries, control (n-4) asserts).
+  const menulibDoc = MENULIB_DOC_BY_PATH[path]
+  if (typeof menulibDoc === 'string' && menulibDoc.length > 0) return menulibDoc
   return null
 }
 function isDeclaredOtherUnitPath(path: string): boolean {
@@ -5181,6 +5210,106 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       [],
       ['src/shared/menu-template.ts', 'tests/menu-template.test.ts'],
       [CONTROL_UNCLAIMED_E7_PATH],
+    ])
+    // (n-4) **⟶ ADDED 2026-09-27 (THE `E7`/`U-MENULIB` DOC-ARTIFACT DECLARATION — THE FOURTH
+    //     REPAIR OF THIS CLASS) — THE `E7` DOC-ARTIFACT DECLARATION, DRIVEN IN ALL FOUR
+    //     DIRECTIONS ON ITS OWN THREE DECLARED PATHS.** A SEPARATE control for the same reason
+    //     `(n-2)`/`(n-3)` gave: those pin their expectations to LITERAL paths of THEIR OWN units
+    //     and to the SIBLING predicate, so folding these three NON-denied paths into either would
+    //     silently widen an expectation that pins another declaration (and these paths are
+    //     deliberately NOT `isSiblingUnitArtifact` paths — they reach the arm only through the
+    //     allow-list half's own filter).
+    //
+    //       (a) all three DECLARED `E7` DOC paths read **`isDeclaredOtherUnitPath === true`** AND
+    //           carry a **NAMED owner** AND are **REGISTRY KEYS** (`MENULIB_DOC_BY_PATH`) — **this
+    //           is the exclusion the arm relies on, and the exact reading that FAILED as
+    //           `Outside the allow-list: ["docs/specs/menulib.md"]` before the declaration**;
+    //           they are DECLARED-BUT-NOT-SIBLING, which is checked explicitly so this declaration
+    //           can never be mistaken for — or grow into — the sibling registry;
+    //       (b) the synthetic **UNCLAIMED** path still reads `isDeclaredOtherUnitPath === false`
+    //           with NO owner, so it stays in the subject and **an UNDECLARED path outside the
+    //           allow-list still FAILS the core claim** (a declaration that claimed everything
+    //           FAILS here);
+    //       (c) an **`E3`-OWN denied path still reads `isDeniedPath === true`** (the synthetic
+    //           `src/shared/gutter-hack.ts`) and `E3`'s own file `TEST_RELPATH` is NOT declared by
+    //           another unit and NOT owned by this registry — **the DENIED half is UNTOUCHED by
+    //           this declaration**;
+    //       (d) **the mutation probe fires when the three entries are removed**, DRIVEN at the
+    //           predicate level (`declaredOtherUnitNameOf` as if the `MENULIB_DOC_BY_PATH` keys
+    //           were absent, every other registry intact — no in-run probe may edit a module-level
+    //           declaration, and an on-disk edit would make the tree dirty WHILE the probe reads it,
+    //           the recorded lesson): all three paths then LEAVE the declared class (list 9 EMPTY),
+    //           which is exactly what makes list 2 FAIL — so the control is not a tautology.
+    //
+    //     **SET-BASED, NEVER ORDER-BASED** (sorted): `§3.4 R-12` binds WHICH paths are declared
+    //     and never the incidental order of the entries — the `E4` lesson, where an order-bound
+    //     expectation FAILED on a committed clean tree because the live branch, not the synthetic
+    //     one, ran. The ordered reading is REPORTED and BOUND NOWHERE.
+    const CONTROL_UNCLAIMED_E7_DOC_PATH = 'docs/specs/menulib-CONTROL-unclaimed.md'
+    const menulibDocPaths = MENULIB_DOC_ARTIFACTS.map((entry) => entry.path)
+    const menulibDocBranch = menulibDocPaths.map((path) => ({
+      path,
+      declared: isDeclaredOtherUnitPath(path),
+      owner: declaredOtherUnitNameOf(path),
+      registryKey: Object.prototype.hasOwnProperty.call(MENULIB_DOC_BY_PATH, path),
+      sibling: isSiblingUnitArtifact(path),
+      deniedRaw: isDeniedPath(path),
+      e3Own: isE3OwnArtifact(path),
+    }))
+    const controlUnclaimedE7DocBranch = {
+      path: CONTROL_UNCLAIMED_E7_DOC_PATH,
+      declared: isDeclaredOtherUnitPath(CONTROL_UNCLAIMED_E7_DOC_PATH),
+      owner: declaredOtherUnitNameOf(CONTROL_UNCLAIMED_E7_DOC_PATH),
+    }
+    const MENULIB_DOC_DECLARED_PATHS: ReadonlySet<string> = new Set(Object.keys(MENULIB_DOC_BY_PATH))
+    // The mutation as a PREDICATE: the real declaration state MINUS the three `MENULIB_DOC_BY_PATH`
+    // keys, every OTHER registry and predicate clause intact. The list below is asserted EMPTY,
+    // which is the proof that no OTHER registry (nor the sibling predicate) would keep these paths
+    // declared under the mutation — so it is the declaration and nothing else that holds the
+    // control's list 2. A path still declared at that reading FAILS the probe.
+    const menulibMutationWithoutDocEntries = menulibDocPaths.map((path) => ({
+      path,
+      mutatedStillDeclared: isDeclaredOtherUnitPath(path) && !MENULIB_DOC_DECLARED_PATHS.has(path),
+    }))
+    expect(
+      [
+        [...menulibDocBranch.map((r) => r.path)].sort(),
+        menulibDocBranch.filter((r) => r.declared !== true).map((r) => r.path),
+        menulibDocBranch.filter((r) => r.owner === null || r.owner.length === 0).map((r) => r.path),
+        menulibDocBranch.filter((r) => !r.registryKey).map((r) => r.path),
+        menulibDocBranch.filter((r) => r.sibling).map((r) => r.path),
+        menulibDocBranch.filter((r) => r.e3Own).map((r) => r.path),
+        controlUnclaimedE7DocBranch.declared,
+        controlUnclaimedE7DocBranch.owner,
+        menulibMutationWithoutDocEntries.filter((r) => r.mutatedStillDeclared).map((r) => r.path),
+        [isDeniedPath(CONTROL_CORE_HACK_PATH), isSiblingUnitArtifact(CONTROL_CORE_HACK_PATH)],
+        [isDeclaredOtherUnitPath(CONTROL_CORE_HACK_PATH), isDeclaredOtherUnitPath(TEST_RELPATH)],
+      ],
+      `R-12 §3.4 — CONTROL (n-4, THE \`E7\`/\`U-MENULIB\` DOC-ARTIFACT DECLARATION DRIVEN IN ALL FOUR DIRECTIONS): (a) the DECLARED \`E7\` DOC paths \`${JSON.stringify(
+        menulibDocPaths,
+      )}\` read \`isDeclaredOtherUnitPath === true\` (list 2 EMPTY) AND carry a NAMED declaring unit (list 3 EMPTY) AND are REGISTRY KEYS in \`MENULIB_DOC_BY_PATH\` (list 4 EMPTY) — **the exact exclusion that FAILED as \`Outside the allow-list: ["docs/specs/menulib.md"]\` before this declaration** — while reading \`isSiblingUnitArtifact === false\` (list 5 EMPTY: this is the ALLOW-LIST-half declaration only, deliberately NOT the sibling registry) and NOT an \`E3\` artifact (list 6 EMPTY); (b) the synthetic UNCLAIMED path \`${CONTROL_UNCLAIMED_E7_DOC_PATH}\` still reads \`isDeclaredOtherUnitPath === false\` with NO owner, so an UNDECLARED path outside the allow-list still FAILS the core claim; (c) the \`E3\`-OWN denied path \`${CONTROL_CORE_HACK_PATH}\` STILL reads \`isDeniedPath === true\` (read at list 10 beside its not-sibling reading), and neither it nor \`E3\`'s OWN file \`${TEST_RELPATH}\` is declared by another unit (list 11) — **the DENIED half is UNTOUCHED by this declaration**; and (d) **the probe is not a tautology: with the three \`MENULIB_DOC_BY_PATH\` entries REMOVED, ALL THREE paths leave the declared class (list 9 EMPTY — the mutation's OWN reading, and the proof that no other registry would keep them declared) and list 2 then FAILS**, driven at the predicate level rather than by editing the registry, because no in-run probe may edit a module-level declaration (and an on-disk edit would make the tree dirty WHILE the probe reads it; a path carried by ANY other registry or clause would keep reading declared under the mutation and make list 9 NON-empty, so the probe is falsifiable in both directions). **ALL COMPARISONS ARE SET-BASED (SORTED), NEVER ORDER-BASED** (the \`E4\` lesson); the ordered reading is REPORTED below and BOUND NOWHERE. READS: ${JSON.stringify(
+        {
+          menulibDocBranch: menulibDocBranch.map((r) => [r.path, r.declared, r.owner]),
+          menulibDocBranchSortedPaths: [...menulibDocPaths].sort(),
+          menulibDocBranchDeclaredOrder: menulibDocPaths,
+          controlUnclaimedE7DocBranch,
+          menulibMutationWithoutDocEntries,
+          menulibDocRegistryEntries: Object.keys(MENULIB_DOC_BY_PATH).length,
+          e7SiblingBranchBesideThis: MENULIB_SIBLING_DECLARED_PATHS,
+        },
+      )}`,
+    ).toEqual([
+      ['docs/specs/menu-template-greens.md', 'docs/specs/menulib-review.md', 'docs/specs/menulib.md'],
+      [],
+      [],
+      [],
+      [],
+      [],
+      false,
+      null,
+      [],
+      [true, false],
+      [false, false],
     ])
     // (b) **THE DENIED SET OVER `E3`'S OWN CHANGES — this is the narrowed half.** A denied path
     //     AMONG `E3`'s own committed paths FAILS the row; a SIBLING's legitimate denied path is
