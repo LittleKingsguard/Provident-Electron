@@ -28,7 +28,10 @@ beforeAll(() => {
 
 /** A fake window.provident.security bridge (the renderer's IPC surface). */
 function fakeSecurity() {
-  let cfg = { token: null, enabled: ['read', 'dispatch'] }
+  // TYPE-ONLY (leg `npm run typecheck:tests`): the setter below writes
+  // `patch.token ?? null`, which the inferred literal type (`null`) cannot hold.
+  // Same values, same reads, same assertions.
+  let cfg: { token: string | null; enabled: string[] } = { token: null, enabled: ['read', 'dispatch'] }
   return {
     current: () => cfg,
     bridge: {

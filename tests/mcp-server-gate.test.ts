@@ -16,14 +16,20 @@ import { ProvidentMcpServer, type McpBackend } from '../src/main/mcp-server.js'
  *  satisfies the constructor's `backend` requirement. */
 const backend: McpBackend = { invoke: async () => ({} ) }
 
+// TYPE-ONLY (leg `npm run typecheck:tests`): `McpServerOptions.transport` is a
+// REQUIRED field (`src/main/mcp-server.ts:228-239`), so the options literals
+// below carry it explicitly. The rows build the server through
+// `ensureServerRegistered()` and never call `start()`, so the kind is never
+// observed — no row's behaviour changes.
+
 describe('ProvidentMcpServer gate (spec §2/§4)', () => {
   it('default (no gate) → getGateConfig() is {token:null, enabled:["read","dispatch"]}', () => {
-    const server = new ProvidentMcpServer({ backend })
+    const server = new ProvidentMcpServer({ backend, transport: 'stdio' })
     expect(server.getGateConfig()).toEqual({ token: null, enabled: ['read', 'dispatch'] })
   })
 
   it('getGateConfig() returns a COPY — mutating the returned enabled does not affect the server', () => {
-    const server = new ProvidentMcpServer({ backend })
+    const server = new ProvidentMcpServer({ backend, transport: 'stdio' })
     const cfg = server.getGateConfig()
     cfg.enabled.push('code' as ToolGroup)
     cfg.token = 't'
@@ -32,12 +38,12 @@ describe('ProvidentMcpServer gate (spec §2/§4)', () => {
 
   it('a `gate` option carrying graph → getGateConfig().enabled includes graph', () => {
     const gate = new SecurityGate().apply({ groups: ['graph'] })
-    const server = new ProvidentMcpServer({ backend, gate })
+    const server = new ProvidentMcpServer({ backend, gate, transport: 'stdio' })
     expect(server.getGateConfig().enabled).toContain('graph')
   })
 
   it('applyGatePatch({groups:["code"]}) → enabled includes code, server gate is patched', () => {
-    const server = new ProvidentMcpServer({ backend })
+    const server = new ProvidentMcpServer({ backend, transport: 'stdio' })
     const cfg = server.applyGatePatch({ groups: ['code'] })
     expect(cfg.enabled).toContain('code')
     expect(server.getGateConfig().enabled).toContain('code')
@@ -46,14 +52,14 @@ describe('ProvidentMcpServer gate (spec §2/§4)', () => {
   })
 
   it('applyGatePatch with a bogus group leaves config unchanged', () => {
-    const server = new ProvidentMcpServer({ backend })
+    const server = new ProvidentMcpServer({ backend, transport: 'stdio' })
     const cfg = server.applyGatePatch({ groups: ['bogus' as ToolGroup] })
     expect(cfg).toEqual({ token: null, enabled: ['read', 'dispatch'] })
     expect(server.getGateConfig()).toEqual({ token: null, enabled: ['read', 'dispatch'] })
   })
 
   it('the server gate gates the tool: provident.code.load denied under default, allowed after patch', () => {
-    const server = new ProvidentMcpServer({ backend })
+    const server = new ProvidentMcpServer({ backend, transport: 'stdio' })
     // Default gate — a code-mutation tool is NOT allowed.
     expect(server.gate.toolAllowed('provident.code.load')).toBe(false)
     // After applyGatePatch, the same gate allows it.
@@ -62,7 +68,7 @@ describe('ProvidentMcpServer gate (spec §2/§4)', () => {
   })
 
   it('the server exposes the allowed tool names it will register (gated registration)', () => {
-    const server = new ProvidentMcpServer({ backend })
+    const server = new ProvidentMcpServer({ backend, transport: 'stdio' })
     // Default gate → the read+dispatch subset only; no graph/code tools.
     const allowed = server.allowedToolNames()
     expect(allowed).toContain('provident.dispatch')
@@ -76,7 +82,7 @@ describe('ProvidentMcpServer gate (spec §2/§4)', () => {
   })
 
   it('M1 — applyGatePatch narrows a LIVE server (the stdio re-gate): the RegisteredTool is disabled', () => {
-    const server = new ProvidentMcpServer({ backend })
+    const server = new ProvidentMcpServer({ backend, transport: 'stdio' })
     // Establish the stdio server (or its registration) so there are live handles.
     server.ensureServerRegistered()
     // A running tool under the default gate.
@@ -90,7 +96,7 @@ describe('ProvidentMcpServer gate (spec §2/§4)', () => {
   })
 
   it('M1-widen — applyGatePatch REGISTERS newly-allowed tools on a LIVE server (spec §2 "registers any newly-allowed ones")', () => {
-    const server = new ProvidentMcpServer({ backend })
+    const server = new ProvidentMcpServer({ backend, transport: 'stdio' })
     server.ensureServerRegistered()
     // default gate: code-mutation + graph tools are NOT registered
     expect(server.registeredEnabled('provident.code.load')).toBe(false)

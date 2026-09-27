@@ -123,7 +123,12 @@ describe('applyPatch — spec §5 / §7', () => {
 
   it('a bogus group in the patch is rejected (config unchanged)', () => {
     const cfg = defaultSecurityConfig()
-    const next = applyPatch(cfg, { groups: ['bogus'] })
+    // TYPE-ONLY (leg `npm run typecheck:tests`): the row's whole point is an
+    // OUT-OF-UNION group name (the same `as ToolGroup` cast the sibling rows at
+    // mcp-server-gate.test.ts:50 / blind-security-gate.test.ts already use), so
+    // the bogus value reaches `applyPatch` exactly as authored. No expectation
+    // changes.
+    const next = applyPatch(cfg, { groups: ['bogus' as ToolGroup] })
     expect(next.enabled).toEqual(['read', 'dispatch'])
   })
 

@@ -32,6 +32,13 @@ function userEnvelope(): EnvelopeForTest {
     const v = (ud && ud.username) ? String(ud.username) : 'ANON';
     context.clientAPI.apply(node.id, [{ targetProp: 'content', mode: 'replace', value: v }]);
   }`
+  // TYPE-ONLY (leg `npm run typecheck:tests`): the return type is the declared
+  // `EnvelopeForTest` (a `ReturnType<typeof demoEnvelope> & { [k: string]: unknown }`
+  // alias, :61), but this hand-authored fixture is an envelope of its own — it
+  // authors `css.id` on its own nodes while `demoEnvelope()`'s inferred literal
+  // shape does not model that field, which is what the object-literal checks were
+  // reporting. The assertion states the fixture's intended type; the returned
+  // object, the two `loadEnvelope` calls and every assertion are unchanged.
   return {
     template: {
       root: {
@@ -55,7 +62,7 @@ function userEnvelope(): EnvelopeForTest {
     },
     content: [],
     clientConfig: { runInstantiation: true, runRendering: true },
-  }
+  } as unknown as EnvelopeForTest
 }
 
 type EnvelopeForTest = ReturnType<typeof demoEnvelope> & { [k: string]: unknown }

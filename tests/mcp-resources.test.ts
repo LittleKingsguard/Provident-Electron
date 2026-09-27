@@ -11,6 +11,10 @@ import { describe, it, expect } from 'vitest'
 import { SecurityGate, type ToolGroup } from '../src/main/security.js'
 import { ProvidentMcpServer, type McpBackend } from '../src/main/mcp-server.js'
 
+// TYPE-ONLY (leg `npm run typecheck:tests`): `McpServerOptions.transport` is a
+// REQUIRED field (`src/main/mcp-server.ts:228-239`). Every row below builds the
+// server through `ensureServerRegistered()` (or a direct `readResource`) and
+// never calls `start()`, so the transport kind is never observed.
 /** A backend that records the invoked methods + returns a configurable reply. */
 function makeBackend() {
   const calls: string[] = []
@@ -27,7 +31,7 @@ function makeBackend() {
 describe('MCP resources — read-group gating (R1/R2)', () => {
   it('default (read ON) → the three resources are registered', () => {
     const { backend } = makeBackend()
-    const server = new ProvidentMcpServer({ backend })
+    const server = new ProvidentMcpServer({ backend, transport: 'stdio' })
     server.ensureServerRegistered()
     const uris = server.registeredResources().map((r) => r.uri)
     expect(uris).toContain('mcp://provident/app')
@@ -37,7 +41,7 @@ describe('MCP resources — read-group gating (R1/R2)', () => {
 
   it('R1 — disabling `read` disables the resources on the LIVE server (never always-registered)', () => {
     const { backend } = makeBackend()
-    const server = new ProvidentMcpServer({ backend })
+    const server = new ProvidentMcpServer({ backend, transport: 'stdio' })
     server.ensureServerRegistered()
     expect(server.resourceEnabled('mcp://provident/app')).toBe(true)
     server.applyGatePatch({ disable: ['read'] })
@@ -48,7 +52,7 @@ describe('MCP resources — read-group gating (R1/R2)', () => {
 
   it('R1 — a non-read group toggle does NOT affect resource registration (dispatch off keeps reads)', () => {
     const { backend } = makeBackend()
-    const server = new ProvidentMcpServer({ backend })
+    const server = new ProvidentMcpServer({ backend, transport: 'stdio' })
     server.ensureServerRegistered()
     server.applyGatePatch({ disable: ['dispatch'] })
     expect(server.resourceEnabled('mcp://provident/app')).toBe(true)
@@ -59,7 +63,7 @@ describe('MCP resources — reads forward over the backend (R4/R5)', () => {
   it('reading mcp://provident/app invokes renderedHtml and returns the snapshot', async () => {
     const mk = makeBackend()
     mk.setReply({ renderedHtml: '<app/>', ssrHtml: '<app/>', census: { inTree: 1 } })
-    const server = new ProvidentMcpServer({ backend: mk.backend })
+    const server = new ProvidentMcpServer({ backend: mk.backend, transport: 'stdio' })
     server.ensureServerRegistered()
     const out = await server.readResource('mcp://provident/app')
     expect(mk.calls).toContain('renderedHtml')
@@ -69,7 +73,7 @@ describe('MCP resources — reads forward over the backend (R4/R5)', () => {
   it('reading the node template mcp://provident/node/{nodeId} invokes nodeState', async () => {
     const mk = makeBackend()
     mk.setReply({ nodeId: 'node-1', states: [], census: { inTree: 1 } })
-    const server = new ProvidentMcpServer({ backend: mk.backend })
+    const server = new ProvidentMcpServer({ backend: mk.backend, transport: 'stdio' })
     server.ensureServerRegistered()
     const out = await server.readResource('mcp://provident/node/node-1')
     expect(mk.calls).toContain('nodeState')
@@ -79,7 +83,7 @@ describe('MCP resources — reads forward over the backend (R4/R5)', () => {
   it('reading mcp://provident/targets invokes listTargets', async () => {
     const mk = makeBackend()
     mk.setReply({ nodes: [] })
-    const server = new ProvidentMcpServer({ backend: mk.backend })
+    const server = new ProvidentMcpServer({ backend: mk.backend, transport: 'stdio' })
     server.ensureServerRegistered()
     await server.readResource('mcp://provident/targets')
     expect(mk.calls).toContain('listTargets')

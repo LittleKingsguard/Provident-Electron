@@ -17,7 +17,7 @@ beforeAll(() => {
 })
 
 function fakeSecurity() {
-  let cfg = { token: null, enabled: ['read', 'dispatch'] }
+  let cfg: { token: string | null; enabled: string[] } = { token: null, enabled: ['read', 'dispatch'] }
   return {
     current: () => cfg,
     bridge: {

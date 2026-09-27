@@ -319,7 +319,13 @@ describe('Runtime battery — adversarial hardening (H7..H13, 2026-08-23)', () =
   })
 })
 
-type LegacyEnvelope = LegacyInitialData & { template: { root: { hooks?: string[] } } }
+// TYPE-ONLY (leg `npm run typecheck:tests`): `hooks` is declared `unknown[]` — not
+// `string[]` — because rows in this file deliberately author a NESTED value
+// (`['x', ['inner0','inner1'], 'z']`, the H8 malformed-state row at :262), which
+// the runtime tolerates and the row asserts on. The authored data, the loads and
+// every assertion are unchanged; only the annotation the suite compiles against
+// now admits the malformed state the rows actually drive.
+type LegacyEnvelope = Omit<LegacyInitialData, 'template'> & { template: { root: { hooks?: unknown[] } } }
 
 /** A tiny envelope whose handler reads translate-scoped `userData` and writes
  *  it into a display node (mirrors runtime-host.test.ts's userEnvelope). */

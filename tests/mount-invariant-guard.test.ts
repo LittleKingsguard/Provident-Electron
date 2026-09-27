@@ -97,6 +97,7 @@ type MountExpectation = { rootNodeId?: string | null; mount?: unknown }
 type ProbeFn = (mount: unknown, expect?: MountExpectation | null) => MountInvariantResult
 type AssertFn = (mount: unknown, expect?: MountExpectation | null) => MountInvariantResult
 
+
 /** The §2.1 result key set for a cardinality-only probe (no `expect.rootNodeId`
  *  supplied): `expectedRootNodeId` is the ONE optional field. */
 const RESULT_KEYS = ['count', 'foreignSiblings', 'mount', 'ok', 'roots', 'violation'].sort()
@@ -491,7 +492,13 @@ describe('S — §2.1 the exact surface (exports, return shape, throw pattern)',
       { code: 'root-identity-mismatch', mount: host.mount, expect: { rootNodeId: 'stale-node-id-not-in-graph' } },
       { code: 'mount-reference-mismatch', mount: bootedDemo().mount, expect: { mount: mountEl() } },
       { code: 'mount-not-appendable', mount: null },
-      { code: 'expect-mismatch', mount: bootedDemo().mount, expect: 'nope' },
+      // TYPE-ONLY (leg `npm run typecheck:tests`): this row's state table — F-6
+      // "malformed expect" — hands the probe a value OUTSIDE `MountExpectation`,
+      // exactly as its sibling rows do with `42`/`null`, and as the I-6 row does
+      // at :860. `MountExpectation | null` cannot NAME that value, so the cast
+      // states the row's intent; the value reaching `probe` at runtime is the
+      // same `'nope'`, and the mismatch verdict asserted below is untouched.
+      { code: 'expect-mismatch', mount: bootedDemo().mount, expect: 'nope' as unknown as MountExpectation | null },
     ]
     for (const c of cases) {
       const violation = probe(c.mount, c.expect).violation
@@ -711,7 +718,7 @@ describe('I — §3.3 the every-state invariants', () => {
       // non-ok state; in the ok state it is `roots.map(nodeId)`.
       const list =
         hasOwn.call(res, 'nodeIds') && Array.isArray((res as { nodeIds?: unknown }).nodeIds)
-          ? ((res as { nodeIds: string[] }).nodeIds as string[])
+          ? ((res as unknown as { nodeIds: string[] }).nodeIds as string[])
           : res.violation !== null
             ? [...res.violation.nodeIds]
             : res.roots.map((r) => r.nodeId)
@@ -733,7 +740,7 @@ describe('I — §3.3 the every-state invariants', () => {
       { id: 'F-3 (identity mismatch)', mount: host.mount, expect: { rootNodeId: 'stale-node-id-not-in-graph' } },
       { id: 'F-4 (mount reference mismatch)', mount: bootedDemo().mount, expect: { mount: mountEl() } },
       { id: 'F-5 (malformed mount)', mount: { children: 'x' } },
-      { id: 'F-6 (malformed expect)', mount: bootedDemo().mount, expect: 42 },
+      { id: 'F-6 (malformed expect)', mount: bootedDemo().mount, expect: 42 as unknown as MountExpectation | null },
       { id: 'F-10 (expect === null)', mount: bootedDemo().mount, expect: null },
     ]
     for (const state of states) {
@@ -837,7 +844,7 @@ describe('I — §3.3 the every-state invariants', () => {
     probe(mountEl())
     probe(null)
     probe('nope')
-    probe({ children: 'x' }, 42)
+    probe({ children: 'x' }, 42 as unknown as MountExpectation | null)
     bootedDemo()
     mountEl().setAttribute('data-node-id', 'unrelated')
     try {

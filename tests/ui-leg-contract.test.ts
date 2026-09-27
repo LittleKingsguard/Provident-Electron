@@ -3898,7 +3898,12 @@ describe('G-4 falsifiability — the declared rows RUN the leg\'s own predicates
     // provenance — has already happened. That partial observation is the realm
     // the struck predicate cannot discriminate against.
     const shimObs = runProbeBody(src, SHIM_REALM)
-    const read = (obs: { frame: string }, key: string): string => readMarker(obs.written.slice(-1)[0] ?? '', key)
+    // TYPE-ONLY (leg `npm run typecheck:tests`): `runProbeBody` returns
+    // `{ written: string[]; frame: string; threw: Error | null }`
+    // (ui-leg-contract.test.ts:1379-1382) — the parameter's annotation had only
+    // named `frame`, so reading the `written` marker list above it was an error.
+    // The body (and every marker it reads) is unchanged.
+    const read = (obs: { written: string[]; frame: string }, key: string): string => readMarker(obs.written.slice(-1)[0] ?? '', key)
     expect(realObs.threw, '§3.2: the REAL realm completes both probe writes (geometry + computed style)').toBeNull()
     expect(shimObs.threw, '§3.4: the shim\'s probe run throws at `getBoundingClientRect` (no layout) instead of returning a `0`').not.toBeNull()
     const realMarkers = {

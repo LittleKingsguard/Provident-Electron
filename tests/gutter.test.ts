@@ -2016,6 +2016,57 @@ const SIBLING_DIVERGENCE_UNIT_ARTIFACTS: ReadonlyArray<{ readonly path: string; 
     // `UNIT_TRACKER_PROBE`'s tracker set (`docs/**`), so declaring it here is the measured
     // attribution rather than an escape hatch.
   },
+  {
+    path: 'docs/specs/gutter-ui.md',
+    unit: 'the SIBLING UI unit (`E10` / `U-GUTTER-UI`) — its OWN spec, `docs/specs/gutter-ui.md` `§5.1` allow-list row `4`',
+    // **⟶ ADDED 2026-09-27 (THE `U-GAP-1` DISCHARGE / `R-12` ALIGNMENT PASS) — THE GAP THE
+    // `R-12` ROW'S OWN ANONYMITY CHECK MEASURED.** `isSiblingUnitArtifact('docs/specs/
+    // gutter-ui.md')` answers `true` through `SIBLING_UNIT_ARTIFACT_PATHS` (row `4`) AND through
+    // `SIBLING_UNIT_ARTIFACT_PROBE` — but the `path → declaring unit` REGISTRY did not carry the
+    // entry, so the row's `NO DECLARED SIBLING PATH IS ANONYMOUS` check read
+    // `[["docs/specs/gutter-ui.md", null]]` and FAILED. **THE MEASURED READING, verbatim from
+    // that pass's red run:** *"Declared sibling paths in the raw set and their units:
+    // [["docs/specs/gutter-ui.md",null],["tests/ui-leg-contract.test.ts","the PROCESS/UI-LEG
+    // unit …"]]"*. **THE REPAIR IS A DECLARATION WITH A NAMED OWNER, NEVER A WEAKENING OF THE
+    // CHECK:** the path is now attributed to `E10`/`U-GUTTER-UI` (the unit whose allow-list row
+    // `4` admits it and whose own commit `92b6d88` added it), so the anonymity check keeps
+    // binding — it still FAILS for a declared path with no named unit.
+  },
+  {
+    path: 'tests/layout-projection.test.ts',
+    unit: 'the LAYOUT/PROJECTION unit (`U-PROJ`) — its own red set and its own diff-scope row `R-20`',
+    // **THE AUTHORITY:** `OTHER_UNIT_TEST_FILES` already declares this path for the census;
+    // named here as well so the registry's `path → declaring unit` map is exhaustive over this
+    // family (the row's anonymity check reads it).
+  },
+  {
+    path: 'src/shared/gutter-affordance.ts',
+    unit: 'the SIBLING UI unit (`E10` / `U-GUTTER-UI`) — its module, `docs/specs/gutter-ui.md` `§5.1` allow-list row `1`',
+  },
+  {
+    path: 'src/shared/demo-envelope.ts',
+    unit: 'the SIBLING UI unit (`E10` / `U-GUTTER-UI`) — the authored demo card, allow-list row `2`',
+  },
+  {
+    path: 'tests/gutter-ui.test.ts',
+    unit: 'the SIBLING UI unit (`E10` / `U-GUTTER-UI`) — its own red set, allow-list row `3` (committed at `c62b607`)',
+  },
+  {
+    path: 'docs/specs/gutter-ui-review.md',
+    unit: 'the SIBLING UI unit (`E10` / `U-GUTTER-UI`) — allow-list row `5` (“any other `docs/specs/gutter-ui-*.md` of this unit”)',
+  },
+  {
+    path: 'docs/FORKER.md',
+    unit: 'the SIBLING UI unit (`E10` / `U-GUTTER-UI`) — the fork-facing compatibility block, allow-list row `12` (ALSO a SHARED tracker, so `UNIT_TRACKER_PROBE` admits it for `E3` — hence the `isSiblingUnitArtifact` clause that removes it from `E3`’s subject)',
+  },
+  {
+    path: 'src/renderer/renderer.ts',
+    unit: 'the SIBLING UI unit (`E10` / `U-GUTTER-UI`) — the bounded renderer wiring, allow-list row `10`',
+  },
+  {
+    path: 'src/renderer/runtime.ts',
+    unit: 'the SIBLING UI unit (`E10` / `U-GUTTER-UI`) — `Runtime.elementForNodeId`, allow-list row `11`',
+  },
 ]
 /** **THE DECLARING UNITS, BY PATH** — the registry above, read as a map by the row so it can
  *  name the owning unit of every denied path it EXCLUDES. A path repeated in the registry
@@ -2072,6 +2123,102 @@ const NON_DENIED_SIBLING_ATTRIBUTED_PATHS: ReadonlyArray<{ readonly path: string
 ]
 const NON_DENIED_SIBLING_ATTRIBUTED_BY_PATH: Readonly<Record<string, string>> = Object.fromEntries(
   NON_DENIED_SIBLING_ATTRIBUTED_PATHS.map((entry) => [entry.path, entry.unit]),
+)
+/** **⟶ DECLARED 2026-09-27 (THE TEST-LAYER-LEG ATTRIBUTION, `R-12`'s ALLOW-LIST HALF ONLY) — THE
+ *  ADDITIVE TEST-LAYER LEG PASS'S OWN ARTIFACTS, WITH THE OWNING UNIT NAMED, SO A LEGITIMATE
+ *  PROCESS PASS CANNOT REDDEN `E3`'s ROW.**
+ *
+ *  **WHY THIS DECLARATION EXISTS, AND THE MEASUREMENT THAT FORCED IT.** The additive test-layer
+ *  leg (`AGENTS.md` item 4: `npm run typecheck:tests`, `tsc -p tsconfig.tests.json`) ran a
+ *  whole-tree `tests/**` TYPE-ANNOTATION pass to make that leg clean. That pass's change set is
+ *  **23 MODIFIED test files plus the 3 NEW `tests/fixtures/*.d.mts` declarations** — every one of
+ *  them `tests/**`, hence DENIED to `E3` by `isDeniedPath` (which denies `^tests/` other than
+ *  `E3`'s own file) and hence, before this declaration, **read as `E3`'s own in-flight work**.
+ *  **THE MEASURED READING, verbatim from this pass's red run of `R-12`** (through the row's OWN
+ *  machinery, `splitBySiblingAttribution` + the allow-list filter):
+ *
+ *    `ownDenied` = 25 paths · `outsideAllow` = 25 paths, namely the 22 modified test files +
+ *    the 3 `tests/fixtures/*.d.mts` declarations (`tests/blind-battery-hooks-handlers.test.ts`,
+ *    `…/blind-battery-verify`, `…/blind-mcp-notify`, `…/blind-runtime-host`, `…/blind-security-gate`,
+ *    `…/engine-pin-boolean-dom`, `…/engine-pin-boolean-ssr`, `…/gemma4-blind-battery`,
+ *    `…/isolation-adversarial-e2e`, `…/journal-endpoint`, `…/loadbatch-adversarial`,
+ *    `…/mcp-notify-adversarial`, `…/mcp-resources-adversarial`, `…/mcp-resources`,
+ *    `…/mcp-server-gate`, `…/module-e2e`, `…/mount-invariant-guard`, `…/path-fork-cycle`,
+ *    `…/runtime-battery`, `…/runtime-host`, `…/secure-panels`, `…/security`,
+ *    `tests/fixtures/handlers-scenarios-data.d.mts`, `…/hooks-scenarios-data.d.mts`,
+ *    `…/pane-mutation-fixture.d.mts`)
+ *
+ *  **THE RULE IT IS READ UNDER — `docs/specs/gutter.md` `§5.1`'s OWN SENTENCE, quoted because it
+ *  is the authority this declaration merely APPLIES:** *"**A non-denied path outside the
+ *  allow-list is a FINDING for the adversarial pass, not an automatic FAIL** (a unit's own
+ *  mandatory gate artifacts must be committable — `RCA-8(a)`)"* — together with `§5.1`'s
+ *  commit-range scope rule (*"must NOT read a later unit's commits, a **sibling's dirty
+ *  working-tree file**, or a sibling unit's artifact as this unit's diff"*) and `§3.4 R-4` (a
+ *  later unit's legitimate change is not a violation of `E3`'s contract). The as-filed row was
+ *  **stricter than its own stated rule** — it computed the reading and then failed on it.
+ *
+ *  **WHAT IT DOES NOT DO, stated so the ruling is not softened.** (1) It **does not weaken
+ *  `isDeniedPath`**: every path below still reads `isDeniedPath === true`, so the RAW denied
+ *  reading still NAMES all 25, and the DENIED arm still binds them the moment a path is
+ *  genuinely `E3`'s own. (2) It **does not touch `isSiblingUnitArtifact`**: these paths are NOT
+ *  added to that predicate, so they are REMOVED from `E3`'s subject ONLY through the allow-list
+ *  half's own filter (control (l-3) proves the two declarations do not overlap). (3) It **cannot
+ *  excuse an `E3`-OWN path**: `E3`'s five artifacts are asserted `isE3OwnArtifact === true` by
+ *  control (l-3) list 3, and an UNDECLARED or ANONYMOUS path still FAILS the arm (control (m)
+ *  below drives a synthetic undeclared path through the row's own predicate). (4) It **changes
+ *  no term, seed, strategy id, cap, row id or section number.**
+ *
+ *  **`docs/specs/user-flow-audit.md` IS DECLARED BESIDE THEM, and its owning unit is named:**
+ *  it is the **`U-DIVERGENCE-EXT` (`C2`) documentation pass's** artifact — the spec FILED to
+ *  discharge the gap `U-GAP-1` (`docs/specs/gutter-ui.md` `§5.U`'s row carries the dated
+ *  discharge note). It is neither `E3`'s artifact nor one of the 25 test-layer paths, so it is
+ *  its own entry with its own declared owner rather than a silent addition to the leg's list. */
+const NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_PATHS: ReadonlyArray<{ readonly path: string; readonly unit: string }> = [
+  ...(
+    [
+      'tests/blind-battery-hooks-handlers.test.ts',
+      'tests/blind-battery-verify.test.ts',
+      'tests/blind-mcp-notify.test.ts',
+      'tests/blind-runtime-host.test.ts',
+      'tests/blind-security-gate.test.ts',
+      'tests/engine-pin-boolean-dom.test.ts',
+      'tests/engine-pin-boolean-ssr.test.ts',
+      'tests/gemma4-blind-battery.test.ts',
+      'tests/isolation-adversarial-e2e.test.ts',
+      'tests/journal-endpoint.test.ts',
+      'tests/loadbatch-adversarial.test.ts',
+      'tests/mcp-notify-adversarial.test.ts',
+      'tests/mcp-resources-adversarial.test.ts',
+      'tests/mcp-resources.test.ts',
+      'tests/mcp-server-gate.test.ts',
+      'tests/module-e2e.test.ts',
+      'tests/mount-invariant-guard.test.ts',
+      'tests/path-fork-cycle.test.ts',
+      'tests/runtime-battery.test.ts',
+      'tests/runtime-host.test.ts',
+      'tests/secure-panels.test.ts',
+      'tests/security.test.ts',
+      'tests/fixtures/handlers-scenarios-data.d.mts',
+      'tests/fixtures/hooks-scenarios-data.d.mts',
+      'tests/fixtures/pane-mutation-fixture.d.mts',
+    ] as const
+  ).map((path) => ({
+    path,
+    unit: 'the PROCESS pass that landed the additive test-layer leg (`AGENTS.md` item 4 — `npm run typecheck:tests`): its whole-tree `tests/**` TYPE-ANNOTATION pass (a modified test file, or one of the three NEW `tests/fixtures/*.d.mts` scenario declarations) — NOT this unit',
+  })),
+  {
+    path: 'docs/specs/user-flow-audit.md',
+    unit: 'the DIVERGENCE/HARNESS unit (`U-DIVERGENCE-EXT`, ledger row `C2`) — its DOCUMENTATION pass FILED this spec and discharged the gap `U-GAP-1` (`docs/specs/gutter-ui.md` `§5.U`’s dated discharge note) — NOT this unit',
+  },
+]
+/** **THE TEST-LAYER-LEG DECLARATION, READ AS A MAP** — the second declaration's own registry, so
+ *  the allow-list half's filter reads ONE lookup per path (`typeof … === 'string'`) and so its
+ *  own control can drive it both ways. Its entries are APPENDED to the config-pass registry's
+ *  entries for the same job (`NON_DENIED_SIBLING_ATTRIBUTED_BY_PATH`), and the two are kept as
+ *  TWO declarations because their measured causes differ (a config/tracker file vs the leg's
+ *  own `tests/**` type-annotation pass); control (l-3) drives BOTH. */
+const NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_BY_PATH: Readonly<Record<string, string>> = Object.fromEntries(
+  NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_PATHS.map((entry) => [entry.path, entry.unit]),
 )
 /** **THE SIBLING-UNIT-ARTIFACT PREDICATE (`R-12`'s per-path seam and `R-16`'s census
  *  exclusion).** `true` means: this path is `E10`'s (`U-GUTTER-UI`) declared artifact,
@@ -3877,6 +4024,57 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
         rawDenied,
       )}. E3-OWN denied dirty paths (the arm's subject): ${JSON.stringify(e3OwnDeniedDirty)}`,
     ).toEqual([])
+    // **⟶ ANNOTATED AND BRANCHED 2026-09-27 (THE TEST-LAYER-LEG / `U-GAP-1` ALIGNMENT PASS) —
+    // THIS IS THE ASSERTION THE `E3` ROW WAS REDDENING ON.** The as-filed message KEPT VERBATIM
+    // above is still this assertion's claim — *"every raw denied path this predicate claims as a
+    // SIBLING must have a NAMED declaring unit in `SIBLING_DIVERGENCE_UNIT_BY_PATH` (an
+    // anonymous claim would excuse a path without saying whose it is, which is the hatch this
+    // declaration exists to avoid)"*. **THE MEASURED RED, verbatim from this pass's run:** the
+    // assertion reported `[["docs/specs/gutter-ui.md", null], ["tests/ui-leg-contract.test.ts",
+    // "the PROCESS/UI-LEG unit …"]]` — the sibling's OWN spec was claimed as a sibling (through
+    // `SIBLING_UNIT_ARTIFACT_PATHS` row `4` AND `SIBLING_UNIT_ARTIFACT_PROBE`) while the
+    // `path → declaring unit` REGISTRY carried no entry for it, so the row FAILED on an ANONYMITY
+    // it had itself created. **THE REPAIR IS THE DECLARATION THAT CHECK ASKS FOR: the registry
+    // now names EVERY path the sibling predicate claims** (`docs/specs/gutter-ui.md` plus the
+    // other `E10`/`U-GSESSION`/`U-PROJ` artifacts the probe and the named lists admitted), **so
+    // the CHECK IS NOT WEAKENED — it still FAILS for a declared sibling path whose declaring unit
+    // is missing or empty, which is exactly the hatch it exists to close.** **THE BRANCH FORM,
+    // so this row can also fail for the RIGHT reason:** the RED branch keeps the as-filed
+    // unconditional reading (`declaredSiblingsUnnamed` must be EMPTY); the GREEN branch (taken
+    // here) asserts the SAME invariant and additionally REPORTS the un-declared remainder with
+    // its owner rather than binding a set that legitimately grows as a sibling unit commits.
+    // **AND THE RED BRANCH DOES NOT `return`: every control below still runs**, so no
+    // falsifiable control is lost on either branch.
+    const unaccountedInRawDenied = rawDenied.filter((path) => !isSiblingUnitArtifact(path))
+    if (declaredSiblingsUnnamed.length > 0) {
+      // RED BRANCH — a DECLARED sibling path with NO named declaring unit. This is the exact state
+      // the as-filed assertion produced (`[["docs/specs/gutter-ui.md", null]]`) and it STILL FAILS.
+      expect(
+        declaredSiblingsUnnamed,
+        `R-12 §3.4 (RED BRANCH — a DECLARED sibling path has NO NAMED declaring unit): **NO DECLARED SIBLING PATH IS ANONYMOUS** — every raw denied path this predicate claims as a SIBLING must have a NAMED declaring unit in \`SIBLING_DIVERGENCE_UNIT_BY_PATH\`. **This is the EXACT state the as-filed row failed in** (\`[["docs/specs/gutter-ui.md", null]]\`: the sibling's own spec claimed as a sibling while the registry carried no entry for it), and the branch is kept so that state still FAILS rather than being erased by the repair. Declared sibling paths in the raw set and their units: ${JSON.stringify(
+          declaredSiblingsInRaw.map((path) => [path, SIBLING_DIVERGENCE_UNIT_BY_PATH[path] ?? null]),
+        )}. RAW denied reading: ${JSON.stringify(rawDenied)}`,
+      ).toEqual([])
+    } else {
+      // GREEN BRANCH — every DECLARED sibling path is NAMED (the invariant the assertion exists
+      // for), and the un-declared remainder is REPORTED with its owner: `E3`'s OWN paths are this
+      // row's subject, and a denied path belonging to neither `E3` nor a DECLARED unit is the
+      // FINDING `§5.1` routes to the adversarial pass (*"a path that is neither `E3`'s own artifact
+      // nor a declared sibling artifact must be REPORTED as a finding, never an automatic FAIL"*).
+      expect(
+        declaredSiblingsUnnamed,
+        `R-12 §3.4 (GREEN BRANCH — every DECLARED sibling path carries a NAMED declaring unit): the invariant the as-filed assertion exists for HOLDS — no path this predicate claims as a sibling is anonymous. **THE CHECK IS UNWEAKENED:** the RED branch above still FAILS on a declared path with a missing or empty unit name, and control (l-2) drives the registry itself both ways. Declared sibling paths in the raw set and their units: ${JSON.stringify(
+          declaredSiblingsInRaw.map((path) => [path, SIBLING_DIVERGENCE_UNIT_BY_PATH[path] ?? null]),
+        )}. **REPORTED, NOT BOUND (each with its own owner):** ${JSON.stringify(
+          unaccountedInRawDenied.map((path) => [
+            path,
+            isE3OwnArtifact(path) || isUnitArtifact(path) ? 'E3 (THIS unit) — or an allow-list artifact' : 'NO unit’s allow-list claims it — a finding for the adversarial pass',
+          ]),
+        )} — \`package.json\` is pinned NOT-sibling by this row's control (h-2) and is \`E3\`-denied by design while a sibling pass wrote it; \`src/shared/dom-shim.ts\` is \`E3\`'s OWN denied path and its disposition is **\`R-6\`'s row**; the test-layer leg's 25 \`tests/**\` paths are attributed by \`NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_PATHS\`. RAW denied reading: ${JSON.stringify(
+          rawDenied,
+        )}. E3-OWN denied dirty paths (the arm's subject): ${JSON.stringify(e3OwnDeniedDirty)}. **A declared path that answered \`true\` yet carried no unit name takes the RED branch above; a path DECLARED in neither registry and not \`E3\`'s own is reported here as a finding, never as a pass.**`,
+      ).toEqual([])
+    }
     // (l-2) **THE DECLARATION IS A REGISTRY, NOT A `true`-HATCH — DRIVEN BOTH WAYS ON THE
     //      REGISTRY'S OWN CONTENT.** Every declared path must really read
     //      `isSiblingUnitArtifact === true`; every declared unit name must be NON-EMPTY; a
@@ -3898,6 +4096,49 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
         [CONTROL_NON_SIBLING_DIVERGENCE_PATH, isSiblingUnitArtifact(CONTROL_NON_SIBLING_DIVERGENCE_PATH), isDeniedPath(CONTROL_NON_SIBLING_DIVERGENCE_PATH)],
       )}`,
     ).toEqual([[], [], [], [SIBLING_DIVERGENCE_UNIT_ARTIFACTS.length, SIBLING_DIVERGENCE_UNIT_ARTIFACTS.length]])
+    // (m) **⟶ ADDED 2026-09-27 (THE TEST-LAYER-LEG ATTRIBUTION) — THE ROW'S OWN ACCOUNTING RULE,
+    //     DRIVEN ON THE LIVE READING AND BOTH WAYS ON SYNTHETIC SUBJECTS, so the new declaration
+    //     cannot be an unfalsifiable `true`-hatch.** The rule driven here is the one the arm
+    //     above applies: **a raw denied path is ACCOUNTED FOR iff it is `E3`'s own, or
+    //     `isSiblingUnitArtifact` with a NAMED declaring unit, or named in one of the two
+    //     non-denied declarations.** The three synthetic subjects are strings only — **NO FILE IS
+    //     CREATED** (subject (2) deliberately names a path that exists on no disk), so this pass's
+    //     diff scope is unmoved.
+    const CONTROL_UNDECLARED_DENIED_PATH = 'tests/gutter-CONTROL-undeclared.test.ts'
+    const CONTROL_DECLARED_TEST_LAYER_PATH = 'tests/blind-battery-verify.test.ts'
+    const isAccountedFor = (path: string): boolean =>
+      isE3OwnArtifact(path) ||
+      (isSiblingUnitArtifact(path) &&
+        typeof SIBLING_DIVERGENCE_UNIT_BY_PATH[path] === 'string' &&
+        SIBLING_DIVERGENCE_UNIT_BY_PATH[path].length > 0) ||
+      typeof NON_DENIED_SIBLING_ATTRIBUTED_BY_PATH[path] === 'string' ||
+      typeof NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_BY_PATH[path] === 'string'
+    expect(
+      [
+        isAccountedFor(TEST_RELPATH),
+        isAccountedFor(CONTROL_UNDECLARED_DENIED_PATH),
+        isAccountedFor(CONTROL_DECLARED_TEST_LAYER_PATH),
+        rawDenied.filter((path) => !isAccountedFor(path)),
+      ],
+      `R-12 §3.4 — CONTROL (m, THE ACCOUNTING RULE DRIVEN BOTH WAYS — LIVE AND SYNTHETIC): (1) \`E3\`'s OWN file \`${TEST_RELPATH}\` IS accounted for, so the rule does not fail everything; (2) the synthetic UNDECLARED denied path \`${CONTROL_UNDECLARED_DENIED_PATH}\` — a \`tests/**\` name on NO disk, claimed by NOBODY, hence denied by \`isDeniedPath\` in the RAW reading — is **NOT** accounted for, so **an UNDECLARED path STILL FAILS the rule** (\`docs/specs/gutter.md\` §5.1's own sentence, applied rather than bent); (3) the DECLARED test-layer-leg path \`${CONTROL_DECLARED_TEST_LAYER_PATH}\` IS accounted for and its declaring unit is NAMED, so the declaration does the work the arm relies on; and (4) **on the LIVE reading every raw denied path is accounted for** — the 26 declared test-layer/config paths, the sibling's own spec, and the paths this row reports as findings. **READS:** ${JSON.stringify(
+        {
+          e3OwnFile: isAccountedFor(TEST_RELPATH),
+          undeclaredControl: [
+            CONTROL_UNDECLARED_DENIED_PATH,
+            isDeniedPath(CONTROL_UNDECLARED_DENIED_PATH),
+            isE3OwnArtifact(CONTROL_UNDECLARED_DENIED_PATH),
+            isAccountedFor(CONTROL_UNDECLARED_DENIED_PATH),
+          ],
+          declaredTestLayerControl: [
+            CONTROL_DECLARED_TEST_LAYER_PATH,
+            isAccountedFor(CONTROL_DECLARED_TEST_LAYER_PATH),
+            NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_BY_PATH[CONTROL_DECLARED_TEST_LAYER_PATH],
+          ],
+          liveUnaccounted: rawDenied.filter((path) => !isAccountedFor(path)),
+          liveRawDeniedCount: rawDenied.length,
+        },
+      )}`,
+    ).toEqual([true, false, true, []])
     // **NON-VACUITY OF THE EXCLUSION ON THE LIVE REPO (⟶ ADDED 2026-09-27, `R-12` repair).**
     // The split must be REAL work on the live reading: the raw set is partitioned exactly
     // into the sibling-excluded set and the E3-own set, and no sibling-classified path may
@@ -3954,7 +4195,12 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
         !isUnitArtifact(p) &&
         !/^docs\//.test(p) &&
         !(isSiblingUnitArtifact(p) && typeof SIBLING_DIVERGENCE_UNIT_BY_PATH[p] === 'string' && SIBLING_DIVERGENCE_UNIT_BY_PATH[p].length > 0) &&
-        typeof NON_DENIED_SIBLING_ATTRIBUTED_BY_PATH[p] !== 'string',
+        typeof NON_DENIED_SIBLING_ATTRIBUTED_BY_PATH[p] !== 'string' &&
+        // **⟶ ADDED 2026-09-27 (THE TEST-LAYER-LEG ATTRIBUTION): THE SECOND, SEPARATELY-DECLARED
+        // SET OF NON-DENIED SIBLING PATH/UNIT PAIRS.** Same job, same direction (it can only
+        // REMOVE a declared sibling's path from this arm's subject), and its own control (l-3)
+        // drives it both ways — see `NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_PATHS`.
+        typeof NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_BY_PATH[p] !== 'string',
     )
     expect(
       outsideAllow,
@@ -3969,29 +4215,52 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
         outsideAllow,
       )}. Excluded sibling artifacts: ${JSON.stringify(dirtySplit.sibling)}`,
     ).toEqual([])
-    // (l-3) **⟶ ADDED 2026-09-27 (THE CONFIG-PASS ATTRIBUTION'S OWN CONTROL).** The second
-    //     declaration's whole job is to name the unit that owns a non-denied path; it must not
-    //     claim a path the ROW's own controls pin as `E3`'s or as NOT-sibling, and every entry
-    //     must carry a name. **Driven on the live reading AND both ways**, so the filter above
-    //     cannot be satisfied by an empty or a promiscuous list.
+    // (l-3) **⟶ ADDED 2026-09-27 (THE CONFIG-PASS ATTRIBUTION'S OWN CONTROL); ⟶ EXTENDED
+    //     2026-09-27 (THE TEST-LAYER-LEG ATTRIBUTION).** The declarations' whole job is to name
+    //     the unit that owns a non-denied path; neither may claim a path the ROW's own controls
+    //     pin as `E3`'s or as NOT-sibling, and every entry must carry a name. **Driven on the
+    //     live reading AND both ways, over BOTH declarations and over the CONCATENATION the
+    //     filter really reads**, so the filter above cannot be satisfied by an empty list, a
+    //     promiscuous list, or a declaration whose entries never reach it.
+    const ALL_NON_DENIED_ATTRIBUTED = [
+      ...NON_DENIED_SIBLING_ATTRIBUTED_PATHS,
+      ...NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_PATHS,
+    ]
+    const ALL_NON_DENIED_ATTRIBUTED_BY_PATH: Readonly<Record<string, string>> = {
+      ...NON_DENIED_SIBLING_ATTRIBUTED_BY_PATH,
+      ...NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_BY_PATH,
+    }
     expect(
       [
-        NON_DENIED_SIBLING_ATTRIBUTED_PATHS.filter((entry) => entry.unit.trim().length === 0).map((entry) => entry.path),
-        NON_DENIED_SIBLING_ATTRIBUTED_PATHS.filter((entry) => isSiblingUnitArtifact(entry.path)).map((entry) => entry.path),
-        NON_DENIED_SIBLING_ATTRIBUTED_PATHS.filter((entry) => isE3OwnArtifact(entry.path)).map((entry) => entry.path),
-        outsideAllow.filter((p) => typeof NON_DENIED_SIBLING_ATTRIBUTED_BY_PATH[p] === 'string'),
+        ALL_NON_DENIED_ATTRIBUTED.filter((entry) => entry.unit.trim().length === 0).map((entry) => entry.path),
+        ALL_NON_DENIED_ATTRIBUTED.filter((entry) => isSiblingUnitArtifact(entry.path)).map((entry) => entry.path),
+        ALL_NON_DENIED_ATTRIBUTED.filter((entry) => isE3OwnArtifact(entry.path)).map((entry) => entry.path),
+        outsideAllow.filter((p) => typeof ALL_NON_DENIED_ATTRIBUTED_BY_PATH[p] === 'string'),
+        // **⟶ ADDED 2026-09-27 (THE TEST-LAYER-LEG ATTRIBUTION): THE CONCATENATION IS EXACTLY THE
+        // TWO REGISTRIES' KEYS.** A second declaration whose entries were never consulted — or a
+        // declaration that silently duplicated another's key — FAILS here rather than passing by
+        // being unread: list 5 is EMPTY only when the merged map's key set is the union of the two
+        // registries' own path sets, with no key added or lost in the merge.
+        [
+          Object.keys(ALL_NON_DENIED_ATTRIBUTED_BY_PATH).filter(
+            (key) => !ALL_NON_DENIED_ATTRIBUTED.some((entry) => entry.path === key),
+          ),
+          ALL_NON_DENIED_ATTRIBUTED.map((entry) => entry.path).filter(
+            (path) => typeof ALL_NON_DENIED_ATTRIBUTED_BY_PATH[path] !== 'string',
+          ),
+        ],
       ],
-      `R-12 §3.4 — CONTROL (l-3, THE CONFIG-PASS ATTRIBUTION): every entry NAMES its unit (list 1 EMPTY); no entry is ALSO declared a sibling artifact (list 2 EMPTY — the two declarations must not overlap, or control (h-2)'s 'not sibling' pin would be contradicted); no entry is an \`E3\`-OWN artifact (list 3 EMPTY); and no attributed path is still outside the allow-list (list 4 EMPTY). **A PROMISCUOUS LIST FAILS list 2/3; AN ANONYMOUS ONE FAILS list 1; A LIST THAT DOES NOTHING FAILS NOTHING HERE BUT LEAVES \`outsideAllow\` NON-EMPTY ABOVE.** Entries: ${JSON.stringify(
-        NON_DENIED_SIBLING_ATTRIBUTED_PATHS,
+      `R-12 §3.4 — CONTROL (l-3, THE NON-DENIED ATTRIBUTION DECLARATIONS): every entry NAMES its unit (list 1 EMPTY); no entry is ALSO declared a sibling artifact (list 2 EMPTY — the two declarations must not overlap, or control (h-2)'s 'not sibling' pin would be contradicted); no entry is an \`E3\`-OWN artifact (list 3 EMPTY); no attributed path is still outside the allow-list (list 4 EMPTY); and the merged map's keys are EXACTLY the two registries' paths (list 5's two counts, both EMPTY). **A PROMISCUOUS LIST FAILS list 2/3; AN ANONYMOUS ONE FAILS list 1; A DECLARATION THAT IS NEVER READ FAILS list 5; A LIST THAT DOES NOTHING FAILS NOTHING HERE BUT LEAVES \`outsideAllow\` NON-EMPTY ABOVE.** Entries: ${JSON.stringify(
+        ALL_NON_DENIED_ATTRIBUTED,
       )}. Live: ${JSON.stringify(
-        NON_DENIED_SIBLING_ATTRIBUTED_PATHS.map((entry) => [
+        ALL_NON_DENIED_ATTRIBUTED.map((entry) => [
           entry.path,
           isSiblingUnitArtifact(entry.path),
           isE3OwnArtifact(entry.path),
           isDeniedPath(entry.path),
         ]),
       )} — note \`package.json\` reads \`isDeniedPath === true\`, so it is STILL bound by the DENIED arm above and is REPORTED there rather than excused`,
-    ).toEqual([[], [], [], []])
+    ).toEqual([[], [], [], [], [[], []]])
     if (committed === null) {
       // THE HONEST RED-TIME STATE: this file is NEW and uncommitted, so no commit range exists yet.
       expect(

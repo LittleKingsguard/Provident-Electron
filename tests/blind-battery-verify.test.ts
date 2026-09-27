@@ -80,8 +80,12 @@ describe('B1 — the cycle-variant envelope (path-fork-cycle module)', () => {
 
   it('3. pathForkCycleLegacyData(12): children 2, content[0].content 20; 23 nodes, 4095 path-states', () => {
     const env = pathForkCycleLegacyData(12)
-    expect(env.template.root.children.length).toBe(2)
-    expect(env.content[0].content.length).toBe(20)
+    // TYPE-ONLY: `children`/`content` are OPTIONAL on LegacyNodeData
+    // (provident-ssr translate.d.ts:68/115) — the non-null assertions state the
+    // census the row already asserts on the next two lines (the envelope is
+    // authored with both present).
+    expect(env.template.root.children!.length).toBe(2)
+    expect(env.content![0].content.length).toBe(20)
     // 2·12−1 = 23 prototypes/nodes; 2^12−1 = 4095 path-state elements (data-only)
     expect(2 * 12 - 1).toBe(23)
     expect(2 ** 12 - 1).toBe(4095)
@@ -205,7 +209,8 @@ describe('B3 — op / export / validate / teardownResult', () => {
     const r = withEnvelope()
     r.load({ kind: 'envelope', envelope: demoEnvelope() })
     const res = r.export('legacy')
-    expect(res.export.template).toBeDefined()
+    // TYPE-ONLY: `ExportResult.export` is typed `unknown` (src/shared/types.ts:119).
+    expect((res.export as { template?: unknown }).template).toBeDefined()
     expect(res.census.inTree).toBeGreaterThan(1)
   })
 
@@ -273,8 +278,10 @@ describe('C1 — code-CRUD (unit C, mcp-endpoint.md §4)', () => {
     r.load({ kind: 'envelope', envelope: demoEnvelope() })
     const got = r.codeGet('')
     expect(got.path).toBe('')
-    expect(got.value.template).toBeDefined()
-    expect(got.value.content).toBeDefined()
+    // TYPE-ONLY: `CodeGetResult.value` is typed `unknown` (src/shared/types.ts:160).
+    const whole = got.value as { template?: unknown; content?: unknown }
+    expect(whole.template).toBeDefined()
+    expect(whole.content).toBeDefined()
   })
 
   it('23. codeSet("template.root.hooks", ["theme","user"]) → ok, wrote; codeGet reflects', () => {

@@ -219,7 +219,12 @@ function tagAttrSets(html: string): Array<{ tag: string; attrs: Set<string>; sta
 }
 
 /** The attribute record of the tag carrying `data-node-id="<nodeId>"`. */
-function attrsOfNode(html: string, nodeId: string): Record<string, string> {
+// TYPE-ONLY (leg `npm run typecheck:tests`): the declared value type mirrors what
+// `attrsOfTagAt` already returns (`Map<string, string | null>`,
+// engine-pin-boolean-dom.test.ts:172) — a bare attribute parses to `null`.
+// `Object.fromEntries(map)` is unchanged; only the record's declared element
+// type widens, so the rows' reads/assertions are identical.
+function attrsOfNode(html: string, nodeId: string): Record<string, string | null> {
   const hit = findTagByAttr(html, 'data-node-id', nodeId)
   if (hit === null) return {}
   const map = attrsOfTagAt(html, hit.start)

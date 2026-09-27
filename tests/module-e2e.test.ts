@@ -59,7 +59,10 @@ describe('U9-FIX — the store→router→MCP dynamic-tool chain (integration)',
       expect(router.listTools()).toEqual([])
       // install a module whose source IS a manifest declaring capabilities
       const manifest = JSON.stringify({ name: 'capture', version: '1.0.0', capabilities: { tools: ['module:capture.screenshot'] } })
-      const res = handleModuleTool(store, 'module.install', { name: 'capture', source: manifest, version: '1.0.0' })
+      // TYPE-ONLY (leg `npm run typecheck:tests`): `handleModuleTool` is declared
+      // `: unknown` (src/main/mcp-server.ts:49) — the same `as { status: string }`
+      // narrowing module-tools.test.ts:92 already uses on this call.
+      const res = handleModuleTool(store, 'module.install', { name: 'capture', source: manifest, version: '1.0.0' }) as { status: string }
       expect(res.status).toBe('installed')
       // re-sync (the production server does this after install)
       syncModuleRouter(router, store)

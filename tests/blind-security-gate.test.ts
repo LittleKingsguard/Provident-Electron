@@ -217,7 +217,12 @@ describe('G5 — applyPatch (spec §5 + F3/F4/F5)', () => {
 describe('G7 — SecurityGate: construction & defaults', () => {
   it('1. new SecurityGate().enabled ⊇ {read,dispatch}, excludes graph/code; token null', () => {
     const g = new SecurityGate()
-    expect(g.token ?? g.config.token).toBeNull()
+    // TYPE-ONLY (leg `npm run typecheck:tests`): `SecurityGate` exposes no public
+    // `token` member (`src/main/security.ts:178-209` — the token rides
+    // `gate.config.token`); this row probes BOTH spellings with `??`, so the
+    // structural annotation below is what lets the left operand exist at all.
+    // The runtime expression (and therefore the assertion) is unchanged.
+    expect((g as SecurityGate & { token?: string | null }).token ?? g.config.token).toBeNull()
     expect(g.enabled.has('read')).toBe(true)
     expect(g.enabled.has('dispatch')).toBe(true)
     expect(g.enabled.has('graph')).toBe(false)
@@ -425,11 +430,11 @@ describe('W3 — the HTTP 401 contract (checkRequest(headers).ok)', () => {
 
 describe('G4 — ProvidentMcpServer gate plumbing (spec mcp-server-gate.md §2/§4)', () => {
   it('new ProvidentMcpServer({backend}).getGateConfig() → {token:null, enabled:["read","dispatch"]}', () => {
-    const server = new ProvidentMcpServer({ backend })
+    const server = new ProvidentMcpServer({ backend, transport: 'stdio' })
     expect(server.getGateConfig()).toEqual({ token: null, enabled: ['read', 'dispatch'] })
   })
   it('getGateConfig() returns a COPY — mutating it does not change the server gate', () => {
-    const server = new ProvidentMcpServer({ backend })
+    const server = new ProvidentMcpServer({ backend, transport: 'stdio' })
     const cfg = server.getGateConfig()
     cfg.enabled.push('code' as ToolGroup)
     cfg.token = 't'
@@ -439,22 +444,23 @@ describe('G4 — ProvidentMcpServer gate plumbing (spec mcp-server-gate.md §2/�
     const server = new ProvidentMcpServer({
       backend,
       gate: new SecurityGate().apply({ groups: ['graph'] }),
+      transport: 'stdio',
     })
     expect(server.getGateConfig().enabled).toContain('graph')
   })
   it('applyGatePatch({groups:["code"]}) → enabled includes code AND server gate allows code.load', () => {
-    const server = new ProvidentMcpServer({ backend })
+    const server = new ProvidentMcpServer({ backend, transport: 'stdio' })
     server.applyGatePatch({ groups: ['code'] })
     expect(server.getGateConfig().enabled).toContain('code')
     expect(server.gate.toolAllowed('provident.code.load')).toBe(true)
   })
   it('applyGatePatch({groups:["bogus"]}) → config unchanged (rejected, never throw)', () => {
-    const server = new ProvidentMcpServer({ backend })
+    const server = new ProvidentMcpServer({ backend, transport: 'stdio' })
     expect(() => server.applyGatePatch({ groups: ['bogus' as ToolGroup] })).not.toThrow()
     expect(server.getGateConfig()).toEqual({ token: null, enabled: ['read', 'dispatch'] })
   })
   it('Gated registration — allowedToolNames() includes the read+dispatch 6 and excludes graph/code', () => {
-    const server = new ProvidentMcpServer({ backend })
+    const server = new ProvidentMcpServer({ backend, transport: 'stdio' })
     const allowed = server.allowedToolNames()
     for (const n of ['provident.dispatch', 'provident.get_rendered_html', 'provident.list_targets', 'provident.get_node_state', 'provident.code.get', 'provident.code.validate']) {
       expect(allowed).toContain(n)
@@ -464,7 +470,7 @@ describe('G4 — ProvidentMcpServer gate plumbing (spec mcp-server-gate.md §2/�
     }
   })
   it('a default-gate server does NOT allow provident.code.load; after applyGatePatch it → true', () => {
-    const server = new ProvidentMcpServer({ backend })
+    const server = new ProvidentMcpServer({ backend, transport: 'stdio' })
     expect(server.gate.toolAllowed('provident.code.load')).toBe(false)
     server.applyGatePatch({ groups: ['code'] })
     expect(server.gate.toolAllowed('provident.code.load')).toBe(true)
@@ -473,18 +479,18 @@ describe('G4 — ProvidentMcpServer gate plumbing (spec mcp-server-gate.md §2/�
 
 describe('G5 — M1: stdio re-gate (applyGatePatch on the LIVE server)', () => {
   it('ensureServerRegistered() then registeredEnabled("provident.dispatch") → true', () => {
-    const server = new ProvidentMcpServer({ backend })
+    const server = new ProvidentMcpServer({ backend, transport: 'stdio' })
     server.ensureServerRegistered()
     expect(server.registeredEnabled('provident.dispatch')).toBe(true)
   })
   it('applyGatePatch({disable:["dispatch","read"]}) → registeredEnabled("provident.dispatch") → false', () => {
-    const server = new ProvidentMcpServer({ backend })
+    const server = new ProvidentMcpServer({ backend, transport: 'stdio' })
     server.ensureServerRegistered()
     server.applyGatePatch({ disable: ['dispatch', 'read'] })
     expect(server.registeredEnabled('provident.dispatch')).toBe(false)
   })
   it('re-enabling applyGatePatch({groups:["dispatch","read"]}) → registeredEnabled("provident.dispatch") → true', () => {
-    const server = new ProvidentMcpServer({ backend })
+    const server = new ProvidentMcpServer({ backend, transport: 'stdio' })
     server.ensureServerRegistered()
     server.applyGatePatch({ disable: ['dispatch', 'read'] })
     server.applyGatePatch({ groups: ['dispatch', 'read'] })

@@ -101,7 +101,7 @@ describe('A4 — B6: code.loadBatch is gated to the code group (OFF by default)'
 
   it('the server registers code.loadBatch only when code is enabled', () => {
     const backend: McpBackend = { invoke: async () => ({}) }
-    const server = new ProvidentMcpServer({ backend })
+    const server = new ProvidentMcpServer({ backend, transport: 'stdio' })
     server.ensureServerRegistered()
     expect(server.registeredEnabled('provident.code.loadBatch')).toBe(false)
     server.applyGatePatch({ groups: ['code'] })

@@ -41,31 +41,42 @@ describe('pathForkCycleLegacyData — the cycle-variant static envelope (§5.1.x
   it('every level carries the two-sided placement contract (placementName + targetPlacement for k≥2)', () => {
     const env = pathForkCycleLegacyData(5)
     const l1 = env.template.root.children ?? []
-    expect(l1[0].placement?.placementName).toBe('zone-1')
-    expect(l1[0].placement?.targetPlacement).toBeUndefined()
+    // TYPE-ONLY (leg `npm run typecheck:tests`): `placement` is declared as the
+    // `LegacyPlacementConfig | LegacyPlacementConfig[]` union (single-object
+    // convenience OR the D1 array form — `provident-ssr` translate.d.ts:57), so
+    // the field reads below are guarded on the single-object member. The guard
+    // is a pure narrowing: the envelope is authored with the single-object form,
+    // so the runtime expression is the same property read as before.
+    const p1 = Array.isArray(l1[0].placement) ? undefined : l1[0].placement
+    expect(p1?.placementName).toBe('zone-1')
+    expect(p1?.targetPlacement).toBeUndefined()
     const content = env.content?.[0]?.content ?? []
     const l2 = content.filter((c) => (c.props as Record<string, unknown>)?.['stress:layer'] === 2)
     expect(l2.length).toBe(2)
-    expect(l2[0].placement?.placementName).toBe('zone-2')
-    expect(l2[0].placement?.targetPlacement).toEqual(['zone-1'])
+    const p2 = Array.isArray(l2[0].placement) ? undefined : l2[0].placement
+    expect(p2?.placementName).toBe('zone-2')
+    expect(p2?.targetPlacement).toEqual(['zone-1'])
   })
 
   it('layer 2 (values) carries the fork-stress values component shape', () => {
     const env = pathForkCycleLegacyData(4)
     const l2 = (env.content?.[0]?.content ?? []).filter((n) => (n.props as Record<string, unknown>)?.['stress:layer'] === 2)
     const a = l2.find((n) => (n.props as Record<string, unknown>)?.['stress:slot'] === 'a')!
-    expect(a.component?.reference).toBe('values-2.a')
-    expect(a.component?.value).toBe('value-A-2')
+    const aComp = Array.isArray(a.component) ? undefined : a.component
+    expect(aComp?.reference).toBe('values-2.a')
+    expect(aComp?.value).toBe('value-A-2')
     const b = l2.find((n) => (n.props as Record<string, unknown>)?.['stress:slot'] === 'b')!
-    expect(b.component?.value).toBe('value-B-2')
+    const bComp = Array.isArray(b.component) ? undefined : b.component
+    expect(bComp?.value).toBe('value-B-2')
   })
 
   it('layer 3 (link) carries the fork-stress link def (type div, def content)', () => {
     const env = pathForkCycleLegacyData(4)
     const l3 = (env.content?.[0]?.content ?? []).filter((n) => (n.props as Record<string, unknown>)?.['stress:layer'] === 3)
     expect(l3.length).toBe(2)
-    expect(l3[0].component?.reference).toBe('link-3')
-    const def = l3[0].component?.value as { type?: string; children?: LegacyNodeData[] }
+    const c3 = Array.isArray(l3[0].component) ? undefined : l3[0].component
+    expect(c3?.reference).toBe('link-3')
+    const def = c3?.value as { type?: string; children?: LegacyNodeData[] }
     expect(def?.type).toBe('div')
     expect(def?.children?.length).toBe(2)
     expect(def?.children?.[0]?.content).toBe('link-3.a')

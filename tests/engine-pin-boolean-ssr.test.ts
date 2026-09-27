@@ -19,7 +19,7 @@ import {
   renderProducingProcess,
   type LegacyInitialData,
 } from 'provident-ssr'
-import { installShim } from '../src/shared/dom-shim.js'
+import { installShim, mountEl } from '../src/shared/dom-shim.js'
 
 beforeAll(() => {
   installShim()
@@ -217,7 +217,12 @@ function tagAttrSets(html: string): Array<{ tag: string; attrs: Set<string>; sta
 }
 
 /** The attribute record of the tag carrying `data-node-id="<nodeId>"`. */
-function attrsOfNode(html: string, nodeId: string): Record<string, string> {
+// TYPE-ONLY (leg `npm run typecheck:tests`): the declared value type mirrors what
+// `attrsOfTagAt` already returns (`Map<string, string | null>`,
+// engine-pin-boolean-ssr.test.ts:170) — a bare attribute parses to `null`.
+// `Object.fromEntries(map)` is unchanged; only the record's declared element
+// type widens, so the rows' reads/assertions are identical.
+function attrsOfNode(html: string, nodeId: string): Record<string, string | null> {
   const hit = findTagByAttr(html, 'data-node-id', nodeId)
   if (hit === null) return {}
   const map = attrsOfTagAt(html, hit.start)
@@ -240,6 +245,14 @@ function nodeIdForCssId(html: string, cssId: string): string {
 }
 
 /** The shim element for a node id, walked from the mount (pre-order). */
+// This is DEAD CODE in this file (declared, never called — `shimElOf` is used by
+// the DOM half, engine-pin-boolean-dom.test.ts): the SSR leg never mounts a shim
+// tree. The name was left unresolved here, which the leg
+// `npm run typecheck:tests` reports as TS2552 (`mountEl` is not imported, while
+// `installShim` is). Fixed by the TYPE-ONLY import below — `mountEl` is a real
+// export of the same module (`src/shared/dom-shim.ts:236`), so the helper's
+// return type resolves to the shim element exactly as in the DOM half. No row in
+// this file reaches it, and no runtime byte changes.
 function shimElOf(mount: ReturnType<typeof mountEl>, nodeId: string): ReturnType<typeof mountEl> | null {
   const walk = (el: unknown): unknown => {
     const e = el as { children?: unknown[]; getAttribute?: (k: string) => string | null }

@@ -9,7 +9,7 @@ import { describe, it, expect, beforeAll } from 'vitest'
 import { installShim, mountEl } from '../src/shared/dom-shim.js'
 import { Runtime } from '../src/renderer/runtime.js'
 import { demoEnvelope } from '../src/shared/demo-envelope.js'
-import { translateLegacy, serializeSlice, type LegacyInitialData } from 'provident-ssr'
+import { translateLegacy, serializeSlice, type LegacyInitialData, type LegacyNodeData } from 'provident-ssr'
 
 beforeAll(() => {
   installShim()
@@ -56,8 +56,8 @@ function userEnvelope(): LegacyInitialData {
  *  owning 'zone-1'; every deeper prototype is a content payload root with
  *  placementName + targetPlacement. Path enumeration yields 2·depth−1 nodes. */
 function placementEnvelope(depth = 4): LegacyInitialData {
-  const children: unknown[] = []
-  const payload: unknown[] = []
+  const children: LegacyNodeData[] = []
+  const payload: LegacyNodeData[] = []
   for (let k = 1; k <= depth - 1; k += 1) {
     for (const slot of ['a', 'b']) {
       const proto = {

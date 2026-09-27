@@ -12,6 +12,18 @@ import { installShim, mountEl } from '../src/shared/dom-shim.js'
 import { Runtime } from '../src/renderer/runtime.js'
 import { hooksScenariosEnvelope } from '../tests/fixtures/hooks-scenarios-data.mjs'
 import { userAuthEnvelope, mainEnvelope } from '../tests/fixtures/handlers-scenarios-data.mjs'
+import type { LegacyInitialData } from 'provident-ssr'
+
+// TYPE-ONLY (leg `npm run typecheck:tests`): `DispatchResult.results` is the
+// engine's `HandlerResult[]` and `HandlerResult` is `unknown`
+// (`provident-ssr` core/handlers.d.ts:26), so a verdict read out of
+// `results[0]` needs narrowing before it is inspected. Compile-time view only:
+// the rows already assert exactly these reads and pass green today.
+type HandlerResultView = { status?: string; error?: { code?: string } }
+const handlerResult = (r: unknown): HandlerResultView => r as HandlerResultView
+/** Narrowing for the per-node state entry read in H5 (same reason). */
+const handlerState = (s: unknown): { bindings: { theme?: string } } =>
+  s as { bindings: { theme?: string } }
 
 beforeAll(() => {
   installShim()
@@ -108,22 +120,22 @@ describe('Hooks-scenarios (battery-hooks-greens.md)', () => {
 
   it('H5 — consumer node_state: theme-readout bindings.theme === "dark", JSON-safe snapshot', () => {
     const state = runtime.nodeState('theme-readout')
-    expect(state.states[0].bindings.theme).toBe('dark')
+    expect(handlerState(state.states[0]).bindings.theme).toBe('dark')
     expect(() => JSON.stringify(state)).not.toThrow()
   })
 
   it('H6 — containment probes: the 4 verdicts', async () => {
     const name = await runtime.dispatch({ target: 'probe-name-btn', event: 'click' })
-    expect(name.results[0].error.code).toBe('hook-name-unresolved')
+    expect(handlerResult(name.results[0]).error?.code).toBe('hook-name-unresolved')
 
     const mode = await runtime.dispatch({ target: 'probe-mode-btn', event: 'click' })
-    expect(mode.results[0].error.code).toBe('hook-mode-blocked')
+    expect(handlerResult(mode.results[0]).error?.code).toBe('hook-mode-blocked')
 
     const kind = await runtime.dispatch({ target: 'probe-kind-btn', event: 'click' })
-    expect(kind.results[0].error.code).toBe('hook-kind-mismatch')
+    expect(handlerResult(kind.results[0]).error?.code).toBe('hook-kind-mismatch')
 
     const seam = await runtime.dispatch({ target: 'probe-seam-btn', event: 'click' })
-    expect(seam.results[0].status).toBe('applied')
+    expect(handlerResult(seam.results[0]).status).toBe('applied')
 
     const light = await runtime.dispatch({
       target: 'theme-light-btn',
@@ -135,8 +147,12 @@ describe('Hooks-scenarios (battery-hooks-greens.md)', () => {
 
   it('H7 — export / validate / teardown (root-only restore)', async () => {
     const exported = runtime.export('legacy')
-    expect(exported.export.template).toBeDefined()
-    const verdict = runtime.validate('legacy', exported.export)
+    // TYPE-ONLY: `ExportResult.export` is typed `unknown`
+    // (src/shared/types.ts:119-122) — the row already passes it straight back to
+    // `runtime.validate`, which takes the legacy envelope.
+    const doc = exported.export as LegacyInitialData
+    expect(doc.template).toBeDefined()
+    const verdict = runtime.validate('legacy', doc)
     expect(verdict.valid).toBe(true)
     expect(verdict.censusMatch).toBe(true)
 
@@ -345,8 +361,10 @@ describe('Handler-scenarios — S2..S10 main envelope (battery-handlers-greens.m
 
   it('H12 — export / validate / teardown (root-only restore)', async () => {
     const exported = runtime.export('legacy')
-    expect(exported.export.template).toBeDefined()
-    const verdict = runtime.validate('legacy', exported.export)
+    // TYPE-ONLY: `ExportResult.export` is typed `unknown` (src/shared/types.ts:119).
+    const doc = exported.export as LegacyInitialData
+    expect(doc.template).toBeDefined()
+    const verdict = runtime.validate('legacy', doc)
     expect(verdict.valid).toBe(true)
 
     const td = await runtime.teardownResult()

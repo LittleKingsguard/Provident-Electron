@@ -228,7 +228,7 @@ describe('Runtime.journal — undo/redo/replay (J3-J8)', () => {
     // The SDK returns "Tool not found" for unregistered tools — the tool is
     // never invoked, never reaches the backend.
     const backend: McpBackend = { invoke: async () => ({}) }
-    const server = new ProvidentMcpServer({ backend })
+    const server = new ProvidentMcpServer({ backend, transport: 'stdio' })
     expect(server.allowedToolNames()).not.toContain('provident.journal')
     // After enabling graph, it IS registered
     server.applyGatePatch({ groups: ['graph'] })
@@ -276,7 +276,7 @@ describe('provident.journal — MCP tool registration (J6)', () => {
 
   it('J6 — the server registers provident.journal only when graph is enabled', () => {
     const backend: McpBackend = { invoke: async () => ({}) }
-    const server = new ProvidentMcpServer({ backend })
+    const server = new ProvidentMcpServer({ backend, transport: 'stdio' })
     expect(server.allowedToolNames()).not.toContain('provident.journal')
     server.applyGatePatch({ groups: ['graph'] })
     expect(server.allowedToolNames()).toContain('provident.journal')

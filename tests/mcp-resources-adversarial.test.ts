@@ -11,6 +11,10 @@ import { describe, it, expect } from 'vitest'
 import { SecurityGate } from '../src/main/security.js'
 import { ProvidentMcpServer, type McpBackend } from '../src/main/mcp-server.js'
 
+// TYPE-ONLY (leg `npm run typecheck:tests`): `McpServerOptions.transport` is a
+// REQUIRED field (`src/main/mcp-server.ts:228-239`). Every row here drives
+// `ensureServerRegistered()`/`readResource` — never `start()` — so the kind is
+// never observed; the literal only satisfies the declared options shape.
 function makeBackend(reply: unknown = {}) {
   const calls: string[] = []
   return {
@@ -25,7 +29,7 @@ describe('A1 — a `read`-off gate shuts off the resources (no bypass door)', ()
     // that by constructing a new server with a read-off gate.
     const { backend } = makeBackend()
     const gate = new SecurityGate({ token: null, enabled: ['dispatch'] }) // read OFF
-    const server = new ProvidentMcpServer({ backend, gate })
+    const server = new ProvidentMcpServer({ backend, gate, transport: 'stdio' })
     server.ensureServerRegistered()
     expect(server.registeredResources()).toHaveLength(0)
     expect(server.resourceEnabled('mcp://provident/app')).toBe(false)
@@ -33,7 +37,7 @@ describe('A1 — a `read`-off gate shuts off the resources (no bypass door)', ()
 
   it('a read-off gate has no registered resources at all (app/targets/node all absent)', async () => {
     const { backend } = makeBackend()
-    const server = new ProvidentMcpServer({ backend })
+    const server = new ProvidentMcpServer({ backend, transport: 'stdio' })
     server.ensureServerRegistered()
     server.applyGatePatch({ disable: ['read'] })
     // the live server still holds the handles but all are DISABLED
@@ -46,7 +50,7 @@ describe('A1 — a `read`-off gate shuts off the resources (no bypass door)', ()
 describe('A4 — malformed/unknown URIs fail cleanly', () => {
   it('reading an unregistered URI throws a clean not-found (no 500 stack)', async () => {
     const { backend } = makeBackend()
-    const server = new ProvidentMcpServer({ backend })
+    const server = new ProvidentMcpServer({ backend, transport: 'stdio' })
     server.ensureServerRegistered()
     await expect(server.readResource('mcp://provident/does-not-exist')).rejects.toThrow(/resource not found/)
   })
@@ -65,7 +69,7 @@ describe('A2/A3 — node-template hardening + SecurePanels isolation', () => {
         return {}
       },
     }
-    const server = new ProvidentMcpServer({ backend })
+    const server = new ProvidentMcpServer({ backend, transport: 'stdio' })
     server.ensureServerRegistered()
     await expect(server.readResource('mcp://provident/node/node-999')).rejects.toThrow(/unresolved target/)
     expect(calls).toContain('nodeState')
@@ -77,7 +81,7 @@ describe('A2/A3 — node-template hardening + SecurePanels isolation', () => {
     // the renderer dispatches only to the app Runtime. The backend is the only
     // routing surface — a resource handler has no path to the pane graph.
     const mk = makeBackend({ renderedHtml: '<app/>' })
-    const server = new ProvidentMcpServer({ backend: mk.backend })
+    const server = new ProvidentMcpServer({ backend: mk.backend, transport: 'stdio' })
     server.ensureServerRegistered()
     const out = await server.readResource('mcp://provident/app')
     // the resource returned app content, and the ONLY invoke was renderedHtml

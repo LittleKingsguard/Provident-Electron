@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import { Runtime } from '../src/renderer/runtime.js';
 import { installShim, mountEl } from '../src/shared/dom-shim.js';
 import { demoEnvelope } from '../src/shared/demo-envelope.js';
-import { translateLegacy, serializeSlice } from 'provident-ssr';
+import { translateLegacy, serializeSlice, type LegacyInitialData } from 'provident-ssr';
 import {
   pathForkCycleLegacyData,
 } from '../src/shared/path-fork-cycle.js';
@@ -14,17 +14,32 @@ import {
 } from '../tests/fixtures/handlers-scenarios-data.mjs';
 import { SecurePanels } from '../src/renderer/secure-panels.js';
 
+// TYPE-ONLY (leg `npm run typecheck:tests`): `DispatchResult.results` is the
+// engine's `HandlerResult[]`, and `HandlerResult` is `unknown`
+// (`provident-ssr` core/handlers.d.ts:26) — so a row that reads a verdict out of
+// `results[0]` needs the read narrowed. Purely a compile-time view: the two
+// rows below were already asserting these exact reads (they pass green today),
+// so the runtime behaviour is unchanged.
+type HandlerResultView = { status?: string; error?: { code?: string; message?: string } }
+const handlerResult = (r: unknown): HandlerResultView => r as HandlerResultView
+
 beforeAll(() => {
   installShim();
 });
 
 describe('Gemma4 Blind Battery', () => {
   let runtime: Runtime;
-  let mount: HTMLElement;
+  let mount: ReturnType<typeof mountEl>;
+  // TYPE-ONLY (leg `npm run typecheck:tests`): `mountEl()` returns the shim's
+  // `ShimElement` (src/shared/dom-shim.ts:236-238) — the shim IS the DOM stand-in
+  // in this suite — so `mount`'s declared type is the shim element, not the
+  // platform `HTMLElement` (which it structurally mirrors). Same value, same
+  // rows; the `as never` at the `Runtime` call is the same seam every other row
+  // in this suite uses for the shim mount (e.g. runtime-host.test.ts:65).
 
   beforeEach(() => {
     mount = mountEl();
-    runtime = new Runtime({ mount, envelope: demoEnvelope() });
+    runtime = new Runtime({ mount: mount as never, envelope: demoEnvelope() });
     runtime.bootstrap();
   });
 
@@ -41,7 +56,11 @@ describe('Gemma4 Blind Battery', () => {
       // userEnvelope is NOT pinned (D4): reconstructed from runtime-host.md §3.1
       // R8 prose. The ud-read node carries a legacy-format handler that renders
       // the translate-scoped supervisor.userData.username (or ANON when absent).
-      const userEnv = {
+      // TYPE-ONLY (leg `npm run typecheck:tests`): the declared type is what the
+      // row already passes to `loadEnvelope` (envelope: LegacyInitialData,
+      // src/renderer/runtime.ts:349) — the object literal is unchanged, only its
+      // widened view, so the rows' runtime behaviour is identical.
+      const userEnv: LegacyInitialData = {
         template: {
           root: {
             type: 'div',
@@ -300,16 +319,16 @@ describe('Gemma4 Blind Battery', () => {
       runtime.loadEnvelope(hooksScenariosEnvelope());
       
       const res1 = await runtime.dispatch({ target: 'probe-name-btn', event: 'click' });
-      expect(res1.results[0].error.code).toBe('hook-name-unresolved');
+      expect(handlerResult(res1.results[0]).error?.code).toBe('hook-name-unresolved');
       
       const res2 = await runtime.dispatch({ target: 'probe-mode-btn', event: 'click' });
-      expect(res2.results[0].error.code).toBe('hook-mode-blocked');
+      expect(handlerResult(res2.results[0]).error?.code).toBe('hook-mode-blocked');
       
       const res3 = await runtime.dispatch({ target: 'probe-kind-btn', event: 'click' });
-      expect(res3.results[0].error.code).toBe('hook-kind-mismatch');
+      expect(handlerResult(res3.results[0]).error?.code).toBe('hook-kind-mismatch');
       
       const res4 = await runtime.dispatch({ target: 'probe-seam-btn', event: 'click' });
-      expect(res4.results[0].status).toBe('applied');
+      expect(handlerResult(res4.results[0]).status).toBe('applied');
     });
 
     it('S28. handlers S1a anon', async () => {

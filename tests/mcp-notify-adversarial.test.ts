@@ -22,7 +22,12 @@ function makeBackend(): McpBackend {
 }
 
 function fakeSecurity() {
-  let cfg = { token: null, enabled: ['read', 'dispatch'] }
+  // TYPE-ONLY (leg `npm run typecheck:tests`): the same annotation the sibling
+  // `tests/secure-panels.test.ts`/`tests/isolation-adversarial-e2e.test.ts`
+  // fakes already carry — the setter below writes `patch.token ?? null`, which
+  // the inferred literal type (`null`) cannot hold. Values, reads and assertions
+  // are unchanged.
+  let cfg: { token: string | null; enabled: string[] } = { token: null, enabled: ['read', 'dispatch'] }
   return {
     bridge: {
       get: async () => ({ ...cfg }),
