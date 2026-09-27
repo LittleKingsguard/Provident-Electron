@@ -30,6 +30,36 @@
 // for the first instance, `node-11`..`node-15` for the third), so the literals
 // carry the ids of the capture instance — that is intentional: the control
 // pins the WHOLE byte string, including the traceability attribute.
+//
+// ===========================================================================
+// ⟶ RE-GRAINED 2026-09-27 (THE DATASET/SHIM FIX) — the capture-above was taken
+// FROM THE DEFECTIVE SHIM, and this pass re-took it from the LANDED tree.
+//
+// WHAT WAS WRONG WITH THE AS-FILED CAPTURE (the fix, named): `src/shared/
+// dom-shim.ts`'s `dataset` slot used to be a PLAIN OBJECT, so the engine's own
+// wire write — `el.dataset.wire = wire` (`provident-ssr/dist/core/adapters.js`,
+// the DOM adapter's create path) — set a JS property and emitted NO ATTRIBUTE,
+// while the REAL DOM renders `data-wire="node-N"` on every created element.
+// `src/shared/dom-shim.ts` now carries an ATTRIBUTE-BACKED `dataset` proxy over
+// the same `attrs` store (with its own stated bound: the camelCase↔kebab map is
+// mirrored; a hyphenated key is ignored and reads `undefined`), and the fix was
+// found LIVE by `U-DIVERGENCE-EXT`'s set-wise attribute-presence extractor —
+// the reading was `only-on-real=[data-wire] only-on-shim=[] sameSize=false` at
+// all three points. The shim is CORRECT AS LANDED; nothing here suppresses
+// `data-wire`.
+//
+// WHAT MOVED: the three DOM literals below gain `data-wire="<nodeId>"` on every
+// `<div>` (the SSR literals do NOT change — the SSRFragmentAdapter never wrote
+// `data-wire`; see the P-IM-1 exception record for the measured reading). The
+// as-filed pre-fix forms are KEPT VISIBLE, superseded, in the banner block
+// above the literals (annotate-never-rewrite; no row id, term, seed, section
+// number or row count moved). The seven rows that were RED against the
+// post-fix tree were exactly the six literal-pinning rows below (`R-16`
+// `CONTROL-1`, `CONTROL-1b`, `R-17` `CONTROL-2`, `P-IM-4` cycle 1 and cycle 2)
+// plus `P-IM-1`'s two pair rows — the last of which was NOT re-greened by
+// pasting literals, because its as-filed invariant is measurably FALSE on the
+// real DOM (see the P-IM-1 re-grounding note below).
+// ===========================================================================
 import { describe, it, expect, beforeAll } from 'vitest'
 import { installShim, mountEl } from '../src/shared/dom-shim.js'
 import { Runtime } from '../src/renderer/runtime.js'
@@ -38,10 +68,83 @@ beforeAll(() => {
   installShim()
 })
 
+/** One authored child node. `handlers` is part of the ENGINE's node shape (the
+ *  `on:<event>` route the `SSRFragmentAdapter` serializes as an inline
+ *  `on<event>` attribute), and it is typed here because the P-IM-1 re-grounding's
+ *  E2 exception is declared from an authored-handler probe envelope. `children`
+ *  is OPTIONAL on a CHILD node, while the root's children array stays REQUIRED
+ *  (`MutableEnvelope` below) — the rows index `root.children[i]` directly. */
+type MutableNode = {
+  type: string
+  css?: Record<string, unknown>
+  props?: Record<string, unknown>
+  content?: string
+  handlers?: Array<{ name: string; event: string; body: string }>
+  children?: MutableNode[]
+}
+
 type MutableEnvelope = {
-  template: { root: { type: string; css?: Record<string, unknown>; props?: Record<string, unknown>; children: unknown[] } }
+  template: { root: MutableNode & { children: MutableNode[] } }
   content: unknown[]
   clientConfig: { runInstantiation: boolean; runRendering: boolean }
+}
+
+/** E2's declared class (⟶ RE-GROUNDED 2026-09-27, THE DATASET/SHIM FIX). The
+ *  `SSRFragmentAdapter` routes `on:<event>` to the inline `on<event>` attribute
+ *  (`provident-ssr/dist/core/adapters.js`, the `name.startsWith('on:')` branch),
+ *  while the DOM adapter wires handlers with `addEventListener` — so these names
+ *  exist in the SSR string and CANNOT exist on a real (or shim) element. */
+const DECLARED_SSR_HANDLER_ATTRS = ['onclick', 'oninput', 'onpointerdown'] as const
+/** E1's declared name (the host-injected wire attribute the engine writes as
+ *  `el.dataset.wire = wire`). */
+const DECLARED_DOM_WIRE_ATTR = 'data-wire'
+
+/** The NARROWED P-IM-1 set: the attribute names a tag carries MINUS the two
+ *  declared exceptions (E1 `data-wire`, E2 the `on<event>` class). Used for the
+ *  per-tag comparison — the as-filed full set-equality form is
+ *  SUPERSEDED-BY-MEASUREMENT (see the P-IM-1 block). */
+function structuralAttrs(tag: { attrs: Set<string> }): string[] {
+  return [...tag.attrs]
+    .filter((n) => n !== DECLARED_DOM_WIRE_ATTR && !DECLARED_SSR_HANDLER_ATTRS.includes(n as (typeof DECLARED_SSR_HANDLER_ATTRS)[number]))
+    .sort()
+}
+
+/** The attribute-name set of a whole fragment (every tag), as a set — the
+ *  per-fragment reading E1/E2's declarations are measured against. */
+function extractNames(html: string): Set<string> {
+  const out = new Set<string>()
+  for (const t of tagAttrSets(html)) for (const name of t.attrs) out.add(name)
+  return out
+}
+
+/** **E2's DECLARATION, MEASURED** (⟶ RE-GROUNDED 2026-09-27, THE DATASET/SHIM
+ *  FIX) — run INSIDE each P-IM-1 pair row, over an envelope that authors three
+ *  handlers (one per declared event kind). It asserts the declared class EXACTLY,
+ *  in both directions, so the exception the narrowed invariant subtracts can
+ *  never silently become a catch-all:
+ *    · the SSR-only set is exactly `['onclick','oninput','onpointerdown']`;
+ *    · the DOM-only set is exactly `['data-wire']`;
+ *    · after subtracting both, the two legs agree PER TAG on this envelope too. */
+function expectDeclaredExceptions(
+  bootFn: (env: MutableEnvelope) => Runtime,
+  probeEnvelope: () => MutableEnvelope,
+  label = 'probe',
+): void {
+  const probe = bootFn(probeEnvelope()).renderedHtmlResult()
+  const probeDom = extractNames(probe.renderedHtml)
+  const probeSsr = extractNames(probe.ssrHtml)
+  const domOnly = [...probeDom].filter((n) => !probeSsr.has(n)).sort()
+  const ssrOnly = [...probeSsr].filter((n) => !probeDom.has(n)).sort()
+  expect(ssrOnly, `${label}: E2 — the SSR-only handler class is exactly the three authored kinds`).toEqual([...DECLARED_SSR_HANDLER_ATTRS])
+  expect(domOnly, `${label}: E1 — the DOM-only class is exactly \`${DECLARED_DOM_WIRE_ATTR}\``).toEqual([DECLARED_DOM_WIRE_ATTR])
+  const pDomTags = tagAttrSets(probe.renderedHtml)
+  const pSsrTags = tagAttrSets(probe.ssrHtml)
+  expect(pDomTags.length).toBe(2)
+  expect(pSsrTags.length).toBe(2)
+  for (let i = 0; i < 2; i++) {
+    expect(pDomTags[i].tag, `${label}: probe tag ${i}`).toBe(pSsrTags[i].tag)
+    expect(structuralAttrs(pDomTags[i]), `${label}: probe structural attribute-name set ${i}`).toEqual(structuralAttrs(pSsrTags[i]))
+  }
 }
 
 /** §4.2 — the pinned scenario envelope (`inert`/`hidden`/`readonly` all authored
@@ -248,12 +351,39 @@ function tagAttrSets(
 // strings are pinned as literals and must not drift.
 // ---------------------------------------------------------------------------
 
+/** The superseded PRE-FIX capture (⟶ RE-GRAINED 2026-09-27, THE DATASET/SHIM
+ *  FIX). These are the as-filed literals, KEPT VISIBLE as the record of what the
+ *  DEFECTIVE shim emitted. Byte difference to the literals below, per tag:
+ *      pre-fix `<div ` + (authored attrs) + `data-node-id="<nodeId>"`
+ *      post-fix `<div data-wire="<nodeId>" ` + (authored attrs) + `data-node-id="<nodeId>"`
+ *  i.e. the DOM literals gained `data-wire="<nodeId>"` on EVERY div; the SSR
+ *  literals are byte-identical (unchanged by the fix).
+ *
+ *    CONTROL1_DOM (pre-fix):
+ *      '<div data-node-id="<nodeId>" id="r">'
+ *      '<div inert="true" data-node-id="<nodeId>" id="n-inert"></div>'
+ *      '<div hidden="true" data-node-id="<nodeId>" id="n-hidden"></div>'
+ *      '<div data-node-id="<nodeId>" id="n-ro"></div>'
+ *      '<div data-node-id="<nodeId>" id="n-plain"></div>'
+ *      '</div>'
+ *    CONTROL1_TRUE_DOM (pre-fix): same, with `readonly="true"` on the n-ro div.
+ *    CONTROL2_DOM (pre-fix):
+ *      '<div data-node-id="<nodeId>" id="r">'
+ *      '<div data-node-id="<nodeId>" id="n-inert"></div>'
+ *      '<div data-node-id="<nodeId>" id="n-hidden"></div>'
+ *      '<div data-node-id="<nodeId>" id="n-ro"></div>'
+ *      '<div data-node-id="<nodeId>" id="n-plain"></div>'
+ *      '</div>'
+ *  These pre-fix forms are FALSIFIABLE and are used as the re-grain's mutation
+ *  evidence: pasting one back turns its row RED (measured, this pass — see the
+ *  re-grain note in the file header). */
+
 const CONTROL1_DOM =
-  '<div data-node-id="<nodeId>" id="r">' +
-  '<div inert="true" data-node-id="<nodeId>" id="n-inert"></div>' +
-  '<div hidden="true" data-node-id="<nodeId>" id="n-hidden"></div>' +
-  '<div data-node-id="<nodeId>" id="n-ro"></div>' +
-  '<div data-node-id="<nodeId>" id="n-plain"></div>' +
+  '<div data-wire="<nodeId>" data-node-id="<nodeId>" id="r">' +
+  '<div data-wire="<nodeId>" inert="true" data-node-id="<nodeId>" id="n-inert"></div>' +
+  '<div data-wire="<nodeId>" hidden="true" data-node-id="<nodeId>" id="n-hidden"></div>' +
+  '<div data-wire="<nodeId>" data-node-id="<nodeId>" id="n-ro"></div>' +
+  '<div data-wire="<nodeId>" data-node-id="<nodeId>" id="n-plain"></div>' +
   '</div>'
 
 const CONTROL1_SSR =
@@ -269,11 +399,11 @@ const CONTROL1_CENSUS = { registered: 5, inTree: 5, unplaced: 0, destroyed: 0, p
 /** The all-TRUTHY variant (`inert`/`hidden`/`readonly` = `'true'`) — the pure
  *  "defined TRUE boolean literal" byte-identity capture. */
 const CONTROL1_TRUE_DOM =
-  '<div data-node-id="<nodeId>" id="r">' +
-  '<div inert="true" data-node-id="<nodeId>" id="n-inert"></div>' +
-  '<div hidden="true" data-node-id="<nodeId>" id="n-hidden"></div>' +
-  '<div readonly="true" data-node-id="<nodeId>" id="n-ro"></div>' +
-  '<div data-node-id="<nodeId>" id="n-plain"></div>' +
+  '<div data-wire="<nodeId>" data-node-id="<nodeId>" id="r">' +
+  '<div data-wire="<nodeId>" inert="true" data-node-id="<nodeId>" id="n-inert"></div>' +
+  '<div data-wire="<nodeId>" hidden="true" data-node-id="<nodeId>" id="n-hidden"></div>' +
+  '<div data-wire="<nodeId>" readonly="true" data-node-id="<nodeId>" id="n-ro"></div>' +
+  '<div data-wire="<nodeId>" data-node-id="<nodeId>" id="n-plain"></div>' +
   '</div>'
 
 const CONTROL1_TRUE_SSR =
@@ -292,11 +422,11 @@ const CONTROL1_TRUE_SSR =
 const CONTROL1_TRUE_CENSUS = { registered: 5, inTree: 5, unplaced: 0, destroyed: 0, prototypes: 0 }
 
 const CONTROL2_DOM =
-  '<div data-node-id="<nodeId>" id="r">' +
-  '<div data-node-id="<nodeId>" id="n-inert"></div>' +
-  '<div data-node-id="<nodeId>" id="n-hidden"></div>' +
-  '<div data-node-id="<nodeId>" id="n-ro"></div>' +
-  '<div data-node-id="<nodeId>" id="n-plain"></div>' +
+  '<div data-wire="<nodeId>" data-node-id="<nodeId>" id="r">' +
+  '<div data-wire="<nodeId>" data-node-id="<nodeId>" id="n-inert"></div>' +
+  '<div data-wire="<nodeId>" data-node-id="<nodeId>" id="n-hidden"></div>' +
+  '<div data-wire="<nodeId>" data-node-id="<nodeId>" id="n-ro"></div>' +
+  '<div data-wire="<nodeId>" data-node-id="<nodeId>" id="n-plain"></div>' +
   '</div>'
 
 const CONTROL2_SSR =
@@ -309,11 +439,22 @@ const CONTROL2_SSR =
 
 const CONTROL2_CENSUS = { registered: 5, inTree: 5, unplaced: 0, destroyed: 0, prototypes: 0 }
 
-/** Normalize the engine's per-process `data-node-id` values to a fixed
- *  placeholder (they are minted from a global sequence and CANNOT be pinned as
- *  literals across runs); every other byte is compared verbatim. */
+/** Normalize the engine's per-process minted values to a fixed placeholder.
+ *  BOTH traceability attributes are normalized here, because BOTH are minted from
+ *  the same global per-process sequence and `U-DIVERGENCE-EXT`'s live reading
+ *  (this pass, both hosts) measures them EQUAL PER TAG: `data-wire="node-N"`
+ *  holds exactly the `data-node-id="node-N"` of the SAME tag. Normalizing both
+ *  to the SAME token is what keeps that equality inside the byte-identity
+ *  comparison instead of dropping it (a value-pinning that used two different
+ *  placeholders, or dropped the attribute, would let a `data-wire` that drifted
+ *  away from its node id pass).
+ *
+ *  ⟶ RE-GRAINED 2026-09-27 (THE DATASET/SHIM FIX): before the fix the shim
+ *  emitted no `data-wire` attribute at all (its `dataset` was a plain object), so
+ *  only `data-node-id` needed a rule. `data-wire` is now present on every created
+ *  element, so it is normalized too. Everything else is compared verbatim. */
 function normalizeNodeIds(html: string): string {
-  return html.replace(/data-node-id="[^"]*"/g, 'data-node-id="<nodeId>"')
+  return html.replace(/data-(?:node-id|wire)="[^"]*"/g, (m) => `${m.slice(0, m.indexOf('='))}="<nodeId>"`)
 }
 
 describe('engine-pin byte-identity controls (spec §4.1 R-16/R-17, §5.5)', () => {
@@ -329,6 +470,16 @@ describe('engine-pin byte-identity controls (spec §4.1 R-16/R-17, §5.5)', () =
     //      with the authored form (never `hidden="false"` for a defined `'true'`)
     // NOT retarget evidence (AF-1/AF-2): this row cannot show that
     // `0.2.1 → 0.5.1` changed nothing — see the file header.
+    // ⟶ RE-GRAINED 2026-09-27 (THE DATASET/SHIM FIX): the as-filed literal was a
+    // capture from the DEFECTIVE shim (`src/shared/dom-shim.ts`'s plain-object
+    // `dataset` emitted no attribute for the engine's `el.dataset.wire = wire`,
+    // so no `data-wire` appeared); the fix is the attribute-backed `dataset`
+    // proxy, landed after `U-DIVERGENCE-EXT`'s set-wise extractor measured
+    // `only-on-real=[data-wire] only-on-shim=[]` live. `CONTROL1_DOM` therefore
+    // gained `data-wire="<nodeId>"` on every div; `CONTROL1_SSR` is unchanged
+    // (the SSRFragmentAdapter never wrote it). The pre-fix literal is kept in the
+    // superseded banner above the constants. RED before the re-grain (the row
+    // failed on the missing attribute), GREEN after.
     const r = boot(baseEnvelope())
     const res = r.renderedHtmlResult()
 
@@ -353,6 +504,10 @@ describe('engine-pin byte-identity controls (spec §4.1 R-16/R-17, §5.5)', () =
     // The pure "defined boolean value" half of R-16: all three named members
     // authored `'true'` → every attribute present with the authored form, and
     // the whole byte string identical to the pinned forward capture.
+    // ⟶ RE-GRAINED 2026-09-27 (THE DATASET/SHIM FIX): `CONTROL1_TRUE_DOM` gained
+    // `data-wire="<nodeId>"` per div (as-filed literal was a capture from the
+    // defective shim — see the header's re-grain note and the superseded banner);
+    // `CONTROL1_TRUE_SSR` is byte-identical, as are the census numbers.
     const env = (() => {
       const e = baseEnvelope()
       e.template.root.children[2].props = { id: 'n-ro', readonly: 'true' }
@@ -371,6 +526,10 @@ describe('engine-pin byte-identity controls (spec §4.1 R-16/R-17, §5.5)', () =
     //   S2 ssrHtml === its pinned forward literal
     //   S3 census === its pinned numbers
     // NOT retarget evidence (AF-1/AF-2): a forward pin, not a `0.2.1` capture.
+    // ⟶ RE-GRAINED 2026-09-27 (THE DATASET/SHIM FIX): `CONTROL2_DOM` gained
+    // `data-wire="<nodeId>"` per div (as-filed literal was a capture from the
+    // defective shim — header re-grain note + superseded banner above the
+    // constants); `CONTROL2_SSR` and `CONTROL2_CENSUS` are unchanged.
     const r = boot(booleanFreeEnvelope())
     const res = r.renderedHtmlResult()
     expect(normalizeNodeIds(res.renderedHtml)).toBe(CONTROL2_DOM)
@@ -400,6 +559,15 @@ describe('engine-pin byte-identity controls (spec §4.1 R-16/R-17, §5.5)', () =
   // dirty-diff path actually re-emits. The values chosen (`props.hidden:'true'`
   // on a member already authored `'true'`) are the envelope's own, so the byte
   // output is unchanged — which is exactly what the invariant claims.
+  //
+  // ⟶ RE-GRAINED 2026-09-27 (THE DATASET/SHIM FIX) — BOTH cycle rows (1 and 2):
+  // they compare against `CONTROL1_DOM`/`CONTROL1_SSR`, so the as-filed forms
+  // carried the same pre-fix DOM literal (no `data-wire`) and failed against the
+  // fixed shim. The re-grained DOM literal gains `data-wire="<nodeId>"` per div;
+  // the SSR literal and the census are unchanged. Nothing about the CYCLE
+  // semantics moved: the two render passes, the applied-op assertions and the
+  // `hidden="true"`/never-`"false"` checks are byte-identical to the as-filed
+  // row. Both cycles were RED before the re-grain and are GREEN after.
   // -------------------------------------------------------------------
   for (const cycle of [1, 2]) {
     it(`P-IM-4 [S-TAB-CYCLE-2] render cycle ${cycle} reproduces the forward-pinned literals`, () => {
@@ -439,7 +607,43 @@ describe('engine-pin byte-identity controls (spec §4.1 R-16/R-17, §5.5)', () =
   // `inert="true"` would have passed. The value comparison it promises is now
   // actually made — over the two named members the contract asserts (`inert`,
   // `hidden`), never over an enumeration of the engine's boolean set.
-  // -------------------------------------------------------------------
+  //
+  // ===================================================================
+  // ⟶ RE-GROUNDED 2026-09-27 (THE DATASET/SHIM FIX) — THE AS-FILED INVARIANT IS
+  // SUPERSEDED-BY-MEASUREMENT, and it is NOT re-greened by pasting literals.
+  //
+  // THE AS-FILED FORM (kept visible as the record): *"the SSR fragment and the
+  // DOM leg agree on the attribute-NAME sets element-wise"* — asserted as full
+  // set EQUALITY per tag. It was true only because the DEFECTIVE shim silently
+  // omitted `data-wire`; the real DOM carries it, so the invariant was a
+  // shim-only artifact.
+  //
+  // THE MEASUREMENT THAT REFUTES IT (real app, `U-DIVERGENCE-EXT`'s own set-wise
+  // extractor, `scripts/electron-divergence.mjs` → `extractAttributeNames` +
+  // `attributeSetDifference`; the reading below was re-taken at THIS test layer
+  // and matches the leg's live `[EXT]` raw sets, both after the fix):
+  //     Δ(dom − ssr) = ["data-wire"]                      (host-injected: the engine writes `el.dataset.wire = wire`)
+  //     only-on-ssr  = ["onclick","oninput","onpointerdown"]  (the SSRFragmentAdapter serializes authored handlers as inline `on<event>` attributes; the DOM adapter wires them with `addEventListener`, so no such attribute exists on a real element)
+  // The real-app reading of the same two directions was
+  // `only-on-real=[data-wire] only-on-shim=[] sameSize=false` at all three
+  // extension points — i.e. on the REAL app the two sets are NOT equal, in both
+  // directions. The row therefore asserts the NARROWED invariant below.
+  //
+  // THE NARROWED INVARIANT THAT IS GENUINELY PROVABLE ON BOTH LAYERS: the two
+  // legs agree per tag on the STRUCTURAL attribute-name set = the whole set
+  // MINUS the two DECLARED EXCEPTIONS, which are:
+  //   E1 `data-wire`       — DOM-only; declared, measured per tag below (present
+  //                          on every DOM tag, absent from the SSR string) AND
+  //                          measured EQUAL to that tag's `data-node-id`.
+  //   E2 the `on<event>`-class — SSR-only; declared, and the DECLARATION ITSELF is
+  //                          measured below over an authored three-handler probe
+  //                          envelope, so the exception class is not taken on
+  //                          faith and is not over-broad (the probe asserts the
+  //                          SSR-only set is EXACTLY the three authored kinds).
+  // Each exception keeps its own positive reading; a full set-equality row would
+  // be a FALSE invariant, and no control is weakened to obtain green — the
+  // exceptions are asserted, not tolerated.
+  // ===================================================================
   const PAIR_ENVELOPES: Array<{ label: string; make: () => MutableEnvelope }> = [
     { label: 'BASE', make: baseEnvelope },
     { label: 'BASE-boolean-OFF', make: booleanOffEnvelope },
@@ -448,8 +652,45 @@ describe('engine-pin byte-identity controls (spec §4.1 R-16/R-17, §5.5)', () =
    *  members are asserted — `inert` and `readonly`" for the OFF proof; the
    *  envelope's third authored member is `hidden`). */
   const PAIR_MEMBERS = ['inert', 'hidden'] as const
+  /** E1/E2 are the exception names the narrowed invariant subtracts; both live as
+   *  module-level constants (they are used by `structuralAttrs`, `extractNames`'s
+   *  consumers and the probe helper — a second declaration here would risk the two
+   *  drifting apart): `DECLARED_DOM_WIRE_ATTR` / `DECLARED_SSR_HANDLER_ATTRS`. */
+
+  /** E2's own PROBE envelope: a node carrying three authored handlers, one per
+   *  declared event kind. It is NOT part of the pair table (it is the exception
+   *  declaration's evidence), and it adds no census or literal of its own. */
+  const handlerProbeEnvelope = (): MutableEnvelope => ({
+    template: {
+      root: {
+        type: 'div',
+        css: { id: 'h-root' },
+        props: { id: 'h-root' },
+        children: [
+          {
+            type: 'div',
+            css: { id: 'h-body' },
+            props: { id: 'h-body' },
+            content: 'x',
+            handlers: [
+              { name: 'h-click', event: 'click', body: 'function (ctx) { return 1 }' },
+              { name: 'h-input', event: 'input', body: 'function (ctx) { return 2 }' },
+              { name: 'h-press', event: 'pointerdown', body: 'function (ctx) { return 3 }' },
+            ],
+          },
+        ],
+      },
+    },
+    content: [],
+    clientConfig: { runInstantiation: true, runRendering: true },
+  })
+
   for (const { label, make } of PAIR_ENVELOPES) {
-    it(`P-IM-1 [S-TAB-PAIR-1] ${label} — the SSR and shim legs agree on the attribute-name sets AND the present boolean values`, () => {
+    it(`P-IM-1 [S-TAB-PAIR-1] ${label} — the SSR and shim legs agree on the STRUCTURAL attribute-name sets AND the present boolean values (the two declared exceptions measured)`, () => {
+      // E2's declaration, measured FIRST inside this row's own scenario (the
+      // authored three-handler probe), so the exception class is evidence in the
+      // row that relies on it — never taken on faith, and never over-broad.
+      expectDeclaredExceptions(boot, handlerProbeEnvelope, label)
       const res = boot(make()).renderedHtmlResult()
       const ssrTags = tagAttrSets(res.ssrHtml)
       const domTags = tagAttrSets(res.renderedHtml)
@@ -459,13 +700,52 @@ describe('engine-pin byte-identity controls (spec §4.1 R-16/R-17, §5.5)', () =
       // order the §4.2 envelope authors them in, identical on both legs.
       for (let i = 0; i < 5; i++) {
         expect(domTags[i].tag, `leg tag ${i}`).toBe(ssrTags[i].tag)
-        expect([...domTags[i].attrs].sort(), `leg attribute-name set ${i}`).toEqual([...ssrTags[i].attrs].sort())
+        // THE NARROWED INVARIANT (⟶ RE-GROUNDED 2026-09-27): the STRUCTURAL
+        // attribute-name set — the whole set minus the two declared exceptions.
+        expect(structuralAttrs(domTags[i]), `leg structural attribute-name set ${i}`).toEqual(structuralAttrs(ssrTags[i]))
+        // …and the subtraction is EXACTLY the declared exception, never a looser
+        // filter: the DOM tag carries precisely one name more than the structural
+        // set (E1), and the SSR tag carries exactly the structural set here
+        // (E2 is absent because this envelope authors no handler — asserted below).
+        expect(domTags[i].attrs.size, `leg ${i}: the DOM set is the structural set + the E1 exception`).toBe(
+          structuralAttrs(domTags[i]).length + 1,
+        )
+        expect(ssrTags[i].attrs.size, `leg ${i}: this envelope's SSR set IS the structural set`).toBe(structuralAttrs(ssrTags[i]).length)
+      }
+      // ---- E1, MEASURED PER TAG (not assumed) ------------------------------
+      // `data-wire` is present on EVERY DOM tag of the pinned envelope, absent
+      // from EVERY SSR tag, and — as the live reading measures on both hosts —
+      // carries exactly that tag's `data-node-id` value. All three facts are
+      // assertions, so a future `data-wire` that goes missing, appears in the SSR
+      // string, or drifts away from its node id FAILS this row.
+      for (let i = 0; i < 5; i++) {
+        const domMap = attrsOfTagAt(res.renderedHtml, domTags[i].start)!
+        const ssrMap = attrsOfTagAt(res.ssrHtml, ssrTags[i].start)!
+        expect(domMap.has('data-wire'), `${label}: E1 — data-wire present on DOM tag ${i}`).toBe(true)
+        expect(ssrMap.has('data-wire'), `${label}: E1 — data-wire absent from SSR tag ${i}`).toBe(false)
+        expect(domMap.get('data-wire'), `${label}: E1 — the wire value is that tag's node id`).toBe(domMap.get('data-node-id'))
+        expect(structuralAttrs(domTags[i]).includes('data-wire'), `${label}: E1 — and it is subtracted as a declared exception`).toBe(false)
+      }
+      // The E2 direction on THIS envelope: the pinned envelope authors no
+      // handler, so the SSR-only set is EMPTY here (measured, never assumed) —
+      // the class is declared by the probe row above, not borrowed into this one.
+      for (let i = 0; i < 5; i++) {
+        const domMap = attrsOfTagAt(res.renderedHtml, domTags[i].start)!
+        const ssrMap = attrsOfTagAt(res.ssrHtml, ssrTags[i].start)!
+        for (const handlerAttr of DECLARED_SSR_HANDLER_ATTRS) {
+          expect(domMap.has(handlerAttr), `${label}: E2 — no handler attribute on DOM tag ${i}`).toBe(false)
+          expect(ssrMap.has(handlerAttr), `${label}: E2 — this envelope authors no handler, tag ${i}`).toBe(false)
+        }
       }
       // Stated as the invariant itself, independent of the walker: the FIRST
-      // tag of each leg (the root) carries the same attribute-NAME set.
+      // tag of each leg (the root) carries the same STRUCTURAL attribute-NAME set.
       const ssrRoot = tagAttrSets(res.ssrHtml, 0, 'div')[0]
       const domRoot = tagAttrSets(res.renderedHtml, 0, 'div')[0]
-      expect([...domRoot.attrs].sort()).toEqual([...ssrRoot.attrs].sort())
+      expect(structuralAttrs(domRoot)).toEqual(structuralAttrs(ssrRoot))
+      // And the root's own E1 reading, per the declared exception.
+      expect(attrsOfTagAt(res.renderedHtml, domRoot.start)!.get('data-wire'), `${label}: E1 on the root`).toBe(
+        attrsOfTagAt(res.renderedHtml, domRoot.start)!.get('data-node-id'),
+      )
 
       // ---- the VALUE comparison the row promises (integrity fix (b)) -------
       // Per node, per named member: the two legs must AGREE on presence, and
