@@ -133,7 +133,13 @@ type RelocateStatsMirror = {
   readonly candidateCalls: number
   readonly resolveCalls: number
   readonly revealWrites: number
-  readonly revealed: number
+  // RENAMED 2026-09-27 (`§0A` note 14 item 1): the member AS FIRST WRITTEN in this
+  // mirror carried the name `§3.4 R-1` bans as a CENSUS token — the module's bytes
+  // (comments included) may not carry it, so the mandated member is now
+  // `revealWritesApplied` ("reveal writes that RETURNED without throwing", the pair
+  // partner of `revealWrites`). The count is ELEVEN before and after; this mirror's
+  // key set is asserted against the module's own `stats()` in `P-RL-TP-1`/`P-RL-TP-2`.
+  readonly revealWritesApplied: number
   readonly resets: number
   readonly sinkCalls: number
   readonly written: number
@@ -1458,7 +1464,7 @@ describe('§3.4 R-1..R-16 — the STATIC rows (the module’s own bytes and the 
     const typedOptions: ModuleRelocateOptions = { threshold: 20 }
     const typedStats: ModuleRelocateStats = {
       attached: 0, gestures: 0, moves: 0, candidateCalls: 0, resolveCalls: 0,
-      revealWrites: 0, revealed: 0, resets: 0, sinkCalls: 0, written: 0, lastCode: 'ok',
+      revealWrites: 0, revealWritesApplied: 0, resets: 0, sinkCalls: 0, written: 0, lastCode: 'ok',
     }
     const typedSessionUse = (session: ModuleRelocateSession): number => session.stats().moves
     expect(
@@ -2854,8 +2860,8 @@ describe('§3.1 M-1 · M-3..M-17 — the valid states (call counts, call order, 
       'M-5 — `stats().revealWrites` reads 1, and THE TWO READINGS AGREE (§0A note 10: a composition whose readings diverge has a writer this module does not know about)',
     ).toBe(1)
     expect(
-      stats.revealed,
-      'M-5 — `stats().revealed` reads 1 (the reveal write RETURNED without throwing)',
+      stats.revealWritesApplied,
+      'M-5 — `stats().revealWritesApplied` reads 1 (the reveal write RETURNED without throwing; the member is the one RENAMED 2026-09-27 from the name `§3.4 R-1` bans as a census token — `§0A` note 14 item 1)',
     ).toBe(1)
     expect(
       stats.moves,
@@ -3318,8 +3324,8 @@ describe('§3.1 M-1 · M-3..M-17 — the valid states (call counts, call order, 
       'M-15 — `revealWrites` reads 1',
     ).toBe(1)
     expect(
-      stats.revealed,
-      'M-15 — `revealed` reads 1, so `revealWrites - revealed === 0` (no reveal throw occurred)',
+      stats.revealWritesApplied,
+      'M-15 — `revealWritesApplied` reads 1, so `revealWrites - revealWritesApplied === 0` (no reveal throw occurred); the member is the one RENAMED 2026-09-27 (`§0A` note 14 item 1) and this row’s key set is still the ELEVEN declared fields',
     ).toBe(1)
     expect(
       c.revealArgs.length,
@@ -3883,7 +3889,26 @@ describe('§3.2 F-4..F-19 — the documented fail-states', () => {
     }
   })
 
-  it('F-13 §3.2 — a candidate answer that is NOT a usable record: a non-record answer supplies NO candidate and NO distance ⇒ the invalid arm at once, never a throw — and an ARRAY is NOT a record and is therefore the same class', async () => {
+  // ---------------------------------------------------------------------------
+  // F-13 — RE-GRAINED 2026-09-27 (`§0A` note 14 item 2, `§2.4` item 3 as corrected).
+  //
+  // THE AS-FILED CELLS, KEPT VISIBLE (annotate-never-rewrite — they are SUPERSEDED and
+  // are NOT driven anywhere below):
+  //   * the subject read *"a candidate answer that is NOT a usable record … and an ARRAY
+  //     is NOT a record and is therefore the same class"*;
+  //   * the drive list carried *"an ARRAY of candidate records"* ⇒ `[answer(1)]` and
+  //     EXPECTED `resets === 1` for it;
+  //   * the answer shape was declared `{candidates: readonly CandidateFor[]}`, with a bare
+  //     array asserted to be "the same class as a primitive answer".
+  // THE CORRECTED CONTRACT: the canonical answer shape IS `readonly CandidateFor[]` — a
+  // bare array IS the legal answer and is NOT this row's invalid class — and the class
+  // level is an answer that is not a usable RECORD OR ARRAY at all. The record with a
+  // THROWING `distance` accessor that the as-filed list carried in this row's class drive
+  // is REMOVED here as a duplicate subject: `§0A` note 14 item 2(ii) records that
+  // non-usable `distance` FIELD is owned by `F-14` (field level) and `P-RL-IM-5`
+  // (the field's seven shapes), so it is not re-driven as a class-level cell.
+  // ---------------------------------------------------------------------------
+  it('F-13 §3.2 — a candidate answer that is NOT a usable record or array AT ALL (the CLASS level): `undefined` · `null` · `42` · `\'x\'` · `true` · a function · a non-array object that is not an accepted answer ⇒ NO candidate and NO distance ⇒ the invalid arm at once, never a throw — while an ARRAY IS the LEGAL answer shape and is NOT this class', async () => {
     const shapes: ReadonlyArray<{ name: string; value: unknown }> = [
       { name: '`undefined`', value: undefined },
       { name: '`null`', value: null },
@@ -3891,8 +3916,10 @@ describe('§3.2 F-4..F-19 — the documented fail-states', () => {
       { name: '`\'x\'`', value: 'x' },
       { name: '`true`', value: true },
       { name: 'a function', value: (): unknown => [answer(1)] },
-      { name: 'an ARRAY of candidate records', value: [answer(1)] },
-      { name: 'a record with a THROWING distance accessor', value: { candidate: { opaque: true }, get distance(): never { throw new Error('a throwing distance accessor') } } },
+      // A NON-ARRAY OBJECT THAT IS NOT AN ACCEPTED ANSWER — an answer-level shape that
+      // differs in subject from `F-15`'s seam-level `{}` (there the SEAM is not callable;
+      // here the seam IS callable and returns this value).
+      { name: 'a non-array object that is not an accepted answer', value: { not: 'an accepted answer' } },
     ]
     for (const shape of shapes) {
       const c = await compose(`F-13/${shape.name}`, { candidatesFor: (): unknown => shape.value })
@@ -3921,14 +3948,109 @@ describe('§3.2 F-4..F-19 — the documented fail-states', () => {
         `F-13 — no reveal is written for an unusable answer (a durable write needs a target, and the arm carries none)`,
       ).toBe(0)
     }
-    // THE CONTRACT'S ANSWER SHAPE, stated so the ARRAY cell is not merely asserted: the
-    // answer shape is `{candidates: readonly CandidateFor[]}`, and an array in its place
-    // supplies nothing.
-    const typedAnswer: { candidates: readonly ModuleCandidateFor[] } = { candidates: [{ candidate: { opaque: true }, distance: 1 }] }
+    // THE ARRAY IS THE LEGAL ANSWER SHAPE — stated as the CONTRACT'S OWN PIN and driven as
+    // a POSITIVE cell, so the class above is not merely asserted: `§2.4` item 3 as
+    // corrected / `§0A` note 14 item 2(i).
+    const typedAnswer: readonly ModuleCandidateFor[] = [{ candidate: { opaque: true }, distance: 1 }]
     expect(
       Array.isArray(typedAnswer),
-      'F-13 — the declared answer shape is a RECORD with a `candidates` member, NOT an array: an ARRAY in its place is the same class as a primitive answer',
+      'F-13 — the canonical answer shape IS `readonly CandidateFor[]` (the shape `§2.1`’s `RelocateTargetFor` already takes): an ARRAY IS the LEGAL answer, so it is NOT an invalid class and is NOT the subject of the drives above',
+    ).toBe(true)
+    const positive = await compose('F-13/positive-array', { candidatesFor: (): unknown => typedAnswer })
+    positive.mod.attach(positive.el)
+    positive.double.establish()
+    positive.double.move()
+    expect(
+      positive.stats().resets,
+      'F-13 (POSITIVE control) — a BARE ARRAY carrying ONE within-proximity candidate is WITHIN PROXIMITY: the invalid arm is NOT taken (a module that treated the bare array as the invalid class FAILS this cell, and that is the as-filed reading this re-grain supersedes)',
+    ).toBe(0)
+    // (iii) THE EMPTY ARRAY: NO CANDIDATES ⇒ nothing within proximity ⇒ the invalid arm
+    // AT ONCE — `§2.4` item 1's `candidatesFor` row, `§2.3` item 6(c), `P-RL-SM-7`
+    // invalidity class `(1)` (`§0A` note 14 item 2(iii)).
+    const empty = await compose('F-13/empty-array', { candidatesFor: (): unknown => [] })
+    empty.mod.attach(empty.el)
+    empty.double.establish()
+    let emptyThrew = false
+    try {
+      empty.double.move()
+    } catch {
+      emptyThrew = true
+    }
+    expect(
+      emptyThrew,
+      'F-13 — an EMPTY ARRAY never throws out of the observed-move turn (an empty candidate set is a VALUE, not an error — `P-RL-SM-7` class 1)',
     ).toBe(false)
+    expect(
+      empty.stats().resets,
+      'F-13 — an EMPTY ARRAY is NO CANDIDATES ⇒ nothing within proximity ⇒ the INVALID ARM AT ONCE (`§2.4` item 1 · `§2.3` item 6(c) · `P-RL-SM-7` invalidity class `(1)`)',
+    ).toBe(1)
+    expect(
+      empty.stats().candidateCalls,
+      'F-13 — and the seam was still ATTEMPTED once for the empty answer',
+    ).toBe(1)
+  })
+
+  // ---------------------------------------------------------------------------
+  // F-13(b) — THE ELEMENT-LEVEL INVALID CLASS, the row `§0A` note 14 item 2(ii) records as
+  // OWED and that no existing row owned. CHECKED BEFORE AUTHORING, so this row does not
+  // duplicate another row's subject:
+  //   * `F-14` owns a NON-USABLE `distance` FIELD with the `candidate` PRESENT;
+  //   * `P-RL-IM-5` owns the `distance` field's SEVEN shapes (a record per element);
+  //   * `F-15` owns the ABSENT/NON-CALLABLE SEAM (and its seam-level `{}` drive);
+  //   * `P-RL-IM-1`'s shapes (2)/(3) are SEAM-absent / SEAM-non-callable;
+  //   * `F-13` (above) owns the CLASS level, and its `[]` cell owns class (iii).
+  // NONE of them drives `[42]` / `['x']` / `[null]` / `[undefined]` / `[true]` /
+  // `[a function]` — an ARRAY whose ELEMENT is not a usable record, i.e. an element that
+  // supplies no readable `distance`. This row is F-13's NEIGHBOUR, not F-13's content, and
+  // it adds NO register row, NO term and NO total (the register is `15` rows / `16` terms /
+  // `170` attempts before and after).
+  // ---------------------------------------------------------------------------
+  it('F-13(b) §3.2 — the ELEMENT-LEVEL invalid class: an ARRAY whose ELEMENT is not a usable record (`[42]` · `[\'x\']` · `[null]` · `[undefined]` · `[true]` · `[a function]`) supplies no readable `distance` ⇒ the invalid arm, never a throw — and the CONTROL drive (`[answer(1)]`) is WITHIN proximity', async () => {
+    const elements: ReadonlyArray<{ name: string; value: unknown }> = [
+      { name: '`42`', value: 42 },
+      { name: '`\'x\'`', value: 'x' },
+      { name: '`null`', value: null },
+      { name: '`undefined`', value: undefined },
+      { name: '`true`', value: true },
+      { name: 'a function', value: (): unknown => 1 },
+    ]
+    for (const element of elements) {
+      const c = await compose(`F-13(b)/${element.name}`, { candidatesFor: (): unknown => [element.value] })
+      c.mod.attach(c.el)
+      c.double.establish()
+      let threw = false
+      try {
+        c.double.move()
+      } catch {
+        threw = true
+      }
+      expect(
+        threw,
+        `F-13(b) — an array whose element is ${element.name} never throws out of the observed-move turn: the element is read through the module’s own total member-read, and a non-record element supplies NO distance rather than an error`,
+      ).toBe(false)
+      expect(
+        c.stats().candidateCalls,
+        `F-13(b) — the seam was still ATTEMPTED once for the element ${element.name} (the ARRAY is a legal answer; it is the ELEMENT that is unusable)`,
+      ).toBe(1)
+      expect(
+        c.stats().resets,
+        `F-13(b) — an array whose element is ${element.name} supplies no readable distance ⇒ the INVALID ARM AT ONCE (the ELEMENT-level class of \`§2.4\` item 3, owed by \`§0A\` note 14 item 2(ii))`,
+      ).toBe(1)
+      expect(
+        c.stats().revealWrites,
+        `F-13(b) — and no reveal is written for the unusable element ${element.name}: a durable write needs a within-proximity candidate, and this answer carries none`,
+      ).toBe(0)
+    }
+    // THE POSITIVE CONTROL: the SAME array shape, whose element IS a usable record within
+    // proximity — so this row's drives are about the ELEMENT, not about the array.
+    const control = await compose('F-13(b)/CONTROL-usable-element', { candidatesFor: (): unknown => [answer(1)] })
+    control.mod.attach(control.el)
+    control.double.establish()
+    control.double.move()
+    expect(
+      control.stats().resets,
+      'F-13(b) (CONTROL) — a ONE-ELEMENT array whose element IS a usable record within proximity is WITHIN PROXIMITY: the arm is NOT taken, so this row is driving the ELEMENT and not the answer shape',
+    ).toBe(0)
   })
 
   it('F-14 §3.2 — a `distance` field that is absent, non-numeric, `NaN`, non-finite or read through a throwing accessor: all five take the invalid arm and NONE throws — and the CONTROL drive (an absent `candidate` with a within-proximity `distance`) IS within proximity', async () => {
@@ -4047,7 +4169,7 @@ describe('§3.2 F-4..F-19 — the documented fail-states', () => {
     }
   })
 
-  it('F-17 §3.2 — an ABSENT or non-callable `onReveal`: the write attempt is made and there is nothing to invoke (`revealWrites` counts the ATTEMPT only where a callable was present, `revealed` reads `0`) — and a THROWING `onReveal` is ABSORBED at the module’s own commit seam, with the sink’s own write unaffected', async () => {
+  it('F-17 §3.2 — an ABSENT or non-callable `onReveal`: the write attempt is made and there is nothing to invoke (`revealWrites` counts the ATTEMPT only where a callable was present, `revealWritesApplied` reads `0`) — and a THROWING `onReveal` is ABSORBED at the module’s own commit seam, with the sink’s own write unaffected', async () => {
     for (const shape of [
       { name: 'the seam omitted', value: undefined, attempts: 0 },
       { name: '`42` (non-callable)', value: 42, attempts: 0 },
@@ -4062,8 +4184,8 @@ describe('§3.2 F-4..F-19 — the documented fail-states', () => {
         `F-17 — with ${shape.name} the write attempt is made and there is nothing to invoke: \`revealWrites\` reads ${shape.attempts} (the invocation is COUNTED only where a callable was present)`,
       ).toBe(shape.attempts)
       expect(
-        c.stats().revealed,
-        `F-17 — and \`revealed\` reads 0 for ${shape.name}`,
+        c.stats().revealWritesApplied,
+        `F-17 — and \`revealWritesApplied\` reads 0 for ${shape.name} (the member RENAMED 2026-09-27 from the banned census-token spelling — \`§0A\` note 14 item 1)`,
       ).toBe(0)
       expect(
         c.stats().sinkCalls,
@@ -4096,8 +4218,8 @@ describe('§3.2 F-4..F-19 — the documented fail-states', () => {
       'F-17 — `revealWrites === 1`: the attempt was made and COUNTED',
     ).toBe(1)
     expect(
-      c.stats().revealed,
-      'F-17 — `revealed === 0`: the write did not return, and it is NEVER RETRIED',
+      c.stats().revealWritesApplied,
+      'F-17 — `revealWritesApplied === 0`: the write did not return, and it is NEVER RETRIED',
     ).toBe(0)
     expect(
       c.stats().sinkCalls,
@@ -5773,7 +5895,10 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
               if (resetKeys.join(',') !== 'code,committed,ok') return `\`reset\` returned the keys ${JSON.stringify(resetKeys)}; the declared record keys are \`{ok, code, committed}\``
               const statsResult = mod.stats()
               const statsKeys = Object.keys(statsResult).sort()
-              const declaredStatsKeys = ['attached', 'candidateCalls', 'gestures', 'lastCode', 'moves', 'revealed', 'revealWrites', 'resets', 'resolveCalls', 'sinkCalls', 'written'].sort()
+              // THE ELEVEN DECLARED FIELDS, under their CURRENT names (`§2.1` item 5; the
+              // member AS FIRST WRITTEN as `revealed` is `revealWritesApplied` as of the
+              // 2026-09-27 rename — `§0A` note 14 item 1 — and the count is ELEVEN either way).
+              const declaredStatsKeys = ['attached', 'candidateCalls', 'gestures', 'lastCode', 'moves', 'revealWrites', 'revealWritesApplied', 'resets', 'resolveCalls', 'sinkCalls', 'written'].sort()
               if (statsKeys.join(',') !== declaredStatsKeys.join(',')) return `\`stats()\` returned the keys ${JSON.stringify(statsKeys)}; the ELEVEN declared fields are ${JSON.stringify(declaredStatsKeys)}`
               const detachResult = mod.detach()
               const detachKind = declaredShapeOf(detachResult)
@@ -5808,7 +5933,10 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
   it('P-RL-TP-2 [S-RL-SHAPES-1] — EVERY argument shape: EVERY module entry point is TOTAL — the factory returns a module, `attach`/`detach` return a `boolean`, `reset` returns a `{ok, code, committed}` record and `stats()` returns the ELEVEN declared fields (6 declared attempts)', async () => {
     const rec = new RegisterRow('P-RL-TP-2', 'S-RL-SHAPES-1')
     const moduleState = await resolveModule()
-    const declaredStatsKeys = ['attached', 'candidateCalls', 'gestures', 'lastCode', 'moves', 'revealed', 'revealWrites', 'resets', 'resolveCalls', 'sinkCalls', 'written'].sort()
+    // THE ELEVEN DECLARED FIELDS, under their CURRENT names (`§2.1` item 5; the member AS
+    // FIRST WRITTEN as `revealed` is `revealWritesApplied` as of the 2026-09-27 rename —
+    // `§0A` note 14 item 1 — and the count is ELEVEN either way).
+    const declaredStatsKeys = ['attached', 'candidateCalls', 'gestures', 'lastCode', 'moves', 'revealWrites', 'revealWritesApplied', 'resets', 'resolveCalls', 'sinkCalls', 'written'].sort()
     for (const shape of TP2_SHAPES) {
       rec.run(`${shape.id} — all four entry points called in sequence on the argument shape`, () => {
         if (moduleState.mod === null) return moduleState.reason ?? 'the module is absent'
