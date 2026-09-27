@@ -626,3 +626,37 @@ item 6; the RCA lesson *a tracker that records a unit's completion but not its r
 | **K-9** | **`H-8` — A GLOSSARY IN THE FORK-FACING DOC** for every adopted name a fork must implement | `docs/FORKER.md` | the relocate parameter/seam glossary appears beside the seam-contract block `E10`'s ruling already requires there |
 
 **WHAT THE FIX MUST *NOT* DO, recorded so it is not over-applied:** the bans stay (`threshold`'s presence on `P-5`/`R-1`/`S-11` is correct for the layers it guards — the fix is a **reconciliation** step, never a relaxation); the two gate-1 reviewers' split was **healthy** (it is the signal that the records were ambiguous, not a reason to merge the passes); and **`A-d4`'s adoption, the unit set and every landed contract are untouched** — the RCA asks for a **pre-filing** guard only.
+
+---
+
+## §L. THE `E4` GATE-1 PASS — ITS ONE OPEN ARCHITECT QUESTION AND ITS PROCESS FINDINGS (2026-09-27 — **findings and one QUESTION, no landed ruling; nothing here flips a status**)
+
+**THE RECORD IS `docs/specs/relocate-review.md`** (the NEW gate-1 record for `E4` / `U-RELOCATE`, 471 lines: the four step verdicts, the condition tables, the filing checklist, the register assessment and these findings). **GATE 1 is `CLOSED` at `DELEGABLE-WITH-CONDITIONS`** — steps 3 (`role_architecture_review`) and 4 (`role_change_analysis`) both returned it, and it is a verdict about readiness for the **SPEC GATE**, **not** about a red set. **`docs/specs/relocate.md` remains `OWED — not filed` and `E4`'s ledger row is unmoved.**
+
+### L-1. THE ONE OPEN ARCHITECT QUESTION (the blocker; `AGENTS.md` item 10a's return point 2)
+
+**THE QUESTION, ONE SENTENCE: *"Does `onReveal` fire at every committing terminal, or only at `'end'`?"*** — **this is the residue the `threshold` ruling leaves open** (it settles the referent, the three channels and the reset arm's commit, and does **not** name `onReveal`'s committing-terminal set). **Owner: the architect. It must be ruled BEFORE `docs/specs/relocate.md` is filed**, because the spec's `§3` reveal clause and `P-RL-SM-1`'s declared terminal domain — and therefore that row's printed DRIVE term — are unwritable without it, and the two readings produce **different red sets**.
+
+| Reading | What it pins | What it costs |
+| --- | --- | --- |
+| **(α) — RECOMMENDED** | `onReveal` fires **only on the `'end'` terminal**; the invalid arm's `reset` commits **exactly one** caller-supplied pre-drag value and writes **ZERO** reveals, the **visible revert** being carried by the **PREVIEW** channel — the shape the ruling itself cites and the shape `U-GUTTER-UI` landed (`gutter-ui.md` `§R.2` `R7`/`R8`(d), `§3.1` `M-13`) | The row's headline wording *"at gesture end"* stays **literally true**; the spec must additionally pin **which channel carries the invalid arm's revert** (else a `[T]` reader cannot tell) |
+| **(β)** | `onReveal` fires at **every** committing terminal; the invalid arm writes the **pre-drag** reveal state back at `reset` | The module must hold and publish a **SECOND caller-supplied state** across the gesture; *"exactly once … at gesture end"* becomes **false as written** on the invalid arm; `P-RL-SM-4`'s retention domain grows by one value |
+
+**Falsification of the *question's* status (recorded so it is not re-litigated):** the classification was **tested, not accepted** — the two readings are each derived from filed records, neither contradicts the other, and the `§6` DO-NOT list's settled `threshold` semantics are cited, **not questioned**.
+
+### L-2. THE CONDITIONS CARRIED OUT OF STEP 1 (a process defect, stated rather than laundered)
+
+**The step-1/step-2 reviewer reports were NEVER FILED as any artifact**, so the `VALID-WITH-CONDITIONS` verdict is **not dischargeable as written**: **`C-3`** (the `threshold` referent) is **DISCHARGED BY THE RULING**; **`C-5`** (the *"carried opaquely, never evaluated"* reading) is **DISSOLVED BY IT, not satisfied** — its content was the **absence** of an evaluator; and **`C-1`, `C-2`, `C-4`, `C-6`, `C-7` are `UNVERIFIABLE — CARRIED`**, each with the derived filing substitute the record names. **No condition was invented.** Owner: **the supervisor** to keep the substitution visible; **the architect** for the systemic half.
+
+### L-3. THE PROCESS FINDINGS `P-1`…`P-6`, WITH OWNERS
+
+| # | Finding | Severity | Owner |
+| --- | --- | --- | --- |
+| **P-1** | **The step-1/2 artifacts were never filed — this is the THIRD gate-1 pass in this family that owes its own record**, and the raw step-3/step-4 reports live **outside version control** (`archive/` is gitignored, so `docs/specs/relocate-review.md` is their **only filed home**). Gate 4's `§3a`/`§3b` and gate 8's doc review have **no citable section-level provenance** for the reviewer outputs otherwise | **HIGH — process** | the supervisor (this filing) · **the architect** for the systemic half (the RCA's `H-1`/`H-2`/`H-3` requests are **unadopted**) |
+| **P-2** | **Five step-1 conditions are unreconstructable from any filed record** (L-2), and the critique's **item numbering is only partly recoverable** (the RCA names item 2 only), so *"three must-decide items"* is a **reading of the ACTIVE ruling row**, not a filed fact | **HIGH — process** | the supervisor (the record names them) · the architect (a verdict whose conditions are unrecorded is not auditable) |
+| **P-3** | **A step-1 verdict was recorded in a handover section while its content lived only in a session** — `docs/next-steps.md` §3 recorded the label and the count with **no clauses**, while §4 instructed step 3 to be *"informed by both"*; **the pickup's own instruction could not be complied with on its terms** | **MED — tracker** | the supervisor (next staleness pass) with the standing rule: **a step-1 verdict is filed when it returns** |
+| **P-4** | **The `E4` ledger row is under-specified against what the rulings force**: its acceptance cell names a **six-member** factory where the ruling's ghost channel forces a **seventh**, and its `Legs` cell (`node suite`) is the `E3` wording for a family that declares **four legs** | **MED — tracker** | the supervisor — **ANNOTATED IN THIS PASS** at the row itself |
+| **P-5** | **An adopted identifier collided with three landed prohibition tables and no gate step greps for it** (`threshold` is banned as mechanism vocabulary in `gutter.md` `§2.2` P-5 / `§3.4` R-1, `gsession.md` `§2.2` P-1/P-5/P-7 / `§3.4` R-1, and is an `§4.4` `S-11` **STOP**) — **discoverable by one grep** | **HIGH — process (now RECORDED, so no longer latent)** | the architect (the RCA's `§K` requests are the fix and are unadopted); **this unit's reconciliation is the spec's** (the record's `C-C`) |
+| **P-6** | **The RCA's own acceptance test for this class is NOT met at this gate**: `§K` `K-4` reads *"`docs/specs/relocate.md` cannot be filed with `threshold` undefined"* — `threshold` **is** now defined, so that test will pass, **but its sibling for the RESIDUE does not exist**, and this pass had to **invent the equivalent by hand** (L-1) | **MED — process** | the architect (adopt the guard, or not) · the supervisor, to record that **this pass discharged the residue unaided** |
+
+**WHAT THIS SECTION IS NOT:** it is **not** a landed ruling, **not** an admission of a unit, and **not** a re-opening of anything on the pickup's `§6` DO-NOT list. **`E4`'s step-1 verdicts, the `threshold` ruling, the `A-d4` family adoption and every landed contract are cited, never questioned.**
