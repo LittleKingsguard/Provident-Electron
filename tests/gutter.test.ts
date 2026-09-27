@@ -2232,6 +2232,59 @@ const SIBLING_DIVERGENCE_UNIT_ARTIFACTS: ReadonlyArray<{ readonly path: string; 
     // for it (a `src/shared/*` path other than `E3`'s own module), which control `(n-3)` drives; the
     // exclusion is one-directional (REMOVE from `E3`'s subject only).
   },
+  // **⟶ THE RULE THIS ENTRY PAIR IS READ UNDER IS THE SAME SENTENCE EVERY ENTRY ABOVE CARRIES —
+  // `E3`'S DENIED PREDICATE IS KEPT BYTE-IDENTICAL AND UNWEAKENED FOR `E3`'S OWN PATHS, AND THIS
+  // REPAIR MAY ONLY *EXCLUDE A DECLARED SIBLING*, NEVER RELAX WHAT COUNTS AS DENIED:** the two
+  // paths below still read `isDeniedPath === true` (both are `tests/**`/`src/shared/*` paths that
+  // are not `E3`'s own), so the RAW reading this row reports still NAMES them; this registry can
+  // only ever REMOVE a path from `E3`'s subject, never add one; and the row's own control (h-2)
+  // keeps `E3`'s OWN denied paths reading NOT-sibling. Control `(n-5)` below drives all four
+  // directions on these very paths.
+  {
+    path: 'tests/theme.test.ts',
+    unit: 'the THEME unit (`E8` / `U-THEME`) — its own red set (`docs/specs/theme.md`, filed at the approved spec gate and committed at `178f1ab`)',
+    // **⟶ DECLARED 2026-09-27 (THE CROSS-UNIT SIBLING-REGISTRY REPAIR — THE FOURTH REPAIR OF THIS
+    // CLASS, AFTER `E4`/`U-RELOCATE`, `E5`/`U-CONTAINER` AND `E7`/`U-MENULIB`).** `tests/theme.test.ts`
+    // is **`E8`'s** artifact — its own 58-row red set, RUN and reported by that unit's TestWriter pass
+    // (40 failed / 18 passed against the absent module, `178f1ab`) — so it is **neither `E3`'s nor
+    // `E10`'s nor `E4`'s nor `E5`'s nor `E7`'s**. **THE MEASURED CAUSE, VERBATIM FROM THE
+    // IMPLEMENTER PASS'S OWN DIRTY-STATE RUN (taken with these two paths UNCOMMITTED, BEFORE this
+    // declaration):** the row's own live reading named exactly
+    // `["src/shared/theme.ts","tests/theme.test.ts"]` — **`R-12` FAILING on a sibling's legitimate
+    // red set and its in-flight module merely because the registry had no entry for them**, the same
+    // class `§5.1`'s commit-range scope rule forbids (*"must NOT read … a sibling's dirty
+    // working-tree file … as this unit's diff"*).
+    // **THE LIVE STATE AT THE TIME OF THIS DECLARATION IS *CLEAN* RATHER THAN RED, and the reason is
+    // recorded rather than smoothed:** `E8`'s red set and its first module landed in `178f1ab`, so
+    // `git status --porcelain` is EMPTY and the dirty arm sees nothing, so this row reads `93/93`
+    // green on the committed tree (measured by this pass, BEFORE its own edit landed). **The defect
+    // is therefore STRUCTURAL AND LATENT in that state and fires the moment `E8`'s own cycle makes
+    // either path dirty** (its Implementer's next landing, or any later edit to its test file),
+    // because the registry is keyed by PATH: the path is declared NOW so a fifth repair pass is not
+    // owed.
+    // **WHAT IT DOES NOT WEAKEN.** `isDeniedPath` is not referenced by this list and is not edited
+    // by this pass (control `(n-5)` asserts it still reads `true` for this path), so
+    // `tests/theme.test.ts` still reads denied in the RAW reading this row reports; a path can only
+    // ever be REMOVED from `E3`'s subject; and `E3`'s own five artifacts stay NOT-sibling, so **a
+    // denied path among `E3`'s own changes still FAILS.**
+  },
+  {
+    path: 'src/shared/theme.ts',
+    unit: 'the THEME unit (`E8` / `U-THEME`) — its own MODULE (`src/shared/theme.ts`, 73 lines landed at `178f1ab`)',
+    // **⟶ DECLARED 2026-09-27 (THE CROSS-UNIT SIBLING-REGISTRY REPAIR).** `docs/specs/theme.md`
+    // pins `src/shared/theme.ts` as that unit's own artifact: the five-name surface in two halves
+    // (the two value exports `resolveTheme` and `applyThemeDeclaration`, plus the three type
+    // declarations `ThemeResolution`, `ThemeAttributeWrite` and `ThemeEnv`). The registry is keyed by
+    // PATH, so declaring the path is what keeps every later `E8` landing commit from reading as
+    // `E3`'s own — the same declaration shape the `E4`/`E5`/`E7` entries above carry, and the same
+    // shape `SIBLING_UNIT_ARTIFACT_PROBE` carries for a not-yet-landed artifact.
+    // **MEASURED:** this module EXISTS on disk (`73` lines) and is TRACKED (`178f1ab`), and it was in
+    // the live reading this declaration answers, so this entry moves a real reading rather than a
+    // hypothetical one.
+    // **WHAT IT DOES NOT WEAKEN:** `isDeniedPath('src/shared/theme.ts')` still reads `true` for it (a
+    // `src/shared/*` path other than `E3`'s own module), which control `(n-5)` drives; the exclusion
+    // is one-directional (REMOVE from `E3`'s subject only).
+  },
 ]
 /** **THE DECLARING UNITS, BY PATH** — the registry above, read as a map by the row so it can
  *  name the owning unit of every denied path it EXCLUDES. A path repeated in the registry
@@ -2408,6 +2461,56 @@ const NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_BY_PATH: Readonly<Record<string, 
 const MENULIB_DOC_BY_PATH: Readonly<Record<string, string>> = Object.fromEntries(
   MENULIB_DOC_ARTIFACTS.map((entry) => [entry.path, entry.unit]),
 )
+/** **⟶ DECLARED 2026-09-27 (THE CROSS-UNIT SIBLING-REGISTRY REPAIR, THE `E8`/`U-THEME` PASS —
+ *  `R-12`'s ALLOW-LIST HALF) — THE THEME UNIT'S OWN TWO **NON-DENIED** SPEC ARTIFACTS, WITH THEIR
+ *  OWNER NAMED.**
+ *
+ *  **WHY THIS IS A SECOND DECLARATION PAIR AND NOT TWO MORE REGISTRY ENTRIES.** `docs/specs/theme.md`
+ *  and `docs/specs/theme-review.md` are **NOT `isDeniedPath` paths** (`isDeniedPath` denies
+ *  `src/shared/*`, `src/main/**`, `src/renderer/**`, `scripts/**`, `tests/**`-other-than-`E3`'s and a
+ *  named handful of config paths — never `docs/specs/*`). They therefore reach `R-12`'s ALLOW-LIST
+ *  half, not its DENIED half, and declaring them `isSiblingUnitArtifact` paths would claim them
+ *  through a predicate whose job is the DENIED half (and would redden control (n-5) list 5, which
+ *  pins them NOT-sibling on purpose). **This is exactly the split `MENULIB_DOC_ARTIFACTS` above
+ *  carries for the same reason, and the same shape is used here so the two declarations can be read
+ *  side by side.** The two paths are declared TOGETHER WITH the unit's denied pair in the SAME pass
+ *  so a later `E8` doc ride-along (`docs/specs/theme-review.md` being amended at a gate, a
+ *  `docs/specs/theme-greens.md` landing) does not force a FIFTH repair of this class.
+ *
+ *  **THE MEASURED CAUSE.** The Implementer pass's live reading named `["src/shared/theme.ts",
+ *  "tests/theme.test.ts"]` for the DENIED half; these two doc paths are the same class on the
+ *  ALLOW-LIST half — a sibling unit's legitimate spec artifacts riding an `E3`-attributed commit
+ *  range (`docs/specs/theme.md` and `docs/specs/theme-review.md` were both filed in commits that
+ *  also touched shared ledgers) are **not `E3`'s diff** (`docs/specs/gutter.md` `§5.1`'s commit-range
+ *  scope rule: *"must NOT read a later unit's commits, a sibling's dirty working-tree file, or a
+ *  sibling unit's artifact as this unit's diff"*; `§3.4 R-4`).
+ *
+ *  **WHAT IT DOES NOT DO.** (1) It **does not weaken `isDeniedPath`** — that predicate is
+ *  byte-identical and untouched; these paths read `false` there and always did. (2) It **does not
+ *  touch `isSiblingUnitArtifact`** — control (n-5) asserts both read NOT-sibling, so this pair can
+ *  never be mistaken for the sibling registry, and it cannot excuse anything in the DENIED arm.
+ *  (3) It **cannot excuse an `E3`-OWN path**: `E3`'s own spec `docs/specs/gutter.md` is NOT on this
+ *  list, and an UNDECLARED path outside the allow-list still FAILS the core claim (control (n-5)
+ *  list (b) drives a synthetic unclaimed path). (4) It **changes no row id, term, seed, strategy id,
+ *  cap or threshold.** */
+const THEME_DOC_ARTIFACTS: ReadonlyArray<{ readonly path: string; readonly unit: string }> = [
+  {
+    path: 'docs/specs/theme.md',
+    unit: 'the THEME unit (`E8` / `U-THEME`) — its own CONTRACT SPEC (`docs/specs/theme.md`, FILED at gate 1 and committed at `0cf90f7`, amended at the approved spec gate `dcf66c0`) — NOT this unit',
+  },
+  {
+    path: 'docs/specs/theme-review.md',
+    unit: 'the THEME unit (`E8` / `U-THEME`) — its own proposal-review / spec-gate record (`docs/specs/<proposal>-review.md`, `AGENTS.md` item 8; `0cf90f7`, gate-ruling annotation at `dcf66c0`) — NOT this unit',
+  },
+]
+/** **THE `E8`/`U-THEME` DOC-ARTIFACT DECLARATION, READ AS A MAP** — its own registry, consulted by
+ *  `declaredOtherUnitNameOf` in the same `typeof … === 'string'` form as the three registries above,
+ *  and driven in all four directions by `R-12` control (n-5). Kept as its OWN declaration rather
+ *  than folded into `MENULIB_DOC_BY_PATH` because its owning unit differs (a different sibling's
+ *  contract/review artifacts, declared for a different measured cause). */
+const THEME_DOC_BY_PATH: Readonly<Record<string, string>> = Object.fromEntries(
+  THEME_DOC_ARTIFACTS.map((entry) => [entry.path, entry.unit]),
+)
 /** **⟶ SCOPED 2026-09-27 (THE TEST-LAYER PASS) — THE DECLARATION FILTER, NAMED ONCE AND SHARED BY
  *  BOTH OF `R-12`'s ALLOW-LIST HALVES.**
  *
@@ -2455,6 +2558,12 @@ function declaredOtherUnitNameOf(path: string): string | null {
   // a DENIED path (`isDeniedPath` answers `false` for all three entries, control (n-4) asserts).
   const menulibDoc = MENULIB_DOC_BY_PATH[path]
   if (typeof menulibDoc === 'string' && menulibDoc.length > 0) return menulibDoc
+  // **⟶ ADDED 2026-09-27 (THE CROSS-UNIT SIBLING-REGISTRY REPAIR, THE `E8`/`U-THEME` PASS).** The
+  // FOURTH non-denied registry, read in the SAME form as the three above: a path another unit is
+  // DECLARED to own is out of `E3`'s allow-list subject. It is consulted by NO other predicate
+  // (`isDeniedPath` answers `false` for both entries and is untouched; control (n-5) drives them).
+  const themeDoc = THEME_DOC_BY_PATH[path]
+  if (typeof themeDoc === 'string' && themeDoc.length > 0) return themeDoc
   return null
 }
 function isDeclaredOtherUnitPath(path: string): boolean {
@@ -5310,6 +5419,175 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       [],
       [true, false],
       [false, false],
+    ])
+    // (n-5) **⟶ ADDED 2026-09-27 (THE CROSS-UNIT SIBLING-REGISTRY REPAIR — THE FOURTH REPAIR OF THIS
+    //     CLASS, AFTER `E4`/`U-RELOCATE`, `E5`/`U-CONTAINER` AND `E7`/`U-MENULIB`) — THE `E8`/`U-THEME`
+    //     DECLARATION, DRIVEN ON ITS OWN FOUR DECLARED PATHS (two DENIED-half, two ALLOW-LIST-half)
+    //     AND IN ALL FOUR REQUIRED DIRECTIONS.** A SEPARATE control rather than an extension of
+    //     `(n)`/`(n-2)`/`(n-3)`/`(n-4)`, for the same reason those gave: each of them pins its
+    //     expectations to LITERAL paths of ITS OWN unit and (for the first three) to the SIBLING
+    //     predicate, so folding `E8`'s paths in would silently widen an expectation that pins another
+    //     declaration.
+    //
+    //     **THE MEASURED CAUSE THIS CONTROL ANSWERS, VERBATIM:** the Implementer pass's live reading
+    //     named `["src/shared/theme.ts","tests/theme.test.ts"]` — this unit's two paths, read as
+    //     `E3`'s own because the registry carried no entry for them.
+    //
+    //       (a) the two DECLARED `E8` denied-half paths (`tests/theme.test.ts`,
+    //           `src/shared/theme.ts`) read **`isSiblingUnitArtifact === true`** AND carry a **NAMED
+    //           owner** (`E8` / `U-THEME`) AND are **REGISTRY KEYS** (`SIBLING_DIVERGENCE_UNIT_BY_PATH`)
+    //           AND are **EXCLUDED from `E3`'s subject** by the row's own splitter; and the two
+    //           DECLARED `E8` DOC paths (`docs/specs/theme.md`, `docs/specs/theme-review.md`) read
+    //           **`isDeclaredOtherUnitPath === true`** AND carry a **NAMED owner** AND are **REGISTRY
+    //           KEYS** (`THEME_DOC_BY_PATH`) AND are **EXCLUDED from the allow-list subject** by the
+    //           row's own declaration filter — **this is the exclusion the arm relies on for both
+    //           halves, and the exact reading that FAILED before the declaration**;
+    //       (b) a synthetic **UNCLAIMED** path still reads **`isSiblingUnitArtifact === false`** AND
+    //           **`isDeclaredOtherUnitPath === false`** with NO owner — so it stays in `E3`'s subject
+    //           and remains the row's FINDING path (`§5.1`: *"a non-denied path outside the allow-list
+    //           is a FINDING for the adversarial pass, not an automatic FAIL"*). This is the direction
+    //           that FAILS a predicate claiming everything;
+    //       (c) an **`E3`-OWN denied path still reads denied/`true` and NOT-sibling** — the synthetic
+    //           `src/shared/gutter-hack.ts` — so **the DENIED half is UNTOUCHED by this declaration**;
+    //           and **the RAW reading still NAMES both declared `E8` paths as DENIED** (the
+    //           `deniedRaw !== true` list is EMPTY because both ARE denied — a list that emptied the
+    //           OTHER way would mean the predicate had been weakened);
+    //       (d) the **MUTATION-SHAPED PROBE fires when the entries are removed**, and it is DRIVEN
+    //           rather than described: the registries are module-level declarations that no in-run
+    //           probe may edit (`R-12`'s own rule: the synthetic controls never touch `src/**`, and an
+    //           edit here would make the tree dirty *while the probe reads it*), so the mutation is
+    //           driven at the PREDICATE level as **exactly the four declarations removed**
+    //           (`isSiblingUnitArtifact(path) && !THEME_SIBLING_DECLARED_PATHS.includes(path)` /
+    //           `isDeclaredOtherUnitPath(path) && !THEME_DOC_DECLARED_PATHS.has(path)`), and the probe
+    //           asserts that ALL FOUR paths then LEAVE their declared class (both mutation lists EMPTY)
+    //           — which is precisely what makes the control's lists FAIL. **The probe is FALSIFIABLE
+    //           IN BOTH DIRECTIONS:** if a path were claimed by some OTHER clause too (a pattern, a
+    //           second list, another registry), it would keep reading declared under the mutation and
+    //           the corresponding mutation list would be NON-empty.
+    //
+    //     **WHAT THIS CONTROL KEEPS OUT OF THE BINDING POSITION.** Every comparison is SET-based
+    //     (sorted), never order-based (`§3.4 R-12` binds WHICH paths are declared and never the
+    //     incidental order in which a registry happens to be listed — the `E4` lesson, where an
+    //     order-bound expectation FAILED on a committed clean tree because the live branch, not the
+    //     synthetic one, was the one running). **The ordered reading is REPORTED inside the message's
+    //     `READS` block and is BOUND NOWHERE.** The `E4`/`E5`/`E7` branch readings are printed BESIDE
+    //     this control's own so the four registrations are visible together without being compared.
+    const THEME_SIBLING_DECLARED_PATHS: readonly string[] = ['tests/theme.test.ts', 'src/shared/theme.ts']
+    const THEME_DOC_DECLARED_PATHS: readonly string[] = THEME_DOC_ARTIFACTS.map((entry) => entry.path)
+    const CONTROL_UNCLAIMED_E8_PATH = 'tests/theme-CONTROL-unclaimed.test.ts'
+    const e8SiblingBranch = THEME_SIBLING_DECLARED_PATHS.map((path) => ({
+      path,
+      sibling: isSiblingUnitArtifact(path),
+      owner: declaredOtherUnitNameOf(path),
+      declared: Object.prototype.hasOwnProperty.call(SIBLING_DIVERGENCE_UNIT_BY_PATH, path),
+      deniedRaw: isDeniedPath(path),
+      e3Own: isE3OwnArtifact(path),
+      outsideAllowSubject: !isDeclaredOtherUnitPath(path),
+    }))
+    const e8DocBranch = THEME_DOC_DECLARED_PATHS.map((path) => ({
+      path,
+      declared: isDeclaredOtherUnitPath(path),
+      owner: declaredOtherUnitNameOf(path),
+      registryKey: Object.prototype.hasOwnProperty.call(THEME_DOC_BY_PATH, path),
+      sibling: isSiblingUnitArtifact(path),
+      deniedRaw: isDeniedPath(path),
+      e3Own: isE3OwnArtifact(path),
+    }))
+    const controlUnclaimedE8Branch = {
+      path: CONTROL_UNCLAIMED_E8_PATH,
+      sibling: isSiblingUnitArtifact(CONTROL_UNCLAIMED_E8_PATH),
+      declared: isDeclaredOtherUnitPath(CONTROL_UNCLAIMED_E8_PATH),
+      owner: declaredOtherUnitNameOf(CONTROL_UNCLAIMED_E8_PATH),
+      deniedRaw: isDeniedPath(CONTROL_UNCLAIMED_E8_PATH),
+    }
+    // (d) THE MUTATION, in TWO halves: the sibling registry read as if BOTH `E8` entries had been
+    // deleted, and the doc registry read as if BOTH `THEME_DOC_BY_PATH` keys were absent — each
+    // keeping every other clause and every other registry intact.
+    const mutationWithoutThemeSiblingEntries = THEME_SIBLING_DECLARED_PATHS.map((path) => ({
+      path,
+      mutatedSibling: isSiblingUnitArtifact(path) && !THEME_SIBLING_DECLARED_PATHS.includes(path),
+    }))
+    const THEME_DOC_DECLARED_KEYS: ReadonlySet<string> = new Set(Object.keys(THEME_DOC_BY_PATH))
+    const mutationWithoutThemeDocEntries = THEME_DOC_DECLARED_PATHS.map((path) => ({
+      path,
+      mutatedStillDeclared: isDeclaredOtherUnitPath(path) && !THEME_DOC_DECLARED_KEYS.has(path),
+    }))
+    // Driven through the row's OWN splitter, so the mutation's consequence is measured on the
+    // mechanism the arm actually reads rather than argued.
+    const e8SubjectSplit = splitBySiblingAttribution([...THEME_SIBLING_DECLARED_PATHS, CONTROL_UNCLAIMED_E8_PATH])
+    expect(
+      [
+        [...e8SiblingBranch.map((r) => r.path)].sort(),
+        e8SiblingBranch.filter((r) => r.sibling !== true).map((r) => r.path),
+        e8SiblingBranch.filter((r) => r.owner === null || r.owner.length === 0).map((r) => r.path),
+        e8SiblingBranch.filter((r) => !r.declared).map((r) => r.path),
+        e8SiblingBranch.filter((r) => r.outsideAllowSubject).map((r) => r.path),
+        e8SiblingBranch.filter((r) => r.deniedRaw !== true).map((r) => r.path),
+        e8SiblingBranch.filter((r) => r.e3Own).map((r) => r.path),
+        [...e8DocBranch.map((r) => r.path)].sort(),
+        e8DocBranch.filter((r) => r.declared !== true).map((r) => r.path),
+        e8DocBranch.filter((r) => r.owner === null || r.owner.length === 0).map((r) => r.path),
+        e8DocBranch.filter((r) => !r.registryKey).map((r) => r.path),
+        e8DocBranch.filter((r) => r.sibling).map((r) => r.path),
+        e8DocBranch.filter((r) => r.e3Own).map((r) => r.path),
+        controlUnclaimedE8Branch.sibling,
+        controlUnclaimedE8Branch.declared,
+        controlUnclaimedE8Branch.owner,
+        [isDeniedPath(CONTROL_CORE_HACK_PATH), isSiblingUnitArtifact(CONTROL_CORE_HACK_PATH), isDeclaredOtherUnitPath(CONTROL_CORE_HACK_PATH)],
+        [isSiblingUnitArtifact(TEST_RELPATH), isE3OwnArtifact(TEST_RELPATH), isDeclaredOtherUnitPath(TEST_RELPATH)],
+        mutationWithoutThemeSiblingEntries.filter((r) => r.mutatedSibling).map((r) => r.path),
+        mutationWithoutThemeDocEntries.filter((r) => r.mutatedStillDeclared).map((r) => r.path),
+        [...e8SubjectSplit.sibling].sort(),
+        e8SubjectSplit.own.filter((path) => path === CONTROL_UNCLAIMED_E8_PATH),
+      ],
+      `R-12 §3.4 — CONTROL (n-5, THE \`E8\`/\`U-THEME\` DECLARATION DRIVEN IN ALL FOUR DIRECTIONS): (a) the DECLARED \`E8\` DENIED-HALF paths \`${JSON.stringify(
+        THEME_SIBLING_DECLARED_PATHS,
+      )}\` read \`isSiblingUnitArtifact === true\` (list 2 EMPTY) AND carry a NAMED declaring unit (list 3 EMPTY) AND are REGISTRY KEYS in \`SIBLING_DIVERGENCE_UNIT_BY_PATH\` (list 4 EMPTY) AND are EXCLUDED from \`E3\`'s subject (list 5 EMPTY) — **the exact exclusion that FAILED with the live reading \`["src/shared/theme.ts","tests/theme.test.ts"]\` before this declaration** — AND the two DECLARED \`E8\` DOC paths \`${JSON.stringify(
+        THEME_DOC_DECLARED_PATHS,
+      )}\` read \`isDeclaredOtherUnitPath === true\` (list 9 EMPTY) AND carry a NAMED declaring unit (list 10 EMPTY) AND are REGISTRY KEYS in \`THEME_DOC_BY_PATH\` (list 11 EMPTY) — while reading \`isSiblingUnitArtifact === false\` (list 12 EMPTY: this pair is the ALLOW-LIST-half declaration only, deliberately NOT the sibling registry) and NOT an \`E3\` artifact (list 13 EMPTY); (b) the synthetic UNCLAIMED path \`${CONTROL_UNCLAIMED_E8_PATH}\` still reads \`isSiblingUnitArtifact === false\` (list 14) AND \`isDeclaredOtherUnitPath === false\` (list 15) with NO owner (list 16), so it stays in the subject and remains the row's FINDING path — a declaration that claimed everything FAILS here; (c) the \`E3\`-OWN denied path \`${CONTROL_CORE_HACK_PATH}\` STILL reads denied/true and NOT-sibling and NOT-declared (list 17), \`E3\`'s OWN file \`${TEST_RELPATH}\` reads not-sibling with \`isE3OwnArtifact === true\` and is declared by NOBODY (list 18), and the \`deniedRaw !== true\` list (list 6) is EMPTY **because both \`E8\` denied-half paths ARE still denied by the byte-identical predicate, so the RAW reading still NAMES them**; and (d) **the probe is not a tautology: with the two \`E8\` REGISTRY ENTRIES REMOVED both paths leave the sibling class (list 19 EMPTY), and with the two \`THEME_DOC_BY_PATH\` ENTRIES REMOVED both doc paths leave the declared class (list 20 EMPTY)** — each mutated reading is the proof that no OTHER clause or registry would keep those paths declared, so the control's lists FAIL under the mutation. **ALL COMPARISONS ARE SET-BASED (SORTED), NEVER ORDER-BASED** (the \`E4\` lesson: an order-bound expectation FAILED on a committed clean tree when the live branch, not the synthetic one, ran); the ordered reading is REPORTED below and BOUND NOWHERE. READS: ${JSON.stringify(
+        {
+          e8SiblingBranch: e8SiblingBranch.map((r) => [r.path, r.sibling, r.owner]),
+          e8SiblingBranchSortedPaths: [...e8SiblingBranch.map((r) => r.path)].sort(),
+          e8SiblingBranchDeclaredOrder: e8SiblingBranch.map((r) => r.path),
+          e8DocBranch: e8DocBranch.map((r) => [r.path, r.declared, r.owner]),
+          e8DocBranchSortedPaths: [...e8DocBranch.map((r) => r.path)].sort(),
+          controlUnclaimedE8Branch,
+          mutationWithoutThemeSiblingEntries,
+          mutationWithoutThemeDocEntries,
+          e8SubjectSplit,
+          e3OwnDeniedControl: [CONTROL_CORE_HACK_PATH, isDeniedPath(CONTROL_CORE_HACK_PATH), isSiblingUnitArtifact(CONTROL_CORE_HACK_PATH)],
+          e3OwnFileNotClaimed: [TEST_RELPATH, isSiblingUnitArtifact(TEST_RELPATH), isE3OwnArtifact(TEST_RELPATH)],
+          e4BranchBesideThis: RELOCATE_SIBLING_DECLARED_PATHS,
+          e5BranchBesideThis: E5_SIBLING_DECLARED_PATHS,
+          e7SiblingBranchBesideThis: MENULIB_SIBLING_DECLARED_PATHS,
+          e7DocBranchBesideThis: menulibDocPaths,
+          declaredRegistryEntries: SIBLING_DIVERGENCE_UNIT_ARTIFACTS.length,
+          themeDocRegistryEntries: Object.keys(THEME_DOC_BY_PATH).length,
+        },
+      )}`,
+    ).toEqual([
+      ['src/shared/theme.ts', 'tests/theme.test.ts'],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      ['docs/specs/theme-review.md', 'docs/specs/theme.md'],
+      [],
+      [],
+      [],
+      [],
+      [],
+      false,
+      false,
+      null,
+      [true, false, false],
+      [false, true, false],
+      [],
+      [],
+      ['src/shared/theme.ts', 'tests/theme.test.ts'],
+      [CONTROL_UNCLAIMED_E8_PATH],
     ])
     // (b) **THE DENIED SET OVER `E3`'S OWN CHANGES — this is the narrowed half.** A denied path
     //     AMONG `E3`'s own committed paths FAILS the row; a SIBLING's legitimate denied path is
