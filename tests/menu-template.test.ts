@@ -57,8 +57,10 @@
 // suppressing it would make the type claim unfalsifiable.
 //
 // THE PROPERTY LAYER IS `§5.5.1`'s REGISTER: **13 typed rows carrying 13 TERMS**
-// whose DECLARED TOTAL is `123` = `12 + 12 + 12 + 12 + 12 + 12 + 12 + 3 + 3 + 3 +
-// 12 + 9 + 12` (`§5.5.3`), caps `≤100`/row · `≤400` total · **stop after 5
+// whose DECLARED TOTAL is `126` = `12 + 12 + 12 + 12 + 12 + 12 + 12 + 3 + 3 + 3 +
+// 12 + 9 + 12` (`§5.5.3`, corrected `123 → 126` by the dated amendment; the
+// as-filed `123` is kept visible BESIDE it as SUPERSEDED and is never substituted),
+// caps `≤100`/row · `≤400` total · **stop after 5
 // CONSECUTIVE failures**, seed **`20260927`** with ONE LCG step per draw over a
 // `pool.length = 12` pool for the ONE generator row (`P-ML-TP-1`). **Every
 // declared term is a DRIVE count; assertions are printed BESIDE the term and are
@@ -1828,18 +1830,37 @@ const TP_DRAW_INDICES: readonly number[] = (() => {
 })()
 
 /** `§5.5.3`'s DECLARED total — the figure the spec PRINTS and the figure every cap
- *  comparison uses. */
-const DECLARED_TOTAL = 123
-/** **THE SPEC FINDING (`§5.5.3`'s arithmetic):** the thirteen declared terms'
- *  ACTUAL sum. `12·7 (the seven `IM` rows) = 84` `+ 3·3 (the `SM` rows) = 9`
- *  `+ 12 + 9 + 12 (the `TP` rows) = 33` ⇒ `84 + 9 + 33 = 126`, while `§5.5.3`
- *  prints `123` and a chain whose `IM` subtotal is `87`. Pinned here as a
- *  LITERAL so the mismatch is REPORTED rather than silently reconciled
- *  (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`; annotate-never-rewrite). */
-const AS_FILED_TERM_SUM = 126
-/** The `IM` subtotal the seven `IM` TERMS actually produce (against `§5.5.3`'s
- *  printed `IM 87`). */
+ *  comparison uses. **RE-GRAINED to the CORRECTED figure `126`** by the dated
+ *  amendment of `CURRENT STATE` item 3 / `§5.5.3`: the thirteen terms
+ *  `12·7 + 3·3 + 12 + 9 + 12` sum to `126` (`84 + 9 + 33`), and the as-filed `123`
+ *  was a mis-sum whose `IM` subtotal read `87` against the terms' own `84`. */
+const DECLARED_TOTAL = 126
+/** **THE SUPERSEDED FILING FIGURE — kept VISIBLE BESIDE the corrected total and
+ *  NEVER substituted for it** (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`;
+ *  annotate-never-rewrite). As filed, `§5.5.3` printed `123` with a chain whose
+ *  `IM` subtotal was `87`; that chain's last step (`114 → 123`) was UNREACHABLE
+ *  from the same thirteen terms. The corrected declared figure above is the sum
+ *  of its own terms; this literal is the as-filed form under its dated
+ *  annotation, and `P-ML-SM-2`-class polarity is pinned by asserting BOTH. */
+const AS_FILED_DECLARED_TOTAL = 123
+/** The `IM` subtotal the seven `IM` TERMS produce — **`84`, the CORRECTED figure**
+ *  (as filed `§5.5.3` printed `IM 87`; the printed figure carried the same mis-sum
+ *  and is SUPERSEDED, kept visible as {@link AS_FILED_IM_SUBTOTAL_PRINTED}). */
 const AS_FILED_IM_SUBTOTAL = 84
+/** The as-filed `§5.5.3` `IM` SUBTOTAL — `87`, the mis-sum's own signature (the
+ *  seven `IM` terms sum to `84`). Visible BESIDE the corrected `84`, never
+ *  substituted for it. */
+const AS_FILED_IM_SUBTOTAL_PRINTED = 87
+/** `§5.5.3`'s DECLARED CHAIN, CORRECTED: the same thirteen terms summed as a chain
+ *  of twelve steps (`12·7 + 3·3 + 12 + 9 + 12`), the first term being the chain's
+ *  own first figure — `12 → 24 → 36 → 48 → 60 → 72 → 84 → 96 → 99 → 102 → 105 →
+ *  117 → 126`, i.e. TWELVE additions between the THIRTEEN terms. */
+const DECLARED_CHAIN: readonly number[] = [12, 24, 36, 48, 60, 72, 84, 96, 99, 102, 105, 117, 126]
+/** THE AS-FILED CHAIN, kept VISIBLE under its repair and SUPERSEDED: its SEVENTH
+ *  step advances by `3` (`84 → 87`) instead of adding the next `3`-term after the
+ *  seven `IM` terms, and every later figure inherits the `-3` offset. It is
+ *  UNREACHABLE from the same thirteen terms. */
+const AS_FILED_CHAIN: readonly number[] = [12, 24, 36, 48, 60, 72, 84, 87, 90, 93, 105, 114, 123]
 /** `§5.5.2` item 3's thirteen HONEST DISTINCT figures, summed: `7 + 4 + 12 + 6 +
  *  9 + 6 + 12 + 3 + 3 + 3 + 12 + 8 + 4 = 89`. Printed BESIDE the declared total
  *  and never substituted for it. */
@@ -1868,7 +1889,7 @@ const REGISTER_TERMS: ReadonlyArray<{ readonly row: string; readonly declared: n
 // §5.5.1 — THE REGISTER, IN REGISTER ORDER, WITH THE CAPS, THE STOP RULE AND
 // THE PINNED SEED (`§4.2` item 5).
 // ===========================================================================
-describe('§5.5.1 — the typed property register (13 rows / 13 terms / 123 declared attempts)', () => {
+describe('§5.5.1 — the typed property register (13 rows / 13 terms / 126 declared attempts; the as-filed 123 is SUPERSEDED and kept visible)', () => {
   it('PRE-1 the dynamic-import boundary itself resolves and casts (proved against an EXISTING module)', async () => {
     const existing = ['..', 'src', 'shared', 'dom-shim.js'].join('/')
     const mod = (await import(/* @vite-ignore */ existing)) as Record<string, unknown>
@@ -1884,34 +1905,61 @@ describe('§5.5.1 — the typed property register (13 rows / 13 terms / 123 decl
     expect(new Set(REGISTER_TERMS.map((r) => r.strategy)).size, '§5.5.1 — the strategy ids are DISTINCT: THIRTEEN ids, one per row, and no row is left without one').toBe(13)
     const sum = REGISTER_TERMS.reduce((a, b) => a + b.declared, 0)
     // =====================================================================
-    // ⟶ SPEC FINDING, CARRIED AS AN ASSERTION AND NOT PATCHED (`§4.2` item 7 /
-    // `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`): `§5.5.1`/`§5.5.3` declare the
-    // thirteen terms `12·7 + 3·3 + 12 + 9 + 12` and print the total `123` — **but
-    // the terms' own sum is `126` (`12·7 = 84`, `+ 9`, `+ 33` = `126`), and `§5.5.3`'s
-    // own chain reaches `123` from `12 → 24 → 36 → 48 → 60 → 72 → 84 → 87 → 90 → 93
-    // → 105 → 114 → 123`, i.e. from an `IM` subtotal of `87` where the seven `IM`
-    // terms' sum is `84`.** THE SPEC'S OWN RULE — *"a total that is not the sum of
-    // its own terms is a review finding"* — is therefore VIOLATED BY THE SPEC, and
-    // a TestWriter may neither rewrite a declared figure (`annotate-never-rewrite`)
-    // nor invent a corrected one.
-    // THIS ROW THEREFORE ASSERTS THE AS-FILED FIGURES **AND THE MISMATCH**, so the
-    // red run REPORTS the arithmetic defect as a SPEC FINDING instead of silently
-    // reconciling it, and the row stays RED at green time until the spec's figure
-    // is reconciled by the pass that owns `docs/specs/menulib.md`.
+    // ⟶ THE RE-GRAIN, AND IT IS A REAL POLARITY FLIP (`§4.2` item 7 /
+    // `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`). As filed, `§5.5.1`/`§5.5.3`
+    // declared the thirteen terms `12·7 + 3·3 + 12 + 9 + 12` and printed the
+    // total `123` with a chain `… 84 → 87 → 90 → 93 → 105 → 114 → 123` — a
+    // figure that is NOT the sum of its own terms (the terms sum to `126`,
+    // `12·7 = 84`, `+ 3·3 = 9`, `+ 12 + 9 + 12 = 33`), so the spec's own rule
+    // (*"a total that is not the sum of its own terms is a review finding"*)
+    // was violated BY THE SPEC and this row was RED as a SPEC FINDING.
+    // THE DATED AMENDMENT RECONCILED IT: the declared total is `126`, its chain
+    // is `12 → 24 → 36 → 48 → 60 → 72 → 84 → 96 → 99 → 102 → 105 → 117 → 126`
+    // and its subtotals are `IM 84 · SM 9 · TP 33`, while the as-filed `123`,
+    // its chain and its printed `IM 87` stay VISIBLE beside the corrected
+    // figures (annotate-never-rewrite). **THIS ROW NOW RECONCILES** — and the
+    // CONTROL below keeps the reconciliation falsifiable, because a harness
+    // that passes for EITHER figure would be the finding, not the fix.
     // =====================================================================
-    expect(DECLARED_TOTAL, "§5.5.3 — the DECLARED total AS FILED, printed WITH its terms ('123 = 12+12+12+12+12+12+12+3+3+3+12+9+12')").toBe(123)
+    expect(DECLARED_TOTAL, "§5.5.3 — the DECLARED total, CORRECTED (`123 → 126` by the dated amendment), printed WITH its terms ('126 = 12+12+12+12+12+12+12+3+3+3+12+9+12')").toBe(126)
     expect(
       sum,
-      "SPEC FINDING (§5.5.3 / REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS) — the thirteen terms' ACTUAL sum, which the as-filed total does NOT reconcile with",
-    ).toBe(AS_FILED_TERM_SUM)
+      "§5.5.3 / REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS — the thirteen terms' ACTUAL sum, which the corrected declared total RECONCILES with",
+    ).toBe(126)
     expect(
       sum,
-      `SPEC FINDING — the as-filed total (123) is NOT the sum of its own terms (${sum}); the seven IM terms sum to 84 and §5.5.3's chain adds 3 before 87, so the chain's last step is unreachable from the terms. This row fails until the spec's figure is reconciled — it is NOT a module defect`,
+      `§5.5.3 / REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS — the DECLARED-VS-TERMS reconciliation, now REAL rather than reported: the thirteen terms' sum (${sum}) IS the declared total. The as-filed filing figure (${AS_FILED_DECLARED_TOTAL}) does NOT reconcile with the same terms and is SUPERSEDED — asserted BESIDE the corrected figure, never substituted`,
     ).toBe(DECLARED_TOTAL)
     expect(
+      AS_FILED_DECLARED_TOTAL,
+      "§5.5.3 — THE AS-FILED (SUPERSEDED) declared total, kept VISIBLE under its dated annotation: `123` = 12+12+12+12+12+12+12+3+3+3+12+9+12 — the mis-sum this re-grain corrects to 126 (`annotate-never-rewrite`)",
+    ).toBe(123)
+    expect(
+      sum === AS_FILED_DECLARED_TOTAL,
+      `THE POLARITY IS REAL (CONTROL, declared to FAIL) — the corrected total ${DECLARED_TOTAL} does NOT equal the as-filed ${AS_FILED_DECLARED_TOTAL}: a harness that passed for either figure would be the finding, so the two are asserted as DIFFERENT figures and the reconciliation below is pinned to ${DECLARED_TOTAL} only`,
+    ).toBe(false)
+    // THE CHAIN (`§5.5.3`): the corrected thirteen-term chain, its own twelve
+    // additions, and its as-filed counterpart kept visible BESIDE it.
+    expect([...DECLARED_CHAIN], '§5.5.3 — the CORRECTED declared chain: 12 → 24 → 36 → 48 → 60 → 72 → 84 → 96 → 99 → 102 → 105 → 117 → 126 (TWELVE steps between the THIRTEEN terms, whose own sum is 126)').toEqual([12, 24, 36, 48, 60, 72, 84, 96, 99, 102, 105, 117, 126])
+    expect(DECLARED_CHAIN[DECLARED_CHAIN.length - 1], '§5.5.3 — the chain\'s LAST figure IS the declared total (126): the chain is the terms summed, not a second figure printed beside them').toBe(DECLARED_TOTAL)
+    const chainSum = DECLARED_CHAIN.reduce((a, term, i) => (i === 0 ? term : a + REGISTER_TERMS[i - 1]!.declared), 0)
+    expect(
+      chainSum,
+      '§5.5.3 — the chain is DERIVABLE FROM ITS OWN TERMS: each step adds the next declared term in register order, so a chain that is not the terms\' cumulative sum FAILS here',
+    ).toBe(DECLARED_TOTAL)
+    expect([...AS_FILED_CHAIN], '§5.5.3 — the AS-FILED chain, kept VISIBLE and SUPERSEDED: its SEVENTH step advances by `3` (84 → 87) and every later figure inherits the -3 offset, so its last step (114 → 123) is UNREACHABLE from the same terms').toEqual([12, 24, 36, 48, 60, 72, 84, 87, 90, 93, 105, 114, 123])
+    expect(
+      AS_FILED_CHAIN[AS_FILED_CHAIN.length - 1] === DECLARED_CHAIN[DECLARED_CHAIN.length - 1],
+      `THE POLARITY IS REAL (CONTROL, declared to FAIL) — the as-filed chain ends at ${AS_FILED_CHAIN[AS_FILED_CHAIN.length - 1]} and the corrected chain at ${DECLARED_CHAIN[DECLARED_CHAIN.length - 1]}: the two figures are DISTINCT, which is what makes the re-grain a flip and not an accommodation`,
+    ).toBe(false)
+    expect(
       REGISTER_TERMS.filter((r) => r.row.startsWith('P-ML-IM')).reduce((a, b) => a + b.declared, 0),
-      'SPEC FINDING — the IM subtotal the SEVEN IM TERMS actually produce (84), against §5.5.3\'s printed `IM 87`',
+      '§5.5.3 — the CORRECTED IM subtotal the SEVEN IM TERMS produce: 84 (as filed §5.5.3 printed `IM 87`, which is kept visible as SUPERSEDED beside this figure)',
     ).toBe(AS_FILED_IM_SUBTOTAL)
+    expect(
+      AS_FILED_IM_SUBTOTAL_PRINTED,
+      '§5.5.3 — the AS-FILED (SUPERSEDED) `IM` subtotal, kept VISIBLE: 87, the mis-sum\'s signature (the seven IM terms sum to 84)',
+    ).toBe(87)
     expect(
       REGISTER_TERMS.filter((r) => r.declared === 12).length,
       '§5.5.3 — the 12-TERM TIE, named so the "largest row" claim is checkable: NINE rows carry the maximum term 12 and the other four carry 3, 3, 3 and 9',
@@ -1920,12 +1968,17 @@ describe('§5.5.1 — the typed property register (13 rows / 13 terms / 123 decl
       REGISTER_TERMS.map((r) => r.declared).reduce((a, b) => Math.max(a, b), 0),
       '§5.5.3 — the largest per-row term (12) is inside the ≤100 per-row cap with headroom 88',
     ).toBeLessThanOrEqual(REGISTER_ROW_CAP)
-    expect(sum, '§5.5.3 — the declared total (123) is inside the ≤400 register cap with headroom 277').toBeLessThanOrEqual(REGISTER_TOTAL_CAP)
+    expect(sum, '§5.5.3 — the CORRECTED declared total (126) is inside the ≤400 register cap with headroom 274 (the as-filed `123 ≤ 400` / headroom 277 is SUPERSEDED, kept visible here and never compared)').toBeLessThanOrEqual(REGISTER_TOTAL_CAP)
+    expect(REGISTER_TOTAL_CAP - sum, '§5.5.3 — the corrected total headroom is 274 against the ≤400 cap (as filed it read 277 beside the mis-summed 123)').toBe(274)
     const im = REGISTER_TERMS.filter((r) => r.row.startsWith('P-ML-IM')).reduce((a, b) => a + b.declared, 0)
     const sm = REGISTER_TERMS.filter((r) => r.row.startsWith('P-ML-SM')).reduce((a, b) => a + b.declared, 0)
     const tp = REGISTER_TERMS.filter((r) => r.row.startsWith('P-ML-TP')).reduce((a, b) => a + b.declared, 0)
-    expect([im, sm, tp], "SPEC FINDING (§5.5.3) — the FAMILY SUBTOTALS the TERMS actually produce: IM 84 (against the printed `IM 87`) · SM 9 (as printed) · TP 33 (as printed); 84 + 9 + 33 = 126, not the printed 123").toEqual([AS_FILED_IM_SUBTOTAL, 9, 33])
-    expect(im + sm + tp, 'SPEC FINDING — the three subtotals ARE the terms\' sum (126), and the discrepancy against the printed `123` is the arithmetic defect this row reports rather than reconciles').toBe(AS_FILED_TERM_SUM)
+    expect([im, sm, tp], "§5.5.3 — the CORRECTED FAMILY SUBTOTALS `IM 84 · SM 9 · TP 33` = 126 (the as-filed `IM 87 · SM 9 · TP 33` = 123 is SUPERSEDED and stays visible in AS_FILED_IM_SUBTOTAL_PRINTED / AS_FILED_DECLARED_TOTAL); SM 9 and TP 33 are UNCHANGED, because the mis-sum was entirely inside the IM family's chain").toEqual([AS_FILED_IM_SUBTOTAL, 9, 33])
+    expect(im + sm + tp, '§5.5.3 — the three CORRECTED subtotals ARE the declared total, which is what makes this a reconciliation rather than a report (84 + 9 + 33 = 126)').toBe(DECLARED_TOTAL)
+    expect(
+      im + sm + tp === AS_FILED_DECLARED_TOTAL,
+      `THE POLARITY IS REAL (CONTROL, declared to FAIL) — the corrected subtotals sum to ${im + sm + tp}, NOT to the as-filed ${AS_FILED_DECLARED_TOTAL}: a harness that passed for the superseded figure would be the finding`,
+    ).toBe(false)
     expect(
       REGISTER_TERMS.map((r) => r.distinct).reduce((a, b) => a + b, 0),
       "§5.5.2 item 3 — the thirteen HONEST DISTINCT figures' own sum, printed BESIDE the declared total (the two figures are deliberately NOT equal: the declared total is what the caps compare and the distinct figure is never substituted for it). NOTE, reported rather than smoothed: §5.5.2 item 3's ledger does not print a total of its own, so this row pins the sum of its thirteen entries",
@@ -2564,7 +2617,7 @@ describe('§5.5.1 — the typed property register (13 rows / 13 terms / 123 decl
 // un-run-row-is-a-FAILURE rule. It runs LAST and reads the register's own state.
 // ===========================================================================
 describe('§5.5.1/§5.5.2 — the register\'s status row', () => {
-  it('REGISTER-STATUS the DECLARED 123 against the measured attempts, the per-row readings, the two caps, the (bounded) set and the stop state', () => {
+  it('REGISTER-STATUS the DECLARED 126 (corrected from the as-filed 123) against the measured attempts, the per-row readings, the two caps, the (bounded) set and the stop state', () => {
     const declared = REGISTER_TERMS.reduce((a, b) => a + b.declared, 0)
     const measured = registerState.attempts
     const record = {
@@ -2584,25 +2637,32 @@ describe('§5.5.1/§5.5.2 — the register\'s status row', () => {
     }
     console.log(`§5.5.1 register record :: ${JSON.stringify(record)}`)
     // =====================================================================
-    // THE RECONCILIATION — and THE SPEC FINDING IT EXPOSES (`§5.5.3`'s
-    // arithmetic; `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`). The DECLARED
-    // figures are asserted AS FILED and the MISMATCH is asserted with them, so
-    // this red run REPORTS the defect instead of silently reconciling it. **These
-    // two rows stay RED at green time until the spec's own figure is reconciled**
-    // — they are NOT module defects, and a TestWriter may not rewrite a declared
-    // figure (annotate-never-rewrite).
+    // THE RECONCILIATION — RE-GRAINED to the CORRECTED figure `126` (`§5.5.3`'s
+    // dated amendment; `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`). As filed
+    // this row asserted the declared `123` AND the mismatch it exposed; with the
+    // amendment landed the declared figure IS the sum of its own terms, and the
+    // as-filed `123` is asserted BESIDE it as the SUPERSEDED filing figure
+    // (annotate-never-rewrite). **The polarity is REAL**: the two figures are
+    // asserted as DIFFERENT, and the CONTROL below keeps the reconciliation
+    // falsifiable — a harness that passed for either figure would be the finding.
     // =====================================================================
-    expect(declared, "SPEC FINDING — the thirteen terms' ACTUAL sum, printed WITH them: 12+12+12+12+12+12+12+3+3+3+12+9+12 = 126").toBe(AS_FILED_TERM_SUM)
-    expect(DECLARED_TOTAL, "SPEC FINDING — the total §5.5.3 PRINTS (`123 = 12+12+12+12+12+12+12+3+3+3+12+9+12`), which is NOT the sum of those terms").toBe(123)
+    expect(declared, "§5.5.3 — the thirteen terms' ACTUAL sum, printed WITH them: 12+12+12+12+12+12+12+3+3+3+12+9+12 = 126").toBe(DECLARED_TOTAL)
+    expect(DECLARED_TOTAL, "§5.5.3 — the DECLARED total, CORRECTED to `126` (`123 → 126` by the dated amendment), printed WITH its terms: `126 = 12+12+12+12+12+12+12+3+3+3+12+9+12`").toBe(126)
+    expect(AS_FILED_DECLARED_TOTAL, "§5.5.3 — THE AS-FILED (SUPERSEDED) declared total, kept VISIBLE beside the corrected figure and never substituted for it: `123 = 12+12+12+12+12+12+12+3+3+3+12+9+12`, the mis-sum of these same thirteen terms").toBe(123)
     /** THE RECONCILIATION, as a predicate over the register's own terms, so the row
      *  can show it CAN fail rather than asserting a figure it cannot falsify. */
     const reconcilesWithItsTerms = (figure: number): boolean => figure === declared
     expect(
       reconcilesWithItsTerms(DECLARED_TOTAL),
-      `SPEC FINDING (§5.5.3) — the DECLARED total 123 does NOT reconcile with its own thirteen terms (${declared})`,
+      `§5.5.3 — the CORRECTED DECLARED total ${DECLARED_TOTAL} RECONCILES with its own thirteen terms (${declared}): the chain's last step is now reachable from the terms`,
     ).toBe(true)
     expect(reconcilesWithItsTerms(declared), 'the terms\' own sum reconciles with itself, which is what makes the assertion above a real reconciliation and not a tautology').toBe(true)
-    expect(reconcilesWithItsTerms(124), 'CONTROL (declared to FAIL) — the figure a re-grain that ADDED the §5.5.2 item 10 lone-surrogate shape would produce (124) does NOT reconcile with the as-filed terms, which is exactly why that addition owes a re-grain').toBe(false)
+    expect(
+      reconcilesWithItsTerms(AS_FILED_DECLARED_TOTAL),
+      `CONTROL (declared to FAIL) — THE SUPERSEDED FILING FIGURE ${AS_FILED_DECLARED_TOTAL} does NOT reconcile with the same thirteen terms (${declared}): the polarity of this row is therefore REAL, and a harness that reconciled BOTH figures would be the finding`,
+    ).toBe(false)
+    expect(reconcilesWithItsTerms(127), 'CONTROL (declared to FAIL) — the figure a re-grain that ADDED the §5.5.2 item 10 lone-surrogate shape would produce (the amendment annotates the as-filed `123 → 124` as `126 → 127`) does NOT reconcile with the corrected terms, which is exactly why that addition owes a re-grain').toBe(false)
+    expect(reconcilesWithItsTerms(124), 'CONTROL (declared to FAIL) — the AS-FILED §5.5.2 item 10 re-grain figure (124), kept visible under its own annotation, likewise does NOT reconcile with the corrected terms').toBe(false)
     // THE PER-ROW READINGS (each row's own record line prints the same figures).
     expect(registerState.records.length, 'REGISTER-STATUS — every one of the 13 rows contributed a record line (a row that never started still records itself: it is reported as a FAILURE by its own finish())').toBe(13)
     for (const r of registerState.records) {
@@ -2629,10 +2689,10 @@ describe('§5.5.1/§5.5.2 — the register\'s status row', () => {
     } else {
       expect(registerState.stoppedAtRow, 'REGISTER-STATUS (GREEN branch) — `stoppedAtRow === null`: no row stopped, because no five consecutive failures occurred').toBe(null)
       expect(registerState.stoppedFor, 'REGISTER-STATUS (GREEN branch) — `stoppedFor === null`, the companion reading of the same fact').toBe(null)
-      // NOTE (SPEC FINDING, carried): the GREEN branch below reads the SPEC'S
-      // PRINTED total (123), not the terms' own sum (126) — so it too is red
-      // until the spec's figure is reconciled.
-      expect(measured, `REGISTER-STATUS (GREEN branch) — the register executed ALL ${DECLARED_TOTAL} of the AS-FILED declared attempts (${measured} measured), with every row's own \`broken\` reading 0`).toBe(DECLARED_TOTAL)
+      // NOTE (RE-GRAINED with the rest of this row): the GREEN branch below reads
+      // the CORRECTED declared total (126), which IS the terms' own sum. The
+      // as-filed 123 is SUPERSEDED and is asserted BESIDE it above, never here.
+      expect(measured, `REGISTER-STATUS (GREEN branch) — the register executed ALL ${DECLARED_TOTAL} of the CORRECTED declared attempts (${measured} measured), with every row's own \`broken\` reading 0; the as-filed ${AS_FILED_DECLARED_TOTAL} is superseded`).toBe(DECLARED_TOTAL)
     }
     expect(
       REGISTER_TERMS.filter((r) => r.bounded).length,
