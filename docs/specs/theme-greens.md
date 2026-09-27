@@ -243,3 +243,32 @@ linted, not `cat`-ed, not `grep`-ed.** The module was reached **only** as an obj
 re-derivation of the contract: where the module and the contract agreed, the reading is printed with the clause it
 was driven against; where they disagreed, the disagreement would have been recorded as a FAIL with its clause
 named — none was found, and `§G` item 8 says what that does and does not mean.**
+
+---
+
+## J. CLOSE-OUT ANNOTATION (`2026-09-27`, the supervisor's `U-THEME` gate-10 doc-writer pass) — **A STATUS RECORD APPENDED AT THE FILE'S END; EVERY SECTION ABOVE IS KEPT VISIBLE AND UNREWRITTEN, AND NOTHING HERE IS A MEASUREMENT BY THIS PASS**
+
+**THE UNIT IS `DONE` — the ledger's SEVENTEENTH `DONE` row — and its authoritative record is `docs/next-steps.md`'s
+`## DONE — U-THEME` section.** **WHAT THIS ANNOTATION DOES NOT DO, stated first because it is the point: it does NOT
+re-drive a single scenario, it does NOT re-assert any reading above, and it does NOT lift this set's blindness claim
+or its layer limits.** **THE `32` PASS / `0` FAIL / `7` `NOT-BLIND-RUNNABLE` CENSUS IS THIS SET'S OWN PASS'S COUNT AT
+`fd70033` AND IS NOT A READING OF THE CLOSED-OUT TREE** — `§G`'s limits (`§G` items 1–8), `§E`'s seven
+`NOT-BLIND-RUNNABLE` rows and `§F`'s five self-repaired driver defects all stand exactly as filed.
+
+**THE `POST-GREEN` CLAUSE ABOVE IS `OWED`, NOT SATISFIED, AND THIS ANNOTATION IS THE CARRY.** The module's revision
+under the close-out is **`36b8c3d`**, not `fd70033`, so **a later pass that quotes any reading in `§B`–`§D` as a
+reading of the closed-out tree is re-quoting a dated measurement**; the targeted re-drive this file's own `§I`
+requires **must be a fresh pass with a shell**, and its readings must be **APPENDED BESIDE** the as-filed ones, with
+its own census printed beside this one. **The re-drive's four trigger classes are unchanged and are exactly the ones
+`§I` names** — the `source` spelling/domain, the name-echo and removal rules, the freshness rule, and the module's
+import set. **OWNER: a fresh blind pass (`AGENTS.md` item 10a/RCA-4); it gates no unit, and it is carried at the DONE
+row's clause (12)(a).**
+
+**AND THE ONE FACT A LATER READER OF THIS SET MOST NEEDS, RECORDED BECAUSE THE CLOSE-OUT MADE IT LIVE: the `source`
+member read by `TG-01`, `TG-06`–`TG-12` and `TG-14` is the member the spec gate RENAMED from `basis` — a RENAME ONLY,
+no semantics change — so the readings above are readings of the RULED spelling and a `basis`-spelling module would
+FAIL them.** **The close-out pass that landed this annotation held read/search/doc-write tools and NO SHELL: it ran no
+suite, no scenario, no leg and no commit, and every figure it cites is the supervisor's own measurement at `36b8c3d`
+or this set's own dated reading above.** **The gate-8 record of the same close-out pass is
+`archive/reviews/2026-09-27-U-THEME-doc-review.md`** (gates 7 and 8 folded into ONE pass, recorded as one, never as
+two).

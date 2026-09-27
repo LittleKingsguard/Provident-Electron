@@ -520,4 +520,36 @@ unit** — the chain continues at the TestWriter red under `AGENTS.md` items 9/1
 obligation (typed rows, executed, totals printed WITH their terms) is not discharged by any clause of this
 annotation.**
 
+**⟶ CLOSE-OUT ANNOTATION (`2026-09-27`, the supervisor's `U-THEME` gate-10 doc-writer pass — APPENDED at the
+record's end; every clause ABOVE is KEPT VISIBLE AND UNREWRITTEN, and this annotation is a STATUS record, not a
+re-opening of any condition, verdict or default).** **THE UNIT IS `DONE` — the ledger's SEVENTEENTH `DONE` row — and
+its authoritative record is `docs/next-steps.md`'s `## DONE — U-THEME` section.** **WHAT CHANGED SINCE THE SPEC GATE,
+in this record's own terms: the paragraph immediately above is TRUE AS OF THE SPEC GATE and is now SPENT — a red set
+was authored and RUN (`tests/theme.test.ts`, `58` rows, `40` failed / `18` passed against the absent module at
+`178f1ab`, the register stopping at `P-TH-IM-1` after five consecutive failures with eleven un-run rows reported as
+FAILURES), the module `src/shared/theme.ts` (`73` lines) exists, and the register's EXECUTED layer ran `103/103` with
+`broken 0` and `registerStoppedAt: null`** (the supervisor's measurement at `36b8c3d`). **`G-5`'s register obligation
+IS NOW DISCHARGED** as that clause requires: typed rows, executed, with the totals printed WITH their per-row terms
+(`103` = `12+12+10+8+6+3+12+12+11+8+6+3`; the distinct sibling `100`), and **the two figures it also carried as
+obligations are CLOSED OR DISPOSITIONED: `G-2` (the five-name surface and the two pinned shapes) is LANDED, and
+`G-6` (gate 6 `STRUCTURAL` plus the `§7.1` decision recorded with its evidence) is LANDED — `[U]` not offered,
+`[D]` not claimed, gate 6 `STRUCTURAL`, NEVER WAIVED.** **`G-1` (the diff scope) held: NO `src/**` edit, NO config
+change and NO new dependency; the six-artifact build census is UNCHANGED.** **`G-3`/`G-4` held as filed (the env
+closed at one member with the strict `=== true` read; the six prohibitions carried; the spec readable with the demo
+deleted).** **THE TWO RECORDED WORKING DEFAULTS ARE DISPOSED, NOT RE-OPENED: `A-1` STANDS AS FILED (approved at the
+spec gate, still architect-reversible, its reversal still owing the four sites and a re-grain) and `A-2` IS CLOSED BY
+THE RULING AS THE RENAME `basis` → `source` — and the table at `§6` above keeps its as-filed `basis` wording, which a
+reader must read as the AS-FILED spelling of the member now named `source` (quotations are not respelled).**
+**`A-4`'s FILING half stays DISCHARGED and its PROCESS half stays `OPEN` (the reviewer returns are still not
+recoverable — this record is the compression, not four filed reviews).** **`P-T-2`'s stale ledger cells ARE REPAIRED
+by the close-out (the `E8` row now reads `E8 — MOVED TO DONE (2026-09-27)` with its spec cell carrying the SPEC-GATE
+APPROVAL and the live register figures beside the as-filed ones, and its chain and `Legs` cells annotated)**;
+**`P-T-3` IS NOW DISCHARGED TOO — the second appearance authority is named in the ledger's `F1` row's own terms as
+well as here**; and **`C-7`'s `docs/FORKER.md` carry is recorded as `OWED` with its owner, in that file's own
+words — a `DONE` unit does NOT imply the fork-facing contract was delivered.** **HONEST EXTENT, as this record's
+`P-T-1` demands of any pass: THE CLOSE-OUT PASS THAT LANDED THIS ANNOTATION HELD NO SHELL — every figure in it is the
+supervisor's own measurement or a recorded file read, and NONE of it is a leg run of that pass.** **THE FULL RECORD IS
+`archive/reviews/2026-09-27-U-THEME-doc-review.md`** (gate 8, folded with gate 7 into the same close-out pass and
+recorded as ONE pass, not two).
+
 

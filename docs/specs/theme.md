@@ -140,6 +140,37 @@ note — the placement the sibling specs use.)**
     and the contract is FILED AND APPROVED.** **THE ORDERED NEXT ACTIONS ARE `docs/next-steps.md`'s
     `## ⟶ HANDOVER — E8 (U-THEME) AT GATE 5` section's `§D`, cited BY NAME.**
 
+12. **THE CLOSE-OUT, LANDED `2026-09-27` BY THE SUPERVISOR'S DOC-WRITER PASS — READ THIS BESIDE ITEM 11, WHICH IS
+    THE GATE-5 STATE AND IS KEPT VISIBLE (item 11's *"it is NOT `DONE`"*, its *"THESE FINDINGS ARE OWED, NOT
+    CLOSED"* and its *"the ledger is UNMOVED at `16 DONE / 5 open`"* were TRUE AS WRITTEN and are STALE ON THEIR
+    STATUS CELLS ONLY).** **THE UNIT IS `DONE`: THE LEDGER'S SEVENTEENTH `DONE` ROW, and the record is
+    `docs/next-steps.md`'s `## DONE — U-THEME` section, cited BY NAME.** **THE LEDGER MOVED IN THE SAME PASS —
+    `17 DONE / 4 open` UNITS = `21` units (`17 + 4 = 21`), the open set `E9` · `F1` · `F2` · `F3` = `4` — and the
+    ledger row `E8` is KEPT VISIBLE as an `E8 — MOVED TO DONE (2026-09-27)` provenance row, its cells annotated as
+    spent, exactly as the family's other moved rows are (`docs/next-steps.md`, the supervisor's).**
+    **GATES 6/7/8/9/10 ALL LANDED IN THAT CLOSE-OUT: gate 6 remains `STRUCTURAL`, NEVER WAIVED (`§5.2`); gate 7
+    (the proofreader's stale-cell sweep) and gate 8 (this unit's per-unit documentation review) were FOLDED INTO
+    THE ONE CLOSE-OUT PASS and are RECORDED AS ONE PASS, NOT TWO, at the gate-8 record
+    `archive/reviews/2026-09-27-U-THEME-doc-review.md`; gate 9 is the SUPERVISOR'S OWN MEASURED GREEN at
+    `36b8c3d`; and gate 10 is the DONE row plus the ledger move.** **THE REGISTER'S EXECUTED LAYER IS GREEN AND IS
+    THE SUPERVISOR'S MEASUREMENT, QUOTED AND NOT RE-RUN BY THIS PASS: ALL `103` DECLARED ATTEMPTS EXECUTED with
+    `broken 0` on every row and `registerStoppedAt: null`, `rowsExecuted 12`, seed `20260927` — per row
+    `attemptsRun/held` `IM-1 12/12 · IM-2 12/12 · IM-3 10/10 · IM-4 8/8 · SM-1 6/6 · SM-2 3/3 · TP-1 12/12 ·
+    TP-2 12/12 · TP-3 11/11 · TP-4 8/8 · TP-5 6/6 · TP-6 3/3` — so the DESIGN this file carries (`§5.5.1`,
+    `§5.5.2`, `§5.5.3`) and its EXECUTED layer now agree, and the un-run-row-is-a-FAILURE rule (`§4.2`) was
+    satisfied rather than waived.** **THE GATE-4 `F1`…`F7` ROWS AND `NG-1`…`NG-3` ARE DISPOSITIONED THROUGH THE
+    DATED ANNOTATION NOW AT `§3b`'s tail — the contract-side remedies `AMEND-1`/`AMEND-2`/`AMEND-3` are LANDED and
+    the five `[T]`-side items (`F2`, `F3`, `F5`, `F6`, `F7`) are recorded there as CLEARED by the supervisor's
+    adjudicated repair pass, with THIS pass's own file-read corroboration for each named at the doc-review record
+    (the test file's own header now reads `103` / the SIX `(bounded)` rows, and its `HARNESS-3` asserts the
+    six-row set — item 11's *"stay UNFIXED"* sentence is therefore STALE ON THAT FACT ONLY, and the `[T]`-side
+    evidence for it is a FILE READ, never a leg run).** **NO TERM, ROW ID, STRATEGY ID, SEED, CAP, SHAPE, POOL
+    MEMBER OR `(bounded)` MARKING MOVED IN THE CLOSE-OUT: the register stands `12` rows / `12` terms / `103`
+    DECLARED attempts, its distinct sibling `100`, and the marked set `6` rows.** **AND THE HONEST EXTENT OF THIS
+    ITEM, stated as notes 7/8 state their own: this pass held a READ/SEARCH/DOC-WRITE tool wall and NO SHELL — it
+    ran no suite, no leg, no `tsc`, no build, no Electron boot and no commit — so every figure above is the
+    supervisor's own measured reading or a recorded file read, and NONE of it is a run of this pass's.**
+
 ---
 
 ## 0. The rulings this unit derives from (recorded, NOT re-opened)
@@ -2054,6 +2085,32 @@ ROWS above are the CONTRACT-side dispositions this annotation landed: **`AMEND-1
 `[T]`-SIDE obligation the TestWriter owes** — **so the seven `F-n` rows stay UNFIXED on their own sides while their
 CONTRACT-side remedies are now recorded.** **And `PACKAGE DEFECTS: NONE` is the expectation for this unit** — it exercises no `provident-ssr` surface, so
 **`docs/defects.md` and `docs/HANDOFF.md` should receive nothing from it** (`§7` item 2).
+
+**⟶ THE DATED CLOSE-OUT ANNOTATION (`2026-09-27`, the supervisor's doc-writer close-out pass — appended BELOW the
+as-filed blocks above, which are KEPT VISIBLE AND UNREWRITTEN: this is an annotation, never a rewrite, and the seven
+`F-n` table rows above still read `OWED` as their PASS-TIME disposition).** **WHAT IT RECORDS, ONE LINE PER ITEM, so
+the `DONE` row's clause (8) and the gate-8 record can cite it rather than re-derive it. NO register term, row id,
+strategy id, seed, cap, shape, pool member or `(bounded)` marking moves in this annotation.**
+
+| Finding | Live status after the close-out | The evidence, and ITS OWNER |
+| --- | --- | --- |
+| **`F1`** | **`CONTRACT-AMENDED` — the own-member read form is PINNED** (`AMEND-1`, `§2.3` item 2 row `(13)`), and **the landed module already conformed, so no module fix was owed.** The `NG-1` diverging-`Proxy` control is **authored in the test file**. | The contract pin is this file's; the landed module's conformance is `§0A` note 8 item 1's reading; the `NG-1` control's presence is **THIS PASS'S OWN FILE READ** of `tests/theme.test.ts`. |
+| **`F2`** | **CLEARED — the `[T]`-side obligation is discharged:** the declared count-`0` assertion now rides the **DECLARED drive's OWN argument and its own recorder** (`shape.observe()` returns both), so the claim is falsifiable on the drive it is declared in; a fresh recorder is still passed explicitly as a CONTROL. | **THE SUPERVISOR's repair pass is the authority** (one adjudicated repair that cleared all six defect classes); **corroborated by THIS PASS'S OWN FILE READ** of `tests/theme.test.ts`'s `P-TH-IM-1` row and its in-place `F2` note. **NOT a leg run.** |
+| **`F3`** | **CLEARED — the draw's twelve indices are PRINTED and the distinct-member coverage is ASSERTED against a measured figure**, with the undriven members named. | Supervisor's repair pass; **corroborated by THIS PASS'S OWN FILE READ** (`NG-3`'s `drawnIndices` / `Set` assertion). **NOT a leg run.** |
+| **`F4`** | **`CONTRACT-AMENDED` — `P-TH-TP-5` carries its `(bounded)` marking; the marked set is `6` ROWS and `P-TH-TP-5`'s term stays `6`** (`AMEND-2`). | This file's `§5.5.1` cell and `§5.5.2` item 2, both landed `2026-09-27`. |
+| **`F5`** | **CLEARED — `P-TH-TP-5`(c) carries a caller-object SNAPSHOT (before/after, both arms) and the snapshot instrument is itself proven LIVE** (a driver-made write must move it). | Supervisor's repair pass; **corroborated by THIS PASS'S OWN FILE READ** (`snapshotOf` + its liveness control). **NOT a leg run.** |
+| **`F6`** | **CLEARED — the applier-first drive is a GENUINE order-independence drive on a literal token**, not a recomputation of drive 1. | Supervisor's repair pass; **corroborated by THIS PASS'S OWN FILE READ** (the `F6` drive-2 comment and its own call site). **NOT a leg run.** |
+| **`F7`** | **`CONTRACT-AMENDED` (text) — the ledger title is corrected to the ledger's own reading (ONE differing row, `P-TH-IM-2`'s `12 → 9`), with the as-written six-row form kept visible, and the harness now asserts the ONE-row ledger.** | This file's `§5.5.2` item 3; the assertion is **corroborated by THIS PASS'S OWN FILE READ** (`HARNESS-4`). **NOT a leg run.** |
+| **`NG-1`** · **`NG-3`** | **LANDED on the `[T]` side** (the diverging-`Proxy`/container controls; the printed drawn indices). | Supervisor's repair pass + this pass's file read. |
+| **`NG-2`** | **LANDED, and its re-grain is TAKEN** (`P-TH-TP-3` `10 → 11`; declared `103`, distinct `100`; the inherited-`env` member is driven in `P-TH-TP-3` and in `F-2`'s pool). | This file's `§0A` note 8 item 3; **corroborated by THIS PASS'S OWN FILE READ** of `tests/theme.test.ts`'s register table and `HARNESS-1`. |
+
+**THE HONEST LIMIT OF THIS ANNOTATION, STATED SO IT IS NOT OVER-READ: this pass ran NO LEG.** The five `[T]`-side
+CLEARED cells above rest on **the supervisor's adjudicated repair pass** (its authority) plus **this pass's own file
+read of the landed test file** (corroboration) — **neither is a re-run of `tests/theme.test.ts`, and the executed
+green (`58/58`; the register `103/103`, `broken 0`, `registerStoppedAt: null`) is THE SUPERVISOR'S at `36b8c3d`,
+quoted and never claimed as this pass's measurement.** **A later pass that wants the executed evidence must re-run
+the commands; the doc-review record `archive/reviews/2026-09-27-U-THEME-doc-review.md` prints what each cell rests
+on, cell by cell.**
 
 ## 3c. GATE 5 — THE BLIND GREENS, RECORDED (`2026-09-27`; the artifact is `docs/specs/theme-greens.md`, cited BY NAME)
 
