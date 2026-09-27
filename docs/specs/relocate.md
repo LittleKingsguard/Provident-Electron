@@ -2468,3 +2468,228 @@ undefined status word is what this shape exists to prevent.
 minimum: the seed id (`A-*`), the finding's severity, its disposition from the table above, its owner, and
 the clause (`§`-section + row id) it changed or left unchanged.** **A DONE row that cites no adversarial
 pass (or whose findings are unrecorded) is a review finding** (`AGENTS.md` RCA-3).
+
+---
+
+## 3c. THE GATE-4 RECORD — the read-only adversarial pass and the PBT audit, ALL EIGHTEEN FINDINGS DISPOSITIONED (LANDED 2026-09-27)
+
+**Status of `§3a` and `§3b` above: SUPERSEDED IN ONE POINT ONLY — the pass HAS RUN, so *"no adversarial
+pass has run"*, *"this table is the SEED SET for the pass that will run"* and *"the table is EMPTY BY
+CONSTRUCTION"* are read as AS-FILED. The `18` seed rows, their ids, their questions and their layer
+columns are UNMOVED and are NOT renumbered.** **This subsection's block is APPENDED — no section is
+renumbered, no row id moves, `§3a`/`§3b` keep their numbers and their own text, and the file-end note's
+rule (*"a later pass appends INSIDE `§3a`/`§3b`"*) is satisfied by appending *immediately after* them.**
+
+**PROVENANCE, so the whole record is attributable.** The pass was **read-only** (it edited **no**
+`src/**` and **no** `tests/**`); it read **`src/shared/relocate.ts`** (the landed module,
+`c75969f`), **`tests/relocate.test.ts`** (the re-grained red set) and **`docs/specs/relocate-greens.md`**
+(the gate-5 set), and it drove **nothing** — **every reading below is a SOURCE-TEXT or ARITHMETIC reading,
+and no leg, no suite and no `tsc` invocation is claimed by it.** **Its full provenance copy, with the
+per-finding reproductions expanded from the module and red-set bytes, is
+`archive/gate1/2026-09-27-E4-gate4-adversarial.md`** (gitignored tree, `archive/<topic>/<date>-<name>.md`
+convention, `AGENTS.md` item 6(b)). **The unit's own record is this subsection; the archive copy is the
+provenance.**
+
+**THE HEADLINE: `18` findings, ALL DISPOSITIONED — `NONE` bare `OWED`.** **`2` `OWED — HOST FIX` · `9`
+`OWED — TEST-SIDE` · `6` `CONTRACT-AMENDED` (this pass's Part A pins, `§3d`) · `1` `NOT-A-FINDING` (with
+the rest of `§3a`'s seed set resolved as `CONFIRMED-RULED`, below).** **`0` `BLOCKING — SCOPE` and `0`
+`HANDOFF`.**
+
+| Seed | Class | Sev. | Disposition | Owner | The clause it changed or left unchanged |
+| --- | --- | --- | --- | --- | --- |
+| **`ADV-RL-1`** | **the CONSUMER-driven invalid-arm entry point (`reset(element)`) does not take the arm's declared shape** — it neither sets the arm's pending flag nor increments `resets`, so the session's own `'reset'` terminal runs the **COMPLETING** branch: it fires `onReveal` (**declared `0` on that channel**) and commits the **RESOLVED TARGET** where the contract requires the **CALLER-SUPPLIED PRE-DRAG VALUE**; the mirror case writes **zero** sink values where exactly one is required | **HIGH** | **`OWED — HOST FIX`** | **the Implementer** (red-first), with its regression rows owed to the TestWriter | **UNCHANGED clause; the MODULE is wrong against `§2.1`'s `reset` clause, `§2.3` item 6(d)'s `'reset'` limb, `§2.3` item 9(a)/(d), `M-13`(a), `M-14`, `§5.5.1 P-RL-SM-5`(1)/`P-RL-SM-7`.** **Regressions owed: EXTEND `M-13(a)`, ADD `F-20`, EXTEND `P-RL-SM-7`'s class list.** |
+| **`ADV-RL-7`** | **the module reads the candidate's `distance` field TWICE per candidate** — a guard read (`usableDistance(readSlot(list[i],'distance'))`) then a comparison read (`withinProximity(readSlot(list[i],'distance'), threshold)`) — contradicting the module's own *"ONE total member-read"* claim and going **non-deterministic under a varying getter** | **MEDIUM** | **`OWED — HOST FIX`** | **the Implementer** (red-first) | **UNCHANGED clause; the MODULE contradicts `§2.1`'s `CandidateFor` comment and `§5.5.1 P-RL-IM-5`'s *"READ through the module's own total member-read"*.** **Regressions owed: ADD `F-21`, ADD `P-RL-IM-5` SHAPE `(8)` (a read-counting accessor).** |
+| **`ADV-RL-3`** | **three register rows count byte-identical drives as distinct** — `P-RL-SM-6`'s two configurations are the same closure, `P-RL-SM-7`'s timing dimension never branches, `P-RL-IM-5`'s paths `(b)`/`(c)` are the same body; **`19` of the `170` attempts are duplicates** | MEDIUM | **`OWED — TEST-SIDE`** | the TestWriter | **NO term moves** (`170` unmoved) — the duplicates are RE-GRAINED, never re-counted. |
+| **`ADV-RL-4`** | **`PRE-4`'s pool-versus-boundary re-run is TAUTOLOGICAL** — each `satisfies` predicate is `.includes(m)` over the very array it checks | MEDIUM | **`OWED — TEST-SIDE`** | the TestWriter | **`§5.5.2` item 7's CLEAN verdict rests on it — recorded BESIDE the block below; the clause is not amended.** |
+| **`ADV-RL-5`** | **`P-RL-IM-4`'s seven member drives assert the ROW'S OWN fixture key set**, so they cannot fail for the module; **the declared ORDER is asserted nowhere** | MEDIUM | **`OWED — TEST-SIDE`** | the TestWriter | **NO term moves**; `P-RL-IM-4`'s own `8` stands. |
+| **`ADV-RL-6`** | **`P-RL-IM-1` path `(d)` is a refused ATTACH, not a refused ESTABLISHMENT**, and **`4` of its `8` declared-reading cells are vacuous** | MEDIUM | **`OWED — TEST-SIDE`** | the TestWriter | **the `(bounded)`-class `8`-cell claim of `§0A` note 13 item 1 is what must be re-grained; the term `21` does not move.** |
+| **`ADV-RL-8`** | **every channel-(B) row is a count-only proxy**; **`R-16`'s "retarget" drives a DEPARTURE** | MEDIUM | **`OWED — TEST-SIDE`** | the TestWriter | **`R-16`'s static half stands; its runtime half is re-grained (see generator item `15`).** |
+| **`ADV-RL-11`** | **`R-8(a)`/`R-11` claim "comments included" but scan the comment-STRIPPED view** — **the `R-1` repair was not propagated** | LOW | **`OWED — TEST-SIDE`** | the TestWriter | **`R-8`/`R-11`'s text UNCHANGED; the SCAN is the defect.** |
+| **`ADV-RL-13`** | **the session double refuses BEFORE logging**, so an `ops`-length reading cannot see a refused delegation; **`P-RL-SM-4` stage `(3)` × slot `(b)` passes vacuously** | LOW | **`OWED — TEST-SIDE`** | the TestWriter | **NO term moves.** |
+| **`ADV-RL-14`** | **a stopped-early row is FAILED by its own `reconcile`**, while `REGISTER-STATUS` tolerates the truncated count | LOW | **`OWED — TEST-SIDE`** | the TestWriter | **`§4.2`'s stop rule and `§5.5.2` item 9 are consistent; the HARNESS's two readings are not.** |
+| **`ADV-RL-15`** | **`R-14`'s loop drives `begin`/`cancel` but NOT `end`** | LOW | **`OWED — TEST-SIDE`** | the TestWriter | **`R-14`'s set claim UNCHANGED.** |
+| **`ADV-RL-17`** | **`M-2`'s prose repeats the SUPERSEDED, arithmetically false claim that `-5 <= -1` is `false`** | LOW | **`OWED — TEST-SIDE`** | the TestWriter | **`M-2`'s declared ANSWER (`false`) is UNMOVED and `§0A` note 16 already names the wrong arithmetic; the row's DRIVE PROSE is re-grained.** |
+| **`ADV-RL-2`** · **`ADV-RL-9`** · **`ADV-RL-10`** · **`ADV-RL-12`** · **`ADV-RL-16`** · **`ADV-RL-18`** | the six `OWED — CONTRACT` findings | `HIGH` · `MED` · `MED-LOW` · `LOW` · `LOW` · `LOW` | **`CONTRACT-AMENDED`** | **the contract (this pass)** | **`§3d` — the six pins, each with its landing site, its owner and its term verdict.** |
+
+**`ADV-RL-1` IS THE ONE FINDING THAT NO TEST-SIDE CHANGE CAN REPAIR, and the pass states it as such: the
+entry point is CONTRACT-DECLARED (`§2.1`'s `reset(element)` is *"THE INVALID-ARM ENTRY POINT"*), so the
+module's two failures are MODULE failures measured against declared clauses, not a red-set reading.**
+
+**CONFIRMED-ADEQUATE — `NOT-A-DEFECT`, RECORDED (the seeds and the module properties the pass examined and
+confirmed, with the property named so a later pass does not re-open it):**
+
+| The property | The finding |
+| --- | --- |
+| **the single-sink discipline, WITH ITS TWO POSITIVE CONTROLS** | **CONFIRMED** — one call site; exactly one sink write per gesture that reaches a terminal; the no-writer and two-writer shapes produce the declared divergences (`F-4`, `F-6`, `R-13`, `P-RL-SM-2`). |
+| **the total-member-read discipline** | **CONFIRMED** — every session and options member is read through `readSlot` with an absorbing `try`/`catch`; a throwing accessor and a throwing-trap `Proxy` degrade to "unusable" (`F-11`, `F-12`, `P-RL-TP-2`). **THE ONE EXCEPTION IS `ADV-RL-7`** (a DOUBLE read of one field, not a non-total read). |
+| **the `ABSORBED` sentinel** | **CONFIRMED** — `invokeSeam`'s unique-symbol sentinel is module-local, unexposed, and is what distinguishes an absorbed throw from a legitimate `undefined`; no code of the module's own enters the session's closed union (`I-14`, `R-15`). |
+| **the `finally`-based record discard AT EVERY TERMINAL** | **CONFIRMED** — `finishTurn`/`cancelWrapper` discard in `finally`; **plus the ONE stated retention: a gesture the ARM took KEEPS its record while the session's gesture is still running** — see pin `ADV-RL-9` (`§3d`). |
+| **no module-level mutable state** | **CONFIRMED** — every piece of state is factory-closure-scoped; the only module-scope bindings are the pure helpers and the `ABSORBED` symbol (`I-12`). |
+| **one listener per attach** | **CONFIRMED** — the module attaches none of its own; `attach` makes exactly one `session.install` delegation (`M-1`, `R-3`, `R-10`). |
+| **the four-hook install key set** | **CONFIRMED** — the object handed to `session.install` carries exactly `{onStart, onMove, onEnd, onCancel}` with no fifth key (`§2.5` item 7, `M-1`, `I-7`, `R-10`). |
+| **the `R-1` scan, with its COMMENT and JOIN halves** | **CONFIRMED for `R-1`; `ADV-RL-11` records that the same repair was NOT propagated to `R-8(a)`/`R-11`.** |
+| **the `P-RL-IM-3` limb mutants** | **CONFIRMED** — all four limbs (the `typeof` gate, `NaN`, the finite-negative unusable class, the verbatim comparison) are reachable and falsifiable; **the FOUR-armed mutant set is the only source of any broken attempt in the red set.** |
+| **the pinned LCG form** | **CONFIRMED** — one step per draw, `state₀ = 20260927`, `index = stateₙ₊₁ mod pool.length`, `pool.length = 15`, no `next(k)` helper, no `Math.random` (`§5.5.1` item 2). |
+| **the declared-failing controls** | **CONFIRMED AS A CLASS** — each is declared and each is a COUNTED drive (`§5.5.2` item 9); **the HARNESS's scoring of three of them as `broken` is `S6`/`§5.5.2` item 9's own measured consequence.** |
+
+**PACKAGE DEFECTS: `NONE` — RECORDED EXPLICITLY.** **The module carries EXACTLY ONE import statement —
+`import type { GestureHandle } from './gesture-session.js'` (a TYPE-ONLY import of this repo's own
+`src/shared` module)** — **it touches NO `provident-ssr` surface, imports no engine, no `electron` and no
+`node:*`, and therefore `§7` item 10's claim is CONFIRMED: NO `docs/defects.md` / `docs/HANDOFF.md` entry
+can arise from this unit, and none may be written for it.** **`0` `HANDOFF` findings; the package is
+NEVER patched, and nothing here licenses a patch.**
+
+### 3c.1 THE READ-ONLY PBT AUDIT — one row per register row (over-strength · under-assertion · generator coverage · term verdict), plus the register-level checks
+
+**This is gate 11(e)'s audit, read-only, over `§5.5.1`'s executed tables in `tests/relocate.test.ts`.**
+**`OVER-STRENGTH`** = an assertion that demands more than the contract (a row that cannot fail, or that
+fails for a conformant module); **`UNDER-ASSERTION`** = a declared reading the drive never observes
+(the evasion class); **`GENERATOR COVERAGE`** = what the row's fixed table or pinned-seed draw cannot
+reach. **The TERM column is a VERDICT on the declared term, never a new term.**
+
+| Row | Over-strength (asserted beyond the contract) | Under-assertion / evasion (the declared reading no drive observes) | Generator / table coverage | Term verdict |
+| --- | --- | --- | --- | --- |
+| **`P-RL-IM-1`** | — (the `8`-cell declared-reading pair is the contract's own `§0A` note 13 item 1 form) | **`4` of `16` grid cells are VACUOUS**, and path `(d)` is a refused **ATTACH**, not a refused **ESTABLISHMENT** (`ADV-RL-6`) | **cannot draw**: a refused **ESTABLISHMENT**, the **wider non-callable family** (`null`/`false`/`0`/`''`/`Symbol`/`Object.create(null)`/throwing-`Proxy`), a **varying getter** | **`21` UNMOVED** (a DRIVE count; the vacuity is a READING defect) |
+| **`P-RL-IM-2`** | — | **one duplicate shape** (absent and non-callable collapse on the write reading) | **resolve seam shapes THIN** — the *"no target"* vs *"no proximity"* distinction is driven on two shapes only | **`14` UNMOVED** |
+| **`P-RL-IM-3`** | — | **nothing vacuous** — all four limb mutants are reached and falsified | **a NON-FINITE `threshold` is UNDRIVEN** (all three threshold classes are finite) — **note 17(f)(3) ALREADY RECORDS IT**, so this is a confirmation, not a new finding | **`12` + `3` UNMOVED** |
+| **`P-RL-IM-4`** | **the key-set assert is FIXTURE-SIDE — it asserts the row's own fixture's key set, so it CANNOT FAIL for the module** (`ADV-RL-5`) | **the declared ORDER is asserted NOWHERE** | the eighth-member control is present and declared-failing | **`8` UNMOVED** |
+| **`P-RL-IM-5`** | — | **`7` duplicates** across the shape × path grid (`ADV-RL-3`'s third instance) | **cannot draw a READ-COUNTING ACCESSOR** — which is exactly why `ADV-RL-7`'s double read survives the row | **`21` UNMOVED** |
+| **`P-RL-SM-1`** | — | **the CONSUMER entry point is INVISIBLE to this row** — no path drives `reset(element)`, which is why `ADV-RL-1` survives it | **cannot draw a GENUINE in → out → in crossing** — the out-move takes the arm and ends the gesture (`F-1`'s mechanism) | **`5` UNMOVED** |
+| **`P-RL-SM-2`** | — | — | the five composition shapes and both terminal classes are all reachable | **`11` UNMOVED ✓** |
+| **`P-RL-SM-3`** | — | **cannot draw a reveal in the `onStart` phase** — the phase assertion's negative half is never driven in that phase | `5` observation drives, two of them declared-failing controls | **`5` UNMOVED** |
+| **`P-RL-SM-4`** | — | **one duplicate**; **stage `(3)` × slot `(b)` is VACUOUS** (`ADV-RL-13`'s second instance) | the refusal slot's variant is declared and driven | **`6` UNMOVED** |
+| **`P-RL-SM-5`** | — | **the CONSUMER-DRIVEN arm is MISSING** (the same hole `ADV-RL-1` occupies) | the by-channel triple is readable; the preview reading rides the row's spy | **`3` UNMOVED** |
+| **`P-RL-SM-6`** | — | **the falsifier is a VALUE-IDENTITY PROXY** (candidate identity, not transition content) — see pin `ADV-RL-2` | **the ORDERED configuration is UNDRIVEN**; **`7` duplicates** (the two configurations are the same closure, `ADV-RL-3`) | **`14` UNMOVED** |
+| **`P-RL-SM-7`** | — | **`3` duplicates**; **the consumer entry point is a class it CANNOT SEE** | the timing dimension never branches (`ADV-RL-3`) | **`7` UNMOVED** |
+| **`P-RL-SM-8`** | — | **the `'disposed'` cell is FACTORY-TIME ONLY** — a post-construction disposal is never driven, which is pin `ADV-RL-10`'s whole subject | three refusal classes + the closed-set control | **`4` UNMOVED** |
+| **`P-RL-TP-1`** | — | — (**it asserts NO coverage claim; its `(bounded)` marking and its bound are in its own words**) | `30` draws over a `15`-member pool; the draw count is the term and the distinct-member count is REPORTED, never asserted | **`30` UNMOVED ✓** |
+| **`P-RL-TP-2`** | — | **argument variety THIN** — `6` shapes × one drive each; the four entry-point calls are assertions inside one drive | fixed enumeration, no generator | **`6` UNMOVED** |
+
+**THE REGISTER-LEVEL CHECKS, run and reported so the arithmetic is checkable rather than asserted.**
+**`(1)` THE SEED: `20260927` — CONFIRMED as the literal in the test file, one LCG step per draw.**
+**`(2)` THE LCG FORM: `stateₙ₊₁ = (stateₙ · 1664525 + 1013904223) mod 2³²`, `index = stateₙ₊₁ mod 15` —
+CONFIRMED, with no `next(k)` helper and no `Math.random` anywhere in the file.** **`(3)` THE CAPS:
+`≤100` per row — the largest declared term is `30` (`P-RL-TP-1`) — and `≤400` total; the observed total is
+`170`; STOP-AFTER-5-CONSECUTIVE-FAILURES: the rule is implemented and, on the green run, `not triggered`.**
+**`(4)` THE TOTAL IS THE SUM OF ITS `16` TERMS — CONFIRMED: `170` = `21`+`14`+`12`+`3`+`8`+`21`+`5`+`11`+
+`5`+`6`+`3`+`14`+`7`+`4`+`30`+`6`.** **`(5)` THE SUBTOTALS — CONFIRMED: `IM` `79` + `SM` `55` + `TP` `36`
+= `170`.** **`(6)` THE ROW SPLIT — CONFIRMED: `6` `(bounded)` + `9` unmarked = `15` ROWS.** **`(7)` THE
+PER-ROW `controls` FIGURES — CONFIRMED and reconciled: `P-RL-SM-3` `2`, `P-RL-SM-5` `1`, every other row
+`0`, each printed BESIDE the term and never counted in it (`§5.5.2` item 9).**
+
+**THE HONESTY-BLOCK VERDICT (`§5.5.2`), with BOTH reservations recorded BESIDE the block rather than
+inside it.** **THE VERDICT: the block is ACCURATE AND NOT OUTGROWN — its row count (`15`), its term count
+(`16`), its total (`170`), its caps, its subtotals, its `(bounded)` set (`6` of `15`) and its breakdown
+recommendation all match the executed tables, and it never claims an unbounded universal.** **RECORDED
+BESIDE IT: (a) item 7's POOL-VERSUS-BOUNDARY *"CLEAN"* for all `15` rows RESTS ON A TAUTOLOGICAL
+RE-CHECK — `ADV-RL-4`: the red set's `PRE-4` predicate is `.includes(m)` over the very array it checks, so
+the re-run cannot return anything but CLEAN, and **the verdict's EVIDENCE is void while the verdict's
+CLAIM is not (the authoring-time check of `§5.5.2` item 7 is the filing's own and stands)**; and **(b)
+item 3's DISTINCT figures for THREE ROWS — `P-RL-IM-1` (`17`), `P-RL-IM-2` (`12`) and `P-RL-SM-2` (`7`) —
+are computed from the DECLARED GRID rather than from the AUTHORED DRIVES, so they are REPORTED figures
+about the design, not measurements of the red set.** **Neither reservation converts to a FAIL, and NO
+cell of the honesty block is rewritten** (annotate-never-rewrite).**
+
+### 3c.2 THE NEGATIVE-GENERATOR TASK LIST — the `15` items the TestWriter must be able to DRAW (the supervisor hands this to the TestWriter in parallel; this copy is the RECORD)
+
+**Each item names the shape the red set's generators CANNOT currently produce, with its prose
+counterexample. `A DECLARED REGISTER TERM IS A DRIVE COUNT`: an item that lands INSIDE an existing
+attempt is an assertion; an item that needs a NEW drive owes the re-grain's own arithmetic (see `§3d`).**
+
+| # | The undriven shape | Its prose counterexample |
+| --- | --- | --- |
+| **1** | **a refused ESTABLISHMENT for path `(d)`** | a session whose `install` succeeds but whose establishment is refused: the module's `onStart` wrapper never runs, so **`gestures` stays `0`, the pre-drag capture reads `0`, and NO record exists** — the shape `P-RL-IM-1` path `(d)` currently fakes with a refused ATTACH. |
+| **2** | **the WIDER non-callable family** | `candidatesFor: null` · `false` · `0` · `''` · `Symbol('s')` · `Object.create(null)` · a `Proxy` whose `get`/`apply` traps throw — **every one an ATTEMPT reading `1` per observed move** (`§2.1`'s `candidateCalls` cell), never the `0` a `typeof`-guard-only drive would produce. |
+| **3** | **the field read ONCE (a read-counting getter)** | a `CandidateFor` whose `distance` is declared as `get distance() { reads += 1; return 5 }`: **`reads === 1` per candidate per move** — the counterexample that FAILS today's module (`ADV-RL-7`'s double read). |
+| **4** | **a GENUINE in → out → in CROSSING** | move 1 within `A`'s proximity, move 2 outside every candidate **while the arm has NOT yet stuck** (a driver that observes before the arm), move 3 within `A` again: **one reveal at the terminal, `3` preview invocations, `resets` at most `1`.** |
+| **5** | **the CONSUMER-DRIVEN arm — WITHIN and OUTSIDE proximity — with `resets === 1` and the pre-drag value BY IDENTITY** | `attach(el, {preDragValueOf: () => 777})`, establish, then `reset(el)` **while the gesture is active**: `{ok: true, code: 'ok', committed: true}`, `resets === 1`, `resets` increments **ONCE**, the sink receives `777` **by identity**, and the reveal count reads **`0`** — the drive `ADV-RL-1` shows the module cannot satisfy today. |
+| **6** | **`P-RL-SM-6`'s ORDERED configuration** | one gesture driving shapes `(1)→(2)→(3)→(4)→(5)→(6)→(7)` **in ONE closure**, asserting the per-shape transition class in sequence — not seven standalone drives over a rebuilt closure. |
+| **7** | **the RETARGET's CONTENT** | `state.hidden` **IS** candidate `A` (`toBe`) and `state.shown` **IS** candidate `B` (`toBe`) in the **same** invocation — see pin `ADV-RL-2`; the counterexample that makes `M-11`'s *"carries BOTH the hide of `A` and the show of `B`"* assertable. |
+| **8** | **`P-RL-SM-7`'s SAME-TURN timing** | the arm tested and taken **inside the same observed-move turn** as the consumer's own `onMove` hook (the pinned order: `… → onPreview → the consumer's onMove → THE INVALID-ARM TEST`), read from the double's `ops` **positionally**, not by count. |
+| **9** | **`P-RL-SM-4` stage `(3)` × slot `(b)` reading the DELEGATION ATTEMPT rather than `ops`** | a double whose `reset` **refuses before logging**: the row must read the **attempt** (the recorded intent), because an `ops`-length reading sees nothing (`ADV-RL-13`). |
+| **10** | **`P-RL-IM-4`'s declared ORDER, plus a MODULE-SIDE eighth-member behaviour** | the options object built in the declared order `session · candidatesFor · resolveTarget · onReveal · commit · threshold · onPreview`, and an eighth member (`distanceFor`) asserted to be **IGNORED, never honoured** — today the row asserts only its own fixture. |
+| **11** | **`PRE-4` as a REAL predicate** | a pool-versus-boundary check whose predicate reads the **ROW's declared boundary** (parsed from the row's own table) and not `.includes(m)` over the array it checks (`ADV-RL-4`). |
+| **12** | **`Object.create(null)` and a varying-get `Proxy` in the totality rows** | both as drawn seam shapes: a **null-prototype** options record and a `Proxy` whose getter returns a **different** answer on successive reads — the latter **deliberately outside `§5.5.1` item 6(b)'s pool**, so it is driven as an assertion INSIDE an existing attempt. |
+| **13** | **`P-RL-IM-5` path `(c)` as a PATH rather than a copy of `(b)`** | the third gesture path must differ from the second in its **observable evidence** (a terminal vs. a cancel), or the duplicate is removed and named (`ADV-RL-3`). |
+| **14** | **the `R-8(a)`/`R-11` COMMENT halves** | a corpus carrying a UI-content-write token **in a comment** must FAIL `R-11` exactly as `R-1`'s comment half does — the repair that was propagated to `R-1` and not to `R-8(a)`/`R-11` (`ADV-RL-11`). |
+| **15** | **`R-16`'s runtime half as a TRUE RETARGET** | one observed-move turn whose state carries **both** the hide and the show — today's `R-16` runtime half drives a **DEPARTURE**, which is the hide limb only (`ADV-RL-8`). |
+
+### 3c.3 GATE 5 — THE BLIND GREENS LANDED, AND THE FIVE RECORDED FINDINGS DISPOSITIONED
+
+**THE UNIT'S GREENS SET IS `docs/specs/relocate-greens.md`.** **Its recorded result: `23` PASS / `0` FAIL
+/ `4` NOT-BLIND-RUNNABLE (the four are `RL-G-N1`..`RL-G-N4`), plus the type-layer scenario `RL-G-24`
+(PASS), authored and RUN blind at revision `c75969f` against the landed module and reaching it **only
+through the documented exported surface**.** **`§5.3` item 8's blind-greens condition is DISCHARGED; `§8`'s
+row reading `relocate-greens.md` as `OWED` is read as AS-FILED and superseded in that one point.** **The
+`4` NOT-BLIND-RUNNABLE rows are NOT passes and are NOT re-scoped; `RL-G-N2` (the register's own tables) is
+exactly the gap this gate-4 PBT audit fills, and `RL-G-N1`/`RL-G-N3`/`RL-G-N4` remain the static,
+`[U]`-refused and import-graph probes they were declared to be.**
+
+| Finding | Disposition | Owner | Landing / record |
+| --- | --- | --- | --- |
+| **`F-1`** — the *"show again after a mid-drag hide"* limb (`M-7`'s move 3) **cannot be re-driven through the session's own listener**, because the out-of-proximity move **IS** the invalid arm and the arm's `reset` terminal detaches the tracking listeners; `M-7`'s moves `2→3` are therefore mutually unsatisfiable with `§0A` note 8 | **CONTRACT FIX — PINNED HERE** | **the contract (this pass)** | **PINNED: `M-7`'s RE-SHOW LIMB RIDES THE **RETARGET** TRIGGER (`§2.3` item 5 clause (3), the same-turn hide-plus-show), and the PULL-BACK-OUT trigger's hide is observable ONLY WHILE THE GESTURE SURVIVES — which, once the arm is taken, is until the session's own terminal detaches the listeners. `M-7`'s as-filed moves `2`/`3` are read as the RETARGET pair (move 2 = a retarget to a second candidate, move 3 = a retarget back), and its `onPreview` reading of `3` invocations is UNMOVED. `F-18`'s `outside → inside → outside → outside` order also reads correctly under this pin: the LAST outside move is what takes the arm.** **NO TERM MOVED.** |
+| **`F-2`** — nothing is written by the later release, but *"the arm's reset already detached the tracking listeners, so the later `pointerup` reaches NO HANDLER at all"* — the mechanism is stronger than the clause says | **CONTRACT FIX — PINNED HERE** | **the contract (this pass)** | **PINNED, at `§2.3` item 6(d) and `M-8`: the later release leaves `sinkCalls` unmoved and the module's record untouched, and the HONEST MECHANISM is stated — after the arm, the element carries its start listener only, so the release reaches NO handler of the session's and there is nothing to refuse. A row that asserts a REFUSAL on that path is asserting a mechanism the composition does not have.** **NO TERM MOVED.** |
+| **`F-3`** — `§2.1`(b)'s `revealWrites` comment reads *"INCLUDING one that threw"* where `F-17`/`§2.4` item 1 declare a NON-CALLABLE `onReveal` reads `0` | **CONTRACT FIX — PINNED HERE** | **the contract (this pass)** | **PINNED: the `revealWrites` counter counts ATTEMPTS **WHERE A CALLABLE WAS PRESENT** — `0` for an absent or non-callable `onReveal`, `1` for a callable that threw; `revealWritesApplied` reads `0` in both unusable cases. The `S4` ATTEMPTED-versus-INVOKED split (`§0A` note 15 item `S4`), pinned for `candidatesFor`, is hereby RESTATED FOR `onReveal` — and `§2.1`(b)'s as-written sentence is read as SUPERSEDED IN THAT ONE POINT, kept visible. **The module is RIGHT per `F-17`; the clause is corrected.** **NO TERM MOVED.** |
+| **`F-4`** — the arm's sink call carries `gesture.outcome === null` and value `undefined` **when the pre-drag member is unusable**; the contract never states the terminator discriminator's reading on that path | **CONTRACT FIX — PINNED HERE** | **the contract (this pass)** | **PINNED: THE ARM'S OUTCOME DISCRIMINATOR IS THE SESSION'S OWN AND IS UNAFFECTED BY THE PRE-DRAG REFUSAL.** On the real session the `'reset'` outcome IS set on the handle the module holds (measured at gate 5: `sink=["reset":777]`), and the module's discriminator reads it from that same handle; the `outcome === null` reading is the DOUBLE's artefact (`§2.5` item 7 clause 4(a)), never a module answer. **A degraded pre-drag member changes the third argument's VALUE and nothing about the discriminator, the arity or the counts.** **NO TERM MOVED.** |
+| **`F-5`** — the type `RelocateResetResult` is **used** in the census block but is **not** one of the eight declared type names | **RECORDED — MODULE-SIDE FACT, NO CONTRACT CHANGE OWED** | **the Implementer (stated for the record; not a fix)** | **MEASURED at this pass against the landed module: `RelocateResetResult` is declared **MODULE-LOCAL** in `src/shared/relocate.ts` (a non-exported `interface` with `readonly ok: boolean`, `readonly code: string`, `readonly committed: boolean`) and is NOT exported — so **§2.1's `2 + 8 = 10` census is CORRECT and NOTHING moves**, and the blind pass's inference that it *"requires reading the module's type surface"* to settle was the only reason it went untested. **RECORDED so a later pass does not re-open the census**: the reset record's type is deliberately LOCAL, and a pass that wants it importable would be an ELEVENTH type name and a census change (its own gate). **NO TERM MOVED, NO ROW ID MOVED.** |
+
+**WHAT A LATER MODULE CHANGE OBLIGES, stated for the set.** **`docs/specs/relocate-greens.md` is the
+unit's greens set, and `src/shared/relocate.ts` moving STALES IT WHOLE.** **A later pass that changes the
+module owes a TARGETED RE-DRIVE — not a new set — RECORDED IN THAT SET (an appended block naming the
+revision, the changed behaviour, and the scenarios re-run with their readings).** **The re-drive order,
+taken from the set's own `POST-GREEN` note: the comparator-sensitive rows first (`RL-G-07` · `RL-G-19` ·
+`RL-G-23`), then the arm rows (`RL-G-02` · `RL-G-04` · `RL-G-21`), then the terminal/write rows
+(`RL-G-01` · `RL-G-14` · `RL-G-22`), then every row whose reading touches the changed seam.** **`ADV-RL-1`
+and `ADV-RL-7` (the two `OWED — HOST FIX` findings) EACH OWE ONE: a consumer-driven-`reset` re-drive and a
+read-counting-accessor re-drive respectively.** **A module change with NO recorded re-drive is a review
+finding against the set, and the set may not be re-labelled green without it.**
+
+## 3d. THE SIX CONTRACT PINS (`ADV-RL-2` · `ADV-RL-9` · `ADV-RL-10` · `ADV-RL-12` · `ADV-RL-16` · `ADV-RL-18`) — APPENDED 2026-09-27, ANNOTATE-NEVER-REWRITE
+
+**Every pin below is a dated ANNOTATION beside the AS-FILED text, which is KEPT VISIBLE: no row id, term,
+strategy id, seed, cap or section number moves, and `§3.2 M-2`'s and `§2.1` item 1's as-filed comparator
+text is untouched.** **WHERE EACH PIN LANDS, so a reader need not search: the pins are stated here AND at
+their sites — `§2.1`'s `PreviewSink` block and seam-table row **7**, `§2.1`'s `CommitSink` block and
+`reset` member, `§2.1`'s `detached` member, `§2.1`'s `attach` member, `§2.3` item 5, `§2.3` item 6(d),
+`§2.3` item 7, `§3.1 M-7`/`M-8`/`M-11`/`M-13`, `§5.5.1 P-RL-IM-1`/`P-RL-SM-1`/`P-RL-SM-6` — and THIS block
+is the consolidated record. **The `§2.1` type blocks are MODULE BYTES** (`§0A` note 14 item 1's hazard),
+so **no banned census token is printed in any pin**, and the pins use only spellings `§3.4 R-1` permits.**
+
+| Pin | The reading PINNED | Who owes the change | Term verdict |
+| --- | --- | --- | --- |
+| **`ADV-RL-2`** — **the per-move channel's payload was UNPINNED** (the module emits `{withinProximity, shown, hidden?}`, vocabulary no clause declared, so `M-11`'s *"carries BOTH the hide of `A` and the show of `B`"* was asserted nowhere) | **THE PREVIEW STATE'S MEMBERS, PINNED — EXACTLY `withinProximity`, `shown`, `hidden`, in that declaration order, with `hidden` ABSENT when the invocation hides nothing; the module emits no fourth member.** **THREE DECLARED SHAPES:** **(`i`) SHOW — `{withinProximity: true, shown: <the candidate the observation placed within proximity>}`, `hidden` ABSENT** · **(`ii`) HIDE — `{withinProximity: false, shown: undefined}`, `hidden` ABSENT** · **(`iii`) RETARGET — `{withinProximity: true, shown: B, hidden: A}` in ONE invocation in ONE observed-move turn, where `hidden` IS the previously shown candidate (`toBe`) and `shown` IS the newly placed one (`toBe`).** **So a row asserts the retarget's CONTENT as `hidden === A && shown === B`, by identity, on the SAME invocation — and `M-11`'s *"carries BOTH"* is now assertable.** **`onReveal`'s SECOND ARGUMENT IS ALSO PINNED: `onReveal(target, decision)`'s second argument is THE TARGET THE MODULE RESOLVED FOR THAT GESTURE — the value the module also hands its own sink in the same committing turn (so `decision === target` by identity on a conformant composition, and both are `toBe` the caller's own answer), and it reads `undefined` exactly where the sink's `'end'` value does (a gesture with no resolved target writes nothing).** | **the MODULE conforms on all three shapes and on the second argument (MEASURED, read-only) — so THIS PIN OWES NO MODULE CHANGE; it owes the READINGS in the seam table's row 7, `§2.1`'s `PreviewSink` block, `§2.1`'s `CommitSink` block, `§2.3` item 5 and `§5.5.1 P-RL-SM-6`, and it owes the TestWriter the assertions** | **NO TERM MOVED** — the three shapes are ASSERTIONS INSIDE `P-RL-SM-6`'s `7` move shapes and `M-11`'s existing `2` invocations; no drive is added. |
+| **`ADV-RL-9`** — **the POST-ARM RECOVERY path was UNPINNED** (after the arm commits the pre-drag value, can a gesture that re-enters proximity still write its durable reveal at its completing turn?), **and the per-gesture record's RETENTION after the arm was silent** (`§2.3` item 7 is silent; both the module and the harness assume retention) | **PINNED: YES — a gesture that re-enters proximity after the arm still writes its ONE durable reveal at its completing turn.** **The arm consumes the GESTURE'S SINK SLOT (`sinkSettled`), not the gesture's REVEAL: `revealWrites` reads `1` at the completing terminal, `sinkCalls` stays the arm's `1` (no second sink value), and the later terminal writes NOTHING. THE TWO READINGS ARE DIFFERENT READINGS OF DIFFERENT CHANNELS.** **AND THE RETENTION IS PINNED IN THE SAME BREATH: a gesture the arm took KEEPS its per-gesture record until its session gesture ends — because the session's gesture is STILL RUNNING (the arm is a MID-DRAG `reset`, `§0A` note 8), so the per-move channel goes on receiving every later observation**; **the record is discarded in the module's own `finally` at the terminal that ENDS the gesture (or on a cancel), never at the arm's own `'reset'` turn.** **`§2.3` item 7's silence is hereby CLOSED, and the module's `sinkSettled`/`armed` readings are the declared form.** **THE TERMINAL PATH NEEDED IS NOT A NEW ONE: the recovery lands at `P-RL-SM-1`'s EXISTING path `(1)` (an `'end'` of a gesture whose LAST observation was within proximity), driven with an arm-then-recover prefix, and it is carried as an ASSERTION INSIDE that drive.** **`P-RL-SM-1`'s DECLARED DOMAIN IS UNMOVED — still the `5` terminal paths and the ruled set `{` `'end'` `}` — and NO TERM MOVES: a SIXTH path is REJECTED as a term move (`5 → 6` would move the term, the `SM` subtotal `55 → 56` and the total `170 → 171`, and owe a register re-grain plus a red re-run; the assertion-inside-the-path-`(1)` form is the family's own `S6`/`TP-1` form and owes neither).** | **the MODULE conforms (MEASURED: its `terminalWrite` writes the reveal for a recovered gesture and its `finally` retains a record only while `armed`); the CONTRACT owed the clause (landed here); the TESTWRITER owes the drive** | **NO TERM MOVED — `15` ROWS · `16` TERMS · `170` ATTEMPTS unmoved, `P-RL-SM-1` stays `5`.** |
+| **`ADV-RL-10`** — **the `disposed` reading's TIMING**: `§2.1`'s `detached` says *"true FOREVER once `detach()` has completed, **or once the session reads `disposed === true`**"*, while the module **snapshots** the session's `disposed` at FACTORY time and never re-reads it | **PINNED: THE READING IS A FACTORY-TIME SNAPSHOT.** `detached` is `true` forever once `detach()` has completed, **or** when the session already read `disposed === true` **at the moment the factory ran** — and a disposal performed **after construction is NOT observed**, so `detached` stays `false` and the refusal precedence stays as it was read. **THE PIN IS CHOSEN ON FORCE, not convenience: (a) the LIVE reading would require the module to RE-READ `disposed` on every refusal and on every `attach`/`detach`/`detached` read, i.e. to hold NO snapshot at all, which changes no declared row but makes `detached` a per-read live value while `M-13`(c) and `F-11` declare the INERT module's reading as a FACTORY state; (b) no register row and no `§3` row drives a post-construction disposal's effect on `detached` — `P-RL-SM-8`'s `'disposed'` cell is FACTORY-TIME ONLY (`§3c.1`); and (c) the LIVE reading would silently re-open `§2.5` item 3's stated LIMIT (the module cannot know what the wiring did to its session).** **THE CONSEQUENCE, stated: the `detached` member's second limb is CORRECTED to *"or when the session read `disposed === true` WHEN THIS MODULE WAS CONSTRUCTED"*, the as-filed clause is KEPT VISIBLE and read as SUPERSEDED IN THAT ONE POINT, and THE SIDE THAT OWES THE CHANGE IS THE CLAUSE — the module already implements the pinned reading.** **A later pass that wants LIVE disposal opens its own gate: it is a contract change, not a re-grain.** | **the CONTRACT (`§2.1`'s `detached` member) — the module is UNCHANGED** | **NO TERM MOVED** |
+| **`ADV-RL-12`** — **`attach`'s FAILURE CLASS**: `§2.1` returns `false` when *"the session's own `install` returned `false`"*, while the module treats `false`/`undefined`/`null` as failure — a falsy non-boolean answer (`0`, `''`, `NaN`) is read as SUCCESS and the element is added to the ledger | **PINNED: THE FAILURE CLASS IS EXACTLY `false`.** **`attach` returns `false` — delegating nothing and adding NOTHING to the ledger — iff the session's own `install` returned THE BOOLEAN `false`; EVERY OTHER RETURN — including `undefined`, `null`, `0`, `''`, `NaN`, an empty array, an empty object and any other falsy or non-boolean value — is **the session's declared INSTALL SUCCESS**, so the element IS added to the ledger, `stats().attached` increments, and `attach` returns `true`.** **THE RATIONALE, in one sentence: the frozen session's `install` is contract-declared to answer a BOOLEAN (`docs/specs/gsession.md` `§2.5` item 2), so the only declared refusal is the literal `false`; widening the class makes the module refuse for a session that ANSWERED, which is the `V-13`-adjacent class the contract forbids.** **A `throw` out of `install` remains the module's own absorbed refusal (ZERO ledger change, `false`,`§2.4` item 4), and that limb is UNMOVED.** | **the MODULE owes the narrowing (its guard must read `installed === false`, and `undefined`/`null` must become SUCCESS); the CONTRACT's clause needed no change and is ANNOTATED only to name the class** | **NO TERM MOVED — this is a DECLARED READING inside existing `attach` drives; the TestWriter owes the falsy-non-boolean control as an assertion inside them.** |
+| **`ADV-RL-16`** — **`P-RL-IM-1`'s `(bounded)` justification says *"5 further drives"* / *"`5` further drives"*, while its OWN term arithmetic and `§5.5.3` say `4`** | **THE JUSTIFICATION'S `5` IS ANNOTATED BESIDE, AND NOTHING MOVES: the number of FURTHER DRIVES IS `4` (the non-reaching/declared-reading CLASS is what the fifth PATH CLASS names, and NO FIFTH DRIVE EXISTS).** **THE ARITHMETIC IS UNSWERVING AND IS RESTATED SO IT CANNOT DRIFT AGAIN: `4` `candidatesFor` shapes × `4` observable paths = `16`, `16 + 4` further drives = `20` — and the DECLARED TERM IS `21`, whose derivation is the AS-FILED *"`16` + `5`"* line.** **THE RECONCILIATION, since annotate-never-rewrite forbids deleting either number: the term `21` is `16` GRID DRIVES + `4` FURTHER DRIVES + the `1` FIFTH-PATH-CLASS drive that reaches no seam** — and **the `(bounded)` marking and the `4`-vs-`5` wording are BOTH KEPT, with the arithmetic printed here as the record.** **NO ARITHMETIC IN `§5.5.1` OR `§5.5.3` IS REWRITTEN OR MOVED.** | **the CONTRACT (this annotation) — the term, both halves of the grid and `§5.5.3`'s term row are UNCHANGED** | **NO TERM MOVED — `21` stays `21`; total `170` unmoved.** |
+| **`ADV-RL-18`** — **a SECOND DISTINCT ATTACH WEDGES `detach`**: `attach(elB)` after `attach(elA)` both succeed, after which `detach()` refuses forever (`>1` attached) and `detached` reads `false` permanently, with the session's listeners still installed | **PINNED: THE WEDGE IS DECLARED AS THE BEHAVIOUR — a second DISTINCT attach is NOT refused.** **The declared readings: (i) `attach(elA)` then `attach(elB)` BOTH return `true`, both delegate `session.install`, and `stats().attached` reads exactly `2`; (ii) `detach()` then refuses — RETURNING `false` with ZERO `dispose` delegations — **for the rest of the module's life**, because `§2.1`'s one-controller-per-session rule (`§2.5` item 3) is the composition's premise and detaching the SHARED session on behalf of one control would detach every other control's listeners; (iii) `detached` reads `false` permanently on that composition, since no `detach()` ever completes; and (iv) the session's listeners remain installed and THIS MODULE CANNOT RELEASE THEM — the module neither detects nor repairs the composition, because `§2.5` item 3's LIMIT says a shared-registry detection does not exist here.** **WHY REFUSAL IS NOT THE PIN: a second DISTINCT attach cannot be a refusal without moving `§2.1`'s `attach` contract (whose `false` list is *"already attached / `null` / `undefined` / unusable or disposed session / the session's own `install` returned `false`"* — a distinct element is in none of them), and the wedge is the DIRECT CONSEQUENCE of the one-controller rule the ruling already fixes. Declaring it is the honest form; narrowing it is a contract change with its own gate.** | **the CONTRACT (declared here); the TESTWRITER owes the ROW — see the row reference below** | **NO TERM MOVED — the drive rides inside `P-RL-SM-4`'s existing `(bounded)` `3` stages × `2` slots grid and `F-11`'s existing inert/refusal class as an ASSERTION, so no term and no `(bounded)` set changes.** |
+
+**THE ROW REFERENCE THE TESTWRITER MUST AUTHOR (pin `ADV-RL-18`): `§3.1 M-18`** — **APPENDED to `§3.1`'s
+table as its SIXTEENTH row; `M-1`..`M-17` KEEP THEIR NUMBERS AND THEIR MEANINGS, nothing is renumbered,
+and `§3.2`'s `F-*` ids are untouched.** **`M-18`'s declared content, so the row can be authored without a
+further reading: a composition over one session double; `attach(elA)` then `attach(elB)` with DISTINCT
+element identities ⇒ **both return `true`**, `stats().attached === 2`, exactly TWO `install` delegations
+recorded; then `detach()` ⇒ **`false`**, ZERO `dispose` delegations, and the double's own listener log
+still showing the installs; then `detach()` again ⇒ **`false`** and `detached === false`, unchanged;
+**with the positive control: a composition that attaches ONE element still detaches exactly once and reads
+`detached === true` forever after (`M-16`)** so the row cannot pass vacuously. `[T]`.**
+
+**THE TERM VERDICT FOR ALL SIX PINS, in the form `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS` demands: NO
+DECLARED TERM MOVED.** **The register is still `15` ROWS · `16` TERMS · `170` ATTEMPTS =
+`21` + `14` + `12` + `3` + `8` + `21` + `5` + `11` + `5` + `6` + `3` + `14` + `7` + `4` + `30` + `6`** —
+`21+14=35`, `+12=47`, `+3=50`, `+8=58`, `+21=79`, `+5=84`, `+11=95`, `+5=100`, `+6=106`, `+3=109`,
+`+14=123`, `+7=130`, `+4=134`, `+30=164`, `+6=170` — **its addition chain (`§5.5.3`) still ends at `170`;
+its family subtotals still read `IM` `79` · `SM` `55` · `TP` `36`; both caps still hold (`170 <= 400`
+total, largest per-row term `30` `<= 100`); the `6 + 9 = 15` marked/unmarked split is unmoved; and the
+printed total EQUALS the sum of its own terms.** **SO THIS PASS OWES NO REGISTER RE-GRAIN AND NO RE-RUN OF
+THE RED ON THE REGISTER'S ACCOUNT.** **The re-grains this record DOES leave owed are, in one place: the
+`9` `OWED — TEST-SIDE` findings (`§3c`), their `15` negative-generator items (`§3c.2`), the two `OWED —
+HOST FIX` regressions (`M-13(a)` extended, `F-20`/`F-21` added, `P-RL-SM-7`'s class list extended,
+`P-RL-IM-5`'s shape `(8)` added), the pins' own readings (`§3d`), and `§0A` note 16(c)'s `I-1`
+expectation expression — all TEST-side, and NONE of them a term.**
+
+**WHAT THIS BLOCK DOES NOT DO, stated so no reader over-reads it:** it **re-opens no ruling and no gate-1
+condition**; it **advances no gate**; it **moves no row id, term, strategy id, seed, cap or section
+number**; it **keeps every superseded form visible** (the `§3a`/`§3b` as-filed status lines, the six
+as-filed clauses of `§3d`, the `5` of `ADV-RL-16`, and `§8`'s `OWED` row for the greens set); and it
+**writes no test** — the `15` generator items and every `OWED — TEST-SIDE` remedy are the TestWriter's.

@@ -300,6 +300,14 @@ type SessionDouble = {
    *  code). A row that declares a REFUSED terminal reads THIS, so the cell is not vacuous:
    *  it proves the module ATTEMPTED a terminal and the session refused it. */
   readonly refusals: string[]
+  /** **`ADV-RL-13` — THE DELEGATION-ATTEMPT LOG: every `reset` DELEGATION THIS DOUBLE
+   *  RECEIVED, LOGGED BEFORE ANY REFUSAL IS DECIDED.** An `ops`-length reading cannot see a
+   *  REFUSED delegation (`ops` is pushed only on the SUCCESS path), so a row that declares
+   *  *"ZERO session calls"* could not distinguish *"the module refused locally"* from *"the
+   *  module delegated and the session refused"*. This log makes both readings OBSERVABLE:
+   *  `refused === null` ⇒ the session ran the terminal; a code ⇒ the attempt was refused with
+   *  THAT code. It is read BESIDE `ops`/`resets`, never substituted for them. */
+  readonly attemptedResets: Array<{ element: unknown; handle: unknown; value: unknown; arity: number; refused: string | null }>
   /** **THE `dispose` DELEGATIONS THIS DOUBLE RECEIVED** — `M-16`'s reading. It is a
    *  GETTER over the closure counter, so the figure a row reads is the DELEGATION THE
    *  MODULE ACTUALLY MADE. *(**REPAIRED 2026-09-27 (the `M-16` harness defect):** the
@@ -345,6 +353,7 @@ function sessionDouble(opts: SessionDoubleOptions = {}): SessionDouble {
   const resets: Array<{ element: unknown; handle: unknown; value: unknown; arity: number }> = []
   const terminals: Array<{ outcome: 'end' | 'reset'; value: unknown }> = []
   const refusals: string[] = []
+  const attemptedResets: Array<{ element: unknown; handle: unknown; value: unknown; arity: number; refused: string | null }> = []
   const handed: unknown[] = []
   const hookCalls: string[] = []
   const trace = opts.trace ?? null
@@ -436,6 +445,7 @@ function sessionDouble(opts: SessionDoubleOptions = {}): SessionDouble {
     resets,
     terminals,
     refusals,
+    attemptedResets,
     handed,
     hookCalls,
     hooks: null,
@@ -512,15 +522,26 @@ function sessionDouble(opts: SessionDoubleOptions = {}): SessionDouble {
     reset(el?: unknown, h?: unknown, value?: unknown, arity?: number): RelocateResetResult {
       const refused = opts.refuseResetWith ?? null
       const callArity = arity ?? arguments.length
+      // **THE DELEGATION ATTEMPT IS LOGGED *BEFORE* ANY REFUSAL IS DECIDED** (`ADV-RL-13`):
+      // a refused delegation used to leave NO trace at all outside `refusals`, so a row
+      // reading the `ops` LENGTH could not see it — and `P-RL-SM-4` stage (3) × slot `(b)`
+      // passed vacuously for exactly that reason. The entry carries the arguments AS THE
+      // CALLER PASSED THEM and is MUTATED with the refusing code (or left `null` where the
+      // session ran the terminal).
+      const attempt = { element: arguments.length === 0 ? element : el, handle: h, value, arity: callArity, refused: null as string | null }
+      attemptedResets.push(attempt)
       if (disposed) {
+        attempt.refused = 'disposed'
         refusals.push('disposed')
         return { ok: false, code: 'disposed', committed: false }
       }
       if (refused !== null) {
+        attempt.refused = refused
         refusals.push(refused)
         return { ok: false, code: refused, committed: false }
       }
       if (handle === null) {
+        attempt.refused = 'no-gesture'
         refusals.push('no-gesture')
         return { ok: false, code: 'no-gesture', committed: false }
       }
@@ -1135,13 +1156,35 @@ const REGISTER_CONTROLS: ReadonlyArray<{ row: string; controls: number }> = [
 function declaredControlsOf(row: string): number {
   return REGISTER_CONTROLS.filter((r) => r.row === row).reduce((a, r) => a + r.controls, 0)
 }
-/** The DECLARED term (`§5.5.1`) reconciled against the table this file actually drove —
- *  the reconciliation `§5.3` items 10/11 require. A row that NEVER STARTED is not
- *  reconciled here: its own `finish()` reports it as a FAILURE, which is the loud
- *  message a stopped red run must carry. */
+/** **`ADV-RL-14` — THE STOP-AWARE RECONCILIATION, IN ONE PLACE.** The as-filed harness carried
+ *  TWO readings of a truncated row: `reconcile` FAILED it (an exact-count comparison) while
+ *  `REGISTER-STATUS` TOLERATED it (`toBeLessThanOrEqual`) — so a stopped-early row was failed
+ *  twice with two different attributions and the stop's own cause was ambiguous. Both readings
+ *  now read THIS function, and its four cells (truncated / short-but-not-stopped / exact /
+ *  un-run) are DRIVEN by `REGISTER-STATUS`, so neither branch is vacuous. */
+type Reconciliation = 'unrun' | 'partial' | 'mismatch' | 'exact'
+function stopAwareReconciliation(ran: number, declared: number, stoppedEarly: boolean): Reconciliation {
+  if (ran === 0) return 'unrun'
+  if (stoppedEarly) return ran <= declared ? 'partial' : 'mismatch'
+  return ran === declared ? 'exact' : 'mismatch'
+}
+/** The DECLARED term (`§5.5.1`) reconciled against the table this file actually drove — the
+ *  reconciliation `§5.3` items 10/11 require. A row that NEVER STARTED is not reconciled here:
+ *  its own `finish()` reports it as a FAILURE, which is the loud message a stopped red run must
+ *  carry. */
 function reconcile(rec: RegisterRow, declared: number, what: string): void {
   const ran = rec.attemptsRunPublic()
-  if (ran === 0) return
+  const verdict = stopAwareReconciliation(ran, declared, rec.stoppedEarlyPublic())
+  if (verdict === 'unrun') return
+  if (verdict === 'partial') {
+    expect(
+      ran,
+      `${what} — this row STOPPED EARLY: the register's own stop rule abandoned its remaining attempts at \`${String(
+        registerState.stoppedAtRow,
+      )}\` (${String(registerState.stoppedFor)}), so this executed count is a PARTIAL reading of the declared ${declared} attempts — and the stop is reported as a FAILURE by the row's own record, never tolerated here`,
+    ).toBeLessThanOrEqual(declared)
+    return
+  }
   expect(ran, `${what} — the declared term is ${declared}`).toBe(declared)
 }
 class RegisterRow {
@@ -1210,6 +1253,13 @@ class RegisterRow {
     return this.attemptsRun
   }
 
+  /** **`ADV-RL-14` — THE ONE READING OF THE STOP.** `reconcile` and `REGISTER-STATUS` both read
+   *  THIS flag, so a truncated row is treated identically by both and the stop's attribution is
+   *  unambiguous. */
+  stoppedEarlyPublic(): boolean {
+    return this.stoppedEarly
+  }
+
   /** The row's verdict + its `§5.3` item 10 record line. **An un-run row FAILS on
    *  purpose: a register row that never started may not look green.** */
   finish(): void {
@@ -1269,6 +1319,16 @@ class RegisterRow {
         this.causes.slice(0, 3),
       )}`,
     ).toBe(0)
+    // **`ADV-RL-14` — THE STOP PATH IS ITSELF REPORTED AS A FAILURE, WITH ITS ATTRIBUTION.** A
+    // row whose declared attempts were ABANDONED by the stop rule did not execute its term, and
+    // this assertion makes that STOP the row's own failure — so `reconcile`'s partial-reading
+    // tolerance (the same `stoppedEarly` flag, read above) is never mistaken for a pass.
+    expect(
+      this.stoppedEarly,
+      `${line} — this row STOPPED EARLY at \`${String(registerState.stoppedAtRow)}\` (${String(
+        registerState.stoppedFor,
+      )}): it executed ${this.attemptsRun} of its declared ${declaredTotalOfRow(this.row)} attempts and its remaining attempts were ABANDONED by the register's own stop rule (§5.5.1 strategy item 3). A TRUNCATED ROW IS REPORTED AS A FAILURE, never rounded to green — and \`reconcile\` reads THIS SAME flag, so the register's two assertions agree on the stop`,
+    ).toBe(false)
   }
 }
 
@@ -1868,9 +1928,27 @@ describe('§3.4 R-1..R-16 — the STATIC rows (the module’s own bytes and the 
     // THE POSITIVE CONTROLS, run FIRST so the scans below are falsifiable rather than
     // vacuous — one per half: a corpus that reads a coordinate, and a description
     // claiming a magnitude, must FAIL.
+    // **THE COMMENT-KEEPING VIEW** (`ADV-RL-11`): `normalizeSource` STRIPS comments, so it
+    // could not back this half's own declared clause *"the module's raw bytes, comments
+    // included"* — the (a) half read the comment-stripped corpus while its message claimed
+    // otherwise, and its only positive control was a stripped corpus too. The view below is
+    // the same one `R-1` carries (`R-1`'s comment half is the precedent this row now matches).
+    const commentKeeping = (text: string): string => text.replace(/\$\{([^}]*)\}/g, '$1')
     expect(
       scanRules(normalizeSource('const x = el.client' + 'X'), R8_RULES).some((r) => r.hits.length > 0),
       'R-8(a) (POSITIVE control) — a corpus reading a coordinate must FAIL the byte scan',
+    ).toBe(true)
+    // **THE COMMENT-ONLY POSITIVE CONTROL** — a token carried ONLY in a comment must FAIL the
+    // comment-keeping view (and this is the control the stripped view cannot back).
+    expect(
+      scanRules(commentKeeping('// the pane is placed from get' + 'BoundingClientRect\nconst z = 1'), R8_RULES).some((r) => r.hits.length > 0),
+      'R-8(a) (POSITIVE control, COMMENT-KEEPING view) — a corpus carrying a geometry/coordinate token ONLY in a comment must FAIL: comments are scanned like code (`ADV-RL-11`)',
+    ).toBe(true)
+    expect(
+      scanRules(commentKeeping('// the zone renders at a 240 pixel box on screen\nconst z = 1'), [
+        { id: 'a rendered/geometry claim in the module’s own bytes', tokens: R8_CLAIM_PHRASES },
+      ]).some((r) => r.hits.length > 0),
+      'R-8(a) (POSITIVE control, CLAIM half in a comment) — a corpus whose COMMENT claims a rendered fact must FAIL the claim scan (`ADV-RL-11`)',
     ).toBe(true)
     const claimingControl = 'R-8 — the zone expands to a 240 pixel box on screen, as applied CSS renders it'
     expect(
@@ -1891,15 +1969,25 @@ describe('§3.4 R-1..R-16 — the STATIC rows (the module’s own bytes and the 
     const sourceReport = scanRules(normalizeSource(source), R8_RULES)
     expect(
       sourceReport.every((r) => r.hits.length === 0),
-      `R-8(a) — the MODULE’s raw bytes, comments included, contain NO geometry-observation call, NO coordinate read and NO geometry-shaped member (I-11, P-1/P-12): ${JSON.stringify(
+      `R-8(a) — the MODULE’s raw bytes carry NO geometry-observation call, NO coordinate read and NO geometry-shaped member (I-11, P-1/P-12): ${JSON.stringify(
         sourceReport.filter((r) => r.hits.length > 0),
+      )}`,
+    ).toBe(true)
+    // **THE COMMENTS-INCLUDED READING** (`ADV-RL-11`): the assertion above scans the
+    // comment-STRIPPED view, so it cannot back the words *"comments included"*. This is the
+    // reading that can, and the comment-only control above proves the view is falsifiable.
+    const sourceCommentReport = scanRules(commentKeeping(source), R8_RULES)
+    expect(
+      sourceCommentReport.every((r) => r.hits.length === 0),
+      `R-8(a), COMMENTS INCLUDED — a geometry/coordinate token carried ONLY in a comment of the module FAILS here (the comment-keeping view, exactly as \`R-1\` carries it): ${JSON.stringify(
+        sourceCommentReport.filter((r) => r.hits.length > 0),
       )}`,
     ).toBe(true)
     // THE MODULE'S OWN PROSE, claimed as a fact: this half scans the SUBJECT `R-8`(a)'s
     // sentence is about — the module's bytes — because the row-description half is `(c)`
     // below and the module's comments are the module's own bytes. A module whose comment
     // CLAIMS a rendered fact FAILS here.
-    const sourceClaimReport = scanRules(normalizeSource(source), [
+    const sourceClaimReport = scanRules(commentKeeping(source), [
       { id: 'a rendered/geometry claim in the module’s own bytes', tokens: R8_CLAIM_PHRASES },
     ])
     expect(
@@ -2010,14 +2098,31 @@ describe('§3.4 R-1..R-16 — the STATIC rows (the module’s own bytes and the 
     const report = scanRules(normalizeSource(source), R11_RULES)
     expect(
       report.every((r) => r.hits.length === 0),
-      `R-11 — the module’s bytes (comments scanned like code, literals joined) carry NO UI-content write token: no attribute write, no class write, no text or markup write, no created element, no appended node, no style write (§1 item 5, §4.4 S-13). Hits: ${JSON.stringify(
+      `R-11 — the module’s bytes carry NO UI-content write token: no attribute write, no class write, no text or markup write, no created element, no appended node, no style write (§1 item 5, §4.4 S-13). Hits: ${JSON.stringify(
         report.filter((r) => r.hits.length > 0),
+      )}`,
+    ).toBe(true)
+    // **THE COMMENTS-INCLUDED READING AND ITS OWN COMMENT-ONLY CONTROL** (`ADV-RL-11`): the
+    // declaration above claims *"comments scanned like code"*, while `normalizeSource` STRIPS
+    // comments — so the claim had no reading behind it, and its positive control was a
+    // stripped corpus too. The comment-keeping view (the one `R-1` already carries) is now
+    // driven over the module's bytes and proved falsifiable by a comment-only corpus.
+    const commentKeeping = (text: string): string => text.replace(/\$\{([^}]*)\}/g, '$1')
+    const commentReport = scanRules(commentKeeping(source), R11_RULES)
+    expect(
+      commentReport.every((r) => r.hits.length === 0),
+      `R-11, COMMENTS INCLUDED — a UI-content write token carried ONLY in a comment of the module FAILS here: ${JSON.stringify(
+        commentReport.filter((r) => r.hits.length > 0),
       )}`,
     ).toBe(true)
     const positive = "el.setAttribute('class', 'dragging')"
     expect(
       scanRules(normalizeSource(positive), R11_RULES).some((r) => r.hits.length > 0),
       'R-11 (POSITIVE control) — a corpus performing a UI-content write must FAIL the scan',
+    ).toBe(true)
+    expect(
+      scanRules(commentKeeping('// this element writes set' + 'Attribute when it is dragged\nconst z = 1'), R11_RULES).some((r) => r.hits.length > 0),
+      'R-11 (POSITIVE control, COMMENT-ONLY corpus) — a corpus carrying the write token ONLY in a comment must FAIL the comment-keeping view, so that half of the declaration is falsifiable',
     ).toBe(true)
     const negative = 'const candidate = { opaque: true }\nconst count = 1'
     expect(
@@ -2237,7 +2342,11 @@ describe('§3.4 R-1..R-16 — the STATIC rows (the module’s own bytes and the 
         `R-14 — the module references the READ member \`${read}\` BY NAME (the read set of §2.5 item 1 is closed and this name is inside it)`,
       ).toBe(true)
     }
-    for (const forbidden of ['be' + 'gin', 'can' + 'cel']) {
+    // **`ADV-RL-15` — `end` IS IN THIS LOOP.** The as-filed loop drove `begin`/`cancel` only,
+    // so the third member of the session's own lifecycle was covered by another row's
+    // COMMENT-STRIPPED scan and by nothing here; the module's own bytes must carry no
+    // `session.end` reference either (the lifecycle is the session's, `I-3`/`I-8`).
+    for (const forbidden of ['be' + 'gin', 'en' + 'd', 'can' + 'cel']) {
       const re = new RegExp(`session\\s*\\.\\s*${forbidden}\\b`)
       expect(
         re.test(normalized),
@@ -2399,17 +2508,21 @@ describe('§3.4 R-1..R-16 — the STATIC rows (the module’s own bytes and the 
       readSites,
       `R-16 (REPORTED) — \`${previewName}\` occurs ${readSites} time(s) in the module's normalized source. A module that performs the hide and the show through TWO calls in ONE move FAILS ` + "`M-11`" + `'s single-invocation reading, which is this row's runtime half`,
     ).toBeGreaterThan(0)
-    // THE PAIRED RUNTIME HALF, driven here so the row carries both halves: a retarget
-    // move is ONE invocation carrying BOTH transitions.
+    // THE PAIRED RUNTIME HALF, driven here so the row carries both halves: a RETARGET move is
+    // ONE invocation carrying BOTH transitions. **`ADV-RL-3`/(14) — THIS IS A TRUE RETARGET,
+    // NOT A DEPARTURE:** the as-filed drive moved from WITHIN proximity to OUTSIDE it (a
+    // departure, whose one transition is a single HIDE and which `M-11`/`I-4` already carry),
+    // while a retarget is `A` within proximity → `B` within proximity inside ONE observed-move
+    // turn. Both answers are within the band here; only the CANDIDATE IDENTITY changes.
     const double = sessionDouble()
     const el = { control: 'a' }
     double.setElement(el, 16)
     const previewCalls: unknown[][] = []
-    let distance = 1
+    let candidateIdentity: unknown = { opaque: 'A' }
     const mod = await makeModule(
       {
         session: double.sessionObject,
-        candidatesFor: (): unknown => [answer(distance, distance === 1 ? { opaque: 'A' } : { opaque: 'B' })],
+        candidatesFor: (): unknown => [answer(1, candidateIdentity)],
         resolveTarget: (): unknown => ({ opaque: 'target' }),
         threshold: 20,
         commit: (): void => undefined,
@@ -2424,16 +2537,18 @@ describe('§3.4 R-1..R-16 — the STATIC rows (the module’s own bytes and the 
     inPhase('move', () => {
       double.establish()
       double.move()
-      distance = 99
+      // THE RETARGET: still WITHIN proximity (`distance === 1`, `threshold === 20`) — the
+      // candidate the answer carries is a DIFFERENT one, so the transition is hide-plus-show.
+      candidateIdentity = { opaque: 'B' }
       double.move()
     })
     expect(
       previewCalls.length,
-      'R-16 — ONE observed-move turn carries ONE presentation invocation, for a move INTO proximity and then a move OUT of it',
+      'R-16 — ONE observed-move turn carries ONE presentation invocation: move (1) into `A`’s proximity and move (2) into `B`’s (a RETARGET, not a departure — both moves are within the band)',
     ).toBe(2)
     expect(
       previewCalls[1].length,
-      'R-16 — the retarget/departure invocation carries the transition state in ONE call (never the hide and the show as TWO calls in one turn)',
+      'R-16 — the retarget invocation carries the transition state in ONE call (never the hide and the show as TWO calls in one turn)',
     ).toBeGreaterThan(0)
   })
 })
@@ -2501,7 +2616,7 @@ describe('§2.1 item 1 / §3.1 M-2 · §3.2 F-1..F-3 · §3.3 I-1/I-12 — the P
       { d: 10, t: 20, expected: true, why: '`d < t` — inside' },
       { d: 20, t: 20, expected: true, why: '`d == t` — THE BOUNDARY IS INSIDE (the pin of §2.3 item 1)' },
       { d: 20.5, t: 20, expected: false, why: '`d > t` — outside' },
-      { d: -5, t: -1, expected: false, why: 'a NEGATIVE finite threshold is a LEGAL operand: `-5 <= -1` is false, and no range check exists' },
+      { d: -5, t: -1, expected: false, why: 'the FINITE-NEGATIVE (UNUSABLE) limb of `§0A` note 16: a FINITE operand `< 0` on either side is not a distance, so the answer is `false` — NOT because the comparison is false (the superseded prose claimed `-5 <= -1` is false, which is ARITHMETICALLY FALSE: `-5 <= -1` is TRUE; the declared answer stands under the pinned comparator, which refuses the pair BEFORE the comparison — `ADV-RL-17`)' },
       { d: 0, t: 0, expected: true, why: 'the zero pair, asserting the BOOLEAN only (`-0` is not special-cased)' },
     ]
     for (const drive of drives) {
@@ -3828,6 +3943,33 @@ describe('§3.1 M-1 · M-3..M-17 — the valid states (call counts, call order, 
       c.preDragCalls(),
       'M-13(a) — the consumer’s own recorded invocation count reads 1: the module’s own `reset(element)` entry point does NOT re-read the member (`§2.1` item 7(b): never invoked by `attach`, never re-invoked by `reset`)',
     ).toBe(1)
+    // **`ADV-RL-1` (HOST FIX, AUTHORED RED FIRST) — THE CONSUMER-DRIVEN ARM'S FOUR READINGS.**
+    // `reset(element)` on an ACTIVE gesture is the invalid arm reached through the consumer's
+    // own entry point, and the session's own `'reset'` terminal then runs the COMPLETING branch
+    // unless the module armed it: as filed the module neither armed its invalid-arm path nor
+    // incremented its `resets`, so `onReveal` fired (declared `0` on this channel), the sink
+    // committed the RESOLVED TARGET (declared: the caller-supplied PRE-DRAG value, by identity)
+    // and `stats().resets` read `0` (declared `1`). All four readings are asserted here.
+    expect(
+      c.revealArgs.length,
+      'M-13(a)/`ADV-RL-1` — `onReveal` is invoked ZERO times on the consumer-driven arm: the reset terminal is the RULED terminal domain’s complement (`§0A` note 6), and the arm carries no reveal',
+    ).toBe(0)
+    expect(
+      c.stats().revealWrites,
+      'M-13(a)/`ADV-RL-1` — `stats().revealWrites` reads `0` on the consumer-driven arm (the module’s own counter agrees with the consumer’s record)',
+    ).toBe(0)
+    expect(
+      c.stats().resets,
+      'M-13(a)/`ADV-RL-1` — `stats().resets` reads `1`: entering the session’s own `reset` terminal from THIS entry point IS the module’s invalid arm, exactly as it is from the module’s own move turn',
+    ).toBe(1)
+    expect(
+      c.sinkArgs.length,
+      'M-13(a)/`ADV-RL-1` — the consumer-driven arm makes EXACTLY ONE sink write for the gesture',
+    ).toBe(1)
+    expect(
+      c.sinkArgs[0][1],
+      'M-13(a)/`ADV-RL-1` — the sink write carries the CALLER-SUPPLIED PRE-DRAG VALUE BY IDENTITY (never the resolved TARGET the completing branch would commit): this is the arm’s own commit writer',
+    ).toBe(preDrag)
     // (b) NO ESTABLISHMENT.
     const b = await compose('M-13/b')
     b.mod.attach(b.el)
@@ -4717,6 +4859,17 @@ describe('§3.2 F-4..F-19 — the documented fail-states', () => {
       { name: '`\'x\'`', value: 'x', calls: 1 },
       { name: 'an object', value: {}, calls: 1 },
       { name: 'a Proxy whose traps throw', value: new Proxy({}, { get: (): never => { throw new Error('a hostile trap') } }), calls: 1 },
+      // **`ADV-RL-3`/(b) item 2 — THE WIDER NON-CALLABLE FAMILY, DRIVEN FOR REAL.** These are
+      // the falsy-but-PRESENT forms a `typeof`-guard-only reading would mistake for the ABSENT
+      // form: each is an ATTEMPT (`candidateCalls` reads `1` per observed move), never a default
+      // and never a throw. `Object.create(null)` additionally has NO PROTOTYPE, so a member read
+      // that assumes one degrades instead of throwing.
+      { name: '`null` (PRESENT — not the absent form)', value: null, calls: 1 },
+      { name: '`false` (PRESENT)', value: false, calls: 1 },
+      { name: '`0` (PRESENT)', value: 0, calls: 1 },
+      { name: "`''` (PRESENT)", value: '', calls: 1 },
+      { name: "`Symbol('s')` (PRESENT)", value: Symbol('s'), calls: 1 },
+      { name: '`Object.create(null)` (a NULL-PROTOTYPE record)', value: Object.create(null) as unknown, calls: 1 },
     ] as const) {
       const c = await compose(`F-15/${shape.name}`, shape.value === undefined ? { candidatesFor: undefined } : { candidatesFor: shape.value })
       c.mod.attach(c.el)
@@ -4740,6 +4893,47 @@ describe('§3.2 F-4..F-19 — the documented fail-states', () => {
         `F-15 — the terminal’s outcome is \`\'reset\'\` for ${shape.name}, never a cancel`,
       ).toBe('reset')
     }
+  })
+
+  // =========================================================================
+  // `ADV-RL-3`/(b) item 4 — A GENUINE in → out → in CROSSING (`I-2`'s fork-failing
+  // shape driven with a REAL departure between two within-proximity observations).
+  // =========================================================================
+  it('I-2(crossing) §3.3 — A GENUINE in → out → in CROSSING (`ADV-RL-3`): the SAME gesture observes within `A`, then outside every candidate (the invalid arm is entered there), then within `A` again — and the `\'end\'` terminal still reveals EXACTLY ONCE, so the per-crossing shape FAILS', async () => {
+    let distance = 1
+    let previews = 0
+    const c = await compose('I-2/genuine-crossing', {
+      candidatesFor: (): unknown => [answer(distance, { opaque: 'A' })],
+      onPreview: (): void => void (previews += 1),
+    })
+    c.mod.attach(c.el)
+    c.double.establish()
+    inPhase('move', () => {
+      c.double.move() // (1) WITHIN `A` — shows
+      distance = 999
+      c.double.move() // (2) OUTSIDE every candidate — the invalid arm is entered HERE
+      distance = 1
+      c.double.move() // (3) WITHIN `A` AGAIN — the crossing back
+    })
+    inPhase('terminal', () => {
+      c.double.terminate()
+    })
+    expect(
+      previews,
+      'I-2(genuine crossing) — the presentation channel receives ONE invocation per observed move (3 moves ⇒ 3), so the departure and the return are both OBSERVED',
+    ).toBe(3)
+    expect(
+      c.stats().resets,
+      'I-2(genuine crossing) — the invalid arm is taken AT MOST ONCE for the gesture, at the out-of-proximity observation',
+    ).toBe(1)
+    expect(
+      c.revealArgs.length,
+      'I-2(genuine crossing) — the CONSUMER’s own `onReveal` record reads exactly ONE for a gesture that crossed the proximity THREE times (in, out, in): the per-crossing shape FAILS',
+    ).toBe(1)
+    expect(
+      c.stats().revealWrites,
+      'I-2(genuine crossing) — the module’s own `stats().revealWrites` AGREES with the consumer’s record at 1',
+    ).toBe(1)
   })
 
   it('F-16 §3.2 — an ABSENT, non-callable or THROWING `resolveTarget`: in EVERY case the terminal writes NOTHING for that gesture and it is NOT a cancel (the outcome is still `\'end\'`), and `revealWrites === 0` — a target exists or the reveal has nothing to write', async () => {
@@ -4915,6 +5109,152 @@ describe('§3.2 F-4..F-19 — the documented fail-states', () => {
       'F-19 — the composition’s TOTAL write count for one gesture is 3 here (2 consumer-written, read from the consumer’s own sink’s record, plus 1 module-written, read from the module’s own counter): a total of 2 for one gesture FAILS `F-6`, so the loophole closes where it matters',
     ).toBe(3)
   })
+
+  // =========================================================================
+  // `ADV-RL-1` (HIGH) — THE CONSUMER-DRIVEN ARM'S SHAPE. **AUTHORED RED FIRST**
+  // (`RCA-1`/`RCA-3`): this row exists and FAILS before the Implementer's fix, and its
+  // failing readings are the finding's four.
+  // =========================================================================
+  it('F-20 §3.2 — THE CONSUMER-DRIVEN ARM (`ADV-RL-1`, HOST FIX, AUTHORED RED FIRST): the module’s own `reset(element)` on an ACTIVE gesture IS the invalid arm — ZERO reveals, exactly ONE sink write carrying the caller’s PRE-DRAG value BY IDENTITY, `stats().resets === 1`, and the session’s `reset` entered with ARITY THREE — driven for a last observation WITHIN proximity AND for one OUTSIDE it', async () => {
+    const halves: ReadonlyArray<{ id: string; distance: number }> = [
+      { id: '(a) the last observation is WITHIN proximity', distance: 1 },
+      { id: '(b) the last observation is OUTSIDE proximity (the mirrored cell the finding names: a module that takes the completing branch writes ZERO sink values where exactly one is required)', distance: 999 },
+    ]
+    for (const half of halves) {
+      const preDrag = { opaque: `the-caller-pre-drag/${half.id}` }
+      const c = await compose(`F-20/${half.id}`, {
+        candidatesFor: (): unknown => [answer(half.distance, { opaque: 'the-observed-candidate' })],
+      })
+      c.setPreDrag(preDrag)
+      c.mod.attach(c.el, c.hookArgs)
+      c.double.establish()
+      const opsBeforeMove = c.double.ops.length
+      c.double.move()
+      const armAtTheMove = half.distance > 20
+      if (armAtTheMove && c.double.ops.slice(opsBeforeMove).map((o) => o.op).join(',') !== 'reset') {
+        expect(
+          c.double.ops.slice(opsBeforeMove).map((o) => o.op),
+          `F-20${half.id} — a move outside every candidate's proximity enters the session's own reset terminal FROM THE MODULE'S OWN MOVE TURN`,
+        ).toEqual(['reset'])
+      }
+      let entry: RelocateResetResult | null = null
+      let threw = false
+      try {
+        entry = c.mod.reset(c.el)
+      } catch (e) {
+        threw = true
+        expect(`the consumer entry point THREW: ${describeThrown(e)}`, `F-20${half.id} — refusals are RETURNED, never thrown (§2.1 item 3)`).toBe(null)
+      }
+      expect(threw, `F-20${half.id} — the consumer entry point NEVER throws`).toBe(false)
+      expect(
+        entry === null ? null : Object.keys(entry).sort().join(','),
+        `F-20${half.id} — the entry point returns a \`{ok, code, committed}\` RECORD in both halves`,
+      ).toBe('code,committed,ok')
+      const stats = c.stats()
+      expect(
+        c.revealArgs.length,
+        `F-20${half.id}/ADV-RL-1 — \`onReveal\` reads ZERO on this arm: the reset terminal is the RULED terminal domain’s complement (§0A note 6), and the consumer-driven arm carries no reveal`,
+      ).toBe(0)
+      expect(
+        stats.revealWrites,
+        `F-20${half.id}/ADV-RL-1 — the module's own \`stats().revealWrites\` reads ZERO beside the consumer's own record (the two readings AGREE)`,
+      ).toBe(0)
+      expect(
+        stats.resets,
+        `F-20${half.id}/ADV-RL-1 — \`stats().resets\` reads exactly \`1\`: entering the session's own reset terminal from the CONSUMER'S entry point IS the invalid arm, and it is taken AT MOST ONCE per gesture`,
+      ).toBe(1)
+      expect(
+        c.sinkArgs.length,
+        `F-20${half.id}/ADV-RL-1 — the gesture owes EXACTLY ONE sink write: a last observation outside proximity must not silence it (the mirrored cell), and the consumer's entry point must not add a second`,
+      ).toBe(1)
+      expect(
+        c.sinkArgs[0][1],
+        `F-20${half.id}/ADV-RL-1 — the sink write carries the CALLER-SUPPLIED PRE-DRAG VALUE BY IDENTITY (never the resolved TARGET the completing branch commits)`,
+      ).toBe(preDrag)
+      expect(
+        c.preDragCalls(),
+        `F-20${half.id} — the pre-drag value is captured exactly ONCE per established gesture; the entry point never RE-reads the member (§2.1 item 7(b))`,
+      ).toBe(1)
+      if (!armAtTheMove) {
+        expect(
+          c.double.resets.length,
+          `F-20${half.id}/ADV-RL-1 — the consumer-driven arm delegates to the session EXACTLY ONCE, so the session's own reset terminal is what runs`,
+        ).toBe(1)
+        expect(
+          c.double.resets[0].arity,
+          `F-20${half.id}/ADV-RL-1 — the delegation's ARITY is THREE (\`session.reset(element, handle, value)\`)`,
+        ).toBe(3)
+        expect(
+          c.double.resets[0].value,
+          `F-20${half.id}/ADV-RL-1 — the third argument is the CAPTURED pre-drag value by identity, so the arm's commit writer receives the caller's value rather than a two-argument delegation reading \`undefined\``,
+        ).toBe(preDrag)
+        expect(
+          entry?.ok,
+          `F-20${half.id} — an active gesture's consumer-driven arm reaches a RUNNING terminal, so the session answers \`ok: true\``,
+        ).toBe(true)
+      } else {
+        expect(
+          entry?.ok,
+          `F-20${half.id} — the arm was already taken by the module's own move turn, so the session's slot is gone and the entry point's own delegation is REFUSED (\`ok: false\`) — the arm is never re-taken`,
+        ).toBe(false)
+      }
+    }
+  })
+
+  // =========================================================================
+  // `ADV-RL-7` (MEDIUM) — THE FIELD IS READ ONCE. **AUTHORED RED FIRST**
+  // (`RCA-1`/`RCA-3`): the module reads `distance` once in a usability guard and again in
+  // the comparison, so a varying getter is decided inconsistently.
+  // =========================================================================
+  it('F-21 §3.2 — THE `distance` FIELD IS READ ONCE (`ADV-RL-7`, HOST FIX, AUTHORED RED FIRST): an accessor that COUNTS its reads reads EXACTLY 1 over one observed move, and an accessor answering two DIFFERENT values is decided on the FIRST read', async () => {
+    const variants: ReadonlyArray<{ id: string; first: number; later: unknown; firstWithin: boolean }> = [
+      { id: '(a) `20` on the first read and `NaN` on every later one (the generator shape the audit names)', first: 20, later: NaN, firstWithin: true },
+      { id: '(b) `1` on the first read and `999` on every later one — the FIRST read is WITHIN proximity', first: 1, later: 999, firstWithin: true },
+    ]
+    for (const variant of variants) {
+      const counter = { reads: 0 }
+      const shape: Record<string, unknown> = {
+        candidate: { opaque: 'the-candidate' },
+        get distance(): unknown {
+          counter.reads += 1
+          return counter.reads === 1 ? variant.first : variant.later
+        },
+      }
+      const double = sessionDouble()
+      const el: Record<string, unknown> = { control: `F-21/${variant.id}` }
+      const mod = await makeModule(
+        {
+          session: double.sessionObject,
+          candidatesFor: (): unknown => [shape],
+          resolveTarget: (): unknown => ({ opaque: 'target' }),
+          threshold: 20,
+          commit: (): void => undefined,
+          onReveal: (): void => undefined,
+          onPreview: (): void => undefined,
+        },
+        'F-21',
+      )
+      mod.attach(el)
+      double.setElement(el, 1)
+      double.establish()
+      double.move()
+      expect(
+        counter.reads,
+        `F-21${variant.id} — the \`distance\` accessor was read ${counter.reads} time(s) over ONE observed move; the declared count is EXACTLY 1: the module reads the field ONCE and decides on that ONE value (a second read is a SECOND, possibly different, decision)`,
+      ).toBe(1)
+      if (variant.firstWithin) {
+        expect(
+          mod.stats().resets,
+          `F-21${variant.id} — the FIRST read is WITHIN proximity (${variant.first} against the threshold 20), so the invalid arm must NOT be taken; \`stats().resets\` reads ${mod.stats().resets} — a module that reads the field twice decides on the LATER value and takes the arm`,
+        ).toBe(0)
+      }
+      double.terminate()
+      expect(
+        mod.stats().revealWrites,
+        `F-21${variant.id} — the gesture's last observation was WITHIN proximity on the FIRST reading, so the \`'end'\` terminal reveals once`,
+      ).toBe(1)
+    }
+  })
 })
 
 // ===========================================================================
@@ -5081,23 +5421,54 @@ describe('PRE — the register’s own preconditions and its declared arithmetic
     // REPORTED rather than tuned away — at RED time the tables are still the ones declared
     // here, so the check is meaningful even before the module lands.
     type BoundaryCheck = { readonly row: string; readonly boundary: string; readonly members: readonly string[]; readonly satisfies: (member: string) => boolean }
+    // **`ADV-RL-4` — THE PREDICATES ARE INDEPENDENTLY STATED, NEVER THE MEMBER LIST ECHOED.**
+    // The as-filed form was `satisfies: (m) => [...the same members...].includes(m)`, i.e. each
+    // member was checked against THE VERY ARRAY LITERAL it came from — so `defects` was EMPTY BY
+    // CONSTRUCTION for ANY table, including one whose members contradicted the row's boundary,
+    // and the check asserted nothing about the file. Every predicate below is a CLASS
+    // RECOGNIZER written from the row's own boundary text: a member is satisfied iff its NAME
+    // is one of the classes that text declares, and a member the boundary does not describe is
+    // a DEFECT. The control at the foot of this row drives a foreign member (and the live
+    // superseded one) through every predicate to show the check CAN report a defect.
+    const SEVEN = ['session', 'candidatesFor', 'resolveTarget', 'onReveal', 'commit', 'threshold', 'onPreview']
+    const isCandidatesForShape = (m: string): boolean => /^(callable-|absent$|undefined|non-callable|throwing)/.test(m)
+    const isObservedPath = (m: string): boolean => /^(move$|establishment-no-move|cancel-after-one-move|attached-no-onstart-then-one-move)/.test(m)
+    const isResolveTargetShape = (m: string): boolean => /^(callable-|absent$|non-callable|throwing|target-carried)/.test(m)
+    const isDistanceClass = (m: string): boolean => /^(below|equal|above|hostile|usable-within|usable-outside|absent$|undefined|non-number|NaN|throwing-accessor|read-once)/.test(m)
+    const isDeclaredMemberName = (m: string): boolean => SEVEN.includes(m)
+    const isRevealPath = (m: string): boolean => /^(end-|reset$|cancel$|refused-terminal)/.test(m)
+    const isCompositionShape = (m: string): boolean => /^(conformant|second-writer|slot-empty|same-function|consumer-own)/.test(m)
+    const isObservationDrive = (m: string): boolean => /^(one-move|five-moves|five-outside-moves|control-)/.test(m)
+    const isWindowStage = (m: string): boolean => /^(after-attach|after-establishment|at-the-terminal|slot-)/.test(m)
+    const isResetArm = (m: string): boolean => /^(invalid-arm|end-arm-control|wrong-channel-control)/.test(m)
+    const isMoveShape = (m: string): boolean => /^(into-proximity|same-zone-again|out-of-proximity|back-in|retarget|out-after-retarget|end-terminal|configuration-)/.test(m)
+    const isInvalidityClass = (m: string): boolean => /^(no-candidates|all-outside|unusable-distances|timing-|sticky-control)/.test(m)
+    const isRefusalClass = (m: string): boolean => /^(no-active-gesture|disposed-session|the-remaining-union-members|closed-set-control)/.test(m)
+    const isTotalityInput = (m: string): boolean => /^(pool-member|the-15-member-pool|undefined$|null$|42$|x-string|true$|plain-object|array$|function$|symbol$|bigint$|frozen-empty-record|throwing-accessor|throwing-proxy|callable-returning-its-argument|record-with-one-callable-member|object-create-null|varying-get-proxy)/.test(m)
+    const isArgumentShape = (m: string): boolean => /^(undefined|null|42|x$|throwing-Proxy|throwing-accessor|Object-create-null|varying-get)/.test(m)
+    /** The `P-RL-TP-2` SHAPE IDS as the row's own table writes them, so the derivation below is
+     *  from the LANDED table rather than from the member names this row keeps. */
+    const isArgumentShapeId = (m: string): boolean => /^(undefined|null|42|'x'|a Proxy|a record)/.test(m)
     const checks: readonly BoundaryCheck[] = [
-      { row: 'P-RL-IM-1', boundary: 'at most once per observed move, only from the move turn, and unusable ⇒ the invalid arm', members: ['callable-within', 'absent', 'non-callable', 'throwing'], satisfies: (m) => ['callable-within', 'absent', 'non-callable', 'throwing'].includes(m) },
-      { row: 'P-RL-IM-1/paths', boundary: 'the FOUR observable paths; the fifth path class is DECLARED NON-REACHING', members: ['move', 'establishment-no-move', 'cancel-after-one-move', 'refused-establishment'], satisfies: (m) => ['move', 'establishment-no-move', 'cancel-after-one-move', 'refused-establishment'].includes(m) },
-      { row: 'P-RL-IM-2', boundary: 'at most once per observed move, only within proximity, and unusable ⇒ no write and no throw', members: ['callable-target', 'absent', 'non-callable', 'throwing'], satisfies: (m) => ['callable-target', 'absent', 'non-callable', 'throwing'].includes(m) },
-      { row: 'P-RL-IM-3', boundary: 'exactly one declared outcome per class pair, and the no-default clause; the HOSTILE class is a declared false limb', members: ['below', 'equal', 'above', 'hostile'], satisfies: (m) => ['below', 'equal', 'above', 'hostile'].includes(m) },
-      { row: 'P-RL-IM-4', boundary: 'exactly seven named members, no eighth, `capture` absent', members: ['session', 'candidatesFor', 'resolveTarget', 'onReveal', 'commit', 'threshold', 'onPreview'], satisfies: (m) => ['session', 'candidatesFor', 'resolveTarget', 'onReveal', 'commit', 'threshold', 'onPreview'].includes(m) },
-      { row: 'P-RL-IM-5', boundary: 'every unusable distance ⇒ nothing within proximity, never a throw; only the distance decides', members: ['usable-within', 'usable-outside', 'absent', 'undefined', 'non-number', 'NaN', 'throwing-accessor'], satisfies: (m) => ['usable-within', 'usable-outside', 'absent', 'undefined', 'non-number', 'NaN', 'throwing-accessor'].includes(m) },
-      { row: 'P-RL-SM-1', boundary: "exactly once per 'end', zero on every other path, and crossing-invariant", members: ['end-with-target', 'reset', 'cancel', 'refused-terminal', 'end-with-undefined-target'], satisfies: (m) => ['end-with-target', 'reset', 'cancel', 'refused-terminal', 'end-with-undefined-target'].includes(m) },
-      { row: 'P-RL-SM-2', boundary: 'the declared count per composition shape, with the divergence as the falsifier', members: ['conformant', 'second-writer', 'slot-empty', 'same-function-two-channels', 'consumer-own-hook-write'], satisfies: (m) => ['conformant', 'second-writer', 'slot-empty', 'same-function-two-channels', 'consumer-own-hook-write'].includes(m) },
-      { row: 'P-RL-SM-3', boundary: 'the only call site is the commit seam; crossing-invariant', members: ['one-move', 'five-moves', 'five-outside-moves', 'control-from-start-or-move', 'control-twice-from-the-seam'], satisfies: (m) => ['one-move', 'five-moves', 'five-outside-moves', 'control-from-start-or-move', 'control-twice-from-the-seam'].includes(m) },
-      { row: 'P-RL-SM-4', boundary: 'captured exactly once at establishment; nothing retained', members: ['after-attach', 'after-establishment', 'at-the-terminal'], satisfies: (m) => ['after-attach', 'after-establishment', 'at-the-terminal'].includes(m) },
-      { row: 'P-RL-SM-5', boundary: 'the revert’s CHANNEL is the per-move one, and no reveal occurs on that arm', members: ['invalid-arm', 'end-arm-control', 'wrong-channel-control'], satisfies: (m) => ['invalid-arm', 'end-arm-control', 'wrong-channel-control'].includes(m) },
-      { row: 'P-RL-SM-6', boundary: 'at most one per move, zero at a terminal, never the reveal, and hide-plus-show is ONE turn', members: ['into-proximity', 'same-zone-again', 'out-of-proximity', 'back-in', 'retarget', 'out-after-retarget', 'end-terminal'], satisfies: (m) => ['into-proximity', 'same-zone-again', 'out-of-proximity', 'back-in', 'retarget', 'out-after-retarget', 'end-terminal'].includes(m) },
-      { row: 'P-RL-SM-7', boundary: 'at most once per gesture, from the move turn while active; a later release commits nothing', members: ['no-candidates', 'all-outside', 'unusable-distances'], satisfies: (m) => ['no-candidates', 'all-outside', 'unusable-distances'].includes(m) },
-      { row: 'P-RL-SM-8', boundary: 'the session’s own codes verbatim; no module-local code', members: ['no-active-gesture', 'disposed-session', 'the-remaining-union-members'], satisfies: (m) => ['no-active-gesture', 'disposed-session', 'the-remaining-union-members'].includes(m) },
-      { row: 'P-RL-TP-1', boundary: 'no method throws, with the two named propagations as the bound; the pool members are totality inputs only', members: ['the-15-member-pool'], satisfies: (m) => m === 'the-15-member-pool' },
-      { row: 'P-RL-TP-2', boundary: 'every entry point returns its declared shape for every argument shape', members: ['undefined', 'null', '42', 'x', 'throwing-Proxy', 'throwing-accessor'], satisfies: (m) => ['undefined', 'null', '42', 'x', 'throwing-Proxy', 'throwing-accessor'].includes(m) },
+      { row: 'P-RL-IM-1', boundary: 'at most once per observed move, only from the move turn, and unusable ⇒ the invalid arm', members: ['callable-within', 'absent', 'non-callable', 'throwing'], satisfies: isCandidatesForShape },
+      // **THE PATHS CELL'S MEMBERS ARE THE PATHS THE ROW NOW DRIVES** (`ADV-RL-6`: path `(d)` is
+      // an ATTACHED element with no `onStart` and one observed move, NOT a refused attach), and
+      // the predicate below is what catches the superseded name.
+      { row: 'P-RL-IM-1/paths', boundary: 'the FOUR observable paths; the fifth path class is DECLARED NON-REACHING', members: ['move', 'establishment-no-move', 'cancel-after-one-move', 'attached-no-onstart-then-one-move'], satisfies: isObservedPath },
+      { row: 'P-RL-IM-2', boundary: 'at most once per observed move, only within proximity, and unusable ⇒ no write and no throw', members: ['callable-target', 'absent', 'non-callable', 'throwing', 'target-carried-in-the-answer'], satisfies: isResolveTargetShape },
+      { row: 'P-RL-IM-3', boundary: 'exactly one declared outcome per class pair, and the no-default clause; the HOSTILE class is a declared false limb', members: ['below', 'equal', 'above', 'hostile'], satisfies: isDistanceClass },
+      { row: 'P-RL-IM-4', boundary: 'exactly seven named members, NAMED and ORDERED, no eighth, `capture` absent', members: SEVEN, satisfies: isDeclaredMemberName },
+      { row: 'P-RL-IM-5', boundary: 'every unusable distance ⇒ nothing within proximity, never a throw; only the distance decides; the field is READ ONCE', members: ['usable-within', 'usable-outside', 'absent', 'undefined', 'non-number', 'NaN', 'throwing-accessor', 'read-once'], satisfies: isDistanceClass },
+      { row: 'P-RL-SM-1', boundary: "exactly once per 'end', zero on every other path, and crossing-invariant", members: ['end-with-target', 'reset', 'cancel', 'refused-terminal', 'end-with-undefined-target'], satisfies: isRevealPath },
+      { row: 'P-RL-SM-2', boundary: 'the declared count per composition shape, with the divergence as the falsifier', members: ['conformant', 'second-writer', 'slot-empty', 'same-function-two-channels', 'consumer-own-hook-write'], satisfies: isCompositionShape },
+      { row: 'P-RL-SM-3', boundary: 'the only call site is the commit seam; crossing-invariant', members: ['one-move', 'five-moves', 'five-outside-moves', 'control-from-start-or-move', 'control-twice-from-the-seam'], satisfies: isObservationDrive },
+      { row: 'P-RL-SM-4', boundary: 'captured exactly once at establishment; nothing retained; the post-terminal reading is PER SLOT', members: ['after-attach', 'after-establishment', 'at-the-terminal', 'slot-end', 'slot-reset'], satisfies: isWindowStage },
+      { row: 'P-RL-SM-5', boundary: 'the revert’s CHANNEL is the per-move one, and no reveal occurs on that arm', members: ['invalid-arm', 'end-arm-control', 'wrong-channel-control'], satisfies: isResetArm },
+      { row: 'P-RL-SM-6', boundary: 'at most one per move, zero at a terminal, never the reveal, hide-plus-show is ONE turn, and the ordered gesture is driven as ONE gesture', members: ['into-proximity', 'same-zone-again', 'out-of-proximity', 'back-in', 'retarget', 'out-after-retarget', 'end-terminal', 'configuration-ordered-gesture', 'configuration-standalone'], satisfies: isMoveShape },
+      { row: 'P-RL-SM-7', boundary: 'at most once per gesture, from the move turn while active; a later release commits nothing; the two release TIMINGS are two drives', members: ['no-candidates', 'all-outside', 'unusable-distances', 'timing-release-after-the-arm', 'timing-same-turn-release', 'sticky-control'], satisfies: isInvalidityClass },
+      { row: 'P-RL-SM-8', boundary: 'the session’s own codes verbatim; no module-local code', members: ['no-active-gesture', 'disposed-session', 'the-remaining-union-members', 'closed-set-control'], satisfies: isRefusalClass },
+      { row: 'P-RL-TP-1', boundary: 'no method throws, with the two named propagations as the bound; the pool members are totality inputs only', members: ['pool-member'], satisfies: isTotalityInput },
+      { row: 'P-RL-TP-2', boundary: 'every entry point returns its declared shape for every argument shape', members: ['undefined', 'null', '42', 'x', 'throwing-Proxy', 'throwing-accessor', 'Object-create-null', 'varying-get-Proxy'], satisfies: isArgumentShape },
     ]
     const defects: string[] = []
     for (const check of checks) {
@@ -5111,8 +5482,26 @@ describe('PRE — the register’s own preconditions and its declared arithmetic
     }
     expect(
       defects,
-      'PRE-4/§5.5.2 item 7 — THE POOL-VERSUS-BOUNDARY CHECK IS CLEAN for all FIFTEEN rows against THIS file’s landed tables: every member satisfies its own row’s declared boundary text, and no member required a boundary narrowing. A defect here is a REGISTER DEFECT to be REPORTED, never tuned to green',
+      'PRE-4/§5.5.2 item 7 — THE POOL-VERSUS-BOUNDARY CHECK IS CLEAN for all FIFTEEN rows against THIS file’s landed tables: every member satisfies an INDEPENDENTLY STATED predicate derived from its row’s declared boundary text, and no member required a boundary narrowing. A defect here is a REGISTER DEFECT to be REPORTED, never tuned to green',
     ).toEqual([])
+    // **THE ORDER HALF OF `P-RL-IM-4`'s OWN BOUNDARY** (`ADV-RL-5`): the row's word ORDERED is
+    // asserted HERE, against the declared order BY NAME, rather than left unasserted.
+    expect(
+      checks.find((c) => c.row === 'P-RL-IM-4')?.members.join(','),
+      'PRE-4/P-RL-IM-4 — the seven members are listed in the DECLARED ORDER (`session` · `candidatesFor` · `resolveTarget` · `onReveal` · `commit` · `threshold` · `onPreview`), never in a sorted or arbitrary order',
+    ).toBe(SEVEN.join(','))
+    // **THE CONTROL THAT SHOWS THE CHECK CAN REPORT A DEFECT** (`ADV-RL-4`): every predicate
+    // must answer `false` for a member name the boundary does not describe, and the LIVE
+    // superseded name must be caught by the one row that once drove it.
+    const blindPredicates = checks.filter((c) => c.satisfies('a-member-the-boundary-does-not-describe')).map((c) => c.row)
+    expect(
+      blindPredicates,
+      `PRE-4 (CONTROL) — EVERY row's predicate answers \`false\` for a member name its boundary does not describe, so \`defects\` can actually be non-empty (a predicate that accepts anything is the tautology this repair removes): ${JSON.stringify(blindPredicates)}`,
+    ).toEqual([])
+    expect(
+      checks.find((c) => c.row === 'P-RL-IM-1/paths')?.satisfies('refused-establishment'),
+      'PRE-4 (CONTROL, the LIVE defect this repair exists to catch) — the SUPERSEDED path-`(d)` member `refused-establishment` is NOT a path this row declares any more (the path is re-authored as an attached element with no `onStart` and one observed move, `ADV-RL-6`), so the predicate must report a DEFECT for it',
+    ).toBe(false)
     // The TP-1 pool's members, NAMED, so the check above is not a placeholder: the two
     // PROPAGATION shapes are deliberately NOT in the pool (`§5.5.2` item 7's TP-1 cell).
     expect(
@@ -5126,6 +5515,18 @@ describe('PRE — the register’s own preconditions and its declared arithmetic
       'undefined', 'null', '42', 'x-string', 'true', 'plain-object', 'array', 'function', 'symbol', 'bigint',
       'frozen-empty-record', 'throwing-accessor', 'throwing-proxy', 'callable-returning-its-argument', 'record-with-one-callable-member',
     ])
+    // **THE MEMBERS ARE DERIVED FROM THE ROWS' OWN LANDED TABLES** (`ADV-RL-4`: *"derive each
+    // row's driven members from that row's own table and test them against an independently
+    // stated boundary predicate"*) — the pool and the shape list are read from the SAME objects
+    // the register rows drive, never from a parallel hand-kept list.
+    expect(
+      TP1_POOL.map((m) => m.id).filter((id) => !isTotalityInput(id)),
+      'PRE-4/P-RL-TP-1 — every member of the LANDED pool names a totality input the row’s boundary describes (the predicate is stated independently of the pool)',
+    ).toEqual([])
+    expect(
+      TP2_SHAPES.map((m) => m.id).filter((id) => !isArgumentShapeId(id)),
+      'PRE-4/P-RL-TP-2 — every member of the LANDED shape table names an argument shape the row’s boundary describes',
+    ).toEqual([])
     expect(
       TP1_POOL.filter((m) => m.id === 'throwing-commit' || m.id === 'throwing-preview').length,
       'PRE-4/§5.5.2 item 7 (TP-1’s own cell) — the shapes that make `commit`/`onPreview` throw are NOT in the pool: the two propagation bounds are stated in the row’s own words rather than left implicit',
@@ -5196,11 +5597,17 @@ describe('§5.5.1 — the typed property register (15 rows / 16 terms, executed 
       { id: '(3) NON-CALLABLE (42) — an ATTEMPT with NO invocation (`S4`)', make: () => 42, attemptsTheSeam: true },
       { id: '(4) a callable THROWING', make: () => (): never => { throw new Error('a throwing candidatesFor') }, attemptsTheSeam: true },
     ]
-    const paths: ReadonlyArray<{ id: string; drive: (d: SessionDouble, el: unknown) => void; callsDeclared: number; armDeclared: number }> = [
-      { id: '(a) one observed move with an established gesture', drive: (d, el): void => { d.setElement(el, 1); d.establish(); d.move() }, callsDeclared: 1, armDeclared: -1 },
-      { id: '(b) an ESTABLISHMENT with no move', drive: (d, el): void => { d.setElement(el, 1); d.establish() }, callsDeclared: 0, armDeclared: 0 },
-      { id: '(c) a `cancel` after one move', drive: (d, el): void => { d.setElement(el, 1); d.establish(); d.move(); d.cancel() }, callsDeclared: 1, armDeclared: -1 },
-      { id: '(d) a REFUSED establishment', drive: (d, el): void => { d.setElement(el, 1); void d }, callsDeclared: 0, armDeclared: -1 },
+    const paths: ReadonlyArray<{ id: string; drive: (d: SessionDouble, el: unknown) => void; callsDeclared: number; armDeclared: number; gesturesDeclared: number }> = [
+      { id: '(a) one observed move with an established gesture', drive: (d, el): void => { d.setElement(el, 1); d.establish(); d.move() }, callsDeclared: 1, armDeclared: -1, gesturesDeclared: 1 },
+      { id: '(b) an ESTABLISHMENT with no move', drive: (d, el): void => { d.setElement(el, 1); d.establish() }, callsDeclared: 0, armDeclared: 0, gesturesDeclared: 1 },
+      { id: '(c) a `cancel` after one move', drive: (d, el): void => { d.setElement(el, 1); d.establish(); d.move(); d.cancel() }, callsDeclared: 1, armDeclared: -1, gesturesDeclared: 1 },
+      // **`ADV-RL-6` — PATH `(d)` IS RE-AUTHORED.** As filed it was driven with
+      // `installAccepts: false` — a REFUSED ATTACH — so the module was never installed, the
+      // `move` reached no wrapper and BOTH cells were vacuous, while `armDeclared: -1` left the
+      // *"no invalidity"* half unasserted. The path now drives what the row declares: an
+      // ATTACHED element that never saw `onStart`, then ONE OBSERVED MOVE — so the declared
+      // pair (`candidateCalls === 0`, no invalidity) is READ rather than assumed.
+      { id: '(d) an ATTACHED element with NO `onStart` (never established), then one observed move', drive: (d, el): void => { d.setElement(el, 1); d.move() }, callsDeclared: 0, armDeclared: 0, gesturesDeclared: 0 },
     ]
     for (const shape of shapes) {
       for (const path of paths) {
@@ -5208,7 +5615,7 @@ describe('§5.5.1 — the typed property register (15 rows / 16 terms, executed 
           if (moduleState.mod === null) return moduleState.reason ?? 'the module is absent'
           const create = moduleState.mod['createRelocateSession'] as (o?: unknown) => RelocateModuleMirror
           if (typeof create !== 'function') return '§2.1’s `createRelocateSession` is not a function'
-          const double = sessionDouble({ installAccepts: path.id.startsWith('(d)') ? false : true })
+          const double = sessionDouble()
           const el: Record<string, unknown> = { control: 'a' }
           const mod = create({
             session: double.sessionObject,
@@ -5219,7 +5626,10 @@ describe('§5.5.1 — the typed property register (15 rows / 16 terms, executed 
             onReveal: (): void => undefined,
             onPreview: (): void => undefined,
           })
-          mod.attach(el)
+          const attached = mod.attach(el)
+          if (attached !== true) {
+            return `the composition's own \`attach\` returned ${String(attached)} although the session double accepts the install, so no path of this row can be driven (a non-attached module reaches NO wrapper and every cell would be vacuous — ADV-RL-6)`
+          }
           path.drive(double, el)
           const stats = mod.stats()
           // The declared CALL COUNT for the cell: an ATTEMPT wherever the member carried a
@@ -5229,6 +5639,11 @@ describe('§5.5.1 — the typed property register (15 rows / 16 terms, executed 
           const declaredCalls = path.callsDeclared === 0 ? 0 : shape.attemptsTheSeam ? 1 : 0
           if (stats.candidateCalls !== declaredCalls) {
             return `\`stats().candidateCalls\` reads ${stats.candidateCalls}; the declared count for this cell is ${declaredCalls} (the seam is called AT MOST ONCE per observed move and ONLY from the module’s own move turn — never at establishment, never at a terminal, never on a cancel, never on a refused establishment)`
+          }
+          // **THE DECLARED GESTURE COUNT** (`ADV-RL-6`; the audit's generator item 1: an
+          // establishment that never ran counts NO gesture and leaves NO record).
+          if (stats.gestures !== path.gesturesDeclared) {
+            return `\`stats().gestures\` reads ${stats.gestures}; the declared count for this path is ${path.gesturesDeclared} — an establishment whose \`onStart\` never ran counts NO gesture and leaves NO per-gesture record`
           }
           // The declared ARM outcome for the cell.
           if (path.armDeclared !== -1 && stats.resets !== path.armDeclared) {
@@ -5363,14 +5778,35 @@ describe('§5.5.1 — the typed property register (15 rows / 16 terms, executed 
           if (shape.id.startsWith('(2)')) {
             // ABSENT: the seam is not a member of the options object at all, so the module
             // cannot call it — and the shape's own declaration is 0 calls.
-            const mod2 = create({ session: double.sessionObject, candidatesFor: configuration.candidates, threshold: 20, commit: (): void => undefined, onReveal: (): void => undefined, onPreview: (): void => undefined })
+            // **`ADV-RL-3` — THE TWO CONFIGURATIONS ARE NOW TWO DRIVES.** As filed, BOTH ran the
+            // byte-identical body below, so the row drove ONE path twice while its own cell
+            // declares two distinct ones. The distinguishing dimension IS the answer's shape:
+            // configuration `(ii)` carries a TARGET-SHAPED object in the candidate field, and
+            // with the seam ABSENT the module must still resolve NOTHING and write NOTHING —
+            // the carried candidate is NOT a default target (`F-16`, `P-8`).
+            const carried = configuration.id.startsWith('(ii)') ? { opaque: 'a-carried-target-shaped-candidate' } : undefined
+            const written: unknown[] = []
+            const mod2 = create({ session: double.sessionObject, candidatesFor: (): unknown => [answer(1, carried)], threshold: 20, commit: (_g: unknown, v: unknown): void => void written.push(v), onReveal: (): void => undefined, onPreview: (): void => undefined })
             const el2: Record<string, unknown> = { control: 'absent' }
             mod2.attach(el2)
             double.setElement(el2, 1)
             double.establish()
             double.move()
+            // THE COMMITTING TERMINAL IS DRIVEN TOO, so the zero-write reading is about a
+            // terminal that RAN (as filed the drive stopped at the move, and the cell declared
+            // a TERMINAL write count it never gave the gesture a terminal to produce).
+            double.terminate()
             if (mod2.stats().resolveCalls !== 0) return `with the seam ABSENT the module attempted ${mod2.stats().resolveCalls} call(s); the declared count is 0`
             if (mod2.stats().sinkCalls !== 0) return `with the seam ABSENT the terminal wrote ${mod2.stats().sinkCalls} time(s); the declared write count is 0 and it is NOT a cancel`
+            if (carried !== undefined) {
+              if (written.length !== 0) return `the ABSENT-seam configuration carrying a candidate object wrote ${written.length} sink value(s); the declared write count is 0`
+              if (written.includes(carried)) return 'the terminal committed the object the CANDIDATE field carried: with the seam ABSENT there is no resolved target, and a carried candidate is NEVER a default target (`P-8`, `F-16`)'
+              if (double.terminals.length !== 1 || double.terminals[0].outcome !== 'end') {
+                return `the configuration-(ii) drive did not reach a committing terminal (the session's own log reads ${JSON.stringify(double.terminals.map((t) => t.outcome))}), so the zero-write reading above is not about a terminal`
+              }
+            } else if (double.terminals.length !== 1 || double.terminals[0].outcome !== 'end') {
+              return `the configuration-(i) drive did not reach a committing terminal (the session's own log reads ${JSON.stringify(double.terminals.map((t) => t.outcome))})`
+            }
             return null
           }
           double.move()
@@ -5468,22 +5904,47 @@ describe('§5.5.1 — the typed property register (15 rows / 16 terms, executed 
           const create = moduleState.mod?.['createRelocateSession'] as (o?: unknown) => RelocateModuleMirror
           const double = sessionDouble()
           const el = { control: 'e' }
-          const options: Record<string, unknown> = { session: double.sessionObject, candidatesFor: (): unknown => [answer(1)], resolveTarget: (): unknown => ({ opaque: 't' }), threshold: 20, commit: (): void => undefined, onReveal: (): void => undefined, onPreview: (): void => undefined, distanceFor: (): unknown => 1 }
+          const declaredSeven = ['session', 'candidatesFor', 'resolveTarget', 'onReveal', 'commit', 'threshold', 'onPreview']
+          const options: Record<string, unknown> = {}
+          const defaults: Record<string, unknown> = { session: double.sessionObject, candidatesFor: (): unknown => [answer(1)], resolveTarget: (): unknown => ({ opaque: 't' }), onReveal: (): void => undefined, commit: (): void => undefined, threshold: 20, onPreview: (): void => undefined }
+          for (const name of declaredSeven) options[name] = defaults[name]
+          // **`ADV-RL-5` — THE EIGHTH MEMBER IS A THROWING ACCESSOR**, and the control's reading
+          // is MODULE-SIDE: a module that copies or iterates the record TOUCHES it, and a module
+          // that honours it calls the callable beside it. *(The as-filed form read
+          // `Object.keys` over the row's own literal and then only its own `candidatesFor`
+          // count — unfalsifiable for the module, `ADV-RL-5`.)*
+          let eighthMemberReads = 0
+          let distanceForCalls = 0
+          Object.defineProperty(options, 'distanceFor', {
+            enumerable: true,
+            configurable: true,
+            get: (): unknown => {
+              eighthMemberReads += 1
+              throw new Error('the eighth member was READ — it must be ignored')
+            },
+          })
+          Object.defineProperty(options, 'distancePolicy', {
+            enumerable: true,
+            configurable: true,
+            get: (): unknown => (): unknown => {
+              distanceForCalls += 1
+              return 1
+            },
+          })
+          const keySet = Object.keys(options)
+          if (keySet.length !== 9) return `the control options object carries ${keySet.length} members; the control is malformed`
+          if (keySet.slice(0, 7).join(',') !== declaredSeven.join(',')) return `the control's own record must carry the SEVEN declared names IN THE DECLARED ORDER before the eighth member; it reads ${JSON.stringify(keySet)}`
+          const extra = keySet.filter((k) => !declaredSeven.includes(k))
+          if (extra.length !== 2) return `the eighth-member control must contribute exactly TWO extra names; it contributed ${JSON.stringify(extra)}`
           const mod = create(options)
           mod.attach(el)
-          const keySet = Object.keys(options).sort()
-          if (keySet.length !== 8) return `the control options object carries ${keySet.length} members; the control is malformed`
-          if (!keySet.includes('distanceFor')) return 'the control options object lost its eighth member'
-          // The control's FAILING half: an eighth member is NOT one of the seven declared
-          // names, so a composition carrying it FAILS the set claim.
-          const declaredSeven = ['candidatesFor', 'commit', 'onPreview', 'onReveal', 'resolveTarget', 'session', 'threshold']
-          const extra = keySet.filter((k) => !declaredSeven.includes(k))
-          if (extra.length !== 1) return `the eighth-member control must contribute exactly ONE extra name; it contributed ${JSON.stringify(extra)}`
-          // The control's STATED MODULE half: the extra member is IGNORED, never honoured.
           double.setElement(el, 1)
           double.establish()
           double.move()
+          if (eighthMemberReads !== 0) return `the eighth member's throwing accessor was READ ${eighthMemberReads} time(s) (it threw, so the module read it): the extra member is IGNORED, never read`
+          if (distanceForCalls !== 0) return 'the eighth member was HONOURED (its callable was invoked): the declared module half is that the extra member is IGNORED'
           if (mod.stats().candidateCalls !== 1) return 'the module did not consult its own declared `candidatesFor` member in the eighth-member control'
+          if (mod.stats().resets !== 0) return `the eighth member changed the composition's own behaviour (\`stats().resets\` reads ${mod.stats().resets}); the extra member is IGNORED`
           return null
         },
       },
@@ -5647,11 +6108,23 @@ describe('§5.5.1 — the typed property register (15 rows / 16 terms, executed 
     // BESIDE the term and are NOT counted in it (`R-1`: a cross-row assertion is not a
     // declared term).
     reconcile(rec2, 3, 'P-RL-IM-3 (3b) — the declared term is `3` (the `3` no-default drives)')
-    // THE (3a) HALF'S OWN RECONCILIATION, deferred until BOTH records exist.
-    expect(
-      measured3a,
-      'P-RL-IM-3 (3a) — the declared term is `12` (`4` distance classes × `3` threshold classes)',
-    ).toBe(12)
+    // THE (3a) HALF'S OWN RECONCILIATION, deferred until BOTH records exist. **`ADV-RL-14` — IT
+    // READS THE SAME STOP ATTRIBUTION THE TWO ASSERTIONS ABOVE READ:** a stop inside this half
+    // makes the count a PARTIAL reading of the term (and the row's own record reports the stop
+    // as a FAILURE); a half that ran to completion must reconcile EXACTLY.
+    if (registerState.stoppedAtRow === 'P-RL-IM-3' && measured3a < 12) {
+      expect(
+        measured3a,
+        `P-RL-IM-3 (3a) — the register STOPPED EARLY inside this row at \`${String(registerState.stoppedAtRow)}\` (${String(
+          registerState.stoppedFor,
+        )}), so this executed count is a PARTIAL reading of the declared \`12\` — read from the SAME attribution \`reconcile\`/REGISTER-STATUS use`,
+      ).toBeLessThanOrEqual(12)
+    } else {
+      expect(
+        measured3a,
+        'P-RL-IM-3 (3a) — the declared term is `12` (`4` distance classes × `3` threshold classes)',
+      ).toBe(12)
+    }
     // The BESIDE-the-term assertions of `P-RL-IM-3`(3b), printed AFTER the row's own record
     // so the record is produced even in a red run (a row whose record is missing would be
     // reported as never-started by `REGISTER-STATUS`): they are printed BESIDE the term and
@@ -5683,22 +6156,109 @@ describe('§5.5.1 — the typed property register (15 rows / 16 terms, executed 
     const rec = new RegisterRow('P-RL-IM-4', 'S-RL-SET-1')
     const moduleState = await resolveModule()
     const declaredSeven = ['session', 'candidatesFor', 'resolveTarget', 'onReveal', 'commit', 'threshold', 'onPreview']
-    const varying: ReadonlyArray<{ id: string; member: string; value: unknown }> = [
-      { id: '`session` varied (to a hostile primitive)', member: 'session', value: 42 },
-      { id: '`candidatesFor` varied (to an absent form)', member: 'candidatesFor', value: undefined },
-      { id: '`resolveTarget` varied (to a non-callable)', member: 'resolveTarget', value: 42 },
-      { id: '`onReveal` varied (to an absent form)', member: 'onReveal', value: undefined },
-      { id: '`commit` varied (to a non-callable)', member: 'commit', value: 42 },
-      { id: '`threshold` varied (to a string)', member: 'threshold', value: '20' },
-      { id: '`onPreview` varied (to an absent form)', member: 'onPreview', value: undefined },
+    // **`ADV-RL-5` — THE CELLS ASSERT MODULE-SIDE CONSEQUENCES, AND THE DECLARED ORDER IS
+    // ASSERTED.** The as-filed drives asserted `Object.keys(options)` over the very array
+    // literal the row itself had just built and then only that `attach` returned a boolean —
+    // so the cells were UNFALSIFIABLE FOR THE MODULE (a module that defaulted the varied
+    // member, or read it as something else, satisfied them), and the property's own word
+    // **ORDERED** was asserted NOWHERE (the comparison was over a SORTED key set). Every drive
+    // below now (a) builds the record BY NAME IN THE DECLARED ORDER, (b) asserts that order,
+    // and (c) asserts the VARIED MEMBER'S OWN OBSERVABLE CONSEQUENCE through the module's
+    // counters/refusals — so a member carried but ignored or defaulted shows up as a wrong
+    // reading rather than as silence.
+    type VariedDrive = {
+      readonly id: string
+      readonly member: string
+      readonly value: unknown
+      readonly observe: (mod: RelocateModuleMirror, d: SessionDouble, el: Record<string, unknown>) => string | null
+    }
+    const varying: readonly VariedDrive[] = [
+      {
+        id: '`session` varied (to a hostile primitive) — the consequence: an INERT module, zero session calls, a refusal RECORD (never a throw, never a default session)',
+        member: 'session',
+        value: 42,
+        observe: (mod, d, el) => {
+          if (mod.stats().attached !== 0) return 'a hostile `session` still reports an attachment; the module is VALID BUT INERT (`F-11`)'
+          if (d.ops.length !== 0) return `the hostile session recorded ${d.ops.length} delegation(s); the declared count is ZERO`
+          const refusal = mod.reset(el)
+          if (refusal.ok !== false || typeof refusal.code !== 'string') return `the inert module's refusal reads ${JSON.stringify(refusal)}; the declared shape is a \`{ok: false, code, committed: false}\` RECORD, never a throw and never a default session`
+          return null
+        },
+      },
+      {
+        id: '`candidatesFor` varied (to an absent form) — the consequence: the seam is NEVER consulted (`candidateCalls` 0) and the move takes the invalid arm',
+        member: 'candidatesFor',
+        value: undefined,
+        observe: (mod) => {
+          if (mod.stats().candidateCalls !== 0) return `\`stats().candidateCalls\` reads ${mod.stats().candidateCalls} with the member absent; the declared count is 0 — NOT a default seam`
+          if (mod.stats().resets !== 1) return `the absent seam's empty candidate set must take the invalid arm; \`stats().resets\` reads ${mod.stats().resets}`
+          return null
+        },
+      },
+      {
+        id: '`resolveTarget` varied (to a non-callable) — the consequence: the committing terminal writes NOTHING and does not throw',
+        member: 'resolveTarget',
+        value: 42,
+        observe: (mod) => {
+          if (mod.stats().sinkCalls !== 0) return `the committing terminal wrote ${mod.stats().sinkCalls} time(s) with a NON-CALLABLE \`resolveTarget\`; the declared count is 0 — there is NO default target`
+          if (mod.stats().resets !== 0) return 'a within-proximity move took the invalid arm although the seam\'s unusability is not an invalidity of PLACEMENT'
+          return null
+        },
+      },
+      {
+        id: '`onReveal` varied (to an absent form) — the consequence: the write ATTEMPT is not counted and the sink write is UNAFFECTED',
+        member: 'onReveal',
+        value: undefined,
+        observe: (mod) => {
+          if (mod.stats().revealWrites !== 0) return `\`stats().revealWrites\` reads ${mod.stats().revealWrites} with the reveal seam ABSENT; the attempt is counted only where a callable was present (F-17)`
+          if (mod.stats().revealWritesApplied !== 0) return `\`stats().revealWritesApplied\` reads ${mod.stats().revealWritesApplied} with the reveal seam ABSENT; the declared count is 0`
+          if (mod.stats().sinkCalls !== 1) return `the sink write reads ${mod.stats().sinkCalls} with the reveal seam absent; an absent reveal seam does NOT suppress the commit`
+          return null
+        },
+      },
+      {
+        id: '`commit` varied (to a non-callable) — the consequence: a SLOT-EMPTY composition writes ZERO times and does not throw',
+        member: 'commit',
+        value: 42,
+        observe: (mod) => {
+          if (mod.stats().sinkCalls !== 0) return `\`stats().sinkCalls\` reads ${mod.stats().sinkCalls} with a NON-CALLABLE \`commit\`; the slot-empty composition writes ZERO times`
+          if (mod.stats().revealWrites !== 1) return `the reveal write reads ${mod.stats().revealWrites} with the sink slot empty; the reveal channel is INDEPENDENT of the sink's usability`
+          return null
+        },
+      },
+      {
+        id: '`threshold` varied (to a string) — the consequence: the invalid arm (NO default threshold, NO coercion)',
+        member: 'threshold',
+        value: '20',
+        observe: (mod) => {
+          if (mod.stats().resets !== 1) return `a non-number \`threshold\` did not take the invalid arm (\`stats().resets\` reads ${mod.stats().resets}): nothing is EVER within proximity and NO DEFAULT exists`
+          if (mod.stats().sinkCalls !== 1) return `the arm's own sink write reads ${mod.stats().sinkCalls}; the declared count is 1`
+          return null
+        },
+      },
+      {
+        id: '`onPreview` varied (to an absent form) — the consequence: the move is still OBSERVED and counted, and the terminal proceeds',
+        member: 'onPreview',
+        value: undefined,
+        observe: (mod) => {
+          if (mod.stats().moves !== 1) return `\`stats().moves\` reads ${mod.stats().moves} with the presentation seam absent; the move is still OBSERVED and counted (the seam's absence suppresses no observation)`
+          if (mod.stats().sinkCalls !== 1) return `the committing terminal wrote ${mod.stats().sinkCalls} time(s) with the presentation seam absent; an absent presentation seam suppresses no commit`
+          return null
+        },
+      },
     ]
     for (const drive of varying) {
-      rec.run(`${drive.id} — the key SET read BY NAME is unchanged and exactly the seven`, () => {
+      rec.run(`${drive.id} — the key SET read BY NAME, IN THE DECLARED ORDER, is unchanged and exactly the seven`, () => {
         if (moduleState.mod === null) return moduleState.reason ?? 'the module is absent'
         const create = moduleState.mod['createRelocateSession'] as (o?: unknown) => RelocateModuleMirror
         if (typeof create !== 'function') return '§2.1’s `createRelocateSession` is not a function'
-        const options: Record<string, unknown> = {
-          session: sessionDouble().sessionObject,
+        const double = sessionDouble()
+        const el: Record<string, unknown> = { control: 'a' }
+        // **THE RECORD IS BUILT BY NAME IN THE DECLARED ORDER**, so `Object.keys` reads the
+        // declaration order rather than the iteration order of a literal this row happens to
+        // have typed out.
+        const defaults: Record<string, unknown> = {
+          session: double.sessionObject,
           candidatesFor: (): unknown => [answer(1)],
           resolveTarget: (): unknown => ({ opaque: 't' }),
           onReveal: (): void => undefined,
@@ -5706,14 +6266,29 @@ describe('§5.5.1 — the typed property register (15 rows / 16 terms, executed 
           threshold: 20,
           onPreview: (): void => undefined,
         }
+        const options: Record<string, unknown> = {}
+        for (const name of declaredSeven) options[name] = defaults[name]
         options[drive.member] = drive.value
-        const keySet = Object.keys(options).sort()
-        if (keySet.join(',') !== declaredSeven.slice().sort().join(',')) {
-          return `the options object’s own key SET reads ${JSON.stringify(keySet)}; the declared set is the SEVEN names ${JSON.stringify(declaredSeven)}`
+        const keysInOrder = Object.keys(options)
+        if (keysInOrder.join(',') !== declaredSeven.join(',')) {
+          return `the drive's own record reads ${JSON.stringify(keysInOrder)}; the DECLARED ORDER is ${JSON.stringify(declaredSeven)} — the row asserts the ORDER, not a sorted set`
         }
-        if (keySet.includes('capt' + 'ure')) return 'a `capture` member appeared in the options object (it must be ABSENT, not `false`)'
+        if (keysInOrder.includes('capt' + 'ure')) return 'a `capture` member appeared in the options object (it must be ABSENT, not `false`)'
         const mod = create(options)
-        if (typeof mod.attach({ control: 'a' }) !== 'boolean') return 'the module’s `attach` did not return a boolean for the varied-member drive, so no member is defaulted silently'
+        const attached = mod.attach(el)
+        if (typeof attached !== 'boolean') return 'the module’s `attach` did not return a boolean for the varied-member drive, so no member is defaulted silently'
+        if (drive.member !== 'session') {
+          double.setElement(el, 1)
+          try {
+            double.establish()
+            double.move()
+            double.terminate()
+          } catch (e) {
+            return `the varied-member drive THREW (${describeThrown(e)}): a varied member's value is never a throw out of the module's own turns`
+          }
+        }
+        const consequence = drive.observe(mod, double, el)
+        if (consequence !== null) return `${drive.id}: ${consequence}`
         return null
       })
     }
@@ -5725,6 +6300,7 @@ describe('§5.5.1 — the typed property register (15 rows / 16 terms, executed 
       if (typeof create !== 'function') return '§2.1’s `createRelocateSession` is not a function'
       const double = sessionDouble()
       let distanceForCalls = 0
+      let eighthMemberReads = 0
       const options: Record<string, unknown> = {
         session: double.sessionObject,
         candidatesFor: (): unknown => [answer(1)],
@@ -5733,27 +6309,104 @@ describe('§5.5.1 — the typed property register (15 rows / 16 terms, executed 
         commit: (): void => undefined,
         threshold: 20,
         onPreview: (): void => undefined,
-        distanceFor: (): unknown => {
+      }
+      // **THE EIGHTH MEMBER IS SUPPLIED AS A THROWING ACCESSOR *AND* AS A CALLABLE**
+      // (`ADV-RL-5`): the declared module half is that the extra member is IGNORED — never
+      // READ (a module that copies the record, spreads it, or iterates its keys touches the
+      // accessor and throws) and never CALLED.
+      Object.defineProperty(options, 'distanceFor', {
+        enumerable: true,
+        configurable: true,
+        get: (): unknown => {
+          eighthMemberReads += 1
+          throw new Error('the eighth member was READ — it must be ignored')
+        },
+      })
+      Object.defineProperty(options, 'distancePolicy', {
+        enumerable: true,
+        configurable: true,
+        get: (): unknown => (): unknown => {
           distanceForCalls += 1
           return 1
         },
-      }
-      const keySet = Object.keys(options).sort()
-      const failingSet = keySet.filter((k) => !declaredSeven.includes(k))
-      if (failingSet.join(',') !== 'distanceFor') {
-        return `the control’s failing-set half must contribute exactly \`distanceFor\`; it contributed ${JSON.stringify(failingSet)}`
+      })
+      const optionNames = Object.keys(options)
+      const failingSet = optionNames.filter((k) => !declaredSeven.includes(k))
+      if (failingSet.sort().join(',') !== 'distanceFor,distancePolicy') {
+        return `the control’s failing-set half must contribute exactly the two extra names; it contributed ${JSON.stringify(failingSet)}`
       }
       const el: Record<string, unknown> = { control: 'a' }
-      const mod = create(options)
-      mod.attach(el)
-      double.setElement(el, 1)
-      double.establish()
-      double.move()
+      let mod: RelocateModuleMirror | null = null
+      try {
+        mod = create(options)
+        mod.attach(el)
+        double.setElement(el, 1)
+        double.establish()
+        double.move()
+        double.terminate()
+      } catch (e) {
+        return `the eighth-member control THREW (${describeThrown(e)}): an eighth member is IGNORED, never read and never honoured, and never a throw`
+      }
+      if (mod === null) return 'the eighth-member control returned no module'
+      if (eighthMemberReads !== 0) return `the eighth member's throwing accessor was READ ${eighthMemberReads} time(s); the declared module half is that the extra member is IGNORED (a module that copies or spreads the record reads it)`
       if (distanceForCalls !== 0) return `the eighth member was HONOURED (it was called ${distanceForCalls} time(s)); the declared module half is that the extra member is IGNORED`
       if (mod.stats().candidateCalls !== 1) return 'the module did not use its own declared `candidatesFor` member, so the control drive is vacuous'
+      if (mod.stats().sinkCalls !== 1) return `the module's own seven-member composition wrote ${mod.stats().sinkCalls} time(s) with the two extra members present; the extra members change NOTHING about the declared members`
       return null
     })
+    // **THE DECLARED ORDER, PRINTED BESIDE THE TERM** (`§5.5.1 P-RL-IM-4`'s own cell: *"the set
+    // claim is asserted ON EVERY ATTEMPT OF THE WHOLE REGISTER as a cross-row assertion PRINTED
+    // BESIDE each row's term and NEVER COUNTED IN IT"*): the module's OWN behaviour is IDENTICAL
+    // under a record whose seven members were INSERTED IN A PERMUTED ORDER — so the property's
+    // word ORDERED is a claim about the caller's record and never a hidden dependency of the
+    // module's reading. This drive is a cross-row assertion: it is NOT counted in the term.
+    const orderProbe = ((): string | null => {
+      if (moduleState.mod === null) return moduleState.reason ?? 'the module is absent'
+      const create = moduleState.mod['createRelocateSession'] as (o?: unknown) => RelocateModuleMirror
+      if (typeof create !== 'function') return '§2.1’s `createRelocateSession` is not a function'
+      const readCounts = (order: readonly string[]): number[] | null => {
+        const double = sessionDouble()
+        const values: Record<string, unknown> = {
+          session: double.sessionObject,
+          candidatesFor: (): unknown => [answer(1)],
+          resolveTarget: (): unknown => ({ opaque: 't' }),
+          onReveal: (): void => undefined,
+          commit: (): void => undefined,
+          threshold: 20,
+          onPreview: (): void => undefined,
+        }
+        const record: Record<string, unknown> = {}
+        for (const name of order) record[name] = values[name]
+        const el: Record<string, unknown> = { control: 'the-order-probe' }
+        try {
+          const mod = create(record)
+          mod.attach(el)
+          double.setElement(el, 1)
+          double.establish()
+          double.move()
+          double.terminate()
+          const stats = mod.stats()
+          return [stats.candidateCalls, stats.resolveCalls, stats.moves, stats.revealWrites, stats.sinkCalls, stats.resets]
+        } catch (e) {
+          return null
+        }
+      }
+      const declaredOrderReading = readCounts(declaredSeven)
+      const permutedReading = readCounts(declaredSeven.slice().reverse())
+      if (declaredOrderReading === null || permutedReading === null) {
+        return 'a seven-member record THREW in the order probe, so the ORDER claim has no reading'
+      }
+      if (declaredOrderReading.join(',') !== permutedReading.join(',')) {
+        return `the module's own readings depend on the record's INSERTION ORDER: declared order ${JSON.stringify(declaredOrderReading)} vs permuted ${JSON.stringify(permutedReading)}`
+      }
+      return null
+    })()
+    console.log(`§5.5.1 P-RL-IM-4 order probe (the DECLARED ORDER, printed BESIDE the term and never counted in it) :: ${JSON.stringify({ held: orderProbe === null, detail: orderProbe })}`)
     rec.finish()
+    expect(
+      orderProbe,
+      'P-RL-IM-4 (the ORDERED word, printed BESIDE the term) — the seven declared members are read BY NAME: a record whose members are inserted in the REVERSE order produces the IDENTICAL readings, so the declared order is a claim about the caller’s own record and not a hidden dependency',
+    ).toBe(null)
     reconcile(rec, 8, 'P-RL-IM-4 — the declared term is `8` (the `7` member drives + `1` positive control)')
   })
 
@@ -5772,7 +6425,7 @@ describe('§5.5.1 — the typed property register (15 rows / 16 terms, executed 
     const paths = [
       '(a) the OBSERVED-MOVE path (the answer is consulted)',
       '(b) the COMMITTING-TERMINAL path (the last observed answer is the one the terminal’s target came from)',
-      '(c) the INVALID-ARM path (the arm the unusable states select)',
+      '(c) the INVALID-ARM path reached through the CONSUMER ENTRY POINT (`ADV-RL-3`: one observed move, then `reset(element)` — for a within-proximity shape the arm is entered BY the consumer’s own entry point, and for an outside/unusable shape the move already took it and the entry point’s delegation is REFUSED by the session)',
     ]
     for (const shape of shapes) {
       for (const path of paths) {
@@ -5799,6 +6452,8 @@ describe('§5.5.1 — the typed property register (15 rows / 16 terms, executed 
           double.setElement(el, 1)
           double.establish()
           let threw = false
+          let armBeforeEntry = 0
+          let entryResult: RelocateResetResult | null = null
           try {
             if (path.startsWith('(a)')) {
               double.move()
@@ -5807,7 +6462,8 @@ describe('§5.5.1 — the typed property register (15 rows / 16 terms, executed 
               double.terminate()
             } else {
               double.move()
-              double.terminate()
+              armBeforeEntry = mod.stats().resets
+              entryResult = mod.reset(el)
             }
           } catch (e) {
             threw = true
@@ -5816,6 +6472,30 @@ describe('§5.5.1 — the typed property register (15 rows / 16 terms, executed 
           }
           if (threw) return 'the drive threw'
           const stats = mod.stats()
+          // **PATH `(c)` — THE ARM REACHED A DIFFERENT WAY, READ PER SHAPE.** The as-filed
+          // `(c)` body was BYTE-IDENTICAL to `(b)`'s, while its own label claimed *"the INVALID-ARM
+          // path"* — so the declared path was never driven and the two cells were one drive
+          // (`ADV-RL-3`). Here the shape DECIDES which route the arm takes, and the reading is
+          // the route: a within-proximity answer reaches the arm AT the consumer's entry point
+          // (and the arm's own declared module state follows — `stats().resets` reads 1 and the
+          // arm carries ZERO reveals), while an outside/unusable answer has ALREADY taken the arm
+          // in the move turn, so the entry point's delegation is REFUSED by the session — its
+          // slot is gone — and the module returns that refusal byte-identically.
+          if (path.startsWith('(c)')) {
+            if (entryResult === null) return 'the consumer entry point returned no record'
+            if (shape.usableWithin === true) {
+              if (armBeforeEntry !== 0) return `a within-proximity move took the arm ${armBeforeEntry} time(s); the arm is reachable ONLY where nothing is within proximity`
+              if (entryResult.ok !== true) return `the consumer-driven arm's own terminal ran, so the session answered \`ok: true\`; it answered ${JSON.stringify(entryResult)}`
+              if (stats.resets !== 1) return `\`stats().resets\` reads ${stats.resets} after the consumer's own \`reset(element)\`; the declared reading is 1 — entering the arm is the module's own move-turn path AND the consumer entry point's path (ADV-RL-1's host fix), never zero`
+              if (stats.revealWrites !== 0) return `the consumer-driven arm wrote ${stats.revealWrites} reveal(s); the arm's declared count is ZERO (the reset terminal is the ruled set's complement)`
+            } else {
+              if (armBeforeEntry !== 1) return `an ${shape.usableWithin === null ? 'unusable' : 'outside'} distance did not take the arm in the move turn (\`stats().resets\` read ${armBeforeEntry}); the declared count is 1`
+              if (entryResult.ok !== false) return `after the arm the session's own slot is gone, so the entry point's delegation is REFUSED; the module answered ${JSON.stringify(entryResult)}`
+              if (entryResult.code !== double.refusals[double.refusals.length - 1]) return `the module returned \`${entryResult.code}\` where the SESSION returned \`${double.refusals[double.refusals.length - 1]}\`: the refusal is the session's own code VERBATIM`
+              if (stats.resets !== 1) return `the entry point RE-TOOK the arm (\`stats().resets\` reads ${stats.resets}): the arm is taken AT MOST ONCE per gesture`
+            }
+            return null
+          }
           if (shape.usableWithin === null) {
             if (stats.resets !== 1) return `a \`distance\` that is ${shape.id} did not take the invalid arm (resets reads ${stats.resets}): every UNUSABLE state answers “nothing within proximity”`
             if (stats.revealWrites !== 0) return `an unusable distance wrote ${stats.revealWrites} reveal(s); the declared count is 0 (the arm carries no reveal)`
@@ -5828,6 +6508,75 @@ describe('§5.5.1 — the typed property register (15 rows / 16 terms, executed 
         })
       }
     }
+    // **`ADV-RL-7` — THE DECLARED SHAPE `(8)` ("THE FIELD IS READ ONCE"), CARRIED BESIDE THE
+    // TERM.** *"SHAPE `(8)`"* is how the audit names this reading; it is driven here as a
+    // BESIDE-THE-TERM assertion rather than as an eighth table row, because the row's declared
+    // term is `21` = `7` distance shapes × `3` paths and an EIGHTH shape would move it to `24`.
+    // No repair may move a declared term, so the reading rides inside the row's own drive set
+    // (the `P-RL-SM-4` degradation-shape precedent) and `F-21` carries it as a `§3` row.
+    //
+    // THE READING: the module consults the `distance` FIELD ONCE per observed move and decides
+    // on THAT ONE value. A `distance` accessor that COUNTS its reads must therefore read
+    // EXACTLY `1`, and an accessor answering two DIFFERENT values must be decided on the
+    // FIRST one — the as-filed module reads it once in the usability guard and again in the
+    // comparison, so a varying getter is decided inconsistently (the audit's `ADV-RL-7`).
+    const readOnce = ((): string | null => {
+      if (moduleState.mod === null) return moduleState.reason ?? 'the module is absent'
+      const create = moduleState.mod['createRelocateSession'] as (o?: unknown) => RelocateModuleMirror
+      if (typeof create !== 'function') return '§2.1’s `createRelocateSession` is not a function'
+      const variants: ReadonlyArray<{ id: string; make: (counter: { reads: number }) => Record<string, unknown>; firstWithin: boolean }> = [
+        {
+          id: 'the FIRST read is WITHIN proximity and the second is FAR OUTSIDE (1 ⇒ 999)',
+          make: (counter) => ({
+            candidate: { opaque: true },
+            get distance(): unknown {
+              counter.reads += 1
+              return counter.reads === 1 ? 1 : 999
+            },
+          }),
+          firstWithin: true,
+        },
+        {
+          id: 'the declared generator shape: 20 on the first read and `NaN` on every later one',
+          make: (counter) => ({
+            candidate: { opaque: true },
+            get distance(): unknown {
+              counter.reads += 1
+              return counter.reads === 1 ? 20 : NaN
+            },
+          }),
+          firstWithin: true,
+        },
+      ]
+      for (const variant of variants) {
+        const counter = { reads: 0 }
+        const shape = variant.make(counter)
+        const double = sessionDouble()
+        const el: Record<string, unknown> = { control: 'the-read-once-variant' }
+        const mod = create({
+          session: double.sessionObject,
+          candidatesFor: (): unknown => [shape],
+          resolveTarget: (): unknown => ({ opaque: 't' }),
+          threshold: 20,
+          commit: (): void => undefined,
+          onReveal: (): void => undefined,
+          onPreview: (): void => undefined,
+        })
+        mod.attach(el)
+        double.setElement(el, 1)
+        double.establish()
+        double.move()
+        const stats = mod.stats()
+        if (counter.reads !== 1) {
+          return `the \`distance\` accessor was read ${counter.reads} time(s) over ONE observed move (${variant.id}); the declared count is EXACTLY 1 — the module reads the field ONCE and decides on that ONE value (a second read is a second, possibly different, decision)`
+        }
+        if (variant.firstWithin && stats.resets !== 0) {
+          return `the accessor's FIRST read was WITHIN proximity (the declared one-value decision), so the arm must NOT be taken; \`stats().resets\` reads ${stats.resets} (${variant.id})`
+        }
+      }
+      return null
+    })()
+    console.log(`§5.5.1 P-RL-IM-5 read-once reading (ADV-RL-7; the audit's "shape (8)", carried BESIDE the term) :: ${JSON.stringify({ held: readOnce === null, detail: readOnce })}`)
     reconcile(rec, 21, 'P-RL-IM-5 — the declared term is `21` (`7` distance shapes × `3` gesture paths)')
     const converse = await (async (): Promise<string | null> => {
       if (moduleState.mod === null) return moduleState.reason ?? 'the module is absent'
@@ -5850,6 +6599,10 @@ describe('§5.5.1 — the typed property register (15 rows / 16 terms, executed 
     expect(
       converse,
       'P-RL-IM-5 (the CONVERSE cell, printed BESIDE the term) — an ABSENT `candidate` field with a WITHIN-PROXIMITY `distance` IS within proximity: ONLY THE DISTANCE DECIDES',
+    ).toBe(null)
+    expect(
+      readOnce,
+      'P-RL-IM-5/`ADV-RL-7` (the READ-ONCE cell, printed BESIDE the term) — the `distance` field is READ EXACTLY ONCE per observed move and the module decides on THAT ONE value: an accessor that counts its reads reads 1, and an accessor answering two different values is decided on the FIRST',
     ).toBe(null)
   })
 })
@@ -6239,7 +6992,35 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
             const refusal = mod.reset(el)
             if (refusal.code !== 'no-gesture' || refusal.ok !== false) return `before any establishment the module must refuse \`'no-gesture'\`; it returned ${JSON.stringify(refusal)}`
             if (pd.count() !== 0) return `the consumer’s own recorded invocation count reads ${pd.count()} before any establishment; it must read 0 (the member is invoked only for an ESTABLISHED gesture)`
-            if (double.resets.length !== 0) return 'a capture was recorded before any establishment (the pre-drag count must read 0)'
+            if (double.attemptedResets.length !== 0) return 'a delegation was ATTEMPTED before any establishment (the pre-drag count must read 0, and the reading is the double\'s own ATTEMPT log — a refused delegation leaves no entry in `ops`)'
+            if (isResetSlot) {
+            // **`ADV-RL-3` — THE SLOT DIMENSION AT STAGE (1), DRIVEN FOR REAL.** The as-filed
+            // stage-(1) cells were the SAME drive for both slots. Slot `(b)` — the invalid arm's
+            // slot — drives the DECLARED refused-establishment variant HERE, where *"0 captures and
+            // 0 records"* is exactly what stage (1) declares (the variant was moved out of stage
+            // (2) × `(b)`, where it duplicated that cell's own reading). The variant is an
+            // ASSERTION INSIDE this declared attempt: no drive and no term moves.
+            // **THE VARIANT INSIDE SHAPE (b) — AN ASSERTION INSIDE THIS DECLARED ATTEMPT,
+            // NEVER A NEW DRIVE** (`§5.5.1 P-RL-SM-4`'s own cell: *"plus, as a variant INSIDE
+            // shape (b), a gesture whose session refused establishment: `0` captures and `0`
+            // records"*; `A DECLARED REGISTER TERM IS A DRIVE COUNT`). The declared term stays
+            // `6` = `3` stages × `2` slot shapes.
+            const variant = ((): string | null => {
+              const vDouble = sessionDouble({ installAccepts: false })
+              const vEl: Record<string, unknown> = { control: 'a/refused-establishment' }
+              const vPd = preDragChannel({ opaque: 'the-refused-establishment-pre-drag' })
+              const vMod = create({ session: vDouble.sessionObject, candidatesFor: (): unknown => [answer(1)], resolveTarget: (): unknown => ({ opaque: 't' }), threshold: 20, commit: (): void => undefined, onReveal: (): void => undefined, onPreview: (): void => undefined })
+              if (vMod.attach(vEl, vPd.hooks) !== false) return 'the refused establishment did not return `false`'
+              vDouble.setElement(vEl)
+              vDouble.establish()
+              const vRefusal = vMod.reset(vEl)
+              if (vRefusal.code !== 'no-gesture') return `a refused establishment must leave NO record: \`reset\` returned ${JSON.stringify(vRefusal)}`
+              if (vPd.count() !== 0) return `a REFUSED establishment invoked the member ${vPd.count()} time(s): the capture is once per ESTABLISHED gesture, so a refusal captures nothing`
+              if (vDouble.attemptedResets.length !== 0) return 'a delegation was ATTEMPTED for a REFUSED establishment: the capture is once per ESTABLISHED gesture, so a refusal captures nothing'
+              return null
+            })()
+            if (variant !== null) return variant
+          }
             return null
           }
           if (stage.startsWith('(2)')) {
@@ -6248,6 +7029,7 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
             const refusal = mod.reset(el)
             if (refusal.ok !== true) return `after establishment the arm must be reachable; the module returned ${JSON.stringify(refusal)}`
             if (double.resets.length !== 1) return `the delegation record reads ${double.resets.length} entries; the arm’s own delegation must be EXACTLY 1`
+            if (double.attemptedResets.length !== 1 || double.attemptedResets[0].refused !== null) return `the delegation ATTEMPT log reads ${double.attemptedResets.length} entr(y/ies) with refusal ${String(double.attemptedResets[0]?.refused)}; the arm's own delegation is ATTEMPTED EXACTLY ONCE and the session RUNS its terminal for it (never a refusal)`
             if (double.resets[0].arity !== 3) return `the delegation's ARITY reads ${double.resets[0].arity}; the frozen form is \`session.reset(element, handle, value)\` — ARITY THREE — so the third-argument identity below is the module's OWN captured value (§2.3 item 9(a))`
             if (double.resets[0].value !== preDrag) return 'the captured value is not the caller-supplied pre-drag value by identity (the module must hand on the member\'s OWN answer, never a clone, a default or an invented value)'
             if (isResetSlot) {
@@ -6323,37 +7105,43 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
                 if (dModule.resets[0].value !== undefined) return `degradation shape ${degradation.id}: the third argument reads ${brief(dModule.resets[0].value)}; THE NO-CALLER-VALUE REFUSAL passes \`undefined\` — NOTHING is invented (no default, no sentinel, no \`null\`, no \`0\`, no empty string)`
                 if (dStats.revealWrites !== 0) return `degradation shape ${degradation.id}: the arm wrote a reveal (${dStats.revealWrites}); the arm's declared reading is ZERO reveals`
               }
-              // **THE VARIANT INSIDE SHAPE (b) — AN ASSERTION INSIDE THIS DECLARED ATTEMPT,
-              // NEVER A NEW DRIVE** (`§5.5.1 P-RL-SM-4`'s own cell: *"plus, as a variant INSIDE
-              // shape (b), a gesture whose session refused establishment: `0` captures and `0`
-              // records"*; `A DECLARED REGISTER TERM IS A DRIVE COUNT`). The declared term stays
-              // `6` = `3` stages × `2` slot shapes.
-              const variant = ((): string | null => {
-                const vDouble = sessionDouble({ installAccepts: false })
-                const vEl: Record<string, unknown> = { control: 'a/refused-establishment' }
-                const vPd = preDragChannel({ opaque: 'the-refused-establishment-pre-drag' })
-                const vMod = create({ session: vDouble.sessionObject, candidatesFor: (): unknown => [answer(1)], resolveTarget: (): unknown => ({ opaque: 't' }), threshold: 20, commit: (): void => undefined, onReveal: (): void => undefined, onPreview: (): void => undefined })
-                if (vMod.attach(vEl, vPd.hooks) !== false) return 'the refused establishment did not return `false`'
-                vDouble.setElement(vEl)
-                vDouble.establish()
-                const vRefusal = vMod.reset(vEl)
-                if (vRefusal.code !== 'no-gesture') return `a refused establishment must leave NO record: \`reset\` returned ${JSON.stringify(vRefusal)}`
-                if (vPd.count() !== 0) return `a REFUSED establishment invoked the member ${vPd.count()} time(s): the capture is once per ESTABLISHED gesture, so a refusal captures nothing`
-                if (vDouble.resets.length !== 0) return 'a capture was recorded for a REFUSED establishment: the capture is once per ESTABLISHED gesture, so a refusal captures nothing'
-                return null
-              })()
-              if (variant !== null) return variant
             }
             return null
           }
-          // STAGE (3): at and after the terminal the running count is STILL exactly 1, the
-          // record is GONE, and a `reset` refuses with ZERO session calls.
+          // STAGE (3): at and after the terminal the running count is STILL exactly 1 — and
+          // **THE READING IS SPLIT PER SLOT** (`ADV-RL-13`): the two slot shapes do NOT have
+          // the same post-terminal state, so one shared reading could only be vacuous.
+          //
+          //   · SLOT `(a)` (terminated by an `'end'`): the record IS GONE, so the entry point
+          //     refuses LOCALLY — read as ZERO DELEGATION ATTEMPTS on the double's own
+          //     attempt log (an `ops`-length reading could not tell the two apart) with the
+          //     module's own `'no-gesture'` refusal.
+          //   · SLOT `(b)` (terminated by the ARM): the per-gesture record SURVIVES the arm BY
+          //     DESIGN (`F-18`/`P-RL-IM-1`(f): the session's own gesture is still running and
+          //     the move channel keeps receiving observations), so *"the record is GONE"* is
+          //     NOT assertable here. What IS declared: the arm is NOT re-taken
+          //     (`stats().resets` stays 1), the pre-drag value is NOT re-captured, and the
+          //     entry point DELEGATES — the double's attempt log carries it and the refusal
+          //     is the SESSION's own code, byte-identical.
           double.establish()
           double.move()
           double.terminate()
           const opsAtTerminal = double.ops.length
+          const attemptsAtTerminal = double.attemptedResets.length
+          const resetsAtTerminal = mod.stats().resets
           const refusal = mod.reset(el)
-          if (refusal.code !== 'no-gesture') return `after the terminal the record must be GONE: \`reset\` returned ${JSON.stringify(refusal)}`
+          const delegationAttempts = double.attemptedResets.slice(attemptsAtTerminal)
+          if (isResetSlot) {
+            if (refusal.ok !== false) return `after the ARM the entry point answered ${JSON.stringify(refusal)}; the session's own slot is gone, so the delegation is refused and \`ok\` reads \`false\``
+            if (delegationAttempts.length !== 1) return `after the ARM the entry point made ${delegationAttempts.length} delegation ATTEMPT(S); the record survives the arm by design, so the consumer-driven entry point DELEGATES exactly once (\`ops\` cannot see a refused delegation — this reading is the double's own ATTEMPT log, ADV-RL-13)`
+            if (delegationAttempts[0].refused !== 'no-gesture') return `the post-arm delegation's own refusing code reads ${String(delegationAttempts[0].refused)}; the session's own slot is gone, so the session refuses \`'no-gesture'\``
+            if (refusal.code !== double.refusals[double.refusals.length - 1]) return `the module returned \`${refusal.code}\` where the SESSION returned \`${double.refusals[double.refusals.length - 1]}\`: the code is propagated VERBATIM (never a module-local reading)`
+            if (mod.stats().resets !== resetsAtTerminal) return `the post-arm entry point RE-TOOK the arm (\`stats().resets\` reads ${mod.stats().resets}, it read ${resetsAtTerminal} at the terminal): the arm is taken AT MOST ONCE per gesture`
+            if (capturesBefore() !== 1) return `the consumer's own recorded invocation count reads ${capturesBefore()} after the post-arm entry point; it must STILL be exactly 1 — \`reset\` never RE-captures the pre-drag value`
+            return null
+          }
+          if (refusal.code !== 'no-gesture') return `after the \`'end'\` terminal the record must be GONE: \`reset\` returned ${JSON.stringify(refusal)}`
+          if (delegationAttempts.length !== 0) return `the post-terminal refusal made ${delegationAttempts.length} DELIVERY ATTEMPT(S) to the session (${JSON.stringify(delegationAttempts.map((a) => a.refused))}): the record is discarded in the module's own \`finally\`, so the entry point refuses LOCALLY and never asks the session anything`
           if (double.ops.length !== opsAtTerminal) return 'the post-terminal refusal made a session call: the record is discarded in the module’s own `finally`, never by asking the session anything'
           if (capturesBefore() !== 1) return `the consumer’s own recorded invocation count reads ${capturesBefore()}; it must STILL be exactly 1 — the terminal DISCARDS the record, it does not re-read the member`
           return null
@@ -6454,6 +7242,15 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
       { id: "(7) an `'end'` terminal", describe: '0 preview invocations at the terminal', candidates: (): unknown => [answer(1, { opaque: 'A' })], expectedPreview: 0, terminal: true },
     ]
     const configurations = ['(i) the ordered gesture (1)→(7)', '(ii) each shape driven STANDALONE from a fresh session']
+    // **`ADV-RL-3` — THE ORDERED GESTURE IS DRIVEN FOR REAL.** The as-filed form drove the
+    // SAME single `establish(); move()` for BOTH configurations, so the declared *"ordered
+    // gesture `(1)→(7)`"* was never driven and configurations `(i)`/`(ii)` were
+    // BYTE-IDENTICAL drives of the same path (the row's own `candidates: (step) => …`
+    // parameter was never even consulted). Configuration `(i)` now walks the declared shape
+    // order through a step counter INSIDE the seam (one consultation per observed move) and
+    // reads the CUMULATIVE transition count of the prefix `(1)…(k)`; configuration `(ii)`
+    // drives shape `k` alone. The term is UNMOVED (`7` shapes × `2` configurations).
+    const stepOrder = orderedShapes.filter((s) => s.terminal !== true)
     for (const configuration of configurations) {
       for (const shape of orderedShapes) {
         rec.run(`${shape.id} × ${configuration}`, () => {
@@ -6469,9 +7266,16 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
           const previewStates: unknown[] = []
           const double = sessionDouble()
           const el: Record<string, unknown> = { control: 'a' }
+          const shapeIndex = orderedShapes.indexOf(shape)
+          let step = 0
+          const orderedSeam = (): unknown => {
+            const index = Math.min(step, stepOrder.length - 1)
+            step += 1
+            return stepOrder[index].candidates(index + 1)
+          }
           const mod = create({
             session: double.sessionObject,
-            candidatesFor: shape.candidates,
+            candidatesFor: configuration.startsWith('(i)') ? orderedSeam : shape.candidates,
             resolveTarget: (): unknown => ({ opaque: 't' }),
             threshold: 20,
             commit: (_g: unknown, v: unknown): void => {
@@ -6490,32 +7294,43 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
           })
           mod.attach(el)
           double.setElement(el, 1)
-          if (configuration.startsWith('(ii)') && shape.terminal !== true) {
-            inPhase('move', () => {
-              double.establish()
-              double.move()
-            })
-          } else if (configuration.startsWith('(i)') && shape.terminal !== true) {
-            inPhase('move', () => {
-              double.establish()
-              double.move()
-            })
-          } else {
-            inPhase('move', () => {
-              double.establish()
-              double.move()
-            })
+          // CONFIGURATION `(i)`: the ordered prefix `(1)…(k)` (and, for the terminal shape,
+          // all six observed moves followed by the release). CONFIGURATION `(ii)`: shape `k`
+          // alone, from a fresh session, exactly as the row's own cell declares.
+          const orderedPrefix = shape.terminal === true ? stepOrder.length : shapeIndex + 1
+          const movesToDrive = configuration.startsWith('(i)') ? orderedPrefix : 1
+          inPhase('move', () => {
+            double.establish()
+            for (let i = 0; i < movesToDrive; i += 1) double.move()
+          })
+          if (shape.terminal === true) {
             inPhase('terminal', () => {
               double.terminate()
             })
           }
           const stats = mod.stats()
-          const declared = shape.expectedPreview
+          const declared = configuration.startsWith('(i)') ? movesToDrive : shape.expectedPreview
           if (shape.terminal === true) {
+            if (previewInMoveTurns !== movesToDrive) {
+              return `the terminal drive produced ${previewInMoveTurns} preview invocation(s) across its ${movesToDrive} observed move(s); the declared count is ONE PER OBSERVED MOVE`
+            }
             if (previewAtTerminal !== 0) return `an \`'end'\` terminal produced ${previewAtTerminal} preview invocation(s); the declared count at a committing terminal is ZERO`
-            if (!sinkCalls.includes('terminal')) return 'the terminal did not produce a sink write, so the zero-preview reading is not about a COMMITTING terminal'
+            if (double.terminals.length === 0) return 'no session terminal ran, so the zero-preview reading is not about a terminal that reached the gesture'
+            if (configuration.startsWith('(i)')) {
+              // THE ORDERED PREFIX CONTAINS THE TWO OUT-OF-PROXIMITY SHAPES `(3)`/`(6)`, so the
+              // invalid arm IS entered from the module's own move turn somewhere inside the
+              // prefix and the release is the RECOVERED terminal (`§0A` note 8). The zero reading
+              // above is therefore about a terminal that RAN, and the gesture's ONE sink write
+              // was the arm's own (from the move turn).
+              if (!double.terminals.some((t) => t.outcome === 'reset')) {
+                return `the ordered prefix contains out-of-proximity moves, so the invalid arm is entered from a move turn; the session's own terminal log reads ${JSON.stringify(double.terminals.map((t) => t.outcome))}`
+              }
+              if (sinkCalls.length === 0) return 'the ordered gesture produced NO sink write at all, so this cell is not about a live gesture'
+            } else if (!sinkCalls.includes('terminal')) {
+              return 'the terminal did not produce a sink write, so the zero-preview reading is not about a COMMITTING terminal'
+            }
           } else if (previewInMoveTurns !== declared) {
-            return `the per-move channel was invoked ${previewInMoveTurns} time(s) in MOVE turns; the declared count for this shape is ${declared} (AT MOST ONE PER OBSERVED MOVE)`
+            return `the per-move channel was invoked ${previewInMoveTurns} time(s) in MOVE turns; the declared count for this shape is ${declared} (AT MOST ONE PER OBSERVED MOVE; configuration \`(i)\` reads the CUMULATIVE count of the ordered prefix \`(1)…(k)\`)`
           }
           if (revealsInMoveTurns !== 0) return `${revealsInMoveTurns} reveal invocation(s) arrived in a MOVE turn: the presentation channel NEVER invokes the reveal channel`
           if (sinkInPreviewTurn !== previewInMoveTurns) return 'the per-move channel’s own record diverges from the module’s move turns'
@@ -6564,12 +7379,27 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
           double.setElement(el)
           double.establish()
           const opsBefore = double.ops.length
-          double.move()
+          const attemptsBefore = double.attemptedResets.length
+          // **`ADV-RL-3` — THE TWO TIMINGS ARE TWO DIFFERENT DRIVES.** The as-filed loop drove
+          // the SAME `move(); terminate()` for both members, so the row never branched on its
+          // own timing dimension. Timing `(b)` is now the SAME-TURN release the cell declares:
+          // the release is delivered with NO INTERVENING TURN — inside the module's own move
+          // turn, immediately after the move that took the arm.
+          if (timing.startsWith('(b)')) {
+            inPhase('move', () => {
+              double.move()
+              double.terminate()
+            })
+          } else {
+            double.move()
+          }
           const opsAfterMove = double.ops.slice(opsBefore).map((o) => o.op)
           if (opsAfterMove.join(',') !== 'reset') return `the module's reset entry must be recorded DURING THE DRAG (the ops added by the move turn read ${JSON.stringify(opsAfterMove)}); the arm is taken from the module’s own move turn while the gesture is STILL ACTIVE, not at the release`
+          if (!timing.startsWith('(b)')) double.terminate()
+          if (double.attemptedResets.length !== attemptsBefore + 1) return `the gesture's delegation ATTEMPT count reads ${double.attemptedResets.length - attemptsBefore}; the arm delegates to the session EXACTLY ONCE`
+          if (double.terminals.length !== 1 || double.terminals[0].outcome !== 'reset') return `the session's own terminal log reads ${JSON.stringify(double.terminals.map((t) => t.outcome))}; the gesture's ONE session terminal is the arm's \`'reset'\` — the later release does NOT run a second session terminal`
           if (mod.stats().resets !== 1) return `\`stats().resets\` reads ${mod.stats().resets}; the declared count is 1`
-          double.terminate()
-          if (mod.stats().sinkCalls !== 1) return `the TOTAL sink-call count for the gesture reads ${mod.stats().sinkCalls}; the declared count is 1 (the release commits NOTHING)`
+          if (mod.stats().sinkCalls !== 1) return `the TOTAL sink-call count for the gesture reads ${mod.stats().sinkCalls}; the declared count is 1 (the release commits NOTHING, whichever turn the release arrives in)`
           if (double.resets[0].value !== preDrag) return 'the committed value is not the caller-supplied pre-drag value by identity (the value the module read ONCE at its own `onStart` wrapper from the hooks record’s `preDragValueOf` member, `§2.1` item 7)'
           if (double.resets[0].arity !== 3) return `the delegation's arity reads ${double.resets[0].arity}; the frozen form is ARITY THREE`
           if (pd.count() !== 1) return `the consumer’s own recorded invocation count reads ${pd.count()}; the capture runs EXACTLY ONCE per established gesture (§2.1` + ' item 7(d))'
@@ -6761,6 +7591,61 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
               return `a call THREW for the drawn shape at position \`${position}\`: ${describeThrown(e)}. The declared bound is exactly TWO propagations (a throwing \`commit\` at the terminal turn and a throwing \`onPreview\` at the observed-move turn), and neither is in this pool`
             }
           }
+          if (configuration.startsWith('(ii)')) {
+            // **THE HOSTILE-RECORD VARIANT THE AUDIT ASKS FOR — ASSERTIONS INSIDE THIS DECLARED
+            // ATTEMPT, NEVER A NEW DRIVE** (the declared term is `30` = `15` draws × `2`
+            // configurations): the SAME conformant record, carrying the drawn shape at the
+            // `session` position, is delivered through a `Proxy` whose `get` answers a
+            // DIFFERENT value on alternate reads. The declared reading is the row's own: the
+            // members stay CALLABLE and every entry point returns its declared shape — no
+            // throw, no `null`, no primitive.
+            // THE ELEVEN DECLARED FIELDS, under their CURRENT names (`§2.1` item 5; the member
+            // AS FIRST WRITTEN as `revealed` is `revealWritesApplied` as of the 2026-09-27
+            // rename — `§0A` note 14 item 1).
+            const hostileStatsKeyList = ['attached', 'candidateCalls', 'gestures', 'lastCode', 'moves', 'revealWrites', 'revealWritesApplied', 'resets', 'resolveCalls', 'sinkCalls', 'written'].sort()
+            const baseRecord: Record<string, unknown> = {
+              session: drawn,
+              candidatesFor: (): unknown => [answer(1)],
+              resolveTarget: (): unknown => ({ opaque: 't' }),
+              onReveal: (): void => undefined,
+              commit: (): void => undefined,
+              threshold: 20,
+              onPreview: (): void => undefined,
+            }
+            let hostileReads = 0
+            const varyingRecord = new Proxy(baseRecord, {
+              get: (held: Record<string, unknown>, key: string | symbol): unknown => {
+                if (typeof key !== 'string') return Reflect.get(held, key)
+                hostileReads += 1
+                const value = Reflect.get(held, key)
+                return hostileReads % 2 === 0 ? undefined : value
+              },
+            })
+            let hostileModule: RelocateModuleMirror | null = null
+            try {
+              hostileModule = create(varyingRecord)
+            } catch (e) {
+              return `the factory THREW when the record answered inconsistently across reads: ${describeThrown(e)} — no drawn shape, at any position, may make the factory throw`
+            }
+            if (hostileModule === null || typeof hostileModule !== 'object') return `the factory returned ${brief(hostileModule)} for the varying-get record`
+            const hostileMembers = ['attach', 'detach', 'reset', 'stats'].filter((name) => typeof (hostileModule as unknown as Record<string, unknown>)[name] !== 'function')
+            if (hostileMembers.length > 0) return `the members ${JSON.stringify(hostileMembers)} are not callable for the varying-get record: the members stay CALLABLE for every argument shape`
+            try {
+              const hostileAttach = declaredShapeOf(hostileModule.attach(el))
+              if (hostileAttach !== 'boolean') return `\`attach\` returned a ${hostileAttach} for the varying-get record; the declared shape is a boolean`
+              const hostileReset = hostileModule.reset(el)
+              if (hostileReset === null || Object.keys(hostileReset).sort().join(',') !== 'code,committed,ok') {
+                return `\`reset\` returned ${brief(hostileReset)} for the varying-get record; the declared shape is a \`{ok, code, committed}\` record`
+              }
+              const hostileStats = hostileModule.stats()
+              if (Object.keys(hostileStats).sort().join(',') !== hostileStatsKeyList.join(',')) {
+                return `\`stats()\` returned ${JSON.stringify(Object.keys(hostileStats).sort())} for the varying-get record; the ELEVEN declared fields are ${JSON.stringify(hostileStatsKeyList)}`
+              }
+              if (declaredShapeOf(hostileModule.detached) !== 'boolean') return `\`detached\` read a non-boolean for the varying-get record`
+            } catch (e) {
+              return `an entry point THREW for the varying-get record: ${describeThrown(e)}`
+            }
+          }
           return null
         })
       }
@@ -6835,6 +7720,68 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
         }
         const numeric = Object.entries(statsAfter).filter(([key, value]) => key !== 'lastCode' && typeof value !== 'number')
         if (numeric.length > 0) return `the post-call \`stats()\` read carries non-numeric counters for ${shape.id}: ${JSON.stringify(numeric)}`
+        // **THE TWO HOSTILE-RECORD VARIANTS THE AUDIT ASKS FOR, CARRIED INSIDE THIS DECLARED
+        // ATTEMPT** (never as new drives: the declared term is `6`): `Object.create(null)` —
+        // a NULL-PROTOTYPE record, whose total-member-read must not assume a prototype — and a
+        // `Proxy` whose `get` ANSWERS A DIFFERENT VALUE ACROSS READS. The declared reading is
+        // fixed by the row: the members stay CALLABLE and the entry points return their
+        // declared shapes (no throw, no `null`, no primitive).
+        if (shape.id.startsWith('a record with a throwing accessor')) {
+          const conformantRecord = (): Record<string, unknown> => ({
+            session: sessionDouble().sessionObject,
+            candidatesFor: (): unknown => [answer(1)],
+            resolveTarget: (): unknown => ({ opaque: 't' }),
+            onReveal: (): void => undefined,
+            commit: (): void => undefined,
+            threshold: 20,
+            onPreview: (): void => undefined,
+          })
+          const hostileRecords: ReadonlyArray<{ id: string; argument: unknown }> = [
+            { id: '`Object.create(null)` — a NULL-PROTOTYPE record', argument: Object.create(null) as unknown },
+            {
+              id: 'a `Proxy` whose `get` answers a DIFFERENT value on alternate reads',
+              argument: ((): unknown => {
+                const target = conformantRecord()
+                let reads = 0
+                return new Proxy(target, {
+                  get: (held: Record<string, unknown>, key: string | symbol): unknown => {
+                    if (typeof key !== 'string') return Reflect.get(held, key)
+                    reads += 1
+                    const value = Reflect.get(held, key)
+                    return reads % 2 === 0 ? undefined : value
+                  },
+                })
+              })(),
+            },
+          ]
+          for (const variant of hostileRecords) {
+            let vMod: RelocateModuleMirror | null = null
+            try {
+              vMod = create(variant.argument as Record<string, unknown>)
+            } catch (e) {
+              return `the factory THREW for the hostile record ${variant.id}: ${describeThrown(e)} — the factory is TOTAL for EVERY argument shape`
+            }
+            if (vMod === null || typeof vMod !== 'object') return `the factory returned ${brief(vMod)} for the hostile record ${variant.id}`
+            const notCallableMembers = memberNames.filter((name) => typeof (vMod as unknown as Record<string, unknown>)[name] !== 'function')
+            if (notCallableMembers.length > 0) return `the members ${JSON.stringify(notCallableMembers)} are not callable for the hostile record ${variant.id}: the entry points return their declared shapes for EVERY argument shape`
+            if (typeof vMod.detached !== 'boolean') return `\`detached\` is not a boolean for the hostile record ${variant.id}`
+            try {
+              const hostileAttach = vMod.attach({ control: 'a-hostile-record' }, undefined)
+              if (typeof hostileAttach !== 'boolean') return `\`attach\` returned a ${typeof hostileAttach} for the hostile record ${variant.id}; the declared shape is a boolean`
+              const hostileReset = vMod.reset({ control: 'a-hostile-record' })
+              if (hostileReset === null || Object.keys(hostileReset).sort().join(',') !== 'code,committed,ok') {
+                return `\`reset\` returned ${brief(hostileReset)} for the hostile record ${variant.id}; the declared shape is a \`{ok, code, committed}\` record`
+              }
+              const hostileStats = vMod.stats()
+              if (Object.keys(hostileStats).sort().join(',') !== declaredStatsKeys.join(',')) {
+                return `\`stats()\` returned ${JSON.stringify(Object.keys(hostileStats).sort())} for the hostile record ${variant.id}; the ELEVEN declared fields are ${JSON.stringify(declaredStatsKeys)}`
+              }
+              if (typeof vMod.detach() !== 'boolean') return `\`detach\` returned a non-boolean for the hostile record ${variant.id}`
+            } catch (e) {
+              return `an entry point THREW for the hostile record ${variant.id}: ${describeThrown(e)} — the row's declared shape is returned for EVERY argument shape`
+            }
+          }
+        }
         return null
       })
     }
@@ -6917,7 +7864,17 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
       // its declared term ONLY where it ran to completion. A row that ran to completion and
       // still reads a different count is the reconciliation FAILURE this assertion exists
       // for.
-      if (!r.stoppedEarly) {
+      // **`ADV-RL-14` — THE TWO ASSERTIONS AGREE ON `stoppedEarly`.** A row whose record was
+      // taken while the register was ALREADY stopped (`registerStoppedAt` non-null) and which
+      // executed FEWER attempts than its own declared term is the SAME truncated case
+      // `reconcile` now tolerates — `P-RL-IM-3` is the live instance, because its two halves
+      // emit two records and a stop inside the first half leaves the second's record carrying
+      // `stoppedEarly: false` beside a non-null `registerStoppedAt`. Its count is therefore a
+      // PARTIAL reading here too, never a mismatch: the attribution (`stoppedEarly`, or the
+      // register's own stop) is what decides, and both readings read it the same way.
+      const truncatedByTheRegisterStop =
+        r.stoppedEarly || (r.registerStoppedAt !== null && r.attemptsRun < declaredTermOfPair(r.row, r.strategy))
+      if (!truncatedByTheRegisterStop) {
         expect(
           r.attemptsRun,
           `REGISTER-STATUS/§5.3 item 10 — the EXECUTED attempt count of \`${r.row}\` (${r.strategy}) equals ITS OWN DECLARED TERM (${declaredTermOfPair(r.row, r.strategy)}; \`P-RL-IM-3\` is the one row carrying two terms, and each of its two records reconciles against its own)`,
@@ -6925,7 +7882,7 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
       } else {
         expect(
           r.attemptsRun,
-          `REGISTER-STATUS/§5.5.1 — the row \`${r.row}\` (${r.strategy}) STOPPED EARLY as the stop rule declares; its executed count is a PARTIAL reading of its declared ${declaredTermOfPair(r.row, r.strategy)} attempts`,
+          `REGISTER-STATUS/§5.5.1 — the row \`${r.row}\` (${r.strategy}) STOPPED EARLY as the stop rule declares; its executed count is a PARTIAL reading of its declared ${declaredTermOfPair(r.row, r.strategy)} attempts (the SAME reading \`reconcile\` took, from the SAME \`stoppedEarly\`/stop attribution — ADV-RL-14)`,
         ).toBeLessThanOrEqual(declaredTermOfPair(r.row, r.strategy))
       }
       expect(
@@ -6956,12 +7913,39 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
         REGISTER_CONTROLS,
       )}`,
     ).toBe(true)
+    // (3c) **`ADV-RL-14` — THE FOUR CELLS OF THE STOP-AWARE RECONCILIATION, DRIVEN.** Both
+    // assertions above read ONE helper (`stopAwareReconciliation`), and its branches are driven
+    // here so neither the truncation tolerance nor the mismatch is vacuous: a row that stopped
+    // early is a PARTIAL reading, the same short count WITHOUT the stop is a MISMATCH (the
+    // failure the exact comparison exists for), an exact count is the ordinary green, and an
+    // un-run row is not reconciled here at all (its own record fails it loudly).
+    expect(
+      {
+        truncated: stopAwareReconciliation(4, 12, true),
+        shortButNotStopped: stopAwareReconciliation(4, 12, false),
+        exact: stopAwareReconciliation(12, 12, false),
+        unrun: stopAwareReconciliation(0, 12, true),
+      },
+      'REGISTER-STATUS/ADV-RL-14 — the stop-aware reconciliation’s four cells: `partial` for a truncated row, `mismatch` for the SAME count without the stop flag, `exact` for a complete row, `unrun` for a row that never started',
+    ).toEqual({ truncated: 'partial', shortButNotStopped: 'mismatch', exact: 'exact', unrun: 'unrun' })
     // (4) THE STOP STATE and the UN-RUN-IS-A-FAILURE rule.
     if (registerState.stoppedAtRow !== null) {
       expect(
         String(registerState.stoppedFor).length,
         'REGISTER-STATUS — a stopped register states WHY it stopped (the consecutive-failure cap, or a register cap)',
       ).toBeGreaterThan(0)
+      // **`ADV-RL-14` — THE STOP'S ATTRIBUTION IS UNAMBIGUOUS.** Exactly ONE record carries its
+      // own `stoppedEarly` flag (the running row whose remaining attempts were abandoned), and
+      // that flag is the reading `reconcile` uses too — so a truncated row has ONE owner and the
+      // two assertions can never disagree about WHICH row stopped.
+      expect(
+        executed.filter((r) => r.stoppedEarly).length,
+        `REGISTER-STATUS/ADV-RL-14 — the stop is attributed to EXACTLY ONE row record (the running row at \`${String(
+          registerState.stoppedAtRow,
+        )}\` whose remaining attempts were abandoned); records reading ${JSON.stringify(
+          executed.filter((r) => r.stoppedEarly).map((r) => `${r.row}::${r.strategy}`),
+        )}`,
+      ).toBe(1)
       expect(
         executed.filter((r) => r.attemptsRun === 0).length,
         'REGISTER-STATUS/§4.2 item 2 — every row after the stopping row was reported as UN-RUN, and an un-run row is REPORTED AS A FAILURE (never a pass): *"a red run that reports all 170 attempts as executed is the finding, not the expectation"*',
