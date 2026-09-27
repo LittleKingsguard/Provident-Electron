@@ -106,6 +106,25 @@ note — the placement the sibling specs use.)**
     **So an appearance authority ALREADY EXISTS in this repo and is NOT this unit's — it is `F1`'s surface, and
     `src/renderer/**` (that file included) is in this unit's DERIVED DENIED set** (`§5.1` item 2). **A pass reading
     this unit as "this repo's one theme authority" is reading a falsehood.**
+11. **THE GATE-4 AND GATE-5 RECORDS, LANDED `2026-09-27` BY THIS ANNOTATION (READ THIS BESIDE ITEMS 1 AND 5, WHICH
+    ARE THE FILING-TIME STATE AND ARE KEPT VISIBLE: item 5's *"THE GATE RECORDS AFTER THIS ONE: NONE"* and this
+    note's opening *"NOTHING ELSE IS ADVANCED"* were TRUE AS FILED and are STALE ON THEIR STATUS CELLS ONLY — every
+    term, row id, strategy id, seed, cap, shape, pool member and `(bounded)` marking in this file is UNMOVED, and
+    the two records below were written by ANNOTATION, never by rewrite).** **BOTH GATES HAVE NOW RUN, and NOTHING
+    IS FIXED AND NOTHING IS CLOSED:** **GATE 4** (the read-only adversarial pass + the gate-11 PBT audit) returned
+    **SEVEN items — `F1`…`F7`, NONE yet fixed, each dispositioned with its OWNING SIDE at `§3b`** (two
+    CONTRACT-side: `F1`, `F4`; five TEST-side: `F2`, `F3`, `F5`, `F6`, `F7`; severity as `§3b` prints it — `F5`/`F7`
+    `LOW`, the rest `MED` / `LOW-MED`), together with **its negative-generator task list `NG-1`…`NG-3`** and **the confirmation block `§3b`
+    records in the pass's own words — including `PACKAGE DEFECTS: NONE`**; and **GATE 5** (the blind greens,
+    `docs/specs/theme-greens.md`) ran **`32` executed scenarios — `32` PASS / `0` FAIL / `7`
+    `NOT-BLIND-RUNNABLE` — BLACK-BOX FROM THE DOCUMENTATION ALONE, at `fd70033`**, with **its two recorded
+    ambiguities, its five self-repaired driver defects (`§F`), its `POST-GREEN` re-drive clause and its `32`-count
+    census all carried at `§3c`.** **THE `NG-2` RE-GRAIN (`10→11` / `102→103`) IS PRE-COMMITTED BUT NOT TAKEN —
+    `P-TH-TP-3` still declares `10` and the declared total is still `102` — and NO other figure in this file moves.**
+    **STATE, PLAINLY: `E8` is GREEN at gate 3 with GATES 4 AND 5 RUN, and it is NOT `DONE`; these findings are OWED,
+    not closed; the ledger is UNMOVED at `16 DONE / 5 open` = `21` units (`docs/next-steps.md`, the supervisor's);
+    and the contract is FILED AND APPROVED.** **THE ORDERED NEXT ACTIONS ARE `docs/next-steps.md`'s
+    `## ⟶ HANDOVER — E8 (U-THEME) AT GATE 5` section's `§D`, cited BY NAME.**
 
 ---
 
@@ -1788,14 +1807,92 @@ needs **no renumbering and no new section**. **A row added later must use one of
 the pass must define its new token IN THIS TABLE with a one-line meaning** — **a bare `OWED` is the one status that
 may not survive the pass** (`AGENTS.md` item 11(e)).
 
+**⟶ THE PASS RAN (`2026-09-27`, the gate-4 read-only adversarial pass + gate-11 PBT audit): SEVEN items, ALL
+UNFIXED, each with its DISPOSITION and its OWNING SIDE.** **The as-filed row above is KEPT VISIBLE as the
+pre-run state (annotate-never-rewrite).** **NO item below is fixed, no row of `tests/theme.test.ts` was edited,
+no register term, row id, strategy id, seed, cap, shape, pool member or section number moves, and no `§3a` seed's
+own text is rewritten.** **THE PASS'S PROVENANCE, STATED WITH ITS OWNER: every figure in this block is THAT PASS'S
+OWN READING, quoted; it is not a measurement taken by the pass that lands this block.**
+
 | Finding | Status | The finding, one line | Where the remedy lands |
 | --- | --- | --- | --- |
-| *(none yet — the pass has not run; the seed set is `§3a`, and every seed's as-filed status is `OWED`)* | — | — | — |
+| **`F1`** | **`OWED` — CONTRACT-side (MED)** | **A NON-THROWING DIVERGING `Proxy` AS `env`:** its traps return `true` and its `getOwnPropertyDescriptor` answers `undefined`, so the read returns **`{prefersDark: false, source: 'degraded-env'}`** while a literal **`=== true`** reading of the same object would read `true`. **No pool member and no cell covers it**, so **the DESCRIPTOR-FORM vs PROPERTY-FORM reading must be PINNED** (the pass's own reading). | A **CONTRACT DISPOSITION** — `docs/specs/theme.md` `§2.3` item 2 (the reading's form), under the ordered next action (1) |
+| **`F2`** | **`OWED — TEST-SIDE` (MED)** | **`P-TH-IM-1`/`P-TH-IM-3`'s declared *"invocation count (`0`)"* assertion is built from a `hookRecorder()` that is NEVER PASSED**, so the count is zero BY CONSTRUCTION and the real check sits **outside the declared term**. | A **TestWriter red-first repair** (the pass's action (2)) |
+| **`F3`** | **`OWED — TEST-SIDE` (MED)** | **`P-TH-TP-1`'s pinned draw is WITH REPLACEMENT and the drawn indices are never printed or asserted**, so repeats could leave pool members undriven while the row still reads **`attemptsRun:12 · held:12`**. | A **TestWriter red-first repair** — **assert or print the twelve drawn indices (a `Set` size of `12`)**, carried as `NG-3` below |
+| **`F4`** | **`OWED` — CONTRACT-side (LOW/MED)** | **`P-TH-TP-5`'s property text says *"EVERY removal drive of the whole register"* while its table drives `3` shapes × `2` instruments**, and **the row is UNMARKED although this contract owes `(bounded)` wherever its text outruns its table.** | A **CONTRACT DISPOSITION** — the `(bounded)` marking of `§5.5.1 P-TH-TP-5`, under action (1) |
+| **`F5`** | **`OWED — TEST-SIDE` (LOW)** | **`P-TH-TP-5` clause (c)'s BEFORE/AFTER BYTE-IDENTITY is asserted by TRAP COUNTS ONLY** — **no snapshot exists**. | A **TestWriter red-first repair** (a caller-object snapshot; carried as `NG-2` below) |
+| **`F6`** | **`OWED — TEST-SIDE` (MED)** | **`P-TH-TP-6`'s *"applier called FIRST on a literal token"* drive RECOMPUTES THE SAME CALL AS DRIVE 1**, so a module with **cross-call state PASSES** and **order-independence is UNFALSIFIABLE**. | A **TestWriter red-first repair** (action (2)) |
+| **`F7`** | **`OWED — TEST-SIDE` (LOW)** | **`§5.5.2` item 3's ledger title says *"the six rows whose distinct figure DIFFERS"* while its ledger expects ONE differing row** — **the spec's six are the rows whose figure EQUALS the term.** | A **TestWriter-visible text repair at `§5.5.2` item 3** (action (2); the title is annotated, never silently rewritten) |
+
+**WHAT THE SAME PASS CONFIRMED, RECORDED SO IT IS NOT RE-DERIVED** (its own readings): **the ARITHMETIC independently
+— the twelve terms sum `102`, the distinct figures sum `99`, both chains are consistent, the caps are compared
+against the DECLARED figure, `5` of `12` rows carry `(bounded)`, and the seed `20260927` takes one step per draw**;
+**that A WRITE IS STRUCTURALLY IMPOSSIBLE — the module invokes no method on any argument and the applier takes no
+element**; **that NO IMPORT BYTE EXISTS**; **that EVERY `env` READ SITS INSIDE A `try`**; and **that the only global
+touches are OWN-DESCRIPTOR READS** — **with ONE recorded limit: a patched `Object.keys` would silently degrade every
+`env` read, ruled `NOT-A-DEFECT` under `§2.5`.** **`PACKAGE DEFECTS: NONE`** (as `§7` item 2 expects).
+
+**THE PASS'S NEGATIVE-GENERATOR TASK LIST, CARRIED BECAUSE IT IS OWED — `NG-1`…`NG-3`, and `NG-2` CARRIES A
+PRE-COMMITTED RE-GRAIN THAT IS *NOT TAKEN*:**
+- **`NG-1`** — the **diverging `Proxy`** of `F1` and **a CONTAINER `env`** (`Object.assign([], {prefersDark: true})`,
+  and a `Map` likewise) **into the `env` rows**.
+- **`NG-2`** — **an INHERITED `env`** (`Object.create({prefersDark: true})`) **into `P-TH-TP-3`**, under the
+  contract's own **PRE-COMMITTED RE-GRAIN `10→11` / `102→103`** — **RECORDED HERE AS PRE-COMMITTED AND NOT TAKEN:
+  `P-TH-TP-3` still declares `10`, the total is still `102`, and the re-grain lands only if that drive is authored**;
+  **plus the whitespace-only name `' '` into `P-TH-IM-3`, and a CALLER-OBJECT SNAPSHOT for `P-TH-TP-5`(c) (the `F5`
+  remedy).**
+- **`NG-3`** — for **`P-TH-TP-1`**: **assert or print the twelve drawn indices (a `Set` size of `12`)** (the `F3`
+  remedy).
 
 **No pass may report this unit `DONE` while a row above is missing, while a bare `OWED` survives, or while a
-`CONTRACT-AMENDED` row lacks its as-written form kept visible as `SUPERSEDED`.** **And `PACKAGE DEFECTS: NONE` is
-the expectation for this unit** — it exercises no `provident-ssr` surface, so **`docs/defects.md` and
-`docs/HANDOFF.md` should receive nothing from it** (`§7` item 2).
+`CONTRACT-AMENDED` row lacks its as-written form kept visible as `SUPERSEDED`.** **Every `F-n` row above is
+DISPOSITIONED (its side named) and NONE is CLOSED; these findings are OWED, not fixed.** **A `DONE` row that reads
+an `F-n` row as fixed, or that quotes `NG-2`'s re-grain figures `11`/`103` as the live ones, is a review finding.**
+**And `PACKAGE DEFECTS: NONE` is the expectation for this unit** — it exercises no `provident-ssr` surface, so
+**`docs/defects.md` and `docs/HANDOFF.md` should receive nothing from it** (`§7` item 2).
+
+## 3c. GATE 5 — THE BLIND GREENS, RECORDED (`2026-09-27`; the artifact is `docs/specs/theme-greens.md`, cited BY NAME)
+
+**This subsection is the CONTRACT-side record of a gate that ran. It is APPENDED at the file end so that nothing
+follows `§3b`'s own closing note, and it moves no term, row id, strategy id, seed, cap, shape, pool member, `(bounded)`
+marking or section number. NO FIGURE BELOW IS THE MEASUREMENT OF THE PASS THAT LANDS IT: every one is the
+BLIND-GREENS PASS'S OWN READING, quoted with that ownership (as `docs/specs/theme-greens.md` records it).**
+
+1. **WHAT RAN, AND ITS CENSUS.** **`32` executed scenarios — `32` PASS / `0` FAIL / `7`
+   `NOT-BLIND-RUNNABLE`** — driven **BLACK-BOX FROM THE DOCUMENTATION ALONE**: **the module was NEVER READ, only
+   imported** (one path string handed to a dynamic `import()`), and **the red set `tests/theme.test.ts` was never
+   read either** (the blindness claim is that pass's own, recorded at the artifact's `§I`). **Its revision is
+   `fd70033`.** **The `7` non-runnable claims are NAMED at the artifact's `§E` and are counted as NEITHER pass NOR
+   evidence** — **a green here proves THE RETURN VALUES OF TWO PURE FUNCTIONS AND NOTHING ELSE** (this file's layer
+   declaration, honesty anchors 1/2/5).
+2. **WHAT IT DROVE, INCLUDING THE CLAUSES THIS CONTRACT'S `§R`/`§M` ROWS ARE BUILT ON:** the **pass-through
+   reading**; **`source`'s CLOSED DOMAIN over twelve `env` rows**; **the NAME-ECHO rule over twelve shapes**;
+   **REMOVAL-AS-DATA**; **the exact key sets**; **a `48`-drive TOTALITY SWEEP**; and **the prohibitions as
+   CALLER-OBSERVABLE FACTS — zero writes, zero element calls, zero realm reads in a TRAPPED CHILD.**
+3. **ITS TWO RECORDED AMBIGUITIES — CARRIED, because each was resolved by CHOOSING A READING rather than by asking,
+   and a later pass must not re-discover them:** **(a)** the **`§2.3` item 1 clause governing the NON-STRING
+   reading** against the **coarser `String()` sentence in `§0A` note 4 / `§7a.1` item 1** — **resolved TOWARD THE
+   CONTRACT'S `§2.3` TABLE, which governs**; and **(b)** the **omitted-name drive taken at ARITY 2 with `undefined`
+   in the name slot**, per **`§0A` note 7(a)**'s arity-0 method note, **with no marker value invented** (the call
+   whose BOTH slots are omitted is filed under the REMOVAL arm, where the contract declares it).
+4. **ITS FIVE SELF-REPAIRED DRIVER DEFECTS — CARRIED AT THE ARTIFACT'S OWN `§F`, AND NONE OF THEM A CLAIM ABOUT THE
+   MODULE** (`D-1` the `JSON.stringify` equality read; `D-2` the shadowed freshness identifier; `D-3` the
+   arity-0/name-omitted conflation; `D-4` the restored-global probe; `D-5` the liveness control that could not
+   fire): **all five are the WRITER'S OWN INSTRUMENTATION, repaired before the readings above, and the census was
+   `32` executed before and after — only the readings moved.** **A later pass that reads `D-1`…`D-5` as module
+   findings is misreading the artifact.**
+5. **ITS `POST-GREEN` RE-DRIVE CLAUSE IS BINDING, AND IT IS CARRIED HERE IN SUBSTANCE.** **The set was authored
+   against the module at `fd70033`; a LATER CHANGE TO `src/shared/theme.ts` STALES IT AND OWES A TARGETED RE-DRIVE
+   RECORDED IN THAT FILE** — owed in particular for **(a)** any change to the **`source`** member's spelling or
+   domain, **(b)** any change to the **name-echo** or **removal** rules, **(c)** any change to the **freshness**
+   rule, and **(d)** any change to the module's **import set**. **The re-drive's readings must be APPENDED BESIDE
+   the as-filed ones, never substituted, and a re-drive is its OWN pass with its own census printed beside this
+   one** (`32` PASS / `0` FAIL / `7` `NOT-BLIND-RUNNABLE` stands as THAT pass's count).
+6. **WHAT THIS RECORD DOES NOT DO, STATED SO IT CANNOT BE OVER-READ.** **It closes NO `§3b` finding** (all seven
+   `F-n` rows stay `OWED`), **it re-asserts NO register figure** (the artifact's own `§G` item 7 makes no claim
+   about the register's arithmetic, seed, caps or `(bounded)` set — `TG-NB-3`), **it offers NO `[U]` and claims NO
+   `[D]`** (gate 6 stays **`STRUCTURAL`, never `waived`**), and **it moves no status beyond gate 5: `E8` remains an
+   OPEN unit at gate 3 GREEN with gates 4 and 5 RUN** (`CURRENT STATE` item 11).
 
 
 
