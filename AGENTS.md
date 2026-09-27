@@ -126,6 +126,22 @@ f. **Commits are scoped, not bulk.** One commit per gate boundary with a
    ```
    (This project has no demo-smoke; the upstream's trio is test + typecheck +
    demo:smoke. The build is this project's third leg.)
+   **⟶ AN ADDITIVE FOURTH LEG LANDED 2026-09-27 (the test-layer leg; it closes
+   `docs/pending.md` §H's standing gap):** the trio above is UNCHANGED, and beside
+   it there is now `npm run typecheck:tests` (`tsc -p tsconfig.tests.json`), which
+   compiles the whole `tests/**/*.ts` tree under the SAME strictness a unit's own
+   leg 4 uses (`--noEmit --strict --target ES2022 --lib ES2022,DOM,DOM.Iterable
+   --module ESNext --moduleResolution bundler --types node,vitest/globals`) —
+   necessary because `tsconfig.json` includes `src/**/*.ts` and excludes `tests`,
+   so the trio's second leg NEVER READS A TEST FILE. It is ADDITIVE in both
+   directions: `npm run typecheck` keeps its `src/**`-only behaviour, and every
+   DONE row written before this leg keeps its "typecheck clean" claim as written.
+   From here on, a unit that cites typecheck as evidence about its OWN test file
+   must cite this leg (or its own leg 4). **Process hazard, recorded because it
+   has already bitten once:** `tests/ui-leg-contract.test.ts`'s `L-1` pins the
+   `scripts` KEY SET (the landed keys plus exactly `ui`), so ANY further script
+   key — including this one — reddens that row until a TestWriter extends the
+   landed set; a config change cannot satisfy it.
 5. **Specs + decision records**: behavior contracts live in `docs/specs/*.md`
    (this repo's contract = the MCP endpoint spec, `docs/specs/mcp-endpoint.md`).
    Design decisions are recorded in `docs/decisions.md` as `DECIDED:` /
@@ -259,6 +275,54 @@ f. **Commits are scoped, not bulk.** One commit per gate boundary with a
     test-counts, phantom return fields, and renumbered sections across every
     spec — exactly the drift this step prevents when run per-unit instead of
     batched.
+
+11. **Gate 11 — THE TYPED PROPERTY REGISTER IS MANDATORY FOR EVERY CODE-BEARING
+    UNIT (`2026-09-27`, the architect's ruling at the `U-LISTHOST` spec gate; the
+    ACTIVE row is `docs/decisions.md`'s **`PBT-REGISTER-REQUIRED-FOR-CODE-UNITS`**,
+    cited by ROW NAME — that ledger is appended-to and its line anchors drift; the
+    follow-ups live in `docs/pending.md` §G).** **A code-bearing unit's spec MUST
+    carry its typed `§5.x` Property register BEFORE its red set is authored** — a
+    TestWriter may not be delegated a red set under the zero-row exemption. What
+    the register is, exactly:
+    a. **Typed rows only** — `P-IM` (invariant) · `P-SM` (state-machine) · `P-TP`
+       (totality). **Never** an `F-` row, and **never** a `§6`/`FS-n` citation used
+       as a register row. Authored by the spec writer (`role_spec_writer`).
+    b. **A property layer the TestWriter EXECUTES** — deterministic, either by
+       exhaustive/finite enumeration or by a **pinned-seed** generator; each row
+       reports its **strategy id + held/broken**; the caps are **≤100 attempts per
+       row · ≤400 attempts total · stop-after-5-consecutive-failures**, and an
+       un-run register row is reported as a **FAILURE**, never as a pass.
+    c. **The attempt total is printed WITH its per-row terms**
+       (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`): a total that is not the sum
+       of its own terms, or a total quoted without its terms, is a review finding,
+       and a mis-sum is corrected by **annotating beside the as-filed form**,
+       never by silently rewriting it.
+    d. **NO new dependency** — no `fast-check`, no property runner, no fourth leg.
+       The executed layer is plain deterministic vitest tables plus, where a draw
+       is genuinely needed, a hand-rolled pinned-seed generator (the in-repo
+       precedent is `docs/specs/engine-pin.md` `§5.5`, which executed 7 of its 8
+       rows with no new devDependency).
+    e. **A read-only PBT audit by the adversarial pass** (gate 4) — over-strength,
+       under-assertion and evasion checks, each dispositioned in the unit's
+       `§3a`/`§3b` with one of the six recorded dispositions, never a bare `OWED`.
+    f. **A DONE row lacking register / executed property layer / PBT audit is a
+       review finding.** The register exists to *identify the testable elements of
+       the designed process and ensure they can be tested thoroughly*, so its row
+       count is an **OUTCOME, not a budget**: the `≤8` threshold is a
+       **component-breakdown SIGNAL**, never a ceiling and never a reason to drop,
+       merge or leave unenumerated a discernible property
+       (`REGISTER-ENTRY-COUNT-IS-NOT-CAPPED-AND-ARCHIVE-IS-THE-TRUTH-MECHANISM`).
+    g. **THE ZERO-ROW EXEMPTION IS AN EXPLICIT, RECORDED, JUSTIFIED EXCEPTION —
+       never a silent default.** It survives only for genuinely invariant-free /
+       doc-only / config-only / non-JS units, stated as such in the spec; it is
+       **not available to a code-bearing unit**, and a recorded exemption the
+       spec's own text refutes (a stated quantification its fixed tables cannot
+       prove) is remanded for re-derivation. A spec that carries the exemption
+       block keeps it **visible** under a dated SUPERSEDED banner (the sibling
+       units' `§5.5.0`), with the current register at `§5.5.1`.
+    Reference shapes: `docs/specs/listhost.md` `§5.5.1` (the landed pilot) and
+    `docs/specs/projection.md` `§5.5.1`; the ruling's own provenance is the
+    `U-LISTHOST` gate record in `docs/next-steps.md`.
 
 ## Roles (imported, adapted)
 

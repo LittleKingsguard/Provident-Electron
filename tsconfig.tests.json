@@ -1,0 +1,53 @@
+// tsconfig.tests.json — THE TEST-LAYER TYPECHECK LEG (`npm run typecheck:tests`).
+//
+// WHY THIS FILE EXISTS: `tsconfig.json` is `"include": ["src/**/*.ts"]` with `tests` in
+// `exclude`, so the trio's `npm run typecheck` NEVER READS A TEST FILE — every DONE row's
+// "typecheck clean" is evidence about `src/**` ONLY. Each unit has therefore had to run a
+// standalone strict `tsc` over its OWN test file by hand (the leg each unit's spec calls
+// "leg 4"). That leg is made first-class here. Recorded gap: `docs/pending.md` §H (two
+// rows), whose fix shape this file is ("a `tsconfig.test.json` + a script key").
+//
+// SCOPE, STATED HONESTLY: `include` below is the WHOLE `tests/**/*.ts` tree — the 67 `.ts`
+// test files the suite loads. The `.mjs` drivers under `tests/**` (e.g.
+// `tests/e2e-battery.test.mjs`, run by `npm run battery`) are NOT included: `allowJs` is
+// off and they are outside the vitest TS graph.
+//
+// UNMEASURED, AND THAT IS RECORDED: the pass that landed this file had NO SHELL, so the
+// whole-tree invocation has NEVER BEEN RUN and its diagnostics are UNKNOWN — no clean run
+// may be claimed for it. IF IT DOES NOT COMPILE CLEANLY IN ONE INVOCATION, the honest fix
+// is to NARROW `include` (an explicit file list, or the failing subset) and to say so in
+// this comment — never to weaken the flags below and never to edit a test file from a
+// config pass (`tests/**` belongs to a TestWriter). Record the diagnostics in
+// `docs/next-steps.md`'s test-layer pointer when the first run happens.
+//
+// FLAG PARITY WITH LEG 4 — the options below are EXACTLY the flags the units' standalone
+// leg-4 invocation uses, so this leg and a unit's own leg are the same strictness (no
+// `skipLibCheck`, no `esModuleInterop`, nothing added or relaxed):
+//   tsc --noEmit --strict --target ES2022 --lib ES2022,DOM,DOM.Iterable \
+//       --module ESNext --moduleResolution bundler --types node,vitest/globals \
+//       tests/**/*.ts
+// The `-p` form is what the script uses because a tsconfig `include` glob is expanded by
+// tsc ITSELF, with no shell-expansion ambiguity (`**/` under a non-globstar shell).
+// Note: with `moduleResolution: bundler`, `allowSyntheticDefaultImports` defaults to
+// `true`, so CJS default imports in test files are accepted exactly as leg 4 accepted them.
+//
+// ADDITIVE, NOT A SUBSTITUTE: `npm run typecheck` keeps its `src/**`-only behaviour, so no
+// existing DONE row's typecheck claim becomes false.
+//
+// PROCESS HAZARD (unchanged by this file but caused by the script key it needs):
+// `tests/ui-leg-contract.test.ts`'s `L-1` pins the `scripts` KEY SET — it asserts that the
+// only key outside the landed eleven is `ui`, and that the block holds exactly twelve. A
+// thirteenth key reddens that row until a TestWriter extends `LANDED_SCRIPT_KEYS` there.
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "types": ["node", "vitest/globals"],
+    "noEmit": true
+  },
+  "include": ["tests/**/*.ts"],
+  "exclude": ["node_modules", "dist", "archive"]
+}

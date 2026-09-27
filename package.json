@@ -12,6 +12,7 @@
     "start": "npm run build && electron .",
     "start:http": "npm run build && electron . --mcp-transport=http",
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "typecheck:tests": "tsc --noEmit -p tsconfig.tests.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "battery": "npm run build && node tests/e2e-battery.test.mjs",
