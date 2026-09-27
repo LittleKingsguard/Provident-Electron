@@ -662,3 +662,11 @@ item 6; the RCA lesson *a tracker that records a unit's completion but not its r
 | **P-6** | **The RCA's own acceptance test for this class is NOT met at this gate**: `§K` `K-4` reads *"`docs/specs/relocate.md` cannot be filed with `threshold` undefined"* — `threshold` **is** now defined, so that test will pass, **but its sibling for the RESIDUE does not exist**, and this pass had to **invent the equivalent by hand** (L-1) | **MED — process** | the architect (adopt the guard, or not) · the supervisor, to record that **this pass discharged the residue unaided** |
 
 **WHAT THIS SECTION IS NOT:** it is **not** a landed ruling, **not** an admission of a unit, and **not** a re-opening of anything on the pickup's `§6` DO-NOT list. **`E4`'s step-1 verdicts, the `threshold` ruling, the `A-d4` family adoption and every landed contract are cited, never questioned.**
+
+### L-4. THE FILING PASS'S OWN TRACKER ITEMS (2026-09-27, recorded with owners)
+
+| # | Item | Status |
+| --- | --- | --- |
+| **L-4a** | **The `SCH-6` → `SCH-7` citation sweep for `E4`** (the gate-1 record's §5.8 item 6) | **DONE — checked this pass:** the `## OPEN` row `E4`'s own cell reads `SCH-7 (A-d4)`, and **no remaining site attributes `SCH-6` to `E4`** (the surviving `SCH-6` mentions are the family row's four-id list and the corrective *"not `SCH-6`, which is `E3`'s spent source"* note) |
+| **L-4b** | **Whether `docs/FORKER.md` must carry `U-RELOCATE`'s seven seams** (`GUTTER-CALLER-SEAMS-ARE-THE-FAMILY'S-DOWNSTREAM-CONTRACT`'s consequence (3): the fork-facing seam contract) | **OPEN — a later pass, NOT owed by the spec gate.** Owner: whatever pass next touches the fork-facing docs; it gates no unit |
+| **L-4c** | **The register's TERM-COUNT defect and its repair** (`15` rows / `16` terms / `170` attempts; the as-filed `17`-term forms kept visible at `docs/specs/relocate.md` `§5.5.1`'s foot and `§5.5.3`) | **FIXED IN THE FILING PASS by ONE remand to the SpecWriter.** Recorded here because it is the **`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS` class firing at FILING time** — a term count that disagreed with the register's own enumeration — and because the supervisor, not the author, caught it: **the DONE row for `E4` must print `16` terms and the total `170`, never the as-written `17`** |
