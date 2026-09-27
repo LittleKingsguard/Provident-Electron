@@ -228,6 +228,75 @@ row ID; it moves the named `§2.2` rows, `§2.1`'s block and the register rows t
 (`Q1` → the key-set rows and `P-ML-IM-3`; `Q2` → `P-ML-IM-6`/`P-ML-IM-7`), plus a register re-grain if a term
 moves.**
 
+**Note 8 — THE GATE-3 STOP, ITS SEVEN MEASURED ROW-BOUND DEFECTS, THE FOUR THIS AMENDMENT PINS, THE THREE THAT
+STAY TEST-SIDE, AND THE RE-GRAIN THIS PASS OWES (`2026-09-27`; annotate-never-rewrite — no clause of this file is
+rewritten, no row id, strategy id, seed, cap or term moves, and every as-written cell stays VISIBLE).**
+
+**(1) THE STOP, RECORDED AS AN EVENT RATHER THAN A STALL.** **The FIRST Implementer pass of `U-MENULIB` STOPPED
+WITHOUT WRITING A LINE OF `src/shared/menu-template.ts`** and reported **SEVEN ROWS UNREACHABLE BY ANY CONFORMANT
+MODULE** — **the correct behaviour at gate 3, because a red set is repaired by a TestWriter and never by the
+Implementer** (`AGENTS.md` item 3 / RCA-1; `§4.2` item 7). **The handover section is `docs/next-steps.md`'s
+`## ⟶ HANDOVER — E7 (U-MENULIB) AT GATE 3, MID-CYCLE`, cited BY NAME; its `§B` carries the seven; its `§A` item 4
+files the red set (`tests/menu-template.test.ts`, `56` ROWS) at `45` failed / `11` passed, while `§5.5.3`'s own
+record of the same run reads `46` failed / `10` passed — the two figures are a `[T]`-side count drift, named here
+and routed to `§7`'s repair addendum (D) alongside the ledger row `E7`'s own `Legs`/status cells, and NOT resolved
+by this pass, which ran no suite and edits no tracker.** **No `§3` row, `§5.5.1` cell, term, cap or seed is moved by
+the stop, and the unit's status does not advance here.**
+
+**(2) WHICH OF THE SEVEN THIS AMENDMENT PINS — FOUR, EACH AT ITS OWN SITE.** **A · `X-5`'s SCOPE IS
+SELF-DEFEATING** (the row bans `\bmenu\b`/`\bpicker\b`/`\bdialog\b`/`'darwin'` across **all** of `src/**` while
+`§5.1` row 1 places this unit's module inside it and `§2.1` item 4 pins `'picker'`/`'darwin'` as its CLOSED
+literal set — so the row passes today and reports the module's own tokens the moment the contract is implemented)
+— **pinned at `§3.5 X-5`'s dated scope pin, and the scope is NARROWED BY EXCLUSION rather than the ban relaxed.
+B · `M-4` VERSUS `M-7`, THE SAME CALL READING `enabled` AS BOTH `false` AND `true`** (measured `true` in BOTH
+readings) — **pinned at `§2.4`'s dated `enabled` pin: the degradation's `false` GOVERNS and `M-7`'s verbatim
+reading is the LOSING CELL, corrected with its as-filed form visible. C · `F-2`'s TWO MUTUALLY UNSATISFIABLE
+PAIRS, AND `P-ML-IM-1` ATTEMPT 12 AGAINST `M-1`/`KEY_SHAPES`(1)** — **both are the SAME missing clause, THE CARRY
+RULE, and it is pinned at `§2.3` item 11: a projected item is a FRESH RECORD of the intersection of the seven
+declared names with the source's OWN keys, its VALUES handed on by identity, an array element keyed by its
+indices, and NO entry is ever the source value.** **D · `PRE-2`'s TWO DISTINCT SUMS (`89` at one line, `83` at
+the next)** — **the two assertions are BOTH HARNESS-SIDE, against ONE unchanged array, so this is a `[T]`-side
+self-contradiction rather than a contract figure: `§5.5.2` item 3's thirteen distinct figures sum to `89` and NOT
+to `83`, pinned at `§5.5.2` item 3's dated pin, and no row of `§3` moves.** **EACH PIN IS PLACED AFTER THE ROW OR
+TABLE IT BINDS SO NO ROW IS SPLIT.**
+
+**(3) WHICH REMAIN TEST-SIDE — THREE, NAMED WITH THEIR OWNERS.** **(i) THE `normalizeView`-BASED CONTROLS** —
+`R-1`'s CONTROL (i) cannot fire because the view **strips comments and collapses every string literal to `'S'`**
+before the scan runs, so the scanned view cannot carry the evidence the control asserts (measured
+`[1,0,0,0,0,1]` against six expected `true`s); **(ii) `R-2`'s TEST-FILE HALF**, whose own BYTES carry the banned
+word (its own import specifiers) — **this half is ALREADY CLOSED ON THE CONTRACT SIDE by `§3.4`'s dated exemption
+pins under `R-1`/`R-2` (the two control corpora exempt BY NAME, the corpora character-code assembled, a
+plainly-spelled reference FAILING anywhere in either file), so what remains is the TESTWRITER's alignment of the
+scan to that pin — the control must still fire FOUR-OF-FOUR and the module file keeps `no exemptions`**; and
+**(iii) the red-count drift of (1), `45`/`11` against `46`/`10`.**
+
+**(4) THE RE-GRAIN / REPAIR OBLIGATION THE TESTWRITER OWES — ONE OBLIGATION WITH FIVE NAMED PARTS, and this
+pass may not run it (it holds a doc-write wall and no shell).** **(a)** re-scope `X-5`'s sweep to the exclusion
+pinned at `§3.5 X-5`, **keeping BOTH controls and asserting that a token in ANY OTHER `src/**` file still FAILS**;
+**(b)** align `M-4` and `M-7` to the `§2.4` `enabled` pin and carry the LOSING cell's as-filed form beside the
+corrected one; **(c)** repair `F-2`'s two pairs to the `§2.3` item 11 carry rule and re-declare
+`P-ML-IM-1` attempt 12's expected entries (the accessor-throwing record SKIPPED, the array element's key set
+`['0']`), so `M-1`/`KEY_SHAPES`(1) and the attempt agree; **(d)** repair `PRE-2`'s distinct assertion to `89`
+beside the as-filed `83`; **(e)** re-assert the `R-1`/`R-2` controls under `§3.4`'s exemption pins. **Every part is
+a ROW/EXPECTATION re-grain: none is a term, a cap, a seed, a strategy id or a row id.**
+
+**(5) THE TERM VERDICT — PRINTED, BECAUSE `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS` REQUIRES IT.** **NO TERM
+MOVED AS A CONSEQUENCE OF ANY PIN OF THIS AMENDMENT.** **THE DECLARED TOTAL REMAINS
+`126` = `12` (`P-ML-IM-1`) + `12` (`P-ML-IM-2`) + `12` (`P-ML-IM-3`) + `12` (`P-ML-IM-4`) + `12` (`P-ML-IM-5`) +
+`12` (`P-ML-IM-6`) + `12` (`P-ML-IM-7`) + `3` (`P-ML-SM-1`) + `3` (`P-ML-SM-2`) + `3` (`P-ML-SM-3`) + `12`
+(`P-ML-TP-1`) + `9` (`P-ML-TP-2`) + `12` (`P-ML-TP-3`)** — **the same THIRTEEN terms, the same chain
+`12 → 24 → 36 → 48 → 60 → 72 → 84 → 96 → 99 → 102 → 105 → 117 → 126`, the same subtotals `IM 84 · SM 9 · TP 33`,
+the same `6`-of-`13` `(bounded)` set, the same seed `20260927`, the same caps (`126 ≤ 400`, largest row
+`12 ≤ 100`).** **WHY, stated per pin so the claim is checkable rather than asserted: (A) is a SCOPE exclusion and
+drives no attempt; (B) is a VALUE reading on a drive `M-4`/`P-ML-TP-2` already declare, and `P-ML-TP-2`'s term
+`9` is a count of SEAM/ANSWER SHAPES, not of readings; (C) changes the KEY SET of a carried entry and the LENGTH a
+pool member's expectation carries — `P-ML-IM-1`'s term `12` counts CATALOG SHAPES, not entries or keys, and
+`KEY_SHAPES` is `P-ML-IM-3`'s `4` shapes × `3` readings, unchanged at `12`; and (D) is a figure BESIDE the
+declared one by `§5.5.2` item 3's own rule.** **The DISTINCT-figure sum stays a REPORTED figure (`89`) and is
+never substituted for the declared total.** **`§5.5.2` item 10's SEPARATE lone-surrogate re-grain (`12 → 13`,
+`126 → 127`, `IM 84 → 85`) remains OWED and untouched by this amendment, and neither re-grain may be substituted
+for the other.**
+
 ---
 
 ## Layer declaration (read this before any table below)
@@ -675,6 +744,16 @@ FILING'S DERIVATION**). **The rules of the projection, in full:**
 7. **THE COLLAPSE APPLIES TO A RUN WHOSE ENTRIES CARRY `enabled: false` TOO** — **`enabled` is CARRIED, never
    consulted** (the module reads **no** member of entry data as a decision; `P-ML-1`/`P-ML-3`).
 
+**(A DATED SUB-RULE OF RULE 1 — `2026-09-27`, the Implementer's stop, defect `B`; `§2.4` item 6 is the full pin and
+this line exists so a reader of the run rule is not left with two readings.)** **RULE 1's VERBATIM clause holds for
+`id` · `label` · `accelerator` · `role` · `kind` and the replaced `submenu`, and is READ AS GOVERNED BY `§2.4` item
+6 FOR THE `enabled` MEMBER WHEN AND ONLY WHEN the seam is absent, non-callable or throwing** — **in that case the
+collapsed parent's `enabled` reads `false`, its six other members stay verbatim, and the SUBMENU's own entries keep
+THEIR carried `enabled` verbatim because the collapse is NOT recursive (rule 2 above).** **This paragraph is the
+DATED SUB-RULE itself; the pin is `§2.4` item 6 and the corrected row leg is `§3.1 M-7`.** **`P-ML-IM-5`'s run
+shapes and its term `12` are unaffected: that row's assertions are `items.length`, the parent's members BY IDENTITY,
+the submenu's length/order/identity and the non-replacement of nested `submenu`s.**
+
 **Item 6 — THE PICKER'S INVOCATION RULE, AND THE "COUNTED ONCE" CLAUSE (correction (b)'s missing row).** **The
 module invokes the caller's `picker` AT MOST ONCE per `buildMenuTemplate` invocation and AT MOST ONCE per
 `selectCatalogItem` invocation**, with the **carried candidate entries** as its single argument, and **hands its
@@ -723,6 +802,90 @@ never an empirical count of collapsed runs** — **stated because the alternativ
 `collapsing` a function of the data rather than of the platform**: **`collapsing` is a function of `platform`
 ALONE.**
 
+**Item 11 — ⟶ THE CARRY RULE, PINNED (`2026-09-27`, the Implementer's stop, defect `C`; annotate-never-rewrite —
+items 1/2/9's as-written clauses above stay VISIBLE and are read THROUGH this pin).** **THIS IS THE CLAUSE `F-2`'s
+TWO MUTUALLY UNSATISFIABLE PAIRS AND `P-ML-IM-1` ATTEMPT 12's THREE-KEYS-AGAINST-SEVEN CONTRADICTION BOTH
+NAME.**
+
+**THE DEFECT, AS MEASURED: NO CARRY RULE SATISFIES EITHER OF `F-2`'s PAIRS.** `F-2` asserts `out[1] toBe(nested)`
+**and** `Object.keys(out[1]) === ['0']`, and `out[2] toBe(valid)` **and**
+`Object.keys(out[2]) === ['id','label','kind']` — **the array `[nested]` owns `['0']` while `nested` owns the
+seven, and `el({id:'valid'})` owns the seven while the declared expectation reads three; so neither IDENTITY
+(`toBe`) nor a fixed seven-key COPY satisfies either pair.** **`P-ML-IM-1` attempt 12 reads the same gap from the
+other side: it expects the entry for `el({id:'nested'})` to carry THREE keys while `M-1` and `KEY_SHAPES`(1) pin
+that source shape to SEVEN.**
+
+**THE PINNED RULE, IN FOUR CLAUSES — AND IT IS THE SAME AT `normalizeCatalog` AND AT `buildMenuTemplate` (the
+projection changes no key set):**
+
+1. **A PROJECTED ITEM IS A FRESH RECORD, NEVER THE CALLER'S OWN ENTRY AND NEVER A REFERENCE CARRY.** **The
+   module returns NO value that IS a caller's catalog element: for each USABLE element it materializes a NEW
+   record whose OWN ENUMERABLE STRING KEYS are the DECLARED ORDER FILTER of the source's own keys.** **(The
+   module retains nothing either — `§2.5` item 1's "never retains it" is unchanged, and the caller's catalog MAY
+   be mutated between calls without changing any contract claim.)**
+2. **THE KEY SET IS THE INTERSECTION, IN DECLARED ORDER — NOT A FIXED SEVEN.** **`Object.keys(emitted)` deep-equals
+   exactly the names of `['id','label','accelerator','role','kind','submenu','enabled']` that the SOURCE OWNS, in
+   that declared order.** **`§2.3` item 2's opening clause ("exactly the seven … in that declared order") is
+   therefore read AS `§2.3` item 9 already reads it — the intersection of the seven declared names with the
+   source's own keys — and the "exactly" is a claim about the CLOSED DECLARED LIST, never a promise that five of
+   them are fabricated.** **An own key OUTSIDE the seven is DROPPED, NEVER COPIED; a `Symbol` key, an
+   non-enumerable member and a prototype-inherited member are NOT carried (`§2.3` item 2's other half, unchanged).
+   THE ORDER IS PART OF THE CLAIM: a present key's position is its declared position, never the source's
+   position.**
+3. **THE VALUES ARE HANDED ON BY IDENTITY.** **Each present member's value IS the source's own value (`Object.is`
+   / `toBe`), never a shallow copy, never a coercion and never a re-key — so `§2.3` item 2's "VERBATIM by identity"
+   holds at the MEMBER level while the RECORD is fresh.** **This is the same identity rule `§2.1` item 2 pins for
+   the picker's answer (`selectCatalogItem` returns the caller's own answer BY IDENTITY `toBe`) and the rule
+   `§2.3` item 8 pins for `id` comparison.**
+4. **AN ENTRY OWNING FEWER THAN SEVEN KEYS → ABSENT KEYS ARE OMITTED, AND A NON-OBJECT ELEMENT IS SKIPPED.**
+   **`§2.3` item 9's absent-member rule is the SAME clause and needs no new one: absent keys are ABSENT — no
+   `undefined` placeholder, no `null`, no `''`/`false`/`0`, no default.** **The "fewer than seven" case has TWO
+   shapes and both are declared: (a) the source does not OWN the key → the key is ABSENT from the emitted item;
+   and (b) the source OWNS the key and its value IS `undefined` → the key is PRESENT and its value is `undefined`
+   (`'enabled' in item === true`), which is the difference `M-8` asserts.** **AND `§2.3` item 1(c)'s SKIP is
+   total: a non-object element, `null`, `undefined`, a primitive, a `Symbol`, a `BigInt` or a function contributes
+   NO entry and carries NOTHING by identity — no entry is ever a primitive.**
+
+**THE TWO ASSERTIONS `F-2` SHOULD CARRY, PRINTED SO THE REPAIR IS NOT A RE-DERIVATION** (`catalog = [null,
+undefined, 42, 'x', Symbol('s'), 12n, () => 1, revokedProxy(), trapThrowingProxy(), protoRecord, [nested], valid,
+accessor]`, `protoRecord = Object.assign(Object.create(null), { id: 'proto', label: 'P' })`, `nested =
+el({ id: 'nested' })`, `valid = el({ id: 'valid' })`):
+
+- **entry 1 (the null-prototype record): `out[0]` deep-equals `{ id: 'proto', label: 'P' }` in VALUE, its own key
+  set is exactly `['id','label']` (it OWNS two, so two are carried — no prototype member was read), and its two
+  values ARE the source's own (`toBe`).**
+- **entry 2 (the ARRAY element `[nested]`): `Object.keys(out[1])` deep-equals `['0']`, and its own value IS the
+  caller's own array element (`out[1]['0']` IS `nested`, `toBe`) — **and `out[1]` is a FRESH RECORD, so
+  `out[1] toBe([nested])` is FALSE** (the array's `'0'` key is carried; the array itself is not the entry).**
+- **entry 3 (the plain record `valid = el({id:'valid'})`): `Object.keys(out[2])` deep-equals
+  `['id','label','accelerator','role','kind','submenu','enabled']` — SEVEN, because that source owns all seven —
+  and each value IS the source's own (`toBe`), while `out[2]` is a FRESH RECORD (so `out[2]` is not `valid` by
+  `toBe`, though it is `toEqual` to it).** **The three carried ids in catalog order remain
+  `['proto','nested','valid']`, `out.length === 3`, and the accessor-throwing record is SKIPPED (`§2.3` item
+  1(d)).**
+- **the pair that must NOT be filed as written:** **`out[2] toBe(valid)` with `Object.keys(out[2])` reading
+  `['id','label','kind']` is UNSATISFIABLE and is DELETED** (the source owns seven and three was never derivable);
+  **and `out[1] toBe(nested)` is DELETED with it.** **`F-2`'s as-filed text stays VISIBLE at its own row under its
+  dating.**
+
+**`P-ML-IM-1` ATTEMPT 12 AND `M-1`/`KEY_SHAPES`(1) ARE NOW MADE TO AGREE, AND WHICH FIGURE IS RIGHT IS STATED IN
+ONE LINE: THE SEVEN IS RIGHT FOR A SOURCE THAT OWNS SEVEN, AND THE ATTEMPT'S OWN FIXTURE IS NOT THAT SOURCE.**
+**The attempt's shape `(12)` is `[nullProtoEl(), el({id:'nested'}), throwingAccessorRecord()]`, so the CORRECT
+declared expectation is TWO CARRIED ENTRIES — the null-prototype element with key set `['id','label']` and the
+ARRAY element with key set `['0']` — with the accessor-throwing record SKIPPED; the attempt's as-authored
+`[SEVEN_KEYS, ['id','label','kind']]` (a THREE-key reading of `el`) is `SUPERSEDED`, and the carried LENGTH for
+that shape is `2`, not `3`.** **`M-1` and `KEY_SHAPES`(1) keep SEVEN for `el()` — i.e. for a source that owns all
+seven keys — and with clause 2 above the two clauses are now the SAME rule rather than two figures.**
+**`P-ML-IM-1`'s term stays `12` (a count of CATALOG SHAPES, not of entries or keys), `P-ML-IM-3`'s term stays
+`12` (`4` key-set shapes × `3` census readings) and NO term, cap, seed or strategy id moves.**
+
+**WHAT STILL HOLDS UNCHANGED, so the pin is not read as a general loosening: `M-8`'s eighth/ninth-key DROP, its
+`Symbol` and non-enumerable exclusion and its INHERITED-`role` exclusion; `M-1`'s and `M-3`'s identity reads —
+which are MEMBER-level reads (`carried[i][k]` against the source's own member) and are satisfied by this rule as
+written in the landed harness's `identityMismatch`; `R-12`'s three halves; and `§2.3` item 7's nominal
+distinction between `CatalogEntry` and `ProjectedItem`, which is a NAME distinction and not a structural
+one.**
+
 ### 2.4 The seam rules — the ONE contract edge, its four declared degradations, and the composition boundary
 
 **THE OWN-SEAM SET IS A SINGLE OPTIONAL MEMBER.** **There is NO factory, NO options object the module owns, NO
@@ -746,6 +909,11 @@ and from "`selectCatalogItem` returns `null`", so each is its own row**).
 
 **AND THE POSITIVE ARM, which is what makes the four degradations non-vacuous: a `non-null`, KNOWN-`id` answer is
 returned BY IDENTITY (`toBe`), and the invocation count is EXACTLY `1`.**
+
+**(A DATED POINTER, `2026-09-27`, the Implementer's stop, defect `B`: classes (1)/(2)/(3)'s `enabled === false` is
+READ AS `§2.4` item 6's PINNED READING, which governs `§2.3` item 5 rule 1's verbatim clause for that ONE member
+and extends the same `false` to an UNCOLLAPSED singleton `'picker'` entry; classes (1)–(3)'s as-written rows above
+and `P-ML-TP-2`'s cells are UNCHANGED by it, and the corrected row leg is `§3.1 M-7`.)**
 
 **Item 2 — `platform` IS REQUIRED AND OPAQUE.** **`TemplateOptions.platform` has NO default and NO omission
 arm**: an omitted `platform` is **the `recognized:false, collapsing:false` arm** (`§2.3` item 4(c)) and **NOT a
@@ -850,6 +1018,95 @@ a contract row for the TestWriter; none is a measurement this pass took.** **Eve
 | **M-7** | **The `'darwin'` collapse: one parent, the rest in the `submenu`, IN CATALOG ORDER** (`G-3`'s second static row; correction (a)'s missing ordering row) | `buildMenuTemplate(catalogC, { platform: 'darwin' })` where `catalogC` is `[nonPicker1, pickerA, pickerB, pickerC, nonPicker2]` with `pickerA/B/C` each carrying distinct `label`s and distinct `id`s | **`items.length === 3`**; **`items[1]` carries `pickerA`'s own carried members verbatim** (its `id`, `label`, `accelerator`, `role`, `kind === 'picker'`, `enabled`) **with its `submenu` REPLACED by an array of EXACTLY `2` projected items**; **`items[1].submenu[0]` carries `pickerB`'s members and `items[1].submenu[1]` `pickerC`'s** — **IN THAT ORDER**; **`items[0]` and `items[2]` are the two non-picker entries UNCHANGED and IN PLACE**; **`template.platform` reads `{ recognized: true, collapsing: true }`**; **a REVERSED catalog order (`[nonPicker1, pickerC, pickerB, pickerA, nonPicker2]`) moves the parent to `pickerC` and the submenu order correspondingly** | `§2.3` item 5, `§5.5.1 P-ML-IM-5`, `G-3` | `[T]` |
 | **M-8** | **The seven-key carry and the eighth-key DROP, with the OWN-KEY rule** (`G-2`'s discharge; correction (c)'s non-falsifiable-as-prose row) | `buildMenuTemplate(catalogD, { platform: 'win32' })` where `catalogD[0]` own-carryies the seven declared keys PLUS `extra: 'must-not-appear'`, `another: 1`; `catalogD[1]` inherits `role: 'parent'` from its prototype and owns the rest; `catalogD[2]` carries a `Symbol` key and a non-enumerable member | **for every emitted item: `Object.keys(item)` deep-equals EXACTLY the seven declared names, IN DECLARED ORDER**; **`'extra' in item === false`, `'another' in item === false`**; **`item.role` is `undefined`/absent for element `1`** (the inherited member was NOT carried); **the `Symbol` key and the non-enumerable member are NOT carried**; **`Object.getOwnPropertySymbols(item).length === 0`** | `§2.3` items 2/9, `§0A` note 2, `§3.4 R-12`, `§5.5.1 P-ML-IM-3`/`P-ML-IM-6` | `[T]` |
 | **M-9** | **The whole surface is reachable and returns its declared shapes in ONE composition** | a single drive that imports the module and calls all three exports in sequence with a conformant caller set, reading every return value and every caller-recorded invocation count | **`normalizeCatalog` ⇒ the carried array; `buildMenuTemplate` ⇒ the five-member shape with `items` and `platform`; `selectCatalogItem` ⇒ the picker's own answer or `null`; NOTHING THROWS; and the drive's own totals read `2` recorded picker invocations across its two seam-bearing calls, `7` own keys on every emitted item, and `2` own keys on the emitted template** | `§2.1` items 1/2, `§3.4 R-5`, `§5.5.1 P-ML-IM-1` | `[T]` |
+
+**Item 6 — ⟶ THE `enabled` MEMBER OF A DEGRADED `'picker'`-KIND ITEM — `M-4` VERSUS `M-7`, RULED HERE
+(`2026-09-27`, the Implementer's stop, defect `B`; annotate-never-rewrite — `§3.1 M-7`'s and `§2.4` item 1's
+as-written cells stay VISIBLE, and `M-7`'s losing cell is corrected in place under its own annotation).**
+
+**THE DEFECT, NAMED AS MEASURED: THE SAME CALL CANNOT READ `enabled` AS BOTH `false` AND `true`.** `M-4` (through
+`§2.4` item 1 class (1)) requires **the collapsed parent's** `enabled` to read `false` on a `'darwin'` collapse
+whose run parent owns `enabled: true`, while `M-7` (through `§2.3` item 5 rule 1) requires **verbatim carry**
+(`=== pa.enabled`, i.e. `true`) for the SAME call — and the Implementer measured `p1.enabled = true` under BOTH
+readings. **`§2.3` item 5 rule 1's verbatim clause and this subsection's degradation clause are therefore
+UNRECONCILED at one member, and one reading must govern.**
+
+**THE PINNED READING, STATED EXACTLY ENOUGH THAT BOTH ROWS AND `P-ML-TP-2`'s CELLS CAN BE ALIGNED WITHOUT
+GUESSING — IT IS THE DEGRADATION THAT GOVERNS, because the collapse is a MECHANISM-SHAPED member rather than a
+carried consumer value:**
+
+1. **`enabled` IS THE ONE MEMBER THE DECLARATION OWNS.** **On the `'darwin'`-collapsed sequence, when the
+   caller's seam is ABSENT, NON-CALLABLE or THROWING, the `'picker'`-kind item's `enabled` member reads
+   **`false`** — **whatever the source entry's own `enabled` value was, `true` included** — and **it is the
+   SEAM's state that member records** (the seam cannot answer), **not a caller datum and not a fabricated policy
+   value** (`P-ML-3` is satisfied: `false` here is the declared DISABLED marker of `§2.4` item 1 classes
+   (1)/(2)/(3), i.e. the same class of declared absence as `[]`, `null` and
+   `{recognized:false, collapsing:false}` — `I-12`).
+2. **EVERY OTHER CARRIED MEMBER KEEPS VERBATIM IDENTITY, BY OWN KEY, UNCHANGED.** **`§2.3` item 5 rule 1
+   survives in full for `id` · `label` · `accelerator` · `role` · `kind` and `submenu`** (the parent's `kind`
+   remains `'picker'`, its `submenu` is the replaced run array) — **so `M-7`'s identity assertion holds for FIVE
+   of its six members and fails only at `enabled`.** **`M-4`'s seven-key census assertion (`Object.keys(parent)`
+   deep-equals the seven names) is UNAFFECTED: `enabled` is PRESENT throughout, only its VALUE is fixed.**
+3. **THE RULE APPLIES TO THE COLLAPSED PARENT *AND* TO AN UNCOLLAPSED SINGLETON `'picker'` ENTRY.** **`§2.3` item
+   5 rule 4's singleton is not collapsed and gains no `submenu`, and its `enabled` reads `false` under the same
+   seam degradation** — **otherwise the same seam state would produce a disabled item at one run length and an
+   enabled one at another, and `P-ML-TP-2`'s `(a)` drive is a collapsed run precisely because that is the shape
+   the clause is about.**
+4. **THE RULE DOES NOT FIRE WHEN THE SEAM IS CALLABLE.** **With a callable seam the `'picker'`-kind item's
+   `enabled` is the source's own value, VERBATIM** — **and that holds for the callable-seam answers that name no
+   known `id` and for an empty (`null`/`undefined`) answer, because class (4) and the empty arm are
+   `selectCatalogItem`'s declared answer domain and NOT a seam-availability degradation** (`§2.4` item 1 class
+   (4); `§2.3` item 8).
+5. **THE COLLAPSE IS NOT RECURSIVE, SO THE RULE IS NOT APPLIED TWICE.** **The submenu's OWN entries keep their
+   carried `enabled` verbatim** (each is the identity projection of its own source entry); **the parent is the one
+   member the degradation reaches, and the rest of the run is carried as `readonly ProjectedItem[]` with its own
+   members untouched.** **`M-7`'s "none of them owned a `submenu`" reading and its per-entry identity readings
+   stand unchanged.**
+6. **THE RESULTING EXPECTATION A TESTWRITER CAN WRITE WITHOUT GUESSING**, for `catalogC =
+   [n1, pa, pb, pc, n2]`, `pa`/`pb`/`pc` carrying `kind: 'picker'` and `enabled: true`, with the picker OMITTED: **`items.length === 3`; `items[1].enabled === false`; `items[1]`'s `id`/`label`/`accelerator`/`role`/`kind`
+   identity-equal to `pa`'s; `items[1].submenu` = the rest of the run in catalog order, each entry carrying ITS
+   OWN `enabled` (`true`) verbatim; the invocation count is `0`; `selectCatalogItem(catalogC, undefined)` is
+   `null`; and NOTHING THROWS.**
+
+**THE LOSING CELL, CORRECTED WITH ITS AS-FILED FORM VISIBLE — `§3.1 M-7`, ONE ASSERTION ONLY.** **AS FILED,
+`M-7`'s fourth assertion read:** *"`items[1]` carries `pickerA`'s own carried members verbatim (its `id`,
+`label`, `accelerator`, `role`, `kind === 'picker'`, `enabled`) ..."* — **and its landed drive compares
+`[parent.id, parent.label, parent.accelerator, parent.role, parent.kind, parent.enabled]` against
+`[pa.id, pa.label, pa.accelerator, pa.role, pa.kind, pa.enabled]` (`enabled: true`), i.e. all SIX verbatim. THE
+`enabled` LEG OF THAT COMPARISON IS `SUPERSEDED` by this pin: the corrected expectation is
+`[pa.id, pa.label, pa.accelerator, pa.role, pa.kind, false]` — five members verbatim and `enabled === false`.**
+**`M-4` STANDS UNCHANGED AND IS THE WINNING ROW** — **its class (1) requirement that the `'picker'`-kind item is
+EMITTED and reads `enabled === false` is exactly the pinned reading, and its as-filed text needs no
+annotation.** **THE AS-FILED `M-7` LEG STAYS VISIBLE BESIDE THE CORRECTED ONE (annotate-never-rewrite), and the
+correction is to a ROW'S EXPECTATION, not to a clause.**
+
+**`§5.5.1 P-ML-TP-2`'s CELLS REQUIRE NO CHANGE — and this is recorded because the Implementer's report suggested
+they might.** **That row's property text ALREADY pins (a) an ABSENT seam leaving the `'picker'`-kind item EMITTED
+AND `enabled === false`, (b) the same for a NON-CALLABLE seam with ZERO invocations, and (c) a THROWING seam
+ATTEMPTED ONCE and producing the same disabled item — and its per-attempt assertion already reads "the item's
+emitted-ness and `enabled` value ... the recorded invocation count EXACTLY (`0`/`1` by the declared rule)" over
+the `9` shapes driven with a run whose entries own `enabled: true`.** **So the register was ALREADY grained to the
+pinned reading; the LANDED table is the one that needed alignment, and the alignment is the `M-7` leg above plus
+`§2.3` item 5 rule 1's verbatim clause being read as governed by this pin for `enabled` only.** **`P-ML-TP-2`'s
+term stays `9`, its strategy id stays `S-ML-SEAM-1`, and its `(bounded)` marking stays.**
+
+**THE TENSION, NAMED RATHER THAN LEFT FOR A READER TO DISCOVER: `§3.3 I-5` reads *"it carries every caller value
+verbatim"* and `P-ML-3` forbids a default `enabled`.** **THIS PIN IS NOT A DEFAULT AND NOT AN OVERWRITE OF CALLER
+DATA: it is the seam's DECLARED DISABLED MARKER, the one member a degradation owns, and `I-5`'s verbatim claim
+holds for every carried member the module does not have a declared degradation for.** **A pass that wants the
+`enabled` member to record the SOURCE's value under a degraded seam is asking for a DIFFERENT contract — it moves
+`M-4`'s and `P-ML-TP-2`'s (a)/(b)/(c) expectations and `§2.4` item 1 classes (1)/(2)/(3) — and it owes a NEW GATE
+(`§7a`/`§7a.1` form), not a spec edit.** **NO ROW ID, TERM, CAP, SEED OR `(bounded)` MARKING MOVES WITH THIS
+PIN.**
+
+**⟶ THE `§3.1 M-7` CORRECTION, RESTATED AT THE TABLE IT CORRECTS (`2026-09-27`).** **On `catalogC =
+[n1, pa, pb, pc, n2]` with `platform: 'darwin'` and the picker OMITTED: `items.length === 3`;
+`items[1].enabled === false`; `items[1]`'s `id`/`label`/`accelerator`/`role`/`kind` identity-equal `pa`'s; and
+`items[1].submenu` carries `pb` and `pc` in catalog order with THEIR own carried `enabled` values (`true`)
+verbatim — the collapse is not recursive.** **`M-7`'s as-filed sixth leg compared `enabled` too and is
+`SUPERSEDED`; the AS-FILED leg remains VISIBLE in `§2.4` item 6's block beside the corrected one; `M-4` was and is
+the WINNING ROW, and `P-ML-TP-2`'s cells already read `enabled === false` and need NO change.** **NO ROW ID,
+TERM, CAP, SEED OR `(bounded)` MARKING MOVES; the remedy is the harness's `M-7` drive and nothing in `§2.4`
+item 1.**
 
 ### 3.2 Documented fail-states / non-happy states
 
@@ -962,6 +1219,31 @@ set with both controls.** **NO ROW ID, TERM, CAP OR `§3` CELL CLAIM MOVES WITH 
 | **X-3** | **`docs/specs/menulib.md` is NOT the gate-1 record, and the gate-1 record is NOT edited by this unit** | the record (`docs/specs/menulib-review.md`) is a DENIED path in `§5.1` item 11; a diff-scope row (`R-13`) reads it |
 | **X-4** | **`docs/skills/designing-pages.md` does not exist** (`§1` item 7; `R-9`) | the file-existence probe of `R-9`, whose FAIL means this unit owes the coverage row |
 | **X-5** | **`src/**` contains NO menu, picker, dialog or accelerator surface** — the gate-1 record's own step-1 fact, **re-measured this pass: ZERO `menu`/`picker`/`dialog`/`accelerator`/`darwin` occurrences in `src/**`; `template` occurs in `5` `src/**` files as the PROVISION ENVELOPE's key (`§2.2`(C) row 3), and `platform`/`role` occur in `src/shared/dom-shim.ts` and `src/renderer/runtime.ts` in their OWN domains (`§2.2`(C) rows 4/9)** | a token census over `src/**` whose FAIL means a menu surface already exists and this unit's denial list must be re-derived |
+
+**⟶ `X-5`'s DATED SCOPE PIN (`2026-09-27`, the Implementer's stop, defect `A`; annotate-never-rewrite — the row's
+cell above stays VISIBLE and unedited).** **THE DEFECT, NAMED AS MEASURED: `X-5` as filed sweeps
+`\bmenu\b`/`\bpicker\b`/`\bdialog\b`/`'darwin'` over ALL of `src/**`, while `§5.1`'s allow-list row 1 places THIS
+UNIT'S MODULE at `src/shared/menu-template.ts` INSIDE that sweep and `§2.1` item 4 / `R-8` pin `'picker'` and
+`'darwin'` as its CLOSED literal set — so the row PASSES today and FLIPS RED the moment the conformant module
+lands. It is a LIVE TRAP, not a live failure.** **THE PIN, CHOSEN AS EXCLUSION RATHER THAN RELAXATION: `X-5`'s
+sweep EXCLUDES EXACTLY ONE PATH — THIS UNIT'S OWN MODULE, `src/shared/menu-template.ts` (the artifact `§5.1` row 1
+is allowed to create) — and NOTHING ELSE.** **THE MODULE'S TWO PINNED LITERALS `'picker'` and `'darwin'` ARE
+DECLARED AS THE NAMED EXEMPTION, and the exemption is scoped to that one file: `R-8`'s closed-set row and `R-7`'s
+one-platform-literal row are the rows that govern the module's own tokens, and they already carry both
+controls.** **WHAT STILL FAILS, STATED SO THE ROW IS NOT VACUOUS — ALL SIX SPECS SURVIVE AND THE FOUR
+CONTROLS BIND:** **(i)** any of the six banned spellings (**a `menu` word, a `MenuItem` word, a
+`setApplicationMenu` word, a `picker` word, a `dialog` word, or a `'darwin'` literal**) in ANY OTHER `src/**`
+file **FAILS** — the sibling/`src/**` population is swept IN FULL, and the exclusion is one path, not a
+directory; **(ii)** a `Menu`/`MenuItem`/`setApplicationMenu` reference **anywhere in `src/**`** still **FAILS**
+(the `menu-template`-derived identifiers of `§2.2`(C) row 2 remain the module's only licensed spelling, and the
+scan's `wordRe` boundary means the module's own hyphenated path is reached by the exclusion rather than by a
+regex patch); **(iii)** a SECOND platform token, a `process.platform` read, a case-insensitive or prefix
+`'darwin'` comparison in the module still **FAILS** (`R-7`/`R-8`); and **(iv)** the exclusion is asserted
+**positivity-checked** — a corpus placing a banned token in a DIFFERENT `src/**` path **must fail the row**, which
+is the control that keeps the exclusion from becoming a blanket exemption. **A module OUTSIDE
+`src/shared/menu-template.ts` — including a second file this unit may not create (`§5.1`'s allow-list holds one
+production path) — RECEIVES NO EXEMPTION.** **NO ROW ID, TERM, CAP, SEED, `§5.5.1` CELL OR OTHER `§3` ROW's CLAIM
+MOVES WITH THIS PIN; `X-5` is not renumbered and its green branch (`§4.1`) is unchanged.**
 
 ---
 
@@ -1561,6 +1843,24 @@ always the cap comparison.**
 REPORTED BESIDE them and are NEVER substituted for them** (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`, sub-rule
 2; `§5.3` item 11).
 
+**⟶ THE DISTINCT SUM, PINNED BECAUSE THE RED SET COMPUTED IT TWO WAYS (`2026-09-27`, the Implementer's stop,
+defect `D`; annotate-never-rewrite — the ledger table above is UNCHANGED and its thirteen entries stay exactly as
+printed).** **THE TWO SUMS ARE BOTH HARNESS-SIDE ASSERTIONS AGAINST THE SAME ARRAY — `89` at one line and `83` at
+the next — and this ledger prints NO TOTAL OF ITS OWN, so the figure below is derived from the thirteen `distinct`
+cells listed above and is the ONLY admissible total for them.** **THE THIRTEEN DISTINCT FIGURES, PRINTED WITH
+THEIR OWN TERMS: `7` (`P-ML-IM-1`) + `4` (`P-ML-IM-2`) + `12` (`P-ML-IM-3`) + `6` (`P-ML-IM-4`) + `9`
+(`P-ML-IM-5`) + `6` (`P-ML-IM-6`) + `12` (`P-ML-IM-7`) + `3` (`P-ML-SM-1`) + `3` (`P-ML-SM-2`) + `3`
+(`P-ML-SM-3`) + `12` (`P-ML-TP-1`) + `8` (`P-ML-TP-2`) + `4` (`P-ML-TP-3`) = `89`.** **`89` IS THE RIGHT FIGURE
+AND `83` IS WRONG — it is nobody's sum: not the thirteen distinct terms (`89`), not the declared total (`126`), not
+the distinct `SM + TP` subtotal (`3 + 3 + 3 + 12 + 8 + 4` = `35`) and not the `IM` declared subtotal (`84`).**
+**WHAT THIS PIN DOES NOT MOVE, because the distinct ledger is a REPORTED figure and never a cap comparison: the
+declared total stays `126` = the same thirteen declared terms, the chain, the subtotals `IM 84 · SM 9 · TP 33`, the
+caps (`126 ≤ 400`, largest row `12 ≤ 100`) and the `6`-of-`13` `(bounded)` set.** **THE DISTINCT SUM IS A REPORTED FIGURE WITH NO
+TERM OF ITS OWN — which is exactly why its mis-computation could not be caught by any cap check, and why it is
+pinned here rather than left to the harness.** **A pass that quotes `83` is quoting a figure this ledger does not
+produce; a pass that substitutes `89` for the DECLARED total in a cap comparison is committing the substitution
+error `§5.3` item 11 names.** **NO ROW ID, TERM, CAP, SEED, STRATEGY ID OR `(bounded)` MARKING MOVES.**
+
 **Item 4 — a DRAW is not a SWEEP, and the `P-ML-TP-1` pool is a SUBSET of the input space by construction.**
 **The pool holds `12` members and the row draws `12` times**, so the row **reports** its distinct-member count and
 **asserts nothing about coverage**. **The pool's silence about a shape it does not list is a stated boundary, not
@@ -1966,6 +2266,24 @@ register at all**, and **the lone-surrogate string's home is `§5.5.2` item 10's
 named re-grain cost** — **so all three are STATED BOUNDARIES, none is an unrecorded omission, and adding the holder
 member owes a NEW dated amendment plus a register re-grain that THIS repair may not make.** **NO METHOD NOTE ABOVE
 CHANGES A ROW, A TERM, A CAP, A SEED OR A `(bounded)` MARKING.**
+
+**(D) THE SECOND GATE-3 EVENT, AND THE RE-GRAIN IT OWES (`2026-09-27`) — THE FIRST IMPLEMENTER PASS STOPPED AND
+WROTE NO BYTE OF THE MODULE, REPORTING SEVEN ROWS UNREACHABLE BY ANY CONFORMANT MODULE.** **Provenance:
+`docs/next-steps.md`'s `## ⟶ HANDOVER — E7 (U-MENULIB) AT GATE 3, MID-CYCLE`, cited BY NAME; its `§B` carries the
+seven row-bound defects and its `§A` item 4 files the red set. The FOUR that are CONTRACT-side are pinned by THESE
+DATED AMENDMENTS: `X-5`'s scope (`§3.5`), `M-4` versus `M-7` (`§2.4` item 6 with `§2.3` item 5's sub-rule and
+`§3.1 M-7`'s corrected leg), the carry rule behind `F-2`'s two pairs and `P-ML-IM-1` attempt 12 (`§2.3` item 11),
+and `PRE-2`'s distinct sum (`§5.5.2` item 3). The THREE that remain TEST-side are named at `§0A` note 8 item (3):
+the `normalizeView`-based controls that strip comments and collapse literals before scanning, `R-2`'s test-file half
+whose own bytes carry the banned word (its contract-side scope gap was already closed by `§3.4`'s dated exemption
+pins), and the red-count drift (`45`/`11` at the handover against `46`/`10` at `§5.5.3`).** **THE RE-GRAIN THIS
+OWES IS `§0A` note 8 item (4)'s five parts, and its extent is bounded ON THE CONTRACT SIDE: THE TERM VERDICT IS
+`NO TERM MOVED` — the declared total remains `126` = `12 + 12 + 12 + 12 + 12 + 12 + 12 + 3 + 3 + 3 + 12 + 9 + 12`,
+with the same chain, the same subtotals `IM 84 · SM 9 · TP 33`, the same seed `20260927`, the same caps and the
+same `6`-of-`13` `(bounded)` set — so THE OWED RE-GRAIN IS A ROW/EXPECTATION RE-GRAIN AT THE TESTWRITER'S HAND and
+NOT the `§7`(B) total re-grain, which is landed.** **`§5.5.2` item 10's lone-surrogate re-grain (`12 → 13`,
+`126 → 127`, `IM 84 → 85`) REMAINS A SEPARATE, STILL-OWED OBLIGATION, and none of the three re-grains may be
+substituted for another.** **This pass RAN NOTHING: no suite, no leg, no `tsc`, no build and no commit.**
 
 ### 7a. Ambiguity report — the clauses a TestWriter could NOT derive a falsifiable row from
 

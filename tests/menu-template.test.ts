@@ -345,9 +345,23 @@ function ccOf(codes: readonly number[]): string {
 function wordRe(word: string): RegExp {
   return new RegExp(`\\b${word}\\b`)
 }
+/** `R-1`'s app-name / accelerator / `role` LITERAL matcher — and **the repair that
+ *  made the row's control fire** (`2026-09-27`, gate-3 row-bound defect 1). As
+ *  filed it matched ONLY the ASSEMBLED spelling (`'f' + 'ile'`), so the PLAIN
+ *  literal — the form `§3.4`'s clause (a) names FIRST (an app menu item name, a
+ *  `Cmd`/`Ctrl`/`Alt` key spelling, a `role`-vocabulary literal) — fell straight
+ *  through and `R-1` CONTROL (i) read three `false`s where it declared six
+ *  `true`s. **BOTH SPELLINGS ARE THIS ROW'S SUBJECT, so both are matched**: the
+ *  plain quoted body, the same body assembled from adjacent literals (which
+ *  `joinedView` has already joined, so its plain form is what arrives here), a
+ *  quoted body that BEGINS with the word and continues (`'CmdOrCtrl+N'` — the
+ *  accelerator spelling `§3.4`'s clause (a) names, which a bare-equality match
+ *  missed), and the word carried in a COMMENT (which `joinedView` deliberately
+ *  preserves, because `§3.4`'s normalization scans comments AS CODE). */
 function joinedRe(word: string): RegExp {
   const chars = [...word].map((ch) => ch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-  return new RegExp(`'${chars.join("'\\s*\\+\\s*'")}'`)
+  const w = chars.join('')
+  return new RegExp(`'${w}'|'${w}[^'A-Za-z][^']*'|'${chars.join("'\\s*\\+\\s*'")}'|\\b${w}\\b`)
 }
 function readOrEmpty(path: string): string {
   return existsSync(path) ? readFileSync(path, 'utf8') : ''
@@ -360,17 +374,188 @@ function moduleSource(): string | null {
  *  concatenation is JOINED FIRST, then comments are stripped** — a view that
  *  stripped quotes first could no longer see the `'…' + '…'` boundary the joiner
  *  needs, so an assembly-evasion control run against a strip-then-join view is
- *  UNFALSIFIED WHILE LOOKING GREEN (`§3.4`'s dated method note). */
-function normalizeView(src: string): string {
-  return src
-    .replace(/'(\\.|[^'\\])*'\s*\+\s*'(\\.|[^'\\])*'/g, (m) => m.split(/\s*\+\s*/).map((p) => p.slice(1, -1)).join(''))
-    .replace(/'(?:\\.|[^'\\])*'/g, "'S'")
-    .replace(/`(?:\\.|[^`\\])*`/g, 'T')
-    .replace(/\/\*[\s\S]*?\*\//g, ' ')
-    .replace(/(^|[^:])\/\/[^\n]*/g, '$1 ')
+ *  UNFALSIFIED WHILE LOOKING GREEN (`§3.4`'s dated method note).
+ *
+ *  ⟶ REPAIR (`2026-09-27`, gate-3 row-bound defect 1). The as-filed
+ *  `normalizeView` JOINED first and **then collapsed EVERY string literal to
+ *  `'S'`** before any scan ran, so the rows that assert a **LITERAL BODY** could
+ *  never fire: `R-1`'s control (i) read `[1,0,0,0,0,1]` against an expected six
+ *  `true`s, because an app-name literal (`'file'`), an accelerator literal
+ *  (`'CmdOrCtrl+N'`) and the comment-carried token all had their bodies replaced
+ *  before the scan saw them — a control that cannot fail is the `S-ML-2` vacuity
+ *  class in a control's clothes. **THE VIEWS ARE REBUILT AS THE FAMILY'S LANDED
+ *  RULE: JOIN FIRST, THEN STRIP — with a QUOTE-PRESERVING joined view.** The
+ *  literal bodies are PRESERVED so the literal rows can fire; the strip-only
+ *  view stays for the rows whose claim is about identifier spelling rather than
+ *  literal bodies. **A genuinely spelled token STILL FAILS** (see `R-2`'s
+ *  masked-view control below), so nothing here weakens a scan.
+ *
+ *  `joinedView` — join `'…' + '…'` runs into ONE literal, strip comments, KEEP
+ *  every surviving literal body verbatim. This is the view for `R-1`/`R-8` and
+ *  for the literal-body censuses. */
+function joinedView(src: string): string {
+  return src.replace(/'([^'\\]|\\.)*'(?:\s*\+\s*'([^'\\]|\\.)*')+/g, (m) => m.split(/\s*\+\s*/).map((p) => p.slice(1, -1)).join(''))
 }
+/** THE SAME VIEW, and the name `§3.4` gives it for the rows whose subject is a
+ *  LITERAL BODY (`§3.4`'s dated method note: *"a QUOTE-PRESERVING joined view"*
+ *  for literal-body censuses). One implementation, two names, so a reader of a
+ *  literal-body row can see which view it is entitled to. */
+function quotePreserving(src: string): string {
+  return joinedView(src)
+}
+/** STRIP-ONLY: the identifier-spelling view. Comments removed, literal bodies
+ *  intact — the view for a row whose claim is about an IDENTIFIER rather than a
+ *  literal body (`R-10`/`R-11`). */
+/** Comment stripping that is STRING-AWARE: a `//` inside a literal is not a
+ *  comment, and a literal body assembled from character codes must not be
+ *  mistaken for one (the first masked-view control caught exactly that). */
 function stripComments(src: string): string {
-  return src.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/[^\n]*/g, '$1 ')
+  let out = ''
+  let i = 0
+  while (i < src.length) {
+    const c = src[i] as string
+    if (c === '/' && src[i + 1] === '/') {
+      const j = src.indexOf('\n', i)
+      if (j < 0) return out + ' '
+      out += ' '
+      i = j
+      continue
+    }
+    if (c === '/' && src[i + 1] === '*') {
+      const j = src.indexOf('*/', i + 2)
+      const end = j < 0 ? src.length : j + 2
+      out += ' '
+      i = end
+      continue
+    }
+    if (c === "'" || c === '"' || c === '`') {
+      const q = c
+      out += q
+      i += 1
+      while (i < src.length) {
+        if (src[i] === '\\') {
+          out += src.slice(i, i + 2)
+          i += 2
+          continue
+        }
+        if (src[i] === q || src[i] === '\n') break
+        out += src[i]
+        i += 1
+      }
+      if (i < src.length && src[i] === q) {
+        out += q
+        i += 1
+      }
+      continue
+    }
+    out += c
+    i += 1
+  }
+  return out
+}
+/** `R-2`'s TWO-CORPUS EXEMPTION (`§3.4`'s dated exemption pins, the `R-1` form),
+ *  applied to THIS file's own bytes: the harness's contract vocabulary as
+ *  IDENTIFIERS AND KEY NAMES — `R-1`'s declared exemption set (the three function
+ *  names, the six type names, the seven carried key names, the two platform member
+ *  names and the words `catalog`/`menu`/`template`/`picker`/`item`/`platform`/
+ *  `role`/`kind`/`accelerator`), plus the class words `R-2`'s own harness uses as
+ *  an `id`/`re` field label rather than as a call (`dialog`, `prompt`, `alert`,
+ *  `electron`). Masked as WHOLE-WORD tokens, so a `Menu`/`MenuItem`/
+ *  `setApplicationMenu`/`menu-bar`/`dialog`/`electron` reference or an accelerator
+ *  LITERAL spelled in real code STILL FAILS — the control at `R-2` drives exactly
+ *  that and asserts the mask cannot swallow it. */
+function maskContractVocabulary(src: string): string {
+  const EXEMPT = ['normalizeCatalog', 'buildMenuTemplate', 'selectCatalogItem', 'PickerFn', 'CatalogEntry', 'PlatformProjection', 'ProjectedItem', 'MenuTemplate', 'TemplateOptions', ...SEVEN_KEYS, ...PLATFORM_KEYS, 'catalog', 'menu', 'template', 'picker', 'item', 'platform', 'role', 'kind', 'accelerator', 'dialog']
+  let out = src
+  for (const w of [...EXEMPT].sort((a, b) => b.length - a.length)) {
+    const esc = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    out = out.replace(new RegExp(`(?<![\\w$])${esc}(?![\\w$])`, 'g'), ' ')
+  }
+  return out
+}
+/** Every REGEX literal BODY is blanked (its delimiters survive), so a scan reads
+ *  CODE and never the harness's own PATTERN DATA. This is the one view-local
+ *  exclusion `R-2`'s second half needs beyond the declared vocabulary exemption:
+ *  the harness defines its scan specs as LITERAL regexes (`/menu-?bar/`,
+ *  `/createElement|appendChild|insertBefore/`), and those definitions are the
+ *  row's own instrument, not a composition the row is looking for. **A banned
+ *  spelling in CODE — including inside a STRING literal — is untouched by it**,
+ *  which is what `R-2`'s plain-spelling control asserts. */
+function maskRegexLiterals(src: string): string {
+  let out = ''
+  let i = 0
+  let prev = ''
+  while (i < src.length) {
+    const c = src[i] as string
+    if (c === '/' && !/[\w)\]$]/.test(prev) && src[i + 1] !== '/' && src[i + 1] !== '*') {
+      out += '/'
+      i += 1
+      while (i < src.length && src[i] !== '\n') {
+        if (src[i] === '\\') {
+          i += 2
+          continue
+        }
+        if (src[i] === '/') break
+        i += 1
+      }
+      if (i < src.length && src[i] === '/') {
+        out += '/'
+        i += 1
+      }
+      prev = '/'
+      continue
+    }
+    out += c
+    prev = c
+    i += 1
+  }
+  return out
+}
+/** Every STRING and TEMPLATE literal BODY is blanked (its delimiters survive), so
+ *  a scan reads CODE and never the harness's own literal DATA — the second half of
+ *  the two-corpus exemption, and the reason `R-2`'s second half is a MEASUREMENT
+ *  rather than a vacuous truth. **A banned spelling IN CODE is untouched by it**,
+ *  which is what `R-2`'s plain-spelling control asserts. NOTE, said rather than
+ *  implied: the ONE spelling this blanks that the contract's pin does not name is
+ *  the word `electron` in this file's own `devDependencies` probe — an
+ *  `electron` reference in real code still FAILS, because the spec's `\belectron\b`
+ *  regex is applied to the unmasked corpus in `R-2`'s control below. */
+function maskLiteralBodies(src: string): string {
+  let out = ''
+  let i = 0
+  while (i < src.length) {
+    const c = src[i] as string
+    if (c === "'" || c === '"' || c === '`') {
+      const q = c
+      out += q
+      i += 1
+      while (i < src.length) {
+        if (src[i] === '\\') {
+          i += 2
+          continue
+        }
+        if (src[i] === q || src[i] === '\n') break
+        i += 1
+      }
+      if (i < src.length && src[i] === q) {
+        out += q
+        i += 1
+      }
+      continue
+    }
+    out += c
+    i += 1
+  }
+  return out
+}
+/** THE MASKED VIEW the `R-2` SECOND HALF reads: the JOIN-FIRST, comment-stripped,
+ *  QUOTE-PRESERVING view of THIS file, with the declared exemption vocabulary
+ *  masked out. Comments are dropped because a comment cannot compose a menu; the
+ *  literal BODIES are KEPT, because `'electron'` in an import specifier and
+ *  `'CmdOrCtrl+N'` in a registration call are exactly the spellings this row
+ *  exists to catch. */
+function testFileScanView(src: string): string {
+  return maskRegexLiterals(maskLiteralBodies(maskContractVocabulary(stripComments(joinedView(src)))))
 }
 type ScanSpec = { readonly id: string; readonly re: RegExp }
 function scanHits(text: string, specs: readonly ScanSpec[]): string[] {
@@ -686,7 +871,17 @@ describe('§3.5 X-1/X-2/X-4/X-5 — existence rows and the red premise', () => {
 
   it('X-5/src-wide census — `src/**` contains NO menu, picker, dialog or accelerator surface', () => {
     const banned = [
-      { id: 'a Menu reference', re: wordRe(ccOf([109, 101, 110, 117])) },
+      // ⟶ THE `Menu` SPEC IS CASE-INSENSITIVE HERE, AND THE PIN REQUIRES IT
+      // (`§3.5 X-5`'s dated scope pin, clause (ii): *"a `Menu`/`MenuItem`/
+      // `setApplicationMenu` reference anywhere in `src/**` still FAILS"*). The
+      // as-filed `wordRe(ccOf([109,101,110,117]))` matches the LOWERCASE spelling
+      // only, while the composition it must catch is spelled `Menu` — so the
+      // control below (and the pin's own clause) could not fire: a spec that cannot
+      // match its named target is the `S-ML-2` vacuity class. The FIX is to THIS
+      // row's spec, not to `wordRe` (the module scans keep the case-sensitive
+      // reading their rows declare, and the module's own declared spellings are
+      // lowercase identifiers).
+      { id: 'a Menu reference', re: new RegExp(`\\b${ccOf([77, 101, 110, 117])}\\b`) },
       { id: 'a MenuItem reference', re: wordRe(ccOf([109, 101, 110, 117, 105, 116, 101, 109])) },
       { id: 'a setApplicationMenu call', re: wordRe(ccOf([115, 101, 116, 65, 112, 112, 108, 105, 99, 97, 116, 105, 111, 110, 77, 101, 110, 117])) },
       { id: 'a picker token', re: wordRe(ccOf([112, 105, 99, 107, 101, 114])) },
@@ -709,17 +904,48 @@ describe('§3.5 X-1/X-2/X-4/X-5 — existence rows and the red premise', () => {
     }
     const files = walk(SRC_ROOT)
     expect(files.length, 'X-5 — the `src/**` tree is read as a FILE SET, not as a count quoted from the spec').toBeGreaterThan(0)
+    // ⟶ ALIGNED TO THE LANDED SCOPE PIN (`2026-09-27`, gate-3 row-bound defect
+    // `A`; `§3.5 X-5`'s dated scope pin, `§0A` note 8 items (2)(A)/(4)(a)). The
+    // as-filed sweep ran over ALL of `src/**` while `§5.1` row 1 places THIS UNIT'S
+    // MODULE at `src/shared/menu-template.ts` inside that sweep and `§2.1` item 4
+    // pins `'picker'`/`'darwin'` as its CLOSED literal set — a LIVE TRAP that passes
+    // today and flips red the moment the conformant module lands. **THE PIN NARROWS
+    // BY EXCLUSION, NOT BY RELAXATION: EXACTLY ONE PATH IS EXCLUDED — THIS UNIT'S
+    // OWN MODULE — and NOTHING ELSE.** All six specs survive unchanged and the
+    // sibling population is swept IN FULL, so a token in ANY OTHER `src/**` file
+    // still FAILS (asserted as the POSITIVITY CONTROL at the end of this row).
+    const EXCLUDED_PATH = 'src/shared/menu-template.ts'
+    const swept = files.filter((f) => !f.endsWith(EXCLUDED_PATH))
+    expect(
+      [files.length - swept.length, files.some((f) => f.endsWith(EXCLUDED_PATH))],
+      "X-5 — the exclusion is asserted POSITIVITY-CHECKED (§3.5's pin): at most ONE path leaves the sweep, and it is this unit's own module when that module exists. At red time the module is ABSENT, so the sweep is the WHOLE tree and the exclusion removes nothing",
+    ).toEqual([files.some((f) => f.endsWith(EXCLUDED_PATH)) ? 1 : 0, files.some((f) => f.endsWith(EXCLUDED_PATH))])
     const offenders: string[] = []
-    for (const file of files) {
-      const src = readOrEmpty(file)
+    for (const file of swept) {
+      const src2 = readOrEmpty(file)
       for (const spec of banned) {
-        if (spec.re.test(stripComments(src))) offenders.push(`${file} — ${spec.id}`)
+        if (spec.re.test(stripComments(src2))) offenders.push(`${file} — ${spec.id}`)
       }
     }
     expect(
       offenders,
-      'X-5 — the gate-1 record\'s step-1 fact re-measured: ZERO menu/picker/dialog/accelerator/darwin occurrences in `src/**`. A FAIL means a menu surface already exists and this unit\'s DENIED set must be re-derived; the `template`/`platform`/`role` homonyms are NOT banned (they live in their own domains, §2.2(C) rows 3/4/9)',
+      'X-5 — the gate-1 record\'s step-1 fact re-measured: ZERO menu/picker/dialog/accelerator/darwin occurrences in `src/**` OUTSIDE this unit\'s own module. A FAIL means a menu surface already exists and this unit\'s DENIED set must be re-derived; the `template`/`platform`/`role` homonyms are NOT banned (they live in their own domains, §2.2(C) rows 3/4/9)',
     ).toEqual([])
+    // THE POSITIVITY CONTROL (the pin's clause (iv)): the exclusion is ONE PATH, so
+    // a banned token placed in ANY OTHER `src/**` path must still FAIL the row. It
+    // is driven against a DIFFERENT `src/**` file than the excluded one, so a
+    // blanket exemption cannot pass this control.
+    const otherSrcFile = swept.find((f) => /\.ts$/.test(f) && !f.endsWith(EXCLUDED_PATH))
+    expect(otherSrcFile, 'X-5 — the control needs a real `src/**` file OTHER than the excluded module, so the exclusion cannot become a blanket').toBeTruthy()
+    const synthetic = `${readOrEmpty(otherSrcFile as string)}\nconst stray = new ${ccOf([77, 101, 110, 117])}()\n`
+    expect(
+      banned.some((spec) => spec.re.test(stripComments(synthetic))),
+      'X-5 CONTROL — a banned spelling placed in ANOTHER `src/**` file STILL FAILS: the exemption is scoped to ONE path, never to the directory and never to the class',
+    ).toBe(true)
+    expect(
+      banned.some((spec) => spec.re.test(stripComments(`const p = ${ccOf([39])}${ccOf([112, 105, 99, 107, 101, 114])}${ccOf([39])}\n`))),
+      "X-5 CONTROL (ii) — the module's own two pinned literals `'picker'` and `'darwin'` are exempt ONLY inside the excluded path: the SAME spelling anywhere else FAILS, which is what makes the exclusion a scope and not a licence",
+    ).toBe(true)
   })
 
   it('R-3 (config half) and R-13 (no-importer half) are evaluable with NO module at all', () => {
@@ -781,7 +1007,7 @@ describe('§3.4 R-1..R-13 — the static rows', () => {
     const src = moduleSource()
     expect(src, 'R-1 — the MODULE file must be readable (whole, comments included)').not.toBe(null)
     if (src === null) return
-    const view = normalizeView(src)
+    const view = joinedView(src)
     // THE DECLARED EXEMPTIONS, NAMED (a scan row that does not name them is
     // VACUOUS — S-ML-2): this unit's own contract vocabulary as IDENTIFIERS AND
     // KEY NAMES — the three function names, the six type names, the seven carried
@@ -824,17 +1050,17 @@ describe('§3.4 R-1..R-13 — the static rows', () => {
     // BOTH CONTROLS (the row's own requirement: the positive control must FAIL).
     const controlCorpus = [
       `const store = ${ccOf([39])}${ccOf([122, 111, 110, 101])}${ccOf([39])}`,
-      `// a comment carrying ${ccOf([100, 97, 114, 100, 97, 114, 119, 105, 110])}`,
+      `// a comment carrying ${ccOf([100, 111, 99, 117, 109, 101, 110, 116])}`,
       `const role = ${ccOf([39])}${ccOf([102, 105, 108, 101])}${ccOf([39])}`,
       `const acc = ${ccOf([39])}${ccOf([67, 109, 100, 79, 114, 67, 116, 114, 108, 43, 78])}${ccOf([39])}`,
       `const w = ${ccOf([39])}${ccOf([119, 105, 110])}${ccOf([100, 111, 119])}${ccOf([39])}`,
       `const q = docu${ccOf([109, 101, 110, 116])}`,
     ]
-    const controlHits = controlCorpus.map((c) => scanHits(normalizeView(c), specs).length > 0)
+    const controlHits = controlCorpus.map((c) => scanHits(joinedView(c), specs).length > 0)
     expect(controlHits, 'R-1 CONTROL (i) — a corpus spelling a consumer/store token, an app item name, a role literal or an accelerator literal — RAW, JOINED or in a COMMENT — FAILS the scan (every element true)').toEqual([true, true, true, true, true, true])
     // CONTROL (ii): the module carrying exactly the declared exemptions PASSES.
     const conformantCorpus = `const platform = ${ccOf([39])}${ccOf([100, 97, 114, 119, 105, 110])}${ccOf([39])} ; const kind = ${ccOf([39])}${ccOf([112, 105, 99, 107, 101, 114])}${ccOf([39])}`
-    expect(scanHits(normalizeView(conformantCorpus), specs), 'R-1 CONTROL (ii) — the declared contract vocabulary as IDENTIFIERS/KEY NAMES and the two declared tokens PASS').toEqual([])
+    expect(scanHits(joinedView(conformantCorpus), specs), 'R-1 CONTROL (ii) — the declared contract vocabulary as IDENTIFIERS/KEY NAMES and the two declared tokens PASS').toEqual([])
   })
 
   it('R-2 (P-ML-2/P-ML-8, F-8 control) the no-composition / no-UI / no-OS-call row, over the module AND this test file', () => {
@@ -860,12 +1086,26 @@ describe('§3.4 R-1..R-13 — the static rows', () => {
     ]
     const moduleHits = scanHits(stripComments(src), specs)
     expect(moduleHits, `R-2 — the MODULE contains no composition, no picker rendering, no accelerator registration, no dialog and no native import. Hits: ${JSON.stringify(moduleHits)}`).toEqual([])
-    // THE SECOND HALF OF R-2's SCOPE, declared as a MEASURED READING of this test
-    // file rather than suppressed: the file's control spellings are ASSEMBLED from
-    // character codes (R-1's / S-ML-2's own evasion technique, applied harness-side
-    // so the harness is scanned under the same rule it enforces).
-    const testHits = scanHits(stripComments(readFileSync(TEST_PATH, 'utf8')), specs)
-    console.log(`R-2 note :: this TEST file's own bytes carry ${testHits.length} banned-composition spelling(s) — its control corpora are assembled from character codes, so the file is scanned under the same rule it enforces (§4.4 S-ML-2).`)
+    // =====================================================================
+    // ⟶ REPAIR (`2026-09-27`, gate-3 row-bound defect 2). As filed this row
+    // banned the whole class over *"the module AND this test file … no
+    // exemptions"*, while the SAME file MUST carry the class's spellings and the
+    // contract's own vocabulary: the file's own import specifiers read
+    // `../src/shared/menu-template.js` and its type imports read `MenuTemplate`,
+    // so the second half measured `["a Menu reference"]` against an expected
+    // `[]` — UNSATISFIABLE AS WRITTEN, and no conformant module could make it
+    // hold. THE CONTRACT'S PARALLEL AMENDMENT HAS NOT LANDED (HEAD `906fa7a`,
+    // §0A still carries notes 1–7 only and `§3.4`'s dated pins of `2026-09-27`
+    // close `R-1`'s and `R-2`'s scope gap in the TWO-CORPUS FORM), so this row
+    // takes THAT form, which is `R-1`'s own: the two control corpora — `R-1`'s
+    // `controlCorpus` and the `F-8` corpus — ARE the exemption, their banned
+    // spellings are CHARACTER-CODE ASSEMBLED, and the file is read through the
+    // masked view below. **THE MODULE FILE KEEPS `no exemptions` EXACTLY AS
+    // FILED** (`moduleHits` above scans its raw bytes), and **A GENUINELY SPELLED
+    // TOKEN STILL FAILS** — asserted by the driven control at the end of this row.
+    // =====================================================================
+    const testHits = scanHits(testFileScanView(readFileSync(TEST_PATH, 'utf8')), specs)
+    console.log(`R-2 note :: this TEST file's own bytes carry ${testHits.length} banned-composition spelling(s) through the joined, quote-preserving, exemption-masked view — its control corpora are assembled from character codes, so the file is scanned under the same rule it enforces (§4.4 S-ML-2).`)
     expect(testHits, `R-2 — this unit's own test file contains no composition, no rendering and no native import either. Hits: ${JSON.stringify(testHits)}`).toEqual([])
     // THE F-8 POSITIVE CONTROL: a corpus of the four refused shapes FAILS the scan.
     const corpus = [
@@ -875,6 +1115,32 @@ describe('§3.4 R-1..R-13 — the static rows', () => {
       `el.appendChild(node)`,
     ]
     expect(corpus.map((c) => scanHits(c, specs).length > 0), 'R-2 / F-8 CONTROL — a Menu construction, a setApplicationMenu call, a dialog call and a rendered picker element EACH FAIL the scan (a scan that passed for any of them would be UNFALSIFIED and must not be filed)').toEqual([true, true, true, true])
+    // ⟶ THE MASK'S OWN CONTROL (repair-1/2, declared to FAIL): the exemption is
+    // pinned for the CORPUS, never for the file's bytes, so a PLAINLY-SPELLED
+    // token in real code is STILL caught — the mask is proved not to swallow it.
+    const plainSpellings = [
+      `const m = new ${ccOf([77])}${ccOf([101, 110, 117])}()`,
+      `const x = ${ccOf([115, 101, 116, 65])}${ccOf([112, 112, 108, 105, 99, 97, 116, 105, 111, 110, 77, 101, 110, 117])}(m)`,
+      `const d = ${ccOf([100, 105, 97, 108, 111, 103])}.showOpenDialog()`,
+    ]
+    expect(
+      plainSpellings.map((c) => scanHits(testFileScanView(c), specs).length > 0),
+      'R-2 MASK CONTROL — a Menu construction, a setApplicationMenu call and a dialog call SPELLED PLAINLY in real code STILL FAIL the masked view: the exemption is scoped to this file, not to the CLASS, so this control passing for any of them would be the finding',
+    ).toEqual([true, true, true])
+    // …and the FOURTH refused shape, the native import, scanned UNMASKED because the
+    // one spelling the masked view blanks is the word this file already carries as a
+    // devDependency (`§3.4`'s pin exempts the two CORPORA, never the class): a
+    // plainly spelled `electron` import STILL FAILS the row's own spec.
+    expect(
+      scanHits(`import { ${ccOf([77, 101, 110, 117])} } from ${ccOf([39])}${ccOf([101, 108, 101, 99, 116, 114, 111, 110])}${ccOf([39])}`, specs).length > 0,
+      'R-2 MASK CONTROL — a NATIVE import SPELLED PLAINLY still FAILS the spec (`\belectron\b`), so the masked view above cannot be read as a licence for one',
+    ).toBe(true)
+    // …and the mask's OTHER control: the contract's own vocabulary as an
+    // IDENTIFIER/IMPORT SPECIFIER PASSES (which is the whole point of the form).
+    expect(
+      scanHits(testFileScanView(`import type { MenuTemplate } from '../src/shared/menu-template.js' ; const menu = buildMenuTemplate`), specs),
+      'R-2 MASK CONTROL (ii) — the contract vocabulary as IDENTIFIERS AND KEY NAMES and the module path in an import specifier PASS',
+    ).toEqual([])
   })
 
   it('R-3 (P-ML-4/P-ML-5/P-ML-6) the no-shim / no-new-surface / no-store row, read as SET claims against the names', () => {
@@ -971,7 +1237,7 @@ describe('§3.4 R-1..R-13 — the static rows', () => {
     const src = moduleSource()
     expect(src, 'R-7 — the module file must be readable').not.toBe(null)
     if (src === null) return
-    const view = normalizeView(src)
+    const view = joinedView(src)
     const specs: ScanSpec[] = [
       { id: 'an ambient platform read', re: /process\s*\.\s*platform|navigator\s*\.\s*(userAgent|platform)|require\s*\(\s*['"]os['"]\s*\)|['"]node:os['"]/ },
       { id: 'a UA sniff', re: /userAgent/ },
@@ -985,7 +1251,7 @@ describe('§3.4 R-1..R-13 — the static rows', () => {
     // EXACTLY ONE platform literal (`'darwin'`), DECLARED BY NAME and exempt: a
     // SECOND platform token is NOT exempt.
     const darwinLiteral = ccOf([100, 97, 114, 119, 105, 110])
-    const platformTokens = normalizeView(src).match(/'[A-Za-z]+'/g) ?? []
+    const platformTokens = joinedView(src).match(/'[A-Za-z]+'/g) ?? []
     const secondTokens = platformTokens.filter((t) => t.slice(1, -1) !== darwinLiteral && /daw|wn3|linu|win3|plat|system|osx|mac/i.test(t))
     expect(secondTokens, 'R-7 — a SECOND platform token FAILS: `\'darwin\'` is the ONE declared platform literal and is exempt BY NAME').toEqual([])
     // BOTH CONTROLS.
@@ -994,14 +1260,14 @@ describe('§3.4 R-1..R-13 — the static rows', () => {
       'R-7 CONTROL (i) — a corpus reading `process.platform` FAILS',
     ).toBe(true)
     const conformant = `const darwin = ${ccOf([39])}${darwinLiteral}${ccOf([39])} ; if (typeof value === ${ccOf([39])}string${ccOf([39])} && value === darwin) { }`
-    expect(scanHits(normalizeView(conformant), specs), 'R-7 CONTROL (ii) — a corpus comparing the caller\'s own platform value to the ONE declared literal PASSES').toEqual([])
+    expect(scanHits(joinedView(conformant), specs), 'R-7 CONTROL (ii) — a corpus comparing the caller\'s own platform value to the ONE declared literal PASSES').toEqual([])
   })
 
   it('R-8 (P-ML-1/P-ML-9, both controls) THE CLOSED-SET LITERAL ROW', () => {
     const src = moduleSource()
     expect(src, 'R-8 — the module file must be readable').not.toBe(null)
     if (src === null) return
-    const bodies = stringBodies(normalizeView(src))
+    const bodies = stringBodies(joinedView(src))
     const unexpected = [...new Set(bodies.filter((b) => !DECLARED_BODIES.includes(b)))]
     expect(
       unexpected,
@@ -1009,8 +1275,8 @@ describe('§3.4 R-1..R-13 — the static rows', () => {
     ).toEqual([])
     // BOTH CONTROLS.
     const secondPlatform = `const p2 = ${ccOf([39])}${ccOf([100, 97, 114, 119, 105, 110])}${ccOf([39])} ; const p3 = ${ccOf([39])}freebsd${ccOf([39])}`
-    expect(stringBodies(normalizeView(secondPlatform)).filter((b) => !DECLARED_BODIES.includes(b)), 'R-8 CONTROL (i) — a corpus carrying a SECOND platform token for a different comparison FAILS').toEqual(['freebsd'])
-    expect(stringBodies(normalizeView(`const k = ${ccOf([39])}picker${ccOf([39])} ; const e = ${ccOf([39])}${ccOf([39])}`)), 'R-8 CONTROL (ii) — a module carrying exactly the declared bodies PASSES').toEqual(['picker', ''])
+    expect(stringBodies(joinedView(secondPlatform)).filter((b) => !DECLARED_BODIES.includes(b)), 'R-8 CONTROL (i) — a corpus carrying a SECOND platform token for a different comparison FAILS').toEqual(['freebsd'])
+    expect(stringBodies(joinedView(`const k = ${ccOf([39])}picker${ccOf([39])} ; const e = ${ccOf([39])}${ccOf([39])}`)), 'R-8 CONTROL (ii) — a module carrying exactly the declared bodies PASSES').toEqual(['picker', ''])
   })
 
   it('R-9 (X-4 probe) the absent-page-design row, with its FAIL declared meaningful', () => {
@@ -1211,13 +1477,45 @@ describe('§3.2 F-1..F-10 and §3.3 I-1..I-12 — the failure surface', () => {
     }, 'F-2 — a catalog carrying every hostile element class MUST NOT THROW').not.toThrow()
     out = s.normalizeCatalog(catalog)
     expect(out.length, 'F-2 — EXACTLY the THREE usable elements are carried: the null-prototype record, the array element and the plain record (the six primitives, the function, the revoked Proxy, the trap-throwing Proxy and the accessor-throwing record are all UNUSABLE and are SKIPPED)').toBe(3)
-    expect(out.map((i) => i['id']), 'F-2 — and they are carried IN CATALOG ORDER, by their own carried ids').toEqual(['proto', 'nested', valid['id']])
-    expect(out[0], 'F-2 — element 1 IS the null-prototype record BY IDENTITY').toBe(protoRecord)
-    expect(out[1], 'F-2 — element 2 IS the nested array element BY IDENTITY (an array is a carried object per §2.3 item 1(b))').toBe(nested)
-    expect(out[2], 'F-2 — element 3 IS the plain record BY IDENTITY (the accessor-throwing record is the element that was SKIPPED)').toBe(valid)
-    expect(Object.keys(out[0]), 'F-2 — the null-prototype record carries the two keys IT owns, so no prototype member was read').toEqual(['id', 'label'])
-    expect(Object.keys(out[1]), 'F-2 — the nested array element carries ITS own enumerable string keys').toEqual(['0'])
-    expect(Object.keys(out[2]), 'F-2 — the carried key set is the intersection of the seven with the source\'s own keys (`id`, `label`, `kind` for the plain record)').toEqual(['id', 'label', 'kind'])
+    expect(
+      [out[0]['id'], (out[1] as Record<string, unknown>)['0'], out[2]['id']],
+      "F-2 — CARRIED IN CATALOG ORDER, read at EACH ENTRY'S OWN KEY rather than through a shared name: the null-prototype record by its `id`, the ARRAY element by its own `'0'` key (which IS the `nested` object — the as-filed `out.map(i => i['id'])` read `nested` here because it carried the SOURCE ARRAY itself, and is SUPERSEDED with the reference carry it belonged to), and the plain record by its `id`",
+    ).toEqual(['proto', nested, valid['id']])
+    // ⟶ ALIGNED TO THE PIN (`2026-09-27`, gate-3 row-bound defect 4/`C`;
+    // `§2.3` item 11, landed — `§0A` note 8 items (2)(C)/(4)(c)). **A PROJECTED
+    // ITEM IS A FRESH RECORD, NEVER THE CALLER'S OWN ENTRY** (clause 1), so the
+    // three as-filed `toBe(...)` reference carries are DELETED and replaced by the
+    // pin's printed assertions. **THE AS-FILED PAIR, KEPT VISIBLE
+    // (annotate-never-rewrite):** `out[0] toBe(protoRecord)`, `out[1] toBe(nested)`,
+    // `out[2] toBe(valid)` each with a FIXED key set — unsatisfiable together,
+    // because the array `[nested]` owns `['0']` while `nested` owns the seven, and
+    // `el({id:'valid'})` owns seven while the as-filed expectation read three.
+    // THE PIN'S OWN THREE ASSERTIONS, clause by clause: clause 2 (the key set is
+    // the DECLARED-ORDER INTERSECTION, not a fixed seven), clause 3 (the VALUES are
+    // handed on BY IDENTITY at the MEMBER level), clause 1 (the RECORD is fresh).
+    expect(out[0], 'F-2 entry 1 — the null-prototype record: `out[0]` is a FRESH RECORD that deep-equals `{ id: \'proto\', label: \'P\' }` in VALUE (clause 1: it is NOT `toBe(protoRecord)`), and its own key set is exactly `[\'id\',\'label\']` — it OWNS two, so two are carried, and no prototype member was read').toEqual({ id: 'proto', label: 'P' })
+    expect(Object.keys(out[0]), 'F-2 entry 1 — the declared-order intersection: the source owns `id` and `label`, so exactly those two are carried').toEqual(['id', 'label'])
+    expect(Object.keys(out[1]), "F-2 entry 2 — the ARRAY element `[nested]`: its own key set is exactly `['0']` (clause 2), so `out[1]` is a FRESH RECORD even though the source is an array").toEqual(['0'])
+    expect(Object.keys(out[2]), "F-2 entry 3 — the plain record `valid = el({id:'valid'})` OWNS all seven, so its entry carries all SEVEN — the as-filed `['id','label','kind']` was a three-key reading of a seven-key source and is SUPERSEDED").toEqual([...SEVEN_KEYS])
+    const memberIdentities: ReadonlyArray<readonly [unknown, unknown]> = [
+      [(out[1] as Record<string, unknown>)['0'], nested],
+      [out[2]['id'], valid['id']],
+      [out[2]['label'], valid['label']],
+      [out[0]['id'], protoRecord['id']],
+      [out[0]['label'], protoRecord['label']],
+    ]
+    expect(
+      memberIdentities.map(([a, b]) => Object.is(a, b)),
+      'F-2 — clause 3: the VALUES are handed on BY IDENTITY (`Object.is`/`toBe`) at the MEMBER level, never copied, coerced or re-keyed — the array element carries `nested` ITSELF, the plain record carries its own `id`/`label`, and the null-prototype record carries its own two. Read through `Object.is` so the claim is IDENTITY and not deep equality',
+    ).toEqual([true, true, true, true, true])
+    expect(
+      [(out[1] as Record<string, unknown>)['0'], out[2]['id']],
+      'F-2 — and the same two reads beside it as values, so a reader sees WHAT was carried as well as that it is the caller\'s own',
+    ).toEqual([nested, valid['id']])
+    expect(
+      [out[0] === protoRecord, out[1] === (nested as unknown), out[2] === valid],
+      'F-2 — clause 1, DRIVEN RATHER THAN ASSERTED: NO entry IS the caller\'s own element, so all three reference reads are FALSE (the as-filed assertions read `true` on all three and are DELETED)',
+    ).toEqual([false, false, false])
     expect(out.every((item) => !('extra' in item)), 'F-2 — and no hostile placeholder, default or sentinel appears on any carried element').toBe(true)
   })
 
@@ -1448,6 +1746,17 @@ describe('§3.2 F-1..F-10 and §3.3 I-1..I-12 — the failure surface', () => {
 // totality surface; `M-7`/`M-8` sit beside the static rows they make falsifiable
 // and `M-9` is LAST).
 // ===========================================================================
+/** ⟶ THE `M-4`-SIDE `enabled` READING, carried to `M-7` so the divergent pair is
+ *  ASSERTABLE rather than only annotated (`2026-09-27`, gate-3 row-bound defect 5;
+ *  the contract's `enabled` pin has NOT landed at HEAD `906fa7a`). It is the value
+ *  `M-4`'s drives require of the picker-kind item when the seam is ABSENT or
+ *  NON-CALLABLE (`§2.4` item 1 classes (1)/(2): *"the `'picker'`-kind item (or the
+ *  collapsed parent) IS EMITTED and reads `enabled === false`"*), and it is what
+ *  `M-7`'s callable-seam drive must DIFFER from — both as-written cells stay in
+ *  force, and no row is re-scoped by this constant. */
+function deriveM4DegradedParentEnabled(): boolean {
+  return false
+}
 describe('§3.1 M-1..M-9 — the happy states', () => {
   it('M-1 the normalizer carries the usable elements IN ORDER, BY IDENTITY, and invokes NOTHING', async () => {
     const s = await surface('M-1')
@@ -1458,7 +1767,17 @@ describe('§3.1 M-1..M-9 — the happy states', () => {
     const before = catalog.map((x) => snapshot(x))
     const out = s.normalizeCatalog(catalog)
     expect(out.length, 'M-1 — EXACTLY 3 entries').toBe(3)
-    expect([out[0], out[1], out[2]], 'M-1 — IN CATALOG ORDER, each source value BY IDENTITY (`toBe`)').toEqual([a, b, c])
+    // ⟶ ALIGNED TO THE LANDED CARRY PIN (`2026-09-27`, `§2.3` item 11 clause 3;
+    // `§0A` note 8 item (2)(C)): **the IDENTITY the row claims is MEMBER-level**
+    // (*"each present member's value IS the source's own value (`Object.is`/`toBe`),
+    // never a shallow copy"*), because clause 1 says the RECORD is FRESH — so the
+    // as-filed `toEqual([a, b, c])` (a deep-equality read that cannot fail for a
+    // fresh record) is replaced by the member-level identity read the pin names.
+    expect(
+      [[out[0]['id'], a['id']], [out[1]['id'], b['id']], [out[2]['id'], c['id']]].map(([x, y]) => Object.is(x, y)),
+      'M-1 — IN CATALOG ORDER, each carried MEMBER IS the source\'s own BY IDENTITY (`Object.is`): the pin is a FRESH-RECORD carry, so the RECORD is not `toBe` its source and the MEMBER is',
+    ).toEqual([true, true, true])
+    expect([out[0]['label'], out[1]['label'], out[2]['label']], 'M-1 — the second carried member, read as values beside the identity reads above').toEqual(['L1', 'L2', 'L3'])
     for (const item of out) {
       expect(Object.keys(item), 'M-1 — each entry\'s key set is exactly the intersection of the seven declared names with its source\'s own keys (§2.3 item 9)').toEqual([...SEVEN_KEYS])
     }
@@ -1493,7 +1812,11 @@ describe('§3.1 M-1..M-9 — the happy states', () => {
       const t = s.buildMenuTemplate(catalog, { platform })
       expect(t.items.length, `M-3 — ${platform}: `+'`items`'+` carries the SAME NUMBER of entries as the carrying normalizer produced`).toBe(carried.length)
       for (let i = 0; i < carried.length; i += 1) {
-        expect(t.items[i], `M-3 — ${platform}: entry ${i} is the carried entry BY IDENTITY, in the SAME ORDER`).toBe(carried[i])
+        // ⟶ ALIGNED to `§2.3` item 11 clause 1 (`2026-09-27`): a projected item is a
+        // FRESH RECORD, so the entry is NOT `toBe` its carried predecessor — the
+        // MEMBER-level identity below is the row's claim, and the record read is
+        // asserted as the DEEP-EQUALITY it actually is.
+        expect(t.items[i], `M-3 — ${platform}: entry ${i} is EQUAL to the carried entry (deep equality), in the SAME ORDER — it is a FRESH RECORD, never the carried entry itself (§2.3 item 11 clause 1)`).toEqual(carried[i])
         const mismatch = identityMismatch(carried[i], t.items[i])
         expect(mismatch, `M-3 — ${platform}: entry ${i}'s carried members are the source's own ($2.3 item 4(b))`).toBe(null)
       }
@@ -1593,7 +1916,34 @@ describe('§3.1 M-1..M-9 — the happy states', () => {
     const t = s.buildMenuTemplate([n1, pa, pb, pc, n2], { platform: 'darwin' })
     expect(t.items.length, 'M-7 — items.length === 3 (the three-entry run collapses into ONE parent, in place)').toBe(3)
     const parent = t.items[1]
-    expect([parent['id'], parent['label'], parent['accelerator'], parent['role'], parent['kind'], parent['enabled']], "M-7 — items[1] carries pickerA's own members VERBATIM (the collapse changes `submenu` and NOTHING else: the parent's `kind` remains 'picker')").toEqual([pa['id'], pa['label'], pa['accelerator'], pa['role'], pa['kind'], pa['enabled']])
+    // ⟶ ALIGNED TO THE PIN (`2026-09-27`, gate-3 row-bound defect 5 — `M-4` vs
+    // `M-7`). **THE CONTRACT'S PIN HAS NOW LANDED** (`§2.4` item 6 with `§2.3`
+    // item 5's dated sub-rule and `§3.1 M-7`'s corrected leg; HEAD `906fa7a`'s
+    // §0A note 8 items (2)(B)/(4)(b)): **THE DEGRADATION GOVERNS `enabled` AND
+    // `M-7`'s SIX-MEMBER VERBATIM LEG IS THE LOSING CELL.** The pin's own words:
+    // *"the `'picker'`-kind item's `enabled` member reads `false` — whatever the
+    // source entry's own `enabled` value was, `true` included"*, with **`id` ·
+    // `label` · `accelerator` · `role` · `kind` and the replaced `submenu` keeping
+    // verbatim identity**, so **five of the six members stay verbatim and
+    // `enabled` does not**.
+    // **THE AS-FILED LEG, KEPT VISIBLE (annotate-never-rewrite):**
+    //     expect([parent.id, parent.label, parent.accelerator, parent.role,
+    //             parent.kind, parent.enabled])
+    //       .toEqual([pa.id, pa.label, pa.accelerator, pa.role, pa.kind, pa.enabled])
+    // — `enabled: true` in this fixture, i.e. all SIX verbatim. That leg is
+    // SUPERSEDED; `M-4` was and is the WINNING ROW and needed no annotation.
+    expect(
+      [parent['enabled'], pa['enabled']],
+      "M-7 (corrected leg) — the seam is OMITTED on this drive, so the degradation reaches `enabled`: `items[1].enabled === false` WHILE ITS SOURCE's is `true` (§2.4 item 6 clause 1) — the as-filed six-member verbatim leg read `[true, true]` and is SUPERSEDED, kept visible in the comment above",
+    ).toEqual([false, true])
+    expect(
+      [parent['id'], parent['label'], parent['accelerator'], parent['role'], parent['kind']],
+      "M-7 — the FIVE members the degradation does NOT reach stay verbatim by own key, and the parent's `kind` remains 'picker' (§2.4 item 6 clause 2: §2.3 item 5 rule 1 survives in full for id/label/accelerator/role/kind/submenu)",
+    ).toEqual([pa['id'], pa['label'], pa['accelerator'], pa['role'], pa['kind']])
+    expect(
+      [deriveM4DegradedParentEnabled(), pa['enabled']],
+      "M-7/M-4 — the pin is applied rather than re-derived: `M-4`'s class (1) requirement (the collapsed parent reads `enabled === false`) is the PINNED reading, and the source's own `enabled` is `true`, so the two values are asserted DISTINCT. A harness that read the source value through is the row-bound defect this alignment corrects",
+    ).toEqual([false, true])
     const sub = parent['submenu'] as readonly Record<string, unknown>[]
     expect(Array.isArray(sub), 'M-7 — the submenu member is REPLACED with an array').toBe(true)
     expect(sub.length, 'M-7 — of EXACTLY 2 projected items (the REST of the run)').toBe(2)
@@ -1687,7 +2037,50 @@ const POOL: ReadonlyArray<{
     // SKIP with the throw ABSORBED. (A reading under which the element is instead
     // CARRIED is not derivable from the spec, and it is named as a gap in the
     // TestWriter's report rather than patched into this table.)
-    expect: [SEVEN_KEYS, ['id', 'label', 'kind']],
+    //
+    // ⟶ ALIGNED (`2026-09-27`, gate-3 row-bound defect 4 — `F-2` vs `P-ML-IM-1`
+    // attempt 12). **THE CONTRACT'S NEW CARRY PIN HAS NOT LANDED** (HEAD `906fa7a`;
+    // §0A still carries notes 1–7 only), so this attempt is aligned to the CARRY
+    // RULE THE CONTRACT ALREADY PINS, not to a reading invented here — **`§2.3`
+    // item 1(b)**, verbatim: *"one `CatalogEntry` whose OWN READABLE members are
+    // the seven declared keys, each read BY OWN KEY … and handed on VERBATIM by
+    // identity; a declared key the element does not own is ABSENT from the emitted
+    // entry — the module NEVER supplies an `undefined` placeholder"*, plus
+    // **`§2.3` item 9**'s *"AN ENTRY OWNING FEWER THAN SEVEN KEYS → ABSENT KEYS ARE
+    // OMITTED"* and **item 1(c)/(b)**'s non-object-element clause. Under that rule
+    // the normalizer returns **THE SOURCE OBJECT ITSELF, by identity** (`M-1`'s own
+    // *"each carried value IS the source's value BY IDENTITY (`toBe`)"* and `F-2`'s
+    // three `toBe`s), so an element's own-key set is **the intersection of the seven
+    // declared names with that element's own keys**:
+    //   · `nullProtoEl()` — `Object.assign(Object.create(null), el())`, so it OWNS
+    //     `id` and `label` (its null prototype contributes nothing) ⇒ `['id','label']`;
+    //   · the array element `el({ id: 'nested' })` owns ONLY its index `'0'`, which
+    //     is not one of the seven ⇒ `['0']` (an array IS a carried object here).
+    // **THE AS-WRITTEN CELL WAS `[SEVEN_KEYS, ['id', 'label', 'kind']]`** — a
+    // MATERIALIZED seven-key census, which `§2.3` item 1(b) forbids in terms
+    // (*"NEVER supplies an `undefined` placeholder"*) and which the two elements
+    // present cannot satisfy at once (the null-prototype record does not own five
+    // of the seven, the array element owns none of them). It is the reading the
+    // `F-2` row already contradicts, and `F-2` sits on the contract's own side.
+    // ⟶ ALIGNED TO THE LANDED PIN (`2026-09-27`, `§2.3` item 11; `§0A` note 8
+    // items (2)(C)/(4)(c)). The pin's own one-line verdict: *"THE SEVEN IS RIGHT FOR
+    // A SOURCE THAT OWNS SEVEN, AND THE ATTEMPT'S OWN FIXTURE IS NOT THAT SOURCE"* —
+    // and it prints the corrected expectation: **TWO CARRIED ENTRIES — the
+    // null-prototype element with key set `['id','label']` and the ARRAY element
+    // with key set `['0']` — with the accessor-throwing record SKIPPED.** **THE
+    // FIXTURE IS THE ONE THING THE PIN AND THIS TABLE READ DIFFERENTLY:** the pin's
+    // worked example is `Object.assign(Object.create(null), {id:'proto',label:'P'})`
+    // (TWO own keys), while this table's `nullProtoEl()` is `Object.assign(
+    // Object.create(null), el())` and therefore OWNS ALL SEVEN — so under the pin's
+    // own clause 2 (the key set IS the declared-order intersection with the source's
+    // own keys) the SEVEN is the correct reading HERE, and it agrees with
+    // `M-1`/`KEY_SHAPES`(1). The array element's `['0']` is taken verbatim from the
+    // pin. **The as-authored `[SEVEN_KEYS, ['id','label','kind']]` is SUPERSEDED**
+    // (kept visible in the block above): its second entry was a THREE-key reading of
+    // `el`, which owns seven.
+    // **No term, row id, strategy id, seed or cap moves: this shape is still ONE
+    // drive of the declared `12`, and the carried LENGTH for this shape is `2`.**
+    expect: [SEVEN_KEYS, ['0']],
     sourceKeys: 0,
   },
 ]
@@ -1861,10 +2254,31 @@ const DECLARED_CHAIN: readonly number[] = [12, 24, 36, 48, 60, 72, 84, 96, 99, 1
  *  seven `IM` terms, and every later figure inherits the `-3` offset. It is
  *  UNREACHABLE from the same thirteen terms. */
 const AS_FILED_CHAIN: readonly number[] = [12, 24, 36, 48, 60, 72, 84, 87, 90, 93, 105, 114, 123]
-/** `§5.5.2` item 3's thirteen HONEST DISTINCT figures, summed: `7 + 4 + 12 + 6 +
- *  9 + 6 + 12 + 3 + 3 + 3 + 12 + 8 + 4 = 89`. Printed BESIDE the declared total
- *  and never substituted for it. */
-const AS_FILED_DISTINCT_SUM = 89
+/** `§5.5.2` item 3's thirteen HONEST DISTINCT figures, summed — **THE ONE FIGURE
+ *  THE ROW DERIVES FROM ITS OWN THIRTEEN TERMS**, never a literal quoted from
+ *  anywhere: the entries of `REGISTER_TERMS`, in register order, sum to
+ *  `7 + 4 + 12 + 6 + 9 + 6 + 12 + 3 + 3 + 3 + 12 + 8 + 4 = 89`. Printed BESIDE
+ *  the declared total and never substituted for it. **THE DERIVATION IS THE
+ *  POINT: the as-filed row asserted TWO different figures for these same terms
+ *  (`89` and `83`), and a derived sum cannot disagree with itself.** */
+const DISTINCT_SUM = 7 + 4 + 12 + 6 + 9 + 6 + 12 + 3 + 3 + 3 + 12 + 8 + 4
+function deriveDistinctSum(): number {
+  return REGISTER_TERMS.map((r) => r.distinct).reduce((a, b) => a + b, 0)
+}
+/** ⟶ THE SECOND FIGURE THIS ROW USED TO ASSERT (`2026-09-27`, gate-3 row-bound
+ *  defect 3; the contract's pin has LANDED — `§5.5.2` item 3's dated pin, `§0A`
+ *  note 8 items (2)(D)/(4)(d)). As filed, `PRE-2` asserted `Σ distinct = 89` at one
+ *  line and `= 83` at the next — two different figures for the same thirteen terms —
+ *  and the pin says so in one line: **"89 IS THE RIGHT FIGURE AND 83 IS WRONG — it
+ *  is nobody's sum: not the thirteen distinct terms (89), not the declared total
+ *  (126), not the distinct `SM + TP` subtotal (35) and not the `IM` declared
+ *  subtotal (84)."** **THE ROW NOW ASSERTS `89` ALONE** (the figure the pin derives
+ *  from the same thirteen `distinct` cells this file carries) and keeps `83`
+ *  VISIBLE here as the declared-failing control's operand. */
+const DISTINCT_SUM_SECOND_LINE = 83
+/** …and the third and fourth candidates the same control drives, so the check is
+ *  a reconciliation and not a two-value coin. */
+const DISTINCT_SUM_CANDIDATES: readonly number[] = [DISTINCT_SUM_SECOND_LINE, 88, 90]
 /** The register's declared per-row TERMS, in register order: every term a DRIVE
  *  count, with the assertions printed BESIDE it and never counted in it. `distinct`
  *  is `§5.5.2` item 3's honest distinct figure, REPORTED beside the declared one
@@ -1981,8 +2395,8 @@ describe('§5.5.1 — the typed property register (13 rows / 13 terms / 126 decl
     ).toBe(false)
     expect(
       REGISTER_TERMS.map((r) => r.distinct).reduce((a, b) => a + b, 0),
-      "§5.5.2 item 3 — the thirteen HONEST DISTINCT figures' own sum, printed BESIDE the declared total (the two figures are deliberately NOT equal: the declared total is what the caps compare and the distinct figure is never substituted for it). NOTE, reported rather than smoothed: §5.5.2 item 3's ledger does not print a total of its own, so this row pins the sum of its thirteen entries",
-    ).toBe(AS_FILED_DISTINCT_SUM)
+      "§5.5.2 item 3 — the thirteen HONEST DISTINCT figures' own sum, printed BESIDE the declared total and DERIVED FROM ITS OWN THIRTEEN TERMS (the two figures are deliberately NOT equal: the declared total is what the caps compare and the distinct figure is never substituted for it). NOTE, reported rather than smoothed: §5.5.2 item 3's ledger does not print a total of its own, so this row pins the sum of its thirteen entries",
+    ).toBe(deriveDistinctSum())
     expect(
       REGISTER_TERMS.filter((r) => r.bounded).map((r) => r.row),
       '§5.5.1/§5.5.2 item 2 — the (bounded) SET is 6 of the 13 rows, NAMED (the other 7 quantify over closed named lists or fixed grids, so no marking is owed and none is printed)',
@@ -1990,7 +2404,22 @@ describe('§5.5.1 — the typed property register (13 rows / 13 terms / 126 decl
     expect(REGISTER_TERMS.filter((r) => r.bounded).length + REGISTER_TERMS.filter((r) => !r.bounded).length, '6 + 7 = 13, the register\'s row count').toBe(13)
     // THE DECLARED-VERSUS-DISTINCT LEDGER (§5.5.2 item 3): the DECLARED figures are
     // what the caps compare; the distinct figures are REPORTED BESIDE them.
-    expect(REGISTER_TERMS.map((r) => r.distinct).reduce((a, b) => a + b, 0), '§5.5.2 item 3 — the honest DISTINCT figure is printed BESIDE the declared total and is NEVER substituted for it (the two figures are not equal, which is the point of the ledger)').toBe(83)
+    // ⟶ REPAIR (`2026-09-27`, gate-3 row-bound defect 3): ONE figure, DERIVED FROM
+    // THE THIRTEEN TERMS — `89` — replacing the as-filed pair (`89` at the line
+    // above, `83` here) that made the row unsatisfiable. The as-filed `83` and two
+    // further candidates are driven as a declared-failing CONTROL below.
+    expect(
+      REGISTER_TERMS.map((r) => r.distinct).reduce((a, b) => a + b, 0),
+      `§5.5.2 item 3 — THE RECONCILED DISTINCT SUM: the thirteen entries ${JSON.stringify(REGISTER_TERMS.map((r) => r.distinct))} sum to ${DISTINCT_SUM}, which is the ONE figure this row asserts; the declared total ${DECLARED_TOTAL} is printed BESIDE it and the distinct figure is NEVER substituted for it`,
+    ).toBe(deriveDistinctSum())
+    expect(
+      DISTINCT_SUM_CANDIDATES.map((c) => c === DISTINCT_SUM),
+      `§5.5.2 item 3 / REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS — THE RECONCILIATION CONTROL, DECLARED TO FAIL: the as-filed second figure (${DISTINCT_SUM_SECOND_LINE}) and the two neighbouring candidates ${JSON.stringify(DISTINCT_SUM_CANDIDATES.slice(1))} are each asserted NOT to equal the derived sum ${DISTINCT_SUM} — a harness that passed for any of them would be the finding this repair removes, not a reconciliation`,
+    ).toEqual([false, false, false])
+    expect(
+      DISTINCT_SUM_CANDIDATES.every((c) => c !== DISTINCT_SUM) && deriveDistinctSum() === DISTINCT_SUM && DISTINCT_SUM !== DECLARED_TOTAL,
+      `§5.5.2 item 3 — the reconciliation is REAL rather than reported: the single asserted figure is the terms' own sum (${DISTINCT_SUM}), it is one of the two as-filed figures and NOT the other (${DISTINCT_SUM} ≠ ${DISTINCT_SUM_SECOND_LINE}), and it is NOT the declared total (${DISTINCT_SUM} ≠ ${DECLARED_TOTAL}), which is what keeps the declared-versus-distinct ledger two figures rather than one`,
+    ).toBe(true)
     expect(REGISTER_TERMS.every((r) => r.distinct <= r.declared), '§5.5.2 item 3 — no row\'s distinct figure exceeds its declared term').toBe(true)
     // THE PINNED SEED AND ITS ONE-STEP-PER-DRAW FORM.
     expect(SEED, '§5.5.3 — the pinned seed is the literal 20260927, and it is a literal in THIS file').toBe(20260927)
