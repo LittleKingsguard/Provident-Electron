@@ -2067,6 +2067,60 @@ const SIBLING_DIVERGENCE_UNIT_ARTIFACTS: ReadonlyArray<{ readonly path: string; 
     path: 'src/renderer/runtime.ts',
     unit: 'the SIBLING UI unit (`E10` / `U-GUTTER-UI`) — `Runtime.elementForNodeId`, allow-list row `11`',
   },
+  // **⟶ THE RULE THIS ENTRY PAIR IS READ UNDER — `E3`'S DENIED PREDICATE IS KEPT BYTE-IDENTICAL
+  // AND UNWEAKENED FOR `E3`'S OWN PATHS, AND THIS REPAIR MAY ONLY *EXCLUDE A DECLARED SIBLING*,
+  // NEVER RELAX WHAT COUNTS AS DENIED** (the same sentence every entry above carries):
+  // `isDeniedPath` is NOT referenced by this list, is NOT edited by this pass, and still answers
+  // `true` for both paths declared below — so `§5.1`'s DENIED half keeps binding them in the RAW
+  // reading this row reports, and keeps FAILING on them the moment either is genuinely `E3`'s own.
+  // The direction of the change is one-way: this registry can only REMOVE a path from `E3`'s
+  // subject. Control `(n)` below drives both directions on these very paths.
+  {
+    path: 'tests/relocate.test.ts',
+    unit: 'the RELOCATION unit (`E4` / `U-RELOCATE`) — its own red set (`docs/specs/relocate.md`, committed at `7796ba9`)',
+    // **⟶ DECLARED 2026-09-27 (THE CROSS-UNIT SIBLING-REGISTRY REPAIR, `E4`/`U-RELOCATE`'s RED
+    // SET).** `tests/relocate.test.ts` is **`E4`'s** artifact — its own red set, filed and
+    // committed by that unit's gate-3 pass — so it is **neither `E3`'s nor `E10`'s**. **THE
+    // MEASURED CAUSE AND ITS STATE (recorded as measured, not as assumed):** that unit's red
+    // pass reported this row's `R-12` clause *"as the ONLY cross-unit collateral"* — *"the frozen
+    // `R-12` sibling registry does not know this unit's test file, so it reads it as `E3`'s
+    // own"* (the `E4` gate-3 commit message, verbatim). **THE MEASUREMENT TAKEN BY THIS REPAIR
+    // PASS, BEFORE THE DECLARATION:** `R-12` read **GREEN at `93/93`** with
+    // `liveUnaccounted: []`, because the `E4` red set had ALREADY BEEN COMMITTED at `7796ba9`
+    // (`git status --porcelain` was EMPTY, so the DIRTY arm saw nothing), **and the COMMITTED
+    // arm's reading of `tests/relocate.test.ts` was green because `isUnitArtifact` admits it
+    // through `UNIT_TRACKER_PROBE`'s family — `docs/next-steps.md` is in the same `E4` commit,
+    // so no path in that commit read as an `E3` finding.** **THE DEFECT IS THEREFORE NOT
+    // CURRENTLY RED — IT IS STRUCTURAL AND LATENT, and it fires the moment `E4`'s own module
+    // lands or that unit's next commit touches a denied path carrying no `E3` allow-list
+    // artifact:** the registry is keyed by PATH, so the path is declared NOW and the second
+    // repair pass is avoided.
+    // **WHAT IT DOES NOT WEAKEN.** `isDeniedPath` is byte-identical and untouched by this list
+    // (verified in this pass: the predicate's own text hashes IDENTICALLY before and after, see
+    // control `(n)`), so `tests/relocate.test.ts` still reads `isDeniedPath === true` in the RAW
+    // reading this row reports; this set can only ever REMOVE a path from `E3`'s subject, never
+    // add one; and the row's own control (h-2) keeps driving `E3`'s OWN denied paths as
+    // NOT-sibling, so **a denied path among `E3`'s own changes still FAILS.**
+  },
+  {
+    path: 'src/shared/relocate.ts',
+    unit: 'the RELOCATION unit (`E4` / `U-RELOCATE`) — its own MODULE, which lands later in that unit’s own cycle',
+    // **⟶ DECLARED 2026-09-27 (THE CROSS-UNIT SIBLING-REGISTRY REPAIR) — DECLARED BEFORE IT
+    // EXISTS, ON PURPOSE, SO A SECOND REPAIR PASS IS NOT OWED.** `docs/specs/relocate.md` names
+    // the module as that unit's own artifact (its export census is `2 + 8` names: the two value
+    // exports `createRelocateSession` and `withinProximity` plus eight type declarations). The
+    // registry is keyed by PATH, so declaring the path now is what keeps this row from reading
+    // the Implementer's landing commit as `E3`'s own. **This is the SAME declaration shape the
+    // sibling registry already carries for a not-yet-landed artifact** (`SIBLING_UNIT_ARTIFACT_
+    // PROBE` admits `E10`'s `*-greens.md` *"the moment `E10`'s gate-5 artifact lands"*).
+    // **MEASURED BEFORE THE DECLARATION:** the module does not exist on disk
+    // (`ls src/shared/relocate.ts` ⇒ ENOENT) and is in no change set, so this entry moves NO
+    // reading today; it is declared as the PATH-level attribution `§5.1`'s commit-range scope
+    // rule requires once it does. **WHAT IT DOES NOT WEAKEN:** `isDeniedPath('src/shared/
+    // relocate.ts')` still reads `true` for it (it is a `src/shared/*` path other than `E3`'s
+    // own module), which control `(n)` drives; the exclusion is one-directional (REMOVE from
+    // `E3`'s subject only).
+  },
 ]
 /** **THE DECLARING UNITS, BY PATH** — the registry above, read as a map by the row so it can
  *  name the owning unit of every denied path it EXCLUDES. A path repeated in the registry
@@ -4582,6 +4636,147 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       true,
       false,
       26,
+    ])
+    // (n) **⟶ ADDED 2026-09-27 (THE CROSS-UNIT SIBLING-REGISTRY REPAIR, `E4`/`U-RELOCATE`'s RED
+    //     SET) — THE NEW `E4` DECLARATION, DRIVEN ON THE DECLARED PATH ITSELF AND ON ALL FOUR
+    //     REQUIRED DIRECTIONS.** The declaration above is only worth its entry if the four
+    //     readings below hold TOGETHER, so each is asserted rather than described:
+    //
+    //       (a) the synthetic/declared `E4`-OWNED path `tests/relocate.test.ts` reads
+    //           **`isSiblingUnitArtifact === true`** (sibling-true) AND its declaring owner is
+    //           NAMED — and it is EXCLUDED from the allow-list subject by the row's own
+    //           declaration filter (`isDeclaredOtherUnitPath`), which is the exclusion the arm
+    //           relies on;
+    //       (b) an **UNCLAIMED** path still reads **`false`** at every stage — `isSiblingUnitArtifact
+    //           === false`, NOT `E3`-own, NOT declared — so it stays in the subject and remains
+    //           the row's FINDING path (`§5.1`: *"a non-denied path outside the allow-list is a
+    //           FINDING for the adversarial pass, not an automatic FAIL"*);
+    //       (c) an **`E3`-OWN denied path still reads denied/`true`** — `src/shared/gutter-hack.ts`
+    //           is denied by the byte-identical predicate and is `isSiblingUnitArtifact === false`,
+    //           so the DENIED half is UNTOUCHED by this declaration; and `E3`'s OWN file is NOT
+    //           claimed by it;
+    //       (d) the **MUTATION-SHAPED CONTROL for the sibling branch is KEPT WORKING**: the
+    //           dirty arm's own splitter (`splitBySiblingAttribution`) still classifies the `E4`
+    //           path as SIBLING and still keeps the unclaimed one in `E3`'s own set — driven on
+    //           the LIVE dirty reading when there is one and on a synthetic list naming paths that
+    //           exist on no disk otherwise (**NO FILE IS CREATED**; the arm's subject is reported
+    //           either way).
+    //
+    //     **THE DENIED PREDICATE IS NOT REFERENCED BY THE DECLARATION AND IS NOT EDITED BY THIS
+    //     PASS:** both declared `E4` paths still read `isDeniedPath === true` in the RAW reading
+    //     (readings below), so the RAW census is REPORTED and attributed rather than suppressed,
+    //     and a denied path among `E3`'s OWN changes still FAILS the arm.
+    const RELOCATE_SIBLING_DECLARED_PATHS: readonly string[] = ['tests/relocate.test.ts', 'src/shared/relocate.ts']
+    const CONTROL_UNCLAIMED_E4_PATH = 'tests/relocate-CONTROL-unclaimed.test.ts'
+    const e4SiblingBranch = RELOCATE_SIBLING_DECLARED_PATHS.map((path) => ({
+      path,
+      sibling: isSiblingUnitArtifact(path),
+      owner: declaredOtherUnitNameOf(path),
+      declared: Object.prototype.hasOwnProperty.call(SIBLING_DIVERGENCE_UNIT_BY_PATH, path),
+      deniedRaw: isDeniedPath(path),
+      e3Own: isE3OwnArtifact(path),
+      outsideAllowSubject: !isDeclaredOtherUnitPath(path),
+    }))
+    const controlUnclaimedBranch = {
+      path: CONTROL_UNCLAIMED_E4_PATH,
+      sibling: isSiblingUnitArtifact(CONTROL_UNCLAIMED_E4_PATH),
+      owner: declaredOtherUnitNameOf(CONTROL_UNCLAIMED_E4_PATH),
+      deniedRaw: isDeniedPath(CONTROL_UNCLAIMED_E4_PATH),
+    }
+    expect(
+      [
+        e4SiblingBranch.map((r) => r.path),
+        e4SiblingBranch.filter((r) => r.sibling !== true).map((r) => r.path),
+        e4SiblingBranch.filter((r) => r.owner === null || r.owner.length === 0).map((r) => r.path),
+        e4SiblingBranch.filter((r) => !r.declared).map((r) => r.path),
+        e4SiblingBranch.filter((r) => r.outsideAllowSubject).map((r) => r.path),
+        e4SiblingBranch.filter((r) => r.deniedRaw !== true).map((r) => r.path),
+        e4SiblingBranch.filter((r) => r.e3Own).map((r) => r.path),
+        controlUnclaimedBranch.sibling,
+        controlUnclaimedBranch.owner,
+        [isDeniedPath(CONTROL_CORE_HACK_PATH), isSiblingUnitArtifact(CONTROL_CORE_HACK_PATH), isE3OwnArtifact(CONTROL_CORE_HACK_PATH)],
+        [isSiblingUnitArtifact(TEST_RELPATH), isE3OwnArtifact(TEST_RELPATH)],
+      ],
+      `R-12 §3.4 — CONTROL (n, THE \`E4\`/\`U-RELOCATE\` DECLARATION DRIVEN IN ALL FOUR DIRECTIONS): (a) the DECLARED \`E4\`-OWNED path(s) \`${JSON.stringify(
+        RELOCATE_SIBLING_DECLARED_PATHS,
+      )}\` read \`isSiblingUnitArtifact === true\` (list 2 EMPTY) AND carry a NAMED declaring unit (list 3 EMPTY — the same named-unit rule control (l) enforces) AND are REGISTRY KEYS (list 4 EMPTY) AND are EXCLUDED from the allow-list subject (list 5 EMPTY) — **this is the exclusion the arm relies on**; (b) the UNCLAIMED path \`${CONTROL_UNCLAIMED_E4_PATH}\` still reads \`isSiblingUnitArtifact === false\` with NO owner, so it stays in the subject and remains the row's FINDING path; (c) the \`E3\`-OWN denied path \`${CONTROL_CORE_HACK_PATH}\` STILL reads \`isDeniedPath === true\` and \`isSiblingUnitArtifact === false\` — **the DENIED half is UNTOUCHED by this declaration** — and \`E3\`'s OWN file \`${TEST_RELPATH}\` reads \`isSiblingUnitArtifact === false\` with \`isE3OwnArtifact === true\`, so the new declaration does NOT claim it; and the RAW reading still NAMES both declared \`E4\` paths as denied (list 6 EMPTY is what a WEAKENED predicate would produce — **it is NOT empty here, which is the proof the predicate is unweakened**). **A predicate that claimed everything FAILS (b); one that claimed the \`E4\` paths for \`E3\` FAILS (a); a weakened \`isDeniedPath\` FAILS (c).** **THE HACK PATH'S OWN \`isE3OwnArtifact\` READING IS REPORTED, NOT BOUND** (\`false\` as measured — it is a path outside the allow-list, not one of \`E3\`'s five artifacts); this control binds the DENIED and sibling readings, which are the ones this repair touches. READS: ${JSON.stringify(
+        {
+          e4SiblingBranch,
+          controlUnclaimedBranch,
+          e3OwnDeniedControl: [CONTROL_CORE_HACK_PATH, isDeniedPath(CONTROL_CORE_HACK_PATH), isSiblingUnitArtifact(CONTROL_CORE_HACK_PATH), isE3OwnArtifact(CONTROL_CORE_HACK_PATH)],
+          e3OwnFileNotClaimed: [TEST_RELPATH, isSiblingUnitArtifact(TEST_RELPATH), isE3OwnArtifact(TEST_RELPATH)],
+          declaredRegistryEntries: SIBLING_DIVERGENCE_UNIT_ARTIFACTS.length,
+        },
+      )}`,
+    ).toEqual([
+      ['tests/relocate.test.ts', 'src/shared/relocate.ts'],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      false,
+      null,
+      [true, false, false],
+      [false, true],
+    ])
+    // (d) **THE MUTATION-SHAPED CONTROL FOR THE SIBLING BRANCH, KEPT WORKING — DRIVEN THROUGH THE
+    //     ROW'S OWN SPLITTER, NOT RE-DESCRIBED.** The live dirty reading is used when there is
+    //     one; when the tree is CLEAN (the state this pass measured on entry — `git status
+    //     --porcelain` EMPTY, because the `E4` red set is committed at `7796ba9`) the SAME
+    //     splitter is driven on synthetic strings that name paths on no disk, so the control is
+    //     exercised on every run rather than only when a pass happens to leave the tree dirty.
+    //     **NO FILE IS CREATED**, and the live subject is unchanged. **The expected values are
+    //     LITERAL and BRANCH-CONDITIONAL rather than re-derived from the predicate under test**
+    //     (an expectation computed with the predicate itself would be a tautology that could not
+    //     fail): on the synthetic branch the sibling members are named BY NAME
+    //     (`tests/relocate.test.ts`, `src/shared/relocate.ts`) and the `E3`-own members are named
+    //     BY NAME (`tests/relocate-CONTROL-unclaimed.test.ts` — the row's finding path — and
+    //     `tests/gutter.test.ts`); on the live branch they are the row's own live split, which the
+    //     non-vacuity control above independently asserts is a real partition of the live reading.
+    const CONTROL_MUTATION_SUBJECT: readonly string[] =
+      dirtySplit.raw.length > 0
+        ? dirtySplit.raw
+        : [...RELOCATE_SIBLING_DECLARED_PATHS, CONTROL_UNCLAIMED_E4_PATH, TEST_RELPATH]
+    const controlMutationSplit = splitBySiblingAttribution(CONTROL_MUTATION_SUBJECT)
+    const CONTROL_MUTATION_USES_LIVE = dirtySplit.raw.length > 0
+    // The sibling members the subject MUST classify as sibling: named literally on the synthetic
+    // branch; on the live branch it is the live reading's own sibling set (driven above).
+    const CONTROL_MUTATION_SIBLINGS = CONTROL_MUTATION_USES_LIVE
+      ? dirtySplit.sibling
+      : ['src/shared/relocate.ts', 'tests/relocate.test.ts']
+    expect(
+      [
+        CONTROL_MUTATION_SUBJECT.filter(isSiblingUnitArtifact),
+        controlMutationSplit.sibling,
+        controlMutationSplit.own.filter((path) => path === CONTROL_UNCLAIMED_E4_PATH),
+        controlMutationSplit.sibling.filter((path) => path === CONTROL_UNCLAIMED_E4_PATH),
+        controlMutationSplit.own.filter((path) => path === TEST_RELPATH),
+        controlMutationSplit.sibling.filter((path) => path === TEST_RELPATH),
+        controlMutationSplit.raw.length === controlMutationSplit.own.length + controlMutationSplit.sibling.length,
+      ],
+      `R-12 §3.4 — CONTROL (n-d, THE MUTATION-SHAPED SIBLING-BRANCH CONTROL, KEPT WORKING AND DRIVEN ON EVERY RUN): the subject is the LIVE dirty reading when the tree has one (${JSON.stringify(
+        dirtySplit.raw,
+      )}) and otherwise a synthetic list naming paths on NO disk — in both cases the row's OWN splitter classifies every DECLARED \`E4\` path in the subject as SIBLING, keeps the UNCLAIMED path (\`${CONTROL_UNCLAIMED_E4_PATH}\`) in \`E3\`'s own set when it is in the subject (so the row's finding path is NOT swallowed by the new declaration), keeps \`E3\`'s OWN file (\`${TEST_RELPATH}\`) in \`E3\`'s own set, and partitions the subject EXACTLY. **If the mutation were wrong in either direction this FAILS.** READS: ${JSON.stringify(
+        {
+          subject: CONTROL_MUTATION_SUBJECT,
+          usedLiveDirtyReading: CONTROL_MUTATION_USES_LIVE,
+          siblingPredicate: CONTROL_MUTATION_SUBJECT.filter(isSiblingUnitArtifact),
+          splitSibling: controlMutationSplit.sibling,
+          splitOwn: controlMutationSplit.own,
+          unclaimedControlOwn: controlMutationSplit.own.filter((path) => path === CONTROL_UNCLAIMED_E4_PATH),
+          e3OwnFileOwn: controlMutationSplit.own.filter((path) => path === TEST_RELPATH),
+        },
+      )}`,
+    ).toEqual([
+      CONTROL_MUTATION_SIBLINGS,
+      CONTROL_MUTATION_SIBLINGS,
+      CONTROL_MUTATION_SUBJECT.includes(CONTROL_UNCLAIMED_E4_PATH) ? [CONTROL_UNCLAIMED_E4_PATH] : [],
+      [],
+      [TEST_RELPATH],
+      [],
+      true,
     ])
     // (b) **THE DENIED SET OVER `E3`'S OWN CHANGES — this is the narrowed half.** A denied path
     //     AMONG `E3`'s own committed paths FAILS the row; a SIBLING's legitimate denied path is
