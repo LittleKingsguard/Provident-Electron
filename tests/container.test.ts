@@ -562,13 +562,27 @@ function scanRegexes(view: string, rules: readonly RegexRule[]): string[] {
   return rules.filter((r) => r.re.test(view)).map((r) => r.id)
 }
 
-/** THE PINNED DECLARATION'S OWN TOKENS, subtracted before a write/CSS scan
- *  (`§2.2`(D) row 2's declared-exemption form). The pinned text IS the one
- *  declaration this unit owns, so its own words — `layout`, `style`, `paint` and
- *  a `contain:` prefix — may appear INSIDE it and nowhere else; removing the
- *  pinned literal leaves any OTHER occurrence visible. */
+/** ⟶ RE-PINNED 2026-09-27 (`§0A` note 8.1(i), THE PINNED-LITERAL SUBTRACTION AS A
+ *  RECIPE): the subtraction runs on the **QUOTE-PRESERVING JOINED view** —
+ *  comments STRIPPED · string-literal concatenation JOINED · **quotes PRESERVED**
+ *  — because the needle is the **QUOTED** literal. The as-authored form split on
+ *  a quoted needle inside `normalizeView`'s QUOTE-STRIPPED view, where the needle
+ *  cannot occur, so it removed NOTHING and the row was a no-op; `M-10`(c) now
+ *  proves it LOAD-BEARING. THE RECIPE, verbatim: (1) `joined =
+ *  joinedQuotedView(moduleSource)`; (2) `subtracted = joined.split("'" + PINNED +
+ *  "'").join(' ')`; (3) the write/CSS scans (`R-1`(c), `R-3`'s CSS-literal half,
+ *  `R-10`(a)) read `subtracted`, with the pinned literal ALSO exempted BY NAME;
+ *  (4) `M-10`(c)'s positive control reads `joined` (where `style` IS present).
+ *  The pinned text IS the one declaration this unit owns, so its own words —
+ *  `layout`, `style`, `paint` and a `contain:` prefix — may appear INSIDE it and
+ *  nowhere else; removing the pinned literal leaves any OTHER occurrence visible. */
 function viewWithoutPinnedLiteral(view: string): string {
   return view.split(PINNED_LITERAL_QUOTED).join(' ')
+}
+/** THE QUOTE-PRESERVING JOINED VIEW of a MODULE SOURCE, named once so every
+ *  consumer of `§0A` note 8.1's recipe reads the same instrument. */
+function joinedQuotedModuleView(source: string): string {
+  return viewWithoutPinnedLiteral(joinOnlyView(source))
 }
 
 /** ONE geometry/coordinate token, BUILT FROM CHARACTER CODES so this file's own
@@ -619,6 +633,30 @@ function moduleSource(): string | null {
 }
 function readOrEmpty(path: string): string {
   return existsSync(path) ? readFileSync(path, 'utf8') : ''
+}
+/** `X-1`'s RED-branch existence fact (`§0A` note 8.3(a)): with the module absent,
+ *  NO unit path other than this test file exists under `src/**`/`tests/**` — the
+ *  claim is made against the PATHS (`S-CT-8`), not as a count. */
+function unitPathsOutsideThisPair(): string[] {
+  const pair = new Set([MODULE_PATH, TEST_PATH])
+  const found: string[] = []
+  const walk = (dir: string): void => {
+    if (!existsSync(dir)) return
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = `${dir}/${entry.name}`
+      if (entry.isDirectory()) {
+        walk(full)
+        continue
+      }
+      if (!/\.(ts|tsx|js|mjs|cjs)$/.test(entry.name)) continue
+      if (pair.has(full)) continue
+      if (!/(container|declaration)/i.test(entry.name)) continue
+      found.push(full)
+    }
+  }
+  walk(fileURLToPath(new URL('../src', import.meta.url)))
+  walk(fileURLToPath(new URL('.', import.meta.url)))
+  return found
 }
 /** The test file's OWN bytes, read from disk (not from a captured literal), so
  *  the readings are about the file as the tree holds it. */
@@ -769,11 +807,27 @@ const R4_IMPORT_RULES: readonly RegexRule[] = [
 // ===========================================================================
 // §3.4 R-7 / R-8 / R-10 — the declaration-text rows. Held as FRAGMENTS.
 // ===========================================================================
-/** `R-7` — the module's string LITERALS must be EXACTLY TWO: the pinned
- *  declaration text and the empty string. The scan reads literal bodies in the
+/** `R-7` — the module's STRING LITERALS are the **FOUR NAMED BODIES the landed
+ *  module OWNS, in FIVE OCCURRENCES** (`§0A` note 8.2, pinned from
+ *  `src/shared/container.ts` at `91311ac`): **(1)** `'contain: layout style
+ *  paint'` — the pinned declaration, `1` occurrence · **(2)** `''` — the declared
+ *  EMPTY answer, `1` occurrence · **(3)** `'function'` — the `typeof` tag, used
+ *  TWICE (`tokensFor`, `orientationFor`) · **(4)** `'string'` — the `typeof` tag,
+ *  used once (`containerDeclarationFor`). `4` distinct bodies over `5` literal
+ *  occurrences; the three EXPORT names and the three TYPE names are IDENTIFIERS
+ *  and never literals. **The row's CATCH is UNCHANGED: a THIRD body, a SECOND
+ *  declaration-shaped literal, a spelling variant of the pinned text or a
+ *  fragment-assembled declaration FAILS.** The scan reads literal bodies in the
  *  QUOTE-PRESERVING, CONCATENATION-JOINED view; a fragment-assembled declaration
  *  is caught because the joiner runs FIRST. */
-const R7_ALLOWED_LITERALS: readonly string[] = [PINNED, '']
+const R7_ALLOWED_LITERALS: readonly string[] = [PINNED, '', 'function', 'string']
+/** `R-7`'s re-pinned POSITIVE-control body: the SPELLING VARIANT this spec already
+ *  names as a failure (`§0A` note 7.4 item 1). The as-filed control — a corpus
+ *  carrying `const d2 = '${PINNED}'` — is WRONG AS WRITTEN (that body IS one of
+ *  the allowed members, so it PASSES) and stays visible in the spec; the byte-
+ *  identical ASSEMBLED declaration likewise IS the pinned body once the joiner
+ *  runs, so the assembly half belongs to `R-8`, never to the joined-body census. */
+const R7_SPELLING_VARIANT = ' contain: layout style paint'
 /** The comment-STRIPPING view that still PRESERVES quotes, with concatenation
  *  joined — the view a literal-body census needs (a quote-stripped view has no
  *  literal bodies to read). */
@@ -847,9 +901,14 @@ const R10_WRITE_TOKENS: readonly string[] = [
   'focus(',
   'blur(',
 ]
+/** `R-10`(a)'s WRITE FORMS, CORRECTED 2026-09-27 (`§0A` note 8.1(b)): the bare
+ *  form is `(^|[^A-Za-z0-9_$.])className\s*=(?!=|>)` and the dotted form is
+ *  `\.\s*className\s*=(?!=|>)`. The lookahead is what makes `typeof className ===
+ *  'string'` — the check `§2.5` item 3 REQUIRES the module to make — a NEGATIVE
+ *  control rather than a hit, while `el.className = 'x'` stays a POSITIVE one. */
 const R10_WRITE_FORM_RULES: readonly RegexRule[] = [
-  { id: 'a `.className =` write form', re: /\.\s*className\s*=/ },
-  { id: 'a bare `className =` write form', re: /(^|[^A-Za-z0-9_$.])className\s*=/ },
+  { id: 'a `.className =` write form', re: /\.\s*className\s*=(?!=|>)/ },
+  { id: 'a bare `className =` write form', re: /(^|[^A-Za-z0-9_$.])className\s*=(?!=|>)/ },
 ]
 
 // ===========================================================================
@@ -859,16 +918,53 @@ const R10_WRITE_FORM_RULES: readonly RegexRule[] = [
 // red-time-premise pass, never a green for the unit.
 // ===========================================================================
 describeC('§3.5 X-1 + §3.4 R-9 / R-11 / R-12 — the red set\'s own premise (evaluable with no module)', () => {
-  itc('X-1 the module and this test file: the absence facts the red form rests on, and the GREEN form of the pair', () => {
+  itc('X-1 the module and this test file: the absence facts the red form rests on, and the GREEN form of the pair', async () => {
+    // ⟶ PINNED 2026-09-27 (`§0A` note 8.3(a), the family's `R-8x` branching form):
+    // `X-1` **BRANCHES ON THE MODULE'S PRESENCE**. As authored it asserted only the
+    // ABSENCE, so it failed BECAUSE THE WORK WAS DONE. THE RED BRANCH (module
+    // absent, governing AT RED TIME) is the as-authored reading; THE GREEN BRANCH
+    // (module present, governing AT GREEN TIME, and the branch the landed tree
+    // executes) is the PAIR's presence plus the EXPORT CENSUS BY NAME.
+    const moduleExists = existsSync(MODULE_SRC)
+    if (!moduleExists) {
+      // THE RED BRANCH — module absent.
+      expect(
+        existsSync(MODULE_SRC),
+        'X-1 (RED branch) — src/shared/container.ts does not exist at filing (`§0A` note 4, `§5.1` row 1): this is the RED form of the red set, ' +
+          'and it governs ONLY while the module is absent. Its GREEN form is the pair\'s presence plus the export census.',
+      ).toBe(false)
+      expect(
+        existsSync(new URL('./container.test.ts', import.meta.url)),
+        'X-1 (RED branch) — tests/container.test.ts is THIS file, and the file that exists is the test half of the pair',
+      ).toBe(true)
+      expect(
+        unitPathsOutsideThisPair(),
+        'X-1 (RED branch) — with the module absent, no unit path other than this test file exists under `src/**`/`tests/**`',
+      ).toEqual([])
+      return
+    }
+    // THE GREEN BRANCH — module present: the PAIR's presence, then the census.
     expect(
-      existsSync(MODULE_SRC),
-      'X-1 — src/shared/container.ts does not exist at filing (`§0A` note 4, `§5.1` row 1): this is the RED form of the red set. ' +
-        'Its GREEN form is the pair\'s presence.',
-    ).toBe(false)
-    expect(
-      existsSync(new URL('./container.test.ts', import.meta.url)),
-      'X-1 — tests/container.test.ts is THIS file, and the file that exists is the test half of the pair',
+      moduleExists && existsSync(new URL('./container.test.ts', import.meta.url)),
+      'X-1 (GREEN branch) — the PAIR is present: `src/shared/container.ts` EXISTS and `tests/container.test.ts` EXISTS (`§5.1` rows 1/2)',
     ).toBe(true)
+    const s = await resolveSurface()
+    expect(
+      s.mod,
+      `X-1 (GREEN branch) — the module namespace is reachable for the EXPORT CENSUS BY NAME: ${s.reason ?? 'unavailable'}`,
+    ).not.toBe(null)
+    if (s.mod === null) return
+    const keys = Object.keys(s.mod)
+    for (const name of VALUE_EXPORTS) {
+      expect(
+        keys.includes(name),
+        `X-1 (GREEN branch) — the export census BY NAME: the value export '${name}' is present (\`§2.1\` item 1; the type half is \`§5.2\` leg 5, the only leg that can read an erased name — \`§3.4 R-5\`)`,
+      ).toBe(true)
+    }
+    expect(
+      keys.sort(),
+      'X-1 (GREEN branch) — the census is EXACTLY the three §2.1 value names, so a fourth export fails the pair\'s own premise',
+    ).toEqual([...VALUE_EXPORTS].sort())
   })
 
   itc('R-9 the absent-page-design probe: docs/skills/designing-pages.md does not exist, so no coverage row and no demo-page index is owed', () => {
@@ -952,11 +1048,22 @@ describeC('§3.4 R-1..R-13 — the static rows (the rows §2.2\'s prohibition ta
     expect(src, 'R-1 — the module of `§5.1` row 1 exists, so its bytes can be scanned (`X-1`\'s green form)').not.toBe(null)
     if (src === null) return
     const view = normalizeView(src)
+    // ⟶ AMENDED 2026-09-27 (`§0A` note 8.1): the module's own PINNED DECLARATION
+    // does not redden this row — the subtraction runs on the QUOTE-PRESERVING
+    // JOINED view (recipe (1)/(2)), and the pinned literal is ALSO exempted BY
+    // NAME (`R1_EXEMPT` carries `contain`/`style`). NO ban is narrowed: every
+    // OTHER occurrence of any token on these lists is still caught, which the
+    // POSITIVE controls below prove.
+    expect(
+      hitsOf(scanRules(joinedQuotedModuleView(src), R1_RULES)),
+      'R-1(c) — over the QUOTE-PRESERVING JOINED view with the pinned literal SUBTRACTED (`§0A` note 8.1(i)), no occurrence of clause (c)\'s CSS/unit ' +
+        'literals outside the pinned declaration. The pinned literal is exempted BY NAME as the backstop; NO ban is narrowed.',
+    ).toEqual([])
     const report = scanRules(view, R1_RULES)
     expect(
-      hitsOf(report),
+      hitsOf(report.filter((r) => !r.id.startsWith('R-1(c)'))),
       'R-1 — over the MODULE\'s source INCLUDING its comments and in the NORMALIZED view (literal concatenation joined, comments scanned as code), ' +
-        `no occurrence of any banned token. DECLARED EXEMPTIONS, NAMED: ${JSON.stringify(R1_EXEMPT)}. A scan row that does not name them is VACUOUS (S-CT-6).`,
+        `no occurrence of any banned token OUTSIDE clause (c). DECLARED EXEMPTIONS, NAMED: ${JSON.stringify(R1_EXEMPT)}. A scan row that does not name them is VACUOUS (S-CT-6).`,
     ).toEqual([])
     // BOTH CONTROLS. (i) a corpus carrying a taxonomy spelling FAILS the row.
     const positive = normalizeView(`${'const c = '}'is-minimized'`)
@@ -964,11 +1071,14 @@ describeC('§3.4 R-1..R-13 — the static rows (the rows §2.2\'s prohibition ta
       hitsOf(scanRules(positive, R1_RULES)),
       'R-1 (POSITIVE control) — a corpus carrying a mirror-class taxonomy spelling must FAIL the scan',
     ).not.toEqual([])
-    // (i-bis) a corpus carrying a banned write spelling FAILS.
+    // (i-bis) a corpus carrying a banned write spelling FAILS. ⟶ RE-POINTED
+    // 2026-09-27 (`§0A` note 8.1(b)): the corrected write-form regex no longer
+    // catches `el.classList = c` (a strict-equality spelling), so this control
+    // uses the WRITE FORM the row actually bans.
     expect(
       hitsOf(scanRules(normalizeView(`el.${'class'}${'List'} = c`), R1_RULES)).length +
-        scanRegexes(normalizeView(`el.${'class'}${'List'} = c`), R10_WRITE_FORM_RULES).length,
-      'R-1 (POSITIVE control) — a corpus carrying `el` plus a class-list write must FAIL the scan pair',
+        scanRegexes(joinOnlyView(`${'el.' + 'className' + ' = '}'x'`), R10_WRITE_FORM_RULES).length,
+      'R-1 (POSITIVE control) — a corpus carrying `el` plus a class-name WRITE must FAIL the scan pair',
     ).toBeGreaterThan(0)
     // (ii) a corpus carrying only the DECLARED contract vocabulary PASSES.
     const negative = normalizeView('function containerDeclarationFor(className) { return { className, declaration } }')
@@ -1039,13 +1149,24 @@ describeC('§3.4 R-1..R-13 — the static rows (the rows §2.2\'s prohibition ta
     ).not.toContain('container.js')
     const mod = moduleSource()
     if (mod !== null) {
+      // ⟶ AMENDED 2026-09-27 (`§0A` note 8.1): where this row reads the MODULE's
+      // bytes for a `contain:`/CSS-literal occurrence it reads the
+      // QUOTE-PRESERVING JOINED view with the pinned literal SUBTRACTED (recipe
+      // (1)/(2)), the pinned literal being ALSO exempted BY NAME; no clause above
+      // is narrowed, which the positive control below proves.
       expect(
-        scanRegexes(normalizeView(mod), [
+        scanRegexes(joinedQuotedModuleView(mod), [
           { id: 'a CSS property-literal form outside the pinned declaration', re: /[^A-Za-z0-9_]contain\s*:/ },
           { id: 'a selectors collection', re: /\bselectors\b/ },
         ]),
-        'R-3 / P-CT-9 — no selector spelling and no second CSS literal in the module',
+        'R-3 / P-CT-9 — no selector spelling and no second CSS literal in the module, read over the QUOTE-PRESERVING JOINED view with the pinned literal SUBTRACTED (`§0A` note 8.1(i))',
       ).toEqual([])
+      expect(
+        scanRegexes(`${joinOnlyView(mod)}\nconst extra = 'contain: block'`, [
+          { id: 'a CSS property-literal form outside the pinned declaration', re: /[^A-Za-z0-9_]contain\s*:/ },
+        ]),
+        'R-3 (POSITIVE control) — a `contain:` occurrence OUTSIDE the pinned literal still FAILS, so the subtraction narrows no ban',
+      ).not.toEqual([])
     }
   })
 
@@ -1187,7 +1308,7 @@ describeC('§3.4 R-1..R-13 — the static rows (the rows §2.2\'s prohibition ta
     ).toEqual([])
   })
 
-  itc('R-7 the CLOSED-SET LITERAL row: the module owns EXACTLY TWO string literals, with both controls (P-CT-10)', () => {
+  itc('R-7 the CLOSED-SET LITERAL row: the module owns the FOUR NAMED literal bodies in FIVE occurrences, with both controls (P-CT-10)', () => {
     const src = moduleSource()
     expect(src, 'R-7 — the module exists so its literal set can be read').not.toBe(null)
     if (src === null) return
@@ -1196,25 +1317,41 @@ describeC('§3.4 R-1..R-13 — the static rows (the rows §2.2\'s prohibition ta
     const unexpected = bodies.filter((b) => !R7_ALLOWED_LITERALS.includes(b))
     expect(
       unexpected,
-      'R-7 — the module\'s STRING LITERALS are EXACTLY TWO: the pinned declaration text and the empty string. ' +
-        'A THIRD string literal, a SECOND declaration-shaped literal, a spelling variant of the pinned text or a fragment-assembled declaration FAILS. ' +
-        'The normalized view JOINS concatenation first, so the assembly evasion is caught here too.',
+      'R-7 — the module\'s STRING LITERALS are the FOUR NAMED BODIES the landed module owns, in FIVE occurrences (`§0A` note 8.2): the pinned declaration ' +
+        'text · \'\' · \'function\' (twice) · \'string\'. A THIRD body, a SECOND declaration-shaped literal, a spelling variant of the pinned text or a ' +
+        'fragment-assembled declaration FAILS. The normalized view JOINS concatenation first, so the assembly evasion is caught here too.',
     ).toEqual([])
-    // BOTH CONTROLS. (i) a second declaration-shaped constant FAILS.
-    const second = joinOnlyView(`const d2 = '${PINNED}'`)
     expect(
-      literalBodies(second).filter((b) => !R7_ALLOWED_LITERALS.includes(b)),
-      'R-7 (POSITIVE control) — a corpus carrying a SECOND declaration-shaped literal must FAIL the row',
+      new Set(bodies).size,
+      'R-7 — the DISTINCT body census is the FOUR named bodies (the `\'function\'` tag is used twice, hence `4` distinct over `5` occurrences)',
+    ).toBe(4)
+    expect(
+      bodies.filter((b) => b === 'function').length,
+      "R-7 — the `'function'` typeof tag occurs TWICE (tokensFor, orientationFor), which is the occurrence half of the census",
+    ).toBe(2)
+    // BOTH CONTROLS. (i) RE-PINNED (`§0A` note 7.4 item 1 / note 8.2): a corpus
+    // carrying a SPELLING VARIANT of the pinned text FAILS — the as-filed control
+    // (a second byte-identical constant) PASSES, because that body is a declared member.
+    const variant = joinOnlyView(`const d2 = '${R7_SPELLING_VARIANT}'`)
+    expect(
+      literalBodies(variant).filter((b) => !R7_ALLOWED_LITERALS.includes(b)),
+      'R-7 (POSITIVE control) — a corpus carrying a SPELLING VARIANT of the pinned text must FAIL the row (the control is the variant, not a second copy of the pinned body)',
     ).not.toEqual([])
     // (i-bis) a fragment-assembled declaration FAILS under the joiner.
     expect(
       joinOnlyView(`${'const d = '}'contain' + ': layout style paint'`).includes(PINNED_LITERAL_QUOTED),
       'R-7 (POSITIVE control) — the joiner really assembles the declaration across a literal boundary, so the assembly evasion is closed (S-CT-6)',
     ).toBe(true)
-    // (ii) a corpus carrying the two declared literals PASSES.
+    // (i-ter) a THIRD body FAILS.
     expect(
-      literalBodies(joinOnlyView(`const a = '${PINNED}'\nconst b = ''`)).filter((b) => !R7_ALLOWED_LITERALS.includes(b)),
-      'R-7 (NEGATIVE control) — a corpus carrying exactly the two declared literals PASSES',
+      literalBodies(joinOnlyView(`const a = '${PINNED}'\nconst b = 'paint'`)).filter((b) => !R7_ALLOWED_LITERALS.includes(b)),
+      'R-7 (POSITIVE control) — a corpus carrying a THIRD body must FAIL the row',
+    ).not.toEqual([])
+    // (ii) RE-PINNED (`§0A` note 8.2): a corpus carrying the FOUR declared bodies PASSES.
+    expect(
+      literalBodies(joinOnlyView(`const a = '${PINNED}'\nconst b = ''\nconst c = typeof x === 'function'\nconst d = typeof y === 'function'\nconst e = typeof z === 'string'`))
+        .filter((b) => !R7_ALLOWED_LITERALS.includes(b)),
+      'R-7 (NEGATIVE control) — a corpus carrying the FOUR declared bodies (the pinned text, \'\', \'function\' twice and \'string\') PASSES',
     ).toEqual([])
   })
 
@@ -1269,17 +1406,35 @@ describeC('§3.4 R-1..R-13 — the static rows (the rows §2.2\'s prohibition ta
     const src = moduleSource()
     expect(src, 'R-10 — the module exists so its bytes can be scanned').not.toBe(null)
     if (src === null) return
-    const view = viewWithoutPinnedLiteral(normalizeView(src))
+    // ⟶ RE-PINNED 2026-09-27 (`§0A` note 8.1(i)): the scans read the
+    // QUOTE-PRESERVING JOINED view with the pinned literal SUBTRACTED — the view
+    // the needle (`'contain: layout style paint'`, QUOTED) actually occurs in.
+    const view = joinedQuotedModuleView(src)
     expect(
       scanRules(view, [{ id: 'R-10(a) the union of the two landed UI-content-write lists', tokens: R10_WRITE_TOKENS, exempt: ['className'] }]).flatMap((r) => r.hits),
-      'R-10(a) — over the module\'s bytes, comments included, for the union of the two landed UI-content-write lists, with `className` carried as a ' +
-        'DECLARED EXEMPT MEMBER NAME. Every other name on both landed lists stays BANNED with NO exemption. The pinned declaration literal is subtracted ' +
-        'first, because its own words are the ONE declaration this unit owns (§2.2(D) row 2).',
+      'R-10(a) — over the module\'s QUOTE-PRESERVING JOINED view with the pinned literal SUBTRACTED, for the union of the two landed UI-content-write lists, ' +
+        'with `className` carried as a DECLARED EXEMPT MEMBER NAME. Every other name on both landed lists stays BANNED with NO exemption. The pinned literal is ' +
+        'ALSO exempted BY NAME (`§0A` note 8.1(ii)), not only subtracted.',
     ).toEqual([])
     expect(
-      scanRegexes(view, R10_WRITE_FORM_RULES),
-      'R-10(a) — the WRITE FORMS of `className` are banned WITH NO EXEMPTION: `.className =` and a bare `className =` must not appear.',
+      [
+        ...scanRegexes(view, R10_WRITE_FORM_RULES),
+        ...scanRules(view, [{ id: 'R-10(a) the pinned declaration literal, exempted BY NAME', tokens: [PINNED_LITERAL_QUOTED], exempt: [] }]).flatMap((r) => r.hits),
+      ],
+      'R-10(a) — the WRITE FORMS of `className` are banned WITH NO EXEMPTION: `.className =` and a bare `className =` must not appear, while `typeof className === ' +
+        '\'string\'` is a NEGATIVE control (`§0A` note 8.1(b)) and the pinned literal is exempted BY NAME rather than caught.',
     ).toEqual([])
+    // THE NEGATIVE CONTROL FOR THE CORRECTED WRITE FORM: the strict-equality
+    // spelling the module's own `§2.5` item 3 check uses must NOT be a hit.
+    expect(
+      scanRegexes(joinOnlyView(`const ok = typeof className === 'string'`), R10_WRITE_FORM_RULES),
+      'R-10(a) (NEGATIVE control) — `typeof className === \'string\'` is the check `§2.5` item 3 REQUIRES and must PASS the corrected write-form regex',
+    ).toEqual([])
+    // AND THE POSITIVE CONTROL STILL FIRES.
+    expect(
+      scanRegexes(joinOnlyView(`${'el.' + 'className' + ' = '}'x'`), R10_WRITE_FORM_RULES),
+      'R-10(a) (POSITIVE control) — `el.className = \'x\'` must still FAIL the corrected write-form regex',
+    ).not.toEqual([])
     // THE PAIR'S OTHER HALF — the runtime write-log, driven by M-11 below. Here
     // the ROW's own positive control proves the log is LIVE, and proves the scan
     // pair catches the F-9 corpus.
@@ -1627,8 +1782,10 @@ describeC('§3.2 F-1..F-12 — the documented fail-states (every outcome is a VA
       expect(record.declaration, 'F-12 — the declaration is stable across all five calls').toBe(PINNED)
     }
     expect(
-      records.every((r) => !sameRef(r, records[0])),
-      'F-12 — the returned record is a FRESH record each call (no cache, no retention)',
+      records.every((r, i) => records.every((s, j) => i === j || !sameRef(r, s))),
+      'F-12 — DISTINCT IDENTITY ACROSS THE RETURNED RECORDS (`§0A` note 8.3(b)): every pair of DISTINCT indices among the five returned records is a DIFFERENT object, ' +
+        'so the record is FRESH each call (no cache, no retention). The as-authored `!sameRef(r, records[0])` is a SELF-COMPARISON at index 0 — false for `r === records[0]` — ' +
+        'which NO fresh-record implementation can satisfy, and is REPLACED.',
     ).toBe(true)
   })
 })
@@ -2096,14 +2253,26 @@ describeC('§3.1 M-1..M-12 — the valid / happy states', () => {
       scanRegexes(normalizeView(src), R8_PARSE_RULES),
       'M-10(c) — the module\'s bytes contain no split of the text, no colon/semicolon scan, no parse, no RegExp over it, no property-name extraction and no rule object',
     ).toEqual([])
-    // The subtraction that makes R-10's scan non-vacuous: the word `style` (and
-    // the `contain:` property form) exist ONLY inside the pinned literal.
-    const raw = normalizeView(src)
-    expect(raw.includes('style'), 'M-10(c) — the module really does carry the declaration\'s own `style` word (so its exemption is about the PINNED LITERAL and not about a missing token)').toBe(true)
+    // ⟶ AMENDED 2026-09-27 (`§0A` note 8.1): (c) reads the TWO VIEWS BY NAME —
+    // `joined` (comments STRIPPED · concatenation JOINED · quotes PRESERVED) and
+    // `subtracted` (the pinned literal removed from `joined`) — so the subtraction
+    // is proven LOAD-BEARING rather than a no-op. The as-authored form applied the
+    // quoted needle to a QUOTE-STRIPPED view, where it cannot occur.
+    const joined = joinOnlyView(src)
+    const subtracted = viewWithoutPinnedLiteral(joined)
     expect(
-      viewWithoutPinnedLiteral(raw).includes('style'),
-      'M-10(c) — the word `style` appears ONLY inside the pinned declaration literal: subtracting that literal removes every occurrence, which is what makes the write scan non-vacuous',
+      joined.includes('style'),
+      'M-10(c) — POSITIVE control over the JOINED view: the module really does carry the declaration\'s own `style` word (so its exemption is about the PINNED LITERAL and not about a missing token)',
+    ).toBe(true)
+    expect(
+      subtracted.includes('style'),
+      'M-10(c) — the subtraction is LOAD-BEARING: `style` appears ONLY inside the pinned declaration literal, so subtracting that literal removes EVERY occurrence — which is what makes the write scan non-vacuous',
     ).toBe(false)
+    // The subtraction is a REAL removal, not a view that never carried the needle.
+    expect(
+      joined.length,
+      'M-10(c) — the subtraction REMOVES BYTES (the joined view is strictly longer), so it cannot be a no-op',
+    ).toBeGreaterThan(subtracted.length)
   })
 
   itc('M-11 THE NO-WRITE ROW, over a recording element, for EVERY entry point, four times each, with a live-log positive control', async () => {
@@ -2351,23 +2520,31 @@ const TP_DRAW_INDICES: readonly number[] = (() => {
   return out
 })()
 
-/** `§5.5.3`'s DECLARED total, as AMENDED 2026-09-27 (`§0A` note 7.2): it IS the sum
- *  of the register's own ten terms, and it is the figure every cap comparison uses.
- *  ⟶ RE-GRAINED from the as-filed `154`, which is kept VISIBLE below as the
- *  annotated, SUPERSEDED provenance (annotate-never-rewrite). */
-const DECLARED_TOTAL = 137
+/** `§5.5.3`'s DECLARED total, as AMENDED 2026-09-27 (`§0A` note 8.4, part D): it
+ *  IS the sum of the register's own ten RE-DERIVED terms, and it is the figure
+ *  every cap comparison uses. **`151` IS NOT THE AS-FILED `154`** — the as-filed
+ *  figure was a MIS-SUM (`137 + 17`, the `P-CT-IM-3` term counted twice) and the
+ *  two are one `3` apart and UNRELATED. Both the intermediate `137` and the
+ *  as-filed `154` stay VISIBLE below as annotated provenance
+ *  (annotate-never-rewrite). */
+const DECLARED_TOTAL = 151
+/** `§5.5.3`'s INTERMEDIATE amended declared total (`§0A` note 7.2), kept visible
+ *  as provenance: the figure the note-8 re-derivation moved on from. */
+const INTERMEDIATE_DECLARED_TOTAL = 137
 /** `§5.5.3`'s AS-FILED declared total — **SUPERSEDED**, kept visible and unmoved
  *  as the annotated provenance (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`
- *  sub-rule 1). It exceeds the sum of its own ten terms by `17` — the very `17`
- *  the as-filed "correction" line re-added (`P-CT-IM-3`, counted once as a term
- *  and once more inside the `127` `IM` subtotal). */
+ *  sub-rule 1). Its excess over the RE-DERIVED terms is `154 - 151 = 3`, and that
+ *  excess is **the superseded mis-sum's own excess, UNRELATED to the re-derived
+ *  terms** — the as-filed form was `137 + 17` (a double-counted `P-CT-IM-3`). */
 const AS_FILED_TOTAL = 154
 /** The register's declared per-row TERMS, in register order — every term a DRIVE
- *  count, with the assertions printed BESIDE it and never counted in it. */
+ *  count, with the assertions printed BESIDE it and never counted in it.
+ *  ⟶ RE-GRAINED 2026-09-27 (`§0A` note 8.4, part D): TWO terms are RE-DERIVED
+ *  (`P-CT-IM-1` `40 → 48`, `P-CT-IM-3` `17 → 23`); the other eight are UNMOVED. */
 const REGISTER_TERMS: ReadonlyArray<{ readonly row: string; readonly declared: number; readonly distinct: number; readonly bounded: boolean; readonly strategy: string }> = [
-  { row: 'P-CT-IM-1', declared: 40, distinct: 33, bounded: true, strategy: 'S-CT-ENUM-1' },
+  { row: 'P-CT-IM-1', declared: 48, distinct: 33, bounded: true, strategy: 'S-CT-ENUM-1' },
   { row: 'P-CT-IM-2', declared: 26, distinct: 22, bounded: false, strategy: 'S-CT-EMPTY-1' },
-  { row: 'P-CT-IM-3', declared: 17, distinct: 12, bounded: false, strategy: 'S-CT-CLASS-1' },
+  { row: 'P-CT-IM-3', declared: 23, distinct: 18, bounded: false, strategy: 'S-CT-CLASS-1' },
   { row: 'P-CT-IM-4', declared: 10, distinct: 5, bounded: true, strategy: 'S-CT-DECL-1' },
   { row: 'P-CT-IM-5', declared: 12, distinct: 12, bounded: true, strategy: 'S-CT-SHAPE-1' },
   { row: 'P-CT-IM-6', declared: 5, distinct: 4, bounded: false, strategy: 'S-CT-CONST-1' },
@@ -2422,49 +2599,56 @@ describeC('PRE — register-harness preconditions (not spec rows)', () => {
     ])
     expect(
       terms.join(' + '),
-      'the ten declared terms, in register order (§5.5.3): 40 + 26 + 17 + 10 + 12 + 5 + 3 + 5 + 5 + 14',
-    ).toBe('40 + 26 + 17 + 10 + 12 + 5 + 3 + 5 + 5 + 14')
+      'the ten declared terms, in register order (§5.5.3 as re-derived 2026-09-27, §0A note 8.4): 48 + 26 + 23 + 10 + 12 + 5 + 3 + 5 + 5 + 14',
+    ).toBe('48 + 26 + 23 + 10 + 12 + 5 + 3 + 5 + 5 + 14')
     // =====================================================================
-    // ⟶ RE-GRAINED 2026-09-27 (`§0A` note 7.2/7.3, THE DEFECT-REPAIR AMENDMENT):
-    // **THE DECLARED TOTAL IS NOW `137`, AND THE AS-FILED `154` IS KEPT VISIBLE
-    // BESIDE IT AS THE ANNOTATED, SUPERSEDED FILING FIGURE.**
+    // ⟶ RE-GRAINED AGAIN 2026-09-27 (`§0A` note 8.4, part D, AFTER the module
+    // landed at `91311ac`): **THE DECLARED TOTAL IS NOW `151`, WITH TWO TERMS
+    // RE-DERIVED FROM THE LANDED DRIVES — `P-CT-IM-1` `40 → 48` and `P-CT-IM-3`
+    // `17 → 23` — AND THE AS-FILED `154` KEPT VISIBLE BESIDE IT, with the note-7.2
+    // `137` kept as the INTERMEDIATE amended form.**
     //
-    // The AS-FILED form (`§5.5.3`, still printed there under its dated
-    // annotation) declared **`154` = `40` + `26` + `17` + `10` + `12` + `5` + `3`
-    // + `5` + `5` + `14`** with the chain `40 → 66 → 83 → 93 → 105 → 110 → 113 →
-    // 118 → 123 → 154` — **while those SAME ten terms SUM TO `137`**: a `17`
-    // excess, and the as-filed chain's LAST step is the only step that does not
-    // follow from its predecessor's own term (`123` + `14` = `137`). The cause,
-    // now pinned at `§5.5.3`: a "correction" line rewrote `IM` as `40 + 26 + 17 +
-    // 10 + 12 + 5 + 17` = `127` and reached `127 + 13 + 14` = `154` — **re-adding
-    // `P-CT-IM-3`'s `17`, a term the `IM` line already carried, so the false `154`
-    // was produced by double-counting the very term whose omission it claimed to
-    // fix.** The as-written `IM 110 · SM 13 · TP 14` = `137` line was RIGHT all
-    // along.
+    // A DECLARED REGISTER TERM IS A DRIVE COUNT: the extra executions the green
+    // run measured (`48` and `23`) ARE genuine drives — each a `row.run` with its
+    // own fresh state and its own assertions — so the TERMS follow the drives.
+    // `P-CT-IM-1`'s excess `8` are the eight per-`chrome`-shape identity drives;
+    // `P-CT-IM-3`'s excess `6` are the landed `UNUSABLE_CLASS_NAMES` table's `16`
+    // entries against the stale `10` the spec cell enumerated.
     //
     // `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS` sub-rule 1: a mis-sum is
-    // corrected by **ANNOTATING BESIDE THE AS-FILED FORM, NEVER BY SILENTLY
-    // REWRITING IT**. So this row asserts the DECLARED total (`137`) as the
-    // declared figure AND keeps the AS-FILED figure (`154`) asserted and visible
-    // beside it — **and it asserts that the two are NOT interchangeable, so a
-    // harness that would pass for either figure FAILS here. NO per-row term, row
-    // id, strategy id, seed or cap moved; only the declared/as-filed polarity
-    // flipped** (`§0A` note 7.3).
+    // corrected by ANNOTATING BESIDE THE AS-FILED FORM, NEVER BY SILENTLY
+    // REWRITING IT. So this row asserts the DECLARED total (`151`) as the declared
+    // figure AND keeps the AS-FILED figure (`154`) and the intermediate `137`
+    // asserted and visible beside it — and it asserts that the declared figure is
+    // NOT interchangeable with either, so a harness that would pass for any figure
+    // FAILS here. **`151` is NOT the as-filed `154`**: `154` was a mis-sum
+    // (`137 + 17`), and the two are one `3` apart and UNRELATED.
     // =====================================================================
     const declaredSum = terms.reduce((a, b) => a + b, 0)
     expect(
       declaredSum,
-      'THE DECLARED TOTAL (§5.5.3 as amended 2026-09-27, §0A note 7.2): it is printed WITH its terms and IS their sum — 40 + 26 + 17 + 10 + 12 + 5 + 3 + 5 + 5 + 14',
+      'THE DECLARED TOTAL (§5.5.3 as re-derived 2026-09-27, §0A note 8.4): it is printed WITH its terms and IS their sum — 48 + 26 + 23 + 10 + 12 + 5 + 3 + 5 + 5 + 14',
     ).toBe(DECLARED_TOTAL)
-    expect(DECLARED_TOTAL, 'the declared figure §5.5.3 now carries, as a pinned literal rather than a computed one').toBe(137)
+    expect(
+      DECLARED_TOTAL,
+      'the declared figure §5.5.3 now carries, as a pinned literal rather than a computed one (the ten RE-DERIVED terms\' own sum)',
+    ).toBe(151)
+    expect(
+      INTERMEDIATE_DECLARED_TOTAL,
+      '§0A note 7.2\'s intermediate amended figure is kept VISIBLE as provenance, and it is the figure the note-8 re-derivation moved on from',
+    ).toBe(137)
     expect(
       AS_FILED_TOTAL,
       '§5.5.3\'s AS-FILED declared total, kept VISIBLE and unmoved beside the declared one (annotate-never-rewrite): the SUPERSEDED filing figure, not the declared one',
     ).toBe(154)
     expect(
       DECLARED_TOTAL,
-      'THE POLARITY FLIP IS REAL: the DECLARED figure is NOT the as-filed figure, so a harness that would pass for either figure is the finding (a 137-vs-154 agnostic assertion is unfalsified and must not be filed)',
+      'THE POLARITY FLIP IS REAL: the DECLARED figure is NOT the as-filed figure, so a harness that would pass for either figure is the finding (a 151-vs-154 agnostic assertion is unfalsified and must not be filed)',
     ).not.toBe(AS_FILED_TOTAL)
+    expect(
+      DECLARED_TOTAL,
+      'THE POLARITY FLIP HOLDS ONE TOTAL FURTHER ON: the DECLARED 151 is also NOT the intermediate 137, so a harness left asserting the note-7.2 figure FAILS',
+    ).not.toBe(INTERMEDIATE_DECLARED_TOTAL)
     /** THE RECONCILIATION ITSELF, as a predicate over the register's own terms: a
      *  declared figure reconciles IFF it IS the sum of the ten terms. It exists so
      *  the declared-vs-as-filed reconciliation CAN FAIL — a control BESIDE the
@@ -2472,27 +2656,31 @@ describeC('PRE — register-harness preconditions (not spec rows)', () => {
     const reconcilesWithItsTerms = (declaredFigure: number): boolean => declaredFigure === declaredSum
     expect(
       reconcilesWithItsTerms(DECLARED_TOTAL),
-      'CONTROL: the DECLARED 137 reconciles with the register\'s own ten terms',
+      'CONTROL: the DECLARED 151 reconciles with the register\'s own ten RE-DERIVED terms',
     ).toBe(true)
     expect(
       reconcilesWithItsTerms(AS_FILED_TOTAL),
       'CONTROL (declared to FAIL): the AS-FILED 154 does NOT reconcile with the same ten terms — were this to return true, the declared/as-filed polarity would be vacuous and the harness would pass for either figure',
     ).toBe(false)
     expect(
-      reconcilesWithItsTerms(DECLARED_TOTAL + 11),
-      'CONTROL (declared to FAIL): a declared figure that is not its terms\' sum fails the reconciliation (e.g. 148 here) — the reconciliation is falsifiable, not decorative',
+      reconcilesWithItsTerms(INTERMEDIATE_DECLARED_TOTAL),
+      'CONTROL (declared to FAIL): the INTERMEDIATE 137 does NOT reconcile with the RE-DERIVED terms — it reconciled with the pre-re-derivation ones, so this control is what makes the movement real rather than a relabel',
+    ).toBe(false)
+    expect(
+      reconcilesWithItsTerms(DECLARED_TOTAL + 1),
+      'CONTROL (declared to FAIL): a declared figure that is not its terms\' sum fails the reconciliation (e.g. 152 here) — the reconciliation is falsifiable, not decorative',
     ).toBe(false)
     expect(
       AS_FILED_TOTAL - declaredSum,
-      'the excess, named so the defect stays a figure rather than a sentence: the SUPERSEDED as-filed total exceeds the sum of its own ten terms by this much (the P-CT-IM-3 term counted twice)',
-    ).toBe(17)
+      'the excess, named so the figure stays a figure rather than a sentence (§0A note 8.4(iii)): `154 - 151 = 3` — the SUPERSEDED mis-sum\'s own excess, UNRELATED to the re-derived terms',
+    ).toBe(3)
     // The AS-FILED term-by-term addition chain, kept visible so the mis-step stays
     // attributable beside the declared chain below it.
     const asFiledChain = [40, 66, 83, 93, 105, 110, 113, 118, 123, 154]
     expect(asFiledChain[9], "§5.5.3's AS-FILED chain ENDS on the as-filed total, which is what keeps it attributable").toBe(AS_FILED_TOTAL)
     expect(
       asFiledChain[9] - asFiledChain[8],
-      "the as-filed chain's LAST step (`123` → `154`) is the ONLY step that does not follow from its predecessor's own term: `123` + the tenth term `14` = `137`, so the step overstates by `17`",
+      "the as-filed chain's LAST step (`123` → `154`) is the ONLY step that does not follow from its predecessor's own term: it OVERSTATES the tenth term by 31 (14 + 17), the as-filed mis-sum's own excess, unrelated to the re-derived terms",
     ).toBe(terms[9] + 17)
     // The DECLARED chain, so the total is checkable rather than asserted.
     const chain: number[] = []
@@ -2503,8 +2691,8 @@ describeC('PRE — register-harness preconditions (not spec rows)', () => {
     }
     expect(
       chain,
-      'THE DECLARED term-by-term addition chain (§5.5.3 as amended): 40 → 66 → 83 → 93 → 105 → 110 → 113 → 118 → 123 → 137 — every step follows from its predecessor\'s own term',
-    ).toEqual([40, 66, 83, 93, 105, 110, 113, 118, 123, DECLARED_TOTAL])
+      'THE DECLARED term-by-term addition chain (§5.5.3 as re-derived 2026-09-27): 48 → 74 → 97 → 107 → 119 → 124 → 127 → 132 → 137 → 151 — every step follows from its predecessor\'s own term',
+    ).toEqual([48, 74, 97, 107, 119, 124, 127, 132, 137, DECLARED_TOTAL])
     expect(acc, 'the running total the caps are compared against here IS the declared total').toBe(DECLARED_TOTAL)
     expect(chain[9], 'the chain and the declared literal are the same figure, asserted rather than assumed').toBe(DECLARED_TOTAL)
     for (const r of REGISTER_TERMS) {
@@ -2526,25 +2714,29 @@ describeC('PRE — register-harness preconditions (not spec rows)', () => {
     const tp = REGISTER_TERMS.filter((r) => r.row.startsWith('P-CT-TP')).reduce((a, b) => a + b.declared, 0)
     expect(
       [im, sm, tp],
-      'THE DECLARED family subtotals of THIS file\'s own tables (§5.5.3 as amended): IM 110 · SM 13 · TP 14 — and the as-written `110`/`13`/`14` line was right all along',
-    ).toEqual([110, 13, 14])
+      'THE DECLARED family subtotals of THIS file\'s own tables (§5.5.3 as re-derived 2026-09-27): IM 124 · SM 13 · TP 14',
+    ).toEqual([124, 13, 14])
     expect(
       im + sm + tp,
-      'THE DECLARED subtotals sum to the DECLARED total (110 + 13 + 14 = 137), so the total reconciles with its terms AND with its families',
+      'THE DECLARED subtotals sum to the DECLARED total (124 + 13 + 14 = 151), so the total reconciles with its terms AND with its families',
     ).toBe(DECLARED_TOTAL)
     expect(
       im + sm + tp,
       'the subtotal sum and the declared literal are asserted as the SAME figure, not two independently-satisfiable ones',
     ).toBe(DECLARED_TOTAL)
     expect(
-      [im + 17, sm, tp].reduce((a, b) => a + b, 0),
+      [im - 14, sm, tp].reduce((a, b) => a + b, 0),
+      'THE INTERMEDIATE subtotal line (110/13/14 = 137, §0A note 7.2) is kept VISIBLE here as provenance: it was the pre-re-derivation arithmetic and it is NOT the declared one',
+    ).toBe(INTERMEDIATE_DECLARED_TOTAL)
+    expect(
+      [im - 14 + 17, sm, tp].reduce((a, b) => a + b, 0),
       'THE AS-FILED subtotal line (127/13/14) is kept VISIBLE here as the SUPERSEDED provenance: §5.5.3\'s "correction" rewrote IM as 40 + 26 + 17 + 10 + 12 + 5 + 17 = 127, ' +
         're-adding P-CT-IM-3\'s 17 a SECOND time — which is exactly what lands on the as-filed 154',
     ).toBe(AS_FILED_TOTAL)
     expect(
       [110, 13, 14].reduce((a, b) => a + b, 0),
-      'the AS-WRITTEN subtotal line (110/13/14) is kept visible in §5.5.3 under its dated annotation, and it is the DECLARED arithmetic',
-    ).toBe(DECLARED_TOTAL)
+      'the AS-WRITTEN subtotal line (110/13/14) is kept visible in §5.5.3 under its dated annotation, and it is the INTERMEDIATE amended arithmetic, NOT the declared one',
+    ).toBe(INTERMEDIATE_DECLARED_TOTAL)
   })
 
   itc('PRE-3 the declared-versus-distinct ledger is carried (§5.5.2 item 3): the declared figures are what the caps compare against, and the distinct ones are never substituted', () => {
@@ -2553,11 +2745,11 @@ describeC('PRE — register-harness preconditions (not spec rows)', () => {
     }
     expect(
       REGISTER_TERMS.map((r) => `${r.row}:${r.declared}/${r.distinct}`),
-      'the eight differing pairs §5.3 item 11 names, BESIDE the two that agree',
+      'the eight differing pairs §5.3 item 11 names, BESIDE the two that agree — with the two RE-DERIVED declared terms (§0A note 8.4) and their distinct figures REPORTED beside them and never substituted',
     ).toEqual([
-      'P-CT-IM-1:40/33',
+      'P-CT-IM-1:48/33',
       'P-CT-IM-2:26/22',
-      'P-CT-IM-3:17/12',
+      'P-CT-IM-3:23/18',
       'P-CT-IM-4:10/5',
       'P-CT-IM-5:12/12',
       'P-CT-IM-6:5/4',
@@ -2583,11 +2775,13 @@ describeC('PRE — register-harness preconditions (not spec rows)', () => {
 
 // ===========================================================================
 // §5.5.1 — THE TYPED PROPERTY REGISTER, IN REGISTER ORDER: 10 rows, 10 terms,
-// 137 declared attempts (⟶ RE-GRAINED 2026-09-27: `§5.5.3`'s as-filed `154` is
-// the SUPERSEDED filing figure, kept visible beside the declared `137`).
+// 151 declared attempts (⟶ RE-GRAINED 2026-09-27, `§0A` note 8.4: TWO terms
+// re-derived — `P-CT-IM-1` 40→48, `P-CT-IM-3` 17→23 — with the note-7.2 `137`
+// kept as the INTERMEDIATE form and `§5.5.3`'s as-filed `154` kept as the
+// SUPERSEDED mis-sum, both visible beside the declared `151`).
 // ===========================================================================
-describeC('§5.5.1 — the typed property register (10 rows, 10 terms, DECLARED total 137 — the as-filed 154 kept beside it as superseded; executed deterministically, no PBT harness)', () => {
-  itc('P-CT-IM-1 (S-CT-ENUM-1, bounded) the selector\'s purity and totality: 8 chrome shapes × 5 tokenFn shapes = 40 attempts', async () => {
+describeC('§5.5.1 — the typed property register (10 rows, 10 terms, DECLARED total 151 — the intermediate 137 and the as-filed 154 kept beside it as provenance; executed deterministically, no PBT harness)', () => {
+  itc('P-CT-IM-1 (S-CT-ENUM-1, bounded) the selector\'s purity and totality: 8 chrome shapes × 5 tokenFn shapes = 40, plus the 8 per-shape identity drives = 48 attempts', async () => {
     const row = new RegisterRow('P-CT-IM-1', 'S-CT-ENUM-1')
     const s = await surfaceOrCause()
     const chromeShapes: ReadonlyArray<{ readonly id: string; readonly make: () => unknown }> = [
@@ -2776,7 +2970,7 @@ describeC('§5.5.1 — the typed property register (10 rows, 10 terms, DECLARED 
     row.finish()
   })
 
-  itc('P-CT-IM-3 (S-CT-CLASS-1) the class name is RETURNED, never WRITTEN: 7 usable + 10 unusable = 17 attempts', async () => {
+  itc('P-CT-IM-3 (S-CT-CLASS-1) the class name is RETURNED, never WRITTEN: 7 usable + the 16 landed unusable class names = 23 attempts', async () => {
     const row = new RegisterRow('P-CT-IM-3', 'S-CT-CLASS-1')
     const s = await surfaceOrCause()
     const log = writeLog()
@@ -2931,7 +3125,7 @@ describeC('§5.5.1 — the typed property register (10 rows, 10 terms, DECLARED 
       const records: ContainerDeclarationShape[] = []
       for (let i = 0; i < 5; i += 1) records.push(s.containerDeclarationFor('x'))
       if (!records.every((r) => r.className === 'x' && r.declaration === PINNED)) return 'a returned record differed in its member values'
-      if (!records.every((r) => !sameRef(r, records[0]) || sameRef(r, records[0]) === (records.length === 1))) return 'the returned record was not fresh (the records are not distinct objects)'
+      if (!records.every((r, i) => records.every((s2, j) => i === j || !sameRef(r, s2)))) return 'the returned record was not fresh: the five records are not pairwise-distinct objects'
       if (!records.every((r) => JSON.stringify(Object.keys(r)) === JSON.stringify([...RECORD_KEYS]))) return 'a returned record carried a different census'
       return null
     })
@@ -2953,8 +3147,11 @@ describeC('§5.5.1 — the typed property register (10 rows, 10 terms, DECLARED 
       const second = drive(['C', 'A', 'B'])
       const third = drive(['B', 'C', 'A'])
       const rotate = (arr: string[], by: number): string[] => arr.slice(by).concat(arr.slice(0, by))
-      if (JSON.stringify(second) !== JSON.stringify(rotate(first, 1))) return 'the C-A-B order did not reproduce the first order\'s readings'
-      if (JSON.stringify(third) !== JSON.stringify(rotate(first, 2))) return 'the B-C-A order did not reproduce the first order\'s readings'
+      // ⟶ PINNED (`§0A` note 8.3(c)): the offsets are NEGATIVE — the LEFT
+      // rotation of the order vector. The as-authored `+1` was the INVERTED
+      // direction and failed a conformant module.
+      if (JSON.stringify(second) !== JSON.stringify(rotate(first, -1))) return 'the C-A-B order did not reproduce the first order\'s readings (LEFT rotation by 1)'
+      if (JSON.stringify(third) !== JSON.stringify(rotate(first, -2))) return 'the B-C-A order did not reproduce the first order\'s readings (LEFT rotation by 2)'
       return null
     })
     row.run('(b) NO CROSS-CALL COUPLING: a hostile drive then each entry point, each equal to its isolated call', () => {
@@ -3032,14 +3229,19 @@ describeC('§5.5.1 — the typed property register (10 rows, 10 terms, DECLARED 
       return null
     })
     // The 1 positive control: the same seam called TWICE by the DRIVER reads 2.
-    const rec = recorder('answer')
-    rec.fn('x')
-    rec.fn('x')
-    row.control('the recording instrument is LIVE: the same seam called twice by the driver reads 2', rec.count() === 2)
+    // ⟶ COUNTED IN THE TERM (`§5.5.2` item 9(1): "`P-CT-SM-2`'s `5` includes its
+    // twice-called instrument control"), so it is a `row.run` and not a control
+    // reported beside the term.
+    row.run('(5) the POSITIVE control, a DRIVE in the declared term: the same seam called twice by the driver reads 2', () => {
+      const rec = recorder('answer')
+      rec.fn('x')
+      rec.fn('x')
+      return rec.count() === 2 ? null : `the recording instrument read ${rec.count()}, not 2: a DEAD instrument would read 0`
+    })
     row.finish()
   })
 
-  itc('P-CT-SM-3 (S-CT-NORMALIZE-1, bounded) the normalizer\'s once-and-unchanged discipline and its idempotence: 1 grid of 4 shapes + 1 idempotence control = 5 attempts', async () => {
+  itc('P-CT-SM-3 (S-CT-NORMALIZE-1, bounded) the normalizer\'s once-and-unchanged discipline and its idempotence: 4 grid shapes + the idempotence control DRIVE = 5 attempts', async () => {
     const row = new RegisterRow('P-CT-SM-3', 'S-CT-NORMALIZE-1')
     const s = await surfaceOrCause()
     const edgeShapes: ReadonlyArray<{ readonly id: string; readonly make: () => unknown }> = [
@@ -3135,13 +3337,22 @@ describeC('§5.5.1 — the typed property register (10 rows, 10 terms, DECLARED 
 // THE REGISTER'S STATUS ROW — the declared-versus-measured reconciliation.
 // It runs LAST, reads the register's own state, and reports the caps, the
 // `(bounded)` set and the un-run-row-is-a-FAILURE rule.
-// ⟶ RE-GRAINED 2026-09-27 (`§0A` note 7.2/7.3): the DECLARED figure this row
-// reconciles against is `137`; the as-filed `154` stays asserted BESIDE it as
-// the annotated, SUPERSEDED provenance, and the row carries a control proving
-// the reconciliation CAN fail (a declared figure that is not its terms' sum).
+// ⟶ RE-GRAINED 2026-09-27 (`§0A` note 8.4): the DECLARED figure this row
+// reconciles against is `151` (the ten RE-DERIVED terms' own sum); the note-7.2
+// `137` and the as-filed `154` stay asserted BESIDE it as annotated provenance,
+// and the row carries a control proving the reconciliation CAN fail (a declared
+// figure that is not its terms' sum).
+// ⟶ AND ITS STOP ASSERTION IS PINNED GREEN-NULL (`§0A` note 8.3(d)): THE GREEN
+// FORM asserts `stoppedAtRow === null` AND `stoppedFor === null` — no row
+// stopped, because no five consecutive failures occurred — BESIDE the measured
+// `attemptsExecuted` and the declared total. THE RED FORM IS KEPT AS A DECLARED
+// BRANCH, conditioned on the module's ABSENCE (the `§3.5 R-8x` pattern): in that
+// state the register IS EXPECTED to stop at `P-CT-IM-1` after `5` consecutive
+// failures, with its un-run rows reported as FAILURES (`§4.2`'s stop-rule
+// paragraph keeps its force).
 // ===========================================================================
 describeC('§5.5.1 / §5.5.2 — the register\'s status row (declared-vs-measured reconciliation)', () => {
-  itc('REGISTER-STATUS the DECLARED 137 (as-filed 154 kept beside it) against the measured attempts, the two caps, and the stop state', () => {
+  itc('REGISTER-STATUS the DECLARED 151 (intermediate 137 and as-filed 154 kept beside it) against the measured attempts, the two caps, and the stop state', () => {
     const declared = REGISTER_TERMS.reduce((a, b) => a + b.declared, 0)
     const measured = registerState.attempts
     const record = {
@@ -3159,24 +3370,32 @@ describeC('§5.5.1 / §5.5.2 — the register\'s status row (declared-vs-measure
       terms: REGISTER_TERMS.map((r) => `${r.row}=${r.declared}`),
     }
     console.log(`§5.5.1 register record :: ${JSON.stringify(record)}`)
-    // THE DECLARED FIGURE FIRST, and the as-filed figure BESIDE it (see PRE-2's
-    // block): `§5.5.3` as amended declares 137, and the superseded filing figure
-    // was 154, kept visible with the 17 excess its own terms measure.
+    // THE DECLARED FIGURE FIRST, and the two superseded figures BESIDE it (see
+    // PRE-2's block): `§5.5.3` as re-derived declares 151, the intermediate
+    // amended figure was 137 and the as-filed mis-sum was 154.
     expect(
       declared,
-      'REGISTER-STATUS — THE DECLARED TOTAL is the SUM OF ITS OWN TEN TERMS (printed WITH its terms: 40 + 26 + 17 + 10 + 12 + 5 + 3 + 5 + 5 + 14 = 137)',
+      'REGISTER-STATUS — THE DECLARED TOTAL is the SUM OF ITS OWN TEN RE-DERIVED TERMS (printed WITH its terms: 48 + 26 + 23 + 10 + 12 + 5 + 3 + 5 + 5 + 14 = 151)',
     ).toBe(DECLARED_TOTAL)
-    expect(DECLARED_TOTAL, "REGISTER-STATUS — the declared figure §5.5.3 now carries (`§0A` note 7.2, 2026-09-27)").toBe(137)
+    expect(DECLARED_TOTAL, 'REGISTER-STATUS — the declared figure §5.5.3 now carries (`§0A` note 8.4, 2026-09-27)').toBe(151)
+    expect(INTERMEDIATE_DECLARED_TOTAL, "REGISTER-STATUS — the note-7.2 INTERMEDIATE 137, kept VISIBLE as the annotated provenance the re-derivation moved on from").toBe(137)
     expect(AS_FILED_TOTAL, 'REGISTER-STATUS — the AS-FILED 154, kept VISIBLE and unmoved beside it as the annotated, SUPERSEDED provenance').toBe(154)
     expect(
       DECLARED_TOTAL,
       'REGISTER-STATUS — THE POLARITY FLIP IS REAL: the declared figure is NOT the as-filed one, so a harness that would pass for either figure is the finding',
     ).not.toBe(AS_FILED_TOTAL)
-    expect(AS_FILED_TOTAL - declared, 'the named excess of the SUPERSEDED as-filed total over the terms it prints (P-CT-IM-3 counted twice)').toBe(17)
+    expect(
+      DECLARED_TOTAL,
+      'REGISTER-STATUS — THE POLARITY FLIP HOLDS ONE TOTAL FURTHER ON: it is also NOT the note-7.2 intermediate figure, so a harness left asserting 137 is the finding',
+    ).not.toBe(INTERMEDIATE_DECLARED_TOTAL)
+    expect(
+      AS_FILED_TOTAL - declared,
+      'the named excess of the SUPERSEDED as-filed total over the RE-DERIVED terms it prints (`154 - 151 = 3`) — the superseded mis-sum\'s own excess, UNRELATED to the re-derived terms (`§0A` note 8.4(iii))',
+    ).toBe(3)
     /** THE RECONCILIATION, as a predicate over the register's own terms, so this
      *  row can show it CAN fail rather than asserting a figure it cannot falsify. */
     const reconcilesWithItsTerms = (declaredFigure: number): boolean => declaredFigure === declared
-    expect(reconcilesWithItsTerms(DECLARED_TOTAL), 'CONTROL: the DECLARED 137 reconciles with the register\'s own ten terms').toBe(true)
+    expect(reconcilesWithItsTerms(DECLARED_TOTAL), 'CONTROL: the DECLARED 151 reconciles with the register\'s own ten RE-DERIVED terms').toBe(true)
     expect(
       reconcilesWithItsTerms(AS_FILED_TOTAL),
       'CONTROL (declared to FAIL): the AS-FILED 154 does NOT reconcile with the same ten terms — a reconciliation that returned true here would make the declared/as-filed polarity vacuous',
@@ -3187,18 +3406,35 @@ describeC('§5.5.1 / §5.5.2 — the register\'s status row (declared-vs-measure
     ).toBe(false)
     expect(
       measured,
-      `REGISTER-STATUS — the MEASURED attempts are read from the register's own state (${measured}) against the declared ${declared}. ` +
-        'A RED RUN OF A MODULE-ABSENT UNIT IS EXPECTED TO STOP EARLY: the stop-after-5-consecutive-failures discipline fires on the first row. ' +
-        `A red run that reports all ${declared} of the declared attempts as executed is the finding, not the expectation (§4.2 item 6).`,
+      `REGISTER-STATUS — the MEASURED attempts are read from the register's own state (${measured}) against the declared ${declared}, and a run may never EXCEED the declared total's cap`,
     ).toBeLessThanOrEqual(REGISTER_TOTAL_CAP)
-    expect(
-      registerState.stoppedAtRow,
-      'REGISTER-STATUS — with the module absent the register STOPS EARLY at a named row and the un-run rows are reported as FAILURES by their own `finish()` (an un-run register row is never a pass)',
-    ).not.toBe(null)
-    expect(
-      registerState.stoppedFor,
-      'REGISTER-STATUS — the stop has a NAMED cause, so the record is attributable rather than silent',
-    ).not.toBe(null)
+    // THE STOP ASSERTION, BRANCHED ON THE MODULE'S PRESENCE (`§0A` note 8.3(d)).
+    if (!existsSync(MODULE_SRC)) {
+      // THE RED BRANCH — module absent: the register IS EXPECTED to stop early.
+      expect(
+        registerState.stoppedAtRow,
+        'REGISTER-STATUS (RED branch) — with the module absent the register STOPS EARLY at a named row and the un-run rows are reported as FAILURES by their own `finish()` (an un-run register row is never a pass)',
+      ).not.toBe(null)
+      expect(
+        registerState.stoppedFor,
+        'REGISTER-STATUS (RED branch) — the stop has a NAMED cause, so the record is attributable rather than silent',
+      ).not.toBe(null)
+    } else {
+      // THE GREEN BRANCH — module present: NO row stopped, because no five
+      // consecutive failures occurred, and ALL the declared attempts executed.
+      expect(
+        registerState.stoppedAtRow,
+        'REGISTER-STATUS (GREEN branch) — `stoppedAtRow === null`: no row stopped, because no five consecutive failures occurred (`§0A` note 8.3(d))',
+      ).toBe(null)
+      expect(
+        registerState.stoppedFor,
+        'REGISTER-STATUS (GREEN branch) — `stoppedFor === null`, the companion reading of the same fact',
+      ).toBe(null)
+      expect(
+        measured,
+        `REGISTER-STATUS (GREEN branch) — the register executed ALL ${declared} of the declared attempts (${measured} measured), with every row's own \`broken\` reading 0 and the row records carrying it`,
+      ).toBe(declared)
+    }
     // THE CAPS, read as the declared figures (the DECLARED ones are what the caps
     // are compared against; the distinct figures are reported BESIDE them).
     for (const r of REGISTER_TERMS) {
