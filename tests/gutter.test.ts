@@ -4812,8 +4812,16 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
         // REPORTED, NOT BOUND (the incidental declaration order of the subject, which this row's
         // contract nowhere pins): kept visible so the ordering this repair stopped binding on
         // remains a MEASUREMENT rather than an absence (`§3.4 R-12` binds WHICH paths are whose).
-        CONTROL_MUTATION_SUBJECT.filter(isSiblingUnitArtifact),
-        controlMutationSplit.sibling,
+        // **⟶ REPAIRED AGAIN 2026-09-27 (THE ORCHESTRATOR'S SECOND BOUNDED REPAIR): the two members
+        //     BELOW were still BOUND IN DECLARATION ORDER, so the CLEAN/SYNTHETIC branch (where the
+        //     splitter yields `['tests/relocate.test.ts','src/shared/relocate.ts']` against a registry
+        //     literal written in the other order) FAILED — measured on a committed, clean tree:
+        //     `1 failed / 92 passed`. The first repair sorted only the SECOND binding reading, and its
+        //     CLEAN-state verification ran while its OWN edit made the tree dirty (so the live branch
+        //     answered instead of the synthetic one). BOTH readings are now SET-based, and the ordered
+        //     reading stays visible INSIDE the message's `READS` block, never in a bound position.**
+        [...CONTROL_MUTATION_SUBJECT.filter(isSiblingUnitArtifact)].sort(),
+        [...controlMutationSplit.sibling].sort(),
         // THE BINDING READING of the same fact: SET equality against the same literals.
         [...controlMutationSplit.sibling].sort(),
         controlMutationSplit.own.filter((path) => path === CONTROL_UNCLAIMED_E4_PATH),
@@ -4839,8 +4847,8 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
         },
       )}`,
     ).toEqual([
-      CONTROL_MUTATION_SIBLINGS,
-      CONTROL_MUTATION_SIBLINGS,
+      [...CONTROL_MUTATION_SIBLINGS].sort(),
+      [...CONTROL_MUTATION_SIBLINGS].sort(),
       [...CONTROL_MUTATION_SIBLINGS].sort(),
       CONTROL_MUTATION_SUBJECT.includes(CONTROL_UNCLAIMED_E4_PATH) ? [CONTROL_UNCLAIMED_E4_PATH] : [],
       [],
