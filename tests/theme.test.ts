@@ -170,14 +170,36 @@ async function live(): Promise<Extract<Surface, { reason: null }>> {
 function liveOrNull(): Extract<Surface, { reason: null }> | null {
   return liveCache
 }
-/** The OMITTED-argument drive (`§2.3` item 1(c)'s omitted case, `§2.4` item
- *  1(d)): arity-0 invocations, so a row can drive the omitted arm without a
- *  marker leaking into the argument domain. */
+/** THE OMITTED-ARGUMENT DRIVES, EACH HONOURING `§2.1` ITEM 2's DECLARED ARITY
+ *  (`[setting, env]`, `[attributeName, resolved]`). **THE NAME-OMITTED AND THE
+ *  SETTING-OMITTED CASE EACH PASS THE OTHER ARGUMENT IN ITS OWN DECLARED SLOT**: a
+ *  helper that passed the value it was handed in the FIRST slot would put the
+ *  `resolved` token in the NAME slot (and the `env` record in the SETTING slot),
+ *  so no arity-2 function could satisfy the contract's tuple and those rows at
+ *  once — the STOP-C defect this pass repairs. */
+type ApplyDrive = 'args' | 'name-omitted' | 'resolved-omitted' | 'arity-0'
+/** `§2.3` item 1(c)'s SETTING-omitted case: `resolveTheme(undefined, env)`. */
 function resolveOmitted(fn: ResolveThemeShape, env: unknown): unknown {
-  return (fn as unknown as (e?: unknown) => unknown)(env)
+  return (fn as unknown as (setting?: unknown, env?: unknown) => unknown)(undefined, env)
 }
+/** `§2.4` item 1(d)'s NAME-omitted case: `applyThemeDeclaration(undefined, resolved)`. */
 function applyOmitted(fn: ApplyThemeDeclarationShape, resolved: unknown): unknown {
-  return (fn as unknown as (r?: unknown) => unknown)(resolved)
+  return (fn as unknown as (attributeName?: unknown, resolved?: unknown) => unknown)(undefined, resolved)
+}
+/** `§2.4` item 2(c)'s RESOLVED-omitted case, arity 1: `applyThemeDeclaration(attributeName)`. */
+function applyResolvedOmitted(fn: ApplyThemeDeclarationShape, name: unknown): unknown {
+  return (fn as unknown as (attributeName?: unknown) => unknown)(name)
+}
+/** The ARITY-0 case: BOTH arguments omitted (`§2.4` items 1(d) + 2(c)). */
+function applyArityZero(fn: ApplyThemeDeclarationShape): unknown {
+  return (fn as unknown as () => unknown)()
+}
+/** ONE applier drive, in the DECLARED-slot discipline above. */
+function applyCall(fn: ApplyThemeDeclarationShape, name: unknown, resolved: unknown, mode: ApplyDrive): unknown {
+  if (mode === 'name-omitted') return applyOmitted(fn, resolved)
+  if (mode === 'resolved-omitted') return applyResolvedOmitted(fn, name)
+  if (mode === 'arity-0') return applyArityZero(fn)
+  return fn(name, resolved)
 }
 
 function describeThrown(e: unknown): string {
@@ -251,8 +273,8 @@ function resolveTry(fn: ResolveThemeShape, setting: unknown, env: unknown, label
   if (thrown !== null) return `${label} — resolveTheme THREW (${describeThrown(thrown)}); §2.1 item 2: it never throws, for any argument`
   return resolutionBreakOf(value, label)
 }
-function applyTry(fn: ApplyThemeDeclarationShape, name: unknown, resolved: unknown, label: string, omitted = false): string | null {
-  const { value, thrown } = drove(() => (omitted ? applyOmitted(fn, resolved) : fn(name, resolved)))
+function applyTry(fn: ApplyThemeDeclarationShape, name: unknown, resolved: unknown, label: string, mode: ApplyDrive = 'args'): string | null {
+  const { value, thrown } = drove(() => applyCall(fn, name, resolved, mode))
   if (thrown !== null) return `${label} — applyThemeDeclaration THREW (${describeThrown(thrown)}); §2.1 item 2: it never throws`
   return writeBreakOf(value, label)
 }
@@ -378,6 +400,27 @@ function commentStrippedView(source: string): string {
 }
 function escapeForRegex(token: string): string {
   return token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+/** **`§3.4 R-2`'s TEST-FILE HALF, IN THE ASSEMBLY / EXEMPTION FORM THE CONTRACT
+ *  PINS** (`§2.2`'s exemption paragraph; `§4.3`: the banned vocabulary may appear
+ *  only inside the control corpora, *"which are ASSEMBLED FROM CHARACTER CODES"*).
+ *  The row reads this file's own bytes with every CHARACTER-CODE ASSEMBLY CALL SITE
+ *  (`t('…')`, the instrument's own form: the rule definitions, the exemption list
+ *  and the F-6/F-7 corpora) removed — those sites carry the banned spelling BY
+ *  CONSTRUCTION and are the instrument, not a write. **A TOKEN SPELLED PLAINLY is
+ *  NOT inside such a call, SURVIVES the strip and FAILS the row** (the control in
+ *  the row proves the strip is not a blanket exemption). */
+function assemblyExemptView(source: string): string {
+  return normalizedView(source).replace(/\bt\s*\([^()]*\)/g, ' ')
+}
+/** A LABEL THAT NEVER TOUCHES ITS SUBJECT (`§2.3` item 2(11)): a revoked `Proxy`
+ *  raises a `TypeError` on ANY interaction, so a message computed with `String(v)`
+ *  would THROW inside the row instead of being ASSERTED by it. */
+function safeLabel(v: unknown): string {
+  if (v === null) return 'null'
+  if (typeof v === 'object') return 'an object'
+  if (typeof v === 'function') return 'a function'
+  return String(v)
 }
 function scanForToken(view: string, token: string, boundary: boolean): boolean {
   if (!boundary) return view.includes(token)
@@ -540,9 +583,9 @@ const F7_IMPORT_CONTROLS: readonly string[] = [
  *  are proven LIVE by a corpus that MUST fail them (`S-TH-2`: a scan that passes
  *  for any of the five is UNFALSIFIED). */
 const F6_CORPUS: readonly { readonly id: string; readonly text: string }[] = [
-  { id: 'F-6(a) a removeAttribute call on a recording fake', text: `el.${t('removeAttribute')}('${NAME_A}')` },
-  { id: 'F-6(b) a setAttribute call', text: `el.${t('setAttribute')}('${NAME_A}', 'v')` },
-  { id: 'F-6(c) a classList / style write', text: `el.${t('classList')}.add('x'); el.${t('style')}.${t('setProperty')}('--x', '1')` },
+  { id: `F-6(a) a ${t('removeAttribute')} call on a recording fake`, text: `el.${t('removeAttribute')}('${NAME_A}')` },
+  { id: `F-6(b) a ${t('setAttribute')} call`, text: `el.${t('setAttribute')}('${NAME_A}', 'v')` },
+  { id: `F-6(c) a ${t('classList')} / style write`, text: `el.${t('classList')}.add('x'); el.${t('style')}.${t('setProperty')}('--x', '1')` },
   { id: 'F-6(d) a matchMedia read', text: `const mq = ${t('globalThis')}.${t('matchMedia')}('(prefers-color-scheme: dark)')` },
   { id: 'F-6(e) a document / window read', text: `const d = ${t('globalThis')}.${t('document')}; const w = ${t('window')}` },
 ]
@@ -779,6 +822,24 @@ function definedRow(rowId: string): { readonly row: string; readonly type: strin
   expect(def, `${rowId} is a declared register row of §5.5.1`).toBeDefined()
   return def as { readonly row: string; readonly type: string; readonly strategy: string }
 }
+/** **THE CONTROL CHANNEL** (`§5.5.1`'s *"PLUS nothing else"*): a row's own positive
+ *  control / mirror control / instrument-liveness check is EXECUTED and REPORTED
+ *  **BESIDE** its declared term — never through `run`, because a declared register
+ *  term is a DRIVE COUNT and the register's control column is where the sibling
+ *  units report exactly these. The control's claim stays FALSIFIABLE: a broken
+ *  control fails the row on its own labelled assertion, while the row's
+ *  `attemptsRun` still equals its declared term. */
+function controlDrive(r: RegisterRow, label: string, body: () => string | null, requiresModule = true): void {
+  r.control()
+  if (requiresModule && liveOrNull() === null) return
+  let brk: string | null
+  try {
+    brk = body()
+  } catch (e) {
+    brk = `the control threw: ${describeThrown(e)}`
+  }
+  expect(brk, `${r.row} (CONTROL, reported BESIDE the declared term and never inside it — §5.5.1 "PLUS nothing else"): ${label} — ${String(brk)}`).toBe(null)
+}
 
 /** The pinned-seed generator of `S-TH-TOTAL-1` (`§5.5.1` method note 2 /
  *  `§5.5.3`): a hand-rolled 32-bit LCG whose constants are LITERALS here, with
@@ -872,11 +933,14 @@ const TP3_POOL: readonly { readonly id: string; readonly env: () => unknown }[] 
   { id: '(9) a record whose accessor THROWS', env: throwingAccessorEnv },
   { id: '(10) a revoked Proxy and a trap-throwing Proxy', env: revokedProxy },
 ]
-/** `P-TH-TP-5`'s THREE REMOVAL SHAPES and its TWO instrument configurations. */
-const TP5_SHAPES: readonly { readonly id: string; readonly resolved: () => unknown; readonly omitted: boolean }[] = [
-  { id: '(1) the empty string', resolved: () => '', omitted: false },
-  { id: '(2) null', resolved: () => null, omitted: false },
-  { id: '(3) the argument OMITTED', resolved: () => undefined, omitted: true },
+/** `P-TH-TP-5`'s THREE REMOVAL SHAPES and its TWO instrument configurations. Each
+ *  removal shape is driven in ITS OWN declared arity (`§2.4` item 2(c)): `''` and
+ *  `null` in the two-argument tuple, the omitted case at arity 1 with the NAME
+ *  present in its own slot — never a `resolved` value standing in the name slot. */
+const TP5_SHAPES: readonly { readonly id: string; readonly resolved: () => unknown; readonly mode: ApplyDrive }[] = [
+  { id: "(1) resolved = ''", resolved: () => '', mode: 'args' },
+  { id: '(2) resolved = null', resolved: () => null, mode: 'args' },
+  { id: '(3) resolved OMITTED (arity 1, the name present)', resolved: () => undefined, mode: 'resolved-omitted' },
 ]
 const TP5_INSTRUMENTS: readonly string[] = ['(i) recording-Proxy arguments + a fake element in scope', '(ii) the same drive with the arguments FROZEN']
 /** `P-TH-TP-6`'s THREE COMPOSED SHAPES. */
@@ -923,7 +987,7 @@ function recordingInstrument(): {
   const proxy = new Proxy(function () {} as unknown as Record<string, unknown>, handler)
   let writes = 0
   const fake: Record<string, unknown> = {}
-  for (const m of [t('setAttribute'), t('removeAttribute'), 'classList', t('setProperty'), 'style']) {
+  for (const m of [t('setAttribute'), t('removeAttribute'), t('classList'), t('setProperty'), t('style')]) {
     Object.defineProperty(fake, m, {
       value: () => {
         writes += 1
@@ -1031,14 +1095,39 @@ describe('§3.5 X-1 / X-2 / X-4 / X-5 + §3.4 R-9 / R-3(config) / R-6(no-importe
     expect(importers, 'R-6 — §2.5 item 5 answers the entry-point question NO: no src/** path reaches this mechanism, and at red time (module absent) the probe reads zero by construction; at green time it must STILL read zero, so a later importer is a FINDING.').toEqual([])
   })
 
-  it('R-6 / §5.1 (allow-list census) — the DENIED paths are PRESENT and the unit\'s own artifact paths are the allow-list', () => {
+  it('R-6 / §5.1 (allow-list census) — the DENIED paths are PRESENT and the unit\'s own artifact paths are the allow-list', async () => {
     const denied = ['src/renderer/index.html', 'src/shared/dom-shim.ts', 'src/main/main.ts', 'package.json', 'vitest.config.ts', 'tsconfig.json', 'tsconfig.tests.json']
     for (const p of denied) {
       expect(existsSync(join(ROOT, p)), `R-6 — the DENIED path §5.1 names is PRESENT on disk: ${p}. The denial binds this unit's diff (a later F1 pass lawfully importing the module does NOT falsify U-THEME).`).toBe(true)
     }
     expect(existsSync(join(ROOT, 'docs', 'specs', 'theme-review.md')), 'R-6 / X-3 — the gate-1 record is a DENIED path (§5.1 item 11) and it EXISTS, so a later edit is a FINDING').toBe(true)
-    expect(existsSync(MODULE_SRC), 'R-6 — the allow-list row 1 (`src/shared/theme.ts`) is the path this unit LANDs; absent at red time (the X-1 red branch)').toBe(false)
     expect(existsSync(new URL('./theme.test.ts', import.meta.url)), 'R-6 — the allow-list row 2 is THIS file').toBe(true)
+    // THE ALLOW-LIST ROW 1, IN THE BRANCH FORM (`X-1`'s own shape, "no third path"):
+    // asserting the module's ABSENCE as a STANDING claim would be a red-only premise
+    // — TRUE before the work and FALSE forever after. The RED branch states the
+    // absence; the GREEN branch states the PAIR's presence plus the export census BY
+    // NAME (`§4.1`'s declared red shape, and `S-TH-6`: a census, never a count).
+    const moduleExists = existsSync(MODULE_SRC)
+    if (!moduleExists) {
+      expect(
+        moduleExists,
+        `R-6 (RED branch) — the allow-list row 1 does not exist yet at ${MODULE_PATH}: this is the RED form of the red set (§4.1), and the GREEN form is the pair's presence plus the export census by name.`,
+      ).toBe(true)
+      return
+    }
+    const s = await resolveSurface()
+    expect(s.reason, `R-6 (GREEN branch) — the module namespace is reachable: ${s.reason ?? 'ok'}`).toBe(null)
+    for (const name of ['resolveTheme', 'applyThemeDeclaration']) {
+      expect(typeof s.mod?.[name], `R-6 (GREEN branch) — the value export '${name}' is present (§2.1 item 1; the type half is §5.2 leg 5)`).toBe('function')
+    }
+    expect(
+      Object.keys(s.mod ?? {}).sort(),
+      'R-6 (GREEN branch) — the census is EXACTLY the two §2.1 VALUE names, so a third value export fails this premise',
+    ).toEqual(['applyThemeDeclaration', 'resolveTheme'])
+    expect(
+      existsSync(MODULE_SRC) && existsSync(new URL('./theme.test.ts', import.meta.url)),
+      'R-6 (GREEN branch) — the PAIR is present: the allow-list row 1 and the allow-list row 2.',
+    ).toBe(true)
   })
 })
 
@@ -1056,11 +1145,15 @@ describe('§3.4 R-1 / R-2 / R-7 / R-8 / R-10 / R-11 — the anti-evasion scans o
       hits,
       `R-1 — the module's DECLARED EXEMPTIONS are NAMED here so the row is not vacuous (§4.4 S-TH-2): the contract vocabulary ${JSON.stringify(R1_EXEMPT)} as IDENTIFIERS and MEMBER NAMES, plus the five declared literal bodies. The NORMALIZED view joins string-literal concatenation BEFORE stripping quotes and scans COMMENTS as code, so an assembled or commented banned token FAILS. Offending: ${JSON.stringify(hits)}`,
     ).toEqual([])
-    // POSITIVE control: the assembly evasion must FAIL the same scan.
-    const assembly = `const a = ${t('da')} + ${t('rk')}`
-    expect(scanTokens(normalizedView(assembly), R1_RULES).length, 'R-1 (POSITIVE control) — a FRAGMENT-ASSEMBLED banned token must FAIL the row (the joiner runs before quotes are stripped).').toBeGreaterThan(0)
-    const commented = `// the caller may pass ${t('da')}${t('rk')}\nconst b = 1`
-    expect(scanTokens(normalizedView(commented), R1_RULES).length, 'R-1 (POSITIVE control) — a banned token in a COMMENT must FAIL (comments are scanned as code).').toBeGreaterThan(0)
+    // POSITIVE control: the assembly evasion must FAIL the same scan. **THE CORPUS
+    // IS CARRIED IN A QUOTE-PRESERVING VIEW** — the family's rule is JOIN FIRST,
+    // THEN STRIP, so the joiner needs the `'…' + '…'` boundary: a corpus built from
+    // QUOTE-LESS fragments has nothing for the joiner to join and would measure 0
+    // hits against its own `>0` assertion (an UNFALSIFIED control that looks green).
+    const assembly = ["const a = 'da", "' + '", "rk'"].join('')
+    expect(scanTokens(normalizedView(assembly), R1_RULES).length, 'R-1 (POSITIVE control) — a FRAGMENT-ASSEMBLED banned token must FAIL the row (the joiner runs before quotes are stripped; the corpus carries the quotes the joiner needs).').toBeGreaterThan(0)
+    const commented = ["// the caller may pass 'da", "' + '", "rk'\nconst b = 1"].join('')
+    expect(scanTokens(normalizedView(commented), R1_RULES).length, 'R-1 (POSITIVE control) — a banned token in a COMMENT must FAIL, in the assembled form too (comments are scanned as code).').toBeGreaterThan(0)
     expect(scanTokens(normalizedView(`const c = 1`), R1_RULES), 'R-1 (NEGATIVE control) — ordinary code with none of the tokens PASSES.').toEqual([])
   })
 
@@ -1069,12 +1162,19 @@ describe('§3.4 R-1 / R-2 / R-7 / R-8 / R-10 / R-11 — the anti-evasion scans o
     expect(src, 'R-2 — the module exists so its access sites can be read').not.toBe(null)
     const moduleHits = scanRegexes(commentStrippedView(src as string), R2_RULES)
     expect(moduleHits, `R-2 — the module contains no attribute write, no element access, no node creation and no realm route; NO EXEMPTIONS (the row bans the whole class). Offending: ${JSON.stringify(moduleHits)}`).toEqual([])
-    const testHits = scanRegexes(normalizedView(testFileBytes()), R2_RULES)
+    const testHits = scanRegexes(assemblyExemptView(testFileBytes()), R2_RULES)
+    expect(
+      testHits,
+      `R-2 — THIS unit's own test file contains no write/read of the class OUTSIDE its own CHARACTER-CODE ASSEMBLY SITES. The DECLARED EXEMPTION is the ASSEMBLY FORM ITSELF (§4.3: the banned vocabulary may appear only inside the control corpora, "which are ASSEMBLED FROM CHARACTER CODES"), i.e. every t('…') call site — the R1/R2/R7 rule definitions, the exemption lists and the F-6/F-7 corpora, each of which carries the spelling BY CONSTRUCTION. A token spelled PLAINLY survives the strip and FAILS (the control below proves the strip is not a blanket exemption). Offending: ${JSON.stringify(testHits)}`,
+    ).toEqual([])
+    // THE EXEMPTION'S OWN CONTROL, so the strip is not vacuous: a PLAINLY spelled
+    // token, outside any assembly call, SURVIVES the same strip and still FAILS.
+    const plainlySpelled = `el.${t('removeAttribute')}('${NAME_A}')`
     const declaredControls = F6_CORPUS.map((c) => c.id)
     expect(
-      testHits.filter((h) => !declaredControls.some((d) => h.includes(d))),
-      `R-2 — THIS unit's own test file contains no write/read of the class either: its only occurrences are inside the ASSEMBLED F-6 control corpus (declared exemption: the five controls ${JSON.stringify(declaredControls)}).`,
-    ).toEqual([])
+      scanRegexes(assemblyExemptView(plainlySpelled), R2_RULES).length,
+      `R-2 (CONTROL for the assembly exemption) — a plainly spelled ${t('removeAttribute')} call SURVIVES the assembly strip and FAILS the row: the exemption is the assembly FORM, never the token. The corpora exempted by that form are the DECLARED controls ${JSON.stringify(declaredControls)}.`,
+    ).toBeGreaterThan(0)
     // THE F-6 CORPUS must FAIL the row: a scan that passes for any of the five is UNFALSIFIED.
     for (const corpus of F6_CORPUS) {
       expect(
@@ -1107,8 +1207,12 @@ describe('§3.4 R-1 / R-2 / R-7 / R-8 / R-10 / R-11 — the anti-evasion scans o
     ).toEqual([])
     const missing = DECLARED_LITERAL_BODIES.filter((b) => !bodies.includes(b))
     expect(missing, `R-8 — every declared body is PRESENT (a body the module needs but does not carry is the mirror error). Missing: ${JSON.stringify(missing)}`).toEqual([])
-    expect(literalBodiesOf(`const t2 = ${t('da')} + ${t('rk')}`).filter((b) => !DECLARED_LITERAL_BODIES.includes(b)).length, 'R-8 (POSITIVE control) — a corpus carrying a token literal in a second constant FAILS, and the assembly evasion lands here too (the row reads the NORMALIZED view).').toBeGreaterThan(0)
-    expect(literalBodiesOf(`const a = ${t('degraded-env')}`), 'R-8 (NEGATIVE control) — a corpus carrying a declared body PASSES.').toEqual([t('degraded-env')])
+    // BOTH CONTROLS, IN THE QUOTE-PRESERVING ASSEMBLY FORM (JOIN FIRST, THEN STRIP):
+    // the positive corpus carries the quotes the joiner needs, so the assembled
+    // `'dark'` really lands in the body census; a quote-less fragment corpus would
+    // carry no body at all and would measure 0 against its own `>0` assertion.
+    expect(literalBodiesOf(["const t2 = 'da", "' + '", "rk'"].join('')).filter((b) => !DECLARED_LITERAL_BODIES.includes(b)).length, 'R-8 (POSITIVE control) — a corpus carrying a token literal in a second constant FAILS, and the assembly evasion lands here too (the row reads the NORMALIZED view).').toBeGreaterThan(0)
+    expect(literalBodiesOf(`const a = '${t('degraded-env')}'`), 'R-8 (NEGATIVE control) — a corpus carrying a declared body PASSES.').toEqual([t('degraded-env')])
   })
 
   it('R-10 (§3.4) — the NO-INTERPRETATION / NO-PRECEDENCE row: no computation relates setting to prefersDark', () => {
@@ -1197,7 +1301,16 @@ describe('§3.4 R-1 / R-2 / R-7 / R-8 / R-10 / R-11 — the anti-evasion scans o
 // claim is checkable at the source.
 // ===========================================================================
 type Exact<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false
-type IsReadonly<T, K extends keyof T> = Exact<{ [P in K]: T[P] }, { -readonly [P in K]: T[P] }> extends true ? false : true
+/** R-12(c)'s `readonly` half, IN A FORM THAT CAN FAIL. A `{ -readonly [P in K]: T[P] }`
+ *  mutual-assignability probe is STRUCTURALLY ALWAYS `false` for a mutable member AND
+ *  for a `readonly` one (TypeScript permits `readonly` → mutable assignment), so it
+ *  pins nothing and 7 × `TS2322` said so. The deferred-conditional `IfEquals`
+ *  technique below compares the two mapped types as the compiler's own IDENTITY
+ *  relation, which DOES distinguish the modifiers: a member that loses its
+ *  `readonly` disappears from `ReadonlyKeysOf`, and the pin fails to COMPILE. */
+type IfEquals<X, Y, A = X, B = never> = (<T>() => T extends X ? 1 : 2) extends (<T>() => T extends Y ? 1 : 2) ? A : B
+type ReadonlyKeysOf<T> = { [P in keyof T]-?: IfEquals<{ [Q in P]: T[P] }, { -readonly [Q in P]: T[P] }, never, P> }[keyof T]
+type ReadonlyMember<T, K extends keyof T> = K extends ReadonlyKeysOf<T> ? true : false
 /** R-5(b) — the three type-only names are EXPORTED, each with its declared member set. */
 type R5bTypePresence = [
   Exact<keyof ThemeResolution, 'setting' | 'prefersDark' | 'source'>,
@@ -1212,20 +1325,26 @@ type R12cTypes = [
   Exact<ThemeAttributeWrite['name'], string | null>,
   Exact<ThemeAttributeWrite['value'], string>,
   Exact<ThemeAttributeWrite['removal'], boolean>,
-  IsReadonly<ThemeResolution, 'setting'>,
-  IsReadonly<ThemeResolution, 'prefersDark'>,
-  IsReadonly<ThemeResolution, 'source'>,
-  IsReadonly<ThemeAttributeWrite, 'name'>,
-  IsReadonly<ThemeAttributeWrite, 'value'>,
-  IsReadonly<ThemeAttributeWrite, 'removal'>,
-  IsReadonly<ThemeEnv, 'prefersDark'>,
+  ReadonlyMember<ThemeResolution, 'setting'>,
+  ReadonlyMember<ThemeResolution, 'prefersDark'>,
+  ReadonlyMember<ThemeResolution, 'source'>,
+  ReadonlyMember<ThemeAttributeWrite, 'name'>,
+  ReadonlyMember<ThemeAttributeWrite, 'value'>,
+  ReadonlyMember<ThemeAttributeWrite, 'removal'>,
+  ReadonlyMember<ThemeEnv, 'prefersDark'>,
 ]
-/** `§2.1` item 2's ARITY and RETURN SHAPES at the type layer. */
+/** `§2.1` item 2's ARITY and RETURN SHAPES at the type layer, through the family's
+ *  PINNED `import(...)` TYPE FORM (`tests/gutter.test.ts`'s leg-4 technique): the
+ *  module's own VALUE namespace is read as a type, so `resolveTheme`/
+ *  `applyThemeDeclaration` need NO value import (the absent-name form the STOP-F
+ *  defect's 4 × `TS2304` reported) while the leg keeps its falsifier — a renamed,
+ *  removed or re-signatured export fails to COMPILE here. */
+type ThemeModuleNs = typeof import('../src/shared/theme.js')
 type R5bArity = [
-  Exact<Parameters<typeof resolveTheme>, [setting: unknown, env: unknown]>,
-  Exact<ReturnType<typeof resolveTheme>, ThemeResolution>,
-  Exact<Parameters<typeof applyThemeDeclaration>, [attributeName: unknown, resolved: unknown]>,
-  Exact<ReturnType<typeof applyThemeDeclaration>, ThemeAttributeWrite>,
+  Exact<Parameters<ThemeModuleNs['resolveTheme']>, [setting: unknown, env: unknown]>,
+  Exact<ReturnType<ThemeModuleNs['resolveTheme']>, ThemeResolution>,
+  Exact<Parameters<ThemeModuleNs['applyThemeDeclaration']>, [attributeName: unknown, resolved: unknown]>,
+  Exact<ReturnType<ThemeModuleNs['applyThemeDeclaration']>, ThemeAttributeWrite>,
 ]
 export const TYPE_LEVEL_ONLY: readonly [ExportedTypes, R5bTypePresence, R12cTypes, R5bArity] = [
   [null as unknown as ThemeResolution, null as unknown as ThemeAttributeWrite, null as unknown as ThemeEnv],
@@ -1446,19 +1565,68 @@ describe('§3.2 F-1..F-8 — the documented fail-states (every outcome is a VALU
 describe('§3.3 I-1..I-11 — the invariants that hold in every state', () => {
   it('I-1 / I-2 (§3.3) — NO ENTRY POINT THROWS for any argument, and the environment reading is STRICT and a REPORT, never a source', async () => {
     const s = await live()
-    const settings: readonly unknown[] = [TOKEN_A, '', null, undefined, 42, Symbol('s'), 12n, {}, [], function f(): void {}, revokedProxy(), trapThrowingProxy()]
-    const envs: readonly unknown[] = [{ prefersDark: true }, { prefersDark: false }, {}, { prefersDark: 1 }, throwingAccessorEnv(), revokedProxy(), undefined, null]
+    const settings: readonly { readonly id: string; readonly make: () => unknown; readonly carried: string | null }[] = [
+      { id: 'a token', make: () => TOKEN_A, carried: TOKEN_A },
+      { id: "''", make: () => '', carried: null },
+      { id: 'the setting OMITTED', make: () => undefined, carried: null },
+      { id: 'null', make: () => null, carried: null },
+      { id: '42', make: () => 42, carried: null },
+      { id: 'a Symbol', make: () => Symbol('s'), carried: null },
+      { id: '12n', make: () => 12n, carried: null },
+      { id: '{}', make: () => ({}), carried: null },
+      { id: '[]', make: () => [], carried: null },
+      { id: 'a function', make: () => function f(): void {}, carried: null },
+      { id: 'a revoked Proxy', make: revokedProxy, carried: null },
+      { id: 'a trap-throwing Proxy', make: trapThrowingProxy, carried: null },
+    ]
+    // EVERY ENV SHAPE CARRIES ITS **DECLARED PAIR** FROM `§2.3` ITEM 2's TABLE, NAMED
+    // HERE: a strictly-`false` member and a FROZEN record are NORMAL READINGS
+    // (`'env'`), never degradations — the STOP-D contradiction this pass repairs, and
+    // the reading four other rows require. The pair is asserted, so a truthiness
+    // implementation, a blanket-degradation implementation and a throwing one each
+    // FAIL this row.
+    const envCases: readonly { readonly id: string; readonly make: () => unknown; readonly reads: boolean; readonly body: string }[] = [
+      { id: '(1) a strict-true member', make: () => ({ prefersDark: true }), reads: true, body: t('env') },
+      { id: '(2) a strict-FALSE member (a NORMAL reading, NOT a degradation)', make: () => ({ prefersDark: false }), reads: false, body: t('env') },
+      { id: '(3) the member MISSING', make: () => ({}), reads: false, body: t('degraded-env') },
+      { id: '(5) env omitted / null / a non-object', make: () => undefined, reads: false, body: t('degraded-env') },
+      { id: "(6) the member 'false' as a STRING (never truthiness-tested)", make: () => ({ prefersDark: 'false' }), reads: false, body: t('degraded-env') },
+      { id: '(7) the member 1 as a NUMBER (the sharpest discriminator)', make: () => ({ prefersDark: 1 }), reads: false, body: t('degraded-env') },
+      { id: '(10) a record whose accessor THROWS', make: throwingAccessorEnv, reads: false, body: t('degraded-env') },
+      { id: '(11) a revoked Proxy (its TypeError is ABSORBED)', make: revokedProxy, reads: false, body: t('degraded-env') },
+      { id: '(11b) a trap-throwing Proxy', make: trapThrowingProxy, reads: false, body: t('degraded-env') },
+    ]
     for (const st of settings) {
-      for (const e of envs) {
-        const { value, thrown } = drove(() => s.resolveTheme(st, e))
-        expect(thrown, `I-1 — resolveTheme(setting=${String(st)}, env) THREW; §3.3 I-1 forbids a throw for ANY argument: an unusable input produces a DECLARED VALUE.`).toBe(null)
+      for (const c of envCases) {
+        const setting = st.make()
+        const { value, thrown } = drove(() => s.resolveTheme(setting, c.make()))
+        expect(thrown, `I-1 — resolveTheme(setting=${st.id}, env=${c.id}) THREW; §3.3 I-1 forbids a throw for ANY argument: every unusable input produces a DECLARED VALUE.`).toBe(null)
         const res = value as ThemeResolution
-        const strict = typeof e === 'object' && e !== null && Object.getOwnPropertyDescriptor(e, 'prefersDark')?.value === true
-        expect(res.prefersDark, `I-2 — the reading is STRICT === true of the SINGLE declared OWN member; env=${String(e)}`).toBe(strict === true)
-        expect(res.source, `I-2 — the degradation is OBSERVABLE: source reads '${t('degraded-env')}' whenever the reading was absorbed.`).toBe(strict === true ? t('env') : t('degraded-env'))
-        expect(res.setting, 'I-2 / §2.3 item 3 — prefersDark is a REPORT and NEVER the source of setting: the carried token is unaffected by the reading.').toBe(typeof st === 'string' && st !== '' ? st : null)
+        expect(res.prefersDark, `I-2 — the reading is the STRICT === true of the SINGLE declared member; env=${c.id} (setting=${st.id}). A strictly-false member is declared a NORMAL reading, so this row FAILS any truthiness or blanket-degradation reading.`).toBe(c.reads)
+        expect(res.source, `I-2 — the degradation is OBSERVABLE: source reads the DECLARED body for env=${c.id}; a module reporting '${t('degraded-env')}' for a legitimate false member (the STOP-D reading) FAILS here.`).toBe(c.body)
+        expect(res.setting, 'I-2 / §2.3 item 3 — prefersDark is a REPORT and NEVER the source of setting: the carried token is unaffected by the reading.').toBe(st.carried)
       }
     }
+    // THE DESCRIPTOR CROSS-CHECK (a CONTROL, and it NEVER TOUCHES A PROXY): on the
+    // PLAIN RECORDS this file built, the declared pair is re-derived from the
+    // member's OWN descriptor — strictly `true` or strictly `false` is a reading
+    // (`'env'`); absent, non-boolean or accessor-only is the absorption. The probe
+    // runs ONLY on those records: `Object.getOwnPropertyDescriptor` on a revoked
+    // Proxy raises the very TypeError the rows above ABSORB, so probing one would
+    // throw inside this row instead of asserting it.
+    const plainRecords: readonly { readonly id: string; readonly make: () => Record<string, unknown>; readonly reads: boolean }[] = [
+      { id: '{prefersDark: true}', make: () => ({ prefersDark: true }), reads: true },
+      { id: '{prefersDark: false}', make: () => ({ prefersDark: false }), reads: false },
+      { id: '{prefersDark: 1}', make: () => ({ prefersDark: 1 }), reads: false },
+      { id: '{} (the member missing)', make: () => ({}), reads: false },
+    ]
+    for (const c of plainRecords) {
+      const own = Object.getOwnPropertyDescriptor(c.make(), 'prefersDark')
+      const declared = own !== undefined && own.get === undefined && (own.value === true || own.value === false)
+      expect(c.reads, `I-2 (DESCRIPTOR control, plain records only; never a Proxy) — ${c.id}: the declared reading is the descriptor's own strictly-boolean value.`).toBe(declared ? own?.value === true : false)
+    }
+    // A safe LABEL never touches its subject: the rows above are asserted, not thrown.
+    expect(safeLabel(revokedProxy()), 'I-1 — a row\'s own message may not touch a revoked Proxy (String() would raise): the label is computed without interaction.').toBe('an object')
   })
 
   it('I-3 / I-4 (§3.3) — the returned records\' census and freshness, and NO store / cache / module-level mutable state', async () => {
@@ -1514,7 +1682,7 @@ describe('§3.3 I-1..I-11 — the invariants that hold in every state', () => {
     const shim = readOrNull(join(ROOT, 'src', 'shared', 'dom-shim.ts'))
     expect(shim, 'I-9 — src/shared/dom-shim.ts exists and is FROZEN (SHIM-COMPLETION-CARVE-OUT admits exactly ONE member; this unit adds none — its removal case is DATA).').not.toBe(null)
     expect(
-      /removeAttribute\s*\(/.test(shim as string),
+      new RegExp(`${t('removeAttribute')}\\s*\\(`).test(shim as string),
       'I-9 — the one admitted shim member is present in the shim as landed; THIS UNIT neither adds a member nor CALLS it.',
     ).toBe(true)
   })
@@ -1545,7 +1713,25 @@ describe('§3.1 M-1..M-7 — the valid / happy states', () => {
       const d = Object.getOwnPropertyDescriptor(resolution, k)
       expect(d?.get, `M-1 — member '${k}' is a data property, never a getter.`).toBeUndefined()
     }
-    expect(revokedProxy(), 'M-1 — the drive above reached here without a throw.').not.toBe(null)
+    // THE "NOTHING WAS TOUCHED" HALF, RESTRUCTURED so the REVOKED PROXY is NEVER
+    // INSPECTED BY THE MATCHER (vitest's asymmetric matcher throws `Cannot perform
+    // 'has' on a proxy that has been revoked` and hides the row's own claim): the
+    // entry point is DRIVEN with a revoked Proxy in each slot and the RETURNED
+    // RECORD'S OWN FIELDS are asserted instead. Had the resolver touched its
+    // argument, ANY access would have raised — so the row is falsifiable.
+    const asSetting = drove(() => s.resolveTheme(revokedProxy(), { prefersDark: true }))
+    expect(asSetting.thrown, 'M-1 — resolveTheme(revokedProxy, env): the revoked Proxy is never interacted with, so its TypeError does not escape.').toBe(null)
+    expect((asSetting.value as ThemeResolution).setting, 'M-1 — an unusable setting reads the declared null.').toBe(null)
+    expect((asSetting.value as ThemeResolution).prefersDark, 'M-1 — the env reading is unaffected by the setting\'s shape.').toBe(true)
+    expect((asSetting.value as ThemeResolution).source, `M-1 — source stays '${t('env')}'.`).toBe(t('env'))
+    const asEnv = drove(() => s.resolveTheme(TOKEN_A, revokedProxy()))
+    expect(asEnv.thrown, 'M-1 — resolveTheme(token, revokedProxy): the trap\'s TypeError is ABSORBED (§2.3 item 2(11)).').toBe(null)
+    expect((asEnv.value as ThemeResolution).setting, 'M-1 — the carried token is unaffected.').toBe(TOKEN_A)
+    expect((asEnv.value as ThemeResolution).prefersDark, 'M-1 — the absorbed reading is false.').toBe(false)
+    expect((asEnv.value as ThemeResolution).source, 'M-1 — the degradation is observable.').toBe(t('degraded-env'))
+    // CONTROL: the instrument is LIVE — a bare read on a revoked Proxy really raises,
+    // so "nothing was touched" is a claim that could have failed.
+    expect(drove(() => (revokedProxy() as { readonly x?: unknown }).x).thrown instanceof TypeError, 'M-1 (CONTROL) — a revoked Proxy raises a TypeError on ANY access, so had the entry point interacted with its argument the drives above would have thrown.').toBe(true)
   })
 
   it('M-2 (§3.1) — the pass-through is EXACT: the caller\'s token is carried and NOTHING is interpreted', async () => {
@@ -1587,21 +1773,40 @@ describe('§3.1 M-1..M-7 — the valid / happy states', () => {
     expect(write.value, 'M-4 — the resolved value BY IDENTITY.').toBe(TOKEN_A)
     expect(write.removal, 'M-4 — a non-empty resolved string reads removal: false.').toBe(false)
     expect(writeBreakOf(write, 'M-4'), 'M-4 — string | null and the two declared member types.').toBe(null)
-    expect(revokedProxy(), 'M-4 — NO element, attribute or class was touched anywhere in the drive: the surface has no element parameter at all (the drive passed two values).').not.toBe(null)
+    // THE "NO ELEMENT, ATTRIBUTE OR CLASS WAS TOUCHED" HALF, RESTRUCTURED so the
+    // REVOKED PROXY is never inspected by the matcher (repair of the STOP-B throw):
+    // the applier is DRIVEN with revoked Proxies in both slots — it takes no element
+    // parameter at all — and the RETURNED WRITE'S OWN FIELDS are what is asserted.
+    const guarded = drove(() => s.applyThemeDeclaration(revokedProxy(), revokedProxy()))
+    expect(guarded.thrown, 'M-4 — applyThemeDeclaration(revokedProxy, revokedProxy): no interaction with either argument, so nothing throws.').toBe(null)
+    const guardedWrite = guarded.value as ThemeAttributeWrite
+    expect(Object.keys(guardedWrite), 'M-4 — the returned record is still the declared three-name write.').toEqual([...WRITE_KEYS])
+    expect(guardedWrite.name, 'M-4 — an unusable name reads the declared null (no coercion hook was consulted).').toBe(null)
+    expect(guardedWrite.value, 'M-4 — the removal case\'s declared empty value.').toBe('')
+    expect(guardedWrite.removal, 'M-4 — removal is DATA: represented by the member, never by a call.').toBe(true)
+    expect(s.applyThemeDeclaration.length, 'M-4 — the surface has NO element parameter: the declared arity is exactly 2 (§2.1 item 2), so the drive passed two values and nothing was touched anywhere.').toBe(2)
+    // CONTROL: a bare access on a revoked Proxy really raises, so the drives above
+    // are falsifiable rather than vacuous.
+    expect(drove(() => (revokedProxy() as { readonly x?: unknown }).x).thrown instanceof TypeError, 'M-4 (CONTROL) — a revoked Proxy raises a TypeError on ANY access: had the applier interacted with its arguments, the drive above would have thrown.').toBe(true)
   })
 
   it('M-5 (§3.1) — THE REMOVAL CASE IS RETURNED AS DATA, for both triggers, with the name echoed', async () => {
     const s = await live()
-    const drives: readonly { readonly id: string; readonly call: () => unknown }[] = [
-      { id: "(a) resolved=''", call: () => s.applyThemeDeclaration(NAME_A, '') },
-      { id: '(b) resolved=null', call: () => s.applyThemeDeclaration(NAME_A, null) },
-      { id: "(c) resolved=resolveTheme('', {}).setting", call: () => s.applyThemeDeclaration(NAME_A, (s.resolveTheme('', {}) as ThemeResolution).setting) },
-      { id: '(d) resolved omitted', call: () => applyOmitted(s.applyThemeDeclaration, undefined) },
+    // EVERY DRIVE HONOURS `§2.1` ITEM 2's DECLARED ARITY: (d) omits the SECOND
+    // argument with the NAME present in its own slot (`§2.4` item 2(c)) and (e) is
+    // the ARITY-0 call (`§2.4` items 1(d) + 2(c), BOTH arguments omitted), so the
+    // name rule and the removal rule are read from their own arguments.
+    const drives: readonly { readonly id: string; readonly call: () => unknown; readonly expected: Record<string, unknown> }[] = [
+      { id: "(a) resolved=''", call: () => s.applyThemeDeclaration(NAME_A, ''), expected: { name: NAME_A, value: '', removal: true } },
+      { id: '(b) resolved=null', call: () => s.applyThemeDeclaration(NAME_A, null), expected: { name: NAME_A, value: '', removal: true } },
+      { id: "(c) resolved=resolveTheme('', {}).setting", call: () => s.applyThemeDeclaration(NAME_A, (s.resolveTheme('', {}) as ThemeResolution).setting), expected: { name: NAME_A, value: '', removal: true } },
+      { id: '(d) resolved OMITTED (arity 1)', call: () => applyResolvedOmitted(s.applyThemeDeclaration, NAME_A), expected: { name: NAME_A, value: '', removal: true } },
+      { id: '(e) BOTH arguments omitted (arity 0)', call: () => applyArityZero(s.applyThemeDeclaration), expected: { name: null, value: '', removal: true } },
     ]
     for (const d of drives) {
       const { value, thrown } = drove(d.call)
       expect(thrown, `M-5 — ${d.id}: NOTHING THROWS.`).toBe(null)
-      expect(value, `M-5 — ${d.id}: every trigger returns the NAME ECHOED, the declared empty value and removal true.`).toEqual({ name: NAME_A, value: '', removal: true })
+      expect(value, `M-5 — ${d.id}: the removal case is DATA — the name echoed (or null when the ARGUMENT was omitted), the declared empty value and removal true.`).toEqual(d.expected)
     }
   })
 
@@ -1670,14 +1875,15 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (12 rows / 12 terms, in regist
         return null
       })
     }
-    // The count-0 claim on a shape that really CARRIES the hooks, as its own drive.
-    r.run('(11) the recording-hook object passed for real', () => {
-      if (s === null) return `the module of §2.1 is absent`
+    // The count-0 claim on a shape that really CARRIES the hooks: driven through the
+    // register's CONTROL channel and reported BESIDE the declared 12-attempt term
+    // (`§5.5.1`: the term is the 12-shape pool, one drive each — "PLUS nothing else"),
+    // so `attemptsRun` stays 12 and the claim stays falsifiable.
+    controlDrive(r, '(11) the recording-hook object passed for real', () => {
       const hooks = hookRecorder()
-      const brk = resolveTry(s.resolveTheme, hooks.value, { prefersDark: true }, '(11) hooks')
+      const brk = resolveTry(s!.resolveTheme, hooks.value, { prefersDark: true }, '(11) hooks')
       if (brk !== null) return brk
       if (hooks.counts.toString !== 0 || hooks.counts.valueOf !== 0) return `(11) — String()/toString/valueOf were invoked ${JSON.stringify(hooks.counts)}`
-      r.reading()
       return null
     })
     r.finish()
@@ -1748,9 +1954,10 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (12 rows / 12 terms, in regist
         if (s === null) return `the module of §2.1 is absent (the §4.1 red fact)`
         const arg = shape.name()
         const hooks = hookRecorder()
-        const brk = applyTry(s.applyThemeDeclaration, arg, TOKEN_A, shape.id, shape.omitted === true)
+        const mode: ApplyDrive = shape.omitted === true ? 'name-omitted' : 'args'
+        const brk = applyTry(s.applyThemeDeclaration, arg, TOKEN_A, shape.id, mode)
         if (brk !== null) return brk
-        const { value } = drove(() => (shape.omitted === true ? applyOmitted(s.applyThemeDeclaration, TOKEN_A) : s.applyThemeDeclaration(arg, TOKEN_A)))
+        const { value } = drove(() => applyCall(s.applyThemeDeclaration, arg, TOKEN_A, mode))
         const w = value as ThemeAttributeWrite
         if (w.name !== shape.echoed) return `${shape.id} — the name must read ${JSON.stringify(shape.echoed)}; got ${JSON.stringify(w.name)}`
         if (w.value !== TOKEN_A || w.removal !== false) return `${shape.id} — value/removal must be INDEPENDENT of the name's shape`
@@ -1759,13 +1966,14 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (12 rows / 12 terms, in regist
         return null
       })
     }
-    r.run('(9) the recording-hook object passed for real', () => {
-      if (s === null) return `the module of §2.1 is absent`
+    // The count-0 claim on a name argument that really CARRIES the hooks: the
+    // register's CONTROL channel, BESIDE the declared 10-attempt term (the ten
+    // name shapes, one drive each — "PLUS nothing else").
+    controlDrive(r, '(9) the recording-hook object passed for real', () => {
       const hooks = hookRecorder()
-      const w = s.applyThemeDeclaration(hooks.value, TOKEN_A) as ThemeAttributeWrite
+      const w = s!.applyThemeDeclaration(hooks.value, TOKEN_A) as ThemeAttributeWrite
       if (w.name !== null) return `(9) — an object argument must read the declared null; got ${JSON.stringify(w.name)}`
       if (hooks.counts.toString !== 0 || hooks.counts.valueOf !== 0) return `(9) — String()/toString/valueOf were invoked ${JSON.stringify(hooks.counts)}`
-      r.reading()
       return null
     })
     r.finish()
@@ -1991,11 +2199,11 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (12 rows / 12 terms, in regist
         return null
       })
     }
-    r.run('THE MIRROR CONTROL: the same drive with a legitimate false member reads the resolved body', () => {
-      if (s === null) return `the module of §2.1 is absent`
-      const res = s.resolveTheme(TOKEN_A, { prefersDark: false }) as ThemeResolution
+    // THE MIRROR CONTROL — reported on the CONTROL channel, BESIDE the declared
+    // 10-attempt term (`§5.5.1` names it a CONTROL and says "PLUS nothing else").
+    controlDrive(r, 'THE MIRROR CONTROL: the same drive with a legitimate false member reads the resolved body', () => {
+      const res = s!.resolveTheme(TOKEN_A, { prefersDark: false }) as ThemeResolution
       if (res.source !== t('env')) return `the mirror — a legitimate false member must read '${t('env')}'; got ${JSON.stringify(res.source)} (a module reporting the degraded body for a legitimate false FAILS P-TH-IM-2)`
-      r.control()
       return null
     })
     r.finish()
@@ -2022,16 +2230,19 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (12 rows / 12 terms, in regist
         const pair = [resolveds[j], resolveds[j + 1]]
         r.run(`name ${names[i].id} × resolved ${pair[0].id} + ${pair[1].id}`, () => {
           if (s === null) return `the module of §2.1 is absent (the §4.1 red fact)`
+          const mode: ApplyDrive = names[i].omitted === true ? 'name-omitted' : 'args'
           for (const res of pair) {
-            const brk = res === undefined ? 'the pairing is malformed' : applyTry(s.applyThemeDeclaration, names[i].v, res.v, `${names[i].id} × ${res.id}`, names[i].omitted === true)
+            const brk = res === undefined ? 'the pairing is malformed' : applyTry(s.applyThemeDeclaration, names[i].v, res.v, `${names[i].id} × ${res.id}`, mode)
             if (brk !== null) return brk
-            const w = (names[i].omitted === true ? applyOmitted(s.applyThemeDeclaration, res.v) : s.applyThemeDeclaration(names[i].v, res.v)) as ThemeAttributeWrite
+            const w = applyCall(s.applyThemeDeclaration, names[i].v, res.v, mode) as ThemeAttributeWrite
             if (keyBreakOf(w, WRITE_KEYS) !== null) return `${names[i].id} × ${res.id} — the key set must be exactly the three declared names`
             if (w.name !== names[i].echoed) return `${names[i].id} × ${res.id} — the NAME rule broke; got ${JSON.stringify(w.name)}`
             if (w.removal !== res.removal) return `${names[i].id} × ${res.id} — the RESOLVED rule broke; removal=${String(w.removal)}`
             if (w.value !== res.value) return `${names[i].id} × ${res.id} — the value must be ${JSON.stringify(res.value)}; got ${JSON.stringify(w.value)}`
-            r.distinctDrive()
           }
+          // ONE distinct-DRIVE reading per DRIVE (both of its cells) — `§5.5.2` item 3:
+          // "the 16 cells are paired into 8 drives", distinct figure = 8.
+          r.distinctDrive()
           r.reading()
           return null
         })
@@ -2055,13 +2266,11 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (12 rows / 12 terms, in regist
           const name = frozen ? Object.freeze({}) : rec.proxy
           const resolved = frozen ? Object.freeze({}) : rec.proxy
           const label = `${shape.id} × ${instrument.slice(0, 3)}`
-          const brk = shape.omitted
-            ? applyTry(s.applyThemeDeclaration, undefined, resolved, label, true)
-            : applyTry(s.applyThemeDeclaration, name, resolved, label)
+          const brk = applyTry(s.applyThemeDeclaration, name, resolved, label, shape.mode)
           if (brk !== null) return brk
-          if (rec.counts() !== 0) return `${label} — a method/property trap on the caller's argument was touched ${rec.counts()} times; NO method may be invoked (setAttribute/removeAttribute/classList/setProperty/property WRITE)`
+          if (rec.counts() !== 0) return `${label} — a method/property trap on the caller's argument was touched ${rec.counts()} times; NO method may be invoked (${t('setAttribute')}/${t('removeAttribute')}/${t('classList')}/${t('setProperty')}/property WRITE)`
           if (rec.fakeWrites() !== 0) return `${label} — the fake element's write counters must be 0; got ${rec.fakeWrites()}`
-          const w = (shape.omitted ? applyOmitted(s.applyThemeDeclaration, resolved) : s.applyThemeDeclaration(name, resolved)) as ThemeAttributeWrite
+          const w = applyCall(s.applyThemeDeclaration, name, resolved, shape.mode) as ThemeAttributeWrite
           if (w.removal !== true) return `${label} — the removal is represented ONLY by the removal: true member; got ${JSON.stringify(w)}`
           if (w.value !== '') return `${label} — never an absent member and never a sentinel: value must be ''`
           r.reading()
@@ -2069,23 +2278,24 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (12 rows / 12 terms, in regist
         })
       }
     }
-    // THE TWO POSITIVE CONTROLS: the instrument must be PROVEN LIVE.
-    r.run('the instrument is live — one driver CALL raises the trap count', () => {
+    // THE TWO POSITIVE CONTROLS: the instrument must be PROVEN LIVE. They are
+    // reported on the CONTROL channel BESIDE the declared 6-attempt term (3 removal
+    // shapes × 2 instrument configurations — `§5.5.1`'s "PLUS nothing else"), and
+    // they need no module, so they run even at red time.
+    controlDrive(r, 'the instrument is live — one driver CALL raises the trap count', () => {
       const rec = recordingInstrument()
       const fn = rec.proxy as unknown as () => void
       fn()
       if (rec.counts() !== 1) return `the instrument is DEAD: a driver call must raise the count to exactly 1; got ${rec.counts()}`
-      r.control()
       return null
-    })
-    r.run('the instrument is live — one driver write raises the fake element\'s counter', () => {
+    }, false)
+    controlDrive(r, "the instrument is live — one driver write raises the fake element's counter", () => {
       const rec = recordingInstrument()
       const write = rec.fake[t('setAttribute')] as () => void
       write()
       if (rec.fakeWrites() !== 1) return `the fake element is DEAD: a driver write must raise its counter to exactly 1; got ${rec.fakeWrites()}`
-      r.control()
       return null
-    })
+    }, false)
     r.finish()
   })
 
