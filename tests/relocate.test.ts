@@ -2103,17 +2103,46 @@ describe('§3.4 R-1..R-16 — the STATIC rows (the module’s own bytes and the 
     // (1) THE VERBATIM PROPAGATION: a session double driven to refuse with each of its
     // own codes in turn — the string that reaches the caller is BYTE-IDENTICAL to the one
     // the session returned.
+    //
+    // **HOW EVERY TABLE MEMBER IS PRODUCED, named here because this probe’s FIRST
+    // construction used to make four of the six members unproducible** (the row failed
+    // for reasons of its own at every implementation): the session’s own `reset` is
+    // driven through the double’s DECLARED refusal route — `SessionDoubleOptions.refuseResetWith`
+    // (`§2.3` item 4 / `§2.4` item 5; the route `F-10` reads) — **on a double whose gesture
+    // is ESTABLISHED**, because a `reset` delegated to a session with NO active gesture
+    // answers the session’s own `'no-gesture'` (`docs/specs/gsession.md` `§2.4` item 4)
+    // whatever the table member is, so every member would have read `'no-gesture'` and the
+    // table would have asserted nothing about its other five members.
+    //
+    // **`'busy'`, REALIZED — not dropped from the table, and NOT a member the module can
+    // be driven into**: the SESSION’s own closed union carries `'busy'` (`GestureCode`,
+    // `src/shared/gesture-session.ts` line 58; the landed session answers it from `begin`
+    // on a second start, `§2.3` item 3 / `P-GS-IM-2`) — **and this module never calls
+    // `begin` at all** (`§2.5` item 1’s closed call set is `install`/`reset`/`dispose`;
+    // `R-14` asserts it), so `'busy'` is NOT reachable through the frozen `reset` surface
+    // and **is realized HERE in the double’s own declared refusal machinery** rather than
+    // silently dropped: `refuseResetWith: 'busy'` makes the double’s own `reset` answer
+    // the `'busy'` member of the session’s closed union, which is exactly the reading this
+    // row binds (the module must hand the session’s code on VERBATIM, whatever the member
+    // is, and must carry none of its own). **The row still FAILS for a module that returns
+    // a code outside the closed union, for a module that renames a code, and for a module
+    // that throws instead of returning** — the table is not weakened by the realization.
     for (const code of sessionCodes) {
-      const double = sessionDouble({ sink: null })
+      // (1a) THE SESSION’S OWN ANSWER, on its OWN double: `refuseResetWith` PLUS an
+      // ESTABLISHED gesture, so the answered member is the table member and not the
+      // `'no-gesture'` a gesture-less session answers.
+      const double = sessionDouble({ sink: null, refuseResetWith: code })
       const el = { control: code }
       double.setElement(el, 15)
-      const mod = await makeModule({ session: double.sessionObject, candidatesFor: (): unknown => [answer(1)], resolveTarget: (): unknown => ({ opaque: 't' }), threshold: 20, commit: (): void => undefined, onReveal: (): void => undefined, onPreview: (): void => undefined }, `R-15/${code}`)
-      mod.attach(el)
+      double.establish()
       const sessionReturned = double.reset(el)
       expect(
         sessionReturned.code,
-        `R-15 — the double’s own refusal really answers \`${code}\` (the table member is live)`,
+        `R-15 — the double’s own refusal really answers \`${code}\` (the table member is live, and the gesture is established so the session’s \`'no-gesture'\` limb is not the one answering)`,
       ).toBe(code)
+      // (1b) THE MODULE’S ANSWER on the same construction: `refuseResetWith` PLUS the
+      // established gesture, so the module’s own `reset` reaches its `session.reset`
+      // delegation (its pre-establishment limb answers from its own state and is block (2)).
       const moduleRefusal = await (async (): Promise<RelocateResetResult> => {
         const d2 = sessionDouble({ refuseResetWith: code })
         d2.setElement(el, 15)
@@ -2129,9 +2158,13 @@ describe('§3.4 R-1..R-16 — the STATIC rows (the module’s own bytes and the 
         `R-15 — the code the module returns is BYTE-IDENTICAL to the one the session returned (\`===\`), never an invented sentinel and never a renamed one`,
       ).toBe(code)
       expect(
-        moduleRefusal.code === code,
-        `R-15 — the comparison is by IDENTITY of the string value, not by a membership test`,
+        moduleRefusal.code === sessionReturned.code,
+        `R-15 — the comparison is by IDENTITY of the string value against the string the SESSION ITSELF returned (not a membership test, and not a table member restated here): the session answered \`${sessionReturned.code}\` and the module answered \`${moduleRefusal.code}\``,
       ).toBe(true)
+      expect(
+        typeof moduleRefusal.code,
+        `R-15 — the refusal is RETURNED, never thrown, and the returned record carries a \`code\` member (\`${code}\`): a module that throws on this path FAILS this row at the drive, not at the comparison`,
+      ).toBe('string')
     }
     // (2) THE ZERO-SESSION-CALL REFUSAL PATH (`§7` item 12): with NO active gesture the
     // module refuses `'no-gesture'` WITHOUT calling the session at all — and the code is
