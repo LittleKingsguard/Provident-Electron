@@ -214,3 +214,20 @@ is **no reason to merge or drop a discernible property**. **No new dependency, n
 **The ONE thing that must reach the architect, and WHEN:** **`Q1` and `Q2`, NOW but as a RECORDED
 DEFAULT, not as a stop.** The filing may proceed; the spec gate is the natural place for the answer,
 and either ordering needs no second round-trip.
+
+---
+
+## ⟶ CLOSE-OUT ANNOTATION (`2026-09-27`, the `E7` / `U-MENULIB` GATE-10 pass — **an ANNOTATION appended below the record; NOTHING IN THIS FILE'S OWN BYTES ABOVE IS REWRITTEN** (`§5.1` item 11 of the contract makes this file a DENIED path to the unit's own spec pass, and this note changes no condition, derivation or verdict of the record). **The unit's contract is `docs/specs/menulib.md`; the authoritative close-out record is `docs/next-steps.md`'s `## DONE — U-MENULIB` section; and this note's own live cell is the `E7` row of `docs/next-steps.md`'s `## OPEN` table.**)
+
+**WHAT THIS RECORD'S OWN OWED ITEMS BECAME, ONE LINE EACH — the record's `§7` process findings `P-1`…`P-5` and its `§8` filing checklist:**
+
+1. **`§8` item 1 / `P-1` (the step-1/2/3 provenance copies) — DISCHARGED.** **THE TWO COPIES ARE WRITTEN: `archive/gate1/2026-09-27-E7-gate1-steps1-2.md` and `archive/gate1/2026-09-27-E7-gate1-step3-architecture.md`** (gitignored, per `archive/`'s convention and the `E5` cycle's sibling form). **Each carries a PROVENANCE BANNER that attributes every line to THIS record's own `§4.1`/`§4.2`/`§3` and to step 3's derivation as filed, and that DISCLAIMS independent measurement** — **the `E4` cycle's `P-1` (step-1/2 reports that were never filed at all) is therefore NOT repeated here.**
+2. **`§8` items 2–3, `G-1`…`G-10` — DISCHARGED BY THE FILING AND BY THE UNIT.** **`docs/specs/menulib.md` was FILED and APPROVED AS FILED at the spec gate, carrying step 3's resolution, the conditions, the `§0` six-prohibition table, the `§2.4` OS-boundary clause, the `§5.1` diff scope with the CONFIRMED DENIED set and the typed `§5.5.x` register with the four domains declared and the terms/caps/seed printed.** **The `E7` row's spec cell and every count derived from it are flipped by the gate-10 move.**
+3. **`§8` item 4 / `P-2` and `P-3` (the `E7` row's missing `Blocked on` cell and its stale status chain) — DISCHARGED.** **The row carries its `Blocked on` reading (`SCH-5 (A-d4)`, no live dependency) and its chain is re-read through gate 10; the row now reads `E7 — MOVED TO DONE (2026-09-27)`.**
+4. **`§8` item 5 / `P-5` (`Q3` owes no architect answer) — HONOURED.** **`Q3` was never re-typed as an architect question; it was discharged by `§2.4` item 5's OS-boundary clause's PRESENCE, exactly as the record's `G-5` required.**
+5. **`§4.3`'s two architect questions — `Q1` and `Q2` REMAIN RECORDED WORKING DEFAULTS.** **The spec gate left both ARCHITECT-REVERSIBLE and NO ruling promoted either; the contract's `§7a.1` items 1/2 carry them, and the DONE row states them as defaults rather than rulings** (the `E5-B-3` form).
+6. **`§5`, `§6` and `§3` — UPHELD BY THE BUILD.** **The three new files landed as the record scoped them (the module, its test file and the spec), no `src/**` edit was needed for the unit, the contract's DENIED set held, and `PACKAGE DEFECTS: NONE`** (the unit exercises no `provident-ssr` surface).
+7. **`P-4` (no leg was run by that pass) — CARRIED IN FORM.** **The gate-10 pass likewise ran no leg; the measured figures it cites are THE SUPERVISOR'S at `6ec24aa`** (`RCA-12`).
+8. **THE ONE THING THIS RECORD'S `§8` CHECKLIST DOES NOT COVER, NOW CARRIED AS OWED: `docs/FORKER.md`'s `U-MENULIB` seam block + adopted-name glossary** — owner: whatever pass next touches that file; it gates no unit; **`docs/FORKER.md`'s unit-digest row reads `DONE` while that block stays `OWED` in its own words.**
+
+**WHAT IS *NOT* CLAIMED HERE: this annotation is written by the CLOSE-OUT pass, whose wall is read/search/doc-write; it re-ran no step of the four-step review, re-derived no condition, and did not re-open the record. THE RECORD'S `G-1`…`G-10` ARE DERIVED AT `docs/specs/menulib.md` `§0`/`§0A` AND ARE NEVER RE-LITIGATED** (the rule the record itself states at `§1`).
