@@ -363,9 +363,16 @@ export function createRelocateSession(options?: RelocateOptions): RelocateSessio
     const list = elementsOf(answer)
     if (list !== null) {
       for (let index = 0; index < list.length; index += 1) {
-        if (usableDistance(readSlot(list[index], 'distance')) && withinProximity(readSlot(list[index], 'distance'), threshold)) {
+        const element = list[index]
+        // THE FIELD IS READ **EXACTLY ONCE** PER CANDIDATE (`ADV-RL-7`): the ONE total
+        // member-read is held in this local, and the LOCAL is what the usability class
+        // gates and what the comparator compares. A second read would be a SECOND,
+        // possibly DIFFERENT, decision — an accessor that varies per read must still be
+        // decided on the value the ONE read answered. No repair, no default, no re-read.
+        const measured = readSlot(element, 'distance')
+        if (usableDistance(measured) && withinProximity(measured, threshold)) {
           within = true
-          shown = readSlot(list[index], 'candidate')
+          shown = readSlot(element, 'candidate')
           break
         }
       }
@@ -624,16 +631,33 @@ export function createRelocateSession(options?: RelocateOptions): RelocateSessio
     } catch {
       return false
     }
-    if (installed === false || installed === undefined || installed === null) return false
+    if (installed === false) return false
     ledger.add(element)
     counters.attached += 1
     return true
   }
 
-  /** THE MODULE'S OWN INVALID-ARM ENTRY POINT: the same arm the move turn takes,
-   *  exposed for a consumer-driven reset. Refusals are RETURNED, never thrown, and
-   *  the code they carry is the SESSION's own closed-union reading — the module
-   *  declares no code of its own.
+  /** THE MODULE'S OWN INVALID-ARM ENTRY POINT: **the SAME arm** the move turn takes,
+   *  exposed for a consumer-driven reset — and it TAKES THE ARM'S DECLARED SHAPE
+   *  (`ADV-RL-1`, the gate-4 host fix). Refusals are RETURNED, never thrown, and the
+   *  code they carry is the SESSION's own closed-union reading — the module declares
+   *  no code of its own.
+   *
+   *  WHAT "THE SAME ARM" MEANS, exactly, because this entry point used to delegate
+   *  without arming anything and the session's own `'reset'` terminal then ran the
+   *  COMPLETING branch: it fires `onReveal` (the arm's declared count is ZERO) and
+   *  commits the RESOLVED TARGET where the contract requires the **CALLER-SUPPLIED
+   *  PRE-DRAG VALUE** (`§2.1` item 7(g), `§2.3` item 4's channel (C) and item 6(d)'s
+   *  `'reset'` limb, `§2.5` item 7 clause 2, `§0A` notes 13/16). So this turn:
+   *  **(1)** ARMS the gesture (`armPending`), so the terminal it enters is the ARM's
+   *  own terminal and `terminalWrite` makes the arm's ONE sink write carrying the
+   *  caller-supplied pre-drag value — and ZERO reveals; **(2)** COUNTS the entry
+   *  (`stats().resets`) exactly as the move turn's arm does; **(3)** delegates with
+   *  ARITY THREE (`session.reset(element, handle, value)`, `§2.3` item 9(a)); and
+   *  **(4)** marks the gesture `armed` ONLY where the session ACCEPTED, so a REFUSED
+   *  consumer-driven arm is RETRYABLE while a gesture the arm has already taken stays
+   *  sticky — *"at most once per gesture"* holds STRUCTURALLY, and a second
+   *  `reset(el)` for a committed gesture cannot enter the session's arm again.
    *
    *  THE REFUSAL ORDER MIRRORS THE SESSION'S OWN PRECEDENCE, which reads the
    *  SESSION's end state FIRST and the GESTURE second: a DISPOSED session refuses
@@ -643,14 +667,30 @@ export function createRelocateSession(options?: RelocateOptions): RelocateSessio
    *  own for the same call, and the propagation must be byte-identical. */
   const resetEntry = (element: unknown): RelocateResetResult => {
     const held = record
-    const refused = session.disposedRead ? 'disposed' : held === null || held.terminated ? 'no-gesture' : sessionUsable(session) ? null : 'no-gesture'
-    if (refused !== null) {
-      counters.lastCode = refused
-      return { ok: false, code: refused, committed: false }
+    if (session.disposedRead) {
+      counters.lastCode = 'disposed'
+      return { ok: false, code: 'disposed', committed: false }
+    }
+    if (held === null || held.terminated || !sessionUsable(session)) {
+      counters.lastCode = 'no-gesture'
+      return { ok: false, code: 'no-gesture', committed: false }
     }
     const seam = session.reset
     if (seam === null) return { ok: false, code: 'no-gesture', committed: false }
-    const result = seam(element, held === null ? undefined : held.handle, held === null ? undefined : held.preDragValue)
+    if (held.armed) {
+      // THE ARM IS ALREADY THIS GESTURE'S (`I-4`, `P-RL-SM-7`): the session's own slot
+      // is gone, so the delegation is refused and NO second sink value is written.
+      const spent = seam(element, held.handle, held.preDragValue)
+      const spentCode = readSlot(spent, 'code')
+      const propagatedSpent = typeof spentCode === 'string' ? spentCode : 'no-gesture'
+      counters.lastCode = propagatedSpent
+      return { ok: false, code: propagatedSpent, committed: false }
+    }
+    held.armed = true
+    held.armPending = true
+    counters.resets += 1
+    const result = seam(element, held.handle, held.preDragValue)
+    held.armPending = false
     const code = readSlot(result, 'code')
     const propagated = typeof code === 'string' ? code : 'no-gesture'
     counters.lastCode = propagated
