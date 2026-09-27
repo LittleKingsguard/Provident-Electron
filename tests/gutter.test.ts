@@ -2176,6 +2176,62 @@ const SIBLING_DIVERGENCE_UNIT_ARTIFACTS: ReadonlyArray<{ readonly path: string; 
     // other than `E3`'s own module), which control `(n-2)` drives; the exclusion is
     // one-directional (REMOVE from `E3`'s subject only).
   },
+  // **⟶ THE RULE THIS ENTRY PAIR IS READ UNDER IS THE SAME SENTENCE EVERY ENTRY ABOVE CARRIES —
+  // `E3`'S DENIED PREDICATE IS KEPT BYTE-IDENTICAL AND UNWEAKENED FOR `E3`'S OWN PATHS, AND THIS
+  // REPAIR MAY ONLY *EXCLUDE A DECLARED SIBLING*, NEVER RELAX WHAT COUNTS AS DENIED:** the two
+  // paths below still read `isDeniedPath === true` (both are `tests/**`/`src/shared/*` paths that
+  // are not `E3`'s own), so the RAW reading this row reports still NAMES them; this registry can
+  // only ever REMOVE a path from `E3`'s subject, never add one; and the row's own control (h-2)
+  // keeps `E3`'s OWN denied paths reading NOT-sibling. Control `(n-3)` below drives all four
+  // directions on these very paths.
+  {
+    path: 'tests/menu-template.test.ts',
+    unit: 'the MENU-LIBRARY unit (`E7` / `U-MENULIB`) — its own red set (`docs/specs/menulib.md`, filed at the approved spec gate and committed at `d287b4b`)',
+    // **⟶ DECLARED 2026-09-27 (THE CROSS-UNIT SIBLING-REGISTRY REPAIR — THE THIRD REPAIR OF THIS
+    // CLASS, AFTER `E4`/`U-RELOCATE` AND `E5`/`U-CONTAINER`).** `tests/menu-template.test.ts` is
+    // **`E7`'s** artifact — its own 56-row red set (46 failed / 10 passed against the absent module)
+    // — so it is **neither `E3`'s nor `E10`'s nor `E4`'s nor `E5`'s**. **THE MEASURED CAUSE,
+    // VERBATIM FROM THIS PASS'S OWN DIRTY-STATE RUN (taken with the `E7` file dirty, BEFORE this
+    // declaration, on the committed tree `d287b4b` + one appended probe comment):**
+    // `liveUnaccounted: ["tests/menu-template.test.ts"]` against an expected `[]` — reported through
+    // this row's OWN accounting rule (`isAccountedFor`, control (m)) — i.e. **`R-12` FAILING on a
+    // SIBLING's legitimate red set merely because the registry had no entry for it** (the same
+    // class `§5.1`'s commit-range scope rule forbids: *"must NOT read … a sibling's dirty
+    // working-tree file … as this unit's diff"*), and that run read `1 failed | 92 passed (93)`.
+    // **THE LIVE STATE ON A CLEAN TREE IS *NOT* RED, and the reason is recorded rather than
+    // smoothed:** the `E7` red set was committed by the supervisor at `d287b4b`, so
+    // `git status --porcelain` is EMPTY and the dirty arm sees nothing, so this row reads `93/93`
+    // green there (measured by this pass, BEFORE its own edit landed). **The defect is therefore
+    // STRUCTURAL AND LATENT in the clean state and fires the moment `E7`'s cycle makes either path
+    // dirty** (its Implementer's landing, or any later edit to its test file), because the registry
+    // is keyed by PATH: the path is declared NOW so a fourth repair pass is not owed.
+    // **WHAT IT DOES NOT WEAKEN.** `isDeniedPath` is not referenced by this list and is not edited
+    // by this pass (control `(n-3)` asserts it still reads `true` for this path), so
+    // `tests/menu-template.test.ts` still reads denied in the RAW reading this row reports; a path
+    // can only ever be REMOVED from `E3`'s subject; and `E3`'s own five artifacts stay
+    // NOT-sibling, so **a denied path among `E3`'s own changes still FAILS.**
+  },
+  {
+    path: 'src/shared/menu-template.ts',
+    unit: 'the MENU-LIBRARY unit (`E7` / `U-MENULIB`) — its own MODULE, which lands later in that unit’s own cycle',
+    // **⟶ DECLARED 2026-09-27 (THE CROSS-UNIT SIBLING-REGISTRY REPAIR) — DECLARED BEFORE IT
+    // EXISTS, ON PURPOSE, SO A FOURTH REPAIR PASS IS NOT OWED.** `docs/specs/menulib.md` pins
+    // `src/shared/menu-template.ts` as that unit's own artifact — its export census is NINE names in
+    // two halves: the three value exports `normalizeCatalog`, `buildMenuTemplate` and
+    // `selectCatalogItem`, plus the six type declarations `PickerFn`, `CatalogEntry`,
+    // `PlatformProjection`, `ProjectedItem`, `MenuTemplate` and `TemplateOptions`. The registry is
+    // keyed by PATH, so declaring the path now is what keeps `E7`'s Implementer landing commit from
+    // reading as `E3`'s own. **This is the SAME declaration shape the registry already carries for a
+    // not-yet-landed artifact** (the `E4` entry declares `src/shared/relocate.ts` and the `E5` entry
+    // `src/shared/container.ts` before either existed; `SIBLING_UNIT_ARTIFACT_PROBE` admits `E10`'s
+    // `*-greens.md` *"the moment `E10`'s gate-5 artifact lands"*). **MEASURED BEFORE THE
+    // DECLARATION:** the module does not exist on disk (`src/shared/menu-template.ts` ⇒ ENOENT,
+    // verified by this pass) and is in no change set, so this entry moves NO live reading today; it
+    // is the PATH-level attribution `§5.1`'s commit-range scope rule requires once it lands.
+    // **WHAT IT DOES NOT WEAKEN:** `isDeniedPath('src/shared/menu-template.ts')` still reads `true`
+    // for it (a `src/shared/*` path other than `E3`'s own module), which control `(n-3)` drives; the
+    // exclusion is one-directional (REMOVE from `E3`'s subject only).
+  },
 ]
 /** **THE DECLARING UNITS, BY PATH** — the registry above, read as a map by the row so it can
  *  name the owning unit of every denied path it EXCLUDES. A path repeated in the registry
@@ -5002,6 +5058,129 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       null,
       [true, false],
       [false, true],
+    ])
+    // (n-3) **⟶ ADDED 2026-09-27 (THE CROSS-UNIT SIBLING-REGISTRY REPAIR — THE THIRD REPAIR OF
+    //     THIS CLASS, AFTER `E4`/`U-RELOCATE` AND `E5`/`U-CONTAINER`) — THE `E7`/`U-MENULIB`
+    //     DECLARATION, DRIVEN ON ITS OWN TWO DECLARED PATHS AND IN ALL FOUR REQUIRED DIRECTIONS.**
+    //     A SEPARATE control rather than an extension of `(n)`/`(n-2)`, for the same reason `(n-2)`
+    //     gave: both of those pin their expectations to LITERAL paths of THEIR OWN units, so folding
+    //     `E7`'s paths into either would silently widen an expectation that pins another
+    //     declaration. **The four directions, each ASSERTED rather than described:**
+    //
+    //       (a) both DECLARED `E7`-OWNED paths (`tests/menu-template.test.ts`,
+    //           `src/shared/menu-template.ts`) read **`isSiblingUnitArtifact === true`** AND carry a
+    //           **NAMED owner** (`E7` / `U-MENULIB`) AND are **REGISTRY KEYS** AND are **EXCLUDED
+    //           from the allow-list subject** by the row's own declaration filter
+    //           (`isDeclaredOtherUnitPath`) — **this is the exclusion the arm relies on, and the
+    //           exact reading that FAILED with `liveUnaccounted: ["tests/menu-template.test.ts"]`
+    //           before the declaration**;
+    //       (b) a synthetic **UNCLAIMED** path still reads **`isSiblingUnitArtifact === false`** with
+    //           NO owner — so it stays in `E3`'s subject and remains the row's FINDING path
+    //           (`§5.1`: *"a non-denied path outside the allow-list is a FINDING for the adversarial
+    //           pass, not an automatic FAIL"*). This is the direction that FAILS a predicate
+    //           claiming everything;
+    //       (c) an **`E3`-OWN denied path still reads denied/`true` and NOT-sibling** — the synthetic
+    //           `src/shared/gutter-hack.ts` — so **the DENIED half is UNTOUCHED by this
+    //           declaration**; and **the RAW reading still NAMES both declared `E7` paths as
+    //           DENIED** (the `deniedRaw !== true` list is EMPTY because both ARE denied — a list
+    //           that emptied the OTHER way would mean the predicate had been weakened);
+    //       (d) the **MUTATION-SHAPED PROBE fires when the two entries are removed**, and it is
+    //           DRIVEN rather than described: the registry is a module-level declaration that no
+    //           in-run probe may edit (`R-12`'s own rule: the synthetic controls never touch
+    //           `src/**`, and an edit here would make the tree dirty *while the probe reads it*),
+    //           so the mutation is driven at the PREDICATE level as **exactly the two declarations
+    //           removed** (`isSiblingUnitArtifact(path) && !MENULIB_SIBLING_DECLARED_PATHS.includes(
+    //           path)`), and the probe asserts that BOTH paths then LEAVE the sibling class (list
+    //           12 EMPTY) — which is precisely what makes lists 1–5 of this control FAIL, so the
+    //           control above is not a tautology. **The probe is FALSIFIABLE IN BOTH DIRECTIONS:**
+    //           if a path were claimed by some OTHER clause too (a pattern or a second list), it
+    //           would keep reading sibling under the mutation and list 12 would be NON-empty.
+    //
+    //     **WHAT THIS CONTROL KEEPS OUT OF THE BINDING POSITION.** Every comparison is SET-based
+    //     (sorted), never order-based (`§3.4 R-12` binds WHICH paths are declared siblings and never
+    //     the incidental order in which the registry happens to be listed — the `E4` lesson, where
+    //     an order-bound expectation FAILED on a committed clean tree because the live branch, not
+    //     the synthetic one, was the one running). **The ordered reading is REPORTED inside the
+    //     message's `READS` block and is BOUND NOWHERE.** The `E4`/`E5` branch readings are printed
+    //     BESIDE this control's own so the three registrations are visible together without being
+    //     compared.
+    const MENULIB_SIBLING_DECLARED_PATHS: readonly string[] = ['tests/menu-template.test.ts', 'src/shared/menu-template.ts']
+    const CONTROL_UNCLAIMED_E7_PATH = 'tests/menu-template-CONTROL-unclaimed.test.ts'
+    const e7SiblingBranch = MENULIB_SIBLING_DECLARED_PATHS.map((path) => ({
+      path,
+      sibling: isSiblingUnitArtifact(path),
+      owner: declaredOtherUnitNameOf(path),
+      declared: Object.prototype.hasOwnProperty.call(SIBLING_DIVERGENCE_UNIT_BY_PATH, path),
+      deniedRaw: isDeniedPath(path),
+      e3Own: isE3OwnArtifact(path),
+      outsideAllowSubject: !isDeclaredOtherUnitPath(path),
+    }))
+    const controlUnclaimedE7Branch = {
+      path: CONTROL_UNCLAIMED_E7_PATH,
+      sibling: isSiblingUnitArtifact(CONTROL_UNCLAIMED_E7_PATH),
+      owner: declaredOtherUnitNameOf(CONTROL_UNCLAIMED_E7_PATH),
+      deniedRaw: isDeniedPath(CONTROL_UNCLAIMED_E7_PATH),
+    }
+    // (d) THE MUTATION: the registry read as if BOTH `E7` entries had been deleted, keeping every
+    // other clause of the predicate intact (the mutated reading is `false` for a path whose ONLY
+    // carrier is the registry clause, and UNCHANGED for a path carried by any other clause).
+    const mutationWithoutMenulibEntries = MENULIB_SIBLING_DECLARED_PATHS.map((path) => ({
+      path,
+      mutatedSibling: isSiblingUnitArtifact(path) && !MENULIB_SIBLING_DECLARED_PATHS.includes(path),
+    }))
+    // Driven through the row's OWN splitter, so the mutation's consequence is measured on the
+    // mechanism the arm actually reads rather than argued: the real split, and the same subject's
+    // members the mutation would move into `E3`'s own set.
+    const e7SubjectSplit = splitBySiblingAttribution([...MENULIB_SIBLING_DECLARED_PATHS, CONTROL_UNCLAIMED_E7_PATH])
+    expect(
+      [
+        [...e7SiblingBranch.map((r) => r.path)].sort(),
+        e7SiblingBranch.filter((r) => r.sibling !== true).map((r) => r.path),
+        e7SiblingBranch.filter((r) => r.owner === null || r.owner.length === 0).map((r) => r.path),
+        e7SiblingBranch.filter((r) => !r.declared).map((r) => r.path),
+        e7SiblingBranch.filter((r) => r.outsideAllowSubject).map((r) => r.path),
+        e7SiblingBranch.filter((r) => r.deniedRaw !== true).map((r) => r.path),
+        e7SiblingBranch.filter((r) => r.e3Own).map((r) => r.path),
+        controlUnclaimedE7Branch.sibling,
+        controlUnclaimedE7Branch.owner,
+        [isDeniedPath(CONTROL_CORE_HACK_PATH), isSiblingUnitArtifact(CONTROL_CORE_HACK_PATH)],
+        [isSiblingUnitArtifact(TEST_RELPATH), isE3OwnArtifact(TEST_RELPATH)],
+        mutationWithoutMenulibEntries.filter((r) => r.mutatedSibling).map((r) => r.path),
+        [...e7SubjectSplit.sibling].sort(),
+        e7SubjectSplit.own.filter((path) => path === CONTROL_UNCLAIMED_E7_PATH),
+      ],
+      `R-12 §3.4 — CONTROL (n-3, THE \`E7\`/\`U-MENULIB\` DECLARATION DRIVEN IN ALL FOUR DIRECTIONS): (a) the DECLARED \`E7\`-OWNED paths \`${JSON.stringify(
+        MENULIB_SIBLING_DECLARED_PATHS,
+      )}\` read \`isSiblingUnitArtifact === true\` (list 2 EMPTY) AND carry a NAMED declaring unit (list 3 EMPTY) AND are REGISTRY KEYS (list 4 EMPTY) AND are EXCLUDED from the allow-list subject (list 5 EMPTY) — **this is the exclusion the arm relies on, and the exact reading that FAILED with \`liveUnaccounted: ["tests/menu-template.test.ts"]\` before the declaration**; (b) the synthetic UNCLAIMED path \`${CONTROL_UNCLAIMED_E7_PATH}\` still reads \`isSiblingUnitArtifact === false\` with NO owner, so it stays in the subject and remains the row's FINDING path (a predicate that claimed everything FAILS here); (c) the \`E3\`-OWN denied path \`${CONTROL_CORE_HACK_PATH}\` STILL reads \`isDeniedPath === true\` and \`isSiblingUnitArtifact === false\` — **the DENIED half is UNTOUCHED by this declaration** — \`E3\`'s OWN file \`${TEST_RELPATH}\` reads not-sibling with \`isE3OwnArtifact === true\`, and the \`deniedRaw !== true\` list (list 6) is EMPTY **because both \`E7\` paths ARE still denied by the byte-identical predicate, so the RAW reading still NAMES them**; and (d) **the probe is not a tautology: with the two \`E7\` REGISTRY ENTRIES REMOVED, BOTH paths leave the sibling class (list 12 EMPTY is the mutated reading's proof, and a path carried by ANY other clause would keep reading sibling there), so the split driven at list 13 would move both into \`own\` and this control's lists 1/3/4/5 FAIL** (the unclaimed path at list 14 stays in \`own\` under the real predicate — the row's finding path). **ALL COMPARISONS ARE SET-BASED (SORTED), NEVER ORDER-BASED** (the \`E4\` lesson: an order-bound expectation FAILED on a committed clean tree when the live branch, not the synthetic one, ran); the ordered reading is REPORTED below and BOUND NOWHERE. READS: ${JSON.stringify(
+        {
+          e7SiblingBranch: e7SiblingBranch.map((r) => [r.path, r.sibling, r.owner]),
+          e7SiblingBranchSortedPaths: [...e7SiblingBranch.map((r) => r.path)].sort(),
+          e7SiblingBranchDeclaredOrder: e7SiblingBranch.map((r) => r.path),
+          controlUnclaimedE7Branch,
+          mutationWithoutMenulibEntries,
+          e7SubjectSplit,
+          e3OwnDeniedControl: [CONTROL_CORE_HACK_PATH, isDeniedPath(CONTROL_CORE_HACK_PATH), isSiblingUnitArtifact(CONTROL_CORE_HACK_PATH)],
+          e3OwnFileNotClaimed: [TEST_RELPATH, isSiblingUnitArtifact(TEST_RELPATH), isE3OwnArtifact(TEST_RELPATH)],
+          e4BranchBesideThis: RELOCATE_SIBLING_DECLARED_PATHS,
+          e5BranchBesideThis: E5_SIBLING_DECLARED_PATHS,
+          declaredRegistryEntries: SIBLING_DIVERGENCE_UNIT_ARTIFACTS.length,
+        },
+      )}`,
+    ).toEqual([
+      ['src/shared/menu-template.ts', 'tests/menu-template.test.ts'],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      false,
+      null,
+      [true, false],
+      [false, true],
+      [],
+      ['src/shared/menu-template.ts', 'tests/menu-template.test.ts'],
+      [CONTROL_UNCLAIMED_E7_PATH],
     ])
     // (b) **THE DENIED SET OVER `E3`'S OWN CHANGES — this is the narrowed half.** A denied path
     //     AMONG `E3`'s own committed paths FAILS the row; a SIBLING's legitimate denied path is

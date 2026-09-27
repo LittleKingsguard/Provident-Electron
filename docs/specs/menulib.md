@@ -61,7 +61,22 @@ note — the placement the sibling specs use.)**
    printed with their THIRTEEN terms and a term-by-term addition at `§5.5.3`** — one pinned-seed generator
    (`S-ML-TOTAL-1`, seed `20260927`, one LCG step per draw, `pool.length = 12`), **`6` of the `13` rows carrying a
    `(bounded)` marking**, and **the POOL-VERSUS-BOUNDARY check RUN and CLEAN for all `13` rows** (`§5.5.2`
-   item 7). **NO `§5.5.0` EXISTS IN THIS FILE** — it is filed **after** the gate-11 ruling and carries its
+   item 7).
+   **⟶ DATE-STAMPED AMENDMENT (`2026-09-27`, the red run's defect report; annotate-never-rewrite — the as-filed
+   cells above stay VISIBLE).** **(i) THE `(bounded)` COUNT, CORRECTED `5 → 6`.** The as-filed form of this item
+   read **`5` of the `13` rows carrying a `(bounded)` marking** — **THAT `5` WAS WRONG and is `SUPERSEDED`**: the
+   register table, `§5.5.1`'s own marking block, `§5.5.2` item 2 and the landed harness
+   (`tests/menu-template.test.ts`, `PRE-2`/`REGISTER-STATUS`) **all name `6`, and the SIX ARE
+   `P-ML-IM-1` · `P-ML-IM-4` · `P-ML-IM-5` · `P-ML-TP-1` · `P-ML-TP-2` · `P-ML-TP-3`** (`6 + 7 = 13` rows, so the
+   count is checkable rather than asserted). **(ii) THE DECLARED TOTAL AND THE BOUNDED COUNT ARE THE ONLY NUMBERS
+   THIS AMENDMENT MOVES** — **the total `123 → 126`** (`§5.5.3` item below, where the corrected terms, chain and
+   subtotals are printed) **and the marking count `5 → 6`**; **no row id, strategy id, seed, term or cap moves, and
+   no `§3` row/register cell is re-scoped.** **(iii) THE RED RUN'S PROVENANCE** (run, filed and reported this
+   date; **read at `§7`'s repair addendum below, which also records the RE-GRAIN this correction owes**): the red
+   set is **`46` failed / `10` passed over `56` rows against a module that does not exist**, and its `PRE-2` /
+   `REGISTER-STATUS` rows are **RED BY DESIGN until this amendment lands**, because they assert **the as-filed
+   `123` AND the measured `126` as two literals**. **This item's own `123` is left standing above under this
+   annotation and is NOT the corrected figure: the corrected declared total is `126`** (`§5.5.3`). **NO `§5.5.0` EXISTS IN THIS FILE** — it is filed **after** the gate-11 ruling and carries its
    register from the start, so there is no superseded zero-row exemption to keep visible. **The register
    overshoots the `≤8` component-breakdown signal on purpose, in the ruling's own form** (`§5.5`, `§5.5.2`
    item 1).
@@ -317,9 +332,11 @@ consumer vocabulary in any module byte**, **no OS read**, and **no write of any 
    family carries its own:** this repo ships **no menu and no picker**, so **a fork implements both and this repo
    proves only the value** — and **the honest reading of the `'darwin'` collapse is that it is an
    OS-integration CLAIM ABOUT A VALUE, never an OS behaviour this repo can observe** (`§2.4`; `§7` item 2).
-   **The honest cost of the unit itself**: this spec + a **`13`-row / `13`-term / `123`-attempt** register +
+   **The honest cost of the unit itself**: this spec + a **`13`-row / `13`-term / `126`-attempt** register +
    red/green **with remands** + the adversarial pass + blind greens + the per-unit documentation review + a DONE
-   row + per-gate commits (`RCA-8(f)`).
+   row + per-gate commits (`RCA-8(f)`). *(As filed this line read **`123`-attempt**; the declared total was
+   corrected to **`126`** by the dated amendment of `CURRENT STATE` item 3 and `§5.5.3` — the as-filed `123` is
+   the mis-sum of the register's own thirteen terms and stays visible there.)*
 
 ---
 
@@ -902,6 +919,39 @@ STRIPPED**, because a view that strips quotes first can no longer see the `'…'
 | **R-11** | **The NO-SIBLING-COMPOSITION / NO-FABRICATED-EDGE row (`P-ML-11`, `P-ML-12`; `I-9`).** *No reference to any sibling module or its surface: no `createGestureSession`, no `GestureHandle`, no `tokensFor`/`orientationFor`/`containerDeclarationFor`, no `computeTrackVars`/`isEmpty`/`trackFor`, no `createOwnedListHost`/`createSlotHost`/`createRelocateSession`/`createResizeController`/`createGutterAffordance`/`project`/`applyProjection`/`probeMountInvariant`, and no `POINTER_TYPES`.* **A reference to any of them FAILS**, because each would be a **composed sibling** this unit's charter does not admit and a **fabricated edge** in the family's `H-r6` class | **none** — **and the row is the reason `§2.4` item 4's non-edge is a CHECKABLE claim rather than a promise** | `P-ML-11`/`P-ML-12`, `§2.4` item 4, `I-8`/`I-9` | static |
 | **R-12** | **THE KEY-CENSUS NEGATIVE ROW — the DROP rule's and the ABSENT-MEMBER rule's row (`G-2`'s discharge; `§2.3` items 2/9; `I-3`).** *(a) The SEVEN-key half: for every emitted item of every drive, `Object.keys(item)` deep-equals EXACTLY `['id','label','accelerator','role','kind','submenu','enabled']`, in that order.* **(b) The EIGHTH-key NEGATIVE DRIVE, which is the falsifiable half of `G-2`'s condition: a catalog element owning an EIGHTH and a NINTH own key (`extra`, `another`), a `Symbol` key and a non-enumerable member — and the assertion is that NONE of them appears on the emitted item, NAMED BY NAME.** **(c) The ABSENT-MEMBER half: an element owning only TWO of the seven produces an item whose `Object.keys` length is `2`, so a module that materializes `undefined` placeholders FAILS.** **(d) The MEMBER-TYPE half, on the `tsc` leg: every one of the seven is typed `unknown`, driven by a test-file assignment of a non-string value to each.** **BOTH CONTROLS: (i) the `F-2`/`M-8` corpora FAIL an implementation that copies extras or materializes placeholders; (ii) the module PASSES.** | **none** | `§2.3` items 2/9, `§0A` note 2, `G-2`, `§5.5.1 P-ML-IM-3`/`P-ML-IM-6`, `§5.2` leg 5 | static + `[T]` + type-level |
 | **R-13** | **The DIFF-SCOPE row and the no-importer probe (`P-ML-5`, `P-ML-12`).** *Every changed path in this unit's commit range is inside `§5.1`'s allow-list; NO path in `§5.1`'s DENIED set appears; and at the time this unit's red set runs, `src/shared/menu-template.ts` is imported by NO `src/**` file* (an import-graph probe: a read of the tree for the module's specifier returns ZERO). **SCOPE RULE, so the row cannot mistake correct gate work for a boundary violation: a diff-scope row asserted over a COMMIT RANGE must scope its allow-list census to THIS UNIT'S OWN ARTIFACTS** — the module, this unit's test file, this spec, this unit's own `*-greens.md` and `archive/reviews/**` record, and the unit's own tracker rows — **and must NOT read a later unit's commits or a sibling's dirty file as this unit's diff. The DENIED set is the exception and binds the WHOLE committed set.** **IMPLEMENTATION FORM, pinned because `git` is not available at run time: a FILESYSTEM PROBE** — every DENIED path PRESENT on disk, every artifact path of this unit's allow-list EXISTING, and the IMPORTER GRAPH READ FROM THE TREE (a recursive `src/**` read matching the module's specifier, never a git command and never a comment) | **none** | `§5.1`, `I-9`/`I-10`, `F-9` | static |
+**⟶ DATED EXEMPTION PINS (`2026-09-27`, the red run's defect report; annotate-never-rewrite — the as-filed `R-1`
+and `R-2` cells of the table above stay VISIBLE, and `R-2`'s *"no exemptions"* clause is read ONLY through this
+pin).** **This block sits AFTER the row table, not inside it, so the table's five columns stay intact and no row
+was split.** **A PINNED EXEMPTION IS NOT A WEAKENING: it is the exemption that keeps a scan row NON-VACUOUS, in
+the form `§4.4 S-ML-2` demands** (*"each must NAME its declared exemptions (`R-1`'s contract-vocabulary set,
+`R-7`'s `'darwin'`, `R-8`'s six declared bodies) or it is vacuous"*) **and that `R-7`/`R-8` already use — a named
+set with both controls.** **NO ROW ID, TERM, CAP OR `§3` CELL CLAIM MOVES WITH THIS BLOCK.**
+
+- **`R-1`'s exemption, PINNED — and it is the half of `S-ML-2`'s condition that row's cell omits.** `R-1`'s cell
+  names the **contract-vocabulary** exemption but not the one that lets this unit's own test file hold the banned
+  spellings: **THE TWO CONTROL CORPORA OF `tests/menu-template.test.ts` ARE EXEMPT, BY NAME — (1) `R-1`'s own
+  `controlCorpus` (a store token, a consumer token, a `role` literal and an accelerator literal) and (2) THE `F-8`
+  CORPUS (a `Menu` construction, a `setApplicationMenu` call, an accelerator registration and a rendered picker
+  element)** — **and NO OTHER SITE is exempt.** **BOTH CONTROLS, in `R-1`'s own form: (i)** each corpus **FAILS the
+  row it is attached to** (`R-1`'s `controlHits`, all six true; `F-8`'s `caught`, four of four true), and **(ii)** a
+  corpus carrying the declared exemptions **PASSES** (`R-1` CONTROL (ii)). **THE FORM, stated so the exemption is
+  not read as a licence: the landed harness spells the corpora through the character-code assembler (`ccOf(...)`),
+  so the FILE's bytes carry none of the banned spellings while the corpus VALUES do** — **the exemption is pinned
+  for the CORPUS, never for the file's bytes.** **A TestWriter that spells a control token PLAINLY in either file
+  owes this contract an amendment of this pin; it may not read the pin as permission to write a banned token
+  freely.**
+- **`R-2`'s SCOPE GAP, CLOSED — the unsatisfiable pair, NAMED.** `R-2` is filed **over "the MODULE's source AND
+  this unit's own `[T]` test file"** with **"no exemptions"**, while **the SAME test file must carry the banned
+  spellings as control data** — **`R-1`'s `controlCorpus` and the `F-8` corpus ARE that control data, so the pair
+  as filed is UNSATISFIABLE and no row could hold.** **THIS AMENDMENT CLOSES IT BY PINNING THE EXEMPTION IN `R-1`'s
+  FORM: the TWO control corpora above, BY NAME, and NO OTHER SITE.** **THE ROW STILL HOLDS, AND IT STILL FAILS FOR
+  A GENUINE SPELLING:** the test file is scanned over its **BYTES**
+  (`stripComments(readFileSync(TEST_PATH, 'utf8'))` — the `R-2` second-half scan the landed harness runs and prints
+  as a measured reading), **the corpora are character-code assembled**, so **a plainly-spelled
+  `Menu`/`setApplicationMenu`/menu-bar/`dialog`/alert/prompt reference, an accelerator registration, a picker render
+  or an `electron` reference ANYWHERE in either file — including inside a corpus — FAILS**, and the **`F-8` positive
+  control itself still has to fail four-of-four**. **The MODULE file keeps `no exemptions` exactly as filed**; the
+  pin is scoped to the two corpora, and **no `§3` row, term, cap or id moves with it.**
 
 ### 3.5 The EXISTENCE rows — the repo-state claims this filing makes, each with a probe
 
@@ -966,7 +1016,9 @@ this is reachable from the app — **in particular, at the end of this cycle the
 **The register's own stop rule binds the red run**: rows are evaluated **sequentially in register order** with
 **STOP AFTER 5 CONSECUTIVE FAILURES**, so **a red run of a module-absent unit is expected to stop early**, and
 **the un-run rows must be REPORTED AS FAILURES rather than silently omitted** — **a red run that reports all
-`123` attempts as executed is the finding, not the expectation.** **The register's execution markings are
+`126` attempts as executed is the finding, not the expectation** *(this sentence read **`123`** as filed; the
+declared total is now **`126`**, `§5.5.3`, and the as-filed `123` was the mis-sum of the register's own thirteen
+terms — `CURRENT STATE` item 3's dated amendment)*. **The register's execution markings are
 DESIGN, not results**: **a row that is marked executable in `§5.5.1` but broken when run is a SPEC FINDING,
 reported rather than tuned to green.**
 
@@ -1247,9 +1299,13 @@ The DONE row (`docs/next-steps.md`, the supervisor's pass) must carry, **in this
     this spec's table alone**: it reads the counts here **and** the TestWriter's tables in
     `tests/menu-template.test.ts`.
 11. **The register's ARITHMETIC.** The DONE row must print the **total WITH its per-row terms** —
-    **`123` = `12` (`P-ML-IM-1`) + `12` (`P-ML-IM-2`) + `12` (`P-ML-IM-3`) + `12` (`P-ML-IM-4`) +
+    **`126` = `12` (`P-ML-IM-1`) + `12` (`P-ML-IM-2`) + `12` (`P-ML-IM-3`) + `12` (`P-ML-IM-4`) +
     `12` (`P-ML-IM-5`) + `12` (`P-ML-IM-6`) + `12` (`P-ML-IM-7`) + `3` (`P-ML-SM-1`) + `3` (`P-ML-SM-2`) +
-    `3` (`P-ML-SM-3`) + `12` (`P-ML-TP-1`) + `9` (`P-ML-TP-2`) + `12` (`P-ML-TP-3`)** — **and must reconcile that
+    `3` (`P-ML-SM-3`) + `12` (`P-ML-TP-1`) + `9` (`P-ML-TP-2`) + `12` (`P-ML-TP-3`)** ***(this item as filed read
+    `123` against this same thirteen-term list — a figure that is NOT the sum of those terms; the declared total was
+    corrected `123 → 126` by the dated amendment of `CURRENT STATE` item 3 / `§5.5.3`, and the as-filed `123` stays
+    visible there. THIS ITEM'S SUBJECT IS THE CHECK, and the check is what caught the defect: a DONE row that prints
+    `123` against these thirteen terms VIOLATES this item's own last sentence.)*** — **and must reconcile that
     figure against the tables the test file actually produces**: **a total that is not the sum of its own terms
     is a review finding** (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`). **Where a row's attempts are several
     assertions over ONE execution, or a count of DISTINCT inputs rather than of DRIVES, the DONE row must report
@@ -1351,6 +1407,46 @@ OWN CELL NAMES ITS ID, THE IDS ARE DISTINCT, AND NO ROW IS LEFT WITHOUT ONE.**
 
 **How every row is executed (the strategy discipline, stated once so no row is ambiguous).**
 
+**⟶ DATE-STAMPED METHOD NOTES AND THE `(bounded)` COUNT (`2026-09-27`, from the RED RUN's recorded readings at
+`tests/menu-template.test.ts`; the TestWriter's three readings, recorded HERE because they are the CONTRACT's
+business, so a later author does not re-discover them — annotate-never-rewrite, and no row id, strategy id, seed,
+term or cap is moved by any of them).** **The canonical provenance, the re-grain obligation and the arithmetic are
+at `§7`'s repair addendum and `§5.5.3`.**
+**(i) THE `(bounded)` COUNT IS `6` OF THE `13` ROWS — the figure `§5.5.1`'s marking block below, this line,
+`§5.5.2` item 2 and the landed harness all print; `CURRENT STATE` item 3's as-filed `5` is CORRECTED and
+`SUPERSEDED` by the dated amendment there, with the as-filed form kept visible.** **THE SIX, NAMED AGAIN HERE so
+the count is checkable: `P-ML-IM-1` · `P-ML-IM-4` · `P-ML-IM-5` · `P-ML-TP-1` · `P-ML-TP-2` · `P-ML-TP-3`**
+(**`6 + 7 = 13`**, the unmarked seven quantifying over closed named lists, fixed grids or closed drive sets).
+**(ii) METHOD NOTE (a) — A SKIPPED ELEMENT BREAKS A COLLAPSE RUN, and the red drove it that way:** **a `null` /
+`undefined` entry (or any element the normalizer SKIPS, `§2.3` item 1(c)/(d)) is NOT part of the run and does NOT
+BRIDGE it** — the red set drove that case as **TWO SINGLETONS** (asserting `items.length === 2`, no `submenu` on
+either, `collapsing === true`), **which is `§2.3` item 5 rule 3's own clause** (*the run is measured on the
+NORMALIZED sequence*), and it is **the declared boundary drive of `P-ML-IM-5`** — **so this reading adds no row,
+moves no term and is a CLARIFICATION, not a new obligation.**
+**(iii) METHOD NOTE (b) — AN ENTRY WHOSE OWN ACCESSOR (own-key read) THROWS IS SKIPPED, NOT CARRIED WITH A MISSING
+KEY:** the red set drove the throwing-accessor element as **SKIPPED with a ZERO throw** — the element contributes
+**NO entry**, and the return is **NOT** an entry carrying the remaining six keys with the throwing one absent.
+**That is the reading `§2.3` item 1(d) pins** (*"the element is SKIPPED, the throw is ABSORBED, and NOTHING
+ESCAPES the call"*), **driven at `P-ML-IM-1` shapes `(11)`/`(12)` and at `§5.5.2` item 7's CLEAN result for that
+row** — **and it is the reading a TestWriter must take: an implementation that carries such an element as a
+partial entry FAILS `P-ML-IM-1`; it does NOT fail `F-2`/`I-1`'s totality half, because nothing throws either way.**
+**(iv) METHOD NOTE (c) — THE CATALOG POOL'S `12`th MEMBER IS A STATED BOUNDARY, AND IT HAS NO DRIVING ROW: NAMED
+AS SUCH RATHER THAN LEFT IMPLIED.** **The `12`-shape catalog/entry pool's shape `(12)` is "an array carrying
+`Object.create(null)`, an array element and a record whose accessor throws" (`P-ML-IM-1`'s own cell), NOT a
+`Map`/`Symbol.toPrimitive`/successive-read holder** — **the `Map` member belongs to `P-ML-TP-1`'s hostile pool,
+where the landed harness also drives `Set` and a function, and where the pool's member `12` is "`[]` and a deeply
+nested array"** — so **the three shapes named as deliberately EXCLUDED at `§5.5.2` item 4 (a lone-surrogate string,
+a `Symbol.toPrimitive` that throws only on its SECOND invocation, and a HOLDER whose getter returns different
+answers on successive reads) are a STATED BOUNDARY WITH NO DRIVING ROW.** **THE HOLDER IS THE ONE WITH A CANDIDATE
+HOME: the row that WOULD drive it is `P-ML-TP-1` (`S-ML-TOTAL-1`, its `12`-member pool), and it does NOT drive it
+— adding that member is NOT this amendment's to make, because it would change a declared pool, a term and the
+total, which this amendment may not move.** **A pass that adds it owes a NEW dated amendment and a register
+re-grain under `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`.** **THE `Symbol.toPrimitive`-on-second-invocation shape
+is a NAMED BOUNDARY WITH NO HOME in this register** (no row of `§5.5.1` quantifies over a successive-read seam),
+**and the lone-surrogate string's home is `§5.5.2` item 10's recorded coverage gap on `P-ML-IM-7`** — **so between
+them: one shape has a named gap with a named re-grain cost, one has a candidate row that does not drive it, and
+one has no row at all, and NONE of the three is an unrecorded omission.**
+
 1. **Plain deterministic vitest in this unit's own test file** (`tests/menu-template.test.ts`, `§4.1`/`§5.1`) —
    the file the red set already owes, and the file the register **rides as part of the red** (`§4.2` item 5).
    **No row of this register is executed by a generator library.**
@@ -1437,7 +1533,10 @@ extent.**
 **says so in its own `Executed?` cell**: *"the universal is NOT proven, and no reader may read this row as its
 proof."* **The other `7` rows quantify over CLOSED NAMED LISTS or FIXED GRIDS — no marking is owed and none is
 printed** (`6 + 7 = 13`, the register's row count). **A DONE row that reports any of the six as a proof of the
-unbounded universal it states is a review finding.**
+unbounded universal it states is a review finding.** ***(Dated amendment `2026-09-27`, the red run's defect
+report: this item's `6` is CONFIRMED and is the figure `CURRENT STATE` item 3 was corrected to — that item's
+as-filed `5` was wrong, and it stays visible there under its own annotation. The six names above are the six; no
+count in this item moves.)***
 
 **Item 3 — THE DECLARED-VERSUS-DISTINCT LEDGER, so the two figures are never conflated and the DECLARED ones are
 always the cap comparison.**
@@ -1540,7 +1639,11 @@ criterion.**
 under the `id` domain's declared extent (`§2.3` item 8: ANY JavaScript value), and `P-ML-TP-1`'s pool likewise
 excludes it.** **IT IS NOT A SILENT ABSENCE — it is a RECORDED OBLIGATION with a named owner: a TestWriter pass
 that ADDS the shape as a further drive of `P-ML-IM-7`, which moves that row's declared term `12 → 13`, the
-declared total `123 → 124`, the chain's last step and the `IM` subtotal `87 → 88`, and owes a register re-grain
+declared total `126 → 127` ***(as filed this read `123 → 124`; the declared total was corrected `123 → 126` by
+the dated amendment of `CURRENT STATE` item 3 and `§5.5.3`, and the re-grain's own arithmetic moves with it — the
+as-filed pair stays visible)***, the chain's last step and the `IM` subtotal `84 → 85` ***(as filed this read
+`87 → 88`: `87` was the mis-sum — the seven `IM` terms are `12 + 12 + 12 + 12 + 12 + 12 + 12` = `84` — so the
+re-grain's own arithmetic is `84 → 85`)***, and owes a register re-grain
 under `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`.** **THE HONEST READING OF THIS BLOCK, stated so no reader
 over-reads it: the `13` rows are `13` OUTCOMES of an enumeration exercise, and THIS ONE IS INCOMPLETE BY ONE
 NAMED SHAPE — a DONE row that reports the register as complete while this item stands is a review finding.**
@@ -1549,14 +1652,72 @@ NAMED SHAPE — a DONE row that reports the register as complete while this item
 
 **THE DECLARED TOTAL, printed WITH its terms — and this is the figure every cap comparison uses:**
 
-**`123` = `12` + `12` + `12` + `12` + `12` + `12` + `12` + `3` + `3` + `3` + `12` + `9` + `12`**
+**`126` = `12` + `12` + `12` + `12` + `12` + `12` + `12` + `3` + `3` + `3` + `12` + `9` + `12`**
 
-**THE DECLARED CHAIN: `12` → `24` → `36` → `48` → `60` → `72` → `84` → `87` → `90` → `93` → `105` → `114` →
-`123`.**
+**THE DECLARED CHAIN, CORRECTED — the thirteen terms summed as a chain of twelve steps: `12` → `24` → `36` →
+`48` → `60` → `72` → `84` → `96` → `99` → `102` → `105` → `117` → `126`.** ***(As filed this read `` `12` → `24` →
+`36` → `48` → `60` → `72` → `84` → `87` → `90` → `93` → `105` → `114` → `123` `` — a chain UNREACHABLE from the
+corrected terms, and unreachable from its own corrected predecessor at its seventh step (`84` → should be `96`).
+The as-filed chain is kept VISIBLE below, `SUPERSEDED`, and its divergence is named: the printed `+3` at the
+seventh step is the mis-sum's signature, and every later figure (`90`, `93`, `105`, `114`, `123`) inherits the `-3`
+offset. NO TERM MOVES — the chain is the same thirteen terms summed.)***
 
-**THE DECLARED SUBTOTALS: `IM 87` · `SM 9` · `TP 33` = `123`.**
+**⟶ A SECOND CANDIDATE CHAIN, RECEIVED WITH THE SAME DEFECT REPORT AND ALSO NOT REACHABLE FROM THE TERMS
+(`2026-09-27`; recorded rather than adopted, so the next author does not re-derive it).** **The repair brief carried
+a chain `12` → `24` → `36` → `48` → `60` → `72` → `84` → `87` → `90` → `93` → `105` → `114` → `126` — i.e. the
+as-filed chain with ONLY its last step changed to `126`. IT IS ALSO A MIS-SUM, and by the SAME signature: it keeps
+the as-filed seventh-through-twelfth steps (`84 → 87 → 90 → 93 → 105 → 114`), which consume the seven terms as
+`12,12,12,12,12,12,3` — only SIX `12`s and a `3` — and then add `12` at the end. The thirteen terms are seven `12`s
+FIRST, then `3`, `3`, `3`, `12`, `9`, `12`, so the step sequence is `… 72 → 84 → 96 → 99 → 102 → 105 → 117 → 126`,
+and no step of `84 → 87` exists in it. THE ADOPTED CHAIN IS THE ONE PRINTED ABOVE; THE SECOND CANDIDATE IS
+`SUPERSEDED` BY ARITHMETIC AND KEPT VISIBLE HERE for exactly the reason `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`
+gives: a chain that is not derivable from its own terms is the defect class this repair exists to close, and a
+CORRECTED-TOTAL amendment that keeps the old intermediate steps would close one mis-sum and leave a second one in
+its place. **NO TERM, ROW ID, STRATEGY ID, SEED OR CAP IS AFFECTED BY THIS PARAGRAPH.**
 
-**CAPS RE-CHECKED: `123 ≤ 400` (total headroom `277`), largest row `12 ≤ 100` (headroom `88`).** **THE
+**THE DECLARED SUBTOTALS: `IM 84` · `SM 9` · `TP 33` = `126`.** ***(As filed the `IM` subtotal read `87` and the
+sum read `123`; those two figures are `SUPERSEDED` and are kept visible in the as-filed block below. `SM 9` and
+`TP 33` are unchanged, because the mis-sum was entirely inside the `IM` family's chain.)***
+
+**⟶ THE ARITHMETIC DEFECT AND ITS DATED REPAIR (`2026-09-27`, from the red run's filed defect report:
+`tests/menu-template.test.ts` ran `56` rows, `46` failed / `10` passed against a module that does not exist, and
+its `PRE-2` / `REGISTER-STATUS` rows report this as a SPEC FINDING rather than reconcile it — annotate-never-rewrite,
+and the as-filed figures below stay VISIBLE).** **WHAT WAS FILED, QUOTED SO IT IS NOT LOST: `§5.5.3` printed
+`` `123` = `12` + `12` + `12` + `12` + `12` + `12` + `12` + `3` + `3` + `3` + `12` + `9` + `12` `` · the chain
+`` `12` → `24` → `36` → `48` → `60` → `72` → `84` → `87` → `90` → `93` → `105` → `114` → `123` `` · and the
+subtotals `` `IM 87` · `SM 9` · `TP 33` = `123` `` — **and ALL THREE CARRIED THE SAME MIS-SUM: the thirteen printed
+terms sum to `126` (`12 · 7` = `84`, `+ 3 · 3` = `9`, `+ 12 + 9 + 12` = `33`), so the `IM` subtotal is `84` and
+NOT the printed `87`, and the as-filed chain's last step (`114 → 123`) is **UNREACHABLE FROM ITS OWN TERMS**: the
+THIRTEEN-term chain's own twelve steps reach `126`, and the as-filed chain's SEVENTH step is the first one to
+diverge (`72 → 84 → 87` should read `72 → 84 → 96`).** **THE MIS-SUM IS THE CAUSE, NAMED AS SUCH: the as-filed
+`IM` cell added `3` where the seventh `IM` term adds `12` — a single `+3`-instead-of-`+12` slip at the seventh
+step — and every downstream figure (`87`, `90`, `93`, `105`, `114`, `123`) inherited it.** **THE CORRECTED TOTAL
+IS `126`, and it is `§5.5.3`'s figures THIS amendment corrects — the only number this repair moves is the declared
+total with its chain and its subtotals**; **the as-filed `123`, its terms line and its subtotal line remain
+VISIBLE below under dated annotations rather than being rewritten** (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`:
+a mis-sum is corrected by annotating beside the as-filed form, never by silently rewriting it). **THE TERM VERDICT
+IS RE-PRINTED HERE AGAINST THE CORRECTED FIGURE: the thirteen terms are `12`×7 (`IM-1`…`IM-7`) `+` `3`×3
+(`SM-1`…`SM-3`) `+` `12` (`TP-1`) `+` `9` (`TP-2`) `+` `12` (`TP-3`) = `126` — the total IS the sum of its own
+terms, the per-row terms and strategy ids are UNCHANGED by this repair, and the caps are RE-CHECKED below.**
+*(The as-filed caps line read `` `123 ≤ 400` (total headroom `277`) `` — with the corrected total the headroom is
+`274`; the as-filed form stays visible below.)* **(The as-filed `§5.5.2` item 10 re-grain arithmetic `123 → 124` /
+`87 → 88` is likewise annotated to `126 → 127` / `84 → 85` at its own site.)**
+
+**THE AS-FILED TOTAL, KEPT VISIBLE UNDER THE REPAIR (`SUPERSEDED` by the dated block above):
+
+> **`123` = `12` + `12` + `12` + `12` + `12` + `12` + `12` + `3` + `3` + `3` + `12` + `9` + `12`**
+
+> **THE AS-FILED CHAIN: `12` → `24` → `36` → `48` → `60` → `72` → `84` → `87` → `90` → `93` → `105` →
+> `114` → `123`.**
+
+> **THE AS-FILED SUBTOTALS: `IM 87` · `SM 9` · `TP 33` = `123`.** **(`87` and the `123` it feeds are the
+> mis-sum; the terms above sum to `126`.)**
+
+**CAPS RE-CHECKED AGAINST THE CORRECTED TOTAL: `126 ≤ 400` (total headroom `274`), largest row `12 ≤ 100`
+(headroom `88`)** — **both caps HOLD, and neither is close.**
+*(As filed this line read: `123 ≤ 400` (total headroom `277`), largest row `12 ≤ 100` (headroom `88`) — the
+as-filed figure is kept visible and is `SUPERSEDED` by the corrected `126` / `274`; the per-row headroom `88` and
+the largest-term reading are unchanged, because no term moved.)* **THE
 `(bounded)` SET: `6` of the `13` rows — `P-ML-IM-1` · `P-ML-IM-4` · `P-ML-IM-5` · `P-ML-TP-1` · `P-ML-TP-2` ·
 `P-ML-TP-3`.** **THE `12`-TERM TIE, named so the "largest row" claim is checkable rather than asserted: NINE
 rows carry the maximum term `12` — `P-ML-IM-1` · `P-ML-IM-2` · `P-ML-IM-3` · `P-ML-IM-4` · `P-ML-IM-5` ·
@@ -1580,20 +1741,40 @@ rows carry the maximum term `12` — `P-ML-IM-1` · `P-ML-IM-2` · `P-ML-IM-3` �
 
 **THE TERM-BY-TERM ADDITION, so the total is checkable rather than asserted** *(the order is `§5.5.1`'s row
 order)***:** **`12` + `12` = `24`** · **`+ 12` = `36`** · **`+ 12` = `48`** · **`+ 12` = `60`** · **`+ 12` = `72`**
-· **`+ 12` = `84`** · **`+ 3` = `87`** · **`+ 3` = `90`** · **`+ 3` = `93`** · **`+ 12` = `105`** · **`+ 9` =
-`114`** · **`+ 12` = `123`.**
+· **`+ 12` = `84`** · **`+ 12` = `96`** · **`+ 3` = `99`** · **`+ 3` = `102`** · **`+ 3` = `105`** · **`+ 12` =
+`117`** · **`+ 9` = `126`.** **⟶ `2026-09-27`, A DATED CORRECTION OF A PRINTED STEP — and the declared total stays
+`126`.** **THE ADDITION IS NOW THE COMPLETE ONE, with no step past the terms: the `12` additions run BETWEEN the
+`13` declared terms (`12`×7 + `3`×3 + `12` + `9` + `12` = `126`), so the chain of cumulative figures is `12` →
+`24` → `36` → `48` → `60` → `72` → `84` → `96` → `99` → `102` → `105` → `117` → `126` — TWELVE steps, the first
+term being the chain's own first figure.** **WHAT THIS LINE CARRIED FOR ONE EDIT OF THIS PASS, recorded because it
+is the very defect class this repair closes: a trailing `` `+ 12` = `138` `` step — i.e. the twelfth term's `+ 12`
+applied TWICE, the shape of a FOURTEENTH-term defect. It was caught on re-reading, deleted here, and the
+authority for the total is `§5.5.1`'s per-row term table plus this subsection's thirteen-term head line, both of
+which read `126`.** **NO ROW ID, TERM, STRATEGY ID, SEED, CAP OR `(bounded)` MARKING MOVES WITH THIS NOTE, and a
+DONE row's arithmetic is the thirteen-term sum `126`.** **THE AS-FILED ADDITION, kept VISIBLE under the repair
+(`SUPERSEDED`) — and the mis-sum is visible IN IT:** **`12` + `12` = `24`** · **`+ 12` = `36`** · **`+ 12` =
+`48`** · **`+ 12` = `60`** · **`+ 12` = `72`** · **`+ 12` = `84`** · **`+ 3` = `87`** · **`+ 3` = `90`** ·
+**`+ 3` = `93`** · **`+ 12` = `105`** · **`+ 9` = `114`** · **`+ 12` = `123`** *(**the as-filed addition carried
+THIRTEEN terms and TWELVE steps, and its seventh step took `+3` where the seventh term is `12` — which is
+the single slip every downstream figure inherited: the as-filed seventh step read `84 → 87` where the same step
+of the corrected addition reads `84 → 96`, and every later figure (`90`, `93`, `105`, `114`, `123`) follows the
+same `-3` offset. The corrected addition above carries the SAME `13` terms and the SAME `12` steps, with its
+seventh step `+ 12`.)***
 
 **THE ROW/TERM RECONCILIATION, printed so it is checkable:** **the `13` ROWS and their terms are `IM-1` (`12`) ·
 `IM-2` (`12`) · `IM-3` (`12`) · `IM-4` (`12`) · `IM-5` (`12`) · `IM-6` (`12`) · `IM-7` (`12`) · `SM-1` (`3`) ·
 `SM-2` (`3`) · `SM-3` (`3`) · `TP-1` (`12`) · `TP-2` (`9`) · `TP-3` (`12`)** — **`13` rows (seven `IM` + three
-`SM` + three `TP`), `13` TERMS (one per row, with NO row carrying a second term), and the total is `123`.**
+`SM` + three `TP`), `13` TERMS (one per row, with NO row carrying a second term), and the total is `126`
+*(as filed this read `123`; corrected by the dated amendment above — the as-filed figure stays visible there).*
 
 **THE FAMILY SUBTOTALS, stated consistently with that addition:** **`IM` = `12 + 12 + 12 + 12 + 12 + 12 + 12` =
-`87`** · **`SM` = `3 + 3 + 3` = `9`** · **`TP` = `12 + 9 + 12` = `33`** — and **`87 + 9 + 33 = 123` = the
-declared total.** **THE CAPS, re-checked against it:** **`123 <= 400` total** (headroom `277`), and **the largest
+`84`** · **`SM` = `3 + 3 + 3` = `9`** · **`TP` = `12 + 9 + 12` = `33`** — and **`84 + 9 + 33 = 126` = the
+declared total.** **THE CAPS, re-checked against it:** **`126 <= 400` total** (headroom `274`), and **the largest
 per-row term is `12`** (the `9`-WAY TIE, named at the two halves above: the nine `12`-term rows against the
 four that carry `3`/`3`/`3`/`9`), **inside `<= 100` per row** (headroom `88`) — **so both
-caps hold.**
+caps hold.** ***(As filed this block read `` `IM` = … = `87` `` and `` `87 + 9 + 33 = 123` ``, with total
+headroom `277`; the `87` was the mis-sum and is `SUPERSEDED` — the seven `IM` terms sum to `84`, and `84 + 9 +
+33 = 126`. The `SM` and `TP` subtotals were and are `9` and `33`; NO term, tie or per-row headroom moves.)***
 
 **THE PINNED SEED AND ITS FORM: `20260927`**, one hand-rolled 32-bit LCG step per draw
 (`stateₙ₊₁ = (stateₙ · 1664525 + 1013904223) mod 2³²`), `index = stateₙ₊₁ mod pool.length` with
@@ -1698,7 +1879,11 @@ dialog and any platform's acceptance of the emitted shape — is REFUSED at fili
    member** (`SHIM-COMPLETION-CARVE-OUT`; `R-3`), **no bundle gains the module** (`§5.2` leg 3), and **the
    module's only artifact is a value a caller reads.**
 9. **THE REGISTER'S MARKINGS ARE EXECUTION DESIGN, NOT RESULTS.** This pass **ran nothing**. **The total is
-   `123`, the sum of the register's THIRTEEN printed terms**, and **both caps hold** (`123 ≤ 400`; largest row
+   `126`, the sum of the register's THIRTEEN printed terms** — ***(as filed this read `123`, which is NOT the sum
+   of those terms; the declared total was corrected `123 → 126` by the dated amendment of `CURRENT STATE` item 3
+   and `§5.5.3`, where the as-filed `123`, its terms line, its chain and its subtotals stay VISIBLE under
+   annotations — annotate-never-rewrite. The as-filed caps parenthetical of this item is corrected with it: at the
+   corrected total the headroom is `274`, not `277`.)*** — and **both caps hold** (`126 ≤ 400`; largest row
    `12 ≤ 100`). **A row marked executable here that is broken when the red runs is a SPEC FINDING, reported
    rather than tuned to green.**
 10. **NO ROW OF THIS UNIT CLAIMS AN ENGINE BEHAVIOUR, A PACKAGE CAPABILITY OR A `bodyRuns`/`BARE-TEXT-EMIT`
@@ -1726,6 +1911,61 @@ dialog and any platform's acceptance of the emitted shape — is REFUSED at fili
     (`§7` item 11; `§8`). **Its only MEASUREMENTS are the ten-token collision table's hit counts (`§2.2`(E)) and
     the existence probes of `§3.5`/`§5.5.2` item 10 — each a read-tool search, attributed at its own site, and
     NONE of them a run of any leg.**
+
+**⟶ REPAIR ADDENDUM (`2026-09-27`) — THE RED RUN's PROVENANCE, THE RE-GRAIN OBLIGATION, AND THE THREE RECORDED
+METHOD READINGS.** **This addendum is INSIDE `§7` on purpose: it adds no section number, moves no row id, moves no
+strategy id, seed, term or cap, and edits no `§3` cell's claim.** **Its cross-references are `CURRENT STATE` item 3
+(the dated status amendment), `§3.4`'s exemption pins under `R-1`/`R-2`, `§5.5.1`'s dated method-note block,
+`§5.5.2` items 2/10 and `§5.5.3`'s dated arithmetic repair.**
+
+**(A) THE RED RUN'S PROVENANCE — IT RAN, AND IT IS FILED.** **`tests/menu-template.test.ts` was authored, RUN and
+REPORTED: `56` rows, `46` FAILED / `10` PASSED, against a module that DOES NOT EXIST** (`src/shared/menu-template.ts`
+is still absent, so the expected module-resolution red is the bulk of the failing set, with the existence/static rows
+that need no module making up the rest). **THE RED SET ASSERTED THE AS-FILED `123` *AND* THE MEASURED `126`, as two
+literals side by side** — **its `PRE-2` and `REGISTER-STATUS` rows carry both figures plus the SPEC FINDING that
+they disagree (`DECLARED_TOTAL = 123`, `AS_FILED_TERM_SUM = 126`, `AS_FILED_IM_SUBTOTAL = 84`), asserting the
+mismatch rather than reconciling it** — **so those rows are RED BY DESIGN and STAY RED until this amendment lands,
+and they are the reason the arithmetic defect is REPORTED here instead of a TestWriter having silently picked a
+figure** (`§4.2` item 7; `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`; annotate-never-rewrite). **The red reported
+its stop state and its un-run rows as FAILURES rather than as passes** (`§4.2`'s stop rule — the register stops
+after `5` consecutive failures at a named row, and the rows that never start record themselves as failures) —
+**which is what this contract asked for, and it is recorded here as SATISFIED at the red gate.** **A run of `46`
+of `56` failing is NOT a defect of the run: a red against an absent module is the EXPECTED shape.**
+
+**(B) THE RE-GRAIN OBLIGATION THE CORRECTION OWES — SAID PLAINLY: THE RED SET OWES A RE-GRAIN TO THE CORRECTED
+TOTAL.** **The as-filed total was `123`; the corrected declared total is `126`** (`CURRENT STATE` item 3,
+`§5.5.3`) — **so `tests/menu-template.test.ts`'s `DECLARED_TOTAL = 123`, the `§5.5.1` describe title, and every row
+or message that asserts the as-filed figure (`PRE-2`, `REGISTER-STATUS`) are now GRAINED TO A SUPERSEDED FIGURE and
+MUST BE RE-GRAINED to `126` before this unit's green may be read as green.** **THE RE-GRAIN'S OWN ARITHMETIC, so it
+is not re-derived: `DECLARED_TOTAL` `123 → 126` · the printed `IM` subtotal `87 → 84` (the measured constant
+`AS_FILED_IM_SUBTOTAL = 84` already reads the true subtotal — the re-grain moves the PRINTED figure, not the
+measured one) · the chain's last step `123 → 126` · the total `126` against the `≤400` cap with headroom `274` ·
+**the thirteen per-row terms, the nine-way `12`-term tie and the six `(bounded)` markings are UNCHANGED.** **NO
+TERM MOVES IN THIS RE-GRAIN and no row id, strategy id or seed moves: it is a FIGURE re-grain, not a register
+re-scope.** **`§5.5.2` item 10's OWN re-grain remains a SEPARATE, STILL-OWED obligation** — a row that ADDS a
+shape moves a term `12 → 13`, the total `126 → 127` and the `IM` subtotal `84 → 85`, with its own named owner —
+**and neither re-grain may be substituted for the other.** **A green reported against the `123` grain is a REVIEW
+FINDING**, and so is a re-grain that DELETES the as-filed figures from the test file instead of carrying the
+corrected ones beside them (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`; annotate-never-rewrite).
+
+**(C) THE THREE METHOD READINGS THE RED RUN RECORDED — contract business, so a later author does not re-discover
+them** (the register-side statement of all three, with their landing sites, is `§5.5.1`'s dated method-note block,
+item (iv)): **(1) A SKIPPED ELEMENT BREAKS A COLLAPSE RUN** — a `null`/`undefined` entry, or any element the
+normalizer skips, is not part of the run and does not bridge it; the red drove that boundary as **TWO SINGLETONS**
+(`items.length === 2`, no `submenu` on either, `collapsing === true`), which is `§2.3` item 5 rule 3's own clause and
+**`P-ML-IM-5`'s declared boundary drive** — a CLARIFICATION, no new row, no term moved. **(2) AN ENTRY WHOSE OWN
+ACCESSOR (own-key read) THROWS IS SKIPPED, NOT CARRIED WITH A MISSING KEY** — **no entry is emitted for it**, and
+the return is **not** an entry carrying the remaining six keys with the throwing one absent; that is `§2.3` item
+1(d)'s reading, driven at `P-ML-IM-1` shapes `(11)`/`(12)`, so **an implementation that carries such an element as
+a partial entry FAILS `P-ML-IM-1`** (it does not fail `F-2`/`I-1`'s totality half, because nothing throws either
+way). **(3) THE `12`-SHAPE CATALOG POOL'S `12`TH MEMBER IS A STATED BOUNDARY WITH NO DRIVING ROW — NAMED AS
+SUCH** — the `Map` / `Symbol.toPrimitive` / successive-read-holder family belongs to **`P-ML-TP-1`'s hostile pool**
+(and `§5.5.2` item 4's deliberately EXCLUDED list), **the row that WOULD drive the successive-read holder is
+`P-ML-TP-1` and it does NOT drive it**, **the `Symbol.toPrimitive`-on-second-invocation shape has NO row in this
+register at all**, and **the lone-surrogate string's home is `§5.5.2` item 10's recorded coverage gap, with its own
+named re-grain cost** — **so all three are STATED BOUNDARIES, none is an unrecorded omission, and adding the holder
+member owes a NEW dated amendment plus a register re-grain that THIS repair may not make.** **NO METHOD NOTE ABOVE
+CHANGES A ROW, A TERM, A CAP, A SEED OR A `(bounded)` MARKING.**
 
 ### 7a. Ambiguity report — the clauses a TestWriter could NOT derive a falsifiable row from
 
@@ -1777,7 +2017,7 @@ census rather than a line anchor.**
 | **`UI-RENDERED-WITH-PROVIDENT`** (`docs/decisions.md`, ACTIVE) | **CARRIED as the constraint that has NO element of this unit's to apply to**: the picker is the caller's, and this repo renders neither the native menu nor the picker | `§0` ruling 4, `§1` item 4, `§2.2` `P-ML-2`, `§7` item 5 |
 | **`GUTTER-CALLER-SEAMS-ARE-THE-FAMILY'S-DOWNSTREAM-CONTRACT`** (`docs/decisions.md`, ACTIVE) | **CARRIED**: this unit's ONE seam's signature, OPTIONAL status and DECLARED DEGRADATIONS are **normative contract text**, and **the seam type is EXPORTED (`PickerFn`) so a fork can import the shape it implements** | `§0` ruling 5, `§2.1` item 1, `§2.4`, `§8` (this row) |
 | **`UI-UNITS-MAY-TOUCH-THE-RENDERER-WIRING`** (`docs/decisions.md`, ACTIVE) | **CARRIED as the rule that DERIVES this unit's DENIED set, and as the entry-point question this spec ANSWERS (`NO`)** | `§0` ruling 6, `§2.5` item 5, `§5.1` |
-| **`PBT-REGISTER-REQUIRED-FOR-CODE-UNITS`** + **`REGISTER-ENTRY-COUNT-IS-NOT-CAPPED-AND-ARCHIVE-IS-THE-TRUTH-MECHANISM`** (`docs/decisions.md`, ACTIVE) | **DISCHARGED BY THIS FILING** — `§5.5.1` is this unit's register: **`13` typed ROWS carrying `13` TERMS in three families**, **`123` attempts** printed **with their thirteen terms and a term-by-term addition table**, **no `F-` row**, **no `§6`/`FS-n` citation as a row**, **no new dependency**, **no extra leg**, seed `20260927` for the one generator, caps `≤100`/row · `≤400` total · stop-after-5, **the four domains declared by name** and **the six `(bounded)` markings stated in their own cells** | `§5.5`, `§5.5.1`, `§5.5.2`, `§5.5.3`, `§5.3` items 10/11 |
+| **`PBT-REGISTER-REQUIRED-FOR-CODE-UNITS`** + **`REGISTER-ENTRY-COUNT-IS-NOT-CAPPED-AND-ARCHIVE-IS-THE-TRUTH-MECHANISM`** (`docs/decisions.md`, ACTIVE) | **DISCHARGED BY THIS FILING** — `§5.5.1` is this unit's register: **`13` typed ROWS carrying `13` TERMS in three families**, **`126` attempts** ***(as filed this cell read `123`; the declared total was corrected `123 → 126` by the dated amendment of `CURRENT STATE` item 3 / `§5.5.3`, the `123` being the mis-sum of the register's own thirteen terms)*** printed **with their thirteen terms and a term-by-term addition table**, **no `F-` row**, **no `§6`/`FS-n` citation as a row**, **no new dependency**, **no extra leg**, seed `20260927` for the one generator, caps `≤100`/row · `≤400` total · stop-after-5, **the four domains declared by name** and **the six `(bounded)` markings stated in their own cells** | `§5.5`, `§5.5.1`, `§5.5.2`, `§5.5.3`, `§5.3` items 10/11 |
 | **`A DECLARED REGISTER TERM IS A DRIVE COUNT`** and **`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`** (`docs/decisions.md`, ACTIVE) | **CARRIED**: every declared term is a DRIVE count, assertions are printed BESIDE it (never inside), the total is printed as the sum of its own thirteen terms with a chain and three subtotals, and the declared-versus-distinct ledger is `§5.5.2` item 3 | `§5.5.1`, `§5.5.2` items 3/9, `§5.5.3`, `§5.3` item 11, `§7` item 9 |
 | **`PROHIBITION-5-IS-AN-ADOPTION-BOUND`** (`docs/decisions.md`, ACTIVE) | **CARRIED** — prohibition 5 is a NON-GOAL row here, and the pinned MCP sets are asserted as SET claims against the names | `§0` ruling 10, `§0A` note 6, `§2.2` `P-ML-5`, `§3.3 I-10` |
 | **`SHIM-COMPLETION-CARVE-OUT`** (`docs/decisions.md`, ACTIVE) | **CARRIED** — the shim gains no member, and `H-r5`'s list stays forbidden | `§0` ruling 11, `§2.2` `P-ML-6`, `§3.4 R-3`, `§7` item 8 |
@@ -1826,7 +2066,9 @@ may be cited as one.**
 
 **The pass's shape, stated so it is not improvised: READ-ONLY** (it changes no `tests/**` and no `src/**`), it
 **must also perform the gate-11 read-only PBT audit of `§5.5.1`'s executed tables** — the per-row attempts, the
-strategy ids, the `123` total against its thirteen terms, the stop-after-5 rule, the pinned seed and its
+strategy ids, the `126` total against its thirteen terms ***(as filed this line read `123`; corrected by the dated
+amendment of `CURRENT STATE` item 3 / `§5.5.3` — the audit reads the CORRECTED total `126`, and the as-filed `123`
+stays visible at its own sites)***, the stop-after-5 rule, the pinned seed and its
 one-step-per-draw form (`pool.length = 12`) — **and it must RE-RUN the pool-versus-boundary check against the
 LANDED tables** (`§5.5.2` item 7). **Its findings are recorded in `§3b` and a HOST finding is fixed here with
 regression rows — never in `docs/defects.md`, because a host finding is this repo's.** **A genuine
@@ -1860,7 +2102,7 @@ is `OWED`, and `OWED` is defined here rather than left bare.**
 | **`A-11`** | **THE OS-BOUNDARY PROBE:** does the module compose a `Menu`, call `setApplicationMenu`, register an accelerator, render a picker or open a dialog — **and does ANY pass read this unit's green as evidence about a native menu, a rendered picker or their equivalence?** **Does `§2.4` item 5's clause appear verbatim in substance, and does each of its six halves have a falsifier row?** | static + `[T]` + the DONE row |
 | **`A-12`** | **THE FABRICATED-EDGE PROBE:** does any pass assert an import or composition edge between this unit and **any** sibling — including reading `docs/specs/gsession.md` `§2.5` as this unit's surface, or reading the collision table's homonyms (`template`, `platform`, `role`) as shared dependencies? | static |
 | **`A-13`** | **THE `[U]`/`[D]` PROBE:** does any pass offer a `[U]` row for the native menu, the rendered picker or any platform's acceptance; claim a `[D]` row; move a rendered row to the `ui` leg (silently or not); report gate 6 as **`waived`** rather than **`STRUCTURAL` with its reason stated**; or omit the `§7.1` `DOES NOT TRIGGER` decision? | the DONE row + `§3.4 R-7`/`R-9` |
-| **`A-14`** | **THE REGISTER AUDIT (gate 11's read-only PBT audit):** do the executed tables match `§5.5.1`'s **per-row attempts, terms, strategy ids and the declared total `123` = `12 + 12 + 12 + 12 + 12 + 12 + 12 + 3 + 3 + 3 + 12 + 9 + 12`**? **In particular: is `P-ML-IM-3`'s EIGHTH-KEY NEGATIVE DRIVE present as a drive, and is `P-ML-IM-5`'s singleton boundary drive present?** Is the **stop-after-5** rule honoured, and were the **un-run rows REPORTED as failures**? Is the **pinned seed `20260927`** and the one-step-per-draw LCG form (`pool.length = 12`) what the test file actually contains? **AND: is every pool/table member still consistent with its row's declared boundary text** — `§5.5.2` item 7's check **re-run against the LANDED tables** rather than this filing's? **AND: does the audit read the `(bounded)` set correctly — `6` marked of `13` ROWS?** **Any mismatch is a SPEC FINDING.** | `[T]` + the test file |
+| **`A-14`** | **THE REGISTER AUDIT (gate 11's read-only PBT audit):** do the executed tables match `§5.5.1`'s **per-row attempts, terms, strategy ids and the declared total `126` = `12 + 12 + 12 + 12 + 12 + 12 + 12 + 3 + 3 + 3 + 12 + 9 + 12`** ***(as filed this row read the declared total `123` against that same thirteen-term list — a total that is NOT the sum of its own terms; the declared total was corrected `123 → 126` by the dated amendment of `CURRENT STATE` item 3 / `§5.5.3`, and an audit comparing the tables against `123` is comparing them against a MIS-SUM: it must read `126`, with the as-filed `123` visible at its own sites)***? **In particular: is `P-ML-IM-3`'s EIGHTH-KEY NEGATIVE DRIVE present as a drive, and is `P-ML-IM-5`'s singleton boundary drive present?** Is the **stop-after-5** rule honoured, and were the **un-run rows REPORTED as failures**? Is the **pinned seed `20260927`** and the one-step-per-draw LCG form (`pool.length = 12`) what the test file actually contains? **AND: is every pool/table member still consistent with its row's declared boundary text** — `§5.5.2` item 7's check **re-run against the LANDED tables** rather than this filing's? **AND: does the audit read the `(bounded)` set correctly — `6` marked of `13` ROWS?** **Any mismatch is a SPEC FINDING.** | `[T]` + the test file |
 | **`A-15`** | **THE LAYER-HONESTY PROBE:** does the DONE row (or any pass's prose) claim **native-menu, accelerator, rendered-picker, dialog, OS-acceptance or equivalence** evidence from this unit's `[T]` green — and does it state explicitly that **the module is imported by no `src/**` file** and therefore proves **the contract holds for a caller, not that the app or any OS behaves differently**? | the DONE row |
 | **`A-16`** | **THE FORK-FACING PROBE:** does any pass read this unit as delivering a working menu, an installed menu bar, an applied accelerator or a rendered picker — **or read the emitted template as a registered one**? **Does the fork-facing carry (`§7` item 7) name the three functions, the six types, the seven keys and the ONE optional seam?** | static + the DONE row |
 | **`A-17`** | **THE HONESTY-BLOCK PROBE:** does `§5.5.2` name the register's ONE coverage gap (the lone-surrogate `id`) as an OBLIGATION rather than a silent absence, and does the DONE row carry it as `OWED` rather than covered? | static + the DONE row |
