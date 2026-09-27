@@ -4735,6 +4735,54 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
     //     BY NAME (`tests/relocate-CONTROL-unclaimed.test.ts` — the row's finding path — and
     //     `tests/gutter.test.ts`); on the live branch they are the row's own live split, which the
     //     non-vacuity control above independently asserts is a real partition of the live reading.
+    //
+    //     **⟶ REPAIRED 2026-09-27 (THE `R-12` TWO-BRANCH BOUNDED REPAIR PASS — BOTH DEFECTS THIS
+    //     CONTROL SHIPPED WITH, MEASURED, AND BOTH CLOSED HERE WITHOUT WEAKENING THE ROW).**
+    //
+    //     **DEFECT 1 — THE DIRTY BRANCH'S UNREACHABLE EXPECTATION (MEASURED).** As filed, the
+    //     expected `E3`-own member `TEST_RELPATH` was asserted IN `own` UNCONDITIONALLY — but on
+    //     the LIVE branch the subject is the live dirty reading, and in the state the `E4` unit's
+    //     own cycle REPEATEDLY creates (a red set in flight, i.e. **only `tests/relocate.test.ts`
+    //     dirty**) the subject is `["tests/relocate.test.ts"]`, which is a DECLARED sibling path.
+    //     `splitBySiblingAttribution` therefore reads `own === []` and the expectation demanding
+    //     `[TEST_RELPATH]` is **UNREACHABLE**. **THE MEASURED READING, verbatim:** `{"subject":
+    //     ["tests/relocate.test.ts"],"usedLiveDirtyReading":true,"siblingPredicate":
+    //     ["tests/relocate.test.ts"],"splitSibling":["tests/relocate.test.ts"],"splitOwn":[],
+    //     "e3OwnFileOwn":[]}` ⇒ `- [ 'tests/gutter.test.ts' ] + []`. **A PATH IS ATTRIBUTED, NOT A
+    //     UNIT** (`docs/specs/gutter.md` `§3.4 R-12` / `§5.1`): `E3`'s own file belongs in `own`
+    //     **IFF IT IS THE DIRTY PATH**, so the expectation is now computed from the subject's own
+    //     membership — the SAME branch-conditional form the sibling expectation above it already
+    //     used — and it asserts `[]` in exactly the state that used to fail.
+    //
+    //     **DEFECT 2 — THE CLEAN/SYNTHETIC BRANCH'S ORDER-SENSITIVE EXPECTATION (MEASURED).** The
+    //     binding comparison was ORDERED (`toEqual`) while the expected sibling list was
+    //     transcribed in the registry's order **REVERSED** (`['src/shared/relocate.ts',
+    //     'tests/relocate.test.ts']`) against the synthetic subject's registry order
+    //     (`['tests/relocate.test.ts','src/shared/relocate.ts', …]`, the order the TWO E4 entries
+    //     were declared in at `9117513`). **THE MEASURED READING, verbatim:** the split reads
+    //     `["tests/relocate.test.ts","src/shared/relocate.ts"]` against the transcribed
+    //     `["src/shared/relocate.ts","tests/relocate.test.ts"]`. **THE REPAIR IS ORDER-INSENSITIVITY,
+    //     WHICH IS WHAT THIS ROW'S OWN CONTRACT SUPPORTS:** `§3.4 R-12` binds WHICH paths are in
+    //     `E3`'s own change set and WHICH are declared siblings — it nowhere binds the incidental
+    //     order in which a declaration registry happens to be listed, and a row that failed on that
+    //     order would be measuring the registry's line ordering rather than the diff scope. So the
+    //     BINDING comparison is now **SET EQUALITY (sorted)**, while **THE ORDERED READING IS KEPT
+    //     AND REPORTED as a measurement rather than bound** — the reading is not discarded, and a
+    //     misclassification still FAILS (`a set comparison cannot be satisfied by a
+    //     misclassification; it can only be satisfied by the same members`).
+    //
+    //     **NO CIRCULARITY IS REINTRODUCED:** on the SYNTHETIC branch every expected member remains
+    //     a LITERAL naming a path on no disk, and the sorted set equality is against the SAME
+    //     literals — never against a value computed with the predicate under test. On the LIVE
+    //     branch the expectation is the live split, which the non-vacuity control above
+    //     independently drives (`raw = own ⊕ sibling`, both halves asserted by membership reading),
+    //     exactly as the as-filed control already did for the sibling half.
+    //
+    //     **FALSIFIABILITY KEPT BOTH WAYS:** with the two `E4` registry entries removed, the
+    //     synthetic branch's literal expectation `['src/shared/relocate.ts','tests/relocate.test.ts']`
+    //     is no longer met (both paths fall into `own`, exactly as the unclaimed control path does)
+    //     and the LIVE branch's `own` grows by the declared path — so the control still reads a
+    //     FAILURE and is not a tautology.
     const CONTROL_MUTATION_SUBJECT: readonly string[] =
       dirtySplit.raw.length > 0
         ? dirtySplit.raw
@@ -4746,10 +4794,28 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
     const CONTROL_MUTATION_SIBLINGS = CONTROL_MUTATION_USES_LIVE
       ? dirtySplit.sibling
       : ['src/shared/relocate.ts', 'tests/relocate.test.ts']
+    // **⟶ REPAIRED 2026-09-27 (THE `R-12` TWO-BRANCH BOUNDED REPAIR PASS): the two expectations
+    //     that were UNREACHABLE-as-filed are now BRANCH-CONDITIONAL on the SUBJECT'S OWN
+    //     MEMBERSHIP — `E3`'s own file is expected in `own` IFF it is IN the subject (i.e. IFF it
+    //     is a dirty path on the live branch, `§3.4 R-12`: *a PATH is attributed, not a unit*), and
+    //     on the synthetic branch the literals above/below are unchanged and still name paths on
+    //     no disk. `CONTROL_MUTATION_E3_OWN_MEMBERS` is `[]` in the E4-ONLY-DIRTY state — which is
+    //     the state that used to FAIL here.**
+    const CONTROL_MUTATION_E3_OWN_MEMBERS = CONTROL_MUTATION_USES_LIVE
+      ? dirtySplit.own.filter((path) => path === TEST_RELPATH)
+      : [TEST_RELPATH]
+    const CONTROL_MUTATION_SIBLING_MEMBERS = CONTROL_MUTATION_USES_LIVE
+      ? dirtySplit.sibling.filter((path) => path === TEST_RELPATH)
+      : []
     expect(
       [
+        // REPORTED, NOT BOUND (the incidental declaration order of the subject, which this row's
+        // contract nowhere pins): kept visible so the ordering this repair stopped binding on
+        // remains a MEASUREMENT rather than an absence (`§3.4 R-12` binds WHICH paths are whose).
         CONTROL_MUTATION_SUBJECT.filter(isSiblingUnitArtifact),
         controlMutationSplit.sibling,
+        // THE BINDING READING of the same fact: SET equality against the same literals.
+        [...controlMutationSplit.sibling].sort(),
         controlMutationSplit.own.filter((path) => path === CONTROL_UNCLAIMED_E4_PATH),
         controlMutationSplit.sibling.filter((path) => path === CONTROL_UNCLAIMED_E4_PATH),
         controlMutationSplit.own.filter((path) => path === TEST_RELPATH),
@@ -4758,7 +4824,7 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       ],
       `R-12 §3.4 — CONTROL (n-d, THE MUTATION-SHAPED SIBLING-BRANCH CONTROL, KEPT WORKING AND DRIVEN ON EVERY RUN): the subject is the LIVE dirty reading when the tree has one (${JSON.stringify(
         dirtySplit.raw,
-      )}) and otherwise a synthetic list naming paths on NO disk — in both cases the row's OWN splitter classifies every DECLARED \`E4\` path in the subject as SIBLING, keeps the UNCLAIMED path (\`${CONTROL_UNCLAIMED_E4_PATH}\`) in \`E3\`'s own set when it is in the subject (so the row's finding path is NOT swallowed by the new declaration), keeps \`E3\`'s OWN file (\`${TEST_RELPATH}\`) in \`E3\`'s own set, and partitions the subject EXACTLY. **If the mutation were wrong in either direction this FAILS.** READS: ${JSON.stringify(
+      )}) and otherwise a synthetic list naming paths on NO disk — in both cases the row's OWN splitter classifies every DECLARED \`E4\` path in the subject as SIBLING, keeps the UNCLAIMED path (\`${CONTROL_UNCLAIMED_E4_PATH}\`) in \`E3\`'s own set when it is in the subject (so the row's finding path is NOT swallowed by the new declaration), attributes \`E3\`'s OWN file (\`${TEST_RELPATH}\`) by PATH (in \`own\` IFF it is IN the subject — on a tree where only \`E4\`'s test file is dirty it is NOT, and this control then reads \`[]\` rather than an unreachable expectation), and partitions the subject EXACTLY. **The SIBLING comparison is SET-based (sorted) and the ordered reading is REPORTED beside it, because this row's contract binds WHICH paths are declared siblings, never the incidental order of the declaration registry.** **If the mutation were wrong in either direction this FAILS.** READS: ${JSON.stringify(
         {
           subject: CONTROL_MUTATION_SUBJECT,
           usedLiveDirtyReading: CONTROL_MUTATION_USES_LIVE,
@@ -4767,15 +4833,19 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
           splitOwn: controlMutationSplit.own,
           unclaimedControlOwn: controlMutationSplit.own.filter((path) => path === CONTROL_UNCLAIMED_E4_PATH),
           e3OwnFileOwn: controlMutationSplit.own.filter((path) => path === TEST_RELPATH),
+          e3OwnFileInSubject: CONTROL_MUTATION_SUBJECT.includes(TEST_RELPATH),
+          expectedE3OwnMembers: CONTROL_MUTATION_E3_OWN_MEMBERS,
+          expectedSiblingMembersSorted: [...CONTROL_MUTATION_SIBLINGS].sort(),
         },
       )}`,
     ).toEqual([
       CONTROL_MUTATION_SIBLINGS,
       CONTROL_MUTATION_SIBLINGS,
+      [...CONTROL_MUTATION_SIBLINGS].sort(),
       CONTROL_MUTATION_SUBJECT.includes(CONTROL_UNCLAIMED_E4_PATH) ? [CONTROL_UNCLAIMED_E4_PATH] : [],
       [],
-      [TEST_RELPATH],
-      [],
+      CONTROL_MUTATION_E3_OWN_MEMBERS,
+      CONTROL_MUTATION_SIBLING_MEMBERS,
       true,
     ])
     // (b) **THE DENIED SET OVER `E3`'S OWN CHANGES — this is the narrowed half.** A denied path
