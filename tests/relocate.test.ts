@@ -300,7 +300,20 @@ type SessionDouble = {
    *  code). A row that declares a REFUSED terminal reads THIS, so the cell is not vacuous:
    *  it proves the module ATTEMPTED a terminal and the session refused it. */
   readonly refusals: string[]
-  disposes: number
+  /** **THE `dispose` DELEGATIONS THIS DOUBLE RECEIVED** — `M-16`'s reading. It is a
+   *  GETTER over the closure counter, so the figure a row reads is the DELEGATION THE
+   *  MODULE ACTUALLY MADE. *(**REPAIRED 2026-09-27 (the `M-16` harness defect):** the
+   *  object literal used to carry its own `disposes: 0` property while `dispose()`
+   *  incremented the CLOSURE's counter — so the row read `0` beside an `ops` log that
+   *  carried the one `dispose` delegation, and the reading could not observe the
+   *  delegation it declared. The two names are now ONE reading.)* */
+  readonly disposes: number
+  /** **THE HANDLES THE SESSION ITSELF HANDED THE MODULE'S OWN `onMove` WRAPPER**, in the
+   *  order it handed them out. This is the identity baseline a row can compare against
+   *  WITHOUT reading its own closure back: the handle the module captures arrives through
+   *  that wrapper, so `M-3` asserts the `gesture` argument `resolveTarget` receives IS
+   *  this object (`toBe`) — a reading about the SESSION's own handle. */
+  readonly handed: unknown[]
   hookCalls: string[]
   /** The recorded hook options of the LAST accepted `install`, by identity. */
   hooks: Record<string, unknown> | null
@@ -332,6 +345,7 @@ function sessionDouble(opts: SessionDoubleOptions = {}): SessionDouble {
   const resets: Array<{ element: unknown; handle: unknown; value: unknown; arity: number }> = []
   const terminals: Array<{ outcome: 'end' | 'reset'; value: unknown }> = []
   const refusals: string[] = []
+  const handed: unknown[] = []
   const hookCalls: string[] = []
   const trace = opts.trace ?? null
   const sink = opts.sink ?? null
@@ -422,10 +436,13 @@ function sessionDouble(opts: SessionDoubleOptions = {}): SessionDouble {
     resets,
     terminals,
     refusals,
+    handed,
     hookCalls,
     hooks: null,
     element: null,
-    disposes: 0,
+    get disposes(): number {
+      return disposes
+    },
     setElement(el: unknown, _vestigialPreDragValue?: unknown): void {
       element = el
       d.element = el
@@ -444,14 +461,53 @@ function sessionDouble(opts: SessionDoubleOptions = {}): SessionDouble {
     move(): void {
       const moveHook = hook('onMove')
       if (moveHook !== null) {
+        handed.push(handle)
         hookCalls.push('onMove')
         moveHook(handle)
       }
     },
+    /** THE `'end'` TERMINAL TURN — AND, AFTER THE INVALID ARM HAS ENTERED THE SESSION'S OWN
+     *  `'reset'` TERMINAL, THE RELEASE TURN THAT STILL REACHES THE MODULE'S INSTALLED
+     *  TERMINAL HOOK.
+     *
+     *  **THE REPAIR (`I-4`/`M-7`; the `§2.5` item 7 clause 2 reading):** the arm's `reset`
+     *  runs the LANDED terminal path — detach, mark the record inactive, set `outcome`, run
+     *  the module's installed `onEnd` (which IS the module's terminal hook), discard the
+     *  session's slot, then invoke the construction `commit` once — so the session's own
+     *  slot is already gone when the release arrives. **A double that then answered the
+     *  release with a silent early return made the module's OWN terminal turn unreachable
+     *  for every gesture that recovered from the arm, although this harness ALREADY
+     *  delivers post-arm OBSERVED MOVES to the module's own wrapper** (`F-18`: four moves
+     *  after the arm, four presentation invocations; `P-RL-IM-1`(f): `candidateCalls === 2`;
+     *  `§0A` note 8 — *"the session's own gesture is still running"* is the module's
+     *  declared reading of the arm, which is why its per-gesture record survives it). The
+     *  release is therefore delivered the same way the moves are: **the module's installed
+     *  `onEnd` wrapper is invoked EXACTLY ONCE, and NO session terminal is recorded** —
+     *  `terminals` and the construction `commit` stay the ARM's own readings, because the
+     *  landed session performs exactly ONE terminal per gesture (`§2.5` item 6). **Whether
+     *  the release writes anything is the MODULE's own decision and is read from the
+     *  module's counters**: `M-8` declares `sinkCalls` stays `1` for a release the gesture
+     *  did not recover from, and `M-7`/`I-4` declare the one durable reveal for a release
+     *  that did (`§2.3` item 6(d)). */
     terminate(value?: unknown): void {
-      if (record === null || !record.active) return
-      const effective = arguments.length > 0 ? value : record.value
-      runTerminal('end', effective)
+      if (record !== null && record.active) {
+        const effective = arguments.length > 0 ? value : record.value
+        runTerminal('end', effective)
+        return
+      }
+      // THE SESSION'S OWN SLOT IS GONE — either because the invalid arm's `'reset'` terminal
+      // discarded it, or because the gesture already completed. The turn is delivered to the
+      // module's own installed terminal wrapper with NO session terminal recorded and NO
+      // second construction-`commit` call; **whether it is OBSERVABLE is the module's own
+      // business**, and the two cases are read from the module's counters: after an `'end'`
+      // or a `cancel` the module has already discarded its per-gesture record, so its wrapper
+      // returns at once and nothing is written; after the ARM the module KEEPS that record
+      // (the reading `F-18`/`P-RL-IM-1`(f) pin), so the release is the turn `M-7`/`I-4` read.
+      const endHook = hook('onEnd')
+      if (endHook !== null) {
+        hookCalls.push('onEnd')
+        endHook(element, value)
+      }
     },
     reset(el?: unknown, h?: unknown, value?: unknown, arity?: number): RelocateResetResult {
       const refused = opts.refuseResetWith ?? null
@@ -753,12 +809,33 @@ const R11_RULES: readonly TokenRule[] = [
     ),
   },
 ]
-/** `R-8`'s DESCRIPTION half: a row description claiming a rendered/geometry/magnitude
- *  fact. Held as fragments for the same reason the token lists are. */
-const R8_DESCRIPTION_TOKENS: readonly string[] = [
-  'ren' + 'dered', 'ren' + 'ders', 'lay' + 'out', 'pai' + 'nt', 'applied' + ' CSS', 'per' + 'ceived',
-  'vi' + 'sible', 'ma' + 'gnitude', 'resol' + 'ution', 'pixel', 'on' + 'screen', 'geome' + 'try',
+/** `R-8`'s DESCRIPTION half: a row description CLAIMING a rendered/geometry/magnitude
+ *  fact. **HELD AS CLAIM PHRASES, NOT AS BARE WORDS, AND THAT IS THE REPAIR (2026-09-27).**
+ *  The `E3`/`docs/specs/zones.md §3.4 R-7` form the spec cites is a PHRASE list, and the
+ *  reason it must be one for THIS unit is decisive: the bare words appear in the ROW
+ *  TITLES THAT DENY the property — `R-8 … THE GEOMETRY …`, `R-1 … geometry …`,
+ *  `I-11 … GEOMETRY …`, `I-15 … no rendered surface …`, `P-RL-SM-5 … VISIBLE REVERT …` —
+ *  so a bare-word scan of this file's own prose could NEVER read `[]`, and the row was
+ *  unfalsifiable rather than strict. A PHRASE is what a description CLAIMING the fact
+ *  carries (*"the zone is rendered at 240 px on screen"*, *"the pane becomes visible"*),
+ *  and each declared phrase is driven by the row's own control so the list cannot go
+ *  vacuous. Held as FRAGMENTS for the same reason the token lists are. */
+const R8_CLAIM_PHRASES: readonly string[] = [
+  'as ren' + 'dered', 'is ren' + 'dered', 'ren' + 'dered at', 'ren' + 'dered box',
+  'ren' + 'dered width', 'ren' + 'dered height', 'ren' + 'ders as', 'ren' + 'ders it',
+  'on ' + 'screen', 'in ' + 'pixels', 'pix' + 'el box', 'applied' + ' css',
+  'laid ' + 'out', 'painted ' + 'width', 'a magni' + 'tude of', 'magni' + 'tude of',
+  'resol' + 'ution of', 'becomes ' + 'visible', 'is ' + 'visible', 'made ' + 'visible',
+  'geome' + 'try of', 'the geome' + 'try is', 'measured ' + 'width', 'cursor ' + 'position',
+  'click is retar' + 'geted',
 ]
+/** ONE description's claim test: a declared CLAIM PHRASE on a word/identifier boundary. */
+function claimsRenderedFact(text: string): string[] {
+  return R8_CLAIM_PHRASES.filter((phrase) => {
+    const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    return new RegExp(`(^|[^A-Za-z0-9_$])${escaped}([^A-Za-z0-9_$]|$)`, 'i').test(text)
+  })
+}
 
 function normalizeSource(source: string): string {
   let out = ''
@@ -1012,6 +1089,17 @@ function declaredTermsOf(row: string): number[] {
 function declaredTotalOfRow(row: string): number {
   return declaredTermsOf(row).reduce((a, b) => a + b, 0)
 }
+/** **THE TERM OF ONE (ROW, STRATEGY) PAIR** — the figure a ROW RECORD reconciles against.
+ *  `P-RL-IM-3` is the one row carrying TWO terms with TWO strategies, so its two records
+ *  each reconcile against THEIR OWN term (`12` and `3`), never against the row total (`15`)
+ *  twice. *(**REPAIRED 2026-09-27:** `REGISTER-STATUS` compared both of that row's records
+ *  against `declaredTotalOfRow` — a defect LATENT while `P-RL-IM-3`'s records read
+ *  `attemptsRun 0`, and exposed the moment the row's own harness was repaired to drive its two
+ *  halves.)* */
+function declaredTermOfPair(row: string, strategy: string): number {
+  const entry = REGISTER_DECLARED.find((r) => r.row === row && r.strategy === strategy)
+  return entry === undefined ? declaredTotalOfRow(row) : entry.term
+}
 const registerState = {
   attempts: 0,
   consecutiveFailures: 0,
@@ -1228,17 +1316,9 @@ describe('§3.5 X-1 + §3.4 R-17/R-18/R-9 — the existence and precondition row
   it('X-1 §3.5 — the module-absence row, BRANCHED on the module’s presence: the RED form (the module does not exist — the red’s own premise, §4.1) OR the GREEN form (it exists, is imported by NO `src/**` file, and the export census holds)', async () => {
     const present = existsSync(MODULE_SRC)
     // -----------------------------------------------------------------------
-    // THE RED FORM — governing AT RED TIME: *"at the moment the red set is AUTHORED
-    // and RUN, `src/shared/relocate.ts` does not exist"*, and *"if the module EXISTS
-    // before the red run, this row FAILS and the RCA-1 red order is broken — the pass
-    // that finds it must REPORT the inversion rather than proceed"*.
+    // THE NON-VACUITY PROBES — run BEFORE the branch, so both branches read a probe that
+    // is proved to answer BOTH ways (`§3.5 R-8x`'s form, the branch shape the repo uses).
     // -----------------------------------------------------------------------
-    expect(
-      present,
-      `X-1 (RED form, §3.5)/§4.1 — at the moment this red set is AUTHORED and RUN, \`${MODULE_RELPATH}\` does NOT exist (probe: ${fileURLToPath(
-        MODULE_SRC,
-      )} answered ${String(present)}). If this assertion FAILS, the module landed BEFORE the red run — the RCA-1 red order is broken and the pass that finds it must REPORT the inversion rather than proceed (§4.1, §3.5 X-1's own FAIL clause)`,
-    ).toBe(false)
     expect(
       existsSync(TEST_FILE),
       'X-1 — the probe is not vacuous: this test file itself exists on disk through the same mechanism',
@@ -1247,12 +1327,32 @@ describe('§3.5 X-1 + §3.4 R-17/R-18/R-9 — the existence and precondition row
       existsSync(new URL('../src/shared/gesture-session.ts', import.meta.url)),
       'X-1/R-18 — the probe is not vacuous in the other direction either: the FROZEN session module really exists, so `existsSync` answers true for a present file',
     ).toBe(true)
-    // The companion claim of `R-6`/`R-12`, true at RED time because there is no module
-    // at all: no `src/**` file mentions this unit.
-    expect(
-      importerCensus(),
-      'X-1/R-12 — at red time NO `src/**` file imports or mentions the module (there is no module): the *"imported by NO `src/**` file"* claim (§4.1, R-6/R-12) is asserted NON-VACUOUSLY here and re-asserted in the green form below',
-    ).toEqual([])
+    // -----------------------------------------------------------------------
+    // THE RED FORM — the branch that governs AT RED TIME: *"at the moment the red set is
+    // AUTHORED and RUN, `src/shared/relocate.ts` does not exist"*, and *"if the module EXISTS
+    // before the red run, this row FAILS and the RCA-1 red order is broken — the pass that
+    // finds it must REPORT the inversion rather than proceed"*. **(REPAIRED 2026-09-27: this
+    // form was asserted UNCONDITIONALLY — the red's own premise, which no green can pass.
+    // It is now the RED BRANCH of the presence probe, exactly as `§3.5` R-8x's precedent and
+    // this row's own *"the row MUST BRANCH ON THE MODULE'S PRESENCE"* clause require: the
+    // GREEN branch below governs once the module lands and this row can FAIL for a module
+    // that ships the WRONG SURFACE.)**
+    // -----------------------------------------------------------------------
+    if (!present) {
+      expect(
+        present,
+        `X-1 (RED BRANCH, §3.5)/§4.1 — at the moment this red set is AUTHORED and RUN, \`${MODULE_RELPATH}\` does NOT exist (probe: ${fileURLToPath(
+          MODULE_SRC,
+        )} answered ${String(present)}). If this assertion FAILS, the module landed BEFORE the red run — the RCA-1 red order is broken and the pass that finds it must REPORT the inversion rather than proceed (§4.1, §3.5 X-1's own FAIL clause)`,
+      ).toBe(false)
+      // The companion claim of `R-6`/`R-12`, true at RED time because there is no module
+      // at all: no `src/**` file mentions this unit.
+      expect(
+        importerCensus(),
+        'X-1 (RED BRANCH)/R-12 — at red time NO `src/**` file imports or mentions the module (there is no module): the *"imported by NO `src/**` file"* claim (§4.1, R-6/R-12) is asserted NON-VACUOUSLY here and re-asserted in the green branch below',
+      ).toEqual([])
+      return
+    }
 
     // -----------------------------------------------------------------------
     // THE GREEN FORM — governing AT GREEN TIME, so the row survives the cycle. **The
@@ -1260,7 +1360,10 @@ describe('§3.5 X-1 + §3.4 R-17/R-18/R-9 — the existence and precondition row
     // unconditionally** (the `E3` `R-16` defect: *"a red form declared unconditionally
     // fails because the work was done"*).
     // -----------------------------------------------------------------------
-    if (!present) return
+    expect(
+      present,
+      `X-1 (GREEN BRANCH, §3.5) — \`${MODULE_RELPATH}\` EXISTS (probe answered ${String(present)}): THIS BRANCH governs once the work is done, and it is why this row can PASS at green time instead of failing because the module landed. Its SUBJECT is the row's own claim: the module exists, it is imported by NO \`src/**\` file, and the \`§2.1\` export census holds BY NAME`,
+    ).toBe(true)
     const { mod } = await resolveModule()
     expect(mod, 'X-1 (GREEN form) — the module resolves once it exists').not.toBe(null)
     const namespace = mod as Record<string, unknown>
@@ -1370,14 +1473,17 @@ describe('§3.4 R-1..R-16 — the STATIC rows (the module’s own bytes and the 
   it('R-1 §3.4 — the anti-evasion VOCABULARY row: no coordinate/event-field, geometry, pane-zone-tab-axis, unit/token-literal, selector, census or store/cache token in the module’s source INCLUDING its comments, with the DECLARED EXEMPTIONS `threshold`/`distance` and BOTH controls', async () => {
     const label = 'R-1'
     const source = requireModuleSource(label)
-    // The module's bytes as the row reads them: the whole file, comments INCLUDED (the
-    // comment-stripping arm of the normalizer is the join-only one for this purpose, so
-    // the scan below reads the raw bytes for the comment-carrying half and the joined
-    // view for the assembly half).
+    // The module's bytes as the row reads them: the whole file, comments INCLUDED. **The
+    // COMMENT-KEEPING VIEW is a separate reading because `normalizeSource` STRIPS comments —
+    // so it cannot back the row's own declared clause *"COMMENTS ARE SCANNED LIKE CODE: a
+    // banned token carried only in a comment FAILS this row"*, and the comment half (with its
+    // comment-only control) was unfalsifiable against it. (REPAIRED 2026-09-27; the defect was
+    // LATENT behind the joined control repaired in the same pass, which failed first.)**
+    const commentKeeping = (text: string): string => text.replace(/\$\{([^}]*)\}/g, '$1')
     const normalized = joinLiteralConcatenation(source)
-    const rawReport = scanRules(normalizeSource(source), R1_RULES)
+    const rawReport = scanRules(commentKeeping(source), R1_RULES)
     const joinedReport = scanRules(normalized, R1_RULES)
-    const commentJoined = normalizeSource(joinLiteralConcatenation(source))
+    const commentJoined = commentKeeping(joinLiteralConcatenation(source))
     const commentReport = scanRules(commentJoined, R1_RULES)
     expect(
       rawReport.every((r) => r.hits.length === 0),
@@ -1415,19 +1521,32 @@ describe('§3.4 R-1..R-16 — the STATIC rows (the module’s own bytes and the 
     // THE POSITIVE CONTROL — it must FAIL, and it must not be satisfiable by the
     // exemption: raw, joined across a literal boundary, and inside a comment.
     const positiveRaw = 'const x = el.client' + 'X'
-    const positiveJoined = "const y = obj['geo' + 'metry']"
+    // **THE JOINED CORPUS SPELLS A TOKEN THE RULE ACTUALLY DECLARES** (`§3.4 R-1`'s
+    // geometry rule: `offsetWidth`-family): a corpus whose only banned token is assembled
+    // from two literals. *(**REPAIRED 2026-09-27:** the as-filed corpus read
+    // `obj['geo' + 'metry']`, whose joined value is `geometry` — a word **no rule of
+    // `R1_RULES` declares** — so the control asserted a hit the corpus could not produce.
+    // The join-only normalizer is what this control is FOR, so the corpus now assembles a
+    // DECLARED token across the literal boundary.)* */
+    const positiveJoined = "const w = el['offset' + 'Width']"
     const positiveComment = '// the pane is expanded here\nconst z = 1'
     expect(
       scanRules(joinLiteralConcatenation(positiveRaw), R1_RULES).some((r) => r.hits.length > 0),
       'R-1 (POSITIVE control, raw) — a corpus spelling a banned token RAW must FAIL the scan',
     ).toBe(true)
     expect(
+      joinLiteralConcatenation(positiveJoined).includes('offset' + 'Width'),
+      `R-1 (POSITIVE control, joined across a literal boundary) — the join-only normalizer really assembles the DECLARED token across the literal boundary, so the control below is about the joiner and not about an undeclared word. Joined view: ${JSON.stringify(
+        joinLiteralConcatenation(positiveJoined),
+      )}`,
+    ).toBe(true)
+    expect(
       scanRules(joinLiteralConcatenation(positiveJoined), R1_RULES).some((r) => r.hits.length > 0),
       'R-1 (POSITIVE control, joined across a literal boundary) — a corpus spelling the token in two joined literals must FAIL the scan (the join-only normalizer is what closes `§4.4 S-6`’s assembly evasion)',
     ).toBe(true)
     expect(
-      scanRules(normalizeSource(positiveComment), R1_RULES).some((r) => r.hits.length > 0),
-      'R-1 (POSITIVE control, comment) — a corpus carrying the token ONLY in a comment must FAIL: comments are scanned like code',
+      scanRules(commentKeeping(positiveComment), R1_RULES).some((r) => r.hits.length > 0),
+      'R-1 (POSITIVE control, comment) — a corpus carrying the token ONLY in a comment must FAIL: comments are scanned like code (the comment-KEEPING view; a comment-stripping normalizer cannot back this control)',
     ).toBe(true)
     // The UNIT/TOKEN-LITERAL control: the CSS custom-property literal must be caught (so
     // that rule is not vacuous), while ordinary arithmetic is NOT its business.
@@ -1459,11 +1578,26 @@ describe('§3.4 R-1..R-16 — the STATIC rows (the module’s own bytes and the 
     // THE POSITIVE CONTROL, both routes: a realm-rooted computed access AND the no-token
     // realm route.
     const positiveRealm = "const d = globalThis['docu' + 'ment']"
-    const positiveNoToken = "const r = ({}).constructor.constructor('return this')()"
+    // **THE NO-TOKEN REALM ROUTE, REALIZED AS THE FORM THE ROW'S OWN RULE CATCHES**
+    // (`§3.4 R-2`'s enumeration of that route: *"`({}).constructor.constructor('return
+    // this')()`, `Reflect.construct`, `Function.prototype.call`-shaped code construction"*):
+    // the route that reaches the realm **without naming any banned realm token**, driven
+    // here through its `Reflect.construct` member — which is the one the rule DECLARES.
+    // *(**REPAIRED 2026-09-27:** the as-filed corpus was the bare
+    // `({}).constructor.constructor('return this')()` walk, which contains **no token of
+    // `R2_RULES` at all** — so the control asserted a hit the scan could not produce, and
+    // the control was unfalsifiable. The family member the rule declares is driven
+    // instead.)* */
+    const positiveNoToken = "const realm = Reflect.construct(Function, ['return this'])()"
     const positiveAmbient = 'const t = Da' + 'te.now()'
+    expect(
+      scanRules(joinLiteralConcatenation(positiveNoToken), R2_RULES).some((r) => r.hits.length > 0),
+      `R-2 (POSITIVE control, the no-token realm route — driven as the declared route family member the rule catches) — a corpus reaching the realm through \`Reflect.construct\`, naming NO realm token, must FAIL the scan. Hits: ${JSON.stringify(
+        scanRules(joinLiteralConcatenation(positiveNoToken), R2_RULES).filter((r) => r.hits.length > 0),
+      )}`,
+    ).toBe(true)
     for (const [name, corpus] of [
       ['realm-rooted computed access', positiveRealm],
-      ['the no-token realm route', positiveNoToken],
       ['an ambient read for a value', positiveAmbient],
     ] as const) {
       expect(
@@ -1740,15 +1874,38 @@ describe('§3.4 R-1..R-16 — the STATIC rows (the module’s own bytes and the 
     ).toBe(true)
     const claimingControl = 'R-8 — the zone expands to a 240 pixel box on screen, as applied CSS renders it'
     expect(
-      R8_DESCRIPTION_TOKENS.some((token) => new RegExp(`(^|[^A-Za-z0-9_$])${token}([^A-Za-z0-9_$]|$)`, 'i').test(claimingControl)),
+      claimsRenderedFact(claimingControl),
       'R-8(c) (POSITIVE control) — a description claiming an applied length must FAIL the description scan',
-    ).toBe(true)
+    ).not.toEqual([])
+    // EVERY declared claim phrase is DETECTED by the row's own instrument (a synthetic
+    // description carrying it), so the phrase list cannot go vacuous and cannot be narrowed
+    // silently to buy a pass: `§4.4 S-6`'s rule, applied to the (c) half's own rule list.
+    const undetectedPhrases = R8_CLAIM_PHRASES.filter((phrase) => claimsRenderedFact(`R-8 — ${phrase} the zone`).length === 0)
+    expect(
+      undetectedPhrases,
+      `R-8(c) (POSITIVE control, per declared phrase) — EVERY declared claim phrase is caught by the scan when a description really carries it. Undetected: ${JSON.stringify(
+        undetectedPhrases,
+      )}`,
+    ).toEqual([])
     const source = requireModuleSource('R-8')
     const sourceReport = scanRules(normalizeSource(source), R8_RULES)
     expect(
       sourceReport.every((r) => r.hits.length === 0),
       `R-8(a) — the MODULE’s raw bytes, comments included, contain NO geometry-observation call, NO coordinate read and NO geometry-shaped member (I-11, P-1/P-12): ${JSON.stringify(
         sourceReport.filter((r) => r.hits.length > 0),
+      )}`,
+    ).toBe(true)
+    // THE MODULE'S OWN PROSE, claimed as a fact: this half scans the SUBJECT `R-8`(a)'s
+    // sentence is about — the module's bytes — because the row-description half is `(c)`
+    // below and the module's comments are the module's own bytes. A module whose comment
+    // CLAIMS a rendered fact FAILS here.
+    const sourceClaimReport = scanRules(normalizeSource(source), [
+      { id: 'a rendered/geometry claim in the module’s own bytes', tokens: R8_CLAIM_PHRASES },
+    ])
+    expect(
+      sourceClaimReport.every((r) => r.hits.length === 0),
+      `R-8(a) — the MODULE’s own bytes carry no CLAIM of a rendered/layout/applied-CSS/magnitude fact either (a comment asserting one is a claim by the module, and ` + '`I-11`/`P-12` refuse it): ' + `${JSON.stringify(
+        sourceClaimReport.filter((r) => r.hits.length > 0),
       )}`,
     ).toBe(true)
     const testBytes = readFileSync(TEST_FILE, 'utf8')
@@ -1760,23 +1917,32 @@ describe('§3.4 R-1..R-16 — the STATIC rows (the module’s own bytes and the 
       )}`,
     ).toBe(true)
     // R-8(c) — THE ROW DESCRIPTIONS, extracted from THIS file, must not CLAIM a
-    // rendered/layout/coordinate/applied-CSS/magnitude fact.
+    // rendered/layout/coordinate/applied-CSS/magnitude fact. **THE SCAN READS CLAIMS, NOT
+    // MENTIONS** (`claimsRenderedFact`'s declared phrase list): a row whose own SUBJECT is
+    // this prohibition necessarily NAMES the property in order to deny it
+    // (`R-8 … THE GEOMETRY …`, `I-11 … GEOMETRY …`, `I-15 … no rendered surface …`,
+    // `P-RL-SM-5 … VISIBLE REVERT …` is the contract's own term for the arm's presentation),
+    // and a bare-word scan of that prose could never read `[]`. What the row REFUSES is a
+    // description CLAIMING the fact, and that is what it now detects — with the per-phrase
+    // control above proving the detector is not vacuous.
     const descriptions = rowDescriptions()
     expect(
       descriptions.length,
       'R-8(c) — the row-description corpus is NON-EMPTY (so the scan below is not vacuous)',
     ).toBeGreaterThan(50)
-    const claiming = descriptions.filter((d) => R8_DESCRIPTION_TOKENS.some((token) => new RegExp(`(^|[^A-Za-z0-9_$])${token}([^A-Za-z0-9_$]|$)`, 'i').test(d)))
+    const claiming = descriptions
+      .map((d) => ({ description: d, phrases: claimsRenderedFact(d) }))
+      .filter((entry) => entry.phrases.length > 0)
     expect(
       claiming,
-      `R-8(c) — NO row description claims a rendered/layout/paint/applied-CSS/perceived/visible/magnitude/resolution/on-screen/geometry fact: ${JSON.stringify(
+      `R-8(c) — NO row description CLAIMS a rendered/layout/paint/applied-CSS/perceived/visible/magnitude/resolution/on-screen/geometry fact: ${JSON.stringify(
         claiming,
       )}`,
     ).toEqual([])
     // THE NEGATIVE CONTROL — ordinary count wording PASSES.
     const countWording = 'R-8 — the sink is called exactly once at the terminal and the reveal count reads one'
     expect(
-      R8_DESCRIPTION_TOKENS.filter((token) => new RegExp(`(^|[^A-Za-z0-9_$])${token}([^A-Za-z0-9_$]|$)`, 'i').test(countWording)),
+      claimsRenderedFact(countWording),
       'R-8(c) (NEGATIVE control) — ordinary count wording PASSES the description scan, so the row is not a blanket ban on prose',
     ).toEqual([])
   })
@@ -2286,6 +2452,48 @@ async function proximity(label: string): Promise<(distance: unknown, threshold: 
   return valueExport<(d: unknown, t: unknown) => boolean>('withinProximity', label)
 }
 
+/** **`§0A` NOTE 16 — THE PINNED COMPARATOR RULE, HELD AS A PREDICATE BECAUSE THE ROW'S EXPECTATION
+ *  IS THE DECLARED RULE, NOT A TRANSCRIPTION OF ANSWERS.** The clauses are written in the note's
+ *  OWN order, and each limb can be varied ALONE (`comparatorWith`), which is what `I-1`'s four limb
+ *  controls drive:
+ *   (1) **THE `typeof` GATE** — a non-`number` operand on EITHER side answers `false`, with no
+ *       coercion, no parsing and no `String` round-trip (so a bigint operand cannot throw);
+ *   (2) **THE `NaN` LIMB** — a `NaN` operand on either side answers `false`;
+ *   (3) **THE FINITE-NEGATIVE (UNUSABLE) LIMB** — a FINITE operand `< 0` on either side answers
+ *       `false`: a distance and a proximity radius are MAGNITUDES, so a negative value is not a
+ *       distance. `-0` is NOT negative (`-0 < 0` is `false`), so it keeps the boundary rule, and an
+ *       INFINITE operand is NOT this class (`Number.isFinite(-Infinity)` is `false`) — the pin is
+ *       NOT "any negative operand";
+ *   (4) **THE COMPARISON, VERBATIM over every remaining (USABLE) pair** — the BOUNDARY IS INSIDE
+ *       (`d === t` answers `true`), and a NON-FINITE `number` reaches the comparison UNCHANGED:
+ *       `(-Infinity, a NON-NEGATIVE finite t)` answers `true`, `(+Infinity, finite t)` answers
+ *       `false`, `(+Infinity, +Infinity)` answers `true`, `(-Infinity, -Infinity)` answers `true`
+ *       (and a FINITE NEGATIVE `t` is itself the unusable class, so limb (3) decides there).
+ *  Every outcome is a VALUE: this function has NO REFUSAL DOMAIN and NOTHING throws for any pair. */
+type ProximityLimbs = {
+  readonly boundary: 'inside' | 'strict'
+  readonly nan: 'false' | 'beyondReading'
+  readonly negative: 'unusable' | 'compared'
+  readonly infinite: 'verbatim' | 'refused'
+}
+function comparatorWith(limbs: ProximityLimbs): (d: unknown, t: unknown) => boolean {
+  return (d, t) => {
+    if (typeof d !== 'number' || typeof t !== 'number') return false
+    if (Number.isNaN(d) || Number.isNaN(t)) {
+      // The pinned reading answers `false`; the mutant reading answers `!(d > t)` — a
+      // "not beyond" formulation that answers `true` for a `NaN` operand.
+      return limbs.nan === 'false' ? false : !(d > t)
+    }
+    if (limbs.negative === 'unusable' && ((Number.isFinite(d) && d < 0) || (Number.isFinite(t) && t < 0))) return false
+    if (limbs.infinite === 'refused' && (!Number.isFinite(d) || !Number.isFinite(t))) return false
+    return limbs.boundary === 'strict' ? d < t : d <= t
+  }
+}
+/** `§0A` note 16's OWN limb choices, in the note's own clause order. */
+const PINNED_LIMBS: ProximityLimbs = { boundary: 'inside', nan: 'false', negative: 'unusable', infinite: 'verbatim' }
+/** THE DECLARED ANSWER of `withinProximity`, as the note states it — computed, never transcribed. */
+const pinnedAnswer = comparatorWith(PINNED_LIMBS)
+
 describe('§2.1 item 1 / §3.1 M-2 · §3.2 F-1..F-3 · §3.3 I-1/I-12 — the PURE TOTAL comparator `withinProximity`', () => {
   it('M-2 §3.1 — the three declared outcomes with the BOUNDARY INSIDE: (10,20) ⇒ true, (20,20) ⇒ true, (20.5,20) ⇒ false, (-5,-1) ⇒ false, (0,0) ⇒ true, and the return is a `boolean` in every drive', async () => {
     const withinProximity = await proximity('M-2')
@@ -2377,11 +2585,83 @@ describe('§2.1 item 1 / §3.1 M-2 · §3.2 F-1..F-3 · §3.3 I-1/I-12 — the P
     }
   })
 
-  it('I-1 §3.3 — the comparator is TOTAL, PURE and FORMULA-EXACT: a `boolean` for EVERY pair of inputs, a throw for NONE, and the answer is either the `typeof` gate\u2019s `false` or `distance <= threshold` VERBATIM', async () => {
+  // **`I-1` — RE-GRAINED 2026-09-27 TO `§0A` NOTE 16'S FOUR CLAUSES.** The as-filed expectation
+  // expression (`typeof d !== 'number' || typeof t !== 'number' ? false : d <= t`) asserted the
+  // SUPERSEDED two-limb reading and diverged from the pin on `8` of the pool's `361` pairs (the
+  // `d === -1` family with `t` in `{42, 0, -0, -1, 20, 20.5, Infinity}`, and `(-Infinity, -1)`).
+  // The expectation is now the DECLARED RULE itself (`pinnedAnswer`, whose clauses mirror the
+  // note's order: `typeof` → `NaN` → FINITE-NEGATIVE → the comparison VERBATIM), so no literal
+  // answer is transcribed and the row cannot drift from the note again.
+  //
+  // THE STATES THIS ROW ENUMERATES, per limb, over the 19-value pool:
+  //   · the `typeof` gate — non-number operands (undefined, null, 'x', true, [], {}, Symbol, 12n,
+  //     a function, a Map) on either side ⇒ `false`, and no throw (the bigint limb included);
+  //   · the `NaN` limb — `NaN` on either side ⇒ `false` (all three pairings);
+  //   · the FINITE-NEGATIVE limb — a finite negative operand on either side ⇒ `false` (the pool's
+  //     `-1` crosses `0`, `-0`, `-1`, `20`, `20.5`, `42`, `Infinity`, and `-Infinity` crosses `-1`);
+  //   · the INFINITY limb — the four non-finite pairings reach the comparison VERBATIM;
+  //   · the BOUNDARY limb — `d === t` over the usable pairs (`(20, 20)`, `(0, 0)`, `(-0, 0)`,
+  //     `(Infinity, Infinity)`, `(-Infinity, -Infinity)`);
+  //   · `-0` — NOT special-cased and NOT negative: it takes the boundary-inside rule.
+  it('I-1 §3.3 — the comparator is TOTAL, PURE and FORMULA-EXACT under `§0A` note 16\u2019s FOUR CLAUSES: a `boolean` for EVERY pair of inputs, a throw for NONE, and the answer is `true` IFF both operands pass the `typeof` gate, are not `NaN`, are non-negative (a FINITE NEGATIVE operand on either side is the UNUSABLE class and answers `false`) AND, where finite, `d <= t` holds — with the NON-FINITE limbs reaching the comparison VERBATIM; with FOUR limb controls, one per limb: the BOUNDARY (`d === t`), the `NaN` limb, the FINITE-NEGATIVE limb and the INFINITY limb', async () => {
     const withinProximity = await proximity('I-1')
     const operandPool: readonly unknown[] = [
       undefined, null, 42, 'x', true, [], {}, Symbol('s'), 12n, (): void => undefined, new Map(), 0, -0, -1, 20, 20.5, NaN, Infinity, -Infinity,
     ]
+    // ---- THE ROW'S OWN FOUR LIMB CONTROLS, ONE PER LIMB OF THE PINNED RULE ------------------
+    // Each control is a comparator that gets EXACTLY ONE limb of `§0A` note 16 wrong, and each
+    // asserts that THIS ROW'S EXPECTATION (`pinnedAnswer`) DISAGREES with that comparator on the
+    // limb's OWN pairs — so the row is falsifiable LIMB BY LIMB and could never be satisfied by a
+    // comparator that is wrong at the boundary, at `NaN`, at the finite-negative class or at the
+    // infinities. (A control drive is a drive, it asserts its declared shape, and it HOLDS — the
+    // declared-failing shape is the mutant, not the row.)
+    // THEY ARE ASSERTED FIRST, DELIBERATELY: they depend on no module at all, so a run that is RED
+    // on the enumeration below still records that this row's expectation is limb-falsifiable.
+    const limbControls: ReadonlyArray<{
+      readonly limb: string
+      readonly pairs: ReadonlyArray<readonly [unknown, unknown]>
+      readonly wrong: (d: unknown, t: unknown) => boolean
+    }> = [
+      {
+        limb: 'the BOUNDARY limb (`d === t` is INSIDE: `<=`, not `<`)',
+        pairs: [[20, 20], [0, 0], [-0, 0]],
+        wrong: comparatorWith({ ...PINNED_LIMBS, boundary: 'strict' }),
+      },
+      {
+        limb: 'the `NaN` limb (a `NaN` operand answers `false`, never the "not beyond" reading\u2019s `true`)',
+        pairs: [[NaN, 20], [20, NaN], [NaN, NaN]],
+        wrong: comparatorWith({ ...PINNED_LIMBS, nan: 'beyondReading' }),
+      },
+      {
+        limb: 'the FINITE-NEGATIVE limb (a finite negative operand on EITHER side is the UNUSABLE class ⇒ `false`)',
+        pairs: [[-1, 20], [-5, -1], [-1, -0], [20, -1], [-Infinity, -1]],
+        wrong: comparatorWith({ ...PINNED_LIMBS, negative: 'compared' }),
+      },
+      {
+        limb: 'the INFINITY limb (a non-finite `number` reaches the comparison VERBATIM: `(-Infinity, a NON-NEGATIVE finite t)` ⇒ `true`, `(+Infinity, finite t)` ⇒ `false`, and both-infinite pairs ⇒ `true`)',
+        pairs: [[-Infinity, 20], [Infinity, 20], [Infinity, Infinity], [-Infinity, -Infinity], [0, Infinity]],
+        wrong: comparatorWith({ ...PINNED_LIMBS, infinite: 'refused' }),
+      },
+    ]
+    for (const control of limbControls) {
+      const divergences = control.pairs.filter(([d, t]) => control.wrong(d, t) !== pinnedAnswer(d, t))
+      expect(
+        divergences.length,
+        `I-1 (CONTROL — ${control.limb}) — a comparator that gets THIS limb wrong MUST be caught by this row's expectation: the mutant and \`pinnedAnswer\` must DISAGREE on this limb's own pairs ${JSON.stringify(control.pairs.map(([d, t]) => [brief(d), brief(t)]))}, or the limb is not actually driven`,
+      ).toBeGreaterThan(0)
+    }
+    // THE MUTANTS ARE ONE-LIMB WRONG, NOT GLOBALLY WRONG: each differs from the pinned reading
+    // ONLY on its own limb, so no control passes by disagreeing everywhere (which would make it
+    // a test of nothing in particular).
+    const boundaryMutant = comparatorWith({ ...PINNED_LIMBS, boundary: 'strict' })
+    expect(
+      boundaryMutant(10, 20),
+      'I-1 (CONTROL — the BOUNDARY limb) — the boundary mutant is right everywhere the boundary does not decide (`d < t`: `(10, 20)` ⇒ `true`), so it exercises the boundary limb ALONE',
+    ).toBe(true)
+    expect(
+      comparatorWith({ ...PINNED_LIMBS, infinite: 'refused' })(10, 20),
+      'I-1 (CONTROL — the INFINITY limb) — the infinity mutant is right on the finite pairs (`(10, 20)` ⇒ `true`), so it exercises the infinity limb ALONE',
+    ).toBe(true)
     let drives = 0
     for (const d of operandPool) {
       for (const t of operandPool) {
@@ -2401,10 +2681,10 @@ describe('§2.1 item 1 / §3.1 M-2 · §3.2 F-1..F-3 · §3.3 I-1/I-12 — the P
           typeof answer,
           `I-1 — the answer for (${brief(d)}, ${brief(t)}) is a \`boolean\`, never \`undefined\`, a record, a string or a sentinel`,
         ).toBe('boolean')
-        const expected = typeof d !== 'number' || typeof t !== 'number' ? false : d <= t
+        const expected = pinnedAnswer(d, t)
         expect(
           answer,
-          `I-1 — for (${brief(d)}, ${brief(t)}) the answer is EXACTLY the declared one: the \`typeof\` gate's \`false\`, or \`distance <= threshold\` VERBATIM (${String(expected)})`,
+          `I-1 — for (${brief(d)}, ${brief(t)}) the answer is EXACTLY the declared one (\`§0A\` note 16): the \`typeof\` gate's \`false\`, the UNUSABLE-class \`false\` (a FINITE NEGATIVE operand on either side), or \`distance <= threshold\` VERBATIM over the USABLE class (${String(expected)})`,
         ).toBe(expected)
       }
     }
@@ -2839,18 +3119,43 @@ describe('§3.3 I-2..I-15 — the invariants that hold in every state', () => {
     ).toBe(true)
     // THE MANDATORY CLAUSE'S OWN HALF: no member of this module's surface takes an event
     // object, so no parameter exists through which a coordinate could arrive.
+    //
+    // **THE TOKEN LIST IS HELD AS FRAGMENTS AND THE SUBJECT IS NAMED (REPAIRED 2026-09-27):**
+    // the as-filed loop iterated an assembled list over the SAME FILE THAT SPELLED IT, so a
+    // `testBytes.includes(<assembled event-type name>)` could never be `false` — the row
+    // asserted a fact its own subject made impossible, and it tested nothing. Held as
+    // fragments, the bytes of this file really do NOT carry an event-type name **except**
+    // in this list's own parts, so both assertions below have a failure mode (a row that
+    // spells an event type raw, or a module that names one, FAILS).
+    const eventTypes: readonly string[] = ['Mouse' + 'Event', 'Pointer' + 'Event', 'Touch' + 'Event', 'Keyboard' + 'Event']
+    expect(
+      eventTypes.filter((token) => token.endsWith('Event')).length,
+      'I-11 — the row’s own token list really assembles the four EVENT-TYPE names it declares (the fragments are the R-1/R-8 form, and the list is not vacuous)',
+    ).toBe(4)
     const testBytes = readFileSync(TEST_FILE, 'utf8')
-    for (const token of ['MouseEvent', 'PointerEvent', 'TouchEvent', 'KeyboardEvent']) {
+    for (const token of eventTypes) {
       expect(
         testBytes.includes(token),
-        `I-11 — neither the module nor this file names an EVENT TYPE (\`${token}\`): the element is an OPAQUE argument and no row hands the module an event object (§2.2 P-1, layer anchor 2)`,
+        `I-11 — THIS FILE names no EVENT TYPE in its own bytes (\`${token}\`): the element is an OPAQUE argument and no row hands the module an event object (§2.2 P-1, layer anchor 2). The list above is FRAGMENT-HELD precisely so this reading is falsifiable — a row that spells the name raw FAILS it`,
+      ).toBe(false)
+      expect(
+        normalizeSource(source).includes(token),
+        `I-11 — and THE MODULE names no EVENT TYPE either (\`${token}\`): no member of its surface takes an event object (§3.3 I-11’s own claim, §2.2 P-1)`,
       ).toBe(false)
     }
+    // THE POSITIVE CONTROL: a corpus naming an event type FAILS this row's instrument.
+    const eventControl = 'const handler = (e: ' + eventTypes[0] + '): void => undefined'
+    expect(
+      eventTypes.filter((token) => eventControl.includes(token)),
+      'I-11 (POSITIVE control) — a corpus naming an event type is CAUGHT by the very reading above, so the two negatives are not vacuous',
+    ).not.toEqual([])
     const descriptions = rowDescriptions()
-    const claiming = descriptions.filter((d) => R8_DESCRIPTION_TOKENS.some((token) => new RegExp(`(^|[^A-Za-z0-9_$])${token}([^A-Za-z0-9_$]|$)`, 'i').test(d)))
+    const claiming = descriptions
+      .map((d) => ({ description: d, phrases: claimsRenderedFact(d) }))
+      .filter((entry) => entry.phrases.length > 0)
     expect(
       claiming,
-      `I-11 — NO row description in this file claims a rendered/layout/coordinate/applied-CSS/cursor/magnitude fact: ${JSON.stringify(
+      `I-11 — NO row description in this file CLAIMS a rendered/layout/coordinate/applied-CSS/cursor/magnitude fact (the same claim-phrase detector ` + '`R-8`(c) uses, for the reason stated there): ' + `${JSON.stringify(
         claiming,
       )}`,
     ).toEqual([])
@@ -2994,7 +3299,7 @@ describe('§3.1 M-1 · M-3..M-17 — the valid states (call counts, call order, 
 
   it('M-3 §3.1 — the seam ORDER at establishment and on an observed move, with the HANDLE’S identity: the module’s own `onStart` then the consumer’s; `candidatesFor` → `resolveTarget` → `onPreview` → the consumer’s `onMove`; and at the terminal `onReveal` → `commit` → the consumer’s `onEnd`', async () => {
     const order: string[] = []
-    const seen: { resolveHandle: unknown; consumerMoveHandle: unknown } = { resolveHandle: null, consumerMoveHandle: null }
+    const seen: { resolveHandle: unknown; consumerMoveHandle: unknown; terminalHandle: unknown } = { resolveHandle: null, consumerMoveHandle: null, terminalHandle: null }
     // THE TURN TRACE (`§2.3` item 6's pinned lead-in): the SESSION marks its own invocation of
     // the module's `onStart` WRAPPER — the one wrapper the pinned order names as an ITEM
     // *(`onStart` WRAPPER → THE CONSUMER'S `onStart` → …)*. Without it the literal `'onStart'`
@@ -3020,8 +3325,12 @@ describe('§3.1 M-1 · M-3..M-17 — the valid states (call counts, call order, 
       onReveal: (): void => {
         order.push('onReveal')
       },
-      commit: (): void => {
+      commit: (gesture: unknown): void => {
         order.push('commit')
+        // THE SINK'S OWN RECORD OF THE HANDLE IT RECEIVED — the reading the tail assertion
+        // below uses (`c.sinkArgs` belongs to the recorder THIS composition replaced, so it
+        // must read `0`; the as-filed tail read it and could not be satisfied).
+        seen.terminalHandle = gesture
       },
     }, { trace: order })
     const consumerHooks: Record<string, unknown> = {
@@ -3048,21 +3357,31 @@ describe('§3.1 M-1 · M-3..M-17 — the valid states (call counts, call order, 
       )}`,
     ).toEqual(['onStart', 'consumer onStart', 'candidatesFor', 'resolveTarget', 'onPreview', 'consumer onMove', 'onReveal', 'commit', 'consumer onEnd'])
     expect(
+      c.double.handed.length,
+      `M-3 — the session double really handed the module's own \`onMove\` wrapper a handle for the one observed move (so the identity reading below is not vacuous). Handed: ${JSON.stringify(
+        c.double.handed.map(brief),
+      )}`,
+    ).toBe(1)
+    expect(
       seen.resolveHandle,
-      'M-3 — the `gesture` argument `resolveTarget` receives is the EXACT handle the session gave the module’s wrapper (`toBe`): the handle arrives only through the module’s own onMove wrapper, is captured there and is never synthesised',
-    ).toBe(c.double.hooks === null ? null : seen.resolveHandle)
+      'M-3 — the `gesture` argument `resolveTarget` receives is the EXACT handle THE SESSION ITSELF handed the module’s own `onMove` wrapper (`toBe` against the session double’s own recorded hand-out — the identity reading this row intends, not the row’s own closure compared against itself): the handle arrives only through the module’s own onMove wrapper, is captured there and is never synthesised',
+    ).toBe(c.double.handed[0])
     expect(
       seen.consumerMoveHandle,
       'M-3 — the consumer’s own `onMove` receives the EXACT handle the session gave the module’s wrapper (`toBe`), forwarded by identity and not altered by the wrapper’s own capture',
     ).toBe(seen.resolveHandle)
     expect(
-      c.sinkArgs.length,
-      'M-3 — the sink receives the terminal once, so the identity reading above is about the SESSION’s own handle',
+      order.filter((entry) => entry === 'commit').length,
+      'M-3 — the sink receives the terminal once, so the identity reading above is about the SESSION’s own handle. **THE READING IS THE COMMIT SEAM’S OWN RECORD** — the seam this row installed — and NOT `c.sinkArgs`, which belongs to the recorder this row REPLACED and therefore reads `0` (REPAIRED 2026-09-27)',
     ).toBe(1)
     expect(
-      c.sinkArgs[0][0],
-      'M-3 — the sink receives the SESSION’s own handle for the terminal (`§2.5` item 6: the module’s commit seam is reached from the session’s own terminal turn)',
-    ).not.toBe(undefined)
+      c.sinkArgs.length,
+      'M-3 — and the replaced recorder really reads `0`, which is why the count above is taken from the seam actually in place',
+    ).toBe(0)
+    expect(
+      seen.terminalHandle,
+      'M-3 — the sink receives the SESSION’s own handle for the terminal (`§2.5` item 6: the module’s commit seam is reached from the session’s own terminal turn) — the SAME object `resolveTarget` received and the session handed the module’s wrapper',
+    ).toBe(c.double.handed[0])
   })
 
   it('M-4 §3.1 — a `cancel` writes nothing and invokes no channel: `revealWrites === 0`, `sinkCalls === 0`, `written === 0`, the session’s terminal result reads `committed: false`, and the module’s per-gesture record is dropped', async () => {
@@ -3806,12 +4125,12 @@ describe('§3.2 F-4..F-19 — the documented fail-states', () => {
     b.double.move()
     b.double.terminate()
     expect(
-      b.sinkArgs.length,
-      'F-5(b) — the SAME function received the SINK’s call as well, so the two channel classes are NOT held by two different functions: the row FAILS (one function received both channel classes, and the module’s own sink seam must be its own function)',
-    ).toBe(1)
+      sharedArgs.filter((entry) => entry.channel === 'onReveal-and-commit').length,
+      'F-5(b) — the SAME function received the SINK’s call as well, so the two channel classes are NOT held by two different functions: the row FAILS (one function received both channel classes, and the module’s own sink seam must be its own function). **THE READING IS THE SHARED FUNCTION’S OWN RECORD** — the seam THIS composition installed — and NOT `sinkArgs`, which belongs to the recorder this row REPLACED and therefore must read `0` (REPAIRED 2026-09-27: the as-filed cell read the replaced seam and could not be satisfied by any composition)',
+    ).toBe(2)
     expect(
-      b.revealArgs.length + b.sinkArgs.length >= 2 && sharedArgs.length >= 2,
-      `F-5(b) — the shared function’s own record reads ${sharedArgs.length} invocations from two different channel classes, which is exactly the divergence the row FAILS on`,
+      b.revealArgs.length + b.sinkArgs.length === 0 && sharedArgs.length >= 2,
+      `F-5(b) — the shared function’s own record reads ${sharedArgs.length} invocations from two different channel classes, while the two recorders this row REPLACED read nothing (${b.revealArgs.length} + ${b.sinkArgs.length}): that divergence is exactly what the row FAILS on`,
     ).toBe(true)
     // (c) A PREVIEW INVOCATION THAT ALSO PRODUCES A REVEAL.
     const c = await compose('F-5/c')
@@ -4377,6 +4696,10 @@ describe('§3.2 F-4..F-19 — the documented fail-states', () => {
     control.mod.attach(control.el)
     control.double.establish()
     control.double.move()
+    // THE DRIVE THE CELL'S OWN TEXT NAMES: *"and the terminal reaches its committing path"* —
+    // so the terminal must be DRIVEN. (REPAIRED 2026-09-27: the as-filed control asserted a
+    // terminal reading without driving a terminal, so `revealWrites` could only ever read `0`.)
+    control.double.terminate()
     expect(
       control.stats().resets,
       'F-14 (CONTROL) — an answer with NO `candidate` field but a WITHIN-PROXIMITY `distance` is WITHIN PROXIMITY: the arm is NOT taken, because ONLY THE DISTANCE DECIDES (the split `P-RL-IM-5` drives)',
@@ -4585,11 +4908,11 @@ describe('§3.2 F-4..F-19 — the documented fail-states', () => {
     ).toBe(1)
     expect(
       c.sinkArgs.length,
-      'F-19 — the module’s own recorded call site ran exactly once for the gesture',
-    ).toBe(1)
+      'F-19 — THE SEAM THIS ROW REPLACED received NOTHING: `sinkArgs` is the composition’s OWN recorder for the `commit` seam, and this row overwrote that seam with its own no-op — so the replaced seam cannot be the record of the module’s call site. *"The module’s own call site ran"* is read from the module’s OWN counter (above) and from the consumer’s own sink record, never from a recorder the row replaced (REPAIRED 2026-09-27: the as-filed cell asserted `1` on the replaced seam — an assertion the row’s own wiring made unsatisfiable)',
+    ).toBe(0)
     expect(
-      consumerWrites.length + c.sinkArgs.length,
-      'F-19 — the composition’s TOTAL write count for one gesture is 3 here (2 consumer-written + 1 module-written): a total of 2 for one gesture FAILS `F-6`, so the loophole closes where it matters',
+      consumerWrites.length + c.stats().sinkCalls,
+      'F-19 — the composition’s TOTAL write count for one gesture is 3 here (2 consumer-written, read from the consumer’s own sink’s record, plus 1 module-written, read from the module’s own counter): a total of 2 for one gesture FAILS `F-6`, so the loophole closes where it matters',
     ).toBe(3)
   })
 })
@@ -5188,53 +5511,52 @@ describe('§5.5.1 — the typed property register (15 rows / 16 terms, executed 
     reconcile(rec, 14, 'P-RL-IM-2 — the declared term is `14` (`4` shapes × `2` configurations + `6` further drives)')
   })
 
-  it('P-RL-IM-3 [S-RL-PURE-1 + S-RL-PURE-2] — the `threshold` row, TWO HALVES each with its own term: (3a) EVERY `(distance, threshold)` class pair answers EXACTLY ONE declared outcome without throwing (12 declared attempts; bounded); (3b) the NO-DEFAULT clause — `threshold` is READ, and no default, no unit string and no mechanism-side distance computation exists (3 declared attempts)', async () => {
+  it('P-RL-IM-3 [S-RL-PURE-1 + S-RL-PURE-2] — the `threshold` row, TWO HALVES each with its own term: (3a) EVERY `(distance, threshold)` class pair answers EXACTLY ONE declared outcome without throwing — the FINITE-NEGATIVE limb and the ±Infinity limb deciding their own cells, with the HOSTILE class declared PER VARIANT because `-Infinity` reaches the comparison VERBATIM (`§0A` note 16) — (12 declared attempts; bounded); (3b) the NO-DEFAULT clause — `threshold` is READ, and no default, no unit string and no mechanism-side distance computation exists (3 declared attempts)', async () => {
     // `P-RL-IM-3` is the ONE row carrying TWO TERMS (`12` and `3`), each with its OWN
-    // strategy — so this row emits TWO records. **BOTH RECORDS ARE EMITTED FIRST, before any
-    // assertion of the row can throw**: an un-run register half that aborted the block would
-    // leave its own record missing, and `REGISTER-STATUS` reports a missing record as a
-    // never-started row rather than as the failure it is.
+    // strategy — so this row emits TWO records. **BOTH RECORDS ARE EMITTED AFTER THEIR OWN
+    // DRIVES RUN (REPAIRED 2026-09-27):** the as-filed harness called `finish()` on both
+    // halves BEFORE driving anything, so both records reported `attemptsRun 0` /
+    // `notStarted true` and the row could never be satisfied by any module — while the
+    // register's own attribution rule (`§5.5.1` strategy item 3, `§4.2` item 2) is that an
+    // UN-RUN row is the FAILURE. The two halves are driven in their own guarded blocks
+    // (so a throw in one half still lets the other run and both records still report the
+    // attempts they executed), and BOTH `finish()` calls follow the drives: a half whose
+    // record is missing would be reported as never-started, which is the failure mode this
+    // ordering removes.
     const rec = new RegisterRow('P-RL-IM-3', 'S-RL-PURE-1')
     const rec2 = new RegisterRow('P-RL-IM-3', 'S-RL-PURE-2')
     let halfFailure: unknown = null
-    try {
-      rec.finish()
-    } catch (e) {
-      halfFailure = e
-    }
-    try {
-      rec2.finish()
-    } catch (e) {
-      if (halfFailure === null) halfFailure = e
-    }
-    if (halfFailure !== null) {
-      // **A REGISTER HALF'S OWN FAILURE IS RE-RAISED, so the row still FAILS** — the two
-      // records above are emitted first (`§5.5.1`/`§4.2` item 2: an un-run row is reported as
-      // a FAILURE, and a half whose record is missing would be reported as never-started).
-      throw halfFailure
-    }
     const moduleState = await resolveModule()
     // ---------------- (3a) THE COMPARISON — `12` attempts = `4` distance classes × `3`
-    // threshold classes. The HOSTILE distance class is driven as its FIVE variants INSIDE
-    // the drive, each declaring `false` and no throw.
+    // threshold classes. **EVERY CELL'S DECLARED ANSWER IS `§0A` NOTE 16'S PINNED RULE**, so the
+    // FINITE-NEGATIVE limb and the ±Infinity limb are driven exactly where the class reading alone
+    // would have declared the superseded answer:
+    //   · threshold class `(b)`'s `below` cell is `d = -1` ⇒ the UNUSABLE class ⇒ `false`;
+    //   · threshold class `(c)`'s three cells (`-5` · `-1` · `0` against `t = -1`) are all `false`;
+    //   · the HOSTILE class is declared **PER VARIANT**: a non-number · `NaN` · `+Infinity` · a
+    //     bigint answer `false`, while `-Infinity` reaches the comparison VERBATIM and so answers
+    //     `true` against a NON-NEGATIVE finite threshold (a NON-FINITE operand is NOT the UNUSABLE
+    //     class — `§0A` note 16, `F-3`'s own cells; a NEGATIVE finite threshold is, so class `(c)`
+    //     answers `false` there).
     const thresholdClasses: ReadonlyArray<{ id: string; t: number; below: number; above: number }> = [
       { id: '(a) a positive finite number (20)', t: 20, below: 10, above: 20.5 },
       { id: '(b) 0', t: 0, below: -1, above: 0.5 },
       { id: '(c) a NEGATIVE finite number (-1)', t: -1, below: -5, above: 0 },
     ]
-    const hostileVariants: ReadonlyArray<{ id: string; value: unknown }> = [
-      { id: 'a non-number (`\'5\'`)', value: '5' },
-      { id: '`NaN`', value: NaN },
-      { id: '`+Infinity`', value: Infinity },
-      { id: '`-Infinity`', value: -Infinity },
-      { id: '`12n` / a `Symbol`', value: 12n },
+    const hostileVariants: ReadonlyArray<{ id: string; value: unknown; limb: string }> = [
+      { id: 'a non-number (`\'5\'`)', value: '5', limb: 'the `typeof` gate' },
+      { id: '`NaN`', value: NaN, limb: 'the `NaN` limb' },
+      { id: '`+Infinity`', value: Infinity, limb: 'the INFINITY limb — VERBATIM, hence `false` against every finite threshold' },
+      { id: '`-Infinity`', value: -Infinity, limb: 'the INFINITY limb — VERBATIM, hence `true` against a NON-NEGATIVE finite threshold (a NON-FINITE operand is NOT the unusable class, while a NEGATIVE finite threshold IS)' },
+      { id: '`12n` / a `Symbol`', value: 12n, limb: 'the `typeof` gate' },
     ]
-    for (const thresholdClass of thresholdClasses) {
-      const distanceClasses: ReadonlyArray<{ id: string; d: unknown; expected: boolean; note: string }> = [
-        { id: '(1) a finite number BELOW', d: thresholdClass.below, expected: true, note: '`d < t` ⇒ inside' },
-        { id: '(2) a finite number EQUAL to the threshold', d: thresholdClass.t, expected: true, note: '`d == t` ⇒ THE BOUNDARY IS INSIDE' },
-        { id: '(3) a finite number ABOVE', d: thresholdClass.above, expected: false, note: '`d > t` ⇒ outside' },
-        { id: '(4) the HOSTILE class', d: null, expected: false, note: 'every hostile variant declares `false` and no throw' },
+    try {
+      for (const thresholdClass of thresholdClasses) {
+      const distanceClasses: ReadonlyArray<{ id: string; d: unknown; expected: boolean | null; limb: string }> = [
+        { id: '(1) a finite number BELOW', d: thresholdClass.below, expected: pinnedAnswer(thresholdClass.below, thresholdClass.t), limb: 'the `d < t` reading ⇒ inside — EXCEPT where the FINITE-NEGATIVE limb overrides it (a finite negative distance such as `-1`/`-5`, or a finite negative threshold, is UNUSABLE ⇒ `false`)' },
+        { id: '(2) a finite number EQUAL to the threshold', d: thresholdClass.t, expected: pinnedAnswer(thresholdClass.t, thresholdClass.t), limb: 'the BOUNDARY-IS-INSIDE reading (`d == t` ⇒ `true`) — EXCEPT where the FINITE-NEGATIVE limb overrides it (a finite negative threshold such as `-1` is UNUSABLE ⇒ `false`)' },
+        { id: '(3) a finite number ABOVE', d: thresholdClass.above, expected: pinnedAnswer(thresholdClass.above, thresholdClass.t), limb: 'the `d > t` reading ⇒ outside ⇒ `false` — and with a finite negative threshold the UNUSABLE limb answers `false` too' },
+        { id: '(4) the HOSTILE class', d: null, expected: null, limb: 'declared PER VARIANT — see `hostileVariants` (a non-number · `NaN` · `+Infinity` · a bigint ⇒ `false`; `-Infinity` ⇒ `true`)' },
       ]
       for (const distanceClass of distanceClasses) {
         rec.run(`${distanceClass.id} × ${thresholdClass.id}`, () => {
@@ -5242,6 +5564,7 @@ describe('§5.5.1 — the typed property register (15 rows / 16 terms, executed 
           if (typeof withinProximity !== 'function') return '§2.1’s `withinProximity` is not a function'
           if (distanceClass.id.startsWith('(4)')) {
             for (const variant of hostileVariants) {
+              const declared = pinnedAnswer(variant.value, thresholdClass.t)
               let threw = false
               let answer: unknown = undefined
               try {
@@ -5252,10 +5575,12 @@ describe('§5.5.1 — the typed property register (15 rows / 16 terms, executed 
                 threw = true
               }
               if (threw) return `the hostile variant ${variant.id} THREW with threshold ${thresholdClass.t}; no hostile pair may throw`
-              if (answer !== false) return `the hostile variant ${variant.id} answered ${brief(answer)} with threshold ${thresholdClass.t}; the declared answer is \`false\``
+              if (answer !== declared) return `the hostile variant ${variant.id} answered ${brief(answer)} with threshold ${thresholdClass.t}; the declared answer is ${String(declared)} (${variant.limb})`
             }
             return null
           }
+          const declared = distanceClass.expected
+          if (declared === null) return `the cell ${distanceClass.id} declares no single outcome`
           let threw = false
           let answer: unknown = undefined
           try {
@@ -5265,15 +5590,14 @@ describe('§5.5.1 — the typed property register (15 rows / 16 terms, executed 
           }
           if (threw) return `the pair (${brief(distanceClass.d)}, ${thresholdClass.t}) threw`
           if (typeof answer !== 'boolean') return `the pair (${brief(distanceClass.d)}, ${thresholdClass.t}) answered a non-boolean (${brief(answer)})`
-          if (answer !== distanceClass.expected) return `the pair (${brief(distanceClass.d)}, ${thresholdClass.t}) answered ${String(answer)}; the declared outcome is ${String(distanceClass.expected)} (${distanceClass.note})`
+          if (answer !== declared) return `the pair (${brief(distanceClass.d)}, ${thresholdClass.t}) answered ${String(answer)}; the declared outcome is ${String(declared)} (${distanceClass.limb})`
           return null
         })
       }
+      }
+    } catch (e) {
+      halfFailure = e
     }
-    // THE TWO HALVES ARE TWO RECORDS WITH THEIR OWN STRATEGIES (`§5.5.1`: `P-RL-IM-3` is the
-    // one row carrying TWO terms). Both records are emitted BEFORE any of the row's own
-    // assertions run, so a red half cannot suppress the other half's record — a register row
-    // whose record is missing is reported as never-started by `REGISTER-STATUS`.
     const measured3a = rec.attemptsRunPublic()
     // ---------------- (3b) THE NO-DEFAULT CLAUSE — `3` attempts.
     const bDrives: ReadonlyArray<{ id: string; build: () => Record<string, unknown>; armDeclared: number }> = [
@@ -5281,8 +5605,9 @@ describe('§5.5.1 — the typed property register (15 rows / 16 terms, executed 
       { id: "(2) a non-number `threshold` (`'20'`) ⇒ the same invalid arm, never a coercion", build: () => ({ threshold: '20', candidatesFor: (): unknown => [answer(1)], resolveTarget: (): unknown => ({ opaque: 't' }), commit: (): void => undefined, onReveal: (): void => undefined, onPreview: (): void => undefined }), armDeclared: 1 },
       { id: '(3) a within-candidate move with a usable `threshold` ⇒ the arm is NOT taken (the positive control)', build: () => ({ threshold: 20, candidatesFor: (): unknown => [answer(1)], resolveTarget: (): unknown => ({ opaque: 't' }), commit: (): void => undefined, onReveal: (): void => undefined, onPreview: (): void => undefined }), armDeclared: 0 },
     ]
-    for (const drive of bDrives) {
-      rec2.run(drive.id, () => {
+    try {
+      for (const drive of bDrives) {
+        rec2.run(drive.id, () => {
         if (moduleState.mod === null) return moduleState.reason ?? 'the module is absent'
         const create = moduleState.mod['createRelocateSession'] as (o?: unknown) => RelocateModuleMirror
         if (typeof create !== 'function') return '§2.1’s `createRelocateSession` is not a function'
@@ -5298,6 +5623,24 @@ describe('§5.5.1 — the typed property register (15 rows / 16 terms, executed 
         }
         return null
       })
+      }
+    } catch (e) {
+      if (halfFailure === null) halfFailure = e
+    }
+    // **BOTH RECORDS ARE EMITTED HERE, AFTER THEIR OWN HALVES' DRIVES** (`§5.5.1` strategy
+    // item 3: the record reports the attempts that EXECUTED; an un-run row is the FAILURE this
+    // ordering removes), and the row's own half-level failures are re-raised at the END so a
+    // red half still emits both records and still FAILS the row.
+    let finishFailure: unknown = null
+    try {
+      rec.finish()
+    } catch (e) {
+      finishFailure = e
+    }
+    try {
+      rec2.finish()
+    } catch (e) {
+      if (finishFailure === null) finishFailure = e
     }
     // The BESIDE-the-term assertions of `P-RL-IM-3`(3b): the module's own bytes contain no
     // default, no unit string and no mechanism-side distance arithmetic. These are printed
@@ -5329,6 +5672,11 @@ describe('§5.5.1 — the typed property register (15 rows / 16 terms, executed 
       beside.distanceArithmetic,
       'P-RL-IM-3 (3b), printed BESIDE the term — the module performs NO mechanism-side distance arithmetic (`§2.3` item 8: no delta, no ratio, no percentage, no scale, no sum, no average)',
     ).toBe(false)
+    // THE ROW'S OWN FAILURES ARE RE-RAISED LAST, so both records above are always emitted
+    // (`§5.5.1`/`§4.2` item 2: an un-run row is REPORTED as a FAILURE, never omitted) while the
+    // row still FAILS for a broken half or a half whose own drive threw.
+    if (finishFailure !== null) throw finishFailure
+    if (halfFailure !== null) throw halfFailure
   })
 
   it('P-RL-IM-4 [S-RL-SET-1] — THE SEAM SET IS FROZEN: the options object carries EXACTLY the SEVEN declared members, NAMED and ORDERED; AN EIGHTH MEMBER FAILS; `capture` is ABSENT (not `false`); a `distanceFor` member FAILS; and no policy default exists (8 declared attempts)', async () => {
@@ -5666,8 +6014,17 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
     // pre-drag value (`§0A` note 15's `A2` continuation's closing pin) — and the session's
     // construction `commit` for the same terminal. `expectedSinkRecord: 2` is therefore what
     // the composition produces, on BOTH terminal classes, and no declared figure moved.
+    // **EACH TERMINAL CLASS DRIVES ITS OWN TERMINAL TURN, AND ONE ONLY** (REPAIRED 2026-09-27):
+    // the as-filed loop drove `double.terminate()` for BOTH classes, which the `'reset'` class
+    // did not need — its move's distance (`999`) takes the invalid arm, which IS that class's
+    // terminal — and which, once the double delivers a post-arm RELEASE to the module's own
+    // installed terminal wrapper (`M-7`/`I-4`'s repair), added a SECOND turn to a class whose
+    // declared cell is about ONE committing terminal (*"AT THE SAME COMMITTING TERMINAL … so
+    // both readings are about ONE gesture"*): the consumer's own `onEnd` then ran twice and the
+    // shared record read `3` where the shape declares `2`. The release timings are owned by
+    // `M-8`/`§5.5.1 P-RL-SM-7`, not by this row's shape table.
     const terminalClasses: ReadonlyArray<{ id: string; drive: (d: SessionDouble) => void }> = [
-      { id: "(a) an `'end'`", drive: (d: SessionDouble): void => { d.establish(); d.move() } },
+      { id: "(a) an `'end'`", drive: (d: SessionDouble): void => { d.establish(); d.move(); d.terminate() } },
       { id: "(b) a `'reset'` (the invalid arm)", drive: (d: SessionDouble): void => { d.establish(); d.move() } },
     ]
     for (const shape of shapes) {
@@ -5707,7 +6064,6 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
           mod.attach(el, consumerHooks)
           double.setElement(el)
           terminal.drive(double)
-          double.terminate()
           const stats = mod.stats()
           // THE PER-ATTEMPT ASSERTIONS: the sink's own record, the module's own count,
           // their declared agreement OR DIVERGENCE.
@@ -6564,13 +6920,13 @@ describe('§5.5.1 — the register’s state-machine and totality rows, and the 
       if (!r.stoppedEarly) {
         expect(
           r.attemptsRun,
-          `REGISTER-STATUS/§5.3 item 10 — the EXECUTED attempt count of \`${r.row}\` (${r.strategy}) equals its DECLARED term (${declaredTotalOfRow(r.row)})`,
-        ).toBe(declaredTotalOfRow(r.row))
+          `REGISTER-STATUS/§5.3 item 10 — the EXECUTED attempt count of \`${r.row}\` (${r.strategy}) equals ITS OWN DECLARED TERM (${declaredTermOfPair(r.row, r.strategy)}; \`P-RL-IM-3\` is the one row carrying two terms, and each of its two records reconciles against its own)`,
+        ).toBe(declaredTermOfPair(r.row, r.strategy))
       } else {
         expect(
           r.attemptsRun,
-          `REGISTER-STATUS/§5.5.1 — the row \`${r.row}\` (${r.strategy}) STOPPED EARLY as the stop rule declares; its executed count is a PARTIAL reading of its declared ${declaredTotalOfRow(r.row)} attempts`,
-        ).toBeLessThanOrEqual(declaredTotalOfRow(r.row))
+          `REGISTER-STATUS/§5.5.1 — the row \`${r.row}\` (${r.strategy}) STOPPED EARLY as the stop rule declares; its executed count is a PARTIAL reading of its declared ${declaredTermOfPair(r.row, r.strategy)} attempts`,
+        ).toBeLessThanOrEqual(declaredTermOfPair(r.row, r.strategy))
       }
       expect(
         r.held + r.broken,
