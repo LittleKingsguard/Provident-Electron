@@ -242,6 +242,53 @@ is ruled.** **A later pass that re-types `A-2` as an open question is citing a c
 **NO STATUS BEYOND THE SPEC GATE IS ADVANCED BY THIS NOTE** — the module does not exist, the red set has not been
 authored or run, and `E8` remains an OPEN unit (`CURRENT STATE` items 1/6; `§4.5`).
 
+**Note 7 — THE RED RUN'S PROVENANCE, AND THE FOUR CONTRACT DEFECTS IT EXPOSED (amendment of `2026-09-27`, SECOND
+DATED NOTE OF THE SAME DAY, APPENDED — NOTHING ABOVE MOVES).** **THE RED SET HAS NOW BEEN AUTHORED AND RUN.**
+**PROVENANCE, recorded verbatim so no later pass re-derives it:** the file is **`tests/theme.test.ts`**, it carries
+**`58` rows**, and it ran against the **ABSENT MODULE** with **`40` FAILED / `18` PASSED**. **The `§5.5.1` register
+STOPPED AT `P-TH-IM-1` after FIVE CONSECUTIVE FAILURES** (the `§5.5.1` method-note-3 stop rule), and **the ELEVEN
+rows not reached are REPORTED AS UN-RUN FAILURES, never as passes** (`§4.2`). **This is `[T]`-layer, module-absent
+evidence only** — the layer anchors are unmoved and **no green is claimed anywhere by this note.**
+
+**THE FOUR DEFECTS THE RED RUN EXPOSED, IN THE REGISTER'S ARITHMETIC AND LEDGER, AND THIS AMENDMENT'S FOUR FIXES.
+THE TERMS THEMSELVES ARE UNCHANGED: NO TERM, NO ROW ID, NO STRATEGY ID, NO SEED, NO CAP, NO SHAPE, NO POOL MEMBER
+AND NO SECTION NUMBER MOVES.**
+
+1. **`§5.5.3` MIXED TWO FIGURES.** The twelve **TERMS** sum to **`102`**, while **`§5.5.2` item 3's DISTINCT figures
+   sum to `99`** (`102 − 12 + 9`): `§5.5.3` printed only the `102` chain, so **a DONE row reconciling DECLARED
+   versus DISTINCT had no authority.** **FIXED at `§5.5.3`, which now prints BOTH figures, each with its own terms
+   and its own chain, and states in one sentence which is which and where each is used — the as-filed `102` chain
+   and the as-filed sentence are KEPT VISIBLE there.**
+2. **`§5.5.2` item 3's LEDGER OMITTED `P-TH-TP-5`.** `§5.5.1` declares its term as `6`, but the ledger listed only
+   `8` rows (one of them the catch-all) and carried no `P-TH-TP-5` line at all. **FIXED: the row is ADDED to the
+   ledger with its declared `6` / distinct `6`**, exactly as `P-TH-TP-5`'s own cell declares it.
+3. **`§5.5.2` item 3's catch-all MISLABELLED SIX ROWS AS *"the other five rows"*.** The rows are **`P-TH-IM-1`,
+   `P-TH-IM-3`, `P-TH-IM-4`, `P-TH-SM-1`, `P-TH-TP-2` and `P-TH-TP-3` — SIX — each with a distinct figure equal to
+   its term.** **FIXED: the count is corrected to SIX and the six rows are NAMED; the as-written *"the other five
+   rows"* form is KEPT VISIBLE.**
+4. **`§3.4 R-1`'s EXEMPTION LIST IMPLIED THE `typeof`-TAG BODIES RATHER THAN CARRYING THEM.** `§2.1` item 5 fixes
+   the module's **FIVE** literal bodies — `''`, `'env'`, `'degraded-env'`, `'string'`, `'object'` — and the last two
+   are the `typeof` tags the value rules REQUIRE. **`R-1`'s exemptions now NAME the exemption set explicitly,
+   including a named `typeof`-TAG SUB-SET**, so the row's scan can hold and still FAIL for a genuinely spelled
+   token (`S-TH-7`'s class).
+
+**ALSO RECORDED HERE AS DATED METHOD NOTES — the two readings the red set had to CHOOSE, because the spec is SILENT
+on them and a later author must NOT re-discover them:**
+
+- **(a) THE OMITTED-ARGUMENT DRIVE IS DRIVEN AT ARITY 0.** `§2.3` item 1(c) and `§2.4` item 1(d) name the OMITTED
+  case but fix **NO MARKER VALUE** for it — so the red set drives **the applier's (and the resolver's) omitted arm by
+  invoking the function with ZERO arguments (ARITY 0)** rather than through a marker value. **NO MARKER IS
+  INTRODUCED, NO ARGUMENT DOMAIN WIDENS, and a later pass that invents a marker value is adding a clause this
+  contract does not carry.**
+- **(b) TWO POOL MULTIPLICITIES ARE EACH ONE MEMBER.** `P-TH-TP-1`'s *"deeply nested array"* (its depth being the
+  red set's own construction) and `P-TH-IM-1`'s shapes `(8)` and `(10)` (which name several values apiece —
+  `0`/`-0`/`NaN`/`1`, and a `Symbol` plus a `12n`) are each taken as **ONE MEMBER**, as `§5.5.1` declares them:
+  **the pools keep their declared lengths and each such shape consumes ONE drive.** **The multiplicity naming is a
+  POOL LABEL, never a term.**
+
+**AND THE HONEST EXTENT OF THIS NOTE: it edits THIS FILE ONLY. It runs no leg, no suite, no `tsc` and no register
+row, changes no tracker, and adds no commit of its own** (`RCA-8`: the pass that lands it commits it).
+
 ---
 
 ## Layer declaration (read this before any table below)
@@ -522,8 +569,12 @@ reconciliation step, never a relaxation of a prohibition"*).
 exemptions are this unit's own contract vocabulary — the two function names, the three type names, the six member
 names of `ThemeResolution`/`ThemeAttributeWrite`/`ThemeEnv`, and the words `theme`, `setting`, `env`, `source`,
 `attributeName`, `prefersDark`, `removal` AS IDENTIFIERS AND MEMBER NAMES** — **plus the five declared literal
-bodies of `§2.1` item 5 as LITERALS**; **`R-8`'s exemptions are exactly those five bodies, NAMED.** **A scan row
-that does not name them is VACUOUS.**
+bodies of `§2.1` item 5 as LITERALS** — **AND, NAMED EXPLICITLY AS THEIR OWN SUB-SET (`2026-09-27` amendment,
+`§0A` note 7 item 4): the `typeof`-TAG BODIES `'string'` and `'object'` ARE PART OF `R-1`'s EXEMPT SET, because
+`§2.1` item 5 fixes them as two of the five literal bodies the value rules REQUIRE** (`S-TH-7`; the
+`docs/specs/container.md` `§0A` note 8.2 precedent) — **so `R-1`'s exemption list CARRIES them rather than leaving
+them implied, and the row's scan can hold and still FAIL for a genuinely spelled token**; **`R-8`'s exemptions are
+exactly those five bodies, NAMED.** **A scan row that does not name them is VACUOUS.**
 
 **(D) THE SEMANTICS TABLE FOR EVERY IDENTIFIER THIS CONTRACT NAMES — and NONE of them is
 `undefined-until-answered`.** **Every row states the identifier's REFERENT, its DOMAIN and its SOURCE, so no
@@ -777,7 +828,7 @@ assembly-evasion control run against a strip-then-join view is UNFALSIFIED WHILE
 
 | id | Row (a TestWriter authors this) | Its DECLARED EXEMPTIONS, and both controls | Pinned by | Layer |
 | --- | --- | --- | --- | --- |
-| **R-1** | **The anti-evasion VOCABULARY row (`P-TH-1`, `P-TH-3`, `P-TH-10`).** *Over the MODULE's source (`src/shared/theme.ts`) INCLUDING its comments and in the normalized view, no occurrence, in any form, of:* **(a)** a TOKEN NAME OR TOKEN VALUE literal (`'light'`, `'dark'`, `'system'`, `'auto'`, `'color-scheme'`, `'prefers-color-scheme'`, a `--`-shaped custom-property literal, a token namespace); **(b)** an ATTRIBUTE-NAME literal (`'data-theme'`, `'data-*'`, `'class'`, `'className'`, `'style'`); **(c)** a consumer-vocabulary token (`zone`, `pane`, `tab`, `region`, `dashboard`, `gutter`, `menu`, `catalog`, `is-empty`, `is-minimized`, `is-revealed`, `census`, `trackProp`); **(d)** a store token (`localStorage`, `sessionStorage`, `indexedDB`, `store`, `cache`, `memo`, `persist`, `journal`); **(e)** a realm/ambient token (`document`, `window`, `navigator`, `globalThis`, `self`, `matchMedia`, `prefers-color-scheme`, `getComputedStyle`, `getBoundingClientRect`, `activeElement`, `process.env`, `process.platform`, `os.platform`, `eval`, `new Function`, and the `globalThis[`-style computed realm access); **(f)** a selector or DOM-write token (`querySelector`, `querySelectorAll`, `closest`, `getElementById`, `createElement`, `innerHTML`, `outerHTML`, `textContent`, `classList`, `appendChild`, `setAttribute`, `removeAttribute`, `setProperty`, `style.`, `focus(`).* | **THE DECLARED EXEMPTIONS, NAMED — a scan row that does not name them is VACUOUS (`S-TH-2`):** **this unit's own contract vocabulary, AS IDENTIFIERS AND MEMBER NAMES** — `resolveTheme`, `applyThemeDeclaration`, `ThemeResolution`, `ThemeAttributeWrite`, `ThemeEnv`, and the members `setting`, `prefersDark`, `source`, `name`, `value`, `removal`, `attributeName`, `resolved`, plus the word `theme` **as part of `resolveTheme`** — **and the FIVE declared literal bodies of `§2.1` item 5** (`''`, `'env'`, `'degraded-env'`, `'string'`, `'object'`). **BOTH CONTROLS: (i) a corpus carrying `const t = 'dark'`, a `'data-theme'` literal or a `matchMedia` reference FAILS; (ii) the module, carrying exactly the declared vocabulary and the five bodies, PASSES.** **AND THE VACUITY WARNING, carried because it is the row's likeliest failure: a scan asserting *"the module contains no `theme` token at all"* is UNFALSIFIED — the module's own two exported names contain it** (`§2.2`(C) row 1). | `P-TH-1`/`P-TH-3`/`P-TH-10`, `§2.1` item 5, `§2.2`(C) row 1 | static |
+| **R-1** | **The anti-evasion VOCABULARY row (`P-TH-1`, `P-TH-3`, `P-TH-10`).** *Over the MODULE's source (`src/shared/theme.ts`) INCLUDING its comments and in the normalized view, no occurrence, in any form, of:* **(a)** a TOKEN NAME OR TOKEN VALUE literal (`'light'`, `'dark'`, `'system'`, `'auto'`, `'color-scheme'`, `'prefers-color-scheme'`, a `--`-shaped custom-property literal, a token namespace); **(b)** an ATTRIBUTE-NAME literal (`'data-theme'`, `'data-*'`, `'class'`, `'className'`, `'style'`); **(c)** a consumer-vocabulary token (`zone`, `pane`, `tab`, `region`, `dashboard`, `gutter`, `menu`, `catalog`, `is-empty`, `is-minimized`, `is-revealed`, `census`, `trackProp`); **(d)** a store token (`localStorage`, `sessionStorage`, `indexedDB`, `store`, `cache`, `memo`, `persist`, `journal`); **(e)** a realm/ambient token (`document`, `window`, `navigator`, `globalThis`, `self`, `matchMedia`, `prefers-color-scheme`, `getComputedStyle`, `getBoundingClientRect`, `activeElement`, `process.env`, `process.platform`, `os.platform`, `eval`, `new Function`, and the `globalThis[`-style computed realm access); **(f)** a selector or DOM-write token (`querySelector`, `querySelectorAll`, `closest`, `getElementById`, `createElement`, `innerHTML`, `outerHTML`, `textContent`, `classList`, `appendChild`, `setAttribute`, `removeAttribute`, `setProperty`, `style.`, `focus(`).* | **THE DECLARED EXEMPTIONS, NAMED — a scan row that does not name them is VACUOUS (`S-TH-2`):** **this unit's own contract vocabulary, AS IDENTIFIERS AND MEMBER NAMES** — `resolveTheme`, `applyThemeDeclaration`, `ThemeResolution`, `ThemeAttributeWrite`, `ThemeEnv`, and the members `setting`, `prefersDark`, `source`, `name`, `value`, `removal`, `attributeName`, `resolved`, plus the word `theme` **as part of `resolveTheme`** — **and the FIVE declared literal bodies of `§2.1` item 5** (`''`, `'env'`, `'degraded-env'`, `'string'`, `'object'`) **— OF WHICH THE `typeof`-TAG SUB-SET IS NAMED HERE EXPLICITLY: `'string'` and `'object'` are PART OF THE EXEMPT SET, because `§2.1` item 5 fixes them as two of the five literal bodies the value rules REQUIRE, and a row that omitted them would redden the conformant module** (`S-TH-7`; `container.md` `§0A` note 8.2's precedent). **BOTH CONTROLS: (i) a corpus carrying `const t = 'dark'`, a `'data-theme'` literal or a `matchMedia` reference FAILS; (ii) the module, carrying exactly the declared vocabulary and the five bodies, PASSES.** **AND THE VACUITY WARNING, carried because it is the row's likeliest failure: a scan asserting *"the module contains no `theme` token at all"* is UNFALSIFIED — the module's own two exported names contain it** (`§2.2`(C) row 1). | `P-TH-1`/`P-TH-3`/`P-TH-10`, `§2.1` item 5, `§2.2`(C) row 1 | static |
 | **R-2** | **THE NO-DOM / NO-WRITE / NO-OS-CALL ROW (`P-TH-2`, `P-TH-9`, `P-TH-11`; `I-6`, `I-7`).** *Over the MODULE's source and over this unit's own `[T]` test file, the change set contains **no `setAttribute` / `removeAttribute` / `classList` / `setProperty` / `style` write or read, no attribute write of any kind, no `createElement`, no node creation, no `document`/`window` access, no `matchMedia` reference, no media-query subscription, no stylesheet or CSS rule text, no file or console write, and NO ELEMENT PARAMETER anywhere in the module's surface**.* **ITS FALSIFIABLE HALF: any of the above FAILS, and the `F-6` corpus is the positive control.** | **no exemptions** — the row bans the whole class; **both controls: (i) the `F-6` corpus (a `removeAttribute` call, a `setAttribute` call, a `classList` write, a `matchMedia` read, a `document` read) FAILS; (ii) the module, which contains none of them, PASSES** | `P-TH-2`/`P-TH-9`/`P-TH-11`, `§2.4` item 3, `§3.2 F-6` | static + `[T]` |
 | **R-3** | **The NO-SHIM / NO-NEW-SURFACE / NO-STORE / NO-PERSISTENCE ROW (`P-TH-4`, `P-TH-5`, `P-TH-6`; `I-4`, `I-9`).** *`src/shared/dom-shim.ts` is byte-identical before and after; no `scripts/**` file changes; no config file changes; no `package.json`/`package-lock.json` change; no new dependency or devDependency; no MCP registration site changes; and no store, no persistence channel and no journal is added anywhere.* **A shim member addition, a new `scripts` key, a config edit, a `package.json` change or a persistence channel FAILS.** **THE MCP NEGATIVES ARE ASSERTED AS SET EQUALITY AGAINST THE NAMES, never as a count quoted here** (`S-TH-6`) | **none** | `P-TH-4`/`P-TH-5`/`P-TH-6`, `I-4`/`I-9`, `§5.1`, `AGENTS.md` item 11(d) | static |
 | **R-4** | **The IMPORT-BOUNDARY row (`P-TH-12`; `I-8`, `I-9`).** *`src/shared/theme.ts` contains ZERO import statements — no value import, no type-only import, no dynamic `import(`, no `require(`.* **ANY import statement of ANY path FAILS, and THREE forms are the NAMED positive controls: `import type { GestureHandle } from './gesture-session.js'` (the frozen-session type a spec writer is most tempted to borrow), `import { tokensFor } from './container.js'` (the sibling whose name is the nearest overload — `§2.2`(C) row 3) and `import { createOwnedListHost } from './owned-list-host.js'`.** | **none** | `P-TH-12`, `§2.1` item 3, `§3.2 F-7` | static |
@@ -1138,6 +1189,12 @@ The DONE row (`docs/next-steps.md`, the supervisor's pass) must carry, **in this
     attempts and the honest DISTINCT-DRIVE figure** (`§5.5.2` item 3's ledger is the authority). **The DECLARED
     figures are what the caps are compared against; the distinct figures are reported BESIDE them and never
     substituted.**
+    **⟶ THE TWO FIGURES NOW HAVE A PRINTED AUTHORITY FOR BOTH HALVES (`2026-09-27` amendment, `§0A` note 7 item 1):
+    `§5.5.3` prints the DECLARED total `102` with its twelve terms and its chain, AND the DISTINCT total `99` with
+    its own twelve terms and its own chain, in one sentence that says which is which and where each is used — so a
+    DONE row that reconciles DECLARED versus DISTINCT cites `§5.5.3` (with `§5.5.2` item 3's ledger as the distinct
+    half's source) rather than deriving either figure itself.** **NO TERM, ROW ID, STRATEGY ID, SEED OR CAP MOVES,
+    AND THE DECLARED FIGURE REMAINS THE ONE THE CAPS ARE COMPARED AGAINST.**
 12. **The `§5.3` → `§5.5` numbering note, cited**: **there is NO `§5.4`** — the gap is DELIBERATE and is the
     family's (`docs/specs/gutter.md` `§5.3`'s own note). **This file also has NO `§5.5.0`**: it was filed **after**
     the gate-11 ruling and carries its register **from the start**, so there is no superseded zero-row exemption to
@@ -1295,9 +1352,22 @@ GENERATOR.** **EACH ROW'S OWN CELL NAMES ITS ID, THE IDS ARE DISTINCT, AND NO RO
    | `P-TH-TP-4` | `8` | `8` | the `16` cells are paired into `8` drives, and the pairing is stated in the cell |
    | `P-TH-TP-5` | `6` | `6` | none |
    | `P-TH-TP-6` | `3` | `3` | the second drive is inside the attempt |
-   | *(the other five rows)* | — | equal to their terms | no collapsing |
-   **THE DISTINCT SUM IS A REPORTED FIGURE AND IS NEVER SUBSTITUTED FOR THE DECLARED TOTAL.** **The caps compare
-   against the DECLARED figures** (`102 ≤ 400`; largest row `12 ≤ 100`).
+   | `P-TH-IM-1` | `12` | `12` | none |
+   | `P-TH-IM-3` | `10` | `10` | none |
+   | `P-TH-IM-4` | `8` | `8` | none |
+   | `P-TH-TP-2` | `12` | `12` | none |
+   | `P-TH-TP-3` | `10` | `10` | none |
+   | **THE FIVE ROWS ABOVE — `P-TH-IM-1` · `P-TH-IM-3` · `P-TH-IM-4` · `P-TH-TP-2` · `P-TH-TP-3` — PLUS `P-TH-SM-1` (already carried above at `6`/`6`) ARE THE SIX ROWS THE AS-FILED FORM OF THIS LEDGER'S LAST ROW MISLABELLED `"the other five rows"`** (`2026-09-27` amendment, `§0A` note 7 item 3) — ***THE AS-WRITTEN FORM, KEPT VISIBLE: "*(the other five rows)* | — | equal to their terms | no collapsing"*** — **the count was SIX, and the six rows are `P-TH-IM-1`, `P-TH-IM-3`, `P-TH-IM-4`, `P-TH-SM-1`, `P-TH-TP-2` and `P-TH-TP-3`, each with a distinct figure equal to its term.** **THIS IS A COUNT AND A NAMING CORRECTION ONLY: NO TERM, NO ROW ID, NO STRATEGY ID, NO SEED AND NO CAP MOVES.** | — | — |
+   **THE LEDGER'S OWN TWO ADDITIONS, STATED ONCE SO THE FIGURES RECONCILE** (`2026-09-27` amendment, `§0A` note 7
+   items 1/2): **`P-TH-TP-5` was OMITTED from this ledger as filed although `§5.5.1` declares its term as `6` — it is
+   ADDED above with its declared `6` and its distinct `6`** (item 2); and **the twelve DISTINCT figures this ledger
+   now carries are `12` (`IM-1`), `9` (`IM-2`), `10` (`IM-3`), `8` (`IM-4`), `6` (`SM-1`), `3` (`SM-2`), `12`
+   (`TP-1`), `12` (`TP-2`), `10` (`TP-3`), `8` (`TP-4`), `6` (`TP-5`) and `3` (`TP-6`) — their own sum, printed
+   with its terms and its own chain at `§5.5.3`, is `99` (`12 + 9 + 10 + 8 + 6 + 3 + 12 + 12 + 10 + 8 + 6 + 3 =
+   99`).** **THE DISTINCT FIGURE IS A REPORTED FIGURE AND IS NEVER SUBSTITUTED FOR THE
+   DECLARED TOTAL.** **The caps compare against the DECLARED figures** (`102 ≤ 400`; largest row `12 ≤ 100`) —
+   **and the two figures, each with its own terms and its own sum, are printed at `§5.5.3` so a DONE row
+   reconciling DECLARED versus DISTINCT has an authority for BOTH.**
 4. **THE SHAPES DELIBERATELY EXCLUDED FROM EVERY POOL — named as a STATED BOUNDARY rather than left implied:**
    **(a)** a **lone-surrogate string** as a `setting` (it would exercise no rule this contract pins, and its only
    observable is identity pass-through, which shape `(1)`–`(4)` already assert) · **(b)** a **`Symbol.toPrimitive`
@@ -1342,12 +1412,22 @@ GENERATOR.** **EACH ROW'S OWN CELL NAMES ITS ID, THE IDS ARE DISTINCT, AND NO RO
 
 #### 5.5.3 Attempt arithmetic — STATED SO A READER CAN CHECK IT AGAINST THE TABLES
 
+**⟶ THIS SECTION CARRIES TWO FIGURES, AND THIS ONE SENTENCE IS THE AUTHORITY FOR WHICH IS WHICH (`2026-09-27`
+amendment, `§0A` note 7 item 1): THE DECLARED FIGURE `102` IS THE SUM OF THE TWELVE DECLARED ROW TERMS AND IS THE
+FIGURE EVERY CAP COMPARISON USES, WHILE THE DISTINCT FIGURE `99` IS THE SUM OF THE TWELVE DISTINCT-DRIVE FIGURES
+`§5.5.2` item 3's ledger reports and is the figure a reconciliation of DECLARED versus DISTINCT uses — the two are
+DIFFERENT FIGURES, each with its own terms and its own sum, and NEITHER substitutes for the other.** **THE AS-FILED
+FORM BELOW PRINTED ONLY THE `102` CHAIN; it is KEPT VISIBLE, and this amendment ADDS the `99` block beside it.**
+**NO TERM, ROW ID, STRATEGY ID, SEED OR CAP MOVES.**
+
 **THE DECLARED TOTAL, printed WITH its terms — and this is the figure every cap comparison uses:**
 
 **`102` = `12` + `12` + `10` + `8` + `6` + `3` + `12` + `12` + `10` + `8` + `6` + `3`**
 
 **THE DECLARED CHAIN, the twelve terms summed as a chain of eleven steps: `12` → `24` → `34` → `42` → `48` →
-`51` → `63` → `75` → `85` → `93` → `99` → `102`.**
+`51` → `63` → `75` → `85` → `93` → `99` → `102`.** **⚠ THE `99` THIS CHAIN PASSES THROUGH AT ITS ELEVENTH STEP IS
+A RUNNING DECLARED SUBTOTAL AND IS **NOT** THE DISTINCT FIGURE `99` OF `§5.5.2` item 3 — the two `99`s are a
+COINCIDENCE OF ARITHMETIC and must never be quoted for one another** (`§0A` note 7 item 1).
 
 | The term | Its row | The enumeration that produces it |
 | --- | --- | --- |
@@ -1374,7 +1454,49 @@ order)*: **`12` + `12` = `24`** · **`+ 10` = `34`** · **`+ 8` = `42`** · **`+
 total.**
 
 **CAPS RE-CHECKED AGAINST IT: `102 ≤ 400` (total headroom `298`), largest row `12 ≤ 100` (headroom `88`) — both
-caps HOLD, and neither is close.**
+caps HOLD, and neither is close.** **THE CAPS ARE COMPARED AGAINST THE DECLARED FIGURE `102` AND NEVER AGAINST THE
+DISTINCT FIGURE `99`** (`§5.5.2` item 3's own sentence).
+
+**⟶ THE DISTINCT TOTAL, PRINTED WITH ITS OWN TERMS AND ITS OWN CHAIN — THE SECOND FIGURE, ADDED BY THE `2026-09-27`
+AMENDMENT (`§0A` note 7 item 1; the source of every figure is `§5.5.2` item 3's DECLARED-VERSUS-DISTINCT LEDGER,
+which is the authority for the distinct half):**
+
+**`99` = `12` + `9` + `10` + `8` + `6` + `3` + `12` + `12` + `10` + `8` + `6` + `3`**
+
+| The DISTINCT term | Its row | Where the difference from the declared term comes from |
+| --- | --- | --- |
+| **`12`** | `P-TH-IM-1` | none (`§5.5.2` item 3: no collapsing) |
+| **`9`** | `P-TH-IM-2` | the `4` further drives share the `8` shapes' objects |
+| **`10`** | `P-TH-IM-3` | none |
+| **`8`** | `P-TH-IM-4` | none |
+| **`6`** | `P-TH-SM-1` | none |
+| **`3`** | `P-TH-SM-2` | the five repetitions are assertions inside one attempt, not drives |
+| **`12`** | `P-TH-TP-1` | the four POSITIONAL drives are assertions inside one attempt |
+| **`12`** | `P-TH-TP-2` | none |
+| **`10`** | `P-TH-TP-3` | none |
+| **`8`** | `P-TH-TP-4` | the `16` cells are paired into `8` drives |
+| **`6`** | `P-TH-TP-5` | none |
+| **`3`** | `P-TH-TP-6` | the second drive is inside the attempt |
+
+**THE DISTINCT CHAIN, the twelve distinct terms summed as a chain of eleven steps: `12` → `21` → `31` → `39` → `45` →
+`48` → `60` → `72` → `82` → `90` → `96` → `99`.**
+
+**THE DISTINCT TERM-BY-TERM ADDITION, so THAT total is checkable rather than asserted** *(the order is `§5.5.1`'s row
+order)*: **`12` + `9` = `21`** · **`+ 10` = `31`** · **`+ 8` = `39`** · **`+ 6` = `45`** · **`+ 3` = `48`** ·
+**`+ 12` = `60`** · **`+ 12` = `72`** · **`+ 10` = `82`** · **`+ 8` = `90`** · **`+ 6` = `96`** · **`+ 3` = `99`.**
+**ELEVEN steps, the first term being the chain's own first figure.**
+
+**THE TWO FIGURES' RELATION, printed so it is arithmetic rather than prose: `102 − 99 = 3`, and the difference is
+ENTIRELY `P-TH-IM-2`'s `12 → 9` collapse (`−3`) — the as-filed reading `102 − 12 + 9` names the same three attempts,
+and every other row's distinct figure equals its term, so `99` and `102` agree on eleven of the twelve terms.**
+**THE DISTINCT FAMILY SUBTOTALS, stated consistently with that addition:** **`IM` = `12 + 9 + 10 + 8` = `39`** ·
+**`SM` = `6 + 3` = `9`** · **`TP` = `12 + 12 + 10 + 8 + 6 + 3` = `51`** — and **`39 + 9 + 51 = `99` = the distinct
+total.** **THE DECLARED FAMILY SUBTOTALS ARE `42` / `9` / `51` (`§5.5.3` above); the DISTINCT ones are `39` / `9` /
+`51`, and the two sets differ ONLY in `IM` — by exactly the `3` attempts `P-TH-IM-2`'s collapse accounts for.**
+
+**THE DISTINCT FIGURE IS A REPORTED FIGURE AND IS NEVER SUBSTITUTED FOR THE DECLARED TOTAL; and a DONE row that
+prints one of the two WITHOUT its terms, or that prints a total that is not the sum of its own terms, is a review
+finding** (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`; `§5.3` item 11).
 
 **THE `(bounded)` SET: `5` of the `12` rows — `P-TH-IM-1` · `P-TH-TP-1` · `P-TH-TP-2` · `P-TH-TP-3` ·
 `P-TH-TP-4`** (`§5.5.2` item 2).
@@ -1382,7 +1504,9 @@ caps HOLD, and neither is close.**
 **THE ROW/TERM RECONCILIATION, printed so it is checkable:** **the `12` ROWS and their terms are `IM-1` (`12`) ·
 `IM-2` (`12`) · `IM-3` (`10`) · `IM-4` (`8`) · `SM-1` (`6`) · `SM-2` (`3`) · `TP-1` (`12`) · `TP-2` (`12`) ·
 `TP-3` (`10`) · `TP-4` (`8`) · `TP-5` (`6`) · `TP-6` (`3`)** — **`12` rows (`4` `IM` + `2` `SM` + `6` `TP`),
-`12` TERMS (one per row, with NO row carrying a second term), and the total is `102`.**
+`12` TERMS (one per row, with NO row carrying a second term), and the DECLARED total is `102` — with the DISTINCT
+total `99` printed beside it, from the same twelve rows' distinct figures, and NO term substituted for another
+(`§0A` note 7 item 1).**
 
 **THE PINNED SEED AND ITS FORM: `20260927`**, one hand-rolled 32-bit LCG step per draw
 (`stateₙ₊₁ = (stateₙ · 1664525 + 1013904223) mod 2³²`), `index = stateₙ₊₁ mod pool.length` with **`pool.length =
@@ -1583,6 +1707,7 @@ or BY ROW NAME, never by line length** — `docs/decisions.md`'s rows are append
 | **`src/renderer/index.html`** | **NOT THIS UNIT — it is the repo's EXISTING appearance authority and it is `F1`'s surface**, unreachable by any value this unit returns. **DENIED to this unit's diff** | `CURRENT STATE` item 10, `§3.5 X-5`, `§5.1` item 2 |
 | **`docs/pending.md` `§K`** (the RCA's requested harness modifications) | **BACKGROUND ONLY.** Its own header reads *"REQUESTS, NOT LANDED RULINGS"*. **Its vocabulary is NOT used anywhere in this file as though it were in force** | `§5.1` item 11, `§8` (this row) |
 | **`docs/specs/theme.md` (this file)** | **LANDED BY THIS FILING** (`OWED — not filed` → FILED). **The tracker cell is the SUPERVISOR's to flip** — this pass edits no tracker | this file, `§5.1` item 3, `§7` item 11 |
+| **THE `2026-09-27` AMENDMENT — THE RED RUN'S PROVENANCE AND THE FOUR REGISTER/SCAN-EXEMPTION CORRECTIONS** (`tests/theme.test.ts`: `58` rows · `40` failed / `18` passed against the absent module · the register stopped at `P-TH-IM-1` after five consecutive failures, with the eleven un-run rows reported as FAILURES) | **RECORDED — AN ANNOTATE-NEVER-REWRITE AMENDMENT OF THIS FILE ONLY, and NOT a ruling**: it moves **no** term, row id, strategy id, seed, cap, shape, pool member or section number. **Its four fixes are `§5.5.3` (both totals printed with their own terms), `§5.5.2` item 3 (`P-TH-TP-5` added; the six mislabelled rows named), `§3.4 R-1`/`§2.2`'s exemption note (the `typeof`-tag sub-set named), and its two dated method notes (the arity-0 omitted drive; the single-member pool multiplicities)** | `§0A` note 7, `§2.2`'s exemption paragraph, `§3.4 R-1`, `§5.3` item 11, `§5.5.2` item 3, `§5.5.3` |
 | **`docs/specs/theme-greens.md`** | **`OWED` at filing — the gate-5 blind-greens artifact; named in the diff scope so the pass that produces it has an allowed home** | `§5.1` row 4, `§5.3` item 8 |
 
 **Archival-loop check (`AGENTS.md` item 6): this filing archives, moves and repoints NOTHING.** It creates **two new
