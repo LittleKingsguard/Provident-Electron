@@ -1544,6 +1544,58 @@ const SIBLING_UNIT_ARTIFACT_PATHS: readonly string[] = [
   'src/renderer/renderer.ts', // row 10 + §R.1 — the bounded renderer wiring
   'src/renderer/runtime.ts', // row 11 + §R.1 — `Runtime.elementForNodeId` and nothing else
 ]
+// ---------------------------------------------------------------------------
+// **⟶ SIBLING-ATTRIBUTED 2026-09-27 (THE U-DIVERGENCE-EXT LANDING) — THE THIRD AND FOURTH DECLARING
+// UNITS, ADDED BY NAME BECAUSE `R-7`'s DENIED ARM MEASURED THEM AS THIS UNIT'S DIFF.** The as-filed
+// `SIBLING_UNIT_ARTIFACT_PATHS` above is KEPT BYTE-FOR-BYTE and the entries below are APPENDED to the
+// same declaration; nothing above is rewritten and the DENIED predicate `R-7` applies is untouched.
+//
+// **THE MEASURED RED AT `1dc6315` (this file's only failing row, `R-7 §3.4`), VERBATIM:**
+//   `Denied among them: ["scripts/electron-divergence.mjs","scripts/electron-spawn.mjs",
+//    "src/shared/dom-shim.ts","tests/divergence-attribute-extractor.test.ts","tests/ui-leg-contract.test.ts"]`
+// — the unit-scoped committed range `0e34e51..HEAD` carries the `U-DIVERGENCE-EXT` unit's own landing
+// pass (`C2`: the `H-r10` channel + the set-wise attribute extractor + the shim-integrity pre-flight)
+// and the `U-REALDOM-BOOT` test-layer leg's own row file, TOGETHER WITH this unit's suite — the SAME
+// over-broad class already repaired twice above (`E10`'s and `E3`'s declared artifacts).
+//
+// **THE GOVERNING RULE, CITED RATHER THAN ASSUMED:** `docs/specs/gutter.md` `§5.1`'s commit-range scope
+// rule (at its `§5.1`, the rule the file's own `R-16` cell also reads) — *"a diff-scope row asserted over
+// a **commit range** must scope its list **to THIS UNIT'S OWN ARTIFACTS**, and **must NOT read a later
+// unit's commits, a sibling's dirty working-tree file, or a sibling unit's artifact as this unit's
+// diff**"* — and `§3.4 R-4` (*"a later unit that legitimately imports THIS module is not a violation of
+// it"*; its cell also names `dom-shim.ts` among the paths a sibling's own import-boundary row denies).
+//
+// **EVERY MEMBER NAMES ITS DECLARING UNIT.** Two units are named here: **the `U-DIVERGENCE-EXT` /
+// `C2` HARNESS UNIT** (`scripts/electron-divergence.mjs`, `scripts/electron-spawn.mjs`,
+// `tests/divergence-attribute-extractor.test.ts`) — the same attribution `tests/gutter.test.ts`'s
+// `SIBLING_DIVERGENCE_UNIT_ARTIFACTS` registry already records for the first two of those paths — and
+// **the `U-REALDOM-BOOT` / `C1` LEG UNIT** (`tests/ui-leg-contract.test.ts`).
+//
+// **`src/shared/dom-shim.ts` — SHARED, AND THAT IS STATED RATHER THAN IMPLIED.** The shim is *not* the
+// exclusive property of any unit: **A PATH IS ATTRIBUTED HERE, NOT A UNIT.** This path was CHANGED by
+// the `U-DIVERGENCE-EXT` landing pass itself — the attribute-backed `dataset` fix that closed the
+// measured `data-wire` divergence (`docs/specs/engine-pin.md`'s `R-16`/`P-IM-1` re-grain records the
+// same landing from the engine-pin side) — so it is attributed to THAT unit for this reading.
+// **A FUTURE CHANGE TO IT BY ANOTHER UNIT MUST BE RE-ATTRIBUTED (a new measurement, a new entry or an
+// amended citation), NEVER SILENTLY INHERITED FROM THIS ONE.**
+// ---------------------------------------------------------------------------
+const DIVERGENCE_EXT_UNIT_ARTIFACT_PATHS: readonly string[] = [
+  // ── THE `U-DIVERGENCE-EXT` / `C2` HARNESS UNIT (each path, its declaring unit named):
+  'scripts/electron-divergence.mjs', // the extended harness itself — the `H-r10` channel + the set-wise attribute extractor (`docs/specs/ci-divergence-leg.md`'s `AMENDMENT BLOCK (U-DIVERGENCE-EXT)`, clauses `A-1.1`/`A-1.5`); already declared for `E10`'s scope by the architect's `e135904` ruling, and now NAMED as `C2`'s own landing
+  'scripts/electron-spawn.mjs', // the same unit's SHIM-INTEGRITY PRE-FLIGHT landing site (`tests/gutter.test.ts` `SIBLING_DIVERGENCE_UNIT_ARTIFACTS` records the same path/unit pair)
+  'tests/divergence-attribute-extractor.test.ts', // the same unit's OWN RED SET (`docs/specs/ci-divergence-leg.md` amendment clause `A-2.8` — the extractor's pure half exercised in the node suite)
+  'src/shared/dom-shim.ts', // the SHARED shim, CHANGED by that pass (the attribute-backed `dataset` fix); shared — a path is attributed, not a unit: a later change by another unit is RE-ATTRIBUTED, never silently inherited
+  // ── THE `U-REALDOM-BOOT` / `C1` LEG UNIT:
+  'tests/ui-leg-contract.test.ts', // that unit's own row file for the additive test-layer leg (`AGENTS.md` item 4); `tests/gutter.test.ts`'s registry names the same path/unit pair
+]
+/** **⟶ ADDED 2026-09-27 (THE U-DIVERGENCE-EXT LANDING, THE SAME CLASS AS THE TWO REPAIRS ABOVE).** The
+ *  third and fourth declaring units' declared artifacts, BY NAME, each with its unit named in the
+ *  comments above and in `SIBLING_UNIT_ARTIFACT_CONTROL` below (which carries the authority per path,
+ *  so `R-7` can name the OWNER of every path it excludes and the exclusion is a checkable declaration
+ *  rather than a `true`-for-convenience hatch). **THE CLOSED-SET DISCIPLINE IS UNCHANGED** and the
+ *  predicate is still driven in the FALSE direction by `R-7`'s own controls — this unit's three
+ *  canonical artifacts and every UNCLAIMED path (incl. `src/renderer/secure-panels.ts`) must answer
+ *  `false` — so a declaration that claimed everything FAILS there. */
 /** Paths whose SHAPE is a sibling `gutter-ui` spec even before they exist on disk (the sibling spec's
  *  own naming convention, `docs/specs/gutter-ui*.md`), so the exclusion stays correct for any further
  *  `docs/specs/gutter-ui-*.md` of that unit. */
@@ -1584,15 +1636,32 @@ function isSiblingUnitArtifact(path: string): boolean {
   return (
     SIBLING_UNIT_ARTIFACT_PATHS.includes(path) ||
     SIBLING_UNIT_ARTIFACT_PROBE.test(path) ||
-    COMPOSING_UNIT_ARTIFACT_PATHS.includes(path)
+    COMPOSING_UNIT_ARTIFACT_PATHS.includes(path) ||
+    // **⟶ SIBLING-ATTRIBUTED 2026-09-27 (THE U-DIVERGENCE-EXT LANDING): the `U-DIVERGENCE-EXT`
+    // (`C2`) harness unit's four declared paths — incl. the SHARED `src/shared/dom-shim.ts`, which
+    // that pass CHANGED — and the `U-REALDOM-BOOT` (`C1`) leg unit's `tests/ui-leg-contract.test.ts`.
+    // A PATH is attributed here, never a unit: a later change to the shared shim by another unit is
+    // RE-ATTRIBUTED, never silently inherited.**
+    DIVERGENCE_EXT_UNIT_ARTIFACT_PATHS.includes(path)
   )
 }
 /** **THE DECLARED-SIBLING CENSUS, WITH ITS AUTHORITY PER PATH** — the control list `R-7` drives in
  *  the predicate's TRUE direction. Every member names the `§5.1` allow-list row of the sibling spec
  *  that declares it (`docs/specs/gutter-ui.md` rows `1`/`2`/`3`/`4`/`5`/`10`/`11` + `§R.1`;
  *  `docs/specs/gutter.md` rows `1`/`2`/`3`/`4`), so the exclusion can never be read as an unnamed
- *  carve-out. */
-const SIBLING_UNIT_ARTIFACT_CONTROL: ReadonlyArray<{ readonly path: string; readonly authority: string }> = [
+ *  carve-out.
+ *
+ *  **⟶ SIBLING-ATTRIBUTED 2026-09-27 (THE U-DIVERGENCE-EXT LANDING): FIVE ENTRIES APPENDED, EACH WITH
+ *  ITS DECLARING UNIT NAMED IN `owner`** (the `U-DIVERGENCE-EXT`/`C2` harness unit's four, incl. the
+ *  SHARED `src/shared/dom-shim.ts`; the `U-REALDOM-BOOT`/`C1` leg unit's one). The as-filed twelve are
+ *  KEPT BYTE-FOR-BYTE (their `owner` defaults to the `E10`/`E3` label in `siblingArtifactOwner`), so
+ *  `R-7`'s positive control now drives the predicate `true` over SEVENTEEN declared paths, and its RAW
+ *  denied reading can name each excluded path's OWNER. */
+const SIBLING_UNIT_ARTIFACT_CONTROL: ReadonlyArray<{
+  readonly path: string
+  readonly authority: string
+  readonly owner?: string
+}> = [
   { path: 'src/shared/gutter-affordance.ts', authority: '`docs/specs/gutter-ui.md` §5.1 allow-list row `1` (NEW — the affordance module)' },
   { path: 'src/shared/demo-envelope.ts', authority: 'allow-list row `2` (the authoring site — this repo\'s one example seam implementation)' },
   { path: 'tests/gutter-ui.test.ts', authority: 'allow-list row `3` ("NEW — the red set")' },
@@ -1605,17 +1674,44 @@ const SIBLING_UNIT_ARTIFACT_CONTROL: ReadonlyArray<{ readonly path: string; read
   { path: 'tests/gutter.test.ts', authority: '`docs/specs/gutter.md` §5.1 allow-list row `2` (`E3`\'s red set — carried by the range commit `81ffd31`)' },
   { path: 'docs/specs/gutter.md', authority: '`docs/specs/gutter.md` §5.1 allow-list row `3` (`E3`\'s contract)' },
   { path: 'docs/specs/gutter-greens.md', authority: '`docs/specs/gutter.md` §5.1 allow-list row `4` (`E3`\'s gate-5 artifact)' },
+  // ── **⟶ SIBLING-ATTRIBUTED 2026-09-27 (THE U-DIVERGENCE-EXT LANDING) — THE FIFTH, SIXTH, SEVENTH,
+  // EIGHTH AND NINTH DECLARED PATHS, EACH WITH ITS DECLARING UNIT NAMED.** The measured red (quoted on
+  // the declaration above) read these five as `U-GSESSION`'s own denied paths; they are the
+  // `U-DIVERGENCE-EXT`/`C2` harness unit's own landing pass and the `U-REALDOM-BOOT`/`C1` leg unit's own
+  // row file, each admitted by the SAME scope rule (`docs/specs/gutter.md` §5.1 + `§3.4 R-4`).**
+  { path: 'scripts/electron-divergence.mjs', owner: 'the `U-DIVERGENCE-EXT` / `C2` HARNESS unit', authority: 'that unit\'s own extended harness — the `H-r10` channel + the set-wise attribute extractor (`docs/specs/ci-divergence-leg.md`\'s `AMENDMENT BLOCK (U-DIVERGENCE-EXT)`, clauses `A-1.1`/`A-1.5`); already in `E10`\'s scope by the architect\'s `e135904` ruling' },
+  { path: 'scripts/electron-spawn.mjs', owner: 'the `U-DIVERGENCE-EXT` / `C2` HARNESS unit', authority: 'that unit\'s SHIM-INTEGRITY PRE-FLIGHT landing site — the same path/unit pair `tests/gutter.test.ts`\'s `SIBLING_DIVERGENCE_UNIT_ARTIFACTS` records' },
+  { path: 'tests/divergence-attribute-extractor.test.ts', owner: 'the `U-DIVERGENCE-EXT` / `C2` HARNESS unit', authority: 'that unit\'s OWN RED SET (the same registry records the pair; `docs/specs/ci-divergence-leg.md` amendment clause `A-2.8`)' },
+  { path: 'src/shared/dom-shim.ts', owner: 'the `U-DIVERGENCE-EXT` / `C2` HARNESS unit — for THIS reading only: the shim is SHARED (a path is attributed, not a unit; a later change by another unit is RE-ATTRIBUTED, never silently inherited)', authority: 'CHANGED by that pass — the attribute-backed `dataset` fix that closed the measured `data-wire` divergence (`docs/specs/engine-pin.md`’s `R-16`/`P-IM-1` re-grain records the same landing); `docs/specs/gutter.md` §3.4 `R-4`’s own cell names `dom-shim.ts`’s sibling status' },
+  { path: 'tests/ui-leg-contract.test.ts', owner: 'the `U-REALDOM-BOOT` / `C1` LEG unit', authority: 'that unit\'s own row file for the additive test-layer leg (`AGENTS.md` item 4) — the same path/unit pair `tests/gutter.test.ts`\'s registry records' },
 ]
+/** **THE DECLARING UNIT, BY PATH** — the census above read as a map, so `R-7` names the OWNER of every
+ *  sibling path it excludes (the same `path → declaring unit` discipline the registry in
+ *  `tests/gutter.test.ts` uses). A path with no explicit `owner` belongs to one of the two original
+ *  declaring units (`E10`/`E3`), which is the label those entries have always carried. */
+const SIBLING_ARTIFACT_UNIT_BY_PATH: Readonly<Record<string, string>> = Object.fromEntries(
+  SIBLING_UNIT_ARTIFACT_CONTROL.map((c) => [c.path, c.owner ?? 'the SIBLING unit (E10 / U-GUTTER-UI) / the COMPOSING unit (E3 / U-GUTTER)']),
+)
 /** **THE PREDICATE'S FALSE DIRECTION, NAMED ONCE** — this unit's own canonical artifacts (which no
  *  sibling allow-list claims), and the UNCLAIMED paths that must STAY this unit's responsibility: a
  *  `src/renderer/**` file no sibling declares (`secure-panels.ts` is DENIED to `E10` by its own
  *  `§5.1` item 4), `src/main/**`, another sibling `src/shared/*` module and another unit's test file.
- *  `R-7` requires every one of these to answer `false`. */
+ *  `R-7` requires every one of these to answer `false`.
+ *
+ *  **⟶ SIBLING-ATTRIBUTED 2026-09-27 (THE U-DIVERGENCE-EXT LANDING): `src/shared/dom-shim.ts` MOVED
+ *  OUT OF THIS LIST.** It can no longer be an UNCLAIMED probe: the landing pass that CHANGED it is the
+ *  pass the declaration above attributes it to, so a control that pins it `false` would now contradict
+ *  that declaration. **THE SUBSTITUTE IS A PATH NO DECLARATION CLAIMS AND THAT STAYS DENIED TO THIS
+ *  UNIT** — `src/shared/census.ts` (`R-7`'s own DENIED list, `§5.1` item "another sibling
+ *  `src/shared/*` module") — so the control stays the same SIZE and keeps driving the predicate's
+ *  false direction with the same force: a predicate that claimed everything still FAILS here. **The
+ *  other four as-filed members are KEPT BYTE-FOR-BYTE, and the shim's `false` reading is still driven
+ *  elsewhere** (the sibling declaration's own `true` direction is driven in `R-7`'s positive control). */
 const GS_UNIT_OWN_ARTIFACT_CONTROL: readonly string[] = [MODULE_RELPATH, TEST_RELPATH, SPEC_RELPATH]
 const UNCLAIMED_PATH_CONTROL: readonly string[] = [
   'src/renderer/secure-panels.ts',
   'src/main/main.ts',
-  'src/shared/dom-shim.ts',
+  'src/shared/census.ts',
   'tests/census.test.ts',
   'docs/specs/census-greens.md',
 ]
@@ -1624,10 +1720,17 @@ const UNCLAIMED_PATH_CONTROL: readonly string[] = [
 function isUnitOwnImporter(path: string): boolean {
   return isUnitArtifact(path) || path === MODULE_RELPATH
 }
-/** Each path's OWNER, NAMED (`R-7`/`F-9` report the current census this way, per RULING B). */
+/** Each path's OWNER, NAMED (`R-7`/`F-9` report the current census this way, per RULING B).
+ *  **⟶ SIBLING-ATTRIBUTED 2026-09-27 (THE U-DIVERGENCE-EXT LANDING):** the sibling branch now names
+ *  the DECLARING UNIT the path is actually attributed to (`SIBLING_ARTIFACT_UNIT_BY_PATH`, built from
+ *  the census above) instead of one fixed label — a path attributed to the `C2` harness unit or the
+ *  `C1` leg unit must not be REPORTED as `E10`'s. The unit-own and unclaimed branches are unchanged. */
+function siblingArtifactOwner(path: string): string {
+  return SIBLING_ARTIFACT_UNIT_BY_PATH[path] ?? 'a DECLARED sibling artifact'
+}
 function ownerOfImporter(path: string): string {
   if (isUnitOwnImporter(path)) return 'THIS unit (U-GSESSION) — STILL A FAIL'
-  if (isSiblingUnitArtifact(path)) return 'the SIBLING unit (E10 / U-GUTTER-UI)'
+  if (isSiblingUnitArtifact(path)) return siblingArtifactOwner(path)
   return 'NO unit’s allow-list claims it'
 }
 /** The module's `src/**` importers in the **TRACKED** tree **AT THE ANCHOR COMMIT** — the
@@ -2840,10 +2943,32 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       // (`isSiblingUnitArtifact`, both named sibling sets with their citing spec rows). **A DENIED
       // PATH AMONG THIS UNIT'S OWN ATTRIBUTABLE PATHS STILL FAILS** — the synthetic control below
       // drives exactly that — and a SIBLING-ONLY set contributes NOTHING.
+      //
+      // **⟶ SIBLING-ATTRIBUTED 2026-09-27 (THE U-DIVERGENCE-EXT LANDING) — THE SAME OVER-BROAD CLASS,
+      // A THIRD TIME, ON THE NEXT UNIT TO LAND.** The annotation above is KEPT BYTE-FOR-BYTE and
+      // EXTENDED, never rewritten. **THE MEASURED RED AT `1dc6315`, VERBATIM:**
+      //
+      //   `Denied among them: ["scripts/electron-divergence.mjs","scripts/electron-spawn.mjs",
+      //    "src/shared/dom-shim.ts","tests/divergence-attribute-extractor.test.ts",
+      //    "tests/ui-leg-contract.test.ts"]`
+      //
+      // i.e. `U-DIVERGENCE-EXT`'s (`C2`) own landing pass — the `H-r10` channel, the set-wise extractor
+      // and the shim-integrity pre-flight, plus the SHARED `src/shared/dom-shim.ts` that pass CHANGED —
+      // and `U-REALDOM-BOOT`'s (`C1`) own row file were committed inside this unit's range and read as
+      // this unit's diff. **THE REPAIR IS THE SAME SUBJECT SEAM, EXTENDED BY NAME:** the declaration
+      // above now names FIVE more paths, EACH WITH ITS DECLARING UNIT (`SIBLING_UNIT_ARTIFACT_CONTROL`
+      // + `SIBLING_ARTIFACT_UNIT_BY_PATH`), so the RAW reading below REPORTS each excluded path's
+      // OWNER — the reading is never dropped, and `isDenied` is untouched. **THE GOVERNING RULE,
+      // RE-CITED FOR THIS LANDING:** `docs/specs/gutter.md` `§5.1`'s commit-range scope rule (*"must
+      // NOT read … a sibling unit's artifact as this unit's diff"*) and `§3.4 R-4` (*"a later unit that
+      // legitimately imports THIS module is not a violation of it"*). **The shim is SHARED and is
+      // attributed as A PATH, not as a unit's property: a later change to it by another unit must be
+      // RE-ATTRIBUTED, never silently inherited from this declaration.**
       // -----------------------------------------------------------------------
       const committedSplit = splitBySiblingAttribution(scoped.allFilesOfUnitCommits)
       const ownCommitted = committedSplit.own
       const rawDeniedInRange = committedSplit.raw.filter(isDenied)
+      const rawDeniedWithOwners = rawDeniedInRange.map((p) => ({ path: p, owner: siblingArtifactOwner(p) }))
       console.log(
         `R-7 §5.1 (SIBLING-ATTRIBUTED COMMITTED CENSUS) MEASURED :: ${JSON.stringify({
           range: committed.range,
@@ -2851,7 +2976,10 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
           siblingArtifactsExcluded: committedSplit.sibling,
           unitOwnCommitted: ownCommitted,
           rawDeniedReading: rawDeniedInRange,
+          rawDeniedReadingWithOwners: rawDeniedWithOwners,
           unitOwnDeniedReading: ownCommitted.filter(isDenied),
+          unitOwnCount: ownCommitted.length,
+          siblingCount: committedSplit.sibling.length,
           clause: 'docs/specs/gutter.md §5.1 (commit-range scope rule) + §3.4 R-4',
         })}`,
       )
@@ -2889,12 +3017,13 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
           ownCommitted,
         )}. Denied among them: ${JSON.stringify(
           ownCommitted.filter(isDenied),
-        )}. **THE RAW FULL-RANGE DENIED READING, REPORTED (NON-FAILING):** ${JSON.stringify(
-          rawDeniedInRange,
-        )} — every path in it is a declared sibling artifact and is excluded by the SPLIT (${JSON.stringify(
+        )}. **THE RAW FULL-RANGE DENIED READING, REPORTED (NON-FAILING) — NEVER DROPPED, AND WITH EACH
+        PATH'S OWNING UNIT NAMED (⟶ ADDED 2026-09-27, THE U-DIVERGENCE-EXT LANDING):** ${JSON.stringify(
+          rawDeniedWithOwners,
+        )} — every path in it is a declared SIBLING artifact and is excluded by the SPLIT (${JSON.stringify(
           committedSplit.sibling,
-        )}), never by a weaker predicate. Excluded sibling artifacts, each against \`isSiblingUnitArtifact\`: ${JSON.stringify(
-          committedSplit.sibling.map((p) => [p, isSiblingUnitArtifact(p)]),
+        )}), never by a weaker predicate. Excluded sibling artifacts, each against \`isSiblingUnitArtifact\` AND \`isDenied\` (so the exclusion is visibly about SUBJECT while the boundary predicate still rejects every one): ${JSON.stringify(
+          committedSplit.sibling.map((p) => [p, siblingArtifactOwner(p), isSiblingUnitArtifact(p), isDenied(p)]),
         )}`,
       ).toEqual([])
       // ---- THE REPAIRED ARM'S OWN FALSIFIABLE CONTROLS (ALL SYNTHETIC: no file is created) ----
@@ -2914,18 +3043,28 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
         )}`,
       ).toEqual([CONTROL_OWN_DENIED_PATH])
       // (2) **A SIBLING-ONLY SET CONTRIBUTES NOTHING** — the direction that makes this row green.
-      const controlSiblingOnly = splitBySiblingAttribution([
+      //     **⟶ EXTENDED 2026-09-27 (THE U-DIVERGENCE-EXT LANDING): the drive now names ALL THREE
+      //     declared units' path sets** (the as-filed two plus the `C2` harness / `C1` leg set added
+      //     above), so the count is stated WITH ITS TERMS rather than as a bare literal.
+      const declaredSiblingPaths = [
         ...SIBLING_UNIT_ARTIFACT_PATHS,
         ...COMPOSING_UNIT_ARTIFACT_PATHS,
-      ])
+        ...DIVERGENCE_EXT_UNIT_ARTIFACT_PATHS,
+      ]
+      const controlSiblingOnly = splitBySiblingAttribution(declaredSiblingPaths)
       expect(
         [controlSiblingOnly.own, controlSiblingOnly.sibling.length],
-        `R-7/§5.1 CONTROL (A SIBLING-ONLY COMMIT/SET CONTRIBUTES NOTHING TO THIS ARM): every one of the twelve DECLARED sibling artifacts is excluded, so the arm's subject is EMPTY and NOTHING of a sibling's legitimate commit can FAIL this unit's row. Drive: ${JSON.stringify(
+        `R-7/§5.1 CONTROL (A SIBLING-ONLY COMMIT/SET CONTRIBUTES NOTHING TO THIS ARM): every one of the DECLARED sibling artifacts — ${SIBLING_UNIT_ARTIFACT_PATHS.length} + ${COMPOSING_UNIT_ARTIFACT_PATHS.length} + ${DIVERGENCE_EXT_UNIT_ARTIFACT_PATHS.length} = ${SIBLING_UNIT_ARTIFACT_PATHS.length + COMPOSING_UNIT_ARTIFACT_PATHS.length + DIVERGENCE_EXT_UNIT_ARTIFACT_PATHS.length}, TERMS PRINTED — is excluded, so the arm's subject is EMPTY and NOTHING of a sibling's legitimate commit can FAIL this unit's row. Drive: ${JSON.stringify(
           controlSiblingOnly.raw,
         )}. own: ${JSON.stringify(
           controlSiblingOnly.own,
         )}. sibling count: ${controlSiblingOnly.sibling.length}`,
-      ).toEqual([[], SIBLING_UNIT_ARTIFACT_PATHS.length + COMPOSING_UNIT_ARTIFACT_PATHS.length])
+      ).toEqual([
+        [],
+        SIBLING_UNIT_ARTIFACT_PATHS.length +
+          COMPOSING_UNIT_ARTIFACT_PATHS.length +
+          DIVERGENCE_EXT_UNIT_ARTIFACT_PATHS.length,
+      ])
       // (3) **THE MEASURED FAILURE'S OWN TWO PATHS ARE BOTH DENIED *AND* BOTH EXCLUDED** — i.e. the
       //     exclusion, and nothing else, is what makes this row's DENIED half green. The first
       //     reading proves the exclusion is doing real work; the second that it is the SPLIT's work
@@ -2948,10 +3087,50 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       //     swallowed this unit's own artifacts FAILS the second.
       expect(
         SIBLING_UNIT_ARTIFACT_CONTROL.filter((c) => !isSiblingUnitArtifact(c.path)).map((c) => c.path),
-        `R-7/§5.1 POSITIVE CONTROL (THE SIBLING CLASS, THE PREDICATE'S TRUE DIRECTION): EVERY declared sibling artifact must read \`isSiblingUnitArtifact === true\` — the list is EMPTY when they do. **READS:** ${JSON.stringify(
-          SIBLING_UNIT_ARTIFACT_CONTROL.map((c) => [c.path, isSiblingUnitArtifact(c.path)]),
+        `R-7/§5.1 POSITIVE CONTROL (THE SIBLING CLASS, THE PREDICATE'S TRUE DIRECTION): EVERY declared sibling artifact (${SIBLING_UNIT_ARTIFACT_CONTROL.length} entries, ${SIBLING_UNIT_ARTIFACT_PATHS.length} + ${COMPOSING_UNIT_ARTIFACT_PATHS.length} + ${DIVERGENCE_EXT_UNIT_ARTIFACT_PATHS.length}) must read \`isSiblingUnitArtifact === true\` — the list is EMPTY when they do. **READS (path, owning unit, reading):** ${JSON.stringify(
+          SIBLING_UNIT_ARTIFACT_CONTROL.map((c) => [c.path, siblingArtifactOwner(c.path), isSiblingUnitArtifact(c.path)]),
         )}. ${SIBLING_UNIT_ARTIFACT_CONTROL.map((c) => `${c.path} ← ${c.authority}`).join(' · ')}`,
       ).toEqual([])
+      // (4b) **⟶ ADDED 2026-09-27 (THE U-DIVERGENCE-EXT LANDING) — THE WHOLE DECLARATION IS DRIVEN,
+      //      NOT ONLY THE CONTROL LIST, AND EACH EXCLUDED PATH'S OWNING UNIT IS NAMED.** The five
+      //      paths the measured red read as this unit's own diff are pinned BOTH ways here: they must
+      //      still be DENIED (so the exclusion is about SUBJECT only, and `isDenied` is unweakened)
+      //      and they must answer `true` to the sibling predicate (so the exclusion really covers
+      // (4b) **⟶ ADDED 2026-09-27 (THE U-DIVERGENCE-EXT LANDING) — THE WHOLE DECLARATION IS DRIVEN,
+      //      NOT ONLY THE CONTROL LIST, AND EACH EXCLUDED PATH'S OWNING UNIT IS NAMED.** The five
+      //      paths the measured red read as this unit's own diff are pinned BOTH ways here: they must
+      //      still be DENIED (so the exclusion is about SUBJECT only, and `isDenied` is unweakened)
+      //      and they must answer `true` to the sibling predicate (so the exclusion really covers
+      //      them). **THE OWNER MAP IS ALSO DRIVEN, NOT ONLY READ:** every declared path must resolve
+      //      through `SIBLING_ARTIFACT_UNIT_BY_PATH` to a NAMED declaring unit (the fallback label is
+      //      a finding, not a pass), so a mis-keyed census entry cannot silently report the wrong
+      //      owner. Each list is EMPTY when its claim holds.
+      const DECLARED_OWNER_LABELS = [
+        'the `U-DIVERGENCE-EXT` / `C2` HARNESS unit',
+        'the `U-REALDOM-BOOT` / `C1` LEG unit',
+        'the SIBLING unit (E10 / U-GUTTER-UI) / the COMPOSING unit (E3 / U-GUTTER)',
+      ]
+      const measuredRedPaths = [
+        'scripts/electron-divergence.mjs',
+        'scripts/electron-spawn.mjs',
+        'src/shared/dom-shim.ts',
+        'tests/divergence-attribute-extractor.test.ts',
+        'tests/ui-leg-contract.test.ts',
+      ]
+      expect(
+        [
+          declaredSiblingPaths.filter((p) => !isSiblingUnitArtifact(p)),
+          measuredRedPaths.filter((p) => !isDenied(p)),
+          measuredRedPaths.filter((p) => !isSiblingUnitArtifact(p)),
+          measuredRedPaths.filter((p) => {
+            const owner = siblingArtifactOwner(p)
+            return !DECLARED_OWNER_LABELS.some((label) => owner.startsWith(label))
+          }),
+        ],
+        `R-7/§5.1 POSITIVE CONTROL (⟶ ADDED 2026-09-27, THE U-DIVERGENCE-EXT LANDING): (1) EVERY path in the WHOLE declaration (all ${declaredSiblingPaths.length} = ${SIBLING_UNIT_ARTIFACT_PATHS.length} + ${COMPOSING_UNIT_ARTIFACT_PATHS.length} + ${DIVERGENCE_EXT_UNIT_ARTIFACT_PATHS.length}) answers \`true\`; (2) the five paths the measured \`1dc6315\` red read as this unit's OWN DENIED diff are STILL DENIED by the byte-identical \`isDenied\` (the predicate is untouched — no sibling escape hatch was added to it); (3) the same five answer \`true\` to the sibling predicate (they are what the exclusion covers); (4) each of them resolves to a NAMED declaring unit (a fallback/unclaimed label here is a finding, not a pass). **READS (path, owning unit, isDenied, isSiblingUnitArtifact):** ${JSON.stringify(
+          measuredRedPaths.map((p) => [p, siblingArtifactOwner(p), isDenied(p), isSiblingUnitArtifact(p)]),
+        )}`,
+      ).toEqual([[], [], [], []])
       expect(
         GS_UNIT_OWN_ARTIFACT_CONTROL.filter((p) => isSiblingUnitArtifact(p)),
         `R-7/§5.1 POSITIVE CONTROL (THE PREDICATE'S FALSE DIRECTION, so the exclusion cannot be vacuous): THIS unit's own three canonical artifacts must read \`isSiblingUnitArtifact === false\` — a predicate that excluded them too would make the arm pass by construction. Reads: ${JSON.stringify(
