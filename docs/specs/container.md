@@ -27,6 +27,22 @@ No gate record after gate 1 exists.** The unit stays an open `## OPEN` row (`E5`
 the supervisor's, and **it is NOT delegable until a TestWriter has RUN and REPORTED the red set**
 (`AGENTS.md` item 9, `§4.5`).
 
+**⟶ STATUS UPDATE 2026-09-27 (the DEFECT-REPAIR AMENDMENT, `§0A` note 7; the paragraph above is the
+FILING's own record and stays visible).** **THE RED SET HAS SINCE BEEN AUTHORED, RUN AND REPORTED** —
+`tests/container.test.ts`, **`68` rows · `49` FAILED / `19` PASSED** against a module that does not exist,
+with the register **stopping at `P-CT-IM-1` after `5` consecutive failures** and its **`9` un-run register
+rows reported as FAILURES**. **THIS FILE HAS BEEN AMENDED IN PLACE**: the **DECLARED REGISTER TOTAL is now
+`137`** (*as filed `154`*; the as-filed total, its chain and its `127` subtotal stay VISIBLE at `§5.5.3`
+beside their dated corrections), **four ROW-BOUND DEFECTS are pinned** (`R-7`'s underivable positive
+control · `R-6`'s declared exemption set and its extended `screenX`/`screenY`/`offsetX`/`offsetY` members ·
+`R-1`'s `style` exemption with the blessed pinned-literal subtraction · `R-1`(g)-vs-`R-6`'s token
+collision), **two dated method notes landed** (`§3.4`'s normalization: **JOIN FIRST, THEN STRIP**, and the
+literal-body census reads a **QUOTE-PRESERVING JOINED** view) and **the five TestWriter guesses are
+dispositioned** (`§0A` note 7.6). **NO per-row term, row id, strategy id, seed, cap or `(bounded)` marking
+moved** (`5` of `10` unmoved; `137 ≤ 400` and the largest row `40 ≤ 100` re-checked). **THE RED SET'S
+REGISTER HARNESS OWES A RE-GRAIN, as a SEPARATE pass** (`§0A` note 7.3). **The module still does NOT
+exist and NOTHING is green. This amendment edited ONE file — this one.**
+
 **READING ORDER (a reader should not have to reconstruct this):** `§0`/`§0A` — the rulings derived and
 this filing's own dated ruling notes · the layer declaration — the four labels and the honesty anchors ·
 `§1` — the scope and its named boundaries · `§2` — the exact surface, the caller-supplied set, the value
@@ -65,6 +81,11 @@ file-end note — the placement the sibling specs use.)**
    (`§5.5.2` item 7). **The register does NOT overshoot the `≤8` component-breakdown signal**: it lands
    **`10` rows against a `≤8` SIGNAL**, and **the overshoot is justified ONCE, in the ruling's own form**
    (`§5.5`, `§5.5.2` item 1).
+   **⟶ AMENDED 2026-09-27 (`§0A` note 7.2) — THE DECLARED TOTAL IS `137`, AND THE AS-FILED `154` ABOVE STAYS
+   VISIBLE**: **`137` = `40` + `26` + `17` + `10` + `12` + `5` + `3` + `5` + `5` + `14`**, chain
+   **`40 → 66 → 83 → 93 → 105 → 110 → 113 → 118 → 123 → 137`**, subtotals **`IM 110` · `SM 13` · `TP 14`
+   = `137`**. **NO per-row term, row id, strategy id, seed or cap moved; the `(bounded)` set is unmoved at
+   `5` of `10`; caps re-checked (`137 ≤ 400`, largest row `40 ≤ 100`).**
 4. **THE LEGS THIS UNIT DECLARES (none run): the node suite `[T]`** — `npm test` — plus
    `npm run typecheck` `[H]` (**`src/**` ONLY**; it never reads `tests/**`), `npm run build` `[H]`
    (**the built output set is `SIX` files — the FIVE `esbuild` outputs plus the copied
@@ -95,6 +116,21 @@ file-end note — the placement the sibling specs use.)**
 9. **THIS PASS'S OWN EXTENT, STATED SO IT IS ATTRIBUTABLE.** One file written, zero files edited, no test
    run, no leg run, no trio run, no `tsc` invocation, no Electron boot, no commit. The new file is
    **untracked and must be committed by the supervisor** (`RCA-8`'s per-gate commit rule).
+10. **⟶ UPDATED 2026-09-27 BY THE DEFECT-REPAIR AMENDMENT (`§0A` note 7) — THE FILE'S ARITHMETIC IS NOW
+    THE AMENDED ONE, AND ITEMS 1–9 ABOVE ARE THE FILING'S OWN RECORD.** The red set **was authored, RUN
+    and REPORTED**: `tests/container.test.ts`, **`68` rows · `49` FAILED / `19` PASSED** against an absent
+    module, with the register stopping at `P-CT-IM-1` after `5` consecutive failures and its **`9` un-run
+    rows reported as FAILURES**. It exposed **a CONTRACT ARITHMETIC DEFECT (the declared total: as filed
+    `154`, amended to `137` = `40 + 26 + 17 + 10 + 12 + 5 + 3 + 5 + 5 + 14`, chain `40 → 66 → 83 → 93 →
+    105 → 110 → 113 → 118 → 123 → 137`, subtotals `IM 110 · SM 13 · TP 14`; the as-filed `154`/chain/`127`
+    kept VISIBLE) and FOUR ROW-BOUND DEFECTS (`R-7`'s underivable control · `R-6`'s self-contradictory
+    bound and its omitted `screenX`/`screenY`/`offsetX`/`offsetY` members · `R-1`'s missing `style`
+    exemption · `R-1`(g)-vs-`R-6`'s token collision), plus **two dated method notes** and **five
+    dispositioned TestWriter guesses** — all at `§0A` note 7. **NO per-row term, row id, strategy id, seed
+    or cap moved; the `(bounded)` set is unmoved at `5` of `10`; both caps hold (`137 ≤ 400`, largest row
+    `40 ≤ 100`).** **THE RED SET'S REGISTER HARNESS OWES A RE-GRAIN** (`§0A` note 7.3) — a SEPARATE pass,
+    and **the module still does not exist, so NOTHING here is green.** **This amendment edited THIS FILE
+    alone: no test file, no module, no tracker, no sibling spec, no gate-1 record.**
 
 ---
 
@@ -212,6 +248,105 @@ UI-config store, `S-d4` is intact"*) · **no `src/main/**`** · **no `electron`,
 change** (`H-r5`, amended **not weakened** — `SHIM-COMPLETION-CARVE-OUT` admits exactly one member and
 forbids `getComputedStyle` permanently).
 
+**Note 7 — THE DEFECT-REPAIR AMENDMENT, MADE AFTER THE RED SET RAN (2026-09-27).** *(The pass that AMENDS
+this contract; it writes THIS FILE and nothing else. The gate-1 record, the two rulings, every row id, every
+per-row term, every strategy id, the seed and both caps are UNMOVED — **the ONE number this amendment moves
+is the DECLARED TOTAL**, and the as-filed forms all stay visible beneath their dated annotations, per
+`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS` sub-rule 1, *"a mis-sum is corrected by annotating, never by
+silently rewriting"*.)*
+
+**7.1 — THE RED RUN'S PROVENANCE, recorded so the amendment is attributable.** `tests/container.test.ts`
+was **authored**, **RUN** and **REPORTED**: **`68` rows · `49` FAILED / `19` PASSED**, against a module that
+**does not exist**. **`19` rows are the red-time-premise rows** the spec's own `§4.1`/`§4.2` item 1 call
+"evaluable with no module at all" (`§3.5 X-1`, `§3.4 R-9`/`R-11`/`R-12`'s no-importer half and the
+`R-1`..`R-13` static rows whose corpora are harness-side). **The REGISTER STOPPED at `P-CT-IM-1` after `5`
+consecutive failures** (`§5.5`/`§5.5.1` strategy-discipline item 3), and the **`9` un-run register rows
+BELOW it were REPORTED AS FAILURES, never omitted** — which is the behaviour `§4.2`'s stop-rule paragraph
+demands (*"the un-run rows must be REPORTED AS FAILURES rather than silently omitted"*), so **the red run
+satisfied the stop rule rather than violating it.** **The red set is FILED and REPORTED; this pass amends the
+CONTRACT it reddened.**
+
+**7.2 — THE REGISTER ARITHMETIC DEFECT, RULED (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`).** **THE TERM
+VERDICT, stated first because everything else follows from it: NO PER-ROW TERM IS WRONG — not one of the ten.
+The declared total, its addition chain and its `IM` subtotal were wrong, and the already-recorded "correction"
+was wrong in a NEW way.** **THE TRUE ARITHMETIC, printed with its terms:**
+**`137` = `40` (`P-CT-IM-1`) + `26` (`P-CT-IM-2`) + `17` (`P-CT-IM-3`) + `10` (`P-CT-IM-4`) + `12`
+(`P-CT-IM-5`) + `5` (`P-CT-IM-6`) + `3` (`P-CT-SM-1`) + `5` (`P-CT-SM-2`) + `5` (`P-CT-SM-3`) + `14`
+(`P-CT-TP-1`)**, **the chain `40 → 66 → 83 → 93 → 105 → 110 → 113 → 118 → 123 → 137`**, and **the subtotals
+`IM 110` · `SM 13` · `TP 14` = `137`.** **THE CAUSE OF THE FALSE `154`: the as-filed *"correction"* line
+(`IM` = `40 + 26 + 17 + 10 + 12 + 5 + 17` = `127`) RE-ADDS `P-CT-IM-3`'s `17` A SECOND TIME — it was written
+to fix a subtotal that omitted `P-CT-IM-3`, and it added that term twice, landing on the false `154`
+(`127 + 13 + 14`). The as-written `110`/`13`/`14` = `137` line and the as-filed `154`/chain/`127` all stay
+visible at `§5.5.3` under dated annotations; **the DECLARED TOTAL this contract now carries is `137`, printed
+WITH its ten terms and its chain, at every site that carries it** (`§5.5.3`, `§5.3` item 11, the `CURRENT
+STATE` block, `§1` item 8, `§4.2` item 6, `§5.5.2`'s references, `§7` item 9, `§8`'s citation-index rows and
+`§3a`'s `A-14` audit question). **CAPS RE-CHECKED AGAINST THE CORRECTED FIGURE: `137 ≤ 400` (total) and the
+largest row `40 ≤ 100` (`P-CT-IM-1`) — BOTH STILL HOLD**, with total headroom `263` and per-row headroom
+`60`. **THE `(bounded)` SET IS UNMOVED: `5` of the `10` rows — `P-CT-IM-1` · `P-CT-IM-4` · `P-CT-IM-5` ·
+`P-CT-SM-3` · `P-CT-TP-1`.** **NO row id, strategy id, seed, cap, family membership or per-row term moved;
+the declared-vs-distinct ledger (`§5.5.2` item 3) is unmoved too, because it is per-row.**
+
+**7.3 — THE RE-GRAIN OBLIGATION, STATED SO IT IS NOT DISCOVERED LATE.** **THE RED SET'S OWN REGISTER
+HARNESS NOW OWES A RE-GRAIN**: it was **authored asserting the AS-FILED `154`** (`tests/container.test.ts`'s
+register-status row asserts the as-filed total `154`, the as-filed chain ending `154`, the excess `17` and the
+family subtotals `110`/`13`/`14`) **beside** the measured `137`. **With this amendment the DECLARED total IS
+`137`**, so that row must be **re-grained to assert `137` as the DECLARED figure with the as-filed `154` kept
+BESIDE it as the annotated provenance** — the annotation survives; only the polarity of "declared" vs
+"measured" flips. **The re-grain is a SEPARATE pass, is owed to the TestWriter, and is NOT performed here**
+(this pass holds no test-file tool). **What the re-grain must NOT do: move any per-row term, any row id, any
+strategy id, the seed `20260927`, either cap, or the `(bounded)` set — it re-points the arithmetic row's
+polarity and nothing else.**
+
+**7.4 — THE FOUR ROW-BOUND DEFECTS THE RED FOUND, each pinned at its own row (`§3.4`/`§2.3`).**
+**(1)** **`R-7`'s positive control was UNDERIVABLE AS WRITTEN**: the spec named *"a corpus carrying a SECOND
+declaration-shaped literal"* as the control, but **the example given WAS the pinned literal — one of the two
+ALLOWED literals — so a corpus carrying `const d2 = 'contain: layout style paint'` PASSES the row**, and a
+**fragment-assembled corpus whose joined value is byte-identical to the pinned text is likewise a member of
+the allowed set, not a violation of it.** **PINNED at `§3.4 R-7` and `§2.3` item 5: the control drives the
+SPELLING-VARIANT form, and the byte-identical assembled declaration is IN the row's catch (out of the
+allowed set) only as the ASSEMBLED spelling — a byte-identical assembled form is caught by `R-8`'s
+assembly control and by the assembly-detecting view, never by the two-literal closed-set census, because that
+census reads LITERAL BODIES and the body of a joined form IS the pinned text.** **(2)** **`R-6`'s stated bound
+was SELF-CONTRADICTORY**: it scans the test file's raw bytes AND its row descriptions for the same geometry
+tokens the scan row must itself hold — the collision `S-CT-6` requires every scan row to NAME an exemption
+for. **PINNED at `§3.4 R-6`: its declared exemption set is the tokens BUILT FROM CHARACTER CODES and never
+spelled, plus the fragment `'geometry'`, and NOTHING else; and `R-6`'s token list is EXTENDED to `§2.5` item
+2's own members — `screenX`/`screenY` and `offsetX`/`offsetY` (named at `§2.5` item 2, omitted by the
+as-filed row).** **(3)** **`R-1`'s exemption list omitted `style`**, while the one literal the module must own
+is `contain: layout style paint` and `R-10` bans a bare `style`. **PINNED — the reconciliation is BLESSED,
+not re-spelled: `R-1` carries `style` as a DECLARED EXEMPTION BY NAME, AND the subtraction of the pinned
+literal before the write/CSS scans is the DECLARED reconciliation, with `M-10`(c) asserting the subtraction
+is LOAD-BEARING** (`style` present before, absent after) **so the exemption cannot become a general licence:
+every OTHER occurrence of the token is still caught.** **(4)** **`R-1`(g)'s token list COLLIDED with `R-6`'s
+subject inside the same file** (`getComputedStyle`/`getBoundingClientRect`/`pointerId`/`matchMedia` — spelled
+nowhere, built from character codes at both sites). **PINNED at both rows: the collision is reconciled by the
+SAME declared-exemption/derivation form as (2) — the `R-1`(g) tokens that `R-6` also fences are held as
+CODE-BUILT tokens and are `R-6`'s declared exemption, so both rows hold at once.**
+
+**7.5 — THE TWO DATED METHOD NOTES (the TestWriter's authoring hazards, which are the CONTRACT's business
+because a later author must not re-discover them).** **(a) JOIN FIRST, THEN STRIP.** The landed
+`tests/**`-scan techniques **STRIP QUOTES BEFORE JOINING**, which means **they cannot join a
+fragment-assembled literal into one piece** — the joined view for the ASSEMBLY controls must be produced by
+**JOINING FIRST AND STRIPPING AFTERWARDS**, and **(b) the literal-body census must read a QUOTE-PRESERVING
+joined view**, because a quote-stripped view has no literal bodies to read at all. **Until both hold, the
+`R-7`/`F-8`/`P-CT-IM-4` ASSEMBLY-EVASION CONTROLS ARE UNFALSIFIED WHILE LOOKING GREEN** — the exact
+`S-CT-6` vacuity class, in the harness rather than in the clause.
+
+**7.6 — THE FIVE RECORDED GUESSES, DISPOSITIONED (each a PIN, none re-opened).** **`G1` — the `R-1`-vs-`style`
+reconciliation: `§3.4 R-1`'s exemption list now NAMES `style` and the pinned-literal subtraction is the
+DECLARED reconciliation (`7.4` item 3) — the option taken is the BLESSED SUBTRACTION; the exemption is
+ADDED, not substituted.** **`G2` — `R-6`(c)'s *"row descriptions extracted from the test file"* had NO
+extraction method: PINNED as the method used — EVERY `it`/`describe` TITLE CAPTURED AT DECLARATION TIME,
+scanned as a SET, plus the file's own BYTES (raw and normalized)** — the capture-at-declaration form, so the
+extraction is the file's real titles and not a copy. **`G3` — `R-1`'s scope over the test file was ambiguous:
+CONFIRMED as the reading used — `R-1` scans the MODULE file, with the CORPORA carried as SEPARATE CONTROL
+STRINGS, and the TEST-FILE scan BELONGS TO `R-6`.** **`G4` — `R-12`'s allow-list census needs `git`, which is
+unavailable at run time: PINNED as the reading used — the FILESYSTEM PROBE: every DENIED path present on
+disk, every artifact path of this unit's allow-list existing, and the IMPORTER GRAPH READ FROM THE TREE
+(a recursive `src/**` read of the module's specifier), with NO git command.** **`G5` — `I-14`'s *"no electron
+import"*: CONFIRMED as an IMPORT-STATEMENT assertion, not prose** — the probe reads the file's import
+statements, so this file's own comments about the refusal cannot redden it.
+
 ---
 
 ## Layer declaration (read this before any table below)
@@ -310,9 +445,10 @@ module byte**, **no coordinate and no geometry read**, and **no write of any kin
    three things:** the **selector discipline** (one call, answer unchanged, no shape gate), the
    **normalizer discipline** (one call, answer unchanged, no vocabulary), and the **shipped declaration
    text** with its caller-supplied class name — **the fork applies both, because this repo does not.**
-   **The honest cost**: this spec + a **`10`-row / `10`-term / `154`-attempt** register + red/green
+   **The honest cost**: this spec + a **`10`-row / `10`-term / `137`-attempt** register + red/green
    **with remands** + the adversarial pass + blind greens + the per-unit documentation review + a DONE
-   row + per-gate commits (`RCA-8(f)`).
+   row + per-gate commits (`RCA-8(f)`). **⟶ THE `137` IS THE AMENDED DECLARED TOTAL (`§0A` note 7.2,
+   2026-09-27); the as-filed form was `154` and is kept visible at `§5.5.3`.**
 
 ---
 
@@ -605,6 +741,22 @@ it.** **A spelling variant of the pinned text (`'contain:layout style paint'`, `
 paint'`, a fragment-assembled `'contain' + ': layout style paint'`) FAILS `R-8`** — **the token-assembly
 evasion is closed by `S-CT-6`, so an assembled form is caught rather than excused.**
 
+**⟶ AMENDED 2026-09-27 (`§0A` note 7.4 item 1) — THE CLOSED SET'S OWN BOUND, WHICH IS WHERE `R-7`'s
+POSITIVE CONTROL WAS UNDERIVABLE.** **The as-filed `R-7` control said *"a corpus carrying a SECOND
+declaration-shaped literal"* MUST FAIL and then EXEMPLIFIED it with `const d2 = 'contain: layout style
+paint'` — but that literal IS the pinned literal, i.e. ONE OF THE TWO ALLOWED MEMBERS, so the control PASSES
+and the row was unfalsifiable as written. The sentence above is kept visible, and the bound is PINNED here:**
+**`R-7`'s closed set is a set of LITERAL BODIES — `{the pinned text, the empty string}` — so its control MUST
+drive the SPELLING-VARIANT form (`'contain:layout style paint'` · `' contain: layout style paint'` · a
+second constant carrying any third body) and NOT the pinned body a second time.** **WHETHER A
+BYTE-IDENTICAL ASSEMBLED DECLARATION IS `IN` OR `OUT` OF THE CLOSED SET, STATED EXPLICITLY RATHER THAN LEFT
+OPEN: a byte-identical assembled form is `IN` the row's CATCH (it FAILS the row) but only in its ASSEMBLED
+spelling — the moment the joiner runs, its body IS the pinned text and is therefore a member of the allowed
+set; so the assembly half of the control belongs to `R-8`'s assembly rule and to any scan that reads the
+PRE-JOIN bytes, while `R-7`'s census of JOINED literal bodies catches exactly the third-body and
+spelling-variant classes and nothing more.** **NO literal was added to the set, no term and no row id
+moved.**
+
 **Item 6 — `className` IS A RETURNED VALUE, NEVER A WRITE SITE — the reconciliation, stated so it cannot
 be misread.** **`className` is (i) the identifier of the parameter of `containerDeclarationFor` and (ii)
 the name of the member of `ContainerDeclaration`; it is NEVER the object of an assignment, a `setAttribute`
@@ -749,7 +901,7 @@ there is no `ok`/`code`/`reason`/`thrown` anywhere in this contract** (`§2.1` i
 | **I-11** | **THE DECLARATION TEXT IS A CONSTANT, IDENTICAL IN EVERY CALL, AND IT IS NEVER PARSED OR APPLIED** | `E5-B-1`'s returned half and `A-d4`'s *"ONE shipped declaration survives"* | `§2.3` items 4/5, `M-9`/`M-10`, `§3.4 R-7`/`R-8`, `§5.5.1 P-CT-IM-4` |
 | **I-12** | **THE DECLARED EMPTY ANSWERS ARE `undefined` (both seams) AND `''` (the class name), AND THEY ARE THE ONLY DEGENERATE VALUES IN THE CONTRACT** | Prohibition 3's absence discipline: each is the **absence of a value the module would otherwise have to fabricate**, names nothing and cannot be mistaken for a caller value | `§2.3` items 1(b)/2/3, `M-4`/`M-5`/`M-8`, `§5.5.1 P-CT-TP-1` |
 | **I-13** | **NO STORE, NO PERSISTENCE, NO MCP SURFACE, NO SHIM MEMBER, NO CSS FILE**: no tool, no resource, no group, no `RpcMethod`, no `MUTATING_METHODS` entry, no IPC method, **no stylesheet, no CSS file and no rule**; `src/shared/dom-shim.ts` **gains no member** | Prohibitions 5/6; `PROHIBITION-5-IS-AN-ADOPTION-BOUND`; `SHIM-COMPLETION-CARVE-OUT` | `§2.2` `P-CT-5`/`P-CT-6`/`P-CT-9`, `§3.4 R-3`/`R-11` |
-| **I-14** | **`[U]` IS NOT OFFERED AND `[D]` IS NOT CLAIMED, AND BOTH REFUSALS ARE STRUCTURAL**: the module is imported by no `src/**` file and reads no coordinate, so there is no rendered surface to observe and nothing for a measuring leg to measure | `§5.2`; `docs/specs/zones.md` `§4.4 S-6` | `§5.2`, `§3.4 R-6`/`R-9`/`R-10`, `§7` item 4 |
+| **I-14** | **`[U]` IS NOT OFFERED AND `[D]` IS NOT CLAIMED, AND BOTH REFUSALS ARE STRUCTURAL**: the module is imported by no `src/**` file and reads no coordinate, so there is no rendered surface to observe and nothing for a measuring leg to measure | `§5.2`; `docs/specs/zones.md` `§4.4 S-6` | `§5.2`, `§3.4 R-6`/`R-9`/`R-10`, `§7` item 4, `§0A` note 7.6 `G5` — **whose drive is PINNED as an IMPORT-STATEMENT assertion (the test file's import statements are read, never its prose), so this file's own comments about the refusal cannot redden the row** |
 
 ### 3.4 The STATIC rows — the rows `§2.2`'s prohibition table cites, ENUMERATED
 
@@ -765,20 +917,31 @@ argument, never a real DOM.**
 paint'` reads as one literal) **and COMMENTS ARE SCANNED AS CODE** — so a banned token in a comment, in a
 fragment-assembled literal, or in a template hole **FAILS as if it were spelled plainly**.
 
+**⟶ ADDED 2026-09-27 — THE TWO DATED METHOD NOTES (`§0A` note 7.5), stated as CONTRACT because a later
+author must not re-discover them.** **(1) JOIN FIRST, THEN STRIP.** The normalization is two operations and
+**THEIR ORDER IS NOT FREE**: the concatenation join must run **BEFORE** quotes are stripped, because a view
+that strips quotes first can no longer see the `'…' + '…'` boundary the joiner needs — **so an
+assembly-evasion control run against a strip-then-join view is UNFALSIFIED WHILE LOOKING GREEN.** **(2) THE
+LITERAL-BODY CENSUS READS A QUOTE-PRESERVING JOINED VIEW.** A row that counts or compares **string literal
+BODIES** (the `R-7` class) cannot read a quote-stripped view at all, because that view has no literal bodies
+left; it reads the **comment-stripped, quote-PRESERVING, concatenation-JOINED** view. **CONSEQUENCE, stated
+so it is not discovered as a false green: the `R-7`/`F-8`/`P-CT-IM-4` assembly-evasion controls are
+falsifiable ONLY under these two views.**
+
 | id | Row (a TestWriter authors this) | Its DECLARED EXEMPTIONS, and both controls | Pinned by | Layer |
 | --- | --- | --- | --- | --- |
-| **R-1** | **The anti-evasion VOCABULARY row (P-CT-1, P-CT-3, P-CT-9, P-CT-12).** *Over the MODULE's source (`src/shared/container.ts`) INCLUDING its comments and in the normalized view, no occurrence, in any form, of: **(a)** a pane/zone/tab/region vocabulary token (`pane`, `zone`, `tab`, `region`, `dashboard`, `column`, `gutter`); **(b)** a mirror-class taxonomy spelling (`is-empty`, `is-minimized`, `is-revealed`, `minimized`, `revealed`, `slotModel`, `emptySlot`) or the bare member key `empty` as an OWN KEY or a STRING; **(c)** a unit or CSS token literal (`'px'`, `'0px'`, `'fit-content'`, `'1fr'`, `'auto'`, `calc(`, the QUOTED CSS CUSTOM-PROPERTY LITERAL `'--` — an opening quote followed by two hyphens — and the CSS PROPERTY-LITERAL FORM `contain:` OUTSIDE the pinned declaration); **(d)** a selector token (`selectors`, `:has(`, `[data-`, `querySelector`, `querySelectorAll`, `closest`, `getElementById`, `querySelectorAll`); **(e)** a census/format token (`census`, `specOf`, `sizes`, `trackProp`, `trackVar`, `trackProp`, `emptyToken`, `trackFor`, `isEmpty`, `String(`, `parseFloat`); **(f)** a store token (`localStorage`, `sessionStorage`, `indexedDB`, `store`, `cache`, `memo`, `persist`); **(g)** a realm/ambient token (`document`, `window`, `globalThis`, `self`, `top`, `parent`, `frames`, `activeElement`, `matchMedia`, `getComputedStyle`, `getBoundingClientRect`, `offsetWidth`, `offsetHeight`, `clientWidth`, `clientHeight`, `scrollWidth`, `clientX`, `clientY`, `pageX`, `pageY`, `movementX`, `movementY`, `pointerId`, `deltaX`, `deltaY`, `isPrimary`, `button`, `buttons`, `eval`, `new Function`, `process.env`, and the `globalThis[`-style computed realm access).* | **THE DECLARED EXEMPTIONS, NAMED — a scan row that does not name them is VACUOUS (`S-CT-6`):** **`chrome` · `edge` · `orientation` · `token` · `tokensFor` · `tokenFn` · `resolveAxis`/`axisResolver` · `className` · `declaration` · `container` · `contain` · `declarationFor` · `Map`** — **THIS UNIT'S DECLARED CONTRACT VOCABULARY**, the names the adoption row and this spec's surface already own. **`chrome`/`edge`/`orientation` are on NO landed ban list** (re-measured this pass: `orientation` has ZERO `src/**` hits; `chrome` has ZERO `src/**` hits and one `tests/**` hit that is the SHELL's own chrome); **`className` is reconciled at `§2.2`(D) row `2` and re-stated at `§2.3` item 6**; **`container`/`contain` appear as substrings of the pinned declaration text and of this unit's own name.** **BOTH CONTROLS: (i) a corpus carrying `const c = 'is-empty'` and a corpus carrying `el.className = c` FAIL the row; (ii) a corpus carrying `containerDeclarationFor(className)` and `tokensFor(chrome, tokenFn)` PASS the row.** | P-CT-1/P-CT-3/P-CT-9/P-CT-12, `§2.2`(D), `§2.3` item 6 | static |
+| **R-1** | **The anti-evasion VOCABULARY row (P-CT-1, P-CT-3, P-CT-9, P-CT-12).** *Over the MODULE's source (`src/shared/container.ts`) INCLUDING its comments and in the normalized view, no occurrence, in any form, of: **(a)** a pane/zone/tab/region vocabulary token (`pane`, `zone`, `tab`, `region`, `dashboard`, `column`, `gutter`); **(b)** a mirror-class taxonomy spelling (`is-empty`, `is-minimized`, `is-revealed`, `minimized`, `revealed`, `slotModel`, `emptySlot`) or the bare member key `empty` as an OWN KEY or a STRING; **(c)** a unit or CSS token literal (`'px'`, `'0px'`, `'fit-content'`, `'1fr'`, `'auto'`, `calc(`, the QUOTED CSS CUSTOM-PROPERTY LITERAL `'--` — an opening quote followed by two hyphens — and the CSS PROPERTY-LITERAL FORM `contain:` OUTSIDE the pinned declaration); **(d)** a selector token (`selectors`, `:has(`, `[data-`, `querySelector`, `querySelectorAll`, `closest`, `getElementById`, `querySelectorAll`); **(e)** a census/format token (`census`, `specOf`, `sizes`, `trackProp`, `trackVar`, `trackProp`, `emptyToken`, `trackFor`, `isEmpty`, `String(`, `parseFloat`); **(f)** a store token (`localStorage`, `sessionStorage`, `indexedDB`, `store`, `cache`, `memo`, `persist`); **(g)** a realm/ambient token (`document`, `window`, `globalThis`, `self`, `top`, `parent`, `frames`, `activeElement`, `matchMedia`, `getComputedStyle`, `getBoundingClientRect`, `offsetWidth`, `offsetHeight`, `clientWidth`, `clientHeight`, `scrollWidth`, `clientX`, `clientY`, `pageX`, `pageY`, `movementX`, `movementY`, `pointerId`, `deltaX`, `deltaY`, `isPrimary`, `button`, `buttons`, `eval`, `new Function`, `process.env`, and the `globalThis[`-style computed realm access).* | **THE DECLARED EXEMPTIONS, NAMED — a scan row that does not name them is VACUOUS (`S-CT-6`):** **`chrome` · `edge` · `orientation` · `token` · `tokensFor` · `tokenFn` · `resolveAxis`/`axisResolver` · `className` · `declaration` · `container` · `contain` · `declarationFor` · `Map`** — **⟶ AMENDED 2026-09-27 (`§0A` note 7.4 items 3/4, 7.6 `G1`): THE EXEMPTION LIST IS EXTENDED BY ONE NAME AND ONE COLLISION IS RECONCILED. (i) `style` IS ADDED TO THIS LIST, because the one literal the module must own IS `contain: layout style paint` and `R-10` bans a bare `style` — the reconciliation is the BLESSED SUBTRACTION: `style` is exempt as a word of the PINNED LITERAL, and the pinned literal is SUBTRACTED before the write/CSS scans, with `M-10`(c) asserting the subtraction is LOAD-BEARING (`style` present before the subtraction, ABSENT after) so every OTHER occurrence of the token is still caught; the exemption is added, NOT substituted for the subtraction. (ii) `R-1`(g)'s tokens that `R-6` ALSO fences (`getComputedStyle`, `getBoundingClientRect`, `pointerId`, `matchMedia` — and here, NOTHING ELSE) are held as CHARACTER-CODE-BUILT tokens and are `R-6`'s DECLARED EXEMPTION, which is the reconciliation that lets both rows hold inside one file. NO name was removed; no ban was narrowed.** — **THIS UNIT'S DECLARED CONTRACT VOCABULARY**, the names the adoption row and this spec's surface already own. **`chrome`/`edge`/`orientation` are on NO landed ban list** (re-measured this pass: `orientation` has ZERO `src/**` hits; `chrome` has ZERO `src/**` hits and one `tests/**` hit that is the SHELL's own chrome); **`className` is reconciled at `§2.2`(D) row `2` and re-stated at `§2.3` item 6**; **`container`/`contain` appear as substrings of the pinned declaration text and of this unit's own name.** **BOTH CONTROLS: (i) a corpus carrying `const c = 'is-empty'` and a corpus carrying `el.className = c` FAIL the row; (ii) a corpus carrying `containerDeclarationFor(className)` and `tokensFor(chrome, tokenFn)` PASS the row.** | P-CT-1/P-CT-3/P-CT-9/P-CT-12, `§2.2`(D), `§2.3` item 6 | static |
 | **R-2** | **The forbidden-ACCESS and file-set row (P-CT-4, P-CT-5, P-CT-7; I-4, I-6, I-13).** *No access in the module is ROOTED IN A BANNED REALM TOKEN OR AN ALIAS OF ONE* — `globalThis['doc' + 'ument']`, `globalThis[name]`, `realm[propName]`, `const g = globalThis; g.document`, a helper returning the realm, and the **no-token realm route** (`({}).constructor.constructor('return this')()`, `Reflect.construct`, `Function.prototype.call`-shaped code construction) — **and no ambient read for a value**: the `R-1`(g) list. **THE FILE-SET HALF:** the change set does not touch `src/shared/dom-shim.ts`, does not add a MCP member, does not add a `scripts` key, does not touch `package.json`/`package-lock.json`/`tsconfig.json`/`tsconfig.tests.json`/`vitest.config.ts`, and does not touch `src/main/**` or `src/renderer/**`; **the MCP negatives are asserted as SET EQUALITY AGAINST THE NAMES, never as a count quoted here** (`S-CT-8`). **STATED LIMIT, so the row is not written unassertably: a BLANKET ban on `[expr]` is NOT claimed** — a **locally built object's** computed access and ordinary **array indexing** carry no banned token and are **deliberately not banned** (`slothost.md`'s `M-14` narrowing is the precedent); **a row that asserts *"no bracket notation at all"* FAILS this row's own text** | no exemptions beyond `R-1`'s; **both controls: (i) a corpus reading `globalThis['doc'+'ument']` FAILS; (ii) a corpus reading `pairs[i]` PASSES** | P-CT-4/P-CT-5/P-CT-7, `I-4`/`I-6`/`I-13` | static |
 | **R-3** | **The NO-SHIM / NO-NEW-SURFACE / NO-CSS-FILE row (P-CT-5, P-CT-6, P-CT-9; I-13).** *`src/shared/dom-shim.ts` is byte-identical before and after; no `.css` file exists in the diff; no `scripts/**` file changes; no config file changes; no MCP registration site changes.* **A shim member addition, a new CSS file, a new `scripts` key or a config edit FAILS** | none | P-CT-5/P-CT-6/P-CT-9, `I-13`, `§5.1` | static |
 | **R-4** | **The IMPORT-BOUNDARY row (P-CT-11; I-9; `§2.1` item 3).** *`src/shared/container.ts` contains ZERO import statements — no value import, no type-only import, no dynamic `import(`, no `require(`.* **ANY import statement of ANY path FAILS, and `import type { AxisOf } from './gutter-affordance.js'` is the named positive control** (the one import a spec writer is most tempted to add, and the one that would create the fabricated edge `§2.2` item 3 forbids). **A later unit that legitimately imports THIS module is not a violation of this row** — the row binds THIS module's own imports, and the *"imported by no `src/**` file"* claim is `R-12`'s | none | P-CT-11, `§2.1` item 3, `F-10` | static |
 | **R-5** | **The EXPORT-CENSUS row (`§2.1`) — a SET claim, never a count.** *`src/shared/container.ts` exports EXACTLY the six names `§2.1`'s census declares, in its two halves:* **(a) the RUNTIME value exports — exactly `tokensFor`, `orientationFor` and `containerDeclarationFor`** (read from the imported namespace's own keys, **by name**, with a **positive control** that a namespace carrying a **fourth** value export FAILS); **(b) THE TYPE-ONLY NAMES — `AxisResolver`, `ChromeTokenFn`, `ContainerDeclaration` — asserted as a PRESENCE claim**, because **a type-only name is ERASED AT RUN TIME** and an `EXACTLY` over an erased set is **not falsifiable at the type layer**; **`§5.2` leg 5 (the standalone strict `tsc` over the test file) is the leg that pins it** — each name is imported as a type by that file, so a rename, removal or unexported name **fails to compile**. **A row asserting only a COUNT without NAMING the names FAILS this row's own text** (`S-CT-8`) | none | `§2.1` items 1/2, `§5.2` leg 5, `F-10` | runtime + type-level |
-| **R-6** | **THE GEOMETRY / COORDINATE / NO-REACH ROW (`E5-B-2`'s no-reach clause, `S-d11`'s mandatory clause, in falsifiable form; P-CT-7; I-8).** *Over the MODULE's source AND over this unit's own `[T]` test file, the change set contains **no geometry-observation call, no coordinate read and no geometry-shaped claim**: no `getComputedStyle`, no `getBoundingClientRect`, no `offsetWidth`/`offsetHeight`/`clientWidth`/`clientHeight`/`scrollWidth`-family member, no `matchMedia`, no `style` write, no class write, no `innerHTML`, no `clientX`/`clientY`/`pageX`/`pageY`/`screenX`/`screenY`/`movementX`/`movementY`/`offsetX`/`offsetY` read, no `pointerId`/`button`/`buttons`/`deltaX` read, **no ELEMENT parameter anywhere in the module's surface**, and **no assertion whose failure message or description claims a rendered/layout/paint/applied-CSS/containment/magnitude fact**.* **ITS FALSIFIABLE HALF:** a module or fixture that observes geometry or a coordinate, an element parameter, or a row description claiming a resolution, an applied length, a containment boundary, a browser's declaration acceptance or a magnitude **FAILS**. **ITS STATED BOUND (three parts, the form `zones.md` `§3.4 R-7` established): (a) the MODULE file's raw bytes, comments included; (b) THIS UNIT'S OWN test file's raw bytes; (c) the row DESCRIPTIONS extracted from that test file** — with the geometry tokens held as **FRAGMENTS** so the scan cannot read its own rule list, and **both a POSITIVE control (a corpus reading `clientX`, and a description claiming a magnitude, must FAIL) and a NEGATIVE control (ordinary count wording PASSES)**. **ITS HONEST LIMIT:** a text scan cannot prove the absence of a claim for all prose — **the contract half is `§5.2`'s refusal to offer a `[U]`/`[D]` row and `I-8`** | none | `E5-B-2`, `S-d11`, `I-8`, `§5.2` | static |
-| **R-7** | **THE CLOSED-SET LITERAL ROW (P-CT-10; `§2.3` item 5).** *The module's STRING LITERALS are EXACTLY TWO: the pinned declaration text (one occurrence, byte-identical) and the empty string `''`.* **A THIRD string literal, a SECOND declaration-shaped literal, a spelling variant of the pinned text, or a fragment-assembled declaration FAILS.** **BOTH CONTROLS: (i) a corpus carrying `const d2 = 'contain: layout style paint'` in a second constant FAILS; (ii) a corpus carrying the two declared literals PASSES.** **ITS SCOPE, stated so it is not vacuous: this row reads the NORMALIZED view, so the assembly evasion lands in `R-8`'s own control too** | none | P-CT-10, `§2.3` items 4/5, `F-8` | static |
+| **R-6** | **THE GEOMETRY / COORDINATE / NO-REACH ROW (`E5-B-2`'s no-reach clause, `S-d11`'s mandatory clause, in falsifiable form; P-CT-7; I-8).** *Over the MODULE's source AND over this unit's own `[T]` test file, the change set contains **no geometry-observation call, no coordinate read and no geometry-shaped claim**: no `getComputedStyle`, no `getBoundingClientRect`, no `offsetWidth`/`offsetHeight`/`clientWidth`/`clientHeight`/`scrollWidth`-family member, no `matchMedia`, no `style` write, no class write, no `innerHTML`, no `clientX`/`clientY`/`pageX`/`pageY`/`screenX`/`screenY`/`movementX`/`movementY`/`offsetX`/`offsetY` read, no `pointerId`/`button`/`buttons`/`deltaX` read, **no ELEMENT parameter anywhere in the module's surface**, and **no assertion whose failure message or description claims a rendered/layout/paint/applied-CSS/containment/magnitude fact**.* **ITS FALSIFIABLE HALF:** a module or fixture that observes geometry or a coordinate, an element parameter, or a row description claiming a resolution, an applied length, a containment boundary, a browser's declaration acceptance or a magnitude **FAILS**. **ITS STATED BOUND (three parts, the form `zones.md` `§3.4 R-7` established): (a) the MODULE file's raw bytes, comments included; (b) THIS UNIT'S OWN test file's raw bytes; (c) the row DESCRIPTIONS extracted from that test file** — with the geometry tokens held as **FRAGMENTS** so the scan cannot read its own rule list, and **both a POSITIVE control (a corpus reading `clientX`, and a description claiming a magnitude, must FAIL) and a NEGATIVE control (ordinary count wording PASSES)**. **ITS HONEST LIMIT:** a text scan cannot prove the absence of a claim for all prose — **the contract half is `§5.2`'s refusal to offer a `[U]`/`[D]` row and `I-8`** | **⟶ AMENDED 2026-09-27 (`§0A` note 7.4 item 2, 7.6 `G2`/`G4`): the as-filed `none` above is REPLACED as a DECLARED EXEMPTION SET, because the row's own stated bound was SELF-CONTRADICTORY without one — bound (b)/(c) scan THIS test file for the same geometry tokens the scan row must itself hold, the collision `S-CT-6` requires every scan row to NAME an exemption for. THE DECLARED EXEMPTIONS, NAMED: the geometry/coordinate vocabulary BUILT FROM CHARACTER CODES and never spelled anywhere in the file (the code literals are themselves the exemption), plus the single fragment `'geometry'` — and NOTHING else. (c)'s EXTRACTION METHOD is PINNED with it (`G2`): EVERY `it`/`describe` TITLE CAPTURED AT DECLARATION TIME, scanned as a SET, plus the file's own BYTES (raw and normalized). THE TOKEN LIST IS EXTENDED to `§2.5` item 2's own members named there and omitted by the as-filed row: `screenX`/`screenY` and `offsetX`/`offsetY` (with `movementX`/`movementY` unchanged).** | `E5-B-2`, `S-d11`, `I-8`, `§5.2`, `§0A` note 7.4 item 2 | static |
+| **R-7** | **THE CLOSED-SET LITERAL ROW (P-CT-10; `§2.3` item 5).** *The module's STRING LITERALS are EXACTLY TWO: the pinned declaration text (one occurrence, byte-identical) and the empty string `''`.* **A THIRD string literal, a SECOND declaration-shaped literal, a spelling variant of the pinned text, or a fragment-assembled declaration FAILS.** **BOTH CONTROLS: (i) a corpus carrying `const d2 = 'contain: layout style paint'` in a second constant FAILS; (ii) a corpus carrying the two declared literals PASSES.** **ITS SCOPE, stated so it is not vacuous: this row reads the NORMALIZED view, so the assembly evasion lands in `R-8`'s own control too** | **⟶ AMENDED 2026-09-27 (`§0A` note 7.4 item 1): the as-filed control `(i)` — *"a corpus carrying `const d2 = 'contain: layout style paint'` in a second constant FAILS"* — IS WRONG AS WRITTEN and stays visible above: that body IS the pinned literal, i.e. ONE OF THE TWO ALLOWED MEMBERS, so the control PASSES and the row is unfalsifiable as filed. THE CONTROL IS RE-PINNED to the SPELLING-VARIANT form this spec already names as an `R-8` failure (`'contain:layout style paint'` · `' contain: layout style paint'` · a second constant carrying ANY third body), and the byte-identical ASSEMBLED declaration's membership in the closed set is STATED EXPLICITLY: it is IN the row's catch only in its ASSEMBLED spelling, because once the joiner runs its body IS the pinned text — so the assembly half belongs to `R-8`'s assembly rule and to any PRE-JOIN reading, never to the joined-body census. (ii)'s negative control is unchanged.** | P-CT-10, `§2.3` items 4/5, `F-8`, `§0A` note 7.4 item 1 | static |
 | **R-8** | **THE DECLARATION-TEXT ROW (P-CT-2, P-CT-10; `E5-B-1`; I-11).** *`containerDeclarationFor(className).declaration` is BYTE-IDENTICAL to the pinned constant `'contain: layout style paint'` — `length === 27`, every character code equal — for EVERY argument, AND the module's bytes contain no PARSE of it: **no `split`, no `indexOf(':')`, no `RegExp` over it, no property-name extraction, no rule object, no `StyleSheet`/`CSSRule` token, no `setProperty`, no `setAttribute('style'`, no `element.style`**.* **ITS FALSIFIABLE HALF (both controls): (i) a module returning a spelling variant, a fragment-assembled form, or a parsed-derived string FAILS; (ii) the `F-8` corpus — a module that splits the text on `':'` — FAILS the parse half.** | none | `E5-B-1`, `§2.3` items 4/5, `M-9`/`M-10`, `§5.5.1 P-CT-IM-4`, `F-8` | static + `[T]` |
 | **R-9** | **The ABSENT-PAGE-DESIGN probe (the existence row that keeps `§1` item 6 falsifiable).** *`docs/skills/designing-pages.md` does NOT exist, so there is no test-use-case coverage matrix and no demo-page index to update.* **THE PROBE: a file-existence check whose FAIL is meaningful — if the file comes to exist, this unit OWES the coverage row and the demo-page entry** (with the honest note that a mechanism with no UI surface can only contribute an **absence** row) | none | `§1` item 6, `§7` item 6 | static |
-| **R-10** | **THE NO-WRITE ROW — the scan pair (P-CT-2, P-CT-8; `E5-B-1`; I-7).** *(a) A STATIC scan over the module's bytes, comments included, for the union of the two landed UI-content-write lists (`gutter-ui.md` `§2.1` item 6 and `relocate.md` `§3.4 R-11`) — `createElement`, `innerHTML`, `outerHTML`, `insertAdjacentHTML`, `insertAdjacentText`, `textContent`, `innerText`, `classList`, `appendChild`, `removeChild`, `insertBefore`, `setAttribute`, `removeAttribute`, `setProperty`, `style`, `nodeValue`, `cursor`, `focus(`, `blur(` — **with `className` carried as a DECLARED EXEMPT MEMBER NAME, and the WRITE FORMS `\.className\s*=` and `\bclassName\b\s*=` banned WITH NO EXEMPTION.** (b) **A RUNTIME write-log** over a recording element reading ZERO writes (`M-11`). **THE PAIR IS THE ROW, because a text scan cannot prove the absence of a write for all control flow.** **BOTH CONTROLS: (i) the `F-9` corpus — `el.className = 'x'` and `el.setAttribute('style', decl)` — FAILS both halves; (ii) the module itself PASSES both, and a DEAD write-log (one that reads `0` for the control) is itself a finding.** **THE `className` EXEMPTION'S RECONCILIATION IS `§2.2`(D) row `2` and `§2.3` item 6: what the two landed lists ban is THE WRITE; this module returns a value and writes nothing, and the exemption is a DECLARED MEMBER NAME, never a relaxed ban** | **`className` (the member/parameter NAME), DECLARED — every other name on both landed lists stays BANNED with NO exemption** | P-CT-2/P-CT-8, `E5-B-1`, `M-11`, `§5.5.1 P-CT-IM-3`, `F-9` | static + `[T]` |
+| **R-10** | **THE NO-WRITE ROW — the scan pair (P-CT-2, P-CT-8; `E5-B-1`; I-7).** *(a) A STATIC scan over the module's bytes, comments included, for the union of the two landed UI-content-write lists (`gutter-ui.md` `§2.1` item 6 and `relocate.md` `§3.4 R-11`) — `createElement`, `innerHTML`, `outerHTML`, `insertAdjacentHTML`, `insertAdjacentText`, `textContent`, `innerText`, `classList`, `appendChild`, `removeChild`, `insertBefore`, `setAttribute`, `removeAttribute`, `setProperty`, `style`, `nodeValue`, `cursor`, `focus(`, `blur(` — **with `className` carried as a DECLARED EXEMPT MEMBER NAME, and the WRITE FORMS `\.className\s*=` and `\bclassName\b\s*=` banned WITH NO EXEMPTION.** (b) **A RUNTIME write-log** over a recording element reading ZERO writes (`M-11`). **THE PAIR IS THE ROW, because a text scan cannot prove the absence of a write for all control flow.** **BOTH CONTROLS: (i) the `F-9` corpus — `el.className = 'x'` and `el.setAttribute('style', decl)` — FAILS both halves; (ii) the module itself PASSES both, and a DEAD write-log (one that reads `0` for the control) is itself a finding.** **THE `className` EXEMPTION'S RECONCILIATION IS `§2.2`(D) row `2` and `§2.3` item 6: what the two landed lists ban is THE WRITE; this module returns a value and writes nothing, and the exemption is a DECLARED MEMBER NAME, never a relaxed ban** | **`className` (the member/parameter NAME), DECLARED — every other name on both landed lists stays BANNED with NO exemption. ⟶ AMENDED 2026-09-27 (`§0A` note 7.4 item 3, 7.6 `G1`): `style` is carried on `R-10(a)`'s token list, and the DECLARED RECONCILIATION is the BLESSED SUBTRACTION of the pinned literal BEFORE this scan (`style` exists inside the pinned declaration and NOWHERE else; `M-10`(c) asserts the subtraction is LOAD-BEARING) — the as-filed list above is UNCHANGED and no ban on it is narrowed** | P-CT-2/P-CT-8, `E5-B-1`, `M-11`, `§5.5.1 P-CT-IM-3`, `F-9`, `§0A` note 7.4 item 3 | static + `[T]` |
 | **R-11** | **The NO-SHIM / NO-CONFIG / surface-negatives companion to `R-3`, stated as the DONE-row-checkable half:** *no `package.json` key changes (the `scripts` key set is UNCHANGED — this unit adds NO script, per `AGENTS.md` item 4's recorded process hazard: `tests/ui-leg-contract.test.ts`'s `L-1` pins the `scripts` key set, so ANY further script key reddens that row until a TestWriter extends the landed set, and a config change cannot satisfy it)*; *no dependency or devDependency is added* (`package.json`'s `devDependencies` key set stays the FIVE names — `@types/node`, `electron`, `esbuild`, `typescript`, `vitest` — **no `fast-check`, no property runner**, per `AGENTS.md` item 11(d)) | none | `§5.1` items 7/9, `§5.5` (NO NEW DEPENDENCY), `AGENTS.md` item 4's hazard | static |
-| **R-12** | **The DIFF-SCOPE row and the no-importer probe (P-CT-5, P-CT-11; C-8's discharge).** *Every changed path in this unit's commit range is inside `§5.1`'s allow-list; NO path in `§5.1`'s DENIED set appears; and at the time this unit's red set runs, `src/shared/container.ts` is imported by NO `src/**` file* (an import-graph probe: a grep for the module's specifier across `src/**` returns ZERO). **SCOPE RULE, so the row cannot mistake correct gate work for a boundary violation: a diff-scope row asserted over a COMMIT RANGE must scope its allow-list census to THIS UNIT'S OWN ARTIFACTS** — the module, this unit's test file, this spec, this unit's own `*-greens.md` and `archive/reviews/**` record, and the unit's own tracker rows — **and must NOT read a later unit's commits or a sibling's dirty file as this unit's diff. The DENIED set is the exception and binds the WHOLE committed set.** | none | C-8, `§5.1`, `I-9`, `F-11` | static |
+| **R-12** | **The DIFF-SCOPE row and the no-importer probe (P-CT-5, P-CT-11; C-8's discharge).** *Every changed path in this unit's commit range is inside `§5.1`'s allow-list; NO path in `§5.1`'s DENIED set appears; and at the time this unit's red set runs, `src/shared/container.ts` is imported by NO `src/**` file* (an import-graph probe: a grep for the module's specifier across `src/**` returns ZERO). **SCOPE RULE, so the row cannot mistake correct gate work for a boundary violation: a diff-scope row asserted over a COMMIT RANGE must scope its allow-list census to THIS UNIT'S OWN ARTIFACTS** — the module, this unit's test file, this spec, this unit's own `*-greens.md` and `archive/reviews/**` record, and the unit's own tracker rows — **and must NOT read a later unit's commits or a sibling's dirty file as this unit's diff. The DENIED set is the exception and binds the WHOLE committed set.** | **⟶ AMENDED 2026-09-27 (`§0A` note 7.6 `G4`): THE ROW'S IMPLEMENTATION FORM IS PINNED, because `git` is UNAVAILABLE at run time — this row is evaluated by a FILESYSTEM PROBE: every DENIED path PRESENT on disk, every artifact path of this unit's allow-list EXISTING, and the IMPORTER GRAPH READ FROM THE TREE (a recursive `src/**` read matching the module's specifier, never a git command and never a comment). No clause above is weakened: the probe's FAIL is meaningful on each of the three halves.** | C-8, `§5.1`, `I-9`, `F-11`, `§0A` note 7.6 `G4` | static |
 | **R-13** | **THE ONE-AUTHORITY / NO-DUPLICATION ROW (P-CT-12, P-CT-13; `AU-1`/`AU-2`; I-2, I-5).** *The module re-implements NOTHING a landed sibling owns: it contains no size formatting, no `String(size)` join, no unit concatenation, no empty-token limb, no malformed-spec limb, no `-0` rule, no `Map`/record census semantics and no dispatch precedence; and it makes NO emptiness/reveal/minimization decision — no comparison, no predicate, no branch on any member of `chrome`.* **ITS FALSIFIABLE HALF, and it is the row's whole content: a module that formats, joins a unit, picks an empty token, or decides emptiness FAILS; and the `B-3` default's own half — *the returned value is unaffected by any member the record carries* — is driven at `M-6` and at `P-CT-IM-2`.** **THE TWO `B-3` READINGS ARE BOTH SATISFIED BY THIS ROW, which is exactly why the default can be reversed without moving a byte** (`§0A` note 3) | none | P-CT-12/P-CT-13, `I-2`/`I-5`, `§5.5.1 P-CT-IM-2` | static + `[T]` |
 
 ### 3.5 The EXISTENCE rows — the repo-state claims this filing makes, each with a probe
@@ -847,6 +1010,10 @@ early**, and **the un-run rows must be REPORTED AS FAILURES rather than silently
 that reports all `154` attempts as executed is the finding, not the expectation.** **The register's
 execution markings are DESIGN, not results**: **a row that is marked executable in `§5.5.1` but broken when
 run is a SPEC FINDING, reported rather than tuned to green.**
+**⟶ AMENDED 2026-09-27 (`§0A` note 7.1/7.2): the figure a red run must NOT report as fully executed is
+`137` (the amended declared total, `§5.5.3`); the AS-FILED `154` above stays visible under its annotation.
+The red run that produced this amendment stopped at `P-CT-IM-1` after `5` consecutive failures and reported
+its `9` un-run register rows as FAILURES — the stop rule HONOURED, not violated.**
 
 ### 4.3 What the red is NOT
 
@@ -1142,6 +1309,17 @@ items**:
     finding.** **The DECLARED figures are what the caps are compared against; the distinct figures are
     reported BESIDE them and never substituted** — **a DONE row that quotes the total alone, or that
     substitutes a distinct-drive figure in the cap comparison, is a review finding.**
+    **⟶ AMENDED 2026-09-27 (`§0A` note 7.2): THE DECLARED TOTAL THIS ITEM NOW PRINTS IS `137`:**
+    **`137` = `40` (`P-CT-IM-1`) + `26` (`P-CT-IM-2`) + `17` (`P-CT-IM-3`) + `10` (`P-CT-IM-4`) + `12`
+    (`P-CT-IM-5`) + `5` (`P-CT-IM-6`) + `3` (`P-CT-SM-1`) + `5` (`P-CT-SM-2`) + `5` (`P-CT-SM-3`) + `14`
+    (`P-CT-TP-1`)**, chain **`40 → 66 → 83 → 93 → 105 → 110 → 113 → 118 → 123 → 137`**, subtotals
+    **`IM 110` · `SM 13` · `TP 14` = `137`**; **caps re-checked — `137 ≤ 400` and the largest row
+    `40 ≤ 100`**; **the `(bounded)` set UNMOVED at `5` of `10`**; **the as-filed `154`, its as-filed chain
+    and the as-filed `127` subtotal all stay VISIBLE as annotated provenance**
+    (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS` sub-rule 1). **THE DONE ROW OWES `137` WITH ITS TERMS; a
+    DONE row that still presents `154` as the declared total is now a review finding, while one printing
+    `154` BESIDE `137` as the annotated as-filed form is correct. THE REGISTER HARNESS'S RE-GRAIN IS OWED
+    SEPARATELY (`§0A` note 7.3). NO per-row term, row id, strategy id, seed or cap is moved.**
 12. **The `§5.3` → `§5.5` numbering note, cited**: **there is NO `§5.4`** — the gap is DELIBERATE and is
     the family's (`docs/specs/gutter.md` `§5.3`'s own note). **This file also has NO `§5.5.0`**: it was
     filed **after** the gate-11 ruling and carries its register **from the start**, so there is no
@@ -1312,7 +1490,11 @@ ones are always the cap comparison.**
 
 **The DECLARED figures are what the `≤100`/row and `≤400` caps are compared against. The distinct figures
 are REPORTED BESIDE them and are NEVER substituted for them** (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`,
-sub-rule 2; `§5.3` item 11).
+sub-rule 2; `§5.3` item 11). **⟶ AMENDED 2026-09-27 (`§0A` note 7.2): the ledger above is PER-ROW and is
+therefore UNMOVED; the DECLARED TOTAL printed over it is `137`** =
+**`40 + 26 + 17 + 10 + 12 + 5 + 3 + 5 + 5 + 14`**, chain **`40 → 66 → 83 → 93 → 105 → 110 → 113 → 118 →
+123 → 137`**, subtotals **`IM 110` · `SM 13` · `TP 14` = `137`** — **the as-filed `154` and its `127`
+subtotal stay visible at `§5.5.3`; the `(bounded)` set is unmoved at `5` of `10`.**
 
 **Item 4 — a DRAW is not a SWEEP, and the `P-CT-TP-1` pool is a SUBSET of the input space by
 construction.** **The pool holds `14` members and the row draws `14` times**, so the row **reports** its
@@ -1388,6 +1570,14 @@ for every row**, and **`broken === 0` remains the green criterion.**
 
 **`154` = `40` + `26` + `17` + `10` + `12` + `5` + `3` + `5` + `5` + `14`**
 
+**⟶ AS-FILED, KEPT VISIBLE — AND CORRECTED 2026-09-27 (`§0A` note 7.2), because the ten terms printed
+directly above SUM TO `137`, NOT TO `154`.** **THE CORRECTED DECLARED TOTAL, with its terms:**
+**`137` = `40` + `26` + `17` + `10` + `12` + `5` + `3` + `5` + `5` + `14`** — **the same ten terms, no term
+moved, unmoved in count and identity.** **NO PER-ROW TERM IS WRONG; the printed TOTAL was, and the
+as-filed `154` above is retained as the annotated as-filed form
+(`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS` sub-rule 1: *"a mis-sum is corrected by annotating beside the
+as-filed form, never by silently rewriting it"*).**
+
 | The term | Its row | The enumeration that produces it |
 | --- | --- | --- |
 | **`40`** | `P-CT-IM-1` | `8` `chrome` shapes × `5` `tokenFn` shapes = `40` (the `8` further drives are ASSERTIONS over the same grid, printed beside the term) |
@@ -1404,24 +1594,48 @@ for every row**, and **`broken === 0` remains the green criterion.**
 **THE TERM-BY-TERM ADDITION, so the total is checkable rather than asserted** *(the order is `§5.5.1`'s
 row order)***:** **`40` → `66` → `83` → `93` → `105` → `110` → `113` → `118` → `123` → `154`.**
 
-**`154` IS THE SUM OF THE TEN TERMS `§5.5.1` ENUMERATES.** **THE CAPS, checked at filing:** **`154 <= 400`
-total**, and **the largest per-row term is `40` (`P-CT-IM-1`), inside `<= 100` per row** — **so both caps
-hold with `246` attempts of total headroom and `60` of per-row headroom.** **THE FAMILY SUBTOTALS, stated
-consistently with that addition:** **`IM` = `40 + 26 + 17 + 10 + 12 + 5` = `110`** · **`SM` = `3 + 5 + 5`
-= `13`** · **`TP` = `14`** — and **`110 + 13 + 14 = 137`**. **⟶ THAT IS NOT THE DECLARED TOTAL, AND THE
-DISCREPANCY IS STATED RATHER THAN SMOOTHED: the sum of the three family subtotals is `137` while the
-declared total is `154`, a difference of `17`.** **THE CAUSE, measured against this register's own
-terms: `P-CT-IM-3`'s term is `17` and it is an `IM` row — the subtotal line above omits it, because it
-was written from the five `P-CT-IM-*` rows listed before it.** **THE HONEST SUBTOTALS ARE `IM` = `40 +
-26 + 17 + 10 + 12 + 5 + 17` = `127` · `SM` = `13` · `TP` = `14`, and `127 + 13 + 14 = 154`.**
-**THE AS-WRITTEN `110`/`13`/`14` LINE IS KEPT VISIBLE ABOVE, per
-`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`'s correction rule (*"a mis-sum is corrected by annotating
-beside the as-filed form, never by silently rewriting it"*), and the DECLARED TOTAL `154` and every
-per-row TERM are UNMOVED by the correction — only the subtotal line was wrong.** **THE ROW/TERM
+**⟶ AMENDED 2026-09-27 (`§0A` note 7.2): THE AS-FILED CHAIN ABOVE IS KEPT VISIBLE, AND THE CORRECT CHAIN
+IS `40` → `66` → `83` → `93` → `105` → `110` → `113` → `118` → `123` → `137`.** **The as-filed chain's
+LAST step (`123` → `154`) is the ONLY step that does not follow from its predecessor's own term: `123` +
+the tenth term `14` = `137`, so the as-filed chain overstates its final step by `17` — and the `123`
+before it is correct, so the defect is the FINAL STEP OF THE TOTAL and nothing upstream of it. That final
+`+17` is the same `17` the as-filed `127` subtotal line re-added (`§5.5.1`'s third `IM` term, counted
+once as a term and once more inside the subtotal).**
+
+**`137` IS THE SUM OF THE TEN TERMS `§5.5.1` ENUMERATES** — **and the as-filed `154` above is the
+ANNOTATED, SUPERSEDED DECLARED TOTAL, retained so the defect remains attributable.**
+**THE CAPS, re-checked against the corrected figure:** **`137 <= 400` total** (headroom `263`), and
+**the largest per-row term is `40` (`P-CT-IM-1`), inside `<= 100` per row** (headroom `60`) — **so both
+caps hold.** **THE FAMILY SUBTOTALS, stated consistently with that addition:**
+**`IM` = `40 + 26 + 17 + 10 + 12 + 5` = `110`** · **`SM` = `3 + 5 + 5`
+= `13`** · **`TP` = `14`** — and **`110 + 13 + 14 = 137`**. **⟶ THE AS-FILED PARAGRAPH BELOW CALLED THAT A
+DISCREPANCY AGAINST A `154` DECLARED TOTAL; THE CORRECTION IS THAT `110`/`13`/`14` WERE RIGHT ALL ALONG and
+the declared total was wrong. The paragraph is KEPT VISIBLE AS-FILED with its own arithmetic annotated, per
+the annotate-never-rewrite rule.** **THE AS-FILED FORM OF THAT PARAGRAPH, verbatim in substance:**
+*("THAT IS NOT THE DECLARED TOTAL, AND THE DISCREPANCY IS STATED RATHER THAN SMOOTHED: the sum of the three
+family subtotals is `137` while the declared total is `154`, a difference of `17`. THE CAUSE, measured
+against this register's own terms: `P-CT-IM-3`'s term is `17` and it is an `IM` row — the subtotal line
+above omits it, because it was written from the five `P-CT-IM-*` rows listed before it. THE HONEST
+SUBTOTALS ARE `IM` = `40 + 26 + 17 + 10 + 12 + 5 + 17` = `127` · `SM` = `13` · `TP` = `14`, and
+`127 + 13 + 14` = `154`)***.** **⟶ THAT "CORRECTION" IS ITSELF WRONG AND IS KEPT VISIBLE WITH ITS DEFECT
+NAMED: `IM` = `40 + 26 + 17 + 10 + 12 + 5 + 17` RE-ADDS `P-CT-IM-3`'s `17` A SECOND TIME** — the row is
+already the THIRD term of the as-written `IM` line (`40 + 26 + 17 + …`), so the appended `+ 17` is a
+double-count of a term the line already contained; **the `110`-line's apparent omission was read as a
+missing term when the line was complete, and the false `154` was reached by adding it twice**
+(`127 + 13 + 14`). **THE HONEST SUBTOTALS, and they are the ORIGINAL as-written ones: `IM` = `110` ·
+`SM` = `13` · `TP` = `14`, and `110 + 13 + 14` = `137` = the declared total.** **THE AS-WRITTEN
+`110`/`13`/`14` LINE IS KEPT VISIBLE ABOVE** (and in the as-filed paragraph quoted here), per
+`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`'s correction rule; **the DECLARED TOTAL is now `137` and every
+per-row TERM is UNMOVED — one number moved, and it is the total.** **THE ROW/TERM
 RECONCILIATION, printed so it is checkable:** **the `10` ROWS and their terms are `IM-1` (`40`) ·
 `IM-2` (`26`) · `IM-3` (`17`) · `IM-4` (`10`) · `IM-5` (`12`) · `IM-6` (`5`) · `SM-1` (`3`) · `SM-2`
 (`5`) · `SM-3` (`5`) · `TP-1` (`14`)** — **`10` rows (six `IM` + three `SM` + one `TP`), `10` TERMS (one
-per row, with NO row carrying a second term), and the total is `154`.**
+per row, with NO row carrying a second term), and the total is `137`.** **THE `(bounded)` SET IS UNMOVED:
+`5` of `10` — `P-CT-IM-1` · `P-CT-IM-4` · `P-CT-IM-5` · `P-CT-SM-3` · `P-CT-TP-1`.** **NO row id, strategy
+id, seed (`20260927`), cap (`≤100`/row · `≤400` total) or per-row term is moved by this amendment.**
+**THE RED SET'S REGISTER HARNESS NOW OWES A RE-GRAIN** (`§0A` note 7.3): it was authored asserting the
+as-filed `154`; with this amendment the DECLARED figure IS `137`, so the assertion's polarity flips while
+the as-filed `154` remains visible BESIDE it.
 
 ---
 
@@ -1522,6 +1736,13 @@ carries NO row at all** (`§5.2`).
    rewritten** (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`, ACTIVE: *a total that is not the sum of its
    own terms is a review finding*). **A row marked executable here that is broken when the red runs is a
    SPEC FINDING, reported rather than tuned to green.**
+   **⟶ AMENDED 2026-09-27 (`§0A` note 7.2, after the red ran): the sentence above is FALSE AS WRITTEN and
+   stays visible. `154` is NOT the sum of the ten printed terms — `137` IS. THE DECLARED TOTAL IS NOW
+   `137` = `40 + 26 + 17 + 10 + 12 + 5 + 3 + 5 + 5 + 14`, chain `40 → 66 → 83 → 93 → 105 → 110 → 113 →
+   118 → 123 → 137`, subtotals `IM 110 · SM 13 · TP 14`. The as-filed `154`, its chain and its `127`
+   subtotal stay visible at `§5.5.3`; NO per-row term, row id, strategy id, seed or cap moved; both caps
+   hold (`137 ≤ 400`, largest row `40 ≤ 100`); the `(bounded)` set is unmoved at `5` of `10`. THE RED
+   SET'S REGISTER HARNESS OWES A RE-GRAIN (`§0A` note 7.3).**
 10. **NO ROW OF THIS UNIT CLAIMS AN ENGINE BEHAVIOUR, A PACKAGE CAPABILITY OR A `bodyRuns`/`BARE-TEXT-EMIT`
     SURFACE.** This module **imports no engine surface at all** (`§2.1` item 3) and **exercises
     `provident-ssr` nowhere** — so **no `docs/defects.md` / `docs/HANDOFF.md` entry can arise from this
@@ -1544,6 +1765,12 @@ carries NO row at all** (`§5.2`).
     wrote **no code**; and it touched **no `src/**`, no `tests/**`, no sibling spec, no tracker, no
     `package.json`, no `scripts/**`, no config and no adjacent repo.** **The tracker cells it leaves stale
     are the SUPERVISOR's to reconcile** (`§7` item 11; `§8`).
+    **⟶ AMENDED 2026-09-27 (`§0A` note 7): a LATER pass — the defect-repair amendment — EDITED THIS FILE
+    and NOTHING ELSE**, annotating beside the as-filed forms at every site that carries the register
+    arithmetic (`§5.5.3`, `§5.3` item 11, the `CURRENT STATE` block, `§1` item 8, `§4.2` item 6, `§5.5.2`
+    item 3, `§7` item 9, `§8`'s two rows, `§3a`'s `A-14`) and pinning the four row-bound defects at
+    `§2.3` item 5 and `§3.4 R-1`/`R-6`/`R-7`/`R-10`/`R-12`/`I-14`. **Items 1–11 above keep their own
+    force; item 12's "this pass" is the FILING pass and is read as such.**
 
 ### 7a. Ambiguity report — the clauses a TestWriter could NOT derive a falsifiable row from
 
@@ -1595,8 +1822,8 @@ the ROW, never the line.**
 | **`SHELL-CHROME-CARVE-OUT-FUNCTIONAL`** (`docs/decisions.md`, ACTIVE) | **CARRIED** — the mechanism-vs-UI-element test, and the reason this unit needs no exception to the project-wide constraint | `§0` ruling 5, `§1` item 4, `§2.2` `P-CT-2`, `§2.2`(D) row 6, `§7` item 5 |
 | **`GUTTER-CALLER-SEAMS-ARE-THE-FAMILY'S-DOWNSTREAM-CONTRACT`** (`docs/decisions.md`, ACTIVE) | **CARRIED**: this unit's two seam signatures, their REQUIRED status and their declared degradations are **normative contract text**, and **both seam types are EXPORTED so a fork can import the shape it implements** | `§0` ruling 6, `§2.1` item 1, `§2.4`, `§8` (this row) |
 | **`UI-UNITS-MAY-TOUCH-THE-RENDERER-WIRING`** (`docs/decisions.md`, ACTIVE) | **CARRIED as the rule that DERIVES this unit's DENIED set, and as the entry-point question this spec ANSWERS (`NO`)** | `§0` ruling 7, `§2.5` item 5, `§5.1` |
-| **`PBT-REGISTER-REQUIRED-FOR-CODE-UNITS`** + **`REGISTER-ENTRY-COUNT-IS-NOT-CAPPED-AND-ARCHIVE-IS-THE-TRUTH-MECHANISM`** (`docs/decisions.md`, ACTIVE) | **DISCHARGED BY THIS FILING** — `§5.5.1` is this unit's register: **`10` typed ROWS carrying `10` TERMS in three families**, **`154` attempts** printed **with their ten terms and a term-by-term addition table**, **no `F-` row**, **no `§6`/`FS-n` citation as a row**, **no new dependency**, **no extra leg**, seed `20260927` for the one generator, caps `≤100`/row · `≤400` total · stop-after-5. **The read-only PBT audit is OWED to the adversarial pass** | `§5.5`, `§5.5.1`, `§5.5.2`, `§5.5.3`, `§5.3` items 10/11 |
-| **`A DECLARED REGISTER TERM IS A DRIVE COUNT`** and **`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`** (`docs/decisions.md`, ACTIVE) | **CARRIED, AND THE SECOND ONE'S RULE FIRED AT FILING TIME**: `§5.5.3`'s family-subtotal line was a mis-sum as first written (`110`/`13`/`14` = `137` against a `154` total) and is **kept visible with its correction printed beside it**; the declared and distinct-drive figures are both reported (`§5.5.2` item 3) | `§5.5.1`, `§5.5.2` items 3/9, `§5.5.3`, `§5.3` item 11, `§7` item 9 |
+| **`PBT-REGISTER-REQUIRED-FOR-CODE-UNITS`** + **`REGISTER-ENTRY-COUNT-IS-NOT-CAPPED-AND-ARCHIVE-IS-THE-TRUTH-MECHANISM`** (`docs/decisions.md`, ACTIVE) | **DISCHARGED BY THIS FILING** — `§5.5.1` is this unit's register: **`10` typed ROWS carrying `10` TERMS in three families**, **`137` attempts** *(the AMENDED declared total — as filed `154`, `§0A` note 7.2)* printed **with their ten terms and a term-by-term addition table**, **no `F-` row**, **no `§6`/`FS-n` citation as a row**, **no new dependency**, **no extra leg**, seed `20260927` for the one generator, caps `≤100`/row · `≤400` total · stop-after-5. **The read-only PBT audit is OWED to the adversarial pass** | `§5.5`, `§5.5.1`, `§5.5.2`, `§5.5.3`, `§5.3` items 10/11 |
+| **`A DECLARED REGISTER TERM IS A DRIVE COUNT`** and **`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`** (`docs/decisions.md`, ACTIVE) | **CARRIED, AND THE SECOND ONE'S RULE FIRED TWICE**: `§5.5.3`'s family-subtotal line was a mis-sum as first written (`110`/`13`/`14` = `137` against a `154` total) and is **kept visible with its correction printed beside it**; **and that correction was itself a DOUBLE-COUNT of `P-CT-IM-3`'s `17`** — **⟶ AMENDED 2026-09-27 (`§0A` note 7.2): the declared total is `137` = `40 + 26 + 17 + 10 + 12 + 5 + 3 + 5 + 5 + 14`, subtotals `IM 110 · SM 13 · TP 14`, and the as-filed `154`/chain/`127` all stay visible**; the declared and distinct-drive figures are both reported (`§5.5.2` item 3) | `§5.5.1`, `§5.5.2` items 3/9, `§5.5.3`, `§5.3` item 11, `§7` item 9, `§0A` note 7.2 |
 | **`PROHIBITION-5-IS-AN-ADOPTION-BOUND`** (`docs/decisions.md`, ACTIVE) | **CARRIED** — prohibition 5 is a NON-GOAL row here, and the pinned MCP sets are asserted as SET claims against the names | `§0` ruling 12, `§0A` note 6, `§2.2` `P-CT-5`, `§3.3 I-13` |
 | **`SHELL-CHROME-...-HANDOFF-REVIEW`'s `S-d8`/`S-d11`/`H-r5`/`H-r6`/`H-r8`/`H-r10`/`H-r15`** (`docs/specs/provident-electron-shell-chrome-handoff-review.md`) | **CARRIED AS OBLIGATIONS**: `S-d8`'s six prohibitions (`§2.2`(A)), `S-d11`'s geometry clause (`§2.5` item 2), `H-r5`'s no-shim rule (`§2.2` `P-CT-6`), `H-r6`'s dissolved-edge class (`§2.2` item 3), `H-r8`'s `§0 Contract-prohibitions` table (`§2.2`(A)), `H-r10`'s extractor limit (`§5.2`), `H-r15`'s taxonomy hazard (`§2.2`(D) row 7) | `§0`, `§0A`, `§2.2`, `§3.4`, `§5.2` |
 | **`docs/specs/zones.md` `§1` item 3 / `§7` item 3** and **`docs/specs/census.md` `§1` item 5 / `§7` item 3** — the no-CSS-in-any-form clauses | **RECONCILED, NOT RELAXED** — `§2.2`(D) row `1`, in the RCA's own *"banned in layer X for reason Y, legitimate in layer Z because …"* form, with **the ban's subject (an APPLIED/LOADED artifact) named and this unit's artifact (returned text) shown outside it** | `§2.2`(D) row 1 | 
@@ -1682,7 +1909,7 @@ bare.**
 | **`A-11`** | **THE CROSS-UNIT BOUNDARY:** does this unit duplicate a `U-ZONES` responsibility (a token literal, a unit string, a formatting rule), a `U-CENSUS` responsibility (a record build, a census read, an emptiness decision of its own), a `U-PROJ`/`U-LISTHOST`/`U-SLOTHOST` one, or a `U-GUTTER`/`U-GUTTER-UI` one (an axis computation, an axis token of its own)? **Duplication is a FINDING; and an obligation pulled in "for convenience" is the `S-CT-11` class.** | static + `[T]` |
 | **`A-12`** | **THE FABRICATED-EDGE PROBE:** does any pass assert an import or composition edge between this unit and any sibling — **including reading the `axisResolver`↔`AxisOf` shape relation as an import edge**? **Is the one-closure rule stated as a FORK-FACING requirement rather than as a mechanism capability this module has?** | static |
 | **`A-13`** | **THE `[U]`/`[D]` PROBE:** does any pass offer a `[U]` row for the applied declaration, the containment boundary or the browser's acceptance; claim a `[D]` row; move a rendered row to the `ui` leg (silently or not); report gate 6 as **`waived`** rather than **`STRUCTURAL` with its reason stated**; or omit the `§7.1` `DOES NOT TRIGGER` decision? | the DONE row + `§3.4 R-6`/`R-9` |
-| **`A-14`** | **THE REGISTER AUDIT (gate 11's read-only PBT audit):** do the executed tables match `§5.5.1`'s **per-row attempts, terms, strategy ids and the `154` total**? Is the **stop-after-5** rule honoured, and were the **un-run rows REPORTED as failures**? Is the **pinned seed `20260927`** and the one-step-per-draw LCG form (`pool.length = 14`) what the test file actually contains? **AND: is every pool/table member still consistent with its row's declared boundary text** — `§5.5.2` item 7's check **re-run against the LANDED tables** rather than this filing's? **AND: does the audit read the `(bounded)` set correctly — `5` marked of `10` ROWS?** **Any mismatch is a SPEC FINDING.** | `[T]` + the test file |
+| **`A-14`** | **THE REGISTER AUDIT (gate 11's read-only PBT audit):** do the executed tables match `§5.5.1`'s **per-row attempts, terms, strategy ids and the declared total (`137` since the 2026-09-27 amendment, `§0A` note 7.2; the as-filed `154` is the annotated form and must be read BESIDE it, never instead of it)**? Is the **stop-after-5** rule honoured, and were the **un-run rows REPORTED as failures**? Is the **pinned seed `20260927`** and the one-step-per-draw LCG form (`pool.length = 14`) what the test file actually contains? **AND: is every pool/table member still consistent with its row's declared boundary text** — `§5.5.2` item 7's check **re-run against the LANDED tables** rather than this filing's? **AND: does the audit read the `(bounded)` set correctly — `5` marked of `10` ROWS?** **Any mismatch is a SPEC FINDING.** | `[T]` + the test file |
 | **`A-15`** | **THE LAYER-HONESTY PROBE:** does the DONE row (or any pass's prose) claim **assembled-app, stylesheet, computed-style, applied-declaration, containment-boundary, layout, paint or browser-acceptance** evidence from this unit's `[T]` green — and does it state explicitly that **the module is imported by no `src/**` file** and therefore proves **the contract holds for a caller, not that the app behaves differently**? | the DONE row |
 | **`A-16`** | **THE FORK-FACING PROBE:** does any pass read this unit as delivering a working chrome taxonomy, an applied containment, or a rendered affordance — **or read the returned text as an applied style**? **Does the fork-facing carry (`§7` item 7) name the two seams, the class name and the returned record's two members?** | static + the DONE row |
 | **`A-17`** | **THE `§7a.1` PROBE:** do the three reported items remain marked as **working defaults** / **derived-pending-confirmation** rather than silently hardened into contract without a ruling — and has the supervisor routed them? **A pass that treats a working default as ruled, or the derived item as a verbatim architect sentence, is a review finding.** | static + the DONE row |
