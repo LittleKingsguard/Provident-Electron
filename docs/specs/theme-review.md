@@ -389,7 +389,10 @@ with no default and no row, so no later pass re-derives it as an open item.**
 **WHAT THE ARCHITECT OWES, AND WHEN, stated in the family's form: NOTHING IS HELD.** The filing proceeds on both
 defaults; **either may be reversed by a dated annotation at the spec gate**, and a reversal of `A-1` **owes a
 register re-grain** while a reversal of `A-2` owes **none**. **`Q2` and `Q3` are PINNED and are not open** (`§4.3`,
-`§4.5`).
+`§4.5`). **⟶ THE SPEC GATE HAS SINCE ANSWERED THIS PARAGRAPH (`2026-09-27`): `A-1` STANDS AS FILED (ratified, still
+architect-reversible — its reversal still owes the re-grain this paragraph names) and `A-2` IS CLOSED BY THE RULING
+AS A RENAME (`basis` → `source`), which owes NO re-grain — exactly the case this paragraph predicted. The ruling is
+the SPEC-GATE RULING ANNOTATION at this record's end; the table ABOVE keeps its as-filed wording.**
 
 ---
 
@@ -457,5 +460,64 @@ counts them**. **WHAT IS NOT OWED AND MUST NOT BE MANUFACTURED: no architect ans
 pinned), **no re-opening of `A-d6` or of the pre-`A-d6` `TOO-THIN-WRONGLY-TARGETED` decline** (the decline is
 `SUPERSEDED` provenance and the architect **overruled** it), **no `U-THEME-MIN`** (the name is retired), and **no
 `[U]`/`[D]` row** (both refusals are structural).
+
+---
+
+## ⟶ SPEC-GATE RULING ANNOTATION (`2026-09-27`, the `E8` / `U-THEME` SPEC GATE)
+
+**THE GATE'S OUTCOME, IN ONE LINE: `docs/specs/theme.md` IS APPROVED AS FILED — APPROVED AT THE SPEC GATE
+(`AGENTS.md` item 10a, the ONE approval the chain waits for) — WITH ONE CHANGE: the discriminator field
+`ThemeResolution.basis` is REPHRASED AS `ThemeResolution.source`.** **NOTHING ABOVE IN THIS RECORD IS REWRITTEN BY
+THIS ANNOTATION: no step verdict, no condition (`C-*`, `G-*`), no finding, no question and no derivation is amended
+by it — the two items the gate adjudicated are ANNOTATED BESIDE, and the as-filed wording of both is kept visible
+here and in the spec.**
+
+**STEP 4's VERDICT IS DISCHARGED, AND THE GATE IS CLOSED. `§5`'s `DELEGABLE-WITH-CONDITIONS FOR THE SPEC GATE` with
+`G-1`…`G-6`, and `§8` item 4's *"put `docs/specs/theme.md` to the SPEC GATE — the place where `A-1`/`A-2` are
+ratified or reversed"*, are answered HERE: the filing was accepted as filed, and the TWO RECORDED WORKING DEFAULTS
+`§6` carries were RATIFIED OR CLOSED as follows.**
+
+**1. `A-1` (the pass-through resolved domain — `Q1`'s residue) STANDS AS FILED.** **The recorded working default
+`§6` states — the caller's own opaque token PASSED THROUGH, with `env.prefersDark` REPORTED rather than being the
+value's source — is APPROVED at the spec gate.** **IT REMAINS ARCHITECT-REVERSIBLE** (`E5-B-3`'s form is not spent by
+an approval): a later reversal still moves the sites `theme.md` `§7a.1` item 1 names and **still owes a register
+RE-GRAIN, which this ruling does NOT trigger** (`§6`'s own clause, unmoved).
+
+**2. `A-2` (the NAME of the observable degradation — restated by step 4 as a NAMING question, finding `A-5`) IS
+CLOSED BY THE RULING, AND IT IS CLOSED AS A RENAME RATHER THAN A SEMANTICS CHANGE.** **The member's OBSERVABILITY
+and its CLOSED two-body domain `'env'` | `'degraded-env'` were approved AS FILED; the ruling renames the SPELLING
+`basis` → `source` and moves nothing else.** **THE REASON, stated as the ruling's own: the member is the
+DISCRIMINATOR that reports whether the environment reading resolved or was absorbed, so respelling it changes no
+reading, no degradation rule and no body's meaning** — and **no body's wording depended on the old field name, so the
+members stay `'env'` | `'degraded-env'` with the SAME cardinality (`2`).** **WHAT THE RENAME MOVES, EXHAUSTIVELY, and
+what it does NOT: expectations STRINGS only — in `theme.md` `§2.1`'s `ThemeResolution` block, `§2.2`(D)'s semantics
+table, `§2.3` item 2's column, `§3.1 M-1`/`M-2`/`M-3`, `§3.2 F-1`, `§3.3 I-3`, `§3.4 R-1`/`R-8`, `§4.4 S-TH-11`,
+`§5.3` item 3, `§5.5.1`'s register rows and domains, `§5.5.2` item 8, `§7` item 10, `§7a.1` item 2, `§3a`'s `A-2`
+seed and `§8`'s index. **NO register TERM moves (the declared total stays `102` = its twelve terms) · NO ROW ID
+moves · NO STRATEGY ID moves · NO SEED moves (`20260927`) · NO CAP moves (`≤100`/row · `≤400` total ·
+stop-after-5) · NO shape, pool member, domain, `(bounded)` marking, section number, export name, arity or record
+member beyond that one spelling moves · and NO REGISTER RE-GRAIN IS OWED.** **`§6`'s own sentence stands as
+written — *"a reversal of `A-1` owes a register re-grain while a reversal of `A-2` owes none"* — and this ruling is
+the case it named.**
+
+**WHERE THE RULING IS RECORDED, so no reader has to reconstruct it: (a) `docs/specs/theme.md`'s `§0A` note 6** (the
+dated ruling note, carrying the AS-FILED declaration as a verbatim quotation and the site census) **; (b) `§7a.1`
+item 2** (annotated CLOSED, its as-filed question and answer kept visible) **; (c) `§7` item 10** and the `§7a`
+intro/arithmetic (**annotated: `1` item standing · `1` closed · `1` not surviving) **; (d) `§8`'s index row for the
+ruling itself ; and (e) `docs/next-steps.md`'s row `E8`, `Spec` cell** (**the spec-gate APPROVAL and the post-ruling
+`source` spelling now stand BESIDE the as-filed wording, with NO ledger count changed and `E8` still an OPEN unit**).
+
+**THE RECORD'S OWN PROVENANCE CLAUSES ARE UNTOUCHED: `A-4`** (this record is the filing pass's compression of
+unfiled step-1/step-2 reports) **, `P-T-1`** (no leg ran, no shell held) **, `P-T-3`** (`src/renderer/index.html` is
+the repo's EXISTING appearance authority) **and the FILING-PASS ANNOTATION above all stand as filed.** **`P-T-2`'s
+`Spec`-cell half is DISCHARGED by the ledger amendment this ruling's recording pass landed**; **its chain and `Legs`
+cell halves remain owed, and `docs/FORKER.md`'s carry (`C-7`) and the per-gate commit remain owed as `§8` item 3 and
+the filing-pass annotation say.**
+
+**WHAT THE RULING DOES NOT DO, stated so no later pass over-reads it: it advances NO gate after the spec gate.** **No
+red set has been authored or RUN, no module exists, no register row has been executed, and `E8` remains an OPEN
+unit** — the chain continues at the TestWriter red under `AGENTS.md` items 9/10a/11, and **`G-5`'s register
+obligation (typed rows, executed, totals printed WITH their terms) is not discharged by any clause of this
+annotation.**
 
 
