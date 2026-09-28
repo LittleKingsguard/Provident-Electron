@@ -31,6 +31,7 @@ function nextStateOf(state: OverlayState, verb: unknown): OverlayState {
   if (verb === VERB_CLOSE) return CLOSED
   if (verb === VERB_TOGGLE) {
     if (state === CLOSED || state === CLOSING) return OPEN
+    if (state === OPEN) return CLOSED
     return state
   }
   if (verb === VERB_ESCAPE) return CLOSED
