@@ -390,7 +390,7 @@ export function demoEnvelope() {
   const node = all.find(function (n) { return n && n.props && n.props.id === 'theme-setting'; });
   if (!node) return;
   let carried = '';
-  try { carried = value == null ? '' : String(value); } catch (e) { carried = ''; }
+  try { carried = value == null ? '' : String(value); } catch (ignored) { return; }
   try { ctx.clientAPI.apply(node.id, [{ targetProp: 'content', mode: 'replace', value: carried }]); } catch (e) { void e; }
 }`,
                   },
@@ -411,7 +411,7 @@ export function demoEnvelope() {
   const node = all.find(function (n) { return n && n.props && n.props.id === 'theme-setting'; });
   if (!node) return;
   let carried = '';
-  try { carried = value == null ? '' : String(value); } catch (e) { carried = ''; }
+  try { carried = value == null ? '' : String(value); } catch (ignored) { return; }
   try { ctx.clientAPI.apply(node.id, [{ targetProp: 'content', mode: 'replace', value: carried }]); } catch (e) { void e; }
 }`,
                   },

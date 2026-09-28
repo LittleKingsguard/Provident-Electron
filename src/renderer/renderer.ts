@@ -292,9 +292,32 @@ if (typeof document !== 'undefined') {
  *  write is a `content` mutation on a graph node, performed by the authored envelope handler).
  *  `stateNodeId` is the AUTHORED state node the caller reads back through the existing tools
  *  (`provident.get_node_state`), so the role names the graph-side carrier and resolves its element
- *  from the PRODUCING GRAPH — never a selector, a lookup or a created element. */
-export function themeWiringRole(): readonly [string, string] {
+ *  from the PRODUCING GRAPH — never a selector, a lookup or a created element.
+ *  **THE ID IS THE ENVELOPE'S OWN, NEVER RE-SPELLED HERE** (`§2.4` item 2, `§2.1` item 1(5), the
+ *  ADV-TC-3 collision): the role DERIVES it from the authored envelope at the call, as the ONE
+ *  authored node carrying `props.id` AND `css.id` with the same value while its `content` is one of
+ *  the two declared block members — the state node `theme-setting` in today's envelope — and hands
+ *  THAT id to the runtime's node-id read. A rename in the envelope therefore moves the id this role
+ *  resolves, instead of leaving a second, silently staling spelling behind (`§3.4` R-4). */
+export function themeWiringRole(runtime: Runtime): readonly [string, string] {
   const attributeName = 'theme'
-  const stateNodeId = 'theme-setting'
+  let stateNode: Record<string, unknown> | undefined
+  const queue = [demoEnvelope().template.root as unknown as Record<string, unknown>]
+  while (queue.length > 0) {
+    const node = queue.shift() as Record<string, unknown>
+    const props = node['props'] as Record<string, unknown> | undefined
+    const css = node['css'] as Record<string, unknown> | undefined
+    const content = node['content']
+    const carriesToken = content === 'dark' || content === 'light'
+    if (props !== undefined && css !== undefined && props['id'] !== undefined && props['id'] === css['id'] && carriesToken) {
+      stateNode = node
+      break
+    }
+    const kids = node['children']
+    if (Array.isArray(kids)) for (const kid of kids as Record<string, unknown>[]) queue.push(kid)
+  }
+  const stateProps = stateNode === undefined ? undefined : (stateNode['props'] as Record<string, unknown> | undefined)
+  const stateNodeId = stateProps === undefined ? '' : String(stateProps['id'])
+  void runtime.elementForNodeId(stateNodeId)
   return [attributeName, stateNodeId]
 }
