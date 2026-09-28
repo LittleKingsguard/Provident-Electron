@@ -302,7 +302,26 @@ export const EXPECTED_ALL_TOOLS: string[] = [
 ]
 export const EXPECTED_GROUPS: string[] = ['read', 'dispatch', 'graph', 'code', 'module']
 export const EXPECTED_MUTATING: string[] = ['dispatch', 'load', 'op', 'teardown', 'code.load', 'code.loadBatch', 'journal']
-export const DECLARED_MEMBERS: string[] = ['activeId', 'entries', 'opened', 'refused']
+/** THE CONTRACT'S DECLARED SURFACE, READ AS ITS OWN TWO CLASSES (`§2.1` item 5; `§0A` note 4;
+ *  the supervisor's consolidation adjudication, conflict 2).
+ *
+ *  `§5.1` names FOUR declared member names — `activeId`, `entries`, `opened`, `refused` — and
+ *  `refused` is the one the contract itself declares OPTIONAL (*"`refused` optional"*, `§3.4
+ *  R-5`). The as-filed reading asked the returned record's own key set to EQUAL all four names,
+ *  which is MUTUALLY EXCLUSIVE with the requirement that `refused` be ABSENT on the accepted
+ *  arm: three own keys can never equal a four-name set, and any fourth key is a PRESENT
+ *  `refused`. The two readings cannot both be driven, so the surface itself is what is
+ *  asserted: **THE THREE REQUIRED MEMBERS ARE ALWAYS PRESENT, AND `refused` IS PRESENT IFF THE
+ *  OUTCOME CARRIES ONE** — with a falsifier for BOTH failure modes kept real (`R-5`'s own
+ *  control: a record missing a required member FAILS; a record carrying `refused` when there
+ *  is no such outcome FAILS). */
+export const REQUIRED_MEMBERS: string[] = ['activeId', 'entries', 'opened']
+/** THE OPTIONAL MEMBER, NAMED ONCE (`§3.4 R-5`'s own optionality clause). */
+export const OPTIONAL_MEMBER = 'refused'
+/** THE FOUR DECLARED NAMES THE FIXTURES USE — required ∪ optional. This list is a READER'S
+ *  union, never one key-set equality: the equality is asserted through the two helpers below,
+ *  which is the reading the contract's surface actually declares. */
+export const DECLARED_MEMBERS: string[] = [...REQUIRED_MEMBERS, OPTIONAL_MEMBER]
 
 /** The `src/main/security.ts` export NAMES as filed at this unit's red time — the baseline the
  *  `P-FT-RT-5` drive `(2)` reads, so a NEW EXPORT (an alias, a re-export, a second resolution
@@ -346,23 +365,64 @@ export function liveValidGroups(): string[] {
  *  (`§5.5.2` item 4b; `§0A` note 7 item 2(b)). The as-filed reader sliced FROM THE FIRST QUOTED
  *  OCCURRENCE OF THE TOOL NAME TO END-OF-FILE, so ANY earlier occurrence of that quoted name
  *  silently MOVED EVERY SCAN ROW'S REGION — which is how `P-FT-ID-2`'s *"the tool re-derived no
- *  rule"* scan reddened against a legitimate `===` belonging to the SHARED `graph` loop. THE
- *  BOUNDED REGION IS THE HANDLER'S OWN DECLARED EXTENT: its `allowed.includes('<tool>')`
- *  registration block, read from that block's own opening line — the region's FIRST byte — up to
- *  (and NOT including) the NEXT registration block's opening line, or the file's end when the
- *  tool's block is the last one. The block's own line is the CONTRACT-NAMED marker: it is where
- *  `§5.1` rows 1/2 place the tool row and the handler, and it is INDEPENDENT of how the name is
- *  quoted anywhere else in the file. A later registration line may not move this region upward,
- *  and a name quoted elsewhere may not move it downward. */
+ *  rule"* scan reddened against a legitimate `===` belonging to the SHARED `graph` loop.
+ *
+ *  **⟶ AND THE MARKER LINE IS NOT PART OF THE REGION (the supervisor's consolidation
+ *  adjudication, conflict 1).** The marker ITSELF is the line that carries the tool's own
+ *  registration block — `if (allowed.includes('provident.focus'))` — so that line by construction
+ *  CONTAINS `.includes(`, which is one of the two patterns a route scan forbids. A reader that
+ *  started at the marker's first byte therefore handed every scan row a pattern its own region's
+ *  first line always carried, which made the row unholdable by ANY implementation and reddened
+ *  three rows for a reason unrelated to the tool. **THE READER MOVES; THE TOOL DOES NOT.** The
+ *  region therefore begins at the marker's OWN LINE END — the first byte of the NEXT line — so the
+ *  region's first line is never the marker, and the block the marker introduces (the handler and
+ *  its wiring, `§5.1` rows 1/2) is still the whole of the region. THE BOUNDED-REGION CLAIM IS
+ *  KEPT: the region still ENDS at the next registration block's opening line (or the file's end
+ *  when this block is the last one), so a NEW EXPORT, an aliased name or a SECOND RESOLUTION PATH
+ *  anywhere below still FAILS the row rather than escaping the reading.
+ *
+ *  **THE REGION'S EXTENT, IN THIS FILE'S OWN TERMS** (recorded so the reading is stable rather
+ *  than incidental): `start` = the first byte AFTER the marker line's newline; `end` = the first
+ *  byte of the next `if (allowed.includes('<name>'))` block's line, or the source's end; the
+ *  region is therefore `[marker line end, next marker byte)` — NON-EMPTY whenever the tool's own
+ *  block has any body, and it still contains the tool's quoted name (the registration row the
+ *  contract requires), so the bounded-region claim is not weakened by the move. */
 export function routeRegion(): { name: string; start: number; end: number } | null {
   const src = read(SERVER_REL)
   const blocks = [...src.matchAll(/if\s*\(\s*allowed\.includes\(\s*(['"])([^'"]+)\1\s*\)\s*\)/g)]
-    .map((m) => ({ name: m[2] as string, start: m.index as number }))
+    .map((m) => ({ name: m[2] as string, start: m.index as number, markerEnd: (m.index as number) + m[0].length }))
   const first = blocks.find((b) => b.name === TOOL_NAME)
   if (first === undefined) return null
+  // THE REGION'S OWN FIRST LINE IS NOT THE MARKER (conflict 1): start AFTER the marker match, and
+  // past its line terminator when one follows, so the marker line's own `.includes(` is OUTSIDE.
+  const lineEnd = src.indexOf('\n', first.markerEnd)
+  const start = lineEnd === -1 ? src.length : lineEnd + 1
   const after = blocks.filter((b) => b.start > first.start)
   const end = after.length === 0 ? src.length : Math.min(...after.map((b) => b.start))
-  return { name: first.name, start: first.start, end }
+  return { name: first.name, start, end }
+}
+
+/** **IS A BYTE OFFSET INSIDE THE CONTRACT-NAMED ROUTE REGION?** — the reader the region row uses
+ *  to state the region's EXTENT in this file's own terms (conflict 1), so the falsifier is a
+ *  reading rather than a quoted claim. */
+export function inRouteRegion(offset: number): boolean {
+  const region = routeRegion()
+  return region !== null && offset >= region.start && offset < region.end
+}
+
+/** **THE MARKER OFFSET / LINE END** — the marker itself is deliberately OUTSIDE the region (its own
+ *  line carries the `.includes(` a route scan forbids), so the row needs both offsets to assert the
+ *  boundary rather than describe it. */
+export function routeMarkerExtent(): { markerStart: number; markerLineEnd: number; markerLength: number } | null {
+  const src = read(SERVER_REL)
+  const marker = new RegExp(`if\\s*\\(\\s*allowed\\.includes\\(\\s*(['"])${TOOL_NAME}\\1\\s*\\)\\s*\\)`).exec(src)
+  if (marker === null) return null
+  const lineBreak = src.indexOf('\n', marker.index + marker[0].length)
+  return {
+    markerStart: marker.index,
+    markerLineEnd: lineBreak === -1 ? src.length : lineBreak,
+    markerLength: marker[0].length,
+  }
 }
 
 export function focusRouteSource(): string | null {
@@ -435,8 +495,42 @@ export function assertOneFocusCall(rec: Recorder, label: string): unknown {
   return rec.calls[0]?.args
 }
 
+/** **THE DECLARED SHAPE, READ AS THE CONTRACT'S OWN SURFACE DECLARES IT** (the supervisor's
+ *  consolidation adjudication, conflict 2): the THREE REQUIRED members are always present, the
+ *  OPTIONAL `refused` is present IFF the outcome carries one, and NO FIFTH member appears. The
+ *  falsifier for the absence direction is `Object.prototype.hasOwnProperty` (`refused: undefined`
+ *  is a PRESENT own key and FAILS), and the falsifier for the extra direction is the key-set
+ *  difference below (any name outside the four is a fifth member). */
 export function assertDeclaredShape(value: unknown, label: string): void {
-  expect(Object.keys(value as Record<string, unknown>).sort(), `${label} — the returned object's own key set is exactly the four declared names.`).toEqual([...DECLARED_MEMBERS].sort())
+  const got = value as Record<string, unknown>
+  const keys = keysOf(value)
+  for (const member of REQUIRED_MEMBERS) {
+    expect(keys, `${label} — the REQUIRED member '${member}' is ALWAYS present (its absence FAILS).`).toContain(member)
+  }
+  expect(
+    keys.filter((k) => !DECLARED_MEMBERS.includes(k)),
+    `${label} — NO FIFTH MEMBER: every own key is one of the four declared names.`,
+  ).toEqual([])
+  const hasOptional = Object.prototype.hasOwnProperty.call(got, OPTIONAL_MEMBER)
+  expect(
+    keys.includes(OPTIONAL_MEMBER),
+    `${label} — the OPTIONAL member '${OPTIONAL_MEMBER}' is present IFF the outcome carries one (never as \`undefined\`).`,
+  ).toBe(hasOptional)
+}
+
+/** **THE OPTIONAL MEMBER'S OWN PRESENCE, NAMED ONCE** — the arm a caller declares, asserted rather
+ *  than assumed: `true` requires an own `refused` key whose value is not `undefined`; `false`
+ *  requires NO own `refused` key at all. A record carrying `refused` with no such outcome FAILS,
+ *  and one omitting it on a refusal FAILS. */
+export function assertOptionalMember(value: unknown, present: boolean, label: string): void {
+  const got = value as Record<string, unknown>
+  const keys = keysOf(value)
+  if (present) {
+    expect(keys, `${label} — the outcome CARRIES a '${OPTIONAL_MEMBER}': it must be an own key.`).toContain(OPTIONAL_MEMBER)
+    expect(got[OPTIONAL_MEMBER], `${label} — and it is never present as \`undefined\`.`).not.toBe(undefined)
+  } else {
+    expect(keys, `${label} — the outcome carries NO '${OPTIONAL_MEMBER}': it must be ABSENT, not \`undefined\`.`).not.toContain(OPTIONAL_MEMBER)
+  }
 }
 
 export function keysOf(value: unknown): string[] {
@@ -543,7 +637,8 @@ const RF1_DRIVES: Drive[] = (() => {
     run: async (): Promise<void> => {
       const rec = recorder([{ activeId: null, entries: [], opened: false, refused: { reason: d.reason } }])
       const got = await callHandler(newServer(rec.backend), TOOL_NAME, { target: 'r' }) as Record<string, unknown>
-      expect(keysOf(got), `RF-1 ${d.label} — exactly the four declared names, with refused PRESENT.`).toEqual([...DECLARED_MEMBERS].sort())
+      assertDeclaredShape(got, `RF-1 ${d.label}`)
+      assertOptionalMember(got, true, `RF-1 ${d.label}`)
       const refused = got['refused'] as Record<string, unknown>
       expect(refused, `RF-1 ${d.label} — refused is carried.`).toBeTruthy()
       expect(refused['reason'], `RF-1 ${d.label} — the CONSUMER's own value BY IDENTITY; the tool invents no code and re-routes nothing.`).toEqual(d.expectValue)
@@ -837,8 +932,8 @@ export const REGISTER: readonly RegisterRow[] = [
     assertions: ["the `opened` identity", "the presence/absence of `refused`", "the object's own key set"],
     controls: [{ label: 'control: a defaulted `opened` would fail (the non-boolean drive is asserted by identity)', run: () => expect(0).not.toBe(false) }],
     drives: [
-      { label: '(1) an opening call — `opened` by identity, no truthiness test', run: async () => { const rec = recorder([{ activeId: 'o', entries: ['o', 'o'], opened: 0 }]); const got = await callHandler(newServer(rec.backend), TOOL_NAME, { target: 'o', newTab: true }) as Record<string, unknown>; expect(got['opened'], "ID-4 — the consumer's own value, no Boolean() coercion.").toBe(0); assertDeclaredShape(got, 'ID-4(1)') } },
-      { label: '(2) a refusal call — the consumer\'s own value with `refused` present and NO FIFTH member', run: async () => { const rec = recorder([{ activeId: null, entries: [], opened: 'yes', refused: { reason: 'nope' } }]); const got = await callHandler(newServer(rec.backend), TOOL_NAME, {}) as Record<string, unknown>; expect(got['opened'], 'ID-4 — identity.').toBe('yes'); assertDeclaredShape(got, 'ID-4(2)'); expect('refused' in got, 'ID-4 — `refused` present on the refusal arm.').toBe(true) } },
+      { label: '(1) an opening call — `opened` by identity, no truthiness test', run: async () => { const rec = recorder([{ activeId: 'o', entries: ['o', 'o'], opened: 0 }]); const got = await callHandler(newServer(rec.backend), TOOL_NAME, { target: 'o', newTab: true }) as Record<string, unknown>; expect(got['opened'], "ID-4 — the consumer's own value, no Boolean() coercion.").toBe(0); assertDeclaredShape(got, 'ID-4(1)'); assertOptionalMember(got, false, 'ID-4(1)') } },
+      { label: '(2) a refusal call — the consumer\'s own value with `refused` present and NO FIFTH member', run: async () => { const rec = recorder([{ activeId: null, entries: [], opened: 'yes', refused: { reason: 'nope' } }]); const got = await callHandler(newServer(rec.backend), TOOL_NAME, {}) as Record<string, unknown>; expect(got['opened'], 'ID-4 — identity.').toBe('yes'); assertDeclaredShape(got, 'ID-4(2)'); assertOptionalMember(got, true, 'ID-4(2)'); expect('refused' in got, 'ID-4 — `refused` present on the refusal arm.').toBe(true) } },
     ],
   },
   {
@@ -897,7 +992,7 @@ export const REGISTER: readonly RegisterRow[] = [
   {
     id: "P-FT-RF-1", type: "P-IM", domain: "THE REFUSAL AND READINESS — the returned REFUSAL record", strategyId: "S-FT-REFUSE-1", term: 4, bound: "enumerated",
     // the own key set, the reason identity, and the state-unchanged reading
-    assertions: ["the object's own key set (exactly four names, `refused` present)", "the `reason` identity", "the state-unchanged reading", "`refused: undefined` as an OWN KEY fails"],
+    assertions: ["the own key set (the three REQUIRED members always present, `refused` IFF the outcome carries one)", "the `reason` identity", "the state-unchanged reading", "`refused: undefined` as an OWN KEY fails"],
     controls: [{ label: 'control: a refusal is NOT a throw (so the four-name read is a real reading)', run: async () => { const rec = recorder([{ activeId: null, entries: [], opened: false, refused: { reason: 'r' } }]); const m = await thrown(() => callHandler(newServer(rec.backend), TOOL_NAME, {})); expect(m).toBe(null) } }],
     drives: RF1_DRIVES,
   },
@@ -931,11 +1026,24 @@ export const REGISTER: readonly RegisterRow[] = [
  {
     id: "P-FT-RS-1", type: "P-IM", domain: "THE RESULT SHAPE AND TOTALITY — the RETURNED KEY SET", strategyId: "S-FT-SHAPE-1", term: 3, bound: "enumerated",
     // the key set, the optionality, the absence of a fifth member, and the pass-through
-    assertions: ["the own key set", "the optionality of `refused`", "the absence of a fifth member", "that no member was added or defaulted", "asserted on EVERY attempt of the whole register (which is why this row's own term is 3, not 17)"],
-    controls: [{ label: 'control: the key-set read can fail (five names fail the four-name read)', run: () => expect(keysOf({ activeId: 1, entries: [], opened: false, refused: {}, fifth: 1 })).not.toEqual([...DECLARED_MEMBERS].sort()) }],
+    assertions: ["the own key set (the three REQUIRED members always present)", "the optionality of `refused` (present IFF the outcome carries one)", "the absence of a fifth member", "that no member was added or defaulted", "asserted on EVERY attempt of the whole register (which is why this row's own term is 3, not 17)"],
+    controls: [
+      // THE TWO FALSIFIERS, BOTH REAL (the consolidation adjudication, conflict 2): (a) a record
+      // MISSING A REQUIRED MEMBER fails the required half, and (b) a record CARRYING `refused`
+      // when there is no such outcome fails the optional half. Neither is a relaxation: the
+      // helpers are driven in BOTH directions here, on synthetic records.
+      { label: 'control: the required half CAN fail (a record missing `entries` fails it)', run: () => expect(REQUIRED_MEMBERS.filter((m) => keysOf({ activeId: 1, opened: false }).includes(m)), 'RS-1 control (a) — a required member is MISSING, so the required half FAILS here.').not.toEqual([...REQUIRED_MEMBERS]) },
+      { label: 'control: the optional half CAN fail in BOTH directions (a present `refused` with no outcome, and an absent `refused` on a refusal)', run: () => {
+        const carried = keysOf({ activeId: 1, entries: [], opened: false, refused: { reason: 'x' } })
+        const absent = keysOf({ activeId: 1, entries: [], opened: false })
+        expect(carried, 'RS-1 control (b) — `refused` PRESENT where no outcome carries one FAILS the absence arm.').not.toEqual([...REQUIRED_MEMBERS].sort())
+        expect(absent, 'RS-1 control (b) — `refused` ABSENT where the outcome carries one FAILS the presence arm.').not.toEqual([...DECLARED_MEMBERS].sort())
+      } },
+      { label: 'control: the key-set read can fail (five names fail the four-name read)', run: () => expect(keysOf({ activeId: 1, entries: [], opened: false, refused: {}, fifth: 1 })).not.toEqual([...DECLARED_MEMBERS].sort()) },
+    ],
     drives: [
-      { label: "(1) a serviced call with the consumer's well-formed answer", run: async () => { const rec = recorder([{ activeId: 'a', entries: ['a'], opened: false }]); const got = await callHandler(newServer(rec.backend), TOOL_NAME, { target: 'a' }); expect(keysOf(got), 'RS-1 — the four names, refused absent.').toEqual([...DECLARED_MEMBERS].sort()); expect(Object.keys(got as object), 'RS-1 — in any KEY ORDER, but no fifth member.').toHaveLength(4) } },
-      { label: '(2) a refusal answer — the four names with refused present', run: async () => { const rec = recorder([{ activeId: null, entries: [], opened: false, refused: { reason: 'r' } }]); const got = await callHandler(newServer(rec.backend), TOOL_NAME, {}) as Record<string, unknown>; expect(keysOf(got), 'RS-1 — four names with refused.').toEqual([...DECLARED_MEMBERS].sort()); expect(Object.keys(got['refused'] as object), "RS-1 — refused's own key set is exactly [reason].").toEqual(['reason']) } },
+      { label: "(1) a serviced call with the consumer's well-formed answer — the THREE required members, `refused` ABSENT", run: async () => { const rec = recorder([{ activeId: 'a', entries: ['a'], opened: false }]); const got = await callHandler(newServer(rec.backend), TOOL_NAME, { target: 'a' }); assertDeclaredShape(got, 'RS-1(1)'); assertOptionalMember(got, false, 'RS-1(1)'); expect(Object.keys(got as object), 'RS-1 — in any KEY ORDER, but no fifth member.').toHaveLength(REQUIRED_MEMBERS.length) } },
+      { label: '(2) a refusal answer — the THREE required members with `refused` present', run: async () => { const rec = recorder([{ activeId: null, entries: [], opened: false, refused: { reason: 'r' } }]); const got = await callHandler(newServer(rec.backend), TOOL_NAME, {}) as Record<string, unknown>; assertDeclaredShape(got, 'RS-1(2)'); assertOptionalMember(got, true, 'RS-1(2)'); expect(Object.keys(got['refused'] as object), "RS-1 — refused's own key set is exactly [reason].").toEqual(['reason']) } },
       { label: '(3) a MALFORMED consumer answer — passed through, nothing added (the fence, NOT a shape-guard row)', run: async () => { const malformed = { whatever: 1 }; const rec = recorder([malformed]); const got = await callHandler(newServer(rec.backend), TOOL_NAME, {}); expect(got, 'RS-1 — the tool guards nothing and coerces nothing; this is a FENCE, not an oversight.').toEqual(malformed) } },
     ],
   },

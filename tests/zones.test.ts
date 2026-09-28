@@ -662,6 +662,43 @@ function isZonesUnitArtifact(path: string): boolean {
     ZONES_REVIEW_PROBE.test(path)
   )
 }
+/** **⟶ DECLARED 2026-09-27 (THE `U-ZONES`/`E4` SIDE OF THE `F3` SAME-COMMIT OBLIGATION) — THE
+ *  `U-FOCUS-TOOL` UNIT'S TWO DECLARED TEST ARTIFACTS PLUS THE SIBLING SUITES ITS ONE CENSUS-REPAIR
+ *  COMMIT CARRIES, EXEMPTED **BY NAME** FROM THIS ROW'S `tests/**` DENIED PATTERN.**
+ *
+ *  **THE MEASURED REASON THIS DECLARATION EXISTS (`docs/specs/focus-tool.md` `§5.1` rows 15–22;
+ *  `§5.2` item 4 (iii) `N-18`).** That contract's WIDENED allow-list NAMES **this file** as a
+ *  SAME-COMMIT obligation of the `F3`/`U-FOCUS-TOOL` unit (`§5.1` row 18: the `ALL_TOOLS` name-set
+ *  equality against the sibling `PINNED_TOOL_SET` plus that sibling's length `21 → 22`, and the
+ *  `RpcMethod` count `21 → 22` WITH its SET-size duplicate check — all IN THE SAME COMMIT). The
+ *  commit that satisfies that obligation therefore TOUCHES `tests/zones.test.ts`, which makes it a
+ *  unit-touching commit for THIS row, and `unitScopedCommitted`'s `allFilesOfUnitCommits` then
+ *  carries EVERY file of it — including the `F3` unit's own red set and its `§5.5.1` register
+ *  module, plus the other suites that same commit census-repairs. **THE OBLIGATION WAS
+ *  UNREACHABLE: `npm test` cannot be green while the repair this row's OWN `N-18` obligation
+ *  requires is charged to this row as a boundary violation.** MEASURED, verbatim, before this
+ *  declaration:
+ *    `R-4/§5.1 — 'tests/census.test.ts' was COMMITTED inside this unit's range
+ *     7fb37b38…..HEAD and is in the DENIED set`.
+ *
+ *  **THE SAME DECLARED-EXEMPTION PATTERN THIS ROW ALREADY USES** (its `DENIED_PATTERNS` above
+ *  carries the identical shape for `U-PROJ`'s `tests/layout-projection.test.ts`, admitted by name
+ *  with its own measured cause and its own REVISIT CONDITION recorded). **IT IS AN EXEMPTION, NOT A
+ *  RELAXATION: `isDeniedStrict` IS UNTOUCHED AND STILL REJECTS EVERY PATH BELOW**, and the
+ *  exemption can only ever REMOVE a path from this row's SUBJECT. **THE FALSIFIABLE HALF IS
+ *  UNCHANGED**: `tests/listhost.test.ts` is on NO list here and is still driven as the row's own
+ *  probe, so a genuinely denied sibling test file still FAILS. */
+const F3_SAME_COMMIT_ARTIFACT_PATHS: readonly string[] = [
+  'tests/focus-tool.test.ts', // `docs/specs/focus-tool.md` §5.1 row 5 — the F3 unit's OWN RED SET (the same-commit obligation's own home)
+  'tests/focus-tool-register.ts', // `docs/specs/focus-tool.md` §5.5.1 — the F3 unit's executed property register (a NON-test module, riding the same red-set commit)
+  // ── AND THE SIBLING SUITES THAT SAME COMMIT CENSUS-REPAIRS, EACH ANOTHER UNIT'S OWN ARTIFACT,
+  //    NAMED FOR THE IDENTICAL REASON (`docs/specs/focus-tool.md` `§5.1` rows 15–22 make the census
+  //    repair a same-commit obligation AT EACH SITE, so one commit necessarily carries all of them).
+  'tests/census.test.ts', // `docs/specs/focus-tool.md` §5.1 row 15 — the `U-CENSUS` (`E5`) unit's own red set
+  'tests/gesture-session.test.ts', // `docs/specs/focus-tool.md` §5.1 row 16 — the `U-GSESSION` (`E6`) unit's own red set
+  'tests/gutter.test.ts', // `docs/specs/focus-tool.md` §5.1 row 17 — the `U-GUTTER` (`E3`) unit's own red set
+  'tests/slot-host.test.ts', // `docs/specs/focus-tool.md` §5.1 row 19 — the slot-host unit's own suite
+]
 /** The per-commit file lists of `anchor` PLUS the range `anchor..HEAD`, with the
  *  unit-scoped partition applied: `files` holds only the files of the commits
  *  that touched at least one of THIS unit's artifacts, and the counts are
@@ -1951,8 +1988,15 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       /^docs\/specs\/(?!zones[^/]*-greens\.md$).*-greens\.md$/,
       /^archive\/reviews\/(?!.*(U-ZONES|zones)).*\.md$/,
     ]
-    const isDenied = (path: string): boolean =>
+    const isDeniedStrict = (path: string): boolean =>
       DENIED.some((d) => path === d || path.startsWith(d)) || DENIED_PATTERNS.some((re) => re.test(path))
+    /** **THE ROW'S DENIED PREDICATE, WITH THE ONE DECLARED EXEMPTION ABOVE — `isDeniedStrict` IS
+     *  UNTOUCHED AND STILL REJECTS EVERY EXEMPTED PATH.** The exemption is an early `false` for the
+     *  NAMED paths in `F3_SAME_COMMIT_ARTIFACT_PATHS` ONLY, which is what makes this row's own
+     *  `N-18` same-commit obligation REACHABLE; every other path is read by the byte-identical
+     *  predicate, so the row's `tests/listhost.test.ts` probe below still FAILS as it must. */
+    const isDenied = (path: string): boolean =>
+      F3_SAME_COMMIT_ARTIFACT_PATHS.includes(path) ? false : isDeniedStrict(path)
     const SCOPE_TEXT = `${ALLOWED.join(
       ' + ',
     )} + this unit's own docs/specs/zones*-greens.md + this unit's own review record under archive/reviews/`
@@ -2052,6 +2096,17 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
     ]) {
       expect(isDenied(probe), `R-4 — the DENIED set really rejects '${probe}' (the row’s falsifiable half)`).toBe(true)
     }
+    // THE DECLARED EXEMPTION’S OWN CONTROL (⟶ ADDED 2026-09-27, the `F3` same-commit obligation) —
+    // **THE EXEMPTION IS A NAMED LIST, NEVER A BLANKET HATCH, AND IT IS DRIVEN BOTH WAYS HERE:**
+    // (a) the `F3` unit’s declared same-commit artifacts are out of THIS row’s subject, and
+    // (b) `isDeniedStrict` — the predicate itself — STILL REJECTS EVERY ONE OF THEM, so nothing
+    // was relaxed in the prohibition; and (c) a GENUINELY DENIED, UNCLAIMED sibling test file
+    // (`tests/listhost.test.ts`, driven above as this row's own probe) still FAILS.
+    for (const path of F3_SAME_COMMIT_ARTIFACT_PATHS) {
+      expect(isDenied(path), `R-4 — '${path}' is a declared same-commit artifact of the F3 obligation (docs/specs/focus-tool.md §5.1 rows 15–22): it is EXEMPT BY NAME from this row’s subject.`).toBe(false)
+      expect(isDeniedStrict(path), `R-4 control — the PROHIBITION is unweakened: '${path}' is STILL DENIED by this row’s own pattern, and only the SUBJECT moved.`).toBe(true)
+    }
+    expect(isDenied('tests/listhost.test.ts'), 'R-4 control — a genuinely denied sibling test file (NOT on the exemption list) still FAILS, so the exemption cannot swallow one.').toBe(true)
   })
 
   it('R-5 §3.4 — the EXPORT-CENSUS row: SET EQUALITY over the TWO value exports, and the type-only name `TrackSpec` through leg 4', async () => {

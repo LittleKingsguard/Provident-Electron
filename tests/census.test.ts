@@ -812,6 +812,47 @@ function isCensusUnitArtifact(path: string): boolean {
     CENSUS_REVIEW_PROBE.test(path)
   )
 }
+/** **⟶ DECLARED 2026-09-27 (THE `U-CENSUS`/`E5` SIDE OF THE F3 SAME-COMMIT OBLIGATION) —
+ *  THE `U-FOCUS-TOOL` UNIT'S TWO DECLARED TEST ARTIFACTS, EXEMPTED **BY NAME** FROM THIS ROW'S
+ *  `tests/**` DENIED PATTERN.**
+ *
+ *  **THE MEASURED REASON THIS DECLARATION EXISTS (`docs/specs/focus-tool.md` `§5.1` rows 15–22;
+ *  `§5.2` item 4 (iii) `N-14`).** `docs/specs/focus-tool.md` `§5.1`'s WIDENED allow-list NAMES this
+ *  file as a SAME-COMMIT obligation of the `F3`/`U-FOCUS-TOOL` unit (`§5.1` row 15: the `ALL_TOOLS`
+ *  name-set equality, the sibling `PINNED_TOOL_SET` length `21 → 22`, the `RpcMethod` union count
+ *  and its SET-size duplicate check — all IN THE SAME COMMIT). That commit therefore TOUCHES
+ *  `tests/census.test.ts`, which makes it a unit-touching commit for THIS row, and
+ *  `unitScopedCommitted`'s `allFilesOfUnitCommits` then carries EVERY file of it — including the
+ *  `F3` unit's own red set and its `§5.5.1` register module, both of which this row's own
+ *  `/^tests\/(?!census\.test\.ts$)/` pattern denies. **THE OBLIGATION WAS UNREACHABLE: `npm test`
+ *  cannot be green while the same-commit repair this row's OWN `N-14` obligation requires is
+ *  charged to this row as a boundary violation.** MEASURED, verbatim, before this declaration:
+ *  `R-8/§5.1 — 'tests/focus-tool-register.ts' was COMMITTED inside this unit's range
+ *  dc0c24c4…..HEAD and is in the DENIED set`.
+ *
+ *  **THE SAME DECLARED-EXEMPTION PATTERN THIS ROW ALREADY USES** (its `DENIED_PATTERNS` above
+ *  carries the identical shape for this unit's own `census*-greens.md` and review record, and the
+ *  sibling diff-scope rows declare `U-PROJ`'s, `U-GESTURE-SESSION`'s, `U-GUTTER`'s and the
+ *  divergence unit's artifacts BY NAME with their reason recorded). **IT IS AN EXEMPTION, NOT A
+ *  RELAXATION: THE PROHIBITION IS NOT WIDENED AND NOTHING IS ALLOWED THAT WAS DENIED BEFORE.** The
+ *  entry is a NAMED PATH LIST, so only the `F3` unit's two declared artifacts leave the subject; a
+ *  genuinely denied path still FAILS — the row's OWN control (`tests/listhost.test.ts`) drives
+ *  exactly that, beside a live drive of this list. */
+const F3_DECLARED_ARTIFACT_PATHS: readonly string[] = [
+  'tests/focus-tool.test.ts', // `docs/specs/focus-tool.md` §5.1 row 5 — the F3 unit's red set (the same-commit obligation's own home)
+  'tests/focus-tool-register.ts', // `docs/specs/focus-tool.md` §5.5.1 — the F3 unit's executed property register (a non-test module, riding the same red-set commit)
+  // ── THE SIBLING SUITES THE SAME `F3` COMMIT TOUCHES, EACH ITS OWN UNIT'S ARTIFACT AND EACH
+  //    NAMED HERE for the identical reason: `docs/specs/focus-tool.md` `§5.1` rows 15–22 make the
+  //    census repair a SAME-COMMIT obligation AT EACH OF THOSE SITES, so the one commit that
+  //    satisfies this row's own `N-14` cell necessarily carries all of them plus the `F3` unit's
+  //    two artifacts. Naming them is what makes that obligation REACHABLE instead of charging a
+  //    sibling's declared file to THIS unit; the DENIED predicate (`isDeniedStrict`) still rejects
+  //    every one of them, and the control below drives that.
+  'tests/gesture-session.test.ts', // `docs/specs/focus-tool.md` §5.1 row 16 — the `U-GSESSION` unit's own red set, repaired in the same commit
+  'tests/gutter.test.ts', // `docs/specs/focus-tool.md` §5.1 row 17 — the `U-GUTTER` (`E3`) unit's own red set, repaired in the same commit
+  'tests/slot-host.test.ts', // `docs/specs/focus-tool.md` §5.1 row 19 — the slot-host unit's own suite, census-repaired in the same commit
+  'tests/zones.test.ts', // `docs/specs/focus-tool.md` §5.1 row 18 — the `U-ZONES` unit's own red set, census-repaired in the same commit
+]
 /** **THE UNIT-SCOPED COMMIT PARTITION** (`§5.1`'s COMMIT-RANGE SCOPE RULE, the
  *  rule the last three passes converged on): the anchored range is
  *  `anchor..HEAD` and HEAD moves through LATER UNITS' commits, so a census over
@@ -2776,8 +2817,16 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       // Another unit’s EXISTING test file (this unit authors exactly one test file).
       /^tests\/(?!census\.test\.ts$)/,
     ]
-    const isDenied = (path: string): boolean =>
+    const isDeniedStrict = (path: string): boolean =>
       DENIED.some((d) => path === d || path.startsWith(d)) || DENIED_PATTERNS.some((re) => re.test(path))
+    /** **THE ROW'S DENIED PREDICATE, WITH THE ONE DECLARED EXEMPTION ABOVE — `isDeniedStrict` IS
+     *  UNTOUCHED AND STILL REJECTS EVERY EXEMPTED PATH.** The exemption is an early `false` for the
+     *  `F3` unit's TWO NAMED artifacts ONLY (`F3_DECLARED_ARTIFACT_PATHS`), which is what makes the
+     *  same-commit obligation this row's own `N-14` cell names REACHABLE; every other path is read
+     *  by the byte-identical predicate. A path NOT on that list — the row's `tests/listhost.test.ts`
+     *  control, or any other unit's test file — still FAILS. */
+    const isDenied = (path: string): boolean =>
+      F3_DECLARED_ARTIFACT_PATHS.includes(path) ? false : isDeniedStrict(path)
     const SCOPE_TEXT = `${ALLOWED.join(
       ' + ',
     )} + this unit’s own docs/specs/census*-greens.md + this unit’s own review record under archive/reviews/`
@@ -2850,7 +2899,11 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       'src/shared/dom-shim.ts',
       'src/shared/types.ts',
       'src/shared/zones.ts',
-      'tests/zones.test.ts',
+      // **⟶ NOTE 2026-09-27: `tests/zones.test.ts` STOOD HERE AS A PROBE AND IS NOW ONE OF THE
+      // DECLARED `F3` SAME-COMMIT SIBLINGS ABOVE, so it can no longer serve as a probe for the
+      // same row** (a path cannot be both exempt and the falsifier of that exemption). The
+      // pattern's own falsifiability is unchanged: `tests/listhost.test.ts` below is UNCLAIMED by
+      // any declaration and is exactly the class the `tests/**` pattern exists to catch.
       'package.json',
       'scripts/mcp-cli.mjs',
       'tests/listhost.test.ts',
@@ -2859,6 +2912,16 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
     ]) {
       expect(isDenied(probe), `R-8 — the DENIED set really rejects '${probe}' (the row’s falsifiable half)`).toBe(true)
     }
+    // THE DECLARED EXEMPTION’S OWN CONTROL (⟶ ADDED 2026-09-27, the `F3` same-commit obligation) —
+    // **THE EXEMPTION IS A NAMED LIST, NEVER A BLANKET HATCH, AND IT IS DRIVEN BOTH WAYS HERE:**
+    // (a) the `F3` unit’s two declared artifacts are exempt from THIS row’s subject, and
+    // (b) `isDeniedStrict` — the predicate itself — STILL REJECTS BOTH OF THEM, so nothing was
+    // relaxed in the prohibition; and (c) a GENUINELY DENIED SIBLING TEST FILE still FAILS.
+    for (const path of F3_DECLARED_ARTIFACT_PATHS) {
+      expect(isDenied(path), `R-8 — '${path}' is the F3 unit’s declared same-commit artifact (docs/specs/focus-tool.md §5.1 rows 5/15–22): it is EXEMPT BY NAME from this row’s subject.`).toBe(false)
+      expect(isDeniedStrict(path), `R-8 control — the PROHIBITION is unweakened: '${path}' is STILL DENIED by the row’s own pattern, and only the SUBJECT moved.`).toBe(true)
+    }
+    expect(isDenied('tests/listhost.test.ts'), 'R-8 control — a genuinely denied sibling test file (NOT on the exemption list) still FAILS, so the exemption cannot swallow one.').toBe(true)
     // …and this unit’s own artifacts are not themselves denied.
     for (const path of [MODULE_RELPATH, TEST_RELPATH, 'docs/specs/census.md', 'docs/specs/census-greens.md']) {
       expect(isDenied(path), `R-8 — '${path}' is THIS unit’s own artifact and can be in no denied set`).toBe(false)

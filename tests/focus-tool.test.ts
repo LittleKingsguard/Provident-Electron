@@ -47,13 +47,14 @@ import { SecurityGate, groupForTool } from '../src/main/security.js'
 import type { RpcMethod } from '../src/shared/types.js'
 import {
   REGISTER, STOP_RULE_PROBE, DECLARED_TERMS, EXPECTED_ALL_TOOLS, EXPECTED_GROUPS,
-  EXPECTED_MUTATING, DECLARED_MEMBERS, CAP_PER_ROW, CAP_TOTAL,
+  EXPECTED_MUTATING, DECLARED_MEMBERS, REQUIRED_MEMBERS, OPTIONAL_MEMBER, CAP_PER_ROW, CAP_TOTAL,
   DECLARED_TOTAL, AS_FILED_TOTAL, AS_FILED_DECLARED_TERMS, EXECUTED_CELLS_SUM_AT_SETTLEMENT,
   DECLARED_TERM_CHAIN, DECLARED_DOMAIN_SUBTOTALS, DECLARED_TYPE_SUBTOTALS,
   DECLARED_BOUNDED_ROWS, DECLARED_READING_CLASSES, ENUMERATED_ROW_IDS, EXECUTED_CELLS_SUM,
   runRegister, reportDiagnostics, read, stripComments, scanLines, liveAllTools, liveRpcMethods,
-  liveMutatingMethods, liveValidGroups, focusRouteSource, routeRegion, recorder, newServer,
-  callTool, callHandler, assertOneFocusCall, thrown,
+  liveMutatingMethods, liveValidGroups, focusRouteSource, routeRegion, routeMarkerExtent,
+  inRouteRegion, assertDeclaredShape, assertOptionalMember, keysOf,
+  recorder, newServer, callTool, callHandler, assertOneFocusCall, thrown,
 } from './focus-tool-register.js'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -119,25 +120,49 @@ describe('§3.5 X-1..X-7 — the existence rows', () => {
     ).toBe(true)
   })
 
-  it('X-8 / RT-5(b) — THE ROUTE REGION IS BOUNDED BY THE CONTRACT, NOT BY A QUOTING CONVENTION (`§5.5.2` item 4b)', () => {
+  it('X-8 / RT-5(b) — THE ROUTE REGION IS BOUNDED BY THE CONTRACT AND ITS FIRST LINE IS NOT THE MARKER (`§5.5.2` item 4b)', () => {
     // THE MEASURED DEFECT THIS ROW EXISTS FOR: the as-filed reader sliced from the FIRST QUOTED
     // OCCURRENCE OF THE TOOL NAME to end-of-file, so an occurrence of that quoted name ANYWHERE
     // ELSE moved every scan row's region — which is how `P-FT-ID-2`'s "the tool re-derived no
     // rule" scan reddened against a legitimate `===` in the SHARED `graph` loop. The region is
     // now the handler's OWN registration block: quoting elsewhere cannot move it.
+    //
+    // AND THE SECOND DEFECT, THIS PASS'S (conflict 1): the region used to BEGIN ON THE MARKER
+    // LINE, whose own text is `if (allowed.includes('provident.focus'))` — a line carrying the
+    // very `.includes(` a route scan forbids, so every scan row was handed a pattern its own
+    // region always carried and no implementation could ever hold it. THE READER MOVED, NOT THE
+    // TOOL: the region now starts AFTER the marker match (and past its line terminator), so the
+    // region's own first line is never the marker while the BOUNDED-REGION claim is kept.
     const region = routeRegion()
     expect(region, `RT-5(b) — the contract-named region must be LOCATABLE: the tool's own \`allowed.includes('${TOOL_NAME}')\` registration block is its marker.`).not.toBe(null)
     const marked = region as NonNullable<ReturnType<typeof routeRegion>>
+    const extent = routeMarkerExtent()
+    expect(extent, 'RT-5(b) — the marker line itself must be readable, or the boundary below is not a reading.').not.toBe(null)
+    const m = extent as NonNullable<ReturnType<typeof routeMarkerExtent>>
     expect(marked.name, 'RT-5(b) — the marker is the tool row itself, not a neighbouring registration.').toBe(TOOL_NAME)
+    // THE REGION'S EXTENT, IN THIS FILE'S OWN TERMS: `start` is AT OR AFTER the marker line's end,
+    // so the marker line — and its own `.includes(` — is OUTSIDE the region read.
+    expect(marked.start, 'RT-5(b) — the region STARTS AFTER THE MARKER LINE (never on it): the marker line carries `.includes(`, which the scans below forbid.').toBeGreaterThanOrEqual(m.markerLineEnd)
+    expect(inRouteRegion(m.markerStart), 'RT-5(b) — the marker BYTE is OUTSIDE the region (the region\'s own first line is therefore not the marker).').toBe(false)
+    expect(inRouteRegion(m.markerStart + m.markerLength), 'RT-5(b) — the marker MATCH is outside the region too; the region begins after its line terminator.').toBe(false)
     const src = read('src/main/mcp-server.ts')
     expect(marked.end, 'RT-5(b) — the region ENDS before the NEXT registration block (never at end-of-file), so a sibling tool\'s bytes are not scanned as this route.').toBeLessThan(src.length)
+    expect(marked.end, 'RT-5(b) — and the region is BOUNDED at its end (end > start) rather than empty.').toBeGreaterThan(marked.start)
     const body = focusRouteSource() ?? ''
     expect(body.length, 'RT-5(b) — the bounded region is NON-VACUOUS: non-empty, so every scan row still reads real bytes at green time.').toBeGreaterThan(0)
-    expect(body.includes(`'${TOOL_NAME}'`), 'RT-5(b) — the bounded region CONTAINS the tool block it names.').toBe(true)
+    // THE BOUNDED-REGION CLAIM, KEPT (never weakened by the move): a SECOND RESOLUTION PATH, a NEW
+    // EXPORT or an alias written INSIDE the tool's own block is INSIDE this region — so it is read
+    // by the scan below and FAILS, rather than escaping the reading. The falsifier is driven here.
+    const controlBlock = `${body}\nif (allowed.includes('provident.focus')) { return 'aliased-resolution-path' }\nconst secondPath = 'focus'\n`
+    expect(scanLines(controlBlock, /===|\.includes\s*\(/).length, 'RT-5(b) control — a SECOND RESOLUTION PATH written inside the block the marker introduces is INSIDE the region and IS caught by the scan.').toBeGreaterThan(0)
     for (const foreign of ["if (allowed.includes('provident.get_rendered_html'))", "if (allowed.includes('provident.get_node_state'))"]) {
       expect(body.includes(foreign), `RT-5(b) — the region must NOT reach a SIBLING registration block ('${foreign}' is outside it).`).toBe(false)
     }
-    expect(scanLines(body, /===|\.includes\s*\(/).length, 'RT-5(b) — the region the scans read is exactly the handler block: no sibling `===`/`.includes(` can redden a route row.').toBe(0)
+    // THE SCAN'S OWN READING: the region the scans read carries NO `===` and NO `.includes(`.
+    // (This is asserted as the SCAN'S reading, never as a claim about which tokens live INSIDE
+    // the tool's block — the block's own registration row names the tool, and naming it is
+    // REQUIRED of the implementation; what the scans read is the code the handler adds.)
+    expect(scanLines(body, /===|\.includes\s*\(/).length, `RT-5(b) — the region the scans read must be free of \`===\` and \`.includes(\`: the ONLY such line is the MARKER LINE, which the region now excludes. Measured hits: ${JSON.stringify(scanLines(body, /===|\.includes\s*\(/))}`).toBe(0)
   })
 })
 
@@ -151,7 +176,9 @@ describe('§3.1 M-1..M-6 — one row per valid/happy state', () => {
     const got = (await callTool(newServer(rec.backend), TOOL_NAME, { target: 'node-1' })) as Record<string, unknown>
     assertOneFocusCall(rec, 'M-1')
     expect(got, "M-1 — entries/activeId are the renderer's own values (`§3.3 I-5`).").toEqual(answer)
-    expect(Object.keys(got).sort(), 'M-1 / `§3.3 I-6` — the four declared names, `refused` ABSENT (not `undefined`).').toEqual([...DECLARED_MEMBERS].sort())
+    assertDeclaredShape(got, 'M-1')
+    assertOptionalMember(got, false, 'M-1')
+    expect(Object.keys(got).sort(), "M-1 / `§3.3 I-6` — the three REQUIRED members, in any order; `refused` ABSENT (not `undefined`).").toEqual([...REQUIRED_MEMBERS].sort())
     expect('refused' in got, 'M-1 — no `refused` own key outside a refusal (`§0A` note 4).').toBe(false)
   })
 
@@ -169,7 +196,8 @@ describe('§3.1 M-1..M-6 — one row per valid/happy state', () => {
     const passed = assertOneFocusCall(rec, 'M-2') as Record<string, unknown>
     expect(passed['newTab'], 'M-2 — the flag reaches the renderer by identity.').toBe(true)
     expect(got, "M-2 — the consumer's own answer, verbatim (`§2.3` item 2).").toEqual(answer)
-    expect(Object.keys(got).sort(), 'M-2 — no member added by the tool.').toEqual([...DECLARED_MEMBERS].sort())
+    expect(Object.keys(got).sort(), 'M-2 — no member added by the tool; `refused` ABSENT on this accepted arm.').toEqual([...REQUIRED_MEMBERS].sort())
+    assertOptionalMember(got, false, 'M-2')
   })
 
   it('M-3 no arguments at all: `{}` and an OMITTED arguments member are the same call (`§0A` note 3(a))', async () => {
@@ -181,7 +209,8 @@ describe('§3.1 M-1..M-6 — one row per valid/happy state', () => {
       const rec = recorder([{ activeId: null, entries: [], opened: false }])
       const got = (await callTool(newServer(rec.backend), TOOL_NAME, shape.args, { omitArguments: shape.omit })) as Record<string, unknown>
       assertOneFocusCall(rec, `M-3 (${shape.label})`)
-      expect(Object.keys(got).sort(), `M-3 (${shape.label}) — the declared shape, no special case.`).toEqual([...DECLARED_MEMBERS].sort())
+      expect(Object.keys(got).sort(), `M-3 (${shape.label}) — the declared shape, no special case: the three required members, \`refused\` ABSENT.`).toEqual([...REQUIRED_MEMBERS].sort())
+      assertOptionalMember(got, false, `M-3 (${shape.label})`)
     }
   })
 
@@ -191,7 +220,9 @@ describe('§3.1 M-1..M-6 — one row per valid/happy state', () => {
     const got = (await callTool(newServer(rec.backend), TOOL_NAME, { target: 'x' })) as Record<string, unknown>
     assertOneFocusCall(rec, 'M-4')
     expect(got, "M-4 — `reason` is the CONSUMER's own string, carried VERBATIM.").toEqual(answer)
-    expect(Object.keys(got).sort(), 'M-4 — exactly the four declared names.').toEqual([...DECLARED_MEMBERS].sort())
+    assertDeclaredShape(got, 'M-4')
+    assertOptionalMember(got, true, 'M-4')
+    expect(Object.keys(got).sort(), 'M-4 — the three required members plus the optional `refused` the outcome carries; no fifth member.').toEqual([...DECLARED_MEMBERS].sort())
     expect(Object.keys(got['refused'] as Record<string, unknown>), "M-4 — `refused`'s own key set is exactly ['reason'].").toEqual(['reason'])
   })
 
@@ -358,7 +389,9 @@ describe('§3.3 I-1..I-13 — the invariants that hold in every state', () => {
     ]
     for (const d of drives) {
       const got = (await callTool(newServer(recorder([d.answer]).backend), TOOL_NAME, {})) as Record<string, unknown>
-      expect(Object.keys(got).sort(), `I-6 (${d.label}) — the declared four-name key set.`).toEqual([...DECLARED_MEMBERS].sort())
+      assertDeclaredShape(got, `I-6 (${d.label})`)
+      assertOptionalMember(got, d.label === 'refusal', `I-6 (${d.label})`)
+      expect(Object.keys(got).sort(), `I-6 (${d.label}) — the three required members, plus \`refused\` IFF the outcome carries one.`).toEqual((d.label === 'refusal' ? [...DECLARED_MEMBERS] : [...REQUIRED_MEMBERS]).sort())
       expect(Object.prototype.hasOwnProperty.call(got, 'refused'), `I-6 (${d.label}) — presence matches the consumer's answer.`).toBe(d.label === 'refusal')
       expect(Object.values(got).every((v) => v !== undefined), `I-6 (${d.label}) — no member is present as undefined.`).toBe(true)
     }
@@ -446,9 +479,17 @@ describe('§3.4 R-1..R-10 — the static rows', () => {
     expect(Object.keys(RPC_METHOD_CENSUS).sort(), 'R-4 / E-b — this record is exhaustive over the 22 declared members.').toEqual([...liveRpcMethods(), METHOD].sort().filter((v, i, a) => a.indexOf(v) === i))
   })
 
-  it("R-5 THE SHAPE ROW — the returned object's own key set is exactly the four declared names", async () => {
+  it("R-5 THE SHAPE ROW — the three required members always present, `refused` IFF the outcome carries one, no fifth member", async () => {
     const got = (await callTool(newServer(recorder([{ activeId: 'x', entries: ['x'], opened: true }]).backend), TOOL_NAME, { target: 'x' })) as Record<string, unknown>
-    expect(Object.keys(got).sort(), 'R-5 / `§0A` note 4 — exactly the declared names, nothing added or re-keyed.').toEqual([...DECLARED_MEMBERS].sort())
+    assertDeclaredShape(got, 'R-5')
+    assertOptionalMember(got, false, 'R-5')
+    expect(Object.keys(got).sort(), 'R-5 / `§0A` note 4 — the required names on an accepted outcome, nothing added or re-keyed.').toEqual([...REQUIRED_MEMBERS].sort())
+    // THE TWO FALSIFIERS, BOTH DRIVEN HERE (the consolidation adjudication, conflict 2 — the
+    // accepted arm and the optionality claim cannot be asserted as one four-name equality):
+    // (a) a record MISSING A REQUIRED MEMBER fails the shape read, and (b) a record CARRYING
+    // `refused` when there is no such outcome fails the optionality read.
+    expect(keysOf({ activeId: null, opened: false }), 'R-5 control (a) — a record missing `entries` FAILS the required-member half (the falsifier is real, not a relaxation).').not.toEqual([...REQUIRED_MEMBERS].sort())
+    expect(keysOf({ activeId: null, entries: [], opened: false, refused: { reason: 'r' } }), 'R-5 control (b) — a record carrying `refused` with NO such outcome FAILS the absence half.').not.toEqual([...REQUIRED_MEMBERS].sort())
   })
 
   it('R-6 THE NO-THROW ROW — no throw escapes on any ACCEPTED shape', async () => {
@@ -555,7 +596,9 @@ describe('§5.U — the seven matrix rows (node-side halves; rows 3/4 LABELLED)'
   it('§5.U row 5 — a refusal returns the declared shape and changes nothing', async () => {
     const reason = '  refused: unicode-pad  '
     const got = (await callTool(newServer(recorder([{ activeId: null, entries: [], opened: false, refused: { reason } }]).backend), TOOL_NAME, { target: 'x' })) as Record<string, unknown>
-    expect(Object.keys(got).sort(), "§5.U row 5 — the asserted object is the returned object's own key set.").toEqual([...DECLARED_MEMBERS].sort())
+    assertDeclaredShape(got, '§5.U row 5')
+    assertOptionalMember(got, true, '§5.U row 5')
+    expect(Object.keys(got).sort(), "§5.U row 5 — the asserted object is the returned object's own key set: three required members + the optional one the refusal carries.").toEqual([...DECLARED_MEMBERS].sort())
     expect((got['refused'] as Record<string, unknown>)['reason'], "§5.U row 5 — the reason is the consumer's own string, untrimmed and uninvented.").toBe(reason)
   })
 
@@ -592,12 +635,16 @@ describe('§5.U — the seven matrix rows (node-side halves; rows 3/4 LABELLED)'
 describe("§2.1 item 5 / §3.2 F-5 — the shape row's three declared drives", () => {
   it("RS-1(a) a serviced call with the consumer's well-formed answer", async () => {
     const got = (await callTool(newServer(recorder([{ activeId: 'a', entries: ['a'], opened: false }]).backend), TOOL_NAME, { target: 'a' })) as Record<string, unknown>
-    expect(Object.keys(got).sort(), 'RS-1(a) — the four declared names.').toEqual([...DECLARED_MEMBERS].sort())
+    assertDeclaredShape(got, 'RS-1(a)')
+    assertOptionalMember(got, false, 'RS-1(a)')
+    expect(Object.keys(got).sort(), 'RS-1(a) — the three required members on the serviced arm; `refused` ABSENT.').toEqual([...REQUIRED_MEMBERS].sort())
   })
 
   it("RS-1(b) a refusal answer: four names with `refused`, and `refused`'s own key set is exactly ['reason']", async () => {
     const got = (await callTool(newServer(recorder([{ activeId: null, entries: [], opened: false, refused: { reason: 'r' } }]).backend), TOOL_NAME, { target: 'a' })) as Record<string, unknown>
-    expect(Object.keys(got).sort(), 'RS-1(b) — four names with `refused` present.').toEqual([...DECLARED_MEMBERS].sort())
+    assertDeclaredShape(got, 'RS-1(b)')
+    assertOptionalMember(got, true, 'RS-1(b)')
+    expect(Object.keys(got).sort(), 'RS-1(b) — three required members with the optional `refused` the refusal carries; no fifth member.').toEqual([...DECLARED_MEMBERS].sort())
     expect(Object.keys(got['refused'] as Record<string, unknown>), 'RS-1(b) — the tool invents NO code and adds NO member inside `refused`.').toEqual(['reason'])
   })
 

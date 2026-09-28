@@ -2285,6 +2285,44 @@ const SIBLING_DIVERGENCE_UNIT_ARTIFACTS: ReadonlyArray<{ readonly path: string; 
     // `src/shared/*` path other than `E3`'s own module), which control `(n-5)` drives; the exclusion
     // is one-directional (REMOVE from `E3`'s subject only).
   },
+  {
+    path: 'tests/census.test.ts',
+    unit: 'the FOCUS-TOOL unit (`F3` / `U-FOCUS-TOOL`) — the `U-CENSUS` suite its SAME-COMMIT census obligation repairs (`docs/specs/focus-tool.md` `§5.1` row 15) — NOT this unit',
+    // **⟶ DECLARED 2026-09-27 (THE `F3` SAME-COMMIT OBLIGATION, `R-12`'s DENIED AND ALLOW-LIST
+    // HALVES) — THE FIFTH REPAIR OF THIS CLASS, AND THE ONE `docs/specs/focus-tool.md` `§5.1`
+    // MAKES UNAVOIDABLE.** That contract's widened allow-list NAMES THIS FILE as a same-commit
+    // obligation of the `F3` unit (`§5.1` row 15: the `ALL_TOOLS` name-set equality, the sibling
+    // `PINNED_TOOL_SET` length `21 → 22`, the `RpcMethod` count and its set-size duplicate check —
+    // all in one commit). The commit satisfying it therefore carries `tests/census.test.ts`
+    // TOGETHER WITH `tests/focus-tool.test.ts`, `tests/zones.test.ts` and the sibling suites that
+    // same commit census-repairs — and this row's accounting rule (`isAccountedFor`, control (m))
+    // then charged two of them to `E3`. **THE MEASURED READING, verbatim:** `liveUnaccounted:
+    // ["tests/census.test.ts","tests/zones.test.ts"]` against an expected `[]`.
+    // **THE AUTHORITY** is the same quoted rule every entry above carries (`docs/specs/gutter.md`
+    // `§5.1`'s commit-range scope rule + `§3.4 R-4`), and **AN UNDECLARED PATH STILL FAILS**:
+    // control (m)'s synthetic `tests/gutter-CONTROL-undeclared.test.ts` stays unaccounted, and
+    // `isDeniedPath` is untouched (`tests/census.test.ts` still reads `DENIED_PATTERNS`-denied in
+    // the RAW reading this row reports).
+  },
+  {
+    path: 'tests/zones.test.ts',
+    unit: 'the FOCUS-TOOL unit (`F3` / `U-FOCUS-TOOL`) — the `U-ZONES` suite its SAME-COMMIT census obligation repairs (`docs/specs/focus-tool.md` `§5.1` row 18) — NOT this unit',
+    // **DECLARED FOR THE IDENTICAL REASON AS THE ENTRY ABOVE**, from the same measured reading and
+    // under the same quoted authority; `isDeniedPath` is untouched for it too.
+  },
+  {
+    path: 'tests/slot-host.test.ts',
+    unit: 'the FOCUS-TOOL unit (`F3` / `U-FOCUS-TOOL`) — the slot-host suite its SAME-COMMIT census obligation repairs (`docs/specs/focus-tool.md` `§5.1` row 19, which NAMES that suite’s own edit bar: its row says the sibling census file “may not be edited by this unit”, which is exactly why the allow-list had to name the file) — NOT this unit',
+    // **⟶ DECLARED 2026-09-27 (THE SAME `F3` SAME-COMMIT OBLIGATION, AND THE ROW’S OWN CORE CLAIM
+    // THAT MEASURED IT).** `R-12`’s core claim reads `E3`’s own attributed change set back against
+    // `§5.1`’s allow-list, and on the committed tree it FAILED with
+    // `Outside the allow-list: ["tests/slot-host.test.ts"]` — that path rode the very commit that
+    // satisfies this unit’s own census obligation (`docs/specs/focus-tool.md` `§5.1` rows 15–22).
+    // The declaration is the same one the four F3-carrying paths above receive, under the same
+    // quoted authority; `isDeniedPath` is untouched for it (a `tests/**` path other than `E3`’s
+    // own), so it still reads in the RAW reading this row reports, and an UNDECLARED path still
+    // FAILS the arm (control (m)’s synthetic path).
+  },
 ]
 /** **THE DECLARING UNITS, BY PATH** — the registry above, read as a map by the row so it can
  *  name the owning unit of every denied path it EXCLUDES. A path repeated in the registry

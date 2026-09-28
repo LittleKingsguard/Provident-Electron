@@ -1588,6 +1588,49 @@ const DIVERGENCE_EXT_UNIT_ARTIFACT_PATHS: readonly string[] = [
   // ── THE `U-REALDOM-BOOT` / `C1` LEG UNIT:
   'tests/ui-leg-contract.test.ts', // that unit's own row file for the additive test-layer leg (`AGENTS.md` item 4); `tests/gutter.test.ts`'s registry names the same path/unit pair
 ]
+// ---------------------------------------------------------------------------
+// **⟶ DECLARED 2026-09-27 (THE `U-GSESSION`/`E6` SIDE OF THE `F3` SAME-COMMIT OBLIGATION) — THE
+// `U-FOCUS-TOOL` UNIT'S TWO DECLARED TEST ARTIFACTS, EXEMPTED **BY NAME** FROM `R-7`'s `tests/**`
+// DENIED PATTERN, EVERY PATH WITH ITS DECLARING UNIT NAMED.**
+//
+// **THE MEASURED REASON THIS DECLARATION EXISTS (`docs/specs/focus-tool.md` `§5.1` rows 15–22;
+// `§5.2` item 4 (iii) `N-15`).** That contract's WIDENED allow-list NAMES **this file** as a
+// SAME-COMMIT obligation of the `F3`/`U-FOCUS-TOOL` unit (`§5.1` row 16: the `ALL_TOOLS` name-set
+// equality against the sibling `PINNED_TOOL_SET`, that sibling list's length `21 → 22`, the
+// `VALID_GROUPS`/`MUTATING_METHODS` equalities, and the `RpcMethod` count `21 → 22` WITH its
+// SET-size duplicate check — all IN THE SAME COMMIT). The commit that satisfies that obligation
+// therefore TOUCHES `tests/gesture-session.test.ts`, which makes it a unit-touching commit for THIS
+// row, and `unitScopedCommitted`'s `allFilesOfUnitCommits` then carries EVERY file of it —
+// including the `F3` unit's own red set and its `§5.5.1` register module, plus the sibling suites
+// that same commit census-repairs. **THE OBLIGATION WAS UNREACHABLE: `npm test` cannot be green
+// while the repair this row's OWN `N-15` obligation requires is charged to this row as a boundary
+// violation.** MEASURED, verbatim, before this declaration:
+//   `Denied among them: ["tests/census.test.ts","tests/focus-tool-register.ts",
+//    "tests/focus-tool.test.ts","tests/slot-host.test.ts","tests/zones.test.ts"]`
+//
+// **THE SAME DECLARED-EXEMPTION PATTERN THIS FILE ALREADY USES** (the `SIBLING_UNIT_ARTIFACT_PATHS`,
+// `COMPOSING_UNIT_ARTIFACT_PATHS` and `DIVERGENCE_EXT_UNIT_ARTIFACT_PATHS` declarations above, each
+// with its measured cause recorded and each driving `isSiblingUnitArtifact` to a NAMED owner).
+// **IT IS AN EXEMPTION, NOT A RELAXATION: `isDenied` IS UNTOUCHED AND STILL REJECTS EVERY PATH
+// BELOW**, and the declaration can only ever REMOVE a path from this row's SUBJECT. The FALSIFIABLE
+// HALF IS UNCHANGED: a genuinely denied path still FAILS — `R-7`'s own `(4b)` control drives
+// `tests/census.test.ts`, an UNCLAIMED test file that is on NO list here and that `R-7`'s own
+// `tests/**` pattern still rejects — and the `(n)` control drives a synthetic THIS-UNIT-OWN denied
+// path (`package.json`). */
+const F3_UNIT_TEST_ARTIFACT_PATHS: readonly string[] = [
+  'tests/focus-tool.test.ts', // `docs/specs/focus-tool.md` §5.1 row 5 — the F3 unit's OWN RED SET (the same-commit obligation's own home)
+  'tests/focus-tool-register.ts', // `docs/specs/focus-tool.md` §5.5.1 — the F3 unit's executed property register (a NON-test module, riding the same red-set commit)
+  // ── AND THE SIBLING SUITES THAT SAME COMMIT CENSUS-REPAIRS, EACH ANOTHER UNIT'S OWN ARTIFACT
+  //    NAMED FOR THE IDENTICAL REASON (`docs/specs/focus-tool.md` `§5.1` rows 15–22 make the census
+  //    repair a same-commit obligation AT EACH SITE, so one commit necessarily carries all of them
+  //    beside the F3 unit's two). Naming them makes the obligation reachable; the DENIED predicate
+  //    still rejects every one, and `R-7`'s controls still drive an unclaimed test file as the
+  //    falsifier.
+  'tests/census.test.ts', // `docs/specs/focus-tool.md` §5.1 row 15 — the `U-CENSUS` (`E5`) unit's own red set
+  'tests/gutter.test.ts', // `docs/specs/focus-tool.md` §5.1 row 17 — the `U-GUTTER` (`E3`) unit's own red set
+  'tests/slot-host.test.ts', // `docs/specs/focus-tool.md` §5.1 row 19 — the slot-host unit's own suite
+  'tests/zones.test.ts', // `docs/specs/focus-tool.md` §5.1 row 18 — the `U-ZONES` unit's own red set
+]
 /** **⟶ ADDED 2026-09-27 (THE U-DIVERGENCE-EXT LANDING, THE SAME CLASS AS THE TWO REPAIRS ABOVE).** The
  *  third and fourth declaring units' declared artifacts, BY NAME, each with its unit named in the
  *  comments above and in `SIBLING_UNIT_ARTIFACT_CONTROL` below (which carries the authority per path,
@@ -1642,7 +1685,13 @@ function isSiblingUnitArtifact(path: string): boolean {
     // that pass CHANGED — and the `U-REALDOM-BOOT` (`C1`) leg unit's `tests/ui-leg-contract.test.ts`.
     // A PATH is attributed here, never a unit: a later change to the shared shim by another unit is
     // RE-ATTRIBUTED, never silently inherited.**
-    DIVERGENCE_EXT_UNIT_ARTIFACT_PATHS.includes(path)
+    DIVERGENCE_EXT_UNIT_ARTIFACT_PATHS.includes(path) ||
+    // **⟶ DECLARED 2026-09-27 (THE `F3` SAME-COMMIT OBLIGATION, THIS ROW'S `N-15`): the
+    // `U-FOCUS-TOOL` unit's two declared artifacts plus the sibling suites its one census-repair
+    // commit carries (see `F3_UNIT_TEST_ARTIFACT_PATHS` for the measured cause and the reason the
+    // exemption is BY NAME). The predicate's DENIED counterpart is UNTOUCHED and still rejects
+    // every path here.**
+    F3_UNIT_TEST_ARTIFACT_PATHS.includes(path)
   )
 }
 /** **THE DECLARED-SIBLING CENSUS, WITH ITS AUTHORITY PER PATH** — the control list `R-7` drives in
@@ -1689,9 +1738,14 @@ const SIBLING_UNIT_ARTIFACT_CONTROL: ReadonlyArray<{
  *  sibling path it excludes (the same `path → declaring unit` discipline the registry in
  *  `tests/gutter.test.ts` uses). A path with no explicit `owner` belongs to one of the two original
  *  declaring units (`E10`/`E3`), which is the label those entries have always carried. */
-const SIBLING_ARTIFACT_UNIT_BY_PATH: Readonly<Record<string, string>> = Object.fromEntries(
-  SIBLING_UNIT_ARTIFACT_CONTROL.map((c) => [c.path, c.owner ?? 'the SIBLING unit (E10 / U-GUTTER-UI) / the COMPOSING unit (E3 / U-GUTTER)']),
-)
+const SIBLING_ARTIFACT_UNIT_BY_PATH: Readonly<Record<string, string>> = {
+  ...Object.fromEntries(
+    SIBLING_UNIT_ARTIFACT_CONTROL.map((c) => [c.path, c.owner ?? 'the SIBLING unit (E10 / U-GUTTER-UI) / the COMPOSING unit (E3 / U-GUTTER)']),
+  ),
+  // **⟶ DECLARED 2026-09-27 (THE `F3` SAME-COMMIT OBLIGATION, THIS ROW'S `N-15`) — the exemption's
+  // OWNER MAP, so `R-7` reports each exempted path's declaring unit rather than a fallback label.**
+  ...Object.fromEntries(F3_UNIT_TEST_ARTIFACT_PATHS.map((path) => [path, 'the `U-FOCUS-TOOL` / `F3` unit'])),
+}
 /** **THE PREDICATE'S FALSE DIRECTION, NAMED ONCE** — this unit's own canonical artifacts (which no
  *  sibling allow-list claims), and the UNCLAIMED paths that must STAY this unit's responsibility: a
  *  `src/renderer/**` file no sibling declares (`secure-panels.ts` is DENIED to `E10` by its own
@@ -1712,7 +1766,14 @@ const UNCLAIMED_PATH_CONTROL: readonly string[] = [
   'src/renderer/secure-panels.ts',
   'src/main/main.ts',
   'src/shared/census.ts',
-  'tests/census.test.ts',
+  // **⟶ SUBSTITUTED 2026-09-27 (THE `F3` SAME-COMMIT OBLIGATION, `R-7`'s `N-15`): `tests/census.test.ts`
+  // STOOD HERE AND IS NOW A DECLARED `F3` PATH** (that unit's own census repair rides the same commit —
+  // see `F3_UNIT_TEST_ARTIFACT_PATHS`), so it can no longer drive the predicate's FALSE direction. **THE
+  // SUBSTITUTE IS A PATH NO DECLARATION CLAIMS AND THAT STAYS DENIED TO THIS UNIT** — an unclaimed
+  // sibling test file that `R-7`'s own `/^tests\/(?!gesture-session\.test\.ts$)/` pattern still rejects —
+  // so the control keeps the same SIZE and the same force: a predicate that claimed everything (or that
+  // swallowed an undeclared test file) still FAILS here.
+  'tests/listhost.test.ts',
   'docs/specs/census-greens.md',
 ]
 /** THIS unit's OWN importer paths — a `src/**` file importing the module that this unit itself
@@ -3126,11 +3187,23 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
             const owner = siblingArtifactOwner(p)
             return !DECLARED_OWNER_LABELS.some((label) => owner.startsWith(label))
           }),
+          // **⟶ ADDED 2026-09-27 (THE `F3` SAME-COMMIT OBLIGATION, THIS ROW'S `N-15`): THE
+          // DECLARED EXEMPTION IS DRIVEN BOTH WAYS.** (5) every path on the F3 declaration answers
+          // `isSiblingUnitArtifact === true` (so the exemption really covers them), (6) every one of
+          // them is STILL DENIED by the byte-identical `isDenied` (so the PROHIBITION was not
+          // weakened — only the SUBJECT moved), and (7) each resolves to the NAMED `F3` unit through
+          // `SIBLING_ARTIFACT_UNIT_BY_PATH` (a fallback label here is a finding, not a pass). Each
+          // list is EMPTY when its claim holds.
+          [...F3_UNIT_TEST_ARTIFACT_PATHS, ...declaredSiblingPaths].filter((p) => !isSiblingUnitArtifact(p)),
+          F3_UNIT_TEST_ARTIFACT_PATHS.filter((p) => !isDenied(p)),
+          F3_UNIT_TEST_ARTIFACT_PATHS.filter((p) => !siblingArtifactOwner(p).startsWith('the `U-FOCUS-TOOL` / `F3` unit')),
         ],
-        `R-7/§5.1 POSITIVE CONTROL (⟶ ADDED 2026-09-27, THE U-DIVERGENCE-EXT LANDING): (1) EVERY path in the WHOLE declaration (all ${declaredSiblingPaths.length} = ${SIBLING_UNIT_ARTIFACT_PATHS.length} + ${COMPOSING_UNIT_ARTIFACT_PATHS.length} + ${DIVERGENCE_EXT_UNIT_ARTIFACT_PATHS.length}) answers \`true\`; (2) the five paths the measured \`1dc6315\` red read as this unit's OWN DENIED diff are STILL DENIED by the byte-identical \`isDenied\` (the predicate is untouched — no sibling escape hatch was added to it); (3) the same five answer \`true\` to the sibling predicate (they are what the exclusion covers); (4) each of them resolves to a NAMED declaring unit (a fallback/unclaimed label here is a finding, not a pass). **READS (path, owning unit, isDenied, isSiblingUnitArtifact):** ${JSON.stringify(
+        `R-7/§5.1 POSITIVE CONTROL (⟶ ADDED 2026-09-27, THE U-DIVERGENCE-EXT LANDING): (1) EVERY path in the WHOLE declaration (all ${declaredSiblingPaths.length} = ${SIBLING_UNIT_ARTIFACT_PATHS.length} + ${COMPOSING_UNIT_ARTIFACT_PATHS.length} + ${DIVERGENCE_EXT_UNIT_ARTIFACT_PATHS.length}) answers \`true\`; (2) the five paths the measured \`1dc6315\` red read as this unit's OWN DENIED diff are STILL DENIED by the byte-identical \`isDenied\` (the predicate is untouched — no sibling escape hatch was added to it); (3) the same five answer \`true\` to the sibling predicate (they are what the exclusion covers); (4) each of them resolves to a NAMED declaring unit (a fallback/unclaimed label here is a finding, not a pass). **⟶ AND (5)/(6)/(7): THE F3 DECLARATION IS DRIVEN THE SAME THREE WAYS** — its ${F3_UNIT_TEST_ARTIFACT_PATHS.length} paths all answer \`true\`, all are STILL DENIED (\`isDenied\` unweakened: nothing was relaxed), and all resolve to the named \`U-FOCUS-TOOL\` / \`F3\` unit. **READS (path, owning unit, isDenied, isSiblingUnitArtifact):** ${JSON.stringify(
           measuredRedPaths.map((p) => [p, siblingArtifactOwner(p), isDenied(p), isSiblingUnitArtifact(p)]),
+        )}. F3 DECLARATION READS: ${JSON.stringify(
+          F3_UNIT_TEST_ARTIFACT_PATHS.map((p) => [p, siblingArtifactOwner(p), isDenied(p), isSiblingUnitArtifact(p)]),
         )}`,
-      ).toEqual([[], [], [], []])
+      ).toEqual([[], [], [], [], [], [], []])
       expect(
         GS_UNIT_OWN_ARTIFACT_CONTROL.filter((p) => isSiblingUnitArtifact(p)),
         `R-7/§5.1 POSITIVE CONTROL (THE PREDICATE'S FALSE DIRECTION, so the exclusion cannot be vacuous): THIS unit's own three canonical artifacts must read \`isSiblingUnitArtifact === false\` — a predicate that excluded them too would make the arm pass by construction. Reads: ${JSON.stringify(
@@ -3139,7 +3212,7 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       ).toEqual([])
       expect(
         UNCLAIMED_PATH_CONTROL.filter((p) => isSiblingUnitArtifact(p)),
-        `R-7/§5.1 POSITIVE CONTROL (THE EXCLUSION IS A CLOSED, NAMED CENSUS — NEVER A BLANKET "NOT MINE" HATCH): a path no sibling spec's allow-list declares STAYS this unit's responsibility and answers \`false\` — including \`src/renderer/secure-panels.ts\`, which \`docs/specs/gutter-ui.md\` §5.1 item 4 keeps DENIED, and \`tests/census.test.ts\`, an UNCLAIMED test file that this row's own DENIED pattern still rejects. Reads: ${JSON.stringify(
+        `R-7/§5.1 POSITIVE CONTROL (THE EXCLUSION IS A CLOSED, NAMED CENSUS — NEVER A BLANKET "NOT MINE" HATCH): a path no sibling spec's allow-list declares STAYS this unit's responsibility and answers \`false\` — including \`src/renderer/secure-panels.ts\`, which \`docs/specs/gutter-ui.md\` §5.1 item 4 keeps DENIED, and \`tests/listhost.test.ts\`, an UNCLAIMED test file that this row's own DENIED pattern still rejects (substituted for \`tests/census.test.ts\`, which is now a DECLARED \`F3\` path). Reads: ${JSON.stringify(
           UNCLAIMED_PATH_CONTROL.map((p) => [p, isSiblingUnitArtifact(p), isDenied(p)]),
         )}`,
       ).toEqual([])
