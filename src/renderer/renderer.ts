@@ -249,14 +249,33 @@ export function handleRequest(runtime: Runtime, req: RpcRequest, notify: (p: { u
  *  the duplicate rules stay the CONSUMED MODULE'S (`§2.3` item 4), which is why this role calls
  *  `focusTransition` instead of re-deriving that rule.
  *
+ *  THE HOLDER IS ALSO THE ENTRY-RESOLUTION AUTHORITY (`§0A` note 8, defect 2) — it is named as
+ *  such because it is what holds `{entries, activeId}`: whether the caller's target already names
+ *  an entry, which identity that entry carries and which verb the attempt takes are resolved BY
+ *  THE HOLDER, out of the caller's own members and out of the state it carries. THE ROUTE PASSES
+ *  THE CALLER'S ARGUMENTS THROUGH UNINTERPRETED and re-wraps nothing: it constructs no entry, it
+ *  mints no id, it chooses no verb and it derives no refusal, so a refusal is never forgeable
+ *  inside it — ONLY THE HOLDER'S OWN ANSWER PRODUCES ONE (`§0A` note 4: `reason` is the
+ *  consumer's own string, carried verbatim).
+ *
  *  THE HANDLER IS BOUNDED AND THIN, and every refusal path is DECLARED: a payload that carries
  *  no target is the consumer's own find-or-open with no target (`S-1`) and returns the current
  *  state; a consumer refusal is NEVER a throw — it is the declared shape with `refused`
- *  (`S-4`/`F-3`), carrying the model's own refusal code; and the answer's members are passed out
- *  BY IDENTITY, with no `typeof` test, no coercion, no trim and no re-keying (`§2.3` item 3).
+ *  (`S-4`/`F-3`), carrying the holder's own refusal record with no member valued `undefined`
+ *  (`§0A` note 8, defect 3); and the answer's members are passed out BY IDENTITY, with no
+ *  `typeof` test, no coercion, no trim and no re-keying (`§2.3` item 3).
  *  It emits NO notification, persists NOTHING, forces NO re-render and authors NO surface —
  *  no element, no text, no class, no attribute and no style is touched here (`§2.4` rows 2/3/4,
  *  `§5.U` rows 3/4). */
+
+/** THE ANSWER THIS SURFACE OWNS (`§2.1` item 5): the THREE required members, plus `refused`
+ *  exactly when the outcome carries one, and never a member present as `undefined`. */
+interface FocusAnswer {
+  readonly activeId: unknown
+  readonly entries: unknown[]
+  readonly opened: boolean
+  readonly refused?: { readonly reason: unknown }
+}
 
 /** THE HOLDER — the renderer's OWN wiring-held focus state (`§2.1` item 6). It carries the
  *  model's state by reference and mutates nothing else; the entry objects inside it are the
@@ -269,30 +288,60 @@ function carriedEntryIds(state: FocusState): unknown[] {
   return focusOrder(state.entries).map((entry: FocusEntry): unknown => (entry as { readonly id?: unknown }).id)
 }
 
-function focusRoute(payload: unknown): { activeId: unknown; entries: unknown[]; opened: boolean; refused?: { reason: unknown } } {
-  const attempt = (payload ?? {}) as { target?: unknown; newTab?: unknown }
-  const carried = holder.state
-  if (!('target' in attempt)) {
-    return { activeId: carried.activeId, entries: carriedEntryIds(carried), opened: false }
-  }
-  const opened = attempt.newTab === true
-  const entry: FocusEntry = { id: attempt.target, target: attempt.target }
-  const result = focusTransition(carried, opened ? 'open' : 'activate', { id: attempt.target, entry })
-  if (!result.accepted) {
-    // THE CONSUMER'S REFUSAL — a RETURNED record, never a throw (`§2.3` item 6, `F-3`).
-    return {
-      activeId: result.state.activeId,
-      entries: carriedEntryIds(result.state),
-      opened: false,
-      refused: { reason: (result.refusals[0] as { readonly code?: unknown })?.code },
-    }
-  }
-  holder.state = result.state
+/** THE HOLDER'S OWN RESOLUTION OF ONE CALL, and it resolves nothing the caller did not supply:
+ *  the verb is read off the caller's own `newTab` (`§2.3` item 2: the flag is passed through, no
+ *  default is applied) and the identity the attempt carries is THE CALLER'S OWN VALUE — nobody
+ *  here mints one (`§2.3` item 1: the caller's own string IS the legal entry id). The entry built
+ *  here is the caller's own entry, handed to the consumed module, whose `===`-on-target
+ *  activation rule and duplicate rules then decide which entry it finds and which is active
+ *  (`§2.3` item 4) — the SECOND ID POLICY and the SECOND ACTIVATION AUTHORITY the route carried
+ *  are gone with it (`§0A` note 8, defect 2). */
+function resolveForHolder(payload: unknown): { readonly present: boolean; readonly verb: unknown; readonly arg: { readonly id?: unknown; readonly entry?: FocusEntry } } {
+  const caller = (payload ?? {}) as Record<string, unknown>
+  if (!('target' in caller)) return { present: false, verb: null, arg: {} }
+  const identity: unknown = caller['target']
   return {
+    present: true,
+    verb: caller['newTab'] === true ? 'open' : 'activate',
+    arg: { id: identity, entry: { id: identity, target: identity } },
+  }
+}
+
+/** THE HOLDER'S OWN ANSWER FOR A RESOLVED ATTEMPT — the declared members carried through AS
+ *  MEMBERS, nothing dropped and nothing collapsed into the refusal record, and NO MEMBER EVER
+ *  EMITTED WITH THE VALUE `undefined` (`§0A` note 8, defect 3): `refused` becomes an own key
+ *  exactly when the holder's own refusal record carries a reason, so a record without one ships
+ *  WITHOUT the key rather than as `{ reason: undefined }` (`§0A` note 4; `I-6`/`RS-1`). */
+function answerForHolder(result: ReturnType<typeof focusTransition>): FocusAnswer {
+  if (result.accepted) {
+    holder.state = result.state
+    return { activeId: result.state.activeId, entries: carriedEntryIds(result.state), opened: result.changed }
+  }
+  const reason: unknown = result.refusals.length > 0 ? result.refusals[0].code : undefined
+  const answer: { activeId: unknown; entries: unknown[]; opened: boolean; refused?: { reason: unknown } } = {
     activeId: result.state.activeId,
     entries: carriedEntryIds(result.state),
-    opened: result.changed,
+    opened: false,
   }
+  if (reason !== undefined) answer.refused = { reason }
+  return answer
+}
+
+/** THE HOLDER'S OWN ANSWER WHEN THE CALLER NAMED NO TARGET — the state it carries, unchanged
+ *  (`S-1`: no special case is applied and the consumer is simply asked with no target). */
+function standingAnswer(): FocusAnswer {
+  return { activeId: holder.state.activeId, entries: carriedEntryIds(holder.state), opened: false }
+}
+
+/** THE ROUTE — THE CALLER'S ARGUMENTS PASS THROUGH UNINTERPRETED (`§0A` note 8, defect 2): no
+ *  member is read here, no verb is chosen here, no entry is built here, no id is minted here and
+ *  no refusal is derived here. The holder resolves the call, the consumed module executes the
+ *  transition, and THE HOLDER'S OWN ANSWER IS WHAT SHIPS. */
+function focusRoute(payload: unknown): FocusAnswer {
+  const resolved = resolveForHolder(payload)
+  if (!resolved.present) return standingAnswer()
+  const result = focusTransition(holder.state, resolved.verb, resolved.arg)
+  return answerForHolder(result)
 }
 
 async function main(): Promise<void> {

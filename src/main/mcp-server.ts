@@ -58,8 +58,15 @@ export function invokeModuleTool(router: CapabilityRouter, gate: SecurityGate, t
  *  no re-keying (`§2.3` item 3). An OWN ENUMERABLE KEY OUTSIDE that set is REFUSED AT VALIDATION
  *  by a `TypeError`-class error that NAMES the rejected key, BEFORE any renderer call is
  *  attempted (`§0A` note 3(d), `S-6`/`F-1`/`F-6`) — the tolerate-by-ignoring alternative is
- *  recorded and NOT taken. A non-object arguments member is not an object the declared shape can
- *  describe, so it is asked with no target at all: `S-1`.
+ *  recorded and NOT taken. A NON-OBJECT ARGUMENTS MEMBER — a number, a boolean, a string, a
+ *  `Date`, a `Map`, a function or any other value the declared shape cannot describe — is
+ *  REFUSED AT VALIDATION TOO, NAMING ITS REJECTED FORM (`§0A` note 8, defect 1, which pins the
+ *  reading of note 3's own clause: the member is a PLAIN OBJECT whose own keys are a subset of
+ *  the declared set). It is NEVER ROUTED AS AN EMPTY CALL: an own-key enumeration over such a
+ *  value finds no key, and dispatching that empty argument set would make A MALFORMED CALL LOOK
+ *  LIKE A LEGAL NO-ARGUMENT CALL. An OMITTED member is still the SAME CALL as `{}` (`§0A` note
+ *  3(a), `S-1`): the refusal is on a member the caller SUPPLIED that is not a plain object, and
+ *  never on emptiness.
  *
  *  BOTH DECLARED THROW CLASSES AND NO OTHERS (`§2.3` item 6): this validation error, and the
  *  backend's own readiness rejection, which the invoke seam raises BEFORE the renderer is ready
@@ -69,13 +76,47 @@ export function invokeModuleTool(router: CapabilityRouter, gate: SecurityGate, t
  *  so a second identical call is a SECOND renderer call and never a cache hit. */
 function focusHandler(args: unknown, backend: McpBackend): Promise<unknown> {
   const passed: Record<string, unknown> = {}
-  if (args) {
-    for (const key of Object.keys(args as object)) {
+  if (args !== undefined) {
+    if (!plainArguments(args)) {
+      throw new TypeError(`provident.focus: malformed arguments — a ${rejectedFormOf(args)} is not the declared shape { target?, newTab? }`)
+    }
+    for (const key of Object.keys(args)) {
       if (!keyAllowed(key)) throw new TypeError(`provident.focus: unknown argument '${key}' — the declared shape is { target?, newTab? }`)
-      passed[key] = (args as Record<string, unknown>)[key]
+      passed[key] = args[key]
     }
   }
   return backend.invoke('focus', passed).then((answer) => text(answer))
+}
+
+/** THE NON-OBJECT MEMBER'S OWN READING (`§0A` note 8, defect 1; note 3(a)/(f)): the declared
+ *  shape can only describe a PLAIN OBJECT, so only a plain object is routed. Every other member
+ *  the caller SUPPLIED — a number, a boolean, a string, a `Date`, a `Map`, an array, a function,
+ *  a revoked holder — is refused by the caller of this guard. An OMITTED member never reaches it
+ *  (`args !== undefined`), so omission and `{}` stay the same valid call. Nothing here throws:
+ *  an unreadable prototype is the non-plain reading, and that is the caller's own refusal. */
+function plainArguments(args: unknown): args is Record<string, unknown> {
+  if (typeof args !== 'object' || args === null || Array.isArray(args)) return false
+  try {
+    const prototype: unknown = Object.getPrototypeOf(args as object)
+    return prototype === Object.prototype || prototype === null
+  } catch {
+    return false
+  }
+}
+
+/** THE REJECTED FORM, NAMED — the member's own word, read off the value rather than off the
+ *  caller's prose, so a refusal says WHICH form it refused (`§0A` note 8, defect 1: a refusal that
+ *  does not name what it rejected FAILS). A holder whose own members are unreadable (a revoked
+ *  proxy) names the plain reading of its type instead. */
+function rejectedFormOf(args: unknown): string {
+  if (args === null) return 'null'
+  try {
+    const named = (args as { constructor?: { name?: unknown } }).constructor?.name
+    if (typeof named === 'string' && named !== '') return named
+  } catch {
+    // unreadable: the type reading below still names a form
+  }
+  return typeof args
 }
 
 /** THE DECLARED MEMBERS, NAMED ONCE — the `{ target?, newTab? }` set (`§2.1` item 4). */
