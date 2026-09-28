@@ -454,7 +454,11 @@ inventing a fourth answer); and ITS REGISTER STILL STOPS AT ITS SECOND IDENTITY 
 `§0A` note 6's term column, its settled total `73` and its row set are NOT touched here, and NO ROW ID, STRATEGY ID,
 SEED, CAP OR CELL MOVES BY THIS NOTE.** **THE TWO FIXES ARE APPLIED AT THREE SITES: `§5.1` (the allow-list WIDENED),
 `§5.2` item 4 (iii) (the census list EXTENDED) and `§5.5.1 RT-5` with `§5.5.2` item 4b (the route row's instrument
-RE-SCOPED to the claim that row exists to carry).**
+RE-SCOPED to the claim that row exists to carry).** **AND A SECOND INCOMPLETENESS OF THE SAME KIND IS RECORDED AT ITEM 5
+BELOW, WHERE THAT ITEM'S OWN TWO ADDED ROWS ARE APPLIED AT THE SAME TWO SITES AND ITEM 1'S `SIX` IS QUALIFIED (its
+`theme-control` reading reached FOUR of that file's FIVE pins — the `RpcMethod` member literal was not reached) — so the
+count reads THREE SITES, plus the two site-widenings item 5 records** (`§5.1` rows 21–22; `§5.2` item 4 (iii)
+`N-20`/`N-21`).
 **NO CODE, NO RED RE-RUN AND NO STATUS FLIP ACCOMPANIES THIS NOTE: it wrote no source byte, authored no test, ran no
 suite, no leg, no trio, no `tsc`, no build, no Electron boot, no MCP call and no register row, re-ran no red, flipped
 no status and made no commit — and THE LEDGER IS UNCHANGED AT `20 DONE / 1 open` = `21` units, with `F3` still an
@@ -536,6 +540,36 @@ defect figures and the STOP's extents are the IMPLEMENTER'S measured readings, c
 register sites it names (the stopped-at `P-FT-ID-2` and the thirteen un-run rows) are THAT PASS'S register report, not
 a re-run's** (`§0A` note 2; `RCA-12`). **THE LEDGER IS UNCHANGED AT `20 DONE / 1 open` = `21` units** (`F3` stays an
 open `## OPEN` row), **and NO STATUS FLIPS ANYWHERE IN THIS FILE.**
+
+**5. DEFECT 3 — THE CENSUS LIST WAS PROVEN NARROWER THAN THE OBLIGATION SET A *SECOND* TIME, AND IT IS DISPOSED BY
+WIDENING THE ALLOW-LIST AND RE-STATING THE CENSUS LIST AGAIN, RATHER THAN BY MOVING THE CENSUS.** **THE MEASURED
+DEFECT: TWO FURTHER SUITES PIN THE SAME CENSUS OUTSIDE THE ONCE-WIDENED ALLOW-LIST — `tests/theme-control.test.ts`,
+which carries THREE `ALL_TOOLS === 21` count pins (the `I-1` row's `tools.length` check + the `R-3` row's
+`ALL_TOOLS.length` check + the `R-3` row's pinned `PINNED_TOOL_SET` length) beside the `I-1` row's SET-SIZE duplicate
+read, and TWO NAME-SET EQUALITIES (the `R-3` row's `ALL_TOOLS`-against-`PINNED_TOOL_SET` equality, and a FIFTH pin this
+pass's reading reached that the last one did not: THE `I-1` ROW'S `RpcMethod` MEMBER LITERAL, asserted against the live
+union) — **AND** `tests/gutter-ui.test.ts`, whose `R-11 §3.4` row is titled
+`ALL_TOOLS` (21) · `RpcMethod` (21) · `MUTATING_METHODS` (7) · `VALID_GROUPS` (5) are UNCHANGED and whose
+`PINNED_TOOL_NAMES` list carries the same census.** **BOTH CURRENTLY PASS ONLY BECAUSE THE PINNED TOOL SET STILL READS
+`21`, so the census move reddens both and the unit is unimplementable under the once-widened list; AND THE PINNED FORMS
+ARE NOT ALL COUNTS — two of the `theme-control` file's FIVE pins are NAME-SET EQUALITIES (the `ALL_TOOLS`-against-
+`PINNED_TOOL_SET` half and the `RpcMethod` member literal), which no count edit can satisfy.** **THIS IS THE SECOND TIME
+THIS CONTRACT'S CENSUS LIST HAS BEEN PROVEN NARROWER THAN THE OBLIGATION SET — the first being the six suites the
+implementer's gate-3 STOP exposed at item 1 above — AND BOTH WERE FOUND BY MEASUREMENT RATHER THAN BY ASSUMPTION: the
+first by the implementer's stopped red run, the second by reading the two suites.** **THE FIX, IN THE SAME RULE AND
+NAMING EACH SITE'S EXACT OBLIGATION: `§5.1`'s ALLOW half gains ADDED rows 21–22 (whose two table cells carry the
+WHICH-PINS-A-COUNT vs WHICH-PINS-A-NAME-SET-EQUALITY distinction), and `§5.2` item 4 (iii) is RE-STATED with the two
+added rows `N-20`/`N-21`.** **THE AS-FILED FORMS ARE KEPT VISIBLE — the `13`-site list and the once-widened `19`-site
+list both DO NOT MOVE and neither is renumbered — and the list is RECORDED AS INCOMPLETE FOR A SECOND TIME rather than
+smoothed away.** **THE RULE IT KEEPS PROVING, STATED AS A RULE: THE ALLOW-LIST MUST NAME EVERY FILE THE SAME-COMMIT
+OBLIGATION TOUCHES, OR THE UNIT IS UNIMPLEMENTABLE.** **NO CODE, NO RED RE-RUN AND NO STATUS FLIP ACCOMPANIES THIS
+ITEM: it wrote no source byte, authored no test, ran no suite, no leg, no trio, no `tsc`, no build, no Electron boot,
+no MCP call and no register row, re-ran no red, flipped no status and made no commit — and THE LEDGER IS UNCHANGED AT
+`20 DONE / 1 open` = `21` units, with `F3` still an open `## OPEN` row whose status is the supervisor's.** **NO FIGURE
+MOVES BY ITEM 5: no count, term, row id, strategy id, seed, cap, cell or ledger figure is re-grained here — the two
+added rows ADD obligations and move nothing already filed, so the register's settled `73`, the executed `67`, the census
+counts and the ledger's `21` units all stand as filed; THE ONLY FIGURES THAT CHANGE ANY READING ARE THE TWO
+*INCOMPLETE* SITE-LIST FIGURES (`13` and `19`), WHICH ARE SUPERSEDED BY ANNOTATION BESIDE THEM RATHER THAN REWRITTEN.**
 
 ---
 
@@ -978,6 +1012,27 @@ ROW BELOW IS A SAME-COMMIT OBLIGATION WHOSE FORM IS NAMED (a COUNT is a duplicat
 pin), and the as-filed list is RECORDED AS INCOMPLETE rather than rewritten.** **NO ROW ID, STRATEGY ID, SEED OR CAP
 MOVES BY THIS ADDITION; the rows below are ADDITIONS and take the next ids in sequence.**
 
+**⟶ 2026-09-27 SECOND ADDITION TO THE ALLOW-LIST (`§0A` note 7 item 5) — TWO FURTHER SAME-COMMIT SITES, ADDED BESIDE
+THE AS-FILED ROWS 1–14 AND THE 2026-09-27 ROWS 15–20, WHICH DO NOT MOVE EITHER.** **THE MEASURED HOLE, SECOND OF ITS
+KIND: TWO FURTHER LANDED SUITES PIN THE SAME CENSUS FROM OUTSIDE THE WIDENED ALLOW-LIST — `tests/theme-control.test.ts`
+(two `ALL_TOOLS === 21` pins PLUS a pinned `PINNED_TOOL_SET` length) and `tests/gutter-ui.test.ts` (a row titled
+`ALL_TOOLS` (21) · `RpcMethod` (21) · `MUTATING_METHODS` (7) · `VALID_GROUPS` (5) are UNCHANGED, whose `RpcMethod (21)`
+half and pinned-name list carry the same census).** **BOTH PASS TODAY ONLY BECAUSE THE PINNED TOOL SET STILL READS `21` —
+so the census move reddens both, and the implementer CANNOT land the unit under the once-widened list.** **THE FIX IS THE
+SAME FIX AS BEFORE, APPLIED AGAIN AND STATED AS THE RULE IT KEEPS PROVING: `§5.1`'s ALLOW HALF NAMES BOTH SITES
+EXPLICITLY (ADDED ROWS 21–22), and `§5.2` item 4 (iii) is RE-STATED to carry each site's EXACT OBLIGATION — WHICH PINS A
+*COUNT* AND WHICH PINS A *NAME-SET EQUALITY*.** **THE AS-FILED AND ONCE-WIDENED FORMS ARE KEPT VISIBLE; THE LIST IS
+RECORDED AS INCOMPLETE FOR A SECOND TIME RATHER THAN SMOOTHED AWAY; AND NO ROW ID, STRATEGY ID, SEED OR CAP MOVES BY
+THIS SECOND ADDITION.**
+
+| # | The path | What changes there | Layer |
+| --- | --- | --- | --- |
+| **21** | **`tests/theme-control.test.ts`** | **THREE `ALL_TOOLS === 21` count pins (the `I-1` row's `tools.length` duplicate check BESIDE its set-size duplicate read, and the `R-3` row's `ALL_TOOLS.length` duplicate check) → `22`, PLUS the pinned `PINNED_TOOL_SET` length extracted from `tests/engine-pin-version.test.ts` for `R-3` → `22`, PLUS the `I-1` row's `RpcMethod` member list — the 21-member literal asserted against the live union — which is a NAME-SET EQUALITY and gains `'focus'`; AND THE SAME `R-3` ROW'S `ALL_TOOLS` NAME-SET EQUALITY IS THAT SITE'S LOAD-BEARING HALF, WHICH MUST BE SATISFIED BESIDE THE COUNTS AND NEVER INSTEAD OF THEM** — **this site carries BOTH forms, the `RpcMethod` equality being the fifth pin the last pass's reading did not reach** (`§5.2` item 4 (iii) `N-20`) | `[T]` |
+| **22** | **`tests/gutter-ui.test.ts`** | **the `R-11 §3.4` NO-NEW-SURFACE row's two `21` figures → `22` (the row's own title, `ALL_TOOLS` (21) / `RpcMethod` (21), and its green-branch comment's *"NOT ONE of the `21` pinned tool names"*) AND the row's own `PINNED_TOOL_NAMES` list gains `provident.focus` so that list's length reads `22` — WITH THE LIST AND ITS COUNT MOVING TOGETHER, because the row's own positive control reads the engine pin's `PINNED_TOOL_SET`, so a name-complete list left at `21` would read a pin that had moved** — **this site pins a COUNT and a NAME-COMPLETE LIST, and NO name-set equality** (`§5.2` item 4 (iii) `N-21`) | `[T]` |
+
+**THE RULE THIS SECOND HOLE KEEPS PROVING, STATED AS A RULE AND NOT AS AN APOLOGY: THE ALLOW-LIST MUST NAME EVERY FILE
+THE SAME-COMMIT OBLIGATION TOUCHES, OR THE UNIT IS UNIMPLEMENTABLE.**
+
 | # | The path | What changes there | Layer |
 | --- | --- | --- | --- |
 | **15** | **`tests/census.test.ts`** | **the `ALL_TOOLS` NAME-SET EQUALITY against the sibling `PINNED_TOOL_SET` list · that sibling list's length `21 → 22` (COUNT) · the `RpcMethod` union count `21 → 22` (COUNT) and its SET-size duplicate check** — **the sibling length check INSIDE this file is one of the six, not a seventh** (`§0A` note 7 item 1 (1)/(6); `§5.2` item 4 (iii) `N-14`) | `[T]` |
@@ -987,9 +1042,11 @@ MOVES BY THIS ADDITION; the rows below are ADDITIONS and take the next ids in se
 | **19** | **`tests/slot-host.test.ts`** | **the `ALL_TOOLS` length `21 → 22` (COUNT) and the `RpcMethod` union count `21 → 22` (COUNT), each read from its OWN live module — AND THIS SITE CARRIES ITS OWN EDIT BAR: its own row states that the sibling census file *"may not be edited by this unit"*, which is exactly why the file had to be NAMED here instead of being reached by an implicit reading** (`§0A` note 7 item 1 (5); `§5.2` item 4 (iii) `N-18`) | `[T]` |
 | **20** | **the TWO SIBLING LENGTH CHECKS, NAMED AS THEIR OWN OBLIGATION** — **`tests/census.test.ts`'s and `tests/gesture-session.test.ts`'s `PINNED_TOOL_SET` length pins** | **each `21 → 22` (COUNT) — a COUNT-only edit satisfies NEITHER a name-set pin nor this row's own partner, and a stale literal quietly bumped satisfies neither of the six** (`§0A` note 7 item 1 (6); `§5.2` item 4 (iii) `N-19`) | `[T]` |
 
-**THE TWO FORMS ARE NOT INTERCHANGEABLE HERE EITHER, AND THE ADDITION CHANGES NOTHING ABOUT THE FENCE: A COUNT RED IS
-SATISFIED BY THE WRONG THING; A NAME-SET EQUALITY ONLY BY THE CENSUS EDIT ITSELF** (`H-r18`; `§5.2` item 4's closing
-paragraph).
+**AND ONE QUALIFIER ITEM 5 ADDS BESIDE THIS LIST WITHOUT REWRITING IT: THIS ITEM'S `SIX` WAS THE MEASURED SET AT THIS
+NOTE'S OWN PASS, AND A LATER PASS FOUND TWO MORE SUITES BY MEASUREMENT — so `SIX` here is the FIRST hole's figure and
+not the completed set** (`§0A` note 7 item 5; `§5.1` rows 21–22). **THE TWO FORMS ARE NOT INTERCHANGEABLE HERE EITHER,
+AND THE ADDITION CHANGES NOTHING ABOUT THE FENCE: A COUNT RED IS SATISFIED BY THE WRONG THING; A NAME-SET EQUALITY
+ONLY BY THE CENSUS EDIT ITSELF** (`H-r18`; `§5.2` item 4's closing paragraph).
 
 ### 5.2 The legs this unit MUST run — **FOUR, and the three refusals**
 
@@ -1096,6 +1153,26 @@ COUNT AND A NAME-SET EQUALITY RED FOR DIFFERENT REASONS and only one of them is 
 **THE COUNT VS NAME-SET DISTINCTION IS NOW CARRIED AT NINETEEN SITES RATHER THAN THIRTEEN, AND THE `13` OF THE AS-FILED
 LIST IS THE INCOMPLETE FIGURE: A PASS THAT QUOTES `13` SAME-COMMIT SITES IS QUOTING THE AS-FILED, INCOMPLETE FORM**
 (`§0A` note 7 item 1; `§5.1` rows 15–20). **NO ROW ID, STRATEGY ID, SEED OR CAP MOVES BY THIS EXTENSION.**
+
+**⟶ 2026-09-27 SECOND EXTENSION OF THIS LIST (`§0A` note 7 item 5) — THE ONCE-WIDENED `19`-SITE LIST WAS STILL
+INCOMPLETE, AND THE TWO SITES BELOW ARE ADDED BESIDE IT WITH THE EXACT OBLIGATION AT EACH.** **THIS IS THE SECOND TIME
+THIS CONTRACT'S CENSUS LIST HAS BEEN PROVEN NARROWER THAN THE OBLIGATION SET — the first being the six suites the
+implementer's STOP exposed — AND BOTH WERE FOUND BY MEASUREMENT RATHER THAN BY ASSUMPTION.** **THE MEASURED DEFECT:
+TWO FURTHER SUITES PIN THE CENSUS AT `21` OUTSIDE the once-widened `§5.1` ALLOW half, AND BOTH PASS TODAY ONLY BECAUSE
+THE PINNED TOOL SET STILL READS `21` — so both will red for the implementer.** **`§5.1` is widened in the same pass
+(ADDED rows 21–22), the as-filed and once-widened forms are KEPT VISIBLE, and the `19` of the once-widened list is the
+INCOMPLETE figure rather than a corrected one.** **A PASS THAT QUOTES `13` OR `19` SAME-COMMIT SITES IS QUOTING AN
+INCOMPLETE FORM.** **NO ROW ID, STRATEGY ID, SEED OR CAP MOVES BY THIS SECOND EXTENSION.**
+
+| # | The same-commit site (ADDED 2026-09-27, SECOND ADDITION) | What reddens there, and THE EXACT OBLIGATION | The form |
+| --- | --- | --- | --- |
+| **`N-20`** | **`tests/theme-control.test.ts` — the THREE `ALL_TOOLS === 21` count pins, the pinned `PINNED_TOOL_SET` length, AND the `I-1` row's `RpcMethod` member list** | **the `I-1` row reads `ALL_TOOLS` at `21` BESIDE its own set-size duplicate read** (the first pin) **· and the `R-3` row pins the `PINNED_TOOL_SET` length extracted from `tests/engine-pin-version.test.ts` at `21` AND `ALL_TOOLS.length` at `21`** (the second and third pins) **— all three counts move `21 → 22`; AND THE SAME `I-1` ROW ASSERTS THE `RpcMethod` UNION'S MEMBERS BY NAME AGAINST A TWENTY-ONE-MEMBER LITERAL, which is a NAME-SET EQUALITY and gains `'focus'` — so the union's member list is a pinned name set at a SECOND site in this file, and the count move does NOT satisfy it; AND THE `R-3` ROW'S OWN `ALL_TOOLS` NAME-SET EQUALITY AGAINST THAT PINNED SET IS THE ONLY HALF THAT PINS THE TOOL CENSUS, so a COUNT-ONLY EDIT SATISFIES NEITHER NAME-SET HALF AND LEAVES BOTH SET HALVES RED** | **NAME-SET EQUALITY ×2 (`ALL_TOOLS` against the sibling `PINNED_TOOL_SET`, and `RpcMethod` against its own member literal) + COUNT ×3 (two `ALL_TOOLS` counts and the sibling `PINNED_TOOL_SET` length), each count BESIDE and NOT INSTEAD OF a set equality** |
+| **`N-21`** | **`tests/gutter-ui.test.ts` — the `R-11 §3.4` NO-NEW-SURFACE row's `ALL_TOOLS (21)` / `RpcMethod (21)` title figures and its pinned-name list** | **the row's own census label moves `ALL_TOOLS` `21 → 22` and `RpcMethod` `21 → 22` (the title, and the green branch's *"NOT ONE of the `21` pinned tool names"*) · AND the row's `PINNED_TOOL_NAMES` list gains `provident.focus` so the name-complete list whose emptiness is being asserted reads `22`, IN THE SAME COMMIT as the census move — because the row's own POSITIVE CONTROL reads `tests/engine-pin-version.test.ts`'s `PINNED_TOOL_SET`, so a list left at `21` reads a pin that had grown and the *"no new surface"* claim is asserted against a stale corpus** | **COUNT ×2 + a NAME-COMPLETE LIST (read BY NAME, never by a bare count) — and the site pins NO name-set equality, so the two figures and the list move TOGETHER** |
+
+**THE COUNT VS NAME-SET DISTINCTION IS NOW CARRIED AT TWENTY-ONE SITES RATHER THAN NINETEEN, AND BOTH `13` AND `19` OF
+THE EARLIER LISTS ARE INCOMPLETE FIGURES** (`§0A` note 7 items 1 and 5; `§5.1` rows 15–22). **THE RULE THE TWO HOLES
+TOGETHER PROVE, RECORDED HERE AND AT `§5.1`: THE ALLOW-LIST MUST NAME EVERY FILE THE SAME-COMMIT OBLIGATION TOUCHES, OR
+THE UNIT IS UNIMPLEMENTABLE.** **NO ROW ID, STRATEGY ID, SEED OR CAP MOVES BY THIS SECOND EXTENSION.**
 
 ### 5.3 The DONE row's shape
 
