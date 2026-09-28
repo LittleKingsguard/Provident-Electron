@@ -2,7 +2,25 @@
 
 **STEP 1 (`role_validity`) HAS RUN AND RETURNED `VALID-WITH-CONDITIONS`, WITH TWELVE CONDITIONS. STEP 2
 (`role_critique`) HAS RUN AND RETURNED `SOUND-WITH-CONDITIONS`, WITH SEVEN FINDINGS AND THREE ARCHITECT QUESTIONS.**
-**STEP 3 (`role_architecture_review`) HAS *NOT RUN*. STEP 4 (`role_change_analysis`) HAS *NOT RUN*. THEREFORE THIS
+**⟶ RE-POINTED `2026-09-27` (THE SUPERVISOR'S DOC-WRITER PASS — AN ANNOTATION BESIDE THE AS-WRITTEN STATUS LINE,
+WHOSE BYTES STAND AND WHOSE READINGS ARE SPENT ON THEIR STATUS VALUES ONLY; `RCA-8(d)`).** **BOTH STEPS HAVE NOW RUN,
+AND THE SUBSTANCE OF EACH IS APPENDED AT `§9` (STEP 3) AND `§10` (STEP 4), IN THE `E4`/`E7`/`E9`/`F1`/`F2`
+FILING-HOME FORM THIS RECORD'S `§`-HEADER PROVENANCE SET FOR STEPS 1 AND 2.** **STEP 3 (`role_architecture_review`)
+RETURNED `DELEGABLE-WITH-CONDITIONS` WITH THE FILING-BLOCKER SET *EMPTY*. STEP 4 (`role_change_analysis`) RETURNED
+`DELEGABLE-WITH-CONDITIONS`, WITH CONDITIONS `G-1`…`G-5`, AND IT *AGREES* THE THREE DEFAULTS ARE FILEABLE RATHER THAN
+BLOCKERS.** **SO THIS RECORD *DOES* CARRY A VERDICT, AND THE PAIRING IS `DELEGABLE-WITH-CONDITIONS`: the unit is
+DELEGABLE TO THE SPEC GATE AND *NOT YET FILED* — `docs/specs/focus-tool.md` still does not exist** (`§10` `G-1`/`G-2`). **THE AS-WRITTEN CELLS THIS ANNOTATION RE-POINTS BY NAME, KEPT VISIBLE: THIS STATUS LINE'S OWN *"STEP 3
+… HAS *NOT RUN*. STEP 4 … HAS *NOT RUN*"* / *"THEREFORE THIS RECORD CARRIES *NO VERDICT*"* / *"THE UNIT IS *NOT
+DELEGABLE*"* clauses (the first two halves only — the *not-filed* and *gate-11-binds* grounds STAND); the `§`-header
+table's two `NOT RUN` step cells; and `§4`'s heading and its four consequence items.** **THE THREE ARCHITECT QUESTIONS
+ARE NOW DISPOSED AS FILEABLE DEFAULTS, NOT AS BLOCKERS** (`§9`); **`G-1` IS DISCHARGED BY THIS PASS — step 3's return
+is appended at `§9` as substance instead of carried unfiled — and `G-2` IS *NOT* DISCHARGED HERE: the STEP-0 ADOPTION
+DOSSIER `docs/specs/focus-tool-adoption-dossier.md` IS CREATED BY THIS SAME PASS, but it must be APPROVED BEFORE THE
+SPEC GATE, and a silent zero-row would be a finding** (`§10`); **`P-7`/`P-8`/`P-9` ARE RECORDED WITH THEIR OWNER AT
+`§11`.** **AND THIS IS THE SEVENTH INSTANCE OF THE WAVE'S RECURRING UNFILED-RETURN GAP, UNLESS THIS PASS LANDS IT —
+which it does.**
+
+**THE AS-WRITTEN LINE, KEPT VISIBLE AS THE FILING PASS'S OWN DATED READING:** **STEP 3 (`role_architecture_review`) HAS *NOT RUN*. STEP 4 (`role_change_analysis`) HAS *NOT RUN*. THEREFORE THIS
 RECORD CARRIES *NO VERDICT*: not `DELEGABLE`, not `DELEGABLE-WITH-CONDITIONS`, not any pairing that would authorise a
 red set, and NO conditions set `G-*` — because no pass derived one.** **THE UNIT IS *NOT DELEGABLE*, ON TWO
 INDEPENDENT GROUNDS: `docs/specs/focus-tool.md` DOES NOT EXIST (`AGENTS.md` item 9), and this unit is CODE-BEARING —
@@ -63,7 +81,7 @@ DISCHARGED** — the contract that would discharge them is `docs/specs/focus-too
 | **Census cells** | **`ALL_TOOLS` `21 → 22` · `RpcMethod` `21 → 22`** (the `F3` row, corrected `2026-09-27`; the pre-correction *"19 → 20"* is stale and must not be quoted) — **cells this record quotes and does NOT flip**, and **the same-commit obligation `H-r18` may NOT be deferred** |
 | **Output shape** | **ALREADY FIXED BY THE ENDPOINT CONTRACT** — `docs/specs/mcp-endpoint.md` `§3.8`: `{ target?: string, newTab?: boolean } → { activeId: string \| null, entries: string[], opened: boolean, refused?: { reason: string } }` |
 | **Contract** | **`docs/specs/focus-tool.md` — `OWED — not filed`, AND IT REMAINS SO AFTER THIS PASS.** **No file of that name exists**, and **this record does not file it, stub it or pre-empt any clause of it** (`§7` item 6) |
-| **Gate-1 steps** | **`1` `role_validity`** → **`VALID-WITH-CONDITIONS`**, twelve conditions (**`§2`**) · **`2` `role_critique`** → **`SOUND-WITH-CONDITIONS`**, seven findings + three architect questions (**`§4`**) · **`3` `role_architecture_review`** → **`NOT RUN`** (**`§5`**) · **`4` `role_change_analysis`** → **`NOT RUN`** (**`§5`**) |
+| **Gate-1 steps** | **`1` `role_validity`** → **`VALID-WITH-CONDITIONS`**, twelve conditions (**`§2`**) · **`2` `role_critique`** → **`SOUND-WITH-CONDITIONS`**, seven findings + three architect questions (**`§4`**) · **`3` `role_architecture_review`** → **`NOT RUN`** (**`§5`**) *(**⟶ RE-POINTED `2026-09-27`: STEP 3 HAS RUN — `DELEGABLE-WITH-CONDITIONS`, FILING-BLOCKER SET EMPTY, appended at `§9`; the as-written `NOT RUN` cell is kept visible as the filing pass's own dated reading, `RCA-8(d)`**)* · **`4` `role_change_analysis`** → **`NOT RUN`** (**`§5`**) *(**⟶ RE-POINTED `2026-09-27`: STEP 4 HAS RUN — `DELEGABLE-WITH-CONDITIONS`, `G-1`…`G-5`, appended at `§10`; as-written cell kept visible**)* |
 | **Filing provenance** | **Written by the FILING PASS, not by the reviewers** (the header block; `§8` `FM-1` — **the SIXTH instance of the `P-1`/`OV-1`/`TC-1`/`FM-1` gap**) |
 | **Tree state** | **Not measured as a commit by this pass, and no leg was run.** The measurements this record DOES assert are **step 1's read-only searches** (`§3.2`, carried as filed) — **none of them is a leg, a suite or a build** |
 
@@ -303,7 +321,20 @@ BY THIS RECORD, AND THIS IS THE RECORD'S MOST IMPORTANT LINE.**
    precisely the material those passes exist to work through.**
 4. **THE GATE'S OWN SEQUENCE IS UNAFFECTED BY THIS RECORD.** **Step 3 requires both step outputs (they exist now,
    filed here) and step 4 requires step 3's** — so **the chain may resume at step 3**, and **nothing in this filing
-   shortens, skips or pre-judges it.**
+   shortens, skips or pre-judges it.
+
+**⟶ RE-POINTED `2026-09-27` (`RCA-8(d)`: ANNOTATE BESIDE, NEVER REWRITE — the heading above and all four items stand
+BYTE-FOR-BYTE, and what follows re-points their STATUS VALUES ONLY).** **THIS SECTION IS NO LONGER A STATEMENT THAT THE
+STEPS HAVE NOT RUN: steps 3 and 4 HAVE RUN, and their substance is appended at `§9` and `§10` in this same file. THE
+FOUR ITEMS ABOVE ARE SPENT AS STATUS CLAIMS AND SURVIVE AS THE STEP-1/STEP-2 FILING PASS'S OWN DATED READING.** **WHAT
+REPLACES THEM, ONE LINE EACH:** **(1)** the record DOES carry a verdict — step 3 `DELEGABLE-WITH-CONDITIONS` with an
+EMPTY filing-blocker set, step 4 `DELEGABLE-WITH-CONDITIONS` with `G-1`…`G-5` (`§9`, `§10`); **(2)** the unit remains
+NOT DELEGABLE **in the operational sense that matters** — it is delegable TO THE SPEC GATE but its contract
+`docs/specs/focus-tool.md` does not exist, and the `STEP-0` adoption dossier must be approved before that gate closes
+(`§10` `G-1`/`G-2`); **(3)** a shape WAS resolved — the tool, the method, the group, the args, the return, the live
+authority, the five negative rows, the seven-row matrix and a register sketch all land at `§9`; **(4)** the chain ran,
+so this record's own *"the chain may resume at step 3"* instruction is DISCHARGED. **NO OTHER BYTE OF THIS SECTION
+MOVES, AND NO `§6`/`§7`/`§8` ROW, COUNT OR CELL MOVES EITHER** (`§6`; `§7`; `§11`).**
 
 ---
 
@@ -405,6 +436,20 @@ with that attribution.** **No figure in this record is a leg, and no figure in i
 8. **APPEND EVERY FUTURE REVIEWER RETURN TO THIS RECORD IN THE SAME PASS THAT RECEIVES IT** (`FM-1`'s standing
    remedy) — **so that a SEVENTH instance of the `P-1`/`OV-1`/`TC-1`/`FM-1` gap is not created by steps 3 and 4.**
 
+**⟶ RE-POINTED `2026-09-27` (ANNOTATE BESIDE; THE EIGHT ITEMS ABOVE AND THE *"WHAT REACHES THE ARCHITECT"* PARAGRAPH
+BELOW STAND BYTE-FOR-BYTE, `RCA-8(d)`).** **THIS SECTION'S INSTRUCTIONS ARE DISCHARGED BECAUSE THEY WERE *FOLLOWED*:
+STEP 3 RAN AGAINST THE TWO FILED STEP OUTPUTS AND STEP 4 RAN AGAINST STEP 3'S — items 1, 2, 3, 5 and 7 are DISCHARGED
+AS INSTRUCTIONS and their verdicts are filed at `§9`/`§10`.** **TWO READINGS IN THIS SECTION ARE NOW SPENT, AND ARE
+CORRECTED HERE RATHER THAN LEFT TO CONTRADICT `§9`: (a) THE THREE ARCHITECT QUESTIONS ARE NO LONGER *"A REAL BLOCKER,
+NOT A FORMALITY"* — step 3 DERIVED A FILEABLE DEFAULT BESIDE EACH, WITH ITS REVERSIBLE ALTERNATIVE, so they are
+disposed rather than escalated** (`§9.2`) — **and `FQ3` IS ANSWERED BY `§9.1`'s authority reading: the renderer holds
+the call site, which is a changed *VALUE* and not a changed *RULE*** (`§9.7`). **(b) THE *"NO REGISTER AND NO REGISTER
+SKETCH"* READING OF `§6` item 3 IS SPENT FOR THE SKETCH HALF: item 1's own words say step 3 is the pass that produces
+*"a register sketch"*, and `§9.8` IS that sketch** — **NO REGISTER EXISTS, NO REGISTER ROW RAN, and the sketch is a
+NAMED-DOMAIN SHAPE rather than an executed register** (`AGENTS.md` item 11(b): an un-run row is a FAILURE). **ITEMS 4
+AND 6 REMAIN OPEN AS INSTRUCTIONS — the red set as a list, and the contract's own contents — and item 8's standing
+remedy is discharged for steps 3 and 4 by THIS PASS** (`§11` `P-7`).
+
 **WHAT REACHES THE ARCHITECT, AND WHEN: `AQ1`, `AQ2`, `AQ3` AND `FQ3` — AND THEY ARE A REAL BLOCKER, NOT A
 FORMALITY.** **On this record there is no derivation to default them into** (`§3.3`), **`docs/specs/focus-tool.md` is
 unfiled and unfilable without them** (**`AQ1`** decides the id-minting authority, **`AQ2`**/**`AQ3`** decide whether
@@ -420,3 +465,170 @@ at filing, not here) · **no conditions set `C-*`/`G-*` beyond the twelve step-1
 derived one) · **no re-opening of the `SCH-13`/`A-d5` admission** (it is an architect disposition) · **no leg run, no
 register executed, no count flipped** · **and no `DONE`-shaped sentence about this unit anywhere** (`F3` is an OPEN
 row at gate 1, and the ledger is `20 DONE / 1 open` = `21`).
+
+---
+
+## §9 STEP 3 — `role_architecture_review`: **`DELEGABLE-WITH-CONDITIONS`**, and the FILING-BLOCKER SET is **EMPTY**
+
+**The verdict and the blocker-set reading are the step-3 reviewer's return, filed here as substance; every grouping,
+heading, cross-reference and clause-level expansion below is THIS FILING PASS'S** (`§`-header provenance (b)). **STEP 3
+RAN READ-ONLY: it wrote no file, flipped no cell, ran no leg and executed no register** (`§`-header limitation 2).
+**AN EMPTY FILING-BLOCKER SET MEANS ONE THING AND NOT TWO: nothing in this unit's shape BLOCKS A FILING of
+`docs/specs/focus-tool.md`. IT DOES NOT MEAN THE UNIT IS FILED, AND IT DOES NOT DISCHARGE `G-2`'s DOSSIER CONDITION**
+(`§10`) — **the contract still does not exist** (`§6` item 6).
+
+### §9.1 THE SHAPE DECIDED — the tool, the method, the group, the args, the return, and the live authority
+
+**THE SHAPE, AS STEP 3 RETURNED IT, CARRIED WHOLE.** **The tool is `provident.focus` — the `22nd` tool — and it adds
+the `RpcMethod` member `'focus'`.** **Its group is `dispatch`, ON BY DEFAULT, and THE FIVE `VALID_GROUPS` STAY FIVE**
+(the tool joins an existing group rather than minting one; `docs/specs/mcp-endpoint.md` `§6.2`).
+**Its args are `{target?: string, newTab?: boolean}` and its return is `{activeId: string | null, entries: string[],
+opened: boolean, refused?: {reason}}` — NORMATIVE AS THE ENDPOINT CONTRACT ALREADY FIXES IT: DERIVED, NOT RE-MINTED**
+(`docs/specs/mcp-endpoint.md` `§3.8` item 2; the `§`-header output-shape row; `C-7`).
+
+**THE HANDLER IS A THIN ADAPTER: VALIDATE → ONE RENDERER CALL → RETURN THE ANSWER VERBATIM.** **Nothing else happens
+in it.**
+
+**THE LIVE AUTHORITY FOR `{entries, activeId}` IS THE RENDERER'S OWN STATE, HELD IN THE WIRING *OUTSIDE* THE CONSUMED
+MODULE — AND IT IS *NOT* A GRAPH SLICE.** **This is `C-5`/`AQ1`'s authority half resolved, and it is the reading that
+keeps `U-FOCUS-MODEL` (`F2`, `DONE`) the sole activation authority** (`docs/specs/focus-model.md` `§5.4`; `§3.1`
+finding 2).
+
+**WHAT THE TOOL CONTAINS, AS A CLOSED NEGATIVE LIST — NO STATE · NO MAP · NO ID POLICY · NO SORT · NO RE-DERIVATION OF
+THE MODEL'S ACTIVATION RULE · NO NOTIFY · NO STORE · AND NO CONSUMER VOCABULARY INSIDE THE MODEL.** **Each item is a
+`C-1`/`C-2`/`C-5` obligation discharged in the SHAPE rather than deferred to the contract.**
+
+### §9.2 THE THREE ARCHITECT QUESTIONS, DISPOSED AS FILEABLE DEFAULTS
+
+**`AQ1`/`AQ2`/`AQ3` ARE ANSWERED BY STEP 3 — AND THE FORM OF THE ANSWER IS A FILEABLE DEFAULT WITH ITS REVERSIBLE
+ALTERNATIVE RECORDED, never a blocker and never a silent closure** (`§3.3`; `§10`'s agreement clause; the sibling
+precedent `docs/specs/focus-model-review.md` `§4` items 12–14 and its dossier's `D-1`/`D-2`).
+
+| # | The question, as step 2 left it | THE DEFAULT STEP 3 DERIVED | THE REVERSIBLE ALTERNATIVE, RECORDED RATHER THAN HIDDEN |
+| --- | --- | --- | --- |
+| **`AQ1`** | **WHO MINTS THE NEW-TAB ENTRY ID — and is the target string itself the legal entry id?** | **NO THIRD PARTY MINTS AN ID: THE CALLER'S OWN STRING *IS* THE LEGAL ENTRY ID.** **The tool mints nothing, keeps no counter, holds no registry and keeps no string-to-entry map** — so it cannot become a second authority over identity (`C-5`; `§3.1` finding 2) | **ADD AN OPTIONAL `id` ARGUMENT.** **It would EXTEND THE FIXED SHAPE and therefore NEEDS THE ARCHITECT'S CONSENT** — the shape is normative at `docs/specs/mcp-endpoint.md` `§3.8`, so this is a shape-extension, not an implementation choice |
+| **`AQ2`** | **IS A STRUCTURALLY-NOT-OBSERVABLE MATRIX ROW ADMISSIBLE, or is a new instrument owed?** | **ADMISSIBLE — BUT ONLY WITH A FALSIFIABLE STRUCTURAL REASON, AND THIS ROUTE SATISFIES THAT TEST.** **So the NODE-SIDE READING IS THE ROW, and the STRONGER WINDOW CLAIM IS THE LABELLED HALF** — i.e. the row claims exactly what the instrument reaches and labels the rest (`C-10`; `§2.3`) | **BUILD A NEW INSTRUMENT** — the alternative the question named, and the one that would be owed if the structural reason were unfalsifiable rather than falsifiable |
+| **`AQ3`** | **DOES THE `ui` LEG'S SPENT SINGLE MEASUREMENT DISCHARGE THE OBSERVABILITY OBLIGATION, OR DOES THIS UNIT OWE A FOURTH MEASUREMENT LEG?** | **NO FOURTH MEASUREMENT LEG IS OWED: THE OBSERVABLE HALVES ARE REACHABLE ON EXISTING INSTRUMENTS** (`docs/specs/ci-ui-leg.md`; `C-10`) | **IF REVERSED, THE CONSEQUENCE IS STATED AND IS NOT COSMETIC: THOSE ROWS WOULD HAVE *NO ADMISSIBLE EVIDENCE CLASS*** — an unrunnable row is a FAILURE, never a pass (`AGENTS.md` item 11(b)) |
+
+**NO QUESTION ABOVE IS LEFT ANSWERED BY ASSERTION, AND NONE IS LEFT OPEN:** each carries its default, its citation and
+its reversal cost (`§10` `G-2`'s *"a silent zero-row is a finding; an open row forces `BLOCKED-ON-SEMANTICS`"*).
+
+### §9.3 THE FIVE NEGATIVE CLAIMS — EACH WITH AN OWNING ROW *AND* A FALSIFIER
+
+**`C-2` and `§3.1` finding 3 demanded four owning rows and asked whether the not-ready rejection path is a FIFTH
+unpinned negative. STEP 3 OWNS ALL FIVE, AND THE FIFTH IS A ROW LIKE THE OTHERS** (`§3.1.1`; `FM-3`).
+
+| # | The negative claim | Its owning row | ITS FALSIFIER — what can REDDEN |
+| --- | --- | --- | --- |
+| **1** | **NOT IN `MUTATING_METHODS`** | **a row pinning THE SEVEN-MEMBER SET *BY NAME*** | **THE SET'S NAME PINS FAIL ON AN EIGHTH ENTRY** — the set is asserted as NAME-SET EQUALITY, so an added member reddens it |
+| **2** | **EMITS NO NOTIFICATION** | **a row asserting THE NOTIFY *PREDICATE* STAYS KEYED ON THAT SET WITH THE METHOD ABSENT** | **a route that PUSHES a notification FAILS.** **A BARE COUNT IS *NOT* THE INSTRUMENT — the notify site is reached on EVERY SUCCESSFUL REPLY, so a count alone cannot carry the claim** |
+| **3** | **PERSISTS NOTHING** | **a row running A STATIC ROUTE SCAN FOR STORAGE TOKENS** | **ANY HIT FAILS** |
+| **4** | **CANNOT FORCE A RE-RENDER** | **a row asserting NO STATE-SLICE WRITE AND NO RESOURCE INVALIDATION IN THE NEW PATH** | **A WRITER FAILS.** **And the row may claim *no more than* this** (`§10` `G-4`) |
+| **5** | **THE NOT-READY REJECTION** *(step 2's *"is this a fifth unpinned negative?"* — ANSWERED: IT IS A ROW, AND IT IS FULLY NODE-OBSERVABLE)* | **a row on THE SHARED READINESS GATE** | **THE GATE REJECTS BEFORE READY AND THE STATE IS UNTOUCHED** — the whole claim is observable node-side, so it is the strongest of the five rather than the weakest (`docs/specs/mcp-endpoint.md` `§3.8` item 2) |
+
+### §9.4 THE CENSUS, AS A LIST — never a phrase
+
+**`C-4` and `§3.1` finding 4 require the same-commit red set NAMED AS A LIST WITH ITS SITES. THE CONTRACT MUST PRINT IT
+AS A LIST, NEVER AS A PHRASE.** **THE LIST'S MEMBERS, as the reviewers enumerated them: the TWO NAME-SET CENSUSES, the
+GROUP MAP'S KEY, and the NINE-PLUS TEST SITES** — **and the list must DISTINGUISH *COUNTS* FROM *NAME-SET EQUALITIES*,
+because the two red for different reasons and only the second pins the invariant** (`H-r18`;
+`docs/specs/mcp-endpoint.md` `§3.8` item 2's set-equality note). **IT MUST ALSO INCLUDE THIS UNIT'S OWN SPEC-EXISTENCE
+ROW IN THE CONSUMED MODULE'S TEST FILE — a row that FLIPS IN THE SAME COMMIT THE SPEC IS FILED** — **and it must note
+that THE RENDERER'S METHOD SWITCH IS A *TYPE WALL*, NOT A RUNTIME RED** (`§3.1` finding 4; `§2.4` row 3).
+
+### §9.5 LAYER / GATE 6 — what is reachable node-side and what is not
+
+**FULLY REACHABLE ON THE NODE SIDE: the tool's EXISTENCE · its REGISTRATION · its DEFAULT-GATE placement · the GROUP
+RESOLUTION · the REFUSAL SHAPE · and the REJECTION PATH.** **THE NOTIFY AND RE-RENDER NEGATIVES ARE A *STATIC ROUTE
+READING* PLUS THE *LABELLED STRUCTURAL HALF*** — never a rendered measurement (`§9.2` `AQ2`; `C-10`). **AND THE RENDERED
+STRIP IS THE CONSUMER'S** (`§9.8`). **CONSEQUENTLY GATE 6 IS `STRUCTURAL`, THE WORD `waived` IS FORBIDDEN, and ITS
+FALSIFIER IS A DIFF CONTAINING ANY RENDERED-SURFACE, ELEMENT, TEXT, CLASS OR SLOT-CONTENT AUTHORING.**
+
+### §9.6 THE SEVEN-ROW `§5.U` MATRIX, NAMED — and limb B TRIGGERS
+
+**`C-3`'s owed-at-filing matrix, with its capped row set NAMED AS THE REVIEWER DEMANDED rather than left to a filing
+pass** (`§2.3`; `§3.1` finding 5):
+
+| # | The row |
+| --- | --- |
+| **1** | **the tool is listed** |
+| **2** | **it is registered under the DEFAULT gate** |
+| **3** | **no graph / resource notification is emitted** — **LABELLED** (the structurally-not-observable half) |
+| **4** | **no re-render and no invalidation** — **LABELLED** |
+| **5** | **a refusal returns the declared shape and changes nothing** |
+| **6** | **the not-ready rejection** |
+| **7** | **a repeated target activates BY IDENTITY with NO APPEND** |
+
+**THE PREDICATE TRIGGERS ON LIMB B — THE TOOL ADDS AN AGENT-PERFORMABLE, OBSERVABLE FLOW — SO THE ZERO-ROW EXEMPTION IS
+UNAVAILABLE** (`§2.3`; `C-3`; `docs/specs/user-flow-audit.md` as the predicate source).
+
+### §9.7 THE ENTRY-POINT ANSWER FLIPS TO `YES` — a changed VALUE, not a changed RULE
+
+**THE CONSUMED MODULE'S ENTRY-POINT ANSWER IS NOW `YES`: THE RENDERER WILL HOLD THE CALL SITE.** **THIS IS A CHANGED
+*VALUE*, NOT A CHANGED *RULE* — so it AUTHORISES WIRE-ELIGIBILITY and RE-OPENS NO `DONE` UNIT.** **`U-FOCUS-MODEL`
+(`F2`) keeps its `DONE` row, its contract, its register and its import census unchanged** (`docs/specs/focus-model.md`
+`§5.4`; `§3.1` finding 2's note).
+
+### §9.8 REGISTER SKETCH AND BOUNDARY
+
+**REGISTER SKETCH — FIVE DOMAINS NAMED: (1) the ROUTE · (2) the OPAQUE ENTRY IDENTITY · (3) the ARGUMENT SHAPE ·
+(4) the REFUSAL AND READINESS · (5) the RESULT SHAPE AND TOTALITY.** **THE EXECUTION FORM IS EXHAUSTIVE ENUMERATION —
+NO SEED, NO GENERATOR, NO NEW DEPENDENCY** (the `engine-pin.md` `§5.5` precedent; `AGENTS.md` item 11(d)) — **with the
+caps `≤100` attempts per row · `≤400` total · stop-after-5-consecutive-failures, and THE TOTAL PRINTED WITH ITS PER-ROW
+TERMS** (`AGENTS.md` item 11(c); `C-11`). **THE CONTRACT AUTHORS THIS REGISTER BEFORE ANY RED SET.**
+
+**BOUNDARY, IN THE CONTRACT'S OWN WORDS: THE SPEC AUTHORS *NO TEXT, ELEMENT, CLASS OR SLOT CONTENT*. THE RENDERED
+FOCUS STRIP AND THE ENTRIES UI ARE A *CONSUMER SURFACE*, OUT OF THIS UNIT** (`C-12`(a); `§3.1` finding 6) — **and this
+is the sentence `§9.5`'s gate-6 falsifier is built on.**
+
+**COLLISIONS PER TOKEN ARE RECONCILED** (`C-6`; `§2.5`): **the METHOD NAME and the SWITCH CASE are LEGITIMATE — only
+the DOM FOCUS *WALK* is banned; the `target` PASSES THROUGH UNINTERPRETED; the `id` is the CALLER'S OWN STRING with NO
+counter and NO registry; and the `group` is the EXISTING `dispatch`, DISTINCT FROM THE DISPATCH TOOL** (the
+`focus`/`target`/`id`/`dispatch` rows of `§2.5`; the dossier's `X-1`…`X-8`).
+
+**CONCLUSION: `YES`, FILE THIS UNIT.** **`C-1`…`C-12` are interface obligations on the contract that follows, NOT
+objections to the proposal; the FILING-BLOCKER SET IS EMPTY; and the one thing standing between this record and a
+filing is `G-2`'s dossier, which is created by this same pass** (`§10`; `§11`).
+
+---
+
+## §10 STEP 4 — `role_change_analysis`: **`DELEGABLE-WITH-CONDITIONS`**, and it AGREES the three defaults are FILEABLE, not blockers
+
+**The verdict, the condition set and the agreement clause are the step-4 reviewer's return, filed here as substance.**
+**STEP 4 RAN READ-ONLY, WROTE NOTHING AND RAN NO LEG.** **IT REQUIRES STEP 3'S OUTPUT — and it read a record whose
+step-3 bytes were ABSENT at the time, which is precisely `G-1`'s subject.**
+
+| # | Condition | What it obliges, and where it lands |
+| --- | --- | --- |
+| **`G-1`** | **STEP 3'S RETURN — CARRIED AS SUBSTANCE BUT UNFILED — MUST BE APPENDED *IN THE SAME PASS AS ITS VERDICT*** | **Failing which a later reader could recover step 3's return ONLY FROM A PROMPT** — the `P-1`-class loss. **DISCHARGED BY THIS PASS: `§9` is that filing** |
+| **`G-2`** | **THE STEP-0 ADOPTION DOSSIER MUST EXIST *BEFORE THE SPEC GATE IS APPROVED*** | **This unit ADOPTS EXTERNALLY-SOURCED IDENTIFIERS — the tool name, the method name, the group, the fixed argument and return shape, the readiness semantics — AND NO DOSSIER EXISTED, SO THE `F2` CLASS REPEATS.** **A SILENT ZERO-ROW IS A *FINDING*; AN OPEN ROW FORCES `BLOCKED-ON-SEMANTICS`.** **THE DOSSIER IS `docs/specs/focus-tool-adoption-dossier.md`, CREATED BY THIS PASS — and per this condition it must be APPROVED BEFORE the spec gate, not filed beside it** |
+| **`G-3`** | **THE SPEC PRINTS THE SAME-COMMIT RED SET *AS A LIST*** | **With the SPEC-EXISTENCE ROW included, and with COUNTS DISTINGUISHED FROM NAME-SET EQUALITIES** (`§9.4`) |
+| **`G-4`** | **THE *FIVE* NEGATIVE ROWS WITH FALSIFIERS, THE ROUTE PINNED AS ITS OWN CELL, AND THE RE-RENDER ROW CLAIMING *NO MORE THAN* *"no notification was invoked and the name sets are unchanged"*** | **`§9.3` + `C-9`'s own-cell route pin** — **the re-render row may NOT claim the window-level reading** (`C-10`) |
+| **`G-5`** | **THE SEVEN-ROW MATRIX · GATE 6 `STRUCTURAL` · THE WORD `waived` ABSENT · AND THE ENTRY-POINT ANSWER RECORDED AS A CHANGED *VALUE*** | **`§9.6` and `§9.7`** — **a changed value, never a changed rule, so no `DONE` unit re-opens** |
+
+**ITS WARNING, CARRIED AS A CONDITION OF ITS OWN: DO NOT BATCH THE DOSSIER WITH THE SPEC** — **the dossier is `G-2`'s
+gating artifact and the spec is the gated artifact, so landing them in one pass defeats the condition rather than
+satisfying it.** **AND ITS AGREEMENT CLAUSE, CARRIED WHOLE: THE THREE DEFAULTS OF `§9.2` ARE *FILEABLE*, NOT
+BLOCKERS** — **which is what makes `DELEGABLE-WITH-CONDITIONS` the verdict rather than `BLOCKED-ON-SEMANTICS`.**
+
+**ITS PROCESS FINDING, CARRIED AND NOW CLOSED AT ITS OWN SITE: step 3's return was UNFILED and WOULD HAVE BECOME THE
+*SEVENTH* INSTANCE of the wave's recurring gap unless landed in this pass — *WHICH THIS APPEND DOES*** (`§11` `P-7`).
+
+---
+
+## §11 THE PROCESS FINDINGS THIS PASS PRODUCED, AND WHAT THIS PASS DID *NOT* DO
+
+| # | Finding | Owner |
+| --- | --- | --- |
+| **`P-7`** | **STEP 3'S RETURN WAS RETURNED BUT UNFILED, AND WOULD HAVE BECOME THE *SEVENTH* INSTANCE OF THE WAVE'S RECURRING GAP** (`FM-1`; `P-1`/`OV-1`/`TC-1`/`FM-1`). **IT IS FILED BY THIS PASS AT `§9`, in the same pass as its verdict, per `G-1`** | **The supervisor** (it owns gate boundaries and `RCA-8(a)` commits). **THE STANDING REMEDY, RESTATED SEVENTH TIME: A REVIEWER'S RETURN IS APPENDED TO THE GATE RECORD IN THE SAME PASS THAT RECEIVES IT — never carried, never batched** |
+| **`P-8`** | **NO STEP-0 ADOPTION DOSSIER EXISTED FOR A UNIT THAT ADOPTS EXTERNALLY-SOURCED IDENTIFIERS — the `F2` class repeating in the very next unit** (`G-2`). **A silent zero-row would itself have been a finding** | **The supervisor + the architect** (the dossier must be APPROVED before the spec gate; `G-2`). **CREATED BY THIS PASS, not by the reviewer that demanded it** |
+| **`P-9`** | **THE WARNING THAT THE DOSSIER AND THE SPEC MUST NOT BE BATCHED** (`§10`, closing) — **a condition satisfied in form and defeated in substance if both land in one pass** | **The supervisor**, at the spec gate |
+
+**WHAT THIS PASS DID *NOT* DO — the negative half, stated because it is the half a later pass over-reads:** **NO CODE. NO
+RED SET. NO REGISTER AND NO REGISTER EXECUTION. NO LEG, NO SUITE, NO `tsc` AND NO BUILD. NO `§5.U` MATRIX EMITTED AND NO
+MATRIX ROW CLAIMED TO EXIST** (**`§9.6`'s seven rows are the NAMED DEMAND, not a landed artifact**). **NO CONTRACT:
+`docs/specs/focus-tool.md` REMAINS `OWED — not filed`, and no file of that name exists. NO COUNT, CELL, ROW ID, TERM,
+SEED, CAP OR LEDGER FLIP MOVED — the ledger is UNMOVED at `20 DONE / 1 open` UNITS = `21` units (`20 + 1 = 21`), the
+open set being `F3` `U-FOCUS-TOOL` ALONE = `1`.** **AND THE UNIT IS *DELEGABLE TO THE SPEC GATE BUT NOT YET FILED*: it
+needs `G-2`'s dossier APPROVED and then its own contract filed** (`AGENTS.md` item 9; `AGENTS.md` item 11 binds, so
+the typed register lands BEFORE the red set).
