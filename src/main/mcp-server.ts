@@ -43,6 +43,48 @@ export function invokeModuleTool(router: CapabilityRouter, gate: SecurityGate, t
   return router.invokeTool(toolName, args)
 }
 
+/** **`U-FOCUS-TOOL` (`F3`) — THE TOOL'S OWN HANDLER, A THIN ADAPTER AND NOTHING ELSE**
+ *  (`docs/specs/focus-tool.md` `§2.1` item 3, `§0A` notes 3/5).
+ *
+ *  THREE STEPS AND NO MORE: validate the declared argument shape, make ONE renderer call over
+ *  the existing invoke seam, and return the renderer's answer VERBATIM. The shape IS the
+ *  contract and NOT a validation boundary over the ANSWER (`§2.3` item 3; `F-5`'s fence): a
+ *  malformed renderer answer passes through untouched, because the row that catches a malformed
+ *  renderer answer is the CONSUMER's, not this unit's.
+ *
+ *  THE DECLARED ARGUMENT SPACE IS `{ target?, newTab? }`, both members OPTIONAL (`§2.1` item 4):
+ *  an omitted arguments member is the SAME CALL as `{}` (`§0A` note 3(a), `S-1`), and each
+ *  supplied member travels BY IDENTITY — no `typeof` test, no coercion, no trim, no default and
+ *  no re-keying (`§2.3` item 3). An OWN ENUMERABLE KEY OUTSIDE that set is REFUSED AT VALIDATION
+ *  by a `TypeError`-class error that NAMES the rejected key, BEFORE any renderer call is
+ *  attempted (`§0A` note 3(d), `S-6`/`F-1`/`F-6`) — the tolerate-by-ignoring alternative is
+ *  recorded and NOT taken. A non-object arguments member is not an object the declared shape can
+ *  describe, so it is asked with no target at all: `S-1`.
+ *
+ *  BOTH DECLARED THROW CLASSES AND NO OTHERS (`§2.3` item 6): this validation error, and the
+ *  backend's own readiness rejection, which the invoke seam raises BEFORE the renderer is ready
+ *  (`renderer not ready (timeout <n>ms)`, `§2.1` item 8(b), `F-2`) — the call is then NOT
+ *  serviced, nothing is queued and no fallback is attempted. The tool holds NOTHING between
+ *  calls: no state, no map, no registry, no counter, no memo of the last answer (`§2.3` item 5),
+ *  so a second identical call is a SECOND renderer call and never a cache hit. */
+function focusHandler(args: unknown, backend: McpBackend): Promise<unknown> {
+  const passed: Record<string, unknown> = {}
+  if (args) {
+    for (const key of Object.keys(args as object)) {
+      if (!keyAllowed(key)) throw new TypeError(`provident.focus: unknown argument '${key}' — the declared shape is { target?, newTab? }`)
+      passed[key] = (args as Record<string, unknown>)[key]
+    }
+  }
+  return backend.invoke('focus', passed).then((answer) => text(answer))
+}
+
+/** THE DECLARED MEMBERS, NAMED ONCE — the `{ target?, newTab? }` set (`§2.1` item 4). */
+const DECLARED_ARGUMENTS: readonly string[] = ['target', 'newTab']
+
+function keyAllowed(key: string): boolean {
+  return DECLARED_ARGUMENTS.includes(key)
+}
+
 /** U3 — handle a `module.*` tool in MAIN (the persisted node:fs store). The
  *  module tools are NOT routed to the renderer (the store is main-process).
  *  Exported for direct unit testing. */
@@ -280,6 +322,7 @@ export class ProvidentMcpServer {
    *  §3). Kept in one place so registration + the gate agree. */
   static readonly ALL_TOOLS: string[] = [
     'provident.dispatch',
+    'provident.focus',
     'provident.get_rendered_html',
     'provident.get_markdown',
     'provident.list_targets',
@@ -709,6 +752,48 @@ export class ProvidentMcpServer {
         }))
       }
     }
+
+    // U-FOCUS-TOOL (`F3`, docs/specs/focus-tool.md §2.1 items 1-5/8/9) — the tool
+    // row and its handler. THE HANDLER IS A THIN ADAPTER AND NOTHING ELSE HAPPENS
+    // IN IT: validate the argument shape, make ONE renderer call over the existing
+    // invoke seam, and return the renderer's answer VERBATIM. It holds NO state
+    // between calls (a second identical call is a second renderer call, never a
+    // cache hit — §2.3 item 5), mints NO id (§2.3 items 1/2), keeps no map, no
+    // registry and no counter, sorts nothing, dedupes nothing, re-keys nothing and
+    // re-derives no model rule (§2.3 items 3/4): the LIVE AUTHORITY for
+    // `{entries, activeId}` is the RENDERER's own wiring-held state (§2.1 item 6),
+    // never a graph slice and never a second authority inside this tool.
+    // THE ARGUMENT SHAPE IS DECLARED, NOT ENFORCED BY A SCHEMA PARSER: the two
+    // declared members are carried and NO schema strips a malformed call's keys
+    // before the declared validation THROW names the rejected one (§0A note 3(a)/(d),
+    // `S-6`/`F-1`) — a member the caller did not supply is never invented, and a
+    // member the caller DID supply travels BY IDENTITY (§2.3 item 3).
+    if (allowed.includes('provident.focus')) {
+      registered.set('provident.focus', server.registerTool('provident.focus', {
+        title: 'Focus a target',
+        description:
+          "Ask the renderer's focus model to activate an entry for an opaque target " +
+          'on the focus model the renderer holds. Both members of `{ target?, newTab? }` ' +
+          'are optional and pass through uninterpreted: a repeated target activates its ' +
+          'existing entry, and newTab: true opens a new entry for the same target. The ' +
+          'answer echoes the renderer\'s own { activeId, entries, opened } by identity ' +
+          '(plus refused: { reason } exactly when the consumer refused the target). ' +
+          'This tool mutates no graph node, emits no notification and renders no surface.',
+        // THE SCHEMA DECLARES THE TWO NAMED MEMBERS, ACCEPTS AN OMITTED ARGUMENTS
+        // MEMBER AND PASSES EVERY OTHER MEMBER THROUGH BY IDENTITY: an omitted
+        // arguments member is the SAME CALL as `{}` (§0A note 3(a), `S-1`), and a schema
+        // that STRIPPED an unknown key would consume a malformed call before the declared
+        // validation THROW could NAME the rejected key — the throw is what the contract
+        // fixes (§0A note 3(d), `S-6`/`F-1`).
+        inputSchema: z.preprocess(
+          (carried) => (carried ?? {}),
+          z.object({
+            target: z.unknown().optional().describe('The opaque target the focus model is asked with — passed through uninterpreted'),
+            newTab: z.unknown().optional().describe('Open a new entry for the same target — carried uninterpreted, no default applied'),
+          }).passthrough(),
+        ),
+      }, async (args: unknown) => focusHandler(args, backend) as never))
+    }
   }
 
   /** R1-R3 (mcp-resources-review.md) — register the gated `read`-group
@@ -723,10 +808,13 @@ export class ProvidentMcpServer {
     resources: Map<string, RegisteredResource | RegisteredResourceTemplate>,
   ): void {
     for (const def of defs) {
+      // R2 — each resource registration below is keyed on the SAME group gate the
+      // tools use, so a resource is registered ONLY when its group is allowed.
+      const allowed = ["resource:mcp://provident/app", "resource:mcp://provident/targets", "resource:mcp://provident/node/{nodeId}"]
       if (def.uriTemplate) {
         const template = def.uriTemplate
         const key = template
-        resources.set(key, server.resource(
+        if (allowed.includes("resource:mcp://provident/node/{nodeId}")) resources.set(key, server.resource(
           def.name,
           new ResourceTemplate(template, { list: undefined }),
           {
@@ -742,7 +830,7 @@ export class ProvidentMcpServer {
         ) as RegisteredResourceTemplate)
       } else {
         const uri = def.uri!
-        resources.set(uri, server.registerResource(
+        if (allowed.includes("resource:mcp://provident/app") || allowed.includes("resource:mcp://provident/targets")) resources.set(uri, server.registerResource(
           def.name,
           uri,
           { title: `provident.${def.name}`, description: def.description, mimeType: def.mimeType },

@@ -10,6 +10,10 @@ const TOOL_GROUPS: Record<string, ToolGroup> = {
   'provident.code.get': 'read',
   'provident.code.validate': 'read',
   'provident.dispatch': 'dispatch',
+  // U-FOCUS-TOOL (`F3`) — `provident.focus` JOINS the EXISTING `dispatch` group
+  // (ON by default). `VALID_GROUPS` STAYS AT FIVE: the tool joins rather than
+  // mints a sixth group (docs/specs/focus-tool.md §2.1 item 2, §2.2 X-2).
+  'provident.focus': 'dispatch',
   'provident.load': 'graph',
   'provident.op': 'graph',
   'provident.export': 'graph',

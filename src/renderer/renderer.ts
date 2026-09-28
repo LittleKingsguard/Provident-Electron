@@ -7,6 +7,7 @@ import { SecurePanels } from './secure-panels.js'
 import { createGestureSession, POINTER_TYPES } from '../shared/gesture-session.js'
 import { createGutterAffordance, domEventSource } from '../shared/gutter-affordance.js'
 import type { RpcRequest, RpcReply } from '../shared/types.js'
+import { focusTransition, focusOrder, type FocusEntry, type FocusState } from '../shared/focus-model.js'
 
 /** N3 (live-notification-review.md) — the MCP methods that mutate the APP graph
  *  (content/structural/re-derive). Only these trigger the app-graph-changed push
@@ -203,6 +204,16 @@ export function handleRequest(runtime: Runtime, req: RpcRequest, notify: (p: { u
         case 'journal':
           value = runtime.journal((req.payload as { action?: 'undo' | 'redo' | 'replay' } | null)?.action as 'undo' | 'redo' | 'replay')
           break
+        // U-FOCUS-TOOL (`F3`, docs/specs/focus-tool.md §2.1 item 6, the layer map's
+        // site 6) — THE CASE BODY READS THE RENDERER'S OWN WIRING-HELD FOCUS STATE,
+        // not a graph slice. The call LANDS here: the case hands the caller's own
+        // payload to the wiring role below, which drives the focus model F2 owns and
+        // returns its own answer. Nothing is pushed (the notify predicate stays keyed
+        // on `MUTATING_METHODS` and this method is absent from that set), nothing is
+        // re-rendered and nothing is written to the graph.
+        case 'focus':
+          value = focusRoute(req.payload)
+          break
         default:
           throw new Error(`unknown method: ${(req as { method: string }).method}`)
       }
@@ -223,6 +234,65 @@ export function handleRequest(runtime: Runtime, req: RpcRequest, notify: (p: { u
     }
     return reply
   })
+}
+
+/** **`U-FOCUS-TOOL` (`F3`) — THE BOUNDED HANDLER AND THE LIVE HOLDER**
+ *  (`docs/specs/focus-tool.md` `§2.1` item 6, `§2.3` items 1/2/3; the layer map's site 6).
+ *
+ *  THE HOLDER IS THE LIVE AUTHORITY FOR `{entries, activeId}`: it sits in the RENDERER'S OWN
+ *  WIRING — HERE, outside the consumed module — and is NEVER a graph slice, so
+ *  `provident.list_targets` / `get_rendered_html` / `get_markdown` / `get_node_state` never
+ *  observe a focus call's effect (`§2.5` item 5). It holds the IDS the model seated and the
+ *  caller-order entry ids it echoed, and NOTHING ELSE: no id is minted here (the caller's own
+ *  string IS the legal entry id, `§2.3` item 2), no sort, no dedupe and no id policy lives
+ *  here, and no comparison of `target` is made here — the `===`-on-target activation rule and
+ *  the duplicate rules stay the CONSUMED MODULE'S (`§2.3` item 4), which is why this role calls
+ *  `focusTransition` instead of re-deriving that rule.
+ *
+ *  THE HANDLER IS BOUNDED AND THIN, and every refusal path is DECLARED: a payload that carries
+ *  no target is the consumer's own find-or-open with no target (`S-1`) and returns the current
+ *  state; a consumer refusal is NEVER a throw — it is the declared shape with `refused`
+ *  (`S-4`/`F-3`), carrying the model's own refusal code; and the answer's members are passed out
+ *  BY IDENTITY, with no `typeof` test, no coercion, no trim and no re-keying (`§2.3` item 3).
+ *  It emits NO notification, persists NOTHING, forces NO re-render and authors NO surface —
+ *  no element, no text, no class, no attribute and no style is touched here (`§2.4` rows 2/3/4,
+ *  `§5.U` rows 3/4). */
+
+/** THE HOLDER — the renderer's OWN wiring-held focus state (`§2.1` item 6). It carries the
+ *  model's state by reference and mutates nothing else; the entry objects inside it are the
+ *  CALLER's own objects, in the caller's own order. */
+const holder: { state: FocusState } = { state: { entries: [], activeId: null } }
+
+/** THE ECHOED ENTRY IDS, IN THE CALLER'S OWN ORDER — read out of the state the model seated,
+ *  read by the model's own `focusOrder` so nothing here orders, dedupes or re-keys them. */
+function carriedEntryIds(state: FocusState): unknown[] {
+  return focusOrder(state.entries).map((entry: FocusEntry): unknown => (entry as { readonly id?: unknown }).id)
+}
+
+function focusRoute(payload: unknown): { activeId: unknown; entries: unknown[]; opened: boolean; refused?: { reason: unknown } } {
+  const attempt = (payload ?? {}) as { target?: unknown; newTab?: unknown }
+  const carried = holder.state
+  if (!('target' in attempt)) {
+    return { activeId: carried.activeId, entries: carriedEntryIds(carried), opened: false }
+  }
+  const opened = attempt.newTab === true
+  const entry: FocusEntry = { id: attempt.target, target: attempt.target }
+  const result = focusTransition(carried, opened ? 'open' : 'activate', { id: attempt.target, entry })
+  if (!result.accepted) {
+    // THE CONSUMER'S REFUSAL — a RETURNED record, never a throw (`§2.3` item 6, `F-3`).
+    return {
+      activeId: result.state.activeId,
+      entries: carriedEntryIds(result.state),
+      opened: false,
+      refused: { reason: (result.refusals[0] as { readonly code?: unknown })?.code },
+    }
+  }
+  holder.state = result.state
+  return {
+    activeId: result.state.activeId,
+    entries: carriedEntryIds(result.state),
+    opened: result.changed,
+  }
 }
 
 async function main(): Promise<void> {

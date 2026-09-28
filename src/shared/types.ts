@@ -278,6 +278,7 @@ export type RpcMethod =
   | 'module.install'
   | 'module.update'
   | 'module.list'
+  | 'focus'
 
 export interface RpcRequest {
   id: number
