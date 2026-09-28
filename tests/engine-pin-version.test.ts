@@ -121,10 +121,15 @@ describe('U-ENGINE-PIN — the version pin (spec §2.1, §3.7, §4.1)', () => {
       'module.install',
       'module.update',
       'module.list',
+      // `U-FOCUS-TOOL` (`docs/specs/focus-tool.md` `§5.1` row 6 / `§5.2` item 4 (iii) `N-1`):
+      // the TOOL joins the name-complete pin in the SAME COMMIT as its census move, so this
+      // row's SET EQUALITY (the load-bearing half) is satisfied by the name and not by a
+      // quietly bumped count.
+      'provident.focus',
     ]
     // S1 — SET equality against the named list (the load-bearing half, AF-9).
     expect([...ProvidentMcpServer.ALL_TOOLS].sort()).toEqual([...PINNED_TOOL_SET].sort())
-    expect(new Set(PINNED_TOOL_SET).size, 'the pinned list itself must not carry a duplicate').toBe(21)
+    expect(new Set(PINNED_TOOL_SET).size, 'the pinned list itself must not carry a duplicate').toBe(22)
     // S2 — no duplicate tool name in the live set.
     expect(new Set(ProvidentMcpServer.ALL_TOOLS).size, 'no duplicate tool name').toBe(ProvidentMcpServer.ALL_TOOLS.length)
 
@@ -157,6 +162,10 @@ describe('U-ENGINE-PIN — the version pin (spec §2.1, §3.7, §4.1)', () => {
       'module.install': 'module',
       'module.update': 'module',
       'module.list': 'module',
+      // THE GROUP-MAP DATA ROW (`docs/specs/focus-tool.md` `§2.1` item 2 / `§5.1` row 2): the
+      // focus tool resolves through the EXISTING `dispatch` group — the group gate's own data
+      // row, NEVER a focus-specific branch in the gate.
+      'provident.focus': 'dispatch',
     }
     // The two halves must describe the SAME set — otherwise set equality above
     // would be satisfied by a map that silently lacks a tool.
@@ -193,8 +202,11 @@ describe('U-ENGINE-PIN — the version pin (spec §2.1, §3.7, §4.1)', () => {
       'module.install': true,
       'module.update': true,
       'module.list': true,
+      // `docs/specs/focus-tool.md` `§5.1` row 6: the union's census moves `21 → 22` in the
+      // SAME COMMIT as the tool's census edit (`§5.2` item 4 (iii) `N-2`).
+      focus: true,
     }
-    expect(Object.keys(RPC_METHOD_CENSUS).length).toBe(21)
+    expect(Object.keys(RPC_METHOD_CENSUS).length).toBe(22)
     expect(Object.keys(RPC_METHOD_CENSUS)).toContain('module.install')
   })
 

@@ -402,6 +402,10 @@ const PINNED_TOOL_NAMES: readonly string[] = [
   'module.install',
   'module.update',
   'module.list',
+  // `docs/specs/focus-tool.md` `§5.1` row 22 (`N-21`) — the NAME-COMPLETE list and its count
+  // move TOGETHER in the tool-census commit: this row's own positive control below reads the
+  // engine pin's `PINNED_TOOL_SET`, so a list left at `21` would read a pin that had grown.
+  'provident.focus',
 ]
 const PINNED_GROUP_NAMES: readonly string[] = ['read', 'dispatch', 'graph', 'code', 'module']
 /** The registration-site vocabulary: a module carrying ANY of these has added a
@@ -2374,7 +2378,7 @@ describe('§3.4 — the static rows (the §2.2 prohibition table’s ids)', () =
     ).toEqual([])
   })
 
-  it('R-11 §3.4 — THE NO-NEW-SURFACE ROW: `ALL_TOOLS` (21) · `RpcMethod` (21) · `MUTATING_METHODS` (7) · `VALID_GROUPS` (5) are UNCHANGED', () => {
+  it('R-11 §3.4 — THE NO-NEW-SURFACE ROW: `ALL_TOOLS` (22) · `RpcMethod` (22) · `MUTATING_METHODS` (7) · `VALID_GROUPS` (5) are UNCHANGED', () => {
     const enginePin = readRel(ENGINE_PIN_RELPATH)
     expect(
       enginePin.length,
@@ -2410,12 +2414,12 @@ describe('§3.4 — the static rows (the §2.2 prohibition table’s ids)', () =
       moduleBytes().length,
       `R-11 §3.4 (GREEN BRANCH — module PRESENT) — \`${MODULE_RELPATH}\` EXISTS, so this branch governs; the green-branch claims below are read over ITS OWN bytes, which is why the scan is asserted NON-EMPTY first (a scan over \`''\` would pass vacuously)`,
     ).toBeGreaterThan(0)
-    // (i) NOT ONE member of the name-complete pin is added: none of the `21` tool names
+    // (i) NOT ONE member of the name-complete pin is added: none of the `22` tool names
     //     appears in this module's bytes, and the module exports no tool descriptor.
     const toolNamesAdded = hitsOf(moduleBytes(), PINNED_TOOL_NAMES)
     expect(
       toolNamesAdded,
-      `R-11 §3.4 (GREEN BRANCH)/§2.2 P-7 — the module adds NO \`ALL_TOOLS\` member: NOT ONE of the \`21\` pinned tool names (§3.4 R-11's name-complete set, \`tests/engine-pin-version.test.ts\`'s \`PINNED_TOOL_SET\`, read BY NAME and never by a bare count) appears in ITS OWN bytes. Hits: ${JSON.stringify(
+      `R-11 §3.4 (GREEN BRANCH)/§2.2 P-7 — the module adds NO \`ALL_TOOLS\` member: NOT ONE of the \`22\` pinned tool names (§3.4 R-11's name-complete set, \`tests/engine-pin-version.test.ts\`'s \`PINNED_TOOL_SET\`, read BY NAME and never by a bare count) appears in ITS OWN bytes. Hits: ${JSON.stringify(
         toolNamesAdded,
       )}`,
     ).toEqual([])

@@ -342,6 +342,70 @@ export function scanLines(src: string, re: RegExp): string[] {
   return out
 }
 
+// ===========================================================================
+// `MODEL-RULE SITES` — THE RE-SCOPED NO-RE-DERIVATION INSTRUMENT FOR THE TWO
+// ROWS THAT SHARE IT (`§5.5.1 ID-2` and `§3.3 I-10 / §2.3` item 4)
+// ===========================================================================
+/** **THE MODEL-RULE SITES INSIDE THE TOOL'S OWN ROUTE REGION** — the instrument `P-FT-ID-2`
+ *  and `I-10` share.
+ *
+ *  **⟶ 2026-09-27 RE-SCOPE, AND THE REASON IT IS A RE-SCOPE RATHER THAN A DELETION.** The
+ *  as-filed instrument was *"any `===`, `.includes(` or `.indexOf(` inside the route region is
+ *  the tool re-deriving a model rule"* — and it FLAGGED A MANDATORY GUARD: the tool's own
+ *  unknown-key guard reads `DECLARED_ARGUMENTS.includes(key)`, and rejecting a key outside the
+ *  declared set is a `§2.1` item 4 REQUIREMENT other rows (F-1/`AR-2`) pin. The scan's intent
+ *  is **NO RE-DERIVATION OF THE MODEL'S RULES** — the model's ACTIVATION on the target, its
+ *  IDENTITY rule and its ID POLICY (`docs/specs/focus-model.md` `§2.3`) — and **NOT "no key
+ *  validation"**. THE TOOL IS RIGHT AND THE SCAN WAS OVER-BROAD, so the instrument is scoped
+ *  TO THE CLAIM IT EXISTS TO CARRY.
+ *
+ *  **THE MODEL-RULE TOKENS — WHAT THIS SCAN NOW FLAGS, AND EACH IS A RE-IMPLEMENTATION:**
+ *   (1) an ASSIGNMENT to, or an EQUALITY/INEQUALITY COMPARISON of, the model-owned fields the
+ *       caller passes through (`target`, `entryId`) — a tool-side `===` on the target is a
+ *       SECOND ACTIVATION AUTHORITY, which `§2.3` item 4 and the row's own cell forbid;
+ *   (2) a MEMBERSHIP TEST / SEARCH over the caller's OPAQUE VALUES (`entries` / `activeId` /
+ *       `opened`) — the tool asking "is this entry already there" rather than reading the
+ *       consumer's answer;
+ *   (3) an ID-MINTING SITE (`randomUUID` / `uuid` / a `counter`).
+ *
+ *  **THE EXEMPTION IS NAMED, NOT SMUGGLED.** KEY VALIDATION AGAINST THE TOOL'S OWN DECLARED
+ *  SET — `DECLARED_ARGUMENTS.includes(key)` — is NOT a membership test over the caller's
+ *  opaque values and is NOT re-derivation: it is the REQUIRED rejection of an undeclared key
+ *  (`F-1`). The exemption fires ONLY for that reading and ONLY when the line is not an
+ *  assignment into a model-owned field, so hiding a comparison behind it still FAILS.
+ *
+ *  **THE FALSIFIER STAYS REAL: A BODY THAT RE-IMPLEMENTS ONE OF THE MODEL'S RULES STILL
+ *  FAILS.** A second equality on the target, a membership test over the caller's values or a
+ *  minted id is caught (see the `ID-2` control drive and the `I-10` falsifier row, both
+ *  driven, and `RT-5(b)`'s region control). */
+export function modelRuleSites(src: string): string[] {
+  const callerOpaque = /\b(?:entries|activeId|opened)\b/
+  const membershipOrSearch = /\.(?:includes|indexOf|lastIndexOf|find|findIndex|some|filter|splice|push|concat)\s*\(/
+  const modelField = /\b(?:target|entryId)\b/
+  const equalityOnModelField = /\b(?:target|entryId)\b[^=!<>]*?[!=]==?/
+  const assignmentToModelField = /\b(?:target|entryId)\s*(?:\?\?|(?<![=!<>])=(?!=))/
+  const minting = /randomUUID|\buuid\b|\bcounter\b/i
+  const declaredKeyGuard = /DECLARED_ARGUMENTS\s*\.includes\s*\(\s*key\s*\)/
+  const out: string[] = []
+  src.split('\n').forEach((line, i) => {
+    const t = line.trim()
+    const modelRule = equalityOnModelField.test(t)
+      || assignmentToModelField.test(t)
+      || (membershipOrSearch.test(t) && (callerOpaque.test(t) || /\bargs\b/.test(t)))
+      || minting.test(t)
+    if (!modelRule) return
+    // THE NAMED EXEMPTION (`F-1`'s required guard): validation against the tool's OWN declared
+    // key set is not a model rule — and it is exempt ONLY as a pure guard, never when the same
+    // line is an assignment into a model-owned field or a search over the caller's values.
+    const pureDeclaredGuard = declaredKeyGuard.test(t)
+      && !assignmentToModelField.test(t)
+      && !callerOpaque.test(t)
+    if (pureDeclaredGuard) return
+    out.push(`${i + 1}: ${t}`)
+  })
+  return out
+}
+
 function readStringArrayLiteral(rel: string, re: RegExp): string[] {
   const m = re.exec(read(rel))
   if (!m) return []
@@ -1010,9 +1074,20 @@ export const REGISTER: readonly RegisterRow[] = [
     id: "P-FT-ID-2", type: "P-SM", domain: "THE OPAQUE ENTRY IDENTITY — the `===`-on-target activation, observed THROUGH the answer", strategyId: "S-FT-ACT-1", term: 3, bound: "enumerated",
     // the identities, the count, the seated activeId, and the no-comparison reading
     assertions: ["the returned element identities", "the returned count", "the seated `activeId`", "the tool performed no comparison of its own"],
-    controls: [{ label: 'control: nothing is appended on the repeated-target arm', run: async () => { const rec = recorder([{ activeId: 'n', entries: ['n'], opened: false }, { activeId: 'n', entries: ['n'], opened: false }]); const s = newServer(rec.backend); await callTool(s, TOOL_NAME, { target: 'n' }); const again = await callTool(s, TOOL_NAME, { target: 'n' }) as Record<string, unknown>; expect((again['entries'] as unknown[]).length).toBe(1) } }],
+    controls: [
+      { label: 'control: nothing is appended on the repeated-target arm', run: async () => { const rec = recorder([{ activeId: 'n', entries: ['n'], opened: false }, { activeId: 'n', entries: ['n'], opened: false }]); const s = newServer(rec.backend); await callTool(s, TOOL_NAME, { target: 'n' }); const again = await callTool(s, TOOL_NAME, { target: 'n' }) as Record<string, unknown>; expect((again['entries'] as unknown[]).length).toBe(1) } },
+      // THE RE-SCOPED INSTRUMENT'S FALSIFIER, DRIVEN (`§0A` note 7 defect 2; `§5.5.2` item 4b):
+      // a body that RE-IMPLEMENTS one of the model's rules MUST still FAIL the scan, while the
+      // tool's REQUIRED declared-key guard is exempt BY NAME and never by relenting the claim.
+      { label: 'control: a RE-IMPLEMENTED model rule still FAILS the re-scoped scan', run: () => {
+        expect(modelRuleSites("  if (args.target === 'x') return {}"), 'ID-2 control — a second equality on the target is a re-derived ACTIVATION rule and MUST FAIL.').not.toEqual([])
+        expect(modelRuleSites('  if (args.entries.includes(args.target)) return {}'), "ID-2 control — a membership test over the caller's opaque values re-implements the IDENTITY rule and MUST FAIL.").not.toEqual([])
+        expect(modelRuleSites('  const id = crypto.randomUUID()'), "ID-2 control — a minted id re-implements the model's ID POLICY and MUST FAIL.").not.toEqual([])
+        expect(modelRuleSites('  return DECLARED_ARGUMENTS.includes(key)'), 'ID-2 control — the REQUIRED unknown-key guard is NOT a model rule: it is exempt BY NAME (`F-1`).').toEqual([])
+      } },
+    ],
     drives: [
-      { label: '(1) a repeated `===` target, the existing entry INACTIVE: activation, NO APPEND', run: async () => { const rec = recorder([{ activeId: '', entries: ['e'], opened: false }, { activeId: 'e', entries: ['e'], opened: false }]); const s = newServer(rec.backend); await callTool(s, TOOL_NAME, { target: 'e' }); const got = await callTool(s, TOOL_NAME, { target: 'e' }) as Record<string, unknown>; expect(got['activeId'], "ID-2 — the existing entry's own id.").toBe('e'); expect((got['entries'] as unknown[]).length, 'ID-2 — NO APPEND.').toBe(1); expect(scanLines(stripComments(focusRouteSource() ?? ''), /===\s*|\.includes\s*\(|\.indexOf\s*\(/), 'ID-2 — the tool re-derived no rule.').toEqual([]) } },
+      { label: '(1) a repeated `===` target, the existing entry INACTIVE: activation, NO APPEND', run: async () => { const rec = recorder([{ activeId: '', entries: ['e'], opened: false }, { activeId: 'e', entries: ['e'], opened: false }]); const s = newServer(rec.backend); await callTool(s, TOOL_NAME, { target: 'e' }); const got = await callTool(s, TOOL_NAME, { target: 'e' }) as Record<string, unknown>; expect(got['activeId'], "ID-2 — the existing entry's own id.").toBe('e'); expect((got['entries'] as unknown[]).length, 'ID-2 — NO APPEND.').toBe(1); expect(modelRuleSites(stripComments(focusRouteSource() ?? '')), "ID-2 — the tool re-derived no rule: NO comparison/assignment on `target`/`entryId`, NO membership test over the caller's values and NO minted id on the route (the as-filed `===`/`.includes(`/`.indexOf(` scan is RE-SCOPED — it flagged the REQUIRED declared-key guard, `§0A` note 7 defect 2).").toEqual([]) } },
       { label: '(2) the same repeated target, the existing entry ALREADY ACTIVE', run: async () => { const rec = recorder([{ activeId: 'e', entries: ['e'], opened: false }, { activeId: 'e', entries: ['e'], opened: false }]); const s = newServer(rec.backend); await callTool(s, TOOL_NAME, { target: 'e' }); const got = await callTool(s, TOOL_NAME, { target: 'e' }) as Record<string, unknown>; expect(got['activeId'], 'ID-2 — the identity is stable on the already-active arm.').toBe('e'); expect((got['entries'] as unknown[]).length, 'ID-2 — still no append.').toBe(1) } },
       { label: '(3) an APPEND CONTROL: a distinct target appends, as declared', run: async () => { const rec = recorder([{ activeId: 'a', entries: ['a'], opened: false }, { activeId: 'b', entries: ['a', 'b'], opened: true }]); const s = newServer(rec.backend); await callTool(s, TOOL_NAME, { target: 'a' }); const got = await callTool(s, TOOL_NAME, { target: 'b' }) as Record<string, unknown>; expect((got['entries'] as unknown[]), "ID-2 — the append is the CONSUMER's rule, echoed.").toEqual(['a', 'b']) } },
     ],

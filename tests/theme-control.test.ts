@@ -1040,7 +1040,7 @@ describe('§3.2 F-* — documented fail-states', () => {
 describe('§3.3 I-* — invariants that hold in every state', () => {
   it('I-1 (§3.4 R-3, P-TC-5) — the tool / group / method censuses do not move', () => {
     const tools = [...ProvidentMcpServer.ALL_TOOLS].sort()
-    expect(tools.length, '§5.3 item 4 — `ALL_TOOLS === 21` is retained ONLY as a duplicate check').toBe(21)
+    expect(tools.length, '§5.3 item 4 / `docs/specs/focus-tool.md` `§5.1` row 21 (`N-20`) — the `ALL_TOOLS` count pin moves `21 → 22` in the tool-census commit; it is retained ONLY as a duplicate check, and the name-set half is asserted beside it').toBe(22)
     expect(new Set(tools).size, 'no duplicate tool name').toBe(tools.length)
     const groups = [...new Set(tools.map((t) => groupForTool(t)))].sort()
     expect(groups, '§5.1 row 1 — no new group: the landed five group names, by NAME').toEqual([
@@ -1069,6 +1069,10 @@ describe('§3.3 I-* — invariants that hold in every state', () => {
         'code.validate',
         'dispatch',
         'export',
+        // `docs/specs/focus-tool.md` `§5.1` row 21 (`N-20`) — THE NAME-SET HALF: the union's
+        // member literal gains `'focus'` in the SAME COMMIT as the counts above, because a
+        // count move does NOT satisfy a name-set equality.
+        'focus',
         'journal',
         'listTargets',
         'load',
@@ -1300,13 +1304,13 @@ describe('§3.4 R-* — the static rows', () => {
 
   it('R-3 (§5.3 item 4, P-TC-5) — the tool census by NAME-SET EQUALITY against the landed pin', () => {
     const pinned = extractStringArray(sourceOrEmpty(ENGINE_PIN_PATH), 'PINNED_TOOL_SET')
-    expect(pinned.length, 'the landed `PINNED_TOOL_SET` must be extractable from tests/engine-pin-version.test.ts').toBe(21)
+    expect(pinned.length, 'the landed `PINNED_TOOL_SET` must be extractable from tests/engine-pin-version.test.ts — `docs/specs/focus-tool.md` `§5.1` row 21 (`N-20`) moves this COUNT `21 → 22`').toBe(22)
     expect(
       [...ProvidentMcpServer.ALL_TOOLS].sort(),
       '§3.4 R-3 — SET equality against the pinned name set (the load-bearing half), never a count quoted from the spec',
     ).toEqual([...pinned].sort())
     expect(pinned.filter((t) => /theme/i.test(t)), '§5.3 item 4 — no theme-named tool exists at this tree').toEqual([])
-    expect(ProvidentMcpServer.ALL_TOOLS.length, '§3.4 R-3 — the count is a DUPLICATE check beside the set equality').toBe(21)
+    expect(ProvidentMcpServer.ALL_TOOLS.length, '§3.4 R-3 / `docs/specs/focus-tool.md` `§5.1` row 21 (`N-20`) — the count is a DUPLICATE check beside the set equality, and it moves `21 → 22`').toBe(22)
   })
 
   it('R-4 (§2.5 item 1/§5.1) — the diff scope: the unit vocabulary lives ONLY in the two ALLOWED paths', () => {

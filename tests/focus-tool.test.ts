@@ -51,7 +51,7 @@ import {
   DECLARED_TOTAL, AS_FILED_TOTAL, AS_FILED_DECLARED_TERMS, EXECUTED_CELLS_SUM_AT_SETTLEMENT,
   DECLARED_TERM_CHAIN, DECLARED_DOMAIN_SUBTOTALS, DECLARED_TYPE_SUBTOTALS,
   DECLARED_BOUNDED_ROWS, DECLARED_READING_CLASSES, ENUMERATED_ROW_IDS, EXECUTED_CELLS_SUM,
-  runRegister, reportDiagnostics, read, stripComments, scanLines, liveAllTools, liveRpcMethods,
+  runRegister, reportDiagnostics, read, stripComments, scanLines, modelRuleSites, liveAllTools, liveRpcMethods,
   liveMutatingMethods, liveValidGroups, focusRouteSource, routeRegion, routeMarkerExtent,
   routeHandlerExtent, inRouteRegion, assertDeclaredShape, assertOptionalMember, keysOf,
   recorder, newServer, callTool, callHandler, assertOneFocusCall, thrown,
@@ -447,7 +447,30 @@ describe('§3.3 I-1..I-13 — the invariants that hold in every state', () => {
     const rec = recorder([{ activeId: 'same', entries: ['same'], opened: false }])
     const got = (await callHandler(newServer(rec.backend), TOOL_NAME, { target: 'same' })) as Record<string, unknown>
     expect(got['entries'], "I-10 — the answer is the consumer's; the tool compared nothing.").toEqual(['same'])
-    expect(scanLines(stripComments(focusRouteSource() ?? ''), /===\s*|\.sort\s*\(|\.includes\s*\(|\.indexOf\s*\(/), 'I-10 / `§2.3` item 4 — a comparison/ordering site FAILS the no-second-authority half.').toEqual([])
+    // ⟶ 2026-09-27 RE-SCOPE (`§0A` note 7, defect 2) — THE AS-FILED INSTRUMENT IS KEPT VISIBLE
+    // BESIDE ITS REPLACEMENT, because it was OVER-BROAD: `/===\s*|\.sort\s*\(|\.includes\s*\(|
+    // \.indexOf\s*\(/` FLAGS THE TOOL'S MANDATORY UNKNOWN-KEY GUARD
+    // (`DECLARED_ARGUMENTS.includes(key)`), and rejecting a key outside the declared set is a
+    // `§2.1` item 4 REQUIREMENT (`F-1`/`AR-2`). THE SCAN'S CLAIM IS *"NO RE-DERIVATION OF THE
+    // MODEL'S RULES"* — the model's ACTIVATION on the target, its IDENTITY rule and its ID
+    // POLICY — AND NOT *"no key validation"*. The instrument is therefore scoped to the
+    // MODEL-RULE TOKENS: a second equality/assignment on the model-owned fields the caller
+    // passes through, a membership test over the caller's opaque values, and a minted id.
+    expect(
+      modelRuleSites(stripComments(focusRouteSource() ?? '')),
+      'I-10 / `§2.3` item 4 — a MODEL-RULE site (a comparison/assignment on `target`/`entryId`, a membership test over the caller’s `entries`/`activeId`/`opened`, or a minted id) FAILS the no-second-authority half. The required declared-key guard is EXEMPT BY NAME (see `modelRuleSites`).',
+    ).toEqual([])
+    // THE FALSIFIER STAYS REAL — and it is DRIVEN here rather than described: a body that
+    // RE-IMPLEMENTS one of the model's rules (a second equality on the target, a membership
+    // test over the caller's values, a minted id) is still CAUGHT by the re-scoped scan.
+    expect(modelRuleSites('  if (args.target === ' + "'x'" + ') return {}'), 'I-10 falsifier — a SECOND EQUALITY on the target is a re-derived activation rule and MUST FAIL.').not.toEqual([])
+    expect(modelRuleSites('  if (args.entries.includes(args.target)) return {}'), "I-10 falsifier — a MEMBERSHIP TEST over the caller's opaque values re-implements the model's identity rule and MUST FAIL.").not.toEqual([])
+    expect(modelRuleSites('  const id = crypto.randomUUID()'), 'I-10 falsifier — a MINTED id re-implements the model’s id policy and MUST FAIL.').not.toEqual([])
+    // AND THE EXEMPTION IS NOT A LOOPHOLE: the required guard is exempt, a comparison hidden
+    // behind it is NOT, and the key guard is asserted HERE as the tool's own live byte.
+    expect(modelRuleSites('  return DECLARED_ARGUMENTS.includes(key)'), 'I-10 — the REQUIRED declared-key guard is NOT a model rule: validation against the tool’s own declared set is exempt BY NAME.').toEqual([])
+    expect(modelRuleSites('  const dup = DECLARED_ARGUMENTS.includes(key) ? (args.target = key) : key'), 'I-10 falsifier — the exemption is NOT a loophole: a line that ALSO assigns into a model-owned field is still a model-rule site.').not.toEqual([])
+    expect(focusRouteSource() ?? '', 'I-10 — the required guard IS read inside the scanned region (the exemption is a reading of the tool’s own bytes, not a hole in the region).').toContain('DECLARED_ARGUMENTS.includes(key)')
   })
 
   it('I-11 a focus call is NEVER a real user gesture — no gesture, DOM read or focus WALK on the route', () => {
