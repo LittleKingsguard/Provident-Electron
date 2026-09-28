@@ -163,11 +163,18 @@ function entriesOf(state: unknown): readonly FocusEntry[] {
   }
 }
 
-/** THE CALLER ACTIVE SLOT, READ TOTALLY: an absent, inherited or unreadable
- *  member reads null, and null is the declared nothing-active reading. */
+/** THE CALLER ACTIVE SLOT, READ TOTALLY AND CARRIED BY IDENTITY. The member's
+ *  value is returned UNTOUCHED — this function NEVER MAPS ONE VALUE ONTO
+ *  ANOTHER — because `undefined` is a LEGAL opaque id value and is DISTINCT FROM
+ *  `null`, which is the declared nothing-active reading and is carried as
+ *  itself. An absent, inherited or unreadable member, and every unusable holder,
+ *  read the declared absence, which is `undefined` — the same value the member
+ *  itself would have carried had the caller written it. NOTHING RISES OUT OF
+ *  HERE for any holder shape, and an `undefined` active id is therefore a
+ *  POSITION: `next` over it takes the accepted arm rather than a refusal about
+ *  a value it never named. */
 function activeOf(state: unknown): FocusId | null {
-  const read = readOwn(state, { activeId: null })
-  return read.present && read.value !== undefined ? read.value : null
+  return readOwn(state, { activeId: null }).value as FocusId | null
 }
 
 /** THE SAME-VALUE-ZERO RULE the one permitted keying uses: identity, with the
@@ -255,8 +262,18 @@ function notCalled(): { readonly present: boolean; readonly value: unknown } {
 
 /** A REFUSED ATTEMPT: accepted false, changed false, EXACTLY ONE refusal, and
  *  the PRIOR STATE RETURNED BY IDENTITY. seated is the prior activeId, so a
- *  boundary refusal names the position it could not leave. The observer sees the
- *  very record the result carries, and the verdict does not depend on it. */
+ *  boundary refusal names the position it could not leave.
+ *
+ *  THE ORDER OF OPERATIONS IS DECLARED AND IT IS INVERTED HERE: THE RECORD IS
+ *  BUILT FIRST, THE RESULT IS ASSEMBLED AROUND IT, AND ONLY THEN IS A COPY
+ *  HANDED TO THE OBSERVER. The result therefore carries THE MODULE'S OWN refusal
+ *  record, while the callback receives a COPY IT MAY MUTATE FREELY — every field
+ *  rewritten, deleted, or a mutation interrupted by a THROW — and NO OUTCOME
+ *  MOVES: not the refusal, not its code, not its order and not its count. The
+ *  copy carries the very same values by identity, so it is NOT the value-losing
+ *  copy the contract bans (no re-stringing, no round-trip and no deep clone),
+ *  and it is built from a record this module owns rather than from any caller
+ *  holder, so no caller member name is ever read here. */
 function refusalResult(
   priorState: FocusState,
   priorActive: FocusId | null,
@@ -276,7 +293,8 @@ function refusalResult(
     changed: false,
     persisted: notCalled(),
   }
-  observe(seams.refuse, record, undefined, undefined)
+  const observation: FocusRefusal = { code: record.code, verb: record.verb, id: record.id }
+  observe(seams.refuse, observation, undefined, undefined)
   return result
 }
 
