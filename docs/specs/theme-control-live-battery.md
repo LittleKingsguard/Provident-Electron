@@ -139,7 +139,11 @@ unchanged) but the *reading* is unreadable as filed; recorded for the tracker, n
 
 **THE READ-ONLY AUDIT (§6.2) IS NOT THIS RUNNER'S TO TAKE** — this report is emitted, not blessed;
 `U-4`'s drifted literal (FINDING-1) and the `dispatch` failure-reading (FINDING-2) are the rows the
-audit must reconcile.
+audit must reconcile. **⟶ ANNOTATED 2026-09-27 (THE SUPERVISOR'S GATE-7/8/10 CLOSE-OUT PASS — a dated
+annotation BESIDE the sentence above, whose bytes are KEPT; `RCA-8(d)`): THE AUDIT `HAS` RUN — it is this
+record's `§9`, taken by a party that authored none of the matrix — and its findings, its *"GATE 6 NOT CLOSED"*
+verdict and its THREE OWED ITEMS are dispositioned in `§8`'s close-out annotation below. THIS RUNNER'S
+SENTENCE STANDS AS THE RUNNER'S OWN READING OF ITS SCOPE.**
 
 ## 5. THE PRECONDITIONS (§5.2, `G-2`) — the legs' OWN measurements, never this control's
 
@@ -232,6 +236,8 @@ battery without its read-only audit is an unblessed matrix, so `F1`'s gate-6 hal
 UN-AUDITED, not closed** — and the two contract-side corrections and the one routed item above are
 this record's complete disposition of its own three open items.
 
+**⟶ CLOSE-OUT ANNOTATION (2026-09-27, the supervisor's GATE-7/8/10 CLOSE-OUT PASS — a dated annotation appended BESIDE this section; `RCA-8(d)`: every byte of `§1`–`§8` stands and NOT ONE READING, TABLE, EXIT CODE OR VERDICT IS REWRITTEN, and the clause above that is now superseded is named rather than rewritten).** **THE CLAUSE SUPERSEDED: *"THE `§6.2` READ-ONLY AUDIT IS STILL OWED"* and *"THE UNIT IS NOT GREEN WHILE THE `§6.2` AUDIT IS OUTSTANDING"* are THIS RUNNER'S OWN DATED READING.** **THE AUDIT HAS SINCE LANDED — IT IS `§9` BELOW — AND ALL THREE OF THE ITEMS IT NAMED ARE NOW CLOSED, EACH AT ITS OWN SITE: (i) THE RUNNER'S VERDICT ANNOTATION AND THE PER-COMMAND EXIT FORM (`AUD-TC-1` annotated beside the `U-5` cell and beside the `§4` summary, both unrewritten; `AUD-TC-2`'s `commands[]`/exit table added with every exit taken from `§2`, nothing re-run and nothing invented; and `AUD-TC-4`'s boot-instrument drift annotated at the contract's `§5.2.1`); (ii) THE UNIT-WIDE `§3a`/`§3b` TRANSCRIPTION WITH THE READ-ONLY GATE-11 PBT AUDIT (`AUD-TC-7`, `HIGH` — transcribed at `docs/specs/theme-control.md`'s `§3b`, its filled `ADV-TC-1`…`ADV-TC-5` table, its three negative-generator tasks and its PBT confirmations); AND (iii) THIS AUDIT'S OWN RECORDING IN THE TRACKERS (`docs/pending.md` `§L-4` `L-4k`).** **SO THE MATRIX IS NOW AUDITED AND THE UNIT IS NOW `DONE` — THE LEDGER'S NINETEENTH `DONE` ROW, its authoritative record the `## DONE — U-THEME-CONTROL` section of `docs/next-steps.md`.** **WHAT THIS CLOSE-OUT DOES **NOT** DO: it blesses no cell, it rewrites no `verdict`, and it withdraws no reading — the `U-5` verdict field stays the mislabel `AUD-TC-1` named, the filed summary stays `total 8 · changed 7 · unchanged 0 · notObservable 1`, and the two contract-side corrections stay CORRECTIONS WITH THEIR AS-FILED FORMS VISIBLE.** **IT ALSO DOES NOT DISCHARGE THE UNIT'S CARRIED ROWS, which live in that record's clause (12): the three negative-generator tasks (`OWED — TEST-SIDE`), the structurally unobservable `U-6` row, the census carry-forward, the routed-out driver item `L-4j`, the `docs/FORKER.md` carry, the blind set's `POST-GREEN` re-drive and the page-design gap.** **THIS ANNOTATION MOVES NO ROW ID, NO TERM, NO STRATEGY ID, NO SEED, NO CAP, NO MATRIX CELL AND NO LEDGER COUNT.**
+
 ## 9. THE `§6.2` READ-ONLY AUDIT — LANDED (recorded 2026-09-27 by the supervisor's doc-writer pass)
 
 **WHAT THIS SECTION IS:** the **transcription of the `§6.2` audit's findings into this record** — **the audit was
@@ -269,4 +275,4 @@ bless the matrix, and the three owed items below are what stands between it and 
 `unchanged 0` · `notObservable 1`** — **the seven `CHANGED` rows and the one `NOT-OBSERVABLE` (`U-6`) row are
 measured readings from one boot and NOT ONE CELL IS REWRITTEN, `U-5`'s contradiction included (annotated, per
 `AUD-TC-1`).** **THE LEDGER IS UNMOVED: `18 DONE / 3 open` UNITS = `21` units (`18 + 3 = 21`)** — **this record's
-`§9` flips no cell, moves no ledger count and authors no unit's status.**
+`§9` flips no cell, moves no ledger count and authors no unit's status.** **⟶ SUPERSEDED ON ITS LEDGER FIGURE ONLY 2026-09-27 (THE SUPERVISOR'S GATE-7/8/10 CLOSE-OUT PASS — a dated annotation BESIDE the sentence above, whose bytes are KEPT; `RCA-8(d)`): `18 DONE / 3 open` WAS THIS RECORD'S OWN DATED READING OF THE LEDGER BEFORE THE UNIT'S OWN MOVE.** **THE LIVE ARITHMETIC IS `19 DONE / 2 open` UNITS = `21` units (`19 + 2 = 21`), because `U-THEME-CONTROL` ITSELF HAS MOVED TO `DONE` — the ledger's NINETEENTH `DONE` row — with the open set now `F2` · `F3` and `22` live rows = `21` unit rows + the non-unit fork row `F4`, the `MOVED TO DONE` label set equalling the `DONE` set at `19`.** **THE REST OF THE SENTENCE STANDS AS FILED AND IS STILL TRUE OF THIS SECTION: `§9` FLIPS NO CELL, REWRITES NO READING AND AUTHORS NO UNIT'S STATUS.**
