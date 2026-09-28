@@ -239,6 +239,66 @@ demo-page index to update**, and **this unit renders no page, authors no element
 comes to exist, this unit OWES a coverage row and a demo-page index entry — and the honest form of that row is an
 ABSENCE row, because a mechanism that renders nothing contributes no page** (`§3.5 X-5`'s probe; `§7` item 6).
 
+**Note 9 — THE GATE-3 RED RUN'S THREE MEASURED DEFECTS AND THEIR DISPOSITIONS (dated `2026-09-27`; this note is the
+single record of all three, and it AMENDS NO CLAUSE — every disposition below is an ANNOTATION BESIDE the as-filed text,
+which stays visible at its own site).** **THE MEASURED PROVENANCE, stated once and quoted nowhere else in this file: the
+gate-3 RED RUN read `72` rows — `56` FAILED / `16` PASSED — with the register stopping AT ITS FIRST ROW after five
+attempts and `11` rows reported as UN-RUN FAILURES, and the strict leg exiting with EXACTLY ONE diagnostic: the declared
+missing module.** **Those figures are the red run's and NOT this filing's** (`§0A` note 5; `RCA-12`): **this note
+re-measured nothing, and no figure here may be quoted as a measurement of this pass's.** **THE THREE DEFECTS, EACH WITH
+ITS DISPOSITION AND ITS LANDING SITES:**
+
+**(a) THE REFUSAL-CODE UNION — THE ADOPTED SIX AGAINST THE EMITTED FIVE.** **MEASURED: the dossier adopted a
+SIX-member universe while the contract files FIVE emitted bodies and its rows can drive exactly those five — there is NO
+DRIVABLE SIXTH MEMBER.** **DISPOSITION: THE CONTRACT'S UNION IS ALIGNED TO THE FIVE IT EMITS AND ITS ROWS DRIVE**
+(`§2.1` item 7's annotation), **and the DOSSIER's adopted row is annotated at its own site to record that the adopted
+sixth member is UNEXERCISED AND THEREFORE WITHDRAWN FROM THIS UNIT'S CONTRACT — stated there as THIS UNIT'S SCOPE
+DECISION, REVERSIBLE, because the adoption itself is EXTERNAL** (`docs/specs/focus-model-adoption-dossier.md` `I-5`).
+**THE SIX-MEMBER ALTERNATIVE IS NOT TAKEN, BECAUSE THE RULE THAT WOULD EMIT A SIXTH MEMBER DOES NOT EXIST IN THIS
+CONTRACT'S OWN TEXT** — **five bodies are derived and named as five (`§0A` note 6), the union is declared as five, and
+`§2.3` item 5's total semantics table lands every refused row in one of the five** (`§2.1` item 7). **NO TERM, ROW ID,
+STRATEGY ID, SEED, CAP OR POOL MEMBER MOVES: the union's own register rows keep their four terms
+(`P-FM-TP-1` `10` · `P-FM-SEAM-1` `6` · `P-FM-SEAM-3` `9` · `P-FM-SEAM-4` `5`).**
+
+**(b) THE ROW-VERSUS-TERM COUNT — `§5.5.1`'s `13` ROWS AND `13` TERMS.** **MEASURED: `§5.5.1`'s table supplies TWELVE
+TERM-CARRYING ROWS plus ONE ROW THAT CARRIES NO TERM AT ALL — so its as-filed single figure, `13` rows carrying `13`
+terms, is TWO claims printed as ONE number.** **DISPOSITION: THE ROW COUNT AND THE TERM COUNT ARE NOW STATED SEPARATELY
+AND CORRECTLY — `13` ROWS, of which `12` CARRY A TERM and `1` DOES NOT; and the TERM COUNT is stated with it, because a
+row count and a term count are different objects.** **THE ROW THAT CARRIES NO TERM IS NAMED AT `§5.5.1`'s table: the
+TRAILING ANNOTATION ROW for `P-FM-TP-2`'s REACHABILITY HALF.** **WHY IT IS STILL A ROW: IT IS AN ASSERTION ROW AND NOT A
+TERM ROW** — it asserts that the reachability drive is the TENTH drive INSIDE `P-FM-TP-2`'s own cell, it carries a
+declared strategy id (`S-FM-REACH-1`, so no row is left without one), and it declares NO attempt term of its own because
+the drive it names is already counted in `P-FM-TP-2`'s term. **NO ROW ID MOVES: `13` rows remain, none is dropped,
+merged or renumbered, and the annotation row is not re-numbered away.** **AND THE FORM-VERSUS-FIGURE QUESTION IS
+ANSWERED EXPLICITLY: THE ROW/TERM COUNTING CHANGE AFFECTS THE FORM OF THIS REGISTER'S PRESENTATION AND NOT A SINGLE
+FIGURE** — the twelve terms are unchanged, the declared total `98` is unchanged, and the row set is unchanged; what the
+change corrects is the FORM of the heading, which printed two claims as one number.
+
+**(c) THE ARITHMETIC — THREE FIGURES THE HARNESS ALREADY ASSERTS.** **MEASURED: (i) the THIRTEEN-TERM LIST
+`10 + 11 + 10 + 6 + 3 + 10 + 10 + 6 + 8 + 9 + 5 + 5 + 5` SUMS TO `98`, and `98` IS THE AUTHORITY, this register's
+DECLARED TOTAL; (ii) the TWELVE TERM CELLS of `§5.5.3`'s own table sum to `93`; and (iii) `§5.5.3`'s claim that reading
+one row as `9 + 1` "also closes on 98" is FALSE — that reading sums to `103` (`9 + 1 = 10`, and `93 + 10 = 103`).**
+**DISPOSITION: THE ARITHMETIC IS CORRECTED SO EVERY PRINTED FIGURE IS WHAT IT SAYS IT IS.** **THE DECLARED TOTAL `98`
+REMAINS PRINTED WITH THE THIRTEEN TERMS IT IS THE SUM OF** (`§5.5.3`, unchanged and still the figure every cap
+comparison uses); **the TWELVE TERM CELLS' OWN SUM IS PRINTED AS WHAT IT IS — `93`** (`§5.5.3`); **and the FALSE `9 + 1`
+READING IS WITHDRAWN, NO GENUINELY CLOSING READING BEING AVAILABLE** — **the arithmetic that shows it is at `§5.5.3`:
+the twelve cells' `93` plus that row's `10` is `103`, so no reading OF THESE PRINTED CELLS closes on `98`, and the `5`
+figure separating `98` from `93` is NOT carried by any printed cell — so it could only be closed by MOVING a term, WHICH
+THIS PASS DOES NOT DO AND REPORTS INSTEAD.** **THE AS-FILED FIGURES STAY VISIBLE AT THEIR OWN SITES** (`CURRENT STATE`
+item 3, `§5.5.1`'s heading, `§5.5.3`'s correction note, `§7` item 9), **THE CAPS ARE RE-CHECKED AGAINST THE DECLARED
+FIGURE — `98 ≤ 400` (headroom `302`) and the LARGEST ROW `11 ≤ 100` (headroom `89`), BOTH HOLDING** — **and NO TERM
+MOVES: not one row id, strategy id, seed, cap or pool member changes, and the register's THIRTEEN-TERM TOTAL IS
+UNCHANGED AT `98`.**
+
+**THE OBLIGATION THIS NOTE CREATES, NAMED BECAUSE IT IS NOT THIS PASS'S ACT: THE REGISTER HARNESS'S OWN ASSERTIONS
+MUST BE RE-ALIGNED TO WHATEVER THIS CONTRACT PRINTS — AND THAT RE-ALIGNMENT IS THE TESTWRITER'S ACT.** **The landed red
+set already carries assertions in this class** (`tests/focus-model.test.ts`: `HARNESS-1` measures the twelve cells'
+`93` and the thirteen terms' `98` side by side; `HARNESS-3`/`HARNESS-4` read the register as twelve term-carrying rows
+and the row/term reading; `HARNESS-5` carries the flagged `9 + 1` reading) — **and the `9 + 1` figure those rows read is
+the reading WITHDRAWN here, so the TestWriter owes the re-grain of that row, not this pass: a TestWriter act under
+`§4.2`/`§5.3` item 11, with an un-run row reported as a FAILURE and never as a pass.** **NO CELL OF THIS CONTRACT IS
+WEAKENED BY THAT OBLIGATION, and this pass writes no test and runs none** (`§5.3` item 11; `§4.5`).
+
 ---
 
 ## Layer declaration (read this before any table below)
@@ -426,6 +486,21 @@ binds here: the census's names are NAMED, in both halves, in this paragraph and 
    `'no-previous'`** — **FIVE bodies.** **THE ADOPTED COUNT IS `6`** (step 3's `§4` item 3: *"a CLOSED six-member
    refusal-code union"*; the dossier's `I-5`), **and its own wording is that *"the six member VALUES are the
    contract's to fix"*** — **the values fixed here number FIVE, and the discrepancy is RECORDED rather than hidden:**
+   **⟶ RESOLVED BY THE GATE-3 RED RUN, 2026-09-27 — THE ALIGNMENT IS TAKEN AND THE SIXTH MEMBER IS WITHDRAWN FROM
+   THIS UNIT'S CONTRACT (disposition (a); the dated disposition note is `§0A` note 9, and the dossier's adopted row is
+   annotated at its own site, its `I-5`).** **THE AS-FILED TEXT BELOW IS KEPT VERBATIM AND NOTHING IN IT MOVES: the five
+   bodies stay exactly `'unknown-verb'` · `'duplicate-id'` · `'unknown-id'` · `'no-next'` · `'no-previous'`, and this
+   contract's union is therefore ALIGNED to the FIVE it EMITS and its rows drive** (`§2.2`(C) row 8; `P-FM-TP-1`;
+   `P-FM-SEAM-1`; `P-FM-SEAM-3`'s membership assertion; `P-FM-SEAM-4`). **THE SIXTH ADOPTED MEMBER IS UNEXERCISED AND IS
+   THEREFORE WITHDRAWN FROM THIS UNIT'S CONTRACT — THE WITHDRAWAL IS THIS UNIT'S SCOPE DECISION AND IS REVERSIBLE.** **AND
+   THE SIX-MEMBER ALTERNATIVE IS NOT ASSERTED HERE: this contract's own rules emit NO sixth body** — **the five refusal
+   bodies are derived and NAMED as five at `§0A` note 6, this union is DECLARED as five in the block below, and `§2.3`
+   item 5's semantics table is total over its `14` attempt rows with every refused row landing in one of the five — so
+   there is NO DRIVABLE SIXTH MEMBER and no rule that emits one; a sixth member could only be a
+   DECLARED-BUT-UNEMITTED member, the landed `docs/specs/slothost.md` `SlotHostRefusal` `'no-container'` form, which the
+   red set forbids a row to drive (`§3.4 R-8`'s SIXTH-refusal-code control).** **THE COUNT THAT NOW GOVERNS IS `5` — the
+   union, the emitted bodies and the drivable bodies are ONE set — and NO register term moves: `P-FM-TP-1`'s `10`,
+   `P-FM-SEAM-1`'s `6`, `P-FM-SEAM-3`'s `9` and `P-FM-SEAM-4`'s `5` are UNCHANGED** (`§5.5.3`).
    **(a)** **the count is READ by a TestWriter as the length of a closed union, so filing six DECLARED-BUT-UNEMITTED
    members would file a member no row can drive** — the `§3.4 R-8`-class defect in the refusal domain; **(b)** **every
    refusal this contract can produce has a home in the five** — `'unknown-verb'` (an unrecognised verb), `'duplicate-id'`
@@ -1423,7 +1498,17 @@ The DONE row (`docs/next-steps.md`, the supervisor's pass) must carry, **in this
     execution, or a count of DISTINCT inputs rather than of DRIVES, the DONE row must report BOTH the declared
     attempts and the honest DISTINCT-DRIVE figure** (`§5.5.2` item 3's ledger is the authority). **The DECLARED
     figures are what the caps are compared against; the distinct figures are reported BESIDE them and never
-    substituted.**
+    substituted.** **⟶ ANNOTATED AND RE-ALIGNED BESIDE THE AS-FILED TERM LIST ABOVE (the gate-3 red run's disposition
+    (c), `2026-09-27`; the full measure is `§0A` note 9): THE DONE ROW'S ARITHMETIC IS RE-ALIGNED TO `§5.5.3`'s
+    AUTHORITATIVE TERM TABLE, WHICH IS THE AUTHORITY — the as-filed list above is kept VISIBLE and is NOT the figure to
+    print:** **the declared total is `98`, printed WITH ITS THIRTEEN TERMS (`10` + `11` + `10` + `6` + `3` + `10` +
+    `10` + `6` + `8` + `9` + `5` + `5` + `5`), and `98` is the DECLARED figure the caps compare against
+    (`98 ≤ 400`; largest row `11 ≤ 100`); the TWELVE TERM CELLS of `§5.5.3`'s table sum to `93`, printed as what IT is;
+    and the `9 + 1` reading is WITHDRAWN because it sums to `103`.** **The as-filed `89`, whose own twelve terms here are
+    `10 + 11 + 10 + 6 + 3 + 10 + 8 + 6 + 8 + 9 + 5 + 1 + 2` — a twelve-term sum that reconciles with NEITHER the
+    thirteen-term `98` NOR the twelve cells' `93` — is therefore NOT re-aligned to a figure the contract does not
+    print.** **The register harness's own assertions must be re-aligned to whatever this contract prints, and that is
+    the TestWriter's act** (`§0A` note 9; `§4.2`).
 12. **The `§5.3` → `§5.5` numbering note, cited**: **there is NO `§5.4` in this file — the gap is DELIBERATE and is
     the family's** (`docs/specs/gutter.md` `§5.3`'s own note, `docs/specs/overlay.md` `§5.3` item 12, and
     `docs/specs/theme.md` `§5.3` item 12) — **because the routing block `§5.4` would otherwise occupy lives as `§5.4`
@@ -1477,13 +1562,17 @@ FINITELY ENUMERABLE, so no dependency AND NO SEED is owed.**
 (`REGISTER-ENTRY-COUNT-IS-NOT-CAPPED-AND-ARCHIVE-IS-THE-TRUTH-MECHANISM`).** **A register ENUMERATES every discernible
 testable property of its unit; the per-section threshold (`≤8`) is a BREAKDOWN SIGNAL, NOT A CEILING.** **THEREFORE
 this filing enumerates `13` rows carrying `13` TERMS and reports the count as its EXTENT — no property was dropped,
-merged or left unenumerated to fit a threshold — and `13` ROWS / `13` TERMS IS AN OUTCOME.** **THERE IS NO `§5.5.0`
+merged or left unenumerated to fit a threshold — and `13` ROWS / `13` TERMS IS AN OUTCOME.** **⟶ AND THE COUNTING FORM
+IS CORRECTED BESIDE THIS AS-FILED SENTENCE, WITH NO FIGURE MOVED (disposition (b); `§0A` note 9): the ROW COUNT is `13`
+ROWS — `12` TERM-CARRYING plus `1` carrying NO TERM, `P-FM-TP-2`'s trailing REACHABILITY ANNOTATION ROW — and the TERM
+COUNT is `12` printed cells plus the declared list's thirteenth term, so the two counts are stated SEPARATELY; the
+change is a change of FORM and NOT of FIGURE** (`§5.5.1`'s table annotation, `§5.5.3`). **THERE IS NO `§5.5.0`
 IN THIS FILE**: the gate-11 ruling landed before this unit, **the zero-row exemption is unavailable to a code-bearing
 unit, and this filing carries its register FROM THE START** — so **there is no superseded exemption block to keep
 visible** (the `docs/specs/theme.md` form; `docs/specs/slothost.md` `§5.5.0` carries one because its unit was filed
 before the ruling).
 
-#### 5.5.1 THE REGISTER — **`13` typed ROWS carrying `13` TERMS, in THREE families, ALL executed by design**
+#### 5.5.1 THE REGISTER — **`13` typed ROWS carrying `13` TERMS, in THREE families, ALL executed by design** — **⟶ THE ROW COUNT AND THE TERM COUNT, STATED SEPARATELY AND CORRECTLY BESIDE THIS AS-FILED HEADING: `13` ROWS, OF WHICH `12` CARRY A TERM AND `1` — `P-FM-TP-2`'s TRAILING REACHABILITY ANNOTATION ROW — CARRIES NO TERM AT ALL; AND `12` PRINTED TERM CELLS IN THE TABLE BESIDE THE DECLARED LIST's THIRTEENTH TERM (disposition (b), `§0A` note 9; the heading is kept VERBATIM and the annotation below the table carries the why)**
 
 **What this section is, in one sentence.** A **typed register of `13` rows / `13` terms** whose **six genuine
 quantifications** — (i) *the closed five-body verb alphabet and the unknown-verb totals rule*; (ii) *the entry record's
@@ -1583,6 +1672,23 @@ distinct ids: `S-FM-ENTRY-1` · `S-FM-TARGET-1` · `S-FM-ID-1` · `S-FM-MATRIX-1
 | **`P-FM-SEAM-5`** | `P-TP` totality | **SEAM 3 — `persist`'s RETURNED-WRITE RULE, AND THE `persisted` MEMBER** | **On EVERY drive of the row: `persist` CALLS NO STORAGE — the module writes no file, touches no `localStorage`/`sessionStorage`/`indexedDB`, allocates no store handle, and retains no reference to the seam or to its return value after the call returns; a callable seam's return value is handed back VERBATIM BY IDENTITY in `{present: true, value}` — whatever shape it is, INCLUDING `undefined`, a promise, a hostile `Proxy` and an object — and is NEVER interpreted (no `typeof`, no member read, no truthiness test, no await); the three degradations read `{present: false, value: undefined}`; `focusTransition` NEVER calls it (so no transition row can move its count); and NOTHING THROWS.** | **YES** *(a closed `5`-drive set, each with its own declared reading)* | `M-13`, `F-8`, `F-11`, `I-4`, `§0A` note 3, `§2.4` seam 3, `§2.2` `P-FM-9` | `S-FM-WRITE-1` | **`5` attempts** = **`5` return-shape drives, ONE DRIVE EACH**, each with a recording fake-storage object ALSO in scope (never passed to the module) whose write counters must read `0`. **The `5` shapes:** **(1)** a seam returning a plain object (`{n: 1}`) — handed back by identity · **(2)** a seam returning `undefined` — `{present: true, value: undefined}`, which is a DIFFERENT reading from the absent-seam arm and must be asserted separately · **(3)** a seam returning a `Promise` — handed back unharmed, never awaited, no unhandled-rejection bookkeeping · **(4)** a seam that THROWS — `{present: false, value: undefined}` with the throw swallowed · **(5)** a NON-CALLABLE seam (a number/a revoked `Proxy`) and a seam that is a hostile `Proxy` whose `apply` trap throws — `{present: false, value: undefined}` with no call attempted OR a swallowed throw. **Per attempt assert:** the `{present, value}` pair; the fake storage's write counters (`0`); the absence of a retained reference (a second call observes a fresh state); and that nothing threw. | `≤100` | **`__/__` (OWED — un-run)** |
 | **`P-FM-TP-2`**'s **reachability half** — *(counted here, inside `P-FM-TP-2`'s own row above, so NO row carries two terms)* | — | — | — | — | — | — | — | — | — |
 
+**⟶ THE ROW COUNT AND THE TERM COUNT, STATED SEPARATELY BECAUSE THE AS-FILED HEADING PRINTED THEM AS ONE NUMBER
+(disposition (b); the dated note is `§0A` note 9).** **THE ROW COUNT IS `13` ROWS: TWELVE TERM-CARRYING ROWS — the
+twelve `ID` cells immediately above, `P-FM-IM-1` through `P-FM-SEAM-5` — PLUS ONE ROW THAT CARRIES NO TERM AT ALL, the
+TRAILING ANNOTATION ROW for `P-FM-TP-2`'s REACHABILITY HALF.** **ITS TERM COUNT IS `12` TERMS IN THIS TABLE** (the
+twelve cells, unchanged: `10` · `11` · `10` · `6` · `3` · `10` · `10` · `6` · `8` · `9` · `5` · `5`), **and the
+register's THIRTEEN-TERM LIST is the one `§5.5.3` prints and declares, whose sum is `98`.** **WHY THE TERM-LESS ROW IS
+STILL A ROW: IT IS AN ASSERTION ROW, NOT A TERM ROW** — it asserts that the reachability drive is the TENTH drive
+INSIDE `P-FM-TP-2`'s own cell, it carries a DECLARED strategy id (`S-FM-REACH-1`, the thirteenth id, so no row is left
+without one), and it declares no attempt of its own because the drive it names is already counted in `P-FM-TP-2`'s term
+of `10`. **NO ROW ID MOVES AND NO ROW IS DROPPED, MERGED OR RENUMBERED; the as-filed heading `13` typed ROWS carrying
+`13` TERMS stays visible at `§5.5.1` and at `CURRENT STATE` item 3.** **AND THE FORM-VERSUS-FIGURE ANSWER IS EXPLICIT:
+THIS COUNTING CHANGE ALTERS THE **FORM** OF THE REGISTER'S PRESENTATION — three claims (`13` rows · `12` term-carrying
+rows · the thirteen-term declared list) where the heading printed one — AND IT ALTERS NO **FIGURE**: the twelve cells,
+the declared total `98`, the seven `(bounded)` markings, the thirteen strategy ids, the caps and the row set are ALL
+UNCHANGED.** **The reconciliation of this table against the declared list is `§5.5.3`'s, and it is printed there with
+its arithmetic rather than asserted** (`§5.5.3`; `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`).
+
 **THE REGISTER'S OWN TERM TABLE, printed before the rows are read, so no reader has to add the cells up by eye** — **see `§5.5.3` for the authoritative arithmetic, the chain and the family subtotals.**
 
 #### 5.5.2 The register's honesty block — what is NOT proven, and the checks this filing RAN
@@ -1629,7 +1735,11 @@ distinct ids: `S-FM-ENTRY-1` · `S-FM-TARGET-1` · `S-FM-ID-1` · `S-FM-MATRIX-1
    against the DECLARED figures** (`89 ≤ 400`; largest row `11 ≤ 100`). **AND ONE HONEST ASYMMETRY, STATED SO THE
    TABLE IS NOT READ AS A DERIVATION: `P-FM-TP-2`'s cell declares TEN drives while its prose names `9` hostile shapes
    plus `1` reachability drive — the term is `10` and the shape count is `9 + 1`, which is why `§5.5.3`'s term table
-   carries the arithmetic rather than a shape count.**
+   carries the arithmetic rather than a shape count.** **⟶ ANNOTATED BESIDE THE AS-FILED FORM (disposition (c); `§0A`
+   note 9): the `9 + 1` SHAPE-VERSUS-TERM reading is WITHDRAWN — as an arithmetic claim it is FALSE, because `9 + 1`
+   added to the twelve cells' `93` sums to `103` and not to `98` (`§5.5.3`).** **The SHAPE COUNT itself is unaffected —
+   `P-FM-TP-2`'s cell really does declare `10` attempts over `9` hostile shapes plus `1` reachability drive — and THE
+   TERM `10` DOES NOT MOVE; what is withdrawn is the reading that treats that split as closing the declared total.**
 4. **THE SHAPES DELIBERATELY EXCLUDED FROM EVERY POOL — named as a STATED BOUNDARY rather than left implied:**
    **(a)** **a `sort`-bearing or comparator-bearing argument shape** (the contract has no comparator parameter at all —
    `§2.2`(D)'s `FocusEquality` row — so driving one would exercise no rule this unit pins) · **(b)** **a
@@ -1643,7 +1753,11 @@ distinct ids: `S-FM-ENTRY-1` · `S-FM-TARGET-1` · `S-FM-ID-1` · `S-FM-MATRIX-1
    against its own boundary text, and the check is CLEAN for all `13` rows**: every pool member is consistent with the
    row's declared domain, no `(bounded)` row's cell claims its grid IS the domain, and no unmarked row quantifies over
    an open domain. **The ONE cell the check FLAGGED and this filing records rather than smooths is `P-FM-TP-2`'s
-   `9 + 1 = 10` shape-versus-term asymmetry (item 3's closing sentence)** — **a stated reading, not a defect.**
+   `9 + 1 = 10` shape-versus-term asymmetry (item 3's closing sentence)** — **a stated reading, not a defect.** **⟶
+   ANNOTATED BESIDE THE AS-FILED FORM (disposition (c); `§0A` note 9): the reading is WITHDRAWN AS AN ARITHMETIC CLAIM —
+   it was the filing's attempt to close the declared total through that split, and that split does NOT close it: `9 + 1`
+   over the twelve cells' `93` sums to `103`, NOT to `98`.** **NO CELL, TERM OR FLAGGED SHAPE MOVES; the flagged reading
+   stays VISIBLE here and at `§5.5.3`, and the declared total `98` remains the figure the caps compare against.**
    **A `(bounded)` marking that is missing is a SPEC FINDING, and a marking that is present on a closed-domain row is
    OVER-STRENGTH.**
 6. **THE RECURSION / NESTED-READ HAZARD, NAMED BECAUSE THE FAMILY HAS BEEN BITTEN BY IT:** **this unit has NO
@@ -1699,6 +1813,24 @@ sums of those cells.** **The as-filed `89` is kept VISIBLE at `CURRENT STATE` it
 `60` → `66` → `74` → `83` → `88` → `93` → `98`.** *(AS FILED: this chain closed `… 88 → 93 → 89` — the last step is
 corrected here, and no earlier step moves.)*
 
+**⟶ THE ARITHMETIC CORRECTED SO EVERY PRINTED FIGURE IS WHAT IT SAYS IT IS — THE THREE FIGURES THE HARNESS ALREADY
+ASSERTS, PRINTED BESIDE THE AS-FILED FORM AND SMOOTHED NOWHERE (disposition (c); the dated note is `§0A` note 9).**
+**THE DECLARED TOTAL IS UNCHANGED: `98`, printed above WITH the THIRTEEN TERMS it is the sum of, and `98` REMAINS THE
+AUTHORITY this register declares.** **THE TERM TABLE BELOW PRINTS TWELVE CELLS, AND THEIR OWN SUM — WHICH IS `93`, NOT
+`98` — IS PRINTED HERE AS WHAT IT IS: `10` + `11` + `10` + `6` + `3` + `10` + `10` + `6` + `8` + `9` + `5` + `5` =
+`93`.** **AND THE `9 + 1` READING IS WITHDRAWN: the claim that reading one row that way "also closes on `98`" is FALSE,
+and the arithmetic that shows it is `93` + `10` = `103` — that reading sums to `103` and NOT to `98`.** **THE AS-FILED
+FIGURES STAY VISIBLE — `89` at `CURRENT STATE` item 3, `§5.5.1`'s heading, `§5.5.3`'s correction note and `§7` item 9;
+`98` as this register's declared total; and the withdrawn `9 + 1` reading at `§5.5.2` item 3's closing sentence and
+`§5.5.2` item 5's flagged reading, both of which this pass annotates rather than rewrites.** **AND THE HONEST RESIDUE,
+REPORTED RATHER THAN CLOSED: NO READING OF THESE PRINTED CELLS GENUINELY CLOSES ON `98` — the `5` that separates the
+declared total `98` from the twelve cells' `93` is carried by NO printed cell, because the THIRTEENTH term exists only
+inside `§5.5.3`'s DECLARED thirteen-term list above and NOT in the table below — so the only way to close it would be to
+MOVE A TERM, WHICH THIS PASS DOES NOT DO AND REPORTS INSTEAD.** **NO TERM, ROW ID, STRATEGY ID, SEED, CAP OR POOL
+MEMBER MOVES, AND THIS REGISTER'S THIRTEEN-TERM TOTAL IS UNCHANGED AT `98`.** **THE CAPS, RE-CHECKED AGAINST THE
+DECLARED FIGURE AND UNMOVED: `98 ≤ 400` — total headroom `302` — and the LARGEST ROW `11 ≤ 100`, headroom `89`: BOTH
+HOLD against the declared total.**
+
 **THE TERMS, AS THE ROW CELLS ACTUALLY CARRY THEM — and this table is the AUTHORITY (`§5.5.2` item 3's ledger's
 source):**
 
@@ -1720,7 +1852,12 @@ source):**
 **THE TERM-BY-TERM ADDITION, so the total is checkable rather than asserted** *(the order is `§5.5.1`'s row order)*:
 **`10` + `11` = `21`** · **`+ 10` = `31`** · **`+ 6` = `37`** · **`+ 3` = `40`** · **`+ 10` = `50`** · **`+ 10` = `60`** ·
 **`+ 6` = `66`** · **`+ 8` = `74`** · **`+ 9` = `83`** · **`+ 5` = `88`** · **`+ 5` = `93`** · **`+ 5` = `98`.**
-**TWELVE steps, the first term being the chain's own first figure.**
+**TWELVE steps, the first term being the chain's own first figure.** **⚠ THE FIGURE THIS ADDITION CLOSES ON — `98` — IS
+THE DECLARED THIRTEEN-TERM LIST's SUM: the last step adds the LIST's thirteenth term, which the TABLE above does NOT
+carry** — **and the TABLE's own twelve cells sum to `93`, printed with its arithmetic immediately above.** **THE
+AS-FILED FORM IS KEPT AND NOTHING HERE IS RE-PRINTED: this addition is the DECLARED LIST's arithmetic and it is
+correct as the list's; the `93` figure is the TABLE's own sum and is a DIFFERENT object** (`§0A` note 9, disposition
+(c); `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`).
 
 **THE SUBTOTALS, stated so the decomposition is CHECKABLE AND TRUE — and stated BOTH ways, because the register's ids
 carry a FOURTH family prefix for five rows while its rows carry one of the three declared TYPES:**
@@ -1730,13 +1867,17 @@ carry a FOURTH family prefix for five rows while its rows carry one of the three
    **`SEAM` = `6 + 8 + 9 + 5 + 5` = `33`** — and the family sum, added ONE GROUP AT A TIME so it is checkable rather
    than asserted: **`31` + `9` = `40`** · **`+ 20` = `60`** · **`+ 33` = `93`.** **⟶ AND THIS CLOSING FIGURE IS
    **NOT** THE TERM LIST'S CLOSING FIGURE, SO THE DEFECT IS RECORDED HERE RATHER THAN SMOOTHED — AND THE DEFECT IS
-   THIS FILING'S OWN ARITHMETIC, NOT A CELL'S:** **the thirteen cells sum `98` and the four family subtotals sum
-   `93`, a FIVE-FIGURE GAP (`98 − 93 = 5`) that repeated re-derivations of this decomposition could not close: the
+   THIS FILING'S OWN ARITHMETIC, NOT A CELL'S:** **the THIRTEEN-TERM LIST above sums `98` (`10 + 11 + 10 + 6 + 3 + 10
+   + 10 + 6 + 8 + 9 + 5 + 5 + 5`) while the TWELVE CELLS of the term TABLE ABOVE sum `93` (`10 + 11 + 10 + 6 + 3 + 10 +
+   10 + 6 + 8 + 9 + 5 + 5`) and the four family subtotals sum `93` — a FIVE-FIGURE GAP between the LIST's `98` and the
+   TABLE's `93` (`98 − 93 = 5`) that repeated re-derivations of this decomposition could not close: the
    gap is not in `SEAM`'s addends (`6 + 8 + 9 + 5 + 5` = `33`, re-checked), not in the group totals (`31 + 9 = `40`,
    `40 + 20` = `60`) and not in any single cell.** **THE ONLY HONEST DISPOSITION IS THE ONE THIS FILING ADOPTS: THE
    THIRTEEN PRINTED CELLS AND THEIR SUM `98` ARE THE AUTHORITY (they are what the rows will execute), THE SUBTOTAL
    DECOMPOSITION IS **WITHDRAWN AS DEFECTIVE**, AND ITS RE-DERIVATION IS OWED TO THE NEXT PASS AS A NAMED
-   OBLIGATION (`§7` item 9, `§3a A-19`).** **NO CELL MOVES; the as-filed `89` stays visible at its own two sites;
+   OBLIGATION (`§7` item 9, `§3a A-19`).** **⟶ AND THE SENTENCE'S OBJECT IS NAMED, SO THE AS-FILED PHRASE IS NOT READ
+   AS A TABLE OF THIRTEEN: the `98` authority is the DECLARED THIRTEEN-TERM LIST above, and the TABLE carries TWELVE
+   cells whose own sum is `93`** (disposition (c); `§0A` note 9). **NO CELL MOVES; the as-filed `89` stays visible at its own two sites;
    and every cap comparison uses the TERM LIST's `98`.** *(The gap is printed rather than hidden because
    `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS` makes an unreconciled total a review finding — and a review finding
    CARRIED WITH ITS EVIDENCE is what the ruling asks for.)*
@@ -1754,7 +1895,8 @@ carry a FOURTH family prefix for five rows while its rows carry one of the three
 
 **CAPS RE-CHECKED AGAINST THE AUTHORITATIVE FIGURE.** **`98 ≤ 400`** (total headroom `302`), **largest row `11 ≤ 100`**
 (headroom `89`) — **both caps HOLD, and neither is close.** **THE CAPS ARE COMPARED AGAINST `98` (the sum of the
-thirteen cells) AND NEVER AGAINST ANY SUBTOTAL FIGURE.**
+thirteen terms of the DECLARED LIST above — and the TABLE below prints TWELVE cells, whose own sum is `93`) AND NEVER
+AGAINST ANY SUBTOTAL FIGURE.**
 
 **THE `(bounded)` SET: `7` of the `13` rows — `P-FM-IM-1` · `P-FM-IM-2` · `P-FM-IM-3` · `P-FM-SM-1` ·
 `P-FM-TP-1` · `P-FM-TP-2` · `P-FM-SEAM-2`** — **`7` marked rows** (`§5.5.2` item 2's own count is the authority:
@@ -1767,12 +1909,16 @@ this set.**
 the THIRTEENTH ROW/TERM PAIR IS `P-FM-TP-2`'s OWN REACHABILITY HALF, whose drive is the TENTH DRIVE INSIDE
 `P-FM-TP-2`'s CELL** (so `P-FM-TP-2`'s term `10` = `9` hostile shapes + `1` reachability drive, and the register is
 `13` ROWS / `13` TERMS **only if that tenth drive is read as its own row** — see `§5.5.1`'s trailing annotation row,
-which is the thirteenth row and carries no term of its own). **⟶ THE HONEST READING, STATED SO NO LATER PASS
-INHERITS AN AMBIGUITY: THE AUTHORITATIVE FORM IS `13` ROWS CARRYING `13` TERMS — the thirteen cells of the term
-table above, whose sum is `98` — and THE TRAILING ANNOTATION ROW IS A READING AID AND NOT A FOURTEENTH OR THIRTEENTH
+which is the thirteenth row and carries no term of its own). **⟶ ANNOTATED 2026-09-27 (disposition (b); `§0A` note 9):
+THE COUNTS HERE ARE NOW STATED SEPARATELY AND CORRECTLY — `13` ROWS, `12` CARRYING A TERM AND `1` CARRYING NONE, and the
+TERM COUNT is `12` printed table cells plus the DECLARED LIST's thirteenth term.** **THE HONEST READING, STATED SO NO LATER PASS
+INHERITS AN AMBIGUITY: THE AUTHORITATIVE FORM IS `13` ROWS CARRYING `13` TERMS — the thirteen terms of the DECLARED
+LIST above, whose sum is `98` (the TABLE below prints TWELVE cells, whose sum is `93`) — and THE TRAILING ANNOTATION ROW
+IS A READING AID AND NOT A FOURTEENTH OR THIRTEENTH
 TERM.** *(The alternative reading — a `12`-row / `12`-term register, with the reachability drive left inside
-`P-FM-TP-2`'s `10` — MOVE no cell and leaves the total at `98`; **a later pass that prefers it MUST say so in a dated
-annotation rather than by re-numbering.** `§5.5.2` item 5 carries the flagged shape-versus-term reading, and `§7`
+`P-FM-TP-2`'s `10` — MOVE no cell and leaves the declared total at `98`; **a later pass that prefers it MUST say so in a dated
+annotation rather than by re-numbering.** `§5.5.2` item 5 carries the flagged shape-versus-term reading — **whose
+arithmetic claim is WITHDRAWN, `9 + 1` summing to `103` and not to `98`** — and `§7`
 item 9 carries the obligation.)* **NO CAP, POOL MEMBER, STRATEGY ID OR EXISTING TERM MOVES UNDER EITHER READING.**
 
 **THE PINNED FORM: NO SEED, NO GENERATOR AND NO DRAW — THE REGISTER IS EXHAUSTIVE ENUMERATION THROUGHOUT**
@@ -1796,6 +1942,24 @@ shape-versus-term reading printed at `§5.5.2` item 5; (4) reconcile the `as-fil
 EXECUTE the thirteen rows.** **A pass that resolves (1)–(4) by RE-PRINTING a figure is correct; a pass that resolves
 them by MOVING a term, a row id, a strategy id, a cap or a pool member is REVERSING this subsection and MUST OPEN A
 GATE.**
+
+**⟶ THE GATE-3 RED RUN'S THREE DISPOSITIONS, READ ONTO THIS SUBSECTION SO ITS THREE FIGURES AND ITS TWO COUNTS STAND
+CORRECTED (dated `2026-09-27`; the full measure is `§0A` note 9, and NOTHING IS RE-COMPUTED HERE).** **(1) THE THREE
+FIGURES: the declared total `98` — printed with the THIRTEEN TERMS it is the sum of, and UNCHANGED as the authority
+every cap comparison uses; the TWELVE TERM CELLS' own sum `93` — printed as what IT is; and the `9 + 1` reading
+WITHDRAWN, because it sums to `103` (`93` + `10`) and closes on nothing.** **(2) THE TWO COUNTS, STATED SEPARATELY:
+the ROW COUNT is `13` — TWELVE TERM-CARRYING ROWS plus ONE ROW THAT CARRIES NO TERM AT ALL, `P-FM-TP-2`'s REACHABILITY
+ANNOTATION ROW, which is an ASSERTION ROW rather than a term row — and the TERM COUNT is `12` printed cells in the
+TABLE plus the DECLARED LIST's thirteenth term, which is the object whose sum is `98`.** **(3) THE TERM VERDICT: THE
+REGISTER'S THIRTEEN-TERM TOTAL IS UNCHANGED — `98`, not one figure of it moving — and the row/term counting changes the
+FORM of the presentation (three claims where the heading printed one number) rather than any FIGURE: no term, row id,
+strategy id, seed, cap or pool member moves, and obligation (2) above is therefore DISCHARGED AS FILED rather than left
+to the next pass.** **OBLIGATIONS (1), (3) and (4) ARE DISCHARGED HERE IN THE SAME FORM — by ANNOTATING BESIDE the
+as-filed text, never by re-printing a figure into a cell — and (5) REMAINS OWED: the thirteen rows are NOT executed by
+this pass.** **AND THE SUBTOTAL DECOMPOSITIONS STAND AS FILED: both are still WITHDRAWN AS DEFECTIVE, their
+re-derivation stays owed, and the `93` each of them closes on is now printed as the TWELVE CELLS' OWN SUM rather than
+read as the term list's closing figure.** **THE REGISTER HARNESS'S OWN ASSERTIONS MUST BE RE-ALIGNED TO WHATEVER THIS
+CONTRACT PRINTS, AND THAT IS THE TESTWRITER'S ACT AND NOT THIS ONE'S** (`§0A` note 9; `§4.2`; `§5.3` item 11).
 
 ---
 
@@ -1895,7 +2059,15 @@ claim over arguments.**
    subtotal decomposition this filing derived reproduces `98`, so the subtotal sentence is WITHDRAWN as defective and
    the re-derivation is OWED to the next pass — along with the `13`-rows/`13`-terms declaration's reconciliation
    against the twelve-entry term table.** **NO TERM, ROW ID, STRATEGY ID, SEED, CAP OR POOL MEMBER MOVES: the caps are
-   `98 ≤ 400` and largest `11 ≤ 100`.**
+   `98 ≤ 400` and largest `11 ≤ 100`.** **⟶ CORRECTED BESIDE THE AS-FILED SENTENCES ABOVE (the gate-3 red run's
+   disposition (c), `2026-09-27`; the full measure is `§0A` note 9): the THIRTEEN-TERM list sums `98` and `98` is the
+   AUTHORITY — it stays printed WITH its thirteen terms and stays the figure every cap comparison uses; the TWELVE TERM
+   CELLS' own sum, `93`, is printed as what IT is; and the `9 + 1` reading is WITHDRAWN because it sums to `103`, not to
+   `98`.** **THE AS-FILED FIGURES ABOVE ARE KEPT VISIBLE — the thirteen printed row cells' `98`, the total `89` and the
+   withdrawn subtotals — and the ROW/TERM COUNTS are stated separately: `13` rows, `12` of them carrying a term and `1`
+   carrying none.** **THE REGISTER'S THIRTEEN-TERM TOTAL IS UNCHANGED AT `98`; the counting change alters the FORM of
+   the presentation and NO FIGURE; and the caps still hold against the DECLARED figure `98 ≤ 400`, largest row
+   `11 ≤ 100`.**
 10. **THE TWO WORKING DEFAULTS ARE DEFAULTS, AND NEITHER IS AN ARCHITECT'S RULING.** `§7a`/`§7a.1` carries them in the
     `E5-B-3` form: **default stated, alternative named, clause blocked named, CONFIRM-OR-REVERSE slot carried.** **A
     pass that presents either as a ruling misreads this file** — **they are step 3's derivations and step 4's
@@ -2056,7 +2228,7 @@ owner. **The as-filed status of every seed below is `OWED`, and `OWED` is define
 | **`A-16`** | **THE VOCABULARY/ENDPOINT PROBE — and its own collision:** does the module's source (comments included, in the NORMALIZED view) carry a consumer-vocabulary token, an endpoint-shaped token (`'opened'`, `'refused'` as a member), a DOM-write verb, a store token or a realm token — **raw, token-assembled or in a comment?** **Is the scan's exemption list NAMED rather than implied, and does the literal census include the eleven declared bodies?** | static |
 | **`A-17`** | **THE NO-DOM / NO-FOCUS-WALK PROBE:** does the module read `activeElement`, walk a focusable set, call `focus(`/`blur(`, read `matchMedia`, install ANY listener or hold a root — **including a "convenience" listener that would make the model dispatchable?** **Are the three seams the mechanism's ONLY calls?** | static + `[T]` |
 | **`A-18`** | **THE MCP / SURFACE PROBE:** is any tool, resource, group, `RpcMethod` member, `MUTATING_METHODS` entry, registration site or IPC method added — **and are the pinned sets asserted BY NAME as set equality rather than by any count this spec quotes?** **Does any clause of this file assert `F3`'s counters or route?** | static |
-| **`A-19`** | **THE REGISTER AUDIT (gate 11's read-only PBT audit):** do the executed tables match `§5.5.1`'s per-row attempts, terms, strategy ids and the thirteen printed cells — **and does the audit RECONCILE the two defects `§5.5.3` records (the as-filed total `89` against the thirteen cells' sum `98`, and the withdrawn subtotal decomposition) rather than flagging them as an owed re-grain this file already declares?** **Is the exhaustive-enumeration declaration TRUE of the landed tables (no seed, no generator, no sampling)?** **Are the `(bounded)` markings `7` of `13` rows as the cells carry?** Is the **stop-after-5** rule honoured, and were the **un-run rows REPORTED as failures**? **Is every pool/table member still consistent with its row's declared boundary text?** **Any OTHER mismatch is a SPEC FINDING.** | `[T]` + the test file |
+| **`A-19`** | **THE REGISTER AUDIT (gate 11's read-only PBT audit):** do the executed tables match `§5.5.1`'s per-row attempts, terms, strategy ids and the thirteen printed cells — **and does the audit RECONCILE the two defects `§5.5.3` records (the as-filed total `89` against the thirteen cells' sum `98`, and the withdrawn subtotal decomposition) rather than flagging them as an owed re-grain this file already declares?** **⟶ ANNOTATED 2026-09-27 (dispositions (b)/(c); `§0A` note 9): the object this seed must audit is the CORRECTED form — `13` rows, `12` carrying a term and `1` carrying none; the DECLARED LIST's thirteen terms summing `98`, which is the authority the caps compare against; and the TABLE's `12` cells summing `93`, printed BESIDE it.** **AND THE `9 + 1` READING IS WITHDRAWN — it sums to `103`, not to `98` — so no pass may reconcile the register through that split; the two figures to reconcile are `98` (declared, thirteen terms) and `93` (the twelve cells), and the register harness's own assertions must be re-aligned to whatever this contract prints, which is the TestWriter's act.** **Is the exhaustive-enumeration declaration TRUE of the landed tables (no seed, no generator, no sampling)?** **Are the `(bounded)` markings `7` of `13` rows as the cells carry?** Is the **stop-after-5** rule honoured, and were the **un-run rows REPORTED as failures**? **Is every pool/table member still consistent with its row's declared boundary text?** **Any OTHER mismatch is a SPEC FINDING.** | `[T]` + the test file |
 | **`A-20`** | **THE LAYER-HONESTY PROBE:** does the DONE row (or any pass's prose) claim **focused-element, rendered-entry, interaction, route or stored-state** evidence from this unit's `[T]` green — and does it state explicitly that **the module is imported by no `src/**` file** and therefore proves **the contract holds for a caller, not that the app behaves differently**? | the DONE row |
 | **`A-21`** | **THE HONESTY-BLOCK PROBE:** does `§5.5.2` name the excluded shapes as a boundary rather than a gap, does `§5.5.1` item 2 declare the exhaustive enumeration rather than merely omit a seed, do `§7` item 9 and `§5.5.3` carry this filing's own arithmetic defects VISIBLY with their obligations named, and does the DONE row carry the register's figures WITH their terms? | static + the DONE row |
 | **`A-22`** | **THE AUTHORITY PROBE:** does any pass read this unit as **the repo's order or focus authority**, or claim its returned values reach a rendered entry, `src/renderer/**` or the demo envelope? **The measured-and-declared fact is that nothing this unit returns can influence any of them, and that the two landed hosts' projections are neither composed nor contradicted.** | static + the DONE row |
