@@ -570,6 +570,29 @@ interface ScanPattern {
   id: string
   re: RegExp
 }
+// ---------------------------------------------------------------------------
+// ADV-TC-4 — THE SECOND-APPEARANCE-AUTHORITY PATTERN FAMILY (§1 item 7 (iii)/(vii)).
+//
+// THE FINDING, MEASURED: the as-filed denied set NAMES *"a stylesheet, CSS rule, `--`-shaped
+// custom property or `color-scheme` value authored by this unit"* (§1 item 7(iii)) and *"a second
+// appearance authority — i.e. any element, attribute, class or style whose effect is 'the app looks
+// different'"* (§1 item 7(vii)), but the as-filed scan carried NO pattern for a CLASS write and
+// NONE for a stylesheet/CSS-rule route — so a corpus doing `el.classList.toggle('dark')` plus
+// `document.createElement('style')` PASSED the very row that must redden for it. The family below
+// is APPENDED to `DENIED_PATTERNS` (a STRENGTHENING: not one as-filed pattern is removed, relaxed
+// or re-scoped, and no existing row is weakened), and every pattern carries the clause id it
+// enforces BY NAME, so the family is NAMED and the scan row is not VACUOUS (§2.2(C)'s rule).
+// CORPUS-EXEMPT — HARNESS bytes.
+const APPEARANCE_AUTHORITY_PATTERNS: ScanPattern[] = [
+  { id: '(iii)/(vii) a class WRITE', re: /\bclassList\s*\.\s*(?:add|remove|toggle|replace)\s*\(/g },
+  { id: '(iii)/(vii) a class ATTRIBUTE write', re: /\bclassName\s*=|setAttribute\s*\(\s*['"]class['"]/g },
+  {
+    id: '(iii) a stylesheet route or a CSS rule set',
+    re: /<style\b|createElement\s*\(\s*['"]style['"]|styleSheets|insertRule\s*\(|cssText|rel\s*=\s*['"]stylesheet['"]/g,
+  },
+  { id: '(iii)/(vii) a style declaration write', re: /\.style\s*\.\s*[a-zA-Z]+\s*=|\bsetProperty\s*\(/g },
+  { id: '(iii) a CSS at-rule', re: /@media\b|@supports\b/g },
+]
 // CORPUS-EXEMPT — these pattern tables are HARNESS bytes, never the unit's surface
 // (§1 item 7: "the new test file's non-assertion bytes are NOT scanned").
 const DENIED_PATTERNS: ScanPattern[] = [
@@ -582,7 +605,16 @@ const DENIED_PATTERNS: ScanPattern[] = [
   },
   { id: '(vi) an edge into the theme mechanism', re: /\b(?:resolveTheme|applyThemeDeclaration)\b|shared\/theme/g },
   { id: '(i) a third token name', re: /['"](?:system|auto|AUTO|DARK|LIGHT)['"]/g },
+  ...APPEARANCE_AUTHORITY_PATTERNS,
 ]
+/**
+ * THE AS-FILED FAMILY, derived (never re-typed, so it cannot drift): `DENIED_PATTERNS` minus the
+ * ADV-TC-4 family. ADV-TC-4 measures the FINDING with it (the corpus PASSES this family) beside the
+ * fixed reading (the corpus FAILS the extended one).
+ */
+const PRE_ADV_DENIED_PATTERNS: ScanPattern[] = DENIED_PATTERNS.filter(
+  (p) => !APPEARANCE_AUTHORITY_PATTERNS.some((a) => a.id === p.id),
+)
 /** §2.2(C)'s BY-NAME EXEMPTION LIST — the citation spellings whose presence is not a use. */
 const EXEMPTION_NAMES = [
   'resolveTheme',
@@ -598,10 +630,11 @@ interface ScanHit {
   text: string
   at: number
 }
-function scanDenied(src: string, applyExemptions: boolean): ScanHit[] {
+/** The scan engine, parameterised so ADV-TC-4 can run the SAME engine over the as-filed family. */
+function scanWithPatterns(src: string, patterns: ScanPattern[], applyExemptions: boolean): ScanHit[] {
   const code = stripComments(src)
   const hits: ScanHit[] = []
-  for (const p of DENIED_PATTERNS) {
+  for (const p of patterns) {
     const re = new RegExp(p.re.source, 'g')
     let m: RegExpExecArray | null
     while ((m = re.exec(code)) !== null) {
@@ -616,6 +649,10 @@ function scanDenied(src: string, applyExemptions: boolean): ScanHit[] {
   }
   return hits
 }
+/** THE ROW'S SCAN — the DECLARED denied set of `§1` item 7, over the EXTENDED family (ADV-TC-4). */
+function scanDenied(src: string, applyExemptions: boolean): ScanHit[] {
+  return scanWithPatterns(src, DENIED_PATTERNS, applyExemptions)
+}
 /** §2.2(C) — the exemptions NAMED, so no scan row is vacuous. */
 function exemptionListIsDeclared(src: string): boolean {
   return EXEMPTION_NAMES.every((e) => src.includes(e))
@@ -624,7 +661,30 @@ const POSITIVE_CONTROL_CORPUS = [
   "const x = { 'data-theme': 'dark' }",
   'localStorage.setItem("theme", t)',
   'matchMedia("(prefers-color-scheme: dark)").matches',
+  // ADV-TC-4 (§1 item 7(iii)/(vii)): the POSITIVE CONTROL now carries the family the as-filed
+  // scan MISSED — a class write and a CSS rule set — so the control covers the whole named set.
+  "el.classList.toggle('dark')",
+  "document.createElement('style').textContent = '.card { background: #111 }'",
 ].join('\n') // CORPUS-EXEMPT — §1 item 7's POSITIVE CONTROL
+/**
+ * **ADV-TC-4'S OWN CORPUS** — the generalising corpus the finding names: a class write plus a
+ * stylesheet route and a CSS rule set, and NOTHING else (checked: it carries no token of the
+ * as-filed six patterns, so the PRE-ADV family's miss is measured cleanly rather than confused
+ * with a token an as-filed pattern already caught). CORPUS-EXEMPT.
+ */
+const APPEARANCE_AUTHORITY_CORPUS = [
+  "const el = document.querySelector('#app')",
+  "el.classList.toggle('dark')",
+  "const sheet = document.createElement('style')",
+  "sheet.textContent = '.card { background: #111 }'",
+  'document.head.appendChild(sheet)',
+].join('\n')
+/** The CLEAN corpus (ADV-TC-4's second control): the declared shape and NO denied token. CORPUS-EXEMPT. */
+const CLEAN_CORPUS = [
+  "const carried = value == null ? '' : String(value)",
+  "ctx.clientAPI.apply(node.id, [{ targetProp: 'content', mode: 'replace', value: carried }])",
+].join('\n')
+
 function writeInventoryScan(region: string): string[] {
   const hits: string[] = []
   const patterns: ScanPattern[] = [
@@ -2728,5 +2788,495 @@ describe('§5.5.1 REGISTER — the executed property layer (11 rows, declared 97
       POSITIVE_CONTROL_CORPUS.length > 0 && EDGE_TOKENS.length > 0 && DENIED_PATTERNS.length > 0,
       '§5.5.2 item 8 — the controls are live readings, not prose',
     ).toBe(true)
+  })
+})
+
+// ===========================================================================
+// §3a/§3b — THE GATE-4 FINDINGS, CLOSED RED-FIRST (`ADV-TC-1` … `ADV-TC-4`)
+//
+// FOUR rows, each RED against the LANDED host implementation (the gate-3 green), each carrying its
+// OWN positive control so its clause is falsifiable rather than vacuous. NOTHING above is weakened,
+// deleted or re-scoped: no term, row id, strategy id, seed or cap of `§5.5.1` moves (the register
+// is untouched and its `97`/`11` readings stand), and no `it(...)` TITLE below matches the
+// applied-appearance / `[U]`-claim / census filters the landed rows run over this file's titles.
+//
+//   ADV-TC-1  the hostile argument is CARRIED, never MINTED as a token (both authored bodies
+//             SWALLOW every throw and write `''` — a token OUTSIDE the declared closed block)
+//   ADV-TC-2  the wiring role is DRIVEN against a recording double, not read as bytes (it
+//             resolves nothing and nothing imports it)
+//   ADV-TC-3  the state node's id is a PAIR, pinned to the authored node read from the envelope
+//             (the wiring re-spells it as a literal that no route ever uses)
+//   ADV-TC-4  the denied-set scan carries the SECOND-APPEARANCE-AUTHORITY family — a CLASS write
+//             and a CSS rule set (the as-filed family misses a corpus that does both)
+// ===========================================================================
+describe('§3a/§3b ADV-TC — the GATE-4 findings, red-first', () => {
+  // -------------------------------------------------------------------------
+  // ADV-TC-1 — the hostile argument
+  // -------------------------------------------------------------------------
+  /** The DECLARED gate of `§2.1` item 2(a) — `value == null ? '' : String(value)` — run by the HARNESS. */
+  function declaredStringGate(value: unknown): { ok: boolean; text: string } {
+    try {
+      return { ok: true, text: value == null ? '' : String(value) }
+    } catch {
+      return { ok: false, text: '' }
+    }
+  }
+  /** A FRESH revoked `Proxy` (a coercion that THROWS, delivered IN-PROCESS: JSON cannot carry one). */
+  function revokedProxy(): unknown {
+    const { proxy, revoke } = Proxy.revocable({}, {})
+    revoke()
+    return proxy
+  }
+  /** The hostile argument shapes this row drives — each whose coercion the contract's gate must survive. */
+  function hostileCoercionShapes(): Array<{ label: string; value: unknown }> {
+    const throwing = {
+      toString: (): string => {
+        throw new Error('the argument `toString` THROWS (ADV-TC-1)')
+      },
+      valueOf: (): number => {
+        throw new Error('the argument `valueOf` THROWS (ADV-TC-1)')
+      },
+    }
+    const trapThrowing = new Proxy(
+      {},
+      {
+        get(): never {
+          throw new Error('the argument Proxy traps THROW (ADV-TC-1)')
+        },
+      },
+    )
+    return [
+      { label: 'a `Symbol` (delivered IN-PROCESS; JSON cannot carry one)', value: Symbol('theme-token') },
+      { label: 'an object whose `toString` AND `valueOf` THROW', value: throwing },
+      { label: 'a REVOKED `Proxy`', value: revokedProxy() },
+      { label: 'a `Proxy` whose traps THROW', value: trapThrowing },
+    ]
+  }
+  interface ClauseReading {
+    ok: boolean
+    reason: string
+  }
+  /**
+   * **THE ADV-TC-1 CLAUSE, AND THE READING TAKEN — STATED, NOT IMPLIED.**
+   *
+   * `§2.1` item 2(a) pins the ONE write's `value` as *"the carried token as a STRING"*; `§2.3` item 2
+   * pins the falsifiable half — *"the gate may STRINGIFY the caller's own argument; it may NEVER
+   * INTERPRET it"* — and FAILS *"a body that … substitutes a default when the argument is absent"*;
+   * `§5.5.1` `P-TC-IM-1` shape (12) asserts *"the single mutation's `value` (identity for strings, the
+   * declared `String()` form otherwise) … no default token was substituted; and nothing threw"*.
+   *
+   * **THE READING TAKEN: when the DECLARED gate itself has NO string form for the argument — i.e.
+   * `String(value)` THROWS, so the declared `String()` form does not exist — the only non-interpreting
+   * outcome is an ABSTENTION: NO write at all, and NO token minted.** Writing `''` is a MINTED TOKEN,
+   * and `''` is OUTSIDE the declared closed block (`§2.2`(D): *"OUTSIDE: … an empty string, a
+   * non-string"*), so it is exactly the *"default substituted for the argument"* that `§2.3` item 2
+   * FAILS. Carrying the raw non-string BY IDENTITY is refused too, because `§2.1` item 2(a) pins the
+   * write's `value` as the STRING form. (The sibling `GAP-3` leniency in the register's hostile arm
+   * — `''` written *or* no write at all — is a TEST-SIDE acceptance recorded as a gap; this row takes
+   * the register's OWN text, which is the stricter half of that pair.)
+   */
+  function hostileArgumentClause(gate: { ok: boolean; text: string }, writes: number, written: unknown): ClauseReading {
+    if (!gate.ok) {
+      if (writes === 0) {
+        return {
+          ok: true,
+          reason: 'the declared gate has NO string form for this argument and the body ABSTAINS: nothing is written and NO token is minted',
+        }
+      }
+      return {
+        ok: false,
+        reason: `a token was MINTED (${JSON.stringify(written)} via ${writes} write(s)) for an argument whose declared \`String()\` gate THROWS — the empty string is OUTSIDE the declared closed block (§2.2(D)) and is the default substitution §2.3 item 2 FAILS`,
+      }
+    }
+    if (writes !== 1) {
+      return {
+        ok: false,
+        reason: `the exact-one-write rule (§3.3 I-9) requires EXACTLY ONE write for a coercible argument; ${writes} were issued`,
+      }
+    }
+    if (written !== gate.text) {
+      return {
+        ok: false,
+        reason: `the carried value must be the declared \`String()\` form ${JSON.stringify(gate.text)}; it reads ${JSON.stringify(written)}`,
+      }
+    }
+    return { ok: true, reason: `carried character for character through the declared gate (${JSON.stringify(gate.text)})` }
+  }
+  /** THE MINTING BODY — the LANDED shape, re-spelled as HARNESS bytes so the falsifier can be driven. */
+  const MINTING_BODY = `function (ctx, value) {
+  const all = ctx.tree.allNodes();
+  const node = all.find(function (n) { return n && n.props && n.props.id === ${JSON.stringify(STATE_ID)}; });
+  if (!node) return;
+  let carried = '';
+  try { carried = value == null ? '' : String(value); } catch (e) { carried = ''; }
+  ctx.clientAPI.apply(node.id, [{ targetProp: 'content', mode: 'replace', value: carried }]);
+}`
+
+  it('ADV-TC-1 (§2.1 item 2(a), §2.3 item 2, §5.5.1 P-TC-IM-1 (12)) — a HOSTILE ARGUMENT is CARRIED, never MINTED as a token', () => {
+    const readings: string[] = []
+    for (const id of [DARK_ID, LIGHT_ID]) {
+      const body = bodyOf(id)
+      expect(body.ok, body.reason).toBe(true)
+      for (const shape of hostileCoercionShapes()) {
+        const st = stateDouble()
+        expect(st, CARD_ABSENT).not.toBeNull()
+        const before = String(st?.content)
+        const dbl = makeCtx({ nodes: [st ?? nodeDouble(STATE_ID, '')] })
+        const thrown = driveBody(body.body, dbl.ctx, shape.value, false)
+        const gate = declaredStringGate(shape.value)
+        const mut = firstMutation(dbl)
+        const written = mut === null ? undefined : mut['value']
+        const clause = hostileArgumentClause(gate, dbl.calls.length, written)
+        expect(
+          thrown,
+          `ADV-TC-1 — \`${id}\` with ${shape.label}: §2.1 item 2/§5.5.1 P-TC-IM-1 "nothing threw" — the authored body must NOT throw; it threw ${String(thrown)}`,
+        ).toBeUndefined()
+        expect(clause.ok, `ADV-TC-1 — \`${id}\` with ${shape.label}: ${clause.reason}`).toBe(true)
+        expect(
+          dbl.calls.length <= 1,
+          `ADV-TC-1 — \`${id}\` with ${shape.label}: the exact-one-write rule allows AT MOST ONE write per dispatch; ${dbl.calls.length} were issued`,
+        ).toBe(true)
+        if (!gate.ok) {
+          expect(
+            mut,
+            `ADV-TC-1 — \`${id}\` with ${shape.label}: the declared gate has NO string form, so NOTHING may be written and NO token may be MINTED. The landed body writes ${JSON.stringify(written)} — the empty string is a token OUTSIDE the declared closed block (§2.2(D)).`,
+          ).toBeNull()
+          expect(
+            String(dbl.nodes[0].content),
+            `ADV-TC-1 — an ABSTENTION must leave the state node's \`content\` untouched; it reads ${JSON.stringify(String(dbl.nodes[0].content))}`,
+          ).toBe(before)
+        }
+        if (mut !== null) {
+          expect(mut['targetProp'], 'ADV-TC-1 — the ONE write is a `content` mutation (§2.1 item 2(a))').toBe('content')
+          expect(mut['mode'], 'ADV-TC-1 — the ONE write carries `mode: "replace"` (§2.1 item 2(a))').toBe('replace')
+        }
+        readings.push(
+          `${id} · ${shape.label} → gate ${gate.ok ? JSON.stringify(gate.text) : 'THROWS'} · writes ${dbl.calls.length} · written ${JSON.stringify(written)}`,
+        )
+      }
+    }
+    // THE CONTROL (THE FALSIFIER): a body that MINTS the empty string MUST FAIL this row's clause.
+    const ctlArg = revokedProxy()
+    const ctlState = stateDouble()
+    expect(ctlState, CARD_ABSENT).not.toBeNull()
+    const ctlDbl = makeCtx({ nodes: [ctlState ?? nodeDouble(STATE_ID, '')] })
+    driveBody(MINTING_BODY, ctlDbl.ctx, ctlArg, false)
+    const ctlMut = firstMutation(ctlDbl)
+    const ctlClause = hostileArgumentClause(
+      declaredStringGate(ctlArg),
+      ctlDbl.calls.length,
+      ctlMut === null ? undefined : ctlMut['value'],
+    )
+    expect(
+      ctlDbl.calls.length,
+      'ADV-TC-1 CONTROL — the synthetic MINTING body really issues ONE write, so the clause measures the behaviour and not the harness',
+    ).toBe(1)
+    expect(String(ctlDbl.nodes[0].content), 'ADV-TC-1 CONTROL — the synthetic body really MINTS the empty string').toBe('')
+    expect(
+      ctlClause.ok,
+      `ADV-TC-1 CONTROL (THE FALSIFIER) — a body minting \`''\` for a coercion-throwing argument MUST FAIL the clause; it read: ${ctlClause.reason}`,
+    ).toBe(false)
+    console.log('ADV-TC-1-READINGS ' + JSON.stringify({ readings, controlMintsEmptyStringAndFails: !ctlClause.ok }))
+  })
+
+  // -------------------------------------------------------------------------
+  // ADV-TC-2 / ADV-TC-3 — the wiring role, DRIVEN
+  // -------------------------------------------------------------------------
+  interface WiringRoleReading {
+    ok: boolean
+    fn: ((...args: unknown[]) => unknown) | null
+    name: string
+    reason: string
+  }
+  /**
+   * THE WIRING ROLE, REACHED FOR A DRIVE (`§2.4` items 1/2).
+   *
+   * GAP-1 (unchanged, and extended by this row rather than papered over): the contract pins *"ONE
+   * bounded renderer-WIRING role (the attribute-name holder)"* and pins NOTHING about its export
+   * name, its signature or which argument carries the producing graph. This probe therefore keys on
+   * the unit's own CHARTER word (`§2.2`(B) row 1(c)) and accepts ANY exported `theme`-named
+   * function, and the drives below pass the recording double as the FIRST argument (the only
+   * caller-supplied position available). Nothing else is invented: the duty asserted is the
+   * contract's own sentence.
+   */
+  async function loadWiringRole(): Promise<WiringRoleReading> {
+    try {
+      const mod = (await import('../src/renderer/renderer.js')) as Record<string, unknown>
+      for (const key of Object.keys(mod).sort()) {
+        const v = mod[key]
+        if (typeof v === 'function' && /theme/i.test(key)) {
+          return {
+            ok: true,
+            fn: v as (...args: unknown[]) => unknown,
+            name: key,
+            reason: `the EXPORTED wiring role \`${key}\` (driven, not read as bytes)`,
+          }
+        }
+      }
+      return {
+        ok: false,
+        fn: null,
+        name: '',
+        reason:
+          WIRING_ABSENT +
+          ' — the renderer module imported, but it EXPORTS no `theme`-named function, so the role cannot be DRIVEN at all (GAP-1: the contract pins no export name).',
+      }
+    } catch (e) {
+      return {
+        ok: false,
+        fn: null,
+        name: '',
+        reason: `§2.4 item 1/2 — the renderer module could not be imported for a DRIVE (${String(e)}); a role that cannot be reached cannot be driven.`,
+      }
+    }
+  }
+  interface GraphReading {
+    graph: unknown
+    reads: string[]
+    calls: Array<{ route: string; args: unknown[] }>
+    inventories: Inventory[]
+  }
+  /** A RECORDING DOUBLE for the PRODUCING GRAPH: it answers the contract-named route, records every
+   *  read and every route call, and hands out a WRITE-COUNTING element double per authored node id. */
+  function recordingProducingGraph(nodeIds: string[]): GraphReading {
+    const reads: string[] = []
+    const calls: Array<{ route: string; args: unknown[] }> = []
+    const inventories: Inventory[] = []
+    const elements = new Map<string, J>()
+    const nodes: NodeDouble[] = []
+    for (const id of nodeIds) {
+      const inv = emptyInventory()
+      inventories.push(inv)
+      elements.set(id, recordingElement(inv))
+      nodes.push(nodeDouble(id, ''))
+    }
+    const resolve = (id: unknown): J | null => {
+      const key = typeof id === 'string' ? id : ''
+      return elements.get(key) ?? null
+    }
+    const record = (route: string, args: unknown[]): J | null => {
+      calls.push({ route, args })
+      return resolve(args[0])
+    }
+    const base: J = {
+      // THE CONTRACT-NAMED ROUTE (`§2.4` item 2: "the `Runtime`'s own node-id read — the landed
+      // `elementForNodeId`-class route the sibling unit's wiring uses"), plus tolerant aliases.
+      elementForNodeId: (id: unknown): J | null => record('elementForNodeId', [id]),
+      elementFor: (id: unknown): J | null => record('elementFor', [id]),
+      getNode: (id: unknown): J | null => record('getNode', [id]),
+      nodeById: (id: unknown): J | null => record('nodeById', [id]),
+      resolve: (id: unknown): J | null => record('resolve', [id]),
+      allNodes: (): NodeDouble[] => {
+        calls.push({ route: 'allNodes', args: [] })
+        return nodes
+      },
+      tree: {
+        allNodes: (): NodeDouble[] => {
+          calls.push({ route: 'tree.allNodes', args: [] })
+          return nodes
+        },
+      },
+      nodes,
+    }
+    const graph: unknown = new Proxy(base, {
+      get(target: J, prop: string | symbol): unknown {
+        const key = typeof prop === 'string' ? prop : String(prop)
+        reads.push(key)
+        if (key in target) return target[key]
+        // ANY OTHER ROUTE the wiring chooses is accepted AND recorded: the drive measures that the
+        // resolution happened against the SUPPLIED graph, never that the wiring used one spelling.
+        return (...args: unknown[]): J | null => record(key, args)
+      },
+    })
+    return { graph, reads, calls, inventories }
+  }
+  /** Every string inside a returned reading (the drive's own observable, however it is shaped). */
+  function flattenStrings(value: unknown, depth = 0): string[] {
+    if (typeof value === 'string') return [value]
+    if (depth > 3 || value === null || typeof value !== 'object') return []
+    const out: string[] = []
+    const vals = Array.isArray(value) ? value : Object.values(value as Record<string, unknown>)
+    for (const v of vals) out.push(...flattenStrings(v, depth + 1))
+    return out
+  }
+
+  it('ADV-TC-2 (§2.4 items 1/2, §3.1 M-7) — the wiring role is DRIVEN against a recording double: it resolves the control from the producing graph and holds the caller name', async () => {
+    const role = await loadWiringRole()
+    expect(role.ok, role.reason).toBe(true)
+    const g = recordingProducingGraph([...DECLARED_ID_SET])
+    let returned: unknown = undefined
+    let thrown: unknown = undefined
+    try {
+      returned = role.fn?.(g.graph)
+    } catch (e) {
+      thrown = e
+    }
+    expect(
+      thrown,
+      `ADV-TC-2 — the drive against a recording double must not throw; it threw ${String(thrown)}`,
+    ).toBeUndefined()
+    // THE DUTY OF `§2.4` item 2, asserted as the contract states it: the role RESOLVES an authored
+    // control element FROM THE PRODUCING GRAPH it is handed. The reading is the double's own log.
+    const resolvedAuthoredIds = g.calls
+      .flatMap((c) => c.args)
+      .filter((a): a is string => typeof a === 'string' && DECLARED_ID_SET.includes(a))
+    expect(
+      resolvedAuthoredIds.length > 0,
+      `ADV-TC-2 — §2.4 item 2: *"IT MAY: resolve an authored control element from the PRODUCING GRAPH"* — driving the role with a recording double produced NO resolution of an AUTHORED control id (routes reached: ${JSON.stringify(g.calls.map((c) => c.route))}, property reads: ${g.reads.length}). The landed role takes no argument, reads no graph and resolves nothing.`,
+    ).toBe(true)
+    // it WRITES NOTHING (`§2.4` item 2 / `§3.3` I-6): every element double it was handed counts 0.
+    const writes = g.inventories.reduce((a, i) => a + inventoryTotal(i), 0)
+    expect(
+      writes,
+      `ADV-TC-2 — §2.4 item 2/§3.3 I-6: the driven role may write no attribute, class, style, text or markup; the element doubles counted ${writes} write(s)`,
+    ).toBe(0)
+    expect(
+      outsideGraphScan(themeWiringRegion().text),
+      'ADV-TC-2/§3.4 R-1 — the driven role creates no element and hand-writes no markup',
+    ).toEqual([])
+    // it HOLDS THE CALLER-SUPPLIED ATTRIBUTE NAME (`§2.4` item 1). The contract does NOT pin how the
+    // held name is observable from a DRIVE (it pins only that the role holds it), so the name is read
+    // through the landed constant route and the returned reading is required to agree with it ONLY
+    // where the drive answers strings at all.
+    const held = callerNameConstant()
+    expect(held.ok, held.reason).toBe(true)
+    expect(held.value.length > 0, 'ADV-TC-2/§2.1 item 4 — the held name is a NON-EMPTY string by identity').toBe(true)
+    const answered = flattenStrings(returned)
+    if (answered.length > 0) {
+      expect(
+        answered,
+        `ADV-TC-2 — §2.4 item 1: a drive whose reading carries strings must carry the CALLER-HELD name among them (held: ${JSON.stringify(held.value)}; answered: ${JSON.stringify(answered)})`,
+      ).toContain(held.value)
+    }
+    console.log(
+      'ADV-TC-2-DRIVE ' +
+        JSON.stringify({
+          role: role.name,
+          resolvedAuthoredIds,
+          routesReached: g.calls.map((c) => c.route),
+          graphPropertyReads: g.reads.length,
+          elementWrites: writes,
+          heldName: held.value,
+          answeredStrings: answered,
+          returnedShape: returned === undefined ? 'undefined' : Array.isArray(returned) ? 'array' : typeof returned,
+        }),
+    )
+  })
+
+  it('ADV-TC-3 (§2.1 item 1(5), §2.4 item 2, §2.2(B) row 1(c)) — the wiring node id must BE the authored state node id: the PAIR is pinned, never re-spelled', async () => {
+    // THE READING TAKEN: the pair is pinned BY THE RESOLUTION ROUTE, not by two literals agreeing.
+    // `§2.4` item 2 has the role resolve the authored control element from the PRODUCING GRAPH, and
+    // `§2.1` item 1(5) makes the state node the ONE authored node carrying BOTH `css.id` and
+    // `props.id`; so the id the wiring hands the graph must BE the id read from the envelope — which
+    // is what makes a rename in the envelope REDDEN this row. Two literal strings that merely agree
+    // would satisfy a text comparison while leaving the id a second, silently staling spelling — the
+    // duplication the finding names.
+    const card = cardReading()
+    expect(card.ok, card.reason).toBe(true)
+    const stateNodes = card.nodes.filter((n) => tagOf(n) === 'div' && propsIdOf(n) !== null && cssIdOf(n) !== null)
+    expect(
+      stateNodes.length,
+      `ADV-TC-3/§2.1 item 1(5) — EXACTLY ONE authored state node carries BOTH \`css.id\` and \`props.id\`; found ${stateNodes.length}`,
+    ).toBe(1)
+    const authoredCssId = cssIdOf(stateNodes[0])
+    const authoredId = propsIdOf(stateNodes[0])
+    expect(authoredId, 'ADV-TC-3/§2.1 item 1(5) — the state node carries the `props.id` the graph reads').not.toBeNull()
+    expect(authoredCssId, 'ADV-TC-3/§2.1 item 1(5) — the state node carries the `css.id` the renderer writes').toBe(authoredId)
+    const pairHolds = (wiringId: unknown, envelopeId: unknown): boolean => wiringId === envelopeId
+    const role = await loadWiringRole()
+    expect(role.ok, role.reason).toBe(true)
+    const g = recordingProducingGraph([...DECLARED_ID_SET])
+    try {
+      role.fn?.(g.graph)
+    } catch (e) {
+      void e
+    }
+    const usedIds = g.calls.flatMap((c) => c.args).filter((a): a is string => typeof a === 'string')
+    const resolvedByTheWiring = usedIds.find((u) => pairHolds(u, authoredId)) ?? null
+    expect(
+      resolvedByTheWiring,
+      `ADV-TC-3 — §2.4 item 2: the id the wiring hands the producing graph must BE the AUTHORED state node's id (read from \`demoEnvelope()\`: ${JSON.stringify(authoredId)}); the ids that reached the graph route were ${JSON.stringify(usedIds)}. The landed wiring re-spells the id as a literal and never uses it, so nothing pins the pair: a rename in the envelope leaves it silently stale.`,
+    ).not.toBeNull()
+    // BOTH CONTROLS (`§1` item 7's form): the pair predicate HOLDS for the authored id and FAILS for
+    // a STALE one — i.e. a RENAME in the envelope REDDENS this row by construction.
+    expect(pairHolds(authoredId, authoredId), 'ADV-TC-3 — the pair predicate holds for the AUTHORED id').toBe(true)
+    expect(
+      pairHolds(authoredId, `${String(authoredId)}-renamed`),
+      'ADV-TC-3 CONTROL (THE RENAME) — a wiring id left behind by a rename in the envelope MUST FAIL the pair; it did not, so the control is vacuous',
+    ).toBe(false)
+    console.log(
+      'ADV-TC-3-PAIR ' +
+        JSON.stringify({
+          authoredCssId,
+          authoredId,
+          idsThatReachedTheGraph: usedIds,
+          resolvedByTheWiring,
+          renameControlFails: !pairHolds(authoredId, `${String(authoredId)}-renamed`),
+        }),
+    )
+  })
+
+  // -------------------------------------------------------------------------
+  // ADV-TC-4 — the denied set's missing family
+  // -------------------------------------------------------------------------
+  it('ADV-TC-4 (§1 item 7 (iii)/(vii), §3.2 F-8, §3.4 R-2) — the denied-set scan catches a CLASS write and a CSS rule set: the generalising corpus REDDENS, the clean corpus passes', () => {
+    // THE FAMILY IS NAMED, so the scan row is not VACUOUS (`§2.2(C)`): every pattern carries the
+    // clause id it enforces, and the family is APPENDED to `DENIED_PATTERNS` (never replacing one).
+    const family = APPEARANCE_AUTHORITY_PATTERNS.map((p) => p.id)
+    expect(
+      family.length,
+      'ADV-TC-4/§1 item 7 — the second-appearance-authority family is NAMED, pattern by pattern',
+    ).toBeGreaterThanOrEqual(4)
+    expect(
+      family.every((id) => /^\(iii\)/.test(id)),
+      `ADV-TC-4 — every pattern of the family cites the clause it enforces (§1 item 7(iii)/(vii)); read ${JSON.stringify(family)}`,
+    ).toBe(true)
+    // THE FINDING, MEASURED BESIDE THE FIX: the AS-FILED family (derived, never re-typed) PASSES the
+    // generalising corpus, and the EXTENDED family REDDENS for it.
+    const preFamilyHits = scanWithPatterns(APPEARANCE_AUTHORITY_CORPUS, PRE_ADV_DENIED_PATTERNS, true)
+    const corpusHits = scanDenied(APPEARANCE_AUTHORITY_CORPUS, true)
+    expect(
+      preFamilyHits.map((h) => `${h.id}: ${h.text}`),
+      'ADV-TC-4 (the FINDING, printed beside the fix) — the AS-FILED denied set carried no class-write and no CSS-rule pattern, so this corpus PASSED it',
+    ).toEqual([])
+    expect(
+      corpusHits.length > 0,
+      `ADV-TC-4 — §1 item 7(iii)/(vii): a corpus doing \`el.classList.toggle('dark')\` PLUS a CSS rule set MUST FAIL the scan row; it produced ${corpusHits.length} hit(s)`,
+    ).toBe(true)
+    expect(
+      corpusHits.some((h) => /class WRITE/.test(h.id)) && corpusHits.some((h) => /stylesheet route|style declaration/.test(h.id)),
+      `ADV-TC-4 — the corpus must redden on BOTH the CLASS write and the CSS-rule route; it reddened on ${JSON.stringify([...new Set(corpusHits.map((h) => h.id))])}`,
+    ).toBe(true)
+    // CONTROL 1 — THE CORPUS FAILS. CONTROL 2 — A CLEAN CORPUS PASSES (the declared shape, and the
+    // unit's OWN diff scope: the authored card block and the wiring role).
+    expect(scanDenied(CLEAN_CORPUS, true).map((h) => `${h.id}: ${h.text}`), 'ADV-TC-4 CONTROL 2 — the CLEAN corpus must PASS').toEqual([])
+    expect(
+      scanDenied(POSITIVE_CONTROL_CORPUS, true).map((h) => h.text),
+      'ADV-TC-4 — the AS-FILED positive control (now carrying the class write and the CSS rule set) MUST still FAIL',
+    ).not.toEqual([])
+    const cardRegionReading = cardRegion()
+    expect(cardRegionReading.ok, cardRegionReading.reason).toBe(true)
+    const wiringRegion = themeWiringRegion()
+    expect(wiringRegion.ok, wiringRegion.reason).toBe(true)
+    expect(
+      scanDenied(cardRegionReading.text, true).map((h) => `${h.id}: ${h.text}`),
+      'ADV-TC-4 CONTROL 2 — the authored card block PASSES the EXTENDED family (the extension reddens nothing the unit authored)',
+    ).toEqual([])
+    expect(
+      scanDenied(wiringRegion.text, true).map((h) => `${h.id}: ${h.text}`),
+      'ADV-TC-4 CONTROL 2 — the wiring role PASSES the EXTENDED family (the extension reddens nothing the unit authored)',
+    ).toEqual([])
+    console.log(
+      'ADV-TC-4-READINGS ' +
+        JSON.stringify({
+          family,
+          asFiledFamilyMissedTheCorpus: preFamilyHits.length === 0,
+          corpusHits: corpusHits.map((h) => `${h.id}: ${h.text}`),
+          cleanCorpusHits: scanDenied(CLEAN_CORPUS, true).length,
+          positiveControlHits: scanDenied(POSITIVE_CONTROL_CORPUS, true).length,
+          cardHits: scanDenied(cardRegionReading.text, true).length,
+          wiringHits: scanDenied(wiringRegion.text, true).length,
+        }),
+    )
   })
 })
