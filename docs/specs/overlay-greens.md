@@ -226,3 +226,26 @@ reached **only** as an object returned by a dynamic `import()` of its path. **Th
 re-derivation of the contract:** where the module and the contract agreed, the reading is printed with the clause it
 was driven against; where a reading contradicted a clause, I re-read the clause, and **in the one case where the
 clause itself is imprecise (`D-1`) the discrepancy is recorded rather than hidden.**
+
+---
+
+**⟶ THE CLOSE-OUT ANNOTATION (2026-09-27, THE SUPERVISOR'S GATE-6/7/8/10 PASS — an ANNOTATION appended at this set's
+foot; EVERY SCENARIO ID, CLAUSE CITATION, CENSUS FIGURE AND LIMIT ABOVE KEEPS ITS BYTES).** **`U-OVERLAY` (`E9`) IS
+`DONE` — the ledger's EIGHTEENTH `DONE` row, wave `E`'s tenth and LAST — and its authoritative record is
+`docs/next-steps.md`'s `## DONE — U-OVERLAY` section, whose clause (8b) carries THIS SET's census (`26` executed ·
+`21` PASS / `0` FAIL / `5` `NOT-BLIND-RUNNABLE`), its recorded ambiguity, its self-repaired driver defects and the
+re-drive clause below.** **WHAT THE CLOSE-OUT DOES *NOT* DO TO THIS FILE: it does NOT re-run a scenario, does NOT
+convert a `NOT-BLIND-RUNNABLE` claim, does NOT touch the `21`/`0`/`5` census, and does NOT repair the `§F` `D-1`
+wording item — THAT ITEM IS CARRIED AS OWED, not settled: `docs/specs/overlay.md` `§2.4` item 2's printed identity
+`removal === (value !== true)` is not satisfiable as a strict equation on both arms because the set arm's `value` is
+the STRING `'true'`; the DECLARED PAIR is what the contract's own table pins and what the landed module implements,
+this set's choice of the declared-pair reading is the reading the close-out carries forward, and the resolution is a
+dated contract annotation in a future pass.** **THE `POST-GREEN` RE-DRIVE CLAUSE ABOVE IS `OWED` AND IS RE-CONFIRMED
+`OWED`, WITH ITS OWNER NAMED: a fresh blind pass owns it, and its readings must be APPENDED BESIDE the as-filed ones,
+never substituted (`26`/`21`/`0`/`5` is THIS pass's census and must not be re-quoted as a reading of a later tree).**
+**THE ONE CAVEAT THIS PASS RE-STATES SO THE RECORD STAYS HONEST: the revision `52d471a` above is the REVISION THIS
+SET WAS AUTHORED AGAINST, and the unit's green was subsequently confirmed on the committed tree — so a reader
+comparing this set to a later tree is comparing it to a tree that moved, and the re-drive clause is the remedy, not a
+silent reconciliation.** *THE FIGURES HERE ARE THIS PASS'S FILE READS AND THE SUPERVISOR'S MEASUREMENTS, QUOTED WITH
+THAT OWNERSHIP; the close-out pass ran no suite, no leg, no `tsc`, no build and no Electron boot, and re-ran none of
+this set's scenarios (`RCA-12`). The gate-8 record is `archive/reviews/2026-09-27-U-OVERLAY-doc-review.md`.*

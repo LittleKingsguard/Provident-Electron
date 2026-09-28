@@ -113,6 +113,45 @@ the placement the sibling specs use.)**
     this contract is looking for a clause this unit REFUSES** — and **a reader who reads that refusal as a silent
     drop of the charter is misreading it: the refusal is STATED, with its reason, and `SCH-12`'s residual is
     RE-STATED AS REFILED** (`§1` item 3; `docs/pending.md`'s `SCH-12` row).
+11. **⟶ THE CLOSE-OUT ITEM — GATE 10 AND THE LEDGER MOVE (2026-09-27, THE SUPERVISOR'S GATE-6/7/8/10 PASS: an
+    ANNOTATION appended to this block; items 1–10 above keep their bytes, and NOTHING in this contract changes).**
+    **THE UNIT IS `DONE`.** **GATE 10 LANDED: the DONE row is written — `docs/next-steps.md`'s `## DONE — U-OVERLAY`
+    section, AT THE TOP of that file's `## DONE — …` sequence, satisfying the `§5.3` twelve-item shape item by item —
+    and the ledger moved: the `E9` row is KEPT and relabelled `E9 — MOVED TO DONE (2026-09-27)`, its cells annotated
+    as spent provenance with a pointer to that record.** **THE LEDGER ARITHMETIC THIS PASS CHANGES: `18 DONE / 3 open`
+    UNITS = `21` units (`18 + 3 = 21`; the table's identity clause `2 engine + 2 harness + 4 (D) + 10 (E) + 3 (F) =
+    21` holds), the open set now `F1` · `F2` · `F3` = `3`, `22` live rows = `21` unit rows + the non-unit fork row
+    `F4`, and the `MOVED TO DONE` label set equal to the `DONE` set at `18`.** **WITH `E9` CLOSED, EVERY `E`-GROUP UNIT
+    IS NOW `DONE` AND THE WAVE-`E` PLAN BLOCK IS SPENT; THE NEXT ACTION IS `F1` (`U-THEME-CONTROL`) — the next UI unit,
+    at its SPEC GATE and owing the MANDATORY live battery of gate 6.** **GATES 6/7/8 WERE FOLDED INTO THAT ONE
+    CLOSE-OUT PASS, IT IS RECORDED AS ONE PASS AND NOT TWO, AND THAT PASS HELD **NO SHELL** — so every leg, register,
+    red-set and blind-set figure in the DONE row is THE SUPERVISOR'S OWN MEASUREMENT, QUOTED WITH THAT OWNERSHIP, and
+    the close-out's own figures are FILE READS ONLY (`RCA-12`). The gate-8 record is
+    `archive/reviews/2026-09-27-U-OVERLAY-doc-review.md` (gitignored provenance).** **THE TRACKERS THIS PASS ANNOTATED
+    IN THE SAME WINDOW, none of them changing a normative clause of this file: `docs/pending.md`'s `SCH-12` row (its
+    stale clauses annotated beside their as-written text) and `§L-4h` (`CLOSED`, with its carried items named) ·
+    `docs/decisions.md` (amendment note `25` appended, and the `E5-B-1` precedent's discharge annotated BESIDE the
+    `E5-B-*` close-out note — **this contract's authority for its declaration class**) · `docs/next-steps.md` (the `E9`
+    row's move, the totals paragraph, the pickup's `§1`/`§3`/`§4`/`§5`, the wave-`E` plan block and the `E8` handover
+    pointer) · `docs/specs/overlay-review.md` and `docs/specs/overlay-greens.md` (their own dated close-out
+    annotations) · and **`docs/FORKER.md`, where the unit's row now reads `DONE` with the seam/glossary carry recorded
+    as `OWED` in its own words.** **STILL OWED AFTER THIS CLOSE-OUT, AND STATED AS OWED RATHER THAN SMOOTHED — the
+    items of the DONE row's clause (12) restated here so a reader of THIS file cannot miss them: (a) the blind set's
+    `POST-GREEN` targeted re-drive; (b) the EXECUTED-VERSUS-DECLARED DISTINCT GAP (`3` executed against the printed
+    `101` — a declared shortfall of `98`), a printed reading and not a defect to tune away; (c) the `docs/FORKER.md`
+    carry of the two signatures, the three types and the refusal (owner: whatever pass next touches that file; it gates
+    no unit); (d) the `P-OV-TP-1` drawn pool's UNDRAWN MEMBER (a stated coverage fact the row's `(bounded)` marking
+    makes honest); (e) the two `[T]`-pinned TYPE halves, which have NO runtime falsifier and are pinned by leg 5's
+    strict `tsc` alone; and (f) the ONE CONTRACT-WORDING ITEM THIS PASS DID NOT REPAIR: `§2.4` item 2's printed identity
+    `removal === (value !== true)` is not satisfiable as a strict equation on both arms (the set arm's `value` is the
+    string `'true'`) — the DECLARED PAIR is what this contract's own table pins and what the module implements, the
+    blind set recorded the choice rather than filing a FAIL against it, and the resolution is a dated annotation in a
+    future pass.** **THE AS-FILED CELLS OF THIS BLOCK ABOVE (items 1–10, including item 5's *"THE GATE RECORDS AFTER
+    THIS ONE: NONE"* and item 7's *"THE TRACKER RESIDUES THIS FILING LEAVES"*) ARE THAT FILING'S OWN DATED READING,
+    KEPT VISIBLE AND NOT REWRITTEN (`RCA-8(d)`; the as-filed item 1's *"NOTHING IS IMPLEMENTED AND NOTHING IS GREEN"*
+    is superseded twice over by the dated annotations at `§0A` notes 8/9/10 and by this item).** *THE FIGURES IN THIS
+    ITEM ARE THE SUPERVISOR'S MEASUREMENTS AND THIS PASS'S OWN FILE READS, QUOTED WITH THAT OWNERSHIP; this closing
+    pass ran no suite, no leg, no `tsc`, no build, no Electron boot and made no commit.*
 
 ---
 
