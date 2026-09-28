@@ -2425,6 +2425,18 @@ const NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_PATHS: ReadonlyArray<{ readonly p
     unit: 'the PROCESS pass that landed the additive test-layer leg (`AGENTS.md` item 4 — `npm run typecheck:tests`): its whole-tree `tests/**` TYPE-ANNOTATION pass (a modified test file, or one of the three NEW `tests/fixtures/*.d.mts` scenario declarations) — NOT this unit',
   })),
   {
+    path: 'tests/focus-model.test.ts',
+    unit: "the FOCUS-TOOL unit (`F3` / `U-FOCUS-TOOL`) — its SPEC-EXISTENCE ROW inside the consumed module's test file was FLIPPED by the F3 TestWriter pass (`focus-tool.md` `§5.2` item 4 `N-5`: the spec IS filed). The file belongs to `U-FOCUS-MODEL` (`F2`, `DONE`); the ONE flipped row is F3's own same-commit obligation — NOT this unit",
+  },
+  {
+    path: 'tests/focus-tool.test.ts',
+    unit: 'the FOCUS-TOOL unit (`F3` / `U-FOCUS-TOOL`) — its TestWriter RED SET (the unit\'s own `§5.1` allow-list row 5 path), declared here by the pass that authored it so the diff-scope accounting names an owner instead of reporting it as a finding — NOT this unit',
+  },
+  {
+    path: 'tests/focus-tool-register.ts',
+    unit: 'the FOCUS-TOOL unit (`F3` / `U-FOCUS-TOOL`) — the module carrying its `§5.5.1` PROPERTY REGISTER (`17` typed rows + the harness; a non-test module, so vitest never collects it as a suite), declared here by the pass that authored it — NOT this unit',
+  },
+  {
     path: 'docs/specs/user-flow-audit.md',
     unit: 'the DIVERGENCE/HARNESS unit (`U-DIVERGENCE-EXT`, ledger row `C2`) — its DOCUMENTATION pass FILED this spec and discharged the gap `U-GAP-1` (`docs/specs/gutter-ui.md` `§5.U`’s dated discharge note) — NOT this unit',
   },
@@ -4517,7 +4529,7 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
         isAccountedFor(CONTROL_DECLARED_TEST_LAYER_PATH),
         rawDenied.filter((path) => !isAccountedFor(path)),
       ],
-      `R-12 §3.4 — CONTROL (m, THE ACCOUNTING RULE DRIVEN BOTH WAYS — LIVE AND SYNTHETIC): (1) \`E3\`'s OWN file \`${TEST_RELPATH}\` IS accounted for, so the rule does not fail everything; (2) the synthetic UNDECLARED denied path \`${CONTROL_UNDECLARED_DENIED_PATH}\` — a \`tests/**\` name on NO disk, claimed by NOBODY, hence denied by \`isDeniedPath\` in the RAW reading — is **NOT** accounted for, so **an UNDECLARED path STILL FAILS the rule** (\`docs/specs/gutter.md\` §5.1's own sentence, applied rather than bent); (3) the DECLARED test-layer-leg path \`${CONTROL_DECLARED_TEST_LAYER_PATH}\` IS accounted for and its declaring unit is NAMED, so the declaration does the work the arm relies on; and (4) **on the LIVE reading every raw denied path is accounted for** — the 26 declared test-layer/config paths, the sibling's own spec, and the paths this row reports as findings. **READS:** ${JSON.stringify(
+      `R-12 §3.4 — CONTROL (m, THE ACCOUNTING RULE DRIVEN BOTH WAYS — LIVE AND SYNTHETIC): (1) \`E3\`'s OWN file \`${TEST_RELPATH}\` IS accounted for, so the rule does not fail everything; (2) the synthetic UNDECLARED denied path \`${CONTROL_UNDECLARED_DENIED_PATH}\` — a \`tests/**\` name on NO disk, claimed by NOBODY, hence denied by \`isDeniedPath\` in the RAW reading — is **NOT** accounted for, so **an UNDECLARED path STILL FAILS the rule** (\`docs/specs/gutter.md\` §5.1's own sentence, applied rather than bent); (3) the DECLARED test-layer-leg path \`${CONTROL_DECLARED_TEST_LAYER_PATH}\` IS accounted for and its declaring unit is NAMED, so the declaration does the work the arm relies on; and (4) **on the LIVE reading every raw denied path is accounted for** — the 29 declared test-layer/config paths, the sibling's own spec, and the paths this row reports as findings. **READS:** ${JSON.stringify(
         {
           e3OwnFile: isAccountedFor(TEST_RELPATH),
           undeclaredControl: [
@@ -4884,7 +4896,7 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       true,
       true,
       false,
-      26,
+      29,
     ])
     // (n) **⟶ ADDED 2026-09-27 (THE CROSS-UNIT SIBLING-REGISTRY REPAIR, `E4`/`U-RELOCATE`'s RED
     //     SET) — THE NEW `E4` DECLARATION, DRIVEN ON THE DECLARED PATH ITSELF AND ON ALL FOUR

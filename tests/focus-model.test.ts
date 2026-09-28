@@ -895,7 +895,10 @@ describe('§3.5 X-1..X-6 + §3.4 R-3(config) / R-14 / R-6(no-importer) — the r
   it('X-3 / X-6 — the TWO INPUT RECORDS exist and are FROZEN for this unit', () => {
     expect(existsSync(join(ROOT, 'docs', 'specs', 'focus-model-review.md')), 'X-6 — the gate-1 record must exist (its FAIL means this contract\'s authority is gone).').toBe(true)
     expect(existsSync(join(ROOT, 'docs', 'specs', 'focus-model-adoption-dossier.md')), 'X-6 — the STEP-0 dossier must exist.').toBe(true)
-    expect(existsSync(join(ROOT, 'docs', 'specs', 'focus-tool.md')), '§5.1 item 12 — `F3`\'s spec is OWED at filing, so its absence is the recorded state (a DENIED path either way; this row records which).').toBe(false)
+    // ⟶ FLIPPED by the `F3`/`U-FOCUS-TOOL` TestWriter pass: `docs/specs/focus-tool.md` IS
+    // filed, so the consumed module's SPEC-EXISTENCE ROW reads `true` (`focus-tool.md`
+    // `§5.2` item 4 `N-5`).
+    expect(existsSync(join(ROOT, 'docs', 'specs', 'focus-tool.md')), "§5.2 item 4 N-5 — `F3`'s spec IS filed, so this row reads `true` (the same-commit spec-existence obligation).").toBe(true)
   })
 
   it('X-4 / R-14 — THE PAGE-DESIGN ABSENCE PROBE: `docs/skills/designing-pages.md` does NOT exist', () => {
