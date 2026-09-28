@@ -55,6 +55,10 @@ import {
   liveMutatingMethods, liveValidGroups, focusRouteSource, routeRegion, routeMarkerExtent,
   routeHandlerExtent, inRouteRegion, assertDeclaredShape, assertOptionalMember, keysOf,
   recorder, newServer, callTool, callHandler, assertOneFocusCall, thrown,
+  consumerResolution, holderResolution, shapeOf, guardedKeysOf, consumerVerbOf,
+  wiringSource, wiringFocusRegion, wiringIdPolicySites, wiringVerbChoiceSites,
+  wiringRefusalDerivationSites,
+  type ConsumerResolutionCall,
 } from './focus-tool-register.js'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -764,6 +768,17 @@ describe('§5.5.1 / §5.5.4 — THE EXECUTED PROPERTY REGISTER (20 typed rows / 
     // per-row state: the register is RED here precisely because the tool does not exist yet,
     // and its un-run rows must be reported as failures rather than absorbed.
     REGISTER_DIAGNOSTICS = reportDiagnostics(report)
+    // THE READINGS, PRINTED ONE LINE AT THE EXECUTION SITE (`REGISTER-ATTEMPT-TOTALS-
+    // PRINT-THEIR-TERMS`): the declared total WITH its twenty terms, `rowsExecuted`,
+    // `registerStoppedAt`, and every row that is `broken` — so the gate-4 red run's
+    // report carries the register's own figures verbatim rather than a summary.
+    process.stdout.write(
+      `FOCUS-TOOL REGISTER READINGS :: termsDeclared=${report.termsDeclared} totalDeclared=${report.totalDeclared} `
+      + `attemptsExecuted=${report.attemptsExecuted} rowsExecuted=${report.rowsExecuted} rows=${report.rows.length} `
+      + `registerStoppedAt=${String(report.registerStoppedAt)} unrun=${JSON.stringify(report.unrunRows)} `
+      + `broken=${JSON.stringify(report.rows.filter((r) => r.state === 'broken').map((r) => r.id))} `
+      + `terms=${JSON.stringify(report.rows.map((r) => r.declaredTerm))}\n`,
+    )
     expect(
       report.unrunRows,
       `REGISTER — un-run rows are FAILURES, never passes. termsDeclared=${report.termsDeclared} · totalDeclared=${report.totalDeclared} · attemptsExecuted=${report.attemptsExecuted} · rowsExecuted=${report.rowsExecuted} · rows=${report.rows.length} · registerStoppedAt=${String(report.registerStoppedAt)} · un-run=${JSON.stringify(report.unrunRows)} · PER ROW: ${perRow}`,
@@ -901,5 +916,318 @@ describe('§5.5.1 / §5.5.4 — THE EXECUTED PROPERTY REGISTER (20 typed rows / 
     const allDrives = REGISTER.flatMap((r) => r.drives.map((d) => d.label))
     expect(allDrives.some((l) => /window|rendered surface|geometry|pointer|gesture|display|OS\b/i.test(l)), 'REGISTER §5.5.2 item 6 — no row drives a rendered surface, a window, an OS, a display, a transport peer or a human gesture: the excluded shapes are a BOUNDARY, not a gap.').toBe(false)
     expect(allDrives.some((l) => /real ipc|socket|electron window/i.test(l)), 'REGISTER §5.5.2 item 4 — the two reading classes are kept apart: a stub-driven row is [T] evidence about THE ROUTE, not about the real renderer.').toBe(false)
+  })
+})
+
+// ===========================================================================
+// 12. THE GATE-4 REGRESSION ROWS (`§0A` note 8, obligations (i)/(ii)) — RED-FIRST
+// ===========================================================================
+// THE FIVE DISPOSITIONS ARE THE AUTHORITY (`§0A` note 8): (1) a NON-OBJECT
+// arguments member IS REFUSED, never routed as an empty call; (2) the RENDERER
+// WIRING HOLDER IS THE ENTRY-RESOLUTION AUTHORITY — the route passes the caller's
+// value THROUGH UNINTERPRETED, the HOLDER resolves whether an entry exists and
+// what the active id is, and ONLY THE CONSUMER'S OWN ANSWER MAY PRODUCE A REFUSAL;
+// (3) the REFUSAL MAPPING is NON-LOSSY on the declared members and NEVER emits a
+// member whose value is `undefined`; (4) the THROW-CLASS claim is STABLE FOR
+// OWN-KEY VIOLATIONS ONLY (the wider reading is WITHDRAWN); (5) the reprints are
+// contract arithmetic, not a host behaviour.
+//
+// ROW STATES ENUMERATED FIRST (one happy path per state, one fail-safe per
+// documented fail-state), THEN the rows:
+//   G4-A  the six non-object arguments forms: number · boolean · string · Date ·
+//         Map · function — each REFUSED, naming its rejected form, NO renderer call.
+//   G4-B  the holder's own resolution: an EXISTING entry ACTIVATED BY IDENTITY ·
+//         the seeded-state divergence · the execution of the activation transition.
+//   G4-C  the refusal mapping: the declared members survive; no member is `undefined`.
+//   G4-D  the throw class: stable for OWN-KEY violations; the engine's own error may
+//         cross otherwise (the withdrawn wider claim is NOT re-asserted).
+// EVERY row drives the LIVE route (`tools/call`), never a handler call, so the
+// schema path is live and the renderer-call count is the tool's own behaviour.
+// ===========================================================================
+/** The rejected-form descriptor, read out of the message: a refusal that does not
+ *  NAME its rejected form is a refusal this row FAILS. THE FORM IS ITS OWN WORD
+ *  (`\bdate\b`, `\bmap\b`, `\bfunction\b`) — never a substring of prose, so the
+ *  read cannot pass by accident. */
+const rejectedForm = (message: string, form: string): boolean =>
+  new RegExp(`(?:^|[^A-Za-z0-9_$])${form}(?:$|[^A-Za-z0-9_$])`, 'i').test(message)
+
+/** The route's DECLARED validation error, matched on the tool's own two words —
+ *  a bare "it threw" is not this row's subject (`§3.3 I-13`). */
+const validationError = (message: string): boolean =>
+  /argument/i.test(message) && /declared shape/i.test(message)
+
+/** The engine's OWN error class, as opposed to the tool's two declared throws
+ *  (`§0A` note 8, defect 4: *the class is stable for OWN-KEY violations*). */
+const engineError = (message: string): boolean => !validationError(message) && !/renderer not ready/i.test(message)
+
+describe('§0A note 8, defect 1 — a NON-OBJECT arguments member IS REFUSED, NEVER ROUTED (obligation (i))', () => {
+  it('G4-A1 — a number, a boolean, a string, a `Date`, a `Map` and a function are EACH REFUSED at validation, naming their rejected form', async () => {
+    const forms: Array<{ form: string; args: unknown; descriptor: string }> = [
+      { form: 'a number', args: 42, descriptor: 'number' },
+      { form: 'a boolean', args: true, descriptor: 'boolean' },
+      { form: 'a string', args: 'target', descriptor: 'string' },
+      { form: 'a Date', args: new Date(0), descriptor: 'date' },
+      { form: 'a Map', args: new Map<string, string>([['target', 'a']]), descriptor: 'map' },
+      { form: 'a function', args: (): unknown => undefined, descriptor: 'function' },
+    ]
+    for (const drive of forms) {
+      const rec = recorder([{ activeId: null, entries: [], opened: false }])
+      const message = await thrown(() => callTool(newServer(rec.backend), TOOL_NAME, drive.args))
+      expect(message, `G4-A1 [${drive.form}] — \`§0A\` notes 3/8, defect 1: a NON-OBJECT arguments member is REFUSED (a throw), NEVER ROUTED as an empty call. A returned value here is the malformed call LOOKING like a legal no-argument call.`).not.toBe(null)
+      expect(message, `G4-A1 [${drive.form}] — and the refusal NAMES ITS REJECTED FORM (\`number\`/\`boolean\`/\`string\`/\`Date\`/\`Map\`/\`function\`); a refusal that does not name what it rejected FAILS. Measured: ${String(message)}`).toContain('argument')
+      expect(rejectedForm(String(message), drive.descriptor), `G4-A1 [${drive.form}] — the rejected form is NAMED (\`\bnumber\b\`, \`\bdate\b\`, \`\bmap\b\`, \`\bfunction\b\` …). Measured: ${String(message)}`).toBe(true)
+      // AND THE SECOND, LOAD-BEARING HALF OF THE SAME CLAUSE: the malformed call
+      // may not be SERVICED as an empty one. A `Date` or a `Map` is a RECORD to the
+      // envelope, so the landed handler reaches it, finds no own keys and
+      // dispatches an EMPTY argument set — which is the measured defect (\`§0A\`
+      // note 8, defect 1: *A MALFORMED CALL LOOKS LIKE A LEGAL NO-ARGUMENT CALL*).
+      // AND IT IS THE CALL THE CONTRACT FORBIDS THAT FAILS HERE: where a member IS
+      // serviced, `message` is `null` above and no descriptor read can rescue it —
+      // the row is RED at THAT assertion rather than at this one.
+      expect(/argument/i.test(String(message)), `G4-A1 [${drive.form}] — the refusal is about the ARGUMENTS member, not about the call: the member is what the declared shape cannot describe. Measured: ${String(message)}`).toBe(true)
+      expect(rec.calls, `G4-A1 [${drive.form}] — and NO RENDERER CALL may occur: the refusal is thrown BEFORE any renderer call is attempted (\`§0A\` note 3(d), \`I-12\`). Measured: ${JSON.stringify(rec.calls)}`).toEqual([])
+    }
+  })
+
+  it('G4-A2 — the OMITTED arguments member and `{}` stay the SAME legal call (the fence is on a NON-OBJECT member, not on emptiness)', async () => {
+    for (const shape of [{ label: 'the arguments member OMITTED', args: undefined, omit: true }, { label: 'the empty arguments object', args: {}, omit: false }]) {
+      const rec = recorder([{ activeId: null, entries: [], opened: false }])
+      const message = await thrown(() => callTool(newServer(rec.backend), TOOL_NAME, shape.args, { omitArguments: shape.omit }))
+      expect(message, `G4-A2 [${shape.label}] — \`§0A\` note 3(a): an omitted arguments member is the SAME CALL as \`{}\`, and neither is refused.`).toBe(null)
+      assertOneFocusCall(rec, `G4-A2 [${shape.label}]`)
+    }
+  })
+
+  it('G4-A3 THE FALSIFIER — a body that ROUTES a non-object member as an empty call FAILS these reads (the readings are real, not vacuous)', () => {
+    const routedAsEmpty: unknown[] = []
+    const route = (args: unknown): number => { routedAsEmpty.push(args); return routedAsEmpty.length }
+    expect(route(new Date(0)), 'G4-A3 falsifier (a) — a body that pushes the member onto the renderer-call log IS caught: the log is non-empty, so "no renderer call occurred" FAILS.').toBe(1)
+    expect(routedAsEmpty, 'G4-A3 falsifier (a) — the routed member is the CALLER\'S OWN value, handed on as though it were a legal call.').toHaveLength(1)
+    // A refusal that does NOT name its rejected form FAILS the descriptor read,
+    // and the real refusal DOES name it (both directions driven here).
+    expect(rejectedForm('provident.focus: malformed arguments — the declared shape is { target?, newTab? }', 'date'), 'G4-A3 falsifier (b) — a refusal that does NOT name its rejected form FAILS the descriptor read.').toBe(false)
+    expect(rejectedForm("provident.focus: malformed arguments — a Date is not the declared shape { target?, newTab? }", 'date'), 'G4-A3 falsifier (b) — and a refusal that DOES name it passes, so the read is not vacuous.').toBe(true)
+    // AND A RETURNED VALUE WHERE THE CONTRACT REQUIRES A THROW FAILS: `thrown`
+    // reports `null` for a body that SERVICES the malformed call, which is exactly
+    // how the landed handler's empty-call dispatch reddens G4-A1.
+    expect(route(new Map()), 'G4-A3 falsifier (c) — the empty-call route is exactly the defect: it hands on a member the declared shape cannot describe.').toBe(2)
+  })
+
+  it('G4-A4 — THE HANDLER-LEVEL COMPANION: a non-object member with NO OWN KEYS reaches the handler as an EMPTY CALL (the defect `§0A` note 8, defect 1 measured)', async () => {
+    // THIS ROW IS THE MEASURED DEFECT'S OWN DRIVE, AND ITS INSTRUMENT IS STATED
+    // HONESTLY: the LIVE route (`tools/call`, G4-A3/G4-A5) never reaches it,
+    // because the engine's own JSON-RPC envelope refuses a non-record `arguments`
+    // member first — so the empty-call dispatch is observable ONE LAYER DOWN, at
+    // the registered handler, and that is where `§0A` note 8, defect 1 measured it
+    // (*the landed handler skips validation for a member with no own keys and
+    // dispatches an EMPTY argument set*). The row's claim is the contract's: the
+    // malformed member must be REFUSED, so a serviced call FAILS here.
+    for (const form of [{ label: 'a `Date`', args: new Date(0) }, { label: 'a `Map`', args: new Map<string, string>([['target', 'a']]) }]) {
+      const rec = recorder([{ activeId: null, entries: [], opened: false }])
+      const message = await thrown(() => callHandler(newServer(rec.backend), TOOL_NAME, form.args))
+      expect(message, `G4-A4 [${form.label}] — a non-object arguments member is REFUSED, never routed as an empty call (\`§0A\` note 8, defect 1; \`§0A\` note 3(d)/(f)). A serviced call here is the malformed call LOOKING LIKE a legal no-argument call. Measured: ${String(message)}`).not.toBe(null)
+      expect(rejectedForm(String(message), form.label.includes('Date') ? 'date' : 'map'), `G4-A4 [${form.label}] — and the refusal NAMES its rejected form. Measured: ${String(message)}`).toBe(true)
+      expect(rec.calls, `G4-A4 [${form.label}] — and no renderer call is made for the malformed member. Measured: ${JSON.stringify(rec.calls)}`).toEqual([])
+    }
+  })
+
+  it('G4-A5 — the refusal is thrown BEFORE any renderer call, driven live (the schema path is LIVE, never a handler call)', async () => {
+    const rec = recorder([{ activeId: 'a', entries: ['a'], opened: false }])
+    const message = await thrown(() => callTool(newServer(rec.backend), TOOL_NAME, 7))
+    expect(message, 'G4-A4 — the live route (`tools/call`) refuses the non-object member too: the schema path is what this row measures.').not.toBe(null)
+    expect(rec.calls, 'G4-A4 — and the malformed call crosses NO IPC boundary.').toEqual([])
+    const okRec = recorder([{ activeId: null, entries: [], opened: false }])
+    expect(await thrown(() => callTool(newServer(okRec.backend), TOOL_NAME, { target: 'a' })), 'G4-A4 — the SAME route services a declared shape: the refusal is about the member\'s form, not about the call.').toBe(null)
+    assertOneFocusCall(okRec, 'G4-A4')
+  })
+})
+
+describe('§0A note 8, defect 2 — the holder is the ENTRY-RESOLUTION AUTHORITY; the route hands the caller\'s value through UNINTERPRETED', () => {
+  it('G4-B1 — the caller\'s own members are handed through UNINTERPRETED: the consumer never learns an id the CALLER did not supply', async () => {
+    const consumer = consumerResolution()
+    // THE CONTROL HALF: the consumer's resolution is itself driven once, so the
+    // reading below is about the FORWARDED PAYLOAD rather than about an answer the
+    // harness assumed.
+    const controlAnswer = (await consumer.backend.invoke(METHOD, { target: 'a' })) as Record<string, unknown>
+    expect(Object.keys(controlAnswer).sort(), 'G4-B1 control — the consumer\'s own resolution REFUSES this call (an id the caller never supplied against an empty holder), so the payload read below is not vacuous.').toEqual([...DECLARED_MEMBERS].sort())
+    const got = (await callTool(newServer(consumer.backend), TOOL_NAME, { target: 'a' })) as Record<string, unknown>
+    expect(Object.keys(got).sort(), 'G4-B1 — the route returned the consumer\'s own answer shape for the same call, unaltered.').toEqual(Object.keys(controlAnswer).sort())
+    const forwarded = consumer.calls[1]?.payload
+    expect(forwarded, 'G4-B1 — the second recorded call is the LIVE route\'s own forwarding.').not.toBe(undefined)
+    expect(Object.keys(forwarded as object).sort(), 'G4-B1 falsifier (a) — THE ROUTE MAY NOT CONSTRUCT AN ID: a forwarded `id` the caller never supplied is a SECOND ID POLICY (`§2.3` item 1) and FAILS. Measured: ' + JSON.stringify(forwarded)).toEqual(['target'])
+    expect((forwarded as Record<string, unknown>)['target'], 'G4-B1 — the caller\'s own `target`, uninterpreted (no trim, no coercion, no substitution, no lookup).').toBe('a')
+  })
+
+  it('G4-B2 — a seeded holder state makes the DIVERGENCE observable: the route is handed a member the caller never supplied', async () => {
+    // THE SEEDED STATE (the consumed module's own record shape) makes the two
+    // readings differ, so this row is not a tautology:
+    //   a route that handed `{ target: 42 }` through → the holder's own resolution
+    //     takes the OPEN arm under `§2.3` item 1 (the caller's own value IS the
+    //     legal entry id) and the entry is ADDED;
+    //   the landed route hands `{ id: 42, target: 42 }` → the consumer's
+    //     resolution refuses `unknown-id`, because `42` is an id the caller never
+    //     supplied.
+    const consumer = consumerResolution({ entries: [{ id: 'a', target: 'a' }], activeId: null })
+    const got = (await callTool(newServer(consumer.backend), TOOL_NAME, { target: 42 })) as Record<string, unknown>
+    const decided = consumer.calls[0] as ConsumerResolutionCall
+    const expected = shapeOf(holderResolution(consumer.priorState(0), decided.payload, consumerVerbOf(decided.verb, decided.payload)))
+    expect(got['activeId'], 'G4-B2 — the route\'s returned identity must be the identity the HOLDER\'S OWN RESOLUTION decided, never an id constructed from the target and never a refusal the route derived itself (`§0A` note 8, defect 2).').toBe(expected.activeId)
+    expect(got['entries'], 'G4-B2 — and the entries the holder\'s own resolution produced: no entry was added or dropped by the route.').toEqual(expected.entries)
+    expect(Object.keys(decided.payload as object).sort(), 'G4-B2 falsifier (a) — THE CONSTRUCTED ID, observed at the forwarding seam: the payload carries a member the caller never supplied. Measured: ' + JSON.stringify(decided.payload)).toEqual(['target'])
+    expect(decided.id, 'G4-B2 falsifier (a) — and the identity the consumer was asked with is the ROUTE\'S construction, not a value the caller supplied. Measured: ' + JSON.stringify(decided.id)).toBe(42)
+  })
+
+  it('G4-B3 — an EXISTING entry is ACTIVATED BY IDENTITY: the tool compared nothing and appended nothing', async () => {
+    const consumer = consumerResolution({ entries: [{ id: 'a', target: 'a' }], activeId: null })
+    const got = (await callTool(newServer(consumer.backend), TOOL_NAME, { target: 'a' })) as Record<string, unknown>
+    const decided = consumer.calls[0] as ConsumerResolutionCall
+    const expected = shapeOf(holderResolution(consumer.priorState(0), decided.payload, consumerVerbOf(decided.verb, decided.payload)))
+    expect(got['activeId'], `G4-B3 — the existing entry's own id, read out of the state the holder carries: the route looked nothing up. Measured: ${JSON.stringify(got)}`).toBe('a')
+    expect(got['entries'], 'G4-B3 — and NO APPEND: the existing entry is activated, never duplicated.').toEqual(['a'])
+    expect(got, 'G4-B3 — the answer is the holder\'s own: the route returned no member the holder\'s resolution did not produce.').toEqual(expected)
+    // AND THE FALSIFIER THE IDENTITY CLAIM NEEDS: an ACTIVE-BY-IDENTITY call must
+    // be asked with the identity the HOLDER\'S OWN resolution decides — a route that
+    // constructed its own id is observable right here even when the two answers
+    // coincide, because the identity is read at the forwarding seam.
+    expect(decided.id, 'G4-B3 — the identity the consumer was asked with is the existing entry\'s own id, read out of the holder\'s state.').toBe(expected.activeId)
+    expect(Object.keys(decided.payload as object).sort(), 'G4-B3 falsifier (a) — and the payload carries the caller\'s own members only: a constructed id is a SECOND ID POLICY. Measured: ' + JSON.stringify(decided.payload)).toEqual(['target'])
+  })
+
+  it("G4-B4 — THE ACTIVATION TRANSITION IS EXECUTED: the holder's OWN resolution decided the answer (the PBT audit's over-strength finding)", async () => {
+    // THE ROW THE PBT AUDIT SAID WAS MISSING: the activation claim had NO EXECUTED
+    // ROW THAT REACHES THE TRANSITION. This row DRIVES an existing entry through the
+    // LIVE route and asserts the holder's own resolution decided it — the resolution
+    // is run on the state the surface carries, and the route's verb is then checked
+    // against the answer the HOLDER'S OWN resolution gives for the SAME payload.
+    const consumer = consumerResolution({ entries: [{ id: 'a', target: 'a' }], activeId: null })
+    const got = (await callTool(newServer(consumer.backend), TOOL_NAME, { target: 'a' })) as Record<string, unknown>
+    const decided = consumer.calls[0] as ConsumerResolutionCall
+    expect(decided.accepted, 'G4-B4 — the holder\'s resolution ACCEPTED the call: the transition EXECUTED (an un-run row is a FAILURE, never a pass — `AGENTS.md` item 11(b)).').toBe(true)
+    expect(consumer.state().activeId, 'G4-B4 — and the transition SEATED the entry in the state the holder itself carries (`§2.3` item 6(c)).').toBe('a')
+    expect(decided.verb, 'G4-B4 falsifier (b) — THE SELF-CHOSEN VERB: the consumer resolved the verb from the CALLER\'S OWN `newTab` (`open`/`activate`, `§0A` note 8, defect 2).').toBe('activate')
+    const expected = shapeOf(holderResolution(consumer.priorState(0), decided.payload, consumerVerbOf(decided.verb, decided.payload)))
+    expect(got, 'G4-B4 — the LIVE route\'s answer is the answer the HOLDER\'S OWN resolution produced for its own payload: a verb the route chose itself diverges here.').toEqual(expected)
+    expect(Object.keys(decided.payload as object).sort(), 'G4-B4 falsifier (a) — the constructed id, in the same drive: the payload must carry the caller\'s own members only. Measured: ' + JSON.stringify(decided.payload)).toEqual(['target'])
+  })
+})
+
+describe('§0A note 8, defect 3 — the refusal mapping is NON-LOSSY and NEVER `undefined`-valued', () => {
+  it('G4-C1 — a well-formed refusal keeps the DECLARED members and carries no member whose value is `undefined`', async () => {
+    const answer = { activeId: null, entries: [], opened: false, refused: { reason: 'unknown-id' } }
+    const got = (await callTool(newServer(recorder([answer]).backend), TOOL_NAME, { target: 'z' })) as Record<string, unknown>
+    expect(got, "G4-C1 — every declared member survives the mapping, `reason` is the CONSUMER's own string carried VERBATIM (`§0A` note 4).").toEqual(answer)
+    expect(Object.keys(got['refused'] as object), 'G4-C1 — and `refused`\'s own key set is exactly the declared one.').toEqual(['reason'])
+    expect((got['refused'] as Record<string, unknown>)['reason'], 'G4-C1 — never `refused: { reason: undefined }`.').not.toBe(undefined)
+  })
+
+  it('G4-C2 — a refusal whose source LACKS a member never yields an own key with an `undefined` value, and drops no declared member', async () => {
+    const answer = { activeId: null, entries: [], opened: false, refused: {} }
+    const got = (await callTool(newServer(recorder([answer]).backend), TOOL_NAME, { target: 'z' })) as Record<string, unknown>
+    const nested = got['refused'] as Record<string, unknown>
+    expect(Object.keys(got).sort(), 'G4-C2 — the DECLARED members of the returned object survive the mapping: no declared member is collapsed into, or dropped by, the refusal record.').toEqual([...DECLARED_MEMBERS].sort())
+    expect(Object.prototype.hasOwnProperty.call(nested, 'reason'), 'G4-C2 — A REFUSAL WHOSE SOURCE LACKS A MEMBER MUST NOT GAIN THAT MEMBER: no own key with an `undefined` value. Measured: ' + JSON.stringify(got)).toBe(false)
+    expect(Object.values(nested).every((v) => v !== undefined), 'G4-C2 — and no member of the refusal record is present as `undefined`.').toBe(true)
+    expect(Object.values(got).every((v) => v !== undefined), 'G4-C2 — nor of the returned object itself (`I-6`; `RS-1`; `§6` item 5).').toBe(true)
+    // THE DECLARED-MEMBER SURVIVAL, DRIVEN ON `reason` ITSELF: the refusal record
+    // the consumer supplied is what ships — nothing is dropped and no substitute is
+    // minted (`§0A` note 4: the tool re-derives NOTHING from the refusal).
+    expect(nested, 'G4-C2 — the consumer\'s own refusal record survives the mapping BY VALUE: the route neither drops a member it carries nor invents one it does not.').toEqual({})
+    expect('reason' in nested, 'G4-C2 — and `reason` is NOT invented for a refusal whose source lacks it. Measured: ' + JSON.stringify(got)).toBe(false)
+  })
+
+  it('G4-C3 THE FALSIFIERS — a lossy mapping and an `undefined`-valued mapping each FAIL these reads (both halves)', () => {
+    const source = { activeId: null, entries: [], opened: false, refused: {} }
+    const lossy = (answer: Record<string, unknown>): Record<string, unknown> => {
+      const { refused: _dropped, ...rest } = answer
+      return rest
+    }
+    const undefinedValued = (): Record<string, unknown> => ({ activeId: null, entries: [], opened: false, refused: { reason: undefined } })
+    expect(Object.keys(lossy(source)).sort(), 'G4-C3 falsifier (a) — A LOSSY MAPPING drops a declared member and FAILS the survival read.').not.toEqual([...DECLARED_MEMBERS].sort())
+    expect(Object.prototype.hasOwnProperty.call(undefinedValued()['refused'] as object, 'reason'), 'G4-C3 falsifier (b) — A MAPPING THAT EMITS `refused` WITH AN `undefined` VALUE FAILS the own-key read: the key is PRESENT.').toBe(true)
+    expect(Object.values(undefinedValued()['refused'] as Record<string, unknown>).every((v) => v !== undefined), 'G4-C3 falsifier (b) — and it FAILS the no-undefined read too, so neither half is vacuous.').toBe(false)
+  })
+})
+
+describe('§0A note 8, defect 4 — the throw-class claim AT ITS NARROWED READING (own-key violations only)', () => {
+  it('G4-D1 — the class is STABLE for OWN-KEY violations: every drive throws the tool\'s OWN declared validation error, never a bare engine error', async () => {
+    const drives: Array<{ label: string; args: unknown }> = [
+      { label: 'a single unknown key', args: { id: 'x' } },
+      { label: 'a legal member with an unknown key', args: { target: 'a', extra: 1 } },
+      { label: 'an unknown key with a non-string value', args: { nope: Symbol('s') } },
+      { label: 'an unknown key supplied last', args: { target: 'a', newTab: true, zz: null } },
+    ]
+    for (const drive of drives) {
+      const rec = recorder([{ activeId: null, entries: [], opened: false }])
+      const message = await thrown(() => callTool(newServer(rec.backend), TOOL_NAME, drive.args))
+      expect(message, `G4-D1 [${drive.label}] — an OWN-ENUMERABLE KEY outside `+ '`{target, newTab}`' + ` is REFUSED (\`§0A\` note 3(d)).`).not.toBe(null)
+      expect(validationError(String(message)), `G4-D1 [${drive.label}] — the class is STABLE for OWN-KEY violations: the tool's own validation error, not the engine's. Measured: ${String(message)}`).toBe(true)
+      expect(rec.calls, `G4-D1 [${drive.label}] — and no renderer call is made on a rejected drive.`).toEqual([])
+    }
+  })
+
+  it('G4-D2 — the ENGINE\'S OWN error MAY CROSS OTHERWISE, and the WITHDRAWN wider claim is NOT re-asserted', () => {
+    // THE NARROWED READING, STATED AS A READING: the wider *"the class is stable
+    // across the WHOLE hostile pool"* claim is WITHDRAWN — a revoked or
+    // trap-throwing arguments proxy may let the ENGINE'S OWN error cross. This row
+    // therefore asserts NO universal over the hostile pool; it asserts only that the
+    // engine's error is DISTINGUISHABLE from the tool's two declared throws, so a
+    // later pass can tell the two apart rather than re-asserting the wider claim.
+    expect(engineError('Cannot read properties of a revoked proxy'), 'G4-D2 — the engine\'s own error class is distinguishable from the tool\'s validation error.').toBe(true)
+    expect(engineError('provident.focus: unknown argument \'id\' — the declared shape is { target?, newTab? }'), 'G4-D2 — and the tool\'s own validation error is NOT read as an engine error.').toBe(false)
+    expect(engineError('renderer not ready (timeout 5000ms)'), 'G4-D2 — nor is the readiness rejection (`§2.3` item 6: the tool\'s TWO declared throws).').toBe(false)
+    // AND THE HOSTILE POOL IS DELIBERATELY NOT DRIVEN THROUGH THE ROUTE: a
+    // JSON-RPC call cannot carry a `Proxy` or a `Symbol` (`§5.5.2` item 4b's
+    // instrument-reading class), so asserting a class over it would be
+    // over-reading this unit's instruments.
+    const proxy = new Proxy({ id: 'x' }, { ownKeys: (): never => { throw new Error('ownKeys trap') } })
+    expect(guardedKeysOf(proxy), 'G4-D2 — this unit\'s own key read is GUARDED, and the failure is the CONSUMER\'S own — never one invented by the tool (`§5.5.2` item 4b).').toBe(null)
+    // THE FALSIFIER: a row that re-asserted the withdrawn claim — "every hostile
+    // arguments shape throws the tool's OWN validation error" — FAILS, because the
+    // engineered proxy refuses at the ENGINE'S layer.
+    expect(engineError('ownKeys trap'), 'G4-D2 falsifier — a hostile arguments shape whose failure is the ENGINE\'S own is NOT the tool\'s validation class, so the withdrawn universal FAILS if it is re-asserted.').toBe(true)
+  })
+})
+
+// ===========================================================================
+// 13. THE GATE-4 ROWS AT THE WIRING'S OWN SITE (`§0A` note 8, defect 2) — RED-FIRST
+// ===========================================================================
+// WHY THESE ROWS READ THE WIRING'S BYTES, STATED PLAINLY: THE ROUTE SEAM IS NOT
+// WHERE THE DEFECT LIVES. The main-side handler forwards the caller\'s value and
+// returns the consumer\'s answer verbatim (measured live in G4-B1/G4-C1), so the
+// id-minting, the verb choice and the refusal derivation the gate-4 pass measured
+// are in THE RENDERER WIRING\'S holder call site — `focusRoute` in
+// `src/renderer/renderer.ts` — which the node suite cannot reach as a live drive
+// (no Electron boot; `§5.2` offers no `[U]`/`[D]` leg). The LIVE rows above keep the
+// route seam\'s own invariant; THESE rows pin the wiring\'s own decision, and they
+// are the ones RED against the landed wiring.
+describe('§0A note 8, defect 2 — the holder is the ENTRY-RESOLUTION AUTHORITY: the wiring mints no id, chooses no verb, derives no refusal', () => {
+  it('G4-E1 — the wiring region is LOCATABLE and NON-VACUOUS (the rows below read the tool\'s own role bytes, not a description of them)', () => {
+    const region = wiringFocusRegion()
+    expect(region, 'G4-E1 — the wiring\'s holder call site must be LOCATABLE: `function focusRoute(` is its marker (`§2.1` item 6, the layer map\'s site 6).').not.toBe(null)
+    const body = region as string
+    expect(body.length, 'G4-E1 — and the region is non-empty, so every reading below is non-vacuous.').toBeGreaterThan(50)
+    expect(body.includes('focusTransition'), 'G4-E1 — the region carries the model call site the holder role owns (`§2.1` item 7): the rows below measure a real region.').toBe(true)
+    expect(body.includes('focusRoute('), 'G4-E1 — the region STARTS at the tool\'s own function, never at a sibling\'s bytes.').toBe(true)
+  })
+
+  it('G4-E2 — THE ROUTE MAY NOT CONSTRUCT AN ID: the wiring builds no entry whose id is a value the CALLER never supplied', () => {
+    const body = wiringFocusRegion() as string
+    expect(wiringIdPolicySites(body), `G4-E2 falsifier (a) — THE CONSTRUCTED ID: the wiring must not build the entry the model is asked with (\`§2.3\` item 1: the caller\'s own string IS the legal entry id, and the HOLDER resolves it). Measured: ${JSON.stringify(wiringIdPolicySites(body))}`).toEqual([])
+    expect(wiringIdPolicySites("  const entry = { id: attempt.target, target: attempt.target }"), 'G4-E2 control — the id-policy pattern CAN hit: the falsifier is real, not a vacuous scan.').not.toEqual([])
+    expect(wiringIdPolicySites("  const answer = { activeId: state.activeId, entries: ids, opened: false }"), 'G4-E2 control — and ordinary ANSWER construction is NOT an id policy: the pattern is not over-broad.').toEqual([])
+  })
+
+  it('G4-E3 — THE ROUTE MAY NOT CHOOSE A VERB: the open/activate decision is the HOLDER\'S', () => {
+    const body = wiringFocusRegion() as string
+    expect(wiringVerbChoiceSites(body), `G4-E3 falsifier (b) — THE SELF-CHOSEN VERB: the wiring must not decide between \`open\` and \`activate\` itself (\`§2.1\` item 7, \`§0A\` note 8, defect 2). Measured: ${JSON.stringify(wiringVerbChoiceSites(body))}`).toEqual([])
+    expect(wiringVerbChoiceSites("  const verb = attempt.newTab === true ? 'open' : 'activate'"), 'G4-E3 control — the verb-choice pattern CAN hit.').not.toEqual([])
+    expect(wiringVerbChoiceSites("  const opened = result.changed"), 'G4-E3 control — and reading the holder\'s own answer is NOT a verb choice: the pattern is not over-broad.').toEqual([])
+  })
+
+  it('G4-E4 — THE ROUTE MAY NOT DERIVE A REFUSAL: the consumer\'s own answer is what ships', () => {
+    const body = wiringFocusRegion() as string
+    expect(wiringRefusalDerivationSites(body), `G4-E4 falsifier (c) — THE TOOL-DERIVED REFUSAL: the wiring must not extract a code out of the model\'s refusal record and ship it as the consumer\'s \`reason\` (\`§0A\` note 4: \`reason\` is the CONSUMER\'s own string, carried verbatim; \`§0A\` note 8, defect 2). Measured: ${JSON.stringify(wiringRefusalDerivationSites(body))}`).toEqual([])
+    expect(wiringRefusalDerivationSites('  refused: { reason: (result.refusals[0] as { code?: unknown })?.code }'), 'G4-E4 control — the refusal-derivation pattern CAN hit: the falsifier is real.').not.toEqual([])
+    expect(wiringRefusalDerivationSites("  const refused = answer['refused'] ?? null"), 'G4-E4 control — and passing the consumer\'s own refusal through is NOT a derivation.').toEqual([])
   })
 })

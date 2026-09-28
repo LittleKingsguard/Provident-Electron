@@ -283,6 +283,16 @@ import { dirname, join } from 'node:path'
 import { expect } from 'vitest'
 import { ProvidentMcpServer, type McpBackend } from '../src/main/mcp-server.js'
 import { SecurityGate, groupForTool } from '../src/main/security.js'
+// THE CONSUMED MODULE'S OWN RULE, IMPORTED BY THE HARNESS (never by the route —
+// `§2.5` item 1 forbids the route that import): the gate-4 rows that must EXECUTE
+// the activation transition replay the LIVE route's forwarded payload through the
+// holder's own resolution instead of accepting a canned stub answer.
+import { focusTransition, focusOrder, type FocusState } from '../src/shared/focus-model.js'
+
+/** THE TRANSITION RESULT'S OWN SHAPE — read from the landed function rather than
+ *  imported (the module exports its four value names and its five TYPES only, and
+ *  `FocusResult` is not one of the five: `docs/specs/focus-model.md` `§2.1`). */
+export type HolderAnswer = ReturnType<typeof focusTransition>
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const TOOL_NAME = 'provident.focus'
@@ -704,6 +714,166 @@ export function guardedKeysOf(value: unknown): string[] | null {
 
 export async function thrown(fn: () => Promise<unknown>): Promise<string | null> {
   try { await fn(); return null } catch (e) { return e instanceof Error ? e.message : String(e) }
+}
+
+// ===========================================================================
+// THE GATE-4 REGRESSION HARNESS (`docs/specs/focus-tool.md` `§0A` note 8)
+// ===========================================================================
+// THE FIVE DISPOSITIONS (`§0A` note 8) ARE THE AUTHORITY FOR THE ROWS THE TEST
+// FILE AUTHORS BESIDE THIS HARNESS. THE HARNESS ADDS **NOTHING** TO THE REGISTER:
+// no row id, no strategy id, no term, no cap, no seed and no cell moves — these
+// helpers serve the ROWS, not a register entry.
+
+/** **A CONSUMER'S OWN RESOLUTION SURFACE** — the renderer-wiring holder's role,
+ *  modelled on this side of the seam (`§0A` note 8, defect 2: *the holder is NAMED
+ *  AS THE ENTRY-RESOLUTION AUTHORITY … it is what holds `{entries, activeId}`*).
+ *
+ *  **IT IS NOT A CANNED ANSWER TABLE.** Every call is RESOLVED — by the consumed
+ *  module's OWN `focusTransition`, on the state this surface itself carries — and
+ *  the resolution is RECORDED, so a row can assert that the answer the LIVE route
+ *  returned is the answer the CONSUMER'S OWN RESOLUTION produced, rather than a
+ *  member the route supplied. A canned stub cannot carry that claim, which is why
+ *  the PBT audit's *"the activation transition is never executed"* finding is
+ *  closed by the rows that drive THIS surface. */
+export interface ConsumerResolutionCall {
+  readonly payload: unknown
+  readonly verb: unknown
+  readonly id: unknown
+  readonly reason: unknown
+  readonly accepted: boolean
+}
+
+export interface ConsumerResolution {
+  readonly calls: ConsumerResolutionCall[]
+  readonly backend: McpBackend
+  /** The state this surface carried BEFORE the call at `index` — the holder's own
+   *  prior state, which is what the *"the holder's own answer produced it"*
+   *  assertion replays the route's forwarded payload against. */
+  priorState(index: number): FocusState
+  state(): FocusState
+}
+
+export function consumerResolution(initial?: FocusState): ConsumerResolution {
+  const calls: ConsumerResolution['calls'] = []
+  const priors: FocusState[] = []
+  let carried: FocusState = initial ?? { entries: [], activeId: null }
+  const backend: McpBackend = {
+    async invoke(_method: string, args: unknown): Promise<unknown> {
+      const payload = (args ?? {}) as Record<string, unknown>
+      const attempt = payload as { readonly target?: unknown; readonly newTab?: unknown }
+      const prior = carried
+      priors.push(prior)
+      // THE HOLDER'S OWN RESOLUTION — the consumed module's rule, run on the
+      // state this surface holds. THE ROUTE'S PAYLOAD IS READ ONLY: the surface
+      // never learns what the route chose beyond what the route forwarded.
+      // AND THE VERB IS RESOLVED FROM THE CALLER'S OWN `newTab`, NOT FROM THE
+      // ROUTE'S PAYLOAD SHAPE: the consumer owns the open/activate choice
+      // (`§0A` note 8, defect 2), so the surface chooses it here.
+      if (!('target' in payload)) {
+        const answer = { activeId: prior.activeId, entries: entryIdsOf(prior), opened: false }
+        calls.push({ payload, verb: null, id: null, reason: null, accepted: true })
+        return answer
+      }
+      const verb: unknown = attempt.newTab === true ? 'open' : 'activate'
+      const id = 'id' in payload ? payload['id'] : attempt.target
+      const result = focusTransition(prior, verb, { id, entry: { id, target: attempt.target } })
+      const refusal = result.refusals[0] as { readonly code?: unknown } | undefined
+      calls.push({ payload, verb, id, reason: refusal?.code, accepted: result.accepted })
+      if (!result.accepted) {
+        return { activeId: prior.activeId, entries: entryIdsOf(prior), opened: false, refused: { reason: refusal?.code } }
+      }
+      carried = result.state
+      return { activeId: result.state.activeId, entries: entryIdsOf(result.state), opened: result.changed }
+    },
+  }
+  return {
+    calls, backend,
+    priorState: (index: number): FocusState => priors[index] ?? { entries: [], activeId: null },
+    state: (): FocusState => carried,
+  }
+}
+
+function entryIdsOf(state: FocusState): unknown[] {
+  return focusOrder(state.entries).map((entry) => (entry as { readonly id?: unknown }).id)
+}
+
+/** **THE VERB THE CONSUMER'S OWN RESOLUTION CHOSE** — read out of the forwarded
+ *  payload's own `newTab` (the caller's value, uninterpreted), NEVER out of the
+ *  route's payload shape: the open/activate choice is the CONSUMER'S (`§0A` note 8,
+ *  defect 2), so a route that chose it would make this reading diverge. */
+export function consumerVerbOf(_verb: unknown, payload: unknown): unknown {
+  const attempt = (payload ?? {}) as { readonly target?: unknown; readonly newTab?: unknown }
+  if (!('target' in (payload as Record<string, unknown>))) return null
+  return attempt.newTab === true ? 'open' : 'activate'
+}
+
+/** **THE HOLDER'S OWN RESOLUTION OF ONE FORWARDED PAYLOAD, REPLAYED** — the pure
+ *  reading the *"only the holder's own answer produced it"* rows compare the LIVE
+ *  route's answer against. It performs NO route step of its own: it runs the
+ *  consumed module's transition on the recorded prior state, under the verb the
+ *  consumer's resolution itself chose, and returns the result. A route that
+ *  CONSTRUCTS AN ID, CHOOSES A VERB or DERIVES A REFUSAL therefore diverges from
+ *  this reading — which is the falsifier `§0A` note 8 makes. */
+export function holderResolution(
+  prior: FocusState,
+  payload: unknown,
+  verb: unknown,
+): HolderAnswer {
+  const attempt = (payload ?? {}) as { readonly target?: unknown }
+  const id = (payload as Record<string, unknown>)['id'] ?? attempt.target
+  return focusTransition(prior, verb, { id, entry: { id, target: attempt.target } })
+}
+
+// ---- THE RENDERER WIRING's OWN BYTES (`§0A` note 8, defect 2) --------------
+/** **WHERE THE DEFECT LIVES, NAMED SO THE ROWS READ THE RIGHT REGION.** The
+ *  id-minting, the verb choice and the refusal derivation the gate-4 pass measured
+ *  are in **THE RENDERER WIRING'S holder call site** — `focusRoute` in
+ *  `src/renderer/renderer.ts` — NOT in the main-side handler: the main handler
+ *  forwards the caller\'s value and returns the answer verbatim (measured live),
+ *  so a row that read only the route seam could not REDDEN on the wiring\'s own
+ *  decision. `§2.1` item 6 / the layer map\'s site 6 is where that role sits. */
+export function wiringSource(): string {
+  return read(RENDERER_REL)
+}
+
+/** The wiring's own holder call site — from `function focusRoute(` to the
+ *  function\'s closing brace, so the rows read the region the holder is
+ *  constructed in and nothing else. */
+export function wiringFocusRegion(): string | null {
+  const src = wiringSource()
+  const start = src.indexOf('function focusRoute(')
+  if (start === -1) return null
+  const end = src.indexOf('\n}', start)
+  return end === -1 ? src.slice(start) : src.slice(start, end + 2)
+}
+
+/** **THE ID-POLICY SITES** — the falsifier shape `§0A` note 8, defect 2 names: the
+ *  wiring CONSTRUCTS the entry whose id is the caller\'s target (`entry = { id: …,
+ *  target: … }`), which is a SECOND ID POLICY against `§2.3` item 1 (*the caller\'s
+ *  own string IS the legal entry id*, and the holder resolves it). */
+export function wiringIdPolicySites(src: string): string[] {
+  return scanLines(src, /\bid\s*:\s*(?:attempt\.target|payload\.target|target)\b|\bentry\s*:\s*\{/)
+}
+
+/** **THE VERB-CHOICE SITES** — the wiring decides between the open and the
+ *  activate verb ITSELF (`opened ? \'open\' : \'activate\'`), a SECOND ACTIVATION
+ *  AUTHORITY (`§2.1` item 7, `§0A` note 8, defect 2). */
+export function wiringVerbChoiceSites(src: string): string[] {
+  return scanLines(src, /\?\s*[\'"]open[\'"]\s*:\s*[\'"]activate[\'"]|[\'"]activate[\'"]\s*:\s*[\'"]open[\'"]/)
+}
+
+/** **THE REFUSAL-DERIVATION SITES** — the wiring EXTRACTS a refusal code from the
+ *  model\'s refusal record and ships it as the consumer\'s `reason`, rather than
+ *  passing the consumer\'s OWN answer through: THE TOOL MAY NOT DERIVE A REFUSAL
+ *  (`§0A` note 8, defect 2; `§0A` note 4: `reason` is the CONSUMER\'S own string,
+ *  carried verbatim). */
+export function wiringRefusalDerivationSites(src: string): string[] {
+  return scanLines(src, /refusals\s*\[\s*0\s*\]|refusals\s*\.\s*at\s*\(/)
+}
+
+/** The route's own returned members, read as the declared shape's values. */
+export function shapeOf(result: HolderAnswer): { readonly activeId: unknown; readonly entries: unknown[]; readonly opened: unknown } {
+  return { activeId: result.state.activeId, entries: entryIdsOf(result.state), opened: result.changed }
 }
 
 // ---- THE REGISTER (`§5.5.1` + `§5.5.4`): 20 typed rows / 20 terms ------------------------
