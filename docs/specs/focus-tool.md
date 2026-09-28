@@ -36,7 +36,10 @@ pass about to quote a register figure — **and, added by the `67`-vs-`72` CORRE
 as-filed figure, and only the chain and the subtotals are recomputed)** — **and `§0A` note 7 (2026-09-27), the note that
 DISPOSES the gate-3 implementer's TWO MEASURED CONTRACT DEFECTS: the allow-list's SCOPE HOLE (six pinning sites the
 as-filed census list did not name) and the route row's INSTRUMENT, which forbade the group-map data row the contract
-requires — read it BESIDE `§5.1`, `§5.2` item 4 (iii) and `§5.5.1 RT-5`/`§5.5.2` item 4b** · the **Layer declaration** — the four
+requires — read it BESIDE `§5.1`, `§5.2` item 4 (iii) and `§5.5.1 RT-5`/`§5.5.2` item 4b** — **and whose items 5 and 6
+record the TWO FURTHER SCOPE HOLES of that same class (the SECOND and THIRD incomplete census lists: a third sibling
+tool-set length site and a declaring-unit registry obligation), disposed at `§5.1`'s ADDED rows 21–24 and `§5.2` item 4
+(iii)'s `N-20`…`N-23`, with ALL THREE HOLES FOUND BY MEASUREMENT and no figure moved** · the **Layer declaration** — the four
 labels, the layer map and the honesty anchors · `§1` — the scope with its NOT-THIS-UNIT items · `§2.1` the surface
 exact · `§2.2` **the prohibition table with a named test per row**, **the collision table BY TOKEN** and **the
 semantics table with no `undefined-until-answered` row** · `§2.3` the value/identity rules · `§2.4` **the five
@@ -458,7 +461,10 @@ RE-SCOPED to the claim that row exists to carry).** **AND A SECOND INCOMPLETENES
 BELOW, WHERE THAT ITEM'S OWN TWO ADDED ROWS ARE APPLIED AT THE SAME TWO SITES AND ITEM 1'S `SIX` IS QUALIFIED (its
 `theme-control` reading reached FOUR of that file's FIVE pins — the `RpcMethod` member literal was not reached) — so the
 count reads THREE SITES, plus the two site-widenings item 5 records** (`§5.1` rows 21–22; `§5.2` item 4 (iii)
-`N-20`/`N-21`).
+`N-20`/`N-21`). **AND A THIRD INCOMPLETENESS OF THE SAME KIND IS RECORDED AT ITEM 6 BELOW — the THIRD scope hole, whose
+fix is applied at TWO OF THESE SAME SITES (`§5.1`'s ADDED rows 23–24 and `§5.2` item 4 (iii)'s `N-22`/`N-23`) — so
+THIS NOTE'S OWN FIX SITES ARE STILL THE THREE NAMED ABOVE, while its SITE-WIDENINGS now number THREE (items 5 and 6), and
+ALL THREE HOLES WERE FOUND BY MEASUREMENT** (`§5.1` rows 21–24; `§5.2` item 4 (iii) `N-20`…`N-23`).
 **NO CODE, NO RED RE-RUN AND NO STATUS FLIP ACCOMPANIES THIS NOTE: it wrote no source byte, authored no test, ran no
 suite, no leg, no trio, no `tsc`, no build, no Electron boot, no MCP call and no register row, re-ran no red, flipped
 no status and made no commit — and THE LEDGER IS UNCHANGED AT `20 DONE / 1 open` = `21` units, with `F3` still an
@@ -570,6 +576,49 @@ MOVES BY ITEM 5: no count, term, row id, strategy id, seed, cap, cell or ledger 
 added rows ADD obligations and move nothing already filed, so the register's settled `73`, the executed `67`, the census
 counts and the ledger's `21` units all stand as filed; THE ONLY FIGURES THAT CHANGE ANY READING ARE THE TWO
 *INCOMPLETE* SITE-LIST FIGURES (`13` and `19`), WHICH ARE SUPERSEDED BY ANNOTATION BESIDE THEM RATHER THAN REWRITTEN.**
+
+**6. DEFECT 4 — THE THIRD SCOPE HOLE: THE CENSUS LIST WAS PROVEN NARROWER THAN THE OBLIGATION SET A *THIRD* TIME, AND
+IT IS DISPOSED BY WIDENING THE ALLOW-LIST A THIRD TIME AND RE-STATING THE CENSUS LIST AGAIN, RATHER THAN BY MOVING THE
+CENSUS.** **THE TWO MEASURED SITES, EACH NAMED WITH ITS EXACT OBLIGATION AND WITH THE FORM DISTINGUISHED — A COUNT IS A
+DUPLICATE CHECK, A NAME-SET EQUALITY IS THE PIN, AND A DECLARING-UNIT REGISTRY ENTRY IS NEITHER:** **(1)
+`tests/layout-projection.test.ts` — A THIRD SUITE PINS THE SIBLING TOOL-SET LENGTH, and it pins it TWICE: its `R-21 §3.4`
+seam-census row reads `tests/engine-pin-version.test.ts`'s `PINNED_TOOL_SET` BY NAME through the row's own reader and
+asserts that list's `pinnedNames.length` and `new Set(pinnedNames).size` at `21`, and BOTH NOW READ THE MOVED VALUE —
+the sibling list already carries `provident.focus` (measured: that file's own `new Set(PINNED_TOOL_SET).size` duplicate
+check reads `22`), so the two pins redden BECAUSE the census move landed, and this is the same sibling-length obligation
+the list already names at `tests/census.test.ts` and `tests/gesture-session.test.ts` (`N-19`) AT A THIRD, UNNAMED FILE;
+the row's reader slices from the `PINNED_TOOL_SET` token to the FIRST `]`, so the gained name must sit INSIDE that list
+and NO other quoted name may enter the slice, or the two figures over-read.** **(2) `tests/gutter.test.ts`'s
+`NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_PATHS` — THE DECLARING-UNIT REGISTRY NEEDS TWO ENTRIES FOR THE TWO IN-SCOPE
+FILES THIS UNIT'S OWN CENSUS EDITS MAKE DIRTY: `tests/engine-pin-version.test.ts` (`§5.1` row 6, the census
+re-parameterisation) and `tests/theme-control.test.ts` (`§5.1` row 21) — the same class of entry earlier rows already
+carry for other paths (`tests/focus-model.test.ts`, `tests/focus-tool.test.ts`, `tests/focus-tool-register.ts`), because
+`R-12`'s allow-list/accounting arms otherwise charge those two sibling files to `E3` while this unit's census commit is
+in flight.** **AND THE COMPLEMENT IS NAMED SO NO FOURTH ENTRY IS INVENTED: `tests/gutter-ui.test.ts` and
+`tests/layout-projection.test.ts` are ALREADY declared (`SIBLING_UNIT_ARTIFACT_PATHS` and `OTHER_UNIT_TEST_FILES`
+respectively, both feeding `isSiblingUnitArtifact`), so a registry entry for either would CONTRADICT that row's own
+control (l-3) list 2 — the two entries above are the whole registry obligation, and `tests/layout-projection.test.ts`
+therefore owes NO registry entry at all.** **THE FIX, IN THE SAME RULE AND NAMING EACH SITE'S EXACT OBLIGATION: `§5.1`'s
+ALLOW half gains ADDED rows 23–24 (row 23 the sibling-length site, row 24 the registry site — including that registry's
+OWN pinned entry-count control literal, which moves `29 → 31` WITH its two added entries and never instead of them), and
+`§5.2` item 4 (iii) is RE-STATED with the two added rows `N-22`/`N-23`.** **THE AS-FILED FORMS ARE KEPT VISIBLE — the
+`13`-site list, the once-widened `19`-site list and the twice-widened `21`-site list ALL DO NOT MOVE and none is
+renumbered — and the list is RECORDED AS INCOMPLETE FOR A THIRD TIME rather than smoothed away; item 5's sentence *"THE
+ONLY FIGURES THAT CHANGE ANY READING ARE THE TWO *INCOMPLETE* SITE-LIST FIGURES (`13` and `19`)"* is therefore kept
+visible and is now THREE FIGURES, `21` joining `13` and `19`.** **ALL THREE SCOPE HOLES IN THIS UNIT WERE FOUND BY
+MEASUREMENT RATHER THAN BY ASSUMPTION — the first by the implementer's stopped red run at gate 3, the second by reading
+the two suites, and this third by measuring the sibling list's own live length and the registry's own live reading — and
+NONE of the three was found by re-reading this contract's own prose.** **THE RULE IT KEEPS PROVING, STATED AGAIN AS THE
+RULE IT KEEPS PROVING: THE ALLOW-LIST MUST NAME EVERY FILE THE SAME-COMMIT OBLIGATION TOUCHES — INCLUDING THE FILES
+WHOSE OWN REGISTRY THE UNIT MUST AMEND — OR THE UNIT IS UNIMPLEMENTABLE.** **NO FIGURE MOVES BY ITEM 6: no register row
+id, strategy id, seed, cap, cell, count, term or ledger figure is re-grained here — the two added rows ADD obligations
+and move nothing already filed, so the register's settled `73`, the executed `67`, the census counts (`C-a`…`C-c`) and
+the ledger's `21` units all stand exactly as filed; THE ONE LITERAL THAT CHANGES IS THE TEST-SIDE REGISTRY ENTRY-COUNT
+CONTROL INSIDE `tests/gutter.test.ts` (`29 → 31`), WHICH IS PART OF ROW 24'S OWN OBLIGATION AND NOT A SPEC FIGURE.**
+**NO CODE, NO RED RE-RUN AND NO STATUS FLIP ACCOMPANIES THIS ITEM: it wrote no source byte, authored no test, ran no
+suite, no leg, no trio, no `tsc`, no build, no Electron boot, no MCP call and no register row, re-ran no red, flipped no
+status and made no commit — and THE LEDGER IS UNCHANGED AT `20 DONE / 1 open` = `21` units, with `F3` still an open
+`## OPEN` row whose status is the supervisor's.**
 
 ---
 
@@ -1048,6 +1097,27 @@ not the completed set** (`§0A` note 7 item 5; `§5.1` rows 21–22). **THE TWO 
 AND THE ADDITION CHANGES NOTHING ABOUT THE FENCE: A COUNT RED IS SATISFIED BY THE WRONG THING; A NAME-SET EQUALITY
 ONLY BY THE CENSUS EDIT ITSELF** (`H-r18`; `§5.2` item 4's closing paragraph).
 
+**⟶ 2026-09-27 THIRD ADDITION TO THE ALLOW-LIST (`§0A` note 7 item 6) — TWO FURTHER SAME-COMMIT SITES, ADDED BESIDE THE
+AS-FILED ROWS 1–14, THE 2026-09-27 ROWS 15–20 AND THE 2026-09-27 ROWS 21–22, NONE OF WHICH MOVES AND NONE OF WHICH IS
+RENUMBERED.** **THE MEASURED HOLE, THIRD OF ITS KIND, AND IT CAME IN TWO HALVES: (i) A THIRD SUITE PINS THE SIBLING
+TOOL-SET LENGTH — `tests/layout-projection.test.ts` — and it pins it TWICE, both pins now reading the MOVED value
+because the census move has already landed in `tests/engine-pin-version.test.ts`'s `PINNED_TOOL_SET`; and (ii) the
+DECLARING-UNIT REGISTRY inside `tests/gutter.test.ts` carries no entry for the TWO in-scope files this unit's own census
+edits make dirty, so `R-12`'s allow-list/accounting arms charge two sibling files to `E3` while this unit's census commit
+is in flight.** **BOTH HALVES ARE THE FAILURE THE FAMILY'S RULE NAMES AND BOTH TAKE THE SAME FIX: THE ALLOW-LIST NAMES
+EVERY SITE — the two rows below carry each site's EXACT obligation, and `§5.2` item 4 (iii) is RE-STATED with
+`N-22`/`N-23`.** **THE LIST IS RECORDED AS INCOMPLETE FOR A THIRD TIME RATHER THAN SMOOTHED AWAY; ALL THREE HOLES WERE
+FOUND BY MEASUREMENT; AND NO ROW ID, STRATEGY ID, SEED OR CAP MOVES BY THIS THIRD ADDITION.**
+
+| # | The path | What changes there | Layer |
+| --- | --- | --- | --- |
+| **23** | **`tests/layout-projection.test.ts`** | **the `R-21 §3.4` seam-census row's TWO figures over the sibling tool-set list — `pinnedNames.length` `21 → 22` AND `new Set(pinnedNames).size` `21 → 22` (the distinct-set duplicate check BESIDE the length) — each read BY NAME out of `tests/engine-pin-version.test.ts`'s `PINNED_TOOL_SET` through the row's own reader. AND THE MOVED VALUE IS ALREADY THERE: that sibling list already carries `provident.focus` (measured: its own `new Set(PINNED_TOOL_SET).size` duplicate check reads `22`), so BOTH pins redden BECAUSE this unit's census move landed. THE READER'S SLICE RUNS FROM THE `PINNED_TOOL_SET` TOKEN TO THE FIRST `]`, so the gained name must sit INSIDE that list and NO other quoted name may enter the slice, or the two figures over-read** — **this site pins a COUNT ×2 and carries NO name-set equality, and it owes NO registry entry: it is ALREADY declared by name in `tests/gutter.test.ts` (`OTHER_UNIT_TEST_FILES`, feeding `isSiblingUnitArtifact`)** (`§0A` note 7 item 6 (1); `§5.2` item 4 (iii) `N-22`) | `[T]` |
+| **24** | **`tests/gutter.test.ts`'s `NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_PATHS` registry** — **a SECOND ALLOW-LIST ROW NAMING A FILE ROW 17 ALREADY NAMES, because THIS obligation is the REGISTRY'S and not the census reader's** | **TWO DECLARING-UNIT ENTRIES — `tests/engine-pin-version.test.ts` (`§5.1` row 6) and `tests/theme-control.test.ts` (`§5.1` row 21) — EACH an `{ path, unit }` object whose `unit` string is NON-EMPTY and names the FOCUS-TOOL unit (`F3` / `U-FOCUS-TOOL`) with its own `§5.1` row as the cause of the dirt; the map `NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_BY_PATH` is DERIVED from the array by `Object.fromEntries`, so those two entries feed `declaredOtherUnitNameOf` → `isDeclaredOtherUnitPath` → `R-12`'s accounting rule (`isAccountedFor`) and its allow-list arm IN ONE EDIT; AND THE REGISTRY'S OWN PINNED ENTRY-COUNT CONTROL LITERAL MOVES `29 → 31` IN THE SAME COMMIT — a COUNT that moves WITH the entries and NEVER instead of them — together with the two prose sites that PRINT the count (the control's own message and the registry's header comments), which are reconciled rather than left stale. AND THE COMPLEMENT IS EXPLICIT: `tests/gutter-ui.test.ts` and `tests/layout-projection.test.ts` MUST NOT be entered here — each is ALREADY declared (`SIBLING_UNIT_ARTIFACT_PATHS`; `OTHER_UNIT_TEST_FILES`), so an entry for either would CONTRADICT this row's own control (l-3) list 2** (`§0A` note 7 item 6 (2); `§5.2` item 4 (iii) `N-23`) | `[T]` |
+
+**THE RULE THIS THIRD HOLE KEEPS PROVING, STATED AS A RULE AND NOT AS AN APOLOGY: THE ALLOW-LIST MUST NAME EVERY FILE THE
+SAME-COMMIT OBLIGATION TOUCHES — INCLUDING THE FILES WHOSE OWN REGISTRY THE UNIT MUST AMEND — OR THE UNIT IS
+UNIMPLEMENTABLE.**
+
 ### 5.2 The legs this unit MUST run — **FOUR, and the three refusals**
 
 **`C-9`/`G-4` demand a MEASUREMENT LEG with the ROUTE PINNED AS ITS OWN CELL and PER-SITE FALSIFIERS for the six wiring
@@ -1173,6 +1243,30 @@ INCOMPLETE FORM.** **NO ROW ID, STRATEGY ID, SEED OR CAP MOVES BY THIS SECOND EX
 THE EARLIER LISTS ARE INCOMPLETE FIGURES** (`§0A` note 7 items 1 and 5; `§5.1` rows 15–22). **THE RULE THE TWO HOLES
 TOGETHER PROVE, RECORDED HERE AND AT `§5.1`: THE ALLOW-LIST MUST NAME EVERY FILE THE SAME-COMMIT OBLIGATION TOUCHES, OR
 THE UNIT IS UNIMPLEMENTABLE.** **NO ROW ID, STRATEGY ID, SEED OR CAP MOVES BY THIS SECOND EXTENSION.**
+
+**⟶ 2026-09-27 THIRD EXTENSION OF THIS LIST (`§0A` note 7 item 6) — THE TWICE-WIDENED `21`-SITE LIST WAS STILL
+INCOMPLETE, AND THE TWO SITES BELOW ARE ADDED BESIDE IT WITH THE EXACT OBLIGATION AT EACH.** **THIS IS THE THIRD TIME
+THIS CONTRACT'S CENSUS LIST HAS BEEN PROVEN NARROWER THAN THE OBLIGATION SET — the first being the six suites the
+implementer's STOP exposed, the second being the two suites the once-widened list did not name — AND ALL THREE WERE
+FOUND BY MEASUREMENT RATHER THAN BY ASSUMPTION.** **THE MEASURED DEFECT, IN TWO HALVES: (i) A THIRD SUITE PINS THE
+SIBLING TOOL-SET LENGTH — `tests/layout-projection.test.ts` — whose two pins now read the MOVED value because
+`tests/engine-pin-version.test.ts`'s `PINNED_TOOL_SET` already carries `provident.focus`; and (ii) the TWO IN-SCOPE FILES
+THIS UNIT'S CENSUS EDITS MAKE DIRTY (`tests/engine-pin-version.test.ts`, `tests/theme-control.test.ts`) have NO
+declaring-unit entry in `tests/gutter.test.ts`'s registry, so `R-12`'s accounting arm charges them to `E3`.** **`§5.1` is
+widened in the same pass (ADDED rows 23–24), the as-filed and once-widened forms are KEPT VISIBLE, and `13`, `19` AND
+`21` are ALL INCOMPLETE FIGURES RATHER THAN CORRECTED ONES — A PASS THAT QUOTES `13`, `19` OR `21` SAME-COMMIT SITES IS
+QUOTING AN INCOMPLETE FORM.** **NO ROW ID, STRATEGY ID, SEED OR CAP MOVES BY THIS THIRD EXTENSION.**
+
+| # | The same-commit site (ADDED 2026-09-27, THIRD ADDITION) | What reddens there, and THE EXACT OBLIGATION | The form |
+| --- | --- | --- | --- |
+| **`N-22`** | **`tests/layout-projection.test.ts` — the `R-21 §3.4` seam-census row's TWO figures over the sibling `PINNED_TOOL_SET` list** | **the row reads the sibling list BY NAME through its own reader (the slice from the `PINNED_TOOL_SET` token to the FIRST `]`) and pins `pinnedNames.length` and `new Set(pinnedNames).size`, EACH `21 → 22`** · **the sibling list ALREADY reads `22` (`tests/engine-pin-version.test.ts`'s own `new Set(PINNED_TOOL_SET).size` duplicate check is at `22`), so BOTH pins redden on this unit's census move and BOTH must move in the same commit** · **the edit adds the gained name INSIDE that list and adds NO other quoted name inside the slice** · **and this site owes NO registry entry, because it is ALREADY declared by name in `tests/gutter.test.ts` (`OTHER_UNIT_TEST_FILES`)** | **COUNT ×2 (a length and its distinct-set duplicate check, each read from the sibling's own bytes), with NO name-set equality at this site** |
+| **`N-23`** | **`tests/gutter.test.ts`'s `NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_PATHS` registry — the TWO declaring-unit entries the two in-scope census-edited files require** | **`tests/engine-pin-version.test.ts` and `tests/theme-control.test.ts` each get an `{ path, unit }` entry whose `unit` string is NON-EMPTY and names the FOCUS-TOOL unit (`F3` / `U-FOCUS-TOOL`) with its `§5.1` row (6 / 21) as the cause of the dirt, so `R-12`'s accounting rule stops charging two sibling files to `E3`; AND the registry's OWN pinned entry-count control literal moves `29 → 31` in the same commit, with the prose sites that print the count reconciled** · **and NEITHER `tests/gutter-ui.test.ts` NOR `tests/layout-projection.test.ts` may be entered here: both are already declared elsewhere, so an entry for either would contradict control (l-3) list 2** | **REGISTRY ENTRY ×2 (each with its unit NAMED — never anonymous) + the registry's OWN COUNT (a duplicate check that moves WITH the entries, never instead of them)** |
+
+**THE COUNT VS NAME-SET DISTINCTION IS NOW CARRIED AT TWENTY-THREE SITES RATHER THAN TWENTY-ONE, AND `13`, `19` AND `21`
+OF THE EARLIER LISTS ARE ALL INCOMPLETE FIGURES** (`§0A` note 7 items 1, 5 and 6; `§5.1` rows 15–24). **THE RULE THE THREE
+HOLES TOGETHER PROVE, RECORDED HERE AND AT `§5.1`: THE ALLOW-LIST MUST NAME EVERY FILE THE SAME-COMMIT OBLIGATION
+TOUCHES — INCLUDING THE FILES WHOSE OWN REGISTRY THE UNIT MUST AMEND — OR THE UNIT IS UNIMPLEMENTABLE.** **NO ROW ID,
+STRATEGY ID, SEED OR CAP MOVES BY THIS THIRD EXTENSION.**
 
 ### 5.3 The DONE row's shape
 
