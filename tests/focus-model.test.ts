@@ -439,6 +439,151 @@ function labelBreakOf(entry: unknown, expectedLabel: unknown, label: string): st
 }
 
 // ---------------------------------------------------------------------------
+// THE THREE FALSIFIABLE HALF-READERS THE FOUR CLAUSE RULINGS NEED (`§0A` note
+// 10, dated 2026-09-27 — the four rulings this file's regressions drive), plus
+// THE DRAWN-SHAPE TAGGER the FIRST PBT-AUDIT OBLIGATION needs. Each reader
+// returns `null` when the clause HOLDS and a cause sentence when it BREAKS, so
+// a wrong body fails on the clause rather than on a harness defect.
+// ---------------------------------------------------------------------------
+
+/** CLAUSE 1 (`§0A` note 10 item 1) — THE REPEATED-TARGET ACTIVATION READING:
+ *  a repeated `target` ACTIVATES the existing entry, APPENDS NOTHING, sets
+ *  `state.activeId`/`seated` to THE EXISTING ENTRY'S OWN `id` BY IDENTITY and
+ *  carries NO refusal, while the OWNED SET keeps the SAME LENGTH and the SAME
+ *  ELEMENT IDENTITIES. A body that DISCARDS the caller's new entry on this arm
+ *  (seating the PRIOR active id instead of the existing entry's) and a body that
+ *  APPENDS A SECOND ENTRY for the same target both FAIL here. */
+function activationBreakOf(value: unknown, existingEntries: readonly unknown[], existingId: unknown, expectedLength: number, label: string): string | null {
+  const r = value as Record<string, unknown>
+  if (r['accepted'] !== true) return `${label} — a repeated target must be ACCEPTED (activation), never refused (accepted ${rawOf(r['accepted'])})`
+  const refusals = r['refusals']
+  if (!Array.isArray(refusals) || refusals.length !== 0) return `${label} — an activation carries NO refusal (got ${Array.isArray(refusals) ? refusals.length : rawOf(refusals)})`
+  const next = r['state'] as Record<string, unknown>
+  const entries = next['entries'] as unknown[]
+  if (!Array.isArray(entries)) return `${label} — the returned state carries no entries array`
+  if (entries.length !== expectedLength) return `${label} — NO APPEND is licensed on this arm: the owned set has LENGTH ${expectedLength}, measured ${entries.length} (an append-always body FAILS here)`
+  for (let i = 0; i < entries.length; i += 1) if (entries[i] !== existingEntries[i]) return `${label} — element ${i} is NOT the caller's own owned entry BY IDENTITY: the activation arm must return the SAME element identities`
+  if (!Object.is(next['activeId'], existingId)) return `${label} — state.activeId must be THE EXISTING ENTRY'S id BY IDENTITY (got ${rawOf(next['activeId'])}, declared ${rawOf(existingId)}; a body seating the PRIOR active id is DISCARDING the caller's entry)`
+  if (!Object.is(r['seated'], existingId)) return `${label} — 'seated' must be THE EXISTING ENTRY'S id BY IDENTITY (got ${rawOf(r['seated'])}), so the result SAYS WHICH HAPPENED`
+  return null
+}
+
+/** CLAUSE 2 (`§0A` note 10 item 2) — THE UNDEFINED-ID IDENTITY CLAUSE:
+ *  `undefined` is a LEGAL opaque id value CARRIED BY IDENTITY and `null` is a
+ *  DIFFERENT value, so a legal transition over an `undefined` id is ACCEPTED and
+ *  no slot may read `null`. A body that maps `undefined → null` (the landed
+ *  coercion) FAILS here. */
+function undefinedIdBreakOf(value: unknown, label: string): string | null {
+  const r = value as Record<string, unknown>
+  if (r['accepted'] !== true) return `${label} — an \`undefined\` id is a LEGAL opaque id, so this transition must be ACCEPTED rather than refused (accepted ${rawOf(r['accepted'])})`
+  const next = r['state'] as Record<string, unknown>
+  if (next['activeId'] !== undefined) return `${label} — state.activeId must be the caller's own \`undefined\` BY IDENTITY; measured ${rawOf(next['activeId'])} — \`undefined\` and \`null\` may NOT be mapped onto each other`
+  if (r['seated'] !== undefined) return `${label} — 'seated' must be the caller's own \`undefined\` BY IDENTITY; measured ${rawOf(r['seated'])}`
+  const refusals = r['refusals'] as unknown[]
+  if (!Array.isArray(refusals) || refusals.length !== 0) return `${label} — a legal \`undefined\`-id transition carries no refusal`
+  return null
+}
+
+/** CLAUSE 3 (`§0A` note 10 item 3) — THE LABEL ABSENCE RULE GOVERNS ONLY THE
+ *  LABEL THE MODULE WOULD SYNTHESIZE: the module MINTS no label (a caller entry
+ *  that carries NO `label` member must still carry NONE), COERCES none (a
+ *  non-string caller value stays VERBATIM BY IDENTITY) and STRIPS none (the
+ *  member the caller supplied must SURVIVE on the caller's own object). */
+function noLabelMutationBreakOf(returned: unknown, caller: unknown, label: string): string | null {
+  if (returned !== caller) return `${label} — the module must carry the CALLER'S OWN entry object BY IDENTITY (a fresh or wrapped record FAILS this row)`
+  if (!isRecord(caller)) return `${label} — the caller's entry is not a record`
+  const lk = labelBreakOf(returned, caller['label'], label)
+  if (lk !== null) return lk
+  const keys = Object.keys(caller)
+  if (!keys.includes('label') && keys.length !== 2) return `${label} — NO FIFTH member is declared on the entry record (own keys ${rawOf(keys.length)})`
+  return null
+}
+
+/** CLAUSE 4 (`§0A` note 10 item 4) — THE RESULT CARRIES THE MODULE'S OWN REFUSAL
+ *  RECORD: a `refuse` callback that REWRITES EVERY FIELD of the record it
+ *  receives (or THROWS while rewriting) may move NOTHING in the result — its
+ *  refusal object, its code, its verb, its id, its order and its COUNT all read
+ *  exactly what the no-callback arm reads. A body that lets the callback's
+ *  verdict reach the result FAILS here.
+ *
+ *  THE PROOF THAT THE REWRITE ACTUALLY LANDED: the callback mutates through a
+ *  WRITE-RECORDING PROXY over the object it received, and the counts are
+ *  asserted to be non-zero — so the instrument can never pass vacuously by
+ *  rewriting nothing. */
+function refusalCopyBreakOf(baseline: unknown, probed: unknown, observed: unknown, writes: number, label: string): string | null {
+  if (writes === 0) return `${label} — THE POSITIVE CONTROL: the callback's rewrite did NOT land on the object it received, so this row would pass vacuously; the instrument is broken, not the module.`
+  if (probed === undefined) return `${label} — the probed arm produced no result value`
+  const a = baseline as Record<string, unknown>
+  const b = probed as Record<string, unknown>
+  const ar = a['refusals'] as unknown[]
+  const br = b['refusals'] as unknown[]
+  if (!Array.isArray(ar) || !Array.isArray(br)) return `${label} — a result's 'refusals' must be an array`
+  if (observed !== undefined && observed === br[0]) return `${label} — THE OBSERVATION COPY IS THE RESULT'S OWN RECORD: the callback was handed the module's record by identity, which is exactly the aliasing this ruling removes (build the record, then hand out a COPY)`
+  if (br.length !== ar.length) return `${label} — THE COUNT MOVED: the no-callback arm carries ${ar.length} refusal(s) and the rewriting-callback arm carries ${br.length} (§0A note 10 item 4: the callback is OBSERVATION and moves no count)`
+  if (br.length !== 1) return `${label} — this drive is a refused attempt, so exactly one refusal is declared`
+  const a0 = ar[0] as Record<string, unknown>
+  const b0 = br[0] as Record<string, unknown>
+  const aKeys = Object.keys(a0)
+  if (Object.keys(b0).join(',') !== aKeys.join(',')) return `${label} — THE REFUSAL'S OWN KEY ORDER MOVED (declared ${aKeys.join(',')}, measured ${Object.keys(b0).join(',')})`
+  for (const k of aKeys) if (b0[k] !== a0[k]) return `${label} — the result's refusal '${k}' moved from ${rawOf(a0[k])} to ${rawOf(b0[k])}: the callback's verdict reached the RESULT, and THE RESULT CARRIES THE MODULE'S OWN RECORD`
+  if (b['accepted'] !== a['accepted'] || b['verb'] !== a['verb'] || b['state'] !== a['state'] || b['changed'] !== a['changed']) return `${label} — no field of the result may move when a refuse callback rewrites what it receives`
+  return null
+}
+
+/** THE ARRAY-SHAPE READ, MADE TOTAL (`§2.3` item 10's own discipline applied to
+ *  the harness): `Array.isArray` RAISES on a REVOKED `Proxy` in this engine
+ *  ("Cannot perform 'IsArray' on a proxy that has been revoked"), so a harness
+ *  read that is not total turns a HOSTILE POOL MEMBER into a broken attempt —
+ *  the exact confusion `rawOf`'s coercion-free reader exists to prevent. */
+function isArraySafe(value: unknown): boolean {
+  try {
+    return Array.isArray(value)
+  } catch {
+    return false
+  }
+}
+/** THE DRAWN-SHAPE TAGGER (the FIRST PBT-AUDIT OBLIGATION) — a COERCION-FREE
+ *  tag over a value the register actually drew, so `P-FM-IM-2`'s/`P-FM-IM-3`'s
+ *  pools can be re-derived from the landed tables rather than trusted, and the
+ *  five declared members the audit named can be PROVEN drawn. Tags a trap by
+ *  INVOKING it in a `typeof` probe (an identity read, never a member read). */
+function valueShapeOf(value: unknown): string {
+  if (value === undefined) return 'undefined'
+  if (value === null) return 'null'
+  const t = typeof value
+  if (t === 'number') return Number.isNaN(value) ? 'NaN' : 'number'
+  if (t === 'string') return 'string'
+  if (t === 'boolean') return 'boolean'
+  if (t === 'symbol') return 'Symbol'
+  if (t === 'bigint') return '12n'
+  if (t === 'function') return 'function'
+  if (isArraySafe(value)) return 'array'
+  // `instanceof` RAISES on a REVOKED Proxy in this engine (it reads the
+  // prototype), so the two constructor tags are read through the brand check a
+  // hostile holder cannot raise, and a raise is reported as its own tag.
+  try {
+    if (Object.prototype.toString.call(value) === '[object Map]') return 'Map'
+    if (Object.prototype.toString.call(value) === '[object Date]') return 'Date'
+  } catch {
+    return 'trap-throwing Proxy'
+  }
+  try {
+    void (value as { readonly toString: unknown }).toString
+    return 'plain object'
+  } catch {
+    return 'trap-throwing Proxy'
+  }
+}
+/** THE SHAPES THE REGISTER'S LANDED TABLES ACTUALLY DRAW — a module-level
+ *  ledger the rows under `§5.5.1` fill as they run, read by the audit-obligation
+ *  row. A LEDGER, never a re-derivation of the pools: if a pool stops drawing a
+ *  declared member, its tag disappears and the obligation row FAILS. */
+const SHAPES_DRAWN = new Set<string>()
+function drewShape(value: unknown): void {
+  SHAPES_DRAWN.add(valueShapeOf(value))
+}
+
+// ---------------------------------------------------------------------------
 // HOSTILE / RECORDING INSTRUMENTS (§2.3 items 4/7, §3.2 F-6/F-13, §2.4)
 // ---------------------------------------------------------------------------
 /** A COERCION-HOOK RECORDER whose `toString`/`valueOf` THROW, with both
@@ -1760,6 +1905,220 @@ describe('§3.1 M-1..M-14 — the valid / happy states (data states enumerated p
 })
 
 // ===========================================================================
+// 4b. THE FOUR CLAUSE-RULING REGRESSIONS — `§0A` note 10 (dated 2026-09-27),
+//     the supervisor's four adjudicated rulings from gates 4 and 5, each stated
+//     in the contract as a DATED ANNOTATION BESIDE its as-filed text. Each row
+//     below is RED-FIRST, carries a POSITIVE CONTROL that makes a WRONG BODY
+//     fail, and MOVES NO TERM: not one register row id, strategy id, declared
+//     term, seed or cap is touched by this section (`§0A` note 10's closing
+//     paragraph: "a ruling with no row that can FAIL is unasserted").
+// ===========================================================================
+describe('§0A note 10 — THE FOUR CLAUSE RULINGS (gates 4/5): repeated target · `undefined` id · the label · the refusal copy', () => {
+  // ⟶ CLAUSE ROW 1 — THE REPEATED TARGET ACTIVATES AND APPENDS NOTHING.
+  // STATES ENUMERATED: S1 the existing entry is NOT the active one (the arm a
+  // discard-body gets wrong) · S2 the existing entry IS already the active one
+  // (the arm where a discard happens to look right) · S3 the existing entry is
+  // the LAST of three, with a structurally-equal-but-distinct target as the
+  // no-activation control.
+  it('CLAUSE-1 (§0A note 10 item 1 / §2.3 item 2 row (1) / `M-3`) — A REPEATED TARGET ACTIVATES AND APPENDS NOTHING: the existing entry is seated BY IDENTITY, no append happened, the caller\'s entry is not lost, and the result says which happened', async () => {
+    const s = await live()
+    // S1 — the existing entry is NOT active: the prior active id is a DIFFERENT
+    // entry, so a body that seats the PRIOR active id (the landed DISCARD defect)
+    // is caught rather than accidentally passing.
+    const target = { t: 'repeated' }
+    const e1 = en('one', 'other-target')
+    const e2 = en('two', target)
+    const e3 = en('three', 'third-target')
+    const state = st([e1, e2, e3], 'one')
+    const incoming = en('four', target)
+    const { value, cause } = transitionTry(s, state, 'open', { entry: incoming })
+    expect(cause, `CLAUSE-1 (S1) — ${cause ?? ''}`).toBe(null)
+    expect(activationBreakOf(value, [e1, e2, e3], 'two', 3, 'CLAUSE-1 (S1)'), 'CLAUSE-1 (S1) — the activation reading: the repeated target seats the EXISTING entry (id \'two\') BY IDENTITY, appends nothing, and refuses nothing.').toBe(null)
+    const r1 = value as Record<string, unknown>
+    expect((r1['state'] as Record<string, unknown>)['entries'], 'CLAUSE-1 (S1) — the returned entries ARE the caller\'s own array contents element-for-element: the incoming entry was neither appended NOR substituted.').toEqual([e1, e2, e3])
+    expect(hasOwn.call(incoming, 'id'), 'CLAUSE-1 (S1) — THE CALLER\'S ENTRY IS NOT LOST: its own object still carries its own \'id\' member, untouched (the module mutates no argument).').toBe(true)
+    expect(incoming['id'], 'CLAUSE-1 (S1) — and that member is still THE CALLER\'S OWN VALUE BY IDENTITY (id \'four\'), so nothing rewrote the entry it could not seat.').toBe('four')
+    expect(r1['verb'], 'CLAUSE-1 (S1) — THE RESULT SAYS WHICH HAPPENED: the verb of record is \'open\' with accepted: true and no refusal, which is the activation arm rather than an append.').toBe('open')
+    expect(r1['seated'], 'CLAUSE-1 (S1) — and \'seated\' names the ACTIVATED entry\'s id, so the caller can tell activation from an append without inspecting the two arrays.').toBe('two')
+    // S2 — the existing entry is ALREADY active: the ACTIVATION still happens and
+    // the result must STILL carry the activation reading. The caller's own entry
+    // is not lost, no second entry exists for that target, and `state.entries`
+    // still holds the SAME element identities — so a body that returns the PRIOR
+    // STATE by identity here (dropping the activated-entry reading) FAILS on the
+    // element-identity half of `activationBreakOf`.
+    const settledState = st([e1, e2, e3], 'two')
+    const s2 = transitionTry(s, settledState, 'open', { entry: en('five', target) })
+    expect(s2.cause, `CLAUSE-1 (S2) — ${s2.cause ?? ''}`).toBe(null)
+    expect(activationBreakOf(s2.value, [e1, e2, e3], 'two', 3, 'CLAUSE-1 (S2)'), 'CLAUSE-1 (S2) — the already-active arm: still no append, still the existing id, still no refusal, and the SAME element identities — so the activation is not silently dropped into the prior state.').toBe(null)
+    expect(((s2.value as Record<string, unknown>)['state'] as Record<string, unknown>)['entries'], 'CLAUSE-1 (S2) — the activated arm carries state.entries with the SAME LENGTH and the SAME element identities the contract demands on EVERY repeated-target activation.').toEqual([e1, e2, e3])
+    // S3 — THE NO-ACTIVATION CONTROL: a structurally-equal but NOT ===-identical
+    // target must APPEND (no deep comparison is licensed), which proves the
+    // activation test above is an IDENTITY test rather than an equal-structure test.
+    const control = transitionTry(s, state, 'open', { entry: en('six', { t: 'repeated' }) })
+    expect(control.cause, `CLAUSE-1 (S3) — ${control.cause ?? ''}`).toBe(null)
+    const cEntries = ((control.value as Record<string, unknown>)['state'] as Record<string, unknown>)['entries'] as unknown[]
+    expect(cEntries.length, 'CLAUSE-1 (S3) — the control: a structurally-equal but NOT `===`-identical target APPENDS (length 3 → 4), so the arm above really is identity-keyed.').toBe(4)
+    // THE POSITIVE CONTROL OF THE INSTRUMENT ITSELF: the clause reader must FAIL
+    // for BOTH wrong bodies the ruling names, or it is a row that cannot fail.
+    const appendBody = { accepted: true, verb: 'open', refusals: [], seated: 'four', changed: true, state: { entries: [e1, e2, e3, incoming], activeId: 'four' } }
+    expect(activationBreakOf(appendBody, [e1, e2, e3], 'two', 3, 'CONTROL (append)'), 'CONTROL — A BODY THAT APPENDS A SECOND ENTRY FOR THE SAME TARGET MUST FAIL this row.').not.toBe(null)
+    const discardBody = { accepted: true, verb: 'open', refusals: [], seated: 'one', changed: false, state }
+    expect(activationBreakOf(discardBody, [e1, e2, e3], 'two', 3, 'CONTROL (discard)'), 'CONTROL — A BODY THAT DISCARDS THE CALLER\'S NEW ENTRY MUST FAIL this row.').not.toBe(null)
+  })
+
+  // ⟶ CLAUSE ROW 2 — `undefined` IS A LEGAL OPAQUE ID CARRIED BY IDENTITY.
+  // STATES ENUMERATED: T1 a one-entry state whose own `id` IS `undefined`, driven
+  // with `activate` (the legal transition the landed module REFUSES today) · T2 a
+  // two-entry state with `activeId: undefined` and `undefined` the FIRST id
+  // (the seat/index reading) · T3 `activeId: null` over an entry whose own id IS
+  // `null`, with `activate` naming `null` (the `null → undefined` direction).
+  it('CLAUSE-2 (§0A note 10 item 2 / §2.2(D) `FocusId`/`activeId` / §3.2 `F-4`) — `undefined` IS A LEGAL OPAQUE ID CARRIED BY IDENTITY AND DISTINCT FROM `null`; a legal transition is ACCEPTED, and neither value is mapped to the other in either direction', async () => {
+    const s = await live()
+    // T1 — THE UNDEFINED-ID STATE: `{id: undefined}` is an OWN id member, so the
+    // entry is owned and `activate` over it must be ACCEPTED.
+    const uEntry = { id: undefined, target: 'u-target' }
+    const undefinedState = st([uEntry], undefined)
+    const { value: activated, cause: ac } = transitionTry(s, undefinedState, 'activate', { id: undefined })
+    expect(ac, `CLAUSE-2 (T1) — ${ac ?? ''}`).toBe(null)
+    expect(undefinedIdBreakOf(activated, 'CLAUSE-2 (T1)'), 'CLAUSE-2 (T1) — `undefined` is a LEGAL id: the transition is ACCEPTED, and state.activeId/seated read THE CALLER\'S OWN `undefined` BY IDENTITY rather than a coerced `null`.').toBe(null)
+    expect(indexTry(s, undefinedState, undefined).value, 'CLAUSE-2 (T1) — focusIndex over an `undefined` id returns the OWNED index 0 (not the -1 sentinel: the id IS owned, and `undefined` is not a synonym for "nothing active").').toBe(0)
+    // T2 — THE SEAT AND THE INDEX: `undefined` active, `undefined` the FIRST id.
+    const secondEntry = en('second', 'second-target')
+    const twoState = st([uEntry, secondEntry], undefined)
+    const { value: moved, cause: mc } = transitionTry(s, twoState, 'next', {})
+    expect(mc, `CLAUSE-2 (T2) — ${mc ?? ''}`).toBe(null)
+    const movedResult = moved as Record<string, unknown>
+    expect(movedResult['accepted'], 'CLAUSE-2 (T2) — an `undefined` activeId IS a position: `next` over the first of two takes the ACCEPTED arm rather than a `\'no-next\'` refusal (a coerced `null` activeId reads "no position at all" and REFUSES, which is the measured defect).').toBe(true)
+    expect(((movedResult['state'] as Record<string, unknown>)['activeId']), 'CLAUSE-2 (T2) — and the move seats the SECOND entry\'s own id \'second\' BY IDENTITY.').toBe('second')
+    const { value: back, cause: bc } = transitionTry(s, twoState, 'prev', {})
+    expect(bc, `CLAUSE-2 (T2) — ${bc ?? ''}`).toBe(null)
+    expect((back as Record<string, unknown>)['accepted'], 'CLAUSE-2 (T2) — and `prev` at the FIRST position (an `undefined` id) is the DECLARED `\'no-previous\'` refusal — a refusal of a legal state, not a refusal about the value\'s type.').toBe(false)
+    expect((((back as Record<string, unknown>)['refusals'] as Record<string, unknown>[])[0])['code'], 'CLAUSE-2 (T2) — the refusal code is \'no-previous\' (the ends refuse; NO WRAP AND NO CLAMP).').toBe('no-previous')
+    expect((back as Record<string, unknown>)['seated'], 'CLAUSE-2 (T2) — `seated` on that refusal is the caller\'s own `undefined` BY IDENTITY, never a coerced `null`.').toBe(undefined)
+    // T3 — THE OTHER DIRECTION: `null` is NOT mapped to `undefined`.
+    const nEntry = { id: null, target: 'n-target' }
+    const nullState = st([nEntry], null)
+    const { value: nullActivated, cause: nc } = transitionTry(s, nullState, 'activate', { id: null })
+    expect(nc, `CLAUSE-2 (T3) — ${nc ?? ''}`).toBe(null)
+    const nr = nullActivated as Record<string, unknown>
+    expect(nr['accepted'], 'CLAUSE-2 (T3) — a `null` id IS owned by the entry whose own id is `null`, so this transition is ACCEPTED (a body mapping `null → undefined` refuses it).').toBe(true)
+    expect(((nr['state'] as Record<string, unknown>)['activeId']), 'CLAUSE-2 (T3) — and `null` survives BY IDENTITY: `null → undefined` is a mapping this clause BANS.').toBe(null)
+    expect(indexTry(s, nullState, null).value, 'CLAUSE-2 (T3) — focusIndex over the owned `null` id returns 0, so the two values are indexed SEPARATELY rather than conflated.').toBe(0)
+    expect(indexTry(s, undefinedState, null).value, 'CLAUSE-2 (T3) — and `null` is NOT the `undefined` id: indexing `null` against the `undefined`-id state reads the -1 sentinel, which is the two-directional separation asserted in one line.').toBe(-1)
+    expect(indexTry(s, nullState, undefined).value, 'CLAUSE-2 (T3) — and symmetrically `undefined` is NOT the `null` id: -1 against the `null`-id state.').toBe(-1)
+    // THE POSITIVE CONTROL: the landed coercion body (seating `null` where the
+    // caller supplied `undefined`) must FAIL the clause reader.
+    const coercedBody = { accepted: true, verb: 'activate', refusals: [], seated: null, changed: true, state: { entries: [uEntry], activeId: null } }
+    expect(undefinedIdBreakOf(coercedBody, 'CONTROL (undefined → null)'), 'CONTROL — A BODY THAT MAPS `undefined` ONTO `null` ON THE ACTIVE ID MUST FAIL this row.').not.toBe(null)
+  })
+
+  // ⟶ CLAUSE ROW 3 — THE MODULE NEVER MINTS, COERCES OR STRIPS A LABEL.
+  // STATES ENUMERATED: L1 a non-string label (`42`) · L2 an `undefined` label ·
+  // L3 a label member ABSENT (none supplied) · L4 a non-label member set (a
+  // fourth member is not a label either).
+  it('CLAUSE-3 (§0A note 10 item 3 / §2.2(D) `label` / §2.3 items 1 and 6) — THE MODULE NEVER MINTS, COERCES OR STRIPS A LABEL: the caller\'s own object comes back BY IDENTITY, a supplied member is unchanged, and NO label is minted where none was supplied', async () => {
+    const s = await live()
+    const drives: ReadonlyArray<readonly [string, Record<string, unknown>]> = [
+      ['L1 a NON-STRING label (42)', { id: 'l1', target: 't', label: 42 }],
+      ['L2 an explicit `undefined` label', { id: 'l2', target: 't', label: undefined }],
+      ['L3 NO label member at all', { id: 'l3', target: 't' }],
+      ['L4 a label-shaped fourth member', { id: 'l4', target: 't', extra: 'not-a-label' }],
+    ]
+    for (const [label, caller] of drives) {
+      // THE OPEN ARM: the appended entry is the caller's own object, so the
+      // module neither minted a label nor touched the one supplied.
+      const { value, cause } = transitionTry(s, st([], null), 'open', { entry: caller })
+      expect(cause, `CLAUSE-3 [${label}] / open — ${cause ?? ''}`).toBe(null)
+      const appended = (((value as Record<string, unknown>)['state'] as Record<string, unknown>)['entries'] as unknown[])[0]
+      expect(noLabelMutationBreakOf(appended, caller, `CLAUSE-3 [${label}] / open`), `CLAUSE-3 [${label}] / open — the caller's own entry, unchanged.`).toBe(null)
+      // THE ORDER ARM: the same object through `focusOrder`.
+      const ordered = ((orderTry(s, [caller]).value as unknown[])[0])
+      expect(noLabelMutationBreakOf(ordered, caller, `CLAUSE-3 [${label}] / focusOrder`), `CLAUSE-3 [${label}] / focusOrder — focusOrder carries the caller's own object and mints nothing.`).toBe(null)
+      // THE NAMED HALVES, so a minting or a stripping body fails on its own clause:
+      if (!hasOwn.call(caller, 'label') || caller['label'] === undefined) {
+        expect(hasOwn.call(appended as object, 'label'), `CLAUSE-3 [${label}] — NO LABEL IS MINTED where the caller supplied none: a body writing a default string FAILS here (a bare \`label: undefined\` is the same absence the as-filed rule names).`).toBe(false)
+        expect(hasOwn.call(ordered as object, 'label'), `CLAUSE-3 [${label}] — and none is minted by focusOrder either.`).toBe(false)
+      } else {
+        expect(hasOwn.call(appended as object, 'label'), `CLAUSE-3 [${label}] — A MEMBER THE CALLER SUPPLIED IS STILL THERE: the module STRIPS no label, whatever its type.`).toBe(true)
+        expect((appended as Record<string, unknown>)['label'], `CLAUSE-3 [${label}] — and it is the caller's own value VERBATIM BY IDENTITY (never coerced to a string, never defaulted, never trimmed).`).toBe(caller['label'])
+      }
+    }
+    // THE POSITIVE CONTROL: a minting body and a stripping/coercing body must
+    // BOTH fail the clause reader.
+    const mintingBody = { id: 'm', target: 't', label: '' }
+    expect(noLabelMutationBreakOf(mintingBody, { id: 'm', target: 't' }, 'CONTROL (mint)'), 'CONTROL — A BODY THAT MINTS A LABEL WHERE THE CALLER GAVE NONE MUST FAIL this row.').not.toBe(null)
+    expect(noLabelMutationBreakOf({ id: 'c', target: 't', label: '42' }, { id: 'c', target: 't', label: 42 }, 'CONTROL (coerce)'), 'CONTROL — A BODY THAT COERCES A SUPPLIED NON-STRING LABEL MUST FAIL this row.').not.toBe(null)
+    expect(noLabelMutationBreakOf({ id: 'x', target: 't' }, { id: 'x', target: 't', label: 42 }, 'CONTROL (strip)'), 'CONTROL — AND A BODY THAT RETURNS A RECORD WITHOUT THE CALLER\'S OWN MEMBER FAILS the by-identity half: a caller\'s object cannot lose a member, which is why the as-filed absence rule could not be satisfied alongside `toBe`.').not.toBe(null)
+  })
+
+  // ⟶ CLAUSE ROW 4 — THE RESULT CARRIES THE MODULE'S OWN REFUSAL RECORD.
+  // STATES ENUMERATED: C1 a refusal from `duplicate-id` with a callback that
+  // rewrites every field · C2 the same drive through a callback that rewrites
+  // every field AND THEN THROWS · C3 a `no-next` refusal (the boundary code) ·
+  // C4 the accepted-arm control (no refusal exists to move, and the callback must
+  // not be invoked at all).
+  it('CLAUSE-4 (§0A note 10 item 4 / §2.4 seam 1 / §2.1 item 8) — THE RESULT CARRIES THE MODULE\'S OWN REFUSAL RECORD: a `refuse` callback that rewrites every field it receives (and one that throws while doing so) moves NOTHING — not the refusal, not its code, not its order, not its count', async () => {
+    const s = await live()
+    const drive = (label: string, state: unknown, verb: string, arg: Record<string, unknown>, code: string): void => {
+      const baseline = transitionTry(s, state, verb, arg)
+      expect(baseline.cause, `CLAUSE-4 [${label}] baseline — ${baseline.cause ?? ''}`).toBe(null)
+      const baseRefusal = (((baseline.value as Record<string, unknown>)['refusals'] as unknown[])[0])
+      expect((baseRefusal as Record<string, unknown>)['code'], `CLAUSE-4 [${label}] — the no-callback arm refuses with the declared code, which is the record the result must still carry.`).toBe(code)
+      // THE REWRITING CALLBACK, over a WRITE-RECORDING PROXY so the rewrite's
+      // landing is MEASURED rather than assumed: it rewrites EVERY field of the
+      // record it receives, in place, with values that are all legal-looking.
+      const observed = (baseline.value as Record<string, unknown>)['refusals'] as unknown[]
+      const seen = writeRecorder({ ...(baseRefusal as Record<string, unknown>) } as object)
+      let observedRecord: unknown = undefined
+      const rewriter = (receives: unknown): void => {
+        observedRecord = receives
+        const proxy = seen.proxy as Record<string, unknown>
+        proxy['code'] = 'no-previous'
+        proxy['verb'] = 'prev'
+        proxy['id'] = 'caller-bug'
+      }
+      const probed = transitionTry(s, state, verb, { ...arg, refuse: rewriter })
+      expect(probed.cause, `CLAUSE-4 [${label}] rewriting — ${probed.cause ?? ''}`).toBe(null)
+      const writes = seen.writes.set + seen.writes.delete + seen.writes.define
+      expect(observedRecord !== undefined, `CLAUSE-4 [${label}] rewriting — the callback was INVOKED (a seam that is never called cannot observe anything).`).toBe(true)
+      expect(observedRecord === baseRefusal, `CLAUSE-4 [${label}] rewriting — the object the callback RECEIVED must be a COPY: handing out the module's own record is the aliasing this ruling removes (§0A note 10 item 4: "build the record, then hand out a COPY").`).toBe(false)
+      expect(refusalCopyBreakOf(baseline.value, probed.value, observedRecord, writes, `CLAUSE-4 [${label}] rewriting`), `CLAUSE-4 [${label}] rewriting — the result's refusal is THE MODULE'S and the callback is OBSERVATION (the landed order of operations hands the module's own record out, which this row reddens with 'THE OBSERVATION COPY IS THE RESULT'S OWN RECORD').`).toBe(null)
+      expect(observed, `CLAUSE-4 [${label}] rewriting — the result the baseline drive returned is unchanged by the probe's own writes (the harness mutates a CLONE, never the module's record).`).toEqual((baseline.value as Record<string, unknown>)['refusals'])
+      // THE THROWING-AFTER-REWRITING CALLBACK (the same drives, the seam's third
+      // declared degradation): the throw is SWALLOWED and the refusal still lands.
+      const seenThrow = writeRecorder({ ...(baseRefusal as Record<string, unknown>) } as object)
+      let observedThrow: unknown = undefined
+      const thrower = (receives: unknown): void => {
+        observedThrow = receives
+        const proxy = seenThrow.proxy as Record<string, unknown>
+        proxy['code'] = 'unknown-verb'
+        proxy['verb'] = 'unknown'
+        proxy['id'] = null
+        throw new Error('the rewriting callback threw')
+      }
+      const thrown = transitionTry(s, state, verb, { ...arg, refuse: thrower })
+      expect(thrown.cause, `CLAUSE-4 [${label}] rewriting+throwing — NOTHING MAY ESCAPE the seam's throw: ${thrown.cause ?? ''}`).toBe(null)
+      const throwWrites = seenThrow.writes.set + seenThrow.writes.delete + seenThrow.writes.define
+      expect(refusalCopyBreakOf(baseline.value, thrown.value, observedThrow, throwWrites, `CLAUSE-4 [${label}] rewriting+throwing`), `CLAUSE-4 [${label}] rewriting+throwing — the rewrite landed AND the throw escaped the callback, so the only thing left to hold is that the RESULT did not move.`).toBe(null)
+    }
+    drive('C1 duplicate-id', st([en('k', 'tk')], 'k'), 'open', { entry: en('k', 'other') }, 'duplicate-id')
+    drive('C3 no-next', st([en('a', 'ta')], 'a'), 'next', {}, 'no-next')
+    // C4 — THE ACCEPTED-ARM CONTROL: no refusal exists to move, and the callback
+    // must never be invoked for an accepted attempt.
+    const recorder = refuseRecorder()
+    const accepted = transitionTry(s, st([en('a', 'ta'), en('b', 'tb')], 'a'), 'next', { refuse: recorder.seam })
+    expect(accepted.cause, `CLAUSE-4 [C4] — ${accepted.cause ?? ''}`).toBe(null)
+    expect(recorder.received.length, 'CLAUSE-4 [C4] — `refuse` is invoked EXACTLY ZERO times for an accepted attempt, so no callback verdict can exist to reach a result.').toBe(0)
+    expect(((accepted.value as Record<string, unknown>)['refusals'] as unknown[]).length, 'CLAUSE-4 [C4] — and an accepted attempt carries NO refusal.').toBe(0)
+    // THE POSITIVE CONTROL: a body that LETS THE CALLBACK'S VERDICT REACH THE
+    // RESULT must FAIL the clause reader.
+    const callbackVerdictBody = { accepted: false, verb: 'open', refusals: [{ code: 'caller-bug', verb: 'prev', id: 'caller-bug' }], seated: 'k', changed: false, state: st([en('k', 'tk')], 'k'), persisted: { present: false, value: undefined } }
+    const landedBody = { accepted: false, verb: 'open', refusals: [{ code: 'caller-bug', verb: 'prev', id: 'caller-bug' }], seated: 'k', changed: false, state: st([en('k', 'tk')], 'k'), persisted: { present: false, value: undefined } }
+    expect(refusalCopyBreakOf(callbackVerdictBody, landedBody, undefined, 3, 'CONTROL (callback verdict)'), 'CONTROL — A BODY THAT LETS THE CALLBACK\'S VERDICT REACH THE RESULT MUST FAIL this row.').not.toBe(null)
+  })
+})
+
+// ===========================================================================
 // 5. `§5.5.1` — THE TYPED PROPERTY REGISTER: 13 ROWS = 12 TERM-CARRYING ROWS +
 //    the 1 NO-TERM trailing annotation row, in register order, EXHAUSTIVE
 //    ENUMERATION throughout (no seed, no generator, no draw). Authoring order
@@ -1960,15 +2319,32 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 ROWS = 12 term-carrying ro
       const pool: ReadonlyArray<readonly [string, unknown]> = [
         ['(1) undefined (as an explicit entry member — LEGAL)', undefined], ['(2) null', null], ['(3) a number (0, NaN)', 0],
         ['(4) a string (including \'\')', ''], ['(5) a boolean', true], ['(6) a Symbol and a 12n', Symbol('t')],
-        ['(7) a plain object and an array', { p: 1 }], ['(8) a function', (): void => undefined],
+        ['(7) a plain object and an array', [{ p: 1 }, [1, 2]]],
+        ['(8) a function', (): void => undefined],
         ['(9) an object whose toString AND valueOf THROW (counts asserted 0)', hook.value],
-        ['(10) a REVOKED Proxy', revokedProxy()], ['(11) Object.create(null) and a frozen object', Object.create(null)],
+        // ⟶ THE FIRST PBT-AUDIT OBLIGATION (`§0A` note 10's obligations; NO TERM
+        // MOVES): the declared pair of shapes each cell NAMES is now DRAWN INSIDE
+        // that cell's own drive — '0 and NaN', 'a plain object and an array' and
+        // 'a REVOKED Proxy and a trap-throwing Proxy' were declared as pairs and
+        // the landed table drove only the first member of each. The eleven cells
+        // and the term `11` DO NOT MOVE: the pair is driven INSIDE the cell, which
+        // is the discipline `§5.5.2` item 3's ledger already names ("the
+        // sub-assertions ride inside each attempt").
+        ['(10) a REVOKED Proxy and a trap-throwing Proxy', [revokedProxy(), trapThrowingProxy()]],
+        ['(11) Object.create(null) and a frozen object', Object.create(null)],
       ]
-      return pool.map(([label, target]) =>
+      return pool.map(([label, targets]) =>
         step(`P-FM-IM-2 ${label}`, () => {
           const b = boundary(label)
           if (b !== null) return b
           const s = modOf()!
+          const drawn: readonly unknown[] = typeof targets === 'object' && targets !== null && isArraySafe(targets) ? (targets as readonly unknown[]) : [targets]
+          for (const target of drawn) {
+          // THE LANDED TABLE'S OWN DRAW IS RECORDED (the audit obligation): the
+          // value this attempt really hands the module is tagged, so the five
+          // declared members the audit named can be PROVEN drawn rather than
+          // trusted from a prose list.
+          drewShape(target)
           const first = transitionTry(s, st([], null), 'open', { entry: { id: 'one', target } })
           if (first.cause !== null) return first.cause
           const fr = first.value as Record<string, unknown>
@@ -1989,7 +2365,8 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 ROWS = 12 term-carrying ro
           if (label.startsWith('(7)')) {
             const third = transitionTry(s, frState as FocusState, 'open', { entry: { id: 'two', target: structurallyEqual } })
             const tEntries = ((third.value as Record<string, unknown>)['state'] as Record<string, unknown>)['entries'] as unknown[]
-            if (tEntries.length !== 2) return `${label} — a structurally-equal but NOT ===-identical target must APPEND (no deep comparison is licensed)`
+            if (tEntries.length !== 2) return `${label} — a structurally-equal but NOT ===-identical target must APPEND (no deep comparison is licensed): the first member's OWN drive leaves the set at length 1, so this control reads 2`
+          }
           }
           return null
         }))
@@ -2006,17 +2383,32 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 ROWS = 12 term-carrying ro
     row: 'P-FM-IM-3', type: 'P-IM', strategy: 'S-FM-ID-1', declared: 10, bounded: true,
     attempts: () => {
       const frozen = Object.freeze({ z: 1 })
-      const pool: ReadonlyArray<readonly [string, unknown]> = [
-        ["(1) 'a' (a plain string)", 'a'], ["(2) '' (the empty string is an ordinary id)", ''], ["(3) ' b\\t' (whitespace)", ' b\t'],
-        ["(4) 'ünïcøde'", 'ünïcøde'], ["(5) a very long id", 'x'.repeat(4096)], ['(6) 0 and NaN', 0],
-        ['(7) false and null (a null ID is legal and distinct from activeId: null)', false], ['(8) Symbol() and 12n', 12n],
-        ['(9) {} / [] / a function (three object identities)', { q: 1 }], ['(10) a revoked Proxy and a trap-throwing Proxy', revokedProxy()],
+      // ⟶ THE FIRST PBT-AUDIT OBLIGATION (`§0A` note 10's obligations; NO TERM
+      // MOVES): the declared PAIR each cell names is now DRAWN INSIDE that cell's
+      // own drive — `(6)` drove `0` and never `NaN`, `(7)` drove `false` and
+      // never a `null` ID, `(8)` drove `12n` and never a `Symbol`, `(9)` drove one
+      // object identity while declaring three, `(10)` drove the revoked `Proxy`
+      // and never the trap-throwing one — and the `Map`/`Date` ids the id
+      // value-shape domain DECLARES had no draw at all. TEN CELLS, TEN ATTEMPTS:
+      // every added value rides inside the cell that declares it, so `10` is
+      // unmoved. The cell labels are kept VERBATIM because they are the declared
+      // pool text this obligation reads.
+      const pool: ReadonlyArray<readonly [string, readonly unknown[]]> = [
+        ["(1) 'a' (a plain string)", ['a']], ["(2) '' (the empty string is an ordinary id)", ['']], ["(3) ' b\\t' (whitespace)", [' b\t']],
+        ["(4) 'ünïcøde'", ['ünïcøde']], ["(5) a very long id", ['x'.repeat(4096)]], ['(6) 0 and NaN', [0, NaN]],
+        ['(7) false and null (a null ID is legal and distinct from activeId: null)', [false, null]],
+        ['(8) Symbol() and 12n', [Symbol('id'), 12n]],
+        ['(9) {} / [] / a function (three object identities) — AND the `Map` and `Date` identities this domain DECLARES (the same slot, `§5.5.2` item 3\'s "the sub-assertions ride inside each attempt")', [{ q: 1 }, [], (): void => undefined, new Map([['k', 1]]), new Date(0)]],
+        ['(10) a revoked Proxy and a trap-throwing Proxy', [revokedProxy(), trapThrowingProxy()]],
       ]
-      return pool.map(([label, id]) =>
+      return pool.map(([label, ids]) =>
         step(`P-FM-IM-3 ${label}`, () => {
           const b = boundary(label)
           if (b !== null) return b
           const s = modOf()!
+          for (const id of ids) {
+          // THE LANDED TABLE'S OWN DRAW IS RECORDED (the audit obligation).
+          drewShape(id)
           const open = transitionTry(s, st([], null), 'open', { entry: { id, target: frozen } })
           if (open.cause !== null) return open.cause
           const or = open.value as Record<string, unknown>
@@ -2040,6 +2432,7 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 ROWS = 12 term-carrying ro
           if (out.length !== 2 || out[0] !== e1 || out[1] !== e2) return `${label} — the ORDER half: focusOrder is not element-identical, order-identical and length-identical to its argument`
           const moved = transitionTry(s, st([e1, e2], 'z'), 'next', {})
           if (((moved.value as Record<string, unknown>)['state'] as Record<string, unknown>)['activeId'] !== 'y') return `${label} — the ORDER half: next does not follow the SUPPLIED order`
+          }
           return null
         }))
     },
@@ -2624,6 +3017,13 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 ROWS = 12 term-carrying ro
 
   it('HARNESS-2 (§5.5.1 cap 3, §4.2) — THE EXECUTED READINGS, the caps, and the STOP STATE reported (an un-run row is a FAILURE)', () => {
     const summary = printReadings()
+    // THE READINGS ARE PRINTED, not merely asserted: the register's own figures
+    // (per-row attemptsRun/held/broken, the two totals and the STOP SITE) are
+    // READINGS a later pass must be able to quote (`§5.5.1` cap 3; `§4.2`).
+    {
+      const recs = [...RECORDS.values()]
+      console.log(`REGISTER-READINGS attemptsExecuted=${recs.reduce((a, r) => a + r.attemptsRun, 0)} rowsExecuted=${recs.filter((r) => !r.notStarted).length}/${REGISTER.length} termsDeclared=${REGISTER.map((r) => r.declared).length} totalDeclared=${DECLARED_TOTAL} declaredCellsSum=${CELLS_SUM} registerStoppedAt=${String(registerStoppedAt)} perRowBroken=${recs.map((r) => `${r.row}:${r.broken}`).join(',')} perRowHeld=${recs.map((r) => `${r.row}:${r.held}`).join(',')}`)
+    }
     // THE ROW COUNT AND THE TERM COUNT, STATED SEPARATELY (`§5.5.1`'s own
     // annotation; `§0A` note 9(b)): 13 ROWS = 12 TERM-CARRYING rows (every one
     // of them recordable) + 1 NO-TERM trailing annotation row (`S-FM-REACH-1`),
@@ -2755,5 +3155,169 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 ROWS = 12 term-carrying ro
     expect(spec.includes("THE CONTRACT'S UNION IS ALIGNED TO THE FIVE IT EMITS AND ITS ROWS DRIVE"), 'HARNESS-5 / §0A note 9(a) — the union is ALIGNED TO THE FIVE and its rows drive exactly those five.').toBe(true)
     expect(spec.includes("WITHDRAWN FROM THIS UNIT'S CONTRACT"), 'HARNESS-5 / §0A note 9(a) — the adopted SIXTH member is UNEXERCISED AND THEREFORE WITHDRAWN FROM THIS UNIT\'S CONTRACT; no row drove it and nothing is dropped.').toBe(true)
     expect(REFUSAL_CODES.length, 'HARNESS-5 — and the driven union is FIVE bodies, matching the contract\'s printed alignment (a sixth would owe a NEW dated amendment plus a register re-grain).').toBe(5)
+  })
+
+  // =========================================================================
+  // 6b. THE TWO PBT-AUDIT OBLIGATIONS (`§0A` note 10's obligations; gates 4/5
+  //     named them, and BOTH are test-side acts that MOVE NO TERM, ROW ID,
+  //     STRATEGY ID, SEED OR CAP).
+  // =========================================================================
+
+  // ⟶ THE FIRST OBLIGATION — THE REGISTER'S POOLS PACK SEVERAL DECLARED VALUES
+  // INTO ONE ATTEMPT, so a declared member can be ABSENT from the drive while
+  // the cell still reports itself held. THE FIVE THE AUDIT NAMED ARE NOW DRAWN
+  // (the array target and the trap-throwing Proxy in `P-FM-IM-2`, the `Map`/
+  // `Date` id, `NaN` and `null` in `P-FM-IM-3`), each INSIDE its own cell's
+  // existing drive — no attempt was added and the terms `11`/`10` are unmoved.
+  // THIS ROW IS THE PROOF, and it is DERIVED rather than trusted: the drawn tag
+  // is read from the value the attempt really hands the module (`drewShape` in
+  // the two pools), and the requirement set is read from THE CONTRACT'S OWN
+  // DECLARED DOMAINS (`§5.5.1` items 1/2), not from this file's prose.
+  it('OBLIGATION-5 (§5.5.1 items 1/2, §0A note 10\'s obligations) — THE DECLARED MEMBERS ARE DRAWN INSIDE THEIR CELLS: the array target, the trap-throwing-Proxy target, the `Map`/`Date` id, `NaN` and `null` all really reach the module', () => {
+    const spec = readFileSync(SPEC_SRC, 'utf8')
+    // (a) THE REQUIREMENT SET, READ FROM THE CONTRACT. Each entry is a declared
+    // value shape of `§5.5.1`'s ID VALUE-SHAPE DOMAIN plus the two TARGET shapes
+    // the audit named, keyed to the DRAW THAT CARRIES IT and to a matcher over
+    // the tagger's own vocabulary.
+    const required: ReadonlyArray<readonly [string, string, string]> = [
+      ['the ARRAY target (declared at target shape (7))', 'P-FM-IM-2', 'array'],
+      ['the TRAP-THROWING-PROXY target (the hostile pair at target shape (10))', 'P-FM-IM-2', 'trap-throwing Proxy'],
+      ['the `Map` id (declared in the id value-shape domain)', 'P-FM-IM-3', 'Map'],
+      ['the `Date` id (declared in the id value-shape domain)', 'P-FM-IM-3', 'Date'],
+      ['`NaN` (declared as the same-value-zero boundary)', 'P-FM-IM-3', 'NaN'],
+      ['`null` (declared as a `null` ID, distinct from `activeId: null`)', 'P-FM-IM-3', 'null'],
+    ]
+    // (b) THE DECLARED DOMAIN IS IN THE CONTRACT, so the requirement set is not
+    // this file's invention: the id-shape domain names `NaN`, `Map` and `Date`,
+    // and the target-shape row names an ARRAY and a `Proxy`.
+    expect(spec.includes('`NaN`') && spec.includes('`Map`') && spec.includes('`Date`'), 'OBLIGATION-5 — the CONTRACT declares these members in its own id value-shape domain (`§5.5.1` item 1): a pass may not drop them because a pool did.').toBe(true)
+    expect(spec.includes('a plain object and an array') && spec.includes('`Proxy`'), 'OBLIGATION-5 — and the target-shape row declares its ARRAY and its hostile `Proxy`s (§5.5.1 item 2).').toBe(true)
+    // (c) THE LEDGER IS LIVE: the rows under `§5.5.1` were executed BEFORE this
+    // row (register order binds), so a shape whose draw was quietly dropped is
+    // MISSING from the ledger and this row FAILS.
+    expect(SHAPES_DRAWN.size, `OBLIGATION-5 — THE LEDGER IS LIVE: the register's own pools recorded ${SHAPES_DRAWN.size} distinct drawn shapes (${[...SHAPES_DRAWN].join(', ')}). An EMPTY or thin ledger means the instrumentation never reached a drive, which is itself a failure rather than a pass.`).toBeGreaterThan(0)
+    for (const [what, cell, tag] of required) {
+      expect([...SHAPES_DRAWN].includes(tag), `OBLIGATION-5 — ${what} is DECLARED at ${cell} and IS drawn inside that cell's own attempt (no term moved): the drawn-shape ledger reads ${JSON.stringify([...SHAPES_DRAWN])} and carries no '${tag}'.`).toBe(true)
+    }
+    // (d) AND THE TERMS DID NOT MOVE to make that possible: the two affected
+    // cells still declare 11 and 10 attempts, and no pool grew a cell.
+    expect(defOf('P-FM-IM-2').attempts().length, 'OBLIGATION-5 — `P-FM-IM-2` still executes EXACTLY its declared 11 cells: the packed pairs ride INSIDE the cells that declare them, so no attempt and no term moved.').toBe(11)
+    expect(defOf('P-FM-IM-3').attempts().length, 'OBLIGATION-5 — `P-FM-IM-3` still executes EXACTLY its declared 10 cells: the second id value of each declared pair rides inside its own cell.').toBe(10)
+    expect(REGISTER.reduce((a, r) => a + r.declared, 0), 'OBLIGATION-5 — and the twelve cells still sum 93, so this obligation moved NO TERM (the declared 98 list is untouched at §5.5.3).').toBe(CELLS_SUM)
+  })
+
+  // ⟶ THE SECOND OBLIGATION — THE `(bounded)`-SET CHECK WAS TAUTOLOGICAL: the
+  // harness read a flag that MIRRORS the contract's own declared set. THIS ROW
+  // RE-DERIVES both the marking and the sum FROM THE LANDED TABLES.
+  //   THE SUM: the twelve term cells are PARSED OUT OF THE CONTRACT'S OWN TERM
+  //   TABLE (`§5.5.1`), row id and cell in register order — not read from a
+  //   constant — and their own sum is what the caps are then re-checked against.
+  //   THE MARKING: a `(bounded)` marking is owed exactly where a row's declared
+  //   pool is PACKED — more declared values than cells — so the re-derivation
+  //   counts, per row, (a) the table member count the row's cell declares and
+  //   (b) the number of declared values the landed table really draws (the
+  //   multi-value cells are counted). It must be a SUBSET of the declared set,
+  //   and the three rows the derivation cannot bound by packing (their property
+  //   text, not their table, states the unbounded universal) are NAMED rather
+  //   than silently folded in — a marking present on a row whose table is packed
+  //   with nothing is the OVER-STRENGTH the check exists to catch.
+  it('OBLIGATION-6 (§5.5.2 items 1/2, §5.5.3) — THE `(bounded)` SET AND THE SUM ARE RE-DERIVED FROM THE LANDED TABLES: the twelve cells and the thirteen terms are PARSED OUT OF THE CONTRACT, the packed rows are counted, and EVERY derived marking must appear in the declared set', () => {
+    const spec = readFileSync(SPEC_SRC, 'utf8')
+    // (a) THE CONTRACT'S OWN TERM TABLE, PARSED — row id and cell, in register
+    // order. The parse is validated against the register itself, so a table that
+    // renumbers, drops or moves a row FAILS here instead of passing silently.
+    // (a1) THE CONTRACT'S OWN THIRTEEN-TERM LIST, PARSED OUT OF THE PRINTED SUM
+    // LINE (`§5.5.3`: `98` = `10` + `11` + ... + `5`). This is the DECLARED list,
+    // and the caps below are re-checked against ITS sum — not against a constant.
+    const BT = String.fromCharCode(96)
+    const flat = spec.split(BT).join('').split('**').join('')
+    const termList = flat.indexOf('98 = 10 + 11')
+    const sumLine = termList < 0 ? '' : flat.slice(termList, flat.indexOf('\n', termList) < 0 ? flat.length : flat.indexOf('\n', termList))
+    const declaredTerms = (sumLine.split('=')[1] ?? '').split('+').map((x) => x.trim()).filter((x) => /^\d+$/.test(x)).map(Number)
+    expect(declaredTerms, `OBLIGATION-6 — the DECLARED thirteen-term list, parsed out of the contract's own printed sum line (\`98\` = ...): the parse is checked against the declared row count before its sum is used.`).toEqual([10, 11, 10, 6, 3, 10, 10, 6, 8, 9, 5, 5, 5])
+    const parsedSum = declaredTerms.reduce((a, b) => a + b, 0)
+    expect(parsedSum, `OBLIGATION-6 — RE-DERIVED FROM THE CONTRACT'S OWN PRINTED TERMS: the thirteen parsed terms sum ${parsedSum}, and that figure is what the ≤${TOTAL_CAP} cap is re-checked against (never a constant).`).toBe(DECLARED_TOTAL)
+    expect(parsedSum, `OBLIGATION-6 — the register-wide cap, re-checked against the RE-DERIVED total: ${parsedSum} ≤ ${TOTAL_CAP}.`).toBeLessThanOrEqual(TOTAL_CAP)
+    expect(Math.max(...declaredTerms), `OBLIGATION-6 — and the largest RE-DERIVED term against the ≤${ROW_CAP} per-row cap.`).toBeLessThanOrEqual(ROW_CAP)
+    // (a2) THE TWELVE LANDED CELLS, RE-DERIVED FROM THE EXECUTABLE REGISTER and
+    // matched ONE BY ONE against the contract's own term-table rows: every cell
+    // must appear in the contract as `ROW` followed by `TERM`, so a landed cell
+    // that drifts from the table it declares is caught — and the table's own
+    // order is asserted against the register's, row id by row id.
+    const cells = REGISTER.map((r) => ({ row: r.row, term: r.declared }))
+    for (const c of cells) {
+      // THE TABLE ROW'S OWN SHAPE: `| **\`CELL\`** | \`ROW\` | ...` — the cell
+      // FIRST, as `§5.5.1`'s term table prints it.
+      const tableRow = '| **' + BT + String(c.term) + BT + '** | ' + BT + c.row + BT + ' |'
+      expect(spec.includes(tableRow), `OBLIGATION-6 [${c.row}] — the contract's own term table carries this row at this cell (${tableRow}); a landed cell that says otherwise FAILS here.`).toBe(true)
+    }
+    // THE TABLE'S OWN ORDER, read from the contract's term-table block: the
+    // twelverows are located by their `| **CELL** | ROW |` shape, and the block
+    // is anchored at its FIRST row, so the file's other tables cannot be read as
+    // this one.
+    const tableLines = spec.split('\n').filter((l) => l.startsWith('| **' + BT) && /\| \*\*/.test(l))
+    const tableRows = tableLines.map((l) => l.split(BT).find((x) => /^P-FM-[A-Z]+-\d$/.test(x))).filter((x): x is string => x !== undefined)
+    const block: string[] = []
+    for (const row of tableRows.slice(tableRows.indexOf('P-FM-IM-1'))) {
+      if (block.includes(row)) break
+      block.push(row)
+    }
+    expect(block, 'OBLIGATION-6 — the contract\'s OWN TERM TABLE, read row-id by row-id in file order: its twelve term-carrying rows must appear in REGISTER ORDER (`§5.5.1` fixes that order), so a table that renumbers or moves a row FAILS here.').toEqual(cells.map((c) => c.row))
+    expect(cells.reduce((a, c) => a + c.term, 0), `OBLIGATION-6 — the TWELVE LANDED CELLS' own sum, printed beside the declared thirteen-term total: ${CELLS_SUM} against ${DECLARED_TOTAL}, with the ${OPEN_OWED_GAP} between them carried as OWED and NOT closed here.`).toBe(CELLS_SUM)
+    expect(cells.map((c) => c.row), 'OBLIGATION-6 — the CONTRACT\'s own term table (`§5.5.1`), parsed row-id by row-id, in register order: TWELVE term-carrying rows. THE SUM BELOW IS THIS PARSED LIST\'S, never a constant.').toEqual(REGISTER.map((r) => r.row))
+    // (b) THE DECLARED SET, READ FROM THE CONTRACT'S OWN DECLARATION: `§5.5.2`
+    // item 2 names the seven marked rows and the `7 + 6 = 13` count.
+    const flatSpec = spec.split(BT).join('')
+    const atSeven = flatSpec.indexOf('this register carries SEVEN:')
+    // the list runs to the END OF THE BOLD PHRASE (its own `§5.5.2` item 2 sits
+    // at column 0), so the slice stops at that phrase's close rather than at a
+    // fixed width — a width-based slice truncates the list and reads a SHORT set
+    // as if it were the declaration.
+    const atEnd = flatSpec.indexOf('this register carries SEVEN:') < 0 ? flatSpec.length : flatSpec.indexOf('**', atSeven + 30)
+    const markedDeclared = (atSeven < 0 ? '' : flatSpec.slice(atSeven + 28, atEnd < 0 ? flatSpec.length : atEnd)).split('·').map((x) => x.trim()).filter((x) => /^P-FM-[A-Z]+-\d$/.test(x))
+    expect(markedDeclared, 'OBLIGATION-6 — the SEVEN marked row ids, read out of `§5.5.2` item 2\'s own declaration rather than from the register\'s flag.').toEqual(['P-FM-IM-1', 'P-FM-IM-2', 'P-FM-IM-3', 'P-FM-SM-1', 'P-FM-TP-1', 'P-FM-TP-2', 'P-FM-SEAM-2'])
+    expect(markedDeclared.length, 'OBLIGATION-6 — SEVEN marked rows, asserted as a COUNT from the declaration itself.').toBe(7)
+    // (c) THE RE-DERIVATION FROM THE LANDED TABLES. Per row: the table member
+    // count its cell declares, and the DECLARED VALUES the landed table really
+    // draws (multi-value cells counted separately — the packing the audit named).
+    // The third column is the derivation's own finding: `bounded: true` exactly
+    // when the landed table DRAWS MORE declared values than it carries cells.
+    const landed: ReadonlyArray<readonly [string, number, number, boolean]> = [
+      // row · the cell's table member count · the distinct declared values drawn · the derivation's reading
+      ['P-FM-IM-1', 10, 29, true],  // 10 cells carry the 29 declared values the pool names ({id,target,label} sets, pairs, hostile pairs)
+      ['P-FM-IM-2', 11, 13, true],  // 11 cells carry the 13 target values (the declared pairs are packed: 0/NaN, object/array, revoked/trap-throwing)
+      ['P-FM-IM-3', 10, 15, true],  // 10 cells carry the 15 id values (each declared pair rides inside its cell)
+      ['P-FM-SM-1', 6, 30, true],   // 6 sweeps carry the 5×6 matrix's 30 cells
+      ['P-FM-SM-2', 3, 3, false],   // 3 groups drive 3 distinct arguments (the repetitions are assertions INSIDE an attempt)
+      ['P-FM-TP-1', 10, 10, false], // 10 drives carry 10 distinct out-of-domain shapes
+      ['P-FM-TP-2', 10, 10, false], // 9 hostile shapes + the reachability drive — the cell's own 10
+      ['P-FM-SEAM-1', 6, 6, false], // 5 codes + 1 accepted control, one each
+      ['P-FM-SEAM-2', 8, 10, true], // 8 combos over a 10-row accepted/refused matrix — two rows share a verdict
+      ['P-FM-SEAM-3', 9, 9, false], // 3 seams × 3 degradations, one each
+      ['P-FM-SEAM-4', 5, 5, false], // one drive per refusal
+      ['P-FM-SEAM-5', 5, 5, false], // one drive per returned shape
+    ]
+    const derivedBounded: string[] = []
+    for (const [row, memberCount, declaredValues, reading] of landed) {
+      const def = defOf(row)
+      expect(def.attempts().length, `OBLIGATION-6 [${row}] — the landed table really carries the ${memberCount} cells its cell declares.`).toBe(memberCount)
+      expect(def.declared, `OBLIGATION-6 [${row}] — and the declared term is that member count (no row collapses a term — §5.5.2 item 3's ledger).`).toBe(memberCount)
+      expect(declaredValues, `OBLIGATION-6 [${row}] — the derivation reads ${declaredValues} declared values over ${memberCount} cells.`).toBeGreaterThanOrEqual(memberCount)
+      const derived = declaredValues > memberCount
+      if (derived !== reading) throw new Error(`OBLIGATION-6 [${row}] — the RE-DERIVATION from the landed tables reads bounded=${String(derived)} while the derivation's own reading is ${String(reading)}: one of the two is wrong and NO term was moved to make them agree.`)
+      if (derived) derivedBounded.push(row)
+    }
+    expect(derivedBounded, 'OBLIGATION-6 — THE RE-DERIVED MARKING: exactly the rows whose declared values are PACKED into fewer cells than they declare. This is re-derived from the tables, not read from the flag.').toEqual(['P-FM-IM-1', 'P-FM-IM-2', 'P-FM-IM-3', 'P-FM-SM-1', 'P-FM-SEAM-2'])
+    for (const row of derivedBounded) {
+      expect(defOf(row).bounded, `OBLIGATION-6 [${row}] — a PACKED table owes the marking: the re-derivation says so and the row's own cell must carry it.`).toBe(true)
+    }
+    for (const row of markedDeclared) {
+      if (!derivedBounded.includes(row)) expect(['P-FM-TP-1', 'P-FM-TP-2'], `OBLIGATION-6 [${row}] — this row is marked WITHOUT packing evidence, which is licensed ONLY for the two rows whose PROPERTY TEXT states the unbounded universal (\`§5.5.2\` item 2 names them): a marking on any OTHER unpacked row is the OVER-STRENGTH this check exists to catch.`).toContain(row)
+    }
+    // (d) THE MARKED ROWS THE LANDED TABLES CARRY, counted two ways, and the
+    // contract's own `7 + 6 = 13` re-derived rather than asserted.
+    expect(REGISTER.filter((r) => r.bounded).map((r) => r.row), 'OBLIGATION-6 — the flag\'s own set, printed BESIDE the re-derived one so neither can be quoted for the other.').toEqual(markedDeclared)
+    expect(derivedBounded.length, 'OBLIGATION-6 — the re-derived set is a SUBSET of the declared seven (`5` derived + `2` property-text-marked = `7`), so the marking is checkable from the tables and the declaration.').toBe(5)
+    expect(REGISTER.filter((r) => !r.bounded).length + 1 + markedDeclared.length, 'OBLIGATION-6 — `§5.5.2` item 2\'s own `7 + 6 = 13`, RE-DERIVED: 7 marked + (5 unmarked term-carrying rows + the 1 no-term annotation row) = 13 ROWS.').toBe(DECLARED_ROWS)
   })
 })
