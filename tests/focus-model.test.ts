@@ -20,6 +20,8 @@
 // legs and the THREE-PART `[U]` refusal, the word `waived` FORBIDDEN, gate 6
 // `STRUCTURAL`), `§5.3`, `§5.5`/`§5.5.1`/`§5.5.2`/`§5.5.3` (**the typed
 // register: THIRTEEN rows, DECLARED TOTAL `98` = `10+11+10+6+3+10+10+6+8+9+5+5+5`,
+// of which TWELVE carry a term (their twelve cells sum `93`) and ONE — the
+// trailing reachability annotation row — carries none (see the live figures below),
 // caps `≤100`/row · `≤400` total · stop-after-5, EXHAUSTIVE ENUMERATION with NO
 // seed and NO generator, SEVEN `(bounded)` rows**), `§6`, `§7`/`§7a`/`§7a.1`,
 // `§8`, `§3a`/`§3b`.
@@ -71,15 +73,28 @@
 // rename, removal or unexported name FAILS TO COMPILE there while the runtime
 // rows still run and report.
 //
-// **TWO CONTRACT OBLIGATIONS THIS FILE CARRIES RATHER THAN SMOOTHS (`§5.5.3`'s
-// five named obligations):** (a) the register is read as **`13` ROWS / `13`
-// TERMS**, the authoritative form, whose thirteen cells sum `98` — and
-// `P-FM-TP-2`'s reachability drive is the TENTH drive inside that row's cell, so
-// the register's trailing annotation row is a READING AID carrying no term of
-// its own (the alternative `12`-row/`12`-term reading moves no cell and is
-// recorded, not silently chosen); (b) **the two as-filed figures `89` and the
-// withdrawn subtotal decompositions are NOT re-printed as green** — the cells
-// are the authority and `HARNESS-1` asserts the sum of the cells.
+// **THE REGISTER'S LIVE FIGURES, RE-ALIGNED TO WHAT THE CONTRACT NOW PRINTS —
+// and the re-alignment is this file's own act** (`§0A` note 9, dispositions
+// (a)/(b)/(c), which name the harness's five assertions as the TestWriter's to
+// re-grain; the obligation is stated at `§0A` note 9's closing paragraph):
+// (a) the ROW COUNT and the TERM COUNT are SEPARATE objects — **`13` ROWS, of
+// which `12` CARRY A TERM and `1` DOES NOT** — the term-less row being
+// `P-FM-TP-2`'s TRAILING REACHABILITY ANNOTATION ROW (its own declared strategy
+// id `S-FM-REACH-1`; an ASSERTION row rather than a term row, because the drive
+// it names is the TENTH drive INSIDE `P-FM-TP-2`'s own cell);
+// (b) the DECLARED TOTAL is **`98`**, printed WITH its THIRTEEN-TERM list, and
+// remains the authority every cap comparison uses — while the table's own TWELVE
+// term cells sum **`93`**;
+// (c) the contract's claim that reading one row as `9 + 1` "also closes on 98"
+// is **WITHDRAWN — that reading sums to `103`** — and **the `5` separating `98`
+// from `93` is carried by NO PRINTED CELL**: it is carried here as a PRINTED
+// READING of an **OPEN OWED RE-DERIVATION** and is explicitly **NOT a satisfied
+// claim** (no term moved, so nothing is silently closed);
+// (d) **the two as-filed figures `89` and the withdrawn subtotal decompositions
+// are NOT re-printed as green.**
+// **NO TERM, ROW ID, STRATEGY ID, SEED OR CAP MOVES in this re-alignment: the
+// twelve cells, the thirteen terms, the thirteen strategy ids and the caps are
+// asserted exactly as the contract prints them.**
 //
 // **ONE GAP AUTHORED AS DECLARED READINGS, NOT INVENTED BEHAVIOUR:** `R-6`'s
 // "no `src/**` importer" half is driven as a REAL filesystem/import-graph probe
@@ -135,9 +150,13 @@ const ENTRY_KEYS = ['id', 'target', 'label'] as const
 const STATE_KEYS = ['entries', 'activeId'] as const
 /** `§2.1` item 5 — the CLOSED five-member verb union. */
 const VERB_BODIES = ['open', 'activate', 'close', 'next', 'prev'] as const
-/** `§2.1` item 7 — the CLOSED five refusal-code bodies this contract EMITS (the
- *  adopted COUNT `6` and this FIVE are reconciled in the open at `§2.1` item 7;
- *  a sixth DECLARED-but-UNEMITTED member owes a dated amendment + re-grain). */
+/** `§2.1` item 7 — the CLOSED FIVE refusal-code bodies this contract EMITS and
+ *  its rows drive: THE UNION IS ALIGNED TO THE FIVE (`§0A` note 9(a)). The
+ *  dossier's ADOPTED SIXTH member is UNEXERCISED AND WITHDRAWN from this unit's
+ *  contract — it has NO emitting rule and NO drivable member — so NO row here
+ *  ever drove it and NOTHING IS DROPPED: the withdrawal is RECORDED here rather
+ *  than deleted, and a pass wanting a sixth member owes a NEW dated amendment
+ *  plus a register re-grain (§2.1 item 7's own annotated disposition). */
 const REFUSAL_CODES = ['unknown-verb', 'duplicate-id', 'unknown-id', 'no-next', 'no-previous'] as const
 /** `§2.1` item 3 — the declared normalised verb body, and NOT a sixth verb. */
 const UNKNOWN_BODY = 'unknown'
@@ -152,6 +171,25 @@ const TYPE_EXPORTS = ['FocusId', 'FocusEntry', 'FocusVerb', 'FocusRefusalCode', 
 const ROW_CAP = 100
 const TOTAL_CAP = 400
 const STOP_AFTER = 5
+/** `§5.5.1` / `§0A` note 9(b) — THE ROW COUNT AND THE TERM COUNT ARE SEPARATE
+ *  OBJECTS: `13` ROWS, of which `12` CARRY A TERM and `1` CARRIES NONE. */
+const DECLARED_ROWS = 13
+const TERM_CARRYING_ROWS = 12
+/** THE ONE ROW THAT CARRIES NO TERM — `P-FM-TP-2`'s TRAILING REACHABILITY
+ *  ANNOTATION ROW: an ASSERTION row, not a term row, with its own declared
+ *  strategy id (`S-FM-REACH-1`, the thirteenth) and no attempt of its own. */
+const NO_TERM_ANNOTATION_ROW = { row: "P-FM-TP-2's trailing reachability annotation row", strategy: 'S-FM-REACH-1' } as const
+/** `§5.5.3` — the table's TWELVE cells, whose own sum IS `93` (the executable
+ *  declaration), and the DECLARED total `98` printed with its thirteen terms. */
+const CELLS_SUM = 93
+const DECLARED_TOTAL = 98
+/** The `5` separating the declared `98` from the cells' `93` — carried by NO
+ *  printed cell, recorded as an OPEN OWED RE-DERIVATION (`§5.5.3`) and NEVER
+ *  presented as a satisfied claim. */
+const OPEN_OWED_GAP = DECLARED_TOTAL - CELLS_SUM
+/** The WITHDRAWN `9 + 1` reading, measured so it stays visible: `93` + `10` =
+ *  `103`, which is NOT the declared total (`§5.5.3`). */
+const WITHDRAWN_NINE_PLUS_ONE_SUM = CELLS_SUM + 9 + 1
 
 // ===========================================================================
 // THE MODULE BOUNDARY — resolution is DATA, never a thrown import (`§4.1`)
@@ -1615,16 +1653,19 @@ describe('§3.1 M-1..M-14 — the valid / happy states (data states enumerated p
 })
 
 // ===========================================================================
-// 5. `§5.5.1` — THE TYPED PROPERTY REGISTER: 13 ROWS / 13 TERMS, in register
-//    order, EXHAUSTIVE ENUMERATION throughout (no seed, no generator, no draw).
-//    Authoring order `§4.2` item 5.
+// 5. `§5.5.1` — THE TYPED PROPERTY REGISTER: 13 ROWS = 12 TERM-CARRYING ROWS +
+//    the 1 NO-TERM trailing annotation row, in register order, EXHAUSTIVE
+//    ENUMERATION throughout (no seed, no generator, no draw). Authoring order
+//    `§4.2` item 5. The twelve term cells sum 93; the DECLARED thirteen-term
+//    list sums 98 and is the cap comparison's figure; the 5 between them is an
+//    OPEN OWED RE-DERIVATION (`§5.5.3`, `§0A` note 9(b)/(c)).
 //
 //    THE EXECUTION DISCIPLINE (`§5.5.1` item 3, `§4.2`'s stop rule): rows are
 //    evaluated SEQUENTIALLY IN REGISTER ORDER with **STOP AFTER 5 CONSECUTIVE
 //    FAILURES**; a red run of a module-absent unit is EXPECTED to stop early,
 //    and **THE UN-RUN ROWS MUST BE REPORTED AS FAILURES rather than silently
-//    omitted** — a red run that reports all 98 attempts as executed is the
-//    finding, not the expectation.
+//    omitted** — a red run that reports all twelve term-carrying rows (93
+//    executable attempts) as executed is the finding, not the expectation.
 // ===========================================================================
 type Attempt = { readonly label: string; readonly probe: () => string | null }
 type Rec = {
@@ -1725,12 +1766,13 @@ function boundary(label: string): string | null {
 // The register's own readings must be taken against the SAME boundary the clause
 // rows report: if a clause row's `await live()` ran first, `liveOrNull()` would
 // hand the register a resolved surface and the red run would silently become a
-// green run of 98 attempts — which `§4.2` names as the FINDING, not the
+// green run of all twelve term-carrying rows / 93 executable attempts — which
+// `§4.2` names as the FINDING, not the
 // expectation. With `liveCache` fixed at `null` (the module is absent at red
 // time), every register attempt breaks on its own boundary.
 await resolveSurface()
 
-describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 rows / 13 terms, register order, NO SEED, NO GENERATOR)', () => {
+describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 ROWS = 12 term-carrying rows + 1 no-term annotation row, register order, NO SEED, NO GENERATOR)', () => {
   const modOf = (): S | null => liveOrNull()
 
   // --- P-FM-IM-1 · the entry record · 10 attempts -------------------------
@@ -2501,31 +2543,38 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 rows / 13 terms, register 
     }
   })
 
-  // The register's trailing annotation row (`§5.5.1`) — a READING AID carrying
-  // NO term of its own: `P-FM-TP-2`'s reachability drive is the TENTH drive
-  // INSIDE that row's cell, which is why the register is read as 13 rows / 13
-  // terms (the authoritative form) and not 12 + a term-less row.
-  it('P-FM-TP-2 (trailing annotation row) — THE REACHABILITY HALF carries NO term of its own', () => {
+  // THE REGISTER'S TRAILING ANNOTATION ROW (`§5.5.1`; `§0A` note 9(b)) — the
+  // row that CARRIES NO TERM. The row count and the term count are separate
+  // objects: 13 ROWS = 12 TERM-CARRYING ROWS + this 1 NO-TERM ASSERTION ROW,
+  // which declares its own strategy id and no attempt of its own because the
+  // drive it names is the TENTH drive INSIDE `P-FM-TP-2`'s cell.
+  it('P-FM-TP-2 (trailing annotation row) — THE REACHABILITY HALF IS A ROW THAT CARRIES NO TERM, and the row/term counts are read separately', () => {
     const tp2 = REGISTER.find((r) => r.row === 'P-FM-TP-2')
-    expect(tp2, "§5.5.1's trailing annotation row is a READING AID and not a thirteenth TERM: P-FM-TP-2's reachability drive is the TENTH drive INSIDE that row's cell, so no row carries two terms and the register's executable DECLARATION is TWELVE rows whose twelve cells sum 98.").toBeDefined()
-    expect(tp2?.declared, "P-FM-TP-2's declared term stays 10 (= 9 hostile shapes + 1 reachability drive), and the reachability half is asserted INSIDE that row's own attempts (attempt (10)), never as a row of its own.").toBe(10)
+    expect(tp2, `§5.5.1's TRAILING REACHABILITY ANNOTATION ROW is a ROW and NOT a term: it asserts that the reachability drive is the TENTH drive INSIDE P-FM-TP-2's own cell, so the register's executable/term-carrying rows are TWELVE while the ROW COUNT is THIRTEEN (${TERM_CARRYING_ROWS} + the no-term annotation row).`).toBeDefined()
+    expect(tp2?.declared, "P-FM-TP-2's declared term stays 10 (= 9 hostile shapes + 1 reachability drive), and the reachability half is asserted INSIDE that row's own attempts (attempt (10)), never as a term of its own — NO TERM MOVES.").toBe(10)
     const attempted = tp2?.attempts() ?? []
     expect(attempted.length, 'and the tenth attempt of that cell IS the reachability drive.').toBe(10)
     expect(attempted[9]?.label.includes('REACHABILITY'), 'the tenth attempt is labelled as the reachability drive.').toBe(true)
+    // THE NO-TERM ROW ITSELF: named, and carrying its own declared strategy id.
+    expect(NO_TERM_ANNOTATION_ROW.row.toUpperCase(), 'THE NO-TERM ROW IS NAMED (`§5.5.1`): the trailing annotation row for P-FM-TP-2\'s reachability half — a row that carries NO term at all.').toContain('REACHABILITY ANNOTATION ROW')
+    expect(NO_TERM_ANNOTATION_ROW.strategy, 'and it carries a DECLARED strategy id so NO ROW IS LEFT WITHOUT ONE — and it is NOT a term cell.').toBe('S-FM-REACH-1')
+    expect(REGISTER.some((r) => r.strategy === NO_TERM_ANNOTATION_ROW.strategy), 'the annotation row\'s strategy id is NOT a term-carrying row of the executable register (it drives nothing of its own).').toBe(false)
+    expect(TERM_CARRYING_ROWS + 1, `§5.5.1 / §0A note 9(b): 13 ROWS = 12 TERM-CARRYING rows + 1 NO-TERM annotation row (${TERM_CARRYING_ROWS} + 1).`).toBe(DECLARED_ROWS)
+    expect(REGISTER.length, 'and the executable register is exactly the TWELVE term-carrying rows — the annotation row declares no attempt term, so it executes nothing.').toBe(TERM_CARRYING_ROWS)
   })
 
   // =========================================================================
   // 6. THE REGISTER-HARNESS ROWS — declared-vs-measured, the caps, the
   //    `(bounded)` set, un-run-is-a-FAILURE, and the `§5.5.2` honesty block.
   // =========================================================================
-  it('HARNESS-1 (§5.5.3) — THE DECLARED TOTAL IS PRINTED WITH ITS TERMS AND IS THEIR SUM (REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS)', () => {
-    // §5.5.1's heading reads `13 rows / 13 terms`, and §5.5.3's AUTHORITATIVE
-    // term list IS thirteen terms summing `98` (its printed string is
-    // `10 + 11 + 10 + 6 + 3 + 10 + 10 + 6 + 8 + 9 + 5 + 5 + 5`). The register's
-    // own term TABLE prints only TWELVE cells, whose sum is `93` — a five-figure
-    // gap §5.5.3 records and WITHDRAWS as this filing's own arithmetic defect.
-    // Both figures are asserted so neither can be quoted for the other, and the
-    // thirteen-term reading is the one whose chain closes on the pinned `98`.
+  it('HARNESS-1 (§5.5.3) — THE DECLARED TOTAL IS PRINTED WITH ITS TERMS AND IS THEIR SUM, and the withdrawn `9 + 1` reading stays VISIBLE (REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS)', () => {
+    // §5.5.3's AUTHORITATIVE declared list IS thirteen terms summing `98` (its
+    // printed string is `10 + 11 + 10 + 6 + 3 + 10 + 10 + 6 + 8 + 9 + 5 + 5 + 5`),
+    // and `98` is the figure every cap comparison uses. The register's own term
+    // TABLE prints only TWELVE cells, whose own sum is `93`, and §5.5.3 WITHDRAWS
+    // the claim that reading one row as `9 + 1` also closes on `98` (that reading
+    // sums to `103`). Both figures are asserted so neither can be quoted for the
+    // other, and the `5` between them is carried as an OWED re-derivation.
     const cells = REGISTER.map((r) => r.declared)
     const asFiledThirteen = [10, 11, 10, 6, 3, 10, 10, 6, 8, 9, 5, 5, 5]
     const chain: number[] = []
@@ -2534,32 +2583,48 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 rows / 13 terms, register 
       running += t
       chain.push(running)
     }
-    expect(cells, 'HARNESS-1 — the TWELVE PRINTED CELLS of §5.5.3\'s AUTHORITATIVE term table, in register order (the cells are what the rows execute).').toEqual([10, 11, 10, 6, 3, 10, 10, 6, 8, 9, 5, 5])
-    expect(asFiledThirteen, "HARNESS-1 — the THIRTEEN terms §5.5.3 prints in its correction note, transcribed verbatim: `10 + 11 + 10 + 6 + 3 + 10 + 10 + 6 + 8 + 9 + 5 + 5 + 5`.").toEqual([10, 11, 10, 6, 3, 10, 10, 6, 8, 9, 5, 5, 5])
-    expect(asFiledThirteen.reduce((a: number, b: number) => a + b, 0), 'HARNESS-1 — the thirteen terms sum to the pinned DECLARED TOTAL 98, which is the figure every cap comparison uses (98 ≤ 400; largest row 11 ≤ 100).').toBe(98)
-    expect(cells.reduce((a: number, b: number) => a + b, 0), "HARNESS-1 — §5.5.3 DEFECT, MEASURED: the register's own TERM TABLE prints TWELVE cells summing 93, while the authoritative thirteen-term list sums 98 — the five-figure gap the contract records and WITHDRAWS as its own arithmetic defect (it asserts that P-FM-TP-2's cell read as `9 + 1` also closes on 98, and that reading in fact sums 103). Both figures are printed here rather than smoothed.").toBe(93)
+    expect(cells, 'HARNESS-1 — the TWELVE PRINTED CELLS of §5.5.3\'s AUTHORITATIVE term table, in register order (the cells are what the rows execute; the thirteenth term exists ONLY in the declared list, not in the table).').toEqual([10, 11, 10, 6, 3, 10, 10, 6, 8, 9, 5, 5])
+    expect(cells.length, `HARNESS-1 — TWELVE TERM CELLS, and the ROW COUNT is a SEPARATE object: ${TERM_CARRYING_ROWS} term-carrying rows + the 1 no-term annotation row = ${DECLARED_ROWS} rows (§5.5.1's own annotation).`).toBe(TERM_CARRYING_ROWS)
+    expect(asFiledThirteen, "HARNESS-1 — the THIRTEEN terms §5.5.3 prints in its DECLARED list, transcribed verbatim: `10 + 11 + 10 + 6 + 3 + 10 + 10 + 6 + 8 + 9 + 5 + 5 + 5`.").toEqual([10, 11, 10, 6, 3, 10, 10, 6, 8, 9, 5, 5, 5])
+    expect(asFiledThirteen.reduce((a: number, b: number) => a + b, 0), 'HARNESS-1 — the thirteen terms sum to the pinned DECLARED TOTAL 98, which is the figure every cap comparison uses (98 ≤ 400; largest row 11 ≤ 100).').toBe(DECLARED_TOTAL)
+    expect(cells.reduce((a: number, b: number) => a + b, 0), "HARNESS-1 — THE TABLE'S OWN TWELVE CELLS SUM 93, printed as what that reading IS (§5.5.3's corrected arithmetic); the declared thirteen-term list's 98 is a DIFFERENT object and the 5 between them is carried by NO printed cell. Both figures are printed here rather than smoothed.").toBe(CELLS_SUM)
     const total = asFiledThirteen.reduce((a: number, b: number) => a + b, 0)
-    expect(total, 'HARNESS-1 — THE DECLARED TOTAL `98` IS THE SUM OF ITS OWN PRINTED TERMS (§5.5.3\'s AUTHORITATIVE thirteen), and the AS-FILED figure `89` is NOT the sum of them — it is kept visible at CURRENT STATE item 3 / §5.5.1\'s heading / §7 item 9, and the term TABLE\'s twelve cells sum 93. Both the 89 and the 93 are reported rather than smoothed.').toBe(98)
+    const cellsSum = cells.reduce((a: number, b: number) => a + b, 0)
+    expect(total, 'HARNESS-1 — THE DECLARED TOTAL `98` IS THE SUM OF ITS OWN PRINTED TERMS (§5.5.3\'s thirteen-term declared list), and the AS-FILED figure `89` is NOT the sum of them — it is kept visible at CURRENT STATE item 3 / §5.5.1\'s heading / §7 item 9, and the term TABLE\'s twelve cells sum 93. Both the 89 and the 93 are reported rather than smoothed.').toBe(DECLARED_TOTAL)
     expect(chain, 'HARNESS-1 — the twelve-step printed chain over the THIRTEEN terms: 10 → 21 → 31 → 37 → 40 → 50 → 60 → 66 → 74 → 83 → 88 → 93 → 98 (§5.5.3 prints exactly this chain).').toEqual([10, 21, 31, 37, 40, 50, 60, 66, 74, 83, 88, 93, 98])
-    expect(total, 'HARNESS-1 — and this is the figure the register\'s own cap comparisons use.').toBe(98)
-    expect(total, 'HARNESS-1 — the total against the ≤400 register cap (§5.5.3\'s cap re-check).').toBeLessThanOrEqual(TOTAL_CAP)
-    expect(Math.max(...cells), `HARNESS-1 — every row's term against the ≤${ROW_CAP}-attempts-per-row cap (largest row 11).`).toBeLessThanOrEqual(ROW_CAP)
+    expect(total, 'HARNESS-1 — and this is the figure the register\'s own cap comparisons use.').toBe(DECLARED_TOTAL)
+    expect(total, 'HARNESS-1 — the total against the ≤400 register cap (§5.5.3\'s cap re-check: 98 ≤ 400, headroom 302).').toBeLessThanOrEqual(TOTAL_CAP)
+    expect(Math.max(...cells), `HARNESS-1 — every row's term against the ≤${ROW_CAP}-attempts-per-row cap (§5.5.3's cap re-check: largest row 11, headroom 89).`).toBeLessThanOrEqual(ROW_CAP)
+    // THE WITHDRAWN READING, MEASURED AND KEPT — never deleted, never asserted
+    // as closing: `9 + 1` added to the twelve cells' `93` sums to `103`.
+    expect(WITHDRAWN_NINE_PLUS_ONE_SUM, "HARNESS-1 — THE `9 + 1` READING IS WITHDRAWN AND IS PRINTED HERE AS WITHDRAWN, NOT AS A CLOSING: 93 + 10 = 103, so that reading does NOT close on the declared total 98 (§5.5.3).").toBe(103)
+    expect(WITHDRAWN_NINE_PLUS_ONE_SUM, 'HARNESS-1 — and it is EXPLICITLY NOT the declared total — the withdrawal is recorded rather than the claim being deleted (§0A note 9(c)).').not.toBe(DECLARED_TOTAL)
+    expect(cellsSum + 9 + 1, 'HARNESS-1 — re-derived from the cells themselves rather than from a constant: the withdrawn reading is 103, which is NOT 98.').toBe(WITHDRAWN_NINE_PLUS_ONE_SUM)
+    // THE OPEN OWED RE-DERIVATION — A PRINTED READING, NOT A SATISFIED CLAIM.
+    expect(DECLARED_TOTAL - cellsSum, "HARNESS-1 — OPEN OWED RE-DERIVATION, PRINTED AS A READING AND NEVER AS A SATISFIED CLAIM: the declared total 98 exceeds the twelve cells' 93 by exactly 5, and that 5 is CARRIED BY NO PRINTED CELL (§5.5.3 records it and reports it rather than closing it by moving a term). This assertion measures the gap; it does NOT close it and must never be read as evidence that 93 and 98 agree.").toBe(OPEN_OWED_GAP)
+    expect(OPEN_OWED_GAP, 'HARNESS-1 — the owed gap is asserted as ITS OWN FIGURE (5) so a later pass may not silently re-read it as zero.').toBe(5)
     const byIdFamily = { IM: 10 + 11 + 10, SM: 6 + 3, TP: 10 + 10, SEAM: 6 + 8 + 9 + 5 + 5 }
     expect(byIdFamily, 'HARNESS-1 — the ID-family subtotals, re-derived from §5.5.1\'s own rows: 31 + 9 + 20 + 33 = 93. §5.5.3 WITHDRAWS this decomposition as defective because it does not close on the thirteen-term total 98 — this row MEASURES the gap (93) rather than smoothing it, and no cell moves.').toEqual({ IM: 31, SM: 9, TP: 20, SEAM: 33 })
-    expect(byIdFamily.IM + byIdFamily.SM + byIdFamily.TP + byIdFamily.SEAM, 'HARNESS-1 — THE CONTRACT\'S OWN DEFECT, PRINTED BESIDE IT: §5.5.3 records that the four ID-family subtotals sum to 93 while its thirteen terms sum 98 — a five-figure gap the filing could not close and WITHDREW as defective. This row measures the same 93 and reports it rather than smoothing it; the thirteen-term list remains the authority for every cap comparison.').toBe(93)
+    expect(byIdFamily.IM + byIdFamily.SM + byIdFamily.TP + byIdFamily.SEAM, 'HARNESS-1 — THE CONTRACT\'S OWN UNCLOSED ARITHMETIC, PRINTED BESIDE IT: §5.5.3 records that the four ID-family subtotals sum to 93 while its thirteen terms sum 98 — the same five-figure gap, recorded as an OPEN OWED RE-DERIVATION rather than papered over. This row measures the same 93 and reports it; the thirteen-term list remains the authority for every cap comparison.').toBe(CELLS_SUM)
     const byType = {
       'P-IM': 10 + 11 + 10 + 6,
       'P-SM': 6 + 3 + 8,
       'P-TP': 10 + 10 + 9 + 5 + 5,
     }
     expect(byType, 'HARNESS-1 — the DECLARED-TYPE subtotals, read from §5.5.1\'s own Type column (`P-FM-SEAM-1` is a P-IM row; `P-FM-SEAM-2` is a P-SM row).').toEqual({ 'P-IM': 37, 'P-SM': 17, 'P-TP': 39 })
-    expect(byType['P-IM'] + byType['P-SM'] + byType['P-TP'], 'HARNESS-1 — and the TYPED subtotals show the SAME five-figure gap (37 + 17 + 39 = 93 against the cells\' 98), which §5.5.3 also withdraws as defective; the Type ASSIGNMENTS themselves are the rows\' own and are not withdrawn.').toBe(93)
+    expect(byType['P-IM'] + byType['P-SM'] + byType['P-TP'], 'HARNESS-1 — and the TYPED subtotals show the SAME five-figure gap (37 + 17 + 39 = 93 against the declared total 98), which §5.5.3 also withdraws as defective and owes a re-derivation for; the Type ASSIGNMENTS themselves are the rows\' own and are not withdrawn.').toBe(CELLS_SUM)
   })
 
   it('HARNESS-2 (§5.5.1 cap 3, §4.2) — THE EXECUTED READINGS, the caps, and the STOP STATE reported (an un-run row is a FAILURE)', () => {
     const summary = printReadings()
-    expect(REGISTER.length, "HARNESS-2 — every DECLARED register row has its own record: §5.5.1's table is TWELVE term-carrying rows plus its trailing no-term annotation row (the 13th row reading; §5.5.3 records both readings as admissible and neither moves a cell).").toBe(12)
-    expect(RECORDS.size, `HARNESS-2 — and every DECLARED row has its own record: rowsExecuted + rowsNotStarted must equal rowsDeclared, because an un-run row is REPORTED rather than omitted (§5.5.1 cap 3). SUMMARY: ${summary}`).toBe(REGISTER.length)
+    // THE ROW COUNT AND THE TERM COUNT, STATED SEPARATELY (`§5.5.1`'s own
+    // annotation; `§0A` note 9(b)): 13 ROWS = 12 TERM-CARRYING rows (every one
+    // of them recordable) + 1 NO-TERM trailing annotation row (`S-FM-REACH-1`),
+    // which executes nothing and therefore carries no record — an un-run row is
+    // reported as a FAILURE, never silently omitted.
+    expect(TERM_CARRYING_ROWS + 1, `HARNESS-2 — THE ROW COUNT, read separately from the term count: ${TERM_CARRYING_ROWS} TERM-CARRYING rows + the 1 NO-TERM annotation row (${NO_TERM_ANNOTATION_ROW.row}, strategy id ${NO_TERM_ANNOTATION_ROW.strategy}) = ${DECLARED_ROWS} ROWS.`).toBe(DECLARED_ROWS)
+    expect(REGISTER.length, "HARNESS-2 — and the EXECUTABLE/term-carrying rows are exactly TWELVE: §5.5.1's table supplies twelve term-carrying rows plus one row that carries no term at all, so the executable register is the twelve.").toBe(TERM_CARRYING_ROWS)
+    expect(RECORDS.size, `HARNESS-2 — every EXECUTABLE (term-carrying) register row has its own record, and rowsExecuted + rowsNotStarted must equal the term-carrying row count, because an un-run row is REPORTED rather than omitted (§5.5.1 cap 3). The no-term annotation row executes nothing and is accounted for by the ROW COUNT above, not by a record. SUMMARY: ${summary}`).toBe(REGISTER.length)
     const recs = [...RECORDS.values()]
     for (const r of recs) {
       expect(r.attemptsRun, `HARNESS-2 [${r.row}] — the MEASURED attempts must not EXCEED the declared term ${r.declared} (measured ${r.attemptsRun}). SUMMARY: ${summary}`).toBeLessThanOrEqual(r.declared)
@@ -2575,8 +2640,9 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 rows / 13 terms, register 
     expect(run, 'HARNESS-2 — every executed attempt is either HELD or BROKEN: no attempt is silently dropped.').toBe(held + broken)
     // THE STOP STATE. At red time the module is absent, so every attempt breaks
     // on the boundary and the register MUST stop early with the remaining rows
-    // reported as NOT STARTED — a red run that reports all 98 attempts executed
-    // is the FINDING, not the expectation (§4.2).
+    // reported as NOT STARTED — a red run that reports all twelve term-carrying
+    // rows (93 executable attempts) as executed is the FINDING, not the
+    // expectation (§4.2).
     if (liveOrNull() === null) {
       expect(registerStoppedAt, `HARNESS-2 — the register order binds: at red time the module is absent, so every attempt breaks on the boundary and the run MUST have stopped after ${STOP_AFTER} consecutive failures with its stop site REPORTED. registerStoppedAt=${String(registerStoppedAt)}. SUMMARY: ${summary}`).not.toBe(null)
       const unrun = recs.filter((r) => r.notStarted).map((r) => r.row)
@@ -2588,19 +2654,24 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 rows / 13 terms, register 
     } else {
       expect(registerStoppedAt, `HARNESS-2 — the register ran to completion with the stop rule NOT TRIGGERED (the green-time reading); every row ran its declared term. SUMMARY: ${summary}`).toBe(null)
       expect(broken, `HARNESS-2 — no attempt is broken once the module lands. SUMMARY: ${summary}`).toBe(0)
-      expect(run, 'HARNESS-2 — and at green time every declared row ran its declared term, so the executed count IS the declared total 98.').toBe(98)
+      expect(run, "HARNESS-2 — at green time every executable row runs its DECLARED term, so the executed count is the TWELVE TERM CELLS' OWN SUM, 93 — NOT the declared total 98: the 5 separating them is carried by NO printed cell and is an OPEN OWED RE-DERIVATION (§5.5.3), printed here as a reading and never as a satisfied claim.").toBe(CELLS_SUM)
+      expect(DECLARED_TOTAL - run, `HARNESS-2 — and the owed gap is printed beside that reading rather than smoothed away: ${DECLARED_TOTAL} − ${CELLS_SUM} = ${OPEN_OWED_GAP}, OWED and not closed. SUMMARY: ${summary}`).toBe(OPEN_OWED_GAP)
     }
   })
 
-  it('HARNESS-3 (§5.5.2 items 1/2) — the ROW COUNT is an EXTENT (13 rows / 13 terms), the `(bounded)` set is SEVEN rows, and each bounded row says so', () => {
-    expect(REGISTER.length, 'HARNESS-3 — TWELVE term-carrying ROWS: the overshoot of the ≤8 breakdown signal is an OUTCOME, not a budget (REGISTER-ENTRY-COUNT-IS-NOT-CAPPED-AND-ARCHIVE-IS-THE-TRUTH-MECHANISM; §5.5.2 item 1). §5.5.1\'s heading reads 13 rows / 13 terms because its trailing annotation row carries the reachability half; that reading moves no cell.').toBe(12)
-    expect(new Set(REGISTER.map((r) => r.strategy)).size, 'HARNESS-3 — TWELVE DISTINCT strategy ids on the twelve rows, and EVERY row names one (§5.5.1: the ids are distinct and no row is left without one). The THIRTEENTH id S-FM-REACH-1 is the register table\'s declared id for the reachability half, which is driven INSIDE P-FM-TP-2\'s cell — see the trailing annotation row.').toBe(12)
-    expect(REGISTER.map((r) => r.strategy), 'HARNESS-3 — the twelve row strategy ids, in register order. ALL ARE ENUMERATION STRATEGIES: there is NO generator row and NO seed.').toEqual(['S-FM-ENTRY-1', 'S-FM-TARGET-1', 'S-FM-ID-1', 'S-FM-MATRIX-1', 'S-FM-CONST-1', 'S-FM-TOTAL-1', 'S-FM-OPAQUE-1', 'S-FM-REFUSE-1', 'S-FM-NOTIFY-1', 'S-FM-DEGRADE-1', 'S-FM-COUNT-1', 'S-FM-WRITE-1'])
+  it('HARNESS-3 (§5.5.2 items 1/2) — THE ROW COUNT IS AN EXTENT (13 ROWS = 12 term-carrying + 1 no-term annotation row), the `(bounded)` set is SEVEN rows, and each bounded row says so', () => {
+    expect(TERM_CARRYING_ROWS + 1, `HARNESS-3 — THE ROW COUNT IS ${DECLARED_ROWS} ROWS, read separately from the term count: ${TERM_CARRYING_ROWS} term-carrying rows + 1 row that carries NO term (${NO_TERM_ANNOTATION_ROW.row}, strategy id ${NO_TERM_ANNOTATION_ROW.strategy}) = ${DECLARED_ROWS}.`).toBe(DECLARED_ROWS)
+    expect(REGISTER.length, 'HARNESS-3 — TWELVE TERM-CARRYING ROWS (the executable register): the overshoot of the ≤8 breakdown signal is an OUTCOME, not a budget (REGISTER-ENTRY-COUNT-IS-NOT-CAPPED-AND-ARCHIVE-IS-THE-TRUTH-MECHANISM; §5.5.2 item 1).').toBe(TERM_CARRYING_ROWS)
+    expect(new Set(REGISTER.map((r) => r.strategy)).size, 'HARNESS-3 — TWELVE DISTINCT strategy ids on the twelve term-carrying rows, and EVERY one of them names one (§5.5.1: the ids are distinct and no row is left without one).').toBe(TERM_CARRYING_ROWS)
+    expect(new Set([...REGISTER.map((r) => r.strategy), NO_TERM_ANNOTATION_ROW.strategy]).size, `HARNESS-3 — and the THIRTEENTH declared strategy id ${NO_TERM_ANNOTATION_ROW.strategy} rides on the NO-TERM annotation row, which drives nothing of its own: 12 + 1 = ${DECLARED_ROWS} declared ids, no row left without one — and NOT a thirteenth term.`).toBe(DECLARED_ROWS)
+    expect(REGISTER.map((r) => r.strategy), 'HARNESS-3 — the twelve term-carrying row strategy ids, in register order. ALL ARE ENUMERATION STRATEGIES: there is NO generator row and NO seed.').toEqual(['S-FM-ENTRY-1', 'S-FM-TARGET-1', 'S-FM-ID-1', 'S-FM-MATRIX-1', 'S-FM-CONST-1', 'S-FM-TOTAL-1', 'S-FM-OPAQUE-1', 'S-FM-REFUSE-1', 'S-FM-NOTIFY-1', 'S-FM-DEGRADE-1', 'S-FM-COUNT-1', 'S-FM-WRITE-1'])
     const byType = REGISTER.reduce<Record<string, number>>((a, r) => ({ ...a, [r.type]: (a[r.type] ?? 0) + 1 }), {})
     expect(byType, "HARNESS-3 — the three declared TYPES only (P-IM / P-SM / P-TP), read from §5.5.1's own Type column: 4 IM + 3 SM + 5 TP = 12 rows; NEVER an F- row and NEVER a §6/FS-n citation used as a register row (AGENTS.md item 11(a)).").toEqual({ 'P-IM': 4, 'P-SM': 3, 'P-TP': 5 })
     const bounded = REGISTER.filter((r) => r.bounded).map((r) => r.row)
     expect(bounded, 'HARNESS-3 — THE `(bounded)` SET IS SEVEN ROWS, NAMED (§5.5.1/§5.5.3): a row whose property text quantifies over a domain LARGER than its table carries the marking, and NO reader may read a bounded row as a proof of the unbounded universal it states.').toEqual(['P-FM-IM-1', 'P-FM-IM-2', 'P-FM-IM-3', 'P-FM-SM-1', 'P-FM-TP-1', 'P-FM-TP-2', 'P-FM-SEAM-2'])
-    expect(bounded.length + REGISTER.filter((r) => !r.bounded).length, 'HARNESS-3 — 7 + 5 = 12 executable rows, so the marking count is checkable rather than asserted (§5.5.2 item 2 reads 7 + 6 = 13 only when the trailing annotation row is counted; no cell moves).').toBe(12)
+    const unmarked = REGISTER.filter((r) => !r.bounded).map((r) => r.row)
+    expect(bounded.length + unmarked.length, 'HARNESS-3 — 7 bounded + 5 unmarked = 12 TERM-CARRYING rows, so the marking count is checkable rather than asserted.').toBe(TERM_CARRYING_ROWS)
+    expect(bounded.length + unmarked.length + 1, `HARNESS-3 — and §5.5.2 item 2's \`7 + 6 = ${DECLARED_ROWS}\` is reproduced exactly by counting the NO-TERM annotation row as the sixth unmarked ROW: 7 bounded + (5 unmarked term-carrying rows + the 1 no-term annotation row) = ${DECLARED_ROWS}. NO CELL MOVES in this reading.`).toBe(DECLARED_ROWS)
     for (const r of REGISTER) {
       if (r.bounded) expect(r.declared, `HARNESS-3 — the bounded row ${r.row} really drives attempts (a bounded marking on an EMPTY table would be over-strength).`).toBeGreaterThan(0)
     }
@@ -2613,20 +2684,24 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 rows / 13 terms, register 
       REGISTER.map((r) => [r.row, r.declared]),
       'HARNESS-4 — the declared term of every row, in register order (the ledger §5.5.2 item 3 prints).',
     ).toEqual([['P-FM-IM-1', 10], ['P-FM-IM-2', 11], ['P-FM-IM-3', 10], ['P-FM-SM-1', 6], ['P-FM-SM-2', 3], ['P-FM-TP-1', 10], ['P-FM-TP-2', 10], ['P-FM-SEAM-1', 6], ['P-FM-SEAM-2', 8], ['P-FM-SEAM-3', 9], ['P-FM-SEAM-4', 5], ['P-FM-SEAM-5', 5]])
-    expect(REGISTER.length, "HARNESS-4 — TWELVE ids carry twelve terms (the printed cells), and the THIRTEENTH counted term is P-FM-TP-2's own REACHABILITY HALF, whose drive is the TENTH DRIVE INSIDE P-FM-TP-2's CELL — so the thirteen counted terms sum 98 while the twelve printed cells ALSO sum 98 (§5.5.3's two readings, neither of which moves a cell).").toBe(12)
+    expect(REGISTER.length, "HARNESS-4 — TWELVE term-carrying rows carry twelve terms (the printed cells), and the register's THIRTEENTH ROW — P-FM-TP-2's TRAILING REACHABILITY ANNOTATION ROW — carries NO term at all: its drive is the TENTH DRIVE INSIDE P-FM-TP-2's cell. So the twelve printed cells sum 93 while the DECLARED thirteen-term list sums 98, and the 5 between them is carried by no printed cell.").toBe(TERM_CARRYING_ROWS)
     const declaredSum = REGISTER.reduce((a, r) => a + r.declared, 0)
     const measuredSum = [...RECORDS.values()].reduce((a, r) => a + r.attemptsRun, 0)
-    // THE CONTRACT'S OWN ARITHMETIC, MEASURED: the TWELVE term-carrying rows of
-    // §5.5.1's table sum to `93` — not the `98` the contract pins — and the
-    // thirteen counted terms (P-FM-TP-2's cell read as `9 + 1`) sum to `98`. Both
-    // figures are asserted, so neither can be quoted for the other.
-    expect(declaredSum, "HARNESS-4 — the TWELVE rows' declared cells sum to 93, and that is the honest executed figure; the contract's pinned DECLARED TOTAL is 98, reached only when P-FM-TP-2's cell is counted as its own 9 + 1 split. The DISTINCT figure is a REPORTED figure and is NEVER substituted for the declared one (`A DECLARED REGISTER TERM IS A DRIVE COUNT`).").toBe(93)
-    expect(
-      declaredSum + 5,
-      "HARNESS-4 — and the declared TOTAL 98 = 93 + the 5-counting of P-FM-TP-2's `9 + 1` split: this is the arithmetic §5.5.3 prints and the figure every cap comparison uses (98 ≤ 400, largest row 11 ≤ 100).",
-    ).toBe(98)
-    expect(measuredSum, `HARNESS-4 — the EXECUTED drives measured BESIDE the declared figure: at red time the register stops early (the stop rule is the reported red), so this is ≤ 98; at green time it IS 98. SUMMARY: ${printReadings()}`).toBeLessThanOrEqual(declaredSum)
-    expect(measuredSum, `HARNESS-4 — and every executed attempt is accounted for by a declared cell: the measured figure never EXCEEDS the declared total. SUMMARY: ${printReadings()}`).toBeGreaterThan(0)
+    // THE CONTRACT'S OWN ARITHMETIC, RE-ALIGNED AND MEASURED (`§0A` note 9(c)):
+    // the TWELVE term cells of §5.5.1's table sum to `93`; the DECLARED total is
+    // `98`, printed WITH its thirteen terms and used for every cap comparison; the
+    // `9 + 1` reading is WITHDRAWN (it sums to `103`); and the `5` between `98`
+    // and `93` is an OPEN OWED RE-DERIVATION — a printed reading, never a pass.
+    expect(declaredSum, "HARNESS-4 — the TWELVE rows' declared cells sum to 93, and that is the honest executed figure; the contract's DECLARED total 98 is the sum of its THIRTEEN-term LIST and is the figure every cap comparison uses. Neither figure is substituted for the other (`A DECLARED REGISTER TERM IS A DRIVE COUNT`).").toBe(CELLS_SUM)
+    expect(WITHDRAWN_NINE_PLUS_ONE_SUM, "HARNESS-4 — THE `9 + 1` READING IS WITHDRAWN AND IS KEPT VISIBLE AS WITHDRAWN (never deleted, never asserted as closing the total): 93 + (9 + 1) = 103, NOT 98 — §5.5.3 prints that arithmetic as the reason for the withdrawal.").toBe(103)
+    expect(WITHDRAWN_NINE_PLUS_ONE_SUM, 'HARNESS-4 — and it is explicitly NOT the declared total: no reading of these printed cells closes on 98.').not.toBe(DECLARED_TOTAL)
+    const openGap = DECLARED_TOTAL - declaredSum
+    expect(openGap, "HARNESS-4 — OPEN OWED RE-DERIVATION, PRINTED AS A READING AND NEVER AS A SATISFIED CLAIM: the declared total 98 exceeds the twelve executable cells' 93 by 5, and that 5 is CARRIED BY NO PRINTED CELL (§5.5.3). This row MEASURES the owed gap; it does NOT close it, and no reader may take it as evidence that 93 and 98 agree.").toBe(OPEN_OWED_GAP)
+    expect(declaredSum, 'HARNESS-4 — and the twelve executable cells are EXPLICITLY NOT the declared total: 93 ≠ 98, the 5 between them being carried by no printed cell and remaining OWED (§5.5.3). This row measures that they differ; it does not reconcile them.').not.toBe(DECLARED_TOTAL)
+    const declaredThirteen = [10, 11, 10, 6, 3, 10, 10, 6, 8, 9, 5, 5, 5]
+    expect(declaredThirteen.reduce((a: number, b: number) => a + b, 0), `HARNESS-4 — the DECLARED total ${DECLARED_TOTAL} IS the sum of its own THIRTEEN-term list, asserted here BESIDE the cells so neither figure can be quoted for the other: ${declaredThirteen.join(' + ')} = ${DECLARED_TOTAL} (the figure the caps compare against: 98 ≤ 400, largest row 11 ≤ 100).`).toBe(DECLARED_TOTAL)
+    expect(measuredSum, `HARNESS-4 — the EXECUTED drives measured BESIDE the declared figure: at red time the register stops early (the stop rule is the reported red), so this is ≤ the twelve cells' 93; at green time it IS 93. SUMMARY: ${printReadings()}`).toBeLessThanOrEqual(declaredSum)
+    expect(measuredSum, `HARNESS-4 — and every executed attempt is accounted for by a declared cell: the measured figure never EXCEEDS the declared cells. SUMMARY: ${printReadings()}`).toBeGreaterThan(0)
   })
 
   it('HARNESS-5 (§5.5.2 items 4/5/6/7/8, §5.5.3) — the STATED BOUNDARIES, the pool-versus-boundary check, the exclusion list and the pinned form', () => {
@@ -2650,10 +2725,28 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 rows / 13 terms, register 
     }
     expect(
       RECORDS.get('P-FM-TP-2')?.declared,
-      'HARNESS-5 / §5.5.2 item 5 — the ONE cell the pool-versus-boundary check FLAGGED and §5.5.3 records rather than smooths: P-FM-TP-2 declares TEN drives while its prose names 9 hostile shapes PLUS 1 reachability drive. This is a stated reading (9 + 1 = 10), NOT a defect.',
+      'HARNESS-5 / §5.5.2 item 5 — the ONE cell the pool-versus-boundary check FLAGGED and §5.5.3 records rather than smooths: P-FM-TP-2 declares TEN drives while its prose names 9 hostile shapes PLUS 1 reachability drive. The TERM stays 10 and NO TERM MOVES; the SHAPE COUNT reading is unaffected — what §5.5.3 WITHDRAWS is the arithmetic claim that this split ALSO closes the declared total (`§0A` note 9(c)).',
     ).toBe(10)
+    expect(WITHDRAWN_NINE_PLUS_ONE_SUM, 'HARNESS-5 — and that withdrawn reading is measured here so it stays VISIBLE rather than deleted: 93 + (9 + 1) = 103, NOT the declared total 98 — which is exactly why §5.5.3 withdraws it and records the 5 between 98 and 93 as an OPEN OWED RE-DERIVATION.').toBe(103)
     const spec = readFileSync(SPEC_SRC, 'utf8')
     expect(/AS FILED IN `CURRENT STATE` ITEM 3/.test(spec), 'HARNESS-5 / §5.5.3 — the as-filed `89` and the withdrawn subtotal decompositions are recorded VISIBLY with their obligations named, rather than smoothed (§7 item 9, §3a A-19).').toBe(true)
     expect(/WITHDRAWN AS DEFECTIVE/.test(spec), 'HARNESS-5 / §5.5.3 — the withdrawn subtotal decomposition is carried with its evidence.').toBe(true)
+    // ⟶ THE LIVE FIGURES, ASSERTED AS THE CONTRACT PRINTS THEM (`§0A` note 9's
+    // dispositions (a)/(b)/(c)). Each string below is the spec's own PRINTED
+    // form, read from the contract file rather than paraphrased.
+    expect(spec.includes('OF WHICH `12` CARRY A TERM AND `1`'), 'HARNESS-5 / §0A note 9(b) — the ROW COUNT and the TERM COUNT are printed SEPARATELY: `13` ROWS, of which `12` CARRY A TERM and `1` DOES NOT.').toBe(true)
+    expect(spec.includes('TRAILING REACHABILITY ANNOTATION ROW'), 'HARNESS-5 / §0A note 9(b) — the NO-TERM ROW IS NAMED at its own site: the TRAILING REACHABILITY ANNOTATION ROW for P-FM-TP-2\'s reachability half.').toBe(true)
+    expect(spec.includes('`98` = `10` + `11` + `10` + `6` + `3` + `10` + `10` + `6` + `8` + `9` + `5` + `5` + `5`'), 'HARNESS-5 / §5.5.3 — the DECLARED TOTAL is printed as `98` WITH its THIRTEEN-TERM list, which is what this file\'s HARNESS-1/HARNESS-4 sum.').toBe(true)
+    expect(spec.includes('WHICH IS `93`, NOT'), "HARNESS-5 / §5.5.3 — the TABLE's OWN TWELVE CELLS are printed as summing `93` — NOT `98` — with that reading named as what it is.").toBe(true)
+    expect(spec.includes('AND THE `9 + 1` READING IS WITHDRAWN'), 'HARNESS-5 / §0A note 9(c) — the `9 + 1` reading is WITHDRAWN at its own site (the withdrawal is recorded, not the claim deleted).').toBe(true)
+    expect(spec.includes('is carried by NO printed cell'), `HARNESS-5 / §5.5.3 — and the ${OPEN_OWED_GAP} separating the declared ${DECLARED_TOTAL} from the twelve cells' ${CELLS_SUM} is printed as CARRIED BY NO PRINTED CELL, so it may never be read as a satisfied claim.`).toBe(true)
+    expect(spec.includes('OWED TO THE NEXT PASS'), 'HARNESS-5 / §5.5.3 — the re-derivation that would carry that gap is printed as OWED TO THE NEXT PASS, with its obligation named rather than closed here.').toBe(true)
+    // ⟶ THE REFUSAL-CODE UNION: the contract now files the FIVE emitted bodies
+    // and WITHDRAWS the adopted sixth as unexercised. No row here ever drove the
+    // sixth; the withdrawal is RECORDED (and asserted against the contract's own
+    // printed disposition) rather than any claim being deleted.
+    expect(spec.includes("THE CONTRACT'S UNION IS ALIGNED TO THE FIVE IT EMITS AND ITS ROWS DRIVE"), 'HARNESS-5 / §0A note 9(a) — the union is ALIGNED TO THE FIVE and its rows drive exactly those five.').toBe(true)
+    expect(spec.includes("WITHDRAWN FROM THIS UNIT'S CONTRACT"), 'HARNESS-5 / §0A note 9(a) — the adopted SIXTH member is UNEXERCISED AND THEREFORE WITHDRAWN FROM THIS UNIT\'S CONTRACT; no row drove it and nothing is dropped.').toBe(true)
+    expect(REFUSAL_CODES.length, 'HARNESS-5 — and the driven union is FIVE bodies, matching the contract\'s printed alignment (a sixth would owe a NEW dated amendment plus a register re-grain).').toBe(5)
   })
 })
