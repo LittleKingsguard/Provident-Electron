@@ -246,6 +246,34 @@ argument-shape rows' expectations and is therefore a clause change that MUST OPE
 **(f) THIS NOTE DECLARES NO NEW EXPORT AND NO NEW SHAPE:** it fixes the tool's behaviour at its own argument edge and
 nothing else, **and the two fixed shapes of `docs/specs/mcp-endpoint.md` `§3.8` are untouched** (`§0` ruling 5).
 
+**⟶⟶⟶ 2026-09-27 ANNOTATION ON THIS NOTE (`§0A` note 8, defect 1, gate 4's `HIGH`) — THE VALIDATION RULE GOVERNS
+A NON-OBJECT ARGUMENTS MEMBER, WHICH MUST BE REFUSED (NAMING ITS REJECTED FORM) AND NEVER ROUTED AS AN EMPTY CALL.**
+**THE CLAUSE ABOVE ALREADY REQUIRES A PLAIN OBJECT — *"PLAIN OBJECT whose OWN enumerable keys are a SUBSET of
+`{target, newTab}`"* — AND `(a)` MAKES AN OMITTED ARGUMENTS MEMBER AND `{}` THE SAME VALID CALL; THE *"NOTHING ELSE"*
+OF THIS NOTE'S HEAD IS THE FENCE THAT KEEPS A MALFORMED MEMBER FROM BECOMING THAT SAME CALL.** **THE AS-FILED TEXT IS
+KEPT AS THE AUTHORITY: THE CLAUSE GOVERNS, AND ITS READING IS PINNED HERE SO NO LATER PASS DERIVES THE WEAKER ONE.**
+**THE FALSIFIER: a body that routes a non-object arguments member (a number, a boolean, a string, a `Date`, a `Map` or
+a function — a value with NO OWN KEYS) AS AN EMPTY CALL MUST FAIL.** **AND THE ONE MEASURED FACT A LATER PASS MUST
+CARRY, RECORDED HERE RATHER THAN DISCOVERED LATE: THE HANDLER LANDED AND IT CONTRADICTS ITS OWN COMMENT AT THIS NOTE —
+it skips validation for a member with no own keys and dispatches an EMPTY argument set, so **A MALFORMED CALL LOOKS LIKE
+A LEGAL NO-ARGUMENT CALL**, which this note's own clause forbids.** **A HOST FIX IS THEREFORE OWED (the implementer's:
+refuse the non-object member, naming the rejected form, before any renderer call), together with the red-first
+regression row that pins it (the test writer's — `§0A` note 8, obligation (ii)).** **NO TERM, ROW ID, STRATEGY ID, SEED,
+CAP OR CELL MOVES BY THIS ANNOTATION.**
+
+**⟶⟶⟶ 2026-09-27 ANNOTATION ON THIS NOTE (`§0A` note 8, defect 2, gate 4's second `HIGH`) — THE RENDERER WIRING HOLDER
+IS THE ENTRY-RESOLUTION AUTHORITY, AND THE ROUTE PASSES THE CALLER'S VALUE THROUGH UNINTERPRETED.** **THE HOLDER IS
+NAMED AS SUCH BECAUSE IT IS WHAT HOLDS `{entries, activeId}`** (`§2.1` item 6; `§0` ruling 3): **so the route hands the
+caller's own `target` — and its own `newTab` — ON UNINTERPRETED, THE HOLDER RESOLVES WHETHER AN ENTRY EXISTS AND WHAT
+THE ACTIVE ID IS, AND ONLY THE CONSUMER'S OWN ANSWER MAY PRODUCE A REFUSAL: THE TOOL MAY NOT DERIVE ONE.**
+**THE FALSIFIER: A ROUTE THAT CONSTRUCTS AN ID, THAT CHOOSES A VERB ON ITS OWN, OR THAT DERIVES A REFUSAL MUST FAIL.**
+**AND A HOST FIX IS OWED HERE TOO (the implementer's), RECORDED BECAUSE IT IS MEASURED AND NOT A READING: the wiring
+builds `{id: <the caller's target>, target: <the caller's target>}` and decides between the open and the activate verbs
+ITSELF — a SECOND ID POLICY and a SECOND ACTIVATION AUTHORITY against this contract's *"NOTHING MINTS AN ID"*
+(`§2.3` item 1) and *"NO RE-DERIVATION OF THE MODEL'S ACTIVATION RULE"* (`§2.1` item 7) — which also makes the refusal FORGEABLE: an
+unknown target yields a refusal THE TOOL DERIVED, with NO CONSUMER SURFACE CONSULTED, against `§0A` note 4's rule that
+`reason` is the CONSUMER'S OWN string.** **NO TERM, ROW ID, STRATEGY ID, SEED, CAP OR CELL MOVES BY THIS ANNOTATION.**
+
 **Note 4 — THE REFUSAL OBJECT'S EXACT MEMBERSHIP, AND WHAT THE TOOL DOES WITH `refused` — ALSO A DERIVATION.** **THE
 CLAUSE:** **a consumer refusal returns an object carrying the FOUR DECLARED MEMBERS (`activeId`, `entries`, `opened`)
 plus `refused: { reason: string }`, and NO FIFTH MEMBER appears in any returned object.** **The `refused` member is
@@ -256,6 +284,18 @@ the consumer's record, and `reason` is the CONSUMER's own string carried verbati
 "CHANGES NOTHING" ON A REFUSAL IS THE CONSUMER'S AND NOT THE TOOL'S: the endpoint contract's *"and changes
 nothing"* is a claim about the FOCUS STATE, and this filing does not restate it as a claim about the tool's own
 bytes** (`§2.4` row 3).
+
+**⟶⟶⟶ 2026-09-27 ANNOTATION ON THIS NOTE (`§0A` note 8, defect 3, gate 4's `MED`) — THE REFUSAL MAPPING MUST BE
+NON-LOSSY ON THE DECLARED MEMBERS AND MUST NEVER EMIT A MEMBER WHOSE VALUE IS `undefined`.** **THE CLAUSE ABOVE FIXES
+THE MEMBERSHIP AND `I-6`/`RS-1` FIX THE KEY SET; THIS ANNOTATION PINS THE MAPPING'S OWN DUTY, WHICH IS WHERE THE
+MEASURED DEFECT LIVES: every route and every mapping site carries the DECLARED members through AS MEMBERS — **the
+model's `verb` and `id` are NOT DROPPED** and **no declared member is collapsed into a refusal record** — and **NO
+MEMBER IS EVER EMITTED WITH THE VALUE `undefined`: a shipped `refused: {reason: undefined}` IS THE EXACT SHAPE THIS
+NOTE'S OWN CLAUSE ALREADY SAYS MUST FAIL** (`§3.3 I-6`; `§5.5.1 RS-1`; `§6` item 5).** **THE FALSIFIER: A MAPPING THAT
+EMITS `refused` WITH AN `undefined` VALUE, OR THAT IS LOSSY ON A DECLARED MEMBER, MUST FAIL.** **A HOST FIX IS OWED
+(the implementer's) — the landed mapping drops the model's `verb`/`id` and can ship `refused: {reason: undefined}` —
+and its red-first regression row is the test writer's** (`§0A` note 8, obligations (i)/(ii)). **NO TERM, ROW ID,
+STRATEGY ID, SEED, CAP OR CELL MOVES BY THIS ANNOTATION.**
 
 **Note 5 — THE TOOL OWNS NO SHAPE RULE OVER THE RETURNED VALUES, AND THAT IS A FENCE RATHER THAN AN OVERSIGHT.**
 **THE CLAUSE:** **the tool passes every returned member through BY IDENTITY and performs NO `typeof` test, NO
@@ -620,6 +660,70 @@ suite, no leg, no trio, no `tsc`, no build, no Electron boot, no MCP call and no
 status and made no commit — and THE LEDGER IS UNCHANGED AT `20 DONE / 1 open` = `21` units, with `F3` still an open
 `## OPEN` row whose status is the supervisor's.**
 
+**Note 8 — THE GATE-4 PASS, DATED 2026-09-27: FIVE FINDINGS DISPOSED (TWO `HIGH`, HOST-SIDE), THE READ-ONLY PBT AUDIT'S
+OVER-STRENGTH ROWS AND ITS FIVE NEGATIVE-GENERATOR TASKS — ANNOTATED BESIDE THE AS-FILED TEXT, WHICH IS NEVER REWRITTEN.**
+**EVERY DISPOSITION BELOW IS APPLIED AT ITS OWN SITE IN THIS FILE (`§0A` note 3's two added blocks, note 4's added
+block, `§3.3 I-13`, `§2.4` row 1 and `§5.5.4` item 2); THIS NOTE IS THE ONE PLACE THAT CARRIES ALL FIVE WITH THEIR
+PROVENANCE AND THE OBLIGATIONS THEY CREATE.** **PROVENANCE, STATED FIRST AND ATTRIBUTED: THE FIVE FINDINGS ARE THE
+GATE-4 PASS'S — THE READ-ONLY ADVERSARIAL PASS PLUS THE GATE-11 READ-ONLY PBT AUDIT — MEASURED AGAINST THE LANDED HOST,
+AND THE ADJUDICATIONS APPLIED HERE ARE THE SUPERVISOR'S; NOTHING BELOW IS THIS PASS'S OWN READ.** **THE AUDIT'S READINGS
+THIS NOTE CARRIES: its OVER-STRENGTH ROWS — above all THAT **THE ACTIVATION TRANSITION IS NEVER EXECUTED ANYWHERE**
+(the contract's activation claim has no executed counterpart that reaches the renderer's wiring, which is where that
+decision lives) — and **THE FIVE NEGATIVE-GENERATOR TASKS** the audit named.** **NO CODE, NO RED RE-RUN AND NO STATUS
+FLIP ACCOMPANIES THIS NOTE; THE LEDGER IS UNCHANGED AT `20 DONE / 1 open` = `21` units, with `F3` still an open
+`## OPEN` row whose status is the supervisor's.**
+
+**1. A NON-OBJECT ARGUMENTS MEMBER IS ACCEPTED AND ROUTED (`HIGH`) — DISPOSED: THE CLAUSE GOVERNS.** **A number, a
+boolean, a string, a `Date`, a `Map` or a function HAS NO OWN KEYS, so the landed handler skips validation and dispatches
+an EMPTY argument set — so **A MALFORMED CALL LOOKS LIKE A LEGAL NO-ARGUMENT CALL**, which this note's own clause
+forbids** (`§0A` note 3(a)/(f)). **THE PINNED READING: A NON-OBJECT ARGUMENTS MEMBER MUST BE REFUSED — NAMING ITS
+REJECTED FORM — AND NEVER ROUTED AS AN EMPTY CALL.** **THE FALSIFIER: A BODY THAT ROUTES A NON-OBJECT MEMBER AS AN
+EMPTY CALL MUST FAIL.** **THE LANDED HANDLER CONTRADICTS ITS OWN COMMENT HERE, AND A HOST FIX IS OWED — OBLIGATION (i).**
+
+**2. THE ROUTE MINTS AN ENTRY ID AND GUESSES THE VERB (`HIGH`) — DISPOSED: THE RENDERER WIRING HOLDER IS THE
+ENTRY-RESOLUTION AUTHORITY.** **The wiring builds `{id: <the caller's target>, target: <the caller's target>}` and
+decides between the open and the activate verbs ITSELF — A SECOND ID POLICY and A SECOND ACTIVATION AUTHORITY against
+this contract's *"nothing mints an id"* and *"the tool owns no model rule"* — **AND IT MAKES THE REFUSAL FORGEABLE: an
+unknown target yields a refusal THE TOOL DERIVED, with NO CONSUMER SURFACE CONSULTED.** **THE PINNED READING: the
+holder is NAMED AS THE ENTRY-RESOLUTION AUTHORITY (it is what holds `{entries, activeId}`); the ROUTE PASSES THE
+CALLER'S VALUE **THROUGH UNINTERPRETED**; the **HOLDER** RESOLVES WHETHER AN ENTRY EXISTS AND WHAT THE ACTIVE ID IS; and
+**ONLY THE CONSUMER'S OWN ANSWER MAY PRODUCE A REFUSAL — THE TOOL MAY NOT DERIVE ONE.** **THE FALSIFIER: A ROUTE THAT
+CONSTRUCTS AN ID, THAT CHOOSES A VERB ON ITS OWN, OR THAT DERIVES A REFUSAL MUST FAIL.** **A HOST FIX IS OWED —
+OBLIGATION (i).**
+
+**3. THE REFUSAL MAPPING IS LOSSY (`MED`) — DISPOSED: NON-LOSSY ON THE DECLARED MEMBERS, AND NEVER A MEMBER WHOSE VALUE
+IS `undefined`.** **The mapping drops the model's `verb`/`id` and can ship `refused: {reason: undefined}` — the exact
+shape ANOTHER CLAUSE OF THIS FILE ALREADY SAYS MUST FAIL** (`§3.3 I-6`; `§5.5.1 RS-1`). **THE FALSIFIER: A MAPPING THAT
+EMITS `refused` WITH AN `undefined` VALUE, OR THAT IS LOSSY ON A DECLARED MEMBER, MUST FAIL.** **A HOST FIX IS OWED —
+OBLIGATION (i).**
+
+**4. THE THROW-CLASS CLAIM IS UNSTABLE (`LOW`) — DISPOSED: THE CLAIM IS WEAKENED TO WHAT IS TRUE, AND THE ROW THAT
+ASSERTS IT IS ALIGNED TO THE NARROWER READING, WITH THE WIDER CLAIM WITHDRAWN AS-FILED VISIBLE.** **THE CLASS IS STABLE
+FOR **OWN-KEY** VIOLATIONS; a revoked or trap-throwing arguments proxy throws THE ENGINE'S OWN ERROR rather than the
+tool's, so **THE ENGINE'S OWN ERROR MAY CROSS OTHERWISE**.** **NO HOST FIX IS OWED FOR THIS ONE — IT IS A CONTRACT
+CORRECTION, NOT A HOST BEHAVIOUR: the contract stops over-claiming, and its test-side alignment rides obligation (ii).**
+
+**5. THE ARITHMETIC REPRINTS ARE STILL INCONSISTENT (CONFIRMED AGAIN) — DISPOSED: THE **EXECUTED SUBTOTALS GOVERN**, AND
+THEY ARE PRINTED AS THE AUTHORITY AT `§5.5.4` ITEM 2.** **The executed subtotals differ from the contract's reprinted
+blocks in TWO FIGURES WHILE THE TOTAL `73` AND THE CHAIN AGREE: the REFUSAL-AND-READINESS domain subtotal is `10` (the
+reprint closes on `8`), and the BY-TYPE decomposition is `P-IM` `43` / `P-SM` `14` / `P-TP` `16` (the reprint prints
+`39` / `14` / `18`).** **THE REPRINTS STAY VISIBLE AS SUPERSEDED, and **THE RECONCILIATION IS OWED AT THE NEXT GATE**
+rather than left silently open: THIS IS THE SEVENTH-CLASS DEFECT AND IT MAY NOT STAY SILENTLY OPEN.** **NO HOST FIX IS
+OWED — IT IS CONTRACT ARITHMETIC, CORRECTED BY ANNOTATION BESIDE THE AS-FILED FORM AND NEVER BY REWRITING IT**
+(`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`).
+
+**THE OBLIGATIONS THIS NOTE CREATES, EACH WITH ITS OWNER, AND NONE OF THEM DISCHARGED HERE.** **(i) THREE HOST FIXES ARE
+THE IMPLEMENTER'S** — the non-object arguments member (defect 1), the route's id/verb minting and its forgeable refusal
+(defect 2), and the lossy `refused` mapping (defect 3) — **each owing a RED-FIRST REGRESSION ROW before its fix.**
+**(ii) THE RED-FIRST REGRESSION ROWS AND THE ROW THAT ACTUALLY EXECUTES THE ACTIVATION TRANSITION ARE THE TEST
+WRITER'S** — the regression rows for the three host fixes and for the throw-class narrowing, **plus the
+activation-executing row, whose absence is the PBT audit's own over-strength finding: as filed, this contract's
+activation claim (`§5.5.1 P-FT-ID-2`; `§5.U` row 7) has NO EXECUTED ROW THAT REACHES THE TRANSITION, and AN UN-RUN ROW
+IS A FAILURE, NEVER A PASS** (`AGENTS.md` item 11(b)). **(iii) THE FIVE NEGATIVE-GENERATOR TASKS THE PBT AUDIT NAMED ARE
+OWED TEST-SIDE** — recorded as owed, **with no register statement, id, strategy id, seed, cap or attempt term changed
+for any of them.** **EVERY DISPOSITION ABOVE IS AN ANNOTATION BESIDE THE AS-FILED TEXT: NO REGISTER TERM, ROW ID,
+STRATEGY ID, SEED, CAP, CELL OR LEDGER FIGURE MOVES BY THIS NOTE.**
+
 ---
 
 ## Layer declaration (read this before any table below)
@@ -879,7 +983,7 @@ STEP 3 OWNS ALL FIVE, AND THE FIFTH IS A ROW LIKE THE OTHERS** (`docs/specs/focu
 
 | # | The negative claim | ITS OWNING ROW (the cell that pins it) | ITS FALSIFIER — **what can REDDEN** | The register row(s) |
 | --- | --- | --- | --- | --- |
-| **1** | **NOT IN `MUTATING_METHODS`** | **a row pinning THE SEVEN-MEMBER SET *BY NAME*, with the SIBLING ROW THAT PINS IT UNCHANGED AMENDED IN THE SAME COMMIT** | **THE SET'S NAME PINS FAIL ON AN EIGHTH ENTRY — the set is asserted as NAME-SET EQUALITY, so an added member reddens it; and the two rows cannot drift apart because they move in one commit** | **`§5.5.1 RT-4`**; `§3.4 R-4` |
+| **1** | **NOT IN `MUTATING_METHODS`** | **a row pinning THE SEVEN-MEMBER SET *BY NAME*, with the SIBLING ROW THAT PINS IT UNCHANGED AMENDED IN THE SAME COMMIT** — **⟶⟶⟶ 2026-09-27 WEAKENING APPLIED AT THIS TABLE (`§0A` note 8, defect 4): THE CLASS-STABILITY CLAIM IS STABLE FOR **OWN-KEY** VIOLATIONS ONLY, AND THE ENGINE'S OWN ERROR MAY CROSS OTHERWISE (a revoked or trap-throwing arguments proxy) — the wider claim is WITHDRAWN, as-filed visible, and `I-13` carries the same narrower reading in place.** | **THE SET'S NAME PINS FAIL ON AN EIGHTH ENTRY — the set is asserted as NAME-SET EQUALITY, so an added member reddens it; and the two rows cannot drift apart because they move in one commit** | **`§5.5.1 RT-4`**; `§3.4 R-4` |
 | **2** | **EMITS NO NOTIFICATION** | **a row asserting THE NOTIFY *PREDICATE* STAYS KEYED ON THAT SET WITH THE METHOD ABSENT, observed with a COUNTING RECORDER** | **a route that PUSHES a notification FAILS.** **A BARE COUNT IS *NOT* THE INSTRUMENT — the notify site is reached on EVERY SUCCESSFUL REPLY, so a count alone cannot carry the claim; the instrument is the recorder read against the predicate's own firing condition** | **`§5.5.1 RF-3`**; `§5.U` row 3 |
 | **3** | **PERSISTS NOTHING** | **a row running a STATIC ROUTE SCAN FOR STORAGE TOKENS** | **ANY HIT FAILS** — a storage read or write, a `localStorage`/`sessionStorage`/`indexedDB` token, a file write or an imported storage module on the route | **`§5.5.1 RF-4`**; `§2.2` `P-FT-4` |
 | **4** | **CANNOT FORCE A RE-RENDER** | **a row asserting NO STATE-SLICE WRITE AND NO RESOURCE INVALIDATION IN THE NEW PATH** | **A WRITER FAILS.** **AND THE ROW MAY CLAIM *NO MORE THAN* THIS: the node suite proves THE NOTIFY WAS NOT INVOKED and THE NAME SETS ARE UNCHANGED — it CANNOT prove that a real window did not re-render** (`C-10`; `§9.2` `AQ2`; `G-4`) | **`§5.5.1 RF-4`**; `§5.U` row 4 |
@@ -964,7 +1068,7 @@ FINDING** (`C-10`; `§7` item 5).
 | **`I-10`** | **THE TOOL RE-DERIVES NO MODEL RULE** — the activation rule, the ordering and the id/duplicate rules stay the consumed module's (`§2.3` item 4) |
 | **`I-11`** | **A FOCUS CALL IS NEVER A REAL USER GESTURE** (`docs/specs/mcp-endpoint.md` `§3.8` item 2; the honesty anchor 3) |
 | **`I-12`** | **AN INVALID CALL CROSSES NO IPC BOUNDARY** — validation precedes the renderer call (`§0A` note 3(d)) |
-| **`I-13`** | **THE TOOL'S OWN THROW CLASS SET IS CLOSED AND TWO-MEMBERED** — the validation `TypeError`-class error and the readiness rejection (`§2.3` item 6) |
+| **`I-13`** | **THE TOOL'S OWN THROW CLASS SET IS CLOSED AND TWO-MEMBERED** — the validation `TypeError`-class error and the readiness rejection (`§2.3` item 6). **⟶⟶⟶ 2026-09-27 WEAKENED IN PLACE (`§0A` note 8, defect 4, gate 4's `LOW`): THE CLASS-STABILITY CLAIM IS TRUE FOR **OWN-KEY** VIOLATIONS AND NOT ACROSS THE HOSTILE POOL — a revoked or trap-throwing arguments proxy throws THE ENGINE'S OWN ERROR rather than the tool's, so the ENGINE'S ERROR MAY CROSS OTHERWISE.** **THE CLOSED-TWO-MEMBERED SET ABOVE STANDS FOR THE TOOL'S OWN THROWS; THE WIDER *"STABLE CLASS ACROSS THE WHOLE HOSTILE POOL"* READING IS WITHDRAWN, AS-FILED VISIBLE.** |
 
 ### 3.4 The STATIC rows — the rows `§2.2`'s prohibition table cites, ENUMERATED
 
@@ -2057,6 +2161,21 @@ ON `73`: `P-IM` = `RT-1` `4` + `RT-2` `3` + `RT-4` `2` + `ID-1` `2` + `ID-3` `10
 families gain the row their own cell declares.)** **THE `67` THE BY-TYPE ADDITION REACHED ON THE SEVENTEEN-ROW SET
 WAS A RUNNING FIGURE AND NOT A SECOND TOTAL; on the twenty-row set the same three families close on `73`, and NO
 family figure is quoted here as a total.**
+**⟶⟶⟶ 2026-09-27 ANNOTATION ON THIS BLOCK (`§0A` note 8, defect 5, THE SEVENTH-CLASS DEFECT CONFIRMED AGAIN, AND IT MAY
+NOT STAY SILENTLY OPEN) — **THE EXECUTED SUBTOTALS GOVERN**, THEY ARE PRINTED HERE AS THE AUTHORITY, AND THE REPRINTS
+ABOVE STAY VISIBLE AS SUPERSEDED.** **THE EXECUTED SUBTOTALS, read off the executed register's TWENTY rows (the terms
+`4, 3, 3, 2, 2 | 2, 3, 10, 2, 1 | 11, 2, 2, 12 | 4, 2, 2, 2 | 3, 1`): BY DOMAIN — THE ROUTE (`RT-1`…`RT-5`) `14` ·
+THE OPAQUE ENTRY IDENTITY (`ID-1`…`ID-5`) `18` · THE ARGUMENT SHAPE (`AR-1`…`AR-4`) `27` · THE REFUSAL AND READINESS
+(`RF-1`…`RF-4`) `10` · THE RESULT SHAPE AND TOTALITY (`RS-1`/`RS-2`) `4`, and `14 + 18 + 27 + 10 + 4` = `73`; BY TYPE —
+`P-IM` `43` · `P-SM` `14` · `P-TP` `16`, and `43 + 14 + 16` = `73`.** **THE TWO DIFFERING FIGURES ARE NAMED SO THE
+DIFFERENCE IS NOT READ AS A THIRD ARITHMETIC: (a) the refusal-and-readiness group is **`10`**, not the `8` the reprint's
+own `4 + 2 + 2` closes on (that reprint omits `RF-3`'s `2`); and (b) the BY-TYPE decomposition is **`P-IM` `43` /
+`P-SM` `14` / `P-TP` `16`**, not the reprint's `P-IM` `39` / `P-TP` `18`.** **THE DECLARED TOTAL `73` AND THE NINETEEN-STEP
+CHAIN (`4 → … → 67 → 69 → 70 → 73`) AGREE WITH THE EXECUTED ROWS — which is exactly this defect's shape: two executed
+subtotals disagreeing with the blocks that reprint them while the total and the chain close.** **THE RECONCILIATION IS
+**OWED** AT THE NEXT GATE (a re-printed subtotal block whose EVERY figure is the sum of the addends it names, over the
+executed row set), and it is named here rather than left silently open.** **NO TERM, ROW ID, STRATEGY ID, SEED, CAP OR
+CELL MOVES BY THIS ANNOTATION.**
 **CAPS RE-CHECKED AGAINST THE FINAL DECLARED FIGURE: `73 ≤ 400` in total (headroom `327`) · largest row `12 ≤ 100`
 (headroom `88`) — BOTH CAPS HOLD against `73`, and neither is close.** **NO CAP VALUE MOVES and no cap is compared
 against any subtotal.**
