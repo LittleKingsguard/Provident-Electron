@@ -58,13 +58,15 @@ the placement the sibling specs use.)**
    element parameter, no listener, no node reference and no write of any kind** (`§2.5`), and **an EMPTY SEAM SET**
    (`§2.1` item 3).
 3. **THE REGISTER (`§5.5.1`): `13` typed ROWS carrying `13` TERMS, in THREE families** —
-   `P-OV-IM-1`…`P-OV-IM-5` · `P-OV-SM-1`/`P-OV-SM-2` · `P-OV-TP-1`…`P-OV-TP-6` — **`102` declared attempts, printed
-   with their THIRTEEN terms and a term-by-term addition at `§5.5.3`** — one pinned-seed generator (`S-OV-TOTAL-1`,
+   `P-OV-IM-1`…`P-OV-IM-5` · `P-OV-SM-1`/`P-OV-SM-2` · `P-OV-TP-1`…`P-OV-TP-6` — **`104` declared attempts, printed
+   with their THIRTEEN terms and a term-by-term addition at `§5.5.3`** *(AS FILED `2026-09-27`: "`102` declared
+   attempts" — corrected to the sum of its own printed terms at `§0A` note 8)* — one pinned-seed generator (`S-OV-TOTAL-1`,
    seed `20260927`, one LCG step per draw, `pool.length = 12`), caps `≤100`/row · `≤400` total · stop-after-5, the
-   **four DOMAINS declared by name**, and **seven `(bounded)` markings**. **THE COUNT TENSION THE RECORD RETURNED IS
+   **four DOMAINS declared by name**, and **six `(bounded)` markings** *(AS FILED: "seven `(bounded)` markings" — the
+   six marked ids are named at `§0A` note 8 item 2)*. **THE COUNT TENSION THE RECORD RETURNED IS
    RECONCILED HERE, EXPLICITLY AND IN THE OPEN** (`§5.5.0`): the record's step-3 sketch came back as an
    ***eight-row*** block while **NINE row ids were enumerated**, and its figure `92` was **the sum of those nine
-   terms**. **This filing files `13` ROWS and `102` ATTEMPTS, prints the as-returned form and the reconciliation
+   terms**. **This filing files `13` ROWS and `104` ATTEMPTS, prints the as-returned form and the reconciliation
    beside it, and moves NO sketch term.**
 4. **THE LEGS THIS UNIT DECLARES (none run): the node suite `[T]`** — `npm test` — plus `npm run typecheck` `[H]`
    (**`src/**` ONLY**; it never reads `tests/**`), `npm run build` `[H]` (**this unit adds a module imported by
@@ -186,14 +188,14 @@ not this filing's own derivation is a READ, a QUOTED RULING or a DERIVATION** (`
 quoted as a measurement of this pass's.** The measurements this pass took are: a read of the gate-1 record; reads of
 `docs/specs/theme.md`, `docs/specs/zones.md` `§4.4 S-6`, `docs/specs/ci-divergence-leg.md` `§A-1.5`/`§A-3` (carried
 from the record), `docs/next-steps.md`'s `E9` row and `docs/pending.md`'s `SCH-12` row; and a `glob` of
-`docs/skills/*`. **None of them is a leg.** **AND THE HONEST FORM OF THE REGISTER'S FIGURES: `102`, `13`, the seven
+`docs/skills/*`. **None of them is a leg.** **AND THE HONEST FORM OF THE REGISTER'S FIGURES: `104`, `13`, the six
 `(bounded)` markings, the four domains and every strategy id are CONTRACT DESIGN until the rows are EXECUTED — an
 un-run register row is reported as a FAILURE, never as a pass.**
 
 **Note 6 — THE COUNT TENSION IS RECONCILED IN THE OPEN, AND THE RECONCILIATION IS THIS FILING'S, NOT A SILENT
 CORRECTION.** See `§5.5.0`: **the as-returned sketch is printed verbatim beside this filing's register, the row count
 this filing files is named, and the printed total equals its printed per-row terms.** **Step 4's requirement is
-satisfied literally: the change from the sketch's `92` to this filing's `102` is printed WITH THE NEW TERMS, and no
+satisfied literally: the change from the sketch's `92` to this filing's `104` is printed WITH THE NEW TERMS, and no
 sketch row id is renamed away.**
 
 **Note 7 — THE THREE UNDER-ASSERTION GAPS STEP 4 NAMED ARE CLOSED BY NEW ROWS, NOT BY PROSE.** **(a)** the charter's
@@ -204,6 +206,45 @@ the fourth, `P-OV-SM-1`'s `changed` column the first — **declared as three nam
 claim map, `§5.5.1` item 6(d)**); **(c)** the **never-consulted half of `target`** gets a row driving an identity
 whose `toString`/`valueOf` throw (`P-OV-IM-4`). **AND THE FOUR REFUSAL ROWS ASSERT THE *ABSENCE* OF THE MOVE VERBS,
 NEVER PROSE** (`§3.4 R-12`, `P-OV-TP-5`).
+
+**Note 8 — THE RED RUN'S PROVENANCE, RECORDED, AND THE TWO DEFECTS IT EXPOSED IN THIS FILE (RULED 2026-09-27).**
+**THE RED RAN: `tests/overlay.test.ts`, `69` test rows, `48` FAILED / `21` passed, against an ABSENT module.**
+**`HARNESS-1` IS THE ONE NON-MODULE FAILURE of that run — every other failure is the module-resolution class.** **THE
+RUN'S OWN SHAPE, reported and read exactly as the stop rule predicts (`§4.2`): the register STOPPED AT `P-OV-IM-1`
+after FIVE CONSECUTIVE FAILURES, and the remaining TWELVE REGISTER ROWS ARE REPORTED AS UN-RUN `FAILURES`** — **never
+as passes, never as omitted** (`§5.5.1`'s execution discipline, `AGENTS.md` item 11(b)). **AND THE PINNED-SEED LEG'S
+HONEST COVERAGE: its printed coverage is `11` OF `12` POOL MEMBERS** (`P-OV-TP-1`'s `12`-member pool, `S-OV-TOTAL-1`,
+seed `20260927`, `pool.length = 12`) — **a PRINTED COVERAGE, REPORTED AS SUCH AND NEVER CLAIMED AS A SWEEP.** **NO
+`(bounded)` marking is moved by that coverage figure, and no pool member is added, removed or re-grained to reach `12`.**
+
+**THE TWO CONTRACT DEFECTS THAT RUN EXPOSED, AND WHAT THIS PASS DOES ABOUT EACH — corrected HERE, at this file:**
+**(1) THE REGISTER'S PRINTED TOTALS WERE NOT THE SUMS OF THEIR OWN PRINTED TERMS.** **The thirteen PRINTED declared
+terms sum to `104`, and the as-filed figure read `102`**; **the thirteen PRINTED distinct-drive figures sum to `101`,
+and the as-filed figure read `99`.** **The as-filed declared chain also ended `…96 → 102` while its own steps summed to
+`104`, and the as-filed family subtotals (`36 + 9 + 59`) agreed with `104`** — so **the TERMS and the SUBTOTALS were
+already right and only the TOTALS and their CHAINS were wrong.** **THE FIX IS THE ONE THE RULING
+`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS` DEMANDS: the printed TOTALS, their CHAINS and their SUBTOTALS are corrected
+to the figures that ARE the sums of their own printed terms — declared `104`, distinct `101` — and NOT ONE TERM IS
+RE-GRAINED, NOT ONE ROW ID, STRATEGY ID, SEED OR CAP IS MOVED, and every as-filed figure stays VISIBLE under a dated
+annotation beside its corrected form** (`§5.5.2` item 3's ledger, `§5.5.3`'s totals and chains, `§5.3` item 11's
+DONE-row shape, `§7` item 9). **RE-CHECKED AGAINST THE CORRECTED DECLARED FIGURE: `104 ≤ 400` (headroom `296`) and the
+largest row `20 ≤ 100` (headroom `80`) — BOTH CAPS HOLD.** **THE TERM VERDICT, STATED: `13` ROWS CARRYING `13` TERMS —
+`P-OV-IM-1` `10` · `P-OV-IM-2` `6` · `P-OV-IM-3` `12` · `P-OV-IM-4` `4` · `P-OV-IM-5` `4` · `P-OV-SM-1` `6` · `P-OV-SM-2`
+`3` · `P-OV-TP-1` `20` · `P-OV-TP-2` `9` · `P-OV-TP-3` `12` · `P-OV-TP-4` `4` · `P-OV-TP-5` `6` · `P-OV-TP-6` `8` —
+summing `104` DECLARED, with their distinct siblings summing `101`; EVERY TERM IS AFFIRMED AS FILED, and a total is
+CORRECTED by re-printing the figure that IS the sum of its terms, NEVER by re-graining a term.**
+**(2) THE `(bounded)` COUNT WAS CONTRADICTED INSIDE THIS FILE.** **`§5.5.2` item 2 named SIX marked rows while
+printing SEVEN ids; `§5.5.3` repeated the seven-id wording and then enumerated the same six.** **THE SIX THE ROW CELLS
+ACTUALLY CARRY ARE NAMED HERE, and they are the authority: `P-OV-IM-1` · `P-OV-IM-3` · `P-OV-TP-1` · `P-OV-TP-2` ·
+`P-OV-TP-3` · `P-OV-TP-5`.** **THE `(bounded)` COUNT IS `6` OF `13` ROWS** — **with `P-OV-SM-1` carrying NO marking
+(its table IS its declared extent) and the other SIX quantifying over closed named lists, fixed grids or closed drive
+sets** — **and the as-filed seven-id wording stays visible at `§5.5.2` item 2 and `§5.5.3` beside the corrected
+count.** **NO MARKING IS ADDED OR REMOVED by this correction.**
+**THE RE-GRAIN OBLIGATION, ANSWERED: THE RED SET DOES OWE A RE-GRAIN for the corrected totals.** **The red asserts
+the CONTRACT'S PRINTED FIGURES against the CONTRACT'S PRINTED TERMS** (the `102`-of-`102` execution expectation,
+`§4.2`'s closing sentence and `A-20`'s own probe), **so once the printed total reads `104` the red's total-comparison
+rows must be re-grained to the corrected figure** — **a re-grain of the COMPARISON ROWS' EXPECTED TOTALS AND THEIR
+CHAINS ONLY, owing no re-grain of any term, any row id, any strategy id, any seed, any cap or any pool member.**
 
 ---
 
@@ -320,7 +361,7 @@ no element, no wiring, no write, and no re-parent semantics of any kind**.
    the fork that adopts this mechanism **still owns the overlay element, the scrim, the key handling, the applied
    attribute write and the node's placement** — **and the re-parent half remains the fork's or a future unit's,
    because this contract refuses it and says so** (`docs/pending.md`'s `SCH-12` row). **The honest cost of the unit
-   itself**: this spec + a **`13`-row / `102`-attempt** register + red/green **with remands** + the adversarial pass
+   itself**: this spec + a **`13`-row / `104`-attempt** register + red/green **with remands** + the adversarial pass
    + blind greens + the per-unit documentation review + a DONE row + per-gate commits (`RCA-8(f)`).
 
 ---
@@ -898,8 +939,9 @@ renders, that a node was re-parented, that focus was trapped or restored, or tha
 
 **The register's own stop rule binds the red run**: rows are evaluated **sequentially in register order** with **STOP
 AFTER 5 CONSECUTIVE FAILURES**, so **a red run of a module-absent unit is expected to stop early**, and **the un-run
-rows must be REPORTED AS FAILURES rather than silently omitted** — **a red run that reports all `102` attempts as
-executed is the finding, not the expectation.** **The register's execution markings are DESIGN, not results**: **a row
+rows must be REPORTED AS FAILURES rather than silently omitted** — **a red run that reports all `104` attempts as
+executed is the finding, not the expectation** *(AS FILED `2026-09-27`: "all `102`"; corrected to the sum of the register's
+own printed terms, `§0A` note 8 — and the red's total-comparison rows owe the re-grain that note records)*. **The register's execution markings are DESIGN, not results**: **a row
 that is marked executable in `§5.5.1` but broken when run is a SPEC FINDING, reported rather than tuned to green.**
 
 ### 4.3 What the red is NOT
@@ -1184,16 +1226,21 @@ The DONE row (`docs/next-steps.md`, the supervisor's pass) must carry, **in this
     finding** — the markings are **execution DESIGN**, and **a read-only PBT audit may not accept this spec's table
     alone**: it reads the counts here **and** the TestWriter's tables in `tests/overlay.test.ts`.
 11. **The register's ARITHMETIC.** The DONE row must print the **total WITH its per-row terms** — the declared figure
-    **`102` = `10` (`P-OV-IM-1`) + `6` (`P-OV-IM-2`) + `12` (`P-OV-IM-3`) + `4` (`P-OV-IM-4`) + `4` (`P-OV-IM-5`) +
+    **`104` = `10` (`P-OV-IM-1`) + `6` (`P-OV-IM-2`) + `12` (`P-OV-IM-3`) + `4` (`P-OV-IM-4`) + `4` (`P-OV-IM-5`) +
     `6` (`P-OV-SM-1`) + `3` (`P-OV-SM-2`) + `20` (`P-OV-TP-1`) + `9` (`P-OV-TP-2`) + `12` (`P-OV-TP-3`) + `4`
-    (`P-OV-TP-4`) + `4` (`P-OV-TP-5`) + `8` (`P-OV-TP-6`), whose DISTINCT sibling is `99`** — **and must reconcile
+    (`P-OV-TP-4`) + `6` (`P-OV-TP-5`) + `8` (`P-OV-TP-6`), **which is the sum of the terms as it is printed**, whose
+    DISTINCT sibling is `101`** *(AS FILED `2026-09-27`: "the declared figure `102` … + `4` (`P-OV-TP-5`) + `8`
+    (`P-OV-TP-6`), whose DISTINCT sibling is `99`" — the as-filed figures did not equal the sums of their own printed
+    terms, and are corrected at `§0A` note 8; here the as-filed form also mis-printed `P-OV-TP-5`'s term as `4` where
+    its own row cell carries `6` — **the same defect, and NOT a term move**)* — **and must reconcile
     that figure against the tables the test file actually produces**: **a total that is not the sum of its own terms
     is a review finding** (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`). **Where a row's attempts are several
     assertions over ONE execution, or a count of DISTINCT inputs rather than of DRIVES, the DONE row must report BOTH
     the declared attempts and the honest DISTINCT-DRIVE figure** (`§5.5.2` item 3's ledger is the authority). **The
     DECLARED figures are what the caps are compared against; the distinct figures are reported BESIDE them and never
     substituted.** **AND THE AS-RETURNED SKETCH'S `92` IS CARRIED BESIDE IT (`§5.5.0`): the sketch's nine terms summed
-    to `92` and the three rows step 4 required add `14` (`4 + 4 + 6`), so `92 + 14 = 102` — printed so the change is
+    to `92` and the three rows step 4 required add `14` (`4 + 4 + 6`), so `92 + 14 = 106` *(AS FILED: "so
+    `92 + 14 = 102`" — a mis-sum, corrected at `§0A` note 8; the step's own terms are unchanged)* — printed so the change is
     ARITHMETIC rather than a silent re-grain.**
 12. **The `§5.3` → `§5.5` numbering note, cited**: **there is NO `§5.4`** — the gap is DELIBERATE and is the family's
     (`docs/specs/gutter.md` `§5.3`'s own note, and `docs/specs/theme.md` `§5.3` item 12). **This file also has NO
@@ -1265,13 +1312,15 @@ the returned-declaration pool (`4` resolved-value shapes) · the node-reference 
    `P-OV-TP-6`'s sibling arithmetic: this filing's `P-OV-TP-1` (`20`) and `P-OV-TP-6` (`8`) were ONE sketch row
    (`P-OV-TP-1` `7`) split into a matrix row and a composition row, whose terms sum `28` against the sketch's `7`
    (`+21`) — **and the honest, checkable form of the whole chain is the ONE THIS SECTION CLOSES ON: the filed terms
-   are the thirteen printed at `§5.5.3`, their sum IS `102`, and `102 ≤ 400` while the largest term is `20 ≤ 100`.**
+   are the thirteen printed at `§5.5.3`, their sum IS `104`, and `104 ≤ 400` while the largest term is `20 ≤ 100`**
+   *(AS FILED `2026-09-27`: "their sum IS `102`, and `102 ≤ 400`" — a mis-sum against the same thirteen terms, corrected
+   at `§0A` note 8)*.**
    **NO SKETCH TERM IS QUOTED AS LIVE, AND NO SKETCH ROW ID IS RENAMED AWAY.**
 
 **THE ONE SENTENCE A LATER PASS MUST CARRY FROM THIS SUBSECTION: the as-returned sketch was an EIGHT-ROW LABEL over
-NINE enumerated ids summing `92`; this filing DECLARES THIRTEEN ROWS / THIRTEEN TERMS SUMMING `102`, and the change is
-printed here with its terms rather than reconciled silently.** **`G-3` IS SATISFIED BY THIS SUBSECTION: the printed
-total equals its printed per-row terms.**
+NINE enumerated ids summing `92`; this filing DECLARES THIRTEEN ROWS / THIRTEEN TERMS SUMMING `104`, and the change is
+printed here with its terms rather than reconciled silently.** *(AS FILED: "SUMMING `102`" — corrected at `§0A` note 8.)*
+**`G-3` IS SATISFIED BY THIS SUBSECTION: the printed total equals its printed per-row terms.**
 
 #### 5.5.1 THE REGISTER — **`13` typed ROWS carrying `13` TERMS, in THREE families, ALL executed by design**
 
@@ -1381,11 +1430,16 @@ GENERATOR.** **EACH ROW'S OWN CELL NAMES ITS ID, THE IDS ARE DISTINCT, AND NO RO
    `P-OV-TP-1`'s module-wide universal could be split per entry point — splitting them is NOT owed, NOT done, and
    changes no term.**
 2. **THE `(bounded)` MARKINGS ARE OWED WHEREVER A PROPERTY TEXT QUANTIFIES OVER A DOMAIN LARGER THAN ITS TABLE — and
-   this register carries SEVEN: `P-OV-IM-1` · `P-OV-IM-3` · `P-OV-TP-1` · `P-OV-TP-2` · `P-OV-TP-3` ·
-   `P-OV-TP-5`** — `6` of the `13` rows — **plus `P-OV-SM-1`, whose table IS its declared extent and therefore
-   carries NO marking** (`6 + 7 = 13`, so the count is checkable rather than asserted). **THE OTHER SEVEN quantify
-   over closed named lists, fixed grids or closed drive sets.** **A row marked `(bounded)` IS NOT A PROOF of the
-   unbounded universal it states, and no reader may read it as one.**
+   this register carries SIX: `P-OV-IM-1` · `P-OV-IM-3` · `P-OV-TP-1` · `P-OV-TP-2` · `P-OV-TP-3` ·
+   `P-OV-TP-5`** — `6` of the `13` rows, **and these SIX are exactly the ids the row cells carry** — **no other row
+   carries the marking: `P-OV-SM-1`'s table IS its declared extent and therefore carries NO marking, and the SIX
+   rows unmarked for the other reason (`P-OV-IM-2` · `P-OV-IM-4` · `P-OV-IM-5` · `P-OV-SM-2` · `P-OV-TP-4` ·
+   `P-OV-TP-6`)
+   quantify over closed named lists, fixed grids or closed drive sets** (`6 + 7 = 13`, so the count is checkable rather
+   than asserted). *(AS FILED `2026-09-27`: "this register carries SEVEN: `P-OV-IM-1` · `P-OV-IM-3` · `P-OV-TP-1` ·
+   `P-OV-TP-2` · `P-OV-TP-3` · `P-OV-TP-5`" — a seven-LABEL over a SIX-id list, and the label contradicted the cells; the
+   corrected count is the six the cells carry, per `§0A` note 8 item 2, with NO marking added or removed.)* **A row
+   marked `(bounded)` IS NOT A PROOF of the unbounded universal it states, and no reader may read it as one.**
 3. **THE DECLARED-VERSUS-DISTINCT LEDGER, printed because the DONE row must reconcile both** (`§5.3` item 11):
 
    | Row | Declared term | The honest DISTINCT-drive figure | What the difference is |
@@ -1403,11 +1457,11 @@ GENERATOR.** **EACH ROW'S OWN CELL NAMES ITS ID, THE IDS ARE DISTINCT, AND NO RO
    | `P-OV-TP-4` | `4` | `4` | none |
    | `P-OV-TP-5` | `6` | `6` | none |
    | `P-OV-TP-6` | `8` | `8` | the order-independence re-drive is inside the attempt |
-   | **THE THIRTEEN TERMS AND THE TWO FIGURES** | **`102` = `10 + 6 + 12 + 4 + 4 + 6 + 3 + 20 + 9 + 12 + 4 + 6 + 8`** | **`99` = `10 + 3 + 12 + 4 + 4 + 6 + 3 + 20 + 9 + 12 + 4 + 6 + 8`** | **`102 − 99 = 3`, and the difference is ENTIRELY `P-OV-SM-1`'s `6 → 3` collapse: the `20` cells are reported as `3` DISTINCT sweeps in the distinct ledger** (`§5.5.3` prints both figures with their own terms and chains) |
+   | **THE THIRTEEN TERMS AND THE TWO FIGURES** | **`104` = `10 + 6 + 12 + 4 + 4 + 6 + 3 + 20 + 9 + 12 + 4 + 6 + 8`** | **`101` = `10 + 3 + 12 + 4 + 4 + 6 + 3 + 20 + 9 + 12 + 4 + 6 + 8`** | **`104 − 101 = 3`, and the difference is ENTIRELY `P-OV-SM-1`'s `6 → 3` collapse: the `20` cells are reported as `3` DISTINCT sweeps in the distinct ledger** (`§5.5.3` prints both figures with their own terms and chains) *(AS FILED `2026-09-27`: `102` / `99` — neither was the sum of the terms printed beside it; corrected at `§0A` note 8, with NO term moved)* |
 
    **A `−` in no row: EVERY other row's distinct figure EQUALS its term, and the ledger expects ONE differing row
    (`P-OV-SM-1`).** **THE DISTINCT FIGURE IS A REPORTED FIGURE AND IS NEVER SUBSTITUTED FOR THE DECLARED TOTAL.**
-   **The caps compare against the DECLARED figures** (`102 ≤ 400`; largest row `20 ≤ 100`).
+   **The caps compare against the DECLARED figures** (`104 ≤ 400`; largest row `20 ≤ 100`).
 4. **THE SHAPES DELIBERATELY EXCLUDED FROM EVERY POOL — named as a STATED BOUNDARY rather than left implied:**
    **(a)** a **lone-surrogate string** as an `attributeName` (it would exercise no rule this contract pins, and its
    only observable is identity pass-through, which the `' class '` shape already asserts) · **(b)** a
@@ -1451,18 +1505,22 @@ GENERATOR.** **EACH ROW'S OWN CELL NAMES ITS ID, THE IDS ARE DISTINCT, AND NO RO
 #### 5.5.3 Attempt arithmetic — STATED SO A READER CAN CHECK IT AGAINST THE TABLES
 
 **⟶ THIS SECTION CARRIES TWO FIGURES, AND THIS ONE SENTENCE IS THE AUTHORITY FOR WHICH IS WHICH: THE DECLARED FIGURE
-`102` IS THE SUM OF THE THIRTEEN DECLARED ROW TERMS AND IS THE FIGURE EVERY CAP COMPARISON USES, WHILE THE DISTINCT
-FIGURE `99` IS THE SUM OF THE THIRTEEN DISTINCT-DRIVE FIGURES `§5.5.2` item 3's ledger reports and is the figure a
+`104` IS THE SUM OF THE THIRTEEN DECLARED ROW TERMS AND IS THE FIGURE EVERY CAP COMPARISON USES, WHILE THE DISTINCT
+FIGURE `101` IS THE SUM OF THE THIRTEEN DISTINCT-DRIVE FIGURES `§5.5.2` item 3's ledger reports and is the figure a
 reconciliation of DECLARED versus DISTINCT uses — the two are DIFFERENT FIGURES, each with its own terms and its own
-sum, and NEITHER substitutes for the other.** **THE AS-RETURNED SKETCH'S `92` AND ITS NINE TERMS ARE PRINTED AT
+sum, and NEITHER substitutes for the other.** *(AS FILED `2026-09-27`: THE DECLARED FIGURE WAS PRINTED `102` AND THE
+DISTINCT FIGURE `99`; NEITHER WAS THE SUM OF THE TERMS PRINTED BESIDE IT — declared `102` against terms summing `104`,
+distinct `99` against terms summing `101`. THE CORRECTION IS AT `§0A` NOTE 8 AND MOVES NO TERM, ROW ID, STRATEGY ID,
+SEED OR CAP.)* **THE AS-RETURNED SKETCH'S `92` AND ITS NINE TERMS ARE PRINTED AT
 `§5.5.0` AND ARE NOT LIVE FIGURES HERE.**
 
 **THE DECLARED TOTAL, printed WITH its terms — and this is the figure every cap comparison uses.**
 
-**`102` = `10` + `6` + `12` + `4` + `4` + `6` + `3` + `20` + `9` + `12` + `4` + `6` + `8`**
+**`104` = `10` + `6` + `12` + `4` + `4` + `6` + `3` + `20` + `9` + `12` + `4` + `6` + `8`**
 
 **THE DECLARED CHAIN, the thirteen terms summed as a chain of twelve steps: `10` → `16` → `28` → `32` → `36` → `42` →
-`45` → `65` → `74` → `86` → `90` → `96` → `102`.**
+`45` → `65` → `74` → `86` → `90` → `96` → `104`.** *(AS FILED: the chain ended `…96 → `102``; its own steps summed to
+`104` — the last step is corrected at `§0A` note 8 and no earlier step moves.)*
 
 | The term | Its row | The enumeration that produces it |
 | --- | --- | --- |
@@ -1482,46 +1540,57 @@ sum, and NEITHER substitutes for the other.** **THE AS-RETURNED SKETCH'S `92` AN
 
 **THE TERM-BY-TERM ADDITION, so the total is checkable rather than asserted** *(the order is `§5.5.1`'s row order)*:
 **`10` + `6` = `16`** · **`+ 12` = `28`** · **`+ 4` = `32`** · **`+ 4` = `36`** · **`+ 6` = `42`** · **`+ 3` = `45`** ·
-**`+ 20` = `65`** · **`+ 9` = `74`** · **`+ 12` = `86`** · **`+ 4` = `90`** · **`+ 6` = `96`** · **`+ 8` = `102`.**
-**TWELVE steps, the first term being the chain's own first figure.**
+**`+ 20` = `65`** · **`+ 9` = `74`** · **`+ 12` = `86`** · **`+ 4` = `90`** · **`+ 6` = `96`** · **`+ 8` = `104`.**
+**TWELVE steps, the first term being the chain's own first figure.** *(AS FILED: the closing term read `+ 8` = `102`; a
+mis-sum of the same twelve steps, whose last step is `96 + 8 = 104`.)*
 
 **THE FAMILY SUBTOTALS, stated consistently with that addition.** **`IM` = `10 + 6 + 12 + 4 + 4` = `36`** · **`SM` =
-`6 + 3` = `9`** · **`TP` = `20 + 9 + 12 + 4 + 6 + 8` = `59`** — and **`36 + 9 + 59 = `102` = the declared total.**
+`6 + 3` = `9`** · **`TP` = `20 + 9 + 12 + 4 + 6 + 8` = `59`** — and **`36 + 9 + 59 = `104` = the declared total.**
+*(AS FILED: "`36 + 9 + 59` = `102`" — the subterms and the subtotals were correct and summed to `104`; only the total
+they were equated to was wrong. The as-filed subtotals are UNCHANGED.)*
 
-**CAPS RE-CHECKED AGAINST IT.** **`102 ≤ 400`** (total headroom `298`)**, largest row `20 ≤ 100`** (headroom `80`) —
-**both caps HOLD, and neither is close.** **THE CAPS ARE COMPARED AGAINST THE DECLARED FIGURE `102` AND NEVER AGAINST
-THE DISTINCT FIGURE `99`** (`§5.5.2` item 3's own sentence).
+**CAPS RE-CHECKED AGAINST IT.** **`104 ≤ 400`** (total headroom `296`)**, largest row `20 ≤ 100`** (headroom `80`) —
+**both caps HOLD, and neither is close.** **THE CAPS ARE COMPARED AGAINST THE DECLARED FIGURE `104` AND NEVER AGAINST
+THE DISTINCT FIGURE `101`** (`§5.5.2` item 3's own sentence). *(AS FILED: "`102 ≤ 400` (total headroom `298`) … NEVER
+AGAINST THE DISTINCT FIGURE `99`" — re-checked against the corrected declared figure, `§0A` note 8.)*
 
 **⟶ THE DISTINCT TOTAL, PRINTED WITH ITS OWN TERMS AND ITS OWN CHAIN — THE SECOND FIGURE:** **the source of every
 figure is `§5.5.2` item 3's DECLARED-VERSUS-DISTINCT LEDGER, which is the authority for the distinct half.**
 
-**`99` = `10` + `3` + `12` + `4` + `4` + `6` + `3` + `20` + `9` + `12` + `4` + `6` + `8`**
+**`101` = `10` + `3` + `12` + `4` + `4` + `6` + `3` + `20` + `9` + `12` + `4` + `6` + `8`**
 
 **THE DISTINCT CHAIN, the thirteen distinct terms summed as a chain of twelve steps: `10` → `13` → `25` → `29` → `33` →
-`39` → `42` → `62` → `71` → `83` → `87` → `93` → `99`.** **THE ONLY STEP THAT DIFFERS FROM THE DECLARED CHAIN IS THE
-SECOND (`16` → `13`, i.e. `P-OV-SM-1`'s `6 → 3` collapse).**
+`39` → `42` → `62` → `71` → `83` → `87` → `93` → `101`.** **THE ONLY STEP THAT DIFFERS FROM THE DECLARED CHAIN IS THE
+SECOND (`16` → `13`, i.e. `P-OV-SM-1`'s `6 → 3` collapse).** *(AS FILED: the chain ended `…93 → `99``; its own steps
+summed to `101` — only the last step is corrected.)*
 
 **THE DISTINCT FAMILY SUBTOTALS:** **`IM` = `10 + 3 + 12 + 4 + 4` = `33`** · **`SM` = `6 + 3` = `9`** · **`TP` =
-`20 + 9 + 12 + 4 + 6 + 8` = `59`** — and **`33 + 9 + 59 = `99` = the distinct total.** **THE TWO SETS OF SUBTOTALS
-DIFFER ONLY IN `IM`, by exactly the `3` attempts `P-OV-SM-1`'s collapse accounts for.**
+`20 + 9 + 12 + 4 + 6 + 8` = `59`** — and **`33 + 9 + 59 = `101` = the distinct total.** **THE TWO SETS OF SUBTOTALS
+DIFFER ONLY IN `IM`, by exactly the `3` attempts `P-OV-SM-1`'s collapse accounts for.** *(AS FILED: "`33 + 9 + 59` =
+`99`" — the subterms and subtotals were correct and summed to `101`; only the total they were equated to was wrong.)*
 
-**THE TWO FIGURES' RELATION, printed so it is arithmetic rather than prose: `102 − 99 = 3`, and the difference is
-ENTIRELY `P-OV-SM-1`'s `6 → 3` collapse (`−3`) — so `99` and `102` agree on TWELVE of the thirteen terms, and THE
-LEDGER EXPECTS ONE DIFFERING ROW.**
+**THE TWO FIGURES' RELATION, printed so it is arithmetic rather than prose: `104 − 101 = 3`, and the difference is
+ENTIRELY `P-OV-SM-1`'s `6 → 3` collapse (`−3`) — so `101` and `104` agree on TWELVE of the thirteen terms, and THE
+LEDGER EXPECTS ONE DIFFERING ROW.** *(AS FILED: "`102 − 99 = 3`" — the difference is unchanged at `3`, because only the
+totals were mis-summed and the terms were not.)*
 
 **THE DISTINCT FIGURE IS A REPORTED FIGURE AND IS NEVER SUBSTITUTED FOR THE DECLARED TOTAL; and a DONE row that
 prints one of the two WITHOUT its terms, or that prints a total that is not the sum of its own terms, is a review
 finding** (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`; `§5.3` item 11).
 
-**THE `(bounded)` SET: `7` of the `13` rows at filing — `P-OV-IM-1` · `P-OV-IM-3` · `P-OV-TP-1` · `P-OV-TP-2` ·
+**THE `(bounded)` SET: `6` of the `13` rows — `P-OV-IM-1` · `P-OV-IM-3` · `P-OV-TP-1` · `P-OV-TP-2` ·
 `P-OV-TP-3` · `P-OV-TP-5`** — **`6` marked rows** (`§5.5.2` item 2's own count is the authority: `6 + 7 = 13`), **and
-the marking is a ROW count, moving no term.**
+the marking is a ROW count, moving no term.** *(AS FILED `2026-09-27`: "`7` of the `13` rows at filing" over this same
+six-id list — the LABEL contradicted the list and the six row cells, which is the second defect `§0A` note 8 corrects;
+NO marking is added or removed by the correction, and the six named ids are exactly those the cells carry.)*
 
 **THE ROW/TERM RECONCILIATION, printed so it is checkable:** **the `13` ROWS and their terms are `IM-1` (`10`) ·
 `IM-2` (`6`) · `IM-3` (`12`) · `IM-4` (`4`) · `IM-5` (`4`) · `SM-1` (`6`) · `SM-2` (`3`) · `TP-1` (`20`) · `TP-2`
 (`9`) · `TP-3` (`12`) · `TP-4` (`4`) · `TP-5` (`6`) · `TP-6` (`8`)** — **`13` rows (`5` `IM` + `2` `SM` + `6` `TP`),
-`13` TERMS (one per row, with NO row carrying a second term), and the DECLARED total is `102` — with the DISTINCT
-total `99` printed beside it, from the same thirteen rows' distinct figures, and NO term substituted for another.**
+`13` TERMS (one per row, with NO row carrying a second term), and the DECLARED total is `104` — with the DISTINCT
+total `101` printed beside it, from the same thirteen rows' distinct figures, and NO term substituted for another.**
+*(AS FILED: "the DECLARED total is `102` — with the DISTINCT total `99`"; corrected at `§0A` note 8, whose terms are
+these thirteen and are NOT moved.)*
 **AND THE AS-RETURNED SKETCH'S RECONCILIATION IS `§5.5.0`'s, cited rather than re-derived.**
 
 **THE PINNED SEED AND ITS FORM: `20260927`**, one hand-rolled 32-bit LCG step per draw
@@ -1624,9 +1693,11 @@ REFUSED at filing time and carry NO row at all** (`§5.2`, `§1` item 3).
    exported types have no fork-facing carry yet, and neither does the refusal** — **a fork cannot read a contract only
    this repo can honour.** **Owner: whatever pass next touches that file; it gates no unit** (`§2.1` item 4;
    `§7` item 11).
-9. **THE REGISTER'S TOTAL IS PRINTED WITH ITS TERMS, AND THE ARITHMETIC IS THE CONTRACT'S OWN.** **`102` = its
-   thirteen terms, with the chain, the three family subtotals and the `(bounded)` set of `6` marked rows all printed
-   (`§5.5.3`), while the as-returned sketch's `92` and its nine terms are carried at `§5.5.0`.** **A total that is not
+9. **THE REGISTER'S TOTAL IS PRINTED WITH ITS TERMS, AND THE ARITHMETIC IS THE CONTRACT'S OWN.** **`104` = the sum of
+   its thirteen terms, with the chain, the three family subtotals and the `(bounded)` set of `6` marked rows all printed
+   (`§5.5.3`), while the as-returned sketch's `92` and its nine terms are carried at `§5.5.0`** *(AS FILED `2026-09-27`:
+   "`102` = its thirteen terms" — a mis-sum corrected at `§0A` note 8, which also records the red set's owed re-grain
+   for the corrected totals)*. **A total that is not
    the sum of its own terms, or a total quoted without its terms, is a review finding**
    (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`).
 10. **THE FOUR WORKING DEFAULTS ARE DEFAULTS, AND NONE IS AN ARCHITECT'S RULING.** `§7a`/`§7a.1` carries them in the
@@ -1703,7 +1774,7 @@ BY ROW NAME, never by line length** — `docs/decisions.md`'s rows are appended-
 | **`UI-RENDERED-WITH-PROVIDENT`** and **`SHELL-CHROME-CARVE-OUT-FUNCTIONAL`** (`docs/decisions.md`, ACTIVE) | **CARRIED as the constraint that has NO element of this unit's to apply to** — and as the rule that requires a CONSUMER or a UI unit for the rendered overlay | `§0` ruling 6, `§1` item 4, `§2.2` `P-OV-2`, `§3.3 I-6` |
 | **`UI-UNITS-MAY-TOUCH-THE-RENDERER-WIRING`** (`docs/decisions.md`, ACTIVE) | **CARRIED as the rule that DERIVES this unit's DENIED set, and as the entry-point question this spec ANSWERS (`NO`)** | `§0` ruling 7, `§2.5` item 5, `§5.1` |
 | **`A-d3` — `INTERACTION-NODE-LOCAL`** | **CARRIED as the ruling that makes the `Escape`-equivalent a CALLER CALLBACK and forbids an installed listener** | `§0` ruling 8, `§2.1` item 2, `§2.3` item 1, `§2.2` `P-OV-8` |
-| **`PBT-REGISTER-REQUIRED-FOR-CODE-UNITS`**, **`REGISTER-ENTRY-COUNT-IS-NOT-CAPPED-AND-ARCHIVE-IS-THE-TRUTH-MECHANISM`**, **`A DECLARED REGISTER TERM IS A DRIVE COUNT`**, **`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`** (`docs/decisions.md`, ACTIVE) | **DISCHARGED BY THIS FILING** — `§5.5.1` is this unit's register: **`13` typed ROWS carrying `13` TERMS in three families, `102` attempts printed WITH their thirteen terms, a chain, three family subtotals, a `(bounded)` set of `6` marked rows, one pinned-seed generator (seed `20260927`), caps `≤100`/row · `≤400` total · stop-after-5, the four domains declared by name, and NO `F-` row, NO `§6`/`FS-n` citation as a row, NO new dependency and NO extra leg** — and **`§5.5.0` reconciles the as-returned sketch's own count tension with its terms printed** | `§5.5`, `§5.5.0`, `§5.5.1`, `§5.5.2`, `§5.5.3`, `§5.3` items 10/11 |
+| **`PBT-REGISTER-REQUIRED-FOR-CODE-UNITS`**, **`REGISTER-ENTRY-COUNT-IS-NOT-CAPPED-AND-ARCHIVE-IS-THE-TRUTH-MECHANISM`**, **`A DECLARED REGISTER TERM IS A DRIVE COUNT`**, **`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`** (`docs/decisions.md`, ACTIVE) | **DISCHARGED BY THIS FILING** — `§5.5.1` is this unit's register: **`13` typed ROWS carrying `13` TERMS in three families, `104` attempts printed WITH their thirteen terms, a chain, three family subtotals, a `(bounded)` set of `6` marked rows, one pinned-seed generator (seed `20260927`), caps `≤100`/row · `≤400` total · stop-after-5, the four domains declared by name, and NO `F-` row, NO `§6`/`FS-n` citation as a row, NO new dependency and NO extra leg** *(AS FILED: "`102` attempts" — corrected to the sum of the register's own printed terms at `§0A` note 8)* — and **`§5.5.0` reconciles the as-returned sketch's own count tension with its terms printed** | `§5.5`, `§5.5.0`, `§5.5.1`, `§5.5.2`, `§5.5.3`, `§5.3` items 10/11 |
 | **`GUTTER-CALLER-SEAMS-ARE-THE-FAMILY'S-DOWNSTREAM-CONTRACT`** (`docs/decisions.md`, ACTIVE) | **CARRIED FOR THE FORM, AND THIS UNIT'S SEAM SET IS EMPTY** — **a derivation, stated as one** (`§2.1` item 4) | `§0` ruling 14, `§2.1` item 4, `§8` (this row) |
 | **`DOC-REVIEW-GATE`** / **`BLIND-ALL-GREENS`** (`docs/decisions.md`, ACTIVE) | **CARRIED as obligations this unit's DONE row must cite**: the per-unit documentation review and the blind-greens record are owed after the greens | `§0` ruling 13, `§5.1` row 4, `§5.3` item 8 |
 | **`docs/specs/zones.md` `§4.4 S-6`** — *"the row may not be moved to the `ui` leg silently"* | **CARRIED VERBATIM in this unit's three-part `[U]` refusal (lifted, not paraphrased — a step-4 finding)** | `§5.2`, `§4.4 S-OV-10`, `§7` item 4 |
@@ -1739,12 +1810,14 @@ stays exactly as recorded**, because **renaming is forbidden for citation stabil
 ## 3a. Adversarial findings — **status as filed: `OWED`; this table is the SEED SET for the pass that will run**
 
 **Status as filed: `OWED`. No adversarial pass has run for `U-OVERLAY`** — **the unit has no green yet**, and `RCA-3`
-runs the pass **after** a green. **Every row below is a QUESTION for that pass, not a finding, and none may be cited
-as one.**
+runs the pass **after** a green. *(THE RED HAS SINCE RUN — `tests/overlay.test.ts`, `69` rows, `48` failed / `21` passed,
+with `HARNESS-1` its one non-module failure; `§0A` note 8 carries that provenance and the two contract corrections it
+forced. THIS TABLE'S STATUS IS UNCHANGED: the adversarial pass is `OWED` until a green exists.)* **Every row below is a
+QUESTION for that pass, not a finding, and none may be cited as one.**
 
 **The pass's shape, stated so it is not improvised: READ-ONLY** (it changes no `tests/**` and no `src/**`), it **must
 also perform the gate-11 read-only PBT audit of `§5.5.1`'s executed tables** — the per-row attempts, the strategy ids,
-the `102` total against its thirteen terms, the stop-after-5 rule, the pinned seed and its one-step-per-draw form
+the `104` total against its thirteen terms, the stop-after-5 rule, the pinned seed and its one-step-per-draw form
 (`pool.length = 12`), and the `(bounded)` set of `6` marked rows — **and it must RE-RUN the pool-versus-boundary check
 against the LANDED tables** (`§5.5.2` item 5). **Its findings are recorded in `§3b` and a HOST finding is fixed here
 with regression rows — never in `docs/defects.md`, because a host finding is this repo's.** **A genuine
@@ -1778,11 +1851,11 @@ owner. **The as-filed status of every seed below is `OWED`, and `OWED` is define
 | **`A-13`** | **THE STORE/PERSISTENCE PROBE:** is any store, cache, memo, module-level binding, retained callback, retained target, file write or persistence channel added — **including a "remember the last state" convenience, which `§1` item 5 makes a NEW GATE?** | static |
 | **`A-14`** | **THE FABRICATED-EDGE PROBE:** does any pass assert an import or composition edge between this unit and **any** sibling — `E8`'s module, the `A-d3` session, the focus rows, the divergence leg, the fork's `PS-1` documentation half — **or read a tracker ordering as a dependency edge?** | static |
 | **`A-15`** | **THE `[U]`/`[D]` PROBE:** does any pass offer a `[U]` row for an applied `inert` attribute, a rendered overlay, a scrim, a re-parented node or a focus behaviour; claim a `[D]` row; claim an `M-46` conversion; move an applied row to the `ui` leg (silently or not); report gate 6 as **`waived`** rather than **`STRUCTURAL` with its reason stated**; or omit the `§7.1` `DOES NOT TRIGGER` decision? | the DONE row + `§3.4 R-9`/`R-12` |
-| **`A-16`** | **THE REGISTER AUDIT (gate 11's read-only PBT audit):** do the executed tables match `§5.5.1`'s **per-row attempts, terms, strategy ids and the declared total `102` = `10 + 6 + 12 + 4 + 4 + 6 + 3 + 20 + 9 + 12 + 4 + 6 + 8`**? **In particular: is the callback-obligation row present (`P-OV-IM-5`, step 4's under-assertion (a)), is the never-consulted-target row present WITH its throwing-hook and revoked-`Proxy` drives (`P-OV-IM-4`, step 4's (c)), and do the three shape invariants have named rows (`P-OV-IM-1`/`P-OV-IM-2`/`P-OV-SM-1`, step 4's (b))?** **Does the refusal row assert the ABSENCE of the move verbs rather than prose (`P-OV-TP-5`)?** Is the **stop-after-5** rule honoured, and were the **un-run rows REPORTED as failures**? Is the **pinned seed `20260927`** and the one-step-per-draw LCG form (`pool.length = 12`) what the test file actually contains? **AND: is every pool/table member still consistent with its row's declared boundary text** — `§5.5.2` item 5's check re-run against the LANDED tables? **AND: does the audit read the `(bounded)` set correctly — `6` marked of `13` ROWS?** **AND: does the audit reconcile the file's `102` against `§5.5.0`'s as-returned `92` and its terms, rather than flagging a re-grain that `§5.5.0` declares?** **Any OTHER mismatch is a SPEC FINDING.** | `[T]` + the test file |
+| **`A-16`** | **THE REGISTER AUDIT (gate 11's read-only PBT audit):** do the executed tables match `§5.5.1`'s **per-row attempts, terms, strategy ids and the declared total `104` = `10 + 6 + 12 + 4 + 4 + 6 + 3 + 20 + 9 + 12 + 4 + 6 + 8`** *(AS FILED: the total was printed `102` — corrected to the sum of its own terms at `§0A` note 8, and the audit reads the CORRECTED figure)*? **In particular: is the callback-obligation row present (`P-OV-IM-5`, step 4's under-assertion (a)), is the never-consulted-target row present WITH its throwing-hook and revoked-`Proxy` drives (`P-OV-IM-4`, step 4's (c)), and do the three shape invariants have named rows (`P-OV-IM-1`/`P-OV-IM-2`/`P-OV-SM-1`, step 4's (b))?** **Does the refusal row assert the ABSENCE of the move verbs rather than prose (`P-OV-TP-5`)?** Is the **stop-after-5** rule honoured, and were the **un-run rows REPORTED as failures**? Is the **pinned seed `20260927`** and the one-step-per-draw LCG form (`pool.length = 12`) what the test file actually contains? **AND: is every pool/table member still consistent with its row's declared boundary text** — `§5.5.2` item 5's check re-run against the LANDED tables? **AND: does the audit read the `(bounded)` set correctly — `6` marked of `13` ROWS?** **AND: does the audit reconcile the file's `104` against `§5.5.0`'s as-returned `92` and its terms, rather than flagging a re-grain that `§5.5.0` declares?** *(AS FILED: "the file's `102`" — corrected at `§0A` note 8, which also records that the RED SET owes the matching re-grain of its total-comparison rows)* **Any OTHER mismatch is a SPEC FINDING.** | `[T]` + the test file |
 | **`A-17`** | **THE LAYER-HONESTY PROBE:** does the DONE row (or any pass's prose) claim **applied-attribute, rendered-overlay, scrim, re-parented-node or focus** evidence from this unit's `[T]` green — and does it state explicitly that **the module is imported by no `src/**` file** and therefore proves **the contract holds for a caller, not that the app behaves differently**? | the DONE row |
 | **`A-18`** | **THE HONESTY-BLOCK PROBE:** does `§5.5.2` name the refused half as a REFUSAL rather than a gap, does it name the three deliberately-excluded shapes, does `§5.5.0` reconcile the as-returned count tension with its terms printed, and does the DONE row carry the register's figures WITH their terms? | static + the DONE row |
 | **`A-19`** | **THE AUTHORITY PROBE:** does any pass read this unit as **the repo's overlay authority**, or claim its returned record reaches a rendered overlay, `src/renderer/**` or the demo envelope? **The measured-and-declared fact is that nothing this unit returns can influence any of them.** | static + the DONE row |
-| **`A-20`** | **THE RED-PROVENANCE PROBE:** is the red set's failing set recorded **AS RUN**, with the stop-after-5 outcome and the un-run register rows reported as FAILURES — and does any pass quote a `102`-of-`102` executed red as if it were the expectation (`§4.2`)? | the DONE row + `§4.2` |
+| **`A-20`** | **THE RED-PROVENANCE PROBE:** is the red set's failing set recorded **AS RUN**, with the stop-after-5 outcome and the un-run register rows reported as FAILURES — and does any pass quote a `104`-of-`104` executed red as if it were the expectation (`§4.2`)? | the DONE row + `§4.2` |
 
 **The seed set's own status: `20` seeds, ALL `OWED` at FILING.** **`A-16` is the gate-11 audit; `A-1`/`A-2`/`A-3`
 are the three claims the transition artifact rests on; **`A-4`/`A-5`/`A-6` are the three claims the declaration
