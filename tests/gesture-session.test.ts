@@ -2764,11 +2764,11 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
     const siblingPinned = readArrayLiteral('tests/engine-pin-version.test.ts', /const\s+PINNED_TOOL_SET\s*=\s*\[/)
     expect(
       siblingPinned.length,
-      'R-6(c)/§4.4 S-2 — the sibling name-complete row (`tests/engine-pin-version.test.ts`) pins the 21 tool NAMES; this row cites it rather than re-authoring it',
-    ).toBe(21)
+      'R-6(c)/§4.4 S-2 — the sibling name-complete row (`tests/engine-pin-version.test.ts`) pins the 22 tool NAMES (`N-15`/`N-19`: `provident.focus` joins it in the SAME COMMIT); this row cites it rather than re-authoring it',
+    ).toBe(22)
     expect(
       toolsLive.sort(),
-      `R-6(c)/§2.2 P-6 — the LIVE \`ALL_TOOLS\` set equals the pinned 21-NAME set (a tool ADDED or REMOVED fails BY NAME, not by count): ${JSON.stringify(
+      `R-6(c)/§2.2 P-6 — the LIVE \`ALL_TOOLS\` set equals the pinned 22-NAME set (a tool ADDED or REMOVED fails BY NAME, not by count): ${JSON.stringify(
         toolsLive,
       )}`,
     ).toEqual([...siblingPinned].sort())
@@ -2783,8 +2783,8 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       'R-6(c)/§2.2 P-6 — the LIVE `MUTATING_METHODS` keeps its SEVEN named entries (this unit adds no mutating IPC method)',
     ).toEqual(['code.load', 'code.loadBatch', 'dispatch', 'journal', 'load', 'op', 'teardown'])
     const rpcLive = readUnionMembers('src/shared/types.ts', /export\s+type\s+RpcMethod\s*=/)
-    expect(rpcLive.length, 'R-6(c)/§2.2 P-6 — the LIVE `RpcMethod` union is name-complete in this census (21 members)').toBe(21)
-    expect(new Set(rpcLive).size, 'R-6(c) — the `RpcMethod` census is a SET (distinct members), so the count is not a bag').toBe(21)
+    expect(rpcLive.length, 'R-6(c)/§2.2 P-6 / `N-15` — the LIVE `RpcMethod` union is name-complete in this census (22 members, `focus` included in the SAME COMMIT)').toBe(22)
+    expect(new Set(rpcLive).size, 'R-6(c) / `N-15` — the `RpcMethod` census is a SET (distinct members), so the count is not a bag').toBe(22)
     // The module itself carries NO registration token of any kind.
     const code = stripComments(moduleSource('R-6(c) §2.2 P-6'))
     const seamRules: ReadonlyArray<{ what: string; re: RegExp }> = [
@@ -5410,8 +5410,8 @@ describe('F — §3.2 the documented fail-states (every outcome is a VALUE)', ()
     // (`src/shared/gesture-session.test.ts` would be a fabricated seam: the six sites are
     // this repo's own, and the five NAME-COMPLETE sets below are theirs).
     const toolsLive = readArrayLiteral('src/main/mcp-server.ts', /static\s+readonly\s+ALL_TOOLS\s*:\s*string\[\]\s*=\s*\[/)
-    expect(toolsLive.length, 'F-9(b)/§0 ruling 9 — `ALL_TOOLS` keeps its 21 names (set equality is asserted against the sibling name-complete row in `R-6(c)`)').toBe(21)
-    expect(new Set(toolsLive).size, 'F-9(b) — the tool census is a SET (distinct names), so no name is a duplicate').toBe(21)
+    expect(toolsLive.length, 'F-9(b)/§0 ruling 9 / `N-15` — `ALL_TOOLS` reads its 22 names (set equality is asserted against the sibling name-complete row in `R-6(c)`)').toBe(22)
+    expect(new Set(toolsLive).size, 'F-9(b) / `N-15` — the tool census is a SET (distinct names), so no name is a duplicate').toBe(22)
     const groupsLive = readArrayLiteral('src/main/security.ts', /const\s+VALID_GROUPS[^=]*=\s*new\s+Set\(\s*\[/)
     expect(groupsLive.sort(), 'F-9(b) — `VALID_GROUPS` keeps its FIVE named members').toEqual([
       'code',
@@ -5423,7 +5423,7 @@ describe('F — §3.2 the documented fail-states (every outcome is a VALUE)', ()
     const mutatingLive = readArrayLiteral('src/renderer/renderer.ts', /const\s+MUTATING_METHODS\s*=\s*new\s+Set\(\s*\[/)
     expect(mutatingLive.length, 'F-9(b) — `MUTATING_METHODS` keeps its SEVEN named entries').toBe(7)
     const rpcLive = readUnionMembers('src/shared/types.ts', /export\s+type\s+RpcMethod\s*=/)
-    expect(rpcLive.length, 'F-9(b) — the `RpcMethod` union keeps its 21 members').toBe(21)
+    expect(rpcLive.length, 'F-9(b) / `N-15` — the `RpcMethod` union reads its 22 members (`focus` included in the SAME COMMIT)').toBe(22)
     // The renderer RPC switch and the preload bridge are unchanged: this unit's own
     // change set touches NEITHER file.
     //

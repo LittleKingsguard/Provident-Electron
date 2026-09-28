@@ -304,6 +304,11 @@ export const EXPECTED_GROUPS: string[] = ['read', 'dispatch', 'graph', 'code', '
 export const EXPECTED_MUTATING: string[] = ['dispatch', 'load', 'op', 'teardown', 'code.load', 'code.loadBatch', 'journal']
 export const DECLARED_MEMBERS: string[] = ['activeId', 'entries', 'opened', 'refused']
 
+/** The `src/main/security.ts` export NAMES as filed at this unit's red time — the baseline the
+ *  `P-FT-RT-5` drive `(2)` reads, so a NEW EXPORT (an alias, a re-export, a second resolution
+ *  path) FAILS the row rather than being absorbed (`§5.5.2` item 4b's obfuscation fence). */
+export const SECURITY_EXPORTS_AT_FILING: string[] = ['ToolGroup', 'groupForTool', 'toolAllowed', 'moduleToolAllowed', 'defaultSecurityConfig', 'authorized', 'applyPatch', 'SecurityConfig', 'SecurityGate']
+
 export function read(rel: string): string {
   return readFileSync(join(ROOT, rel), 'utf8')
 }
@@ -337,10 +342,32 @@ export function liveValidGroups(): string[] {
   return readStringArrayLiteral(SECURITY_REL, /const\s+VALID_GROUPS\s*:\s*ReadonlySet<string>\s*=\s*new\s+Set\(\s*\[([^\]]*)\]/)
 }
 
-export function focusRouteSource(): string | null {
+/** THE ROUTE REGION — **BOUNDED BY THE CONTRACT'S OWN STATEMENT, NOT BY A QUOTING CONVENTION**
+ *  (`§5.5.2` item 4b; `§0A` note 7 item 2(b)). The as-filed reader sliced FROM THE FIRST QUOTED
+ *  OCCURRENCE OF THE TOOL NAME TO END-OF-FILE, so ANY earlier occurrence of that quoted name
+ *  silently MOVED EVERY SCAN ROW'S REGION — which is how `P-FT-ID-2`'s *"the tool re-derived no
+ *  rule"* scan reddened against a legitimate `===` belonging to the SHARED `graph` loop. THE
+ *  BOUNDED REGION IS THE HANDLER'S OWN DECLARED EXTENT: its `allowed.includes('<tool>')`
+ *  registration block, read from that block's own opening line — the region's FIRST byte — up to
+ *  (and NOT including) the NEXT registration block's opening line, or the file's end when the
+ *  tool's block is the last one. The block's own line is the CONTRACT-NAMED marker: it is where
+ *  `§5.1` rows 1/2 place the tool row and the handler, and it is INDEPENDENT of how the name is
+ *  quoted anywhere else in the file. A later registration line may not move this region upward,
+ *  and a name quoted elsewhere may not move it downward. */
+export function routeRegion(): { name: string; start: number; end: number } | null {
   const src = read(SERVER_REL)
-  const marker = src.indexOf(`'${TOOL_NAME}'`)
-  return marker === -1 ? null : src.slice(marker)
+  const blocks = [...src.matchAll(/if\s*\(\s*allowed\.includes\(\s*(['"])([^'"]+)\1\s*\)\s*\)/g)]
+    .map((m) => ({ name: m[2] as string, start: m.index as number }))
+  const first = blocks.find((b) => b.name === TOOL_NAME)
+  if (first === undefined) return null
+  const after = blocks.filter((b) => b.start > first.start)
+  const end = after.length === 0 ? src.length : Math.min(...after.map((b) => b.start))
+  return { name: first.name, start: first.start, end }
+}
+
+export function focusRouteSource(): string | null {
+  const region = routeRegion()
+  return region === null ? null : read(SERVER_REL).slice(region.start, region.end)
 }
 
 interface Recorder {
@@ -414,6 +441,17 @@ export function assertDeclaredShape(value: unknown, label: string): void {
 
 export function keysOf(value: unknown): string[] {
   return Object.keys(value as Record<string, unknown>).sort()
+}
+
+/** THE GUARDED KEY READ (`§5.5.2` item 3(a)): THE HARNESS MUST NOT COMPUTE A KEY READ OUTSIDE
+ *  ITS OWN GUARD. A REVOKED `Proxy` (the `P-FT-AR-4` drive `(10)` the contract names) and an
+ *  own-keys-TRAP-THROWING `Proxy` (drive `(11)`) make `Object.keys` itself throw — so a driver
+ *  that read the caller`s keys in order to BUILD ITS OWN READING STRING aborted the drive BEFORE
+ *  the tool was ever reached, which made the row UNHOLDABLE BY ANY IMPLEMENTATION. Every caller
+ *  key read therefore goes through this guarded form: it RETURNS the reading, or reports that
+ *  the shape does not admit one — never throws into the harness. */
+export function guardedKeysOf(value: unknown): string[] | null {
+  try { return keysOf(value) } catch { return null }
 }
 
 export async function thrown(fn: () => Promise<unknown>): Promise<string | null> {
@@ -538,8 +576,13 @@ const AR4_DRIVES: Drive[] = (() => {
       const rec = recorder([{ activeId: null, entries: [], opened: false }])
       const server = newServer(rec.backend)
       const args = d.make()
+      // THE CALLER-SIDE KEY READ IS GUARDED (`§5.5.2` item 3(a)): a revoked `Proxy` and an
+      // own-keys-trap `Proxy` make `Object.keys` throw, and an UNGUARDED read here would
+      // abort the drive BEFORE the tool was reached — the harness's own read, which no
+      // implementation can make succeed. `null` means "this shape does not admit the
+      // reading", and the byte-identity clause below is then satisfied BOTH times.
       const before = args !== null && (typeof args === 'object' || typeof args === 'function')
-        ? JSON.stringify(Object.keys(args as object))
+        ? guardedKeysOf(args)
         : null
       let threw: string | null = null
       let serviced = false
@@ -557,7 +600,11 @@ const AR4_DRIVES: Drive[] = (() => {
         expect(rec.calls, `AR-4 ${d.label} — a serviced drive makes exactly one renderer call.`).toHaveLength(1)
       }
       if (before !== null) {
-        expect(JSON.stringify(Object.keys(args as object)), `AR-4 ${d.label} — the caller's arguments object is byte-identical afterwards.`).toBe(before)
+        const after = guardedKeysOf(args)
+        expect(
+          after,
+          `AR-4 ${d.label} — the caller's arguments object is byte-identical afterwards, and its own key set stays READABLE (an unreadable key set on the SECOND read is a mutation of the shape, and FAILS).`,
+        ).toEqual(before)
       }
       if (d.label.startsWith('(6)')) {
         const rec2 = recorder([{ activeId: null, entries: [], opened: false }])
@@ -745,7 +792,15 @@ export const REGISTER: readonly RegisterRow[] = [
     controls: [{ label: 'control: the gate read distinguishes a disabled group (a graph tool under the default gate is absent)', run: () => expect(newServer(recorder([{}]).backend).allowedToolNames()).not.toContain('provident.load') }],
     drives: [
       { label: '(1) `dispatch` ON — the tool resolves and is callable', run: () => expect(newServer(recorder([{}]).backend).allowedToolNames(), 'RT-5 — registered under the default gate.').toContain(TOOL_NAME) },
-      { label: '(2) `dispatch` OFF — the tool is not registered/listed', run: () => { const gate = new SecurityGate().apply({ disable: ['dispatch'] }); expect(newServer(recorder([{}]).backend, gate).allowedToolNames(), "RT-5 — the endpoint's existing group semantics, not a new case.").not.toContain(TOOL_NAME); expect(new RegExp('focus', 'i').test(stripComments(read(SECURITY_REL))), 'RT-5 — NO focus-specific branch exists in the gate.').toBe(false) } },
+      { label: '(2) `dispatch` OFF — the tool is not registered/listed', run: async () => { const gate = new SecurityGate().apply({ disable: ['dispatch'] }); expect(newServer(recorder([{}]).backend, gate).allowedToolNames(), "RT-5 — the endpoint's existing group semantics, not a new case.").not.toContain(TOOL_NAME); const security = stripComments(read(SECURITY_REL)); const focusMentions = scanLines(security, /focus/i); const branchLines = scanLines(security, /\bfocus\b/i).filter((line) => /\bif\b|\?|&&|\|\||\bcase\b|\bswitch\b|\bthrow\b|\breturn\b/.test(line)); const mapLiteral = new RegExp(`(['"])${TOOL_NAME.replace('.', '\\.')}\\1\\s*:\\s*(['"])dispatch\\2`).test(security); // THE RE-SCOPED INSTRUMENT (`§5.5.1 RT-5`; `§0A` note 7, defect 2): THE CLAIM IS *"no
+        // focus-specific BRANCH"* — NEVER the absence of the group-map DATA row `§2.1` item 2
+        // and `§5.1` row 2 REQUIRE. The as-filed form asserted the method name does NOT appear
+        // in this file at all, which FORBADE that required data row: NO implementation could
+        // satisfy both. The required data row is therefore ASSERTED (its absence FAILS), and
+        // the branch scan carries the claim. OBFUSCATION IS NOT A SATISFACTION: a SPLIT or
+        // BUILT literal, a NEW EXPORT, a re-export, an alias or a computed name that hides the
+        // name from this read is its own FAILING finding (`§2.2 P-FT-5`).
+        expect(focusMentions, `RT-5 — the gate's group-map DATA row names the tool (the row \`§5.1\` row 2 REQUIRES). Security-source mentions measured: ${JSON.stringify(focusMentions)}`).not.toEqual([]); expect(mapLiteral, `RT-5 — and it resolves to the EXISTING \`dispatch\` group as DATA, never by a new case. Security-source mentions measured: ${JSON.stringify(focusMentions)}`).toBe(true); expect(branchLines, `RT-5 — NO focus-specific BRANCH: no conditional keyed on the method name and no second resolution path alongside \`TOOL_GROUPS\`/\`groupForTool\`. A branch FAILS this row. Measured: ${JSON.stringify(branchLines)}`).toEqual([]); const addedExports = [...security.matchAll(/export\s+(?:function|class|const|let|interface|type)\s+([A-Za-z0-9_$]+)/g)].map((m) => m[1]).filter((n) => !SECURITY_EXPORTS_AT_FILING.includes(n)); expect(addedExports, `RT-5 — no NEW EXPORT, alias or second resolution path is introduced to satisfy the row (an added name FAILS). Measured: ${JSON.stringify(addedExports)}`).toEqual([]) } },
     ],
   },
   {
@@ -820,7 +875,23 @@ export const REGISTER: readonly RegisterRow[] = [
     id: "P-FT-AR-4", type: "P-TP", domain: "THE ARGUMENT SHAPE — the EDGE'S TOTALITY over hostile argument shapes", strategyId: "S-FT-TOTAL-1", term: 12, bound: "bounded",
     // the one declared throw class or the serviced reading, with byte-identity and call-count assertions
     assertions: ["the ONE declared throw class or the serviced reading", "the renderer stub's call count (0 on a rejected drive)", "the caller's object's byte-identity after the call", "no third throw class escaped", "THE UNIVERSAL IS OVER THE ENUMERATED DOMAINS OF THIS TABLE, NOT OVER THE WHOLE INPUT SPACE"],
-    controls: [{ label: 'control: a legal shape services (so the either/or is not satisfied vacuously by always throwing)', run: async () => { const rec = recorder([{ activeId: null, entries: [], opened: false }]); const m = await thrown(() => callHandler(newServer(rec.backend), TOOL_NAME, {})); expect(m).toBe(null); expect(rec.calls).toHaveLength(1) } }],
+    controls: [
+      { label: 'control: a legal shape services (so the either/or is not satisfied vacuously by always throwing)', run: async () => { const rec = recorder([{ activeId: null, entries: [], opened: false }]); const m = await thrown(() => callHandler(newServer(rec.backend), TOOL_NAME, {})); expect(m).toBe(null); expect(rec.calls).toHaveLength(1) } },
+      // THE HARNESS-OWN GUARD, PROVEN RATHER THAN ASSERTED (`§5.5.2` item 3(a)): the caller-side
+      // key read on a REVOKED `Proxy` and on an own-keys-TRAP `Proxy` THROWS — so this control
+      // proves the guarded read can fail AND that the guarded form does not throw, which is what
+      // makes the row HOLDABLE by a conformant tool instead of aborting the whole register.
+      { label: 'control: the caller-side key read CAN throw, and the GUARDED form never does (a revoked Proxy and an own-keys-trap Proxy)', run: (): void => {
+        const revoked = Proxy.revocable({}, {}); revoked.revoke()
+        const traps: unknown[] = [revoked.proxy, new Proxy({}, { ownKeys: (): string[] => { throw new Error('trap threw') } })]
+        for (const shape of traps) {
+          let raw = false
+          try { keysOf(shape) } catch { raw = true }
+          expect(raw, 'AR-4 control — the RAW key read throws on this shape, which is exactly why the unguarded form aborted the register.').toBe(true)
+          expect(guardedKeysOf(shape), 'AR-4 control — the GUARDED read returns null instead of throwing into the harness.').toBe(null)
+        }
+      } },
+    ],
     drives: AR4_DRIVES,
   },
   {

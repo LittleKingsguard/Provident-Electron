@@ -3985,18 +3985,18 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       change.paths.filter((p) => p === 'src/shared/dom-shim.ts'),
       'R-6 §3.4 — the change set does not touch `src/shared/dom-shim.ts` (no member added, no member needed)',
     ).toEqual([])
-    const tools = readNamesFromDeclaration('src/main/mcp-server.ts', /ALL_TOOLS\s*(?::[^=]*)?=\s*\[/, 21)
+    const tools = readNamesFromDeclaration('src/main/mcp-server.ts', /ALL_TOOLS\s*(?::[^=]*)?=\s*\[/, 22)
     expect(
       tools.length,
-      `R-6 §3.4 — the five-seam negative’s first limb: \`ALL_TOOLS\` is still the pinned 21-NAME set, asserted BY SET EQUALITY AGAINST THE NAMES where a name-complete row exists and NEVER by a bare count (S-7). Read: ${JSON.stringify(
+      `R-6 §3.4 / \`N-16\` — the five-seam negative’s first limb: \`ALL_TOOLS\` is the pinned 22-NAME set (\`provident.focus\` joins it in the SAME COMMIT), asserted BY SET EQUALITY AGAINST THE NAMES where a name-complete row exists and NEVER by a bare count (S-7). Read: ${JSON.stringify(
         tools,
       )}`,
-    ).toBe(21)
+    ).toBe(22)
     const rpc = readUnionMembers('src/shared/types.ts', /export type RpcMethod\s*=/)
     expect(
       rpc.length,
-      `R-6 §3.4 — \`RpcMethod\` is still 21 union members by NAME (S-7). Read: ${JSON.stringify(rpc)}`,
-    ).toBe(21)
+      `R-6 §3.4 / \`N-16\` — \`RpcMethod\` is 22 union members by NAME (\`focus\` joins it in the SAME COMMIT) (S-7). Read: ${JSON.stringify(rpc)}`,
+    ).toBe(22)
     const mutating = readNamesFromDeclaration('src/renderer/renderer.ts', /MUTATING_METHODS\s*=\s*new Set\(\[/, 7)
     expect(
       mutating,

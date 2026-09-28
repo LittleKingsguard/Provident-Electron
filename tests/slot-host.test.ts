@@ -3026,8 +3026,11 @@ describe('S — §2.1 the surface + §2.2/§4.4 the static rows over the module'
     }
     const probed = security.applyPatch({ token: null, enabled: [] }, { groups: ['no-such-group-probe'] })
     expect(probed.enabled, 'S-5: a group OUTSIDE the live set is REJECTED — the probe above is not vacuous').toEqual([])
-    // The tool seam: `ALL_TOOLS` stays 21, and every tool still resolves into the
-    // pinned group domain (a new tool bound to a NEW group fails both halves).
+    // The tool seam: `ALL_TOOLS` reads 22 (`N-18`: `provident.focus` joins the
+    // live listing in the SAME COMMIT — this site's own edit bar names the sibling
+    // census file as one it may not edit, which is why the obligation lands here),
+    // and every tool still resolves into the pinned group domain (a new tool bound
+    // to a NEW group fails both halves).
     const mcp = (await import(/* @vite-ignore */ ['..', 'src', 'main', 'mcp-server.js'].join('/'))) as {
       ProvidentMcpServer: {
         ALL_TOOLS: string[]
@@ -3036,7 +3039,7 @@ describe('S — §2.1 the surface + §2.2/§4.4 the static rows over the module'
     }
     const allTools = mcp.ProvidentMcpServer.ALL_TOOLS
     expect(Array.isArray(allTools), 'S-5: the LIVE `ALL_TOOLS` list is reachable').toBe(true)
-    expect(allTools.length, 'S-5 / §2.2 prohibition 5: `ALL_TOOLS` STAYS 21 (src/main/mcp-server.ts:281-303)').toBe(21)
+    expect(allTools.length, 'S-5 / §2.2 prohibition 5 / `N-18`: `ALL_TOOLS` reads 22 — the live listing, read from its OWN live module').toBe(22)
     for (const tool of allTools) {
       const group = security.groupForTool(tool)
       expect(
@@ -3072,8 +3075,8 @@ describe('S — §2.1 the surface + §2.2/§4.4 the static rows over the module'
     }
     expect(
       (memberLines.join('\n').match(/'[^']*'/g) ?? []).length,
-      'S-5 / §2.2 prohibition 5: `RpcMethod` stays 21 members (src/shared/types.ts:259-281) — no new IPC method',
-    ).toBe(21)
+      'S-5 / §2.2 prohibition 5 / `N-18`: `RpcMethod` reads 22 — no new IPC method beyond `focus`, read from its OWN live module',
+    ).toBe(22)
     // …and the sibling census that pins the same five seams must still exist and
     // run in the same suite (`§2.2` prohibition 5 names it; this unit may not
     // edit it, `§5.1`). Its PASSING is that file's own business — this row asserts

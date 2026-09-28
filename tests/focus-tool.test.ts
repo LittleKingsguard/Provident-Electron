@@ -52,7 +52,7 @@ import {
   DECLARED_TERM_CHAIN, DECLARED_DOMAIN_SUBTOTALS, DECLARED_TYPE_SUBTOTALS,
   DECLARED_BOUNDED_ROWS, DECLARED_READING_CLASSES, ENUMERATED_ROW_IDS, EXECUTED_CELLS_SUM,
   runRegister, reportDiagnostics, read, stripComments, scanLines, liveAllTools, liveRpcMethods,
-  liveMutatingMethods, liveValidGroups, focusRouteSource, recorder, newServer,
+  liveMutatingMethods, liveValidGroups, focusRouteSource, routeRegion, recorder, newServer,
   callTool, callHandler, assertOneFocusCall, thrown,
 } from './focus-tool-register.js'
 
@@ -110,13 +110,34 @@ describe('§3.5 X-1..X-7 — the existence rows', () => {
     expect(existsSync(join(ROOT, 'docs/specs/focus-tool-adoption-dossier.md')), 'the STEP-0 dossier must exist (`G-2`).').toBe(true)
   })
 
-  it("X-7 / N-5 — the consumed module's spec-existence row now reads `true` (the row this pass FLIPS)", () => {
+  it('X-7 / N-5 — the consumed module\'s spec-existence row now reads `true` (the row this pass FLIPS)', () => {
     const src = read('tests/focus-model.test.ts')
     expect(src.includes("docs', 'specs', 'focus-tool.md'"), "N-5 — the site that pins whether this unit's spec exists.").toBe(true)
     expect(
       /existsSync\(join\(ROOT, 'docs', 'specs', 'focus-tool\.md'\)\),[^\n]*\)\.toBe\(true\)/.test(src),
       '§5.2 item 4 N-5 — the spec IS filed, so that row must read `true` (`CURRENT STATE` item 6).',
     ).toBe(true)
+  })
+
+  it('X-8 / RT-5(b) — THE ROUTE REGION IS BOUNDED BY THE CONTRACT, NOT BY A QUOTING CONVENTION (`§5.5.2` item 4b)', () => {
+    // THE MEASURED DEFECT THIS ROW EXISTS FOR: the as-filed reader sliced from the FIRST QUOTED
+    // OCCURRENCE OF THE TOOL NAME to end-of-file, so an occurrence of that quoted name ANYWHERE
+    // ELSE moved every scan row's region — which is how `P-FT-ID-2`'s "the tool re-derived no
+    // rule" scan reddened against a legitimate `===` in the SHARED `graph` loop. The region is
+    // now the handler's OWN registration block: quoting elsewhere cannot move it.
+    const region = routeRegion()
+    expect(region, `RT-5(b) — the contract-named region must be LOCATABLE: the tool's own \`allowed.includes('${TOOL_NAME}')\` registration block is its marker.`).not.toBe(null)
+    const marked = region as NonNullable<ReturnType<typeof routeRegion>>
+    expect(marked.name, 'RT-5(b) — the marker is the tool row itself, not a neighbouring registration.').toBe(TOOL_NAME)
+    const src = read('src/main/mcp-server.ts')
+    expect(marked.end, 'RT-5(b) — the region ENDS before the NEXT registration block (never at end-of-file), so a sibling tool\'s bytes are not scanned as this route.').toBeLessThan(src.length)
+    const body = focusRouteSource() ?? ''
+    expect(body.length, 'RT-5(b) — the bounded region is NON-VACUOUS: non-empty, so every scan row still reads real bytes at green time.').toBeGreaterThan(0)
+    expect(body.includes(`'${TOOL_NAME}'`), 'RT-5(b) — the bounded region CONTAINS the tool block it names.').toBe(true)
+    for (const foreign of ["if (allowed.includes('provident.get_rendered_html'))", "if (allowed.includes('provident.get_node_state'))"]) {
+      expect(body.includes(foreign), `RT-5(b) — the region must NOT reach a SIBLING registration block ('${foreign}' is outside it).`).toBe(false)
+    }
+    expect(scanLines(body, /===|\.includes\s*\(/).length, 'RT-5(b) — the region the scans read is exactly the handler block: no sibling `===`/`.includes(` can redden a route row.').toBe(0)
   })
 })
 

@@ -2698,11 +2698,11 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
     const siblingPinned = readArrayLiteral('tests/engine-pin-version.test.ts', /const\s+PINNED_TOOL_SET\s*=\s*\[/)
     expect(
       siblingPinned.length,
-      'R-7/§4.4 S-3 — the sibling name-complete row (`tests/engine-pin-version.test.ts` R-15) pins the 21 tool NAMES; this row cites it rather than re-authoring it',
-    ).toBe(21)
+      'R-7/§4.4 S-3 — the sibling name-complete row (`tests/engine-pin-version.test.ts` R-15) pins the 22 tool NAMES (`N-14`/`N-19`: `provident.focus` joins it in the SAME COMMIT); this row cites it rather than re-authoring it',
+    ).toBe(22)
     expect(
       toolsLive.sort(),
-      `R-7/§2.2 P-5 — the LIVE \`ALL_TOOLS\` set equals the pinned 21-NAME set (a tool ADDED or REMOVED fails by name, not by count): ${JSON.stringify(
+      `R-7/§2.2 P-5 — the LIVE \`ALL_TOOLS\` set equals the pinned 22-NAME set (a tool ADDED or REMOVED fails by name, not by count): ${JSON.stringify(
         toolsLive,
       )}`,
     ).toEqual([...siblingPinned].sort())
@@ -2720,8 +2720,8 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       'R-7/§2.2 P-5 — the LIVE `MUTATING_METHODS` keeps its SEVEN named entries (this unit adds no mutating IPC method)',
     ).toEqual(['code.load', 'code.loadBatch', 'dispatch', 'journal', 'load', 'op', 'teardown'])
     const rpcLive = readUnionMembers('src/shared/types.ts', /export\s+type\s+RpcMethod\s*=/)
-    expect(rpcLive.length, 'R-7/§2.2 P-5 — the LIVE `RpcMethod` union is name-complete in this census (21 members)').toBe(21)
-    expect(new Set(rpcLive).size, 'R-7 — the RpcMethod census is a SET (distinct members), so the count above is not a bag').toBe(21)
+    expect(rpcLive.length, 'R-7/§2.2 P-5 / `N-14` — the LIVE `RpcMethod` union is name-complete in this census (22 members, `focus` included in the SAME COMMIT)').toBe(22)
+    expect(new Set(rpcLive).size, 'R-7 / `N-14` — the RpcMethod census is a SET (distinct members), so the count above is not a bag').toBe(22)
   })
 
   it('R-8 §3.4 — THE DIFF-SCOPE ROW: the unit’s own committed artifacts inside the allow-list, the DENIED set over the WHOLE set, and no consumer', () => {
