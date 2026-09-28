@@ -28,7 +28,10 @@ unit stays an open `## OPEN` row (`F3`) with its ledger status the supervisor's,
 TestWriter has RUN and REPORTED the red set** (`AGENTS.md` item 9, `§4.5`).
 
 **READING ORDER (a reader should not have to reconstruct this):** `CURRENT STATE` — the one status block, before
-`§0` · `§0`/`§0A` — the rulings derived and this filing's own dated notes · the **Layer declaration** — the four
+`§0` · `§0`/`§0A` — the rulings derived and this filing's own dated notes, **including `§0A` note 6 — THE GATE-3
+RED-RUN RE-GRAIN (2026-09-27), the ONE place that carries all three adjudicated defects, the re-grained term column
+and its moved declared total, the explicit bounded set and the named instrument reading class, and read FIRST by any
+pass about to quote a register figure** · the **Layer declaration** — the four
 labels, the layer map and the honesty anchors · `§1` — the scope with its NOT-THIS-UNIT items · `§2.1` the surface
 exact · `§2.2` **the prohibition table with a named test per row**, **the collision table BY TOKEN** and **the
 semantics table with no `undefined-until-answered` row** · `§2.3` the value/identity rules · `§2.4` **the five
@@ -78,6 +81,12 @@ the placement the sibling specs use.)**
    reported as a FAILURE, never as a pass**. **THE ROW COUNT IS AN EXTENT, NOT A BUDGET**
    (`REGISTER-ENTRY-COUNT-IS-NOT-CAPPED-AND-ARCHIVE-IS-THE-TRUTH-MECHANISM`); the `≤8` threshold is a
    component-breakdown **SIGNAL** and no property was dropped, merged or left unenumerated to fit it.
+   **⟶ 2026-09-27 ANNOTATION (`§0A` note 6, defect 1) — THE AS-FILED *"declared total `67`"* IS DEFECTIVE AND IS
+   SUPERSEDED: the seventeen row cells of `§5.5.1` — the register's own — sum to `72`, and `72` is the re-grained
+   declared total printed with its seventeen terms and its recomputed chain and subtotals at `§5.5.3`.** **`67` is
+   KEPT VISIBLE HERE AS THE AS-FILED FIGURE and is no longer the figure this file quotes.** **The row set is UNCHANGED:
+   `17` rows, `17` terms, no row id, strategy id, seed or cap moved, and the caps are re-checked against `72`**
+   (`§5.5.3`).**
 5. **THE LEGS THIS UNIT DECLARES (none run): the node suite `[T]`** — `npm test` — plus `npm run typecheck` `[H]`
    (`src/**` ONLY; it never reads `tests/**`), `npm run build` `[H]`, and the additive `npm run typecheck:tests`
    `[H]` (`AGENTS.md` item 4) — **and GATE 6 IS `STRUCTURAL`, the word `waived` FORBIDDEN** (`§7`; `§9.5` of the
@@ -102,6 +111,13 @@ the placement the sibling specs use.)**
    no leg run; no trio run; no `tsc` invocation; no Electron boot; no commit.** The new file is **untracked and must
    be committed by the supervisor** (`RCA-8`'s per-gate rule). **NO MEASUREMENT OF A LEG WAS TAKEN BY THIS PASS, AND
    NONE MAY BE QUOTED FROM IT** (`§0A` note 2; `RCA-12`).
+   **⟶ 2026-09-27 ANNOTATION — THE RE-GRAIN PASS'S OWN EXTENT, KEPT DISTINCT FROM THE FILING'S, because the two
+   passes have different extents and must not be read for one another: THIS ANNOTATION EDITED EXACTLY ONE FILE —
+   `docs/specs/focus-tool.md` (this one) — AND EDITED NOTHING ELSE**; **it ran no suite, no leg, no `tsc`, no build,
+   no Electron boot, no MCP call and no register row; it wrote no code; it re-ran no red; it flipped no status; and
+   THE LEDGER, `docs/decisions.md` AND EVERY SIBLING SPEC ARE UNCHANGED BY IT.** **The gate-3 red run's figures
+   (`70` rows · `45` failed / `25` passed · the register stopping at `P-FT-RT-3` · `14` un-run FAILURES · one
+   typecheck diagnostic) are CARRIED FROM THAT RUN AND NOT RE-MEASURED HERE** (`§0A` note 6 item 4).
 10. **THE ONE FACT A FRESH READER WOULD GET WRONG, NAMED HERE.** **THE ROUTING AUTHORITY IS NOT THE MUTATING SET.**
     **The authority is `RpcMethod`'s TYPE WALL plus the RENDERER'S METHOD SWITCH; the mutating set decides only the
     NOTIFY PUSH** — so **membership in it is neither necessary nor sufficient to decide whether a call crosses the
@@ -224,6 +240,108 @@ ARE A CONTRACT, NOT A VALIDATION BOUNDARY THIS TOOL ENFORCES.** **THE REASON: a 
 make the tool A SECOND AUTHORITY over identity and over the entry list — the exact thing `C-5` forbids** (`§2.3`
 item 1). **THE CONSEQUENCE A READER MUST CARRY: a hostile renderer could return a malformed shape and this tool
 would pass it on; the row that catches that is the CONSUMER's, not this unit's** (`§2.4` item 3; `§7` item 5).
+
+**Note 6 — THE GATE-3 RED-RUN RE-GRAIN, DATED 2026-09-27: THE THREE ADJUDICATED DEFECTS, THE RE-GRAINED TERM COLUMN,
+THE BOUNDED SET AND THE INSTRUMENT READING CLASS — ANNOTATED BESIDE THE AS-FILED TEXT, WHICH IS NEVER REWRITTEN.**
+**WHAT THIS NOTE IS AND IS NOT.** **The gate-3 red run MEASURED three defects in this filing's own contract text; all
+three are ADJUDICATED and this note APPLIES them — it does not re-derive them.** **THE AUTHORITY IS THE REGISTER THE
+TestWriter AUTHORED AND EXECUTED — `tests/focus-tool-register.ts`, which carries the SEVENTEEN typed rows whose cells
+are the figures a reader can actually read** — **and the rule this re-grain follows is the register's own, stated at
+its `DECLARED_TERMS` cell: *"if a printed term disagrees with the executed row, the CONTRACT is wrong and moves — never
+the row."*** **THE AS-FILED TEXT OF EVERY SITE BELOW IS KEPT VISIBLE, the moved figure is printed beside its as-filed
+form, and every figure the as-filed column printed as defective is recorded as DEFECTIVE AND SUPERSEDED — never
+silently rewritten** (`RCA-8(d)`; `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`). **NO CODE, NO RED RE-RUN AND NO STATUS
+FLIP ACCOMPANIES THIS ANNOTATION, AND THE LEDGER IS UNCHANGED: `F3` stays an open `## OPEN` row with its status the
+supervisor's** (`CURRENT STATE` item 1/item 9 remain true of this pass except where they print a moved figure).
+**THIS NOTE MOVES NO ROW ID, NO STRATEGY ID, NO SEED AND NO CAP.**
+
+**1. THE TERM COLUMN WAS CORRUPT — RE-GRAINED HERE, WITH THE DECLARED TOTAL MOVED FROM `67` TO THE SUM OF ITS OWN
+SEVENTEEN TERMS, `72`.** **THE MEASURED DEFECT, AS THE RED RUN FOUND IT: this filing's own SEVENTEEN-ROW id list sums
+to `73` over its OWN cells** (`P-FT-RT-1` `4` · `RT-2` `3` · `RT-3` `3` · `RT-4` `2` · `RT-5` `2` · `ID-1` `2` · `ID-2`
+`3` · `ID-3` `10` · `ID-4` `2` · `ID-5` `1` · `AR-1` `11` · `AR-4` `12` · `RF-1` `4` · `RF-2` `2` · `RF-4` `2` · `RS-1`
+`3` · `RS-2` `1`) **— the figure the as-filed text printed only as *"the two chains' `73`"*** · **the as-filed declared
+term LIST *sums to `61`*** — **it OMITS ONE ROW'S ELEVEN DRIVES (`AR-1`), prints TWO CELLS AGAINST THEIR OWN PROPERTY
+TEXT (`AR-4` printed as `2` beside a twelve-drive property, and `RS-1` printed as `2` beside a three-drive property),
+and APPENDS A TRAILING DRIVE WITH NO ROW (the eighteenth element, `1`)** · **and the by-domain/by-type subtotals close
+on `63`.**
+**⟶ THE RE-GRAINED TERM COLUMN — EVERY PRINTED FIGURE IS THE SUM OF THE TERMS PRINTED AGAINST THE ROWS THAT CARRY
+THEM, AND EVERY FIGURE BELOW IS RECOMPUTED RATHER THAN ASSERTED.** **THE SEVENTEEN TERMS, in the register's own row
+order, ONE PER ROW: `4` · `3` · `3` · `2` · `2` | `2` · `3` · `10` · `2` · `1` | `11` · `12` | `4` · `2` · `2` | `3` ·
+`1`** — **and their sum, added ONE TERM AT A TIME AND IN REGISTER ORDER: `4` → `7` → `10` → `12` → `14` → `16` → `19`
+→ `29` → `31` → `32` → `43` → `55` → `59` → `61` → `63` → `66` → `72`** (**`4 + 3 + 3 + 2 + 2` = `14`** · **`+ 2 + 3 +
+10 + 2 + 1` = `32`** · **`+ 11 + 12` = `55`** · **`+ 4 + 2 + 2` = `63`** · **`+ 3 + 1` = `72`**). **THE DECLARED TOTAL
+IS THEREFORE `72` — and the as-filed `67` is RECORDED AS DEFECTIVE AND SUPERSEDED: it is NOT the sum of the seventeen
+terms this contract's own table prints, and the register's cells are the authority.**
+**THE AS-FILED `67` IS KEPT VISIBLE AT ITS AS-FILED SITES** (`CURRENT STATE` item 4's *"declared total `67`,
+printed with its SEVENTEEN terms"* · `§5.5.1`'s chain of *"sixteen steps"* that prints THREE terms twice to reach it ·
+`§5.5.2` item 5 · `§5.5.3`'s declared total and chain · `§7` item 8 · `§3a` `A-15`) — **each is annotated in place, and
+none is written away.** **AND THE ONE DOWNSTREAM FIGURE THIS MOVES, RECORDED HERE SO IT IS NOT DISCOVERED LATE: the
+landed red set PINS the old figure — `tests/focus-tool.test.ts`'s `REGISTER-TERMS` row asserts *"the declared total of
+THIS register = the sum of its own seventeen terms"* AGAINST `67`, and `REGISTER-HONESTY` asserts `totalDeclared` `67`
+— so that row goes RED against the register's own printed sum and its ONE FIGURE must be corrected in the same pass
+that reconciles this re-grain.** **THE TERM ITSELF IS NOT MOVED THERE: `REGISTER-TERMS`' comparison against
+`DECLARED_TERMS` is already correct, because the register's own `DECLARED_TERMS` array is the re-grained list exactly
+(`[4, 3, 3, 2, 2, 2, 3, 10, 2, 1, 11, 12, 4, 2, 2, 3, 1]`, sum `72`) — ONLY the `67` literal moves.**
+**THE RE-GRAINED BY-DOMAIN SUBTOTALS, each the sum of its own addends: THE ROUTE = `4 + 3 + 3 + 2 + 2` = `14` · THE
+OPAQUE ENTRY IDENTITY = `2 + 3 + 10 + 2 + 1` = `18` · THE ARGUMENT SHAPE = `11 + 12` = `23` · THE REFUSAL AND
+READINESS = `4 + 2 + 2` = `8` · THE RESULT SHAPE AND TOTALITY = `3 + 1` = `4`** — **and `14 + 18` = `32`** · **`+ 23` =
+`55`** · **`+ 8` = `63`** · **`+ 4` = `72`.** **THE RE-GRAINED BY-TYPE SUBTOTALS: `P-IM` = `4 + 3 + 2 + 2 + 10 + 11 + 4
++ 3` = `39` · `P-SM` = `3 + 2 + 3 + 2 + 2` = `12` · `P-TP` = `1 + 12 + 2 + 1` = `16`** — **and `39` + `12` = `51`** ·
+**`+ 16` = `67`.** **⚠ THE BY-TYPE FIGURE `67` IS NOT THE TOTAL AND MUST NOT BE QUOTED AS ONE: it is the `P-TP`
+family's own residue in that addition, and the file's ONE total is `72`.**
+**CAPS RE-CHECKED AGAINST THE RE-GRAINED DECLARED FIGURE** (as this note requires): **`72` ≤ `400` IN TOTAL** (headroom
+`328`) · **largest row `12` ≤ `100`** (headroom `88`) — **both caps HOLD against `72`, and neither is close; the
+as-filed caps check against `67` stands for `67` and is not re-quoted as if it had checked `72`.** **AND THE ROW COUNT
+IS UNCHANGED: `17` rows, `17` terms, `17` executed by design** (`REGISTER-ENTRY-COUNT-IS-NOT-CAPPED-AND-ARCHIVE-IS-
+THE-TRUTH-MECHANISM`).
+**⟶ THE TERM VERDICT, PRINTED SO THE MOVE IS ATTRIBUTABLE ROW BY ROW.**
+**(a) THE ROWS WHOSE TERMS MOVED — `3` OF THE `17`, and each moved from NO PRINTED TERM AT ALL to the term the
+register's cell carries: `P-FT-AR-2` → `2` · `P-FT-AR-3` → `2` · `P-FT-RF-3` → `2`.** **Their as-filed form is the
+ABSENCE OF A ROW IN THE DECLARED LIST — and the register prints `AR-2`, `AR-3` and `RF-3` as ROWS, so the `73 − 67 = 6`
+gap the as-filed file kept as an unexplained residue is `2 + 2 + 2`, attributed.** **(b) THE ROWS WHOSE TERMS MOVED
+WITHOUT THEIR VALUES CHANGING — `AR-1` (`11`) and `AR-4` (`12`): their row cells printed `11`/`12`, while the declared
+list printed the CELLS OF OTHER ROWS against them (`AR-1` omitted entirely; `AR-4` printed as `2`).** **(c) THE ROWS
+WHOSE TERMS DID NOT MOVE — `12` OF THE `17`: `RT-1` `4` · `RT-2` `3` · `RT-3` `3` · `RT-4` `2` · `RT-5` `2` · `ID-1` `2`
+· `ID-2` `3` · `ID-3` `10` · `ID-4` `2` · `ID-5` `1` · `RF-1` `4` · `RF-2` `2` · `RF-4` `2` · `RS-1` `3` · `RS-2` `1`**
+— **(this is `15` cells whose VALUES were already right; the verdict's arithmetic is `3` rows gaining a first term, `2`
+rows whose printed-against figure was another row's, and `12` rows untouched — `3 + 2 + 12 = 17`).** **THE AS-FILED
+LIST'S TRAILING `+ 1` BELONGS TO NO ROW AND IS WITHDRAWN: the trailing drive the as-filed list appended is the
+eighteenth element of a seventeen-term list.**
+
+**2. THE BOUNDED SET IS `FIVE` ROWS — MARKED IN ALL FIVE PROPERTY TEXTS HERE, SO THE CONTRACT AND THE REGISTER AGREE.**
+**THE MEASURED DEFECT: this filing DECLARED five bounded rows at `§5.5.2` item 2, but its own property texts mark only
+THREE (`P-FT-ID-3` · `P-FT-ID-5` · `P-FT-RS-2`) — `P-FT-AR-1` and `P-FT-AR-4` were named in the declaration and marked
+NOWHERE, which is the SPEC FINDING `§5.5.2` item 2 itself creates.** **THE SET, PRINTED EXPLICITLY AND IN REGISTER
+ORDER: `P-FT-ID-3` (`10` drives) · `P-FT-ID-5` (`1`) · `P-FT-AR-1` (`11`) · `P-FT-AR-4` (`12`) · `P-FT-RS-2` (`1`)
+— `5` of `17` rows, and the register's own `bound: 'bounded'` cells carry EXACTLY these five and no others.** **The two
+unmarked rows are marked at their own cells below (`§5.5.1`), beside their as-filed property text, and NO TERM, ROW ID
+OR STRATEGY ID MOVES BY THE MARKING.**
+
+**3. THE INSTRUMENT READING CLASS FOR IDENTITY IS ITS OWN NAMED CLASS, AND THE ROUTE-LEVEL IDENTITY CLAIM IS BOUNDED.**
+**THE MEASURED DEFECT: a JSON-RPC call cannot carry a `Proxy`, a frozen container or a `Symbol`, so TRUE BY-IDENTITY IS
+UNOBSERVABLE THROUGH THE ROUTE — yet this filing's honesty block named only TWO reading classes (`§5.5.2` item 4), and
+the identity rows read as if the route could observe identity directly.** **THE CLASS, NAMED HERE AND AT `§5.5.2` item
+4: *the consumer-side container pass-through, driven through the SAME REGISTERED HANDLER and asserted by EQUALITY (of
+the container's members and of the returned key set) rather than by reference identity.* **THE EXECUTED REGISTER'S OWN
+CONDUCT, WHICH IS THE AUTHORITY FOR THIS READING: it drives a `Proxy`-wrapped array, a frozen array and a
+`Symbol`/`12n` argument through `callHandler` — the SAME registered handler the route uses — and asserts EQUALITY; and
+its `ID-3(10)` throwing-accessor drive asserts ONLY THAT ANY FAILURE IS THE CONSUMER'S OWN** (*"a failure here must be
+the CONSUMER's own, never one invented by the tool"*), **which is a WEAKER and HONESTER claim than "no throw".**
+**CONSEQUENTLY: EVERY ROUTE-LEVEL IDENTITY CLAIM OF THIS UNIT IS BOUNDED AND IS MARKED AS SUCH — the rows that carry
+it are `P-FT-ID-3` (bounded), `P-FT-AR-1` (bounded), `P-FT-AR-4` (bounded) and `P-FT-ID-5` (bounded), and a pass that
+reads any of them as a claim about reference identity OBSERVED OVER THE WIRE is over-reading this unit's instruments**
+(`§5.5.2` item 3's fence stands unchanged: **this class proves nothing about a rendered surface, a window or a real
+transport round trip, and no row drives a real IPC transport**).
+
+**4. THE PROVENANCE, MEASURED AND ATTRIBUTED — THE GATE-3 RED RUN.** **THE MEASUREMENTS, CARRIED FROM THAT RUN AND NOT
+RE-TAKEN BY THIS PASS: the `[T]` suite ran `70` ROWS — `45` FAILED and `25` PASSED; the register STOPPED at
+`P-FT-RT-3` after FIVE CONSECUTIVE FAILURES; and `14` ROWS were reported as UN-RUN **FAILURES**, never as passes**
+(`AGENTS.md` item 11(b)). **AND THE TEST-TREE TYPECHECK (`npm run typecheck:tests`, `AGENTS.md` item 4's additive
+fourth leg) EXITED WITH EXACTLY ONE DIAGNOSTIC — THE INTENDED TYPE-WALL RED** (the `RpcMethod` member and the
+renderer's method switch disagreeing until the census edit lands, `§3.4 R-4`, `§5.2` item 4 `N-11`). **THIS PASS RAN
+NO SUITE, NO LEG, NO `tsc`, NO BUILD AND NO ELECTRON BOOT: the figures above are the red run's, and the ONLY figures
+this pass moved are the mis-summed ones, each printed beside its as-filed form.** **NO CODE IS WRITTEN BY THIS
+ANNOTATION, NO RED IS RE-RUN, NO STATUS FLIPS, AND THE LEDGER IS UNCHANGED.**
 
 ---
 
@@ -909,25 +1027,46 @@ all**.
 | **`P-FT-ID-3`** | `P-IM` | **THE OPAQUE ENTRY IDENTITY — the `entries` echo BY IDENTITY** | **For EVERY one of the row's `10` echo drives: the returned `entries` value is THE RENDERER'S OWN VALUE BY IDENTITY — no `typeof` test, no coercion, no trim, no sort, no dedupe, no `Array.from`, no spread that re-creates the container, and no re-keying; a non-array `entries` value is passed through UNCHANGED rather than being normalised; and nothing throws on any of the `10` shapes.** **THE DECLARED TYPE IS A CONTRACT, NOT A VALIDATION BOUNDARY.** | `I-5`, `R-5`, `§0A` note 5, `§2.2`(B) (`entry` row) | `S-FT-ECHO-1` | **`10` attempts** = **the `10` returned-`entries` shapes, ONE DRIVE EACH, each driven through a renderer stub returning that shape.** **The `10` shapes:** **(1)** a plain string array · **(2)** `[]` (**the empty list**) · **(3)** a one-member array · **(4)** an array of the SAME string twice (**no dedupe**) · **(5)** strings with `''`, whitespace, unicode and a very long member (**no trim**) · **(6)** an UNSORTED array (a descending sequence — **no sort**) · **(7)** a NON-ARRAY value (`null`, a number, a string, an object) · **(8)** an array-like (`{length: 2, 0:'a', 1:'b'}`) · **(9)** a frozen array and a `Proxy`-wrapped array · **(10)** an array whose accessor THROWS on an index read. **Per attempt assert:** identity of the returned container, the member order, the length, and that nothing threw — **with the throwing-accessor drive's expected reading declared by the CONSUMER contract and NOT invented here** (`§3.2 F-5`'s fence). | `≤100` | **`__/__` (OWED — un-run)** |
 | **`P-FT-ID-4`** | `P-SM` | **THE OPAQUE ENTRY IDENTITY — the `opened` reading** | **For EVERY one of the row's `2` `opened` drives: `opened` is returned BY IDENTITY as the consumer supplied it (no truthiness test, no `Boolean()` coercion, no default); a call that opens a new entry reports the consumer's own value; and a REFUSAL call reports the consumer's own value with `refused` present and NO FIFTH MEMBER.** *(A defaulted or coerced `opened` FAILS.)* | `I-5`, `M-2`, `M-4`, `RS-1` | `S-FT-OPEN-1` | **`2` attempts** = **`2` drives, ONE DRIVE EACH: (1) an opening call · (2) a refusal call.** **Per attempt assert:** the `opened` identity, the presence/absence of `refused`, and the object's own key set. | `≤100` | **`__/__` (OWED — un-run)** |
 | **`P-FT-ID-5`** | `P-TP` | **THE OPAQUE ENTRY IDENTITY — the no-minting-anywhere rule over the tool's own bytes** | **On EVERY drive of the row: the tool's route carries NO minting token — no counter increment, no `crypto.randomUUID`, no UUID/`nanoid`-class call, no `Map`/`Set`/registry keyed by anything the tool derived, no id-shaped string concatenation and no module-level mutable binding; the ONLY identifiers the route handles are the ones that arrived as arguments or in the renderer's answer.** **THE SCAN'S EXEMPTION LIST IS NAMED OR STANDS VACUOUS** (`§2.2`(B)'s closing paragraph). | `I-1`, `I-4`, `R-3`, `R-7`, `§2.3` items 1/2 | `S-FT-NOMINT-1` | **`1` attempt** = **`1` static route-scan drive** over the route's own file set with the exemption list named at the attempt site, **plus** the same scan re-read with the tool's pass-through `entries`/`activeId` echo NAMED as the reason those tokens are not hits. | `≤100` | **`__/__` (OWED — un-run)** |
-| **`P-FT-AR-1`** | `P-IM` | **THE ARGUMENT SHAPE — the declared two-member optional shape** | **For EVERY one of the row's `11` accepted-shape drives: the call is accepted, EXACTLY ONE renderer call is made, and the arguments are passed through uninterpreted; and for every accepted shape the declared return key set holds.** **The accepted shapes are the DECLARED space** (`§2.2`(C) `S-1`…`S-3`, `S-7`). | `M-1`, `M-2`, `M-3`, `I-12`, `§2.2`(C) | `S-FT-ARG-1` | **`11` attempts** = **the `11` accepted argument shapes, ONE DRIVE EACH:** **(1)** arguments omitted · **(2)** `{}` · **(3)** `{target:'a'}` · **(4)** `{target:''}` · **(5)** `{target:'a', newTab:true}` · **(6)** `{target:'a', newTab:false}` · **(7)** `{newTab:true}` (no target) · **(8)** a `target` with whitespace/unicode (**untrimmed**) · **(9)** a `target` that is a very long string · **(10)** a `target` supplied as a NON-string value (`0`, `null`, an object — **passed through, no `typeof` test, no coercion**) · **(11)** a frozen arguments object and a null-prototype arguments object. **Per attempt assert:** the call is accepted, the renderer stub's call count is `1`, the passed-through identities, and the returned key set. | `≤100` | **`__/__` (OWED — un-run)** |
-| **`P-FT-AR-2`** | `P-TP` | **THE ARGUMENT SHAPE — the UNKNOWN-KEY EDGE** | **For EVERY one of the row's `2` edge drives: an OWN ENUMERABLE KEY OUTSIDE `{target, newTab}` THROWS the tool's `TypeError`-class validation error NAMING the rejected key, BEFORE any renderer call; and NO `refused` RECORD, NO SILENT DROP AND NO DEFAULT IS PRODUCED.** **The throwing arm is the DECLARED one and the tolerate-by-ignoring alternative is NOT taken.** | `F-1`, `F-6`, `I-12`, `§0A` note 3(d) | `S-FT-EDGE-1` | **`2` attempts** = **the `2` edge arms, ONE DRIVE EACH: (1) a single unknown key (a bare `{id:'x'}` — the shape fence's own drive) · (2) a mixture of a legal member with an unknown key (`{target:'a', extra:1}`).** **Per attempt assert:** the throw's class, that the error names the rejected key, that the renderer stub's call count is `0`, and that nothing was returned. | `≤100` | **`__/__` (OWED — un-run)** |
-| **`P-FT-AR-3`** | `P-IM` | **THE ARGUMENT SHAPE — the PASS-THROUGH RULE (no interpretation on the way in)** | **For EVERY one of the row's `2` pass-through drives: the arguments object the renderer receives carries the caller's own values BY IDENTITY; the tool performs no `typeof` test, no trim, no coercion and no defaulting on `target` or on `newTab`.** | `I-5`, `§0A` note 3(b)/(c), `§2.2`(B) (`target` row) | `S-FT-PASS-1` | **`2` attempts** = **`2` drives, ONE DRIVE EACH: (1) a `target` supplied as a non-string value (the identity is asserted at the renderer stub) · (2) a `newTab` supplied as a non-boolean value (the tool applies no default and no coercion).** **Per attempt assert:** the received identities, the absence of a `typeof`/coercion site on the route, and that no default value was substituted. | `≤100` | **`__/__` (OWED — un-run)** |
-| **`P-FT-AR-4`** | `P-TP` | **THE ARGUMENT SHAPE — the EDGE'S TOTALITY over hostile argument shapes** | **For EVERY one of the row's `12` hostile drives: the tool EITHER THROWS ITS ONE DECLARED VALIDATION ERROR OR SERVICES THE CALL — and NOTHING ELSE HAPPENS: no third throw class escapes, no renderer call is made on a rejected drive, and no mutation of the caller's arguments object occurs (it is byte-identical afterwards).** **THE UNIVERSAL IS OVER THE ENUMERATED DOMAINS OF THIS TABLE AND NOT OVER THE WHOLE INPUT SPACE.** | `F-1`, `R-6`, `I-13`, `§2.3` item 6, `§0A` note 3 | `S-FT-TOTAL-1` | **`12` attempts** = **the `12` hostile argument shapes, ONE DRIVE EACH:** **(1)** the arguments object as `null` · **(2)** as `undefined` · **(3)** as a number · **(4)** as a string · **(5)** as a boolean · **(6)** as a `Symbol` and as a `12n` · **(7)** as an array · **(8)** as a function · **(9)** as a `Date` and a `Map` (**objects whose own keys are not the declared set**) · **(10)** as a revoked `Proxy` · **(11)** as a trap-throwing `Proxy` · **(12)** as a THROWING-ACCESSOR holder (`{get target(){throw}}`). **Per attempt assert:** the ONE declared throw class or the serviced reading; the renderer stub's call count (`0` on a rejected drive); the caller's object's byte-identity after the call; and that no third throw class escaped. | `≤100` | **`__/__` (OWED — un-run)** |
+| **`P-FT-AR-1`** | `P-IM` — **`(bounded)`, MARKED IN PLACE 2026-09-27 (`§0A` note 6, defect 2): the as-filed property text left this row UNMARKED while `§5.5.2` item 2 declared it bounded, and the register's cell carries `bound: 'bounded'`. The row is one of THE FIVE THE CONTRACT NAMES.** | **THE ARGUMENT SHAPE — the declared two-member optional shape** | **For EVERY one of the row's `11` accepted-shape drives: the call is accepted, EXACTLY ONE renderer call is made, and the arguments are passed through uninterpreted; and for every accepted shape the declared return key set holds.** **The accepted shapes are the DECLARED space** (`§2.2`(C) `S-1`…`S-3`, `S-7`). | `M-1`, `M-2`, `M-3`, `I-12`, `§2.2`(C) | `S-FT-ARG-1` | **`11` attempts** = **the `11` accepted argument shapes, ONE DRIVE EACH:** **(1)** arguments omitted · **(2)** `{}` · **(3)** `{target:'a'}` · **(4)** `{target:''}` · **(5)** `{target:'a', newTab:true}` · **(6)** `{target:'a', newTab:false}` · **(7)** `{newTab:true}` (no target) · **(8)** a `target` with whitespace/unicode (**untrimmed**) · **(9)** a `target` that is a very long string · **(10)** a `target` supplied as a NON-string value (`0`, `null`, an object — **passed through, no `typeof` test, no coercion**) · **(11)** a frozen arguments object and a null-prototype arguments object. **Per attempt assert:** the call is accepted, the renderer stub's call count is `1`, the passed-through identities, and the returned key set. **⟶ 2026-09-27 (`§0A` note 6, defect 1): THE AS-FILED DECLARED LIST OMITTED THIS ROW'S ELEVEN DRIVES ENTIRELY; the register's cell carries `11`, and the re-grained term column prints `11`.** | `≤100` | **`__/__` (OWED — un-run)** |
+| **`P-FT-AR-2`** | `P-TP` — **term `2`, ADDED TO THE DECLARED COLUMN 2026-09-27 (`§0A` note 6, defect 1): this row and `AR-3`/`RF-3` are the three rows the as-filed declared list printed NO term for.** | **THE ARGUMENT SHAPE — the UNKNOWN-KEY EDGE** | **For EVERY one of the row's `2` edge drives: an OWN ENUMERABLE KEY OUTSIDE `{target, newTab}` THROWS the tool's `TypeError`-class validation error NAMING the rejected key, BEFORE any renderer call; and NO `refused` RECORD, NO SILENT DROP AND NO DEFAULT IS PRODUCED.** **The throwing arm is the DECLARED one and the tolerate-by-ignoring alternative is NOT taken.** | `F-1`, `F-6`, `I-12`, `§0A` note 3(d) | `S-FT-EDGE-1` | **`2` attempts** = **the `2` edge arms, ONE DRIVE EACH: (1) a single unknown key (a bare `{id:'x'}` — the shape fence's own drive) · (2) a mixture of a legal member with an unknown key (`{target:'a', extra:1}`).** **Per attempt assert:** the throw's class, that the error names the rejected key, that the renderer stub's call count is `0`, and that nothing was returned. | `≤100` | **`__/__` (OWED — un-run)** |
+| **`P-FT-AR-3`** | `P-IM` — **term `2`, ADDED TO THE DECLARED COLUMN 2026-09-27 (`§0A` note 6, defect 1): one of the three rows the as-filed declared list printed NO term for.** | **THE ARGUMENT SHAPE — the PASS-THROUGH RULE (no interpretation on the way in)** | **For EVERY one of the row's `2` pass-through drives: the arguments object the renderer receives carries the caller's own values BY IDENTITY; the tool performs no `typeof` test, no trim, no coercion and no defaulting on `target` or on `newTab`.** | `I-5`, `§0A` note 3(b)/(c), `§2.2`(B) (`target` row) | `S-FT-PASS-1` | **`2` attempts** = **`2` drives, ONE DRIVE EACH: (1) a `target` supplied as a non-string value (the identity is asserted at the renderer stub) · (2) a `newTab` supplied as a non-boolean value (the tool applies no default and no coercion).** **Per attempt assert:** the received identities, the absence of a `typeof`/coercion site on the route, and that no default value was substituted. | `≤100` | **`__/__` (OWED — un-run)** |
+| **`P-FT-AR-4`** | `P-TP` — **`(bounded)`, MARKED IN PLACE 2026-09-27 (`§0A` note 6, defect 2): the as-filed property text left this row UNMARKED while `§5.5.2` item 2 declared it bounded, and the register's cell carries `bound: 'bounded'`. One of THE FIVE the contract names.** | **THE ARGUMENT SHAPE — the EDGE'S TOTALITY over hostile argument shapes** | **For EVERY one of the row's `12` hostile drives: the tool EITHER THROWS ITS ONE DECLARED VALIDATION ERROR OR SERVICES THE CALL — and NOTHING ELSE HAPPENS: no third throw class escapes, no renderer call is made on a rejected drive, and no mutation of the caller's arguments object occurs (it is byte-identical afterwards).** **THE UNIVERSAL IS OVER THE ENUMERATED DOMAINS OF THIS TABLE AND NOT OVER THE WHOLE INPUT SPACE.** | `F-1`, `R-6`, `I-13`, `§2.3` item 6, `§0A` note 3 | `S-FT-TOTAL-1` | **`12` attempts** = **the `12` hostile argument shapes, ONE DRIVE EACH:** **(1)** the arguments object as `null` · **(2)** as `undefined` · **(3)** as a number · **(4)** as a string · **(5)** as a boolean · **(6)** as a `Symbol` and as a `12n` · **(7)** as an array · **(8)** as a function · **(9)** as a `Date` and a `Map` (**objects whose own keys are not the declared set**) · **(10)** as a revoked `Proxy` · **(11)** as a trap-throwing `Proxy` · **(12)** as a THROWING-ACCESSOR holder (`{get target(){throw}}`). **Per attempt assert:** the ONE declared throw class or the serviced reading; the renderer stub's call count (`0` on a rejected drive); the caller's object's byte-identity after the call; and that no third throw class escaped. **⟶ 2026-09-27 (`§0A` note 6, defect 1): THE AS-FILED DECLARED LIST PRINTED THIS ROW AS `2` AGAINST ITS OWN TWELVE-DRIVE PROPERTY TEXT; the register's cell carries `12`, and the re-grained term column prints `12`.** **AND (`§0A` note 6, defect 3) this row's `(9)`/`(10)`/`(12)` drives are THE INSTRUMENT READING CLASS's own rows: a revoked/trap-throwing `Proxy` and a throwing-accessor holder cannot cross a JSON-RPC call, so they are driven through the SAME REGISTERED HANDLER and the throwing-accessor drive asserts only that ANY FAILURE IS THE CONSUMER'S OWN.** | `≤100` | **`__/__` (OWED — un-run)** |
 | **`P-FT-RF-1`** | `P-IM` | **THE REFUSAL AND READINESS — the returned REFUSAL record** | **For EVERY one of the row's `4` refusal drives: the returned object carries the FOUR declared names with `refused` PRESENT and NO FIFTH member; `reason` is the CONSUMER'S OWN STRING BY IDENTITY; the tool invents NO refusal code, adds NO member and re-routes nothing; `refused: undefined` as an OWN KEY FAILS; and the focus state changes nothing.** *(An omitted `refused`, an extra member, an invented code or a re-routed call FAILS.)* | `M-4`, `F-3`, `I-6`, `R-5`, `§0A` note 4, `§5.U` row 5 | `S-FT-REFUSE-1` | **`4` attempts** = **the `4` refusal drives, ONE DRIVE EACH: (1) a refusal with a plain `reason` string · (2) a refusal with an EMPTY `reason` (`''` — legal, carried verbatim) · **(3)** a refusal whose `reason` carries whitespace and unicode (**carried untrimmed**) · **(4)** a refusal whose `reason` is a NON-string value (passed through, no coercion).** **Per attempt assert:** the object's own key set (exactly four names, `refused` present), the `reason` identity, and the state-unchanged reading. | `≤100` | **`__/__` (OWED — un-run)** |
 | **`P-FT-RF-2`** | `P-SM` | **THE REFUSAL AND READINESS — the NOT-READY REJECTION (the FIFTH negative)** | **For EVERY one of the row's `2` readiness drives: BEFORE the renderer signals ready, the call REJECTS with the backend's readiness error (`renderer not ready (timeout <n>ms)`) and the focus state is UNTOUCHED — no silent no-op, no queued mutation, no special case, no fallback; and after the renderer signals ready the same call SERVICED.** *(A pre-ready success, a silent no-op, a queued mutation or a mutated state FAILS.)* | `F-2`, `I-13`, `§2.4` row 5, `§5.U` row 6 | `S-FT-READY-1` | **`2` attempts** = **the `2` readiness states, ONE DRIVE EACH: (1) NOT READY — asserting the rejection's error form, the untouched state and the absence of a queue · (2) READY — asserting the same call services.** **Per attempt assert:** the rejection/serviced outcome, the error's declared form, the state's identity before and after, and the renderer stub's call count. | `≤100` | **`__/__` (OWED — un-run)** |
-| **`P-FT-RF-3`** | `P-SM` | **THE REFUSAL AND READINESS — the ZERO-NOTIFICATION reading (NEGATIVE CLAIM 2)** | **On EVERY drive of the row: the notify predicate stays KEYED ON `MUTATING_METHODS` with `'focus'` absent, so no `resources/updated` and no `app-graph-changed` can fire for this method; the route contains NO push site, NO invalidation call and NO graph-write of its own; and THE ROW CLAIMS NO MORE THAN THIS — *"no notification was invoked and the name sets are unchanged"*.** **A BARE COUNT IS NOT THE INSTRUMENT.** *(A push site, an invalidation call, a new set member or a claim stronger than the instrument FAILS.)* | `I-8`, `RT-4`, `§2.4` row 2, `§5.U` row 3 | `S-FT-PUSH-1` | **`2` attempts** = **`2` reads, ONE DRIVE EACH: (1) the predicate keying read with `'focus'` absent from the set (the STATIC ROUTE READING) · (2) a route push-site and invalidation-token scan (the labelled structural half).** **Per attempt assert:** the predicate's keying site, the set's membership, the absence of a push site, and the row's OWN claim's wording (no stronger reading). | `≤100` | **`__/__` (OWED — un-run)** |
+| **`P-FT-RF-3`** | `P-SM` — **term `2`, ADDED TO THE DECLARED COLUMN 2026-09-27 (`§0A` note 6, defect 1): the third of the three rows the as-filed declared list printed NO term for, after the trailing `+ 1` it appended belonged to no row.** | **THE REFUSAL AND READINESS — the ZERO-NOTIFICATION reading (NEGATIVE CLAIM 2)** | **On EVERY drive of the row: the notify predicate stays KEYED ON `MUTATING_METHODS` with `'focus'` absent, so no `resources/updated` and no `app-graph-changed` can fire for this method; the route contains NO push site, NO invalidation call and NO graph-write of its own; and THE ROW CLAIMS NO MORE THAN THIS — *"no notification was invoked and the name sets are unchanged"*.** **A BARE COUNT IS NOT THE INSTRUMENT.** *(A push site, an invalidation call, a new set member or a claim stronger than the instrument FAILS.)* | `I-8`, `RT-4`, `§2.4` row 2, `§5.U` row 3 | `S-FT-PUSH-1` | **`2` attempts** = **`2` reads, ONE DRIVE EACH: (1) the predicate keying read with `'focus'` absent from the set (the STATIC ROUTE READING) · (2) a route push-site and invalidation-token scan (the labelled structural half).** **Per attempt assert:** the predicate's keying site, the set's membership, the absence of a push site, and the row's OWN claim's wording (no stronger reading). | `≤100` | **`__/__` (OWED — un-run)** |
 | **`P-FT-RF-4`** | `P-TP` | **THE REFUSAL AND READINESS — the NO-STORAGE / NO-WRITER reading (NEGATIVE CLAIMS 3 AND 4)** | **On EVERY drive of the row: the static route scan finds NO storage token (no `localStorage`, no `sessionStorage`, no `indexedDB`, no file write, no storage-module import) — ANY HIT FAILS; AND the route declares NO state-slice write and NO resource invalidation IN THE NEW PATH — A WRITER FAILS; and NO ROW, DONE ROW OR GREENS ROW MAY CLAIM THAT A REAL WINDOW DID NOT RE-RENDER.** | `I-8`, `P-FT-4`, `§2.4` rows 3/4, `§5.U` row 4 | `S-FT-STORE-1` | **`2` attempts** = **`2` scans, ONE DRIVE EACH: (1) the storage-token scan over the route's file set · (2) the state-slice-write and resource-invalidation scan over the same set.** **Per attempt assert:** the absence of each token class, the NAMED exemption list, and that the row's declared claim is exactly the instrument's reach. | `≤100` | **`__/__` (OWED — un-run)** |
-| **`P-FT-RS-1`** | `P-IM` | **THE RESULT SHAPE AND TOTALITY — the RETURNED KEY SET** | **On EVERY attempt of the whole register: the returned object's OWN key set is EXACTLY the four declared names, in any key order, with `refused` OPTIONAL and NO FIFTH member; `refused`, when present, is an object whose own key set is exactly `['reason']`; the three required names are ALWAYS present (a missing member FAILS, a `refused: undefined` own key FAILS); and nothing throws on any attempt of this row.** | `I-6`, `R-5`, `M-1`, `M-4`, `§2.1` item 5, `§0A` note 4 | `S-FT-SHAPE-1` | **`3` attempts** = **the `3` returned-shape drives, ONE DRIVE EACH: (1) a serviced call with the CONSUMER's own well-formed answer (asserting the four names, `refused` absent) · (2) a refusal answer (asserting the four names with `refused` present, and `refused`'s own key set `['reason']`) · (3) a MALFORMED consumer answer (asserting that the tool passes it through and adds nothing — `§3.2 F-5`'s fence, NOT a shape-guard row).** **Per attempt assert:** the own key set, the optionality, the absence of a fifth member, and that no member was added or defaulted. | `≤100` | **`__/__` (OWED — un-run)** |
-| **`P-FT-RS-2`** | `P-TP` | **THE RESULT SHAPE AND TOTALITY — the route's totality and REACHABILITY** | **On EVERY attempt of the row: the route is REACHABLE BY NAME from the imported surface (the tool row, the `RpcMethod` member and the switch case each resolvable by name), and NO undeclared export or module API is introduced by this unit.** **THE UNIVERSAL IS OVER THE NAMED SURFACE OF THIS UNIT AND NOT OVER THE WHOLE REPOSITORY.** | `M-6`, `I-2`, `§2.1` item 3, `§2.1`'s closing note | `S-FT-REACH-1` | **`1` attempt** = **`1` reachability drive** asserting, by name: the tool's listing, the `RpcMethod` member, the switch case, **and the ABSENCE of any new export or module API this unit might have introduced.** | `≤100` | **`__/__` (OWED — un-run)** |
+| **`P-FT-RS-1`** | `P-IM` | **THE RESULT SHAPE AND TOTALITY — the RETURNED KEY SET** | **On EVERY attempt of the whole register: the returned object's OWN key set is EXACTLY the four declared names, in any key order, with `refused` OPTIONAL and NO FIFTH member; `refused`, when present, is an object whose own key set is exactly `['reason']`; the three required names are ALWAYS present (a missing member FAILS, a `refused: undefined` own key FAILS); and nothing throws on any attempt of this row.** | `I-6`, `R-5`, `M-1`, `M-4`, `§2.1` item 5, `§0A` note 4 | `S-FT-SHAPE-1` | **`3` attempts** = **the `3` returned-shape drives, ONE DRIVE EACH: (1) a serviced call with the CONSUMER's own well-formed answer (asserting the four names, `refused` absent) · (2) a refusal answer (asserting the four names with `refused` present, and `refused`'s own key set `['reason']`) · (3) a MALFORMED consumer answer (asserting that the tool passes it through and adds nothing — `§3.2 F-5`'s fence, NOT a shape-guard row).** **Per attempt assert:** the own key set, the optionality, the absence of a fifth member, and that no member was added or defaulted. **⟶ 2026-09-27 (`§0A` note 6, defect 1): THE AS-FILED DECLARED LIST PRINTED THIS ROW AS `2`; the register's cell carries `3`, and the re-grained term column prints `3`.** | `≤100` | **`__/__` (OWED — un-run)** |
+| **`P-FT-RS-2`** | `P-TP` — **`(bounded)` (as-filed, and one of THE FIVE the contract names, `§5.5.2` item 2).** | **THE RESULT SHAPE AND TOTALITY — the route's totality and REACHABILITY** | **On EVERY attempt of the row: the route is REACHABLE BY NAME from the imported surface (the tool row, the `RpcMethod` member and the switch case each resolvable by name), and NO undeclared export or module API is introduced by this unit.** **THE UNIVERSAL IS OVER THE NAMED SURFACE OF THIS UNIT AND NOT OVER THE WHOLE REPOSITORY.** | `M-6`, `I-2`, `§2.1` item 3, `§2.1`'s closing note | `S-FT-REACH-1` | **`1` attempt** = **`1` reachability drive** asserting, by name: the tool's listing, the `RpcMethod` member, the switch case, **and the ABSENCE of any new export or module API this unit might have introduced.** | `≤100` | **`__/__` (OWED — un-run)** |
 
-**⟶ THE TERM CELLS OF THIS TABLE ARE THE AUTHORITY: `17` ROW CELLS CARRY A TERM, `17` ROWS, and the declared total
-at `§5.5.3` is the sum of exactly those seventeen terms.** **NO ROW OF THIS TABLE CARRIES A TERM OF ZERO, and no row
+**⟶ 2026-09-27 RE-GRAIN ANNOTATION (`§0A` note 6, defect 1) — READ THIS BEFORE QUOTING ANY FIGURE FROM THE PARAGRAPH
+BELOW.** **THE AS-FILED TERM COLUMN WAS DEFECTIVE AND IS SUPERSEDED: its declared list summed to `61`, its own
+seventeen-row id list summed to `73` over its own cells, and its by-domain/by-type subtotals closed on `63`.** **THE
+RE-GRAINED TERMS ARE THE REGISTER'S OWN SEVENTEEN CELLS — `4, 3, 3, 2, 2, 2, 3, 10, 2, 1, 11, 12, 4, 2, 2, 3, 1`
+— AND THEIR SUM IS `72`; the chain and the subtotals recomputed over them, and the term verdict row by row, are at
+`§5.5.3` (`§0A` note 6).** **THE PARAGRAPH BELOW IS KEPT VISIBLE AS THE AS-FILED FORM, WITH ITS AS-FILED FIGURES: it
+prints THREE terms twice and closes on `67` by that means, so it is NOT the sum of its own seventeen printed terms and
+must not be quoted as the declared total.** **NO ROW ID, STRATEGY ID, SEED, CAP OR POOL MEMBER MOVES BY THIS
+ANNOTATION — only the figures the re-grain recomputes.**
+
+**⟶ THE AS-FILED TERM CELLS OF THIS TABLE WERE READ AS THE AUTHORITY: `17` ROW CELLS CARRY A TERM, `17` ROWS, and the
+declared total at `§5.5.3` is the sum of exactly those seventeen terms.** **NO ROW OF THIS TABLE CARRIES A TERM OF ZERO, and no row
 is an annotation row: every one of the seventeen drives its own declared pool.** **THE TERM-BY-TERM ADDITION, so the
 total is checkable rather than asserted** *(the order is this table's row order; the `17` terms are
 `4, 3, 3, 2, 2, 2, 3, 10, 2, 1, 11, 2, 2, 12, 4, 2, 1`)*: **`4` + `3` = `7`** · **`+ 3` = `10`** · **`+ 2` = `12`** ·
 **`+ 2` = `14`** · **`+ 2` = `16`** · **`+ 3` = `19`** · **`+ 10` = `29`** · **`+ 2` = `31`** · **`+ 1` = `32`** ·
 **`+ 11` = `43`** · **`+ 2` = `45`** · **`+ 2` = `47`** · **`+ 12` = `59`** · **`+ 4` = `63`** · **`+ 2` = `65`** ·
 **`+ 2` = `67`.** **THE CHAIN HAS SIXTEEN STEPS AND CLOSES ON `67` — the sum of its own seventeen printed terms.**
+**⟶ 2026-09-27 RE-GRAIN (`§0A` note 6, defect 1) — THIS AS-FILED CHAIN AND ITS AS-FILED TERM LIST ARE DEFECTIVE AND
+ARE SUPERSEDED, AND BOTH ARE KEPT VISIBLE HERE.** **THE AS-FILED LIST THIS CHAIN ADDS — `4, 3, 3, 2, 2, 2, 3, 10, 2,
+1, 11, 2, 2, 12, 4, 2, 1` — SUMS TO `61` and prints TWO CELLS AGAINST THEIR OWN PROPERTY TEXT (`AR-4` as `2` beside a
+twelve-drive property; `RS-1` as `2` beside a three-drive property), while the chain above reaches `67` by ALSO adding
+a final `+ 2` against `RS-2`, whose cell carries `1`.** **NEITHER FORM IS THE SUM OF THE SEVENTEEN CELLS THIS TABLE
+PRINTS.** **THE RE-GRAINED TERM LIST IS THE REGISTER'S OWN — `4, 3, 3, 2, 2, 2, 3, 10, 2, 1, 11, 12, 4, 2, 2, 3, 1`
+— and its RE-GRAINED CHAIN (`4` → `7` → `10` → `12` → `14` → `16` → `19` → `29` → `31` → `32` → `43` → `55` → `59` →
+`61` → `63` → `66` → `72`) CLOSES ON `72`, which is the declared total from here on** (`§5.5.3`; `§0A` note 6).
+**NO ROW ID, STRATEGY ID, SEED, CAP OR POOL MEMBER MOVES BY THAT RE-GRAIN: the three rows whose terms were absent
+(`AR-2`, `AR-3`, `RF-3`) gain the terms their cells carry, and the two rows whose figures were printed against them
+(`AR-1`, `AR-4`) are re-gained to `11`/`12`.**
 **⚠ THIS FIGURE IS THE ONE A FIRST DRAFT OF THIS SUBSECTION GOT WRONG, AND THE MIS-SUM IS RECORDED HERE RATHER THAN
 SMOOTHED AWAY, BECAUSE `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS` MAKES A TOTAL THAT IS NOT THE SUM OF ITS OWN TERMS
 A REVIEW FINDING: THE DRAFTED `CURRENT STATE` ITEM 4 AND THE DRAFTED `§5.5.1` HEADING BOTH PRINTED `69`, WHICH IS
@@ -938,10 +1077,20 @@ in this paragraph** (`§5.5.3`); and NO TERM, ROW ID, STRATEGY ID,
 SEED, CAP OR POOL MEMBER MOVES** (`§5.5.3`). **THE LESSON THE RULING EXISTS TO FORCE, RECORDED BECAUSE IT IS THIS
 FILING'S OWN DEFECT: the total was drafted before the terms were summed, and the summation is the check that caught
 it.**
+**⟶ 2026-09-27 RE-GRAIN (`§0A` note 6, defect 1): THE SAME CHECK, RUN AGAINST THE REGISTER'S OWN CELLS, CAUGHT THE
+AS-FILED `67` **AND** THE AS-FILED `61`/`73`/`63` FORMS.** **THE SEVENTEEN ROW CELLS OF THIS TABLE ARE THE AUTHORITY
+AND THEIR SUM IS `72`; the as-filed `67` and the as-filed `61` are RECORDED AS DEFECTIVE AND SUPERSEDED, each beside
+its as-filed form, and the declared total this file quotes from here on is `72`** (`§5.5.3`). **THE AS-DRAFTED `69`
+STILL STANDS AS THE EARLIER, NARROWER MIS-SUM IT WAS — one of THREE defective figures this filing has now printed at
+its own total, and the reason the re-grained form is the one a later pass quotes.**
 
 **CAPS RE-CHECKED AGAINST THE AUTHORITATIVE FIGURE.** **`67 ≤ 400`** (total headroom `333`), **largest row `12 ≤
 100`** (headroom `88`) — **both caps HOLD, and neither is close.** **THE CAPS ARE COMPARED AGAINST `67` (the sum of
 the seventeen terms of this table) AND NEVER AGAINST ANY SUBTOTAL FIGURE.**
+**⟶ 2026-09-27 RE-GRAIN (`§0A` note 6, defect 1): THE CAPS ARE RE-CHECKED AGAINST THE RE-GRAINED DECLARED FIGURE
+`72` — `72 ≤ 400` in total (headroom `328`) and largest row `12 ≤ 100` (headroom `88`) — both HOLD, and no cap value
+moves.** **The as-filed `67`-based check above is kept visible; `67` is NOT the sum of this table's seventeen printed
+terms, and `72` is the figure the caps now compare against.**
 
 **NO NEW DEPENDENCY, NO FIFTH LEG, NO `package.json` CHANGE:** the register rides `npm test` (leg 1) unchanged, and
 **an un-run register row is reported as a FAILURE, never as a pass.**
@@ -957,6 +1106,13 @@ the seventeen terms of this table) AND NEVER AGAINST ANY SUBTOTAL FIGURE.**
    argument shapes"*) · `P-FT-ID-5` (*"the tool's own bytes"* — the scan names its file set) · `P-FT-RS-2`
    (*"reachable by name"*).** **A `(bounded)` marking that is missing is a SPEC FINDING; a marking on a closed-domain
    row is OVER-STRENGTH.**
+   **⟶ 2026-09-27 ANNOTATION (`§0A` note 6, defect 2) — THIS DECLARATION WAS TRUE AND ITS OWN TABLE WAS NOT: of these
+   FIVE rows the as-filed `§5.5.1` property texts marked only THREE (`P-FT-ID-3` · `P-FT-ID-5` · `P-FT-RS-2`), leaving
+   `P-FT-AR-1` and `P-FT-AR-4` named here and marked NOWHERE — which is exactly the SPEC FINDING this item creates.**
+   **THE FIVE THE CONTRACT NAMES, PRINTED EXPLICITLY AND IN REGISTER ORDER, SO CONTRACT AND REGISTER AGREE: `P-FT-ID-3`
+   (`10` drives) · `P-FT-ID-5` (`1`) · `P-FT-AR-1` (`11`) · `P-FT-AR-4` (`12`) · `P-FT-RS-2` (`1`) — `5` of `17`.**
+   **The register's own `bound: 'bounded'` cells carry EXACTLY these five and no others; the two missing markings are
+   now made at the rows' own cells (`§5.5.1`), and NO TERM, ROW ID, STRATEGY ID OR CAP MOVES BY THE MARKING.**
 3. **WHAT THIS REGISTER CANNOT PROVE, stated so no DONE row over-reads it: it proves NOTHING about a rendered strip,
    a focused element, a real window's re-render, an OS, a human interaction, a transport peer or a store written.
    Every claim above is a name, a returned value's identity, a key set, a call count, a static token scan or a
@@ -965,9 +1121,29 @@ the seventeen terms of this table) AND NEVER AGAINST ANY SUBTOTAL FIGURE.**
    RENDERER STUB** — **so they are `[T]` rows about THE ROUTE's behaviour, not about the real renderer's** — **and
    `RT-4`/`ID-5`/`RF-3`/`RF-4` are STATIC ROWS over the route's own bytes.** **A row may not be quoted as the other
    class.**
+   **4b. ⟶ 2026-09-27 ANNOTATION (`§0A` note 6, defect 3) — A THIRD READING CLASS, NAMED HERE RATHER THAN LEFT AS A
+   FOOTNOTE: *the consumer-side container pass-through, driven through the same registered handler and asserted by
+   equality rather than by reference identity*. **WHY IT IS A CLASS OF ITS OWN: a JSON-RPC call cannot carry a
+   `Proxy`, a frozen container or a `Symbol`, so TRUE BY-IDENTITY IS UNOBSERVABLE THROUGH THE ROUTE — and the two
+   classes above therefore cannot describe what `P-FT-ID-3`/`P-FT-ID-5`/`P-FT-AR-1`/`P-FT-AR-4` actually do.** **WHAT
+   THE EXECUTED REGISTER DOES, AS ITS OWN AUTHORITY: it drives those shapes through `callHandler` — the SAME REGISTERED
+   HANDLER the route uses, NOT the route's wire — and asserts EQUALITY of the container's members and of the returned
+   key set; and its `ID-3(10)` throwing-accessor drive asserts ONLY THAT ANY FAILURE IS THE CONSUMER'S OWN** (*"a
+   failure here must be the CONSUMER's own, never one invented by the tool"*), **which is a WEAKER AND HONESTER claim
+   than "nothing throws".** **CONSEQUENTLY THE ROUTE-LEVEL IDENTITY CLAIM IS BOUNDED AND IS MARKED AS SUCH: the four
+   rows above carry the `(bounded)` marking** (`§5.5.2` item 2; `§5.5.1`'s cells), **and a pass that reads any of them
+   as evidence of reference identity OBSERVED OVER THE WIRE IS OVER-READING THIS UNIT'S INSTRUMENTS.** **THE LIMIT IS
+   UNCHANGED BY THIS CLASS AND THE LIMIT IS STILL THE POINT: no row drives a real IPC transport** (item 6), **so this
+   class proves nothing about what a live route would do with such a value — only what the registered handler does
+   with it when called directly.**
 5. **A DECLARED TERM IS A DRIVE COUNT, AND ASSERTIONS ARE PRINTED BESIDE IT RATHER THAN INSIDE IT.** **THE DECLARED
    TOTAL IS `67`, and it is the sum of the SEVENTEEN TERMS of `§5.5.1`'s table — printed with its term-by-term
-   addition at `§5.5.3`, where the as-filed `69` is kept VISIBLE beside the correction.** **THE CROSS-ROW
+   addition at `§5.5.3`, where the as-filed `69` is kept VISIBLE beside the correction.**
+   **⟶ 2026-09-27 ANNOTATION (`§0A` note 6, defect 1): THE AS-FILED *"DECLARED TOTAL IS `67`"* IS DEFECTIVE AND IS
+   SUPERSEDED — `67` is NOT the sum of the seventeen terms `§5.5.1`'s table prints.** **THE RE-GRAINED DECLARED TOTAL
+   IS `72`, the sum of the register's seventeen cells (`4, 3, 3, 2, 2, 2, 3, 10, 2, 1, 11, 12, 4, 2, 2, 3, 1`),
+   printed with its recomputed chain and subtotals at `§5.5.3`; the as-filed `69` AND the as-filed `61`/`73`/`63`
+   forms are each kept visible at their own sites.** **THE CROSS-ROW
    ASSERTIONS, printed BESIDE the terms and NEVER counted inside them: (1) the returned key set is asserted on
    EVERY attempt of the whole register (`RS-1`'s property is a per-attempt assertion, which is why its own term is
    `3` and not `17`); (2) the caller's arguments object's byte-identity is asserted on every attempt of `AR-4`; (3)
@@ -990,6 +1166,56 @@ the seventeen terms of this table) AND NEVER AGAINST ANY SUBTOTAL FIGURE.**
    OWN, found while printing the terms as the ruling demands.**
 
 #### 5.5.3 Attempt arithmetic — STATED SO A READER CAN CHECK IT AGAINST THE TABLE
+
+**⟶ 2026-09-27 RE-GRAIN (`§0A` note 6, defect 1) — READ THIS BLOCK FIRST; EVERY PARAGRAPH BELOW IT IS THE AS-FILED
+FORM, KEPT VISIBLE AND MARKED DEFECTIVE.** **THE CONTRACT'S TERM COLUMN WAS DEFECTIVE AND IS SUPERSEDED; THE EXECUTED
+REGISTER (`tests/focus-tool-register.ts`, `17` typed rows) IS THE AUTHORITY, AND THE RE-GRAINED FIGURES BELOW ARE THE
+SUM OF THE TERMS ACTUALLY PRINTED AGAINST THE ROWS THAT CARRY THEM — EACH RECOMPUTED, NOT ASSERTED.**
+
+**THE RE-GRAINED TERM LIST — SEVENTEEN TERMS, ONE PER ROW, IN THE REGISTER'S ROW ORDER:**
+
+**`4, 3, 3, 2, 2` (THE ROUTE: `RT-1`…`RT-5`) · `2, 3, 10, 2, 1` (THE OPAQUE ENTRY IDENTITY: `ID-1`…`ID-5`) ·
+`11, 12` (THE ARGUMENT SHAPE: `AR-1`, `AR-4`) · `4, 2, 2` (THE REFUSAL AND READINESS: `RF-1`, `RF-2`, `RF-4`) ·
+`3, 1` (THE RESULT SHAPE AND TOTALITY: `RS-1`, `RS-2`)**
+
+**THE DECLARED TOTAL, the sum of exactly those seventeen terms — and this is the figure every cap comparison uses from
+here on:**
+
+**`72` = `4` + `3` + `3` + `2` + `2` + `2` + `3` + `10` + `2` + `1` + `11` + `12` + `4` + `2` + `2` + `3` + `1`**
+
+**THE RE-GRAINED CHAIN, the seventeen terms summed as a chain of sixteen steps, IN REGISTER ORDER: `4` → `7` → `10` →
+`12` → `14` → `16` → `19` → `29` → `31` → `32` → `43` → `55` → `59` → `61` → `63` → `66` → `72`.** **(Checkable in
+five domain-sized steps: `4 + 3 + 3 + 2 + 2` = `14` · `+ 2 + 3 + 10 + 2 + 1` = `32` · `+ 11 + 12` = `55` · `+ 4 + 2 +
+2` = `63` · `+ 3 + 1` = `72`.)**
+
+**THE RE-GRAINED SUBTOTALS — EACH ONE THE SUM OF ITS OWN ADDENDS, AND EACH ONE CLOSING ON THE SAME `72`:**
+
+1. **BY DOMAIN (the five domains `§5.5` declares, which the row count is not permitted to merge away — `§5.5.2` item
+   1):** **THE ROUTE (`RT-1`…`RT-5`) = `4 + 3 + 3 + 2 + 2` = `14`** · **THE OPAQUE ENTRY IDENTITY (`ID-1`…`ID-5`) =
+   `2 + 3 + 10 + 2 + 1` = `18`** · **THE ARGUMENT SHAPE (`AR-1`…`AR-4`) = `11 + 12` = `23`** · **THE REFUSAL AND
+   READINESS (`RF-1`…`RF-4`) = `4 + 2 + 2` = `8`** · **THE RESULT SHAPE AND TOTALITY (`RS-1`/`RS-2`) = `3 + 1` =
+   `4`** — **and the five-way sum, added ONE GROUP AT A TIME: `14` + `18` = `32`** · **`+ 23` = `55`** · **`+ 8` =
+   `63`** · **`+ 4` = `72`.** **THIS DECOMPOSITION CLOSES ON THE DECLARED TOTAL `72`, which is what the as-filed form
+   could not do.**
+2. **BY DECLARED TYPE (the three families `§5.5` names, read from the `Type` column of `§5.5.1`, and over the
+   register's own seventeen rows):** **`P-IM` = `RT-1` `4` + `RT-2` `3` + `RT-4` `2` + `ID-1` `2` + `ID-3` `10` +
+   `AR-1` `11` + `AR-3` `2` + `RF-1` `4` + `RS-1` `3` = `39`** · **`P-SM` = `RT-3` `3` + `RT-5` `2` + `ID-2` `3` +
+   `ID-4` `2` + `RF-2` `2` + `RF-3` `2` = `12`** · **`P-TP` = `ID-5` `1` + `AR-4` `12` + `RF-4` `2` + `RS-2` `1` =
+   `16`** — checkable: **`39` + `12` = `51`** · **`+ 16` = `67`.** **⚠ THE BY-TYPE RESIDUE `67` IS NOT THE DECLARED
+   TOTAL AND MAY NOT BE QUOTED AS ONE: it is only the running figure of THIS addition, and the file's one declared
+   total is `72`.**
+3. **AND THE ARITHMETIC THE RE-GRAIN SETTLES, PRINTED BECAUSE THE AS-FILED FILE LEFT IT AS AN OPEN PARITY ARGUMENT:
+   the as-filed `63`-vs-`67` gap was NOT a misstated TYPE column (`§5.5.1`'s `Type` cells are the rows' own and stand
+   unchanged).** **It was the TERM COLUMN: three rows carried no printed term at all (`AR-2` `2`, `AR-3` `2`, `RF-3`
+   `2` — `6` in total, the whole of the unexplained `73 − 67 = 6`), and two rows had other rows' figures printed
+   against them (`AR-1` omitted, `AR-4` printed as `2` against a twelve-drive property).** **A pass asking WHICH
+   figure was misstated now has the answer from the register's own cells: the TERM column was, in exactly those three
+   respects.**
+
+**⟶ THE AS-FILED FORM, KEPT VISIBLE AND MARKED DEFECTIVE — RECORDED HERE EXACTLY AS FILED, SO NOTHING IS SILENTLY
+REWRITTEN.** **ITS DECLARED FIGURES WERE `67` (the declared total), `61` (its own declared term LIST) and `63` (its
+by-domain and by-type subtotals), against `73` for its own seventeen-row id list; THE THREE ARE MUTUALLY
+INCONSISTENT AND NONE OF THEM IS THE SUM OF THE SEVENTEEN TERM CELLS `§5.5.1` PRINTS — `72` IS.**
 
 **THIS REGISTER CARRIES ONE DECLARED FIGURE, AND IT IS THE SUM OF ITS OWN SEVENTEEN PRINTED TERMS — `67`.**
 
@@ -1069,15 +1295,33 @@ DECOMPOSITIONS ARE WITHDRAWN AS DEFECTIVE IN BOTH THEIR AS-DRAFTED AND THEIR COR
 — one that closes on `67` — IS THE NEXT PASS'S NAMED OBLIGATION, WITH THE AS-DRAFTED AND CORRECTED FORMS BOTH LEFT
 VISIBLE HERE SO THE NEXT PASS NEED NOT RECONSTRUCT THEM.** **NO CELL, TERM, ROW ID, STRATEGY ID, SEED, CAP OR POOL
 MEMBER MOVES BY THIS DISPOSITION.**
+**⟶ 2026-09-27 RE-GRAIN ON THIS AS-FILED SENTENCE, WHICH IS KEPT VISIBLE: THE AUTHORITY IS THE SEVENTEEN ROW CELLS —
+but their sum is `72`, not `67`, and the two decompositions are therefore NOT withdrawn here: they are RE-DERIVED at
+the head of this subsection and both close on `72`.** **The as-drafted forms (`27`, `18`, `73`) and the as-filed
+total (`67`) remain visible above; `72` is the one figure this file quotes.** **NO CELL, TERM, ROW ID, STRATEGY ID,
+SEED OR CAP MOVES.**
 
 **⟶ THE HONEST FRAME, STATED ONCE MORE BECAUSE THIS IS THE SUBSECTION WHERE THIS FILING'S OWN ARITHMETIC FAILED
-FIRST: EVERY FIGURE ABOVE IS CONTRACT DESIGN AND NONE OF IT IS A RESULT.** **The next pass's obligations from this
+FIRST: EVERY FIGURE ABOVE IS CONTRACT DESIGN AND NONE OF IT IS A RESULT — EXCEPT THE RE-GRAINED BLOCK AT THE HEAD OF
+THIS SUBSECTION, WHOSE TERMS ARE THE EXECUTED REGISTER'S OWN CELLS.** **The next pass's obligations from this
 subsection are THREE, and each is named rather than implied: (1) re-derive the two subtotal decompositions so each
 closes on the term list's `67`, or withdraw them for good; (2) reconcile the as-filed `69` AND the as-drafted subtotal figures (`27` for the argument-shape group, `18` for the
 `P-TP` family, and the two chains' `73`) at their visible sites (`CURRENT STATE` item 4, this subsection's correction
 paragraph and its subtotal block) against the authoritative `67`; and (3) EXECUTE the seventeen rows.** **A pass that resolves (1)–(2)
 by RE-PRINTING a figure is correct; a pass that resolves them by MOVING a term, a row id, a strategy id, a cap or a
 pool member is REVERSING this subsection and MUST OPEN A GATE.**
+**⟶ 2026-09-27 RE-GRAIN — THE THREE OBLIGATIONS' DISPOSITION, ONE BY ONE, SO NONE IS LEFT HANGING.** **(1) DISCHARGED,
+BY RE-PRINTING: the two decompositions are re-derived at the head of this subsection and EACH CLOSES ON THE DECLARED
+TOTAL — `14 + 18 + 23 + 8 + 4 = 72` by domain, and `39 + 12 + 16 = 72` by type.** **(2) DISCHARGED, BY RE-PRINTING AND
+BY ATTRIBUTION: the as-filed `69` and its drafted terms stand visible in this subsection's correction paragraph; the
+drafted `27` and `18` stand visible in its closing paragraphs; and the two chains' `73` is ATTRIBUTED rather than left
+unexplained — `73` IS the sum of the seventeen-row id list `§5.5.1` prints, and `72` is the sum of the seventeen TERMS
+that list's rows carry, the `1`-figure difference being the one cell the as-filed column printed against no row.**
+**THE AS-DRAFTED `27` AND `18` ARE NOT RE-GRAINED: they were misstatements of those groups' OWN addends (`17` and `8`
+respectively), and their correction is preserved here as the earlier, narrower defect it was.** **(3) EXECUTED — BY THE
+TestWriter's register, one register-order pass of the seventeen rows, whose cells this subsection now prints.**
+**A pass that resolves any of the three by MOVING a term, a row id, a strategy id, a cap or a pool member still
+REVERSES this subsection and MUST OPEN A GATE — and the re-grain above moved NO such item.**
 
 ---
 
@@ -1159,6 +1403,14 @@ excludes IPC behaviour and rendered geometry, and the row **may not be moved to 
    against the seventeen cells' sum `67`, and the two as-drafted subtotal figures that closed on `73` — is its
    OWN and is recorded VISIBLY with its obligations named** (`§5.5.3`) — **and no term, row id, strategy id, seed, cap
    or pool member was moved to hide it.**
+   **⟶ 2026-09-27 ANNOTATION (`§0A` note 6, defect 1): THE ARITHMETIC DEFECT NAMED IN THIS ITEM IS NOT THE WHOLE OF
+   IT, AND THE AS-FILED READING OF IT IS CORRECTED HERE RATHER THAN LEFT STANDING: the seventeen cells do NOT sum to
+   `67` — they sum to `72` — so the sentence above is TRUE of the drafting history and WRONG about the cells.** **The
+   filing had THREE mutually inconsistent total figures (`67` declared, `61` over its own declared term list, `73`
+   over its own seventeen-row id list) against `63` for its subtotals, and the executed register's own cells are the
+   authority that settles all four.** **The re-grained column, its chain, its subtotals, its re-checked caps and the
+   row-by-row term verdict are at `§0A` note 6 and `§5.5.3`; NO term, row id, strategy id, seed, cap or pool member
+   moved, and THE ONLY FIGURES THAT MOVED ARE THE MIS-SUMMED ONES, each printed beside its as-filed form.**
 
 ### 7a. Ambiguity report — the clauses a TestWriter could NOT derive a falsifiable row from without a default
 
@@ -1270,7 +1522,7 @@ strategy id or attempt term changed for it · **`BLOCKING — SCOPE`** = a scope
 | **`A-12`** | **THE DENY-SET PROBE:** is any changed file outside `§5.1`'s allow-list while inside `§2.5` item 3's DENY set — **in particular the preload bridge, the notification path, `src/shared/focus-model.ts` and `docs/specs/focus-model.md`?** | static |
 | **`A-13`** | **THE FOCUS-WALK PROBE:** does the route read `activeElement`, walk a focusable set, call `focus(`/`blur(`, read `matchMedia`, install ANY listener or hold a root — **including a "convenience" listener that would make the route dispatchable?** **Is the ban really on the WALK only, with the NAME and CASE legitimate?** | static + `[T]` |
 | **`A-14`** | **THE ENDPOINT-AMENDMENT PROBE:** did the SAME COMMIT land the tool, the `RpcMethod` member, the switch case, the census edits, the endpoint's six named amendment items **AND the missing `module` row**? **A deferred amendment FAILS** (`H-r18`). | static + the commit |
-| **`A-15`** | **THE REGISTER AUDIT (gate 11's read-only PBT audit):** do the executed tables match `§5.5.1`'s per-row attempts, terms, strategy ids and the seventeen cells — **and does the audit RECONCILE the defects `§5.5.3` records (the as-filed `69` against the seventeen cells' sum `67`, and the two WITHDRAWN subtotal decompositions) rather than flagging them as an owed re-grain this file already declares?** **Is the exhaustive-enumeration declaration TRUE of the landed tables (no seed, no generator, no sampling)?** **Are the `(bounded)` markings `5` of `17` rows as the cells carry?** Is the **stop-after-5** rule honoured, and were the **un-run rows REPORTED as failures**? **Is every pool/table member still consistent with its row's declared boundary text?** **Any OTHER mismatch is a SPEC FINDING.** | `[T]` + the test file |
+| **`A-15`** | **THE REGISTER AUDIT (gate 11's read-only PBT audit):** do the executed tables match `§5.5.1`'s per-row attempts, terms, strategy ids and the seventeen cells — **and does the audit RECONCILE the defects `§5.5.3` records (the as-filed `69` against the seventeen cells' sum `67`, and the two WITHDRAWN subtotal decompositions) rather than flagging them as an owed re-grain this file already declares?** **Is the exhaustive-enumeration declaration TRUE of the landed tables (no seed, no generator, no sampling)?** **Are the `(bounded)` markings `5` of `17` rows as the cells carry?** Is the **stop-after-5** rule honoured, and were the **un-run rows REPORTED as failures**? **Is every pool/table member still consistent with its row's declared boundary text?** **Any OTHER mismatch is a SPEC FINDING.** **⟶ 2026-09-27 (`§0A` note 6): the defects this audit was to reconcile are RECONCILED — the re-grained declared total is `72`, the as-filed `69`/`67`/`61`/`73`/`63` and the as-drafted `27`/`18` are each kept visible and marked DEFECTIVE AND SUPERSEDED, the bounded set is the FIVE NAMED rows, and the third reading class is named at `§5.5.2` item 4b** — **so this seed's question is now about the RE-GRAINED cells and the register's own, at `72`.** | `[T]` + the test file |
 | **`A-16`** | **THE LAYER-HONESTY PROBE:** does the DONE row (or any pass's prose) claim **rendered-strip, focused-element, window-re-render, interaction or stored-state** evidence from this unit's `[T]` green — and does it state explicitly that **the notification and re-render rows claim only the node-reachable reading**? | the DONE row |
 | **`A-17`** | **THE HONESTY-BLOCK PROBE:** does `§5.5.2` name the excluded shapes as a boundary rather than a gap, does `§5.5.1` item 2 declare the exhaustive enumeration rather than merely omit a seed, do `§5.5.3` and `§7` item 8 carry this filing's own arithmetic defect VISIBLY with its obligations named, and does the DONE row carry the register's figures WITH their terms? | static + the DONE row |
 | **`A-18`** | **THE AUTHORITY PROBE:** does any pass read this unit as **the focus authority** — or claim that its route makes the tool an owner of `{entries, activeId}`, that the consumed module's rules were re-derived, or that a graph slice is the live authority? | static + the DONE row |
