@@ -98,6 +98,15 @@ the placement the sibling specs use.)**
    UNCHANGED: `17` rows, `17` terms, no row id, strategy id, seed or cap moved, the caps are re-checked against `67`,
    and `§5.5.3` now recomputes only the chain and the subtotals so every printed figure closes on `67`**
    (`§5.5.3`).**
+   **⟶⟶⟶ 2026-09-27 ANNOTATION ON THAT CORRECTION (`§5.5.4`, THE ROW-SET SETTLEMENT) — THE ROW SET *IS* SETTLED AND
+   THE DECLARED TOTAL IS NO LONGER `67`: `AR-2`, `AR-3` and `RF-3` are each DISCERNIBLE and are EXECUTED, so THE
+   FILE'S ONE DECLARED TOTAL IS `73` (`67 + 2 + 2 + 2`), printed with its TWENTY terms, its nineteen-step chain and
+   its two subtotal decompositions at `§5.5.4`.** **THE AS-FILED `67` IS KEPT VISIBLE HERE AND AT `§5.5.1`/`§5.5.2`
+   item 5/`§5.5.3` — it was the sum of the seventeen EXECUTED cells and is not rewritten — and the caps are
+   re-checked against `73` (`73 ≤ 400`, headroom `327`; largest row `12 ≤ 100`).** **WHAT MOVES: ONLY THE TOTAL, ITS
+   CHAIN AND THE TWO SUBTOTALS, EACH BY THE THREE ROWS' OWN DECLARED DRIVES (`2 + 2 + 2`); NO ROW ID, STRATEGY ID,
+   SEED, CAP OR CELL MOVES — and the TEST SIDE MUST NOW GROW (`17` → `20` rows, `+6` drives), which is the
+   TestWriter's act** (`§5.5.4` item 4).**
 5. **THE LEGS THIS UNIT DECLARES (none run): the node suite `[T]`** — `npm test` — plus `npm run typecheck` `[H]`
    (`src/**` ONLY; it never reads `tests/**`), `npm run build` `[H]`, and the additive `npm run typecheck:tests`
    `[H]` (`AGENTS.md` item 4) — **and GATE 6 IS `STRUCTURAL`, the word `waived` FORBIDDEN** (`§7`; `§9.5` of the
@@ -1093,6 +1102,14 @@ seed** (`§5.5.3`). **EACH ROW'S OWN CELL NAMES ITS ID, THE IDS ARE DISTINCT, AN
 
 #### 5.5.1 THE REGISTER — **`17` typed ROWS carrying `17` TERMS, in THREE families over FIVE domains, ALL executed by design**
 
+**⟶⟶ 2026-09-27 ANNOTATION (`§5.5.4`, THE ROW-SET SETTLEMENT) — THE TABLE BELOW IS THE CONTRACT'S FULL ROW SET AND
+IT IS NOW THE EXECUTED ONE: its TWENTY rows (`RT-1`…`RT-5`, `ID-1`…`ID-5`, `AR-1`…`AR-4`, `RF-1`…`RF-4`,
+`RS-1`/`RS-2`) each carry their own printed cell, property text, strategy id and cap, and `AR-2` `2`, `AR-3` `2` and
+`RF-3` `2` are each ruled DISCERNIBLE and EXECUTED at `§5.5.4` item 1 — so THE DECLARED TOTAL IS THE TABLE'S OWN
+TWENTY-CELL SUM, `73`, printed with its chain and subtotals at `§5.5.4` item 2.** **THE HEADING'S `17`/`17` AND EVERY
+`67` PRINTED BELOW ARE KEPT VISIBLE AS THE AS-FILED/EXECUTED-SEVENTEEN FORM AND ARE NOT REWRITTEN; no row id,
+strategy id, seed, cap or cell moves by the settlement.**
+
 **What this section is, in one sentence.** A **typed register of `17` rows / `17` terms** whose **quantifications**
 — (i) *the route's listing, registration, gate placement, invoke path and notify exclusion*; (ii) *the opaque entry
 identity, the `===`-on-target activation, the identity echo and the no-minting rule*; (iii) *the argument shape, its
@@ -1284,6 +1301,12 @@ file states is `333`.**
    sum is `67`, and the executed drive counts match** (`§0A` note 6, item 1's correction). **THE DECLARED TOTAL THIS
    FILE STATES — in `CURRENT STATE` item 4, here, and at `§5.5.3` — IS `67`; the chain and the subtotals are
    RE-PRINTED at `§5.5.3` so each closes on it, and NO CELL MOVES.**
+   **⟶⟶⟶ 2026-09-27 ANNOTATION (`§5.5.4`, THE ROW-SET SETTLEMENT): THE DECLARED TOTAL THIS FILE STATES IS NOW `73`,
+   because the three rows the executed register lacked (`AR-2` `2`, `AR-3` `2`, `RF-3` `2`) are each DISCERNIBLE and
+   are EXECUTED — the `67` above is kept visible as the SEVENTEEN-CELL sum and is not rewritten.** **THIS PARAGRAPH'S
+   CROSS-ROW ASSERTIONS AND ITS `3`/`17` POINT ARE UNCHANGED BY THE SETTLEMENT: the returned key set is still asserted
+   on every attempt (`RS-1`'s own term is still `3`, not `20`), and the three restored rows' assertions print BESIDE
+   their `2` terms rather than inside them** (`§5.5.4` items 1/3; `§5.5.2` item 5's beside-the-term rule).**
 6. **THE SHAPES DELIBERATELY EXCLUDED FROM EVERY POOL, named as a BOUNDARY and not as a gap:** **no row drives a
    rendered surface, a window, an OS, a display, a transport peer or a human gesture — because this contract HAS no
    such half** (`§2.5` item 3's DENY set). **AND: no row drives a REAL IPC transport** — the route is driven through
@@ -1617,6 +1640,128 @@ the twenty-row readings that close on `73` are printed above beside them, and WH
 ACCOMPANIES THIS PASS; THE LEDGER IS UNCHANGED AT `20 DONE / 1 open` = `21` units; THE BOUNDED SET STAYS THE FIVE ROWS
 (`P-FT-ID-3`, `P-FT-ID-5`, `P-FT-AR-1`, `P-FT-AR-4`, `P-FT-RS-2`); AND THE READING CLASSES STAY AS RECORDED
 (`§5.5.2` items 4 and 4b).**
+
+**⟶⟶⟶ 2026-09-27 ANNOTATION ON THIS CLOSING STATEMENT (`§5.5.4`, THE ROW-SET SETTLEMENT) — ITEM (6)'S **OWED** IS
+DISCHARGED AND ITEMS (1) AND (5) ARE SUPERSEDED.** **THE ROW SET IS SETTLED: `AR-2`, `AR-3` and `RF-3` are each
+DISCERNIBLE (no executed row carries the unknown-key THROW, the no-coercion PASS-THROUGH, or the route PUSH-SITE
+scan), so ALL THREE ARE EXECUTED, every row of `§5.5.1`'s twenty now has a recorded fate, and no row remains
+enumerated-but-unexecuted.** **ITEM (1) IS DISCHARGED AND RE-CLOSED: THE DECLARED TOTAL IS `73`, the sum of the
+TWENTY row cells (`14 + 18 + 27 + 10 + 4` by domain, `43 + 14 + 16` by type — each the sum of the addends it names),
+with its nineteen-step chain `4 → … → 67 → 69 → 70 → 73` printed at `§5.5.4` item 2; so the `63` and the two `72`s
+this subsection withdrew stay withdrawn, and `67` is kept visible as the seventeen-cell sum rather than rewritten.**
+**ITEM (5) IS SUPERSEDED: THE TEST-SIDE VERDICT IS NO LONGER A NO-OP — the executed register must grow `17` → `20`
+rows (`+6` drives, `DECLARED_TERMS` to twenty terms and total `67` → `73`), which is the TestWriter's act, and the red
+set reddens until it lands** (`§5.5.4` item 4).**
+
+#### 5.5.4 THE ROW-SET SETTLEMENT (2026-09-27) — **EVERY ENUMERATED ROW'S FATE, NAMED, SO NO ROW REMAINS ENUMERATED-BUT-UNEXECUTED**
+
+**WHAT THIS SUBSECTION DISCHARGES.** `§5.5.3`'s correction block and its closing statement (6) leave the row set
+**OWED**: this contract's `§5.5.1` table enumerates **TWENTY** typed rows whose own printed property terms sum to
+`73`, while the EXECUTED register carries **SEVENTEEN** whose terms sum to `67`, the difference being exactly `AR-2`
+`2` + `AR-3` `2` + `RF-3` `2` = `6`. **THIS SUBSECTION DECIDES THAT QUESTION ON THE MERITS, ROW BY ROW, AND RECORDS
+EACH ROW'S FATE WITH ITS REASON.** **The rule applied is the family's own, already binding at `§5.5.1`/`§5.5.2`:
+a DISCERNIBLE property is NEVER dropped, merged or left unenumerated, and AN UN-RUN ROW IS A FAILURE, never a pass
+(`AGENTS.md` item 11(b); `REGISTER-ENTRY-COUNT-IS-NOT-CAPPED-AND-ARCHIVE-IS-THE-TRUTH-MECHANISM`).** **A row is
+withdrawn ONLY where its property is genuinely subsumed by an executed row.**
+
+**1. THE THREE ROWS' FATES, EACH WITH ITS REASON AND ITS DECLARED DRIVES.**
+**(a) `P-FT-AR-2` · `P-TP` · `S-FT-EDGE-1` · declared term `2` — FATE: EXECUTED.**
+**REASON: ITS PROPERTY IS DISCERNIBLE AND NO EXECUTED ROW COVERS IT.** The row declares *the UNKNOWN-KEY EDGE* —
+for each of its two drives an **own** enumerable key outside `{target, newTab}` THROWS the tool's `TypeError`-class
+validation error **naming the rejected key**, BEFORE any renderer call, with **no `refused` record, no silent drop
+and no default**. The executed rows do **not** carry it: `AR-1` is the *accepted* space (its eleven drives are all
+legal shapes) and its unknown-key arm rides a **control reported BESIDE the term**, not a counted drive; `AR-4`'s
+twelve drives are **hostile CONTAINERS and primitives** (`null`, `undefined`, a number, a string, a boolean, a
+`Symbol`/`12n`, an array, a function, a `Date`/`Map`, a revoked `Proxy`, a trap-throwing `Proxy`, a
+throwing-accessor holder) and **not one of them is a plain object carrying an extra key** — `AR-4` asserts *"the one
+declared throw class OR the serviced reading"*, which is weaker than *"the extra key itself is named in the throw"*.
+**DRIVES DECLARED (`§5.5.1`'s own cell, unmoved): (1) a single unknown key (a bare `{id:'x'}`) · (2) a mixture of a
+legal member with an unknown key (`{target:'a', extra:1}`); per attempt: the throw's class, that the error names the
+rejected key, the renderer stub's call count `0`, and that nothing was returned.**
+**(b) `P-FT-AR-3` · `P-IM` · `S-FT-PASS-1` · declared term `2` — FATE: EXECUTED.**
+**REASON: ITS PROPERTY IS DISCERNIBLE AND NO EXECUTED ROW COVERS IT.** The row declares *the PASS-THROUGH RULE* —
+the arguments object the renderer receives carries the caller's own values **BY IDENTITY**, with **no `typeof` test,
+no trim, no coercion and no defaulting** on `target` or on `newTab`. `AR-1` asserts acceptance, one renderer call and
+the declared return key set, and its identity read is **`toEqual` on the keys of the supplied arguments object** —
+it never drives a **non-`string` `target`** and never a **non-`boolean` `newTab`**, so *"no coercion, no defaulting"*
+is **asserted nowhere by an executed row** (its drive (10) supplies `target: 0`, but the reading it carries is
+`toEqual`/key-set, not the no-defaulting rule). **DRIVES DECLARED: (1) a `target` supplied as a non-string value
+(identity asserted at the renderer stub) · (2) a `newTab` supplied as a non-boolean value (no default, no coercion);
+per attempt: the received identities, the absence of a `typeof`/coercion site on the route, and that no default was
+substituted.**
+**(c) `P-FT-RF-3` · `P-SM` · `S-FT-PUSH-1` · declared term `2` — FATE: EXECUTED.**
+**REASON: ITS PROPERTY IS DISCERNIBLE AND NO EXECUTED ROW COVERS IT.** The row declares *the ZERO-NOTIFICATION
+reading* as a **two-drive** property: (1) the **predicate keying read** with `'focus'` absent from the set and (2) a
+**route push-site and invalidation-TOKEN scan**, with the row claiming **no more than** *"no notification was invoked
+and the name sets are unchanged"* and **a bare count explicitly NOT the instrument**. The executed rows split that
+property and carry neither half whole: `RT-4` reads the **seven-member set and the predicate's keying site only** (no
+route push-site scan); `RF-4` scans the route for **storage tokens and state-slice/invalidation writers** (`state-slice`,
+`applyCommand`, `invalidate`) and does **not** scan for a **notification push site**. **DRIVES DECLARED: (1) the
+predicate keying read with `'focus'` absent (the STATIC ROUTE READING) · (2) the route push-site and
+invalidation-token scan (the labelled structural half); per attempt: the predicate's keying site, the set's
+membership, the absence of a push site, and the row's OWN claim's wording — no stronger reading.**
+
+**2. THE DECLARED TOTAL MOVES BY EXACTLY THE DRIVES THOSE ROWS ADD: `67` → `73` (`+ 2 + 2 + 2`), PRINTED BESIDE THE
+AS-FILED FIGURE.** **THE AS-FILED `67` IS NOT REWRITTEN — IT WAS THE SUM OF THE SEVENTEEN EXECUTED CELLS AND IS KEPT
+VISIBLE AT EVERY SITE THAT PRINTED IT.** **THE FINAL DECLARED TOTAL IS `73`, THE SUM OF THE TWENTY ROW CELLS
+`§5.5.1` ENUMERATES, and it is the figure every cap comparison now uses.**
+**THE TERM LIST, TWENTY TERMS IN REGISTER ROW ORDER (`§5.5.1`'s table order): `4, 3, 3, 2, 2 | 2, 3, 10, 2, 1 | 11,
+2, 2, 12 | 4, 2, 2, 2 | 3, 1` — the seventeen executed terms with `AR-2` `2`, `AR-3` `2`, `RF-3` `2` RESTORED AT
+THEIR OWN ROW POSITIONS.**
+**THE CHAIN, ADDED ONE TERM AT A TIME IN REGISTER ORDER, NINETEEN STEPS: `4` → `7` → `10` → `12` → `14` → `16` →
+`19` → `29` → `31` → `32` → `43` → `45` → `47` → `59` → `63` → `65` → `67` → `69` → `70` → `73`.**
+**(Checkable in five domain-sized steps, each a domain subtotal: `4 + 3 + 3 + 2 + 2` = `14` · `+ 2 + 3 + 10 + 2 + 1`
+= `32` · `+ 11 + 2 + 2 + 12` = `59` · `+ 4 + 2 + 2 + 2` = `69` · `+ 3 + 1` = `73`.)**
+**THE BY-DOMAIN SUBTOTALS, EACH THE SUM OF THE ADDENDS IT NAMES, EACH CLOSING ON THE FINAL TOTAL `73`:**
+**THE ROUTE (`RT-1`…`RT-5`) = `4 + 3 + 3 + 2 + 2` = `14`** · **THE OPAQUE ENTRY IDENTITY (`ID-1`…`ID-5`) =
+`2 + 3 + 10 + 2 + 1` = `18`** · **THE ARGUMENT SHAPE (`AR-1`…`AR-4`) = `11 + 2 + 2 + 12` = `27`** · **THE REFUSAL
+AND READINESS (`RF-1`…`RF-4`) = `4 + 2 + 2 + 2` = `10`** · **THE RESULT SHAPE AND TOTALITY (`RS-1`/`RS-2`) =
+`3 + 1` = `4`** — **and the five-way sum, ONE GROUP AT A TIME: `14` + `18` = `32`** · **`+ 27` = `59`** · **`+ 10` =
+`69`** · **`+ 4` = `73`.**
+**THE BY-TYPE SUBTOTALS, read from `§5.5.1`'s own `Type` column, EACH THE SUM OF THE ADDENDS IT NAMES, EACH CLOSING
+ON `73`: `P-IM` = `RT-1` `4` + `RT-2` `3` + `RT-4` `2` + `ID-1` `2` + `ID-3` `10` + `AR-1` `11` + `AR-3` `2` +
+`RF-1` `4` + `RS-1` `3` = `43`** · **`P-SM` = `RT-3` `3` + `RT-5` `2` + `ID-2` `3` + `ID-4` `2` + `RF-2` `2` +
+`RF-3` `2` = `14`** · **`P-TP` = `ID-5` `1` + `AR-2` `2` + `AR-4` `12` + `RF-4` `2` + `RS-2` `1` = `16`** — **and
+`43` + `14` = `57`** · **`+ 16` = `73`.** **(`AR-2` is `P-TP`, `AR-3` is `P-IM`, `RF-3` is `P-SM`, so all three
+families gain the row their own cell declares.)** **THE `67` THE BY-TYPE ADDITION REACHED ON THE SEVENTEEN-ROW SET
+WAS A RUNNING FIGURE AND NOT A SECOND TOTAL; on the twenty-row set the same three families close on `73`, and NO
+family figure is quoted here as a total.**
+**CAPS RE-CHECKED AGAINST THE FINAL DECLARED FIGURE: `73 ≤ 400` in total (headroom `327`) · largest row `12 ≤ 100`
+(headroom `88`) — BOTH CAPS HOLD against `73`, and neither is close.** **NO CAP VALUE MOVES and no cap is compared
+against any subtotal.**
+
+**3. THE TERM VERDICT — WHICH FIGURES MOVED AND WHICH DID NOT.** **(a) THE THREE ROWS WHOSE TERMS MOVE (RESTORED TO
+THE DECLARED COLUMN BY THIS SETTLEMENT): `AR-2` `2`, `AR-3` `2`, `RF-3` `2` — each moved from **NO PRINTED TERM IN
+THE EXECUTED REGISTER** to the term its own `§5.5.1` cell carries; each is printed BESIDE its as-filed absence.
+They move because their row is reinstated (executed), BY THAT ROW'S OWN DECLARED DRIVES AND BY NOTHING ELSE.**
+**(b) THE ROWS WHOSE TERMS DO NOT MOVE: THE OTHER SEVENTEEN `§5.5.1` ROWS** — `RT-1` `4` · `RT-2` `3` · `RT-3` `3` ·
+`RT-4` `2` · `RT-5` `2` · `ID-1` `2` · `ID-2` `3` · `ID-3` `10` · `ID-4` `2` · `ID-5` `1` · `AR-1` `11` · `AR-4`
+`12` · `RF-1` `4` · `RF-2` `2` · `RF-4` `2` · `RS-1` `3` · `RS-2` `1` — **each cell stands exactly as `§5.5.1`
+prints it, none re-valued, and the seventeen executed terms are unchanged by this settlement.**
+**(c) WHAT ELSE MOVES: ONLY THE DECLARED TOTAL (`67` → `73`), ITS CHAIN AND THE TWO SUBTOTAL DECOMPOSITIONS, each
+recomputed in 2 above.** **NO ROW ID, NO STRATEGY ID, NO SEED, NO CAP AND NO POOL MEMBER MOVES** (`H-r14`; `§5.5.2`);
+**the bounded set stays the FIVE NAMED rows (`P-FT-ID-3`, `P-FT-ID-5`, `P-FT-AR-1`, `P-FT-AR-4`, `P-FT-RS-2`) and the
+reading classes stay as recorded (`§5.5.2` items 4 and 4b).**
+
+**4. THE TEST SIDE MUST GROW — AND IT IS THE TestWriter'S ACT, NOT THIS PASS'S.** **The executed register
+(`tests/focus-tool-register.ts`, `17` typed rows) and the red set that rides it now DISAGREE WITH THIS CONTRACT, and
+the disagreement is the intended RED, not a defect**: the register must gain the three rows (`P-FT-AR-2`, `P-FT-AR-3`,
+`P-FT-RF-3`), its `DECLARED_TERMS` literal must grow **from seventeen terms to twenty** (`[4, 3, 3, 2, 2, 2, 3, 10, 2,
+1, 11, 2, 2, 12, 4, 2, 2, 2, 3, 1]`), its declared total literal **from `67` to `73`**, and its row census **from `17`
+to `20` rows / `20` terms** — **`+3` rows, `+6` drives**, exactly the three rows' own declared drives. **The red set's
+term rows (`REGISTER-TERMS`, `REGISTER-HONESTY`) therefore REDDEN until that edit lands: this pass does not make it,
+and a pass that lands it must NOT also move a row id, a strategy id, a seed, a cap or any other cell.** **THE
+TEST-SIDE VERDICT IS THEREFORE THE OPPOSITE OF `§5.5.3`'s WITHDRAWN ALIGNMENT NO-OP: the no-op ruling is superseded
+for these three rows, because the row set — not a literal — is what moved.**
+
+**5. NO CODE, NO RED RE-RUN, NO STATUS FLIP.** **THIS PASS EDITED EXACTLY ONE FILE — `docs/specs/focus-tool.md` (this
+one) — AND EDITED NOTHING ELSE: it wrote no code, authored no test, ran no suite, no leg, no trio, no `tsc`, no
+Electron boot and no register row, re-ran no red, flipped no status, and made no commit.** **THE LEDGER IS UNCHANGED
+AT `20 DONE / 1 open` = `21` units, `F3` stays an open `## OPEN` row with its status the supervisor's, and every
+tracker (`docs/next-steps.md`, `docs/pending.md`, `docs/decisions.md`, `docs/defects.md`) and every sibling spec is
+untouched.** **AND THE ONE FIGURE THIS SUBSECTION MOVES IN THE OTHER DIRECTION, STATED SO IT IS NOT DISCOVERED LATE:
+the `328` total headroom and every `72`-closing form printed by the withdrawn re-grain stay WITHDRAWN; the headroom
+this file states is now `327`, and the file's ONE declared total is `73`.**
 
 ---
 
