@@ -161,11 +161,21 @@ function realmRoot(): Record<string, unknown> {
   return (globalThis as unknown as Record<string, Record<string, unknown>>)[t0('globalThis')] as unknown as Record<string, unknown>
 }
 
-/** `§3.2 F-4` / `P-OV-IM-4` — an identity whose `toString` AND `valueOf` THROW,
- *  with BOTH invocation counts recorded: the drive that catches a module reading
- *  the `target` (`§2.4` item 3's own named falsifier). */
-function throwingHookIdentity(): { readonly value: unknown; readonly counts: { toString: number; valueOf: number } } {
-  const counts = { toString: 0, valueOf: 0 }
+/** **⟶ `AD-6`'s DRIVE MECHANISM — THE THIRD BANNED COERCION HOOK, AS A KEY.** `R-14`
+ *  bans `toString`, `valueOf` **and the well-known `Symbol.toPrimitive`** on any caller
+ *  argument, and this file's count-`0` assertions must be able to DRIVE the third rather
+ *  than assert its absence from a spelling. The well-known symbol is looked up through
+ *  the file's ONE assembled-token helper, so THIS FILE'S SCANNED VIEW (string literals
+ *  stripped, as the unit's own byte scans read it) carries no banned spelling while the
+ *  lookup is the live well-known symbol (`§2.4` item 3, `R-14`, `P-OV-1`/`I-12`). */
+const COERCION_KEY = Symbol[t0('toPrimitive') as 'toPrimitive']
+/** `§3.2 F-4` / `P-OV-IM-4` — an identity whose `toString`, `valueOf` AND
+ *  `Symbol.toPrimitive` hooks ALL THROW, with every invocation count recorded: the
+ *  drive that catches a module reading the `target` (`§2.4` item 3's own named
+ *  falsifier) **including the third hook the contract bans and no earlier drive
+ *  exercised** (`AD-6`). */
+function throwingHookIdentity(): { readonly value: unknown; readonly counts: HookCounts } {
+  const counts: HookCounts = { toString: 0, valueOf: 0, toPrimitive: 0 }
   const value = {
     toString(): string {
       counts.toString += 1
@@ -175,14 +185,18 @@ function throwingHookIdentity(): { readonly value: unknown; readonly counts: { t
       counts.valueOf += 1
       throw new Error('the valueOf hook of a caller identity must never be consulted')
     },
+    [COERCION_KEY](): string {
+      counts.toPrimitive += 1
+      throw new Error('the well-known coercion-hook symbol of a caller identity must never be consulted')
+    },
   }
   return { value, counts }
 }
-/** `§3.2 F-1`/`F-2`/`F-5` — an object carrying RECORDING coercion hooks, so the
- *  declared count-`0` assertions are falsifiable by construction rather than
- *  true-by-construction. */
-function hookRecorder(): { readonly value: unknown; readonly counts: { toString: number; valueOf: number } } {
-  const counts = { toString: 0, valueOf: 0 }
+/** `§3.2 F-1`/`F-2`/`F-5` — an object carrying RECORDING coercion hooks (`toString`,
+ *  `valueOf` and the well-known `Symbol.toPrimitive`, `AD-6`), so the declared
+ *  count-`0` assertions are falsifiable by construction rather than true-by-construction. */
+function hookRecorder(): { readonly value: unknown; readonly counts: HookCounts } {
+  const counts: HookCounts = { toString: 0, valueOf: 0, toPrimitive: 0 }
   const value = {
     toString(): string {
       counts.toString += 1
@@ -191,6 +205,10 @@ function hookRecorder(): { readonly value: unknown; readonly counts: { toString:
     valueOf(): number {
       counts.valueOf += 1
       return 1
+    },
+    [COERCION_KEY](): string {
+      counts.toPrimitive += 1
+      return 'a-coerced-primitive'
     },
   }
   return { value, counts }
@@ -222,7 +240,7 @@ function trapThrowingProxy(): unknown {
 /** `§5.5.1 P-OV-TP-1`'s TWELVE-MEMBER POOL, in the spec's DECLARED ORDER. A `Map`
  *  and a `Set` carry NO coercion hook that throws, which is why the coercing shapes
  *  are driven separately as their own table members. */
-type HookCounts = { toString: number; valueOf: number }
+type HookCounts = { toString: number; valueOf: number; toPrimitive: number }
 type PoolMember = { readonly id: string; readonly value: () => unknown; readonly hooks: HookCounts | null }
 function makePool(): readonly PoolMember[] {
   const throwing = throwingHookIdentity()
@@ -236,11 +254,19 @@ function makePool(): readonly PoolMember[] {
     { id: '(4) a 12n bigint', value: () => 12n, hooks: null },
     { id: '(5) a revoked Proxy', value: () => revokedProxy(), hooks: null },
     { id: '(6) a trap-throwing Proxy', value: () => trapThrowingProxy(), hooks: null },
-    { id: '(7) an identity whose toString/valueOf THROW', value: () => throwing.value, hooks: throwing.counts },
+    { id: '(7) an identity whose toString/valueOf/the banned well-known coercion-hook symbol THROW', value: () => throwing.value, hooks: throwing.counts },
     { id: '(8) a self-referential object', value: () => selfRef, hooks: null },
     { id: '(9) a Map', value: () => new Map<string, number>([['a', 1]]), hooks: null },
     { id: '(10) a Set', value: () => new Set<number>([1, 2]), hooks: null },
-    { id: '(11) a function (and a THROWING function)', value: () => function f(): void {}, hooks: null },
+    // ⟶ **`AD-5` REPAIR — POOL MEMBER (11) NOW DRIVES WHAT ITS OWN DECLARED WORDING
+    // SAYS.** The contract's pool reads *"(11) a function (and a THROWING function as
+    // the callback arm)"*, while the member as filed held a PLAIN function — so the
+    // drawn `as callback` arm never drove the declared throw. `thrower()` is BOTH halves
+    // in one member: its `typeof` is `'function'` (the identity the other arms carry) and
+    // its INVOCATION throws (the declared callback arm, which `I-1`/`I-13` require the
+    // module to ABSORB). THE INDEX, THE DRAWN SEQUENCE AND THE DRAWN MEMBER COUNT ARE
+    // UNCHANGED: no pool member, term, row id, strategy id, seed or cap moves.
+    { id: '(11) a function (and a THROWING function as the callback arm)', value: () => thrower(), hooks: null },
     { id: '(12) [] and a deeply nested array', value: () => nested, hooks: null },
   ]
 }
@@ -280,6 +306,15 @@ function drove(fn: () => unknown): { readonly value: unknown; readonly thrown: u
   } catch (e) {
     return { value: undefined, thrown: e }
   }
+}
+/** **⟶ `AD-1` — ONE COUNTED DRIVE.** The entry point is DRIVEN (the call is ISSUED, and
+ *  the drive is recorded on the row's own `executedDrives` figure, which is printed
+ *  BESIDE the declared term and NEVER counted in it) and the thrown value is returned as
+ *  data exactly as `drove` does. Used where a row's clause issues more entry-point calls
+ *  than its declared term counts, so the executed figure is MEASURED rather than implied. */
+function droveCounted(r: RegisterRow, fn: () => unknown): { readonly value: unknown; readonly thrown: unknown } {
+  r.executedDrive()
+  return drove(fn)
 }
 
 // ===========================================================================
@@ -867,6 +902,11 @@ type RowRecord = {
   readings: number
   controls: number
   distinctDrives: number
+  /** **⟶ `AD-1` — THE ROW'S OWN EXECUTED-DRIVE FIGURE, PRINTED BESIDE ITS DECLARED TERM
+   *  AND NEVER COUNTED IN IT** (the family's rule: assertions and extra drives are
+   *  printed beside the term). `null` means *this row is not separately instrumented* and
+   *  is reported as `not-instrumented` rather than as a figure nobody measured. */
+  executedDrives: number | null
   stoppedEarly: boolean
   notStarted: boolean
   registerStoppedAt: string | null
@@ -889,7 +929,7 @@ const DECLARED_REGISTER: readonly {
   readonly distinct: number | null
 }[] = [
   { row: 'P-OV-IM-1', type: 'P-IM', strategy: 'S-OV-STATE-1', declared: 10, bounded: true, distinct: 10 },
-  { row: 'P-OV-IM-2', type: 'P-IM', strategy: 'S-OV-SHAPE-1', declared: 6, bounded: false, distinct: 6 },
+  { row: 'P-OV-IM-2', type: 'P-IM', strategy: 'S-OV-SHAPE-1', declared: 6, bounded: true, distinct: 6 },
   { row: 'P-OV-IM-3', type: 'P-IM', strategy: 'S-OV-ECHO-1', declared: 12, bounded: true, distinct: 12 },
   { row: 'P-OV-IM-4', type: 'P-IM', strategy: 'S-OV-TARGET-1', declared: 4, bounded: false, distinct: 4 },
   { row: 'P-OV-IM-5', type: 'P-IM', strategy: 'S-OV-CALLBACK-1', declared: 4, bounded: false, distinct: 4 },
@@ -956,6 +996,7 @@ class RegisterRow {
   private readings = 0
   private controls = 0
   private distinct = 0
+  private executed: number | null = null
   private stoppedEarly = false
   private notStarted = false
   private readonly causes: string[] = []
@@ -1022,6 +1063,13 @@ class RegisterRow {
   distinctDrive(): void {
     this.distinct += 1
   }
+  /** **⟶ `AD-1` — ONE EXECUTED DRIVE COUNTED BESIDE THE DECLARED TERM.** A row whose
+   *  clause drives an entry point MORE than once per counted attempt (or drives several
+   *  cells inside one attempt) reports the figure its body really issued here, printed
+   *  BESIDE the term and NEVER counted in it — the term itself does not move. */
+  executedDrive(): void {
+    this.executed = (this.executed ?? 0) + 1
+  }
   /** The row's verdict + its own record line. **An un-run row FAILS on purpose: an
    *  un-executed register row may not look green** (`§5.5.1` cap 3). */
   finish(): void {
@@ -1036,6 +1084,7 @@ class RegisterRow {
       readings: this.readings,
       controls: this.controls,
       distinctDrives: this.distinct,
+      executedDrives: this.executed,
       stoppedEarly: this.stoppedEarly,
       notStarted: this.notStarted,
       registerStoppedAt: registerState.stoppedAtRow,
@@ -1549,7 +1598,7 @@ describe('§3.2 F-1 / F-2 / F-3 / F-4 / F-5 + §3.3 I-1 / I-13 — the declared 
       expect(t.state, `F-1 ${c.id} — an unusable state reads the declared no-move behaviour from 'closed'; no fifth body appears and no coercion is attempted`).toBe('closed')
       expect(t.changed, `F-1 ${c.id} — changed is false: nothing moved`).toBe(false)
     }
-    expect(hook.counts, 'F-1(16) — String(), toString and valueOf are NOT invoked for a caller-supplied state (the drive records the counts, and the shape that carries them asserts 0)').toEqual({ toString: 0, valueOf: 0 })
+    expect(hook.counts, 'F-1(16) — String(), toString and valueOf are NOT invoked for a caller-supplied state (the drive records the counts, and the shape that carries them asserts 0)').toEqual({ toString: 0, valueOf: 0, toPrimitive: 0 })
   })
 
   it('F-2 (§3.2) / P-OV-TP-3 — AN UNRECOGNIZED VERB, the alphabet\'s whole outside, and the never-consulted callback', async () => {
@@ -1581,7 +1630,7 @@ describe('§3.2 F-1 / F-2 / F-3 / F-4 / F-5 + §3.3 I-1 / I-13 — the declared 
       expect(t, `F-2 ${c.id} — the caller's own (normalized) state with changed false: no default verb is applied and nothing opens, closes or toggles`).toEqual({ state: 'held', changed: false })
       expect(rec.count(), `F-2 ${c.id} — the callback's invocation count is 0: an unrecognized verb NEVER invokes the Escape-equivalent`).toBe(0)
     }
-    expect(hook.counts, 'F-2(14) — the verb is read by an EQUALITY TEST against the five declared bodies ONLY: no String() coercion, no case fold, no trim and no prefix match (§2.3 item 1)').toEqual({ toString: 0, valueOf: 0 })
+    expect(hook.counts, 'F-2(14) — the verb is read by an EQUALITY TEST against the five declared bodies ONLY: no String() coercion, no case fold, no trim and no prefix match (§2.3 item 1)').toEqual({ toString: 0, valueOf: 0, toPrimitive: 0 })
   })
 
   it('F-3 (§3.2) / P-OV-IM-5 — A HOSTILE CALLBACK: the callback\'s own degenerations, with every throw ABSORBED', async () => {
@@ -1667,7 +1716,7 @@ describe('§3.2 F-1 / F-2 / F-3 / F-4 / F-5 + §3.3 I-1 / I-13 — the declared 
       expect(writeBreakOf({ name: NAME_A, value: 'true', removal: true, target: plain }, NAME_A, plain, 'F-4 (LIVENESS)'), 'F-4 (LIVENESS) — a record whose SET arm claims removal FAILS the row\'s own reading (the repair did not weaken the discrimination)').not.toBe(null)
       expect(writeBreakOf({ name: NAME_A, value: 'true', removal: false, target: plain }, NAME_A, plain, 'F-4 (LIVENESS)'), 'F-4 (LIVENESS) — the module\'s declared SET record PASSES the same reading').toBe(null)
     }
-    expect(hook.counts, 'F-4(1) — BOTH coercion-hook counts are 0: a module that reads the target (typeof, a member access, instanceof, a String()/toString/valueOf call, a hasOwnProperty call) FAILS this row, and this is the drive that catches it').toEqual({ toString: 0, valueOf: 0 })
+    expect(hook.counts, 'F-4(1) — ALL THREE coercion-hook counts (toString, valueOf and the banned well-known `Symbol.toPrimitive` — `AD-6`) are 0: a module that reads the target (typeof, a member access, instanceof, a String()/toString/valueOf/coercion-symbol call, a hasOwnProperty call) FAILS this row, and this is the drive that catches it').toEqual({ toString: 0, valueOf: 0, toPrimitive: 0 })
   })
 
   it('F-5 (§3.2) — AN UNUSABLE ATTRIBUTE NAME, and the independence of the three arguments (the CROSSED drives)', async () => {
@@ -1694,7 +1743,7 @@ describe('§3.2 F-1 / F-2 / F-3 / F-4 / F-5 + §3.3 I-1 / I-13 — the declared 
       expect((r.value as OverlayInertWrite).value, `F-5 ${c.id} — the VALUE rule is independent of the name's shape: inert === true still yields 'true'`).toBe('true')
       expect((r.value as OverlayInertWrite).removal, `F-5 ${c.id} — and removal false`).toBe(false)
     }
-    expect(hook.counts, 'F-5(11) — String(attributeName), attributeName.toString() and valueOf are NEVER consulted for the name: both counts are 0')?.toEqual({ toString: 0, valueOf: 0 })
+    expect(hook.counts, 'F-5(11) — String(attributeName), attributeName.toString(), valueOf and the banned well-known `Symbol.toPrimitive` (`AD-6`) are NEVER consulted for the name: all THREE counts are 0')?.toEqual({ toString: 0, valueOf: 0, toPrimitive: 0 })
     // THE CROSSED DRIVES: the name rule and the value rule answer DIFFERENT
     // arguments, so a set-write with a null name and a removal with an echoed name
     // are both NORMAL returns, not contradictions (§3.2 F-5's own text).
@@ -2091,7 +2140,7 @@ describe('§3.1 M-1..M-9 — the valid / happy states', () => {
       expect(w.value, `M-7 ${c.id} — value/removal are INDEPENDENT of the name's shape`).toBe('true')
       expect(w.removal, `M-7 ${c.id} — the value rule answers the inert argument, not the name`).toBe(false)
     }
-    expect(hook.counts, 'M-7(g) — the object\'s toString is NOT invoked and its valueOf is NOT invoked (the drive records the counts and asserts 0): this is the row a String()-coercing implementation FAILS').toEqual({ toString: 0, valueOf: 0 })
+    expect(hook.counts, 'M-7(g) — the object\'s toString is NOT invoked and its valueOf is NOT invoked (the drive records the counts and asserts 0): this is the row a String()-coercing implementation FAILS').toEqual({ toString: 0, valueOf: 0, toPrimitive: 0 })
   })
 
   it('M-8 (§3.1) / P-OV-IM-4 — THE TARGET IS ECHOED BY IDENTITY AND READS NOTHING', async () => {
@@ -2191,11 +2240,20 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 rows / 13 terms, in regist
       { id: '(9) an object, an array, a function — and one whose hooks are recorded', value: () => hook.value, hooks: hook.counts },
       { id: '(10) a revoked Proxy and a trap-throwing Proxy', value: () => revokedProxy(), hooks: null },
     ]
+    // ⟶ **`AD-1` — THE EXECUTED-DRIVE FIGURE, PRINTED BESIDE THE DECLARED TERM.** The
+    // row's declared term is the contract's `10` — the TEN POOL SHAPES — and the cell's
+    // own wording ("a FIXED moving verb and a FIXED no-move verb") is why EACH counted
+    // attempt issues TWO entry-point calls: one with the FIXED moving verb (`close`) and
+    // one with the FIXED no-move verb (`unknown`). The row therefore MEASURES `20`
+    // executed drives beside its `10` term (`r.executedDrive()` at each drive, reported on
+    // its own record line and reconciled by `HARNESS-2`), and **NO TERM MOVES**: the `10`
+    // stays the declared extent the caps compare against, the extra ten drives are printed
+    // beside it and never counted in it.
     for (const member of pool) {
       r.run(member.id, () => {
         if (s === null) return 'the module of §2.1 is absent (the §4.1 red fact)'
         const shape = member.value()
-        const moving = drove(() => s.overlayTransition(shape, t0('close')))
+        const moving = droveCounted(r, () => s.overlayTransition(shape, t0('close')))
         if (moving.thrown !== null) return `${member.id} — the entry point THREW: ${describeThrown(moving.thrown)}`
         const mv = moving.value as OverlayTransition
         if (!STATE_BODIES.includes(mv.state)) return `${member.id} — the returned state ${JSON.stringify(mv.state)} is not a member of the closed four-body set (a FIFTH body FAILS)`
@@ -2208,7 +2266,7 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 rows / 13 terms, in regist
         if (mv.state !== t0('closed')) return `${member.id} — 'close' from the normalized base must settle at 'closed'; got ${JSON.stringify(mv.state)}`
         if (mv.changed !== (t0('closed') !== settled)) return `${member.id} — changed === (next !== previous) is the declared identity: previous=${JSON.stringify(settled)}, changed=${String(mv.changed)}`
         // the FIXED no-move verb: the non-moving arm returns the state it normalizes to.
-        const noMove = drove(() => s.overlayTransition(shape, t0('unknown')))
+        const noMove = droveCounted(r, () => s.overlayTransition(shape, t0('unknown')))
         if (noMove.thrown !== null) return `${member.id} — the no-move arm THREW: ${describeThrown(noMove.thrown)}`
         const nm = noMove.value as OverlayTransition
         if (nm.state !== settled) return `${member.id} — a verb that does not move a state must return THAT state: expected ${JSON.stringify(settled)}, got ${JSON.stringify(nm.state)}`
@@ -2218,12 +2276,12 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 rows / 13 terms, in regist
       })
     }
     if (hook.counts !== null) {
-      expect(hook.counts, 'P-OV-IM-1 — String()/toString/valueOf are NEVER invoked for a state shape (the pool member that carries the hooks makes this falsifiable by construction)').toEqual({ toString: 0, valueOf: 0 })
+      expect(hook.counts, 'P-OV-IM-1 / `AD-6` — NONE of the THREE banned coercion hooks (String()/toString/valueOf/`Symbol.toPrimitive`) is invoked for a state shape (the pool member that carries the hooks makes this falsifiable by construction, and its liveness is proven by a positive control in P-OV-IM-4)').toEqual({ toString: 0, valueOf: 0, toPrimitive: 0 })
     }
     r.finish()
   })
 
-  it('P-OV-IM-2 [S-OV-SHAPE-1] — the SHAPE half: the two key sets in declared order, changed === (next !== previous) on every drive, AND the refusal\'s absence assertion', async () => {
+  it('P-OV-IM-2 [S-OV-SHAPE-1] (bounded) — the SHAPE half: the two key sets in declared order, changed === (next !== previous) on every drive, AND the refusal\'s absence assertion', async () => {
     const r = row(definedRow('P-OV-IM-2'))
     const s = await live().catch(() => null)
     const shapeDrives: readonly { readonly id: string; readonly body: () => string | null }[] = [
@@ -2346,7 +2404,7 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 rows / 13 terms, in regist
         })
       }
     }
-    expect(hook.counts, 'P-OV-IM-3 — String()/toString/valueOf are NEVER consulted for the name').toEqual({ toString: 0, valueOf: 0 })
+    expect(hook.counts, 'P-OV-IM-3 / `AD-6` — NONE of String()/toString/valueOf/the banned well-known coercion symbol is consulted for the name').toEqual({ toString: 0, valueOf: 0, toPrimitive: 0 })
     // THE TRUTHINESS CONTROL (`§5.5.1` P-OV-IM-3's "NEVER read as the set case") and
     // the two non-`true` string/number shapes, reported BESIDE the term.
     controlDrive(r, 'the truthiness control: \'false\', \'true\' and 1 must NOT be read as the SET case', () => {
@@ -2366,7 +2424,7 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 rows / 13 terms, in regist
     const s = await live().catch(() => null)
     const throwing = throwingHookIdentity()
     const groups: readonly { readonly id: string; readonly target: () => unknown; readonly hooks: HookCounts | null; readonly boundary?: boolean }[] = [
-      { id: '(1) an identity whose toString AND valueOf THROW (hooks recorded)', target: () => throwing.value, hooks: throwing.counts },
+      { id: '(1) an identity whose toString, valueOf AND the banned well-known coercion-hook symbol THROW (hooks recorded — `AD-6`)', target: () => throwing.value, hooks: throwing.counts },
       { id: '(2) a REVOKED Proxy (any access raises a TypeError — asserted ABSORBED)', target: () => revokedProxy(), hooks: null },
       { id: '(3) a Proxy whose get/has/getOwnPropertyDescriptor traps THROW', target: () => trapThrowingProxy(), hooks: null },
       { id: '(4) the -0 / NaN boundary pair, asserted under Object.is', target: () => -0, hooks: null, boundary: true },
@@ -2388,16 +2446,25 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 rows / 13 terms, in regist
         return null
       })
     }
-    expect(throwing.counts, 'P-OV-IM-4 — BOTH coercion-hook counts are 0, the revoked Proxy\'s TypeError was never raised, and NOTHING was thrown by the module').toEqual({ toString: 0, valueOf: 0 })
-    // THE INSTRUMENT IS PROVEN LIVE (reported BESIDE the term).
-    controlDrive(r, 'the hook recorder is LIVE: a deliberate String(target) DOES move the count', () => {
+    // ⟶ **`AD-6` — THE BANNED COERCION HOOK IS NOW DRIVEN, INSIDE THIS DECLARED TERM.**
+    // `R-14`/`§2.4` item 3 ban `Symbol.toPrimitive` beside `toString` and `valueOf`, and
+    // no drive exercised it: group (1)'s identity carries the LIVE well-known symbol
+    // (`COERCION_KEY`) whose invocation BOTH throws and records a count, it is supplied
+    // to `overlayInertDeclaration` as the `target` on this row's own declared drive, and
+    // the count below is asserted `0` — so a module that consults the hook FAILS this row
+    // rather than passing it vacuously. The liveness control that follows proves the
+    // third hook really fires. `NO TERM MOVES`: this drive is the row's own declared
+    // drive, not a new attempt.
+    expect(throwing.counts, 'P-OV-IM-4 / `AD-6` — ALL THREE coercion-hook counts are 0 (toString, valueOf AND the banned well-known coercion symbol), the revoked Proxy\'s TypeError was never raised, and NOTHING was thrown by the module').toEqual({ toString: 0, valueOf: 0, toPrimitive: 0 })
+    // THE INSTRUMENT IS PROVEN LIVE (reported BESIDE the term), INCLUDING the third hook.
+    controlDrive(r, 'the hook instrument is LIVE — a deliberate String(target) DOES move the banned well-known coercion hook\'s count', () => {
       const probe = throwingHookIdentity()
       try {
         String(probe.value)
       } catch {
-        // the hook throws by construction — the count is what matters
+        // the hooks throw by construction — the COUNT is what matters
       }
-      if (probe.counts.toString !== 1) return `the instrument is dead: a deliberate String() read left the count at ${probe.counts.toString}`
+      if (probe.counts.toPrimitive !== 1) return `the instrument is dead: a deliberate String() read left the banned coercion hook's count at ${probe.counts.toPrimitive} (a count-0 reading taken from a hook that can never fire proves nothing)`
       return null
     }, false)
     r.finish()
@@ -2484,7 +2551,7 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 rows / 13 terms, in regist
     }
     const assertCell = (st: string, vb: string, label: string): string | null => {
       if (s === null) return 'the module of §2.1 is absent (the §4.1 red fact)'
-      const drv = drove(() => s.overlayTransition(st, vb))
+      const drv = droveCounted(r, () => s.overlayTransition(st, vb))
       if (drv.thrown !== null) return `${label} — the cell THREW: ${describeThrown(drv.thrown)}`
       const t = drv.value as OverlayTransition
       const [next, changed] = MATRIX[st][vb]
@@ -2536,7 +2603,7 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 rows / 13 terms, in regist
       for (const st of STATE_BODIES) {
         for (const vb of VERB_BODIES) {
           const rec = recorder()
-          const drv = drove(() => s.overlayTransition(st, vb, rec.fn))
+          const drv = droveCounted(r, () => s.overlayTransition(st, vb, rec.fn))
           if (drv.thrown !== null) return `('${st}' × '${vb}') — the cell THREW: ${describeThrown(drv.thrown)}`
           const brk = assertCell(st, vb, `('${st}' × '${vb}') [recorder]`)
           if (brk !== null) return brk
@@ -2548,6 +2615,16 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 rows / 13 terms, in regist
       return null
     })
     console.log('P-OV-SM-1 THE TWO CELLS A VERB TABLE GETS WRONG :: (\'held\' × \'toggle\') ⇒ \'held\', NOT changed · (\'closing\' × \'open\') ⇒ \'open\', changed')
+    // ⟶ **`AD-1` — THE EXECUTED-DRIVE FIGURE, PRINTED BESIDE THE DECLARED TERM.** The
+    // term is the contract's `6` — *"the `20`-cell matrix reported as `5` row-sweeps + `1`
+    // recorder sweep"* — and EACH counted attempt drives a SWEEP of cells: the four state
+    // sweeps and the no-move column drive `4` cells each (`20` cells) and the recorder
+    // sweep drives the whole `20`-cell matrix TWICE (once with the recorder installed,
+    // once through the cell reader), so THIS ROW'S BODY ISSUES `60` ENTRY-POINT DRIVES
+    // INSIDE ITS `6` COUNTED ATTEMPTS. The figure is MEASURED (`r.executedDrive()` at each
+    // drive, reported on its own record line and reconciled by `HARNESS-2`) and printed
+    // BESIDE the term — **THE TERM DOES NOT MOVE**: `6` stays the declared extent the caps
+    // compare against, and the extra drives are never counted in it.
     r.distinctDrive()
     r.distinctDrive()
     r.distinctDrive()
@@ -2633,33 +2710,43 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 rows / 13 terms, in regist
           // stay inside the declared term `P-OV-TP-1` `20` (the `4 × 5` matrix, one draw
           // per cell), and no term, row id, strategy id, seed, cap or pool member moves.**
           const rec0 = recorder()
+          // ⟶ **`AD-5` REPAIR — EVERY DRAWN ARM NOW DRIVES ITS OWN SLOT.** As filed, the
+          // `as state` arm was SKIPPED by a `continue` (so the drawn member never occupied
+          // the `state` slot it names) and the `as attributeName` arm was BYTE-IDENTICAL to
+          // the `as target` arm (so it re-drove the target slot and left the attribute-name
+          // slot undriven). **THE SECOND IS NOT RE-DRIVEN, AND THAT IS THE CONTRACT'S OWN
+          // PIN**: `§0A` note 9 item 1 SUPERSEDES the as-filed `as attributeName` clause —
+          // the drawn pool member is supplied in the `target` slot ONLY, the attribute-name
+          // slot ALWAYS carries the NON-EMPTY STRING `NAME_A`, and the as-filed clause stays
+          // visible at the contract's own cell. The duplicated arm is therefore DELETED
+          // rather than kept as a second copy of the same call, and the arm set below is the
+          // FIVE slots the pinned reading really drives: state, verb, callback, target,
+          // inert. **NO TERM, ROW ID, STRATEGY ID, SEED, CAP OR POOL MEMBER MOVES** — the
+          // arms are assertions INSIDE the declared `20`-cell term, and the extra drives
+          // they issue are printed BESIDE it (never counted in it).
           const arms: readonly { readonly id: string; readonly drive: () => unknown }[] = [
             { id: 'as state', drive: () => s.overlayTransition(draw.value, vb) },
             { id: 'as verb', drive: () => s.overlayTransition(st, draw.value) },
             { id: 'as callback', drive: () => s.overlayTransition(st, vb, draw.value) },
             { id: 'as target', drive: () => s.overlayInertDeclaration(draw.value, NAME_A, true) },
-            // the attribute-name slot carries the NON-EMPTY STRING (`NAME_A`); the drawn
-            // member stays in the `target` slot, where its identity is the assertion.
-            { id: 'as attributeName', drive: () => s.overlayInertDeclaration(draw.value, NAME_A, true) },
             { id: 'as inert', drive: () => s.overlayInertDeclaration(TGT, NAME_A, draw.value) },
           ]
           for (const arm of arms) {
-            if (arm.id === 'as state') continue // the declared cell drive is asserted below
             const drv = drove(arm.drive)
             if (drv.thrown !== null) return `the drawn shape ${draw.member.id} ${arm.id} made the entry point THROW: ${describeThrown(drv.thrown)}`
             const v = drv.value as Record<string, unknown>
-            const keys = arm.id === 'as verb' || arm.id === 'as callback' ? TRANSITION_KEYS : WRITE_KEYS
+            const keys = arm.id === 'as verb' || arm.id === 'as callback' || arm.id === 'as state' ? TRANSITION_KEYS : WRITE_KEYS
             const kb = keyBreakOf(v, keys)
             if (kb !== null) return `the drawn shape ${draw.member.id} ${arm.id} — ${kb}`
             if (keys === WRITE_KEYS) {
-              // ⟶ **THE ALIGNED WRITE-RECORD READ (`§0A` note 9 item 1).** BOTH the
-              // `as target` and the `as attributeName` arms carry the drawn pool member
-              // in the `target` slot — the slot the row's IDENTITY assertion reads — and
-              // the NON-EMPTY STRING `NAME_A` in the attribute-name slot, so the NAME-ECHO
-              // assertion (`§2.4` item 1) holds in the SAME attempt. The `as inert` arm
-              // keeps `TGT` in the target slot and takes the drawn member in the `inert`
-              // slot. The previous form asserted `TGT` for every write arm, which the
-              // drawn `target` members can never satisfy — that read was the defect.
+              // ⟶ **THE ALIGNED WRITE-RECORD READ (`§0A` note 9 item 1).** The `as target`
+              // arm carries the drawn pool member in the `target` slot — the slot the row's
+              // IDENTITY assertion reads — with the NON-EMPTY STRING `NAME_A` in the
+              // attribute-name slot, so the NAME-ECHO assertion (`§2.4` item 1) holds in the
+              // SAME attempt. The `as inert` arm keeps `TGT` in the target slot and takes the
+              // drawn member in the `inert` slot. The previous form asserted `TGT` for every
+              // write arm, which the drawn `target` members can never satisfy — that read was
+              // the defect.
               const expectedTarget: unknown = arm.id === 'as inert' ? TGT : draw.value
               const wb = writeBreakOf(v, NAME_A, expectedTarget, `${draw.member.id} ${arm.id}`)
               if (wb !== null) return wb
@@ -2689,7 +2776,7 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 rows / 13 terms, in regist
           if (wb !== null) return wb
           s.overlayTransition(st, vb, rec0.fn)
           if (rec0.count() !== (vb === t0('escape') ? 1 : 0)) return `cell ('${st}' × '${vb}') — the callback count is ${rec0.count()}`
-          if (draw.hooks !== null && (draw.hooks.toString !== 0 || draw.hooks.valueOf !== 0)) return `the drawn shape ${draw.member.id} had a coercion hook consulted (${JSON.stringify(draw.hooks)})`
+          if (draw.hooks !== null && (draw.hooks.toString !== 0 || draw.hooks.valueOf !== 0 || draw.hooks.toPrimitive !== 0)) return `the drawn shape ${draw.member.id} had a coercion hook consulted, INCLUDING the banned well-known symbol (\`AD-6\`): ${JSON.stringify(draw.hooks)}`
           r.reading()
           return null
         })
@@ -3130,6 +3217,40 @@ describe('§5.5.1 / §5.5.2 / §5.5.3 — the register harness: declared-vs-meas
       }
     }
     expect(REGISTER_RECORDS.reduce((a, r) => a + r.attemptsRun, 0), 'HARNESS-2 — the executed attempt count stays inside the ≤400 register cap').toBeLessThanOrEqual(REGISTER_TOTAL_CAP)
+    // ⟶ **`AD-1` — THE EXECUTED-DRIVE FIGURE OF EVERY ROW, PRINTED BESIDE ITS DECLARED
+    // TERM.** A row whose clause drives an entry point MORE than once per counted attempt
+    // (or drives a sweep of cells inside one attempt) MEASURES that figure; rows that are
+    // not separately instrumented report `not-instrumented` rather than a figure nobody
+    // measured. **NO TERM MOVES AND NO TERM IS RE-DERIVED**: the declared terms are the
+    // contract's, the caps compare against them, and the extra drives are printed BESIDE
+    // them, never counted in them.
+    const executedByRow = DECLARED_REGISTER.map((def) => {
+      const rec = REGISTER_RECORDS.find((x) => x.row === def.row)
+      return { row: def.row, declaredTerm: def.declared, executedDrives: rec?.executedDrives ?? null }
+    })
+    console.log(`§5.5.1 AD-1 executed-drive readings (declared term beside its MEASURED executed drives) :: ${JSON.stringify(executedByRow)}`)
+    console.log(`§5.5.1 AD-1 measured executed drives :: ${JSON.stringify(executedByRow.filter((x) => x.executedDrives !== null))} — every other row is NOT SEPARATELY INSTRUMENTED and is reported as such rather than as a figure nobody measured`)
+    for (const x of REGISTER_RECORDS) {
+      expect(
+        x.executedDrives === null || (Number.isInteger(x.executedDrives) && x.executedDrives >= 0),
+        `HARNESS-2 / AD-1 — ${x.row}'s executed-drive figure is either a non-negative integer or \`null\` (not separately instrumented); it is NEVER a negative or fabricated number`,
+      ).toBe(true)
+    }
+    // THE TWO INSTRUMENTED ROWS, ASSERTED AS MEASURED READINGS BESIDE THEIR TERMS.
+    const im1 = REGISTER_RECORDS.find((x) => x.row === 'P-OV-IM-1')
+    const sm1 = REGISTER_RECORDS.find((x) => x.row === 'P-OV-SM-1')
+    expect(
+      im1?.executedDrives,
+      'HARNESS-2 / AD-1 — `P-OV-IM-1`: its declared term is `10` (the ten pool SHAPES) while its cell drives a FIXED moving verb AND a FIXED no-move verb per shape, so the row issues `20` entry-point drives. The `20` is MEASURED and printed BESIDE the `10`; the term does not move.',
+    ).toBe(20)
+    expect(
+      sm1?.executedDrives,
+      'HARNESS-2 / AD-1 — `P-OV-SM-1`: its declared term is `6` (5 row-sweeps + 1 recorder sweep) while a single attempt drives a SWEEP of cells — 4 cells in each of the first five sweeps and the whole 20-cell matrix twice in the recorder sweep — so the row issues `60` entry-point drives inside its six counted attempts. The `60` is MEASURED and printed BESIDE the `6`; the term does not move.',
+    ).toBe(60)
+    expect(
+      REGISTER_RECORDS.filter((x) => x.executedDrives !== null).map((x) => x.row),
+      'HARNESS-2 / AD-1 — the rows that print a MEASURED executed-drive figure are NAMED (a row that is not instrumented says `not-instrumented` instead of implying a figure)',
+    ).toEqual(['P-OV-IM-1', 'P-OV-SM-1'])
   })
 
   it('HARNESS-3 (§5.5.2 items 1/2) — the ROW COUNT is an EXTENT (13 rows / 13 terms), the (bounded) SET is named, and each bounded row says so', () => {
@@ -3138,8 +3259,8 @@ describe('§5.5.1 / §5.5.2 / §5.5.3 — the register harness: declared-vs-meas
     expect(DECLARED_REGISTER.filter((r) => r.type === 'P-IM').length, 'HARNESS-3 — 5 IM rows').toBe(5)
     expect(DECLARED_REGISTER.filter((r) => r.type === 'P-SM').length, 'HARNESS-3 — 2 SM rows').toBe(2)
     expect(DECLARED_REGISTER.filter((r) => r.type === 'P-TP').length, 'HARNESS-3 — 6 TP rows').toBe(6)
-    expect(boundedRows(), 'HARNESS-3 — THE (bounded) SET, NAMED: every row whose property text quantifies over a domain LARGER than its table is MARKED in its own cell ("YES (bounded — … the universal is NOT proven)"), and NO READER MAY READ A BOUNDED ROW AS A PROOF OF THE UNBOUNDED UNIVERSAL IT STATES. **SPEC FINDING REPORTED HERE: §5.5.3\'s "(bounded) SET" sentence counts `7` of `13` and then enumerates the SAME `6` row ids that §5.5.2 item 2 names — so the figure `7` and the enumerated set disagree and the ROW CELLS (the register\'s authority) mark `6`. The marking is a ROW count and moves NO term; the mis-count is reported rather than tuned, and no row is added to make "7" true.**').toEqual(['P-OV-IM-1', 'P-OV-IM-3', 'P-OV-TP-1', 'P-OV-TP-2', 'P-OV-TP-3', 'P-OV-TP-5'])
-    expect(boundedRows().length, 'HARNESS-3 — the bounded set is the SIX rows §5.5.2 item 2 names, and §5.5.2 item 2\'s own arithmetic `6 + 7 = 13` reads as the marked-rows-plus-unmarked-rows count').toBe(6)
+    expect(boundedRows(), 'HARNESS-3 — THE (bounded) SET, NAMED: every row whose property text quantifies over a domain LARGER than its table is MARKED in its own cell ("YES (bounded — … the universal is NOT proven)"), and NO READER MAY READ A BOUNDED ROW AS A PROOF OF THE UNBOUNDED UNIVERSAL IT STATES. **⟶ THE SEVENTH ROW IS `P-OV-IM-2` (`§0A` NOTE 10 ITEM 1, gate 4\'s `AD-3`): its property text asserts `changed === (next !== previous)` ON EVERY DRIVE while its cell drives `6`, so its own cell is now MARKED — and the `7` the contract had printed over a `6`-id list, the `6` note 8 item 2 corrected it down to, and the SEVEN the cells now carry are three states of ONE row count, each visible at its own site.** The marking is a ROW count and moves NO term: the seven marked rows carry no term of their own in either total, the declared total stays `104`, and no row is added to make the figure true.').toEqual(['P-OV-IM-1', 'P-OV-IM-2', 'P-OV-IM-3', 'P-OV-TP-1', 'P-OV-TP-2', 'P-OV-TP-3', 'P-OV-TP-5'])
+    expect(boundedRows().length, 'HARNESS-3 — the bounded set is the SEVEN rows the cells carry (`§5.5.2` item 2 and `§5.5.3` now NAME the same set, `§0A` note 10 item 1), and `7 + 6 = 13` reads as the marked-rows-plus-unmarked-rows count').toBe(7)
     expect(boundedRows().length + DECLARED_REGISTER.filter((r) => !r.bounded).length, 'HARNESS-3 — marked + unmarked = 13, so the row count is checkable rather than asserted').toBe(13)
     expect(DECLARED_REGISTER.filter((r) => r.bounded && r.declared < 1).length, 'HARNESS-3 — every bounded row really drives attempts (a bounded marking on an EMPTY table would be over-strength)').toBe(0)
     for (const def of DECLARED_REGISTER) {
@@ -3147,23 +3268,58 @@ describe('§5.5.1 / §5.5.2 / §5.5.3 — the register harness: declared-vs-meas
     }
   })
 
-  it('HARNESS-4 (§5.5.2 item 3) — THE DECLARED-VERSUS-DISTINCT LEDGER: the ONE collapsing row is printed BESIDE its declared term', () => {
+  it('HARNESS-4 (§5.5.2 item 3) — THE DECLARED-VERSUS-DISTINCT LEDGER: the ONE collapsing row is printed BESIDE its declared term, and the MEASURED executed distinct (`AD-2`) is printed and asserted beside the DESIGN figure', () => {
     const ledger = DECLARED_REGISTER.filter((r) => r.distinct !== null && r.distinct !== r.declared).map((r) => ({ row: r.row, declared: r.declared, distinct: r.distinct }))
     console.log(`§5.5.2 item 3 declared-vs-distinct ledger (differing rows) :: ${JSON.stringify(ledger)}`)
     expect(ledger, 'HARNESS-4 — the ledger expects EXACTLY ONE differing row: P-OV-SM-1 `6 → 3` (the 20 cells are reported as 3 DISTINCT sweeps in the distinct ledger; the pairing is stated in the cell). The DISTINCT figure is REPORTED BESIDE the declared term and is NEVER substituted for it, and the caps compare against the DECLARED figures.').toEqual([{ row: 'P-OV-SM-1', declared: 6, distinct: 3 }])
     const declaredSum = declaredTotal()
     const declaredDistinctSum = declaredDistinctTotal()
-    const executedDistinctSum = REGISTER_RECORDS.reduce((a, r) => a + r.distinctDrives, 0)
-    console.log(`§5.5.2 item 3 sums :: declared=${declaredSum} declared-distinct=${declaredDistinctSum} executed-distinct=${executedDistinctSum}`)
+    // ⟶ **`AD-2` (HIGH) — THE PRINTED DISTINCT FIGURE IS A DESIGN FIGURE, AND THE ROW NOW
+    // PRINTS AND ASSERTS THE MEASURED ONE BESIDE IT.** The contract's declared distinct
+    // total is `101` (the corrected `§5.5.2` item 3 figure), while the EXECUTED distinct
+    // drives this register really issues are counted on each row's own `distinctDrives`.
+    // The row therefore prints the measured figure PER ROW beside its declared one, and
+    // states the shortfall as a DECLARED SHORTFALL — a printed reading of what ran, never
+    // a satisfied claim that the declared figure was executed, and never a re-grain of any
+    // term to hide it. THE DECLARED FIGURE IS NOT REDUCED: `101` stays the contract's and
+    // is asserted below as such.
+    const measuredDistinctByRow = DECLARED_REGISTER.map((def) => {
+      const rec = REGISTER_RECORDS.find((x) => x.row === def.row)
+      return { row: def.row, declaredDistinct: def.distinct ?? def.declared, measuredExecutedDistinct: rec?.distinctDrives ?? 0 }
+    })
+    const executedDistinctSum = measuredDistinctByRow.reduce((a, x) => a + x.measuredExecutedDistinct, 0)
+    const distinctShortfall = declaredDistinctSum - executedDistinctSum
+    console.log(`§5.5.2 item 3 distinct readings PER ROW (declared beside MEASURED executed) :: ${JSON.stringify(measuredDistinctByRow)}`)
+    console.log(`§5.5.2 item 3 sums :: declared=${declaredSum} declared-distinct=${declaredDistinctSum} executed-distinct=${executedDistinctSum} — **DECLARED SHORTFALL=${distinctShortfall}** (the declared distinct figure is a DESIGN figure; the executed distinct drives are the MEASURED one, and the shortfall is REPORTED here as a printed reading and never as a satisfied claim)`)
     expect(declaredDistinctSum, 'HARNESS-4 — the DECLARED distinct sum is the COMPUTED sum of the thirteen distinct figures (10 + 6 + 12 + 4 + 4 + 3 + 3 + 20 + 9 + 12 + 4 + 6 + 8 = 101; §5.5.2 item 3 NOW PRINTS the same thirteen figures and the same `101` — `§0A` note 9 item 2 reconciled the assignment to this ledger\'s own rows, and the as-filed mirror `10 + 3 + 12 + 4 + 4 + 6 + 3 + …` stays visible beside it under that note\'s dated annotation)').toBe(101)
     expect(declaredSum - declaredDistinctSum, 'HARNESS-4 — the two figures\' relation is ARITHMETIC: 104 − 101 = 3, the ONE differing row\'s collapse (P-OV-SM-1 `6 → 3`), so the ledger\'s expectation of ONE differing row holds regardless of the printed totals').toBe(3)
-    expect(executedDistinctSum, 'HARNESS-4 — the EXECUTED distinct drives are measured BESIDE the declared figure (A DECLARED REGISTER TERM IS A DRIVE COUNT): at red time every row is broken on the module-absent boundary, so this measures what really ran').toBeLessThanOrEqual(declaredSum)
+    // THE MEASURED FIGURE, ASSERTED EXPLICITLY BESIDE THE DECLARED ONE.
+    expect(
+      executedDistinctSum,
+      'HARNESS-4 / AD-2 — the MEASURED EXECUTED distinct drives total `3`: the ONLY row that re-drives for a distinct reading is `P-OV-SM-1`, whose `20`-cell matrix is reported as `3` DISTINCT SWEEPS (its three `distinctDrive()` readings). The earlier form of this row asserted only `executedDistinctSum ≤ declaredSum`, which the DESIGN figure satisfied while the EXECUTED figure was `3` against a printed `101` — an under-claim that must be a printed reading, never a silent pass.',
+    ).toBe(3)
+    expect(
+      distinctShortfall,
+      'HARNESS-4 / AD-2 — THE SHORTFALL IS DECLARED, NOT HIDDEN: `101` declared minus `3` executed = `98`, printed above as the DECLARED SHORTFALL. The declared figure is a DESIGN figure and this row may NOT be read as evidence that 101 distinct drives ran.',
+    ).toBe(98)
+    expect(
+      measuredDistinctByRow.filter((x) => x.measuredExecutedDistinct > 0).map((x) => x.row),
+      'HARNESS-4 / AD-2 — the rows carrying a MEASURED distinct drive are NAMED, so the executed figure has named terms rather than being a bare total',
+    ).toEqual(['P-OV-SM-1'])
+    for (const x of measuredDistinctByRow) {
+      expect(
+        x.measuredExecutedDistinct,
+        `HARNESS-4 — ${x.row}: the MEASURED distinct drives never exceed the row's DECLARED distinct figure (${x.declaredDistinct}) — a measured count above it would be a spec/table contradiction and is REPORTED, never tuned`,
+      ).toBeLessThanOrEqual(x.declaredDistinct)
+    }
+    expect(executedDistinctSum, 'HARNESS-4 — the measured executed distinct stays inside the declared total (and inside the DECLARED figure it is reported beside)').toBeLessThanOrEqual(declaredSum)
+    expect(distinctShortfall, 'HARNESS-4 / AD-2 — the shortfall is REAL and POSITIVE on this row: the declared distinct figure is not executed, and the row says so as a printed reading').toBeGreaterThan(0)
   })
 
   it('HARNESS-5 (§5.5.2 items 4/5/8) — the three deliberately EXCLUDED shapes, the pool-versus-boundary check, and the register\'s stated limits', () => {
     const excluded = [
       'a lone-surrogate string as an attributeName (it would exercise no rule this contract pins, and its only observable is identity pass-through, which the whitespace-padded shape already asserts)',
-      'a Symbol.toPrimitive that throws only on its SECOND invocation (it would make a draw\'s count ambiguous, and this module consults no coercion hook at all)',
+      'a Symbol.toPrimitive that throws only on its SECOND invocation (it would make a draw\'s count ambiguous, and this module consults no coercion hook at all) — **STILL EXCLUDED, AND NOW SAID SO AGAINST A DRIVE: `AD-6` drives the banned hook on its FIRST invocation (throwing, on the `target`, `state` and `name` slots, with the count asserted 0 and proven live by a positive control), which is the unambiguous form; the SECOND-invocation shape stays a STATED BOUNDARY.**',
       'a callback whose invocation count depends on a timer (equally ambiguous for a draw; P-OV-IM-5 asserts the count instead)',
     ]
     expect(excluded.length, 'HARNESS-5 — §5.5.2 item 4 names THREE deliberately excluded shapes as a STATED BOUNDARY, not an unrecorded omission. A pass that wants one driven owes a NEW dated amendment and a register re-grain under REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS.').toBe(3)
