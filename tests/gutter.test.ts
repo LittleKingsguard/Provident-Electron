@@ -2478,6 +2478,24 @@ const NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_PATHS: ReadonlyArray<{ readonly p
     path: 'docs/specs/user-flow-audit.md',
     unit: 'the DIVERGENCE/HARNESS unit (`U-DIVERGENCE-EXT`, ledger row `C2`) — its DOCUMENTATION pass FILED this spec and discharged the gap `U-GAP-1` (`docs/specs/gutter-ui.md` `§5.U`’s dated discharge note) — NOT this unit',
   },
+  // **⟶ ADDED 2026-09-27 (THE THIRD ALLOW-LIST ADDITION, `F3`/`U-FOCUS-TOOL`’s TWO IN-SCOPE
+  //    CENSUS-EDITED FILES — `docs/specs/focus-tool.md` `§5.1` allow-list row 24 / `§5.2` item 4
+  //    (iii) `N-23`): THE DECLARING-UNIT ENTRIES FOR THE TWO FILES THAT UNIT’S OWN CENSUS COMMIT
+  //    DIRTIES, each entered HERE rather than in `SIBLING_UNIT_ARTIFACT_PATHS` because neither is a
+  //    sibling artifact and neither may be excused in the DENIED arm.** **THE COMPLEMENT IS
+  //    EXPLICIT AND IS ENFORCED BY THIS ROW’S OWN CONTROL (l-3) LIST 2 (which reads
+  //    `isSiblingUnitArtifact` over every entry and requires it EMPTY): `tests/gutter-ui.test.ts`
+  //    and `tests/layout-projection.test.ts` are NOT entered here — each is already declared
+  //    (`SIBLING_UNIT_ARTIFACT_PATHS`; `OTHER_UNIT_TEST_FILES`), so an entry for either would
+  //    CONTRADICT that list.** **AN ENTRY NAMES ITS UNIT; NONE IS ANONYMOUS.**
+  {
+    path: 'tests/engine-pin-version.test.ts',
+    unit: 'the FOCUS-TOOL unit (`F3` / `U-FOCUS-TOOL`) — its CENSUS RE-PARAMETERISATION (`docs/specs/focus-tool.md` `§5.1` allow-list row 6) moved the tool-set length pins `21 → 22` for `provident.focus` and DIRTIED this file in the same commit — NOT this unit',
+  },
+  {
+    path: 'tests/theme-control.test.ts',
+    unit: 'the FOCUS-TOOL unit (`F3` / `U-FOCUS-TOOL`) — its SAME-COMMIT CENSUS EDIT (`docs/specs/focus-tool.md` `§5.1` allow-list row 21: the `ALL_TOOLS` `21 → 22` count pins, the `RpcMethod` member list and the pinned sibling length) DIRTIED this file in the same commit — NOT this unit',
+  },
 ]
 const MENULIB_DOC_ARTIFACTS: ReadonlyArray<{ readonly path: string; readonly unit: string }> = [
   {
@@ -4333,7 +4351,7 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
   //   `Outside the allow-list: ["tests/blind-battery-hooks-handlers.test.ts", … 25 paths …]`
   //
   // All 25 are the test-layer leg's own files, already declared with their owning unit in
-  // `NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_PATHS` (26 entries) — i.e. `E3` was being FAILED for
+  // `NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_PATHS` (31 entries) — i.e. `E3` was being FAILED for
   // another unit's pass.
   //
   // **THE AUTHORITY — `docs/specs/gutter.md` `§5.1`, quoted rather than paraphrased:** *"a
@@ -4567,7 +4585,7 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
         isAccountedFor(CONTROL_DECLARED_TEST_LAYER_PATH),
         rawDenied.filter((path) => !isAccountedFor(path)),
       ],
-      `R-12 §3.4 — CONTROL (m, THE ACCOUNTING RULE DRIVEN BOTH WAYS — LIVE AND SYNTHETIC): (1) \`E3\`'s OWN file \`${TEST_RELPATH}\` IS accounted for, so the rule does not fail everything; (2) the synthetic UNDECLARED denied path \`${CONTROL_UNDECLARED_DENIED_PATH}\` — a \`tests/**\` name on NO disk, claimed by NOBODY, hence denied by \`isDeniedPath\` in the RAW reading — is **NOT** accounted for, so **an UNDECLARED path STILL FAILS the rule** (\`docs/specs/gutter.md\` §5.1's own sentence, applied rather than bent); (3) the DECLARED test-layer-leg path \`${CONTROL_DECLARED_TEST_LAYER_PATH}\` IS accounted for and its declaring unit is NAMED, so the declaration does the work the arm relies on; and (4) **on the LIVE reading every raw denied path is accounted for** — the 29 declared test-layer/config paths, the sibling's own spec, and the paths this row reports as findings. **READS:** ${JSON.stringify(
+      `R-12 §3.4 — CONTROL (m, THE ACCOUNTING RULE DRIVEN BOTH WAYS — LIVE AND SYNTHETIC): (1) \`E3\`'s OWN file \`${TEST_RELPATH}\` IS accounted for, so the rule does not fail everything; (2) the synthetic UNDECLARED denied path \`${CONTROL_UNDECLARED_DENIED_PATH}\` — a \`tests/**\` name on NO disk, claimed by NOBODY, hence denied by \`isDeniedPath\` in the RAW reading — is **NOT** accounted for, so **an UNDECLARED path STILL FAILS the rule** (\`docs/specs/gutter.md\` §5.1's own sentence, applied rather than bent); (3) the DECLARED test-layer-leg path \`${CONTROL_DECLARED_TEST_LAYER_PATH}\` IS accounted for and its declaring unit is NAMED, so the declaration does the work the arm relies on; and (4) **on the LIVE reading every raw denied path is accounted for** — the 31 declared test-layer/config paths, the sibling's own spec, and the paths this row reports as findings. **READS:** ${JSON.stringify(
         {
           e3OwnFile: isAccountedFor(TEST_RELPATH),
           undeclaredControl: [
@@ -4930,11 +4948,13 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       // **THE HACK PATH IS DENIED (\`true\`) AND STILL AN \`E3\`-OWN, NON-sibling, NON-declared path:
       // both halves bind it, and the allow-list filter above does not excuse it. The two following
       // readings are the DECLARED sibling's (denied, sibling) and the hack's (\`isSiblingUnitArtifact
-      // === false\`), and the last is the test-layer declaration's entry count.**
+      // === false\`), and the last is the test-layer declaration's entry count (31 = the 25
+      // test-layer-leg paths + the 6 declaring-unit entries: focus-model, focus-tool,
+      // focus-tool-register, user-flow-audit, engine-pin-version, theme-control).**
       true,
       true,
       false,
-      29,
+      31,
     ])
     // (n) **⟶ ADDED 2026-09-27 (THE CROSS-UNIT SIBLING-REGISTRY REPAIR, `E4`/`U-RELOCATE`'s RED
     //     SET) — THE NEW `E4` DECLARATION, DRIVEN ON THE DECLARED PATH ITSELF AND ON ALL FOUR

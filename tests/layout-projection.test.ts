@@ -3722,7 +3722,7 @@ describe('R — §3.4/§3.5 the static + existence rows', () => {
       'R-21: `tests/engine-pin-version.test.ts`’s existing R-15/R-15a/R-15b rows exist and run in the same node suite (they are the seam half — this row does not re-author them)',
     ).toBe(true)
     const src = readFileSync(sibling, 'utf8')
-    // The tool seam is asserted against the PINNED 21-NAME set — a NEW seam fails
+    // The tool seam is asserted against the PINNED 22-NAME set — a NEW seam fails
     // it BY NAME (S-14: never by count alone). Read from the sibling's OWN
     // `PINNED_TOOL_SET`, which is name-complete.
     const setAt = src.indexOf('PINNED_TOOL_SET')
@@ -3734,12 +3734,12 @@ describe('R — §3.4/§3.5 the static + existence rows', () => {
     const pinnedNames = [...setBody.matchAll(/'([^'\n]+)'/g)].map((m) => m[1])
     expect(
       pinnedNames.length,
-      'R-21: the sibling census pins the 21 tool NAMES (a SET assertion — a new or removed seam fails it BY NAME)',
-    ).toBe(21)
+      'R-21: the sibling census pins the 22 tool NAMES (a SET assertion — a new or removed seam fails it BY NAME)',
+    ).toBe(22)
     expect(
       new Set(pinnedNames).size,
       'R-21: the pinned tool names are distinct (a set, not a bag)',
-    ).toBe(21)
+    ).toBe(22)
     const code = stripComments(moduleSource('R-21 the module must add no seam'))
     expectNoStaticHits(
       code,
