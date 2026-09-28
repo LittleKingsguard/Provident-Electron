@@ -1132,22 +1132,56 @@ describe('§3.5 X-1 / X-2 / X-4 / X-5 + §3.4 R-9 / R-3(config) / R-6(no-importe
 
   it('X-5 (§3.5) — src/** carries NO theme/appearance/attribute-write/media-query/OS surface, and the only theme-ish artifact is index.html\'s existing rule', () => {
     const vocabulary = [t('matchMedia'), t('prefers-color-scheme'), t('data-theme'), t('color-scheme'), t('appearance')]
+    // THE DECLARED EXEMPTIONS, NAMED (the form this file's other scan rows use —
+    // `R-1_EXEMPT` above; `S-TH-2`: a scan row that does not name its exemptions
+    // is VACUOUS). TWO PATHS AND NO OTHERS: `F1` / `U-THEME-CONTROL`'s MANDATED
+    // surface necessarily carries this vocabulary — the AUTHORED appearance
+    // control in the demo envelope and the caller-held attribute-name holder in
+    // the renderer wiring (`theme-control.md` §5.1 allow-list rows 11/12, both
+    // ALLOWED to that unit and DENIED to this one). The exemption is the two
+    // PATHS BY NAME, never the tokens: the POSITIVE CONTROL below proves a
+    // token in any OTHER `src/**` file still FAILS, in BOTH vocabularies.
+    // It is applied PER PATH to both readings, so the row measures ONE surface.
+    const X5_EXEMPT_PATHS: readonly string[] = ['src/shared/demo-envelope.ts', 'src/renderer/renderer.ts']
+    const x5Exempt = (p: string): boolean => X5_EXEMPT_PATHS.some((e) => p === join(ROOT, e))
+    const exemptedReads: string[] = []
+    const x5Scan = (p: string, src: string, tokens: readonly string[]): string[] => {
+      const rel = p.replace(ROOT, '.')
+      const within: string[] = []
+      for (const v of tokens) if (scanForToken(src, v, false)) within.push(`${rel}: ${v}`)
+      return within
+    }
     const hits: string[] = []
     const readFile = (p: string): void => {
       const src = readFileSync(p, 'utf8')
-      for (const v of vocabulary) if (scanForToken(src, v, false)) hits.push(`${p.replace(ROOT, '.')}: ${v}`)
+      const found = x5Scan(p, src, vocabulary)
+      if (x5Exempt(p)) exemptedReads.push(...found)
+      else hits.push(...found)
     }
     readFile(join(ROOT, 'src', 'renderer', 'index.html'))
     const tsHits: string[] = []
     for (const p of srcTsFiles()) {
       const src = readFileSync(p, 'utf8')
-      for (const v of [t('theme'), t('appearance'), t('dark')]) if (scanForToken(src, v, false)) tsHits.push(`${p.replace(ROOT, '.')}: ${v}`)
-      readFile(p)
+      const found = x5Scan(p, src, [t('theme'), t('appearance'), t('dark')])
+      if (x5Exempt(p)) exemptedReads.push(...found)
+      else tsHits.push(...found)
     }
     expect(
       tsHits,
-      'X-5 — a src/**/*.ts search for the theme/appearance vocabulary returns ZERO matches (re-measured at §3.5 X-5). A FAIL here means a theme surface already exists and this unit\'s DENIED list must be re-derived.',
+      `X-5 — a src/**/*.ts search for the theme/appearance vocabulary returns ZERO matches OUTSIDE THE DECLARED EXEMPTIONS, which are the two paths BY NAME: ${JSON.stringify(X5_EXEMPT_PATHS)} (the surface \`F1\`/\`U-THEME-CONTROL\` is MANDATED to carry, and which is DENIED to this unit — theme-control.md §5.1 allow-list rows 11/12). A FAIL here means a theme surface already exists OUTSIDE those two paths and this unit's DENIED list must be re-derived. Offending: ${JSON.stringify(tsHits)}. The exempted reads, reported and never asserted: ${JSON.stringify(exemptedReads)}`,
     ).toEqual([])
+    // THE EXEMPTION'S OWN POSITIVE CONTROL, so the exemption is not a blanket
+    // strip: the SAME scan instrument carrying the same token, in a synthetic
+    // file whose path is NEITHER exempt path, MUST FAIL.
+    const otherFile = join(ROOT, 'src', 'shared', 'anything-else.ts')
+    expect(
+      x5Scan(otherFile, `const label = '${t('dark')}'`, [t('theme'), t('appearance'), t('dark')]).length,
+      `X-5 (POSITIVE control for the declared exemption) — a file outside the two exempt paths that carries the vocabulary MUST FAIL this row: the exemption is the two PATHS BY NAME, never the token (instrument: ${x5Scan(otherFile, 'const a = 1', [t('theme'), t('appearance'), t('dark')]).length} hits for ordinary code).`,
+    ).toBeGreaterThan(0)
+    expect(
+      x5Scan(otherFile, `const rule = '${t('color-scheme')}'`, vocabulary).length,
+      'X-5 (POSITIVE control, second vocabulary) — the SAME path rule governs the appearance-vocabulary reading: the token in a non-exempt path FAILS it too, so the exemption is neither a blanket strip nor a per-vocabulary one.',
+    ).toBeGreaterThan(0)
     expect(
       hits.length,
       `X-5 — a src/** search for the appearance vocabulary returns EXACTLY ONE matching line: the existing :root rule in src/renderer/index.html (the repo\'s EXISTING appearance authority, which is F1\'s surface and which nothing this unit returns can influence). Read: ${JSON.stringify(hits)}`,

@@ -2243,10 +2243,18 @@ function tp2Attempt(argShape: number, ctxShape: 'wellformed' | 'empty' | 'throwi
     const extraTree = rec.tree.filter((k) => k !== 'allNodes')
     const extraApi = rec.clientAPI.filter((k) => k !== 'apply')
     const expectedMutations = ctxShape === 'wellformed' ? 1 : 0
+    const boundHolds = dbl.calls.length <= 1
+    const wellformedExactHolds = ctxShape === 'wellformed' ? dbl.calls.length === expectedMutations : true
     return checkAssertions(
       [
         { label: `§5.5.1 P-TC-TP-2 arg(${argShape}) ctx(${ctxShape}) — the authored body NEVER throws (a throwing applyCommand must be ABSORBED)`, ok: thrown === undefined },
-        { label: `§5.5.1 P-TC-TP-2 arg(${argShape}) ctx(${ctxShape}) — AT MOST ONE mutation (${dbl.calls.length} issued)`, ok: dbl.calls.length <= 1 && dbl.calls.length === expectedMutations },
+        // THE ROW'S OWN DECLARED PER-ATTEMPT ASSERTION IS THE BOUND (`≤ 1`), and it is
+        // asserted as the bound; the WELL-FORMED arm keeps the exact count, because
+        // the one mandated write is measurable on that double (§5.5.1's "applies AT
+        // MOST ONE mutation" + the `M-4` single-write clause). The harness pushes onto
+        // its call log BEFORE it throws, so counting an exact 0 on the resolving or
+        // throwing double would assert against a write the row itself requires.
+        { label: `§5.5.1 P-TC-TP-2 arg(${argShape}) ctx(${ctxShape}) — AT MOST ONE mutation (${dbl.calls.length} issued)`, ok: boundHolds && wellformedExactHolds },
         { label: `§5.5.1 P-TC-TP-2 arg(${argShape}) ctx(${ctxShape}) — NO ctx member beyond the two declared reads is consulted; extra: ${[...extraTop, ...extraTree, ...extraApi].join(',')}`, ok: extraTop.length === 0 && extraTree.length === 0 && extraApi.length === 0 },
         { label: `§5.5.1 P-TC-TP-2 arg(${argShape}) ctx(${ctxShape}) — nothing was written to an element-shaped peer`, ok: inventoryTotal(dbl.inv) === 0 },
       ],
@@ -2527,6 +2535,27 @@ describe('§5.5.1 REGISTER — the executed property layer (11 rows, declared 97
   })
   it('REG P-TC-TP-2 (§5.5.1, S-TC-HANDLER-1) — the handler body totality over hostile ctx doubles', () => {
     registerRowTest(REGISTER_TP_2)
+    // THE BOUND'S OWN FALSIFIER, REPORTED ON THE CONTROL CHANNEL AND OUTSIDE THE
+    // DECLARED 18-ATTEMPT TERM (`§5.5.1`: a row's controls sit BESIDE its term):
+    // the per-attempt bound `≤ 1` is only a claim if a body performing TWO
+    // mutations FAILS it. This control must be BROKEN by construction.
+    const c = cardReading()
+    const st = stateNodeRequired()
+    const twoMut = makeCtx({ nodes: st.ok ? [st.node] : [] })
+    driveBody(
+      `function body(ctx, value) { const ns = ctx.tree.allNodes(); const n = ns.find((x) => x && x.props && x.props.id === ${JSON.stringify(STATE_ID)}); if (!n) return; ctx.clientAPI.apply(n.id, [{ targetProp: 'content', value: 'a' }]); ctx.clientAPI.apply(n.id, [{ targetProp: 'content', value: 'b' }]); }`,
+      twoMut.ctx,
+      'dark',
+      false,
+    )
+    expect(
+      twoMut.calls.length,
+      'P-TC-TP-2 (CONTROL for the BOUND) — the synthetic two-mutation body really issues TWO mutations against the same recording double, so the falsifier below measures the bound and not the harness.',
+    ).toBe(2)
+    expect(
+      twoMut.calls.length <= 1,
+      `P-TC-TP-2 (CONTROL for the BOUND, reported BESIDE the declared 18-attempt term and never inside it) — a body performing TWO mutations MUST FAIL the per-attempt bound \`≤ 1\`, so the row's totality claim is FALSIFIABLE and not a tautology (${twoMut.calls.length} issued${c.ok ? '' : `; the authored card is absent: ${c.reason}`}).`,
+    ).toBe(false)
   })
   it('REG P-TC-TP-3 (§5.5.1, S-TC-NOEDGE-1) — the no-fabricated-edge refusal', () => {
     registerRowTest(REGISTER_TP_3)
