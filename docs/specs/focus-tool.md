@@ -31,7 +31,9 @@ TestWriter has RUN and REPORTED the red set** (`AGENTS.md` item 9, `§4.5`).
 `§0` · `§0`/`§0A` — the rulings derived and this filing's own dated notes, **including `§0A` note 6 — THE GATE-3
 RED-RUN RE-GRAIN (2026-09-27), the ONE place that carries all three adjudicated defects, the re-grained term column
 and its moved declared total, the explicit bounded set and the named instrument reading class, and read FIRST by any
-pass about to quote a register figure** · the **Layer declaration** — the four
+pass about to quote a register figure — **and, added by the `67`-vs-`72` CORRECTION, its own WITHDRAWAL annotation
+(the moved `72` was the re-grain's own arithmetic defect; the EXECUTED register's declared total is `67`, which is the
+as-filed figure, and only the chain and the subtotals are recomputed)** · the **Layer declaration** — the four
 labels, the layer map and the honesty anchors · `§1` — the scope with its NOT-THIS-UNIT items · `§2.1` the surface
 exact · `§2.2` **the prohibition table with a named test per row**, **the collision table BY TOKEN** and **the
 semantics table with no `undefined-until-answered` row** · `§2.3` the value/identity rules · `§2.4` **the five
@@ -86,6 +88,15 @@ the placement the sibling specs use.)**
    declared total printed with its seventeen terms and its recomputed chain and subtotals at `§5.5.3`.** **`67` is
    KEPT VISIBLE HERE AS THE AS-FILED FIGURE and is no longer the figure this file quotes.** **The row set is UNCHANGED:
    `17` rows, `17` terms, no row id, strategy id, seed or cap moved, and the caps are re-checked against `72`**
+   (`§5.5.3`).**
+   **⟶⟶ 2026-09-27 ANNOTATION ON THAT ANNOTATION (`§0A` note 6, the `67`-vs-`72` CORRECTION) — THE MOVED `72` IS
+   ITSELF DEFECTIVE AND IS WITHDRAWN; THE AS-FILED `67` IS RESTORED AS THE DECLARED TOTAL.** **The executed register's
+   own `DECLARED_TERMS` is exactly the SEVENTEEN values `§5.5.1`'s row cells carry, its cells match TERM FOR TERM, its
+   sum is `67`, and its drive counts match — so the re-grain's `72` was THIS SUPERVISOR'S OWN RE-GRAIN ARITHMETIC
+   DEFECT, recorded here as such and WITHDRAWN; the as-filed `67` above is NOT superseded after all.**
+   **THE FILE'S ONE DECLARED TOTAL IS `67`, printed with the seventeen terms that actually sum to it.** **The row set is
+   UNCHANGED: `17` rows, `17` terms, no row id, strategy id, seed or cap moved, the caps are re-checked against `67`,
+   and `§5.5.3` now recomputes only the chain and the subtotals so every printed figure closes on `67`**
    (`§5.5.3`).**
 5. **THE LEGS THIS UNIT DECLARES (none run): the node suite `[T]`** — `npm test` — plus `npm run typecheck` `[H]`
    (`src/**` ONLY; it never reads `tests/**`), `npm run build` `[H]`, and the additive `npm run typecheck:tests`
@@ -243,6 +254,12 @@ would pass it on; the row that catches that is the CONSUMER's, not this unit's**
 
 **Note 6 — THE GATE-3 RED-RUN RE-GRAIN, DATED 2026-09-27: THE THREE ADJUDICATED DEFECTS, THE RE-GRAINED TERM COLUMN,
 THE BOUNDED SET AND THE INSTRUMENT READING CLASS — ANNOTATED BESIDE THE AS-FILED TEXT, WHICH IS NEVER REWRITTEN.**
+**⟶⟶ DATED CORRECTION INSIDE NOTE 6 (2026-09-27, the SAME DATE, APPENDED): THE `67`-vs-`72` CORRECTION — THE RE-GRAIN'S
+MOVED DECLARED TOTAL `72` IS WITHDRAWN AS THE RE-GRAIN'S OWN ARITHMETIC DEFECT, THE EXECUTED REGISTER'S DECLARED TOTAL
+IS `67`, AND ONLY THE CHAIN AND THE SUBTOTALS ARE RECOMPUTED.** **PROVENANCE: THE ALIGNMENT PASS'S OWN LIVE MEASUREMENT
+AND ITS STOP.** **A READER ABOUT TO QUOTE A FIGURE FROM THIS NOTE MUST READ PARAGRAPH 1's closing correction below
+BEFORE QUOTING ITS `72`; items 2 and 3 of this note are UNAFFECTED by the correction** (the bounded set is still the
+FIVE NAMED rows and the reading class is still as recorded — see the correction's own closing paragraph).
 **WHAT THIS NOTE IS AND IS NOT.** **The gate-3 red run MEASURED three defects in this filing's own contract text; all
 three are ADJUDICATED and this note APPLIES them — it does not re-derive them.** **THE AUTHORITY IS THE REGISTER THE
 TestWriter AUTHORED AND EXECUTED — `tests/focus-tool-register.ts`, which carries the SEVENTEEN typed rows whose cells
@@ -289,6 +306,13 @@ READINESS = `4 + 2 + 2` = `8` · THE RESULT SHAPE AND TOTALITY = `3 + 1` = `4`**
 + 3` = `39` · `P-SM` = `3 + 2 + 3 + 2 + 2` = `12` · `P-TP` = `1 + 12 + 2 + 1` = `16`** — **and `39` + `12` = `51`** ·
 **`+ 16` = `67`.** **⚠ THE BY-TYPE FIGURE `67` IS NOT THE TOTAL AND MUST NOT BE QUOTED AS ONE: it is the `P-TP`
 family's own residue in that addition, and the file's ONE total is `72`.**
+**⟶⟶ 2026-09-27 CORRECTION ON THESE TWO SUBTOTAL SENTENCES (`§0A` note 6, the `67`-vs-`72` CORRECTION): THE BY-DOMAIN
+`= 72` ABOVE AND THE `⚠` SENTENCE'S *"the file's ONE total is `72`"* ARE BOTH WITHDRAWN, AND THE `67` THE `⚠`
+DISCLAIMS IS IN FACT THE FILE'S ONE TOTAL.** **THE SUBTOTAL ARITHMETIC, READ AGAINST THE EXECUTED REGISTER'S
+SEVENTEEN ROWS (`AR-1` `11`, `AR-4` `12`, `RF-1`/`RF-2`/`RF-4` only): BY DOMAIN = `14 + 18 + 23 + 8 + 4` = `67`; BY
+TYPE = `39 + 12 + 16` = `67` — each the sum of the addends it names, both closing on the declared total `67`.** **THE
+`= 72` ABOVE IS A SUMMATION ERROR (`14 + 18 + 23 + 8 + 4` is `67`), NOT AN ADDEND ERROR, WHICH IS WHY THE SAME
+SENTENCES ALSO PRINT `39` + `12` = `51`, `+ 16` = `67` — a total contradicting a subtotal the same paragraph prints.**
 **CAPS RE-CHECKED AGAINST THE RE-GRAINED DECLARED FIGURE** (as this note requires): **`72` ≤ `400` IN TOTAL** (headroom
 `328`) · **largest row `12` ≤ `100`** (headroom `88`) — **both caps HOLD against `72`, and neither is close; the
 as-filed caps check against `67` stands for `67` and is not re-quoted as if it had checked `72`.** **AND THE ROW COUNT
@@ -307,6 +331,68 @@ WHOSE TERMS DID NOT MOVE — `12` OF THE `17`: `RT-1` `4` · `RT-2` `3` · `RT-3
 rows whose printed-against figure was another row's, and `12` rows untouched — `3 + 2 + 12 = 17`).** **THE AS-FILED
 LIST'S TRAILING `+ 1` BELONGS TO NO ROW AND IS WITHDRAWN: the trailing drive the as-filed list appended is the
 eighteenth element of a seventeen-term list.**
+
+**⟶⟶ CORRECTION TO THIS PARAGRAPH, DATED 2026-09-27 (`§0A` note 6, item 1, the `67`-vs-`72` CORRECTION) — THE
+DECLARED TOTAL MOVED IN THIS PARAGRAPH IS WITHDRAWN, AND THE AS-FILED `67` STANDS AS THE TOTAL.** **WHAT MOVES NOW:
+ONLY THE TOTALS, THE CHAIN AND THE SUBTOTALS — NO CELL MOVES.** **THE AUTHORITY IS STILL THE EXECUTED REGISTER
+(`tests/focus-tool-register.ts`, `17` typed rows), and it says `67`:** **the executed register's own `DECLARED_TERMS`
+literal is EXACTLY the SEVENTEEN values this contract's `§5.5.1` row cells carry — `[4, 3, 3, 2, 2, 2, 3, 10, 2, 1, 11,
+12, 4, 2, 2, 3, 1]` — its cells match TERM FOR TERM, their own sum is `67`, and its drive counts match.** **THE LIVE
+MEASUREMENT THAT REFUTES THE `72`, in its three parts: (1) THE CELLS' OWN SUM — the executed `DECLARED_TERMS` array
+sums to `67`, not `72`; (2) THE TERM-FOR-TERM MATCH — `17` executed cells for `17` contract rows, term for term, with
+no residue; (3) THE DRIVE-COUNT MATCH — the executed per-row drive counts equal the declared terms, and their total is
+`67`.** **AND THE PREVIOUS RE-GRAIN'S OWN LIST IS THE AS-FILED LIST: its *"re-grained"* seventeen terms
+(`4, 3, 3, 2, 2, 2, 3, 10, 2, 1, 11, 12, 4, 2, 2, 3, 1`) ARE the `§5.5.1` cells' terms and sum to `67` — so the `72`
+this note printed was THIS SUPERVISOR'S OWN RE-GRAIN ARITHMETIC DEFECT, RECORDED HERE AS SUCH AND WITHDRAWN.**
+**IT IS THE SAME CLASS OF ERROR AS THE DRAFTED `69` ALREADY RECORDED IN `§5.5.3` (a total printed one step away from
+the summation it asserts — here an eighteenth `+ 2` step carried from the as-filed chain's tail, which closed the
+re-grain on `72`), and the check that catches it is the SAME check: the summation, by its own terms.**
+**THE AS-FILED `67` IS THEREFORE NOT SUPERSEDED: the file's ONE DECLARED TOTAL IS `67`, printed with the seventeen
+terms that actually sum to it, and the as-filed `67` at `§5.5.1`, `§5.5.2` item 5 and `§5.5.3` STANDS.** **`72` is kept
+VISIBLE at every site this note printed it, each now annotated as WITHDRAWN.** **NO CELL, ROW ID, STRATEGY ID, SEED OR
+CAP MOVES BY THIS CORRECTION — and the caps are RE-CHECKED against `67` at `§5.5.1` and `§5.5.3`.**
+**⟶ THE TERM VERDICT, SPLIT INTO WHAT THE PREVIOUS RE-GRAIN DID (IT STANDS) AND WHAT MOVES NOW (ONLY FIGURES).**
+**(a) THE PREVIOUS RE-GRAIN — its CELL moves STAND as recorded in the verdict above, and none of them is undone here:
+THREE ROWS GAINED A TERM (`AR-2` → `2` · `AR-3` → `2` · `RF-3` → `2`), TWO HAD ANOTHER ROW'S FIGURE PRINTED AGAINST THEM
+(`AR-1`, `AR-4` — their own cells are `11`/`12` and the as-filed list printed `AR-1` under `4` and omitted `AR-4`), and
+FIFTEEN CELLS WERE ALREADY CORRECT** (`RT-1`…`RT-5`, `ID-1`…`ID-5`, `RF-1`, `RF-2`, `RF-4`, `RS-1`, `RS-2` — their
+values right, printed against the wrong row or appended with no row in `AR-1`'s and `RS-2`'s cases). **The verdict's
+arithmetic is `3` + `2` + `15` = `20` printed-list positions for `17` rows, because three of the fifteen were printed
+against another row's name and one was printed with no row — the ROW moves are `3` gaining a first term and `2`
+re-gained, over `12` rows whose printed term already matched their cell.**
+**(b) WHAT MOVES NOW: ONLY THE TOTALS, THE CHAIN AND THE SUBTOTALS — NO CELL MOVES.** **Not one of the seventeen terms
+moves in this correction; what moves is the figure the chain and the subtotals close on (`72` → `67`) and the two
+subtotal decompositions, which are re-derived by re-printing at `§5.5.3` so each is the sum of the addends it names.
+A pass that reads this correction as a second re-grain of cells is misreading it: it is a RE-PRINT of figures whose
+defect was in the summation, exactly as `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS` requires (corrected by annotating
+beside the as-filed form, never by silently rewriting it).**
+**(c) THE TEST-SIDE VERDICT: NOTHING IN THE RED SET MOVES — THE ALIGNMENT IS A NO-OP.**
+**The paragraph above records the ONE downstream figure this note's re-grain believed it had to move — the landed red
+set's `67` literal. THAT BELIEF IS WITHDRAWN: NO CHANGE IS OWED TO THE TEST FILE.** **`tests/focus-tool.test.ts`'s
+`REGISTER-TERMS` row pins *"the declared total of THIS register = the sum of its own SEVENTEEN terms"* AT `67`, and its
+`REGISTER-HONESTY` row pins `totalDeclared` at `67` and `termsDeclared` at `67`; the red set's OWN TERM ROWS ALSO PIN
+`67`** (the register's own `DECLARED_TERMS` array carries `67` in its own cell, beside a `17`-row table summing to
+`67`) — **SO THE RED SET'S OWN TERM ROWS ALREADY PIN `67`, WHICH IS CORRECT, AND NOTHING IN THE TEST FILE NEEDS TO
+MOVE.** **A pass that re-grains those three literals to `72` would be carrying this correction's withdrawn figure into
+the test side: DO NOT.** **This is recorded as an ALIGNMENT NO-OP, and not as an owed test edit.**
+**(d) THE BOUNDED SET AND THE READING CLASS ARE UNCHANGED BY THIS CORRECTION: THE BOUNDED SET STAYS THE FIVE ROWS this
+note marks (`P-FT-ID-3` · `P-FT-ID-5` · `P-FT-AR-1` · `P-FT-AR-4` · `P-FT-RS-2`, `5` of `17`) and the READING CLASS
+STAYS AS RECORDED (`§5.5.2` items 4 and 4b: the recording-renderer-stub class, the static-bytes class, and the
+consumer-side container pass-through class) — NO TERM, ROW, MARKING OR CLASS MOVES.**
+**(e) AND THE PROVENANCE, AS THE NOTE'S OWN PROVENANCE RULE REQUIRES: this correction derives from THE ALIGNMENT PASS'S
+LIVE MEASUREMENT AND ITS STOP — the alignment pass measured the executed register live, found that only the totals,
+the chain and the subtotals disagreed with the executed cells, STOPPED rather than moving a cell, and returned the
+`72` to its author. THE ADJUDICATION APPLIED HERE IS THE AUTHOR'S OWN: the executed register governs, its declared
+total is `67`, and the `72` was the supervisor's re-grain defect — withdrawn.** **NO CODE, NO RED
+RE-RUN AND NO STATUS
+FLIP ACCOMPANIES THIS CORRECTION, AND THE LEDGER IS UNCHANGED AT `20 DONE / 1 open` = `21` units** (`F3` stays an open
+`## OPEN` row with its status the supervisor's — `CURRENT STATE` items 1 and 9 remain true of this pass except where
+they print a moved figure). **AND ONE FINDING STRICTLY WORSE THAN THE `72` IS NAMED HERE RATHER THAN LEFT TO THE
+`§5.5.3` BLOCK: the EXECUTED register carries `17` rows (`AR-1` `11` and `AR-4` `12` present; `AR-2`, `AR-3` and
+`RF-3` ABSENT), while this contract's `§5.5.1` table enumerates TWENTY rows whose own printed property terms sum to
+`73` — so `67` IS the executed total and `73` is the contract's own table's sum, `73 − (2 + 2 + 2)` = `67`, and WHICH
+THREE ROWS THE REGISTER DROPPED IS **OWED** AT THE NEXT GATE** (`§5.5.3`'s correction block prints both chains and
+both decompositions; `§3a` `A-15`).
 
 **2. THE BOUNDED SET IS `FIVE` ROWS — MARKED IN ALL FIVE PROPERTY TEXTS HERE, SO THE CONTRACT AND THE REGISTER AGREE.**
 **THE MEASURED DEFECT: this filing DECLARED five bounded rows at `§5.5.2` item 2, but its own property texts mark only
@@ -1047,6 +1133,16 @@ RE-GRAINED TERMS ARE THE REGISTER'S OWN SEVENTEEN CELLS — `4, 3, 3, 2, 2, 2, 3
 prints THREE terms twice and closes on `67` by that means, so it is NOT the sum of its own seventeen printed terms and
 must not be quoted as the declared total.** **NO ROW ID, STRATEGY ID, SEED, CAP OR POOL MEMBER MOVES BY THIS
 ANNOTATION — only the figures the re-grain recomputes.**
+**⟶⟶ 2026-09-27 CORRECTION ON THIS ANNOTATION (`§0A` note 6, the `67`-vs-`72` CORRECTION): THE SUM `72` PRINTED ABOVE
+AND THE VERDICT IT CARRIES ABOUT THE PARAGRAPH BELOW ARE BOTH WITHDRAWN — `72` WAS THIS SUPERVISOR'S OWN RE-GRAIN
+ARITHMETIC DEFECT.** **The executed register's `DECLARED_TERMS` is exactly the SEVENTEEN cells of this table, its cells
+match TERM FOR TERM, its sum is `67`, and its drive counts match — so THE PARAGRAPH BELOW IS NOT DEFECTIVE AS TO THIS
+TABLE: its seventeen printed terms ARE the executed cells' own terms and THEIR SUM IS `67`.** **ITS ONE REAL DEFECT
+STANDS AS THE EARLIER, NARROWER ONE `§5.5.3` RECORDS — THREE ROWS' TERMS WERE PRINTED AGAINST OTHER ROWS (`AR-1`,
+`AR-4`) OR WITH NO ROW (`AR-2`, `AR-3`, `RF-3`), and its printed `17`-term list therefore differs from the table's
+cells in two positions — BUT THAT IS A ROW-ATTRIBUTION DEFECT, NOT A SUM DEFECT, AND IT DOES NOT MOVE THE TOTAL.**
+**THE FILE'S ONE DECLARED TOTAL IS `67`; the chain and the subtotals are RE-PRINTED at `§5.5.3` to close on it, each
+as the sum of the addends it names; and NO CELL MOVES** (`§0A` note 6, item 1's correction paragraph).
 
 **⟶ THE AS-FILED TERM CELLS OF THIS TABLE WERE READ AS THE AUTHORITY: `17` ROW CELLS CARRY A TERM, `17` ROWS, and the
 declared total at `§5.5.3` is the sum of exactly those seventeen terms.** **NO ROW OF THIS TABLE CARRIES A TERM OF ZERO, and no row
@@ -1056,14 +1152,25 @@ total is checkable rather than asserted** *(the order is this table's row order;
 **`+ 2` = `14`** · **`+ 2` = `16`** · **`+ 3` = `19`** · **`+ 10` = `29`** · **`+ 2` = `31`** · **`+ 1` = `32`** ·
 **`+ 11` = `43`** · **`+ 2` = `45`** · **`+ 2` = `47`** · **`+ 12` = `59`** · **`+ 4` = `63`** · **`+ 2` = `65`** ·
 **`+ 2` = `67`.** **THE CHAIN HAS SIXTEEN STEPS AND CLOSES ON `67` — the sum of its own seventeen printed terms.**
-**⟶ 2026-09-27 RE-GRAIN (`§0A` note 6, defect 1) — THIS AS-FILED CHAIN AND ITS AS-FILED TERM LIST ARE DEFECTIVE AND
-ARE SUPERSEDED, AND BOTH ARE KEPT VISIBLE HERE.** **THE AS-FILED LIST THIS CHAIN ADDS — `4, 3, 3, 2, 2, 2, 3, 10, 2,
-1, 11, 2, 2, 12, 4, 2, 1` — SUMS TO `61` and prints TWO CELLS AGAINST THEIR OWN PROPERTY TEXT (`AR-4` as `2` beside a
-twelve-drive property; `RS-1` as `2` beside a three-drive property), while the chain above reaches `67` by ALSO adding
-a final `+ 2` against `RS-2`, whose cell carries `1`.** **NEITHER FORM IS THE SUM OF THE SEVENTEEN CELLS THIS TABLE
-PRINTS.** **THE RE-GRAINED TERM LIST IS THE REGISTER'S OWN — `4, 3, 3, 2, 2, 2, 3, 10, 2, 1, 11, 12, 4, 2, 2, 3, 1`
-— and its RE-GRAINED CHAIN (`4` → `7` → `10` → `12` → `14` → `16` → `19` → `29` → `31` → `32` → `43` → `55` → `59` →
-`61` → `63` → `66` → `72`) CLOSES ON `72`, which is the declared total from here on** (`§5.5.3`; `§0A` note 6).
+**⟶⟶ 2026-09-27 CORRECTION ON THIS RE-GRAIN (`§0A` note 6, the `67`-vs-`72` CORRECTION): THE AS-FILED CHAIN AND TERM
+LIST ABOVE ARE **NOT** SUPERSEDED AS TO THEIR SUM, AND THE RE-GRAINED CHAIN PRINTED BELOW IS.** **The as-filed seventeen
+printed terms ARE the executed register's own `DECLARED_TERMS` — `4, 3, 3, 2, 2, 2, 3, 10, 2, 1, 11, 12, 4, 2, 2, 3,
+1` — term for term, and their sum is `67`, which is why the chain above closes on `67`.** **ITS ONE REAL DEFECT IS THE
+EARLIER, NARROWER ROW-ATTRIBUTION ONE:** **the as-filed list printed TWO positions against other rows (`AR-1` under
+`4`, `AR-4` omitted) and omitted THREE rows' terms (`AR-2`, `AR-3`, `RF-3`) — and its `61` is the sum of the POSITIONS it
+actually printed, not of the cells.** **THE RE-GRAINED CHAIN BELOW (its closing steps `61` → `63` → `66` → `72`) IS
+DEFECTIVE AND WITHDRAWN: it carries an eighteenth `+ 2` step, exactly the class of error as the drafted `69` this
+subsection already records.** **THE CELLS ARE THE AUTHORITY, THEIR SUM IS `67`, NO CELL MOVES, AND THE CHAIN AND
+SUBTOTALS THAT CLOSE ON `67` ARE RE-PRINTED BELOW** (`§5.5.3`).
+**⟶⟶ 2026-09-27 CORRECTION (`§0A` note 6, the `67`-vs-`72` CORRECTION) — THE SEVENTEEN REGISTER CELLS AND THEIR SUM
+`67` ARE THE TOTAL, AND THE `67` THE PARAGRAPH BELOW CALLS DEFECTIVE STANDS AS THE FILE'S ONE DECLARED TOTAL.** **The
+executed register's `DECLARED_TERMS` is these seventeen cells exactly (`[4, 3, 3, 2, 2, 2, 3, 10, 2, 1, 11, 12, 4, 2,
+2, 3, 1]`), its cells match term for term, its sum is `67`, and its drive counts match — so the `72` this
+re-grain's block prints above is WITHDRAWN as the re-grain's own arithmetic defect.** **THE AUTHORITY IS THE SEVENTEEN
+ROW CELLS AND THEIR SUM `67`; the re-grained block at the head of this subsection is kept visible and marked
+WITHDRAWN; its chain and subtotals are RE-PRINTED to close on `67`; and NO CELL, TERM, ROW ID, STRATEGY ID, SEED, CAP
+OR POOL MEMBER MOVES** (`§5.5.3`). **THE AS-DRAFTED `27`/`18`/`69`/`73`/`61`/`63` FIGURES AND THE RE-GRAINED `72` ARE
+EACH KEPT VISIBLE AT THEIR OWN SITES, AND THE `72` IS THE ONE OF THEM THAT WAS THIS SUPERVISOR'S OWN.**
 **NO ROW ID, STRATEGY ID, SEED, CAP OR POOL MEMBER MOVES BY THAT RE-GRAIN: the three rows whose terms were absent
 (`AR-2`, `AR-3`, `RF-3`) gain the terms their cells carry, and the two rows whose figures were printed against them
 (`AR-1`, `AR-4`) are re-gained to `11`/`12`.**
@@ -1083,6 +1190,18 @@ AND THEIR SUM IS `72`; the as-filed `67` and the as-filed `61` are RECORDED AS D
 its as-filed form, and the declared total this file quotes from here on is `72`** (`§5.5.3`). **THE AS-DRAFTED `69`
 STILL STANDS AS THE EARLIER, NARROWER MIS-SUM IT WAS — one of THREE defective figures this filing has now printed at
 its own total, and the reason the re-grained form is the one a later pass quotes.**
+**⟶⟶ 2026-09-27 CORRECTION (`§0A` note 6, the `67`-vs-`72` CORRECTION): THIS PARAGRAPH'S CONCLUSION IS WITHDRAWN — THE
+SAME CHECK, RUN AGAINST THE EXECUTED REGISTER'S OWN `DECLARED_TERMS`, GIVES `67`, AND THE AS-FILED `67` IS NOT
+DEFECTIVE.** **The executed literal is exactly these seventeen cells, they match TERM FOR TERM, THEIR SUM IS `67`, and
+the drive counts match — so the `72` this paragraph quotes was the RE-GRAIN'S OWN ARITHMETIC DEFECT and is WITHDRAWN as
+such** (`§0A` note 6, item 1's correction; `§5.5.3`). **WHAT THE CHECK DID CATCH, AND WHAT STANDS: the as-filed `61`
+(the sum of the POSITIONS the printed list actually carried), the `73` (the seventeen-row id list summed over rows the
+term column mis-attributed) and the `63` (the as-filed subtotals) — and, beside them, the earlier drafted `69`, now the
+second of FOUR defective total figures this filing has printed (`69`, `72`) beside its two wrong subtotal closures
+(`63`, and the rejected `73`).** **NONE OF THEM IS THE DECLARED TOTAL: THE FILING'S ONE DECLARED TOTAL IS `67`, AND
+THE ROW-ATTRIBUTION DEFECTS THE AS-FILED TERM COLUMN CARRIED (three rows with NO printed term, two rows with another
+row's figure printed against them) STAND AS THE EARLIER, NARROWER DEFECT `§0A` note 6 already adjudicates — A DEFECT OF
+ATTRIBUTION, NOT OF SUM, so it never moved the total.**
 
 **CAPS RE-CHECKED AGAINST THE AUTHORITATIVE FIGURE.** **`67 ≤ 400`** (total headroom `333`), **largest row `12 ≤
 100`** (headroom `88`) — **both caps HOLD, and neither is close.** **THE CAPS ARE COMPARED AGAINST `67` (the sum of
@@ -1091,6 +1210,14 @@ the seventeen terms of this table) AND NEVER AGAINST ANY SUBTOTAL FIGURE.**
 `72` — `72 ≤ 400` in total (headroom `328`) and largest row `12 ≤ 100` (headroom `88`) — both HOLD, and no cap value
 moves.** **The as-filed `67`-based check above is kept visible; `67` is NOT the sum of this table's seventeen printed
 terms, and `72` is the figure the caps now compare against.**
+**⟶⟶ 2026-09-27 CORRECTION (`§0A` note 6, the `67`-vs-`72` CORRECTION): THE `72`-BASED CHECK ABOVE IS WITHDRAWN WITH
+THE `72` ITSELF — THE CAPS ARE RE-CHECKED AGAINST `67`, AND THE AS-FILED `67`-BASED CHECK AT THE HEAD OF THIS BLOCK
+STANDS AS WRITTEN.** **`67` IS the sum of this table's seventeen printed terms (they are the executed register's own
+`DECLARED_TERMS`), so: `67 ≤ 400` IN TOTAL (headroom `333`) · `largest row `12` ≤ `100` (headroom `88`) — BOTH CAPS
+HOLD against `67`, and neither is close.** **THE `72`-BASED CHECK'S OWN ARITHMETIC WAS INTERNALLY SOUND (`72 ≤ 400`,
+headroom `328`) — its defect was the FIGURE, not the comparison — so nothing here is a cap violation either way, and NO
+CAP VALUE MOVES.** **A pass that quotes the `328` headroom is quoting the withdrawn figure's residue: the headroom this
+file states is `333`.**
 
 **NO NEW DEPENDENCY, NO FIFTH LEG, NO `package.json` CHANGE:** the register rides `npm test` (leg 1) unchanged, and
 **an un-run register row is reported as a FAILURE, never as a pass.**
@@ -1150,6 +1277,13 @@ terms, and `72` is the figure the caps now compare against.**
    the "nothing threw" claim is asserted on every attempt of every row; (4) the renderer stub's call count is
    asserted on every attempt of `AR-1`/`AR-2`/`RT-3`; and (5) the no-minting-site and no-storage-token readings are
    STATIC companion assertions reported beside the terms (`R-3`/`R-7`).**
+   **⟶⟶ 2026-09-27 CORRECTION ON THAT ANNOTATION (`§0A` note 6, the `67`-vs-`72` CORRECTION): THE AS-FILED *"DECLARED
+   TOTAL IS `67`"* ABOVE IS NOT DEFECTIVE, AND THE RE-GRAINED `72` IS WITHDRAWN AS THE RE-GRAIN'S OWN ARITHMETIC
+   DEFECT.** **`67` IS the sum of the seventeen terms `§5.5.1`'s table prints — those terms ARE the executed register's
+   own `DECLARED_TERMS` (`4, 3, 3, 2, 2, 2, 3, 10, 2, 1, 11, 12, 4, 2, 2, 3, 1`), they match TERM FOR TERM, their own
+   sum is `67`, and the executed drive counts match** (`§0A` note 6, item 1's correction). **THE DECLARED TOTAL THIS
+   FILE STATES — in `CURRENT STATE` item 4, here, and at `§5.5.3` — IS `67`; the chain and the subtotals are
+   RE-PRINTED at `§5.5.3` so each closes on it, and NO CELL MOVES.**
 6. **THE SHAPES DELIBERATELY EXCLUDED FROM EVERY POOL, named as a BOUNDARY and not as a gap:** **no row drives a
    rendered surface, a window, an OS, a display, a transport peer or a human gesture — because this contract HAS no
    such half** (`§2.5` item 3's DENY set). **AND: no row drives a REAL IPC transport** — the route is driven through
@@ -1171,6 +1305,76 @@ terms, and `72` is the figure the caps now compare against.**
 FORM, KEPT VISIBLE AND MARKED DEFECTIVE.** **THE CONTRACT'S TERM COLUMN WAS DEFECTIVE AND IS SUPERSEDED; THE EXECUTED
 REGISTER (`tests/focus-tool-register.ts`, `17` typed rows) IS THE AUTHORITY, AND THE RE-GRAINED FIGURES BELOW ARE THE
 SUM OF THE TERMS ACTUALLY PRINTED AGAINST THE ROWS THAT CARRY THEM — EACH RECOMPUTED, NOT ASSERTED.**
+**⟶⟶ 2026-09-27 CORRECTION ON THIS RE-GRAINED BLOCK (`§0A` note 6, the `67`-vs-`72` CORRECTION): THE BLOCK'S METHOD
+STANDS AND ITS ONE FIGURE DOES NOT — READ `72` EVERYWHERE BELOW AS WITHDRAWN, AND `67` AS THE DECLARED TOTAL.** **THE
+BLOCK'S OWN TERM LIST IS NOT DEFECTIVE: those seventeen terms ARE the executed register's own `DECLARED_TERMS`, its
+cells match TERM FOR TERM, THEIR SUM IS `67`, and its drive counts match — so the `72` below was THE RE-GRAIN'S OWN
+ARITHMETIC DEFECT (an eighteenth step carried from the as-filed chain's tail), RECORDED HERE AS SUCH AND WITHDRAWN.**
+**THE BLOCK'S OWN ARITHMETIC IS THE PROOF: its by-type addition BELOW already reaches `67` (`39` + `12` = `51`, `+ 16`
+= `67`) — a `72` total contradicts a subtotal the same block prints.**
+
+**⛔ AND THIS CORRECTION STOPS HERE, ON ONE MEASURED FACT THAT IS WORSE THAN THE DEFECT IT WAS SENT TO FIX, RECORDED
+RATHER THAN MANUFACTURED AWAY — READ IT BEFORE QUOTING ANY CHAIN OR SUBTOTAL FROM THIS SUBSECTION.** **THE FACT, AS
+MEASURED: there are THREE row sets in play and no two of them agree.** **(a) THE EXECUTED REGISTER carries `17` rows —
+`RT-1`…`RT-5` (`4, 3, 3, 2, 2`), `ID-1`…`ID-5` (`2, 3, 10, 2, 1`), **`AR-1` (`11`) and `AR-4` (`12`) ONLY**,
+`RF-1`/`RF-2`/`RF-4` (`4, 2, 2`) **and NOT `RF-3`**, `RS-1`/`RS-2` (`3, 1`) — `17` rows whose terms sum to `67`.**
+**(b) THIS CONTRACT'S `§5.5.1` TABLE enumerates `20` rows over the same five domains — it also carries `AR-2` `2`,
+`AR-3` `2` and `RF-3` `2`, each with its own printed cell, property text, strategy id and cap — and those twenty
+property-text terms sum to `73`.** **(c) THE AS-FILED PRINTED TERM COLUMN was a THIRD list, and the as-filed file's own
+figures for it are `67` declared, `61` over the printed list as printed, `73` over the id list and `63` over its
+subtotals.** **THE CONSEQUENCE IS STATED PLAINLY RATHER THAN SMOOTHED: THE `67` IS THE EXECUTED REGISTER'S OWN FIGURE
+AND IT GOVERNS (its `DECLARED_TERMS`, its `17` `term:` cells and its drive counts all agree, term for term), BUT NO
+CHAIN OR SUBTOTAL IN THIS FILE CAN BE CERTIFIED AGAINST IT UNTIL THE ROW SET IS SETTLED, BECAUSE THE CONTRACT'S OWN
+TABLE CLOSES ON `73` AND THE EXECUTED REGISTER'S ROWS CLOSE ON `67` — the difference being exactly the three rows the
+register does not carry (`AR-2` `2` + `AR-3` `2` + `RF-3` `2` = `6`; `73 − 6` = `67`).** **THE EXECUTED REGISTER NAMES
+THIS ITSELF (`tests/focus-tool-register.ts`: *"`17` rows summing to `67` AND that row set cannot both hold"*), and THE
+CONTRACT HAS NEVER RECORDED WHICH THREE ROWS MOVED — A CONTRACT DEFECT INDEPENDENT OF, AND OLDER THAN, THE BOGUS `72`
+THIS CORRECTION WITHDRAWS.** **SO THE CHAIN AND SUBTOTALS THAT CLOSE ON `67` ARE PRINTED BELOW OVER THE SEVENTEEN
+EXECUTED ROWS, THE TWENTY-ROW READINGS THAT CLOSE ON `73` ARE PRINTED BESIDE THEM, AND THE ROW-SET RECONCILIATION IS
+**OWED** AT THE NEXT GATE.**
+
+**⟶ THE CHAIN AND THE SUBTOTALS THE ADJUDICATION ASKS FOR — PRINTED TWICE, ONCE OVER THE SEVENTEEN EXECUTED ROWS
+(which close on `67`) AND ONCE OVER THE CONTRACT'S TWENTY PRINTED ROWS (which close on `73`), SO THE READER SEES
+BOTH AND QUOTES THE RIGHT ONE.**
+
+**THE DECLARED TOTAL IS `67` — the executed register's own `DECLARED_TERMS` sum, term for term, and the figure every
+cap comparison uses.**
+
+**THE CHAIN OVER THE SEVENTEEN EXECUTED ROWS, in the register's own order (`RT-1`…`RT-5`, `ID-1`…`ID-5`, `AR-1`,
+`AR-4`, `RF-1`, `RF-2`, `RF-4`, `RS-1`, `RS-2`; terms `4, 3, 3, 2, 2, 2, 3, 10, 2, 1, 11, 12, 4, 2, 2, 3, 1`): `4` → `7`
+→ `10` → `12` → `14` → `16` → `19` → `29` → `31` → `32` → `43` → `55` → `59` → `63` → `65` → `66` → `67`, SIXTEEN
+STEPS, CLOSING ON `67`.** **(Checkable in five domain-sized steps: `4 + 3 + 3 + 2 + 2` = `14` · `+ 2 + 3 + 10 + 2 + 1`
+= `32` · `+ 11 + 12` = `55` · `+ 4 + 2 + 2` = `63` · `+ 3 + 1` = `67`.)** **THIS IS THE CHAIN THE FILE QUOTES: `67`.**
+
+**THE CHAIN OVER THE CONTRACT'S TWENTY PRINTED ROWS (`…, AR-1` `11`, `AR-2` `2`, `AR-3` `2`, `AR-4` `12`, `RF-1` `4`,
+`RF-2` `2`, `RF-3` `2`, `RF-4` `2`, `RS-1` `3`, `RS-2` `1`; `4, 3, 3, 2, 2, 2, 3, 10, 2, 1, 11, 2, 2, 12, 4, 2, 2, 2,
+3, 1`): `4` → `7` → `10` → `12` → `14` → `16` → `19` → `29` → `31` → `32` → `43` → `45` → `47` → `59` → `63` → `65`
+→ `67` → `69` → `70` → `73`.** **⚠ THIS IS THE OTHER CHAIN, IT CLOSES ON `73`, AND IT IS PRINTED HERE ONLY SO THE
+`73` IS ATTRIBUTED TO THE CONTRACT'S OWN EXTRA THREE ROWS (`AR-2`, `AR-3`, `RF-3`) AND NOT LEFT AS AN UNEXPLAINED
+RESIDUE — it is NOT the declared total and may not be quoted as one.**
+
+**THE SUBTOTALS OVER THE SEVENTEEN EXECUTED ROWS — each one the sum of the addends it names, each closing on the
+declared `67`:**
+
+1. **BY DOMAIN:** **THE ROUTE (`RT-1`…`RT-5`) = `4 + 3 + 3 + 2 + 2` = `14`** · **THE OPAQUE ENTRY IDENTITY
+   (`ID-1`…`ID-5`) = `2 + 3 + 10 + 2 + 1` = `18`** · **THE ARGUMENT SHAPE (`AR-1`, `AR-4`) = `11 + 12` = `23`** ·
+   **THE REFUSAL AND READINESS (`RF-1`, `RF-2`, `RF-4`) = `4 + 2 + 2` = `8`** · **THE RESULT SHAPE AND TOTALITY
+   (`RS-1`/`RS-2`) = `3 + 1` = `4`** — **and the five-way sum, ONE GROUP AT A TIME: `14` + `18` = `32`** · **`+ 23` =
+   `55`** · **`+ 8` = `63`** · **`+ 4` = `67`.** **THIS DECOMPOSITION CLOSES ON THE DECLARED TOTAL `67`.**
+2. **BY DECLARED TYPE, read from the `Type` column of `§5.5.1` and over the SEVENTEEN EXECUTED ROWS:** **`P-IM` =
+   `RT-1` `4` + `RT-2` `3` + `RT-4` `2` + `ID-1` `2` + `ID-3` `10` + `AR-1` `11` + `RF-1` `4` + `RS-1` `3` = `39`** ·
+   **`P-SM` = `RT-3` `3` + `RT-5` `2` + `ID-2` `3` + `ID-4` `2` + `RF-2` `2` = `12`** · **`P-TP` = `ID-5` `1` + `AR-4`
+   `12` + `RF-4` `2` + `RS-2` `1` = `16`** — **checkable: `39` + `12` = `51`** · **`+ 16` = `67`.** **THE TWO FAMILIES
+   THAT MOVE BETWEEN THE SEVENTEEN-ROW AND TWENTY-ROW READINGS ARE `P-IM` (`39` → `41`, via `AR-3` `2`) AND `P-TP`
+   (`16` → `18`, via `AR-2` `2`), with `P-SM` unchanged at `12` — and THOSE THREE FIGURES' SUM IS `39 + 12 + 16` = `67`
+   HERE AND `41 + 14 + 18` = `73` OVER THE TWENTY-ROW TABLE (`AR-2` is `P-TP`, `AR-3` is `P-IM`, `RF-3` is `P-SM`, so
+   all three families gain a row in the twenty-row reading).**
+3. **THE HONEST STATEMENT OF WHAT THE `67` AND THE `73` ARE, so neither is over-read: `67` IS THE DECLARED TOTAL (the
+   executed register's seventeen rows, measured, governing, and the figure the caps compare against); `73` IS THE SUM
+   OF THE CONTRACT'S TWENTY PRINTED ROW CELLS AND IS **NOT** A DECLARED TOTAL OF THIS UNIT.** **WHICH THREE ROWS THE
+   REGISTER DROPPED, AND WHETHER `AR-2`/`AR-3`/`RF-3`'s DRIVES ARE CARRIED ELSEWHERE OR OWED, IS **OWED** AT THE NEXT
+   GATE — this correction settles the TOTAL (`67`), withdraws the `72`, and NAMES the residue (`73 − 67 = 6`) rather
+   than moving a term, a row, a type, a seed or a cap to force agreement.** **NO CELL MOVES.**
 
 **THE RE-GRAINED TERM LIST — SEVENTEEN TERMS, ONE PER ROW, IN THE REGISTER'S ROW ORDER:**
 
@@ -1189,6 +1393,16 @@ five domain-sized steps: `4 + 3 + 3 + 2 + 2` = `14` · `+ 2 + 3 + 10 + 2 + 1` = 
 2` = `63` · `+ 3 + 1` = `72`.)**
 
 **THE RE-GRAINED SUBTOTALS — EACH ONE THE SUM OF ITS OWN ADDENDS, AND EACH ONE CLOSING ON THE SAME `72`:**
+**⟶⟶ 2026-09-27 CORRECTION ON THE THREE PARAGRAPHS ABOVE (`§0A` note 6, the `67`-vs-`72` CORRECTION): READ `72` IN
+BOTH THE TOTAL AND THE CHAIN ABOVE AS WITHDRAWN — IT IS THE RE-GRAIN'S OWN ARITHMETIC DEFECT — AND `67` AS THE FIGURE
+THEY REACH.** **THE SEVENTEEN TERMS THIS BLOCK PRINTS SUM TO `67`, so the declared total is `67` and the correct chain
+is `4` → `7` → `10` → `12` → `14` → `16` → `19` → `29` → `31` → `32` → `43` → `55` → `59` → `63` → `65` → `66` →
+`67`, whose five domain-sized steps are `14` · `+ 2 + 3 + 10 + 2 + 1` = `32` · `+ 11 + 12` = `55` · `+ 4 + 2 + 2` =
+`63` · `+ 3 + 1` = `67`.** **AND WHAT THE `72` IS, NAMED RATHER THAN GUESSED: an EIGHTEENTH STEP — the same class of
+error as the drafted `69` — because the executed register's own `DECLARED_TERMS`, its `17` `term:` cells and its drive
+counts all give `67`, and this block's own by-type addition below already prints `39` + `12` = `51`, `+ 16` = `67`, a
+subtotal its own `72` total contradicts.** **THE RE-GRAINED ADDENDS ARE NOT THE DEFECT: NO CELL MOVES, and only the
+running sum was wrong.**
 
 1. **BY DOMAIN (the five domains `§5.5` declares, which the row count is not permitted to merge away — `§5.5.2` item
    1):** **THE ROUTE (`RT-1`…`RT-5`) = `4 + 3 + 3 + 2 + 2` = `14`** · **THE OPAQUE ENTRY IDENTITY (`ID-1`…`ID-5`) =
@@ -1216,6 +1430,14 @@ five domain-sized steps: `4 + 3 + 3 + 2 + 2` = `14` · `+ 2 + 3 + 10 + 2 + 1` = 
 REWRITTEN.** **ITS DECLARED FIGURES WERE `67` (the declared total), `61` (its own declared term LIST) and `63` (its
 by-domain and by-type subtotals), against `73` for its own seventeen-row id list; THE THREE ARE MUTUALLY
 INCONSISTENT AND NONE OF THEM IS THE SUM OF THE SEVENTEEN TERM CELLS `§5.5.1` PRINTS — `72` IS.**
+**⟶⟶ 2026-09-27 CORRECTION ON THIS AS-FILED-FORM PARAGRAPH (`§0A` note 6, the `67`-vs-`72` CORRECTION): ITS LAST
+CLAUSE IS WITHDRAWN AND ITS `73`-ATTRIBUTION IS CORRECTED.** **ITS LAST CLAUSE: the sum of the seventeen term cells
+`§5.5.1` prints is `67`, NOT `72` — `72` was the supervisor's own re-grain arithmetic defect** (see this
+subsection's head). **ITS ATTRIBUTION: the `73` is NOT *"its own seventeen-row id list"* — it is THIS CONTRACT'S
+TWENTY PRINTED ROW CELLS' sum (`14 + 18 + 27 + 10 + 4` by domain, `41 + 14 + 18` by type), the executed register's
+seventeen being those twenty MINUS `AR-2` `2` + `AR-3` `2` + `RF-3` `2` = `6`, so `73 − 6` = `67`.** **AND WHAT
+STANDS FROM THIS PARAGRAPH: its declared figures `67`/`61`/`63` are each kept visible above exactly as filed, its
+`67` IS the declared total, and NO CELL IS REWRITTEN.**
 
 **THIS REGISTER CARRIES ONE DECLARED FIGURE, AND IT IS THE SUM OF ITS OWN SEVENTEEN PRINTED TERMS — `67`.**
 
@@ -1290,6 +1512,17 @@ the decomposition is closed either.** **AND THE CONSEQUENCE FOR A LATER PASS IS 
 INFERENCE: because `67` is the sum of the seventeen printed TERMS while `63` is the sum of the same rows' printed
 TYPES, the four-figure difference means THAT EITHER ONE ROW'S DECLARED TERM OR ONE ROW'S DECLARED TYPE IS MISSTATED,
 and a pass closing this MUST SAY WHICH — with its own arithmetic — rather than moving a figure to force agreement.**
+**⟶⟶ 2026-09-27 CORRECTION (`§0A` note 6, the `67`-vs-`72` CORRECTION) — THIS PARAGRAPH'S DILEMMA IS RESOLVED, AND
+NEITHER OF ITS TWO CANDIDATES IS THE CAUSE.** **THE CAUSE IS A ROW-SET MISMATCH, NOT A MISSTATED TERM OR TYPE: this
+contract's `§5.5.1` table enumerates TWENTY rows (`AR-2` `2`, `AR-3` `2` and `RF-3` `2` among them, each with its own
+printed cell and its own strategy id), while the EXECUTED register carries SEVENTEEN — `AR-1` `11` and `AR-4` `12`
+present, `AR-2`/`AR-3`/`RF-3` ABSENT** (`tests/focus-tool-register.ts`'s own gap note says so; `§5.5.3`'s correction
+block prints both chains). **SO: the TWENTY-row reading closes on `73` (`14 + 18 + 27 + 10 + 4` by domain, `41 + 14 +
+18` by type), the SEVENTEEN-row reading closes on `67` (`14 + 18 + 23 + 8 + 4` by domain, `39 + 12 + 16` by type), and
+the difference IS the three unexecuted rows' `2 + 2 + 2` = `6` minus — for the as-filed table only — the `1` the
+as-filed printed column carried against no row.** **BOTH READINGS ARE PRINTED AT `§5.5.3`, AND WHICH THREE ROWS THE
+REGISTER DROPPED IS **OWED** AT THE NEXT GATE — a row-set reconciliation, which is a CONTRACT change and therefore a
+GATE, NOT a re-grain.** **NO CELL, TERM, ROW ID, STRATEGY ID, SEED, CAP OR POOL MEMBER MOVES BY THIS CORRECTION.**
 **THE AUTHORITY IS THE SEVENTEEN ROW CELLS AND THEIR SUM `67`; BOTH
 DECOMPOSITIONS ARE WITHDRAWN AS DEFECTIVE IN BOTH THEIR AS-DRAFTED AND THEIR CORRECTED FORM; and THEIR RE-DERIVATION
 — one that closes on `67` — IS THE NEXT PASS'S NAMED OBLIGATION, WITH THE AS-DRAFTED AND CORRECTED FORMS BOTH LEFT
@@ -1300,6 +1533,17 @@ but their sum is `72`, not `67`, and the two decompositions are therefore NOT wi
 the head of this subsection and both close on `72`.** **The as-drafted forms (`27`, `18`, `73`) and the as-filed
 total (`67`) remain visible above; `72` is the one figure this file quotes.** **NO CELL, TERM, ROW ID, STRATEGY ID,
 SEED OR CAP MOVES.**
+**⟶⟶ 2026-09-27 CORRECTION ON THAT RE-GRAIN (`§0A` note 6, the `67`-vs-`72` CORRECTION): THE `72` IN THE SENTENCE
+ABOVE IS WITHDRAWN — it is the re-grain's own arithmetic defect — AND THE AS-FILED `67` IS THE FIGURE THIS FILE
+QUOTES.** **`67` IS the sum of the seventeen terms the executed register's `DECLARED_TERMS` carries, and the register's
+own `17` `term:` cells match that list term for term; the chain and the subtotals that close on `67` are printed at
+the head of this subsection, and the `72`-closing forms are kept visible there and marked WITHDRAWN.** **AND NOTE WHAT
+THE CORRECTION DOES **NOT** CLAIM: the as-filed `63` and the as-drafted `73` are not re-gained or re-drawn here — the
+`73` IS the sum of this contract's twenty printed row cells (`14 + 18 + 27 + 10 + 4` by domain, `41 + 14 + 18` by
+type), the `67` is the sum of the executed register's seventeen (`14 + 18 + 23 + 8 + 4` by domain, `39 + 12 + 16` by
+type), and the SIX-figure difference between the two readings IS exactly the three rows the executed register does not
+carry:** **`AR-2` `2`, `AR-3` `2`, `RF-3` `2`.** **WHICH THREE ROWS THE REGISTER DROPPED IS **OWED** AT THE
+NEXT GATE.** **NO CELL, TERM, ROW ID, STRATEGY ID, SEED OR CAP MOVES BY THIS CORRECTION.**
 
 **⟶ THE HONEST FRAME, STATED ONCE MORE BECAUSE THIS IS THE SUBSECTION WHERE THIS FILING'S OWN ARITHMETIC FAILED
 FIRST: EVERY FIGURE ABOVE IS CONTRACT DESIGN AND NONE OF IT IS A RESULT — EXCEPT THE RE-GRAINED BLOCK AT THE HEAD OF
@@ -1322,6 +1566,57 @@ respectively), and their correction is preserved here as the earlier, narrower d
 TestWriter's register, one register-order pass of the seventeen rows, whose cells this subsection now prints.**
 **A pass that resolves any of the three by MOVING a term, a row id, a strategy id, a cap or a pool member still
 REVERSES this subsection and MUST OPEN A GATE — and the re-grain above moved NO such item.**
+**⟶⟶ 2026-09-27 CORRECTION ON THE THREE SENTENCES ABOVE (`§0A` note 6, the `67`-vs-`72` CORRECTION) — BOTH `= 72`
+CLOSURES AND THE `73`-ATTRIBUTION ARE CORRECTED HERE.** **(a) THE CLOSURES: `14 + 18 + 23 + 8 + 4` = `67`, NOT `72`,
+and `39` + `12` + `16` = `67`, NOT `72` — the two decompositions above each close on `67` as their own addends are
+printed, and the `72` was the re-grain's own arithmetic defect (an error in the RUNNING SUM, not in the addends),
+WITHDRAWN.** **(b) THE `73`-ATTRIBUTION: `73` is NOT the sum of a seventeen-row id list — it is the sum of THIS
+CONTRACT'S TWENTY PRINTED ROW CELLS** (`14 + 18 + 27 + 10 + 4` by domain, `41 + 14 + 18` by type, where the `27` is
+`11 + 2 + 2 + 12` for `AR-1`…`AR-4` and the argument-shape group's four cells are all present) — **and the executed
+register's SEVENTEEN rows are those twenty MINUS `AR-2` `2` + `AR-3` `2` + `RF-3` `2` = `6`, so `73 − 6` = `67`.** **THE
+`1`-FIGURE DIFFERENCE THIS PARAGRAPH NAMES IS NOT THE CAUSE: the cause is the THREE unexecuted rows, and WHICH THREE
+ROWS THE REGISTER DROPPED IS **OWED** AT THE NEXT GATE.** **NO TERM, ROW ID, STRATEGY ID, SEED, CAP OR POOL MEMBER
+MOVES — the two `72`s above were summation errors and the `73`'s attribution was a mis-description, and NOTHING else
+in this disposition changes.**
+**⟶⟶ 2026-09-27 CORRECTION ON THIS DISPOSITION (`§0A` note 6, the `67`-vs-`72` CORRECTION): OBLIGATION (1) IS
+**NOT** DISCHARGED — the two decompositions re-printed here close on `72`, and `72` is WITHDRAWN as the re-grain's own
+arithmetic defect, so OBLIGATION (1) STANDS OPEN with its figure corrected from `72` to `67`; and OBLIGATION (2)'S
+ATTRIBUTION IS CORRECTED.** **WHAT IS NOW TRUE, ONE OBLIGATION AT A TIME:** **(1) RE-DERIVE THE TWO DECOMPOSITIONS SO
+EACH CLOSES ON `67` — **OWED**, because this contract's table carries TWENTY rows (`AR-2` `2`, `AR-3` `2`, `RF-3` `2`
+among them) and its own additions close on `73` (`14 + 18 + 27 + 10 + 4` by domain, `41 + 14 + 18` by type), while
+the EXECUTED register carries SEVENTEEN rows whose terms close on `67` — and the seventeen-row chain and subtotals
+that DO close on `67` are printed at the head of this subsection.** **(2) RECONCILE THE AS-FILED `69`, THE AS-DRAFTED
+`27`/`18`, THE TWO CHAINS' `73` AND THE RE-GRAINED `72` AGAINST `67` — **PARTLY DISCHARGED, WITH ONE ATTRIBUTION
+CORRECTED**: the figures are each kept visible and each is annotated; the `73`'s cause is the contract's TWENTY-row row
+set (not the seventeen-row id list, which is what the paragraph above says — the `73` is the SUM OF THE TWENTY ROWS'
+OWN CELLS, and the executed register's seventeen rows are those twenty MINUS `AR-2`/`AR-3`/`RF-3`); and the `72` is
+WITHDRAWN as the re-grain's own defect rather than reconciled as a figure.** **(3) EXECUTE THE SEVENTEEN ROWS — STILL
+EXECUTED BY THE TestWriter's register, whose cells the head of this subsection prints; and WHICH THREE OF THE TWENTY
+ROWS THE REGISTER DROPPED IS **OWED** AT THE NEXT GATE, as a GATE and not as a re-grain, because it moves a row set.**
+**NO CELL, TERM, ROW ID, STRATEGY ID, SEED OR CAP MOVES BY THIS CORRECTION — and a pass that resolves any of the three
+by moving one of them still REVERSES this subsection and MUST OPEN A GATE.**
+
+**⟶⟶ CLOSING STATEMENT OF THIS SUBSECTION, ADDED BY THE `67`-vs-`72` CORRECTION (2026-09-27) — WHAT A LATER PASS
+SHOULD CARRY FROM `§5.5.3`, IN SIX LINES.** **(1) THE DECLARED TOTAL IS `67`, printed with the SEVENTEEN terms that
+actually sum to it; it is the executed register's own `DECLARED_TERMS` sum, term for term, with matching drive
+counts, and it is the figure every cap comparison uses (`67 ≤ 400`, headroom `333`; largest row `12 ≤ 100`, headroom
+`88`).** **(2) THE `72` IS WITHDRAWN AND ATTRIBUTED: it was THIS SUPERVISOR'S OWN RE-GRAIN ARITHMETIC DEFECT (an
+eighteenth `+ 2` step), the same class of error as the drafted `69`, and it is kept visible at every site that printed
+it with `WITHDRAWN` beside it.** **(3) WHAT MOVED IN THE PREVIOUS RE-GRAIN STANDS: three rows gained a term (`AR-2`,
+`AR-3`, `RF-3`), two had another row's figure printed against them (`AR-1`, `AR-4`), and `15` positions were already
+right — `3 + 2 + 12 = 17` rows, and none of those moves is undone here.** **(4) WHAT MOVES NOW: ONLY THE TOTALS, THE
+CHAIN AND THE SUBTOTALS — NO CELL MOVES, and no row id, strategy id, seed, cap or pool member moves.** **(5) THE
+TEST-SIDE VERDICT: THE ALIGNMENT IS A NO-OP — the red set's own term rows already pin `67` (`REGISTER-TERMS`,
+`REGISTER-HONESTY`, and the register's own `DECLARED_TERMS`), which is correct, so NOTHING IN THE TEST FILE NEEDS TO
+MOVE and a pass that re-grains those literals to `72` would be importing a withdrawn figure.** **(6) AND ONE FINDING
+STRICTLY WORSE THAN THE `72`, NAMED RATHER THAN SMOOTHED: this contract's `§5.5.1` table enumerates TWENTY rows whose
+own printed property terms sum to `73`, while the executed register carries SEVENTEEN — `AR-1` `11` and `AR-4` `12`
+present, `AR-2`/`AR-3`/`RF-3` ABSENT — so the seventeen-row chain and subtotals that close on `67` are printed above,
+the twenty-row readings that close on `73` are printed above beside them, and WHICH THREE ROWS THE REGISTER DROPPED IS
+**OWED** AT THE NEXT GATE (a row-set change is a GATE, not a re-grain).** **NO CODE, NO RED RE-RUN AND NO STATUS FLIP
+ACCOMPANIES THIS PASS; THE LEDGER IS UNCHANGED AT `20 DONE / 1 open` = `21` units; THE BOUNDED SET STAYS THE FIVE ROWS
+(`P-FT-ID-3`, `P-FT-ID-5`, `P-FT-AR-1`, `P-FT-AR-4`, `P-FT-RS-2`); AND THE READING CLASSES STAY AS RECORDED
+(`§5.5.2` items 4 and 4b).**
 
 ---
 
@@ -1411,6 +1706,21 @@ excludes IPC behaviour and rendered geometry, and the row **may not be moved to 
    authority that settles all four.** **The re-grained column, its chain, its subtotals, its re-checked caps and the
    row-by-row term verdict are at `§0A` note 6 and `§5.5.3`; NO term, row id, strategy id, seed, cap or pool member
    moved, and THE ONLY FIGURES THAT MOVED ARE THE MIS-SUMMED ONES, each printed beside its as-filed form.**
+   **⟶⟶ 2026-09-27 CORRECTION ON THAT ANNOTATION (`§0A` note 6, the `67`-vs-`72` CORRECTION): THE CORRECTION ABOVE IS
+   ITSELF CORRECTED — THE SEVENTEEN CELLS **DO** SUM TO `67`, AND THE `72` IT PRINTED WAS THIS SUPERVISOR'S OWN
+   RE-GRAIN ARITHMETIC DEFECT, WITHDRAWN.** **The executed register's `DECLARED_TERMS` (`[4, 3, 3, 2, 2, 2, 3, 10, 2,
+   1, 11, 12, 4, 2, 2, 3, 1]`) is exactly the seventeen cells this contract's `§5.5.1` table prints, its cells match
+   TERM FOR TERM, its sum is `67`, and its drive counts match — so the as-filed sentence above (*"the drafted declared
+   total `69` against the seventeen cells' sum `67`"*) is TRUE about the cells, and only its `69`-vs-`67` history
+   stands as the narrower earlier defect.** **THE FILING'S DEFECTIVE TOTAL FIGURES ARE FOUR (`69` drafted, `61` over the
+   as-filed printed list, `73` over the contract's twenty-row set, `72` re-grained) AND `67` IS NONE OF THEM: `67` IS
+   THE DECLARED TOTAL.** **AND THE ONE FINDING WORSE THAN THE `72`, RECORDED HERE AS AT `§5.5.3`: the contract's
+   `§5.5.1` table enumerates TWENTY rows whose own printed property terms sum to `73`, while the executed register
+   carries SEVENTEEN (`AR-1` `11`, `AR-4` `12` present; `AR-2`, `AR-3`, `RF-3` absent) — so WHICH THREE ROWS THE
+   REGISTER DROPPED IS **OWED**, and `73 − 67 = 6` is that residue.** **THE BOUNDED SET STAYS THE FIVE ROWS
+   (`P-FT-ID-3`, `P-FT-ID-5`, `P-FT-AR-1`, `P-FT-AR-4`, `P-FT-RS-2`) AND THE READING CLASSES STAY AS RECORDED
+   (`§5.5.2` items 4/4b).** **NO CODE, NO RED RE-RUN AND NO STATUS FLIP ACCOMPANIES THIS CORRECTION; THE LEDGER IS
+   UNCHANGED AT `20 DONE / 1 open` = `21` units; and NO term, row id, strategy id, seed, cap or pool member moves.**
 
 ### 7a. Ambiguity report — the clauses a TestWriter could NOT derive a falsifiable row from without a default
 
@@ -1522,7 +1832,7 @@ strategy id or attempt term changed for it · **`BLOCKING — SCOPE`** = a scope
 | **`A-12`** | **THE DENY-SET PROBE:** is any changed file outside `§5.1`'s allow-list while inside `§2.5` item 3's DENY set — **in particular the preload bridge, the notification path, `src/shared/focus-model.ts` and `docs/specs/focus-model.md`?** | static |
 | **`A-13`** | **THE FOCUS-WALK PROBE:** does the route read `activeElement`, walk a focusable set, call `focus(`/`blur(`, read `matchMedia`, install ANY listener or hold a root — **including a "convenience" listener that would make the route dispatchable?** **Is the ban really on the WALK only, with the NAME and CASE legitimate?** | static + `[T]` |
 | **`A-14`** | **THE ENDPOINT-AMENDMENT PROBE:** did the SAME COMMIT land the tool, the `RpcMethod` member, the switch case, the census edits, the endpoint's six named amendment items **AND the missing `module` row**? **A deferred amendment FAILS** (`H-r18`). | static + the commit |
-| **`A-15`** | **THE REGISTER AUDIT (gate 11's read-only PBT audit):** do the executed tables match `§5.5.1`'s per-row attempts, terms, strategy ids and the seventeen cells — **and does the audit RECONCILE the defects `§5.5.3` records (the as-filed `69` against the seventeen cells' sum `67`, and the two WITHDRAWN subtotal decompositions) rather than flagging them as an owed re-grain this file already declares?** **Is the exhaustive-enumeration declaration TRUE of the landed tables (no seed, no generator, no sampling)?** **Are the `(bounded)` markings `5` of `17` rows as the cells carry?** Is the **stop-after-5** rule honoured, and were the **un-run rows REPORTED as failures**? **Is every pool/table member still consistent with its row's declared boundary text?** **Any OTHER mismatch is a SPEC FINDING.** **⟶ 2026-09-27 (`§0A` note 6): the defects this audit was to reconcile are RECONCILED — the re-grained declared total is `72`, the as-filed `69`/`67`/`61`/`73`/`63` and the as-drafted `27`/`18` are each kept visible and marked DEFECTIVE AND SUPERSEDED, the bounded set is the FIVE NAMED rows, and the third reading class is named at `§5.5.2` item 4b** — **so this seed's question is now about the RE-GRAINED cells and the register's own, at `72`.** | `[T]` + the test file |
+| **`A-15`** | **THE REGISTER AUDIT (gate 11's read-only PBT audit):** do the executed tables match `§5.5.1`'s per-row attempts, terms, strategy ids and the seventeen cells — **and does the audit RECONCILE the defects `§5.5.3` records (the as-filed `69` against the seventeen cells' sum `67`, and the two WITHDRAWN subtotal decompositions) rather than flagging them as an owed re-grain this file already declares?** **Is the exhaustive-enumeration declaration TRUE of the landed tables (no seed, no generator, no sampling)?** **Are the `(bounded)` markings `5` of `17` rows as the cells carry?** Is the **stop-after-5** rule honoured, and were the **un-run rows REPORTED as failures**? **Is every pool/table member still consistent with its row's declared boundary text?** **Any OTHER mismatch is a SPEC FINDING.** **⟶ 2026-09-27 (`§0A` note 6): the defects this audit was to reconcile are RECONCILED — the re-grained declared total is `72`, the as-filed `69`/`67`/`61`/`73`/`63` and the as-drafted `27`/`18` are each kept visible and marked DEFECTIVE AND SUPERSEDED, the bounded set is the FIVE NAMED rows, and the third reading class is named at `§5.5.2` item 4b** — **so this seed's question is now about the RE-GRAINED cells and the register's own, at `72`.** **⟶⟶ 2026-09-27 CORRECTION (`§0A` note 6, the `67`-vs-`72` CORRECTION): this seed's closing figure is WITHDRAWN — the RECONCILED defects are reconciled against the declared total `67`, NOT `72` (`72` was the supervisor's own re-grain arithmetic defect); the as-filed `69`/`61`/`73`/`63` and the as-drafted `27`/`18` are each kept visible with the `72` added to that list of withdrawn figures; the bounded set is still the FIVE NAMED rows and the third reading class is still at `§5.5.2` item 4b; and THIS AUDIT NOW ALSO OWES THE ROW-SET QUESTION `§5.5.3` names — the contract's `§5.5.1` table enumerates TWENTY rows whose own printed property terms sum to `73`, while the executed register carries SEVENTEEN (`AR-2`, `AR-3`, `RF-3` absent), so WHICH THREE ROWS MOVED IS A SPEC FINDING THIS SEED MUST OPEN RATHER THAN FLAG AS RECONCILED.** | `[T]` + the test file |
 | **`A-16`** | **THE LAYER-HONESTY PROBE:** does the DONE row (or any pass's prose) claim **rendered-strip, focused-element, window-re-render, interaction or stored-state** evidence from this unit's `[T]` green — and does it state explicitly that **the notification and re-render rows claim only the node-reachable reading**? | the DONE row |
 | **`A-17`** | **THE HONESTY-BLOCK PROBE:** does `§5.5.2` name the excluded shapes as a boundary rather than a gap, does `§5.5.1` item 2 declare the exhaustive enumeration rather than merely omit a seed, do `§5.5.3` and `§7` item 8 carry this filing's own arithmetic defect VISIBLY with its obligations named, and does the DONE row carry the register's figures WITH their terms? | static + the DONE row |
 | **`A-18`** | **THE AUTHORITY PROBE:** does any pass read this unit as **the focus authority** — or claim that its route makes the tool an owner of `{entries, activeId}`, that the consumed module's rules were re-derived, or that a graph slice is the live authority? | static + the DONE row |
