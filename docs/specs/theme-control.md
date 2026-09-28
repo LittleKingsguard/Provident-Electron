@@ -805,6 +805,62 @@ appearance impression into the evidence FAILS** (`U-6`'s refusal; `S-TC-5`).
 `ui` leg's green AND the battery's own live readings — NEVER one substituting for the other** (the record's gate-6
 reading, carried).
 
+#### 5.2.1 DATED ANNOTATION (2026-09-27) — THE TWO BATTERY-TEXT CORRECTIONS THE RUN FORCED, AND THE ONE ITEM ROUTED OUT
+
+**The battery RAN** — the record is `docs/specs/theme-control-live-battery.md` (one boot, one pid, the three MCP
+commands, the PRE/POST pair, the two censuses, the `NOT-OBSERVABLE` row, at source revision `c65c475`), **and it left
+THREE items open.** **THIS ANNOTATION IS THE CONTRACT-SIDE DISPOSITION OF ALL THREE: TWO ARE CORRECTED IN THIS
+CONTRACT'S OWN BATTERY TEXT (below), ONE IS ROUTED OUT OF THIS UNIT'S SCOPE WITH A NAMED OWNER. THE `§5.2` BATTERY
+STEPS ABOVE STAND AS FILED AND ARE KEPT VISIBLE, WITH THE CORRECTED FORM BESIDE EACH (`RCA-8(d)`).** **This annotation
+moves NO row id, NO term, NO strategy id, NO seed, NO cap, NO ledger count and NO `§5.U` matrix cell; it names no new
+command surface, admits no unit and edits no `src/**` or `scripts/**` byte.**
+
+**`DEV-1` — THE BATTERY'S OWN BOOT LINE. CORRECTED HERE.** **AS FILED (kept visible, `§5.2` item 1):
+*"**BOOT.** **`npm start`** — the real Electron app boots the authored demo envelope."*** **MEASURED (the record's
+`§1`/`§7` item 1): `npm start` is `npm run build && electron .`, carrying no `--mcp-transport` flag, so the app's own
+default applies — and with the base vector's `--mcp-transport=stdio` reaching it FIRST (`src/main/main.ts`'s
+`transportFromArgs` returns the FIRST match) the literal `npm start` boots the **stdio** transport, **prints
+`[provident-mcp] stdio transport ready`, binds NO `http://127.0.0.1:3787/mcp` endpoint, and every HTTP command of
+items 2–6 below has nothing to reach.** **THE CORRECTED BOOT LINE — a boot that ACTUALLY BINDS THE HTTP ENDPOINT:**
+**`npm run start:http`** (`package.json`: `npm run build && electron . --mcp-transport=http` — **the repo's OWN
+script key, whose flag is the one the runner substituted in place of the base vector's stdio member, recorded at the
+record's `§1` with the full flag vector, and therefore the exact form this contract names**). **AND THE RULE THE
+CORRECTION CARRIES, STATED SO IT IS NOT RE-DERIVED WRONG: THE `stdio` TRANSPORT IS THE DEFAULT FOR **MCP CLIENTS**
+(a client spawns the process and speaks over its own pipes), **NEVER FOR THIS BATTERY** — this battery's instrument is
+the project's HTTP-driven `scripts/mcp-cli.mjs` over `--target http --port 3787`, so a battery boot MUST carry the
+HTTP transport (the flag or the script key above), **and a `[U]` battery that boots plain `npm start` and reports
+readings anyway is reporting readings it cannot have taken** (`S-TC-12`). **The record's own honest limit stands: its
+literal `deviation` clause is kept as written there** (`RCA-8(d)`).
+
+**`FINDING-1` — THE FILED DISPATCH STEP OMITS ITS TOKEN ARGUMENT. CORRECTED HERE.** **AS FILED (kept visible,
+`§5.2` item 3): *"`npm run mcp -- --target http --port 3787 dispatch theme-dark click`"* — **no `jsonArgs`.***
+**MEASURED (the record's `§2` step 4 / `§3` `FINDING-1`): that filed literal leaves the item-4 POST reading at the
+**EMPTY STRING** (`content: ""`), which **CONTRADICTS THIS BATTERY'S OWN CLAUSE — item 4's *"MUST equal the dispatched
+token character for character"*** (no argument reaches the handler, so the authored body's `value == null ? '' :
+String(value)` gate writes `''`). **THE CORRECTED FILED STEP — THE SAME COMMAND **WITH** ITS TOKEN ARGUMENT, the
+CLI's own declared third parameter (`scripts/mcp-cli.mjs`'s `dispatch <target> <event> [jsonArgs]`):**
+**`npm run mcp -- --target http --port 3787 dispatch theme-light click '["light"]'`** (and, for the other closed
+member, `… dispatch theme-dark click '["dark"]'`). **THE MEASURED PRE/POST PAIR, RECORDED HERE AS THIS BATTERY'S OWN
+EVIDENCE:** **PRE — `… node-state theme-setting` BEFORE the dispatch → `content: "dark"`** (the authored initial
+token) · **POST — the same command AFTER it → `content: "light"`**, i.e. **character for character the dispatched
+token; PRE ≠ POST holds AND POST == the token holds, so the `U-4` carry is MEASURED WORKING.** **The as-filed literal
+is ALSO kept in the record's own `§2` row 4 and its `§5.U` `U-4` observation, there as the counter-example it is**
+(`RCA-8(d)`; `§5.U` `U-4`'s verdict is unchanged and no cell of that matrix is rewritten by this annotation).
+
+**`FINDING-2` — AN UNRESOLVABLE TARGET PRINTS A JSON-PARSE COMPLAINT INSTEAD OF THE FAILURE TEXT: ROUTED OUT OF THIS
+UNIT'S SCOPE, WITH ITS OWNER.** **AS FILED (kept visible, `§5.2` item 3's U-5 negative): the reading for
+`dispatch no-such-node click`.** **MEASURED (the record's `§2` U-5 row / `§3` `FINDING-2`): the semantic result is
+RIGHT — **non-zero exit (`1`), the tool's own `unresolved target` result, and the following `node-state` reading
+UNCHANGED (`content: "light"`), so no success is fabricated** — **but the READING is unreadable: the tool returns the
+failure as PLAIN TEXT while the CLI expects a JSON body, so the driver prints
+`Unexpected token 'u', "unresolved"… is not valid JSON` instead of the failure text itself.** **THE DRIVER LIVES
+UNDER `scripts/**`, WHICH THIS CONTRACT'S OWN DENIED SET FORBIDS** (`§5.1`'s DERIVED denied set; **`§1` item 8: *"no
+`scripts/**` edit"***) — **so this is OUT OF SCOPE FOR `F1`, IT IS FIXED NOWHERE, and it is recorded as its own owed
+row in `docs/pending.md` `§L-4` (`L-4j`) with its owner and its acceptance test (the driver prints the failure text
+for an unresolvable target).** **IT GATES NO UNIT** and it changes no clause of this battery: **`U-5`'s declared
+semantics hold as filed and its `§5.U` verdict stands as measured.** **THE DRIVER IS NOT CHANGED BY THIS UNIT OR BY
+THIS ANNOTATION.**
+
 ### 5.3 The DONE row's shape
 
 The DONE row (`docs/next-steps.md`, the supervisor's pass) must carry, **in this order** — **all TWELVE items**:
@@ -1258,6 +1314,20 @@ by this pass** (`RCA-8(d)`: annotate, never rewrite).
 **No adversarial pass has run** (`AGENTS.md` RCA-3 makes it MANDATORY per completed unit). **This table SEEDS it;
 each row is `OWED`, and no seed is a finding.**
 
+**⟶ ANNOTATION BESIDE THE AS-WRITTEN TEXT (2026-09-27, the supervisor's doc-writer pass — `RCA-8(d)`; the section
+above is NOT rewritten and every seed below stands as filed): THE UNIT-WIDE ADVERSARIAL PASS **HAS** RUN, AND SO HAS
+THE GATE-11 READ-ONLY PBT AUDIT — A READER MUST NOT BE TOLD OTHERWISE BY THE AS-WRITTEN LINES ABOVE.** **THE PASS's
+FINDINGS, THEIR DISPOSITIONS AND THE READ-ONLY PBT AUDIT EXIST AND WERE LANDED BY THAT PASS in the ledger commit.**
+**WHERE THEY ACTUALLY LIVE:** that pass's own gate-4 record (**cited BY NAME in `docs/next-steps.md`'s `F1` record
+and the ledger commit it landed in**), **from which the formal transcription into the table below is drawn.**
+**WHAT IS STILL OWED, AND IT IS OWED BY THE SUPERVISOR — THE FORMAL `§3a`/`§3b` TRANSCRIPTION IS **NOT** COMPLETE:**
+`§3a`'s seeds are still carried as `OWED` seeds and `§3b`'s disposition table is still EMPTY. **THIS ANNOTATION DOES
+NOT CLAIM THE RECORD IS COMPLETE AND IT SUPPLIES NO FINDING, NO DISPOSITION AND NO SEVERITY OF ITS OWN.** **The scope
+of the `§6.2` audit is NARROWER than this gate:** that audit is a **read-only audit of
+`docs/specs/theme-control-live-battery.md`'s `§4` MATRIX alone** — **it does NOT discharge this unit-wide gate-4
+record** (`AUD-TC-7`, `HIGH`: `docs/specs/theme-control-live-battery.md` `§9`). **The `DONE` row owes BOTH** (this
+file's `§5.3` item 8). **No seed, no row id, no term, no strategy id, no cap and no ledger count is moved here.**
+
 | # | The seed (what the read-only adversarial pass must attack) | Why it is the sharp one |
 | --- | --- | --- |
 | **A-1** | **THE BOUNDARY SCAN'S VACUITY** — attack `R-2` with a corpus that generalises the card WITHOUT any denied token (a new demo card in a second envelope, a renamed-but-equivalent token block, a "shipped" appearance module that spells its tokens differently) and see whether the row still passes | a scan that only catches the literal list is the `S-TH-7`/`S-ML-2` vacuity class, and the boundary clause is exactly where the family has been bitten |
@@ -1277,6 +1347,16 @@ bare `OWED` after the pass.** **A finding dispositioned with a bare `OWED` in th
 this file) · `OWED-TEST-SIDE` (owner: the TestWriter) · `OWED-CONTRACT-SIDE` (owner: the supervisor's adjudication)
 · `NOT-A-FINDING` (with its reason) · `PACKAGE-DEFECT` (→ `docs/defects.md` + `docs/HANDOFF.md`, NEVER patched
 here).**
+
+**⟶ ANNOTATION BESIDE THE AS-WRITTEN BLOCK ABOVE (2026-09-27, the supervisor's doc-writer pass — `RCA-8(d)`): THE
+PASS **HAS** RUN AND THIS TABLE'S FORM IS WHAT THE OWED TRANSCRIPTION IS DRAWN INTO.** **The as-written sentence
+*"NO PASS HAS RUN"* and the `OWED` row below are KEPT VISIBLE, and the as-written FORM (the six dispositions) is
+KEPT — NOTHING IN THIS BLOCK IS REWRITTEN.** **The pass's findings, their dispositions and the read-only gate-11 PBT
+audit exist and were landed by that pass in the ledger commit (where they actually live — see the `§3a` annotation
+above).** **A finding dispositioned with a bare `OWED` in the DONE row is a review finding** (`AGENTS.md` item 11(e)), **and that rule is UNCHANGED by this annotation.** **THE FORMAL TRANSCRIPTION INTO THIS TABLE IS STILL OWED BY THE SUPERVISOR and the record is NOT CLAIMED
+COMPLETE HERE; the `DONE` row owes it** (`§5.3` item 8; `AUD-TC-7`, `HIGH` —
+`docs/specs/theme-control-live-battery.md` `§9`). **The `§6.2` matrix audit is a NARROWER scope and does NOT
+discharge this table.**
 
 | # | Finding | Class | Severity | Disposition | Owner | Revisit condition |
 | --- | --- | --- | --- | --- | --- | --- |

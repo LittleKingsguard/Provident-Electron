@@ -170,3 +170,90 @@ probe envelope, the divergence leg the shim≡real identity).
    `U-5`'s failure reading is unreadable as filed (FINDING-2). **Neither is parked: the battery RAN,
    the carry works, and both are reported as OPEN items with their exact reason** — a UI unit is not
    green while a filed reading contradicts its own contract text.
+
+## 8. DISPOSITION OF THIS RECORD'S THREE OPEN ITEMS, AND THE AUDIT THAT IS STILL OWED (annotated 2026-09-27 by the supervisor's doc-writer pass)
+
+**WHAT THIS SECTION IS:** the **dated disposition annotation** on the record above — **every reading,
+table, exit code, verdict and honest limit in `§1`–`§7` stands EXACTLY AS FILED and NOT ONE IS
+REWRITTEN** (`RCA-8(d)`: annotate beside, never rewrite). **It adds no reading, moves no row id, no
+term, no strategy id, no seed, no cap and no ledger count, and it measures nothing itself.**
+
+**THE THREE ITEMS, DISPOSED — TWO CORRECTED IN THE CONTRACT'S OWN BATTERY TEXT, ONE ROUTED OUT OF
+SCOPE WITH ITS OWNER.** **All three are dispositioned at their own sites in `docs/specs/theme-control.md`
+`§5.2.1` (the new dated annotation under the DECLARED GATE-6 BATTERY, which keeps each as-filed
+wording visible beside its correction):**
+
+1. **`DEV-1` (this record's `§1` boot deviation / `§7` item 1) — FIXED IN THE CONTRACT TEXT.** The
+   contract's battery now names **`npm run start:http`** (the repo's OWN script key —
+   `npm run build && electron . --mcp-transport=http`) as **the boot that actually binds
+   `http://127.0.0.1:3787/mcp`**, states that **the `stdio` default is for MCP CLIENTS and NOT for
+   this battery**, and keeps the as-filed `npm start` line visible. **The record's own literal
+   deviation clause `§1` is kept as written — it is superseded by the contract text, not by a rewrite
+   here.**
+2. **`FINDING-1` (this record's `§3`) — FIXED IN THE CONTRACT TEXT.** The filed dispatch step is
+   corrected to **carry its token argument** (`dispatch theme-light click '["light"]'`), the as-filed
+   no-arg literal is kept visible as the counter-example, and **this record's own measured PRE/POST
+   pair — PRE `content: "dark"` (`§2` step 2(c)) → POST `content: "light"` (`§2` step 4b) — is
+   recorded at the contract as the battery's own evidence that the `U-4` carry is MEASURED WORKING.**
+   **The record's `§5.U` `U-4` verdict is unchanged and no matrix cell is rewritten.**
+3. **`FINDING-2` (this record's `§3`) — ROUTED OUT OF SCOPE, WITH ITS OWNER.** The driver lives under
+   `scripts/**`, which this unit's contract **DENIES** (`docs/specs/theme-control.md` `§1` item 8 ·
+   `§5.1`), so **it is out of scope for `F1` and is fixed nowhere by this pass. THE DRIVER WAS NOT
+   CHANGED.** It is recorded as **its own owed row, `docs/pending.md` `§L-4` `L-4j`**, **owner = the
+   next pass that touches the driver or the MCP client surface**, with its acceptance test (**the
+   driver prints the failure text for an unresolvable target**), and **it gates no unit.**
+
+**THE `§6.2` READ-ONLY AUDIT IS STILL OWED — AND IT BELONGS TO A PARTY THAT DID NOT AUTHOR THE MATRIX.**
+`§4`'s structured coverage report is **EMITTED, NOT BLESSED** (`emitter: "MANUAL"`): **no pass has
+blessed it, and this runner is not that party** (a self-blessed matrix is the self-verified-greens
+anti-pattern, `AGENTS.md` item 10/RCA-4). **The audit must reconcile `U-4`'s drifted literal
+(`FINDING-1`) and the `dispatch` failure-reading (`FINDING-2`), and until it lands the matrix carries
+NO verdict from an independent eye.**
+
+**THE MATRIX STANDS AS MEASURED, AND THE UNIT IS NOT YET GREEN.** `§4`'s summary stands unchanged:
+**`total 8` · `changed 7` · `unchanged 0` · `notObservable 1`** — **the SEVEN `CHANGED` rows (`U-1`,
+`U-2`, `U-3`, `U-4`, `U-5`, `U-7`, `U-8`) plus the ONE structurally `NOT-OBSERVABLE` row (`U-6`,
+reason `STRUCTURAL` and non-empty) are measured readings from one boot, not projections.** **THE UNIT IS
+NOT GREEN WHILE THE `§6.2` AUDIT IS OUTSTANDING**: the battery RAN and its readings hold, but **a live
+battery without its read-only audit is an unblessed matrix, so `F1`'s gate-6 half is RUN AND
+UN-AUDITED, not closed** — and the two contract-side corrections and the one routed item above are
+this record's complete disposition of its own three open items.
+
+## 9. THE `§6.2` READ-ONLY AUDIT — LANDED (recorded 2026-09-27 by the supervisor's doc-writer pass)
+
+**WHAT THIS SECTION IS:** the **transcription of the `§6.2` audit's findings into this record** — **the audit was
+READ-ONLY, it authored none of `§4`'s matrix and it ran nothing.** **Every reading, table, exit code, verdict and
+honest limit in `§1`–`§8` stands EXACTLY AS FILED and NOT ONE IS REWRITTEN** (`RCA-8(d)`): **the findings below are
+ANNOTATED BESIDE the material they concern, they add no reading, and they move no row id, no term, no strategy id,
+no seed, no cap and no ledger count.** **This section measures nothing itself.**
+
+**VERDICT: GATE 6 IS NOT CLOSED.** **`F1`'s gate-6 half is RUN, AUDITED AND NOT CLOSED** — the audit does **not**
+bless the matrix, and the three owed items below are what stands between it and closure.
+
+| # | Finding (clause · evidence · severity · disposition) |
+| --- | --- |
+| **`AUD-TC-1`** | **THE NEGATIVE-CONTROL ROW'S VERDICT CONTRADICTS ITS OWN TEXT — `MED`.** `§4`'s **U-5** row files its `verdict` as **`CHANGED`** while **its own observation is the UNCHANGED reading** (the unresolvable `no-such-node` target left the state node at `content: "light"`, its prior value; exit non-zero) — **a verdict that contradicts its own observation text.** **THE READINGS STAND: the `U-5` observation and its `exit 1` are kept as measured and the `verdict` cell is NOT rewritten — the correction is an ANNOTATION BESIDE it** (`RCA-8(d)`). **DISPOSITION: OWED — the runner's OWN verdict annotation** (owner: the runner's next pass); **it changes no reading and no matrix cell.** |
+| **`AUD-TC-2`** | **THE FALSIFIABLE CLAUSE IS NOT SATISFIED LITERALLY — `MED`.** `§4`'s report carries **one `cmd` and one `exit` per row**, while **two rows' commands are several each** (**U-4**'s three-command PRE/dispatch/POST sequence and **U-8**'s four-reading sequence) **and their exit codes live only in this record's own sequence table (`§2`), never in the row's `exit` field.** **NO READING IS DISPUTED and nothing measured is withdrawn.** **DISPOSITION: OWED — the per-command `commands[]`/exit FORM** (owner: the runner's next pass). |
+| **`AUD-TC-3`** | **NO PROJECTED POST-READING FOUND — `NOT-A-FINDING / LOW`.** **The single carry-forward is NAMED:** the contract's **filing-time authored census** (`18`, a `§2.1`/`CURRENT STATE` filing figure), carried into `§4`'s **U-7** row **because NO pre-control tree exists to measure a "before" against** — **a named carry-forward, not a projection.** **Each census was measured with its OWN command** (authored via `node -e`, loaded via `… targets`), **and the loaded `23` and authored `18 + 5 = 23` figures RECONCILE.** **DISPOSITION: `NOT-A-FINDING`, recorded with its reason; nothing owed.** |
+| **`AUD-TC-4`** | **THE ADDITIVE/SCOPING STORY IS SOUND — `LOW`.** **Every verdict in `§4` is a GRAPH-SIDE reading or the LIVE TOOL CENSUS**; **the `ui` leg (`§5`) and the divergence leg (`§5`) appear ONLY as PRECONDITIONS**; **and NO APPLIED-APPEARANCE CLAIM EXISTS ANYWHERE in this record** (`§4`'s **U-6** stays `NOT-OBSERVABLE (STRUCTURAL)`). **ONE ITEM RECORDED FOR ANNOTATION — a BOOT-INSTRUMENT DRIFT:** the **as-filed start command** of `§1` (**`electron … --mcp-transport=http …`**) is **SUPERSEDED BY the corrected battery text** at **`docs/specs/theme-control.md` `§5.2.1`** (**`npm run start:http`**). **The as-filed line stands as written** (`RCA-8(d)`). **DISPOSITION: that one drift item is OWED for annotation** (owner: the runner's next pass). |
+| **`AUD-TC-5`/`AUD-TC-6`** | **THE TWO CONTRACT-TEXT CORRECTIONS ARE CORRECTIONS, NOT RETRO-FITS — `NOT-A-FINDING`.** **The as-filed forms stay VISIBLE** at the contract (`npm start`; the no-arg dispatch literal) **and the recorded PRE/POST pair (`§2` steps 2(c)/4b) traces EXACTLY** onto the corrected text. **The out-of-scope routing is VERIFIED against the contract's OWN denied path** (`§1` item 8 · `§5.1`'s denied set contain `scripts/**`, the driver's home), **and THERE IS NO CONTRADICTION BETWEEN THE LIVE READINGS AND THE BLIND GREENS.** **DISPOSITION: `NOT-A-FINDING`, each with its reason; nothing owed.** |
+| **`AUD-TC-7`** | **🔴 THE UNIT-WIDE ADVERSARIAL PASS AND THE GATE-11 PBT AUDIT ARE OUTSTANDING IN THE CONTRACT'S OWN RECORD — `HIGH`.** **The contract STILL READS that NO adversarial pass has run and that EVERY SEED IS `OWED`** (`docs/specs/theme-control.md` `CURRENT STATE` item 5 · `§3a`'s `OWED` header and its eight `OWED` seeds) **and ITS `§3b` DISPOSITION TABLE IS EMPTY** (`| *(none yet — the pass has not run)* | … | OWED |`) — **ALTHOUGH THE PASS **HAS** RUN: its findings, their dispositions and the read-only gate-11 PBT audit EXIST and were LANDED BY THAT PASS in the ledger commit.** **THIS SCOPED `§6.2` AUDIT DOES NOT DISCHARGE THE UNIT-WIDE GATE-4 RECORD** (a read-only matrix audit is not the unit's adversarial pass and is not its PBT audit). **A READER OF `§3a`/`§3b` IS CURRENTLY TOLD THE PASS HAS NOT RUN; the contract's dated annotation beside the as-written text (landed this pass) points at where its findings actually live.** **DISPOSITION: OWED — the UNIT-WIDE `§3a`/`§3b` RECORD with its PBT audit; the `DONE` ROW OWES BOTH** (owner: **the supervisor's formal `§3a`/`§3b` transcription**). **It gates the `DONE` row and it is NOT closed here.** |
+| **LOW — one authored binding** | **ONE AUTHORED BINDING SITS OUTSIDE THE DECLARED FIVE IDS AND ONE HANDLER NAME — `LOW`, recorded as a NOTE.** **`THEME_INITIAL_TOKEN`** is an authored binding **outside** the declared five ids (`theme-card`/`theme-dark`/`theme-light`/`theme-setting` and the handler `theme-set`); **it is UNEXPORTED.** **NO CLAUSE REDDENED** — it is **recorded as a note only**, and it moves no id, term, seed or cap. **DISPOSITION: NOTE, nothing owed.** |
+
+**THE AUDIT'S VERDICT AND ITS FINDINGS, WITH OWNERS — and the THREE ITEMS THE RECORDS STILL OWE:**
+
+1. **THE RUNNER'S VERDICT ANNOTATION AND THE PER-COMMAND EXIT FORM** (`AUD-TC-1` · `AUD-TC-2`, plus `AUD-TC-4`'s
+   boot-instrument drift item) — **owner: the runner's next pass.** **The readings stand; nothing measured is
+   withdrawn and no matrix cell is rewritten.**
+2. **THE UNIT-WIDE `§3a`/`§3b` RECORD WITH THE GATE-11 PBT AUDIT** (`AUD-TC-7`) — **owner: the supervisor's formal
+   transcription.** **The pass HAS run and its findings exist and were landed by that pass in the ledger commit;
+   the contract's as-written `§3a`/`§3b` are annotated beside this pass to say so, and the record itself is still
+   OWED — the record is NOT COMPLETE and this pass does not claim it is.**
+3. **THIS AUDIT RECORDED IN THE TRACKERS** — **owner: the supervisor's doc-writer pass** — **landed as
+   `docs/pending.md` `§L-4` `L-4k`.**
+
+**WHAT IS NOT CHANGED, STATED EXPLICITLY:** **`§4`'s summary stands as measured** — **`total 8` · `changed 7` ·
+`unchanged 0` · `notObservable 1`** — **the seven `CHANGED` rows and the one `NOT-OBSERVABLE` (`U-6`) row are
+measured readings from one boot and NOT ONE CELL IS REWRITTEN, `U-5`'s contradiction included (annotated, per
+`AUD-TC-1`).** **THE LEDGER IS UNMOVED: `18 DONE / 3 open` UNITS = `21` units (`18 + 3 = 21`)** — **this record's
+`§9` flips no cell, moves no ledger count and authors no unit's status.**
