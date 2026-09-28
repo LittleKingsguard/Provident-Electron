@@ -284,8 +284,31 @@ function assembledCorpus(token: string): string {
   return `const a = '${half}' + '${rest}'\n// a comment mentioning ${token}\n`
 }
 
+/** THE HARNESS'S OWN READING OF A RAW VALUE — COERCION-FREE BY CONSTRUCTION
+ *  (the gate-3 repair's adjudication 3(b)): the harness's own diagnostic labels
+ *  used to COERCE a hostile value (`String(verb)` over a REVOKED `Proxy`, and the
+ *  exception-describing helper applied to a NULL-PROTOTYPE state object) and
+ *  therefore RAISED BEFORE THE MODULE WAS EVER CALLED — which makes a
+ *  harness-side throw indistinguishable from a module-side one, the exact
+ *  confusion `§2.1` item 2's uniform error pattern is asserted against.
+ *  THIS READER TOUCHES NO COERCION HOOK: no `toString`, no `valueOf`, no
+ *  `Symbol.toPrimitive`, no member access, no trap. It reports the `typeof` tag
+ *  and, for PRIMITIVES only, the literal value — so a hostile object is reported
+ *  as `an object` rather than converted. */
+function rawOf(v: unknown): string {
+  switch (typeof v) {
+    case 'string': return `'${v}'`
+    case 'number': return `number ${String(v)}`
+    case 'boolean': return `boolean ${String(v)}`
+    case 'bigint': return 'a bigint'
+    case 'symbol': return 'a Symbol'
+    case 'function': return 'a function'
+    case 'undefined': return 'undefined'
+    default: return v === null ? 'null' : 'an object'
+  }
+}
 function describeThrown(e: unknown): string {
-  return e instanceof Error ? e.message : String(e)
+  return e instanceof Error ? e.message : rawOf(e)
 }
 /** ONE drive: the thrown value is RETURNED, never re-thrown, so a row can report
  *  it in its own vocabulary (`§2.1` item 2: a throw is always a FINDING). */
@@ -335,7 +358,7 @@ function resultBreakOf(value: unknown, label: string): string | null {
   const r = value as Record<string, unknown>
   if (typeof r['accepted'] !== 'boolean') return `${label} — 'accepted' is ${typeof r['accepted']}, not the declared boolean`
   const verb = r['verb']
-  if (typeof verb !== 'string' || !(VERB_BODIES as readonly string[]).concat([UNKNOWN_BODY]).includes(verb)) return `${label} — 'verb' is ${JSON.stringify(verb)}, outside the closed five + the declared normalised body 'unknown'`
+  if (typeof verb !== 'string' || !(VERB_BODIES as readonly string[]).concat([UNKNOWN_BODY]).includes(verb)) return `${label} — 'verb' is ${rawOf(verb)}, outside the closed five + the declared normalised body 'unknown'`
   if (!Array.isArray(r['refusals'])) return `${label} — 'refusals' is not an array`
   const refusals = r['refusals'] as unknown[]
   if (refusals.length !== 0 && refusals.length !== 1) return `${label} — 'refusals'.length is ${refusals.length}; at most ONE refusal per call (§2.3 item 8)`
@@ -357,9 +380,9 @@ function refusalBreakOf(value: unknown, label: string): string | null {
   if (k !== null) return k
   const r = value as Record<string, unknown>
   const code = r['code']
-  if (typeof code !== 'string' || !(REFUSAL_CODES as readonly string[]).includes(code)) return `${label} — 'code' is ${JSON.stringify(code)}, outside the CLOSED FIVE this contract emits`
+  if (typeof code !== 'string' || !(REFUSAL_CODES as readonly string[]).includes(code)) return `${label} — 'code' is ${rawOf(code)}, outside the CLOSED FIVE this contract emits`
   const verb = r['verb']
-  if (typeof verb !== 'string' || !(VERB_BODIES as readonly string[]).concat([UNKNOWN_BODY]).includes(verb)) return `${label} — 'verb' is ${JSON.stringify(verb)}, not the verb of record`
+  if (typeof verb !== 'string' || !(VERB_BODIES as readonly string[]).concat([UNKNOWN_BODY]).includes(verb)) return `${label} — 'verb' is ${rawOf(verb)}, not the verb of record`
   return null
 }
 /** `accepted: false` + `changed: false` + one refusal of the expected code +
@@ -368,28 +391,50 @@ function refusedBreakOf(value: unknown, state: unknown, code: string, label: str
   const b = resultBreakOf(value, label)
   if (b !== null) return b
   const r = value as Record<string, unknown>
-  if (r['accepted'] !== false) return `${label} — a refused attempt must read accepted: false (got ${JSON.stringify(r['accepted'])})`
-  if (r['changed'] !== false) return `${label} — a refused attempt must read changed: false (got ${JSON.stringify(r['changed'])})`
+  if (r['accepted'] !== false) return `${label} — a refused attempt must read accepted: false (got ${rawOf(r['accepted'])})`
+  if (r['changed'] !== false) return `${label} — a refused attempt must read changed: false (got ${rawOf(r['changed'])})`
   const refusals = r['refusals'] as Record<string, unknown>[]
   if (refusals.length !== 1) return `${label} — a refused attempt carries EXACTLY ONE refusal (got ${refusals.length})`
-  if (refusals[0]['code'] !== code) return `${label} — the refusal code is ${JSON.stringify(refusals[0]['code'])}, not ${JSON.stringify(code)}`
+  if (refusals[0]['code'] !== code) return `${label} — the refusal code is ${rawOf(refusals[0]['code'])}, not ${rawOf(code)}`
   if (r['state'] !== state) return `${label} — the prior state must be returned BY IDENTITY on every refusal (§2.3 item 8)`
   return null
 }
-/** `§2.3` item 6 — the `label` echo: PRESENT with the caller's own string BY
- *  IDENTITY when it is a `string`, ABSENT otherwise (never `undefined`, never a
- *  defaulted `''`). */
+/** `§2.3` items 1/6 — the ENTRY-RECORD CENSUS AND THE `label` ECHO, RE-ALIGNED
+ *  TO THE DECLARED MEMBERS ACTUALLY PRESENT (adjudication 1 of the gate-3
+ *  repair). THE DEFECT THIS REPLACES: the census demanded the entry's own
+ *  enumerable keys be EXACTLY the three declared members WHILE THE SAME CALL
+ *  demanded the member be ABSENT for a caller who supplied no usable string —
+ *  and an object cannot carry an enumerable own key that is not an own member, so
+ *  SIX of `P-FM-IM-1`'s ten attempts broke for EVERY possible implementation.
+ *  THE CONTRACT'S RULE GOVERNS: `label` is OPTIONAL; a caller label that IS a
+ *  `string` is echoed BY IDENTITY, and an absent-or-non-string caller label
+ *  yields an entry WITHOUT a label.
+ *  THE CENSUS THIS READS, so it stays FALSIFIABLE: the REQUIRED PAIR (`id` ·
+ *  `target`) is asserted ALWAYS and in the declared order, with NO FOURTH member —
+ *  a body that DROPS a required member or that MINTS a label for a caller who
+ *  supplied none FAILS; a usable string label must be present and identical; and
+ *  a NON-STRING caller label is NEVER A LABEL — it is never coerced, defaulted or
+ *  replaced (its own value is admissible, and so is its absence, because the
+ *  returned entry IS the caller's own object — `§2.3` item 3(a)). */
 function labelBreakOf(entry: unknown, expectedLabel: unknown, label: string): string | null {
   if (!isRecord(entry)) return `${label} — the returned entry is not an object`
+  const keys = Object.keys(entry)
+  if (!hasOwn.call(entry, ENTRY_KEYS[0])) return `${label} — the REQUIRED '${ENTRY_KEYS[0]}' member is not an own member of the returned entry`
+  if (!hasOwn.call(entry, ENTRY_KEYS[1])) return `${label} — the REQUIRED '${ENTRY_KEYS[1]}' member is not an own member of the returned entry`
+  if (keys[0] !== ENTRY_KEYS[0]) return `${label} — the returned entry's first own member is ${rawOf(keys[0])}, not the declared '${ENTRY_KEYS[0]}' (declared ORDER binds)`
+  if (keys[1] !== ENTRY_KEYS[1]) return `${label} — the returned entry's second own member is ${rawOf(keys[1])}, not the declared '${ENTRY_KEYS[1]}' (declared ORDER binds)`
+  for (const k of keys) {
+    if (!(ENTRY_KEYS as readonly string[]).includes(k)) return `${label} — the entry is a CLOSED record: the FOURTH member ${rawOf(k)} is not declared`
+  }
   const present = hasOwn.call(entry, 'label')
   if (typeof expectedLabel === 'string') {
     if (!present) return `${label} — the caller's string label is ABSENT from the returned entry (it must be echoed verbatim)`
-    if (entry['label'] !== expectedLabel) return `${label} — the label is ${JSON.stringify(entry['label'])}, not the caller's own string BY IDENTITY`
-  } else if (present) {
-    return `${label} — a NON-STRING label must leave the member ABSENT; got label: ${JSON.stringify(entry['label'])}`
+    if (entry['label'] !== expectedLabel) return `${label} — the label is ${rawOf(entry['label'])}, not the caller's own string BY IDENTITY`
+  } else if (expectedLabel === undefined) {
+    if (present) return `${label} — a label member was MINTED for an entry whose caller supplied NO usable label (§2.3 item 6: the member is ABSENT otherwise)`
+  } else if (present && entry['label'] !== expectedLabel) {
+    return `${label} — the caller's NON-STRING label ${rawOf(expectedLabel)} was REPLACED by ${rawOf(entry['label'])}: a non-string is never a label, never coerced and never defaulted`
   }
-  const k = keyBreakOf(entry, ENTRY_KEYS, label)
-  if (k !== null) return k
   return null
 }
 
@@ -504,7 +549,10 @@ type S = {
   readonly reason: null
 }
 function transitionTry(s: S, state: unknown, verb: unknown, arg?: unknown): { readonly value: unknown; readonly cause: string | null } {
-  return callTry(`focusTransition(${describeThrown(state)}, ${String(verb)}, …)`, () => (arg === undefined ? s.focusTransition(state as FocusState, verb) : s.focusTransition(state as FocusState, verb, arg)))
+  // THE LABEL IS READ WITH THE COERCION-FREE READER (adjudication 3(b)): a
+  // `String(verb)` here RAISED on a revoked `Proxy` and the exception-describing
+  // helper RAISED on a null-prototype state — BEFORE the module was called.
+  return callTry(`focusTransition(${rawOf(state)}, ${rawOf(verb)}, …)`, () => (arg === undefined ? s.focusTransition(state as FocusState, verb) : s.focusTransition(state as FocusState, verb, arg)))
 }
 function orderTry(s: S, entries: unknown): { readonly value: unknown; readonly cause: string | null } {
   return callTry('focusOrder(…)', () => s.focusOrder(entries))
@@ -535,7 +583,16 @@ const BANNED_REALM = ['document', 'window', 'navigator', 'globalThis', 'self', '
 const BANNED_STORE = ['localStorage', 'sessionStorage', 'indexedDB', 'fs.', 'writeFile']
 const BANNED_WIRING = ['addEventListener', 'removeEventListener', 'dispatchEvent', 'preventDefault', 'stopPropagation', 'onclick', 'onkeydown', 'keydown', 'keyup']
 const BANNED_COERCION = ['String(', 'toString', 'valueOf', 'Symbol.toPrimitive', 'JSON.stringify', 'JSON.parse', 'structuredClone', 'instanceof', 'hasOwnProperty', 'localeCompare']
-const BANNED_ORDER = ['sort(', 'toSorted', 'reverse(', 'localeCompare', 'orderOf', 'comparator']
+/** ⟶ ITEM 4 OF THE GATE-3 REPAIR: THE DECLARED BAN IS EXTENDED BY NAME, because
+ *  the contract's OWN TEXT requires it and the corpus token that drove this row
+ *  matched nothing in the set. `R-13`'s subject is not only sorting and comparing
+ *  but CACHING: `§2.2`(C) row 3 declares *"no `sort(`, no comparator call, no rank
+ *  member and NO MEMO OF THE SEQUENCE"*, `P-FM-7` names *"no cached sequence"*,
+ *  and `§2.3` item 3(c) repeats *"NO memo of the caller's sequence"* — so a memo /
+ *  cache write IS the banned verb, and the two forms below are the ban SPOKEN BY
+ *  NAME rather than left to the `R-1` store-vocabulary group. NO row id, term,
+ *  strategy id, seed or cap moves by this extension. */
+const BANNED_ORDER = ['sort(', 'toSorted', 'reverse(', 'localeCompare', 'orderOf', 'comparator', 'memo.set', 'cache.set']
 function scanFor(view: string, tokens: readonly string[], label: string): string | null {
   for (const t of tokens) {
     const at = view.indexOf(t)
@@ -570,18 +627,28 @@ function readJson(rel: string): Record<string, unknown> {
 //    `R-6`(no-importer). Authoring order `§4.2` item 1. These need NO module.
 // ===========================================================================
 describe('§3.5 X-1..X-6 + §3.4 R-3(config) / R-14 / R-6(no-importer) — the red set\'s own premise', () => {
-  it('X-1 (RED BRANCH) — `src/shared/focus-model.ts` DOES NOT EXIST at red time, and the red form is the module-resolution failure', async () => {
-    expect(
-      existsSync(MODULE_SRC),
-      `X-1's RED BRANCH governs while the module is absent: ${MODULE_PATH} must NOT exist at red time. If it exists, the GREEN BRANCH governs (the PAIR's presence + the export census BY NAME) and this row is the one that records the transition.`,
-    ).toBe(false)
+  it('X-1 (RED BRANCH / GREEN BRANCH — the one row reads BOTH) — the module/test PAIR, and the branch that governs: absent ⇒ the declared module-resolution red form, present ⇒ the export census BY NAME', async () => {
     expect(existsSync(TEST_PATH), 'X-1 — this file IS the pair\'s other half and must exist.').toBe(true)
     const s = await resolveSurface()
-    expect(
-      s.reason,
-      `X-1 — the RED FORM this unit reports: the module does not resolve (${MODULE_SPECIFIER}), i.e. 'Cannot find module '../src/shared/focus-model.js'' or the repo's equivalent module-resolution failure (§4.1). Measured reason: ${String(s.reason)}`,
-    ).not.toBe(null)
-    expect(s.mod, 'X-1 — no namespace is reachable while the module is absent.').toBe(null)
+    if (!existsSync(MODULE_SRC)) {
+      // ⟶ THE RED BRANCH, taken only while the module is genuinely absent.
+      expect(
+        s.reason,
+        `X-1 (RED) — the RED FORM this unit reports: the module does not resolve (${MODULE_SPECIFIER}), i.e. 'Cannot find module '../src/shared/focus-model.js'' or the repo's equivalent module-resolution failure (§4.1). Measured reason: ${String(s.reason)}`,
+      ).not.toBe(null)
+      expect(s.mod, 'X-1 (RED) — no namespace is reachable while the module is absent.').toBe(null)
+      return
+    }
+    // ⟶ THE GREEN BRANCH, taken as soon as the module lands (adjudication 3(a):
+    // the row is CORRECT IN BOTH STATES and its contract branch is NOT deleted —
+    // a row that asserted the module's NON-EXISTENCE as its own premise reddened
+    // the green tree, and a premise that cannot hold in both states is a row
+    // defect rather than a measurement).
+    expect(s.reason, `X-1 (GREEN) — the module EXISTS at ${MODULE_PATH}, so the resolved surface must carry no reason: ${String(s.reason)}`).toBe(null)
+    expect(s.mod, 'X-1 (GREEN) — the imported namespace IS reachable once the module exists.').not.toBe(null)
+    const mod = (s.mod ?? {}) as ModuleSurface
+    expect(Object.keys(mod).sort(), 'X-1 (GREEN) — R-5(a)\'s runtime half, reached from this row too: the namespace exposes EXACTLY the four value exports, BY NAME (a FIFTH value export FAILS).').toEqual([...VALUE_EXPORTS].sort())
+    for (const n of VALUE_EXPORTS) expect(typeof mod[n], `X-1 (GREEN) — '${n}' is reachable BY NAME as a function.`).toBe('function')
   })
 
   it('X-1 (GREEN BRANCH, carried) — the export census BY NAME: 4 value exports + 5 type declarations = 9 names (§2.1 items 1/12, R-5)', () => {
@@ -1045,9 +1112,20 @@ describe('§3.2 F-1..F-14 — the documented fail-states (every outcome is a VAL
       ['a THROWING refuse accessor', Object.defineProperty({}, 'refuse', { get(): never { throw new Error('throwing accessor') }, enumerable: true, configurable: true })],
     ]
     for (const [label, arg] of args) {
-      const { value, cause } = transitionTry(s, st([en('a', 't')], 'a'), 'activate', arg)
+      const argState = st([en('a', 't')], 'a')
+      const { value, cause } = transitionTry(s, argState, 'activate', arg)
       expect(cause, `F-7 [arg ${label}] — ${cause ?? ''}`).toBe(null)
-      expect((value as Record<string, unknown>)['accepted'], `F-7 [arg ${label}] — an unusable 'arg' reads as a record with ALL FOUR members absent, and the verb's own arm still decides.`).toBe(true)
+      // ⟶ ADJUDICATION 2 (the accept-versus-refuse conflict): an unusable `arg`
+      // reads as a record with ALL FOUR members absent, so this `activate` carries
+      // NO `id` member — and THE REFUSAL ROWS GOVERN: a missing id is the declared
+      // `'unknown-id'` refusal and is NEVER an acceptance, which is exactly what
+      // F-2, I-3, `P-FM-SEAM-1`(3) and `P-FM-SEAM-4`(3) demand of the same drive.
+      // THE TOTALITY CLAIM IS KEPT: a refusal is a VALUE the result carries and
+      // nothing throws, so this row still fails for a throwing or an accepting body.
+      expect(
+        refusedBreakOf(value, argState, 'unknown-id', `F-7 [arg ${label}]`),
+        `F-7 [arg ${label}] — an unusable 'arg' reads as a record with ALL FOUR members absent, so the verb's own arm decides BY THE REFUSAL ROWS: 'activate' with no id member is REFUSED 'unknown-id', with the prior state BY IDENTITY and ONE refusal — a refusal is a VALUE, never a throw and never an acceptance (§2.3 items 5/10).`,
+      ).toBe(null)
     }
   })
 
@@ -1249,8 +1327,14 @@ describe('§3.3 I-1..I-14 — the invariants that hold in every state', () => {
     expect((rec.value as Record<string, unknown>)['present'], 'I-4 — a callable seam is CALLED and `present` is true: the value goes to the CALLER, not into a store.').toBe(true)
     expect(storage.writes, 'I-4 — a recording fake storage kept IN SCOPE (never passed to the module) reads 0 writes: `persist` calls the CALLER\'s callback and NOTHING ELSE.').toEqual({ setItem: 0, open: 0, writeFile: 0 })
     // I-5: the ends refuse rather than clamp or wrap, and no default verb exists
-    const atEnd = transitionTry(s, st([en('a', 'ta')], 'a'), 'next', {})
-    expect(refusedBreakOf(atEnd.value, st([en('a', 'ta')], 'a'), 'no-next', 'I-5'), 'I-5 — the ENDS REFUSE rather than clamp or wrap (the clamp reading is the NAMED architect-reversible alternative, §7a.1 item 3).').toBe(null)
+    // ⟶ ADJUDICATION 3(c): the state is BOUND ONCE and the very same object is
+    // handed to the drive and to the reader. A FRESHLY BUILT literal on the
+    // reader's side made the contract's by-identity clause (`state === the
+    // caller's own state argument`, §2.3 item 8) UNHOLDABLE BY CONSTRUCTION: the
+    // module returns the ARGUMENT, and the row compared it against another record.
+    const endState = st([en('a', 'ta')], 'a')
+    const atEnd = transitionTry(s, endState, 'next', {})
+    expect(refusedBreakOf(atEnd.value, endState, 'no-next', 'I-5'), 'I-5 — the ENDS REFUSE rather than clamp or wrap (the clamp reading is the NAMED architect-reversible alternative, §7a.1 item 3), and the prior state is returned BY IDENTITY (`===` the caller\'s own argument).').toBe(null)
     const unknown = transitionTry(s, state, 'toggle', {})
     expect((unknown.value as Record<string, unknown>)['accepted'], 'I-5 — a module that treats an unrecognised verb as a real verb FAILS: no default verb is applied.').toBe(false)
   })
@@ -1274,6 +1358,14 @@ describe('§3.3 I-1..I-14 — the invariants that hold in every state', () => {
 
   it('I-7 / I-8 / I-10 / I-11 / I-14 (layer + boundary invariants) — no `[U]` row offered, no `[D]` row claimed, no import edge, and a seam is observation never the gate', async () => {
     const spec = readFileSync(SPEC_SRC, 'utf8')
+    // ⟶ ADJUDICATION 3(d): THE ROW IS ALIGNED TO THE CONTRACT'S OWN PRINTED
+    // WORDS. The consequence sentence IS in the contract (`§5.2`) but the filing
+    // PRINTS it across a line break, so a contiguous one-line match required a
+    // sentence the file does not contain and invented a requirement the contract
+    // does not make. The reading below is a WHITESPACE-NORMALIZED view of the
+    // contract's own bytes: no word changes, no clause is weakened, and the claim
+    // still fails if the sentence is removed or reworded.
+    const specFlat = spec.replace(/\s+/g, ' ')
     expect(spec.includes('the row may not be moved to the `ui` leg silently.'), 'I-7 / S-FM-10 — the three-part [U] refusal carries the `zones.md` §4.4 S-6 sentence VERBATIM.').toBe(true)
     expect(/STRUCTURAL/.test(spec), 'I-7 / §5.2 — gate 6 is `STRUCTURAL`, with its reason.').toBe(true)
     // `G-6` in its DECLARED form: the status sentence reads `STRUCTURAL` WITH ITS
@@ -1285,16 +1377,20 @@ describe('§3.3 I-1..I-14 — the invariants that hold in every state', () => {
       'I-7 / G-6 — §5.2 states the status in the declared form: `GATE 6 IS STRUCTURAL, NOT WAIVED`, and the word `waived` is FORBIDDEN as this unit\'s gate-6 status (§5.2, §7 item 3, S-FM-10).',
     ).toBe(true)
     expect(
-      /A DONE row that reports gate 6 as \*"waived"\* is a review finding/.test(spec),
-      'I-7 / G-6 — and the prohibition is carried with its consequence, so the forbidden form is NAMED as forbidden rather than used.',
+      /A DONE row that reports gate 6 as \*"waived"\* is a review finding/.test(specFlat),
+      'I-7 / G-6 — and the prohibition is carried with its consequence, so the forbidden form is NAMED as forbidden rather than used. Read over the WHITESPACE-NORMALIZED contract view because the filing prints this sentence across a line break.',
     ).toBe(true)
     const src = moduleSourceOrNull()
     if (src !== null) expect(importBreakOf(src, 'I-10'), 'I-10 — no import edge in either direction, and none fabricated.').toBe(null)
     const s = await live()
     const rec = refuseRecorder()
-    const drive = transitionTry(s, st([en('a', 'ta')], 'a'), 'next', { refuse: throwingSeam() })
+    // ⟶ ADJUDICATION 3(c), the same defect at its second site: ONE bound state
+    // object is handed to the drive AND to the by-identity reader — a second,
+    // freshly built literal here could never be `===` the module's returned state.
+    const seamState = st([en('a', 'ta')], 'a')
+    const drive = transitionTry(s, seamState, 'next', { refuse: throwingSeam() })
     expect(drive.cause, 'I-14 — observation, NEVER THE GATE: a `refuse` that throws leaves the refusal verdict IDENTICAL to the no-seam case and NOTHING ESCAPES.').toBe(null)
-    expect(refusedBreakOf(drive.value, st([en('a', 'ta')], 'a'), 'no-next', 'I-14'), 'I-14 — the refusal verdict, the accepted flag, the seated id and the changed boolean are IDENTICAL to the no-seam case.').toBe(null)
+    expect(refusedBreakOf(drive.value, seamState, 'no-next', 'I-14'), 'I-14 — the refusal verdict, the accepted flag, the seated id and the changed boolean are IDENTICAL to the no-seam case, with the prior state BY IDENTITY.').toBe(null)
     expect(rec.received.length, 'I-14 — no seam is retained: a second call with the same seam observes a FRESH count.').toBe(0)
   })
 
@@ -1550,7 +1646,8 @@ describe('§3.1 M-1..M-14 — the valid / happy states (data states enumerated p
   })
 
   // STATES (M-11): S1 a label ABSENT · S2 a padded label · S3 an EMPTY-STRING
-  // label (legal) · S4 a NON-STRING label (member must be absent).
+  // label (legal) · S4 a NON-STRING label (never a label: never coerced, never
+  // defaulted, never replaced).
   it('M-11 — THE `label` IS ECHOED OR ABSENT, and `focusOrder` carries it through untouched', async () => {
     const s = await live()
     const t = 't'
@@ -1562,10 +1659,20 @@ describe('§3.1 M-1..M-14 — the valid / happy states (data states enumerated p
     const { value, cause } = orderTry(s, arr)
     expect(cause, `M-11 — ${cause ?? ''}`).toBe(null)
     const out = value as Record<string, unknown>[]
+    // ⟶ ADJUDICATION 3(e) — THE PAIR IS RECONCILED TO THE CONTRACT'S OWN
+    // OPTIONAL-LABEL RULE. The contract's label rule (§2.3 item 6: echoed when it
+    // is a `string`, ABSENT otherwise) and its by-identity rule (§2.3 item 3(a):
+    // every returned element IS the caller's own entry object) cannot both hold
+    // for a CALLER OBJECT THAT ALREADY CARRIES a non-string `label` member:
+    // `focusOrder` returns `arr`'s own objects, so the member that is present is
+    // the CALLER'S OWN and the module neither minted, coerced, defaulted nor
+    // dropped it. The satisfiable reading, asserted here, is the label half the
+    // contract can falsify on this arm: A NON-STRING IS NEVER A LABEL.
     expect(hasOwn.call(out[0] as object, 'label'), 'M-11 — entry `a`\'s returned object has NO label member (`\'label\' in it === false`).').toBe(false)
     expect(out[1]?.['label'], 'M-11 — entry `b`\'s label === \' B \' BY IDENTITY, UNTRIMMED (the row a defaulting/trimming-label implementation FAILS).').toBe(' B ')
     expect(out[2]?.['label'], 'M-11 — entry `c`\'s label === \'\' — A LEGAL LABEL.').toBe('')
-    expect(hasOwn.call(out[3] as object, 'label'), 'M-11 — entry `d`\'s returned object has NO label member: a NON-STRING is not a label (and never `label: undefined`).').toBe(false)
+    expect(out[3], 'M-11 — entry `d`\'s returned element IS the caller\'s own object: `focusOrder` mints no record.').toBe(e4)
+    expect(out[3]?.['label'], 'M-11 — a NON-STRING is NEVER A LABEL: the caller\'s own `42` is carried UNCOERCED and UNDEFAULTED — a module reading `\'42\'`, `\'\'` or `undefined` into it FAILS this row (§2.3 item 6).').toBe(42)
     expect([out[0], out[1], out[2], out[3]], 'M-11 — every element is the caller\'s own object BY IDENTITY.').toEqual(arr)
   })
 
@@ -1755,6 +1862,32 @@ function printReadings(): string {
     .join(' | ')
 }
 
+/** ⟶ THE PER-ROW READING, CORRECT IN BOTH STATES (the gate-3 repair; the same
+ *  defect class as adjudication 3(a), at the sibling sites of the premise row).
+ *  THE DEFECT THIS REPLACES: the twelve term-carrying rows' terminal assertions
+ *  were written in a RED-ONLY form — they demanded `broken > 0` and read a HELD
+ *  attempt as a defect — so once the module LANDED the row could never hold and
+ *  the register's green reading (`registerStoppedAt null`, every declared attempt
+ *  held) was UNREACHABLE. NEITHER STATE'S READING IS DELETED: at RED time (the
+ *  module absent) every attempt breaks on the boundary, an un-run row is a
+ *  FAILURE and a HELD attempt is the defect; at GREEN time every declared attempt
+ *  must HOLD and a BROKEN attempt is the finding the reading exists to report. */
+function rowWhy(r: Rec): string | null {
+  if (r.notStarted) return `${r.row} — UN-RUN ROW = FAILURE (§5.5.1 cap 3 / §4.2): the register stopped at ${String(registerStoppedAt)}, so this row's ${r.declared} declared attempts were NOT executed and are reported as NOT STARTED, never as a pass.`
+  if (liveOrNull() === null) {
+    if (r.broken === 0) return `${r.row} — a register row that reports itself HELD while src/shared/focus-model.ts resolves to nothing is a row that cannot fail.`
+    if (r.held !== 0) return `${r.row} — an attempt reported itself HELD at red time, which is a silent pass rather than a boundary reading.`
+    return !r.stoppedEarly && r.attemptsRun !== r.declared
+      ? `${r.row} — the row did not run to its declared term and the register's stop rule did not fire.`
+      : null
+  }
+  if (r.broken !== 0) return `${r.row} — at GREEN time (the module resolves) EVERY declared attempt must HOLD: this row reports ${r.held} held and ${r.broken} broken of its declared ${r.declared}.`
+  if (r.held !== r.declared) return `${r.row} — the row must HOLD its whole DECLARED term of ${r.declared} attempts, and it held ${r.held}.`
+  return r.attemptsRun !== r.declared
+    ? `${r.row} — the executed attempt count must be the declared term ${r.declared}, measured ${r.attemptsRun}.`
+    : null
+}
+
 /** The clause probe for a module-absent register attempt: the red is DATA. */
 function boundary(label: string): string | null {
   const s = liveOrNull()
@@ -1816,19 +1949,7 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 ROWS = 12 term-carrying ro
   it('P-FM-IM-1 (S-FM-ENTRY-1, 10 attempts, bounded) — THE ENTRY RECORD: closed shape, identity echo, verbatim-or-absent label', async () => {
     await resolveSurface()
     const rec = runRegisterRow(defOf('P-FM-IM-1'))
-    {
-      const r = rec
-      const why = r.notStarted
-        ? `${r.row} — UN-RUN ROW = FAILURE (§5.5.1 cap 3 / §4.2): the register stopped at ${String(registerStoppedAt)}, so this row's ${r.declared} declared attempts were NOT executed and are reported as NOT STARTED, never as a pass.`
-        : r.broken === 0
-          ? `${r.row} — a register row that reports itself HELD while src/shared/focus-model.ts resolves to nothing is a row that cannot fail.`
-          : r.held !== 0
-            ? `${r.row} — an attempt reported itself HELD at red time, which is a silent pass rather than a boundary reading.`
-            : (!r.stoppedEarly && r.attemptsRun !== r.declared)
-              ? `${r.row} — the row did not run to its declared term and the register's stop rule did not fire.`
-              : null
-      expect(why, `${r.row} — the register's own reading (attemptsRun ${r.attemptsRun}/${r.declared}, held ${r.held}, broken ${r.broken}). SUMMARY: ${printReadings()}`).toBe(null)
-    }
+    expect(rowWhy(rec), `${rec.row} — the register's own reading (attemptsRun ${rec.attemptsRun}/${rec.declared}, held ${rec.held}, broken ${rec.broken}). SUMMARY: ${printReadings()}`).toBe(null)
   })
 
   // --- P-FM-IM-2 · the never-consulted target · 11 attempts ---------------
@@ -1877,19 +1998,7 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 ROWS = 12 term-carrying ro
   it('P-FM-IM-2 (S-FM-TARGET-1, 11 attempts, bounded) — THE OPAQUE TARGET: never consulted, and its ONE licensed `===` operation', async () => {
     await resolveSurface()
     const rec = runRegisterRow(defOf('P-FM-IM-2'))
-    {
-      const r = rec
-      const why = r.notStarted
-        ? `${r.row} — UN-RUN ROW = FAILURE (§5.5.1 cap 3 / §4.2): the register stopped at ${String(registerStoppedAt)}, so this row's ${r.declared} declared attempts were NOT executed and are reported as NOT STARTED, never as a pass.`
-        : r.broken === 0
-          ? `${r.row} — a register row that reports itself HELD while src/shared/focus-model.ts resolves to nothing is a row that cannot fail.`
-          : r.held !== 0
-            ? `${r.row} — an attempt reported itself HELD at red time, which is a silent pass rather than a boundary reading.`
-            : (!r.stoppedEarly && r.attemptsRun !== r.declared)
-              ? `${r.row} — the row did not run to its declared term and the register's stop rule did not fire.`
-              : null
-      expect(why, `${r.row} — the register's own reading (attemptsRun ${r.attemptsRun}/${r.declared}, held ${r.held}, broken ${r.broken}). SUMMARY: ${printReadings()}`).toBe(null)
-    }
+    expect(rowWhy(rec), `${rec.row} — the register's own reading (attemptsRun ${rec.attemptsRun}/${rec.declared}, held ${rec.held}, broken ${rec.broken}). SUMMARY: ${printReadings()}`).toBe(null)
   })
 
   // --- P-FM-IM-3 · the id domain × refusal domain × order spec · 10 attempts
@@ -1938,19 +2047,7 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 ROWS = 12 term-carrying ro
   it('P-FM-IM-3 (S-FM-ID-1, 10 attempts, bounded) — THE ID DOMAIN × THE REFUSAL DOMAIN × THE ORDER SPEC', async () => {
     await resolveSurface()
     const rec = runRegisterRow(defOf('P-FM-IM-3'))
-    {
-      const r = rec
-      const why = r.notStarted
-        ? `${r.row} — UN-RUN ROW = FAILURE (§5.5.1 cap 3 / §4.2): the register stopped at ${String(registerStoppedAt)}, so this row's ${r.declared} declared attempts were NOT executed and are reported as NOT STARTED, never as a pass.`
-        : r.broken === 0
-          ? `${r.row} — a register row that reports itself HELD while src/shared/focus-model.ts resolves to nothing is a row that cannot fail.`
-          : r.held !== 0
-            ? `${r.row} — an attempt reported itself HELD at red time, which is a silent pass rather than a boundary reading.`
-            : (!r.stoppedEarly && r.attemptsRun !== r.declared)
-              ? `${r.row} — the row did not run to its declared term and the register's stop rule did not fire.`
-              : null
-      expect(why, `${r.row} — the register's own reading (attemptsRun ${r.attemptsRun}/${r.declared}, held ${r.held}, broken ${r.broken}). SUMMARY: ${printReadings()}`).toBe(null)
-    }
+    expect(rowWhy(rec), `${rec.row} — the register's own reading (attemptsRun ${rec.attemptsRun}/${rec.declared}, held ${rec.held}, broken ${rec.broken}). SUMMARY: ${printReadings()}`).toBe(null)
   })
 
   // --- P-FM-SM-1 · the five-verb matrix × the ends × re-seating · 6 attempts
@@ -2037,19 +2134,7 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 ROWS = 12 term-carrying ro
   it('P-FM-SM-1 (S-FM-MATRIX-1, 6 attempts, bounded) — THE FIVE-VERB MATRIX, THE ENDS, THE RE-SEATING AND THE `changed` OBSERVABLE', async () => {
     await resolveSurface()
     const rec = runRegisterRow(defOf('P-FM-SM-1'))
-    {
-      const r = rec
-      const why = r.notStarted
-        ? `${r.row} — UN-RUN ROW = FAILURE (§5.5.1 cap 3 / §4.2): the register stopped at ${String(registerStoppedAt)}, so this row's ${r.declared} declared attempts were NOT executed and are reported as NOT STARTED, never as a pass.`
-        : r.broken === 0
-          ? `${r.row} — a register row that reports itself HELD while src/shared/focus-model.ts resolves to nothing is a row that cannot fail.`
-          : r.held !== 0
-            ? `${r.row} — an attempt reported itself HELD at red time, which is a silent pass rather than a boundary reading.`
-            : (!r.stoppedEarly && r.attemptsRun !== r.declared)
-              ? `${r.row} — the row did not run to its declared term and the register's stop rule did not fire.`
-              : null
-      expect(why, `${r.row} — the register's own reading (attemptsRun ${r.attemptsRun}/${r.declared}, held ${r.held}, broken ${r.broken}). SUMMARY: ${printReadings()}`).toBe(null)
-    }
+    expect(rowWhy(rec), `${rec.row} — the register's own reading (attemptsRun ${rec.attemptsRun}/${rec.declared}, held ${rec.held}, broken ${rec.broken}). SUMMARY: ${printReadings()}`).toBe(null)
   })
 
   // --- P-FM-SM-2 · cross-call constancy, freshness, no retained state · 3 ----
@@ -2123,36 +2208,36 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 ROWS = 12 term-carrying ro
   it('P-FM-SM-2 (S-FM-CONST-1, 3 attempts) — CROSS-CALL CONSTANCY, FRESHNESS AND THE ABSENCE OF RETAINED STATE', async () => {
     await resolveSurface()
     const rec = runRegisterRow(defOf('P-FM-SM-2'))
-    {
-      const r = rec
-      const why = r.notStarted
-        ? `${r.row} — UN-RUN ROW = FAILURE (§5.5.1 cap 3 / §4.2): the register stopped at ${String(registerStoppedAt)}, so this row's ${r.declared} declared attempts were NOT executed and are reported as NOT STARTED, never as a pass.`
-        : r.broken === 0
-          ? `${r.row} — a register row that reports itself HELD while src/shared/focus-model.ts resolves to nothing is a row that cannot fail.`
-          : r.held !== 0
-            ? `${r.row} — an attempt reported itself HELD at red time, which is a silent pass rather than a boundary reading.`
-            : (!r.stoppedEarly && r.attemptsRun !== r.declared)
-              ? `${r.row} — the row did not run to its declared term and the register's stop rule did not fire.`
-              : null
-      expect(why, `${r.row} — the register's own reading (attemptsRun ${r.attemptsRun}/${r.declared}, held ${r.held}, broken ${r.broken}). SUMMARY: ${printReadings()}`).toBe(null)
-    }
+    expect(rowWhy(rec), `${rec.row} — the register's own reading (attemptsRun ${rec.attemptsRun}/${rec.declared}, held ${rec.held}, broken ${rec.broken}). SUMMARY: ${printReadings()}`).toBe(null)
   })
 
   // --- P-FM-TP-1 · the verb domain including unknown · 10 attempts ---------
   REGISTER.push({
     row: 'P-FM-TP-1', type: 'P-TP', strategy: 'S-FM-TOTAL-1', declared: 10, bounded: true,
     attempts: () => {
-      const drives: ReadonlyArray<readonly [string, unknown, boolean]> = [
-        ["(1) the declared body 'open'", 'open', true], ["(2) the declared body 'activate'", 'activate', true],
-        ["(3) the declared body 'close'", 'close', true], ["(4) the declared body 'next'", 'next', true],
-        ["(5) the declared body 'prev'", 'prev', true],
-        ['(6) the argument OMITTED (undefined) and null', undefined, false],
-        ["(7) '' and an unrecognised string ('toggle')", 'toggle', false],
-        ["(8) the CASE/WHITESPACE variants ('OPEN', ' open', 'open ', 'open\\u0000') and 'unknown' ITSELF", 'OPEN', false],
-        ['(9) a number (0, 42, NaN), a boolean, a Symbol and a 12n', 42, false],
-        ['(10) an object, an array, a function, `new String(\'open\')`, a revoked Proxy and a trap-throwing Proxy', new String('open'), false],
+      // ⟶ THE DECLARED VERDICT PER DRIVE, ALIGNED BY ADJUDICATION 2 (the
+      // accept-versus-refuse conflict): THE REFUSAL ROWS GOVERN. A drive whose
+      // argument carries no `entry`/`id` member takes the refusal ITS OWN ROW
+      // names — `'open'`/`'activate'`/`'close'` with no `entry`/`id` ⇒
+      // `'unknown-id'` (§2.3 item 5 row 4/6/8), and `'prev'` at the FIRST position
+      // ⇒ `'no-previous'` (row 12) — while `'next'` from the first of two takes its
+      // own ACCEPTED arm (`null` marks it). THE TOTALITY CLAIM IS KEPT: every
+      // declared body still takes its OWN arm (its verb of record is never
+      // normalised away), a refusal is a VALUE rather than a throw, and each drive
+      // can still FAIL.
+      const drives: ReadonlyArray<readonly [string, unknown, string | null, boolean]> = [
+        ["(1) the declared body 'open' with NO `entry` member — its own arm is the declared 'unknown-id' refusal", 'open', 'unknown-id', true],
+        ["(2) the declared body 'activate' with NO `id` member — the declared 'unknown-id' refusal (the `unknown-id` refusal rows govern, never an acceptance)", 'activate', 'unknown-id', true],
+        ["(3) the declared body 'close' with NO `id` member — the declared 'unknown-id' refusal", 'close', 'unknown-id', true],
+        ["(4) the declared body 'next' from the FIRST of two — its own ACCEPTED arm", 'next', null, true],
+        ["(5) the declared body 'prev' at the FIRST position — the declared 'no-previous' refusal (no wrap, no clamp)", 'prev', 'no-previous', true],
+        ['(6) the argument OMITTED (undefined) and null', undefined, 'unknown-verb', false],
+        ["(7) '' and an unrecognised string ('toggle')", 'toggle', 'unknown-verb', false],
+        ["(8) the CASE/WHITESPACE variants ('OPEN', ' open', 'open ', 'open\\u0000') and 'unknown' ITSELF", 'OPEN', 'unknown-verb', false],
+        ['(9) a number (0, 42, NaN), a boolean, a Symbol and a 12n', 42, 'unknown-verb', false],
+        ['(10) an object, an array, a function, `new String(\'open\')`, a revoked Proxy and a trap-throwing Proxy', new String('open'), 'unknown-verb', false],
       ]
-      return drives.map(([label, verb, declared]) =>
+      return drives.map(([label, verb, verdict, declaredBody]) =>
         step(`P-FM-TP-1 ${label}`, () => {
           const b = boundary(label)
           if (b !== null) return b
@@ -2163,18 +2248,24 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 ROWS = 12 term-carrying ro
           const { value, cause } = transitionTry(s, state, verb, { refuse: rec.seam, onChange: on.seam })
           if (cause !== null) return cause
           const r = value as Record<string, unknown>
-          if (!declared) {
+          if (!declaredBody) {
             const rb = refusedBreakOf(value, state, 'unknown-verb', label)
             if (rb !== null) return rb
-            if (r['verb'] !== UNKNOWN_BODY) return `${label} — an unrecognised verb must be NORMALISED to the declared body 'unknown' (got ${JSON.stringify(r['verb'])})`
+            if (r['verb'] !== UNKNOWN_BODY) return `${label} — an unrecognised verb must be NORMALISED to the declared body 'unknown' (got ${rawOf(r['verb'])})`
             if (rec.received.length !== 1) return `${label} — the refuse count must be EXACTLY 1`
             if (on.calls.length !== 0) return `${label} — the onChange count must be 0 (no default verb is applied)`
           } else {
-            if (r['verb'] !== verb) return `${label} — a declared body must take its OWN arm and never be normalised away`
-            if (r['accepted'] !== true) return `${label} — a declared body against a fixed two-entry state must take its own arm`
+            if (r['verb'] !== verb) return `${label} — a declared body must take its OWN arm and never be normalised away (verb of record ${rawOf(r['verb'])})`
+            if (verdict === null) {
+              if (r['accepted'] !== true) return `${label} — this declared body's own arm is the ACCEPTED one against the fixed two-entry state`
+            } else {
+              // THE DECLARED VERDICT IS THE REFUSAL ITS OWN ROW NAMES.
+              const rb = refusedBreakOf(value, state, verdict, label)
+              if (rb !== null) return `${label} — the declared body's own arm is the '${verdict}' refusal: ${rb}`
+            }
           }
           const keys = Object.keys(r)
-          if (keys.length !== RESULT_KEYS.length) return `${label} — a fifth state body or a sixth verb body appeared (result keys ${JSON.stringify(keys)})`
+          if (keys.length !== RESULT_KEYS.length) return `${label} — a fifth state body or a sixth verb body appeared (result keys ${rawOf(keys.length)})`
           return null
         }))
     },
@@ -2182,19 +2273,7 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 ROWS = 12 term-carrying ro
   it('P-FM-TP-1 (S-FM-TOTAL-1, 10 attempts, bounded) — THE VERB DOMAIN INCLUDING UNKNOWN', async () => {
     await resolveSurface()
     const rec = runRegisterRow(defOf('P-FM-TP-1'))
-    {
-      const r = rec
-      const why = r.notStarted
-        ? `${r.row} — UN-RUN ROW = FAILURE (§5.5.1 cap 3 / §4.2): the register stopped at ${String(registerStoppedAt)}, so this row's ${r.declared} declared attempts were NOT executed and are reported as NOT STARTED, never as a pass.`
-        : r.broken === 0
-          ? `${r.row} — a register row that reports itself HELD while src/shared/focus-model.ts resolves to nothing is a row that cannot fail.`
-          : r.held !== 0
-            ? `${r.row} — an attempt reported itself HELD at red time, which is a silent pass rather than a boundary reading.`
-            : (!r.stoppedEarly && r.attemptsRun !== r.declared)
-              ? `${r.row} — the row did not run to its declared term and the register's stop rule did not fire.`
-              : null
-      expect(why, `${r.row} — the register's own reading (attemptsRun ${r.attemptsRun}/${r.declared}, held ${r.held}, broken ${r.broken}). SUMMARY: ${printReadings()}`).toBe(null)
-    }
+    expect(rowWhy(rec), `${rec.row} — the register's own reading (attemptsRun ${rec.attemptsRun}/${rec.declared}, held ${rec.held}, broken ${rec.broken}). SUMMARY: ${printReadings()}`).toBe(null)
   })
 
   // --- P-FM-TP-2 · module-wide totality + reachability · 10 attempts -------
@@ -2248,19 +2327,7 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 ROWS = 12 term-carrying ro
   it('P-FM-TP-2 (S-FM-OPAQUE-1, 10 attempts = 9 hostile drives + 1 reachability drive, bounded) — THE MODULE-WIDE UNIVERSAL PLUS THE REACHABILITY HALF', async () => {
     await resolveSurface()
     const rec = runRegisterRow(defOf('P-FM-TP-2'))
-    {
-      const r = rec
-      const why = r.notStarted
-        ? `${r.row} — UN-RUN ROW = FAILURE (§5.5.1 cap 3 / §4.2): the register stopped at ${String(registerStoppedAt)}, so this row's ${r.declared} declared attempts were NOT executed and are reported as NOT STARTED, never as a pass.`
-        : r.broken === 0
-          ? `${r.row} — a register row that reports itself HELD while src/shared/focus-model.ts resolves to nothing is a row that cannot fail.`
-          : r.held !== 0
-            ? `${r.row} — an attempt reported itself HELD at red time, which is a silent pass rather than a boundary reading.`
-            : (!r.stoppedEarly && r.attemptsRun !== r.declared)
-              ? `${r.row} — the row did not run to its declared term and the register's stop rule did not fire.`
-              : null
-      expect(why, `${r.row} — the register's own reading (attemptsRun ${r.attemptsRun}/${r.declared}, held ${r.held}, broken ${r.broken}). SUMMARY: ${printReadings()}`).toBe(null)
-    }
+    expect(rowWhy(rec), `${rec.row} — the register's own reading (attemptsRun ${rec.attemptsRun}/${rec.declared}, held ${rec.held}, broken ${rec.broken}). SUMMARY: ${printReadings()}`).toBe(null)
   })
 
   // --- P-FM-SEAM-1 · refuse's firing point and payload · 6 attempts --------
@@ -2300,19 +2367,7 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 ROWS = 12 term-carrying ro
   it('P-FM-SEAM-1 (S-FM-REFUSE-1, 6 attempts) — SEAM 1: `refuse`\'s FIRING POINT AND PAYLOAD, the FIVE codes each reachable', async () => {
     await resolveSurface()
     const rec = runRegisterRow(defOf('P-FM-SEAM-1'))
-    {
-      const r = rec
-      const why = r.notStarted
-        ? `${r.row} — UN-RUN ROW = FAILURE (§5.5.1 cap 3 / §4.2): the register stopped at ${String(registerStoppedAt)}, so this row's ${r.declared} declared attempts were NOT executed and are reported as NOT STARTED, never as a pass.`
-        : r.broken === 0
-          ? `${r.row} — a register row that reports itself HELD while src/shared/focus-model.ts resolves to nothing is a row that cannot fail.`
-          : r.held !== 0
-            ? `${r.row} — an attempt reported itself HELD at red time, which is a silent pass rather than a boundary reading.`
-            : (!r.stoppedEarly && r.attemptsRun !== r.declared)
-              ? `${r.row} — the row did not run to its declared term and the register's stop rule did not fire.`
-              : null
-      expect(why, `${r.row} — the register's own reading (attemptsRun ${r.attemptsRun}/${r.declared}, held ${r.held}, broken ${r.broken}). SUMMARY: ${printReadings()}`).toBe(null)
-    }
+    expect(rowWhy(rec), `${rec.row} — the register's own reading (attemptsRun ${rec.attemptsRun}/${rec.declared}, held ${rec.held}, broken ${rec.broken}). SUMMARY: ${printReadings()}`).toBe(null)
   })
 
   // --- P-FM-SEAM-2 · onChange's firing point, payload, count-is-data · 8 ----
@@ -2358,19 +2413,7 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 ROWS = 12 term-carrying ro
   it('P-FM-SEAM-2 (S-FM-NOTIFY-1, 8 attempts, bounded) — SEAM 2: `onChange`\'s SCHEDULE, PAYLOAD AND COUNT-IS-DATA', async () => {
     await resolveSurface()
     const rec = runRegisterRow(defOf('P-FM-SEAM-2'))
-    {
-      const r = rec
-      const why = r.notStarted
-        ? `${r.row} — UN-RUN ROW = FAILURE (§5.5.1 cap 3 / §4.2): the register stopped at ${String(registerStoppedAt)}, so this row's ${r.declared} declared attempts were NOT executed and are reported as NOT STARTED, never as a pass.`
-        : r.broken === 0
-          ? `${r.row} — a register row that reports itself HELD while src/shared/focus-model.ts resolves to nothing is a row that cannot fail.`
-          : r.held !== 0
-            ? `${r.row} — an attempt reported itself HELD at red time, which is a silent pass rather than a boundary reading.`
-            : (!r.stoppedEarly && r.attemptsRun !== r.declared)
-              ? `${r.row} — the row did not run to its declared term and the register's stop rule did not fire.`
-              : null
-      expect(why, `${r.row} — the register's own reading (attemptsRun ${r.attemptsRun}/${r.declared}, held ${r.held}, broken ${r.broken}). SUMMARY: ${printReadings()}`).toBe(null)
-    }
+    expect(rowWhy(rec), `${rec.row} — the register's own reading (attemptsRun ${rec.attemptsRun}/${rec.declared}, held ${rec.held}, broken ${rec.broken}). SUMMARY: ${printReadings()}`).toBe(null)
   })
 
   // --- P-FM-SEAM-3 · all three seams' NINE degradations · 9 attempts -------
@@ -2423,19 +2466,7 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 ROWS = 12 term-carrying ro
   it('P-FM-SEAM-3 (S-FM-DEGRADE-1, 9 attempts) — ALL THREE SEAMS\' NINE DECLARED DEGRADATIONS (absent / non-callable / throwing)', async () => {
     await resolveSurface()
     const rec = runRegisterRow(defOf('P-FM-SEAM-3'))
-    {
-      const r = rec
-      const why = r.notStarted
-        ? `${r.row} — UN-RUN ROW = FAILURE (§5.5.1 cap 3 / §4.2): the register stopped at ${String(registerStoppedAt)}, so this row's ${r.declared} declared attempts were NOT executed and are reported as NOT STARTED, never as a pass.`
-        : r.broken === 0
-          ? `${r.row} — a register row that reports itself HELD while src/shared/focus-model.ts resolves to nothing is a row that cannot fail.`
-          : r.held !== 0
-            ? `${r.row} — an attempt reported itself HELD at red time, which is a silent pass rather than a boundary reading.`
-            : (!r.stoppedEarly && r.attemptsRun !== r.declared)
-              ? `${r.row} — the row did not run to its declared term and the register's stop rule did not fire.`
-              : null
-      expect(why, `${r.row} — the register's own reading (attemptsRun ${r.attemptsRun}/${r.declared}, held ${r.held}, broken ${r.broken}). SUMMARY: ${printReadings()}`).toBe(null)
-    }
+    expect(rowWhy(rec), `${rec.row} — the register's own reading (attemptsRun ${rec.attemptsRun}/${rec.declared}, held ${rec.held}, broken ${rec.broken}). SUMMARY: ${printReadings()}`).toBe(null)
     expect(rec.controls > 0 || rec.broken === 0, 'P-FM-SEAM-3 — the POSITIVE CONTROL is named: a driver run against a corpus module that LETS a seam throw escape must FAIL this row (the control corpus is the in-memory seam whose throw the degraded arm absorbs).').toBe(true)
   })
 
@@ -2472,19 +2503,7 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 ROWS = 12 term-carrying ro
   it('P-FM-SEAM-4 (S-FM-COUNT-1, 5 attempts) — THE REFUSAL CALL COUNT, IN ATTEMPT ORDER', async () => {
     await resolveSurface()
     const rec = runRegisterRow(defOf('P-FM-SEAM-4'))
-    {
-      const r = rec
-      const why = r.notStarted
-        ? `${r.row} — UN-RUN ROW = FAILURE (§5.5.1 cap 3 / §4.2): the register stopped at ${String(registerStoppedAt)}, so this row's ${r.declared} declared attempts were NOT executed and are reported as NOT STARTED, never as a pass.`
-        : r.broken === 0
-          ? `${r.row} — a register row that reports itself HELD while src/shared/focus-model.ts resolves to nothing is a row that cannot fail.`
-          : r.held !== 0
-            ? `${r.row} — an attempt reported itself HELD at red time, which is a silent pass rather than a boundary reading.`
-            : (!r.stoppedEarly && r.attemptsRun !== r.declared)
-              ? `${r.row} — the row did not run to its declared term and the register's stop rule did not fire.`
-              : null
-      expect(why, `${r.row} — the register's own reading (attemptsRun ${r.attemptsRun}/${r.declared}, held ${r.held}, broken ${r.broken}). SUMMARY: ${printReadings()}`).toBe(null)
-    }
+    expect(rowWhy(rec), `${rec.row} — the register's own reading (attemptsRun ${rec.attemptsRun}/${rec.declared}, held ${rec.held}, broken ${rec.broken}). SUMMARY: ${printReadings()}`).toBe(null)
   })
 
   // --- P-FM-SEAM-5 · persist's returned-write rule · 5 attempts ------------
@@ -2528,19 +2547,7 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 ROWS = 12 term-carrying ro
   it('P-FM-SEAM-5 (S-FM-WRITE-1, 5 attempts) — SEAM 3: `persist`\'s RETURNED-WRITE RULE AND THE `persisted` MEMBER', async () => {
     await resolveSurface()
     const rec = runRegisterRow(defOf('P-FM-SEAM-5'))
-    {
-      const r = rec
-      const why = r.notStarted
-        ? `${r.row} — UN-RUN ROW = FAILURE (§5.5.1 cap 3 / §4.2): the register stopped at ${String(registerStoppedAt)}, so this row's ${r.declared} declared attempts were NOT executed and are reported as NOT STARTED, never as a pass.`
-        : r.broken === 0
-          ? `${r.row} — a register row that reports itself HELD while src/shared/focus-model.ts resolves to nothing is a row that cannot fail.`
-          : r.held !== 0
-            ? `${r.row} — an attempt reported itself HELD at red time, which is a silent pass rather than a boundary reading.`
-            : (!r.stoppedEarly && r.attemptsRun !== r.declared)
-              ? `${r.row} — the row did not run to its declared term and the register's stop rule did not fire.`
-              : null
-      expect(why, `${r.row} — the register's own reading (attemptsRun ${r.attemptsRun}/${r.declared}, held ${r.held}, broken ${r.broken}). SUMMARY: ${printReadings()}`).toBe(null)
-    }
+    expect(rowWhy(rec), `${rec.row} — the register's own reading (attemptsRun ${rec.attemptsRun}/${rec.declared}, held ${rec.held}, broken ${rec.broken}). SUMMARY: ${printReadings()}`).toBe(null)
   })
 
   // THE REGISTER'S TRAILING ANNOTATION ROW (`§5.5.1`; `§0A` note 9(b)) — the
