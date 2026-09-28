@@ -909,12 +909,24 @@ describe('§3.5 X-1..X-6 + §3.4 R-3(config) / R-14 / R-6(no-importer) — the r
     ).toBe(false)
   })
 
-  it('X-5 / §2.5 item 5 — THE ENTRY-POINT PATH QUESTION: the answer is NO, and no `src/**` file names this module', () => {
-    const offenders = srcFilesReading(/focus-model/)
+  it('X-5 / §2.5 item 5 — THE ENTRY-POINT PATH QUESTION: the answer is NO, and no `src/**` file names this module OUTSIDE the declared exemption set', () => {
+    const { outside: offenders, exempted } = srcImporterBreak(/focus-model/)
     expect(
       offenders,
-      'X-5 / §2.5 item 5 — the ENTRY-POINT ANSWER IS `NO`: the allow-list contains ONE production path and NO src/** edit, so no path from the application\'s entry point reaches this mechanism. Grounds: (a) no src/** file names its specifier — this filesystem/import-graph probe; (b) F3 is BLOCKED on this unit; (c) src/main/** is DENIED.',
+      `X-5 / §2.5 item 5 — the ENTRY-POINT ANSWER IS \`NO\` FOR THIS UNIT'S OWN DIFF: no path from the application's entry point reaches this mechanism INSIDE it. Grounds: (a) no \`src/**\` file OUTSIDE THE DECLARED EXEMPTION SET names its specifier — this filesystem/import-graph probe; (b) \`F3\` was BLOCKED on this unit; (c) \`src/main/**\` is DENIED. THE EXEMPTION IS THE PATH BY NAME, never the token: ${JSON.stringify(DECLARED_IMPORTER_EXEMPTIONS)} — the renderer entry the SIBLING unit is chartered to wire (\`focus-tool.md\` §2.1 item 6, §5.1 rows 3/4), whose wiring is exactly what makes the consumed module's transitions reachable. THE EXEMPTED READS, REPORTED AND NEVER ASSERTED: ${JSON.stringify(exempted)}. ANY OTHER \`src/**\` FILE NAMING THIS MODULE IS STILL AN OFFENDER AND FAILS.`,
     ).toEqual([])
+    // THE EXEMPTION'S OWN POSITIVE CONTROL, so the exemption is not a blanket strip: the SAME
+    // instrument, on a path NEITHER in the exemption set, MUST FAIL. Driven against an in-memory
+    // corpus — a test file may not create or mutate a sibling `src/**` module (§5.1's DENIED set
+    // binds this pass too), so the control is the PATH RULE, exercised directly.
+    expect(
+      [ 'src/main/mcp-server.ts', 'src/shared/nothing-else.ts' ].filter((p) => !importerExempt(p)).length,
+      `X-5 (POSITIVE control for the declared exemption) — a file OUTSIDE the declared set is NOT exempt and MUST FAIL the row: the exemption is the ${DECLARED_IMPORTER_EXEMPTIONS.length} PATH(S) BY NAME, never the token.`,
+    ).toBe(2)
+    expect(
+      importerExempt('src/renderer/renderer.ts') && !importerExempt('src/main/mcp-server.ts'),
+      'X-5 (POSITIVE control) — and the set is applied PER PATH: the renderer entry is exempt while a neighbouring `src/**` path is not, so the exemption cannot widen itself.',
+    ).toBe(true)
     expect(
       existsSync(join(ROOT, 'src', 'renderer', 'renderer.ts')) && existsSync(join(ROOT, 'src', 'shared', 'demo-envelope.ts')),
       'X-5 — the consumer\'s rendering surface EXISTS elsewhere (the demo envelope + the renderer wiring), and §5.1 DENIES both paths to this unit.',
@@ -936,8 +948,16 @@ describe('§3.5 X-1..X-6 + §3.4 R-3(config) / R-14 / R-6(no-importer) — the r
   })
 
   it('R-6 (no-importer half) — the import-graph probe over the TREE reads ZERO, and the canonical artifacts are present (§5.1)', () => {
-    const offenders = srcFilesReading(/['"][^'"]*focus-model[^'"]*['"]/)
-    expect(offenders, 'R-6 / §2.5 item 5 — at the time this unit\'s red set runs, `src/shared/focus-model.ts` is imported by NO `src/**` file: a recursive `src/**` read matching the module\'s specifier returns ZERO (the probe reads the TREE, never a comment).').toEqual([])
+    const { outside: offenders, exempted } = srcImporterBreak(/['"][^'"]*focus-model[^'"]*['"]/)
+    expect(offenders, `R-6 / §2.5 item 5 — \`src/shared/focus-model.ts\` is imported by NO \`src/**\` file OUTSIDE THE DECLARED EXEMPTION SET: a recursive \`src/**\` read matching the module's specifier returns ZERO outside it (the probe reads the TREE, never a comment). THE CLAIM IS SCOPED TO THIS UNIT'S OWN DIFF BY THE PATH-NAMED EXEMPTION ${JSON.stringify(DECLARED_IMPORTER_EXEMPTIONS)} — the renderer entry the SIBLING unit (\`F3\`/\`U-FOCUS-TOOL\`) is chartered to wire, which is the whole reason that unit exists; the exemption's reason is recorded at the set's own declaration. THE EXEMPTED READS, REPORTED AND NEVER ASSERTED: ${JSON.stringify(exempted)}.`).toEqual([])
+    // THE EXEMPTION'S OWN POSITIVE CONTROL, driven THROUGH THE SAME INSTRUMENT: a synthetic hit
+    // list carrying the exempt path AND a path outside the set routes the outside one to the
+    // OFFENDER side — so the exemption is per-path and cannot become a blanket strip.
+    const control = srcImporterBreak(/focus-model/, [DECLARED_IMPORTER_EXEMPTIONS[0]!, 'src/main/mcp-server.ts'])
+    expect(
+      control.outside,
+      `R-6 (POSITIVE control for the declared exemption) — a file OUTSIDE the declared set still FAILS this row: the instrument routes ${JSON.stringify(control.exempted)} to the exempt side and ${JSON.stringify(control.outside)} to the OFFENDER side, so the exemption is the PATH BY NAME, never the token.`,
+    ).toEqual(['src/main/mcp-server.ts'])
     const allowed = ['src/shared/focus-model.ts', 'tests/focus-model.test.ts', 'docs/specs/focus-model.md']
     expect(existsSync(join(ROOT, allowed[2]!)), 'R-6 — this unit\'s OWN artifacts must non-vacuously exist in the range: the spec.').toBe(true)
     expect(existsSync(join(ROOT, allowed[1]!)), 'R-6 — and this unit\'s own test file (allow-list row 2).').toBe(true)
@@ -947,6 +967,39 @@ describe('§3.5 X-1..X-6 + §3.4 R-3(config) / R-14 / R-6(no-importer) — the r
     ).toBe(true)
   })
 })
+
+/** THE DECLARED EXEMPTION, BY NAME, FOR THE TWO `src/**`-IMPORTER READINGS (`X-5`, `R-6`).
+ *
+ *  THE MEASURED CONFLICT THIS EXISTS TO DISPOSE: both rows pin that NO `src/**` file names this
+ *  module's specifier — TRUE of THIS unit's own diff, and its entry-point answer — but a SIBLING
+ *  unit (`F3` / `U-FOCUS-TOOL`, `docs/specs/focus-tool.md`) exists precisely to make the
+ *  renderer's wiring-held focus state reach the consumed module, and ITS own allow-list
+ *  (`§5.1` rows 3/4) names the renderer path that carries the read. Unscoped, these rows FORBID
+ *  THE WIRING A LATER UNIT EXISTS TO ADD: they redden on a legitimate sibling diff, and no
+ *  implementation can satisfy both. THE CLAIM IS NOT WEAKENED — it is SCOPED TO ITS OWN UNIT'S
+ *  DIFF, in the declared-exemption-by-name form this file's own scan rows already use (`R-1`,
+ *  `R-7`, `R-8`, `R-13`: an exemption set NAMED, with a POSITIVE CONTROL proving a member outside
+ *  it still FAILS).
+ *
+ *  THE REASON, RECORDED HERE SO THE EXEMPTION IS NEVER A SILENT STRIP: the exempt path is the
+ *  renderer entry the sibling unit is CHARTERED to wire — the holder whose live focus state the
+ *  consumed module's transitions are driven from. ANY OTHER `src/**` file naming this module is
+ *  STILL an offender and STILL FAILS, which is what the positive controls below drive. NO ROW ID,
+ *  CLAIM OR CONTROL IS DELETED: the exemption is the PATH BY NAME, never the token. */
+const DECLARED_IMPORTER_EXEMPTIONS: readonly string[] = ['src/renderer/renderer.ts']
+const importerExempt = (rel: string): boolean => DECLARED_IMPORTER_EXEMPTIONS.includes(rel)
+
+/** The `src/**`-importer read, SCOPED to this unit's own diff BY NAME: the offenders OUTSIDE the
+ *  declared exemption set, with the exempted reads reported BESIDE them (reported, never asserted —
+ *  the form `tests/theme.test.ts`'s `X-5` uses for its two declared paths). `source` is the probe's
+ *  hit list; it defaults to the live `src/**` tree and accepts an explicit list so the POSITIVE
+ *  CONTROL drives the exemption's OWN instrument rather than a restatement of it. */
+function srcImporterBreak(re: RegExp, source?: readonly string[]): { outside: string[]; exempted: string[] } {
+  const outside: string[] = []
+  const exempted: string[] = []
+  for (const rel of source ?? srcFilesReading(re)) (importerExempt(rel) ? exempted : outside).push(rel)
+  return { outside, exempted }
+}
 
 /** Every `src/**` file whose text matches `re` — the import-graph probe (a
  *  filesystem read, never a comment; `R-6`'s implementation form, pinned because
@@ -960,7 +1013,12 @@ function srcFilesReading(re: RegExp): string[] {
       else if (/\.(ts|tsx|js|mjs|cjs|html|json)$/.test(e.name)) {
         const text = readFileSync(p, 'utf8')
         const code = text.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ')
-        if (re.test(code)) out.push(p.slice(ROOT.length + 1))
+        // THE REPO-RELATIVE PATH, NORMALISED: `p.slice(ROOT.length)` drops the separator too
+        // (`src/...` became `rc/...`), which no OFFENDER reading could reveal while the probe
+        // returned ZERO hits — and the declared importer exemption (`X-5`/`R-6`) is a set of
+        // PATHS, so a malformed path would make every exemption miss. ONE normalised form is used
+        // by the probe, the exemption and the messages.
+        if (re.test(code)) out.push(p.replace(ROOT, '').replace(/^[\\/]+/, '').split('\\').join('/'))
       }
     }
   }

@@ -361,73 +361,117 @@ export function liveValidGroups(): string[] {
   return readStringArrayLiteral(SECURITY_REL, /const\s+VALID_GROUPS\s*:\s*ReadonlySet<string>\s*=\s*new\s+Set\(\s*\[([^\]]*)\]/)
 }
 
+/** **THE TOOL'S OWN BYTES — WHERE THEY ACTUALLY LIVE (`§5.1` rows 1/2; conflict 2).** The
+ *  route's BYTES are NOT a single contiguous span: the tool's REGISTRATION BLOCK is inside
+ *  `registerTools` (600 lines below), while its HANDLER, its declared-members list and its
+ *  key guard sit at the module's top level beside the other handlers the registration refers
+ *  to. Reading EITHER alone is what let the scans look green while reading the wrong bytes, so
+ *  the region is the union of the two spans and every scan row reads BOTH.
+ *
+ *  THE HANDLER SPAN is found by the tool's own HANDLER NAME (`function focusHandler`) and runs
+ *  to the closing brace of its KEY GUARD (`function keyAllowed`), so it carries the handler, the
+ *  declared-members list and the guard — AND NOTHING ELSE: the two functions ABOVE it
+ *  (`invokeModuleTool`) and BELOW it (`handleModuleTool`) belong to other units and are excluded. */
+function toolHandlerSpan(src: string): { start: number; end: number } | null {
+  const handler = src.indexOf('function focusHandler')
+  if (handler === -1) return null
+  const guard = src.indexOf('function keyAllowed', handler)
+  if (guard === -1) return null
+  const guardEnd = src.indexOf('\n}\n', guard)
+  return { start: handler, end: guardEnd === -1 ? guard : guardEnd + 3 }
+}
+
 /** THE ROUTE REGION — **BOUNDED BY THE CONTRACT'S OWN STATEMENT, NOT BY A QUOTING CONVENTION**
  *  (`§5.5.2` item 4b; `§0A` note 7 item 2(b)). The as-filed reader sliced FROM THE FIRST QUOTED
  *  OCCURRENCE OF THE TOOL NAME TO END-OF-FILE, so ANY earlier occurrence of that quoted name
  *  silently MOVED EVERY SCAN ROW'S REGION — which is how `P-FT-ID-2`'s *"the tool re-derived no
  *  rule"* scan reddened against a legitimate `===` belonging to the SHARED `graph` loop.
  *
- *  **⟶ AND THE MARKER LINE IS NOT PART OF THE REGION (the supervisor's consolidation
- *  adjudication, conflict 1).** The marker ITSELF is the line that carries the tool's own
- *  registration block — `if (allowed.includes('provident.focus'))` — so that line by construction
- *  CONTAINS `.includes(`, which is one of the two patterns a route scan forbids. A reader that
- *  started at the marker's first byte therefore handed every scan row a pattern its own region's
- *  first line always carried, which made the row unholdable by ANY implementation and reddened
- *  three rows for a reason unrelated to the tool. **THE READER MOVES; THE TOOL DOES NOT.** The
- *  region therefore begins at the marker's OWN LINE END — the first byte of the NEXT line — so the
- *  region's first line is never the marker, and the block the marker introduces (the handler and
- *  its wiring, `§5.1` rows 1/2) is still the whole of the region. THE BOUNDED-REGION CLAIM IS
- *  KEPT: the region still ENDS at the next registration block's opening line (or the file's end
- *  when this block is the last one), so a NEW EXPORT, an aliased name or a SECOND RESOLUTION PATH
- *  anywhere below still FAILS the row rather than escaping the reading.
+ *  **⟶ THE REGION STARTS AT THE MARKER BLOCK'S END (conflict 2, this pass), NOT AT THE MARKER
+ *  LINE'S NEXT LINE.** Two readings in a row were dishonest, and this is the second: the marker
+ *  line `if (allowed.includes('provident.focus')) {` itself carries the `.includes(` a route scan
+ *  forbids, so starting ON it handed every scan row a pattern its own region always carried; but
+ *  moving `start` to the marker line's NEWLINE made the region the block's BODY ONLY — and the
+ *  tool's own route bytes (its `focusHandler`, its declared-members list and its `keyAllowed`
+ *  guard) were then moved OUTSIDE the region to satisfy the scans, so the rows read a region the
+ *  tool's bytes no longer inhabited and the scans measured nothing of the tool's.
  *
- *  **THE REGION'S EXTENT, IN THIS FILE'S OWN TERMS** (recorded so the reading is stable rather
- *  than incidental): `start` = the first byte AFTER the marker line's newline; `end` = the first
- *  byte of the next `if (allowed.includes('<name>'))` block's line, or the source's end; the
- *  region is therefore `[marker line end, next marker byte)` — NON-EMPTY whenever the tool's own
- *  block has any body, and it still contains the tool's quoted name (the registration row the
- *  contract requires), so the bounded-region claim is not weakened by the move. */
+ *  **THE CONTRACT'S OWN STATEMENT IS THE BOUNDARY: THE REGION IS THE TOOL'S OWN ROUTE BYTES —
+ *  ITS SCHEMA, ITS HANDLER AND ITS GUARDS — WITH THE MARKER LINE *ITSELF* OUTSIDE IT.** So the
+ *  region is the UNION of (a) the marker block's INNER bytes (everything the marker line
+ *  introduces, up to and excluding the sibling block's own line) and (b) the tool's handler span.
+ *  THE BOUNDED-REGION CLAIM IS KEPT AND STRENGTHENED: `start` is the marker block's FIRST INNER
+ *  BYTE and `end` the next registration block's first byte, so a SECOND RESOLUTION PATH, a NEW
+ *  EXPORT or an alias written INSIDE the block the marker introduces is INSIDE the region — and
+ *  the HANDLER SPAN is inside it too, so a minting/coercion/comparison site written into the tool's
+ *  own handler or guard is read as well rather than escaping into the file's 600 unread lines. */
 export function routeRegion(): { name: string; start: number; end: number } | null {
   const src = read(SERVER_REL)
   const blocks = [...src.matchAll(/if\s*\(\s*allowed\.includes\(\s*(['"])([^'"]+)\1\s*\)\s*\)/g)]
     .map((m) => ({ name: m[2] as string, start: m.index as number, markerEnd: (m.index as number) + m[0].length }))
   const first = blocks.find((b) => b.name === TOOL_NAME)
   if (first === undefined) return null
-  // THE REGION'S OWN FIRST LINE IS NOT THE MARKER (conflict 1): start AFTER the marker match, and
-  // past its line terminator when one follows, so the marker line's own `.includes(` is OUTSIDE.
+  // THE MARKER LINE IS OUTSIDE, ITS BLOCK IS INSIDE (conflict 2): `start` is the first byte of the
+  // marker block's INNER span — past the marker match and past its line terminator, which is where
+  // the block the marker introduces begins (`§5.1` row 1's schema and registration).
   const lineEnd = src.indexOf('\n', first.markerEnd)
   const start = lineEnd === -1 ? src.length : lineEnd + 1
+  // `end` = the next registration block's opening line (the sibling's own bytes are never scanned
+  // as this route), so the region is bounded at BOTH ends and never runs to end-of-file.
   const after = blocks.filter((b) => b.start > first.start)
   const end = after.length === 0 ? src.length : Math.min(...after.map((b) => b.start))
   return { name: first.name, start, end }
 }
 
-/** **IS A BYTE OFFSET INSIDE THE CONTRACT-NAMED ROUTE REGION?** — the reader the region row uses
- *  to state the region's EXTENT in this file's own terms (conflict 1), so the falsifier is a
- *  reading rather than a quoted claim. */
-export function inRouteRegion(offset: number): boolean {
-  const region = routeRegion()
-  return region !== null && offset >= region.start && offset < region.end
+/** THE HANDLER SPAN'S EXTENT, exposed so the region row asserts that the tool's OWN handler bytes
+ *  are INSIDE the scanned region (conflict 2) as a READING rather than as a claim about them. */
+export function routeHandlerExtent(): { start: number; end: number; body: string } | null {
+  const src = read(SERVER_REL)
+  const span = toolHandlerSpan(src)
+  return span === null ? null : { ...span, body: src.slice(span.start, span.end) }
 }
 
-/** **THE MARKER OFFSET / LINE END** — the marker itself is deliberately OUTSIDE the region (its own
- *  line carries the `.includes(` a route scan forbids), so the row needs both offsets to assert the
- *  boundary rather than describe it. */
-export function routeMarkerExtent(): { markerStart: number; markerLineEnd: number; markerLength: number } | null {
+/** **IS A BYTE OFFSET INSIDE THE CONTRACT-NAMED ROUTE REGION?** — the reader the region row uses
+ *  to state the region's EXTENT in this file's own terms (conflict 2), so the falsifier is a
+ *  reading rather than a quoted claim. The region is the marker block's INNER span PLUS the
+ *  tool's own handler span; EVERYTHING ELSE in the file — the marker line itself, the 600 lines
+ *  of sibling registrations — is OUTSIDE it. */
+export function inRouteRegion(offset: number): boolean {
+  const region = routeRegion()
+  if (region === null) return false
+  if (offset >= region.start && offset < region.end) return true
+  const handler = routeHandlerExtent()
+  return handler !== null && offset >= handler.start && offset < handler.end
+}
+
+/** **THE MARKER OFFSET / LINE END** — the marker line ITSELF is deliberately OUTSIDE the region (its
+ *  own line carries the `.includes(` a route scan forbids), so the row needs both offsets to assert
+ *  the boundary rather than describe it. */
+export function routeMarkerExtent(): { markerStart: number; markerLineEnd: number; markerLength: number; blockEnd: number } | null {
   const src = read(SERVER_REL)
   const marker = new RegExp(`if\\s*\\(\\s*allowed\\.includes\\(\\s*(['"])${TOOL_NAME}\\1\\s*\\)\\s*\\)`).exec(src)
   if (marker === null) return null
   const lineBreak = src.indexOf('\n', marker.index + marker[0].length)
+  const region = routeRegion()
   return {
     markerStart: marker.index,
     markerLineEnd: lineBreak === -1 ? src.length : lineBreak,
     markerLength: marker[0].length,
+    blockEnd: region === null ? src.length : region.end,
   }
 }
 
+/** THE SCANNED BYTES: the marker block's INNER span, FOLLOWED BY the tool's own handler span — the
+ *  tool's own route bytes, in one reading (`§5.5.2` item 4b). A scan row that reads only one of the
+ *  two is reading a region the tool's bytes do not inhabit, which is exactly the second defect
+ *  (conflict 2) this reader closes. */
 export function focusRouteSource(): string | null {
   const region = routeRegion()
-  return region === null ? null : read(SERVER_REL).slice(region.start, region.end)
+  if (region === null) return null
+  const src = read(SERVER_REL)
+  const handler = routeHandlerExtent()
+  const spans = handler === null ? `${src.slice(region.start, region.end)}` : `${src.slice(region.start, region.end)}\n${handler.body}`
+  return spans
 }
 
 interface Recorder {
@@ -456,18 +500,64 @@ export function newServer(backend: McpBackend, gate?: SecurityGate): ProvidentMc
   return server
 }
 
+/** **THE LIVE MOCK SESSION — ONE TRANSPORT PER SERVER, CONNECTED ONCE AND REUSED
+ *  (`§5.5.1 RT-3`/`ID-1`/`ID-2` drive `callTool` MORE THAN ONCE ON ONE `server`).**
+ *
+ *  THE MEASURED DEFECT THIS CACHE EXISTS FOR: the as-filed `callTool` called
+ *  `server.connectMockTransport()` on EVERY invocation, which builds a FRESH transport and
+ *  `connect()`s it to the SAME SDK `Server` — and the SDK throws *"Already connected to a
+ *  transport. Call close() before connecting to a new transport, or use a separate Protocol
+ *  instance per connection."* So every SECOND call on one server threw a harness error, and
+ *  because the as-filed helper read `sent[0]` of ITS OWN fresh array it could not reuse a
+ *  connection even if one had survived. A MULTI-CALL DRIVE WAS THEREFORE IMPOSSIBLE and four
+ *  register rows (`RT-3`, `ID-1`, `ID-2` and `AR-3`) read `broken` for a reason that no host
+ *  byte can fix — the failing read is the TEST HARNESS'S OWN (`§0A` note 7 item 3).
+ *
+ *  THE REPAIR, AT THE HARNESS'S OWN SITE: the transport is created and connected ONCE per
+ *  `server` (a `WeakMap`, so each drive's fresh server gets its OWN session and no state
+ *  crosses drives), and EVERY call pushes its request into that ONE live `sent` array and
+ *  reads the reply the live connection emits. NO ROW'S CLAIM, CONTROL OR TERM MOVES: a row
+ *  that drove two calls still drives two calls, and the drive now reaches the tool. */
+const LIVE_SESSIONS = new WeakMap<ProvidentMcpServer, { sent: Array<Record<string, unknown>>; onmessage: (m: unknown, e?: unknown) => void }>()
+
+async function liveSession(server: ProvidentMcpServer): Promise<{ sent: Array<Record<string, unknown>>; onmessage: (m: unknown, e?: unknown) => void }> {
+  const held = LIVE_SESSIONS.get(server)
+  if (held !== undefined) return held
+  const sent: Array<Record<string, unknown>> = []
+  const transport = {
+    start: async (): Promise<void> => {},
+    send: async (msg: Record<string, unknown>): Promise<void> => { sent.push(msg) },
+    close: async (): Promise<void> => {},
+    onclose: undefined as (() => void) | undefined,
+    onerror: undefined as ((e: unknown) => void) | undefined,
+    onmessage: undefined as unknown,
+  }
+  const sdk = server.ensureServerRegistered() as unknown as { connect(t: unknown): Promise<void>; server?: { _transport?: unknown } }
+  await sdk.connect(transport)
+  // THE HANDLER IS THE ONE THE CONNECTION INSTALLED: `Protocol.connect` wraps the transport's
+  // own `onmessage` and stores the WRAPPED form on `_transport` — which is the function that
+  // routes a JSON-RPC request into the request handlers. Reading it from the LIVE connection
+  // (rather than from a private field read before `connect`) is what lets a SECOND call on the
+  // same server reach the tool instead of the SDK's already-connected throw.
+  const connected = sdk.server?.['_transport'] as { onmessage?: unknown } | undefined
+  const onmessage = connected?.['onmessage']
+  if (typeof onmessage !== 'function') throw new Error('tools/call: the connected server exposes no request handler — the mock session cannot deliver a message')
+  const session = { sent, onmessage: (m: unknown, e?: unknown): void => { (onmessage as (msg: unknown, extra?: unknown) => void)(m, e) } }
+  LIVE_SESSIONS.set(server, session)
+  return session
+}
+
 export async function callTool(
   server: ProvidentMcpServer, name: string, args: unknown, opts?: { omitArguments?: boolean },
 ): Promise<unknown> {
-  const sent = await server.connectMockTransport()
-  const srv = (server as unknown as { stdioServer: Record<string, unknown> }).stdioServer
-  const inner = srv['server'] as Record<string, unknown> | undefined
-  const transport = (inner?.['_transport'] ?? srv['_transport']) as { onmessage: (m: unknown, e?: unknown) => void }
+  const session = await liveSession(server)
+  const before = session.sent.length
+  const id = 11 + before
   const params: Record<string, unknown> = { name }
   if (opts?.omitArguments !== true) params['arguments'] = args
-  transport.onmessage({ jsonrpc: '2.0', id: 11, method: 'tools/call', params }, {})
-  for (let i = 0; i < 60 && sent.length === 0; i += 1) await new Promise((r) => setTimeout(r, 5))
-  const reply = sent[0] as { result?: unknown; error?: unknown } | undefined
+  session.onmessage({ jsonrpc: '2.0', id, method: 'tools/call', params }, {})
+  for (let i = 0; i < 60 && session.sent.length === before; i += 1) await new Promise((r) => setTimeout(r, 5))
+  const reply = session.sent[before] as { id?: unknown; result?: unknown; error?: unknown } | undefined
   if (reply === undefined) throw new Error(`tools/call ${name}: no reply on the mock transport`)
   if (reply.error !== undefined) {
     const e = reply.error as { message?: string }
@@ -789,11 +879,19 @@ const AR3_DRIVES: Drive[] = (() => {
       for (const token of p.forbid) {
         expect(scanLines(body, token), `AR-3 ${p.label} — a \`typeof\`/coercion/defaulting site FOR '${p.member}' on the route FAILS: ${String(token)}`).toEqual([])
       }
-      // THE FALSIFIER, so the scan is a reading and not a ritual: the SAME scan hits a coerced
-      // site, and a DEFAULTER would be caught by the identity read above (Object.is(0, false)
-      // is false, Object.is({...}, undefined) is false) rather than by a message form.
-      expect(scanLines('const t = String(args.target)', p.forbid[0] as RegExp), `AR-3 ${p.label} control — the coercion scan CAN hit.`)
-        .not.toEqual([])
+      // THE FALSIFIER, so the scan is a reading and not a ritual: a CANARY LINE CARRYING THIS
+      // DRIVE'S OWN COERCION FORM is hit by at least one of the patterns this drive forbids.
+      // (The as-filed control drove `forbid[0]` — `target`'s `String(…)` form — for EVERY
+      // member, so the `newTab` drive ran a canary its own `Boolean(…)`/`!!`/`typeof`/`??`
+      // patterns cannot match and the control reddened a row whose SCAN had actually held.
+      // The canary is now member-specific and the match is asserted over the drive's whole
+      // pattern set, never at a fixed index.)
+      const canary = p.member === 'target' ? 'const t = String(args.target)' : 'const t = Boolean(args.newTab)'
+      const caught = p.forbid.filter((re) => scanLines(canary, re).length > 0)
+      expect(
+        caught.length,
+        `AR-3 ${p.label} control — at least one of THIS drive's ${p.forbid.length} forbidden patterns catches its own coercion form (${JSON.stringify(canary)}), so the no-coercion scan CAN hit.`,
+      ).toBeGreaterThan(0)
       const defaulted = { ...args } as Record<string, unknown>
       if (p.member === 'newTab') defaulted['newTab'] = false
       else delete defaulted['target']
@@ -865,7 +963,7 @@ export const REGISTER: readonly RegisterRow[] = [
     assertions: ["the union member's presence", "the switch case's presence", "the renderer stub's call count is exactly 1 on a valid call", "the routing decision is independent of the mutating set"],
     controls: [{ label: 'control: the recording stub is a real recorder (two calls show two)', run: async () => { const rec = recorder([{}, {}]); const s = newServer(rec.backend); await callTool(s, TOOL_NAME, {}); await callTool(s, TOOL_NAME, {}); expect(rec.calls.length).toBe(2) } }],
     drives: [
-      { label: '(1) the union-member read against the switch case', run: () => { expect(liveRpcMethods(), 'RT-3 — the union member.').toContain(METHOD); expect(read(RENDERER_REL), 'RT-3 — the switch case.').toMatch(new RegExp('case[ ]+' + METHOD + '[ ]*:')) } },
+      { label: '(1) the union-member read against the switch case', run: () => { expect(liveRpcMethods(), 'RT-3 — the union member.').toContain(METHOD); expect(read(RENDERER_REL), "RT-3 — the switch case, read in the renderer's OWN QUOTED CASE-LABEL FORM (`case 'focus':` — the form `X-1b`/`N-11`/`RS-2` read; the as-filed form here omitted the quotes, which matches NO case label in this file and reddened the row against a conformant switch).").toMatch(new RegExp("case[ ]+'" + METHOD + "'[ ]*:")) } },
       { label: '(2) the invoke path through a recording stub (call count exactly 1)', run: async () => { const rec = recorder([{ activeId: null, entries: [], opened: false }]); const s = newServer(rec.backend); const got = await callTool(s, TOOL_NAME, { target: 'a' }); assertOneFocusCall(rec, 'RT-3(2)'); assertDeclaredShape(got, 'RT-3(2)') } },
       { label: '(3) the route does NOT consult the mutating set for routing', run: () => { expect(scanLines(stripComments(focusRouteSource() ?? ''), /MUTATING_METHODS/), 'RT-3(3) — the route never reads the mutating set for routing.').toEqual([]); expect(liveAllTools(), 'RT-3(3) — the tool IS listed, so the route crosses the invoke path by the TYPE WALL + the switch.').toContain(TOOL_NAME) } },
     ],

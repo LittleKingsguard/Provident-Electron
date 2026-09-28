@@ -53,7 +53,7 @@ import {
   DECLARED_BOUNDED_ROWS, DECLARED_READING_CLASSES, ENUMERATED_ROW_IDS, EXECUTED_CELLS_SUM,
   runRegister, reportDiagnostics, read, stripComments, scanLines, liveAllTools, liveRpcMethods,
   liveMutatingMethods, liveValidGroups, focusRouteSource, routeRegion, routeMarkerExtent,
-  inRouteRegion, assertDeclaredShape, assertOptionalMember, keysOf,
+  routeHandlerExtent, inRouteRegion, assertDeclaredShape, assertOptionalMember, keysOf,
   recorder, newServer, callTool, callHandler, assertOneFocusCall, thrown,
 } from './focus-tool-register.js'
 
@@ -124,15 +124,21 @@ describe('§3.5 X-1..X-7 — the existence rows', () => {
     // THE MEASURED DEFECT THIS ROW EXISTS FOR: the as-filed reader sliced from the FIRST QUOTED
     // OCCURRENCE OF THE TOOL NAME to end-of-file, so an occurrence of that quoted name ANYWHERE
     // ELSE moved every scan row's region — which is how `P-FT-ID-2`'s "the tool re-derived no
-    // rule" scan reddened against a legitimate `===` in the SHARED `graph` loop. The region is
-    // now the handler's OWN registration block: quoting elsewhere cannot move it.
+    // rule" scan reddened against a legitimate `===` in the SHARED `graph` loop.
     //
-    // AND THE SECOND DEFECT, THIS PASS'S (conflict 1): the region used to BEGIN ON THE MARKER
-    // LINE, whose own text is `if (allowed.includes('provident.focus'))` — a line carrying the
-    // very `.includes(` a route scan forbids, so every scan row was handed a pattern its own
-    // region always carried and no implementation could ever hold it. THE READER MOVED, NOT THE
-    // TOOL: the region now starts AFTER the marker match (and past its line terminator), so the
-    // region's own first line is never the marker while the BOUNDED-REGION claim is kept.
+    // AND THE SECOND DEFECT, THE PREVIOUS PASS'S: the region began ON the marker line, whose own
+    // text is `if (allowed.includes('provident.focus'))` — a line carrying the very `.includes(`
+    // a route scan forbids, so every scan row was handed a pattern its own region always carried
+    // and no implementation could hold it.
+    //
+    // AND THE THIRD DEFECT, THIS PASS'S (conflict 2): moving `start` past the marker line made
+    // the region the marker block's BODY ONLY, and the tool's own route bytes — its handler, its
+    // declared-members list and its key guard, which live at the module's TOP LEVEL — ended up
+    // OUTSIDE the scanned region, so the scans read a region the tool's bytes no longer inhabited
+    // and measured nothing of the tool's. THE REGION NOW STARTS AT THE MARKER BLOCK'S END IN THE
+    // SENSE THE CONTRACT STATES: the marker LINE is outside it, and THE TOOL'S OWN ROUTE BYTES —
+    // its schema, its handler and its guards — are INSIDE it. The claim is now a READING of the
+    // handler span, asserted below, rather than a description of it.
     const region = routeRegion()
     expect(region, `RT-5(b) — the contract-named region must be LOCATABLE: the tool's own \`allowed.includes('${TOOL_NAME}')\` registration block is its marker.`).not.toBe(null)
     const marked = region as NonNullable<ReturnType<typeof routeRegion>>
@@ -148,21 +154,39 @@ describe('§3.5 X-1..X-7 — the existence rows', () => {
     const src = read('src/main/mcp-server.ts')
     expect(marked.end, 'RT-5(b) — the region ENDS before the NEXT registration block (never at end-of-file), so a sibling tool\'s bytes are not scanned as this route.').toBeLessThan(src.length)
     expect(marked.end, 'RT-5(b) — and the region is BOUNDED at its end (end > start) rather than empty.').toBeGreaterThan(marked.start)
+    expect(marked.end, 'RT-5(b) — the region ends at the MARKER BLOCK\'S END (`§5.5.2` item 4b): the next `if (allowed.includes(...))` block\'s own line, the first byte outside the tool\'s block.').toBe(m.blockEnd)
     const body = focusRouteSource() ?? ''
     expect(body.length, 'RT-5(b) — the bounded region is NON-VACUOUS: non-empty, so every scan row still reads real bytes at green time.').toBeGreaterThan(0)
-    // THE BOUNDED-REGION CLAIM, KEPT (never weakened by the move): a SECOND RESOLUTION PATH, a NEW
-    // EXPORT or an alias written INSIDE the tool's own block is INSIDE this region — so it is read
-    // by the scan below and FAILS, rather than escaping the reading. The falsifier is driven here.
+    // THE TOOL'S OWN BYTES ARE INSIDE THE REGION (conflict 2, asserted as a READING): the handler
+    // span carries `function focusHandler`, the declared-members list and the key guard, and every
+    // byte of it is inside the region the scans read — while the marker line is not.
+    const handler = routeHandlerExtent()
+    expect(handler, 'RT-5(b) — the tool\'s own handler span must be LOCATABLE (`function focusHandler` … the key guard\'s close), or the "the tool\'s own bytes are inside the region" claim is not a reading.').not.toBe(null)
+    const h = handler as NonNullable<ReturnType<typeof routeHandlerExtent>>
+    for (const need of ['function focusHandler', 'DECLARED_ARGUMENTS', 'function keyAllowed']) {
+      expect(h.body.includes(need), `RT-5(b) — the handler span carries the tool's own byte '${need}' (\`§5.1\` row 1's handler and its guard).`).toBe(true)
+      expect(body.includes(need), `RT-5(b) — and THAT BYTE IS INSIDE THE SCANNED REGION: '${need}' must be read by every scan row, or the region the rows read is one the tool's bytes do not inhabit (conflict 2).`).toBe(true)
+    }
+    expect(body.includes("if (allowed.includes('"), 'RT-5(b) — the region STARTS AT THE MARKER BLOCK\'S END: no marker line of the tool\'s own is inside the scanned bytes (that line is what carried the forbidden `.includes(`).').toBe(false)
+    // THE BOUNDED-REGION CLAIM, KEPT AND STRENGTHENED (never weakened by the move): a SECOND
+    // RESOLUTION PATH, a NEW EXPORT or an alias written INSIDE the tool's own block OR INTO ITS
+    // HANDLER is INSIDE this region — so it is read by the scan below and FAILS rather than
+    // escaping the reading. Both falsifiers are driven here.
     const controlBlock = `${body}\nif (allowed.includes('provident.focus')) { return 'aliased-resolution-path' }\nconst secondPath = 'focus'\n`
-    expect(scanLines(controlBlock, /===|\.includes\s*\(/).length, 'RT-5(b) control — a SECOND RESOLUTION PATH written inside the block the marker introduces is INSIDE the region and IS caught by the scan.').toBeGreaterThan(0)
+    expect(scanLines(controlBlock, /===|\.includes\s*\(/).length, 'RT-5(b) control (a) — a SECOND RESOLUTION PATH written inside the block the marker introduces is INSIDE the region and IS caught by the scan.').toBeGreaterThan(0)
+    const controlHandler = `${h.body}\n  const minted = crypto.randomUUID()\n`
+    expect(scanLines(controlHandler, /randomUUID/).length, 'RT-5(b) control (b) — a MINTING site written INTO THE TOOL\'S OWN HANDLER is inside the region too: the handler span is appended to the scanned bytes, so the tool\'s own bytes are measured, not skipped.').toBeGreaterThan(0)
     for (const foreign of ["if (allowed.includes('provident.get_rendered_html'))", "if (allowed.includes('provident.get_node_state'))"]) {
       expect(body.includes(foreign), `RT-5(b) — the region must NOT reach a SIBLING registration block ('${foreign}' is outside it).`).toBe(false)
     }
-    // THE SCAN'S OWN READING: the region the scans read carries NO `===` and NO `.includes(`.
-    // (This is asserted as the SCAN'S reading, never as a claim about which tokens live INSIDE
-    // the tool's block — the block's own registration row names the tool, and naming it is
-    // REQUIRED of the implementation; what the scans read is the code the handler adds.)
-    expect(scanLines(body, /===|\.includes\s*\(/).length, `RT-5(b) — the region the scans read must be free of \`===\` and \`.includes(\`: the ONLY such line is the MARKER LINE, which the region now excludes. Measured hits: ${JSON.stringify(scanLines(body, /===|\.includes\s*\(/))}`).toBe(0)
+    // THE SCAN'S OWN READING, OVER THE WHOLE REGION (the tool's own bytes INCLUDED): the region is
+    // free of a `===\s*`, an `.includes(` or an `.indexOf(` SITE. THIS READING IS DELIBERATELY NOT
+    // ASSERTED HERE AS A PASS — the region now carries the tool's own guard, so it is a MEASUREMENT
+    // of the tool (reported by the rows that own the claim, `I-10`/`ID-2`), never a shape this row
+    // may require the region to have. A pass asserted here would re-commit the exact defect this
+    // row exists for: engineering the region until the tool's own bytes are out of it.
+    const sites = scanLines(stripComments(body), /===\s*|\.includes\s*\(|\.indexOf\s*\(/)
+    expect(sites.every((line) => !line.includes("if (allowed.includes('")), `RT-5(b) — the ONLY \`.includes(\` sites inside the region belong to the TOOL'S OWN BYTES (never the marker line): measured ${JSON.stringify(sites)}`).toBe(true)
   })
 })
 
