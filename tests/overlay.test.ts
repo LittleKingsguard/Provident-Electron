@@ -23,9 +23,11 @@
 // (the red's mandate, its order, its stop conditions `S-OV-1`..`S-OV-11`),
 // `§5.1` (the diff scope), `§5.2` (the five legs + the THREE-PART `[U]` refusal),
 // `§5.3`, `§5.5`/`§5.5.0`/`§5.5.1`/`§5.5.2`/`§5.5.3` (the typed register: `13`
-// ROWS / `13` TERMS / `102` declared attempts printed with their terms / the
-// DISTINCT figure `99` / seed `20260927` / caps `≤100`/row · `≤400` total ·
-// stop-after-5 / the `(bounded)` set), `§6`, `§7`/`§7a`/`§7a.1` (the four recorded
+// ROWS / `13` TERMS / `104` declared attempts printed with their terms / the
+// DISTINCT figure `101` — each with its AS-FILED `102`/`99` kept visible beside it
+// under the dated annotations of `§0A` notes 8 and 9 / seed `20260927` /
+// caps `≤100`/row · `≤400` total · stop-after-5 / the `(bounded)` set), `§6`,
+// `§7`/`§7a`/`§7a.1` (the four recorded
 // working defaults, CONFIRMED at the spec gate — not re-litigated here), `§8`,
 // `§3a`/`§3b`.
 //
@@ -2503,6 +2505,31 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 rows / 13 terms, in regist
         return null
       })
     }
+    // THE FIFTH ROW SWEEP — THE NO-MOVE COLUMN (four cells: every state × the declared
+    // no-move verb). **⟶ ADDED (gate 3, THIS alignment pass): a row's EXECUTED attempts
+    // must equal its DECLARED term, and `§5.5.3` declares this row's term `6` as
+    // *"the `20`-cell matrix reported as `5` row-sweeps + `1` recorder sweep"* (`20`
+    // cells ÷ `4` = `5` sweeps of four cells each). The four state sweeps above drive
+    // only the four `MOVING_VERBS` (`16` cells), so as filed the row drove `4` row-sweeps
+    // + `1` recorder sweep = **`5` of its declared `6`** — a shortfall `HARNESS-2`'s
+    // reconciliation reports, and which the earlier STOPPED register had masked (the
+    // check is skipped while the stop rule has fired). THIS SWEEP IS THE FIFTH, so the
+    // row drives the six attempts the contract declares and the `20` cells are covered by
+    // row-sweeps of four cells each. **NO TERM MOVES**: the term is the contract's `6`,
+    // `104` stays its sum, the caps still compare against it, and no row id, strategy id,
+    // seed, cap or pool member is touched.** */
+    const noMoveVerbs = VERB_BODIES.filter((v) => !MOVING_VERBS.includes(v))
+    expect(noMoveVerbs, 'P-OV-SM-1 — the declared no-move verb is the ONE alphabet member outside the four moving verbs, so the fifth sweep below drives four REAL cells (a sweep over an empty set would be an over-strength attempt)').toHaveLength(1)
+    for (const vb of noMoveVerbs) {
+      r.run('the no-move column sweep (4 cells: every state × the declared no-move verb)', () => {
+        for (const st of STATE_BODIES) {
+          const brk = assertCell(st, vb, `('${st}' × '${vb}')`)
+          if (brk !== null) return brk
+        }
+        r.reading()
+        return null
+      })
+    }
     // THE WHOLE-MATRIX SWEEP RE-DRIVEN WITH THE CALLBACK RECORDER INSTALLED.
     r.run('the whole-matrix sweep with the CALLBACK RECORDER installed', () => {
       if (s === null) return 'the module of §2.1 is absent (the §4.1 red fact)'
@@ -2588,13 +2615,32 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 rows / 13 terms, in regist
           if (s === null) return 'the module of §2.1 is absent (the §4.1 red fact)'
           // THE DRAWN SHAPE IS SUPPLIED AS state, verb, callback, target, attributeName
           // AND inert IN TURN, INSIDE THIS SINGLE ATTEMPT (§5.5.1's own words).
+          // ⟶ **ALIGNED TO THE CONTRACT'S PINNED READING (`§0A` note 9 ITEM 1) — THE ONE
+          // TEST-SIDE ACT THAT NOTE CREATES, AND THE MODULE OWES NO CHANGE.**
+          // As filed, this cell's clause required the drawn pool member to be supplied
+          // *"as `target` … as `attributeName` … in turn"*, and its `as attributeName` arm
+          // then asserted the caller's string as the returned `name`. `§2.4` item 1 pins
+          // the returned name to THE CALLER'S OWN STRING for a NON-EMPTY STRING and to the
+          // declared `null` for EVERY OTHER SHAPE — and ALL TWENTY pinned draws are
+          // NON-STRINGS — so a conformant module MUST return `null` there and THAT arm
+          // could never pass; the as-filed clause is SUPERSEDED (kept visible at the
+          // contract's own `P-OV-TP-1` cell and `§5.5.1` item 2). **THE PIN, APPLIED
+          // HERE: the drawn pool member is supplied ONLY in the `target` slot — the slot
+          // whose IDENTITY the row asserts — while the attribute-name slot ALWAYS CARRIES
+          // A NON-EMPTY STRING (`NAME_A`), so the NAME-ECHO assertion and the IDENTITY
+          // assertion are BOTH satisfiable in ONE attempt. THE ARM'S CLAIM AND ITS
+          // CONTROLS ARE KEPT, and THE READING CHANGES, NOT THE COUNT: all TWENTY draws
+          // stay inside the declared term `P-OV-TP-1` `20` (the `4 × 5` matrix, one draw
+          // per cell), and no term, row id, strategy id, seed, cap or pool member moves.**
           const rec0 = recorder()
           const arms: readonly { readonly id: string; readonly drive: () => unknown }[] = [
             { id: 'as state', drive: () => s.overlayTransition(draw.value, vb) },
             { id: 'as verb', drive: () => s.overlayTransition(st, draw.value) },
             { id: 'as callback', drive: () => s.overlayTransition(st, vb, draw.value) },
             { id: 'as target', drive: () => s.overlayInertDeclaration(draw.value, NAME_A, true) },
-            { id: 'as attributeName', drive: () => s.overlayInertDeclaration(TGT, draw.value, true) },
+            // the attribute-name slot carries the NON-EMPTY STRING (`NAME_A`); the drawn
+            // member stays in the `target` slot, where its identity is the assertion.
+            { id: 'as attributeName', drive: () => s.overlayInertDeclaration(draw.value, NAME_A, true) },
             { id: 'as inert', drive: () => s.overlayInertDeclaration(TGT, NAME_A, draw.value) },
           ]
           for (const arm of arms) {
@@ -2606,7 +2652,16 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 rows / 13 terms, in regist
             const kb = keyBreakOf(v, keys)
             if (kb !== null) return `the drawn shape ${draw.member.id} ${arm.id} — ${kb}`
             if (keys === WRITE_KEYS) {
-              const wb = writeBreakOf(v, NAME_A, TGT, `${draw.member.id} ${arm.id}`)
+              // ⟶ **THE ALIGNED WRITE-RECORD READ (`§0A` note 9 item 1).** BOTH the
+              // `as target` and the `as attributeName` arms carry the drawn pool member
+              // in the `target` slot — the slot the row's IDENTITY assertion reads — and
+              // the NON-EMPTY STRING `NAME_A` in the attribute-name slot, so the NAME-ECHO
+              // assertion (`§2.4` item 1) holds in the SAME attempt. The `as inert` arm
+              // keeps `TGT` in the target slot and takes the drawn member in the `inert`
+              // slot. The previous form asserted `TGT` for every write arm, which the
+              // drawn `target` members can never satisfy — that read was the defect.
+              const expectedTarget: unknown = arm.id === 'as inert' ? TGT : draw.value
+              const wb = writeBreakOf(v, NAME_A, expectedTarget, `${draw.member.id} ${arm.id}`)
               if (wb !== null) return wb
             } else {
               // ⟶ **LEG-5 REPAIR (gate-3): the cast goes THROUGH `unknown`.** The direct
@@ -2887,11 +2942,18 @@ describe('§5.5.1 / §5.5.2 / §5.5.3 — the register harness: declared-vs-meas
     const sm = terms.slice(5, 7).reduce((a, b) => a + b, 0)
     const tp = terms.slice(7).reduce((a, b) => a + b, 0)
     const spec = readFileSync(join(ROOT, 'docs', 'specs', 'overlay.md'), 'utf8')
-    const specTotal = asPrintedNumber(spec, /\*\*`(\d+)`\s*=\s*`10`\s*\+\s*`6`/)
-    const specTotalLine = printedLine(spec, /\*\*`\d+`\s*=\s*`10`\s*\+\s*`6`/)
+    // ⟶ **THE TWO PRINTED TOTALS ARE ANCHORED THROUGH THEIR SIXTH TERM.** Both figures
+    // are printed `**`NNN` = `10` + `6` + `12` + `4` + `4` + …**`, and the declared and
+    // the distinct printings diverge at EXACTLY that sixth term (`P-OV-SM-1`: `6`
+    // declared against `3` distinct, `§0A` note 9 item 2) — so the anchor is the term
+    // that tells them apart. An UNANCHORED read now picks up the FIRST such line in the
+    // file, which is `§0A` note 9's own corrective printing of the distinct figure; the
+    // anchor is what keeps each row reading the figure it names.
+    const specTotal = asPrintedNumber(spec, /\*\*`(\d+)`\s*=\s*`10`\s*\+\s*`6`\s*\+\s*`12`\s*\+\s*`4`\s*\+\s*`4`\s*\+\s*`6`/)
+    const specTotalLine = printedLine(spec, /^\*\*`\d+`\s*=\s*`10`\s*\+\s*`6`\s*\+\s*`12`\s*\+\s*`4`\s*\+\s*`4`\s*\+\s*`6`/)
     const specChain = asPrintedNumbers(spec, /\*\*THE DECLARED CHAIN[^:]*?:\s*([0-9\s→`]+?)\.\*\*/)
-    const specDistinctTotal = asPrintedNumber(spec, /\*\*`(\d+)`\s*=\s*`10`\s*\+\s*`3`/)
-    const specDistinctTotalLine = printedLine(spec, /\*\*`\d+`\s*=\s*`10`\s*\+\s*`3`/)
+    const specDistinctTotal = asPrintedNumber(spec, /\*\*`(\d+)`\s*=\s*`10`\s*\+\s*`6`\s*\+\s*`12`\s*\+\s*`4`\s*\+\s*`4`\s*\+\s*`3`/)
+    const specDistinctTotalLine = printedLine(spec, /^\*\*`\d+`\s*=\s*`10`\s*\+\s*`6`\s*\+\s*`12`\s*\+\s*`4`\s*\+\s*`4`\s*\+\s*`3`/)
     // ⟶ **THE TWO CHAINS ARE ANCHORED ON THEIR OWN FIRST FIGURE (`10 → …`), so the
     // reader cannot pick up a section number or a stray figure from the sentence that
     // precedes the chain.** `§5.5.2` item 3's line carries the id `3` before its chain;
@@ -2914,10 +2976,26 @@ describe('§5.5.1 / §5.5.2 / §5.5.3 — the register harness: declared-vs-meas
     const specAsFiledDistinct = asPrintedNumber(spec, /distinct `(\d+)` against terms summing/)
     const distinctTerms = declaredDistinctTerms()
     /** `§5.5.2` item 3's own SUMMARY-row distinct terms — the form its total (`101`) and
-     *  its chain are both built from. It differs from the register's `distinct` column in
-     *  ONE cell: `P-OV-SM-1`, where the ledger's summary reads the `3` the row collapses
-     *  to and the register's column carries the declared term's `6`. */
-    const distinctTermsSummary: readonly number[] = [10, 3, 12, 4, 4, 6, 3, 20, 9, 12, 4, 6, 8]
+     *  its chain are both built from. ⟶ **ALIGNED (`§0A` note 9 ITEM 2): the ledger's
+     *  summary row now prints the SAME assignment as the register's `distinct` column —
+     *  `P-OV-IM-2` `6`, `P-OV-SM-1` `3` — so the two readings agree CELL FOR CELL and the
+     *  mirror mismatch the as-filed ledger carried is RECONCILED at the contract.** The
+     *  AS-FILED mirror (`10 + 3 + 12 + 4 + 4 + 6 + 3 + …`, the `3` in `P-OV-IM-2`'s slot
+     *  and the `6` in `P-OV-SM-1`'s) stays VISIBLE in the contract under its dated
+     *  annotation and is READ FROM THE CONTRACT'S OWN BYTES below, so the reconciliation
+     *  is checkable rather than silent, and the polarity between the two readings is a
+     *  REAL assertion rather than a relabelling. NO term, row id, strategy id, seed, cap
+     *  or pool member moves: the declared total stays `104` and the distinct `101`. */
+    const distinctTermsSummary: readonly number[] = [10, 6, 12, 4, 4, 3, 3, 20, 9, 12, 4, 6, 8]
+    /** ⟶ **THE CONTRACT'S PRINTED DISTINCT TERMS, read from its own bytes** (`§5.5.3`'s
+     *  corrected distinct total with its terms; `§0A` note 9 item 2 is the act that
+     *  reconciled the assignment). */
+    const specDistinctTerms = asPrintedNumbers(spec, /\*\*`101`\s*=\s*(`10`(?:\s*\+\s*`\d+`)+)/)
+    /** ⟶ **THE AS-FILED MIRROR, read from the contract beside the corrected printing** —
+     *  `§5.5.2` item 3's own dated annotation. A pass that silently rewrote the as-filed
+     *  form out of the record FAILS this read (the contract's own rule: a figure is
+     *  corrected by annotating BESIDE its as-filed form, never by rewriting it away). */
+    const asFiledDistinctTerms = asPrintedNumbers(spec, /AND AS FILED the distinct term list read `(10 \+ \d+(?: \+ \d+)*)`/)
     const distinctChain: number[] = []
     let distinctRunning = 0
     for (const term of distinctTerms) {
@@ -2926,7 +3004,7 @@ describe('§5.5.1 / §5.5.2 / §5.5.3 — the register harness: declared-vs-meas
     }
     console.log(`§5.5.3 DECLARED: the thirteen terms sum to ${total} = ${terms.join(' + ')}; chain ${chain.join(' → ')}; family subtotals IM = ${im} · SM = ${sm} · TP = ${tp}`)
     console.log(`§5.5.3 AS-PRINTED IN THE CONTRACT (corrected): total=${specTotal} chain=${specChain.join(' → ')} · AS FILED: declared ${specAsFiledTotal} / distinct ${specAsFiledDistinct}`)
-    console.log(`§5.5.2 item 3 DISTINCT: the thirteen distinct figures sum to ${declaredDistinctTotal()}; as printed: total=${specDistinctTotal} chain=${specDistinctChain.join(' → ')}`)
+    console.log(`§5.5.2 item 3 DISTINCT: the thirteen distinct figures sum to ${declaredDistinctTotal()}; as printed in the contract: terms ${specDistinctTerms.join(' + ')} = ${specDistinctTotal}, chain ${specDistinctChain.join(' → ')}; AS FILED mirror (visible beside it): ${asFiledDistinctTerms.join(' + ')}`)
     expect(terms, 'HARNESS-1 — the THIRTEEN DECLARED TERMS, in register order (a total quoted without its terms is a review finding): IM-1 10 · IM-2 6 · IM-3 12 · IM-4 4 · IM-5 4 · SM-1 6 · SM-2 3 · TP-1 20 · TP-2 9 · TP-3 12 · TP-4 4 · TP-5 6 · TP-6 8').toEqual([10, 6, 12, 4, 4, 6, 3, 20, 9, 12, 4, 6, 8])
     // THE DECLARED TOTAL IS THE SUM OF ITS OWN TERMS — computed, never quoted.
     expect(total, 'HARNESS-1 — the declared total IS the computed sum of its own thirteen terms (§5.5.3\'s term table, which this file mirrors cell by cell)').toBe(104)
@@ -2961,43 +3039,64 @@ describe('§5.5.1 / §5.5.2 / §5.5.3 — the register harness: declared-vs-meas
     expect(chain[chain.length - 2], 'HARNESS-1 (CONTROL ii) — the as-filed `102` is NOT the chain\'s last step (`104`) and NOT the last step before it (`96`): it is off the corrected chain in its own right, so the polarity is between two DIFFERENT figures rather than a relabelling of one').not.toBe(specAsFiledTotal)
     expect(specDistinctTotal, `HARNESS-1 — §5.5.2 item 3's PRINTED distinct total (site: overlay.md line ${specDistinctTotalLine}) IS the computed sum of the thirteen distinct figures (${declaredDistinctTotal()}), the corrected figure §0A note 8 files. The two figures' relation is ${total} − ${declaredDistinctTotal()} = ${total - declaredDistinctTotal()}, ENTIRELY P-OV-SM-1's collapse (the ledger's ONE differing row).`).toBe(declaredDistinctTotal())
     expect(specDistinctChain[specDistinctChain.length - 1], 'HARNESS-1 — §5.5.2 item 3\'s PRINTED distinct chain ends at the computed distinct total, and its own steps are the thirteen distinct figures').toBe(declaredDistinctTotal())
-    expect(specDistinctChain, 'HARNESS-1 — §5.5.2 item 3\'s printed distinct chain read as written: the CORRECTED twelve steps; only the chain\'s endpoint was re-grained (as filed it ended `…93 → 99`)').toEqual([10, 13, 25, 29, 33, 39, 42, 62, 71, 83, 87, 93, 101])
+    expect(specDistinctChain, 'HARNESS-1 — §5.5.2 item 3\'s printed distinct chain read as written: the CORRECTED twelve steps, which now read `P-OV-SM-1`\'s `6 → 3` collapse at the SIXTH step (`§0A` note 9 item 2 reconciled the assignment the as-filed chain mis-placed at its second step; `§0A` note 8 had corrected only its endpoint, which as filed ended `…93 → 99`)').toEqual([10, 16, 28, 32, 36, 39, 42, 62, 71, 83, 87, 93, 101])
     // THE PRINTED DISTINCT CHAIN'S OWN TWELVE INCREMENTS ARE THE LEDGER'S OWN DISTINCT
-    // FIGURES, IN REGISTER ORDER — the summary row's terms (`10 + 3 + 12 + … + 8 = 101`),
-    // which is the form its own printed chain and its own total are built from. **THE
-    // LEDGER'S OWN `P-OV-SM-1` CELL IS THE ONE DISCREPANCY: its TABLE row spells that
-    // row's distinct figure `6` while its SUMMARY row, its total and its chain all read
-    // the `3` it collapses to.** The chain is asserted against the SUMMARY (the
-    // self-consistent reading, and the one the printed chain's own steps ARE); the
-    // table/summary disagreement is REPORTED, never tuned — the declared term moves
-    // nowhere (`HARNESS-4` reads the `6 → 3` pair itself, and no term, row id, strategy
-    // id, seed or cap is re-grained by this row).
-    expect(distinctTermsSummary, 'HARNESS-1 — the ledger\'s SUMMARY-row distinct terms, in register order: `10 + 3 + 12 + 4 + 4 + 6 + 3 + 20 + 9 + 12 + 4 + 6 + 8` (§5.5.2 item 3, the row that carries the corrected distinct total `101`). The `P-OV-SM-1` figure here is the ledger\'s own `3`, NOT the `6` its table row prints — the disagreement is reported, not reconciled by moving a term.').toEqual([10, 3, 12, 4, 4, 6, 3, 20, 9, 12, 4, 6, 8])
+    // FIGURES, IN REGISTER ORDER — the summary row's terms (`10 + 6 + 12 + … + 8 = 101`),
+    // which is the form its own printed chain and its own total are built from.
+    // ⟶ **ALIGNED (`§0A` note 9 item 2): the ledger's summary row, its total, its chain
+    // and the register's `distinct` column ALL read the SAME assignment now —
+    // `P-OV-IM-2` `6`, `P-OV-SM-1` `3` — so the chain is asserted against the summary
+    // reading AND that reading is asserted against the register's own column below. The
+    // AS-FILED mirror (the `3` in `P-OV-IM-2`'s slot and the `6` in `P-OV-SM-1`'s) stays
+    // visible in the contract and is read from its bytes, so the reconciliation is
+    // checkable rather than silent. NO term, row id, strategy id, seed or cap moves.**
+    expect(distinctTermsSummary, 'HARNESS-1 — the ledger\'s SUMMARY-row distinct terms, in register order: `10 + 6 + 12 + 4 + 4 + 3 + 3 + 20 + 9 + 12 + 4 + 6 + 8` (§5.5.2 item 3, the row that carries the corrected distinct total `101`). The `P-OV-SM-1` figure here is the ledger\'s own `3` and `P-OV-IM-2`\'s is its `6` — the assignment `§0A` note 9 item 2 reconciles to the register\'s column, NOT the as-filed mirror.').toEqual([10, 6, 12, 4, 4, 3, 3, 20, 9, 12, 4, 6, 8])
     // THE PRINTED DISTINCT CHAIN'S STEPS, READ AS THE CHAIN ITSELF: twelve increments,
     // of which EXACTLY ONE differs from the declared chain's — the step the ledger
-    // collapses (`104 → 101` is `-3`, and the chain's own second step carries it). **THE
-    // LEDGER'S `P-OV-SM-1` CELL IS THE ONE INTERNAL CONTRADICTION THIS ROW REPORTS AND
-    // DOES NOT RESOLVE: the chain's own steps read the collapse, while the register's
-    // `distinct` column for that row carries the declared term `6` (the ledger's table
-    // row), so the chain's steps are the CHAIN'S OWN reading and the register's column is
-    // the DECLARED reading — `HARNESS-4` reads the `6 → 3` pair itself.** No term, row id,
-    // strategy id, seed or cap is moved: only the printed total, its chain and their
-    // subtotals are re-grained, exactly as `§0A` note 8 scopes it.
+    // collapses (`104 → 101` is `-3`). **⟶ ALIGNED (`§0A` note 9 item 2): the collapse
+    // sits at `P-OV-SM-1`'s step — the SIXTH — where the collapsed term `6 → 3` is, and
+    // every later step inherits the `-3`; the as-filed chain printed its divergence at
+    // the SECOND step while NAMING `P-OV-SM-1`. No term, row id, strategy id, seed or
+    // cap is moved: the totals, the chain and the subtotals are asserted as the contract
+    // prints them, exactly as `§0A` notes 8 and 9 scope the reading.**
     const distinctStepDiffs = specDistinctChain.slice(1).map((v, i) => v - specDistinctChain[i])
-    expect(distinctStepDiffs, 'HARNESS-1 — the printed distinct chain\'s twelve steps, as printed: it is well-formed as a chain (twelve increments from thirteen figures) and carries the collapsed step in SECOND position (a `-3` step against the declared chain\'s `+6`)').toEqual([3, 12, 4, 4, 6, 3, 20, 9, 12, 4, 6, 8])
+    expect(distinctStepDiffs, 'HARNESS-1 — the printed distinct chain\'s twelve steps, as printed: it is well-formed as a chain (twelve increments from thirteen figures) and carries the collapsed step in SIXTH position (`P-OV-SM-1`\'s `6 → 3`, a `-3` step against the declared chain\'s `+6`)').toEqual([6, 12, 4, 4, 3, 3, 20, 9, 12, 4, 6, 8])
     expect(distinctStepDiffs.reduce((a, b) => a + b, 10), 'HARNESS-1 — the printed distinct chain\'s own steps sum to its own endpoint, the corrected distinct total `101`').toBe(declaredDistinctTotal())
-    expect(specChain[1] - specDistinctChain[1], 'HARNESS-1 — the ONE step at which the printed distinct chain differs from the printed declared chain: `16 → 13`, the `-3` P-OV-SM-1 collapse the ledger names').toBe(3)
-    // ⟶ **SPEC FINDING (SPEC-SIDE, REPORTED AND NOT TUNED): `§5.5.2` item 3's LEDGER
-    // TABLE contradicts its own SUMMARY row on `P-OV-SM-1`.** The table row (and the
-    // register's `distinct` column, which mirrors it) prints that row's distinct figure
-    // as the DECLARED term `6`, while the summary row's terms, the corrected distinct
-    // total `101` and the printed distinct chain all read the `3` it collapses to. The
-    // row reports the disagreement BY NAME and resolves it NOWHERE: no term, row id,
-    // strategy id, seed or cap moves, and the corrected totals/chains/subtotals are
-    // asserted above exactly as `§0A` note 8 scopes the re-grain.
+    expect(specChain[5] - specDistinctChain[5], 'HARNESS-1 — the ONE step at which the printed distinct chain differs from the printed declared chain: `42 → 39`, `P-OV-SM-1`\'s `-3` collapse, the step the ledger names; EVERY earlier step is identical to the declared chain\'s (`§0A` note 9 item 2)').toBe(3)
+    expect(distinctStepDiffs.map((d, i) => d - terms.slice(1)[i]), 'HARNESS-1 — the printed chains\' own increments compared step by step: EXACTLY ONE step differs (the SIXTH) and it differs by exactly the `-3` `P-OV-SM-1` collapses, so `101` and `104` agree on twelve of the thirteen terms').toEqual([0, 0, 0, 0, -3, 0, 0, 0, 0, 0, 0, 0])
+    // ⟶ **ALIGNED (`§0A` note 9 ITEM 2): THE LEDGER'S SUMMARY ROW AND THE REGISTER'S
+    // `distinct` COLUMN NOW AGREE — the mirror mismatch the previous pass REPORTED as a
+    // SPEC FINDING is RECONCILED at the contract, to `P-OV-IM-2` `6` and `P-OV-SM-1` `3`
+    // on BOTH readings.** The row therefore asserts the AGREEMENT cell for cell, asserts
+    // its own reading against the contract's PRINTED distinct terms (read from the
+    // contract's bytes, not from this file's table), and keeps the AS-FILED mirror — the
+    // `3` in `P-OV-IM-2`'s slot and the `6` in `P-OV-SM-1`'s — as a REAL polarity
+    // assertion: the as-filed form must still be VISIBLE in the contract beside the
+    // corrected one (`§0A` note 9 item 2 says so explicitly), must DIFFER from it in
+    // exactly those two slots, and must NOT be the reading this row accepts. A contract
+    // that silently rewrote the as-filed form away, or one whose summary row drifted back
+    // to the mirror, FAILS here. NO term, row id, strategy id, seed or cap moves.
     const columnVsSummary = distinctTerms.map((t, i) => (t === distinctTermsSummary[i] ? null : DECLARED_REGISTER[i].row))
-    expect(columnVsSummary.filter((r) => r !== null), 'HARNESS-1 (CONTROL v) — the register\'s `distinct` column and the ledger\'s SUMMARY-row terms disagree in exactly TWO rows, printed BY NAME').toEqual(['P-OV-IM-2', 'P-OV-SM-1'])
-    expect(distinctTerms.map((t, i) => (t === distinctTermsSummary[i] ? null : [DECLARED_REGISTER[i].row, t, distinctTermsSummary[i]])).filter((x) => x !== null), 'HARNESS-1 (CONTROL vi) — the TWO readings of each disagreeing row, printed BESIDE each other: `P-OV-IM-2` column `6` / summary `3`, and `P-OV-SM-1` column `3` / summary `6` — the SAME `6`/`3` pair read in opposite rows. The column mirrors `§5.5.2` item 3\'s TABLE rows and the comparison mirrors its SUMMARY row, and the ledger names the collapse on `P-OV-SM-1` (`§0A` note 8 item 2, the `6 → 3` pair). THE CONTRADICTION IS THE CONTRACT\'S (its ledger table against its own summary row, its corrected total and its corrected chain) AND IS REPORTED HERE, NOT TUNED: the printed totals, chains and subtotals are asserted above exactly as `§0A` note 8 scopes the re-grain, and NO term, row id, strategy id, seed or cap is moved by this row.').toEqual([['P-OV-IM-2', 6, 3], ['P-OV-SM-1', 3, 6]])
+    expect(
+      columnVsSummary.filter((r) => r !== null),
+      'HARNESS-1 (CONTROL v) — the register\'s `distinct` column and the ledger\'s SUMMARY-row terms now disagree in NO row: the mirror mismatch this row reported as a SPEC FINDING is RECONCILED at `§0A` note 9 item 2, and the row reads the RECONCILED contract rather than the as-filed contradiction.',
+    ).toEqual([])
+    expect(
+      distinctTerms.map((t, i) => (t === distinctTermsSummary[i] ? null : [DECLARED_REGISTER[i].row, t, distinctTermsSummary[i]])).filter((x) => x !== null),
+      'HARNESS-1 (CONTROL vi(a)) — the two readings of every row must AGREE cell for cell, so no `[row, column, summary]` triple survives',
+    ).toEqual([])
+    expect(distinctTerms, 'HARNESS-1 (CONTROL vi(b)) — the register\'s `distinct` column IS the contract\'s PRINTED distinct terms, read from the contract\'s own bytes (`§5.5.3`\'s corrected `101` with its thirteen terms): the file\'s table is not the only witness').toEqual(specDistinctTerms)
+    expect(distinctTermsSummary, 'HARNESS-1 (CONTROL vi(c)) — the ledger\'s SUMMARY-row reading is the same thirteen figures as the printed ones').toEqual([...specDistinctTerms])
+    expect(asFiledDistinctTerms, 'HARNESS-1 (CONTROL vi(d)) — THE AS-FILED MIRROR STAYS VISIBLE in the contract beside the corrected printing (`§5.5.2` item 3\'s own dated annotation): the `3` in `P-OV-IM-2`\'s slot and the `6` in `P-OV-SM-1`\'s, whose sum was still `101`. A silent rewrite of the as-filed form out of the record FAILS this read.').toEqual([10, 3, 12, 4, 4, 6, 3, 20, 9, 12, 4, 6, 8])
+    expect(asFiledDistinctTerms.reduce((a, b) => a + b, 0), 'HARNESS-1 (CONTROL vi(e)) — the as-filed mirror sums to the SAME `101` (the sums were never in question: the mirror is a PLACEMENT defect, and the placement is what `§0A` note 9 item 2 corrects)').toBe(declaredDistinctTotal())
+    expect(
+      asFiledDistinctTerms.map((t, i) => (t === distinctTerms[i] ? null : DECLARED_REGISTER[i].row)).filter((r) => r !== null),
+      'HARNESS-1 (CONTROL vi(f)) — the as-filed mirror and the corrected assignment differ in EXACTLY the two reconciled rows, BY NAME: the polarity between the as-filed form and the live one is REAL, so a row satisfied by either reading would be the defect this alignment removes.',
+    ).toEqual(['P-OV-IM-2', 'P-OV-SM-1'])
+    expect(
+      asFiledDistinctTerms.map((t, i) => (t === distinctTerms[i] ? null : [DECLARED_REGISTER[i].row, t, distinctTerms[i]])).filter((x) => x !== null),
+      'HARNESS-1 (CONTROL vi(g)) — the two readings of each reconciled row, printed BESIDE each other: `P-OV-IM-2` as filed `3` / corrected `6`, and `P-OV-SM-1` as filed `6` / corrected `3`',
+    ).toEqual([['P-OV-IM-2', 3, 6], ['P-OV-SM-1', 6, 3]])
     expect(distinctChain[distinctChain.length - 1], 'HARNESS-1 — the distinct chain computed from the register\'s own `distinct` column therefore agrees with the printed corrected chain').toBe(specDistinctChain[specDistinctChain.length - 1])
     expect(specAsFiledDistinct, 'HARNESS-1 — the as-filed distinct `99` remains VISIBLE in the contract beside the corrected `101` (§0A note 8)').toBe(99)
     expect(specAsFiledDistinct, 'HARNESS-1 (CONTROL iii) — the as-filed distinct figure is NOT the computed distinct total: the polarity is real on BOTH figures, not just the declared one').not.toBe(declaredDistinctTotal())
@@ -3056,7 +3155,7 @@ describe('§5.5.1 / §5.5.2 / §5.5.3 — the register harness: declared-vs-meas
     const declaredDistinctSum = declaredDistinctTotal()
     const executedDistinctSum = REGISTER_RECORDS.reduce((a, r) => a + r.distinctDrives, 0)
     console.log(`§5.5.2 item 3 sums :: declared=${declaredSum} declared-distinct=${declaredDistinctSum} executed-distinct=${executedDistinctSum}`)
-    expect(declaredDistinctSum, 'HARNESS-4 — the DECLARED distinct sum is the COMPUTED sum of the thirteen distinct figures (10 + 3 + 12 + 4 + 4 + 6 + 3 + 20 + 9 + 12 + 4 + 6 + 8 = 101; §5.5.2 item 3 PRINTS 99 over the same terms — the defect reported by HARNESS-1)').toBe(101)
+    expect(declaredDistinctSum, 'HARNESS-4 — the DECLARED distinct sum is the COMPUTED sum of the thirteen distinct figures (10 + 6 + 12 + 4 + 4 + 3 + 3 + 20 + 9 + 12 + 4 + 6 + 8 = 101; §5.5.2 item 3 NOW PRINTS the same thirteen figures and the same `101` — `§0A` note 9 item 2 reconciled the assignment to this ledger\'s own rows, and the as-filed mirror `10 + 3 + 12 + 4 + 4 + 6 + 3 + …` stays visible beside it under that note\'s dated annotation)').toBe(101)
     expect(declaredSum - declaredDistinctSum, 'HARNESS-4 — the two figures\' relation is ARITHMETIC: 104 − 101 = 3, the ONE differing row\'s collapse (P-OV-SM-1 `6 → 3`), so the ledger\'s expectation of ONE differing row holds regardless of the printed totals').toBe(3)
     expect(executedDistinctSum, 'HARNESS-4 — the EXECUTED distinct drives are measured BESIDE the declared figure (A DECLARED REGISTER TERM IS A DRIVE COUNT): at red time every row is broken on the module-absent boundary, so this measures what really ran').toBeLessThanOrEqual(declaredSum)
   })
