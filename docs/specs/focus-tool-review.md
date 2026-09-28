@@ -9,7 +9,7 @@ FILING-HOME FORM THIS RECORD'S `§`-HEADER PROVENANCE SET FOR STEPS 1 AND 2.** *
 RETURNED `DELEGABLE-WITH-CONDITIONS` WITH THE FILING-BLOCKER SET *EMPTY*. STEP 4 (`role_change_analysis`) RETURNED
 `DELEGABLE-WITH-CONDITIONS`, WITH CONDITIONS `G-1`…`G-5`, AND IT *AGREES* THE THREE DEFAULTS ARE FILEABLE RATHER THAN
 BLOCKERS.** **SO THIS RECORD *DOES* CARRY A VERDICT, AND THE PAIRING IS `DELEGABLE-WITH-CONDITIONS`: the unit is
-DELEGABLE TO THE SPEC GATE AND *NOT YET FILED* — `docs/specs/focus-tool.md` still does not exist** (`§10` `G-1`/`G-2`). **THE AS-WRITTEN CELLS THIS ANNOTATION RE-POINTS BY NAME, KEPT VISIBLE: THIS STATUS LINE'S OWN *"STEP 3
+DELEGABLE TO THE SPEC GATE AND *NOT YET FILED* — `docs/specs/focus-tool.md` still does not exist** (`§10` `G-1`/`G-2`). **⟶⟶ CLOSE-OUT ANNOTATION 2026-09-27 (THE SUPERVISOR'S GATE-6/7/8/10 PASS): THAT STATUS IS SPENT ON BOTH ITS VALUES — `docs/specs/focus-tool.md` IS FILED AND APPROVED AS FILED AT THE SPEC GATE, AND THE UNIT IS `DONE`, THE LEDGER'S TWENTY-FIRST `DONE` ROW, WHOSE MOVE CLOSES THE LEDGER AT `21 DONE / 0 open` UNITS = `21` units (the open set EMPTY); the record's four verdicts, its conditions and its three architect questions STAND UNCHANGED and are NOT re-litigated (see this file's closing close-out annotation).** **THE AS-WRITTEN CELLS THIS ANNOTATION RE-POINTS BY NAME, KEPT VISIBLE: THIS STATUS LINE'S OWN *"STEP 3
 … HAS *NOT RUN*. STEP 4 … HAS *NOT RUN*"* / *"THEREFORE THIS RECORD CARRIES *NO VERDICT*"* / *"THE UNIT IS *NOT
 DELEGABLE*"* clauses (the first two halves only — the *not-filed* and *gate-11-binds* grounds STAND); the `§`-header
 table's two `NOT RUN` step cells; and `§4`'s heading and its four consequence items.** **THE THREE ARCHITECT QUESTIONS
@@ -632,3 +632,17 @@ SEED, CAP OR LEDGER FLIP MOVED — the ledger is UNMOVED at `20 DONE / 1 open` U
 open set being `F3` `U-FOCUS-TOOL` ALONE = `1`.** **AND THE UNIT IS *DELEGABLE TO THE SPEC GATE BUT NOT YET FILED*: it
 needs `G-2`'s dossier APPROVED and then its own contract filed** (`AGENTS.md` item 9; `AGENTS.md` item 11 binds, so
 the typed register lands BEFORE the red set).
+
+**⟶ CLOSE-OUT ANNOTATION 2026-09-27 (THE SUPERVISOR'S GATE-6/7/8/10 PASS — `RCA-8(d)`: the record's own bytes ABOVE stand
+BYTE-FOR-BYTE and are read as the FILING pass's dated state; `RCA-8(f)`: this pass APPENDS, and adds no successor
+row).** **EVERY STATUS-ONLY CLAUSE OF THIS RECORD IS NOW SPENT: THE CONTRACT IS FILED AND APPROVED AS FILED AT THE SPEC
+GATE, `G-2`'s DOSSIER IS APPROVED, THE TYPED REGISTER LANDED BEFORE THE RED SET, AND THE UNIT IS `DONE` — THE LEDGER'S
+TWENTY-FIRST `DONE` ROW, WHOSE MOVE CLOSES THE LEDGER AT `21 DONE / 0 open` UNITS = `21` units with the open set EMPTY.**
+**ITS AUTHORITATIVE RECORD IS `docs/next-steps.md`'s `## DONE — U-FOCUS-TOOL` section; the unit's doc-review is
+`archive/reviews/2026-09-27-U-FOCUS-TOOL-doc-review.md`.** **WHAT THIS RECORD REMAINS THE AUTHORITY FOR, AND WHAT THIS
+ANNOTATION DOES NOT TOUCH: the four steps' verdicts (`VALID-WITH-CONDITIONS` · `SOUND-WITH-CONDITIONS` ·
+`DELEGABLE-WITH-CONDITIONS` · `DELEGABLE-WITH-CONDITIONS`), `C-1`…`C-12`, the seven findings, the three architect
+questions `AQ1`/`AQ2`/`AQ3`, step 3's shape derivation with its five negative rows and its seven-row matrix, and `G-1`…`G-5`
+— ALL UNCHANGED and NOT re-litigated by the close-out.** **NO COUNT, CELL, ROW ID, TERM, SEED, CAP OR STRATEGY ID MOVES BY
+THIS ANNOTATION; the `20 DONE / 1 open` and `OWED — not filed` readings above are KEPT VISIBLE as this record's own dated
+state.**

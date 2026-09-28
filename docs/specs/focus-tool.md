@@ -67,8 +67,19 @@ the placement the sibling specs use.)**
    (`docs/specs/focus-tool-review.md` `§2.4` rows 2/3/9; the dossier's `I-1`/`I-2`: *"no `provident.focus` in
    `ALL_TOOLS` today … no `focus` member in the renderer's `RpcMethod` union"*), **NOT re-measured by this pass**.
    The unit is **`OWED` at every gate after this one**, and **it is NOT delegable until a TestWriter has RUN and
-   REPORTED the red set** (`§4.5`).
-2. **THE SURFACE THIS FILING PROPOSES (nothing of it exists yet):** **a NEW MCP tool `provident.focus` — the `22nd`
+   REPORTED the red set** (`§4.5`). **⟶ CLOSE-OUT ANNOTATION 2026-09-27 (`CURRENT STATE` item 11; the as-filed text
+   above is KEPT and read as the filing pass's own dated state, spent on its status values only): NOTHING ABOVE IS TRUE
+   OF THE LANDED TREE ANY MORE — the tool, the method member, the four `src/**` sites, the two test files, the census
+   moves, the red set, the register's EXECUTED layer, the greens set, the gate records after gate 1 and the DONE row ALL
+   EXIST, and THE UNIT IS `DONE` (the ledger's TWENTY-FIRST `DONE` row, `21 DONE / 0 open` UNITS = `21` units — the
+   ledger's CLOSING move).**
+2. **THE SURFACE THIS FILING PROPOSES (nothing of it exists yet — *as filed*).** **⟶ CLOSE-OUT ANNOTATION 2026-09-27
+   (`CURRENT STATE` item 11): THE WHOLE OF THIS ITEM IS NOW THE LANDED SURFACE — the tool `provident.focus` IS the
+   twenty-second `ALL_TOOLS` member, the `'focus'` `RpcMethod` member EXISTS, the group is the EXISTING `dispatch`
+   (ON by default, the group set still FIVE), the args and return are as fixed, the handler IS a thin adapter, and the
+   live authority `{entries, activeId}` IS held by the renderer's own wiring state OUTSIDE the consumed module — with
+   the wiring HOLDER named the entry-resolution authority by this unit's second gate-4 `HIGH` fix. `[U]` NOT OFFERED,
+   `[D]` NOT CLAIMED, GATE 6 `STRUCTURAL`.** **a NEW MCP tool `provident.focus` — the `22nd`
    `ALL_TOOLS` member — plus the renderer-side `RpcMethod` member `'focus'`, in the EXISTING group `dispatch`
    (ON by default), with args `{ target?: string, newTab?: boolean }` and the return
    `{ activeId: string | null, entries: string[], opened: boolean, refused?: { reason: string } }` NORMATIVE AS THE
@@ -80,6 +91,15 @@ the placement the sibling specs use.)**
 3. **THE TOOL OWNS NOTHING, AS A CLOSED NEGATIVE LIST** (step 3's own list, carried whole): **NO STATE · NO MAP · NO
    ID POLICY · NO SORT · NO RE-DERIVATION OF THE MODEL'S ACTIVATION RULE · NO NOTIFY · NO STORE · and NO CONSUMER
    VOCABULARY INSIDE THE MODEL** (`docs/specs/focus-tool-review.md` `§9.1`; `§2.3` item 1, `§2.4`).
+**⟶ THE LIVE FORM OF THIS ITEM, AS OF THE CLOSE-OUT 2026-09-27 (`CURRENT STATE` item 11) — READ THIS BESIDE THE
+   AS-FILED TEXT BELOW, WHICH IS KEPT: THE REGISTER IS `20` TYPED ROWS CARRYING `20` TERMS, DECLARING AND EXECUTING
+   `73` ATTEMPTS OVER `20` OF `20` ROWS, `broken 0` on every row, `registerStoppedAt: null`** (the supervisor's
+   measurement at `118a3ac`), **and the executed register `tests/focus-tool-register.ts` carries the `20` typed rows.**
+   **THE AS-FILED `17` ROWS / `17` TERMS / DECLARED TOTAL `67` WAS THE SEVENTEEN-CELL FORM AND IS KEPT VISIBLE BELOW AS
+   THE AS-FILED/EXECUTED-SEVENTEEN READING: `AR-2`, `AR-3` and `RF-3` are each DISCERNIBLE and EXECUTED, so the settled
+   total is `73` (`67 + 2 + 2 + 2`), printed with its twenty terms, its nineteen-step chain and its two subtotal
+   decompositions at `§5.5.4` — and THE EXECUTED SUBTOTALS GOVERN, printed as the authority at `§5.5.4` item 2's
+   annotation. NO SEED AND NO GENERATOR still hold: exhaustive enumeration throughout.**
 4. **THE REGISTER (`§5.5.1`): `17` typed ROWS carrying `17` TERMS, in THREE families, over the FIVE NAMED DOMAINS,
    ALL executed by design** — **`P-FT-RT-1`…`P-FT-RT-5` · `P-FT-ID-1`…`P-FT-ID-5` · `P-FT-AR-1`…`P-FT-AR-4` ·
    `P-FT-RF-1`…`P-FT-RF-4` · `P-FT-RS-1`/`P-FT-RS-2`** — **declared total `67`, printed with its SEVENTEEN terms
@@ -113,10 +133,15 @@ the placement the sibling specs use.)**
    CHAIN AND THE TWO SUBTOTALS, EACH BY THE THREE ROWS' OWN DECLARED DRIVES (`2 + 2 + 2`); NO ROW ID, STRATEGY ID,
    SEED, CAP OR CELL MOVES — and the TEST SIDE MUST NOW GROW (`17` → `20` rows, `+6` drives), which is the
    TestWriter's act** (`§5.5.4` item 4).**
-5. **THE LEGS THIS UNIT DECLARES (none run): the node suite `[T]`** — `npm test` — plus `npm run typecheck` `[H]`
+5. **THE LEGS THIS UNIT DECLARES (none run *at filing*): the node suite `[T]`** — `npm test` — plus `npm run typecheck` `[H]`
    (`src/**` ONLY; it never reads `tests/**`), `npm run build` `[H]`, and the additive `npm run typecheck:tests`
    `[H]` (`AGENTS.md` item 4) — **and GATE 6 IS `STRUCTURAL`, the word `waived` FORBIDDEN** (`§7`; `§9.5` of the
-   record). **NO `[U]` ROW IS OFFERED AND NO `[D]` ROW IS CLAIMED** (`§5.2`).
+   record). **NO `[U]` ROW IS OFFERED AND NO `[D]` ROW IS CLAIMED** (`§5.2`). **⟶ CLOSE-OUT ANNOTATION 2026-09-27
+   (`CURRENT STATE` item 11): EVERY DECLARED LEG HAS NOW RUN AND IS GREEN — the supervisor's own measurement at
+   `118a3ac`: `npm test` `76` files / `2112` passed / `2` skipped / `0` failed · `npm run typecheck` `0` ·
+   `npm run typecheck:tests` `0` · `npm run build` `0` · `npm run ui` `0` (`11/11` assertions, the `[U]`-PRECONDITION
+   reading and NOT this unit's own surface measurement) — and the unit's own file is `90/90`. `[U]` STILL IS NOT
+   OFFERED and `[D]` IS STILL NOT CLAIMED; GATE 6 REMAINS `STRUCTURAL` AND `waived` IS STILL FORBIDDEN.**
 6. **THE CENSUS IS A LIST, NOT A PHRASE — and it is the same commit's obligation, never a deferrable follow-up**
    (`H-r18`): **`ALL_TOOLS` `21 → 22` · `RpcMethod` `21 → 22` · the default-gate registered subset `7 → 8`**, **plus
    the NAME-SET EQUALITIES and the NINE-PLUS SAME-COMMIT SITES printed at `§5.2` item 4 — including this unit's OWN
@@ -152,6 +177,34 @@ the placement the sibling specs use.)**
     that reads *"not in `MUTATING_METHODS`"* as *"does not cross the invoke path"* is reversing this contract's
     `§0` ruling 1 and MUST OPEN A GATE.** **AND A RENDERER METHOD *NAMED* `focus` IS LEGITIMATE AS A METHOD NAME even
     in a tree where the shim's FOCUS WALK is banned: THE BAN IS ON THE WALK, NOT ON THE WORD** (`§2.2` `X-1`).
+
+11. **⟶ THE CLOSE-OUT (2026-09-27, THE SUPERVISOR'S GATE-6/7/8/10 PASS) — GATE 10 LANDED AND THE UNIT CLOSED THE LEDGER.
+    THIS ITEM IS THE LIVE CELL FOR EVERY STATUS READING ABOVE; items 1–10 ARE AS-FILED READINGS THAT THIS ITEM
+    SUPERSEDES ON THEIR STATUS VALUES ONLY (`RCA-8(d)` — annotate beside, never rewrite).**
+    **`U-FOCUS-TOOL` IS `DONE` — the ledger's TWENTY-FIRST `DONE` row, wave `F`'s third and LAST — and its
+    authoritative record is `docs/next-steps.md`'s `## DONE — U-FOCUS-TOOL` section (the `§5.3` twelve-item shape
+    filled item by item, everything unfillable stated as owed).** **ITS LEDGER ROW `F3` IS KEPT VISIBLE as
+    `F3 — MOVED TO DONE (2026-09-27)`, its cells annotated as SPENT PROVENANCE.**
+    **THE LEDGER IS CLOSED BY THIS MOVE: `21 DONE / 0 open` UNITS = `21` units, THE OPEN SET IS EMPTY, NO UNIT IS
+    BLOCKED, and the next work is whatever the architect directs — with the standing non-unit carries named (the fork
+    row `F4`, the `docs/FORKER.md` carries and the parked items in `docs/pending.md`).**
+    **GATE 9 IS GREEN — the supervisor's own five-leg measurement at `118a3ac`: `npm test` `76` files / `2112` passed /
+    `2` skipped / `0` failed · `npm run typecheck` `0` · `npm run typecheck:tests` `0` · `npm run build` `0` ·
+    `npm run ui` `0` (`11/11` assertions) — and the unit's OWN file is `90/90`; the register executed `73` DECLARED /
+    `73` ATTEMPTED over `20` of `20` ROWS with `broken 0` and `registerStoppedAt: null`; the first red run was `70`
+    rows, `45` failed / `25` passed against an ABSENT tool with fourteen un-run rows reported as FAILURES.**
+    **GATES 7 AND 8 WERE FOLDED INTO THIS ONE CLOSE-OUT PASS (recorded honestly) and the record is
+    `archive/reviews/2026-09-27-U-FOCUS-TOOL-doc-review.md`; GATE 6 IS `STRUCTURAL` (the word `waived` FORBIDDEN,
+    `[U]` not offered in the three-part form, `[D]` not claimed) and the `§7.1` predicate TRIGGERS ON LIMB B, so the
+    zero-row exemption is UNAVAILABLE and is never claimed.** **THE STALE CELLS THIS PASS FIXED ARE NAMED AT THEIR OWN
+    SITES: the register's figures and the two EXECUTED SUBTOTALS now printed as the AUTHORITY (`§5.5.4` item 2's
+    annotation), the superseded reprints (kept visible beside them), the `67`/`73` prose sites (each annotated where it
+    stands), the WITHDRAWN WIDER THROW-CLASS CLAIM (`§0A` note 8 defect 4), the census list's THREE RECORDED
+    INCOMPLETENESSES (`§0A` notes 7.5/7.6 and `§5.2` item 4(iii)'s added rows), the `CURRENT STATE` items this unit
+    outgrew (this one), and every tracker cell the move changed.** **AND THE HONEST LIMITS: this pass holds NO SHELL,
+    so EVERY leg figure quoted here is the SUPERVISOR'S AT `118a3ac` AND NONE IS THIS PASS'S MEASUREMENT (`RCA-12`) —
+    the only figures this pass took for itself are FILE READS.** **THE OWED ROWS ARE CARRIED IN THE RECORD'S CLAUSE
+    (13) AND ARE NOT DISCHARGED BY THIS ITEM.**
 
 ---
 
@@ -1104,6 +1157,16 @@ FINDING** (`C-10`; `§7` item 5).
 **THE RED SET IS NOT WRITTEN AND HAS NOT BEEN RUN. NO TEST FILE EXISTS FOR THIS UNIT. NO FAILING SET WAS MEASURED.**
 **This pass ran NO suite, NO leg, NO `tsc` and NO register row** (`CURRENT STATE` item 1; `§0A` note 2).
 
+**⟶ CLOSE-OUT ANNOTATION 2026-09-27 (THE SUPERVISOR'S GATE-6/7/8/10 PASS — the as-filed heading above is KEPT and read
+as the FILING pass's own state).** **THE RED SET WAS WRITTEN AND RUN, IN ORDER, AND ITS FIGURES ARE THE SUPERVISOR'S AT
+`118a3ac`: THE FIRST RED RUN WAS `70` ROWS, `45` FAILED / `25` PASSED against an ABSENT tool, with the register STOPPING
+AT ITS FIRST ROW and FOURTEEN rows REPORTED AS UN-RUN FAILURES — never as passes; THEN THE GREEN: `tests/focus-tool.test.ts`
+is `90/90` and `tests/focus-tool-register.ts` executed `73` DECLARED / `73` ATTEMPTED over `20` OF `20` ROWS with
+`broken 0` and `registerStoppedAt: null`.** **THE CHAIN TOOK TEN-PLUS REPAIR PASSES, SEVEN REGISTER-ARITHMETIC DEFECTS,
+FIVE SCOPE-DECLARATION GAPS (each FOUND BY MEASUREMENT), FOUR TEST-SIDE INSTRUMENT CONFLICTS AND GATE 4'S FIVE FINDINGS
+— so the red is NOT to be read as one clean run** (the unit's DONE record clause (5)). **NO TERM, ROW ID, STRATEGY ID,
+SEED OR CAP MOVED IN ANY OF THOSE PASSES.**
+
 1. **THE RED STATEMENT, as the unit will owe it.** **A TestWriter authors `tests/focus-tool.test.ts` rows that FAIL
    against the tree as it stands** — **because the tool row, the handler, the `'focus'` member and the switch case do
    not exist** — **plus the register rows of `§5.5.1` riding the same file, and it RUNS and REPORTS the failing set
@@ -1155,6 +1218,20 @@ inside the DENY set is a REVIEW FINDING.**
 | **14** | **the tracker/record artifacts this unit's own gates produce** | **the `F3` ledger row's flip at gate 10, the `*-greens.md`, the gate records, and the per-gate commits (`RCA-8(a)`/`(f)`)** — **all of them gate-10's, not this filing's** | docs |
 
 **THIS FILING ITSELF TOUCHES ROW 10 ONLY (creating it) AND EDITS NOTHING** (`CURRENT STATE` item 9).
+
+**⟶ THE ALLOW-LIST'S COMPLETENESS RECORD, AS OF THE CLOSE-OUT 2026-09-27 (THE SUPERVISOR'S GATE-6/7/8/10 PASS —
+`RCA-8(d)`: the rows above stand BYTE-FOR-BYTE and the three addition blocks below them keep their own bytes; THIS NOTE
+ADDS NO ROW AND MOVES NO ID).** **THE AS-FILED ROWS 1–14 WERE INCOMPLETE, AND THE INCOMPLETENESS IS A RECORDED
+MEASUREMENT RATHER THAN A SMOOTHED FACT: the same-commit obligation's site set was proven wider than the list it was
+written against THREE TIMES by measurement — `§0A` note 7 item 1's SIX pinning sites (rows 15–20), note 7 item 5's TWO
+further suites (rows 21–22) and note 7 item 6's third hole (the two further sites added beside them) — and ONE OF THOSE
+HOLES WAS EXPOSED BY A SUCCESSFUL CENSUS EDIT rather than by a reading** (the class the unit's own DONE record carries
+in clause (5)(c)). **EACH HOLE WAS DISPOSED BY ADDING ROWS, NEVER BY WEAKENING THE OBLIGATION, and NO ROW ID, STRATEGY
+ID, SEED, CAP OR CELL MOVED IN ANY OF THE THREE ADDITIONS.** **THE LIVE FORM, STATED FOR A READER WHO MUST NOT QUOTE
+THE AS-FILED FOURTEEN: the census obligation is a SAME-COMMIT obligation whose sites are asserted BY NAME-SET EQUALITY
+with the counts kept only as duplicate checks, and the landed tree carries the obligation satisfied that way at every
+named site.** **THE RECORD OF THIS INCOMPLETENESS IS CARRIED, NOT CLOSED BY ASSERTION, in the unit's DONE record
+(clause (13)(b)) and in `docs/pending.md` `§L-4m`(2).**
 
 **⟶ 2026-09-27 ADDITION TO THE ALLOW-LIST (`§0A` note 7, defect 1) — SIX SITES ADDED BESIDE THE AS-FILED ROWS 1–14,
 WHICH DO NOT MOVE, BECAUSE THE ALLOW-LIST MUST NAME EVERY FILE THE SAME-COMMIT OBLIGATION TOUCHES OR THE UNIT IS
@@ -1429,6 +1506,23 @@ fully instrumented · `0` rows deferred to the `ui` leg · `0` rows moved silent
 S-6`). **A ROW MAY NOT BE MOVED TO THE `ui` LEG SILENTLY: no row of this matrix is moved anywhere, and the `ui` leg
 is refused IN TERMS at `§5.2` item 2.** **AND A PASS THAT CLAIMS THE WINDOW-LEVEL READING ON ROWS 3/4 IS
 OVER-READING THIS MATRIX** (`§2.4` row 4's fence).
+
+**⟶ THE MATRIX'S CLOSE-OUT RECORD (2026-09-27, THE SUPERVISOR'S GATE-6/7/8/10 PASS — `RCA-8(d)`: the matrix above
+stands BYTE-FOR-BYTE, no row is added, removed or relabelled, and NO FALSIFIER MOVES).** **THE MATRIX WAS DELIVERED,
+THE `§7.1` PREDICATE TRIGGERED ON LIMB B (`UI-OVERHAUL`), and GATE 6 WAS RECORDED `STRUCTURAL` — NEVER `waived`, and
+the zero-row exemption is UNAVAILABLE and is NEVER CLAIMED.** **THE MEASURED/LABELLED SPLIT, STATED AS THE GATE RECORD
+REQUIRES: `7` rows, of which `5` ARE MEASURED (rows `1`, `2`, `5`, `6`, `7`) and `2` ARE LABELLED
+STRUCTURALLY-NOT-OBSERVABLE (rows `3`, `4`).** **THE INSTRUMENT THAT TOOK EACH MEASURED ROW'S READING, NAMED PER ROW:
+row `1` (the tool is listed) — THE LIVE MCP SURFACE, read as a name-set membership check · row `2` (registered under
+the DEFAULT gate) — THE LIVE MCP SURFACE plus the in-repo group constants, read as a registration lookup · rows `5`, `6`
+and `7` (the refusal shape, the not-ready rejection, the repeated-target identity) — THE SUITE'S OWN ROUTE DRIVES,
+each asserting a RETURNED or THROWN value rather than a rendering.** **AND THE HONEST LIMIT THE GATE-4 ROW PASS
+RECORDED, CARRIED HERE SO THE MATRIX IS NOT OVER-READ: WHERE THE WIRING IS UNREACHABLE NODE-SIDE, THE READING IS A
+STATIC BOUNDED-REGION READ of the route's own bytes — a real instrument with a real falsifier, and NOT a live-window
+observation.** **A ROW THAT CLAIMED OTHERWISE WOULD BE A REVIEW FINDING; NO ROW DOES, AND NO ROW IS A CONVENIENCE PARK
+— none is deferred, none is silently moved to another leg, and rows `3`/`4` each carry their own falsifiable
+structural reason and their own `REDDENS IT` cell.** **NO RENDERED-SURFACE, FOCUSED-ELEMENT, WINDOW-RE-RENDER,
+INTERACTION OR STORED-STATE READING IS CLAIMED BY ANY ROW OF THIS MATRIX.**
 
 ---
 
@@ -2176,6 +2270,19 @@ subtotals disagreeing with the blocks that reprint them while the total and the 
 **OWED** AT THE NEXT GATE (a re-printed subtotal block whose EVERY figure is the sum of the addends it names, over the
 executed row set), and it is named here rather than left silently open.** **NO TERM, ROW ID, STRATEGY ID, SEED, CAP OR
 CELL MOVES BY THIS ANNOTATION.**
+
+**⟶ THE REGISTER'S CLOSE-OUT (2026-09-27, THE SUPERVISOR'S GATE-6/7/8/10 PASS — `RCA-8(d)`: every reprint above stands
+BYTE-FOR-BYTE and the annotations above it are KEPT).** **THE EXECUTED READING, MEASURED: `73` DECLARED / `73` ATTEMPTED
+over `20` OF `20` ROWS, `broken 0` on EVERY row, `registerStoppedAt: null`** (the supervisor's measurement at
+`118a3ac`). **THE TWO EXECUTED SUBTOTALS ARE THE AUTHORITY AND ARE PRINTED AT THE ANNOTATION ABOVE: BY DOMAIN
+`14 + 18 + 27 + 10 + 4` = `73`; BY TYPE `P-IM 43` · `P-SM 14` · `P-TP 16` = `73`.** **WHAT REMAINS `OWED`, STATED AS
+OWED AND NOT AS CLOSED: the RECONCILIATION of the contract's REPRINT blocks against those executed subtotals — a
+re-printed block whose EVERY figure is the sum of the addends it names, over the executed row set — is the task of the
+next pass that touches this register's arithmetic; the reprints that closed on `8` for the refusal-and-readiness domain
+and on `P-IM 39`/`P-SM 14`/`P-TP 18` STAY VISIBLE AS SUPERSEDED and are never quoted as live.** **IT GATES NO UNIT:
+the unit is `DONE` (the ledger's TWENTY-FIRST `DONE` row, `21 DONE / 0 open` UNITS = `21` units — the ledger's CLOSING
+move), and this carried row is named in that record's clause (13)(a).** **NO TERM, ROW ID, STRATEGY ID, SEED, CAP OR
+CELL MOVES BY THIS ANNOTATION.**
 **CAPS RE-CHECKED AGAINST THE FINAL DECLARED FIGURE: `73 ≤ 400` in total (headroom `327`) · largest row `12 ≤ 100`
 (headroom `88`) — BOTH CAPS HOLD against `73`, and neither is close.** **NO CAP VALUE MOVES and no cap is compared
 against any subtotal.**
@@ -2439,6 +2546,23 @@ are the route/group/commit claims; `A-3` is the census class; `A-4`/`A-5`/`A-6`/
 and readiness classes; `A-8`/`A-9` are the two negative halves; `A-10`/`A-11`/`A-12`/`A-13` are the boundary classes;
 and `A-16`/`A-17`/`A-18`/`A-19`/`A-20` are the layer-honesty, honesty-block, authority, argument-edge and routed-
 question probes.**
+
+**⟶ THE SEED SET'S DISPOSITION (2026-09-27, THE GATE-4 PASS; RECORDED HERE BY THE SUPERVISOR'S CLOSE-OUT PASS SO
+`§3a`'s `OWED` STATUS IS NOT READ AS STILL OPEN).** **GATE 4 RAN — the read-only adversarial pass over these `20`
+seeds plus the gate-11 read-only PBT audit — AND ITS FIVE FINDINGS (TWO `HIGH`, TWO `MED`, ONE `LOW`) ARE DISPOSITIONED
+AT `§0A` note 8 AND AT THE CONTRACT'S OWN ANNOTATION SITES, WITH NO BARE `OWED` SURVIVING: the two `HIGH` rows were REAL
+CONTRACT VIOLATIONS IN THE LANDED TOOL (a non-object arguments member routed as a legal empty call; the route minting an
+id, choosing the verb and deriving the refusal), each FIXED with a NAMED AUTHORITY and a RED-FIRST regression row; the
+`MED` row was the LOSSY REFUSAL MAPPING, fixed non-lossy and never `undefined`; the `MED` row was the
+SEVENTH-CLASS ARITHMETIC REPRINT defect, DISPOSED with the EXECUTED SUBTOTALS AS THE AUTHORITY (printed beside the
+superseded reprints); and the `LOW` row was the THROW-CLASS instability, whose WIDER CLAIM IS WITHDRAWN and whose row is
+aligned to the narrower true reading.** **THE PBT AUDIT'S OVER-STRENGTH FINDING — the activation transition had NO
+executed row reaching the renderer's wiring — IS CLOSED BY AN ACTIVATION-EXECUTING ROW.** **`PACKAGE DEFECTS: NONE`:
+this unit exercises no `provident-ssr` surface, and `docs/defects.md` and `docs/HANDOFF.md` RECEIVE NOTHING from it.**
+**AND THE STATUS OF `§3b`'s TABLE, STATED HONESTLY RATHER THAN LEFT TO A READER: the disposition table below was EMPTY
+BY CONSTRUCTION at filing and NO ROW WAS APPENDED TO IT IN PLACE — the five findings and their dispositions LIVE at
+`§0A` note 8 and at their own annotation sites, which is this contract's ONE place for them; a later pass that needs a
+row here must ADD one using `§3a`'s defined vocabulary and must not renumber this section.**
 
 ## 3b. The adversarial pass's disposition table — **the SHAPE this contract will be reconciled to**
 

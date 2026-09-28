@@ -130,3 +130,14 @@ seven-row `§5.U` matrix and the typed register). **It does not batch itself wit
 clause; `P-9`). **It flips no ledger cell, moves no count and runs no leg: the ledger is UNMOVED at `20 DONE / 1 open`
 UNITS = `21` units (`20 + 1 = 21`), the open set being `F3` `U-FOCUS-TOOL` ALONE = `1`, and the unit is DELEGABLE TO
 ITS SPEC GATE BUT NOT YET FILED.** **It touches no `src/**` file and no test file, and it proposes no source change.**
+
+**⟶ CLOSE-OUT ANNOTATION 2026-09-27 (THE SUPERVISOR'S GATE-6/7/8/10 PASS — `RCA-8(d)`: the file's own bytes above stand
+BYTE-FOR-BYTE and are the STEP-0 pass's dated state).** **EVERY STATUS-ONLY CLAUSE ABOVE IS SPENT: THE DOSSIER WAS
+APPROVED AT/BEFORE THE SPEC GATE (discharging `G-2`), `docs/specs/focus-tool.md` IS FILED AND APPROVED AS FILED, AND
+`U-FOCUS-TOOL` IS `DONE` — the ledger's TWENTY-FIRST `DONE` row, whose move CLOSES THE LEDGER at `21 DONE / 0 open`
+UNITS = `21` units with the OPEN SET EMPTY.** **ITS AUTHORITATIVE RECORD IS `docs/next-steps.md`'s
+`## DONE — U-FOCUS-TOOL` section; the unit's doc-review is
+`archive/reviews/2026-09-27-U-FOCUS-TOOL-doc-review.md`.** **WHAT THIS DOSSIER REMAINS THE AUTHORITY FOR AND WHAT THIS
+ANNOTATION DOES NOT TOUCH: the `8` identifier rows `I-1`…`I-8`, the `8` collision rows `X-1`…`X-8`, the `16`-row
+`0`-open reconciliation and the `BLOCKED-ON-SEMANTICS` check — ALL UNCHANGED, and NOT re-opened or re-derived here.**
+**NO ROW, IDENTIFIER, COUNT OR CELL MOVES BY THIS ANNOTATION.**

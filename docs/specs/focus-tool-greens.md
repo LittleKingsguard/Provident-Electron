@@ -49,6 +49,13 @@ file**, `§I`).
 
 **THE DATE.** The host clock reads **2026-09-28**; the contract's dated notes are `2026-09-27`.
 
+**⟶ CLOSE-OUT ANNOTATION ON THIS STATUS BLOCK (2026-09-27, THE SUPERVISOR'S GATE-6/7/8/10 PASS — `RCA-8(d)`: the block's
+own bytes stand and its readings are `POST-GREEN` provenance; THE CLOSING BLOCK AT THIS FILE'S END IS THE LIVE CELL).**
+**`U-FOCUS-TOOL` IS `DONE` — the ledger's TWENTY-FIRST `DONE` row, whose move CLOSES THE LEDGER at `21 DONE / 0 open`
+UNITS = `21` units — and this set's `19`-row census (`18` PASS / `0` FAIL / `1` NOT-BLIND-RUNNABLE, plus the `12`
+gate-6-pointed claims) is CARRIED as this writer's own `b2a24b8`-revision measurement, with its `POST-GREEN` re-drive
+`OWED` in the DONE record's clause (13)(d).**
+
 ---
 
 ## A. HOW THE SCENARIOS WERE AUTHORED AND DRIVEN (so every reading is reproducible)
@@ -247,3 +254,19 @@ implementation text I read was **the runtime text of named methods' function obj
 the artifact's header says so), and **the BUILD ARTIFACT for three labelled static readings**. **Every input, expected
 reading and PASS criterion is mine, chosen from the contract's clause text. This artifact is a measurement, not a
 re-derivation of the contract.**
+
+**⟶ CLOSE-OUT ANNOTATION 2026-09-27 (THE SUPERVISOR'S GATE-6/7/8/10 PASS — `RCA-8(d)`: this set's own bytes and every
+reading above stand BYTE-FOR-BYTE and are `POST-GREEN` provenance).** **THE UNIT IS `DONE` — the ledger's TWENTY-FIRST
+`DONE` row, whose move CLOSES THE LEDGER at `21 DONE / 0 open` UNITS = `21` units — and its authoritative record is
+`docs/next-steps.md`'s `## DONE — U-FOCUS-TOOL` section.** **THE CENSUS AS FILED AND AS CARRIED: `19` rows — `18` PASS /
+`0` FAIL / `1` NOT-BLIND-RUNNABLE — plus `13` claims pointed at gate 6 (`§E`; A LATER PASS MUST NOT QUOTE `12` HERE:
+the close-out brief that commissioned this annotation carried a `12`, and THIS FILE'S OWN HEADER AND `§E` — read by this
+pass — carry `13`, which is the figure that stands), with the set's recorded ambiguities and FOUR
+SELF-REPAIRED DRIVER DEFECTS of the blind writer's own, all disclosed in the set.** **THIS SET IS NOT THE UNIT'S
+BATTERY AND IS NOT OVER-READ HERE: the LIVE battery is `tests/focus-tool.test.ts` + `tests/focus-tool-register.ts`
+(gate 6's evidence, and NOT this writer's), and a PASS above means the route's OBSERVED value or name set matched the
+cited clause ON THE INPUT THIS WRITER CHOSE — never that the contract is fully exercised, and never that a rendered
+window did anything.** **THE `POST-GREEN` CLAUSE ABOVE STANDS AS `OWED` AND IS CARRIED IN THE DONE RECORD'S CLAUSE
+(13)(d): a later change to the tool in any of the seven named classes STALES this set and owes a TARGETED RE-DRIVE whose
+readings are APPENDED beside the as-filed ones — and this set's `19`/`18`/`0`/`1` census must NOT be re-quoted as a
+reading of a later tree.** **NO READING, ROW, CENSUS FIGURE OR CLAUSE MOVES BY THIS ANNOTATION.**
