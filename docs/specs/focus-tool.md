@@ -33,7 +33,10 @@ RED-RUN RE-GRAIN (2026-09-27), the ONE place that carries all three adjudicated 
 and its moved declared total, the explicit bounded set and the named instrument reading class, and read FIRST by any
 pass about to quote a register figure — **and, added by the `67`-vs-`72` CORRECTION, its own WITHDRAWAL annotation
 (the moved `72` was the re-grain's own arithmetic defect; the EXECUTED register's declared total is `67`, which is the
-as-filed figure, and only the chain and the subtotals are recomputed)** · the **Layer declaration** — the four
+as-filed figure, and only the chain and the subtotals are recomputed)** — **and `§0A` note 7 (2026-09-27), the note that
+DISPOSES the gate-3 implementer's TWO MEASURED CONTRACT DEFECTS: the allow-list's SCOPE HOLE (six pinning sites the
+as-filed census list did not name) and the route row's INSTRUMENT, which forbade the group-map data row the contract
+requires — read it BESIDE `§5.1`, `§5.2` item 4 (iii) and `§5.5.1 RT-5`/`§5.5.2` item 4b** · the **Layer declaration** — the four
 labels, the layer map and the honesty anchors · `§1` — the scope with its NOT-THIS-UNIT items · `§2.1` the surface
 exact · `§2.2` **the prohibition table with a named test per row**, **the collision table BY TOKEN** and **the
 semantics table with no `undefined-until-answered` row** · `§2.3` the value/identity rules · `§2.4` **the five
@@ -437,6 +440,102 @@ renderer's method switch disagreeing until the census edit lands, `§3.4 R-4`, `
 NO SUITE, NO LEG, NO `tsc`, NO BUILD AND NO ELECTRON BOOT: the figures above are the red run's, and the ONLY figures
 this pass moved are the mis-summed ones, each printed beside its as-filed form.** **NO CODE IS WRITTEN BY THIS
 ANNOTATION, NO RED IS RE-RUN, NO STATUS FLIPS, AND THE LEDGER IS UNCHANGED.**
+
+**Note 7 — THE TWO CONTRACT DEFECTS THE IMPLEMENTER MEASURED AT GATE 3 AND THIS PASS DISPOSES, DATED 2026-09-27 —
+EACH ANNOTATED BESIDE ITS AS-FILED TEXT, WHICH IS NEVER REWRITTEN.**
+**PROVENANCE, STATED FIRST AND ATTRIBUTED WHERE IT IS DUE: BOTH DEFECTS ARE THE IMPLEMENTER'S MEASURED STOP
+FINDINGS FROM THE GATE-3 PASS — NOT this filing's readings and not this pass's measurements.**
+**WHAT THAT PASS DID, IN ITS OWN TERMS: IT WROTE *NO SOURCE BYTE* — because THE RED SET COULD NOT BE TAKEN TO GREEN
+UNDER EITHER CHOICE, so implementing would have produced a red suite rather than a green one (`RCA-1`'s order is
+untouched by this: the red was authored and RUN, and the implementer STOPPED on a contract defect instead of
+inventing a fourth answer); and ITS REGISTER STILL STOPS AT ITS SECOND IDENTITY ROW WITH THIRTEEN ROWS UN-RUN** (the
+`§5.5.4` row set is TWENTY; the stopped-at row is `P-FT-ID-2` and the un-run rows are `P-FT-ID-3` … `P-FT-RS-2`)
+— **an un-run row is a FAILURE, never a pass** (`AGENTS.md` item 11(b)). **NEITHER DEFECT IS A RE-GRAIN OF A FIGURE:
+`§0A` note 6's term column, its settled total `73` and its row set are NOT touched here, and NO ROW ID, STRATEGY ID,
+SEED, CAP OR CELL MOVES BY THIS NOTE.** **THE TWO FIXES ARE APPLIED AT THREE SITES: `§5.1` (the allow-list WIDENED),
+`§5.2` item 4 (iii) (the census list EXTENDED) and `§5.5.1 RT-5` with `§5.5.2` item 4b (the route row's instrument
+RE-SCOPED to the claim that row exists to carry).**
+**NO CODE, NO RED RE-RUN AND NO STATUS FLIP ACCOMPANIES THIS NOTE: it wrote no source byte, authored no test, ran no
+suite, no leg, no trio, no `tsc`, no build, no Electron boot, no MCP call and no register row, re-ran no red, flipped
+no status and made no commit — and THE LEDGER IS UNCHANGED AT `20 DONE / 1 open` = `21` units, with `F3` still an
+open `## OPEN` row whose status is the supervisor's.**
+
+**1. DEFECT 1 — THE ALLOW-LIST WAS NOT THE SAME-COMMIT LIST: A REAL SCOPE HOLE, AND IT IS DISPOSED BY WIDENING THE
+ALLOW-LIST RATHER THAN BY MOVING THE CENSUS.** **THE MEASURED DEFECT: `§5.2` item 4 (iii)'s as-filed list names
+THIRTEEN same-commit sites, but SIX PINNING SITES LIVE OUTSIDE `§5.1`'s ALLOW-LIST and all six pin the censuses at
+`21` — so `npm test` IS RED UNDER EITHER CHOICE: move the census and those six red for a change the unit may not
+make, leave it and THIS unit's own rows red for a census the unit must make.** **THE SIX, NAMED WITH THEIR EXACT
+OBLIGATION AND WITH THE FORM DISTINGUISHED — A COUNT IS A DUPLICATE CHECK, A NAME-SET EQUALITY IS THE PIN:**
+**(1) `tests/census.test.ts` — `ALL_TOOLS` read at its own live declaration and asserted NAME-SET-EQUAL to the sibling
+`PINNED_TOOL_SET` list (a NAME-SET EQUALITY) plus that sibling list's length pinned at `21` (a COUNT) and the
+`RpcMethod` union's member count at `21` twice (a COUNT and its SET-size duplicate check) — the census file's own
+sibling length check inside it.** **(2) `tests/gesture-session.test.ts` — the identical `ALL_TOOLS` name-set equality
+against `PINNED_TOOL_SET`, that sibling list's length `21` (COUNT), the `VALID_GROUPS` five-name equality (unchanged),
+the `MUTATING_METHODS` seven-name equality (unchanged, NO EIGHTH), and the `RpcMethod` union count `21` twice (COUNT +
+SET-size duplicate) — the second sibling length check inside it.** **(3) `tests/gutter.test.ts` — `ALL_TOOLS` by name
+with its length at `21` (COUNT, read through the shared name-declaration reader) and `RpcMethod` at `21` (COUNT).**
+**(4) `tests/zones.test.ts` — the `ALL_TOOLS` name-set equality against `PINNED_TOOL_SET` plus that sibling's length
+`21` (COUNT), with the `RpcMethod` union count `21` twice (COUNT + SET-size duplicate).** **(5) `tests/slot-host.test.ts`
+— the `ALL_TOOLS` length `21` (COUNT) beside its `RpcMethod` union count `21` (COUNT), reached through each seam's OWN
+live module; and THIS SITE CARRIES ITS OWN EDIT BAR: the row states that the sibling census file *"may not be edited by
+this unit"* — which is exactly why `§5.1` and not a `git`-free reading had to name the file.** **(6) AND THE SIBLING
+LENGTH CHECKS ARE THE SAME OBLIGATION, NOT A SEPARATE ONE: the two `PINNED_TOOL_SET` length pins at (1) and (2) redden
+on the census move even where the name-set half is satisfied — a count-only edit satisfies neither.** **THE FIX, IN THE
+FAMILY'S OWN RULE — THE ALLOW-LIST MUST NAME EVERY FILE THE SAME-COMMIT OBLIGATION TOUCHES, OR THE UNIT IS
+UNIMPLEMENTABLE: `§5.1`'s ALLOW half is WIDENED to name these six sites explicitly (as ADDED rows 15–20, beside the
+as-filed rows 1–14, which do not move), and `§5.2` item 4 (iii) is RE-STATED to include them with the exact obligation
+at each.** **THE AS-FILED LIST WAS INCOMPLETE: its `13` sites stood at `§5.2` item 4 (iii) and are KEPT VISIBLE AS THE
+INCOMPLETE FORM, with the six added beside them and the incompleteness RECORDED rather than smoothed away.** **NO
+COUNT, ROW ID, STRATEGY ID, SEED OR CAP MOVES BY THE WIDENING.**
+
+**2. DEFECT 2 — THE ROUTE ROW'S INSTRUMENT FORBADE WHAT THE CONTRACT REQUIRES, AND IT IS DISPOSED BY RE-SCOPING THE
+INSTRUMENT TO THE CLAIM THE ROW ACTUALLY MAKES.** **THE MEASURED DEFECT: `P-FT-RT-5`'s second drive asserts that the
+method name does NOT appear in `src/main/security.ts` (`expect(new RegExp('focus','i').test(stripComments(read(
+SECURITY_REL)))).toBe(false)`), while `§2.1` item 2 and `§5.1` row 2 REQUIRE a GROUP-MAP DATA ROW naming the tool —
+and the gate's resolution sites ARE the group-map literal and the module prefix, so THE NAME MUST APPEAR THERE.** **THE
+ROW'S CLAIM IS *"no focus-specific BRANCH"*, BUT ITS AS-FILED INSTRUMENT FORBIDS THE REQUIRED DATA ROW — the row
+contradicts `§2.1`/`§5.1`, and no implementation can satisfy both.** **THE FIX: THE INSTRUMENT IS RE-SCOPED TO THE
+CLAIM — assert that NO BRANCH exists (NO conditional on the method name and NO new resolution path), NOT the absence of
+the required data row.** **THE FALSIFIER STAYS REAL: A BODY ADDING A BRANCH — a conditional keyed on the method name,
+or a second resolution path alongside the existing group lookup — MUST FAIL the row.** **AND THE OBFUSCATION FENCE,
+STATED PLAINLY BECAUSE IT IS THE FIRST THING A PASS WOULD REACH FOR: SATISFYING THE AS-FILED FORM BY HIDING THE NAME —
+A SPLIT OR BUILT LITERAL, A NEW EXPORT, A RE-EXPORT, AN ALIAS, A COMPUTED NAME — IS *NOT* AN ACCEPTABLE WAY TO
+SATISFY THE AS-FILED FORM AND WOULD ITSELF BE A FINDING** (it defeats `§2.2 P-FT-5`'s name-set equality rows, whose
+whole point is that the census edit is the only thing that satisfies a name-set pin).** **THE AS-FILED WORDING IS KEPT
+VISIBLE at its two sites (`§5.5.1 RT-5` and `§5.5.2` item 4b), each annotated in place.**
+**AND THE QUOTING-CONVENTION FRAGILITY, RECORDED BECAUSE THE IMPLEMENTER MEASURED IT: the route-region reader slices
+THE FIRST QUOTED OCCURRENCE OF THE METHOD NAME TO END-OF-FILE (`src.indexOf("'provident.focus'")` then `slice(marker)`),
+so ANY EARLIER occurrence of that quoted name — an added entry in the route's own listing, a second mention in the
+handler's bytes — silently MOVES EVERY SCAN ROW'S REGION, which is how `P-FT-ID-2`'s *"the tool re-derived no rule"*
+scan reddened against a legitimate `===`.** **THEREFORE THE REGION MUST BE BOUNDED BY THE CONTRACT'S OWN STATEMENT — A
+NAMED REGION (the handler's own declared extent, marked by the contract and read as one region) — RATHER THAN BY A
+QUOTING CONVENTION; and A BOUNDED REGION IS WHAT THE TEST SIDE MUST IMPLEMENT** (`§5.5.2` item 4b carries the same
+statement at the row's own block).
+
+**3. THE OBLIGATIONS THAT REMAIN *TEST-SIDE*, NAMED SO NO LATER PASS READS THEM AS HOST WORK.** **(a) THE HARNESS MUST
+NOT COMPUTE A KEY READ OUTSIDE ITS OWN GUARD.** **The executed harness reads `drive.label` (and `row.id`) in the `catch`
+and the `push` of its per-drive loop — OUTSIDE the `try` that guards the drive — so a drive that supplies a REVOKED
+`Proxy` (the `P-FT-AR-4` drive `(10)` the class at `§5.5.2` item 4b names) throws while the harness is BUILDING ITS OWN
+READING STRING: the throw escapes the per-drive guard and aborts the WHOLE REGISTER.** **THE CONSEQUENCE, STATED
+PLAINLY: A REGISTER ROW THAT DRIVES A REVOKED PROXY IS UNHOLDABLE BY ANY IMPLEMENTATION — no host byte can make that
+read succeed, because the failing read is the TEST HARNESS'S OWN — so this is a TEST-SIDE obligation and NOT a host
+finding** (`AGENTS.md` item 11(b): an un-run row is a FAILURE; the remedy is the harness reading its own labels inside
+the guard, not a source edit). **(b) THE BOUNDED ROUTE REGION** — as stated in item 2 above: the route-region reader
+must slice a CONTRACT-NAMED REGION rather than from the first quoted occurrence of the method name.** **BOTH ARE
+RECORDED AS OWED ON THE TEST SIDE, and NEITHER is discharged by this note.** **AND ONE CONTRACT-SIDE RESIDUE IS FLAGGED
+RATHER THAN LEFT TO BE DISCOVERED LATE: this file's ONE declared total is the SETTLED `73` (`§5.5.4` item 2 and item 4),
+which is what the executed register's own `DECLARED_TOTAL` and `DECLARED_TERMS` (TWENTY cells) carry — while `CURRENT
+STATE` item 4, `§5.5.1`'s heading and its `67`/`72` annotation chain, and `§5.5.3` still print the SUPERSEDED
+`67`-as-declared-total reading; THE `73` IS THE LIVE FIGURE and the `67` sites are dated readings, so a pass that
+quotes `67` as this file's declared total is quoting a withdrawn figure.**
+
+**4. THIS NOTE'S OWN EXTENT, KEPT DISTINCT FROM EVERY PASS BEFORE IT.** **IT EDITED EXACTLY ONE FILE —
+`docs/specs/focus-tool.md` (this one) — AND EDITED NOTHING ELSE**: **no source byte, no test file, no register module,
+no tracker, no decision row, no sibling spec and no gate record**; **it ran nothing and measured nothing of its own: the
+defect figures and the STOP's extents are the IMPLEMENTER'S measured readings, carried and attributed, and the two
+register sites it names (the stopped-at `P-FT-ID-2` and the thirteen un-run rows) are THAT PASS'S register report, not
+a re-run's** (`§0A` note 2; `RCA-12`). **THE LEDGER IS UNCHANGED AT `20 DONE / 1 open` = `21` units** (`F3` stays an
+open `## OPEN` row), **and NO STATUS FLIPS ANYWHERE IN THIS FILE.**
 
 ---
 
@@ -870,6 +969,28 @@ inside the DENY set is a REVIEW FINDING.**
 
 **THIS FILING ITSELF TOUCHES ROW 10 ONLY (creating it) AND EDITS NOTHING** (`CURRENT STATE` item 9).
 
+**⟶ 2026-09-27 ADDITION TO THE ALLOW-LIST (`§0A` note 7, defect 1) — SIX SITES ADDED BESIDE THE AS-FILED ROWS 1–14,
+WHICH DO NOT MOVE, BECAUSE THE ALLOW-LIST MUST NAME EVERY FILE THE SAME-COMMIT OBLIGATION TOUCHES OR THE UNIT IS
+UNIMPLEMENTABLE.** **THE MEASURED HOLE: the as-filed ALLOW half named fourteen rows, but SIX PINNING SITES in the
+landed suites pin the censuses at `21` from OUTSIDE this list, so `npm test` was RED UNDER EITHER CHOICE — moving the
+census reddens those six for a change the unit could not declare, and leaving it reddens this unit's own rows.** **EACH
+ROW BELOW IS A SAME-COMMIT OBLIGATION WHOSE FORM IS NAMED (a COUNT is a duplicate check; a NAME-SET EQUALITY is the
+pin), and the as-filed list is RECORDED AS INCOMPLETE rather than rewritten.** **NO ROW ID, STRATEGY ID, SEED OR CAP
+MOVES BY THIS ADDITION; the rows below are ADDITIONS and take the next ids in sequence.**
+
+| # | The path | What changes there | Layer |
+| --- | --- | --- | --- |
+| **15** | **`tests/census.test.ts`** | **the `ALL_TOOLS` NAME-SET EQUALITY against the sibling `PINNED_TOOL_SET` list · that sibling list's length `21 → 22` (COUNT) · the `RpcMethod` union count `21 → 22` (COUNT) and its SET-size duplicate check** — **the sibling length check INSIDE this file is one of the six, not a seventh** (`§0A` note 7 item 1 (1)/(6); `§5.2` item 4 (iii) `N-14`) | `[T]` |
+| **16** | **`tests/gesture-session.test.ts`** | **the `ALL_TOOLS` NAME-SET EQUALITY against `PINNED_TOOL_SET` · that sibling list's length `21 → 22` (COUNT) · `VALID_GROUPS` five-name equality (UNCHANGED) · `MUTATING_METHODS` seven-name equality (UNCHANGED, NO EIGHTH) · the `RpcMethod` count `21 → 22` (COUNT) and its SET-size duplicate check** — **the second sibling length check INSIDE this file** (`§0A` note 7 item 1 (2)/(6); `§5.2` item 4 (iii) `N-15`) | `[T]` |
+| **17** | **`tests/gutter.test.ts`** | **`ALL_TOOLS` by name with its length `21 → 22` (COUNT, through the shared name-declaration reader) · `RpcMethod` `21 → 22` (COUNT)** — **`MUTATING_METHODS` stays at `7` in the same read** (`§0A` note 7 item 1 (3); `§5.2` item 4 (iii) `N-16`) | `[T]` |
+| **18** | **`tests/zones.test.ts`** | **the `ALL_TOOLS` NAME-SET EQUALITY against `PINNED_TOOL_SET` plus that sibling's length `21 → 22` (COUNT) · the `RpcMethod` count `21 → 22` (COUNT) and its SET-size duplicate check** (`§0A` note 7 item 1 (4); `§5.2` item 4 (iii) `N-17`) | `[T]` |
+| **19** | **`tests/slot-host.test.ts`** | **the `ALL_TOOLS` length `21 → 22` (COUNT) and the `RpcMethod` union count `21 → 22` (COUNT), each read from its OWN live module — AND THIS SITE CARRIES ITS OWN EDIT BAR: its own row states that the sibling census file *"may not be edited by this unit"*, which is exactly why the file had to be NAMED here instead of being reached by an implicit reading** (`§0A` note 7 item 1 (5); `§5.2` item 4 (iii) `N-18`) | `[T]` |
+| **20** | **the TWO SIBLING LENGTH CHECKS, NAMED AS THEIR OWN OBLIGATION** — **`tests/census.test.ts`'s and `tests/gesture-session.test.ts`'s `PINNED_TOOL_SET` length pins** | **each `21 → 22` (COUNT) — a COUNT-only edit satisfies NEITHER a name-set pin nor this row's own partner, and a stale literal quietly bumped satisfies neither of the six** (`§0A` note 7 item 1 (6); `§5.2` item 4 (iii) `N-19`) | `[T]` |
+
+**THE TWO FORMS ARE NOT INTERCHANGEABLE HERE EITHER, AND THE ADDITION CHANGES NOTHING ABOUT THE FENCE: A COUNT RED IS
+SATISFIED BY THE WRONG THING; A NAME-SET EQUALITY ONLY BY THE CENSUS EDIT ITSELF** (`H-r18`; `§5.2` item 4's closing
+paragraph).
+
 ### 5.2 The legs this unit MUST run — **FOUR, and the three refusals**
 
 **`C-9`/`G-4` demand a MEASUREMENT LEG with the ROUTE PINNED AS ITS OWN CELL and PER-SITE FALSIFIERS for the six wiring
@@ -953,6 +1074,28 @@ BY THE WRONG THING** (a config change, a duplicated check, a stale literal quiet
 EQUALITY IS SATISFIED ONLY BY THE CENSUS EDIT ITSELF.** **A config change cannot satisfy a name-set pin; only the
 census edit can** (`H-r18`). **AND THE ROUTE'S OWN CELL — `§2.1` item 3 — is what stops the *"not in
 `MUTATING_METHODS`"* clause from being read as a route claim** (`§0` ruling 1).
+
+**⟶ 2026-09-27 EXTENSION OF THIS LIST (`§0A` note 7, defect 1) — THE AS-FILED `13`-SITE LIST ABOVE WAS INCOMPLETE, AND
+THE SIX SITES BELOW ARE ADDED BESIDE IT WITH THE EXACT OBLIGATION AT EACH.** **THE MEASURED DEFECT: SIX LANDED
+SUITES PIN THE CENSUSES AT `21` OUTSIDE `§5.1`'s as-filed ALLOW-LIST, so `npm test` was RED UNDER EITHER CHOICE —
+moving the census reddens the six, leaving it reddens this unit's own rows.** **THE ALLOW-LIST IS WIDENED IN THE SAME
+PASS (`§5.1` rows 15–20): THE FAMILY'S OWN RULE IS THAT THE ALLOW-LIST MUST NAME EVERY FILE THE SAME-COMMIT OBLIGATION
+TOUCHES.** **THE AS-FILED LIST IS KEPT VISIBLE ABOVE AS THE INCOMPLETE FORM — the `13` sites `N-1`…`N-13` DO NOT MOVE
+and none is renumbered — and the six are ADDED as `N-14`…`N-19`, each with its count-vs-name-set form stated, because A
+COUNT AND A NAME-SET EQUALITY RED FOR DIFFERENT REASONS and only one of them is satisfied by the census edit.**
+
+| # | The same-commit site (ADDED 2026-09-27) | What reddens there, and THE EXACT OBLIGATION | The form |
+| --- | --- | --- | --- |
+| **`N-14`** | **`tests/census.test.ts` — the census file's own five-seam row** | **its `ALL_TOOLS` read must be NAME-SET-EQUAL to the sibling `PINNED_TOOL_SET` list, which must CONTAIN `provident.focus`** (the pin) **· and that sibling list's length must read `22`** (the duplicate check) **· and the `RpcMethod` union's member count must read `22`, with its distinct-member/SET-size read at `22`** | **NAME-SET EQUALITY + the sibling length COUNT + the `RpcMethod` COUNT and its SET-size duplicate** |
+| **`N-15`** | **`tests/gesture-session.test.ts` — the second landed five-seam row** | **the identical `ALL_TOOLS` name-set equality and `PINNED_TOOL_SET` length `22`** · **`VALID_GROUPS` stays name-equal to its FIVE** (unchanged) · **`MUTATING_METHODS` stays name-equal to its SEVEN with NO EIGHTH** (unchanged) · **the `RpcMethod` count reads `22` twice (count + SET-size)** | **NAME-SET EQUALITIES + two COUNTs, with two sets deliberately UNCHANGED** |
+| **`N-16`** | **`tests/gutter.test.ts` — the name-declaration reader's first limb and the union read** | **`ALL_TOOLS` read by name with its length at `22`** · **`RpcMethod` at `22` by name** · **`MUTATING_METHODS` stays at `7` in the same read** | **COUNT ×2 (names read, lengths asserted) + an UNCHANGED COUNT** |
+| **`N-17`** | **`tests/zones.test.ts` — the sibling-name-set row** | **the `ALL_TOOLS` name-set equality against `PINNED_TOOL_SET` and that sibling's length `22`** · **the `RpcMethod` count `22` and its SET-size duplicate read** | **NAME-SET EQUALITY + COUNT (sibling length) + `RpcMethod` COUNT/SET-size** |
+| **`N-18`** | **`tests/slot-host.test.ts` — the five-seam negative read against each seam's OWN live module** | **`ALL_TOOLS` length `22` and the `RpcMethod` union count `22`** — **AND THIS SITE'S OWN EDIT BAR IS NAMED HERE SO A LATER PASS DOES NOT READ IT AS FORBIDDING THE EDIT: its row says the sibling census file *"may not be edited by this unit"*, which the widened `§5.1` row 19 now NAMES as this unit's obligation rather than leaving it unreachable** | **COUNT ×2, with its own `§5.1` edit bar recorded** |
+| **`N-19`** | **the TWO SIBLING LENGTH CHECKS INSIDE `tests/census.test.ts` AND `tests/gesture-session.test.ts`** | **each `PINNED_TOOL_SET` length pin moves `21 → 22`** — **and a count-only edit does NOT satisfy the name-set half; the two halves red for different reasons and must BOTH be satisfied in the same commit** | **COUNT ×2 (the sibling checks), each BESIDE and NOT INSTEAD OF a name-set equality** |
+
+**THE COUNT VS NAME-SET DISTINCTION IS NOW CARRIED AT NINETEEN SITES RATHER THAN THIRTEEN, AND THE `13` OF THE AS-FILED
+LIST IS THE INCOMPLETE FIGURE: A PASS THAT QUOTES `13` SAME-COMMIT SITES IS QUOTING THE AS-FILED, INCOMPLETE FORM**
+(`§0A` note 7 item 1; `§5.1` rows 15–20). **NO ROW ID, STRATEGY ID, SEED OR CAP MOVES BY THIS EXTENSION.**
 
 ### 5.3 The DONE row's shape
 
@@ -1124,7 +1267,7 @@ all**.
 | **`P-FT-RT-2`** | `P-IM` | **THE ROUTE — the registration and the DEFAULT-GATE placement** | **For EVERY one of the row's `3` gate drives: the tool is registered under the EXISTING group `dispatch`; `dispatch` is ON by default, so no human grant is required for reachability; `VALID_GROUPS` is name-set-equal to its FIVE members with NO sixth; and a per-call registration branch is ABSENT.** *(A new group name, or `focus` under any other group, FAILS.)* | `M-6`, `R-4`, `X-2`, `§2.1` item 2 | `S-FT-GATE-1` | **`3` attempts** = **`3` gate drives, ONE DRIVE EACH: (1) the group-name lookup for `focus` · (2) the ON-by-default reading of `dispatch` · (3) the `VALID_GROUPS` five-member name-set equality.** **Per attempt assert:** the resolved group name, the default state, and that no sixth group name exists. | `≤100` | **`__/__` (OWED — un-run)** |
 | **`P-FT-RT-3`** | `P-SM` | **THE ROUTE — the INVOKE PATH and the one-call rule (the ROUTE'S OWN CELL)** | **For EVERY one of the row's `3` path drives: the `RpcMethod` union contains `'focus'` and the renderer's method switch carries the matching case (THE TYPE WALL AND THE SWITCH AGREE); EXCLUSION FROM `MUTATING_METHODS` IS NOT READ AS DECIDING THE INVOKE PATH — so the call DOES cross the existing IPC invoke path while the mutating set stays unread for routing; and the handler makes EXACTLY ONE renderer call per valid invocation (never two, never zero).** *(A missing union member FAILS AT TYPECHECK; a second renderer call FAILS the count; a handler that routes on set membership FAILS the reading.)* | `I-2`, `§2.1` item 3, the layer map's sites 4/5/6 | `S-FT-INVOKE-1` | **`3` attempts** = **`3` path drives, ONE DRIVE EACH: (1) the union-member read against the switch case · (2) the invoke-path reading driven through a recording renderer stub whose call count must be exactly `1` on a valid call · (3) the same with the mutating set's content read to prove the route does NOT consult it.** **Per attempt assert:** the member's presence, the case's presence, the call count, and that the routing decision is independent of the mutating set. | `≤100` | **`__/__` (OWED — un-run)** |
 | **`P-FT-RT-4`** | `P-IM` | **THE ROUTE — the ABSENCE FROM THE NOTIFY PREDICATE'S SET** | **On EVERY drive of the row: `MUTATING_METHODS` is name-set-equal to its SEVEN members and contains NO `'focus'`; the notify predicate is still KEYED ON THAT SET (a predicate read, not a count); and this row and the sibling row that pins the set are asserted in the SAME commit so they cannot drift apart.** *(An eighth entry, or `'focus'` appearing in the set, FAILS.)* | `I-7`, `§2.4` row 1, `§5.2` item 4 (`E-d`) | `S-FT-NOTIFY-1` | **`2` attempts** = **`2` reads, ONE DRIVE EACH: (1) the seven-member name-set equality with `'focus'` absent · (2) the predicate's keying read against that set.** **Per attempt assert:** the set's members by name, the absence of `'focus'`, and the predicate's keying site. | `≤100` | **`__/__` (OWED — un-run)** |
-| **`P-FT-RT-5`** | `P-SM` | **THE ROUTE — the GROUP RESOLUTION on a call, and the denied group** | **For EVERY one of the row's `2` resolution drives: with `dispatch` ENABLED the tool resolves and is callable; with `dispatch` DISABLED the tool is not registered / not listed / returns an error — THE ENDPOINT'S EXISTING GROUP SEMANTICS, NOT A NEW CASE.** *(A special case for focus in the group gate FAILS.)* | `M-6`, `F-4`, `§2.1` item 2 | `S-FT-GROUP-1` | **`2` attempts** = **the `2` gate states, ONE DRIVE EACH: (1) `dispatch` ON · (2) `dispatch` OFF.** **Per attempt assert:** the resolution outcome and the error/absence form, with NO focus-specific branch read anywhere in the gate. | `≤100` | **`__/__` (OWED — un-run)** |
+| **`P-FT-RT-5`** | `P-SM` | **THE ROUTE — the GROUP RESOLUTION on a call, and the denied group** | **For EVERY one of the row's `2` resolution drives: with `dispatch` ENABLED the tool resolves and is callable; with `dispatch` DISABLED the tool is not registered / not listed / returns an error — THE ENDPOINT'S EXISTING GROUP SEMANTICS, NOT A NEW CASE.** *(A special case for focus in the group gate FAILS.)* **⟶ 2026-09-27 RE-SCOPED (`§0A` note 7, defect 2) — THE AS-FILED INSTRUMENT, KEPT VISIBLE: drive `(2)` as filed asserted that the method name does NOT appear in `src/main/security.ts` (`expect(new RegExp('focus','i').test(stripComments(read(SECURITY_REL)))).toBe(false)`), which FORBIDS THE GROUP-MAP DATA ROW `§2.1` item 2 and `§5.1` row 2 REQUIRE — the gate's resolution sites ARE the group-map literal and the module prefix, so the name MUST appear there, and NO implementation could satisfy both. THE ROW'S CLAIM IS *"no focus-specific BRANCH"*, SO THE INSTRUMENT IS THE BRANCH, NOT THE DATA ROW: assert NO BRANCH (NO conditional on the method name, NO new resolution path), NEVER the absence of the required data row. THE FALSIFIER STAYS REAL — a body ADDING a BRANCH or a SECOND RESOLUTION PATH MUST FAIL this row — AND OBFUSCATION IS NOT AN ANSWER: satisfying the as-filed form by HIDING the name (a SPLIT or BUILT literal, a NEW EXPORT, a re-export, an alias, a computed name) is NOT an acceptable way to satisfy it and WOULD ITSELF BE A FINDING. THE REGION IS BOUNDED BY THE CONTRACT'S OWN STATEMENT (a NAMED region), never by a quoting convention, and a BOUNDED REGION IS WHAT THE TEST SIDE MUST IMPLEMENT** (`§5.5.2` item 4b; `§0A` note 7 item 2). | `M-6`, `F-4`, `§2.1` item 2 | `S-FT-GROUP-1` | **`2` attempts** = **the `2` gate states, ONE DRIVE EACH: (1) `dispatch` ON · (2) `dispatch` OFF.** **Per attempt assert:** the resolution outcome and the error/absence form, **with NO focus-specific branch read anywhere in the gate — A BRANCH, NOT A DATA ROW (`§0A` note 7, defect 2)**. | `≤100` | **`__/__` (OWED — un-run)** |
 | **`P-FT-ID-1`** | `P-IM` | **THE OPAQUE ENTRY IDENTITY — the caller's own string as the legal entry id** | **For EVERY one of the row's `2` id drives: NO THIRD PARTY MINTS AN ID — the tool keeps no counter, no UUID site, no registry and no string-to-entry map, and the caller's own `target` string is the value the answer's identity refers to; a `newTab: true` call is serviced WITHOUT any id derivation inside the tool's bytes.** *(A minting site anywhere on the route FAILS.)* | `M-2`, `I-4`, `R-3`, `§2.3` items 1/2 | `S-FT-ID-1` | **`2` attempts** = **`2` id drives, ONE DRIVE EACH: (1) a plain-string target call · (2) a `newTab: true` call.** **Per attempt assert:** the absence of a minting site on the route, the absence of a tool-side registry/`Map`/counter, that the returned identity is the consumer's own value, and that the second call performs a SECOND renderer call (no tool-side cache). | `≤100` | **`__/__` (OWED — un-run)** |
 | **`P-FT-ID-2`** | `P-SM` | **THE OPAQUE ENTRY IDENTITY — the `===`-on-target activation, observed THROUGH the answer** | **For EVERY one of the row's `3` activation drives: a repeated target ACTIVATES BY IDENTITY WITH NO APPEND — the returned `entries` keeps its element identities and its count, and the returned `activeId` reads the existing entry's own id; a target that is structurally equal but NOT `===` does NOT activate; and the tool RE-DERIVES NONE of this rule (it reads the consumer's answer).** *(An append, a duplicate entry, or a wrong `activeId` FAILS; a tool-side comparison of targets FAILS the no-second-authority half.)* | `M-1`, `M-2`, `I-10`, `§2.3` item 4, `§5.U` row 7 | `S-FT-ACT-1` | **`3` attempts** = **`3` activation drives, ONE DRIVE EACH: (1) a repeated `===` target (the existing entry INACTIVE, asserting activation and no append) · (2) the same with the existing entry ALREADY ACTIVE · (3) an APPEND CONTROL (a distinct target, which appends as declared).** **Per attempt assert:** the returned element identities, the returned count, the seated `activeId`, and that the tool performed no comparison of its own. | `≤100` | **`__/__` (OWED — un-run)** |
 | **`P-FT-ID-3`** | `P-IM` | **THE OPAQUE ENTRY IDENTITY — the `entries` echo BY IDENTITY** | **For EVERY one of the row's `10` echo drives: the returned `entries` value is THE RENDERER'S OWN VALUE BY IDENTITY — no `typeof` test, no coercion, no trim, no sort, no dedupe, no `Array.from`, no spread that re-creates the container, and no re-keying; a non-array `entries` value is passed through UNCHANGED rather than being normalised; and nothing throws on any of the `10` shapes.** **THE DECLARED TYPE IS A CONTRACT, NOT A VALIDATION BOUNDARY.** | `I-5`, `R-5`, `§0A` note 5, `§2.2`(B) (`entry` row) | `S-FT-ECHO-1` | **`10` attempts** = **the `10` returned-`entries` shapes, ONE DRIVE EACH, each driven through a renderer stub returning that shape.** **The `10` shapes:** **(1)** a plain string array · **(2)** `[]` (**the empty list**) · **(3)** a one-member array · **(4)** an array of the SAME string twice (**no dedupe**) · **(5)** strings with `''`, whitespace, unicode and a very long member (**no trim**) · **(6)** an UNSORTED array (a descending sequence — **no sort**) · **(7)** a NON-ARRAY value (`null`, a number, a string, an object) · **(8)** an array-like (`{length: 2, 0:'a', 1:'b'}`) · **(9)** a frozen array and a `Proxy`-wrapped array · **(10)** an array whose accessor THROWS on an index read. **Per attempt assert:** identity of the returned container, the member order, the length, and that nothing threw — **with the throwing-accessor drive's expected reading declared by the CONSUMER contract and NOT invented here** (`§3.2 F-5`'s fence). | `≤100` | **`__/__` (OWED — un-run)** |
@@ -1280,6 +1423,23 @@ file states is `333`.**
    UNCHANGED BY THIS CLASS AND THE LIMIT IS STILL THE POINT: no row drives a real IPC transport** (item 6), **so this
    class proves nothing about what a live route would do with such a value — only what the registered handler does
    with it when called directly.**
+   **⟶ 2026-09-27 ADDITION (`§0A` note 7, defect 2) — THE ROUTE ROW'S INSTRUMENT IS RE-SCOPED, AND THE REGION IT READS
+   IS BOUNDED BY THE CONTRACT RATHER THAN BY A QUOTING CONVENTION.** **(a) THE RE-SCOPE, APPLIED AT `§5.5.1 RT-5`'s own
+   cell: the as-filed drive `(2)` asserted that the method name does NOT appear in `src/main/security.ts`, which FORBIDS
+   THE GROUP-MAP DATA ROW `§2.1` item 2 and `§5.1` row 2 REQUIRE — a real contradiction, because the gate's resolution
+   sites ARE the group-map literal and the module prefix.** **THE ROW'S CLAIM IS *"no focus-specific BRANCH"*, SO THE
+   INSTRUMENT IS THE BRANCH AND NEVER THE DATA ROW: the row asserts NO BRANCH — NO conditional on the method name and NO
+   new resolution path — and the as-filed wording stays VISIBLE beside the re-scoped form.** **ITS FALSIFIER STAYS REAL: a
+   body ADDING a branch or a SECOND resolution path MUST FAIL it.** **AND OBFUSCATION IS NOT AN ACCEPTABLE WAY TO SATISFY
+   THE AS-FILED FORM: a SPLIT OR BUILT LITERAL, a NEW EXPORT, a re-export, an alias or a computed name that hides the
+   name from the scan WOULD ITSELF BE A FINDING — it defeats `§2.2 P-FT-5`'s name-set equalities, which are satisfied
+   only by the census edit itself** (`H-r18`). **(b) THE BOUNDED REGION, WHICH IS WHAT THE TEST SIDE MUST IMPLEMENT: the
+   route-region reader as built slices FROM THE FIRST QUOTED OCCURRENCE OF THE METHOD NAME TO END-OF-FILE, so ANY earlier
+   occurrence of that quoted name silently MOVES EVERY SCAN ROW'S REGION — which is how `P-FT-ID-2`'s *"the tool
+   re-derived no rule"* scan reddened against a legitimate `===`.** **THEREFORE THE REGION MUST BE BOUNDED BY THE
+   CONTRACT'S OWN STATEMENT — A NAMED REGION (the handler's declared extent, marked by the contract and read as one
+   region) — RATHER THAN BY A QUOTING CONVENTION**, and this is a TEST-SIDE obligation, not a host finding (`§0A` note 7
+   item 3(b)).
 5. **A DECLARED TERM IS A DRIVE COUNT, AND ASSERTIONS ARE PRINTED BESIDE IT RATHER THAN INSIDE IT.** **THE DECLARED
    TOTAL IS `67`, and it is the sum of the SEVENTEEN TERMS of `§5.5.1`'s table — printed with its term-by-term
    addition at `§5.5.3`, where the as-filed `69` is kept VISIBLE beside the correction.**
