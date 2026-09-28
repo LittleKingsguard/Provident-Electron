@@ -488,14 +488,42 @@ function undefinedIdBreakOf(value: unknown, label: string): string | null {
  *  LABEL THE MODULE WOULD SYNTHESIZE: the module MINTS no label (a caller entry
  *  that carries NO `label` member must still carry NONE), COERCES none (a
  *  non-string caller value stays VERBATIM BY IDENTITY) and STRIPS none (the
- *  member the caller supplied must SURVIVE on the caller's own object). */
+ *  member the caller supplied must SURVIVE on the caller's own object).
+ *
+ *  ⟶ RE-POINTED TO THE ADJUDICATED READING (`2026-09-27`, the supervisor's
+ *  gate-5 adjudication after `FM-11`): THE MODULE'S OWN OBLIGATION IS ASSERTED
+ *  DIRECTLY — IT ADDS NO `label` MEMBER OF ITS OWN AND REMOVES NONE OF THE
+ *  CALLER'S (the returned entry's own key set EQUALS the caller's own key set) —
+ *  while the caller's own member, whatever its type (`undefined` included),
+ *  STAYS PRESENT AND UNCHANGED on the caller's own object.
+ *
+ *  THE AS-WRITTEN ASSERTION DROPPED HERE, KEPT VISIBLE: this reader used to hand
+ *  the returned entry to `labelBreakOf`, whose non-string branch demanded
+ *  *"a label member was MINTED for an entry whose caller supplied NO usable
+ *  label (§2.3 item 6: the member is ABSENT otherwise)"*. READ TOGETHER WITH THIS
+ *  ROW'S OWN FIRST CHECK (`returned !== caller` ⇒ the returned entry must BE the
+ *  caller's own object BY IDENTITY) THAT PAIR WAS JOINTLY UNSATISFIABLE: A
+ *  CALLER'S OWN OBJECT CANNOT LOSE A MEMBER, so no module could satisfy both
+ *  (measured live). `labelBreakOf`'s as-written form stays in force where it
+ *  belongs — on the entry the MODULE builds (`P-FM-IM-1`, whose drives supply no
+ *  label member at all).
+ *
+ *  THE FALSIFIER STAYS REAL: a body that MINTS a label where the caller supplied
+ *  none, or that STRIPS or COERCES one the caller did supply, still FAILS (the
+ *  three controls drive it). */
 function noLabelMutationBreakOf(returned: unknown, caller: unknown, label: string): string | null {
   if (returned !== caller) return `${label} — the module must carry the CALLER'S OWN entry object BY IDENTITY (a fresh or wrapped record FAILS this row)`
   if (!isRecord(caller)) return `${label} — the caller's entry is not a record`
-  const lk = labelBreakOf(returned, caller['label'], label)
-  if (lk !== null) return lk
-  const keys = Object.keys(caller)
-  if (!keys.includes('label') && keys.length !== 2) return `${label} — NO FIFTH member is declared on the entry record (own keys ${rawOf(keys.length)})`
+  if (!isRecord(returned)) return `${label} — the returned entry is not an object`
+  const callerKeys = Object.keys(caller)
+  const returnedKeys = Object.keys(returned)
+  if (returnedKeys.join(',') !== callerKeys.join(',')) return `${label} — THE MODULE MUST ADD NO 'label' MEMBER OF ITS OWN AND REMOVE NONE OF THE CALLER'S: the returned entry's own key set ${JSON.stringify(returnedKeys)} is not the caller's own key set ${JSON.stringify(callerKeys)} (a MINTED label adds a key; a STRIPPED one removes it)`
+  // NOTE: the entry-RECORD census (the declared pair's order and the closed
+  // three-member set) is `labelBreakOf`'s and `P-FM-IM-1`'s obligation, NOT this
+  // row's: this row's `L4` drive supplies a label-SHAPED FOURTH member
+  // (`extra: 'not-a-label'`) precisely to show that a caller member is neither
+  // read as a label nor policed here — only ADDED/REMOVED `label` members are.
+  if (hasOwn.call(caller, 'label') && returned['label'] !== caller['label']) return `${label} — the caller's own label ${rawOf(caller['label'])} was REPLACED by ${rawOf(returned['label'])}: a supplied member is never coerced, defaulted or re-written`
   return null
 }
 
@@ -527,6 +555,51 @@ function refusalCopyBreakOf(baseline: unknown, probed: unknown, observed: unknow
   if (Object.keys(b0).join(',') !== aKeys.join(',')) return `${label} — THE REFUSAL'S OWN KEY ORDER MOVED (declared ${aKeys.join(',')}, measured ${Object.keys(b0).join(',')})`
   for (const k of aKeys) if (b0[k] !== a0[k]) return `${label} — the result's refusal '${k}' moved from ${rawOf(a0[k])} to ${rawOf(b0[k])}: the callback's verdict reached the RESULT, and THE RESULT CARRIES THE MODULE'S OWN RECORD`
   if (b['accepted'] !== a['accepted'] || b['verb'] !== a['verb'] || b['state'] !== a['state'] || b['changed'] !== a['changed']) return `${label} — no field of the result may move when a refuse callback rewrites what it receives`
+  return null
+}
+
+/** ⟶ THE OBSERVATION-COPY READ (`§0A` note 10 item 4; the supervisor's gate-5
+ *  adjudication after `FM-28`): THE AS-FILED IDENTITY ASSERTION IS WITHDRAWN —
+ *  the `refuse` callback receives A COPY WHOSE `code`/`verb`/`id` VALUES EQUAL the
+ *  result's own refusal record's, and THE MODULE'S COPY IS DISTINCT FROM THE
+ *  RESULT'S RECORD. THIS READER RETURNS `null` WHEN THAT HOLDS AND A CAUSE
+ *  SENTENCE WHEN IT BREAKS, so a regression that re-aliases the callback to the
+ *  module's own record (the exact aliasing the ruling removes) FAILS here.
+ *
+ *  THE AS-WRITTEN ASSERTION DROPPED AT THE THREE AS-FILED ROWS (`F-1`, `F-14`,
+ *  `M-13`) — KEPT VISIBLE: `expect(rec.received[0]).toBe(result.refusals[0])`,
+ *  *"the received record IS the result's own refusals[0] BY IDENTITY"* — which
+ *  the contract now states in words as WITHDRAWN (`§5.5.1` `P-FM-SEAM-1`'s
+ *  re-scoped cell). */
+function observationCopyBreakOf(received: unknown, resultRefusal: unknown, expectedCode: string, expectedVerb: unknown, expectedId: unknown, label: string): string | null {
+  if (!isRecord(received)) return `${label} — the refuse seam received ${typeof received}, not the declared four-member refusal record`
+  if (received === resultRefusal) return `${label} — THE OBSERVATION IS THE RESULT'S OWN RECORD: the callback was handed the module's record BY IDENTITY, which is exactly the aliasing the ruling removes (§0A note 10 item 4: build the record, then hand out a COPY)`
+  if (!isRecord(resultRefusal)) return `${label} — the result's refusals[0] is not a refusal record`
+  const rk = Object.keys(resultRefusal)
+  const ok = Object.keys(received)
+  if (ok.join(',') !== rk.join(',')) return `${label} — the observation's own key set ${JSON.stringify(ok)} is not the result's record's ${JSON.stringify(rk)} (the copy carries the same declared members, in the declared order)`
+  for (const k of rk) if (received[k] !== resultRefusal[k]) return `${label} — the observation's '${k}' is ${rawOf(received[k])}, not the result's own ${rawOf(resultRefusal[k])} BY IDENTITY: the copy must CARRY THE SAME VALUES (a re-\`String()\`ed, JSON-round-tripped or \`structuredClone\`d record LOSES them, and that copy the contract bans)`
+  if (received['code'] !== expectedCode) return `${label} — the observation's code is ${rawOf(received['code'])}, not the declared ${rawOf(expectedCode)}`
+  if (received['verb'] !== expectedVerb) return `${label} — the observation's verb is ${rawOf(received['verb'])}, not the verb of record the result carries`
+  if (received['id'] !== expectedId) return `${label} — the observation's id is ${rawOf(received['id'])}, not the caller's own id ${rawOf(expectedId)} BY IDENTITY`
+  return null
+}
+
+/** THE POSITIVE HALF THE COPY RULING MAKES ASSERTABLE: A REWRITE OF EVERY FIELD
+ *  OF WHAT THE CALLBACK RECEIVED MUST MOVE NOTHING — the result's own refusal, its
+ *  count, its code and its order all read exactly what they read before the
+ *  rewrite. Returns `null` when it holds, so a regression that lets the callback's
+ *  verdict reach the result FAILS. */
+function observationRewriteBreakOf(received: unknown, resultRefusal: unknown, code: string, label: string): string | null {
+  if (!isRecord(received)) return `${label} — no observation record to rewrite`
+  if (received === resultRefusal) return `${label} — the rewrite would land on the RESULT'S OWN record: the observation must be a DISTINCT COPY, so this positive half cannot be driven (that aliasing is the defect the ruling removes)`
+  if (!isRecord(resultRefusal)) return `${label} — the result's refusals[0] is not a refusal record`
+  received['code'] = 'no-next'
+  received['verb'] = 'prev'
+  received['id'] = 'FM-28-REWRITE-SENTINEL'
+  if (resultRefusal['code'] !== code) return `${label} — the callback's rewrite MOVED the result's refusal code to ${rawOf(resultRefusal['code'])} (the result carries THE MODULE'S record; the callback is OBSERVATION)`
+  if (Object.keys(resultRefusal).length !== 3) return `${label} — the callback's rewrite CHANGED the result's own refusal record's member census`
+  if (resultRefusal['id'] === 'FM-28-REWRITE-SENTINEL') return `${label} — the callback's rewrite REACHED the result's refusal record: the observation is ALIASED, not copied`
   return null
 }
 
@@ -1087,7 +1160,18 @@ describe('§3.2 F-1..F-14 — the documented fail-states (every outcome is a VAL
       const refusals = r['refusals'] as Record<string, unknown>[]
       expect(refusals[0]['id'], `F-1 [${label}] — a 'unknown-verb' refusal is about the VERB, so its id member is null (never a caller id).`).toBe(null)
       expect(rec.received.length, `F-1 [${label}] — the refuse count is EXACTLY 1 (one call per refusal, in attempt order).`).toBe(1)
-      expect(rec.received[0], `F-1 [${label}] — the received record IS the result's own refusals[0] BY IDENTITY.`).toBe(refusals[0])
+      // ⟶ RE-POINTED BY THE COPY RULING (`§0A` note 10 item 4): the AS-FILED
+      // `expect(rec.received[0]).toBe(refusals[0])` — *"the received record IS the
+      // result's own refusals[0] BY IDENTITY"* — is WITHDRAWN, and a VALUE
+      // equality assertion stands here instead, WITH the positive half the ruling
+      // makes assertable: the observation is NOT the result's own record, and a
+      // rewrite of every field moves nothing.
+      const oc = observationCopyBreakOf(rec.received[0], refusals[0], 'unknown-verb', refusals[0]['verb'], null, `F-1 [${label}]`)
+      expect(oc, `F-1 [${label}] — ${oc ?? ''}`).toBe(null)
+      expect(rec.received.length, `F-1 [${label}] — the count is UNCHANGED by the rewrite (still EXACTLY 1).`).toBe(1)
+      const ow = observationRewriteBreakOf(rec.received[0], refusals[0], 'unknown-verb', `F-1 [${label}]`)
+      expect(ow, `F-1 [${label}] — ${ow ?? ''}`).toBe(null)
+      expect(refusals.length, `F-1 [${label}] — the refusal count is UNCHANGED by the rewrite: the result still carries exactly one refusal.`).toBe(1)
       expect(on.calls.length, `F-1 [${label}] — onChange fires NEVER for a refused attempt.`).toBe(0)
     }
     expect(counts.toString + counts.valueOf, 'F-1 — String()/toString/valueOf are NOT invoked: the recorded hook counts read 0 (a coercion hook is a READ OF CALLER DATA AS A DECISION, S-FM-4\'s class — `String()` is not called on the verb either).').toBe(0)
@@ -1418,7 +1502,17 @@ describe('§3.2 F-1..F-14 — the documented fail-states (every outcome is a VAL
       expect(cause, `F-14 ${label} — ${cause ?? ''}`).toBe(null)
       expect(rec.received.length, `F-14 ${label} — the running count advances by EXACTLY 1 (a mis-count is caught at the step it occurs, not at the end).`).toBe(before + 1)
       const refusals = (value as Record<string, unknown>)['refusals'] as Record<string, unknown>[]
-      expect(rec.received[before], `F-14 ${label} — the received record IS result.refusals[0] BY IDENTITY.`).toBe(refusals[0])
+      // ⟶ RE-POINTED BY THE COPY RULING (`§0A` note 10 item 4): the AS-FILED
+      // `expect(rec.received[before]).toBe(refusals[0])` — *"the received record IS
+      // result.refusals[0] BY IDENTITY"* — is WITHDRAWN, and the VALUES + the
+      // observation's DISTINCTNESS from the result's record are asserted instead,
+      // WITH the positive half: a rewrite of every field moves nothing.
+      const oc = observationCopyBreakOf(rec.received[before], refusals[0], String(refusals[0]['code']), refusals[0]['verb'], refusals[0]['id'], `F-14 ${label}`)
+      expect(oc, `F-14 ${label} — ${oc ?? ''}`).toBe(null)
+      expect(rec.received.length, `F-14 ${label} — and the rewrite moves no COUNT: the running count still reads ${before + 1}.`).toBe(before + 1)
+      const ow = observationRewriteBreakOf(rec.received[before], refusals[0], String(refusals[0]['code']), `F-14 ${label}`)
+      expect(ow, `F-14 ${label} — ${ow ?? ''}`).toBe(null)
+      expect(refusals.length, `F-14 ${label} — the result still carries exactly ONE refusal after the rewrite (the callback's verdict reached nothing).`).toBe(1)
       seen.push(String(refusals[0]['code']))
     }
     expect(rec.received.length, 'F-14 — the recorded call count over a sequence of refusals of ALL FIVE codes is EXACTLY 5.').toBe(5)
@@ -1866,7 +1960,19 @@ describe('§3.1 M-1..M-14 — the valid / happy states (data states enumerated p
     const b = transitionTry(s, refused, 'next', { refuse: rec.seam, onChange: on.seam })
     expect(b.cause, `M-13(b) — ${b.cause ?? ''}`).toBe(null)
     expect(rec.received.length, 'M-13(b) — refuse count 1.').toBe(1)
-    expect(rec.received[0], 'M-13(b) — the received record IS `result.refusals[0]` (toBe).').toBe(((b.value as Record<string, unknown>)['refusals'] as unknown[])[0])
+    // ⟶ RE-POINTED BY THE COPY RULING (`§0A` note 10 item 4): the AS-FILED
+    // `expect(rec.received[0]).toBe(result.refusals[0])` — *"the received record
+    // IS `result.refusals[0]` (toBe)"* — is WITHDRAWN; the VALUES (code, verb, id)
+    // are asserted to EQUAL the result's, the module's copy is asserted DISTINCT
+    // from the result's record, and the rewrite of every field moves nothing.
+    const m13Refusals = ((b.value as Record<string, unknown>)['refusals'] as Record<string, unknown>[])
+    expect(rec.received[0] === m13Refusals[0], 'M-13(b) — the received record is NOT `result.refusals[0]` BY IDENTITY: the callback receives a COPY, and the module\'s copy is DISTINCT from the result\'s own record (the aliasing the ruling withdraws).').toBe(false)
+    const m13 = observationCopyBreakOf(rec.received[0], m13Refusals[0], 'no-next', m13Refusals[0]['verb'], 'a', 'M-13(b)')
+    expect(m13, `M-13(b) — ${m13 ?? ''}`).toBe(null)
+    expect(rec.received.length, 'M-13(b) — the rewrite moves no COUNT: the refuse count still reads 1.').toBe(1)
+    const m13w = observationRewriteBreakOf(rec.received[0], m13Refusals[0], 'no-next', 'M-13(b)')
+    expect(m13w, `M-13(b) — ${m13w ?? ''}`).toBe(null)
+    expect(m13Refusals.length, 'M-13(b) — and the result still carries exactly ONE refusal, in the same order, with the same code after the rewrite.').toBe(1)
     expect(on.calls.length, 'M-13(b) — onChange count stays 0 for the refusal arm.').toBe(1)
     const valueBack = { n: 1 }
     const p = persistTry(s, () => valueBack, refused)
@@ -2035,20 +2141,28 @@ describe('§0A note 10 — THE FOUR CLAUSE RULINGS (gates 4/5): repeated target 
       const ordered = ((orderTry(s, [caller]).value as unknown[])[0])
       expect(noLabelMutationBreakOf(ordered, caller, `CLAUSE-3 [${label}] / focusOrder`), `CLAUSE-3 [${label}] / focusOrder — focusOrder carries the caller's own object and mints nothing.`).toBe(null)
       // THE NAMED HALVES, so a minting or a stripping body fails on its own clause:
-      if (!hasOwn.call(caller, 'label') || caller['label'] === undefined) {
-        expect(hasOwn.call(appended as object, 'label'), `CLAUSE-3 [${label}] — NO LABEL IS MINTED where the caller supplied none: a body writing a default string FAILS here (a bare \`label: undefined\` is the same absence the as-filed rule names).`).toBe(false)
+      if (!hasOwn.call(caller, 'label')) {
+        expect(hasOwn.call(appended as object, 'label'), `CLAUSE-3 [${label}] — NO LABEL IS MINTED where the caller supplied none: a body writing a default string FAILS here.`).toBe(false)
         expect(hasOwn.call(ordered as object, 'label'), `CLAUSE-3 [${label}] — and none is minted by focusOrder either.`).toBe(false)
       } else {
-        expect(hasOwn.call(appended as object, 'label'), `CLAUSE-3 [${label}] — A MEMBER THE CALLER SUPPLIED IS STILL THERE: the module STRIPS no label, whatever its type.`).toBe(true)
+        // ⟶ THE `undefined`-LABEL HALF (`L2`) IS RE-POINTED BESIDE ITS AS-FILED
+        // FORM by the same adjudication: the as-written demand was that a
+        // caller-supplied non-string (here an explicit `undefined`) leave the
+        // returned entry WITHOUT a `label` member — unsatisfiable alongside the
+        // by-identity half above, so THIS row asserts the module's own obligation
+        // instead: the caller's own member SURVIVES, its value is UNCHANGED BY
+        // IDENTITY, and the returned entry's own key set equals the caller's.
+        expect(hasOwn.call(appended as object, 'label'), `CLAUSE-3 [${label}] — A MEMBER THE CALLER SUPPLIED IS STILL THERE: the caller's own object cannot lose it, and the module STRIPS no label, whatever its type.`).toBe(true)
         expect((appended as Record<string, unknown>)['label'], `CLAUSE-3 [${label}] — and it is the caller's own value VERBATIM BY IDENTITY (never coerced to a string, never defaulted, never trimmed).`).toBe(caller['label'])
+        expect(Object.keys(appended as object).join(','), `CLAUSE-3 [${label}] — AND THE MODULE MINTS NO LABEL OF ITS OWN: the returned entry's own key set is the caller's own key set, member for member.`).toBe(Object.keys(caller).join(','))
       }
     }
     // THE POSITIVE CONTROL: a minting body and a stripping/coercing body must
     // BOTH fail the clause reader.
     const mintingBody = { id: 'm', target: 't', label: '' }
-    expect(noLabelMutationBreakOf(mintingBody, { id: 'm', target: 't' }, 'CONTROL (mint)'), 'CONTROL — A BODY THAT MINTS A LABEL WHERE THE CALLER GAVE NONE MUST FAIL this row.').not.toBe(null)
-    expect(noLabelMutationBreakOf({ id: 'c', target: 't', label: '42' }, { id: 'c', target: 't', label: 42 }, 'CONTROL (coerce)'), 'CONTROL — A BODY THAT COERCES A SUPPLIED NON-STRING LABEL MUST FAIL this row.').not.toBe(null)
-    expect(noLabelMutationBreakOf({ id: 'x', target: 't' }, { id: 'x', target: 't', label: 42 }, 'CONTROL (strip)'), 'CONTROL — AND A BODY THAT RETURNS A RECORD WITHOUT THE CALLER\'S OWN MEMBER FAILS the by-identity half: a caller\'s object cannot lose a member, which is why the as-filed absence rule could not be satisfied alongside `toBe`.').not.toBe(null)
+    expect(noLabelMutationBreakOf(mintingBody, { id: 'm', target: 't' }, 'CONTROL (mint)'), 'CONTROL — A BODY THAT MINTS A LABEL WHERE THE CALLER GAVE NONE MUST FAIL this row: the returned entry gains a member the caller\'s own object does not carry, so the two key sets differ.').not.toBe(null)
+    expect(noLabelMutationBreakOf({ id: 'c', target: 't', label: '42' }, { id: 'c', target: 't', label: 42 }, 'CONTROL (coerce)'), 'CONTROL — A BODY THAT COERCES A SUPPLIED NON-STRING LABEL MUST FAIL this row: the returned entry\'s `label` is a value the caller never supplied.').not.toBe(null)
+    expect(noLabelMutationBreakOf({ id: 'x', target: 't' }, { id: 'x', target: 't', label: 42 }, 'CONTROL (strip)'), 'CONTROL — AND A BODY THAT RETURNS A RECORD WITHOUT THE CALLER\'S OWN MEMBER FAILS this row: the caller\'s own key set carries \'label\' and the returned record does not. (Under the RE-POINTED reading this is a FAILED FALSIFIER, not an impossibility: a caller\'s object cannot lose a member, which is exactly why the as-filed absence rule could not hold alongside `toBe` — and why the module\'s own key-set-equality obligation is what this row drives.)').not.toBe(null)
   })
 
   // ⟶ CLAUSE ROW 4 — THE RESULT CARRIES THE MODULE'S OWN REFUSAL RECORD.
@@ -2741,10 +2855,25 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 ROWS = 12 term-carrying ro
           return null
         }
         if (rec.received.length !== 1) return `${label} — refuse must be invoked EXACTLY ONCE per refused attempt (got ${rec.received.length})`
-        if (rec.received[0] !== (r['refusals'] as unknown[])[0]) return `${label} — the received record must BE the result's own refusals[0] BY IDENTITY (a COPY fails)`
+        // ⟶ RE-POINTED BY THE COPY RULING (`§0A` note 10 item 4 / `§5.5.1`
+        // `P-FM-SEAM-1`'s re-scoped cell): the AS-FILED *"the received record must
+        // BE the result's own refusals[0] BY IDENTITY (a COPY fails)"* is
+        // WITHDRAWN. What holds is that the received record's `code`/`verb`/`id`
+        // EQUAL the result's (the caller's own `id` value included, by identity),
+        // that THE MODULE'S COPY IS DISTINCT FROM THE RESULT'S RECORD, and that NO
+        // CALLBACK WRITE MOVES THE RESULT.
+        const rr0 = (r['refusals'] as Record<string, unknown>[])[0]
+        const oc = observationCopyBreakOf(rec.received[0], rr0, code, rr0['verb'], rr0['id'], label)
+        if (oc !== null) return oc
         const rr = rec.received[0] as Record<string, unknown>
-        if (rr['code'] !== code) return `${label} — the payload's code is ${JSON.stringify(rr['code'])}, not ${JSON.stringify(code)}`
         if (rr['verb'] !== r['verb']) return `${label} — the payload's verb must be the verb of record the result carries`
+        // THE POSITIVE HALF IS DRIVEN LAST, because it MUTATES the observation
+        // (`observationRewriteBreakOf`): every claim read off the received record
+        // is asserted BEFORE that rewrite, never after it.
+        const ow = observationRewriteBreakOf(rec.received[0], rr0, code, label)
+        if (ow !== null) return ow
+        if (rec.received.length !== 1) return `${label} — the rewrite moved the COUNT: refuse has now been invoked ${rec.received.length} time(s) for one refusal`
+        if ((r['refusals'] as unknown[]).length !== 1) return `${label} — the result no longer carries exactly one refusal after the callback's rewrite`
         return null
       }
       return [
@@ -2885,10 +3014,22 @@ describe('§5.5.1 — THE TYPED PROPERTY REGISTER (13 ROWS = 12 term-carrying ro
           if (cause !== null) return cause
           if (recorder.received.length !== i + 1) return `${label} — the running count after the ${i + 1}-th refusal is ${recorder.received.length} (a mis-count is caught at the step it occurs)`
           const r = value as Record<string, unknown>
-          if (recorder.received[i] !== (r['refusals'] as unknown[])[0]) return `${label} — the received record must be that step's own refusals[0] BY IDENTITY`
+          // ⟶ RE-POINTED BY THE COPY RULING (`§0A` note 10 item 4; the AS-FILED
+          // *"the received record must be that step's own refusals[0] BY IDENTITY"*
+          // is WITHDRAWN): the observation's VALUES equal that step's own result
+          // record's, the module's copy is DISTINCT from it, and no rewrite moves
+          // the sequence.
+          const sr0 = (r['refusals'] as Record<string, unknown>[])[0]
+          const oc = observationCopyBreakOf(recorder.received[i], sr0, code, sr0['verb'], sr0['id'], label)
+          if (oc !== null) return oc
           seen.push(String((recorder.received[i] as Record<string, unknown>)['code']))
           if (seen.join(',') !== seq.slice(0, i + 1).map((x) => x[1]).join(',')) return `${label} — the recorded code sequence so far is ${JSON.stringify(seen)}, not the declared ATTEMPT ORDER`
           if (code !== String((recorder.received[i] as Record<string, unknown>)['code'])) return `${label} — wrong code at this step`
+          // THE POSITIVE HALF IS DRIVEN LAST, because it MUTATES the observation:
+          // every claim read off the received record precedes that rewrite.
+          const ow = observationRewriteBreakOf(recorder.received[i], sr0, code, label)
+          if (ow !== null) return ow
+          if (recorder.received.length !== i + 1) return `${label} — the rewrite moved the COUNT: the running count is now ${recorder.received.length}`
           return null
         }))
     },
