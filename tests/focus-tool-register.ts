@@ -6,10 +6,20 @@
 // register rides the SAME node suite (`npm test`, `§5.2` leg 1) exactly as `§5.5.1`
 // requires, and the test file itself stays reviewable.
 //
-// CONTRACT: `docs/specs/focus-tool.md` `§5.5`/`§5.5.1` (the `17` typed rows carrying
-// `17` terms, declared total `67`, printed with its terms), `§5.5.2` (the honesty block;
-// the `(bounded)` markings; assertions printed BESIDE a term, never inside it) and
-// `§5.5.3` (the attempt arithmetic).
+// CONTRACT: `docs/specs/focus-tool.md` `§5.5`/`§5.5.1` (the typed rows carrying their
+// terms), `§5.5.2` (the honesty block; the `(bounded)` markings; assertions printed
+// BESIDE a term, never inside it), `§5.5.3` (the attempt arithmetic) and `§5.5.4`
+// (THE ROW-SET SETTLEMENT — `AR-2`, `AR-3` and `RF-3` are each DISCERNIBLE and EXECUTED,
+// so the register carries the contract's FULL TWENTY rows and its declared total is the
+// TWENTY-CELL SUM `73`, printed with its chain and its two subtotal decompositions).
+//
+// THE FIGURES, PRINTED WITH THEIR TERMS (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`):
+// DECLARED_TERMS (twenty terms) = [4, 3, 3, 2, 2 | 2, 3, 10, 2, 1 | 11, 2, 2, 12 | 4, 2, 2, 2 | 3, 1]
+// DECLARED_TOTAL = 73 = 14 (RT) + 18 (ID) + 27 (AR) + 10 (RF) + 4 (RS)
+//                 = 43 (P-IM) + 14 (P-SM) + 16 (P-TP)
+// and the SUPERSEDED seventeen-cell reading `67` is kept VISIBLE, WITHDRAWN by `§5.5.4`
+// (AS_FILED_DECLARED_TERMS / AS_FILED_TOTAL / EXECUTED_CELLS_SUM_AT_SETTLEMENT) — never
+// used as an assertion target and never as a cap comparison.
 //
 // STRATEGY DISCIPLINE, DECLARED ONCE (`§5.5.1` item 2): every domain is finite, pinned
 // and fully enumerable, so strategy = EXHAUSTIVE ENUMERATION THROUGHOUT. There is NO
@@ -72,23 +82,99 @@ export interface RegisterReport {
 export const STOP_AFTER = 5
 export const CAP_PER_ROW = 100
 export const CAP_TOTAL = 400
-/** The `17` DECLARED TERMS, in `§5.5.1`'s own row order (`§5.5.3`'s printed list). */
-/**
- * THE `17` DECLARED TERMS OF THE EXECUTED REGISTER, in the register's own row order.
+
+/** THE TWENTY DECLARED TERMS — the register's own row cells, in `§5.5.1`'s table order.
  *
- * ▸ GAP, RECORDED RATHER THAN SMOOTHED (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`): the
- * contract prints its declared list as `[4, 3, 3, 2, 2, 2, 3, 10, 2, 1, 11, 2, 2, 12, 4, 2, 1]`
- * (sum `67`) while its OWN `§5.5.1` row table enumerates TWENTY typed rows over five
- * domains — RT-1..RT-5, ID-1..ID-5, AR-1..AR-4, RF-1..RF-4, RS-1/RS-2 — whose property
- * text requires terms `4,3,3,2,2 | 2,3,10,2,1 | 11,2,2,12 | 4,2,2,2 | 3,1` (sum `73`).
- * SEVENTEEN ROWS SUMMING TO `67` AND THAT ROW SET CANNOT BOTH HOLD: dropping any three of
- * the twenty gives at most `67`, and dropping three (or four) leaves `AR-4`'s declared
- * twelve hostile drives or the refusal pair's `RF-2`/`RF-3` cells without a row. The
- * register therefore executes the seventeen rows authored below — the contract's own
- * declared total `67` OVER ITS OWN TERMS — and the residue is reported as a GAP to the
- * supervisor, never silently dropped (`§4.4`'s stop conditions).
+ *  ▸ THE RE-GRAIN (`§5.5.4` item 2): the three rows the executed register lacked are
+ *  EXECUTED rather than withdrawn — `P-FT-AR-2` `2` (the UNKNOWN-KEY EDGE, `P-TP`,
+ *  `S-FT-EDGE-1`), `P-FT-AR-3` `2` (the PASS-THROUGH RULE, `P-IM`, `S-FT-PASS-1`) and
+ *  `P-FT-RF-3` `2` (the ZERO-NOTIFICATION reading, `P-SM`, `S-FT-PUSH-1`) — each restored AT
+ *  ITS OWN ROW POSITION and each driven by its OWN declared drives and by nothing else.
+ *  Their cells sit in `§5.5.1`'s table order: `AR-1` `11` · `AR-2` `2` · `AR-3` `2` ·
+ *  `AR-4` `12`, `RF-1` `4` · `RF-2` `2` · `RF-3` `2` · `RF-4` `2`.
+ *
+ *  ▸ AND, AS THE SECOND SUPERSEDED FIGURE, THE POSITIONAL READ: the twenty terms are NOT the
+ *  seventeen as-filed cells with three appended — `AR-1` carries `11` (not the `12` the
+ *  as-filed cell printed) and `AR-4` carries `12` (the cell the as-filed list omitted), while
+ *  `RS-1` carries `3`. Both withdrawn figures are stated in the exports below, so no reader
+ *  has to re-derive them.
  */
-export const DECLARED_TERMS: readonly number[] = [4, 3, 3, 2, 2, 2, 3, 10, 2, 1, 11, 12, 4, 2, 2, 3, 1]
+export const DECLARED_TERMS: readonly number[] = [4, 3, 3, 2, 2, 2, 3, 10, 2, 1, 11, 2, 2, 12, 4, 2, 2, 2, 3, 1]
+
+/** THE SUPERSEDED SEVENTEEN-CELL READING, KEPT VISIBLE AND WITHDRAWN (`§5.5.4` item 2):
+ *  the executed register's own seventeen terms before the row-set settlement. It is the sum
+ *  `67` and it is NEVER an assertion target here — the three rows' own six drives are what
+ *  moved it (`67 + 2 + 2 + 2` = `73`). */
+export const AS_FILED_DECLARED_TERMS: readonly number[] = [4, 3, 3, 2, 2, 2, 3, 10, 2, 1, 11, 12, 4, 2, 2, 3, 1]
+
+/** `67` — WITHDRAWN as the declared total by `§5.5.4`, kept visible as the seventeen-cell
+ *  sum so the settlement's arithmetic is auditable (`73 − 6` = `67`). */
+export const AS_FILED_TOTAL = 67
+
+/** THE DECLARED TOTAL: the twenty-cell sum, the figure every cap comparison uses
+ *  (`§5.5.4` item 2). `73 ≤ 400`, largest row `12 ≤ 100`. */
+export const DECLARED_TOTAL = 73
+
+/** The `17`-cell sum the settlement started from, MEASURED from `AS_FILED_DECLARED_TERMS`
+ *  rather than re-typed — asserted beside `DECLARED_TOTAL` so the `+6` is checkable. */
+export const EXECUTED_CELLS_SUM_AT_SETTLEMENT = AS_FILED_DECLARED_TERMS.reduce((a, b) => a + b, 0)
+
+/** THE CHAIN, one term at a time IN THE ORDER `DECLARED_TERMS` PRINTS (`§5.5.4` item 2),
+ *  recomputed FROM the terms rather than quoted so a total that is not the sum of its own
+ *  terms cannot stand (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`). It runs
+ *  `4 → 7 → 10 → 12 → 14 → 16 → 19 → 29 → 31 → 32 → 43 → 44 → 46 → 58 → 63 → 65 → 67 → 69
+ *  → 70 → 73` over the twenty cells.
+ *
+ *  ▸ THE DIVERGENCE, REPORTED RATHER THAN BENT (the executed cells govern; `§5.5.3`): the
+ *  chain `§5.5.4` item 2 PRINTS is `… 43 → 45 → 47 → 59 → 63 → 65 → 67 → 69 → 70 → 73` and
+ *  carries TWENTY running figures under a *"nineteen steps"* label. That is a DIFFERENT ROW
+ *  ORDER over the same cells — it takes the `AR` cells in `§5.5.1` table order (`AR-4`'s `12`
+ *  where the printed list gives `AR-2`'s `2`) and it closes `RS-2`'s `1` before `RS-1`'s `3`
+ *  (hence `70 → 73`, where this list's `[3, 1]` order gives `72 → 73`). BOTH variants close on
+ *  `73` — the twenty cells' sum is order-independent — so the declared TOTAL is never in
+ *  question; only the intermediate figures are, and they are DERIVED here from this module's
+ *  own terms rather than quoted from a sequence that does not follow the list it accompanies. */
+export const DECLARED_TERM_CHAIN: readonly number[] = DECLARED_TERMS.reduce<number[]>(
+  (acc, t) => [...acc, (acc[acc.length - 1] ?? 0) + t], [])
+
+/** The five by-domain subtotals, each the sum of the addends it names (`§5.5.4` item 2). */
+export const DECLARED_DOMAIN_SUBTOTALS: Readonly<Record<string, number>> = { RT: 14, ID: 18, AR: 27, RF: 10, RS: 4 }
+
+/** The three by-type subtotals, EACH THE SUM OF THE ADDENDS IT NAMES over `§5.5.1`'s own
+ *  `Type` column, MEASURED from the rows rather than quoted so a subtotal that is not the sum
+ *  of its own addends cannot stand.
+ *
+ *  ▸ THE DIVERGENCE, REPORTED RATHER THAN BENT: `§5.5.4` item 2 prints `P-IM` = `43` and
+ *  `P-TP` = `16`, and the ADDENDS it lists in the same sentence (each typed exactly as
+ *  `§5.5.1`'s `Type` column types it) sum to `41` and `18`. The block's printed `43`/`16` are
+ *  therefore not the sum of its own addends, while ITS addend set IS the one this register
+ *  implements. THE CELLS GOVERN (`§5.5.3`), so this module's live decomposition is `P-IM`
+ *  `41`, `P-SM` `14`, `P-TP` `18` — which also closes on `73` and on the same `43`-and-`16`
+ *  pair of figures the block prints, transposed between the two families. The declared TOTAL,
+ *  the chain's closure and the domain decomposition are unaffected in every direction; only
+ *  the type split's two printed subtotals are, and they are REPORTED, never asserted. */
+export const DECLARED_TYPE_SUBTOTALS: Readonly<Record<string, number>> = { 'P-IM': 41, 'P-SM': 14, 'P-TP': 18 }
+
+/** The FIVE `(bounded)` rows `§5.5.2` item 2 names — UNMOVED by the settlement: all three
+ *  added rows are ENUMERATED, so the bounded set is still `5` of `20`. */
+export const DECLARED_BOUNDED_ROWS: readonly string[] = ['P-FT-ID-3', 'P-FT-ID-5', 'P-FT-AR-1', 'P-FT-AR-4', 'P-FT-RS-2']
+
+/** The `§5.5.2` item 4 / `4b` reading classes, by the rows that carry them — UNMOVED. */
+export const DECLARED_READING_CLASSES: Readonly<Record<string, readonly string[]>> = {
+  'stub-driven route rows': ['P-FT-RT-3', 'P-FT-AR-1', 'P-FT-AR-4'],
+  'static rows over the route bytes': ['P-FT-RT-4', 'P-FT-ID-5', 'P-FT-RF-3', 'P-FT-RF-4'],
+  'consumer-side container pass-through (handler-driven, equality-read)': ['P-FT-ID-3', 'P-FT-ID-5', 'P-FT-AR-1', 'P-FT-AR-4'],
+}
+
+/** The TWENTY row ids `§5.5.1` enumerates, in table order — the set against which
+ *  "no enumerated-but-unexecuted row" is asserted. */
+export const ENUMERATED_ROW_IDS: readonly string[] = [
+  'P-FT-RT-1', 'P-FT-RT-2', 'P-FT-RT-3', 'P-FT-RT-4', 'P-FT-RT-5',
+  'P-FT-ID-1', 'P-FT-ID-2', 'P-FT-ID-3', 'P-FT-ID-4', 'P-FT-ID-5',
+  'P-FT-AR-1', 'P-FT-AR-2', 'P-FT-AR-3', 'P-FT-AR-4',
+  'P-FT-RF-1', 'P-FT-RF-2', 'P-FT-RF-3', 'P-FT-RF-4',
+  'P-FT-RS-1', 'P-FT-RS-2',
+]
 
 /** Execute the register: deterministic, sequential, capped, STOP AFTER 5 CONSECUTIVE
  *  FAILURES. An un-run row is REPORTED (`unrunRows`), never treated as a pass. */
@@ -131,18 +217,56 @@ export async function runRegister(table: readonly RegisterRow[]): Promise<Regist
       declaredTerm: row.term, attemptsRun, held, broken: attemptsRun - held, readings, controls: 0,
       state: rowBroken ? 'broken' : 'held' })
     if (stoppedAt !== null) continue
+    // A BROKEN CONTROL IS RECORDED, NEVER SWALLOWED — and it never aborts the run: the
+    // controls are reported BESIDE the term (`§5.5.2` item 5), so they are not attempts, and
+    // only a run of broken DRIVES triggers the stop rule. Reporting them keeps every row's
+    // reading visible instead of hiding the register's true stop point behind a control.
     let controlsHeld = 0
-    for (const control of row.controls) { controlsRun += 1; await control.run(); controlsHeld += 1 }
+    for (const control of row.controls) {
+      controlsRun += 1
+      try {
+        await control.run()
+        controlsHeld += 1
+      } catch (e) {
+        readings.push(`${control.label}: BROKEN — ${e instanceof Error ? e.message : String(e)}`)
+      }
+    }
     assertionsPrinted += row.assertions.length
-    rows[rows.length - 1] = { ...(rows[rows.length - 1] as RowReport), controls: controlsHeld }
+    rows[rows.length - 1] = { ...(rows[rows.length - 1] as RowReport), readings, controls: controlsHeld,
+      broken: (rows[rows.length - 1] as RowReport).broken + row.controls.length - controlsHeld }
   }
-  return { rows, attemptsExecuted, rowsExecuted: rows.filter((r) => r.state !== 'un-run').length,
-    termsDeclared: table.reduce((n, r) => n + r.term, 0), totalDeclared: 67, controlsRun,
-    assertionsPrinted, registerStoppedAt: stoppedAt, unrunRows: unrun }
+  return registerReport(rows, attemptsExecuted, controlsRun, assertionsPrinted, stoppedAt, unrun)
 }
 
+/** Build the report from the readings taken SO FAR — used both at the end of a run and at the
+ *  point a broken control aborts one, so an aborted register still reports its rows. */
+function registerReport(rows: RowReport[], attemptsExecuted: number, controlsRun: number,
+  assertionsPrinted: number, registerStoppedAt: string | null, unrunRows: string[]): RegisterReport {
+  return { rows, attemptsExecuted, rowsExecuted: rows.filter((r) => r.state !== 'un-run').length,
+    termsDeclared: rows.reduce((n, r) => n + r.declaredTerm, 0), totalDeclared: DECLARED_TOTAL, controlsRun,
+    assertionsPrinted, registerStoppedAt, unrunRows }
+}
+
+/** THE READINGS, ONE LINE, for any message that has to carry them (`REGISTER-ATTEMPT-TOTALS-
+ *  PRINT-THEIR-TERMS`): the declared total with its terms, the chain's closure, the two
+ *  subtotal decompositions, and EVERY row's per-row reading — with un-run rows named as
+ *  FAILURES rather than silently omitted. */
+export function reportDiagnostics(report: RegisterReport): string {
+  const perRow = report.rows
+    .map((r) => `${r.id} ${r.attemptsRun}/${r.declaredTerm} held=${r.held} broken=${r.broken} controls=${r.controls} ${r.state}`)
+    .join(' | ')
+  return `REGISTER — termsDeclared=${report.termsDeclared} · totalDeclared=${report.totalDeclared} · `
+    + `attemptsExecuted=${report.attemptsExecuted} · rowsExecuted=${report.rowsExecuted} · rows=${report.rows.length} · `
+    + `controlsRun=${report.controlsRun} · assertionsPrinted=${report.assertionsPrinted} · `
+    + `registerStoppedAt=${String(report.registerStoppedAt)} · un-run (FAILURES)=${JSON.stringify(report.unrunRows)}\n`
+    + `PER ROW: ${perRow}`
+}
+
+/** THE EXECUTED CELLS' OWN SUM — the live figure the declared total must equal. */
+export const EXECUTED_CELLS_SUM: number = DECLARED_TERMS.reduce((a, b) => a + b, 0)
+
 /** A deliberately FAILING probe table, used ONLY to prove the stop rule. It is NOT part of
- *  the register: the register's own term cells are the authority for `67`. */
+ *  the register: the register's own term cells are the authority for `73` (`§5.5.4`). */
 export const STOP_RULE_PROBE: readonly RegisterRow[] = [
   { id: 'P-FT-PROBE-1', type: 'P-TP', domain: 'HARNESS PROBE', strategyId: 'S-FT-PROBE-STOP-1', term: 7,
     bound: 'enumerated', assertions: ['the stop-after-5 rule abandons the remainder of this row and starts NO further row'],
@@ -296,10 +420,13 @@ export async function thrown(fn: () => Promise<unknown>): Promise<string | null>
   try { await fn(); return null } catch (e) { return e instanceof Error ? e.message : String(e) }
 }
 
-// ---- THE REGISTER (`§5.5.1`): 17 typed rows / 17 terms ----------------------------------
-/** THE REGISTER — the contract's declared `17` typed rows / `17` terms, in the contract's
- *  own table order, each carrying its declared TERM. NO probe row rides the register: the
- *  stop-rule control is a SEPARATE table reported BESIDE it. */
+// ---- THE REGISTER (`§5.5.1` + `§5.5.4`): 20 typed rows / 20 terms ------------------------
+/** THE REGISTER — the contract's declared TWENTY typed rows / TWENTY terms (`§5.5.1`'s full
+ *  table, whose every row `§5.5.4` gives a recorded fate), in the contract's own table order,
+ *  each carrying its declared TERM. NO probe row rides the register: the stop-rule control is a
+ *  SEPARATE table reported BESIDE it. THE THREE ROWS `§5.5.4` item 1 restores (`P-FT-AR-2` `2`,
+ *  `P-FT-AR-3` `2`, `P-FT-RF-3` `2`) are driven BY THEIR OWN DECLARED DRIVES AND BY NOTHING
+ *  ELSE, and NO existing row id, strategy id, seed, cap or drive was moved to make room. */
 // ---- the multi-line drive pools, built once and referenced by their rows -----------------
 const ID3_DRIVES: Drive[] = (() => {
   const shapes = [
@@ -446,6 +573,126 @@ const AR4_DRIVES: Drive[] = (() => {
   }))
 })()
 
+// ---- `P-FT-AR-2`'s drive pool: THE UNKNOWN-KEY EDGE (`§5.5.4` item 1(a), `S-FT-EDGE-1`) ---
+/** `2` drives, ONE DRIVE EACH, as `§5.5.1`'s own cell declares and `§5.5.4` item 1(a) restores:
+ *  (1) a bare `{id:'x'}` · (2) `{target:'a', extra:1}`. PER ATTEMPT: the throw's class, that the
+ *  error NAMES THE REJECTED KEY (read in EVERY declared form — an extra Error argument, an
+ *  `invalidKeys`-style array, or the message text — so the implementation is not over-constrained
+ *  to one message shape), the renderer stub's call count `0`, and that NOTHING was returned —
+ *  no `refused` record, no silent drop, no default. */
+const AR2_DRIVES: Drive[] = (() => {
+  const edges = [
+    { label: "(1) a single unknown key (a bare {id:'x'})", keys: ['id'], args: { id: 'x' } as unknown },
+    { label: "(2) a legal member mixed with an unknown key ({target:'a', extra:1})", keys: ['extra'], args: { target: 'a', extra: 1 } as unknown },
+  ]
+  return edges.map((edge) => ({
+    label: edge.label,
+    run: async (): Promise<void> => {
+      const rec = recorder([{ activeId: null, entries: [], opened: false }])
+      const server = newServer(rec.backend)
+      let threw: unknown = null
+      let returned: unknown
+      try { returned = await callHandler(server, TOOL_NAME, edge.args) } catch (e) { threw = e }
+      expect(threw, `AR-2 ${edge.label} — the unknown-key edge THROWS (a serviced call would be the tolerate-by-ignoring alternative the contract does NOT take).`).not.toBe(null)
+      expect(returned, `AR-2 ${edge.label} — NOTHING is returned on the throwing arm.`).toBeUndefined()
+      const e = threw as { constructor?: { name?: string }; name?: string; message?: unknown; invalidKeys?: unknown }
+      const className = String(e?.constructor?.name ?? e?.name ?? '')
+      expect(className, `AR-2 ${edge.label} — the DECLARED throw class (TypeError-class, NOT an invented one). Measured: ${className}`).toMatch(/error/i)
+      const named = [
+        String(e?.message ?? ''),
+        Array.isArray(e?.invalidKeys) ? (e?.invalidKeys as unknown[]).join(' ') : '',
+        e?.invalidKeys === undefined ? '' : String(e?.invalidKeys),
+      ].join(' | ')
+      for (const key of edge.keys) {
+        expect(named, `AR-2 ${edge.label} — the error NAMES the rejected key '${key}'. Measured: ${named}`).toContain(key)
+      }
+      expect(Object.prototype.hasOwnProperty.call(returned ?? {}, 'refused'), `AR-2 ${edge.label} — no \`refused\` record is produced on the throwing arm.`).toBe(false)
+      expect(rec.calls, `AR-2 ${edge.label} / I-12 — the rejection crosses NO IPC boundary: the renderer stub's call count is 0.`).toEqual([])
+    },
+  }))
+})()
+
+// ---- `P-FT-AR-3`'s drive pool: THE PASS-THROUGH RULE (`§5.5.4` item 1(b), `S-FT-PASS-1`) -----
+/** `2` drives, ONE DRIVE EACH, as `§5.5.1`'s own cell declares and `§5.5.4` item 1(b) restores:
+ *  (1) a `target` supplied as a NON-string value · (2) a `newTab` supplied as a NON-boolean value.
+ *  PER ATTEMPT: the received IDENTITIES AT THE RENDERER STUB, the absence of a `typeof`/coercion/
+ *  default site on the route, and the absence of any substituted default. THIS ROW'S PROPERTY IS
+ *  ASSERTED BY IDENTITY AND BY `Object.is` — never by `toEqual` and never by a key set — which is
+ *  exactly why `AR-1`'s drive (10) does not carry it (`§5.5.4` item 1(b)'s reason). */
+const AR3_DRIVES: Drive[] = (() => {
+  const passes: Array<{ label: string; member: 'target' | 'newTab'; value: unknown; forbid: readonly RegExp[] }> = [
+    {
+      label: '(1) a `target` supplied as a NON-string value (an OBJECT — no `typeof` test, no coercion)', member: 'target', value: { nested: true, tag: 'not-a-string' },
+      forbid: [/String\s*\(\s*a(?:rgs|rgument)?(?:\s*[.\[]\s*target|\s*\.?\s*target\s*\))/, /`\s*\$\{/, /\btypeof\b[^\n]*\btarget\b/],
+    },
+    {
+      label: '(2) a `newTab` supplied as a NON-boolean value (the NUMBER `0` — no default, no coercion)', member: 'newTab', value: 0,
+      forbid: [/Boolean\s*\(\s*a(?:rgs|rgument)?(?:\s*[.\[]\s*newTab|\s*\.?\s*newTab\s*\))/, /!!\s*a(?:rgs|rgument)?(?:\s*[.\[]\s*newTab|\s*\.?\s*newTab)/, /\btypeof\b[^\n]*\bnewTab\b/, /a(?:rgs|rgument)?\s*[.\[]\s*['"]?newTab['"]?\s*\]?\s*\?\?\s*(?:false|true)/],
+    },
+  ]
+  return passes.map((p) => ({
+    label: p.label,
+    run: async (): Promise<void> => {
+      const args: Record<string, unknown> = { [p.member]: p.value }
+      const rec = recorder([{ activeId: null, entries: [], opened: false }])
+      const server = newServer(rec.backend)
+      const got = await callHandler(server, TOOL_NAME, args)
+      assertDeclaredShape(got, `AR-3 ${p.label}`)
+      const passed = assertOneFocusCall(rec, `AR-3 ${p.label}`) as Record<string, unknown>
+      expect(passed, `AR-3 ${p.label} — the arguments object the renderer receives is a real object.`).toBeTruthy()
+      expect(Object.is(passed[p.member], p.value), `AR-3 ${p.label} — '${p.member}' travels BY IDENTITY, with NO coercion and NO default (Object.is, never toEqual).`).toBe(true)
+      expect(Object.keys(passed), `AR-3 ${p.label} — nothing is supplied to the renderer that the caller did not send, and the member is spelled EXACTLY as the caller spelled it.`).toEqual([p.member])
+      const body = stripComments(focusRouteSource() ?? '')
+      expect(body, `AR-3 ${p.label} — the route must exist for the no-coercion scan to be non-vacuous.`).not.toBe('')
+      for (const token of p.forbid) {
+        expect(scanLines(body, token), `AR-3 ${p.label} — a \`typeof\`/coercion/defaulting site FOR '${p.member}' on the route FAILS: ${String(token)}`).toEqual([])
+      }
+      // THE FALSIFIER, so the scan is a reading and not a ritual: the SAME scan hits a coerced
+      // site, and a DEFAULTER would be caught by the identity read above (Object.is(0, false)
+      // is false, Object.is({...}, undefined) is false) rather than by a message form.
+      expect(scanLines('const t = String(args.target)', p.forbid[0] as RegExp), `AR-3 ${p.label} control — the coercion scan CAN hit.`)
+        .not.toEqual([])
+      const defaulted = { ...args } as Record<string, unknown>
+      if (p.member === 'newTab') defaulted['newTab'] = false
+      else delete defaulted['target']
+      expect(Object.is(defaulted[p.member], p.value), `AR-3 ${p.label} control — the identity read REJECTS a defaulted member.`).toBe(false)
+    },
+  }))
+})()
+
+// ---- `P-FT-RF-3`'s drive pool: THE ZERO-NOTIFICATION reading (`§5.5.4` item 1(c)) ----------
+/** `2` drives, ONE DRIVE EACH, as `§5.5.1`'s own cell declares and `§5.5.4` item 1(c) restores:
+ *  (1) the predicate KEYING read with `'focus'` absent from the set (the STATIC ROUTE READING) ·
+ *  (2) the route PUSH-SITE and invalidation-TOKEN scan (the labelled structural half).
+ *  PER ATTEMPT: the predicate's keying site, the set's membership, the absence of a push site —
+ *  and THE ROW CLAIMS NO MORE THAN *"no notification was invoked and the name sets are unchanged"*.
+ *  A BARE COUNT IS NOT THE INSTRUMENT. */
+const RF3_DRIVES: Drive[] = (() => {
+  return [
+    {
+      label: "(1) the predicate keying read with `'focus'` absent from the set (the STATIC ROUTE READING)",
+      run: (): void => {
+        expect(/MUTATING_METHODS[.]has[(][ ]*(?:req|request|r)[.]method[ ]*[)]/.test(read(RENDERER_REL)), "RF-3 — the notify predicate is still KEYED ON that set (a predicate read, not a count).").toBe(true)
+        expect(liveMutatingMethods(), "RF-3 — the set the predicate is keyed on carries NO 'focus'.").not.toContain(METHOD)
+        expect(liveMutatingMethods().sort(), 'RF-3 — name-set-equal to its SEVEN members: no EIGHTH entry was added.').toEqual([...EXPECTED_MUTATING].sort())
+      },
+    },
+    {
+      label: '(2) the route push-site and invalidation-token scan (the labelled structural half)',
+      run: (): void => {
+        const src = focusRouteSource()
+        expect(src, 'RF-3 — the route must exist for the push-site scan to be non-vacuous.').not.toBe(null)
+        const body = stripComments(src ?? '')
+        for (const token of [/notify|sendResourceUpdated|resources\/updated|app-graph-changed/i, /invalidate/i]) {
+          expect(scanLines(body, token), `RF-3 / I-8 / §5.U row 3 — a PUSH site or an invalidation token on the route FAILS: ${String(token)}`).toEqual([])
+        }
+        expect(scanLines('renderer.notifyGraphChanged()', /notify/i), 'RF-3 control — the push-site scan is a real scan.').not.toEqual([])
+        expect(liveMutatingMethods(), "RF-3 — and the name sets are unchanged.").not.toContain(METHOD)
+      },
+    },
+  ]
+})()
+
 export const REGISTER: readonly RegisterRow[] = [
   {
     id: "P-FT-RT-1", type: "P-IM", domain: "THE ROUTE — the listing", strategyId: "S-FT-LIST-1", term: 4, bound: "enumerated",
@@ -556,6 +803,20 @@ export const REGISTER: readonly RegisterRow[] = [
     drives: AR1_DRIVES,
   },
   {
+    id: "P-FT-AR-2", type: "P-TP", domain: "THE ARGUMENT SHAPE — the UNKNOWN-KEY EDGE", strategyId: "S-FT-EDGE-1", term: 2, bound: "enumerated",
+    // the throw's class, the rejected key NAMED, the call count, and nothing returned
+    assertions: ["the throw's class", "that the error names the rejected key", "the renderer stub's call count is 0", "that nothing was returned (no `refused` record, no silent drop, no default)", "THE THROWING ARM IS THE DECLARED ONE AND THE TOLERATE-BY-IGNORING ALTERNATIVE IS NOT TAKEN"],
+    controls: [{ label: 'control: a KNOWN key is NOT refused by the same read (so the edge is a real edge, not a blanket refusal)', run: async () => { const rec = recorder([{ activeId: null, entries: [], opened: false }]); const m = await thrown(() => callHandler(newServer(rec.backend), TOOL_NAME, { target: 'a', newTab: false })); expect(m).toBe(null); expect(rec.calls.map((c) => c.method)).toEqual([METHOD]) } }],
+    drives: AR2_DRIVES,
+  },
+  {
+    id: "P-FT-AR-3", type: "P-IM", domain: "THE ARGUMENT SHAPE — the PASS-THROUGH RULE (no interpretation on the way in)", strategyId: "S-FT-PASS-1", term: 2, bound: "enumerated",
+    // the received identities, the absence of a typeof/coercion site, and the absence of a default
+    assertions: ["the received identities AT THE RENDERER STUB (asserted by `Object.is`, never by `toEqual`)", "the absence of a `typeof`/coercion site on the route", "that no default value was substituted", "the caller's own member spelling, with no member re-keyed or added"],
+    controls: [{ label: 'control: the identity read CAN fail (a defaulted `newTab` is not the caller\'s `0`)', run: () => { expect(Object.is(false, 0)).toBe(false); expect(Object.is(undefined, { nested: true, tag: 'not-a-string' })).toBe(false) } }],
+    drives: AR3_DRIVES,
+  },
+  {
     id: "P-FT-AR-4", type: "P-TP", domain: "THE ARGUMENT SHAPE — the EDGE'S TOTALITY over hostile argument shapes", strategyId: "S-FT-TOTAL-1", term: 12, bound: "bounded",
     // the one declared throw class or the serviced reading, with byte-identity and call-count assertions
     assertions: ["the ONE declared throw class or the serviced reading", "the renderer stub's call count (0 on a rejected drive)", "the caller's object's byte-identity after the call", "no third throw class escaped", "THE UNIVERSAL IS OVER THE ENUMERATED DOMAINS OF THIS TABLE, NOT OVER THE WHOLE INPUT SPACE"],
@@ -578,6 +839,13 @@ export const REGISTER: readonly RegisterRow[] = [
       { label: '(1) NOT READY — the rejection, the untouched state, no queue', run: async () => { const rec = recorder([], 'renderer not ready (timeout 250ms)'); const m = await thrown(() => callTool(newServer(rec.backend), TOOL_NAME, { target: 'a' })); expect(m, 'RF-2 — the rejection is the whole claim and it is node-observable.').toMatch(/renderer not ready \(timeout 250ms\)/); expect(rec.calls, 'RF-2 — exactly one attempt: nothing queued, no retry.').toEqual([{ method: METHOD, args: { target: 'a' } }]) } },
       { label: '(2) READY — the same call SERVICED', run: async () => { const rec = recorder([{ activeId: 'a', entries: ['a'], opened: false }]); const got = await callHandler(newServer(rec.backend), TOOL_NAME, { target: 'a' }); assertDeclaredShape(got, 'RF-2(2)'); expect(rec.calls.map((c) => c.method), 'RF-2 — serviced once ready.').toEqual([METHOD]) } },
     ],
+  },
+  {
+    id: "P-FT-RF-3", type: "P-SM", domain: "THE REFUSAL AND READINESS — the ZERO-NOTIFICATION reading (NEGATIVE CLAIM 2)", strategyId: "S-FT-PUSH-1", term: 2, bound: "enumerated",
+    // the predicate's keying site, the set's membership, the absence of a push site, and the claim's own wording
+    assertions: ["the predicate's keying site", "the set's membership", "the absence of a push site and of an invalidation token on the route", "the row's OWN claim's wording — no `resources/updated` and no `app-graph-changed` can fire for this method, and NO MORE THAN THAT IS CLAIMED", "A BARE COUNT IS NOT THE INSTRUMENT"],
+    controls: [{ label: 'control: the push-site scan CAN hit (so the absence is a reading, not a vacuous scan)', run: () => expect(scanLines('renderer.notifyGraphChanged()', /notify/i)).not.toEqual([]) }],
+    drives: RF3_DRIVES,
   },
   {
     id: "P-FT-RF-4", type: "P-TP", domain: "THE REFUSAL AND READINESS — the NO-STORAGE / NO-WRITER reading (NEGATIVE CLAIMS 3 AND 4)", strategyId: "S-FT-STORE-1", term: 2, bound: "enumerated",

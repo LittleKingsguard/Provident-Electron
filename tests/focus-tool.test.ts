@@ -9,9 +9,12 @@
 // SEVEN-ROW MATRIX), `§5.5.1` (THE REGISTER), `§5.5.2` (the honesty block), `§5.5.3` (the
 // attempt arithmetic), `§7`/`§7a`/`§7a.1`. Gate-1 record: `docs/specs/focus-tool-review.md`.
 //
-// THE REGISTER (`§5.5.1`) RIDES THIS SUITE (`§5.2` leg 1): its `17` typed rows and the
-// harness that executes them live in `tests/focus-tool-register.ts` — a NON-test module, so
-// it is never collected as a suite — and `REGISTER-EXEC-1` below EXECUTES them.
+// THE REGISTER (`§5.5.1` + `§5.5.4`) RIDES THIS SUITE (`§5.2` leg 1): its TWENTY typed rows
+// (the contract's full table — the row-set settlement `§5.5.4` executes `P-FT-AR-2`,
+// `P-FT-AR-3` and `P-FT-RF-3` rather than withdrawing them, so the declared total is the
+// TWENTY-CELL SUM `73` and the superseded seventeen-cell `67` is kept VISIBLE and WITHDRAWN)
+// and the harness that executes them live in `tests/focus-tool-register.ts` — a NON-test
+// module, so it is never collected as a suite — and `REGISTER-EXEC-1` below EXECUTES them.
 //
 // AUTHORING ORDER (`§4.2`): (a) the EXISTENCE rows → (b) the ROUTE rows → (c) the SHAPE rows
 // → (d) the REFUSAL/READINESS and NEGATIVE rows → (e) the IDENTITY and SEMANTICS rows →
@@ -45,7 +48,10 @@ import type { RpcMethod } from '../src/shared/types.js'
 import {
   REGISTER, STOP_RULE_PROBE, DECLARED_TERMS, EXPECTED_ALL_TOOLS, EXPECTED_GROUPS,
   EXPECTED_MUTATING, DECLARED_MEMBERS, CAP_PER_ROW, CAP_TOTAL,
-  runRegister, read, stripComments, scanLines, liveAllTools, liveRpcMethods,
+  DECLARED_TOTAL, AS_FILED_TOTAL, AS_FILED_DECLARED_TERMS, EXECUTED_CELLS_SUM_AT_SETTLEMENT,
+  DECLARED_TERM_CHAIN, DECLARED_DOMAIN_SUBTOTALS, DECLARED_TYPE_SUBTOTALS,
+  DECLARED_BOUNDED_ROWS, DECLARED_READING_CLASSES, ENUMERATED_ROW_IDS, EXECUTED_CELLS_SUM,
+  runRegister, reportDiagnostics, read, stripComments, scanLines, liveAllTools, liveRpcMethods,
   liveMutatingMethods, liveValidGroups, focusRouteSource, recorder, newServer,
   callTool, callHandler, assertOneFocusCall, thrown,
 } from './focus-tool-register.js'
@@ -617,45 +623,125 @@ describe('§5.2 item 4 — the census as a list: counts (duplicate checks) besid
 // ===========================================================================
 let REGISTER_REPORT: Awaited<ReturnType<typeof runRegister>> | null = null
 let REGISTER_EXEC_ERROR: unknown = null
+/** THE READINGS, ONE LINE, captured at the register's own execution site so they are
+ *  reportable at RED time (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`). */
+let REGISTER_DIAGNOSTICS = '(the register did not reach its execution site)'
 
-describe('§5.5.1 — THE EXECUTED PROPERTY REGISTER (17 typed rows / 17 terms / declared total 67)', () => {
+describe('§5.5.1 / §5.5.4 — THE EXECUTED PROPERTY REGISTER (20 typed rows / 20 terms / declared total 73)', () => {
   it('REGISTER-EXEC-1 — the register EXECUTES: the harness runs it once and reports every row (an un-run row is a FAILURE)', async () => {
     try {
       REGISTER_REPORT = await runRegister(REGISTER)
     } catch (e) {
       REGISTER_EXEC_ERROR = e
+      // THE READINGS COME BACK EVEN ON THE FAILING PATH: the harness's own failure message IS
+      // the readings (declared total with its terms, the executed total, every row's
+      // attempts/held/broken, and the un-run rows NAMED as failures).
+      REGISTER_DIAGNOSTICS = e instanceof Error ? e.message : String(e)
     }
     if (REGISTER_EXEC_ERROR !== null) throw REGISTER_EXEC_ERROR
     const report = REGISTER_REPORT as NonNullable<typeof REGISTER_REPORT>
     const perRow = report.rows
       .map((r) => `${r.id} ${r.attemptsRun}/${r.declaredTerm} held=${r.held} broken=${r.broken} controls=${r.controls} ${r.state}`)
       .join(' | ')
+    // THE READINGS, PRINTED WHETHER OR NOT THEY PASS (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-
+    // TERMS`): the declared total WITH its terms, the executed total, each row's own
+    // attempts/held/broken, and the un-run rows NAMED as FAILURES. This file pins NO expected
+    // per-row state: the register is RED here precisely because the tool does not exist yet,
+    // and its un-run rows must be reported as failures rather than absorbed.
+    REGISTER_DIAGNOSTICS = reportDiagnostics(report)
     expect(
       report.unrunRows,
-      `REGISTER — un-run rows are FAILURES, never passes. rowsExecuted=${report.rowsExecuted} · attemptsExecuted=${report.attemptsExecuted} · termsDeclared=${report.termsDeclared} · totalDeclared=${report.totalDeclared} · registerStoppedAt=${String(report.registerStoppedAt)} · un-run=${JSON.stringify(report.unrunRows)} · PER ROW: ${perRow}`,
+      `REGISTER — un-run rows are FAILURES, never passes. termsDeclared=${report.termsDeclared} · totalDeclared=${report.totalDeclared} · attemptsExecuted=${report.attemptsExecuted} · rowsExecuted=${report.rowsExecuted} · rows=${report.rows.length} · registerStoppedAt=${String(report.registerStoppedAt)} · un-run=${JSON.stringify(report.unrunRows)} · PER ROW: ${perRow}`,
     ).toEqual([])
-    expect(report.rows.filter((r) => r.state === 'broken').map((r) => r.id), 'REGISTER — every row held (no row is a pass while broken).').toEqual([])
-    expect(report.attemptsExecuted, `REGISTER — the EXECUTED attempts equal the seventeen declared terms. PER ROW: ${perRow}`).toBe(report.termsDeclared)
+    expect(report.rows.filter((r) => r.state === 'broken').map((r) => r.id), `REGISTER — every row held (no row is a pass while broken). PER ROW: ${perRow}`).toEqual([])
+    expect(report.attemptsExecuted, `REGISTER — the EXECUTED attempts equal the twenty declared terms. PER ROW: ${perRow}`).toBe(report.termsDeclared)
+    expect(report.totalDeclared, `REGISTER — the declared total is the twenty-cell sum the cells themselves carry. PER ROW: ${perRow}`).toBe(report.termsDeclared)
   })
 
-  it('REGISTER-TERMS — the declared total is the sum of its SEVENTEEN printed TERMS: `67` (`§5.5.3`)', () => {
+  it('REGISTER-TERMS — the declared total is the sum of its TWENTY printed TERMS: `73` (`§5.5.4` item 2)', () => {
     const rowTerms = REGISTER.map((r) => r.term)
-    expect(rowTerms, `REGISTER — the seventeen typed row cells carry their terms IN ROW ORDER. Measured: ${JSON.stringify(rowTerms)} vs declared: ${JSON.stringify([...DECLARED_TERMS])}`).toEqual([...DECLARED_TERMS])
-    expect(REGISTER.length, 'REGISTER — exactly `17` typed rows (the two `P-FT-PROBE-*` rows are the stop-rule CONTROL, reported beside the register).').toBe(17)
+    expect(rowTerms, `REGISTER — the twenty typed row cells carry their terms IN ROW ORDER. Measured: ${JSON.stringify(rowTerms)} vs declared: ${JSON.stringify([...DECLARED_TERMS])}`).toEqual([...DECLARED_TERMS])
+    expect(REGISTER.length, 'REGISTER — exactly `20` typed rows (`§5.5.1` enumerates twenty; the two `P-FT-PROBE-*` rows are the stop-rule CONTROL, reported beside the register).').toBe(20)
     expect(new Set(REGISTER.map((r) => r.id)).size, 'REGISTER — the row ids are distinct (`P-FT-*`).').toBe(REGISTER.length)
-    expect(new Set(REGISTER.map((r) => r.strategyId)).size, 'REGISTER — SEVENTEEN DISTINCT strategy ids, one per row (`S-FT-*`).').toBe(REGISTER.length)
-    // THE DECLARED TOTAL (`§5.5.3`): the contract's declared figure is `67` over ITS
-    // seventeen cells; this register's seventeen authored terms sum to `64`, and the
-    // three-figure residue is REPORTED AS A GAP to the supervisor (the contract's own
-    // `§5.5.1` row table enumerates twenty rows whose property text needs `73`, so the
-    // declared total, the declared row set and its own property texts cannot all hold).
-    expect(rowTerms.reduce((a, b) => a + b, 0), 'REGISTER — the declared total of THIS register = the sum of its own seventeen terms.').toBe(67)
+    expect(new Set(REGISTER.map((r) => r.strategyId)).size, 'REGISTER — TWENTY DISTINCT strategy ids, one per row (`S-FT-*`).').toBe(REGISTER.length)
+    // THE DECLARED TOTAL (`§5.5.4` item 2, discharged by the row-set settlement):
+    // it is the sum of the executed cells' OWN twenty terms — asserted live, never a
+    // figure the execution contradicts — and the superseded seventeen-cell `67` is
+    // kept VISIBLE as a WITHDRAWN reading beside it (`73 − 6` = `67`).
+    expect(rowTerms.reduce((a, b) => a + b, 0), 'REGISTER — the declared total = the sum of the cells\' own twenty terms: `73`.')
+      .toBe(73)
+    expect(rowTerms.reduce((a, b) => a + b, 0), 'REGISTER — and that live sum is the register\'s own DECLARED_TOTAL literal (a literal the cells contradict is a review finding).')
+      .toBe(DECLARED_TOTAL)
+    expect(DECLARED_TOTAL, 'REGISTER — the re-grained declared total literal.').toBe(73)
+    expect([...DECLARED_TERMS].reduce((a, b) => a + b, 0), 'REGISTER — the DECLARED_TERMS literal sums to `73` too (no second authority).').toBe(73)
+    // THE WITHDRAWN READING, KEPT VISIBLE AND NEVER AN ASSERTION TARGET:
+    expect(AS_FILED_TOTAL, 'REGISTER — the SUPERSEDED seventeen-cell total, kept visible as WITHDRAWN.').toBe(67)
+    expect(EXECUTED_CELLS_SUM_AT_SETTLEMENT, 'REGISTER — the superseded reading is MEASURED from its own terms, not re-typed.').toBe(67)
+    expect(AS_FILED_DECLARED_TERMS.length, 'REGISTER — seventeen cells at the settlement (the superseded row count).').toBe(17)
+    expect([...DECLARED_TERMS].length - AS_FILED_DECLARED_TERMS.length, 'REGISTER — the settlement added THREE rows: `+6` drives (`2 + 2 + 2`) is the whole of the `67` → `73` move (`§5.5.4` item 1/2).').toBe(3)
+    expect(DECLARED_TOTAL - AS_FILED_TOTAL, 'REGISTER — `73 − 67` = `6` = the three restored rows\' own declared drives.').toBe(6)
+    // THE CHAIN, RECOMPUTED FROM THE TERMS AND CLOSING ON THE FINAL TOTAL. THE DERIVED CHAIN
+    // IS WHAT IS ASSERTED; `§5.5.4` item 2's PRINTED chain is NOT (`… 43 → 45 → 47 → 59 …`):
+    // that sequence applies the `AR` rows in `§5.5.1` TABLE order while the `DECLARED_TERMS`
+    // list printed in the same sentence runs `… 43 → 44 → 46 → 58 …`, and it carries TWENTY
+    // running figures under a *"nineteen steps"* label. THE EXECUTED CELLS GOVERN (`§5.5.3`),
+    // so the divergence is REPORTED, not bent: the closure on `73` is asserted under EITHER
+    // derivation, and the step-count WORD is asserted against the cells, never quoted.
+    expect([...DECLARED_TERM_CHAIN], 'REGISTER — the chain, one term at a time in `DECLARED_TERMS` order (the contract\'s printed chain orders the `AR`/`RS` cells differently; reported, not asserted).').toEqual([4, 7, 10, 12, 14, 16, 19, 29, 31, 32, 43, 45, 47, 59, 63, 65, 67, 69, 72, 73])
+    expect(DECLARED_TERM_CHAIN.length, 'REGISTER — a chain over the twenty terms carries TWENTY running figures (asserted against the cells, NOT the contract\'s "nineteen-step" WORD, which its own twenty printed figures refute).').toBe(DECLARED_TERMS.length)
+    expect(DECLARED_TERM_CHAIN[DECLARED_TERM_CHAIN.length - 1], 'REGISTER — the chain CLOSES on the declared total, so the total is the sum of its own terms.').toBe(DECLARED_TOTAL)
+    expect([4, 7, 10, 12, 14, 16, 19, 29, 31, 32, 43, 45, 47, 59, 63, 65, 67, 69, 70, 73][19], 'REGISTER — the contract\'s PRINTED chain (table-ordered `AR`, `[1, 3]`-ordered `RS`) ALSO closes on `73`: the two derivations differ in ORDER, never in total.').toBe(DECLARED_TOTAL)
+    // THE TWO SUBTOTAL DECOMPOSITIONS, each recomputed from the cells' own terms:
+    const domainOfId = (id: string): string => id.split('-')[2] as string
+    const byDomain: Record<string, number> = {}
+    const byType: Record<string, number> = {}
+    for (const r of REGISTER) {
+      byDomain[domainOfId(r.id)] = (byDomain[domainOfId(r.id)] ?? 0) + r.term
+      byType[r.type] = (byType[r.type] ?? 0) + r.term
+    }
+    expect(byDomain, 'REGISTER — the five by-domain subtotals, EACH THE SUM OF THE ADDENDS IT NAMES (`14 + 18 + 27 + 10 + 4` = `73`).').toEqual({ ...DECLARED_DOMAIN_SUBTOTALS })
+    expect(Object.values(byDomain).reduce((a, b) => a + b, 0), 'REGISTER — the five-way domain sum closes on the final total.').toBe(DECLARED_TOTAL)
+    expect(byType, 'REGISTER — the three by-type subtotals over `§5.5.1`\'s own `Type` column (`41 + 14 + 18` = `73`; `§5.5.4` item 2\'s printed `43`/`16` are not the sum of the addends it lists — reported, not asserted).').toEqual({ ...DECLARED_TYPE_SUBTOTALS })
+    expect(Object.values(byType).reduce((a, b) => a + b, 0), 'REGISTER — the three-way type sum closes on the final total.').toBe(DECLARED_TOTAL)
     expect(new Set(REGISTER.map((r) => r.type)), 'REGISTER — the three families, and never an `F-` row.').toEqual(new Set(['P-IM', 'P-SM', 'P-TP']))
     for (const r of REGISTER) expect(['P-IM', 'P-SM', 'P-TP'], `REGISTER — ${r.id} is a TYPED row.`).toContain(r.type)
     // THE FIVE DOMAINS, READ FROM THE ROW ID'S OWN DOMAIN PREFIX (`§5.5`'s declaration:
     // the prefix is PART of the id so a reader sees which domain a row drives).
-    const domainOf = (id: string): string => id.split('-')[2] as string
-    expect([...new Set(REGISTER.map((r) => domainOf(r.id)))].sort(), 'REGISTER — the FIVE declared domains (RT/ID/AR/RF/RS), by name.').toEqual(['AR', 'ID', 'RF', 'RS', 'RT'])
+    expect([...new Set(REGISTER.map((r) => domainOfId(r.id)))].sort(), 'REGISTER — the FIVE declared domains (RT/ID/AR/RF/RS), by name.').toEqual(['AR', 'ID', 'RF', 'RS', 'RT'])
+  })
+
+  it('REGISTER-ROW-SET — EVERY one of the TWENTY enumerated rows executes: NO enumerated-but-unexecuted row (`§5.5.4`)', () => {
+    const ids = REGISTER.map((r) => r.id)
+    expect([...ids].sort(), 'REGISTER — the register carries EXACTLY the twenty ids `§5.5.1` enumerates, by name (`§5.5.4` item 1: every enumerated row has a recorded fate).').toEqual([...ENUMERATED_ROW_IDS].sort())
+    for (const id of ENUMERATED_ROW_IDS) {
+      expect(ids, `REGISTER — the enumerated row ${id} IS executed (the row-set settlement EXECUTES it rather than withdrawing it).`).toContain(id)
+      const row = REGISTER.find((r) => r.id === id) as (typeof REGISTER)[number] | undefined
+      expect(row?.drives.length, `REGISTER — ${id} carries its own declared drives (no enumerated row rides another row's drives).`).toBe(row?.term)
+    }
+    // THE THREE ROWS THE SETTLEMENT RESTORES, EACH WITH ITS OWN DECLARED PROPERTY, FAMILY,
+    // STRATEGY ID AND DRIVE COUNT (`§5.5.4` item 1(a)/(b)/(c)) — and NONE of them is a
+    // re-numbered or re-used existing row.
+    const restored: Array<{ id: string; type: string; strategyId: string; term: number }> = [
+      { id: 'P-FT-AR-2', type: 'P-TP', strategyId: 'S-FT-EDGE-1', term: 2 },
+      { id: 'P-FT-AR-3', type: 'P-IM', strategyId: 'S-FT-PASS-1', term: 2 },
+      { id: 'P-FT-RF-3', type: 'P-SM', strategyId: 'S-FT-PUSH-1', term: 2 },
+    ]
+    for (const r of restored) {
+      const row = REGISTER.find((x) => x.id === r.id) as (typeof REGISTER)[number] | undefined
+      expect(row, `REGISTER — the restored row ${r.id} is present.`).toBeTruthy()
+      expect(
+        { type: row?.type, strategyId: row?.strategyId, term: row?.term },
+        `REGISTER — ${r.id}'s own declared family, strategy id and drive count, unmoved from \`§5.5.1\`'s cell.`,
+      ).toEqual({ type: r.type, strategyId: r.strategyId, term: r.term })
+      expect(row?.bound, `REGISTER — ${r.id} is ENUMERATED (the bounded set is unchanged by the settlement).`).toBe('enumerated')
+    }
+    // THE BOUNDED SET AND THE READING CLASSES, BOTH UNMOVED (`§5.5.4` item 3(c)).
+    expect(REGISTER.filter((r) => r.bound === 'bounded').map((r) => r.id), 'REGISTER — `§5.5.2` item 2\'s FIVE `(bounded)` rows, still the five the contract names.').toEqual([...DECLARED_BOUNDED_ROWS])
+    const allIds = REGISTER.map((r) => r.id)
+    for (const [cls, members] of Object.entries(DECLARED_READING_CLASSES)) {
+      for (const id of members) expect(allIds, `REGISTER — the reading class "${cls}" names ${id}, which IS a register row.`).toContain(id)
+    }
+    expect(REGISTER.filter((r) => r.term > 0).length, 'REGISTER — NO row carries a zero term: every row drives its own pool.').toBe(20)
   })
 
   it('REGISTER-CAPS — `<=100` attempts per row · `<=400` total · no seed and no generator', () => {
@@ -668,7 +754,7 @@ describe('§5.5.1 — THE EXECUTED PROPERTY REGISTER (17 typed rows / 17 terms /
     expect(REGISTER.every((r) => !/seed|random|lcg/i.test(r.strategyId)), 'REGISTER — NO SEED AND NO GENERATOR: no row samples.').toBe(true)
     expect(REGISTER.every((r) => /^P-FT-[A-Z]+-\d+$/.test(r.id)), 'REGISTER — every row id is a typed `P-FT-<domain>-<n>` id.').toBe(true)
     const bounded = REGISTER.filter((r) => r.bound === 'bounded').map((r) => r.id)
-    expect(bounded, "REGISTER — `§5.5.2` item 2 declares FIVE of the seventeen rows `(bounded)` (a quantifier over a pool: the 10/11/12 shapes, the tool's own bytes, reachable by name); the five marked here are the five the contract names.").toEqual(['P-FT-ID-3', 'P-FT-ID-5', 'P-FT-AR-1', 'P-FT-AR-4', 'P-FT-RS-2'])
+    expect(bounded, "REGISTER — `§5.5.2` item 2 declares FIVE of the TWENTY rows `(bounded)` (a quantifier over a pool: the 10/11/12 shapes, the tool's own bytes, reachable by name); UNMOVED by the settlement — all three restored rows are ENUMERATED.").toEqual(['P-FT-ID-3', 'P-FT-ID-5', 'P-FT-AR-1', 'P-FT-AR-4', 'P-FT-RS-2'])
   })
 
   it("REGISTER-STOP-RULE-CONTROL — stop-after-5-consecutive-failures abandons the row's remaining attempts and starts NO further row", async () => {
@@ -681,9 +767,17 @@ describe('§5.5.1 — THE EXECUTED PROPERTY REGISTER (17 typed rows / 17 terms /
 
   it('REGISTER-HONESTY — what the register does NOT prove, and the two reading classes kept apart', () => {
     const report = REGISTER_REPORT
+    // THE READINGS, so a RED register still reports every figure it reached — and the
+    // superseded `67` is read as WITHDRAWN beside the live `73` rather than silently gone.
+    expect(typeof REGISTER_DIAGNOSTICS, 'REGISTER — the readings line is captured on BOTH paths (a returned report or the harness\'s own failure message).').toBe('string')
+    expect(REGISTER_DIAGNOSTICS, `REGISTER — the readings carry the re-grained declared total.\n${REGISTER_DIAGNOSTICS}`).toContain('totalDeclared=73')
+    expect(report?.totalDeclared ?? DECLARED_TOTAL, `REGISTER — the live declared total is the twenty-cell sum. ${REGISTER_DIAGNOSTICS}`).toBe(73)
+    expect(AS_FILED_TOTAL, 'REGISTER — and the withdrawn reading is `67`, never asserted as live.').toBe(67)
     if (report !== null) {
-      expect(report.totalDeclared, 'REGISTER — the declared total printed by the harness is `67`.').toBe(67)
-      expect(report.termsDeclared, 'REGISTER — and it is the sum of the seventeen printed terms.').toBe(67)
+      expect(report.totalDeclared, 'REGISTER — the declared total printed by the harness is the re-grained `73` (the settled figure), never the superseded `67`.').toBe(73)
+      expect(report.totalDeclared, 'REGISTER — and it is the SAME figure the executed cells sum to: no printed total the execution contradicts.').toBe(REGISTER.reduce((n, r) => n + r.term, 0))
+      expect(report.termsDeclared, 'REGISTER — and it is the sum of the twenty printed terms.').toBe(73)
+      expect(report.termsDeclared, 'REGISTER — the cells\' own live sum, asserted rather than the literal alone.').toBe(EXECUTED_CELLS_SUM)
       expect(report.attemptsExecuted, `REGISTER — the EXECUTED attempt total. Executed: ${report.attemptsExecuted} · declared: ${report.termsDeclared}`).toBeLessThanOrEqual(CAP_TOTAL)
       expect(report.rows.length, 'REGISTER — per-row attemptsRun/held/broken/readings/controls are reported for EVERY row.').toBe(REGISTER.length)
       expect(report.controlsRun, 'REGISTER — the control drives are reported BESIDE the term and are not counted inside it.').toBeGreaterThan(0)
