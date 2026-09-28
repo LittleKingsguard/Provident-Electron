@@ -60,6 +60,14 @@ const RESET_BODY = `function (ctx) {
 const GUTTER_DRAG_BODY = `function (ctx) {
   void ctx;
 }`
+// ⟶ ADDED 2026-09-27 (`U-THEME-CONTROL`, `docs/specs/theme-control.md` §2.1 item 3, §2.3 item 3):
+// THE AUTHORED INITIAL SETTING TOKEN, AND IT IS DEMO DATA. It is ONE member of the appearance
+// control's CLOSED two-member setting block (the two `theme-set` buttons carry `'dark'` and
+// `'light'`); the repo asserts NOTHING about what either member MEANS, and NOTHING here reads the
+// environment, the OS or a stored preference to choose it (`P-TC-3`). The setting lives in the live
+// graph and nowhere else (`§1` item 6, `P-TC-4`): a re-boot reconstructs THIS value.
+const THEME_INITIAL_TOKEN = 'dark'
+
 // Echo: args[0] (the synthetic input event's value) into the echo-out node.
 const ECHO_BODY = `function (ctx, value) {
   const all = ctx.tree.allNodes();
@@ -349,6 +357,71 @@ export function demoEnvelope() {
                 css: { id: 'echo-out', classes: ['echo-out'] },
                 props: { id: 'echo-out' },
                 content: '(nothing yet)',
+              },
+            ],
+          },
+          // ---- theme card (U-THEME-CONTROL, docs/specs/theme-control.md §2.1) -------------------
+          // 'theme-card' — THE AUTHORED APPEARANCE CONTROL, and it is FIVE nodes: this section,
+          // its heading, the two setting-token buttons and the state node whose `content` carries
+          // the setting. THE TOKEN BLOCK IS CLOSED AT TWO and it is DEMO DATA: the repo asserts
+          // nothing about what either member MEANS, the authored handler CARRIES the caller's token
+          // and interprets nothing, the state node is the ONE graph-readable carrier, NO attribute
+          // is written, and no unit may generalise this card into a shipped appearance UI (§1
+          // item 7). Each button's handler carries its OWN authored block member; the value it
+          // WRITES is the CALLER's (`provident.dispatch theme-dark click` with the token as its
+          // argument), which is why the body declares its member and substitutes no default.
+          {
+            type: 'section',
+            css: { id: 'theme-card', classes: ['card'] },
+            children: [
+              { type: 'h2', content: 'Appearance (demo)' },
+              {
+                type: 'button',
+                css: { id: 'theme-dark', classes: ['btn'] },
+                content: 'Dark',
+                handlers: [
+                  {
+                    name: 'theme-set',
+                    event: 'click',
+                    body: `function (ctx, value) {
+  const authoredToken = 'dark';
+  void authoredToken;
+  const all = ctx.tree.allNodes();
+  const node = all.find(function (n) { return n && n.props && n.props.id === 'theme-setting'; });
+  if (!node) return;
+  let carried = '';
+  try { carried = value == null ? '' : String(value); } catch (e) { carried = ''; }
+  try { ctx.clientAPI.apply(node.id, [{ targetProp: 'content', mode: 'replace', value: carried }]); } catch (e) { void e; }
+}`,
+                  },
+                ],
+              },
+              {
+                type: 'button',
+                css: { id: 'theme-light', classes: ['btn'] },
+                content: 'Light',
+                handlers: [
+                  {
+                    name: 'theme-set',
+                    event: 'click',
+                    body: `function (ctx, value) {
+  const authoredToken = 'light';
+  void authoredToken;
+  const all = ctx.tree.allNodes();
+  const node = all.find(function (n) { return n && n.props && n.props.id === 'theme-setting'; });
+  if (!node) return;
+  let carried = '';
+  try { carried = value == null ? '' : String(value); } catch (e) { carried = ''; }
+  try { ctx.clientAPI.apply(node.id, [{ targetProp: 'content', mode: 'replace', value: carried }]); } catch (e) { void e; }
+}`,
+                  },
+                ],
+              },
+              {
+                type: 'div',
+                css: { id: 'theme-setting', classes: ['theme-setting'] },
+                props: { id: 'theme-setting' },
+                content: THEME_INITIAL_TOKEN,
               },
             ],
           },

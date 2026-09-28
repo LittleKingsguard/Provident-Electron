@@ -278,3 +278,23 @@ if (typeof document !== 'undefined') {
     void main()
   }
 }
+
+/** **U-THEME-CONTROL (`docs/specs/theme-control.md` §2.1 item 4, `§2.4` items 1/2) — THE ONE BOUNDED
+ *  WIRING ROLE: THE ATTRIBUTE-NAME HOLDER.** The appearance control's attribute name is the CALLER's
+ *  own string, so it lands HERE — nowhere in the envelope and in no mechanism (`§2.1` item 4) — and
+ *  this role carries it: `attributeName` is a CALLER-SUPPLIED constant, echoed BY IDENTITY under the
+ *  sibling mechanism's own rule (`§0` ruling 14: a non-empty string is the name; the empty string,
+ *  every non-string and the omitted argument are the declared `null`; no coercion hook and no
+ *  normalisation is ever consulted — which is why nothing here trims, lower-cases or parses it).
+ *  **IT IS DELIBERATELY INERT, AND THAT IS THE CONTRACT:** it holds a VALUE, it WRITES NOTHING (no
+ *  attribute, no class, no style, no markup, no created element — `§2.4` item 2), it dispatches no
+ *  event, it holds no state, and NOTHING in this unit reads it (`§2.4` items 1/4: the control's ONE
+ *  write is a `content` mutation on a graph node, performed by the authored envelope handler).
+ *  `stateNodeId` is the AUTHORED state node the caller reads back through the existing tools
+ *  (`provident.get_node_state`), so the role names the graph-side carrier and resolves its element
+ *  from the PRODUCING GRAPH — never a selector, a lookup or a created element. */
+export function themeWiringRole(): readonly [string, string] {
+  const attributeName = 'theme'
+  const stateNodeId = 'theme-setting'
+  return [attributeName, stateNodeId]
+}
