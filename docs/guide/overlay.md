@@ -4,7 +4,9 @@ You have an overlay to open, hold, close and dismiss, and you want to know which
 job this repo has already decided for you. In one line: `src/shared/overlay.ts` gives you a
 **state machine that returns data** (`overlayTransition`) and an **inert-background write that is
 returned, never performed** (`overlayInertDeclaration`), while the overlay element, the scrim,
-the key handling, the applied attribute write and the node's placement stay yours. Unit
+the key handling, the applied attribute write and the node's placement stay yours — **and the inert half is a
+fork decision between two non-equivalent routes, spelled out in *Making the background inert: you must choose a
+route* below, whose absence was the miscommunication a downstream consumer ruled on (`OS-1`)**. Unit
 **`U-OVERLAY`**, wave **`E`**, ledger row **`E9`**; the landed record is the
 `## DONE — U-OVERLAY` section of `docs/next-steps.md`.
 
@@ -70,6 +72,34 @@ and `tests/overlay.test.ts`'s `I-9` row asserts the same (`docs/specs/overlay.md
 | `docs/specs/overlay.md` | §5.1, §5.2 | the diff scope with its denied set, and the declared verification set with the three-part refusal of a live/DOM row and of a divergence row |
 | `docs/specs/overlay.md` | §6, §7 | the falsification conditions and the honest statements |
 | `docs/decisions.md` | rows `E5-B-1-DECLARATION-IS-RETURNED-AS-TEXT-AND-NEVER-APPLIED`, `PROHIBITION-5-IS-AN-ADOPTION-BOUND`, `UI-RENDERED-WITH-PROVIDENT` | the rulings the unit derives from |
+
+## Making the background inert: you must choose a route
+
+**This is a fork decision, not an omission, and the two routes are NOT equivalent.** Everything above hands
+you a declaration; the routes differ in **where that declaration is applied** and in **who owns the applied
+half**. What the declaration gives you is unchanged either way, and this is exact:
+
+| `inert` argument | Returned record |
+| --- | --- |
+| the strict boolean `true` | `{ name: <the echoed non-empty string, or null when the name is unusable>, value: 'true', removal: false, target }` |
+| **anything else** (the string `'true'` included) | `{ name, value: false, removal: true, target }` |
+
+The set arm's `value` is the **string `'true'`**; the removal arm's is the **boolean `false`**; the case is read
+from the **`removal` member alone — never inferred from an empty value** (`docs/specs/overlay.md` §2.4 items 1–4,
+§2.2 `P-OV-7`/`P-OV-9`).
+
+| Route | What it is | Owner | Layer | What verifies it |
+| --- | --- | --- | --- | --- |
+| **(a) `props: { inert: 'true' }` on an authored node** | the project-wide UI-constraint route: the attribute rides the authored envelope as pure data (the project-wide constraint; `docs/decisions.md` `UI-RENDERED-WITH-PROVIDENT` — **not** a clause of `docs/specs/overlay.md`) | you, as the app authoring the node | the authored envelope — `[T]` | the node suite, asserting the authored envelope |
+| **(b) a DOM write at your own write site** | `setAttribute` / `removeAttribute` on the background element, at your own write site (the shell-chrome carve-out; `docs/specs/overlay.md` §2.5 item 2 — *"the applied write is the CONSUMER's"* — with §5.2's `[U]` refusal and `[D]` non-claim) | you, in your app/shell wiring | the app layer — `[U]`/`[D]`, never this unit's `[T]` | the live real-Electron leg (`npm run ui`) — **and that leg's own precondition is not green in this repo's current state, so it would take no measurement here** |
+
+**The removal arm of route (b) needs `ShimElement.removeAttribute` — the one admitted shim addition
+(`SHIM-COMPLETION-CARVE-OUT` / `H-r7`, `docs/specs/overlay.md` §0 ruling 9) — and it already exists.** The
+composition is the same for both routes: `overlayInertDeclaration(bg, ATTRIBUTE, overlayTransition(state, verb).changed)`.
+
+**Write the attribute name yourself — the spelling above is yours, not ours.** This mechanism owns, defaults
+and documents no attribute name (`docs/specs/overlay.md` §2.2 `P-OV-7`), and this repo contains no DOM `inert`
+attribute to copy and no layer that reads an applied one back (§5.2's reader question, answered `NONE`).
 
 ## Use cases
 
