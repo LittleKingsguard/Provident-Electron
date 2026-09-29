@@ -435,6 +435,18 @@ filed. **The one limit of that repair is stated rather than smoothed: the sectio
 rows of content did not** (a >2 000-character table row cannot be re-emitted verbatim without an unverifiable
 transcription risk — `RCA-8(c)`/`(d)`), so heading and content are not physically adjacent today; that residual is
 owned by the next shell-capable pass, and it is recorded in the doc-review record's §3 (`F1`) and §9 item 3.
+**⟶ THAT RESIDUAL IS NOW CLOSED (2026-09-29, THE SUPERVISOR'S SHELL-CAPABLE MOVE PASS; `RCA-8(d)` ANNOTATE-BESIDE —
+the as-written paragraph above is KEPT VISIBLE and is NOT rewritten, and it stands as the repair pass's own dated
+reading):** the limit above was a **tool-wall** limit, not a document limit. With a shell the move is exact: the
+subsection's WHY-paragraph, table, single row and *"WHAT THIS SECTION IS NOT"* paragraph were **moved WITH the
+heading by a byte-exact eight-line relocation** (`8` insertions / `8` deletions, no line re-emitted, no byte lost; a
+checkpoint commit at `e9fa549` precedes the move — `RCA-8(b)`/`RCA-8(c)`). **`docs/pending.md`'s `§M` therefore now
+reads WHOLE in the fork-request disposition region** — heading at `:336`, its WHY-paragraph, table header, single row
+and closing paragraph at `:338`–`:344`, `## SPECULATIVE / IN GATE` at `:346` — and **`### L-4.` sits at `:689` with
+rows `L-4a`…`L-4m` intact and undisturbed**; the former site carries only the as-filed heading text and a dated
+pointer, and `docs/pending.md` still carries **exactly one** `## §M.` heading (counted this pass by `grep`). **The
+doc-review record's §3 (`F1`) and §9 item 3 are annotated CLOSED accordingly.** No figure, status, row or count moves
+in this annotation, and **no leg ran** (`RCA-12`).
 
 **AND THE ROUTING THIS PASS DID NOT ALTER:** §4's REJECTED alternatives stand untouched — **no `docs/defects.md`
 row and no `docs/HANDOFF.md` round** — even though the repair pass DID edit both files to annotate stale citations
