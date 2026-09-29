@@ -265,6 +265,8 @@ describe('UC-4', () => {
 | `persist` `(seam, state) => {present, value}` — a **top-level export the caller calls**; `focusTransition` never calls it | OPTIONAL | the caller | `{ present: false, value: undefined }`, and the module calls NOTHING (`focus-model.md` §2.4 seam 3) | `{ present: false, value: undefined }`, no call attempted (`focus-model.md` §2.4 seam 3) | `{ present: false, value: undefined }`, the throw SWALLOWED, nothing escapes (`focus-model.md` §2.4 seam 3) |
 | **`U-THEME`** — no seam | — | — | the seam set is EMPTY: the `env` reading is an ordinary argument record (`theme.md` §2.1 item 3, §2.3 item 2) | n/a — there is no callable to be non-callable | n/a — nothing is invoked, so nothing can throw from a seam (`theme.md` §2.4 item 3) |
 
+**⟶ THE PERSISTENCE BOUNDARY, AT THE `persist` ROW (`2026-09-29`):** **the family's answer to persistence is the caller-called returned write above — `persist(seam, state)` hands your seam's own value back to YOU — and the foundation supplies NO store** (`docs/decisions.md` ACTIVE row `NO-FOUNDATION-CONFIG-FILE-FACILITY`; `S-d4` + `H-r16` in `docs/specs/provident-electron-shell-chrome-handoff-review.md`; a fork's own carrier is `docs/FORKER.md` §4's `### PERSISTENCE — WHAT A FORK OWNS`).
+
 ## Gotchas measured in this repo
 
 - **`U-FOCUS-MODEL` is imported by a `src/**` file today**, although its own unit record and module header say

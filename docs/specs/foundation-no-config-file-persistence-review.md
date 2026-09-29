@@ -101,7 +101,7 @@ routed it host-side. The verdict-word divergence is vocabulary, not evidence.
 | 14 | The fork's own atomicity is internally inconsistent | **VERIFIED — the fork's to fix, on the fork's tree** | **non-atomic** `writeFileSync`: `operator-settings-store.ts:107`, `security-store.ts:77`, `engine-config.ts:57` · **atomic** `tmp`+`renameSync`: `module-store.ts:137-138`, `template-store.ts:106-107`, `rag-store.ts:825-826`, `vector-cache.ts:233-234`, `rag-store-registry-write.ts:275,282` |
 | 15 | The standing clauses say what this record says they say | **VERIFIED, NO DRIFT** | `S-d4` `docs/specs/provident-electron-shell-chrome-handoff-review.md:180` *"this repo **must not acquire a UI-config store**"* · `S-d8` prohibition 4 `:184` *"**a UI-config store or any persistence of its own** (persisted state is supplied *to* the mechanism)"* · `S-d13` `:190` *"**Persistence stays consumer-side: this repo owns no UI-config store** (… the fork's `UI-CONFIG-CARRIER` is the carrier)"* · `H-r16` `:244` *"… it must gain a store, and **that is a new gate that must not be smuggled in**"* · `H-r14` `:242` (the misreading class) · `docs/decisions.md:73`/`:84`/`:86` |
 | 16 | Ten landed contracts carry the boundary as a NEGATIVE, testable row | **VERIFIED — all ten; one anchor is off by two in the sibling report** | `docs/specs/theme.md:923` (`I-4`) + `:953` (`R-3`) · `theme-control.md:629` + `:1031` (`P-TC-IM-5`, built to FAIL) · `focus-model.md:1220` (`R-3`; the sibling's `:1188` sits on the adjacent `I-2` row at `:1186` — substance unchanged) · `focus-tool.md:944` (`P-FT-4`) · `overlay.md:905` + `:937` + `:1957` · `gsession.md:677` · `gutter-ui.md:2503` · `relocate.md:1394` · `container.md:968` · `menulib.md:1159` |
-| 17 | The `ui` leg witnesses exactly two store file names | **VERIFIED — and a third file would be UNOBSERVED, not red** | `scripts/electron-ui.mjs:652` fixed two-name literal; fixtures `tests/ui-leg-seam.test.ts:422-423,462`; `tests/ui-leg-contract.test.ts:3822-3823`; §0 prohibition table at `docs/specs/ci-ui-leg.md:214` (*"HOLDS — asserted"*) |
+| 17 | The `ui` leg witnesses exactly two store file names | **VERIFIED — and a third file would be UNOBSERVED, not red** | `scripts/electron-ui.mjs:652` fixed two-name literal **(⟶ POST-FILING ANCHOR CORRECTION 2026-09-29, THE GATE-7/8 REPAIR PASS, FINDING `F4`, LOW: the as-written `:652` is KEPT VISIBLE and the precise anchor is `:651-652` — the array is DECLARED at `:651` and its two-name literal stands at `:652`. Measured by that pass's own file read of `scripts/electron-ui.mjs` on 2026-09-29; `RCA-12`: no suite, no leg, no Electron boot and no battery ran in that pass.)**; fixtures `tests/ui-leg-seam.test.ts:422-423,462`; `tests/ui-leg-contract.test.ts:3822-3823`; §0 prohibition table at `docs/specs/ci-ui-leg.md:214` (*"HOLDS — asserted"*) |
 | 18 | The ledger is closed | **VERIFIED — `21 DONE / 0 open`** | `docs/next-steps.md:13`, `:769`, `:2420`; `docs/guide/README.md:56-57` |
 
 **Incidental staleness FOUND and REPORTED, not fixed here (out of this disposition's scope; annotate beside, never
@@ -190,7 +190,7 @@ this ask flows **fork → foundation** — the `SCH`-package channel, `docs/spec
    `docs/guide/seams.md:265`), the **atomic-replace precedent** (`src/main/module-store.ts:136-138`, against the
    non-atomic contrast at `src/main/security-store.ts:52`), and **version-from-first-write** (the foundation carries
    **no** `schemaVersion` token and **no** migration machinery); (iv) the **witness gap** — the `ui` leg witnesses
-   exactly two file names (`scripts/electron-ui.mjs:652`), so a fork's own file is outside every foundation witness
+   exactly two file names (`scripts/electron-ui.mjs:652` **⟶ POST-FILING ANCHOR CORRECTION 2026-09-29, THE GATE-7/8 REPAIR PASS, FINDING `F4`, LOW: the as-written `:652` is KEPT VISIBLE; the precise anchor is `:651-652` — declaration at `:651`, two-name literal at `:652`**), so a fork's own file is outside every foundation witness
    and the fork must witness its own; (v) the return note — the fork's own row is answered by this block and is
    **annotated by the fork's own pass** (this repo writes no file under `<Astrographer>/`, `H-r6` precedent `:217`,
    `:507-508`). *MUST NOT:* enumerate pane/zone/tab/region names as a foundation vocabulary, default or documented
@@ -374,3 +374,77 @@ an artifact of its own** — the same recurring unfiled-return gap the wave reco
 closed rather than carried. **No code, no red set, no register, no leg and no `§5.U` matrix ran or was emitted here.**
 **This pass's own legs:** none claimed — this is a documentation/gate record, and **no leg figure is quoted as this
 pass's measurement** (`RCA-12`).
+
+---
+
+## §13. POST-REVIEW ADDENDUM — GATES 7 AND 8 RAN ON THIS DISPOSITION AND RETURNED FINDINGS (2026-09-29, appended; **NOT ONE EARLIER SECTION OF THIS RECORD IS REWRITTEN BY THIS ADDENDUM**)
+
+**GATES 7 (proofreader) AND 8 (per-unit documentation review) RAN READ-ONLY ON THIS DISPOSITION AFTER THE COVERAGE
+PASS SHIPPED, FOLDED INTO ONE REPAIR PASS, AND THEY RETURNED FINDINGS — THIS DISPOSITION DID NOT PASS ITS GATES
+CLEAN.** Gate 7 returned **twelve** findings (`PF-NC-1`…`PF-NC-12`) and gate 8 returned **five** (`F1`…`F5`). **The
+provenance record is `archive/reviews/2026-09-29-foundation-no-config-file-persistence-doc-review.md`** (the
+gitignored `archive/reviews/` tree; the record this record's own §7 predicted as the pass's only new gitignored
+artifact — **and §7's gate-chain row is hereby CONFIRMED as written**: `1` ran as this record, `7 + 8` folded into one
+pass, `10`'s tracker-cell duty was discharged, gate 6 is an explicit `DOES NOT TRIGGER` and gate 11's zero-row
+exemption is cited **by row name** `PBT-REGISTER-REQUIRED-FOR-CODE-UNITS`).
+
+**THE DISPOSITION OF EVERY FINDING, IN ONE LINE EACH — each finding's own record is the §2/§3 tables of the doc-review
+record, cited here by id:**
+
+- **FIXED IN THE REPAIR PASS:** gate 7's `PF-NC-1` (the un-annotated `R13-HOST-FIX` citations inside
+  `docs/defects.md` — **seven** of them, the coverage pass having annotated only `:33`), `PF-NC-2`
+  (`docs/HANDOFF.md:397`), `PF-NC-3` (`docs/specs/mount-invariant-guard.md:785`'s verification claim, which this
+  repair pass found **worse** than reported: **all six** of its figures had drifted, not two), `PF-NC-4` (the
+  doc-review record itself — filed by that pass); and gate 8's `F1` (the `§M` placement), `F3` (the measurement
+  authority in the two repaired count annotations — corrected to this record's **§2 row 8 alone**, row 8 being the
+  count measurement and row 17 the two-name-witness census, which measures no count), `F4` (the witness anchor
+  `:652` → `:651-652`, **corrected in this record too at its §2 row 17 and §5 item 1(iv) as a POST-FILING ANCHOR
+  CORRECTION beside the as-written form**), and `F5` (the `OWED`-vs-`WRITTEN` contradiction in `docs/FORKER.md` —
+  **the two paragraph-form `OWED` markers** at `:285` and `:287` each annotated as DISCHARGED by the corresponding
+  `WRITTEN` block, with the `OWED` text kept as the earlier pass's pre-block provenance). **The two byte-level
+  count repairs the coverage pass landed — `docs/specs/gutter-ui.md:2504` and `docs/specs/ci-ui-leg.md:215` — were
+  verified CLEAN by the reviewer and re-read CLEAN by the repair pass**: no dangling fragment, no as-filed clause
+  consumed (the as-filed `21`/`21` text is kept visible in both), and the `ci-ui-leg.md` resume marker *"The as-filed
+  sentence resumes here"* confirmed as the owed shape.
+- **RECORDED AS OWED, WITH THE OWNER NAMED IN `docs/pending.md` `§C`'s new row
+  `DECISIONS-LEDGER-LINE-ANCHORS-DRIFT — CITE ROWS BY NAME (THE `:39` AND `:53` CLASSES, OWED)`:** gate 8's `F2` —
+  **partly fixed, partly owed.** The **misleading** sites were annotated (a verification claim that no longer
+  verifies, and the file that had adopted the by-name rule while still carrying un-annotated `:39` citations);
+  **the rest of both classes — the remaining `:39` sites in spec files, the whole `:53`/`:54`/`:64` class, and the
+  two related spent cells this record's §2 staleness note sits beside — are OWED to whatever pass next sweeps
+  documentation drift, and that row names them with per-file counts, an example each and the correct live anchors.**
+- **NOT DISPOSITIONED, AND THE GAP IS STATED RATHER THAN SMOOTHED: gate 7's `PF-NC-5`…`PF-NC-12`.** Their finding
+  texts were **not available to the repair pass**, so no verdict was invented for them. **This addendum therefore
+  does not claim a clean gate-7 pass**; the eight are carried in the doc-review record (§2's table, §9 item 1) with
+  the owner being the pass that holds the gate-7 reviewer's report.
+
+**THE `§M` PLACEMENT DEVIATED FROM THIS RECORD'S OWN §5 ITEM 3, AND THE DEVIATION WAS CORRECTED IN THE REPAIR PASS —
+recorded here because `§5` is this record's instruction and a later reader should see the deviation and its repair in
+the same place.** `§5` item 3 anchors the disposition's row *"in the fork-request disposition region (`## UPSTREAM
+REQUESTS FROM FORKS — DISPOSITIONS`, `:34`) — a new subsection in that region, since `§A`'s table is keyed to `SCH`
+ids"*. **The coverage pass filed the subsection between `§L-3` and `### L-4.` instead — OUTSIDE that region and
+INSIDE the `§L` region — and its own first sentence claimed the placement was *"appended at the tail so no
+pre-existing row, note or anchor moves"*, which was false on that placement twice over: `### L-4.` and rows
+`L-4a`…`L-4m` were displaced by eight lines, and the file's real tail is after `L-4m`.** **The repair pass moved the
+`## §M.` section boundary into the fork-request disposition region — so `§5` item 3 is now satisfied — restored
+`### L-4.` and its rows to the positions they held before the coverage pass, and corrected the placement sentence
+BESIDE ITSELF rather than rewriting it (`RCA-8(d)`):** the as-filed heading is kept visible as text at the former
+site with a dated pointer to the live position, `docs/pending.md` carries **exactly one** `## §M.` heading, and the
+subsection's paragraph, table, single row and *"WHAT THIS SECTION IS NOT"* paragraph remain at the former site as
+filed. **The one limit of that repair is stated rather than smoothed: the section BOUNDARY moved, the block's eight
+rows of content did not** (a >2 000-character table row cannot be re-emitted verbatim without an unverifiable
+transcription risk — `RCA-8(c)`/`(d)`), so heading and content are not physically adjacent today; that residual is
+owned by the next shell-capable pass, and it is recorded in the doc-review record's §3 (`F1`) and §9 item 3.
+
+**AND THE ROUTING THIS PASS DID NOT ALTER:** §4's REJECTED alternatives stand untouched — **no `docs/defects.md`
+row and no `docs/HANDOFF.md` round** — even though the repair pass DID edit both files to annotate stale citations
+(**seven** citation annotations in `docs/defects.md`, **one** in `docs/HANDOFF.md`; **no row added and no status
+changed in either**). **`docs/next-steps.md` remains UNCHANGED** — the ledger is closed at `21 DONE / 0 open`, no
+unit is admitted and `RCA-8(f)` admits no successor row — **`AGENTS.md` remains UNTOUCHED**, and **nothing was
+archived and nothing was repointed**: no doc became obsolete, and the fork's own row stays **OPEN**, to be annotated
+by the **fork's own pass** (this repo writes no file under `<Astrographer>/`).
+
+**The repair pass's tool wall and attribution, stated as its own record states it:** read/search/doc-write only, **no
+shell** — it ran **no suite, no leg, no trio, no `tsc`, no build, no Electron boot and no battery**, re-ran no red,
+flipped no status by measurement, and **made no commit** (the orchestrator owns the commit and the gate boundary).
+**No leg figure is quoted as that pass's measurement** (`RCA-12`).

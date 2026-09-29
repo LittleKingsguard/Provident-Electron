@@ -394,7 +394,7 @@ filed as a handoff item per AGENTS.md item 7:
 >    (`docs/pending.md`).
 >
 > `docs/defects.md` is the **package**-gap catalogue; host findings follow the
-> `R13-HOST-FIX` precedent (`docs/decisions.md:39`). **No row was added either
+> `R13-HOST-FIX` precedent (`docs/decisions.md:39`) *(row cited by name: `R13-HOST-FIX`; `:39` was the pre-amendment anchor and is now `GSESSION-THE-DISPOSAL-GOVERNS-A-MID-CALL-BEGIN`; the row sits at `:58` — dated clause added 2026-09-29 by the gate-7/8 repair pass, finding `PF-NC-1`/`PF-NC-2`/`PF-NC-3`; `RCA-8(d)`: the as-filed anchor is kept visible and is not rewritten)*. **No row was added either
 > place** for the 0.5.1 move — `UNDO-REDO-DESTROY-STATUS` (Round 9) was
 > annotated as still open, and that is the only row this pass touched.
 > **⟶ SUPERSEDED 2026-09-27 (`U-ENGINE-DRIFT` `M-31`): the sentence above is no longer
