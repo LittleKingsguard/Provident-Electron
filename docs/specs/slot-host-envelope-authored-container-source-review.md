@@ -180,6 +180,15 @@ Every load-bearing reading this disposition rests on, re-taken by the step passe
 
 ---
 
+## 9a. THE ARCHITECT'S RULINGS ON THIS DISPOSITION (recorded 2026-10-04, the gate-1 return)
+
+**The four-step record above was returned to the architect, and the architect has RULED on the two open calls this disposition leaves. Both rulings are recorded here so no later pass re-asks them (once an architect ruling is recorded, it is settled and applied without further confirmation — `AGENTS.md` item 10a).**
+
+1. **THE `OWED` SPEC PASS STAYS CARRIED — O-1/O-2 ARE NOT TAKEN UP IN THIS DISPOSITION, AND THE ARCHITECT HAS CHOSEN THE CARRY.** The bounded `docs/specs/slothost.md` amendment (the factory call discipline, the two lifecycle residues, and the long-owed `ADV-SH-2` `M-20`/`F-13`-shaped negative row) **remains `OWED`, with its owner and its revisit condition, in `docs/pending.md` `§N`**, exactly as §5 records it. **The reason the architect's ruling pins:** the fork's blocker is **already answered without it** (§0, §3.1), and admitting the pass would mean **re-opening a closed unit's `DONE` status and re-deriving its `§5.5` register in the same pass** (`docs/pending.md` §H) for a change whose entire content is a sentence the contract already carries plus one negative row it already implements. **NO UNIT IS ADMITTED BY THIS RULING and the ledger remains unmoved at `21 DONE / 0 open`.** The revisit condition is unchanged and stays **positive**: the architect's next ruling pass, or the first consumer whose integration turns on the distinction.
+2. **THE FORK-SIDE RETURN IS BY RELAY — THIS REPO STILL WRITES NO FILE UNDER `<Astrographer>/`.** §7's instructions are the return, and they are relayed to the fork's own pass by the architect; **no foundation pass edits the fork's filing, its `docs/defects.md` row or its `docs/HANDOFF.md` pointer** (`H-r6`'s fork-side-return convention, `docs/specs/provident-electron-shell-chrome-handoff-review.md:217`, `:507-508`). The four corrections the fork must make to its **own** filing are §7 items 3–6 (the clause-1(c) refusal withdrawn, the blocker restated as the ordering obligation, E-3 corrected against the fork's own lockfile, and the non-adoption recorded as a **decision**).
+
+**What these two rulings do NOT change, stated so nothing is inferred:** the disposition's shape (docs-only), its verdict (`NOT-DELEGABLE`, substantive sense), its declined arms, the `OWED` set's membership, the gate-chain determination (§10) and the falsifier (§9). **They resolve the two calls this record left open and nothing else.**
+
 ## 10. PROVENANCE AND THE GATE CHAIN
 
 **A DOCS-ONLY DISPOSITION. This pass ran NO suite, NO leg, NO Electron boot, NO battery and NO trio; every figure in this record is a file read, a cited artifact's own number, or a step pass's own reading, attributed. No leg figure here is this pass's measurement (`RCA-12`).**
