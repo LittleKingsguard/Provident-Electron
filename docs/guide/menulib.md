@@ -325,7 +325,7 @@ own — the menu and the picker, plus the judgement that they are equivalent for
 
 ## See also
 
-- `docs/guide/TEMPLATE.md` — the binding page template and the two rules.
+- `docs/guide/TEMPLATE.md` — the binding page template and the three rules (the third: a module header is not a clause).
 - `docs/guide/README.md` — the index, the readers and the reading order.
 - `docs/guide/00-base-surface.md` — the base surface this mechanism is not part of.
 - `docs/guide/container.md` — a sibling mechanism page, for the family's seam-table shape.

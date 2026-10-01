@@ -243,7 +243,7 @@ The fork also supplies the values, because this repo supplies none of them to th
 
 ## See also
 
-- `docs/guide/TEMPLATE.md` — the binding page template and the two rules.
+- `docs/guide/TEMPLATE.md` — the binding page template and the three rules (the third: a module header is not a clause).
 - `docs/guide/README.md` — the index, the readers and the reading order.
 - `docs/guide/seams.md` — every seam in the closed wave, in one table.
 - `docs/specs/container.md` — the contract this page cites.

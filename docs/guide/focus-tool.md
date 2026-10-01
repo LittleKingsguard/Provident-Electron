@@ -330,7 +330,7 @@ notification is changing this contract, not configuring it.
 - `docs/guide/README.md` — the index, the two readers and the reading order.
 - `docs/guide/00-base-surface.md` — the tool table, the dispatch path and the group
   model this tool rides on.
-- `docs/guide/TEMPLATE.md` — the binding section order and the two rules.
+- `docs/guide/TEMPLATE.md` — the binding section order and the three rules (the third: a module header is not a clause).
 - `docs/specs/focus-tool.md` — this unit's contract (the authority; this page cites it
   and never replaces it).
 - `docs/specs/focus-model.md` — the consumed model half: the activation, ordering and

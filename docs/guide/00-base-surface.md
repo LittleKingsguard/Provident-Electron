@@ -10,6 +10,18 @@ Every name below exists in this tree. Where a fact was measured by a test, the t
 is cited. Nothing here restates a spec clause: the contracts are cited by path and
 section, and the spec governs if this page ever disagrees with it.
 
+**Two things this page does not do, stated because their absence caused a real
+miscommunication (`2026-10-04`).** This page covers **the base surface**, not every
+mechanism: units with no page in this set — the two owned-host families among them —
+carry their contracts in `docs/specs/*.md`, their fork-facing seams in
+`docs/guide/seams.md`'s *"What a fork must supply"* table, and their fork-facing
+recipes in `docs/FORKER.md` §4. And **a module header is not a clause**: the normative
+text is the spec section (and, where an architect ruled, the `docs/decisions.md` ACTIVE
+row cited by row name) — so when a header, a doc-comment or a page's scope paragraph
+appears to settle a question of **what a mechanism accepts**, read the spec before
+acting on it (`docs/guide/TEMPLATE.md`'s third rule; `docs/guide/README.md`'s *"Units
+that have no page here"*).
+
 ## Code, runnable
 
 ### UC-1 — read the tool list an agent will actually see

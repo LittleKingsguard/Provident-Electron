@@ -333,6 +333,6 @@ declared in code it is cited; where this repo declares none, the cell says so.
 - `docs/guide/00-base-surface.md` — read first: the tool set, the resources, the runtime, the
   preload bridge and the group model.
 - `docs/guide/seams.md` — every seam in the closed wave in one table, with its degradation.
-- `docs/guide/TEMPLATE.md` — the binding section order and the two rules.
+- `docs/guide/TEMPLATE.md` — the binding section order and the three rules (the third: a module header is not a clause).
 - The contracts: `docs/specs/mcp-endpoint.md`, `docs/specs/adapter-parity-battery.md`,
   `docs/specs/ci-divergence-leg.md`, `docs/specs/ci-ui-leg.md`, `docs/specs/engine-pin.md` §5.5.

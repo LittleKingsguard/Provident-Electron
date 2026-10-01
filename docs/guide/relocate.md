@@ -424,7 +424,7 @@ The two propagation arms are the *only* exceptions to the module's totality
 ## See also
 
 - `docs/guide/README.md` — the index and the reading order (this page is the `relocate.md` row).
-- `docs/guide/TEMPLATE.md` — the binding page shape, and the two rules this page follows.
+- `docs/guide/TEMPLATE.md` — the binding page shape, and the three rules this page follows (the third: a module header is not a clause).
 - `docs/specs/relocate.md` — the contract this page cites and never restates.
 - `docs/specs/relocate-greens.md` — the unit's blind-scenario set.
 - `docs/specs/gsession.md` — the frozen session it composes; `docs/decisions.md` — the ACTIVE rulings

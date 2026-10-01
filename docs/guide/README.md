@@ -25,8 +25,10 @@ silently. See `docs/guide/TEMPLATE.md`, which is binding on every page here.
    model.
 2. **`mcp-parity.md`** — read second. What the agent sees versus what the operator
    sees, and what is deliberately invisible to MCP.
-3. **`seams.md`** — read third, and read it as a fork author. Every seam in the
-   repo's closed wave, in one table, with its declared degradation.
+3. **`seams.md`** — read third, and read it as a fork author. The fork-facing seams
+   in one table, with each one's declared degradation — **and, since 2026-10-04, the
+   two owned-host families' seams as well**. A seam you cannot find there is a
+   documentation defect to fix, not a seam you may infer from a module header.
 4. **The mechanism pages**, in ledger order (wave E, then wave F) — or jump straight
    to the one mechanism you are changing. Each page is self-contained: it names its
    unit id, its files, its exports and its contract sections.
@@ -50,8 +52,8 @@ silently. See `docs/guide/TEMPLATE.md`, which is binding on every page here.
 | `focus-model.md` | **`U-FOCUS-MODEL`** (wave F, `F2`) | the pure ordered-entry transition reducer over opaque ids/targets: `focusTransition`, `focusOrder`, `focusIndex`, `persist` — no store, no DOM, no vocabulary |
 | `focus-tool.md` | the **`provident.focus`** tool (`U-FOCUS-TOOL`, wave F, `F3`) | the 22nd MCP tool and its method member: a thin adapter that routes the caller's `{ target?, newTab? }` to the renderer's own wiring-held focus state and returns the holder's answer |
 | `mcp-parity.md` | MCP parity | the parity surface: which views must agree (`renderedHtml` / `ssrHtml` / markdown), what the agent can and cannot observe, and the notification/push rules |
-| `seams.md` | the seam contracts | every seam in the closed wave in one REQUIRED/OPTIONAL table, with its supplier and its declared degradation for absent / non-callable / throwing, each cited |
-| `TEMPLATE.md` | the page template | the binding section order and the two rules (**never restate a spec**, **never claim behaviour you have not read**) |
+| `seams.md` | the seam contracts | the fork-facing seams in one REQUIRED/OPTIONAL table, with each one's supplier and its declared degradation for absent / non-callable / throwing, each cited — **including the two owned-host families' (`containerFactory`; `mount` + `itemFactory`), added 2026-10-04** |
+| `TEMPLATE.md` | the page template | the binding section order and the three rules (**never restate a spec**, **never claim behaviour you have not read**, **a module header is not a clause**) |
 
 Page filenames are the planned set for the wave just closed (ledger: **`21 DONE /
 0 open`** units, `docs/next-steps.md`). Pages 05-12 are named after the unit id in
@@ -59,6 +61,29 @@ kebab form; `focus-tool.md` is named after the tool it documents because the uni
 `U-FOCUS-TOOL` exists to land that one tool.
 
 ## Units that have no page here
+
+**⟶ READ THIS SECTION AS A MAP OF WHAT IS MISSING, NEVER AS A LICENCE TO LEAVE A CONTRACT UNSTATED
+(`2026-10-04`, added after a miscommunication this section helped cause).** A downstream fork read this list,
+found no `slot-host`/`owned-list-host` page, then read those modules' **headers** (*"a container manager for
+CALLER-CREATED nodes"*) as the contract — and filed a capability gap against a contract that already admitted
+its case (a container is **any value offering `appendChild`**, `docs/specs/slothost.md` §2.1's container-source
+clause item 3). **Three rules follow, and all three are binding on this tree:**
+
+1. **A MODULE HEADER IS NOT A CLAUSE.** A header (and a page's own scope paragraph) is a reading aid written for
+   orientation; the normative text is the **spec** (`docs/specs/*.md`) and, where an architect ruled, the
+   **`docs/decisions.md` ACTIVE row** cited **by row name**. A header's *"for CALLER-CREATED nodes"* describes
+   **whose nodes a mechanism places** — never the full admissibility rule for what it accepts. Cite the spec
+   section; if a header and a spec appear to disagree, **the spec governs and the header is the thing to fix**
+   (`docs/guide/TEMPLATE.md`'s third rule, and the third item below).
+2. **EVERY FORK-FACING SEAM GETS A ROW SOMEWHERE — a pointer is not a row.** If a unit has no page here, its
+   fork-facing seams still belong in `docs/guide/seams.md`'s *"What a fork must supply"* table (with the spec
+   section cited), and its fork-facing recipe belongs in `docs/FORKER.md` §4. *"Read the spec and cite it"* (item
+   3 below) is the rule for a **page that does not exist**; it is **not** a reason to leave a seam undocumented.
+   Measured consequence of the pointer-only reading: `containerFactory` and `owned-list-host`'s `mount` had **no
+   seam row in this tree** between their landing and 2026-10-04.
+3. **THE SPEC, NOT A SIBLING PAGE.** The rule this section already carried stands, unchanged and re-stated
+   because the failure above was a failure to apply it: *"read the spec and cite it — do not infer its behaviour
+   from a sibling page."* Add its second half: **do not infer it from the module's own header either.**
 
 The ledger is closed at **21 units** (`docs/next-steps.md`, the `U-FOCUS-TOOL`
 close-out row). The waves also closed units whose mechanisms the two readers above

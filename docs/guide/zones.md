@@ -259,7 +259,7 @@ for any of them.
 - `docs/guide/00-base-surface.md` — the MCP surface, runtime and wiring this mechanism
   sits beside (it adds no tool, no resource and no group).
 - `docs/guide/README.md` — the index, the two readers, and the reading order.
-- `docs/guide/TEMPLATE.md` — the binding section order and the two rules.
+- `docs/guide/TEMPLATE.md` — the binding section order and the three rules (the third: a module header is not a clause).
 - `docs/FORKER.md` — what a fork gets per unit, with the layer caveat.
 - `docs/specs/census.md` — the unit that consumes this one and delegates its token
   bytes here.

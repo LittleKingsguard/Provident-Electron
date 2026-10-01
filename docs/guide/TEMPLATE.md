@@ -10,7 +10,7 @@ A page describes a **mechanism or surface of this repo** for two readers:
 - a **fork author** — you are changing a seam, so you must know which contracts are
   yours to implement and what degradation is declared when you don't.
 
-## THE TWO RULES (they decide every sentence you write)
+## THE BINDING RULES (three; the third added 2026-10-04 — the page's other references to *"the two rules"* are read with this note and are not rewritten)
 
 1. **NEVER RESTATE A SPEC.** The contract lives in `docs/specs/*.md`. A guide page
    **cites it by path + section** and says what the mechanism is *for*. If you find
@@ -22,6 +22,19 @@ A page describes a **mechanism or surface of this repo** for two readers:
    Anything you could not verify is written **`unverified`** in the text, with what
    would settle it. "Probably", "should" and remembered-upstream behaviour are not
    evidence.
+3. **A MODULE HEADER IS NOT A CLAUSE (added 2026-10-04, after a real miscommunication).**
+   Neither is a doc-comment, a page's own scope paragraph, or a sibling page. The
+   **normative** text is the spec (`docs/specs/*.md`) and, where an architect ruled,
+   the `docs/decisions.md` **ACTIVE row cited by row name**. A header states what a
+   mechanism is **for** and whose values it handles — a summary, written for
+   orientation — and reading it as the admissibility rule is exactly how a downstream
+   fork concluded that `slot-host` refused the very container shape its spec admits
+   (any value offering a function-valued `appendChild`: `docs/specs/slothost.md` §2.1's
+   container-source clause item 3; the header's *"for CALLER-CREATED nodes"* describes
+   **whose nodes the host places**, not what it accepts). **Cite the spec section; if a
+   header and a spec appear to disagree, the spec governs and the header is the thing
+   to fix. And a fork-facing seam with no row anywhere is a documentation defect, not a
+   pointer: give it a row in the `What a fork must supply` table with its spec cited.**
 
 Use **real names** throughout: the exact export names, tool names, argument keys,
 result members and file paths that exist in the tree. An example that would not

@@ -37,6 +37,21 @@ This page does not cover every unit in the ledger. The sibling seam families —
 their contracts are `docs/specs/gutter.md`, `docs/specs/gutter-ui.md` and `docs/specs/menulib.md`. Read those
 blocks for those units; do not infer them from this page.
 
+**⟶ AND THE TWO OWNED-HOST FAMILIES' SEAMS ARE NOW IN THE TABLE BELOW (`2026-10-04`).** This paragraph used to
+route *"the two owned-host families"* away from this page entirely, and that routing is what left `slot-host`'s
+container source and `owned-list-host`'s mount/factory with **no seam row anywhere in this tree** — a downstream
+fork read the modules' **headers**, found no row, and asked whether an envelope-authored consumer could satisfy
+the container seam at all. The rows are now below (`containerFactory`, and `mount` + `itemFactory`); read
+`docs/specs/slothost.md` and `docs/specs/listhost.md` for their contracts, and `docs/FORKER.md` §4's
+`### THE HOST CONTAINER SOURCE — WHAT A FORK SUPPLIES, AND WHEN IT IS CALLED` for the fork-facing recipe.
+
+**⟶ A PAGE'S OWN SCOPE PARAGRAPH IS NOT A CONTRACT EITHER (`2026-10-04`).** The routing sentence above was
+**accurate about WHICH PAGE carries those units' fork-facing material**, and it is kept for that reason — but it
+was **wrong as a statement about where a fork-facing seam contract may live undocumented**: `docs/guide/README.md`'s
+*"Units that have no page here"* is a list of pages this tree **does not have**, never a licence to leave a
+**fork-facing seam** with no row anywhere. When you find a seam with no row on this page, the fix is **a row that
+cites the spec** — not a pointer.
+
 ## Where it lives
 
 | File | Exports |
@@ -264,6 +279,10 @@ describe('UC-4', () => {
 | `onChange` `(next, previous, refusal?) => void` (← `arg.onChange`) | OPTIONAL | the caller | no call attempted; the accepted result is bit-for-bit the called case (`focus-model.md` §2.4 seam 2) | no call attempted, same result (`focus-model.md` §2.4 seam 2) | SWALLOWED — the transition is still ACCEPTED with the same result (`focus-model.md` §2.4 seam 2) |
 | `persist` `(seam, state) => {present, value}` — a **top-level export the caller calls**; `focusTransition` never calls it | OPTIONAL | the caller | `{ present: false, value: undefined }`, and the module calls NOTHING (`focus-model.md` §2.4 seam 3) | `{ present: false, value: undefined }`, no call attempted (`focus-model.md` §2.4 seam 3) | `{ present: false, value: undefined }`, the throw SWALLOWED, nothing escapes (`focus-model.md` §2.4 seam 3) |
 | **`U-THEME`** — no seam | — | — | the seam set is EMPTY: the `env` reading is an ordinary argument record (`theme.md` §2.1 item 3, §2.3 item 2) | n/a — there is no callable to be non-callable | n/a — nothing is invoked, so nothing can throw from a seam (`theme.md` §2.4 item 3) |
+| `containerFactory` `(key) => unknown` (`slot-host.ts`) — **the SOLE container source** | OPTIONAL | the fork | **nothing is placeable**: the key's container is treated as ABSENT, `placed` `[]`, `containerFor(key)` returns `null` for every key, `keys()`/`order` still valid, and **no refusal is invented** — in particular `'no-container'` is DECLARED-BUT-NOT-EMITTED (`slothost.md` §2.1's container-source clause items 4/5, `§3.2 F-11`/`F-12`) | the SAME declared outcome as absent — `F-12` states all five drives (omitted · `undefined` · non-callable · throwing · unusable-return) as ONE `F-6`-class degradation, so a non-callable factory is not a separate state (`slothost.md` §3.2 `F-12`) | the same: the throw is **CAUGHT**, never re-thrown, and becomes no refusal code of its own (`slothost.md` §2.1's totality-boundary table, the FIFTH seam; `§3.2 F-12`) |
+| `mount` (`owned-list-host.ts`) — the single container the host places your nodes in; plus `itemFactory` `(entry) => N \| null` | OPTIONAL | the fork | a VALID no-op with **no placement and no container-state refusal**: the mount is *"the container the host places CALLER-CREATED nodes inside"*, and an unusable one simply places nothing (`listhost.md` §2.1; `src/shared/owned-list-host.ts:129-132`, `:172-176`) | the same declared no-op shape — `mount` is a container, not a callable, so "non-callable" has no separate arm (`listhost.md` §2.1) | the factory's throw is **ABSORBED** and takes the same safe default as a factory returning nothing: the typed `'factory-returned-null'` refusal for that entry (`listhost.md` §2.1, `§3.2`; `src/shared/owned-list-host.ts:271-289`) |
+
+**⟶ WHY THE LAST TWO ROWS ARE HERE WHEN THIS PAGE'S SCOPE PARAGRAPH USED TO SEND THEIR UNITS ELSEWHERE (`2026-10-04`, the `SLOT-HOST-ENVELOPE-AUTHORED-CONTAINER-SOURCE` gate-1 disposition's guide pass).** **They were missing, and their absence is what made a downstream fork ask this repo whether an envelope-authored consumer could satisfy the container seam at all:** it read the two hosts' **module headers** (*"a container manager for CALLER-CREATED nodes"*) as the contract, found no seam row on this page, and filed a capability gap against a contract that already admitted its case. **THE READING THAT GOVERNS IS THE NORMATIVE ONE, AND A MODULE HEADER IS NOT A CLAUSE.** A container is **any value offering a function-valued `appendChild`** — `slothost.md` §2.1's container-source clause item 3: *"a real DOM element satisfies it; a shim `ShimElement` satisfies it; a plain object offering an `appendChild` function satisfies it; **no predicate such as `instanceof` or a tag check is asserted or admissible**"* — and the module's own predicate is exactly that one test (`isNodeShaped`/`isUsable`, `src/shared/slot-host.ts:167-171`, `:199-203`, with `obtainContainer` accepting on `isUsable` alone). **So a runtime-materialised, framework-authored element is admitted BY CONSTRUCTION, and the header's *"CALLER-CREATED nodes"* describes WHOSE NODES the host places — never what a container may be.** **The one constraint on top of the shape is TIMING, not category:** the factory is invoked only when the host is **driven** for that key with a present and usable injected `container` (`src/shared/slot-host.ts:305-322`, reached from `setNode`/`setOrder`/`render`; **never at construction**), so the value must exist at that moment and be re-supplied if the consumer's own tree re-materialises. **A source that READS A TREE — a projection, a lookup, a `querySelector`-family read — is NOT admissible**, and this repo declines to add one (`docs/decisions.md`'s ACTIVE row `SLOTHOST-CONTAINER-SOURCE-IS-INJECTED` stays untouched: the source is **injected**, and the ambient read stays deleted). **The fork-facing recipe, the ordering rule and the `owned-list-host` divergence are in `docs/FORKER.md` §4's `### THE HOST CONTAINER SOURCE — WHAT A FORK SUPPLIES, AND WHEN IT IS CALLED`; the pinning decision is `docs/decisions.md`'s ACTIVE row `SLOTHOST-CONTAINER-SOURCE-ADMITS-A-RUNTIME-MATERIALISED-CONTAINER` (cited by row name); the full four-step disposition and its `OWED` residues are `docs/specs/slot-host-envelope-authored-container-source-review.md` and `docs/pending.md` §N.**
 
 **⟶ THE PERSISTENCE BOUNDARY, AT THE `persist` ROW (`2026-09-29`):** **the family's answer to persistence is the caller-called returned write above — `persist(seam, state)` hands your seam's own value back to YOU — and the foundation supplies NO store** (`docs/decisions.md` ACTIVE row `NO-FOUNDATION-CONFIG-FILE-FACILITY`; `S-d4` + `H-r16` in `docs/specs/provident-electron-shell-chrome-handoff-review.md`; a fork's own carrier is `docs/FORKER.md` §4's `### PERSISTENCE — WHAT A FORK OWNS`).
 
@@ -306,8 +325,13 @@ describe('UC-4', () => {
 ## See also
 
 - `docs/guide/README.md` — the index, and the reading order (this page is read third, as a fork author).
-- `docs/guide/TEMPLATE.md` — the binding section order and the two rules.
+- `docs/guide/TEMPLATE.md` — the binding section order and the three rules (the third: a module header is not a clause).
 - `docs/guide/00-base-surface.md` — the base surface, the tool set and the gate model.
 - `docs/FORKER.md` §4 — the fork-facing seam blocks, unit by unit; `docs/decisions.md` — the ACTIVE family ruling.
-- `docs/specs/container.md`, `docs/specs/relocate.md`, `docs/specs/focus-model.md`, `docs/specs/theme.md` — the
+- `docs/specs/container.md`, `docs/specs/relocate.md`, `docs/specs/focus-model.md`, `docs/specs/theme.md`,
+  `docs/specs/slothost.md`, `docs/specs/listhost.md` — the
   contracts. If this page and a spec disagree, the spec governs and this page is the thing to fix.
+- `docs/specs/slot-host-envelope-authored-container-source-review.md` + `docs/pending.md` §N — the disposition
+  that added the two host-family rows above, with its `OWED` residues; `docs/guide/README.md`'s *"Units that have
+  no page here"* — why these units have no page, and the two rules that keep a missing page from becoming a
+  missing contract.
