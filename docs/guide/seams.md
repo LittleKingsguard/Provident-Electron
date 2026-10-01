@@ -288,6 +288,30 @@ describe('UC-4', () => {
 
 ## Gotchas measured in this repo
 
+### Expectations — four facts a fork gets wrong BEFORE it files an ask about the gesture layer
+
+- **The per-move value push is YOUR `onMove` handle; `sizeFor` is read ONCE, at the committing terminal.**
+  There is no mechanism-side per-move presentation seam to request, and the preview channel is the
+  consumer's own and is **never the sink** (the rows above cite `docs/specs/gutter.md` §2.3 item 2(b),
+  §2.3's *"The consumer-owned preview channel"* block, §2.5, §2.6 item 4b, §4.4 `S-10` class (b), `I-2b`).
+  The affordance's `applyPreview` seam is where a presentation write goes, with its degradation declared
+  at its own row.
+- **The clamp happens at exactly one site, and `clampToBounds` is a public pure VALUE export you may call
+  directly.** A second clamp site is not admissible (`docs/specs/gutter.md` §2.1, §2.3 item 3 clause
+  (iii), §4.4 `S-PURE-4`) — so an interim of your own that calls it **is** the family's clamp, not a
+  rival authority.
+- **The affordance COMPOSES the controller and takes your SESSION; it does not accept a controller, and a
+  refused `attach()` rolls its own listeners back.** The direction is fixed by contract, not by taste
+  (`docs/specs/gutter-ui.md` §2.1 clause 4 and its `attach` cell, §3.1 `M-6`; the ACTIVE row
+  `E10-MODULE-IMPORTS-THE-CONTROLLER-FACTORY`; `docs/specs/gsession.md` §2.4 item 2).
+- **Element identity survives a PATCH write, and a full graph re-derivation is OUT OF CONTRACT** — the
+  wiring does not re-attach and the affordance goes **inert**, with no throw (`docs/specs/gutter-ui.md`
+  §2.3 rows 15/**16**, §7 item 15, §3.3 `I-15`). Write through the managed patch channel or defer the
+  reveal; do not ask for a re-claim route (the delegate surface is frozen:
+  `GSESSION-DELEGATE-SURFACE-IS-FROZEN-FOR-E3-E4`). **And a `0px` track is a TOKEN this family emits, never
+  a box** — a member's slot/location geometry is the consumer's to measure (`docs/specs/zones.md` §2.3
+  item 7, §3.3 `I-10`, §4.4 `S-6`; `docs/specs/census.md` §2.5; the mandatory clause `S-d11`).
+
 - **`U-FOCUS-MODEL` is imported by a `src/**` file today**, although its own unit record and module header say
   “imported by NO `src/**` file”: `src/renderer/renderer.ts:10` imports `focusTransition`, `focusOrder`,
   `FocusEntry` and `FocusState` (the `U-FOCUS-TOOL` wiring). Read that census claim as scoped to the unit's own

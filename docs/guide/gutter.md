@@ -247,6 +247,29 @@ into the session unchanged — the controller adds no fifth hook and computes no
 
 ## Gotchas measured in this repo
 
+### Expectations — the four things a consumer most often gets wrong
+
+- **There is a per-move VALUE channel, and it is the caller's own `onMove` handle — not a seam this
+  module offers.** `sizeFor` is read **once, at the committing terminal**; the mid-gesture push is your
+  hook, and the live preview is **your** channel, which is **never the sink** (`docs/specs/gutter.md`
+  §2.3 item 2(b), §2.3's *"The consumer-owned preview channel"* block, §2.5, §2.6 item 4b, §4.4 `S-10`
+  class (b), `I-2b`; the ACTIVE row `GUTTER-E3-REMAINS-THE-POLICY-FREE-CLAMP-COMMIT-LAYER`). Asking for a
+  second, mechanism-side per-move presentation sink is asking for something you already have.
+- **The clamp happens at exactly one site, and `clampToBounds` is a public pure VALUE export you may call
+  directly.** A second clamp site — a pre-normalising clamp inside a seam wrapper, in `attach`, or in
+  `reset`'s refusal path — is **not admissible** (`docs/specs/gutter.md` §2.3 item 3 clause (iii), §4.4
+  `S-PURE-4`, §2.1's export list). An interim of your own that calls `clampToBounds` **is** the family's
+  own clamp; record it that way instead of building a rival authority.
+- **A zone minimum is a CONSUMER-CARRIED size decision, and the family half of it is the pure clamp over
+  values you supply.** The ruled domain is `{min … max} ∪ {minimized}`, a below-minimum attempt rounds to
+  the minimum **or to zero**, **zero is the minimize verb and never a smaller width**, and a minimized
+  member **keeps its location** so proximity detection can expand it back and host a pane
+  (`docs/decisions.md`'s ACTIVE row `ZONE-SIZE-DOMAIN-IS-CONSUMER-CARRIED-AND-THE-MINIMUM-CLAMP-IS-FAMILY-SIDE`,
+  cited by row name; the family-side unit's own record lands separately).
+- **The rendered geometry is not this layer's claim, at any point.** Nothing here proves an applied
+  width, and the family's geometry clause is mandatory wherever geometry criteria are described
+  (`docs/specs/gutter.md` §5.2, §4.4 `S-PURE-5`).
+
 - **`clampToBounds` answers `NaN` — it does not refuse and does not throw.** `NaN` is a value here, and
   there is no `ok`, `code` or `reason` on it (`docs/specs/gutter.md` §2.3 item 2, §0A note 8; measured
   this pass: `'600'` ⇒ `NaN`, `undefined` bounds ⇒ `NaN`, a `Map`-shaped pair ⇒ `NaN`).

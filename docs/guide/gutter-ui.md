@@ -377,6 +377,29 @@ Beyond the seams, `GutterAffordanceOptions` carries four REQUIRED inputs the wir
 
 ## Gotchas measured in this repo
 
+### Expectations — what a consumer most often gets wrong about this composition
+
+- **The affordance COMPOSES the controller — it does not accept one.** Your **session** is a REQUIRED
+  argument and is yours; the controller is built by the module and exposed, and the contract **requires**
+  that direction (`docs/specs/gutter-ui.md` §2.1 clause 4, §2.1's `attach` cell, §3.1 `M-6`; the ACTIVE row
+  `E10-MODULE-IMPORTS-THE-CONTROLLER-FACTORY`). Handing it a controller you built is not a missing
+  composition; it is blocked by the element/ledger identity refusal — **and a refused `attach()` rolls the
+  module's OWN listeners back and answers `false`, displacing nothing** (§2.1's `attach` cell; `docs/specs/gsession.md`
+  §2.4 item 2).
+- **Element identity is preserved across a PATCH write — and a full graph re-derivation is OUT OF
+  CONTRACT.** A `state-slice` apply patches the element in place, so the affordance is multi-shot and no
+  rebind is owed; a post-boot re-derivation tears the graph down, the wiring does not re-attach, and the
+  affordance goes **inert (no gesture, no cursor, no preview)** with no throw (`docs/specs/gutter-ui.md`
+  §2.3 row 15 and **row 16**, §7 item 15, §3.3 `I-15`). Do not re-derive during a gesture — write through
+  the managed patch channel or defer the reveal.
+- **The preview is the consumer's channel and is never the sink; `sizeFor` is read once, at the
+  committing terminal, and the per-move push is the caller's `onMove` handle** (`docs/specs/gutter-ui.md`
+  §2.5, §2.6 item 1; `docs/specs/gutter.md` §2.3 item 2(b) and §2.5). The affordance's own `applyPreview`
+  seam is where your presentation write goes, with the degradation declared at its own row.
+- **A member's own cell/slot geometry is YOURS to measure.** This composition owns the coordinate, the
+  cursor and the preview — never a box for a zone or a pane (`docs/specs/gutter-ui.md` §2.4; and the
+  family-side refusal at `docs/specs/zones.md` §2.3 item 7, §3.3 `I-10`, §4.4 `S-6`).
+
 - **The authored pane's data is emitted as BARE attributes, not `data-*`.** `props: { size, min, max,
   resizable }` lands on the element as `size="100" min="0" max="200" resizable="true"`, so the example
   seams read `getAttribute('size')` with a `dataset` fallback (`src/shared/demo-envelope.ts`'s

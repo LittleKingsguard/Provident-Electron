@@ -207,6 +207,28 @@ for any of them.
 
 ## Gotchas measured in this repo
 
+### Expectations — what a consumer most often gets wrong about this pair
+
+- **A `0px` track is the whole TOKEN the family emits — never a box claim.** Nothing here reads a cell, a
+  slot, a rect or an element: the module works from its **arguments** alone and the emitted string says
+  nothing about a rendered extent (`docs/specs/zones.md` §2.3 item 7, §3.3 `I-10`, §3.4 `R-7`, §4.4 `S-6`;
+  `docs/specs/census.md` §2.5, and the mandatory geometry clause `S-d11`). A question of the form *"what
+  box does a collapsed member have?"* is not answerable from this module, by design.
+- **The member's slot/location geometry is the CONSUMER's to measure** — and so is the size decision that
+  sits beside it. The ruled shape: a zone's minimum is enforced (an attempt below it rounds to the
+  minimum or to zero), **zero is the minimize verb and never a smaller width**, and a minimized zone
+  **keeps its location** so proximity detection can expand it back to its configured size and host a pane
+  (`docs/decisions.md`'s ACTIVE row `ZONE-SIZE-DOMAIN-IS-CONSUMER-CARRIED-AND-THE-MINIMUM-CLAMP-IS-FAMILY-SIDE`,
+  cited by row name; the family-side half is a pure clamp over values you supply, and its own record lands
+  separately).
+- **An emptiness flag and a size of `0` are two different things, and the overloading is yours.** The
+  module emits your `emptyToken` for a truthy flag **or** a non-finite/negative size, while a size of `0`
+  is a legitimate SIZE — so *"zero means minimized"* belongs in **your** predicate/census, never in the
+  mechanism (`docs/specs/zones.md` §2.3 items 1–2, §4.4 `S-9`; `docs/specs/census.md` §2.4 `C-C`).
+- **No vocabulary, no default, no store.** Every name, unit and token is an argument; a constraint that
+  also requires this pair to learn what a cell/slot *is* cannot be satisfied at all
+  (`docs/specs/zones.md` §2.2 `P-1`/`P-3`/`P-4`).
+
 - **A malformed spec beats the empty flag.** `trackFor({ unit: 'px' }, 120, true)` is
   `''`, not your `emptyToken` — the malformed limb is evaluated first and gates the other
   three (`src/shared/zones.ts`, read in order; `docs/specs/zones.md` §2.3 item 1's
