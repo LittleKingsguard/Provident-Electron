@@ -333,5 +333,5 @@ describe('UC-4', () => {
   contracts. If this page and a spec disagree, the spec governs and this page is the thing to fix.
 - `docs/specs/slot-host-envelope-authored-container-source-review.md` + `docs/pending.md` §N — the disposition
   that added the two host-family rows above, with its `OWED` residues; `docs/guide/README.md`'s *"Units that have
-  no page here"* — why these units have no page, and the two rules that keep a missing page from becoming a
+  no page here"* — why these units have no page, and the rules that keep a missing page from becoming a
   missing contract.
