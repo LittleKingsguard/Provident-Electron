@@ -321,9 +321,33 @@ const LOADING_DECLARATIONS: readonly { name: string; reserved?: boolean }[] = [
   { name: 'mem.entity.id.working' },
   { name: 'temp.entity.id.candidate' },
 ]
+/** THE FIXTURE THE ROWS CONSTRUCT WITH — the register's own store fixture, MIRRORED
+ *  (`tests/store-core-graph-register.ts`'s `REGISTER_FIXTURE_ROWS`): the four contract
+ *  fixture declarations PLUS the THREE `window` root declarations.
+ *  REPAIRED 2026-10-01 (THE TESTWRITER'S REPAIR PASS, the second half of the fixture bug
+ *  this pass fixes): a `§3.1` `M-1`/`M-2`-shaped drive commits
+ *  `file.window.tabs.landingPage`, whose FIRST path segment is the top-level name
+ *  `window` — and `§2.4` item 4's annotation makes the TOP-LEVEL NAME DECLARATION the
+ *  discriminator between a COLD ROOT NAME and a name that is *"not a root name at all"*.
+ *  With `window` undeclared the walk's `C-TOP` arm answers `'undeclared-name'` before the
+ *  chain is reached, so the row could not resolve what it drives. A declaration
+ *  contributes NO register row (`§2.4` item 3's annotation): this list only widens the
+ *  REACHABLE root set, and it moves no row's assertion or expectation. */
+const STORE_FIXTURE_ROWS: readonly { name: string; reserved?: boolean }[] = [
+  ...LOADING_DECLARATIONS,
+  { name: 'file.window.tabs' },
+  { name: 'mem.window.tabs' },
+  { name: 'temp.window.tabs' },
+]
 /** `§2.4` item 8's annotation — the declarations are the CALLER'S TOP-LEVEL NAME
- *  DECLARATIONS: a root name is what the input MAKES, and it contributes NO ROW. */
-const ROOT_NAMES: readonly string[] = ['entity']
+ *  DECLARATIONS: a root name is what the input MAKES, and it contributes NO ROW.
+ *  REPAIRED 2026-10-01 (THE TESTWRITER'S REPAIR PASS, the fixture bug this pass fixes):
+ *  the list is the fixture's OWN root-name set and now names BOTH roots the fixture
+ *  declares — `entity` and `window` — mirroring the register's `REGISTER_ROOT_NAMES`
+ *  (`tests/store-core-graph-register.ts`). The as-filed `['entity']` named one root while
+ *  the rows drive `file.window.tabs.landingPage` (`§3.1` `M-1`/`M-2`), which the fixture
+ *  never declared. */
+const ROOT_NAMES: readonly string[] = ['entity', 'window']
 /** `§5.5.1`'s fixture — the two constraint rows, verbatim. */
 const FIXTURE_CONSTRAINTS: readonly Record<string, unknown>[] = [
   {
@@ -353,10 +377,19 @@ function crossingRecorder(): { rows: { name: string; value: unknown }[]; put: (r
 
 function storeOptions(extra: Record<string, unknown> = {}): Record<string, unknown> {
   return {
-    declarations: { rows: LOADING_DECLARATIONS },
+    declarations: { rows: STORE_FIXTURE_ROWS },
     constraints: FIXTURE_CONSTRAINTS,
     crossing: crossingRecorder(),
-    reservedNamespaces: ['entity'],
+    // THE FIXTURE LOADS — REPAIRED 2026-10-01 (THE TESTWRITER'S REPAIR PASS, the FIRST half
+    // of the fixture bug this pass fixes). `§2.4` item 5(d) refuses AT CONSTRUCTION a
+    // declared row COLLIDING with a reserved namespace key, and this fixture's own
+    // declarations live UNDER the `entity` namespace — so the as-filed
+    // `reservedNamespaces: ['entity']` REFUSED the fixture's own input (`'reserved-namespace'`)
+    // and no row could construct a store. The set is EMPTY here, exactly as the register's
+    // own `fixtureOptions()` declares it: arm (d) is driven on its OWN input, which is the
+    // only input that carries that collision (`F-18`(d), whose inline fixture keeps
+    // `reservedNamespaces: ['entity']`).
+    reservedNamespaces: [],
     enableTestSeam: true,
     ...extra,
   }
