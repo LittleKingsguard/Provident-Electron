@@ -239,8 +239,65 @@ const DECLARED_TIER_TOKENS: readonly string[] = ['temp', 'mem', 'file', 'secure'
  *  appears in the register or the traversal. */
 const DECLARED_NODE_FLAGS: readonly string[] = ['temp', 'mem', 'file']
 
+// ---- THE TEST-ONLY SEAM'S EIGHT DECLARED MEMBERS (`§2.1`'s `GraphStore` block) -----------
+// EXTENDED 2026-10-01 (THE TESTWRITER'S REPAIR PASS, `TW-1`/`TW-2`; the contract amendment
+// `bb8394e`): `§2.1`'s `GraphStore` block declares FOUR as-filed seam members PLUS the FOUR
+// this pass appended — `nodeFor` · `anchorFor` · `linkFor` · `failNextCacheRebuild` — so the
+// seam's member census is `4 + 4 = 8` ✓, and `§2.1`'s block annotation item (3) reads the
+// production-negative row over ALL EIGHT KEYS: *"ALL EIGHT seam keys … are ABSENT in a
+// production-shaped construction and PRESENT only under `{ enableTestSeam: true }`"*.
+// The two lists are kept as the block prints them (as-filed · appended), because the appended
+// four are INSTRUMENTS and the as-filed four are the ones a production-negative reading
+// already checked; `SEAM_MEMBERS` is the ONE key set every reading below is made against.
+const AS_FILED_SEAM_MEMBERS: readonly string[] = ['reset', 'seed', 'parentLinkCountOf', 'cacheEntryFor']
+const APPENDED_SEAM_MEMBERS: readonly string[] = ['nodeFor', 'anchorFor', 'linkFor', 'failNextCacheRebuild']
+/** THE SEAM'S OWN KEY SET, read as a SET: `4 + 4 = 8`. `§2.1`'s block annotation item (5):
+ *  *"its `4` DRIVE MEMBERS are the four AS-FILED members, and the four appended keys are
+ *  read by the SAME TWO READINGS that row already performs"* — so this list widens the
+ *  READINGS' subject set and adds NO drive (the register's `P-GR-IM-10` term stays `4`). */
+const SEAM_MEMBERS: readonly string[] = [...AS_FILED_SEAM_MEMBERS, ...APPENDED_SEAM_MEMBERS]
+/** THE POSITIVE CONTROL for every key-set reading below: a NINTH member name — a key the
+ *  contract does NOT declare — must FAIL the same set-equality reading, so the reading is
+ *  not a lower bound that any extra key would satisfy. */
+const UNDECLARED_NINTH_MEMBER = 'notADeclaredSeamMember'
+
 // ---- SCAN FRAGMENTS (composed so a rule list never reads its own rule) -------------------
 const F = (...parts: string[]): RegExp => new RegExp(parts.join(''))
+
+/** A node handle — `§2.1`'s `GraphNodeRef`: a per-graph monotone STRING (never a path
+ *  segment, never a lookup key: `§2.4` item 2). */
+type GraphNodeRefLike = string
+/** `§2.1`'s `GraphRegisterCacheEntry` / `GraphLinkCacheEntry` — the SAME dictionary shape,
+ *  one for the register (top-level names only) and one scoped to a single link. */
+interface CacheEntryLike {
+  readonly name: string
+  readonly matchedRef: GraphNodeRefLike
+  readonly matchedTier: string
+}
+/** `§2.1`'s `GraphLink` — the edge an anchor holds: `to` is the store's own handle for the
+ *  child (`null` once the target is severed) and `cache` is THIS link's cache entry. */
+interface GraphLinkLike {
+  readonly from: GraphNodeRefLike
+  readonly to: GraphNodeRefLike | null
+  readonly cache: CacheEntryLike
+  readonly constraint: string | null
+}
+/** `§2.1`'s `GraphAnchor` — ONE named property slot: the caller's own `key`, carried
+ *  verbatim, and the `link` it holds. */
+interface GraphAnchorLike {
+  readonly owner: GraphNodeRefLike
+  readonly key: string
+  readonly link: GraphLinkLike | null
+}
+/** `§2.1`'s `GraphNode` — ONE node: its own `ref`, its `flag` (the ONLY residency carrier),
+ *  its LOCAL name, its FROZEN `anchors` array and its ONE `parentLink`. */
+interface GraphNodeLike {
+  readonly ref: GraphNodeRefLike
+  readonly flag: string
+  readonly localName: string
+  readonly anchors: readonly GraphAnchorLike[]
+  readonly parentLink: GraphLinkLike | null
+}
 
 // ---- THE SURFACE, RESOLVED WITHOUT THROWING (the repo's absent-module technique) ---------
 interface StoreLike {
@@ -258,8 +315,20 @@ interface StoreLike {
   constraints?: unknown
   reset?: () => void
   seed?: (rows: readonly unknown[]) => void
-  parentLinkCountOf?: (nodeRef: string) => number
-  cacheEntryFor?: (name: string) => unknown
+  parentLinkCountOf?: (nodeRef: GraphNodeRefLike) => number
+  cacheEntryFor?: (name: string) => CacheEntryLike | null
+  /** `§2.1`'s block annotation (`TW-1`/`TW-2`) — THE THREE READ-ONLY READERS a row
+   *  observes the walk's own objects with, each answering the graph's OWN object or
+   *  `null` when no such object exists, and none mutating the graph, the register,
+   *  either cache or a listener set. */
+  nodeFor?: (nodeRef: GraphNodeRefLike) => GraphNodeLike | null
+  anchorFor?: (owner: GraphNodeRefLike, key: string) => GraphAnchorLike | null
+  linkFor?: (owner: GraphNodeRefLike, key: string) => GraphLinkLike | null
+  /** `§2.1`'s block annotation (`TW-2`) — THE ONE-SHOT, ONE-SUBJECT TEST-ONLY FAULT
+   *  INJECTOR: it arms the NEXT rebuild the INVALIDATION SITE performs (`§2.6` item 4,
+   *  the record's `DR-7`) to fail, which is what makes the walk's arm (vi)
+   *  `'rebuild-failed'` at `F-CACHE` driveable. It can fault nothing else. */
+  failNextCacheRebuild?: () => void
 }
 
 let storeCache: { mod: Record<string, unknown> | null; reason: string | null } | null = null
@@ -621,8 +690,24 @@ describe('§4.1 · the STATIC and EXISTENCE rows (both branches)', () => {
     const pkg = JSON.parse(readFileSync(fileURLToPath(new URL('./../package.json', import.meta.url)), 'utf8')) as Record<string, unknown>
     const scripts = Object.keys(pkg['scripts'] as Record<string, unknown>)
     expect(scripts, '§2.2 P-4 — the `scripts` KEY SET is unmoved: adding a key would redden `tests/ui-leg-contract.test.ts`\u2019s `L-1`').toHaveLength(13)
-    expect(scripts, '§2.2 P-4 — the landed twelve plus exactly `ui` (the set the sibling row `L-1` pins, read as a SET and never as a count alone, `§4.4 S-7`)').toEqual(
-      ['clean', 'build', 'build:watch', 'start', 'start:http', 'typecheck', 'typecheck:tests', 'test', 'test:watch', 'battery', 'divergence', 'mcp', 'ui'],
+    // READ AS A SET, NOT AS AN ORDERED ARRAY. REPAIRED 2026-10-01 (THE TESTWRITER'S REPAIR
+    // PASS, Repair 2): the as-filed form compared the LIVE `Object.keys(package.json.scripts)`
+    // — an ORDERED array, in the file's own insertion order — against a HAND-WRITTEN array
+    // whose last two members were `... 'mcp', 'ui'`, while `package.json` orders `ui` BEFORE
+    // `mcp`. So the row reddened on ORDER and not on membership, and NO implementation could
+    // green it. The claim it makes is a KEY SET claim and the contract says so in its own
+    // words: `§2.2` `P-4` pins *"the `scripts` key set"*, and `§3.4` `R-10` reads *"the frozen
+    // surfaces asserted **by set equality against the NAMES**"* — set equality is
+    // order-insensitive. Sorting BOTH sides makes the comparison a set comparison while
+    // keeping the row's id and its substantive claim (the landed twelve plus exactly `ui`;
+    // a count is asserted BESIDE the set, never instead of it — `§4.4 S-7`).
+    expect([...scripts].sort(), '§2.2 P-4/§3.4 R-10 — the `scripts` KEY SET is EXACTLY the landed twelve plus `ui`, read BY SET EQUALITY AGAINST THE NAMES (never as an ordered array: the key order is `package.json`\u2019s own and is not a declared surface)').toEqual(
+      ['clean', 'build', 'build:watch', 'start', 'start:http', 'typecheck', 'typecheck:tests', 'test', 'test:watch', 'battery', 'divergence', 'mcp', 'ui'].sort(),
+    )
+    // THE POSITIVE CONTROL: the SAME set-equality reading FAILS on an added/renamed key, so
+    // its passing over the live key set is a reading and not a dead scan.
+    expect([...scripts, 'ui:store'].sort(), '§2.2 P-4 POSITIVE control — an ADDED `scripts` key FAILS this set-equality reading').not.toEqual(
+      [...scripts].sort(),
     )
     expect(scripts, '§2.2 P-4 — the additive test-layer leg is present and NO further key (this unit adds none)').toContain('typecheck:tests')
     const deps = Object.keys({ ...(pkg['dependencies'] as Record<string, unknown>) })
@@ -653,7 +738,7 @@ describe('§4.1 · the STATIC and EXISTENCE rows (both branches)', () => {
   })
 
   // [T] §3.4 R-12 — no module-level binding, and the seam is absent unless enabled.
-  it('§3.4 R-12 · no module-level store/graph/register/cache binding, and the four seam keys are ABSENT by default', async () => {
+  it('§3.4 R-12 · no module-level store/graph/register/cache binding, and the EIGHT seam keys are ABSENT by default', async () => {
     expect(existsSync(STORE_SRC), `§3.4 R-12 — the store module does not exist yet (${fileURLToPath(STORE_SRC)})`).toBe(true)
     const bytes = readFileSync(STORE_SRC, 'utf8')
     expect(
@@ -668,9 +753,26 @@ describe('§4.1 · the STATIC and EXISTENCE rows (both branches)', () => {
     expect(mod, `§3.4 R-12 — ${reason ?? ''}`).not.toBe(null)
     const factory = (mod as Record<string, unknown>)['createGraphStore'] as (o?: unknown) => Record<string, unknown>
     const plain = factory({ declarations: { rows: LOADING_DECLARATIONS }, constraints: FIXTURE_CONSTRAINTS })
-    for (const member of ['reset', 'seed', 'parentLinkCountOf', 'cacheEntryFor']) {
-      expect(member in plain, `§3.4 R-12 — \`'${member}' in store === false\` when the seam was not enabled`).toBe(false)
+    // THE PRODUCTION-NEGATIVE READING, EXTENDED IN SUBJECT AND NOT IN KIND (`§3.4 R-12`'s own
+    // annotation, `TW-1`/`TW-2`): row (c)'s key-set reading is made over ALL EIGHT seam keys —
+    // the four as-filed names PLUS `nodeFor` · `anchorFor` · `linkFor` · `failNextCacheRebuild`
+    // — and a production-shaped construction in which ANY of the eight is present FAILS R-12
+    // exactly as one carrying `reset` does.
+    const presentWhenSeamless = SEAM_MEMBERS.filter((member) => member in plain)
+    expect(presentWhenSeamless, '§3.4 R-12(c) — NONE of the EIGHT seam keys is present when the seam was not enabled (a store carrying ANY of them FAILS R-12 exactly as one carrying `reset` does)').toEqual([])
+    const seamKeysWhenSeamless = Object.keys(plain).filter((key) => SEAM_MEMBERS.includes(key))
+    expect(seamKeysWhenSeamless, '§3.4 R-12(c) — the store\u2019s own key set read against the EIGHT declared members: the intersection is EMPTY').toEqual([])
+    // THE POSITIVE CONTROL: the SAME set-equality reading with a NINTH, undeclared member name
+    // FAILS — so the reading above is set equality and not a lower bound.
+    expect(seamKeysWhenSeamless, `§3.4 R-12(c) POSITIVE control — a ninth, UNDECLARED member name (${UNDECLARED_NINTH_MEMBER}) FAILS this reading, so its silence over the eight is a reading and not a dead scan`).toEqual([UNDECLARED_NINTH_MEMBER])
+    // AND THE NEGATIVE CONTROL: the ENABLED construction exposes ALL EIGHT keys, so the eight
+    // names are the seam's own and not a list of names nothing answers.
+    const enabled = await storeFor('§3.4 R-12 (the enabled construction)')
+    const enabledKeys = Object.keys(enabled)
+    for (const member of SEAM_MEMBERS) {
+      expect(Object.prototype.hasOwnProperty.call(enabled, member), `§3.4 R-12(c) — with \`{enableTestSeam:true}\` the member \`${member}\` is PRESENT (§2.1's test-only seam, read over all EIGHT members)`).toBe(true)
     }
+    expect(SEAM_MEMBERS.filter((member) => !enabledKeys.includes(member)), '§3.4 R-12(c) — the ENABLED construction answers ALL EIGHT declared seam keys (`4` as-filed + `4` appended), read as a SET against the store\u2019s own keys').toEqual([])
   })
 
   // [T] §3.3 I-11 / §3.4 R-10 — the five frozen surfaces, BY SET EQUALITY against the NAMES.
@@ -834,11 +936,41 @@ describe('§2.3/§2.5 · the walk and its arms', () => {
     expect(typeof store.cacheEntryFor, 'F-6 — the seam member `cacheEntryFor` (§2.1\u2019s test-only seam)').toBe('function')
     const stale = store.cacheEntryFor?.('window')
     expect(stale, 'F-6 — a stale entry whose rebuild cannot answer is what the arm is driven through').not.toBe(undefined)
+    // THE DRIVE ITSELF IS THE INJECTOR (`§2.1`'s block annotation, `TW-2`): `failNextCacheRebuild`
+    // arms the NEXT rebuild the INVALIDATION SITE performs (`§2.6` item 4, the record's `DR-7`)
+    // to fail, ONE-SHOT. The armed failure is INTERNAL and arrives as the arm's DECLARED
+    // RETURNED RECORD, so the injector call itself adds no throw class — asserted BESIDE the
+    // drive so a seam that threw would not be read as the arm holding.
+    expect(typeof store.failNextCacheRebuild, 'F-6 — the arm\u2019s INSTRUMENT is the declared one-shot seam member `failNextCacheRebuild` (§2.1\u2019s GraphStore block, appended 2026-10-01)').toBe('function')
+    let armThrew: unknown = null
+    try {
+      store.failNextCacheRebuild?.()
+    } catch (e) {
+      armThrew = e
+    }
+    expect(armThrew, 'F-6 — arming the injector adds NO throw class: `§2.2 P-5`\u2019s three named exceptions are unmoved and the injection adds no fourth').toBe(null)
+    // THE ARMED REBUILD IS PERFORMED BY THE NEXT INVALIDATING OPERATION (the mutation between
+    // the arming and the read), and the arm is observed through the walk\u2019s NEXT answer — the
+    // contract\u2019s own words: *"the armed failure is internal and is consumed by the mutating
+    // operation\u2019s own synchronous rebuild step, which is why the arm is observable only
+    // through the walk\u2019s next answer"*.
+    const invalidated = await settle(store, 'commit', 'mem.window.tabs', 'm2')
+    expect(invalidated['reason'], 'F-6 — the invalidating operation\u2019s own rebuild failure is INTERNAL: the mutating operation still answers its receipt, and the injection adds no throw').not.toBe('rebuild-failed')
     const { reason, result } = await forceStaleRebuild(store, 'window')
     expect(reason, `F-6 — ${reason ?? ''}`).toBe('rebuild-failed')
     const d = diagnosticOf('F-6', result)
     expect(reasonOf('F-6', result), 'F-6 — the arm\u2019s own token: `rebuild-failed` names the STALE-AND-UNREBUILDABLE case alone').toBe('rebuild-failed')
     expect(d['step'], 'F-6 — the failing step').toBe('F-CACHE')
+    expect(d['owner'], 'F-6 — the diagnostic names the node the walk had reached; the stale entry lives on the `window` root\u2019s own link, whose handle is that root\u2019s register row (`§2.4` item 3)').toBe(
+      ((store.register as Record<string, unknown>)?.['rows'] as Record<string, unknown>[] | undefined)?.find((r) => r['name'] === 'window')?.['nodeRef'],
+    )
+    // THE ONE-SHOT BOUND: the armed failure is CONSUMED by the invalidation site\u2019s own
+    // synchronous rebuild, so a SECOND invalidating operation rebuilds normally and the same
+    // read answers the declared NORMAL path again — the arm\u2019s own token belongs to the ONE
+    // armed rebuild and is not a standing state.
+    await settle(store, 'commit', 'mem.window.tabs.landingPage', 'later')
+    const second = store.resolve('temp.window.tabs.landingPage') as Record<string, unknown>
+    expect(reasonOf('F-6 · the second drive', second), 'F-6 — ONE-SHOT: the second invalidating operation rebuilds normally, so the arm\u2019s token is not a standing state').not.toBe('rebuild-failed')
   })
 
   // [T] §3.2 F-7 — arm (vii), the write-side twin.
@@ -1489,11 +1621,19 @@ describe('§2.2/§3.3/§3.4 · totality, the tree invariant and the purity rows'
     const { mod } = await storeModule()
     const plain = (mod as Record<string, unknown>)['createGraphStore'] as (o?: unknown) => Record<string, unknown>
     const seamless = plain({ declarations: { rows: LOADING_DECLARATIONS } })
-    for (const member of ['reset', 'seed', 'parentLinkCountOf', 'cacheEntryFor']) {
+    // THE EIGHT SEAM KEYS (`§2.1`'s `GraphStore` block, `4 + 4 = 8` — the contract amendment
+    // `bb8394e` appended `nodeFor` · `anchorFor` · `linkFor` · `failNextCacheRebuild`).
+    for (const member of SEAM_MEMBERS) {
       if (member in seamless) { seamThrows.push(`${member}: not absent`); continue }
       seamThrows.push(`${member}: absent`)
     }
-    expect(seamThrows.filter((s) => s.endsWith('not absent')), 'F-24 — the seam-less construction exposes NONE of the four members').toEqual([])
+    expect(seamThrows.filter((s) => s.endsWith('not absent')), 'F-24 — the seam-less construction exposes NONE of the EIGHT members (`§2.1`\u2019s block annotation item (3) reads the production-negative row over all eight keys)').toEqual([])
+    // THE POSITIVE CONTROL: the SAME reading is run over a construction that DOES carry a
+    // NINTH, UNDECLARED member name, and it is REPORTED — so the eight-member silence above
+    // is set equality and not a reading that could never redden.
+    const ninthProbe = { ...(seamless as Record<string, unknown>), [UNDECLARED_NINTH_MEMBER]: () => {} }
+    const ninthReported = [...SEAM_MEMBERS, UNDECLARED_NINTH_MEMBER].filter((member) => member in ninthProbe)
+    expect(ninthReported, `F-24 POSITIVE control — a ninth, UNDECLARED seam name (${UNDECLARED_NINTH_MEMBER}) IS reported by this reading, so its silence over the eight is a reading and not a dead scan`).toEqual([UNDECLARED_NINTH_MEMBER])
     const seamCall = thrownBy(() => {
       const fn = seamless['reset']
       if (typeof fn !== 'function') return 'the key is absent'

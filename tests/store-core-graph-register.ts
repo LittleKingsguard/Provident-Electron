@@ -129,6 +129,24 @@ export const STRATEGY_IDS: readonly string[] = [
 /** `§5.5.2` item 1 — the `(bounded)` set is exactly TWO rows and no others. */
 export const BOUNDED_ROWS: readonly string[] = ['P-GR-TP-1', 'P-GR-IM-12']
 
+// ---- THE TEST-ONLY SEAM'S EIGHT DECLARED MEMBERS (`§2.1`'s `GraphStore` block) ----------
+// EXTENDED 2026-10-01 (THE TESTWRITER'S REPAIR PASS, `TW-1`/`TW-2`; the contract amendment
+// `bb8394e`): the block declares FOUR as-filed seam members PLUS the FOUR that amendment
+// appended — `nodeFor` · `anchorFor` · `linkFor` · `failNextCacheRebuild` — giving a member
+// census of `4 + 4 = 8` ✓ (`§2.1`'s block annotation, item (1)). The appended four are
+// INSTRUMENTS of drives the register already counts, so they add ASSERTIONS to the readings
+// below and NO drive: `P-GR-IM-10`'s term stays `4` = `4` DRIVE MEMBERS × `1` DRIVE
+// (block annotation, item (5)) and the operative twenty-two-term total stays `249`.
+/** The four AS-FILED seam members, in the order the block prints them. */
+export const AS_FILED_SEAM_MEMBERS: readonly string[] = ['reset', 'seed', 'parentLinkCountOf', 'cacheEntryFor']
+/** The four APPENDED seam members (`TW-1`/`TW-2`), in the order the block prints them. */
+export const APPENDED_SEAM_MEMBERS: readonly string[] = ['nodeFor', 'anchorFor', 'linkFor', 'failNextCacheRebuild']
+/** THE SEAM'S OWN KEY SET, read as a SET: `4 + 4 = 8`. */
+export const SEAM_MEMBERS: readonly string[] = [...AS_FILED_SEAM_MEMBERS, ...APPENDED_SEAM_MEMBERS]
+/** THE POSITIVE CONTROL for the key-set readings: a NINTH, UNDECLARED member name must FAIL
+ *  the same set-equality reading, so the reading is not a lower bound. */
+export const UNDECLARED_NINTH_MEMBER = 'notADeclaredSeamMember'
+
 /** `§5.5.3` item (11) — the SUPERSEDED figures, kept VISIBLE and never asserted:
  *  the as-filed drive column (`427`), the pre-amendment corrected column (`233`),
  *  and the filing-time `389` that no term set reproduces. */
@@ -251,7 +269,10 @@ export interface Surface {
 }
 
 /** The store's own members (`§2.1`'s `GraphStore`), reached by name so a missing
- *  member reddens the row that drives it instead of failing the file. */
+ *  member reddens the row that drives it instead of failing the file.
+ *  THE TEST-ONLY SEAM'S EIGHT DECLARED MEMBERS are declared here in the block's own
+ *  signatures and optionality (`?`), the four as-filed ones PLUS the four appended
+ *  2026-10-01 by `TW-1`/`TW-2` (`§2.1`'s block annotation: `4 + 4 = 8`). */
 export interface GraphStoreLike {
   resolve: (name: string) => unknown
   set: (name: string, value: unknown, opts?: unknown) => unknown
@@ -265,10 +286,24 @@ export interface GraphStoreLike {
   tiers?: Record<string, unknown>
   register?: unknown
   constraints?: unknown
+  /* ---- THE FOUR AS-FILED SEAM MEMBERS ---- */
   reset?: () => void
   seed?: (rows: readonly unknown[]) => void
   parentLinkCountOf?: (nodeRef: string) => number
   cacheEntryFor?: (name: string) => unknown
+  /* ---- THE FOUR APPENDED SEAM MEMBERS (`TW-1`/`TW-2`, read-only + one-shot) ---- */
+  /** `nodeFor` answers a NODE by the reference a resolution yielded — its `ref` and its
+   *  `flag` — or `null` when no such object exists. Read-only. */
+  nodeFor?: (nodeRef: string) => unknown
+  /** `anchorFor` answers the ANCHOR on an owner for a caller's own `key` — its `key` and
+   *  its `link` — or `null`. Read-only. */
+  anchorFor?: (owner: string, key: string) => unknown
+  /** `linkFor` answers the LINK that anchor holds — its target (the declared `to`, `null`
+   *  once the target is severed) and its PER-LINK CACHE ENTRY (the declared `cache`). */
+  linkFor?: (owner: string, key: string) => unknown
+  /** `failNextCacheRebuild` arms the NEXT rebuild the INVALIDATION SITE performs (`§2.6`
+   *  item 4, `DR-7`) to fail, ONE-SHOT, and it can fault nothing else. */
+  failNextCacheRebuild?: () => void
 }
 
 let surfaceCache: Surface | null = null
@@ -756,6 +791,111 @@ export const TOTALITY_POOL: readonly string[] = [
   'file.entity.id.disagreeing',
 ]
 
+/** ⟶ ADDED 2026-10-01 (THE TESTWRITER'S REPAIR PASS, `TW-1`/`TW-2`; `§2.1`'s block
+ *  annotation, items (1)–(6)). THE SEAM READERS the repaired drives below read their own
+ *  subjects with: `nodeFor` · `anchorFor` · `linkFor` · `failNextCacheRebuild`, each called
+ *  through a GAP-REPORTING wrapper (`§2.1`'s block annotation item (2): *"a row that needs
+ *  one of these four and finds it ABSENT … REPORTS THE GAP"*, and *"a row whose drive
+ *  answered `null` from a reader where the contract's own fixture says a node, an anchor or
+ *  a link EXISTS FAILS"*). NONE of these is a drive: they are the INSTRUMENTS of drives the
+ *  register already counts (`§2.1`'s block annotation item (5)), so no term moves. */
+function nodeObjectOf(store: GraphStoreLike, nodeRef: string, label: string, why: string): Record<string, unknown> {
+  if (typeof store.nodeFor !== 'function') {
+    fail(label, `the node reader \`nodeFor\` (\u00a72.1\u2019s test-only seam, appended by TW-1) is ABSENT, so ${why} has no reading; the contract declares it, so this is a REPORTED GAP (\u00a72.1\u2019s block annotation item (2))`)
+  }
+  const node = record(store.nodeFor(nodeRef))
+  need(node !== null, label, `\`nodeFor(${nodeRef})\` answered null where the fixture says a node exists: ${why} (\u00a72.1\u2019s block annotation item (2))`)
+  return node as Record<string, unknown>
+}
+/** The ANCHOR view a drive reads before and after an operation: the anchor's OWN object, its
+ *  `key`, the LINK object it holds and that link's declared members. */
+interface AnchorView {
+  readonly present: boolean
+  readonly anchorObject: unknown
+  readonly key: unknown
+  readonly linkObject: unknown
+  readonly linkTo: unknown
+  readonly linkCache: unknown
+}
+function anchorView(store: GraphStoreLike, owner: string, key: string, label: string, why: string): AnchorView {
+  if (typeof store.anchorFor !== 'function') {
+    fail(label, `the anchor reader \`anchorFor\` (\u00a72.1\u2019s test-only seam, appended by TW-1) is ABSENT, so ${why} has no reading; the contract declares it (\`P-GR-IM-2\`\u2019s anchor half), so this is a REPORTED GAP (\u00a72.1\u2019s block annotation item (2))`)
+  }
+  if (typeof store.linkFor !== 'function') {
+    fail(label, `the link reader \`linkFor\` (\u00a72.1\u2019s test-only seam, appended by TW-1) is ABSENT, so the link an anchor holds has no reading: ${why} (\u00a72.1\u2019s block annotation item (2))`)
+  }
+  const anchor = record(store.anchorFor(owner, key))
+  if (anchor === null) {
+    return { present: false, anchorObject: null, key: null, linkObject: null, linkTo: null, linkCache: null }
+  }
+  const link = record(anchor['link'])
+  return {
+    present: true,
+    anchorObject: anchor,
+    key: anchor['key'],
+    linkObject: link,
+    linkTo: link === null ? null : link['to'],
+    linkCache: link === null ? null : link['cache'],
+  }
+}
+/** THE ANCHOR-IMMUTABILITY READING (`§2.2` `P-2`, `§5.5.1` `P-GR-IM-2`\u2019s anchor half): for
+ *  EVERY anchor object read before and after an operation, `key` and `link` are UNCHANGED.
+ *  Read as a SET over the anchor keys that SURVIVE the operation: an anchor the operation
+ *  DELETES has no object to mutate (`§2.6` item 5: a re-parent DELETES and MINTS), so the
+ *  assertion is made over the intersection — and the drive's own positive control (two reads
+ *  of one anchor answering the SAME object) keeps the reading from being satisfiable by a
+ *  reader that fabricated a fresh anchor per call. */
+function assertAnchorsUnchanged(before: ReadonlyMap<string, AnchorView>, after: ReadonlyMap<string, AnchorView>, label: string): void {
+  let surviving = 0
+  for (const [key, old] of before) {
+    const now = after.get(key)
+    if (now === undefined || !now.present) continue
+    surviving += 1
+    eq(now.key, old.key, label, `the anchor keyed \`${key}\` kept its own \`key\`, carried verbatim (\u00a72.2 P-2, \u00a72.2 P-3)`)
+    eq(now.linkObject === null, old.linkObject === null, label, `the anchor keyed \`${key}\` kept the SHAPE of its \`link\` across the operation (a link\u2019s presence is not changed by an unrelated operation)`)
+    if (old.linkObject !== null && now.linkObject !== null) {
+      eq(now.linkObject, old.linkObject, label, `the anchor keyed \`${key}\` holds the SAME link object after the operation: no anchor is mutated in place and no link is rebuilt under a surviving anchor (\u00a72.2 P-2)`)
+      eq(now.linkTo, old.linkTo, label, `and that link\u2019s target (the declared \`to\`) is UNCHANGED (\u00a72.1\u2019s \`GraphLink\`)`)
+      eq(JSON.stringify(now.linkCache), JSON.stringify(old.linkCache), label, `and its per-link cache entry is UNCHANGED (\`GraphLink.cache\`)`)
+    }
+  }
+  need(surviving > 0, label, `at least ONE anchor survives the operation (read ${String(surviving)} of ${String(before.size)}), so the immutability reading has SUBJECTS: a drive with no surviving anchor is VACUOUS and FAILS`)
+}
+
+/** The PER-LINK CACHE ENTRY (`GraphLink.cache`, `§2.6` item 1(b)) a drive reads on one owner
+ *  half (`§2.1`\u2019s block annotation item (4)), because `cacheEntryFor`\u2019s declared key domain
+ *  is TOP-LEVEL NAMES (`§2.6` item 1\u2019s annotation) and therefore cannot reach it. */
+interface LinkEntryView {
+  readonly entry: unknown
+  readonly bytes: string
+  readonly linkObject: unknown
+  readonly to: unknown
+}
+function linkEntryView(store: GraphStoreLike, owner: string, key: string, label: string, why: string): LinkEntryView {
+  if (typeof store.linkFor !== 'function') {
+    fail(label, `the per-link cache entry is read through \`linkFor\` (\u00a72.1\u2019s test-only seam, appended by TW-1) and it is ABSENT, so ${why} has no reading: this is a REPORTED GAP (\u00a72.1\u2019s block annotation item (2))`)
+  }
+  const link = record(store.linkFor(owner, key))
+  need(link !== null, label, `\`linkFor(${owner}, ${key})\` answered null where the fixture says a link exists: ${why}`)
+  const l = link as Record<string, unknown>
+  need(Object.prototype.hasOwnProperty.call(l, 'cache'), label, 'the link carries its own `cache` member (`GraphLink.cache`, `\u00a72.6` item 1(b))')
+  const entry = l['cache']
+  need(entry !== null && typeof entry === 'object', label, `the PER-LINK CACHE ENTRY is a record, never null/absent, on a link the fixture holds: ${why}`)
+  return {
+    entry,
+    bytes: JSON.stringify({ name: (entry as Record<string, unknown>)['name'], matchedRef: (entry as Record<string, unknown>)['matchedRef'], matchedTier: (entry as Record<string, unknown>)['matchedTier'] }),
+    linkObject: l,
+    to: l['to'],
+  }
+}
+/** THE WRITTEN SUBJECT and THE UNTOUCHED POSITIVE CONTROL the cache/link drives share: the
+ *  baseline tree's `window` root (written by every operation the register names) and its
+ *  `entity` root (which NO operation of this register touches). Both are DECLARED root
+ *  names of the fixture (`§2.4` item 8's annotation), so both carry a register row, and both
+ *  carry a first-segment anchor key. */
+const LINK_SUBJECT = { name: 'window', key: 'tabs' } as const
+const LINK_CONTROL = { name: 'entity', key: 'id' } as const
+
 export const REGISTER_ROWS: readonly RegisterRow[] = [
   {
     id: 'P-GR-IM-1', type: 'P-IM',
@@ -780,15 +920,41 @@ export const REGISTER_ROWS: readonly RegisterRow[] = [
         run: (store: GraphStoreLike) => {
           const label = `IM-2 (${op}) — the anchor objects read before/after are UNCHANGED`
           buildBaselineTree(store, label)
-          const before = readNodes(store, label)
+          // ⟶ REPAIRED 2026-10-01 (THE TESTWRITER'S REPAIR PASS, `TW-1`): the drive is now
+          // DRIVEN. The as-filed version reported this half as a contract gap because no
+          // declared member yielded an anchor; `§2.1`'s block annotation item (4) appends
+          // `anchorFor` (and `linkFor`) to the test-only seam FOR THIS ROW, so the anchors'
+          // OWN objects are readable and the row's own property is asserted rather than
+          // reported. A `throw`-only drive is gone with the gap it reported.
+          const rootRef = nodeRefOf(store, LINK_SUBJECT.name)
+          need(rootRef !== null, label, `the written root \`${LINK_SUBJECT.name}\` carries a register row, so its node handle is readable (\u00a72.4 item 3)`)
+          const readAnchors = (): ReadonlyMap<string, AnchorView> => {
+            const node = nodeObjectOf(store, rootRef as string, label, 'the anchors an operation must not mutate cannot be read')
+            const anchors = Array.isArray(node['anchors']) ? (node['anchors'] as readonly unknown[]) : []
+            const out = new Map<string, AnchorView>()
+            for (const raw of anchors) {
+              const anchor = record(raw)
+              if (anchor === null) continue
+              const key = anchor['key']
+              if (typeof key !== 'string') continue
+              out.set(key, anchorView(store, rootRef as string, key, label, 'the anchor object an operation must not mutate is not readable'))
+            }
+            return out
+          }
+          const before = readAnchors()
+          need(before.size > 0, label, 'the drive has SUBJECTS: the root carries at least ONE anchor before the operation (a vacuous drive FAILS)')
+          // THE POSITIVE CONTROL that the anchor reading is the GRAPH'S OWN OBJECT and not a
+          // fabrication: two consecutive reads of the same anchor answer the SAME object.
+          const probeKey = LINK_SUBJECT.key
+          const first = before.get(probeKey) ?? null
+          need(first !== null, label, `the anchor the positive control reads (\`${probeKey}\` on \`${LINK_SUBJECT.name}\`) exists before the operation`)
+          const readBack = anchorView(store, rootRef as string, probeKey, label, 'the positive control reads the same anchor twice')
+          eq(readBack.anchorObject, (first as AnchorView).anchorObject, label, 'POSITIVE control: two reads of one anchor answer the SAME object by identity, so a reader that fabricated a fresh anchor per call FAILS')
           runOperation(store, op, label)
-          const after = readNodes(store, label)
-          assertLinkIdentity(before, after, label)
-          const refs = new Set(after.nodes.map((n) => n.ref))
-          fail(
-            label,
-            `THE ANCHORS' OWN OBJECTS ARE NOT READABLE FROM THIS CONTRACT'S DECLARED SURFACE, so this drive's subject does not exist: \u00a72.1's GraphStore block declares NO node accessor and NO anchor accessor, and the TEST-ONLY seam carries \`parentLinkCountOf\` · \`cacheEntryFor\` · \`reset\` · \`seed\` alone \u2014 so no caller can read an anchor's \`key\`, read its \`link\`, or compare the anchor object before and after an operation. READ AS A CONTRACT GAP, not satisfied with a fabricated seam. (What IS readable is the \`${String(refs.size)}\` node handle(s) the walk exposes, and the flag half of the row is driven in the twin drive.)`,
-          )
+          const after = readAnchors()
+          assertAnchorsUnchanged(before, after, label)
+          const refs = new Set([...after.keys()])
+          need(refs.size >= 0, label, `the \`${String(refs.size)}\` anchor key(s) surviving the operation are read off the anchor reader \`anchorFor\` (\u00a72.1\u2019s test-only seam, appended by TW-1)`)
         },
       },
       {
@@ -801,6 +967,28 @@ export const REGISTER_ROWS: readonly RegisterRow[] = [
           const after = readNodes(store, label)
           assertFlagChangeAccompaniedByNewRef(before, after, label)
           assertLinkIdentity(before, after, label)
+          // ⟶ REPAIRED 2026-10-01 (THE TESTWRITER'S REPAIR PASS, `TW-1`): the flag half is now
+          // OBSERVED through `nodeFor`, which is the ONE member that answers a node's own
+          // `ref` (`§2.1`'s block annotation item (4)) — so "`flag` changes only together
+          // with a NEW `ref`" is asserted over the NODE'S OWN `ref` rather than inferred from
+          // a `(row nodeRef, tier)` composite.
+          const rootA = nodeObjectOf(store, nodeRefOf(store, LINK_SUBJECT.name) as string, label, 'the flag half cannot be read')
+          need(typeof rootA['flag'] === 'string', label, '`nodeFor(nodeRef).flag` is the node\u2019s OWN flag (`GraphNodeFlag`, `\u00a72.1`)')
+          const rootB = nodeObjectOf(store, nodeRefOf(store, LINK_SUBJECT.name) as string, label, 'the flag half cannot be read')
+          eq(rootB['ref'], rootA['ref'], label, 'the same node read twice answers the same `ref`')
+          eq(rootB['flag'], rootA['flag'], label, 'and the same `flag`: a read that answered a fresh node per call FAILS')
+          const readFlagsByRef = new Map<string, unknown>()
+          for (const node of after.nodes) {
+            if (node.graphRef === null) fail(label, 'every node the walk reached must answer its OWN `ref` through `nodeFor` (`\u00a72.1`\u2019s block annotation item (4)): this is a REPORTED GAP, never a pass')
+            readFlagsByRef.set(node.graphRef, node.flag)
+          }
+          need(readFlagsByRef.size > 0, label, 'the flag reading has SUBJECTS after the operation')
+          for (const beforeNode of before.nodes) {
+            if (beforeNode.graphRef === null) fail(label, 'every node the walk reached must answer its OWN `ref` through `nodeFor` (`\u00a72.1`\u2019s block annotation item (4)): this is a REPORTED GAP, never a pass')
+            const held = readFlagsByRef.get(beforeNode.graphRef)
+            if (held === undefined) continue
+            eq(held, beforeNode.flag, label, `the node \`${beforeNode.graphRef}\` kept its OWN \`ref\` across the operation, so its \`flag\` is unchanged (\u00a72.2 P-2: a flag change means a NEW ref, never a rewrite in place)`)
+          }
         },
       },
     ]),
@@ -902,12 +1090,42 @@ export const REGISTER_ROWS: readonly RegisterRow[] = [
         run: (store: GraphStoreLike) => {
           const label = `IM-5 (${op}) — the link entry reads invalid where the rule says so`
           buildBaselineTree(store, label)
-          cacheEntryOf(store, 'window', label)
+          // ⟶ REPAIRED 2026-10-01 (THE TESTWRITER'S REPAIR PASS, `TW-1`): the drive is now
+          // DRIVEN. The as-filed version reported this half as a contract gap because the
+          // per-link cache entry lives ON a link (`GraphLink.cache`, `§2.6` item 1(b)) and no
+          // declared member yielded a link; `§2.1`'s block annotation item (4) appends
+          // `linkFor` FOR THIS ROW (the register entry half is driven in the twin drive),
+          // so the link entry is read and the row's own property is asserted.
+          const subjectRef = nodeRefOf(store, LINK_SUBJECT.name)
+          const controlRef = nodeRefOf(store, LINK_CONTROL.name)
+          need(subjectRef !== null, label, `the written root \`${LINK_SUBJECT.name}\` carries a node handle (\u00a72.4 item 3)`)
+          need(controlRef !== null, label, `the UNTOUCHED root \`${LINK_CONTROL.name}\` carries a node handle: the positive control needs a subject`)
+          // THE TWO READS THE ROW NAMES: the link entry for the WRITTEN path (the subject) and
+          // the link entry for an UNTOUCHED path (the POSITIVE CONTROL, which must SURVIVE).
+          const subjectBefore = linkEntryView(store, subjectRef as string, LINK_SUBJECT.key, label, 'the link entry for the written path cannot be read')
+          const controlBefore = linkEntryView(store, controlRef as string, LINK_CONTROL.key, label, 'the link entry for an untouched path cannot be read')
+          // THE POSITIVE CONTROL that the entry reading is the graph's OWN object: two reads of
+          // the same link entry answer the SAME entry object.
+          const controlReRead = linkEntryView(store, controlRef as string, LINK_CONTROL.key, label, 'the untouched entry is re-read beside the subject')
+          eq(controlReRead.entry, controlBefore.entry, label, 'POSITIVE control: two reads of one link entry answer the SAME object by identity, so a probe that fabricated a fresh entry per call FAILS')
           runOperation(store, op, label)
-          fail(
-            label,
-            `THE PER-LINK CACHE ENTRY IS NOT READABLE FROM THIS CONTRACT'S DECLARED SURFACE, so this drive's subject does not exist: the entry lives ON a link (\`GraphLink.cache\`, \u00a72.6 item 1(b)), and \u00a72.1's GraphStore block hands a caller NO link and NO node \u2014 the ONLY cache probe the contract declares is \`cacheEntryFor(name): GraphRegisterCacheEntry | null\`, whose declared key domain is TOP-LEVEL NAMES (\u00a72.6 item 1\u2019s annotation). READ AS A CONTRACT GAP: the register-entry half is driven in the twin drive.`,
-          )
+          const subjectAfter = linkEntryView(store, subjectRef as string, LINK_SUBJECT.key, label, 'the link entry for the written path is not readable after the operation')
+          const controlAfter = linkEntryView(store, controlRef as string, LINK_CONTROL.key, label, 'the link entry for the untouched path is not readable after the operation')
+          // THE POSITIVE CONTROL MUST SURVIVE: the untouched root is not the operation's
+          // subject, so its entry keeps both its object and its declared members.
+          eq(controlAfter.entry, controlBefore.entry, label, `the UNTOUCHED entry on \`${LINK_CONTROL.name}\` SURVIVES the \`${op}\` operation as the SAME object: the invalidation is SELECTIVE and never a blanket reset (\u00a72.6 item 3\u2019s exhaustive two-part rule)`)
+          eq(controlAfter.bytes, controlBefore.bytes, label, `and its declared members are UNCHANGED: \`{name, matchedRef, matchedTier}\` on the untouched entry read identically (\u00a72.6 item 2)`)
+          if (op.startsWith('a read')) {
+            // THE READ PATH MUTATES NO CACHE ENTRY (`R-5`, `§3.3` I-14): the subject's entry is
+            // unchanged by a read, and the row's whole claim for this drive is the silence.
+            eq(subjectAfter.bytes, subjectBefore.bytes, label, 'a READ invalidates NOTHING: the written path\u2019s link entry is UNCHANGED, so a read that rebuilt one FAILS R-5 (\u00a72.6 item 4: the rebuild is at the invalidation site, never on the read path)')
+            return
+          }
+          // EVERY OTHER OPERATION IN THIS ROW IS AN INVALIDATOR BY THE RULE\u2019S OWN WORDS, so the
+          // written path\u2019s entry must read INVALID — and the drive has its own positive control
+          // (the untouched entry above) proving the reading can tell the two apart.
+          const changed = subjectAfter.bytes !== subjectBefore.bytes || subjectAfter.to !== subjectBefore.to
+          need(changed, label, `the \`${op}\` operation is an invalidator (\u00a72.6 item 3), so the written path\u2019s link entry (or the severed target it addressed) MUST read differently after it: the untouched control\u2019s entry survived, so this reading is not vacuous`)
         },
       },
     ]),
@@ -990,9 +1208,10 @@ export const REGISTER_ROWS: readonly RegisterRow[] = [
   },
   {
     id: 'P-GR-IM-10', type: 'P-IM',
-    domain: 'THE TEST SEAM\u2019S SHAPE AND ITS PRODUCTION-NEGATIVE ROW — with {enableTestSeam:true} all four members are callable; WITHOUT it all four keys are ABSENT and the store\u2019s key set is exactly the interface\u2019s declared members; reset() clears the graph/register/both caches and releases every subscription emitting NO event; seed(rows) drives the ORDINARY write path; each seam call without the seam THROWS',
+    domain: 'THE TEST SEAM\u2019S SHAPE AND ITS PRODUCTION-NEGATIVE ROW — with {enableTestSeam:true} all EIGHT declared seam members (4 as-filed: reset \u00b7 seed \u00b7 parentLinkCountOf \u00b7 cacheEntryFor, plus 4 appended 2026-10-01 by TW-1/TW-2: nodeFor \u00b7 anchorFor \u00b7 linkFor \u00b7 failNextCacheRebuild) are callable; WITHOUT it all EIGHT keys are ABSENT and the store\u2019s key set is exactly the interface\u2019s declared members; reset() clears the graph/register/both caches and releases every subscription emitting NO event; seed(rows) drives the ORDINARY write path; each seam call without the seam THROWS',
     strategyId: 'S-GR-SEAM-1', term: 4, bound: 'enumerated',
-    assertions: ['the seam-ABSENT key-set assertion and the seam-less THROW are ASSERTIONS per member (\u00a75.5.3\u2019s corrected column)'],
+    assertions: ['the seam-ABSENT EIGHT-KEY set-equality assertion (with its ninth-member positive control) and the seam-less THROW are ASSERTIONS per member (\u00a75.5.3\u2019s corrected column); the four appended keys add ASSERTIONS to these readings and NO drive, so the term stays `4` (\u00a72.1\u2019s block annotation item (5))'],
+
     compensating: ['F-24', '\u00a73.4 R-12', '\u00a75.5.1 P-GR-IM-12'],
     drives: ['reset', 'seed', 'parentLinkCountOf', 'cacheEntryFor'].map((member) => ({
       label: `IM-10 (${member}) — callable with the seam, ABSENT without it, and it THROWS when the seam was not enabled`,
@@ -1235,15 +1454,25 @@ function runOperation(store: GraphStoreLike, op: string, label: string): void {
  *  operations\u2019 own reachability: a node the graph holds below a root is reached by the
  *  links above it, and the ONLY way a caller learns its handle is a resolution answer. */
 interface NodeReading {
-  readonly nodes: readonly { readonly ref: string; readonly flag: unknown; readonly cacheIdentity: unknown }[]
-  readonly byRef: ReadonlyMap<string, { readonly ref: string; readonly flag: unknown; readonly cacheIdentity: unknown }>
+  readonly nodes: readonly { readonly ref: string; readonly graphRef: string | null; readonly flag: unknown; readonly cacheIdentity: unknown }[]
+  readonly byRef: ReadonlyMap<string, { readonly ref: string; readonly graphRef: string | null; readonly flag: unknown; readonly cacheIdentity: unknown }>
 }
 /** The node handles a store exposes, together with the OWN flag and the tier handle its
  *  answer names BY IDENTITY (`§2.5` item 3). Read from the ONE inventory the contract
- *  declares (the register's own projection, `§2.4` item 3) plus the walk's own answers. */
+ *  declares (the register's own projection, `§2.4` item 3) plus the walk's own answers.
+ *
+ *  **EXTENDED 2026-10-01 (THE TESTWRITER'S REPAIR PASS, `TW-1`): `graphRef` carries the
+ *  NODE'S OWN `ref`, read through the appended read-only reader `nodeFor(nodeRef)`**
+ *  (`§2.1`'s block annotation item (4): *"it is the ONE member that answers a node's `ref`,
+ *  so 'flag changes only together with a NEW `ref`' becomes observable rather than
+ *  inferred"*). The reading still falls back to the `(row nodeRef, tier)` composite when the
+ *  reader is absent, so the rows that do not drive the flag half keep their own reading —
+ *  and the FLAG-HALF DRIVE (which the contract names this member for) requires a non-null
+ *  `graphRef` and FAILS with the gap when the reader is missing. */
 function readNodes(store: GraphStoreLike, label: string): NodeReading {
-  const nodes: { ref: string; flag: unknown; cacheIdentity: unknown }[] = []
+  const nodes: { ref: string; graphRef: string | null; flag: unknown; cacheIdentity: unknown }[] = []
   const seen = new Set<string>()
+  const nodeReader = typeof store.nodeFor === 'function' ? store.nodeFor : null
   for (const row of registerRows(store)) {
     const name = String(row['name'])
     for (const token of ['file', 'mem', 'temp']) {
@@ -1256,22 +1485,30 @@ function readNodes(store: GraphStoreLike, label: string): NodeReading {
       const key = `${String(row['nodeRef'])}@${token}`
       if (seen.has(key)) continue
       seen.add(key)
-      nodes.push({ ref: key, flag: answer.answer['flag'], cacheIdentity: answer.answer['cache'] })
+      const rowRef = typeof row['nodeRef'] === 'string' ? (row['nodeRef'] as string) : null
+      const nodeObject = nodeReader !== null && rowRef !== null ? record(nodeReader(rowRef)) : null
+      const graphRef = nodeObject !== null && typeof nodeObject['ref'] === 'string' ? (nodeObject['ref'] as string) : null
+      nodes.push({ ref: key, graphRef, flag: answer.answer['flag'], cacheIdentity: answer.answer['cache'] })
     }
   }
-  const byRef = new Map<string, { ref: string; flag: unknown; cacheIdentity: unknown }>()
+  const byRef = new Map<string, { ref: string; graphRef: string | null; flag: unknown; cacheIdentity: unknown }>()
   for (const node of nodes) if (!byRef.has(node.ref)) byRef.set(node.ref, node)
   return { nodes, byRef }
 }
 /** `§2.2` `P-2` / `§3.3` `I-5`: a node's flag changes ONLY together with a NEW `ref` — so a
  *  handle present in BOTH readings carries the SAME flag, and no handle's flag is rewritten
- *  in place. */
+ *  in place.
+ *
+ *  **REPAIRED 2026-10-01 (`TW-1`): the comparison is made over the NODE'S OWN `ref` (read
+ *  through `nodeFor`) wherever both readings carry one**, per `§2.1`'s block annotation item
+ *  (4) — with the `(row nodeRef, tier)` composite kept as the fallback for the readings that
+ *  do not drive this half. */
 function assertFlagChangeAccompaniedByNewRef(before: NodeReading, after: NodeReading, label: string): void {
   for (const node of after.nodes) {
     const old = before.byRef.get(node.ref)
     if (old === undefined) continue
     if (old.flag !== node.flag) {
-      fail(label, `the node handle \`${node.ref}\` kept its ref and changed its flag ${JSON.stringify(old.flag)} \u2192 ${JSON.stringify(node.flag)}: a flag changes ONLY together with a NEW ref (\u00a73.3 I-5)`)
+      fail(label, `the node handle \`${node.graphRef ?? node.ref}\` kept its ref and changed its flag ${JSON.stringify(old.flag)} \u2192 ${JSON.stringify(node.flag)}: a flag changes ONLY together with a NEW ref (\u00a73.3 I-5)`)
     }
   }
   need(after.nodes.length > 0, label, 'the census has SUBJECTS after the operation')
@@ -1560,10 +1797,43 @@ function diagnosticDrive(store: GraphStoreLike, arm: string): void {
     return
   }
   if (arm.startsWith('(vi)')) {
-    fail(
-      label,
-      `THIS ARM HAS NO SUBJECT THE CONTRACT SUPPLIES: it is *"the cache entry is stale AND the rebuild itself fails"* (\u00a72.3 item 6 (vi), \`reason:'rebuild-failed'\`, \`step:'F-CACHE'\`), and nothing in \u00a72.1's declared surface lets a drive make a rebuild fail \u2014 \u00a72.6 item 4 puts the rebuild at the INVALIDATION SITE (\`DR-7\`), the contract declares no injectable rebuild, no fault seam beyond \`reset\`/\`seed\`/\`parentLinkCountOf\`/\`cacheEntryFor\`, and \`cacheEntryFor(name)\` only READS. READ AS A CONTRACT GAP: the arm is un-reachable and un-observable, so no drive over this contract can hold it.`,
-    )
+    // ⟶ REPAIRED 2026-10-01 (THE TESTWRITER'S REPAIR PASS, `TW-2`): the arm is now DRIVEN. The
+    // as-filed version reported it as an un-reachable, un-observable contract gap; `§2.1`'s
+    // block annotation appends the ONE-SHOT, ONE-SUBJECT test-only fault injector
+    // `failNextCacheRebuild` FOR THIS ARM (`§2.3` item 6 (vi)'s own annotation), so a drive
+    // can arm the NEXT rebuild the INVALIDATION SITE performs (`§2.6` item 4, `DR-7`) to fail.
+    // THE ARM'S OBSERVABLE IS UNCHANGED BY ITS BEING DRIVEABLE (`§3.2` `F-6`): a RETURNED
+    // RECORD with `reason:'rebuild-failed'` at `step:'F-CACHE'`, never a throw.
+    need(typeof store.failNextCacheRebuild === 'function', label, 'the arm\u2019s INSTRUMENT is the declared one-shot seam member `failNextCacheRebuild` (\u00a72.1\u2019s GraphStore block, appended 2026-10-01 by TW-2); its absence is a REPORTED GAP, never a pass (\u00a72.1\u2019s block annotation item (2))')
+    const windowRef = nodeRefOf(store, 'window')
+    need(windowRef !== null, label, 'the stale entry\u2019s link lives on the `window` root, whose handle the register\u2019s own row carries (\u00a72.4 item 3)')
+    const armInjector: () => void = store.failNextCacheRebuild as () => void
+    let armThrew: unknown = null
+    try {
+      armInjector()
+    } catch (e) {
+      armThrew = e
+    }
+    eq(armThrew, null, label, 'arming the injector adds NO throw class: `\u00a72.2 P-5`\u2019s three named exceptions are unmoved and the injection adds no fourth')
+    // THE ARMED REBUILD IS PERFORMED BY THE NEXT INVALIDATING OPERATION (the mutation between
+    // the arming and the read) — `\u00a72.4` item 8's annotation: `mem.window.tabs` is a DECLARED
+    // root name of the fixture. The armed failure is INTERNAL, so the mutating operation still
+    // answers its own receipt.
+    const invalidated = readWrite(store, 'commit', ['mem.window.tabs', 'm2'], label)
+    eq(invalidated.status, 'committed', label, 'the invalidating operation\u2019s own rebuild failure is INTERNAL: the operation still answers its receipt, and the injection adds no throw')
+    const w = readWalk(store, 'file.window.tabs', label)
+    check(w, 'F-CACHE', 'tabs', windowRef, 'the arm\u2019s own step, and the diagnostic names the stale entry\u2019s link (the `tabs` anchor on the `window` root, \u00a73.2 F-6)')
+    eq((w as unknown as Record<string, unknown>)['status'], 'refused', label, 'the arm answers a RETURNED RECORD, never a throw (`\u00a72.3` item 6 (vi))')
+    const armedDiagnostic = record((w as unknown as Record<string, unknown>)['diagnostic'])
+    need(armedDiagnostic !== null, label, 'the refusal record carries its own diagnostic')
+    const reasonText = String((armedDiagnostic as Record<string, unknown>)['reason'])
+    need(reasonText.length > 0, label, 'the diagnostic names the reason the rebuild could not answer')
+    // THE ONE-SHOT BOUND: the armed failure is CONSUMED by the invalidation site\u2019s own
+    // synchronous rebuild, so a SECOND invalidating operation rebuilds normally and the same
+    // read no longer answers the arm\u2019s token — the token belongs to the ONE armed rebuild.
+    readWrite(store, 'commit', ['file.window.tabs', 'f2'], label)
+    const second = readWalk(store, 'file.window.tabs', label)
+    need(second.reason !== 'rebuild-failed', label, 'ONE-SHOT: the armed failure is consumed by ONE rebuild, so a second invalidating operation rebuilds normally and the arm\u2019s token is not a standing state')
     return
   }
   fail(
@@ -1648,11 +1918,33 @@ function seamMemberDrive(store: GraphStoreLike, surface: Surface, member: string
   need(Object.prototype.hasOwnProperty.call(store, member), label, `with \`{enableTestSeam:true}\` the member \`${member}\` is PRESENT (\u00a72.1's test-only seam block)`)
   const fn = (store as unknown as Record<string, unknown>)[member]
   eq(typeof fn, 'function', label, `\`${member}\` is CALLABLE with the seam`)
+  // THE SEAM'S OWN MEMBER CENSUS, READ AS A SET OVER ALL EIGHT KEYS AND NOT ONLY OVER THE
+  // FOUR THIS ROW DRIVES (`§2.1`'s block annotation items (1)/(3): `4 + 4 = 8`, and the
+  // production-negative row's subject set is ALL EIGHT keys). The appended four add
+  // ASSERTIONS to this row's two existing readings and NO drive, so the term stays `4`
+  // (block annotation item (5)).
+  const enabledMissing = SEAM_MEMBERS.filter((key) => !Object.prototype.hasOwnProperty.call(store, key))
+  eq(enabledMissing, [], label, `the ENABLED construction carries ALL EIGHT declared seam members (\`4\` as-filed + \`4\` appended: ${SEAM_MEMBERS.join(' · ')}), read as a SET against the store\u2019s own keys`)
+  const enabledTyped = [...AS_FILED_SEAM_MEMBERS, ...APPENDED_SEAM_MEMBERS].filter((key) => typeof (store as unknown as Record<string, unknown>)[key] !== 'function')
+  eq(enabledTyped, [], label, 'every one of the eight declared seam members is CALLABLE under `{enableTestSeam:true}`')
   const plain = constructStore(surface, { declarations: { rows: REGISTER_FIXTURE_ROWS }, constraints: FIXTURE_CONSTRAINTS, crossing: stubCrossing })
   need(plain.store !== null, label, 'the seam-less construction answers a store (\u00a72.11 item 1)')
-  for (const other of ['reset', 'seed', 'parentLinkCountOf', 'cacheEntryFor']) {
-    eq(Object.prototype.hasOwnProperty.call(plain.store as object, other), false, label, `WITHOUT the seam the key \`${other}\` is ABSENT (\u00a73.4 R-12)`)
+  // THE PRODUCTION-NEGATIVE READING, EXTENDED IN SUBJECT (`§3.4 R-12`'s own annotation):
+  // row (c)'s key-set reading is made over ALL EIGHT KEYS, and a production-shaped
+  // construction in which ANY of the eight is present FAILS exactly as one carrying
+  // `reset` does. The reading is SET EQUALITY, not a lower bound: the intersection of the
+  // store's own keys with the declared eight must be EMPTY.
+  for (const other of SEAM_MEMBERS) {
+    eq(Object.prototype.hasOwnProperty.call(plain.store as object, other), false, label, `WITHOUT the seam the key \`${other}\` is ABSENT (\u00a73.4 R-12, read over all EIGHT declared members)`)
   }
+  const seamlessKeys = Object.keys(plain.store as object).filter((key) => SEAM_MEMBERS.includes(key))
+  eq(seamlessKeys, [], label, 'the store\u2019s own key set read against the EIGHT declared seam members: the intersection is EMPTY')
+  // THE POSITIVE CONTROL: the SAME reading run over a store-shaped object carrying a NINTH,
+  // UNDECLARED member name REPORTS it, so the empty intersection above is a reading and not
+  // a scan that could never redden.
+  const ninthProbe = { ...(plain.store as unknown as Record<string, unknown>), [UNDECLARED_NINTH_MEMBER]: () => {} }
+  const ninthReported = [...SEAM_MEMBERS, UNDECLARED_NINTH_MEMBER].filter((key) => key in ninthProbe)
+  eq(ninthReported, [UNDECLARED_NINTH_MEMBER], label, `POSITIVE control — a ninth, UNDECLARED seam member name (${UNDECLARED_NINTH_MEMBER}) IS reported by this reading, so its silence over the eight is a reading and not a dead scan`)
   const called = callStore(plain.store as GraphStoreLike, member, [])
   need(called.error !== null, label, `each seam call WITHOUT the seam THROWS (\u00a72.2 P-5's named exception (b)); it answered ${JSON.stringify(called.value)}`)
   if (member === 'reset') {
