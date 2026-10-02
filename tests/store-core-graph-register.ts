@@ -63,6 +63,27 @@
 // and throws ONLY when the property is actually falsified. THE PRECEDENT IS
 // `tests/focus-tool-register.ts`, whose drives are real assertions.
 //
+// ⟶ REPAIRED AGAIN 2026-10-01 (THE TESTWRITER'S RED-SET REPAIR PASS, `TW-4`; the FINAL red-set
+// repair, `RCA-8(a)`): FIVE drives of that first repair still threw UNCONDITIONALLY, so
+// `REGISTER-EXEC`'s `rowsHeld === 22` remained unsatisfiable for a CORRECT implementation —
+// `rowsHeld` counts a row as held only if NONE of its drives throws (`runRegister`'s own
+// `broken === 0` test). THE FIVE, AND THEIR REPAIRS: `P-GR-IM-8`'s arm `(vii)` (the
+// write-to-orphaned-reference drive, whose as-filed body asserted the arm was unreachable —
+// WITHDRAWN beside; the drive now MIRRORS `§3.2` `F-7` on the clause at `§2.5` item 6 /
+// `§2.3` item 6 row `(vii)`, and `§7` item `11`(a) carries this pass's dated annotation), and
+// `P-GR-IM-14`'s FOUR `secure`-as-PARENT pairs (`(secure, file)` · `(secure, mem)` ·
+// `(secure, temp)` · `(secure, secure)`), which now assert the token `§5.5.1`'s `TW-3` clause
+// names PER DIRECTION for the `secure`-involving half — `'secure-refused'`, decided at the
+// security gate (`§2.4` item 7(b)) — exactly as the SAME ROW's child-`secure` half is driven;
+// `1 + 4 = 5` ✓. THE ROW COUNT, EVERY TERM, EVERY STRATEGY ID AND BOTH `(bounded)` MARKINGS
+// ARE UNMOVED: `22` rows (`14` `P-GR-IM` + `1` `P-GR-SM` + `7` `P-GR-TP`), the declared total
+// `249` with its twenty-two terms, chain and caps printed at the head of this file.
+// ⟶ WITH THE FIVE GONE, NO DRIVE IN THIS FILE THROWS UNCONDITIONALLY: every remaining throw
+// is either a falsified property or the module-absence report `resolveRegisterSurface()` makes
+// (`makeStore` answers `null` per attempt), which is why the `rowsHeld === 22` expectation is
+// REACHABLE — a correct implementation holds all `22` rows, and at RED time the harness
+// reports `0` held over `1` row with `21` un-run, exactly as the module-absence state predicts.
+//
 // NO NON-CONTRACTUAL SEAM IS INVENTED. The as-authored `P-GR-IM-1` read a
 // fabricated `(store as {__minted?})` member that the contract does not declare —
 // REMOVED. The only observation seam any drive now uses is the ONE the contract
@@ -1836,10 +1857,49 @@ function diagnosticDrive(store: GraphStoreLike, arm: string): void {
     need(second.reason !== 'rebuild-failed', label, 'ONE-SHOT: the armed failure is consumed by ONE rebuild, so a second invalidating operation rebuilds normally and the arm\u2019s token is not a standing state')
     return
   }
-  fail(
-    label,
-    `THIS ARM HAS NO SUBJECT THE CONTRACT SUPPLIES: it is *"the WRITE side's twin of (v) \u2014 a write to an ORPHANED reference"* (\u00a72.3 item 6 (vii), a RETURNED RECORD, \`'severed-link'\`), and \u00a72.10 item 3 / \u00a72.11 item 4 DELETE the node on the far side of a severed link rather than orphaning the reference \u2014 so the path is GONE, not orphaned, and a write to it reports the absence of a node rather than a severed link. READ AS A CONTRACT GAP: no drive over this contract can reach an orphaned reference, so the arm cannot hold.`,
-  )
+  // ⟶ REPAIRED 2026-10-01 (THE TESTWRITER'S RED-SET REPAIR PASS, `TW-4`; THE ARM IS DRIVEN).
+  // The as-filed body threw UNCONDITIONALLY here, claiming the arm has no subject the
+  // contract supplies. THE CLAIM IS FALSE AND IS WITHDRAWN BESIDE (`RCA-8(d)`): the subject is
+  // supplied by the contract at its own sites — `§2.3` item 6 row `(vii)` (*"the WRITE side's
+  // twin of (v) — a write to an ORPHANED reference"*, token `'severed-link'`, a RETURNED
+  // RECORD), `§2.3` item 6 row `(v)` (*"the anchor exists and its link's target has been
+  // severed/reclaimed"*, at step `E-LINK`), `§2.5` item 6 (*"a write whose walk reaches a link
+  // whose target is severed fails LOUDLY, with `reason:'severed-link'`"*), `§3.2` `F-7`'s
+  // trigger (*"`set`/`commit`/`remove` on a path whose walk reaches a severed link"*) and
+  // `§3.3` `I-6` (*"A WRITE TO AN ORPHANED REFERENCE FAILS LOUDLY, as a returned record"*).
+  // THE DRIVE MIRRORS `F-7`, which the red set already drives TWICE (`tests/store-core-graph.test.ts`'s
+  // `F-7` row; this register's own `P-GR-TP-5`, whose severance drive reads
+  // `after.refused && after.reason === 'severed-link'` on the released reference).
+  if (arm.startsWith('(vii)')) {
+    const minted = readWrite(store, 'commit', ['file.window.other', 'o'], label)
+    eq(minted.status, 'committed', label, 'the arm\u2019s SUBJECT is minted through the ORDINARY write path (`\u00a72.8` item 3: `commit` is the minting operation), so the anchor and its link exist before the link is severed')
+    const severed = readWrite(store, 'sever', ['file.window', 'other'], label)
+    eq(severed.status, 'committed', label, 'the severance COMMITS, so the link is genuinely severed and reclaimed (`\u00a72.10` item 3)')
+    const reachedRef = nodeRefOf(store, 'window')
+    need(reachedRef !== null, label, 'the severed link lives on the `window` root, whose handle the register\u2019s own row carries (`\u00a72.4` item 3)')
+    const read = readWalk(store, 'file.window.other', label)
+    eq(read.reason, 'severed-link', label, 'the READ side of the SAME graph fact answers the declared token at `E-LINK` (`\u00a72.3` item 6 (v)) \u2014 the write-side twin is that fact seen from the other side')
+    const mutators: readonly (readonly ['set' | 'commit' | 'remove', readonly unknown[]])[] = [
+      ['set', ['file.window.other', 'o2']],
+      ['commit', ['file.window.other', 'o2']],
+      ['remove', ['file.window.other']],
+    ]
+    for (const [member, args] of mutators) {
+      const w = readRefusal(store, member, args, label)
+      eq(w.reason, 'severed-link', label, `a \`${member}\` through the severed link is REFUSED with the ARM\u2019S OWN TOKEN as a RETURNED RECORD (\`\u00a72.3\` item 6 row (vii); \`\u00a72.5\` item 6) \u2014 no pin set exists and no silent no-op is admissible (\`\u00a73.3\` \`I-6\`; \`\u00a73.2\` \`F-7\`)`)
+      if (member === 'commit') {
+        // THE ARM'S DIAGNOSTIC READINGS, taken on the write receipt (`\u00a72.1`'s
+        // `GraphWriteReceipt` carries `diagnostic?`). `E-LINK` IS the step: \u00a72.3 item 6's own
+        // annotation states row `(vii)` *"occupies NO step id"* of its own \u2014 it is the same
+        // graph fact as `(v)`, so the walk fails at the anchor\u2019s link, naming the caller\u2019s
+        // own failing segment (`other`) and the node the walk had REACHED (`window`\u2019s handle),
+        // exactly as the `(ii)`/`(vi)` arms read their pair.
+        check(w, 'E-LINK', 'other', reachedRef, 'the write-side twin occupies NO step id of its own: the same severed-link fact is seen at `E-LINK` (\u00a72.3 item 6 row (vii) and its annotation)')
+      }
+    }
+    return
+  }
+  fail(label, `the arm \`${arm}\` is not one of the SEVEN \`\u00a72.3\` item 6 arms this drive enumerates \u2014 a drive reaching this line has a row whose arm list moved`)
 }
 const REGEN_SHAPES: Readonly<Record<string, readonly string[]>> = {
   'a leaf-only subtree': ['mem.window.tabs'],
@@ -2145,19 +2205,34 @@ function persistenceDrive(store: GraphStoreLike, parent: string, child: string):
   buildBaselineTree(store, label)
   const parentPath = `${parent}.window.tabs`
   const childPath = `${parent}.window.tabs.node`
+  // ⟶ REPAIRED 2026-10-01 (THE TESTWRITER'S RED-SET REPAIR PASS, `TW-4`; THE FOUR
+  // `secure`-AS-PARENT PAIRS ARE DRIVEN). The as-filed branch threw UNCONDITIONALLY on the
+  // claim that the pair's declared outcome does not hold as printed and the parent node
+  // "CANNOT EXIST" — an UNSATISFIABLE drive, and a claim that asserts the OPPOSITE of the
+  // contract's own operative reading. THE OPERATIVE READING IS `§5.5.1`'s `TW-3` clause
+  // beside `P-GR-IM-14`, which names the token PER DIRECTION: `'durability-inversion'` for
+  // the THREE INVERSION PAIRS of the ordered three AND NOTHING ELSE; `'secure-refused'` for
+  // the SEVEN `secure`-involving pairs, EVERY ONE OF THEM, *"decided at `B-SECURE-GATE`"*
+  // (`§2.4` item 7(b) — decided BEFORE the register is consulted and BEFORE any traversal;
+  // `§2.3` item 1; `§2.5` item 2's precedence), the pair being VACUOUS-WITH-REASON (no graph
+  // node carries `secure`: `GraphNodeFlag` is `'temp' | 'mem' | 'file'`, `§2.1` item 4).
+  // `3 + 7 + 6 = 16` ✓ — the row's `4` × `4` form and its TERM `16` are UNMOVED.
+  if (parent === 'secure') {
+    const parentAtSecure = readRefusal(store, 'commit', [parentPath, 'p'], label)
+    eq(parentAtSecure.reason, 'secure-refused', label, `the PARENT spelling \`${parentPath}\` carries the \`secure\` tier token, so the mint is DECIDED at the security gate (\`\u00a72.4\` item 7(b); \`\u00a72.3\` item 1) \u2014 exactly as the child-\`secure\` half of this row is driven`)
+    const childAtSecure = readRefusal(store, 'commit', [childPath, 'c'], label)
+    eq(childAtSecure.reason, 'secure-refused', label, 'BOTH directions of the pair are decided at the SAME gate, so the token does not depend on which side of the pair names the `secure` tier')
+    need(parentAtSecure.reason !== 'durability-inversion', label, 'THE ROW\u2019S OWN DECLARED TOKEN IS NOT OBSERVED ON THIS PAIR: the pair is VACUOUS-WITH-REASON and reads the SECURE GATE\u2019S token, never `durability-inversion` (`\u00a75.5.1` `P-GR-IM-14`\u2019s `TW-3` clause, `(b)`)')
+    const noParent = readWalk(store, parentPath, label)
+    eq(noParent.reason, 'secure-refused', label, 'NO SUBJECT, STATED AS A READING RATHER THAN AN ASSUMPTION: the generic surface cannot even WALK to the parent the invariant would be read against, so no node carries the `secure` flag (`\u00a72.11` item 2; `\u00a73.2` `F-15`)')
+    return
+  }
   const parentWrite = readWrite(store, 'commit', [parentPath, 'p'], label)
   eq(parentWrite.status, 'committed', label, `the parent node is minted at \`${parentPath}\` so the pair has a subject (\u00a72.1\u2019s named-invariant block is VACUOUS AT A ROOT)`);
   const parentFlag = parent
   const requestChildAt = (token: string): WriteReading => {
     const w = readWrite(store, 'commit', [`${token}.window.tabs.node`, 'c'], `${label} (the child minted at the requested flag)`)
     return w
-  }
-  if (parent === 'secure') {
-    fail(
-      label,
-      `THE CONTRACT'S DECLARED OUTCOME FOR THIS PAIR DOES NOT HOLD AS PRINTED, and the drive is written as a real assertion rather than a placeholder: \u00a75.5.1 says the 7 \`secure\`-involving pairs are *"each DECIDED as a refusal because \`secure\` carries no graph node"*, while the drive's own first act \u2014 minting the PARENT at \`${parentPath}\` \u2014 is a \`secure.*\` name, and \u00a72.4 item 7(b) requires it to be refused \`'secure-refused'\` BEFORE the register is consulted and BEFORE any traversal. So the parent node the invariant is read against CANNOT EXIST, and the pair has no subject. READ AS A CONTRACT GAP (the pair's outcome is a refusal, but its token is \`'secure-refused'\` and not \`'durability-inversion'\`).`,
-    )
-    return
   }
   if (child === 'secure') {
     const w = readWrite(store, 'commit', [`secure.window.tabs`, 'p'], `${label} (the child's spelling is the secure tier)`)

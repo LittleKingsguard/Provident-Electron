@@ -73,7 +73,10 @@
 //   cap refuses and never evicts · F-14 `secure.*` refused before the register ·
 //   F-15 no `secure` node in the register or the walk · F-16 malformed names, with
 //   the four legal tokens as control · F-17 a tier-free write · F-18 the register's
-//   six construction-time arms · F-19 a second constraint with no interaction rule ·
+//   six construction-time arms · F-19 a malformed or ambiguous TOP-LEVEL pattern does not
+//   load (RE-AIMED 2026-10-01 by the architect's interaction-precondition ruling; the
+//   as-filed subject, *"a second constraint with no interaction rule"*, is withdrawn and its
+//   own input is REFUTED beside) ·
 //   F-20 `reserved-name` by name · F-21 the constraint's evaluation points · F-22 the
 //   export may not cross · F-23 the tree cannot take a second parent link · F-24 the
 //   totality universal over every member · F-25 `R-9`'s re-pointed non-vacuous control.
@@ -523,6 +526,25 @@ function structurallyIdentical(label: string, a: unknown, b: unknown): void {
   if (x['cache'] !== null && x['cache'] !== undefined) {
     expect(x['cache'], `${label} — \`cache\` compared BY IDENTITY against the same handle`).toBe(y['cache'])
   }
+}
+
+/** `F-25`'s DIFFERENTIAL READING, written in this file and adding NO dependency and NO
+ *  seam (`§5.5.1` `P-GR-IM-13`'s comparator is the precedent). It answers ONE question —
+ *  *are these two read answers the SAME?* — over the DECLARED members of `§2.1`'s read
+ *  result shapes, so a caller can assert both directions: EQUAL for two stores in one
+ *  graph state (`§2.6` item 2 / item 6), DIFFERENT for two stores whose graph state was
+ *  changed (`§3.4` `R-9`(b)). `parts` ABSENT is compared as ABSENT; a live `cache` handle
+ *  is compared by the both-live / both-absent distinction alone, because two stores own
+ *  DIFFERENT handles by construction (`§2.5` item 3) and the row's subject is the graph
+ *  state, never an object's address. */
+function sameAnswer(a: unknown, b: unknown): boolean {
+  if (!isRecord(a) || !isRecord(b)) return a === b
+  for (const m of ['status', 'reason', 'step', 'found', 'value', 'tier', 'flag', 'merged', 'name']) {
+    if (JSON.stringify(a[m] ?? null) !== JSON.stringify(b[m] ?? null)) return false
+  }
+  if (Object.prototype.hasOwnProperty.call(a, 'parts') !== Object.prototype.hasOwnProperty.call(b, 'parts')) return false
+  if (JSON.stringify(a['parts'] ?? null) !== JSON.stringify(b['parts'] ?? null)) return false
+  return ((a['cache'] ?? null) === null) === ((b['cache'] ?? null) === null)
 }
 
 /** Reads a tracked file's bytes at `HEAD` for the commit-range-shaped rows. */
@@ -1348,25 +1370,57 @@ describe('§2.7/§2.8 · the write surface and the transaction', () => {
     }
   })
 
-  // [T] §3.2 F-19 — a second constraint with no interaction rule does not load.
-  it('F-19 · §2.7 item 6 · an input carrying two distinct constraint ids with no interaction rule does NOT load', async () => {
+  // [T] §3.2 F-19 (RE-AIMED 2026-10-01 by the architect's ruling on the interaction
+  // precondition) — the SURVIVING malformed-declaration refusal: §2.4 item 5(f), carried at
+  // §2.4 item 7(g), driven by §5.5.1 P-GR-IM-6 arm (f). The as-filed subject — *"a second
+  // constraint with no interaction rule does not load"* — is WITHDRAWN (its exception was
+  // unexpressible by construction: §2.7 item 1's declaration shape carries no interaction-rule
+  // member), and the row is RE-AIMED at a MALFORMED OR AMBIGUOUS TOP-LEVEL PATTERN, whose
+  // positive control the contract itself names ("a well-formed interior-wildcard pattern
+  // LOADS", §2.4 item 5). The as-filed subject's OWN input — this contract's two-constraint
+  // register fixture — is REFUTED rather than merely withdrawn (§2.7 item 6's annotation;
+  // §5.5.1's fixture annotation), so it is asserted below as the row's second control.
+  it('F-19 · §2.4 item 5(f)/item 7(g) · a malformed or ambiguous TOP-LEVEL pattern does NOT load, with a well-formed interior-wildcard pattern as its NAMED control', async () => {
     const { reason, make } = await factoryFor('F-19')
     expect(make, `F-19 — ${reason ?? ''}`).not.toBe(null)
     const factory = make as (o?: unknown) => unknown
-    const two = constructionOutcome(factory, {
-      declarations: { rows: LOADING_DECLARATIONS },
-      constraints: [
-        { id: 'a', kind: 'count-exactly-one', matchedSet: 's', evaluatedOn: ['set'], repair: 'next-surviving-by-order', onRepeat: 'edit', refusalReason: null },
-        { id: 'b', kind: 'unique-path-tier', matchedSet: 's', evaluatedOn: ['commit'], repair: 'none', onRepeat: 'refuse', refusalReason: 'duplicate-path-tier' },
-      ],
+    // THE REFUSED ARM. The subject is the TOP-LEVEL pattern — the only pattern kind §2.4
+    // item 5(f)'s own annotation admits: *"`'malformed-pattern'` — SURVIVES, and ONLY as a
+    // TOP-LEVEL pattern: the per-leaf pattern kind is retired … so a sub-root pattern cannot
+    // reach this arm"*. The spelling MIRRORS §5.5.1 P-GR-IM-6 arm (f)'s own drive (`tests/store-core-graph-register.ts`):
+    // the pattern's FIRST segment is not one of the four legal tier tokens, so the top-level
+    // pattern is malformed/ambiguous rather than a filtered name.
+    const malformed = constructionOutcome(factory, {
+      declarations: { rows: [{ name: '*.window.other' }] },
+      constraints: FIXTURE_CONSTRAINTS,
+      reservedNamespaces: [],
+      enableTestSeam: true,
     })
-    expect(two.threw, 'F-19 — a cascading rule is made mechanical: the input is refused AT CONSTRUCTION').toBe(true)
-    expect(two.reason, 'F-19 — its own token').toBe('malformed-pattern')
-    const one = constructionOutcome(factory, {
-      declarations: { rows: LOADING_DECLARATIONS },
-      constraints: [{ id: 'a', kind: 'count-exactly-one', matchedSet: 's', evaluatedOn: ['set'], repair: 'next-surviving-by-order', onRepeat: 'edit', refusalReason: null }],
+    expect(malformed.threw, 'F-19 — a malformed or ambiguous TOP-LEVEL pattern is refused AT CONSTRUCTION as the factory’s `GraphLoadError` (§2.4 item 5(f), carried at §2.4 item 7(g))').toBe(true)
+    expect(malformed.reason, 'F-19 — the arm’s own token, a HELD member of the union (§2.1’s block annotation (3): the withdrawal removes an ARM and NO MEMBER)').toBe('malformed-pattern')
+    // THE NAMED POSITIVE CONTROL, in the contract's own words: *"a well-formed
+    // interior-wildcard pattern LOADS"* (§2.4 item 5; §5.5.1 P-GR-IM-6 arm (f)'s control is
+    // the same shape), so the refusal above is the ARM's and not the input form's.
+    const control = constructionOutcome(factory, {
+      declarations: { rows: [{ name: 'file.window.*' }] },
+      constraints: FIXTURE_CONSTRAINTS,
+      reservedNamespaces: [],
+      enableTestSeam: true,
     })
-    expect(one.threw, 'F-19 POSITIVE control — a one-row table LOADS').toBe(false)
+    expect(control.threw, 'F-19 POSITIVE control — a WELL-FORMED INTERIOR-WILDCARD top-level pattern LOADS (§2.4 item 5’s own named control)').toBe(false)
+    // THE AS-FILED SUBJECT'S OWN INPUT, PRINTED AS REFUTED RATHER THAN MERELY WITHDRAWN: this
+    // contract's own register fixture declares its two constraint rows and §2.7 item 6's
+    // annotation makes them LEGAL TO DECLARE TOGETHER, each enforced independently — so the
+    // as-filed expectation ("the input does NOT load") would be FALSE of the fixture every
+    // register row is driven with (§5.5.1's fixture annotation).
+    const twoConstraints = constructionOutcome(factory, {
+      declarations: { rows: [...LOADING_DECLARATIONS] },
+      constraints: FIXTURE_CONSTRAINTS,
+      reservedNamespaces: [],
+      enableTestSeam: true,
+    })
+    expect(twoConstraints.threw, 'F-19 — the as-filed subject’s input (the register’s own two-constraint fixture) LOADS: the withdrawn precondition is REFUTED beside, never silently dropped (§2.7 item 6’s annotation)').toBe(false)
+    expect(FIXTURE_CONSTRAINTS.length, 'F-19 — the refutation is printed WITH ITS TERMS: N = 2 declared constraint rows, each enforced independently (§2.7 item 6)').toBe(2)
   })
 
   // [T] §3.2 F-20 — refused BY NAME, never by value.
@@ -1644,18 +1698,60 @@ describe('§2.2/§3.3/§3.4 · totality, the tree invariant and the purity rows'
   })
 
   // [T] §3.2 F-25 / §3.4 R-9 — the re-pointed control is NOT VACUOUS.
-  it('F-25 · §2.2 P-8/§3.4 R-9 · a store that has NEVER minted a row answers DISTINGUISHABLY from one that has', async () => {
-    const store = await storeFor('F-25')
-    const empty = await storeFor('F-25 (never-minted store)')
-    const withRow = store.resolve('file.window.tabs')
-    const without = empty.resolve('file.window.tabs')
+  // ⟶ REPAIRED 2026-10-01 (THE TESTWRITER'S RED-SET REPAIR PASS, `TW-4`; THE DIFFERENTIAL IS
+  // MADE SATISFIABLE BY NAMING AND DRIVING ITS INDEPENDENT VARIABLE). The as-filed body built
+  // TWO FRESH STORES WITH IDENTICAL OPTIONS and required them to answer DIFFERENTLY BEFORE ANY
+  // MINT — a differential with NO independent variable, which `§2.6` item 2 forbids the store
+  // from supplying by any ambient route (*"it is computed from the graph with NO ambient input:
+  // no clock, no counter, no insertion time"* — the fourth named source is the engine's
+  // randomness, spelled here as `Math` and `.random` so that THIS FILE's own bytes do not read
+  // as a hit of the scan `REGISTER-SEED` runs over them, `§5.5` item 2), so the row was red on
+  // construction. THE INDEPENDENT VARIABLE IS THE ONE `§3.4` `R-9`(b) ITSELF NAMES — *"the same
+  // drive against a store that has never minted a row must answer DISTINGUISHABLY from one that
+  // has"* — so it is DRIVEN: ONE store mints the read path's own root node through the ordinary
+  // write path (`§2.8` item 3), the OTHER mints nothing, and the same resolve is read on both
+  // sides of that single graph-state change. `(§0` ruling 13's map class is exactly what the
+  // last assertion below closes.)
+  it('F-25 · §2.2 P-8/§3.4 R-9 · `R-9`’s re-pointed control is NOT VACUOUS: a store that has NEVER minted a row answers DISTINGUISHABLY from one that has', async () => {
+    const store = await storeFor('F-25 (the store whose root is minted)')
+    const empty = await storeFor('F-25 (the store that never mints)')
+    const NAME = 'file.window.tabs'
+    // (1) THE SAME-STATE HALF — `§2.6` item 2. Two stores built with the SAME options and
+    // holding the SAME graph state (neither has minted anything) answer IDENTICALLY: any
+    // ambient input that could differ between them (a clock, a counter, an insertion time,
+    // an entropy source) would answer here, so this reading is what makes the row's §2.6 item 2
+    // claim falsifiable rather than assumed.
+    const emptyBefore = empty.resolve(NAME)
+    const storeBefore = store.resolve(NAME)
     expect(
-      JSON.stringify(without) === JSON.stringify(withRow),
-      'F-25 — a control that PASSES ON BOTH a global-engine-id-keyed map and this store FAILS as vacuous: the never-minted store must answer DISTINGUISHABLY',
+      sameAnswer(emptyBefore, storeBefore),
+      'F-25 — §2.6 item 2: before any mint the two stores are in the SAME graph state, so NO ambient input may make them differ; a store deriving this answer from a clock, a counter, an insertion time or an entropy source FAILS here',
+    ).toBe(true)
+    // (2) THE INDEPENDENT VARIABLE IS DRIVEN: exactly one store mints the read path's own root.
+    const minted = await settle(store, 'commit', NAME, 'v')
+    expect(minted.reason, `F-25 — the minted store’s own drive (§2.8 item 3: \`commit\` is the MINTING operation): ${JSON.stringify(minted.receipt ?? null)}`).toBe(null)
+    // (3) THE SAME DRIVE, RE-READ: the two answers are now DISTINGUISHABLE — `§3.4` `R-9`(b)'s
+    // non-vacuity requirement. A control that passes on BOTH FAILS as vacuous.
+    const emptyAfter = empty.resolve(NAME)
+    const storeAfter = store.resolve(NAME)
+    expect(
+      sameAnswer(emptyAfter, storeAfter),
+      'F-25 — §3.4 R-9(b): the never-minted store must answer DISTINGUISHABLY from the store that has minted; a control that PASSES ON BOTH is VACUOUS and FAILS',
     ).toBe(false)
-    const minted = await settle(store, 'commit', 'file.window.tabs', 'v')
-    expect(minted.reason, 'F-25 — the minted store\u2019s own drive').toBe(null)
-    expect(reasonOf('F-25 — the never-minted store\u2019s answer', empty.resolve('file.window.tabs')), 'F-25 — the two states stay distinguishable by their own positive controls').not.toBe(null)
+    const hit = storeAfter as Record<string, unknown>
+    expect(hit['found'], 'F-25 — the minted store answers the HIT its own graph state licenses').toBe(true)
+    expect(hit['value'], 'F-25 — and the hit carries the minted value').toBe('v')
+    const miss = emptyAfter as Record<string, unknown>
+    expect(miss['found'], 'F-25 — the never-minted store answers its OWN declared state: §2.4 item 4’s annotation makes `window` a declared TOP-LEVEL name, so a root name whose root node does not exist is a COLD ROOT NAME and draws the DECLARED MISS').toBe(false)
+    expect(miss['value'], 'F-25 — a cold root name carries no value (§2.4 item 4’s annotation)').toBe(undefined)
+    expect(miss['reason'] ?? null, 'F-25 — the never-minted store does NOT collapse into a refusal: §2.4 item 4’s annotation keeps (ii) a cold root name distinguishable from (iii) a name that is not a root name at all, and a body in which they collapse FAILS `F-2`').toBe(null)
+    // (4) THE VACUITY CLASS ITSELF, CLOSED: `§2.2` `P-8` / `§3.3` `I-12` — the store keeps NO
+    // global string-to-entry map. A GLOBAL engine-id-keyed map would couple the two stores, so
+    // the untouched store's own answer would move when the OTHER store minted. It must not.
+    expect(
+      sameAnswer(emptyBefore, emptyAfter),
+      'F-25 — §2.2 P-8/§3.3 I-12: the never-minted store is UNCHANGED by the OTHER store’s mint — a store keeping a global string-to-entry map FAILS this reading, which is exactly the vacuity `§3.4` `R-9` re-points the control against',
+    ).toBe(true)
     const storeBytes = existsSync(STORE_SRC) ? readFileSync(STORE_SRC, 'utf8') : ''
     expect(storeBytes, 'F-25 — R-9\u2019s no-counter / no-UUID half binds the handle\u2019s minting').not.toMatch(F('random', 'UUID'))
     expect(storeBytes, 'F-25 — no path segment is looked up against an id registry').not.toMatch(F('nodeRefs', '\\.get\\('))
