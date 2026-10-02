@@ -165,6 +165,73 @@ that is an ownership fact, not an open semantic.
    with that ownership); the fork's tree; `docs/HANDOFF.md`; `docs/defects.md`. **Nothing was run and nothing
    was committed** by this pass.
 
+## 5. THE SUCCESSOR'S IN-PLACE AMENDMENT (2026-10-01) — the amendment the successor's `§6.5` item 3(a) owes THIS file
+
+**WHAT THIS SECTION IS, AND WHAT IT IS NOT.** **The successor contract for this unit, `docs/specs/store-core-graph.md`, is
+FILED, and its own `§6` carries the STEP-0 determination for that unit plus the two obligations it owes THIS FILE IN
+PLACE: its `§6.2`'s re-statuses and its `§6.3`'s one new collision row — each authored THERE BY ROW ID, and each written
+HERE by this pass.** **Nothing above this line is rewritten: not one row's bytes, not one status cell, not one count
+sentence — every as-filed row of `§1`, `§2` and `§3` stands exactly as filed (`RCA-8(d)`, annotate-beside and never
+replace).** **The successor is cited BY PATH, and its own ids (`§6.1`, `§6.2`, `§6.3`, `§6.4`, `§6.5`, `K-13`) are cited BY
+ROW ID where they are the artifact the clause is owed to.** **This section is not a contract: it pins no behaviour, and a
+clause of it that could be read as one is read as a citation to `docs/specs/store-core-graph.md`'s own row.**
+
+**WHERE THE SUCCESSOR CITES THIS FILE, BY PATH.** **`docs/specs/store-core-graph.md` `§6.1`(a) cites this file's
+ALREADY-ADOPTED rows `A-1`…`A-8` as the whole of the successor's adopted vocabulary; its `§6.2` opens *"`docs/specs/store-core-adoption-dossier.md`
+is REUSED, NOT REPLACED"*, cites it by path, and reads this file's *"STATUS OF ALL ROWS: `defined`"* as UNCHANGED; and its
+`§6.5` item 3(a) carries this amendment as an obligation with an owner and a positive revisit condition.** **Its `§6.1`
+also states why the successor's own zero-row rationale is a BLOCK in that file rather than a second dossier: a second
+file is not in that package's authority, so this dossier is reused and amended IN PLACE — which is the disposition this
+section discharges.** **`§6.1`'s `≤8` paragraph cites `REGISTER-ENTRY-COUNT-IS-NOT-CAPPED-AND-ARCHIVE-IS-THE-TRUTH-MECHANISM`
+for the same reason this file's `§1` does: the `≤8` figure is a component-breakdown SIGNAL, never a ceiling.**
+
+### 5.1 The eight held rows `A-1`…`A-8`, RE-STATUSED for the successor — BY ROW ID, EVERY AS-FILED CELL KEPT
+
+**The successor's `§6.2` is the authority for this table; each row id is cited there and each amended reading names the
+clause that moves it. NOT ONE ROW RE-STATUSES TO `undefined-until-answered`, SO THE SPEC GATE IS NOT BLOCKED BY ANY ROW
+OF THIS FILE — which is the condition this file's own opening status line states.**
+
+| The held row | Its status here | Its amended reading, and the clause that moves it (all in `docs/specs/store-core-graph.md`) |
+| --- | --- | --- |
+| **`A-1`** · `file` | **`defined`, UNCHANGED** | the token survives as the filter's own fourth member; the carrier is now the NODE's flag (`§2.3` item 1) |
+| **`A-2`** · `mem` | **`defined`, UNCHANGED** | unchanged in substance |
+| **`A-3`** · `temp` | **`defined`, UNCHANGED** | unchanged in substance; the terminal sweep still returns the tier to its floor |
+| **`A-4`** · `secure` | **`defined`, UNCHANGED, STRENGTHENED** | the refusal is decided BEFORE the register AND before any traversal, so the separate collection is unreachable by construction (`§2.4` item 5) |
+| **`A-5`** · the per-tier `get`/`set` surface | **`defined`, UNCHANGED in substance** | the tier-local surface keeps its meaning; the handle is now a VIEW over the graph, and its identity rule survives (`§2.5` item 3) |
+| **`A-6`** · the layered `read` | **`defined` → `defined`, READING NARROWED** | the merged read and `parts` now SURVIVE under the round-3 `DR-11` ruling, so the row's readings that treated the two composing cases as unreachable are read as LIVE, and its own *"OUTSIDE"* column is re-read against a merged arm that is reachable (`§2.5` item 4) |
+| **`A-7`** · `commit` | **`defined` → `defined`, SCOPE WIDENED** | *"clears the same LOGICAL PATH in every lower-durability tier"* becomes ONE CLAUSE of a wider transaction — the subtree regeneration (`§2.8` items 2/5/6); the clear rule itself is UNTOUCHED |
+| **`A-8`** · `subscribe` | **`defined`, with an AMENDED RELEASE PATH** | the third release trigger (a severance) is now a DECIDED clause — the `'severed'` arm and its release rule at `§2.10` item 3 — so the row does NOT reach `undefined-until-answered`, and the release path is written rather than open |
+
+**THE SUBSUMPTION RECORD CARRIES UNCHANGED, and is re-asserted rather than amended: `U-STORE-PERSIST` consumes `A-1`,
+`A-4`, `A-7` and `A-8`; `U-STORE-SECURITY` consumes `A-1`, `A-4` and `A-5`; the successor unit itself consumes `A-1`…`A-5`
+directly and `A-6`/`A-7`/`A-8` through the re-statuses above.** **THE ARITHMETIC OF THIS TABLE, PRINTED WITH ITS TERMS:
+`8` held rows, `8` statused, `5` read UNCHANGED (`A-1` · `A-2` · `A-3` · `A-4` · `A-5`) and `3` RE-READ (`A-6` · `A-7` ·
+`A-8`); `5 + 3 = 8` ✓.** **No row was added, merged or dropped, and the count of adopted identifiers stays `8`.** **AND THE FILE'S OWN ADOPTED-IDENTIFIER COUNT IS UNMOVED, stated so no reader double-counts the two tables: `§1` still carries `8` identifier rows (`A-1`…`A-8`, each `defined`) and the table above REPEATS those same eight ids AS RE-STATUSES and adds not one — `8` as filed = `8` adopted, `8 + 0 = 8` ✓; a reader counting identifier rows counts `§1`'s table, and a reader counting collision rows counts `§2`'s plus `K-13` (`12 + 1 = 13`).**
+
+### 5.2 The ONE NEW COLLISION ROW the successor's identifier set needs — `K-13`, reconciled BY ROW ID
+
+**THE FORM IS `§2`'s AND IS NOT NEGOTIABLE: the hit is reconciled BY ROW ID as *"banned by row `<R-id>` for reason `<Y>`;
+legitimate in this layer because `<Z>`"*. A hit is NEVER reconciled by RELAXING a prohibition; the only other lawful
+disposition is an EXPLICIT RE-NAME REQUEST, and none is made here.** **The row is authored in the successor at its `§6.3`
+and is carried HERE, in place, so that this file's collision block is COMPLETE for the successor's identifier set.**
+
+| # | The prohibition row hit | Banned by row — FOR THE REASON Y | LEGITIMATE in this layer — BECAUSE Z | Falsifier |
+| --- | --- | --- | --- | --- |
+| **`K-13`** | **`docs/specs/store-core.md` `§3.4` `R-9`** — *"No path segment is looked up against any id registry, and the store keeps no counter, no UUID site and no string-to-entry map"*, positive control *"a `Map` keyed by a derived value FAILS"* | **banned by row `R-9` for the reason that a GLOBAL, PROCESS-WIDE, ENGINE-ID-KEYED string-to-entry map would be a THIRD holder** over the same ids the engine's registry and the `cssIndex`/`propsIndex` pair already index (the plan's `§7.2` `F-5`, `§3.3` row `2.3-8`) | **legitimate in this layer because the prohibition's SCOPE HAS BEEN RULED — not re-read — BY THE ARCHITECT, and the ruling is the ACTIVE row `R-9-SCOPE-BANS-A-GLOBAL-ENGINE-ID-KEYED-MAP-AND-NOT-A-PER-LINK-CALLER-KEYED-WALK-GATED-TARGET-SET`:** the class the clause binds is a **global engine-id-keyed map**, and the class it does **not** bind is a **per-link, per-edge, caller-keyed, walk-gated target set**. The successor's dictionary is **PER-EDGE** (one anchor on one node), **keyed by the CALLER'S OWN DECLARED SEGMENT**, and consulted **as the LAST STEP of a walk that already reached that node** — and it is **UNREACHABLE WITHOUT ITS WALK**, which is the observable the ruling names. **`R-9`'s no-counter / no-UUID half STANDS and binds the store-minted handle's minting (`docs/specs/store-core-graph.md` `§7a.1` item 8), and the handle is NEVER a lookup key (`§2.4` item 2).** | a per-link set that resolves a node **without** its walk; a key that is an ENGINE or AUTHORED id string rather than the caller's own segment; a store-minted handle that a path segment resolves against. **AND the vacuity test: `R-9`'s own positive control is RE-POINTED, and a control that passes on BOTH a global engine-id-keyed map and this store FAILS as vacuous** (`docs/specs/store-core.md` `§3.4` `R-9`; `docs/specs/store-core-graph.md` `§3.4` `R-9`, `F-25`) |
+
+**THE COUNT OF THIS BLOCK, ANNOTATED BESIDE THE AS-FILED FORM RATHER THAN REWRITTEN: `§2`'s table carries `12` collision
+rows as filed (`K-1`…`K-12`) and this section adds `1` (`K-13`), so the file's collision rows now number `13` —
+`12 + 1 = 13` — and NOT ONE of the `13` is reconciled by relaxing a prohibition.** **The closing line below still prints
+*twelve collision rows* and is KEPT VISIBLE; it is read through this sentence.** **Nothing else in `§2` moves: its `K-5`
+`CARRIED` item keeps its owner (the architect) and its positive revisit condition (the next `docs/decisions.md` pass),
+and its five `PROHIBITED` entries stay carried, not relaxed.**
+
+**NO ROW IS ADDED TO `§1` AND NO ROW IS ADDED TO `§3` BY THIS SECTION: the adopted identifiers stay `8`, the overflow
+entries stay `16`, and the successor's own new overflow entry (`O-17`, the per-`(logical path, tier)` uniqueness
+constraint) is carried in the SUCCESSOR's `§6.4` block, not in this file's `§3`.** **A pass that reads this file's `§3` as
+having gained an entry has mis-read it; a pass that reads this dossier's collision block as still numbering `12` has
+mis-read this section.**
+
 **END OF THE DOSSIER.** **Eight adopted identifiers, all `defined`; sixteen overflow entries, none
 `undefined-until-answered`; twelve collision rows, none reconciled by relaxing a prohibition; one
 `CARRIED` item with a named owner and a positive revisit condition; zero bare `OWED`.**
