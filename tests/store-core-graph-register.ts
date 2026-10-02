@@ -40,6 +40,16 @@
 //   P-GR-TP-4   6  = 6 export shapes × 1 drive          P-GR-TP-5  10 = 5 severance classes × 2 drives
 //   P-GR-TP-6   5  = 5 fixtures × 1 census              P-GR-TP-7  12 = 6 merge shapes × 2 drives
 //
+// ⟶ AMENDED 2026-10-01 (THE ARCHITECT'S MERGED-ARM RULING, `A3` at `§0` of the contract; the
+// AS-FILED TERM LINES ABOVE ARE KEPT, *"P-GR-TP-7  12 = 6 merge shapes × 2 drives"* among
+// them). THE ONE ROW WHOSE SUBJECT WAS THE MERGED READ IS `P-GR-TP-7`, AND IT IS RE-DERIVED
+// ONTO THE NODE-LOCAL TIER READING: `12` = `6` subtree shapes × `2` readings, its id, its
+// `P-TP` type and its strategy id `S-GR-MERGE-1` UNMOVED, its term RE-DERIVED rather than
+// preserved and printed with all twenty-two terms at the contract's `§5.5.3` closing block
+// item `(14)`. THE ROW COUNT (`22` = `14` + `1` + `7`), THE `22` STRATEGY IDS, THE PINNED SEED
+// `20261002`, THE `pool.length = 22` AND THE TWO `(bounded)` MARKINGS ARE UNMOVED, and NO OTHER
+// ROW'S TERM MOVES: `P-GR-TP-4` IS THE EXPORT'S ROW AND IS NOT THE MERGED-READ ROW.
+//
 // CAPS AND STOP RULE (`§5.5` item 3, `§5.5.3` item (9)): <=100 attempts per row,
 // <=400 in total, rows evaluated SEQUENTIALLY IN REGISTER ORDER, STOP AFTER 5
 // CONSECUTIVE FAILURES. A row that never ran is reported `un-run` and EVERY un-run
@@ -593,9 +603,13 @@ function readWalk(store: GraphStoreLike, name: string, label: string): WalkReadi
 function isMiss(w: WalkReading): boolean {
   return !w.refused && w.answer['found'] === false
 }
-function isMerged(w: WalkReading): boolean {
-  return !w.refused && w.answer['found'] === true && w.answer['merged'] === true
-}
+// ⟶ REMOVED 2026-10-01 (THE ARCHITECT'S MERGED-ARM RULING, `A3` at `§0` of the contract): the
+// as-authored helper `isMerged` — *"return !w.refused && w.answer['found'] === true &&
+// w.answer['merged'] === true"* — read a `merged` member that no longer exists, and its only
+// caller was the withdrawn `mergeDrive`. It is deleted rather than left as dead code in a
+// file whose own rows must stay driveable; no row loses its subject (the row it served,
+// `P-GR-TP-7`, is re-derived onto the node-local tier reading and keeps its id, its type, its
+// strategy id and its term `12`).
 
 /** THE REGISTER'S OWN VIEW (`§2.4`), read structurally. */
 function registerRows(store: GraphStoreLike): readonly Record<string, unknown>[] {
@@ -1271,7 +1285,11 @@ export const REGISTER_ROWS: readonly RegisterRow[] = [
     id: 'P-GR-IM-13', type: 'P-IM',
     domain: 'THE TWO-RUN STORE-STATE-INDEPENDENCE DIFFERENTIAL with the CANONICAL STRUCTURAL COMPARATOR — for every (store state, call) pair the answer is IDENTICAL across two runs whose ONLY difference is the store\u2019s tier state, and the read path mutates NO cache entry',
     strategyId: 'S-GR-DIFF-1', term: 40, bound: 'enumerated',
-    assertions: ['the cache-entry reading taken BETWEEN the two runs; `parts` ABSENT compared as ABSENT; a `cache` compared BY IDENTITY against the same handle; found/tier/flag/merged/name by value (\u00a72.6 item 6). THIS ROW IS THE PER-ROW MAXIMUM (40 \u2264 100)'],
+    // \u27f6 RE-DERIVED 2026-10-01 (THE ARCHITECT'S MERGED-ARM RULING, `A3` at `\u00a70`): the `parts` member this
+    // assertion names is WITHDRAWN from the read result, so the comparator's declared member set is
+    // `found` \u00b7 `value` \u00b7 `tier` \u00b7 `flag` \u00b7 `name` by value with a live `cache` by identity, and no
+    // `parts`/`merged` reading remains (`\u00a72.6` item 6's re-derived comparator; `\u00a75.5.1` `P-GR-TP-7`'s clause).
+    assertions: ['the cache-entry reading taken BETWEEN the two runs; a `cache` compared BY IDENTITY against the same handle; found/value/tier/flag/name by value (\u00a72.6 item 6, re-derived). THIS ROW IS THE PER-ROW MAXIMUM (40 \u2264 100)'],
     compensating: ['M-3', 'M-16', 'F-6', 'R-5', '\u00a70A note 3'],
     drives: ['all cold', 'a `temp` shadow over a `mem` holder', 'a `mem` shadow over a `file` holder', 'a cold item (a declared root name with no row yet)', 'a severed path']
       .flatMap((state) => ['an unqualified resolve', 'a qualified resolve', 'the tier-local get', 'the tier-local has'].flatMap((call) => [
@@ -1382,20 +1400,28 @@ export const REGISTER_ROWS: readonly RegisterRow[] = [
   },
   {
     id: 'P-GR-TP-7', type: 'P-TP',
-    domain: 'THE MERGED READ AND ITS `parts` SURVIVE AND ARE TOTAL — for EVERY merged drive, `parts` is NON-EMPTY and ORDERED by the overlay order (`file` \u2192 `mem` \u2192 `temp`); every entry names THE PATH THE TIER ACTUALLY HOLDS and NEVER the read path; `tier` is null and `merged` is true; `cache` is null; the value is a composite no node holds; and a merge runs ONLY where NO node holds the read path',
+    // ⟶ RE-DERIVED 2026-10-01 (THE ARCHITECT'S MERGED-ARM RULING, `A3` at `§0` of the contract; the
+    // AS-FILED subject, *"THE MERGED READ AND ITS `parts` SURVIVE AND ARE TOTAL"*, is WITHDRAWN and is
+    // kept visible here in this comment rather than left unrecorded: *"for EVERY merged drive, `parts` is
+    // NON-EMPTY and ORDERED by the overlay order (`file` → `mem` → `temp`); every entry names THE PATH THE
+    // TIER ACTUALLY HOLDS and NEVER the read path; `tier` is null and `merged` is true; `cache` is null; …
+    // and a merge runs ONLY where NO node holds the read path"*). THE ROW'S ID, ITS TYPE, ITS STRATEGY ID
+    // AND ITS TERM ARE UNMOVED — `S-GR-MERGE-1` stays the row's own opaque label, and the term is
+    // RE-DERIVED rather than preserved: `12` = `6` subtree shapes × `2` readings.
+    domain: 'THE NODE-LOCAL TIER READING — for EVERY node a caller receives (the node itself, or a clone or a reference of it passed to the function calling the read), THE TIER THE CALLER IDENTIFIES IS THE NODE\u2019S OWN `flag`, READ FROM THAT NODE: a hit\u2019s answer carries the resolved node\u2019s own flag; a qualified read\u2019s diagnostic names the node\u2019s own flag AND the flag the token asked for; a miss asserts NO tier (`tier: null`); and NO tier label is ever RESTATED BY THE STORE from the caller\u2019s token',
     strategyId: 'S-GR-MERGE-1', term: 12, bound: 'enumerated',
-    assertions: ['two drives per shape; the four claims (parts\u2019 ORDER · parts\u2019 PATH identity · the tier/merged/cache triple · the value\u2019s non-authoritative status) are ASSERTIONS per drive (\u00a75.5.3)'],
-    compensating: ['M-5', 'F-8', 'I-3', 'I-17', '\u00a72.5 item 4'],
+    assertions: ['two readings per shape: (a) THE NODE-LOCAL READING — the flag the answer carries compared against the `flag` of the node the walk reached, read through the test-only reader `nodeFor` (\u00a72.1\u2019s block annotation item (4)); (b) THE NO-RESTATED-LABEL READING — every tier the answer or the diagnostic names is TRACEABLE TO A NODE\u2019S OWN `flag` (a hit\u2019s `cache.tier`, a qualified read\u2019s diagnostic `owner` node flag, or a miss\u2019s `tier: null` that asserts none). The POSITIVE CONTROL is the SAME node driven under a DISAGREEING token, on which a store that restated the token FAILS'],
+    compensating: ['M-5', 'F-8', 'I-3', '\u00a72.3 items 1/2', '\u00a72.5 item 4'],
     drives: [
-      'a file-held child only',
-      'a file-held child plus a temp-held grandchild',
-      'the same path held in file AND temp (the overlay wins by the durability order)',
-      'the same path held at TWO tiers AND a descendant held (the first-hit boundary)',
-      'a node holding the read path with a held descendant (NO merge runs)',
-      'a cold item with NO held descendant (the miss)',
+      'a leaf the read resolves (its own flag)',
+      'an interior node with a written descendant (the node\u2019s own flag, and the descendant\u2019s own flag read one by one)',
+      'a node whose flag AGREES with the token (the HIT)',
+      'the SAME node under a DISAGREEING token (the QUALIFIED read: the diagnostic names the node\u2019s own flag and the token)',
+      'the DECLARED-BUT-UNWRITTEN parent with a WRITTEN CHILD (the MISS: the descendant\u2019s own flag is still read from the descendant)',
+      'a REGENERATED node (a NEW `ref` carrying its own flag after a downward re-tier)',
     ].flatMap((shape) => [
-      { label: `TP-7 (${shape}) — the parts list read for order and path identity`, run: (store: GraphStoreLike) => mergeDrive(store, shape, 'parts') },
-      { label: `TP-7 (${shape}) — the tier/merged/cache triple and the value\u2019s non-authoritative status`, run: (store: GraphStoreLike) => mergeDrive(store, shape, 'triple') },
+      { label: `TP-7 (${shape}) — the node-local reading: the tier the answer carries is the node\u2019s own \`flag\``, run: (store: GraphStoreLike) => tierReadingDrive(store, shape, 'node-local') },
+      { label: `TP-7 (${shape}) — the no-restated-label reading: every tier named is traceable to a node\u2019s own \`flag\``, run: (store: GraphStoreLike) => tierReadingDrive(store, shape, 'no-restated-label') },
     ]),
   },
 ]
@@ -1967,7 +1993,11 @@ function snapshot(store: GraphStoreLike, names: readonly string[]): Record<strin
       value: w.answer['value'],
       tier: w.answer['tier'],
       name: w.answer['name'],
-      merged: w.answer['merged'] ?? null,
+      // ⟶ RE-DERIVED 2026-10-01 (THE ARCHITECT'S MERGED-ARM RULING, `A3` at `§0`): the `merged`
+      // member this reading carried is WITHDRAWN from the read result, so the reading is made
+      // over the DECLARED members alone (`found` · `value` · `tier` · `name`, `§2.6` item 6's
+      // re-derived comparator). The as-authored line was
+      // `merged: w.answer['merged'] ?? null,` — kept visible here rather than silently dropped.
     })
   }
   return out
@@ -2116,9 +2146,9 @@ function differentialDrive(store: GraphStoreLike, state: string, call: string, f
   const first = differentialReading(store, state, call, label)
   const entryBetween = cacheEntryOf(store, 'window', label)
   const second = differentialReading(store, state, call, label)
-  eq(second.serialized.answer, first.serialized.answer, label, 'the answer is IDENTICAL across two runs whose ONLY difference is the store\u2019s tier state (members by value; `parts` ABSENT compared as ABSENT; `cache` by identity)')
+  eq(second.serialized.answer, first.serialized.answer, label, 'the answer is IDENTICAL across two runs whose ONLY difference is the store\u2019s tier state (members by value; `cache` by identity) \u2014 `\u00a72.6` item 6\u2019s comparator, re-derived 2026-10-01 with the `parts` reading withdrawn')
   eq(second.serialized.cache, first.serialized.cache, label, '`cache` is compared BY IDENTITY against the same handle (\u00a72.6 item 6)')
-  eq(second.serialized.parts, first.serialized.parts, label, '`parts` is compared with ABSENT-as-ABSENT')
+  eq(second.serialized.value, first.serialized.value, label, '`value` is compared by value: the withdrawn `parts` member\u2019s ABSENT-as-ABSENT reading is gone with the member (`\u00a72.6` item 6, re-derived)')
   eq(second.serialized.flag, first.serialized.flag, label, '`flag`/`tier` compared by value')
   need(sameEntry(first.entryNow, entryBetween), label, 'the reading taken BETWEEN the two runs is the first run\u2019s own: the read path does not rebuild an entry')
   need(sameEntry(second.entryNow, entryBetween), label, 'THE READ PATH MUTATES NO CACHE ENTRY, so the second run\u2019s cache state is the first run\u2019s cache state (\u00a72.6 item 4, R-5)')
@@ -2148,7 +2178,7 @@ function buildDifferentialState(store: GraphStoreLike, state: string, label: str
   need(registerRows(store).length >= 0, label, 'the all-cold state carries no declared write')
 }
 interface DifferentialReading {
-  readonly serialized: { answer: string; flag: unknown; cache: unknown; entry: unknown; parts: unknown }
+  readonly serialized: { answer: string; flag: unknown; value: unknown; cache: unknown; entry: unknown }
   readonly entryBefore: unknown
   readonly entryNow: unknown
 }
@@ -2194,7 +2224,9 @@ function differentialReading(store: GraphStoreLike, state: string, call: string,
       flag: flag ?? (answerRecord === null ? null : answerRecord['tier']),
       cache: cache ?? null,
       entry: entryNow ?? null,
-      parts: answerRecord !== null && Object.prototype.hasOwnProperty.call(answerRecord, 'parts') ? JSON.stringify(answerRecord['parts']) : null,
+      // \u27f6 RE-DERIVED 2026-10-01: the as-authored `parts: \u2026 hasOwnProperty(\u2026 'parts') \u2026` reading is replaced by
+      // the DECLARED member\u2019s own by-value reading, because `parts` is WITHDRAWN with the merged arm.
+      value: answerRecord === null ? null : JSON.stringify(answerRecord['value'] ?? null),
     },
     entryBefore,
     entryNow,
@@ -2558,68 +2590,100 @@ function censusDrive(fixture: string): void {
   }
   need(census.moduleBindings.length > 0, label, `the fixture\'s module-level binding FAILS this census (positive control): read ${JSON.stringify(census.moduleBindings)}`)
 }
-function mergeDrive(store: GraphStoreLike, shape: string, half: 'parts' | 'triple'): void {
-  const label = `TP-7 (${shape} \u00b7 ${half})`
-  const read = 'entity'
-  if (shape.startsWith('a file-held child only')) {
-    readWrite(store, 'commit', [`file.${read}.child`, 'f'], label)
-  } else if (shape.startsWith('a file-held child plus a temp-held grandchild')) {
-    readWrite(store, 'commit', [`file.${read}.child`, 'f'], label)
-    readWrite(store, 'commit', [`temp.${read}.child.grand`, 't'], label)
-  } else if (shape.startsWith('the same path held in file AND temp')) {
-    readWrite(store, 'commit', [`file.${read}.child`, 'f'], label)
-    readWrite(store, 'commit', [`temp.${read}.child`, 't'], label)
-  } else if (shape.startsWith('the same path held at TWO tiers AND a descendant')) {
-    readWrite(store, 'commit', [`file.${read}.child`, 'f'], label)
-    readWrite(store, 'commit', [`temp.${read}.child`, 't'], label)
-    readWrite(store, 'commit', [`file.${read}.child.grand`, 'g'], label)
-  } else if (shape.startsWith('a node holding the read path with a held descendant')) {
-    readWrite(store, 'commit', [`file.${read}.child`, 'f'], label)
-    readWrite(store, 'commit', [`temp.${read}.child.grand`, 't'], label)
+function tierReadingDrive(store: GraphStoreLike, shape: string, reading: 'node-local' | 'no-restated-label'): void {
+  const label = `TP-7 (${shape} \u00b7 ${reading})`
+  // THE SUBJECT OF THE AS-FILED DRIVE THIS REPLACES (`mergeDrive`, the withdrawn merged read
+  // with its `parts` list) IS GONE WITH THE ARM ITSELF (`A3` at `§0` of the contract): the
+  // RE-DERIVED subject is THE NODE-LOCAL TIER READING, and every state below is built through
+  // the ORDINARY write path (`§2.8` item 3) with the register's own fixture.
+  let readName: string
+  let ownerRef: string
+  if (shape.startsWith('a leaf the read resolves')) {
+    readWrite(store, 'commit', ['file.entity.order', 'f'], label)
+    readName = 'file.entity.order'
+    ownerRef = nodeRefOf(store, 'entity') as string
+  } else if (shape.startsWith('an interior node with a written descendant')) {
+    readWrite(store, 'commit', ['file.entity.id.child', 'f'], label)
+    // THE DESCENDANT HALF FIRST: the descendant\u2019s OWN flag is what its read carries.
+    const inner = nodeRefOf(store, 'entity') as string
+    const mid = linkEntryView(store, inner, 'id', label, 'the intermediate node of the fixture path').to as string
+    const leaf = linkEntryView(store, mid, 'child', label, 'the written descendant of the fixture path').to as string
+    const leafWalk = readWalk(store, 'file.entity.id.child', label)
+    need(!leafWalk.refused, label, 'the descendant\u2019s own read is an ANSWER, not a refusal (\u00a72.5 item 4)')
+    eq(leafWalk.answer['flag'], nodeObjectOf(store, leaf, label, 'the descendant the read resolved')['flag'], label, 'THE TIER THE ANSWER CARRIES IS THE DESCENDANT\u2019S OWN `flag`, read off the node')
+    readName = 'file.entity.id'
+    ownerRef = mid
+  } else if (shape.startsWith('a node whose flag AGREES')) {
+    readWrite(store, 'commit', ['mem.entity.order', 'm'], label)
+    readName = 'mem.entity.order'
+    ownerRef = nodeRefOf(store, 'entity') as string
+  } else if (shape.startsWith('the SAME node under a DISAGREEING token')) {
+    readWrite(store, 'commit', ['file.entity.order', 'f'], label)
+    readName = 'mem.entity.order'
+    ownerRef = nodeRefOf(store, 'entity') as string
+  } else if (shape.startsWith('the DECLARED-BUT-UNWRITTEN parent')) {
+    readWrite(store, 'commit', ['file.entity.id.child', 'f'], label)
+    // THE TIER-LOCAL CLEAR OF THE PARENT\u2019S REFERENCE (`\u00a72.8` item 4): the parent\u2019s value is
+    // dropped and NO descendant is touched \u2014 which is the ONE state in which a path is unheld
+    // while its descendants are resident.
+    const cleared = readWrite(store, 'clear', ['file.entity.id'], label)
+    eq(cleared.status, 'committed', label, 'the tier-local clear of the parent\u2019s reference commits (\u00a72.8 item 4)')
+    const inner = nodeRefOf(store, 'entity') as string
+    const mid = linkEntryView(store, inner, 'id', label, 'the unwritten parent of the fixture path').to as string
+    const childWalk = readWalk(store, 'file.entity.id.child', label)
+    need(!childWalk.refused, label, 'the WRITTEN CHILD still resolves while its parent reference is unwritten (\u00a72.5 item 4(iii))')
+    eq(childWalk.answer['found'], true, label, 'the child still HOLDS a value')
+    readName = 'file.entity.id'
+    ownerRef = mid
+  } else {
+    // A REGENERATED NODE: a downward re-tier mints NEW nodes, and the new node\u2019s flag is its own.
+    readWrite(store, 'commit', ['temp.entity.id', 't'], label)
+    const regenerated = readWrite(store, 'commit', ['file.entity.id', 'f'], label)
+    eq(regenerated.status, 'committed', label, 'the regeneration commits (\u00a72.8 item 5)')
+    readName = 'file.entity.id'
+    ownerRef = nodeRefOf(store, 'entity') as string
   }
-  const readName = shape.startsWith('a node holding the read path') ? `file.${read}.child` : `file.${read}`
   const w = readWalk(store, readName, label)
-  if (shape.startsWith('a cold item')) {
-    need(w.refused || isMiss(w), label, 'a cold item with NO held descendant draws the DECLARED MISS, never a merge (\u00a72.5 item 4)')
-    eq(isMerged(w), false, label, 'and never the merged arm')
-    return
-  }
-  if (shape.startsWith('a node holding the read path')) {
-    eq(isMerged(w), false, label, 'a node holding the read path means NO MERGE RUNS: the first-hit arm answers (\u00a73.2 F-8)')
-    eq(w.answer['found'], true, label, 'and it is a HIT')
-    eq(Object.prototype.hasOwnProperty.call(w.answer, 'parts'), false, label, '`parts` is ABSENT on the hit arm')
-    return
-  }
-  need(isMerged(w), label, 'a path NO node holds whose DESCENDANTS are held answers the MERGED arm (\u00a72.5 item 4)')
-  const parts = asArray(w.answer['parts'])
-  if (half === 'parts') {
-    need(parts.length > 0, label, '`parts` is NON-EMPTY on the merged arm')
-    const order: string[] = []
-    for (const part of parts) {
-      const p = record(part)
-      if (p === null) fail(label, 'every `parts` entry is a `GraphPart` record (\u00a72.1\u2019s block)')
-      const tier = String(p['tier'])
-      order.push(tier)
-      need(tier !== 'secure', label, 'no `parts` entry names the secure tier: it carries no graph node')
-      need(typeof p['path'] === 'string' && (p['path'] as string).length > 0, label, 'every entry names a PATH')
-      eq(p['path'] === readName, false, label, 'every entry names THE PATH THE TIER ACTUALLY HOLDS and NEVER the read path')
-      const held = flagsOfName(store, String(p['path']), label)
-      need(held.includes(tier), label, `the entry\u2019s own tier \`${tier}\` really HOLDS \`${String(p['path'])}\``)
+  const ownFlag = nodeObjectOf(store, ownerRef, label, `the node \`${readName}\` resolves to`)['flag']
+  if (reading === 'node-local') {
+    if (w.refused) {
+      // THE QUALIFIED READ: the diagnostic names the node the walk reached, and the tier is
+      // read OFF THAT NODE rather than restated from the caller\u2019s token.
+      need(w.reason === 'tier-filter-miss', label, `a DISAGREEING token on a resolvable leaf is the QUALIFIED case\u2019s own token, never \`'no-such-anchor'\` (\u00a72.3 items 6(iv)/7): read \`${String(w.reason)}\``)
+      eq(w.step, 'H-FLAG', label, 'and it is decided at `H-FLAG`, AFTER `G-RESOLVE-LEAF`')
+      eq(w.owner, ownerRef, label, 'the diagnostic names the node the walk had reached')
+      eq(ownFlag, 'file', label, 'and THAT node\u2019s own `flag` is the tier the answer must be read against')
+      return
     }
-    const rank = order.map((t) => DURABILITY_RANK[t] ?? 0)
-    for (let i = 1; i < rank.length; i++) {
-      need((rank[i] as number) <= (rank[i - 1] as number), label, `\`parts\` is ORDERED by the overlay order (file \u2192 mem \u2192 temp), read ${JSON.stringify(order)}`)
+    if (isMiss(w)) {
+      eq(w.answer['tier'], null, label, 'the MISS asserts NO tier (`tier: null`): there is no node holding the read path, and no composite is assembled (\u00a72.5 item 4(iii))')
+      return
     }
+    eq(w.answer['found'], true, label, 'the resolved leaf is an ANSWER (\u00a72.5 item 4(i))')
+    eq(w.answer['flag'], ownFlag, label, 'THE TIER THE ANSWER CARRIES IS THE NODE\u2019S OWN `flag`, read off the node the walk reached')
+    eq(w.answer['tier'], ownFlag, label, 'and `tier` is that same own flag: the token is a FILTER, never the tier\u2019s carrier (\u00a72.3 item 1)')
     return
   }
-  eq(w.answer['tier'], null, label, 'the merged arm carries `tier: null`')
-  eq(w.answer['merged'], true, label, 'and `merged: true`')
-  eq(w.answer['cache'], null, label, 'and `cache: null`: no live handle on a composite no node holds')
-  const before = snapshot(store, [readName])
-  const value = record(w.answer['value'])
-  if (value !== null) value['mutated'] = true
-  const after = snapshot(store, [readName])
-  eq(after[readName], before[readName], label, 'the merged value is NON-AUTHORITATIVE: a mutation of it changes NOTHING in the store (\u00a72.5 item 4)')
+  // THE NO-RESTATED-LABEL READING, WITH ITS POSITIVE CONTROL: every tier the answer or the
+  // diagnostic names is TRACEABLE TO A NODE\u2019S OWN `flag` \u2014 and the SAME node driven under a
+  // DISAGREEING token must NOT answer the token as if it were the node\u2019s tier.
+  const tokenAsked = readName.split('.')[0] as string
+  eq(tokenAsked === ownFlag, false, label, `POSITIVE CONTROL: the token asked (\`${tokenAsked}\`) DISAGREES with the node\u2019s own flag (\`${String(ownFlag)}\`), so a store that restated the token FAILS here`)
+  const disagreeing = readWalk(store, `${ownFlag === 'file' ? 'temp' : 'file'}.${readName.split('.').slice(1).join('.')}`, label)
+  if (!disagreeing.refused) {
+    need(disagreeing.answer['found'] !== true || disagreeing.answer['flag'] !== ownFlag || disagreeing.answer['tier'] !== null, label, 'a store answering the file node\u2019s OWN tier for a `temp`/`file` request that disagrees is the DURABILITY-LIE class `R-6` closes: the token is NEVER restated as the tier')
+  }
+  if (w.refused) {
+    need(w.reason === 'tier-filter-miss' || w.reason === 'undeclared-name' || w.reason === 'no-such-anchor', label, `a refusal on this path carries one of the walk\u2019s own read-side tokens, read \`${String(w.reason)}\``)
+    return
+  }
+  if (isMiss(w)) {
+    eq(w.answer['tier'], null, label, 'a MISS names NO tier at all, so nothing is restated from the token')
+    return
+  }
+  const tierCarried = record(w.answer['cache'])
+  const cacheTier = tierCarried === null ? null : tierCarried['tier']
+  eq(cacheTier === ownFlag, true, label, 'every tier the answer carries is TRACEABLE TO A NODE\u2019S OWN `flag`: the `cache` handle\u2019s own `tier` token is the node\u2019s flag (\u00a72.5 item 3)')
 }
 
 // ---- THE SCAN CONTROLS (`§5.5.1` `P-GR-TP-5`'s synthetic corpus) ------------------------

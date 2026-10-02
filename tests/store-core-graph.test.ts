@@ -17,7 +17,10 @@
 //      that fails merely because the work was done FAILS `§3.5 R-13`'s branch rule.
 //   2. the walk and its seven failure arms: `M-1`, `M-2`, `F-1`…`F-7`, `R-4`.
 //   3. the filter rule and the register: `M-4`, `F-2`, `F-14`…`F-18`, `R-6`.
-//   4. the uniqueness constraint and the merged read: `M-5`, `M-6`, `F-8`.
+//   4. the uniqueness constraint and the read's case set: `M-5`, `M-6`, `F-8`.
+//      (RE-DERIVED 2026-10-01: the as-filed line read *"the uniqueness constraint and the merged
+//      read"*, and the architect's merged-arm ruling `A3` (`§0` of the contract) withdrew that arm;
+//      the three row ids and this item's position are unmoved — `§4.2` item 4's own annotation.)
 //   5. the write surface and the regeneration transaction: `M-9`, `M-10`, `M-11`,
 //      `M-12`, `F-9`, `F-10`, `F-12`, `F-13`, `F-17`, `F-20`, `M-13`, `F-21`,
 //      `F-19`, `F-3`(h).
@@ -56,7 +59,9 @@
 // ===========================================================================
 // HAPPY STATES (`§3.1`): M-1 the architect's own example end to end · M-2 the leaf
 //   stores its OWN local name · M-3 `cache` IS `tiers[flag]` by identity · M-4 two
-//   holders across tiers · M-5 the merged read with `parts` · M-6 the uniqueness
+//   holders across tiers · M-5 the read's case set HIT · QUALIFIED · MISS, at the declared-but-
+//   unwritten parent with a written child (RE-DERIVED 2026-10-01; the as-filed subject was *"the
+//   merged read with `parts`"*) · M-6 the uniqueness
 //   constraint's EDIT arm · M-7 one `commit` event plus one `clear` per cleared
 //   lower reference · M-8 hostile segments as DATA · M-9 `commit` mints / `set`
 //   never does · M-10 anchors immutable across a re-tier · M-11 the five-step
@@ -67,7 +72,8 @@
 // FAIL-STATES (`§3.2`): F-1 `C-TOP` undeclared · F-2 cold item (miss) vs
 //   unregistered root name (refusal) · F-3 `D-ANCHOR` no-such-anchor · F-4 `H-FLAG`
 //   filter miss · F-5 `E-LINK` severed-link · F-6 `F-CACHE` rebuild-failed · F-7
-//   the write-side twin · F-8 the first-hit boundary · F-9 the three regeneration
+//   the write-side twin · F-8 the hit arm's plain property, "from that node ALONE" (RE-DERIVED
+//   2026-10-01; the as-filed subject was *"the first-hit boundary"* between two arms) · F-9 the three regeneration
 //   failure arms · F-10 a `remove` inside the window · F-11 the severance's release
 //   report · F-12 a refusal clears and emits nothing, on EVERY mutator · F-13 the
 //   cap refuses and never evicts · F-14 `secure.*` refused before the register ·
@@ -110,11 +116,9 @@ import type {
   GraphLink,
   GraphLinkCacheEntry,
   GraphLoadError,
-  GraphMergedRead,
   GraphNode,
   GraphNodeFlag,
   GraphNodeRef,
-  GraphPart,
   GraphReadHit,
   GraphReadMiss,
   GraphRefusalReason,
@@ -163,8 +167,8 @@ type DeclaredTypeNames =
   | GraphTierToken | GraphNodeFlag | GraphRefusalReason | GraphResolveStep
   | GraphResolveDiagnostic | GraphNodeRef | GraphNode | GraphAnchor | GraphLink
   | GraphTierHandle | GraphRegisterRow | GraphRegister | GraphRegisterCacheEntry
-  | GraphLinkCacheEntry | GraphConstraint | GraphPart | GraphReadHit | GraphReadMiss
-  | GraphMergedRead | GraphResolveResult | GraphWriteReceipt | GraphWriteOptions
+  | GraphLinkCacheEntry | GraphConstraint | GraphReadHit | GraphReadMiss
+  | GraphResolveResult | GraphWriteReceipt | GraphWriteOptions
   | GraphEvent | GraphSubscription | GraphCrossing | GraphStore | GraphLoadError
   | GraphTierGetResult | GraphAffectedRow
 type DeclarationRowNames = StoreGraphDeclarationRow | StoreGraphDeclarationInput | StoreGraphReferenceFixture
@@ -185,9 +189,11 @@ const REFS_SPECIFIER = './../src/renderer/' + 'store-graph' + '-references.js'
 
 const REPO_ROOT = fileURLToPath(new URL('./../', import.meta.url))
 
-/** The 29 named type declarations of `§2.1` item 3, with the contract's own nine
- *  terms (`3 + 6 + 4 + 1 + 1 + 5 + 2 + 2 + 5 = 29`). A row asserting a COUNT
- *  without NAMING the names FAILS (`§2.1` item 3). */
+/** The 27 named type declarations of `§2.1` item 3, with the contract's own nine
+ *  terms after the merged-arm withdrawal (`3 + 6 + 4 + 1 + 0 + 4 + 2 + 2 + 5 = 27`);
+ *  the pre-withdrawal correction printed `29` and is kept visible in the two comments
+ *  below (`§2.1` item 3's second annotation). A row asserting a COUNT without NAMING
+ *  the names FAILS (`§2.1` item 3; `§4.4` `S-7`). */
 const DECLARED_TYPE_DECLARATIONS: readonly string[] = [
   // 3 domain
   'GraphTierToken', 'GraphNodeFlag', 'GraphRefusalReason',
@@ -197,10 +203,13 @@ const DECLARED_TYPE_DECLARATIONS: readonly string[] = [
   'GraphRegisterRow', 'GraphRegister', 'GraphRegisterCacheEntry', 'GraphLinkCacheEntry',
   // 1 constraint
   'GraphConstraint',
-  // 1 provenance pair
-  'GraphPart',
-  // 5 read-result shapes and their union
-  'GraphReadHit', 'GraphReadMiss', 'GraphMergedRead', 'GraphResolveResult', 'GraphTierGetResult',
+  // 0 provenance pair — WITHDRAWN 2026-10-01 with the merged arm: the as-filed slot held
+  // `GraphPart`, and `§2.1` item 3's second annotation prints the slot as `0` rather than
+  // dropping it from the sum.
+  // 4 read-result shapes and their union — `GraphMergedRead` WITHDRAWN with the merged arm
+  // (the as-filed slot held `5`: `GraphReadHit` · `GraphReadMiss` · `GraphMergedRead` ·
+  // `GraphResolveResult` · `GraphTierGetResult`).
+  'GraphReadHit', 'GraphReadMiss', 'GraphResolveResult', 'GraphTierGetResult',
   // 2 walk
   'GraphResolveStep', 'GraphResolveDiagnostic',
   // 2 event
@@ -510,19 +519,19 @@ function reasonOf(label: string, result: unknown): unknown {
   return (result as Record<string, unknown>)['reason']
 }
 
-/** The canonical structural comparator (`§2.6` item 6, `§5.5.1` `P-GR-IM-13`):
- *  `parts` ABSENT compared as ABSENT, a `cache` compared BY IDENTITY, members by
- *  value. Written in the test file, adds NO dependency, and is NOT a seam. */
+/** The canonical structural comparator (`§2.6` item 6, `§5.5.1` `P-GR-IM-13`), RE-DERIVED
+ *  2026-10-01 with the merged arm withdrawn: the declared members `found`/`tier`/`flag`/
+ *  `name` are compared BY VALUE and a live `cache` BY IDENTITY. The as-filed comparator's
+ *  *"`parts` ABSENT compared as ABSENT"* reading is GONE WITH THE MEMBER (`§2.6` item 6's own
+ *  annotation; the contract's `§0`(A3)). Written in the test file, adds NO dependency, and is
+ *  NOT a seam. */
 function structurallyIdentical(label: string, a: unknown, b: unknown): void {
   expect(isRecord(a) && isRecord(b), `${label} — both answers are records`).toBe(true)
   const x = a as Record<string, unknown>
   const y = b as Record<string, unknown>
-  for (const m of ['found', 'tier', 'flag', 'merged', 'name']) {
+  for (const m of ['found', 'tier', 'flag', 'value', 'name']) {
     expect(x[m], `${label} — member \`${m}\` compared by value`).toEqual(y[m])
   }
-  expect(Object.prototype.hasOwnProperty.call(x, 'parts'), `${label} — \`parts\` ABSENT compared as ABSENT`).toBe(
-    Object.prototype.hasOwnProperty.call(y, 'parts'),
-  )
   if (x['cache'] !== null && x['cache'] !== undefined) {
     expect(x['cache'], `${label} — \`cache\` compared BY IDENTITY against the same handle`).toBe(y['cache'])
   }
@@ -533,17 +542,15 @@ function structurallyIdentical(label: string, a: unknown, b: unknown): void {
  *  *are these two read answers the SAME?* — over the DECLARED members of `§2.1`'s read
  *  result shapes, so a caller can assert both directions: EQUAL for two stores in one
  *  graph state (`§2.6` item 2 / item 6), DIFFERENT for two stores whose graph state was
- *  changed (`§3.4` `R-9`(b)). `parts` ABSENT is compared as ABSENT; a live `cache` handle
+ *  changed (`§3.4` `R-9`(b)). A live `cache` handle
  *  is compared by the both-live / both-absent distinction alone, because two stores own
  *  DIFFERENT handles by construction (`§2.5` item 3) and the row's subject is the graph
  *  state, never an object's address. */
 function sameAnswer(a: unknown, b: unknown): boolean {
   if (!isRecord(a) || !isRecord(b)) return a === b
-  for (const m of ['status', 'reason', 'step', 'found', 'value', 'tier', 'flag', 'merged', 'name']) {
+  for (const m of ['status', 'reason', 'step', 'found', 'value', 'tier', 'flag', 'name']) {
     if (JSON.stringify(a[m] ?? null) !== JSON.stringify(b[m] ?? null)) return false
   }
-  if (Object.prototype.hasOwnProperty.call(a, 'parts') !== Object.prototype.hasOwnProperty.call(b, 'parts')) return false
-  if (JSON.stringify(a['parts'] ?? null) !== JSON.stringify(b['parts'] ?? null)) return false
   return ((a['cache'] ?? null) === null) === ((b['cache'] ?? null) === null)
 }
 
@@ -654,17 +661,26 @@ describe('§4.1 · the STATIC and EXISTENCE rows (both branches)', () => {
   })
 
   // [T] §2.1 item 3 — the export census, BY NAME.
-  it('§2.1 item 3 · the export census — TWO value exports + TWENTY-NINE named type declarations = THIRTY-ONE names', () => {
+  // ⟶ RE-DERIVED 2026-10-01 (THE ARCHITECT'S MERGED-ARM RULING, `A3` at `§0` of the contract;
+  // the as-filed row title printed *"TWENTY-NINE … THIRTY-ONE"* and is kept visible in this
+  // comment). THE OPERATIVE CENSUS IS `2` VALUE EXPORTS + `27` TYPE DECLARATIONS = `29`
+  // EXPORTED NAMES: `GraphPart` and `GraphMergedRead` are WITHDRAWN, so the twenty-seven are
+  // the pre-withdrawal twenty-nine MINUS those two, with `GraphTierGetResult` and
+  // `GraphAffectedRow` still counted (`§2.1` item 3's second annotation). THE ROW'S ID, ITS
+  // LAYER AND ITS PLACE ARE UNMOVED; it now REDDENS on a module that still exports the two
+  // withdrawn types, which is the honest signal that the `src/**` removal of item `(b)` of
+  // the contract's `§7` item 12 sweep is still owed.
+  it('§2.1 item 3 · the export census — TWO value exports + TWENTY-SEVEN named type declarations = TWENTY-NINE names', () => {
     expect(existsSync(STORE_SRC), `§2.1 item 3 — the module does not exist yet (${fileURLToPath(STORE_SRC)}), so its census cannot be read`).toBe(true)
     const bytes = readFileSync(STORE_SRC, 'utf8')
     const typeNames = [...bytes.matchAll(/^export\s+(?:type|interface)\s+([A-Za-z0-9_]+)/gm)].map((m) => m[1])
     const valueNames = [...bytes.matchAll(/^export\s+function\s+([A-Za-z0-9_]+)/gm)].map((m) => m[1])
-    expect([...typeNames].sort(), '§2.1 item 3 — the TWENTY-NINE type declarations, NAMED (a count without the names FAILS)').toEqual(
+    expect([...typeNames].sort(), '§2.1 item 3 — the TWENTY-SEVEN type declarations, NAMED (a count without the names FAILS)').toEqual(
       [...DECLARED_TYPE_DECLARATIONS].sort(),
     )
     expect([...valueNames].sort(), '§2.1 item 3(a) — the TWO runtime value exports, exactly').toEqual([...DECLARED_VALUE_EXPORTS].sort())
-    expect(typeNames.length + valueNames.length, '§2.1 item 3 — 2 + 29 = 31 exported names').toBe(31)
-    expect(DECLARED_TYPE_DECLARATIONS.length, '§2.1 item 3 — the terms printed: 3 + 6 + 4 + 1 + 1 + 5 + 2 + 2 + 5 = 29').toBe(29)
+    expect(typeNames.length + valueNames.length, '§2.1 item 3 — 2 + 27 = 29 exported names (the merged arm’s two declarations WITHDRAWN)').toBe(29)
+    expect(DECLARED_TYPE_DECLARATIONS.length, '§2.1 item 3 — the terms printed: 3 + 6 + 4 + 1 + 0 + 4 + 2 + 2 + 5 = 27').toBe(27)
     const refsBytes = readFileSync(REFS_SRC, 'utf8')
     const refsTypes = [...refsBytes.matchAll(/^export\s+(?:type|interface)\s+([A-Za-z0-9_]+)/gm)].map((m) => m[1])
     expect([...refsTypes].sort(), '§2.1 item 2 — the second module\u2019s THREE type declarations').toEqual([...DECLARED_REFS_TYPES].sort())
@@ -1172,36 +1188,79 @@ describe('§2.4/§2.5 · the filter rule and the register', () => {
 // ===========================================================================
 // 4. THE UNIQUENESS CONSTRAINT AND THE MERGED READ — M-5, M-6, F-8
 // ===========================================================================
-describe('§2.5/§2.7 · the merged read and the uniqueness constraint', () => {
-  // [T] §3.1 M-5 — the merged read and its parts survive.
-  it('M-5 · §2.5 item 4 · a path NO node holds whose descendants are held answers the merged arm, overlay-ordered', async () => {
+describe('§2.5/§2.7 · the read\u2019s case set and the uniqueness constraint', () => {
+  // [T] §3.1 M-5 — RE-DERIVED 2026-10-01 (THE ARCHITECT'S MERGED-ARM RULING, `A3` at `§0`):
+  // the read's SURVIVING CASE SET — HIT · QUALIFIED · MISS — driven at the ONE state in which
+  // a path is unheld while its descendants are resident, THE DECLARED-BUT-UNWRITTEN PARENT WITH
+  // A WRITTEN CHILD. The row keeps its id, its layer (`[T]`) and its place in the authoring
+  // order (`§4.2` item 4). The AS-FILED subject — *"a path NO node holds whose descendants are
+  // held answers the merged arm, overlay-ordered"*, with `merged`/`parts`/overlay order — is
+  // WITHDRAWN and its bytes are kept visible at `§3.1`'s own annotation in the contract.
+  it('M-5 · §2.5 item 4 · the case set HIT · QUALIFIED · MISS at the declared-but-unwritten parent', async () => {
     const store = await storeFor('M-5')
-    await settle(store, 'commit', 'file.entity.id.child', 'f')
-    await settle(store, 'commit', 'temp.entity.id.child', 't')
-    await settle(store, 'remove', 'file.entity.id.child')
-    const merged = store.resolve('mem.entity.id') as Record<string, unknown>
-    expect(merged['found'], 'M-5 — the merged arm is a `found:true` answer').toBe(true)
-    expect(merged['tier'], 'M-5 — `tier: null` on the merged arm').toBe(null)
-    expect(merged['cache'], 'M-5 — `cache: null` on the merged arm').toBe(null)
-    expect(merged['merged'], 'M-5 — `merged: true`').toBe(true)
-    const parts = (merged['parts'] ?? []) as Record<string, unknown>[]
-    expect(parts.length, 'M-5 — a NON-EMPTY parts list').toBeGreaterThan(0)
-    const tiers = parts.map((p) => p['tier'])
-    const order = ['file', 'mem', 'temp'].filter((t) => tiers.includes(t))
-    expect(tiers, 'M-5 — parts is ORDERED by the OVERLAY ORDER (file → mem → temp), the reverse of the search order').toEqual(order)
-    expect(parts.map((p) => p['path']), 'M-5 — every entry names THE PATH THE TIER ACTUALLY HOLDS and NEVER the read path').not.toContain('mem.entity.id')
+    const minted = await settle(store, 'commit', 'file.entity.id.child', 'f')
+    expect(minted.reason, 'M-5 — the write through the fixture\u2019s own declared root name commits').toBe(null)
+    const rootRef = await rootRefOf(store, 'entity')
+    expect(typeof rootRef, 'M-5 — the root carries a register row with its own node handle (§2.4 item 1(b))').toBe('string')
+    const midRef = await refUnder(store, rootRef as string, 'id')
+    expect(typeof midRef, 'M-5 — the fixture\u2019s own parent link is readable through `linkFor` (the intermediate node)').toBe('string')
+    const childRef = await refUnder(store, midRef as string, 'child')
+    expect(typeof childRef, 'M-5 — the fixture\u2019s parent link and its child link are readable through `linkFor`').toBe('string')
+    // (i) THE HIT: the node\u2019s OWN flag is what the answer carries.
+    const hit = store.resolve('file.entity.id.child') as Record<string, unknown>
+    expect(hit['found'], 'M-5(i) HIT — the child resolves').toBe(true)
+    expect(hit['flag'], 'M-5(i) HIT — the answer\u2019s tier is the NODE\u2019s OWN flag, read off the node').toBe(await nodeFlagOf(store, childRef))
+    expect(hit['cache'], 'M-5(i) HIT — `cache` IS the tier collection\u2019s own handle, BY IDENTITY (§2.5 item 3)').toBe(
+      (store.tiers as Record<string, unknown>)['file'],
+    )
+    // (ii) THE QUALIFIED READ: the same node under a DISAGREEING token addresses ONE tier.
+    const qualified = store.resolve('temp.entity.id.child') as Record<string, unknown>
+    expect(qualified['status'], 'M-5(ii) QUALIFIED — a disagreement is a RETURNED RECORD, never a silent pick').toBe('refused')
+    expect(qualified['reason'], 'M-5(ii) QUALIFIED — `tier-filter-miss`, NEVER `no-such-anchor` (§2.3 items 6(iv)/7)').toBe('tier-filter-miss')
+    const qDiag = qualified['diagnostic'] as Record<string, unknown>
+    expect(qDiag['step'], 'M-5(ii) — decided at H-FLAG, AFTER G-RESOLVE-LEAF').toBe('H-FLAG')
+    expect(qDiag['owner'], 'M-5(ii) — the diagnostic names the node the walk reached').toBe(childRef)
+    expect(await nodeFlagOf(store, childRef), 'M-5(ii) — and that node\u2019s own flag is \u2018file\u2019: the store NEVER restated the `temp` token as the node\u2019s tier').toBe('file')
+    // (iii) THE MISS: the parent reference is made unwritten while its child stays resident.
+    const cleared = await settle(store, 'clear', 'file.entity.id')
+    expect(cleared.reason, 'M-5(iii) — the TIER-LOCAL clear commits (§2.8 item 4)').toBe(null)
+    expect(await nodeFlagOf(store, childRef), 'M-5(iii) — the clear is NON-RECURSIVE: the child node is UNTOUCHED').toBe('file')
+    const childStillHeld = store.resolve('file.entity.id.child') as Record<string, unknown>
+    expect(childStillHeld['found'], 'M-5(iii) — and the child still HOLDS its own value: the descendants are resident').toBe(true)
+    const miss = store.resolve('file.entity.id') as Record<string, unknown>
+    expect(miss['found'], 'M-5(iii) MISS — the unwritten parent is the DECLARED MISS, never a composite (§2.3 item 6(iii))').toBe(false)
+    expect(miss['tier'], 'M-5(iii) — the miss asserts NO tier').toBe(null)
+    expect(miss['cache'], 'M-5(iii) — and carries NO handle').toBe(null)
+    expect(miss['status'], 'M-5(iii) — and it is NOT a refusal').toBe(undefined)
+    expect(Object.prototype.hasOwnProperty.call(miss, 'merged'), 'M-5(iii) — no `merged` member exists on any arm (§2.1 block annotation, item (2))').toBe(false)
+    expect(Object.prototype.hasOwnProperty.call(miss, 'parts'), 'M-5(iii) — and no `parts` list: both are WITHDRAWN with the merged arm').toBe(false)
   })
 
-  // [T] §3.2 F-8 — the first-hit boundary.
-  it('F-8 · §2.5 item 4 · where a node holds the read path the hit arm answers and NO merge runs', async () => {
+  // [T] §3.2 F-8 — RE-DERIVED 2026-10-01 (THE ARCHITECT'S MERGED-ARM RULING, `A3` at `§0`): the
+  // first-hit boundary is no longer a boundary BETWEEN two arms — there is one arm to answer
+  // from — so it is driven as a PLAIN PROPERTY OF THE HIT ARM: where a node holds the read path,
+  // the hit answers from THAT NODE ALONE (its value, its own flag, its own handle) and NO second
+  // holder is consulted. The as-filed subject — *"where a node holds the read path the hit arm
+  // answers and NO merge runs"* — is kept visible at `§3.2`'s own annotation in the contract.
+  it('F-8 · §2.5 item 4 · where a node holds the read path the hit answers from that node ALONE', async () => {
     const store = await storeFor('F-8')
     await settle(store, 'commit', 'file.entity.id', 'f')
     await settle(store, 'commit', 'temp.entity.id.child', 't')
+    const holderRef = await rootRefOf(store, 'entity')
     const hit = store.resolve('file.entity.id') as Record<string, unknown>
-    expect(hit['found'], 'F-8 — the first-hit arm WINS over the merged arm').toBe(true)
-    expect(hit['flag'], 'F-8 — the hit\u2019s tier carrier').toBe('file')
-    expect(Object.prototype.hasOwnProperty.call(hit, 'parts'), 'F-8 — `parts` is ABSENT on the hit arm').toBe(false)
-    expect(Object.prototype.hasOwnProperty.call(hit, 'merged'), 'F-8 — `merged` is ABSENT on the hit arm').toBe(false)
+    expect(hit['found'], 'F-8 — a node holds the read path, so the HIT answers').toBe(true)
+    expect(hit['flag'], 'F-8 — the hit\u2019s tier is the node\u2019s OWN flag').toBe(await nodeFlagOf(store, holderRef as string))
+    expect(hit['tier'], 'F-8 — and `tier` is that same own flag: the token is a filter, not the carrier').toBe(await nodeFlagOf(store, holderRef as string))
+    expect(hit['cache'], 'F-8 — `cache` is the hit\u2019s own tier handle, BY IDENTITY (§2.5 item 3)').toBe(
+      (store.tiers as Record<string, unknown>)['file'],
+    )
+    expect(Object.prototype.hasOwnProperty.call(hit, 'merged'), 'F-8 — no `merged` member exists, on this arm or any other').toBe(false)
+    expect(Object.prototype.hasOwnProperty.call(hit, 'parts'), 'F-8 — and no `parts` list: NO COMPOSITION RUNS').toBe(false)
+    // THE OTHER TIER\u2019S REQUEST MUST NOT ANSWER THIS NODE\u2019S VALUE (the durability-lie class `R-6`),
+    // and it must not COMPOSE one either: the qualified case addresses ONE tier.
+    const other = store.resolve('mem.entity.id') as Record<string, unknown>
+    expect(other['value'], 'F-8 — a `mem` request never answers the `file` holder\u2019s own value').not.toBe('f')
+    expect(Object.prototype.hasOwnProperty.call(other, 'parts'), 'F-8 — and it never composes: no `parts` anywhere').toBe(false)
   })
 
   // [T] §3.1 M-6 — the uniqueness constraint's two declared outcomes.
@@ -2072,6 +2131,27 @@ async function mintedRefs(store: StoreLike): Promise<string[]> {
   const rows = ((store.register as Record<string, unknown>)?.['rows'] ?? []) as Record<string, unknown>[]
   const refs = rows.map((r) => r['nodeRef']).filter((v): v is string => typeof v === 'string')
   return [...new Set(refs)]
+}
+
+/** THE THREE READ-ONLY READERS' TEST-SIDE USE (`§2.1`'s block annotation, item (4)): the seam
+ *  answers a node, an anchor and a link for a REFERENCE the caller already holds, so the
+ *  M-5/F-8 rows can read a node's OWN `flag` instead of taking the store's word for the tier.
+ *  A missing reader is an ASSERTION carrying the row's own label (`§2.1`'s block annotation,
+ *  item (2): an absent member REPORTS THE GAP, it never silently passes a row). */
+async function rootRefOf(store: StoreLike, rootName: string): Promise<string | null> {
+  const rows = ((store.register as Record<string, unknown>)?.['rows'] ?? []) as Record<string, unknown>[]
+  for (const row of rows) if (row['name'] === rootName && typeof row['nodeRef'] === 'string') return row['nodeRef'] as string
+  return null
+}
+async function refUnder(store: StoreLike, owner: string, key: string): Promise<string | null> {
+  const link = store.linkFor?.(owner, key)
+  if (!isRecord(link)) return null
+  return typeof link['to'] === 'string' ? (link['to'] as string) : null
+}
+async function nodeFlagOf(store: StoreLike, ref: string | null): Promise<unknown> {
+  if (ref === null) return null
+  const node = store.nodeFor?.(ref)
+  return isRecord(node) ? node['flag'] : null
 }
 
 /** `forceStaleRebuild` — `F-6`\u2019s drive: it reaches the stale entry whose rebuild
