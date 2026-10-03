@@ -740,16 +740,42 @@ describe('§3.2 F-6 — no two writes per gesture end (the §2.5 terminal grid, 
   })
 
   it('F-6/§7a.1.2-cancel: the cancel/pointercancel terminal erases the temp preview with AT MOST ONE remove per gesture (reading (i)); ZERO sink writes (E10)', () => {
+    // RE-AIMED (PBT AUDIT 2026-10-05, FINDING 3 — this F-6 cancel row): the as-driven
+    // observables could NOT discriminate §7a.1 item 2 reading (i) (cancel ERASES the temp
+    // preview) from reading (ii) (cancel leaves it RESIDENT) — a bare `'drag'` subtree
+    // subscriber NEVER fires for a tier-qualified write (`emit`'s
+    // `origin.startsWith(subscriber.name + '.')` fan-out cell against the written path
+    // `'temp.drag.g1.placement'`), and `resolve('drag.g1.placement')` walks only the root's
+    // own boot-cleared entry — both answer IDENTICALLY under zero/one/two removes. The row
+    // now reads the DISCRIMINATING surface: the TIER-QUALIFIED temp read (the exact read
+    // M-6's own right-click row uses — `tiers['temp'].get` at the full spelling) answers
+    // MISS (ERASED) — under reading (ii) the preview would still be RESIDENT here — while
+    // the persistent settings-root original still answers the tier-qualified file read; the
+    // ≤1-remove pin is counted on the EXACT reference subscriber (a second cancel performs
+    // NO second remove — the count is EXACTLY one, never zero, never two).
     const { w, store } = compose()
+    // the persistent settings-root ORIGINAL (M-6's re-aim route — the wiring's own file-tier
+    // root is `settings`), seeded BEFORE the erase turn so the "still answers" face is
+    // observable against a temp-only removal:
+    expect(store.commit(`file.settings.drag.g1.placement`, 'orig').status).toBe('committed')
+    w.move('g1', { placement: 100 }) // the temp preview is resident
     const terminalEvents: GraphEvent[] = []
-    store.subscribe('drag', (e) => terminalEvents.push(e), { subtree: true })
-    w.move('g1', { placement: 100 })
+    store.subscribe(`temp.drag.g1.placement`, (e) => terminalEvents.push(e)) // the EXACT reference
     w.cancel('g1')
-    w.cancel('g1') // a second cancel of the same gesture = the MISS no-op (F-4 class)
+    w.cancel('g1') // a second cancel of the same gesture = the at-most-one-remove gate: NO second remove
+    // THE DISCRIMINATOR — the tier-qualified temp read answers MISS (the preview was ERASED;
+    // under reading (ii) the preview would still answer here):
+    const tempPost = store.tiers['temp'].get('temp.drag.g1.placement')
+    expect(tempPost.found).toBe(false)
+    // THE ≤1-REMOVE PIN, observable on the exact reference: EXACTLY ONE temp remove — never
+    // zero (reading (ii)), never two (the second cancel is the MISS no-op, F-4 class):
     const removeCount = terminalEvents.filter((e) => e.cause === 'remove').length
-    expect(removeCount).toBeLessThanOrEqual(1) // at most one remove per gesture
-    const post = store.resolve('drag.g1.placement')
-    expect(post.found).toBe(false) // the staleness hazard is closed: the abandon path erased it
+    expect(removeCount).toBe(1)
+    // the persistent settings-root original still answers — the erase was temp-only and the
+    // abandon path's file reassert is observable (§2.5's cancel row; ZERO sink writes per E10):
+    const filePost = store.tiers['file'].get('file.settings.drag.g1.placement')
+    expect(filePost.found).toBe(true)
+    expect(filePost.value).toBe('orig')
   })
 
   it('F-6/invalid-release (reset): ONE file commit holding the clamped PRE-DRAG size (the persistent original RESTORED BY THE COMMIT)', () => {
@@ -1144,7 +1170,7 @@ describe('REGISTER P-PD-SM-2 (S-PD-REPAIR-1) — the TWO-ARM REPAIR\'s end state
 
 /* ─── THE REGISTER ROW P-PD-TP-1 (S-PD-FUNCTIONS-1, 18 = 6 shapes × 3 points) ─── */
 
-describe('REGISTER P-PD-TP-1 (S-PD-FUNCTIONS-1) — the passed-function surface (constraint + repair, TOTAL) — §7a.1 item 3 reading (i): a hostile supply is ABSORBED at the evaluation', () => {
+describe('REGISTER P-PD-TP-1 (S-PD-FUNCTIONS-1) — the passed-function surface (constraint, TOTAL) — RE-AIMED to the LANDABLE half (PBT AUDIT 2026-10-05, FINDING 1): the machinery CALLS the member on matching writes; the §7a.1 item 3 reading (i) evaluation-absorption is ROUTED TO THE ARCHITECT and recorded, never asserted', () => {
   const shapes = [
     'absent-undefined',
     'null',
@@ -1164,65 +1190,138 @@ describe('REGISTER P-PD-TP-1 (S-PD-FUNCTIONS-1) — the passed-function surface 
   }
 
   it.each(cases)('P-PD-TP-1/%s — supply shape %s × evaluation point %s', drive('P-PD-TP-1', (_id: string, shape: string, point: string) => {
+    // RE-AIMED (PBT AUDIT 2026-10-05, FINDINGS 1 + 2 (a)): the row's drives now REACH the
+    // evaluation — the member's `matchedSet` is the ROOT form `'layout'` (the ONLY form the
+    // landed `captureConstraintSlots` gate `member.matchedSet === parsed.rootName` accepts;
+    // the as-driven `'mem.layout.zone.<id>.size'` matchedSet could never equal a write's
+    // parsed ROOT NAME, so the member NEVER evaluated), and the writes land on the matched
+    // root's DIRECT leaf `mem.layout.size` — the surface the evaluation's leaf record
+    // reaches (the enumerated §2.4 name 5 nested form evaluates against `{zone: undefined}`
+    // and never reaches the member's data – finding 2 (a)).
+    //
+    // DATED NOTE — THE ARCHITECT-ROUTED RESIDUE (FINDING 1): a THROWING constraint function
+    // at a MATCHING matchedSet PROPAGATES out of the evaluation on the frozen store
+    // (`evaluateConstraints` calls `member.constraint(...)` UNGUARDED); the §7a.1 item 3
+    // reading (i) absorption reading is ROUTED TO THE ARCHITECT (§7 item 7) and is
+    // UNLANDABLE without a store-surface change — this row asserts only what IS landable
+    // (the machinery CALLS the member on matching writes — the call-count/arity
+    // observables; refusal-via-feedback when the supply is repairless; a non-function is
+    // never called), and the throwing cells RECORD the residue without asserting either
+    // absorption or propagation.
+    //
+    // THE HOSTILE SUPPLY — the fixture admits the drive's in-domain SEED (MIN) so the
+    // evaluation-point writes (30) REACH the evaluation with a live leaf; on the
+    // violating writes under test the function shape answers its declared hostile form
+    // (a non-boolean, or a throw). The call-recording observables pin the call-count and
+    // the positional-arity (changed/current/next — the store calls with ≥3 arguments).
+    const callLogs = new Map<string, unknown[][]>()
     function hostileConstraint(shapeName: string): unknown {
       if (shapeName === 'absent-undefined') return undefined
       if (shapeName === 'null') return null
       if (shapeName === 'non-function') return 42
       if (shapeName === 'hostile-record-throwing-accessor') {
+        // a hostile record whose OWN member throws on read — the store never reads a
+        // constraint's internals, so the member is skipped by the typeof-gate, never read:
         return Object.defineProperty({}, 'x', { get() { throw new Error('boom') } })
       }
+      const log: unknown[][] = []
+      callLogs.set(shapeName, log)
       if (shapeName === 'function-returning-non-boolean') {
-        return () => 'not-a-boolean'
+        return (changed: unknown, current: unknown, next: unknown, feedback?: { reason?: string }): unknown => {
+          log.push([changed, current, next, feedback])
+          const record = (next ?? null) as { size?: unknown } | null | undefined
+          const size = record !== null && typeof record === 'object' && 'size' in record ? record.size : next
+          if (typeof size === 'number' && size >= MIN) return true // the drive's in-domain SEED lands
+          if (feedback !== undefined) feedback.reason = 'hostile-non-boolean'
+          return 'not-a-boolean' // the HOSTILE SHAPE — a non-boolean answer on a violating write
+        }
       }
       if (shapeName === 'function-throwing') {
-        return () => { throw new Error('caller-function-throws') }
+        return (changed: unknown, current: unknown, next: unknown): unknown => {
+          log.push([changed, current, next])
+          const record = (next ?? null) as { size?: unknown } | null | undefined
+          const size = record !== null && typeof record === 'object' && 'size' in record ? record.size : next
+          if (typeof size === 'number' && size >= MIN) return true // the drive's in-domain SEED lands
+          throw new Error('caller-function-throws') // the THROWING SHAPE on a violating write
+        }
       }
       return undefined
     }
 
     const row: GraphConstraint = {
       id: 'hostile-zone-size',
-      matchedSet: 'mem.layout.zone.<id>.size',
+      matchedSet: 'layout', // the ROOT form — the ONLY form the landed root-name gate accepts
       evaluatedOn: ['set', 'commit', 'remove'],
       constraint: hostileConstraint(shape) as never,
     }
     let store: GraphStore
     try {
-      store = makeStore({ constraints: [row] })
+      // THE DECLARED ROOT — REQUIRED for this row, exactly as F-2 / P-PD-SM-2's refusal rows
+      // document it: `rootParts` names the root BY POSITION only where the segment is
+      // DECLARED — without the declaration the drive's first `mem.layout.size` write parses
+      // to the WHOLE dotted root `'layout.size'` (the mint declares THAT as the root) and the
+      // `matchedSet: 'layout'` member NEVER captures — the evaluation is never reached.
+      // Declaring `layout` (with the wiring's sibling roots) makes every drive write parse
+      // to the root the member matches.
+      store = makeStore({
+        declarations: storeGraphReferences([{ name: 'layout' }, { name: 'drag' }, { name: 'settings' }]),
+        constraints: [row],
+      })
     } catch (error) {
       // PROBE-DISPOSITION: the store refused the hostile supply AT CONSTRUCTION — the
       // evaluation-point drives cannot run; the drive records the construction refusal
-      // as the store's declared posture (nothing stored, no throw escapes). The probe
-      // log distinguishes this path from the absorbed-at-evaluation path below.
+      // as the store's declared posture (nothing stored, no throw escapes).
       // eslint-disable-next-line no-console
       console.log(`TP1-CONSTRUCTION-REFUSED shape=${shape} point=${point} ${String((error as Error)?.message ?? error)}`)
       return // the store's construction posture — recorded as held
     }
-    expect(store.commit(`mem.layout.zone.${ZONE_ID}.size`, 200).status === 'committed' ||
-      store.commit(`mem.layout.zone.${ZONE_ID}.size`, 200).status === 'refused').toBe(true)
-    const before = (() => { try { return stored(store, `mem.layout.zone.${ZONE_ID}.size`).value } catch { return undefined } })()
-    // THE ABSORPTION — never a throw out of the write turn, the write refused with the
-    // violation's posture (NOTHING stored), byte-identical pre/post (a "committed" arm for
-    // a PASSING constraint is the declared posture; a THROWING/non-boolean/absent one is
-    // the refusal posture — either way the TURN never observes the throw):
-    let outcome: 'threw' | 'returned' = 'returned'
+    // THE SEED at the reachable direct leaf — an in-domain write the function shapes admit
+    // (so the point writes REACH the evaluation on a live leaf) and the non-function shapes
+    // commit unguarded (the member is skipped — never called):
+    expect(store.commit(`mem.layout.size`, MIN).status).toBe('committed')
+    const before = stored(store, `mem.layout.size`).value
+    const callsBefore = callLogs.get(shape)?.length ?? 0
     let receipt: GraphWriteReceipt | null = null
+    let threw: unknown = null
     try {
       const p = point as 'set'
-      const name = `mem.layout.zone.${ZONE_ID}.size`
+      const name = `mem.layout.size`
       if (p === 'set') receipt = store.set(name, 30)
       else if (p === 'commit') receipt = store.commit(name, 30)
       else receipt = store.remove(name)
     } catch (error) {
-      outcome = 'threw'
-      throw error // a throw OUT of the write turn FAILS the row — report it as the red
+      threw = error
     }
-    expect(outcome).toBe('returned')
-    if (receipt !== null && receipt.status === 'refused') {
-      expect(receipt.repaired).toEqual([])
-      expect(receipt.cleared).toEqual([])
-      const after = (() => { try { return stored(store, `mem.layout.zone.${ZONE_ID}.size`).value } catch { return undefined } })()
-      expect(after).toBe(before) // byte-identical on the refusal cells
+    const calls = callLogs.get(shape) ?? []
+    if (shape === 'function-returning-non-boolean') {
+      // LANDABLE: the machinery CALLED the member ONCE at the matching write, with the
+      // positional (changed, current, next) arity — the call-count/arity observables:
+      expect(calls.length - callsBefore).toBe(1)
+      expect(calls[callsBefore]!.length).toBeGreaterThanOrEqual(3)
+      // the non-boolean answer is a VIOLATION; the supply is REPAIRLESS ⇒ refusal-via-
+      // feedback — the constraint's OWN data-string reason, the store byte-identical:
+      expect(threw).toBe(null)
+      expect(receipt !== null && receipt.status === 'refused').toBe(true)
+      expect(typeof receipt!.reason).toBe('string')
+      expect(receipt!.repaired).toEqual([])
+      expect(receipt!.cleared).toEqual([])
+      expect(receipt!.events).toBe(0)
+      expect(stored(store, `mem.layout.size`).value).toBe(before) // byte-identical pre/post
+    } else if (shape === 'function-throwing') {
+      // LANDABLE: the THROWING member WAS called at the matching write — the throw is
+      // attributable to the EVALUATION, never a load/construct failure (the routed
+      // residue itself — absorption or propagation — is NOT asserted here; see the
+      // DATED NOTE above).
+      expect(calls.length - callsBefore).toBe(1)
+      expect(calls[callsBefore]!.length).toBeGreaterThanOrEqual(3)
+      void threw
+    } else {
+      // the NON-FUNCTION shapes (absent / null / non-function / a hostile record): the
+      // store's typeof-gate SKIPS the member — it is NEVER called, NEVER read, and no
+      // throw escapes; the write proceeds unguarded:
+      expect(calls.length).toBe(0)
+      expect(threw).toBe(null)
+      expect(receipt !== null && receipt.status === 'committed').toBe(true)
     }
   }))
 })
@@ -1310,20 +1409,46 @@ describe('REGISTER P-PD-SM-4 (S-PD-LISTENER-1) — the zone-render listener: sub
         // the first preview write of a FRESH gesture = the commit/mint:
         w.move('g-fresh', { placement: 'first' })
       } else {
-        store.commit(`mem.layout.zone.${ZONE_ID}.size`, 49) // a repaired reference (arm (b))
-        expect(store.commit(`mem.layout.zone.${ZONE_ID}.size`, 300).status).toBe('committed')
+        // RE-AIMED (PBT AUDIT 2026-10-05, FINDING 2 (a)/(b)): the repair arm drives the
+        // REACHABLE matched root's DIRECT LEAF `mem.layout.size` — the enumerated §2.4
+        // name 5 nested form (`mem.layout.zone.<id>.size`) NEVER reaches the repair (the
+        // member's record is the matched root's leaf record; a nested write evaluates
+        // against `{zone: undefined}` — no `size` member — the passed repair answers
+        // `false`, nothing repairs and the sub-minimum write COMMITS un-repaired). The
+        // direct leaf is the same surface P-PD-SM-2's rows drive. Driving band (b):
+        // 49 < min/2 ⇒ the zone MINIMIZES (the end state is asserted at the drive cell).
+        expect(store.commit(`mem.layout.size`, 49).status).toBe('committed')
       }
     }
 
     const deliveries: GraphEvent[] = []
     if (shape === 'one-subscriber-one-event') {
-      store.subscribe('drag', (e) => deliveries.push(e), { subtree: true })
+      // RE-AIMED (PBT AUDIT 2026-10-05, FINDING 2 — audit note 1 + the reachable-surface
+      // repair): the SET arm's observed turn is a TRUE `set` — the first-preview MINT sits
+      // OUTSIDE the measured delta (the as-driven cell fired a commit-mint on its first
+      // move and was labelled 'set'); the subscriber is the TIER-QUALIFIED ancestor
+      // `'temp.drag'` for the set/commit arms (a bare `'drag'` subscriber NEVER fires for
+      // a tier-qualified write) and the EXACT `mem.layout.size` for the repair arm, whose
+      // band arm's end state is asserted at the REACHABLE direct leaf (P-PD-SM-2's shape):
+      if (arm === 'set') w.move('g1', { placement: 'base' }) // the mint — OUTSIDE the delta
+      if (arm === 'repair') expect(store.commit(`mem.layout.size`, MIN).status).toBe('committed') // the repair's reference pre-exists
+      const registeredName = arm === 'repair' ? `mem.layout.size` : 'temp.drag'
+      const subtreeOpt = arm !== 'repair' ? { subtree: true } : undefined
+      store.subscribe(registeredName, (e) => deliveries.push(e), subtreeOpt)
       const before = deliveries.length
       fireArm()
-      // ONE subscriber gets EXACTLY ONE event per write (the arm actually fired is the
-      // declared one; the render turn also ran — observable through the source double):
-      expect(deliveries.length - before).toBeLessThanOrEqual(1)
-      expect(source.calls.length).toBeGreaterThan(0)
+      const fresh = deliveries.slice(before)
+      if (arm === 'repair') {
+        // the ONE repair event for the repairing write, and the BAND ARM's end state at
+        // the REACHABLE surface — 49 < min/2 ⇒ arm (b) ⇒ the zone MINIMIZES:
+        expect(fresh.filter((e) => e.cause === 'repair').length).toBe(1)
+        expect(stored(store, `mem.layout.size`).value).toBe(MINIMIZE_MARKER)
+      } else {
+        // ONE subscriber gets EXACTLY ONE event per write (the arm actually fired is the
+        // declared one) and the render turn also ran (observable through the source double):
+        expect(fresh.length).toBe(1)
+        expect(source.calls.length).toBeGreaterThan(0)
+      }
     } else if (shape === 'three-subscribers-registration-order') {
       // RE-AIMED (the emit's `origin.startsWith(subscriber.name + '.')` fan-out + the wiring's
       // own turn shape): the subscribers are the TIER-QUALIFIED ANCESTOR `'temp.drag'` (a bare
@@ -1506,12 +1631,29 @@ describe('§3.4 R-1 — THE NO-BYTES-MOVE ROW (plan rows 1/3/4/15)', () => {
 })
 
 describe('§3.4 R-2 — THE WIRING-ONLY / NO-WRITE-THROUGH ROW', () => {
-  it('R-2: the wiring module carries NO module-scope store binding (the store handle appears ONLY as a wiring-held value passed into closures — dom-shim F-12 shape); a planted module-scope binding FAILS the scan', () => {
+  it('R-2: RE-AIMED (PBT AUDIT 2026-10-05, FINDING 4 — the executed scan): the unit\'s OWN additions add NO NEW module-scope store binding — the scan is a NAME-AGNOSTIC module-scope binding detector (the audit\'s `^const\s+store\s*=` / `^let\s+store\s*=` forms match only the literal `store`, so a differently-named binding THIS UNIT adds would slip past them), and the landed `wiredGraphStore` TENANT-1 seam (§0 ruling 12 — the wired store\'s own module-scope binding, landed BEFORE this unit) is the ONE named exception that MUST HOLD; the unit\'s composition (`createPaneDrag(store, source)`) holds the store as an ARGUMENT — never a new module-scope binding (dom-shim F-12 shape); a differently-named planted binding FAILS the scan', () => {
     const renderer = readModuleSource('src/renderer/renderer.ts')
-    const planted = 'const store = createGraphStore({})'
-    expect(/^const\s+store\s*=/m.test(planted)).toBe(true) // positive control
-    expect(/^const\s+store\s*=/m.test(renderer)).toBe(false) // no module-scope binding
-    expect(/^let\s+store\s*=/m.test(renderer)).toBe(false)
+    /** THE NAME-AGNOSTIC MODULE-SCOPE STORE-BINDING DETECTOR — a module-scope `const`/`let`
+     *  whose declaration carries the store CONSTRUCTION (`createGraphStore(...)`) or a
+     *  `GraphStore` type annotation, caught whatever the binding is called. */
+    function moduleScopeStoreBindings(source: string): string[] {
+      const found: string[] = []
+      for (const line of source.split('\n')) {
+        const m = line.match(/^(?:const|let)\s+([A-Za-z_$][\w$]*)\s*(?::\s*([^=]+?))?\s*=/)
+        if (m === null) continue
+        const name = m[1] as string
+        const type = m[2] ?? ''
+        if (/\bcreateGraphStore\s*\(/.test(line) || /\bGraphStore\b/.test(type)) found.push(name)
+      }
+      return found
+    }
+    // POSITIVE CONTROLS — a differently-named planted module-scope store binding IS caught:
+    expect(moduleScopeStoreBindings('const graftedStore = createGraphStore({})')).toEqual(['graftedStore'])
+    expect(moduleScopeStoreBindings('let myStore: GraphStore = null')).toEqual(['myStore'])
+    // THE ROW'S PIN — the ONLY module-scope store binding in the wiring module is the landed
+    // TENANT-1 seam `wiredGraphStore`; a binding THIS UNIT added, under ANY name, would join
+    // the detected set and FAIL:
+    expect(moduleScopeStoreBindings(renderer)).toEqual(['wiredGraphStore'])
   })
 
   it('R-2: the store is NEVER handed an element (this repo writes no file under <Astrographer>/ — H-r6; out of the node host\'s reach, recorded in the row comment)', () => {
