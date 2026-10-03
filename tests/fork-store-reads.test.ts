@@ -61,7 +61,10 @@
 //   S-7  the zero-row exemption is EXPLICIT, justified and NOT silent (§5.5)
 //   S-8  the migration invariants + the shape's five steps are enumerated (§3.1/§5.1)
 //   S-9  the live repo's MCP surface carries NO direct-store-read handler (§2.1/§2.3)
-//   S-10 the owed/fork/ambiguity halves are recorded as OWED, not as passes (§6.3/§7.1)
+//   S-10 the owed/fork/ambiguity halves are recorded — the as-filed `OWED` KEPT VISIBLE
+//        beside the dated `LANDED 2026-10-03` clause (`RCA-8(d)` annotate-beside), the
+//        delivered note VERIFIED PRESENT at its site, and neither half presented as a
+//        pass this repo took (§6.3/§7.1)
 //
 // FAIL-STATES (one row each, per documented fail-state):
 //   F-A  a cited § resolves to nothing at the named site
@@ -911,16 +914,70 @@ describe('§2.1 / §2.3 — the MCP surface carries NO direct-store-read handler
 // The rows below assert the RECORD is honest — that the OWED items are marked
 // OWED (never claimed landed) and that the non-claims are non-claims.
 
-describe('§6.3 — the `H-r6` handoff note is recorded OWED, never claimed written (S-10)', () => {
-  it('S-10: the owed artifact is stated with its STATUS `OWED — NOT WRITTEN BY THIS PASS`, its reason, its owner and its (non-)gate — "stated so its absence is a FINDING" (§6.3; §0.1 item 8)', () => {
+describe('§6.3 — the `H-r6` handoff note: the as-filed `OWED` is KEPT VISIBLE beside the dated `LANDED` clause, and the delivered note is VERIFIED PRESENT (S-10)', () => {
+  it('S-10: the owed artifact is stated with its STATUS — as-filed `OWED — NOT WRITTEN BY THIS PASS` KEPT VISIBLE beside the dated `LANDED 2026-10-03` clause (`RCA-8(d)` annotate-beside) — its reason, its owner and its (non-)gate, and the delivered note actually EXISTS with seven clauses (i)–(vii) and the cross-reference back here (§6.3; §0.1 item 8)', () => {
     const block = /### 6\.3 The `H-r6` handoff note this unit OWES[\s\S]*?(?=\n### |\n## )/.exec(SPEC)
     expect(block, 'S-10 — `§6.3` is present as the owed-artifact site').not.toBeNull()
     const body = block?.[0] ?? ''
+
+    // -- (1) THE AS-FILED STATUS IS KEPT VISIBLE (annotate-beside, `RCA-8(d)`) ----
     expect(body, 'S-10 — the artifact is NAMED (a `docs/FORKER.md` §4 block carrying §2/§3/§4/§5 to a fork)').toMatch(/a `docs\/FORKER\.md` §4 block/)
-    expect(body, 'S-10 — its STATUS is `OWED — NOT WRITTEN BY THIS PASS`, so no reader infers it landed').toMatch(/STATUS: `OWED` — NOT WRITTEN BY THIS PASS/)
-    expect(body, 'S-10 — the reason it is not written here is STATED RATHER THAN HIDDEN (the `RCA-8` one-file constraint)').toMatch(/WHY IT IS NOT WRITTEN HERE, STATED RATHER THAN HIDDEN/)
-    expect(body, 'S-10 — an OWNER is named (`whatever pass next touches docs/FORKER.md §4`) — an owed item with no owner is an orphan, not a carry').toMatch(/owner: whatever pass next touches/)
+    expect(body, 'S-10 — the AS-FILED status bytes `OWED` / `NOT WRITTEN` are STILL PRESENT (`RCA-8(d)` ANNOTATE-BESIDE keeps the as-filed form visible; a reconcile that DELETED them would redden this clause)').toMatch(/`OWED`[\s\S]{0,40}NOT WRITTEN BY THIS PASS/)
+
+    // -- (2) THE OPERATIVE READING IS THE DATED `LANDED` CLAUSE -------------------
+    const landing = /LANDED 2026-10-03/.exec(body)
+    expect(landing, 'S-10 — the reconciled OPERATIVE reading is PRESENT: a DATED `LANDED 2026-10-03` clause closes the `OWED` for the note (a pass that reverted the reconcile, or that landed the note without recording it, reddens here)').not.toBeNull()
+    expect(body, 'S-10 — and the clause names the block `docs/FORKER.md` §4 was to receive (`THE STORE-ADDRESSED MCP READS — WHAT A FORK MUST RE-ROUTE`), so the `LANDED` claim is anchored to a NAMED site, not to a bare date').toMatch(/THE STORE-ADDRESSED MCP READS — WHAT A FORK MUST RE-ROUTE/)
+    expect(body, 'S-10 — the clause records the note as written in the seven-clause form `§6.3` OWED ("seven clauses **(i)–(vii)**") — the shape the VERIFIED-PRESENT check below re-measures against the live file').toMatch(/seven clauses \*\*\(i\)–\(vii\)\*\*/)
+    const landingToEnd = body.slice((landing?.index ?? 0) + 'LANDED 2026-10-03'.length)
+    expect(landingToEnd, 'S-10 — the `LANDED` clause is NOT the deleted-annotation evasion: at least one clause after the dated landing names the delivered artifact (naming the `docs/FORKER.md` block, the seven clauses or this file\'s `§6.3`)').toMatch(/docs\/FORKER\.md` §4's block|seven clauses|`§6\.3`/)
+
+    // -- (3) THE REASON IS STATED RATHER THAN HIDDEN ------------------------------
+    // TOLERANT BY DESIGN: the reconciled wording is in the PAST TENSE and is kept as
+    // the filing pass's own dated reading, so an exact-phrase pin here is exactly
+    // what a legitimate future reconcile breaks. This asserts the CLAIM instead:
+    // a STATED-reason sentence (either tense, "NOT WRITTEN" or "WAS NOT WRITTEN")
+    // naming the `RCA-8` one-file constraint AND the `docs/FORKER.md` §4 file that
+    // made the carry a deferred one — a pass that dropped the stated reason (or
+    // silently deleted the as-filed paragraph) reddens here.
+    expect(body, 'S-10 — the reason it is (was) not written here is STATED RATHER THAN HIDDEN, in the reconciled (past) or as-filed tense — NOT a frozen exact phrase').toMatch(/\bWHY IT (?:IS|WAS) NOT WRITTEN (?:HERE|BY THIS PASS), STATED RATHER THAN HIDDEN\b/)
+    expect(body, 'S-10 — the stated-reason sentence is WHOLE, not a severed label: the reason follows the label in the SAME sentence (`RCA-8`\'s one-file constraint), which is the thing the section promises is stated rather than hidden').toMatch(/\bWHY IT (?:IS|WAS) NOT WRITTEN (?:HERE|BY THIS PASS), STATED RATHER THAN HIDDEN:\*\*[\s\S]{0,80}?`RCA-8`'s one-file constraint governs this pass/)
+    expect(body, 'S-10 — and the stated reason NAMES the governing constraint (`RCA-8`\'s one-file rule), so the section states why rather than merely asserting').toMatch(/`RCA-8`'s one-file constraint governs this pass/)
+    expect(body, 'S-10 — and it names the file whose size made the carry a deferral (`docs/FORKER.md` §4: an existing, long, actively appended-to file)').toMatch(/`docs\/FORKER\.md` §4 is an existing, long, actively appended-to file/)
+
+    // -- (4) THE OWNER, AND THE (NON-)GATE ---------------------------------------
+    // NOTE ON THE RE-AIM: the filing pass's clause "the owner named … is SPENT:
+    // discharged by the same 2026-10-03 landing" is asserted as a NON-CLAIM, not as
+    // an absence — a tolerance in BOTH directions, so neither the as-filed carry nor
+    // the reconciled landing can redden a row by restating the other. The OWNERSHIP
+    // FORM (`owner: …` / `owned …`) must SURVIVE either way — marking the owner SPENT
+    // is not licence to delete it.
+    expect(body, 'S-10 — an OWNER is named — the as-filed `owner: whatever pass next touches docs/FORKER.md §4` form (kept `owNer:`, with the spacing of the filed clause) — an owed item with no owner is an orphan, not a carry, and the reconcile may mark the owner SPENT but may not delete the ownership form').toMatch(/\bowner: whatever pass next touches/)
+    expect(body, 'S-10 — the (non-)gate is stated: the carry gates NO unit in this repo').toMatch(/it gates \*\*no\*\* unit in this repo/)
+    expect(body, 'S-10 — and the `LANDED` clause is a CLOSURE OF THE NOTE HALF ONLY: what remains `OWED` is the FORK\'s own `src/main/**` re-route (`§0.1` item 9), so the landing cannot be read as the whole unit being closed').toMatch(/what remains `OWED` is the FORK's own `src\/main\/\*\*` re-route/)
     expect(SPEC, 'S-10 — and `§7.3` item 5 repeats the OWED state independently, "so a reader of this file alone sees the gap"').toMatch(/The `H-r6` handoff note is `OWED` and its absence leaves the unit INCOMPLETE/)
+    expect(SPEC, 'S-10 — the `§7.3` item is reconciled the SAME way (`RECONCILED 2026-10-03`, the `OWED` form kept visible), so the two sites do not drift apart').toMatch(/RECONCILED 2026-10-03[\s\S]{0,400}THE AS-FILED `OWED` FORM ABOVE IS KEPT VISIBLE/)
+
+    // -- (5) THE DELIVERED ARTIFACT ACTUALLY EXISTS (the falsifiable half the row
+    //        lacked: a pass that DELETED the note — or reverted the reconcile —
+    //        reddens HERE, against the live file, not against the spec's prose) ---
+    const footerRel = 'docs/FORKER.md'
+    const footer = readOrNull(footerRel)
+    expect(footer, `S-10 — the delivered artifact EXISTS: \`${footerRel}\` is present (its absence reddens the note's VERIFICATION, not just its record)`).not.toBeNull()
+    const footerText = footer ?? ''
+    const noteStart = footerText.indexOf('### THE STORE-ADDRESSED MCP READS — WHAT A FORK MUST RE-ROUTE')
+    expect(noteStart, `S-10 — \`${footerRel}\` §4 carries the delivered block "THE STORE-ADDRESSED MCP READS — WHAT A FORK MUST RE-ROUTE (\`H3\`, \`U-FORK-STORE-READS\`)"`).toBeGreaterThan(-1)
+    const noteEnd = footerText.indexOf('\n## ', noteStart)
+    const note = footerText.slice(noteStart, noteEnd === -1 ? footerText.length : noteEnd)
+    const roman = [...note.matchAll(/\*\*\((i|ii|iii|iv|v|vi|vii)\)/g)].map((m) => m[1] as string)
+    expect(roman, `S-10 — the delivered block carries the SEVEN clauses (i)–(vii), in order and without a gap — the shape \`§6.3\` OWED. FOUND: ${JSON.stringify(roman)}`).toEqual(['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii'])
+    for (const clause of ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii']) {
+      const at = note.indexOf(`**(${clause}) `)
+      const next = roman.indexOf(clause) + 1 < roman.length ? note.indexOf(`**(${roman[roman.indexOf(clause) + 1]}) `) : note.length
+      expect(note.slice(at, next).trim().length, `S-10 — clause (${clause}) STATES something (a numbered-but-empty clause is a label, not a delivery)`).toBeGreaterThan(30)
+    }
+    expect(note, `S-10 — and the delivered block CROSS-REFERENCES BACK to its authority at \`${SPEC_REL}\` §6.3, so the note and the spec are one carry rather than two drifting texts`).toMatch(/`docs\/specs\/fork-store-reads\.md` `§6\.3`/)
+    expect(note, 'S-10 — the delivered block carries the FORK-side return rule (`H-r6`: this repo writes NO file under `<Astrographer>/`), the half that stays the fork\'s').toMatch(/^\(vii\) THE RETURN NOTE\.\*\* \*\*This repo writes NO file under `<Astrographer>\/`\*\* \(|This repo writes NO file under `<Astrographer>\/`/)
   })
 
   it('S-10 (fail-state F-G): the spec does NOT claim to have written the handoff note, and this repo writes NO file under `<Astrographer>/` — the fork tree is the fork\'s pass (`H-r6`) (§0.1; §6.2 prohibition 3)', () => {

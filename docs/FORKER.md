@@ -397,7 +397,7 @@ timing is a NEW hard row**: reveal is written **exactly once per gesture, at ges
 
 ### THE STORE-ADDRESSED MCP READS — WHAT A FORK MUST RE-ROUTE (`H3`, `U-FORK-STORE-READS`)
 
-**⟶ ADDED 2026-10-03, THE `U-FORK-STORE-READS` PASS — THE FORK-FACING HANDOFF NOTE THE SPEC OWED (`docs/specs/fork-store-reads.md` `§6.3`; the ruling is `docs/decisions.md`'s ACTIVE row `H3`-IS-A-RE-ROUTE-NOT-AN-EXEMPTION, cited BY ROW NAME). Every point below is a CITATION, never a restatement — the spec and that ruling govern, and where this note and the spec disagree, the spec governs and this note is the thing to fix.**
+**⟶ ADDED 2026-10-03, THE `U-FORK-STORE-READS` PASS — THE FORK-FACING HANDOFF NOTE THE SPEC OWED (`docs/specs/fork-store-reads.md` `§6.3`; the ruling is `docs/decisions.md`'s ACTIVE row `H3` (`U-FORK-STORE-READS`) IS A RE-ROUTE, NOT AN EXEMPTION, cited BY ROW NAME). Every point below is a CITATION, never a restatement — the spec and that ruling govern, and where this note and the spec disagree, the spec governs and this note is the thing to fix.**
 
 **(i) THE RULING, IN ONE LINE.** **RE-ROUTE — the exemption arm is NOT taken.** `P-16` (*MCP endpoints read only the app Runtime; a store value is MCP-visible iff a graph node carries it; the store is never agent-addressable* — `docs/specs/mcp-endpoint.md` §6.4, cited there as quoted substance; `data-ownership-model-plan.md` §2.3) **stands UNQUALIFIED: no carve-out is created, and no later pass — on either side — may cite the ruling as license for a direct agent→store read.**
 
