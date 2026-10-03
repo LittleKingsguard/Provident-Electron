@@ -48,6 +48,19 @@ The successor contract specifies **one renderer-realm store**, and it is the ame
 | **The tier-1 crossing seam** (`GraphCrossing`) | `put(row: {name, value})` → `{status: 'committed' \| 'refused'}`; **the default is a no-op recorder answering `'committed'`** | injected by the caller and **STUBBED**; the real channel is `U-STORE-PERSIST`'s | per store construction | not rewritten by this unit; **this unit asserts NOTHING about it** | `§2.1`'s block; `§2.8` item 8; `§1` item 6 |
 | **The typed PROPERTY register** — **A DIFFERENT OBJECT from the runtime top-level-name register above** | `21` typed rows — `13` `P-GR-IM` + `1` `P-GR-SM` + `7` `P-GR-TP` — each with a property, a term, a strategy id (`S-GR-*`) and compensating sample rows; plus one declared-row fixture and two constraint rows | **the contract's `§5.5.1`; executed by the unit's own test file** | the specification; it is not a runtime object at all | authored in the contract; **it counts ROWS OF A PROPERTY TABLE and ATTEMPTS, and NO COUNT CROSSES to the store's runtime register** | **`§5.5.1`'s object-naming note**; `§5.5`; `§5.5.1`; `§5.5.3`; `§2.4`'s ruling block |
 
+**⟶ ANNOTATED BESIDE THE CONSTRAINT-TABLE ROW ABOVE (2026-10-03, the ACTIVE row `D-GP-…-CONSTRAINTS-ARE-FUNCTIONS` — "THE
+CONSTRAINTS ARE PASSED FUNCTIONS, NOT A DATA TABLE" — `docs/decisions.md`; `RCA-8(d)` ANNOTATE-BESIDE — the row's own
+bytes are UNCHANGED and this is its dated reading).** The row's members — `kind` (`'count-exactly-one'` \| `'unique-path-tier'`) · `repair`
+(`'next-surviving-by-order'` \| `'none'`) · `onRepeat` (`'edit'` \| `'refuse'`) · `refusalReason` (a token or `null`) — are the **SUPERSEDED
+data-table model**, and the row's *"a second constraint with no interaction rule does not load"* lifetime cell is read under `§2.7` item 6's
+re-derivation (no constraint DATA loads — the caller supplies `N` independent functions at construction). **The OPERATIVE reading: `GraphConstraint`
+is a FUNCTION-CARRIER — `{ id, matchedSet, evaluatedOn, constraint, repair? }` — the constraint/repair FUNCTIONS are CALLER CODE supplied at
+construction (the factory option is the ONE supply site; the store's read-only `constraints` view is never a runtime-mutable table);
+`unique-path/tier` is a GRAPH INVARIANT (write machinery), NOT a constraint (`§2.7` item 4); `count-exactly-one` is the WORKED EXAMPLE —
+constraint function + three-arm repair function (`§2.7` item 5); and the evaluation points are unchanged (`§2.7` item 2).** The row's citations
+(`§2.1`'s block; `§2.7` items 1/2/6; `§3.2` `F-21`) keep their numbers; their referents are the re-derived clauses. This annotation is the
+dated-editorial allowance the constraint-table row permits: the row's own text above is NOT rewritten.
+
 ### §2.1 The tree invariant
 
 **THE GRAPH IS A TREE BY CONSTRUCTION: every node has EXACTLY ONE parent link (`parentLink`), and NO operation creates a second** — a re-parent is **a DELETE of the anchors plus a MINT of new ones**, which is what makes the cache's anchor-set invalidator well-defined and **makes a cycle UNCONSTRUCTIBLE** (`§2.3` item 4; `§2.2` `P-2`; `§3.3` `I-2`). **Consequence, stated by the contract and repeated here only as its consequence: no visited set and no depth bound is owed**, and **a positive control that cannot express its failing case is VACUOUS and is itself a finding** (`§2.3` item 4; `§2.11` item 3; `§3.2` `F-23`; `§3.4` `R-2`). The invariant is driven by the register row `P-GR-IM-1` (`§5.5.1`).
