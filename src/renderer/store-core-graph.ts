@@ -552,6 +552,18 @@ export function createGraphStore(options: {
     return undefined
   }
 
+  /** WHETHER the reference carries a VALUE ENTRY OF ITS OWN (field 2's `clear` row +
+   *  `value` row; `§2.5` item 4(iii)'s subject — the DECLARED-BUT-UNWRITTEN PARENT WITH A
+   *  WRITTEN CHILD). The walk's presence check reads THIS, never the value's substance
+   *  (`§2.2 P-6`/`P-9`: any JavaScript value including `undefined` is in-domain): a node that
+   *  exists only structurally (cleared, or minted as a path's intermediate) has NO entry and
+   *  answers the DECLARED MISS, while a WRITTEN leaf holding `undefined` as its own value HAS
+   *  an entry and answers the HIT — the discrimination is ENTRY-PRESENCE, never value. */
+  function hasValueEntry(ref: GraphNodeRef): boolean {
+    for (const entry of values) if (entry.ref === ref) return true
+    return false
+  }
+
   function setValue(ref: GraphNodeRef, name: string, value: unknown): void {
     for (const entry of values) {
       if (entry.ref === ref) {
@@ -775,20 +787,27 @@ export function createGraphStore(options: {
         return { deepest: current, node: null, severed: true, firstMissing: segment }
       }
       if (!autoMint) return { deepest: current, node: null, severed: false, firstMissing: segment }
-      current = makeChild(current, segment, start.flag, rootName, last ? value : undefined)
+      current = makeChild(current, segment, start.flag, rootName, value, last)
       if (last) return { deepest: current, node: current, severed: false, firstMissing: null }
     }
     if (autoMint) setValue(current.ref, current.localName, value)
     return { deepest: current, node: current, severed: false, firstMissing: null }
   }
 
-  function makeChild(parent: GraphNode, segment: string, flag: GraphNodeFlag, rootName: string, value: unknown): GraphNode {
+  function makeChild(parent: GraphNode, segment: string, flag: GraphNodeFlag, rootName: string, value: unknown, written: boolean): GraphNode {
     const ref = mintRef()
     const link: GraphLink = { from: parent.ref, to: ref, cache: linkEntry(rootName, ref, flag), constraint: null }
     const child: GraphNode = { ref, flag, localName: segment, anchors: [], parentLink: link }
     nodes.set(ref, child)
     withAnchor(parent.ref, segment, link)
-    if (value !== undefined) setValue(ref, segment, value)
+    // THE LEAF'S ENTRY IS WRITTEN WHEN THE SEGMENT IS THE LEAF, NEVER WHEN IT IS AN
+    // INTERMEDIATE (`§2.3` item 2: the caller's own LAST segment is the path's leaf; an
+    // intermediate node is a STRUCTURAL PARENT with no value entry of its own). `written` is
+    // the MINT WALK's own segment fact, so the entry is created WITHOUT consulting the value's
+    // substance (`§2.2 P-6`/`P-9`) — a leaf whose committed value is `undefined` still HAS an
+    // entry and answers the HIT (M5's discrimination), while a structural parent carries none
+    // and answers the DECLARED MISS (M4).
+    if (written) setValue(ref, segment, value)
     return child
   }
 
@@ -875,6 +894,16 @@ export function createGraphStore(options: {
       return { answer: refusalOf('no-such-anchor', 'D-ANCHOR', segment, walked.deepest.ref, name), leaf: null, rootName, tail, token: parsed.token }
     }
     const leaf = walked.node
+    // THE VALUE-PRESENCE CHECK — the DECLARED-but-unwritten-parent arm (field 2's `clear` row
+    // + MISS arm: the miss's subject is the "DECLARED-BUT-UNWRITTEN PARENT WITH A WRITTEN
+    // CHILD" — a node that exists STRUCTURALLY but holds NO value entry of its own). It sits
+    // BEFORE `H-FLAG` because the fixed precedence answers "the resolved leaf's miss → the
+    // filter miss → the answer" (`§2.5` item 2). The check reads ENTRY PRESENCE, never the
+    // value's contents — a WRITTEN leaf holding `undefined` as its own value HAS an entry and
+    // stays a HIT (M5's discrimination; field 2's `value` row: the store never interprets it).
+    if (!hasValueEntry(leaf.ref)) {
+      return { answer: miss(name), leaf: null, rootName, tail, token: parsed.token }
+    }
     if (parsed.token !== null && parsed.token !== 'secure' && leaf.flag !== parsed.token) {
       // `H-FLAG` runs AFTER `G-RESOLVE-LEAF`: a filter miss on a RESOLVABLE leaf is its OWN
       // diagnostic, NEVER `'no-such-anchor'` — and it NAMES the node's OWN flag AND the flag
@@ -1110,7 +1139,10 @@ export function createGraphStore(options: {
     nodes.set(ref, { ref, flag, localName: old.localName, anchors: [], parentLink: null })
     affected.push({ name: path, flag, ref })
     const carried = valueOf(old.ref)
-    if (carried !== undefined) setValue(ref, old.localName, carried)
+    // THE COPIED ENTRY IS PRESENCE-PRESERVED, NEVER VALUE-GATED (M5's discrimination): a node
+    // whose OWN entry holds `undefined` is still a WRITTEN leaf and keeps its entry through the
+    // re-tier — the ENTRY is the fact the walk's presence check reads, never the value.
+    if (hasValueEntry(old.ref)) setValue(ref, old.localName, carried)
     for (const anchor of old.anchors) {
       if (anchor.link === null || anchor.link.to === null) continue
       const child = nodes.get(anchor.link.to)
