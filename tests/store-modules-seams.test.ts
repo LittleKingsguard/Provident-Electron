@@ -112,6 +112,19 @@ function gitFileInHead(relative: string): boolean {
   }
 }
 
+/** E-ST-1's re-pin probe (spec §2.7 item 7 extension 2, 2026-10-03): the number of
+ *  commits whose history touches the file — exactly ONE proves the file was
+ *  BORN in that (landing) commit: it neither predated the unit (different commit)
+ *  nor was edited later (a second commit). */
+function gitFileCommitCount(relative: string): number {
+  try {
+    const out = execFileSync('git', ['log', '--format=%H', '--', relative], { cwd: process.cwd(), stdio: 'pipe', encoding: 'utf8' })
+    return out.trim() === '' ? 0 : out.trim().split('\n').length
+  } catch {
+    return 0
+  }
+}
+
 /** THE ANTI-ASSEMBLY DETECTORS (§7 item 2): import-statement forms, `require(`
  *  and dynamic `import(` are the three positive-control classes the census rows
  *  name. `import.meta` and the word `import` in prose/identifiers are NOT forms.
@@ -1448,11 +1461,17 @@ describe('§3.5 existence rows (E-*)', () => {
     }
   })
 
-  test('E-ST-1 — the caller files are NEW: src/renderer/overlay-store.ts and src/renderer/theme-store.ts did not exist before this unit (their creation IS the landing; red-time probe over the pre-landing HEAD)', () => {
-    expect(gitFileInHead('src/renderer/overlay-store.ts')).toBe(false)
-    expect(gitFileInHead('src/renderer/theme-store.ts')).toBe(false)
-    expect(gitLsFile('src/renderer/overlay-store.ts')).toBe(false)
-    expect(gitLsFile('src/renderer/theme-store.ts')).toBe(false)
+  test('E-ST-1 — the caller files are NEW: src/renderer/overlay-store.ts and src/renderer/theme-store.ts did not exist before this unit (their creation IS the landing; the files\' ENTIRE HISTORY is this unit\'s landing commit — re-pinned per the spec §2.7-item-7 extension 2, 2026-10-03)', () => {
+    // THE RE-PIN (licensed by the spec's §2.7 item 7 extension 2, 2026-10-03): a
+    // fixed `HEAD^:` probe cannot work once later commits exist after the landing,
+    // so the "NEW to this unit" reading is proved by HISTORY: `git log -- <path>`
+    // must list EXACTLY ONE commit — the landing commit that created the file.
+    // Zero commits would mean untracked/never-committed; more than one would mean
+    // the file predated the unit or was edited later — both FAIL the reading.
+    expect(gitFileCommitCount('src/renderer/overlay-store.ts')).toBe(1)
+    expect(gitFileCommitCount('src/renderer/theme-store.ts')).toBe(1)
+    expect(gitLsFile('src/renderer/overlay-store.ts')).toBe(true)
+    expect(gitLsFile('src/renderer/theme-store.ts')).toBe(true)
   })
 })
 
