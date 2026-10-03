@@ -58,7 +58,11 @@
 //             writing under a `mem.list..…` reference — FAILS the declared
 //             refusal read (§2.1 item 1: "the module NEVER mints, defaults,
 //             normalizes or re-interprets it … never a throw"); a non-empty
-//             hostId (even one containing a `.`) is composed VERBATIM
+//             hostId (even one containing a `.`) is composed VERBATIM. THE SLOT
+//             SIDE consumes the SAME per-parameter reading through the
+//             identical `storeEngaged` gate (slot-host.ts:311-312) — recorded
+//             as a dated PAR-NOTE beside the row (2026-10-05, N-2), not driven
+//             as a duplicate row (F-LS-5 is the drive-of-record for the class)
 //     F-SS-1  SS-LEAK arm (a) — same three-arm shape, per key
 //     F-SS-2  SS-LEAK arm (b) — PLUS the FOREIGN-subscription half (gate-4
 //             F-3f): a second party's mem.other.x subscription survives the
@@ -601,6 +605,57 @@ const IMPORT_CONTROL_C = "const s = await import('../renderer/store-core-graph.j
 // imported by the modules' own bytes).
 const IMPORT_CONTROL_D = "export { createGraphStore } from '../renderer/store-core-graph.js'\n"
 const IMPORT_CONTROL_E = "export * from '../renderer/store-core-graph.js'\n"
+
+// GATE-4 RE-AUDIT N-1 (2026-10-05, the LOW red-set fix — the HANDLE-AGNOSTIC
+// CONTAINER-SOURCE FALSIFIER): the landed implementation names its store handle
+// `channel` (`src/shared/slot-host.ts:301` — `const channel = source.store`),
+// so the AS-FILED `store\.`-token arms were vacuously green against the landed
+// bytes: a container-from-store path spelled with the ACTUAL handle evaded them
+// (the audit's named evasions: `record.container = channel.resolve(x)`, and a
+// resolve value placed without `obtainContainer`). The arms below bind the SAME
+// class handle-agnostically — ANY member call on ANY handle name
+// (`\.(resolve|commit|subscribe|set|remove)\(`) is a store-access site, and a
+// store-access site whose RESULT feeds a CONTAINER-OBTAINING position (the
+// `record.container` assignment or the `obtainContainer` call) FAILS the
+// boundary. The module's OWN legitimate record turns — `channel.commit`
+// (`writePlacement`), `channel.resolve` (`refreshKey`), `channel.subscribe`
+// (`registerKey`) — are the CONTRACT (record writes, never container sources),
+// so the arms are SCOPED to the container-obtaining positions: those turns
+// never feed them, and the false-positive corpus below pins that reading.
+const SS_STORE_MEMBERS = 'resolve|commit|subscribe|set|remove'
+/** Arm 1 — a channel-surface member call on ANY handle whose RESULT lands
+ *  DIRECTLY in the container-obtaining position: `record.container =
+ *  <handle>.<member>(…)` FAILS (the as-filed arm-1/arm-3 `store\.`-token
+ *  class, handle-agnostic — the audit's first named evasion). */
+const SS_CONTAINER_FROM_MEMBER_CALL = new RegExp(
+  `record\\.container\\s*=\\s*[A-Za-z_$][\\w$]*\\s*\\.\\s*(?:${SS_STORE_MEMBERS})\\(`,
+)
+/** Arm 2 — the 120-char window, widened: a channel-surface member call on ANY
+ *  handle whose result feeds `obtainContainer` within 120 chars FAILS (a
+ *  resolve value routed through the container-obtaining call). */
+const SS_CONTAINER_FEEDS_OBTAIN_CONTAINER = new RegExp(
+  `\\.(?:${SS_STORE_MEMBERS})\\([^)]*\\)[\\s\\S]{0,120}obtainContainer`,
+)
+/** Arm 3 — the after-order window: a channel-surface member call on ANY handle
+ *  whose result lands in `record.container =` within 120 chars FAILS (a
+ *  resolve value carried by a local and placed WITHOUT `obtainContainer` — the
+ *  audit's second named evasion). */
+const SS_CONTAINER_INTO_RECORD_POSITION = new RegExp(
+  `\\.(?:${SS_STORE_MEMBERS})\\([^)]*\\)[\\s\\S]{0,120}record\\.container\\s*=`,
+)
+/** THE PLANTED POSITIVE CONTROLS (the escape the audit named — the ACTUAL
+ *  `channel.` handle, not just a `store.` spelling): each evasion MUST fire
+ *  its own arm. */
+const SS_EVASION_DIRECT_MEMBER = "record.container = channel.resolve('mem.slots.h1.a')\n"
+const SS_EVASION_LOCAL_PLACEMENT = "const v = channel.resolve('mem.slots.h1.a')\nrecord.container = v\n"
+const SS_EVASION_FEEDS_OBTAIN = "const v = channel.resolve('mem.slots.h1.a')\nobtainContainer(v)\n"
+/** THE FALSE-POSITIVE CONTROL: the module's OWN legitimate record writes (the
+ *  contract — the per-key placement commits, the re-invocation's read face,
+ *  the per-key subscription registration) MUST PASS all three arms. */
+const SS_CONTRACT_RECORD_WRITES =
+  "channel.commit(slotReferenceOf(key), { placed: false }, { onRepeat: 'edit' })\n" +
+  'const answer = channel.resolve(slotReferenceOf(key))\n' +
+  'const handle = channel.subscribe(slotReferenceOf(key), () => refreshKey(key))\n'
 
 /** THE NO-MODULE-LEVEL-BINDING FILTER (P-SMB-*-IM-2, S-LS-2/S-SS-2): a
  *  module-scope binding named after the store handle, a subscription handle OR
@@ -1225,6 +1280,31 @@ describe('H2a U-STORE-MODULES-BYTES — §3.2 fail-states (LS-LEAK / SS-LEAK thr
     expect(state.written.has('mem.list.a.b.node.a'), 'F-LS-5 — the node record lands under the VERBATIM spelling').toBe(true)
   })
 
+  // PAR-NOTE (2026-10-05, gate-4 re-audit N-2 — the SLOT side of the
+  // malformed-hostId class, recorded as a dated PAR-note, NOT driven as a
+  // separate row, per the audit's own redundancy escape: "record it as a dated
+  // PAR-note instead (with the reason) — do not force a row"): the slot host
+  // carries the SAME closure-held engagement predicate as the list host
+  // (`storeEngaged`, `src/shared/slot-host.ts:311-312` — store present && string
+  // hostId && non-empty, on the RAW `source.hostId`), so a slot row probing
+  // slot + store + absent/empty/non-string hostId — no subscription, no
+  // `mem.slots..…` record, no throw, construction fine, the verbatim `'a.b'`
+  // control composed as `mem.slots.a.b.<key>` — would re-execute EXACTLY the
+  // drive F-LS-5 above executes, on the second consumer. THE REASON IT IS
+  // GENUINELY REDUNDANT UNDER THE SPEC'S PER-PARAMETER TABLE: §2.1 item 1 IS ONE
+  // per-parameter table (one `hostId` row, BOTH factories — "the module NEVER
+  // mints, defaults, normalizes or re-interprets it … never a throw"), and
+  // F-LS-5 is its executing drive, covering the full malformed matrix (absent /
+  // empty / non-string + never-a-throw + no minted-identity record + the
+  // verbatim `'a.b'` composition) and pinning the same §2.1-item-1 reading the
+  // audit's N-2 probes would pin; the slot side's ENGAGED path is executed
+  // dynamically (M-SS-1/2/3 at hostId 'h1'; I-SS-1's five store states), and
+  // its reading of `hostIdentity` is byte-visible (`slot-host.ts:302`) beside
+  // the identical `storeEngaged` gate. A forced F-SS-5-named row would ALSO
+  // collide with the recorded gate-8 re-id (spec §3b F-4a: the §3.2
+  // container-source-falsifier cell is re-id'd to F-SS-5 — the N-3 doc item,
+  // not this file's change). F-LS-5 stays the drive-of-record for the class.
+
   it('F-SS-1 — SS-LEAK arm (a): DELIVERY AFTER DISPOSE — per-key counter > 0 after dispose FAILS; positive control: the same drive before dispose delivers 1 (§3.2)', () => {
     const { store, state } = createRecordingDouble()
     const host = makeSlotHost(store, 'h1', makeContainerFactory(), ['a'])
@@ -1306,12 +1386,33 @@ describe('H2a U-STORE-MODULES-BYTES — §3.2 fail-states (LS-LEAK / SS-LEAK thr
 
   it('F-SS-4 (container-source falsifier, §2.3 items 1/2 — SLOTHOST-CONTAINER-SOURCE-IS-INJECTED unmoved): no module-side store→container path; the record’s value never IS (or contains) a container; positive control: the injected-factory drive passes with containerFor reference-identical to the factory’s product', () => {
     // drive (a) — a MODULE byte that reads a store value into a container-obtaining position,
-    // or stores a container in its own record, FAILS the boundary. Today the module carries
-    // NO store-access site at all (the declared-parameter form does not exist yet), so the
-    // static scan holds vacuously — the boundary is asserted, not yet exercised.
-    expect(SLOT_HOST_SRC).not.toMatch(/store\s*\.\s*resolve\(/)
-    expect(SLOT_HOST_SRC).not.toMatch(/resolve\([^)]*\)[\s\S]{0,120}obtainContainer/)
-    expect(SLOT_HOST_SRC).not.toMatch(/record\.container\s*=\s*(?:store|resolve)/)
+    // or stores a container in its own record, FAILS the boundary. CORRECTED BESIDE 2026-10-05
+    // (gate-4 re-audit N-1 — the as-filed claim "the module carries NO store-access site at all
+    // (the declared-parameter form does not exist yet) … holds vacuously" is FALSE on the landed
+    // bytes): the implementation DOES carry store-access sites — the handle is `channel`
+    // (`src/shared/slot-host.ts:301`, `const channel = source.store`) and the module's OWN
+    // `channel.commit` / `channel.resolve` / `channel.subscribe` calls are the CONTRACT's record
+    // turns (`writePlacement` / `refreshKey` / `registerKey`). The as-filed `store\.`-token arms
+    // (vacuously green by handle NAME) are replaced by the shared handle-agnostic arms below:
+    // ANY member call on ANY handle (`\.(resolve|commit|subscribe|set|remove)\(`) whose RESULT
+    // feeds a CONTAINER-OBTAINING position — the `record.container` assignment (arms 1/3) or the
+    // `obtainContainer` call (arm 2) — FAILS. The arms BIND because the module's record turns
+    // never feed those positions: the per-key placement marker and the re-invocation's read face
+    // are data, never containers (§2.3 items 1/2).
+    expect(SLOT_HOST_SRC).not.toMatch(SS_CONTAINER_FROM_MEMBER_CALL)
+    expect(SLOT_HOST_SRC).not.toMatch(SS_CONTAINER_FEEDS_OBTAIN_CONTAINER)
+    expect(SLOT_HOST_SRC).not.toMatch(SS_CONTAINER_INTO_RECORD_POSITION)
+    // the planted positive controls — the ACTUAL `channel.` spelling (never a `store.` token)
+    // MUST fire each arm; the bare-handle-object spelling (`record.container = channel`) is
+    // closed by the DYNAMIC half (I-SS-1's containerFor-identity, drive (b) below).
+    expect(SS_EVASION_DIRECT_MEMBER, 'F-SS-4(a) — record.container = channel.resolve(x) MUST fail arm 1 (the audit\'s named evasion)').toMatch(SS_CONTAINER_FROM_MEMBER_CALL)
+    expect(SS_EVASION_LOCAL_PLACEMENT, 'F-SS-4(a) — a channel.resolve value placed in record.container WITHOUT obtainContainer MUST fail arm 3').toMatch(SS_CONTAINER_INTO_RECORD_POSITION)
+    expect(SS_EVASION_FEEDS_OBTAIN, 'F-SS-4(a) — a channel.resolve value fed to obtainContainer MUST fail arm 2').toMatch(SS_CONTAINER_FEEDS_OBTAIN_CONTAINER)
+    // the false-positive control — the module's OWN legitimate record writes (the contract,
+    // never container sources) PASS all three arms
+    expect(SS_CONTRACT_RECORD_WRITES, 'F-SS-4(a) — the module\'s own channel.commit/resolve/subscribe record writes PASS arm 1').not.toMatch(SS_CONTAINER_FROM_MEMBER_CALL)
+    expect(SS_CONTRACT_RECORD_WRITES, 'F-SS-4(a) — the record-write corpus passes the obtainContainer window').not.toMatch(SS_CONTAINER_FEEDS_OBTAIN_CONTAINER)
+    expect(SS_CONTRACT_RECORD_WRITES, 'F-SS-4(a) — the record-write corpus passes the record-position window').not.toMatch(SS_CONTAINER_INTO_RECORD_POSITION)
     // drive (b) — the record-value rule: a mem.slots.<hostId>.<key> record whose value IS (or
     // contains) a container FAILS (dynamic half: the container the host places into is never a
     // store value; containerFor is the injected product).
@@ -1515,9 +1616,22 @@ describe('H2a U-STORE-MODULES-BYTES — §3.4 statics', () => {
   })
 
   it('S-SS-3 — the container-source static: no code path in src/shared/slot-host.ts obtains a container from a store value; the injected containerFactory is the SOLE container source; positive control: the injected-factory drive passes (M-SS-2)', () => {
-    expect(SLOT_HOST_SRC).not.toMatch(/store\s*\.\s*(?:resolve|commit|subscribe)\(/)
-    expect(SLOT_HOST_SRC).not.toMatch(/resolve\([^)]*\)[\s\S]{0,120}obtainContainer/)
-    expect(SLOT_HOST_SRC).not.toMatch(/record\.container\s*=\s*(?:store|resolve)/)
+    // CORRECTED BESIDE 2026-10-05 (gate-4 re-audit N-1): the arms are the shared
+    // handle-agnostic falsifier — the landed handle is `channel` (slot-host.ts:301), so the
+    // as-filed `store\.`-token arms were vacuously green by handle NAME; ANY member call on
+    // ANY handle feeding a container-obtaining position binds the class, while the module's
+    // OWN `channel` record turns pass (they never feed those positions).
+    expect(SLOT_HOST_SRC).not.toMatch(SS_CONTAINER_FROM_MEMBER_CALL)
+    expect(SLOT_HOST_SRC).not.toMatch(SS_CONTAINER_FEEDS_OBTAIN_CONTAINER)
+    expect(SLOT_HOST_SRC).not.toMatch(SS_CONTAINER_INTO_RECORD_POSITION)
+    // planted positives — the ACTUAL `channel.` spelling fires each arm
+    expect(SS_EVASION_DIRECT_MEMBER, 'S-SS-3 — record.container = channel.resolve(x) MUST fail arm 1').toMatch(SS_CONTAINER_FROM_MEMBER_CALL)
+    expect(SS_EVASION_LOCAL_PLACEMENT, 'S-SS-3 — a resolve value placed without obtainContainer MUST fail arm 3').toMatch(SS_CONTAINER_INTO_RECORD_POSITION)
+    expect(SS_EVASION_FEEDS_OBTAIN, 'S-SS-3 — a resolve value fed to obtainContainer MUST fail arm 2').toMatch(SS_CONTAINER_FEEDS_OBTAIN_CONTAINER)
+    // false-positive control — the module's own record writes pass
+    expect(SS_CONTRACT_RECORD_WRITES, 'S-SS-3 — the module\'s own channel record writes PASS arm 1').not.toMatch(SS_CONTAINER_FROM_MEMBER_CALL)
+    expect(SS_CONTRACT_RECORD_WRITES, 'S-SS-3 — the record-write corpus passes the obtainContainer window').not.toMatch(SS_CONTAINER_FEEDS_OBTAIN_CONTAINER)
+    expect(SS_CONTRACT_RECORD_WRITES, 'S-SS-3 — the record-write corpus passes the record-position window').not.toMatch(SS_CONTAINER_INTO_RECORD_POSITION)
     const { store } = createRecordingDouble()
     const factory = makeContainerFactory()
     const host = makeSlotHost(store, 'h1', factory, ['a'])
