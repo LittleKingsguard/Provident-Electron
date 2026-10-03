@@ -1,7 +1,7 @@
 /**
  * tests/store-modules-seams.test.ts — THE RED SET (RCA-1) FOR UNIT `H2b` =
  * `U-STORE-MODULES-SEAMS` (`docs/specs/store-modules-seams.md`, 915 lines).
- * ⟶ LINE COUNT CORRECTED BESIDE 2026-10-06 (the H2b gate-4 landing pass; F-1b —
+ * ⟶ LINE COUNT CORRECTED BESIDE 2026-10-03 (the H2b gate-4 landing pass; F-1b —
  * the as-filed `915 lines` above is KEPT VISIBLE, never rewritten): the spec
  * measures `937` lines as read that pass (the `§3b` table and this unit's
  * landing annotations grew it). No length census is a pinned claim — the spec
@@ -1739,7 +1739,7 @@ async function themeTpAnswers(mode: 'cold' | 'shadowing' | 'committed', factory:
   expect(r7.source).toBe('env')
   out.push(canonicalOf(r7))
   // (8) THE SEED-ARM READBACK, DRIVEN THROUGH THE TURN — the amended re-pin
-  // (the P-SMS-TH-TP-1 row, repaired 2026-10-06): the store's OWN post-remove
+  // (the P-SMS-TH-TP-1 row, repaired 2026-10-03): the store's OWN post-remove
   // readback is NOT a caller answer and does NOT return the as-filed
   // {found:false} — after the downward remove, the tier-qualified resolve
   // answers the store's own D-ANCHOR 'no-such-anchor' refusal on the
@@ -1936,7 +1936,7 @@ describe('§5.5.1 THE REGISTER — the executed layer', () => {
       for (const o of ctx.outcomes) expect(o.held, `P-SMS-TH-TP-1 attempt ${o.id}: ${o.note}`).toBe(true)
       return
     }
-    // THE SCRIPT DRIVES ARE HARNESSED (the row's repair, 2026-10-06): a throw
+    // THE SCRIPT DRIVES ARE HARNESSED (the row's repair, 2026-10-03): a throw
     // mid-script must STILL REGISTER the row — a row that throws outside the
     // attempt harness never registers, and §5.5.3's aggregate treats an un-run
     // register row as a FAILURE. Each run's answers are computed inside a
