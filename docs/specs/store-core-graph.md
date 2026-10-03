@@ -64,6 +64,23 @@ the placement the sibling specs use.)** **This block is the FILING-TIME state, a
    register's EXECUTED layer, the greens set, the gate records and the DONE row ALL DO NOT EXIST YET.** The unit is
    **`OWED` at every gate after this one, and it is NOT delegable until a TestWriter has RUN and REPORTED the red set**
    (`AGENTS.md` item 9).
+
+   **⟶ ANNOTATED 2026-10-05 (THE `U-STORE-DOC-SWEEP` PASS — the store's own standing-staleness reconciliation the
+   `U-PANE-DRAG-COMPLIANCE` close-out routed; `RCA-8(d)` ANNOTATE-BESIDE — item `1`'s bytes above stand byte-for-byte and
+   are this contract's FILING-TIME state, not a claim about the tree today).** **WHAT HAS LANDED SINCE, SO THIS BLOCK IS
+   NOT READ AS CURRENT: both modules exist and are conformed to the frozen-surface artifacts; `tests/store-core-graph.test.ts`
+   and `tests/store-core-graph-integration.test.ts` exist; the module wave ran `MODULE-RED → MODULE-GREEN → MODULE-AUDITED
+   → FROZEN` and the integration wave `T4 → T5 → T6 → WAVE-GREEN`; `src/renderer/renderer.ts` wires the store at boot
+   (`docs/specs/store-core-graph-compliance-review.md` `§9A`/`§9B`/`§9C`; `docs/next-steps.md`'s `G1` cell; `docs/pending.md`
+   `P-8`).** **AND THE CARVE-OUT EVERY GREEN CLAIM ABOUT THIS UNIT OWES — THE LEGACY SUITE IS RED: `tests/store-core-graph.test.ts`
+   carries `11` T9-class failing rows on the current tree (the supervisor's measured count, recorded at the compliance
+   review's `§9B`/`§9C` and at the `G1` cell), because its `FIXTURE_CONSTRAINTS` still carries the SUPERSEDED data-table form
+   and after `AMENDMENT CONSTRAINT-RE-DERIVE-1` the machinery evaluates only function-carrier members
+   (`src/renderer/store-core-graph.ts:evaluateConstraints`).** **THE SUITE IS BYTE-UNCHANGED EVIDENCE, OWED A RE-AUTHOR UNDER
+   THE RE-FROZEN ARTIFACT, AND ITS FATE (RE-AUTHOR vs RETIRE) IS THE ARCHITECT'S TO RULE — that ruling being the item's
+   ENTRY CONDITION (`docs/specs/store-core-graph-compliance-review.md` `§9B`'s disposition block).** **THE UNIT'S GREENS ARE
+   `ENVELOPE-GREEN` / first-root `INTEGRATION-green` AND ARE NEVER `APP-green`; the store is NOT to be reported as
+   `landed-green` SIMPLICITER while this suite is red.** **NO OTHER WORD OF item `1`, and no other item of this block, moves.**
 2. **THE SURFACE THIS FILING PINS (nothing of it exists yet):** a **NEW `src/renderer/store-core-graph.ts`** exporting
    **`TWO` runtime value exports and `TWENTY-SEVEN` type declarations = `TWENTY-NINE` exported names** (`§2.1`), plus a
    **NEW `src/renderer/store-graph-references.ts`** holding the register's caller-declaration input and its type
@@ -1141,6 +1158,56 @@ row"* with no id is not a row**, and **every prohibition above names at least on
    refusal-union discipline for its OWN tokens is UNCHANGED (`GraphRefusalReason`, `SIXTEEN` members, `§2.1`'s block
    annotation); the caller's constraint may return its own reason in feedback, and that reason is a DATA STRING in
    the record, NEVER a NEW STORE TOKEN.**
+
+   **⟶ ANNOTATED BESIDE 2026-10-05 (THE `U-STORE-DOC-SWEEP` HOME-TRUTH PASS — the gate-7 proofreader's finding the
+   `U-PANE-DRAG-COMPLIANCE` close-out routed, plus the same finding's arm in the pane-drag red set; `RCA-8(d)`
+   ANNOTATE-BESIDE — the RE-DERIVED item above and its `2026-10-03` annotation STANDS BYTE-FOR-BYTE and are NOT
+   rewritten; this clause is this pass's dated reading of the re-derived item's third sentence, and the
+   `U-PANE-DRAG-COMPLIANCE` files this pass does NOT touch carry the sibling annotations for the same clause).** THE CLAIM
+   *"a REFUSED or ABSENT repair CLEARS NOTHING and leaves the store byte-identical to its pre-call state"* IS SPLIT
+   BESIDE, BECAUSE ITS TWO HALVES HAVE TWO DIFFERENT LANDED ANSWERS — and the operative model is the ONE the
+   `U-PANE-DRAG-COMPLIANCE` contract carries as THE AUTHORITY for the machinery (`docs/specs/pane-drag-compliance.md`
+   `§0` ruling 3, which reads the re-derived text of `§2.7` items 1/2/3/5 and `§2.1`'s `GraphConstraint` block as the
+   authority and the data-table form as the SUPERSEDED model).**
+   ***(1) THE `"ABSENT"` HALF IS THE OPERATIVE ONE AND IS LANDED: a write whose violating constraint carries NO
+   `repair` member at all answers REFUSAL-VIA-FEEDBACK*** — `evaluateConstraints`' repairless arm
+   (`src/renderer/store-core-graph.ts:evaluateConstraints`, the `typeof member.repair !== 'function'` branch) returns
+   `{refused: true, reason: <the member's own `feedback.reason`, defaulting to `'validate-failed'`>}`, the caller's
+   write is rolled back BYTE-EXACTLY by the write journal (`src/renderer/store-core-graph.ts:journalBefore` /
+   `:revertTo`), and the receipt is the returned record `refusalOfFeedback(...)` with EVERY member empty
+   (`src/renderer/store-core-graph.ts:refusalOfFeedback`). **NO THROW. THE ARMED FIXTURE IS `F-2` AND ITS LANDED
+   EVIDENCE IS `docs/specs/pane-drag-compliance.md` `§3b.1`'s `F-2` row** (the zone-size constraint WITHOUT a repair;
+   the receipt `{status:'refused', reason:<the constraint's own feedback reason>, cleared: [], repaired: [],
+   rows: [], crossings: 0, events: 0}`, the store byte-identical to its pre-call state).
+   ***(2) THE `"REFUSED"` HALF — A PRESENT-BUT-FAILING REPAIR, i.e. a repair function whose own call returns
+   `false` — DOES NOT CLEAR THE WRITE AND DOES NOT LEAVE THE STORE BYTE-IDENTICAL, AND THIS IS THE CLAUSE THIS
+   ANNOTATION CORRECTS.*** **THE LANDED MACHINERY NEVER CONSULTS THE REPAIR'S RETURNED SUCCESS BOOLEAN:**
+   `src/renderer/store-core-graph.ts:evaluateConstraints` calls `member.repair(next, feedback)` and DISCARDS the
+   returned value (the `false`/`true` boolean the REPAIR FUNCTION'S CONTRACT at item 1 declares is **CALLER-SIDE
+   REPORTING and nothing else**), then lands whatever the corrective action actually did **as a pre/post DIFF on the
+   matched root's leaf record** — a NEW record entry becomes a REAL leaf node under the matched root
+   (`src/renderer/store-core-graph.ts:mintRecordLeaf`), a CHANGED entry rewrites that leaf's value
+   (`src/renderer/store-core-graph.ts:setValue`) against the unbounded recursive snapshot
+   (`src/renderer/store-core-graph.ts:deepCopyOf` / `:deepEqualOf`). **SO A FAILING REPAIR THAT ACTS ON NOTHING IS
+   INDISTINGUISHABLE FROM A SUCCESSFUL ONE THAT ACTS ON NOTHING, AND THE WRITE ITSELF STANDS: the caller's write
+   keeps its OWN value and its OWN `status: 'committed'`, the receipt reads `repaired: []` and `cleared: []`, NO
+   `cause:'repair'` event fires, and NOTHING THROWS. What is NOT admissible is a PARTIAL/REPAIR-SIDE MUTATION: the
+   diff is taken over the whole record, so any entry the corrective action did touch becomes a named repaired
+   reference with its own event.**
+   ***(3) THE EVIDENCE, CITED RATHER THAN RE-DERIVED.*** **The re-aimed `F-3` row of the pane-drag red set (recorded
+   beside the as-filed cell at `docs/specs/pane-drag-compliance.md` `§3b.1`, `F-3`) is the drive: the as-filed
+   *"the store is byte-identical to its pre-call state"* is UNMAINTAINABLE against the landed machinery, and the
+   landed end state is `repaired: []`, `cleared: []`, NO repair event, NO throw, the write's own `status:
+   'committed'` and its value STANDING.** **The same reading is carried at `docs/specs/pane-drag-compliance.md`
+   `§2.2` item 3's annotation** (the as-filed sentence there stands visible; the operative one is *"an UNSUCCESSFUL
+   (present-but-failing) repair's `false` …"* with the re-aimed `F-3` end state printed in full).
+   ***(4) WHAT DOES NOT MOVE.*** **The evaluation points (item 2) are UNCHANGED; the repair's SAME-COMMITTED-WRITE
+   landing, its OWN `cause:'repair'` event and its `repaired[]` naming are UNCHANGED and are exactly what the
+   machinery implements; the refusal-via-feedback discipline is UNCHANGED and is the repairless arm above; and the
+   reason's domain (the caller's reason is a DATA STRING, never a new store token) is UNCHANGED.** **A row that
+   drives a PRESENT-BUT-FAILING repair and asserts this item's as-filed *"byte-identical"* sentence FAILS against
+   the landed machinery and drives a WITHDRAWN expectation; the driveable positive control for the byte-identical
+   claim is the REPAIRLESS arm (`F-2`).**
 4. **THE UNIQUENESS CONSTRAINT, WITH ITS TWO DECLARED OUTCOMES.** **At most one node holds a given `(logical path, tier)`
    pair.** **An attempt to add one where it already exists is routed by the call params**: **`'edit'` rewrites the
    existing node's value in place of minting a second node** (the DEFAULT), and **`'refuse'` fails LOUDLY with
@@ -1185,6 +1252,21 @@ row"* with no id is not a row**, and **every prohibition above names at least on
    that it CALLS the supplied constraint on the evaluation points (item 2) and LANDS a supplied repair's corrective
    action in the same committed write (item 3).** **A RowWriter that drives the as-filed kind-token
    (`kind:'count-exactly-one'`) drives the SUPERSEDED data-table form and FAILS (item 1, RE-DERIVED).**
+
+   **⟶ ANNOTATED BESIDE 2026-10-05 (THE `U-STORE-DOC-SWEEP` PASS — the same pass's correction of item `3`'s as-filed
+   *"a REFUSED or ABSENT repair CLEARS NOTHING"* half; `RCA-8(d)` ANNOTATE-BESIDE — the re-derived item above stands
+   byte-for-byte).** **ITS LAST SENTENCE IS SHARPENED BESIDE, BECAUSE *"a supplied repair"* IS TRUE OF EVERY REPAIR AND
+   NOT ONLY OF A SUCCEEDING ONE: THE STORE LANDS A SUPPLIED REPAIR'S CORRECTIVE ACTION **WHATEVER THAT FUNCTION'S OWN
+   SUCCESS BOOLEAN SAYS**.** **`src/renderer/store-core-graph.ts:evaluateConstraints` calls `member.repair(next, feedback)`
+   and DISCARDS the returned value; the landing is the PRE/POST DIFF on the matched root's leaf record
+   (`:deepCopyOf` / `:deepEqualOf` / `:mintRecordLeaf` / `:setValue`).** **SO: a repair that performs no corrective change
+   lands `repaired: []` and the caller's own write stands `'committed'`; a repair that changes entries lands exactly those
+   entries with their own `cause:'repair'` events; and NO clause of this item promises that a `false` return undoes the
+   write.** **THE CALLER'S CODE AND THE CALLER'S CHOICES (the matched-set resolution, every order / tie-break / landing-page
+   choice, per this item above) are UNCHANGED BY THIS READING, and the item's SUPERSESSION of the as-filed
+   next-surviving-by-`order` machinery as THE STORE'S OWN PROMISE is UNCHANGED.** **The full operative reading is item `3`'s
+   `2026-10-05` annotation; the armed evidence is `docs/specs/pane-drag-compliance.md` `§3b.1`'s `F-2` and re-aimed
+   `F-3` rows.**
 6. **A SECOND CONSTRAINT WITH NO INTERACTION RULE DOES NOT LOAD.** **An input carrying two distinct constraint ids where
    neither declares an interaction rule is refused AT CONSTRUCTION with `reason:'malformed-pattern'`** (the landed
    cascading rule, made mechanical); **the positive control is that a one-row table LOADS.**
