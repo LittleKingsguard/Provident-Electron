@@ -150,3 +150,6 @@ opencode.jsonc
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Module-wave seat root (D-GP-IWG-1 in-checkout literal; the wave record is transcribed to docs/, never committed from the root)
+module-wave-scratch/
