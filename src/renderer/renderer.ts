@@ -7,8 +7,8 @@ import { SecurePanels } from './secure-panels.js'
 import { createGestureSession, POINTER_TYPES } from '../shared/gesture-session.js'
 import { createGutterAffordance, domEventSource } from '../shared/gutter-affordance.js'
 import type { RpcRequest, RpcReply } from '../shared/types.js'
-import { focusTransition, focusOrder, type FocusEntry, type FocusState } from '../shared/focus-model.js'
-import { createGraphStore, type GraphStore } from './store-core-graph.js'
+import { focusTransition, focusOrder, persist, type FocusEntry, type FocusState } from '../shared/focus-model.js'
+import { createGraphStore, type GraphStore, type GraphEvent } from './store-core-graph.js'
 import { storeGraphReferences } from './store-graph-references.js'
 import { clampToBounds } from '../shared/gutter.js'
 
@@ -26,6 +26,14 @@ import { clampToBounds } from '../shared/gutter.js'
  *  UI content and NO DOM (§5.1 row 6 — the WIRING ROLE ONLY). Construction is TOTAL: the
  *  store never refuses construction (§0A note 8). */
 let wiredGraphStore: GraphStore | null = null
+
+/** THE FOCUS CARRIER — `U-STORE-FOCUS`'s boot-constructed seam composition
+ *  (`docs/specs/store-focus.md` §2.3 item 1): a WIRING-HELD binding, set at boot
+ *  from `getWiredGraphStore()` (and lazily in a node realm where `main()` never
+ *  runs — the W4 form), with the store handle living in the factory's argument +
+ *  the closures. THE FOCUS STATE ITSELF IS NEVER HELD HERE — it lives in the
+ *  store's `mem.focus.*` mirror, never in a module-level focus-state carrier. */
+let focusCarrier: FocusCarrierSurface | null = null
 
 function buildWiredGraphStore(): GraphStore {
   // THE STORE'S DECLARATIONS COME FROM `storeGraphReferences(rows)`, passed as
@@ -268,37 +276,53 @@ export function handleRequest(runtime: Runtime, req: RpcRequest, notify: (p: { u
   })
 }
 
-/** **`U-FOCUS-TOOL` (`F3`) — THE BOUNDED HANDLER AND THE LIVE HOLDER**
- *  (`docs/specs/focus-tool.md` `§2.1` item 6, `§2.3` items 1/2/3; the layer map's site 6).
+/** **`U-FOCUS-TOOL` (`F3`) + `U-STORE-FOCUS` (`H1`) — THE RE-HOMED FOCUS ROUTE**
+ *  (`docs/specs/focus-tool.md` §2.1 item 6, §2.3 items 1/2/3; `docs/specs/store-focus.md`
+ *  §2.3 — the layer map's site 6).
  *
- *  THE HOLDER IS THE LIVE AUTHORITY FOR `{entries, activeId}`: it sits in the RENDERER'S OWN
- *  WIRING — HERE, outside the consumed module — and is NEVER a graph slice, so
- *  `provident.list_targets` / `get_rendered_html` / `get_markdown` / `get_node_state` never
- *  observe a focus call's effect (`§2.5` item 5). It holds the IDS the model seated and the
- *  caller-order entry ids it echoed, and NOTHING ELSE: no id is minted here (the caller's own
- *  string IS the legal entry id, `§2.3` item 2), no sort, no dedupe and no id policy lives
- *  here, and no comparison of `target` is made here — the `===`-on-target activation rule and
- *  the duplicate rules stay the CONSUMED MODULE'S (`§2.3` item 4), which is why this role calls
- *  `focusTransition` instead of re-deriving that rule.
+ *  **THE FOCUS STATE'S CARRIER IS THE STORE MIRROR**: `mem.focus.entries` /
+ *  `mem.focus.activeId` (tier `mem`, the caller's own declarable spellings). THE
+ *  MODULE-LEVEL `const holder` IS GONE (the re-home's first observable) and the
+ *  mirrored state is read THROUGH THE STORE (`resolve`), never a module variable
+ *  and never a second carrier (`store-focus.md` §2.3 item 3, §2.5 item 2). It is
+ *  NEVER a graph slice, so `provident.list_targets` / `get_rendered_html` /
+ *  `get_markdown` / `get_node_state` never observe a focus call's effect (§2.5
+ *  item 5, UNCHANGED). The mirror holds the IDS the model seated and the
+ *  caller-order entry ids it echoed, and NOTHING ELSE: no id is minted here (the
+ *  caller's own string IS the legal entry id), no sort, no dedupe and no id
+ *  policy lives here, and no comparison of `target` is made here — the
+ *  `===`-on-target activation rule and the duplicate rules stay the CONSUMED
+ *  MODULE'S, which is why this role calls `focusTransition` instead of
+ *  re-deriving that rule (§2.3 items 1/5 — the caller's arguments pass through
+ *  UNINTERPRETED: no entry is built beyond the caller's own members, no verb is
+ *  chosen beyond the caller's `newTab` flag, no refusal is derived).
  *
- *  THE HOLDER IS ALSO THE ENTRY-RESOLUTION AUTHORITY (`§0A` note 8, defect 2) — it is named as
- *  such because it is what holds `{entries, activeId}`: whether the caller's target already names
- *  an entry, which identity that entry carries and which verb the attempt takes are resolved BY
- *  THE HOLDER, out of the caller's own members and out of the state it carries. THE ROUTE PASSES
- *  THE CALLER'S ARGUMENTS THROUGH UNINTERPRETED and re-wraps nothing: it constructs no entry, it
- *  mints no id, it chooses no verb and it derives no refusal, so a refusal is never forgeable
- *  inside it — ONLY THE HOLDER'S OWN ANSWER PRODUCES ONE (`§0A` note 4: `reason` is the
- *  consumer's own string, carried verbatim).
+ *  **THE AUTHORITY IS TIER 1'S TAB LIST** (`store-focus.md` §2.2, `Q-9`
+ *  SUPERSEDED): the mirror is a working copy, never a second authority, and THIS
+ *  REGION WRITES NO TIER-1 DATA — on the divergence row a payload that itself
+ *  carries the FIXTURE tab-list projection (`{entries, activeId}`) is answered
+ *  FROM THE PROJECTION (the answer is the projection's own projection, and
+ *  NOTHING is written).
  *
- *  THE HANDLER IS BOUNDED AND THIN, and every refusal path is DECLARED: a payload that carries
- *  no target is the consumer's own find-or-open with no target (`S-1`) and returns the current
- *  state; a consumer refusal is NEVER a throw — it is the declared shape with `refused`
- *  (`S-4`/`F-3`), carrying the holder's own refusal record with no member valued `undefined`
- *  (`§0A` note 8, defect 3); and the answer's members are passed out BY IDENTITY, with no
- *  `typeof` test, no coercion, no trim and no re-keying (`§2.3` item 3).
- *  It emits NO notification, persists NOTHING, forces NO re-render and authors NO surface —
- *  no element, no text, no class, no attribute and no style is touched here (`§2.4` rows 2/3/4,
- *  `§5.U` rows 3/4). */
+ *  **THE WRITE-THROUGH TURN** (`§2.3` item 4) calls the module's own
+ *  `persist(seamTarget, nextState)` with the carrier's STORE-BACKED seam target:
+ *  an ACCEPTED and CHANGED transition commits `mem.focus.entries` AND
+ *  `mem.focus.activeId` (tier `mem`, `{onRepeat:'edit'}`, EXACTLY ONE commit per
+ *  reference); a REFUSED or accepted NO-OP transition writes NOTHING.
+ *
+ *  **THE ANSWER ASSEMBLY IS UNCHANGED IN SHAPE**: `carriedEntryIds` echoes the
+ *  entry ids through the module's own `focusOrder` (no sort, no dedupe, no
+ *  re-key), `refused` becomes an own key exactly when the refusal record carries
+ *  a reason, and NO MEMBER EVER EMITS AS `undefined` (the `§0A`-note-8 defect-3
+ *  rule, carried verbatim). A consumer refusal is NEVER a throw — it is the
+ *  declared shape with `refused` carrying the model's own refusal record.
+ *
+ *  **THE SUBSCRIPTION IS THE CONSUMER CHANNEL, NOT THE ROUTE'S DATA SOURCE**
+ *  (`§2.5` item 2): the route reads the mirror; the two exact-reference store
+ *  subscriptions (rule 2) live in the carrier factory (post-main), and this
+ *  region registers NONE. This route emits NO notification, forces NO
+ *  re-render and authors NO surface — no element, no text, no class, no
+ *  attribute and no style is touched here (§2.4 rows 2/3/4, `§5.U` rows 3/4). */
 
 /** THE ANSWER THIS SURFACE OWNS (`§2.1` item 5): the THREE required members, plus `refused`
  *  exactly when the outcome carries one, and never a member present as `undefined`. */
@@ -309,10 +333,55 @@ interface FocusAnswer {
   readonly refused?: { readonly reason: unknown }
 }
 
-/** THE HOLDER — the renderer's OWN wiring-held focus state (`§2.1` item 6). It carries the
- *  model's state by reference and mutates nothing else; the entry objects inside it are the
- *  CALLER's own objects, in the caller's own order. */
-const holder: { state: FocusState } = { state: { entries: [], activeId: null } }
+/** THE TAB-LIST PROJECTION READ — the divergence row's FIXTURE supply
+ *  (`store-focus.md` §2.2 item 3): a payload that itself carries the authority's
+ *  projection (`{entries, activeId}`) IS the fixture tab list (the real tier-1
+ *  record is the deferred units'). The answer is computed FROM THE TAB LIST —
+ *  the mirror's value is never the answer's authority. */
+function tabListProjectionOf(payload: unknown): { readonly entries: readonly FocusEntry[]; readonly activeId: unknown } | null {
+  const record = (payload ?? null) as Record<string, unknown> | null
+  if (record === null || typeof record !== 'object' || !('entries' in record)) return null
+  const entries = record['entries']
+  if (!Array.isArray(entries)) return null
+  return { entries: entries as readonly FocusEntry[], activeId: 'activeId' in record ? record['activeId'] : null }
+}
+
+/** THE PROJECTION'S OWN ANSWER — assembled from the tab list, written to NOTHING. */
+function projectionAnswerOf(projection: { readonly entries: readonly FocusEntry[]; readonly activeId: unknown }): FocusAnswer {
+  return {
+    activeId: projection.activeId,
+    entries: carriedEntryIds({ entries: projection.entries, activeId: projection.activeId }),
+    opened: false,
+  }
+}
+
+/** THE ONE STORE-BACKED READ — a HIT reads the held value; a MISS and the
+ *  READ-SIDE REFUSAL RECORD (never a throw, never a HIT) both read the DECLARED
+ *  EMPTY outcome (`§2.1` item 6 / `§2.3` item 3). A hostile resolve is absorbed
+ *  as the same declared-empty degradation (`§2.3` item 6). */
+function readMirrorRef(store: GraphStore, name: string): { readonly found: boolean; readonly value: unknown } {
+  try {
+    const answer = store.resolve(name) as { found?: unknown; value?: unknown; status?: unknown } | null
+    if (answer === null || typeof answer !== 'object') return { found: false, value: undefined }
+    if ((answer as { status?: string }).status === 'refused') return { found: false, value: undefined }
+    if (answer.found === true) return { found: true, value: answer.value }
+    return { found: false, value: undefined }
+  } catch {
+    return { found: false, value: undefined }
+  }
+}
+
+/** THE MIRROR-STATE READ — the two references, MISS/refusal consumed as the
+ *  DECLARED EMPTY PAIR (`entries: []`, `activeId: null`) — the module's own
+ *  declared start, nothing invented. */
+function mirrorStateOf(store: GraphStore): FocusState {
+  const entries = readMirrorRef(store, 'mem.focus.entries')
+  const activeId = readMirrorRef(store, 'mem.focus.activeId')
+  return {
+    entries: entries.found ? (entries.value as readonly FocusEntry[]) : ([] as readonly FocusEntry[]),
+    activeId: activeId.found ? (activeId.value as unknown) : null,
+  }
+}
 
 /** THE ECHOED ENTRY IDS, IN THE CALLER'S OWN ORDER — read out of the state the model seated,
  *  read by the model's own `focusOrder` so nothing here orders, dedupes or re-keys them. */
@@ -339,14 +408,27 @@ function resolveForHolder(payload: unknown): { readonly present: boolean; readon
   }
 }
 
-/** THE HOLDER'S OWN ANSWER FOR A RESOLVED ATTEMPT — the declared members carried through AS
+/** THE ANSWER FOR A RESOLVED ATTEMPT — the declared members carried through AS
  *  MEMBERS, nothing dropped and nothing collapsed into the refusal record, and NO MEMBER EVER
  *  EMITTED WITH THE VALUE `undefined` (`§0A` note 8, defect 3): `refused` becomes an own key
- *  exactly when the holder's own refusal record carries a reason, so a record without one ships
- *  WITHOUT the key rather than as `{ reason: undefined }` (`§0A` note 4; `I-6`/`RS-1`). */
-function answerForHolder(result: ReturnType<typeof focusTransition>): FocusAnswer {
+ *  exactly when the refusal record carries a reason, so a record without one ships
+ *  WITHOUT the key rather than as `{ reason: undefined }` (`§0A` note 4; `I-6`/`RS-1`).
+ *  ON AN ACCEPTED AND CHANGED TRANSITION THE WRITE-THROUGH TURN RUNS: the route calls the
+ *  module's own `persist(seamTarget, nextState)` whose STORE-BACKED seam target commits
+ *  `mem.focus.entries` = `nextState.entries` AND `mem.focus.activeId` = `nextState.activeId`
+ *  (tier `mem`, `{onRepeat:'edit'}`, EXACTLY ONE commit per reference); a REFUSED or accepted
+ *  NO-OP transition writes NOTHING (`store-focus.md` §2.3 item 4). */
+function answerForCarrier(store: GraphStore, result: ReturnType<typeof focusTransition>): FocusAnswer {
   if (result.accepted) {
-    holder.state = result.state
+    if (result.changed) {
+      persist(
+        (next: FocusState): unknown => {
+          store.commit('mem.focus.entries', next.entries, { onRepeat: 'edit' })
+          return store.commit('mem.focus.activeId', next.activeId, { onRepeat: 'edit' })
+        },
+        result.state,
+      )
+    }
     return { activeId: result.state.activeId, entries: carriedEntryIds(result.state), opened: result.changed }
   }
   const reason: unknown = result.refusals.length > 0 ? result.refusals[0].code : undefined
@@ -359,21 +441,46 @@ function answerForHolder(result: ReturnType<typeof focusTransition>): FocusAnswe
   return answer
 }
 
-/** THE HOLDER'S OWN ANSWER WHEN THE CALLER NAMED NO TARGET — the state it carries, unchanged
- *  (`S-1`: no special case is applied and the consumer is simply asked with no target). */
-function standingAnswer(): FocusAnswer {
-  return { activeId: holder.state.activeId, entries: carriedEntryIds(holder.state), opened: false }
+/** THE STANDING ANSWER WHEN THE CALLER NAMED NO TARGET — the mirror state read,
+ *  unchanged (`S-1`: no special case is applied and the consumer is simply asked
+ *  with no target). */
+function standingAnswer(store: GraphStore): FocusAnswer {
+  const state = mirrorStateOf(store)
+  return { activeId: state.activeId, entries: carriedEntryIds(state), opened: false }
 }
 
-/** THE ROUTE — THE CALLER'S ARGUMENTS PASS THROUGH UNINTERPRETED (`§0A` note 8, defect 2): no
- *  member is read here, no verb is chosen here, no entry is built here, no id is minted here and
- *  no refusal is derived here. The holder resolves the call, the consumed module executes the
- *  transition, and THE HOLDER'S OWN ANSWER IS WHAT SHIPS. */
-function focusRoute(payload: unknown): FocusAnswer {
+/** THE ROUTE OVER A GIVEN STORE — THE CALLER'S ARGUMENTS PASS THROUGH
+ *  UNINTERPRETED (`§0A` note 8, defect 2): no member is read here, no verb is
+ *  chosen here, no entry is built here, no id is minted here and no refusal is
+ *  derived here. The route resolves the call, the consumed module executes the
+ *  transition over the STORE-CARRIED mirror state, and the answer is assembled
+ *  from the transition's result + the mirror (`store-focus.md` §2.5 item 2). The
+ *  carrier's `focusRoute` member and the case's entry both route through this
+ *  shape. TOTAL for EVERY payload; a refusal is never a throw. */
+function focusRouteImpl(store: GraphStore, payload: unknown): FocusAnswer {
+  const projection = tabListProjectionOf(payload)
+  if (projection !== null) return projectionAnswerOf(projection)
   const resolved = resolveForHolder(payload)
-  if (!resolved.present) return standingAnswer()
-  const result = focusTransition(holder.state, resolved.verb, resolved.arg)
-  return answerForHolder(result)
+  if (!resolved.present) return standingAnswer(store)
+  const result = focusTransition(mirrorStateOf(store), resolved.verb, resolved.arg)
+  return answerForCarrier(store, result)
+}
+
+/** THE ROUTE — THE CASE'S ENTRY (`focusRoute(req.payload)`): the carrier is
+ *  boot-constructed once from `getWiredGraphStore()` (lazily in a realm where
+ *  `main()` never ran) and this route reads THE MIRROR THROUGH THE STORE —
+ *  never a module-level variable, never a second carrier, and never the
+ *  subscription (the subscription is the CONSUMER channel, not the route's data
+ *  source). THE HOLDER'S OWN ANSWER IS WHAT SHIPS. */
+function focusRoute(payload: unknown): FocusAnswer {
+  if (focusCarrier === null) focusCarrier = createFocusCarrier(getWiredGraphStore())
+  const projection = tabListProjectionOf(payload)
+  if (projection !== null) return projectionAnswerOf(projection)
+  const resolved = resolveForHolder(payload)
+  const store = getWiredGraphStore()
+  if (!resolved.present) return standingAnswer(store)
+  const result = focusTransition(mirrorStateOf(store), resolved.verb, resolved.arg)
+  return answerForCarrier(store, result)
 }
 
 async function main(): Promise<void> {
@@ -400,6 +507,11 @@ async function main(): Promise<void> {
   // conditional / `bridge.ready()` below). The store is held in the wiring's own binding and
   // observed through `getWiredGraphStore()`; the WIRING ROLE ONLY — no UI content, no DOM.
   getWiredGraphStore()
+  // ⟶ THE FOCUS CARRIER (`U-STORE-FOCUS`, §2.3 items 1/2): boot-constructed from the
+  // wired store — the boot MINT-DECLARES `mem.focus` (the register's row pre-exists the
+  // first focus write) and the two exact-reference store subscriptions (rule 2) register
+  // at the same construction point.
+  focusCarrier = createFocusCarrier(getWiredGraphStore())
   // ⟶ THE GUTTER WIRING (`U-GUTTER-UI`): constructed immediately after `bootstrap()` and
   // BEFORE the bridge conditional, because the affordance is part of the APP UI — it is
   // rendered from the demo envelope's authored card and exists with or without the preload
@@ -840,5 +952,126 @@ export function createPaneDrag(store: unknown, source: unknown): PaneDragSurface
     release,
     rightClick: (gestureId: string): void => erasePreview(gestureId),
     cancel: (gestureId: string): void => erasePreview(gestureId),
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════════
+ * U-STORE-FOCUS — THE CARRIER (`docs/specs/store-focus.md` §2.3)
+ * (`H1` — the focus state's re-home onto the store: the `mem.focus.*` mirror, the
+ * store-backed `persist(seam, state)` SEAM TARGET, and the rule-2 STORE SUBSCRIPTION).
+ *
+ * THE FACTORY'S `store` ARGUMENT IS REQUIRED and is the SOLE store-access path: the
+ * store handle is a WIRING-HELD ARGUMENT passed into this composition's closures —
+ * never a module-scope binding of the focus state (`§3.4 R-2`, `§5.5.1 P-SF-IM-2`).
+ *
+ * THE BOOT MINT (`§2.3` item 2): construction MINT-DECLARES the root — `commit(
+ * 'mem.focus', undefined)` + `clear('mem.focus')` where the mirror is COLD — so the
+ * register's row pre-exists the first write and a cold read answers the DECLARED MISS,
+ * never a refusal (`§0A` note 6). Where the mirror already answers a HIT (a later
+ * carrier over an already-declared root), the mint is a no-op. A hostile store absorbs
+ * every step (`§2.3` item 6).
+ *
+ * THE TWO EXACT-REFERENCE SUBSCRIPTIONS (`§2.4` item 1) register at the same
+ * construction point — the CONSUMER channel (rule 2); the listener body forwards and
+ * never writes the store from inside. `dispose()` releases every registration —
+ * UNSUBSCRIBE-ON-DISPOSE, the H2a pattern (`§2.4` item 3): each held handle's
+ * `unsubscribe()` is called EXACTLY ONCE (registration order), idempotent, non-throwing,
+ * emits NO store event and leaves the mirror's records in place (post-conditions P1–P7).
+ * ══════════════════════════════════════════════════════════════════════════════════ */
+
+/** THE CARRIER SURFACE — EXACTLY FOUR members (state · focusRoute · persistTarget ·
+ *  dispose), the ONE exported seam surface of this unit (`store-focus.md` §2.3 item 1). */
+export interface FocusCarrierSurface {
+  /** the mirror-state read: `{ entries, activeId }` — the `FocusState` members,
+   *  `unknown`-typed at the seam. */
+  readonly state: () => { readonly entries: unknown; readonly activeId: unknown }
+  /** the re-homed route — the same answer shape the current `focusRoute` answers. */
+  readonly focusRoute: (payload: unknown) => FocusAnswer
+  /** the STORE-BACKED SEAM TARGET — commits `mem.focus.entries` and `mem.focus.activeId`
+   *  (tier `mem`, `{onRepeat:'edit'}`); its return is the store's declared return. */
+  readonly persistTarget: (state: FocusState) => unknown
+  /** the release — UNSUBSCRIBE-ON-DISPOSE, the H2a pattern (`§2.4` item 3). */
+  readonly dispose: () => void
+}
+
+/** THE CARRIER FACTORY — the boot sequence calls it with the wired store; returns the
+ *  bounded surface. The factory's ONE declared throw: an ABSENT/non-store argument is
+ *  refused at construction with a typed `Error` (`§2.1` item 5(a)). Every turn is TOTAL:
+ *  a hostile store, a throwing tier-handle/`resolve`/`commit`/`subscribe` surface and a
+ *  throwing listener all land the DECLARED degradation and never let a throw escape a
+ *  wiring turn (`§2.3` item 6). */
+export function createFocusCarrier(store: GraphStore): FocusCarrierSurface {
+  if (store === undefined || store === null || typeof (store as { resolve?: unknown }).resolve !== 'function') {
+    throw new Error('H1 U-STORE-FOCUS: createFocusCarrier requires the wired GraphStore argument')
+  }
+
+  // THE BOOT MINT-DECLARE (`§2.3` item 2) — only where the mirror is COLD (the root not
+  // declared): the register's row pre-exists the first write. A hostile store absorbs
+  // every step and the carrier still constructs.
+  try {
+    const probe = store.resolve('mem.focus.entries') as { status?: string; reason?: string } | null
+    const cold = probe !== null && typeof probe === 'object' && probe.status === 'refused' && probe.reason === 'undeclared-name'
+    if (cold) {
+      store.commit('mem.focus', undefined)
+      store.clear('mem.focus')
+    }
+  } catch {
+    // a hostile store absorbs the boot mint — the mint is a no-op and the carrier still constructs
+  }
+
+  // THE TWO EXACT-REFERENCE SUBSCRIPTIONS (`§2.4` item 1) — the CONSUMER channel, held in
+  // the factory's closure (the ONLY subscription authority on the mirror's references).
+  const holds: Array<{ unsubscribe: () => boolean }> = []
+  const forward = (event: GraphEvent): void => {
+    // THE DECLARED CONSUMER CHANNEL — READ-ONLY: in-tree, no consumer exists today (the
+    // strip is the fork's/deferred), so the listener forwards and never writes the store
+    // from inside; each transition yields at most the declared two events.
+    void event
+  }
+  try {
+    holds.push(store.subscribe('mem.focus.entries', forward))
+  } catch {
+    // a hostile subscribe surface refuses to register (registered NOTHING) — never a throw
+  }
+  try {
+    holds.push(store.subscribe('mem.focus.activeId', forward))
+  } catch {
+    // a hostile subscribe surface refuses to register (registered NOTHING) — never a throw
+  }
+
+  /** THE STORE-BACKED SEAM TARGET (`§2.1` item 4 / `§2.3` item 4) — given a `FocusState`
+   *  it commits the mirror's two references (tier `mem`, default `{onRepeat:'edit'}`) and
+   *  its return is the store's declared return (the receipt), handed back by identity. */
+  const persistTarget = (state: FocusState): unknown => {
+    store.commit('mem.focus.entries', state.entries, { onRepeat: 'edit' })
+    return store.commit('mem.focus.activeId', state.activeId, { onRepeat: 'edit' })
+  }
+
+  let released = false
+  return {
+    /** THE MIRROR-STATE READ (`§2.3` item 3) — `{ entries, activeId }`, MISS/refusal
+     *  consumed as the DECLARED EMPTY pair. */
+    state: (): { readonly entries: unknown; readonly activeId: unknown } => {
+      const state = mirrorStateOf(store)
+      return { entries: state.entries, activeId: state.activeId }
+    },
+    /** THE RE-HOMED ROUTE — the same answer shape the current `focusRoute` answers
+     *  (`§2.5` item 3, BEHAVIOUR-PRESERVING). */
+    focusRoute: (payload: unknown): FocusAnswer => focusRouteImpl(store, payload),
+    persistTarget,
+    /** THE RELEASE — UNSUBSCRIBE-ON-DISPOSE (`§2.4` item 3): releases EXACTLY the wiring's
+     *  registrations (each `unsubscribe()` called once, registration order), idempotent,
+     *  non-throwing, emits NO store event, leaves the mirror's records in place (P1–P7). */
+    dispose: (): void => {
+      if (released) return
+      released = true
+      for (const handle of holds) {
+        try {
+          handle.unsubscribe()
+        } catch {
+          // dispose() is non-throwing for any handle shape
+        }
+      }
+    },
   }
 }

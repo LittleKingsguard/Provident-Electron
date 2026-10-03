@@ -723,7 +723,7 @@ describe('§2.1 / §2.3 — the MCP surface carries NO direct-store-read handler
     expect(tierStoreReads, `S-9 — NO TIER-STORE read on a tool-handler path — a tier-store read answering an agent IS a \`GCR-3\` FINDING (§2.1 GCR-1; §2.2's four-tier table is the relation's own subject, and §2.2's store-axis closure does NOT reach a tier payload). TIER-STORE HITS: ${JSON.stringify(tierStoreReads)}; ALL HITS: ${JSON.stringify(hits)}`).toEqual([])
   })
 
-  it('S-9: `src/renderer/renderer.ts` — EVERY answering route reaches its answer through the app Runtime or a wiring-held holder; the ONE store-read site is the pane-drag wiring\'s closure, whose read feeds a graph COMMIT — `§2.4` item 2\'s CONFORMING shape, not the finding (§2.1 `GCR-1`; `§2.4` item 2; `§7.1` `AMB-3`)', () => {
+  it('S-9: `src/renderer/renderer.ts` — every answering route reaches its answer through the app Runtime or a wiring-held carrier; the renderer\'s store reads are `§2.4` item 2\'s commit-feeding pane-drag closure (not on a live route) AND the focus route\'s `mem.focus.*` mirror read — the LATTER the store-focus spec\'s DECLARED CONFORMING member (the compliance criterion\'s OWN mandated store-carried read: `store-focus.md` §2.5 item 5, §0A note 4, §0A.3 edge S-2, §5.1 row 5), ADMITTED under this unit\'s landing; any OTHER store read on an answering route stays a `GCR-3` finding (§2.1 `GCR-1`; `§2.4` item 2; `§7.1` `AMB-3`)', () => {
     const src = readOrNull('src/renderer/renderer.ts')
     expect(src, 'S-9 — the renderer request-route site the spec names (`§3.2` row 9\'s sibling wiring; the route table the MCP surface answers through) exists at `src/renderer/renderer.ts`').not.toBeNull()
     const raw = src ?? ''
@@ -787,10 +787,34 @@ describe('§2.1 / §2.3 — the MCP surface carries NO direct-store-read handler
       'S-9 — and `createPaneDrag`\'s call sites are the DECLARATION plus nothing else in this file (its one caller lives in the pane-drag test, not on a live route) — the corrected premise the audit measured',
     ).toBe(1)
 
-    // The live failure signal: an UNQUALIFIED store read (the plain `GCR-3` (b) form)
-    // anywhere in this renderer. The tier-qualified reads are dispositioned below.
-    const nonWiring = hits.filter((h) => !/tiers\s*\[/.test(h))
-    expect(nonWiring, `S-9 — a store read on a renderer route that is NOT the commit-feeding tier-qualified form is a \`GCR-3\` finding unless it feeds a graph commit (§2.4 item 2). NON-WIRING HITS: ${JSON.stringify(nonWiring)}; ALL HITS: ${JSON.stringify(hits)}`).toEqual([])
+    // ── THE DECLARED CONFORMING MEMBER, ADMITTED. The store-focus spec §2.5 item 5 declares,
+    // verbatim: "the routed answer is store-carried, which is the compliance criterion's OWN
+    // mandated shape (§0A note 4). A static scan that still forbids a store read in the
+    // ROUTE's bytes after this unit lands is a stale scan and is the landing pass's amendment
+    // target, never a reason to leave the §Q flip un-landed" (also §0A.3 edge S-2: H1 IS the
+    // carrier answer this spec's §2.4 non-case 5 routes to it; §5.1 row 5's amendment set).
+    // **THE FOCUS ROUTE'S STORE-CARRIED READ IS THEREFORE ADMITTED HERE.** The renderer's
+    // `store.resolve(` sites are ENTIRELY that mirror: (a) the boot-mint's cold-home probe on
+    // the literal `'mem.focus.entries'` (store-focus §2.3 item 2) and (b) the `readMirrorRef`
+    // helper's ONE dynamic resolve, whose ONLY call sites pass the two FIXED references
+    // `mem.focus.entries` / `mem.focus.activeId` (store-focus §2.3 item 3's read turn).
+    const literalFocusSites = (raw.match(/store\.resolve\(\s*'mem\.focus\./g) ?? []).length
+    const helperBodySites = (raw.match(/function readMirrorRef[\s\S]*?store\.resolve\(/g) ?? []).length
+    const helperCallSites = (raw.match(/readMirrorRef\(\s*store,\s*'mem\.focus\./g) ?? []).length
+    expect(literalFocusSites, 'S-9 — the focus mirror\'s literal resolve site exists as the declared conforming member (the boot mint\'s cold-home probe, store-focus §2.3 item 2), so the admission is over a REAL site, not an empty scan').toBeGreaterThan(0)
+    expect(helperBodySites, 'S-9 — the mirror-read helper holds its ONE dynamic resolve').toBe(1)
+    expect(helperCallSites, 'S-9 — the helper\'s ONLY call sites pass the TWO FIXED mirror references (store-focus §2.3 item 3\'s read turn)').toBe(2)
+    const resolveHits = hits.filter((h) => h === 'store.resolve(')
+    expect(
+      resolveHits.length,
+      `S-9 — EVERY \`store.resolve(\` in the renderer is an ADMITTED \`mem.focus.*\` mirror read (${literalFocusSites} boot-mint probe + ${helperBodySites} helper body, whose ${helperCallSites} call sites are the two fixed references). A store read of ANY OTHER spelling on an answering route is a \`GCR-3\` finding. RESOLVE HITS: ${JSON.stringify(resolveHits)}`,
+    ).toBe(literalFocusSites + helperBodySites)
+
+    // The live failure signal: an UNQUALIFIED store read (the plain `GCR-3` (b) form) that is
+    // NEITHER the commit-feeding tier-qualified form (§2.4 item 2) NOR the focus mirror's
+    // admitted store-carried read (store-focus §2.5 item 5) — anywhere in this renderer.
+    const nonWiring = hits.filter((h) => !/tiers\s*\[/.test(h) && h !== 'store.resolve(')
+    expect(nonWiring, `S-9 — a store read on a renderer route that is NOT the commit-feeding tier-qualified form and NOT the focus route's DECLARED store-carried read (store-focus §2.5 item 5's admitted conforming member) is a \`GCR-3\` finding unless it feeds a graph commit (§2.4 item 2). NON-WIRING HITS: ${JSON.stringify(nonWiring)}; ALL HITS: ${JSON.stringify(hits)}`).toEqual([])
 
     // ── THE TIER-QUALIFIED SITE, DISPOSITIONED BY ITS ACTUAL SHAPE (`§2.4` item 2),
     // with the disposition ATTRIBUTED TO A SITE rather than to an `Array.isArray`
