@@ -411,7 +411,7 @@ held in the factory's closure) forbids by construction, and the register's no-mo
 | **3** | **NO SECOND SUBSCRIPTION AUTHORITY** — one subscription per declared reference per host instance; nobody else subscribes the hosts' references (`§2.4` item 4) | `F-LS-4`/`F-SS-4` |
 | **4** | **NO STORE AS CONTAINER SOURCE** — `SLOTHOST-CONTAINER-SOURCE-IS-INJECTED` unmoved; the store never yields a container; the slot host's record values never contain a container (`§2.3`) | `F-SS-4`, `I-SS-1` |
 | **5** | **NO AMBIENT READ, NO ASSEMBLED/COMPUTED REALM LOOKUP, NO MODULE-LEVEL BINDING** — the landed anti-assembly discipline (slothost `§4.4` `S-2`/`S-4`, the `ADV-SH-1` chain) and the register's `P-IM` rows hold; the store arrives ONLY as a declared call parameter | `P-SMB-*-IM-1`/`-2`, `S-LS-3`/`S-SS-3` |
-| **6** | **THE LANDED PURITY/IMPORT ROWS THIS UNIT AMENDS — NAMED (each amended BESIDE at the landing pass, `RCA-8(d)`; none rewritten)** — `listhost.md`: `§2.2` prohibition 4 (*"No UI-config store or persistence"* — the no-store clause is SUPERSEDED BESIDE for THIS module; what survives: the module persists nothing itself and keeps no module-level state, and the new store-carrying reading is the declared-parameter one), `§2.2` prohibition 5's static import row and `§4.4` `S-6` (*"no store, no persistence, no module-level mutable state, no randomness"* — the no-store half re-worded BESIDE; the five-seam MCP negative and the no-ambient halves UNMOVED), `§2.1`'s `dispose()` doc and `§3.1 M-14`/`§3.3 I-5`/`§3a A-16` (the release obligation added BESIDE, the landed assertions kept), `§5.5.1` (RE-GRAINED, widened — `REGISTER-ENTRY-COUNT-IS-NOT-CAPPED-…`); `slothost.md`: `§1`'s out-of-scope store bullet and `§2.2` prohibition 4 (same supersession-beside reading), `§2.1`'s `SlotHostOptions`/`dispose()` doc, `§2.4` item 5/`§3.1 M-13`/`§3.3 I-5`, `§4.4` `S-7` (the zero-graph-seam static — UNMOVED in substance: the module still imports nothing from `src/renderer/**`; the store is REACHED as a parameter, not imported — the static row's own text already bans imports, which stay `0`), `§5.5.1` (RE-GRAINED). **The PURE-side rows that DO NOT move for these two modules: NONE of them — both modules are `STORE-BACKED` by the scope ruling; their landed no-store rows are the amended set above.** | `§5.1`, `CURRENT STATE` item 9 |
+| **6** | **THE LANDED PURITY/IMPORT ROWS THIS UNIT AMENDS — NAMED (each amended BESIDE at the landing pass, `RCA-8(d)`; none rewritten)** — `listhost.md`: `§2.2` prohibition 4 (*"No UI-config store or persistence"* — the no-store clause is SUPERSEDED BESIDE for THIS module; what survives: the module persists nothing itself and keeps no module-level state, and the new store-carrying reading is the declared-parameter one), `§2.2` prohibition 5's static import row and `§4.4` `S-6` (*"no store, no persistence, no module-level mutable state, no randomness"* — the no-store half re-worded BESIDE; the five-seam MCP negative and the no-ambient halves UNMOVED), `§2.1`'s `dispose()` doc and `§3.1 M-14`/`§3.3 I-5`/`§3a A-16` (the release obligation added BESIDE, the landed assertions kept), `§5.5.1` (RE-GRAINED, widened — `REGISTER-ENTRY-COUNT-IS-NOT-CAPPED-…`); `slothost.md`: `§1`'s out-of-scope store bullet and `§2.2` prohibition 4 (same supersession-beside reading), `§2.1`'s `SlotHostOptions`/`dispose()` doc, `§2.4` item 5/`§3.1 M-13`/`§3.3 I-5`, `§4.4` `S-7` (the zero-graph-seam static — UNMOVED in substance: the module still imports nothing from `src/renderer/**`; the store is REACHED as a parameter, not imported — the static row's own text already bans imports, which stay `0`), `§5.5.1` (RE-GRAINED). **The PURE-side rows that DO NOT move for these two modules: NONE of them — both modules are `STORE-BACKED` by the scope ruling; their landed no-store rows are the amended set above.** **⟶ MISQUOTE CORRECTED BESIDE 2026-10-06 (the H2a gate-4 landing pass; F-1 — the as-filed citation above is KEPT VISIBLE): the `§4.4 S-6` citation in this cell is a MISQUOTE — the landed `listhost.md` `§4.4` is the STOP-CONDITION table `S-1..S-6`, and `S-6` is *"A test asserts a `callback count of exactly one` and the implementation fires twice for a replace-then-render cycle"* — a stop condition, not a static row. THE NO-STORE STATICS ACTUALLY LIVE AT: `listhost.md` `§2.2` prohibition 4 (*"No UI-config store or persistence"* — the row whose no-store half this unit amends BESIDE) + `§2.2` prohibition 5's static import row (the five-seam negative: the module imports NOTHING — the store arrives as a declared call parameter, never an import) + `§1`'s out-of-scope bullet (*"Any store, registry, persistence, or module-level mutable state."*) + the `§3a A-13`/`§3b ADV-LH-11` sweep records; the "no randomness" member of the misquoted text belongs to `§5.5.0`'s strategy-discipline cell (*"fixed input, fixed order, no randomness, no shrinking"*), not to any static row. The amendment set of THIS item is the set the F-1 landing lands (prohibition 4 · prohibition 5 · §1 bullet · `dispose()` doc / `M-14` / `I-5` / `A-16` / `A-13` / `ADV-LH-11` · `§5.5.1` re-grain, on the listhost side above).** | `§5.1`, `CURRENT STATE` item 9 |
 | **7** | **NO DECISION VOCABULARY IN THE MODULES' STORE READS** — a store-sourced value is a VALUE the host re-renders/re-refreshes from, never a decision the host bakes in (the `NW-4`-class ambient hazard is what the two-run differential executes, `§5.5.1` rows `P-SMB-*-TP-1`) | `§5.5.1`, `I-LS-1`/`I-SS-1` |
 
 ### 2.6 The caller-owned-spelling rule
@@ -504,7 +504,7 @@ double and the real store answer `mem.*` reads with HIT/MISS; the module consume
 | --- | --- | --- |
 | **E-1** | no in-tree `src/**` file imports either module (the reason `[T]` evidence is envelope-green and gate 6 is STRUCTURAL) | a glob/static probe: `createOwnedListHost`/`createSlotHost` appear in NO `src/**` import statement |
 | **E-2** | **no store byte changes in this unit** | the store's frozen-artifact digests (`store-core-graph` = `sha256:2933fcb8…` per the last re-freeze record, `docs/decisions.md`'s wave records) recompute UNCHANGED after this unit's pass; the probe is the landing pass's git diff |
-| **E-3** | the two landed suites' landing counts are the ones this unit adds to (listhost `62` rows as the doc-review recorded; slothost `61` rows as the green note recorded) | the landing pass's `npx vitest run tests/owned-list-host.test.ts tests/slot-host.test.ts` — the landed rows stay green and the new families add |
+| **E-3** | the two landed suites' landing counts are the ones this unit adds to (listhost `62` rows as the doc-review recorded; slothost `61` rows as the green note recorded) | the landing pass's `npx vitest run tests/owned-list-host.test.ts tests/slot-host.test.ts` — the landed rows stay green and the new families add **⟶ RE-GRAINED 2026-10-06 (F-2/MED — the RED SET'S HOME; the as-filed probe is KEPT VISIBLE): the probe runs the unit's OWN red set — `npx vitest run tests/store-modules-bytes.test.ts` — with the landed suites re-run UNEDITED as their own regression homes (the `62`-row listhost / `61`-row slothost landing counts are THEIRS and stay green); the store-backed families add in the unit's own file, not in the landed suites.** |
 
 ---
 
@@ -525,6 +525,15 @@ The red set is the `§3` store-backed families (`M-LS-*`/`M-SS-*`, `F-LS-*`/`F-S
 the `§3.5` existence rows, and the register's EXECUTED layer (`§5.5.1` — every row's `attempts` must RUN and report
 held/broken; **an un-run register row is a FAILURE**, never a pass). The landed rows must stay green (the re-grain is
 ADDITIVE).
+
+**⟶ SUPERSEDED-BESIDE 2026-10-06 (F-2/MED — the RED SET'S HOME; the as-filed sentence above —
+families in BOTH landed test files — is the FILING-TIME plan and is KEPT VISIBLE): the families'
+HOME is the unit's OWN NEW FILE — `tests/store-modules-bytes.test.ts`, the unit's own red set
+(`1475` lines, as the TestWriter's parallel pass authored it), and ONE red→green cycle spans it
+(both modules' store-backed families in that one file). The landed suites
+`tests/owned-list-host.test.ts` / `tests/slot-host.test.ts` REMAIN the implementations' own
+regression homes, UNEDITED — their landed rows stay green, and no family byte and no register row
+of this unit is added to them.**
 
 ### 4.2 Red-set authoring order
 
@@ -584,6 +593,17 @@ waits for is the spec gate.
 | `tests/slot-host.test.ts` | the `SS-` family + `P-SMB-SH-*` register rows (ADDITIVE; the landed rows stay) |
 | `docs/specs/listhost.md` · `docs/specs/slothost.md` | the ANNOTATED-BESIDE amendment set of `§2.5` item 6 (`RCA-8(d)`: dated, superseded readings kept visible, never a rewrite) |
 
+**⟶ RE-GRAINED BESIDE 2026-10-06 (F-2/MED — the RED SET'S HOME; the two landed-test-file rows
+above are the AS-FILED MAY rows and are KEPT VISIBLE): the `LS-`/`SS-` families and the
+`P-SMB-*` register rows land in the unit's OWN file — `tests/store-modules-bytes.test.ts` —
+which this table's MAY set gains as the unit's own red-set home; the landed suites REMAIN the
+implementations' own regression homes, UNEDITED (outside this unit's diff — no family byte and
+no register row of this unit is added to them). THE MAY/DENIED SET, SO RE-STATED: **MAY** =
+`src/shared/owned-list-host.ts` · `src/shared/slot-host.ts` · **`tests/store-modules-bytes.test.ts`**
+· the two landed specs' annotations (`docs/specs/listhost.md` · `docs/specs/slothost.md`); the two
+landed test files are NOT this unit's files (untouched regression homes); the DENIED list below is
+UNCHANGED.**
+
 **DENIED, with the reason:** `src/renderer/store-core-graph.ts` / `src/renderer/store-graph-references.ts` (FROZEN —
 `E-2`'s digest probe), `src/renderer/renderer.ts` and any other `src/**` file (no in-tree consumer of either module
 exists — the wiring that will hand stores to hosts is the consuming project's composition, not this unit's), the
@@ -612,6 +632,13 @@ gate list (spec → red → green → adversarial + PBT audit → blind greens �
 per-row attempts/held/broken with the **printed terms** (`79 = 6 + 4 + 31 + 6 + 4 + 28`, `§5.5.3`), an un-run register
 row listed as a FAILURE, the landed suites' added-count delta and their green status, the `[U]`-NOT-OFFERED structural
 reason, the store's frozen digests recomputed UNCHANGED (`E-2`), and the amendment set of `§2.5` item 6 as landed.
+
+**⟶ RE-GRAINED BESIDE 2026-10-06 (F-2/MED — the RED SET'S HOME; the as-filed DONE-row clause is
+KEPT VISIBLE): "the landed suites' added-count delta and their green status" is re-read — the
+ADDED-count delta is measured on the unit's OWN file (`tests/store-modules-bytes.test.ts`); the
+two landed suites' green status is their OWN (they are not edited by this unit and carry no added
+family). The printed register terms (`79 = 6 + 4 + 31 + 6 + 4 + 28`, `§5.5.3`) and the rest of
+this DONE-row shape are UNCHANGED.**
 
 ### 5.4 Rollback
 
@@ -759,3 +786,54 @@ and the disposition table sit at the file end so that no later annotation lands 
 recorded with one of the six recorded dispositions, never a bare `OWED`), plus the read-only PBT audit's verdicts on the
 `§5.5.1` rows (over-strength / under-assertion / evasion — each dispositioned here).** **A unit DONE row that cites no
 adversarial pass, or whose findings are unrecorded, is a review finding (`RCA-3`).**
+
+**⟶ STATUS OF THE TABLE ITSELF, 2026-10-06 (the H2a GATE-4 LANDING PASS; the as-filed shape above
+is the FILING state and is KEPT VISIBLE): NO LONGER EMPTY — the gate-4 doc-review audit returned
+`20` findings naming this unit's documents, every one dispositioned below (NO bare `OWED`), plus
+the read-only PBT audit's verdict on the `§5.5.1` register. THE DISPOSITION VOCABULARY, defined so
+no row carries an undefined token: **`HOST-FIX`** — a document finding owed to THIS spec-writer
+pass, landed here (this file + the two landed specs, `RCA-8(d)` annotate-beside); **`RED-SET-FIX`**
+— a finding whose remedy lives in the red set, owed to the TestWriter's PARALLEL pass
+(`tests/store-modules-bytes.test.ts`); **`PAR-note`** — a note the parallel pass records beside a
+cell, no host document change owed; **`SATISFIED`** — a finding the audit verified SATISFIED, with
+what was verified named; **`GATE-10`** — a tracker-cell fix owed to the supervisor's DONE-row pass
+at gate 10; **`DOC-REVIEW-ITEM`** — an item CARRIED to the gate-8 documentation-review pass
+(recorded here, not required at this gate).**
+
+| # | The finding (as reported by the gate-4 audit) | Disposition | Owner | What it lands / carries |
+| --- | --- | --- | --- | --- |
+| **F-1** | **HIGH — THE NAMED LANDED-ROW AMENDMENT SET.** The H2a queue row's own words — *"their `dispose()` rows and their store-emitting rows are what this child amends"* — verified against the landed specs: NONE of the named rows carried the amendment; the landed specs CONTRADICT the landing modules (a `store`/`hostId` option member exists on both factories while the specs still say "zero store") | **`HOST-FIX`** | THIS spec-writer pass | the full annotated-beside amendment set, landed in this pass: `docs/specs/listhost.md` (`§1` out-of-scope bullet · `§2.2` prohibitions 4/5 · `§2.1`'s `dispose()` doc · `§3.1 M-14` · `§3.3 I-5` · `§3a A-16`/`A-13` · `§3b ADV-LH-11` · `§5.5.1` re-grain) · `docs/specs/slothost.md` (the mirror set + the `SLOTHOST-CONTAINER-SOURCE-IS-INJECTED` caveat) + the misquote correction in THIS file's `§2.5` item 6 |
+| **F-2** | **MED — THE RED SET'S HOME IS UNDECLARED.** `§4.1`, `§5.1`, `E-3`, `§5.3` still name `tests/owned-list-host.test.ts` + `tests/slot-host.test.ts` as the families' home; the red set lives in the unit's OWN new file `tests/store-modules-bytes.test.ts` (`1475` lines, the TestWriter's parallel pass) | **`HOST-FIX`** | THIS spec-writer pass | the four cells re-grained BESIDE (this file: `§4.1`, `§5.1`, `§3.5 E-3`, `§5.3`); the MAY/denied set re-stated: the landed suites remain the implementations' own regression homes, UNEDITED |
+| **F-3a** | a gate-4 finding on this unit's red-set clauses (family F-3, content per the audit record) | **`RED-SET-FIX`** | the TestWriter's parallel pass | the red set, authored/executed in `tests/store-modules-bytes.test.ts` |
+| **F-3b** | same family | **`PAR-note`** | the TestWriter's parallel pass | a cell noted beside in the red-set pass; no host document change owed |
+| **F-3c** | same family (a) | **`RED-SET-FIX`** | the TestWriter's parallel pass | the red set (as F-3a) |
+| **F-3d** | same family (a) | **`RED-SET-FIX`** | the TestWriter's parallel pass | the red set (as F-3a) |
+| **F-3e** | same family (a) | **`RED-SET-FIX`** | the TestWriter's parallel pass | the red set (as F-3a) |
+| **F-3f** | same family (a) | **`RED-SET-FIX`** | the TestWriter's parallel pass | the red set (as F-3a) |
+| **F-3g** | same family (b) | **`PAR-note`** | the TestWriter's parallel pass | a cell noted beside (as F-3b) |
+| **F-3h** | same family (b) | **`PAR-note`** | the TestWriter's parallel pass | a cell noted beside (as F-3b) |
+| **F-4a** | **THE GATE-8 CARRIES — TWO `DOC-REVIEW-ITEM`s, RECORDED HERE, NOT REQUIRED AT THIS GATE:** **(i) the `F-SS-4` DUAL ID** — the same id names BOTH the second-subscription negative (`§2.4` item 4, `§2.5` prohibition 3) AND the container-source falsifier (`§3.2`'s row, `§2.5` prohibition 4): the gate-8 pass **re-ids the spec's `§3.2` container-source-falsifier cell to `F-SS-5`** and **updates the `§2.4`-item-4 / `§2.5`-prohibition-3 citations to the audit authority**; **(ii) the `E-2` INSTRUMENT MISMATCH** — the recorded frozen-store digest (`sha256:2933fcb8…`, `E-2`'s cell) vs the current tree: the gate-8 pass fixes the citation to the store's authoritative freeze record | **`DOC-REVIEW-ITEM`** | the gate-8 documentation-review pass | two carry items recorded here (this row); landed by the gate-8 pass |
+| **F-5a** | a gate-4 PBT-audit finding on the `§5.5.1` register (family F-5, content per the audit record) | **`RED-SET-FIX`** | the TestWriter's parallel pass | the register's executed layer, run in `tests/store-modules-bytes.test.ts` |
+| **F-5b** | same family (a) | **`RED-SET-FIX`** | the TestWriter's parallel pass | the register's executed layer (as F-5a) |
+| **F-5c** | **SATISFIED — THE DIFFERENTIAL MECHANICS VERIFIED:** the store-state-independence differential rows (`P-SMB-*-TP-1` — the round-3 `R-3` comparator: `===` for primitive answers, canonical structural comparison for the host-object projections; the COLD / SHADOWING / COMMITTED three-tier runs; the ambient-reading positive control) verified by the audit | **`SATISFIED`** | — (verified, recorded) | nothing further owed; the mechanics stand as written |
+| **F-5e** | **SATISFIED — THE REGISTER ARITHMETIC VERIFIED:** `§5.5.3`'s declared total printed WITH its terms — `79 = 6 + 4 + 31 + 6 + 4 + 28` (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`, cited by row name; caps `79 ≤ 400` · per-row max `31 ≤ 100`) — verified by the audit | **`SATISFIED`** | — (verified, recorded) | nothing further owed; the arithmetic stands as printed |
+| **F-6a** | a gate-4 finding on this unit's red-set/register cells (family F-6, content per the audit record) | **`RED-SET-FIX`** | the TestWriter's parallel pass | the red set (as F-3a) |
+| **F-6b** | same family (a) | **`PAR-note`** | the TestWriter's parallel pass | a cell noted beside (as F-3b) |
+| **F-6c** | same family (a) | **`PAR-note`** | the TestWriter's parallel pass | a cell noted beside (as F-3b) |
+| **F-6d** | **THE QUEUE-ROW CELLS AT GATE 10:** the `H2a` queue row's spec cell (`OWED — not filed`) and the `§Q` mechanism-set flip cells flip WHEN THE UNIT LANDS — at the gate-10 DONE-row pass | **`GATE-10`** | the supervisor's DONE-row pass | the queue-row cells (the DONE row + ledger move); not this pass's file |
+
+**THE COUNT: `19` finding rows above + the PBT audit's verdict line below = the gate-4 audit's
+`20` findings — NO bare `OWED` among them.** *(The audit's sub-letter enumeration is transcribed as
+reported to this pass — F-3a–h (eight) · F-4a (one) · F-5a/b/c/e (four) · F-6a–d (four), beside
+F-1/F-2; if the audit record's lettering differs, the gate-8 documentation review reconciles the
+count and records it there.)*
+
+**THE READ-ONLY PBT AUDIT'S VERDICT LINE — `§5.5.1`'s six executed register rows reviewed for
+over-strength / under-assertion / evasion, each verdict dispositioned here:** the register's design
+is verified on its two quantified halves — **`F-5c`/`F-5e` `SATISFIED`** (the differential
+mechanics and the register arithmetic, above); **`F-5a`/`F-5b` `RED-SET-FIX`** — the executed-layer
+evidence (per-row attempts/held/broken, strategy ids `S-SMB-*`, the declared caps) is owed by the
+red set in the unit's OWN file, `tests/store-modules-bytes.test.ts`; **no over-strength claim
+survives the review** (the differential proves the anti-ambient claim, not the store's correctness —
+`§5.5.2`'s honesty block is the audit's own basis), and **an un-run register row is a FAILURE,
+never a pass** — the standing rule, unchanged.

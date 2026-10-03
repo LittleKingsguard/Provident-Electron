@@ -14,11 +14,35 @@
 //     M-LS-3  a store-sourced order change re-invokes the host (§2.4 items 2/3)
 //     M-LS-4  dispose() releases — P1/P2/P5 (§2.2)
 //     M-LS-5  dispose-then-use, records remain — P3/P6 (§2.2)
+//     M-LS-6  THE OWN-WRITE-DELIVERY-0 row (gate-4 F-3a): the host's OWN
+//             setEntries/setOrder turn delivers 0 to its own subscriber (the
+//             own-write turn detaches; the counter reads only store-sourced
+//             writes) — positive control: the same channel delivers 1 for an
+//             external commit (§2.4 item 2)
+//     M-LS-7  the LIST-side write-loop-termination check (gate-4 F-3a; the
+//             I-SS-3 equivalent): exactly ONE written entry per own-write turn
+//             and no second write; an external order commit is the ONLY write
+//             of its turn (§2.4 item 3)
+//     M-LS-8  §2.2 P4 LIVE re-entrant-dispose (gate-4 F-3d): a delivery in
+//             flight when a listener calls dispose() re-entrantly COMPLETES;
+//             dispose() returns normally; the fan-out continues in registration
+//             order; from the moment dispose begins NO FURTHER delivery to the
+//             host's listeners
+//     M-LS-9  the REAL-store two-step node-record observable (gate-4 F-6a): the
+//             store's own serialize-failed gate refuses a direct node mint; the
+//             module's turn lands the opaque marker + the raw node on the edit
+//             path, readback HIT, differential equal, events as pinned (§2.1
+//             item 2)
 //     M-SS-1  slot construciton registers ONE subscription PER DECLARED KEY
 //     M-SS-2  the placement write lands; the container stays INJECTED (§2.3)
 //     M-SS-3  a store-sourced placement change re-invokes FOR THAT KEY ONLY
 //     M-SS-4  dispose() releases every key — P1/P2/P5
 //     M-SS-5  dispose-then-use, records remain — P3/P6
+//     M-SS-6  the NODE-SHAPED placement-refresh drive (gate-4 F-3e): the
+//             record starts as the module's opaque marker; an external commit
+//             that SHAPES the record like a node delivers once and the per-key
+//             refresh RE-READS and RE-PLACES (the slot-side analog of the list
+//             node-record, §2.1 item 2 / §2.4 item 3)
 //
 //   §3.2 DOCUMENTED FAIL-STATES (the LEAK'S THREE-ARM DETECTION + boundaries):
 //     F-LS-1  LS-LEAK arm (a): DELIVERY AFTER DISPOSE (>0 increase) FAILS
@@ -28,8 +52,17 @@
 //     F-LS-3  LS-LEAK arm (c): THE EVENT NEGATIVE — the release emits no store
 //             event; the `'severed'` arm is the SEVERANCE's, not a dispose's
 //     F-LS-4  a SECOND SUBSCRIPTION AUTHORITY on the host's reference FAILS
+//     F-LS-5  the store-present + hostId-absent/malformed drive (gate-4 F-3c):
+//             with a store present and the identity ABSENT/EMPTY/NON-STRING, a
+//             module that mints or defaults an identity — registering or
+//             writing under a `mem.list..…` reference — FAILS the declared
+//             refusal read (§2.1 item 1: "the module NEVER mints, defaults,
+//             normalizes or re-interprets it … never a throw"); a non-empty
+//             hostId (even one containing a `.`) is composed VERBATIM
 //     F-SS-1  SS-LEAK arm (a) — same three-arm shape, per key
-//     F-SS-2  SS-LEAK arm (b)
+//     F-SS-2  SS-LEAK arm (b) — PLUS the FOREIGN-subscription half (gate-4
+//             F-3f): a second party's mem.other.x subscription survives the
+//             host's dispose and receives its OWN deliveries
 //     F-SS-3  SS-LEAK arm (c)
 //     F-SS-4  (two readings, both driven) — the container-source falsifier
 //             (§2.3, part of this row id per §3.2) AND the slot's
@@ -61,18 +94,21 @@
 //     (the landed suites exist to be added to — the count probe is the landing
 //     pass's own run, per the spec's probe cell).
 //
-//   §5.5.1 THE REGISTER (6 typed rows, 79 declared attempts, executed
+//   §5.5.1 THE REGISTER (6 typed rows, 85 declared attempts, executed
 //     deterministically — no generator, no new dependency):
-//     P-SMB-LH-IM-1 6 = 3 readings + 3 controls   (S-SMB-LH-IM-1)
-//     P-SMB-LH-IM-2 4 = 1 scan + 2 controls + 1 declaration-position check
-//                                                              (S-SMB-LH-IM-2)
+//     P-SMB-LH-IM-1 8 = 3 readings + 5 controls   (S-SMB-LH-IM-1)
+//                                  (F-5b: + the export-from re-emission controls)
+//     P-SMB-LH-IM-2 5 = 1 scan + 3 controls + 1 declaration-position check
+//                                  (S-SMB-LH-IM-2) (F-5a: + the hostId arms)
 //     P-SMB-LH-TP-1 31 = 3 runs × (8 + 2) + 1 control  (S-SMB-LH-TP-1)
-//     P-SMB-SH-IM-1 6 = 3 readings + 3 controls   (S-SMB-SH-IM-1)
-//     P-SMB-SH-IM-2 4 = 1 scan + 2 controls + 1 declaration-position check
-//                                                              (S-SMB-SH-IM-2)
+//     P-SMB-SH-IM-1 8 = 3 readings + 5 controls   (S-SMB-SH-IM-1)
+//     P-SMB-SH-IM-2 5 = 1 scan + 3 controls + 1 declaration-position check
+//                                  (S-SMB-SH-IM-2)
 //     P-SMB-SH-TP-1 28 = 3 runs × (8 + 1) + 1 control  (S-SMB-SH-TP-1)
-//     TOTALS: 79 = 6 + 4 + 31 + 6 + 4 + 28 (chain 6 → 10 → 41 → 47 → 51 → 79;
-//     per-family IM 20 · TP 59). Caps: 79 ≤ 400 · max row 31 ≤ 100.
+//     TOTALS: 85 = 8 + 5 + 31 + 8 + 5 + 28 (chain 8 → 13 → 44 → 52 → 57 → 85;
+//     per-family IM 26 · TP 59). Caps: 85 ≤ 400 · max row 31 ≤ 100.
+//     (GATE-4 TERM EXTENSIONS, 2026-10-05: IM-1 6 → 8 (F-5b, two new export-from
+//     controls), IM-2 4 → 5 (F-5a, the hostId scan arm + let-hostId control).)
 //
 //   §2.2 THE HEADLINE — THE dispose() RELEASE OBLIGATION, DECIDED AS
 //     UNSUBSCRIBE-ON-DISPOSE, with its SEVEN POST-CONDITIONS:
@@ -505,8 +541,13 @@ function canonicalProjection(value: unknown): unknown {
 // discipline bind every scanner below).
 // ---------------------------------------------------------------------------
 
+// GATE-4 F-5b EXTENSION: an `export … from` re-emission IMPORTS the store as
+// surely as an `import` does (the store must arrive ONLY as a declared call
+// parameter, §2.1 item 1). The scanner therefore also catches the named
+// re-export (`export { … } from '…'`) and the star re-export (`export * from
+// '…'`) forms — each with its own corpus control in the P-SMB-*-IM-1 rows.
 const IMPORT_STATEMENT_RE =
-  /(^|\n)[ \t]*import[ \t]+[^\n]*from[ \t]+['"][^'"]+['"]|(^|\n)[ \t]*import[ \t]+['"][^'"]+['"]|\brequire[ \t]*\(|\bimport[ \t]*\(/g
+  /(^|\n)[ \t]*import[ \t]+[^\n]*from[ \t]+['"][^'"]+['"]|(^|\n)[ \t]*import[ \t]+['"][^'"]+['"]|\brequire[ \t]*\(|\bimport[ \t]*\(|(^|\n)[ \t]*export[ \t]+\*[ \t]+from[ \t]+['"][^'"]+['"]|(^|\n)[ \t]*export[ \t]+\{[^}]*\}[ \t]+from[ \t]+['"][^'"]+['"]/g
 
 function findImports(view: string): string[] {
   return view.match(IMPORT_STATEMENT_RE) ?? []
@@ -529,7 +570,13 @@ function commentsOnly(source: string): string {
 }
 
 function topLevelBindings(source: string): string[] {
-  return [...source.matchAll(/^[ \t]*(?:const|let|var)[ \t]+([A-Za-z_$][\w$]*)/gm)].map((match) => match[1] ?? '')
+  // MODULE-SCOPE ONLY — anchored at column 0. The no-module-level-binding rows
+  // scan for a MODULE-scope const/let/var holding the store, a subscription or
+  // the host identity; the modules' closure-held handles live INSIDE the
+  // factories (parameter-scoped by the contract), so an INDENTED binding must
+  // not be counted (the gate-4 F-5a hostId arm would otherwise false-positive
+  // on the factories' own `const hostIdentity` — a legitimate closure binding).
+  return [...source.matchAll(/^(?:const|let|var)[ \t]+([A-Za-z_$][\w$]*)/gm)].map((match) => match[1] ?? '')
 }
 
 function countOccurrences(source: string, needle: string): number {
@@ -548,6 +595,21 @@ function countOccurrences(source: string, needle: string): number {
 const IMPORT_CONTROL_A = "import { createGraphStore } from '../renderer/store-core-graph.js'\n"
 const IMPORT_CONTROL_B = "const s = require('../renderer/store-core-graph.js')\n"
 const IMPORT_CONTROL_C = "const s = await import('../renderer/store-core-graph.js')\n"
+// GATE-4 F-5b: the `export … from` re-emission controls — a planted named
+// re-export and a planted star re-export of the store module EACH MUST FAIL the
+// import-census rows (a re-emission is an import, and the store is never
+// imported by the modules' own bytes).
+const IMPORT_CONTROL_D = "export { createGraphStore } from '../renderer/store-core-graph.js'\n"
+const IMPORT_CONTROL_E = "export * from '../renderer/store-core-graph.js'\n"
+
+/** THE NO-MODULE-LEVEL-BINDING FILTER (P-SMB-*-IM-2, S-LS-2/S-SS-2): a
+ *  module-scope binding named after the store handle, a subscription handle OR
+ *  the host identity FAILS the row — the store-shaped tokens appear ONLY in the
+ *  factory's parameter position and the closures' parameter-scoped references
+ *  (the gate-4 F-5a hostId arm: a module-level `let hostId;` must be caught). */
+function storeShapedBinding(name: string): boolean {
+  return /^(store|subscription|hostid)/i.test(name) || /store/i.test(name) || /hostid/i.test(name)
+}
 
 function wiredGraphStore(): GraphStore {
   return createGraphStore({
@@ -689,6 +751,181 @@ describe('H2a U-STORE-MODULES-BYTES — §3.1 valid states (the store-backed fam
     expect(host.dispose()).toBeUndefined()
   })
 
+  it('M-LS-6 — the OWN-WRITE-DELIVERY-0 row (gate-4 F-3a): the host’s OWN setEntries/setOrder write delivers 0 to the host’s own subscriber — the own-write turn detaches (release → commit → re-register), so the subscriber’s counter reads ONLY store-sourced writes; positive control: the same channel delivers exactly 1 for an EXTERNAL commit (§2.4 item 2’s write-loop narrative)', () => {
+    const { store, state } = createRecordingDouble()
+    const host = makeListHost(store, 'h1', makeElement())
+    const orderRef = 'mem.list.h1.order'
+    // the counter is pinned at the baseline
+    expect(deliveriesOf(state, orderRef), 'M-LS-6 — the delivery counter starts at 0').toBe(0)
+    // the host's OWN write turns deliver NOTHING to its own subscriber
+    host.setEntries([{ key: 'a', node: makeNode() }, { key: 'b', node: makeNode() }])
+    expect(deliveriesOf(state, orderRef), 'M-LS-6 — the own setEntries turn delivers 0 to the host’s own subscriber (the own-write turn detaches)').toBe(0)
+    expect(deliveriesTotal(state), 'M-LS-6 — the own setEntries turn delivers 0 in total').toBe(0)
+    host.setOrder(['b', 'a'])
+    expect(deliveriesOf(state, orderRef), 'M-LS-6 — the own setOrder turn delivers 0 to the host’s own subscriber').toBe(0)
+    expect(deliveriesTotal(state), 'M-LS-6 — the own setOrder turn delivers 0 in total').toBe(0)
+    // the records still landed (M-LS-2's fact — the write turns are store-carrying)
+    expect(state.written.has(orderRef)).toBe(true)
+    expect(state.written.has('mem.list.h1.node.a')).toBe(true)
+    // positive control — the measurement channel works: an EXTERNAL commit
+    // delivers exactly 1 (store-sourced writes are what the counter reads)
+    store.commit(orderRef, ['a', 'b'], { onRepeat: 'edit' })
+    expect(deliveriesOf(state, orderRef), 'M-LS-6 — positive control: an external commit delivers exactly 1').toBe(1)
+    void host
+  })
+
+  it('M-LS-7 — the LIST-side write-loop-termination check (the I-SS-3 equivalent, gate-4 F-3a): the order reference receives EXACTLY ONE written entry per own-write turn — no second write; an EXTERNAL commit to the order reference is the ONLY store write of its turn, one event one delivery, the re-invoked path never writes (§2.4 item 3, I-SS-3’s list analog)', () => {
+    // arm A — the own-write turn: exactly one order-ref commit, no second write
+    const { store: storeA, state: stateA } = createRecordingDouble()
+    const hostA = makeListHost(storeA, 'h1')
+    const writesBeforeA = stateA.calls.filter((call) => (WRITE_MEMBERS as readonly string[]).includes(call.member)).length
+    hostA.setOrder(['a'])
+    const writesAddedA = stateA.calls.filter((call) => (WRITE_MEMBERS as readonly string[]).includes(call.member)).length - writesBeforeA
+    expect(writesAddedA, 'M-LS-7 — the own setOrder turn performs exactly ONE store write (its own order commit; unsubscribe/re-register are not store writes)').toBe(1)
+    const orderCommitsA = stateA.calls
+      .slice(writesBeforeA)
+      .filter((call) => call.member === 'commit' && call.name === 'mem.list.h1.order').length
+    expect(orderCommitsA, 'M-LS-7 — the order reference receives EXACTLY ONE written entry per own-write turn — no second write').toBe(1)
+    // arm B — the external turn (I-SS-3's exact shape): the re-invocation is
+    // READ-ONLY, so the ONLY store write of the turn is the external commit
+    const { store: storeB, state: stateB } = createRecordingDouble()
+    const hostB = makeListHost(storeB, 'h1')
+    hostB.setEntries([{ key: 'a', node: makeNode() }, { key: 'b', node: makeNode() }])
+    const writesBeforeB = stateB.calls.filter((call) => (WRITE_MEMBERS as readonly string[]).includes(call.member)).length
+    storeB.commit('mem.list.h1.order', ['b', 'a'], { onRepeat: 'edit' })
+    const writesAddedB = stateB.calls.filter((call) => (WRITE_MEMBERS as readonly string[]).includes(call.member)).length - writesBeforeB
+    expect(writesAddedB, 'M-LS-7 — during an external order commit the ONLY store write is the external commit itself (the re-invoked path never writes)').toBe(1)
+    expect(deliveriesOf(stateB, 'mem.list.h1.order'), 'M-LS-7 — one event, one delivery; the write-loop terminates').toBe(1)
+    void hostA
+    void hostB
+  })
+
+  it('M-LS-8 — §2.2 P4, the live re-entrant-dispose drive (gate-4 F-3d): a delivery in flight when a listener calls dispose() re-entrantly COMPLETES — the in-flight delivery finishes, dispose() returns normally (void), the store continues its fan-out in registration order, and from the moment dispose() begins NO FURTHER delivery is dispatched to that host’s listeners (§2.2 P4’s declared rule)', () => {
+    // LEG A — the recording double: registration order host → A(dispose-caller) → B
+    const { store, state } = createRecordingDouble()
+    const host = makeListHost(store, 'h1')
+    host.setEntries([{ key: 'a', node: makeNode() }, { key: 'b', node: makeNode() }])
+    // the host's own (only) subscription record — captured by reference before the fan-out
+    const hostRecord = state.subscriptions.find((record) => record.name === 'mem.list.h1.order')
+    expect(hostRecord).toBeDefined()
+    let aDeliveries = 0
+    let disposeAnswer: unknown = 'unset'
+    let bDeliveries = 0
+    // A: the re-entrant dispose-caller — its own delivery is IN FLIGHT while dispose runs
+    store.subscribe('mem.list.h1.order', () => {
+      aDeliveries += 1
+      disposeAnswer = host.dispose()
+    })
+    // B: a later-registered party — the fan-out must continue past the dispose
+    store.subscribe('mem.list.h1.order', () => { bDeliveries += 1 })
+    const resolvesBefore = state.calls.filter((call) => call.member === 'resolve' && call.name === 'mem.list.h1.order').length
+    // the in-flight delivery: the host's own listener runs FIRST (registration order)…
+    store.commit('mem.list.h1.order', ['b', 'a'], { onRepeat: 'edit' })
+    // …then A's body calls dispose() re-entrantly: the delivery A is receiving
+    // COMPLETES (the body ran to completion INCLUDING the dispose, which returns)
+    expect(aDeliveries, 'M-LS-8/P4 — the in-flight delivery completes (the dispose-calling listener’s body runs to completion)').toBe(1)
+    expect(disposeAnswer, 'M-LS-8/P4 — dispose() called re-entrantly returns normally (void, no throw)').toBeUndefined()
+    // the host's own listener ran exactly once (its delivery completed in-flight)
+    const resolvesAdded = state.calls.filter((call) => call.member === 'resolve' && call.name === 'mem.list.h1.order').length - resolvesBefore
+    expect(resolvesAdded, 'M-LS-8/P4 — the host’s own delivery completed (its read-only re-invocation ran)').toBe(1)
+    // the store continues its fan-out in registration order (B, registered after A)
+    expect(bDeliveries, 'M-LS-8/P4 — the store continues its fan-out in registration order past the dispose').toBe(1)
+    // dispose() removed the host's subscription SYNCHRONOUSLY — exactly its own handle
+    if (hostRecord !== undefined) {
+      expect(hostRecord.unsubscribeCalls, 'M-LS-8/P4 — the host’s own handle is unsubscribed exactly once (by the re-entrant dispose)').toBe(1)
+      expect(hostRecord.firstAnswer, 'M-LS-8/P4 — the first unsubscribe call answers true').toBe(true)
+      expect(hostRecord.live, 'M-LS-8/P4 — the host’s subscription is gone from the moment dispose() begins').toBe(false)
+    }
+    // from the moment dispose() began NO FURTHER delivery to the host's listeners:
+    // a follow-up commit delivers to A/B only — the host's own listener never runs again
+    const resolvesAfter = state.calls.filter((call) => call.member === 'resolve' && call.name === 'mem.list.h1.order').length
+    store.commit('mem.list.h1.order', ['a', 'b'], { onRepeat: 'edit' })
+    expect(aDeliveries, 'M-LS-8/P4 — the follow-up commit still delivers to the OTHER parties').toBe(2)
+    expect(bDeliveries).toBe(2)
+    expect(
+      state.calls.filter((call) => call.member === 'resolve' && call.name === 'mem.list.h1.order').length,
+      'M-LS-8/P4 — no further delivery is dispatched to the host’s listeners after the dispose',
+    ).toBe(resolvesAfter)
+    // the completing body's post-dispose behaviour (listhost A-16): valid results, no throw
+    expect(() => host.render()).not.toThrow()
+    expect(host.keys(), 'M-LS-8/P4 — A-16: every method after dispose returns a valid result').toEqual([])
+    // LEG B — the REAL store: the module-level guarantee against the hardware store
+    const real = wiredGraphStore()
+    const realHost = makeListHost(real, 'h1')
+    realHost.setEntries([{ key: 'a', node: makeNode() }])
+    // positive control — the host's own listener delivers (events 1)
+    expect(real.commit('mem.list.h1.order', ['a'], { onRepeat: 'edit' }).events, 'M-LS-8/P4 — positive control: the host’s own listener delivers 1').toBe(1)
+    let realDisposeAnswer: unknown = 'unset'
+    const aHandle = real.subscribe('mem.list.h1.order', () => { realDisposeAnswer = realHost.dispose() })
+    const bHandle = real.subscribe('mem.list.h1.order', () => undefined)
+    // the re-entrant drive — a delivery in flight while dispose() is called from a listener body
+    const receipt = real.commit('mem.list.h1.order', ['a'], { onRepeat: 'edit' })
+    expect(receipt.status, 'M-LS-8/P4 — the in-flight delivery completes; the commit returns normally').toBe('committed')
+    expect(realDisposeAnswer, 'M-LS-8/P4 — the re-entrant dispose returns normally on the real store').toBeUndefined()
+    // release the test-owned parties, then: NO FURTHER delivery to the host's
+    // listeners — the post-dispose commit delivers 0 (the host's subscription
+    // died AT the dispose; dispose removed it synchronously)
+    void aHandle.unsubscribe()
+    void bHandle.unsubscribe()
+    expect(real.commit('mem.list.h1.order', ['a'], { onRepeat: 'edit' }).events, 'M-LS-8/P4 — from the moment dispose begins no further delivery is dispatched to the host’s listeners').toBe(0)
+  })
+
+  it('M-LS-9 — the REAL-store two-step node-record observable (gate-4 F-6a): the store’s OWN serialize-failed gate refuses a DIRECT mint of the caller’s opaque node; the module’s declared node-record turn (the caller’s NODE by reference, §2.1 item 2) lands the marker + the node — the opaque marker occupies the leaf, then the raw node on the edit path — with the readback HIT and the differential equal; the events stay as the spec pins', () => {
+    const real = wiredGraphStore()
+    const captured: Array<{ name: string; value: unknown; receipt: GraphWriteReceipt }> = []
+    const wrapped: GraphStore = new Proxy(real, {
+      get(target, prop, receiver) {
+        const value = Reflect.get(target, prop, receiver)
+        if (typeof value !== 'function') return value
+        return (...args: unknown[]) => {
+          const result = (value as (...a: unknown[]) => unknown).apply(target, args)
+          if (String(prop) === 'commit') {
+            captured.push({ name: String(args[0]), value: args[1], receipt: result as GraphWriteReceipt })
+          }
+          return result
+        }
+      },
+    }) as GraphStore
+    const nodeA = makeNode()
+    const ref = 'mem.list.h1.node.a'
+    // positive control — the store's OWN gate refuses a DIRECT mint of the opaque node
+    const direct = real.commit(ref, nodeA, { onRepeat: 'edit' })
+    expect(direct.status, 'M-LS-9 — the store’s serialize-failed gate refuses a direct mint of the caller’s node').toBe('refused')
+    expect(direct.reason, 'M-LS-9 — the refusal is the frozen store’s serialize-failed arm').toBe('serialize-failed')
+    const host = makeListHost(wrapped, 'h1')
+    captured.length = 0
+    host.setEntries([{ key: 'a', node: nodeA }])
+    // THE TWO-STEP: first the raw node (refused by the gate — the module consumes
+    // the returned receipt as a record, §2.1 item 3), then the opaque marker
+    // occupies the leaf, then the raw node lands on the EDIT path (edit outcomes
+    // carry no value gate — the record ends as the caller's node by reference).
+    const nodeWrites = captured.filter((entry) => entry.name === ref)
+    expect(nodeWrites.length, 'M-LS-9 — the module’s node-record turn is the two-step (marker + node) preceded by the refused raw write').toBe(3)
+    expect(nodeWrites[0]?.value, 'M-LS-9 — step 0: the raw node is offered first').toBe(nodeA)
+    expect(nodeWrites[0]?.receipt.status, 'M-LS-9 — the raw node’s mint is refused by the store’s own gate').toBe('refused')
+    expect(nodeWrites[1]?.value, 'M-LS-9 — the opaque marker occupies the leaf (the store value the gate accepts)').toEqual({ present: true })
+    expect(nodeWrites[1]?.receipt.status, 'M-LS-9 — the marker mint is committed').toBe('committed')
+    expect(nodeWrites[2]?.value, 'M-LS-9 — the raw node lands on the edit path, by reference').toBe(nodeA)
+    expect(nodeWrites[2]?.receipt.status, 'M-LS-9 — the edit commits (edit outcomes carry no value gate)').toBe('committed')
+    // the readback HIT and the differential equal (the R-3 canonical comparator)
+    const readback: GraphResolveResult = wrapped.resolve(ref)
+    expect(readback.found, 'M-LS-9 — the readback answers a HIT').toBe(true)
+    if (readback.found) {
+      expect(canonicalProjection(readback.value), 'M-LS-9 — the differential is equal: the readback value is the caller’s node').toEqual(canonicalProjection(nodeA))
+    }
+    // events stay as the spec pins: the node-record writes deliver NOTHING to the
+    // module's own subscription (per-reference delivery — the module holds EXACTLY
+    // ONE subscription, on the ORDER reference, §2.4 item 1), and the pinned
+    // M-LS-3 reading is unchanged: an external order commit still delivers ≥ 1.
+    for (const entry of nodeWrites) {
+      expect(entry.receipt.events, 'M-LS-9 — no store-sourced event is attributable to the node-record writes (no subscriber on a node ref)').toBe(0)
+    }
+    const orderCommit = real.commit('mem.list.h1.order', ['a'], { onRepeat: 'edit' })
+    expect(orderCommit.events, 'M-LS-9 — the pinned M-LS-3 reading is unchanged: an external order commit delivers ≥ 1 to the host’s own subscription').toBeGreaterThanOrEqual(1)
+    expect(real.resolve('mem.list.h1.order').found, 'M-LS-9 — the order record readback is a HIT').toBe(true)
+    void host
+  })
+
   it('M-SS-1 — construction registers one subscription PER DECLARED KEY: active-set EXACT, count = declaredKeyCount, one handle per key, EXACT-REFERENCE (§2.4 item 1)', () => {
     const { store, state } = createRecordingDouble()
     void makeSlotHost(store, 'h1', makeContainerFactory(), ['a', 'b', 'c'])
@@ -754,6 +991,13 @@ describe('H2a U-STORE-MODULES-BYTES — §3.1 valid states (the store-backed fam
       expect(record.unsubscribeCalls, 'M-SS-4 — P1: each handle called exactly once').toBe(1)
       expect(record.firstAnswer, 'M-SS-4 — P1: first answer true').toBe(true)
     }
+    // P1's "(registration order)" half, PINNED (gate-4 F-3g): the slot's release
+    // order IS the registration order by construction — dispose() iterates its
+    // closure-held per-key Map, which is insertion-ordered by the construction
+    // registration loop (§7a.1 item 4) — this assert makes the dated note's
+    // claim executable rather than asserted-in-prose only.
+    const unsubscribedNames = added.filter((call) => call.member === 'unsubscribe').map((call) => call.name)
+    expect(unsubscribedNames, 'M-SS-4 — P1: every held handle is released in REGISTRATION order').toEqual(preSubs.map((record) => record.name))
     // P2 — post-dispose external writes to ANY released key deliver NONE
     const deliveredBefore = deliveriesTotal(state)
     store.commit('mem.slots.h1.a', { x: 1 }, { onRepeat: 'edit' })
@@ -785,6 +1029,57 @@ describe('H2a U-STORE-MODULES-BYTES — §3.1 valid states (the store-backed fam
     expect(host.containerFor('a'), 'M-SS-5 — the landed F-6/F-7/F-12 classes, dispose column: valid state').toBeNull()
     expect(writtenSnapshot(state), 'M-SS-5 — P6: the double’s written map still holds the placement records').toEqual(before)
     expect(host.dispose(), 'M-SS-5 — P3: idempotent, no throw').toBeUndefined()
+  })
+
+  // PAR-NOTE (2026-10-05, gate-4 F-3b): the own-write turn's release → commit →
+  // re-register window — the module's OWN subscription is down while its own
+  // commit's synchronous fan-out runs — is NOT exploitable in-tree. The turn
+  // (releaseOwn(); channel.commit(…); registerOwn()) has no await or reentrancy
+  // point; the only interleave the store can create inside the commit is a
+  // LISTENER body, and a WRITING listener (ADV-SMB-5's class) writing during the
+  // module's own turn would not re-invoke THIS host (its own subscription is
+  // down, so no event reaches it — no second write, no loop). Declared
+  // not-exploitable in-tree; recorded as a dated note, never a new row.
+
+  it('M-SS-6 — the NODE-SHAPED placement-refresh drive (gate-4 F-3e): the placement record starts as the module’s own opaque placement marker; an EXTERNAL commit that SHAPES the record like a node (the slot-side analog of the list node-record) delivers once and the per-key refresh RE-READS and RE-PLACES — the externally-committed node lands in the key’s container — per §2.1’s slot contract; the refresh is READ-ONLY and the container source stays the injected factory (§2.3)', () => {
+    const { store, state } = createRecordingDouble()
+    const factory = makeContainerFactory()
+    const host = makeSlotHost(store, 'h1', factory, ['a', 'b'])
+    // the key-a container is the factory's memoized product — the element the
+    // host places nodes into (a DOM-faithful node stub: its remove() detaches it
+    // from that container, exactly what a real node's remove() does)
+    const element = factory('a') as { children: unknown[] }
+    const detachCount = { value: 0 }
+    const nodeA = {
+      appendChild: () => undefined,
+      remove: () => {
+        detachCount.value += 1
+        const at = element.children.indexOf(nodeA)
+        if (at !== -1) element.children.splice(at, 1)
+      },
+    }
+    const nodeB = { appendChild: () => undefined, remove: () => undefined }
+    host.setNode('a', nodeA)
+    const ref = 'mem.slots.h1.a'
+    expect(state.written.get(ref)?.value, 'M-SS-6 — the module’s own placement record is its opaque marker').toEqual({ placed: true })
+    const writesBefore = state.calls.filter((call) => (WRITE_MEMBERS as readonly string[]).includes(call.member)).length
+    // an external commit SHAPES the record like a node — the slot-side node-record analog
+    store.commit(ref, nodeB, { onRepeat: 'edit' })
+    const writesAdded = state.calls.filter((call) => (WRITE_MEMBERS as readonly string[]).includes(call.member)).length - writesBefore
+    expect(writesAdded, 'M-SS-6 — the refresh is READ-ONLY: the ONLY store write of the turn is the external commit itself').toBe(1)
+    expect(deliveriesOf(state, ref), 'M-SS-6 — the a subscriber’s delivery counter reads 1 (one event, one delivery)').toBe(1)
+    expect(deliveriesOf(state, 'mem.slots.h1.b'), 'M-SS-6 — the untouched key receives NO delivery').toBe(0)
+    // the refresh RE-READS the stored record and RE-PLACES: the externally-committed
+    // node lands in the key's container (the node the host had placed goes out)
+    expect(element.children, 'M-SS-6 — the refresh re-places: the container holds the externally-committed node').toEqual([nodeB])
+    expect(detachCount.value, 'M-SS-6 — the node the host had placed goes out (its remove() is called once)').toBe(1)
+    // the container source never moves: the host's container is still the factory's product
+    expect(host.containerFor('a'), 'M-SS-6 — containerFor is still the INJECTED factory’s product (§2.3)').toBe(factory('a'))
+    // the readback HIT (the store now holds the externally-committed node-shaped record)
+    const read: GraphResolveResult = store.resolve(ref)
+    expect(read.found, 'M-SS-6 — the readback answers a HIT').toBe(true)
+    if (read.found) expect(read.value, 'M-SS-6 — the readback reads the externally-committed node record').toBe(nodeB)
+    void host
   })
 })
 
@@ -828,6 +1123,14 @@ describe('H2a U-STORE-MODULES-BYTES — §3.2 fail-states (LS-LEAK / SS-LEAK thr
     const other = state.subscriptions.find((record) => record.name === 'mem.other.x')
     expect(other?.live, 'F-LS-2/P7 — a subscription another party registered is NOT released by the host’s dispose').toBe(true)
   })
+
+  // PAR-NOTE (2026-10-05, gate-4 F-3h): the real-store legs' write-census
+  // Proxy EXCLUDES 'resolve' from the recorded member calls — already covered:
+  // the module's disposal path performs NO store member call at all (the
+  // per-subscription unsubscribe handle is an object-member method of the
+  // handle `subscribe` RETURNED, never a store member of the store object), so
+  // the exclusion is a documented negative census bound, never a gap. No row
+  // change beyond the existing arms.
 
   it('F-LS-3 — LS-LEAK arm (c): THE EVENT NEGATIVE — the release emits NO store event; a \'severed\'/\'clear\'/\'set\' attributable to dispose FAILS; positive control: a real sever emits exactly ONE \'severed\' naming the released reference (§2.2 P5, store-core-graph.md §2.10 item 3)', () => {
     // double leg — the event census + call log
@@ -892,6 +1195,36 @@ describe('H2a U-STORE-MODULES-BYTES — §3.2 fail-states (LS-LEAK / SS-LEAK thr
     void host
   })
 
+  it('F-LS-5 — the store-present + hostId-absent/malformed drive (gate-4 F-3c): with a store PRESENT and the host identity ABSENT, EMPTY or NON-STRING, §2.1 item 1’s declared reading binds — "the module NEVER mints, defaults, normalizes or re-interprets it (a non-string/empty value is the LANDED refusal read for a malformed option — … — never a throw)": construction and every store-carrying turn NEVER throw, and NO subscription is registered and NO record is written under a MINTED/DEFAULTED identity (a `mem.list..…` reference); a non-empty-string hostId — even one containing a `.` — is composed VERBATIM (§2.6 item 2: never normalized)', () => {
+    const malformed = [
+      { label: 'absent', options: { mount: null } },
+      { label: 'empty string', options: { mount: null, hostId: '' } },
+      { label: 'non-string', options: { mount: null, hostId: 42 as unknown as string } },
+    ] as const
+    for (const probe of malformed) {
+      const { store, state } = createRecordingDouble()
+      const options = { store, ...probe.options } as unknown as OwnedListHostOptions
+      let made: OwnedListHost | undefined
+      expect(() => { made = createOwnedListHost(options) }, `F-LS-5 — construction NEVER throws (${probe.label} hostId) — "never a throw", per the landed totality`).not.toThrow()
+      expect(
+        activeSet(state),
+        `F-LS-5 — NO subscription is registered under a minted/defaulted identity (${probe.label} hostId) — the module NEVER mints or defaults the hostId (§2.1 item 1)`,
+      ).toEqual(new Set())
+      expect(() => {
+        made?.setEntries([{ key: 'a', node: makeNode() }])
+      }, `F-LS-5 — a store-carrying turn NEVER throws (${probe.label} hostId)`).not.toThrow()
+      const ownsDefaulted = [...state.written.keys()].some((name) => /^mem\.list\.\.(order|node\.)/.test(name))
+      expect(ownsDefaulted, `F-LS-5 — NO store record is written under a minted/defaulted identity (${probe.label} hostId) — the LANDED refusal read, never a default`).toBe(false)
+    }
+    // the non-empty-string probe — VERBATIM composition (never normalized, even a '.')
+    const { store, state } = createRecordingDouble()
+    const dotted = createOwnedListHost({ mount: null, store, hostId: 'a.b' })
+    expect(activeSet(state), 'F-LS-5 — a non-empty hostId containing a `.` is composed VERBATIM: mem.list.a.b.order').toEqual(new Set(['mem.list.a.b.order']))
+    dotted.setEntries([{ key: 'a', node: makeNode() }])
+    expect(state.written.has('mem.list.a.b.order'), 'F-LS-5 — the order record lands under the VERBATIM spelling').toBe(true)
+    expect(state.written.has('mem.list.a.b.node.a'), 'F-LS-5 — the node record lands under the VERBATIM spelling').toBe(true)
+  })
+
   it('F-SS-1 — SS-LEAK arm (a): DELIVERY AFTER DISPOSE — per-key counter > 0 after dispose FAILS; positive control: the same drive before dispose delivers 1 (§3.2)', () => {
     const { store, state } = createRecordingDouble()
     const host = makeSlotHost(store, 'h1', makeContainerFactory(), ['a'])
@@ -916,6 +1249,16 @@ describe('H2a U-STORE-MODULES-BYTES — §3.2 fail-states (LS-LEAK / SS-LEAK thr
       expect(record.unsubscribeCalls).toBeGreaterThanOrEqual(1)
       expect(record.firstAnswer, 'F-SS-2 — the first call answers true (never false)').toBe(true)
     }
+    // P7 (gate-4 F-3f) — the FOREIGN-subscription half, explicit in the slot's own
+    // row: a second party's subscription on a reference OUTSIDE the module's
+    // declared set survives the host's dispose AND receives its OWN deliveries.
+    let foreignDeliveries = 0
+    store.subscribe('mem.other.x', () => { foreignDeliveries += 1 })
+    host.dispose()
+    const foreign = state.subscriptions.find((record) => record.name === 'mem.other.x')
+    expect(foreign?.live, 'F-SS-2/P7 — a second party\'s mem.other.x subscription is NOT released by the host\'s dispose (dispose releases EXACTLY the module\'s own)').toBe(true)
+    store.commit('mem.other.x', { v: 9 }, { onRepeat: 'edit' })
+    expect(foreignDeliveries, 'F-SS-2/P7 — the foreign subscription receives its OWN deliveries after the host\'s dispose').toBe(1)
   })
 
   it('F-SS-3 — SS-LEAK arm (c): THE EVENT NEGATIVE — the release emits NO store event; positive control: the sever control of F-LS-3 (§2.2 P5)', () => {
@@ -1104,28 +1447,39 @@ describe('H2a U-STORE-MODULES-BYTES — §3.3 invariants', () => {
 // ---------------------------------------------------------------------------
 
 describe('H2a U-STORE-MODULES-BYTES — §3.4 statics', () => {
-  it('S-LS-1 — the list host import census: ZERO import statements over the RAW bytes, the NORMALIZED view and COMMENTS-scanned-as-code; three positive controls; PLUS the §2.6 SPELLING-COUNT reading (one composition site per declared reference — a second copy FAILS)', () => {
+  it('S-LS-1 — the list host import census: ZERO import statements over the RAW bytes, the NORMALIZED view and COMMENTS-scanned-as-code; FIVE positive controls (incl. the gate-4 F-5b export-from re-emissions) PLUS the §2.6 SPELLING-COUNT reading (one composition site per declared reference — a second copy FAILS)', () => {
     // the import census
     expect(findImports(LIST_HOST_SRC), 'S-LS-1 — raw bytes carry zero imports').toEqual([])
     expect(findImports(normalizeView(LIST_HOST_SRC)), 'S-LS-1 — the normalized view carries zero imports').toEqual([])
     expect(findImports(commentsOnly(LIST_HOST_SRC)), 'S-LS-1 — comments scanned as code carry zero imports').toEqual([])
-    // the three positive controls — each banned corpus MUST fail the row
+    // the five positive controls — each banned corpus MUST fail the row
     expect(findImports(IMPORT_CONTROL_A)).not.toEqual([])
     expect(findImports(IMPORT_CONTROL_B)).not.toEqual([])
     expect(findImports(IMPORT_CONTROL_C)).not.toEqual([])
+    expect(findImports(IMPORT_CONTROL_D), 'S-LS-1 (F-5b) — a planted `export { … } from` the store module FAILS the row').not.toEqual([])
+    expect(findImports(IMPORT_CONTROL_E), 'S-LS-1 (F-5b) — a planted `export * from` the store module FAILS the row').not.toEqual([])
     // §2.6 item 3 — the spelling-count reading: each declared reference (order ref + node ref)
     // is composed at exactly one site in the closures; the two refs share the root literal so
     // the count is exactly 2; a duplicated full spelling pushes it past the bound and FAILS.
     const sites = countOccurrences(LIST_HOST_SRC, 'mem.list.')
     expect(sites, 'S-LS-1/§2.6 — the module’s closures compose its references at their sites (≥ 2 sites for order + node)').toBeGreaterThanOrEqual(2)
     expect(sites, 'S-LS-1/§2.6 — no second copy of a reference spelling (≤ 2)').toBeLessThanOrEqual(2)
+    // PAR-NOTE (2026-10-05, gate-4 F-6b — the census notes): the spelling-count
+    // reading counts the NORMALIZED RAW bytes, COMMENTS INCLUDED (normalizeView
+    // joins string-concatenations and template substitutions only; it never
+    // strips comments), so the tight bound [2,2] for 'mem.list.' holds only
+    // while the module's bytes — comments included — carry exactly those
+    // occurrences (measured 2026-10-05: 2). A comment mentioning a reference
+    // spelling, or a second composition site, FAILS the row — the assembly
+    // discipline's comment-hygiene half binds the implementer.
   })
 
-  it('S-LS-2 — the no-module-level-binding scan: no module-scope const/let/var holds the store; store-shaped tokens appear ONLY in the factory’s parameter position; two positive controls', () => {
-    const bindings = topLevelBindings(LIST_HOST_SRC).filter((name) => /^(store|subscription)/i.test(name) || /store/i.test(name))
-    expect(bindings, 'S-LS-2 — no module-scope store/subscription binding').toEqual([])
+  it('S-LS-2 — the no-module-level-binding scan: no module-scope const/let/var holds the store, a subscription or the host identity (the gate-4 F-5a hostId arm); three positive controls', () => {
+    const bindings = topLevelBindings(LIST_HOST_SRC).filter(storeShapedBinding)
+    expect(bindings, 'S-LS-2 — no module-scope store/subscription/hostId binding').toEqual([])
     expect(topLevelBindings('const store = createGraphStore()\n'), 'S-LS-2 — positive control: a module-level `const store = …` MUST be detected').toContain('store')
     expect(topLevelBindings('let store;\n'), 'S-LS-2 — positive control: a module-level `let store;` MUST be detected').toContain('store')
+    expect(topLevelBindings('let hostId;\n'), 'S-LS-2 (F-5a) — positive control: a module-level `let hostId;` MUST be detected').toContain('hostId')
   })
 
   it('S-LS-3 — the zero-graph-seam row SURVIVES: the module still imports NOTHING from src/renderer/** (the store is a parameter, never an import — R3-4); a corpus importing ../renderer/store-core-graph.js FAILS', () => {
@@ -1134,23 +1488,30 @@ describe('H2a U-STORE-MODULES-BYTES — §3.4 statics', () => {
     expect(findImports(IMPORT_CONTROL_A), 'S-LS-3 — positive control: a corpus importing ../renderer/store-core-graph.js FAILS the row').not.toEqual([])
   })
 
-  it('S-SS-1 — the slot import census (same three-view scan, same three positive controls) PLUS the §2.6 SPELLING-COUNT reading', () => {
+  it('S-SS-1 — the slot import census (same three-view scan, same five positive controls incl. the F-5b export-from re-emissions) PLUS the §2.6 SPELLING-COUNT reading', () => {
     expect(findImports(SLOT_HOST_SRC)).toEqual([])
     expect(findImports(normalizeView(SLOT_HOST_SRC))).toEqual([])
     expect(findImports(commentsOnly(SLOT_HOST_SRC))).toEqual([])
     expect(findImports(IMPORT_CONTROL_A)).not.toEqual([])
     expect(findImports(IMPORT_CONTROL_B)).not.toEqual([])
     expect(findImports(IMPORT_CONTROL_C)).not.toEqual([])
+    expect(findImports(IMPORT_CONTROL_D), 'S-SS-1 (F-5b) — a planted `export { … } from` the store module FAILS the row').not.toEqual([])
+    expect(findImports(IMPORT_CONTROL_E), 'S-SS-1 (F-5b) — a planted `export * from` the store module FAILS the row').not.toEqual([])
     const sites = countOccurrences(SLOT_HOST_SRC, 'mem.slots.')
     expect(sites, 'S-SS-1/§2.6 — the slots reference is composed at its one site (≥ 1)').toBeGreaterThanOrEqual(1)
     expect(sites, 'S-SS-1/§2.6 — no second copy of the slots reference spelling (≤ 1)').toBeLessThanOrEqual(1)
+    // PAR-NOTE (2026-10-05, gate-4 F-6b — the census notes): the slot spelling
+    // count reads the NORMALIZED RAW bytes, comments included — exactly 1
+    // 'mem.slots.' occurrence measured 2026-10-05; a comment mentioning the
+    // reference spelling FAILS the row (same comment-hygiene clause as S-LS-1).
   })
 
-  it('S-SS-2 — the slot no-module-level-binding scan (same two positive controls)', () => {
-    const bindings = topLevelBindings(SLOT_HOST_SRC).filter((name) => /^(store|subscription)/i.test(name) || /store/i.test(name))
-    expect(bindings, 'S-SS-2 — no module-scope store/subscription binding').toEqual([])
+  it('S-SS-2 — the slot no-module-level-binding scan (same three positive controls, incl. the F-5a hostId arm)', () => {
+    const bindings = topLevelBindings(SLOT_HOST_SRC).filter(storeShapedBinding)
+    expect(bindings, 'S-SS-2 — no module-scope store/subscription/hostId binding').toEqual([])
     expect(topLevelBindings('const store = createGraphStore()\n')).toContain('store')
     expect(topLevelBindings('let store;\n')).toContain('store')
+    expect(topLevelBindings('let hostId;\n'), 'S-SS-2 (F-5a) — positive control: a module-level `let hostId;` MUST be detected').toContain('hostId')
   })
 
   it('S-SS-3 — the container-source static: no code path in src/shared/slot-host.ts obtains a container from a store value; the injected containerFactory is the SOLE container source; positive control: the injected-factory drive passes (M-SS-2)', () => {
@@ -1206,14 +1567,23 @@ describe('H2a U-STORE-MODULES-BYTES — §3.5 existence rows', () => {
 })
 
 // ---------------------------------------------------------------------------
-// §5.5.1 — THE REGISTER'S EXECUTED LAYER. Six typed rows, 79 declared attempts,
+// §5.5.1 — THE REGISTER'S EXECUTED LAYER. Six typed rows, 85 declared attempts,
 // all executed deterministically — no generator, no pinned seed, no new
 // dependency (AGENTS.md item 11(d); the engine-pin precedent). The runner
 // enforces stop-after-5-consecutive-failures per row; an un-run attempt is
 // reported as a FAILURE. The totals print WITH their terms
-// (REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS). §7 item 3: a leak arm observed by
-// F-LS-1/F-SS-1, F-LS-2/F-SS-2 or F-LS-3/F-SS-3 BLOCKS the passing of the TP rows'
-// dispose step.
+// (REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS; the gate-4 F-5a/F-5b term
+// extensions 6→8 and 4→5 are re-printed below with the caps check). §7 item 3:
+// a leak arm observed by F-LS-1/F-SS-1, F-LS-2/F-SS-2 or F-LS-3/F-SS-3 BLOCKS
+// the passing of the TP rows' dispose step.
+//
+// PAR-NOTE (2026-10-05, gate-4 F-6c — the census notes): the attempt-total
+// census is the §5.5.3 row's own subject — a total quoted without its terms,
+// or a total that is not the sum of its terms, is a review finding
+// (REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS). The as-filed 79 = 6+4+31+6+4+28
+// is superseded BESIDE by the gate-4 extension 85 = 8+5+31+8+5+28 (F-5a: the
+// IM-2 rows 4→5; F-5b: the IM-1 rows 6→8); the printed terms are the operative
+// form.
 // ---------------------------------------------------------------------------
 
 interface RegisterRowResult {
@@ -1344,8 +1714,8 @@ function tierStore(tier: 'cold' | 'shadowing' | 'committed', family: 'list' | 's
   return store
 }
 
-describe('H2a U-STORE-MODULES-BYTES — §5.5.1 the register (6 typed rows, 79 declared attempts)', () => {
-  it('P-SMB-LH-IM-1 (S-SMB-LH-IM-1, P-IM) — 6 attempts = 3 module readings (raw · normalized · comments-as-code) + 3 positive controls (each banned import corpus MUST FAIL)', () => {
+describe('H2a U-STORE-MODULES-BYTES — §5.5.1 the register (6 typed rows, 85 declared attempts)', () => {
+  it('P-SMB-LH-IM-1 (S-SMB-LH-IM-1, P-IM) — 8 attempts = 3 module readings (raw · normalized · comments-as-code) + 5 positive controls (import-from · require · dynamic import · export-from-named · export-from-star — the gate-4 F-5b re-emission controls)', () => {
     const result = runRegisterRow('P-SMB-LH-IM-1', 'S-SMB-LH-IM-1', 'P-IM', [
       () => expect(findImports(LIST_HOST_SRC)).toEqual([]),
       () => expect(findImports(normalizeView(LIST_HOST_SRC))).toEqual([]),
@@ -1353,20 +1723,27 @@ describe('H2a U-STORE-MODULES-BYTES — §5.5.1 the register (6 typed rows, 79 d
       () => expect(findImports(IMPORT_CONTROL_A)).not.toEqual([]),
       () => expect(findImports(IMPORT_CONTROL_B)).not.toEqual([]),
       () => expect(findImports(IMPORT_CONTROL_C)).not.toEqual([]),
-    ], 'the store handle arrives ONLY as a declared call parameter')
+      () => expect(findImports(IMPORT_CONTROL_D), 'P-SMB-LH-IM-1 (F-5b) — a planted `export { … } from` the store module MUST FAIL the row').not.toEqual([]),
+      () => expect(findImports(IMPORT_CONTROL_E), 'P-SMB-LH-IM-1 (F-5b) — a planted `export * from` the store module MUST FAIL the row').not.toEqual([]),
+    ], 'the store handle arrives ONLY as a declared call parameter — an export-from re-emission is an import and FAILS the row')
     assertRegisterResult(result)
   })
 
-  it('P-SMB-LH-IM-2 (S-SMB-LH-IM-2, P-IM) — 4 attempts = 1 top-level module scan + 2 positive controls (const store/let store) + 1 declaration-position check (the options type declares the readonly store member)', () => {
+  it('P-SMB-LH-IM-2 (S-SMB-LH-IM-2, P-IM) — 5 attempts = 1 top-level module scan + 3 positive controls (const store · let store · let hostId — the gate-4 F-5a hostId arm) + 1 declaration-position check (the options type declares BOTH readonly members in a DECLARED TYPE/CALL-PARAMETER position — a comment-only mention must NOT satisfy it)', () => {
     const result = runRegisterRow('P-SMB-LH-IM-2', 'S-SMB-LH-IM-2', 'P-IM', [
       () => {
-        const bindings = topLevelBindings(LIST_HOST_SRC).filter((name) => /^(store|subscription)/i.test(name) || /store/i.test(name))
-        expect(bindings).toEqual([])
+        const bindings = topLevelBindings(LIST_HOST_SRC).filter(storeShapedBinding)
+        expect(bindings, 'P-SMB-LH-IM-2 — no module-scope store/subscription/hostId binding').toEqual([])
       },
       () => expect(topLevelBindings('const store = createGraphStore()\n')).toContain('store'),
       () => expect(topLevelBindings('let store;\n')).toContain('store'),
-      () => expect(/\breadonly\s+store\s*:/.test(LIST_HOST_SRC), 'the options type declares the store member as a readonly call-parameter member').toBe(true),
-    ], 'declaration-position check red today: OwnedListHostOptions does not declare the store member')
+      () => expect(topLevelBindings('let hostId;\n'), 'P-SMB-LH-IM-2 (F-5a) — a module-level `let hostId;` MUST be detected by the scan').toContain('hostId'),
+      () => {
+        expect(/\breadonly\s+store\s*\?:/.test(LIST_HOST_SRC), 'the options type declares `readonly store?:` — a DECLARED TYPE/CALL-PARAMETER position').toBe(true)
+        expect(/\breadonly\s+hostId\s*\?:/.test(LIST_HOST_SRC), 'the options type declares `readonly hostId?:` — a DECLARED TYPE/CALL-PARAMETER position (F-5a)').toBe(true)
+        expect(/\breadonly\s+store\s*\?:/.test('// readonly store: a comment mention only'), 'P-SMB-LH-IM-2 (F-5a) — a comment-only mention does NOT satisfy the DECLARED-position check').toBe(false)
+      },
+    ], 'green: OwnedListHostOptions declares both members as readonly call-parameter members (readonly store? + readonly hostId?)')
     assertRegisterResult(result)
   })
 
@@ -1400,11 +1777,11 @@ describe('H2a U-STORE-MODULES-BYTES — §5.5.1 the register (6 typed rows, 79 d
       expect(differs, 'P-SMB-LH-TP-1 control — an ambient-reading fixture MUST differ across tier states (the probe is non-vacuous)').toBe(true)
     })
     const result = runRegisterRow('P-SMB-LH-TP-1', 'S-SMB-LH-TP-1', 'P-TP', cells,
-      'red today: the readback cells differ across tier states (the module never wrote its mem copies); dispose step BLOCKED by the red leak arms (F-LS-1/F-LS-2/F-LS-3, §7 item 3)')
+      'green after the implementer pass: the module writes its own mem copies and the leak arms are green (§7 item 3 — nothing BLOCKS the dispose step); the readback cells hold across COLD/SHADOWING/COMMITTED')
     assertRegisterResult(result)
   })
 
-  it('P-SMB-SH-IM-1 (S-SMB-SH-IM-1, P-IM) — 6 attempts = 3 module readings + 3 positive controls (same shape as P-SMB-LH-IM-1)', () => {
+  it('P-SMB-SH-IM-1 (S-SMB-SH-IM-1, P-IM) — 8 attempts = 3 module readings + 5 positive controls (same shape as P-SMB-LH-IM-1, incl. the F-5b export-from re-emission controls)', () => {
     const result = runRegisterRow('P-SMB-SH-IM-1', 'S-SMB-SH-IM-1', 'P-IM', [
       () => expect(findImports(SLOT_HOST_SRC)).toEqual([]),
       () => expect(findImports(normalizeView(SLOT_HOST_SRC))).toEqual([]),
@@ -1412,20 +1789,27 @@ describe('H2a U-STORE-MODULES-BYTES — §5.5.1 the register (6 typed rows, 79 d
       () => expect(findImports(IMPORT_CONTROL_A)).not.toEqual([]),
       () => expect(findImports(IMPORT_CONTROL_B)).not.toEqual([]),
       () => expect(findImports(IMPORT_CONTROL_C)).not.toEqual([]),
-    ], 'the store handle arrives ONLY as a declared call parameter')
+      () => expect(findImports(IMPORT_CONTROL_D), 'P-SMB-SH-IM-1 (F-5b) — a planted `export { … } from` the store module MUST FAIL the row').not.toEqual([]),
+      () => expect(findImports(IMPORT_CONTROL_E), 'P-SMB-SH-IM-1 (F-5b) — a planted `export * from` the store module MUST FAIL the row').not.toEqual([]),
+    ], 'the store handle arrives ONLY as a declared call parameter — an export-from re-emission is an import and FAILS the row')
     assertRegisterResult(result)
   })
 
-  it('P-SMB-SH-IM-2 (S-SMB-SH-IM-2, P-IM) — 4 attempts = 1 top-level module scan + 2 positive controls + 1 declaration-position check (SlotHostOptions declares the readonly store member)', () => {
+  it('P-SMB-SH-IM-2 (S-SMB-SH-IM-2, P-IM) — 5 attempts = 1 top-level module scan + 3 positive controls + 1 declaration-position check (same extended shape as P-SMB-LH-IM-2: SlotHostOptions declares BOTH readonly members)', () => {
     const result = runRegisterRow('P-SMB-SH-IM-2', 'S-SMB-SH-IM-2', 'P-IM', [
       () => {
-        const bindings = topLevelBindings(SLOT_HOST_SRC).filter((name) => /^(store|subscription)/i.test(name) || /store/i.test(name))
-        expect(bindings).toEqual([])
+        const bindings = topLevelBindings(SLOT_HOST_SRC).filter(storeShapedBinding)
+        expect(bindings, 'P-SMB-SH-IM-2 — no module-scope store/subscription/hostId binding').toEqual([])
       },
       () => expect(topLevelBindings('const store = createGraphStore()\n')).toContain('store'),
       () => expect(topLevelBindings('let store;\n')).toContain('store'),
-      () => expect(/\breadonly\s+store\s*:/.test(SLOT_HOST_SRC), 'the options type declares the store member as a readonly call-parameter member').toBe(true),
-    ], 'declaration-position check red today: SlotHostOptions does not declare the store member')
+      () => expect(topLevelBindings('let hostId;\n'), 'P-SMB-SH-IM-2 (F-5a) — a module-level `let hostId;` MUST be detected by the scan').toContain('hostId'),
+      () => {
+        expect(/\breadonly\s+store\s*\?:/.test(SLOT_HOST_SRC), 'the options type declares `readonly store?:` — a DECLARED TYPE/CALL-PARAMETER position').toBe(true)
+        expect(/\breadonly\s+hostId\s*\?:/.test(SLOT_HOST_SRC), 'the options type declares `readonly hostId?:` — a DECLARED TYPE/CALL-PARAMETER position (F-5a)').toBe(true)
+        expect(/\breadonly\s+store\s*\?:/.test('// readonly store: a comment mention only'), 'P-SMB-SH-IM-2 (F-5a) — a comment-only mention does NOT satisfy the DECLARED-position check').toBe(false)
+      },
+    ], 'green: SlotHostOptions declares both members as readonly call-parameter members (readonly store? + readonly hostId?)')
     assertRegisterResult(result)
   })
 
@@ -1457,19 +1841,20 @@ describe('H2a U-STORE-MODULES-BYTES — §5.5.1 the register (6 typed rows, 79 d
       expect(differs, 'P-SMB-SH-TP-1 control — an ambient-reading fixture MUST differ across tier states').toBe(true)
     })
     const result = runRegisterRow('P-SMB-SH-TP-1', 'S-SMB-SH-TP-1', 'P-TP', cells,
-      'red today: the readback cell differs across tier states (the module never wrote its mem copy); dispose step BLOCKED by the red leak arms (F-SS-1/F-SS-2/F-SS-3, §7 item 3)')
+      'green after the implementer pass: the module writes its own mem copy and the leak arms are green (§7 item 3 — nothing BLOCKS the dispose step); the readback cell holds across COLD/SHADOWING/COMMITTED')
     assertRegisterResult(result)
   })
 
-  it('§5.5.3 — the attempt arithmetic prints WITH its terms (REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS): 79 = 6 + 4 + 31 + 6 + 4 + 28; caps ≤100 per row and ≤400 total hold', () => {
-    const terms = [6, 4, 31, 6, 4, 28]
+  it('§5.5.3 — the attempt arithmetic prints WITH its terms (REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS): 85 = 8 + 5 + 31 + 8 + 5 + 28; the gate-4 term extensions re-printed beside the as-filed 79; caps ≤100 per row and ≤400 total hold', () => {
+    const terms = [8, 5, 31, 8, 5, 28]
     const total = terms.reduce((sum, term) => sum + term, 0)
-    expect(total).toBe(79)
+    expect(total).toBe(85)
     expect(Math.max(...terms), 'per-row cap ≤ 100').toBeLessThanOrEqual(100)
     expect(total, 'total cap ≤ 400').toBeLessThanOrEqual(400)
     console.log(
-      '[§5.5.1] TOTALS: 79 = 6 (P-SMB-LH-IM-1) + 4 (P-SMB-LH-IM-2) + 31 (P-SMB-LH-TP-1) + 6 (P-SMB-SH-IM-1) + 4 (P-SMB-SH-IM-2) + 28 (P-SMB-SH-TP-1)' +
-        ' — chain 6 → 10 → 41 → 47 → 51 → 79 · per-family subtotals IM 20 · TP 59 · caps 79 ≤ 400 ✔ · max row 31 ≤ 100 ✔',
+      '[§5.5.1] TOTALS: 85 = 8 (P-SMB-LH-IM-1) + 5 (P-SMB-LH-IM-2) + 31 (P-SMB-LH-TP-1) + 8 (P-SMB-SH-IM-1) + 5 (P-SMB-SH-IM-2) + 28 (P-SMB-SH-TP-1)' +
+        ' — chain 8 → 13 → 44 → 52 → 57 → 85 · per-family subtotals IM 26 · TP 59 · caps 85 ≤ 400 ✔ · max row 31 ≤ 100 ✔' +
+        ' · supersedes beside the as-filed 79 = 6+4+31+6+4+28 (gate-4 F-5a/F-5b term extensions 4→5 and 6→8)',
     )
   })
 })
