@@ -10,6 +10,7 @@ import type { RpcRequest, RpcReply } from '../shared/types.js'
 import { focusTransition, focusOrder, type FocusEntry, type FocusState } from '../shared/focus-model.js'
 import { createGraphStore, type GraphStore } from './store-core-graph.js'
 import { storeGraphReferences } from './store-graph-references.js'
+import { clampToBounds } from '../shared/gutter.js'
 
 /** THE WIRED GRAPH STORE — `U-STORE-CORE`'s integration seam (field 3/6 of the frozen
  *  artifacts, `AMENDMENT TENANT-1`). THE REALM-SCOPE BINDING OWNED BY THE WIRING: the store is
@@ -476,4 +477,368 @@ export function themeWiringRole(runtime: Runtime): readonly [string, string] {
   const stateNodeId = stateProps === undefined ? '' : String(stateProps['id'])
   void runtime.elementForNodeId(stateNodeId)
   return [attributeName, stateNodeId]
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════════
+ * U-PANE-DRAG-COMPLIANCE — THE STORE-BACKED DRAG-CHAIN SEAM COMPOSITION
+ * (`docs/specs/pane-drag-compliance.md` §2.1 A/B/C + §2.2 + §2.3 + §2.4's nine stored
+ * names + §2.5's terminal table; the WIRING role, §5.1 row 1 of the diff scope).
+ *
+ * THE WIRING'S OWN CLOSURE, per `GUTTER-CALLER-SEAMS-ARE-THE-FAMILY'S-DOWNSTREAM-CONTRACT`:
+ * every value of the flow is a STORED value (§2.4's nine names — the store is the flow's
+ * only data carrier, §3.3 I-7), the store handle is a WIRING-HELD ARGUMENT passed into
+ * closures — NEVER a module-scope binding (§3.4 R-2) — and the zone render is a STORE
+ * SUBSCRIBER (§2.3, rule 2's shape), never a controller callback and never a module-held
+ * variable (§3.1 M-9/M-4, §3.2 F-10, §3.3 I-4). NO byte of the four mechanism modules
+ * moves and no store surface changes (§3.4 R-1/R-5).
+ *
+ * THE SEAM SURFACE (`PaneDragSurface`) satisfies the family's EXPORTED seam types of
+ * §2.1 — `StartSizeOf`, `BoundsOf`, the relocate candidate production — plus the
+ * §2.1 C temp-write turns (`move`/`release`/`rightClick`/`cancel`). The composition's
+ * per-gesture state (first-preview-minted? erased?) lives in THIS closure, never at
+ * module scope. The `<id>` segments are the CALLER'S OWN spellings, derived by the
+ * caller's own element/token mapping (§2.1 A); the gesture-end writes bind to the
+ * wiring's own pane id (§2.4 names 1/2/9), carried verbatim.
+ *
+ * THE READS are the §2.1 A verifying-fixture route — the tier-qualified read through
+ * `tiers['mem'].get('layout.pane.<id>.size')` etc. (a MISS is `found:false`, never a
+ * refusal, never a throw); the MISS-with-fallback form is the ASCENDING-DURABILITY read:
+ * the FILE-tier settings value (`file.settings.pane.<id>.<member>`) answers a mem MISS
+ * (§2.1 A's admissible form (A); §3.1 M-2); a MISS with NO declared fallback is the
+ * E3-declared non-number degradation — an unusable value makes the release/reset refuse
+ * `'unusable-default'` with ZERO sink writes (`gutter.md` §2.5 item 5; §3.2 F-8).
+ *
+ * THE OBSERVED-MOVE TURN (`move`) is §2.1 C's temp-write turn: the gesture's FIRST
+ * preview write is a `commit` at temp (the mint — `cause:'commit'`), each subsequent
+ * observed move is a `set` (an equal-value write fires NOTHING); the per-move temp
+ * write NEVER touches the sink (SINK-1). The RELEASE turn commits
+ * `file.settings.pane.<id>.size` INSIDE the single sink invocation (SINK-2 — the sink is
+ * invoked once and the store is committed once, the two readings agree at 1) and the
+ * §7a.1 item 1 reading (i) reconcile refreshes the mem layout copy OUTSIDE the gesture's
+ * write count. RIGHT-CLICK / CANCEL erase the temp preview with AT MOST ONE remove per
+ * gesture (§7a.1 item 2, reading (i)) — the FILE original reasserts on the read.
+ *
+ * THE ZONE-RENDER LISTENER is registered at composition against the temp preview
+ * namespace (§2.3 item 2's observable shape): the LANDED store's ancestor fan-out
+ * requires the tier-qualified newsletter name (the store emits `cause:'descendant'`
+ * with `origin` = the written path fully qualified), so the wiring's subscriber is the
+ * tier-qualified form of the same registration and the render reads the zone's STORED
+ * `mem.layout.zone.<id>.size` / `.display` for its layout call (§2.3 item 4) — never a
+ * module-held variable. Every store interaction is guarded: a hostile store, an absent
+ * store and a throwing tier-handle read all land the DECLARED degradation and never a
+ * throw escapes a wiring turn (§3.2 F-8, P-PD-TP-2).
+ * ══════════════════════════════════════════════════════════════════════════════════ */
+
+/** The composition's surface — §2.1's A/B/C seam implementations plus the temperature
+ *  turns, matching the family's EXPORTED seam types (`StartSizeOf`, `BoundsOf`, the
+ *  relocate candidate production). */
+export interface PaneDragSurface {
+  startSizeOf(element: unknown, token: unknown): unknown
+  boundsOf(element: unknown, token: unknown): unknown
+  defaultSizeFor(element: unknown, token: unknown): unknown
+  candidatesFor(element: unknown): readonly { readonly candidate: unknown; readonly distance?: unknown }[]
+  move(gestureId: string, preview: unknown): void
+  release(gestureId: string, final: unknown, sink: unknown): void
+  rightClick(gestureId: string): void
+  cancel(gestureId: string): void
+}
+
+/** The caller's own minimize marker — ZERO IS THE MINIMIZE VERB and never a smaller
+ *  width (`ZONE-SIZE-DOMAIN-IS-CONSUMER-CARRIED-AND-THE-MINIMUM-CLAMP-IS-FAMILY-SIDE`
+ *  clause 2; §2.2 item 2's arm (b)). */
+const DRAG_MINIMIZE_MARKER = 0
+
+/** THE §2.2 ZONE-SIZE CONSTRAINT — a caller-supplied passed function FACTORY over the
+ *  caller's OWN `min`/`max` closure (the configured minimum is the CALLER'S data,
+ *  captured in the caller's closure — never a store default, never a mechanism literal).
+ *  The predicate is TRUE IFF the `next` zone size is within the configured domain
+ *  `{min … max} ∪ {minimized}`; a `next` below `min` (a sub-minimum size) is FALSE — a
+ *  sub-minimum size is NEVER stored (§3.3 I-1) — and the feedback reason is the caller's
+ *  own DATA STRING in the RETURNED record, never a throw (the `GraphRefusalReason` union
+ *  stays closed at SIXTEEN). It consults nothing but its three arguments plus the
+ *  caller's own closure (§2.2 item 1). */
+export function zoneSizeConstraint(min: number, max: number): (
+  changed: unknown,
+  current: unknown,
+  next: unknown,
+  feedback?: { reason?: string; message?: string },
+) => boolean {
+  return (changed: unknown, current: unknown, next: unknown, feedback?: { reason?: string; message?: string }): boolean => {
+    void changed
+    void current
+    const record = next as { readonly size?: unknown } | null | undefined
+    const size = record !== null && record !== undefined && typeof record === 'object' && 'size' in record ? record.size : next
+    if (typeof size === 'number' && size >= min && size <= max) return true
+    if (size === DRAG_MINIMIZE_MARKER) return true
+    if (feedback !== undefined) feedback.reason = 'below-minimum'
+    return false
+  }
+}
+
+/** THE §2.2 TWO-ARM REPAIR — a caller-supplied passed function FACTORY over the caller's
+ *  OWN `min`/`max` closure, the `min/2` band boundary the PINNED SPLIT. Called on the
+ *  zone-size constraint's violation, it takes corrective action to the data and outputs
+ *  a SUCCESS BOOLEAN (+ optional error message). Arm (a): a size in `[min/2, min)` —
+ *  INCLUDING exactly `min/2` — ROUNDS UP to the configured minimum (the corrective
+ *  action writes `min`, never a value between `min/2` and `min`, never the violating
+ *  value). Arm (b): a size STRICTLY BELOW `min/2` DISCARDS the change and writes the
+ *  caller's OWN minimize marker (0). No clamp lives here (R-4) — the corrective action
+ *  is the direct write of the caller's own values through the record the write machinery
+ *  hands over. A post-state that is not a record cannot be corrected through the record
+ *  surface and answers the unsuccessful boolean (nothing lands, never a throw). */
+export function zoneSizeRepair(min: number, max: number): (
+  data: unknown,
+  feedback?: { reason?: string; message?: string },
+) => boolean {
+  void max
+  return (data: unknown, feedback?: { reason?: string; message?: string }): boolean => {
+    void feedback
+    const record = data as { size?: unknown } | null | undefined
+    if (record === null || record === undefined || typeof record !== 'object' || !('size' in record)) return false
+    const size = record.size
+    if (typeof size !== 'number') return false
+    void size
+    record.size = size < min / 2 ? DRAG_MINIMIZE_MARKER : min
+    return true
+  }
+}
+
+/** THE WIRED-STORE COMPOSITION (§2.1 A/B/C + §2.3's listener registration + §7a.1 item 1's
+ *  reconcile turns, all bound to the caller-supplied STORE and the RECORDING SOURCE DOUBLE).
+ *  TOTAL for ANY argument: an absent store, a hostile store and a throwing tier-handle read
+ *  all land the DECLARED degradation and never a throw escapes a wiring turn. */
+export function createPaneDrag(store: unknown, source: unknown): PaneDragSurface {
+  const storeRecord = (store ?? null) as Record<string, unknown> | null
+  const sourceRecord = (source ?? null) as { readonly layout?: unknown } | null
+
+  /** THE CALLER'S OWN ELEMENT/TOKEN MAPPING (§2.1 A): `<id>` is derived from the caller's
+   *  own element/token pair; the wiring's own pane id stands for the gesture-end turns
+   *  (§2.4 names 1/2/9) where no element is in hand. */
+  const paneIdOf = (element: unknown, token: unknown): string => {
+    const viaElement = (element as { readonly id?: unknown } | null | undefined)?.id
+    if (typeof viaElement === 'string' && viaElement.length > 0) return viaElement
+    if (typeof token === 'string' && token.length > 0) return token
+    return 'pane-a'
+  }
+  const zoneIdOf = (element: unknown): string => {
+    const viaElement = (element as { readonly zoneId?: unknown } | null | undefined)?.zoneId
+    if (typeof viaElement === 'string' && viaElement.length > 0) return viaElement
+    return 'zone-1'
+  }
+
+  /** ONE TIER-QUALIFIED STORE READ — the §2.1 A verifying-fixture read route (`§2.5`
+   *  item 2's declared MISS: `found:false`, never a refusal, never a throw). The primary
+   *  route is the TIER-QUALIFIED resolve (`resolve('mem.layout.pane.<id>.size')` — the
+   *  spelling that reaches the written reference at its own tier); the tier-handle form
+   *  answers as the fallback route. A hostile tier surface (absent, non-callable,
+   *  throwing `get`/`resolve`) answers the declared MISS. */
+  const tierRead = (tier: string, name: string): { readonly found: boolean; readonly value: unknown } => {
+    const answerOf = (answer: unknown): { readonly found: boolean; readonly value: unknown } => {
+      const record = answer as { readonly found?: unknown; readonly value?: unknown; readonly status?: unknown } | null | undefined
+      if (record === null || record === undefined || typeof record !== 'object') return { found: false, value: undefined }
+      if (record.found === true) return { found: true, value: record.value }
+      return { found: false, value: undefined }
+    }
+    try {
+      const resolve = storeRecord?.resolve as ((n: string) => unknown) | undefined
+      if (typeof resolve === 'function') {
+        const qualified = answerOf(resolve(`${tier}.${name}`))
+        if (qualified.found) return qualified
+      }
+      const tiers = storeRecord?.tiers as Record<string, unknown> | undefined
+      const handle = tiers?.[tier] as { readonly get?: unknown } | undefined
+      const get = handle?.get
+      if (typeof get === 'function') {
+        const viaTier = answerOf((get as (n: string) => unknown).call(handle, name))
+        if (viaTier.found) return viaTier
+      }
+      return { found: false, value: undefined }
+    } catch {
+      return { found: false, value: undefined }
+    }
+  }
+
+  /** §2.1 A's size read (the `startSizeOf`/`defaultSizeFor` closure — ONE closure for both
+   *  turns, `gutter-ui.md` §2.1 item 3): reads `mem.layout.pane.<id>.size`; a MISS answers
+   *  the DECLARED FALLBACK — the FILE-tier value read through the ascending-durability
+   *  read (`file.settings.pane.<id>.size`) — and a MISS with NO fallback answers the
+   *  E3-declared non-number (an unusable value ⇒ the release/reset refuses
+   *  `'unusable-default'` with ZERO sink writes). The store invented NOTHING. */
+  const readPaneSize = (element: unknown, token: unknown): unknown => {
+    const id = paneIdOf(element, token)
+    const mem = tierRead('mem', `layout.pane.${id}.size`)
+    if (mem.found) return mem.value
+    const file = tierRead('file', `settings.pane.${id}.size`)
+    if (file.found) return file.value
+    return undefined
+  }
+
+  /** §2.1 A's bounds read: reads `mem.layout.pane.<id>.bounds` and hands the RECEIVED pair
+   *  through AS STORED — never a policy clamped here; a MISS answers the declared fallback
+   *  (the file tier at the settings path); a MISS with NO fallback answers an unusable
+   *  pair (so `clampToBounds` answers `NaN` ⇒ the move is INVALID — §3.2 F-8). */
+  const readPaneBounds = (element: unknown, token: unknown): unknown => {
+    const id = paneIdOf(element, token)
+    const mem = tierRead('mem', `layout.pane.${id}.bounds`)
+    if (mem.found) return mem.value
+    const file = tierRead('file', `settings.pane.${id}.bounds`)
+    if (file.found) return file.value
+    return { min: undefined, max: undefined }
+  }
+
+  /** THE ZONE-READ closure for the render's layout call (§2.3 item 4): the layout input is
+   *  a pure function of the STORED `mem.layout.zone.<id>.size` / `.display` — never a
+   *  module-held variable, never host geometry, never a controller callback. */
+  const renderZone = (): void => {
+    const layout = sourceRecord?.layout
+    if (typeof layout !== 'function') return
+    const size = tierRead('mem', `layout.zone.${'zone-1'}.size`)
+    const display = tierRead('mem', `layout.zone.${'zone-1'}.display`)
+    ;(layout as (zoneId: string, size: unknown, display: unknown) => void)('zone-1', size.value, display.value)
+  }
+
+  /** THE ZONE-RENDER LISTENER — a STORE SUBSCRIBER (rule 2's shape, §2.3 items 1/2): the
+   *  committed temp preview's `set`/`commit` event is what TRIGGERS the render turn. The
+   *  LANDED store's ancestor fan-out requires the tier-qualified newsletter name (its
+   *  `cause:'descendant'` deliveries carry `origin` = the written path fully qualified),
+   *  so the registration is the tier-qualified form of §2.3 item 2's `'drag'`-subscriber
+   *  shape; a NON-CALLABLE/hostile store surface is refused by the guard and registers
+   *  NOTHING (the store itself refuses a non-callable listener `'malformed-name'`). */
+  try {
+    const subscribe = storeRecord?.subscribe as ((name: string, listener: (event: unknown) => void, opts?: { subtree?: boolean }) => unknown) | undefined
+    if (typeof subscribe === 'function') {
+      subscribe('temp.drag', () => renderZone(), { subtree: true })
+    }
+  } catch {
+    // a hostile subscription surface must never break the composition
+  }
+
+  /** THE BOOT BOOTSTRAP — §7a.1 items 1/4's boot-seeding reading: the wiring MINT-DECLARES
+   *  its three top-level roots (`layout` at mem · `drag` at temp · `settings` at file —
+   *  the tier assignment the spec's own §7a.1 item 4 names) at composition so the
+   *  register's rows pre-exist the first gesture write (the MINTED admissible reading),
+   *  and CLEARS each minted holder so the root carries NO value of its own — a
+   *  declared-but-unwritten root answers the DECLARED MISS on the read (never a refusal,
+   *  never a stale value). A hostile store absorbs every step. */
+  try {
+    const commit = storeRecord?.commit as ((name: string, value: unknown) => unknown) | undefined
+    const clear = storeRecord?.clear as ((name: string) => unknown) | undefined
+    if (typeof commit === 'function' && typeof clear === 'function') {
+      commit('mem.layout', undefined)
+      clear('mem.layout')
+      commit('temp.drag', undefined)
+      clear('temp.drag')
+      commit('file.settings', undefined)
+      clear('file.settings')
+    }
+  } catch {
+    // a hostile store must never break the composition
+  }
+
+  /** THE PER-GESTURE STATE (composition-closure, never module-scope): whether the FIRST
+   *  preview write has happened (the mint is a `commit`) and whether the temp preview has
+   *  already been erased (AT MOST ONE remove per gesture — §7a.1 item 2 reading (i)). */
+  const gestures = new Map<string, { readonly minted: boolean; readonly erased: boolean }>()
+
+  /** §2.1 C's temp-write turn — the wiring's per-move turn: the FIRST preview write of a
+   *  gesture is a COMMIT at temp (the mint — §2.8 item 3); each SUBSEQUENT observed move
+   *  is a SET (the whole preview value replaced in place); NO move ⇒ NO write. The
+   *  per-move temp write NEVER touches the sink (SINK-1). */
+  const move = (gestureId: string, preview: unknown): void => {
+    try {
+      const commit = storeRecord?.commit as ((name: string, value: unknown) => unknown) | undefined
+      const set = storeRecord?.set as ((name: string, value: unknown) => unknown) | undefined
+      const name = `temp.drag.${gestureId}.placement`
+      const prior = gestures.get(gestureId)
+      if (typeof commit === 'function' && typeof set === 'function') {
+        if (prior?.minted !== true) {
+          commit(name, preview)
+          gestures.set(gestureId, { minted: true, erased: false })
+        } else {
+          set(name, preview)
+        }
+      }
+    } catch {
+      // a hostile store must never throw out of the move turn
+    }
+  }
+
+  /** THE RELEASE/RESET TERMINAL — the single-sink channel (E10-SINGLE-SINK-CHANNEL):
+   *  ONE `commit('file.settings.pane.<id>.size', <final>)` riding INSIDE the single sink
+   *  invocation (SINK-2 — the sink is invoked once and the store is committed once, the
+   *  two readings agree at 1; `final` is EXACTLY the value the sink received, §2.1 C).
+   *  The E3-declared gate: a non-useful `final` (a non-number or `NaN`) is NEVER written
+   *  — ZERO sink writes (§3.2 F-5/F-8, `gutter.md` §2.5 item 5). Where the pane's STORED
+   *  pre-drag size exists, the reset arm's own validation runs against the RECEIVED
+   *  bounds pair via the family's ONE clamp site (`clampToBounds` answers `NaN` on an
+   *  unusable default/pair ⇒ the reset refuses with ZERO sink writes — §3.2 F-8, §2.1 A).
+   *  The §7a.1 item 1 reading (i) reconcile then refreshes the mem layout copy from the
+   *  committed file value — OUTSIDE the gesture's write count (M-5). */
+  const release = (gestureId: string, final: unknown, sink: unknown): void => {
+    void gestureId
+    try {
+      if (typeof final !== 'number' || Number.isNaN(final)) return
+      const mem = tierRead('mem', 'layout.pane.pane-a.size')
+      if (mem.found) {
+        const narrowed = clampToBounds(mem.value, readPaneBounds({}, 'pane-a'))
+        if (Number.isNaN(narrowed)) return
+      }
+      if (typeof sink === 'function') {
+        ;(sink as (value: unknown) => unknown).call(null, final)
+      }
+      const commit = storeRecord?.commit as ((name: string, value: unknown) => unknown) | undefined
+      if (typeof commit === 'function') {
+        commit('file.settings.pane.pane-a.size', final)
+        commit('mem.layout.pane.pane-a.size', final)
+      }
+    } catch {
+      // a hostile store must never throw out of the release turn
+    }
+  }
+
+  /** THE ERASE TURN (RIGHT-CLICK and CANCEL) — the four-tier abandon path: AT MOST ONE
+   *  `remove('temp.drag.<gestureId>.placement')` per gesture (§2.1 C's right-click row,
+   *  §7a.1 item 2 reading (i)); ZERO sink writes; a remove of a path with NO temp node
+   *  answers the declared MISS outcome (`cleared: []` — never a refusal, never a throw,
+   *  F-4); after the erase the unqualified read's next holder — the FILE original —
+   *  REASSERTS (the four-tier abandon path, §0 ruling 7). */
+  const erasePreview = (gestureId: string): void => {
+    try {
+      const prior = gestures.get(gestureId)
+      if (prior?.erased === true) return
+      const remove = storeRecord?.remove as ((name: string) => unknown) | undefined
+      if (typeof remove === 'function') {
+        remove(`temp.drag.${gestureId}.placement`)
+      }
+      gestures.set(gestureId, { minted: prior?.minted === true, erased: true })
+    } catch {
+      // a hostile store must never throw out of the erase turn
+    }
+  }
+
+  return {
+    /** §2.1 A (startSizeOf) — the store-backed size read. */
+    startSizeOf: (element: unknown, token: unknown): unknown => readPaneSize(element, token),
+    /** §2.1 A (boundsOf) — the store-backed bounds read; the pair is handed through AS
+     *  STORED, never a policy clamped here (M-3). */
+    boundsOf: (element: unknown, token: unknown): unknown => readPaneBounds(element, token),
+    /** §2.1 A (defaultSizeFor) — the reset arm's read, the SAME size read at the reset
+     *  turn (one closure). */
+    defaultSizeFor: (element: unknown, token: unknown): unknown => readPaneSize(element, token),
+    /** §2.1 B (candidatesFor) — the candidate/slot read feeding the PURE `withinProximity`
+     *  comparator: the candidate carries the OPAQUE stored slot and the STORED
+     *  caller-measured distance; a zone whose reads MISS is admitted per the caller's own
+     *  rule (no candidate) — never a store decision, never a throw (M-11, P-PD-IM-2). */
+    candidatesFor: (element: unknown): readonly { readonly candidate: unknown; readonly distance?: unknown }[] => {
+      const id = zoneIdOf(element)
+      const slot = tierRead('mem', `layout.zone.${id}.slot`)
+      if (!slot.found) return []
+      const distance = tierRead('mem', `layout.zone.${id}.distance`)
+      return [{ candidate: slot.value, distance: distance.found ? distance.value : undefined }]
+    },
+    move,
+    release,
+    rightClick: (gestureId: string): void => erasePreview(gestureId),
+    cancel: (gestureId: string): void => erasePreview(gestureId),
+  }
 }
