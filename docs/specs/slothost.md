@@ -1202,7 +1202,11 @@ differential, `28`) — the plan's `§5.2.7` round-3 item (4) set, executed in t
 set `tests/store-modules-bytes.test.ts`
 (`REGISTER-ENTRY-COUNT-IS-NOT-CAPPED-AND-ARCHIVE-IS-THE-TRUTH-MECHANISM`, cited by row name). A
 reader of THIS register reads the store-driving rows at that contract; this register is not their
-home. **The container-source caveat binds throughout: `SLOTHOST-CONTAINER-SOURCE-IS-INJECTED`
+home. **⟶ EXECUTED-TERMS BESIDE 2026-10-03 (the H2a gate-8 documentation review; DRIFT SMB-G-50's face here CLOSED —
+the as-filed `6`/`4`/`28` terms above are KEPT VISIBLE): the EXECUTED terms of the three H2a rows are `P-SMB-SH-IM-1`
+`8` · `P-SMB-SH-IM-2` `5` · `P-SMB-SH-TP-1` `28` (the gate-4 F-5a/F-5b term extensions `4 → 5` and `6 → 8`); the unit
+register's executed total is `85 = 8 + 5 + 31 + 8 + 5 + 28`, printed with its terms at
+`docs/specs/store-modules-bytes.md` §5.5.3.** **The container-source caveat binds throughout: `SLOTHOST-CONTAINER-SOURCE-IS-INJECTED`
 untouched — the store carries the PLACEMENT RECORD, never the container (H2a §2.3).**
 
 **What this section is, in one sentence.** The exemption `§5.5.0` above is replaced by a **typed
