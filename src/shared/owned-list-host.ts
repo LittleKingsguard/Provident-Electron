@@ -283,6 +283,15 @@ export function createOwnedListHost<N = unknown>(
   // the new obligations do not engage (§2.1 item 4).
   const channel: OwnedListHostStore | null | undefined = source.store
   const hostIdentity: string = typeof source.hostId === 'string' ? source.hostId : ''
+  /** §2.1 item 1's LANDED refusal read (U-STORE-MODULES-BYTES): a missing,
+   *  non-string or EMPTY host identity is NEVER minted, defaulted, normalized
+   *  or re-interpreted — the store-backed contract (the subscription, the
+   *  records, the re-invocation) declines to engage under the degenerate
+   *  identity. The handle may be present; every store turn below stays a valid
+   *  no-op and nothing throws, per the landed totality. A non-empty-string
+   *  identity — even one containing `.` — is composed VERBATIM (§2.6 item 2). */
+  const storeEngaged: boolean =
+    channel !== null && channel !== undefined && typeof source.hostId === 'string' && source.hostId.length > 0
   const orderReference = 'mem.list.' + hostIdentity + '.order'
   const nodeReferenceOf = (key: ListKey): string => 'mem.list.' + hostIdentity + '.node.' + key
   /** The closure-held subscription handle (P-SMB-LH-IM-2: never a module-scope
@@ -313,7 +322,7 @@ export function createOwnedListHost<N = unknown>(
   /** The subscription's listener: a MISS read is the bookkeeping-authority
    *  outcome (§2.1 item 5) — nothing is invented, nothing is re-minted here. */
   const onOrderEvent = (): void => {
-    if (released) return
+    if (released || !storeEngaged) return
     if (channel === null || channel === undefined || typeof channel.resolve !== 'function') return
     const answer = channel.resolve(orderReference)
     if (!answer.found) return
@@ -335,7 +344,7 @@ export function createOwnedListHost<N = unknown>(
   /** Register (or re-register) the module's OWN subscription on the order
    *  reference — the ONLY subscription the module holds (§2.4 item 1). */
   const registerOwn = (): void => {
-    if (released) return
+    if (released || !storeEngaged) return
     if (channel === null || channel === undefined || typeof channel.subscribe !== 'function') return
     const handle = channel.subscribe(orderReference, onOrderEvent)
     if (handle !== null && typeof handle === 'object' && typeof (handle as { unsubscribe?: unknown }).unsubscribe === 'function') {
@@ -347,7 +356,7 @@ export function createOwnedListHost<N = unknown>(
   *   with the edit outcome; never `set` for the module's own records. Runs with
   *   the module's own subscription released (self-delivery suppressed). */
   const writeOrderRecord = (keys: readonly ListKey[]): void => {
-    if (released || channel === null || channel === undefined || typeof channel.commit !== 'function') return
+    if (released || !storeEngaged || channel === null || channel === undefined || typeof channel.commit !== 'function') return
     releaseOwn()
     channel.commit(orderReference, keys, { onRepeat: 'edit' })
     registerOwn()
@@ -359,7 +368,7 @@ export function createOwnedListHost<N = unknown>(
    *  raw node lands on the editing path (edit outcomes carry no value gate) —
    *  so the record ends as the caller's node in every store state. */
   const writeNodeRecord = (key: ListKey, node: unknown): void => {
-    if (released || channel === null || channel === undefined || typeof channel.commit !== 'function') return
+    if (released || !storeEngaged || channel === null || channel === undefined || typeof channel.commit !== 'function') return
     const name = nodeReferenceOf(key)
     const receipt = channel.commit(name, node, { onRepeat: 'edit' }) as
       | { status?: unknown; reason?: unknown }
@@ -447,7 +456,7 @@ export function createOwnedListHost<N = unknown>(
     sync()
     // §2.1 item 2 — the store-backed turn: the host's OWN order and the nodes
     // it acquired, each via commit(…, {onRepeat:'edit'}) on the mem tier.
-    if (!released && channel !== null && channel !== undefined && typeof channel.commit === 'function') {
+    if (!released && storeEngaged && channel !== null && channel !== undefined && typeof channel.commit === 'function') {
       releaseOwn()
       channel.commit(orderReference, projection.slice(), { onRepeat: 'edit' })
       for (const key of projection) {
@@ -504,7 +513,7 @@ export function createOwnedListHost<N = unknown>(
     projection = next
     sync()
     // §2.1 item 2 — the store-backed order write on an order change.
-    if (!released && channel !== null && channel !== undefined && typeof channel.commit === 'function') {
+    if (!released && storeEngaged && channel !== null && channel !== undefined && typeof channel.commit === 'function') {
       releaseOwn()
       channel.commit(orderReference, projection.slice(), { onRepeat: 'edit' })
       registerOwn()

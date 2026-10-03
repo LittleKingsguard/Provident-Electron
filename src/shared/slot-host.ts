@@ -300,6 +300,16 @@ export function createSlotHost(options: SlotHostOptions): SlotHost {
   // consulted for a container and a record's value never IS one (§2.3).
   const channel = source.store
   const hostIdentity: string = typeof source.hostId === 'string' ? source.hostId : ''
+  /** §2.1 item 1's LANDED refusal read (U-STORE-MODULES-BYTES), the slot-host
+   *  arm: a missing, non-string or EMPTY host identity is NEVER minted,
+   *  defaulted, normalized or re-interpreted — the store-backed contract (the
+   *  per-key subscriptions, the placement records, the per-key re-invocation)
+   *  declines to engage under the degenerate identity. The handle may be
+   *  present; every store turn below stays a valid no-op and nothing throws,
+   *  per the landed totality. A non-empty-string identity — even one containing
+   *  a `.` — is composed VERBATIM (§2.6 item 2). */
+  const storeEngaged: boolean =
+    channel !== null && channel !== undefined && typeof source.hostId === 'string' && source.hostId.length > 0
   const slotReferenceOf = (key: SlotKey): string => 'mem.slots.' + hostIdentity + '.' + key
   /** True from the moment dispose() runs: the store turns become no-ops and a
    *  second dispose is a no-op (§2.2 P3/P6 — records are never deleted). */
@@ -314,7 +324,7 @@ export function createSlotHost(options: SlotHostOptions): SlotHost {
    *  the bookkeeping-authority outcome (§2.1 item 5); a non-node-shaped record
    *  (an external caller's data) changes nothing. */
   const refreshKey = (key: SlotKey): void => {
-    if (disposed || channel === null || channel === undefined || typeof channel.resolve !== 'function') return
+    if (disposed || !storeEngaged || channel === null || channel === undefined || typeof channel.resolve !== 'function') return
     const answer = channel.resolve(slotReferenceOf(key))
     if (!answer.found) return
     const record = records.get(key)
@@ -342,7 +352,7 @@ export function createSlotHost(options: SlotHostOptions): SlotHost {
   /** Register (or re-register) the module's OWN subscription for a declared
    *  key — exact-reference, one handle per key (§2.4 item 1). */
   const registerKey = (key: SlotKey): void => {
-    if (disposed) return
+    if (disposed || !storeEngaged) return
     if (channel === null || channel === undefined || typeof channel.subscribe !== 'function') return
     const handle = channel.subscribe(slotReferenceOf(key), (): void => refreshKey(key))
     if (handle !== null && typeof handle === 'object' && typeof (handle as { unsubscribe?: unknown }).unsubscribe === 'function') {
@@ -356,7 +366,7 @@ export function createSlotHost(options: SlotHostOptions): SlotHost {
    *  writes, §3.1 M-SS-3). The record's value is the host's own opaque
    *  placement marker — NEVER a container (§2.3). */
   const writePlacement = (key: SlotKey, value: unknown): void => {
-    if (disposed || channel === null || channel === undefined || typeof channel.commit !== 'function') return
+    if (disposed || !storeEngaged || channel === null || channel === undefined || typeof channel.commit !== 'function') return
     releaseKey(key)
     channel.commit(slotReferenceOf(key), value, { onRepeat: 'edit' })
     registerKey(key)
