@@ -82,7 +82,7 @@ placement the sibling specs use.)**
    precedent) and `0` `(bounded)` rows. **Three rows per module — the plan's `§5.2.7` round-3 item (4) set: (a) the
    IMPORT-CENSUS `P-IM` row with its positive control · (b) the NO-MODULE-LEVEL-BINDING `P-IM` row · (c) the
    STORE-STATE-INDEPENDENCE TWO-RUN DIFFERENTIAL `P-TP` row (COLD / SHADOWING / COMMITTED).** **The caps are compared
-   against the DECLARED figures: `79 ≤ 400`; per-row maximum `31` (`P-SMB-LH-TP-1`) ≤ `100`; the `≤8` per-module
+   against the DECLARED figures: `79 ≤ 400` ⟶ RE-GRAINED BESIDE 2026-10-03 (THE GATE-5 BLIND-GREENS DRIFT SMB-G-50; RCA-8(d) ANNOTATE-BESIDE — the as-filed 79-form above is KEPT VISIBLE and the EXECUTED layer is the operative reading): the register's executed terms are 85 = 8 + 5 + 31 + 8 + 5 + 28 (chain 8 -> 13 -> 44 -> 52 -> 57 -> 85, family subtotals IM 26 · TP 59; caps 85 <= 400 · per-row max 31 <= 100) — the gate-4 F-5a/F-5b term extensions (P-SMB-*-IM-2 4 -> 5, P-SMB-*-IM-1 6 -> 8) are the cause, and this clause lands them BESIDE every declared cell of this file. A pass quoting the register MUST quote 85 with these terms.; per-row maximum `31` (`P-SMB-LH-TP-1`) ≤ `100`; the `≤8` per-module
    component-breakdown signal is an OUTCOME, not a budget — each module carries exactly `3` of its mandated rows
    (`REGISTER-ENTRY-COUNT-IS-NOT-CAPPED-AND-ARCHIVE-IS-THE-TRUTH-MECHANISM`).**
 
@@ -629,7 +629,7 @@ the `[T]` layer exactly as landed; **(3)** gate 6 is `STRUCTURAL` — the word `
 
 The unit's DONE row (the supervisor's to write at gate 10) must carry: the unit id/wave (`H2a` · wave `H`), the honest
 gate list (spec → red → green → adversarial + PBT audit → blind greens → doc review → trio/legs → DONE), the register's
-per-row attempts/held/broken with the **printed terms** (`79 = 6 + 4 + 31 + 6 + 4 + 28`, `§5.5.3`), an un-run register
+per-row attempts/held/broken with the **printed terms** (`79 = 6 + 4 + 31 + 6 + 4 + 28` ⟶ RE-GRAINED BESIDE 2026-10-03 (THE GATE-5 BLIND-GREENS DRIFT SMB-G-50; RCA-8(d) ANNOTATE-BESIDE — the as-filed 79-form above is KEPT VISIBLE and the EXECUTED layer is the operative reading): the register's executed terms are 85 = 8 + 5 + 31 + 8 + 5 + 28 (chain 8 -> 13 -> 44 -> 52 -> 57 -> 85, family subtotals IM 26 · TP 59; caps 85 <= 400 · per-row max 31 <= 100) — the gate-4 F-5a/F-5b term extensions (P-SMB-*-IM-2 4 -> 5, P-SMB-*-IM-1 6 -> 8) are the cause, and this clause lands them BESIDE every declared cell of this file. A pass quoting the register MUST quote 85 with these terms., `§5.5.3`), an un-run register
 row listed as a FAILURE, the landed suites' added-count delta and their green status, the `[U]`-NOT-OFFERED structural
 reason, the store's frozen digests recomputed UNCHANGED (`E-2`), and the amendment set of `§2.5` item 6 as landed.
 
@@ -637,7 +637,7 @@ reason, the store's frozen digests recomputed UNCHANGED (`E-2`), and the amendme
 KEPT VISIBLE): "the landed suites' added-count delta and their green status" is re-read — the
 ADDED-count delta is measured on the unit's OWN file (`tests/store-modules-bytes.test.ts`); the
 two landed suites' green status is their OWN (they are not edited by this unit and carry no added
-family). The printed register terms (`79 = 6 + 4 + 31 + 6 + 4 + 28`, `§5.5.3`) and the rest of
+family). The printed register terms (`79 = 6 + 4 + 31 + 6 + 4 + 28` ⟶ RE-GRAINED BESIDE 2026-10-03 (DRIFT SMB-G-50): the executed register is 85 = 8 + 5 + 31 + 8 + 5 + 28 (chain 8 -> 13 -> 44 -> 52 -> 57 -> 85; caps 85 <= 400, max row 31 <= 100) — the F-5a/F-5b term extensions; the as-filed 79-form above is KEPT VISIBLE., `§5.5.3`) and the rest of
 this DONE-row shape are UNCHANGED.**
 
 ### 5.4 Rollback
@@ -692,9 +692,9 @@ citation is never used as a register row). **A declared term IS a DRIVE count**
 
 ### 5.5.3 Attempt arithmetic — STATED SO A READER CAN CHECK IT AGAINST THE TABLES
 
-**THE DECLARED TOTAL, WITH ITS TERMS: `79 = 6 (P-SMB-LH-IM-1) + 4 (P-SMB-LH-IM-2) + 31 (P-SMB-LH-TP-1) + 6
-(P-SMB-SH-IM-1) + 4 (P-SMB-SH-IM-2) + 28 (P-SMB-SH-TP-1)`** (chain `6 → 10 → 41 → 47 → 51 → 79`; per-family subtotals
-**IM `20` · TP `59`**). **Caps: `79 ≤ 400` ✔ · per-row maximum `31` (`P-SMB-LH-TP-1`) ≤ `100` ✔ · stop-after-5
+**THE DECLARED TOTAL, WITH ITS TERMS: `79 = 6 (P-SMB-LH-IM-1) + 4 (P-SMB-LH-IM-2) + 31 (P-SMB-LH-TP-1) +  ⟶ RE-GRAINED BESIDE 2026-10-03 (DRIFT SMB-G-50): the executed register is 85 = 8 + 5 + 31 + 8 + 5 + 28 (chain 8 -> 13 -> 44 -> 52 -> 57 -> 85; caps 85 <= 400, max row 31 <= 100) — the F-5a/F-5b term extensions; the as-filed 79-form above is KEPT VISIBLE.6
+(P-SMB-SH-IM-1) + 4 (P-SMB-SH-IM-2) + 28 (P-SMB-SH-TP-1)`** (chain `6 → 10 → 41 → 47 → 51 → 79` ⟶ RE-GRAINED BESIDE 2026-10-03 (THE GATE-5 BLIND-GREENS DRIFT SMB-G-50; RCA-8(d) ANNOTATE-BESIDE — the as-filed 79-form above is KEPT VISIBLE and the EXECUTED layer is the operative reading): the register's executed terms are 85 = 8 + 5 + 31 + 8 + 5 + 28 (chain 8 -> 13 -> 44 -> 52 -> 57 -> 85, family subtotals IM 26 · TP 59; caps 85 <= 400 · per-row max 31 <= 100) — the gate-4 F-5a/F-5b term extensions (P-SMB-*-IM-2 4 -> 5, P-SMB-*-IM-1 6 -> 8) are the cause, and this clause lands them BESIDE every declared cell of this file. A pass quoting the register MUST quote 85 with these terms.; per-family subtotals
+**IM `20` · TP `59`**). **Caps: `79 ≤ 400` ✔ ⟶ RE-GRAINED BESIDE 2026-10-03 (DRIFT SMB-G-50): the executed register is 85 = 8 + 5 + 31 + 8 + 5 + 28 (chain 8 -> 13 -> 44 -> 52 -> 57 -> 85; caps 85 <= 400, max row 31 <= 100) — the F-5a/F-5b term extensions; the as-filed 79-form above is KEPT VISIBLE. · per-row maximum `31` (`P-SMB-LH-TP-1`) ≤ `100` ✔ · stop-after-5
 consecutive failures applies per row.** **A total that is not the sum of its own terms, or a total quoted without its
 terms, is a review finding** (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`) — the form above is the operative one; a
 mis-sum is corrected BY ANNOTATION beside the as-filed form, never by silent rewrite.
@@ -816,7 +816,7 @@ at gate 10; **`DOC-REVIEW-ITEM`** — an item CARRIED to the gate-8 documentatio
 | **F-5a** | a gate-4 PBT-audit finding on the `§5.5.1` register (family F-5, content per the audit record) | **`RED-SET-FIX`** | the TestWriter's parallel pass | the register's executed layer, run in `tests/store-modules-bytes.test.ts` |
 | **F-5b** | same family (a) | **`RED-SET-FIX`** | the TestWriter's parallel pass | the register's executed layer (as F-5a) |
 | **F-5c** | **SATISFIED — THE DIFFERENTIAL MECHANICS VERIFIED:** the store-state-independence differential rows (`P-SMB-*-TP-1` — the round-3 `R-3` comparator: `===` for primitive answers, canonical structural comparison for the host-object projections; the COLD / SHADOWING / COMMITTED three-tier runs; the ambient-reading positive control) verified by the audit | **`SATISFIED`** | — (verified, recorded) | nothing further owed; the mechanics stand as written |
-| **F-5e** | **SATISFIED — THE REGISTER ARITHMETIC VERIFIED:** `§5.5.3`'s declared total printed WITH its terms — `79 = 6 + 4 + 31 + 6 + 4 + 28` (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`, cited by row name; caps `79 ≤ 400` · per-row max `31 ≤ 100`) — verified by the audit | **`SATISFIED`** | — (verified, recorded) | nothing further owed; the arithmetic stands as printed |
+| **F-5e** | **SATISFIED — THE REGISTER ARITHMETIC VERIFIED:** `§5.5.3`'s declared total printed WITH its terms — `79 = 6 + 4 + 31 + 6 + 4 + 28` ⟶ RE-GRAINED BESIDE 2026-10-03 (DRIFT SMB-G-50): the executed register is 85 = 8 + 5 + 31 + 8 + 5 + 28 (chain 8 -> 13 -> 44 -> 52 -> 57 -> 85; caps 85 <= 400, max row 31 <= 100) — the F-5a/F-5b term extensions; the as-filed 79-form above is KEPT VISIBLE. (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`, cited by row name; caps `79 ≤ 400` · per-row max `31 ≤ 100`) — verified by the audit | **`SATISFIED`** | — (verified, recorded) | nothing further owed; the arithmetic stands as printed |
 | **F-6a** | a gate-4 finding on this unit's red-set/register cells (family F-6, content per the audit record) | **`RED-SET-FIX`** | the TestWriter's parallel pass | the red set (as F-3a) |
 | **F-6b** | same family (a) | **`PAR-note`** | the TestWriter's parallel pass | a cell noted beside (as F-3b) |
 | **F-6c** | same family (a) | **`PAR-note`** | the TestWriter's parallel pass | a cell noted beside (as F-3b) |
