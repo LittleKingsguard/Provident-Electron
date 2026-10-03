@@ -1,6 +1,13 @@
 /**
  * tests/store-modules-seams.test.ts — THE RED SET (RCA-1) FOR UNIT `H2b` =
  * `U-STORE-MODULES-SEAMS` (`docs/specs/store-modules-seams.md`, 915 lines).
+ * ⟶ LINE COUNT CORRECTED BESIDE 2026-10-06 (the H2b gate-4 landing pass; F-1b —
+ * the as-filed `915 lines` above is KEPT VISIBLE, never rewritten): the spec
+ * measures `937` lines as read that pass (the `§3b` table and this unit's
+ * landing annotations grew it). No length census is a pinned claim — the spec
+ * itself carries NO length census of any file (its `CURRENT STATE`/header
+ * citation rule, the sibling convention) — this header cites the filing's size
+ * at RED-set authoring time only.
  *
  * THE RED STATEMENT, HONESTLY. The unit's §3 families (M-·/F-·/I-·/S-·/E-· rows), the
  * §4.2-item-4 REAL-STORE integration drives and the §5.5.1 register's EXECUTED
