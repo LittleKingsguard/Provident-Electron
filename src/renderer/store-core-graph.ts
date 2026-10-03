@@ -110,11 +110,6 @@ export interface GraphConstraint {
 
 /* ───────────────────────────── THE READ AND THE WALK ───────────────────────────── */
 
-export interface GraphPart {
-  readonly tier: GraphNodeFlag
-  readonly path: string
-}
-
 export interface GraphReadHit {
   readonly found: true
   readonly value: unknown
@@ -132,17 +127,7 @@ export interface GraphReadMiss {
   readonly name: string
 }
 
-export interface GraphMergedRead {
-  readonly found: true
-  readonly value: unknown
-  readonly tier: null
-  readonly cache: null
-  readonly name: string
-  readonly merged: true
-  readonly parts: readonly GraphPart[]
-}
-
-export type GraphResolveResult = GraphReadHit | GraphReadMiss | GraphMergedRead
+export type GraphResolveResult = GraphReadHit | GraphReadMiss
 
 export interface GraphWriteReceipt {
   readonly status: 'committed' | 'refused'
@@ -399,6 +384,7 @@ export function createGraphStore(options: {
   let refCounter = 0
   let injectArmed = false
   const seamEnabled = options.enableTestSeam === true
+  const crossing: GraphCrossing | null = options.crossing ?? null
 
   const declaredInput = options.declarations === undefined ? { rows: [] } : options.declarations
   const declaredRows: readonly unknown[] = isRecordObject(declaredInput) && Array.isArray((declaredInput as StoreGraphDeclarationInput).rows)
@@ -646,7 +632,10 @@ export function createGraphStore(options: {
   function climbToBound(node: GraphNode, requested: GraphNodeFlag): GraphNode {
     void requested
     let current = node
-    for (let hop = 0; hop < 64; hop += 1) {
+    // NO DEPTH BOUND IS OWED (`§2.3` item 4, `§2.11` item 3): the graph is a TREE BY
+    // CONSTRUCTION — every node has EXACTLY ONE parent link and no operation creates a
+    // second, so a cycle is UNCONSTRUCTIBLE and the climb terminates (D-6).
+    for (;;) {
       if (isRootRef(current.ref)) break
       const parent = parentOf(current)
       if (parent === null) break
@@ -828,7 +817,19 @@ export function createGraphStore(options: {
   /* ── THE WALK'S ANSWER (`§2.3` item 6, `§2.5`) ── */
 
   function refusalOf(reason: GraphRefusalReason, step: GraphResolveStep, segment: string | null, owner: GraphNodeRef | null, name: string): Record<string, unknown> {
-    return { status: 'refused', reason, diagnostic: { reason, step, segment, owner }, name }
+    // THE READ-SIDE REFUSAL RECORD (an INLINE, unnamed shape — D-2) carries the refusal
+    // token AND its diagnostic, with the diagnostic's step/segment/owner also readable at
+    // the record's own top level (the artifact's field-5 observables name them beside the
+    // diagnostic, and the red set reads them there).
+    return {
+      status: 'refused',
+      reason,
+      step,
+      segment,
+      owner,
+      diagnostic: { reason, step, segment, owner },
+      name,
+    }
   }
 
   interface WalkOutcome {
@@ -848,11 +849,11 @@ export function createGraphStore(options: {
       return { answer: refusalOf('secure-refused', 'B-SECURE-GATE', null, null, raw as string), leaf: null, rootName: '', tail: [], token: null }
     }
     const name = raw as string
-    if (parsed.segments.length < 2) {
-      return { answer: refusalOf('malformed-name', 'A-PARSE', null, null, name), leaf: null, rootName: '', tail: [], token: null }
-    }
     const tiered = isTierToken(parsed.segments[0]) && parsed.segments[0] !== 'secure'
     if (tiered && parsed.segments.length < 2) {
+      // A TIER TOKEN ALONE is a filter with no top (`§2.3` item 1) — malformed. A TIER-FREE
+      // single segment is a LEGAL resolve (`resolve('p')` on a tier-free spelling is legal —
+      // the read has a filter order and the write has none, `§3.2 F-16/F-17`).
       return { answer: refusalOf('malformed-name', 'A-PARSE', null, null, name), leaf: null, rootName: '', tail: [], token: null }
     }
     const { rootName, tail } = rootParts(parsed.segments)
@@ -876,8 +877,10 @@ export function createGraphStore(options: {
     const leaf = walked.node
     if (parsed.token !== null && parsed.token !== 'secure' && leaf.flag !== parsed.token) {
       // `H-FLAG` runs AFTER `G-RESOLVE-LEAF`: a filter miss on a RESOLVABLE leaf is its OWN
-      // diagnostic, and NEVER `'no-such-anchor'` (`§2.3` items 6(iv)/7, `R-6`).
-      return { answer: refusalOf('tier-filter-miss', 'H-FLAG', segment, leaf.ref, name), leaf: null, rootName, tail, token: parsed.token }
+      // diagnostic, NEVER `'no-such-anchor'` — and it NAMES the node's OWN flag AND the flag
+      // the filter asked for (`§2.3` items 6(iv)/7, field 5 token #13, `R-6`).
+      const record = refusalOf('tier-filter-miss', 'H-FLAG', segment, leaf.ref, name)
+      return { answer: { ...record, flag: leaf.flag, requested: parsed.token }, leaf: null, rootName, tail, token: parsed.token }
     }
     const entry = registerEntries.get(rootName)
     if (entry !== undefined && staleEntries.has(rootName) && !entryIsLive(entry)) {
@@ -892,92 +895,12 @@ export function createGraphStore(options: {
     }
   }
 
-  function mergedAnswer(name: string, anchorNode: GraphNode): GraphMergedRead | null {
-    const byPath = new Map<string, GraphPart>()
-    for (const held of heldPathsOf(anchorNode)) {
-      const existing = byPath.get(held.path)
-      if (existing === undefined) {
-        byPath.set(held.path, { tier: held.flag, path: held.path })
-        continue
-      }
-      if ((DURABILITY_RANK[held.flag] ?? 0) > (DURABILITY_RANK[existing.tier] ?? 0)) {
-        byPath.set(held.path, { tier: held.flag, path: held.path })
-      }
-    }
-    const collected = [...byPath.values()]
-    if (collected.length === 0) return null
-    collected.sort((a, b) => (DURABILITY_RANK[b.tier] ?? 0) - (DURABILITY_RANK[a.tier] ?? 0))
-    const value: Record<string, unknown> = {}
-    for (const part of collected) value[part.path] = part.tier
-    return { found: true, value, tier: null, cache: null, name, merged: true, parts: collected }
-  }
-
-  /** EVERY HELD PATH of a read, read off EVERY holder branch the walk reaches: the merged
-   *  arm's `parts` are the DESCENDANTS the tiers hold where no single node holds the read
-   *  path (`§2.5` item 4). */
-  /** EVERY DESCENDANT the tiers hold below the read path (`§2.5` item 4): each entry names
-   *  THE PATH THE TIER ACTUALLY HOLDS and NEVER the read path, and the list is ORDERED by the
-   *  OVERLAY ORDER (`file` → `mem` → `temp`, descending durability) with the paths ascending
-   *  within one tier — the reverse of the search order. */
-  function collectParts(readTail: readonly string[], token: GraphTierToken | null): GraphPart[] {
-    void token
-    const rootName = readTail[0] as string
-    const anchors: GraphNode[] = []
-    for (const holder of liveHolders(rootName)) {
-      const walked = walkFrom(rootName, holder, readTail, false, undefined)
-      if (walked.deepest !== null) anchors.push(walked.deepest)
-    }
-    return partsUnder(anchors, readTail)
-  }
-
-  /** THE DESCENDANTS OF A SET OF ANCHOR NODES: every node that still belongs to a branch
-   *  hanging BELOW the read path, named by the path it ACTUALLY holds. A node the graph no
-   *  longer reaches through its own anchors is not held (`§2.4`'s ruling: the graph is the
-   *  source of truth), so it is not a part. */
-  function partsUnder(anchors: readonly GraphNode[], readTail: readonly string[]): GraphPart[] {
-    const byKey = new Map<string, GraphPart>()
-    const pathOf = new Map<GraphNodeRef, string>()
-    for (const anchor of anchors) {
-      const base = anchor.localName === readTail[0] ? (readTail[0] as string) : [...readTail.slice(1, readTail.length - 1), anchor.localName].join('.')
-      const visit = (node: GraphNode, path: string): void => {
-        pathOf.set(node.ref, path)
-        for (const child of descendantsOf(node)) {
-          const childPath = `${path}.${child.localName}`
-          pathOf.set(child.ref, childPath)
-          visit(child, childPath)
-        }
-      }
-      visit(anchor, base)
-    }
-    for (const [ref, path] of pathOf) {
-      const node = nodes.get(ref)
-      if (node === undefined) continue
-      const segments = path.split('.')
-      if (segments.length <= 1) continue
-      byKey.set(`${path}@${node.flag}`, { tier: node.flag, path })
-    }
-    const collected = [...byKey.values()]
-    collected.sort((a, b) => {
-      const byRank = (DURABILITY_RANK[b.tier] ?? 0) - (DURABILITY_RANK[a.tier] ?? 0)
-      if (byRank !== 0) return byRank
-      return a.path < b.path ? -1 : a.path > b.path ? 1 : 0
-    })
-    return collected
-  }
-
   function resolveRead(raw: unknown): GraphResolveResult | Record<string, unknown> {
-    const outcome = walkName(raw)
-    if (outcome.leaf !== null) return outcome.answer
-    const answer = outcome.answer as Record<string, unknown>
-    if (answer['status'] === 'refused') return outcome.answer
-    // THE DECLARED MISS, AND THE MERGED ARM BESIDE IT (`§2.5` item 4): where no node holds the
-    // read path but DESCENDANTS of it are held, the merged arm answers instead.
-    const parts = collectParts([outcome.rootName, ...outcome.tail.slice(1)], outcome.token)
-    if (parts.length === 0) return outcome.answer
-    const value: Record<string, unknown> = {}
-    for (const part of parts) value[part.path] = part.tier
-    const merged: GraphMergedRead = { found: true, value, tier: null, cache: null, name: raw as string, merged: true, parts }
-    return merged
+    // THE READ'S SURVIVING CASE SET IS THREE AND NO FOURTH — HIT · QUALIFIED · MISS (`§2.5`
+    // item 4's annotation): the merged/composite arm is WITHDRAWN (D-1/D-3), so the walk's own
+    // answer IS the read's answer — never a composition, never a provenance list, never a
+    // second holder (`§3.2 F-8`'s re-derived form).
+    return walkName(raw).answer
   }
 
   /* ── THE EVENT SURFACE (`§2.10`) ── */
@@ -1035,6 +958,85 @@ export function createGraphStore(options: {
     }, 'refused', reason)
   }
 
+  /* ── THE CROSSING SEAM (`§2.8` items 5(5)/7/8, `§2.5`) — D-4 ── */
+
+  /** PUSH THE STABLE-JSON TRANSLATION OF THE GRAPH through the declared, stubbed seam — the
+   *  ONE committed write of the whole regenerated set (`crossings: 1`). The unit asserts
+   *  NOTHING about the channel's order, idempotency or failure recovery (`§2.8` item 8): a
+   *  throwing recorder never propagates to the mutator's caller, and a refused status is not
+   *  this unit's fail-state. */
+  function crossingPut(name: string): void {
+    if (crossing === null) return
+    try {
+      crossing.put({ name, value: stableGraphTranslation() })
+    } catch {
+      // the seam is stubbed and out of this unit's authority — nothing to report
+    }
+  }
+
+  /** THE STABLE-JSON TRANSLATION (`§2.8` item 9): an object whose own enumerable keys are
+   *  emitted in SORTED order (rule (a)); `undefined`-valued members are OMITTED (rule (c)):
+   *  the translation keys the graph's own held references (`<flag>.<path>`) by their values.
+   *  Two translations of the same settled graph are BYTE-IDENTICAL whatever order the nodes
+   *  were created in (rule (f)) — the walk keys are the references' own deterministic
+   *  spellings, never a minted ref. */
+  function stableGraphTranslation(): string {
+    const entries: [string, unknown][] = []
+    const seen = new Set<string>()
+    const visit = (node: GraphNode, path: string): void => {
+      const reference = `${node.flag}.${path}`
+      if (!seen.has(reference)) {
+        seen.add(reference)
+        const value = valueOf(node.ref)
+        if (value !== undefined) entries.push([reference, stableJsonValue(value, new Set<unknown>(), 0)])
+      }
+      for (const anchor of node.anchors) {
+        if (anchor.link === null || anchor.link.to === null) continue
+        const child = nodes.get(anchor.link.to)
+        if (child === undefined) continue
+        visit(child, `${path}.${anchor.key}`)
+      }
+    }
+    for (const rootName of rootHolders.keys()) {
+      for (const holder of liveHolders(rootName)) visit(holder, holder.localName)
+    }
+    entries.sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
+    const out: Record<string, unknown> = {}
+    for (const entry of entries) out[entry[0]] = entry[1]
+    return JSON.stringify(out)
+  }
+
+  /** A NEVER-THROWING, DETERMINISTIC RENDER of an opaque value (rules (b)–(e)): primitives by
+   *  value with `-0`/`NaN` distinguished by `Object.is`; an object's own keys in SORTED order;
+   *  `undefined`-valued members omitted; a cyclic or otherwise unrepresentable structure is
+   *  rendered as a string rather than thrown — the translation itself must never fail. */
+  function stableJsonValue(value: unknown, seen: Set<unknown>, depth: number): unknown {
+    if (value === null) return null
+    const kind = typeof value
+    if (kind === 'string' || kind === 'boolean') return value
+    if (kind === 'number') {
+      if (Object.is(value, -0)) return '-0'
+      if (Number.isNaN(value)) return 'NaN'
+      return Number.isFinite(value as number) ? value : String(value)
+    }
+    if (kind === 'undefined') return undefined
+    if (kind === 'bigint' || kind === 'symbol' || kind === 'function') return String(value)
+    if (depth > 8 || seen.has(value)) return '<circular>'
+    seen.add(value)
+    if (Array.isArray(value)) {
+      const out = value.map((item) => stableJsonValue(item, seen, depth + 1))
+      seen.delete(value)
+      return out
+    }
+    const out: Record<string, unknown> = {}
+    for (const key of Object.keys(value as Record<string, unknown>).sort()) {
+      const rendered = stableJsonValue((value as Record<string, unknown>)[key], seen, depth + 1)
+      if (rendered !== undefined) out[key] = rendered
+    }
+    seen.delete(value)
+    return out
+  }
+
   /* ── THE CONSTRAINT TABLE (`§2.7`) ── */
 
   function evaluateConstraints(op: 'set' | 'commit' | 'remove', state: ReceiptState): void {
@@ -1066,12 +1068,12 @@ export function createGraphStore(options: {
     if (parsed.segments.length === 0) return refuse(raw, 'malformed-name', 'A-PARSE', null, null)
     if (parsed.segments[0] === 'secure') return refuse(raw, 'secure-refused', 'B-SECURE-GATE', null, null)
     if (!isTierToken(parsed.segments[0])) return refuse(raw, 'malformed-name', 'A-PARSE', null, null)
+    // THE DECLARATION INPUT IS THE ONLY AUTHORITY OVER WHICH NAMES ARE ROOTS (`§2.4` item 8,
+    // `§2.2 P-7`): parseWrite mints NO root declaration, because a REFUSED write must leave
+    // the declaration set BYTE-IDENTICAL (CR-1/M2 — a later resolve of a name a refused write
+    // touched answers `'undeclared-name'` at `C-TOP`, never a cold-name MISS). The mint's own
+    // declaration lives in the MINT paths, where the commit actually LANDS (`§2.8` item 3).
     const parts = rootParts(parsed.segments)
-    if (!declared.has(parts.rootName)) {
-      // THE CALLER'S OWN SPELLING IS THE ROOT NAME (`§2.2` `P-7`): a spelling whose tail
-      // carries no registered name is taken WHOLE, with the tier token stripped.
-      declared.set(parts.rootName, { root: parts.rootName, names: [{ name: raw as string, reserved: false }] })
-    }
     const token: GraphNodeFlag = parsed.segments[0] === 'mem' ? 'mem' : parsed.segments[0] === 'file' ? 'file' : 'temp'
     return { name: raw as string, token, segments: parsed.segments, rootName: parts.rootName, tail: parts.tail }
   }
@@ -1103,16 +1105,6 @@ export function createGraphStore(options: {
     return null
   }
 
-  function lowerCopiesOf(parsed: WriteName, requested: GraphNodeFlag): { node: GraphNode; path: string }[] {
-    const found: { node: GraphNode; path: string }[] = []
-    for (const holder of holdersOf(parsed.rootName)) {
-      if ((DURABILITY_RANK[holder.flag] ?? 0) >= (DURABILITY_RANK[requested] ?? 0)) continue
-      const lower = anchorWalk(parsed.rootName, [parsed.rootName, ...parsed.tail.slice(1)], holder.flag, false, undefined, holder.ref)
-      if (lower.node !== null) found.push({ node: lower.node, path: `${holder.flag}.${parsed.tail.join('.')}` })
-    }
-    return found
-  }
-
   function replicate(old: GraphNode, flag: GraphNodeFlag, path: string, affected: AffectedRef[]): GraphNode {
     const ref = mintRef()
     nodes.set(ref, { ref, flag, localName: old.localName, anchors: [], parentLink: null })
@@ -1130,9 +1122,15 @@ export function createGraphStore(options: {
   }
 
   function editNode(raw: unknown, parsed: WriteName, node: GraphNode, value: unknown, cause: GraphEvent['cause']): GraphWriteReceipt {
-    setValue(node.ref, node.localName, value)
+    const prior = valueOf(node.ref)
     const state: ReceiptState = { cleared: [], repaired: [], rows: [{ name: parsed.name, flag: node.flag, nodeRef: node.ref }], crossings: 0, events: 0 }
-    state.events += emit(parsed.name, node.flag, value, [], cause, parsed.name)
+    // AN EQUAL-VALUE `set` FIRES NOTHING (`§2.10` item 5, field 4.3's `'set'` row: "an
+    // equal-value write fires NOTHING; a `set` is NOT a commit and must never be counted
+    // as one"). A `commit` on a held pair always fires.
+    if (cause !== 'set' || !Object.is(prior, value)) {
+      setValue(node.ref, node.localName, value)
+      state.events += emit(parsed.name, node.flag, value, [], cause, parsed.name)
+    }
     evaluateConstraints(cause === 'set' ? 'set' : 'commit', state)
     rebuildEntriesAtInvalidation(parsed.rootName)
     return receiptFor(raw, state, 'committed')
@@ -1147,15 +1145,26 @@ export function createGraphStore(options: {
     if (target.parentLink !== null) {
       const parent = nodes.get(target.parentLink.from)
       if (parent !== undefined && isRootRef(parent.ref) === false && (DURABILITY_RANK[requested] ?? 0) > (DURABILITY_RANK[parent.flag] ?? 0)) {
-        // NO ANCESTOR CAN CARRY THE REQUEST: the subtree's own PARENT is a non-root node less
-        // durable than the request, so the re-tier would make the child MORE durable than the
-        // node reaching it (`§2.1`'s named-invariant block) — and re-tiering the PARENT is the
-        // regeneration's own business, not this one's.
+        // THE REGENERATION'S NEW ROOT TIER ARM (field 5 #16, `§2.8` item 5): the re-tiered
+        // subtree's own PARENT is a non-root node less durable than the request, so the new
+        // root would be MORE durable than the node reaching it — REFUSED, store unchanged.
         return refuse(raw, 'durability-inversion', 'G-RESOLVE-LEAF', parsed.tail[parsed.tail.length - 1] ?? null, parent.ref)
       }
     }
     const failure = serializationFailureOf(value)
     if (failure !== null) return refuse(raw, failure, 'G-RESOLVE-LEAF', null, target.ref)
+    // THE DOOMED LOWER-DURABILITY COPIES ARE READ FIRST — BEFORE the regenerated branch moves:
+    // the clears happen only AFTER the higher tier durably accepted the value (`§2.8` item 2),
+    // and the regenerated branch itself must never be mistaken for a copy to clear (S5: the
+    // receipt's `cleared[]` is the AUDIT list naming each cleared reference).
+    const doomed: { path: string; ref: GraphNodeRef }[] = []
+    for (const holder of rootHolders.get(parsed.rootName) ?? []) {
+      if (nodes.get(holder.ref) === undefined) continue
+      if ((DURABILITY_RANK[holder.flag] ?? 0) >= (DURABILITY_RANK[requested] ?? 0)) continue
+      const lower = anchorWalk(parsed.rootName, [parsed.rootName, ...parsed.tail.slice(1)], holder.flag, true, undefined, holder.ref)
+      if (lower.node === null) continue
+      doomed.push({ path: `${holder.flag}.${parsed.tail.join('.')}`, ref: lower.node?.ref ?? holder.ref })
+    }
     const affected: AffectedRef[] = []
     const rebuilt = replicate(target, requested, target.localName, affected)
     const parentLink = target.parentLink
@@ -1174,28 +1183,53 @@ export function createGraphStore(options: {
     } else if (target.parentLink === null) {
       setHolder(targetName, rebuilt)
     }
-    setValue(rebuilt.ref, rebuilt.localName, value)
+    // THE COMMITTED VALUE LANDS ON THE CALLER'S OWN PATH LEAF of the regenerated branch: the
+    // caller's name is the path, and the path's own node is the leaf (`§2.3` item 2) — never
+    // on the re-tiered subtree's root (M3: a 66-segment chain regenerated fully answers HIT
+    // at its deepest reference with the committed value).
+    const leafNode = anchorWalk(parsed.rootName, [parsed.rootName, ...parsed.tail.slice(1)], requested, false).node ?? rebuilt
+    setValue(leafNode.ref, leafNode.localName, value)
     const cleared: string[] = []
-    for (const lower of lowerCopiesOf(parsed, requested)) {
-      if (lower.node.ref === rebuilt.ref) continue
-      detach(lower.node.ref)
-      cleared.push(lower.path)
+    for (const entry of doomed) {
+      if (entry.ref === leafNode.ref) continue
+      detach(entry.ref)
+      if (!cleared.includes(entry.path)) cleared.push(entry.path)
     }
+    // THE CROSSING SEAM (`§2.8` items 5(5)/7/8, D-4): a `file`-tier write pushes the
+    // STABLE-JSON TRANSLATION OF THE GRAPH through the declared seam — ONE committed write
+    // for the whole regenerated set, `crossings: 1` real, never a synthesised integer
+    // (X1/X2). The put rides the POST-state graph, so two regenerations of the same settled
+    // graph are byte-identical (field 2.5 rule (f)).
+    if (requested === 'file') crossingPut(parsed.name)
     const state: ReceiptState = {
       cleared: [...new Set(cleared)],
       repaired: [],
       rows: affected.map((row) => ({ name: row.name, flag: row.flag, nodeRef: row.ref })),
-      crossings: 1,
+      crossings: requested === 'file' ? 1 : 0,
       events: 0,
     }
     for (const row of affected) state.events += emit(row.name, row.flag, value, state.cleared, 'commit', row.name)
     // EACH LOWER-DURABILITY BRANCH'S OWN COPY of the same logical path is CLEARED, and each
     // cleared reference fires its OWN `cause:'clear'` on ITS OWN path (`§2.8` item 2,
     // `§2.10` item 2).
-    clearLowerCopies(parsed, requested, state)
+    for (const path of state.cleared) state.events += emit(path, requested, undefined, [], 'clear', path)
     evaluateConstraints('commit', state)
     rebuildEntriesAtInvalidation(parsed.rootName)
     return receiptFor(raw, state, 'committed')
+  }
+
+  /** WHETHER the caller's own path is ACTUALLY held at a LOWER-DURABILITY tier — the
+   *  regeneration transaction's trigger (`§2.8` item 3: "on a path held at a LOWER tier it
+   *  performs the REGENERATION TRANSACTION at the requested tier"). A path whose leaf is
+   *  missing at the lower tier is not held there (U1: a mint, with its own durability gate). */
+  function heldAtLowerTier(parsed: WriteName, requested: GraphNodeFlag): boolean {
+    for (const holder of rootHolders.get(parsed.rootName) ?? []) {
+      if (nodes.get(holder.ref) === undefined) continue
+      if ((DURABILITY_RANK[holder.flag] ?? 0) >= (DURABILITY_RANK[requested] ?? 0)) continue
+      const lower = anchorWalk(parsed.rootName, [parsed.rootName, ...parsed.tail.slice(1)], holder.flag, true, undefined, holder.ref)
+      if (lower.node !== null) return true
+    }
+    return false
   }
 
   /** THE LOWER-DURABILITY COPIES of the SAME LOGICAL PATH: a commit to a HIGHER tier clears
@@ -1240,7 +1274,7 @@ export function createGraphStore(options: {
     // VACUOUS (`§2.1`'s named-invariant block). The node AND EVERY DESCENDANT re-tiers, so the
     // caller's own leaf lands at the requested tier with them.
     let subtree = current
-    for (let hop = 0; hop < 64; hop += 1) {
+    for (;;) {
       const parent = parentOf(subtree) ?? parentPathOf(rootName, tail, subtree.ref)
       if (parent === null) break
       if (isRootRef(parent.ref)) { subtree = parent; break }
@@ -1259,6 +1293,14 @@ export function createGraphStore(options: {
     if (bound.node !== null && (DURABILITY_RANK[requested] ?? 0) > bound.rank) {
       return refuse(parsed.name, 'durability-inversion', 'G-RESOLVE-LEAF', parsed.tail[parsed.tail.length - 1] ?? null, bound.node.ref)
     }
+    // THE COMMIT LANDS, AND A LANDED COMMIT'S MINTED HOLDER IS A ROOT: the commit registers
+    // the root's top-level row (`§2.8` item 3). THIS declaration mint lives HERE — inside the
+    // mint — and NOT in parseWrite: a REFUSED write never adds a root declaration (CR-1/M2 —
+    // the declaration input is the ONLY authority over which names are roots, and a refused
+    // write must leave the declaration set byte-identical).
+    if (!declared.has(parsed.rootName)) {
+      declared.set(parsed.rootName, { root: parsed.rootName, names: [{ name: parsed.name, reserved: false }] })
+    }
     const ref = mintRef()
     const fresh: GraphNode = { ref, flag: requested, localName: parsed.rootName, anchors: [], parentLink: null }
     nodes.set(ref, fresh)
@@ -1273,6 +1315,12 @@ export function createGraphStore(options: {
     writeRowsFor(reached, parsed.name, state.rows)
     state.events += emit(parsed.name, requested, value, [], 'commit', parsed.name)
     if (raised) clearLowerCopies(parsed, requested, state)
+    // THE CROSSING SEAM for a `file`-tier MINT (the whole set is ONE committed write — the
+    // receipt's `crossings: 1` rides the real put, never a synthesised integer; D-4).
+    if (requested === 'file') {
+      crossingPut(parsed.name)
+      state.crossings = 1
+    }
     evaluateConstraints('commit', state)
     rebuildEntriesAtInvalidation(parsed.rootName)
     return receiptFor(parsed.name, state, 'committed')
@@ -1317,26 +1365,32 @@ export function createGraphStore(options: {
       if (rootCapReached(requested)) {
         return refuse(raw, 'cap-exceeded', 'G-RESOLVE-LEAF', parsed.tail[parsed.tail.length - 1] ?? null, null)
       }
-      // WHERE THE CALLER'S OWN PATH REACHES ONLY THE BRANCH'S ROOT, the commit RE-TIERS that
-      // root's whole subtree in ONE committed write (`§2.8` item 5) — a ROOT carries no parent
-      // link, so the monotonic-persistence invariant is VACUOUS over it (`§2.1`'s
-      // named-invariant block) and no sibling branch's flag can refuse the re-tier.
       // WHERE THE CALLER'S OWN PATH IS HELD AT A LOWER TIER BY ANOTHER BRANCH'S ROOT, the
       // commit RE-TIERS that whole subtree in ONE committed write (`§2.8` item 5): a ROOT
-      // carries no parent link, so the monotonic-persistence invariant is VACUOUS over it.
+      // carries no parent link, so the monotonic-persistence invariant is VACUOUS over it
+      // (`§2.1`'s named-invariant block). THE REGENERATION RUNS ONLY WHERE THE CALLER'S OWN
+      // PATH IS ACTUALLY HELD at the lower tier (the path's leaf is a real node): a path whose
+      // leaf is MISSING below the located node is a MINT, not a re-tier (U1 — a `file`-tier
+      // child under a `mem` parent is REFUSED, never silently re-tiered).
+      const leafWalk = anchorWalk(parsed.rootName, [parsed.rootName, ...parsed.tail.slice(1)], null, false)
       const located = locateWriteTarget(parsed.rootName, parsed.tail, requested)
-      // THE RE-TIER RUNS WHERE THE REQUEST IS MORE DURABLE THAN THE BRANCH THAT HOLDS THE
-      // PATH (`§2.8` item 5): the transaction re-tiers the node and EVERY DESCENDANT in one
-      // committed write. A request that is NOT more durable than its siblings is a HOLDER OF
-      // ITS OWN (`§2.3` item 5: the tiers COMPOSE), never a re-tier of theirs.
       const heldAtAnotherTier = located !== null && (DURABILITY_RANK[requested] ?? 0) > (DURABILITY_RANK[located.flag] ?? 0)
-      if (heldAtAnotherTier && parsed.tail.length > 1) {
+      if (heldAtAnotherTier && leafWalk.node !== null) {
         const failureAtRoot = serializationFailureOf(value)
         if (failureAtRoot !== null) return refuse(raw, failureAtRoot, 'G-RESOLVE-LEAF', null, located.ref)
         return regenerationReceipt(raw, parsed, value, located)
       }
       const failure = serializationFailureOf(value)
       if (failure !== null) return refuse(raw, failure, 'G-RESOLVE-LEAF', null, null)
+      // THE MINT'S DURABILITY GATE (field 5 #16; `§2.4` item 7(h)): a mint whose requested tier
+      // is MORE DURABLE than the deepest existing node of the caller's own path — the parent
+      // the minted child would hang from, read from the graph, never from a name or a tier
+      // token — is a DECLARED REFUSAL, never a silent re-tier, and the store is left COMPLETELY
+      // UNCHANGED (U1).
+      const deepest = leafWalk.deepest
+      if (deepest !== null && (DURABILITY_RANK[requested] ?? 0) > (DURABILITY_RANK[deepest.flag] ?? 0)) {
+        return refuse(raw, 'durability-inversion', 'G-RESOLVE-LEAF', leafWalk.firstMissing ?? parsed.tail[parsed.tail.length - 1] ?? null, deepest.ref)
+      }
       return mintNewHolder(parsed, requested, value, mintBound(parsed, requested))
     }
     const walkTail = [parsed.rootName, ...parsed.tail.slice(1)]
@@ -1354,6 +1408,14 @@ export function createGraphStore(options: {
       // the requested tier to be legal (`§2.8` item 5): a CHILD may never be MORE durable than
       // the node that reaches it (`§2.1`'s named-invariant block), so where the target's own
       // PARENT is less durable than the request the SUBTREE is the parent's, not the target's.
+      return regenerationReceipt(raw, parsed, value, target)
+    }
+    if (target !== null && target.flag === requested && heldAtLowerTier(parsed, requested)) {
+      // THE PAIR HOLDS, BUT THE PATH IS ALSO HELD AT A LOWER TIER: `commit` performs the
+      // REGENERATION TRANSACTION at the requested tier (`§2.8` item 3) — ONE committed write
+      // that re-tiers the held branch and clears every lower copy, pushing the `file`-tier
+      // translation through the crossing seam (X2: the re-created lower copy is cleared and
+      // the settled graph's translation is byte-identical).
       return regenerationReceipt(raw, parsed, value, target)
     }
     if (target !== null) return editNode(raw, parsed, target, value, 'commit')
@@ -1425,16 +1487,24 @@ export function createGraphStore(options: {
     // the same logical path, never a higher tier — each copy is SEVERED from its own parent and
     // its own value dropped, and the parent's anchor slot is dropped with it.
     const cleared: string[] = []
+    const lowerCleared: string[] = []
     for (const holder of holdersOf(parsed.rootName)) {
       if ((DURABILITY_RANK[holder.flag] ?? 0) > (DURABILITY_RANK[parsed.token] ?? 0)) continue
       const candidate = anchorWalk(parsed.rootName, [parsed.rootName, ...parsed.tail.slice(1)], holder.flag, false, undefined, holder.ref)
       if (candidate.node === null) continue
       cleared.push(`${holder.flag}.${parsed.tail.join('.')}`)
+      if ((DURABILITY_RANK[holder.flag] ?? 0) < (DURABILITY_RANK[parsed.token] ?? 0)) {
+        lowerCleared.push(`${holder.flag}.${parsed.tail.join('.')}`)
+      }
       detach(candidate.node.ref)
     }
     const state: ReceiptState = { cleared: [...new Set(cleared)], repaired: [], rows: [], crossings: 0, events: 0 }
-    for (const path of state.cleared) state.events += emit(path, parsed.token, undefined, [], 'clear', path)
-    state.events += emit(parsed.name, parsed.token, undefined, [], 'remove', parsed.name)
+    // A CLEARED LOWER REFERENCE fires its OWN `cause:'clear'` on its OWN path; the NAMED
+    // reference itself is removed by the `'remove'` event — the arm that carries the audit
+    // list in `cleared[]` and is distinguishable from a commit-with-clears by its cause token
+    // and by `value: undefined` (field 4.3's `'remove'` row).
+    for (const path of [...new Set(lowerCleared)]) state.events += emit(path, parsed.token, undefined, [], 'clear', path)
+    state.events += emit(parsed.name, parsed.token, undefined, state.cleared, 'remove', parsed.name)
     evaluateConstraints('remove', state)
     rebuildEntriesAtInvalidation(parsed.rootName)
     return receiptFor(raw, state, 'committed')
@@ -1542,18 +1612,8 @@ export function createGraphStore(options: {
     if (record['status'] === 'refused') return record['reason'] as GraphRefusalReason
     const read = answer as GraphResolveResult
     if (read.found === false) return miss(read.name)
-    if (read.tier === null) {
-      const merged = read as GraphMergedRead
-      return {
-        found: true,
-        value: snapshotValue(merged.value),
-        tier: null,
-        cache: null,
-        name: merged.name,
-        merged: true,
-        parts: merged.parts,
-      }
-    }
+    // THE HIT ARM — a fresh object per call, cache never granted (field 2.9); the merged arm
+    // is WITHDRAWN (D-1), so a hit is exactly the hit (three cases and no fourth).
     return { found: true, value: snapshotValue(read.value), tier: read.tier, flag: read.tier, cache: undefined, name: read.name } as unknown as GraphReadHit
   }
 

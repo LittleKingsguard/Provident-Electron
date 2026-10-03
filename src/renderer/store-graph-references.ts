@@ -26,19 +26,11 @@ export interface StoreGraphReferenceFixture {
   readonly rows: readonly StoreGraphDeclarationRow[]
 }
 
-/** THE ONE VALUE EXPORT — the caller's rows, carried verbatim and uninterpreted. */
+/** THE ONE VALUE EXPORT — the caller's rows, carried verbatim and uninterpreted
+ *  (`§2.1` item 2's annotation: the module adds no default, no policy predicate and no
+ *  spelling of its own). The malformed shapes are the STORE's own construction-refusal
+ *  subjects (sibling artifact field 5) — this module never filters, rebuilds or re-keys
+ *  a row (E-1/D-5: the laundered build is the divergence; the surface carries). */
 export function storeGraphReferences(rows: readonly StoreGraphDeclarationRow[]): StoreGraphDeclarationInput {
-  const carried: StoreGraphDeclarationRow[] = []
-  if (Array.isArray(rows)) {
-    for (const row of rows) {
-      if (typeof row !== 'object' || row === null) continue
-      const candidate = row as { readonly name?: unknown; readonly reserved?: unknown }
-      const name = candidate.name
-      if (typeof name !== 'string') continue
-      const declared: StoreGraphDeclarationRow =
-        candidate.reserved === true ? { name, reserved: true } : { name }
-      carried.push(declared)
-    }
-  }
-  return { rows: carried }
+  return { rows }
 }

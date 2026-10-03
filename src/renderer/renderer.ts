@@ -8,6 +8,37 @@ import { createGestureSession, POINTER_TYPES } from '../shared/gesture-session.j
 import { createGutterAffordance, domEventSource } from '../shared/gutter-affordance.js'
 import type { RpcRequest, RpcReply } from '../shared/types.js'
 import { focusTransition, focusOrder, type FocusEntry, type FocusState } from '../shared/focus-model.js'
+import { createGraphStore, type GraphStore } from './store-core-graph.js'
+import { storeGraphReferences } from './store-graph-references.js'
+
+/** THE WIRED GRAPH STORE — `U-STORE-CORE`'s integration seam (field 3/6 of the frozen
+ *  artifacts, `AMENDMENT TENANT-1`). THE REALM-SCOPE BINDING OWNED BY THE WIRING: the store is
+ *  constructed EXACTLY ONCE per realm — in `main()`'s boot sequence, after the realm's own
+ *  construction of its runtime and before the boot sequence's hand-off/return (field 6 row 1)
+ *  — and held HERE, in the wiring's own module-scope binding (the contract's
+ *  no-module-level-mutable-state rule governs `store-core-graph.ts` itself, not the wiring
+ *  host). Any `subscribe(...)` the wiring needs would be registered at that same point; this
+ *  wiring needs none. THE SEAM IS THE MODULE-EXTERNAL WINDOW the end-point test drives:
+ *  `getWiredGraphStore()` answers the ONE boot-constructed store — same identity on every
+ *  read — and, in a realm where `main()` never runs (a node test), performs the single
+ *  construction lazily so the wiring is observable in a DOM-less runtime (W4). It authors NO
+ *  UI content and NO DOM (§5.1 row 6 — the WIRING ROLE ONLY). Construction is TOTAL: the
+ *  store never refuses construction (§0A note 8). */
+let wiredGraphStore: GraphStore | null = null
+
+function buildWiredGraphStore(): GraphStore {
+  // THE STORE'S DECLARATIONS COME FROM `storeGraphReferences(rows)`, passed as
+  // `options.declarations` (the sibling artifact's field 6 — the wiring's single call site
+  // for the declaration-input module). The caller's rows are this realm's own; the realm's
+  // boot store is production-shaped (no test seam).
+  wiredGraphStore = createGraphStore({ declarations: storeGraphReferences([]) })
+  return wiredGraphStore
+}
+
+export function getWiredGraphStore(): GraphStore {
+  if (wiredGraphStore === null) wiredGraphStore = buildWiredGraphStore()
+  return wiredGraphStore
+}
 
 /** N3 (live-notification-review.md) — the MCP methods that mutate the APP graph
  *  (content/structural/re-derive). Only these trigger the app-graph-changed push
@@ -362,6 +393,12 @@ async function main(): Promise<void> {
   }
   const runtime = new Runtime({ mount, envelope: demoEnvelope(), maxJournalLength })
   runtime.bootstrap()
+  // ⟶ THE GRAPH-STORE WIRING (`U-STORE-CORE`, field 3/6 of the frozen artifacts): the ONE
+  // store construction per realm at boot — AFTER the realm's own construction of its runtime
+  // (the `Runtime` + `bootstrap()` above) and BEFORE the boot sequence's hand-off (the bridge
+  // conditional / `bridge.ready()` below). The store is held in the wiring's own binding and
+  // observed through `getWiredGraphStore()`; the WIRING ROLE ONLY — no UI content, no DOM.
+  getWiredGraphStore()
   // ⟶ THE GUTTER WIRING (`U-GUTTER-UI`): constructed immediately after `bootstrap()` and
   // BEFORE the bridge conditional, because the affordance is part of the APP UI — it is
   // rendered from the demo envelope's authored card and exists with or without the preload
