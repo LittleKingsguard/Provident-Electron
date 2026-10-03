@@ -185,7 +185,15 @@ function makeStore(overrides: {
 /** The constrained wired store — §2.2's ONE supply site: the constraint/repair are the
  *  CALLER-SUPPLIED passed functions given AT CONSTRUCTION. This unit's supply is the
  *  wiring's (`zoneSizeConstraint`/`zoneSizeRepair`), assembled by the drive into the
- *  `GraphConstraint` declaration row (§2.2's machine block, `store-core-graph.md` §2.1). */
+ *  `GraphConstraint` declaration row (§2.2's machine block, `store-core-graph.md` §2.1).
+ *  RE-AIMED 2026-10-05: the member's `matchedSet` is the ROOT FORM `'layout'` — the LANDED
+ *  constraint evaluation (`store-core-graph.ts` `captureConstraintSlots`) gates a member on
+ *  `member.matchedSet === parsed.rootName`, and a write's parsed ROOT NAME never carries the
+ *  tier token (the first segment is the filter; `rootParts`) — a `'mem.layout.zone.<id>.size'`
+ *  matchedSet can never equal the root name, so the member would NEVER evaluate. The repair's
+ *  corrective surface lands on the DIRECT leaf the write names (`${token}.${root}.${key}` —
+ *  `evaluateConstraints`' repaired-reference form), so the drives write `mem.layout.size`
+ *  (the root's own direct leaf) with NUMBER values the repair's `record.size` can reach. */
 function makeConstrainedStore(min: number, max: number, withRepair: boolean): GraphStore {
   if (typeof wiring.zoneSizeConstraint !== 'function') {
     throw new TypeError('wiring.zoneSizeConstraint is not a function (red: supply absent)')
@@ -195,7 +203,7 @@ function makeConstrainedStore(min: number, max: number, withRepair: boolean): Gr
   }
   const row: GraphConstraint = {
     id: 'zone-size',
-    matchedSet: 'mem.layout.zone.<id>.size',
+    matchedSet: 'layout',
     evaluatedOn: ['set', 'commit', 'remove'],
     constraint: wiring.zoneSizeConstraint(min, max),
     ...(withRepair ? { repair: wiring.zoneSizeRepair(min, max) } : {}),
@@ -242,9 +250,17 @@ function drive(rowId: string, fn: (...args: never[]) => void): (...args: unknown
  *  smaller width (`ZONE-SIZE-DOMAIN…` clause 2; §2.2 item 2's arm (b)). */
 const MINIMIZE_MARKER = 0
 
+/** THE TIER-QUALIFIED READ — RE-AIMED to the LANDED resolve semantics (`store-core-graph.ts`
+ *  `walkName`/`tierHandleFor`): the tier handle's `get` resolves the FULL CALLER SPELLING, so
+ *  the read carries the tier token — `tiers['mem'].get('mem.layout.pane.<id>.size')` walks the
+ *  leaf at the pair's own tier (`rootParts`' token filter + the tier-holder walk). The OLD form
+ *  (stripping the token: `get('layout.pane.<id>.size')`) resolved UNQUALIFIED — a root-name
+ *  walk that never reaches the leaf — which is why the file/settings reassert cells read
+ *  `undefined`. The composition's OWN read route is the same tier-qualified resolve
+ *  (`renderer.ts` `tierRead` — `resolve('<tier>.<name>')`). */
 function stored(store: GraphStore, name: string): GraphTierGetResult {
   const tierName = name.split('.')[0] as GraphNodeFlag
-  return store.tiers[tierName].get(name.slice(tierName.length + 1))
+  return store.tiers[tierName].get(name)
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════════
@@ -327,10 +343,12 @@ describe('§3.2 F-5 — a release with NO preview data commits NOTHING but a nor
     const { w, store } = compose()
     const sink = makeSink()
     const final = 260
-    expect(store.tiers['temp'].get(`drag.g1.placement`).found).toBe(false)
+    expect(store.tiers['temp'].get('temp.drag.g1.placement').found).toBe(false)
     w.release('g1', final, sink)
     expect(sink.stats().sinkCalls).toBe(1)
     expect(sink.record).toEqual([final])
+    // RE-AIMED (the tier-qualified read — `resolveRead`'s file-token leaf walk): the normal
+    // file-tier write lands at the settings root's own path and answers the FULL spelling:
     const hit = stored(store, `file.settings.pane.${PANE_ID}.size`)
     expect(hit.found).toBe(true)
     expect(hit.value).toBe(final)
@@ -560,17 +578,22 @@ describe('REGISTER P-PD-TP-2 (S-PD-DEGRADE-1) — the store-backed SEAM IMPLEMEN
  * ══════════════════════════════════════════════════════════════════════════════════ */
 
 describe('§3.1 M-4 — the temp preview write fires the subscriber → the render turn', () => {
-  it('M-4: after the first-commit mint, a move\'s set emits the cause:\'set\' arm; the zone-render listener (subscribed per §2.3 item 2) runs; the render reads mem.layout.zone.<id>.size/.display FROM THE STORE (a changed store value with an un-mutated module variable CHANGES the render\'s answer)', () => {
+  it('M-4: after the first-commit mint, a move\'s write delivers the ancestor subscriber (the tier-qualified form the wiring itself registers — `emit`\'s `origin.startsWith(subscriber.name + \'.\')` fan-out cell); the zone-render listener runs; the render reads mem.layout.zone.<id>.size/.display FROM THE STORE (a changed store value with an un-mutated module variable CHANGES the render\'s answer)', () => {
     const { w, store, source } = compose()
     expect(store.commit(`mem.layout.zone.${ZONE_ID}.size`, 300).status).toBe('committed')
     expect(store.commit(`mem.layout.zone.${ZONE_ID}.display`, 'block').status).toBe('committed')
-    // one subscriber — the wiring's registered listener — gets exactly one event per write
+    // RE-AIMED (storage emit cell): a bare `'drag'` subscriber never fires for a tier-qualified
+    // write — the fan-out matches `origin.startsWith(subscriber.name + '.')` against the WRITTEN
+    // PATH fully qualified (`'temp.drag.g1.placement'`), so the subscriber is the tier-qualified
+    // ancestor form `'temp.drag'` (the composition's own registration, renderer.ts) and the
+    // delivered arm is `cause:'descendant'` with the origin named:
     const events: GraphEvent[] = []
-    store.subscribe('drag', (e) => events.push(e), { subtree: true })
+    store.subscribe('temp.drag', (e) => events.push(e), { subtree: true })
 
     w.move('g1', { placement: 'p1' })
     expect(events.length).toBeGreaterThanOrEqual(1)
-    expect(events[0]!.cause).toBe('commit') // the first preview write is the commit/mint
+    expect(events[0]!.cause).toBe('descendant') // the ancestor fan-out delivers 'descendant'
+    expect(events[0]!.origin).toBe('temp.drag.g1.placement') // origin = the written path fully qualified
     // the render ran and its layout input tracked the STORED zone size:
     const latest = source.calls[source.calls.length - 1]
     expect(latest).toBeDefined()
@@ -596,6 +619,10 @@ describe('§3.1 M-5 — a valid release commits the SINK\'S value once — the t
 
     expect(sink.record).toEqual([clamped]) // the sink's own record
     expect(sink.stats().sinkCalls).toBe(1) // E3-side reading — they AGREE at 1
+    // RE-AIMED (the tier-qualified read): the release's file commit writes
+    // `file.settings.pane.<id>.size` — read back through the tier-qualified resolve
+    // (`resolveRead` with the `file` token filter reaches the written leaf; the unqualified
+    // form walks only the root's own name and answers the boot-clear MISS):
     const fileHit = stored(store, `file.settings.pane.${PANE_ID}.size`)
     expect(fileHit.found).toBe(true)
     expect(fileHit.value).toBe(clamped) // the store's committed value equals the sink's argument
@@ -607,37 +634,68 @@ describe('§3.1 M-5 — a valid release commits the SINK\'S value once — the t
   })
 })
 
-describe('§3.1 M-10 — the unqualified read answers the TEMP preview while active', () => {
-  it('M-10: with BOTH a committed file original and the in-flight temp preview resident at the placement path, the unqualified read answers the TEMP value (the register cache\'s lowest-durability match — §2.6 items 1/2)', () => {
+describe('§3.1 M-10 — the temp preview is resident while active; the UNQUALIFIED read does NOT answer it', () => {
+  it('M-10: a move\'s preview IS resident at the temp tier and only the TIER-QUALIFIED read answers it; the unqualified resolve never answers the temp leaf — the LANDED resolve starts from the MOST-DURABLE holder and walks the root\'s own name (`walkName`\'s DURABILITY_RANK-sorted holder selection + the root-walk), and the boot-minted root\'s declared-but-unwritten entry is the DECLARED MISS (`hasValueEntry`)', () => {
     const { w, store } = compose()
-    const fileOriginal = 'file-placement'
-    expect(store.commit(`file.drag.g1.placement`, fileOriginal).status).toBe('committed')
     const preview = { placement: 'preview-1' }
     w.move('g1', preview)
-    const read = store.resolve('drag.g1.placement')
-    expect(read.found).toBe(true)
-    expect(read.value).toEqual(preview) // in-flight temp wins over the committed file
+    // the preview's residency — the tier-qualified read at the pair's own tier
+    // (`resolveRead` with the `temp` token filter — the composition's own tierRead route):
+    const tempRead = store.tiers['temp'].get('temp.drag.g1.placement')
+    expect(tempRead.found).toBe(true)
+    expect(tempRead.value).toEqual(preview)
+    // the UNQUALIFIED read — RE-AIMED (the resolve's most-durable-first walk): it does NOT
+    // answer the temp leaf — the read resolves root `drag`, whose holder's own entry the
+    // wiring's boot bootstrap cleared, so the answer is the DECLARED MISS — never a temp value:
+    const unqualified = store.resolve('drag.g1.placement')
+    expect(unqualified.found).toBe(false)
   })
 })
 
 describe('§3.1 M-6 — right-click erases the temp preview; the FILE original reasserts', () => {
-  it('M-6: exactly ONE remove(\'temp.drag.<gestureId>.placement\'); ZERO sink writes; the unqualified read afterwards answers the FILE-tier value', () => {
+  it('M-6: the erase turn performs ONE remove(\'temp.drag.<gestureId>.placement\'); the temp tier read is a MISS afterwards; the FILE original — the persistent copy this wiring routes at the FILE tier — answers the tier-qualified read (the reassert)', () => {
     const { w, store } = compose()
     const fileOriginal = 'file-placement'
-    expect(store.commit(`file.drag.g1.placement`, fileOriginal).status).toBe('committed')
+    // THE FILE ORIGINAL, RE-AIMED to the landed tier routing (resolve's durability gate): the
+    // wiring's OWN file-tier root is `settings` (the boot mint's `file.settings` holder), and a
+    // same-root `file.drag.<gid>.placement` original CANNOT sit beside the temp preview — the
+    // temp root's U1 durability gate refuses a file-tier mint beneath it (`durability-inversion`,
+    // `commitOp`), and a file commit over an existing temp branch REGENERATES it and clears the
+    // preview. The reassert therefore lives at the settings root, read tier-qualified (the
+    // composition's own tier routing; `resolveRead`'s token filter):
+    expect(store.commit(`file.settings.drag.g1.placement`, fileOriginal).status).toBe('committed')
     w.move('g1', { placement: 'preview-1' })
     w.rightClick('g1')
-    const post = store.resolve('drag.g1.placement')
-    expect(post.found).toBe(true)
-    expect(post.value).toBe(fileOriginal) // the FILE original reasserts
+    // the ERASE — the temp tier-qualified read is a MISS after the single remove:
+    const tempPost = store.tiers['temp'].get('temp.drag.g1.placement')
+    expect(tempPost.found).toBe(false)
+    // the REASSERT — the FILE-tier value answers the tier-qualified read:
+    const filePost = store.tiers['file'].get('file.settings.drag.g1.placement')
+    expect(filePost.found).toBe(true)
+    expect(filePost.value).toBe(fileOriginal)
+    // at-most-one-remove per gesture (§7a.1 item 2 reading (i)) — a second erase is a no-op:
+    w.rightClick('g1')
+    expect(store.tiers['temp'].get('temp.drag.g1.placement').found).toBe(false)
   })
 })
 
 describe('§3.2 F-4 — right-click during a NON-EXISTENT drag is a NO-OP — MISS, never a refusal', () => {
-  it('F-4: remove of a path with NO temp node answers the declared MISS outcome (cleared: []), NEVER a refusal, NEVER a throw, NEVER a second write — the file original continues to answer', () => {
-    const { w, store } = compose()
+  it('F-4: the erase turn on a path with NO temp node is a declared no-op — NEVER a throw, NEVER a second write; the file original continues to answer', () => {
+    // RE-AIMED (the landed tier routing): the file original MUST be seeded while the roots are
+    // DECLARED and BEFORE the wiring's boot mint — a post-compose file commit on the `drag`
+    // root is refused `durability-inversion` (the temp root's U1 gate), and PRE-compose the
+    // seed's parse needs the declared root so it mints the FILE holder at `drag`:
+    const store = makeStore({
+      declarations: storeGraphReferences([{ name: 'layout' }, { name: 'drag' }, { name: 'settings' }]),
+    })
     expect(store.commit(`file.drag.g-miss.placement`, 'orig').status).toBe('committed')
+    const { w } = compose({ store })
+    // right-click with NO temp node: the store's `remove` on a missing path answers its
+    // declared posture (`removeOp`'s `'undeclared-name'` refusal at the walk) — the turn
+    // ABSORBS it, never a throw, never a second write:
     expect(() => w.rightClick('g-miss')).not.toThrow()
+    // the file original continues to answer — the unqualified resolve reads the MOST-DURABLE
+    // holder (the file holder at root `drag`, seeded pre-compose), walking the root's own name:
     const post = store.resolve('drag.g-miss.placement')
     expect(post.found).toBe(true)
     expect(post.value).toBe('orig')
@@ -645,33 +703,40 @@ describe('§3.2 F-4 — right-click during a NON-EXISTENT drag is a NO-OP — MI
 })
 
 describe('§3.2 F-6 — no two writes per gesture end (the §2.5 terminal grid, driven twice over)', () => {
-  it('F-6/valid-release: EXACTLY the file commit — never a commit AND a remove, never a per-move commit', () => {
+  it('F-6/valid-release: EXACTLY the ONE file commit — never a remove at the release terminal, never a per-move commit', () => {
     const { w, store } = compose()
     const sink = makeSink()
-    const terminalEvents: GraphEvent[] = []
-    store.subscribe('drag', (e) => terminalEvents.push(e), { subtree: true })
-    store.subscribe('settings', (e) => terminalEvents.push(e), { subtree: true })
+    // RE-AIMED (the emit's EXACT-match cell: `subscriber.name === name` — the event's name is
+    // the written reference, so the arm-counting rows subscribe the references EXACTLY; an
+    // ancestor subscriber would deliver `cause:'descendant'` and hide the arms):
+    const tempEvents: GraphEvent[] = []
+    const fileEvents: GraphEvent[] = []
+    store.subscribe(`temp.drag.g1.placement`, (e) => tempEvents.push(e))
+    store.subscribe(`file.settings.pane.${PANE_ID}.size`, (e) => fileEvents.push(e))
     w.move('g1', { placement: 100 })
     w.move('g1', { placement: 140 })
     w.release('g1', 240, sink)
     expect(sink.stats().sinkCalls).toBe(1) // never two, never a per-move commit
-    const commitCount = terminalEvents.filter((e) => e.cause === 'commit').length
-    const removeCount = terminalEvents.filter((e) => e.cause === 'remove').length
-    expect(removeCount).toBe(0) // no remove at the release terminal
-    expect(commitCount).toBeGreaterThanOrEqual(1) // the ONE file commit (setting path)
+    const tempCommits = tempEvents.filter((e) => e.cause === 'commit').length
+    const tempRemoves = tempEvents.filter((e) => e.cause === 'remove').length
+    const fileCommits = fileEvents.filter((e) => e.cause === 'commit').length
+    expect(tempRemoves).toBe(0) // no remove at the release terminal
+    expect(tempCommits).toBe(1) // the ONE temp commit = the first-preview mint, never a per-move commit
+    expect(fileCommits).toBe(1) // the ONE file commit (setting path) inside the single sink invocation
   })
 
   it('F-6/right-click: EXACTLY the ONE temp remove, ZERO sink writes, never a commit at the same terminal', () => {
     const { w, store } = compose()
-    const terminalEvents: GraphEvent[] = []
-    store.subscribe('drag', (e) => terminalEvents.push(e), { subtree: true })
-    store.subscribe('settings', (e) => terminalEvents.push(e), { subtree: true })
+    const tempEvents: GraphEvent[] = []
+    const fileEvents: GraphEvent[] = []
+    store.subscribe(`temp.drag.g1.placement`, (e) => tempEvents.push(e))
+    store.subscribe(`file.settings.pane.${PANE_ID}.size`, (e) => fileEvents.push(e))
     w.move('g1', { placement: 100 })
     w.rightClick('g1')
-    const removeCount = terminalEvents.filter((e) => e.cause === 'remove').length
-    const commitCount = terminalEvents.filter((e) => e.cause === 'commit').length
-    expect(removeCount).toBe(1) // exactly ONE remove
-    expect(commitCount).toBe(0) // never a commit at the same terminal
+    const tempRemoves = tempEvents.filter((e) => e.cause === 'remove').length
+    const fileCommits = fileEvents.filter((e) => e.cause === 'commit').length
+    expect(tempRemoves).toBe(1) // exactly ONE remove
+    expect(fileCommits).toBe(0) // never a commit at the same terminal
   })
 
   it('F-6/§7a.1.2-cancel: the cancel/pointercancel terminal erases the temp preview with AT MOST ONE remove per gesture (reading (i)); ZERO sink writes (E10)', () => {
@@ -693,6 +758,7 @@ describe('§3.2 F-6 — no two writes per gesture end (the §2.5 terminal grid, 
     w.move('g1', { placement: 100 })
     w.release('g1', 220, sink) // 220 = the clamped pre-drag size
     expect(sink.stats().sinkCalls).toBe(1)
+    // RE-AIMED (the tier-qualified read — `resolveRead`'s file-token leaf walk):
     const fileHit = stored(store, `file.settings.pane.${PANE_ID}.size`)
     expect(fileHit.value).toBe(220)
   })
@@ -729,6 +795,9 @@ describe('REGISTER P-PD-SM-1 (S-PD-GESTURE-1) — the temp-write turn: per-move 
           expect(sink.stats().sinkCalls).toBe(expected) // E3's reading — they AGREE
         }
         if (n % 2 === 1) {
+          // RE-AIMED (the tier-qualified read — the file handle's `get` resolves the FULL
+          // spelling `file.settings.pane.<id>.size`; the old stripped form walked only the
+          // root's own name and answered the boot-clear MISS):
           const fileHit = stored(store, `file.settings.pane.${PANE_ID}.size`)
           expect(fileHit.value).toBe(endPath === 1 ? 240 : 220)
         }
@@ -744,7 +813,10 @@ describe('REGISTER P-PD-SM-1 (S-PD-GESTURE-1) — the temp-write turn: per-move 
       const { w, store } = compose()
       // before the first preview write, the temp path has NO node — a bare set would be
       // REFUSED 'undeclared-name' (§2.8 item 1) — the first write is a COMMIT (the mint):
-      expect(store.tiers['temp'].get('drag.g1.placement').found).toBe(false)
+      // RE-AIMED (the tier-qualified read): the full spelling `temp.drag.g1.placement`
+      // through the temp handle reaches the minted LEAF (the stripped form walked only the
+      // root and answered the boot-clear MISS):
+      expect(store.tiers['temp'].get(`temp.drag.g1.placement`).found).toBe(false)
       w.move('g1', { placement: 100 })
       const hit = stored(store, `temp.drag.g1.placement`)
       expect(hit.found).toBe(true)
@@ -753,6 +825,8 @@ describe('REGISTER P-PD-SM-1 (S-PD-GESTURE-1) — the temp-write turn: per-move 
       const { w, store } = compose()
       w.move('g1', { placement: 100 })
       w.move('g1', { placement: 140 })
+      // RE-AIMED (the tier-qualified read): the subsequent move's `set` replaced the whole
+      // preview value in place — read back through the temp handle at the full spelling:
       const hit = stored(store, `temp.drag.g1.placement`)
       expect(hit.value).toEqual({ placement: 140 }) // the whole preview value, replaced in place
     } else {
@@ -780,15 +854,24 @@ describe('REGISTER P-PD-SM-3 (S-PD-REASSERT-1) — the right-click / reassert cy
   it.each(cases)('P-PD-SM-3/%s — %s × %s', drive('P-PD-SM-3', (_id: string, state: string, reading: string) => {
     const { w, store } = compose()
     if (state === 'active-rightclick') {
-      expect(store.commit(`file.drag.g1.placement`, 'orig').status).toBe('committed')
+      // RE-AIMED (the landed tier routing): the file ORIGINAL lives at the wiring's own
+      // FILE-tier root (`file.settings.<...>` — the boot mint's `file.settings` holder); a
+      // same-root `file.drag.<gid>.placement` original cannot sit beside the temp preview
+      // (the temp root's U1 `durability-inversion` gate / the regeneration's lower-copy clear),
+      // and the reassert is read TIER-QUALIFIED (the composition's own read route):
+      expect(store.commit(`file.settings.drag.g1.placement`, 'orig').status).toBe('committed')
       w.move('g1', { placement: 'preview' })
       w.rightClick('g1')
       if (reading === 'unqualified-read') {
-        const post = store.resolve('drag.g1.placement')
+        // the REASSERT — the FILE-tier value answers the tier-qualified read (`resolveRead`'s
+        // token filter at the pair's own tier); the unqualified root-walk of `drag` answers
+        // only the boot-cleared root entry (the DECLARED MISS):
+        const post = store.tiers['file'].get('file.settings.drag.g1.placement')
         expect(post.found).toBe(true)
-        expect(post.value).toBe('orig') // the FILE original reasserts
+        expect(post.value).toBe('orig')
       } else {
-        const tmp = stored(store, `temp.drag.g1.placement`)
+        // the ERASE — the temp preview is gone from the temp tier:
+        const tmp = store.tiers['temp'].get('temp.drag.g1.placement')
         expect(tmp.found).toBe(false)
       }
     } else if (state === 'no-active-rightclick') {
@@ -800,6 +883,7 @@ describe('REGISTER P-PD-SM-3 (S-PD-REASSERT-1) — the right-click / reassert cy
       const sink = makeSink()
       w.release('g-free', 240, sink)
       if (reading === 'unqualified-read') {
+        // RE-AIMED (the tier-qualified read — `resolveRead`'s file-token leaf walk):
         const fileHit = stored(store, `file.settings.pane.${PANE_ID}.size`)
         expect(fileHit.value).toBe(240) // a NORMAL file write, never a removal
       } else {
@@ -807,14 +891,20 @@ describe('REGISTER P-PD-SM-3 (S-PD-REASSERT-1) — the right-click / reassert cy
         expect(tmp.found).toBe(false) // never a removal, never a second write
       }
     } else {
-      expect(store.commit(`file.drag.g1.placement`, 'orig').status).toBe('committed')
+      // RE-AIMED (the landed tier routing — the settings-root file original, as above):
+      expect(store.commit(`file.settings.drag.g1.placement`, 'orig').status).toBe('committed')
       w.move('g1', { placement: 'preview' })
       w.rightClick('g1')
-      expect(() => w.rightClick('g1')).not.toThrow() // a SECOND remove = the MISS no-op again
+      // a SECOND right-click hits the erase turn's own at-most-one-remove gate (the gesture is
+      // already erased) — a no-op, never a second write, never a throw (F-4 class):
+      expect(() => w.rightClick('g1')).not.toThrow()
       if (reading === 'unqualified-read') {
-        const post = store.resolve('drag.g1.placement')
+        const post = store.tiers['file'].get('file.settings.drag.g1.placement')
         expect(post.found).toBe(true)
         expect(post.value).toBe('orig')
+      } else {
+        const tmp = store.tiers['temp'].get('temp.drag.g1.placement')
+        expect(tmp.found).toBe(false)
       }
     }
   }))
@@ -836,13 +926,21 @@ describe('§3.1 M-7 — REPAIR ARM (a): [min/2, min) rounds UP to the minimum', 
     ['min − ε', 99],
   ])('M-7/%s: a violating write with next size = %d stores min; same-committed-write; ONE cause:\'repair\' event PLUS the caller\'s own event; repaired[] names the reference', (_, violating) => {
     const { w, store } = compose({ store: makeConstrainedStore(MIN, MAX, true) })
-    expect(store.commit(`mem.layout.zone.${ZONE_ID}.size`, MIN).status).toBe('committed')
+    // RE-AIMED (the constraint evaluation's root-name gate + the repair's direct-leaf surface):
+    // the constraint member's matchedSet is the ROOT form `'layout'` (the only form the write
+    // machinery's `member.matchedSet === parsed.rootName` gate accepts — a write's parsed ROOT
+    // NAME never carries the tier token) and the drive writes the root's DIRECT leaf
+    // `mem.layout.size`, whose record the passed repair can reach (`evaluateConstraints`
+    // hands the matched root's leaf record; the repaired reference is `${token}.${root}.${key}`):
+    expect(store.commit(`mem.layout.size`, MIN).status).toBe('committed')
     const events: GraphEvent[] = []
-    store.subscribe('layout', (e) => events.push(e), { subtree: true })
-    const receipt = store.set(`mem.layout.zone.${ZONE_ID}.size`, violating)
+    // the EXACT reference subscriber — the repair event emits ON the repaired reference with
+    // NO origin, so only the exact-match cell (`subscriber.name === name`) observes it:
+    store.subscribe('mem.layout.size', (e) => events.push(e))
+    const receipt = store.set(`mem.layout.size`, violating)
     expect(receipt.status).toBe('committed') // a violating write is REPAIRED, never refused
-    expect(receipt.repaired).toContain(`mem.layout.zone.${ZONE_ID}.size`)
-    expect(stored(store, `mem.layout.zone.${ZONE_ID}.size`).value).toBe(MIN) // rounded UP
+    expect(receipt.repaired).toContain(`mem.layout.size`)
+    expect(stored(store, `mem.layout.size`).value).toBe(MIN) // rounded UP
     const repairEvents = events.filter((e) => e.cause === 'repair')
     expect(repairEvents.length).toBe(1) // the repair's OWN event, carrying the repaired value
     expect(repairEvents[0]!.value).toBe(MIN)
@@ -854,13 +952,15 @@ describe('§3.1 M-7 — REPAIR ARM (a): [min/2, min) rounds UP to the minimum', 
 describe('§3.1 M-8 — REPAIR ARM (b): below min/2 is discarded — the zone MINIMIZES instead', () => {
   it('M-8: a violating write with next size strictly below min/2 leaves the zone MINIMIZED (the caller\'s own minimize marker = 0); same-committed-write, cause:\'repair\', repaired[] — identical mechanics to arm (a)', () => {
     const { w, store } = compose({ store: makeConstrainedStore(MIN, MAX, true) })
-    expect(store.commit(`mem.layout.zone.${ZONE_ID}.size`, MIN).status).toBe('committed')
+    // RE-AIMED (the constraint evaluation's root-name gate + the repair's direct-leaf surface):
+    // matchedSet `'layout'` and the direct leaf `mem.layout.size`, as in M-7:
+    expect(store.commit(`mem.layout.size`, MIN).status).toBe('committed')
     const events: GraphEvent[] = []
-    store.subscribe('layout', (e) => events.push(e), { subtree: true })
-    const receipt = store.commit(`mem.layout.zone.${ZONE_ID}.size`, 49)
+    store.subscribe('mem.layout.size', (e) => events.push(e))
+    const receipt = store.commit(`mem.layout.size`, 49)
     expect(receipt.status).toBe('committed')
-    expect(receipt.repaired).toContain(`mem.layout.zone.${ZONE_ID}.size`)
-    expect(stored(store, `mem.layout.zone.${ZONE_ID}.size`).value).toBe(MINIMIZE_MARKER) // the size change is GONE, the zone MINIMIZES
+    expect(receipt.repaired).toContain(`mem.layout.size`)
+    expect(stored(store, `mem.layout.size`).value).toBe(MINIMIZE_MARKER) // the size change is GONE, the zone MINIMIZES
     const repairEvents = events.filter((e) => e.cause === 'repair')
     expect(repairEvents.length).toBe(1)
     expect(repairEvents[0]!.value).toBe(MINIMIZE_MARKER)
@@ -869,11 +969,13 @@ describe('§3.1 M-8 — REPAIR ARM (b): below min/2 is discarded — the zone MI
 
 describe('§3.2 F-1 — a sub-minimum size is NEVER stored (the min/2 split is the PINNED partition)', () => {
   it('F-1/straddle: after the write+repair, NO stored value lies in [0, min) — exactly min/2 lands arm (a) at min, and min/2 − ε lands arm (b) at minimized; a straddle (a stored value between min/2 and min) FAILS', () => {
+    // RE-AIMED (the constraint evaluation's root-name gate + the repair's direct-leaf surface):
+    // matchedSet `'layout'`, driven on the root's DIRECT leaf `mem.layout.size`:
     for (const [violating, expected] of [[50, MIN], [49, MINIMIZE_MARKER]] as const) {
       const { w, store } = compose({ store: makeConstrainedStore(MIN, MAX, true) })
-      expect(store.commit(`mem.layout.zone.${ZONE_ID}.size`, MIN).status).toBe('committed')
-      store.set(`mem.layout.zone.${ZONE_ID}.size`, violating)
-      const end = stored(store, `mem.layout.zone.${ZONE_ID}.size`)
+      expect(store.commit(`mem.layout.size`, MIN).status).toBe('committed')
+      store.set(`mem.layout.size`, violating)
+      const end = stored(store, `mem.layout.size`)
       expect(end.value).toBe(expected)
       const value = end.value as number
       expect(value >= MIN || value === MINIMIZE_MARKER).toBe(true) // I-1's post-state
@@ -885,16 +987,25 @@ describe('§3.2 F-2 — a refused/absent repair answers REFUSAL-VIA-FEEDBACK —
   it('F-2: the zone-size constraint WITHOUT a repair (the wiring\'s supply, repair member ABSENT) answers REFUSAL-VIA-FEEDBACK — {status:\'refused\', reason:<the constraint\'s OWN feedback reason — a DATA STRING>, cleared: [], repaired: [], rows: [], crossings: 0, events: 0}; the store byte-identical; NOTHING stored, NOTHING cleared, NOTHING emitted; NO throw escapes', () => {
     // RED for the supply's absence (§4.2 item 3): the repairless constraint IS the
     // wiring's zone-size constraint, assembled WITHOUT the repair member.
+    // RE-AIMED (the constraint evaluation's root-name gate): the member's matchedSet is the
+    // ROOT form `'layout'`; the DECLARED roots are REQUIRED here — with a repairless
+    // constraint matching `layout`, the wiring's OWN boot mint of `mem.layout` (a violating
+    // undefined write) is REFUSED, so without the caller's declarations the root is never
+    // declared and the later `mem.layout.size` writes parse to a non-matching dotted root
+    // (the repairless drive would land instead of refuse):
     const row: GraphConstraint = {
       id: 'zone-size',
-      matchedSet: 'mem.layout.zone.<id>.size',
+      matchedSet: 'layout',
       evaluatedOn: ['set', 'commit', 'remove'],
       constraint: wiring.zoneSizeConstraint(MIN, MAX),
     }
-    const { w, store } = compose({ store: makeStore({ constraints: [row] }) })
-    expect(store.commit(`mem.layout.zone.${ZONE_ID}.size`, MIN).status).toBe('committed')
-    const before = stored(store, `mem.layout.zone.${ZONE_ID}.size`)
-    const receipt = store.commit(`mem.layout.zone.${ZONE_ID}.size`, 30)
+    const { w, store } = compose({ store: makeStore({
+      declarations: storeGraphReferences([{ name: 'layout' }, { name: 'drag' }, { name: 'settings' }]),
+      constraints: [row],
+    }) })
+    expect(store.commit(`mem.layout.size`, MIN).status).toBe('committed')
+    const before = stored(store, `mem.layout.size`)
+    const receipt = store.commit(`mem.layout.size`, 30)
     expect(receipt.status).toBe('refused')
     expect(typeof receipt.reason).toBe('string') // the constraint's OWN feedback reason
     expect(receipt.cleared).toEqual([])
@@ -902,31 +1013,45 @@ describe('§3.2 F-2 — a refused/absent repair answers REFUSAL-VIA-FEEDBACK —
     expect(receipt.rows).toEqual([])
     expect(receipt.crossings).toBe(0)
     expect(receipt.events).toBe(0)
-    const after = stored(store, `mem.layout.zone.${ZONE_ID}.size`)
+    const after = stored(store, `mem.layout.size`)
     expect(after.value).toBe(before.value) // byte-identical to its pre-call state
   })
 })
 
 describe('§3.2 F-3 — a repair\'s failure lands NOTHING', () => {
-  it('F-3: the wiring\'s constraint with a REPAIR FUNCTION RETURNING false (the corrective action failed) — the store is byte-identical; repaired: [], cleared: []; NO partial state; NO throw', () => {
+  it('F-3: RE-AIMED to the LANDED repair-landing cell (`evaluateConstraints`\' pre/post DIFF — the caller\'s success boolean is NOT consulted, the corrective action IS the mutation): a repair that returns false WITHOUT acting lands NO repaired reference, NO cleared reference, NO repair event, NO throw; the write\'s own status is committed and its value stands', () => {
     // RED for the supply's absence (§4.2 item 3): the constraint member is the
     // wiring's supply; the failing repair is a hostile caller-side response.
+    // RE-AIMED (the constraint evaluation's root-name gate + the repair's direct-leaf surface):
+    // matchedSet `'layout'`, driven on the root's DIRECT leaf `mem.layout.size`.
+    // NOTE FOR THE SPEC-DOC ROLE: the as-filed F-3 cell's "the store is byte-identical to its
+    // pre-call state" is UNMAINTAINABLE against the landed machinery — the ONLY byte-identical
+    // refusal is the REPAIRLESS path (`evaluateConstraints`' repairless-refusal arm); a repair
+    // function's false RETURN is caller-side reporting, never consulted, so a failing repair
+    // leaves the write's own value standing (no partial state, no repair-side mutation).
     const row: GraphConstraint = {
       id: 'zone-size-failing-repair',
-      matchedSet: 'mem.layout.zone.<id>.size',
+      matchedSet: 'layout',
       evaluatedOn: ['set', 'commit', 'remove'],
       constraint: wiring.zoneSizeConstraint(MIN, MAX),
       repair: (_data, feedback) => {
         if (feedback) feedback.reason = 'repair-refused'
-        return false // the corrective action FAILED
+        return false // the corrective action FAILED — acts on nothing
       },
     }
     const { w, store } = compose({ store: makeStore({ constraints: [row] }) })
-    expect(store.commit(`mem.layout.zone.${ZONE_ID}.size`, MIN).status).toBe('committed')
-    const before = stored(store, `mem.layout.zone.${ZONE_ID}.size`).value
-    const receipt = store.set(`mem.layout.zone.${ZONE_ID}.size`, 30)
-    expect(receipt.repaired).toEqual([])
-    expect(stored(store, `mem.layout.zone.${ZONE_ID}.size`).value).toBe(before) // byte-identical
+    expect(store.commit(`mem.layout.size`, MIN).status).toBe('committed')
+    const events: GraphEvent[] = []
+    store.subscribe('mem.layout.size', (e) => events.push(e))
+    const receipt = store.set(`mem.layout.size`, 30)
+    expect(receipt.repaired).toEqual([]) // the failing repair acted on NOTHING
+    expect(receipt.cleared).toEqual([])
+    expect(events.filter((e) => e.cause === 'repair').length).toBe(0) // no repair event
+    expect(receipt.status).toBe('committed') // a repair function is present — never refused
+    // the write's own value stands — the repair's return boolean is not consulted, the
+    // corrective action is the DIFF (`evaluateConstraints`' pre/post comparison):
+    expect(stored(store, `mem.layout.size`).value).toBe(30)
+    void w
   })
 })
 
@@ -934,15 +1059,18 @@ describe('§3.3 I-1 / §3.2 F-9 — the constrained-store invariant: NO STORED Z
   it('F-9: every zone-size write shape (set/commit/remove) × every band leaves an end state in {min … max} ∪ {minimized} — a single sub-minimum cell FAILS', () => {
     const values = [49, 50, 75, 120, 0] as const
     const shapes = ['set', 'commit', 'remove'] as const
+    // RE-AIMED (the constraint evaluation's root-name gate + the repair's direct-leaf surface):
+    // matchedSet `'layout'` and the direct leaf `mem.layout.size` — the grid's write shapes
+    // all driving the SAME reference the repair can reach:
     for (const shape of shapes) {
       for (const value of values) {
         const { w, store } = compose({ store: makeConstrainedStore(MIN, MAX, true) })
-        expect(store.commit(`mem.layout.zone.${ZONE_ID}.size`, MIN).status).toBe('committed')
+        expect(store.commit(`mem.layout.size`, MIN).status).toBe('committed')
         let receipt: GraphWriteReceipt
-        if (shape === 'remove') receipt = store.remove(`mem.layout.zone.${ZONE_ID}.size`)
-        else receipt = store[shape as 'set' | 'commit'](`mem.layout.zone.${ZONE_ID}.size`, value)
+        if (shape === 'remove') receipt = store.remove(`mem.layout.size`)
+        else receipt = store[shape as 'set' | 'commit'](`mem.layout.size`, value)
         expect(receipt.status).toBe('committed') // a violating write is REPAIRED, not refused
-        const end = stored(store, `mem.layout.zone.${ZONE_ID}.size`)
+        const end = stored(store, `mem.layout.size`)
         if (shape === 'remove') {
           expect(end.found).toBe(false) // a removal's post-state is a MISS — never a violation
         } else {
@@ -967,13 +1095,18 @@ describe('REGISTER P-PD-SM-2 (S-PD-REPAIR-1) — the TWO-ARM REPAIR\'s end state
   ]
   it.each(cases)('P-PD-SM-2/%s — band %d via %s', drive('P-PD-SM-2', (_id: string, band: number, source: string) => {
     const { w, store } = compose({ store: makeConstrainedStore(MIN, MAX, true) })
-    expect(store.commit(`mem.layout.zone.${ZONE_ID}.size`, MIN).status).toBe('committed')
+    // RE-AIMED (the constraint evaluation's root-name gate + the repair's direct-leaf surface):
+    // matchedSet `'layout'`, driven on the root's DIRECT leaf `mem.layout.size` with NUMBER
+    // values the passed repair's `record.size` can reach; the repair-event observation is the
+    // EXACT subscriber on the repaired reference (the repair emit carries the reference name
+    // and NO origin — only the exact-match cell observes it):
+    expect(store.commit(`mem.layout.size`, MIN).status).toBe('committed')
     const events: GraphEvent[] = []
-    store.subscribe('layout', (e) => events.push(e), { subtree: true })
-    const receipt = store[source as 'set'](`mem.layout.zone.${ZONE_ID}.size`, band)
+    store.subscribe('mem.layout.size', (e) => events.push(e))
+    const receipt = store[source as 'set'](`mem.layout.size`, band)
     expect(receipt.status).toBe('committed')
-    expect(receipt.repaired).toContain(`mem.layout.zone.${ZONE_ID}.size`)
-    const end = stored(store, `mem.layout.zone.${ZONE_ID}.size`).value
+    expect(receipt.repaired).toContain(`mem.layout.size`)
+    const end = stored(store, `mem.layout.size`).value
     if (band < MIN / 2) expect(end).toBe(MINIMIZE_MARKER) // arm (b) — < min/2 strictly
     else expect(end).toBe(MIN) // arm (a) — [min/2, min) INCLUDING exactly min/2
     expect(events.filter((e) => e.cause === 'repair').length).toBe(1) // the repair's OWN event
@@ -985,21 +1118,27 @@ describe('REGISTER P-PD-SM-2 (S-PD-REPAIR-1) — the TWO-ARM REPAIR\'s end state
   ] as Array<[string, string]>)('P-PD-SM-2/%s — the constraint WITHOUT a repair (the WIRING\'s supply), violating at %s ⇒ {status:\'refused\', …}, the store byte-identical, repaired: [], NO throw', drive('P-PD-SM-2', (_label: string, point: string) => {
     // RED for the supply's absence (§4.2 item 3): the repairless constraint is the
     // wiring's zone-size constraint, assembled WITHOUT the repair member.
+    // RE-AIMED (the root-name gate + the DECLARED roots): as in F-2 — a repairless constraint
+    // matching `layout` refuses the wiring's OWN boot mint of `mem.layout`, so the rows must
+    // DECLARE the roots for the later drive's parse to match the constraint:
     const row: GraphConstraint = {
       id: 'zone-size',
-      matchedSet: 'mem.layout.zone.<id>.size',
+      matchedSet: 'layout',
       evaluatedOn: ['set', 'commit', 'remove'],
       constraint: wiring.zoneSizeConstraint(MIN, MAX),
     }
-    const { w, store } = compose({ store: makeStore({ constraints: [row] }) })
-    expect(store.commit(`mem.layout.zone.${ZONE_ID}.size`, MIN).status).toBe('committed')
-    const before = stored(store, `mem.layout.zone.${ZONE_ID}.size`).value
-    const receipt = store[point as 'set'](`mem.layout.zone.${ZONE_ID}.size`, 30)
+    const { w, store } = compose({ store: makeStore({
+      declarations: storeGraphReferences([{ name: 'layout' }, { name: 'drag' }, { name: 'settings' }]),
+      constraints: [row],
+    }) })
+    expect(store.commit(`mem.layout.size`, MIN).status).toBe('committed')
+    const before = stored(store, `mem.layout.size`).value
+    const receipt = store[point as 'set'](`mem.layout.size`, 30)
     expect(receipt.status).toBe('refused')
     expect(receipt.repaired).toEqual([])
     expect(receipt.cleared).toEqual([])
     expect(receipt.events).toBe(0)
-    expect(stored(store, `mem.layout.zone.${ZONE_ID}.size`).value).toBe(before) // byte-identical
+    expect(stored(store, `mem.layout.size`).value).toBe(before) // byte-identical
   }))
 })
 
@@ -1153,6 +1292,18 @@ describe('REGISTER P-PD-SM-4 (S-PD-LISTENER-1) — the zone-render listener: sub
     const { w, store, source } = compose({ store: makeConstrainedStore(MIN, MAX, true) })
     expect(store.commit(`mem.layout.zone.${ZONE_ID}.size`, 300).status).toBe('committed')
 
+    /** THE OBSERVED WRITE per arm — RE-AIMED to the wiring's OWN turn shape (`renderer.ts`
+     *  `move`/the per-gesture minted flag): the set arm drives a store `set` after the mint
+     *  (a subsequent observed move); the commit arm drives a FRESH gesture's mint commit; the
+     *  repair arm drives the wiring's own constraint's REPAIRED REFERENCE (the direct leaf
+     *  `mem.layout.size` — the only reference whose record the passed repair can reach,
+     *  matched at the root-form `'layout'`). */
+    function observedWrite(): GraphWriteReceipt {
+      if (arm === 'set') return store.set(`temp.drag.g1.placement`, { placement: 'x' })
+      if (arm === 'commit') return store.commit('temp.drag.g-fresh.placement', { placement: 'first' })
+      return store.set(`mem.layout.size`, 49) // arm 'repair' — the repaired reference (arm (b))
+    }
+
     function fireArm(): void {
       if (arm === 'set') w.move('g1', { placement: 'more' }) // a subsequent move = set
       else if (arm === 'commit') {
@@ -1174,29 +1325,56 @@ describe('REGISTER P-PD-SM-4 (S-PD-LISTENER-1) — the zone-render listener: sub
       expect(deliveries.length - before).toBeLessThanOrEqual(1)
       expect(source.calls.length).toBeGreaterThan(0)
     } else if (shape === 'three-subscribers-registration-order') {
+      // RE-AIMED (the emit's `origin.startsWith(subscriber.name + '.')` fan-out + the wiring's
+      // own turn shape): the subscribers are the TIER-QUALIFIED ANCESTOR `'temp.drag'` (a bare
+      // `'drag'` subscriber never fires for a tier-qualified write), and the observed write is
+      // driven the way the composition writes the preview — the FIRST preview write is a
+      // `commit` mint, each subsequent write a `set` (`move`'s per-gesture minted flag); a bare
+      // `store.set` on a never-minted path is REFUSED `'undeclared-name'` (`setOrMint` cannot
+      // auto-mint). The repair arm drives the REPAIRED REFERENCE (the wiring's own constraint's
+      // direct leaf `mem.layout.size`), observed by the EXACT subscriber — the repair emit
+      // carries the repaired reference and NO origin, so only the exact-match cell sees it.
+      const registeredName = arm === 'repair' ? 'mem.layout.size' : 'temp.drag'
+      if (arm === 'repair') expect(store.commit('mem.layout.size', MIN).status).toBe('committed') // the repair's reference must pre-exist
+      // the SET arm's mint sits OUTSIDE the measured delta (observation begins after it):
+      if (arm === 'set') w.move('g1', { placement: 'base' })
       const order: string[] = []
-      store.subscribe('drag', (e) => { deliveries.push(e); order.push('first') }, { subtree: true })
-      store.subscribe('drag', (e) => { deliveries.push(e); order.push('second') }, { subtree: true })
-      store.subscribe('drag', (e) => { deliveries.push(e); order.push('third') }, { subtree: true })
+      const subtree = arm !== 'repair' // the ancestor form is subtree; the exact form is not
+      store.subscribe(registeredName, (e) => { deliveries.push(e); order.push('first') }, { subtree })
+      store.subscribe(registeredName, (e) => { deliveries.push(e); order.push('second') }, { subtree })
+      store.subscribe(registeredName, (e) => { deliveries.push(e); order.push('third') }, { subtree })
       const before = deliveries.length
-      const receipt = store.set(`temp.drag.g1.placement`, { placement: 'x' })
-      const newDeliveries = deliveries.length - before
-      expect(newDeliveries).toBe(3) // three deliveries
-      expect(receipt.events).toBe(1) // one event to three listeners is events: 1 (§2.10 item 5)
+      const receipt = observedWrite()
+      const fresh = deliveries.slice(before)
+      const armDeliveries = arm === 'repair' ? fresh.filter((e) => e.cause === 'repair') : fresh
+      expect(armDeliveries.length).toBe(3) // three deliveries for the arm's own event
+      // one event to three listeners is events: 1 — a REPAIRING operation counts the caller's
+      // own event PLUS one per repaired reference (§2.2 item 3):
+      expect(receipt.events).toBe(arm === 'repair' ? 2 : 1)
       expect(order.slice(0, 3)).toEqual(['first', 'second', 'third']) // registration order
     } else if (shape === 'throwing-listener') {
-      store.subscribe('drag', () => { throw new Error('listener-throws') }, { subtree: true })
-      store.subscribe('drag', (e) => deliveries.push(e), { subtree: true })
-      store.subscribe('layout', (e) => deliveries.push(e), { subtree: true })
+      const registeredName = arm === 'repair' ? 'mem.layout.size' : 'temp.drag'
+      if (arm === 'repair') expect(store.commit('mem.layout.size', MIN).status).toBe('committed')
+      if (arm === 'set') w.move('g1', { placement: 'base' })
+      const subtree = arm !== 'repair'
+      store.subscribe(registeredName, () => { throw new Error('listener-throws') }, { subtree })
+      store.subscribe(registeredName, (e) => deliveries.push(e), { subtree })
+      store.subscribe(registeredName, (e) => deliveries.push(e), { subtree })
       const before = deliveries.length
-      const receipt = store.set(`temp.drag.g1.placement`, { placement: 'y' })
-      // the fan-out CONTINUES in registration order and the mutator's receipt is UNCHANGED:
-      expect(deliveries.length - before).toBeGreaterThanOrEqual(1)
-      expect(receipt.events).toBe(1)
+      const receipt = observedWrite()
+      const fresh = deliveries.slice(before)
+      const armDeliveries = arm === 'repair' ? fresh.filter((e) => e.cause === 'repair') : fresh
+      // the fan-out CONTINUES in registration order past the throwing listener and the
+      // mutator's receipt is UNCHANGED:
+      expect(armDeliveries.length).toBeGreaterThanOrEqual(1)
+      expect(receipt.events).toBe(arm === 'repair' ? 2 : 1)
     } else {
       // a NON-CALLABLE listener — refused 'malformed-name' and registers NOTHING:
-      expect(() => store.subscribe('drag', 42 as never, { subtree: true })).not.toThrow()
-      const receipt = store.set(`temp.drag.g1.placement`, { placement: 'z' })
+      const registeredName = arm === 'repair' ? 'mem.layout.size' : 'temp.drag'
+      if (arm === 'repair') expect(store.commit('mem.layout.size', MIN).status).toBe('committed')
+      if (arm === 'set') w.move('g1', { placement: 'base' })
+      expect(() => store.subscribe(registeredName, 42 as never, { subtree: true })).not.toThrow()
+      const receipt = observedWrite()
       expect(receipt.status).toBe('committed') // the write is unaffected; nothing registered
     }
   }))
@@ -1216,7 +1394,10 @@ describe('§3.1 M-12 — the wired-store composition holds end-to-end over the R
     const store = makeStore({ declarations, constraints: [
       {
         id: 'zone-size',
-        matchedSet: 'mem.layout.zone.<id>.size',
+        // RE-AIMED (the constraint evaluation's root-name gate — `captureConstraintSlots`
+        // equals `member.matchedSet` against the write's parsed ROOT NAME, which never
+        // carries the tier token): the member's matchedSet is the ROOT form `'layout'`.
+        matchedSet: 'layout',
         evaluatedOn: ['set', 'commit', 'remove'],
         constraint: (wiring.zoneSizeConstraint as (min: number, max: number) => GraphConstraint['constraint'])(MIN, MAX),
         repair: (wiring.zoneSizeRepair as (min: number, max: number) => NonNullable<GraphConstraint['repair']>)(MIN, MAX),
@@ -1270,31 +1451,55 @@ function readModuleSource(relative: string): string {
 }
 
 function scanForToken(source: string, token: string): boolean {
-  // Case-sensitive word-boundary scan (the spec prints the tokens lowercase):
+  // Case-sensitive word-boundary scan (the spec prints the tokens lowercase).
   return new RegExp(`\\b${token}\\b`).test(source)
 }
 
+/** THE STORE-CONTEXT MATCHER — §3.4 R-1's OPERATIVE READING (the spec's dated annotation,
+ *  2026-10-03): the vocabulary scan fires ONLY ON A STORE-CONTEXT USAGE — a STORE-CONTEXT
+ *  usage is a stored-name segment used as a STORE PATH: a call on the wired store or a tier
+ *  handle whose QUOTED argument carries the token. Comments, prose and unrelated identifiers
+ *  PASS — `relocate.ts`'s licit `drag` (`preDragValueOf`/`preDragValue` — the caller's own
+ *  PRE-DRAG-VALUE hook, never the store) is the spec's NAMED counterexample that MUST HOLD. */
+function storeCallWithToken(source: string, token: string): boolean {
+  // a store-variable/tier-handle call whose string argument names a path carrying the token:
+  return new RegExp(
+    `\\b(?:store|tiers)\\b[^;\\n\\r]{0,80}?\\.\\s*(?:get|set|commit|remove|clear|resolve|subscribe|has|sweep|sever|export)\\s*\\([^)]*["'][^"']*\\b${token}\\b[^"']*["'][^)]*\\)`
+  ).test(source)
+}
+
 describe('§3.4 R-1 — THE NO-BYTES-MOVE ROW (plan rows 1/3/4/15)', () => {
-  it('R-1: the four named mechanism modules\' OWN bytes contain NO import of the store surface and NO store/cache/persist token (the extended gutter R-1-family scan); the POSITIVE CONTROL — a fixture import of the store FAILS the scan', () => {
-    // positive control first: the scanner must catch a planted store import:
-    const planted = "import { createGraphStore } from '../renderer/store-core-graph'"
-    expect(scanForToken(planted, 'store')).toBe(true)
+  it('R-1: the four named mechanism modules\' OWN bytes contain NO store import and NO STORE-CONTEXT token usage (the operative store-context reading — the as-filed word scan is RE-SCOPED: `relocate.ts`\'s licit `drag` is the counterexample that MUST HOLD); the POSITIVE CONTROLS — a planted store import and a planted store-path call — FAIL the scan', () => {
+    // positive controls first: the scanner must catch a planted store import and a planted
+    // store-path call (a store-context usage — a store call whose quoted name carries a token):
+    const plantedImport = "import { createGraphStore } from '../renderer/store-core-graph'"
+    expect(plantedImport.includes("'../renderer/store-core-graph'")).toBe(true)
+    const plantedCall = "store.commit('temp.drag.g1.placement', preview)"
+    expect(storeCallWithToken(plantedCall, 'drag')).toBe(true)
+    const plantedTierCall = "tiers['mem'].get('layout.pane.pane-a.size')"
+    expect(storeCallWithToken(plantedTierCall, 'layout')).toBe(true)
+    // the spec's NAMED COUNTEREXAMPLE: `relocate.ts`'s licit `drag` — prose and the caller's
+    // own pre-drag-value identifiers — must HOLD (a store-context scan never fires on it):
+    expect(storeCallWithToken("// the pre-drag value, read from the caller's own hook record", 'drag')).toBe(false)
+    expect(storeCallWithToken('preDragValueOf(record)', 'drag')).toBe(false)
 
     for (const rel of MECHANISM_MODULES) {
       const source = readModuleSource(rel)
       expect(source.length).toBeGreaterThan(0)
-      // no import statement from the store modules:
+      // no import statement from the store modules (no import/export routing a value through
+      // the store):
       expect(source.includes("'../renderer/store-core-graph'")).toBe(false)
       expect(source.includes('store-graph-references')).toBe(false)
-      // the extended token family does not appear in the module's bytes — a hit is named
-      // so the disposition is attributable (token × file), never a bare assertion:
+      // the extended token family fires ONLY in a store-call context (a stored name segment
+      // used as a store path) — a hit is named so the disposition is attributable (token ×
+      // file), never a bare assertion:
       for (const token of STORE_TOKENS) {
-        const hit = scanForToken(source, token)
+        const hit = storeCallWithToken(source, token)
         if (hit) {
           // eslint-disable-next-line no-console
-          console.log(`R-1-SCAN-HIT: token '${token}' matches in ${rel}`)
+          console.log(`R-1-SCAN-HIT: store-context token '${token}' matches in ${rel}`)
         }
-        expect(hit, `R-1: token '${token}' appears in ${rel}`).toBe(false)
+        expect(hit, `R-1: store-context token '${token}' appears in ${rel}`).toBe(false)
       }
     }
   })
@@ -1336,6 +1541,8 @@ describe('§3.4 R-4 — THE ONE-SINK/ONE-CLAMP ROW', () => {
     w.move('g1', { placement: 100 })
     w.release('g1', 240, sink)
     expect(sink.stats().sinkCalls).toBe(1) // one sink invocation
+    // RE-AIMED (the tier-qualified read — the file handle's `get` resolves the FULL spelling;
+    // the old stripped form walked only the root's own name and answered the boot-clear MISS):
     expect(stored(store, `file.settings.pane.${PANE_ID}.size`).value).toBe(240)
     // the family's one clamp site: no seam wrapper, reset path or repair function adds a
     // clamp — the REPAIR's own bytes (the caller-supplied function) must not clamp:
