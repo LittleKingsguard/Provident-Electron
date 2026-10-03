@@ -1132,9 +1132,14 @@ export function createGraphStore(options: {
 
   /** THE MATCHED ROOT at the pair's own tier: the tier-holder whose anchor leaves are the
    *  data the member's matched set reads. Where the pair's tier holds no node, the most
-   *  durable holder answers (the read side's own filter order, `§2.3` item 1). */
+   *  durable holder answers (the read side's own filter order, `§2.3` item 1). The holder
+   *  is RE-RESOLVED BY REF against the live `nodes` map: an anchor write REPLACES the
+   *  node's object (`§2.2 P-2` — anchors are immutable), and the constraint's record must
+   *  read the CURRENT object, never the holder registry's older one. */
   function rootNodeAt(token: GraphNodeFlag, rootName: string): GraphNode | null {
-    return holderOf(rootName, token) ?? holderOf(rootName, null)
+    const holder = holderOf(rootName, token) ?? holderOf(rootName, null)
+    if (holder === null) return null
+    return nodes.get(holder.ref) ?? holder
   }
 
   /** THE MATCHED SET'S DATA RECORD — a LIVE record keyed by the leaf's OWN name, holding
