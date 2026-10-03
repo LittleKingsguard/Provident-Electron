@@ -67,6 +67,14 @@
  *          holder"), D-1/D-3 (merged arm WITHDRAWN), E-3 (CR-1: a refused write must not mint a
  *          root), D-6 (no depth bound — "a red set may drive a chain deeper than 64 and must not
  *          be written to depend on the bound's presence")
+ *   M4/M5  THE GATE-4 REMAND (the T6 HIGH, from the artifact alone): the tier-local clear of a
+ *          written parent whose CHILD survives — the parent read answers the DECLARED MISS
+ *          (declared-but-unwritten-parent-with-a-written-child) and the surviving child answers
+ *          HIT, DISCRIMINATED from a WRITTEN leaf holding `undefined` as its own VALUE (a legal
+ *          HIT — the value is opaque) .. field 2's clear row + MISS arm + value row, §2.8 item 4,
+ *          §3.1 M-5's re-derived form (iii)/(i). RED today: the conformed walk answers
+ *          HIT-with-`undefined` at the cleared parent — the clear leaves the node in place and
+ *          the walk has no value-presence check, so the declared MISS arm is never reached.
  *   X1/X2  the crossing seam (D-4) ................. field 2.1/2.5 + §2.8 items 5(5)/7/8 — the
  *          `file`-tier write pushes a STABLE-JSON translation through the declared seam,
  *          `crossings: 1` for the whole regenerated set — never a synthesised integer
@@ -75,7 +83,7 @@
  *
  * DETERMINISM AND SCOPE: no `Math.random`, no clock, no ambient read; enumeration rows print
  * their terms (C1a's 29 names, E2's malformed-row terms, S9's eight seam keys, the eight `cause`
- * arms as data, U0's sixteen tokens); totals are modest — 31 runtime rows + 1 type-level row,
+ * arms as data, U0's sixteen tokens); totals are modest — 33 runtime rows + 1 type-level row,
  * and RCAP-1's 1024-enumeration is NOT re-driven here (the seat owns the exhaustive sweep).
  *
  * LEG NOTE: row C2 is erased at vitest runtime (type unions have no runtime bytes). It is part
@@ -684,6 +692,98 @@ describe('U-STORE-CORE module wave — T4 integration red set (fields 3/6 wiring
     const hit = store.resolve(deepAtMem) as GraphReadHit
     expect(hit.found).toBe(true)
     expect(hit.value).toBe(8)
+  })
+
+  it('M4 — THE GATE-4 REMAND (T6 HIGH): after a TIER-LOCAL clear of a written parent whose CHILD survives, the parent read answers the DECLARED MISS {found:false, value:undefined, tier:null, cache:null, name:<the caller\'s own spelling>} — never a HIT-with-undefined and never a refusal', async () => {
+    // Field 2's `clear` row: "TIER-LOCAL, NON-RECURSIVE, and one event per cleared reference; a
+    // tier-local clear of a parent leaves its descendants alone — which is what makes the M-5
+    // miss-at-an-unwritten-parent state reachable" (§2.8 item 4; §3.1 M-5's re-derived form).
+    // Field 2's MISS arm: "{found:false, value:undefined, tier:null, cache:null, name:<the
+    // caller's own spelling>} — NEVER a composite and NEVER a refusal. Its subject is the
+    // DECLARED-BUT-UNWRITTEN PARENT WITH A WRITTEN CHILD" (§2.5 item 4(iii); §2.4 item 4's
+    // annotation). §3.1 M-5 RE-DERIVED — (iii) the read of the unwritten parent reference
+    // answers the DECLARED MISS; (i) the surviving CHILD answers HIT with its OWN value and its
+    // OWN flag. The tree-by-construction invariant (§2.3 item 2 / §2.2 P-3: a descendant is
+    // reached THROUGH its parent's anchors) is what makes the parent GENUINELY
+    // declared-but-unwritten-with-a-written-child — never a cold name, never a removed subtree.
+    // THE DRIVE'S PRINTED TERMS: parent spelling 'mem.r4.par' · its own value 1 · child
+    // spelling 'mem.r4.par.kid' · its own value 2 · tier 'mem' — the SAME tier for both (the
+    // brief's "at the same tier (or lower)"; the artifact's clear row ties the state to a
+    // tier-LOCAL clear, not to a particular token) · the tier-local clear 'mem.r4.par' →
+    // receipt {status:'committed', cleared:['mem.r4.par'], events:1} (one event per cleared
+    // reference) · post-state: the child SURVIVES, the parent holds NO value of its own.
+    // NOTE ON THE EVENTS HALF: the clear row's "one event per cleared reference" is cited for
+    // the DRIVE's shape; the receipt-visible observable of the one cleared reference is its
+    // `cleared[]`, which this row asserts. A subscriber-LESS clear's `events` is a
+    // delivery-dependent figure in the landed build (§2.10 item 5's emitted-vs-delivered
+    // semantics are the seat's sweep's subject, not this remand's); this row does NOT pin it,
+    // so the row's red point is exactly the finding — the parent read's wrong arm.
+    // RED TODAY (the T6 finding, in the conformed walk's own words): the walk answers
+    // {found:true, value:undefined, tier:'mem', …} at the parent path — a HIT with an undefined
+    // value — because the clear leaves the node in place and the walk has NO value-presence
+    // check, so the declared MISS arm is never reached.
+    const store = await wiredStore()
+    expect(store.commit('mem.r4.par', 1).status).toBe('committed') // (1) the parent minted WITH a value
+    expect(store.commit('mem.r4.par.kid', 2).status).toBe('committed') // (2) the child at the SAME tier
+    const receipt = store.clear('mem.r4.par') // (3) the TIER-LOCAL, NON-RECURSIVE clear of the parent
+    expect(receipt.status).toBe('committed')
+    expect(receipt.cleared).toEqual(['mem.r4.par']) // the one cleared reference
+    const child = store.resolve('mem.r4.par.kid') as GraphReadHit // (4) M-5 RE-DERIVED (i)
+    expect(child.found).toBe(true) // the child SURVIVES: the clear "leaves its descendants alone"
+    expect(child.value).toBe(2) // the CHILD's own value
+    expect(child.flag).toBe('mem') // the CHILD's OWN flag
+    const miss = store.resolve('mem.r4.par') // (5) M-5 RE-DERIVED (iii) — the parent reference's read
+    expect(miss.found).toBe(false) // ← RED today: the conformed walk answers found:true (HIT-with-undefined)
+    expect(Object.keys(miss).sort()).toEqual(MISS_KEYS) // the declared MISS shape — never a refusal record
+    expect((miss as GraphReadMiss).value).toBeUndefined()
+    expect((miss as GraphReadMiss).tier).toBeNull()
+    expect((miss as GraphReadMiss).cache).toBeNull()
+    expect((miss as GraphReadMiss).name).toBe('mem.r4.par') // the caller's own spelling
+  })
+
+  it('M5 — THE DISCRIMINATION, IN ONE STORE: a WRITTEN leaf holding `undefined` as its VALUE answers the HIT arm (the value is opaque — any JS value including undefined is in-domain), while the cleared structural parent answers the MISS — two DIFFERENT observable states, never collapsed', async () => {
+    // Field 2's `value` row: "any JavaScript value, including undefined … THE STORE NEVER
+    // REFUSES A SIZE, A MAGNITUDE OR A SHAPE, and it never interprets the value" — a node that
+    // GENUINELY HOLDS `undefined` as its own VALUE is a legal HIT, answered from that node
+    // alone (field 2.3's HIT arm; §2.5 item 3 / M-3: `cache` IS `store.tiers[flag]` BY
+    // IDENTITY). Field 2's MISS arm's subject is the DECLARED-BUT-UNWRITTEN parent — a node
+    // with NO VALUE ENTRY of its own. The two states BOTH carry `value: undefined` (M4
+    // printed the same) — so the discrimination the Implementer's fix must preserve is the
+    // ENTRY-PRESENCE one, and this row makes it explicit: MISS = found:false · tier:null ·
+    // cache:null · name = the caller's spelling; HIT = found:true · tier/flag = the node's own
+    // · cache BY IDENTITY. A fix that collapses them — HIT-with-undefined at the cleared
+    // parent (today's wrong arm) or MISS at the written leaf — FAILS this row.
+    // THE DRIVE'S PRINTED TERMS: parent 'mem.r5.par' (value 1) · child 'mem.r5.par.kid'
+    // (value 2) · tier 'mem' (the same tier, both) · tier-local clear 'mem.r5.par' · written
+    // leaf 'mem.r5.udleaf' whose OWN VALUE is `undefined` — driven at the mem tier so no
+    // file-tier serialization arm is involved (field 2's value row's one non-representability
+    // rule is file-tier-only, §2.8 item 6(b)).
+    const store = await wiredStore()
+    store.commit('mem.r5.par', 1)
+    store.commit('mem.r5.par.kid', 2)
+    store.clear('mem.r5.par') // → the structural parent now holds NO value entry
+    store.commit('mem.r5.udleaf', undefined) // → a WRITTEN leaf whose VALUE is undefined
+    const parent = store.resolve('mem.r5.par')
+    const leaf = store.resolve('mem.r5.udleaf') as GraphReadHit
+    // THE MISS HALF — RED today: the conformed walk answers found:true at the cleared parent
+    expect(parent.found).toBe(false) // ← the wrong arm today
+    expect(Object.keys(parent).sort()).toEqual(MISS_KEYS)
+    expect((parent as GraphReadMiss).value).toBeUndefined()
+    expect((parent as GraphReadMiss).tier).toBeNull()
+    expect((parent as GraphReadMiss).cache).toBeNull()
+    expect((parent as GraphReadMiss).name).toBe('mem.r5.par')
+    // THE HIT HALF — the written-undefined leaf answers the HIT arm outright (green today; the
+    // value-presence fix must NOT turn it into a MISS — value is opaque, undefined is in-domain)
+    expect(leaf.found).toBe(true)
+    expect(Object.keys(leaf).sort()).toEqual(HIT_KEYS)
+    expect(leaf.value).toBeUndefined() // value opaque — undefined is in-domain
+    expect(leaf.tier).toBe('mem')
+    expect(leaf.flag).toBe('mem')
+    expect(leaf.cache).toBe(store.tiers[leaf.flag]) // BY IDENTITY (M-3) — a VIEW, never a copy
+    expect(leaf.name).toBe('mem.r5.udleaf') // the caller's own spelling
+    // THE DISCRIMINATION: same store, both states live, `value` undefined in BOTH — they
+    // differ in found/tier/cache/name, i.e. the observable is an ENTRY-PRESENCE fact, never a
+    // value-substance one.
   })
 
   /* ===========================================================================================
