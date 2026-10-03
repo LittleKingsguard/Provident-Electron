@@ -2426,13 +2426,38 @@ function tp3Attempt(shape: number): AttemptResult {
     if (!wiring.ok) return brokenAttempt(wiring.reason, 1, 1)
     return checkAssertions([{ label: '§5.5.1 P-TC-TP-3 (11) — the wiring role holds NO mechanism reference', ok: edgeScan(wiring.text, true).length === 0 }], 1)
   }
+  // ⟶ AMENDED 2026-10-03 (machine clock — the `H2b` IMPLEMENTER-LANDING amendment
+  // pass; `RCA-8(d)` ANNOTATE-BESIDE, never a rewrite). LICENCE CELL:
+  // `docs/specs/store-modules-seams.md` `§2.7` item 7's dated EXTENSION, cell (3)
+  // — REG `P-TC-TP-3`, attempt 12. THE AS-FILED READING, KEPT VISIBLE BESIDE:
+  // the allowed carrier set was the module (`src/shared/theme.ts`, excluded
+  // below) plus the theme-control unit's OWN surfaces (the envelope card, the
+  // handler strings, the wiring role — attempts 1–4/11) and NOTHING else. The
+  // unit's landing — `src/renderer/theme-store.ts` naming the mechanism's
+  // functions on the `H2b` caller's behalf — is the moment attempt 12 gains its
+  // ONE admitted carrier: `src/renderer/theme-store.ts`, excluded here BY NAME.
+  // The row's closed intent is UNCHANGED: ANY OTHER `src/**`
+  // `.ts`/`.mjs`/`.js` file naming the mechanism on this unit's behalf is STILL
+  // a carrier, attempts 1–11 are NOT amended, and a second admitted carrier
+  // would be a FINDING per the licence's positive-control clause (the
+  // bounded-extension control below proves the instrument still flags one).
+  // ROLLBACK: retiring the theme caller reverts this attempt to its as-filed
+  // closed offending-carriers form (the annotation's removal, never a
+  // re-derivation; `§5.4`'s rollback holds).
+  const admittedCarrier = 'src/renderer/theme-store.ts'
   const offenders = walkSrc()
     .filter((p) => /\.(?:ts|mjs|js)$/.test(p))
     .filter((p) => p !== 'src/shared/theme.ts')
+    .filter((p) => p !== admittedCarrier)
     .filter((p) => edgeScan(sourceOrEmpty(p), true).length > 0)
+  // THE BOUNDED-EXTENSION POSITIVE CONTROL (the licence's positive-control
+  // clause: an EXTRA carrier beyond the one admitted path is a FINDING): the
+  // SAME instrument MUST still flag a SECOND new carrier path.
+  const secondCarrier = `import { resolveTheme, applyThemeDeclaration } from '../shared/theme.js'`
   return checkAssertions(
     [
-      { label: `§5.5.1 P-TC-TP-3 (12) — no \`src/**\` file outside the allowed set names the mechanism on this unit behalf; carriers: ${offenders.join(', ')}`, ok: offenders.length === 0 },
+      { label: `§5.5.1 P-TC-TP-3 (12, AMENDED, licence cell (3) of §2.7 item 7's dated extension) — no \`src/**\` file outside the allowed set names the mechanism on this unit behalf; carriers: ${offenders.join(', ')}`, ok: offenders.length === 0 },
+      { label: '§5.5.1 P-TC-TP-3 (12, bounded-extension control) — a SECOND new carrier (a synthetic second caller) is STILL flagged by the instrument: the admitted set gained EXACTLY the one path (`src/renderer/theme-store.ts`), never a blanket strip', ok: edgeScan(secondCarrier, true).length > 0 },
     ],
     1,
   )
