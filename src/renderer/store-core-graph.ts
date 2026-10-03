@@ -96,16 +96,56 @@ export interface GraphLinkCacheEntry {
   readonly matchedTier: GraphNodeFlag
 }
 
-/* ───────────────────────────── THE CONSTRAINT TABLE ───────────────────────────── */
+/* ───────────────────────────── THE CONSTRAINT SURFACE ───────────────────────────── */
 
+/**
+ * THE CONSTRAINT MEMBER — RE-DERIVED 2026-10-03 (`CONSTRAINTS-ARE-PASSED-FUNCTIONS`,
+ * `docs/decisions.md`'s ACTIVE row, cited by row name; the unit's frozen-surface artifact
+ * field 2, `AMENDMENT CONSTRAINT-RE-DERIVE-1`).
+ *
+ * THE SUPERSEDED SEVEN-MEMBER DATA-ROW FORM, KEPT VISIBLE BESIDE (`RCA-8(d)`
+ * ANNOTATE-BESIDE — never deleted; every member of the as-filed form is a member of the
+ * SUPERSEDED model, OUTSIDE the operative surface):
+ *
+ *     interface GraphConstraint {
+ *       readonly id: string
+ *       readonly kind: 'count-exactly-one' | 'unique-path-tier'
+ *       readonly matchedSet: string
+ *       readonly evaluatedOn: readonly ('set' | 'commit' | 'remove')[]
+ *       readonly repair: 'next-surviving-by-order' | 'none'
+ *       readonly onRepeat: 'edit' | 'refuse'
+ *       readonly refusalReason: GraphRefusalReason | null
+ *     }
+ *
+ * THE OPERATIVE MEMBER IS THE FUNCTION-CARRIER. `constraint` is a PASSED FUNCTION the
+ * write machinery calls with `(changed, current, next, feedback?)` — the changed data,
+ * the current (pre-write) state and the landed post-state `next` — expecting a boolean
+ * and optionally an error message / refusal reason delivered back through `feedback`.
+ * `repair` is an optional PASSED FUNCTION called on a violation, taking corrective
+ * action to the data IN THE SAME COMMITTED WRITE and outputting a success boolean plus
+ * an optional error message. CONSTRAINTS ARE CODE FEATURES, NOT DATA: no install path,
+ * no runtime table mutation. `matchedSet` is a caller-supplied name the write machinery
+ * resolves to the data checked (the operation's own top-level name); `evaluatedOn`
+ * `⊆ {'set','commit','remove'}` is UNCHANGED. `unique-path/tier` is a GLOBAL BEHAVIORAL
+ * STATE of the graph — NOT a constraint: its `{onRepeat}`/`{onDuplicate}` pair routing
+ * stays in the write machinery (`'duplicate-path-tier'` and the invariant clauses),
+ * never a caller row. `count-exactly-one` is the WORKED EXAMPLE of the general-purpose
+ * system — its three-arm repair (de-activate surplus active entries; re-activate the
+ * most-recently-active from the entries' own local data; open the landing page on an
+ * empty set) is the CALLER-SUPPLIED passed repair function, never a store-owned
+ * `'next-surviving-by-order'` token repair.
+ */
 export interface GraphConstraint {
   readonly id: string
-  readonly kind: 'count-exactly-one' | 'unique-path-tier'
   readonly matchedSet: string
   readonly evaluatedOn: readonly ('set' | 'commit' | 'remove')[]
-  readonly repair: 'next-surviving-by-order' | 'none'
-  readonly onRepeat: 'edit' | 'refuse'
-  readonly refusalReason: GraphRefusalReason | null
+  readonly constraint: (
+    changed: unknown,
+    current: unknown,
+    next: unknown,
+    feedback?: { reason?: string; message?: string },
+  ) => boolean
+  readonly repair?: (nextState: unknown, feedback?: { reason?: string; message?: string }) => boolean
 }
 
 /* ───────────────────────────── THE READ AND THE WALK ───────────────────────────── */
@@ -391,7 +431,12 @@ export function createGraphStore(options: {
     ? (declaredInput as StoreGraphDeclarationInput).rows
     : []
   const reservedNames: readonly unknown[] = Array.isArray(options.reservedNamespaces) ? options.reservedNamespaces : []
-  const constraintTable: readonly GraphConstraint[] = Array.isArray(options.constraints) ? options.constraints : []
+  // THE CALLER-SUPPLIED CONSTRAINT MEMBERS, HELD BY IDENTITY (`§2.7` items 1/2, RE-DERIVED
+  // 2026-10-03: CONSTRAINTS-ARE-PASSED-FUNCTIONS) — CODE FEATURES, never runtime-mutable
+  // data: no install path, no table mutation; the store's `constraints` view carries the
+  // very same array. The factory is TOTAL and never refuses construction over the
+  // members' contents — a non-array option is simply the empty set.
+  const constraints: readonly GraphConstraint[] = Array.isArray(options.constraints) ? options.constraints : []
 
   /* ── THE DECLARED-ROW INPUT AND ITS CLOSED REFUSAL SET (`§2.4` item 5) ── */
 
@@ -1066,20 +1111,240 @@ export function createGraphStore(options: {
     return out
   }
 
-  /* ── THE CONSTRAINT TABLE (`§2.7`) ── */
+  /* ── THE CONSTRAINT MACHINERY (`§2.7` — RE-DERIVED 2026-10-03:
+     CONSTRAINTS-ARE-PASSED-FUNCTIONS) ── */
 
-  function evaluateConstraints(op: 'set' | 'commit' | 'remove', state: ReceiptState): void {
-    for (const row of constraintTable) {
-      if (!Array.isArray(row.evaluatedOn) || !row.evaluatedOn.includes(op)) continue
-      if (row.repair !== 'next-surviving-by-order') continue
-      const actives = values.filter((entry) => entry.active)
-      if (actives.length > 1) {
-        for (const extra of actives.slice(1)) {
-          extra.active = false
-          state.repaired.push(extra.name)
+  interface ConstraintSlot {
+    readonly member: GraphConstraint
+    readonly isSelf: boolean
+    readonly current: unknown
+  }
+
+  interface ConstraintOutcome {
+    readonly refused: boolean
+    /** Present exactly when `refused`: the member's own feedback reason — the
+     *  refusal-via-feedback record's `reason` — or `'validate-failed'` where the member
+     *  answered false without one (field 5 token #15's token). */
+    readonly reason?: GraphRefusalReason
+    readonly repairedNames: readonly string[]
+    readonly repairEvents: readonly GraphEvent[]
+  }
+
+  /** THE MATCHED ROOT at the pair's own tier: the tier-holder whose anchor leaves are the
+   *  data the member's matched set reads. Where the pair's tier holds no node, the most
+   *  durable holder answers (the read side's own filter order, `§2.3` item 1). */
+  function rootNodeAt(token: GraphNodeFlag, rootName: string): GraphNode | null {
+    return holderOf(rootName, token) ?? holderOf(rootName, null)
+  }
+
+  /** THE MATCHED SET'S DATA RECORD — a LIVE record keyed by the leaf's OWN name, holding
+   *  the leaf's stored value BY REFERENCE, built from the matched root's anchor leaves (the
+   *  worked example's per-leaf record). A severed or absent anchor target contributes no
+   *  entry, so a removed leaf (or an emptied set) is OBSERVABLE on the post-state. A
+   *  mutation made through the record's values lands on the nodes' stored values (the same
+   *  references). */
+  function leafRecordFor(root: GraphNode | null): Record<string, unknown> {
+    const record: Record<string, unknown> = {}
+    if (root !== null) {
+      for (const anchor of root.anchors) {
+        if (anchor.link === null || anchor.link.to === null) continue
+        const child = nodes.get(anchor.link.to)
+        if (child !== undefined) record[anchor.key] = valueOf(child.ref)
+      }
+    }
+    return record
+  }
+
+  function leafNodeAt(root: GraphNode | null, key: string): GraphNode | null {
+    if (root === null) return null
+    const anchor = anchorOf(root.ref, key)
+    if (anchor === null || anchor.link === null || anchor.link.to === null) return null
+    return nodes.get(anchor.link.to) ?? null
+  }
+
+  /** THE NODE THE CALLER'S OWN PATH LANDS ON in the LIVE (post-write) graph — the written
+   *  leaf whose landing value is the `changed` argument of the constraint call. */
+  function nodeAtPath(parsed: WriteName): GraphNode | null {
+    return anchorWalk(parsed.rootName, [parsed.rootName, ...parsed.tail.slice(1)], parsed.token, false).node
+  }
+
+  /** THE APPLICABLE MEMBERS of the operation, captured BEFORE the mutation so the CURRENT
+   *  state is the PRE-WRITE state (`§2.7` items 1/2, RE-DERIVED 2026-10-03): a member
+   *  applies when its own `evaluatedOn` declares the operation and its `matchedSet` names
+   *  the operation's own TOP-LEVEL name. Each member evaluates INDEPENDENTLY on its own
+   *  matched root's data. A member that is not a FUNCTION-CARRIER (a superseded data-row
+   *  leftover) carries no code to call and is inert — it never evaluates, never refrains
+   *  and never repairs. */
+  function captureConstraintSlots(op: 'set' | 'commit' | 'remove', parsed: WriteName): ConstraintSlot[] {
+    const slots: ConstraintSlot[] = []
+    for (const member of constraints) {
+      if (member === null || typeof member !== 'object') continue
+      if (!Array.isArray(member.evaluatedOn) || !member.evaluatedOn.includes(op)) continue
+      if (typeof member.matchedSet !== 'string' || member.matchedSet !== parsed.rootName) continue
+      if (typeof member.constraint !== 'function') continue
+      const isSelf = parsed.tail.length === 1
+      let current: unknown
+      if (isSelf) {
+        const root = holderOf(parsed.rootName, parsed.token)
+        current = root !== null ? valueOf(root.ref) : undefined
+      } else {
+        current = leafRecordFor(rootNodeAt(parsed.token, parsed.rootName))
+      }
+      slots.push({ member, isSelf, current })
+    }
+    return slots
+  }
+
+  /** THE POST-STATE EVALUATION (`§2.7` items 2/3, RE-DERIVED 2026-10-03): the mutation has
+   *  LANDED — `constraint(changed, current, next, feedback)` is called with ≥3 positional
+   *  arguments; `changed` is the written data, `current` the captured pre-write state and
+   *  `next` the landed post-state (the matched root's live record, or the reference's own
+   *  value for a self write). `true` lets the write stand. `false` with a repair function
+   *  calls the repair on the post-state; its corrective action lands IN THE SAME COMMITTED
+   *  WRITE — a NEW record entry becomes a REAL leaf node under the matched root — each
+   *  repaired reference fires its OWN `cause:'repair'` event beside the caller's own write
+   *  event and is NAMED in the receipt's `repaired[]`. `false` with NO repair is
+   *  REFUSAL-VIA-FEEDBACK: the member's own feedback reason answers in a returned record,
+   *  every receipt member empty, the store byte-unchanged — NEVER a throw. */
+  function evaluateConstraints(op: 'set' | 'commit' | 'remove', parsed: WriteName, slots: readonly ConstraintSlot[]): ConstraintOutcome {
+    const repairedNames: string[] = []
+    const repairEvents: GraphEvent[] = []
+    for (const slot of slots) {
+      const member = slot.member
+      const feedback: { reason?: string; message?: string } = {}
+      let changed: unknown
+      let next: unknown
+      if (slot.isSelf) {
+        const root = holderOf(parsed.rootName, parsed.token)
+        changed = root !== null ? valueOf(root.ref) : undefined
+        next = changed
+      } else {
+        const written = nodeAtPath(parsed)
+        changed = written !== null ? valueOf(written.ref) : undefined
+        next = leafRecordFor(rootNodeAt(parsed.token, parsed.rootName))
+      }
+      if (member.constraint(changed, slot.current, next, feedback) === true) continue
+      if (typeof member.repair !== 'function') {
+        return {
+          refused: true,
+          reason: (typeof feedback.reason === 'string' ? feedback.reason : 'validate-failed') as GraphRefusalReason,
+          repairedNames: [],
+          repairEvents: [],
+        }
+      }
+      if (slot.isSelf) {
+        // THE REPAIR ACTED ON THE CHANGED REFERENCE'S OWN DATA: the repaired reference IS
+        // the write's own spelling, carrying the corrected value.
+        member.repair(next, feedback)
+        const root = holderOf(parsed.rootName, parsed.token)
+        repairedNames.push(parsed.name)
+        repairEvents.push({ name: parsed.name, flag: parsed.token, value: root !== null ? valueOf(root.ref) : next, cleared: [], cause: 'repair' })
+      } else {
+        // THE RECORD THE REPAIR ACTED ON: entries the corrective action CHANGED or ADDED
+        // are the repaired references (distinct from the caller's own); a NEW entry becomes
+        // a real leaf node under the matched root — the "open the landing page" arm.
+        const pre = deepCopyOf(next)
+        member.repair(next, feedback)
+        const root = rootNodeAt(parsed.token, parsed.rootName)
+        for (const key of Object.keys(next as Record<string, unknown>)) {
+          const refName = `${parsed.token}.${parsed.rootName}.${key}`
+          const landed = (next as Record<string, unknown>)[key]
+          if (!Object.prototype.hasOwnProperty.call(pre as Record<string, unknown>, key)) {
+            if (root !== null) {
+              mintRecordLeaf(root, parsed.token, key, landed)
+              repairedNames.push(refName)
+              repairEvents.push({ name: refName, flag: parsed.token, value: landed, cleared: [], cause: 'repair' })
+            }
+          } else if (!deepEqualOf((pre as Record<string, unknown>)[key], landed)) {
+            const leaf = leafNodeAt(root, key)
+            if (leaf !== null) {
+              setValue(leaf.ref, leaf.localName, landed)
+              repairedNames.push(refName)
+              repairEvents.push({ name: refName, flag: parsed.token, value: landed, cleared: [], cause: 'repair' })
+            }
+          }
         }
       }
     }
+    return { refused: false, repairedNames, repairEvents }
+  }
+
+  /** THE REPAIR'S DIFF BASE — an UNBOUNDED recursive copy of the record the repair is
+   *  about to act on, so a change the repair makes at ANY depth is detected and lands on
+   *  the graph's own nodes. */
+  function deepCopyOf(value: unknown): unknown {
+    if (value === null || typeof value !== 'object') return value
+    if (Array.isArray(value)) return (value as unknown[]).map((item) => deepCopyOf(item))
+    const out: Record<string, unknown> = {}
+    for (const key of Object.keys(value as Record<string, unknown>)) {
+      out[key] = deepCopyOf((value as Record<string, unknown>)[key])
+    }
+    return out
+  }
+
+  function deepEqualOf(a: unknown, b: unknown): boolean {
+    if (a === b) return true
+    if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object') return false
+    if (Array.isArray(a) !== Array.isArray(b)) return false
+    const ka = Object.keys(a as Record<string, unknown>)
+    const kb = Object.keys(b as Record<string, unknown>)
+    if (ka.length !== kb.length) return false
+    for (const key of ka) {
+      if (!Object.prototype.hasOwnProperty.call(b as Record<string, unknown>, key)) return false
+      if (!deepEqualOf((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key])) return false
+    }
+    return true
+  }
+
+  /** A RECORD ENTRY THE REPAIR ADDS becomes a REAL LEAF under the matched root — its own
+   *  anchor, link and value entry — so the corrective action is present IN THE GRAPH
+   *  (the worked example's "open the landing page on an empty set" arm). */
+  function mintRecordLeaf(root: GraphNode, token: GraphNodeFlag, key: string, value: unknown): GraphNode {
+    return makeChild(root, key, token, root.localName, value, true)
+  }
+
+  /** THE WRITE JOURNAL (`§2.7` item 3's refusal posture): the constraint functions evaluate
+   *  on the LANDED post-state, so a repairless violation must roll the write back — the
+   *  journal snapshots the graph's own collections (nodes, value entries, root holders,
+   *  declarations) plus the ref counter, and reverting restores them BYTE-EXACTLY. Taken
+   *  ONLY where this write has applicable constraint slots: the ordinary no-constraint
+   *  path is untouched. */
+  interface WriteJournal {
+    readonly nodes: Map<GraphNodeRef, GraphNode>
+    readonly values: readonly ValueEntry[]
+    readonly rootHolders: Map<string, readonly GraphNode[]>
+    readonly declared: Map<string, RootDeclaration>
+    readonly refCounter: number
+  }
+
+  function journalBefore(): WriteJournal {
+    return {
+      nodes: new Map(nodes),
+      values: values.map((entry) => ({ ...entry })),
+      rootHolders: new Map([...rootHolders.entries()].map(([name, held]) => [name, [...held]])),
+      declared: new Map(declared),
+      refCounter,
+    }
+  }
+
+  function revertTo(journal: WriteJournal): void {
+    nodes.clear()
+    for (const [ref, node] of journal.nodes) nodes.set(ref, node)
+    values.length = 0
+    for (const entry of journal.values) values.push({ ...entry })
+    rootHolders.clear()
+    for (const [name, held] of journal.rootHolders) rootHolders.set(name, [...held])
+    declared.clear()
+    for (const [name, declaration] of journal.declared) declared.set(name, declaration)
+    refCounter = journal.refCounter
+  }
+
+  /** THE REFUSAL-VIA-FEEDBACK RECORD (`§2.7` item 3, RE-DERIVED 2026-10-03): `false` with
+   *  NO repair answers a RETURNED RECORD carrying the member's own feedback reason, with
+   *  every receipt member EMPTY and the store BYTE-UNCHANGED — never a throw (field 2.6's
+   *  receipt; field 5: "a reason is a RETURNED RECORD member; it is NEVER a throw"). */
+  function refusalOfFeedback(name: string, reason: GraphRefusalReason): GraphWriteReceipt {
+    return receiptFor(name, { cleared: [], repaired: [], rows: [], crossings: 0, events: 0 }, 'refused', reason)
   }
 
   /* ── THE WRITE SURFACE (`§2.8`) ── */
@@ -1158,12 +1423,28 @@ export function createGraphStore(options: {
     const state: ReceiptState = { cleared: [], repaired: [], rows: [{ name: parsed.name, flag: node.flag, nodeRef: node.ref }], crossings: 0, events: 0 }
     // AN EQUAL-VALUE `set` FIRES NOTHING (`§2.10` item 5, field 4.3's `'set'` row: "an
     // equal-value write fires NOTHING; a `set` is NOT a commit and must never be counted
-    // as one"). A `commit` on a held pair always fires.
+    // as one"). A `commit` on a held pair always fires. An equal-value `set` has no
+    // post-state of its own, so the constraint functions are not re-evaluated over it.
     if (cause !== 'set' || !Object.is(prior, value)) {
+      const op = cause === 'set' ? 'set' : 'commit'
+      // THE APPLICABLE MEMBERS ARE CAPTURED BEFORE THE MUTATION (their `current` state is
+      // the PRE-WRITE state); the journal lets a repairless violation roll the write back.
+      const slots = captureConstraintSlots(op, parsed)
+      const journal = slots.length > 0 ? journalBefore() : null
       setValue(node.ref, node.localName, value)
+      const outcome = evaluateConstraints(op, parsed, slots)
+      if (outcome.refused) {
+        if (journal !== null) revertTo(journal)
+        return refusalOfFeedback(parsed.name, outcome.reason ?? 'validate-failed')
+      }
       state.events += emit(parsed.name, node.flag, value, [], cause, parsed.name)
+      // A REPAIR EMITS ITS OWN `cause:'repair'` EVENT BESIDE the caller's own write event
+      // and names the repaired reference(s) in `repaired[]` (field 4.3's `'repair'` arm).
+      for (const repairEvent of outcome.repairEvents) {
+        state.events += emit(repairEvent.name, repairEvent.flag, repairEvent.value, repairEvent.cleared, 'repair')
+      }
+      state.repaired.push(...outcome.repairedNames)
     }
-    evaluateConstraints(cause === 'set' ? 'set' : 'commit', state)
     rebuildEntriesAtInvalidation(parsed.rootName)
     return receiptFor(raw, state, 'committed')
   }
@@ -1185,6 +1466,10 @@ export function createGraphStore(options: {
     }
     const failure = serializationFailureOf(value)
     if (failure !== null) return refuse(raw, failure, 'G-RESOLVE-LEAF', null, target.ref)
+    // THE APPLICABLE MEMBERS ARE CAPTURED BEFORE THE MUTATION (their `current` is the
+    // PRE-WRITE state); the journal lets a repairless violation roll the write back.
+    const slots = captureConstraintSlots('commit', parsed)
+    const journal = slots.length > 0 ? journalBefore() : null
     // THE DOOMED LOWER-DURABILITY COPIES ARE READ FIRST — BEFORE the regenerated branch moves:
     // the clears happen only AFTER the higher tier durably accepted the value (`§2.8` item 2),
     // and the regenerated branch itself must never be mistaken for a copy to clear (S5: the
@@ -1227,6 +1512,14 @@ export function createGraphStore(options: {
       detach(entry.ref)
       if (!cleared.includes(entry.path)) cleared.push(entry.path)
     }
+    // THE CONSTRAINT FUNCTIONS EVALUATE ON THE LANDED POST-STATE (the mutation above is the
+    // write); a repairless violation is REFUSAL-VIA-FEEDBACK with the journal rolled back —
+    // the store is BYTE-UNCHANGED, the answer a returned record, never a throw.
+    const outcome = evaluateConstraints('commit', parsed, slots)
+    if (outcome.refused) {
+      if (journal !== null) revertTo(journal)
+      return refusalOfFeedback(parsed.name, outcome.reason ?? 'validate-failed')
+    }
     // THE CROSSING SEAM (`§2.8` items 5(5)/7/8, D-4): a `file`-tier write pushes the
     // STABLE-JSON TRANSLATION OF THE GRAPH through the declared seam — ONE committed write
     // for the whole regenerated set, `crossings: 1` real, never a synthesised integer
@@ -1245,7 +1538,10 @@ export function createGraphStore(options: {
     // cleared reference fires its OWN `cause:'clear'` on ITS OWN path (`§2.8` item 2,
     // `§2.10` item 2).
     for (const path of state.cleared) state.events += emit(path, requested, undefined, [], 'clear', path)
-    evaluateConstraints('commit', state)
+    for (const repairEvent of outcome.repairEvents) {
+      state.events += emit(repairEvent.name, repairEvent.flag, repairEvent.value, repairEvent.cleared, 'repair')
+    }
+    state.repaired.push(...outcome.repairedNames)
     rebuildEntriesAtInvalidation(parsed.rootName)
     return receiptFor(raw, state, 'committed')
   }
@@ -1325,6 +1621,11 @@ export function createGraphStore(options: {
     if (bound.node !== null && (DURABILITY_RANK[requested] ?? 0) > bound.rank) {
       return refuse(parsed.name, 'durability-inversion', 'G-RESOLVE-LEAF', parsed.tail[parsed.tail.length - 1] ?? null, bound.node.ref)
     }
+    // THE APPLICABLE MEMBERS ARE CAPTURED BEFORE THE MUTATION (their `current` is the
+    // PRE-WRITE state — for a FRESH root, the data record is empty); the journal lets a
+    // repairless violation roll the write back byte-exactly, declaration mint included.
+    const slots = captureConstraintSlots('commit', parsed)
+    const journal = slots.length > 0 ? journalBefore() : null
     // THE COMMIT LANDS, AND A LANDED COMMIT'S MINTED HOLDER IS A ROOT: the commit registers
     // the root's top-level row (`§2.8` item 3). THIS declaration mint lives HERE — inside the
     // mint — and NOT in parseWrite: a REFUSED write never adds a root declaration (CR-1/M2 —
@@ -1345,7 +1646,19 @@ export function createGraphStore(options: {
     const raised = false
     const state: ReceiptState = { cleared: [], repaired: [], rows: [], crossings: requested === 'file' ? 1 : 0, events: 0 }
     writeRowsFor(reached, parsed.name, state.rows)
+    // THE CONSTRAINT FUNCTIONS EVALUATE ON THE LANDED POST-STATE (the mint above IS the
+    // write); a repairless violation is REFUSAL-VIA-FEEDBACK with the journal rolled back —
+    // the store is BYTE-UNCHANGED, the answer a returned record, never a throw.
+    const outcome = evaluateConstraints('commit', parsed, slots)
+    if (outcome.refused) {
+      if (journal !== null) revertTo(journal)
+      return refusalOfFeedback(parsed.name, outcome.reason ?? 'validate-failed')
+    }
     state.events += emit(parsed.name, requested, value, [], 'commit', parsed.name)
+    for (const repairEvent of outcome.repairEvents) {
+      state.events += emit(repairEvent.name, repairEvent.flag, repairEvent.value, repairEvent.cleared, 'repair')
+    }
+    state.repaired.push(...outcome.repairedNames)
     if (raised) clearLowerCopies(parsed, requested, state)
     // THE CROSSING SEAM for a `file`-tier MINT (the whole set is ONE committed write — the
     // receipt's `crossings: 1` rides the real put, never a synthesised integer; D-4).
@@ -1353,7 +1666,6 @@ export function createGraphStore(options: {
       crossingPut(parsed.name)
       state.crossings = 1
     }
-    evaluateConstraints('commit', state)
     rebuildEntriesAtInvalidation(parsed.rootName)
     return receiptFor(parsed.name, state, 'committed')
   }
@@ -1464,15 +1776,30 @@ export function createGraphStore(options: {
     }
     const failure = serializationFailureOf(value)
     if (failure !== null) return refuse(raw, failure, 'G-RESOLVE-LEAF', null, deepest.ref)
+    // THE APPLICABLE MEMBERS ARE CAPTURED BEFORE THE MUTATION (their `current` is the
+    // PRE-WRITE state); the journal lets a repairless violation roll the write back.
+    const slots = captureConstraintSlots('commit', parsed)
+    const journal = slots.length > 0 ? journalBefore() : null
     const childWalk = anchorWalk(parsed.rootName, walkTail, requested, true, value)
     const minted = childWalk.node
     if (minted === null) return refuse(raw, 'undeclared-name', 'C-TOP', parsed.rootName, null)
     const raised = true
     const state: ReceiptState = { cleared: [], repaired: [], rows: [], crossings: requested === 'file' ? 1 : 0, events: 0 }
     writeRowsFor(minted, parsed.name, state.rows)
+    // THE CONSTRAINT FUNCTIONS EVALUATE ON THE LANDED POST-STATE (the mint above IS the
+    // write); a repairless violation is REFUSAL-VIA-FEEDBACK with the journal rolled back —
+    // the store is BYTE-UNCHANGED, the answer a returned record, never a throw.
+    const outcome = evaluateConstraints('commit', parsed, slots)
+    if (outcome.refused) {
+      if (journal !== null) revertTo(journal)
+      return refusalOfFeedback(parsed.name, outcome.reason ?? 'validate-failed')
+    }
     state.events += emit(parsed.name, requested, value, [], 'commit', parsed.name)
+    for (const repairEvent of outcome.repairEvents) {
+      state.events += emit(repairEvent.name, repairEvent.flag, repairEvent.value, repairEvent.cleared, 'repair')
+    }
+    state.repaired.push(...outcome.repairedNames)
     if (raised) clearLowerCopies(parsed, requested, state)
-    evaluateConstraints('commit', state)
     rebuildEntriesAtInvalidation(parsed.rootName)
     return receiptFor(raw, state, 'committed')
   }
@@ -1515,6 +1842,11 @@ export function createGraphStore(options: {
     if (target === null) {
       return refuse(raw, 'undeclared-name', 'G-RESOLVE-LEAF', walked.firstMissing ?? parsed.tail[parsed.tail.length - 1] ?? null, walked.deepest?.ref ?? null)
     }
+    // THE APPLICABLE MEMBERS ARE CAPTURED BEFORE THE MUTATION (their `current` is the
+    // PRE-WRITE state — a removed leaf's own data is still present in the matched record);
+    // the journal lets a repairless violation roll the remove back byte-exactly.
+    const slots = captureConstraintSlots('remove', parsed)
+    const journal = slots.length > 0 ? journalBefore() : null
     // `remove` CLEARS DOWNWARD (`§2.8` item 4): the NAMED tier AND EVERY LESS-PERSISTENT COPY of
     // the same logical path, never a higher tier — each copy is SEVERED from its own parent and
     // its own value dropped, and the parent's anchor slot is dropped with it.
@@ -1531,13 +1863,25 @@ export function createGraphStore(options: {
       detach(candidate.node.ref)
     }
     const state: ReceiptState = { cleared: [...new Set(cleared)], repaired: [], rows: [], crossings: 0, events: 0 }
+    // THE CONSTRAINT FUNCTIONS EVALUATE ON THE LANDED POST-STATE (the removal above IS the
+    // write — the removed leaf is OBSERVABLE as absent from the matched record); a repairless
+    // violation is REFUSAL-VIA-FEEDBACK with the journal rolled back — the store is
+    // BYTE-UNCHANGED, the answer a returned record, never a throw.
+    const outcome = evaluateConstraints('remove', parsed, slots)
+    if (outcome.refused) {
+      if (journal !== null) revertTo(journal)
+      return refusalOfFeedback(parsed.name, outcome.reason ?? 'validate-failed')
+    }
     // A CLEARED LOWER REFERENCE fires its OWN `cause:'clear'` on its OWN path; the NAMED
     // reference itself is removed by the `'remove'` event — the arm that carries the audit
     // list in `cleared[]` and is distinguishable from a commit-with-clears by its cause token
     // and by `value: undefined` (field 4.3's `'remove'` row).
     for (const path of [...new Set(lowerCleared)]) state.events += emit(path, parsed.token, undefined, [], 'clear', path)
     state.events += emit(parsed.name, parsed.token, undefined, state.cleared, 'remove', parsed.name)
-    evaluateConstraints('remove', state)
+    for (const repairEvent of outcome.repairEvents) {
+      state.events += emit(repairEvent.name, repairEvent.flag, repairEvent.value, repairEvent.cleared, 'repair')
+    }
+    state.repaired.push(...outcome.repairedNames)
     rebuildEntriesAtInvalidation(parsed.rootName)
     return receiptFor(raw, state, 'committed')
   }
@@ -1738,7 +2082,10 @@ export function createGraphStore(options: {
     get register(): GraphRegister {
       return { rows: registerRows() }
     },
-    constraints: Object.freeze([...constraintTable]),
+    // THE READ-ONLY VIEW OF THE CALLER-SUPPLIED MEMBERS, BY IDENTITY (RE-DERIVED 2026-10-03:
+    // the members are code features — the very array the caller supplied, never a copy, never
+    // mutated here, no install path).
+    constraints,
   }
 
   if (seamEnabled) {
