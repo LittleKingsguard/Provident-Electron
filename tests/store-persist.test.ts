@@ -179,21 +179,32 @@ function ordered(text: string, tokens: string[]): { held: boolean; where: number
 }
 
 /** The boot-order scan (§2.9): the Y-1 hand-off marker must precede the first-envelope load
- *  marker in `renderer.ts`. RED because the hand-off is absent and the first envelope
- *  (`runtime.bootstrap()`, renderer.ts:503) loads before ANY hand-off — the observed order is
- *  still the old one. ORDER only — no timing figure is claimed or measured. */
+ *  marker in `renderer.ts`. The marker is the REAL bracket-form call `bridge.store['get']()`
+ *  (renderer.ts:570) — G4-P2 (MED): the probes previously matched the DOC-COMMENT's
+ *  `store.get()` prose (renderer.ts:556), so the suite stayed green with the call deleted
+ *  and would redden if the comment were removed — the honest observable is the CALL, not the
+ *  comment. A code-only control (every comment line elided) must still fire the marker — a
+ *  comment-only match breaks. ORDER only — no timing figure is claimed or measured. */
 function bootOrderProbe(): Probe {
   const text = readSrcSafe('renderer/renderer.ts')
   if (text === null) return BREAK('renderer.ts unreadable')
-  const handoffIdx = text.search(/store\.get\s*\(/)
+  const handoffIdx = text.search(/store\[['"]get['"]\]\s*\(/)
   const envelopeIdx = text.search(/runtime\.bootstrap\s*\(/)
   if (handoffIdx < 0) {
-    return BREAK('the Y-1 hand-off does not exist in the renderer boot; the first envelope (runtime.bootstrap(), renderer.ts:~503) still loads before any hand-off — the pinned sequence (hand-off → tiers → Runtime → first envelope) is inverted')
+    return BREAK('the Y-1 hand-off does not exist in the renderer boot (the REAL bracket-form call bridge.store[\'get\'](), renderer.ts:570); the first envelope (runtime.bootstrap(), renderer.ts:~615) still loads before any hand-off — the pinned sequence (hand-off → tiers → Runtime → first envelope) is inverted')
   }
   if (envelopeIdx < 0) return BREAK('the first-envelope-load marker (runtime.bootstrap() call) is not found')
-  return handoffIdx < envelopeIdx
-    ? HOLD(`the hand-off is answered before the first envelope load (indices ${handoffIdx} < ${envelopeIdx})`)
-    : BREAK(`the first envelope loads before the hand-off answered (indices ${envelopeIdx} < ${handoffIdx}) — the starting-order gate observes the inversion`)
+  const codeOnly = rendererCommentElided()
+  if (codeOnly === null) return BREAK('renderer.ts unreadable (code-only scan)')
+  const codeHandoffIdx = codeOnly.search(/store\[['"]get['"]\]\s*\(/)
+  if (codeHandoffIdx < 0) {
+    return BREAK('the bracket-form hand-off call exists only inside a comment line — the honest observable is the CALL, not the comment (G4-P2)')
+  }
+  const codeEnvelopeIdx = codeOnly.search(/runtime\.bootstrap\s*\(/)
+  if (codeEnvelopeIdx < 0) return BREAK('the first-envelope-load marker is absent from the code-only scan')
+  return handoffIdx < envelopeIdx && codeHandoffIdx < codeEnvelopeIdx
+    ? HOLD(`the hand-off is answered before the first envelope load (indices ${handoffIdx} < ${envelopeIdx}; code-only ${codeHandoffIdx} < ${codeEnvelopeIdx})`)
+    : BREAK(`the first envelope loads before the hand-off answered (indices ${envelopeIdx} < ${handoffIdx}; code-only ${codeEnvelopeIdx} < ${codeHandoffIdx}) — the starting-order gate observes the inversion`)
 }
 
 /* ───────────────────────────── §5.5.1 THE REGISTER — 8 ROWS / 47 ATTEMPTS ───────────────────────────── */
@@ -531,7 +542,7 @@ const REGISTER_ROWS: readonly RegisterRow[] = [
     term: '6 attempts = 3 realm turns (boot · after-commit · reload) × 2 readings per turn (the served hand-off\'s payload; the renderer\'s resolve on tier-1 names answers the handed-off value — the R1 falsifier\'s positive control is a value main wrote outside the channel, which must NOT appear)',
     attempts: [
       { label: 'SM-3 boot · reading 1 — the holder (bootRecord) is populated at the boot read and served at Y-1', run: async (): Promise<Probe> => y1Probe('boot turn', (y1) => (y1.includes('bootRecord') ? HOLD('bootRecord is held and served at the Y-1 hand-off (C-10\'s name)') : BREAK('the bootRecord (C-10 — the third holder) is not held/served at the boot read'))) },
-      { label: 'SM-3 boot · reading 2 — the renderer resolves the handed-off values (the Y-1 hand-off call exists)', run: async (): Promise<Probe> => (rendererHandoffCount() === 1 ? HOLD('the renderer calls the Y-1 hand-off once') : BREAK('the renderer\'s Y-1 hand-off call (store.get()) is absent — the renderer cannot construct its tiers from the persisted record')) },
+      { label: 'SM-3 boot · reading 2 — the renderer resolves the handed-off values (the real Y-1 hand-off call exists)', run: async (): Promise<Probe> => (rendererHandoffCount() === 1 && rendererHandoffControl() ? HOLD('the renderer calls the Y-1 hand-off once — the REAL bracket-form bridge.store[\'get\']() (renderer.ts:570), still firing with the comments elided (G4-P2)') : BREAK('the renderer\'s Y-1 hand-off call (bridge.store[\'get\'](), renderer.ts:570) is absent from the CODE — the renderer cannot construct its tiers from the persisted record')) },
       { label: 'SM-3 after-commit · reading 1 — the holder is REFRESHED only by the channel\'s own committed writes', run: async (): Promise<Probe> => y2Probe('after-commit turn', (y2) => (y2.includes('bootRecord') ? HOLD('each Y-2\'s projected record synchronously replaces bootRecord') : BREAK('the Y-2 write does not refresh the holder (bootRecord)'))) },
       { label: 'SM-3 after-commit · reading 2 — the renderer\'s tier-1 table updates from the crossed receipt (the seam put exists)', run: async (): Promise<Probe> => (rendererTextSafe().includes('bridge.store.put') ? HOLD('the crossing seam (bridge.store.put) is wired') : BREAK('the crossing seam is not implemented at the construction site (renderer.ts) — the receipt-only rule (§2.11 item 2) cannot hold')) },
       { label: 'SM-3 reload · reading 1 — the hand-off serves the FILE\'s current value; a dead realm\'s cleared[] is NOT replayed', run: async (): Promise<Probe> => y1Probe('reload turn', (y1) => {
@@ -544,7 +555,7 @@ const REGISTER_ROWS: readonly RegisterRow[] = [
           const handoffs = rendererHandoffCount()
           const directFileRead = renderer.includes(DECLARED_SETTINGS_FILE)
           return ALL(
-            handoffs === 1 ? HOLD('exactly one Y-1 hand-off per realm') : BREAK(`expected exactly one Y-1 hand-off call in the renderer boot, found ${handoffs}`),
+            handoffs === 1 && rendererHandoffControl() ? HOLD('exactly one Y-1 hand-off per realm — the REAL bracket-form bridge.store[\'get\']() (renderer.ts:570), comment-elided control held (G4-P2)') : BREAK(`expected exactly one Y-1 hand-off call (bridge.store['get']()) in the renderer boot, found ${handoffs}`),
             directFileRead ? BREAK('the renderer references a file path — the renderer never touches a path (§2.12 item 1)') : HOLD('no settings-path literal in the renderer (it cannot read the file)'),
           )
         } },
@@ -722,8 +733,62 @@ function rendererTextSafe(): string {
   return readSrcSafe('renderer/renderer.ts') ?? ''
 }
 
+/** The comment-ELIDED renderer text (G4-P2's control surface): a probe that fires in this
+ *  text observes the CALL, never the doc-comment's prose — a match that dies with the
+ *  comments elided is a comment-only match and breaks. */
+function rendererCommentElided(): string | null {
+  const text = readSrcSafe('renderer/renderer.ts')
+  if (text === null) return null
+  return text
+    .split('\n')
+    .filter((line) => !line.trimStart().startsWith('//'))
+    .join('\n')
+}
+
+/** The §2.9 Y-1 hand-off count — the REAL bracket-form call `bridge.store['get']()`
+ *  (renderer.ts:570), never the doc-comment's `store.get()` prose (renderer.ts:556): the
+ *  probes previously matched the comment, so the suite stayed green with the call deleted
+ *  and would redden if the comment were removed (G4-P2, MED) — the honest observable is the
+ *  CALL. The bracket spelling is also the one the fork-store-reads scanner's receiver
+ *  grammar (a direct `.get(` on a store-ish receiver) stays silent for. */
 function rendererHandoffCount(): number {
-  return (rendererTextSafe().match(/store\.get\s*\(/g) ?? []).length
+  return (rendererTextSafe().match(/store\[['"]get['"]\]\s*\(/g) ?? []).length
+}
+
+/** G4-P2's control — the bracket-form hand-off must still fire with every comment line
+ *  elided: `rendererHandoffCount()` observes the CALL, not the comment (a comment-only
+ *  match would drop to 0 here and break). */
+function rendererHandoffControl(): boolean {
+  const codeOnly = rendererCommentElided()
+  return codeOnly !== null && (codeOnly.match(/store\[['"]get['"]\]\s*\(/g) ?? []).length === 1
+}
+
+/** The §2.9 tier-1 HYDRATION seam — the renderer boot CONSUMES the hand-off through the
+ *  store's `hydrate(rows)` seam (`wired.hydrate(bootHandoff)`, renderer.ts:605): the
+ *  G4-P1 gap's closure — bootHandoff is fed to the store, never captured-and-held. */
+function rendererHydrateSeam(): Probe {
+  const codeOnly = rendererCommentElided()
+  const wired = codeOnly !== null && /hydrate\s*\(\s*bootHandoff\s*\)/.test(codeOnly)
+  return wired
+    ? HOLD("the renderer feeds the handed-off record into the store's hydrate seam (wired.hydrate(bootHandoff), renderer.ts:605) — bootHandoff is CONSUMED, not captured-and-held")
+    : BREAK("the renderer's boot does not call wired.hydrate(bootHandoff) — bootHandoff is captured-but-never-consumed (the G4-P1 gap reading)")
+}
+
+/** THE HYDRATED-STORE DRIVE (the G4-P1 closure's reading — tier-1 `resolve` answers the
+ *  hydrated value AFTER boot): a fresh store resolves the declared tier-1 name COLD (a miss —
+ *  the declaration is minted, no value), `hydrate` feeds the hand-off-shaped record (the
+ *  shape the Y-1 hand-off answers), and the SAME name resolves a HIT carrying the hydrated
+ *  value. A wiring-held-only reading — the call exists but the record is never consumed —
+ *  breaks this drive. */
+function hydratedStoreDrive(): Probe {
+  const store = createGraphStore({ declarations: storeGraphReferences([{ name: 'settings' }]) })
+  const cold = store.resolve('file.settings')
+  store.hydrate([{ name: 'file.settings', value: { theme: { token: 'a' } } }])
+  const after = store.resolve('file.settings')
+  const ok = !cold.found && after.found
+  return ok
+    ? HOLD('tier-1 resolve answers the hydrated value AFTER boot (cold resolve = a miss; post-hydrate resolve = a hit carrying the handed-off value)')
+    : BREAK(`tier-1 resolve does not answer the hydrated value after hydrate (cold found=${cold.found}; post-hydrate found=${after.found}) — the handed-off record is NOT consumed by the store`)
 }
 
 /** Write/rename constructs across the main-side tree that carry a `provident-*.json` literal. */
@@ -803,7 +868,8 @@ describe('G2 U-STORE-PERSIST — tier-1 crossing: THE RED SET (from docs/specs/s
         y1Probe('persisted boot', (y1) => (y1.includes('bootRecord') && y1.includes('schemaVersion')
           ? HOLD('the boot read validates and holds the record (bootRecord), served at the hand-off')
           : BREAK('the persisted-record serve path is absent'))),
-        rendererHandoffCount() === 1 ? HOLD('the renderer calls the hand-off once') : BREAK('the renderer\'s hand-off call is absent'),
+        rendererHandoffCount() === 1 && rendererHandoffControl() ? HOLD('the renderer calls the hand-off once — the REAL bracket-form bridge.store[\'get\']() (renderer.ts:570), comment-elided control held (G4-P2)') : BREAK('the renderer\'s hand-off call (bridge.store[\'get\'](), renderer.ts:570) is absent from the CODE'),
+        rendererHydrateSeam(),
       ), 'M-3 persisted boot')
     })
 
@@ -861,7 +927,13 @@ describe('G2 U-STORE-PERSIST — tier-1 crossing: THE RED SET (from docs/specs/s
       assertProbe(ALL(
         y1Probe('holder-boot', (y1) => (y1.includes('bootRecord') ? HOLD('bootRecord populated at the boot read, served at Y-1') : BREAK('the bootRecord holder is absent at the boot read (C-10)'))),
         y2Probe('holder-commit', (y2) => (y2.includes('bootRecord') ? HOLD('bootRecord refreshed by the channel\'s own committed writes') : BREAK('the committed write does not refresh bootRecord'))),
-        rendererHandoffCount() === 1 ? HOLD('the renderer reads the handed-off record once') : BREAK('the renderer has no Y-1 hand-off'),
+        rendererHandoffCount() === 1 && rendererHandoffControl() ? HOLD('the renderer reads the handed-off record once — the REAL bracket-form bridge.store[\'get\']() (renderer.ts:570), comment-elided control held (G4-P2)') : BREAK('the renderer has no Y-1 hand-off (bridge.store[\'get\'](), renderer.ts:570)'),
+        // THE G4-P1 CLOSURE (the hydrated-store reading — this row no longer accepts the
+        // wiring-held-only reading): bootHandoff is CONSUMED by the store's `hydrate(rows)`
+        // seam (wired.hydrate(bootHandoff), renderer.ts:605) and tier-1 `resolve` answers the
+        // handed-off value AFTER boot — M-7 is satisfiable, per the HYDRATE-1 re-ruling.
+        rendererHydrateSeam(),
+        hydratedStoreDrive(),
         crossingSeamProbe(),
       ), 'M-7 holder bound')
     })
@@ -921,7 +993,8 @@ describe('G2 U-STORE-PERSIST — tier-1 crossing: THE RED SET (from docs/specs/s
             : BREAK('the file.*-keyed projection filter is absent from the write path'),
           y2.includes('schemaVersion') ? HOLD('the reserved schemaVersion member is stamped') : BREAK('schemaVersion is not stamped'),
         )),
-        rendererHandoffCount() === 1 ? HOLD('a restart re-hydrates from the hand-off (in-realm tiers built from the handed-off record; mem/temp EMPTY)') : BREAK('the renderer has no Y-1 hand-off — a restart cannot reconstruct its tiers from the record'),
+        rendererHandoffCount() === 1 && rendererHandoffControl() ? HOLD('a restart re-hydrates from the hand-off — the REAL bracket-form bridge.store[\'get\']() (renderer.ts:570), comment-elided control held (G4-P2)') : BREAK('the renderer has no Y-1 hand-off (bridge.store[\'get\'](), renderer.ts:570) — a restart cannot reconstruct its tiers from the record'),
+        rendererHydrateSeam(),
       ), 'F-4 projection')
     })
 
@@ -1132,7 +1205,7 @@ describe('G2 U-STORE-PERSIST — tier-1 crossing: THE RED SET (from docs/specs/s
 
     it('BO-4: consequence (4) — a late push never tells the renderer what to believe; the table updates from the RECEIPT (§2.9 item 2(4), §2.5 item 2)', async () => {
       assertProbe(ALL(
-        rendererHandoffCount() === 1 ? HOLD('the hand-off is the only main→renderer tier-1 value flow the boot uses') : BREAK('no Y-1 hand-off exists'),
+        rendererHandoffCount() === 1 && rendererHandoffControl() ? HOLD('the hand-off is the only main→renderer tier-1 value flow the boot uses — the REAL bracket-form bridge.store[\'get\']() (renderer.ts:570), comment-elided control held (G4-P2)') : BREAK('no Y-1 hand-off exists (bridge.store[\'get\'](), renderer.ts:570)'),
         crossingSeamProbe(),
       ), 'BO-4 receipt-only')
     })

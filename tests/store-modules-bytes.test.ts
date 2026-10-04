@@ -1728,8 +1728,15 @@ describe('H2a U-STORE-MODULES-BYTES — §3.5 existence rows', () => {
     // pin is RE-PINNED to the re-frozen bytes (the E-2 cell's own mechanism — this row pins
     // the changed file's CURRENT sha256 as the re-frozen figure). The input module was NOT
     // part of the pin set (its span is unchanged) and its digest is UNMOVED.
-    expect(digestOf('src/renderer/store-core-graph.ts'), 'E-2 — store-core-graph.ts carries the RE-FROZEN digest (the seven UNIT-ADV-1 pins are this figure)').toBe(
-      'e3db10fde5d58cf04e32e149b98fb34a49fcb4c9dbefddde566b8b14cdf7b976',
+    // ⟶ RE-PINNED 2026-10-06 (G2 `U-STORE-PERSIST`, the HYDRATE-1 re-cycle's closure pass):
+    // the as-filed figure (e3db10fd…, the G1 re-freeze's bytes) is superseded BESIDE by the
+    // MEASURED 0664c52f… — the HYDRATE-1 seam landed in the store module's bytes since (the
+    // re-frozen re-freeze: `hydrate(rows)` is the boot seam the Y-1 hand-off feeds), so the
+    // digest MOVED BY DESIGN and the cell re-pins the changed file's CURRENT sha256 (verified
+    // by sha256sum THIS pass — measured, not quoted). The references digest (5c0c1a97…)
+    // STANDS — its assertion below is UNMOVED.
+    expect(digestOf('src/renderer/store-core-graph.ts'), 'E-2 — store-core-graph.ts carries the HYDRATE-1 RE-FROZEN digest (0664c52f…, sha256sum-measured this pass; the seven UNIT-ADV-1 pins are superseded BESIDE; the references digest below STANDS)').toBe(
+      '0664c52f06bd6da5e95de957a6170e5be07b5a8c5a459489f98c2b01921e8450',
     )
     expect(digestOf('src/renderer/store-graph-references.ts'), 'E-2 — store-graph-references.ts byte-unchanged').toBe(
       '5c0c1a971d7f9268866b46b4d34f803694dd5a43f3b06a0cf81012c20d8f9657',
