@@ -4,8 +4,21 @@ You are starting an Electron app on this baseline, you have a pane whose width a
 you want the value to reach your own code exactly once, already narrowed into your own bounds —
 without this layer owning a coordinate, a default or an opinion about what is being resized.
 That is unit **`U-GUTTER`** (wave **E**, ledger row **`E3`**, closed — `docs/next-steps.md`'s
-`## DONE — U-GUTTER`), and the answer is one `src/shared` module: a resize controller composed on
+`## DONE — U-GUTTER`), and the module answer is one `src/shared` module: a resize controller composed on
 the landed gesture session, plus the pure `clampToBounds`.
+
+**⟶ STORE-WAVE SCOPING (`2026-10-04`, read beside `docs/FORKER.md` §4's `### THE STORE-BACKED DRAG +
+GUTTER FEATURES`):** this page documents the **pure module bytes** (`src/shared/gutter.ts`) — and the
+bytes' "no store in the module" claims SURVIVE (the store arrives as an argument). **The family's
+LANDED composition is the store-backed `createPaneDrag(store, source)`** (`src/renderer/renderer.ts`,
+`PaneDragSurface`): its `startSizeOf`/`boundsOf`/`defaultSizeFor` read `mem.layout.pane.<id>.size`/
+`…bounds` (tier-qualified `{found, value}` reads; MISS → the `file.settings.pane.<id>.*` fallback),
+its previews live at `temp.drag.<gid>.placement`, and its release commits `file.settings.pane.<id>.size`
+— the composition's store reads are the CALLER's, never a census inside the module (the spec's
+`P-9`/`P-10` rows were amended to this reading on 2026-10-03). The store flow's RELEASE DEVALUE: the
+composition commits the caller's `final` BY IDENTITY (the clamp is only a NaN gate on the stored mem
+pre-drag value — non-number/NaN ⇒ ZERO sink writes); the module's E3-side clamped-commit stays
+module semantics, exercised by the module's own tests. (**G1/G2/G3**)
 
 ## What it is
 
@@ -42,7 +55,7 @@ it (§1 item 5, §2.6 item 7). This module authors no element, text, class, attr
 | `src/shared/gutter.ts` | value: `createResizeController`, `clampToBounds` · type: `AxisFor`, `BoundsFor`, `ClampBounds`, `CommitSink`, `DefaultSizeFor`, `IsResizable`, `ResizeController`, `ResizeControllerHandle`, `ResizeControllerOptions`, `ResizeStats` — **two value exports and ten type declarations, twelve names** (§2.1) |
 | `tests/gutter.test.ts` | the unit's own rows (a fact measured by one is cited where it is used) |
 | `src/shared/gutter-affordance.ts` | the in-tree consumer (`U-GUTTER-UI`): value-imports `clampToBounds` and `createResizeController`, and publishes `domEventSource`, `createGutterAffordance`, `cursorDeclarationFor` |
-| `src/renderer/renderer.ts` | `startGutterAffordance` — the demo wiring that builds the session and attaches the affordance |
+| `src/renderer/renderer.ts` | `startGutterAffordance` — the LEGACY app wiring (main() boot) that builds the session + attaches the affordance; the CURRENT store demo wiring is `createPaneDrag(store, { layout })` + the store's own gutter turns (`demo/pane-drag-demo/demo.ts`) (G5) |
 
 `ResizeCode` and `ResizeResetResult` are deliberately **not** exports: the module declares them
 module-locally, and a consumer reads the codes as string literals off `reset(element)`'s inferred
@@ -162,6 +175,8 @@ export function revertPaneToPreDrag(runtime: Runtime, handleNodeId: string, preD
   const element = runtime.elementForNodeId(handleNodeId)
 
   // an active, resizable gesture whose default is usable: ONE clamped commit of your pre-drag size
+  // STORE-WAVE: this module-side reset() is NOT the store flow's abandon — the store abandon is
+  // remove('temp.drag.<gid>.placement') with ZERO commits and the FILE original reasserts (G4).
   const committed = controller.reset(element)
   // { ok: true, code: 'ok', committed: true }
   // and your sink received the CLAMPED default (320 into the 120..480 pair)
@@ -300,7 +315,7 @@ into the session unchanged — the controller adds no fifth hook and computes no
   the caller of the terminal, the sink record stayed empty).
 - **A throwing sink does not propagate**: `stats().sinkCalls` read `1` beside `stats().written` `0`
   (measured this pass; §2.4 item 2's column-`(c)` universal, §3.2 `F-11`).
-- **`src/shared/gutter.ts` now has an in-tree importer**: `src/shared/gutter-affordance.ts` value-imports
+- **`src/shared/gutter.ts` now has TWO in-tree importers**: `src/shared/gutter-affordance.ts` value-imports
   `clampToBounds` and `createResizeController` (`docs/next-steps.md`, `## DONE — U-GUTTER` clause 3).
 - **Naming variance between the spec block and the landed module**: `docs/specs/gutter.md` §2.1's code
   block writes the value-source seam as an exported `SizeFor` type, while the landed module declares
