@@ -73,7 +73,18 @@ sibling spec, no gate record, no `src/**` byte, no `tests/**` byte is touched** 
 LANDING pass's act, never this filing's). **No red set has been authored or run; no leg, no trio, no register row has been
 EXECUTED; no gate record after gate 1 exists.** The unit stays an open `## OPEN` row (`H1`) with **`OWED — not filed`** spent
 on its spec status by THIS filing (the tracker edit is the supervisor's at gate 10, `RCA-8(f)`), and it is **NOT delegable until a
-TestWriter has RUN and REPORTED the red set** (`AGENTS.md` item 9, `§4.5`).
+TestWriter has RUN and REPORTED the red set** (`AGENTS.md` item 9, `§4.5`). **⟶ 2026-10-03 THE GATE-4 FINDINGS-LANDING PASS
+(FINDINGS A + G) — THE STATUS LINE IS ANNOTATED BESIDE, NEVER REWRITTEN (`RCA-8(d)`; the as-filed GATE-2 form above is KEPT
+VISIBLE and this paragraph is the OPERATIVE reading): THE UNIT HAS ADVANCED PAST THE FILING STATE — the TestWriter's red set
+exists (`tests/store-focus.test.ts`, authored from this spec alone), the wiring's re-home focus region is IMPLEMENTED
+(`src/renderer/renderer.ts`'s `createFocusCarrier(store)` with its FOUR-member surface, the store-backed `persistTarget`, the
+mirror reads `mem.focus.entries`/`mem.focus.activeId`, the two exact-reference subscriptions + the `dispose()` release; the
+module-level `const holder` is GONE — `[READ]` this pass), and the gate-4 audit returned Findings A + G, whose spec-side
+landings THIS pass carries (§2.2 item 3 · §3.1 `M-4` · §3.2 `F-5` · §5.5.1 `P-SF-TP-2` · §5.5.2 item 3 · §7a.1 item 7 ·
+§0A note 6 · §5.1 row 5).** **THIS PASS EDITS NO TRACKER, NO `src/**` BYTE AND NO `tests/**` BYTE; the DONE row, the ledger
+move and the §Q flips remain the supervisor's gate-10 acts (`RCA-8(f)`).** **CURRENT STATE items 1–10 are the FILING-TIME
+snapshot and stay as-filed; their full reconciliation is the gate-8 documentation-review pass's (`AGENTS.md` item 10d) —
+recorded here so no reader takes them as current.**
 
 ---
 
@@ -247,7 +258,24 @@ as "the `RH-4` fix" is re-literalising a superseded answer and MUST OPEN A GATE.
 REFUSAL: without a declared root, `resolve('mem.focus.entries')` would answer `'undeclared-name'` at `C-TOP`. **The carrier
 therefore MINT-DECLARES its root at construction — `commit('mem.focus', undefined)` then `clear('mem.focus')` — so the register's
 row pre-exists the first write and a cold read answers the DECLARED MISS** (the `pane-drag-compliance.md` §7a.1-item-4 reading,
-landed at `createPaneDrag`'s bootstrap). A hostile store absorbs every step (`§2.3` item 6).
+landed at `createPaneDrag`'s bootstrap). A hostile store absorbs every step (`§2.3` item 6). **⟶ 2026-10-03 THE GATE-4
+AUDIT'S FINDING G (DOC-REVIEW-ITEM) — THE COLD READ'S LITERAL ANSWER CORRECTED BESIDE (`RCA-8(d)` ANNOTATE-BESIDE; the as-filed
+note above is KEPT VISIBLE and this paragraph is the OPERATIVE reading).** **THE COLD READ ANSWERS THE DECLARED-EMPTY OUTCOME
+VIA THE CARRIER'S CONSUMPTION OF THE STORE'S D-ANCHOR READ-SIDE REFUSAL: after the boot mint (`commit('mem.focus', undefined)`
++ `clear('mem.focus')`), `resolve('mem.focus.entries')` / `resolve('mem.focus.activeId')` on the CURRENT frozen store answer the
+READ-SIDE REFUSAL RECORD `{reason:'no-such-anchor', step:'D-ANCHOR'}` — the walk arm (ii) of `store-core-graph.md` §2.3 item 6,
+never a throw and never a `GraphReadHit` (documented by the red set's `S23-2b`/`S23-3b` rows, `[READ]` this pass); the carrier's
+read turn CONSUMES that refusal as the same declared-empty reading — `§2.1` item 6's LAST SENTENCE and `§2.3` item 6 are the
+CONSUMPTION RULE whose letter carries this outcome.** **`'undeclared-name'` CANNOT OCCUR POST-MINT: the boot mint declares +
+mints the root (the register row pre-exists the first write), so `C-TOP` is passed and the leaf references answer
+`'no-such-anchor'` at `D-ANCHOR` — `'undeclared-name'` at `C-TOP` is the PRE-MINT tree's answer only.** **The as-filed sentence
+*"a cold read answers the DECLARED MISS, never a refusal"* is therefore READ AS THE OUTCOME CLAIM (the declared-empty reading),
+not as the store's literal record — the store's literal post-mint answer is the D-ANCHOR read-side refusal consumed as that
+outcome.** **AND THE FINDING'S SECOND HALF, RECORDED HERE AS A `DOC-REVIEW-ITEM` (a TestWriter-side fix, NOT executed at this
+gate — the scheduling the gate's ruling names): the red set's header cell `tests/store-focus.test.ts` line 4 reads
+*"docs/specs/store-focus.md (952 lines, read in full)"* while the file measures **953** lines at this pass — the header's
+count is corrected by the TestWriter's next pass (this spec carries no length census of its own by its own rule; the
+line-count claim is the test-side cell's, and its correction lives in the test file, never here).**
 
 **Note 7 — THE MIRROR'S VALUE SEMANTICS.** The store holds node VALUES as `unknown` — the wiring commits the CALLER'S OWN entry
 objects (the `FocusEntry` records, by reference) and reads them back as the node's own value. **This filing pins the READER'S
@@ -286,12 +314,15 @@ CLAIM-BEARING ROW GROUPS this file enumerates, per major section — the sibling
 | **`NORM`** | a normative clause: it obliges, forbids or declares a shape | **`80`** = `5` (`§1` — the numbered scope items) + `32` (`§2` — itself `6` (`§2.1`) + `5` (`§2.2`) + `6` (`§2.3`) + `4` (`§2.4`) + `5` (`§2.5`) + `6` (`§2.6`)) + `24` (`§3`'s BEHAVIOURAL rows — itself `6` (`§3.1`) + `6` (`§3.2`) + `6` (`§3.3`) + `6` (`§3.4`); §3.5's existence probes are `FACT` readings, NOT counted twice) + `5` (`§4`) + `3` (`§5` — the diff scope, the legs, the DONE-row shape) + `3` (`§6`) + `7` (`§7` — the numbered honest statements) + `1` (`§7a.1` — the answered-decision ledger's closing rule) |
 | **`FACT`** | a reading of landed bytes or a quoted landed clause | **`11`** = `1` (`CURRENT STATE` item 1 — the holder/`FocusAnswer` read) + `1` (`§2.1` item 3 — the module-census read) + `3` (`§0`'s quoted cells — the §Q cell, the queue row, the plan row 13) + `5` (`§3.5`'s existence probes `X-1`…`X-5`) + `1` (`§8`'s authority table) |
 | **`PRED`** | a prediction about a later pass's behaviour, with its falsifier | **`0`** — this file makes NO prediction: every clause that would be a prediction is a `NORM` declaration or an `OPEN` carry (`§7a.1`) |
-| **`OPEN`** | a named, owned, unresolved item carried rather than decided | **`6`** = `§7a.1` items `1` – `6` (the `unknown-id` pair · the slice record landing · the fork observation-channel carry · the §Q flip cells · the `mcp-endpoint.md` §3.8 repair · the register's execution) |
+| **`OPEN`** | a named, owned, unresolved item carried rather than decided | **`6`** = `§7a.1` items `1` – `6` (the `unknown-id` pair · the slice record landing · the fork observation-channel carry · the §Q flip cells · the `mcp-endpoint.md` §3.8 repair · the register's execution) **⟶ 2026-10-03 (THE GATE-4 FINDING-A LANDING — `RCA-8(d)` ANNOTATE-BESIDE; the as-filed `6` above is KEPT VISIBLE and this is the OPERATIVE reading): `7` = `§7a.1` items `1` – `7`** — the six as-filed + **item 7 (the re-seed WRITE half's deferral, added by this pass)** |
 
 **THE TOTAL, PRINTED WITH ITS TERMS (a total without its terms is a review finding — `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`):
 `80` `NORM` + `11` `FACT` + `0` `PRED` + `6` `OPEN` = `97` claims.** **THE IDENTITY CHECK: `80 + 11 + 0 + 6 = 97` ✓ — and the
 subsection terms re-check: `5 + 32 + 24 + 5 + 3 + 3 + 7 + 1 = 80` ✓ · `6 + 5 + 6 + 4 + 5 + 6 = 32` ✓ · `6 + 6 + 6 + 6 = 24` ✓ ·
-`1 + 1 + 3 + 5 + 1 = 11` ✓.**
+`1 + 1 + 3 + 5 + 1 = 11` ✓.** **⟶ 2026-10-03 (THE GATE-4 FINDING-A LANDING — `RCA-8(d)` ANNOTATE-BESIDE; the as-filed `97`
+form above is KEPT VISIBLE and this is the OPERATIVE reading): `80` `NORM` + `11` `FACT` + `0` `PRED` + `7` `OPEN` = `98`
+claims — identity `80 + 11 + 0 + 7 = 98` ✓; the subsection terms re-check is UNCHANGED (only the `OPEN` term moved `6 → 7`,
+the added `§7a.1` item 7).**
 
 ### 0A.3 THE SUPERSESSION POINTER EDGES — CLOSED AND ENUMERATED
 
@@ -307,8 +338,11 @@ AND ENUMERATED — a supersession whose edge is absent is a review finding.**
 | **S-5** | `§5.1` row 5's amendment set (the `focus-tool.md` §2.1 item 6 carrier amendment) | `data-ownership-model-plan.md` `§3.4` row 2.4-1's cost clause (*the holder is the live authority* stays true; its carrier changes from a module-level `const` to a tier-2 reference) | **LANDED-AS-H1** — this unit is that row's landing; the amendment is an annotated-beside target of the landing pass, per the plan's own words |
 | **S-6** | `§2.1` item 4's seam-target rule | `docs/specs/focus-model.md` `§2.4` seam 3 (+ `§0A` note 3): the module's `persist` touches no storage surface | **TARGET-SUPERSEDED** — the MODULE's bytes and its seam contract are unchanged; the SEAM's TARGET semantics change from caller-called to store-backed AT THE CALLER, carried as an annotated-beside note in `focus-model.md` (no clause weakened, no register re-grain — `§1.7` item 9) |
 | **S-7** | `§2.5` (the tool's reply + the wiring's carrier) | `docs/specs/focus-tool.md` §2.1 item 6 / §2.5 items 2/5 / §2.4 row 4 / §2.1 item 7 (the wiring-held live authority; the tool's "no store" negatives) | **CARRIER-AMENDED** — the live authority's CARRIER changes from the module-level `const` to the tier-2 mirror (the tool's reply shape and the TOOL's own negative claims stay); the wiring half's "any store" denial narrows to the TOOL's own bytes; each cell amended BESIDE by the landing pass |
+| **S-8** | §2.2 item 3's dated annotation (+ `§3.1` `M-4`'s, `§3.2` `F-5`'s, `§5.5.1` `P-SF-TP-2` drive-5's and `§5.5.2` item 3's — the gate-4 Finding-A landing, 2026-10-03) | THIS file's OWN as-filed DRIVEN reading — *"the mirror is RE-PROJECTED from the tab list (the mirror's entry set and seat are re-seeded to the tab list's projection in the same committed write)"* (`§2.2` item 3 as filed; `§3.1` `M-4`'s as-filed "in one committed write"; `§3.2` `F-5`'s as-filed "re-projects the mirror"; `P-SF-TP-2`'s as-filed "the declared re-projection on divergence") | **SELF-ANNOTATED-BESIDE** — the re-seed WRITE is DECLARED-DEFERRED (`§7a.1` item 7, its own future register drive); the executed half is the divergence DETECTION + the declared reconcile READING; the as-filed forms stay visible (`RCA-8(d)`) |
 
-**SEVEN EDGES, ENUMERATED AND COUNTED: `7` ✓.** **NO clause of this file supersedes a landed clause without an edge above, and
+**SEVEN EDGES, ENUMERATED AND COUNTED: `7` ✓.** **⟶ 2026-10-03 (THE GATE-4 FINDING-A LANDING — `RCA-8(d)` ANNOTATE-BESIDE;
+the as-filed seven is KEPT VISIBLE and this is the OPERATIVE reading): EIGHT EDGES, ENUMERATED AND COUNTED: `8` ✓** — `S-8`
+added by this pass (a self-re-pointing edge on this file's own as-filed reading, no marker on any cited ruling row). **NO clause of this file supersedes a landed clause without an edge above, and
 no edge above is an `AMENDED`/`SUPERSEDED` marker on a cited ruling row** (the discipline the sibling specs state as *"a landed
 ruling re-opened silently"* is a finding).
 
@@ -464,7 +498,24 @@ exist).
    reconcile is EXECUTABLE where the slice's record exists** — on today's tree the tab list is a PLAN reference no unit has
    landed, so the driveable half is the DECLARATION's mirror-side rows (`§3.1` `M-4`, `§3.2` `F-5`): the mirror never
    self-authorises, and the wiring never writes tier 1. **The slice record's landing is the deferred units' (their owner,
-   `§7a.1` item 2); this unit declares the rule their landing will execute.**
+   `§7a.1` item 2); this unit declares the rule their landing will execute.** **⟶ 2026-10-03 THE GATE-4 AUDIT'S FINDING A —
+   THE RE-SEED IS DECLARED-DEFERRED; THE AS-FILED DRIVEN READING IS NARROWED BESIDE, NEVER REWRITTEN (`RCA-8(d)`; the
+   supervisor's ruling, per this spec's own `§5.5.2` item 3 "the driveable half today" reading — the words above are KEPT
+   VISIBLE and this paragraph is the OPERATIVE reading). THE RE-PROJECTION'S TWO HALVES, SPLIT: (1) THE DIVERGENCE
+   **DETECTION** + THE DECLARED RECONCILE **READING** — the answer and the subsequent write-through computed FROM THE TAB
+   LIST'S VALUES, the mirror's value honestly read and NEVER self-authorised, the wiring NEVER writing tier 1 — **THIS HALF
+   IS DRIVEN AND LANDED HERE** (`§3.1` `M-4`'s executed arm, `§3.2` `F-5`, `§5.5.1` `P-SF-TP-2`'s drive-5 cell, the red set's
+   `S22-5b`; the landed projection path answers from the projection and writes NOTHING — `renderer.ts`'s `projectionAnswerOf`
+   doc, *"written to NOTHING"*, `[READ]` this pass). (2) THE RE-SEED **WRITE** — the mirror's entry set and seat re-seeded to
+   the tab list's projection IN ONE COMMITTED WRITE — **IS DECLARED-DEFERRED: it lands WITH the slice's projection source
+   (tier 1's projection authority — the deferred units' `file.tabs.*` record + projection landing, `§7a.1` items 2/7) and is
+   NEVER executed or asserted by THIS unit. ITS REVISIT CONDITION, NAMED: when the slice's projection source lands, the re-seed
+   WRITE becomes executable and MUST be driven by a register row of THAT landing unit's own register, reported under that
+   unit's gate (`§7a.1` item 7). A PASS THAT READS OR REPORTS THE RE-SEED WRITE AS LANDED BY THIS UNIT — including a pass
+   citing the as-filed "re-projected (re-seeded) … in one committed write" sentence as H1's landed behaviour — IS A REVIEW
+   FINDING. AND, AS THE AUDIT RECORDED: the red set's `S22-3` commit-census (an EXACT two-reference census) would REDDEN the
+   moment a re-seed write lands — the census matches only while the projection path writes NOTHING, so it is a
+   nothing-write detector, never the re-seed's landing evidence; the re-seed's real drive is the slice unit's own register.**
 4. **`RH-4` IS ANSWERED BY THE SLICE, NOT BY A CAP — DECLARED.** **NO declared cap is added to `mem.focus.entries`** (`Q-9`
    SUPERSEDED; `§7.1`'s amended block: the as-filed tier-2-cap answer is WITHDRAWN AS THE ANSWER). The mirror's growth is
    bounded BY CONSTRUCTION by the tab list's first-class removal path (`§1.7` items 4/5 — removal is the close verb, a PERSISTED
@@ -639,7 +690,7 @@ exist).
 | **M-1** | COLD (the boot mint done, nothing written) | `state()` answers the DECLARED EMPTY pair (`[]`/`null`); a `focusRoute` with no target answers `{activeId:null, entries:[], opened:false}`; an `activate` on the empty mirror refuses `'unknown-id'` — exactly the empty-holder behaviour today | `§2.1` item 6, `§2.3` items 3/5 |
 | **M-2** | ONE ACCEPTED, CHANGED TRANSITION (`newTab:true` on a fresh target) | the mirror reads the fresh state (`entries` carries the caller's own entry object by identity; `activeId` is the caller's string); the answer echoes them by identity; EXACTLY ONE `commit` per reference fired `cause:'commit'`; the persisted record reads `{present:true, value:<receipt>}` | `§2.3` item 4, `§5.5.1 P-SF-SM-1` |
 | **M-3** | ACTIVATE on an owned id (`changed:true`) | the seat changes, the entries array is UNTOUCHED (same reference — the module returns the caller's array unchanged); only `mem.focus.activeId`'s commit changes substance; both commits still fire (the transition changed) | `§2.3` item 4, `§3.3 I-4` |
-| **M-4** | A DIVERGENT MIRROR against a fixture-supplied tab-list projection | the answer and the subsequent write-through compute FROM THE TAB LIST; the mirror is re-projected (re-seeded) from the tab list in one committed write — never the reverse | `§2.2` item 3, `§3.2 F-5` |
+| **M-4** | A DIVERGENT MIRROR against a fixture-supplied tab-list projection | the answer and the subsequent write-through compute FROM THE TAB LIST; the mirror is re-projected (re-seeded) from the tab list in one committed write — never the reverse **⟶ 2026-10-03 THE GATE-4 AUDIT'S FINDING A — THIS ROW'S EXECUTED ARM IS THE DECLARED READING, NOT THE RE-SEED COMMIT (`RCA-8(d)` ANNOTATE-BESIDE; the as-filed cell above is KEPT VISIBLE and this clause is the OPERATIVE reading): THE EXECUTED ARM OF `M-4` IS THE DIVERGENCE DETECTION + THE DECLARED RECONCILE READING — the answer and the subsequent write-through compute FROM THE TAB LIST'S VALUES, the mirror's value honestly computed and NEVER self-authorised, the wiring never writing tier 1. THE RE-SEED WRITE HALF (the mirror re-projected "in one committed write") IS DECLARED-DEFERRED and is NEVER asserted by this row — it lands with the slice's projection source (`§2.2` item 3's dated annotation; `§7a.1` item 7); a pass that reports the re-seed WRITE as this row's landed reading — or asserts the one-committed-write census as this row's executed behaviour — is a finding.** | `§2.2` item 3, `§3.2 F-5` |
 | **M-5** | POST-DISPOSE | every handle's `unsubscribe()` answered `true` once then `false`; a write to either released name delivers NOTHING; a second `dispose()` is a no-op; the mirror's records REMAIN readable (`resolve` still answers HIT) | `§2.4` items 3/4 |
 | **M-6** | THE REAL-STORE DRIVE (the wired `createGraphStore`, this unit's composition rows) | every turn's receipt is the store's settled `GraphWriteReceipt`; the events count matches the store's own delivery record; the subscription count on the two references reads exactly `2` while alive — the "wired-store integration" reading of the register (`§5.5.1`) | `§2.4`, `§5.2` leg 6 |
 
@@ -651,7 +702,7 @@ exist).
 | **F-2** | **`SF-LEAK` — DELIVERY AFTER DISPOSE** | a post-dispose write to a released name with ANY delivery to the wiring's listener FAILS (the delivery-recorder counter must stay at its pre-write value) | `§2.4` item 4 `P2` |
 | **F-3** | **`SF-LEAK` — THE HANDLE'S RETURN SHAPE / NO SECOND RELEASE AUTHORITY** | a held handle whose first `unsubscribe()` answers `false`, or an active set non-empty after dispose, FAILS; a release of a subscription another party registered FAILS | `§2.4` item 4 `P1`/`P7` |
 | **F-4** | **`SF-LEAK` — THE EVENT NEGATIVE** | a `'severed'`/`'clear'`/`'set'` event attributable to the `dispose()` call FAILS (`events: 0` attributable) | `§2.4` item 4 `P5` |
-| **F-5** | A MIRROR THAT SELF-AUTHORISES (a fixture writes `mem.focus.*` a value the tab list does not project, then reads an answer computed from the mirror) | FAILS the divergence rule — the tab list wins and the declared reconcile re-projects the mirror; the mirror's value is NEVER the answer's authority | `§2.2` item 3 |
+| **F-5** | A MIRROR THAT SELF-AUTHORISES (a fixture writes `mem.focus.*` a value the tab list does not project, then reads an answer computed from the mirror) | FAILS the divergence rule — the tab list wins and the declared reconcile re-projects the mirror; the mirror's value is NEVER the answer's authority **⟶ 2026-10-03 (FINDING A'S LANDING, `RCA-8(d)` ANNOTATE-BESIDE — the as-filed cell above is KEPT VISIBLE and this clause is the OPERATIVE reading): this row's EXECUTED arm is the mirror-never-self-authorises reading (the answer computed from the tab list, the wiring never writing tier 1); the "re-projects the mirror" half is the DECLARED reading, executed by the slice's projection-source landing (`§2.2` item 3's dated annotation; `§7a.1` item 7), never asserted by this unit.** | `§2.2` item 3 |
 | **F-6** | A SECOND CARRIER (a residual module-level holder of the focus state, a memo of the last answer, or a route that consumes the SUBSCRIPTION as its data source) | FAILS the re-home's carrier rule — the answer must come from the mirror read; a second carrier is the §Q rule-1 ✗ shape resurrected | `§2.3` item 1, `§2.5` item 2, `§5.5.1 P-SF-IM-2` |
 
 ### 3.3 Invariants that hold in every state
@@ -737,7 +788,7 @@ item 10; `§3a`/`§3b`).
 | 2 | `tests/store-focus.test.ts` | **ALLOWED — NEW** | the unit's whole red/green/register home |
 | 3 | `docs/specs/store-focus.md` + `store-focus-greens.md` + the records under `archive/reviews/` | **ALLOWED — NEW** | this filing + the unit's records |
 | 4 | `tests/store-core-graph-integration.test.ts` | **CITE-ONLY — never edited by this unit** | the module-external end point (`TENANT-1`); this unit's composition rows live in THIS unit's own new test file |
-| 5 | **THE AMENDMENT SET (annotated-beside, `RCA-8(d)` — the LANDING pass's act, each dated, NEVER a rewrite):** `docs/specs/focus-tool.md` (`§2.1` item 6 — the carrier changes from the module-level `const` to the tier-2 reference, per plan `§3.4` row 2.4-1; `§2.5` items 2/5 — the wiring-held authority is the mirror, the tool's own route clause; `§2.4` row 4 + `§5.5.1` `RF-3`/`RF-4` — the "any store" static scans narrowed to the TOOL's own bytes; `§2.1` item 7 — the "NO STORE" negative narrowed to the tool's surface) · `docs/specs/focus-model.md` (`§2.4` seam 3 — the seam's TARGET semantics become store-backed at the caller; no clause weakened, no register re-grain) · `docs/specs/fork-store-reads.md` (`§2.4` non-case 5 — the carrier question answered: the focus path becomes the mandated store-carried read; `P-16` unchanged) | **ALLOWED — the amendment set ONLY (supersession-beside)** | one dated annotation per named cell, each keeping its landed bytes visible (`§0A.3` edges `S-2`/`S-5`/`S-6`/`S-7`) |
+| 5 | **THE AMENDMENT SET (annotated-beside, `RCA-8(d)` — the LANDING pass's act, each dated, NEVER a rewrite):** `docs/specs/focus-tool.md` (`§2.1` item 6 — the carrier changes from the module-level `const` to the tier-2 reference, per plan `§3.4` row 2.4-1; `§2.5` items 2/5 — the wiring-held authority is the mirror, the tool's own route clause; `§2.4` row 4 + `§5.5.1` `RF-3`/`RF-4` — the "any store" static scans narrowed to the TOOL's own bytes; `§2.1` item 7 — the "NO STORE" negative narrowed to the tool's surface) · `docs/specs/focus-model.md` (`§2.4` seam 3 — the seam's TARGET semantics become store-backed at the caller; no clause weakened, no register re-grain) · `docs/specs/fork-store-reads.md` (`§2.4` non-case 5 — the carrier question answered: the focus path becomes the mandated store-carried read; `P-16` unchanged) | **ALLOWED — the amendment set ONLY (supersession-beside)** | one dated annotation per named cell, each keeping its landed bytes visible (`§0A.3` edges `S-2`/`S-5`/`S-6`/`S-7`) **⟶ 2026-10-03 (THE LANDING PASS — `RCA-8(d)` ANNOTATE-BESIDE; the as-filed set above is KEPT VISIBLE and this note is the OPERATIVE schedule record): THE SET IS LANDED AS THE GATE'S RULING SCHEDULES IT — `focus-tool.md` §2.1 item 6 + §2.5 items 2/5 and `focus-model.md` §2.4 seam 3 are annotated BESIDE IN THIS PASS** (the two halves this pass's ruling names); **the `fork-store-reads.md` §2.4 non-case 5 half is recorded as the TestWriter-pass-amended half per the gate's scheduling** (the pass report flags that the current tree's cell still reads as-filed — verified this pass — and that discrepancy is the supervisor's to reconcile before the DONE row / the §Q flip; THIS pass does not touch `fork-store-reads.md`); **the remaining named cells (`focus-tool.md` §2.4 row 4 + `§5.5.1` `RF-3`/`RF-4` + §2.1 item 7 — the "any store" static-scan-narrowing cells) are NOT landed by this pass and stay scheduled** |
 | 6 | **DENIED: `src/renderer/store-core-graph.ts` · `store-graph-references.ts`** | one row | the landed/frozen store surfaces are untouched (`§2.6` prohibition 2) |
 | 7 | **DENIED: every `src/shared/**` module** (…`focus-model.ts` INCLUDED) | one row | the module's bytes are UNMOVED; `tests/focus-model.test.ts`/`tests/focus-tool.test.ts` are UNTOUCHED (`§4.3`) |
 | 8 | **DENIED: `src/main/**` · the preload/MCP surface · the shell chrome · `scripts/**` · `package.json`/`package-lock.json`/`tsconfig*`/`vitest.config`** | one row | no store surface, no MCP surface, no config key (`§2.6` prohibition 3's MCP half) |
@@ -804,7 +855,7 @@ total · stop-after-5-consecutive-failures, and NO new dependency (plain determi
 | **`P-SF-SM-1`** | **THE MIRROR WRITE-THROUGH TURNS** — for each declared turn class (accepted+changed · accepted-no-op · refused · no-target): **accepted+changed ⇒ EXACTLY ONE `commit` per reference** (`mem.focus.entries` AND `mem.focus.activeId`), each answering the store's settled `GraphWriteReceipt`, the `persist` return reading `{present:true, value:<receipt>}`; **refused ⇒ ZERO writes** (the mirror byte-identical, the persisted record the declared not-called); **no-op acceptance ⇒ ZERO writes**; no-target ⇒ ZERO writes; the events count matches the store's own delivery record | `P-SM` | `S-SF-TURNS-1` | `18` |
 | **`P-SF-SM-2`** | **THE SUBSCRIPTION + RELEASE** — the subscription count reads exactly `2` at construction and stays `2` across `N` graph re-derivations (per-realm-per-reference); `dispose()` releases EVERY registration: each handle's `unsubscribe()` first-call-`true` then-`false`, idempotent second dispose, post-dispose writes deliver NOTHING, the release emits NO store event (`events: 0`), the mirror's records REMAIN (`resolve` still answers HIT), and no second party's registration on the references survives (per-reference count exactly the wiring's own) | `P-SM` | `S-SF-RELEASE-1` | `16` |
 | **`P-SF-TP-1`** | **THE TWO-RUN STORE-STATE-INDEPENDENCE DIFFERENTIAL** (`§5.2.7` item (4)(c); `R-3`'s comparator): for FIXED ARGUMENT TUPLES over the module's four value exports, the answers are CANONICAL-STRUCTURALLY IDENTICAL when the tiers are COLD / hold a SHADOWING `temp`/`mem` value / hold a committed `file` value — **the module consults NO store value**; the comparator is the CANONICAL STRUCTURAL COMPARISON for object returns (own enumerable keys, sorted, primitives by value; `===` for primitives; NO deep-equality dependency); **the positive control: the CALLER-side carrier's read of the mirror DOES change with the mirror — the store-sourced state is the WIRING's state, which is the sanctioned dependence** | `P-TP` | `S-SF-DIFF-1` | `24` |
-| **`P-SF-TP-2`** | **THE MIRROR READ TOTALITY** — for EVERY store state (cold root · minted-but-unwritten · one reference held · both held · a divergent mirror against a fixture tab-list projection) and EVERY hostile surface (absent store argument refusal · throwing `resolve`·throwing `commit`·throwing `subscribe`·throwing listener), the carrier's turns answer the DECLARED record (the declared-empty pair on a MISS; the declared re-projection on divergence; the declared degradation on hostility) and NO throw escapes a wiring turn | `P-TP` | `S-SF-TOTAL-1` | `16` |
+| **`P-SF-TP-2`** | **THE MIRROR READ TOTALITY** — for EVERY store state (cold root · minted-but-unwritten · one reference held · both held · a divergent mirror against a fixture tab-list projection) and EVERY hostile surface (absent store argument refusal · throwing `resolve`·throwing `commit`·throwing `subscribe`·throwing listener), the carrier's turns answer the DECLARED record (the declared-empty pair on a MISS; the declared re-projection on divergence; the declared degradation on hostility) and NO throw escapes a wiring turn **⟶ 2026-10-03 THE GATE-4 AUDIT'S FINDING A — THE DRIVE-5 CELL'S EXECUTED READING IS THE DECLARED READING, NOT THE RE-SEED COMMIT (`RCA-8(d)` ANNOTATE-BESIDE; the as-filed property text above is KEPT VISIBLE and this clause is the OPERATIVE reading): the divergent-mirror drive executes the DECLARED RECONCILE READING — the answer computed from the tab-list projection's values, the mirror never self-authorised, the wiring never writing tier 1 (the driveable half today, `§5.5.2` item 3 / `§2.2` item 3). THE RE-SEED WRITE IS THE DEFERRED HALF: NO drive of this row asserts the mirror re-seeded into one committed write — that write is the slice's projection-source landing's own future register drive (`§7a.1` item 7), and a pass reading this row's `16` terms as a landed re-seed drive over-reads the register. THE ROW'S TYPE, STRATEGY ID AND DECLARED TERM ARE UNCHANGED (`P-TP` · `S-SF-TOTAL-1` · `16`): this is a reading annotation, NOT a re-grain** (`§5.5.3`'s form — the register's terms are untouched). | `P-TP` | `S-SF-TOTAL-1` | `16` |
 
 **THE SIX ROWS = THE PLAN-MANDATED THREE (`P-SF-IM-1` · `P-SF-IM-2` · `P-SF-TP-1`) + THE THREE CALLER-SIDE PROPERTY ROWS
 (`P-SF-SM-1` · `P-SF-SM-2` · `P-SF-TP-2`).** The row count is an OUTCOME, not a budget
@@ -821,7 +872,15 @@ no discernible property was dropped, merged or left unenumerated to fit it.
    caller-side dependence asserted as the positive control.
 3. **The divergence row drives the DECLARED reconcile against a fixture PROJECTION of the tab list** — the real `file.tabs.*`
    record does not exist until the slice lands; the row proves the mirror never self-authorises and the wiring never writes
-   tier 1, which is the driveable half today (`§2.2` item 3).
+   tier 1, which is the driveable half today (`§2.2` item 3). **⟶ 2026-10-03 THE GATE-4 AUDIT'S FINDING A — THE "DRIVEABLE
+   HALF TODAY" READING CONFIRMED AND SHARPENED BESIDE (`RCA-8(d)` ANNOTATE-BESIDE; the as-filed item above is KEPT VISIBLE and
+   this clause is the OPERATIVE reading): THE EXECUTED HALF IS DISTINGUISHABLE FROM THE DECLARED HALF, AND THE DISTINCTION IS A
+   FINDING.** **THE EXECUTED HALF = the divergence DETECTION + the declared reconcile READING** (the answer computed from the
+   tab list's values; the mirror never self-authorises; no tier-1 write — `§3.1` `M-4`, `§3.2` `F-5`, `§5.5.1` `P-SF-TP-2`
+   drive-5). **THE DECLARED HALF = the re-seed WRITE** (the mirror re-projected into one committed write), DECLARED-DEFERRED to
+   the slice's projection-source landing (`§2.2` item 3's dated annotation; `§7a.1` item 7). **A pass, a greens scenario or a
+   DONE row that reports the re-seed WRITE as landed by THIS unit — or that reads the as-filed "in one committed write"
+   sentence as executed H1 behaviour — is a finding, never a pass** (`§7a.1` item 7's falsifier).
 4. **No timing, no size and no memory figure is claimed anywhere in this file** (`RCA-12`).
 5. **A register row is not a licence to move the module's or the store's contracts** — every row's subject is this unit's own
    surface; the module's and the store's own registers are UNTOUCHED.
@@ -890,6 +949,7 @@ The remaining items are CARRIED, and each is a NAMED item with its owner — not
 | **4** | **THE `§Q` FLIP CELLS + THE TRACKER MOVES** (the `provident.focus` PENDING-REBUILD cell, the `H1` row's status, the ledger move) | **CARRIED** — the supervisor's gate-10 acts; this pass edits no tracker (`§5.1` row 9) |
 | **5** | **THE `mcp-endpoint.md` §3.8 DOCUMENTATION REPAIR** (the §Q finding's recorded carry: the unit's own same-commit §3.8 amendment was never performed) | **CARRIED** — the §Q finding's owed documentation pass; NOT this unit's (`§1`'s non-concern table) |
 | **6** | **THE REGISTER'S EXECUTION** (the six rows' declared `96` attempts) | **CARRIED** — the TestWriter's red set executes it; an un-run row is a FAILURE; the executed totals are reported in the same terms-form (`§5.5.3`) |
+| **7** | **THE RE-SEED WRITE HALF — the mirror re-projected (re-seeded) from the tab list's projection IN ONE COMMITTED WRITE on divergence — DECLARED-DEFERRED** (the gate-4 audit's Finding A, landed 2026-10-03; `§2.2` item 3's dated annotation) | **CARRIED-DEFERRED** — lands WITH the slice's projection source (tier 1's projection authority: the deferred units' `file.tabs.*` record + projection landing — `§7a.1` item 2's owner); **REVISIT CONDITION, NAMED: when that record + projection source land, the re-seed WRITE becomes executable and MUST be driven by a register row of that landing unit's own register and reported under that unit's gate — never claimed by THIS one**; THIS unit's executed half is the divergence DETECTION + the declared reconcile READING (`§3.1` `M-4`, `§3.2` `F-5`, `§5.5.1` `P-SF-TP-2` drive-5, `§5.5.2` item 3). **A pass that reports the re-seed as landed by `U-STORE-FOCUS` — or that reads the as-filed "in one committed write" sentence as landed H1 behaviour — is a review finding.** |
 
 **THE ANSWERED DECISIONS (each with its reason, NONE `undefined-until-answered`):** the **AUTHORITY** — tier 1's tab list
 (`§2.2`; `Q-9`); the **REPLY SHAPE** — behaviour-preserving, unchanged (`§2.5`; the BREAK clause not triggered); the

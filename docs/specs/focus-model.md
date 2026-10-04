@@ -1027,6 +1027,18 @@ OPTIONAL, ALL THREE ARE CALLER CALLBACKS, AND NONE IS RETAINED.**
 | **2** | **`onChange`** — **the change OBSERVER** (**OPTIONAL, NO LANDED PRECEDENT** — `onChange` occurs nowhere in `src/**`, so **its firing point and payload are FIXED HERE**) | `focusTransition`'s third argument, as `arg.onChange` | **EXACTLY ONCE PER ACCEPTED TRANSITION — for EVERY accepted attempt, INCLUDING one whose `changed` is `false` — and NEVER for a refused attempt.** **A module that fires it for a refusal, that fires it twice for one acceptance, that skips it on a no-op acceptance, or that derives its firing from `changed` instead of `accepted`, FAILS `P-FM-SEAM-2`'s count row** | **`(next, previous, refusal?)` — three positional arguments: `next` is the `state` the result carries (BY IDENTITY), `previous` is the caller's own `state` argument (BY IDENTITY), and `refusal` is `undefined` on every accepted transition.** **`next` and `previous` MAY BE `===` on a no-op acceptance — a row drives both the no-op and the moving arm** | **the accepted transition is unaffected — the result is BIT-FOR-BIT the called case** (`P-FM-SEAM-3` drive 4) | **NO CALL IS ATTEMPTED** (`P-FM-SEAM-3` drive 5) | **THE THROW IS SWALLOWED and the transition is still ACCEPTED with the same result** (`P-FM-SEAM-3` drive 6) |
 | **3** | **`persist`** — **the RETURNED-WRITE seam, WHOSE NAME THIS CONTRACT RECORDS AS IMPRECISE** (`§0A` note 3) | **a TOP-LEVEL VALUE EXPORT** — `persist(seam, state)` — **NEVER called by `focusTransition`** (`§2.1` item 4's bound) | **when the caller CALLS `persist`**, and then **EXACTLY ONCE PER CALL** — **it is not fired by a transition at all, so no transition row can move its count** | **its second argument, the `state` the caller passed, BY IDENTITY — and its RETURN VALUE, whatever shape it is (including `undefined`, an object, a promise, a hostile value), is handed back BY IDENTITY as `FocusResult`-independent `{present: true, value: …}`** | **`{present: false, value: undefined}`** — **and the module calls NOTHING** (`P-FM-SEAM-3` drive 7) | **`{present: false, value: undefined}`, NO CALL ATTEMPTED** (`P-FM-SEAM-3` drive 8) | **`{present: false, value: undefined}`, THE THROW SWALLOWED, NOTHING ESCAPES** (`P-FM-SEAM-3` drive 9) |
 
+**⟶ 2026-10-03 SEAM 3'S TARGET — STORE-BACKED AT THE CALLER, THE MODULE'S OWN BYTES UNCHANGED (the `U-STORE-FOCUS`
+landing pass's amended reading — `RCA-8(d)` ANNOTATE-BESIDE, per `docs/specs/store-focus.md` §5.1 row 5; the as-filed seam-3
+row above is KEPT VISIBLE and this note is the OPERATIVE reading):** **the seam's TARGET (the CALLER's `persist`
+implementation) is now STORE-BACKED per the re-home** — the in-tree caller's store-backed seam target (`persistTarget`)
+commits `mem.focus.entries` = the state's `entries` and `mem.focus.activeId` = the state's `activeId` (tier `mem`, `commit`
+with the default `{onRepeat:'edit'}`) — `docs/specs/store-focus.md` §2.1 item 4 (the seam-target rule), §2.3 item 4 (the
+write-through turn). **THE MODULE'S OWN BYTES AND ITS EXPORT CENSUS ARE UNCHANGED** (`store-focus.md` §2.1 item 3,
+RE-VERIFIED by the register row `P-SF-IM-1`): the module's own claim — *`persist` CALLS NO STORAGE* — stays TRUE OF THE
+MODULE's bytes, because the seam's TARGET is the caller's implementation and the module still calls only the caller's
+callback; **NO `focus-model` register re-grain is owed** (`store-focus.md` §1.7 item 9; the `store-focus.md` `§0A.3` edge
+`S-6` / `TARGET-SUPERSEDED` reading).
+
 **THE THREE SEAMS' SHARED LAWS, STATED ONCE SO NO ROW IS AMBIGUOUS:**
 
 1. **OBSERVATION, NEVER THE GATE.** **NO SEAM MAY CHANGE AN OUTCOME**: a `refuse` that throws, a `refuse` that

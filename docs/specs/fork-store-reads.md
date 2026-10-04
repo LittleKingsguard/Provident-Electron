@@ -180,6 +180,8 @@ Per `docs/specs/data-ownership-model-plan.md` §2.5 (`§0`'s `A-4`), the tiers a
 4. **The `secure` tier's own main-side surface.** Unchanged and untouched (plan §2.5; `mcp-endpoint.md` §6.4).
 5. **A tool that reads NO store value at all.** The `provident.focus` precedent (`docs/pending.md` §Q: *"the focus path reads NO store value and NO graph node — only the wiring-held holder + the pure model"*) is a **`P-16`-clean** shape; it is **not** a template for a store-addressed read and **not** a licence to add one (that carrier question is `H1`'s, not this unit's).
 
+**⟶ ANNOTATED BESIDE 2026-10-03 (THE `U-STORE-FOCUS` (`H1`) GATE-4 LANDING — `RCA-8(d)`, `store-focus.md` §5.1 row 5's scheduled amendment): THE PRECEDENT'S CARRIER CHANGED.** `provident.focus` is no longer a NO-STORE-READ precedent: the focus state now lives in the store mirror `mem.focus.entries`/`mem.focus.activeId` (tier `mem`, caller-owned spelling), its write-through is the store-backed seam target of the module's `persist(seam, state)`, and the renderer route's mirror read is the **CONFORMING `GCR-1` reading** `store-focus.md` §2.5 item 5 declares (a scan that still forbids a store read in the route's bytes after this unit lands is a STALE SCAN). **The non-case's own operative form SURVIVES as the class it names — *a tool that reads NO store value at all* is still not a `GCR-1` finding — but `provident.focus` is no longer ITS EXAMPLE** (the mirror read is a declared conforming member, never a general licence: ANY OTHER route read stays a `GCR-3` finding — `tests/fork-store-reads.test.ts` S-9's planted-unqualified control is the closed-set falsifier). Cite `docs/specs/store-focus.md` §2.1/§2.3/§2.5 + §0A.3 edge S-2.
+
 ---
 
 ## 3. The conforming shape a fork consumes

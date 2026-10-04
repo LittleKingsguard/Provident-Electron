@@ -26,6 +26,29 @@
 //
 // WALLS (§5.1): this pass writes ONLY this file. No `src/**` byte, no other `tests/**` file,
 // no tracker, no spec is touched by this pass.
+//
+// GATE-4 REPAIR PASS (2026-10-05, the supervisor's rulings — the re-seed is DECLARED-DEFERRED,
+// so the executed half is the divergence DETECTION + the declared reconcile READING, never the
+// re-seed WRITE). Findings A–F repaired IN THIS FILE ONLY, each with its dated note:
+//   A (MED)  S22-3 / M-4 / F-5 / REG-TP-2 drive 5 / §3.3 I-1's reading re-driven to the
+//            EXECUTED half — the answer is honestly computed from the mirror, never
+//            self-authorised, tier 1 wins where driven (a fixture projection IS driven) — and
+//            the re-seed WRITE is pinned as the DEFERRED half (a row asserting a re-seed COMMIT
+//            is a finding; these rows assert the ABSENCE today, dated);
+//   B (MED/LOW) the exported `persistTarget` seam's hostile surface driven (§2.3 item 6 +
+//            §2.1 item 5(b)'s letter — the seam's OWN throw surface is the seam's; the DECLARED
+//            absorption is the route-mediated write-through, which stays absorbed);
+//   C (LOW)  P-SF-TP-1's three-state corpus EXECUTED, not dead — each drive consults its
+//            state's store at the mirror spellings (in-drive observations beside the term,
+//            `A-DECLARED-REGISTER-TERM-IS-A-DRIVE-COUNT` — NO re-grain: 24 = 4×3×2 stays);
+//   D/E/F (PARs, dated in-file comments / re-drives, NO new rows) — P1's direct-unsubscribe
+//            note · P-SF-IM-2's region-slice-gap note · REG-SM-1 drives 9–11 RE-DRIVEN to the
+//            module's physical refusal surface (the carrier cannot flow no-next/no-previous/
+//            unknown-verb — its verb resolution is open/activate only, §2.3 item 5) ·
+//            REG-SM-2's drive labels corrected + drive 16's duplicate RE-DRIVEN to the physical
+//            P4 in-flight shape. NO RE-GRAIN: the register's terms stay 10/12/18/16/24/16 = 96
+//            (a re-drive that changed a row's drive count would re-print the totals with the
+//            caps check — none did).
 
 import { readFileSync } from 'node:fs'
 import { describe, it, expect, beforeAll } from 'vitest'
@@ -559,19 +582,26 @@ describe('H1 U-STORE-FOCUS — §2.2 THE AUTHORITY AND THE DIVERGENCE', () => {
     expect(noTierOneWriteProbe().ok).toBe(true)
   })
 
-  it('S22-3 §2.2 item 3 — THE DIVERGENCE AND THE DECLARED RECONCILE: a fixture writes a mirror value the tab-list projection does not carry — the answer must come FROM THE TAB LIST and the mirror must be RE-PROJECTED in one committed write (never the reverse, never a mirror-side guess)', () => {
+  it('S22-3 §2.2 item 3 — THE DIVERGENCE AND THE DECLARED RECONCILE — THE EXECUTED HALF (the re-seed WRITE is DECLARED-DEFERRED, 2026-10-05): a fixture writes a mirror value the tab-list projection does not carry; the projection IS driven (the payload itself carries {entries, activeId} — the fixture tab list) and the ANSWER is computed FROM THE TAB LIST — the mirror\'s stale value is NEVER the answer\'s authority (the mirror never self-authorises; tier 1 wins where driven); the mirror is NOT re-seeded today: the projection turn writes NOTHING and the mirror keeps its stale value, pinned as the deferred half\'s absence (a row asserting a re-seed COMMIT is a finding — this row asserts the absence)', () => {
     // The tab-list projection is FIXTURE-SUPPLIED (the real file.tabs.* record is the
-    // deferred units\' — this unit drives the declared rule against a fixture projection).
+    // deferred units' — this unit drives the declared rule against a fixture projection).
     const projection = { entries: [{ id: 'only-tab', target: 'only-tab' }], activeId: 'only-tab' }
     const rec = createRecordingStore()
     rec.store.commit('mem.focus.entries', [{ id: 'stale', target: 'stale' }])
     rec.store.commit('mem.focus.activeId', 'stale')
     const carrier = carrierOf(rec.store)
-    // The answer computes FROM THE TAB LIST — never from the mirror\'s stale value.
+    const commitsBefore = rec.commits.length
+    // THE DECLARED RECONCILE READING — the answer computes FROM THE TAB LIST, never from the
+    // mirror's stale value: the mirror never self-authorises, and tier 1 wins where driven.
     const answer = carrier.focusRoute((projection as unknown) as never)
     expect(answer.entries).toEqual(['only-tab'])
-    // The mirror is RE-SEEDED from the tab list in the same committed write.
-    expect(rec.commits.map((c) => c.name).sort()).toEqual(['mem.focus.activeId', 'mem.focus.entries'])
+    expect(answer.entries).not.toEqual(['stale'])
+    // THE RE-SEED WRITE IS THE DEFERRED HALF — pinned as an ABSENCE today (dated note
+    // 2026-10-05, the supervisor's DECLARED-DEFERRED ruling): the projection turn commits
+    // NOTHING and the mirror keeps its stale value, byte-identical after the drive.
+    expect(rec.commits.length).toBe(commitsBefore)
+    expect((resolveOf(rec.store, 'mem.focus.entries') as { value?: readonly FocusEntry[] }).value?.[0]?.id).toBe('stale')
+    expect((resolveOf(rec.store, 'mem.focus.activeId') as { value?: unknown }).value).toBe('stale')
   })
 
   it('S22-4 §2.2 item 4 — RH-4 IS ANSWERED BY THE SLICE, NOT BY A CAP: NO declared cap is added to mem.focus.entries (Q-9 SUPERSEDED — a later cap row re-literalises a withdrawn answer and OWES A GATE)', () => {
@@ -695,7 +725,7 @@ describe('H1 U-STORE-FOCUS — §2.3 THE RE-HOME', () => {
     expect(rec.commits).toHaveLength(0) // the totality turns write NOTHING (§2.3 items 4/5)
   })
 
-  it('S23-6a §2.3 item 6 — THE HOSTILE-STORE DEGRADATION: an ABSENT store-member argument, a hostile store, and a throwing tier-handle/resolve/commit/subscribe surface all land the DECLARED degradation and never let a throw escape a wiring turn — state() answers the declared-empty pair; the write-through answers a declared no-write; the subscription refuses to register; the boot mint is a no-op; dispose() still returns normally', () => {
+  it('S23-6a §2.3 item 6 — THE HOSTILE-STORE DEGRADATION: an ABSENT store-member argument, a hostile store, and a throwing tier-handle/resolve/commit/subscribe surface all land the DECLARED degradation and never let a throw escape a wiring turn — state() answers the declared-empty pair; the write-through answers a declared no-write; the subscription refuses to register; the boot mint is a no-op; dispose() still returns normally. ⟶ PLUS THE EXPORTED persistTarget SEAM\'S HOSTILE SURFACE (finding B, 2026-10-05): an absent/throwing `commit` on the store handed to the carrier — the seam\'s OWN throw surface is the SEAM\'s (a direct seam call raises the store\'s throw; §2.3 item 6\'s enumerated absorbing turns exclude the seam), and the ROUTE-MEDIATED write-through stays absorbed (the module\'s persist answers the DECLARED ABSENCE — §2.1 item 4 / focus-model §2.4 seam 3)', () => {
     const rec = createRecordingStore()
     const carrier = carrierOf(rec.store)
     rec.hostiles.resolve = new Error('hostile resolve')
@@ -709,7 +739,57 @@ describe('H1 U-STORE-FOCUS — §2.3 THE RE-HOME', () => {
       wrote = false
     }
     expect(wrote).toBe(true)
+    // FINDING B (the gate-4 audit, MED/LOW — the hostile drive against the exported
+    // `persistTarget` member, 2026-10-05). THE SPEC'S LETTER, PINNED (§2.3 item 6 + §2.1 item
+    // 5(b)): `persistTarget` IS THE SEAM ITSELF (§2.3 item 1 — "the STORE-BACKED SEAM
+    // IMPLEMENTATION itself"), and §2.3 item 6's enumerated absorbing TURN surfaces are
+    // state() · the write-through · the subscription registration · the boot mint · dispose()
+    // — the seam is NOT among them. THE SEAM'S OWN DIRECT THROW SURFACE IS THE SEAM'S: a
+    // direct seam invocation over an absent/throwing store `commit` raises the seam's own
+    // store-call throw (no clause declares an absorption AT the seam; "the store's surface
+    // stays UNGUARDED", §0 ruling 14), while the DECLARED absorption lives at the
+    // ROUTE-MEDIATED write-through — the module's `persist` answers the DECLARED ABSENCE
+    // `{present:false}` (§2.1 item 4 / focus-model.md §2.4 seam 3), so the route never lets
+    // the throw escape the turn. A reading of §2.1 item 5(b)'s "never throw for ANY argument"
+    // that included a DIRECT seam call would make this drive FAIL today — a host-fix gap to
+    // report, never to soften; the reading driven here is the one the spec's enumerated
+    // degradation list supports.
+    let seamThrew = false
+    try {
+      carrier.persistTarget({ entries: [{ id: 'x', target: 'x' }], activeId: 'x' })
+    } catch {
+      seamThrew = true
+    }
+    expect(seamThrew).toBe(true) // the seam's OWN surface is the seam's — the direct call raises the store's throw
+    let routeThrewAgain = false
+    try {
+      carrier.focusRoute({ target: 'x', newTab: true })
+    } catch {
+      routeThrewAgain = true
+    }
+    expect(routeThrewAgain).toBe(false) // the ROUTE-MEDIATED path stays absorbed — {present:false}, never a throw
     rec.hostiles.commit = null
+    // AN ABSENT `commit` member on the store handed to the carrier — the same posture: the
+    // seam's own direct surface raises the store's own TypeError; the route-mediated path
+    // stays absorbed (the persist boundary answers the declared absence).
+    const commitlessStore = { ...mintedStore() } as GraphStore
+    delete (commitlessStore as { commit?: unknown }).commit
+    const commitlessCarrier = carrierOf(commitlessStore)
+    let seamThrewAbsent = false
+    try {
+      commitlessCarrier.persistTarget({ entries: [{ id: 'x', target: 'x' }], activeId: 'x' })
+    } catch {
+      seamThrewAbsent = true
+    }
+    expect(seamThrewAbsent).toBe(true)
+    let routeThrewAbsent = false
+    try {
+      commitlessCarrier.focusRoute({ target: 'x', newTab: true })
+    } catch {
+      routeThrewAbsent = true
+    }
+    expect(routeThrewAbsent).toBe(false)
+    commitlessCarrier.dispose()
     rec.hostiles.subscribe = new Error('hostile subscribe')
     const factory = requireCarrierFactory()
     let constructed = true
@@ -798,11 +878,21 @@ describe('H1 U-STORE-FOCUS — §2.4 THE SUBSCRIPTION + RELEASE (rule 2, the H2a
   })
 
   it('P1 §2.4 item 4 — RELEASE POST-CONDITION P1: every subscription the wiring registered is released — each handle\'s unsubscribe() is called EXACTLY ONCE, each first call answers true, later calls false, never a throw', () => {
+    // PAR-NOTE (2026-10-05, the gate-4 repair pass — recorded in-file, NO row change): THE
+    // EXECUTED first-`true` HERE IS THE STORE'S OWN unsubscribe() CONTRACT (store-core-graph.md
+    // §2.10 item 4 — a LIVE handle answers true on its first call), NOT THE WIRING'S RELEASE:
+    // dispose() has NOT run in this row, so the handles answer the store's live-contract
+    // shape. THE WIRING'S RELEASE HALF (dispose() calls each handle EXACTLY ONCE, so the first
+    // POST-dispose call answers false) is driven by P3 / F-3 / DEFAULT-RELEASE / REG-SM-2's
+    // drives — the first-`false`-after-dispose rows. THE LEAK IS JOINTLY CAUGHT: this row
+    // proves the handles are live-and-releaseable (first call true, second false), and the
+    // dispose-first rows prove the release emptied them. P1'S LABELS STAY — no re-name, no
+    // claim change (the H2a P1 post-condition's own text is what this row executes).
     const rec = createRecordingStore()
     const carrier = carrierOf(rec.store)
     expect(rec.subscriptionsHeld.length).toBe(2)
     const firstAnswers = rec.subscriptionsHeld.map((h) => h.unsubscribe())
-    expect(firstAnswers).toEqual([true, true]) // dispose() calls each exactly once, in registration order
+    expect(firstAnswers).toEqual([true, true]) // THE STORE's own live-contract shape (§2.10 item 4) — first call true on a LIVE handle (dispose() has not run here)
     expect(rec.subscriptionsHeld.map((h) => h.unsubscribe())).toEqual([false, false])
   })
 
@@ -1016,7 +1106,7 @@ describe('H1 U-STORE-FOCUS — §3.1 THE VALID / HAPPY STATES', () => {
     expect(rec.commits.map((c) => c.name).sort()).toEqual(['mem.focus.activeId', 'mem.focus.entries'])
   })
 
-  it('M-4 A DIVERGENT MIRROR against a fixture-supplied tab-list projection — the answer and the subsequent write-through compute FROM THE TAB LIST; the mirror is re-projected (re-seeded) from the tab list in one committed write — never the reverse', () => {
+  it('M-4 A DIVERGENT MIRROR against a fixture-supplied tab-list projection — THE EXECUTED HALF: the projection IS driven and the answer and the reading compute FROM THE TAB LIST (tier 1 wins where driven; the mirror\'s stale value is NEVER the answer); the mirror is NOT re-seeded today — the RE-SEED WRITE is DECLARED-DEFERRED (2026-10-05), pinned as an absence: the projection turn commits NOTHING and the mirror keeps its stale value (never the reverse — and never a re-seed write today)', () => {
     const projection = { entries: [{ id: 't1', target: 't1' }], activeId: 't1' }
     const rec = createRecordingStore()
     carrierOf(rec.store)
@@ -1024,8 +1114,14 @@ describe('H1 U-STORE-FOCUS — §3.1 THE VALID / HAPPY STATES', () => {
     rec.store.commit('mem.focus.activeId', 'stale')
     const carrier = carrierOf(rec.store)
     expect((resolveOf(rec.store, 'mem.focus.entries') as { value?: readonly FocusEntry[] }).value?.[0]?.id).toBe('stale')
+    const commitsBefore = rec.commits.length
     const answer = carrier.focusRoute((projection as unknown) as never)
-    expect(answer.entries).toEqual(['t1'])
+    expect(answer.entries).toEqual(['t1']) // FROM THE TAB LIST — tier 1 wins where driven
+    expect(answer.entries).not.toEqual(['stale']) // never the mirror's stale value
+    // THE DEFERRED HALF'S ABSENCE (dated 2026-10-05): no re-seed write today — zero commits
+    // on the projection turn, the mirror byte-identical to its pre-drive stale value.
+    expect(rec.commits.length).toBe(commitsBefore)
+    expect((resolveOf(rec.store, 'mem.focus.entries') as { value?: readonly FocusEntry[] }).value?.[0]?.id).toBe('stale')
   })
 
   it('M-5 POST-DISPOSE — every handle\'s unsubscribe() answered true once then false; a write to either released name delivers NOTHING; a second dispose() is a no-op; the mirror\'s records REMAIN readable (resolve still answers HIT)', () => {
@@ -1089,13 +1185,18 @@ describe('H1 U-STORE-FOCUS — §3.2 THE DOCUMENTED FAIL-STATES / NON-HAPPY STAT
     expect(rec.deliveries.length).toBe(before)
   })
 
-  it('F-5 A MIRROR THAT SELF-AUTHORISES (a fixture writes mem.focus.* a value the tab list does not project, then reads an answer computed from the mirror) FAILS the divergence rule — the tab list wins and the declared reconcile re-projects the mirror; the mirror\'s value is NEVER the answer\'s authority', () => {
+  it('F-5 A MIRROR THAT SELF-AUTHORISES FAILS the divergence rule — THE FALSIFIER DRIVEN WITH A PROJECTION WHOSE ANSWERED VALUE AND THE MIRROR\'S DIVERGE (the "never self-authorises" claim is exercised, not assumed): a fixture writes mem.focus.* a value the tab-list projection does not carry, and the projection is driven — the ANSWER is the tab list\'s, the mirror\'s divergent value is NEVER the answer\'s authority, and the declared reconcile\'s re-seed WRITE is the DECLARED-DEFERRED half (2026-10-05): the turn writes NOTHING and the mirror keeps its self-authority candidate, unpromoted', () => {
     const rec = createRecordingStore()
     const carrier = carrierOf(rec.store)
     rec.store.commit('mem.focus.entries', [{ id: 'rogue', target: 'rogue' }])
     rec.store.commit('mem.focus.activeId', 'rogue')
-    const answer = carrier.focusRoute({ target: 't1', newTab: true })
-    expect(answer.entries).not.toEqual(['rogue'])
+    const projection = { entries: [{ id: 't1', target: 't1' }], activeId: 't1' }
+    const commitsBefore = rec.commits.length
+    const answer = carrier.focusRoute((projection as unknown) as never)
+    expect(answer.entries).toEqual(['t1']) // the tab list wins where driven
+    expect(answer.entries).not.toEqual(['rogue']) // the mirror never self-authorises — rogue is NEVER the answer
+    expect(rec.commits.length).toBe(commitsBefore) // the re-seed WRITE is the deferred half — absent today (dated 2026-10-05)
+    expect((resolveOf(rec.store, 'mem.focus.entries') as { value?: readonly FocusEntry[] }).value?.[0]?.id).toBe('rogue') // the mirror keeps its own value, unpromoted
   })
 
   it('F-6 A SECOND CARRIER (a residual module-level holder of the focus state, a memo of the last answer, or a route that consumes the SUBSCRIPTION as its data source) FAILS the re-home\'s carrier rule. RED today, honestly: the residual module-level holder EXISTS — the §Q rule-1 ✗ shape is still present', () => {
@@ -1107,7 +1208,7 @@ describe('H1 U-STORE-FOCUS — §3.2 THE DOCUMENTED FAIL-STATES / NON-HAPPY STAT
 })
 
 describe('H1 U-STORE-FOCUS — §3.3 THE INVARIANTS', () => {
-  it('I-1 The mirror equals the holder\'s state at every turn — for every sequence of route calls, the mirror\'s canonical projection (entries ids in order + the seat) equals the state the pre-re-home holder would have carried (P-SF-TP-1\'s drive is the instrument)', () => {
+  it('I-1 The mirror equals the route-written state at every ROUTE turn — for every sequence of the route\'s own turns, the mirror\'s canonical projection (entries ids in order + the seat) equals the state the pre-re-home holder would have carried (P-SF-TP-1\'s drive is the instrument); THE DIVERGENCE ANGLE RE-AIMED (2026-10-05, the DECLARED-DEFERRED ruling): the divergence DETECTION + the declared reconcile READING are the executed half — a fixture projection is answered FROM the tab list (tier 1 wins where driven) and the mirror is NOT re-seeded: it stays at its route-written value, the reconcile-write being the deferred half (the invariant is scoped to the route\'s own turns — at every ROUTE turn, never a re-seed write today)', () => {
     const rec = createRecordingStore()
     const carrier = carrierOf(rec.store)
     carrier.focusRoute({ target: 'i1', newTab: true })
@@ -1115,6 +1216,13 @@ describe('H1 U-STORE-FOCUS — §3.3 THE INVARIANTS', () => {
     const state = carrier.state()
     expect(canonicalJson(state)).toBe(canonicalJson({ entries: [{ id: 'i1', target: 'i1' }, { id: 'i2', target: 'i2' }], activeId: 'i2' }))
     expect(rec.commits.length).toBeGreaterThanOrEqual(4)
+    // THE DIVERGENCE ANGLE — the executed half: the projection answers FROM the tab list and
+    // the mirror stays byte-identical (the re-seed write is the DECLARED-DEFERRED half).
+    const projection = { entries: [{ id: 'tab', target: 'tab' }], activeId: 'tab' }
+    const answer = carrier.focusRoute((projection as unknown) as never)
+    expect(answer.entries).toEqual(['tab']) // tier 1 wins where driven
+    const afterProjection = carrier.state()
+    expect(canonicalJson(afterProjection)).toBe(canonicalJson(state)) // the mirror is UNCHANGED — never re-seeded today
   })
 
   it('I-2 The module\'s answer is a function of its arguments alone — focusTransition/focusOrder/focusIndex/persist consult no ambient value and no store value (this row is the P-SF-TP-1 differential\'s guard: the module-half drives, all PASS on the CURRENT tree)', () => {
@@ -1414,6 +1522,19 @@ describe('H1 U-STORE-FOCUS — §5.5.1 THE REGISTER (6 rows · 96 attempts · 6 
   })
 
   it('REG-IM-2 P-SF-IM-2 · S-SF-STATIC-1 · P-IM · term 12 — THE NO-MODULE-LEVEL-BINDING ROW: after the re-home, renderer.ts\'s focus region holds NO module-level focus-state carrier (the const holder is GONE) and the store handle stays the wiring-held boot binding; the positive controls: the detectors fire on a re-added holder / a region subscription / a memo (each synthetic fixture FAILS its own scan)', () => {
+    // PAR-NOTE (2026-10-05, the gate-4 repair pass — recorded in-file, NO row change): THE
+    // REGION-SLICE GAP — `focusRegion()` slices renderer.ts between the LAST `U-FOCUS-TOOL`
+    // marker before `main()` and the `main()` boundary, but the CARRIER FACTORY
+    // (`createFocusCarrier`) sits POST-main (the §2.3 boot construction is a post-main
+    // composition): a RE-SPELLED module-level focus-state carrier in the POST-MAIN BLOCK would
+    // EVADE the region-slice scan. The hole is covered by THIS ROW'S WHOLE-FILE drives (the
+    // `rendererSrc()` scans over renderer.ts's full bytes — the HISTORIC spellings: `const
+    // holder: { state: FocusState }`, `holder.state = ...`, `focusTransition(holder.state`,
+    // plus the `{ state: { entries` second-carrier-literal scan over the whole file), which
+    // the slice's route-region scans complement for the route's own bytes. A later pass
+    // shrinking this row to region-only scans would re-open the hole — NAMED here, not fixed
+    // (the post-main carrier is this unit's own landed surface; the note records the gap a
+    // future carrier-of-the-carrier would need to close).
     const report = newRowReport('P-SF-IM-2', 'S-SF-STATIC-1', 'P-IM', 12)
     const src = (): string => rendererSrc()
     const region = (): string => focusRegion()
@@ -1503,20 +1624,27 @@ describe('H1 U-STORE-FOCUS — §5.5.1 THE REGISTER (6 rows · 96 attempts · 6 
         expect(carrier.focusRoute({ target: 'ghost' }).refused?.reason).toBe('unknown-id')
         expect(rec.commits).toHaveLength(0)
       } },
-      { name: 'module-level refused no-next — ZERO writes (the mirror never accumulates)', drive: (): void => {
-        const rec = createRecordingStore()
-        const carrier = carrierOf(rec.store)
-        expect(typeof carrier.focusRoute).toBe('function')
-        rec.commits.length = 0
-        expect(rec.commits).toHaveLength(0)
+      { name: 'module-level refused no-next — RE-DRIVEN (2026-10-05, the gate-4 repair; the OLD typeof-existence drive was vacuous): the MODULE refuses a next over the END — accepted:false · code no-next · the persisted record reads the DECLARED not-called (ZERO writes, no seam invoked); the CARRIER cannot flow this arm — its verb resolution is open/activate only (§2.3 item 5, the physical-impossibility note)', drive: (): void => {
+        const state: FocusState = { entries: [{ id: 'a', target: 'a' }], activeId: 'a' }
+        const result = focusTransition(state, 'next', {})
+        expect(result.accepted).toBe(false)
+        expect(result.refusals[0]?.code).toBe('no-next')
+        expect(result.persisted).toEqual({ present: false, value: undefined })
       } },
-      { name: 'module-level refused no-previous — ZERO writes', drive: (): void => {
-        const carrier = carrierOf()
-        expect(typeof carrier.focusRoute).toBe('function')
+      { name: 'module-level refused no-previous — RE-DRIVEN: the MODULE refuses a prev over the START — accepted:false · code no-previous · not-called persisted (ZERO writes); the carrier cannot flow this arm either (open/activate only)', drive: (): void => {
+        const state: FocusState = { entries: [{ id: 'a', target: 'a' }], activeId: 'a' }
+        const result = focusTransition(state, 'prev', {})
+        expect(result.accepted).toBe(false)
+        expect(result.refusals[0]?.code).toBe('no-previous')
+        expect(result.persisted).toEqual({ present: false, value: undefined })
       } },
-      { name: 'module-level refused unknown-verb — ZERO writes', drive: (): void => {
-        const carrier = carrierOf()
-        expect(typeof carrier.focusRoute).toBe('function')
+      { name: 'module-level refused unknown-verb — RE-DRIVEN: an unrecognised verb refuses unknown-verb, returns the prior state BY IDENTITY, and never calls a seam (not-called persisted, ZERO writes); the carrier\'s verb resolution never produces it (newTab:true ⇒ open, else activate — §2.3 item 5)', drive: (): void => {
+        const state: FocusState = { entries: [{ id: 'a', target: 'a' }], activeId: 'a' }
+        const result = focusTransition(state, 'bogus', {})
+        expect(result.accepted).toBe(false)
+        expect(result.refusals[0]?.code).toBe('unknown-verb')
+        expect(result.state).toBe(state)
+        expect(result.persisted).toEqual({ present: false, value: undefined })
       } },
       { name: 'no-target on COLD — ZERO writes + standing answer', drive: (): void => {
         const { carrier, rec } = fresh()
@@ -1615,12 +1743,12 @@ describe('H1 U-STORE-FOCUS — §5.5.1 THE REGISTER (6 rows · 96 attempts · 6 
         carrier.focusRoute({ target: 'b', newTab: true })
         expect(rec.subscriptionsHeld.length).toBe(2)
       } },
-      { name: 'dispose releases handle 1: first unsubscribe() true', drive: (): void => {
+      { name: 'dispose releases handle 1 — the first POST-dispose unsubscribe() answers FALSE (the release was dispose()\'s own call; the H2a first-call-true is the PRE-dispose store contract — REG-SM-2\'s label corrected 2026-10-05)', drive: (): void => {
         const rec = createRecordingStore()
         carrierOf(rec.store).dispose()
         expect(rec.subscriptionsHeld[0].unsubscribe()).toBe(false) // released by dispose, so the first post-dispose call is false
       } },
-      { name: 'dispose releases handle 2: first unsubscribe() true', drive: (): void => {
+      { name: 'dispose releases handle 2 — the first POST-dispose unsubscribe() answers FALSE (label corrected 2026-10-05)', drive: (): void => {
         const rec = createRecordingStore()
         carrierOf(rec.store).dispose()
         expect(rec.subscriptionsHeld[1].unsubscribe()).toBe(false)
@@ -1698,12 +1826,32 @@ describe('H1 U-STORE-FOCUS — §5.5.1 THE REGISTER (6 rows · 96 attempts · 6 
         const carrier = carrierOf()
         expect(() => carrier.dispose()).not.toThrow()
       } },
-      { name: 'P4 — a delivery in flight during dispose() COMPLETES (synchronous fan-out)', drive: (): void => {
-        const rec = createRecordingStore()
-        const carrier = carrierOf(rec.store)
-        const before = rec.deliveries.length
-        carrier.dispose()
-        expect(rec.deliveries.length).toBe(before)
+      { name: 'P4 — a delivery in flight during dispose() COMPLETES; from dispose() onward NO FURTHER delivery is dispatched to the wiring\'s listener (RE-DRIVEN 2026-10-05 — the old drive duplicated drive 9\'s no-event body; driven STORE-SIDE because the recording double\'s recorded-wrapper re-invocation makes exact delivery counts unusable on a LIVE pass): a second-party listener registered BEFORE the carrier arms dispose() MID-FAN-OUT — the wiring\'s listener is already captured for the in-flight pass when dispose() begins — the store\'s synchronous fan-out (§2.10 items 4/5) runs to its end, and the follow-up pass reaches the surviving second parties only (the release happened in flight: the wiring\'s record is out of the store\'s subscription set, so emit\'s exact-references capture never collects it again)', drive: (): void => {
+        const store = mintedStore()
+        const order: string[] = []
+        let disposeFn: (() => void) | null = null
+        // A SECOND-PARTY listener registered BEFORE the carrier — its body arms dispose()
+        // at the START of the fan-out, so the wiring's listener's delivery is IN FLIGHT
+        // (already captured in emit's exact-references pass) when dispose() begins.
+        store.subscribe('mem.focus.entries', () => { order.push('A'); disposeFn?.() })
+        const carrier = carrierOf(store)
+        disposeFn = (): void => carrier.dispose()
+        store.subscribe('mem.focus.entries', () => order.push('B'))
+        store.commit('mem.focus.entries', [{ id: 'flight', target: 'flight' }])
+        // THE IN-FLIGHT DELIVERY COMPLETED — the fan-out ran to its end: B was dispatched
+        // AFTER dispose() began inside A's body; the wiring's listener, captured in the same
+        // exact-references pass, received the in-flight event (§2.10 items 4/5).
+        expect(order).toEqual(['A', 'B'])
+        // FROM DISPOSE() ONWARD NO FURTHER DELIVERY IS DISPATCHED TO THE WIRING'S LISTENER —
+        // the release happened IN FLIGHT, so the follow-up pass delivers to exactly the
+        // surviving second parties (A, B and the fresh C — never a wiring-side delivery: the
+        // released record is no longer in the store's subscription set, and emit's exact
+        // capture reads only that set).
+        store.subscribe('mem.focus.entries', () => order.push('C'))
+        order.length = 0
+        store.commit('mem.focus.entries', [{ id: 'late', target: 'late' }])
+        expect(order).toEqual(['A', 'B', 'C'])
+        expect(() => carrier.dispose()).not.toThrow() // idempotent second dispose
       } },
     ]
     runRegisterRow(report, drives)
@@ -1711,7 +1859,7 @@ describe('H1 U-STORE-FOCUS — §5.5.1 THE REGISTER (6 rows · 96 attempts · 6 
     expect(report.unRun).toBe(0)
   })
 
-  it('REG-TP-1 P-SF-TP-1 · S-SF-DIFF-1 · P-TP · term 24 — THE TWO-RUN STORE-STATE-INDEPENDENCE DIFFERENTIAL: for FIXED ARGUMENT TUPLES over the module\'s four value exports the answers are CANONICAL-STRUCTURALLY IDENTICAL when the tiers are COLD / hold a SHADOWING temp+mem value / hold a committed file value — the module consults NO store value (24 = 4 exports × 3 states × 2 runs, the R-3 comparator); the POSITIVE CONTROL: the CALLER-side carrier\'s read of the mirror DOES change with the mirror — the store-sourced state is the WIRING\'s state, the sanctioned dependence (carrier-required; reported with the row)', () => {
+  it('REG-TP-1 P-SF-TP-1 · S-SF-DIFF-1 · P-TP · term 24 — THE TWO-RUN STORE-STATE-INDEPENDENCE DIFFERENTIAL, THE THREE-STATE CORPUS EXECUTED (finding C, 2026-10-05 — the COLD/SHADOWING/COMMITTED stores were built-and-never-consulted; now EACH DRIVE CONSULTS ITS STATE\'S STORE at the mirror spellings): for FIXED ARGUMENT TUPLES over the module\'s four value exports the answers are CANONICAL-STRUCTURALLY IDENTICAL when the tiers are COLD / hold a SHADOWING temp+mem value / hold a committed file value — the corpus is ALIVE: the ambient store demonstrably answers its ambient value in the same drive, and the caller-stable read answers the same fixed tuple (the tiers differ, the answer never does — the module consults NO store value); 24 = 4 exports × 3 states × 2 runs, the R-3 comparator; THE AMBIENT READINGS ARE IN-DRIVE OBSERVATIONS BESIDE THE DECLARED TERM (`A-DECLARED-REGISTER-TERM-IS-A-DRIVE-COUNT`) — the term stays 24, NO re-grain; the POSITIVE CONTROL: the CALLER-side carrier\'s read of the mirror DOES change with the mirror — the store-sourced state is the WIRING\'s state, the sanctioned dependence (carrier-required; reported with the row)', () => {
     const report = newRowReport('P-SF-TP-1', 'S-SF-DIFF-1', 'P-TP', 24)
     const NO_STORE_EXPECTED = {
       transition: (): ReturnType<typeof focusTransition> => focusTransition({ entries: [{ id: 'a', target: 'a' }], activeId: null }, 'open', { entry: { id: 'a', target: 'a' } }),
@@ -1719,44 +1867,81 @@ describe('H1 U-STORE-FOCUS — §5.5.1 THE REGISTER (6 rows · 96 attempts · 6 
       index: (): number => focusIndex({ entries: [{ id: 'x', target: 'x' }], activeId: null }, 'x'),
       persist: (): { readonly present: boolean; readonly value: unknown } => persist(() => 'fixed-seam-answer', { entries: [], activeId: null }),
     }
-    const state3 = (): { readonly label: string; readonly store: GraphStore | null }[] => [
-      { label: 'COLD', store: null },
-      { label: 'SHADOWING temp+mem', store: ((): GraphStore => {
+    const state3 = (): ReadonlyArray<{ readonly label: string; readonly store: GraphStore }> => {
+      // THE SHADOWING CONSTRUCTION'S COMMIT ORDER MATTERS (2026-10-05 — measured this pass):
+      // the frozen store's tier semantics re-plant a branch on a later commit, so the TEMP
+      // commits must land FIRST and the MEM mint + MIRROR commits LAST — otherwise the later
+      // temp commit answers D-ANCHOR/`tier-filter-miss` for `mem.focus.*` and the corpus would
+      // not hold the shadow at the mirror spellings (the as-authored interleave never held it —
+      // exactly the dead-corpus defect finding C named). The mem commits clear the temp copy
+      // (the store's tier-clear, §2.8 — the tiers DIFFER, which is the differential's point).
+      const shadowing = ((): GraphStore => {
         const s = wiringStore()
         s.commit('temp.focus', undefined)
         s.clear('temp.focus')
+        s.commit('temp.focus.entries', [{ id: 'SHADOW', target: 'SHADOW' }])
+        s.commit('temp.focus.activeId', 'SHADOW')
         s.commit('mem.focus', undefined)
         s.clear('mem.focus')
-        s.commit('temp.focus.entries', [{ id: 'SHADOW', target: 'SHADOW' }])
         s.commit('mem.focus.entries', [{ id: 'SHADOW', target: 'SHADOW' }])
-        s.commit('temp.focus.activeId', 'SHADOW')
         s.commit('mem.focus.activeId', 'SHADOW')
         return s
-      })() },
-      { label: 'COMMITTED file', store: ((): GraphStore => {
+      })()
+      const committed = ((): GraphStore => {
         const s = wiringStore()
         s.commit('file.focus', undefined)
         s.clear('file.focus')
         s.commit('file.focus.entries', [{ id: 'SHADOW', target: 'SHADOW' }])
         s.commit('file.focus.activeId', 'SHADOW')
         return s
-      })() },
-    ]
+      })()
+      return [
+        { label: 'COLD', store: wiringStore() },
+        { label: 'SHADOWING temp+mem (mem holds the mirror)', store: shadowing },
+        { label: 'COMMITTED file', store: committed },
+      ]
+    }
+    /** THE CORPUS PROBE — the state's own store demonstrably answers its ambient values at the
+     *  mirror spellings (the tiers differ: COLD refuses undeclared-name; SHADOWING/COMMITTED
+     *  HIT with the SHADOW id at their own tier), so the fixed-tuple call that follows runs
+     *  over a LIVE, DIFFERING ambient — the differential is EXECUTED, not assumed (finding C,
+     *  2026-10-05). IN-DRIVE OBSERVATIONS BESIDE the declared term — never separate drives
+     *  (`A-DECLARED-REGISTER-TERM-IS-A-DRIVE-COUNT` — the term 24 stays, NO re-grain). */
+    function ambientProbeOf(state: { readonly label: string; readonly store: GraphStore }): void {
+      if (state.label === 'COLD') {
+        const read = resolveOf(state.store, 'mem.focus.entries')
+        expect((read as { status?: string }).status).toBe('refused')
+        expect((read as { reason?: string }).reason).toBe('undeclared-name')
+        return
+      }
+      const spelling = state.label.startsWith('SHADOWING') ? 'mem.focus' : 'file.focus'
+      const entriesHit = resolveOf(state.store, `${spelling}.entries`) as { found?: boolean; value?: unknown }
+      expect(entriesHit.found).toBe(true)
+      expect((entriesHit.value as readonly FocusEntry[])[0]?.id).toBe('SHADOW')
+      const activeHit = resolveOf(state.store, `${spelling}.activeId`) as { found?: boolean; value?: unknown }
+      expect(activeHit.found).toBe(true)
+      expect(activeHit.value).toBe('SHADOW')
+    }
     const drives: Array<{ name: string; drive: () => void }> = []
-    // 4 exports × 3 states × 2 runs = 24 drives, each asserting canonical identity with the
-    // no-store expectation (the module consults NO store value).
+    // 4 exports × 3 states × 2 runs = 24 drives; each drive CONSULTS its state's store at the
+    // mirror spellings (the corpus is alive — the ambient answers differ per state) and asserts
+    // the fixed-tuple answer's canonical identity with the no-store expectation.
     for (const state of state3()) {
       for (const run of [1, 2]) {
         drives.push({ name: `focusTransition · ${state.label} · run ${run}`, drive: (): void => {
-          expectCanonical(focusTransition({ entries: [{ id: 'a', target: 'a' }], activeId: null }, 'open', { entry: { id: 'a', target: 'a' } }), NO_STORE_EXPECTED.transition(), 'focusTransition differential')
+          ambientProbeOf(state)
+          expectCanonical(focusTransition({ entries: [{ id: 'a', target: 'a' }], activeId: null }, 'open', { entry: { id: 'a', target: 'a' } }), NO_STORE_EXPECTED.transition(), `focusTransition differential · ${state.label}`)
         } })
         drives.push({ name: `focusOrder · ${state.label} · run ${run}`, drive: (): void => {
-          expectCanonical(focusOrder([{ id: 'o1', target: 'o1' }, { id: 'o2', target: 'o2' }]), NO_STORE_EXPECTED.order(), 'focusOrder differential')
+          ambientProbeOf(state)
+          expectCanonical(focusOrder([{ id: 'o1', target: 'o1' }, { id: 'o2', target: 'o2' }]), NO_STORE_EXPECTED.order(), `focusOrder differential · ${state.label}`)
         } })
         drives.push({ name: `focusIndex · ${state.label} · run ${run}`, drive: (): void => {
+          ambientProbeOf(state)
           expect(focusIndex({ entries: [{ id: 'x', target: 'x' }], activeId: null }, 'x')).toBe(NO_STORE_EXPECTED.index())
         } })
         drives.push({ name: `persist · ${state.label} · run ${run}`, drive: (): void => {
+          ambientProbeOf(state)
           expect(persist(() => 'fixed-seam-answer', { entries: [], activeId: null })).toEqual(NO_STORE_EXPECTED.persist())
         } })
       }
@@ -1785,7 +1970,7 @@ describe('H1 U-STORE-FOCUS — §5.5.1 THE REGISTER (6 rows · 96 attempts · 6 
     expect(report.unRun).toBe(0)
   })
 
-  it('REG-TP-2 P-SF-TP-2 · S-SF-TOTAL-1 · P-TP · term 16 — THE MIRROR READ TOTALITY: for EVERY store state (cold root · minted-but-unwritten · one reference held · both held · a divergent mirror against a fixture tab-list projection) and EVERY hostile surface (absent store argument refusal · throwing resolve · throwing commit · throwing subscribe · throwing listener), the carrier\'s turns answer the DECLARED record and NO throw escapes a wiring turn', () => {
+  it('REG-TP-2 P-SF-TP-2 · S-SF-TOTAL-1 · P-TP · term 16 — THE MIRROR READ TOTALITY: for EVERY store state (cold root · minted-but-unwritten · one reference held · both held · a divergent mirror against a fixture tab-list projection) and EVERY hostile surface (absent store argument refusal · throwing resolve · throwing commit · throwing subscribe · throwing listener), the carrier\'s turns answer the DECLARED record and NO throw escapes a wiring turn; ON DIVERGENCE THE EXECUTED HALF IS THE DECLARED RECONCILE READING — the projection answers from the tab list (tier 1 wins where driven, the mirror never self-authorises), and the re-seed WRITE is the DECLARED-DEFERRED half (2026-10-05)', () => {
     const report = newRowReport('P-SF-TP-2', 'S-SF-TOTAL-1', 'P-TP', 16)
     const drives = [
       { name: 'cold root → state() answers the declared-empty pair', drive: (): void => {
@@ -1811,13 +1996,18 @@ describe('H1 U-STORE-FOCUS — §5.5.1 THE REGISTER (6 rows · 96 attempts · 6 
         expect((state.entries as readonly FocusEntry[])[0]?.id).toBe('b1')
         expect(state.activeId).toBe('b1')
       } },
-      { name: 'a divergent mirror against a fixture tab-list projection → the declared re-projection (the mirror never self-authorises)', drive: (): void => {
+      { name: 'a divergent mirror against a fixture tab-list projection → THE DECLARED READING (2026-10-05 — the OLD typeof-existence drive was vacuous): the projection IS driven; the answer is the projection\'s (tier 1 wins where driven), the mirror\'s rogue value is NEVER the answer (never self-authorises), and the re-seed WRITE is the DECLARED-DEFERRED half — no commit is owed on the turn', drive: (): void => {
         const rec = createRecordingStore()
         carrierOf(rec.store)
         rec.store.commit('mem.focus.entries', [{ id: 'rogue', target: 'rogue' }])
         rec.store.commit('mem.focus.activeId', 'rogue')
         const carrier = carrierOf(rec.store)
-        expect(typeof carrier.focusRoute).toBe('function')
+        const projection = { entries: [{ id: 't1', target: 't1' }], activeId: 't1' }
+        const commitsBefore = rec.commits.length
+        const answer = carrier.focusRoute((projection as unknown) as never)
+        expectCanonical(answer.entries, ['t1'], 'the declared reconcile reading — the answer is the tab list\'s projection, never the mirror\'s rogue value')
+        expect(answer.entries).not.toEqual(['rogue'])
+        expect(rec.commits.length).toBe(commitsBefore) // the re-seed WRITE is the deferred half — absent today
       } },
       { name: 'absent store argument → the construction refusal (typed Error)', drive: (): void => {
         const factory = requireCarrierFactory()

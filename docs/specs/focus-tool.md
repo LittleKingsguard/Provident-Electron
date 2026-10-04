@@ -919,7 +919,7 @@ group, no new resource and no rendered surface.**
 | **3** | **THE ROUTE — PINNED AS ITS OWN CELL (`C-9`; `G-4`)** | **`provident.focus` → the `RpcMethod` member `'focus'` → the renderer's method switch. THE AUTHORITY IS `RpcMethod`'s TYPE WALL PLUS THAT SWITCH; THE MUTATING SET DECIDES ONLY THE NOTIFY PUSH** (`§0` ruling 1). **THE HANDLER IS A THIN ADAPTER: VALIDATE → ONE RENDERER CALL → RETURN THE ANSWER VERBATIM, and nothing else happens in it** (`§0` ruling 4; `§0A` note 3). **A `focus` call is NEVER a real user gesture** (`§0` ruling 6). |
 | **4** | **THE ARGS** | **`{ target?: string, newTab?: boolean }` — BOTH MEMBERS OPTIONAL, NORMATIVE AS THE ENDPOINT CONTRACT ALREADY FIXES IT, derived and NOT re-minted** (`docs/specs/mcp-endpoint.md` `§3.8` item 2). **An added member is a SHAPE EXTENSION and needs the architect** (`§7a.1` item 1). **The validation rule that decides what is acceptable is `§0A` note 3.** |
 | **5** | **THE RETURN** | **`{ activeId: string \| null, entries: string[], opened: boolean, refused?: { reason: string } }` — NORMATIVE AS THE ENDPOINT CONTRACT ALREADY FIXES IT.** **`refused` is OPTIONAL and appears exactly when the consumer refused, and NO FIFTH MEMBER appears** (`§0A` note 4). **Every member is passed through BY IDENTITY, with no `typeof` test, no coercion, no trim, no sort and no dedupe** (`§0A` note 5). |
-| **6** | **THE LIVE AUTHORITY** | **THE RENDERER'S OWN STATE, HELD IN THE WIRING *OUTSIDE* THE CONSUMED MODULE — AND IT IS *NOT* A GRAPH SLICE** (`§0` ruling 3). **The consumed module (`src/shared/focus-model.ts`) owns ONLY the `===`-on-target activation and its own id/duplicate rules; the tool re-derives NEITHER** (`docs/specs/focus-model.md` `§2.3`). |
+| **6** | **THE LIVE AUTHORITY** | **THE RENDERER'S OWN STATE, HELD IN THE WIRING *OUTSIDE* THE CONSUMED MODULE — AND IT IS *NOT* A GRAPH SLICE** (`§0` ruling 3). **The consumed module (`src/shared/focus-model.ts`) owns ONLY the `===`-on-target activation and its own id/duplicate rules; the tool re-derives NEITHER** (`docs/specs/focus-model.md` `§2.3`). **⟶ 2026-10-03 (THE `U-STORE-FOCUS` LANDING PASS'S AMENDED READING — `RCA-8(d)` ANNOTATE-BESIDE, per `docs/specs/store-focus.md` §5.1 row 5; the as-filed cell above is KEPT VISIBLE and this clause is the OPERATIVE reading): THE LIVE AUTHORITY'S CARRIER IS THE STORE-CARRIED MIRROR — the renderer's wiring now holds the live authority in the store references `mem.focus.entries` / `mem.focus.activeId` (tier `mem`, the mirror — `store-focus.md` §2.1 items 1/2), not the module-level `const holder` (the re-home, `store-focus.md` §1); the tool's reply assembly NOW RE-READS THE STORE-CARRIED VALUE / SNAPSHOT per the re-home — the route reads the mirror and assembles the answer from it (`store-focus.md` §2.3 item 3, §2.5 items 2/3), with the REPLY SHAPE UNCHANGED (declared behaviour-preserving, `store-focus.md` §2.5 item 3).** **The *"IT IS NOT A GRAPH SLICE"* half is UNCHANGED** — the mirror is store-carried in the renderer realm, never graph-carried — and the module's own `===`-activation/id rules are still NOT re-derived by the tool (`store-focus.md` §2.5 item 5, `§7` item 5).** |
 | **7** | **WHAT THE TOOL OWNS — THE CLOSED NEGATIVE LIST** | **NO STATE · NO MAP · NO ID POLICY · NO COUNTER · NO REGISTRY · NO UUID SITE · NO SORT · NO COMPARATOR · NO RE-DERIVATION OF THE MODEL'S ACTIVATION RULE · NO NOTIFY · NO STORE · NO RETAINED REFERENCE TO THE RENDERER'S ANSWER.** **Each item is a `C-1`/`C-2`/`C-5` obligation discharged in the SHAPE rather than deferred** (`§0` ruling 4). |
 | **8** | **THE THROW PATTERNS** | **(a) AN INVALID ARGUMENT SHAPE THROWS A `TypeError`-CLASS VALIDATION ERROR BEFORE ANY RENDERER CALL IS ATTEMPTED** — **the tool's own error, never a `refused` record** (`§0A` note 3(d)). **(b) BEFORE THE RENDERER SIGNALS READY, THE CALL REJECTS WITH THE BACKEND'S READINESS ERROR (`renderer not ready (timeout <n>ms)`) AND THE FOCUS STATE IS UNTOUCHED — no silent no-op, no queued mutation, no special case, no fallback** (`docs/specs/mcp-endpoint.md` `§3.8` item 2, VERBATIM in substance). **(c) NO OTHER THROW IS DECLARED, AND NO THROW IS INVENTED FOR A CONSUMER REFUSAL.** |
 | **9** | **THE REFUSAL PATH** | **A target the consumer refuses returns the DECLARED SHAPE with `refused: { reason: string }` and CHANGES NOTHING** — *"changes nothing"* being the endpoint contract's claim about the **FOCUS STATE** (`docs/specs/mcp-endpoint.md` `§3.8` item 2; `§0A` note 4). |
@@ -1059,7 +1059,15 @@ FINDING** (`C-10`; `§7` item 5).
    this unit may not re-litigate its contract**: **the module owns the `===`-on-target activation and the id/duplicate
    rules; the RENDERER'S WIRING holds the live authority for `{entries, activeId}`; and the tool owns only the ROUTE
    and the ECHO** (`§0` rulings 3/4; `§9.7` of the record). **THIS UNIT AMENDS NO LINE OF
-   `src/shared/focus-model.ts`, AND IT ADDS NO CLAUSE TO `docs/specs/focus-model.md`.**
+   `src/shared/focus-model.ts`, AND IT ADDS NO CLAUSE TO `docs/specs/focus-model.md`.** **⟶ 2026-10-03 (THE `U-STORE-FOCUS`
+    LANDING PASS'S AMENDED READING — `RCA-8(d)` ANNOTATE-BESIDE, per `docs/specs/store-focus.md` §5.1 row 5; the as-filed item
+    above is KEPT VISIBLE and this clause is the OPERATIVE reading): *"THE RENDERER'S WIRING HOLDS THE LIVE AUTHORITY"* NOW
+    READS AS: the wiring's carrier holds the live authority IN THE STORE-CARRIED MIRROR — `mem.focus.entries` /
+    `mem.focus.activeId`, tier `mem` (`store-focus.md` §2.1 items 1/2) — and the route answers from that mirror read
+    (`store-focus.md` §2.3 item 3); the authority's CARRIER changed from the module-level `const` to the tier-2 reference
+    (plan `§3.4` row 2.4-1; `store-focus.md` §0A note 1, §5.1 row 5).** **The F2/F3 close-outs stay un-re-litigated and the
+    module's contract is untouched** (`store-focus.md` §1 item 5, §2.6 prohibition 1) — this cell re-reads the WIRING's
+    carrier clause only.**
 3. **THE DENIED SET, NAMED FIRST (`UI-UNITS-MAY-TOUCH-THE-RENDERER-WIRING`, cited for its form).** **DENIED: the
    rendered focus strip and the entries UI · any element, text, class, slot content, attribute, style or geometry ·
    any sixth group, any new resource, any channel and any `MUTATING_METHODS` entry · any second IPC method · any
@@ -1077,7 +1085,11 @@ FINDING** (`C-10`; `§7` item 5).
 5. **WHAT THE TOOL CANNOT DO TO THE GRAPH, STATED AS `C-1`'s OWN NEGATIVE.** **`list_targets`, `get_rendered_html`,
    `get_markdown` and `get_node_state` NEVER OBSERVE a focus call’s effect** (`docs/specs/mcp-endpoint.md` `§3.8`
    item 2). **The tool mutates no graph node, no envelope and no state slice**, **and a pass that expects a focus
-   call to show up in a rendered read is expecting a behaviour this contract forbids.**
+   call to show up in a rendered read is expecting a behaviour this contract forbids.** **⟶ 2026-10-03 (THE `U-STORE-FOCUS` LANDING PASS'S AMENDED READING —
+    `RCA-8(d)` ANNOTATE-BESIDE; the as-filed item above is KEPT VISIBLE and this clause is the OPERATIVE reading): STILL TRUE
+    AFTER THE RE-HOME — the re-home moves the state's carrier into the STORE inside the RENDERER realm, never into the graph:
+    the mirror is store-carried and the graph-invisibility contract is UNCHANGED (`docs/specs/store-focus.md` §2.5 items 2/5,
+    `§7` item 5); the re-homed route answers from the mirror read, never from a graph node.**
 
 ---
 
