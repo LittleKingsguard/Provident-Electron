@@ -3,7 +3,9 @@
  * G3 = U-STORE-SECURITY — THE RED SET (RCA-1: tests FIRST, reported failing,
  * before any implementation).  Author: TestWriter.  Layer: [H]/[T] per §1.4.
  *
- * Spec: docs/specs/store-security.md (read in FULL — 338 lines).
+ * Spec: docs/specs/store-security.md (read in FULL — 338 lines at red-authoring; the live file has since
+ * grown via the dated gate-4 annotations and the §3b disposition-table landing — every operative cell is
+ * cited by §/row id above, never by line).
  *
  * WHAT THIS FILE IS: the tier-4 re-home's red set — authored from THE SPEC
  * ALONE against the CURRENT tree.  Everything that must land (the atomic
@@ -331,7 +333,7 @@ function assertBurstAbsentForm2(rendererSrc: string): void {
     '§2.5 item 3 — the debug refresh re-homes onto EXACTLY TWO invocation sites: the BOOT refresh (renderer.ts:645) + the app-graph-changed notify callback (renderer.ts:660). NEW-1 re-aim: a re-added reply-path refreshDebug is a THIRD code-level site ANYWHERE in renderer.ts and FAILS (the as-filed onRequest…sendReply span matched NOTHING — the probe passed vacuously under any code state). Measured sites: ' + sites.length + ' (' + sites.join(' | ') + ')').toBe(2)
   const bootBlock = /if \(panels\) \{[\s\S]*?\n  \}/.exec(rendererSrc)?.[0] ?? ''
   expect(/panels\.refreshDebug\(runtime\)/.test(bootBlock),
-    '§2.5 item 3(i) — the BOOT refresh (panels.refresh() + panels.refreshDebug(runtime), renderer.ts:639-643) stays').toBe(true)
+    '§2.5 item 3(i) — the BOOT refresh (panels.refresh() + panels.refreshDebug(runtime), renderer.ts:643-645) stays').toBe(true)
   const notifyCallback = /handleRequest\(runtime, req, \(p\) => [\s\S]*?bridge!?\.notify\(p\)[\s\S]*?\)/.exec(rendererSrc)?.[0] ?? ''
   expect(/refreshDebug/.test(notifyCallback),
     '§2.5 item 3(ii) — the notify callback becomes `(p) => { bridge.notify(p); panels?.refreshDebug(runtime) }` — ONE refresh per MUTATING reply, coalesced with the ONE notify (N4).').toBe(true)
@@ -531,7 +533,7 @@ describe('G3 §2.3 THE RECEIPT (red: the receipt members do not exist)', () => {
     // the handler still re-gates (§2.3 item 3, §0A item 8 — GREEN today):
     const setHandler = await setHandlerSource()
     expect(/mcp\.applyGatePatch/.test(setHandler),
-      '§2.3 item 3 — the handler still calls mcp.applyGatePatch(...) on a SET (main.ts:373) — the gate\'s live reflection applies').toBe(true)
+      '§2.3 item 3 — the handler still calls mcp.applyGatePatch(...) on a SET (main.ts:381) — the gate\'s live reflection applies').toBe(true)
     // the divergence is VISIBLE via the receipt on BOTH delivery surfaces (RED today):
     const { store } = await makeStore()
     store.set({ token: 'x' }) // the write whose outcome the receipt surfaces — a COLD store answers null (§2.1 item 4)
@@ -644,10 +646,10 @@ describe('G3 §2.5 RH-3\'s two halves (red: the old pane shape)', () => {
     // the constructor declares the NEW option (a boot-read projection of tier 4, §2.5 item 2):
     expect(/constructor\(\s*mount: HTMLElement,\s*opts\?:\s*\{\s*maxJournalLength\?:\s*number\s*\}\s*\)/.test(panelSrc),
       '§2.5 item 2 — SecurePanels declares `constructor(mount, opts?: { maxJournalLength?: number })`. RED: today `constructor(mount: HTMLElement)` (secure-panels.ts:248).').toBe(true)
-    // the wiring passes the boot snapshot value at construction (§2.5 item 2 → renderer.ts:638):
+    // the wiring passes the boot snapshot value at construction (§2.5 item 2 → renderer.ts:641):
     const rendererSrc = await sourceOf(['renderer', 'renderer.ts'])
     expect(/new SecurePanels\(\s*panesMount,\s*\{\s*maxJournalLength/.test(rendererSrc),
-      '§2.5 item 2 — the wiring constructs `new SecurePanels(panesMount, { maxJournalLength })` from the SAME boot snapshot the Runtime read (renderer.ts:638). RED: today `new SecurePanels(panesMount)`.').toBe(true)
+      '§2.5 item 2 — the wiring constructs `new SecurePanels(panesMount, { maxJournalLength })` from the SAME boot snapshot the Runtime read (renderer.ts:641, the operative construction — re-pointed from the as-filed :638 by the G3 gates-7/8 doc pass). RED: today `new SecurePanels(panesMount)`.').toBe(true)
   })
 
   it('§2.5 item 4: the DECLARED TEST SEAM `journalDepth()` — absent from SecurePanels; and its production-negative control', async () => {
@@ -1118,7 +1120,7 @@ const registerSpecs: RegisterRowSpec[] = [
           fresh.store.set({ token: 'abc' })
           expect(fresh.store.get().token).toBe('abc')
           const setHandler = await setHandlerSource()
-          expect(/mcp\.applyGatePatch/.test(setHandler), 'the handler still calls applyGatePatch (main.ts:373, §0A item 8)').toBe(true)
+          expect(/mcp\.applyGatePatch/.test(setHandler), 'the handler still calls applyGatePatch (main.ts:381, §0A item 8)').toBe(true)
         },
       },
       {
