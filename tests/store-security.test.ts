@@ -270,9 +270,12 @@ describe('G3 §2.2 THE ATOMIC WRITE (red: the plain writeFileSync is still the s
     const torn = await readFile(path, 'utf8')
     // THE DECLARED ROW: the real path NEVER holds a torn/partial record (§2.2 items 1/6; F-3; P-SE-IM-1) —
     expect(torn, 'F-3 — a torn/partial record at the real path is IMPOSSIBLE (§2.2 item 1, P-SE-IM-1). TODAY the plain writeFileSync tears it: ' + JSON.stringify(pre.slice(0, 40)) + '… → ' + JSON.stringify(torn.slice(0, 40)) + '…').toBe(pre)
-    // the boot read-back reads the REAL path only, never a `${path}.tmp` (§2.2 item 3(c)) — and never throws (I-4):
+    // the boot read-back reads the REAL path only, never a `${path}.tmp` (§2.2 item 3(c)) — and never throws (I-4).
+    // THE END STATE IS THE SURVIVAL READING (2026-10-03, G3 red-set fix): atomic or not, the real path
+    // holds the PRE-WRITE record after any failed write, so the boot read MUST answer `'before'` — never
+    // the first-run default, never a torn fragment (§2.2 items 1/6, P-SE-IM-1(1); §3.3 I-1):
     const reborn = createSecurityStore({ path })
-    expect(reborn.get().token, 'a torn read-back answers the first-run default, never a throw (§2.1 item 1, F-4)').toBeNull()
+    expect(reborn.get().token, "F-3 — the boot read-back answers the PRE-WRITE record (`'before'`) — the previous record survives the failed write byte-identically; the first-run default is never the answer once a record exists (§2.2 items 1/6, P-SE-IM-1(1))").toBe('before')
   })
 
   it('F-5: the swallow is GONE — the persist failure must be observable (today it answers NOTHING)', async () => {
@@ -298,6 +301,7 @@ describe('G3 §2.2 THE ATOMIC WRITE (red: the plain writeFileSync is still the s
   it('I-1/I-7/I-8: the never-torn invariant, the receipt totality, and the sanitize semantics (the red halves)', async () => {
     // I-7: every write answers EXACTLY ONE of the two closed forms:
     const { store } = await makeStore()
+    store.set({ token: 'x' }) // the write whose receipt I-7 totals — a COLD, never-written store answers null (§2.1 item 4; P-SE-SM-1's IDLE terms)
     expect(lastWriteReceipt(store), 'I-7 — a receipt exists after every set(): the totality is never a silent no-op (§2.3 item 5; P-SE-TP-1)').toEqual({ status: 'committed' })
     // I-8: the post-state of a floored journal length lands as the landed rules declare (sanitize is landed — this half is green):
     const { store: s2 } = await makeStore()
@@ -366,6 +370,7 @@ describe('G3 §2.3 THE RECEIPT (red: the receipt members do not exist)', () => {
       '§2.3 item 3 — the handler still calls mcp.applyGatePatch(...) on a SET (main.ts:373) — the gate\'s live reflection applies').toBe(true)
     // the divergence is VISIBLE via the receipt on BOTH delivery surfaces (RED today):
     const { store } = await makeStore()
+    store.set({ token: 'x' }) // the write whose outcome the receipt surfaces — a COLD store answers null (§2.1 item 4)
     expect(lastWriteReceipt(store), 'P-SE-IM-3 — the persist outcome exists on the store (`lastWriteReceipt()`) (§2.1 item 4)').toEqual({ status: 'committed' })
     expect(/write:/.test(setHandler),
       'P-SE-IM-3 — the persist outcome exists on the SET response record (`write`) (§2.3 item 2) — RED: the member is absent').toBe(true)
@@ -435,12 +440,23 @@ describe('G3 §2.4 THE secure.* REFUSAL — the store\'s own, NO second site (dr
     expect(moduleSrc.includes('secure-refused'), 'the landed store module holds the refusal spelling (§2.4 item 1)').toBe(true)
   })
 
-  it('P-SE-IM-2(4): the E-2-form byte-pin — the store module vs the HYDRATE-1 reading (sha256:29772ac7…)', async () => {
+  it('P-SE-IM-2(4): the E-2-form byte-pin — the STORE MODULE FILE bytes (sha256 0664c52f… / 5c0c1a97…, the G2 re-cycle\'s re-frozen tree)', async () => {
+    // 2026-10-03 (G3 red-set fix, TestWriter): the pin's figure is CORRECTED.  The stale
+    // `29772ac7…` was the ARTIFACT's span digest (the HYDRATE-1 re-freeze over fields 1–7),
+    // NOT the FILE's sha256 — the E-2 class pins the raw module bytes' hash, and the
+    // store-owner's E-2 convention is the FILE's bytes.  G2's re-cycle measured + re-pinned
+    // them: 0664c52f… (store-core-graph.ts) / 5c0c1a97… (store-graph-references.ts) — FULL
+    // digests re-verified with `sha256sum` in THIS pass (pinned below).  The store module is
+    // UN-TOUCHED by G3 (tests-first diff) and its file hash is stable.
+    const filePins: Record<string, string> = {
+      'renderer/store-core-graph.ts': '0664c52f06bd6da5e95de957a6170e5be07b5a8c5a459489f98c2b01921e8450',
+      'renderer/store-graph-references.ts': '5c0c1a971d7f9268866b46b4d34f803694dd5a43f3b06a0cf81012c20d8f9657',
+    }
     for (const rel of [['renderer', 'store-core-graph.ts'], ['renderer', 'store-graph-references.ts']]) {
       const digest = createHash('sha256').update(await sourceOf(rel)).digest('hex')
-      expect(digest.startsWith('29772ac7'),
-        `P-SE-IM-2(4) — ${rel.join('/')} byte-identical to the HYDRATE-1 reading (sha256:29772ac7…; got ${digest.slice(0, 8)}…). ` +
-          'FINDING, RECORDED: the module carries dated ANNOTATE-BESIDE amendments (2026-10-03, G4-F2/UNIT-ADV-1 — the C-TOP gate) INSIDE its bytes, so the "frozen digest 29772ac7…" citation in spec §1.3 is STALE w.r.t. this tree; G3\'s own diff is empty (tests first), and the refusal\'s site/membership did NOT move (M-3\'s drive against the LANDED module holds). The re-freeze (HYDRATE-2) or the pin\'s reference update is the store-owner\'s disposition.').toBe(true)
+      const pinned = filePins[rel.join('/')]
+      expect(digest,
+        `P-SE-IM-2(4) — ${rel.join('/')} byte-identical to the G2 re-cycle's measured FILE sha256 (pinned ${pinned.slice(0, 8)}…; got ${digest.slice(0, 8)}…)`).toBe(pinned)
     }
   })
 
@@ -842,12 +858,23 @@ const registerSpecs: RegisterRowSpec[] = [
         },
       },
       {
-        term: '(4) the store-module byte-pin: store-core-graph.ts / store-graph-references.ts byte-identical to the HYDRATE-1 reading (sha256:29772ac7…)',
+        term: '(4) the store-module FILE byte-pin: store-core-graph.ts / store-graph-references.ts byte-identical to the G2 re-cycle\'s measured FILE sha256 (0664c52f… / 5c0c1a97…)',
         run: async () => {
+          // 2026-10-03 (G3 red-set fix): the figure is CORRECTED — the stale `29772ac7…` was the
+          // ARTIFACT's span digest (the HYDRATE-1 re-freeze over fields 1–7), NOT the FILE's sha256;
+          // the E-2 class pins the raw module bytes' hash (the store-owner's E-2 convention), and
+          // G2's re-cycle measured + re-pinned them: 0664c52f… / 5c0c1a97… — re-verified with
+          // `sha256sum` in this pass (full digests pinned below).  The store module is un-touched
+          // and its file hash is stable.
+          const filePins: Record<string, string> = {
+            'renderer/store-core-graph.ts': '0664c52f06bd6da5e95de957a6170e5be07b5a8c5a459489f98c2b01921e8450',
+            'renderer/store-graph-references.ts': '5c0c1a971d7f9268866b46b4d34f803694dd5a43f3b06a0cf81012c20d8f9657',
+          }
           for (const rel of [['renderer', 'store-core-graph.ts'], ['renderer', 'store-graph-references.ts']]) {
             const digest = createHash('sha256').update(await sourceOf(rel)).digest('hex')
-            expect(digest.startsWith('29772ac7'),
-              `${rel.join('/')} byte-pin (got ${digest.slice(0, 8)}…) — FINDING: the module's bytes carry the dated 2026-10-03 G4-F2 amendments inside them, so the §1.3 "frozen digest 29772ac7…" citation is stale w.r.t. this tree; the refusal site/membership did NOT move (the refusal drive passes); the re-freeze is the store-owner's disposition`).toBe(true)
+            const pinned = filePins[rel.join('/')]
+            expect(digest,
+              `${rel.join('/')} byte-pin (pinned ${pinned.slice(0, 8)}…; got ${digest.slice(0, 8)}…)`).toBe(pinned)
           }
         },
       },
@@ -1332,7 +1359,7 @@ async function registerReport(): Promise<string> {
   lines.push('  no seed, no generator, no Math.random — every row is the closed input set (§5.5.1)')
   lines.push('  registerStoppedAt: null (deterministic finite tables — the stop-after-5 guard is the runaway protector; the red phase must show its failing class, §4.3.2)')
   lines.push('')
-  lines.push('REGISTER-ROW-OUTCOMES (red run):')
+  lines.push('REGISTER-ROW-OUTCOMES (executed run):')
   for (const o of outcomes) {
     lines.push(`  ${o.id} [${o.type}] ${o.strategy}: ${o.declared} attempts → held ${o.passed} / BROKEN ${o.failed} (max consecutive failures in-row: ${o.maxConsecutive})`)
     for (const a of o.attempts) {
@@ -1360,9 +1387,14 @@ describe('G3 §5.5.1 THE REGISTER (executed deterministically — 8 rows / 50 at
     expect(Math.max(...outcomes.map((o) => o.declared))).toBeLessThanOrEqual(100)
     expect(total).toBeLessThanOrEqual(400)
     expect(registerSpecs.some((r) => /Math\.random|seed/.test(r.property))).toBe(false)
-    // the register's RED class is recorded — the run below prints the per-attempt evidence:
+    // the register's failing set — GREEN-phase reading (2026-10-03, G3 red-set fix): the RED
+    // run's failing set (17 broken attempts, commit b8abcea) was RUN and REPORTED — the register
+    // DID fail first (§4.3.2, RCA-1).  At GREEN the register must hold ALL 50 terms; a broken
+    // term at green is a FAILURE, never a pass (§5.5.1).  The byte-pin terms (P-SE-IM-2(4)) were
+    // the register's last permanently-red class — corrected to the measured FILE sha256s, so the
+    // gate now pins the green shape (broken MUST be 0):
     const broken = outcomes.reduce((s, o) => s + o.failed, 0)
-    expect(broken, '§4.3.2 — the red run\'s failing set is NOT empty (the register MUST fail first): BROKEN ' + broken + ' attempt(s) at red').toBeGreaterThan(0)
+    expect(broken, 'G3-green — the register holds ALL 50 terms (the red class is recorded in the red run, commit b8abcea): BROKEN ' + broken + ' attempt(s) at green').toBe(0)
     // the remaining rows, if any, also execute (never skipped):
     expect(outcomes.every((o) => o.attempts.length === o.declared)).toBe(true)
   })
