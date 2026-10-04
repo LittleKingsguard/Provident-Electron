@@ -74,6 +74,12 @@ export interface DemoSurface {
 let activeGhostZone: ZoneId | null = null
 let activeGhostOpacity = 0
 let sinkCalls = 0
+/** the zone expanded at DRAG time (temporarily hosting the ghost — restored on
+ *  release/abandon; the drag READS the expanded size to decide placement) */
+let dragExpandedZone: ZoneId | null = null
+/** the per-zone user toggle: an explicitly EXPANDED zone stays expanded (the file
+ *  tier holds the committed size); an EMPTY minimized zone shows ONLY a button */
+const userExpanded = new Set<ZoneId>()
 
 export function buildDemo(): DemoSurface {
   const store = createGraphStore({
@@ -138,15 +144,53 @@ export function buildDemo(): DemoSurface {
         title.className = 'pane-title'
         title.textContent = p.title
         head.append(handle, title)
+        // A MINIMIZED zone shows a TAB STRIP (panes) — the frames are NOT rendered
+        // in the stack; the tabs list what the zone contains (clause: "retains a
+        // tab-style list of panes it contains").
+        if (minimized) {
+          const tab = document.createElement('button')
+          tab.className = 'zone-tab'
+          tab.setAttribute('data-tab-for', p.id)
+          tab.textContent = p.title
+          stack.append(tab)
+          continue
+        }
         const body = document.createElement('div')
         body.className = 'pane-body'
-        body.textContent = minimized ? '▸ minimized' : `content of ${p.title}`
+        body.textContent = `content of ${p.title}`
         frame.append(head, body)
         stack.append(frame)
       }
+      // THE SECTION MORPHOLOGY FROM THE STORE state (INSIDE the per-zone loop).
+      const section = root.querySelector(`[data-zone="${z}"]`) as HTMLElement | null
+      const tabs = stack.querySelectorAll('.zone-tab').length
+      if (section) {
+        let expandBtn = section.querySelector('[data-expand-zone]') as HTMLElement | null
+        if (!expandBtn) {
+          expandBtn = document.createElement('button')
+          expandBtn.className = 'zone-expand-btn'
+          expandBtn.setAttribute('data-expand-zone', z)
+          expandBtn.textContent = '▸ expand'
+          section.insertBefore(expandBtn, stack)
+        }
+        const collapsedNow = minimized && !dragExpandedZone && !userExpanded.has(z)
+        if (collapsedNow) {
+          section.classList.add('zone-minimized')
+          if (tabs === 0) section.classList.add('zone-empty')
+          else section.classList.remove('zone-empty')
+          // the minimized zone is HIDDEN ENTIRELY when empty — only the button shows
+          stack.style.display = tabs === 0 ? 'none' : 'flex'
+          expandBtn.style.display = tabs === 0 ? 'inline-block' : 'none'
+        } else {
+          section.classList.remove('zone-minimized', 'zone-empty')
+          stack.style.display = 'flex'
+          expandBtn.style.display = 'none'
+        }
+      }
     }
     // GHOST: if a temp drag preview is live, paint the ghost into its zone at
-    // reduced opacity (fully displayed on release+commit).
+    // reduced opacity (fully displayed on release+commit). The target zone is
+    // TEMPORARILY EXPANDED to host the ghost (the drag expanded it).
     if (activeGhostZone && root) {
       const stack = zoneEl(activeGhostZone)
       if (stack) {
@@ -205,8 +249,10 @@ export function buildDemo(): DemoSurface {
     // THE HANDLE-GATED DRAG — a drag starts ONLY from the pane handle element.
     root.addEventListener('pointerdown', (ev) => {
       const handle = (ev.target as HTMLElement)?.closest?.('.pane-handle')
-      if (!handle) return
-      const paneId = handle.getAttribute('data-handle-for')
+      // THE TAB IS ALSO A DRAG SOURCE: a minimized zone's tab strip is what a user
+      // grabs to move a contained pane out (the tab carries the pane id).
+      const tab = (ev.target as HTMLElement)?.closest?.('.zone-tab')
+      const paneId = handle ? handle.getAttribute('data-handle-for') : tab ? tab.getAttribute('data-tab-for') : null
       if (!paneId) return
       const pane = panes.get(paneId)
       if (!pane) return
@@ -235,14 +281,26 @@ export function buildDemo(): DemoSurface {
         try {
           const targetZone = zoneAtPoint(e.clientX, e.clientY) ?? (e.target as HTMLElement)?.closest?.('.zone')?.getAttribute('data-zone') as ZoneId | null
           const zone = targetZone && (ZONES as readonly string[]).includes(targetZone) ? targetZone : pane.zone
-          const placement = { paneId, zone, ghostOpacity: GHOST_OPACITY }
+          // THE PLACEMENT DECISION READS THE STORE'S EXPANDED SIZE (clause: "a pane
+          // drag reads the expanded size from store in order to determine if it
+          // should place into the zone") — the collapsed/minimized view is never
+          // the decision input; the SIZE is the store-carried domain value.
+          const sizeRaw = (store.tiers as unknown as Record<string, { get: (n: string) => unknown }>).mem.get(
+            `mem.layout.zone.${zone}.size`,
+          ) as { found?: boolean; value?: unknown } | null
+          const expandedSize = sizeRaw && sizeRaw.found && typeof sizeRaw.value === 'number' ? sizeRaw.value : 0
+          const canPlace = expandedSize >= MIN_ZONE_SIZE
+          const placement = { paneId, zone, ghostOpacity: GHOST_OPACITY, storeSize: expandedSize, canPlace }
           drag.move(gid, placement)
           lastPlacementZone = zone
-          activeGhostZone = zone
+          activeGhostZone = canPlace ? zone : null
           activeGhostOpacity = GHOST_OPACITY
+          // TEMPORARILY EXPAND a minimized target to host the ghost (restored on
+          // release/abandon — the collapse state is not a file write).
+          dragExpandedZone = canPlace ? zone : null
           paint()
           window.__dragTrace = window.__dragTrace ?? []
-          window.__dragTrace.push({ zone, x: e.clientX, y: e.clientY })
+          window.__dragTrace.push({ zone, x: e.clientX, y: e.clientY, canPlace, expandedSize })
         } catch (err) {
           window.__dragTrace = window.__dragTrace ?? []
           window.__dragTrace.push({ err: String(err) })
@@ -250,6 +308,7 @@ export function buildDemo(): DemoSurface {
       }
       const onUp = (): void => {
         cleanup()
+        dragExpandedZone = null
         try {
           drag.release(gid, pane.size, commitSink)
           window.__upTrace = { ok: true, final: pane.size, sinkCalls: sinkCalls, lastZone: lastPlacementZone }
@@ -262,6 +321,7 @@ export function buildDemo(): DemoSurface {
       }
       const onCancel = (): void => {
         cleanup()
+        dragExpandedZone = null
         drag.rightClick(gid)
         activeGhostZone = null
         activeGhostOpacity = 0
@@ -283,6 +343,23 @@ export function buildDemo(): DemoSurface {
       window.addEventListener('contextmenu', onCtx)
     })
     // THE GUTTER's own gesture — the resize lifecycle (temp / reset / file).
+    // THE EXPAND TOGGLE: a minimized zone's button expands it back to visibility
+    // (the user toggle; the file tier holds the committed size).
+    for (const z of ZONES) {
+      const sect = root.querySelector(`[data-zone="${z}"]`)
+      if (!sect) continue
+      const btn = sect.querySelector('[data-expand-zone]')
+      if (!btn) continue
+      btn.addEventListener('click', () => {
+        if (userExpanded.has(z)) {
+          userExpanded.delete(z)
+          // back to minimized (the display state is the store's)
+        } else {
+          userExpanded.add(z)
+        }
+        paint()
+      })
+    }
     const gutterEl = root.querySelector('#gutter')
     if (gutterEl) {
       const ggid = 'gutter-g1'

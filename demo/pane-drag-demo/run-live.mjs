@@ -189,12 +189,16 @@ async function main() {
     await releaseAt(500, 700)
     await sleep(400)
     const after = await evaluate(`window.__pgdemo.storeSummary()`)
-    const paneInZone3 = await evaluate(`!!document.querySelector('[data-zone="zone-3"] .pane-frame[data-pane-id="pane-a"]')`)
+    const paneInZone3 = await evaluate(`JSON.stringify((()=>{const s=document.querySelector('[data-zone="zone-3"]');return{frame:!!s.querySelector('.pane-frame[data-pane-id="pane-a"]'),tab:!!s.querySelector('.zone-tab[data-tab-for="pane-a"]')}})())`)
+    const p3 = JSON.parse(paneInZone3)
     const paneZone = await evaluate(`window.__pgdemo.read.paneZone('pane-a')`)
     const upTrace = await evaluate(`JSON.stringify(window.__upTrace ?? null)`)
     const traceTail = await evaluate(`JSON.stringify((window.__dragTrace ?? []).slice(-4))`)
     console.log(`[live] post-release: paneZone=${paneZone} upTrace=${upTrace} traceTail=${traceTail}`)
-    check('release commits: pane-a now displayed in zone-3 (fully, not ghost)', paneInZone3 === true, `paneZone=${paneZone} inZ3=${paneInZone3}`)
+    // "fully displayed properly on release and commit": the pane is IN zone-3 —
+    // a FRAME when the zone is displayed (expanded), or its TAB when the zone is
+    // minimized (which the minimized-zone test then expands + verifies).
+    check('release commits: pane-a now displayed in zone-3 (fully, not ghost)', paneZone === 'zone-3' && (p3.frame || p3.tab), `paneZone=${paneZone} inZ3.frame=${p3.frame} inZ3.tab=${p3.tab}`)
     check('the ghost is gone after commit', after.ghost === false, `ghost=${after.ghost}`)
     check('exactly ONE sink call (the single-sink channel)', after.sinkCalls === 1, `sinkCalls=${after.sinkCalls}`)
     // the zone-3 size obeys the constraint: the drop size (< min) repaired per the
@@ -204,8 +208,14 @@ async function main() {
 
     // 5. THE ABANDON PATH: a fresh drag, then right-click -> temp removed, the
     //    persistent original reasserts (the file-tier original never removed).
-    //    The committed pane now lives in zone-3, so re-query its handle there.
-    const handleBox2 = await boxOf('.pane-frame[data-pane-id="pane-a"] .pane-handle')
+    //    The committed pane now lives in zone-3 — which is MINIMIZED, so its stack
+    //    is hidden and the frame has no box; the pane is represented by its TAB.
+    //    The drag source in this state is the TAB itself (the minimized zone's
+    //    tab strip is what a user grabs to move the pane out).
+    const z3tab = await evaluate(`(()=>{const t=document.querySelector('.zone-tab[data-tab-for="pane-a"]');if(!t)return null;const r=t.getBoundingClientRect();return JSON.stringify({x:r.x+r.width/2,y:r.y+r.height/2})})()`)
+    let handleBox2
+    if (z3tab && z3tab !== 'null') handleBox2 = JSON.parse(z3tab)
+    else handleBox2 = await boxOf('.pane-frame[data-pane-id="pane-a"] .pane-handle')
     await drag(handleBox2, { x: 400, y: 300 }, 12)
     await sleep(200)
     const abandonGhost = await evaluate(`window.__pgdemo.storeSummary().ghost`)
@@ -301,12 +311,92 @@ async function main() {
   check('the temp is empty after the release (file holds the truth)', tempAfterRelease === null, `temp=${tempAfterRelease}`)
   check('ONE file commit per gesture end (the single-sink channel)', true)
 
+  // ───────────────────────────────────────────────────────────────────────────
+  // THE MINIMIZED-ZONE TEST — the three clauses:
+  //   1. an EMPTY minimized zone is HIDDEN entirely + a visible expand button;
+  //   2. a minimized zone WITH panes shows a TAB-STRIP list of its panes;
+  //   3. a pane drag READS THE STORE'S EXPANDED SIZE to decide placement, and
+  //      temporarily EXPANDS the zone to display the ghost.
+  // ───────────────────────────────────────────────────────────────────────────
+  // SELF-CONTAINED: normalize the state first (make zone-3 empty + minimized), then
+  // drive each clause from a known position.
+
+  // (a) ensure zone-3 is EMPTY: if it holds pane-a, drag the tab out to zone-1.
+  const holding = await evaluate(`!!document.querySelector('.zone-tab[data-tab-for="pane-a"]')`)
+  if (holding) {
+    const tabBox = await boxOf('.zone-tab[data-tab-for="pane-a"]')
+    await drag(tabBox, { x: 120, y: 300 }, 16)
+    await releaseAt(120, 300)
+    await sleep(400)
+  }
+  // ensure pane-a is in zone-1 (its origin) for the later re-entry drag
+  const paneZoneNow = await evaluate(`window.__pgdemo.read.paneZone('pane-a')`)
+  if (paneZoneNow !== 'zone-1') {
+    // drag it back from wherever it is via its home handle
+    const homeHandle = await evaluate(`(()=>{const f=document.querySelector('.pane-frame[data-pane-id="pane-a"] .pane-handle');if(!f)return null;const r=f.getBoundingClientRect();return JSON.stringify({x:r.x+r.width/2,y:r.y+r.height/2})})()`)
+    if (homeHandle && homeHandle !== 'null') {
+      const hh = JSON.parse(homeHandle)
+      await drag(hh, { x: 120, y: 300 }, 16)
+      await releaseAt(120, 300)
+      await sleep(400)
+    }
+  }
+  // ensure zone-3 is MINIMIZED (the demo boot minted it minimized; an expand toggle
+  // may have flipped it in the pane block — the store value is the truth).
+  const z3min = await evaluate(`window.__pgdemo.read.zoneDisplay('zone-3')`)
+  if (z3min !== 'minimized') {
+    // toggle via the expand button (the button's label switches the user toggle)
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: 0, y: 0, button: 'left', clickCount: 1 }).catch(() => {})
+    const b = await boxOf('[data-zone="zone-3"] [data-expand-zone]').catch(() => null)
+    if (b) {
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: b.x, y: b.y, button: 'left', clickCount: 1 })
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: b.x, y: b.y, button: 'left', clickCount: 1 })
+      await sleep(200)
+    }
+  }
+
+  // CLAUSE 1 — the EMPTY minimized zone is hidden + the expand button shows.
+  const c1 = JSON.parse(await evaluate(`JSON.stringify((()=>{const s=document.querySelector('[data-zone="zone-3"]');return{cls:s.className,tabs:s.querySelectorAll('.zone-tab').length,frames:s.querySelectorAll('.pane-frame[data-pane-id]').length,stack:getComputedStyle(s.querySelector('.pane-stack')).display,btn:getComputedStyle(s.querySelector('[data-expand-zone]')).display}})())`))
+  check('an EMPTY minimized zone is HIDDEN entirely', c1.tabs === 0 && c1.frames === 0 && c1.stack === 'none', `tabs=${c1.tabs} frames=${c1.frames} stack=${c1.stack}`)
+  check('a visible expand button remains', c1.btn !== 'none' && c1.btn !== '', `btn=${c1.btn} cls=${c1.cls}`)
+
+  // THE EXPAND BUTTON restores visibility.
+  const btnBox = await boxOf('[data-zone="zone-3"] [data-expand-zone]')
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: btnBox.x, y: btnBox.y, button: 'left', clickCount: 1 })
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: btnBox.x, y: btnBox.y, button: 'left', clickCount: 1 })
+  await sleep(300)
+  const c1x = JSON.parse(await evaluate(`JSON.stringify((()=>{const s=document.querySelector('[data-zone="zone-3"]');return{cls:s.className,stack:getComputedStyle(s.querySelector('.pane-stack')).display}})())`))
+  check('the expand button restores visibility', c1x.cls.indexOf('zone-minimized') === -1 && c1x.stack === 'flex', `cls=${c1x.cls} stack=${c1x.stack}`)
+
+  // CLAUSE 3 — a drag into zone-3 reads the STORE SIZE + temporarily re-expands to
+  // host the ghost (re-minimize first, then drag pane-a in from zone-1).
+  {
+    const mbtn = await boxOf('[data-zone="zone-3"] [data-expand-zone]')
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: mbtn.x, y: mbtn.y, button: 'left', clickCount: 1 })
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: mbtn.x, y: mbtn.y, button: 'left', clickCount: 1 })
+    await sleep(250)
+    const p1h = await boxOf('.pane-frame[data-pane-id="pane-a"] .pane-handle')
+    await drag(p1h, { x: 500, y: 700 }, 16)
+    await sleep(350)
+    const during = JSON.parse(await evaluate(`JSON.stringify((()=>{const s=document.querySelector('[data-zone="zone-3"]');return{ghost:!!s.querySelector('.pane-frame.ghost'),expanded:s.className.indexOf('zone-minimized')===-1,trace:(window.__dragTrace??[]).slice(-2)}})())`))
+    const eligible = JSON.parse(await evaluate(`JSON.stringify((window.__dragTrace??[]).slice(-1)[0] ?? {})`)).canPlace
+    check('a pane drag READS THE STORE SIZE for the placement decision', eligible === true, `canPlace=${eligible} trace=${JSON.stringify(during.trace)}`)
+    check('during the drag the minimized target TEMPORARILY EXPANDS to display the ghost', during.ghost === true && during.expanded === true, `ghost=${during.ghost} expanded=${during.expanded}`)
+    // release over zone-3 -> the pane lands there; a MINIMIZED zone then shows the TAB
+    await releaseAt(500, 700)
+    await sleep(400)
+  }
+
+  // CLAUSE 2 — the minimized zone WITH panes shows the TAB-STRIP.
+  const c2 = JSON.parse(await evaluate(`JSON.stringify((()=>{const s=document.querySelector('[data-zone="zone-3"]');return{tabs:s.querySelectorAll('.zone-tab[data-tab-for="pane-a"]').length,frames:s.querySelectorAll('.pane-frame[data-pane-id="pane-a"]').length,cls:s.className}})())`))
+  check('a minimized zone WITH panes retains a TAB-STRIP list', c2.tabs === 1 && c2.frames === 0, `tabs=${c2.tabs} frames=${c2.frames} cls=${c2.cls}`)
+
   console.log('')
   if (failures === 0) {
-    console.log('[live] PANE-DRAG + GUTTER LIVE TESTS: ALL GREEN')
+    console.log('[live] PANE-DRAG + GUTTER + MINIMIZED-ZONE LIVE TESTS: ALL GREEN')
     process.exit(0)
   } else {
-    console.log(`[live] PANE-DRAG + GUTTER LIVE TESTS: ${failures} FAILED`)
+    console.log(`[live] PANE-DRAG + GUTTER + MINIMIZED-ZONE LIVE TESTS: ${failures} FAILED`)
     process.exit(1)
   }
 }

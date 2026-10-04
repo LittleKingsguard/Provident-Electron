@@ -11,6 +11,13 @@ body { margin: 0; font-family: system-ui, sans-serif; background: #010409; color
 #gutter { grid-column: 3; grid-row: 1; width: 10px; cursor: col-resize; background: #21262d; border-radius: 3px; display: flex; align-items: stretch; position: relative; z-index: 5; }
 #gutter .gutter-grip { flex: 1; background: #30363d; margin: 2px 0; border-radius: 2px; }
 .pane-size { font-size: 10px; color: #8b949e; padding: 2px 8px; }
+.zone.zone-minimized { flex-direction: row; align-items: center; gap: 6px; }
+.zone.zone-minimized.zone-empty { border-style: dashed; opacity: 0.55; min-height: 2rem; }
+.zone.zone-minimized.zone-empty .pane-stack { display: none; }
+.zone.zone-minimized:not(.zone-empty) .pane-stack { display: flex; flex-direction: row; gap: 6px; min-height: 1.5rem; }
+.zone-minimized .zone-title { display: none; }
+.zone-tab { font-size: 11px; padding: 2px 8px; background: #21262d; border: 1px solid #30363d; border-radius: 3px; color: #c9d1d9; cursor: pointer; }
+.zone-expand-btn { font-size: 10px; padding: 2px 8px; background: #1f6feb; border: none; border-radius: 3px; color: #fff; cursor: pointer; }
 #app > .zone, #app > .statusbar { min-width: 0; min-height: 0; }
 .statusbar { grid-column: 1 / 5; grid-row: 3; }
 #zone-sidebar, #zone-main { height: 100%; min-height: 0; }

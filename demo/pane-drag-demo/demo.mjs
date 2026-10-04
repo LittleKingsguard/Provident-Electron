@@ -12650,6 +12650,8 @@ var INITIAL_PANES = [
 var activeGhostZone = null;
 var activeGhostOpacity = 0;
 var sinkCalls = 0;
+var dragExpandedZone = null;
+var userExpanded = /* @__PURE__ */ new Set();
 function buildDemo() {
   const store = createGraphStore({
     declarations: { rows: [{ name: "layout" }, { name: "settings" }, { name: "drag" }] }
@@ -12700,11 +12702,43 @@ function buildDemo() {
         title.className = "pane-title";
         title.textContent = p.title;
         head.append(handle, title);
+        if (minimized) {
+          const tab = document.createElement("button");
+          tab.className = "zone-tab";
+          tab.setAttribute("data-tab-for", p.id);
+          tab.textContent = p.title;
+          stack.append(tab);
+          continue;
+        }
         const body = document.createElement("div");
         body.className = "pane-body";
-        body.textContent = minimized ? "\u25B8 minimized" : `content of ${p.title}`;
+        body.textContent = `content of ${p.title}`;
         frame.append(head, body);
         stack.append(frame);
+      }
+      const section = root2.querySelector(`[data-zone="${z}"]`);
+      const tabs = stack.querySelectorAll(".zone-tab").length;
+      if (section) {
+        let expandBtn = section.querySelector("[data-expand-zone]");
+        if (!expandBtn) {
+          expandBtn = document.createElement("button");
+          expandBtn.className = "zone-expand-btn";
+          expandBtn.setAttribute("data-expand-zone", z);
+          expandBtn.textContent = "\u25B8 expand";
+          section.insertBefore(expandBtn, stack);
+        }
+        const collapsedNow = minimized && !dragExpandedZone && !userExpanded.has(z);
+        if (collapsedNow) {
+          section.classList.add("zone-minimized");
+          if (tabs === 0) section.classList.add("zone-empty");
+          else section.classList.remove("zone-empty");
+          stack.style.display = tabs === 0 ? "none" : "flex";
+          expandBtn.style.display = tabs === 0 ? "inline-block" : "none";
+        } else {
+          section.classList.remove("zone-minimized", "zone-empty");
+          stack.style.display = "flex";
+          expandBtn.style.display = "none";
+        }
       }
     }
     if (activeGhostZone && root2) {
@@ -12753,8 +12787,8 @@ function buildDemo() {
     if (!root2) return;
     root2.addEventListener("pointerdown", (ev) => {
       const handle = ev.target?.closest?.(".pane-handle");
-      if (!handle) return;
-      const paneId = handle.getAttribute("data-handle-for");
+      const tab = ev.target?.closest?.(".zone-tab");
+      const paneId = handle ? handle.getAttribute("data-handle-for") : tab ? tab.getAttribute("data-tab-for") : null;
       if (!paneId) return;
       const pane = panes.get(paneId);
       if (!pane) return;
@@ -12780,14 +12814,20 @@ function buildDemo() {
         try {
           const targetZone = zoneAtPoint(e.clientX, e.clientY) ?? e.target?.closest?.(".zone")?.getAttribute("data-zone");
           const zone = targetZone && ZONES.includes(targetZone) ? targetZone : pane.zone;
-          const placement = { paneId, zone, ghostOpacity: GHOST_OPACITY };
+          const sizeRaw = store.tiers.mem.get(
+            `mem.layout.zone.${zone}.size`
+          );
+          const expandedSize = sizeRaw && sizeRaw.found && typeof sizeRaw.value === "number" ? sizeRaw.value : 0;
+          const canPlace = expandedSize >= MIN_ZONE_SIZE;
+          const placement = { paneId, zone, ghostOpacity: GHOST_OPACITY, storeSize: expandedSize, canPlace };
           drag.move(gid, placement);
           lastPlacementZone = zone;
-          activeGhostZone = zone;
+          activeGhostZone = canPlace ? zone : null;
           activeGhostOpacity = GHOST_OPACITY;
+          dragExpandedZone = canPlace ? zone : null;
           paint();
           window.__dragTrace = window.__dragTrace ?? [];
-          window.__dragTrace.push({ zone, x: e.clientX, y: e.clientY });
+          window.__dragTrace.push({ zone, x: e.clientX, y: e.clientY, canPlace, expandedSize });
         } catch (err) {
           window.__dragTrace = window.__dragTrace ?? [];
           window.__dragTrace.push({ err: String(err) });
@@ -12795,6 +12835,7 @@ function buildDemo() {
       };
       const onUp = () => {
         cleanup();
+        dragExpandedZone = null;
         try {
           drag.release(gid, pane.size, commitSink);
           window.__upTrace = { ok: true, final: pane.size, sinkCalls, lastZone: lastPlacementZone };
@@ -12807,6 +12848,7 @@ function buildDemo() {
       };
       const onCancel = () => {
         cleanup();
+        dragExpandedZone = null;
         drag.rightClick(gid);
         activeGhostZone = null;
         activeGhostOpacity = 0;
@@ -12827,6 +12869,20 @@ function buildDemo() {
       window.addEventListener("pointercancel", onCancel);
       window.addEventListener("contextmenu", onCtx);
     });
+    for (const z of ZONES) {
+      const sect = root2.querySelector(`[data-zone="${z}"]`);
+      if (!sect) continue;
+      const btn = sect.querySelector("[data-expand-zone]");
+      if (!btn) continue;
+      btn.addEventListener("click", () => {
+        if (userExpanded.has(z)) {
+          userExpanded.delete(z);
+        } else {
+          userExpanded.add(z);
+        }
+        paint();
+      });
+    }
     const gutterEl = root2.querySelector("#gutter");
     if (gutterEl) {
       const ggid = "gutter-g1";
