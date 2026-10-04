@@ -90,11 +90,24 @@
  *          FRESH deep copy at every depth — no aliasing, no depth bound), P6 = G4-F6 (the
  *          constraint evaluation's data record is PROTOTYPE-SAFE), P7 = G4-F7 ("equal value"
  *          is the pinned `===`, not `Object.is`)
+ *   H1–H8  the HYDRATE-1 SEAM DRIVES (AMENDMENT HYDRATE-1, 2026-10-04 — added by the G2
+ *          HYDRATE-1 re-cycle under field 7 member 4's licence, the seat's R192–R199
+ *          siblings): H1 = the seam-census boundary (hydrate is PRODUCTION-PRESENT, never a
+ *          test-seam key), H2 = the mint + the fired event surface (one event per minted
+ *          reference, the existing envelope, void return), H3 = NEVER CROSSES (zero
+ *          GraphCrossing.put calls on a recording double; the control commit crosses once),
+ *          H4 = NEVER EVALUATES THE CONSTRAINT TABLE (call-count 0 on a hydrate; the control
+ *          commit under the hydrated top evaluates), H5 = NOT set/commit/remove + the
+ *          register's top-level projection (only the minted tops enter), H6 = the SKIP
+ *          posture (7 enumerated malformed terms), H7 = totality on a non-array + the cold
+ *          boot's `[]`, H8 = the read-back (ALL N entries resolve at tier-1 — the G2 spec's
+ *          M-7 satisfiable)
  *
  * DETERMINISM AND SCOPE: no `Math.random`, no clock, no ambient read; enumeration rows print
  * their terms (C1a's 29 names, E2's malformed-row terms, S9's eight seam keys, the eight `cause`
- * arms as data, U0's sixteen tokens); totals are modest — 40 runtime rows + 1 type-level row
- * (33 as filed + the seven P1–P7 pin drives added by the G1 pass), and RCAP-1's 1024-enumeration
+ * arms as data, U0's sixteen tokens); totals are modest — 48 runtime rows + 1 type-level row
+ * (33 as filed + the seven P1–P7 pin drives added by the G1 pass + the eight H1–H8 hydrate
+ * drives added by the G2 HYDRATE-1 re-cycle), and RCAP-1's 1024-enumeration
  * is NOT re-driven here (the seat owns the exhaustive sweep).
  *
  * LEG NOTE: row C2 is erased at vitest runtime (type unions have no runtime bytes). It is part
@@ -1182,6 +1195,242 @@ describe('U-STORE-CORE module wave — T4 integration red set (fields 3/6 wiring
     s3.subscribe('mem.r', (e) => ev3.push(e))
     expect(s3.set('mem.r', 'same').events).toBe(0) // the ===-equal primitive control fires NOTHING
     expect(ev3).toHaveLength(0)
+  })
+
+  /* =============================================================================================
+   * GROUP H — THE HYDRATE-1 SEAM DRIVES (G2 HYDRATE-1 re-cycle, 2026-10-04).
+   * Derived from the frozen-surface artifact's HYDRATE-1 amendment (field 2, the boot-hydration
+   * seam), `docs/decisions.md`'s ACTIVE row 'THE BOOT HYDRATION MINT'S EVENTS ARE INTENTIONAL'
+   * (by row name), and `docs/specs/store-persist.md` §2.3 item 3's re-read / §2.9 / M-7's
+   * annotation: `store.hydrate(rows)` MINTS the file-tier nodes for the Y-1 hand-off's record,
+   * FIRES the store's event surface BY DESIGN (the boot-load events ARE the consumer-
+   * notification channel — readiness is DELIVERED by the event surface, never a return value),
+   * NEVER CROSSES (no GraphCrossing.put — the record came FROM main; a boot write-back is a
+   * redundant round-trip), NEVER EVALUATES THE CONSTRAINT TABLE (the first evaluation stays
+   * U-STORE-FOCUS's boot step), is NOT set/commit/remove (the register/ref-count change ONLY by
+   * the file-tier nodes the record's names mint), SKIPS malformed rows (never a throw — the 16-
+   * member union and the three throw classes are UNCHANGED), and returns void.
+   * =========================================================================================== */
+
+  it('H1 (HYDRATE-1, clause (5) — the seam-census boundary) — hydrate is a PRODUCTION-PRESENT declared member: present on the WIRED boot store and on a construction WITHOUT { enableTestSeam: true }; the flag neither gates nor removes it; hydrate is NOT one of the eight test-seam keys (a row asserting it behaves like a test-seam key — ABSENT without the flag, or throwing without it — FAILS)', async () => {
+    // Field 2's clause (5): "hydrate is a PRODUCTION-PRESENT declared member — the boot wiring
+    // calls it after the Y-1 hand-off"; "a row asserting that hydrate behaves like a test-seam
+    // key (ABSENT without {enableTestSeam:true}, or throwing without the flag) FAILS"; "the
+    // census above — 4 as-filed + 4 appended = 8 ✓ — is UNCHANGED and those keys stay absent
+    // from production constructions".
+    const wired = await wiredStore()
+    expect(typeof wired.hydrate).toBe('function') // present on the realm's boot store
+    const prod = createGraphStore({ declarations: storeGraphReferences([{ name: 'w' }]) })
+    expect(typeof prod.hydrate).toBe('function') // present WITHOUT the test seam
+    const seam = createGraphStore({ enableTestSeam: true })
+    expect(typeof seam.hydrate).toBe('function') // the flag neither gates nor removes it
+    expect(TEST_SEAM_KEYS_EIGHT).toHaveLength(8)
+    expect(TEST_SEAM_KEYS_EIGHT.includes('hydrate')).toBe(false) // never one of the census keys
+  })
+
+  it('H2 (HYDRATE-1, clauses (1)/(7)/(8) — the mint + the fired event surface) — hydrate a `file.settings.theme.token` row into a FRESH store: the file-tier node is MINTED, resolve answers the hydrated value, and the subscriber on the minted reference gains the DELIVERY — ONE event per minted reference, the existing envelope (name = the reference\'s spelling, flag = file, value present as a key, cleared[] present); the return is VOID; the seam registers/releases no subscription', () => {
+    // Field 2's clauses (1)/(7)/(8): "mints the FILE-TIER nodes for a handed-off record",
+    // "FIRES the store's EVENT SURFACE: the boot-load events ARE the consumer-notification
+    // channel", "a subscriber on a minted reference gains the delivery, one event per minted
+    // reference (§3.3 I-16's one-event-per-affected-reference rule read over the minted
+    // nodes; §2.10 item 5's delivery record)", "The return: void — readiness is DELIVERED by
+    // the event surface, never by a return value". RED today: store.hydrate does not exist.
+    const store = createGraphStore()
+    const got: GraphEvent[] = []
+    const sub = store.subscribe('file.settings.theme.token', (e) => got.push(e))
+    let ret: unknown = 'sentinel'
+    expect(() => {
+      ret = store.hydrate([{ name: 'file.settings.theme.token', value: { theme: 'dark' } }])
+    }).not.toThrow() // the seam itself NEVER throws
+    expect(ret).toBeUndefined() // the return is VOID
+    const hit = store.resolve('file.settings.theme.token') as GraphReadHit
+    expect(hit.found).toBe(true) // the file-tier node is MINTED — resolve answers the hydrated value
+    expect(hit.value).toEqual({ theme: 'dark' })
+    expect(hit.flag).toBe('file')
+    expect(got).toHaveLength(1) // the boot-load event fired BY DESIGN — one event per minted reference
+    const ev = got[0]
+    expect(ev.name).toBe('file.settings.theme.token') // the reference's own spelling
+    expect(ev.flag).toBe('file') // the tier that FIRED
+    expect('value' in ev).toBe(true) // present as a KEY on every arm
+    expect(Array.isArray(ev.cleared)).toBe(true) // PRESENT AND POSSIBLY EMPTY
+    expect(sub.unsubscribe()).toBe(true) // the pre-existing subscription is still live
+  })
+
+  it('H3 (HYDRATE-1, clause (2) — NEVER CROSSES) — a hydrate into a store with a RECORDING crossing double answers ZERO put calls (no channel byte, no GraphCrossing.put invocation — the record came FROM main at the Y-1 hand-off, and a boot write-back is a redundant round-trip); the mint still lands; the LIVE control — a file-tier commit — drives the seam exactly once', () => {
+    // Field 2's clause (2): "It NEVER CROSSES — no channel byte, no GraphCrossing.put
+    // invocation"; the D-4 control: the double must be driven (`crossings: 1` for a
+    // regenerated set, never a synthesised integer). RED today: store.hydrate does not exist.
+    const calls: unknown[] = []
+    const crossing: GraphCrossing = {
+      put(row) {
+        calls.push(row)
+        return { status: 'committed' }
+      },
+    }
+    const store = createGraphStore({ crossing })
+    store.hydrate([{ name: 'file.settings.theme.token', value: 'hydrated' }])
+    expect(calls).toHaveLength(0) // a hydrate NEVER CROSSES — zero put calls, no channel byte
+    expect((store.resolve('file.settings.theme.token') as GraphReadHit).value).toBe('hydrated') // the no-cross rule is not a no-mint rule
+    const ctl = store.commit('file.ctl', 'x')
+    expect(ctl.status).toBe('committed')
+    expect(ctl.crossings).toBe(1) // the control drives the seam — crossings: 1 for the whole set
+    expect(calls).toHaveLength(1) // the recording double is LIVE — it recorded the control, never the hydrate
+  })
+
+  it('H4 (HYDRATE-1, clause (2) — NEVER EVALUATES THE CONSTRAINT TABLE) — a store WITH a constraint member whose matchedSet matches the hydrated top: the hydrate answers no repair/refusal and the constraint function\'s call-count stays 0; the LIVE control — a commit under the hydrated top — DOES evaluate the matched member (the FIRST constraint evaluation stays reserved for the slice\'s boot step, U-STORE-FOCUS\'s)', () => {
+    // Field 2's clause (2): "It NEVER EVALUATES THE CONSTRAINT TABLE — the FIRST constraint
+    // evaluation stays reserved for the slice's boot step, U-STORE-FOCUS's, before the first
+    // graph load"; the RE-DERIVED constraint member's evaluation points are every write
+    // (set/commit) and every remove on the call's POST-STATE — hydrate is not among them.
+    let calls = 0
+    const member: GraphConstraint = {
+      id: 'c1',
+      matchedSet: 'settings',
+      evaluatedOn: ['set', 'commit', 'remove'],
+      constraint: () => {
+        calls += 1
+        return true
+      },
+    }
+    const store = createGraphStore({ constraints: [member] })
+    const before = calls
+    store.hydrate([{ name: 'file.settings.theme.token', value: { theme: 'dark' } }])
+    expect(calls).toBe(before) // the hydrate never evaluated the table — call-count stays 0
+    expect((store.resolve('file.settings.theme.token') as GraphReadHit).found).toBe(true) // no repair, no refusal — the value is present
+    const ctl = store.commit('mem.settings.ctl', 1)
+    expect(ctl.status).toBe('committed') // the control commit commits under the hydrated top
+    expect(calls).toBe(before + 1) // the control DID evaluate the matched member
+  })
+
+  it('H5 (HYDRATE-1, clause (2) — NOT set/commit/remove, and the register\'s own top-level projection) — the write-census double\'s set/commit/remove counts stay 0 on a hydrate; the return is VOID; the register is UNCHANGED except the file-tier nodes the record\'s names mint (pre-existing rows byte-identical, the minted tops enter under the register\'s top-level-projection rule); no lower-tier regeneration clear ran', () => {
+    // Field 2's clause (2): "It is NOT set, NOT commit, NOT remove … and it leaves the
+    // register/ref-count unchanged EXCEPT the file-tier nodes the record's names mint (the
+    // top-level rows those names imply enter the register under the register's own
+    // top-level-projection rule)". RED today: store.hydrate does not exist.
+    function withCensus(store: GraphStore): { proxy: GraphStore; census: { set: number; commit: number; remove: number } } {
+      const census = { set: 0, commit: 0, remove: 0 }
+      const proxy = new Proxy(store, {
+        get(target, prop) {
+          const v = (target as unknown as Record<string, unknown>)[prop as string]
+          if (typeof v !== 'function') return v
+          if (Object.hasOwn(census, prop as string)) {
+            return (...args: unknown[]) => {
+              census[prop as 'set' | 'commit' | 'remove'] += 1
+              return (v as (...a: unknown[]) => unknown).apply(target, args)
+            }
+          }
+          return (v as (...a: unknown[]) => unknown).bind(target)
+        },
+      })
+      return { proxy, census }
+    }
+    const store = createGraphStore()
+    expect(store.commit('mem.dock', 1).status).toBe('committed') // pre-existing row 1
+    expect(store.commit('file.alpha', 'a').status).toBe('committed') // pre-existing row 2 (a file-tier root)
+    const { proxy, census } = withCensus(store)
+    const before = proxy.register.rows
+    const namesBefore = new Set(before.map((r) => r.name))
+    let ret: unknown = 'sentinel'
+    expect(() => {
+      ret = proxy.hydrate([
+        { name: 'file.settings.theme.token', value: { theme: 'dark' } },
+        { name: 'file.window.tabs.active', value: true },
+      ])
+    }).not.toThrow()
+    expect(ret).toBeUndefined() // VOID — never a receipt
+    expect(census.set).toBe(0)
+    expect(census.commit).toBe(0)
+    expect(census.remove).toBe(0)
+    const after = proxy.register.rows
+    const added = after.filter((r) => !namesBefore.has(r.name)).map((r) => r.name).sort()
+    expect(added).toEqual(['settings', 'window']) // the minted tops entered the register — exactly the file-tier nodes
+    expect(after).toHaveLength(before.length + 2) // nothing else entered
+    for (const row of after) {
+      if (namesBefore.has(row.name)) {
+        const beforeRow = before.find((b) => b.name === row.name)
+        expect(row).toEqual(beforeRow) // the pre-existing row is byte-identical
+      } else {
+        expect(row.derived).toBe(true)
+        expect(row.nodeRef).not.toBeNull()
+        expect(row.constraintId).toBeNull()
+      }
+    }
+    expect((store.tiers.mem.get('mem.dock') as GraphTierGetResult).found).toBe(true) // no lower-tier regeneration clear
+    expect((store.tiers.file.get('file.alpha') as GraphTierGetResult).found).toBe(true)
+    expect((store.tiers.mem.get('mem.settings') as GraphTierGetResult).found).toBe(false) // file-tier nodes only
+    expect((store.tiers.file.get('file.window.tabs.active') as GraphTierGetResult).found).toBe(true)
+  })
+
+  it('H6 (HYDRATE-1, clause (4) — THE SKIP POSTURE, DECLARED) — a row that is not a record, or whose name is not a string, or whose spelling is not file.*-qualified, is SKIPPED: it mints nothing, fires nothing and leaves the store unchanged for that name; the record\'s OTHER rows still mint and still fire; the seam itself NEVER throws — attempts: 7 enumerated row terms (1 valid + 6 skipped)', () => {
+    // Field 2's clause (4): "A row of the record that is not a record, or whose name is not a
+    // string, or whose spelling is not file.*-qualified, is SKIPPED: it mints nothing, fires
+    // nothing and leaves the store unchanged for that name; the record's other rows still mint
+    // and still fire. The seam itself NEVER throws."
+    const rows: unknown[] = [
+      { name: 'file.ok', value: 'v' },
+      null, // a non-record
+      7, // a non-record
+      'junk', // a non-record
+      { name: 42, value: 'x' }, // a non-string name
+      { name: 'mem.x.v', value: 'z' }, // a non-file.* spelling
+      { value: 'y' }, // a name-less row
+    ]
+    expect(rows).toHaveLength(7)
+    const store = createGraphStore()
+    const okEv: GraphEvent[] = []
+    const xEv: GraphEvent[] = []
+    store.subscribe('file.ok', (e) => okEv.push(e))
+    const xSub = store.subscribe('mem.x.v', (e) => xEv.push(e))
+    let ret: unknown = 'sentinel'
+    expect(() => {
+      ret = store.hydrate(rows)
+    }).not.toThrow() // never a throw — the row-level skip re-uses the seed seam's skip shape
+    expect(ret).toBeUndefined()
+    expect((store.resolve('file.ok') as GraphReadHit).found).toBe(true) // the record's OTHER rows still mint
+    expect((store.resolve('file.ok') as GraphReadHit).value).toBe('v')
+    expect(okEv).toHaveLength(1) // the valid row still FIRES — one event per minted reference
+    expect((store.tiers.mem.get('mem.x.v') as GraphTierGetResult).found).toBe(false) // minted NOTHING for that name
+    expect(xEv).toHaveLength(0) // the skipped row fired NOTHING for its name
+    expect(store.register.rows.map((r) => r.name)).toEqual(['ok']) // only the valid row's top entered the register
+    expect(xSub.unsubscribe()).toBe(true) // no subscription registered/released by the seam
+  })
+
+  it('H7 (HYDRATE-1, clause (8) — totality on a non-array + the cold boot) — hydrate(\'not-an-array\'), hydrate({}) and the cold-boot hydrate([]) never throw and mint nothing: a non-array is OUTSIDE the rows domain and is SKIPPED under clause (4) — never a throw', () => {
+    // Field 2's clause (8): "Outside: a non-array … A row outside the domain is SKIPPED under
+    // clause (4) — never a throw"; "a `{ name: string; value: unknown }[]` … `[]` for a cold
+    // boot (the hand-off answers [] and the renderer boots on that)"; §2.2 P-5 — the seam
+    // itself NEVER throws.
+    const terms: unknown[] = ['not-an-array', {}, []]
+    expect(terms).toHaveLength(3)
+    const store = createGraphStore()
+    for (const term of terms) {
+      expect(() => store.hydrate(term)).not.toThrow() // never a throw
+    }
+    expect(store.register.rows).toHaveLength(0) // no mint — the register stays empty
+    expect((store.tiers.file.get('file.anything') as GraphTierGetResult).found).toBe(false)
+  })
+
+  it('H8 (HYDRATE-1, clause (3) — THE READ-BACK) — after a hydrate of N entries, ALL N resolve the hydrated values at tier-1 — the G2 spec\'s M-7 ("the renderer answers the handed-off values") is thereby satisfiable, and a persisted-record boot\'s first rendered graph answers the handed-off values — attempts: 4 deterministic entries, ALL N read back', () => {
+    // Field 2's clause (3): "After a hydrate at boot, tier-1 resolves answer the hydrated
+    // values — the G2 spec's M-7 … is thereby satisfiable"; store-persist.md M-7's annotation:
+    // "every tier-1 resolve answers the handed-off value (or the declared miss)".
+    const entries: { name: string; value: unknown }[] = [
+      { name: 'file.settings.theme.token', value: { theme: 'dark' } },
+      { name: 'file.window.tabs.active', value: true },
+      { name: 'file.session.last.key', value: 3 },
+      { name: 'file.preferences.locale.lang', value: 'en' },
+    ]
+    expect(entries).toHaveLength(4)
+    const store = createGraphStore()
+    store.hydrate(entries)
+    for (const { name, value } of entries) {
+      const hit = store.resolve(name) as GraphReadHit
+      expect(hit.found).toBe(true) // ALL N answer a HIT after the hydrate
+      expect(hit.value).toEqual(value) // the hydrated value
+      expect(hit.flag).toBe('file') // tier-1 resolves answer the hydrated values
+      expect(hit.cache).toBe(store.tiers.file) // the HIT's cache IS store.tiers[flag] by identity (M-3)
+    }
+    expect(store.register.rows).toHaveLength(4) // four tops entered under the register's top-level-projection rule
   })
 })
 
