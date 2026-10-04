@@ -75,13 +75,17 @@ clause 6, which I did not re-run).
 | `docs/decisions.md` | `U-RELOCATE-REVEALED-ZONE-HIDES-AGAIN` (ACTIVE) | the revealed zone's hide rule, and that displayed-ness is not monotonic in a gesture |
 | `docs/decisions.md` | `E10-SINGLE-SINK-CHANNEL` (ACTIVE) | the single-sink-writer rule the composition must obey |
 | `docs/decisions.md` | `SEAM-THROW-DISPOSITION-VALUE-READING-SEAMS-ABSORBED` (ACTIVE) | which seam classes absorb a throw and which two propagate |
-| `docs/next-steps.md` | `## DONE — U-RELOCATE` | the landed record: the surface, the red/green chain, the leg figures and the two rows still owed |
+| `docs/next-steps.md` | `## DONE — U-RELOCATE` | the landed record: the surface, the red/green chain, the leg figures and the REMAINING owed row (the `§3.1 M-18` test-side half; the FORKER.md relocate seam block itself is WRITTEN at FORKER.md §4) |
 
 ## Use cases
 
 **UC-1 — "a pane drag should commit a drop decision to my own state."** You have panes and zones,
 you can measure how far a zone is from the pointer, and you want the drop recorded exactly once,
-at the end of the gesture, with the target your policy chose. You supply the session, your
+at the end of the gesture, with the target your policy chose. **STORE-WAVE (`2026-10-04`): in the
+LANDED composition the candidate production is STORE-CARRIED** — `createPaneDrag`'s `candidatesFor`
+reads `mem.layout.zone.<id>.slot` / `…distance` — and the landed demo resolves the target zone by
+POINT (`document.elementFromPoint` + a rect fallback, because the ghost repaint clears the stack
+under the pointer; the distance-measurement premise below is the module-agnostic form). You supply the session, your
 candidate closure, your resolver, your reveal write and your sink; the module owns the order and
 the once-ness.
 
