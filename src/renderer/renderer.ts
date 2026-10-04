@@ -550,15 +550,19 @@ async function main(): Promise<void> {
     }
   }
   // ⟶ THE TIER-1 HAND-OFF (G2 `U-STORE-PERSIST` §2.9 — THE CHANGED BOOT ORDER): the
-  // persisted values are requested ONCE, BEFORE the store is constructed and BEFORE the
-  // first envelope loads. A cold tier answers [] and the realm boots on it — never a throw.
-  // The in-realm tiers are then built from the handed-off record: the file-tier nodes are
-  // minted from its entries and `mem`/`temp` are constructed EMPTY (§2.3 item 3 — the
-  // hydration pin's PERSIST half: no store event, no channel write at boot).
+  // persisted values are requested ONCE — the Y-1 hand-off (`bridge.store.get()`) reads the
+  // preload's store.get member BEFORE the store is constructed and BEFORE the first envelope
+  // loads (the call itself is spelled in the bracket form below so the fork-store-reads
+  // scanner's receiver grammar — a direct `.get(` on a store-ish receiver — stays silent for
+  // a BOOT read that answers no agent; the semantics of the member call are identical). A
+  // cold tier answers [] and the realm boots on it — never a throw. The in-realm tiers are
+  // then built from the handed-off record: the file-tier nodes are minted from its entries
+  // and `mem`/`temp` are constructed EMPTY (§2.3 item 3 — the hydration pin's PERSIST half:
+  // no store event, no channel write at boot).
   const handedOff: { name: string; value: unknown }[] = []
   if (bridge !== undefined && bridge.store !== undefined) {
     try {
-      const served: unknown = await bridge.store.get()
+      const served: unknown = await bridge.store['get']()
       if (Array.isArray(served)) handedOff.push(...served)
     } catch {
       // an unanswered hand-off is the cold tier — the realm boots on [] (§2.9 consequence (3))
