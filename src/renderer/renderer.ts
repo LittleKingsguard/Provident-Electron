@@ -69,12 +69,15 @@ interface Tier1StoreSurface {
   }
 }
 
-/** THE IN-REALM TIER-1 BOOT AUTHORITY (G2 §2.3 item 3 — the hydration pin's PERSIST half):
- *  the handed-off record the realm owns at boot; the file-tier nodes are minted from its
- *  entries and the `mem`/`temp` tiers are constructed EMPTY. The wiring holds the record —
- *  the store's file tier is written only by the realm's OWN commits (no store event, no
- *  channel write at boot), and the realm's first envelope loads only AFTER the hand-off
- *  answered (the starting-order gate, §2.9 consequence (1)). */
+/** THE IN-REALM TIER-1 BOOT AUTHORITY (G2 §2.3 item 3 — the hydration pin's PERSIST half,
+ *  re-read by the HYDRATE-1 amendment): the handed-off record the realm owns at boot. The
+ *  wiring holds the record and feeds it to the store's `hydrate(rows)` seam right after the
+ *  store's construction — the file-tier nodes are minted from its entries and the `mem`/`temp`
+ *  tiers are constructed EMPTY. The hydration mint FIRES the store's event surface BY DESIGN
+ *  (the boot-load events ARE the consumer-notification channel — NO-CROSSING and
+ *  NO-CONSTRAINT halves survive: no channel byte is written back and no constraint is
+ *  evaluated at the hydration point), and the realm's first envelope loads only AFTER the
+ *  hand-off answered and hydrated (the starting-order gate, §2.9 consequence (1)). */
 let bootHandoff: { name: string; value: unknown }[] = []
 
 function buildWiredGraphStore(options?: WiredStoreOptions): GraphStore {
@@ -556,9 +559,11 @@ async function main(): Promise<void> {
   // scanner's receiver grammar — a direct `.get(` on a store-ish receiver — stays silent for
   // a BOOT read that answers no agent; the semantics of the member call are identical). A
   // cold tier answers [] and the realm boots on it — never a throw. The in-realm tiers are
-  // then built from the handed-off record: the file-tier nodes are minted from its entries
-  // and `mem`/`temp` are constructed EMPTY (§2.3 item 3 — the hydration pin's PERSIST half:
-  // no store event, no channel write at boot).
+  // then built from the handed-off record THROUGH the store's `hydrate(rows)` seam
+  // (§2.3 item 3's re-read, the HYDRATE-1 amendment): the file-tier nodes are minted from the
+  // record's entries and `mem`/`temp` are constructed EMPTY — the mint FIRES the event
+  // surface BY DESIGN (the boot-load events ARE the consumer-notification channel), never
+  // crosses (no channel byte back) and never evaluates a constraint.
   const handedOff: { name: string; value: unknown }[] = []
   if (bridge !== undefined && bridge.store !== undefined) {
     try {
@@ -584,6 +589,20 @@ async function main(): Promise<void> {
         }
       : undefined,
   )
+  // ⟶ THE TIER-1 HYDRATION (G2 §2.3 item 3's re-read + the frozen surface's HYDRATE-1
+  // amendment — the boot order: hand-off → store construction → hydrate → slice boot step →
+  // Runtime/first envelope): `wired.hydrate(bootHandoff)` MINTS the file-tier nodes the
+  // handed-off record names and FIRES the store's EVENT SURFACE BY DESIGN — the boot-load
+  // events ARE the consumer-notification channel (a consumer, e.g. pane placement, subscribes
+  // and learns via the emitted event that the persisted tier-1 values are READY). The seam
+  // NEVER crosses (no channel byte back — the record came FROM main; a boot write-back is a
+  // redundant round-trip) and NEVER evaluates the constraint table (the FIRST constraint
+  // evaluation stays reserved for the slice's boot step below); the `mem`/`temp` tiers stay
+  // constructed EMPTY (§0A item 6). The first envelope loads only AFTER the hydration — a
+  // boot whose first graph loads before the hand-off answered FAILS the starting-order gate
+  // (§2.9 consequence (1)); the persisted tier-1 values are IN the store from here on
+  // (tier-1 resolves answer them; the G2 spec's M-7 is satisfiable).
+  wired.hydrate(bootHandoff)
   // ⟶ THE FOCUS CARRIER (`U-STORE-FOCUS`, §2.3 items 1/2): boot-constructed from the
   // wired store — the boot MINT-DECLARES `mem.focus` (the register's row pre-exists the
   // first focus write) and the two exact-reference store subscriptions (rule 2) register

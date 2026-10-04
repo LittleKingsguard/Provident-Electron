@@ -233,6 +233,12 @@ export interface GraphStore {
   readonly tiers: Readonly<Record<GraphNodeFlag, GraphTierHandle>>
   readonly register: GraphRegister
   readonly constraints: readonly GraphConstraint[]
+  /** THE BOOT-HYDRATION SEAM (frozen-surface field 2, the `HYDRATE-1` amendment —
+   *  PRODUCTION-PRESENT, never a test-seam key): mints the file-tier nodes the handed-off
+   *  record names, fires the event surface BY DESIGN (the boot-load events ARE the
+   *  consumer-notification channel), never crosses, never evaluates the constraint table,
+   *  skips malformed rows (never a throw), returns void. */
+  hydrate(rows: readonly { readonly name: string; readonly value: unknown }[]): void
   reset?(): void
   seed?(rows: readonly { readonly name: string; readonly value: unknown }[]): void
   parentLinkCountOf?(nodeRef: GraphNodeRef): number
@@ -2152,6 +2158,92 @@ export function createGraphStore(options: {
     return handle
   }
 
+  /* ── THE BOOT-HYDRATION SEAM (`HYDRATE-1`, frozen-surface field 2; docs/decisions.md's
+     ACTIVE row 'THE BOOT HYDRATION MINT'S EVENTS ARE INTENTIONAL') ── */
+
+  /** `store.hydrate(rows)` — the G2 boot wiring feeds it the Y-1 hand-off's record at boot.
+   *  For each `{ name, value }` row it MINTS the file-tier node CHAIN the name implies and
+   *  places the value at the leaf — the same node/mint machinery the file-tier mint uses
+   *  (setHolder / mintRef / withAnchor + the per-link cache), WITHOUT the crossing
+   *  invocation (clause (2): the record came FROM main — a boot write-back is a redundant
+   *  round-trip), WITHOUT the constraint capture (the FIRST constraint evaluation stays
+   *  reserved for U-STORE-FOCUS's boot step) and WITHOUT the lower-tier regeneration
+   *  clears — and FIRES the store's EVENT SURFACE: the boot-load events ARE the
+   *  consumer-notification channel, the mint is NOT silent, one event per minted reference
+   *  (clauses (1)/(7), I-16, §2.10 item 5). The events ride the EXISTING envelope —
+   *  HYDRATE-1 records the cause token as a gap never filled, so the mint's own event takes
+   *  the existing minting-write 'commit' arm's shape (no ninth arm is invented). It is NOT
+   *  set/commit/remove, registers/releases NO subscription, and the register/ref-count
+   *  change ONLY by the top-level rows the record's names mint (the register's own
+   *  top-level-projection rule — the same declaration mint the landed file-tier mint
+   *  performs); no lower-tier regeneration clears ever run. Refusal posture: SKIP — a
+   *  non-array argument, a non-record row, a non-string name, a non-`file.*` spelling is
+   *  skipped (mints nothing, fires nothing, never a throw — field 5's closed throw list is
+   *  UNCHANGED); the return is void — readiness is DELIVERED by the event surface, never
+   *  by a return value (clauses (4)/(8)). */
+  function hydrateRows(rows: unknown): void {
+    if (!Array.isArray(rows)) return
+    const touchedRoots = new Set<string>()
+    for (const row of rows) {
+      if (row === null || typeof row !== 'object' || Array.isArray(row)) continue
+      const candidate = row as { readonly name?: unknown; readonly value?: unknown }
+      if (typeof candidate.name !== 'string') continue
+      const parsed = parseWrite(candidate.name)
+      // A refusal receipt (malformed / secure-refused) and a tier-free or tier-only
+      // spelling are SKIPPED — hydrate mints `file.*` references only (clause (4); the
+      // seat's 2-segment minimum: a tier and a non-empty top are both required).
+      if (!('token' in parsed)) continue
+      if (parsed.token !== 'file' || parsed.segments.length < 2) continue
+      // THE MINT: the file-tier node chain, value placed at the leaf.
+      let root = holderOf(parsed.rootName, 'file')
+      if (root === null) {
+        const ref = mintRef()
+        root = { ref, flag: 'file', localName: parsed.rootName, anchors: [], parentLink: null }
+        nodes.set(ref, root)
+        setHolder(parsed.rootName, root)
+        // THE MINTED TOP'S DECLARATION: the top-level rows the record's names imply enter
+        // the register under the register's own top-level-projection rule (`§2.4` item 3's
+        // annotation — the rule any mint states): a REFUSED row never gets here, so the
+        // declaration-mint-inside-the-mint discipline holds exactly as on the write side.
+        if (!declared.has(parsed.rootName)) {
+          declared.set(parsed.rootName, { root: parsed.rootName, names: [{ name: candidate.name, reserved: false }] })
+        }
+      }
+      let current: GraphNode = root
+      let acc = `file.${parsed.rootName}`
+      // THE FIRST TAIL SEGMENT IS THE ROOT'S OWN LOCAL NAME (`§2.3` item 2) — the descent
+      // begins at the SECOND one, exactly as the walk's `walkFrom` consumes it.
+      for (let index = 1; index < parsed.tail.length; index += 1) {
+        const segment = parsed.tail[index] as string
+        acc = `${acc}.${segment}`
+        const anchor = anchorOf(current.ref, segment)
+        let target: GraphNode | null = anchor !== null && anchor.link !== null && anchor.link.to !== null ? (nodes.get(anchor.link.to) ?? null) : null
+        if (target === null) {
+          const ref = mintRef()
+          const link: GraphLink = { from: current.ref, to: ref, cache: linkEntry(parsed.rootName, ref, 'file'), constraint: null }
+          const child: GraphNode = { ref, flag: 'file', localName: segment, anchors: [], parentLink: link }
+          nodes.set(ref, child)
+          // RE-PARENTING DELETES AND RE-MINTS — a live anchor's own members never mutate
+          // (field 2.6): the anchor replacement is the immutable-anchor form of the seat's
+          // `cur.anchors.set(seg, ...)`.
+          withAnchor(current.ref, segment, link)
+          target = child
+        }
+        current = target
+      }
+      setValue(current.ref, current.localName, candidate.value)
+      // THE FIRE: one event per minted reference, the existing envelope — delivered to the
+      // exact subscribers on the minted reference and (through the 'descendant' arm) to the
+      // {subtree:true} ancestors whose prefix matched — the fire is BY DESIGN, never silent.
+      emit(candidate.name, 'file', candidate.value, [], 'commit', candidate.name)
+      touchedRoots.add(parsed.rootName)
+    }
+    // THE CACHE REBUILD AT THE INVALIDATION SITE (never on the read path, `§2.6` item 4):
+    // one rebuild per top the record minted — the seat's single invalidation pass, in the
+    // checkout's per-name form.
+    for (const rootName of touchedRoots) rebuildEntriesAtInvalidation(rootName)
+  }
+
   /* ── CONSTRUCTION ── */
 
   loadDeclarations()
@@ -2216,6 +2308,16 @@ export function createGraphStore(options: {
     // the members are code features — the very array the caller supplied, never a copy, never
     // mutated here, no install path).
     constraints,
+    // THE BOOT-HYDRATION SEAM (`HYDRATE-1`, frozen-surface field 2 — PRODUCTION-PRESENT,
+    // NEVER a test-seam key: the G2 boot wiring calls it after the Y-1 hand-off; the census's
+    // eight test-seam keys stay absent from production constructions, hydrate is not one of
+    // them). It mints the file-tier nodes the handed-off record names, FIRES the store's
+    // event surface BY DESIGN (the boot-load events ARE the consumer-notification channel —
+    // readiness is delivered by the events, never by a return value), NEVER crosses, NEVER
+    // evaluates the constraint table, skips malformed rows and returns void.
+    hydrate(rows: readonly { readonly name: string; readonly value: unknown }[]): void {
+      hydrateRows(rows)
+    },
   }
 
   if (seamEnabled) {
