@@ -313,8 +313,9 @@ export interface McpServerOptions {
   transport: McpTransportKind
   port?: number
   gate?: SecurityGate
-  /** U3 — the persisted module registry. When set, the server handles the
-   *  `module.*` tools in MAIN (node:fs store), NOT routed to the renderer. */
+  /** U3 → Q-5 — the persisted module registry's surface, re-pointed by `U-STORE-PERSIST` to
+   *  the settings-backed file tier (`file.modules.<id>`, one atomic write; writer class 2).
+   *  When set, the server handles the `module.*` tools in MAIN, NOT routed to the renderer. */
   moduleStore?: ModuleStore
   /** U9 — the CapabilityRouter whose dynamic `module:<name>.<tool>` tools are
    *  registered + invoked (with the invocation two-gate, F1). */

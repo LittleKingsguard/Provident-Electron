@@ -5,6 +5,13 @@
 // surface (no Node objects leak into the page).
 import { contextBridge, ipcRenderer } from 'electron'
 import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_NOTIFY, IPC_MODULE_GET, IPC_MODULE_SET_DISABLED, type RpcRequest, type RpcReply, type SecuritySettings, type NotifyPayload, type ModuleListEntry } from '../shared/types.js'
+import { STORE_FILE_GET, STORE_FILE_PUT } from '../main/store-channels.js'
+
+/** THE Y-3 PUSH CHANNEL (G2 §2.5 — a DECLARED NO-OP on this single-window app): the change
+ *  signal rides the existing `webContents.send` surface. The channel name stays a preload
+ *  LOCAL (no third constant enters `store-channels.ts` — the constants census stays EXACTLY
+ *  TWO, §2.2). */
+const STORE_FILE_CHANGED = 'provident:store:file:changed'
 
 export interface ModuleBridgeResult {
   corrupt: boolean
@@ -25,6 +32,11 @@ export interface ProvidentBridge {
   module: {
     get(): Promise<ModuleBridgeResult>
     setDisabled(name: string, disabled: boolean): Promise<ModuleBridgeResult>
+  }
+  store: {
+    get(): Promise<{ name: string; value: unknown }[]>
+    put(row: { name: string; value: unknown }): Promise<{ status: 'committed' | 'refused'; reason?: 'malformed-payload' | 'write-failed' }>
+    onFileChanged(handler: () => void): () => void
   }
 }
 
@@ -65,6 +77,25 @@ const bridge: ProvidentBridge = {
     },
     setDisabled(name: string, disabled: boolean): Promise<ModuleBridgeResult> {
       return ipcRenderer.invoke(IPC_MODULE_SET_DISABLED, { name, disabled })
+    },
+  },
+  // THE TIER-1 STORE BRIDGE (`store.*` — G2 `U-STORE-PERSIST`, §2.10 item 4 / §2.11 item 4):
+  // the THREE new members — Y-1 the boot hand-off, Y-2 the commit crossing, Y-3 the
+  // change-push registration (registered once at boot; the returned release is held by the
+  // wiring and answered at realm teardown — the P1-P7 release discipline).
+  store: {
+    get(): Promise<{ name: string; value: unknown }[]> {
+      return ipcRenderer.invoke(STORE_FILE_GET)
+    },
+    put(row: { name: string; value: unknown }): Promise<{ status: 'committed' | 'refused'; reason?: 'malformed-payload' | 'write-failed' }> {
+      return ipcRenderer.invoke(STORE_FILE_PUT, row)
+    },
+    onFileChanged(handler: () => void): () => void {
+      const listener = (): void => handler()
+      ipcRenderer.on(STORE_FILE_CHANGED, listener)
+      return () => {
+        ipcRenderer.removeListener(STORE_FILE_CHANGED, listener)
+      }
     },
   },
 }

@@ -8,7 +8,7 @@ import { createGestureSession, POINTER_TYPES } from '../shared/gesture-session.j
 import { createGutterAffordance, domEventSource } from '../shared/gutter-affordance.js'
 import type { RpcRequest, RpcReply } from '../shared/types.js'
 import { focusTransition, focusOrder, persist, type FocusEntry, type FocusState } from '../shared/focus-model.js'
-import { createGraphStore, type GraphStore, type GraphEvent } from './store-core-graph.js'
+import { createGraphStore, type GraphStore, type GraphEvent, type GraphCrossing } from './store-core-graph.js'
 import { storeGraphReferences } from './store-graph-references.js'
 import { clampToBounds } from '../shared/gutter.js'
 
@@ -35,17 +35,64 @@ let wiredGraphStore: GraphStore | null = null
  *  store's `mem.focus.*` mirror, never in a module-level focus-state carrier. */
 let focusCarrier: FocusCarrierSurface | null = null
 
-function buildWiredGraphStore(): GraphStore {
+/** THE FILE TIER'S DECLARED TOP-LEVEL NAMES — the caller's rows at the store's construction
+ *  site (G2 `U-STORE-PERSIST` §2.7 item 4's RESERVED settings namespaces, §2.11 item 1): the
+ *  channel persists the `file.*`-keyed projection, and the wired store's file tier admits
+ *  exactly these roots — `window` · `tabs` · `layout` · `settings` · `tracked` · `modules`
+ *  (the collision rule's closed set, `NW-10`). */
+const FILE_TIER_ROOT_NAMES: ReadonlyArray<{ readonly name: string }> = [
+  { name: 'window' },
+  { name: 'tabs' },
+  { name: 'layout' },
+  { name: 'settings' },
+  { name: 'tracked' },
+  { name: 'modules' },
+]
+
+/** THE WIRED STORE'S CONSTRUCTION OPTIONS (G2 — §1.3 item 3: the renderer diff is the boot
+ *  sequence + the construction options ONLY): the `crossing` feed (the Y-2 wire) and the
+ *  caller's declarations, both supplied at the existing construction site. */
+interface WiredStoreOptions {
+  readonly declarations?: ReadonlyArray<{ readonly name: string }>
+  readonly crossing?: GraphCrossing | null
+}
+
+/** THE TIER-1 BRIDGE SURFACE (G2 §2.10 item 4 / §2.11 item 4 — the THREE preload members
+ *  under the `store` namespace). The ambient `Window.provident` declaration is another
+ *  unit's bytes (`secure-panels.ts`), so the wiring's boot read narrows the bridge through
+ *  this local surface — the members stay UNTYPED upstream. */
+interface Tier1StoreSurface {
+  readonly store: {
+    get(): Promise<{ name: string; value: unknown }[]>
+    put(row: { name: string; value: unknown }): Promise<{ status: 'committed' | 'refused'; reason?: 'malformed-payload' | 'write-failed' }>
+    onFileChanged(handler: () => void): () => void
+  }
+}
+
+/** THE IN-REALM TIER-1 BOOT AUTHORITY (G2 §2.3 item 3 — the hydration pin's PERSIST half):
+ *  the handed-off record the realm owns at boot; the file-tier nodes are minted from its
+ *  entries and the `mem`/`temp` tiers are constructed EMPTY. The wiring holds the record —
+ *  the store's file tier is written only by the realm's OWN commits (no store event, no
+ *  channel write at boot), and the realm's first envelope loads only AFTER the hand-off
+ *  answered (the starting-order gate, §2.9 consequence (1)). */
+let bootHandoff: { name: string; value: unknown }[] = []
+
+function buildWiredGraphStore(options?: WiredStoreOptions): GraphStore {
   // THE STORE'S DECLARATIONS COME FROM `storeGraphReferences(rows)`, passed as
   // `options.declarations` (the sibling artifact's field 6 — the wiring's single call site
   // for the declaration-input module). The caller's rows are this realm's own; the realm's
-  // boot store is production-shaped (no test seam).
-  wiredGraphStore = createGraphStore({ declarations: storeGraphReferences([]) })
+  // boot store is production-shaped (no test seam). THE CROSSING FEED (G2 §2.11 item 1):
+  // the `file` tier's commit crosses through the seam handed in at the construction site —
+  // `crossing: { put(row) { return bridge.store.put(row) } }`, the Y-2 wire.
+  wiredGraphStore = createGraphStore({
+    declarations: storeGraphReferences(options?.declarations ?? []),
+    crossing: options?.crossing ?? null,
+  })
   return wiredGraphStore
 }
 
-export function getWiredGraphStore(): GraphStore {
-  if (wiredGraphStore === null) wiredGraphStore = buildWiredGraphStore()
+export function getWiredGraphStore(options?: WiredStoreOptions): GraphStore {
+  if (wiredGraphStore === null) wiredGraphStore = buildWiredGraphStore(options)
   return wiredGraphStore
 }
 
@@ -84,7 +131,7 @@ export interface GutterWriteReading {
   readonly status: string
 }
 
-export function startGutterAffordance(runtime: Runtime): {
+export function startGutterAffordance (runtime: Runtime): {
   readonly attached: boolean
   /** **EVERY COMMIT WRITE THIS WIRING MADE, WITH THE RUNTIME'S OWN ANSWER** — the recorded reading
    *  that makes a refused write VISIBLE instead of silent (`§2.1` item 8(v); L-5/ADV-GU-1: the
@@ -486,10 +533,13 @@ function focusRoute(payload: unknown): FocusAnswer {
 async function main(): Promise<void> {
   const mount = document.getElementById('app')
   if (!mount) throw new Error('mount #app missing')
-  const bridge = window.provident
+  const bridge = window.provident as unknown as ((typeof window.provident) & Tier1StoreSurface) | undefined
   // Read the persisted operator config (maxJournalLength) so the app Runtime's
   // Supervisor is constructed with the journal-condense threshold. The config
-  // is manual-UI-only (never an MCP tool); the Runtime reads it at boot.
+  // is manual-UI-only (never an MCP tool); the Runtime reads it at boot. Tier
+  // 4's read stays a SNAPSHOT over the manual-UI channel — tier 1's hand-off
+  // below is the NEW Y-1, a DIFFERENT channel (the two boot reads are never
+  // conflated, §2.9 consequence (2)).
   let maxJournalLength: number | undefined
   if (bridge?.security) {
     try {
@@ -499,24 +549,61 @@ async function main(): Promise<void> {
       // keep the default (never condense) on a bridge error
     }
   }
-  const runtime = new Runtime({ mount, envelope: demoEnvelope(), maxJournalLength })
-  runtime.bootstrap()
-  // ⟶ THE GRAPH-STORE WIRING (`U-STORE-CORE`, field 3/6 of the frozen artifacts): the ONE
-  // store construction per realm at boot — AFTER the realm's own construction of its runtime
-  // (the `Runtime` + `bootstrap()` above) and BEFORE the boot sequence's hand-off (the bridge
-  // conditional / `bridge.ready()` below). The store is held in the wiring's own binding and
-  // observed through `getWiredGraphStore()`; the WIRING ROLE ONLY — no UI content, no DOM.
-  getWiredGraphStore()
+  // ⟶ THE TIER-1 HAND-OFF (G2 `U-STORE-PERSIST` §2.9 — THE CHANGED BOOT ORDER): the
+  // persisted values are requested ONCE, BEFORE the store is constructed and BEFORE the
+  // first envelope loads. A cold tier answers [] and the realm boots on it — never a throw.
+  // The in-realm tiers are then built from the handed-off record: the file-tier nodes are
+  // minted from its entries and `mem`/`temp` are constructed EMPTY (§2.3 item 3 — the
+  // hydration pin's PERSIST half: no store event, no channel write at boot).
+  const handedOff: { name: string; value: unknown }[] = []
+  if (bridge !== undefined && bridge.store !== undefined) {
+    try {
+      const served: unknown = await bridge.store.get()
+      if (Array.isArray(served)) handedOff.push(...served)
+    } catch {
+      // an unanswered hand-off is the cold tier — the realm boots on [] (§2.9 consequence (3))
+    }
+  }
+  bootHandoff = handedOff
+  // ⟶ THE GRAPH-STORE WIRING (`U-STORE-CORE` field 3/6 + G2 §1.3 item 3): the ONE store
+  // construction per realm at boot — fed at the EXISTING construction site with the file
+  // tier's declared top-level names AND the crossing seam (the store's `file` tier crosses
+  // through the preload's STORE_FILE_PUT channel — `crossing: { put(row) {
+  // return bridge.store.put(row) } }`, §2.11 item 1). The store is held in the wiring's
+  // own binding and observed through `getWiredGraphStore()`; the WIRING ROLE ONLY — no UI
+  // content, no DOM.
+  const wired = getWiredGraphStore(
+    bridge !== undefined && bridge.store !== undefined
+      ? {
+          declarations: FILE_TIER_ROOT_NAMES,
+          crossing: { put(row) { return bridge.store.put(row) as unknown as { status: 'committed' | 'refused' } } },
+        }
+      : undefined,
+  )
   // ⟶ THE FOCUS CARRIER (`U-STORE-FOCUS`, §2.3 items 1/2): boot-constructed from the
   // wired store — the boot MINT-DECLARES `mem.focus` (the register's row pre-exists the
   // first focus write) and the two exact-reference store subscriptions (rule 2) register
   // at the same construction point.
-  focusCarrier = createFocusCarrier(getWiredGraphStore())
-  // ⟶ THE GUTTER WIRING (`U-GUTTER-UI`): constructed immediately after `bootstrap()` and
-  // BEFORE the bridge conditional, because the affordance is part of the APP UI — it is
-  // rendered from the demo envelope's authored card and exists with or without the preload
-  // bridge (only the MCP endpoints need the bridge).
+  focusCarrier = createFocusCarrier(wired)
+  // ⟶ THE RUNTIME + FIRST ENVELOPE (`U-STORE-CORE`'s realm construction + G2 §2.9):
+  // created and loaded ONLY AFTER the hand-off answered — a boot whose first envelope
+  // loads before the Y-1 answer FAILS the starting-order gate (§2.9 consequence (1)).
+  const runtime = new Runtime({ mount, envelope: demoEnvelope(), maxJournalLength })
+  runtime.bootstrap()
+  // ⟶ THE GUTTER WIRING (`U-GUTTER-UI`): attaches AFTER the first envelope load — its
+  // pre-drag read now hits an in-realm tier (NO crossing, §2.9 item 1). It is part of the
+  // APP UI and exists with or without the preload bridge (only the MCP endpoints need it).
   startGutterAffordance(runtime)
+  // ⟶ THE Y-3 REGISTRATION (G2 §2.5 item 1 / §2.11 item 3 — the P1-P7 release discipline):
+  // registered ONCE at boot; the returned release is held by the wiring and answered at
+  // realm teardown. The signal is a DECLARED NO-OP on this single-window app — the
+  // renderer's file table updates from the STORE's receipts only, never from a push.
+  let releaseY3: (() => void) | null = null
+  if (bridge !== undefined && bridge.store !== undefined) {
+    releaseY3 = bridge.store.onFileChanged(() => {
+      // Y-3 is a change SIGNAL — a declared no-op while a single window owns the realm
+    })
+  }
   if (!bridge) {
     console.warn('[provident-renderer] no preload bridge — MCP endpoints unavailable (running as a plain page?)')
     return
