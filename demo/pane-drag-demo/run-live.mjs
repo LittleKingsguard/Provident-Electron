@@ -243,6 +243,13 @@ async function main() {
   const tempMid = await evaluate(`window.__pgdemo.read.gutterTemp('gutter-g1')`)
   const gtr = await evaluate(`JSON.stringify((window.__gutterTrace ?? []).slice(0, 8))`)
   check('during the drag the size updates at the TEMP tier', typeof tempMid === 'number' && tempMid > fileBefore, `temp=${tempMid} (file=${fileBefore}) trace=${gtr}`)
+  // THE LAYOUT must be a function of the store: zone-2's rendered width and the
+  // gutter x must change with the temp preview (rule 2 — the render reads the store)
+  const layoutMid = await evaluate(`JSON.stringify((()=>{const z=document.querySelector('[data-zone="zone-2"]');const g=document.getElementById('gutter');const zr=z.getBoundingClientRect();const gr=g.getBoundingClientRect();return{z2w:zr.width,gx:gr.x,gt:getComputedStyle(document.getElementById('app')).gridTemplateColumns}})())`)
+  const lm = JSON.parse(layoutMid)
+  const expectedZone2 = Math.round(200 + 100) // the +100px drag's preview
+  check('the ACTUAL zone-2 size updates during the drag', Math.abs(Math.round(lm.z2w) - expectedZone2) <= 2, `zone2W=${lm.z2w.toFixed(0)} expected~${expectedZone2} grid=${lm.gt.split('px')[1]?.trim()}px`)
+  check('the gutter repositions to the new boundary', lm.gx > 230 + 20, `gutterX=${lm.gx.toFixed(0)} (boot was ~230)`)
 
   // 3. RIGHT-CLICK abandons: the temp is removed, the FILE original REASSERTS
   await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: gutterX0 + 100, y: gutterY0, button: 'right', clickCount: 1 })
@@ -264,10 +271,14 @@ async function main() {
   await sleep(400)
   const fileAfterRelease = await evaluate(`window.__pgdemo.read.gutterFile()`)
   const tempAfterRelease = await evaluate(`window.__pgdemo.read.gutterTemp('gutter-g1')`)
+  const layoutAfter = await evaluate(`JSON.stringify((()=>{const z=document.querySelector('[data-zone="zone-2"]');const g=document.getElementById('gutter');const zr=z.getBoundingClientRect();const gr=g.getBoundingClientRect();return{z2w:Math.round(zr.width),gx:Math.round(gr.x)}})())`)
+  const la = JSON.parse(layoutAfter)
   // The demo's final = startSize + (releaseX - startX); the last MOVE preview used
   // the same arithmetic at the same x (gutterX0+120), so they must agree to an
   // integer px. (The trace's earlier 204.8 reading was the mid-drag float.)
   check('release COMMITS to FILE (the committed size is the final preview)', typeof fileAfterRelease === 'number' && typeof tempBeforeRelease === 'number' && Math.round(fileAfterRelease) === Math.round(tempBeforeRelease), `file=${fileAfterRelease} final-preview=${tempBeforeRelease}`)
+  check('after release the ACTUAL zone-2 width == the committed file size', la.z2w === Math.round(fileAfterRelease), `zone2W=${la.z2w} committed=${Math.round(fileAfterRelease)}`)
+  check('after release the gutter stays at the new boundary', la.gx > 230 + 20, `gutterX=${la.gx}`)
   check('the temp is empty after the release (file holds the truth)', tempAfterRelease === null, `temp=${tempAfterRelease}`)
   check('ONE file commit per gesture end (the single-sink channel)', true)
 

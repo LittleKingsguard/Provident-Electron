@@ -7,15 +7,15 @@
 :root { --zone-border: #c9d1d9; --zone-bg: #0d1117; --pane-bg: #161b22; --ghost-opacity: 0.45; }
 * { box-sizing: border-box; }
 body { margin: 0; font-family: system-ui, sans-serif; background: #010409; color: #e6edf3; }
-#app { display: grid; grid-template-columns: 220px 10px 1fr; grid-template-rows: calc(100vh - 6rem) 3.5rem auto; height: 100vh; gap: 6px; padding: 6px; }
-#gutter { grid-column: 2; grid-row: 1; width: 10px; cursor: col-resize; background: #21262d; border-radius: 3px; display: flex; align-items: stretch; position: relative; z-index: 5; }
+#app { display: grid; grid-template-columns: 220px 200px 10px minmax(0, 1fr); grid-template-rows: calc(100vh - 6rem) 3.5rem auto; height: 100vh; gap: 6px; padding: 6px; }
+#gutter { grid-column: 3; grid-row: 1; width: 10px; cursor: col-resize; background: #21262d; border-radius: 3px; display: flex; align-items: stretch; position: relative; z-index: 5; }
 #gutter .gutter-grip { flex: 1; background: #30363d; margin: 2px 0; border-radius: 2px; }
 .pane-size { font-size: 10px; color: #8b949e; padding: 2px 8px; }
 #app > .zone, #app > .statusbar { min-width: 0; min-height: 0; }
-.statusbar { grid-column: 1 / 4; grid-row: 3; }
+.statusbar { grid-column: 1 / 5; grid-row: 3; }
 #zone-sidebar, #zone-main { height: 100%; min-height: 0; }
-#zone-main { grid-column: 3; grid-row: 1; }
-#zone-footer { grid-column: 1 / 4; }
+#zone-main { grid-column: 2; grid-row: 1; min-width: 0; overflow: hidden; }
+#zone-footer { grid-column: 1 / 5; }
 .zone { border: 1px dashed var(--zone-border); background: var(--zone-bg); border-radius: 6px; padding: 6px; min-height: 0; display: flex; flex-direction: column; }
 .pane-stack { flex: 1; min-height: 0; overflow-y: auto; }
 .zone-title { font-size: 11px; color: #8b949e; text-transform: uppercase; letter-spacing: .08em; margin: 0 0 6px; pointer-events: none; }

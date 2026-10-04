@@ -288,6 +288,7 @@ export function buildDemo(): DemoSurface {
       const ggid = 'gutter-g1'
       window.__gutterTrace = window.__gutterTrace ?? []
       window.__gutterAttached = true
+      applyGutterLayout()
       gutterEl.addEventListener('pointerdown', (ev) => {
         window.__gutterTrace.push({ ev: 'down', x: ev.clientX, y: ev.clientY })
         ev.preventDefault()
@@ -345,27 +346,39 @@ export function buildDemo(): DemoSurface {
     gutterFileValue = 200
   }
   mintGutterFile()
+  // THE STORE-DRIVEN LAYOUT PASS (rule 2's shape): the page's grid — zone-2's
+  // WIDTH and the GUTTER's POSITION — is a pure function of the store-carried
+  // size: the temp preview while dragging, the FILE value otherwise. Every
+  // gutter turn (resize / reset / release) re-applies it, so the actual zone
+  // resizes and the gutter moves to the new boundary — never a module var.
+  const applyGutterLayout = (): void => {
+    // `root` IS #app (mount receives the #app element) — querySelector would
+    // never match the root itself, so target it directly.
+    const el = root
+    if (!el) return
+    const active = gutterTempValue ?? gutterFileValue ?? 200
+    ;(el as HTMLElement).style.gridTemplateColumns = `220px ${active}px 10px minmax(0, 1fr)`
+    const readout = root?.querySelector('[data-size-for="pane-a"]')
+    if (readout) readout.textContent = `zone-2 size: ${active}`
+  }
+
   const gutter = {
     resize(gid: string, preview: number): void {
-      // the first preview write of a gesture is a COMMIT at temp (the mint);
-      // each subsequent move is a SET (the whole preview replaced in place)
-      if (gutterTempValue === null && gutterFileValue === null) {
-        // nothing persisted yet — mint the temp on the first observed move
-      }
       store.commit(GUTTER_TEMP(gid), preview, { onRepeat: 'edit' })
       gutterTempValue = preview
+      applyGutterLayout()
     },
     reset(gid: string): void {
       store.remove(GUTTER_TEMP(gid))
       gutterTempValue = null
+      applyGutterLayout()
     },
     release(gid: string, final: number): void {
-      // THE COMMIT: the file tier holds the final; the temp preview is PARKED
-      // (removed — the file original is now the truth; the ghost/preview is gone)
       store.commit(GUTTER_FILE, final, { onRepeat: 'edit' })
       store.remove(GUTTER_TEMP(gid))
       gutterFileValue = final
       gutterTempValue = null
+      applyGutterLayout()
     },
   }
 

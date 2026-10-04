@@ -12832,6 +12832,7 @@ function buildDemo() {
       const ggid = "gutter-g1";
       window.__gutterTrace = window.__gutterTrace ?? [];
       window.__gutterAttached = true;
+      applyGutterLayout();
       gutterEl.addEventListener("pointerdown", (ev) => {
         window.__gutterTrace.push({ ev: "down", x: ev.clientX, y: ev.clientY });
         ev.preventDefault();
@@ -12884,22 +12885,31 @@ function buildDemo() {
     gutterFileValue = 200;
   };
   mintGutterFile();
+  const applyGutterLayout = () => {
+    const el = root2;
+    if (!el) return;
+    const active = gutterTempValue ?? gutterFileValue ?? 200;
+    el.style.gridTemplateColumns = `220px ${active}px 10px minmax(0, 1fr)`;
+    const readout = root2?.querySelector('[data-size-for="pane-a"]');
+    if (readout) readout.textContent = `zone-2 size: ${active}`;
+  };
   const gutter = {
     resize(gid, preview) {
-      if (gutterTempValue === null && gutterFileValue === null) {
-      }
       store.commit(GUTTER_TEMP(gid), preview, { onRepeat: "edit" });
       gutterTempValue = preview;
+      applyGutterLayout();
     },
     reset(gid) {
       store.remove(GUTTER_TEMP(gid));
       gutterTempValue = null;
+      applyGutterLayout();
     },
     release(gid, final) {
       store.commit(GUTTER_FILE, final, { onRepeat: "edit" });
       store.remove(GUTTER_TEMP(gid));
       gutterFileValue = final;
       gutterTempValue = null;
+      applyGutterLayout();
     }
   };
   return {
