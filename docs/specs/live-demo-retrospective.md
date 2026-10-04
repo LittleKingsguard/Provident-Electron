@@ -193,6 +193,29 @@ zone-1, zone minimized) then drive each clause.
   asserting (the driver discipline the pane block already follows); a shared
   normalize-step helper would make new blocks composable.
 
+## Part 2B — the tab-behavior build's additional findings (the same session)
+
+### D-17. A temporal-dead-zone from declaring the constraint member BELOW its use
+The initial version declared `exactlyOneActiveMember` AFTER the two store constructions
+that referenced it — the bundle compiled to a `ReferenceError: Cannot access
+'exactlyOneActiveMember2' before initialization` at mount (esbuild emitted the rename
+`_2` as its error-recovery; the real cause was the TDZ). The session cost two cycles:
+the member must be declared at MODULE scope ABOVE every store that receives it.
+- **The missing test (T-14):** the boot no-exception assertion (T-11) — a TDZ at mount
+  must fail the leg the instant it happens, not via a later behavioral check.
+
+### D-18. `resolve('mem.tabs')` answers the ROOT NODE's value, not the direct-leaf record
+The consumer's `activeId()` first scanned the root record:
+`store.tiers.mem.get('mem.tabs')` — which resolves to a MISS/root-node value (the FIRST
+leaf's value, in practice), not `{tabA:…, tabB:…, tabC:…}`. The direct-leaf record the
+CONSTRAINT receives (`next`) is NOT the public resolve shape: a consumer enumerating the
+tabs must read each leaf individually (or subscribe subtree). The fix: a per-leaf scan
+including the repaired `landingPage` leaf.
+- **The missing test (T-15):** a consumer-facing row — "the ROOT-NAME resolve answers
+  the root node's value; enumerating the leaves is a per-leaf read" — the store's red
+  set knows the record shape the constraint sees but never warned a consumer that the
+  public resolve at the root is not that record.
+
 ## Part 3 — dispositions
 
 - **T-1, T-2, T-3, T-4, T-5 (node rows)**: `RED-SET-FIX` — land as dated additions to

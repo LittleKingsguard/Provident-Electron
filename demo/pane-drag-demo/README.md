@@ -63,6 +63,19 @@ The three clauses, verified in the real Electron app:
    minimized target to display the ghost** (restored on release/abandon — never a
    file write).
 
+## Live result — the TAB-BEHAVIOR clauses (2026-10-03)
+PANE-DRAG + GUTTER + MINIMIZED-ZONE + TAB-BEHAVIOR LIVE TESTS: ALL GREEN (41/41 PASS, exit 0).
+The tab-pane clauses, verified in the real Electron app:
+- a consumer pane READS the active tab's data, DISPLAYS it, and MODIFIES it (a store
+  commit — the constraint evaluates post-state), all through the REAL store;
+- a STORE LISTENER re-renders the pane when the active tab OR its contained data changes
+  (both the user-driven change and the REPAIR-driven active change);
+- the count-exactly-one constraint on the tabs root (the CR6 worked example verbatim):
+  arm (a) a second active write de-activates the surplus keeping the most-recently-active
+  (repairs=1), arm (b) none active re-activates the most-recent per tab-local lastActive
+  (repairs=4), arm (c) an empty set opens the landingPage (repairs=7) — each repair's
+  active change propagated to the listening pane.
+
 ## Consumer contract + hardening record
 - **Wire shapes every consumer must observe** (the tenant roots declared: `layout`/`settings`/`drag`; the bounds as `{ min, max }`; the temp/file lifecycle spellings): `docs/FORKER.md` §4's STORE-BACKED DRAG + GUTTER FEATURES block.
 - **The build/debug difficulties + the automated tests that were missing** (D-1..D-13, T-1..T-10): `docs/specs/live-demo-retrospective.md`.
