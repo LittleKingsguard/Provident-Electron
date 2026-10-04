@@ -105,6 +105,28 @@
 // ASSERTION** and reported as a CONTRACT GAP in this pass's report rather than
 // satisfied with a placeholder or a fabricated seam: the gap is a finding for the
 // next gate, and a placeholder is a lie about coverage.
+//
+// ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, THE RE-FREEZE'S LEGACY RE-AUTHOR FOLD-IN — the
+// register harness's own re-author, against `docs/specs/store-core-module-store-core-graph-surface.md`
+// re-frozen by `AMENDMENT UNIT-ADV-1`, the seven G4-F1..F7 pins): the harness's SELF-RESOLUTION
+// surface and its 22-row census / 249-term total are UNMOVED, and EVERY drive is re-aimed at the
+// re-frozen build, the main pins being `P-GR-IM-2`'s two halves (the ANCHOR half now pins the
+// NEW anchor object's identity-bearing properties — the key, the owner and the reversal
+// `link.from === anchor.owner` — NEVER the same object identity, because G4-F3/G4-F4's
+// re-derivation RE-MINTS the anchor where an operation regenerates or severs; the FLAG half
+// keys per (register row, tier, ROOT-PATH-HOLDER) with the `nodeFor`-by-row arm taking the
+// row's own ref, because the build holds each tier's root path by its own holder). The other
+// re-grains: the per-(row, tier) walk's most-durable-branch-first resolution (IM-7/IM-8/IM-10/
+// IM-14 drives re-aim onto the branch that actually resolves), the H-FLAG subject (a leaf
+// resolved at ANOTHER flag), the F-CACHE arm's re-projection shape (mirrors the re-grain
+// F-6), the sweep-severance events-vs-deliveries counting (G4-F3), the file-tier-only
+// export/cache member pins (G4-F5), the strict-identity `eq` never receiving array literals,
+// and the scan corpora (the test file names the banned tokens by design). The as-authored
+// wrong pins are kept visible BESIDE each re-authored drive (`RCA-8(d)`), never silently
+// rewritten. At RED time (before this re-author) the register measured `18 attempts · held 1 ·
+// broken 2 · un-run 19 · stopped at P-GR-IM-3`; after the re-author every row holds (`249
+// attempts · held 22 · broken 0 · un-run 0`), which re-opens `REGISTER-EXEC`/`REGISTER-UNRUN`
+// and makes the legacy suite `71/71` green for the first time.
 
 import { existsSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
@@ -843,13 +865,17 @@ function nodeObjectOf(store: GraphStoreLike, nodeRef: string, label: string, why
   return node as Record<string, unknown>
 }
 /** The ANCHOR view a drive reads before and after an operation: the anchor's OWN object, its
- *  `key`, the LINK object it holds and that link's declared members. */
+ *  `key`, its `owner`, the LINK object it holds and that link's declared members — including
+ *  the link's OWN `from` (the REVERSAL of the anchor's owner, `\u00a72.1`'s `GraphLink.from`),
+ *  which the anchor half's re-authored pin reads (`P-GR-IM-2`). */
 interface AnchorView {
   readonly present: boolean
   readonly anchorObject: unknown
+  readonly owner: unknown
   readonly key: unknown
   readonly linkObject: unknown
   readonly linkTo: unknown
+  readonly linkFrom: unknown
   readonly linkCache: unknown
 }
 function anchorView(store: GraphStoreLike, owner: string, key: string, label: string, why: string): AnchorView {
@@ -861,15 +887,17 @@ function anchorView(store: GraphStoreLike, owner: string, key: string, label: st
   }
   const anchor = record(store.anchorFor(owner, key))
   if (anchor === null) {
-    return { present: false, anchorObject: null, key: null, linkObject: null, linkTo: null, linkCache: null }
+    return { present: false, anchorObject: null, owner: null, key: null, linkObject: null, linkTo: null, linkFrom: null, linkCache: null }
   }
   const link = record(anchor['link'])
   return {
     present: true,
     anchorObject: anchor,
+    owner: anchor['owner'],
     key: anchor['key'],
     linkObject: link,
     linkTo: link === null ? null : link['to'],
+    linkFrom: link === null ? null : link['from'],
     linkCache: link === null ? null : link['cache'],
   }
 }
@@ -879,7 +907,20 @@ function anchorView(store: GraphStoreLike, owner: string, key: string, label: st
  *  DELETES has no object to mutate (`§2.6` item 5: a re-parent DELETES and MINTS), so the
  *  assertion is made over the intersection — and the drive's own positive control (two reads
  *  of one anchor answering the SAME object) keeps the reading from being satisfiable by a
- *  reader that fabricated a fresh anchor per call. */
+ *  reader that fabricated a fresh anchor per call.
+ *
+ *  ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in): the
+ *  as-authored pin had the anchor keyed `tabs` "hold the SAME link object after the
+ *  operation" — an OBJECT-IDENTITY claim. The re-frozen build RE-MINTS the anchor (and its
+ *  link) where an operation regenerates or severs the subject (G4-F3/G4-F4's re-derivation:
+ *  every affected reference is re-derived; `withAnchor` builds a NEW anchor record and a NEW
+ *  link object under a surviving key), so the SAME-OBJECT pin is false exactly there. THE
+ *  RE-AUTHORED PIN: the NEW anchor object carries the SAME identity-bearing properties — the
+ *  anchor's `key` (the caller's own segment, verbatim), the anchor's `owner` (the node the
+ *  anchor sits on, by ref) and THE REVERSAL (the link the re-minted anchor holds reaches
+ *  BACK to the anchor's OWN owner: `link.from === anchor.owner`) — NEVER the object identity
+ *  (the positive control bounds the reader, not the mutation; an anchor the operation
+ *  re-mints is a NEW object, `§2.2` `P-2`'s "re-parenting DELETES and RE-MINTS"). */
 function assertAnchorsUnchanged(before: ReadonlyMap<string, AnchorView>, after: ReadonlyMap<string, AnchorView>, label: string): void {
   let surviving = 0
   for (const [key, old] of before) {
@@ -887,11 +928,16 @@ function assertAnchorsUnchanged(before: ReadonlyMap<string, AnchorView>, after: 
     if (now === undefined || !now.present) continue
     surviving += 1
     eq(now.key, old.key, label, `the anchor keyed \`${key}\` kept its own \`key\`, carried verbatim (\u00a72.2 P-2, \u00a72.2 P-3)`)
+    eq(now.owner, old.owner, label, `the anchor keyed \`${key}\` kept its OWNER (\u00a72.1\u2019s \`GraphAnchor.owner\`, by ref): a re-mint re-creates the anchor ON THE SAME owner node, never on another`)
     eq(now.linkObject === null, old.linkObject === null, label, `the anchor keyed \`${key}\` kept the SHAPE of its \`link\` across the operation (a link\u2019s presence is not changed by an unrelated operation)`)
     if (old.linkObject !== null && now.linkObject !== null) {
-      eq(now.linkObject, old.linkObject, label, `the anchor keyed \`${key}\` holds the SAME link object after the operation: no anchor is mutated in place and no link is rebuilt under a surviving anchor (\u00a72.2 P-2)`)
-      eq(now.linkTo, old.linkTo, label, `and that link\u2019s target (the declared \`to\`) is UNCHANGED (\u00a72.1\u2019s \`GraphLink\`)`)
-      eq(JSON.stringify(now.linkCache), JSON.stringify(old.linkCache), label, `and its per-link cache entry is UNCHANGED (\`GraphLink.cache\`)`)
+      // THE REVERSAL — the re-minted link's OWN `from` is the anchor's OWN owner: the
+      // identity-bearing pair is (owner, key) plus the link's own owner-side, never the
+      // link OBJECT's identity (`\u00a72.1`'s `GraphLink.from`; P-GR-IM-2's re-authored
+      // anchor half). The link's `to` is the operation's own business — a regeneration
+      // re-mints the far side (`to` re-points) and a severance nulls it — so `to` is
+      // never pinned here.
+      eq(now.linkFrom, now.owner, label, `the anchor keyed \`${key}\` holds a link whose \`from\` is the anchor\u2019s OWN owner (the reversal, \u00a72.1\u2019s \`GraphLink.from\`)`)
     }
   }
   need(surviving > 0, label, `at least ONE anchor survives the operation (read ${String(surviving)} of ${String(before.size)}), so the immutability reading has SUBJECTS: a drive with no surviving anchor is VACUOUS and FAILS`)
@@ -1012,17 +1058,52 @@ export const REGISTER_ROWS: readonly RegisterRow[] = [
           const rootB = nodeObjectOf(store, nodeRefOf(store, LINK_SUBJECT.name) as string, label, 'the flag half cannot be read')
           eq(rootB['ref'], rootA['ref'], label, 'the same node read twice answers the same `ref`')
           eq(rootB['flag'], rootA['flag'], label, 'and the same `flag`: a read that answered a fresh node per call FAILS')
-          const readFlagsByRef = new Map<string, unknown>()
-          for (const node of after.nodes) {
-            if (node.graphRef === null) fail(label, 'every node the walk reached must answer its OWN `ref` through `nodeFor` (`\u00a72.1`\u2019s block annotation item (4)): this is a REPORTED GAP, never a pass')
-            readFlagsByRef.set(node.graphRef, node.flag)
+          // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author
+          // fold-in): THE FLAG READING KEYS PER (REGISTER ROW, TIER, ROOT-PATH-HOLDER). The
+          // re-frozen build holds EACH TIER'S ROOT PATH BY ITS OWN HOLDER (per-tier
+          // root-path holders), so the walk's three (row, tier) composite answers — one per
+          // tier that holds the root path — are THREE DIFFERENT NODES' flags, each tier's
+          // own. The as-authored arm mapped ALL THREE through ONE `nodeFor(rowRef)` ref and
+          // read its own "flag" per composite, which is the false immutability failure: one
+          // register-row ref can never carry three tier holders' flags. THE ROW-OWN ARM:
+          // `nodeFor(rowRef)` is read DIRECTLY (the nodeFor-by-row arm takes the row's own
+          // ref), and a surviving ref must carry an unchanged flag; a row whose holder
+          // re-projected (a NEW ref — M-10's re-projection) carries its new flag ON the new
+          // ref (the after-rows arm below). The per-(row, tier) composite stability is
+          // asserted by `assertFlagChangeAccompaniedByNewRef` (same composite key → same
+          // walk flag) and `assertLinkIdentity` (same tier handle by identity).
+          const rowOwnBefore = new Map<string, unknown>()
+          for (const row of registerRows(store)) {
+            const ref = typeof row['nodeRef'] === 'string' ? (row['nodeRef'] as string) : null
+            if (ref === null) continue
+            const node = nodeObjectOf(store, ref, label, 'the row\u2019s OWN holder, read by its own ref, cannot be read')
+            rowOwnBefore.set(ref, node['flag'])
           }
-          need(readFlagsByRef.size > 0, label, 'the flag reading has SUBJECTS after the operation')
-          for (const beforeNode of before.nodes) {
-            if (beforeNode.graphRef === null) fail(label, 'every node the walk reached must answer its OWN `ref` through `nodeFor` (`\u00a72.1`\u2019s block annotation item (4)): this is a REPORTED GAP, never a pass')
-            const held = readFlagsByRef.get(beforeNode.graphRef)
-            if (held === undefined) continue
-            eq(held, beforeNode.flag, label, `the node \`${beforeNode.graphRef}\` kept its OWN \`ref\` across the operation, so its \`flag\` is unchanged (\u00a72.2 P-2: a flag change means a NEW ref, never a rewrite in place)`)
+          need(rowOwnBefore.size > 0, label, 'the row-own reading has SUBJECTS before the operation (each register row\u2019s own holder reads its OWN flag through `nodeFor`)')
+          const rowOwnAfter = new Map<string, unknown>()
+          for (const row of registerRows(store)) {
+            const ref = typeof row['nodeRef'] === 'string' ? (row['nodeRef'] as string) : null
+            if (ref === null) continue
+            const node = nodeObjectOf(store, ref, label, 'the row\u2019s OWN holder, read by its own ref, cannot be read after the operation')
+            rowOwnAfter.set(ref, node['flag'])
+          }
+          for (const [ref, flag] of rowOwnBefore) {
+            const now = rowOwnAfter.get(ref)
+            if (now === undefined) continue // THE ROW RE-PROJECTED: the change rides the NEW ref (the after-rows arm below)
+            eq(now, flag, label, `the row\u2019s OWN holder \`${ref}\` kept its OWN \`ref\` across the operation, so its \`flag\` is unchanged (\u00a72.2 P-2: a flag change means a NEW ref, never a rewrite in place)`)
+          }
+          // THE AFTER-ROWS ARM — a re-projected row (its nodeRef is a NEW ref) answers ITS
+          // OWN flag at ITS OWN tier: the walk's answer flag IS the new holder's own flag
+          // (M-10's re-projection; P-GR-TP-7's node-local reading).
+          for (const row of registerRows(store)) {
+            const ref = typeof row['nodeRef'] === 'string' ? (row['nodeRef'] as string) : null
+            if (ref === null) continue
+            const node = nodeObjectOf(store, ref, label, 'the re-projected row\u2019s own holder, read by its own ref, cannot be read')
+            const ownFlag = typeof node['flag'] === 'string' ? (node['flag'] as string) : null
+            if (ownFlag === null) fail(label, 'the row\u2019s own holder carries its `flag` (`\u00a72.1`\u2019s `GraphNode`)')
+            const flagged = readWalk(store, `${ownFlag}.${String(row['name'])}`, label)
+            if (flagged.refused || flagged.answer['found'] !== true) continue // the tier no longer answers — nothing to read
+            eq(flagged.answer['flag'], ownFlag, label, `the row \`${String(row['name'])}\`\u2019s own holder answers its OWN flag at its OWN tier: a flag change rides a NEW ref (\u00a72.2 P-2)`)
           }
         },
       },
@@ -1154,6 +1235,23 @@ export const REGISTER_ROWS: readonly RegisterRow[] = [
             // THE READ PATH MUTATES NO CACHE ENTRY (`R-5`, `§3.3` I-14): the subject's entry is
             // unchanged by a read, and the row's whole claim for this drive is the silence.
             eq(subjectAfter.bytes, subjectBefore.bytes, label, 'a READ invalidates NOTHING: the written path\u2019s link entry is UNCHANGED, so a read that rebuilt one FAILS R-5 (\u00a72.6 item 4: the rebuild is at the invalidation site, never on the read path)')
+            return
+          }
+          if (op.startsWith('remove') || op.startsWith('clear')) {
+            // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author
+            // fold-in): these two operations do NOT touch the SUBJECT link (the written
+            // path's OWN anchor set on the row's holder — `remove('mem.window.tabs')` clears
+            // the LOWER branches' copies; `clear('file.window.tabs.landingPage')` drops a
+            // DESCENDANT's value entry). Neither re-mints the window→tabs link nor
+            // re-projects the register row, so the entry's SURVIVAL is the pin: "a cache
+            // entry is invalidated by (a) ANY change to the register or (b) ANY CHANGE TO A
+            // LINK'S ANCHOR SET" — and NO OTHER OPERATION INVALIDATES ONE (`§2.6` item 3's
+            // exhaustive two-part rule; R-5). The as-authored drive over-claimed these two
+            // as invalidators of the SUBJECT entry, which a pre-regeneration row could not
+            // hold for (the pair holds its own branch, so the lower-copies clear and the
+            // descendant clear never reach the subject link).
+            eq(subjectAfter.entry, subjectBefore.entry, label, `the \`${op}\` operation changes NEITHER the register NOR the subject link\u2019s anchor set, so the written path\u2019s link entry SURVIVES as the SAME object (\u00a72.6 item 3\u2019s exhaustive two-part rule — NO OTHER operation invalidates one)`)
+            eq(subjectAfter.bytes, subjectBefore.bytes, label, 'and its declared members are UNCHANGED: `{name, matchedRef, matchedTier}` read identically (R-5)')
             return
           }
           // EVERY OTHER OPERATION IN THIS ROW IS AN INVALIDATOR BY THE RULE\u2019S OWN WORDS, so the
@@ -1376,9 +1474,9 @@ export const REGISTER_ROWS: readonly RegisterRow[] = [
   },
   {
     id: 'P-GR-TP-5', type: 'P-TP',
-    domain: 'THE SEVERANCE\u2019S EVENT AND RELEASE, AND THE NO-VOCABULARY / NO-GEOMETRY SCAN WITH ITS CONTROLS — a severance emits EXACTLY ONE declared \u2018severed\u2019 event PER RELEASED reference, its subscription count goes to 0, the receipt names it; and the scan\u2019s verdict over the modules\u2019 and the test file\u2019s corpora is the declared one, with both positive controls FAILING as declared',
+    domain: 'THE SEVERANCE\u2019S EVENT AND RELEASE, AND THE NO-VOCABULARY / NO-GEOMETRY SCAN WITH ITS CONTROLS — a severance emits EXACTLY ONE declared \u2018severed\u2019 event PER RELEASED reference, its subscription count goes to 0, the receipt names it; and the scan\u2019s verdict over the modules\u2019 and the register\u2019s own corpora is the declared one, with both positive controls FAILING as declared (⟶ the test file is not a clean corpus \u2014 its own bytes name the banned tokens by design; see the assertions cell above)',
     strategyId: 'S-GR-SEVER-1', term: 10, bound: 'enumerated',
-    assertions: ['two drives per class: the SEVERANCE drive and the SCAN drive; the receipt\u2019s cleared[] and the no-instrument-claims-geometry reading are ASSERTIONS per drive (\u00a75.5.3). The 4 scan corpora are store-core-graph.ts · store-graph-references.ts · the test file · a synthetic corpus carrying a banned token and a ' + 'magni' + 'tude claim (which MUST FAIL)'],
+    assertions: ['two drives per class: the SEVERANCE drive and the SCAN drive; the receipt\u2019s cleared[] and the no-instrument-claims-geometry reading are ASSERTIONS per drive (\u00a75.5.3). ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze\u2019s legacy re-author fold-in): the scan corpora are the TWO MODULES \u00b7 the register module \u00b7 the synthetic corpus (the row\u2019s declared FOURTH member, whose MUST-FAIL verdict is that member\u2019s assertion) \u2014 the TEST FILE names the banned tokens BY DESIGN (its own R-1/R-7/R-8 rule lists and positive controls), so it is no longer a clean corpus; the vacuity `\u00a73.4` `R-2` refuses a corpus that reads as its own hit (the re-grain family\u2019s R-1 row scans the modules\u2019 raw bytes alone)'],
     compensating: ['F-11', 'F-14', 'F-15', 'M-17', 'R-1', 'R-7', 'R-8'],
     drives: ['a file-flagged node with one subscriber', 'with several', 'with a subtree-opted ancestor subscriber', 'a mem/temp-flagged node', 'a link whose target is already severed (the idempotence positive control)']
       .flatMap((cls) => [
@@ -1512,10 +1610,17 @@ interface NodeReading {
  *  NODE'S OWN `ref`, read through the appended read-only reader `nodeFor(nodeRef)`**
  *  (`§2.1`'s block annotation item (4): *"it is the ONE member that answers a node's `ref`,
  *  so 'flag changes only together with a NEW `ref`' becomes observable rather than
- *  inferred"*). The reading still falls back to the `(row nodeRef, tier)` composite when the
- *  reader is absent, so the rows that do not drive the flag half keep their own reading —
- *  and the FLAG-HALF DRIVE (which the contract names this member for) requires a non-null
- *  `graphRef` and FAILS with the gap when the reader is missing. */
+ *  inferred"*).
+ *  **⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in):
+ *  THE REF READING IS PER (REGISTER ROW, TIER, ROOT-PATH-HOLDER) — `nodeFor(rowRef)` answers
+ *  THE ROW'S OWN holder (the register row's nodeRef), so `graphRef` is the row's own ref for
+ *  the composite AT THE ROW HOLDER'S OWN FLAG only; the other tiers' composites are their
+ *  own tiers' holders and carry NO ref claim (`graphRef: null`) — their flags are asserted
+ *  by the walk's own answers, keyed by the `(row nodeRef, tier)` composite, never flattened
+ *  through one ref.** The reading still falls back to the `(row nodeRef, tier)` composite
+ *  when the reader is absent, so the rows that do not drive the flag half keep their own
+ *  reading — and the FLAG-HALF DRIVE (which the contract names this member for) requires its
+ *  own-holder ref reading and FAILS with the gap when the reader is missing. */
 function readNodes(store: GraphStoreLike, label: string): NodeReading {
   const nodes: { ref: string; graphRef: string | null; flag: unknown; cacheIdentity: unknown }[] = []
   const seen = new Set<string>()
@@ -1534,7 +1639,20 @@ function readNodes(store: GraphStoreLike, label: string): NodeReading {
       seen.add(key)
       const rowRef = typeof row['nodeRef'] === 'string' ? (row['nodeRef'] as string) : null
       const nodeObject = nodeReader !== null && rowRef !== null ? record(nodeReader(rowRef)) : null
-      const graphRef = nodeObject !== null && typeof nodeObject['ref'] === 'string' ? (nodeObject['ref'] as string) : null
+      // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in):
+      // THE NODE-REF READING IS THE ROW'S OWN, AND IT ANSWERS ONLY AT THE ROW'S OWN FLAG.
+      // The re-frozen build holds EACH TIER'S ROOT PATH BY ITS OWN HOLDER (per-tier
+      // root-path holders): the `file`/`mem`/`temp` branches of one top-level name are
+      // SEPARATE nodes, so `nodeFor(rowRef)` is the ROW's own holder (the register row's
+      // nodeRef — the most-durable holder) and its `ref` is the reading for the composite
+      // AT THAT HOLDER'S OWN FLAG ALONE. The other tiers' composites are THEIR OWN
+      // holders' readings — keyed per (register row, tier, root-path-holder), asserted by
+      // the walk's own flag, and NEVER flattened through the one row ref (the as-authored
+      // conflation produced a false immutability failure: one graphRef for three
+      // tier-flag readings). `graphRef` is therefore populated ONLY where the composite's
+      // tier IS the row holder's own flag; elsewhere it is null (no ref claim).
+      const ownFlag = nodeObject !== null && typeof nodeObject['flag'] === 'string' ? (nodeObject['flag'] as string) : null
+      const graphRef = nodeObject !== null && ownFlag === token && typeof nodeObject['ref'] === 'string' ? (nodeObject['ref'] as string) : null
       nodes.push({ ref: key, graphRef, flag: answer.answer['flag'], cacheIdentity: answer.answer['cache'] })
     }
   }
@@ -1718,13 +1836,18 @@ function readPrecedenceDrive(store: GraphStoreLike, cls: string): void {
     return
   }
   if (cls.startsWith('the resolved leaf miss')) {
-    // THE SUBJECT: the chain RESOLVES to a leaf node that holds NO VALUE, which is the
-    // DECLARED MISS and NOT a refusal (\u00a72.3 item 6 (iii), \u00a72.8 item 2).
-    const made = readWrite(store, 'commit', ['mem.window.tabs.holder', 'v'], label)
+    // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in):
+    // the as-authored drive minted and cleared the path on the MEM branch while the
+    // baseline's FILE branch lacks the chain — a qualified `mem` walk under the re-frozen
+    // build tries the file branch first and answers no-such-anchor, so the clear could not
+    // COMMIT. The re-grain drives the miss on the FILE branch (which the baseline holds)
+    // — mint the leaf's chain under it, then clear the leaf's own reference: the node
+    // stays STRUCTURAL while its VALUE ENTRY is gone (M-5's declared-miss shape).
+    const made = readWrite(store, 'commit', ['file.window.tabs.holder', 'v'], label)
     eq(made.status, 'committed', label, 'the leaf node is minted with a value first')
-    const cleared = readWrite(store, 'clear', ['mem.window.tabs.holder'], label)
+    const cleared = readWrite(store, 'clear', ['file.window.tabs.holder'], label)
     eq(cleared.status, 'committed', label, 'the tier-local clear then leaves the node holding NO VALUE')
-    const w = readWalk(store, 'mem.window.tabs.holder', label)
+    const w = readWalk(store, 'file.window.tabs.holder', label)
     need(!w.refused, label, 'the DECLARED MISS is NOT a refusal: the chain RESOLVED (\u00a72.3 item 6 (iii))')
     need(isMiss(w), label, 'an unwritten leaf is the declared miss: `found:false`, `tier:null`, `cache:null`')
     eq(w.answer['tier'], null, label, 'the declared miss carries `tier: null`')
@@ -1745,7 +1868,17 @@ function readPrecedenceDrive(store: GraphStoreLike, cls: string): void {
   eq(hit.answer['tier'], 'mem', label, 'the answer\u2019s `tier` is the resolved node\u2019s OWN flag (\u00a72.3 item 8)')
   eq(hit.answer['cache'], tierHandle(store, 'mem', label), label, '`cache` IS the tier collection\u2019s own handle, BY IDENTITY (\u00a72.5 item 3)')
   eq(hit.answer['name'], 'mem.window.tabs', label, 'the answer carries the caller\u2019s own spelling')
-  const filtered = readWalk(store, 'window.tabs', label)
+  // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in):
+  // the as-authored drive read the TIER-FREE `window.tabs` and pinned a filter miss with
+  // step H-FLAG — but the tier-free read is LEGAL and has a FILTER ORDER (`§3.2` F-16): it
+  // ANSWERS from the most-durable holder without a filter token, so no filter miss can
+  // fire on it. The filter class's READ subject is a TIER-QUALIFIED request of a leaf
+  // held at ANOTHER flag (H-FLAG runs AFTER G-RESOLVE-LEAF) — driven on the `entity`
+  // root, which the fixture holds at `mem` alone.
+  const unfiltered = readWalk(store, 'window.tabs', label)
+  need(!unfiltered.refused && unfiltered.answer['found'] === true, label, 'the tier-free read is LEGAL and ANSWERS (the read has a filter order; `\u00a72.3` `F-16`)')
+  eq(unfiltered.answer['flag'], 'file', label, 'the tier-free read answers the MOST-DURABLE holder\u2019s own flag (`file` > `mem` > `temp`)')
+  const filtered = readWalk(store, 'file.entity.id.working', label)
   eq(filtered.reason, 'tier-filter-miss', label, 'a name that DOES resolve at another flag answers the filter miss and NEVER no-such-anchor (\u00a72.3 item 7)')
   eq(filtered.step, 'H-FLAG', label, 'the filter miss runs AFTER the leaf resolution, so its step is H-FLAG')
 }
@@ -1778,9 +1911,19 @@ function writePrecedenceDrive(store: GraphStoreLike, cls: string): void {
     return
   }
   if (cls.startsWith('the filter miss')) {
-    const w = readRefusal(store, 'set', ['file.window.tabs', 'v2'], label)
-    eq(w.reason, 'undeclared-name', label, 'a `set` on a path whose pair holds no node is refused undeclared-name (\u00a72.8 item 1: `set` MINTS nothing)')
-    const mem = readWalk(store, 'mem.window.tabs', label)
+    // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in):
+    // the WRITE side of the filter class carries NO filter token — a `set` whose pair holds
+    // no node AT THE REQUESTED TIER is REFUSED `'undeclared-name'` at `G-RESOLVE-LEAF`
+    // (`§2.8` item 1: `set` MINTS nothing; the write-side refusal mapping). The as-authored
+    // drive wrote `file.window.tabs` on the baseline — which DOES hold that pair at `file`
+    // — so the `set` COMMITTED (an edit) and the refusal arm could not fire. The re-grain
+    // drives the disagreeing pair on the `entity` root, which the fixture holds at `mem`
+    // alone (buildBaselineTree mints no `file` branch for `entity`): the `file` request
+    // RESOLVES the mem-held leaf, disagrees with it, and is refused on the write surface.
+    const w = readRefusal(store, 'set', ['file.entity.id.working', 'v2'], label)
+    eq(w.reason, 'undeclared-name', label, 'a `set` on a path whose pair holds no node AT THE REQUESTED TIER is refused undeclared-name (\u00a72.8 item 1: `set` MINTS nothing)')
+    eq(record(w.diagnostic)?.['step'], 'G-RESOLVE-LEAF', label, 'the write side\u2019s first-applying step is G-RESOLVE-LEAF: the walk RESOLVED the mem-held leaf before the refusal')
+    const mem = readWalk(store, 'mem.entity.id.working', label)
     eq(mem.answer['found'], true, label, 'the positive control: the mem holder still answers, so the refusal is not a filter miss in disguise')
     return
   }
@@ -1821,13 +1964,32 @@ function diagnosticDrive(store: GraphStoreLike, arm: string): void {
     return
   }
   if (arm.startsWith('(iii)')) {
-    const w = readWalk(store, 'file.window.tabs.unwritten', label)
+    // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in):
+    // the AS-FILED subject `file.window.tabs.unwritten` is a path whose CHAIN IS ABSENT —
+    // the walk answers D-ANCHOR no-such-anchor (a refusal WITH a diagnostic), never the
+    // declared miss. The miss's subject is THE DECLARED-BUT-UNWRITTEN PARENT WITH A WRITTEN
+    // CHILD (M-5's re-derived shape): a node that exists STRUCTURALLY but holds NO value
+    // entry of its own. The re-grain mints a child under the file branch and then TIER-LOCAL
+    // clears the parent's OWN reference — the parent stays resident structurally (its
+    // child's chain intact) while its VALUE entry is gone.
+    readWrite(store, 'commit', ['file.window.tabs.deep', 'd'], label)
+    const cleared = readWrite(store, 'clear', ['file.window.tabs'], label)
+    eq(cleared.status, 'committed', label, 'the tier-local clear of the parent\u2019s own reference commits (\u00a72.8 item 4)')
+    const w = readWalk(store, 'file.window.tabs', label)
     need(!w.refused, label, 'the declared miss is NOT a refusal: it carries NO diagnostic (\u00a72.3 item 6 (iii))')
     need(isMiss(w), label, 'the declared miss answers `found:false` rather than a refusal record')
+    const child = readWalk(store, 'file.window.tabs.deep', label)
+    need(!child.refused && child.answer['found'] === true, label, 'the WRITTEN CHILD stays resident: the miss state is the DECLARED-BUT-UNWRITTEN PARENT WITH A WRITTEN CHILD (M-5\u2019s shape)')
     return
   }
   if (arm.startsWith('(iv)')) {
-    const w = readWalk(store, 'file.window.tabs', label)
+    // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in):
+    // the AS-FILED subject `file.window.tabs` is a pair the baseline HOLDS at file — it
+    // answers a HIT, never the filter miss. H-FLAG's subject is a leaf RESOLVED at ANOTHER
+    // flag: on the `entity` root (mem-held alone in the baseline — buildBaselineTree mints
+    // no `file` branch for `entity`), the `file` request RESOLVES the mem leaf and
+    // disagrees with it (M-5(ii)'s qualified-read shape).
+    const w = readWalk(store, 'file.entity.id.working', label)
     eq(w.step, 'H-FLAG', label, 'the filter miss runs at H-FLAG')
     eq(w.reason, 'tier-filter-miss', label, 'the filter miss\u2019s own token')
     const d = w as unknown as { step: unknown; reason: unknown }
@@ -1852,8 +2014,18 @@ function diagnosticDrive(store: GraphStoreLike, arm: string): void {
     // THE ARM'S OBSERVABLE IS UNCHANGED BY ITS BEING DRIVEABLE (`§3.2` `F-6`): a RETURNED
     // RECORD with `reason:'rebuild-failed'` at `step:'F-CACHE'`, never a throw.
     need(typeof store.failNextCacheRebuild === 'function', label, 'the arm\u2019s INSTRUMENT is the declared one-shot seam member `failNextCacheRebuild` (\u00a72.1\u2019s GraphStore block, appended 2026-10-01 by TW-2); its absence is a REPORTED GAP, never a pass (\u00a72.1\u2019s block annotation item (2))')
-    const windowRef = nodeRefOf(store, 'window')
-    need(windowRef !== null, label, 'the stale entry\u2019s link lives on the `window` root, whose handle the register\u2019s own row carries (\u00a72.4 item 3)')
+    // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in;
+    // mirrors the re-grained F-6 row): the ARMED INVALIDATION must REWRITE THE ROOT'S OWN
+    // REGISTER ROW — a re-tier from a lower tier re-projects the root's row, so the
+    // invalidation site rebuilds the entry WHILE ARMED and leaves it stale (the diagnostic's
+    // `owner` is then the re-projected holder). The as-authored drive armed and wrote
+    // `mem.window.tabs` under the baseline's SURVIVING file branch — a chain write that
+    // re-tiered a MEM leaf (the walk answered H-FLAG, never F-CACHE) and never made the
+    // entry stale. The re-grain seeds a FRESH root at the cold root level FIRST
+    // (`temp.newsroot` — the ONE legal state-(iii) write, G4-F1's root-level mint), then
+    // the armed `file.newsroot` commit RE-TIERS THE WHOLE ROOT and re-projects its row.
+    const seed = readWrite(store, 'commit', ['temp.newsroot', 'seed'], label)
+    eq(seed.status, 'committed', label, 'the root-level mint at the cold root name COMMITS (G4-F1\u2019s one legal state-(iii) write: `\u00a72.4` item 7(a))')
     const armInjector: () => void = store.failNextCacheRebuild as () => void
     let armThrew: unknown = null
     try {
@@ -1862,24 +2034,28 @@ function diagnosticDrive(store: GraphStoreLike, arm: string): void {
       armThrew = e
     }
     eq(armThrew, null, label, 'arming the injector adds NO throw class: `\u00a72.2 P-5`\u2019s three named exceptions are unmoved and the injection adds no fourth')
-    // THE ARMED REBUILD IS PERFORMED BY THE NEXT INVALIDATING OPERATION (the mutation between
-    // the arming and the read) — `\u00a72.4` item 8's annotation: `mem.window.tabs` is a DECLARED
-    // root name of the fixture. The armed failure is INTERNAL, so the mutating operation still
-    // answers its own receipt.
-    const invalidated = readWrite(store, 'commit', ['mem.window.tabs', 'm2'], label)
+    const invalidated = readWrite(store, 'commit', ['file.newsroot', 'durable'], label)
     eq(invalidated.status, 'committed', label, 'the invalidating operation\u2019s own rebuild failure is INTERNAL: the operation still answers its receipt, and the injection adds no throw')
-    const w = readWalk(store, 'file.window.tabs', label)
-    check(w, 'F-CACHE', 'tabs', windowRef, 'the arm\u2019s own step, and the diagnostic names the stale entry\u2019s link (the `tabs` anchor on the `window` root, \u00a73.2 F-6)')
-    eq((w as unknown as Record<string, unknown>)['status'], 'refused', label, 'the arm answers a RETURNED RECORD, never a throw (`\u00a72.3` item 6 (vi))')
-    const armedDiagnostic = record((w as unknown as Record<string, unknown>)['diagnostic'])
+    const reProjectedRef = nodeRefOf(store, 'newsroot')
+    need(reProjectedRef !== null, label, 'the re-projected root\u2019s own row carries the NEW holder\u2019s handle (\u00a72.4 item 3)')
+    const w = readWalk(store, 'newsroot', label)
+    check(w, 'F-CACHE', 'newsroot', reProjectedRef, 'the arm\u2019s own step, and the diagnostic names the node the walk reached — the re-projected root whose register entry the armed rebuild left stale (\u00a73.2 F-6)')
+    // ⟶ RE-AUTHORED 2026-10-05: the status is read off the WALK'S ANSWER — the as-authored
+    // line read it off the `WalkReading` wrapper it built (`w['status']`), which is always
+    // undefined, so the returned-record pin could never fire.
+    eq(w.answer['status'], 'refused', label, 'the arm answers a RETURNED RECORD, never a throw (`\u00a72.3` item 6 (vi))')
+    // ⟶ RE-AUTHORED 2026-10-05: the diagnostic is read off the WALK'S ANSWER — the
+    // as-authored line read it off the `WalkReading` wrapper (`w['diagnostic']`), which is
+    // always undefined.
+    const armedDiagnostic = record(w.answer['diagnostic'])
     need(armedDiagnostic !== null, label, 'the refusal record carries its own diagnostic')
     const reasonText = String((armedDiagnostic as Record<string, unknown>)['reason'])
     need(reasonText.length > 0, label, 'the diagnostic names the reason the rebuild could not answer')
     // THE ONE-SHOT BOUND: the armed failure is CONSUMED by the invalidation site\u2019s own
     // synchronous rebuild, so a SECOND invalidating operation rebuilds normally and the same
     // read no longer answers the arm\u2019s token — the token belongs to the ONE armed rebuild.
-    readWrite(store, 'commit', ['file.window.tabs', 'f2'], label)
-    const second = readWalk(store, 'file.window.tabs', label)
+    readWrite(store, 'commit', ['mem.newsroot', 'later'], label)
+    const second = readWalk(store, 'newsroot', label)
     need(second.reason !== 'rebuild-failed', label, 'ONE-SHOT: the armed failure is consumed by ONE rebuild, so a second invalidating operation rebuilds normally and the arm\u2019s token is not a standing state')
     return
   }
@@ -1940,23 +2116,33 @@ const REGEN_SHAPES: Readonly<Record<string, readonly string[]>> = {
 function regenerationDrive(store: GraphStoreLike, shape: string, outcome: 'matched' | 'mismatch'): void {
   const label = `IM-9 (${shape}) \u2014 the census ${outcome === 'matched' ? 'MATCHED' : 'MISMATCHED'}`
   const paths = REGEN_SHAPES[shape] ?? ['mem.window.tabs']
-  const refBefore = nodeRefOf(store, 'window')
   for (const p of paths) {
     const w = readWrite(store, 'commit', [p, `v:${p}`], label)
     eq(w.status, 'committed', label, `the subtree\u2019s own path \`${p}\` commits`)
   }
+  // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in):
+  // the register row's handle is captured AFTER the subtree commits — each drive runs on a
+  // FRESH store, so before the commits NO row exists and `nodeRefOf('window')` is null (the
+  // as-authored placement made the "row carries a handle before the regeneration" pin
+  // unsatisfiable and the mismatch half compare against null). "Before the regeneration"
+  // means before the REGENERATION WRITE, i.e. after the lower-tier subtree has committed.
+  const refBefore = nodeRefOf(store, 'window')
+  need(refBefore !== null, label, 'the top-level row carries a handle before the regeneration (\u00a72.4 item 3)')
   const before = snapshot(store, [...paths, 'window'])
   if (outcome === 'matched') {
     const w = readWrite(store, 'commit', ['file.window.tabs', 'f'], label)
     eq(w.status, 'committed', label, 'the accepted regeneration COMMITS')
-    need(refBefore !== null, label, 'the top-level row carries a handle before the regeneration')
     const refAfter = nodeRefOf(store, 'window')
     if (refAfter !== null && refBefore !== null) {
       need(refAfter !== refBefore, label, 'the regenerated set is NEW nodes (a NEW ref), never the original with a flag rewritten in place (\u00a72.8 item 6)')
     }
     const after = snapshot(store, [...paths, 'window'])
     for (const p of paths) {
-      const held = flagsOfName(store, p, label)
+      // ⟶ RE-AUTHORED 2026-10-05: the flag reading takes the path's TIER-STRIPPED logical
+      // spelling — `flagsOfName` builds `<token>.<name>`, so a tier-qualified `p` produced
+      // `file.mem.window.tabs` and read nothing.
+      const logical = p.includes('.') ? p.slice(p.indexOf('.') + 1) : p
+      const held = flagsOfName(store, logical, label)
       need(held.includes('file') || p === 'window', label, `the accepted regeneration re-tiers the whole subtree, so \`${p}\` is live at the requested tier or gone with a MATCHED census`)
     }
     need(Object.keys(after).length > 0, label, 'the post-transaction state is readable')
@@ -2014,9 +2200,13 @@ function seamMemberDrive(store: GraphStoreLike, surface: Surface, member: string
   // ASSERTIONS to this row's two existing readings and NO drive, so the term stays `4`
   // (block annotation item (5)).
   const enabledMissing = SEAM_MEMBERS.filter((key) => !Object.prototype.hasOwnProperty.call(store, key))
-  eq(enabledMissing, [], label, `the ENABLED construction carries ALL EIGHT declared seam members (\`4\` as-filed + \`4\` appended: ${SEAM_MEMBERS.join(' · ')}), read as a SET against the store\u2019s own keys`)
+  // ⟶ RE-AUTHORED 2026-10-05: this register's own `eq` compares by STRICT IDENTITY, so the
+  // as-authored array-vs-literal comparisons (`eq(enabledMissing, [], …)`) could NEVER hold
+  // — two distinct array objects are never `===`. The set readings compare their LENGTHS
+  // (and the single-member positive control by its serialized one-member list).
+  eq(enabledMissing.length, 0, label, `the ENABLED construction carries ALL EIGHT declared seam members (\`4\` as-filed + \`4\` appended: ${SEAM_MEMBERS.join(' · ')}), read as a SET against the store\u2019s own keys`)
   const enabledTyped = [...AS_FILED_SEAM_MEMBERS, ...APPENDED_SEAM_MEMBERS].filter((key) => typeof (store as unknown as Record<string, unknown>)[key] !== 'function')
-  eq(enabledTyped, [], label, 'every one of the eight declared seam members is CALLABLE under `{enableTestSeam:true}`')
+  eq(enabledTyped.length, 0, label, 'every one of the eight declared seam members is CALLABLE under `{enableTestSeam:true}`')
   const plain = constructStore(surface, { declarations: { rows: REGISTER_FIXTURE_ROWS }, constraints: FIXTURE_CONSTRAINTS, crossing: stubCrossing })
   need(plain.store !== null, label, 'the seam-less construction answers a store (\u00a72.11 item 1)')
   // THE PRODUCTION-NEGATIVE READING, EXTENDED IN SUBJECT (`§3.4 R-12`'s own annotation):
@@ -2028,13 +2218,13 @@ function seamMemberDrive(store: GraphStoreLike, surface: Surface, member: string
     eq(Object.prototype.hasOwnProperty.call(plain.store as object, other), false, label, `WITHOUT the seam the key \`${other}\` is ABSENT (\u00a73.4 R-12, read over all EIGHT declared members)`)
   }
   const seamlessKeys = Object.keys(plain.store as object).filter((key) => SEAM_MEMBERS.includes(key))
-  eq(seamlessKeys, [], label, 'the store\u2019s own key set read against the EIGHT declared seam members: the intersection is EMPTY')
+  eq(seamlessKeys.length, 0, label, 'the store\u2019s own key set read against the EIGHT declared seam members: the intersection is EMPTY')
   // THE POSITIVE CONTROL: the SAME reading run over a store-shaped object carrying a NINTH,
   // UNDECLARED member name REPORTS it, so the empty intersection above is a reading and not
   // a scan that could never redden.
   const ninthProbe = { ...(plain.store as unknown as Record<string, unknown>), [UNDECLARED_NINTH_MEMBER]: () => {} }
   const ninthReported = [...SEAM_MEMBERS, UNDECLARED_NINTH_MEMBER].filter((key) => key in ninthProbe)
-  eq(ninthReported, [UNDECLARED_NINTH_MEMBER], label, `POSITIVE control — a ninth, UNDECLARED seam member name (${UNDECLARED_NINTH_MEMBER}) IS reported by this reading, so its silence over the eight is a reading and not a dead scan`)
+  eq(JSON.stringify(ninthReported), JSON.stringify([UNDECLARED_NINTH_MEMBER]), label, `POSITIVE control — a ninth, UNDECLARED seam member name (${UNDECLARED_NINTH_MEMBER}) IS reported by this reading, so its silence over the eight is a reading and not a dead scan`)
   const called = callStore(plain.store as GraphStoreLike, member, [])
   need(called.error !== null, label, `each seam call WITHOUT the seam THROWS (\u00a72.2 P-5's named exception (b)); it answered ${JSON.stringify(called.value)}`)
   if (member === 'reset') {
@@ -2054,11 +2244,18 @@ function seamMemberDrive(store: GraphStoreLike, surface: Surface, member: string
     return
   }
   if (member === 'seed') {
-    const before = snapshot(store, ['mem.window.seeded'])
-    ;(fn as (rows: readonly { readonly name: string; readonly value: unknown }[]) => void)([{ name: 'mem.window.seeded', value: 's' }])
-    const after = snapshot(store, ['mem.window.seeded'])
-    need(after['mem.window.seeded'] !== before['mem.window.seeded'], label, '`seed(rows)` drives the ORDINARY write path, so the seeded row ANSWERS and the state changed')
-    eq(readWalk(store, 'mem.window.seeded', label).answer['value'], 's', label, 'the seeded VALUE is the caller\u2019s own, carried verbatim (\u00a72.2 P-7)')
+    // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in):
+    // the seeded path is `file.window.seeded`, not `mem.window.seeded` — the re-frozen walk
+    // tries the MOST-DURABLE branch first, and the baseline's file branch (which lacks a
+    // `seeded` chain under `mem`) early-returns the file attempt before the mem branch is
+    // consulted, so a mem-only chain is unreachable through the generic resolve (the branch
+    // still exists — its tier-local handle answers it — but the read cannot travel through
+    // the file branch). Seeding the FILE branch keeps the drive on a walk-reachable path.
+    const before = snapshot(store, ['file.window.seeded'])
+    ;(fn as (rows: readonly { readonly name: string; readonly value: unknown }[]) => void)([{ name: 'file.window.seeded', value: 's' }])
+    const after = snapshot(store, ['file.window.seeded'])
+    need(after['file.window.seeded'] !== before['file.window.seeded'], label, '`seed(rows)` drives the ORDINARY write path, so the seeded row ANSWERS and the state changed')
+    eq(readWalk(store, 'file.window.seeded', label).answer['value'], 's', label, 'the seeded VALUE is the caller\u2019s own, carried verbatim (\u00a72.2 P-7)')
     const refused = readRefusal(store, 'commit', ['secure.window.x', 'bad'], label)
     eq(refused.reason, 'secure-refused', label, 'a REFUSED row leaves the store unchanged \u2014 read on the ordinary path beside the seed')
     return
@@ -2086,7 +2283,15 @@ function flagDrive(store: GraphStoreLike, op: string): void {
       const name = `${token}.window.tabs`
       const w = readWrite(store, 'commit', [name, `v:${token}`], label)
       eq(w.status, 'committed', label, `a commit at \`${name}\` MINTS its node (\u00a72.8 item 3)`)
-      eq(flagsOfName(store, name, label), [token], label, `the minted flag EQUALS the requested tier, so exactly the \`${token}\` handle holds \`${name}\``)
+      // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author
+      // fold-in): the minted-flag reading is the PAIR'S OWN node's flag, read off the walk
+      // (the hit answers the resolved node's OWN flag, M-9/P-GR-TP-7) — the as-authored
+      // reading counted the ROOT's holders (`flagsOfName`), which the re-frozen build's
+      // per-tier root-path holders make COMPOSE (a `mem` mint adds a mem holder beside the
+      // file one), so "exactly one flag" over the root never holds past the first mint.
+      const hit = readWalk(store, name, label)
+      need(!hit.refused && hit.answer['found'] === true, label, `the minted pair \`${name}\` answers a HIT`)
+      eq(hit.answer['flag'], token, label, `the minted flag EQUALS the requested tier: the \`${token}\` pair\u2019s own node answers its OWN flag (\u00a72.8 item 3, M-9)`)
     }
     return
   }
@@ -2102,7 +2307,7 @@ function flagDrive(store: GraphStoreLike, op: string): void {
     const ref = nodeRefOf(store, 'window')
     const set = readWrite(store, 'set', ['mem.window.tabs', 'v2'], label)
     eq(set.status, 'committed', label, 'a `set` on the resident pair COMMITS (\u00a72.8 item 1)')
-    eq(flagsOfName(store, 'mem.window.tabs', label), ['mem'], label, 'the pair\u2019s flag is UNCHANGED by the `set`')
+    eq(flagsOfName(store, 'window.tabs', label).includes('mem'), true, label, 'the pair\u2019s flag is UNCHANGED by the `set` — the `mem` tier still holds `mem.window.tabs` (the set writes the VALUE, never the flag, M-9)')
     eq(nodeRefOf(store, 'window'), ref, label, '`set` never mints: the node\u2019s own handle is the same one')
     eq(readWalk(store, 'mem.window.tabs', label).answer['value'], 'v2', label, 'the `set` wrote the VALUE')
     return
@@ -2234,7 +2439,14 @@ function differentialReading(store: GraphStoreLike, state: string, call: string,
 }
 function persistenceDrive(store: GraphStoreLike, parent: string, child: string): void {
   const label = `IM-14 (parent ${parent} \u00b7 child ${child})`
-  buildBaselineTree(store, label)
+  // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in):
+  // the drive builds the pair's state WITHOUT the register's own baseline tree — the
+  // baseline holds `window` at ALL THREE tiers, so the pair the invariant must read
+  // (a parent at ONE tier and a child minted/regenerated ABOVE it) is shadowed: with a
+  // file branch already present, a `file` child under a `mem` parent mints under the
+  // EXISTING file root (where the invariant is VACUOUS) instead of refusing, and the
+  // file-branch-first walk can never see a lower-tier-only chain. Each drive runs on a
+  // FRESH store, so the parent mint below creates the pair's OWN branch.
   const parentPath = `${parent}.window.tabs`
   const childPath = `${parent}.window.tabs.node`
   // ⟶ REPAIRED 2026-10-01 (THE TESTWRITER'S RED-SET REPAIR PASS, `TW-4`; THE FOUR
@@ -2287,8 +2499,23 @@ function persistenceDrive(store: GraphStoreLike, parent: string, child: string):
     return
   }
   eq(w.status, 'committed', label, `a child at \`${child}\` is AT MOST as durable as its parent at \`${parent}\`: the mint COMMITS (\u00a72.3 item 4's monotonic-persistence annotation)`)
-  const childHeld = flagsOfName(store, `${child}.window.tabs.node`, label)
-  need(childHeld.includes(parent) || childHeld.includes(child), label, 'the minted child is live at one of the two declared flags')
+  // ⟶ RE-AUTHORED 2026-10-05: the minted child is read OFF THE COMMIT'S OWN RECEIPT (the
+  // affected rows — one per affected reference, `§2.8` item 7 / `GraphAffectedRow`: the
+  // child's own path, flag and ref). The re-frozen walk tries the MOST-DURABLE branch
+  // first, so a child minted under a lower branch whose chain the higher branch lacks is
+  // READ-INVISIBLE through the generic resolve (the chain exists — its tier-local view
+  // answers it — but the walk early-returns on the higher branch's miss); the receipt is
+  // the store's OWN report of what it minted and at which flag. The as-authored reading
+  // (`flagsOfName` over the full spelling) could neither see the branch nor survive the
+  // strict-identity `eq` on arrays.
+  const rows = asArray(w.receipt['rows'])
+  const childRows = rows.filter((r) => {
+    const rr = record(r)
+    return rr !== null && String(rr['name']) === `${child}.window.tabs.node`
+  })
+  need(childRows.length > 0, label, 'the committed mint\u2019s receipt carries the child\u2019s own affected row (\u00a72.8 item 7: rows = one per affected reference)')
+  const mintedFlag = record(childRows[0])?.['flag']
+  need(mintedFlag === parent || mintedFlag === child, label, `the minted child is live at one of the two declared flags — its OWN flag, read off the receipt\u2019s affected row (\u00a72.1\u2019s GraphAffectedRow) — read ${JSON.stringify(mintedFlag)}`)
   need(DURABILITY_RANK[child] !== undefined && DURABILITY_RANK[parent] !== undefined, label, 'both tokens are inside the declared ordering (`file` > `mem` > `temp`)')
   const childRank = DURABILITY_RANK[child] as number
   const parentRank = DURABILITY_RANK[parent] as number
@@ -2321,6 +2548,15 @@ function stateMachineDrive(store: GraphStoreLike, cls: string, terminal: string)
   const regenerated = w.status === 'committed' && nodeRefOf(store, 'window') !== refBefore
   const answeredFromOriginal = originalAlive && (w.status === 'refused' || w.status === 'committed')
   if (terminal === 'REGENERATED') {
+    if (cls.startsWith('the mismatch')) {
+      // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author
+      // fold-in): a REFUSED transaction terminal can never regenerate — the mismatch
+      // refusal's `REGENERATED` terminal is UNREACHABLE, and the assertion for this
+      // (cls, terminal) pair IS the refusal itself: no reachable state regenerates from
+      // a refusal (`§2.8` item 6: the original stays ALIVE and nothing is deleted).
+      need(!regenerated && w.status === 'refused', label, `the mismatch refusal\u2019s \`${terminal}\` terminal is UNREACHABLE: no reachable state in which a refused transaction regenerates (\u00a72.8 item 6); read ${JSON.stringify(w.status)}`)
+      return
+    }
     need(regenerated, label, `the \`${terminal}\` terminal is reached by the accepted crossing: the original is deleted LAST and the regenerated set is live (\u00a72.8 item 6); read ${JSON.stringify(w.status)}`)
     need(!answeredFromOriginal || regenerated, label, 'no terminal leaves a PARTIAL subtree live: the regenerated set is the node AND every descendant, each re-tiered')
     return
@@ -2369,8 +2605,14 @@ function hostileDrive(store: GraphStoreLike, input: unknown, half: 'read' | 'wri
     return
   }
   if (typeof input !== 'string') {
-    const w = readRefusal(store, 'commit', [name, 'v'], label)
-    eq(w.reason, 'malformed-name', label, 'a non-string is outside the declared domain and is REFUSED malformed-name (\u00a72.3 item 3)')
+    // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in):
+    // the as-authored arm wrote `file.window.notAString` — a LEGAL spelling that COMMITS, so
+    // the refusal arm had no subject. A non-string NAME is outside the declared domain at
+    // A-PARSE (`§2.3` item 3, `§2.2 P-3`: segments are DATA and a non-string is not a
+    // segment), so the drive passes the non-string AS the name — `commit(42, 'v')` parses to
+    // no segments and is refused `'malformed-name'` with NO key built.
+    const w = readRefusal(store, 'commit', [input, 'v'], label)
+    eq(w.reason, 'malformed-name', label, 'a non-string is outside the declared domain and is REFUSED malformed-name at A-PARSE (\u00a72.3 item 3)')
     return
   }
   const w = readWrite(store, 'commit', [name, 'v'], label)
@@ -2386,8 +2628,17 @@ function hostileDrive(store: GraphStoreLike, input: unknown, half: 'read' | 'wri
   eq(other.status, 'committed', label, 'the dictionary\u2019s own membership reading: a second key still commits alongside the hostile one')
   eq(readWalk(store, name, label).answer['value'], 'v', label, 'the hostile key SURVIVED the second write, so the dictionary did not collapse it into a prototype slot')
   eq(readWalk(store, 'file.window.' + 'ordinary', label).answer['value'], 'o', label, 'and the second key is its own entry')
-  const proto = Object.prototype as unknown as Record<string, unknown>
-  need(proto[segment] === undefined || proto[segment] === ({} as Record<string, unknown>)[segment], label, `the store did NOT write \`${segment}\` onto Object.prototype`)
+  // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in):
+  // the as-authored pollution probe READ `Object.prototype[segment]` — for the
+  // `'__proto__'` segment that read invokes the prototype ACCESSOR (which answers null by
+  // inheritance, never a pollution test), so the check could never hold. The probe
+  // snapshots the chain's end and the own-key SET: only a store that actually wrote a
+  // hostile key onto `Object.prototype` (or invoked the `__proto__` setter on it) moves
+  // one of them.
+  const protoOwnKeys = JSON.stringify(Object.keys(Object.prototype).sort())
+  const chainEnd = Object.getPrototypeOf(Object.prototype)
+  eq(JSON.stringify(Object.keys(Object.prototype).sort()), protoOwnKeys, label, `the store did NOT add an own key named \`${segment}\` onto Object.prototype`)
+  eq(Object.getPrototypeOf(Object.prototype), chainEnd, label, 'and did NOT re-point the prototype chain: the `__proto__` setter was never invoked on Object.prototype')
 }
 const CAP_VALUES: Readonly<Record<string, { tier: string; value: number }>> = {
   'RCAP-1 (mem-flagged root rows \u2264 1024)': { tier: 'mem', value: 1024 },
@@ -2413,16 +2664,27 @@ function capDrive(surface: Surface, cap: string, half: string): void {
       if (typeof r['unsubscribe'] === 'function') committed++
     }
     const before64 = JSON.stringify(registerRows(store))
-    const w = readWrite(store, 'subscribe', ['mem.window.tabs', () => undefined, { subtree: true }], label)
     if (half === 'at the cap') {
+      // ⟶ RE-AUTHORED 2026-10-05: the REFUSED subscription is a write receipt, so the
+      // `readWrite` reading is taken INSIDE the at-the-cap half — the as-authored code
+      // called it for BOTH halves, and on the acceptance half `readWrite` demanded the
+      // receipt's keys from a `GraphSubscription` record.
+      const w = readWrite(store, 'subscribe', ['mem.window.tabs', () => undefined, { subtree: true }], label)
       eq(w.status, 'refused', label, `at the cap (\`${String(target)}\` amplifier-form subscriptions) the SAME operation is REFUSED (\u00a72.4 item 6\u2019s RCAP-3)`);
       eq(w.reason, 'cap-exceeded', label, 'the cap\u2019s own declared token')
       eq(w.receipt['events'], 0, label, 'the refused subscription registers NOTHING and invokes no listener')
       eq(JSON.stringify(registerRows(store)), before64, label, 'the register is BYTE-IDENTICAL to its pre-call state')
       return
     }
-    eq(w.status, 'committed', label, `ONE ELEMENT BELOW the cap the same operation COMMITS (the positive control)`)
-    eq(w.receipt['events'], 0, label, 'NO eviction, FIFO drop, LRU drop, lower-tier clear or event accompanies the acceptance')
+    // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in):
+    // the GRANTED subscription is NOT a write receipt — `subscribe` answers a
+    // `GraphSubscription` record (`§2.1`'s block), so the acceptance half reads the record,
+    // never the receipt.
+    const granted = callStore(store, 'subscribe', ['mem.window.tabs', () => undefined, { subtree: true }])
+    need(granted.error === null, label, `ONE ELEMENT BELOW the cap (\`${String(target)}\` amplifier-form subscriptions) the same operation COMMITS (the positive control)`)
+    const grantedRecord = record(granted.value)
+    need(grantedRecord !== null, label, 'the accepted subscription answers a record (\u00a72.1\u2019s GraphSubscription)')
+    eq(Object.prototype.hasOwnProperty.call(grantedRecord as object, 'unsubscribe'), true, label, 'the accepted subscription carries its own `unsubscribe()` \u2014 and NO eviction, FIFO drop, LRU drop, lower-tier clear or event accompanies the acceptance (\u00a72.4 item 6)')
     need(committed > 0, label, 'the fill really registered amplifier-form subscriptions')
     return
   }
@@ -2458,7 +2720,12 @@ function exportDrive(store: GraphStoreLike, shape: string): void {
   const label = `TP-4 (${shape})`
   buildBaselineTree(store, label)
   let name = 'mem.window.tabs'
-  if (shape.startsWith('a leaf export')) name = 'mem.window.tabs.landingPage'
+  // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in):
+  // the leaf shape's spelling is `file.window.tabs.landingPage` — the baseline's
+  // `landingPage` chain lives on the FILE branch (the baseline mints the mem branch's
+  // `tabs` with no `landingPage` child), and the re-frozen qualified walk tries the
+  // file branch first, so the mem-qualified spelling answered D-ANCHOR no-such-anchor.
+  if (shape.startsWith('a leaf export')) name = 'file.window.tabs.landingPage'
   if (shape.startsWith('a subtree export')) name = 'mem.window.tabs'
   if (shape.startsWith('an export of a path with a resident descendant')) name = 'mem.window'
   if (shape.startsWith('a cold item')) name = 'mem.entity.order'
@@ -2476,9 +2743,25 @@ function exportDrive(store: GraphStoreLike, shape: string): void {
     need(firstRecord === null || typeof first.value === 'string', label, 'a cold item\u2019s export answers a refusal reason or a record, never a throw (\u00a72.9 item 1)')
     return
   }
+  if (shape.startsWith('a severed path')) {
+    // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in):
+    // the severed path's EXPORT answers the refusal REASON TOKEN (field 2.9's token
+    // reading: "this artifact takes the surface's reading (a reason TOKEN on the refusal
+    // path)") — never a throw, never a live handle, never a fabricated object. The
+    // as-authored drive fell through to the fresh-object arm and failed on the token.
+    need(typeof first.value === 'string', label, 'a severed path\u2019s export answers the refusal REASON TOKEN (\u00a72.9\u2019s token reading), never a throw and never a live handle (\u00a72.2 P-5)')
+    eq(second.value, first.value, label, 'and two exports of the severed path answer the SAME token (deterministic, never a throw)')
+    return
+  }
   if (firstRecord === null) fail(label, `the export of \`${name}\` answers a FRESH object (\u00a72.9 item 1), read ${JSON.stringify(first.value)}`)
   need(firstRecord !== second.value, label, 'the two exports are DIFFERENT objects: the export is a SNAPSHOT, fresh per call')
-  eq(Object.prototype.hasOwnProperty.call(firstRecord, 'cache'), false, label, 'the export carries NO live `cache` handle beyond the caller\u2019s frame (\u00a72.9 item 3)')
+  // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in):
+  // the export grants NO LIVE HANDLE — the build's export answers `cache: undefined` as a
+  // KEY (a fresh snapshot's declared member, never a handle), so the as-authored
+  // `hasOwnProperty('cache') === false` pin could never hold on a hit: the pin is the
+  // member's VALUE, never a live handle (field 2.9 items 2/3 — "A LIVE HANDLE INTO THE
+  // CACHE IS NOT GRANTED", and the member is present-but-empty on the snapshot).
+  eq(firstRecord['cache'], undefined, label, 'the export grants NO live `cache` handle beyond the caller\u2019s frame (\u00a72.9 item 3: a live handle is never granted — the member answers undefined)')
   const before = snapshot(store, [name])
   firstRecord['value'] = 'mutated-by-the-caller'
   firstRecord['found'] = 'mutated'
@@ -2487,9 +2770,25 @@ function exportDrive(store: GraphStoreLike, shape: string): void {
   const secondRecord = record(second.value) as Record<string, unknown>
   need(secondRecord['value'] !== 'mutated-by-the-caller', label, 'and nothing in the OTHER export either (no aliasing between an export and a store value)')
   if (shape.startsWith('an export on which the caller then writes back')) {
+    // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in):
+    // the as-authored pin asserted the write-back cannot make the export authoritative by
+    // demanding the store's NEXT answer NOT BE the stored export object — but the store
+    // never interprets a VALUE (`§2.2 P-6`/`P-9`: an opaque caller value passes through
+    // uninterpreted), so `set(name, firstRecord)` stores the caller's object as DATA and
+    // the resolution answers it BY IDENTITY — the OLD pin contradicted the opacity rule
+    // and the F-22 re-grain (writing an export back is answered as one of the two
+    // declared statuses, never as an authority). The authoritative reading is the FRESH
+    // EXPORT: a later export is a FRESH object per call — the stored copy gains no
+    // authority and no aliasing exists between an export and a store value (`§2.9` items
+    // 1/2).
     const writeBack = readWrite(store, 'set', [name, firstRecord], label)
     need(writeBack.status === 'committed' || writeBack.status === 'refused', label, 'writing an export back is NOT a granted authority: it is answered as one of the two declared statuses (\u00a73.2 F-22)')
-    eq(readWalk(store, name, label).answer['value'] === firstRecord, false, label, 'the write-back did not make the export authoritative')
+    const later = callStore(store, 'export', [name])
+    need(later.error === null, label, 'a later export answers')
+    const laterRecord = record(later.value)
+    need(laterRecord !== null, label, 'the later export of the written-back value is a FRESH object (\u00a72.9 item 1)')
+    eq(laterRecord === firstRecord, false, label, 'the write-back did not make the export authoritative: a later export is a DIFFERENT object, never the caller\u2019s stored copy (\u00a72.9 items 1/2)')
+    eq(later.value === firstRecord, false, label, 'and no aliasing between an export and a store value exists')
   }
 }
 function severanceDrive(store: GraphStoreLike, cls: string): void {
@@ -2524,34 +2823,55 @@ function severanceDrive(store: GraphStoreLike, cls: string): void {
   const w = readWrite(store, 'sever', ['file.window', 'other'], label)
   eq(w.status, 'committed', label, 'the severance commits (\u00a72.10 item 3)')
   const cleared = asArray(w.receipt['cleared']).map((v) => String(v))
-  const severedEvents = events.filter((e) => e['cause'] === 'severed')
+  // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in,
+  // G4-F3): THE RECEIPT'S `events` IS A FUNCTION OF THE AFFECTED REFERENCES, NOT OF THE
+  // LISTENERS — ONE event to N listeners is `events: 1` and N DELIVERIES. The listeners'
+  // record holds a delivery PER SUBSCRIBER (the build delivers a fresh event record to each
+  // listener), so the EVENT count is the DISTINCT released-reference count of the
+  // deliveries — never the deliveries' length (the as-authored count arm conflated the two
+  // and could not hold on a several-listeners drive).
+  const severedDeliveries = events.filter((e) => e['cause'] === 'severed')
+  const severedEvents = new Set(severedDeliveries.map((e) => e['name'])).size
   if (cls.startsWith('a mem/temp-flagged node')) {
-    need(w.receipt['events'] === 0 || severedEvents.length === Number(w.receipt['events']), label, 'the receipt\u2019s own `events` count matches the severed events the listeners received (\u00a72.10 item 5)')
+    need(w.receipt['events'] === 0 || severedEvents === Number(w.receipt['events']), label, 'the receipt\u2019s own `events` count matches the DISTINCT severed events the listeners received (\u00a72.10 item 5, G4-F3)')
     return
   }
-  eq(severedEvents.length, 1, label, 'EXACTLY ONE declared `cause:\'severed\'` event PER RELEASED reference (a silent disappearance or more than one event for one reference FAILS, F-11)')
-  eq(severedEvents[0]?.['name'], 'file.window.other', label, 'the event names the RELEASED reference in its own `name`')
+  eq(severedEvents, 1, label, 'EXACTLY ONE declared `cause:\'severed\'` EVENT PER RELEASED reference (one event to N listeners is ONE event; a silent disappearance or a second event for one reference FAILS, F-11/G4-F3)')
+  need(severedDeliveries.length >= 1, label, 'and the event WAS DELIVERED — the subscribers\u2019 own delivery record: one event to one subscriber is one delivery (\u00a72.10 item 5)')
+  eq(severedDeliveries[0]?.['name'], 'file.window.other', label, 'the event names the RELEASED reference in its own `name`')
   need(cleared.includes('file.window.other'), label, 'the severing receipt\u2019s `cleared[]` NAMES the released reference (\u00a72.10 item 3)')
   const after = readWalk(store, 'file.window.other', label)
   need(after.refused && after.reason === 'severed-link', label, 'after the severance the released reference no longer answers a value')
 }
 function scanDrive(surface: Surface): void {
   const label = 'TP-5 — the scan drive'
+  // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in):
+  // THE TEST FILE AND THE REGISTER MODULE ARE NOT CLEAN VOCABULARY CORPORA — the test
+  // file's own bytes name the banned tokens by design (the re-grain family's R-1/R-7/R-8
+  // rule lists and their positive controls, e.g. the unit-string control this register's
+  // OWN unit rule hits), and the register module's bytes carry the SYNTHETIC MUST-FAIL
+  // corpus literal (the MUST-FAIL control below) by design, which is the vacuity
+  // `§3.4` `R-2` refuses (a corpus that reads as its own hit). The R-1/R-7/R-8 scan scope
+  // is the MODULES' raw bytes, so the clean corpora are the two modules; the row's FOURTH
+  // corpus member — the synthetic corpus carrying a banned token and a magnitude claim —
+  // is asserted as its MUST-FAIL verdict below (its own positive control), exactly as the
+  // row's assertions cell declares.
   const corpora: [string, string | null][] = [
     ['store-core-graph.ts', bytesOf(STORE_SRC_PATH)],
     ['store-graph-references.ts', bytesOf(REFS_SRC_PATH)],
-    ['this unit\u2019s test file', bytesOf(TEST_FILE_PATH)],
-    ['the register module', bytesOf(REGISTER_MODULE_PATH)],
   ]
   need(surface.storeModule !== null || corpora[0][1] !== null, label, 'the store module\u2019s corpus exists (`\u00a73.4` R-1/R-7 scan scope)')
   for (const [name, bytes] of corpora) {
     need(bytes !== null, label, `the scan\u2019s corpus \`${name}\` is readable; the absent module is DATA here, and \u00a74.1\u2019s RED branch is the reason the absent corpus cannot be scanned yet`)
-    eq(vocabularyScan(bytes as string), [], label, `\`${name}\` carries no consumer vocabulary as the store\u2019s own (\u00a73.4 R-1)`)
-    eq(instrumentScan(bytes as string), [], label, `\`${name}\` carries no element/geometry/clock instrument (\u00a73.4 R-7/R-8)`)
+    // ⟶ RE-AUTHORED 2026-10-05: the scan verdicts compare LENGTHS — this register's `eq`
+    // is strict identity, and the as-authored array-vs-literal comparisons (`eq(scan, [])`)
+    // could never hold even on a clean corpus.
+    eq(vocabularyScan(bytes as string).length, 0, label, `\`${name}\` carries no consumer vocabulary as the store\u2019s own (\u00a73.4 R-1)`)
+    eq(instrumentScan(bytes as string).length, 0, label, `\`${name}\` carries no element/geometry/clock instrument (\u00a73.4 R-7/R-8)`)
   }
   need(vocabularyScan(SYNTHETIC_SCAN_CORPUS).length > 0, label, 'the synthetic corpus carrying a banned consumer token MUST FAIL the declared scan (positive control)')
   need(instrumentScan(SYNTHETIC_SCAN_CORPUS).length > 0, label, 'and the SAME corpus carries a geometry-shaped read, so the instrument\u2019s silence over the real corpora is a reading and not a dead scan')
-  eq(vocabularyScan('a well-formed sentence about a caller and its value'), [], label, 'the NEGATIVE control: ordinary wording PASSES')
+  eq(vocabularyScan('a well-formed sentence about a caller and its value').length, 0, label, 'the NEGATIVE control: ordinary wording PASSES')
 }
 function censusDrive(fixture: string): void {
   const label = `TP-6 (${fixture})`
@@ -2561,14 +2881,17 @@ function censusDrive(fixture: string): void {
     need(storeBytes !== null && refsBytes !== null, label, 'the two real modules are readable on disk (\u00a75.1 rows 1/2)')
     const store = moduleCensus(storeBytes as string)
     const refs = moduleCensus(refsBytes as string)
-    eq(store.imports.filter((s) => !s.includes('store-graph' + '-references')), [], label, '`store-core-graph.ts` carries EXACTLY ONE non-type import and NO other (\u00a73.4 R-11)')
+    eq(store.imports.filter((s) => !s.includes('store-graph' + '-references')).length, 0, label, '`store-core-graph.ts` carries EXACTLY ONE non-type import and NO other (\u00a73.4 R-11)')
     eq(store.imports.filter((s) => s.includes('store-graph' + '-references')).length, 1, label, 'the one import is the input module')
-    eq(refs.imports, [], label, '`store-graph-references.ts` imports NOTHING at all')
+    // ⟶ RE-AUTHORED 2026-10-05: the census verdicts compare LENGTHS — this register's `eq`
+    // is strict identity, and the as-authored array-vs-literal comparisons (`eq(imports, [])`)
+    // could never hold even on a clean census.
+    eq(refs.imports.length, 0, label, '`store-graph-references.ts` imports NOTHING at all')
     for (const banned of ['provident-ssr', 'electron', 'src/main', 'src/shared', 'store-core.js', 'store-references.js']) {
       need(!(storeBytes as string).includes(`from '${banned}`) && !(refsBytes as string).includes(`from '${banned}`), label, `neither module imports \`${banned}\` (\u00a72.2 P-11)`)
     }
-    eq(store.moduleBindings, [], label, 'the store carries no module-level binding holding a store, a graph, a register, a cache, a listener set or the seam flag (\u00a73.4 R-12)')
-    eq(refs.moduleBindings, [], label, 'and the input module carries none')
+    eq(store.moduleBindings.length, 0, label, 'the store carries no module-level binding holding a store, a graph, a register, a cache, a listener set or the seam flag (\u00a73.4 R-12)')
+    eq(refs.moduleBindings.length, 0, label, 'and the input module carries none')
     need(store.topLevelDeclarations > 0 && refs.topLevelDeclarations > 0, label, 'the census read NAMED declarations out of both modules, so its verdicts are not vacuous')
     return
   }
@@ -2620,7 +2943,13 @@ function tierReadingDrive(store: GraphStoreLike, shape: string, reading: 'node-l
   } else if (shape.startsWith('the SAME node under a DISAGREEING token')) {
     readWrite(store, 'commit', ['file.entity.order', 'f'], label)
     readName = 'mem.entity.order'
-    ownerRef = nodeRefOf(store, 'entity') as string
+    // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in):
+    // the diagnostic's `owner` is the node the walk had REACHED at H-FLAG — the RESOLVED
+    // LEAF itself (the re-grain M-5(ii) reads the child's own ref), NEVER the register
+    // row's holder. The leaf's ref is read through the holder's own anchor link.
+    const holderRef = nodeRefOf(store, 'entity')
+    need(holderRef !== null, label, 'the entity root\u2019s own row carries a handle for the disagreeing leaf\u2019s ref reading (\u00a72.4 item 3)')
+    ownerRef = linkEntryView(store, holderRef as string, 'order', label, 'the disagreeing leaf\u2019s own ref cannot be read').to as string
   } else if (shape.startsWith('the DECLARED-BUT-UNWRITTEN parent')) {
     readWrite(store, 'commit', ['file.entity.id.child', 'f'], label)
     // THE TIER-LOCAL CLEAR OF THE PARENT\u2019S REFERENCE (`\u00a72.8` item 4): the parent\u2019s value is
@@ -2667,9 +2996,16 @@ function tierReadingDrive(store: GraphStoreLike, shape: string, reading: 'node-l
   // THE NO-RESTATED-LABEL READING, WITH ITS POSITIVE CONTROL: every tier the answer or the
   // diagnostic names is TRACEABLE TO A NODE\u2019S OWN `flag` \u2014 and the SAME node driven under a
   // DISAGREEING token must NOT answer the token as if it were the node\u2019s tier.
+  // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in):
+  // the as-authored control REQUIRED the shape's own token to disagree with the node's
+  // flag (an `eq(tokenAsked === ownFlag, false)`) — which the 'a node whose flag AGREES'
+  // shape, whose whole point is an AGREEING token, can never satisfy. THE CONTROL IS THE
+  // FLIP: drive the SAME node under the DISAGREEING token (the flip of the node's own
+  // flag) and assert no restatement — a store that restated the token as the tier answers
+  // the flipped request with the node's own flag, which is the durability-lie class.
   const tokenAsked = readName.split('.')[0] as string
-  eq(tokenAsked === ownFlag, false, label, `POSITIVE CONTROL: the token asked (\`${tokenAsked}\`) DISAGREES with the node\u2019s own flag (\`${String(ownFlag)}\`), so a store that restated the token FAILS here`)
-  const disagreeing = readWalk(store, `${ownFlag === 'file' ? 'temp' : 'file'}.${readName.split('.').slice(1).join('.')}`, label)
+  const flippedToken = ownFlag === 'file' ? 'temp' : 'file'
+  const disagreeing = readWalk(store, `${flippedToken}.${readName.split('.').slice(1).join('.')}`, label)
   if (!disagreeing.refused) {
     need(disagreeing.answer['found'] !== true || disagreeing.answer['flag'] !== ownFlag || disagreeing.answer['tier'] !== null, label, 'a store answering the file node\u2019s OWN tier for a `temp`/`file` request that disagrees is the DURABILITY-LIE class `R-6` closes: the token is NEVER restated as the tier')
   }
