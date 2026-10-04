@@ -60,7 +60,7 @@ cites the spec** — not a pointer.
 | `src/shared/relocate.ts` | values `createRelocateSession`, `withinProximity`; types `CandidateFor`, `RelocateTargetFor`, `CommitSink`, `PreviewSink`, `RelocateHandle`, `RelocateOptions`, `RelocateSession`, `RelocateStats` |
 | `src/shared/focus-model.ts` | values `focusTransition`, `focusOrder`, `focusIndex`, `persist`; types `FocusId`, `FocusEntry`, `FocusVerb`, `FocusRefusalCode`, `FocusState` |
 | `src/shared/theme.ts` | values `resolveTheme`, `applyThemeDeclaration`; types `ThemeResolution`, `ThemeAttributeWrite`, `ThemeEnv` |
-| `src/renderer/renderer.ts` | the one landed consumer: `:10` imports `focusTransition`, `focusOrder`, `FocusEntry`, `FocusState` from `../shared/focus-model.js` (the `U-FOCUS-TOOL` wiring) |
+| `src/renderer/renderer.ts` | the one landed consumer + the STORE-BACKED COMPOSITION HOST: imports the store machinery (`./store-core-graph.js`, `storeGraphReferences`) AND the focus-model symbols (`focusTransition`, `focusOrder`, `persist`, `FocusEntry`, `FocusState`); boot-constructs the wired tiered store (`getWiredGraphStore`) and exports the post-store spine — `createPaneDrag`/`PaneDragSurface`, `createFocusCarrier`/`FocusCarrierSurface`, `zoneSizeConstraint`, `zoneSizeRepair` (the `U-FOCUS-TOOL` + `U-STORE-FOCUS` + `U-PANE-DRAG-COMPLIANCE` wirings together) |
 | `tests/container.test.ts`, `tests/relocate.test.ts`, `tests/focus-model.test.ts`, `tests/theme.test.ts` | the units' own rows. A fact measured by a test is cited where it is used |
 
 ## The contract it obeys
@@ -282,6 +282,22 @@ describe('UC-4', () => {
 | `containerFactory` `(key) => unknown` (`slot-host.ts`) — **the SOLE container source** | OPTIONAL | the fork | **nothing is placeable**: the key's container is treated as ABSENT, `placed` `[]`, `containerFor(key)` returns `null` for every key, `keys()`/`order` still valid, and **no refusal is invented** — in particular `'no-container'` is DECLARED-BUT-NOT-EMITTED (`slothost.md` §2.1's container-source clause items 4/5, `§3.2 F-11`/`F-12`) | the SAME declared outcome as absent — `F-12` states all five drives (omitted · `undefined` · non-callable · throwing · unusable-return) as ONE `F-6`-class degradation, so a non-callable factory is not a separate state (`slothost.md` §3.2 `F-12`) | the same: the throw is **CAUGHT**, never re-thrown, and becomes no refusal code of its own (`slothost.md` §2.1's totality-boundary table, the FIFTH seam; `§3.2 F-12`) |
 | `mount` (`owned-list-host.ts`) — the single container the host places your nodes in; plus `itemFactory` `(entry) => N \| null` | OPTIONAL | the fork | a VALID no-op with **no placement and no container-state refusal**: the mount is *"the container the host places CALLER-CREATED nodes inside"*, and an unusable one simply places nothing (`listhost.md` §2.1; `src/shared/owned-list-host.ts:129-132`, `:172-176`) | the same declared no-op shape — `mount` is a container, not a callable, so "non-callable" has no separate arm (`listhost.md` §2.1) | the factory's throw is **ABSORBED** and takes the same safe default as a factory returning nothing: the typed `'factory-returned-null'` refusal for that entry (`listhost.md` §2.1, `§3.2`; `src/shared/owned-list-host.ts:271-289`) |
 
+**⟶ THE STORE-BACKED COMPOSITION'S OWN SEAM SET (`createPaneDrag(store, source)`, the `U-PANE-DRAG-COMPLIANCE`
+wiring — READ BESIDE the table above; `docs/FORKER.md` §4's `### THE STORE-BACKED DRAG + GUTTER FEATURES` carries
+the full wording).** These are NOT fork-supplied seams — they are the composition's own members, and each READS or
+WRITES the store (the fork wires the store, then the composition resolves the seams through it):
+
+| Seam member (`PaneDragSurface`) | Store route (landed, `renderer.ts`) |
+| --- | --- |
+| `startSizeOf` / `boundsOf` / `defaultSizeFor` | read `mem.layout.pane.<id>.size` / `…bounds` (tier-qualified `tierRead`, `{found, value}` answers; MISS → `file.settings.pane.<id>.*` fallback) — bounds MUST be `{ min, max }` (an ARRAY silently kills the sink) |
+| `candidatesFor` | reads `mem.layout.zone.<id>.slot` / `…distance` |
+| `move(gestureId, preview)` | the temp-write turn — FIRST preview = `commit('temp.drag.<gid>.placement')` (the mint), each subsequent move = `set(...)`; NEVER a sink write |
+| `release(gestureId, final, sink)` | ONE sink call + `commit('file.settings.pane.<id>.size', final)` + the `mem` copy; temp parked; hard-coded `pane-a` tenant |
+| `rightClick` / `cancel` | `remove('temp.drag.<gid>.placement')` — the temp erases, the FILE original REASSERTS (never a file removal) |
+
+The composition's zone render is a STORE SUBSCRIBER — the wiring must register the tier-qualified ancestor form
+`store.subscribe('temp.drag', listener, { subtree: true })` or the ancestor fan-out never fires the render.
+
 **⟶ WHY THE LAST TWO ROWS ARE HERE WHEN THIS PAGE'S SCOPE PARAGRAPH USED TO SEND THEIR UNITS ELSEWHERE (`2026-10-04`, the `SLOT-HOST-ENVELOPE-AUTHORED-CONTAINER-SOURCE` gate-1 disposition's guide pass).** **They were missing, and their absence is what made a downstream fork ask this repo whether an envelope-authored consumer could satisfy the container seam at all:** it read the two hosts' **module headers** (*"a container manager for CALLER-CREATED nodes"*) as the contract, found no seam row on this page, and filed a capability gap against a contract that already admitted its case. **THE READING THAT GOVERNS IS THE NORMATIVE ONE, AND A MODULE HEADER IS NOT A CLAUSE.** A container is **any value offering a function-valued `appendChild`** — `slothost.md` §2.1's container-source clause item 3: *"a real DOM element satisfies it; a shim `ShimElement` satisfies it; a plain object offering an `appendChild` function satisfies it; **no predicate such as `instanceof` or a tag check is asserted or admissible**"* — and the module's own predicate is exactly that one test (`isNodeShaped`/`isUsable`, `src/shared/slot-host.ts:167-171`, `:199-203`, with `obtainContainer` accepting on `isUsable` alone). **So a runtime-materialised, framework-authored element is admitted BY CONSTRUCTION, and the header's *"CALLER-CREATED nodes"* describes WHOSE NODES the host places — never what a container may be.** **The one constraint on top of the shape is TIMING, not category:** the factory is invoked only when the host is **driven** for that key with a present and usable injected `container` (`src/shared/slot-host.ts:305-322`, reached from `setNode`/`setOrder`/`render`; **never at construction**), so the value must exist at that moment and be re-supplied if the consumer's own tree re-materialises. **A source that READS A TREE — a projection, a lookup, a `querySelector`-family read — is NOT admissible**, and this repo declines to add one (`docs/decisions.md`'s ACTIVE row `SLOTHOST-CONTAINER-SOURCE-IS-INJECTED` stays untouched: the source is **injected**, and the ambient read stays deleted). **The fork-facing recipe, the ordering rule and the `owned-list-host` divergence are in `docs/FORKER.md` §4's `### THE HOST CONTAINER SOURCE — WHAT A FORK SUPPLIES, AND WHEN IT IS CALLED`; the pinning decision is `docs/decisions.md`'s ACTIVE row `SLOTHOST-CONTAINER-SOURCE-ADMITS-A-RUNTIME-MATERIALISED-CONTAINER` (cited by row name); the full four-step disposition and its `OWED` residues are `docs/specs/slot-host-envelope-authored-container-source-review.md` and `docs/pending.md` §N.**
 
 **⟶ THE PERSISTENCE BOUNDARY, AT THE `persist` ROW (`2026-09-29`):** **the family's answer to persistence is the caller-called returned write above — `persist(seam, state)` hands your seam's own value back to YOU — and the foundation supplies NO store** (`docs/decisions.md` ACTIVE row `NO-FOUNDATION-CONFIG-FILE-FACILITY`; `S-d4` + `H-r16` in `docs/specs/provident-electron-shell-chrome-handoff-review.md`; a fork's own carrier is `docs/FORKER.md` §4's `### PERSISTENCE — WHAT A FORK OWNS`).
@@ -314,7 +330,8 @@ describe('UC-4', () => {
 
 - **`U-FOCUS-MODEL` is imported by a `src/**` file today**, although its own unit record and module header say
   “imported by NO `src/**` file”: `src/renderer/renderer.ts:10` imports `focusTransition`, `focusOrder`,
-  `FocusEntry` and `FocusState` (the `U-FOCUS-TOOL` wiring). Read that census claim as scoped to the unit's own
+  `persist`, `FocusEntry` and `FocusState` — `persist` is the STORE-WAVE addition, called by the `U-STORE-FOCUS`
+  write-through (the `U-FOCUS-TOOL` + `U-STORE-FOCUS` wirings together). Read that census claim as scoped to the unit's own
   diff — the unit's row records the renderer path as a named exemption (`tests/focus-model.test.ts`, the
   `DECLARED_IMPORTER_EXEMPTIONS` message at `:952`).
 - **Two return shapes you cannot import.** `RelocateResetResult` (the type of `RelocateSession.reset`'s return) is
@@ -339,9 +356,9 @@ describe('UC-4', () => {
   (`src/shared/container.ts:80-84`; the pinned reading is `docs/specs/container.md` §3.4 R-8's class).
 - **`U-THEME` reads `prefersDark` by own-property descriptor only**: an inherited member reads
   `{ prefersDark: false, source: 'degraded-env' }` (`src/shared/theme.ts:45`).
-- **`U-CONTAINER`, `U-RELOCATE` and `U-THEME` are imported by no `src/**` file**, and the build's five entries are
-  the paths named in `package.json`'s `build` script — so those three modules are in **no shipped bundle** and a
-  fork consumes them as source. `U-FOCUS-MODEL` is the exception (see above).
+- **`U-CONTAINER` and `U-RELOCATE` are imported by no `src/**` file**, and the build's five entries are
+  the paths named in `package.json`'s `build` script — so those two modules are in **no shipped bundle** and a
+  fork consumes them as source. **`U-THEME` gained its ONE admitted caller in the store wave** — `src/renderer/theme-store.ts` imports `resolveTheme`/`applyThemeDeclaration` (`U-STORE-MODULES-SEAMS`/`H2b`; `docs/specs/store-modules-seams.md` §2.3) — so the import-free set is now `U-CONTAINER`, `U-RELOCATE`, plus the exceptions `U-FOCUS-MODEL` (renderer) and `U-THEME` (theme-store).
 - **The examples above were not executed by this pass.** Every export name, argument and outcome is read from the
   cited source lines, but a static `../src/shared/<x>.js` value import from a new `tests/` file is — **unverified**;
   it would be settled by running one of the four snippets under `npx vitest run`.
