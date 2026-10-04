@@ -34,7 +34,7 @@ Setting your attribute, rendering your overlay, restoring focus and placing the 
 consumer's work by construction, not by omission.
 
 Two consequences a reader should get right the first time. First, the module has **no in-tree
-consumer** — no `src/**` file imports it, so nothing in the shell or the demo envelope exercises
+consumer** — EXCEPT its ONE admitted store-wave caller: `src/renderer/overlay-store.ts` imports `overlayTransition`/`overlayInertDeclaration` (`U-STORE-MODULES-SEAMS`/H2b; `docs/specs/store-modules-seams.md` §2.2) and reads/writes `mem.overlay.<name>.state` with the store's `{found,value}` resolve shape — nothing else in the shell or the demo envelope exercises
 it for you, and its value is the contract rather than a feature (`docs/specs/overlay.md` §1
 item 9, §2.5 item 5). Second, `SCH-12`'s **re-parent half is refused, with its reason stated and
 the residual re-filed** — there is no node reference, no move verb and no returned move plan

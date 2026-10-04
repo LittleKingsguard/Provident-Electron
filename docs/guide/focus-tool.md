@@ -6,7 +6,7 @@ and what it returns, and a **fork author**, who has to know which half of the ro
 theirs to implement. The unit is **`U-FOCUS-TOOL`** (wave `F`, ledger row `F3`); its
 landed record is `docs/next-steps.md`'s `## DONE — U-FOCUS-TOOL` section. In one line:
 it is a **thin adapter** — validate `{ target?, newTab? }`, make one renderer call,
-return the renderer's answer verbatim — and the live focus state belongs to the
+return the renderer's answer verbatim — and the live focus state belongs to the STORE MIRROR (mem.focus.*) — never to the
 renderer's wiring, never to the tool and never to the graph.
 
 ## What it is
@@ -18,7 +18,7 @@ closed set of steps, and fixes the negative list beside it (no state, no map, no
 policy, no sort, no re-derivation of the focus model's activation rule, no notify, no
 store) at `docs/specs/focus-tool.md` §1 item 3, §2.1 item 7 and §2.3.
 
-**The live authority for `{ entries, activeId }` is the renderer's own state, held in
+**The live authority for `{ entries, activeId }` is the STORE MIRROR — `mem.focus.entries` / `mem.focus.activeId` (tier mem, read via resolve; the page's contract cell was amended 2026-10-03 by `U-STORE-FOCUS`; NOT the module-level `const holder`), held in
 the renderer wiring outside the consumed module** — not a graph slice, and not the tool
 (`docs/specs/focus-tool.md` §2.1 item 6). That is why `provident.list_targets`,
 `provident.get_rendered_html`, `provident.get_markdown` and `provident.get_node_state`

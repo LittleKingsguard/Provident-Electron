@@ -237,7 +237,7 @@ resolved        // ['theme-setting'] — the ONE route the role calls on the gra
   the appearance authority `src/renderer/index.html` (`docs/specs/theme-control.md` §1
   item 5, §2.4 item 4, §3.3 `I-6`, §3.4 `R-6`, §5.1 row 8).
 - **No store, no persistence, no cache.** The setting lives in the live graph only and a
-  re-boot reconstructs the authored initial value; a store is a new gate, not a smuggled
+  re-boot reconstructs the authored initial value; **STORE-WAVE: the theme caller-side store turn EXISTS** — `src/renderer/theme-store.ts` (the H2b admitted caller) reads `file.settings.theme.token` with the `{found,value}` resolve shape and commits with `{onRepeat:'edit'}` (the unit's own `§5.5.1 P-TC-TP-3` admits that path by name); the DEMO ENVELOPE itself is still unwired — a store is a new gate, not a smuggled
   addition (`docs/specs/theme-control.md` §1 item 6, §3.3 `I-5`, §3.2 `F-6`).
 - **No environment or OS reading, and no policy default.** No `matchMedia`, no
   `prefers-color-scheme`, no `process.env`, no stored preference, no default selection —
