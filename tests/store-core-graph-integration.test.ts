@@ -80,11 +80,22 @@
  *          `crossings: 1` for the whole regenerated set — never a synthesised integer
  *   U1/U2  the sixteen-token refusal union (field 5): a reason is a RETURNED RECORD member,
  *          NEVER a throw (tokens #14/#16 driven as their declared returned records)
+ *   P1–P7  the seven UNIT-ADV-1 PIN DRIVES (AMENDMENT UNIT-ADV-1, 2026-10-03 — added by the
+ *          G1 integration wave under field 7 member 4's licence, the seat's R185–R191
+ *          siblings; each row drives one pin's WHAT-TO-DRIVE clause): P1 = G4-F1 (the
+ *          write-side C-TOP gate), P2 = G4-F2 (the read-side top is the segment at index 1,
+ *          by position; the silent re-spell is FORBIDDEN), P3 = G4-F3 (the receipt's
+ *          `events` counts the EMITTED events, never the deliveries), P4 = G4-F4 (the
+ *          sweep's cleared[]/event set matches its post-state), P5 = G4-F5 (the export is a
+ *          FRESH deep copy at every depth — no aliasing, no depth bound), P6 = G4-F6 (the
+ *          constraint evaluation's data record is PROTOTYPE-SAFE), P7 = G4-F7 ("equal value"
+ *          is the pinned `===`, not `Object.is`)
  *
  * DETERMINISM AND SCOPE: no `Math.random`, no clock, no ambient read; enumeration rows print
  * their terms (C1a's 29 names, E2's malformed-row terms, S9's eight seam keys, the eight `cause`
- * arms as data, U0's sixteen tokens); totals are modest — 33 runtime rows + 1 type-level row,
- * and RCAP-1's 1024-enumeration is NOT re-driven here (the seat owns the exhaustive sweep).
+ * arms as data, U0's sixteen tokens); totals are modest — 40 runtime rows + 1 type-level row
+ * (33 as filed + the seven P1–P7 pin drives added by the G1 pass), and RCAP-1's 1024-enumeration
+ * is NOT re-driven here (the seat owns the exhaustive sweep).
  *
  * LEG NOTE: row C2 is erased at vitest runtime (type unions have no runtime bytes). It is part
  * of this red set precisely because the D-1/D-3 merged-arm closure is a TYPE-surface fact; it
@@ -893,6 +904,249 @@ describe('U-STORE-CORE module wave — T4 integration red set (fields 3/6 wiring
       crossings: 0,
       events: 0,
     })
+  })
+
+  /* ===========================================================================================
+   * GROUP P — THE SEVEN UNIT-ADV-1 PIN DRIVES (AMENDMENT UNIT-ADV-1, 2026-10-03 — added by
+   * the G1 integration wave; the seat's R185–R191 sibling drives). Each row drives one pin's
+   * WHAT-TO-DRIVE clause from the re-frozen artifact (field 2 / 2.6 / 4.3, the ¬AMENDED
+   * ¶UNIT-ADV-1¬ clauses): P1 = G4-F1 (write-side C-TOP) · P2 = G4-F2 (read-side top by
+   * position) · P3 = G4-F3 (emitter-counted events) · P4 = G4-F4 (sweep truthfulness) ·
+   * P5 = G4-F5 (export deep copy at every depth) · P6 = G4-F6 (prototype-safe records) ·
+   * P7 = G4-F7 (the pinned `===`).
+   * =========================================================================================== */
+
+  it('P1 (G4-F1) — the write-side C-TOP gate: a commit/set/seed whose TOP name is NOT DECLARED (F-2 state (iii)) is refused \'undeclared-name\' and the write-side mint NEVER mints an undeclared or dotted root — every refusal leaves the store UNCHANGED; a commit on a DECLARED-but-cold root name MINTS (the named positive control)', () => {
+    // Field 2's F1 clause: "'a commit/set/seed whose TOP name … is NOT DECLARED is REFUSED
+    // \"undeclared-name\"'", "the write-side mint NEVER mints an undeclared or dotted root",
+    // "Every refusal leaves the store UNCHANGED", "a commit on a DECLARED-but-cold root name
+    // MINTS — the named positive control". The seed arm drives through the ORDINARY write
+    // path (the seam member's own row: seed's pinned refusal sentence IS the write-side gate).
+    const store = createGraphStore()
+    const r1: GraphWriteReceipt = store.commit('mem.undeclared.x', 'v')
+    expect(r1.status).toBe('refused')
+    expect(r1.reason).toBe('undeclared-name')
+    expect(r1.name).toBe('mem.undeclared.x') // the receipt's name is the caller's own spelling
+    expect(r1.cleared).toEqual([])
+    expect(r1.repaired).toEqual([])
+    expect(r1.rows).toEqual([])
+    expect(r1.crossings).toBe(0)
+    expect(r1.events).toBe(0)
+    expect(store.register.rows).toHaveLength(0) // nothing minted, nothing registered — store UNCHANGED
+    expect((store.tiers.mem.get('mem.undeclared.x') as GraphTierGetResult).found).toBe(false)
+    expect((store.resolve('mem.undeclared.x') as { reason?: unknown }).reason).toBe('undeclared-name')
+
+    const r2: GraphWriteReceipt = store.commit('file.undeclaredTop.x', 'v') // the file-tier spelling — the gate precedes the crossing transaction
+    expect(r2.status).toBe('refused')
+    expect(r2.reason).toBe('undeclared-name')
+    expect(r2.crossings).toBe(0) // the refused write never reaches the crossing
+    expect(store.register.rows).toHaveLength(0)
+
+    const r3: GraphWriteReceipt = store.commit('mem.a.b.c', 'v') // a deep-dotted write with nothing declared — top 'a' is state (iii)
+    expect(r3.status).toBe('refused')
+    expect(r3.reason).toBe('undeclared-name')
+    expect(store.register.rows).toHaveLength(0) // the mint NEVER mints a dotted root
+
+    const r4: GraphWriteReceipt = store.set('mem.undeclared.x', 'v')
+    expect(r4.status).toBe('refused')
+    expect(r4.reason).toBe('undeclared-name')
+
+    const seam = createGraphStore({ enableTestSeam: true })
+    seam.seed?.([{ name: 'temp.undeclared.y', value: 'v' }]) // a refused seed row leaves the store UNCHANGED
+    expect(seam.register.rows).toHaveLength(0)
+    expect((seam.resolve('temp.undeclared.y') as { reason?: unknown }).reason).toBe('undeclared-name')
+
+    // The positive controls (F-18's one-control-per-arm): a commit on a DECLARED-but-cold
+    // root name MINTS (F-2 state (ii)); the dotted shape WITH its top declared is the
+    // F1-GREEN arm — the top IS declared, so the gate passes and the mint creates the legal
+    // root, never a dotted one (exactly ONE register row).
+    const s3 = createGraphStore({ declarations: storeGraphReferences([{ name: 'mint' }]) })
+    expect(s3.commit('mem.mint', 'm').status).toBe('committed')
+    expect(s3.register.rows).toHaveLength(1)
+    expect((s3.resolve('mem.mint') as GraphReadHit).value).toBe('m')
+
+    const s4 = createGraphStore({ declarations: storeGraphReferences([{ name: 'a' }]) })
+    expect(s4.commit('mem.a.b.c', 'ab').status).toBe('committed')
+    expect(s4.register.rows.map((row) => row.name)).toEqual(['a']) // ONE root row — never a dotted root
+  })
+
+  it('P2 (G4-F2) — the read-side top is the segment at index 1 BY POSITION: a name whose index-1 segment is undeclared (and unregistered) answers the DECLARED \'undeclared-name\' refusal at C-TOP BEFORE any traversal — no anchor/link/cache/leaf walk, no silent re-spell; a DECLARED index-1 segment walks by the ordinary rules', () => {
+    // Field 2's F2 clause: "the parse reads rootParts[1] BY POSITION, never 'the first
+    // declared segment anywhere in the tail'", "refused at C-TOP on its index-1 segment and
+    // NEVER resolves against the declared leaf", "the same spelling with a DECLARED index-1
+    // segment walks by the ordinary rules".
+    const s = createGraphStore({ declarations: storeGraphReferences([{ name: 'window' }]) })
+    s.commit('mem.window.tabs', { active: true })
+    const r = s.resolve('file.x.window.tabs.landingPage') as unknown as Record<string, unknown>
+    expect(r.reason).toBe('undeclared-name') // the index-1-segment-undeclared spelling answers the declared refusal
+    expect(r.step).toBe('C-TOP') // BEFORE any traversal
+    expect(r.segment).toBe('x') // the caller's OWN index-1 segment (the F-1 shape)
+    expect(r.owner).toBeNull()
+    expect((r as unknown as GraphReadHit).found).not.toBe(true) // never a MISS and never the window data
+    const hit = s.resolve('mem.window.tabs') as GraphReadHit
+    expect(hit.found).toBe(true) // the DECLARED index-1 segment walks by the ordinary rules
+    expect(hit.value).toEqual({ active: true })
+    expect(hit.flag).toBe('mem')
+
+    const s2 = createGraphStore({ declarations: storeGraphReferences([{ name: 'declaredLeaf' }]) })
+    s2.commit('mem.declaredLeaf', 'leaf-data')
+    const r2 = s2.resolve('file.undeclaredTop.declaredLeaf') as unknown as Record<string, unknown>
+    expect(r2.reason).toBe('undeclared-name') // 'file.undeclaredTop.declaredLeaf' is refused on its index-1 segment
+    expect(r2.step).toBe('C-TOP')
+    expect(r2.segment).toBe('undeclaredTop')
+    expect((r2 as unknown as GraphReadHit).found).not.toBe(true) // NEVER the declared leaf's value — the deeper declared segment never re-points the read
+
+    // The refusal-before-traversal corner: committed data under an undeclared index-1 top
+    // (F1's subject — its setup commit is refused in the fixed world; the read's answer is
+    // F2's and may never be a traversal).
+    const s3 = createGraphStore({ declarations: storeGraphReferences([{ name: 'window' }]) })
+    s3.commit('mem.x.window.tabs.landingPage', { active: true }) // setup — F1 refuses this; unasserted here
+    const r3 = s3.resolve('file.x.window.tabs.landingPage') as unknown as Record<string, unknown>
+    expect(r3.reason).toBe('undeclared-name') // refusal BEFORE any traversal — never an answer from the tail
+    expect(r3.step).toBe('C-TOP')
+    expect(r3.segment).toBe('x')
+  })
+
+  it('P3 (G4-F3) — the receipt\'s `events` is a function of the AFFECTED REFERENCES, not of the listeners: one affected reference answers events:1 whether or not ANY subscriber exists, and a second subscriber changes the DELIVERIES to two while the receipt\'s events stays 1', () => {
+    // Field 2.6's F3 clause: "One affected reference answers events: 1 whether or not ANY
+    // subscriber exists", "a receipt's events NEVER reads 0 for a write that affected one
+    // reference SOLELY BECAUSE no listener matched", "a second subscriber on the same
+    // reference changes the DELIVERIES to two while the receipt's events stays 1".
+    const s = createGraphStore({ declarations: storeGraphReferences([{ name: 'p' }]) })
+    // ZERO subscribers registered: the write that affects ONE reference still answers
+    // events: 1 — the emission exists on the surface and is counted by the receipt.
+    expect(s.commit('mem.p', 'x').events).toBe(1)
+    expect(s.set('mem.p', 'y').events).toBe(1)
+    expect(s.remove('mem.p').events).toBe(1)
+    // The two-subscriber arm: the second subscriber changes the deliveries, never the count —
+    // one event, two deliveries.
+    s.commit('mem.p', 0)
+    let deliveries = 0
+    s.subscribe('mem.p', () => { deliveries += 1 })
+    s.subscribe('mem.p', () => { deliveries += 1 })
+    expect(s.commit('mem.p', 7).events).toBe(1) // the receipt's events stays 1
+    expect(deliveries).toBe(2) // the second subscriber changed the DELIVERIES, never the count
+  })
+
+  it('P4 (G4-F4) — the sweep\'s cleared[]/cause:\'sweep\' set matches its POST-STATE: cleared[] lists AND fires cause:\'sweep\' for EXACTLY the references the sweep actually clears — a descendant that remains readable after the sweep is neither named nor fired, and events equals that count', () => {
+    // Field 2.3's F4 clause: "lists in cleared[] AND emits cause:\"sweep\" for EXACTLY the
+    // references it actually clears", "a reference that still answers a value after the sweep
+    // was never swept, so it is neither named nor counted", "never a still-readable descendant
+    // in cleared[], never a still-readable descendant's event, and never one list-carrying
+    // event".
+    const store = createGraphStore({ declarations: storeGraphReferences([{ name: 'hub' }]) })
+    store.commit('file.hub', 'h')
+    store.commit('mem.hub.chan.a', 'x')
+    const ev: GraphEvent[] = []
+    store.subscribe('mem.hub.chan.a', (e) => ev.push(e)) // exact — captures the descendant's own sweep event
+    const rec: GraphWriteReceipt = store.sweep('file.hub')
+    expect(rec.status).toBe('committed')
+    const descStillAnswers = (store.tiers.mem.get('mem.hub.chan.a') as GraphTierGetResult).found
+    if (descStillAnswers) {
+      // the pin's drive: the sweep's post-state leaves the descendant readable ⇒ it was never
+      // swept ⇒ neither named in cleared[] nor fired.
+      expect(rec.cleared).not.toContain('mem.hub.chan.a')
+      expect(ev.some((e) => e.name === 'mem.hub.chan.a')).toBe(false)
+    }
+    // Either way, the receipt's set matches its own post-state truth: one event per cleared
+    // reference, every cleared/event-named reference answering false on its own tier, never
+    // one list-carrying event.
+    expect(rec.events).toBe(rec.cleared.length)
+    for (const name of rec.cleared) {
+      const t = name.split('.')[0] as GraphNodeFlag
+      expect((store.tiers[t].get(name) as GraphTierGetResult).found).toBe(false)
+    }
+    for (const e of ev) {
+      expect(e.cause).toBe('sweep')
+      const t = e.name.split('.')[0] as GraphNodeFlag
+      expect((store.tiers[t].get(e.name) as GraphTierGetResult).found).toBe(false)
+    }
+    expect(new Set(ev.map((e) => e.name)).size).toBe(ev.length)
+  })
+
+  it('P5 (G4-F5) — the export NEVER aliases a live stored object: a FRESH deep copy at EVERY depth (no depth bound), cyclic or deeply nested; two exports of one state are different objects; mutating the export at ANY depth changes nothing the store holds', () => {
+    // Field 2.3's F5 clause: "'a FRESH deep copy at EVERY depth: there is NO depth bound above
+    // which the live object is returned — a cyclic or deeply-nested stored value NEVER aliases
+    // into the export, and mutating the export NEVER mutates the store'", "two exports of one
+    // state are different objects (M-15's freshness/identity drive)".
+    const cyc: { name: string; deep: { level: number }; self: unknown } = { name: 'cyc', deep: { level: 1 }, self: null }
+    cyc.self = cyc // cyclic at depth 1, nested at depth 2
+    const store = createGraphStore({ declarations: storeGraphReferences([{ name: 'cyc' }]) })
+    expect(store.commit('mem.cyc', cyc).status).toBe('committed') // the mem tier never refuses a shape (field 2's value row: the file tier only declares non-representability)
+    const stored = (store.tiers.mem.get('mem.cyc') as GraphTierGetResult).value
+    const e1 = store.export('mem.cyc') as GraphReadHit
+    const e2 = store.export('mem.cyc') as GraphReadHit
+    expect(e1).not.toBe(e2) // a FRESH object per call (M-15)
+    expect(e1.found).toBe(true)
+    expect(e1.value).not.toBe(stored) // depth 1: the export's value is NOT the stored object
+    expect(e1.value).not.toBe(e2.value) // two exports of one state are different objects at depth 1
+    expect((e1.value as { deep: unknown }).deep).not.toBe((cyc as { deep: unknown }).deep) // depth 2: a fresh copy
+    expect((e1.value as { deep: unknown }).deep).not.toBe((stored as { deep: unknown }).deep)
+    expect((e1.value as { self: unknown }).self).not.toBe(cyc) // the cyclic reference is a fresh copy
+    // mutating the export at ANY depth changes nothing the store holds.
+    ;(e1.value as { self: unknown }).self = 'HACKED'
+    ;(e1.value as { deep: { level: number } }).deep.level = 99
+    const after = store.resolve('mem.cyc') as GraphReadHit
+    expect((after.value as { self: unknown }).self).toBe(cyc) // the store's cyclic self-reference is the ORIGINAL object
+    expect((after.value as { deep: { level: number } }).deep.level).toBe(1) // the store's deep member is the ORIGINAL value
+  })
+
+  it('P6 (G4-F6) — the constraint evaluation\'s DATA record is PROTOTYPE-SAFE: a caller-owned key named \'__proto__\' is carried as DATA — never OMITTED (the entry exists and is readable) and never POISONING (the caller\'s data never becomes the record\'s prototype)', () => {
+    // Field 2.6's F6 clause: "the changed/current/next records the passed constraint function
+    // receives … is built PROTOTYPE-SAFE (Object.create(null) or a Map, never a plain object
+    // whose key set inherits Object.prototype)", "it never POISONS … and never OMITS (the entry
+    // still exists and is readable)".
+    const tabValue = { active: true, lastActive: 1 }
+    const seen: unknown[] = []
+    const member: GraphConstraint = {
+      id: 'c',
+      matchedSet: 'tabs',
+      evaluatedOn: ['set', 'commit', 'remove'],
+      constraint: (changed, current, next) => {
+        seen.push(next)
+        return true
+      },
+    }
+    const store = createGraphStore({ constraints: [member], declarations: storeGraphReferences([{ name: 'tabs' }]) })
+    const rec: GraphWriteReceipt = store.commit('mem.tabs.__proto__', tabValue)
+    expect(rec.status).toBe('committed') // the constraint/feedback answers as declared — true ⇒ the write commits
+    expect(seen).toHaveLength(1) // the evaluation happened — the record was built and handed to the passed function
+    const record = seen[0] as Record<string, unknown>
+    expect(Object.hasOwn(record, '__proto__')).toBe(true) // the '__proto__' entry EXISTS as an own key — never omitted
+    expect(Object.keys(record)).toContain('__proto__') // the record's own key set carries the hostile name as DATA
+    expect((record['__proto__'] as { active: boolean }).active).toBe(true) // keyed read returns the tab's own data
+    expect(Object.getPrototypeOf(record)).not.toBe(tabValue) // no prototype POLLUTION — the caller's data never becomes the record's prototype
+  })
+
+  it('P7 (G4-F7) — \'equal value\' is the pinned `===`, NOT `Object.is`: NaN === NaN is false, so a SECOND NaN write FIRES (events:1, the delivery lands); -0 === 0 is true, so a 0 write after -0 is equal-value and fires NOTHING; the ===-equal primitive control fires nothing', () => {
+    // Field 4.3's F7 clause: "the fire/no-fire decision is ===-based on the stored value, and
+    // the subscribers' delivery record observes the same decision", "set(\"mem.p\", NaN) twice —
+    // the second answers events: 1 and the subscriber's record gains the delivery",
+    // "set(\"mem.p\", -0) then set(\"mem.p\", 0) — the second fires NOTHING (equal under ===)".
+    const s = createGraphStore({ declarations: storeGraphReferences([{ name: 'p' }, { name: 'q' }, { name: 'r' }]) })
+    s.commit('mem.p', 0)
+    const ev: GraphEvent[] = []
+    s.subscribe('mem.p', (e) => ev.push(e))
+    s.set('mem.p', NaN) // the first NaN write — not equal to 0 — fires
+    const second: GraphWriteReceipt = s.set('mem.p', NaN)
+    expect(second.status).toBe('committed')
+    expect(second.events).toBe(1) // the second NaN write FIRES — NaN === NaN is false
+    expect(ev).toHaveLength(2) // the subscriber's delivery record gains the second delivery
+    expect(ev[1]?.cause).toBe('set')
+    expect(Number.isNaN(ev[1]?.value)).toBe(true)
+    const s2 = createGraphStore({ declarations: storeGraphReferences([{ name: 'q' }]) })
+    s2.commit('mem.q', 123) // the landmark — the seeding write is subscribed AFTER
+    const ev2: GraphEvent[] = []
+    s2.subscribe('mem.q', (e) => ev2.push(e))
+    expect(s2.set('mem.q', -0).events).toBe(1) // -0 is not equal to the landmark 123 — it fires
+    expect(s2.set('mem.q', 0).events).toBe(0) // 0 after -0 is EQUAL under the pinned === — it fires NOTHING
+    expect(ev2).toHaveLength(1) // the delivery record observes the same decision
+    const s3 = createGraphStore({ declarations: storeGraphReferences([{ name: 'r' }]) })
+    s3.commit('mem.r', 'same')
+    const ev3: GraphEvent[] = []
+    s3.subscribe('mem.r', (e) => ev3.push(e))
+    expect(s3.set('mem.r', 'same').events).toBe(0) // the ===-equal primitive control fires NOTHING
+    expect(ev3).toHaveLength(0)
   })
 })
 

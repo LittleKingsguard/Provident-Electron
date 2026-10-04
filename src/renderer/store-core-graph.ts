@@ -353,16 +353,33 @@ function miss(name: string): GraphReadMiss {
   return { found: false, value: undefined, tier: null, cache: null, name }
 }
 
-function snapshotValue(value: unknown, depth = 0): unknown {
-  if (depth > 8) return value
-  if (value === null || typeof value !== 'object') return value
-  if (Array.isArray(value)) return value.map((item) => snapshotValue(item, depth + 1))
-  const out: Record<string, unknown> = {}
-  for (const key of Object.keys(value as Record<string, unknown>)) {
-    out[key] = snapshotValue((value as Record<string, unknown>)[key], depth + 1)
+/** ⟶ AMENDED 2026-10-03 (`UNIT-ADV-1`, G4-F5, ANNOTATE-BESIDE): THE EXPORT NEVER ALIASES A
+   *  LIVE STORED OBJECT, PINNED — a FRESH deep copy at EVERY depth, with NO depth bound above
+   *  which the live object is returned. The copy is CYCLE-SAFE (a `seen` map preserves the
+   *  structure and terminates on a self/mutual reference) and PROTOTYPE-SAFE (G4-F6: outputs
+   *  are built with `Object.create(null)`, so a caller-owned hostile key rides as DATA, never
+   *  as the copy's prototype). Mutating the copy at ANY depth never mutates the store. */
+  function snapshotValue(value: unknown): unknown {
+    const seen = new Map<unknown, unknown>()
+    const copy = (candidate: unknown): unknown => {
+      if (candidate === null || typeof candidate !== 'object') return candidate
+      const already = seen.get(candidate)
+      if (already !== undefined) return already
+      if (Array.isArray(candidate)) {
+        const out: unknown[] = []
+        seen.set(candidate, out)
+        for (const item of candidate) out.push(copy(item))
+        return out
+      }
+      const out: Record<string, unknown> = Object.create(null)
+      seen.set(candidate, out)
+      for (const key of Object.keys(candidate as Record<string, unknown>)) {
+        out[key] = copy((candidate as Record<string, unknown>)[key])
+      }
+      return out
+    }
+    return copy(value)
   }
-  return out
-}
 
 function serializationFailureOf(value: unknown): 'serialize-failed' | 'validate-failed' | null {
   const seen = new Set<unknown>()
@@ -724,44 +741,28 @@ export function createGraphStore(options: {
     return walked.deepest
   }
 
-  /** EVERY LOGICAL PATH a node and its descendants hold, at the node's OWN local name — the
-   *  root's own name included (`§2.3` item 2: a node stores its own local name, never a
-   *  stored dotted path, so the path is composed HERE and nowhere else). */
-  function heldPathsOf(node: GraphNode): readonly { readonly path: string; readonly flag: GraphNodeFlag }[] {
-    const out: { path: string; flag: GraphNodeFlag }[] = [{ path: node.localName, flag: node.flag }]
-    for (const anchor of node.anchors) {
-      if (anchor.link === null || anchor.link.to === null) continue
-      const child = nodes.get(anchor.link.to)
-      if (child === undefined) continue
-      for (const held of heldPathsOf(child)) out.push({ path: `${node.localName}.${held.path}`, flag: held.flag })
-    }
-    return out
-  }
-
   /* ── THE ROOT-PATH READING (`§2.3` item 1) ── */
 
   /** THE ROOT-PATH READING: whether the caller's spelling NAMES its root by the TIER-TOKEN
    *  POSITION (`§2.3` item 1 — the first segment is the token, the NEXT segment is the
    *  registered TOP-LEVEL NAME), the ROOT NAME itself, and the TAIL the walk descends from
-   *  the root's own local name. A spelling whose token position does not carry a DECLARED
-   *  name is read WHOLE: the caller's own spelling is the root name, carried verbatim
-   *  (`§2.2` `P-7`: the store derives, re-keys and normalizes NOTHING it was given). */
+   *  the root's own local name.
+   *
+   *  ⟶ AMENDED 2026-10-03 (`UNIT-ADV-1`, G4-F2, ANNOTATE-BESIDE): **THE TOP IS THE SEGMENT
+   *  AT INDEX 1, BY POSITION — PINNED.** The parse reads `rootParts[1]` — never *"the first
+   *  declared segment anywhere in the tail"*. **THE SILENT RE-SPELL IS FORBIDDEN**: a
+   *  declared segment DEEPER in the tail never re-points the parse — the caller's own
+   *  spelling alone determines the top (`§2.3` item 1, `§2.2 P-7`, the F2 clause). A
+   *  tier-qualified name with NO second segment reads the token itself (the walk's own
+   *  `'malformed-name'` arm handles a bare tier token). */
   function rootParts(segments: readonly string[]): { qualified: boolean; rootName: string; tail: readonly string[]; token: GraphTierToken | null } {
     const first = segments[0] ?? ''
     if (isTierToken(first) && first !== 'secure') {
-      // A TIER-QUALIFIED SPELLING NAMES ITS ROOT BY POSITION (`§2.3` item 1: the first segment
-      // is the token — a FILTER — and the NEXT segment is the registered top-level name). A
-      // spelling whose tail carries NO REGISTERED NAME is read WHOLE with the token stripped
-      // (`§2.2` `P-7`: the caller's own spelling is the root name, carried verbatim), so an
-      // undeclared root is reached and reported at `C-TOP` (`§2.3` item 6(i)).
+      // THE TOP IS THE SEGMENT AFTER THE TIER, BY POSITION (`§2.3` item 1: the first segment
+      // is the token — a FILTER — and the NEXT segment is the registered top-level name).
       const tail = segments.slice(1)
-      for (let index = 0; index < tail.length; index += 1) {
-        if (declared.has(tail[index] as string)) {
-          return { qualified: true, rootName: tail[index] as string, tail: tail.slice(index), token: first }
-        }
-      }
-      const whole = tail.length > 0 ? tail.join('.') : first
-      return { qualified: true, rootName: whole, tail: [whole], token: first }
+      const top = tail.length > 0 ? (tail[0] as string) : first
+      return { qualified: true, rootName: top, tail: tail.length > 0 ? tail : [first], token: first }
     }
     return { qualified: false, rootName: first, tail: segments.slice(0, 1), token: null }
   }
@@ -860,7 +861,10 @@ export function createGraphStore(options: {
     const parsed = parseName(raw)
     if (parsed.segments.length === 0) return null
     const { rootName, tail } = rootParts(parsed.segments)
-    if (!declared.has(rootName)) return null
+    // G4-F2 (AMENDED 2026-10-03 — UNIT-ADV-1): the C-TOP gate — a state-(iii) index-1
+    // segment (neither declared nor registered) never walks; a REGISTERED root (state (i))
+    // walks by the ordinary rules.
+    if (!declared.has(rootName) && liveHolders(rootName).length === 0) return null
     const token: GraphTierToken | null = parsed.token
     const walked = anchorWalk(rootName, tail, token, false)
     let stale = false
@@ -921,7 +925,14 @@ export function createGraphStore(options: {
       return { answer: refusalOf('malformed-name', 'A-PARSE', null, null, name), leaf: null, rootName: '', tail: [], token: null }
     }
     const { rootName, tail } = rootParts(parsed.segments)
-    if (!declared.has(rootName)) {
+    // ⟶ AMENDED 2026-10-03 (`UNIT-ADV-1`, G4-F2): the READ-SIDE C-TOP GATE — a name whose
+    // index-1 segment (the TOP, by position) is in F-2 state (iii) — NOT A ROOT NAME AT
+    // ALL, neither declared nor REGISTERED — answers the DECLARED `'undeclared-name'`
+    // refusal at C-TOP BEFORE any traversal: no anchor, link, cache or leaf walk happens
+    // for it, and a declared segment deeper in the tail never re-points the read (the
+    // silent re-spell is FORBIDDEN). A REGISTERED root (state (i), declared or not) walks
+    // by the ordinary rules — the gate is `undeclared AND unregistered`.
+    if (!declared.has(rootName) && liveHolders(rootName).length === 0) {
       if (tiered) {
         return { answer: refusalOf('undeclared-name', 'C-TOP', parsed.segments[1] as string, null, name), leaf: null, rootName: '', tail: [], token: null }
       }
@@ -996,11 +1007,19 @@ export function createGraphStore(options: {
       if (subscriber.name === name) exact.push(subscriber)
       else if (subscriber.subtree && origin !== undefined && origin.startsWith(`${subscriber.name}.`)) ancestors.push(subscriber)
     }
-    if (exact.length === 0 && ancestors.length === 0) return 0
     for (const subscriber of exact) deliver(subscriber, { name, flag, value, cleared, cause })
+    // THE DESCENDANT ARM's DELIVERY gate (`§2.10` item 2's `'descendant'` row): an ancestor
+    // fires ONLY for `{subtree:true}` subscribers — an ancestor with no opt-in subscriber
+    // receives nothing (the ancestor event is created and delivered only on a match).
     for (const ancestor of ancestors) {
       deliver(ancestor, { name: ancestor.name, flag, value: undefined, cleared: [], cause: 'descendant', origin: origin as string, subtree: true })
     }
+    // ⟶ AMENDED 2026-10-03 (`UNIT-ADV-1`, G4-F3): THE RECEIPT'S `events` IS A FUNCTION OF
+    // THE AFFECTED REFERENCES, NOT OF THE LISTENERS, PINNED. An event is EMITTED FOR an
+    // affected reference and DELIVERED to whoever is subscribed; the absent-subscriber case
+    // never deletes the event from the count — one affected reference answers `events: 1`
+    // whether or not ANY subscriber exists, and a second subscriber changes the deliveries,
+    // never the count (`§2.10` item 5; `§3.3 I-16`'s one-event-per-affected-reference rule).
     return 1
   }
 
@@ -1075,7 +1094,10 @@ export function createGraphStore(options: {
       for (const holder of liveHolders(rootName)) visit(holder, holder.localName)
     }
     entries.sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
-    const out: Record<string, unknown> = {}
+    // G4-F6 (AMENDED 2026-10-03 — UNIT-ADV-1): the translation's keys are the references'
+    // OWN caller-owned spellings — the dictionary is PROTOTYPE-SAFE (`Object.create(null)`),
+    // never a plain object whose key set inherits `Object.prototype`.
+    const out: Record<string, unknown> = Object.create(null)
     for (const entry of entries) out[entry[0]] = entry[1]
     return JSON.stringify(out)
   }
@@ -1102,7 +1124,7 @@ export function createGraphStore(options: {
       seen.delete(value)
       return out
     }
-    const out: Record<string, unknown> = {}
+    const out: Record<string, unknown> = Object.create(null)
     for (const key of Object.keys(value as Record<string, unknown>).sort()) {
       const rendered = stableJsonValue((value as Record<string, unknown>)[key], seen, depth + 1)
       if (rendered !== undefined) out[key] = rendered
@@ -1149,7 +1171,13 @@ export function createGraphStore(options: {
    *  mutation made through the record's values lands on the nodes' stored values (the same
    *  references). */
   function leafRecordFor(root: GraphNode | null): Record<string, unknown> {
-    const record: Record<string, unknown> = {}
+    // ⟶ AMENDED 2026-10-03 (`UNIT-ADV-1`, G4-F6): THE CONSTRAINT EVALUATION'S DATA RECORD
+    // IS PROTOTYPE-SAFE, PINNED — built on `Object.create(null)`, never a plain object whose
+    // key set inherits `Object.prototype`. A leaf named `'__proto__'`/`'constructor'`/
+    // `'toString'` (any hostile caller-owned name) rides as an OWN keyed-readable entry —
+    // never OMITTED (the entry exists and is readable) and never POISONING (the caller's
+    // data never becomes the record's prototype, no key behaves as a prototype key).
+    const record: Record<string, unknown> = Object.create(null)
     if (root !== null) {
       for (const anchor of root.anchors) {
         if (anchor.link === null || anchor.link.to === null) continue
@@ -1274,17 +1302,32 @@ export function createGraphStore(options: {
     return { refused: false, repairedNames, repairEvents }
   }
 
-  /** THE REPAIR'S DIFF BASE — an UNBOUNDED recursive copy of the record the repair is
-   *  about to act on, so a change the repair makes at ANY depth is detected and lands on
-   *  the graph's own nodes. */
+  /** THE REPAIR'S DIFF BASE — a CYCLESAFE, UNBOUNDED recursive copy of the record the repair
+   *  is about to act on, so a change the repair makes at ANY depth is detected and lands on
+   *  the graph's own nodes. ⟶ AMENDED 2026-10-03 (`UNIT-ADV-1`, G4-F6): the copy's outputs
+   *  are PROTOTYPE-SAFE (`Object.create(null)`) — every caller-owned key (a hostile
+   *  `'__proto__'`/`'constructor'`/`'toString'` name included) rides as an OWN data key,
+   *  never as the object's prototype. */
   function deepCopyOf(value: unknown): unknown {
-    if (value === null || typeof value !== 'object') return value
-    if (Array.isArray(value)) return (value as unknown[]).map((item) => deepCopyOf(item))
-    const out: Record<string, unknown> = {}
-    for (const key of Object.keys(value as Record<string, unknown>)) {
-      out[key] = deepCopyOf((value as Record<string, unknown>)[key])
+    const seen = new Map<unknown, unknown>()
+    const copy = (candidate: unknown): unknown => {
+      if (candidate === null || typeof candidate !== 'object') return candidate
+      const already = seen.get(candidate)
+      if (already !== undefined) return already
+      if (Array.isArray(candidate)) {
+        const out: unknown[] = []
+        seen.set(candidate, out)
+        for (const item of candidate) out.push(copy(item))
+        return out
+      }
+      const out: Record<string, unknown> = Object.create(null)
+      seen.set(candidate, out)
+      for (const key of Object.keys(candidate as Record<string, unknown>)) {
+        out[key] = copy((candidate as Record<string, unknown>)[key])
+      }
+      return out
     }
-    return out
+    return copy(value)
   }
 
   function deepEqualOf(a: unknown, b: unknown): boolean {
@@ -1377,6 +1420,36 @@ export function createGraphStore(options: {
     return { name: raw as string, token, segments: parsed.segments, rootName: parts.rootName, tail: parts.tail }
   }
 
+  /** F-2's three states (`§2.4` item 4's annotation): (i) a REGISTERED ROOT — resolves and
+   *  may be written; (ii) a COLD ROOT NAME — declared but rowless, the ONE state a mint may
+   *  create (the declared-but-cold root's row); (iii) NOT A ROOT NAME AT ALL — neither
+   *  declared nor registered — `'undeclared-name'` on every surface. In this build every
+   *  registered root is also declared (a landed mint records its declaration at the mint
+   *  site, never at parse), so states (i)/(ii) collapse to `declared.has` — the registered
+   *  arm is carried for the three-state model's exactness. */
+  function rootIsKnown(rootName: string): boolean {
+    return declared.has(rootName) || liveHolders(rootName).length > 0
+  }
+
+  /** THE WRITE-SIDE C-TOP GATE (G4-F1, AMENDED 2026-10-03 — UNIT-ADV-1): refuses the write
+   *  whose TOP — the segment after the tier on a tier-qualified write (`file.<top>…` ·
+   *  `mem.<top>…` · `temp.<top>…`) — is in F-2 state (iii): NOT A ROOT NAME AT ALL (neither
+   *  declared nor registered). A CHAIN write (something beyond the top) under a state-(iii)
+   *  top is refused `'undeclared-name'` BEFORE any mint/transaction — the write-side mint
+   *  NEVER mints an undeclared or dotted root — and every refusal leaves the store
+   *  UNCHANGED. The gate is about the TOP, not the depth: a deep-dotted write whose top IS
+   *  declared (state (ii)) or registered (state (i)) passes and mints the legal cold root /
+   *  chain; and THE ROOT-LEVEL MINT under a state-(iii) top stays legal — the one operation
+   *  that lifts a top into the registered state (`§2.4` item 7(a); `§2.8` item 1; F-2's
+   *  three states; the F1 clause's own positive control). */
+  function ctopWriteRefusal(parsed: WriteName, raw: unknown): GraphWriteReceipt | null {
+    if (parsed.tail.length > 1 && !rootIsKnown(parsed.rootName)) {
+      const top = parsed.segments[1] ?? parsed.rootName
+      return refuse(raw, 'undeclared-name', 'C-TOP', top, null)
+    }
+    return null
+  }
+
   function rootCapReached(token: GraphNodeFlag): boolean {
     if (token !== 'mem' && token !== 'temp') return false
     let count = 0
@@ -1426,11 +1499,14 @@ export function createGraphStore(options: {
   function editNode(raw: unknown, parsed: WriteName, node: GraphNode, value: unknown, cause: GraphEvent['cause']): GraphWriteReceipt {
     const prior = valueOf(node.ref)
     const state: ReceiptState = { cleared: [], repaired: [], rows: [{ name: parsed.name, flag: node.flag, nodeRef: node.ref }], crossings: 0, events: 0 }
-    // AN EQUAL-VALUE `set` FIRES NOTHING (`§2.10` item 5, field 4.3's `'set'` row: "an
-    // equal-value write fires NOTHING; a `set` is NOT a commit and must never be counted
-    // as one"). A `commit` on a held pair always fires. An equal-value `set` has no
-    // post-state of its own, so the constraint functions are not re-evaluated over it.
-    if (cause !== 'set' || !Object.is(prior, value)) {
+    // ⟶ AMENDED 2026-10-03 (`UNIT-ADV-1`, G4-F7): "EQUAL VALUE" IS THE PINNED `===`, PINNED —
+    // the fire/no-fire decision uses the LANDED `===` on the stored value, NEVER `Object.is`.
+    // `NaN === NaN` is `false`, so a SECOND write of the same NaN value is NOT equal-value —
+    // it FIRES its event exactly as `===` says; `-0 === 0` is `true`, so a write of `0` after
+    // `-0` IS equal-value and fires NOTHING (`§2.10`'s `'set'` arm row; `M-8`'s equal-value
+    // row re-pinned at this operator; the F7 clause). An equal-value `set` has no post-state
+    // of its own, so the constraint functions are not re-evaluated over it.
+    if (cause !== 'set' || prior !== value) {
       const op = cause === 'set' ? 'set' : 'commit'
       // THE APPLICABLE MEMBERS ARE CAPTURED BEFORE THE MUTATION (their `current` state is
       // the PRE-WRITE state); the journal lets a repairless violation roll the write back.
@@ -1469,8 +1545,16 @@ export function createGraphStore(options: {
         return refuse(raw, 'durability-inversion', 'G-RESOLVE-LEAF', parsed.tail[parsed.tail.length - 1] ?? null, parent.ref)
       }
     }
-    const failure = serializationFailureOf(value)
-    if (failure !== null) return refuse(raw, failure, 'G-RESOLVE-LEAF', null, target.ref)
+    // THE ONE DECLARED NON-REPRESENTABILITY RULE IS THE FILE TIER'S (`§2.8` item 6(b); field
+    // 2's `value` row: "One declared non-representability rule exists at the `file` tier
+    // only" — token #14, step (3) of the transaction's five: the STABLE-JSON translation of
+    // the built set). A mem/temp write NEVER refuses a size, a magnitude or a shape (`§2.2
+    // P-6`/`P-9`) — a cyclic or BigInt value stores fine below the file tier, which is what
+    // makes F5's cyclic-export drive driveable.
+    if (requested === 'file') {
+      const failure = serializationFailureOf(value)
+      if (failure !== null) return refuse(raw, failure, 'G-RESOLVE-LEAF', null, target.ref)
+    }
     // THE APPLICABLE MEMBERS ARE CAPTURED BEFORE THE MUTATION (their `current` is the
     // PRE-WRITE state); the journal lets a repairless violation roll the write back.
     const slots = captureConstraintSlots('commit', parsed)
@@ -1706,6 +1790,13 @@ export function createGraphStore(options: {
     if (!('token' in parsed)) return parsed as GraphWriteReceipt
     const routing = routingOf(opts)
     if (!('onRepeat' in routing)) return routing as GraphWriteReceipt
+    // G4-F1 (AMENDED 2026-10-03 — UNIT-ADV-1): THE WRITE-SIDE C-TOP GATE — a commit whose
+    // TOP is state (iii) is REFUSED `'undeclared-name'` BEFORE any mint/transaction; every
+    // refusal leaves the store UNCHANGED (a seed row drives through this same gate — the
+    // seed's pinned refusal sentence is the write surface's own). The root-level mint under
+    // a state-(iii) top stays legal (the one operation that lifts a top into state (i)).
+    const f1 = ctopWriteRefusal(parsed, raw)
+    if (f1 !== null) return f1
     const requested = parsed.token
     const tierHolder = holderOf(parsed.rootName, requested)
     if (tierHolder === null) {
@@ -1725,12 +1816,19 @@ export function createGraphStore(options: {
       const located = locateWriteTarget(parsed.rootName, parsed.tail, requested)
       const heldAtAnotherTier = located !== null && (DURABILITY_RANK[requested] ?? 0) > (DURABILITY_RANK[located.flag] ?? 0)
       if (heldAtAnotherTier && leafWalk.node !== null) {
-        const failureAtRoot = serializationFailureOf(value)
-        if (failureAtRoot !== null) return refuse(raw, failureAtRoot, 'G-RESOLVE-LEAF', null, located.ref)
+        // THE FILE TIER ONLY declares a non-representability arm (token #14, step (3) of the
+        // transaction's five — the STABLE-JSON translation of the built set): a mem/temp
+        // regeneration never refuses a shape (`§2.2 P-6`/`P-9`; field 2's `value` row).
+        if (requested === 'file') {
+          const failureAtRoot = serializationFailureOf(value)
+          if (failureAtRoot !== null) return refuse(raw, failureAtRoot, 'G-RESOLVE-LEAF', null, located.ref)
+        }
         return regenerationReceipt(raw, parsed, value, located)
       }
-      const failure = serializationFailureOf(value)
-      if (failure !== null) return refuse(raw, failure, 'G-RESOLVE-LEAF', null, null)
+      if (requested === 'file') {
+        const failure = serializationFailureOf(value)
+        if (failure !== null) return refuse(raw, failure, 'G-RESOLVE-LEAF', null, null)
+      }
       // THE MINT'S DURABILITY GATE (field 5 #16; `§2.4` item 7(h)): a mint whose requested tier
       // is MORE DURABLE than the deepest existing node of the caller's own path — the parent
       // the minted child would hang from, read from the graph, never from a name or a tier
@@ -1779,8 +1877,12 @@ export function createGraphStore(options: {
     if ((DURABILITY_RANK[requested] ?? 0) > (DURABILITY_RANK[deepest.flag] ?? 0)) {
       return refuse(raw, 'durability-inversion', 'G-RESOLVE-LEAF', walked.firstMissing ?? lastSegment, deepest.ref)
     }
-    const failure = serializationFailureOf(value)
-    if (failure !== null) return refuse(raw, failure, 'G-RESOLVE-LEAF', null, deepest.ref)
+    // FILE-TIER-ONLY serialization refusal (`§2.8` item 6(b); field 2's `value` row) — a
+    // mem/temp mint never refuses a shape.
+    if (requested === 'file') {
+      const failure = serializationFailureOf(value)
+      if (failure !== null) return refuse(raw, failure, 'G-RESOLVE-LEAF', null, deepest.ref)
+    }
     // THE APPLICABLE MEMBERS ARE CAPTURED BEFORE THE MUTATION (their `current` is the
     // PRE-WRITE state); the journal lets a repairless violation roll the write back.
     const slots = captureConstraintSlots('commit', parsed)
@@ -1814,6 +1916,11 @@ export function createGraphStore(options: {
     if (!('token' in parsed)) return parsed as GraphWriteReceipt
     const routing = routingOf(opts)
     if (!('onRepeat' in routing)) return routing as GraphWriteReceipt
+    // G4-F1 (AMENDED 2026-10-03 — UNIT-ADV-1): the WRITE-SIDE C-TOP GATE — a set whose TOP
+    // is state (iii) is REFUSED `'undeclared-name'` BEFORE any walk; the write-side mint
+    // never mints an undeclared or dotted root, store unchanged.
+    const f1 = ctopWriteRefusal(parsed, raw)
+    if (f1 !== null) return f1
     const walked = anchorWalk(parsed.rootName, [parsed.rootName, ...parsed.tail.slice(1)], parsed.token, false)
     if (walked.severed) {
       return refuse(raw, 'severed-link', 'E-LINK', walked.firstMissing ?? parsed.name, walked.deepest?.ref ?? null)
@@ -1920,10 +2027,28 @@ export function createGraphStore(options: {
     if (target === null) {
       return refuse(raw, 'undeclared-name', 'G-RESOLVE-LEAF', walked.firstMissing ?? parsed.tail[parsed.tail.length - 1] ?? null, walked.deepest?.ref ?? null)
     }
-    const swept = heldPathsOf(target).map((held) => `${parsed.token}.${held.path}`)
-    dropValue(target.ref)
-    const state: ReceiptState = { cleared: swept, repaired: [], rows: [], crossings: 0, events: 0 }
-    for (const path of swept) state.events += emit(path, parsed.token, undefined, [], 'sweep', path)
+    // ⟶ AMENDED 2026-10-03 (`UNIT-ADV-1`, G4-F4): THE SWEEP'S RECEIPT/EVENT SET MATCHES ITS
+    // POST-STATE, PINNED (per-swept-reference truthfulness). `cleared[]` AND the `'sweep'`
+    // events name EXACTLY the references the sweep ACTUALLY clears: every name listed has its
+    // value entry REALLY dropped HERE, so each swept reference answers MISS after the sweep —
+    // one `'sweep'` event per cleared reference, `events === cleared.length`, never one
+    // list-carrying event (`§2.8` item 4, `§2.10` item 2's `'sweep'` arm). A reference that
+    // still answers a value after the sweep was NEVER swept — it is neither named nor fired
+    // (the F4 clause; `§3.3 I-16` read as one event per ACTUALLY-affected reference).
+    const swept: { path: string; ref: GraphNodeRef }[] = []
+    const collectSwept = (node: GraphNode, logical: string): void => {
+      swept.push({ path: `${parsed.token}.${logical}`, ref: node.ref })
+      for (const anchor of node.anchors) {
+        if (anchor.link === null || anchor.link.to === null) continue
+        const child = nodes.get(anchor.link.to)
+        if (child === undefined) continue
+        collectSwept(child, `${logical}.${anchor.key}`)
+      }
+    }
+    collectSwept(target, parsed.tail.join('.'))
+    for (const { ref } of swept) dropValue(ref)
+    const state: ReceiptState = { cleared: swept.map((entry) => entry.path), repaired: [], rows: [], crossings: 0, events: 0 }
+    for (const entry of swept) state.events += emit(entry.path, parsed.token, undefined, [], 'sweep', entry.path)
     rebuildEntriesAtInvalidation(parsed.rootName)
     return receiptFor(raw, state, 'committed')
   }
