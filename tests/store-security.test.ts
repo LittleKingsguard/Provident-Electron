@@ -55,12 +55,28 @@
  * consecutive-failure run is reported per row so the PBT audit (gate 4) can
  * disposition the reading.
  *
- * THE DYNAMIC PANE DRIVE (§5.5.2's "constructed pane graph"): the red phase's
- * P-SE-SM-2 attempts assert the STATIC observables of the pane shape (the
+ * THE DYNAMIC PANE DRIVE (§5.5.2's "constructed pane graph") — AMENDED
+ * 2026-10-03 by the gate-4 PBT audit (finding 2, RED-SET-FIX): the as-filed
+ * P-SE-SM-2 attempts asserted the STATIC observables of the pane shape (the
  * seam's absence, the constructor/supervisor options, the burst, the notify
- * re-home).  The dynamic `journalDepth()`-driven depth read cannot EXECUTE
- * until the seam exists — its absence IS the red (§2.5 item 4, F-8); the
- * dynamic constructed-pane drive is the greens'/shim-hosted form.
+ * re-home) and reading-1 of every strength asserted EXISTENCE ONLY
+ * (`typeof journalDepth === 'function'`) — no pane was constructed, no
+ * refresh cycle ran, the seam was never read, the cap was never crossed
+ * (P-SE-SM-2's declared-under-assertion class).  The gate-4 amendment
+ * RE-AUTHORS reading 1 (the drive bodies, terms stay 6): the REAL constructed
+ * pane — `new SecurePanels(mountEl(), { maxJournalLength: M })` with a SMALL
+ * M — is driven with N refreshDebug cycles (N > M — the cap IS crossed; one
+ * cycle journals 11 state-slice entries, one per mutated pane node, the
+ * falsifier's own load), the seam is READ and asserted `≤ M`, with an
+ * UNCAPPED positive control proving the drive journals.  MEASURED RED against
+ * the current tree (2026-10-03, this run): the pane supervisor's deferred
+ * condense ABORTS on the pane graph (`condense-aborted: serialization-error:
+ * non-JSON value; journal untouched` — supervisor.js D5's failure
+ * containment), so `journalDepth()` grows UNBOUNDED (N=25 → 275 ≥ M; the
+ * uncapped control grows identically) — the pane journal is EFFECTIVELY
+ * UNCAPPED today and F-8's unbounded-growth class is OPEN (§2.5 items 1/2/4).
+ * The dynamic constructed-pane drive is therefore a RED row of THIS red set,
+ * no longer a greens'/shim-hosted form only.
  *
  * LAYER HONESTY (§1.4): no timing figure is claimed anywhere in this file.
  * ============================================================================
@@ -70,7 +86,7 @@
 // imports the vitest bindings explicitly (runtime), while tsconfig.tests.json
 // still types them globally (types: ["node", "vitest/globals"]).
 import { beforeAll, afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { mkdtemp, rm, readFile, writeFile, readdir } from 'node:fs/promises'
+import { mkdtemp, rm, readFile, writeFile, readdir, mkdir } from 'node:fs/promises'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { tmpdir } from 'node:os'
@@ -78,6 +94,10 @@ import { createHash } from 'node:crypto'
 import { createSecurityStore, type SecurityStore, type SecurityWriteReceipt } from '../src/main/security-store.js'
 import { createGraphStore } from '../src/renderer/store-core-graph.js'
 import { SecurePanels } from '../src/renderer/secure-panels.js'
+// G3 gate-4 finding 2 (RED-SET-FIX): the re-authored P-SE-SM-2 reading-1 drives the REAL
+// CONSTRUCTED pane — `new SecurePanels(mountEl(), { maxJournalLength: M })` needs the shimmed
+// DOM the secure-panels.test.ts precedent installs (installShim() + mountEl()):
+import { installShim, mountEl } from '../src/shared/dom-shim.js'
 
 /* ============================ THE node:fs MOCK (the failure-injection + the
  * write-sequence observation point).  The store DESTRUCTURES its fs imports
@@ -176,6 +196,40 @@ async function assertSetResolutionStillPostState(store: SecurityStore, path: str
   expect(/write:/.test(await setHandlerSource()), 'the response record carries the additive `write` member — `{...settings, write}` (§2.3 item 2)').toBe(true)
   void path
 }
+/** The refreshDebug drive's fake runtime — the app Runtime's rendered-html surface the pane
+ *  reads (`renderedHtmlResult(): { census, ssrHtml }`, secure-panels.ts:364-367).  G3 gate-4
+ *  finding 2's P-SE-SM-2 drive input (§2.5 item 4's falsifier: "drive `SecurePanels.refreshDebug`
+ *  N times"); the census/ssrHtml CONTENT is irrelevant to the depth observable — a fresh object
+ *  per call, never shared state across drives. */
+function fakePaneRuntime(): { renderedHtmlResult(): { census: Record<string, unknown>; ssrHtml: string } } {
+  return {
+    renderedHtmlResult: () => ({
+      census: { inTree: 1, registered: 1, unplaced: 0, destroyed: 0, prototypes: 0 },
+      ssrHtml: '<div class="app" id="root">security panes</div>',
+    }),
+  }
+}
+/** G3 gate-4 finding 2's P-SE-SM-2 drive (the falsifier's form, §2.5 items 1/2/4): construct
+ *  the REAL pane with a SMALL cap M, drive N refreshDebug cycles — one cycle journals one
+ *  state-slice per mutated pane node (MEASURED 11 entries/cycle at the current tree), so even
+ *  N=1 CROSSES the cap — let the engine's DEFERRED condense (a timer-tick microtask-free
+ *  macro task, supervisor.js D5) settle, then READ the seam journalDepth().  Returns the
+ *  settled capped depth + the UNCAPPED control's depth (the same N on a pane with NO
+ *  maxJournalLength — the engine never condenses, so the control grows past M, proving the
+ *  capped ≤ M is the CAP's observable, never a vacuous zero). */
+async function drivePaneCap(M: number, N: number): Promise<{ capped: number; uncapped: number }> {
+  const mount = mountEl() as never
+  const panels = new SecurePanels(mount as never, { maxJournalLength: M })
+  for (let i = 0; i < N; i++) panels.refreshDebug(fakePaneRuntime() as never)
+  await new Promise((r) => setTimeout(r, 0)) // the deferred condense's timer tick
+  const capped = panels.journalDepth()
+  const rawMount = mountEl() as never
+  const uncapped = new SecurePanels(rawMount as never)
+  for (let i = 0; i < N; i++) uncapped.refreshDebug(fakePaneRuntime() as never)
+  await new Promise((r) => setTimeout(r, 0))
+  const uncappedDepth = uncapped.journalDepth()
+  return { capped, uncapped: uncappedDepth }
+}
 let cachedMainSrc: string | null = null
 async function awaitMainSource(): Promise<string> {
   if (cachedMainSrc === null) cachedMainSrc = await sourceOf(['main', 'main.ts'])
@@ -190,6 +244,10 @@ async function setHandlerSource(): Promise<string> {
 
 beforeAll(async () => {
   baseDir = await mkdtemp(join(tmpdir(), 'g3-store-security-red-'))
+  // G3 gate-4 finding 2: the re-authored P-SE-SM-2 reading-1 constructs the REAL SecurePanels
+  // (mountEl() + DomAdapter) — the shimmed DOM must be installed first (the secure-panels.test.ts
+  // precedent, installShim() + mountEl()):
+  installShim()
 })
 afterAll(async () => {
   await rm(baseDir, { recursive: true, force: true })
@@ -593,6 +651,58 @@ describe('G3 §3.2 fail-states and §3.3 invariants', () => {
     expect(store.get()).toEqual({ token: null, enabled: ['read', 'dispatch'], maxJournalLength: undefined })
     store.set({ groups: ['code'] }) // a write after a corrupt boot must not throw either
     expect(store.get().enabled).toEqual(['read', 'dispatch', 'code'])
+  })
+
+  it('F-11 (gate-4 finding 1, HOST-FIX): a stale `${path}.tmp` that names a DIRECTORY answers the refused receipt — set() must NEVER throw (§2.3 item 5, §3.3 I-4/I-7). TODAY the catch-block\'s own cleanup throw escapes persist()', async () => {
+    // G3 gate-4 finding 1 (MEDIUM, HOST-FIX) — verified against the tree: security-store.ts's
+    // catch-block cleanup `rmSync(tmp, {force:true})` (security-store.ts:98) suppresses ONLY
+    // ENOENT; a stale `${path}.tmp` that names a DIRECTORY (or a protected path) makes the
+    // earlier `writeFileSync` throw EISDIR, then the cleanup's OWN EISDIR ESCAPES persist() ->
+    // set() throws -> lastReceipt never updates -> NO receipt answered — totality (§2.3 item 5)
+    // + never-throw (§3.3 I-4/I-7) violated.  The audit's fix shape: contain/ignore the cleanup
+    // error, or `rmSync(tmp, {recursive:true, force:true})`.  This row RED-FIRSTS that class.
+    // THE POSITIVE CONTROL — a stale FILE tmp + a forced write failure: the cleanup runs on a
+    // FILE, rmSync(tmp, {force:true}) succeeds (force masks only ENOENT — a file is removable
+    // without recursive), and the refused receipt is answered WITHOUT a throw (this arm PASSES
+    // today — the audit's point is the DIRECTORY class):
+    const { store: controlStore, path: controlPath } = await makeStore()
+    controlStore.set({ token: 'before' })
+    const preControl = await readFile(controlPath, 'utf8')
+    await writeFile(`${controlPath}.tmp`, '{\n  "stale": true\n}', 'utf8') // a stale FILE tmp
+    hooks.inject.writeFile = true // the write fails -> the catch-block's cleanup runs on the stale FILE
+    let controlThrew: unknown = null
+    try {
+      controlStore.set({ token: 'after' })
+    } catch (e) {
+      controlThrew = e
+    }
+    expect(controlThrew, 'positive control — a stale FILE tmp: set() does NOT throw (the cleanup rm on a file succeeds)').toBeNull()
+    expect(await readFile(controlPath, 'utf8'), 'positive control — the previous file is intact at the real path (§2.2 item 6)').toBe(preControl)
+    expect(lastWriteReceipt(controlStore), 'positive control — the persist answers {status:\'refused\', reason:\'write-failed\'} (§2.3 item 5)').toEqual({ status: 'refused', reason: 'write-failed' })
+    resetInject()
+    // THE DIRECTORY CASE — the audit's finding: the stale `${path}.tmp` names a DIRECTORY, so
+    // the writeFileSync throws EISDIR NATURALLY (no injection — the hostile pre-existence class
+    // §3a seeds), and the catch-block's own rmSync(tmp, {force:true}) WITHOUT recursive throws
+    // EISDIR on the directory, ESCAPING persist().  RED measured today: set() throws the
+    // cleanup error, the receipt never updates (the stale `committed` from the first write is
+    // still the answer), and the refusal is never delivered:
+    const { store, path } = await makeStore()
+    store.set({ token: 'before' })
+    const pre = await readFile(path, 'utf8')
+    await mkdir(`${path}.tmp`) // a stale tmp that names a DIRECTORY (mkdir BEFORE the persist)
+    let threw: unknown = null
+    try {
+      store.set({ token: 'after' })
+    } catch (e) {
+      threw = e
+    }
+    expect(threw,
+      'F-11 — set() must NOT throw when a stale `${path}.tmp` names a directory (§2.3 item 5: a refusal NEVER throws; §3.3 I-4). RED today: the catch-block\'s rmSync(tmp, {force:true}) throws EISDIR on the directory and ESCAPES persist() — set() throws the cleanup error: ' +
+        (threw instanceof Error ? String(threw) : String(threw))).toBeNull()
+    expect(await readFile(path, 'utf8'),
+      'F-11 — the previous file is intact at the real path (§2.2 item 6 — the failure never touches the real record)').toBe(pre)
+    expect(lastWriteReceipt(store),
+      'F-11 — the persist answers {status:\'refused\', reason:\'write-failed\'} — never a silent no-op, never a throw (§2.1 item 5, §2.3 item 5, P-SE-TP-1). RED today: lastReceipt never updates (the escaping cleanup error leaves the FIRST write\'s stale `committed` as the answer)').toEqual({ status: 'refused', reason: 'write-failed' })
   })
 
   it('F-7/F-10/I-2/I-3: the write-site census — EXACTLY two persisted files, the security file\'s single writer, no third file (GREEN static)', async () => {
@@ -1034,10 +1144,19 @@ const registerSpecs: RegisterRowSpec[] = [
     property: 'THE RH-3 CAP / BURST / SEAM MACHINE — the pane journal stays ≤ M; the reply path does not refresh; the seam is TEST-ONLY (§2.5; §3.3)',
     attempts: [
       {
-        term: 'N=1 · reading 1: the pane journal\'s depth via the declared seam journalDepth() stays ≤ M',
-        run: () => {
-          expect(typeof (SecurePanels.prototype as unknown as { journalDepth?: unknown }).journalDepth,
-            'P-SE-SM-2 — journalDepth() exists (the seam, §2.5 item 4). RED: the seam is absent').toBe('function')
+        term: 'N=1 · reading 1: the REAL constructed pane with a SMALL cap M=2 — 1 refreshDebug drive already CROSSES the cap (11 state-slice entries > M); journalDepth() ≤ M after the deferred condense settles; the UNCAPPED control grows > M (the drive journals — never an existence-check)',
+        run: async () => {
+          // gate-4 finding 2's drive (RED-SET-FIX, 2026-10-03): the as-filed reading-1 asserted
+          // ONLY `typeof journalDepth === 'function'` — no pane constructed, no refresh cycle,
+          // the cap never crossed.  THIS drive constructs the pane and CROSSES the cap with the
+          // REAL surface; RED measured today: the pane supervisor's condense ABORTS
+          // (serialization-error: non-JSON value; journal untouched) and the depth grows past M
+          // (measured N=25 → 275 at the probe pass) — the pane journal is effectively UNCAPPED.
+          const { capped, uncapped } = await drivePaneCap(2, 1)
+          expect(capped,
+            'P-SE-SM-2 (N=1) — journalDepth() stays ≤ M (§2.5 items 1/2/4). RED measured today: the pane condense aborts and the depth grows past M — measured ' + capped + ' > 2').toBeLessThanOrEqual(2)
+          expect(uncapped,
+            'P-SE-SM-2 (N=1) — the UNCAPPED control grows past M (the drive journals per mutated pane node; the capped ≤ M is the cap\'s observable — the false-green premise is closed): measured ' + uncapped).toBeGreaterThan(2)
         },
       },
       {
@@ -1053,10 +1172,13 @@ const registerSpecs: RegisterRowSpec[] = [
         },
       },
       {
-        term: 'N=5 · reading 1: journalDepth() ≤ M across 5 refreshed drives',
-        run: () => {
-          expect(typeof (SecurePanels.prototype as unknown as { journalDepth?: unknown }).journalDepth,
-            'P-SE-SM-2 (N=5) — the seam exists. RED: absent').toBe('function')
+        term: 'N=5 · reading 1: 5 refreshDebug drives on the constructed pane (M=2, the cap crossed 5× — 55 entries without a firing condense); journalDepth() ≤ M after settle; the UNCAPPED control grows > M',
+        run: async () => {
+          const { capped, uncapped } = await drivePaneCap(2, 5)
+          expect(capped,
+            'P-SE-SM-2 (N=5) — journalDepth() ≤ M (§2.5 items 1/2/4). RED measured today: the pane condense aborts and the depth grows past M — measured ' + capped + ' > 2').toBeLessThanOrEqual(2)
+          expect(uncapped,
+            'P-SE-SM-2 (N=5) — the UNCAPPED control grows past M: measured ' + uncapped).toBeGreaterThan(2)
         },
       },
       {
@@ -1068,10 +1190,13 @@ const registerSpecs: RegisterRowSpec[] = [
         },
       },
       {
-        term: 'N=20 · reading 1: journalDepth() ≤ M across 20 refreshed drives (condense fires — the unbounded-growth class is closed)',
-        run: () => {
-          expect(typeof (SecurePanels.prototype as unknown as { journalDepth?: unknown }).journalDepth,
-            'P-SE-SM-2 (N=20) — the seam exists. RED: absent').toBe('function')
+        term: 'N=20 · reading 1: 20 refreshDebug drives on the constructed pane (M=2, the cap crossed 20× — 220 entries without a firing condense); journalDepth() ≤ M after settle (the condense FIRES and the depth drops — the unbounded-growth class is closed); the UNCAPPED control grows > M',
+        run: async () => {
+          const { capped, uncapped } = await drivePaneCap(2, 20)
+          expect(capped,
+            'P-SE-SM-2 (N=20) — journalDepth() ≤ M (§2.5 items 1/2/4: the cap crossed, the condense fires, the depth stays bounded). RED measured today: the pane condense aborts and the depth grows past M — measured ' + capped + ' > 2').toBeLessThanOrEqual(2)
+          expect(uncapped,
+            'P-SE-SM-2 (N=20) — the UNCAPPED control grows past M (F-8\'s unbounded-growth class is live without the cap): measured ' + uncapped).toBeGreaterThan(2)
         },
       },
       {
