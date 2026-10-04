@@ -90,7 +90,7 @@
  *          FRESH deep copy at every depth — no aliasing, no depth bound), P6 = G4-F6 (the
  *          constraint evaluation's data record is PROTOTYPE-SAFE), P7 = G4-F7 ("equal value"
  *          is the pinned `===`, not `Object.is`)
- *   H1–H8  the HYDRATE-1 SEAM DRIVES (AMENDMENT HYDRATE-1, 2026-10-04 — added by the G2
+ *   H1–H8  the HYDRATE-1 SEAM DRIVES (AMENDMENT HYDRATE-1, 2026-10-03 — added by the G2
  *          HYDRATE-1 re-cycle under field 7 member 4's licence, the seat's R192–R199
  *          siblings): H1 = the seam-census boundary (hydrate is PRODUCTION-PRESENT, never a
  *          test-seam key), H2 = the mint + the fired event surface (one event per minted
@@ -1198,7 +1198,7 @@ describe('U-STORE-CORE module wave — T4 integration red set (fields 3/6 wiring
   })
 
   /* =============================================================================================
-   * GROUP H — THE HYDRATE-1 SEAM DRIVES (G2 HYDRATE-1 re-cycle, 2026-10-04).
+   * GROUP H — THE HYDRATE-1 SEAM DRIVES (G2 HYDRATE-1 re-cycle, 2026-10-03).
    * Derived from the frozen-surface artifact's HYDRATE-1 amendment (field 2, the boot-hydration
    * seam), `docs/decisions.md`'s ACTIVE row 'THE BOOT HYDRATION MINT'S EVENTS ARE INTENTIONAL'
    * (by row name), and `docs/specs/store-persist.md` §2.3 item 3's re-read / §2.9 / M-7's
