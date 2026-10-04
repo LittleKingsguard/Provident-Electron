@@ -12652,9 +12652,43 @@ var activeGhostOpacity = 0;
 var sinkCalls = 0;
 var dragExpandedZone = null;
 var userExpanded = /* @__PURE__ */ new Set();
+var tabRepairCalls = [];
+function countActiveTabs(tabs) {
+  return Object.keys(tabs || {}).filter((k) => tabs[k] && tabs[k].active === true).length;
+}
+function mostRecentTab(tabs) {
+  let best = null;
+  for (const k of Object.keys(tabs || {})) {
+    if (best === null || (tabs[k].lastActive ?? -1) > (tabs[best].lastActive ?? -1)) best = k;
+  }
+  return best;
+}
+var exactlyOneActiveMember = {
+  id: "count-exactly-one",
+  matchedSet: "tabs",
+  evaluatedOn: ["set", "commit", "remove"],
+  constraint: (_changed, _current, next) => countActiveTabs(next) === 1,
+  repair: (data) => {
+    tabRepairCalls.push(1);
+    const tabs = data && typeof data === "object" && !Array.isArray(data) ? data : {};
+    const active = Object.keys(tabs).filter((k) => tabs[k] && tabs[k].active === true);
+    const count = active.length;
+    if (count > 1) {
+      const keep = active.reduce((a, b) => (tabs[a].lastActive ?? -1) >= (tabs[b].lastActive ?? -1) ? a : b);
+      for (const k of active) if (k !== keep) tabs[k].active = false;
+    } else if (count === 0 && Object.keys(tabs).length > 0) {
+      const rec = mostRecentTab(tabs);
+      if (rec !== null) tabs[rec].active = true;
+    } else if (Object.keys(tabs).length === 0) {
+      tabs.landingPage = { active: true, lastActive: 0 };
+    }
+    return true;
+  }
+};
 function buildDemo() {
   const store = createGraphStore({
-    declarations: { rows: [{ name: "layout" }, { name: "settings" }, { name: "drag" }] }
+    declarations: { rows: [{ name: "layout" }, { name: "settings" }, { name: "drag" }, { name: "tabs" }] },
+    constraints: [exactlyOneActiveMember]
   });
   const panes = new Map(INITIAL_PANES.map((p) => [p.id, { ...p }]));
   const mintAll = () => {
@@ -12781,9 +12815,41 @@ function buildDemo() {
     mintAll();
     paint();
   };
+  const renderTabPane = () => {
+    const info = root2?.querySelector("#tab-info");
+    const bar = root2?.querySelector("#tab-bar");
+    const active = tabsSurface.activeId();
+    if (bar) {
+      for (const b of bar.querySelectorAll(".tab-btn")) {
+        b.classList.toggle("active", b.getAttribute("data-tab") === active);
+      }
+    }
+    if (info) info.textContent = `active tab: ${active}
+` + (active ? `data: ${JSON.stringify(tabsSurface.activeData())}` : "(none)");
+  };
+  const wireTabs = () => {
+    const bar = root2?.querySelector("#tab-bar");
+    if (!bar) return;
+    bar.addEventListener("click", (ev) => {
+      const btn = ev.target?.closest?.(".tab-btn");
+      const tid = btn?.getAttribute("data-tab");
+      if (tid) tabsSurface.activate(tid);
+    });
+    const modify = root2?.querySelector("#tab-modify");
+    if (modify) {
+      modify.addEventListener("click", () => {
+        const d = tabsSurface.activeData();
+        const n = d && typeof d === "object" && typeof d.lastActive === "number" ? d.lastActive : 0;
+        tabsSurface.setActiveData({ active: true, lastActive: n + 1, note: "modified" });
+      });
+    }
+    tabsSurface.subscribe(() => renderTabPane());
+    renderTabPane();
+  };
   const mount = (el) => {
     root2 = el;
     paint();
+    wireTabs();
     if (!root2) return;
     root2.addEventListener("pointerdown", (ev) => {
       const handle = ev.target?.closest?.(".pane-handle");
@@ -12968,11 +13034,54 @@ function buildDemo() {
       applyGutterLayout();
     }
   };
+  const tabIds = ["tabA", "tabB", "tabC"];
+  const seedTabs = () => {
+    store.commit("mem.tabs.tabA", { active: true, lastActive: 3 }, { onRepeat: "edit" });
+    store.commit("mem.tabs.tabB", { active: false, lastActive: 2 }, { onRepeat: "edit" });
+    store.commit("mem.tabs.tabC", { active: false, lastActive: 1 }, { onRepeat: "edit" });
+  };
+  seedTabs();
+  const tabsSurface = {
+    activeId: () => {
+      for (const id of [...tabIds, "landingPage"]) {
+        const r = store.tiers.mem.get(`mem.tabs.${id}`);
+        if (r && r.found && r.value && r.value.active === true) return id;
+      }
+      return null;
+    },
+    activeData: () => {
+      const id = tabsSurface.activeId();
+      if (!id) return null;
+      const r = store.tiers.mem.get(`mem.tabs.${id}`);
+      return r && r.found ? r.value : null;
+    },
+    subscribe: (fn) => {
+      const subs = tabIds.map((id) => store.subscribe(`mem.tabs.${id}`, () => fn()));
+      return () => subs.forEach((s) => s.unsubscribe());
+    },
+    setActiveData: (data) => {
+      const id = tabsSurface.activeId();
+      if (!id) return;
+      store.commit(`mem.tabs.${id}`, data, { onRepeat: "edit" });
+    },
+    activate: (id) => {
+      const r = store.tiers.mem.get(`mem.tabs.${id}`);
+      const lastActive = r && r.found && r.value ? r.value.lastActive ?? 0 : 0;
+      store.commit(`mem.tabs.${id}`, { active: true, lastActive }, { onRepeat: "edit" });
+    },
+    ids: () => [...tabIds],
+    tabData: (id) => {
+      const r = store.tiers.mem.get(`mem.tabs.${id}`);
+      return r && r.found ? r.value : null;
+    },
+    tabRepairCalls: () => tabRepairCalls.length
+  };
   return {
     store,
     drag,
     commitSink,
     gutter,
+    tabs: tabsSurface,
     read: {
       paneSize: (id) => panes.get(id)?.size ?? 0,
       zoneSize: (id) => {
@@ -13029,6 +13138,7 @@ window.addEventListener("contextmenu", (e) => {
 window.__pgdemo = {
   store: demo.store,
   drag: demo.drag,
+  tabs: demo.tabs,
   read: demo.read,
   evCounts: () => ({ ...evCounts }),
   storeSummary: () => {

@@ -391,12 +391,72 @@ async function main() {
   const c2 = JSON.parse(await evaluate(`JSON.stringify((()=>{const s=document.querySelector('[data-zone="zone-3"]');return{tabs:s.querySelectorAll('.zone-tab[data-tab-for="pane-a"]').length,frames:s.querySelectorAll('.pane-frame[data-pane-id="pane-a"]').length,cls:s.className}})())`))
   check('a minimized zone WITH panes retains a TAB-STRIP list', c2.tabs === 1 && c2.frames === 0, `tabs=${c2.tabs} frames=${c2.frames} cls=${c2.cls}`)
 
+  // ───────────────────────────────────────────────────────────────────────────
+  // THE TAB-BEHAVIOR TEST — a pane that READS/DISPLAYS/MODIFIES the active tab's
+  // data via a STORE LISTENER (re-render on active or contained-data change), and
+  // the exactly-one-ACTIVE constraint + repair arms on every set/commit post-state.
+  // ───────────────────────────────────────────────────────────────────────────
+  const tabState = async () =>
+    JSON.parse(await evaluate(`JSON.stringify((()=>{const t=window.__pgdemo.tabs;return{active:t.activeId(),a:t.tabData('tabA'),b:t.tabData('tabB'),c:t.tabData('tabC'),repairs:t.tabRepairCalls()}})())`))
+  const tabInfo = async () => await evaluate(`document.getElementById('tab-info')?.textContent ?? ''`)
+
+  // S-1: the seed — exactly ONE active (the constraint holds the invariant).
+  const s1 = await tabState()
+  check('exactly one tab is active at boot (the constraint holds)', s1.active === 'tabA', `active=${s1.active} repairs=${s1.repairs}`)
+
+  // S-2: the pane READS + DISPLAYS the active tab's data.
+  const info1 = await tabInfo()
+  check('the pane displays the active tab and its data', info1.indexOf('tabA') !== -1 && info1.indexOf('lastActive') !== -1, `info=${JSON.stringify(info1).slice(0,70)}`)
+
+  // S-3: the pane MODIFIES the active tab's data; the LISTENER re-renders WITHOUT a
+  // manual refresh (the data change reached the pane via the store subscription).
+  const modBtn = await boxOf('#tab-modify')
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: modBtn.x, y: modBtn.y, button: 'left', clickCount: 1 })
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: modBtn.x, y: modBtn.y, button: 'left', clickCount: 1 })
+  await sleep(350)
+  const s3 = await tabState()
+  const info3 = await tabInfo()
+  check('the pane MODIFIES the active tab data (a store commit)', s3.a && s3.a.note === 'modified', `a=${JSON.stringify(s3.a).slice(0,60)}`)
+  check('the LISTENER re-rendered the pane on the data change', info3.indexOf('modified') !== -1, `info=${JSON.stringify(info3).slice(0,70)}`)
+
+  // S-4: THE CONSTRAINT + REPAIR ARM (a) — activating tabB while tabA is active is
+  // a SECOND active write -> the repair de-activates the SURPLUS, keeping the most
+  // recently active (tabA's lastActive is 4 after the modify; tabB's activate sets
+  // 2 -> tabA survives). The pane's tab-B click drives it.
+  const tabBbox = await boxOf('.tab-btn[data-tab="tabB"]')
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: tabBbox.x, y: tabBbox.y, button: 'left', clickCount: 1 })
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: tabBbox.x, y: tabBbox.y, button: 'left', clickCount: 1 })
+  await sleep(350)
+  const s4 = await tabState()
+  const actives4 = [s4.a, s4.b, s4.c].filter((v) => v && v.active === true).length
+  check('a second active write is REPAIRED — exactly one active (arm a: surplus)', actives4 === 1, `actives=${actives4} active=${s4.active}`)
+  check('the repair ran (the repair-call counter moved)', s4.repairs >= 1, `repairs=${s4.repairs}`)
+  check('the repair KEPT the most-recently-active tab', s4.active === 'tabA', `active=${s4.active} a.lastActive=${s4.a?.lastActive} b.lastActive=${s4.b?.lastActive}`)
+
+  // S-5: ARM (b) — drive ALL actives off -> the repair activates the most-recently-active.
+  await evaluate(`(()=>{const s=window.__pgdemo.store;window.__pgdemo.tabs.ids().forEach(id=>s.commit('mem.tabs.'+id,{active:false,lastActive:0},{onRepeat:'edit'}));return true})()`)
+  await sleep(350)
+  const s5 = await tabState()
+  const anyActive5 = [s5.a, s5.b, s5.c].some((v) => v && v.active === true)
+  check('arm (b): NONE active -> the repair activates the most-recently-active tab', s5.active !== null && anyActive5, `active=${s5.active} repairs=${s5.repairs}`)
+
+  // S-6: ARM (c) — the tab set EMPTY -> the repair opens the LANDING PAGE.
+  await evaluate(`(()=>{const s=window.__pgdemo.store;window.__pgdemo.tabs.ids().forEach(id=>s.remove('mem.tabs.'+id));return true})()`)
+  await sleep(350)
+  const s6 = await tabState()
+  check('arm (c): the EMPTY tab set -> the repair opens the landing page', s6.active === 'landingPage', `active=${s6.active} repairs=${s6.repairs}`)
+
+  // S-7: THE LISTENER's ACTIVE-CHANGE half — the pane re-rendered on the repair-
+  // driven active change (the landing page shows in the info).
+  const info7 = await tabInfo()
+  check('the LISTENER re-rendered the pane on the ACTIVE-tab change (repair-driven)', info7.indexOf('landingPage') !== -1, `info=${JSON.stringify(info7).slice(0,70)}`)
+
   console.log('')
   if (failures === 0) {
-    console.log('[live] PANE-DRAG + GUTTER + MINIMIZED-ZONE LIVE TESTS: ALL GREEN')
+    console.log('[live] PANE-DRAG + GUTTER + MINIMIZED-ZONE + TAB-BEHAVIOR LIVE TESTS: ALL GREEN')
     process.exit(0)
   } else {
-    console.log(`[live] PANE-DRAG + GUTTER + MINIMIZED-ZONE LIVE TESTS: ${failures} FAILED`)
+    console.log(`[live] PANE-DRAG + GUTTER + MINIMIZED-ZONE + TAB-BEHAVIOR LIVE TESTS: ${failures} FAILED`)
     process.exit(1)
   }
 }

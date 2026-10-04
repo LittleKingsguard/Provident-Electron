@@ -17,6 +17,7 @@ window.addEventListener('contextmenu', (e) => { evCounts.ctx += 1 })
 ;(window as unknown as Record<string, unknown>).__pgdemo = {
   store: demo.store,
   drag: demo.drag,
+  tabs: demo.tabs,
   read: demo.read,
   evCounts: () => ({ ...evCounts }),
   storeSummary: () => {

@@ -69,6 +69,16 @@ export interface DemoSurface {
   /** the DOM the driver reads/paints (live window) */
   root: HTMLElement | null
   mount: (root: HTMLElement) => void
+  tabs: {
+    activeId: () => string | null
+    activeData: () => unknown
+    subscribe: (fn: () => void) => () => void
+    setActiveData: (data: unknown) => void
+    activate: (id: string) => void
+    ids: () => string[]
+    tabData: (id: string) => unknown
+    tabRepairCalls: () => number
+  }
 }
 
 let activeGhostZone: ZoneId | null = null
@@ -81,9 +91,54 @@ let dragExpandedZone: ZoneId | null = null
  *  tier holds the committed size); an EMPTY minimized zone shows ONLY a button */
 const userExpanded = new Set<ZoneId>()
 
+// THE EXACTLY-ONE-ACTIVE TAB CONSTRAINT — the WORKED EXAMPLE (count-exactly-one)
+  // from the store contract's CR6 seat row, driven as CALLER-SUPPLIED FUNCTIONS:
+  //   constraint: exactly one tab is marked 'active'
+  //   repair arms: (a) >1 active -> de-activate the surplus, keep the most recent;
+  //                (b) 0 active with tabs -> activate the most-recently-active per
+  //                    tab-local data; (c) the tab set EMPTY -> open the landing page.
+  const tabRepairCalls: number[] = []
+  function countActiveTabs(tabs: Record<string, { active?: boolean; lastActive?: number }>): number {
+    return Object.keys(tabs || {}).filter((k) => tabs[k] && tabs[k].active === true).length
+  }
+  function mostRecentTab(tabs: Record<string, { active?: boolean; lastActive?: number }>): string | null {
+    let best: string | null = null
+    for (const k of Object.keys(tabs || {})) {
+      if (best === null || (tabs[k].lastActive ?? -1) > (tabs[best].lastActive ?? -1)) best = k
+    }
+    return best
+  }
+  const exactlyOneActiveMember = {
+    id: 'count-exactly-one',
+    matchedSet: 'tabs',
+    evaluatedOn: ['set', 'commit', 'remove'] as const,
+    constraint: (_changed: unknown, _current: unknown, next: unknown): boolean =>
+      countActiveTabs(next as Record<string, { active?: boolean }>) === 1,
+    repair: (data: unknown): boolean => {
+      tabRepairCalls.push(1)
+      const tabs = (data && typeof data === 'object' && !Array.isArray(data) ? data : {}) as Record<
+        string,
+        { active?: boolean; lastActive?: number }
+      >
+      const active = Object.keys(tabs).filter((k) => tabs[k] && tabs[k].active === true)
+      const count = active.length
+      if (count > 1) {
+        const keep = active.reduce((a, b) => ((tabs[a].lastActive ?? -1) >= (tabs[b].lastActive ?? -1) ? a : b))
+        for (const k of active) if (k !== keep) tabs[k].active = false
+      } else if (count === 0 && Object.keys(tabs).length > 0) {
+        const rec = mostRecentTab(tabs)
+        if (rec !== null) tabs[rec].active = true
+      } else if (Object.keys(tabs).length === 0) {
+        tabs.landingPage = { active: true, lastActive: 0 }
+      }
+      return true
+    },
+  }
+
 export function buildDemo(): DemoSurface {
   const store = createGraphStore({
-    declarations: { rows: [{ name: 'layout' }, { name: 'settings' }, { name: 'drag' }] },
+    declarations: { rows: [{ name: 'layout' }, { name: 'settings' }, { name: 'drag' }, { name: 'tabs' }] },
+    constraints: [exactlyOneActiveMember],
   })
 
   const panes = new Map<string, PaneRecord>(INITIAL_PANES.map((p) => [p.id, { ...p }]))
@@ -242,9 +297,40 @@ export function buildDemo(): DemoSurface {
     paint()
   }
 
+  const renderTabPane = (): void => {
+    const info = root?.querySelector('#tab-info')
+    const bar = root?.querySelector('#tab-bar')
+    const active = tabsSurface.activeId()
+    if (bar) {
+      for (const b of bar.querySelectorAll('.tab-btn')) {
+        b.classList.toggle('active', b.getAttribute('data-tab') === active)
+      }
+    }
+    if (info) info.textContent = `active tab: ${active}\n` + (active ? `data: ${JSON.stringify(tabsSurface.activeData())}` : '(none)')
+  }
+  const wireTabs = (): void => {
+    const bar = root?.querySelector('#tab-bar')
+    if (!bar) return
+    bar.addEventListener('click', (ev) => {
+      const btn = (ev.target as HTMLElement)?.closest?.('.tab-btn')
+      const tid = btn?.getAttribute('data-tab')
+      if (tid) tabsSurface.activate(tid)
+    })
+    const modify = root?.querySelector('#tab-modify')
+    if (modify) {
+      modify.addEventListener('click', () => {
+        const d = tabsSurface.activeData() as { lastActive?: number } | null
+        const n = d && typeof d === 'object' && typeof (d as { lastActive?: number }).lastActive === 'number' ? (d as { lastActive?: number }).lastActive : 0
+        tabsSurface.setActiveData({ active: true, lastActive: n + 1, note: 'modified' })
+      })
+    }
+    tabsSurface.subscribe(() => renderTabPane())
+    renderTabPane()
+  }
   const mount = (el: HTMLElement): void => {
     root = el
     paint()
+    wireTabs()
     if (!root) return
     // THE HANDLE-GATED DRAG — a drag starts ONLY from the pane handle element.
     root.addEventListener('pointerdown', (ev) => {
@@ -459,11 +545,74 @@ export function buildDemo(): DemoSurface {
     },
   }
 
+  // THE TAB PANE — a store-listener surface (rule 2): the store carries the tabs;
+  // the consumer pane READS the active tab's data, DISPLAYS it, MODIFIES it (a store
+  // commit — the constraint evaluates post-state), and uses a STORE LISTENER to
+  // re-render when the active tab or its contained data changes.
+  const tabIds = ['tabA', 'tabB', 'tabC']
+  const seedTabs = (): void => {
+    store.commit('mem.tabs.tabA', { active: true, lastActive: 3 }, { onRepeat: 'edit' })
+    store.commit('mem.tabs.tabB', { active: false, lastActive: 2 }, { onRepeat: 'edit' })
+    store.commit('mem.tabs.tabC', { active: false, lastActive: 1 }, { onRepeat: 'edit' })
+  }
+  seedTabs()
+  const tabsSurface = {
+    activeId: (): string | null => {
+      // per-leaf scan of the FIXED tab ids + the constraint-arm-(c) landingPage leaf
+      // (the root-name resolve answers the root NODE's value, not the record — so the
+      // scan is per-leaf; the repair's created leaf is a tab like any other)
+      for (const id of [...tabIds, 'landingPage']) {
+        const r = (store.tiers.mem as unknown as { get: (n: string) => unknown }).get(`mem.tabs.${id}`) as {
+          found?: boolean
+          value?: { active?: boolean }
+        } | null
+        if (r && r.found && r.value && r.value.active === true) return id
+      }
+      return null
+    },
+    activeData: (): unknown => {
+      const id = tabsSurface.activeId()
+      if (!id) return null
+      const r = (store.tiers.mem as unknown as { get: (n: string) => unknown }).get(`mem.tabs.${id}`) as {
+        found?: boolean
+        value?: unknown
+      } | null
+      return r && r.found ? r.value : null
+    },
+    subscribe: (fn: () => void): (() => void) => {
+      const subs = tabIds.map((id) => store.subscribe(`mem.tabs.${id}`, () => fn()))
+      return () => subs.forEach((s) => s.unsubscribe())
+    },
+    setActiveData: (data: unknown): void => {
+      const id = tabsSurface.activeId()
+      if (!id) return
+      store.commit(`mem.tabs.${id}`, data, { onRepeat: 'edit' })
+    },
+    activate: (id: string): void => {
+      const r = (store.tiers.mem as unknown as { get: (n: string) => unknown }).get(`mem.tabs.${id}`) as {
+        found?: boolean
+        value?: { lastActive?: number }
+      } | null
+      const lastActive = r && r.found && r.value ? (r.value.lastActive ?? 0) : 0
+      store.commit(`mem.tabs.${id}`, { active: true, lastActive }, { onRepeat: 'edit' })
+    },
+    ids: (): string[] => [...tabIds],
+    tabData: (id: string): unknown => {
+      const r = (store.tiers.mem as unknown as { get: (n: string) => unknown }).get(`mem.tabs.${id}`) as {
+        found?: boolean
+        value?: unknown
+      } | null
+      return r && r.found ? r.value : null
+    },
+    tabRepairCalls: (): number => tabRepairCalls.length,
+  }
+
   return {
     store,
     drag,
     commitSink,
     gutter,
+    tabs: tabsSurface,
     read: {
       paneSize: (id) => panes.get(id)?.size ?? 0,
       zoneSize: (id) => {
@@ -500,5 +649,8 @@ export function buildDemo(): DemoSurface {
 }
 
 export function createGraphStoreForDemo(): GraphStore {
-  return createGraphStore({ declarations: { rows: [{ name: 'layout' }, { name: 'settings' }, { name: 'drag' }] } })
+  return createGraphStore({
+    declarations: { rows: [{ name: 'layout' }, { name: 'settings' }, { name: 'drag' }, { name: 'tabs' }] },
+    constraints: [exactlyOneActiveMember],
+  })
 }
