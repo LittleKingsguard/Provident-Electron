@@ -3,9 +3,38 @@
 This page is for a developer who wants a draggable gutter — a resize handle that an agent can also
 see and drive — without authoring one, and for a fork author who is replacing this repo's example
 seams with their own. The unit is `U-GUTTER-UI`, wave `E`, ledger row `E10`; its landed record is
-the `## DONE — U-GUTTER-UI` section of `docs/next-steps.md`. The one-line answer: an authored
+the `## DONE — U-GUTTER-UI` section of `docs/next-steps.md`. The one-line answer (LEGACY app path): an authored
 provident card supplies the handle, `src/shared/gutter-affordance.ts` turns real pointer events into
-previews and one committed value, and the renderer wiring attaches it from the producing graph.
+previews and one committed value, and the renderer wiring attaches it from the producing graph —
+whereas the CURRENT store-backed flow (`demo/pane-drag-demo/`) uses TS pane records + `createPaneDrag(store, { layout })`
+with NO authored envelope card and NO `Runtime` (see the STORE-WAVE SCOPING BANNER above).
+
+**⟶ STORE-WAVE SCOPING BANNER (`2026-10-04`, read this page beside `docs/FORKER.md` §4's
+`### THE STORE-BACKED DRAG + GUTTER FEATURES`):** the flow BELOW — the transient inline `width`
+preview, the `state-slice` write to the authored `GUTTER_STATUS_ID` status node, the MCP
+`runtime.nodeState(GUTTER_STATUS_ID)` read-back — is the **LEGACY app wiring** (`startGutterAffordance`
++ `demo-envelope.ts`). **The CURRENT store-backed flow** (the `demo/pane-drag-demo/` 50/50 live suite)
+differs on exactly the four points this banner names:
+- **The preview is a STORE TEMP WRITE**, not an inline style — `temp.drag.<gid>.placement`, FIRST
+  preview = `commit` (the mint) then `set` per move, and the page's layout (zone-2 width + gutter
+  position) is a pure function of the store-carried size (temp while dragging, the FILE value
+  otherwise). The module's `applyPreview` seam remains only for the legacy path. (GU-1)
+- **THE one write per gesture end is the FILE-TIER COMMIT** — `commit('file.settings.pane.<id>.size',
+  final)` — ONE file commit, the temp parked (the single-sink channel). There is NO status-node
+  `state-slice` in the store flow (the pane-drag composition also hard-codes the `pane-a` tenant
+  on release). (GU-2)
+- **The abandon/reset is TEMP-REMOVAL-WITH-FILE-REASSERT**, not a revert write — right-click/cancel
+  does `remove('temp.drag.<gid>.placement')`: ZERO commits, ZERO sink writes, ZERO revert writes; the
+  temp erases and the FILE original reasserts on the next layout pass. The "visible revert … one
+  revert write" rows below describe the LEGACY module-side reset only. (GU-3)
+- **The committed-value read-back is the STORE TIERS** (`file.settings.pane.<id>.size` /
+  `mem.layout.pane.<id>.size`, `{found, value}` answers) — the MCP status-node read-back is the
+  legacy path only. (GU-4)
+
+**⟶ LEDGER + CITATION UPDATES (`2026-10-04`):** the ledger is now **`30 DONE / 0 open` UNITS = 30**
+(`## DONE — U-STORE-SECURITY`, the ledger's thirtieth row) — not 21 (GU-6); the sibling pages
+`docs/guide/gutter.md` and `docs/guide/seams.md` both EXIST and are linked froM `docs/guide/README.md`
+(GU-7).
 
 ## What it is
 
