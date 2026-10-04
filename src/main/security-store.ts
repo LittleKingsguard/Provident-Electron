@@ -95,7 +95,21 @@ export function createSecurityStore(opts: SecurityStoreOptions): SecurityStore {
       closeSync(dirFd)
       return { status: 'committed' }
     } catch {
-      rmSync(tmp, { force: true })
+      // G3 gate-4 finding 1 (F-11, 2026-10-03): the stale-tmp cleanup must
+      // NEVER escape persist() — a stale `${path}.tmp` that names a DIRECTORY
+      // (or a protected path) made the earlier writeFileSync throw EISDIR and
+      // THEN made `rmSync(tmp, {force:true})` throw ITS OWN EISDIR (force masks
+      // only ENOENT), which escaped the catch: set() threw and no receipt was
+      // answered — totality (§2.3 item 5) and never-throw (§3.3 I-4/I-7)
+      // violated. The cleanup is BEST-EFFORT and its failure is SWALLOWED —
+      // the receipt is the refusal, never a throw; `recursive` restores
+      // writability when the stale tmp is a directory (§2.2 item 3's "the tmp
+      // fate": a stale tmp is never the record and is removed/overwritten next).
+      try {
+        rmSync(tmp, { recursive: true, force: true })
+      } catch {
+        // swallowed by design: the refused receipt is the write's only answer
+      }
       return { status: 'refused', reason: 'write-failed' }
     }
   }

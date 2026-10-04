@@ -244,6 +244,14 @@ export class SecurePanels {
   private debugValue = 'booting…'
   private moduleStatus = 'loading…'
   private moduleListText = ''
+  /** G3 §2.5 (gate-4 finding 2, 2026-10-03) — the pane journal's declared cap:
+   *  the tier-4 `maxJournalLength` value passed at construction (IDENTITY with
+   *  the operator's setting; `undefined` = never condense). The engine receives
+   *  it too (`new Supervisor({…, maxJournalLength})` below) so its deferred
+   *  condense triggers, but the CAP IS ENFORCED HERE over the raw journal
+   *  entries (`applyJournalCap()`) — the engine's own round-trip condense is
+   *  defeated on this pane (§2.5 items 1/2/4's measured evidence). */
+  private readonly maxJournalLength: number | undefined
 
   /** Test/visibility accessor — the current Debug pane text (census + SSR
    *  preview). */
@@ -253,6 +261,7 @@ export class SecurePanels {
 
   constructor(mount: HTMLElement, opts?: { maxJournalLength?: number }) {
     this.mount = mount
+    this.maxJournalLength = opts?.maxJournalLength
     this.scope = createIsolatedScope()
     const hub = createLinkHub()
     const t = translateLegacy(paneEnvelope(), { hub, graphScope: this.scope })
@@ -353,6 +362,7 @@ export class SecurePanels {
     if (!paneMutationValid(mutation)) return { status: 'rejected', applied: false }
     const node = this.supervisor.getNode(nodeId)
     const result = this.supervisor.apply({ kind: 'state-slice', node, mutation } as never) as { status?: unknown }
+    this.applyJournalCap()
     this.render()
     const status = typeof result?.status === 'string' ? result.status : 'unknown'
     return { status, applied: status === 'applied' }
@@ -421,7 +431,7 @@ export class SecurePanels {
         const jl = this.cfg.maxJournalLength !== undefined ? ` · journal: ≤${this.cfg.maxJournalLength}` : ' · journal: ∞'
         mutation.push({ targetProp: 'content', value: `token: ${this.cfg.token ? '••••' : '(none)'} · enabled: [${this.cfg.enabled.join(', ')}]${jl}` })
       } else if (id === 'status') {
-        mutation.push({ targetProp: 'content', value: this.debugText })
+        mutation.push({ targetProp: 'content', value: this.debugText() })
       } else if (id === 'token-input') {
         mutation.push({ targetProp: 'content', value: this.cfg.token ?? '' })
       } else if (typeof id === 'string' && id.startsWith('toggle:')) {
@@ -440,6 +450,41 @@ export class SecurePanels {
         this.supervisor.apply({ kind: 'state-slice', node: n, mutation })
       }
     }
+    this.applyJournalCap()
+  }
+
+  /** G3 §2.5 items 1/2/4 — THE PANE JOURNAL'S CAP, ENFORCED AT THE HOST
+   *  (gate-4 finding 2, RED-SET-FIX, 2026-10-03): the engine's own deferred
+   *  condense cannot drop this pane's journal past the cap — measured defeat
+   *  paths: (1) the D5 containment aborts (`condense-aborted:
+   *  serialization-error`) while the journal/newest entries carry a non-JSON
+   *  value (the refresh's `status` write once shipped the `debugText` METHOD
+   *  reference — a function — into the node's content instead of the string;
+   *  fixed above), and (2) the D5 size guard skips a small journal (`base >=
+   *  journal`: MEASURED — a 1-cycle 11-entry journal is ~1864B while the pane
+   *  graph's base snapshot is ~5249B), so at small N the engine's condense
+   *  never rewrites and `journalDepth()` stays ≥ the cap. The cap is therefore
+   *  made REAL by condensing over the RAW journal entries — never a graph
+   *  round-trip — with the engine's OWN D6 rewrite semantics (`supervisor.js`
+   *  condense): the oldest excess entries are dropped from the journal and the
+   *  parallel undo stack, and the redo stack clears (a truncation invalidates
+   *  the redo basis — D6's rule). `maxJournalLength === undefined` (no cap)
+   *  never trims; the falsifier's observable — "a journal depth > M means the
+   *  cap is not applied" — is closed: after every pane journaling cycle the
+   *  depth is ≤ M, while an UNCAPPED pane keeps growing per mutated node. */
+  private applyJournalCap(): void {
+    const max = this.maxJournalLength
+    if (max === undefined) return
+    const sup = this.supervisor as unknown as {
+      journal: unknown[]
+      undoStack: unknown[]
+      redoStack: unknown[]
+    }
+    const excess = sup.undoStack.length - max
+    if (excess <= 0) return
+    sup.journal.splice(0, excess)
+    sup.undoStack.splice(0, excess)
+    sup.redoStack.length = 0
   }
 
   /** Compile the pane graph root + re-render into the pane mount. */
