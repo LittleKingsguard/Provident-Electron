@@ -78,6 +78,35 @@
  * The dynamic constructed-pane drive is therefore a RED row of THIS red set,
  * no longer a greens'/shim-hosted form only.
  *
+ * ⟶⟶ THE GATE-4 RE-AUDIT CLOSE-OUT (2026-10-03, TestWriter — NEW-1 + NEW-2):
+ *  NEW-1 (MEDIUM, RED-SET-FIX): the as-filed burst-absence probe was STRUCTURALLY
+ *  VACUOUS — the re-home refactor moved `bridge.sendReply(reply)` INSIDE the
+ *  `replyRoute` const (renderer.ts:657-665), so the anchor
+ *  `bridge\.onRequest[\s\S]*?bridge\.sendReply\(reply\)` matched NOTHING and
+ *  `expect(/refreshDebug/.test('')).toBe(false)` passed under ANY code state (a
+ *  re-added reply-path `panels?.refreshDebug` — before/after sendReply, inside/beside
+ *  replyRoute — still yields no onRequest-then-sendReply span).  RE-AIMED at ALL FIVE
+ *  probe sites (the M-5/F-8 row + the three P-SE-SM-2 reading-2 attempts) to the
+ *  CLOSED-OCCURRENCE form: EXACTLY TWO code-level refreshDebug invocation sites in
+ *  renderer.ts — the boot line (:645) + the app-graph-changed notify-callback line
+ *  (:660) — a THIRD site anywhere (a re-added reply-path burst) FAILS.  The span-form
+ *  alternative WAS VERIFIED AND REJECTED on this tree: the notify-callback site at
+ *  :660 lies INSIDE a `const replyRoute … bridge.sendReply(reply)` span (657-662),
+ *  so that span form would redden the LEGIT re-home.  MUTATION-PROVEN non-vacuous:
+ *  a scratch copy of renderer.ts with a re-added reply-path refreshDebug FAILS the
+ *  count (the probe ran under vitest against the mutated file and is deleted after).
+ *  NEW-2 (LOW, TEST-SIDE RE-GRAIN): the fsync mock threw on the FIRST fsyncSync (the
+ *  tmp, pre-rename) only, so the POST-RENAME DIR-FSYNC failure class was UNREACHABLE —
+ *  persist runs the dir-fsync AFTER renameSync (security-store.ts:92-95), so a dir-fsync
+ *  failure answers the refused receipt with the NEW record live at the real path and the
+ *  pre-write bytes GONE (never torn/file-loss, but "the previous file intact at EVERY
+ *  failure point" over-claims).  RE-GRAINED: the mock carries a per-call fsync counter
+ *  and an `fsyncAt` arm for call N (the dir-fsync = call 2 of the injected persist);
+ *  P-SE-SM-1's FSYNCED·refused terminal is RE-AIMED to the commit-side refusal — the
+ *  refused receipt + the NEW record live — and the pre-rename failure rows' wording is
+ *  TIGHTENED to name their class (never asserting the pre-write bytes survive a
+ *  POST-rename failure).  Register totals UNCHANGED: 50 = 6+4+4+8+6+8+8+6.
+ *
  * LAYER HONESTY (§1.4): no timing figure is claimed anywhere in this file.
  * ============================================================================
  */
@@ -108,7 +137,20 @@ import { installShim, mountEl } from '../src/shared/dom-shim.js'
 
 const hooks = vi.hoisted(() => ({
   log: [] as string[],
-  inject: { writeFile: false, fsync: false, rename: false, partial: false } as Record<string, boolean>,
+  /** NEW-2 re-grain (2026-10-03, gate-4 RE-audit, TestWriter): the per-call fsync
+   *  counter, zeroed by resetInject().  The as-filed mock threw on the FIRST
+   *  fsyncSync only — the tmp, pre-rename — so the POST-RENAME DIR-FSYNC failure
+   *  class (the parent-directory fsync AFTER renameSync, §2.2 item 2(b)) was
+   *  UNREACHABLE and no drive could assert its honest state.  With the counter,
+   *  `inject.fsyncAt` targets call N of the NEXT persist (the dir-fsync = call 2). */
+  fsyncCalls: 0,
+  inject: {
+    writeFile: false,
+    fsync: false,
+    rename: false,
+    partial: false,
+    fsyncAt: null,
+  } as { writeFile: boolean; fsync: boolean; rename: boolean; partial: boolean; fsyncAt: number | null },
 }))
 
 vi.mock('node:fs', async (importOriginal) => {
@@ -141,7 +183,16 @@ vi.mock('node:fs', async (importOriginal) => {
     },
     fsyncSync: (fd: unknown): void => {
       hooks.log.push(`fsync:${String(fd)}`)
+      // NEW-2 re-grain: the per-call counter makes the POST-RENAME DIR-FSYNC injectable
+      // (call 2 of a persist = the parent-directory fsync AFTER renameSync). `inject.fsync`
+      // keeps the as-filed FIRST-fsync (the tmp, pre-rename) class; `inject.fsyncAt` targets
+      // an exact later call — the dir-fsync — which runs AFTER the rename has already
+      // committed the NEW record at the real path (security-store.ts:92-95).
+      hooks.fsyncCalls += 1
       if (hooks.inject.fsync) throw new Error('injected: fsync failure')
+      if (hooks.inject.fsyncAt !== null && hooks.fsyncCalls === hooks.inject.fsyncAt) {
+        throw new Error('injected: dir-fsync failure (the POST-RENAME directory fsync)')
+      }
       return actual.fsyncSync(fd as never)
     },
     readFileSync: (file: unknown, opts?: unknown): string | Buffer => actual.readFileSync(file as never, opts as never),
@@ -165,7 +216,20 @@ async function makeStore(): Promise<{ store: SecurityStore; path: string }> {
   return { store: createSecurityStore({ path }), path }
 }
 function resetInject(): void {
-  hooks.inject = { writeFile: false, fsync: false, rename: false, partial: false }
+  hooks.inject = { writeFile: false, fsync: false, rename: false, partial: false, fsyncAt: null }
+  hooks.fsyncCalls = 0
+}
+/** NEW-2 re-grain (2026-10-03, gate-4 RE-audit, TestWriter): arm the POST-RENAME
+ *  DIR-FSYNC failure class — the 2nd fsyncSync of the NEXT persist (the parent
+ *  DIRECTORY fsync AFTER renameSync, §2.2 item 2(b); security-store.ts:93-95).  The
+ *  as-filed mock could only throw at the FIRST fsync (the tmp, pre-rename) — the
+ *  dir-fsync class was UNREACHABLE, so no drive asserted its HONEST state: the refused
+ *  receipt with the NEW record LIVE at the real path (the rename already committed it;
+ *  the pre-write bytes are gone — no torn-file, no data-loss, but the previous-file-
+ *  intact claim is scoped to the PRE-RENAME failure points, never a POST-rename one). */
+function armDirFsyncFailure(): void {
+  resetInject()
+  hooks.inject.fsyncAt = 2
 }
 async function sourceOf(rel: string[]): Promise<string> {
   return await readFile(SRC(...rel), 'utf8')
@@ -229,6 +293,48 @@ async function drivePaneCap(M: number, N: number): Promise<{ capped: number; unc
   await new Promise((r) => setTimeout(r, 0))
   const uncappedDepth = uncapped.journalDepth()
   return { capped, uncapped: uncappedDepth }
+}
+/** NEW-1 re-aim (2026-10-03, gate-4 RE-audit, TestWriter) — THE BURST-ABSENCE PROBE'S
+ *  CLOSED-OCCURRENCE FORM, used at ALL FIVE probe sites (the M-5/F-8 row + the three
+ *  P-SE-SM-2 reading-2 attempts).  WHY: the as-filed anchor
+ *  `bridge\.onRequest[\s\S]*?bridge\.sendReply\(reply\)` was STRUCTURALLY VACUOUS — the
+ *  re-home refactor moved `sendReply` INSIDE the `replyRoute` const (renderer.ts:657-665,
+ *  text order sendReply 662 < onRequest 665), so the span came up EMPTY and the
+ *  `expect(/refreshDebug/.test('')).toBe(false)` passed under ANY code state.  The count
+ *  pins the CODE-LEVEL invocation spelling `panels.{?}.refreshDebug(runtime)` — EXACTLY
+ *  TWO sites allowed: the boot line (:645) + the app-graph-changed notify-callback line
+ *  (:660) — a THIRD site anywhere (a re-added reply-path burst) FAILS.  Raw `/refreshDebug/`
+ *  is NOT counted: it also matches the two COMMENT mentions (renderer.ts:649/653).  The
+ *  span-form alternative (`const replyRoute … bridge.sendReply(reply)`) was verified and
+ *  REJECTED: the notify-callback site at :660 lies INSIDE that span (657-662), so the
+ *  span form would redden the LEGIT re-home. */
+function refreshDebugCodeSites(rendererSrc: string): string[] {
+  // the invocation spelling `panels.refreshDebug(...)` / `panels?.refreshDebug(...)` — the
+  // optional-chaining `?` sits BETWEEN the name and the dot in the code spelling.  The
+  // renderer's own COMMENTS also spell the invocation text (renderer.ts:649 quotes the
+  // REMOVED burst verbatim) — a site is counted only when its line carries no `//` before
+  // it (code-level = a real invocation; comment-level = a description of the re-home):
+  const out: string[] = []
+  for (const m of rendererSrc.matchAll(/panels\??\.refreshDebug\(runtime\)/g)) {
+    const lineHead = m.index !== undefined ? rendererSrc.slice(rendererSrc.lastIndexOf('\n', m.index - 1) + 1, m.index) : ''
+    if (!lineHead.includes('//')) out.push(m[0])
+  }
+  return out
+}
+/** The closed-occurrence assertion block — the row's intent, all three legs: (i) the
+ *  EXACTLY-TWO count (a re-added reply-path refreshDebug is a THIRD code site anywhere
+ *  in renderer.ts and FAILS), (ii) the boot refresh's presence, (iii) the notify
+ *  callback's presence. */
+function assertBurstAbsentForm2(rendererSrc: string): void {
+  const sites = refreshDebugCodeSites(rendererSrc)
+  expect(sites.length,
+    '§2.5 item 3 — the debug refresh re-homes onto EXACTLY TWO invocation sites: the BOOT refresh (renderer.ts:645) + the app-graph-changed notify callback (renderer.ts:660). NEW-1 re-aim: a re-added reply-path refreshDebug is a THIRD code-level site ANYWHERE in renderer.ts and FAILS (the as-filed onRequest…sendReply span matched NOTHING — the probe passed vacuously under any code state). Measured sites: ' + sites.length + ' (' + sites.join(' | ') + ')').toBe(2)
+  const bootBlock = /if \(panels\) \{[\s\S]*?\n  \}/.exec(rendererSrc)?.[0] ?? ''
+  expect(/panels\.refreshDebug\(runtime\)/.test(bootBlock),
+    '§2.5 item 3(i) — the BOOT refresh (panels.refresh() + panels.refreshDebug(runtime), renderer.ts:639-643) stays').toBe(true)
+  const notifyCallback = /handleRequest\(runtime, req, \(p\) => [\s\S]*?bridge!?\.notify\(p\)[\s\S]*?\)/.exec(rendererSrc)?.[0] ?? ''
+  expect(/refreshDebug/.test(notifyCallback),
+    '§2.5 item 3(ii) — the notify callback becomes `(p) => { bridge.notify(p); panels?.refreshDebug(runtime) }` — ONE refresh per MUTATING reply, coalesced with the ONE notify (N4).').toBe(true)
 }
 let cachedMainSrc: string | null = null
 async function awaitMainSource(): Promise<string> {
@@ -312,7 +418,7 @@ describe('G3 §2.2 THE ATOMIC WRITE (red: the plain writeFileSync is still the s
       const pre = await readFile(path, 'utf8')
       hooks.inject[point] = true
       store.set({ token: 'after' })
-      expect(await readFile(path, 'utf8'), `F-2 — ${point} failure: the previous file is intact at the real path (§2.2 item 6)`).toBe(pre)
+      expect(await readFile(path, 'utf8'), `F-2 — ${point} failure (the PRE-RENAME injection point — the NO-${point} arm: the real path never received the new bytes): the previous file is intact at the real path (§2.2 item 6; NEW-2 scopes the intact claim to the PRE-RENAME failure points — the POST-RENAME dir-fsync class answers the refused receipt with the NEW record live, driven at P-SE-SM-1's COMMITTED/RENAMED refused terminal)`).toBe(pre)
       expect(lastWriteReceipt(store), `F-2 — ${point} failure answers the refused receipt, never a swallow (§2.2 item 6, F-6)`).toEqual({ status: 'refused', reason: 'write-failed' })
       resetInject()
     }
@@ -557,18 +663,16 @@ describe('G3 §2.5 RH-3\'s two halves (red: the old pane shape)', () => {
 
   it('M-5/F-8: THE BURST IS STOPPED — the reply path does NOT call refreshDebug; the debug refresh re-homes onto boot + the app-graph-changed notify', async () => {
     const rendererSrc = await sourceOf(['renderer', 'renderer.ts'])
-    // (i) the reply path (bridge.onRequest(...).then((reply) => ...)) must NOT touch the pane graph:
-    const replyPath = /bridge\.onRequest\([\s\S]*?bridge\.sendReply\(reply\)/.exec(rendererSrc)?.[0] ?? ''
-    expect(/refreshDebug/.test(replyPath),
-      '§2.5 item 3 — the reply path sends the reply WITHOUT touching the pane graph. RED: `panels?.refreshDebug(runtime)` runs after EVERY reply (renderer.ts:644-649) — the burst is still present (F-8).').toBe(false)
-    // (ii) the boot refresh is UNCHANGED (the re-home's first half — GREEN today):
-    const bootBlock = /if \(panels\) \{[\s\S]*?\n  \}/.exec(rendererSrc)?.[0] ?? ''
-    expect(/panels\.refreshDebug\(runtime\)/.test(bootBlock),
-      '§2.5 item 3(i) — the BOOT refresh (panels.refresh() + panels.refreshDebug(runtime), renderer.ts:639-643) stays').toBe(true)
-    // (iii) the app-graph-changed notify callback carries the refresh (the re-home's second half):
-    const notifyCallback = /handleRequest\(runtime, req, \(p\) => [\s\S]*?bridge!?\.notify\(p\)[\s\S]*?\)/.exec(rendererSrc)?.[0] ?? ''
-    expect(/refreshDebug/.test(notifyCallback),
-      '§2.5 item 3(ii) — the notify callback becomes `(p) => { bridge.notify(p); panels?.refreshDebug(runtime) }` — ONE refresh per MUTATING reply, coalesced with the ONE notify (N4). RED: today the callback is `(p) => bridge!.notify(p)` only, and the refreshDebug lives on the reply path.').toBe(true)
+    // NEW-1 re-aim (2026-10-03, gate-4 RE-audit): the as-filed anchor
+    // `bridge\.onRequest[^]*?bridge\.sendReply\(reply\)` matched NOTHING after the
+    // re-home (sendReply :662 sits INSIDE replyRoute, defined :657, registered :665), so
+    // `expect(/refreshDebug/.test(''))` passed under ANY code state — the probe was
+    // structurally vacuous.  THE CLOSED-OCCURRENCE FORM (assertBurstAbsentForm2) counts
+    // the code-level refreshDebug invocation sites: exactly TWO (boot :645 + notify
+    // callback :660); a third site anywhere (a re-added reply-path burst) FAILS — the
+    // mutation probe (a scratch copy of renderer.ts with the burst re-added) reddens this
+    // row, so the absence is now checkable, not assumed:
+    assertBurstAbsentForm2(rendererSrc)
   })
 
   it('M-4(dynamic): the pane journal stays bounded — the falsifier\'s form (red: the seam\'s absence blocks the drive)', async () => {
@@ -842,7 +946,7 @@ const registerSpecs: RegisterRowSpec[] = [
     type: 'P-IM',
     strategy: 'S-SE-ATOM-1',
     declared: 6,
-    property: 'THE SECURITY FILE IS NEVER TORN AND THE PREVIOUS RECORD SURVIVES EVERY FAILURE (§2.2; §3.3 I-1)',
+    property: 'THE SECURITY FILE IS NEVER TORN AND THE PREVIOUS RECORD SURVIVES EVERY PRE-RENAME FAILURE (§2.2: tmp-write · tmp-fsync · rename); A POST-RENAME DIR-FSYNC FAILURE ANSWERS THE REFUSED RECEIPT WITH THE NEW RECORD LIVE (never torn, never silent — but the pre-write bytes are gone; §3.3 I-1, NEW-2 re-grain)',
     attempts: [
       // 3 injection points × 2 readings.  In the RED phase the injections cannot
       // stage on the absent sequence: the TMP-WRITE point is staged as the TORN
@@ -875,15 +979,15 @@ const registerSpecs: RegisterRowSpec[] = [
         },
       },
       {
-        term: 'fsync failure · reading (a): the fsync point EXISTS in the write sequence, and the real path\'s record is byte-identical',
+        term: 'fsync failure (the PRE-RENAME tmp-fsync class) · reading (a): the fsync point EXISTS in the write sequence, and the real path\'s record is byte-identical — the POST-RENAME dir-fsync class (the refused receipt with the NEW record live) is driven at P-SE-SM-1\'s COMMITTED/RENAMED refused terminal (NEW-2 re-grain)',
         run: async () => {
           const fresh = await rowStore()
           fresh.store.set({ token: 'before' })
           const pre = await readFile(fresh.path, 'utf8')
-          hooks.inject.fsync = true
+          hooks.inject.fsync = true // throws at the FIRST fsync of the next persist — the tmp, PRE-RENAME (the dir-fsync is call 2; its class is the COMMITTED/RENAMED terminal's)
           fresh.store.set({ token: 'after' })
           expect(hooks.log.some((e) => e.startsWith('fsync:')), 'P-SE-IM-1 — the fsync point exists (§2.2 item 2(a)); today NO fsync exists (the plain write has no such point) — RED').toBe(true)
-          expect(await readFile(fresh.path, 'utf8'), 'P-SE-IM-1 — the previous file is intact (§2.2 item 6)').toBe(pre)
+          expect(await readFile(fresh.path, 'utf8'), 'P-SE-IM-1 — the PRE-RENAME tmp-fsync failure leaves the previous file byte-identical at the real path (§2.2 item 6; NEW-2: this intact claim is the PRE-RENAME point\'s — never a POST-rename one)').toBe(pre)
         },
       },
       {
@@ -1048,7 +1152,7 @@ const registerSpecs: RegisterRowSpec[] = [
     type: 'P-SM',
     strategy: 'S-SE-ASM-1',
     declared: 8,
-    property: 'THE ATOMIC-WRITE STATE MACHINE (CLOSED): IDLE → TMP-WRITTEN → FSYNCED → COMMITTED/RENAMED, every failure → REFUSED with the previous file intact (§2.2; §3.3 I-1)',
+    property: 'THE ATOMIC-WRITE STATE MACHINE (CLOSED): IDLE → TMP-WRITTEN → FSYNCED → COMMITTED/RENAMED, every failure → REFUSED — FILE-STATE HONESTY (NEW-2 re-grain): a PRE-RENAME failure keeps the previous file intact; a POST-RENAME dir-fsync failure answers refused with the NEW record LIVE at the real path (§2.2; §3.3 I-1)',
     attempts: [
       {
         term: 'IDLE · committed terminal — the receipt is answered ONLY at a terminal: before any write, lastWriteReceipt() is null',
@@ -1096,15 +1200,21 @@ const registerSpecs: RegisterRowSpec[] = [
         },
       },
       {
-        term: 'FSYNCED · refused terminal — a failed fsync leaves the previous file intact and answers refused',
+        term: 'COMMITTED/RENAMED · refused at the POST-RENAME DIR-FSYNC (NEW-2 re-grain, 2026-10-03) — the honest state: the refused receipt with the NEW record LIVE at the real path (the rename already committed it; the pre-write bytes are GONE — no torn-file, no data-loss, never silent). The PRE-RENAME tmp-fsync refused terminal is driven at P-SE-IM-1 reading (a) + P-SE-TP-1\'s fsync rows + F-2',
         run: async () => {
           const fresh = await rowStore()
           fresh.store.set({ token: 'before' })
-          const pre = await readFile(fresh.path, 'utf8')
-          hooks.inject.fsync = true
+          armDirFsyncFailure() // the 2nd fsyncSync of the NEXT persist — the parent-DIRECTORY fsync AFTER renameSync (security-store.ts:93-95)
           fresh.store.set({ token: 'after' })
-          expect(await readFile(fresh.path, 'utf8')).toBe(pre)
-          expect(lastWriteReceipt(fresh.store)).toEqual({ status: 'refused', reason: 'write-failed' })
+          // the refused receipt — the dir-fsync failure still answers the closed refusal form:
+          expect(lastWriteReceipt(fresh.store), 'COMMITTED/RENAMED · dir-fsync refused — the receipt answers {status:\'refused\', reason:\'write-failed\'} (§2.3 item 5)').toEqual({ status: 'refused', reason: 'write-failed' })
+          // the HONEST file state: the rename already replaced the real path, so the NEW
+          // record is LIVE — a VALID (parseable, untorn) record; the pre-write bytes are gone:
+          const onDisk = JSON.parse(await readFile(fresh.path, 'utf8')) as { token: unknown }
+          expect(onDisk.token,
+            'COMMITTED/RENAMED · dir-fsync refused — the real path holds the NEW record (the rename already committed it); a valid, never-torn record; the pre-write bytes are GONE — NEW-2: the previous-file-intact claim is scoped to the PRE-RENAME failure points').toBe('after')
+          // the in-memory post-state still answers (the process-lifetime authority, §2.1 item 2):
+          expect(fresh.store.get().token).toBe('after')
         },
       },
       {
@@ -1160,15 +1270,10 @@ const registerSpecs: RegisterRowSpec[] = [
         },
       },
       {
-        term: 'N=1 · reading 2: the burst probe — the reply path\'s refreshDebug absence and the boot/notify refresh presence',
+        term: 'N=1 · reading 2: the burst probe (NEW-1 re-aim — the CLOSED-OCCURRENCE count): EXACTLY TWO refreshDebug invocation sites in renderer.ts (the boot line + the notify-callback line); a THIRD code site ANYWHERE (a re-added reply-path burst) FAILS; the boot/notify refresh presence holds',
         run: async () => {
           const rendererSrc = await sourceOf(['renderer', 'renderer.ts'])
-          const replyPath = /bridge\.onRequest\([\s\S]*?bridge\.sendReply\(reply\)/.exec(rendererSrc)?.[0] ?? ''
-          expect(/refreshDebug/.test(replyPath), 'P-SE-SM-2 — the reply path fires NO refreshDebug (§2.5 item 3). RED: the burst is present').toBe(false)
-          const bootBlock = /if \(panels\) \{[\s\S]*?\n  \}/.exec(rendererSrc)?.[0] ?? ''
-          expect(/panels\.refreshDebug\(runtime\)/.test(bootBlock), 'the boot refresh stays').toBe(true)
-          const notifyCallback = /handleRequest\(runtime, req, \(p\) => [\s\S]*?bridge!?\.notify\(p\)[\s\S]*?\)/.exec(rendererSrc)?.[0] ?? ''
-          expect(/refreshDebug/.test(notifyCallback), 'the notify callback carries the refresh (N4 coalescing). RED: absent').toBe(true)
+          assertBurstAbsentForm2(rendererSrc)
         },
       },
       {
@@ -1182,11 +1287,10 @@ const registerSpecs: RegisterRowSpec[] = [
         },
       },
       {
-        term: 'N=5 · reading 2: the burst probe holds across drives',
+        term: 'N=5 · reading 2: the burst probe (the SAME closed-occurrence count as N=1\'s reading 2) holds across drives',
         run: async () => {
           const rendererSrc = await sourceOf(['renderer', 'renderer.ts'])
-          const replyPath = /bridge\.onRequest\([\s\S]*?bridge\.sendReply\(reply\)/.exec(rendererSrc)?.[0] ?? ''
-          expect(/refreshDebug/.test(replyPath), 'P-SE-SM-2 (N=5) — the reply path fires NO refreshDebug. RED: the burst is present').toBe(false)
+          assertBurstAbsentForm2(rendererSrc)
         },
       },
       {
@@ -1200,11 +1304,10 @@ const registerSpecs: RegisterRowSpec[] = [
         },
       },
       {
-        term: 'N=20 · reading 2: the burst probe holds; the seam\'s production-absence probe (the STATIC control) holds',
+        term: 'N=20 · reading 2: the burst probe (the closed-occurrence count) holds; the seam\'s production-absence probe (the STATIC control) holds',
         run: async () => {
           const rendererSrc = await sourceOf(['renderer', 'renderer.ts'])
-          const replyPath = /bridge\.onRequest\([\s\S]*?bridge\.sendReply\(reply\)/.exec(rendererSrc)?.[0] ?? ''
-          expect(/refreshDebug/.test(replyPath), 'P-SE-SM-2 (N=20) — the reply path fires NO refreshDebug. RED: the burst is present').toBe(false)
+          assertBurstAbsentForm2(rendererSrc)
           for (const rel of [['main', 'security-store.ts'], ['main', 'main.ts'], ['main', 'preload.ts'], ['renderer', 'renderer.ts'], ['renderer', 'secure-panels.ts']]) {
             expect(/\.journalDepth\(/.test(await sourceOf(rel)), 'the seam is TEST-ONLY — no shipped wiring calls journalDepth() (§2.5 item 4; R C-8)').toBe(false)
           }
@@ -1217,7 +1320,7 @@ const registerSpecs: RegisterRowSpec[] = [
     type: 'P-TP',
     strategy: 'S-SE-RCPT-1',
     declared: 8,
-    property: 'RECEIPT TOTALITY — every write answers EXACTLY ONE of the two closed forms on BOTH surfaces; a refusal never throws and leaves the previous file intact (§2.3; §3.3 I-7)',
+    property: 'RECEIPT TOTALITY — every write answers EXACTLY ONE of the two closed forms on BOTH surfaces; a refusal never throws (§2.3; §3.3 I-7). FILE-STATE per class (NEW-2 re-grain): a PRE-RENAME failure leaves the previous file intact; the POST-RENAME dir-fsync failure leaves the NEW record live — never torn, never silent',
     attempts: [
       {
         term: 'success · assertion 1: the answered receipt is the declared form on BOTH surfaces (store + SET response record)',
@@ -1272,12 +1375,12 @@ const registerSpecs: RegisterRowSpec[] = [
         },
       },
       {
-        term: 'fsync failure · assertion 2: the file\'s post-state is the pre-write record and the in-memory post-state still answers',
+        term: 'fsync failure (the PRE-RENAME tmp-fsync class — the FIRST fsync) · assertion 2: the file\'s post-state is the pre-write record and the in-memory post-state still answers — the POST-RENAME dir-fsync class (the refused receipt with the NEW record live) is driven at P-SE-SM-1\'s COMMITTED/RENAMED refused terminal (NEW-2 re-grain)',
         run: async () => {
           const fresh = await rowStore()
           fresh.store.set({ token: 'v1' })
           const pre = await readFile(fresh.path, 'utf8')
-          hooks.inject.fsync = true
+          hooks.inject.fsync = true // the FIRST fsync of the next persist — the tmp, PRE-RENAME (the dir-fsync is call 2 and never runs — the rename is not reached; the class's file state is scoped accordingly)
           fresh.store.set({ token: 'v2' })
           expect(await readFile(fresh.path, 'utf8')).toBe(pre)
           expect(fresh.store.get().token).toBe('v2')
