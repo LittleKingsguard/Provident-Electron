@@ -76,6 +76,21 @@ The tab-pane clauses, verified in the real Electron app:
   (repairs=4), arm (c) an empty set opens the landingPage (repairs=7) — each repair's
   active change propagated to the listening pane.
 
+## Live result — the TAB-MANAGEMENT clauses (2026-10-03)
+PANE-DRAG + GUTTER + MINIMIZED-ZONE + TAB-BEHAVIOR + TAB-MANAGEMENT LIVE TESTS: ALL GREEN (50/50 PASS, exit 0).
+The tab-strip management clauses, verified in the real Electron app:
+- **FOCUS between tabs**: clicking an existing tab bumps its lastActive to max+1, so
+  the exactly-one surplus repair KEEPS the clicked tab (focus wins by recency);
+- **OPEN a new tab** (the persistent `+ new` control): a new active leaf at max+1 opens
+  FOCUSED, the bar shows it, exactly one stays active;
+- **CLOSE existing tabs** (the per-tab `×`): the leaf leaves the store + the bar;
+  closing the ACTIVE tab makes the repair arm (b) reactivate the most-recent survivor;
+  closing ALL makes arm (c) open the landing page via the UI path.
+The bar renders dynamically from the registry with per-tab close buttons; the pane's
+subscription is a SUBTREE listener on `mem.tabs` (open/close/repair re-render). The
+session's registry-vs-synchronous-store-event races (closeTab/openNewTab ordering) are
+D-19/T-16 in the retrospective.
+
 ## Consumer contract + hardening record
 - **Wire shapes every consumer must observe** (the tenant roots declared: `layout`/`settings`/`drag`; the bounds as `{ min, max }`; the temp/file lifecycle spellings): `docs/FORKER.md` §4's STORE-BACKED DRAG + GUTTER FEATURES block.
 - **The build/debug difficulties + the automated tests that were missing** (D-1..D-13, T-1..T-10): `docs/specs/live-demo-retrospective.md`.

@@ -216,6 +216,25 @@ including the repaired `landingPage` leaf.
   set knows the record shape the constraint sees but never warned a consumer that the
   public resolve at the root is not that record.
 
+## Part 2C — the tab-management build's additional findings (the same session)
+
+### D-19. The synchronous store event VS the consumer registry — two live-only races
+`store.commit`/`store.remove` fire the subscription listener SYNCHRONOUSLY (the
+listener's re-render runs DURING the same turn). A consumer whose registry of ids
+drives the render updates the registry on the WRONG side of the write and the render
+sees stale state:
+- `closeTab`: filtering `tabIds` AFTER `store.remove` → the render re-added the closed
+  tab from the still-unfiltered registry (the bar kept a zombie button).
+- `openNewTab`: pushing the new id AFTER the commit → the render never saw the new
+  tab (the button never appeared), even though the store was correct.
+Both fixed by registry-first ordering (filter/push before the write). The node suite
+cannot drive either race — the store's own tests assert the EVENT, never a consumer's
+registry-then-render ordering.
+- **The missing test (T-16):** a consumer-facing row — "the subscription listener runs
+  SYNCHRONOUSLY inside the write: a consumer that updates its own registry from the
+  write must do so BEFORE the write on the same turn, or re-render after" — documented
+  as a live/host integration rule, since only a rendered consumer (the demo) exposes it.
+
 ## Part 3 — dispositions
 
 - **T-1, T-2, T-3, T-4, T-5 (node rows)**: `RED-SET-FIX` — land as dated additions to
