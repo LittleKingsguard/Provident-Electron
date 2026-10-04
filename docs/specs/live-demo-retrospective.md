@@ -161,6 +161,38 @@ in the demo driver, so the live layer has the same adversarial rigor the envelop
 
 ---
 
+## Part 2A — the minimized-zone build's additional findings (the next session)
+
+### D-14. A scope slip in `paint()` cost a ReferenceError cycle
+Inserting the zone-morphology block with a Python string splice left it OUTSIDE the
+per-zone `for` loop (the loop's closing brace was duplicated) — `ReferenceError: z is
+not defined` at mount. The same class as D-10 (brace/scope drift from string splicing
+a complex DOM loop).
+- **The missing test (T-11):** a BUILD-CLEAN assertion on the demo bundle (esbuild
+  exit 0 + a boot probe with `Runtime.exceptionThrown` captured) — a mount-time
+  exception must fail the leg. The demo driver's boot block now implicitly catches it
+  (the pane/window checks fail), but the preflight should assert "no page exceptions
+  at boot" explicitly.
+
+### D-15. The re-homed pane has NO box when its zone is minimized
+After committing a pane into the minimized zone, its frame lives in a `display:none`
+stack — `getBoundingClientRect()` is zero and `boxOf` fails. The pane is represented
+by its TAB. This is CORRECT demo behavior, but the driver's second-drag re-query
+assumed a boxed handle.
+- **The missing test (T-12):** a driver row that the drag SOURCE in a minimized zone
+  is the TAB (a `.zone-tab` is a drag source carrying the pane id) — the demo now
+  makes tabs draggable; a driver asserting "I can move a pane out of its minimized
+  zone by its tab" is the honest integration check.
+
+### D-16. The minimized-zone clauses needed a state-independent driver block
+The pane block's residue (pane-a in zone-3, zone minimized) plus the gutter block's
+grid changes made the first minimized-zone block order-dependent (it assumed an
+empty zone-3). Rewritten to normalize the state first (empty zone-3, pane-a in
+zone-1, zone minimized) then drive each clause.
+- **The missing test (T-13):** driver blocks NORMALIZE their preconditions before
+  asserting (the driver discipline the pane block already follows); a shared
+  normalize-step helper would make new blocks composable.
+
 ## Part 3 — dispositions
 
 - **T-1, T-2, T-3, T-4, T-5 (node rows)**: `RED-SET-FIX` — land as dated additions to

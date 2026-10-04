@@ -50,6 +50,19 @@ release and commit. Plus the handle-gating (a body drag does not start), the
 single-sink channel (sinkCalls === 1), the zone-size minimum respected, and the
 right-click abandon path (ghost erased, persistent original reasserted).
 
+## Live result — the MINIMIZED-ZONE clauses (2026-10-03)
+PANE-DRAG + GUTTER + MINIMIZED-ZONE LIVE TESTS: ALL GREEN (31/31 PASS, exit 0).
+The three clauses, verified in the real Electron app:
+1. **An EMPTY minimized zone is hidden entirely** — its stack `display:none`, the
+   section collapsed — with a **visible expand button** that restores it.
+2. **A minimized zone WITH panes retains a TAB-STRIP list** of its panes (no frames;
+   the tabs are also PANE-DRAG SOURCES, so a user can drag a contained pane out).
+3. **A pane drag reads the STORE'S EXPANDED SIZE** (`mem.layout.zone.<id>.size` —
+   `canPlace = size >= MIN_ZONE_SIZE`; the live trace records `expandedSize` in the
+   placement) to decide whether to place into the zone, and **temporarily expands the
+   minimized target to display the ghost** (restored on release/abandon — never a
+   file write).
+
 ## Consumer contract + hardening record
 - **Wire shapes every consumer must observe** (the tenant roots declared: `layout`/`settings`/`drag`; the bounds as `{ min, max }`; the temp/file lifecycle spellings): `docs/FORKER.md` §4's STORE-BACKED DRAG + GUTTER FEATURES block.
 - **The build/debug difficulties + the automated tests that were missing** (D-1..D-13, T-1..T-10): `docs/specs/live-demo-retrospective.md`.
