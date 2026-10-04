@@ -101,7 +101,7 @@ await call('provident.code.loadBatch', { ops: [
 | Gate | `src/main/security.ts` | `ToolGroup`, `groupForTool`, `toolAllowed`, `moduleToolAllowed`, `defaultSecurityConfig`, `authorized`, `applyPatch`, `SecurityGate` |
 | Shared contract | `src/shared/types.ts` | `RpcMethod`, `RpcRequest`, `RpcReply`, `DispatchRequest`/`Result`, `RenderedHtmlResult`, `MarkdownResult`, `ListTargetsResult`/`NodeInfo`, `NodeStateResult`, `Census`, `LoadResult`/`LoadPayload`, `OpResult`, `ExportResult`, `ValidateResult`, `TeardownResult`, `JournalResult`, `CodeGetResult`…`CodeLoadBatchResult`, the `IPC_*` channel constants |
 | Renderer runtime | `src/renderer/runtime.ts` | `Runtime`, `RuntimeOptions` |
-| Renderer wiring | `src/renderer/renderer.ts` | `handleRequest`, `startGutterAffordance`, `GutterWriteReading`, `themeWiringRole`, and the module-private `MUTATING_METHODS` |
+| Renderer wiring | `src/renderer/renderer.ts` | `handleRequest`, `startGutterAffordance`, `GutterWriteReading`, `themeWiringRole`, the module-private `MUTATING_METHODS` — plus the STORE-WAVE spine `getWiredGraphStore` (the wired tiered store), `createPaneDrag`/`PaneDragSurface`, `createFocusCarrier`/`FocusCarrierSurface`, `zoneSizeConstraint`/`zoneSizeRepair` |
 | Preload bridge | `src/main/preload.ts` | `ProvidentBridge`, `ModuleBridgeResult`; `contextBridge.exposeInMainWorld('provident', bridge)` |
 | Capabilities | `src/renderer/extensions.ts` | `CapabilityRouter`, `ModuleCtx` |
 
@@ -255,9 +255,15 @@ with `runtime.bootstrap()`.
 
 `src/renderer/renderer.ts` runs `main()` on `DOMContentLoaded`: it requires
 `#app`, reads `window.provident`, calls `bridge.security.get()` for
-`maxJournalLength`, constructs `new Runtime({ mount, envelope: demoEnvelope(),
-maxJournalLength })`, calls `runtime.bootstrap()`, then `startGutterAffordance(runtime)`
-**before** the bridge check (the affordance is app UI, not an MCP surface), mounts
+`maxJournalLength`, then — **the STORE WAVE interposes the tier-1 store boot between
+the security read and the Runtime construction** — hands off `bridge.store.get()` (the
+Y-1 `FILE_TIER_ROOT_NAMES` hand-off), constructs the ONE wired store
+(`getWiredGraphStore({ declarations, crossing })`), calls `wired.hydrate(bootHandoff)`,
+and builds `createFocusCarrier(wired)`; only after that does it construct
+`new Runtime({ mount, envelope: demoEnvelope(), maxJournalLength })` and call
+`runtime.bootstrap()`, then `startGutterAffordance(runtime)`
+**before** the bridge check (the affordance is app UI, not an MCP surface), registers
+the Y-3 `bridge.store.onFileChanged(…)` listener, mounts
 `SecurePanels` into `#panes`, subscribes with `bridge.onRequest(…)`, and finally
 calls `bridge.ready()`.
 
@@ -273,8 +279,8 @@ Exported wiring entry points:
   the envelope.
 
 Two structural facts about this file: `MUTATING_METHODS` is a **seven**-member set
-of IPC methods (`src/renderer/renderer.ts:15`) — see the next section — and the
-focus route's holder is module-private state in this file, never a graph slice.
+of IPC methods (`src/renderer/renderer.ts:105`) — see the next section — and the
+focus route's holder is the STORE MIRROR — `mem.focus.entries` / `mem.focus.activeId` read through the store (the `U-STORE-FOCUS` re-home removed the module-level `const holder`; the wiring holds only the `focusCarrier` binding + closures), never a graph slice.
 
 ## The preload bridge
 
@@ -296,7 +302,10 @@ export interface ProvidentBridge {
 
 Channels (`src/shared/types.ts:297-328`): `provident:invoke`, `provident:reply`,
 `provident:ready`, `provident:notify`, `provident:security:get`,
-`provident:security:set`, `provident:module:get`, `provident:module:set-disabled`.
+`provident:security:set`, `provident:module:get`, `provident:module:set-disabled`,
+plus the STORE-WAVE `store.*` namespace in `src/main/store-channels.ts`/`preload.ts` —
+`provident:store:file:get`, `provident:store:file:put`, `provident:store:file:changed`
+(the tier-1 file persistence hand-off the wiring boot requires).
 
 **A boundary worth stating explicitly:** `security.*` and `module.*` on the bridge
 are **manual-UI only**. The MCP tool handlers never route to those channels, so an
@@ -327,7 +336,7 @@ with the source:
 
 **Seven mutating methods** — `MUTATING_METHODS` is
 `Set(['dispatch', 'load', 'op', 'teardown', 'code.load', 'code.loadBatch',
-'journal'])` (`src/renderer/renderer.ts:15`) — seven names, and the push predicate is
+'journal'])` (`src/renderer/renderer.ts:105`) — seven names, and the push predicate is
 keyed on membership, so `focus` deliberately never notifies. Pinned by name-set
 equality in `tests/gutter.test.ts:4056`, `tests/zones.test.ts:2188`,
 `tests/focus-tool.test.ts:583`, `tests/gesture-session.test.ts:5496`. Note that the
@@ -380,7 +389,7 @@ file.)
 | `window.provident` (the preload bridge) | REQUIRED for MCP | the fork's preload wiring | the renderer logs `no preload bridge — MCP endpoints unavailable` and returns; the app UI still boots (`src/renderer/renderer.ts:370-373`) | a bridge without `security` skips the config read and keeps the default journal length (`src/renderer/renderer.ts:354-362`) | `bridge.security.get()` is wrapped in try/catch and keeps the default; `bridge.sendReply` is **not** guarded — **unverified** how a throwing `sendReply` is observed |
 
 The authoritative seam contracts are `docs/specs/mcp-endpoint.md` §2 (transports)
-and §6 (security), and the per-unit specs under `docs/guide/seams.md` (planned).
+and §6 (security), and the per-unit specs aggregated by `docs/guide/seams.md`.
 
 ## Gotchas measured in this repo
 
@@ -414,4 +423,4 @@ and §6 (security), and the per-unit specs under `docs/guide/seams.md` (planned)
 - `docs/specs/mcp-endpoint.md` — the MCP endpoint contract (§2, §3, §4, §6).
 - `docs/specs/mcp-server-gate.md`, `docs/specs/mcp-resources-review.md` — the gate
   and resource reviews named in the source comments.
-- `docs/next-steps.md` — the ledger (`21 DONE / 0 open`) and the DONE rows.
+- `docs/next-steps.md` — the ledger (`30 DONE / 0 open` UNITS = 30, the store wave closed it at `## DONE — U-STORE-SECURITY`) and the DONE rows.
