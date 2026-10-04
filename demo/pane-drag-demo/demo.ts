@@ -78,6 +78,10 @@ export interface DemoSurface {
     ids: () => string[]
     tabData: (id: string) => unknown
     tabRepairCalls: () => number
+    openNewTab: () => string
+    closeTab: (id: string) => void
+    reset: () => void
+    focus: (id: string) => void
   }
 }
 
@@ -302,8 +306,25 @@ export function buildDemo(): DemoSurface {
     const bar = root?.querySelector('#tab-bar')
     const active = tabsSurface.activeId()
     if (bar) {
+      // rebuild the buttons from the LIVE registry (open/close/focus re-renders);
+      // the #tab-new control is PERSISTENT (created once in wireTabs) — the dynamic
+      // rebuild only removes the REGISTRY buttons, never the new-tab control
       for (const b of bar.querySelectorAll('.tab-btn')) {
-        b.classList.toggle('active', b.getAttribute('data-tab') === active)
+        if (b.id === 'tab-new') continue
+        b.remove()
+      }
+      for (const id of tabIds) {
+        const btn = document.createElement('button')
+        btn.className = 'tab-btn'
+        btn.setAttribute('data-tab', id)
+        btn.classList.toggle('active', id === active)
+        btn.textContent = id
+        const closeBtn = document.createElement('button')
+        closeBtn.className = 'tab-close'
+        closeBtn.setAttribute('data-close-tab', id)
+        closeBtn.textContent = '×'
+        btn.append(closeBtn)
+        bar.append(btn)
       }
     }
     if (info) info.textContent = `active tab: ${active}\n` + (active ? `data: ${JSON.stringify(tabsSurface.activeData())}` : '(none)')
@@ -311,10 +332,30 @@ export function buildDemo(): DemoSurface {
   const wireTabs = (): void => {
     const bar = root?.querySelector('#tab-bar')
     if (!bar) return
+    // the OPEN-NEW-TAB control (rendered once, appended after the dynamic buttons)
+    let newBtn = root?.querySelector('#tab-new')
+    if (!newBtn) {
+      newBtn = document.createElement('button')
+      newBtn.id = 'tab-new'
+      newBtn.className = 'tab-btn tab-new'
+      newBtn.textContent = '+ new'
+      bar.append(newBtn)
+    }
     bar.addEventListener('click', (ev) => {
+      const closeBtn = (ev.target as HTMLElement)?.closest?.('.tab-close')
+      if (closeBtn) {
+        const cid = closeBtn.getAttribute('data-close-tab')
+        if (cid) tabsSurface.closeTab(cid)
+        return
+      }
       const btn = (ev.target as HTMLElement)?.closest?.('.tab-btn')
       const tid = btn?.getAttribute('data-tab')
-      if (tid) tabsSurface.activate(tid)
+      if (tid === '') return
+      if (btn?.classList.contains('tab-new')) {
+        tabsSurface.openNewTab()
+        return
+      }
+      if (tid) tabsSurface.focus(tid)
     })
     const modify = root?.querySelector('#tab-modify')
     if (modify) {
@@ -549,13 +590,26 @@ export function buildDemo(): DemoSurface {
   // the consumer pane READS the active tab's data, DISPLAYS it, MODIFIES it (a store
   // commit — the constraint evaluates post-state), and uses a STORE LISTENER to
   // re-render when the active tab or its contained data changes.
-  const tabIds = ['tabA', 'tabB', 'tabC']
+  let tabIds: string[] = ['tabA', 'tabB', 'tabC']
+  let newTabCounter = 0
   const seedTabs = (): void => {
     store.commit('mem.tabs.tabA', { active: true, lastActive: 3 }, { onRepeat: 'edit' })
     store.commit('mem.tabs.tabB', { active: false, lastActive: 2 }, { onRepeat: 'edit' })
     store.commit('mem.tabs.tabC', { active: false, lastActive: 1 }, { onRepeat: 'edit' })
   }
   seedTabs()
+  const maxLastActive = (): number => {
+    let m = 0
+    for (const id of [...tabIds, 'landingPage']) {
+      const r = (store.tiers.mem as unknown as { get: (n: string) => unknown }).get(`mem.tabs.${id}`) as {
+        found?: boolean
+        value?: { lastActive?: number }
+      } | null
+      const v = r && r.found && r.value ? (r.value.lastActive ?? 0) : 0
+      if (v > m) m = v
+    }
+    return m
+  }
   const tabsSurface = {
     activeId: (): string | null => {
       // per-leaf scan of the FIXED tab ids + the constraint-arm-(c) landingPage leaf
@@ -580,13 +634,22 @@ export function buildDemo(): DemoSurface {
       return r && r.found ? r.value : null
     },
     subscribe: (fn: () => void): (() => void) => {
-      const subs = tabIds.map((id) => store.subscribe(`mem.tabs.${id}`, () => fn()))
-      return () => subs.forEach((s) => s.unsubscribe())
+      // the SUBTREE subscription on the tabs root — a change to ANY tab (a data
+      // write, an activate, a close, a repair-created leaf) re-renders the pane
+      const sub = store.subscribe('mem.tabs', () => fn(), { subtree: true })
+      return () => sub.unsubscribe()
     },
     setActiveData: (data: unknown): void => {
       const id = tabsSurface.activeId()
       if (!id) return
       store.commit(`mem.tabs.${id}`, data, { onRepeat: 'edit' })
+    },
+    focus: (id: string): void => {
+      // FOCUS BY RECENCY: clicking an EXISTING tab while another is active is a
+      // surplus write — the exactly-one repair keeps the MOST-RECENTLY-ACTIVE, so
+      // the focus turn bumps this tab's lastActive above every other tab's, making
+      // it the most recent → the repair KEEPS it (the clicked tab wins the focus).
+      store.commit(`mem.tabs.${id}`, { active: true, lastActive: maxLastActive() + 1 }, { onRepeat: 'edit' })
     },
     activate: (id: string): void => {
       const r = (store.tiers.mem as unknown as { get: (n: string) => unknown }).get(`mem.tabs.${id}`) as {
@@ -595,6 +658,35 @@ export function buildDemo(): DemoSurface {
       } | null
       const lastActive = r && r.found && r.value ? (r.value.lastActive ?? 0) : 0
       store.commit(`mem.tabs.${id}`, { active: true, lastActive }, { onRepeat: 'edit' })
+    },
+    openNewTab: (): string => {
+      // a NEW tab is minted active with the HIGHEST lastActive → if another tab is
+      // active the surplus repair keeps THIS one (the new tab opens focused). The
+      // registry push comes FIRST: the store's event is synchronous, so the
+      // listener's re-render during the commit already sees the new id (the same
+      // direction of the closeTab race — a live-only hazard the node suite cannot
+      // drive).
+      newTabCounter += 1
+      const id = `tabN${newTabCounter}`
+      if (!tabIds.includes(id)) tabIds.push(id)
+      store.commit(`mem.tabs.${id}`, { active: true, lastActive: maxLastActive() + 1 }, { onRepeat: 'edit' })
+      return id
+    },
+    closeTab: (id: string): void => {
+      // CLOSING removes the leaf — if it was the active tab, the repair arm (b)
+      // re-activates the most-recently-active of the survivors (or arm (c) opens
+      // the landing page when the set empties). The registry is filtered BEFORE
+      // the remove: the store's event is synchronous, so the listener's re-render
+      // must already see the tab gone (otherwise the bar re-adds it from the stale
+      // registry — a live-race the node suite could not see).
+      tabIds = tabIds.filter((k) => k !== id)
+      store.remove(`mem.tabs.${id}`)
+    },
+    reset: (): void => {
+      for (const id of [...tabIds, 'landingPage']) store.remove(`mem.tabs.${id}`)
+      tabIds = ['tabA', 'tabB', 'tabC']
+      newTabCounter = 0
+      seedTabs()
     },
     ids: (): string[] => [...tabIds],
     tabData: (id: string): unknown => {

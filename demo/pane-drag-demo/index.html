@@ -19,7 +19,10 @@ body { margin: 0; font-family: system-ui, sans-serif; background: #010409; color
 .zone-tab { font-size: 11px; padding: 2px 8px; background: #21262d; border: 1px solid #30363d; border-radius: 3px; color: #c9d1d9; cursor: pointer; }
 .zone-expand-btn { font-size: 10px; padding: 2px 8px; background: #1f6feb; border: none; border-radius: 3px; color: #fff; cursor: pointer; }
 .tab-bar { display: flex; gap: 6px; margin-bottom: 6px; }
-.tab-btn { font-size: 11px; padding: 3px 10px; background: #21262d; border: 1px solid #30363d; border-radius: 3px; color: #c9d1d9; cursor: pointer; }
+.tab-btn { font-size: 11px; padding: 3px 10px; background: #21262d; border: 1px solid #30363d; border-radius: 3px; color: #c9d1d9; cursor: pointer; position: relative; padding-right: 22px; }
+.tab-close { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); border: none; background: transparent; color: #8b949e; cursor: pointer; font-size: 12px; padding: 0 3px; }
+.tab-close:hover { color: #f85149; }
+.tab-btn.tab-new { padding-right: 10px; background: #21262d; border-style: dashed; }
 .tab-btn.active { background: #1f6feb; color: #fff; border-color: #1f6feb; }
 .tab-content { margin-top: 8px; font-size: 12px; }
 .tab-info { white-space: pre-wrap; color: #c9d1d9; }
@@ -50,7 +53,7 @@ body { margin: 0; font-family: system-ui, sans-serif; background: #010409; color
   <section id="zone-sidebar" class="zone" data-zone="zone-1"><p class="zone-title">Zone 1 (source)</p><div class="pane-stack"></div><div class="pane-size" data-size-for="pane-a"></div></section>
   <div id="gutter" class="gutter" data-gutter-for="zone-2"><div class="gutter-grip"></div></div>
   <section id="zone-main" class="zone" data-zone="zone-2"><p class="zone-title">Zone 2 (target)</p>
-  <div class="tab-bar" id="tab-bar"><button class="tab-btn" data-tab="tabA">Tab A</button><button class="tab-btn" data-tab="tabB">Tab B</button><button class="tab-btn" data-tab="tabC">Tab C</button></div>
+  <div class="tab-bar" id="tab-bar"></div>
   <div class="pane-stack"></div>
   <div class="tab-content" id="tab-content"><div class="tab-info" id="tab-info"></div><button id="tab-modify">modify active tab</button></div>
 </section>

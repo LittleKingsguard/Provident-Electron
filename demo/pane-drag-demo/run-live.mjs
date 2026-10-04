@@ -431,7 +431,7 @@ async function main() {
   const actives4 = [s4.a, s4.b, s4.c].filter((v) => v && v.active === true).length
   check('a second active write is REPAIRED — exactly one active (arm a: surplus)', actives4 === 1, `actives=${actives4} active=${s4.active}`)
   check('the repair ran (the repair-call counter moved)', s4.repairs >= 1, `repairs=${s4.repairs}`)
-  check('the repair KEPT the most-recently-active tab', s4.active === 'tabA', `active=${s4.active} a.lastActive=${s4.a?.lastActive} b.lastActive=${s4.b?.lastActive}`)
+  check('the repair KEPT the most-recently-active tab (the focused one)', s4.active === 'tabB', `active=${s4.active} a.lastActive=${s4.a?.lastActive} b.lastActive=${s4.b?.lastActive}`)
 
   // S-5: ARM (b) — drive ALL actives off -> the repair activates the most-recently-active.
   await evaluate(`(()=>{const s=window.__pgdemo.store;window.__pgdemo.tabs.ids().forEach(id=>s.commit('mem.tabs.'+id,{active:false,lastActive:0},{onRepeat:'edit'}));return true})()`)
@@ -451,12 +451,78 @@ async function main() {
   const info7 = await tabInfo()
   check('the LISTENER re-rendered the pane on the ACTIVE-tab change (repair-driven)', info7.indexOf('landingPage') !== -1, `info=${JSON.stringify(info7).slice(0,70)}`)
 
+  // ───────────────────────────────────────────────────────────────────────────
+  // THE TAB-MANAGEMENT TEST — the visible tab strip: FOCUS between tabs, OPEN a
+  // new tab, CLOSE existing tabs, all through the store (the exactly-one
+  // constraint + repair govern every turn).
+  // ───────────────────────────────────────────────────────────────────────────
+  // normalize: re-seed the three tabs + clear any landingPage/remnant state
+  await evaluate(`window.__pgdemo.tabs.reset()`)
+  await sleep(350)
+  const barButtons = async () => JSON.parse(await evaluate(`JSON.stringify([...document.querySelectorAll('#tab-bar .tab-btn')].filter(b=>b.id!=='tab-new').map(b=>({id:b.getAttribute('data-tab'),cls:b.className,close:!!b.querySelector('.tab-close')})))`))
+  const mState = async () => JSON.parse(await evaluate(`JSON.stringify({active:window.__pgdemo.tabs.activeId(),ids:window.__pgdemo.tabs.ids(),repairs:window.__pgdemo.tabs.tabRepairCalls()})`))
+
+  // M-1: the bar shows all THREE tabs, each with a close control, exactly one active.
+  const bar1 = await barButtons()
+  check('the visible tab strip shows all tabs with close controls', bar1.length === 3 && bar1.every((b) => b.close === true), `buttons=${bar1.map((b) => b.id).join(',')}`)
+  const m1 = await mState()
+  check('exactly one tab active after the reset', m1.active === 'tabA' && m1.ids.length === 3, `active=${m1.active} ids=${m1.ids.length}`)
+
+  // M-2: OPEN a new tab via the + control — it appears in the bar AND opens FOCUSED
+  // (the surplus repair keeps the newest — the focus-by-recency bump).
+  const newBtn = await boxOf('#tab-new')
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: newBtn.x, y: newBtn.y, button: 'left', clickCount: 1 })
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: newBtn.x, y: newBtn.y, button: 'left', clickCount: 1 })
+  await sleep(350)
+  const bar2 = await barButtons()
+  const opened = bar2[bar2.length - 1].id
+  const m2 = await mState()
+  check('OPEN: a new tab appears in the bar', bar2.length === 4, `buttons=${bar2.length}`)
+  check('OPEN: the new tab opens FOCUSED (exactly one active)', m2.ids.length === 4 && bar2.find((b) => b.id === opened)?.cls.indexOf('active') !== -1, `active=${m2.active} ids=${m2.ids.length} opened=${opened}`)
+
+  // M-3: FOCUS between tabs — clicking an EXISTING (older) tab focuses it (the
+  // recency bump makes the repair keep the clicked tab).
+  const tabCbox = await boxOf('.tab-btn[data-tab="tabC"]')
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: tabCbox.x, y: tabCbox.y, button: 'left', clickCount: 1 })
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: tabCbox.x, y: tabCbox.y, button: 'left', clickCount: 1 })
+  await sleep(350)
+  const m3 = await mState()
+  const bar3 = await barButtons()
+  const tabCactive = bar3.find((b) => b.id === 'tabC')
+  check('FOCUS: clicking an existing tab focuses it (exactly one active)', m3.active === 'tabC' && tabCactive && tabCactive.cls.indexOf('active') !== -1, `active=${m3.active}`)
+
+  // M-4: CLOSE an existing tab via its × — the tab leaves the bar; if it was the
+  // ACTIVE tab, the repair reactivates the most-recent survivor; exactly one stays.
+  const tabCclose = await boxOf(`.tab-btn[data-tab="tabC"] .tab-close`)
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: tabCclose.x, y: tabCclose.y, button: 'left', clickCount: 1 })
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: tabCclose.x, y: tabCclose.y, button: 'left', clickCount: 1 })
+  await sleep(350)
+  const bar4 = await barButtons()
+  const m4 = await mState()
+  check('CLOSE: the closed tab left the bar', bar4.length === 3 && !bar4.some((b) => b.id === 'tabC'), `buttons=${bar4.map((b) => b.id).join(',')}`)
+  check('CLOSE of the ACTIVE tab: the repair re-activates a survivor (exactly one)', m4.active !== null && m4.active !== 'tabC', `active=${m4.active}`)
+  const m4actives = (await evaluate(`window.__pgdemo.tabs.ids().map(id=>window.__pgdemo.tabs.tabData(id)?.active ?? false)`)).filter((v) => v === true).length
+  check('exactly one tab remains active after the close', m4actives === 1, `actives=${m4actives}`)
+
+  // M-5: CLOSE ALL down to EMPTY — the repair arm (c) opens the LANDING PAGE.
+  while (true) {
+    const cur = await barButtons()
+    if (cur.length === 0) break
+    const last = cur[cur.length - 1]
+    const cbox = await boxOf(`.tab-btn[data-tab="${last.id}"] .tab-close`)
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: cbox.x, y: cbox.y, button: 'left', clickCount: 1 })
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: cbox.x, y: cbox.y, button: 'left', clickCount: 1 })
+    await sleep(250)
+  }
+  const m5 = await mState()
+  check('CLOSE-ALL: the empty set opens the landing page (arm c via the UI)', m5.active === 'landingPage', `active=${m5.active} repairs=${m5.repairs}`)
+
   console.log('')
   if (failures === 0) {
-    console.log('[live] PANE-DRAG + GUTTER + MINIMIZED-ZONE + TAB-BEHAVIOR LIVE TESTS: ALL GREEN')
+    console.log('[live] PANE-DRAG + GUTTER + MINIMIZED-ZONE + TAB-BEHAVIOR + TAB-MANAGEMENT LIVE TESTS: ALL GREEN')
     process.exit(0)
   } else {
-    console.log(`[live] PANE-DRAG + GUTTER + MINIMIZED-ZONE + TAB-BEHAVIOR LIVE TESTS: ${failures} FAILED`)
+    console.log(`[live] PANE-DRAG + GUTTER + MINIMIZED-ZONE + TAB-BEHAVIOR + TAB-MANAGEMENT LIVE TESTS: ${failures} FAILED`)
     process.exit(1)
   }
 }

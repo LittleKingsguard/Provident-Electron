@@ -12821,7 +12821,21 @@ function buildDemo() {
     const active = tabsSurface.activeId();
     if (bar) {
       for (const b of bar.querySelectorAll(".tab-btn")) {
-        b.classList.toggle("active", b.getAttribute("data-tab") === active);
+        if (b.id === "tab-new") continue;
+        b.remove();
+      }
+      for (const id of tabIds) {
+        const btn = document.createElement("button");
+        btn.className = "tab-btn";
+        btn.setAttribute("data-tab", id);
+        btn.classList.toggle("active", id === active);
+        btn.textContent = id;
+        const closeBtn = document.createElement("button");
+        closeBtn.className = "tab-close";
+        closeBtn.setAttribute("data-close-tab", id);
+        closeBtn.textContent = "\xD7";
+        btn.append(closeBtn);
+        bar.append(btn);
       }
     }
     if (info) info.textContent = `active tab: ${active}
@@ -12830,10 +12844,29 @@ function buildDemo() {
   const wireTabs = () => {
     const bar = root2?.querySelector("#tab-bar");
     if (!bar) return;
+    let newBtn = root2?.querySelector("#tab-new");
+    if (!newBtn) {
+      newBtn = document.createElement("button");
+      newBtn.id = "tab-new";
+      newBtn.className = "tab-btn tab-new";
+      newBtn.textContent = "+ new";
+      bar.append(newBtn);
+    }
     bar.addEventListener("click", (ev) => {
+      const closeBtn = ev.target?.closest?.(".tab-close");
+      if (closeBtn) {
+        const cid = closeBtn.getAttribute("data-close-tab");
+        if (cid) tabsSurface.closeTab(cid);
+        return;
+      }
       const btn = ev.target?.closest?.(".tab-btn");
       const tid = btn?.getAttribute("data-tab");
-      if (tid) tabsSurface.activate(tid);
+      if (tid === "") return;
+      if (btn?.classList.contains("tab-new")) {
+        tabsSurface.openNewTab();
+        return;
+      }
+      if (tid) tabsSurface.focus(tid);
     });
     const modify = root2?.querySelector("#tab-modify");
     if (modify) {
@@ -13034,13 +13067,23 @@ function buildDemo() {
       applyGutterLayout();
     }
   };
-  const tabIds = ["tabA", "tabB", "tabC"];
+  let tabIds = ["tabA", "tabB", "tabC"];
+  let newTabCounter = 0;
   const seedTabs = () => {
     store.commit("mem.tabs.tabA", { active: true, lastActive: 3 }, { onRepeat: "edit" });
     store.commit("mem.tabs.tabB", { active: false, lastActive: 2 }, { onRepeat: "edit" });
     store.commit("mem.tabs.tabC", { active: false, lastActive: 1 }, { onRepeat: "edit" });
   };
   seedTabs();
+  const maxLastActive = () => {
+    let m = 0;
+    for (const id of [...tabIds, "landingPage"]) {
+      const r = store.tiers.mem.get(`mem.tabs.${id}`);
+      const v = r && r.found && r.value ? r.value.lastActive ?? 0 : 0;
+      if (v > m) m = v;
+    }
+    return m;
+  };
   const tabsSurface = {
     activeId: () => {
       for (const id of [...tabIds, "landingPage"]) {
@@ -13056,18 +13099,38 @@ function buildDemo() {
       return r && r.found ? r.value : null;
     },
     subscribe: (fn) => {
-      const subs = tabIds.map((id) => store.subscribe(`mem.tabs.${id}`, () => fn()));
-      return () => subs.forEach((s) => s.unsubscribe());
+      const sub = store.subscribe("mem.tabs", () => fn(), { subtree: true });
+      return () => sub.unsubscribe();
     },
     setActiveData: (data) => {
       const id = tabsSurface.activeId();
       if (!id) return;
       store.commit(`mem.tabs.${id}`, data, { onRepeat: "edit" });
     },
+    focus: (id) => {
+      store.commit(`mem.tabs.${id}`, { active: true, lastActive: maxLastActive() + 1 }, { onRepeat: "edit" });
+    },
     activate: (id) => {
       const r = store.tiers.mem.get(`mem.tabs.${id}`);
       const lastActive = r && r.found && r.value ? r.value.lastActive ?? 0 : 0;
       store.commit(`mem.tabs.${id}`, { active: true, lastActive }, { onRepeat: "edit" });
+    },
+    openNewTab: () => {
+      newTabCounter += 1;
+      const id = `tabN${newTabCounter}`;
+      if (!tabIds.includes(id)) tabIds.push(id);
+      store.commit(`mem.tabs.${id}`, { active: true, lastActive: maxLastActive() + 1 }, { onRepeat: "edit" });
+      return id;
+    },
+    closeTab: (id) => {
+      tabIds = tabIds.filter((k) => k !== id);
+      store.remove(`mem.tabs.${id}`);
+    },
+    reset: () => {
+      for (const id of [...tabIds, "landingPage"]) store.remove(`mem.tabs.${id}`);
+      tabIds = ["tabA", "tabB", "tabC"];
+      newTabCounter = 0;
+      seedTabs();
     },
     ids: () => [...tabIds],
     tabData: (id) => {
