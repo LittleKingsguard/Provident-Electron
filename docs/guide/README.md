@@ -55,7 +55,7 @@ silently. See `docs/guide/TEMPLATE.md`, which is binding on every page here.
 | `seams.md` | the seam contracts | the fork-facing seams in one REQUIRED/OPTIONAL table, with each one's supplier and its declared degradation for absent / non-callable / throwing, each cited — **including the two owned-host families' (`containerFactory`; `mount` + `itemFactory`), added 2026-10-04** |
 | `TEMPLATE.md` | the page template | the binding section order and the three rules (**never restate a spec**, **never claim behaviour you have not read**, **a module header is not a clause**) |
 
-Page filenames are the planned set for the wave just closed (ledger: **`21 DONE /
+Page filenames are the planned set for the wave just closed (ledger: **`30 DONE /
 0 open`** units, `docs/next-steps.md`). Pages 05-12 are named after the unit id in
 kebab form; `focus-tool.md` is named after the tool it documents because the unit
 `U-FOCUS-TOOL` exists to land that one tool.
@@ -85,7 +85,7 @@ clause item 3). **Three rules follow, and all three are binding on this tree:**
    because the failure above was a failure to apply it: *"read the spec and cite it — do not infer its behaviour
    from a sibling page."* Add its second half: **do not infer it from the module's own header either.**
 
-The ledger is closed at **21 units** (`docs/next-steps.md`, the `U-FOCUS-TOOL`
+The ledger is closed at **30 units** (`docs/next-steps.md`, the `U-STORE-SECURITY` close-out row — it read 21 at the `U-FOCUS-TOOL` close-out)
 close-out row). The waves also closed units whose mechanisms the two readers above
 do not consume directly — the engine-pin / engine-drift measurement pair, the
 divergence leg, the mount-invariant guard, the census and layout-projection
