@@ -43,6 +43,14 @@ export interface DemoSurface {
   store: GraphStore
   drag: ReturnType<typeof createPaneDrag>
   commitSink: (finalSize: number) => void
+  gutter: {
+    /** per-move temp write turn (the wiring's — SINK never touched) */
+    resize(gid: string, preview: number): void
+    /** right-click abandon: temp removed, the FILE original reasserts */
+    reset(gid: string): void
+    /** release: ONE file-tier commit (the single-sink channel) */
+    release(gid: string, final: number): void
+  }
   read: {
     paneSize: (id: string) => number
     zoneSize: (id: ZoneId) => number
@@ -51,6 +59,12 @@ export interface DemoSurface {
     ghostOpacity: () => number | null
     sinkCalls: () => number
     paneZone: (id: string) => ZoneId | null
+    /** the gutter's current size (what the pane readout shows) */
+    gutterSize: (id: string) => number
+    /** the gutter's temp preview (undefined when parked — the file reasserts) */
+    gutterTemp: (id: string) => number | null
+    /** the gutter's file-committed size */
+    gutterFile: (id: string) => number | null
   }
   /** the DOM the driver reads/paints (live window) */
   root: HTMLElement | null
@@ -200,12 +214,21 @@ export function buildDemo(): DemoSurface {
       drag.startSizeOf({ id: paneId }, null)
       drag.boundsOf({ id: paneId }, null)
       const zoneAtPoint = (x: number, y: number): ZoneId | null => {
+        // 1) the element-stack hit (the zone under the pointer, incl. its stack)
         const el = document.elementFromPoint(x, y) as HTMLElement | null
-        const via = el?.closest?.('.zone') ?? (root as HTMLElement | null)?.querySelector?.('.zone')
-        // fall back to a rect check when the pointer is over the pane itself (the
-        // pane sits inside the zone — the closest .zone resolves correctly)
-        const z = via?.getAttribute?.('data-zone') as ZoneId | null
-        if (z && (ZONES as readonly string[]).includes(z)) return z
+        const via = el?.closest?.('.zone') ?? null
+        const zEl = via?.getAttribute?.('data-zone') as ZoneId | null
+        if (zEl && (ZONES as readonly string[]).includes(zEl)) return zEl
+        // 2) the RECT fallback: a point inside a zone's box resolves to that zone
+        //    even when the stack is momentarily empty (the ghost repaint clears it)
+        if (root) {
+          for (const z of ZONES) {
+            const sec = root.querySelector(`[data-zone="${z}"]`) as HTMLElement | null
+            if (!sec) continue
+            const r = sec.getBoundingClientRect()
+            if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return z
+          }
+        }
         return null
       }
       const onMove = (e: PointerEvent): void => {
@@ -259,12 +282,98 @@ export function buildDemo(): DemoSurface {
       window.addEventListener('pointercancel', onCancel)
       window.addEventListener('contextmenu', onCtx)
     })
+    // THE GUTTER's own gesture — the resize lifecycle (temp / reset / file).
+    const gutterEl = root.querySelector('#gutter')
+    if (gutterEl) {
+      const ggid = 'gutter-g1'
+      window.__gutterTrace = window.__gutterTrace ?? []
+      window.__gutterAttached = true
+      gutterEl.addEventListener('pointerdown', (ev) => {
+        window.__gutterTrace.push({ ev: 'down', x: ev.clientX, y: ev.clientY })
+        ev.preventDefault()
+        const startX = ev.clientX
+        const startSize = gutterFileValue ?? 200
+        const onMove = (e: PointerEvent): void => {
+          window.__gutterTrace.push({ ev: 'move', x: e.clientX })
+          window.__gutterMoves = (window.__gutterMoves ?? 0) + 1
+          const delta = e.clientX - startX
+          const preview = Math.max(40, Math.min(600, startSize + delta))
+          gutter.resize(ggid, preview)
+          gutterSizeReadout(preview)
+        }
+        const onUp = (e: PointerEvent): void => {
+          cleanupG()
+          const delta = e.clientX - startX
+          const final = Math.max(40, Math.min(600, startSize + delta))
+          gutter.release(ggid, final)
+          gutterSizeReadout(final)
+        }
+        const onCtx = (e: Event): void => {
+          e.preventDefault()
+          cleanupG()
+          gutter.reset(ggid)
+          gutterSizeReadout(gutterFileValue ?? 200)
+        }
+        const cleanupG = (): void => {
+          window.removeEventListener('pointermove', onMove)
+          window.removeEventListener('pointerup', onUp)
+          window.removeEventListener('pointercancel', cleanupG)
+          window.removeEventListener('contextmenu', onCtx)
+        }
+        window.addEventListener('pointermove', onMove)
+        window.addEventListener('pointerup', onUp)
+        window.addEventListener('pointercancel', cleanupG)
+        window.addEventListener('contextmenu', onCtx)
+      })
+    }
+  }
+  const gutterSizeReadout = (size: number): void => {
+    const el = root?.querySelector('[data-size-for="pane-a"]')
+    if (el) el.textContent = `gutter size: ${size}`
+  }
+
+  // THE GUTTER-RESIZE WIRING — the queued contract's resize lifecycle through the
+  // REAL store tiers: per-move SET at temp (the preview), right-click REMOVE at
+  // temp (the file original REASSERTS — never a removal of the file), release
+  // COMMIT to file (the single-sink channel — ONE file commit per gesture end).
+  const GUTTER_FILE = 'file.settings.pane.zone-2.size'
+  const GUTTER_TEMP = (gid: string): string => `temp.drag.${gid}.placement`
+  let gutterTempValue: number | null = null
+  let gutterFileValue: number | null = null
+  const mintGutterFile = (): void => {
+    store.commit(GUTTER_FILE, 200, { onRepeat: 'edit' })
+    gutterFileValue = 200
+  }
+  mintGutterFile()
+  const gutter = {
+    resize(gid: string, preview: number): void {
+      // the first preview write of a gesture is a COMMIT at temp (the mint);
+      // each subsequent move is a SET (the whole preview replaced in place)
+      if (gutterTempValue === null && gutterFileValue === null) {
+        // nothing persisted yet — mint the temp on the first observed move
+      }
+      store.commit(GUTTER_TEMP(gid), preview, { onRepeat: 'edit' })
+      gutterTempValue = preview
+    },
+    reset(gid: string): void {
+      store.remove(GUTTER_TEMP(gid))
+      gutterTempValue = null
+    },
+    release(gid: string, final: number): void {
+      // THE COMMIT: the file tier holds the final; the temp preview is PARKED
+      // (removed — the file original is now the truth; the ghost/preview is gone)
+      store.commit(GUTTER_FILE, final, { onRepeat: 'edit' })
+      store.remove(GUTTER_TEMP(gid))
+      gutterFileValue = final
+      gutterTempValue = null
+    },
   }
 
   return {
     store,
     drag,
     commitSink,
+    gutter,
     read: {
       paneSize: (id) => panes.get(id)?.size ?? 0,
       zoneSize: (id) => {
@@ -283,6 +392,17 @@ export function buildDemo(): DemoSurface {
       ghostOpacity: () => (activeGhostZone ? activeGhostOpacity : null),
       sinkCalls: () => sinkCalls,
       paneZone: (id) => panes.get(id)?.zone ?? null,
+      gutterSize: (id) =>
+        (((store.tiers as unknown as Record<string, { get: (n: string) => unknown }>).mem.get(
+          `mem.layout.zone.${id}.size`,
+        ) as number) ?? 200),
+      gutterTemp: (gid) => {
+        const r = ((store.tiers as unknown as Record<string, { get: (n: string) => unknown }>).temp.get(
+          GUTTER_TEMP(gid),
+        ) as { found?: boolean; value?: unknown } | null)
+        return r && r.found && typeof r.value === 'number' ? r.value : null
+      },
+      gutterFile: () => gutterFileValue,
     },
     root,
     mount,

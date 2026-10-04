@@ -12763,9 +12763,17 @@ function buildDemo() {
       drag.boundsOf({ id: paneId }, null);
       const zoneAtPoint = (x, y) => {
         const el2 = document.elementFromPoint(x, y);
-        const via = el2?.closest?.(".zone") ?? root2?.querySelector?.(".zone");
-        const z = via?.getAttribute?.("data-zone");
-        if (z && ZONES.includes(z)) return z;
+        const via = el2?.closest?.(".zone") ?? null;
+        const zEl = via?.getAttribute?.("data-zone");
+        if (zEl && ZONES.includes(zEl)) return zEl;
+        if (root2) {
+          for (const z of ZONES) {
+            const sec = root2.querySelector(`[data-zone="${z}"]`);
+            if (!sec) continue;
+            const r = sec.getBoundingClientRect();
+            if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return z;
+          }
+        }
         return null;
       };
       const onMove = (e) => {
@@ -12819,11 +12827,86 @@ function buildDemo() {
       window.addEventListener("pointercancel", onCancel);
       window.addEventListener("contextmenu", onCtx);
     });
+    const gutterEl = root2.querySelector("#gutter");
+    if (gutterEl) {
+      const ggid = "gutter-g1";
+      window.__gutterTrace = window.__gutterTrace ?? [];
+      window.__gutterAttached = true;
+      gutterEl.addEventListener("pointerdown", (ev) => {
+        window.__gutterTrace.push({ ev: "down", x: ev.clientX, y: ev.clientY });
+        ev.preventDefault();
+        const startX = ev.clientX;
+        const startSize = gutterFileValue ?? 200;
+        const onMove = (e) => {
+          window.__gutterTrace.push({ ev: "move", x: e.clientX });
+          window.__gutterMoves = (window.__gutterMoves ?? 0) + 1;
+          const delta = e.clientX - startX;
+          const preview = Math.max(40, Math.min(600, startSize + delta));
+          gutter.resize(ggid, preview);
+          gutterSizeReadout(preview);
+        };
+        const onUp = (e) => {
+          cleanupG();
+          const delta = e.clientX - startX;
+          const final = Math.max(40, Math.min(600, startSize + delta));
+          gutter.release(ggid, final);
+          gutterSizeReadout(final);
+        };
+        const onCtx = (e) => {
+          e.preventDefault();
+          cleanupG();
+          gutter.reset(ggid);
+          gutterSizeReadout(gutterFileValue ?? 200);
+        };
+        const cleanupG = () => {
+          window.removeEventListener("pointermove", onMove);
+          window.removeEventListener("pointerup", onUp);
+          window.removeEventListener("pointercancel", cleanupG);
+          window.removeEventListener("contextmenu", onCtx);
+        };
+        window.addEventListener("pointermove", onMove);
+        window.addEventListener("pointerup", onUp);
+        window.addEventListener("pointercancel", cleanupG);
+        window.addEventListener("contextmenu", onCtx);
+      });
+    }
+  };
+  const gutterSizeReadout = (size) => {
+    const el = root2?.querySelector('[data-size-for="pane-a"]');
+    if (el) el.textContent = `gutter size: ${size}`;
+  };
+  const GUTTER_FILE = "file.settings.pane.zone-2.size";
+  const GUTTER_TEMP = (gid) => `temp.drag.${gid}.placement`;
+  let gutterTempValue = null;
+  let gutterFileValue = null;
+  const mintGutterFile = () => {
+    store.commit(GUTTER_FILE, 200, { onRepeat: "edit" });
+    gutterFileValue = 200;
+  };
+  mintGutterFile();
+  const gutter = {
+    resize(gid, preview) {
+      if (gutterTempValue === null && gutterFileValue === null) {
+      }
+      store.commit(GUTTER_TEMP(gid), preview, { onRepeat: "edit" });
+      gutterTempValue = preview;
+    },
+    reset(gid) {
+      store.remove(GUTTER_TEMP(gid));
+      gutterTempValue = null;
+    },
+    release(gid, final) {
+      store.commit(GUTTER_FILE, final, { onRepeat: "edit" });
+      store.remove(GUTTER_TEMP(gid));
+      gutterFileValue = final;
+      gutterTempValue = null;
+    }
   };
   return {
     store,
     drag,
     commitSink,
+    gutter,
     read: {
       paneSize: (id) => panes.get(id)?.size ?? 0,
       zoneSize: (id) => {
@@ -12841,7 +12924,17 @@ function buildDemo() {
       ghostPresent: () => activeGhostZone !== null,
       ghostOpacity: () => activeGhostZone ? activeGhostOpacity : null,
       sinkCalls: () => sinkCalls,
-      paneZone: (id) => panes.get(id)?.zone ?? null
+      paneZone: (id) => panes.get(id)?.zone ?? null,
+      gutterSize: (id) => store.tiers.mem.get(
+        `mem.layout.zone.${id}.size`
+      ) ?? 200,
+      gutterTemp: (gid) => {
+        const r = store.tiers.temp.get(
+          GUTTER_TEMP(gid)
+        );
+        return r && r.found && typeof r.value === "number" ? r.value : null;
+      },
+      gutterFile: () => gutterFileValue
     },
     root: root2,
     mount

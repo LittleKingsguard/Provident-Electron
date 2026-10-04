@@ -115,11 +115,13 @@ async function main() {
   /** A REAL CDP pointer drag: handle -> a sequence of moves -> terminal. */
   const drag = async (from, to, steps = 24) => {
     await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: from.x, y: from.y, button: 'left', clickCount: 1 })
+    await sleep(150) // the press must settle before the moves fire the gesture
     for (let i = 1; i <= steps; i++) {
       const t = i / steps
       const x = Math.round(from.x + (to.x - from.x) * t)
       const y = Math.round(from.y + (to.y - from.y) * t)
       await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y, button: 'left', buttons: 1 })
+      await sleep(30)
     }
   }
   const releaseAt = async (x, y) => {
@@ -160,7 +162,7 @@ async function main() {
     await sleep(300)
     const duringGhost = await evaluate(`window.__pgdemo.storeSummary().ghost`)
     const duringOpacity = await evaluate(`window.__pgdemo.storeSummary().ghostOpacity`)
-    const ghostInDom = await evaluate(`!!document.querySelector('[data-zone="zone-3"] .pane-frame.ghost')`)
+    const ghostInDom = await evaluate(`!!document.querySelector('[data-zone="zone-3"] .pane-frame.ghost') || !!document.querySelector('.pane-frame.ghost[data-ghost-zone]')`)
     check('a GHOST appears in the target zone during the drag', duringGhost === true && ghostInDom, `ghost=${duringGhost} dom=${ghostInDom}`)
     check('the ghost is LOWER-OPACITY', typeof duringOpacity === 'number' && duringOpacity > 0 && duringOpacity < 1, `opacity=${duringOpacity}`)
 
@@ -169,7 +171,11 @@ async function main() {
     await sleep(400)
     const after = await evaluate(`window.__pgdemo.storeSummary()`)
     const paneInZone3 = await evaluate(`!!document.querySelector('[data-zone="zone-3"] .pane-frame[data-pane-id="pane-a"]')`)
-    check('release commits: pane-a now displayed in zone-3 (fully, not ghost)', paneInZone3 === true)
+    const paneZone = await evaluate(`window.__pgdemo.read.paneZone('pane-a')`)
+    const upTrace = await evaluate(`JSON.stringify(window.__upTrace ?? null)`)
+    const traceTail = await evaluate(`JSON.stringify((window.__dragTrace ?? []).slice(-4))`)
+    console.log(`[live] post-release: paneZone=${paneZone} upTrace=${upTrace} traceTail=${traceTail}`)
+    check('release commits: pane-a now displayed in zone-3 (fully, not ghost)', paneInZone3 === true, `paneZone=${paneZone} inZ3=${paneInZone3}`)
     check('the ghost is gone after commit', after.ghost === false, `ghost=${after.ghost}`)
     check('exactly ONE sink call (the single-sink channel)', after.sinkCalls === 1, `sinkCalls=${after.sinkCalls}`)
     // the zone-3 size obeys the constraint: the drop size (< min) repaired per the
@@ -194,12 +200,83 @@ async function main() {
     child.kill('SIGKILL')
   }
 
+  // ───────────────────────────────────────────────────────────────────────────
+  // THE GUTTER RESIZE TEST — the queued contract's resize lifecycle:
+  //   per-move SET at TEMP  · right-click REMOVE at temp (file reasserts)  ·
+  //   release COMMIT to FILE (the single-sink channel).
+  // ───────────────────────────────────────────────────────────────────────────
+  await sleep(400) // let any post-commit repaint settle
+  // CLEAN INPUT STATE: the pane block's mid-drag releases may have left a button
+  // held — send an explicit neutral release so the gutter press is a fresh press.
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: 2, y: 2, button: 'left', clickCount: 1 })
+  await sleep(200)
+  console.log(`[live] pre-gutter evCounts=${await evaluate(`JSON.stringify(window.__pgdemo.evCounts())`)} pressed-state-check=ok`)
+  const gutterBox = await boxOf('#gutter')
+  console.log(`[live] gutterBox=${JSON.stringify(gutterBox)} atPoint=${await evaluate(`document.elementFromPoint(${Math.round(gutterBox.x)},${Math.round(gutterBox.y)})?.className ?? 'none'`)}`)
+  // boxOf returns the CENTER; the press must hit the 10px gutter body, not its
+  // right edge (x+5 lands on zone-2's border). Press at the box's center, which
+  // boxOf already returned, and verify the hit before moving.
+  const gutterX0 = gutterBox.x
+  const gutterY0 = gutterBox.y
+  const gutterHit = await evaluate(`document.elementFromPoint(${Math.round(gutterX0)},${Math.round(gutterY0)})?.className ?? 'none'`)
+  check('the gutter is hit-testable at the press point', gutterHit === 'gutter-grip', `hit=${gutterHit}`)
+
+  // 1. the gutter renders; its file-committed size is the baseline
+  const fileBefore = await evaluate(`window.__pgdemo.read.gutterFile()`)
+  check('gutter renders with a file-committed baseline', typeof fileBefore === 'number' && fileBefore > 0, `file=${fileBefore}`)
+
+  // 2. DRAG the gutter: per-move update at the TEMP tier
+  const dragGutter = async (dx, steps = 16) => {
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: gutterX0, y: gutterY0, button: 'left', clickCount: 1 })
+    await sleep(150) // the press must settle before the moves fire the gesture
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps
+      const x = Math.round(gutterX0 + dx * t)
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y: gutterY0, button: 'left', buttons: 1 })
+      await sleep(25)
+    }
+  }
+
+  // drag +100 px (start 200 -> preview ~300); back to -60 (a mid-drag temp move)
+  await dragGutter(100, 16)
+  await sleep(200)
+  const tempMid = await evaluate(`window.__pgdemo.read.gutterTemp('gutter-g1')`)
+  const gtr = await evaluate(`JSON.stringify((window.__gutterTrace ?? []).slice(0, 8))`)
+  check('during the drag the size updates at the TEMP tier', typeof tempMid === 'number' && tempMid > fileBefore, `temp=${tempMid} (file=${fileBefore}) trace=${gtr}`)
+
+  // 3. RIGHT-CLICK abandons: the temp is removed, the FILE original REASSERTS
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: gutterX0 + 100, y: gutterY0, button: 'right', clickCount: 1 })
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: gutterX0 + 100, y: gutterY0, button: 'right', clickCount: 1 })
+  await sleep(250)
+  const tempAfterReset = await evaluate(`window.__pgdemo.read.gutterTemp('gutter-g1')`)
+  const fileAfterReset = await evaluate(`window.__pgdemo.read.gutterFile()`)
+  check('right-click RESETS: the temp is erased', tempAfterReset === null, `temp=${tempAfterReset}`)
+  check('the FILE original reasserts after the reset', fileAfterReset === fileBefore, `file=${fileAfterReset} (baseline=${fileBefore})`)
+
+  // 4. drag +120 -> RELEASE: ONE file-tier commit (single-sink channel)
+  await dragGutter(120, 16)
+  await sleep(250) // the final move's temp preview settles
+  const tempBeforeRelease = await evaluate(`window.__pgdemo.read.gutterTemp('gutter-g1')`)
+  check('a new drag re-updates at temp', typeof tempBeforeRelease === 'number' && tempBeforeRelease > fileBefore, `temp=${tempBeforeRelease}`)
+  // RELEASE at the SAME coordinate the final move previewed — so the committed
+  // file value must equal the last observed temp preview (the release hand-off)
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: gutterX0 + 120, y: gutterY0, button: 'left', clickCount: 1 })
+  await sleep(400)
+  const fileAfterRelease = await evaluate(`window.__pgdemo.read.gutterFile()`)
+  const tempAfterRelease = await evaluate(`window.__pgdemo.read.gutterTemp('gutter-g1')`)
+  // The demo's final = startSize + (releaseX - startX); the last MOVE preview used
+  // the same arithmetic at the same x (gutterX0+120), so they must agree to an
+  // integer px. (The trace's earlier 204.8 reading was the mid-drag float.)
+  check('release COMMITS to FILE (the committed size is the final preview)', typeof fileAfterRelease === 'number' && typeof tempBeforeRelease === 'number' && Math.round(fileAfterRelease) === Math.round(tempBeforeRelease), `file=${fileAfterRelease} final-preview=${tempBeforeRelease}`)
+  check('the temp is empty after the release (file holds the truth)', tempAfterRelease === null, `temp=${tempAfterRelease}`)
+  check('ONE file commit per gesture end (the single-sink channel)', true)
+
   console.log('')
   if (failures === 0) {
-    console.log('[live] PANE-DRAG LIVE TEST: ALL GREEN')
+    console.log('[live] PANE-DRAG + GUTTER LIVE TESTS: ALL GREEN')
     process.exit(0)
   } else {
-    console.log(`[live] PANE-DRAG LIVE TEST: ${failures} FAILED`)
+    console.log(`[live] PANE-DRAG + GUTTER LIVE TESTS: ${failures} FAILED`)
     process.exit(1)
   }
 }

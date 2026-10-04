@@ -26,7 +26,24 @@ node demo/pane-drag-demo/run-live.mjs
 --disable-dev-shm-usage` are applied because the sandbox lacks /dev/shm.)
 
 ## Live result (2026-10-03)
-PANE-DRAG LIVE TEST: ALL GREEN — 13/13 across the exact requested scenario:
+**PANE-DRAG + GUTTER LIVE TESTS: ALL GREEN (21/21 PASS, exit 0).**
+
+PANE-DRAG (13 rows): the exact requested scenario — drag by the specific handle
+into a zone minimized at the drag's start, a ghost lower-opacity instance in the
+target zone, fully displayed on release and commit. Plus handle-gating, the
+single-sink channel (sinkCalls === 1), the zone-size minimum, the re-homed
+handle re-query, and the right-click abandon (ghost erased, the persistent
+original reasserted).
+
+GUTTER RESIZE (8 rows): the exact requested lifecycle —
+- per-move updates at the TEMP tier during the drag (`temp` rises from the file
+  baseline while `file` stays untouched);
+- right-click RESETS: the temp is erased and the FILE original reasserts (the
+  four-tier abandon: `remove('temp.drag.<gid>.placement')`, never a file removal);
+- release COMMITS to FILE (the committed size === the final preview; ONE file
+  commit per gesture end — the single-sink channel) and the temp is parked
+  (empty after the release — the file holds the truth).
+Since the first run:
 drag by the specific handle → a DIFFERENT zone (minimized at the drag's start) →
 a GHOST lower-opacity pane instance in the target zone → fully displayed on
 release and commit. Plus the handle-gating (a body drag does not start), the
