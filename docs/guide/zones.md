@@ -215,12 +215,24 @@ for any of them.
   `docs/specs/census.md` §2.5, and the mandatory geometry clause `S-d11`). A question of the form *"what
   box does a collapsed member have?"* is not answerable from this module, by design.
 - **The member's slot/location geometry is the CONSUMER's to measure** — and so is the size decision that
-  sits beside it. The ruled shape: a zone's minimum is enforced (an attempt below it rounds to the
-  minimum or to zero), **zero is the minimize verb and never a smaller width**, and a minimized zone
-  **keeps its location** so proximity detection can expand it back to its configured size and host a pane
-  (`docs/decisions.md`'s ACTIVE row `ZONE-SIZE-DOMAIN-IS-CONSUMER-CARRIED-AND-THE-MINIMUM-CLAMP-IS-FAMILY-SIDE`,
-  cited by row name; the family-side half is a pure clamp over values you supply, and its own record lands
-  separately).
+  sits beside it. **STORE-WAVE (`2026-10-04`): the zone state this family reads/writes is STORE-carried** —
+  `mem.layout.zone.<id>.size` / `…display ('normal'|'minimized')` / `…slot` (the demo's `mintAll`; the
+  renderer's `renderZone`) — this module never touches it: sizes arrive as arguments. The ruled shape: a
+  zone's minimum is enforced by **CALLER-SUPPLIED passed functions** — `zoneSizeConstraint(min,max)` +
+  `zoneSizeRepair(min,max)` (`src/renderer/renderer.ts`) — with the **pinned `min/2` band**: arm (a)
+  `[min/2, min)` ROUNDS UP to `min`, arm (b) `< min/2` DISCARDS + writes the minimize marker; the repair
+  lands **in the same committed write** (`cause:'repair'` event + receipt `repaired[]`; a repairless
+  below-min is refusal-via-feedback, never a throw). **`docs/specs/pane-drag-compliance.md` §2.2 is the
+  record** (M-7/M-8/F-1/F-2), and the operative decision authority is `CONSTRAINTS-ARE-PASSED-FUNCTIONS`.
+- **The MINIMIZED-zone behavior (live-verified in the 50/50 suite, `demo/pane-drag-demo/` README's
+  MINIMIZED-ZONE block):** `display:'minimized'` hides an EMPTY zone entirely (stack `display:none`)
+  with a **visible expand button** that restores it; a minimized zone **WITH panes retains a TAB-STRIP
+  list** of its panes (no frames — the tabs are drag sources too); a pane drag **READS the STORE's
+  EXPANDED size** (`mem.layout.zone.<id>.size`; `canPlace = size >= min`) to decide placement — never
+  host/minimized-view geometry — and **TEMPORARILY EXPANDS** a minimized target to host the ghost,
+  restored on release/abandon (never a file write). The older "proximity detection on a broadcast
+  location" model (`ZONE-SIZE-DOMAIN-IS-CONSUMER-CARRIED-…`) is SUPERSEDED by these clauses at the
+  assembled-app layer; this module's own bytes still measure nothing.
 - **An emptiness flag and a size of `0` are two different things, and the overloading is yours.** The
   module emits your `emptyToken` for a truthy flag **or** a non-finite/negative size, while a size of `0`
   is a legitimate SIZE — so *"zero means minimized"* belongs in **your** predicate/census, never in the
