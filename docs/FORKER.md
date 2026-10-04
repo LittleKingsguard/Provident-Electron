@@ -395,6 +395,44 @@ timing is a NEW hard row**: reveal is written **exactly once per gesture, at ges
 
 **WHAT THIS BLOCK IS NOT.** It is **not** an option, a variant, a helper, an export or a file — **nothing is added to any mechanism**; it is a reading of contracts that already stand. It is **not** a promise of a controller-accepting member on the affordance (the affordance **composes** its own controller and takes your **session**, and that direction does not reverse without a frozen-contract change and its own gate). It is **not** a restatement of any seam row, seam census, degradation cell or census figure — **it cites them**, because the caller seams' **three homes** (the module's exported types, the spec's normative seam table, and this §4) move together and a second hand-maintained copy is the drift class this file's own precedent refuses. And it is **not** a statement about your own schema, your own carrier, or your own reveal implementation — those are yours, and the fork may change them freely.
 
+### THE STORE-BACKED DRAG + GUTTER FEATURES — HOW TO CONSUME THEM (the pane-drag + gutter live-demo reference, `U-PANE-DRAG-COMPLIANCE`'s store edges)
+
+**⟶ ADDED 2026-10-03, THE LIVE-DEMO PASS** (the demo `demo/pane-drag-demo/` + `docs/specs/live-demo-retrospective.md`). **The store-integrated drag + gutter resize are LIVE-VERIFIED against the real store (PANE-DRAG + GUTTER LIVE TESTS: ALL GREEN 25/25) — the fork's H-r6 pass consumes THIS surface.** Every value flows through the store (`createGraphStore`) via the landed composition (`createPaneDrag` from `src/renderer/renderer.ts`); the fork's pane-drag UI bytes are the fork's own — this block is the consumer contract the demo proved.
+
+**(i) THE WIRE SHAPES YOU MUST OBSERVE (each cost the live session when missed — the red set could not see them, the live driver now asserts them):**
+
+| The requirement | The exact shape | The failure mode if missed |
+| --- | --- | --- |
+| **The tenant roots must be DECLARED** | the store's `declarations` MUST include the composition's roots — minimally `layout`, `settings`, `drag` (the temp preview lives at `temp.drag.<gid>.placement`) | `commit('temp.drag…')` is REFUSED `'undeclared-name'` at the write-side C-TOP gate — **silently absorbed by the composition** (a dead gesture with no error). Declare the roots. |
+| **The pane bounds wire-shape is `{ min, max }`** | `mem.layout.pane.<id>.bounds` and the `file.settings.pane.<id>.bounds` fallback hold the OBJECT `{ min, max }` | a minted ARRAY `[min, max]` makes `release`'s `clampToBounds` return NaN → **the sink is silently skipped** (sinkCalls 0). |
+| **The pane-size reads** | `startSizeOf`/`boundsOf` read `mem.layout.pane.<id>.size`/`.bounds` (mem first, then the file-tier fallback) | a missing mem value silently falls to the file copy — mint both. |
+| **The zone render reads** | the display layer reads `mem.layout.zone.<id>.size`/`.display` FROM THE STORE — never a module variable | a render that ignores the store breaks the "the render is a function of the store" rule (rule 2). |
+
+**(ii) THE TEMP/FILE LIFECYCLE (the queued contract's six clauses, live-proven):**
+
+| Gesture turn | The store call | What it must not do |
+| --- | --- | --- |
+| first preview write | `commit('temp.drag.<gid>.placement', preview)` (the mint) | never a sink write |
+| each subsequent move | `set('temp.drag.<gid>.placement', preview)` (replace in place) | never a second commit, never a sink write |
+| **right-click / cancel** | `remove('temp.drag.<gid>.placement')` | NEVER a file removal — the temp erases and the FILE ORIGINAL REASSERTS (the four-tier abandon) |
+| **release (valid end or invalid reset)** | `commit('file.settings.pane.<id>.size', final)` — ONE commit | exactly ONE file commit per gesture end (the single-sink channel) |
+
+**(iii) THE GUTTER's store-driven layout:** the page's grid IS a function of the
+store-carried size — zone width = the temp preview while dragging, the file value
+otherwise; the gutter re-positions to the zone's new boundary on every turn
+(resize/reset/release). A consumer whose layout does not follow the store will see
+"the size calculates but the zone doesn't update" — the exact demo bug that the
+`applyGutterLayout`-reads-the-store pattern fixes.
+
+**(iv) THE LIVE LAYER'S RULES the fork's own driver should carry:** the launch vector
+needs `--no-sandbox --disable-dev-shm-usage` and the flags BEFORE the app path
+(Chromium ignores `--remote-debugging-port` after the entry); a per-run unique
+`--user-data-dir` + port (or a stale-window preflight) prevents attaching to a dead
+realm; `Input.dispatchMouseEvent` needs a ~150ms settle after `mousePressed` and
+`buttons: 1` on moves — rapid no-sleep moves are coalesced and the gesture dies
+silently. Full row-level detail: `docs/specs/live-demo-retrospective.md` (D-1..D-13,
+T-1..T-10).
+
 ### THE STORE-ADDRESSED MCP READS — WHAT A FORK MUST RE-ROUTE (`H3`, `U-FORK-STORE-READS`)
 
 **⟶ ADDED 2026-10-03, THE `U-FORK-STORE-READS` PASS — THE FORK-FACING HANDOFF NOTE THE SPEC OWED (`docs/specs/fork-store-reads.md` `§6.3`; the ruling is `docs/decisions.md`'s ACTIVE row `H3` (`U-FORK-STORE-READS`) IS A RE-ROUTE, NOT AN EXEMPTION, cited BY ROW NAME). Every point below is a CITATION, never a restatement — the spec and that ruling govern, and where this note and the spec disagree, the spec governs and this note is the thing to fix.**

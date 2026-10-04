@@ -67,6 +67,25 @@ function cdpClient(wsUrl) {
 }
 
 async function main() {
+  // T-8 PRECONDITION (live-demo-retrospective.md): no stale electron of THIS app may
+  // be running on THIS port — a leftover window attaches the driver to a dead state.
+  const { execSync } = await import('node:child_process')
+  try {
+    const stale = execSync(
+      `ps aux | grep -E "electron.*pane-drag-demo.*remote-debugging-port=${CDP_PORT}" | grep -v grep || true`,
+      { encoding: 'utf8' },
+    )
+    if (stale && stale.trim() !== '') {
+      console.log(`[live] T-8 preflight: killing stale demo windows on port ${CDP_PORT}`)
+      execSync(
+        `ps aux | grep -E "electron.*pane-drag-demo.*remote-debugging-port=${CDP_PORT}" | grep -v grep | awk '{print $2}' | xargs -r kill -9`,
+        { shell: '/bin/bash' },
+      )
+      await sleep(1200)
+    }
+  } catch { /* no stale process machinery — proceed */ }
+  // T-6 PRECONDITION (live-demo-retrospective.md): the raw-binary launch vector must
+  // expose a CDP endpoint — fail fast with the flag-order/sandbox reasoning.
   console.log(`[live] launching electron with cdp port ${CDP_PORT} …`)
   const child = spawn(
     electronBinary,

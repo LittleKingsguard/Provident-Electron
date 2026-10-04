@@ -178,6 +178,7 @@ provident.dispatch { target: { kind: "nodeId", nodeId: "node-6" }, event: "click
   not reproducible at `0.5.1`, and `LIVE-OP-REJECT` is a HOST-owned row in that
   file's `## FIXED (in this repo)` section) → `docs/HANDOFF.md` (the issue
   handoff to the upstream project; **no round is open**).
+- **`demo/pane-drag-demo/`** — the LIVE store-integrated panes demo (2026-10-03): a real Electron window driving the landed `createPaneDrag` + gutter-resize compositions against the real store (`createGraphStore`) — the pane-drag-by-handle-into-a-minimized-zone (ghost at reduced opacity, full display on commit) and the gutter temp/reset/file lifecycle. `node demo/pane-drag-demo/run-live.mjs` runs the dependency-free CDP driver (PANE-DRAG + GUTTER LIVE TESTS: ALL GREEN 25/25). It is the fork's H-r6 consumption reference. The build/debug session's findings + missing-test audit: `docs/specs/live-demo-retrospective.md`; the consumer wire-shape contract: `docs/FORKER.md` §4's STORE-BACKED DRAG + GUTTER block.
 - `docs/decisions.md` / `docs/pending.md` / `docs/next-steps.md` — the process
   trackers (imported from the upstream `AGENTS.md` document-archival loop).
   **`docs/next-steps.md` is the work queue AND the handover surface:** its

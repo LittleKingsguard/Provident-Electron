@@ -50,6 +50,11 @@ release and commit. Plus the handle-gating (a body drag does not start), the
 single-sink channel (sinkCalls === 1), the zone-size minimum respected, and the
 right-click abandon path (ghost erased, persistent original reasserted).
 
+## Consumer contract + hardening record
+- **Wire shapes every consumer must observe** (the tenant roots declared: `layout`/`settings`/`drag`; the bounds as `{ min, max }`; the temp/file lifecycle spellings): `docs/FORKER.md` §4's STORE-BACKED DRAG + GUTTER FEATURES block.
+- **The build/debug difficulties + the automated tests that were missing** (D-1..D-13, T-1..T-10): `docs/specs/live-demo-retrospective.md`.
+- **Live driver preflights** (T-6/T-8): the driver kills stale demo windows on the port before launching and could fail fast if the CDP endpoint doesn't resolve.
+
 Layer honesty (RCA-12): this is the CHECKOUT's own demo window — APP-level code
 (the store + composition were already envelope/integration-green; this exercises
 the ASSEMBLED rendered app + REAL CDP pointer input). It is NOT the fork's app;
