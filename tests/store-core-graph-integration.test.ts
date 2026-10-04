@@ -717,34 +717,47 @@ describe('U-STORE-CORE module wave — T4 integration red set (fields 3/6 wiring
     // OWN flag. The tree-by-construction invariant (§2.3 item 2 / §2.2 P-3: a descendant is
     // reached THROUGH its parent's anchors) is what makes the parent GENUINELY
     // declared-but-unwritten-with-a-written-child — never a cold name, never a removed subtree.
-    // THE DRIVE'S PRINTED TERMS: parent spelling 'mem.r4.par' · its own value 1 · child
-    // spelling 'mem.r4.par.kid' · its own value 2 · tier 'mem' — the SAME tier for both (the
-    // brief's "at the same tier (or lower)"; the artifact's clear row ties the state to a
-    // tier-LOCAL clear, not to a particular token) · the tier-local clear 'mem.r4.par' →
-    // receipt {status:'committed', cleared:['mem.r4.par'], events:1} (one event per cleared
-    // reference) · post-state: the child SURVIVES, the parent holds NO value of its own.
-    // NOTE ON THE EVENTS HALF: the clear row's "one event per cleared reference" is cited for
-    // the DRIVE's shape; the receipt-visible observable of the one cleared reference is its
-    // `cleared[]`, which this row asserts. A subscriber-LESS clear's `events` is a
-    // delivery-dependent figure in the landed build (§2.10 item 5's emitted-vs-delivered
-    // semantics are the seat's sweep's subject, not this remand's); this row does NOT pin it,
-    // so the row's red point is exactly the finding — the parent read's wrong arm.
-    // RED TODAY (the T6 finding, in the conformed walk's own words): the walk answers
-    // {found:true, value:undefined, tier:'mem', …} at the parent path — a HIT with an undefined
-    // value — because the clear leaves the node in place and the walk has NO value-presence
-    // check, so the declared MISS arm is never reached.
+    // ⟶ RE-GRAINED 2026-10-05 (U-STORE-CORE G1, the POST-UNIT-ADV-1 re-grain family): the
+    // as-filed drive wrote `'mem.r4.par'` FIRST — a CHAIN write under a top the wired boot's
+    // EMPTY declarations (`storeGraphReferences([])`) never declares. G4-F1 (the F1 pin, the
+    // write-side C-TOP gate) REFUSES that mint (`'undeclared-name'` at C-TOP, segment `r4` —
+    // "the write-side mint NEVER mints an undeclared or dotted root"), so the as-filed drive
+    // could not reach the record. The re-grain keeps the row's INTENT (the record write/readback
+    // works through the store; the tier-local clear leaves the child alone and the parent reads
+    // the DECLARED MISS) and RE-ROUTES the drive through the declared top: (1) the F1 REFUSAL
+    // arm for the undeclared case is asserted first (the refusal receipt's shape + the store
+    // unchanged — no `r4` row, no node), then (2) the ROOT-LEVEL mint `commit('mem.r4', 1)` lifts
+    // the top into the registered state (the F1 positive control — the F-2 state (ii) cold-root
+    // mint), and the `r4.par` / `r4.par.kid` writes ride the now-registered-declared path.
     const store = await wiredStore()
-    expect(store.commit('mem.r4.par', 1).status).toBe('committed') // (1) the parent minted WITH a value
-    expect(store.commit('mem.r4.par.kid', 2).status).toBe('committed') // (2) the child at the SAME tier
-    const receipt = store.clear('mem.r4.par') // (3) the TIER-LOCAL, NON-RECURSIVE clear of the parent
+    // (1) THE F1 REFUSAL ARM — the undeclared top is refused with the exact receipt shape and
+    // the store is left UNCHANGED (nothing minted, nothing registered, no node).
+    const beforeRows = store.register.rows.map((r) => r.name).sort()
+    const refused = store.commit('mem.r4.par', 1)
+    expect(refused.status).toBe('refused')
+    expect(refused.reason).toBe('undeclared-name')
+    expect(refused.name).toBe('mem.r4.par') // the receipt's name is the caller's own spelling
+    expect(refused.cleared).toEqual([])
+    expect(refused.repaired).toEqual([])
+    expect(refused.rows).toEqual([])
+    expect(refused.crossings).toBe(0)
+    expect(refused.events).toBe(0)
+    expect(store.register.rows.map((r) => r.name).sort()).toEqual(beforeRows) // unchanged
+    expect(store.tiers.mem.get('mem.r4.par').found).toBe(false) // no node exists at the refused path
+    // (2) THE DECLARED-TOP ROUTE: the root-level mint MINT-DECLARES `r4` (F-2 state (ii) — the
+    // ONE legal cold-root mint), then the parent/child writes are the registered-declared path.
+    expect(store.commit('mem.r4', 1).status).toBe('committed') // (1) the ROOT minted — the declared top
+    expect(store.commit('mem.r4.par', 1).status).toBe('committed') // (2) the parent minted WITH a value
+    expect(store.commit('mem.r4.par.kid', 2).status).toBe('committed') // (3) the child at the SAME tier
+    const receipt = store.clear('mem.r4.par') // (4) the TIER-LOCAL, NON-RECURSIVE clear of the parent
     expect(receipt.status).toBe('committed')
     expect(receipt.cleared).toEqual(['mem.r4.par']) // the one cleared reference
-    const child = store.resolve('mem.r4.par.kid') as GraphReadHit // (4) M-5 RE-DERIVED (i)
+    const child = store.resolve('mem.r4.par.kid') as GraphReadHit // (5) M-5 RE-DERIVED (i)
     expect(child.found).toBe(true) // the child SURVIVES: the clear "leaves its descendants alone"
     expect(child.value).toBe(2) // the CHILD's own value
     expect(child.flag).toBe('mem') // the CHILD's OWN flag
-    const miss = store.resolve('mem.r4.par') // (5) M-5 RE-DERIVED (iii) — the parent reference's read
-    expect(miss.found).toBe(false) // ← RED today: the conformed walk answers found:true (HIT-with-undefined)
+    const miss = store.resolve('mem.r4.par') // (6) M-5 RE-DERIVED (iii) — the parent reference's read
+    expect(miss.found).toBe(false) // the DECLARED MISS — never a HIT-with-undefined
     expect(Object.keys(miss).sort()).toEqual(MISS_KEYS) // the declared MISS shape — never a refusal record
     expect((miss as GraphReadMiss).value).toBeUndefined()
     expect((miss as GraphReadMiss).tier).toBeNull()
@@ -763,27 +776,49 @@ describe('U-STORE-CORE module wave — T4 integration red set (fields 3/6 wiring
     // ENTRY-PRESENCE one, and this row makes it explicit: MISS = found:false · tier:null ·
     // cache:null · name = the caller's spelling; HIT = found:true · tier/flag = the node's own
     // · cache BY IDENTITY. A fix that collapses them — HIT-with-undefined at the cleared
-    // parent (today's wrong arm) or MISS at the written leaf — FAILS this row.
+    // parent (the pre-re-freeze wrong arm) or MISS at the written leaf — FAILS this row.
+    // ⟶ RE-GRAINED 2026-10-05 (U-STORE-CORE G1, the POST-UNIT-ADV-1 re-grain family): the
+    // as-filed drive wrote `'mem.r5.par'` FIRST under the wired boot's EMPTY declarations —
+    // G4-F1 (the F1 pin) REFUSES that chain mint (`'undeclared-name'` at C-TOP, segment `r5`).
+    // The re-grain keeps the row's INTENT (the record write/readback works through the store;
+    // the two `value: undefined` states are discriminated by ENTRY-PRESENCE) and RE-ROUTES
+    // through the declared top exactly as M4 does: (1) the F1 refusal arm for the undeclared
+    // case first, then (2) the root-level cold mint `commit('mem.r5', …)` and the
+    // registered-declared parent/child/leaf writes.
     // THE DRIVE'S PRINTED TERMS: parent 'mem.r5.par' (value 1) · child 'mem.r5.par.kid'
     // (value 2) · tier 'mem' (the same tier, both) · tier-local clear 'mem.r5.par' · written
     // leaf 'mem.r5.udleaf' whose OWN VALUE is `undefined` — driven at the mem tier so no
     // file-tier serialization arm is involved (field 2's value row's one non-representability
     // rule is file-tier-only, §2.8 item 6(b)).
     const store = await wiredStore()
+    // (1) THE F1 REFUSAL ARM — the undeclared top 'r5' is refused; nothing minted.
+    const beforeRows = store.register.rows.map((r) => r.name).sort()
+    const refused = store.commit('mem.r5.par', 1)
+    expect(refused.status).toBe('refused')
+    expect(refused.reason).toBe('undeclared-name')
+    expect(refused.cleared).toEqual([])
+    expect(refused.repaired).toEqual([])
+    expect(refused.rows).toEqual([])
+    expect(refused.crossings).toBe(0)
+    expect(refused.events).toBe(0)
+    expect(store.register.rows.map((r) => r.name).sort()).toEqual(beforeRows) // unchanged
+    expect(store.tiers.mem.get('mem.r5.par').found).toBe(false)
+    // (2) THE DECLARED-TOP ROUTE — the root-level mint declares `r5`, then the mirror writes.
+    expect(store.commit('mem.r5', 1).status).toBe('committed') // the declared top minted
     store.commit('mem.r5.par', 1)
     store.commit('mem.r5.par.kid', 2)
     store.clear('mem.r5.par') // → the structural parent now holds NO value entry
     store.commit('mem.r5.udleaf', undefined) // → a WRITTEN leaf whose VALUE is undefined
     const parent = store.resolve('mem.r5.par')
     const leaf = store.resolve('mem.r5.udleaf') as GraphReadHit
-    // THE MISS HALF — RED today: the conformed walk answers found:true at the cleared parent
-    expect(parent.found).toBe(false) // ← the wrong arm today
+    // THE MISS HALF — the cleared parent answers the DECLARED MISS (the entry-presence fact)
+    expect(parent.found).toBe(false)
     expect(Object.keys(parent).sort()).toEqual(MISS_KEYS)
     expect((parent as GraphReadMiss).value).toBeUndefined()
     expect((parent as GraphReadMiss).tier).toBeNull()
     expect((parent as GraphReadMiss).cache).toBeNull()
     expect((parent as GraphReadMiss).name).toBe('mem.r5.par')
-    // THE HIT HALF — the written-undefined leaf answers the HIT arm outright (green today; the
+    // THE HIT HALF — the written-undefined leaf answers the HIT arm outright (the
     // value-presence fix must NOT turn it into a MISS — value is opaque, undefined is in-domain)
     expect(leaf.found).toBe(true)
     expect(Object.keys(leaf).sort()).toEqual(HIT_KEYS)

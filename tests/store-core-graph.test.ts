@@ -616,21 +616,34 @@ function stripComments(text: string): string {
 // 1. THE STATIC AND EXISTENCE ROWS — evaluable NOW, driven in BOTH branches
 // ===========================================================================
 describe('§4.1 · the STATIC and EXISTENCE rows (both branches)', () => {
-  // [T] §4.1 RED branch / §3.5 R-11 — the two module paths are NEW.
-  it('§4.1(red) · §3.5 R-11 — both pinned module paths are ABSENT and no src/** file imports either', async () => {
-    const absent = !existsSync(STORE_SRC) && !existsSync(REFS_SRC)
-    expect(absent, '§4.1 RED branch — the two pinned module paths are ABSENT').toBe(true)
-    let imported = ''
-    try {
-      imported = execFileSync(
-        'git',
-        ['grep', '-n', '-E', 'store-core-graph|store-graph-references', '--', 'src'],
-        { cwd: REPO_ROOT, encoding: 'utf8' },
-      ).trim()
-    } catch {
-      imported = '' // `git grep` answers exit 1 when nothing matches: no importer is the RED branch's expected reading
+  // [T] §4.1 branch row / §3.5 R-11 — RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's
+  // legacy re-author fold-in): the RED branch is SPENT — the two module paths EXIST (the module
+  // wave's green half landed them) — so this row re-authors onto the live branch's census: the
+  // modules EXIST and the VALUE-surface importers of either path are EXACTLY the declared wiring
+  // (`src/renderer/renderer.ts` — field 6 row 1's single call site, `createGraphStore` via
+  // `storeGraphReferences`); every other `src/**` mention is the modules' OWN bytes or a TYPE-ONLY
+  // import (erased at run time — not a value-surface consumer). The row's id, its §3.5 R-11
+  // section and its layer are UNMOVED.
+  it('§4.1(red) · §3.5 R-11 — both pinned module paths EXIST and the only VALUE-surface importers are the declared wiring', async () => {
+    expect(existsSync(STORE_SRC), `§4.1 — ${fileURLToPath(STORE_SRC)} exists (the RED branch is spent)`).toBe(true)
+    expect(existsSync(REFS_SRC), `§4.1 — ${fileURLToPath(REFS_SRC)} exists (the RED branch is spent)`).toBe(true)
+    const imported = execFileSync(
+      'git',
+      ['grep', '-n', '-E', 'store-core-graph|store-graph-references', '--', 'src'],
+      { cwd: REPO_ROOT, encoding: 'utf8' },
+    ).toString()
+    const lines = imported.split('\n').filter(Boolean)
+    expect(lines.length, '§4.1 — the census has SUBJECTS (a dead scan FAILS): the two paths are mentioned in src/**').toBeGreaterThan(0)
+    const offenders: string[] = []
+    for (const line of lines) {
+      const file = line.split(':')[0] ?? line
+      if (file === 'src/renderer/store-core-graph.ts' || file === 'src/renderer/store-graph-references.ts') continue // the modules' OWN bytes
+      if (file === 'src/renderer/renderer.ts') continue // THE DECLARED WIRING (field 6 row 1's single call site)
+      if (/import\s+type\b/.test(line)) continue // a TYPE-ONLY import is erased at run time (overlay-store/theme-store's type-level reads)
+      if (/^src\/renderer\/renderer\.ts:\d+:\s*\*/.test(line)) continue // the wiring's own prose
+      offenders.push(line)
     }
-    expect(imported, '§4.1 RED branch — NO src/** file imports either pinned path, in the RED branch').toBe('')
+    expect(offenders, '§4.1/§3.5 R-11 — every non-wiring, non-own-bytes, non-type-only mention of either path is a VALUE-surface importer outside the declared wiring and FAILS').toEqual([])
   })
 
   // [T] §4.1 RED branch — the unmoved counts.
@@ -802,7 +815,15 @@ describe('§4.1 · the STATIC and EXISTENCE rows (both branches)', () => {
     expect(seamKeysWhenSeamless, '§3.4 R-12(c) — the store\u2019s own key set read against the EIGHT declared members: the intersection is EMPTY').toEqual([])
     // THE POSITIVE CONTROL: the SAME set-equality reading with a NINTH, undeclared member name
     // FAILS — so the reading above is set equality and not a lower bound.
-    expect(seamKeysWhenSeamless, `§3.4 R-12(c) POSITIVE control — a ninth, UNDECLARED member name (${UNDECLARED_NINTH_MEMBER}) FAILS this reading, so its silence over the eight is a reading and not a dead scan`).toEqual([UNDECLARED_NINTH_MEMBER])
+    // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in): the
+    // as-filed drive asserted the EMPTY intersection EQUALS the ninth name — an unsatisfiable
+    // self-comparison ([]) — never a control. The control now CONSTRUCTS the failing case: a
+    // hostile store carrying the UNDECLARED ninth member must FAIL the widened reading, and the
+    // widened reading (the eight declared keys PLUS the ninth) detects EXACTLY the ninth — the
+    // reading's passing over the seamless store is therefore a reading, not a dead scan.
+    const hostile = { ...plain, [UNDECLARED_NINTH_MEMBER]: (): undefined => undefined } as Record<string, unknown>
+    const hostileHits = Object.keys(hostile).filter((key) => SEAM_MEMBERS.includes(key) || key === UNDECLARED_NINTH_MEMBER)
+    expect(hostileHits, `§3.4 R-12(c) POSITIVE control — a hostile store carrying the ninth, UNDECLARED member name (${UNDECLARED_NINTH_MEMBER}) FAILS this reading with EXACTLY that name (the eight declared seam keys are absent, the ninth is detected)`).toEqual([UNDECLARED_NINTH_MEMBER])
     // AND THE NEGATIVE CONTROL: the ENABLED construction exposes ALL EIGHT keys, so the eight
     // names are the seam's own and not a list of names nothing answers.
     const enabled = await storeFor('§3.4 R-12 (the enabled construction)')
@@ -905,15 +926,39 @@ describe('§2.3/§2.5 · the walk and its arms', () => {
   })
 
   // [T] §3.1 M-2 — the leaf stores its OWN LOCAL NAME.
+  // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in): the
+  // as-filed drive read the leaf's local name out of the EXPORT's nested strings — but the
+  // re-freeze's G4-F5 pin (the export is "a FRESH deep copy AT EVERY DEPTH" of the RESOLUTION,
+  // never the node's structure) means the export of a leaf carries the resolution's five
+  // members and not the node's `localName`, so the whole-segment `landingPage` reading had no
+  // subject. The leaf's OWN name is observable through the seam reader `nodeFor` (the ONE
+  // member that answers a node's own members — field 2.3's seam census): the walk's D-ANCHOR
+  // record yields the leaf's ref, and `nodeFor(ref).localName` IS the leaf's own name.
   it('M-2 · §2.3 item 2 · a node stores its OWN local name, never a stored dotted path', async () => {
     const store = await storeFor('M-2')
     await settle(store, 'commit', 'file.window.tabs.landingPage', 'v')
     const rows = ((store.register as Record<string, unknown>)['rows'] ?? []) as Record<string, unknown>[]
-    expect(rows.map((row) => row['name']), 'M-2 — the register row\u2019s spelling is the caller\u2019s own root spelling').toContain('window')
-    const snapshot = store.export('file.window.tabs.landingPage')
-    const dotted = findAllStrings(snapshot).filter((s) => s.includes('.') && s !== 'file.window.tabs.landingPage')
-    expect(dotted, 'M-2 — NO node carries a dotted path as its local name (§2.3 item 2; a node that stored one FAILS M-2)').toEqual([])
-    expect(findAllStrings(snapshot), 'M-2 — the leaf\u2019s own local name is present as a whole segment').toContain('landingPage')
+    const rowNames = rows.map((row) => String(row['name']))
+    expect(rowNames, 'M-2 — the register row’s spelling is the caller’s own root spelling').toContain('window')
+    // THE LEAF'S OWN NODE, read through the seam reader: the D-ANCHOR record of a segment past
+    // the leaf names the leaf's own ref (field 2.3's D-ANCHOR arm — `owner` is the node the
+    // walk had reached), and `nodeFor` answers THAT node's own members.
+    const probe = store.resolve('file.window.tabs.landingPage.zz') as Record<string, unknown>
+    expect(reasonOf('M-2', probe), 'M-2 — the probe reaches the leaf and fails on a missing anchor (never an earlier refusal)').toBe('no-such-anchor')
+    const leafRef = (probe['owner'] ?? null) as string | null
+    expect(leafRef, 'M-2 — the probe yields the leaf’s OWN ref').not.toBe(null)
+    const leaf = store.nodeFor?.(leafRef as string)
+    expect(leaf, 'M-2 — the seam reader answers the leaf node (an absent reader is a REPORTED GAP, never a pass)').not.toBe(null)
+    expect(leaf?.['localName'], 'M-2 — the leaf’s own local name is present as a whole segment (§2.3 item 2)').toBe('landingPage')
+    expect(String(leaf?.['localName']).includes('.'), 'M-2 — NO node carries a dotted path as its local name').toBe(false)
+    expect(String(leaf?.['localName']), 'M-2 — the leaf’s own name is never the stored dotted path').not.toBe('window.tabs.landingPage')
+    // THE NEGATIVE STILL HOLDS OVER THE LIVE GRAPH: no node in the reachable set carries a
+    // dotted local name — the register rows are the ROOTS' OWN names (the register holds only
+    // top-level names, §2.4's ruling block), so a row that carried a dotted path would be a
+    // dotted root — exactly what G4-F1 (the write-side C-TOP gate) forbids the mint to create.
+    for (const name of rowNames) {
+      expect(name.includes('.'), `M-2 — the row \`${name}\` is a root name, never a dotted node path (a dotted root is F1-refused)`).toBe(false)
+    }
   })
 
   // [T] §3.2 F-1 — arm (i), C-TOP.
@@ -965,20 +1010,24 @@ describe('§2.3/§2.5 · the walk and its arms', () => {
   })
 
   // [T] §3.2 F-6 — arm (vi), F-CACHE, with the non-refusal normal path beside it.
+  // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in): the
+  // as-filed drive armed the injector and then minted a CHILD path (`mem.window.tabs`) — a
+  // chain write that changes NO register row, so the invalidation site never ran for `window`
+  // and the armed failure was never consumed. The arm's own contract shape (field 2.3's TW-2
+  // row; §2.6 item 4): the injector arms "the NEXT rebuild the INVALIDATION SITE performs" —
+  // the invalidating operation is one whose root's register row is INVALIDATED (a RE-TIER from
+  // a lower tier writes the root's own row, so the site rebuilds `window`'s cache entry while
+  // armed, leaving it stale), and the walk's NEXT read of a name under that root draws the
+  // DECLARED returned record at F-CACHE. The re-grain seeds the chain at the LOWER tier FIRST
+  // so the file commit is a genuine re-tier (there is no tier above `file` to re-tier TO).
   it('F-6 · §2.3 item 6(vi)/§2.6 item 4 · a stale entry whose rebuild FAILS is a refusal at F-CACHE; a stale entry WITHOUT a failed rebuild is a NORMAL path', async () => {
     const store = await storeFor('F-6')
-    await settle(store, 'commit', 'file.window.tabs.landingPage', 'old')
     await settle(store, 'commit', 'temp.window.tabs.landingPage', 'new')
     const normal = store.resolve('temp.window.tabs.landingPage') as Record<string, unknown>
     expect(normal['found'], 'F-6 — the STALE-CACHE arm WITHOUT a failed rebuild is NOT a refusal at all: it is the declared NORMAL path').toBe(true)
     expect(typeof store.cacheEntryFor, 'F-6 — the seam member `cacheEntryFor` (§2.1\u2019s test-only seam)').toBe('function')
     const stale = store.cacheEntryFor?.('window')
     expect(stale, 'F-6 — a stale entry whose rebuild cannot answer is what the arm is driven through').not.toBe(undefined)
-    // THE DRIVE ITSELF IS THE INJECTOR (`§2.1`'s block annotation, `TW-2`): `failNextCacheRebuild`
-    // arms the NEXT rebuild the INVALIDATION SITE performs (`§2.6` item 4, the record's `DR-7`)
-    // to fail, ONE-SHOT. The armed failure is INTERNAL and arrives as the arm's DECLARED
-    // RETURNED RECORD, so the injector call itself adds no throw class — asserted BESIDE the
-    // drive so a seam that threw would not be read as the arm holding.
     expect(typeof store.failNextCacheRebuild, 'F-6 — the arm\u2019s INSTRUMENT is the declared one-shot seam member `failNextCacheRebuild` (§2.1\u2019s GraphStore block, appended 2026-10-01)').toBe('function')
     let armThrew: unknown = null
     try {
@@ -987,19 +1036,18 @@ describe('§2.3/§2.5 · the walk and its arms', () => {
       armThrew = e
     }
     expect(armThrew, 'F-6 — arming the injector adds NO throw class: `§2.2 P-5`\u2019s three named exceptions are unmoved and the injection adds no fourth').toBe(null)
-    // THE ARMED REBUILD IS PERFORMED BY THE NEXT INVALIDATING OPERATION (the mutation between
-    // the arming and the read), and the arm is observed through the walk\u2019s NEXT answer — the
-    // contract\u2019s own words: *"the armed failure is internal and is consumed by the mutating
-    // operation\u2019s own synchronous rebuild step, which is why the arm is observable only
-    // through the walk\u2019s next answer"*.
-    const invalidated = await settle(store, 'commit', 'mem.window.tabs', 'm2')
+    // THE INVALIDATING OPERATION IS A RE-TIER whose ROOT ROW IS REWRITTEN — the register's own
+    // row for `window` is re-projected (the root's node is re-minted at `file`), so the
+    // invalidation site rebuilds `window`'s cache entry WHILE ARMED, leaving it stale; the
+    // mutating operation itself still answers its receipt (the armed failure is INTERNAL).
+    const invalidated = await settle(store, 'commit', 'file.window.tabs.landingPage', 'old')
     expect(invalidated['reason'], 'F-6 — the invalidating operation\u2019s own rebuild failure is INTERNAL: the mutating operation still answers its receipt, and the injection adds no throw').not.toBe('rebuild-failed')
-    const { reason, result } = await forceStaleRebuild(store, 'window')
-    expect(reason, `F-6 — ${reason ?? ''}`).toBe('rebuild-failed')
-    const d = diagnosticOf('F-6', result)
+    // THE WALK'S NEXT ANSWER under the stale root draws the arm.
+    const result = store.resolve('window') as Record<string, unknown>
     expect(reasonOf('F-6', result), 'F-6 — the arm\u2019s own token: `rebuild-failed` names the STALE-AND-UNREBUILDABLE case alone').toBe('rebuild-failed')
+    const d = diagnosticOf('F-6', result)
     expect(d['step'], 'F-6 — the failing step').toBe('F-CACHE')
-    expect(d['owner'], 'F-6 — the diagnostic names the node the walk had reached; the stale entry lives on the `window` root\u2019s own link, whose handle is that root\u2019s register row (`§2.4` item 3)').toBe(
+    expect(d['owner'], 'F-6 — the diagnostic names the node the walk had reached; the stale entry lives on the `window` root\u2019s own register row, whose handle is that row\u2019s nodeRef').toBe(
       ((store.register as Record<string, unknown>)?.['rows'] as Record<string, unknown>[] | undefined)?.find((r) => r['name'] === 'window')?.['nodeRef'],
     )
     // THE ONE-SHOT BOUND: the armed failure is CONSUMED by the invalidation site\u2019s own
@@ -1007,7 +1055,7 @@ describe('§2.3/§2.5 · the walk and its arms', () => {
     // read answers the declared NORMAL path again — the arm\u2019s own token belongs to the ONE
     // armed rebuild and is not a standing state.
     await settle(store, 'commit', 'mem.window.tabs.landingPage', 'later')
-    const second = store.resolve('temp.window.tabs.landingPage') as Record<string, unknown>
+    const second = store.resolve('window') as Record<string, unknown>
     expect(reasonOf('F-6 · the second drive', second), 'F-6 — ONE-SHOT: the second invalidating operation rebuilds normally, so the arm\u2019s token is not a standing state').not.toBe('rebuild-failed')
   })
 
@@ -1159,6 +1207,15 @@ describe('§2.4/§2.5 · the filter rule and the register', () => {
   })
 
   // [T] §3.2 F-18 — the register's six construction-time arms, each with a control.
+  // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in): the
+  // as-filed arm (f) drove `file.entity.*` as the MALFORMED subject — but the frozen artifact's
+  // token-5 cell pins the opposite: *"the positive control is that a well-formed interior-wildcard
+  // TOP-LEVEL pattern LOADS"* — `file.entity.*` IS that legal interior-wildcard form, so the arm's
+  // NEGATIVE subject is the malformed/ambiguous wildcard placement (`*.entity.order` etc.), and
+  // the well-formed interior-wildcard spelling is the arm's NAMED positive. Arm (e) — whose
+  // construction-time half has NO subject under the register ruling (the frozen surface's arm (e)
+  // report, the seat's R21 form) — is REPORTED beside, never skipped, with its positive (a second
+  // TIER's holder for one ROOT's logical path LOADS) driven.
   it('F-18 · §2.4 item 5 · the register\u2019s closed SIX construction-time arms each refuse with their own token, each beside a NAMED positive control', async () => {
     const { reason, make } = await factoryFor('F-18')
     expect(make, `F-18 — ${reason ?? ''}`).not.toBe(null)
@@ -1168,7 +1225,7 @@ describe('§2.4/§2.5 · the filter rule and the register', () => {
       ['(b) secure-refused — a declared row whose first segment is `secure`', { declarations: { rows: [{ name: 'secure.entity.secret' }] } }, 'secure-refused'],
       ['(c) undeclared-name — a DOUBLED top-level name', { declarations: { rows: [{ name: 'file.entity.order' }, { name: 'file.entity.order' }] } }, 'undeclared-name'],
       ['(d) reserved-namespace — a name colliding with a reserved namespace key', { declarations: { rows: [{ name: 'file.entity.order' }] }, reservedNamespaces: ['entity'] }, 'reserved-namespace'],
-      ['(f) malformed-pattern — a malformed or ambiguous top-level pattern', { declarations: { rows: [{ name: 'file.entity.*' }, { name: 'file.entity.order' }] } }, 'malformed-pattern'],
+      ['(f) malformed-pattern — a MALFORMED/AMBIGUOUS top-level pattern (the wildcard at the TIER or the TOP position)', { declarations: { rows: [{ name: '*.entity.order' }] } }, 'malformed-pattern'],
     ]
     for (const [arm, options, token] of arms) {
       const outcome = constructionOutcome(factory, options)
@@ -1177,6 +1234,20 @@ describe('§2.4/§2.5 · the filter rule and the register', () => {
       const control = constructionOutcome(factory, { declarations: { rows: [{ name: 'file.entity.order' }] } })
       expect(control.threw, `F-18 ${arm} — its NAMED POSITIVE control LOADS (one per arm)`).toBe(false)
     }
+    // THE ARM (f) NAMED POSITIVE — the frozen surface's own control: a WELL-FORMED interior-wildcard
+    // TOP-LEVEL pattern LOADS (`file.entity.*` — wildcard as the LAST segment after a non-wildcard
+    // top), and drives a second malformed placement as the negative's agreeing shape.
+    const fPositive = constructionOutcome(factory, { declarations: { rows: [{ name: 'file.entity.*' }] } })
+    expect(fPositive.threw, 'F-18 (f) POSITIVE control — the well-formed interior-wildcard pattern LOADS (§2.4 item 5\u2019s named control)').toBe(false)
+    const fAmbiguous = constructionOutcome(factory, { declarations: { rows: [{ name: 'file.*.order' }] } })
+    expect(fAmbiguous.threw, 'F-18 (f) — a wildcard before the top (an ambiguous placement) is ALSO refused').toBe(true)
+    expect(fAmbiguous.reason, 'F-18 (f) — the ambiguous placement\u2019s token').toBe('malformed-pattern')
+    // THE ARM (e) REPORT (§2.4 item 5's annotation; the seat's R21 form): the construction-time
+    // half has NO subject under the register ruling (a second TIER's holder for one ROOT's logical
+    // path is not a duplicate declaration) — REPORTED as having none, never silently skipped — and
+    // its positive (the multi-tier spelling LOADS) is exercised.
+    const ePositive = constructionOutcome(factory, { declarations: { rows: [{ name: 'file.entity.order' }, { name: 'temp.entity.order' }] } })
+    expect(ePositive.threw, 'F-18 (e) POSITIVE control — two TIERS of ONE root\u2019s logical path LOAD at construction (arm (e)\u2019s positive, driven beside the no-subject report)').toBe(false)
     const { reason: eReason, make: errMake } = { reason: null as string | null, make: await errorFactory() }
     expect(errMake, `F-18 — ${eReason ?? 'the one exported error constructor'}`).not.toBe(null)
     const err = (errMake as (m: string, r: string) => Record<string, unknown>)('m', 'malformed-name')
@@ -1299,29 +1370,59 @@ describe('§2.7/§2.8 · the write surface and the transaction', () => {
   })
 
   // [T] §3.1 M-10 — anchors are immutable; a re-parent deletes and mints.
+  // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in): the
+  // as-filed drive counted the REGISTER ROWS' refs and expected the count to GROW — but the
+  // register holds only TOP-LEVEL rows (the frozen surface's ruling block: "rows = R = the root
+  // count"), so a re-tier of ONE root cannot grow the row count. The regeneration observable is
+  // the ROW's nodeRef itself: the re-minted root is a NEW node with a NEW ref and NEW anchors —
+  // the pre-regeneration ref is NOT carried (the register's own row re-projection), and the
+  // post-regeneration node answers NEW anchor objects (the frozen surface's D-4/§2.8 item 5's
+  // "re-parenting DELETES and RE-MINTS").
   it('M-10 · §2.2 P-2/§2.6 item 5 · the post-regeneration node is a NEW node with NEW anchors, and no operation mutates one', async () => {
     const store = await storeFor('M-10')
     await settle(store, 'commit', 'temp.entity.id', 'v')
     const before = await mintedRefs(store)
     await settle(store, 'commit', 'file.entity.id', 'v')
     const after = await mintedRefs(store)
-    expect(after.length, 'M-10 — the regeneration MINTS new nodes rather than mutating the original').toBeGreaterThan(before.length)
-    expect(before.every((ref) => !after.includes(ref)), 'M-10 — the pre-regeneration node\u2019s ref is not carried into the regenerated set').toBe(true)
+    expect(after.length, 'M-10 — the register row\u2019s ref set is read (the register holds ONE row per root — rows = R, never a total node count)').toBe(before.length)
+    expect(before.every((ref) => !after.includes(ref)), 'M-10 — the pre-regeneration node\u2019s ref is NOT carried into the regenerated set: the root\u2019s own register row is RE-PROJECTED to a NEW node').toBe(true)
     expect(typeof store.parentLinkCountOf, 'M-10 · R-2 — the parent-link census is the seam that reads the tree invariant').toBe('function')
+    // THE NEW-ANCHORS HALF, read through the seam readers: the node the NEW register row points
+    // at carries its OWN anchors (a FRESH array), while the OLD node's anchors are not the same
+    // objects — the regeneration mints new nodes and never mutates the old ones in place.
+    const rows = ((store.register as Record<string, unknown>)['rows'] ?? []) as Record<string, unknown>[]
+    const rootRow = rows.find((r) => r['name'] === 'entity')
+    const node = store.nodeFor?.(String(rootRow?.['nodeRef']))
+    expect(node, 'M-10 — the seam reader answers the re-projected root node (§2.1\u2019s block annotation; an absent reader is a REPORTED GAP, never a pass)').not.toBe(null)
+    expect(Array.isArray(node?.['anchors']), 'M-10 — the regenerated root carries its anchors array (§2.3 item 2 — a descendant is reached THROUGH its parent\u2019s anchors)').toBe(true)
+    expect((node?.['anchors'] as unknown[]).length, 'M-10 — the drive has SUBJECTS: the regenerated root holds at least ONE anchor for its `id` chain (a vacuous drive FAILS)').toBeGreaterThan(0)
+    expect(typeof store.anchorFor, 'M-10 — the anchor reader is the seam member `anchorFor`').toBe('function')
+    const liveAnchor = store.anchorFor?.(String(rootRow?.['nodeRef']), 'id')
+    expect(liveAnchor, 'M-10 — the anchor the regenerated node holds is readable by its own key').not.toBe(null)
   })
 
   // [T] §3.1 M-11 / §2.8 items 5/6 — the FIVE-step transaction.
+  // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in): the
+  // as-filed tail asserted the old tier's gone-ness as "the read's reason is NOT
+  // 'tier-filter-miss'" — but the re-frozen surface's QUALIFIED arm (field 2.3) means a
+  // tier-qualified read of a path the tier NO LONGER holds answers `'tier-filter-miss'` at
+  // H-FLAG when ANOTHER holder survives (the token names the filter's disagreement, never a
+  // fall-through). "Gone from its old tier" is a TIER-LOCAL fact, and the tier handle's own
+  // `get` (field 2.4: "a record for EVERY name") is the DIRECT observable.
   it('M-11 · §2.8 item 5 · the regeneration is a FIVE-step machine (build → compare census → serialize → validate → accept)', async () => {
     const store = await storeFor('M-11')
     await settle(store, 'commit', 'temp.entity.id', 'v')
     await settle(store, 'commit', 'temp.entity.id.child', 'c')
     const receipt = (await settle(store, 'commit', 'file.entity.id.child', 'c2')) as Record<string, unknown>
     expect(receipt['crossings'], 'M-11 — ONE crossing for the WHOLE regenerated set: a crossing that serializes one reference at a time is a FINDING').toBe(1)
-    const r = receipt as unknown as { receipt?: Record<string, unknown> }
-    const rows = ((r.receipt ?? receipt)['rows'] ?? receipt['rows'] ?? []) as unknown[]
+    const rows = ((receipt['rows'] ?? []) as unknown[])
     expect(rows.length, 'M-11 — `rows[]` carries one entry PER AFFECTED REFERENCE, `N` of them').toBeGreaterThan(0)
     expect((store.resolve('file.entity.id.child') as Record<string, unknown>)['found'], 'M-11 — the regenerated set is live at the requested tier').toBe(true)
-    expect(reasonOf('M-11 — the original is deleted as the transaction\u2019s LAST step', store.resolve('temp.entity.id.child')), 'M-11 — the original re-tier is gone from its old tier').not.toBe('tier-filter-miss')
+    // THE OLD-TIER GONE-NESS, tier-local: the temp copy of the regenerated path was cleared by
+    // the transaction's own clears — the temp tier's handle answers `found:false` for the path
+    // it no longer holds (never an invented value, never a fall-through).
+    const oldTier = (store.tiers as Record<string, unknown>)['temp'] as { get: (n: string) => Record<string, unknown> }
+    expect(oldTier.get('temp.entity.id.child')['found'], 'M-11 — the original re-tier is GONE from its old tier: the temp handle\u2019s tier-local `get` answers `found:false` (§2.8 item 2 — after the durable accept, by logical path)').toBe(false)
   })
 
   // [T] §3.1 M-12 — the census' two declared instruments, never interchanged.
@@ -1337,6 +1438,20 @@ describe('§2.7/§2.8 · the write surface and the transaction', () => {
   })
 
   // [T] §3.2 F-9 — the THREE declared failure arms, each with its own token.
+  // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in): the
+  // as-filed drive reported a regeneration failure for a plain-value commit — but on the
+  // re-frozen surface only ONE of the three arms is DRIVEABLE from the declared surface, and
+  // ONLY at the file tier: `'serialize-failed'` at the regeneration's serialization step for a
+  // value that cannot be represented as saveable JSON (field 2's value row: "One declared
+  // non-representability rule exists at the `file` tier only"; the seat's R79/R80 drive shape).
+  // The other two — `'rebuild-failed'` at the CENSUS COMPARISON and `'validate-failed'` at the
+  // validation arm — have NO drive knob: the seam's ONE fault injector (`failNextCacheRebuild`)
+  // "can fault nothing else — not a read, not a write, not a serialization, not a validation,
+  // and not the CENSUS-COMPARISON arm whose own token is also 'rebuild-failed'" (field 2.3's
+  // TW-2 row), and validation is store-internal. They are members of the closed union BY NAME
+  // and REPORTED as having none (the seat's R81 recorded-not-skipped form), never silently
+  // skipped; the row keeps its id, its section and its ORIGINAL-ALIVE property on the
+  // driveable arm.
   it('F-9 · §2.8 item 6 · all THREE arms are declared failures that leave the ORIGINAL ALIVE (`rebuild-failed` · `serialize-failed` · `validate-failed`)', async () => {
     const store = await storeFor('F-9')
     await settle(store, 'commit', 'temp.entity.id', 'v')
@@ -1344,12 +1459,25 @@ describe('§2.7/§2.8 · the write surface and the transaction', () => {
     for (const token of tokens) {
       expect([...DECLARED_REFUSAL_UNION], `F-9 — the union carries the arm\u2019s own token \`${token}\``).toContain(token)
     }
-    const { receipt, token, alive } = await driveRegenerationFailure(store, 'census-mismatch')
-    expect(tokens, `F-9 — the arm\u2019s token is one of the THREE; the receipt reported \`${String(token)}\``).toContain(token)
-    assertRefusalShape('F-9', receipt, String(token))
+    // THE DRIVEABLE ARM — the file-tier serialization failure: hold at the lower tier, then
+    // commit a value that cannot be represented as saveable JSON at the `file` tier; the
+    // regeneration's serialization step refuses with the EXACT returned record, crosses
+    // NOTHING, emits NOTHING, and the ORIGINAL STILL RESOLVES (nothing deleted, no partial
+    // state — §2.8 item 2: clears happen only AFTER the durable accept, NEVER BEFORE).
+    const receipt = store.commit('file.entity.id', { n: 10n })
+    assertRefusalShape('F-9', receipt, 'serialize-failed')
     expect((receipt as Record<string, unknown>)['crossings'], 'F-9 — a failed regeneration crosses NOTHING').toBe(0)
-    expect((receipt as Record<string, unknown>)['events'], 'F-9 — a failed regeneration emits NOTHING, and §2.10 item 3\u2019s `severed` arm is NOT emitted by any of them').toBe(0)
-    expect(alive, 'F-9 — the ORIGINAL STILL RESOLVES: nothing deleted, no partial state').toBe(true)
+    expect((receipt as Record<string, unknown>)['events'], 'F-9 — a failed regeneration emits NOTHING').toBe(0)
+    const original = store.resolve('temp.entity.id') as Record<string, unknown>
+    expect(original['found'], 'F-9 — the ORIGINAL STILL RESOLVES: nothing deleted, no partial state').toBe(true)
+    expect(original['value'], 'F-9 — the original\u2019s value is the caller\u2019s own').toBe('v')
+    expect(((store.tiers as Record<string, unknown>)['file'] as { get: (n: string) => Record<string, unknown> }).get('file.entity.id')['found'], 'F-9 — nothing was minted at the file tier (the refusal precedes any accept)').toBe(false)
+    // THE TWO NO-KNOB ARMS, REPORTED NOT-SKIPPED (the seat's R81 census row): both tokens are
+    // members of the closed union BY NAME, and the seam's EIGHT declared members carry EXACTLY
+    // ONE fault injector (`failNextCacheRebuild`), whose arm is the walk's F-CACHE rebuild —
+    // neither the census-comparison arm nor the validation arm has a knob from the declared
+    // surface; a row that claimed a knob for them would be inventing a second surface.
+    expect(typeof store.failNextCacheRebuild, 'F-9 — the seam\u2019s ONE fault injector is `failNextCacheRebuild` (the census-comparison and validation arms have NO other knob)').toBe('function')
   })
 
   // [T] §3.2 F-10 — a remove inside the window: ONE crossing, one row per reference.
@@ -1544,18 +1672,56 @@ describe('§2.6 · the two caches', () => {
 // ===========================================================================
 describe('§2.10 · the event surface and the severance', () => {
   // [T] §3.1 M-7 — one commit event plus one clear per cleared lower reference.
-  it('M-7 · §2.8 item 2/§2.10 items 2/5 · the commit fires ONCE and each cleared lower reference fires its OWN `cause:\\u0027clear\\u0027`', async () => {
+  // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in): the
+  // as-filed drive seeded temp FIRST and mem SECOND — so the mem commit (a higher tier) had
+  // ALREADY cleared the temp copy, and the file commit had only ONE lower copy left to clear —
+  // and it subscribed on the committed reference's FULL spelling while the regeneration's
+  // commit-row events are emitted per AFFECTED REFERENCE (the row spellings the transaction
+  // re-mints, G4-F3's one-event-per-affected-reference rule), so the count arms had no subject.
+  // The re-authored drive splits the row's two intents onto their own drivable arms: (A) a
+  // SINGLE-reference commit fires EXACTLY ONE `cause:'commit'` to its own exact-reference
+  // subscriber (the caller's own spelling — the F3-affirmed one-event-one-delivery pair), and
+  // (B) a higher-tier regeneration over TWO surviving lower copies clears exactly those, and
+  // each cleared lower reference fires its OWN `cause:'clear'` on its OWN path (one event per
+  // actually-cleared reference, G4-F4's truthfulness reading) — with the receipt's `events`
+  // equal to the affected-reference count (rows + cleared).
+  it('M-7 · §2.8 item 2/§2.10 items 2/5 · the commit fires ONCE and each cleared lower reference fires its OWN `cause:\u0027clear\u0027`', async () => {
     const store = await storeFor('M-7')
-    await settle(store, 'commit', 'temp.window.tabs', 't')
+    // (A) THE COMMIT-FIRES-ONCE ARM: a mint at a FRESH path under a declared top — the committed
+    // reference's own exact subscriber receives EXACTLY ONE `cause:'commit'` naming the caller's
+    // own spelling, and the receipt counts the ONE affected reference (G4-F3: one affected
+    // reference answers events: 1; one subscriber answers deliveries: 1). The drive sits on the
+    // `entity` root — a DIFFERENT root from (B)'s `window` — so the (A) mint's tier choice can
+    // never make (B)'s higher-tier seed a durability inversion.
+    const own: Record<string, unknown>[] = []
+    store.subscribe('temp.entity.own', (e) => own.push(e as Record<string, unknown>))
+    const single = (await settle(store, 'commit', 'temp.entity.own', 'o')) as Record<string, unknown>
+    expect(single['status'], 'M-7 (A) — the single-reference mint commits').toBe('committed')
+    expect(single['events'], 'M-7 (A)/G4-F3 — the receipt counts the ONE affected reference').toBe(1)
+    expect(own.filter((e) => e['cause'] === 'commit').length, 'M-7 (A) — the committed reference\u2019s own subscriber receives EXACTLY ONE `cause:\u0027commit\u0027`').toBe(1)
+    expect(own[0]?.['name'], 'M-7 (A) — the commit event\u2019s `name` is the caller\u2019s own spelling').toBe('temp.entity.own')
+    // (B) THE CLEARS ARM: seed the `window` chain at mem FIRST, then temp (so BOTH lower copies
+    // survive — the monotonic-persistence ordering: mem before temp, so neither seed inverts a
+    // parent it lands under), then commit the same logical path at the HIGHER file tier — the
+    // regeneration clears EXACTLY the two lower copies and each clears its OWN `cause:'clear'`
+    // on its OWN path.
     await settle(store, 'commit', 'mem.window.tabs', 'm')
+    await settle(store, 'commit', 'temp.window.tabs', 't')
     const events: Record<string, unknown>[] = []
-    for (const p of ['file.window.tabs', 'mem.window.tabs', 'temp.window.tabs']) store.subscribe(p, (e) => events.push(e as Record<string, unknown>))
+    for (const p of ['mem.window.tabs', 'temp.window.tabs']) store.subscribe(p, (e) => events.push(e as Record<string, unknown>))
     const receipt = (await settle(store, 'commit', 'file.window.tabs', 'f')) as Record<string, unknown>
-    const commits = events.filter((e) => e['cause'] === 'commit')
+    expect(receipt['status'], 'M-7 (B) — the higher-tier commit commits').toBe('committed')
+    expect(receipt['cleared'], 'M-7 (B) — the regeneration clears EXACTLY the two lower copies (by logical path, after the durable accept)').toEqual(['mem.window.tabs', 'temp.window.tabs'])
     const clears = events.filter((e) => e['cause'] === 'clear')
-    expect(commits.length, 'M-7 — the committed reference\u2019s own subscriber receives EXACTLY ONE `cause:\\u0027commit\\u0027`').toBe(1)
-    expect(clears.length, 'M-7 — the mem and temp subscribers each receive exactly one `cause:\\u0027clear\\u0027` ON THEIR OWN PATHS').toBe(2)
-    expect(receipt['events'], 'M-7/§2.10 item 5 — `events` is the count of EVENTS EMITTED, not of listeners invoked').toBe(3)
+    expect(clears.length, 'M-7 (B) — each cleared lower reference fires its OWN `cause:\u0027clear\u0027` (one per cleared reference)').toBe(2)
+    expect(clears.map((e) => e['name']).sort(), 'M-7 (B) — each clear event names ITS OWN path (never a list-carrying event, never another reference\u2019s path)').toEqual(['mem.window.tabs', 'temp.window.tabs'])
+    // (C) THE RECEIPT COUNT IS THE AFFECTED-REFERENCE COUNT (G4-F3/I-16): rows (the committed
+    // path's regenerated references) plus cleared — the count is the events', never the
+    // listeners' (the commit-row events are emitted per affected reference even where the row
+    // spelling has no subscriber).
+    expect(receipt['events'], 'M-7/§2.10 item 5 · `events` is the count of EVENTS EMITTED, not of listeners invoked').toBe(
+      (receipt['rows'] as unknown[]).length + (receipt['cleared'] as unknown[]).length,
+    )
     for (const e of events) {
       for (const member of ['name', 'flag', 'value', 'cleared', 'cause']) {
         expect(Object.prototype.hasOwnProperty.call(e, member), `M-7 · I-15 — the envelope\u2019s five common members are present AS KEYS on every event (\`${member}\`)`).toBe(true)
@@ -1629,15 +1795,31 @@ describe('§2.9 · the multi-level export', () => {
   })
 
   // [T] §3.1 M-16 — no second authority.
+  // ⟶ RE-AUTHORED 2026-10-05 (U-STORE-CORE G1, the re-freeze's legacy re-author fold-in): the
+  // as-filed drive wrote `file._Entity.order` under a top the fixture never declared and pinned
+  // a DOTTED register row (`'_Entity.order'`) — the pre-freeze mint's answer. G4-F1 (the
+  // write-side C-TOP gate) forbids minting an undeclared/dotted root, so the re-grain is the
+  // DECLARED-TOP drive (the brief's "dotted-root pins become declared-top drives"): the mixed-
+  // case top IS declared, its register row reads the root name VERBATIM (`'_Entity'`, never the
+  // caller's dotted path, never a normalized spelling), the answer's `name` is the caller's own
+  // spelling, and the lower-cased variant is a DIFFERENT name — refused at C-TOP, proving the
+  // store derives, defaults and re-keys NOTHING it was given.
   it('M-16 · §2.2 P-7/§2.7 item 5 · the store derives, defaults and re-keys NOTHING it was given', async () => {
-    const store = await storeFor('M-16')
+    const { reason, make } = await factoryFor('M-16')
+    expect(make, `M-16 — ${reason ?? ''}`).not.toBe(null)
+    const store = (make as (o?: unknown) => unknown)({
+      declarations: { rows: [{ name: 'file._Entity.order' }] },
+      enableTestSeam: true,
+    }) as StoreLike
     const spelling = 'file._Entity.order'
     await settle(store, 'commit', spelling, 'v')
     const rows = ((store.register as Record<string, unknown>)['rows'] ?? []) as Record<string, unknown>[]
-    expect(rows.map((r) => r['name']), 'M-16 — the register row reads the caller\u2019s spelling VERBATIM: no normalization, no re-key').toContain('_Entity.order')
+    expect(rows.map((r) => r['name']), 'M-16 — the register row reads the top-level name VERBATIM (`_Entity`, case kept): never a dotted root (G4-F1) and never a normalized spelling').toEqual(['_Entity'])
+    expect(String(rows[0]?.['name']).includes('.'), 'M-16 — NO dotted root exists: the register holds the ROOT name, never the caller\u2019s dotted path').toBe(false)
     const answer = store.resolve(spelling) as Record<string, unknown>
     expect(answer['name'], 'M-16 — the answer\u2019s `name` is the caller\u2019s OWN spelling').toBe(spelling)
     expect(reasonOf('M-16 — no derived default: the lower-cased spelling is a DIFFERENT name and is not found', store.resolve('file._entity.order')), 'M-16 — no normalization').not.toBe(null)
+    expect(reasonOf('M-16 — the lower-cased spelling is refused at C-TOP', store.resolve('file._entity.order')), 'M-16 — the case-distinct top is refused \u0027undeclared-name\u0027: the store re-keys nothing').toBe('undeclared-name')
   })
 
   // [T] §3.2 F-22 — the export may not cross.

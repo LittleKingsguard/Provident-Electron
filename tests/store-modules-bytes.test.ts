@@ -905,11 +905,34 @@ describe('H2a U-STORE-MODULES-BYTES — §3.1 valid states (the store-backed fam
     expect(() => host.render()).not.toThrow()
     expect(host.keys(), 'M-LS-8/P4 — A-16: every method after dispose returns a valid result').toEqual([])
     // LEG B — the REAL store: the module-level guarantee against the hardware store
-    const real = wiredGraphStore()
+    // ⟶ RE-GRAINED 2026-10-05 (U-STORE-CORE G1, the POST-UNIT-ADV-1 re-grain family): the
+    // as-filed tail asserted the no-further-delivery via the follow-up commit's RECEIPT
+    // `events` — but G4-F3 (the F3 pin) re-defines `events` as "a function of the AFFECTED
+    // REFERENCES, not of the listeners": one affected reference answers `events: 1` whether or
+    // not ANY subscriber exists, so a subscriber-less post-dispose commit reads events: 1, NOT
+    // 0. The no-further-delivery observable is the LISTENER RECORD — the host's own listener
+    // (the ONLY consumer of its order reference) re-reads the reference on every delivery
+    // (`onOrderEvent` → `resolve`), so a resolve-count record over the REAL store is the
+    // delivery record: zero new host resolutions after the dispose = zero deliveries. The F3
+    // arm (events: 1, deliveries: 0) is asserted BESIDE it.
+    const realBase = wiredGraphStore()
+    let hostResolves = 0
+    const real: GraphStore = new Proxy(realBase, {
+      get(target, prop, receiver) {
+        const value = Reflect.get(target, prop, receiver)
+        if (typeof value !== 'function') return value
+        return (...args: unknown[]) => {
+          if (String(prop) === 'resolve' && String(args[0]) === 'mem.list.h1.order') hostResolves += 1
+          return (value as (...a: unknown[]) => unknown).apply(target, args)
+        }
+      },
+    }) as GraphStore
     const realHost = makeListHost(real, 'h1')
     realHost.setEntries([{ key: 'a', node: makeNode() }])
-    // positive control — the host's own listener delivers (events 1)
+    // positive control — the host's own listener delivers (the resolve record gains the drive)
+    const resolvesAtControl = hostResolves
     expect(real.commit('mem.list.h1.order', ['a'], { onRepeat: 'edit' }).events, 'M-LS-8/P4 — positive control: the host’s own listener delivers 1').toBe(1)
+    expect(hostResolves, 'M-LS-8/P4 — the positive control’s delivery is observable on the host’s own listener record (a delivery ⇒ its read-only re-invocation ran)').toBe(resolvesAtControl + 1)
     let realDisposeAnswer: unknown = 'unset'
     const aHandle = real.subscribe('mem.list.h1.order', () => { realDisposeAnswer = realHost.dispose() })
     const bHandle = real.subscribe('mem.list.h1.order', () => undefined)
@@ -917,18 +940,23 @@ describe('H2a U-STORE-MODULES-BYTES — §3.1 valid states (the store-backed fam
     const receipt = real.commit('mem.list.h1.order', ['a'], { onRepeat: 'edit' })
     expect(receipt.status, 'M-LS-8/P4 — the in-flight delivery completes; the commit returns normally').toBe('committed')
     expect(realDisposeAnswer, 'M-LS-8/P4 — the re-entrant dispose returns normally on the real store').toBeUndefined()
+    const resolvesAtDispose = hostResolves
     // release the test-owned parties, then: NO FURTHER delivery to the host's
-    // listeners — the post-dispose commit delivers 0 (the host's subscription
-    // died AT the dispose; dispose removed it synchronously)
+    // listeners — the host's subscription died AT the dispose; dispose removed it
+    // synchronously, so the follow-up commit's DELIVERIES to the host read 0
     void aHandle.unsubscribe()
     void bHandle.unsubscribe()
-    expect(real.commit('mem.list.h1.order', ['a'], { onRepeat: 'edit' }).events, 'M-LS-8/P4 — from the moment dispose begins no further delivery is dispatched to the host’s listeners').toBe(0)
+    const followUp = real.commit('mem.list.h1.order', ['a'], { onRepeat: 'edit' })
+    expect(followUp.status, 'M-LS-8/P4 — the follow-up commit itself is committed').toBe('committed')
+    expect(followUp.events, 'M-LS-8/P4/G4-F3 — THE F3 ARM: the follow-up commit affects ONE reference, so its receipt reads `events: 1` — the count is the events’, never the subscribers’ (zero matching subscribers never deletes the event from the count)').toBe(1)
+    expect(hostResolves, 'M-LS-8/P4 — THE DELIVERY RECORD: from the moment dispose begins NO FURTHER delivery is dispatched to the host’s listeners — the host’s own listener record gained NOTHING from the follow-up commit (0 deliveries)').toBe(resolvesAtDispose)
   })
 
-  it('M-LS-9 — the REAL-store two-step node-record observable (gate-4 F-6a): the store’s OWN serialize-failed gate refuses a DIRECT mint of the caller’s opaque node; the module’s declared node-record turn (the caller’s NODE by reference, §2.1 item 2) lands the marker + the node — the opaque marker occupies the leaf, then the raw node on the edit path — with the readback HIT and the differential equal; the events stay as the spec pins', () => {
-    const real = wiredGraphStore()
+  it('M-LS-9 — the REAL-store node-record observable RE-AIMED TO THE FILE-TIER-ONLY SERIALIZATION RULE (gate-4 F-6a): the frozen surface’s value row declares the ONE non-representability rule "at the `file` tier only" — so the mem-tier direct mint of the caller’s opaque node is NOT refused at serialize (it commits; the module’s own turn is then the SINGLE raw-node write — the two-step marker-then-node is the module’s strategy for a REFUSING tier, driven at the file tier where the rule fires); the module’s declared node-record turn (the caller’s NODE by reference, §2.1 item 2) lands the raw node — with the readback HIT and the differential equal; the FILE-tier refusal arm (direct mint refused `serialize-failed`, original alive, nothing deleted) and the module’s two-step shape (marker then node on the refusing tier) are driven beside it; the events are the F3 counts (one per affected reference) and the deliveries follow the listener record', () => {
+    const realBase = wiredGraphStore()
+    let orderResolves = 0
     const captured: Array<{ name: string; value: unknown; receipt: GraphWriteReceipt }> = []
-    const wrapped: GraphStore = new Proxy(real, {
+    const real: GraphStore = new Proxy(realBase, {
       get(target, prop, receiver) {
         const value = Reflect.get(target, prop, receiver)
         if (typeof value !== 'function') return value
@@ -937,46 +965,74 @@ describe('H2a U-STORE-MODULES-BYTES — §3.1 valid states (the store-backed fam
           if (String(prop) === 'commit') {
             captured.push({ name: String(args[0]), value: args[1], receipt: result as GraphWriteReceipt })
           }
+          if (String(prop) === 'resolve' && String(args[0]) === 'mem.list.h1.order') orderResolves += 1
           return result
         }
       },
     }) as GraphStore
     const nodeA = makeNode()
     const ref = 'mem.list.h1.node.a'
-    // positive control — the store's OWN gate refuses a DIRECT mint of the opaque node
+    // (1) THE MEM-TIER DIRECT MINT IS NOT REFUSED AT SERIALIZE (the re-aimed positive): the
+    // value row declares the serialize-failed arm at the FILE tier only — the mem tier NEVER
+    // refuses a size, magnitude or shape, so the direct mint of the opaque node COMMITS and the
+    // readback answers the caller's node BY REFERENCE.
     const direct = real.commit(ref, nodeA, { onRepeat: 'edit' })
-    expect(direct.status, 'M-LS-9 — the store’s serialize-failed gate refuses a direct mint of the caller’s node').toBe('refused')
-    expect(direct.reason, 'M-LS-9 — the refusal is the frozen store’s serialize-failed arm').toBe('serialize-failed')
-    const host = makeListHost(wrapped, 'h1')
+    expect(direct.status, 'M-LS-9 — the mem-tier direct mint of the opaque node COMMITS (the serialize rule is FILE-TIER ONLY — field 2’s value row; §2.8 item 6(b))').toBe('committed')
+    const directHit = real.resolve(ref) as GraphReadHit
+    expect(directHit.found, 'M-LS-9 — the mem-tier direct mint readback answers a HIT').toBe(true)
+    expect(directHit.value, 'M-LS-9 — the direct mint readback is the caller’s node BY REFERENCE').toBe(nodeA)
+    // (2) THE MODULE'S OWN TURN AT THE MEM TIER: the raw node lands in the ONE write (no
+    // refusing tier on the mem path, so the marker-then-node two-step is not taken on THIS
+    // tier); the readback HIT and the differential equal (the R-3 canonical comparator).
+    const host = makeListHost(real, 'h1')
     captured.length = 0
+    orderResolves = 0
     host.setEntries([{ key: 'a', node: nodeA }])
-    // THE TWO-STEP: first the raw node (refused by the gate — the module consumes
-    // the returned receipt as a record, §2.1 item 3), then the opaque marker
-    // occupies the leaf, then the raw node lands on the EDIT path (edit outcomes
-    // carry no value gate — the record ends as the caller's node by reference).
     const nodeWrites = captured.filter((entry) => entry.name === ref)
-    expect(nodeWrites.length, 'M-LS-9 — the module’s node-record turn is the two-step (marker + node) preceded by the refused raw write').toBe(3)
-    expect(nodeWrites[0]?.value, 'M-LS-9 — step 0: the raw node is offered first').toBe(nodeA)
-    expect(nodeWrites[0]?.receipt.status, 'M-LS-9 — the raw node’s mint is refused by the store’s own gate').toBe('refused')
-    expect(nodeWrites[1]?.value, 'M-LS-9 — the opaque marker occupies the leaf (the store value the gate accepts)').toEqual({ present: true })
-    expect(nodeWrites[1]?.receipt.status, 'M-LS-9 — the marker mint is committed').toBe('committed')
-    expect(nodeWrites[2]?.value, 'M-LS-9 — the raw node lands on the edit path, by reference').toBe(nodeA)
-    expect(nodeWrites[2]?.receipt.status, 'M-LS-9 — the edit commits (edit outcomes carry no value gate)').toBe('committed')
-    // the readback HIT and the differential equal (the R-3 canonical comparator)
-    const readback: GraphResolveResult = wrapped.resolve(ref)
+    expect(nodeWrites.length, 'M-LS-9 — the module’s node-record turn at the mem tier is the SINGLE raw-node write (the two-step fires only where the store refuses)').toBe(1)
+    expect(nodeWrites[0]?.value, 'M-LS-9 — the raw node lands BY REFERENCE').toBe(nodeA)
+    expect(nodeWrites[0]?.receipt.status, 'M-LS-9 — the mem-tier raw-node write commits').toBe('committed')
+    expect(nodeWrites[0]?.receipt.events, 'M-LS-9/G4-F3 — the F3 count: ONE affected reference answers `events: 1` (the receipt’s count is the events’, never the listeners’)').toBe(1)
+    // THE DELIVERY RECORD: the module holds EXACTLY ONE subscription — on the ORDER reference
+    // (§2.4 item 1) — and the node-record writes deliver NOTHING to it (the host's own listener
+    // re-reads ONLY on an order delivery, so its resolve record is flat across the node writes).
+    expect(orderResolves, 'M-LS-9 — the node-record writes deliver NOTHING to the module’s own subscription (0 deliveries on the listener record)').toBe(0)
+    const readback: GraphResolveResult = real.resolve(ref)
     expect(readback.found, 'M-LS-9 — the readback answers a HIT').toBe(true)
     if (readback.found) {
       expect(canonicalProjection(readback.value), 'M-LS-9 — the differential is equal: the readback value is the caller’s node').toEqual(canonicalProjection(nodeA))
     }
-    // events stay as the spec pins: the node-record writes deliver NOTHING to the
-    // module's own subscription (per-reference delivery — the module holds EXACTLY
-    // ONE subscription, on the ORDER reference, §2.4 item 1), and the pinned
-    // M-LS-3 reading is unchanged: an external order commit still delivers ≥ 1.
-    for (const entry of nodeWrites) {
-      expect(entry.receipt.events, 'M-LS-9 — no store-sourced event is attributable to the node-record writes (no subscriber on a node ref)').toBe(0)
-    }
+    // (3) THE FILE-TIER REFUSAL ARM (the file-tier-only rule, driven): a DIRECT file-tier mint
+    // of the opaque node is refused `serialize-failed` with the EXACT returned record — never a
+    // throw, nothing minted, the original alive.
+    const nodeB = makeNode()
+    const fref = 'file.sev.node.x'
+    const fileDirect = real.commit(fref, nodeB, { onRepeat: 'edit' })
+    expect(fileDirect.status, 'M-LS-9 — the FILE-tier direct mint of the opaque node IS refused at serialize (the ONE declared non-representability site — §2.8 item 6(b))').toBe('refused')
+    expect(fileDirect.reason, 'M-LS-9 — the refusal is the frozen store’s serialize-failed arm').toBe('serialize-failed')
+    expect(fileDirect.cleared).toEqual([])
+    expect(fileDirect.repaired).toEqual([])
+    expect(fileDirect.rows).toEqual([])
+    expect(fileDirect.crossings).toBe(0)
+    expect(fileDirect.events).toBe(0)
+    expect(real.tiers.file.get(fref).found, 'M-LS-9 — nothing was minted at the refusing tier').toBe(false)
+    // (4) THE TWO-STEP MARKER-THEN-NODE, DRIVEN AT THE ONLY REFUSING TIER (the module's own
+    // strategy — writeNodeRecord's fallback: the opaque marker occupies the leaf, then the raw
+    // node lands on the edit path; the record ends as the caller's node by reference).
+    const marker = real.commit(fref, { present: true }, { onRepeat: 'edit' })
+    expect(marker.status, 'M-LS-9 — the marker mint is committed (the store accepts the opaque marker)').toBe('committed')
+    const edit = real.commit(fref, nodeB, { onRepeat: 'edit' })
+    expect(edit.status, 'M-LS-9 — the raw node lands on the EDIT path (edit outcomes carry no value gate)').toBe('committed')
+    const fileReadback = real.resolve(fref) as GraphReadHit
+    expect(fileReadback.found, 'M-LS-9 — the file-tier two-step readback answers a HIT').toBe(true)
+    expect(fileReadback.value, 'M-LS-9 — the record ends as the caller’s node by reference').toBe(nodeB)
+    // (5) THE PINNED M-LS-3 READING IS UNCHANGED: an EXTERNAL order commit still delivers ≥ 1
+    // to the host’s own subscription (the delivery record moves again), and the order record
+    // readback is a HIT.
+    const orderResolvesBefore = orderResolves
     const orderCommit = real.commit('mem.list.h1.order', ['a'], { onRepeat: 'edit' })
     expect(orderCommit.events, 'M-LS-9 — the pinned M-LS-3 reading is unchanged: an external order commit delivers ≥ 1 to the host’s own subscription').toBeGreaterThanOrEqual(1)
+    expect(orderResolves, 'M-LS-9 — the host’s own delivery is on the listener record (the resolve record gains the order delivery)').toBe(orderResolvesBefore + 1)
     expect(real.resolve('mem.list.h1.order').found, 'M-LS-9 — the order record readback is a HIT').toBe(true)
     void host
   })
@@ -1663,11 +1719,17 @@ describe('H2a U-STORE-MODULES-BYTES — §3.5 existence rows', () => {
     expect(hits, 'E-1 — createOwnedListHost/createSlotHost appear in NO src/** import statement').toEqual([])
   })
 
-  it('E-2 — no store byte changes in this unit: the frozen modules’ sha256 digests recompute to their RED-AUTHORING pins (a change during this unit breaks the pin)', () => {
+  it('E-2 — the store bytes are the RE-FROZEN digest (the E-2 cell’s own mechanism — a change during this unit breaks the pin)', () => {
     const digestOf = (rel: string): string =>
       createHash('sha256').update(readFileSync(new URL(`../${rel}`, import.meta.url))).digest('hex')
-    expect(digestOf('src/renderer/store-core-graph.ts'), 'E-2 — store-core-graph.ts byte-unchanged').toBe(
-      '8995f0abf884d5a1b8385b20a3ddbcba9b1d4ec5919b39fed780d7d2f76829f2',
+    // ⟶ RE-PINNED 2026-10-05 (U-STORE-CORE G1, the POST-UNIT-ADV-1 re-grain family): the
+    // store module was the ONE intentional `src/**` change of the re-freeze (the seven
+    // UNIT-ADV-1 pins G4-F1..F7 landed in its bytes), so the digest MOVED BY DESIGN and the
+    // pin is RE-PINNED to the re-frozen bytes (the E-2 cell's own mechanism — this row pins
+    // the changed file's CURRENT sha256 as the re-frozen figure). The input module was NOT
+    // part of the pin set (its span is unchanged) and its digest is UNMOVED.
+    expect(digestOf('src/renderer/store-core-graph.ts'), 'E-2 — store-core-graph.ts carries the RE-FROZEN digest (the seven UNIT-ADV-1 pins are this figure)').toBe(
+      'e3db10fde5d58cf04e32e149b98fb34a49fcb4c9dbefddde566b8b14cdf7b976',
     )
     expect(digestOf('src/renderer/store-graph-references.ts'), 'E-2 — store-graph-references.ts byte-unchanged').toBe(
       '5c0c1a971d7f9268866b46b4d34f803694dd5a43f3b06a0cf81012c20d8f9657',

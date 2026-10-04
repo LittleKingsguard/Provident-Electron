@@ -651,10 +651,46 @@ describe('H1 U-STORE-FOCUS — §2.2 THE AUTHORITY AND THE DIVERGENCE', () => {
     // The tab-list projection is FIXTURE-SUPPLIED (the real file.tabs.* record is the
     // deferred units' — this unit drives the declared rule against a fixture projection).
     const projection = { entries: [{ id: 'only-tab', target: 'only-tab' }], activeId: 'only-tab' }
+    // ⟶ RE-GRAINED 2026-10-05 (U-STORE-CORE G1, the POST-UNIT-ADV-1 re-grain family): the
+    // as-filed drive wrote the stale mirror values onto a FRESH recording store whose top
+    // `mem.focus` was UNDECLARED — G4-F1 (the F1 pin, the write-side C-TOP gate) refuses a
+    // chain write under an undeclared top, so the stale values never landed and the mirror
+    // read a refusal (`.value` undefined), not the stale entry. The re-grain drives the
+    // mirror writes AFTER the FOCUS UNIT'S OWN BOOT DECLARATION: the carrier's construction
+    // MINT-DECLARES the `mem.focus` root (§2.3 item 2 — `commit('mem.focus', undefined)` +
+    // `clear('mem.focus')`, the ONE legal cold-root mint — the boot-mint the implementer
+    // verified conforms), so the fixture mirror writes are the registered-declared path. The
+    // construction census resets after the carrier exists (the register's fresh() discipline —
+    // the boot mint is a construction fact, never a turn), and the mirror writes drive the
+    // F3 counts: receipts by affected reference (events: 1 each) and the deliveries by a
+    // counting listener record on the mirror references (the F3 pair — one event, one
+    // delivery per exact-reference subscription).
     const rec = createRecordingStore()
-    rec.store.commit('mem.focus.entries', [{ id: 'stale', target: 'stale' }])
-    rec.store.commit('mem.focus.activeId', 'stale')
-    const carrier = carrierOf(rec.store)
+    const carrier = carrierOf(rec.store) // the boot MINT-DECLARES `mem.focus` (the focus unit's own boot declaration)
+    rec.commits.length = 0 // the construction census resets (S21-1's fresh() discipline)
+    const staleEntries = rec.store.commit('mem.focus.entries', [{ id: 'stale', target: 'stale' }])
+    const staleActive = rec.store.commit('mem.focus.activeId', 'stale')
+    expect(staleEntries.status, 'S22-3 — the mirror write is the REGISTERED-DECLARED path: the boot-declared `mem.focus` top passes the F1 gate').toBe('committed')
+    expect(staleActive.status).toBe('committed')
+    // G4-F3 — events by AFFECTED REFERENCE (one per reference, whether or not a subscriber
+    // exists).
+    expect(staleEntries.events, 'S22-3/G4-F3 — the mirror write\u2019s receipt counts ONE affected reference').toBe(1)
+    expect(staleActive.events, 'S22-3/G4-F3 — the second mirror write\u2019s receipt counts ONE affected reference').toBe(1)
+    // THE DELIVERIES BY LISTENER RECORD: the F3 pair (one event, one delivery per exact-
+    // reference subscription) is asserted against a counting listener record on the mirror
+    // references — the same-recording-store DOUBLE's own `deliveries` array is not a counting
+    // record (its `recorded` wrapper re-invokes the hook listeners, so it is read only by
+    // DELTA in this suite); the pair itself is the store's declared delivery shape.
+    const entriesDelivery = mintedStore()
+    const activeDelivery = mintedStore()
+    let entriesSeen = 0
+    let activeSeen = 0
+    entriesDelivery.subscribe('mem.focus.entries', () => { entriesSeen += 1 })
+    activeDelivery.subscribe('mem.focus.activeId', () => { activeSeen += 1 })
+    expect(entriesDelivery.commit('mem.focus.entries', [{ id: 'delivered', target: 'delivered' }]).events, 'S22-3/G4-F3 — one affected reference, one event').toBe(1)
+    expect(activeDelivery.commit('mem.focus.activeId', 'delivered').events).toBe(1)
+    expect(entriesSeen, 'S22-3/G4-F3 — the listener record reads the ONE delivery to the entries subscription').toBe(1)
+    expect(activeSeen, 'S22-3/G4-F3 — the listener record reads the ONE delivery to the activeId subscription').toBe(1)
     const commitsBefore = rec.commits.length
     // THE DECLARED RECONCILE READING — the answer computes FROM THE TAB LIST, never from the
     // mirror's stale value: the mirror never self-authorises, and tier 1 wins where driven.
@@ -1741,26 +1777,29 @@ describe('H1 U-STORE-FOCUS — §5.5.1 THE REGISTER (6 rows · 96 attempts · 6 
         expect(persisted.present).toBe(true)
         expect((persisted.value as GraphWriteReceipt).status).toBe('committed')
       } },
-      { name: 'each receipt is the store\'s settled GraphWriteReceipt (events = the DELIVERY count, store-core-graph §2.10 — 0 on a subscription-free store, 1 per exact-reference listener)', drive: (): void => {
-        // THE FROZEN RECEIPT's `events` field counts the DELIVERIES its emits made (per-realm-
-        // per-reference, store-core-graph.md §2.10 item 4 — `emit` returns 0 with no
-        // subscribers), NEVER a write count. On a subscription-free store the settled receipt
-        // reads events: 0 — the store's own declared shape (§2.8).
+      { name: 'each receipt is the store\'s settled GraphWriteReceipt (events = the count of AFFECTED REFERENCES, G4-F3 — 1 on a subscription-free store, still 1 with one exact-reference listener, whose DELIVERY record reads 1)', drive: (): void => {
+        // ⟶ RE-GRAINED 2026-10-05 (U-STORE-CORE G1, the POST-UNIT-ADV-1 re-grain family): the
+        // as-filed drive pinned `events: 0` on a subscription-free store — the pre-re-freeze
+        // delivery-dependent count. G4-F3 (the F3 pin) re-defines `events` as "a function of
+        // the AFFECTED REFERENCES, not of the listeners": one affected reference answers
+        // `events: 1` whether or not ANY subscriber exists — so the subscription-free receipt
+        // reads `events: 1`, and a second reading (a listener added) keeps the receipt at
+        // `events: 1` while the DELIVERY record reads 1 (one event, one delivery — the F3
+        // drive's own pair, asserted against the subscribers' own delivery record).
         const store = mintedStore()
         const receipt = store.commit('mem.focus.activeId', 'r')
         expect(receipt.status).toBe('committed')
         expect(receipt.name).toBe('mem.focus.activeId')
-        expect(receipt.events).toBe(0)
-        // THE POSITIVE DELIVERY SHAPE — one exact-reference listener ⇒ the same commit answers
-        // events: 1 (the store's own bounded fan-out, §2.10 item 4 — exactly one delivery per
-        // subscriber on the committed reference).
+        expect(receipt.events, 'the F3 count — one affected reference answers events: 1 with ZERO subscribers (an absent listener never deletes the event from the count)').toBe(1)
+        // THE POSITIVE DELIVERY SHAPE — one exact-reference listener ⇒ the same commit's
+        // receipt STAYS at events: 1 while the subscriber's own record reads 1 delivery.
         const subscribed = mintedStore()
         let seen = 0
         subscribed.subscribe('mem.focus.activeId', () => { seen += 1 })
         const second = subscribed.commit('mem.focus.activeId', 'r2')
         expect(second.status).toBe('committed')
-        expect(second.events).toBe(1)
-        expect(seen).toBe(1)
+        expect(second.events, 'the receipt\'s events STAYS 1 — the count is the events\', never the listeners\' (G4-F3)').toBe(1)
+        expect(seen, 'the DELIVERY record reads the one delivery (one event, one delivery — F3\'s asserted pair)').toBe(1)
       } },
       { name: 'the events count matches the store\'s own delivery record', drive: (): void => {
         const rec = createRecordingStore()
