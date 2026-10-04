@@ -1,7 +1,9 @@
 // tests/store-focus.test.ts — H1 · U-STORE-FOCUS — THE RED SET (RCA-1), authored BEFORE any
 // implementation.
 //
-// CONTRACT: docs/specs/store-focus.md (952 lines, read in full). LAYER: [T] — the node suite
+// CONTRACT: docs/specs/store-focus.md (952 lines at red-authoring, read in full — corrected BESIDE:
+// 1013 lines at the gate-4 close; the header's census is a red-time figure, never a pinned claim).
+// LAYER: [T] — the node suite
 // driving pure values and recording closures; NO DOM, NO window, NO MCP transport, no focus is
 // ever moved anywhere by this run.
 //
@@ -49,6 +51,30 @@
 //            P4 in-flight shape. NO RE-GRAIN: the register's terms stay 10/12/18/16/24/16 = 96
 //            (a re-drive that changed a row's drive count would re-print the totals with the
 //            caps check — none did).
+//
+// THE GATE-4 RE-AUDIT'S THREE LOW RESIDUALS — REPAIRED 2026-10-03 IN THIS FILE ONLY (per the
+// re-audit's verified reading; §0A note 6's second half names the census cell as the
+// TestWriter-side fix, "corrected by the TestWriter's next pass"):
+//   G's second half  the header census cell (above): corrected BESIDE — "952 lines at
+//            red-authoring" kept visible, "1013 lines at the gate-4 close" added. The header's
+//            census is a red-time figure, never a pinned claim (the spec carries no length
+//            census of its own; the correction lives HERE, never in the spec);
+//   NEW-1    REG-SM-1 drive 3's label RE-AIMED to its body: the drive opens
+//            (`focusRoute({target:'c', newTab:true})` → 2 commits) and the CARRIER cannot flow a
+//            `close` — its verb resolution is open/activate only (§2.3 item 5; the same class the
+//            drives 9–11 re-aim fixed) — so the label now names the accepted+changed OPEN, one
+//            commit per reference (never a verb move, never a term move);
+//   NEW-2    REG-TP-2 drive 16's hostile-clear is now ARMED — the recording double gained a
+//            throwing `clear` host + a `clears` recorder, so the boot-mint absorption is proven
+//            LIVE (the mint runs commit('mem.focus', undefined) then clear('mem.focus') on the
+//            cold store; the clear's throw is absorbed; the carrier still constructs) — AND
+//            drive 11 re-aimed to what the carrier actually reads: the tier-handle fallback form
+//            driven on the REAL host (the mem handle's get reads the mirror: declared miss cold,
+//            found:true held) + a REVOKED `tiers['mem'].get` hosted on the double (the carrier's
+//            read rides the PRIMARY resolver route — the revoked handle answers the held values,
+//            never a throw; the resolve-hostile degradation is drive 7's OWN surface). NO
+//            term/attempt-count change: the register stays 10+12+18+16+24+16 = 96, all HELD,
+//            printed with the chain.
 
 import { readFileSync } from 'node:fs'
 import { describe, it, expect, beforeAll } from 'vitest'
@@ -67,6 +93,7 @@ import {
   type GraphWriteReceipt,
   type GraphSubscription,
   type GraphResolveResult,
+  type GraphTierGetResult,
 } from '../src/renderer/store-core-graph.js'
 import { storeGraphReferences } from '../src/renderer/store-graph-references.js'
 
@@ -250,9 +277,19 @@ interface RecordingStore {
   readonly resolves: string[]
   readonly deliveries: Array<{ readonly name: string; readonly event: GraphEvent }>
   readonly subscriptionsHeld: GraphSubscription[]
+  readonly clears: string[]
   /** HOSTILE TOGGLES — when set, the double's member THROWS (the wiring-turn
-   *  absorption rule: the carrier's turns consume the declared degradation). */
-  readonly hostiles: { resolve: Error | null; commit: Error | null; subscribe: Error | null }
+   *  absorption rule: the carrier's turns consume the declared degradation).
+   *  `clear` (a throwing store-level clear — the boot-mint absorption's own hostile)
+   *  and `tierGet` (a revoked/throwing `tiers['mem'].get`) were ADDED 2026-10-03 by the
+   *  gate-4 re-audit's NEW-2 repairs — the hostile surfaces the double lacked. */
+  readonly hostiles: {
+    resolve: Error | null
+    commit: Error | null
+    subscribe: Error | null
+    clear: Error | null
+    tierGet: Error | null
+  }
   readonly listen: (event: GraphEvent) => void
 }
 
@@ -262,8 +299,29 @@ function createRecordingStore(): RecordingStore {
   const resolves: string[] = []
   const deliveries: Array<{ name: string; event: GraphEvent }> = []
   const subscriptionsHeld: GraphSubscription[] = []
-  const hostiles = { resolve: null as Error | null, commit: null as Error | null, subscribe: null as Error | null }
+  const clears: string[] = []
+  const hostiles = {
+    resolve: null as Error | null,
+    commit: null as Error | null,
+    subscribe: null as Error | null,
+    clear: null as Error | null,
+    tierGet: null as Error | null,
+  }
   const listeners: Array<(event: GraphEvent) => void> = []
+
+  /** THE TIER-HANDLE SURFACE of the double (§2.3 item 3): the real handles, with the mem
+   *  handle's `get` REVOCABLE (a hostile/revoked tier handle — REG-TP-2 drive 11's host). */
+  const tiers: GraphStore['tiers'] = {
+    temp: real.tiers.temp,
+    mem: {
+      ...real.tiers.mem,
+      get(name: string): GraphTierGetResult {
+        if (hostiles.tierGet !== null) throw hostiles.tierGet
+        return real.tiers.mem.get(name)
+      },
+    },
+    file: real.tiers.file,
+  }
 
   const store: GraphStore = {
     ...real,
@@ -276,6 +334,11 @@ function createRecordingStore(): RecordingStore {
       commits.push({ name, value, opts })
       if (hostiles.commit !== null) throw hostiles.commit
       return real.commit(name, value, opts)
+    },
+    clear(name: string): GraphWriteReceipt {
+      clears.push(name)
+      if (hostiles.clear !== null) throw hostiles.clear
+      return real.clear(name)
     },
     subscribe(name: string, listener: (event: GraphEvent) => void, opts?: { subtree?: boolean }): GraphSubscription {
       if (hostiles.subscribe !== null) throw hostiles.subscribe
@@ -291,6 +354,7 @@ function createRecordingStore(): RecordingStore {
       subscriptionsHeld.push(handle)
       return handle
     },
+    tiers,
   } as GraphStore
 
   return {
@@ -299,6 +363,7 @@ function createRecordingStore(): RecordingStore {
     resolves,
     deliveries,
     subscriptionsHeld,
+    clears,
     hostiles,
     listen: (event: GraphEvent): void => listeners.forEach((l) => l(event)),
   }
@@ -1584,7 +1649,7 @@ describe('H1 U-STORE-FOCUS — §5.5.1 THE REGISTER (6 rows · 96 attempts · 6 
         expect(rec.commits.filter((c) => c.name === 'mem.focus.entries')).toHaveLength(1)
         expect(rec.commits.filter((c) => c.name === 'mem.focus.activeId')).toHaveLength(1)
       } },
-      { name: 'close the active id — one commit per reference', drive: (): void => {
+      { name: 'open a FRESH target via newTab:true — the accepted+changed OPEN, one commit per reference — RE-AIMED (2026-10-03, the gate-4 re-audit\'s NEW-1): the OLD label named a CLOSE the carrier cannot flow — its verb resolution is open/activate only (§2.3 item 5)', drive: (): void => {
         const rec = createRecordingStore()
         const carrier = carrierOf(rec.store)
         rec.commits.length = 0
@@ -2050,11 +2115,43 @@ describe('H1 U-STORE-FOCUS — §5.5.1 THE REGISTER (6 rows · 96 attempts · 6 
         const carrier = carrierOf(store)
         expect(typeof carrier.focusRoute).toBe('function')
       } },
-      { name: 'hostile/revoked tier handle → state() answers the declared degradation', drive: (): void => {
+      { name: 'THE TIER-HANDLE FORM + A REVOKED TIER HANDLE — RE-AIMED (2026-10-03, the gate-4 re-audit\'s NEW-2): the OLD drive re-armed drive 7\'s resolve-hostile under a tier-handle label; the carrier\'s read rides the PRIMARY resolver route (§2.3 item 3) — the tier-handle fallback is a LIVE surface of the frozen store and a REVOKED handle cannot disturb a wiring turn', drive: (): void => {
+        // (i) THE FALLBACK FORM ON THE REAL HOST — the mem handle's get is resolveRead with the
+        // tier fixed on the handle: the minted-but-unwritten mirror answers the DECLARED MISS
+        // (found:false) and the held mirror answers found:true with the held value. The QUALIFIED
+        // spelling is the live reading; the tier-stripped 'focus.entries' reads root 'focus'
+        // verbatim per the store's P-7 (the caller's own spelling is the root, carried verbatim)
+        // and answers the declared miss — recorded here, never driven as a value read.
+        const host = mintedStore()
+        expect(host.tiers['mem'].get('mem.focus.entries').found).toBe(false)
+        expect(host.tiers['mem'].get('mem.focus.activeId').found).toBe(false)
+        host.commit('mem.focus.entries', [{ id: 'h1', target: 'h1' }])
+        host.commit('mem.focus.activeId', 'h1')
+        expect((host.tiers['mem'].get('mem.focus.entries').value as readonly FocusEntry[])[0]?.id).toBe('h1')
+        expect(host.tiers['mem'].get('mem.focus.activeId').value).toBe('h1')
+        // (ii) A REVOKED TIER HANDLE on a store HOLDING both references: the carrier constructs
+        // and state() answers the HELD VALUES via the primary resolver route — the revoked
+        // fallback handle neither throws out of a turn nor disturbs the read (the wiring never
+        // consults the tier handle; the resolve-hostile degradation is that surface's OWN drive,
+        // this row's drive 7 — no duplicate re-arm here).
         const rec = createRecordingStore()
+        rec.store.commit('mem.focus', undefined)
+        rec.store.clear('mem.focus')
+        rec.store.commit('mem.focus.entries', [{ id: 'h2', target: 'h2' }])
+        rec.store.commit('mem.focus.activeId', 'h2')
+        rec.hostiles.tierGet = new Error('tier handle revoked')
         const carrier = carrierOf(rec.store)
-        rec.hostiles.resolve = new Error('tier handle revoked')
-        expect(carrier.state()).toEqual({ entries: [], activeId: null })
+        let threw = false
+        let answer: { readonly entries: unknown; readonly activeId: unknown } | null = null
+        try {
+          answer = carrier.state()
+        } catch {
+          threw = true
+        }
+        expect(threw).toBe(false)
+        expect(answer).not.toBeNull()
+        expect((answer?.entries as readonly FocusEntry[])[0]?.id).toBe('h2')
+        expect(answer?.activeId).toBe('h2')
       } },
       { name: 'cold store → no-target route answers the standing answer on the empty mirror', drive: (): void => {
         expect(carrierOf(mintedStore()).focusRoute({})).toEqual({ activeId: null, entries: [], opened: false })
@@ -2083,16 +2180,28 @@ describe('H1 U-STORE-FOCUS — §5.5.1 THE REGISTER (6 rows · 96 attempts · 6 
         store.commit('mem.focus.activeId', 'echo')
         expect(carrierOf(store).focusRoute({ target: 'echo' }).activeId).toBe('echo')
       } },
-      { name: 'a hostile clear during the boot mint → the mint is a no-op and the carrier still constructs', drive: (): void => {
+      { name: 'a hostile clear during the boot mint → the mint is a no-op and the carrier still constructs (the hostile CLEAR is now ARMED — 2026-10-03, the gate-4 re-audit\'s NEW-2: the OLD drive armed NO hostile)', drive: (): void => {
         const rec = createRecordingStore()
+        rec.hostiles.clear = new Error('hostile clear')
         const factory = requireCarrierFactory()
-        let constructed = true
+        let carrier: unknown = null
+        let threw = false
         try {
-          factory(rec.store)
+          carrier = factory(rec.store)
         } catch {
-          constructed = false
+          threw = true
         }
-        expect(constructed).toBe(true)
+        expect(threw).toBe(false)
+        expect(carrier).not.toBeNull()
+        // the hostile clear was REALLY reached, not skirted: on the COLD store the mint probe
+        // answers undeclared-name, so the boot mint RUNS commit('mem.focus', undefined) then
+        // clear('mem.focus') — the clear's throw is absorbed, the mint's clear step is a no-op
+        // and the carrier still constructs (§2.3 items 2/6 — the absorption proven LIVE).
+        expect(rec.clears).toContain('mem.focus')
+        expect(rec.commits.some((c) => c.name === 'mem.focus' && c.value === undefined)).toBe(true)
+        // and the mirror's read still answers the DECLARED record — the post-mint read-side
+        // refusal is consumed as the declared-empty pair, never a throw out of a wiring turn.
+        expect((carrier as { state: () => { readonly entries: unknown; readonly activeId: unknown } }).state()).toEqual({ entries: [], activeId: null })
       } },
     ]
     runRegisterRow(report, drives)
