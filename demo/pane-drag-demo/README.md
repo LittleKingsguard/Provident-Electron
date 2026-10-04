@@ -1,7 +1,12 @@
 # Pane-Drag Live Demo (store-backed)
 
-Live Electron test of the store-integrated pane-drag flow — the reference for the
-fork's H-r6 pass (the fork's own bytes are NOT migrated yet).
+Live Electron test of the store-integrated panes — the drag into a minimized zone,
+the gutter resize lifecycle, the minimized-zone clauses, the tab pane and the full
+tab strip (focus / open / close). **The suite's current total: PANE-DRAG + GUTTER +
+MINIMIZED-ZONE + TAB-BEHAVIOR + TAB-MANAGEMENT LIVE TESTS: ALL GREEN 50/50.** The
+sections below record each block's layered result as it landed (25 → 31 → 41 → 50).
+It is the reference for the fork's H-r6 pass (the fork's own bytes are NOT migrated
+yet).
 
 ## Files
 - `index.html` — the demo page (three zones; zone-3 starts MINIMIZED; panes with

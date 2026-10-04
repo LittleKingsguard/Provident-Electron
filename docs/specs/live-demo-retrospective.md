@@ -1,13 +1,16 @@
 # Live-Demo Retrospective — the difficulties, and the automated tests that were missing
 
-**Status: filed 2026-10-03 · the pane-drag + gutter live-demo build (commit range
-`6384a20` → `6bcda6f`).** This record does two things: (1) it enumerates, honestly,
-every difficulty encountered while getting the store-integrated pane-drag/gutter to
-operate in the LIVE Electron app (not the shim); (2) for each, it names the
-AUTOMATED test case that was missing and would have caught it earlier — so the
-findings are dispositioned as concrete red-set additions, not anecdotes. The live
-results themselves (PANE-DRAG + GUTTER LIVE TESTS: ALL GREEN 25/25) are recorded in
-the demo's README (`demo/pane-drag-demo/README.md`).
+**Status: filed 2026-10-03 · EXTENDED twice in the same day (the live-demo build:
+pane-drag + gutter `6384a20`→`6bcda6f`; minimized-zone + tab-behavior + tab-management
+`20f4c70`→`37a1218`).** This record does two things: (1) it enumerates, honestly,
+every difficulty encountered while getting the store-integrated pane-drag/gutter,
+then the minimized-zone and the tab features, to operate in the LIVE Electron app
+(not the shim); (2) for each, it names the AUTOMATED test case that was missing and
+would have caught it earlier — so the findings are dispositioned as concrete
+red-set additions, not anecdotes. The live results themselves (the suite's LAYERED
+totals: pane-drag+gutter 25 → +minimized-zone 31 → +tab-behavior 41 → +tab-management
+**50/50 ALL GREEN**) are recorded in the demo's README
+(`demo/pane-drag-demo/README.md`).
 
 ---
 
@@ -217,6 +220,28 @@ including the repaired `landingPage` leaf.
   public resolve at the root is not that record.
 
 ## Part 2C — the tab-management build's additional findings (the same session)
+
+### D-20. The dynamic rebuild destroyed its own persistent control
+`renderTabPane` rebuilt the bar with `for (const b of bar.querySelectorAll('.tab-btn')) b.remove()`
+— the `+ new` control (a `.tab-btn`) was removed on every re-render, so the driver's
+second click of `#tab-new` found no box (`no box for #tab-new` fatal). Fix: the rebuild
+exempts the control by id (`if (b.id === 'tab-new') continue`).
+- **The missing test (T-17):** a rendered-host row — "a PERSISTENT control inside a
+  dynamically-rebuilt container survives the rebuild; the rebuild clears the data
+  rows, never its own chrome". A node-DOM test with `mountEl` could carry this (the
+  dom-shim is layout-less but element presence is assertable).
+
+### D-21. The driver read the persistent control as a tab; assertions assumed a stale semantic
+Two driver-hygiene slips in one block: (1) `barButtons` mapped EVERY `.tab-btn`
+including the `+ new` control (whose `data-tab` is null), skewing the counts
+(`buttons=,tabA,tabB,tabC`); fixed by filtering `b.id !== 'tab-new'` in the driver's
+read. (2) The S-4 expectation (tab-behavior block) was written against the OLD
+activate semantics — when the demo's focus-by-recency changed which tab the surplus
+repair keeps, the assertion was stale until re-derived (tabA → tabB).
+- **The missing test (T-18):** a driver-convention row — "an element-read helper that
+  lists the registry-owned items EXCLUDES the persistent chrome", plus the general
+  rule that assertions are re-derived when the pinned semantics change (a doc/driver
+  hypothesis, recorded as a convention).
 
 ### D-19. The synchronous store event VS the consumer registry — two live-only races
 `store.commit`/`store.remove` fire the subscription listener SYNCHRONOUSLY (the

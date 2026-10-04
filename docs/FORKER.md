@@ -397,7 +397,7 @@ timing is a NEW hard row**: reveal is written **exactly once per gesture, at ges
 
 ### THE STORE-BACKED DRAG + GUTTER FEATURES — HOW TO CONSUME THEM (the pane-drag + gutter live-demo reference, `U-PANE-DRAG-COMPLIANCE`'s store edges)
 
-**⟶ ADDED 2026-10-03, THE LIVE-DEMO PASS** (the demo `demo/pane-drag-demo/` + `docs/specs/live-demo-retrospective.md`). **The store-integrated drag + gutter resize are LIVE-VERIFIED against the real store (PANE-DRAG + GUTTER LIVE TESTS: ALL GREEN 25/25) — the fork's H-r6 pass consumes THIS surface.** Every value flows through the store (`createGraphStore`) via the landed composition (`createPaneDrag` from `src/renderer/renderer.ts`); the fork's pane-drag UI bytes are the fork's own — this block is the consumer contract the demo proved.
+**⟶ ADDED 2026-10-03, THE LIVE-DEMO PASS** (the demo `demo/pane-drag-demo/` + `docs/specs/live-demo-retrospective.md`). **The store-integrated drag + gutter resize, the minimized-zone behavior, and the tab strip are LIVE-VERIFIED against the real store (PANE-DRAG + GUTTER + MINIMIZED-ZONE + TAB-BEHAVIOR + TAB-MANAGEMENT LIVE TESTS: ALL GREEN 50/50) — the fork's H-r6 pass consumes THIS surface.** Every value flows through the store (`createGraphStore`) via the landed composition (`createPaneDrag` from `src/renderer/renderer.ts`); the fork's pane-drag UI bytes are the fork's own — this block is the consumer contract the demo proved.
 
 **(i) THE WIRE SHAPES YOU MUST OBSERVE (each cost the live session when missed — the red set could not see them, the live driver now asserts them):**
 
@@ -430,7 +430,19 @@ needs `--no-sandbox --disable-dev-shm-usage` and the flags BEFORE the app path
 `--user-data-dir` + port (or a stale-window preflight) prevents attaching to a dead
 realm; `Input.dispatchMouseEvent` needs a ~150ms settle after `mousePressed` and
 `buttons: 1` on moves — rapid no-sleep moves are coalesced and the gesture dies
-silently. Full row-level detail: `docs/specs/live-demo-retrospective.md` (D-1..D-13,
+silently. **(v) THE TAB STRIP + TAB PANE (the live-tested consumer surface):** tabs live at
+`mem.tabs.<id>` with `{ active, lastActive }`; the pane READS the active tab's data, DISPLAYS it,
+MODIFIES it (a store commit) and re-renders via a SUBTREE subscription on `mem.tabs`
+(`{ subtree: true }` — the ancestor fan-out). The exactly-one-active CONSTRAINT is the CR6 worked
+example as caller-supplied functions (constraint = exactly one `active`; repair arms (a) surplus →
+de-activate the rest keeping the most recent, (b) none → re-activate the most-recent per tab-local
+`lastActive`, (c) empty → open `landingPage`). FOCUS = a commit bumping the target's `lastActive`
+above all others (the surplus repair keeps it); OPEN = a new active leaf at max+1; CLOSE = a remove
+(a closed ACTIVE tab → arm (b) reactivates a survivor). ATTENTION: the store's events are
+SYNCHRONOUS — a consumer registry that drives the render must update it BEFORE the write on the
+same turn (closeTab/openNewTab ordering, D-19/T-16).
+Full row-level detail: `docs/specs/live-demo-retrospective.md` (D-1..D-21,
+
 T-1..T-10).
 
 ### THE STORE-ADDRESSED MCP READS — WHAT A FORK MUST RE-ROUTE (`H3`, `U-FORK-STORE-READS`)
