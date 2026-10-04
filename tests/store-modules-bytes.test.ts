@@ -179,6 +179,10 @@ import type { SlotHost, SlotHostOptions, SlotHostResult, SlotKey } from '../src/
 // — store-core-graph.md §2.1) and adds NO member of its own; the instrumentation
 // (active set, written map, delivery counters, event census, call log) lives on
 // the harness's returned `state`, never on the store-shaped object.
+// ⟶ DATED NOTE (2026-10-06, the G2 `HYDRATE-1` re-cycle): `hydrate(rows)` is
+// PRODUCTION-PRESENT and a REQUIRED `GraphStore` member since the HYDRATE-1
+// amendment (frozen-surface field 2), so the double carries it — as a recording
+// no-op (see `hydrateImpl` below): not a member of the double's own.
 // ---------------------------------------------------------------------------
 
 const LIST_HOST_SRC = readFileSync(new URL('../src/shared/owned-list-host.ts', import.meta.url), 'utf8')
@@ -478,6 +482,16 @@ function createRecordingDouble(): { store: GraphStore; state: DoubleState } {
     },
   })
 
+  /** `store.hydrate(rows)` — the HYDRATE-1 boot-hydration seam (frozen-surface field 2;
+   *  PRODUCTION-PRESENT, never a test-seam key; the interface's REQUIRED 13th member) is a
+   *  part of the `GraphStore` shape now, so the double MUST carry it. This double's hydrate
+   *  is a recording no-op (records the call on `state`; mints nothing): the modules under
+   *  test never drive a boot hydrate, and the mint + fired-event surface is the real
+   *  store's, driven in store-core-graph-integration.test.ts's H1–H8 rows. */
+  const hydrateImpl = (rows: readonly { readonly name: string; readonly value: unknown }[]): void => {
+    state.calls.push({ member: 'hydrate' })
+  }
+
   const store: GraphStore = {
     resolve: resolveImpl,
     set: setImpl,
@@ -496,6 +510,7 @@ function createRecordingDouble(): { store: GraphStore; state: DoubleState } {
     }),
     register: { rows: [] },
     constraints: [],
+    hydrate: hydrateImpl,
   }
 
   return { store, state }

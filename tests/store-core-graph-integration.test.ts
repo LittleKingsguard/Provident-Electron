@@ -1383,7 +1383,11 @@ describe('U-STORE-CORE module wave — T4 integration red set (fields 3/6 wiring
     const xSub = store.subscribe('mem.x.v', (e) => xEv.push(e))
     let ret: unknown = 'sentinel'
     expect(() => {
-      ret = store.hydrate(rows)
+      // The term array is DECLARED `unknown[]` because six of its rows are deliberately
+      // out-of-domain runtime data (null, 7, 'junk', a non-string name, a name-less row);
+      // the call asserts the seam's declared parameter shape (`HYDRATE-1`, field 2 —
+      // `rows: { name: string; value: unknown }[]`) — the interface is NOT weakened.
+      ret = store.hydrate(rows as readonly { readonly name: string; readonly value: unknown }[])
     }).not.toThrow() // never a throw — the row-level skip re-uses the seed seam's skip shape
     expect(ret).toBeUndefined()
     expect((store.resolve('file.ok') as GraphReadHit).found).toBe(true) // the record's OTHER rows still mint
@@ -1404,7 +1408,10 @@ describe('U-STORE-CORE module wave — T4 integration red set (fields 3/6 wiring
     expect(terms).toHaveLength(3)
     const store = createGraphStore()
     for (const term of terms) {
-      expect(() => store.hydrate(term)).not.toThrow() // never a throw
+      // `term` is declared `unknown` because 'not-an-array' / {} are out-of-domain runtime
+      // data; the call asserts the seam's declared parameter shape (`HYDRATE-1`, field 2) —
+      // the interface is NOT weakened.
+      expect(() => store.hydrate(term as readonly { readonly name: string; readonly value: unknown }[])).not.toThrow() // never a throw
     }
     expect(store.register.rows).toHaveLength(0) // no mint — the register stays empty
     expect((store.tiers.file.get('file.anything') as GraphTierGetResult).found).toBe(false)
