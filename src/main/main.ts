@@ -6,9 +6,9 @@ import { app, BrowserWindow, ipcMain } from 'electron'
 import { join, dirname } from 'node:path'
 import { readFileSync, writeFileSync, renameSync, existsSync, mkdirSync, rmSync, openSync, closeSync, fsyncSync } from 'node:fs'
 import { createHash } from 'node:crypto'
-import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_NOTIFY, IPC_MODULE_GET, IPC_MODULE_SET_DISABLED, type RpcReply, type NotifyPayload } from '../shared/types.js'
+import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_NOTIFY, IPC_MODULE_GET, IPC_MODULE_SET_DISABLED, type RpcReply, type NotifyPayload, type SecuritySettings } from '../shared/types.js'
 import { ProvidentMcpServer, RendererBackend, type McpTransportKind } from './mcp-server.js'
-import { createSecurityStore, type SecurityStore } from './security-store.js'
+import { createSecurityStore, type SecurityStore, type SecurityWriteReceipt } from './security-store.js'
 import { createModuleStore, type ModuleStore, type ModuleRecord, type ModuleStoreStatus } from './module-store.js'
 import { STORE_FILE_GET, STORE_FILE_PUT } from './store-channels.js'
 import { CapabilityRouter } from '../renderer/extensions.js'
@@ -368,7 +368,15 @@ async function main(): Promise<void> {
 
   ipcMain.handle(IPC_SECURITY_GET, () => securityStore.get())
   ipcMain.handle(IPC_SECURITY_SET, (_event, patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }) => {
-    const updated = securityStore.set(patch)
+    // THE RECEIPT'S ADDITIVE DELIVERY (§2.3 items 2/4 — the C-11 NON-BREAKING
+    // reading, G3 2026-10-03): `set()`'s OWN return stays the post-state
+    // SecuritySettings (no consumer reads it — the pane bodies fire-and-forget);
+    // the RESPONSE record is the post-state extended by the declared member
+    // `write` — `{ ...settings, write }`, a SUPERSET of the old resolution (a
+    // reader typed to the old shape continues to typecheck and reads
+    // identically). The `write` member is NEVER absent on a SET response — the
+    // handler just performed a write (totality, P-SE-TP-1).
+    const updated = { ...securityStore.set(patch), write: securityStore.lastWriteReceipt() } as SecuritySettings & { write: SecurityWriteReceipt }
     // Re-gate the live MCP server + persist.
     mcp.applyGatePatch({ token: patch.token, groups: patch.groups as ToolGroup[] | undefined, disable: patch.disable as ToolGroup[] | undefined })
     return updated

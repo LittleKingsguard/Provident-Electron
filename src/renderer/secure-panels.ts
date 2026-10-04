@@ -27,6 +27,10 @@ import {
 } from 'provident-ssr'
 import { createIsolatedScope, type GraphScope } from 'provident-ssr/core/registry.js'
 import type { SecuritySettings, RpcRequest, RpcReply } from '../shared/types.js'
+// G3 §1.3 item 4 — the NEW `SecurityWriteReceipt` type lives in
+// `src/main/security-store.ts` and reaches the pane's bridge DECLARATION by
+// IMPORT (type-only — erased at build; no runtime coupling to the main side).
+import type { SecurityWriteReceipt } from '../main/security-store.js'
 
 declare global {
   interface Window {
@@ -37,7 +41,9 @@ declare global {
       notify(payload: { uri: string }): void
       security?: {
         get(): Promise<SecuritySettings>
-        set(patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }): Promise<SecuritySettings>
+        // G3 §2.3 item 2 — the pane's declared `security.set` follows the same
+        // superset as the preload's (the receipt's additive `write` member).
+        set(patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }): Promise<SecuritySettings & { write: SecurityWriteReceipt }>
       }
       module?: {
         get(): Promise<{ corrupt: boolean; quarantined: string[]; loaded: string[]; modules: Array<{ name: string; version: string; capabilities?: unknown; disabled?: boolean; quarantined?: boolean }> }>
@@ -245,16 +251,34 @@ export class SecurePanels {
     return this.debugValue
   }
 
-  constructor(mount: HTMLElement) {
+  constructor(mount: HTMLElement, opts?: { maxJournalLength?: number }) {
     this.mount = mount
     this.scope = createIsolatedScope()
     const hub = createLinkHub()
     const t = translateLegacy(paneEnvelope(), { hub, graphScope: this.scope })
-    this.supervisor = new Supervisor({ events: new EventBridge(), graphScope: this.scope })
+    // RH-3 half (a) (G3 §2.5 items 1/2 — the pane-cap IDENTITY): the pane
+    // Supervisor is built WITH `maxJournalLength` — the tier-4 operator's
+    // setting, read ONCE at boot and passed in from the SAME snapshot the app
+    // Runtime consumed (never re-read after boot; `undefined` = never condense).
+    // There is NO independent pane-cap constant — a second knob would be a
+    // second journal authority with no owner.
+    this.supervisor = new Supervisor({ events: new EventBridge(), graphScope: this.scope, maxJournalLength: opts?.maxJournalLength })
     for (const n of t.nodes as unknown[]) this.supervisor.registerNode(n as never)
     this.adapter = new DomAdapter(mount, { onEvent: this.handleDomEvent })
     this.root = t.root
     this.nodes = t.nodes as unknown[]
+  }
+
+  /** THE DECLARED TEST SEAM (G3 §2.5 item 4 — the plan's `D-8` carry: "the seam
+   *  is the unit's to declare"): a read-only accessor over the pane supervisor's
+   *  journal depth (the engine's read-only `undoDepth` accessor, `J1`'s FIXED
+   *  surface at provident-ssr@^0.5.1). TEST-ONLY, with the production-negative
+   *  row of `R C-8`'s seam discipline — no production code path calls it; it is
+   *  NOT exposed on the bridge, NOT an MCP surface and NOT a pane node handler,
+   *  and the pane graph it reads is the isolated scope the MCP endpoints cannot
+   *  reach (§2.5 item 4). */
+  journalDepth(): number {
+    return this.supervisor.undoDepth
   }
 
   /** Wire a real DOM interaction on a pane control to the pane graph's

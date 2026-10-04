@@ -635,18 +635,34 @@ async function main(): Promise<void> {
   // provident graph (secure-panels.ts) — a separate GraphScope, so the MCP
   // endpoints (which read the app Runtime) can never see/dispatch them.
   const panesMount = document.getElementById('panes')
-  const panels = panesMount ? new SecurePanels(panesMount) : null
+  // RH-3 half (a) (G3 §2.5 item 2): the pane is constructed with the SAME boot
+  // snapshot `maxJournalLength` the app Runtime read (renderer.ts:546-553) — a
+  // boot-read projection of tier 4, never re-read after boot.
+  const panels = panesMount ? new SecurePanels(panesMount, { maxJournalLength }) : null
   if (panels) {
     void panels.refresh()
     // the Debug pane's live census + SSR preview, sourced from the APP graph
     panels.refreshDebug(runtime)
   }
-  bridge.onRequest((req) => {
-    void handleRequest(runtime, req, (p) => bridge!.notify(p)).then((reply) => {
+  // RH-3 half (b) (G3 §2.5 item 3 — THE BURST'S REPLACEMENT): the reply path
+  // sends the reply WITHOUT touching the pane graph (the old per-reply
+  // `panels?.refreshDebug(runtime)` burst is GONE). The debug refresh is
+  // re-homed onto (i) the BOOT refresh above (UNCHANGED) and (ii) the
+  // APP-GRAPH-CHANGED notify signal — the N4 push
+  // `notify({uri:'mcp://provident/app'})` that `handleRequest` emits once per
+  // MUTATING reply: the notify callback fires EXACTLY ONE `refreshDebug`,
+  // coalesced with the ONE notify; a read-only reply (no graph change) fires NO
+  // pane refresh — the pane journal's growth is bounded at its source (§2.5
+  // item 3's falsifier: graph changes × mutated pane nodes, capped by items 1/2).
+  const replyRoute = (req: RpcRequest): void => {
+    void handleRequest(runtime, req, (p) => {
+      bridge!.notify(p)
       panels?.refreshDebug(runtime)
+    }).then((reply) => {
       bridge.sendReply(reply)
     })
-  })
+  }
+  bridge.onRequest(replyRoute)
   bridge.ready()
 }
 

@@ -6,6 +6,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_NOTIFY, IPC_MODULE_GET, IPC_MODULE_SET_DISABLED, type RpcRequest, type RpcReply, type SecuritySettings, type NotifyPayload, type ModuleListEntry } from '../shared/types.js'
 import { STORE_FILE_GET, STORE_FILE_PUT } from '../main/store-channels.js'
+import type { SecurityWriteReceipt } from './security-store.js'
 
 /** THE Y-3 PUSH CHANNEL (G2 §2.5 — a DECLARED NO-OP on this single-window app): the change
  *  signal rides the existing `webContents.send` surface. The channel name stays a preload
@@ -27,7 +28,12 @@ export interface ProvidentBridge {
   notify(payload: NotifyPayload): void
   security: {
     get(): Promise<SecuritySettings>
-    set(patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }): Promise<SecuritySettings>
+    // THE RECEIPT'S ADDITIVE DELIVERY (G3 §2.3 item 2): `security.set`'s
+    // resolution is re-declared as the SUPERSET — the post-state settings
+    // extended by the declared member `write` (the receipt of THIS write).
+    // `set()`'s own return shape is UNCHANGED (C-11 NON-BREAKING — the receipt
+    // rides NEW members only, §2.3 item 4).
+    set(patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }): Promise<SecuritySettings & { write: SecurityWriteReceipt }>
   }
   module: {
     get(): Promise<ModuleBridgeResult>
@@ -65,7 +71,7 @@ const bridge: ProvidentBridge = {
     get(): Promise<SecuritySettings> {
       return ipcRenderer.invoke(IPC_SECURITY_GET)
     },
-    set(patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }): Promise<SecuritySettings> {
+    set(patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }): Promise<SecuritySettings & { write: SecurityWriteReceipt }> {
       return ipcRenderer.invoke(IPC_SECURITY_SET, patch)
     },
   },
