@@ -2541,6 +2541,22 @@ const NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_PATHS: ReadonlyArray<{ readonly p
     path: 'tests/focus-tool-register.ts',
     unit: 'the FOCUS-TOOL unit (`F3` / `U-FOCUS-TOOL`) — the module carrying its `§5.5.1` PROPERTY REGISTER (`17` typed rows + the harness; a non-test module, so vitest never collects it as a suite), declared here by the pass that authored it — NOT this unit',
   },
+  // **⟶ DECLARED 2026-10-05 (THE `U-SECURE-EXCLUSION` TESTWRITER PASS — `R-12`'s ACCOUNTING RULE).**
+  // The exclusion gate's red set is authored INSIDE `R-12`'s `tests/**` denied class, so its two
+  // artifacts were reported by control (m) as `liveUnaccounted` until an owner was named. **THE
+  // MEASURED CAUSE**: the unit's own TestWriter pass created the two files, and NO prior pass had
+  // declared them (the same class the `tests/focus-tool.test.ts` / `tests/focus-tool-register.ts`
+  // entries above carry). **THE OWNER IS NAMED, NOT ANONYMOUS**, and the DECLARATION DOES THE WORK
+  // THE ARM RELIES ON: subject (2)'s synthetic UNDECLARED path still FAILS the rule (control (m)
+  // drives it), so this addition is a registry entry, never a `true`-hatch.
+  {
+    path: 'tests/secure-exclusion.test.ts',
+    unit: 'the SECURE-EXCLUSION unit (`S1` / `U-SECURE-EXCLUSION`) — its TestWriter RED SET (`docs/specs/secure-exclusion.md` `§4.1` item 1 names the path), declared here by the pass that authored it so the diff-scope accounting names an owner instead of reporting it as a finding — NOT this unit',
+  },
+  {
+    path: 'tests/secure-exclusion-register.ts',
+    unit: 'the SECURE-EXCLUSION unit (`S1` / `U-SECURE-EXCLUSION`) — the module carrying its `§5.5.1` PROPERTY REGISTER (`9` typed rows + the harness; a non-test module, so vitest never collects it as a suite), declared here by the pass that authored it — NOT this unit',
+  },
   {
     path: 'docs/specs/user-flow-audit.md',
     unit: 'the DIVERGENCE/HARNESS unit (`U-DIVERGENCE-EXT`, ledger row `C2`) — its DOCUMENTATION pass FILED this spec and discharged the gap `U-GAP-1` (`docs/specs/gutter-ui.md` `§5.U`’s dated discharge note) — NOT this unit',
@@ -5186,13 +5202,24 @@ describe('R — §3.4 the static rows (the §2.2 prohibition table’s ids)', ()
       // **THE HACK PATH IS DENIED (\`true\`) AND STILL AN \`E3\`-OWN, NON-sibling, NON-declared path:
       // both halves bind it, and the allow-list filter above does not excuse it. The two following
       // readings are the DECLARED sibling's (denied, sibling) and the hack's (\`isSiblingUnitArtifact
-      // === false\`), and the last is the test-layer declaration's entry count (31 = the 25
-      // test-layer-leg paths + the 6 declaring-unit entries: focus-model, focus-tool,
-      // focus-tool-register, user-flow-audit, engine-pin-version, theme-control).**
+      // === false\`), and the last is the test-layer declaration's entry count.
+      //
+      // **⟶ RE-PINNED 2026-10-05 (THE \`U-SECURE-EXCLUSION\` TESTWRITER PASS — \`RCA-8(d)\`
+      // ANNOTATE-BESIDE; the as-filed figure \`31\` and its terms are KEPT VISIBLE here and the
+      // new figure is printed WITH ITS OWN TERMS beside it): the as-filed reading was
+      // \`31\` = the 25 test-layer-leg paths + the 6 declaring-unit entries (focus-model,
+      // focus-tool, focus-tool-register, user-flow-audit, engine-pin-version, theme-control).
+      // THE OPERATIVE READING IS \`33\` = those same \`31\` + the 2 entries that pass DECLARED for
+      // the \`S1\`/\`U-SECURE-EXCLUSION\` red set (\`tests/secure-exclusion.test.ts\` and its
+      // non-collected register module \`tests/secure-exclusion-register.ts\`) — the SAME class the
+      // \`focus-tool\` pair above carries, declared by the pass that authored them so control (m)'s
+      // accounting rule names an owner. \`31 + 2 = 33\` ✓. THE NON-VACUITY IS UNCHANGED: control
+      // (m)'s synthetic UNDECLARED path still FAILS the rule, so this is a registry entry, never a
+      // \`true\`-hatch.**
       true,
       true,
       false,
-      31,
+      33,
     ])
     // (n) **⟶ ADDED 2026-09-27 (THE CROSS-UNIT SIBLING-REGISTRY REPAIR, `E4`/`U-RELOCATE`'s RED
     //     SET) — THE NEW `E4` DECLARATION, DRIVEN ON THE DECLARED PATH ITSELF AND ON ALL FOUR
