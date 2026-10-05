@@ -2757,6 +2757,49 @@ const STORE_MODULES_SEAMS_DOC_ARTIFACTS: ReadonlyArray<{ readonly path: string; 
 const STORE_MODULES_SEAMS_DOC_BY_PATH: Readonly<Record<string, string>> = Object.fromEntries(
   STORE_MODULES_SEAMS_DOC_ARTIFACTS.map((entry) => [entry.path, entry.unit]),
 )
+/** **⟶ DECLARED 2026-10-05 (THE TIER-4 GENERALIZATION GATE-1 PASS — THE SEVENTH REPAIR OF THIS
+ *  CLASS, `R-12`'s ALLOW-LIST HALF).**
+ *
+ *  **WHY THIS IS A SEVENTH DECLARATION PAIR AND NOT TWO MORE REGISTRY ENTRIES.** The two paths
+ *  below are **NOT `isDeniedPath` paths** (never `docs/specs/*` in the denied form), so they reach
+ *  the ALLOW-LIST half — the same split `MENULIB_DOC_ARTIFACTS`, `THEME_DOC_ARTIFACTS`, the `H2a`
+ *  pair and the `H2b` pair above carry, in the same shape, so all five doc pairs read side by side.
+ *
+ *  **THE MEASURED CAUSE — THE SAME RIDING-COMMIT CLASS AS `caaccf8`, ON THIS PASS'S OWN ARTIFACTS.**
+ *  The gate-1 pass committed `576fe2e`, which carried its two NEW spec artifacts **and** — because
+ *  the archival loop (`AGENTS.md` item 6) requires the trackers to move in the same pass —
+ *  `docs/decisions.md`, `docs/next-steps.md` and `docs/pending.md`, the last of which is one of
+ *  `E3`'s own artifacts. That commit is therefore attributed to `E3` by this file's own per-commit
+ *  rule (`isE3Commit`/`e3Attribution`) and every path in it is read as `E3`'s own. **Measured,
+ *  verbatim from the red run (this pass, AFTER the boundary commit landed, BEFORE this
+ *  declaration):** `Outside the allow-list: ["docs/specs/secure-tier-generalization-adoption-dossier.md",
+ *  "docs/specs/secure-tier-generalization-review.md"]`, `1 failed | 2671 passed of 2674` — i.e. a
+ *  legitimate OTHER-UNIT pass that merely rode a commit carrying one of `E3`'s artifacts was FAILING
+ *  `E3`'s row, the identical defect the `NON_DENIED_SIBLING_ATTRIBUTED_TEST_LAYER_PATHS` registry
+ *  above documents for the test-annotation commit.
+ *
+ *  **WHAT IT DOES NOT DO** — the same four clauses every pair above carries: (1) `isDeniedPath`
+ *  untouched (both read `false` there); (2) `isSiblingUnitArtifact` untouched; (3) an UNDECLARED
+ *  path outside the allow-list still FAILS (this registry can only REMOVE a path from `E3`'s
+ *  subject, never add one); (4) no row id, term, seed, strategy id, cap or threshold moves. */
+const TIER4_GENERALIZATION_DOC_ARTIFACTS: ReadonlyArray<{ readonly path: string; readonly unit: string }> = [
+  {
+    path: 'docs/specs/secure-tier-generalization-review.md',
+    unit: 'the TIER-4 GENERALIZATION GATE-1 pass (no unit — a GATE-1 record, 2026-10-05, committed at `576fe2e`): the RCA + capability answer + critique disposition + change analysis + the `D-GP-SAD-5` decomposition row. NOT this unit',
+  },
+  {
+    path: 'docs/specs/secure-tier-generalization-adoption-dossier.md',
+    unit: 'the TIER-4 GENERALIZATION GATE-1 pass (no unit — its STEP 0 adoption dossier, 8 identifier rows / 13-hit collision block, committed at `576fe2e`). NOT this unit',
+  },
+]
+/** **THE TIER-4 GENERALIZATION GATE-1 PASS'S DOC-ARTIFACT DECLARATION, READ AS A MAP** — its own
+ *  registry, consulted by `declaredOtherUnitNameOf` in the same `typeof … === 'string'` form as the
+ *  six registries above, and driven by `R-12` control (n-6)'s list (b). Kept as its OWN declaration
+ *  rather than folded into `STORE_MODULES_SEAMS_DOC_BY_PATH` because its authoring pass differs (a
+ *  gate-1 record with no ledger row, declared for its own measured cause). */
+const TIER4_GENERALIZATION_DOC_BY_PATH: Readonly<Record<string, string>> = Object.fromEntries(
+  TIER4_GENERALIZATION_DOC_ARTIFACTS.map((entry) => [entry.path, entry.unit]),
+)
 /** **⟶ SCOPED 2026-09-27 (THE TEST-LAYER PASS) — THE DECLARATION FILTER, NAMED ONCE AND SHARED BY
  *  BOTH OF `R-12`'s ALLOW-LIST HALVES.**
  *
@@ -2821,6 +2864,12 @@ function declaredOtherUnitNameOf(path: string): string | null {
   // non-denied registry, in the same form; control (n-6) drives all three entries.
   const storeModulesSeamsDoc = STORE_MODULES_SEAMS_DOC_BY_PATH[path]
   if (typeof storeModulesSeamsDoc === 'string' && storeModulesSeamsDoc.length > 0) return storeModulesSeamsDoc
+  // **⟶ ADDED 2026-10-05 (THE TIER-4 GENERALIZATION GATE-1 PASS'S DOC-ARTIFACT DECLARATION).** The
+  // SEVENTH non-denied registry, in the same form; its own measured cause is recorded at the
+  // declaration above. It can only REMOVE a path from `E3`'s subject (`isDeniedPath` answers
+  // `false` for both entries and is untouched).
+  const tier4GeneralizationDoc = TIER4_GENERALIZATION_DOC_BY_PATH[path]
+  if (typeof tier4GeneralizationDoc === 'string' && tier4GeneralizationDoc.length > 0) return tier4GeneralizationDoc
   return null
 }
 function isDeclaredOtherUnitPath(path: string): boolean {
