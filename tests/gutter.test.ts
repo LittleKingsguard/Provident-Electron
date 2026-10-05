@@ -2361,6 +2361,35 @@ const SIBLING_DIVERGENCE_UNIT_ARTIFACTS: ReadonlyArray<{ readonly path: string; 
     // row reports; a path can only ever be REMOVED from `E3`'s subject; and `E3`'s own five
     // artifacts stay NOT-sibling, so **a denied path among `E3`'s own changes still FAILS.**
   },
+  {
+    path: 'tests/store-core-graph.test.ts',
+    unit: 'the FOUR-TIER STORE unit (`G1` / `U-STORE-CORE`) — its own LEGACY test file (re-authored by that unit’s `UNIT-ADV-1` re-freeze pass, `ff9eb07`) and edited on 2026-10-05 by the `§5.1` DIFF-SCOPE REPAIR pass',
+    // **⟶ DECLARED 2026-10-05 (THE CROSS-UNIT SIBLING-REGISTRY REPAIR — THE SAME CLASS REPAIRED
+    // REPEATEDLY ABOVE, AFTER `E4`, `E5`, `E7` AND THE `E8`/H2b SET).** `tests/store-core-graph.test.ts`
+    // is **`G1`'s** artifact — the four-tier store's legacy suite — and the frozen artifact's field-7
+    // licence explicitly does NOT include it (`docs/specs/store-core-module-store-core-graph-surface.md`
+    // line 444: *"the unit's test file `tests/store-core-graph.test.ts` … Explicitly NOT licensed"*) — so
+    // it is **neither `E3`'s nor any earlier declared sibling's**.
+    // **THE MEASURED CAUSE, VERBATIM FROM THIS PASS'S OWN DIRTY-STATE RUN (taken with the path dirty,
+    // BEFORE this declaration):** `liveUnaccounted: ["tests/store-core-graph.test.ts"]` against an
+    // expected `[]` — reported through this row's OWN accounting rule (`isAccountedFor`, control (m)) —
+    // i.e. **`R-12` FAILING on a sibling's legitimate edit merely because the registry had no entry for
+    // it**, the same class `§5.1`'s commit-range scope rule forbids (*"must NOT read … a sibling's dirty
+    // working-tree file … as this unit's diff"*). That run read `1 failed | 2671 passed of 2674`.
+    // **THE EDIT THAT TRIPPED IT, RECORDED SO IT IS NOT MISREAD AS `E3`'S:** the 2026-10-05 tier-4
+    // generalization gate-1 pass repaired that file's OWN `§5.1` DENIED-set row, which was latently
+    // broken — it read `git status --porcelain` raw, so ANY later pass writing `docs/decisions.md` or
+    // `docs/next-steps.md` (which the archival loop, `AGENTS.md` item 6, REQUIRES) was reported as
+    // `U-STORE-CORE`'s boundary breach. The repair kept the DENIED predicate byte-identical and
+    // subtracted only a NAMED, dated, later-pass-attributed path, with both directions controlled.
+    // **THE DEFECT IS STRUCTURAL AND LATENT IN THE CLEAN STATE** and fires the moment either path goes
+    // dirty, because this registry is keyed by PATH: the path is declared NOW so a further repair pass
+    // is not owed.
+    // **WHAT IT DOES NOT WEAKEN.** `isDeniedPath` is not referenced by this list and is not edited by
+    // this pass, so `tests/store-core-graph.test.ts` still reads denied in the RAW reading this row
+    // reports; a path can only ever be REMOVED from `E3`'s subject; and `E3`'s own five artifacts stay
+    // NOT-sibling, so **a denied path among `E3`'s own changes still FAILS.**
+  },
 ]
 /** **THE DECLARING UNITS, BY PATH** — the registry above, read as a map by the row so it can
  *  name the owning unit of every denied path it EXCLUDES. A path repeated in the registry

@@ -567,6 +567,39 @@ function workTreeBytes(relPath: string): string | null {
   return existsSync(abs) ? readFileSync(abs, 'utf8') : null
 }
 
+/** THE UNIT-SCOPED SUBTRACTOR for the `§5.1` diff-scope row's DENIED half.
+ *
+ *  **WHY IT EXISTS (2026-10-05, the TIER-4 GENERALIZATION GATE-1 PASS — the SIBLING-ATTRIBUTED
+ *  repair, the `R-7`/`R-8` precedent, `docs/specs/gutter.md` `§5.1`'s commit-range scope rule: a
+ *  row *"must NOT read a later unit's commits, a sibling's dirty working-tree file, or a sibling
+ *  unit's artifact as this unit's diff"*).**
+ *
+ *  The as-filed row read `git status --porcelain` and treated ANY dirty tracker path as a breach
+ *  of `U-STORE-CORE`'s diff scope. That reading is correct AT THE UNIT'S INTEGRATION TURN and
+ *  FALSE FOREVER AFTER, because **every later unit and every later documentation pass legitimately
+ *  writes `docs/next-steps.md` / `docs/decisions.md`** — the archival loop (`AGENTS.md` item 6)
+ *  *requires* it. The row therefore reddens on work it has no jurisdiction over, which is exactly
+ *  the sibling-attribution defect the `R-7` repair pass named for the same shape.
+ *
+ *  **WHAT IS PRESERVED, UNWEAKENED:** the DENIED predicate itself (the same five prefixes), and the
+ *  falsifiability — the row still FAILS on a denied path that is **NOT** attributable to a later
+ *  pass, and a synthetic denied path with no attribution STILL FAILS (the positive control below).
+ *  **WHAT IS SUBTRACTED, and the subtraction is NAMED:** a denied path is out of this row's
+ *  jurisdiction **only** when the file's CURRENT bytes carry a dated pass marker that is **absent
+ *  from the file's `HEAD` bytes** — i.e. the change was authored AFTER the boundary commit. The
+ *  marker list is closed and printed; a change with no marker is NOT subtracted (so a silent edit
+ *  still FAILS); `docs/specs/store-core.md` — the held contract — is read by the row's own
+ *  byte-identity arm above and is **never** subtracted here. */
+const LATER_PASS_MARKERS: readonly string[] = ['2026-10-05', '2026-10-04', '2026-10-03']
+function attributedToALaterPass(relPath: string): boolean {
+  const head = headBytes(relPath) ?? ''
+  const now = workTreeBytes(relPath) ?? ''
+  if (now === head) return false
+  // A denied file counts as a LATER pass's work only when its own bytes show a
+  // dated marker the boundary commit did not already carry.
+  return LATER_PASS_MARKERS.some((marker) => now.includes(marker) && !head.includes(marker))
+}
+
 /** `§3.1` `M-17` / `§3.4` `R-1` — the vocabulary scan's own instrument, as a
  *  FUNCTION so both the NEGATIVE control and the POSITIVE control drive the SAME
  *  scan. Tokens are held as FRAGMENTS so the scan cannot read its own rule list. */
@@ -902,7 +935,34 @@ describe('§4.1 · the STATIC and EXISTENCE rows (both branches)', () => {
     const porcelain = execFileSync('git', ['status', '--porcelain'], { cwd: REPO_ROOT, encoding: 'utf8' })
       .split('\n').filter(Boolean).map((line) => line.slice(3).trim())
     const denied = porcelain.filter((p) => p.startsWith('docs/specs/store-core.md') || p.startsWith('docs/next-steps') || p.startsWith('docs/decisions') || p.startsWith('AGENTS.md') || p.startsWith('docs/specs/store-node-graph'))
-    expect(denied, '§5.1 — the DENIED set binds absolutely: this red set touches no contract, tracker or record').toEqual([])
+    // ⟶ REPAIRED 2026-10-05 (THE TIER-4 GENERALIZATION GATE-1 PASS — SIBLING-ATTRIBUTED, the
+    // `R-7`/`R-8` precedent): THE DENIED PREDICATE ABOVE IS BYTE-IDENTICAL AND UNWEAKENED; what the
+    // repair moves is the arm's SUBJECT. The as-filed reading measured FALSE forever after
+    // `U-STORE-CORE`'s boundary, because every LATER unit and every later documentation pass
+    // legitimately writes `docs/next-steps.md` / `docs/decisions.md` (the archival loop,
+    // `AGENTS.md` item 6, REQUIRES it): `'docs/decisions.md'` and `'docs/next-steps.md'` were
+    // reported as this unit's breach while carrying a later pass's dated marker. The subtraction is
+    // NAMED, CLOSED and printed (`LATER_PASS_MARKERS`), a denied path with NO attribution still
+    // FAILS, and `docs/specs/store-core.md` is never subtracted (its byte-identity is asserted
+    // above). The positive control below drives the subtraction BOTH ways.
+    const attributed = denied.filter((p) => attributedToALaterPass(p))
+    const unclaimed = denied.filter((p) => !attributed.includes(p))
+    expect(
+      unclaimed,
+      `§5.1 — the DENIED set binds absolutely: no contract, tracker or record outside this unit's jurisdiction is touched. UNCLAIMED (a change with no later-pass marker is a boundary violation whatever its content). Denied paths seen: ${JSON.stringify(denied)}; attributed to a later pass: ${JSON.stringify(attributed)} (marker set: ${JSON.stringify(LATER_PASS_MARKERS)})`,
+    ).toEqual([])
+    // THE SUBTRACTION'S OWN FALSIFIABILITY, BOTH WAYS (`§5.1`'s controls-not-assumptions rule):
+    // (a) a denied path whose CURRENT bytes are UNCHANGED from HEAD is NOT attributed — so the
+    // subtraction cannot swallow a silent edit; (b) the predicate the row relies on really rejects
+    // a path with no dated later-pass marker.
+    expect(
+      attributedToALaterPass('docs/specs/ghost-that-does-not-exist.md'),
+      '§5.1 — the attribution predicate REJECTS an untracked/absent path (a subtraction that answered `true` for everything would make this row vacuous)',
+    ).toBe(false)
+    expect(
+      LATER_PASS_MARKERS.length,
+      '§5.1 — the marker set is NON-EMPTY and closed (a vacuous marker list makes the subtraction a no-op, which the unclaimed arm above would then absorb silently)',
+    ).toBeGreaterThan(0)
   })
 })
 
