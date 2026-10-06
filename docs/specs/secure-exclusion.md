@@ -461,6 +461,42 @@ change owed** because every changed signature is inside an already-allowed file.
      and the test file keeps the lineage in-line at `SECURITY_STORE_PIN` (`c7359530…` =
      `SECURITY_STORE_PIN_PRE_AMENDMENT`, `99618ac2…` = `SECURITY_STORE_PIN_PRE_ADV1`, both
      asserted awake and distinct from the operative pin).
+     **⟶ THE THIRD RE-POINT AND THE EXTENDED DIGEST CHAIN, DATED `2026-10-11` (`RCA-8(d)`: EVERY
+     note above — the as-filed bullet, the first amendment note and the second re-point note —
+     STANDS BYTE-FOR-BYTE and is NOT rewritten; this note governs the bullet's pin citation after
+     the THIRD authorized move, never its text).** **THE ARTIFACT MOVED A THIRD TIME, AND THE
+     REASON IS NAMED, ONE LINE:** the **`§2.6` write-lock amendment LANDED** (`f444426`; the clause
+     is `docs/specs/secure-store-discipline.md` `§2.6` item 5, its green record at that file's
+     `§9g`) — **the record now advances AT the commit and the in-flight attempt's own receipt
+     lands at that SAME TERMINAL** — so, exactly as at the two re-points above, **THE PIN'S
+     EXPECTATION FOLLOWS THE ARTIFACT: a byte-pin that refused to follow an authorized move would
+     be an instrument demanding an unauthorized rollback.** **THE FULL DIGEST CHAIN, EVERY VALUE
+     MEASURED (`node:crypto` over the file's bytes) AND EVERY CAUSE NAMED:**
+     `sha256:c7359530b530ed866a86908e176bf101b836f138793de0a0ac1db3df7dc8823d` (**the AS-FILED
+     bytes**, `83f2dde`, `15,983` bytes) →
+     `sha256:99618ac219ac4701e219e7926be61f78f22d3803818852a9dbca4fcf0e66aacc` (**CAUSE: the `S3`
+     implementer's green `460fb66` + its kick-back resolution `0d36c46`** — `O-1` refused-persist
+     rollback · `O-2` JSON-representability admission · `O-3` full-surface deep clone) →
+     `sha256:a98273b8f8a5cb5ec521f437eb7fe38f7adfa79cc22484d39fdcaa06c642eaa3` (**CAUSE: gate 4's
+     `ADV-1` read-once remediation, `e317d82`**) →
+     **`sha256:8ed09c97358b0eaab81b60d665519498552cd6f20bb748afceaff030494f0419` (CAUSE: the
+     `§2.6` write-lock amendment, `f444426` — THE CURRENT PIN, `321` lines, MEASURED with
+     `node:crypto` before this re-point and VERIFIED with `sha256sum`, that command being the
+     authority).** **WHAT DOES NOT MOVE:** the bullet's SUBJECT (the bound is still *"this unit
+     moves no byte of this path"* per unit, asserted as a MEASURED digest), the BITE (ANY byte move
+     of the file still reddens `FS-EX-15`, its `I-EX-6` arm and `P-EX-IM-2` cells (j)/(l); the
+     byte-moved POSITIVE CONTROL now answers **NONE of the FOUR** pinned digests), the four-value
+     distinctness (all four asserted 64-hex, awake and mutually distinct, so no re-point in the
+     chain can be a silent no-op), and the other three forbidden paths (`0664c52f…` /
+     `5c0c1a97…` / the surface artifact). **THE THREE TEST-SIDE ROWS THIS CLEARS, ONE CAUSE:**
+     `FS-EX-15` · the `I-EX-6` store-byte arm of `I-EX-4/I-EX-5/I-EX-6/I-EX-7` · `§5.5.1`'s register
+     `REPORTS` row, whose `broken 2 of 117` → `0 of 117` with its terms UNMOVED
+     (`117 = 12 + 17 + 13 + 13 + 14 + 12 + 12 + 14 + 10`). **THE CHAIN IS NOW FOUR-VALUED AND THE
+     TEST FILE KEEPS IT IN-LINE AT `SECURITY_STORE_PIN`** (`c7359530…` =
+     `SECURITY_STORE_PIN_PRE_AMENDMENT`, `99618ac2…` = `SECURITY_STORE_PIN_PRE_ADV1`,
+     `a98273b8…` = `SECURITY_STORE_PIN_PRE_LOCK`, all three historical values asserted awake and
+     distinct from the operative `8ed09c97…`); the test-side record is the same one place as before
+     (`docs/specs/secure-store-discipline.md` `§9c` item 10 and now its `§9i`).
    **These come from THREE authorities, not one, so the pin is not a paraphrase:** the **decomposition row** names the
    `S1`/`S2` split (`A` `THE TIER-4 GENERALIZATION IS SPLIT PER UNIT`); the **gate-1 record** names *"NO frozen artifact
    and NO store byte"* as the boundary's decisive property (`R` `§6` column 3, and its RISK/COST table's *"Frozen

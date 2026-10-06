@@ -3061,6 +3061,22 @@ describe('§2.6 THE WRITE LOCK — reads are locked out until the commit lands (
     resetFsLog()
     armRenameFailure()
     assertNoThrow(() => seeded.store.set({ token: 'FIRST' }), 'F-13: the landed refusal attempt')
+    /* `KB-10` CORRECTION (`2026-10-11`, TestWriter — the implementer's kick-back upheld).
+     * THE MIS-AIMED REFERENT, AS FILED: the `.tmp`-removal count was read at the END of
+     * this row, i.e. AFTER `probeCommitAttempt` — and that probe OPENS with
+     * `resetFsLog()`, which clears `rmLinks` (the line this very amendment appended). The
+     * only later activity is ONE COMMITTING write, and a committing write runs no cleanup
+     * at all (`§2.3` item 4(a): "the rename consumed it"), so the count there measured `0`
+     * and could be greened ONLY by adding an effect to the SUCCESS arm that the contract
+     * does NOT declare — green for the wrong reason, and a different referent than the
+     * assertion's own words name.
+     * THE REFERENT THE CLAUSE DECLARES: `§2.6` item 7(a) names `rmSync` among the write
+     * path's own effects, and its site is the attempt's CAUGHT-FAILURE cleanup — the
+     * REFUSAL TERMINAL. That terminal is THIS row's own refusal probe (the
+     * `armRenameFailure()` + `set()` immediately above), so the count is read THERE, before
+     * any later probe resets the per-row log. Nothing about the clause's bite is weakened:
+     * the site must still be REACHED and must still remove the record's own staging path. */
+    const refusalCleanup = hooks.rmLinks.filter((l) => l.endsWith('.tmp'))
     const candidate = expectedPost(pre, { token: 'LOCK' })
     const probed = probeCommitAttempt(seeded.store, { token: 'LOCK' }, 'F-13')
     const atA = lockReadingsOf(probed.atA, 'F-13 · (a)')
@@ -3094,7 +3110,8 @@ describe('§2.6 THE WRITE LOCK — reads are locked out until the commit lands (
     expect(atA.receipt, 'F-13 (c) — and on the current bytes the member WITHHOLDS the in-flight form at (a): it answers the last LANDED closed form, which is the first attempt’s refusal (§2.6 item 3(b))').toBe(LOCK_REFUSED)
     // §2.6 item 6 — THE LOCK NEVER BLOCKS, WAITS, SPINS, QUEUES, RE-ENTERS OR THROWS.
     for (const instant of [probed.atA, probed.atB]) assertLockTotality(instant, 'F-13 · §2.6 item 6')
-    expect(hooks.rmLinks.filter((l) => l.endsWith('.tmp')).length, 'F-13 — the refusal terminal’s own cleanup ran (the probe site at (c) is reachable, so §2.6 item 7(a)’s rmSync site is real)').toBe(1)
+    expect(refusalCleanup.length, 'F-13 — the refusal terminal’s own cleanup ran EXACTLY ONCE, read AT the row’s own refusal probe (the §2.6 item 7(a) rmSync site) and never after the committing probe’s resetFsLog, which would measure 0 and demand an undeclared effect on the success arm (`KB-10` correction)').toBe(1)
+    expect(refusalCleanup, 'F-13 — and the removal names the RECORD’s own staging path (the pinned path + `.tmp`, §2.1 item 3), so the site is the record’s own cleanup and not a foreign file’s').toEqual([`${seeded.path}.tmp`])
   })
 
   it('I-10 · at every instant of a write’s window the read surface answers from the DURABLE state — I-10-a and I-10-b, with the lock’s totality', async () => {
