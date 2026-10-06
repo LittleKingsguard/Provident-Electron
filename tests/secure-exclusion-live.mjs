@@ -1882,13 +1882,127 @@ check('SX-G-53 (static census)', 'the store\'s refusal union carries no exclusio
   `store-core-graph.ts contains 'exclusion-closed': false; refusal-shaped tokens found in that module: ${JSON.stringify(unionTokens)}`,
   'the exclusion token is a CHANNEL token, never a store-union member')
 
-const chain = execSync('git log --name-only --pretty=format: 7142591^..HEAD', { cwd: root }).toString().split('\n').filter((l) => l.trim() !== '')
-const forbidden = ['src/renderer/store-core-graph.ts', 'src/renderer/store-graph-references.ts', 'docs/specs/store-core-module-store-core-graph-surface.md', 'src/main/security-store.ts', 'package.json']
-const touchedForbidden = forbidden.filter((f) => chain.includes(f))
-const sharedTouched = chain.some((p) => p.startsWith('src/shared/'))
-check('SX-G-55 (diff scope)', 'the landing chain touches no frozen artifact, no store byte and no `src/shared/**`', touchedForbidden.length === 0 && !sharedTouched ? 'PASS' : 'FAIL',
-  `landing chain paths: ${JSON.stringify([...new Set(chain)])}; forbidden hits: ${JSON.stringify(touchedForbidden)}; src/shared touched: ${sharedTouched}`,
-  'the unit\'s own §5.1 item 2 DENIED set')
+// ──────────────────────────────────────────────────────────────────────────────
+// `SX-G-55 (diff scope)` — **RE-GRAINED 2026-10-11** (the OWNER's ruling that closes the choice
+// `§4h`/`§8` item 65 filed; the row keeps its id, its subject and its denied set).
+//
+// THE FINDING, ONE SENTENCE: the as-filed row read ONE window (`git log --name-only
+// 7142591^..HEAD`) against ONE denied list, so a RULED, AUTHORIZED sibling amendment — the `S3`
+// unit's `§2.6` landing moving `src/main/security-store.ts` under the architect's `D-1` · `D-2`
+// ruling, with `SECURITY_STORE_PIN` re-pointed `a98273b8… → 8ed09c97…` by that same authority —
+// reddened a row whose subject is THIS unit's diff scope. A diff-scope row that reddens on any
+// sibling's authorized move is the wrong instrument: it forbids what architect ruled.
+//
+// THE RE-GRAIN KEEPS THE BITE BY SPLITTING THE READING INTO TWO HALVES, NEITHER OF THEM VACUOUS:
+//   HALF A — **THIS UNIT'S OWN DIFF SCOPE IS STILL ASSERTED**, as the DENIAL reading PLUS a SET
+//     reading over the paths THIS unit's own commits touch (`§5.1` item 1's ALLOWED six and
+//     `§5.1` item 2's DENIED set). Own-ness is attributed by the commit's OWN subject: it names
+//     this unit (`U-SECURE-EXCLUSION`) or opens with the `S1` wave token (`^S1`).
+//     **REDDENS ON:** an own commit touching the store byte · a genuinely frozen artifact
+//     (`store-core-graph.ts` · `store-graph-references.ts` · the surface artifact) · a
+//     `package.json` (config/`scripts`-key) byte · `src/shared/**` · any `src/**` path OUTSIDE
+//     the ALLOWED six (item 2's *"every other `src/**` path"* denial) · or a window in which the
+//     classifier finds NO own commit at all (a vacuous own half reads `FAIL`, never a silent pass).
+//   HALF B — **A MOVE OF `src/main/security-store.ts` IS ATTRIBUTED, NOT FORBIDDEN.** Such a move
+//     must (a) be ATTRIBUTABLE to a RECORDED sibling amendment — the commit's own subject names
+//     the sibling unit `U-SECURE-STORE-DISCIPLINE` **and** one of the recorded markers
+//     {`§2.6` (the write-lock amendment, `f444426`) · `ADV-1` (gate 4's remediation, `e317d82`) ·
+//     `(S3)` (the earlier landing, `460fb66`)} — and (b) CARRY ITS LICENCE: the pin lineage
+//     `SECURITY_STORE_PIN`'s FOUR values, awake, mutually distinct and read live out of the
+//     unit's own test file, the OPERATIVE one equal to the recorded `8ed09c97…`; **plus** the
+//     `docs/decisions.md` ruling row that re-point is derived from. **AND THE CURRENT DIGEST OF
+//     THE FILE IS READ AND COMPARED TO THAT PIN — read at the bytes, never assumed.**
+//   **A MOVE OF A GENUINELY FROZEN ARTIFACT OR OF `src/shared/**` IS FORBIDDEN FOR EVERY COMMIT,
+//     THIS UNIT'S OR A SIBLING'S, AND STILL REDDENS THE ROW** (the one path the architect's
+//     ruling admits is the store byte, and only that one).
+// **THE MUTATIONS THAT REDDEN EACH HALF ARE NOT ASSERTED, THEY ARE DRIVEN**: `scopeControls`
+// below executes THIS row's OWN predicate over FIFTEEN mutated readings — an own store edit, an
+// own frozen-artifact edit, an own `package.json` edit, an own `src/shared/**` edit, an own
+// out-of-ALLOWED `src/**` edit, an emptied own half, an unattributed sibling store move, a
+// sibling store move attributed to the WRONG unit, a window with no sibling store move at all,
+// a FABRICATED digest, a lineage short by one value, a lineage whose operative pin is not the
+// recorded one, an absent decisions row, a sibling edit to a frozen module and a sibling
+// `src/shared/**` edit — and the row reads `PASS` only if every one of them is REFUSED.
+const SCOPE_WINDOW = '7142591^..HEAD'
+const DENIED_STORE = 'src/main/security-store.ts'
+const DENIED_FROZEN = ['src/renderer/store-core-graph.ts', 'src/renderer/store-graph-references.ts', 'docs/specs/store-core-module-store-core-graph-surface.md', 'package.json']
+const OWN_ALLOWED_SRC = ['src/main/security.ts', 'src/main/main.ts', 'src/main/store-channels.ts', 'src/main/mcp-server.ts', 'src/main/preload.ts', 'src/renderer/secure-panels.ts']
+const OWN_TOKENS = [/U-SECURE-EXCLUSION/, /^S1( |$)/]
+const SIBLING_UNIT = 'U-SECURE-STORE-DISCIPLINE'
+const AMENDMENT_MARKERS = ['§2.6', 'ADV-1', '(S3)']
+const RECORDED_STORE_PIN = '8ed09c97358b0eaab81b60d665519498552cd6f20bb748afceaff030494f0419'
+const DECISIONS_LICENCE = ['TIER-4 READS RETURN DEEP CLONES OVER THE FULL READ SURFACE', '`D-1` · `D-2`']
+
+function diffScopeReading() {
+  const raw = execSync(`git log --name-only --pretty=format:@@%H@@%s ${SCOPE_WINDOW}`, { cwd: root, maxBuffer: 1 << 28 }).toString()
+  const commits = []
+  for (const line of raw.split('\n')) {
+    if (line.startsWith('@@')) { const [sha, subject] = line.slice(2).split('@@'); commits.push({ sha, subject, paths: [] }) }
+    else if (line.trim() !== '') commits[commits.length - 1].paths.push(line.trim())
+  }
+  const unitTest = readFileSync(join(root, 'tests', 'secure-exclusion.test.ts'), 'utf8')
+  const lineage = [...unitTest.matchAll(/const (SECURITY_STORE_PIN(?:_PRE_[A-Z0-9]+)?) = '([0-9a-f]{64})'/g)].map((m) => [m[1], m[2]])
+  const decisions = readFileSync(join(root, 'docs', 'decisions.md'), 'utf8')
+  return { commits, storeDigest: sha256(join(root, 'src', 'main', 'security-store.ts')), lineage, decisionsLicence: DECISIONS_LICENCE.every((t) => decisions.includes(t)) }
+}
+
+function diffScopeProperty(r) {
+  const isOwn = (c) => OWN_TOKENS.some((re) => re.test(c.subject))
+  const own = r.commits.filter(isOwn)
+  const ownPaths = [...new Set(own.flatMap((c) => c.paths))].sort()
+  const siblings = r.commits.filter((c) => !isOwn(c))
+  const storeMoves = siblings.filter((c) => c.paths.includes(DENIED_STORE))
+  const isAttributed = (c) => c.subject.includes(SIBLING_UNIT) && AMENDMENT_MARKERS.some((m) => c.subject.includes(m))
+  const unattributed = storeMoves.filter((c) => !isAttributed(c))
+  const anyPaths = [...new Set(r.commits.flatMap((c) => c.paths))].sort()
+  const values = r.lineage.map(([, v]) => v)
+  const operative = r.lineage.filter(([n]) => n === 'SECURITY_STORE_PIN')
+  const operativePin = operative.length === 1 ? operative[0][1] : null
+  const terms = {
+    // HALF A — this unit's own diff scope (`§5.1` items 1/2)
+    'own-scope-denied-set-clean': ownPaths.filter((p) => p === DENIED_STORE || DENIED_FROZEN.includes(p)).length === 0,
+    'own-scope-src-shared-untouched': ownPaths.filter((p) => p.startsWith('src/shared/')).length === 0,
+    'own-scope-src-subset-of-the-declared-ALLOWED-list': ownPaths.filter((p) => p.startsWith('src/')).every((p) => OWN_ALLOWED_SRC.includes(p)),
+    'own-scope-classifier-non-vacuous': own.length > 0 && ownPaths.length > 0,
+    // HALF B — a sibling store move: ATTRIBUTED and LICENCED, never forbidden
+    'sibling-store-moves-all-attributed': unattributed.length === 0,
+    'sibling-store-move-present-in-window': storeMoves.length > 0,
+    'store-digest-equals-the-operative-pin': r.storeDigest === operativePin,
+    'store-licence-lineage-four-values-awake-distinct-and-recorded': r.lineage.length === 4 && new Set(r.lineage.map(([n]) => n)).size === 4 && new Set(values).size === 4 && values.every((v) => /^[0-9a-f]{64}$/.test(v)) && operativePin === RECORDED_STORE_PIN,
+    'store-licence-decisions-row-present': r.decisionsLicence,
+    // HALF B — the genuinely frozen artifacts and `src/shared/**`: NOBODY may move these
+    'genuinely-frozen-and-src-shared-untouched-by-ANY-commit': anyPaths.filter((p) => DENIED_FROZEN.includes(p) || p.startsWith('src/shared/')).length === 0,
+  }
+  return { terms, ok: Object.values(terms).every(Boolean), own, ownPaths, siblings, storeMoves, unattributed, anyPaths }
+}
+
+const SCOPE_LIVE = diffScopeReading()
+const liveScope = diffScopeProperty(SCOPE_LIVE)
+const scopeWithCommit = (subject, paths) => (r) => ({ ...r, commits: [...r.commits, { sha: 'f'.repeat(40), subject, paths }] })
+const ownHalfEmptied = (r) => ({ ...r, commits: r.commits.map((c) => (OWN_TOKENS.some((re) => re.test(c.subject)) ? { ...c, subject: `SIBLING RECORD — ${c.subject.replace(/U-SECURE-EXCLUSION/g, 'U-OTHER')}` } : c)) })
+const scopeControls = Object.fromEntries([
+  ['HALF A · an OWN commit moves the STORE byte', diffScopeProperty(scopeWithCommit('U-SECURE-EXCLUSION (S1) GATE 9 — a stray store edit', [DENIED_STORE])(SCOPE_LIVE))],
+  ['HALF A · an OWN commit moves a GENUINELY FROZEN artifact (`store-core-graph.ts`)', diffScopeProperty(scopeWithCommit('U-SECURE-EXCLUSION (S1) GATE 9 — a frozen-module edit', ['src/renderer/store-core-graph.ts'])(SCOPE_LIVE))],
+  ['HALF A · an OWN commit moves `package.json` (a config/`scripts`-key byte)', diffScopeProperty(scopeWithCommit('U-SECURE-EXCLUSION (S1) GATE 9 — a new script key', ['package.json'])(SCOPE_LIVE))],
+  ['HALF A · an OWN commit edits `src/shared/types.ts`', diffScopeProperty(scopeWithCommit('U-SECURE-EXCLUSION (S1) GATE 9 — a shared-type widening', ['src/shared/types.ts'])(SCOPE_LIVE))],
+  ['HALF A · an OWN commit edits a `src/**` path OUTSIDE the ALLOWED six (`src/renderer/renderer.ts`)', diffScopeProperty(scopeWithCommit('U-SECURE-EXCLUSION (S1) GATE 9 — an undeclared src path', ['src/renderer/renderer.ts'])(SCOPE_LIVE))],
+  ['HALF A · the own classifier finds NOTHING (a VACUOUS own half: the unit\'s commits renamed out of the token rule)', diffScopeProperty(ownHalfEmptied(SCOPE_LIVE))],
+  ['HALF B · an UNATTRIBUTED sibling store move (subject names no recorded amendment)', diffScopeProperty(scopeWithCommit('chore: tidy the security store', [DENIED_STORE])(SCOPE_LIVE))],
+  ['HALF B · a sibling store move attributed to the WRONG unit (`S2`, `U-TIER4-ARBITRARY-STORAGE`)', diffScopeProperty(scopeWithCommit('S2 (U-TIER4-ARBITRARY-STORAGE) — a store tweak', [DENIED_STORE])(SCOPE_LIVE))],
+  ['HALF B · NO sibling store move in the window (the attribution half would be VACUOUS)', diffScopeProperty({ ...SCOPE_LIVE, commits: SCOPE_LIVE.commits.filter((c) => !c.paths.includes(DENIED_STORE)) })],
+  ['HALF B · a FABRICATED digest (the store\'s current byte digest is not the pin)', diffScopeProperty({ ...SCOPE_LIVE, storeDigest: '0'.repeat(64) })],
+  ['HALF B · the LICENCE\'s pin lineage is SHORT by one value (`PRE_ADV1`)', diffScopeProperty({ ...SCOPE_LIVE, lineage: SCOPE_LIVE.lineage.filter(([n]) => n !== 'SECURITY_STORE_PIN_PRE_ADV1') })],
+  ['HALF B · the LICENCE\'s lineage is complete but the OPERATIVE pin is not the recorded `8ed09c97…`', diffScopeProperty({ ...SCOPE_LIVE, lineage: SCOPE_LIVE.lineage.map(([n, v]) => [n, n === 'SECURITY_STORE_PIN' ? 'ab'.repeat(32) : v]) })],
+  ['HALF B · the LICENCE\'s decisions row is ABSENT from `docs/decisions.md`', diffScopeProperty({ ...SCOPE_LIVE, decisionsLicence: false })],
+  ['HALF B · a SIBLING (`S3`) commit edits a GENUINELY FROZEN artifact (`store-graph-references.ts`)', diffScopeProperty(scopeWithCommit('S3 (U-SECURE-STORE-DISCIPLINE) — `§2.6` — an edit to a frozen module', ['src/renderer/store-graph-references.ts'])(SCOPE_LIVE))],
+  ['HALF B · a SIBLING commit edits `src/shared/types.ts`', diffScopeProperty(scopeWithCommit('S2 (U-TIER4-ARBITRARY-STORAGE) — a shared edit', ['src/shared/types.ts'])(SCOPE_LIVE))],
+])
+const scopeNotRefused = Object.entries(scopeControls).filter(([, v]) => v.ok !== false).map(([k]) => k)
+const scopeOperativePin = (SCOPE_LIVE.lineage.find(([n]) => n === 'SECURITY_STORE_PIN') ?? [null, 'ABSENT'])[1]
+check('SX-G-55 (diff scope)', 'this unit\'s own diff touches no frozen artifact, no store byte and no `src/shared/**` — while a RULED SIBLING MOVE of the store byte is ATTRIBUTED and LICENCED (never forbidden), and an UNATTRIBUTED move, or any move of a genuinely frozen artifact or of `src/shared/**`, still reddens it',
+  liveScope.ok && Object.values(scopeControls).every((v) => v.ok === false) && scopeNotRefused.length === 0 ? 'PASS' : 'FAIL',
+  `landing chain paths: ${JSON.stringify(liveScope.anyPaths)}; HALF A — own diff scope: ${liveScope.own.length} of ${SCOPE_LIVE.commits.length} commit(s) in \`${SCOPE_WINDOW}\` name this unit and touch ${liveScope.ownPaths.length} path(s) ${JSON.stringify(liveScope.ownPaths)}; own forbidden hits: ${JSON.stringify(liveScope.ownPaths.filter((p) => p === DENIED_STORE || DENIED_FROZEN.includes(p)))}; own \`src/shared/**\` hits: ${JSON.stringify(liveScope.ownPaths.filter((p) => p.startsWith('src/shared/')))}; own \`src/**\` outside the ALLOWED six: ${JSON.stringify(liveScope.ownPaths.filter((p) => p.startsWith('src/') && !OWN_ALLOWED_SRC.includes(p)))}; HALF B — ${liveScope.storeMoves.length} sibling commit(s) move \`${DENIED_STORE}\`: ${JSON.stringify(liveScope.storeMoves.map((c) => [c.sha.slice(0, 7), AMENDMENT_MARKERS.filter((m) => c.subject.includes(m))]))} with ${liveScope.unattributed.length} UNATTRIBUTED; the store's CURRENT digest ${SCOPE_LIVE.storeDigest.slice(0, 12)}… vs the pin the unit's own test carries ${scopeOperativePin.slice(0, 12)}…; the licence: lineage ${SCOPE_LIVE.lineage.length} value(s) ${JSON.stringify(SCOPE_LIVE.lineage.map(([n]) => n))}, decisions row ${SCOPE_LIVE.decisionsLicence ? 'present' : 'ABSENT'}; frozen-or-shared paths touched by ANY commit: ${JSON.stringify(liveScope.anyPaths.filter((p) => DENIED_FROZEN.includes(p) || p.startsWith('src/shared/')))}; terms: ${JSON.stringify(liveScope.terms)}; FIXTURES driving this row's OWN predicate (each must be REFUSED, each printed with the terms it broke): ${JSON.stringify(Object.fromEntries(Object.entries(scopeControls).map(([k, v]) => [k, { ok: v.ok, broke: Object.entries(v.terms).filter(([, b]) => !b).map(([t]) => t) }])))}; fixtures NOT refused: ${JSON.stringify(scopeNotRefused)}`,
+  'HALF A `docs/specs/secure-exclusion.md` `§5.1` item 1 (the ALLOWED six) and item 2 (the DENIED set, incl. `package.json` and *"every other `src/**` path"*) · HALF B `§1.3` item 1\'s DATED ANNOTATIONS (the three AUTHORISED re-points `c7359530…` → `99618ac2…` → `a98273b8…` → `8ed09c97…`, `S3`\'s `§2.6`/`ADV-1`/earlier landing) and `docs/decisions.md`\'s `TIER-4 READS RETURN DEEP CLONES … `D-1` · `D-2` row — **the licence a sibling store move must carry, and the ONE path that ruling admits**')
 
 // ══════════════════════════════════════════════════════════════════════════════
 // THE VERDICT SUMMARY (printed WITH its terms)
