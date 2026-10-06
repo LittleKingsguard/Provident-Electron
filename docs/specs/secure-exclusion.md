@@ -32,6 +32,30 @@ response is to STOP and say so, not to edit the path.** `§1.3` names every forb
 
 ## CURRENT STATE (2026-10-05) — the ONE status block in this file, placed BEFORE `§0`
 
+**⟶ ANNOTATED BESIDE 2026-10-07 (THE GATE-4 DISPOSITION PASS — `RCA-8(d)` ANNOTATE-BESIDE, cited by this block's own
+subject; the as-filed status token *"FILED — awaiting the architect's approval"* at the STATUS LINE, and the
+as-filed `CURRENT STATE` item 5's forward-looking *"gate 6 … is a MANDATORY live battery"*, both STAND BYTE-FOR-BYTE
+and are NOT rewritten; THIS clause is the OPERATIVE state, and it reports the gates as they actually stand).**
+**THE OPERATIVE STATE, GATES 1–10: SPEC GATE APPROVED** (the contract is FILED and approved; the chain proceeds under
+`AGENTS.md` item 10a without further permission) · **GATE 1 (proposal/validity review): DONE** (the record
+`docs/specs/secure-tier-generalization-review.md`) · **GATE 2 (spec authoring): DONE** (this file) · **GATE 3
+(TestWriter red): DONE and REPORTED** (`§4.3.2`-class record at `§5.5.1`'s red clause — the register DID fail first,
+`RCA-1`) · **GATE 4 (adversarial + PBT audit): DONE, and its FINAL AUDIT STATE IS EMPTY** — `2 HIGH + 3 MED + 3 LOW +
+1 observation` findings were returned over the LANDED implementation, **every one is CLOSED or RECORDED**, and the
+dispositions are `§3a`/`§3b`'s (`HOST-FIX` for the host defects `A-1`/`A-2`/`A-3`; re-grains/controls for the instrument
+defects `A-4`/`A-5`/`A-6`/`A-8`/`A-10`; `NOT-A-FINDING` for `A-7`; a recorded harness limitation with an owner for
+`A-9`) · **GATE 5 (blind greens): OWED** — no `docs/specs/secure-exclusion-greens.md` exists yet (`§5.1` item 3 calls
+for it) · **GATE 6 (the `[U]` live battery): OWED — MANDATORY LIVE, NOT PARKED, AND NOT RUN** — **no `§5.U` matrix, no
+`§6.1` coverage report and no live run exist as of this clause** (`§2.4` item 7(2)/(3)) · **GATES 7–10: OWED**
+(proofreader · per-unit documentation review · the five legs · the DONE row + ledger move). **THE HONEST READING OF THE
+AS-FILED HEAD: a reader who finds the STATUS LINE still saying *"awaiting the architect's approval"* has found the
+FILING-TIME record of the spec gate, not a contradiction — the gate was passed, and this clause is where the chain's
+progress is legible.** **Authority `L`/`T`; class `OBSERVATION`** (falsifiable by the tree: the greens file's absence,
+the missing `§5.U` matrix, the recorded gate-4 dispositions).
+**⟶ THE GATE-4 FINDINGS ARE RECORDED IN THE HOUSE FORM AT `§3a`/`§3b`** (`AGENTS.md` RCA-3: the findings live in the
+unit's spec, each with its disposition and its landed-evidence citation — **never a bare `OWED`**); **the register's
+operative total moved `106 → 113`** and the amendment is at `§5.5.1`, in the annotate-beside form.
+
 1. **This unit is the exclusion gate, standing alone** — the ledger row's own words (`docs/next-steps.md`'s `S1` row):
    *"the access-control mutual-exclusion gate, standing alone: the exclusion state machine (the legal pairs
    `{MCP-ENABLED, TIER-4-CLOSED}` / `{MCP-DISABLED, TIER-4-OPEN}`, the illegal pair unreachable) · the invocation-turn
@@ -56,6 +80,22 @@ response is to STOP and say so, not to edit the path.** `§1.3` names every forb
    unit DECLARES the exclusion state machine, its three enforcement sites (invocation turn, epoch stamping, in-flight
    invalidation), its application to both transports, its fail-safe boot terminal, and one operator control authored as
    provident data in the isolated pane graph.
+**⟶ THE FOUR OWED AMENDMENTS AND THEIR LANDING SITES, LISTED SO A READER CAN CHECK EACH (2026-10-07, THE GATE-4
+DISPOSITION PASS — `RCA-8(d)` ANNOTATE-BESIDE; each was DISCOVERED BY the gate-4 passes and each is recorded where it
+bites, never in a summary alone):** **(1) `SecurityGate.exclusionEpoch(): number` IS A DECLARED SURFACE MEMBER** —
+declared at `§1.5` item 5 (the new item) with its authority (`A` `D-GATE` clause (1)(b)) and its row (`PAR-14`),
+beside `§2.1` item 2's `THREE → FOUR` member amendment and `§1.5` item 5's cross-reference into `PAR-5` (a
+caller-supplied epoch is a TS error; `PAR-5`'s OUTSIDE column is the reason). **(2) THE REPLY TURN'S EPOCH COUPLING IS
+DECLARED** at `§2.2` item 3's added clause (the acceptor binds a READER of the server's live gate —
+`RendererBackend.setExclusionEpochSource`, bound in the server constructor — so **no surface takes an epoch** and
+`PAR-5` holds), with the stale arm's verbatim token `'exclusion-closed'`. **(3) THE REGISTER'S OPERATIVE TOTAL IS
+`113`, NOT THE AS-FILED `106`** — amended at `§5.5.1`'s arithmetic paragraph and its heading annotation, with the
+as-filed `106 = 12 + 12 + 10 + 12 + 12 + 14 + 12 + 12 + 10` and the `44 + 38 + 24` subtotals **kept visible**; the
+earlier `P-EX-SM-2`/`P-EX-SM-3` transposition annotation is **SUBSUMED** (recorded there, not deleted). **(4) THE
+`§5.1` ITEM 1 DECLARED-SIGNATURE LIST WAS STALE IN TWO PLACES** (the `security.ts` member count, and the
+`mcp-server.ts` reader-form parameters plus the epoch seam) — amended beside at `§5.1` item 1, **with NO ALLOWED-list
+change owed** because every changed signature is inside an already-allowed file.
+
 4. **The exclusion state is a SEPARATE AXIS from `VALID_GROUPS`** (`A`; `R` `§2`'s `C-1`/`C-8` conditions; `R` `§7`
    `G-6`): `VALID_GROUPS` is **frozen at five** (`read` · `dispatch` · `graph` · `code` · `module` — `L`
    `src/main/security.ts:3`, `:138`; `src/main/security-store.ts:35`; `src/renderer/secure-panels.ts:56`), and a design
@@ -198,7 +238,7 @@ response is to STOP and say so, not to edit the path.** `§1.3` names every forb
    column 9 names as unit 1's architect needs). **ONE new authored node** in `paneEnvelope()` — a `<button>`-typed node
    with `props.id = 'exclusion-toggle'`, plus its label node — whose handler body calls the SAME manual-UI bridge the
    four landed bodies call (`window.provident.security`), inside the Security Settings pane beside the group toggles.
-   **It adds NO pane, NO group row, NO new pane id namespace and NO new DOM.** Reversible by the architect at this gate:
+   **It adds NO pane, NO group row, NO new pane id namespace and NO new DOM.** **⟶ THE LANDED NODE IS NOW `L`-CITED 2026-10-07 (THE GATE-4 DISPOSITION PASS — `RCA-8(d)` ANNOTATE-BESIDE; the as-filed wording stands BYTE-FOR-BYTE and is NOT rewritten): the declared control is IN the landed tree** — `props: { id: 'exclusion-toggle', 'data-state': 'mcp-enabled' }` at `L` `src/renderer/secure-panels.ts:220`, its click handler at `L` `:223` (`body: EXCLUSION_TOGGLE_BODY`, the function-STRING at `L` `:152`, whose `data-state` read is at `L` `:155`), and its `syncConfig` refresh at `L` `:497-501`. **THE AS-FILED PANE-GRAPH ANCHORS DRIFTED WITH THE LANDING AND ARE ANNOTATED, NOT REWRITTEN**: the renderer-side `declare global` bridge re-declaration declared at `§1.5` item 5 as *":43"* reads at `L` `:38`; the `security-status` mutation declared at `§2.4` item 3 as *":430-432"* reads at `L` `:486`. **A later pass that re-points these MUST keep the as-filed form visible** (`§0B` item 3's supersession-pointer edge; **authority `L`; class `CROSS-REF`**). Reversible by the architect at this gate:
    a different form (a checkbox, a two-node radio pair) is a one-clause amendment to `§2.4` item 2 with the same register
    terms (§5.5.3).
 5. **THE OFF-STATE'S OBSERVABILITY — THE `security-status` LINE** (`T`, `CONTRACT`, `DECLARED-DEFAULT` — the second
@@ -420,9 +460,28 @@ response is to STOP and say so, not to edit the path.** `§1.3` names every forb
    invocation turn (the tool answer), the HTTP POST (the 503 body) and the manual-UI SET response (the additive
    `exclusion` member). **No fourth producer.** (`T`, `CONTRACT`.)
 3. **`ExclusionTransition`** — the operator's request record on the manual-UI channel (`§2.4` item 4). (`T`, `CONTRACT`.)
+   **⟶ DECLARED, NOT LEFT TO INFERENCE, 2026-10-07 (THE GATE-4 DISPOSITION PASS — `RCA-8(d)` ANNOTATE-BESIDE): the
+   manual-UI transition surface's own declared member set is ONE host-side channel constant + ONE preload member + ONE
+   additive response member, named at `§2.4` item 4 and counted at `§2.6` item 3; the record above is the REQUEST
+   record's name, and it adds no runtime member of its own.** **Authority `T`; class `CONTRACT`.**
 4. **The one new channel constant** — `IPC_SECURITY_EXCLUSION = 'provident:security:exclusion'` (`§2.6` item 3).
-   (`T`, `CONTRACT`.)
-5. **THE READ-SIDE TYPING WIDENING — the manual-UI read's DECLARED RETURN** (`T`, `CONTRACT`; `§2.4` item 4; the
+   (`T`, `CONTRACT`.) **Landed at `L` `src/main/store-channels.ts` and imported by `L` `src/main/main.ts:13`.** **Authority `L`; class `CROSS-REF`.**
+5. **THE FOURTH ADDED `SECURITYGATE` MEMBER — THE EPOCH READER — IS A DECLARED SURFACE MEMBER HERE, BESIDE THE
+   READ-SIDE WIDENING, BECAUSE `§2.1` ITEM 2 DECLARES IT ON THE GATE AND A DECLARED MEMBER WITHOUT A ROW IS A GATE-2
+   FINDING** (`T`, `CONTRACT`; **⟶ ADDED 2026-10-07 BY THE GATE-4 DISPOSITION PASS — the as-filed list above declared
+   the gate's other three added members and omitted this one; **NOTHING IS REWRITTEN, THE MEMBER IS DECLARED BESIDE**).
+   **The member is `SecurityGate.exclusionEpoch(): number`** — the epoch reader `§2.2` item 3 requires and `§2.1`
+   item 2 declares. **ITS AUTHORITY IS `A` `D-GATE` clause (1)(b):** *"the gate must therefore … **(b)** stamp an epoch
+   on accepted work and invalidate in-flight work on the transition"* — an epoch must be READABLE to be stamped, so
+   the reader is mandated by the ruling, not invented here. **ITS ROW IS `PAR-14`** (domain: no argument, returns a
+   non-negative integer bumped by exactly `1` per accepted transition; OUTSIDE: a caller-supplied epoch — a TS error,
+   **and `PAR-5`'s *"no surface accepts a caller-supplied epoch"* clause is the reason, cross-referenced there**; a
+   negative/fractional reading; a reading that moves on `T-3`/`T-4`). **ITS LANDED SITE, CITED SO THE ROW IS CHECKABLE
+   BY ENUMERATION RATHER THAN BY ASSURANCE**: `L` `src/main/security.ts:255-256` (`exclusionEpoch(): number { return
+   this._exclusionEpoch }`) over the private counter at `L` `:210` (`private _exclusionEpoch = 0`), bumped by exactly
+   `+1` at `L` `:279` (`moved._exclusionEpoch = this._exclusionEpoch + 1`, the `T-1`/`T-2` path) and carried forward
+   UNMOVED at `L` `:273` (the `T-3` path) and `L` `:300` (the `T-4`/`T-5` path). **Authority `L`; class `CROSS-REF`.**
+6. **THE READ-SIDE TYPING WIDENING — the manual-UI read's DECLARED RETURN** (`T`, `CONTRACT`; `§2.4` item 4; the
    strict-reading-widening rule: a declared-return widening is a **declared surface**, so it needs a row here and a
    `§2.PAR` row, not an implicit consequence of item 2 above). The manual-UI read's declared return **widens** from the
    landed `SecuritySettings` to **`SecuritySettings & { exclusion: EXCLUSION_STATE }`** — the same
@@ -432,7 +491,7 @@ response is to STOP and say so, not to edit the path.** `§1.3` names every forb
    (both are in `§5.1` item 1's ALLOWED list): **`src/main/preload.ts:30`** — `get(): Promise<SecuritySettings>` becomes
    `get(): Promise<SecuritySettings & { exclusion: EXCLUSION_STATE }>` — and **`src/renderer/secure-panels.ts:43`** — the
    renderer-side `declare global` re-declaration of the bridge, which MUST widen in lockstep or the pane cannot read the
-   member. **`src/shared/types.ts` IS NOT ONE OF THE SITES**: `SecuritySettings` itself stays **byte-identical** and is
+   member. **⟶ THE TWO DECLARATION SITES ARE ANNOTATED TO THEIR LANDED LINES 2026-10-07 (THE GATE-4 DISPOSITION PASS — `RCA-8(d)` ANNOTATE-BESIDE; the as-filed `:30`/`:43` references above stand BYTE-FOR-BYTE and are NOT rewritten): the landed `get()` declaration reads `get(): Promise<SecuritySettings & { exclusion: EXCLUSION_STATE }>` at `L` `src/main/preload.ts:48`, and the renderer-side `declare global` re-declaration reads at `L` `src/renderer/secure-panels.ts:38`; the new bridge member's declaration is `L` `src/main/preload.ts:55` (`setExclusion(state: EXCLUSION_STATE): Promise<{ applied: boolean; state: EXCLUSION_STATE; reason?: 'malformed-state' }>`). AUTHORITY `L`; CLASS `CROSS-REF`.** **`src/shared/types.ts` IS NOT ONE OF THE SITES**: `SecuritySettings` itself stays **byte-identical** and is
    **DENIED** (`§1.3` item 9); the widening is an INTERSECTION applied at the two declaration sites above, never an edit
    to the shared type. A pass that widens `SecuritySettings` itself, or that adds the member to `src/shared/types.ts`, is
    a **COLLISION finding**.
@@ -452,13 +511,14 @@ implicit.**
 | **PAR-4** | `ProvidentMcpServer.exclusionSnapshot(): ExclusionReceipt \| null` (`§2.2` item 2) | the live gate's reading | `null` ONLY when the gate says `'mcp-enabled'`; a `'mcp-disabled'` gate answers the receipt. **No third return value**; never a throw. |
 | **PAR-5** | the exclusion **epoch** (`§2.2` item 3) | a value the gate BUMPs on every accepted transition; carried, never compared across processes | *OUTSIDE*: a caller supplying an epoch. No declared surface takes one — a PASS that adds an epoch-accepting parameter is a new surface and a finding (it would let a caller forge recency). |
 | **PAR-6** | `RendererBackend.abandonPendingForExclusion(reason: string): number` (`§2.2` item 4) | any `string`; the caller passes `'exclusion-closed'` | *OUTSIDE*: a non-string. **A non-string is NOT a declared-domain input** — the parameter is `string`, and a caller supplying a non-string is a TS error at the call site; at runtime the method reads the value only to build the rejection message, so a hostile value cannot change the OUTCOME (the count returned). **Never a throw**; returns the number of rejected pending entries (`0` when none). |
-| **PAR-7** | `handleHttp`'s per-POST exclusion arm (`§2.3` item 2) | the live gate's reading at POST arrival | *OUTSIDE*: HTTP methods other than `POST` on `/mcp` — those keep their landed answers (`404` off-path, `405` for `GET`/`DELETE`, `405` for other methods; `L` `mcp-server.ts:913-927`) and **the exclusion arm runs ONLY for `POST`**. A `POST` to `/mcp` with an unparseable body, a hostile header set or an oversized body is answered the exclusion arm's 503 when the state is `'mcp-disabled'` — **the state is read BEFORE the body and BEFORE the server is built** (so a hostile body can never reach a server while the tier is open). |
+| **PAR-7** | `handleHttp`'s per-POST exclusion arm (`§2.3` item 2) | the live gate's reading at POST arrival | *OUTSIDE*: HTTP methods other than `POST` on `/mcp` — those keep their landed answers (`404` off-path, `405` for `GET`/`DELETE`, `405` for other methods; `L` `mcp-server.ts:913-927`) and **the exclusion arm runs ONLY for `POST`**. A `POST` to `/mcp` with an unparseable body, a hostile header set or an oversized body is answered the exclusion arm's 503 when the state is `'mcp-disabled'` — **the state is read BEFORE the body and BEFORE the server is built** (so a hostile body can never reach a server while the tier is open). **⟶ ANNOTATED BESIDE 2026-10-07 (THE GATE-4 DISPOSITION PASS — `RCA-8(d)` ANNOTATE-BESIDE; the cell above stands BYTE-FOR-BYTE and is NOT rewritten): THIS ROW IS NOT AN OVERFLOW GUARANTEE, AND THE HONEST LIMIT IS NOW STATED** — **`readBody` HAS NO SIZE BOUND** (the gate-4 finding `A-7`), it is **PRE-EXISTING** and **outside this unit's boundary**, and **this unit makes it STRICTLY SAFER rather than fixing it**: on the exclusion arm the state is read and the `503` answered **BEFORE `readBody` is reached**, so in the `'mcp-disabled'` state a hostile or oversized body is **never read at all**. **A reader must NOT infer a bound in the `'mcp-enabled'` state from this row** — there is none, and this unit claims none (`§3b` `A-7`; `NOT-A-FINDING` for this unit).** |
 | **PAR-8** | `IPC_SECURITY_EXCLUSION` handler's payload (`§2.4` item 4) | `'mcp-enabled' \| 'mcp-disabled'` — the two closed tokens only | **OUTSIDE:** a bare `boolean`, a number, an object, `undefined`, `null`, an unknown string, a string differing only in case (`'MCP-DISABLED'`, `'mcp_disabled'`, `'mcp-disabled '`). **EVERY outside value is REFUSED AS A VALUE:** the handler answers `{ applied: false, state: <the UNCHANGED state>, reason: 'malformed-state' }` — **never a throw, never a silent no-op that looks applied.** |
 | **PAR-9** | the manual-UI read's exclusion member (`§2.4` item 4) | the state string, always present on a GET and on a SET response | *OUTSIDE*: absence. **The member is NEVER absent** (`IPC_SECURITY_GET` always carries it; `IPC_SECURITY_SET` always carries it, additively beside the landed `write` member — `L` `main.ts:379`'s additive precedent). A response missing it FAILS `P-EX-TP-2`. |
 | **PAR-10** | the pane control's bridge member (`§2.4` item 2) | `window.provident.security.setExclusion(state)` — the two closed tokens | **OUTSIDE:** the handler body's own `!s` guard (bridge absent) and any rejected transition (the handler answers `applied: false`). **The body NEVER throws** — its four landed siblings' posture (`L` `secure-panels.ts:107-136`, each an early `return`). |
 | **PAR-11** | the `security-status` line's `MCP:` segment (`§2.4` item 3) | exactly one of `· MCP: enabled` / `· MCP: disabled`, appended to the landed line | *OUTSIDE*: any other rendering, any interpolated numeric, any tier-4 VALUE. **The segment carries a STATE WORD, never a tier-4 value** — the forbidden carriers stand (`§1.3` item 8). |
 | **PAR-12** | the register's strategy drives (`§5.5.1`) | the tables printed in each row's Term cell | *OUTSIDE*: any drive not in a row's own table. **A `(bounded)` marking is not owed by any row here** — every table is the CLOSED input set (`§5.5.2` item 3). |
-| **PAR-13** | **the manual-UI read's declared RETURN CARRIER** (`§1.5` item 5; `§2.4` item 4) | **`SecuritySettings & { exclusion: EXCLUSION_STATE }`** — the widened declared return of `window.provident.security.get()`, declared at the two sites `§1.5` item 5 names (`L` `src/main/preload.ts:30`; `L` `src/renderer/secure-panels.ts:43`'s `declare global` re-declaration) | *OUTSIDE*: **(a) a carrier whose declared type is the UNDWIDENED `SecuritySettings`** — then the pane's own read of `exclusion` is not typed and `§2.4` item 4's render obligation is untypeable; **(b) a carrier widened by editing `SecuritySettings` itself or `src/shared/types.ts`** — **DENIED** (`§1.3` item 9), a COLLISION finding; **(c) a carrier that widens `get()` but not the `declare global` re-declaration (or vice versa)** — the two sites MUST move together, and a half-widening FAILS. **The widening is an INTERSECTION at the two named declaration sites; it is never a mutation of the shared type, and it adds no runtime member beyond `PAR-9`'s.** **Authority `T`; class `CONTRACT`** — and its carrier's *presence* is `PAR-9`'s separate reading (`T`, `CONTRACT`), which this row does NOT duplicate. |
+| **PAR-14** | **`SecurityGate.exclusionEpoch(): number`** (`§1.5` item 5's declaration — **⟶ THE ITEM NUMBER IS ANNOTATED, NOT SILENTLY REWRITTEN: the epoch reader was DECLARED 2026-10-07 by the gate-4 disposition pass as `§1.5`'s NEW item 5, and the read-side widening it once numbered as item 5 is now item 6** (`RCA-8(d)`); `§2.1` item 2; `§2.2` item 3) | **the function takes NO argument** and returns the gate's own monotone counter — a **non-negative integer** (`0` at construction, `+1` per accepted `T-1`/`T-2` transition, **carried forward, never moved, on `T-3`/`T-4`** and on the `T-5` SET path). Read by the acceptor's epoch source (`§2.2` item 3) and by no other declared surface. | *OUTSIDE*: **(a) a caller supplying an epoch** — a PASS that adds an epoch-accepting parameter is a new surface and a finding, **and `PAR-5`'s OUTSIDE column is the reason it is stated here**: *"a caller supplying an epoch. No declared surface takes one — a PASS that adds an epoch-accepting parameter is a new surface and a finding (it would let a caller forge recency)"*; **`PAR-14` is the row that makes that clause checkable by enumeration — the reader is a getter, and a caller-supplied epoch is therefore a TS error at every call site.** **(b) a negative, fractional or `NaN` reading** — the counter starts at `0` and moves by `+1` only, so any other reading FAILS (`P-EX-IM-3`); **(c) a reading that MOVES on a self-transition or an outside-value call** — FAILS `P-EX-SM-1`'s `T-3`/`T-4` cells (`§2.1` item 3). **Never a throw, never `undefined`.** |
+| **PAR-13** | **the manual-UI read's declared RETURN CARRIER** (`§1.5` item 6 — **as-filed `§1.5` item 5, renumbered beside by the 2026-10-07 gate-4 disposition pass when the epoch reader took item 5; both numbers are printed so the citation edge is not a dead end** (`RCA-8(d)`); `§2.4` item 4) | **`SecuritySettings & { exclusion: EXCLUSION_STATE }`** — the widened declared return of `window.provident.security.get()`, declared at the two sites `§1.5` item 5 names (`L` `src/main/preload.ts:30`; `L` `src/renderer/secure-panels.ts:43`'s `declare global` re-declaration) | *OUTSIDE*: **(a) a carrier whose declared type is the UNDWIDENED `SecuritySettings`** — then the pane's own read of `exclusion` is not typed and `§2.4` item 4's render obligation is untypeable; **(b) a carrier widened by editing `SecuritySettings` itself or `src/shared/types.ts`** — **DENIED** (`§1.3` item 9), a COLLISION finding; **(c) a carrier that widens `get()` but not the `declare global` re-declaration (or vice versa)** — the two sites MUST move together, and a half-widening FAILS. **The widening is an INTERSECTION at the two named declaration sites; it is never a mutation of the shared type, and it adds no runtime member beyond `PAR-9`'s.** **Authority `T`; class `CONTRACT`** — and its carrier's *presence* is `PAR-9`'s separate reading (`T`, `CONTRACT`), which this row does NOT duplicate. |
 
 ---
 
@@ -481,13 +541,29 @@ implicit.**
    process, held on the ONE `SecurityGate` instance `main` constructs at boot (`L` `main.ts:90`) and passes to the
    server (`L` `main.ts:264` → `mcp-server.ts:354`). **No per-window copy, no per-realm copy, no second holder.**
 2. **THE DECLARED SURFACE ON `SecurityGate`** (`T`, `CONTRACT`; `[H]`; the class is `L` `src/main/security.ts:184-214`
-   and its constructor/accessor posture is UNCHANGED). Three declared members are ADDED, and nothing else of the class
+   and its constructor/accessor posture is UNCHANGED). **FOUR declared members are ADDED** — **⟶ AMENDED 2026-10-07
+   (THE GATE-4 DISPOSITION PASS — `RCA-8(d)` ANNOTATE-BESIDE; the as-filed *"Three declared members are ADDED"* stands
+   visible in this clause's own record of it and is NOT rewritten): THE AS-FILED COUNT WAS `3`, AND THE LANDED SURFACE
+   HAS `4`, because the EPOCH READER is a declared member of the gate and was omitted from the as-filed list.** **THE
+   FOURTH MEMBER'S AUTHORITY AND ROW ARE `§1.5` ITEM 5's: authority `A` `D-GATE` clause (1)(b) (the ruling requires
+   the epoch to be stamped on accepted work, so the reader is mandated), row `PAR-14`.** — and nothing else of the class
    moves:
    - `get exclusion(): { readonly mcpEnabled: boolean; readonly tier4Open: boolean }` — the derived pair (`PAR-1`);
    - `exclusionState(): 'mcp-enabled' | 'mcp-disabled'` — the total reader (`PAR-2`);
    - `withExclusion(next: 'mcp-enabled' | 'mcp-disabled'): SecurityGate` — the transition's pure constructor
      (`PAR-3`), **returning a NEW gate in the `apply`-family style** (`L` `security.ts:211-213`: *"`apply(patch): SecurityGate` … `return new SecurityGate(applyPatch(this.config, patch))`"*) so the transition cannot mutate a
      gate another holder already captured.
+   - **`exclusionEpoch(): number` — the epoch reader (`PAR-14`; `§1.5` item 5)** — **the member `§2.2` item 3's stamp
+     reads.** It takes NO argument and returns the gate's own monotone counter, bumped by exactly `+1` on `T-1`/`T-2`
+     and carried forward UNMOVED on `T-3`/`T-4` (`§2.1` item 3). **ITS LANDED SITE: `L` `src/main/security.ts:255-256`**,
+     over the private counter at `L` `:210`, bumped at `L` `:279`, carried at `L` `:273` and `L` `:300`. **A caller
+     supplying an epoch is a TS error, and `PAR-5`'s OUTSIDE column states the reason** (`PAR-14` is where that clause
+     becomes checkable by enumeration). **Authority `L`/`T`; class `CONTRACT`.**
+   **THE FOUR LANDED DECLARATION LINES, CITED SO THE DECLARED SURFACE IS ENUMERABLE RATHER THAN ASSERTED** (the
+   as-filed range above, `L` `src/main/security.ts:184-214`, is the class's pre-unit span and **sits ABOVE the landed
+   members**; **annotated, not rewritten**, `RCA-8(d)`; **authority `L`; class `CROSS-REF`**): `get exclusion()` at
+   `L` `src/main/security.ts:241` · `exclusionState()` at `L` `:248` · `exclusionEpoch()` at `L` `:255` ·
+   `withExclusion()` at `L` `:265`.
    **THE IMMUTABLE-STYLE RULE IS NOT COSMETIC**: `applyGatePatch` REPLACES `this._gate` (`L` `mcp-server.ts:441`), so a
    mutating `withExclusion` would leave the server's own replacement invisible to any earlier reader. The declared
    transition therefore REPLACES the server's `_gate` exactly as `applyGatePatch` does (`§2.2` item 6).
@@ -583,7 +659,17 @@ implicit.**
    - **(a) THE INVOCATION TURN — MANDATORY, and it is the ONLY depth that closes race 1.** EVERY MCP tool handler
      invocation and EVERY MCP resource read runs the predicate **before any renderer dispatch**, and answers the
      refusal `ExclusionReceipt` as the tool's/resource's RESULT (a VALUE, never a throw — `§3.5`). The predicate's
-     read is the LIVE gate's state, read at the turn: **not a captured snapshot** (`P-EX-IM-2`).
+     read is the LIVE gate's state, read at the turn: **not a captured snapshot** (`P-EX-IM-2`). **⟶ THE LIVE-READ
+     REQUIREMENT IS NOW `L`-CITED, AND IT IS THE CLAUSE THE `A-1` FINDING TURNED ON (2026-10-07, THE GATE-4
+     DISPOSITION PASS — `RCA-8(d)` ANNOTATE-BESIDE; the as-filed sentence above stands BYTE-FOR-BYTE): the landed
+     mechanism is `exclusionTurn(gate: () => SecurityGate)` at `L` `src/main/mcp-server.ts:53`, **called with the
+     SERVER'S LIVE GATE READER** — `exclusionTurn(() => this._gate)` at `L` `:621` (the shared tool closure) and
+     `exclusionTurn(liveGate)` at `L` `:750`, `:992`, `:1006` (the shared tool/resource closures, whose own parameter
+     `liveGate: () => SecurityGate` reads at `L` `:739`, `:972`), each bound by `const liveGate = (): SecurityGate =>
+     this._gate` at `L` `:467` and `L` `:723`.** **WHY A READER, NOT A GATE VALUE — the as-filed `:45-47`/`:718-719`
+     shape captured the gate AT REGISTRATION, and `applyExclusion` REPLACES `this._gate` (`L` `:414`, beside
+     `applyGatePatch`'s `L` `:571`), so a captured value would be dead on the stdio server; the finding `A-1` is exactly
+     that defect, dispositioned at `§3b`.** **Authority `L`; class `CONTRACT`.**
    - **(b) THE REGISTRATION TOGGLING — KEPT, and it is NOT the enforcement.** `applyGatePatch`'s existing mechanism
      (`L` `mcp-server.ts:444-459`, `:460-477`) stays and keeps working; the decline is on the same terms
      `docs/specs/store-security.md` `§0A` item 8 states for the re-gate (*"COMPOSED WITH, never rewritten"*). **Its
@@ -601,6 +687,19 @@ implicit.**
    UNFORGETTABLE for a tool added later (one call site per surface, not one per name) and keeps the `P-4`-style
    *"no new surface"* reading. A per-tool implementation is admissible and would be a one-item amendment to this clause
    with the SAME register terms.
+   **⟶ THE DECLARED HELPER'S LANDED SIGNATURE IS THE READER FORM, AND THE AS-FILED TEXT THAT DESCRIBED A GATE *VALUE*
+   IS CORRECTED HERE (2026-10-07, THE GATE-4 DISPOSITION PASS — `RCA-8(d)` ANNOTATE-BESIDE; the declared-surface
+   language above is UNCHANGED, and `§1.3` item 9's boundary is UNTOUCHED).** **THE LANDED SIGNATURES**: `function
+   exclusionTurn(gate: () => SecurityGate)` — `L` `src/main/mcp-server.ts:53`; and the two registration entry points
+   take the same reader — `registerTools(…, liveGate: () => SecurityGate)` — `L` `:739` — and `registerResources(…,
+   liveGate: () => SecurityGate)` — `L` `:972`. **`createServer` binds it to the server's OWN live gate** —
+   `ProvidentMcpServer.registerTools(server, …, liveGate)` at `L` `:724` and `registerResources(server, …,
+   liveGate)` at `L` `:728`. **NO CALLER SUPPLIES A GATE VALUE, AN EPOCH OR A SNAPSHOT ANYWHERE ON THIS PATH** —
+   which is what makes `PAR-5`'s OUTSIDE column (*"no surface accepts a caller-supplied epoch"*) hold at the call
+   sites rather than by discipline. **THE PARAMETER-TYPE CHANGE IS INSIDE FILES `§5.1` ITEM 1 ALREADY ALLOWS** (`src/
+   main/mcp-server.ts` is on the ALLOWED list), **so NO ALLOWED-LIST CHANGE IS OWED and `§5.1` item 1's scope is
+   unchanged** — **its DECLARED-SIGNATURE prose is what the amendment targets, and it is annotated at `§5.1` item 1
+   itself, not silently rewritten.** **Authority `L`; class `CONTRACT`.**
 3. **THE EPOCH — STAMPED ON ACCEPTED WORK** (`T`, `CONTRACT`; `A` `D-GATE` clause (1)(b): *"stamp an epoch on accepted
    work"*). **What the epoch IS, exactly**: a **per-process monotone counter held beside the exclusion record**, bumped
    **once per accepted TRANSITION** (`T-1`, `T-2`; **never** on `T-3`/`T-4`, `§2.1` item 3). **What it is stamped on**:
@@ -613,6 +712,25 @@ implicit.**
    renderer's value — it is settled with the DECLARED refusal (`§2.2` item 5). A wire-carried epoch is admissible and
    would widen this unit's diff to `src/shared/types.ts` — **the architect may reverse this one item without any other
    clause moving.**
+   **⟶ THE COUPLING THE DECLARED STAMP LEFT UNSETTLED IS DECLARED HERE — HOW THE REPLY TURN LEARNS THE CURRENT EPOCH
+   (2026-10-07, THE GATE-4 DISPOSITION PASS — `RCA-8(d)` ANNOTATE-BESIDE; **ADDED, because the as-filed clause declared
+   the stamp and the staleness arm but not the coupling between them**; nothing above is rewritten).** **THE DECLARED
+   MECHANISM: the acceptor binds a READER OF THE SERVER'S LIVE GATE — one bound callable, no cached number and no
+   caller-supplied epoch.** **THE LANDED SHAPE, CITED**: `RendererBackend` declares `private exclusionEpochSource:
+   (() => number) | null = null` at `L` `mcp-server.ts:1188` and `setExclusionEpochSource(read: () => number): void` at
+   `L` `:1265-1266`; **`ProvidentMcpServer`'s constructor binds it to its OWN live gate** —
+   `acceptor.setExclusionEpochSource(() => this._gate.exclusionEpoch())` at `L` `:391-393` (guarded by a
+   `typeof … === 'function'` presence check, so a backend without the seam is not a crash). **THE STAMP IS THEREFORE
+   READ AT ACCEPTANCE FROM THE LIVE GATE, NEVER FROM A CAPTURE** (`L` `:1272`: `const read =
+   this.exclusionEpochSource`) — which is `A-1`'s reader discipline applied to the epoch, and the reason `A-2`'s
+   staleness arm can be honest. **NO SURFACE TAKES AN EPOCH — `PAR-5`'s OUTSIDE column HOLDS**, restated here because
+   this clause is what makes it true of the reply turn and not only of the invocation turn.
+   **THE STALE ARM'S TOKEN IS VERBATIM**: a reply whose stamped epoch is stale is settled with
+   `Error.message === 'exclusion-closed'` — **the same closed token as `§2.5` item 1's refusal, spelled once as the
+   landed constant `EXCLUSION_CLOSED = 'exclusion-closed'` at `L` `mcp-server.ts:33`** — which is the observable
+   `P-EX-IM-3`'s cell (b) reads and the string the `A-2#4`/`A-2#5`/`A-2#6` regression cells assert. **A third spelling,
+   a renamed token, or a stale reply settled with the renderer's value FAILS that row.** **Authority `L`/`T`; class
+   `CONTRACT`.**
 4. **THE IN-FLIGHT INVALIDATION — AND THE EVIDENCE THAT A CALL CAN OUTLIVE THE TRANSITION** (`T`, `CONTRACT`;
    `A` `D-GATE` clause (1)(b); `R` `§5.3` race 1). **THE EVIDENCE (a MEASURED reading of the landed bytes, `[H]`)**:
    `RendererBackend.invoke`'s `pending` entry carries a **60 000 ms** timer (`L` `mcp-server.ts:1045` —
@@ -625,6 +743,11 @@ implicit.**
    the landed `handleReset` loop **EXACTLY** (`L` `:1103-1113`): `clearTimeout(entry.timer)`, `entry.reject(new
    Error(reason))`, then `this.pending.clear()`, **returning the number of entries rejected** (a number, so
    `P-EX-IM-3` can observe whether the invalidation found work — the arithmetic is OBSERVED, not inferred).
+   **⟶ THE LANDED SITE AND ITS CITE ANNOTATION (2026-10-07, THE GATE-4 DISPOSITION PASS — `RCA-8(d)` ANNOTATE-BESIDE;
+   the as-filed `:1103-1113` above stands BYTE-FOR-BYTE and is NOT rewritten): the landed
+   `abandonPendingForExclusion(reason: string): number` reads at `L` `src/main/mcp-server.ts:1292` (its contract comment at `:1282-1291`; its `applyExclusion` call site at `L` `:418-419`)**, mirroring
+   `handleReset`'s loop (`clearTimeout` · `reject(new Error(reason))` · `pending.clear()`), **and the epoch seam it sits
+   beside is `L` `:1188` / `:1265-1266` (`§2.2` item 3's coupling clause).** **Authority `L`; class `CROSS-REF`.**
    **IT IS NOT `handleReset` AND IT MUST NOT BE**: `handleReset` also flips `this.ready = false`, rejects the readiness
    promise and mints a fresh `readyPromise` (`L` `:1109-1112`) — **re-arming the readiness gate is precisely what
    `§0A` item 6 forbids** (*"the renderer may not re-arm what the operator disabled"*). **`abandonPendingForExclusion`
@@ -815,6 +938,37 @@ implicit.**
      surfaces a genuinely NEW user-visible flow, it is added as a row and the count is printed with its terms — **the
      cap is a SIGNAL, not a ceiling and never a quota** (`AGENTS.md` item 11(f): *"never a ceiling and never a reason to
      drop, merge or leave unenumerated a discernible property"*).
+   - **(2-note) THE GATE-6 STATUS, RECORDED SO THE OWED BATTERY IS NOT MISTAKEN FOR A PARKED ONE** (`T`, `OWED`; **⟶
+     ADDED 2026-10-07 BY THE GATE-4 DISPOSITION PASS — `RCA-8(d)` ANNOTATE-BESIDE; item (2) above stands BYTE-FOR-BYTE
+     and is NOT rewritten**). **STATUS: `OWED — MANDATORY LIVE, NOT PARKED`, AND THE HONEST ADDITION IS *NOT RUN*: as
+     of this clause THERE IS NO `§5.U` MATRIX, NO `§6.1` COVERAGE REPORT AND NO LIVE RUN** — no matrix file, no report
+     file, and no execution of any U-row exists on this unit, so nothing here may be read as a battery result
+     (`docs/specs/user-flow-audit.md` `§4` item 6's *"never upgrade a layer"*). **THE `§5.U` SUBJECT LIST IS `U-1`…
+     `U-7`** — the seven subjects item (2) enumerates (the toggle's render in the isolated graph · the status line's
+     `MCP:` segment moving `enabled → disabled` · the refusal answered while `'mcp-disabled'` · the return and the
+     restored answers · the D1–D8 isolation holding with the new node · the disabled state surviving a reload while a
+     restart returns to `'mcp-enabled'` · the stdio transport staying CONNECTED) — **and `U-8` is CORRECTLY DEMOTED to
+     the matrix's precondition / battery note**, not counted as a U-row (`7 of ≤8`, item (2)). **THE GATE-4 AUDIT
+     CONFIRMED THE LIMB-A TRIGGER AND THAT NO STRUCTURAL BLOCKER JUSTIFIES A PARK** (`docs/specs/user-flow-audit.md`
+     `§7.1` limb A `DOM-SHIM-BLINDNESS` + limb B `UI-OVERHAUL`; `docs/pending.md` `§R` `P-R2`'s *"RECORDED, NOT WAIVED
+     … a merely-parked battery is NOT a gate-6 pass"*; `RCA-11`), so **nothing in this unit's shape converts the
+     battery into a `STRUCTURAL` row** (`§2.4` item 7(5) is the positive refusal). **THE GESTURE ROWS MUST CARRY THE
+     INSTRUMENT `MANUAL`, AND THE REASON IS STRUCTURAL, CITED FROM BOTH SIDES**: the pane lives in an **isolated
+     graph** that `provident.dispatch` cannot reach (`docs/specs/secure-panels.md` `§4`: *"`Runtime.dispatch`/
+     `get_rendered_html`/`list_targets`/`get_markdown`/`get_node_state` … NEVER see the security controls"*; `§2.7`
+     item 1), **and the shipped `ui` leg's own `R4` row forbids the two remaining reach-in instruments** —
+     `scripts/electron-ui.mjs`'s `R4` static check scans this leg's own CODE for the app-claim call sites
+     `L` `scripts/electron-ui.mjs:261` (`webContents.executeJavaScript`) and `L` `:263` (`webContents.debugger`), and
+     its own comment reads *"(`webContents.executeJavaScript`, then CDP via `webContents.debugger`) are NOT"*
+     (`L` `:46`); **so `executeJavaScript`/`debugger` are BOTH unavailable to a conforming battery.** **AND A NEW
+     `scripts/*.mjs` DRIVER IS NOT A LOOPHOLE — IT WOULD REDDEN `tests/ui-leg-contract.test.ts`'s HELPER-CANDIDATE
+     RULE** (`AGENTS.md` item 4's hazard note: the `L-1` row pins the `scripts` KEY SET, so a new key reddens it and a
+     config change cannot satisfy it). **Therefore `MANUAL` is the DECLARED instrument for the gesture rows, and a row
+     that names "the live gate" or "the leg" instead names NO instrument and FAILS** (`§2.4` item 7(3)'s closed set).
+     **THE `OWED`'s OWNER AND POSITIVE REVISIT CONDITION**: owner **the live-scenario runner / the supervisor, at gate
+     6**; revisit condition **gate 6 runs** — then the matrix's values, its U-row count and the report's
+     `summary.total` are authored from the RUNS (`§7a` `OW-5`). **Authority `T`; class `OWED` — with an owner and a
+     positive revisit condition, never a bare `OWED`.**
    - **(3) THE `§6.1` COVERAGE REPORT IS OWED**, with that file's declared fields (`unit` · `matrixSource` ·
      `predicateSource` = *this* obligation's source, i.e. `docs/specs/secure-exclusion.md` `§2.4` item 7, which cites
      `docs/specs/user-flow-audit.md` `§7.1` · `predicateSourcePresent: true` (that file exists — filed 2026-09-27) ·
@@ -884,19 +1038,27 @@ implicit.**
    | **N-5 — NO NEW PERSISTED ARTIFACT** (`A` `D-19`) | ANY new key in `provident-security.json`, ANY third filename, ANY write to a file for the state | The exactly-two persisted-file pin stands (`§1.3` item 7); the state's non-persistence IS the fail-safe guarantee (`§2.1` item 5). |
 
 3. **THE ADDITIVE-SURFACE CENSUS — THE ONE PLACE THIS UNIT MOVES A COUNT, PRINTED WITH ITS TERMS** (`T`, `CENSUS`):
-   **`5` surfaces · `8` distinct additions · the constant before-value read separately** —
+   **`5` surfaces · `8` distinct additions · the constant before-value read separately** — **(⟶ OPERATIVE 2026-10-07:
+   `5` surfaces · `9` distinct additions · the constant before-value read separately — the as-filed `8` stands visible
+   above and the moved term is the `SecurityGate`'s `3 → 4` (`PAR-14`'s epoch reader), `RCA-8(d)` ANNOTATE-BESIDE)** —
    `store-channels.ts`'s constant census **`2 → 3`** (adds `1`: `IPC_SECURITY_EXCLUSION`); the preload's `security`
    member set **`2 → 3`** (adds `1`: `setExclusion`) — **and its `get()`'s declared return widens, which is `PAR-13`'s
-   `1` declaration-site change, counted separately below**; the `SecurityGate`'s public member set **adds `3`**
-   (`exclusion` · `exclusionState` · `withExclusion`); the `RendererBackend`'s public member set **adds `1`**
+   `1` declaration-site change, counted separately below**; the `SecurityGate`'s public member set **adds `4`**
+   — `exclusion` · `exclusionState` · **`exclusionEpoch`** · `withExclusion` **(⟶ AMENDED 2026-10-07 BY THE GATE-4
+   DISPOSITION PASS — `RCA-8(d)` ANNOTATE-BESIDE: as-filed `adds `3`` (`exclusion` · `exclusionState` ·
+   `withExclusion`); the epoch reader `PAR-14`/`§1.5` item 5 was omitted from the as-filed census, and **the ADDITION
+   TOTAL below is therefore `9`, not `8` — `1 + 1 + 4 + 1 + 2 = 9` ✓**, with every other term unmoved)**; the `RendererBackend`'s public member set **adds `1`**
    (`abandonPendingForExclusion`); `paneEnvelope()`'s authored node census **adds `2`** (the label node + the toggle
-   node). **THE ADDITION TOTAL IS THE SUM OF ITS OWN ADDITIONS: `1 + 1 + 3 + 1 + 2 = 8` distinct additions ✓** (a
+   node). **THE ADDITION TOTAL IS THE SUM OF ITS OWN ADDITIONS: `1 + 1 + 3 + 1 + 2 = 8` distinct additions ✓** **(⟶ OPERATIVE
+   `1 + 1 + 4 + 1 + 2 = 9` distinct additions ✓, AMENDED 2026-10-07 BY THE GATE-4 DISPOSITION PASS — `RCA-8(d)`
+   ANNOTATE-BESIDE: the as-filed `8` stands visible above and its only moved term is the `SecurityGate`'s `3 → 4`, the
+   epoch reader; the `5` surfaces below are UNCHANGED and NO surface was added)** (a
    *before-value* is **not** an addition and is therefore **NOT** a term of that total). **THE CONSTANT BEFORE-VALUE IS
    A SEPARATE READING, NOT A TERM**: the census's two starting constants (`store-channels.ts`'s landed `2`) and the two
    starting preload members (the landed `2`) are **before-values**; they are printed here so a reader can check the
    `2 → 3` transitions, and **they are not added into `8`** — the family rule this honours is
    `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`: **a total that is not the sum of its own printed terms is a review
-   finding.** **THE `PAR-13` DECLARATION-SITE WIDENING, COUNTED SEPARATELY** (`§1.5` item 5): **`1` declared-return
+   finding.** **THE `PAR-13` DECLARATION-SITE WIDENING, COUNTED SEPARATELY** (`§1.5` item 6 — as-filed `§1.5` item 5, renumbered 2026-10-07): **`1` declared-return
    widening at `2` declaration sites** (`L` `src/main/preload.ts:30`; `L` `src/renderer/secure-panels.ts:43`) — a
    **type-level** widening that adds **no runtime member and no new surface**, which is why it is not folded into the
    `8`. **THE FIVE SURFACES are `store-channels.ts` · the preload · `SecurityGate` · `RendererBackend` ·
@@ -962,7 +1124,11 @@ implicit.**
 6. **`D-CLAUSE-2` IS NOT CONTRADICTED** (`T`, `CONTRACT`, `NEGATIVE`). The exclusion is an **access-control** state and
    changes **no residency**: it creates no lower-tier alias, clears no holder, refuses nothing on account of a same-path
    copy and creates no cross-tier interaction (`A` `D-CLAUSE-2`; the dossier's `§5` `A-3`/`A-8`). **A design in which
-   opening the tier writes, clears or re-tiers anything FAILS this clause.**
+   opening the tier writes, clears or re-tiers anything FAILS this clause.** **⟶ THE EPOCH IS NOT A RESIDENCY FACT
+   EITHER, ADDED 2026-10-07 (THE GATE-4 DISPOSITION PASS — `RCA-8(d)`): the epoch is a per-process COUNTER on the gate
+   (`§2.2` item 3; `PAR-14`), never a persisted value, never a tier value and never compared across processes** —
+   **`PAR-5`'s carried-never-compared clause stands, and the `A-2` host fix did not move it.** **Authority `L`/`T`;
+   class `CONTRACT`.**
 
 ---
 
@@ -1027,7 +1193,7 @@ last place where a bare id could be mistaken for a sibling row. No cell's conten
 6. **`I-EX-6` — THE STORE'S DECISION SITE AND ITS BYTES ARE UNTOUCHED**; `B-SECURE-GATE` is the one site, and no byte of `src/main/security-store.ts` moves (`§2.6`; `P-EX-IM-2`'s drive cells (i)/(j)/(k)/(l)).
 7. **`I-EX-7` — THE EXCLUSION STATE IS NOT PERSISTED**; no new key, no new file, no new writer; the boot terminal is `'mcp-enabled'` for every input class (`§2.1` items 4/5; `P-EX-SM-3`).
 8. **`I-EX-8` — THE EXCLUSION STATE IS INDEPENDENT OF THE ENABLED-GROUP SET AND OF `isReady()`**; neither readers nor transitions consult the other axis (`§2.1` item 3 `T-5`, `§2.4` item 5; `P-EX-SM-2`'s drive cells (1)–(5)).
-9. **`I-EX-9` — THE ISOLATED PANE GRAPH'S ISOLATION HOLDS WITH THE NEW NODE**; the app graph never sees, addresses or dispatches it (`§2.4` item 2, `§2.7` item 1; `P-EX-IM-4`'s isolation cells (a)–(e)).
+9. **`I-EX-9` — THE ISOLATED PANE GRAPH'S ISOLATION HOLDS WITH THE NEW NODE**; the app graph never sees, addresses or dispatches it (`§2.4` item 2, `§2.7` item 1; `P-EX-IM-4`'s isolation cells (a)–(e)). **⟶ ITS INSTRUMENT SET IS ANNOTATED 2026-10-07 (THE GATE-4 DISPOSITION PASS — `RCA-8(d)` ANNOTATE-BESIDE): cells (a)–(e) are read as NODE-SET / CENSUS readings** (the app `Runtime`'s HTML readings are EMPTY in the node harness — `A-9`, MEASURED: `census.inTree 23`, `listTargets 23` — so the app-HTML form of an absence probe is vacuous there), **and the pane-side reading is guarded by the `A-6` control (`panels !== null` asserted first; the `34`-node pane census).** **The invariant is UNCHANGED; only the instrument that can falsify it is named** (`§5.5.2` items 5/6).
 10. **`I-EX-10` — NO TIER-4 VALUE REACHES A GRAPH NODE, A TOOL RESULT, A RESOURCE OR A NOTIFICATION PAYLOAD, AND NO NEW NOTIFICATION IS EMITTED ON A TRANSITION** (`§2.6` item 4; `P-EX-IM-4`'s carrier/notify cells (1)–(5)).
 11. **`I-EX-11` — THE UNMOVED SET IS UNMOVED**: `ALL_TOOLS` `22` · `RpcMethod` `22` · `MUTATING_METHODS` `7` · `VALID_GROUPS` `5` · the default enabled-group set · the `scripts` key set · the persisted-file set · the union `16` (`§2.6` item 3).
 12. **`I-EX-12` — THE ONE ADDED RENDERED SURFACE IS AUTHORED AS PROVIDENT DATA IN THE PANE GRAPH**; no hand-written DOM, no new pane, no new group row (`§2.4` items 1/2; `AGENTS.md`'s UI-rendering constraint).
@@ -1095,7 +1261,21 @@ finding.**
 ### 5.1 Diff scope (what this unit may touch)
 
 1. **ALLOWED** (`T`, `CONTRACT`; `A` `THE TIER-4 GENERALIZATION IS SPLIT PER UNIT`, boundary item (i) — the named
-   moving set): `src/main/security.ts` (the exclusion record's three members + the state predicate) ·
+   moving set): **⟶ THE DECLARED-SIGNATURE LIST BELOW WAS STALE IN TWO PLACES AND IS AMENDED BESIDE, NOT REWRITTEN
+   (2026-10-07, THE GATE-4 DISPOSITION PASS — `RCA-8(d)`; **THE ALLOWED SET ITSELF IS UNCHANGED — no path is added and
+   no path is removed, because every changed signature is INSIDE an already-allowed file, so NO ALLOWED-LIST CHANGE IS
+   OWED**).** **THE TWO STALE PLACES, NAMED EXACTLY** **(i)** the `src/main/security.ts` clause read *"the exclusion
+   record's three members"* — **the landed surface has FOUR** (`PAR-14`'s `exclusionEpoch()`; `§1.5` item 5; `§2.1`
+   item 2's amendment) — and **(ii)** the `src/main/mcp-server.ts` clause described the exclusion record's machinery but
+   **not the READER-form parameters** the landing changed (`exclusionTurn(gate: () => SecurityGate)` at `L`
+   `mcp-server.ts:53`; `registerTools`/`registerResources` taking `liveGate: () => SecurityGate` at `L` `:739`/`:972`;
+   `createServer` binding `() => this._gate` at `L` `:723-728`), **nor the epoch seam now declared among the additions**
+   — **`RendererBackend.setExclusionEpochSource` (`L` `:1188`, `:1265-1266`), bound in the server constructor at `L`
+   `:391-393`** — which is **one of the declared additions this section's own file list covers** (`§1.5` item 5's
+   fourth member is the reader it binds; `§2.2` item 3's coupling clause is the mechanism). **A pass that reads the
+   `three members` phrase as operative has read the STALE cell; the operative count is FOUR.** `src/main/security.ts`
+   (the exclusion record's **four** members — `exclusion` · `exclusionState` · `withExclusion` · **`exclusionEpoch`
+   (`PAR-14`)** — + the state predicate) ·
    `src/main/main.ts` (the gate construction site's initialization, the ONE new channel constant's handler, the
    additive `exclusion` member on the two `IPC_SECURITY_*` responses) · `src/main/store-channels.ts` (the ONE new
    constant — the file's constant census `2 → 3`; **⟶ THIS FILE'S TWO NOW-STALE CENSUS COMMENTS ARE ANNOTATION SITES,
@@ -1109,11 +1289,11 @@ finding.**
    `src/main/mcp-server.ts` (the invocation-turn check at the two shared
    closures, the per-POST HTTP arm, the `exclusionSnapshot()` reader, `RendererBackend.abandonPendingForExclusion` and
    the epoch-gated reply turn) · `src/main/preload.ts` (the ONE new `security` member; the member set `2 → 3`;
-   **`get()`'s declared-return widening at `:30` — `§1.5` item 5 / `PAR-13`; and the `:13-14` census comment noted
+   **`get()`'s declared-return widening at `:30` (landed at `L` `:48`) — `§1.5` item 6 / `PAR-13`; and the `:13-14` census comment noted
    above**) ·
    `src/renderer/secure-panels.ts` (the ONE authored control + its label + the status line's trailing segment + the
    `syncConfig` refresh for `data-state`/`content`; **the renderer-side `declare global` bridge re-declaration at
-   `:43`, which MUST widen in lockstep with `preload.ts:30` — `§1.5` item 5 / `PAR-13`**) · the unit's own test file ·
+   `:43`, which MUST widen in lockstep with `preload.ts:30` — `§1.5` item 6 / `PAR-13`; **the landed sites are `L` `preload.ts:48` and `L` `secure-panels.ts:38`**, annotated 2026-10-07**) · the unit's own test file ·
    its own `*-greens.md` · its
    `§5.U` matrix + `§6.1` report · this spec's `§3a`/`§3b` findings as they land.
 2. **DENIED — and these are the boundary's decisive property, so a diff touching them is a COLLISION finding**
@@ -1191,11 +1371,35 @@ finding.**
    `§1.3` item 10); its rows keep their ids byte-for-byte, and **the two registers are now DISJOINT in ALL FIVE id
    spaces, so the FILE-citation rule below is belt-and-braces rather than load-bearing.** **NO term, no row count, no
    clause and no property moved in the rename** — the register arithmetic below re-prints `106 =
-   12 + 12 + 10 + 12 + 12 + 14 + 12 + 12 + 10` unchanged.**
+   12 + 12 + 10 + 12 + 12 + 14 + 12 + 12 + 10` unchanged.** **⟶ THE RENAME'S OWN CLAIM IS UNTOUCHED AND ONLY THE
+   FIGURE MOVES, ADDED 2026-10-07 (THE GATE-4 DISPOSITION PASS — `RCA-8(d)` ANNOTATE-BESIDE): the rename moved no term
+   and no row; the GATE-4 amendment moved three terms, and the OPERATIVE total is `113 = 12 + 15 + 13 + 13 + 14 + 12 +
+   12 + 12 + 10` (`§5.5.1`'s arithmetic paragraph is the ONE operative reading; the `106` above is the as-filed and
+   post-rename figure, kept visible).**
 3. **The register's subjects** (`R` `§7`'s own naming form): *the exclusion's state-machine / invocation-turn / epoch /
    both-transports / boot-terminal / operator-surface rows.*
 
 ### 5.5.1 THE REGISTER — **`9` typed rows = `4` `P-EX-IM` + `3` `P-EX-SM` + `2` `P-EX-TP`, declared total `106 = 12 + 12 + 10 + 12 + 12 + 14 + 12 + 12 + 10`**
+
+**⟶ THE HEADING'S DECLARED TOTAL IS ANNOTATED BESIDE (2026-10-07, THE GATE-4 DISPOSITION PASS — `RCA-8(d)`
+ANNOTATE-BESIDE; the as-filed heading above stands BYTE-FOR-BYTE and is NOT rewritten): THE OPERATIVE TOTAL IS
+`113 = 12 + 15 + 13 + 13 + 14 + 12 + 12 + 12 + 10`, and the ROW COUNT is UNCHANGED (`9` typed rows = `4` `P-EX-IM` +
+`3` `P-EX-SM` + `2` `P-EX-TP`). The three moved terms are `P-EX-IM-2` (`12 → 15`, the `A-1` cells), `P-EX-IM-3`
+(`10 → 13`, the `A-2` cells) and `P-EX-SM-2` (`14 → 15`, the `A-3` cell); the arithmetic paragraph below carries the
+operative terms, the chain and the re-derived subtotals, and `§5.5.3` prints the amended factors.** **Authority `T`;
+class `CENSUS`.**
+
+**⟶ THE EXECUTED REGISTER'S OWN READING AFTER THE AMENDMENT, PRINTED HERE SO THE TABLE, THE ARITHMETIC PARAGRAPH AND
+`§5.5.3` ARE MUTUALLY CONSISTENT** (`T`, `M`; added 2026-10-07 by the gate-4 disposition pass): **the register is
+EXECUTED DETERMINISTICALLY — NO seed, NO generator, NO new dependency — `9` typed rows, `113` attempts =
+`12 + 15 + 13 + 13 + 14 + 12 + 12 + 12 + 10`, `broken === 0`, un-run `=== 0`, `held === attemptsExecuted`,
+`registerStoppedAt: null`, subtotals `P-IM 50 + P-SM 39 + P-TP 24 = 113`, caps `15 ≤ 100` and `113 ≤ 400`.** **THE
+RED-TIME READING IS KEPT VISIBLE RATHER THAN SMOOTHED**: the **`A-10` finding's drive ran `5` of `113` attempts BROKEN
+under the OLD, vacuous guard** (`expect(typeof broken).toBe('number')`), **which is exactly why the guard is now a
+`broken === 0` conjunction** — **the broken run is NOT quoted as the register's current state, it is quoted as the
+control that proved the old guard blind** (`§5.5.2` item 5; `§3b` `A-10`). **The `§5.5.3` item 1 factors and the
+operative terms are consistent because both print the SAME nine terms in TABLE order — a reader can check the table,
+the paragraph and the factors against each other and get one answer.** **Authority `M`/`T`; class `OBSERVATION`.**
 
 **⟶ RE-PREFIXED 2026-10-05 (THE REVIEW-CLOSURE PASS — `RCA-8(d)` ANNOTATE-BESIDE; see `§5.5` item 2 for the verified
 collision and `§7a` `OW-7` for the RECORDED RESOLUTION). THE AS-FILED IDS WERE `P-SE-IM-1`…`P-SE-IM-4` ·
@@ -1208,15 +1412,20 @@ own terms.**
 | --- | --- | --- | --- | --- | --- |
 | 1 | `P-EX-IM-1` | `P-IM` | **THE EXCLUSION RECORD'S TWO READINGS CANNOT DISAGREE, AND THE ILLEGAL PAIR IS UNSPELLABLE** — for EVERY state the record can hold, `exclusion.mcpEnabled === !exclusion.tier4Open` holds; the state string is one of the two closed tokens; **no assignment path exists** (a `readonly` accessor and no setter — and a setter's very presence FAILS this row); `withExclusion` is pure in the `apply`-family sense (the RECEIVER is unchanged by a transition: a receiver read before and after answers the SAME state) | `S-EX-STATE-1` | **`12` attempts** = `2` legal states × `6` readings per state — (1) `exclusionState()` is the declared token; (2) `exclusion.mcpEnabled === !exclusion.tier4Open`; (3) no assignment path is reachable (the member is a getter: an attempted write throws in strict mode and does NOT change the reading — the two halves of the reading are asserted together); (4) `config`/`enabled` are UNCHANGED by the transition (the exclusion is a separate axis — the enabled-group set is read before and after); (5) the RECEIVER's state is unchanged after a successful `withExclusion` on it; (6) a self-transition returns a gate whose state equals the receiver's |
 | 2 | `P-EX-IM-2` | `P-IM` | **THE INVOCATION TURN IS THE ENFORCEMENT, AND IT IS TOTAL OVER `D-SCOPE`** — for EVERY MCP-reachable method class, with the state `'mcp-disabled'`, the call is refused the VALUE `{status:'refused', reason:'exclusion-closed'}` BEFORE any renderer dispatch, on BOTH transports; a registry-only re-gate is NOT the enforcement; the tool/resource set is NOT deregistered (the non-legibility pin); AND the static boundary holds: **the diff adds NO `secure.*` segment check, adds NO token to the store's 16-member union, and moves NO byte of the four forbidden paths** | `S-EX-TURN-1` | **`12` attempts** = `12` drive cells — (a) an invocation while `'mcp-disabled'`: the declared refusal as a VALUE, no `pending` entry created, no epoch stamped; (b) the positive control — the SAME call while `'mcp-enabled'` reaches the renderer normally (the refusal is not vacuous); (c) the registry-only depth FAILS alone: with the toggling DISABLED and the invocation check live, the call is STILL refused (the row that proves the enforcement is not registration); (d) a resource READ is refused by the same predicate (the resource surface is inside `D-SCOPE`); (e) the tool/resource handles are still RESOLVABLE after the transition (the non-legibility pin, `§0A` item 7(c)); (f) the stdio server is still CONNECTED after the transition; (g) the HTTP POST is refused at arrival while `'mcp-disabled'`; (h) the HTTP positive control: the same POST while `'mcp-enabled'` reaches a per-POST server; (i) the diff-spelling census: ZERO `secure`-segment tests and ZERO `'secure-refused'` spellings in the unit's five files; (j) the union-count census: the store's union is READ at `16` and the file `src/main/security-store.ts` is **byte-identical to its measured pre-unit bytes**; (k) **THE MEASURED FILE BYTE-PIN** of `src/renderer/store-core-graph.ts` = **`sha256:0664c52f06bd6da5e95de957a6170e5be07b5a8c5a459489f98c2b01921e8450`** and `src/renderer/store-graph-references.ts` = **`sha256:5c0c1a971d7f9268866b46b4d34f803694dd5a43f3b06a0cf81012c20d8f9657`** — both re-read and UNCHANGED after this unit's diff (**the pin's attribution, per the sibling's dated annotations: `sha256:29772ac7…` is the frozen ARTIFACT's SPAN digest and is NEVER a file-pin figure; the FILE pins are the two full digests above** — `docs/specs/store-security.md` `§1.3` item 1's and `§2.7` item 1's dated annotations are the authority for which figure is which); (l) **THE MEASURED ARTIFACT BYTE-PIN** of `docs/specs/store-core-module-store-core-graph-surface.md` — its frozen fields-1–7 SPAN digest reads **`sha256:29772ac7aa27eaa32065a19cfd1e64716746d86371b933108a7e527970d928a6`** (the `HYDRATE-1` re-freeze figure, unchanged and un-annotated by this unit), asserted over the span at the `FROZEN-SPAN-BEGIN`/`FROZEN-SPAN-END` sentinels.unit reading |
+**⟶ THE `A-1` FINDING'S RE-GRAIN AND ITS THREE NEW CELLS ARE RECORDED HERE, BESIDE ROW 2's TERM — THE TABLE IS THE PER-ROW AUTHORITY AND NO CELL IN ROW 2 IS REWRITTEN (2026-10-07, THE GATE-4 DISPOSITION PASS; `RCA-8(d)` ANNOTATE-BESIDE).** **ROW 2's OPERATIVE TERM READS `15` ATTEMPTS = `15` DRIVE CELLS — as-filed `12`** (`RCA-8(d)`: the as-filed figure is printed here so the supersession edge is visible; the as-filed sequence `12 + 12 + 10 + 12 + 12 + 14 + 12 + 12 + 10` and its `44 + 38 + 24` subtotals stay visible in `§5.5.1`'s arithmetic paragraph). **THE ADDED CELLS ARE THE `A-1` REGRESSION SET — (m) `A-1#1`: AFTER A REAL `applyExclusion('mcp-disabled')` WITH THE SDK-REGISTRY TOGGLING DELIBERATELY WITHHELD, A TOOL INVOCATION IS STILL REFUSED (the finding's own falsifier: the pre-fix code dispatched — `invokes 1` — and returned the renderer's value); (n) `A-1#2`: THE SAME CELL FOR A RESOURCE READ (the resource surface is inside `D-SCOPE`, `§2.2` item 2(a)); (o) `A-1#3`: THE POSITIVE CONTROL — the SAME two calls under `'mcp-enabled'` reach the renderer (`invokes` GROWS), proving cells (m)/(n) are not vacuous.** **WHY THE CELLS EXIST AT ALL, CITED**: the invocation-turn reader now reads the LIVE gate at the turn (`L` `mcp-server.ts:53`, `:621`, `:750`, `:992`, `:1006`; `§2.2` item 2(a)'s annotation), so a drive that captures the gate at REGISTRATION cannot falsify the clause — **the cells drive the replacement, not a snapshot**. **Authority `L`/`T`; class `CONTRACT`.**
 | 3 | `P-EX-IM-3` | `P-IM` | **THE EPOCH AND THE INVALIDATION ARE TOTAL OVER THE IN-FLIGHT CLASS, AND THE STATE HAS EXACTLY ONE LIVE HOME** — for EVERY accepted work item, the epoch read at acceptance is carried; a reply whose stamped epoch is stale is settled with the DECLARED token and NEVER with the renderer's value; `abandonPendingForExclusion` rejects EVERY pending entry, returns their COUNT, and touches NOTHING ELSE (never `ready`, never the readiness promise); and the process's exclusion record has ONE live home (the server's own gate, REPLACED by the transition exactly as `applyGatePatch` replaces it) | `S-EX-EPOCH-1` | **`10` attempts** = `10` drive cells — (a) accept-then-transition: the call answers the declared token, and the renderer's late value does NOT surface; (b) the reply turn's stale-epoch arm: a reply arriving after the bump is settled with the refusal even though the renderer answered `ok` (the value is DISCARDED); (c) the invalidation's count is OBSERVED (`abandonPendingForExclusion` returns the number of entries it rejected — `2` pending entries → `2`); (d) the invalidation's non-re-arm arm: `isReady()` and `pendingCount()` are read before and after — the readiness flag is UNCHANGED by the invalidation and the pending map is empty after it; (e) the landed reload path is UNCHANGED: `handleReset` still rejects pending AND re-arms readiness (the two operations are distinguishable); (f) the transition's replay on a live server REPLACES the server's gate (a reader of `mcp.gate` observes the new state); (g) a second gate constructed from the same options does NOT observe the first's transition (no shared mutable module record — the row that FAILS a module-global design); (h) a self-transition does NOT bump the epoch (a pending entry accepted before it is NOT invalidated); (i) an outside-value transition does NOT bump the epoch and does NOT invalidate; (j) **THE RACE-2 ORDERING DRIVE (`§2.2` item 7's drive — ⟶ RE-AIMED 2026-10-05 BY THE REVIEW-CLOSURE PASS: this cell previously read *"a tier-write (`IPC_SECURITY_SET`) does NOT bump the epoch and does NOT invalidate"*, an assertion about ONE holder's response to a write; it is now the INTERLEAVING DRIVE the clause it belongs to actually needs, and it absorbs the old reading rather than adding an eleventh cell — the term stays `10`): a tier-write (`IPC_SECURITY_SET`) does NOT bump the epoch and does NOT invalidate, AND the SET and the EXCLUSION transition are issued back-to-back in ONE tick in BOTH orders — after the pair, (i) the store's `current` equals the SET's post-state, (ii) the gate's config equals the transition's post-value, and (iii) NO third holder is observable. **A store `current` observed mid-update, a gate left at its pre-value, or any third holder FAILS** — the ordering claim `§2.2` item 7 makes is thereby DRIVEN rather than stated** (race 2's ordering rule, `§2.2` item 7) |
+**⟶ THE `A-2` FINDING'S RE-GRAIN AND ITS THREE NEW CELLS ARE RECORDED HERE, BESIDE ROW 3's TERM (2026-10-07, THE GATE-4 DISPOSITION PASS; `RCA-8(d)` ANNOTATE-BESIDE — **ROW 3's CELLS ARE NOT REWRITTEN**).** **ROW 3's OPERATIVE TERM READS `13` ATTEMPTS = `13` DRIVE CELLS — as-filed `10`.** **THE ADDED CELLS — (k)/(l)/(m) of this row's own sequence: (k) `A-2#4` THE EPOCH-READER CELL: `exclusionEpoch()` answers `0` at construction and `+1` on each accepted `T-1`/`T-2`, reads UNMOVED across the transition's gate REPLACEMENT (the reader is bound to the LIVE gate through the acceptor's epoch source, `§2.2` item 3's annotation at `L` `mcp-server.ts:1188`, `:1265-1266`, `:391-393`, `:1272`); (l) `A-2#5` THE STALE-REPLY CELL: a reply whose entry's stamped epoch is STALE is settled with `Error.message === 'exclusion-closed'` VERBATIM, and the renderer's `ok` payload does NOT surface (`L` `mcp-server.ts:1360-1371`, the arm at `:1365-1367`); (m) `A-2#6` THE ACCEPTOR-BINDING CELL: `setExclusionEpochSource` is BOUND by the server's constructor to `() => this._gate.exclusionEpoch()`, and no surface accepts a caller-supplied epoch (`PAR-5`).** **THE FOURTH ADDED ITEM IS A RE-GRAIN, NOT A CELL — `P-EX-SM-1`'s T-1(ii) reading was RE-GRAINED to read the epoch's own MOVE (the bump), rather than the invalidation's count alone.** **WHY `A-2` EXISTED AT ALL, CITED**: the declared epoch had no landed reader and `handleReply` had no staleness arm at the RED/GREEN boundary — so the declared property was **unenforceable as written**, which is a HOST defect and a RED-SET defect at once (`§3b` carries both dispositions). **Authority `L`/`T`; class `CONTRACT`.**
 | 4 | `P-EX-SM-1` | `P-SM` | **THE EXCLUSION'S STATE MACHINE IS CLOSED, TERMINAL-TOTAL, AND ITS TRANSITION SET IS EXACTLY FIVE** — `MCP-ENABLED → MCP-DISABLED` (T-1) · `MCP-DISABLED → MCP-ENABLED` (T-2) · the self-transition (T-3, a legal no-op) · the outside-value call (T-4, the unchanged gate) · the SET path (T-5, **NOT a transition site**); every drive reaches a declared terminal and no drive invents a sixth | `S-EX-MACH-1` | **`12` attempts** = `5` transition classes × `2` readings + `2` machine-level readings — each class read twice: (i) the state the machine lands on, (ii) the obligations it did or did not fire (the epoch and the invalidation). T-1: `'mcp-disabled'` + (bump, invalidate). T-2: `'mcp-enabled'` + (bump, invalidate). T-3: unchanged + (no bump, no invalidate). T-4: unchanged + (no bump, no invalidate, **no throw**). T-5: unchanged + (no bump, no invalidate). The `2` machine-level readings: the START state (the boot terminal, read before any operator act) and the TOTALITY reading (every class above is reachable from the start state by a declared path); `5 × 2 + 2 = 12` ✓ |
 | 5 | `P-EX-SM-2` | `P-SM` | **RE-ARM OWNERSHIP: `markReady()` AND A RELOAD DO NOT RE-ARM WHAT THE OPERATOR DISABLED, AND THE DISABLED STATE DOES NOT CLOSE THE TRANSPORT** — the exclusion state is a function of NEITHER `isReady()` NOR a reload NOR a timer; the only re-arm is the operator's own `setExclusion('mcp-enabled')`; the stdio transport is not closed and not rebuilt by a transition; and the landed `IPC_READY` handler is unmodified | `S-EX-REARM-1` | **`14` attempts** = `7` drive cells × `2` readings per cell — (1) `markReady()` while `'mcp-disabled'`, (2) a `did-finish-load` reload while `'mcp-disabled'`, (3) a `closed`/`destroyed` reset while `'mcp-disabled'`, (4) a monotone clock advance with no operator act (the NO-TIMER arm), (5) the operator's own `setExclusion('mcp-enabled')` (the ONE cell that DOES change the state — the positive control), (6) a transition with the stdio transport live (the CONNECTED reading), (7) a transition with a per-POST HTTP server live (the per-POST reading). Each cell's TWO readings: (i) the state AFTER the drive, (ii) the tool/resource ENABLED-ness after the drive (read through the landed `registeredEnabled`/`resourceEnabled` accessors — `L` `mcp-server.ts:491-511`); `7 × 2 = 14` ✓. **The `IPC_READY` handler's source is read as the STATIC control of cells (1)/(2)** |
+**⟶ THE `A-3` FINDING'S NEW CELL IS RECORDED HERE, BESIDE ROW 5's TERM (2026-10-07, THE GATE-4 DISPOSITION PASS; `RCA-8(d)` ANNOTATE-BESIDE — **ROW 5's SEVEN CELLS ARE NOT REWRITTEN**).** **ROW 5's OPERATIVE TERM READS `15` ATTEMPTS = `7` DRIVE CELLS × `2` READINGS + `1` WIDEN-ARM CELL — as-filed `14` (`7 × 2`).** **THE ADDED CELL `A-3#7`: after a re-enable (`setExclusion('mcp-enabled')` from `'mcp-disabled'`) with the enabled-GROUP set unchanged, a tool that is newly ALLOWED by the re-enable is REGISTERED on the live stdio server — i.e. `applyExclusion` and `applyGatePatch` route through ONE shared re-gate (the landed `regateLiveServer()` at `L` `src/main/mcp-server.ts:443`, called from `applyExclusion` at `L` `:426` and from `applyGatePatch` at `L` `:577`), whose widen arm registers newly-allowed tools and resources at `L` `:467-476` while the WIDEN stays SUPPRESSED while the tier is open.** **THE CELL'S FALSIFIER IS THE FINDING ITSELF**: before the fix `applyExclusion` omitted the widen arm `applyGatePatch` has, so a re-enable left newly-allowed tools unregistered; **a positive control (the same re-enable under `applyGatePatch`'s own path) proves the cell is not vacuous.** **Also carried by the SAME arm: `createServer`'s registration uses the LIVE gate reader — `L` `:723-728` (`const liveGate = (): SecurityGate => this._gate`; `registerTools(server, …, liveGate)`; `registerResources(server, …, liveGate)`) — so "one shared re-gate" is the widened reading of `§2.3` item 1's re-gate clause and not a second mechanism.** **Authority `L`/`T`; class `CONTRACT`.**
 | 6 | `P-EX-SM-3` | `P-SM` | **THE BOOT TERMINAL IS THE SAFE PAIR, TOTAL OVER THE WHOLE INPUT DOMAIN, AND NOTHING PERSISTS — RE-SCOPED SO EVERY DRIVE IS OBSERVABLE AGAINST THE LANDED CODE** (**⟶ RE-SCOPED 2026-10-05 BY THE REVIEW-CLOSURE PASS: the as-filed cell asserted an `OPEN→INGEST→CLOSE→ENABLE` sequence whose first three steps the landed tree CANNOT EXHIBIT — the tier has no open/close API (`L` `security-store.ts:25-33`) and no ingestion pass exists in `main.ts`. THE DRIVES ARE RE-SCOPED TO THE ARTIFACTS THAT ACTUALLY EXIST; **the term count is UNCHANGED at `12`**.**) — for EVERY boot input class the state resolves `'mcp-enabled'`/`{mcpEnabled:true, tier4Open:false}`; the ORDER the contract pins is the **ORDER OF CONSTRUCTION** over the landed artifacts (store → gate → transports → `mcp.start()`), **and OPEN/CLOSE are DECLARED `S2`'s mechanism, NOT this unit's — so NO drive here asserts an open/close call or an ingestion pass** (`§2.1` item 4's restatement; `§1.3` item 3); and the state has NO persistence path (no new key, no third file, no writer) | `S-EX-BOOT-1` | **`12` attempts** = `7` input classes + `3` order readings + `2` persistence readings — the `7` input classes (cold · missing file · corrupt/unparsable file · a TORN record · an EMPTY record · a wrongly-shaped record · a file with a stale `${path}.tmp` beside it) each read ONCE for the resolved state; **the `3` ORDER readings, EACH OBSERVABLE ON THE LANDED ARTIFACTS: (i) the security store's construction precedes the `SecurityGate`'s construction (`L` `main.ts:86-90`); (ii) the gate's construction precedes the MCP server's construction (`L` `main.ts:90` → `:264`; the server holds the gate it was passed, `L` `mcp-server.ts:354`); (iii) the server's construction precedes `mcp.start()` (`L` `main.ts:264` → `:459`, the last boot step), and the state reads `'mcp-enabled'` at every point before it**; the `2` persistence readings (the security file's KEY SET is read before and after a transition — byte-identical · the persisted-file census is read at exactly TWO filenames). `7 + 3 + 2 = 12` ✓. **A DRIVE THAT ASSERTS AN OPEN/CLOSE CALL, AN INGESTION PASS, OR A CACHING HOLDER FAILS THIS ROW — no such surface exists in the landed tree, so such a drive cannot be exhibited and is NOT owed (`§5.5.2` item 2's `S2`-scope fence).** |
 | 7 | `P-EX-TP-1` | `P-TP` | **EVERY REFUSAL IS A VALUE, NEVER A THROW, AND THE REFUSAL'S TOKEN IS EXACTLY ONE** — for EVERY refusal class (`'mcp-disabled'` invocation turn · `'mcp-disabled'` resource read · the in-flight abandonment · the HTTP POST at arrival · the malformed transition payload), the outcome is a declared VALUE, `status` is exactly `'refused'`, the token is exactly `'exclusion-closed'` for state refusals and exactly `'malformed-state'` for payload refusals, and NO throw escapes any declared surface | `S-EX-RFUS-1` | **`12` attempts** = `5` refusal classes × `2` readings + `2` reading cells — each of the `5` classes read twice: (i) the value's exact shape (`status`/`reason` tokens; for the HTTP class the status line AND the body's `error.code`/`error.message`); (ii) **the no-throw reading** (the call is made inside a `try` that FAILS the row if anything is thrown, and the surface is re-read afterwards to prove the failure was non-destructive). The `2` extra cells: (1) the token census over the whole diff — `'exclusion-closed'` and `'malformed-state'` are the ONLY two new refusal tokens, and NEITHER appears in the store module; (2) the union reading — the store's union count is `16` and no new member was added. `5 × 2 + 2 = 12` ✓ |
 | 8 | `P-EX-TP-2` | `P-TP` | **THE MANUAL-UI CHANNEL IS TOTAL OVER ITS DECLARED DOMAIN, AND THE TRANSITION IS NOT A SETTING** — for EVERY payload the transition channel can be given, the handler answers ONE of exactly TWO closed forms (`{applied:true, state}` for the two legal tokens; `{applied:false, state:<unchanged>, reason:'malformed-state'}` for every outside value), never throws; the `exclusion` member is NEVER absent on a GET or a SET response and the SET response keeps its landed `write` member BESIDE it; and a SET does NOT change the state | `S-EX-CHAN-1` | **`12` attempts** = `9` payload classes + `3` channel readings — the `9` payload classes (the two legal tokens; a bare `boolean`; a number; an object; `undefined`; `null`; an unknown string; a case-variant string; a whitespace-padded string) each read ONCE for the answered form; the `3` readings (a GET response's `exclusion` member is present and is the live state; a SET response carries `exclusion` AND the landed `write` member together; a SET does not move the state — read before and after). `9 + 3 = 12` ✓ |
 | 9 | `P-EX-IM-4` | `P-IM` | **THE NEW NODE DOES NOT WIDEN THE PANE GRAPH'S ISOLATION, AND THE EXCLUSION STATE REACHES NO CARRIER** — the app graph's `renderedHtmlResult()` / `listTargets()` / `get_markdown` / `get_node_state` and an app-graph `dispatch` on the pane node's authored id observe NONE of the new control (D1–D8 HOLDS WITH the added node — `§2.7` item 1); the app Runtime's census contains no pane content; the exclusion state appears in NO graph node, NO tool result, NO resource payload and NO notification payload (`I-EX-10`); the notify path is NOT re-aimed at the exclusion and a transition emits NO notification; and the pane's `cfg` snapshot path is UNCHANGED (the new control rides the SAME manual-UI channel — `data-ownership-model-plan.md` `§2.3` row 2.4-12 is not breached by construction, `§2.7` item 3) | `S-EX-ISOL-1` | **`10` attempts** = `5` isolation probes + `5` carrier/notify probes — the isolation probes, each read on the CONSTRUCTED pane graph: (a) `Runtime.renderedHtmlResult()` contains NEITHER the toggle's label text NOR its authored id; (b) `listTargets()` exposes no authored id from the pane graph; (c) an app-graph `dispatch` on the toggle's authored id is an unresolved target (never reaching the pane); (d) the app census's node count is UNCHANGED by the pane's construction (before/after readings); (e) `get_markdown`/`get_node_state` carry no pane content. The five carrier/notify probes: (1) no graph node holds the exclusion token (a census over the app NODE SET); (2) a tool result payload carries no exclusion token; (3) a resource payload carries no exclusion token; (4) the notification payload's member set is UNCHANGED and a transition emits ZERO notifications (the `notifyGraphChanged` call count is read across a transition, before and after); (5) the positive control — the SAME probes on the app's OWN `#status`-free content DO observe app content, proving the probes are not vacuous. `5 + 5 = 10` ✓ |
 
 **THE ARITHMETIC, PRINTED WITH ITS TERMS** (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`): **`106 = 12 + 12 + 10 + 12 + 12 + 14 + 12 + 12 + 10`**, in register order (`P-EX-IM-1` … `P-EX-IM-4`, `P-EX-SM-1` … `P-EX-SM-3`, `P-EX-TP-1`/`P-EX-TP-2`), with the chain **`12 → 24 → 34 → 46 → 58 → 72 → 84 → 96 → 106` ✓** — **nine terms, and the total IS the sum of its own terms.** **SUBTOTALS BY TYPE**: `P-IM` = `12 + 12 + 10 + 10 = 44` · `P-SM` = `12 + 12 + 14 = 38` · `P-TP` = `12 + 12 = 24` — and **`44 + 38 + 24 = 106` ✓**. **CAPS: largest row `14` ≤ `100` ✓ (headroom `86`); total `106` ≤ `400` ✓ (headroom `294`) — each compared against its OWN cap, never against a subtotal.** **⟶ ANNOTATED BESIDE 2026-10-05 (`U-SECURE-EXCLUSION` `S1`, gate 3; `RCA-8(d)` ANNOTATE-BESIDE — the sentence above stands BYTE-FOR-BYTE and is NOT rewritten; this clause records a **per-row-assignment drift**, NOT a mis-sum).** **THE DRIFT: the term sequence printed above (`12 + 12 + 10 + 12 + 12 + 14 + 12 + 12 + 10`, chain `…46 → 58 → 72…`) TRANSPOSES `P-EX-SM-2` and `P-EX-SM-3` relative to the per-row `§5.5.1` TABLE, which numbers row 5 = `P-EX-SM-2` at `14` attempts and row 6 = `P-EX-SM-3` at `12`.** **THE TABLE IS THE PER-ROW AUTHORITY — it is the cell that carries each row's own term — so the operative sequence is `12 + 12 + 10 + 12 + 14 + 12 + 12 + 12 + 10`, chain `12 → 24 → 34 → 46 → 60 → 72 → 84 → 96 → 106`; the executed register prints that form.** **BOTH FORMS SUM TO `106` AND BOTH GIVE `P-SM = 38`, so the SUBTOTALS and the CAPS above are UNAFFECTED and NO TERM VALUE, ROW, STRATEGY ID OR PROPERTY MOVES — the drift is purely which of the two `P-SM` rows carries `14`.** **A reader MUST treat the TABLE's per-row figures as operative and this paragraph's ordering as its own dated reading.** **ALSO CORRECTED IN THE SAME PASS: the parenthetical order string's *"`P-EX-IM-1` … `P-EX-IM-4`"* above reads as a RANGE but must not be read as the row POSITIONS — the TABLE places `P-EX-IM-4` NINTH, and the register's `REGISTER_ROW_IDS`/strategy-id arrays are in lockstep with the TABLE.** **ROWS: `9` (`4` + `3` + `2`) — the `≤8` component-breakdown SIGNAL is EXCEEDED and the register is REPORTED AS `9`, because the signal is not a ceiling**: `P-EX-IM-4` was added when this filing's own `§2.7`/`I-EX-9`/`I-EX-10` clauses were found to cite a row that did not yet exist — i.e. the D1–D8-with-the-new-node isolation and the four-carrier emptiness are **discernible, independently falsifiable properties**, and enumerating them is exactly what `AGENTS.md` item 11(f) requires (*"never a ceiling and never a reason to drop, merge or leave unenumerated a discernible property"*). **No property was merged, dropped or left unenumerated to fit the signal, and the excess is DECLARED rather than smoothed.**
+
+**⟶ THE OPERATIVE ARITHMETIC, AMENDED 2026-10-07 BY THE GATE-4 DISPOSITION PASS — `RCA-8(d)` ANNOTATE-BESIDE: THE AS-FILED PARAGRAPH ABOVE STANDS BYTE-FOR-BYTE AND IS NOT REWRITTEN, AND ITS FIGURES — `106 = 12 + 12 + 10 + 12 + 12 + 14 + 12 + 12 + 10`, the chain `… 96 → 106`, and the subtotals `44 + 38 + 24 = 106` — STAY VISIBLE AS THE AS-FILED FORM SO THE SUPERSESSION EDGE IS CHECKABLE.** **THE OPERATIVE TOTAL IS `113`, NOT `106`.** **THE TERMS, IN `§5.5.1` TABLE ORDER (row 1 → row 9): `113 = 12 + 15 + 13 + 13 + 14 + 12 + 12 + 12 + 10`; the chain reads `12 → 27 → 40 → 53 → 67 → 79 → 91 → 103 → 113 ✓` — nine terms, and the total IS the sum of its own terms** (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`). **THE DELTA IS `+7`, AND IT IS ACCOUNTED FOR BY EXACTLY THREE ROWS — no fourth row moved and no term was re-assigned:** **`+3` at `P-EX-IM-2` (`12 → 15`, the `A-1` cells)** · **`+3` at `P-EX-IM-3` (`10 → 13`, the `A-2` cells)** · **`+1` at `P-EX-SM-2` (`14 → 15`, the `A-3` cell)** — and **`3 + 3 + 1 = 7`; `106 + 7 = 113` ✓**. **SUBTOTALS BY TYPE, RE-DERIVED FROM THE OPERATIVE TERMS**: **`P-IM` = `12 + 15 + 13 + 10 = 50`** · **`P-SM` = `12 + 15 + 12 = 39`** · **`P-TP` = `12 + 12 = 24`** — and **`50 + 39 + 24 = 113` ✓** (as-filed: `44 + 38 + 24 = 106`; the type subtotals move with their own rows — `P-IM` `+6` from the `A-1`/`A-2` cells and `P-SM` `+1` from the `A-3` cell). **THE CAPS STILL HOLD, EACH COMPARED AGAINST ITS OWN CAP: largest row `15 ≤ 100` ✓ (headroom `85`); total `113 ≤ 400` ✓ (headroom `287`).** **THE EARLIER 2026-10-05 TRANSPOSITION ANNOTATION FOR `P-EX-SM-2`/`P-EX-SM-3` IS SUBSUMED BY THIS ONE**: that clause corrected *which* `P-SM` row carried `14` — **it is not withdrawn and it is not wrong; it is SUPERSEDED as the operative reading** because both of those rows' figures are now stated here in table order (`P-EX-SM-2` at `15`, `P-EX-SM-3` at `12`), so **this clause is the ONE operative arithmetic and the 2026-10-05 clause is its dated predecessor** (`RCA-8(d)`'s supersession-pointer edge: the predecessor points here, and here points at `§5.5.1`'s TABLE as the per-row authority). **NOTHING ELSE MOVED WITH THE ARITHMETIC**: no row was added, dropped or merged (**`9` typed rows = `4` `P-IM` + `3` `P-SM` + `2` `P-TP`, unchanged**), no property, no strategy id and no clause moved, the register is still **EXECUTED DETERMINISTICALLY with NO seed and NO generator**, and **`§5.5.3` prints the amended factors below so the two cells cannot drift.** **Authority `T`/`M`; class `CENSUS`.**
 
 ### 5.5.2 The register's honesty block — what is NOT proven
 
@@ -1239,6 +1448,41 @@ own terms.**
 4. **The `[U]` half of the contract is NOT in this register.** The four `§5.U` obligations live in the matrix and the
    `§6.1` report, whose clause set is `docs/specs/user-flow-audit.md`'s, not this register's. **A pass that reports this
    register as covering the live battery is a finding.**
+5. **THE TEST-SIDE RE-GRAINS THE GATE-4 PASS FORCED ARE RECORDED HERE, EACH WITH ITS CONTROL** (`T`, `OBSERVATION`;
+   **⟶ ADDED 2026-10-07 BY THE GATE-4 DISPOSITION PASS**; the dispositions are `§3b`'s, and this item records ONLY what
+   the register's own drives now are): **`A-4` — SIX DRIVES WERE VACUOUS OR SELF-COMPARING** (a `x.toBe(x)` tautology; a
+   `size === (x ? size : size)` self-comparison; a "transition" driven on a throwaway gate; a
+   `toBeGreaterThanOrEqual(0)` count; an order-insensitive term check) — **RE-GRAINED, each with a positive control
+   proven able to fail.** **`A-5` — `P-EX-TP-2`'s nine payload classes measured the FIXTURE'S OWN RECEIVER, not the
+   landed handler** (the handler was read as text only) — **RE-GRAINED: the handler's totality is now asserted through
+   the source-shape reading PLUS the declared-surface drive, AND THE LIMITATION IS STATED rather than implied** (the
+   handler is exercised through the channel's declared surface, and the static reading is the second, not the only,
+   half — `P-EX-TP-2`'s term stays `12 = 9 + 3`, no cell moved). **`A-6` — `P-EX-IM-4`'s isolation probes could pass
+   with NO PANE AT ALL** (the pane factory's failure was swallowed) — **RE-GRAINED: `panels !== null` is asserted FIRST,
+   and a pane-side positive control (`paneNodeById(panels,'exclusion-toggle')` DEFINED) makes the absence probe
+   falsifiable. MEASURED: `34` pane nodes** (`M`; the measuring pass is this unit's gate-4 disposition pass, by node-set
+   enumeration over the constructed pane graph — **a BEFORE-value for `P-EX-IM-4`'s isolation cell (d)'s node-set
+   reading, which is why it is printed with its measuring method rather than as a bare number**). **`A-8` — the
+   byte-pin instrument had no control proving the digest comparison can fail** — **CONTROL ADDED** (a MUTATED COPY of
+   the pinned file does NOT answer its pin, so `P-EX-IM-2`'s cell (k) can redden). **`A-10` — THE REGISTER'S
+   BROKEN-COUNT GUARD WAS VACUOUS**: `expect(typeof broken).toBe('number')` **passed a run in which `5` of `113`
+   attempts were BROKEN** — **GUARD TIGHTENED to `broken === 0` + un-run `=== 0` + `held === attemptsExecuted`, with
+   the RED-time reading (`5 of 113` broken) kept VISIBLE, and a positive control proving the OLD form passed a broken
+   run while the NEW form fails it.** **A register row reported `broken > 0`, or an un-run row, is a FAILURE, never a
+   pass** (`AGENTS.md` item 11(b)). **Authority `T`/`M`; class `OBSERVATION`.**
+6. **THE NODE-HARNESS LIMITATION THAT MAKES EVERY APP-**HTML** ABSENCE PROBE VACUOUS IN ONE DIMENSION IS RECORDED, WITH
+   ITS MEASUREMENT AND ITS OWNER** (`M`, `OWED` — **⟶ ADDED 2026-10-07 BY THE GATE-4 DISPOSITION PASS; recorded, not
+   authored**): the app `Runtime`'s `renderedHtml` / `ssrHtml` / `markdown` readings are **EMPTY (`0 B`) in the node
+   harness** — **MEASURED this pass: `census.inTree 23`, `listTargets 23`** (`M`; the measuring pass is the gate-4
+   disposition pass, by reading the constructed app Runtime's three payloads and its two censuses) — **so every
+   app-HTML ABSENCE probe is vacuous in that dimension and CANNOT falsify an isolation claim on its own.** **THE
+   AFFECTED PROBES WERE REPLACED WITH NODE-SET/CENSUS READINGS** (`P-EX-IM-4`'s isolation cells (a)–(e) now read the
+   app NODE SET and the censuses, and cell (d)'s before/after reading is the `23`-node census above). **OWNER: a future
+   app-render unit** — **this is NOT this unit's surface** (the app Runtime's HTML rendering is its own concern, and a
+   spec-filing pass may not widen this contract to reach it: `§1.3` items 4/10). **Positive revisit condition: an
+   app-render unit lands the app-Runtime HTML reading in the node harness — then the app-HTML form of these probes
+   becomes falsifiable and may be restored BESIDE the node-set readings.** **Authority `M`/`T`; class `OWED` — with an
+   owner and a positive revisit condition, never a bare `OWED`.**
 
 ### 5.5.3 Attempt arithmetic (readable against the tables above)
 
@@ -1249,6 +1493,18 @@ own terms.**
    reading cells) · `12 = 9 + 3` (nine payload classes + three channel readings) · `10 = 5 + 5` (five isolation probes +
    five carrier/notify probes) — **the nine terms sum to `106`, and each term is the product/sum of the explicit factors
    its own cell prints.**
+2. **⟶ THE AMENDED FACTORS, BESIDE THE AS-FILED LIST ABOVE 2026-10-07 (THE GATE-4 DISPOSITION PASS — `RCA-8(d)`
+   ANNOTATE-BESIDE; item 1 stands BYTE-FOR-BYTE and is NOT rewritten, and its `106` is the AS-FILED reading).** **THE
+   THREE MOVED ROWS' FACTORS, SO THE FACTOR LIST AND THE TERMS CANNOT DRIFT** (`§5.5.1`'s arithmetic paragraph is the
+   ONE operative reading): **`15 = 15 × 1`** (fifteen drive cells × one assertion each — `P-EX-IM-2`; as-filed
+   `12 = 12 × 1`) · **`13 = 13 × 1`** (thirteen drive cells × one assertion each — `P-EX-IM-3`; as-filed
+   `10 = 10 × 1`) · **`15 = 7 × 2 + 1`** (seven drive cells × two readings, PLUS the `A-3#7` widen-arm cell — read on
+   its own because it has one reading, not two — `P-EX-SM-2`; as-filed `14 = 7 × 2`). **THE OTHER SIX ROWS' FACTORS ARE
+   UNCHANGED**: `12 = 2 × 6` · `12 = 5 × 2 + 2` (`P-EX-SM-1`) · `12 = 7 + 3 + 2` (`P-EX-SM-3`) · `12 = 5 × 2 + 2`
+   (`P-EX-TP-1`) · `12 = 9 + 3` (`P-EX-TP-2`) · `10 = 5 + 5` (`P-EX-IM-4`). **THE NINE AMENDED TERMS THEREFORE SUM TO
+   `113` IN TABLE ORDER (`12 + 15 + 13 + 13 + 14 + 12 + 12 + 12 + 10`), each term the product/sum of the explicit
+   factors its own cell prints** — **and `§5.5.1`'s arithmetic paragraph, this item and `§5.5.3` item 1 are mutually
+   consistent: they print the SAME nine terms, in the SAME table order.** **Authority `T`; class `CENSUS`.**
 
 ---
 
@@ -1275,7 +1531,14 @@ own terms.**
 1. **The layer honesty** (`§1.4`): everything here is main-process/constructed-driver evidence, except gate 6's `[U]`
    battery, which is MANDATORY and is the ONLY assembled-app evidence this unit claims. No timing figure is claimed.
 2. **The `[U]` battery is a condition on the DONE row, not a formality**: a DONE row that cites no `§5.U` matrix and no
-   `§6.1` report is a review finding (`docs/specs/user-flow-audit.md` `§5`, `§2.4` item 7).
+   `§6.1` report is a review finding (`docs/specs/user-flow-audit.md` `§5`, `§2.4` item 7). **⟶ ITS OPERATIVE STATUS IS
+   `OWED — MANDATORY LIVE, NOT PARKED, AND NOT RUN`, ANNOTATED 2026-10-07 (THE GATE-4 DISPOSITION PASS — `RCA-8(d)`;
+   `§2.4` item 7(2-note) is the ONE operative cell): NO `§5.U` matrix, NO `§6.1` report and NO live run exist** — the
+   subject list is `U-1`…`U-7` with `U-8` demoted to the matrix's precondition, the gate-4 audit confirmed the limb-A
+   trigger and that no structural blocker justifies a park, and **the gesture rows carry the instrument `MANUAL`**
+   (the pane is in the isolated graph and `scripts/electron-ui.mjs`'s `R4` forbids `executeJavaScript`/`debugger`,
+   `L` `:261`/`:263`; a new `scripts/*.mjs` driver would redden `tests/ui-leg-contract.test.ts`'s helper-candidate
+   rule). **A reader who finds no matrix and no report has found the CORRECT current state, not a filing error.**
 3. **The OWED carries, each with its owner and its positive revisit condition — the list is `§0B` item 3's `(C-1)`…
    `(C-5)`, and it is carried HERE BY POINTER rather than by paraphrase** (`§0B` item 3 is the ONE list; a paraphrase in
    a second place is exactly the drift this pointer removes — the review found the two cells worded differently for the
@@ -1421,16 +1684,48 @@ transition). Findings are dispositioned in `§3b` with one of the six recorded d
 `provident-ssr` package defect found by the pass is a handoff item (`docs/defects.md` + `docs/HANDOFF.md`), never a host
 patch.
 
+**⟶ THE SEED SET'S RECONCILIATION, ADDED 2026-10-07 (THE GATE-4 DISPOSITION PASS — `RCA-8(d)` ANNOTATE-BESIDE; the seed
+sentence above stands BYTE-FOR-BYTE and is NOT rewritten).** **EVERY SEED THIS PASS NAMED IS DISPOSITIONED, AND THE
+DISPOSITIONS ARE `§3b`'S TEN ROWS — this clause is the pointer, not a second disposition table**: the **state record's
+hostile readers** are driven by `P-EX-IM-1`'s six readings + `P-EX-IM-3`'s cell (g) (no second holder) — **no finding
+returned**; the **invocation turn's evasions** are the `A-1` set (the captured-gate reading was the real defect, found
+and fixed — `HOST-FIX`), and the module-tool two-gate conflation is fenced by `§2.2` item 1's predicate scope — **no
+finding returned beyond `A-1`**; the **epoch's ordering** is the `A-2` set (the absent staleness arm — `HOST-FIX` +
+`RED-SET-FIX`) and `P-EX-IM-3`'s cells (a)/(b)/(h)/(i); the **invalidation's blast radius** is `P-EX-IM-3`'s cells
+(c)/(d)/(e)/(j)/(k) and `§2.2` items 4/6 — **no finding returned**; the **transports** are `P-EX-IM-2`'s cells (g)/(h)
+and `§2.3` items 2/3 — **no finding returned**; the **manual-UI channel** is `P-EX-TP-2` and the `A-5` re-grain
+(`RED-SET-FIX`) plus `A-7`'s `readBody` observation (**`NOT-A-FINDING`** for this unit); the **pane control** is
+`P-EX-IM-4` and the `A-6` re-grain (`RED-SET-FIX`) plus `A-9`'s recorded harness limitation (`PAR`-note); the
+**boundary** seeds are `P-EX-IM-2`'s static cells (i)–(l) and `P-EX-TP-2`'s channel readings — **no collision finding
+returned**; the **oracle** seeds are `§0A` item 7(a)–(d) and `FS-EX-9`/`P-EX-IM-2`'s non-legibility cells — **no finding
+returned**. **THE PBT AUDIT'S THREE CHECK CLASSES ARE ALSO DISPOSITIONED (`§3b`'s closing clause)**, and **`A-10` — the
+vacuous register guard — is the one finding that lived OUTSIDE this seed list and was found by the register reading
+itself** (`RED-SET-FIX`). **NOTHING IN THIS SEED SET REMAINS UN-DISPOSITIONED, AND NO SEED IS SILENTLY DROPPED.**
+**Authority `T`; class `OBSERVATION`.**
+
 ## 3b. The adversarial pass's disposition table — the SHAPE (filled by gate 4; every finding dispositioned, host fixes land here with red-first regression rows)
 
 | # | Finding (as returned) | Severity | Disposition | Red-first row |
 | --- | --- | --- | --- | --- |
-| *(to be filled by gate 4 — the read-only adversarial pass and the read-only PBT audit over `§5.5.1`; every row dispositioned within the six-disposition vocabulary, and the PBT audit's over-strength / under-assertion / evasion checks dispositioned here rather than left as an `OWED`)* | | | | |
+| **A-1** | **gate-4 finding 1 — THE DECLARED ENFORCEMENT WAS DEAD ON THE STDIO SERVER: the invocation-turn check read a gate CAPTURED AT REGISTRATION** (`src/main/mcp-server.ts:45-47`, `:718-719`) **while `applyExclusion` REPLACED `this._gate`** (`:396`) **and `withExclusion` always returned a NEW instance** (`src/main/security.ts:250-260`) — **so the registry-toggling reading was the only live one and the declared turn check was inert.** **SUPERVISOR-PROVEN BY EMPIRICAL PROBE, NOT BY READING**: after a real `applyExclusion('mcp-disabled')` with the SDK-registry toggling withheld, the handler STILL dispatched (`invokes 1`) and returned the RENDERER'S VALUE instead of the refusal | **HIGH** | **`HOST-FIX` — CLOSED, LANDED (`commit 74202e0`)**: `exclusionTurn` now takes the gate's **READER** (`() => SecurityGate` — `L` `mcp-server.ts:53`), so the decision reads the **LIVE** gate at the turn; `registerTools`/`registerResources` take `liveGate: () => SecurityGate` (`L` `:739`, `:972`); `createServer` binds `() => this._gate` (`L` `:723-728`); the call sites are `L` `:621`, `:750`, `:992`, `:1006` (`§2.2` item 2(a)'s annotation; `§2.2` item 2's declared-mechanism amendment) | **REGRESSION CELLS `A-1#1` (tool) / `A-1#2` (resource) with the POSITIVE CONTROL `A-1#3`** — carried into `P-EX-IM-2` as its cells **(m)/(n)/(o)** (`§5.5.1`, the `A-1` annotation beside row 2; the row's term moved `12 → 15`) |
+| **A-2** | **gate-4 finding 2 — THE DECLARED EPOCH DID NOT EXIST**: `grep epoch src/main/mcp-server.ts` returned **comments only**; `handleReply` had **no staleness arm**; and `ProvidentMcpServer.applyExclusion` was driven by **no test** — so `§2.1` item 3(b)'s bump and `§2.2` item 3's stamp and staleness were DECLARED BUT UNENFORCEABLE | **HIGH** | **`HOST-FIX` + `RED-SET-FIX` — CLOSED, LANDED**: `SecurityGate._exclusionEpoch` + `exclusionEpoch()` (`L` `security.ts:210`, `:255-256`); `withExclusion` bumps by exactly `1` on `T-1`/`T-2` (`L` `:279`) and CARRIES FORWARD on `T-3`/`T-4` (`L` `:273`, `:300`); `RendererBackend.setExclusionEpochSource` (`L` `mcp-server.ts:1188`, `:1265-1266`) is BOUND by the server's constructor to the server's live gate (`L` `:391-393`) and stamps the **LIVE** epoch at acceptance (`L` `:1272`); `handleReply` gained the stale arm settling with `Error.message === 'exclusion-closed'` **VERBATIM** (`L` `:1360-1371`, the arm at `:1365-1367`) — the token being the landed constant `L` `:33`. **THE SPEC SIDE OF THE SAME FIX**: the FOURTH declared `SecurityGate` member and the reply-turn coupling are now DECLARED (`§1.5` item 5; `§2.1` item 2's FOUR-member amendment; `§2.2` item 3's coupling clause; `PAR-14`) | **CELLS `A-2#4`** (the epoch reader: `0` at construction, `+1` per accepted transition, unmoved across the gate's replacement) **/ `A-2#5`** (the stale reply settles with the token VERBATIM and the renderer's `ok` value is DISCARDED) **/ `A-2#6`** (the acceptor's binding) — carried into `P-EX-IM-3` (`§5.5.1`, the `A-2` annotation beside row 3; the row's term moved `10 → 13`) — **plus the RE-GRAINED `P-EX-SM-1` T-1(ii) reading** (it now reads the epoch's own MOVE) |
+| **A-3** | **gate-4 finding 3 — `applyExclusion` OMITTED THE REGISTRATION WIDEN ARM that `applyGatePatch` has**, so on a RE-ENABLE newly-allowed tools were NOT registered on the live stdio server — an operator-visible consequence of the transition that the contract's `T-2` clause already required | **MED** | **`HOST-FIX` — CLOSED, LANDED**: `applyExclusion` and `applyGatePatch` now route through ONE shared `regateLiveServer()` helper (`L` `mcp-server.ts:443`), which toggles the captured handles AND registers newly-allowed tools/resources (`L` `:467-476`), **with the widen still SUPPRESSED while the tier is open**; called from `applyExclusion` at `L` `:426` and from `applyGatePatch` at `L` `:577` (`§5.5.1`'s `A-3` annotation beside row 5) | **CELL `A-3#7`** — carried into `P-EX-SM-2` (`§5.5.1`; the row's term moved `14 → 15` = `7 × 2 + 1`), with a positive control on `applyGatePatch`'s own path proving the cell is not vacuous |
+| **A-4** | **gate-4 finding 4 — SIX DRIVES WERE VACUOUS OR SELF-COMPARING**: a `x.toBe(x)` tautology; a `size === (x ? size : size)` self-comparison; a "transition" driven on a THROWAWAY gate; a `toBeGreaterThanOrEqual(0)` count; an ORDER-INSENSITIVE term check | **MED** | **`TEST-SIDE RE-GRAIN` — CLOSED**: all six re-grained, **each with a POSITIVE CONTROL PROVEN ABLE TO FAIL** (the control is exercised against a mutated/absent form, so the re-grained drive's falsifier is not itself vacuous). **NO TERM MOVED FOR THIS FINDING** — the re-grains replaced drives, they did not add cells (`§5.5.2` item 5) | the six re-grained drives, cited by their rows: `P-EX-IM-2`'s registry-only cell (c), `P-EX-IM-3`'s (c)/(h)/(i) counts, `P-EX-IM-4`'s census readings, `P-EX-SM-1`'s T-1/T-2 pair, `P-EX-SM-2`'s cells (6)/(7), `P-EX-TP-1`'s no-throw arms |
+| **A-5** | **gate-4 finding 5 — `P-EX-TP-2`'s NINE PAYLOAD CLASSES MEASURED THE FIXTURE'S OWN RECEIVER, NOT THE LANDED HANDLER** — the handler was read as TEXT ONLY, so the row could have passed with the handler absent | **MED** | **`RED-SET-FIX` — CLOSED, RE-GRAINED**: the handler's totality is now asserted through the **SOURCE-SHAPE READING PLUS THE DECLARED-SURFACE DRIVE**, **and the limitation is STATED** (the declared-surface drive is the operative reading; the static reading is its second half, not its substitute — `§5.5.2` item 5). **NO TERM MOVED**: `P-EX-TP-2`'s term stays `12 = 9 + 3` | `P-EX-TP-2`'s nine payload classes + its three channel readings — driven against the landed `IPC_SECURITY_EXCLUSION` handler (`L` `main.ts:405-415`) through the declared surface, with the source-shape reading beside it |
+| **A-6** | **gate-4 finding 6 — `P-EX-IM-4`'s ISOLATION PROBES COULD PASS WITH NO PANE AT ALL** — the pane factory's failure was SWALLOWED, so the absence probes were unfalsifiable | **LOW** | **`RED-SET-FIX` — CLOSED, RE-GRAINED**: `panels !== null` is asserted **FIRST**, and a pane-side **POSITIVE CONTROL** makes the absence probe falsifiable — `paneNodeById(panels,'exclusion-toggle')` must be **DEFINED** before its absence from the app graph means anything. **MEASURED this pass: `34` pane nodes** (`M`; by node-set enumeration over the constructed pane graph) | `P-EX-IM-4`'s isolation cells (a)–(e) (the pane-side control + the `34`-node reading; `§5.5.2` item 5) |
+| **A-7** | **gate-4 finding 7 — `readBody` HAS NO SIZE BOUND** | **LOW** | **`NOT-A-FINDING` for this unit — RECORDED so `PAR-7` is not read as an overflow guarantee in the CLOSED state**: the unbounded `readBody` is **PRE-EXISTING** and **OUTSIDE this unit's boundary** (`§1.3` items 1/2 — no store byte, no frozen artifact; and the body reader is not a surface this unit declares), **and THIS UNIT MAKES IT STRICTLY SAFER**: **on the exclusion arm the state is read and the `503` answered BEFORE `readBody` is reached** (`§2.3` item 2), so a hostile or oversized body in the `'mcp-disabled'` state is never read at all. **`PAR-7`'s cell is amended to say exactly this and no more** (`PAR-7`) | none owed for this unit; the pre-existing bound is recorded for the app/MCP-host surface that owns it (**no cell claims it**) |
+| **A-8** | **gate-4 finding 8 — THE BYTE-PIN INSTRUMENT HAD NO CONTROL PROVING THE DIGEST COMPARISON CAN FAIL** | **LOW** | **`TEST-SIDE RE-GRAIN` — CLOSED**: **CONTROL ADDED** — a **MUTATED COPY** of the pinned file does NOT answer the pin, so `P-EX-IM-2`'s cell (k) is proved able to redden (`§5.5.2` item 5) | `P-EX-IM-2`'s cell (k) (the measured file byte-pin of the two frozen sources) + the mutated-copy control |
+| **A-9** | **gate-4 observation 9 — THE APP `Runtime`'s `renderedHtml` / `ssrHtml` / `markdown` READINGS ARE EMPTY (`0 B`) IN THE NODE HARNESS** (MEASURED; `census.inTree 23`, `listTargets 23`), **so every app-**HTML** ABSENCE PROBE IS VACUOUS IN THAT DIMENSION** | **OBSERVATION** | **`PAR`-note, RECORDED — NEW, RECORDED NOT AUTHORED**: the limitation is written into the register's honesty block **with its measurement**, and the affected probes were **REPLACED with NODE-SET / CENSUS readings** (`§5.5.2` item 6). **OWNER: a future app-render unit** — the app Runtime's HTML rendering is **NOT this unit's surface** (`§1.3` items 4/10), so this spec does not author it. **Positive revisit condition: an app-render unit lands the node-harness HTML reading — then the app-HTML probe form may be restored BESIDE the node-set readings** | `P-EX-IM-4`'s isolation cells (a)–(e) (the node-set/census form) + the `23`-node census reading |
+| **A-10** | **gate-4 finding 10 — THE REGISTER'S BROKEN-COUNT GUARD WAS VACUOUS**: `expect(typeof broken).toBe('number')` **PASSED A RUN IN WHICH `5` OF `113` ATTEMPTS WERE BROKEN** — the guard could not distinguish a whole register from a partly-failed one | **MED** | **`RED-SET-FIX` — CLOSED, GUARD TIGHTENED**: the guard is now **`broken === 0` + un-run `=== 0` + `held === attemptsExecuted`**, with the **RED-TIME READING KEPT VISIBLE** (`5 of 113` broken) **and a POSITIVE CONTROL proving the OLD form passed a broken run while the NEW form fails it** (`§5.5.2` item 5) | the register's executed-layer guard (`§5.5.1`'s register leg), plus the two controls (old form on a broken run / new form on a broken run) |
+
+**⟶ THE TABLE IS FILLED 2026-10-07 (THE GATE-4 DISPOSITION PASS — `RCA-8(d)` ANNOTATE-BESIDE: the as-filed placeholder row *(to be filled by gate 4 — …)* is **SPENT** and its content stands quoted above by the rows that replaced it; the section's SHAPE sentence stands, and this clause is the operative reading).** **TEN ROWS, TEN FINDINGS — `2 HIGH` (`A-1`, `A-2`) · `4 MED` (`A-3`, `A-4`, `A-5`, `A-10`) · `3 LOW` (`A-6`, `A-7`, `A-8`) · `1 OBSERVATION` (`A-9`)** — and **`2 + 4 + 3 = 9` severity-bearing findings plus `1` recorded observation = `10` rows ✓.** **EVERY ROW CARRIES A DISPOSITION FROM THE CLOSED SIX-DISPOSITION VOCABULARY, AND THE COUNTS PRINT THEIR TERMS — NO BARE `OWED` APPEARS ANYWHERE IN THIS SECTION:** **`HOST-FIX` `3`** (`A-1` · `A-2` — which is ALSO a `RED-SET-FIX` · `A-3`) · **`RED-SET-FIX` `4`** (`A-2` · `A-4` — also a `TEST-SIDE RE-GRAIN` · `A-5` · `A-10`) · **`TEST-SIDE RE-GRAIN` `3`** (`A-4` · `A-6` · `A-8`) · **`PAR`-note `1`** (`A-9`) · **`NOT-A-FINDING` `1`** (`A-7`) · **`DOC-REVIEW-ITEM` `0`** (none was returned by this pass) — and **`3 + 4 + 3 + 1 + 1 + 0 = 12` disposition tokens over `10` rows ✓**, because **two rows carry TWO tokens each** (`A-2` = `HOST-FIX` + `RED-SET-FIX`; `A-4` = `RED-SET-FIX` + `TEST-SIDE RE-GRAIN`), and every token is one of the closed six (`HOST-FIX` · `RED-SET-FIX` · `TEST-SIDE RE-GRAIN` · `DOC-REVIEW-ITEM` · `PAR`-note · `SATISFIED`/`NOT-A-FINDING`). **THE FINAL AUDIT STATE IS EMPTY, AND THAT IS STATED HONESTLY RATHER THAN INFERRED: every finding above is CLOSED — a landed host fix with its regression cells — or RECORDED — a harness limitation with an owner and a positive revisit condition — and NO finding remains open, parked or un-dispositioned.** **THE FIXING PARTIES ARE NAMED SO THE RECORD IS NOT ANONYMOUS**: the **host** defects (`A-1`, `A-2`, `A-3`) were fixed by the **implementer** (`A-1`'s landed commit is `commit 74202e0`; `A-2`/`A-3` landed in the same host-fix pass, cited per row by `file:line`), the **instrument** defects (`A-4`, `A-5`, `A-6`, `A-8`, `A-10`) were repaired by the **test author**, and **`A-9` was authored by NO pass** — it is an observation this spec records (`AGENTS.md` RCA-3's disposition form, never a bare `OWED`). **PACKAGE DEFECTS: NONE** — no `provident-ssr` package defect was found by this pass, so **no `docs/defects.md` / `docs/HANDOFF.md` handoff is owed on this unit's account** (`AGENTS.md` item 7's carve-out). **THE REGISTER'S EXECUTED LAYER AFTER THE AMENDMENT: `113` = its own nine printed terms (`§5.5.1`'s arithmetic paragraph) · `9` typed rows (`4` `P-IM` + `3` `P-SM` + `2` `P-TP`) · `broken === 0` · un-run `=== 0` · `held === attemptsExecuted` · NO seed, NO generator, NO new dependency.** **AND THE READ-ONLY PBT AUDIT'S THREE CHECK CLASSES ARE DISPOSITIONED ABOVE RATHER THAN LEFT AS AN `OWED`** (`AGENTS.md` item 11(e)): **over-strength** — `A-4`'s order-insensitive term check and `A-10`'s vacuous guard; **under-assertion** — `A-5`'s fixture-receiver reading, `A-6`'s unguarded absence probe, and `A-1`'s captured-gate reading (which is why the enforcement's falsifier had to be re-grained at all); **evasion** — `A-2`'s absent staleness arm and `A-8`'s uncontrolled digest comparison. **⟶ THE `§3a` SEED SET IS RECONCILED BESIDE ITS OWN CELL**: every seed the as-filed pass named is dispositioned within the vocabulary, and the reconciliation is written at `§3a`'s closing clause rather than left to inference. **Authority `T`; class `OBSERVATION`** (falsifiable against the tree: the landed cells, the measured readings, the spent placeholder).
 
 ---
 
-**END OF THE SPEC.** Nine typed register rows, executed deterministically with no seed and no new dependency; the
-exclusion's state machine closed at two legal pairs over one process-global record; the invocation turn as the
+**END OF THE SPEC.** Nine typed register rows, executed deterministically with no seed and no new dependency (**the
+operative total is `113`, amended beside the as-filed `106` at `§5.5.1`**); the gate-4 findings are dispositioned at
+`§3a`/`§3b` (**`2 HIGH` + `4 MED` + `3 LOW` + `1` recorded observation, every one CLOSED or RECORDED — the final audit
+state is EMPTY**); the exclusion's state machine closed at two legal pairs over one process-global record; the invocation turn as the
 mandatory enforcement beside the landed registry toggling; the epoch and the in-flight invalidation closing the
 `RendererBackend`'s 60 000 ms window; both transports pinned, with the HTTP path answered before its per-POST server is
 built; the boot terminal fail-safe because the flag is not persisted; ONE operator control authored as provident data in
