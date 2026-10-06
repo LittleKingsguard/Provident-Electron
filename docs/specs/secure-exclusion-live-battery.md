@@ -246,8 +246,9 @@ PASSES. That is the audit's `F2`, and it is closed here rather than by asking th
       "observed": "the landing chain's 15 paths touch no frozen artifact, no store byte and no src/shared/** (read by the battery's own SX-G-55 row in this same run)" },
     { "cmd": "ps -eo pid=,args=", "exit": 0,
       "observed": "the stale-window preflight, INSIDE the driver (the audit's F10): no process matching dist/main/main.cjs before the first boot — §5 row 1. A probe that FAILS now stops the run (exit 1, no summary)" },
-    { "cmd": "npm test", "exit": 0, "observed": "86 files / 2729 passed | 2 skipped (2731) / 0 failed — the post-commit reading of the 2026-10-08 pass; THIS pass did not re-run it (§8 item 17), so this cell is a CARRIED reading with its own revision named, not a measurement of this pass" },
-    { "cmd": "npm run typecheck", "exit": 0, "observed": "carried from the 2026-10-08 pass (§8 item 17) — the typecheck:tests leg never reads a `tests/**`-outside file's own text; both still read clean at the revisions named above" }
+    { "cmd": "npm test", "exit": 0, "observed": "86 files / 2729 passed | 2 skipped (2731) / 0 failed — measured POST-COMMIT at this pass's own HEAD (the 2026-10-08 pass measured the same figures; this cell is a re-measurement, not a carried reading — §8 item 17)" },
+    { "cmd": "npm run typecheck", "exit": 0, "observed": "clean, POST-COMMIT at this pass's own HEAD" },
+    { "cmd": "npm run typecheck:tests", "exit": 0, "observed": "clean, POST-COMMIT at this pass's own HEAD (the additive fourth leg; it is the leg that would read a new `tests/**` TypeScript file, and this pass added none)" }
   ]
 }
 ```
@@ -259,7 +260,7 @@ PASSES. That is the audit's `F2`, and it is closed here rather than by asking th
 | 1 | **`summary.total` === the matrix's U-row count, and the per-verdict counts sum to it** | **`7 = 7`: `rows[]` carries `7` entries and `summary.total` reads `7`, and both ARE the matrix's `7` U-ROWS (`U-1`…`U-7`)** — asserted as a SET equality (`{U-1…U-7}` = `{U-1…U-7}`), with `7 + 0 + 0 = 7` ✓ on the role's closed verdict set (`PASS`/`FAIL`/`PARKED`) and the landed vocabulary reading `4 + 3 + 0 = 7` ✓ as well. **The `U-8` precondition is NOT one of the `7`** (it is a non-row note beside `summary`, `F2`), and the matrix's `8` ROWS = `7` U-rows + `1` non-U note, both printed with their terms. **The total is NOT short and the report is NOT empty** (`docs/specs/user-flow-audit.md` `§2`'s INVALID rule). |
 | 2 | **every `post` is MEASURED, never projected** | every `observation` above is a value a command in `commands[]` printed in this run; the driver prints each observation verbatim beside its verdict. **THE ONE PLACE THIS PASS COULD HAVE PROJECTED AND DID NOT** is the `U-6` restart arm: its `Post` cell carries the two profile LISTINGS, the three store-BYTES readings, the two pids and the `12`-term predicate result — all printed by the run, none inferred from the fix's diff (`§4a` `F1`) |
 | 3 | **every `instrument` is from the CLOSED set** | **four instruments are named and each is a shipped tool / literal command line**: the repo's own driver (`node tests/secure-exclusion-live.mjs`), the app's **own MCP stdio surface** over the repo's shipped `ChildProcessTransport` helper, **literal `fetch` POSTs/GETs** at the app's own HTTP endpoint, and the app's **own CDP listener** (`--remote-debugging-port=0`, read from the child's own stderr) for the rendered-box reads and the real pointer gestures — the same apparatus the as-filed run declared, now on BOTH boots **and on the restart-arm profile copy**. **No row names "the live gate" or "the leg".** **THE `MANUAL` SUBSTITUTION'S AUTHORITY IS A GAP, NOT THIS PASS'S ANNOTATION (`GAP-1`, `§6`):** the owner citation that admits `[CDP]` at all is `docs/decisions.md`'s `REAL-DOM-UI-GATE-LEG` row (architect ruling `A-d8`, leg-only channels), and it rules about the `ui` LEG, not about this battery — so `§2.4` item 7(2-note)'s `MANUAL` prediction is superseded HERE by measurement with its own reading printed, and the ruling that formalises it is owed by the spec owner |
-| 4 | **every `cmd` is a literal command line, with its own exit code** | `commands[]` carries eight literal command lines, each with the `exit` code the run produced (`0` for all eight) — **and the battery's OWN exit code is now information, not decoration**: `node tests/secure-exclusion-live.mjs` exits `1` iff any row is `FAIL` (the audit's `F5`; as filed it exited `0` unconditionally), which is why this pass ran it twice and reports `exit 0` twice |
+| 4 | **every `cmd` is a literal command line, with its own exit code** | `commands[]` carries nine literal command lines, each with the `exit` code the run produced (`0` for all eight) — **and the battery's OWN exit code is now information, not decoration**: `node tests/secure-exclusion-live.mjs` exits `1` iff any row is `FAIL` (the audit's `F5`; as filed it exited `0` unconditionally), which is why this pass ran it twice and reports `exit 0` twice |
 | 5 | **a `MANUAL` row's observation is an operator observation; a `NOT-OBSERVABLE` row carries its STRUCTURAL reason** | **there are ZERO `MANUAL` rows and ZERO `NOT-OBSERVABLE` rows among the `7` U-rows** — every U-row was taken by a shipped instrument, so neither form is claimed and neither could be used to soften a contradiction. **THE FORM IS USED WHERE IT IS OWED, THOUGH: the in-flight/straddle arm carries its STRUCTURAL reason as a non-row note** (`nonRowNotes`, with `§2.3` item 3 / `§2.4` item 7(2) / `§5` item 1 cited and **GAP-2** filed for the owner — the audit's `F15`), and `§6` records the same with the instruments that would have been owed had the arm been parkable |
 | 6 | **the predicate's decision is recorded** | `§1` above: **`TRIGGERS`**, both limbs, with the measured evidence for each |
 
@@ -869,14 +870,16 @@ this record — the delegation's own scope), so items 14–20 are limits of INST
     `§6.1` clause 5's declared-limit form beside the rows (`§2`), with its structural reason; **if the owner rules it a
     matrix subject, the count becomes `8`, `rows[]` gains a row and `summary.total` follows.** This record does not
     re-derive the subject list the spec declares (`docs/specs/user-flow-audit.md` `§5` item 1 forbids it).
-17. **IT DID NOT RE-RUN THE REPO'S OWN LEGS, AND IT SAYS SO WHERE THE FIGURES APPEAR.** This pass ran
-    **`npm run build`** (exit `0`, immediately before both battery executions) and the battery twice (exit `0` twice).
-    **`npm test` / `npm run typecheck` / `npm run typecheck:tests` were NOT re-run**, so `§3`'s `commands[]` marks those
-    cells **CARRIED** with the revision they were taken at (`2729 passed | 2 skipped (2731)`, `afd3212`-era). **The known
-    interaction to expect when a later pass does run them — MEASURED twice in this unit's history:** `tests/gutter.test.ts`
-    `R-12 §3.4` reads the WORKING TREE's raw dirty paths, so **while this driver is edited-but-uncommitted that row
-    reports `liveUnaccounted: ["tests/secure-exclusion-live.mjs"]` and `npm test` reads `1 failed | 85 passed (86)`**;
-    the fix is the gate COMMIT, not a row change. **This pass's commit follows the run.**
+17. **IT RE-RAN THE REPO'S OWN LEGS — AFTER THE GATE COMMIT, WHICH IS THE ONLY ORDER THAT CAN BE GREEN.** This pass ran
+    **`npm run build`** (exit `0`, immediately before the two documented battery executions) and the battery twice
+    (exit `0` twice), and then, **post-commit at its own HEAD**, the rest of the trio plus the additive fourth leg:
+    **`npm test` → `86 files / 2729 passed | 2 skipped (2731) / 0 failed`, exit `0`; `npm run typecheck` → exit `0`;
+    `npm run typecheck:tests` → exit `0`** — **the SAME figures the 2026-10-08 pass measured, now re-measured at this
+    pass's own commit rather than carried** (`§3`'s `commands[]` says so in each cell). **The known interaction — MEASURED
+    twice in this unit's history and deliberately NOT re-measured here:** `tests/gutter.test.ts` `R-12 §3.4` reads the
+    WORKING TREE's raw dirty paths, so **while this driver is edited-but-uncommitted that row reports
+    `liveUnaccounted: ["tests/secure-exclusion-live.mjs"]` and `npm test` reads `1 failed | 85 passed (86)`**; the fix is
+    the gate COMMIT, not a row change — and the figures above were taken **after** this pass's commit.
 18. **IT DID NOT DISPOSE OF FINDING `F16`** (`U-2`'s registry half and `U-7` do not bite against total deletion). It is
     not among this pass's mandated findings, and re-graining those rows unmandated would have been a change to a
     PASSing predicate's subject. **HANDED BACK, MEASURED AND NAMED, with the fix shape this pass built for the restart
