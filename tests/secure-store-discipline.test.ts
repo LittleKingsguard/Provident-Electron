@@ -1911,8 +1911,15 @@ runRow('P-O3-TP-1', 'P-TP', 'S-SS-CENSUS-1', 8, () => {
       // Every denied path is now read at its DECLARED CONTENT: the two handler
       // bodies' declared shapes (§0A item 5's carriers), the preload member set's
       // declared `2 → 3` signature shape, and `src/shared/types.ts`'s declared
-      // `SecuritySettings` member census (byte-identity is NOT claimable here — that
-      // file moves under other units — so the declared SHAPE is pinned instead).
+      // `SecuritySettings` member census.  CORRECTED (the earlier note read
+      // *"byte-identity is NOT claimable here — that file moves under other units —
+      // so the declared SHAPE is pinned instead"*, which `F-2`'s pin REFUTES):
+      // `types.ts` is one of the three DENIED paths below and IS byte-pinned at its
+      // measured digest `29af4efa…`, so byte-identity IS claimed — the census read here
+      // is the ADDITIONAL structural reading beside the pin, and the pin moves only by
+      // the authorized-diff re-point discipline stated below (an authorized diff
+      // re-points it in the same pass that names its authority; an unauthorized diff
+      // finds this row red).
       const typesSrc = await readFile(SRC('shared', 'types.ts'), 'utf8')
       const getHandler = /ipcMain\.handle\(IPC_SECURITY_GET,[\s\S]*?\n  \}\)/.exec(mainSrc)?.[0] ?? ''
       const setHandler = /ipcMain\.handle\(IPC_SECURITY_SET,[\s\S]*?\n  \}\)/.exec(mainSrc)?.[0] ?? ''
@@ -2472,8 +2479,39 @@ describe('§3.2 the documented fail-states (F-1 … F-12)', () => {
 
   it('F-11 · a fourth value-returning member, or a renamed one, FAILS the census', async () => {
     const { store } = await makeStore()
-    expect(memberCensusOf(store), 'F-11 — set-equal to the three declared members, in the landed order').toEqual(['get', 'lastWriteReceipt', 'set'])
+    // ---- THE CENSUS IS READ AS A **SET**, NOT IN SOURCE ORDER (`§9` item 5(b) ·
+    // `§9d` item 3 · `PBT-2`).  `§2.5` item 3 says `Object.keys(createSecurityStore(
+    // {path}))` is *"EXACTLY `["get","lastWriteReceipt","set"]`"* and in the same breath
+    // calls it *"in the landed order"* — **the two halves CANNOT BOTH HOLD**, and **"a
+    // source-order reading is NOT DERIVABLE from this contract"** (`§9` item 5(b)'s
+    // filed resolution; the landed literal answered `["get","set","lastWriteReceipt"]`
+    // until the non-behavioural reorder `§9b` item 1 records, which this row neither
+    // requires nor forbids).  The operative reading is the SET reading — exactly how the
+    // falsifier `§3.2` `F-11` phrases it: *"`Object.keys(store)` must be **set-equal** to
+    // `["get","lastWriteReceipt","set"]`"*.  NO clause of this contract pins an order, so
+    // NO order is asserted here: a behaviour-preserving reorder must NOT redden this row.
+    const census = memberCensusOf(store) // set-equality against MEMBER_CENSUS is enforced inside; an ADDED, RENAMED or REMOVED member throws there
+    expect(new Set(census).size, 'F-11 — every member name appears EXACTLY ONCE').toBe(census.length)
+    expect([...census].sort(), 'F-11 — SET-EQUAL to the three declared members (`§2.5` item 3 read as a SET; `§9` item 5(b): the order half is not derivable)').toEqual([...MEMBER_CENSUS].sort())
     expect(Object.keys(store).length, 'F-11 — a fourth value-returning member FAILS').toBe(3)
+    // CONTROLS — the SET terms are not vacuous, and the row keeps its bite on all three
+    // failure states.  A DUPLICATE own key is unrepresentable in `Object.keys` output
+    // (own keys are unique by definition), so the duplicate state is driven where it IS
+    // reachable — a census/declaration carrying a repeated name; a MISSING member and a
+    // RENAMED one throw inside `memberCensusOf()` (`P-O3-TP-1` part (a) drives all three).
+    const duplicated = [...MEMBER_CENSUS, 'get']
+    const fourth = [...MEMBER_CENSUS, 'inspect']
+    const removed = MEMBER_CENSUS.slice(0, 2)
+    const asSet = (names: readonly string[]): string => [...names].sort().join('|')
+    expect(
+      [
+        new Set(duplicated).size !== duplicated.length, // the "exactly ONCE" term
+        asSet(duplicated) !== asSet(MEMBER_CENSUS), // the SET term is not a silent DEDUP
+        asSet(fourth) !== asSet(MEMBER_CENSUS), // a FOURTH member
+        asSet(removed) !== asSet(MEMBER_CENSUS), // a REMOVED member
+      ],
+      'F-11 CONTROL — the SET terms FIRE on a duplicate, a fourth member and a missing member (a detector that cannot fail proves nothing)',
+    ).toEqual([true, true, true, true])
     const moduleSrc = await readFile(SRC('main', 'security-store.ts'), 'utf8')
     const found = [...moduleSrc.matchAll(/^export\s+(?:type\s+|interface\s+|function\s+|const\s+)?([A-Za-z_$][\w$]*)/gm)].map((m) => m[1])
     expect([...new Set(found)].sort(), 'F-11 — the export census is UNMOVED at four names (§2.1 item 1)').toEqual([...MODULE_EXPORTS].sort())
@@ -2831,7 +2869,13 @@ describe('§5.6.1 THE REGISTER — the executed summary (118 = 51+12+6+7+16+2+8+
     // The detector (`drive`) must FAIL for a falsified property and HOLD for a
     // satisfied one, or `REGISTER-RED`'s end-state reading (`broken === 0` per row)
     // above would prove nothing.
-    const probeRow = { id: '__CONTROL__', type: 'P-TP' as const, strategy: 'S-SS-CTL-1', declared: 2, attempts: 0, held: 0, broken: 0, failure: null as string | null, ran: true }
+    // THE PROBE ROW'S TERMS, stated so its declaration and its drive agree:
+    // `3` attempts = `1` HELD reading (`ctl·held`) + `2` BROKEN readings
+    // (`ctl·broken`, `ctl·async-broken`), so `declared` — the register's
+    // attempt-count term, read as `declared === attempts` at the end state
+    // (`§5.6.1`; `printRegister`'s *"executed = declared?"*) — reads `3`.  The earlier
+    // `2` named only the two BROKEN readings and under-counted the drive by one.
+    const probeRow = { id: '__CONTROL__', type: 'P-TP' as const, strategy: 'S-SS-CTL-1', declared: 3, attempts: 0, held: 0, broken: 0, failure: null as string | null, ran: true }
     results.push(probeRow)
     drive('__CONTROL__', 'ctl·held', () => undefined)
     drive('__CONTROL__', 'ctl·broken', () => {
@@ -2852,6 +2896,7 @@ describe('§5.6.1 THE REGISTER — the executed summary (118 = 51+12+6+7+16+2+8+
     expect(probeRow.broken, 'REGISTER-CONTROL — a falsified ASYNC property is BROKEN too (the async arm attributes, never swallows)').toBe(2)
     expect(probeRow.held, 'REGISTER-CONTROL — and the satisfied reading is still exactly one').toBe(1)
     expect(probeRow.attempts, 'REGISTER-CONTROL — three attempts, each counted once').toBe(3)
+    expect(probeRow.attempts, 'REGISTER-CONTROL — and the drive EQUALS the declaration (declared 3 = 1 held + 2 broken), so the probe row’s terms are aligned rather than merely labelled').toBe(probeRow.declared)
     results.pop()
   })
 })
