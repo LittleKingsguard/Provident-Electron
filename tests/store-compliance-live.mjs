@@ -7,6 +7,21 @@
 //              the main file store; exactly two persisted files; the write's atomic
 //              shape; no lower-tier alias).
 //   FAMILY C — THE ACCESS CONTROLS (no MCP or nonsecure path mirrors tier-4 data).
+//   FAMILY D — THE ARCHITECT'S CLONE/WRITE RULING: every tier-4 READ returns a CLONE (D-1)
+//              and runtime tier-4 WRITES are permitted IFF the MCP server is BLOCKED (D-2).
+//              The ruling is the ACTIVE docs/decisions.md row
+//              `DATA-REQUESTS-RETURN-CLONES-AND-RUNTIME-WRITES-IFF-MCP-BLOCKED`; the write path
+//              it constrains is `IPC_SECURITY_SET` (src/main/main.ts:385-404 — the manual-UI
+//              channel `D-SCOPE` names as NOT an MCP method) and the read path is the store
+//              module's own get()/set(patch) return (src/main/security-store.ts).
+//              THE INSTRUMENT TABLE FOR THIS FAMILY IS PRINTED BY THE DRIVER ITSELF (the
+//              INSTRUMENT_TABLE constant, before SC-D-01) because the BOUNDARY is the point:
+//              the REFERENCE half is [B]-only (an in-process module probe — the value the module
+//              hands back IN THE CALLING PROCESS), and a [CDP]-only probe CANNOT observe it,
+//              because the live bridge's value has already been structured-cloned across the IPC
+//              boundary. The CONSEQUENCE half is [CDP]+[G] and is labelled as such wherever it
+//              is quoted. Family D measures the WRITE PATH's conditionality, not the MCP call
+//              path (S1 owns the call path's rows).
 //
 // Run:  npm run build && node tests/store-compliance-live.mjs
 //
@@ -1349,6 +1364,660 @@ check('SC-B-09 (Family B, arm a) — THE CENSUS AND THE TIER KEY SET RE-MEASURED
   'the EXACTLY-TWO pin re-read at the END of the run rather than only at its start (docs/specs/store-persist.md; `store-security.md` §1.2 item 2; `docs/FORKER.md` §4 (ii)/(iv)). This row adds no new property: it makes `SC-B-01`\'s claim non-vacuous AFTER every live write and transition this battery itself performed, which is the §6.2 audit\'s A-F12 remedy — a phase that ends with a third file or a leftover `.tmp` would otherwise have been unmeasured. **AND SINCE THE THIRD AUDIT\'S `A3-06` THE SAME RE-MEASUREMENT COVERS `SC-B-04`\'s TIER-SHAPE CLAIM: the key set was read ONCE before both `setExclusion` transitions, so an `exclusion` key landing there reddened nothing; the set-equality predicate is now re-run on the END-of-run profile and is a term of this row.**')
 
 // ══════════════════════════════════════════════════════════════════════════════════════
+// FAMILY D — THE ARCHITECT'S CLONE/WRITE RULING (2026-10-11), MEASURED RATHER THAN ASSUMED
+// ══════════════════════════════════════════════════════════════════════════════════════
+/** **WHAT THIS FAMILY IS.** `docs/decisions.md`'s ACTIVE row `DATA-REQUESTS-RETURN-CLONES-AND-RUNTIME-WRITES-IFF-MCP-BLOCKED`
+ *  carries the architect's ruling VERBATIM: *"Data requests from the security do not return references to original
+ *  data, they return clones to prevent external read/mutation by reference. Writes at runtime are permitted iff
+ *  the MCP is blocked"*. Its TWO clauses are the two arms of this family:
+ *
+ *    **D-1 — EVERY TIER-4 READ RETURNS A CLONE, NEVER A REFERENCE TO THE ORIGINAL.** The decisive site is the
+ *    MODULE'S OWN `get()`/`set(patch)` return (`src/main/security-store.ts`), because that is the value every
+ *    downstream holder receives. `window.provident.security.get()` crosses an IPC boundary that ALREADY
+ *    SERIALIZES (a structured clone), so a mutation of the RENDERER-side copy CANNOT reach `main` even when
+ *    `main` hands out a live reference — **a bridge-only probe therefore cannot observe the reference half and
+ *    must not be presented as though it did.** Both halves are measured, and EACH INSTRUMENT NAMES ITS OWN
+ *    BOUNDARY in the instrument table this driver prints at this family.
+ *
+ *    **D-2 — RUNTIME TIER-4 WRITES ARE PERMITTED IFF THE MCP SERVER IS BLOCKED.** The gate under measurement is
+ *    the write path `IPC_SECURITY_SET` (`L` `src/main/main.ts:385-404`), driven through the manual-UI channel
+ *    the operator uses (`window.provident.security.set({…})`), in the TWO legal pairs the exclusion contract
+ *    declares (`{MCP-ENABLED, TIER-4-CLOSED}` / `{MCP-DISABLED, TIER-4-OPEN}`) PLUS the return transition.
+ *    The REQUIREMENT DIRECTION is: while MCP is ENABLED the tier is CLOSED, so a runtime write must be REFUSED;
+ *    with MCP DISABLED the tier is OPEN, so it must be ADMITTED. **A write that SUCCEEDS while MCP is enabled is
+ *    a D-2 FAIL with its measurement — not a defect of the instrument.**
+ *
+ *  **THIS FAMILY DOES NOT DUPLICATE `S1`** (`tests/secure-exclusion-live.mjs` / `docs/specs/secure-exclusion-live-battery.md`):
+ *  `S1` measures the MCP CALL path — the declared `exclusion-closed` receipt while the gate is in force, the
+ *  operator's pane gesture, the epoch/in-flight invalidation, the boot order — and the sibling rows in THIS
+ *  battery (`SC-C-05`/`U-6`) re-measure the gate's two arms. **FAMILY D measures the WRITE PATH'S
+ *  CONDITIONALITY: what the `IPC_SECURITY_SET` channel answers in each MCP state, and what the tier's read
+ *  hands back. It drives no MCP call, no pane gesture and no epoch reading.** The transition itself is driven by
+ *  the app's OWN channel member `window.provident.security.setExclusion(state)` (`L` `src/main/preload.ts`;
+ *  `main.ts`'s `IPC_SECURITY_EXCLUSION` handler) — the state is never fabricated.
+ *
+ *  **THE FOUR RULES THIS FAMILY OBEYS** (the §6.2 audits' six repairs to control-less predicates are the reason
+ *  each is named here): (1) EVERY absence-asserting arm carries a NON-VACUITY term (the write really landed,
+ *  the read really answered, the fixture really moves the file); (2) EVERY predicate has a term that REDDENS
+ *  UNDER DELETION, and the deletion test is RUN — the [B] probe executes it in-process over the SAME detector
+ *  it drives, and the live arms carry their reddening terms in their own printed evidence; (3) a CONTROL that
+ *  CAN ACTUALLY REFUSE is asserted for each half — a SHARED-OBJECT subject that really does hand out a live
+ *  reference (so the detector is shown to FIRE on a reference), and a REPLACED-FILE subject (so the module's own
+ *  second read is shown to be able to MOVE); (4) a MANUAL row is a WITHHELD claim, never a PASS. */
+
+/** **THE `[B]` INSTRUMENT — AN IN-PROCESS MODULE PROBE. DECLARED WITH ITS BOUNDARY, because the boundary is
+ *  what this family's first row is ABOUT.** The probe is a scratch `.mjs` written INTO THE OS TEMP DIR under a
+ *  clean `mkdtemp` (never the repo, never a `src/**` byte, never the operator's profile) and run by this
+ *  driver's OWN `node` binary as a CHILD PROCESS. It imports the app's OWN module at its SOURCE path
+ *  (`src/main/security-store.ts`, the same file `npm run build` bundles into `dist/main/main.cjs`) as an ESM
+ *  module — Node 24 resolves the module's own `import type { … } from '../shared/types.js'` by TYPE-STRIPPING
+ *  (a type-only import, erased), MEASURED at this HEAD.
+ *
+ *  **WHAT `[B]` CAN OBSERVE:** the EXACT object identity the module's `get()`/`set(patch)` hand back IN THE
+ *  PROCESS THAT CALLED THEM — i.e. THE REFERENCE HALF of D-1, which NO live instrument can reach: over CDP the
+ *  value has already crossed an IPC boundary and been structured-cloned, so a renderer-side mutation cannot
+ *  reach `main` whatever `main` returns.
+ *  **WHAT `[B]` CANNOT OBSERVE:** the live app. It boots no Electron process, reads no MCP surface and cannot
+ *  see whether the LIVE bridge serializes anything; it is an IN-PROCESS reading of the same module bytes, and
+ *  the app's own boot read constructs its store from THAT module. **A `[B]` PASS IS NOT AN APP-GREEN
+ *  (`RCA-12`): it is the reference half only, and the consequence half is `SC-D-03`'s live reading.** */
+const MODULE_PROBE_DIR = mkdtempSync(join(tmpdir(), 'sc-live-D-'))
+registerCleanup(() => { try { removeWithVerify(MODULE_PROBE_DIR) } catch { /* gone */ } })
+const SECURITY_STORE_MODULE = join(root, 'src', 'main', 'security-store.ts')
+const MODULE_PROBE_PATH = join(MODULE_PROBE_DIR, 'module-probe.mjs')
+const MODULE_PROBE_STORE = join(MODULE_PROBE_DIR, 'probe-security.json')
+/** THE DELETION TEST'S OWN FIXTURE, declared where the detector it drives is defined: the FIVE mutations the
+ *  probe applies to whatever a subject returns, and the detector term EACH ONE moves ALONE. `subject` is the
+ *  function under test (a store read, a store write's return, the SHARED-OBJECT control or the REPLACED-FILE
+ *  control), so the SAME detector is driven against a subject that really does return a live reference — which
+ *  is what makes "the detector did not fire" a READING rather than an unfalsifiable claim. */
+/** FIVE mutations, FOUR DISTINCT TERMS: `delete-token` and `overwrite-token` are two TRANSITIONS of the SAME
+ *  member and are mapped to the ONE term `b.token !== a.token` — a presence change moves the value too, and
+ *  splitting the term into two spellings would not make the deletion test stronger (the same deletion disables
+ *  both). The row states this rather than claiming five independent terms. */
+const MODULE_PROBE_MUTATIONS = [
+  { key: 'add-member', reddens: 'b.hasExtra !== a.hasExtra' },
+  { key: 'change-maxjournal', reddens: 'b.mjl !== a.mjl' },
+  { key: 'delete-token', reddens: 'b.token !== a.token' },
+  { key: 'overwrite-token', reddens: 'b.token !== a.token' },
+  { key: 'splice-enabled', reddens: 'b.enabled !== a.enabled' },
+]
+/** TWO DECLARED COUNTS, NAMED APART: the REFERENCE-HALF ROUNDS (the two reads whose returns are mutated) and
+ *  the DELETION TEST'S MUTATIONS (one per member transition). Conflating them is what made the first form of
+ *  SC-D-02a's verdict read MANUAL on a complete probe (MEASURED: `2 of 5`). */
+const D1_ROUND_COUNT = 2
+const D1_REFERENCE_MUTATION_COUNT = 5
+const MODULE_PROBE_OUT = join(MODULE_PROBE_DIR, 'module-probe-out.json')
+const MODULE_PROBE_SRC = [
+  "import { createHash } from 'node:crypto'",
+  "import { readFileSync, writeFileSync } from 'node:fs'",
+  'const MODULE = ' + JSON.stringify(SECURITY_STORE_MODULE),
+  'const STORE_PATH = ' + JSON.stringify(MODULE_PROBE_STORE),
+  'const OUT_PATH = ' + JSON.stringify(MODULE_PROBE_OUT),
+  'const SEED = ' + JSON.stringify({ token: TOKEN, enabled: GROUPS, maxJournalLength: JOURNAL }),
+  'const OUT = { module: MODULE, storePath: STORE_PATH, sha256: createHash("sha256").update(readFileSync(MODULE)).digest("hex"), fixture: null, rounds: [], setReturn: null, persistedAfterMutation: null, control: null, replacedFileControl: null, deletionAudit: [], errors: [] }',
+  'const snap = (o) => ({',
+  '  keys: Object.keys(o).sort(),',
+  '  token: Object.prototype.hasOwnProperty.call(o, "token") ? o.token : "<ABSENT>",',
+  '  enabled: Array.isArray(o.enabled) ? [...o.enabled].length + ":" + [...o.enabled].join("|") : "<NOT-AN-ARRAY>",',
+  '  mjl: o.maxJournalLength === undefined ? "<ABSENT>" : o.maxJournalLength,',
+  '  hasExtra: Object.prototype.hasOwnProperty.call(o, "dProbeExtra"),',
+  '})',
+  'const same = (a, b) => JSON.stringify(a) === JSON.stringify(b)',
+  '/** THE DETECTOR — TRUE IFF THE SUBJECT HANDED OUT A LIVE REFERENCE. Six disjuncts, ONE PER MUTATION, so',
+  ' *  DELETING a term leaves that mutation undetectable; the deletionAudit at the end RUNS that deletion on',
+  ' *  these very bytes. */',
+  'const detectorFires = (b, a) => (b.hasExtra !== a.hasExtra) || (b.mjl !== a.mjl) || (b.token !== a.token)',
+  '  || (b.enabled !== a.enabled)',
+  'const MUTATE = (held) => {',
+  '  held.dProbeExtra = "MODULE-PROBE-MUTATION"',
+  '  held.maxJournalLength = 999',
+  '  held.enabled.push("dProbeInjectedGroup")',
+  '  delete held.token',
+  '  held.enabled.splice(0, 1)',
+  '  held.token = "MODULE-PROBE-HIJACK"',
+  '}',
+  'try {',
+  '  const mod = await import(MODULE)',
+  '  writeFileSync(STORE_PATH, JSON.stringify(SEED, null, 2))',
+  '  /** ROUND 1 — THE get() HALF: a FRESH store on the seeded record, then ONE round of mutation. */',
+  '  const s1 = mod.createSecurityStore({ path: STORE_PATH })',
+  '  const g0 = s1.get()',
+  '  OUT.fixture = { seededBytes: readFileSync(STORE_PATH, "utf8"), firstRead: snap(g0), loadedTheSeed: g0.token === SEED.token && g0.maxJournalLength === SEED.maxJournalLength && Array.isArray(g0.enabled) && g0.enabled.length === SEED.enabled.length }',
+  '  const before1 = snap(g0)',
+  '  MUTATE(g0)',
+  '  const secondRead1 = s1.get()',
+  '  const after1 = snap(secondRead1)',
+  '  OUT.rounds.push({ label: "store.get()", before: before1, mutated: snap(g0), after: after1, secondReadMoved: detectorFires(before1, after1), sameObjectReturned: g0 === secondRead1 })',
+  '  /** ROUND 2 — THE set(patch) RETURN: the SAME seeded record on a FRESH store. */',
+  '  writeFileSync(STORE_PATH, JSON.stringify(SEED, null, 2))',
+  '  const s2 = mod.createSecurityStore({ path: STORE_PATH })',
+  '  const ret0 = s2.set({ maxJournalLength: SEED.maxJournalLength + 3 })',
+  '  OUT.setReturn = { receipt: s2.lastWriteReceipt(), loadedTheSeed: ret0.token === SEED.token, keys: Object.keys(ret0).sort() }',
+  '  /** THE WRITE REALLY LANDED — the non-vacuity term for the whole "the return is detached" reading, read',
+  '   *  from the FILE this probe owns. */',
+  '  const fileAfterSet = JSON.parse(readFileSync(STORE_PATH, "utf8"))',
+  '  OUT.setReturn.fileAfterSetMoved = fileAfterSet.maxJournalLength === SEED.maxJournalLength + 3',
+  '  OUT.setReturn.fileAfterSet = fileAfterSet',
+  '  const before2 = snap(ret0)',
+  '  MUTATE(ret0)',
+  '  const secondRead2 = s2.get()',
+  '  const after2 = snap(secondRead2)',
+  '  OUT.rounds.push({ label: "store.set(patch) return", before: before2, mutated: snap(ret0), after: after2, secondReadMoved: detectorFires(before2, after2), sameObjectReturned: ret0 === secondRead2 })',
+  '  OUT.persistedAfterMutation = JSON.parse(readFileSync(STORE_PATH, "utf8"))',
+  '  /** THE FIRST CONTROL — A SHARED OBJECT: ONE live object handed to two readers, i.e. a subject that',
+  '   *  really does return a reference. If the detector cannot fire HERE it can never fire. */',
+  '  const shared = { token: "shared-subject", enabled: ["read"], maxJournalLength: 7 }',
+  '  const cb = snap(shared)',
+  '  MUTATE(shared)',
+  '  const ca = snap(shared)',
+  '  OUT.control = { label: "the SAME detector against a SHARED object (a subject that really returns a live reference)", before: cb, mutated: ca, secondReadMoved: detectorFires(cb, ca) }',
+  '  /** THE SECOND CONTROL — THE RECORD REPLACED OUT OF BAND: a FRESH store is constructed on a record this',
+  '   *  probe REWRITES beside the live one, so the "second read moved" term is shown to be able to move. */',
+  '  const replaced = { token: "REPLACED-FILE-CONTROL-TOKEN", enabled: ["read"], maxJournalLength: 3 }',
+  '  writeFileSync(STORE_PATH, JSON.stringify(replaced, null, 2))',
+  '  const s3 = mod.createSecurityStore({ path: STORE_PATH })',
+  '  const tb = before2',
+  '  const ta = snap(s3.get())',
+  '  OUT.replacedFileControl = { label: "the module read across a FILE replaced out of band (the detector MUST see the change)", before: tb, after: ta, secondReadMoved: detectorFires(tb, ta) }',
+  '  /** THE DELETION TEST, RUN — not described: every mutation\'s own disjunct is DELETED from the detector\'s',
+  '   *  SOURCE TEXT (read from this probe file, the bytes that ran), the SAME mutation is re-evaluated on the',
+  '   *  SHARED-OBJECT subject, and the reddening term\'s disappearance is recorded. */',
+  '  const selfSrc = readFileSync(new URL(import.meta.url), "utf8")',
+  '  /** THE PREDICATE\'S SOURCE IS ALL OF ITS LINES, NOT THE FIRST ONE: the detector is written across two',
+  '   *  lines, and reading only the first made TWO of the five terms read `termIsInTheDetector: false` while the',
+  '   *  file plainly carries them (MEASURED — the third finding this instrument produced about itself). */',
+  '  const srcLines = selfSrc.split("\\n")',
+  '  const predStart = srcLines.findIndex((l) => l.includes("const detectorFires = (b, a) =>"))',
+  '  const predLine = predStart < 0 ? "" : [srcLines[predStart], srcLines[predStart + 1] || ""].join(" ")',
+  '  /** EACH MUTATION IS APPLIED TO ITS OWN SHARED OBJECT AND COMPARED WITH ITS OWN BASELINE, so a mutation\'s',
+  '   *  term is the ONLY one its own round can move: a composite subject (every mutation at once) leaves',
+  '   *  every term true for every mutation, which is the defect the first form of this audit had. */',
+  '  /** FIVE MUTATIONS, FOUR TERMS: `delete-token` and `overwrite-token` are two TRANSITIONS of the SAME',
+  '   *  member, and a presence change moves the value term too — so they are mapped to that ONE term and the',
+  '   *  row states it, rather than splitting a term into two spellings that the same deletion would disable. */',
+  '  const MUTATIONS = [',
+  '    { key: "add-member", term: "b.hasExtra !== a.hasExtra", apply: (o) => { o.dProbeExtra = "MODULE-PROBE-MUTATION" } },',
+  '    { key: "change-maxjournal", term: "b.mjl !== a.mjl", apply: (o) => { o.maxJournalLength = 999 } },',
+  '    { key: "delete-token", term: "b.token !== a.token", apply: (o) => { delete o.token } },',
+  '    { key: "overwrite-token", term: "b.token !== a.token", apply: (o) => { o.token = "MODULE-PROBE-HIJACK" } },',
+  '    { key: "splice-enabled", term: "b.enabled !== a.enabled", apply: (o) => { o.enabled.splice(0, 1) } },',
+  '  ]',
+  '  const TERMS = [...new Set(MUTATIONS.map((m) => m.term))]',
+  '  for (const T of TERMS) {',
+  '    const mapped = MUTATIONS.filter((m) => m.term === T)',
+  '    const present = predLine.includes(T)',
+  '    const stripped = predLine.split(T).join("false")',
+  '    let detector = null',
+  '    let throwsWithout = null',
+  '    try {',
+  '      detector = new Function("b", "a", "return " + stripped.replace("const detectorFires = (b, a) =>", ""))',
+  '    } catch (e) { throwsWithout = String(e) }',
+  '    for (const M of mapped) {',
+  '      const subject = { token: "shared-subject", enabled: ["read"], maxJournalLength: 7 }',
+  '      const bObj = snap(subject)',
+  '      M.apply(subject)',
+  '      const aObj = snap(subject)',
+  '      const wholeDetectorFires = detectorFires(bObj, aObj)',
+  '      let firesWithout = null',
+  '      try { firesWithout = detector === null ? null : detector(bObj, aObj) === true } catch (e) { throwsWithout = String(e) }',
+  '      OUT.deletionAudit.push({',
+  '        mutation: M.key,',
+  '        term: T,',
+  '        termIsInTheDetector: present,',
+  '        theWholeDetectorFiresOnThisMutationAlone: wholeDetectorFires,',
+  '        detectorStillFiresAfterDeletingTheTerm: firesWithout,',
+  '        throwsWithout,',
+  '        reddensUnderDeletion: present === true && wholeDetectorFires === true && (firesWithout === false || throwsWithout !== null),',
+  '      })',
+  '    }',
+  '  }',
+  '} catch (e) { OUT.errors.push(String(e && e.stack ? e.stack : e)) }',
+  'writeFileSync(OUT_PATH, JSON.stringify(OUT, null, 2))',
+  'process.stdout.write("PROBE-OK")',
+].join('\n')
+writeFileSync(MODULE_PROBE_PATH, MODULE_PROBE_SRC)
+/** **THE PROBE'S OWN FAILURE IS REPORTED, NOT SWALLOWED** (`execSync` throws on a non-zero exit OR on a
+ *  signal): the child's status, stdout, stderr and thrown message are ALL carried into the row, because a
+ *  probe that dies must read as an INSTRUMENT state with its cause visible rather than as a quiet `MANUAL`. */
+const moduleProbePrewrite = { dir: MODULE_PROBE_DIR, listing: (() => { try { return readdirSync(MODULE_PROBE_DIR) } catch (e) { return 'UNREADABLE: ' + String(e) } })(), probeExists: exists(MODULE_PROBE_PATH), probeBytes: (() => { try { return statSync(MODULE_PROBE_PATH).size } catch (e) { return -1 } })() }
+const moduleProbeRun = (() => {
+  try {
+    return { ok: true, stdout: execSync(`${JSON.stringify(process.execPath)} ${JSON.stringify(MODULE_PROBE_PATH)}`, { encoding: 'utf8', timeout: 60000, stdio: ['ignore', 'pipe', 'pipe'] }), exitCode: 0 }
+  } catch (e) {
+    return {
+      ok: false,
+      stdout: String(e?.stdout ?? ''),
+      stderr: String(e?.stderr ?? ''),
+      signal: e?.signal ?? null,
+      exitCode: e?.status === undefined ? 'THREW-WITHOUT-STATUS' : e.status,
+      error: String(e?.message ?? e),
+    }
+  }
+})()
+/** THE PROBE'S OWN BYTES ARE CHECKED IN: the probe's sha256 and the module's are printed by SC-D-02a, so a
+ *  reader can tell WHICH bytes produced the reading (the campaign's SHA-pin discipline, applied to [B]). */
+const moduleProbeSha = sha256Text(MODULE_PROBE_SRC)
+/** THE PROBE WRITES ITS RESULT TO A FILE **AND** PRINTS A TOKEN, and BOTH are terms: a child that threw before
+ *  `writeFileSync` leaves no result file (an INSTRUMENT state), while a result file without the token would be
+ *  a stale artifact from an earlier run. The first draft of this probe emitted JSON on stdout and one of its
+ *  readings contradicted a focused re-run of the SAME module — so the result is now a FILE READ, the probe
+ *  names its own fixture check (`loadedTheSeed`), and a contradicting reading is reported as a FAIL with its
+ *  measurement rather than absorbed. */
+const moduleProbeOut = (() => {
+  try { return JSON.parse(readOrNull(MODULE_PROBE_OUT)) } catch { return null }
+})()
+const moduleProbeTokenOk = moduleProbeRun.ok && moduleProbeRun.stdout.includes('PROBE-OK')
+const moduleProbe = moduleProbeOut
+const moduleProbeReadable = moduleProbeTokenOk && moduleProbe !== null && typeof moduleProbe === 'object' && moduleProbeOut !== null
+const moduleProbeErrs = moduleProbeReadable && Array.isArray(moduleProbe.errors) ? moduleProbe.errors : []
+const moduleProbeFixtureLoaded = moduleProbeReadable && moduleProbe.fixture?.loadedTheSeed === true
+const moduleProbeMutationRows = moduleProbeReadable && Array.isArray(moduleProbe.rounds) ? moduleProbe.rounds : []
+const moduleProbeFired = moduleProbeMutationRows.filter((r) => r.secondReadMoved === true)
+const moduleProbeHeld = moduleProbeMutationRows.filter((r) => r.secondReadMoved !== true)
+const moduleProbeControl = moduleProbeReadable ? moduleProbe.control : null
+const moduleProbeControlFires = moduleProbeControl?.secondReadMoved === true
+const moduleProbeReplacedControl = moduleProbeReadable ? moduleProbe.replacedFileControl : null
+const moduleProbeReplacedControlFires = moduleProbeReplacedControl?.secondReadMoved === true
+const moduleDeletionAudit = moduleProbeReadable && Array.isArray(moduleProbe.deletionAudit) ? moduleProbe.deletionAudit : []
+const moduleDeletionReddens = moduleDeletionAudit.filter((r) => r.reddensUnderDeletion === true)
+/** THE INSTRUMENT TABLE — PRINTED AT THIS FAMILY (and at its verdict block), so a reader can see WHAT EACH
+ *  INSTRUMENT CAN AND CANNOT OBSERVE without reading this driver. It is the honest boundary statement the two
+ *  clauses need: the REFERENCE half is [B]-only; the CONSEQUENCE half is [CDP]/[G]-only. */
+const INSTRUMENT_TABLE = [
+  { tag: '[B]', what: 'an IN-PROCESS module probe (a scratch .mjs under mkdtemp, run by this driver\'s own node, importing src/main/security-store.ts by SOURCE path)', canObserve: 'the EXACT object identity the module\'s get()/set(patch) hand back IN THE CALLING PROCESS — the REFERENCE HALF of D-1, unreachable from any live instrument', cannotObserve: 'the live app: it boots no Electron process, reads no MCP surface, and cannot see whether the live bridge serializes anything', familyDLayer: 'SC-D-02a / SC-D-11 (the reference half and its two controls)' },
+  { tag: '[CDP]', what: 'Chrome DevTools Protocol Runtime.evaluate against the app\'s OWN renderer realm', canObserve: 'what the RENDERER receives from window.provident.security.get()/set(), and whether the LIVE tier-4 file moves', cannotObserve: 'the reference half: the value has ALREADY crossed an IPC boundary and been STRUCTURED-CLONED, so a renderer-side mutation cannot reach main whatever main returns', familyDLayer: 'SC-D-03 (the consequence half), SC-D-05…SC-D-08 (the write gate in each MCP state)' },
+  { tag: '[G]', what: 'file BYTES and sha256 over the scratch profiles', canObserve: 'the persisted tier-4 file\'s exact bytes before and after every probe, and an OUT-OF-BAND file replacement used as SC-D-03\'s second control', cannotObserve: 'any in-memory object identity', familyDLayer: 'SC-D-01 (the seeded fixture), SC-D-03, SC-D-05…SC-D-07' },
+]
+
+// ── THE ROW-KIND DECLARATION, DEFINED HERE BECAUSE FAMILY D'S VERDICT BLOCK USES IT ────────────────────
+/** THE DECLARED PER-ID KIND TABLE (the fourth `§6.2` audit's `A4-01` remedy) lives in the summary block BELOW
+ *  and is READ by Family D's own verdict print; it is therefore defined here and the summary block's copy is
+ *  removed by this pass's splice (a duplicate `const` in one module scope is a SyntaxError). The table's
+ *  content is unchanged — see the summary block's own comment for the `A4-01` provenance. */
+const ROW_KINDS = {
+  'SC-PRE-01': 'INSTRUMENT', 'SC-PRE-02': 'INSTRUMENT',
+  'SC-CH-01': 'CHANNEL', 'SC-CH-02': 'CHANNEL',
+  'SC-A-01': 'ARM', 'SC-A-02': 'ARM', 'SC-A-03': 'CONTROL', 'SC-A-04': 'ARM',
+  'SC-A-05': 'ARM', 'SC-A-06': 'CHANNEL-CENSUS',
+  'SC-B-01': 'ARM', 'SC-B-02': 'CONTROL', 'SC-B-03': 'ARM', 'SC-B-04': 'ARM', 'SC-B-05': 'ARM',
+  'SC-B-06': 'CONTROL', 'SC-B-07': 'ARM', 'SC-B-08': 'CONTROL', 'SC-B-09': 'ARM',
+  'SC-C-01': 'ARM', 'SC-C-02': 'ARM', 'SC-C-03': 'ARM', 'SC-C-04': 'CONTROL', 'SC-C-05': 'ARM',
+  'SC-D-01': 'FIXTURE',
+  'SC-D-02a': 'STATIC-CENSUS', 'SC-D-11': 'CONTROL',
+  'SC-D-03': 'ARM', 'SC-D-04': 'ARM',
+  'SC-D-05': 'ARM', 'SC-D-06': 'ARM', 'SC-D-07': 'ARM', 'SC-D-08': 'ARM', 'SC-D-10': 'CONTROL',
+  'SC-G-01': 'STATIC-CENSUS', 'SC-G-02': 'STATIC-CENSUS', 'SC-CLEAN-01': 'INSTRUMENT-CLEANUP',
+}
+const rowKind = (c) => ROW_KINDS[c.id.split(' ')[0]] ?? 'UNDECLARED'
+
+// ── THE FAMILY/ROW-KIND HELPERS, DEFINED HERE BECAUSE FAMILY D'S VERDICT BLOCK USES THEM ─────────────
+/** `rowKind` and the verdict-split helpers live in the summary block BELOW (they read `CHECKS` and the
+ *  DECLARED per-id table); the two below are needed by Family D's own verdict block, which runs at the end of
+ *  Family D rather than at the end of the file. Defining them here rather than moving the summary block keeps
+ *  the summary's own order intact (the §6.2 audits' rule: an artifact's order is part of its reading). */
+const familyRows = (fam) => CHECKS.filter((c) => new RegExp(`^SC-${fam}-`).test(c.id))
+const verdictSplit = (set) => ['PASS', 'FAIL', 'MANUAL', 'PARKED'].map((v) => `${set.filter((c) => c.verdict === v).length} ${v}`).join(' / ')
+
+// ── FAMILY D, D-1 — THE MODULE-LAYER REFERENCE HALF ([B]) ──────────────────────────────
+const dSeedBytes = readOrNull(secPathA)
+const dSeedSha = dSeedBytes === null ? null : sha256(secPathA)
+const dSeedRecord = (() => { try { return JSON.parse(dSeedBytes) } catch { return null } })()
+/** **THE ASSERTED SHAPE IS THE THREE DECLARED MEMBERS AND THE SEEDED IDENTITY — NOT THE SEEDED CAP.** The
+ *  live profile\'s `maxJournalLength` is NOT `JOURNAL` at this point in the run BY DESIGN: `SC-B-03` drives a
+ *  real operator write (`JOURNAL + 3`, 44) on this very profile BEFORE Family D, and the cap is a MEASURED
+ *  reading of the live file rather than a constant. The first draft asserted `JOURNAL` here and read FAIL on a
+ *  CORRECT profile — the instrument defect, filed and fixed in this pass rather than explained away. */
+const dSeedShapeOk = dSeedRecord !== null && dSeedRecord.token === TOKEN
+  && Array.isArray(dSeedRecord.enabled) && dSeedRecord.enabled.length === GROUPS.length
+  && typeof dSeedRecord.maxJournalLength === 'number'
+const scD01Verdict = dSeedShapeOk ? 'PASS' : (dSeedRecord === null ? 'MANUAL' : 'FAIL')
+check('SC-D-01 (Family D, fixture)', 'FIXTURE: the profile this family measures carries the three declared tier-4 members with the seeded token and group set, read FROM THE PROFILE — and the module probe\'s OWN fixture check (`loadedTheSeed`) is a term of SC-D-02a', scD01Verdict,
+  `NAMED TERMS: securityPath=${join(bootA.profile, SECURITY_FILE)}, sha256=${String(dSeedSha).slice(0, 16)}…, bytes=${JSON.stringify(dSeedBytes)}, parsed=${JSON.stringify(dSeedRecord)}, the shape asserted (token===TOKEN, enabled.length===${GROUPS.length}, maxJournalLength is a number — the live value, NOT the seed\'s ${JOURNAL}, because SC-B-03\'s operator write already ran on this profile)=${dSeedShapeOk}; THE MODULE PROBE\'S OWN FIXTURE READ (the [B] subject\'s): ${JSON.stringify(moduleProbe?.fixture ?? null)}, loadedTheSeed=${moduleProbeFixtureLoaded}`,
+  'the fixture every Family D reading stands on: a probe against a DEFAULT-shaped store would not measure the object the live app actually ingests — MEASURED, the first draft of this probe read the module\'s DEFAULT record because its seed write did not precede the store construction, and that defect is why the probe now asserts `loadedTheSeed` itself. A MISSING fixture reads MANUAL (no fixture, no reading) rather than FAIL — the §6.2 audits\' rule that a broken instrument is never charged as a defect')
+
+/** **THE FOUR-STATE MAPPING, WITH THE DELETION TEST AS AN INSTRUMENT PRECONDITION:** a mutation whose term
+ *  does NOT redden under its own deletion is a mutation that never carried the reading — the exact defect
+ *  class this battery was repaired for six times — so that state reads `MANUAL` (an INSTRUMENT fault), never
+ *  `PASS`. A fired round is the requirement reading and reads `FAIL` whatever the instrument's state. */
+const moduleDeletionAuditComplete = moduleDeletionAudit.length === D1_REFERENCE_MUTATION_COUNT
+  && moduleDeletionReddens.length === D1_REFERENCE_MUTATION_COUNT
+const scD02aVerdict = (!moduleProbeReadable || moduleProbeErrs.length > 0 || !moduleProbeFixtureLoaded) ? 'MANUAL'
+  : (moduleProbeMutationRows.length !== D1_ROUND_COUNT) ? 'MANUAL'
+    : (moduleProbeFired.length > 0 ? 'FAIL' : (moduleDeletionAuditComplete ? 'PASS' : 'MANUAL'))
+check('SC-D-02a (Family D, D-1) — THE REFERENCE HALF, AT THE MODULE LAYER [B]', 'D-1 REQUIREMENT ARM (reference half): NO tier-4 read hands out a LIVE REFERENCE to the original — each of the FIVE mutations applied to what the module\'s get() or its set(patch) returned is INVISIBLE to a SECOND read, and the persisted bytes are unmoved too', scD02aVerdict,
+  `NAMED TERMS: probe=${MODULE_PROBE_PATH} + its own file result ${MODULE_PROBE_OUT} (a scratch dir under mkdtemp — the repo, the operator's profile and every src/** byte are untouched), probeSha256=${moduleProbeSha.slice(0, 16)}…, module=${moduleProbe?.module ?? SECURITY_STORE_MODULE}, moduleSha256=${String(moduleProbe?.sha256 ?? '').slice(0, 16)}…, executable=${JSON.stringify(process.execPath)}, probeDirListingBeforeTheRun=${JSON.stringify(moduleProbePrewrite)} (the file the run is ABOUT to execute — a probe deleted before its own execution is the measured ENOENT cause), probeExitCode=${moduleProbeRun.exitCode}, probeStdoutToken=${JSON.stringify(String(moduleProbeRun.stdout).trim().slice(0, 40))}, probeSignal=${JSON.stringify(moduleProbeRun.signal ?? null)}, probeStderr=${JSON.stringify(String(moduleProbeRun.stderr ?? '').slice(-400))}, probeThrownError=${JSON.stringify(String(moduleProbeRun.error ?? ''))}, probeErrors=${JSON.stringify(moduleProbeErrs)}; THE PROBE'S OWN FIXTURE READ=${JSON.stringify(moduleProbe?.fixture ?? null)} (loadedTheSeed=${moduleProbeFixtureLoaded} — the non-vacuity term: a probe on the module's DEFAULT record would measure the wrong object AND was the first draft's measured defect); THE ROUNDS (${moduleProbeMutationRows.length} of ${D1_ROUND_COUNT} declared): ${JSON.stringify(moduleProbeMutationRows)}; rounds whose SECOND READ MOVED (a live reference was handed out): ${JSON.stringify(moduleProbeFired.map((r) => r.label))} — EMPTY is the D-1 reading; rounds where it did NOT move: ${JSON.stringify(moduleProbeHeld.map((r) => r.label))}; THE set() RETURN'S OWN REPORT=${JSON.stringify(moduleProbe?.setReturn ?? null)}; THE PERSISTED RECORD AFTER THE MUTATION ROUNDS=${JSON.stringify(moduleProbe?.persistedAfterMutation ?? null)}; THE DELETION TEST, RUN OVER THESE VERY BYTES: ${JSON.stringify(moduleDeletionAudit)} => ${moduleDeletionReddens.length} of ${moduleDeletionAudit.length} mutations REDDEN under the deletion of their own term; THE REDDENING TERM PER MUTATION, PRINTED (the fixture that drives each is the mutation itself, applied to the SHARED-OBJECT subject): ${JSON.stringify(MODULE_PROBE_MUTATIONS.map((m) => m.key + '→' + m.reddens))}`,
+  'THE ARCHITECT\'S D-1 CLAUSE, MEASURED AT ITS DECISIVE SITE: the module\'s own return is the value every downstream holder receives, and a live reference there would let any holder read or mutate tier-4 state by holding the returned object. **THE INSTRUMENT BOUNDARY IS THE POINT OF THIS ROW: a bridge-only probe (SC-D-03) CANNOT observe this half at all** — the value has already been structured-cloned across IPC, so the renderer\'s copy could not reach main even on a reference-returning store. The SHARED-OBJECT control (SC-D-11) drives the SAME detector against a subject that really does return a live reference, and the REPLACED-FILE control drives it across a record replaced out of band, so neither "the detector did not fire" nor "the second read equals the first" is unfalsifiable')
+
+const scD02bVerdict = (!moduleProbeReadable) ? 'MANUAL'
+  : (!moduleProbeControlFires || !moduleProbeReplacedControlFires) ? 'FAIL' : (moduleDeletionAuditComplete && moduleProbeControlFires ? 'PASS' : 'MANUAL')
+check('SC-D-11 (Family D, D-1) — THE SHARED-OBJECT + REPLACED-FILE SUBJECT PAIR', 'CONTROL: the SAME detector FIRES on a subject that really does hand out a live reference (one shared object handed to two readers), AND the SAME module read MOVES when the record is replaced out of band — so SC-D-02a is neither a detector that cannot fire nor a read that can never change', scD02bVerdict,
+  `NAMED TERMS: CONTROL-1 (SHARED OBJECT — the same detector, a subject that really returns a reference): ${JSON.stringify(moduleProbeControl)}, fires=${moduleProbeControlFires}. CONTROL-2 (REPLACED FILE — the same module read across a record replaced out of band): ${JSON.stringify(moduleProbeReplacedControl)}, fires=${moduleProbeReplacedControlFires}. A control that CANNOT REFUSE is the defect class this battery was repaired for six times, so BOTH directions are driven: the first proves the detector fires on a REFERENCE, the second proves a module read is a READING rather than a constant`,
+  'the falsifiability of SC-D-02a in both directions. **CONTROL-1 is deliberately the WRONG implementation of the same function** (a subject returning the SAME object on every call), so a detector that failed to fire there would make every "clone" reading above vacuous. **CONTROL-2 drives the second-read term itself**: if the module\'s read could not see a record replaced out of band, "the second read is unchanged" would be unfalsifiable')
+
+
+// ── FAMILY D, D-1 — THE CONSEQUENCE HALF, LIVE ([CDP] + [G]) ───────────────────────────
+/** **THE INSTRUMENT BOUNDARY, STATED IN THE ROW ITSELF: THIS HALF CANNOT WITNESS THE REFERENCE HALF.**
+ *  `window.provident.security.get()` crosses an IPC boundary that ALREADY SERIALIZES, so the object the
+ *  renderer mutates is ALREADY a structured clone of whatever main handed out: **this arm would hold even on a
+ *  store that returned a live reference.** It is a CONSEQUENCE check — "the operator's own record cannot be
+ *  corrupted by mutating what a read returned" — and its verdict is about the LIVE consequence only. */
+const d1LiveHeld = await cdp.evaluate('(function(){ window.__d1ProbeHeld = window.provident.security.get(); return window.__d1ProbeHeld; })()')
+const d1LiveBefore = await cdp.evaluate('window.provident.security.get()')
+const d1HeldIsSeeded = d1LiveHeld !== null && typeof d1LiveHeld === 'object' && d1LiveHeld.token === TOKEN
+const d1SetReturnHeld = await cdp.evaluate(`(function(){ window.__d1SetReturn = window.provident.security.set({ maxJournalLength: ${JOURNAL + 3} }); return window.__d1SetReturn; })()`)
+const d1SetReturnIsSeeded = d1SetReturnHeld !== null && typeof d1SetReturnHeld === 'object' && d1SetReturnHeld.write?.status === 'committed'
+await sleep(400)
+const d1FileBefore = readOrNull(secPathA)
+const d1FileShaBefore = sha256(secPathA)
+const d1LiveMutation = await cdp.evaluate(`(function(){
+  const v = window.__d1ProbeHeld;
+  if (v === null || typeof v !== 'object') return { ok: false, reason: 'no held record' };
+  v.dProbeExtra = 'LIVE-D1-MUTATION';
+  v.maxJournalLength = 999;
+  if (Array.isArray(v.enabled)) { v.enabled.push('dProbeInjectedGroup'); v.enabled.splice(0, 1); }
+  delete v.token;
+  return { ok: true, mutatedKeys: Object.keys(v).sort(), mutatedMaxJournalLength: v.maxJournalLength, mutatedEnabled: Array.isArray(v.enabled) ? v.enabled : null, hasDProbeExtra: Object.prototype.hasOwnProperty.call(v, 'dProbeExtra'), token: v.token === undefined ? '<ABSENT>' : v.token };
+})()`)
+await sleep(500)
+const d1LiveAfter = await cdp.evaluate('window.provident.security.get()')
+const d1FileAfter = readOrNull(secPathA)
+const d1FileShaAfter = sha256(secPathA)
+const d1LiveUnmoved = JSON.stringify(d1LiveAfter) === JSON.stringify(d1LiveBefore)
+const d1FileUnmoved = d1FileShaBefore === d1FileShaAfter
+/** THE OUT-OF-BAND CONTROL — the SECOND control for THIS half: the detector (a fresh file read compared
+ *  against the baseline record) must be able to SEE A CHANGE. A SEPARATE scratch profile's tier-4 file is
+ *  REWRITTEN by this driver with a changed `maxJournalLength`, and the SAME predicate — "the record read now
+ *  equals the record read before" — is re-evaluated against the changed bytes. The profile the app is RUNNING
+ *  ON is never written to. */
+const D1_CONTROL_PROFILE = seedProfile('D1-CTL')
+const D1_CONTROL_RECORD = { token: TOKEN, enabled: GROUPS, maxJournalLength: JOURNAL + 500 }
+writeFileSync(join(D1_CONTROL_PROFILE, SECURITY_FILE), JSON.stringify(D1_CONTROL_RECORD, null, 2))
+const D1_CONTROL_READBACK = (() => {
+  try { return { ok: true, bytes: readFileSync(join(D1_CONTROL_PROFILE, SECURITY_FILE), 'utf8') } }
+  catch (e) { return { ok: false, error: String(e?.message ?? e) } }
+})()
+const d1ControlReadbackFires = D1_CONTROL_READBACK.ok && JSON.stringify(JSON.parse(D1_CONTROL_READBACK.bytes)) === JSON.stringify(D1_CONTROL_RECORD)
+const d1ControlBaselineFires = JSON.stringify(dSeedRecord) !== JSON.stringify(D1_CONTROL_RECORD)
+/** **THE CONTROL'S PROFILE IS REMOVED HERE, IN THE RUN, AND THE REMOVAL IS A TERM OF ITS OWN ROW** — the
+ *  end-of-run cleanup row (`SC-CLEAN-01`) sweeps every profile this run CREATED, and this control creates one;
+ *  leaving it to the final drain is what the drain is for, but a control profile that survives the run is a
+ *  cleanup reading the battery must not lose. MEASURED on the first attempt: the drain reported `1` leftover
+ *  (this profile) because its directory was created AFTER the boot profiles had already been swept. */
+const d1ControlProfileRemoved = removeWithVerify(D1_CONTROL_PROFILE)
+/** THE DELETION TEST FOR THIS ROW, RUN ON THE PREDICATE ITSELF: the two terms ARE the whole predicate, and each
+ *  is exercised against the out-of-band control above. Deleting the live term leaves the file term; deleting
+ *  the file term leaves the live term — and the CONTROL proves BOTH can move, which is what makes their
+ *  conjunction a reading rather than a pair of constants. */
+const D1_LIVE_DELETION_AUDIT = [
+  { term: 'd1LiveUnmoved', reddensOnDeletion: !d1LiveUnmoved, drivenBy: 'the CDP mutation of the held record is the deletion fixture: the SAME mutation that leaves this term TRUE is the one that would make it FALSE on a store exposing the record by reference' },
+  { term: 'd1FileUnmoved', reddensOnDeletion: !d1FileUnmoved, drivenBy: 'CONTROL-OUT-OF-BAND-FILE: baselineDiffersFromMutated=' + String(d1ControlBaselineFires) + ', the replaced-file readback carries the changed cap=' + String(d1ControlReadbackFires) },
+]
+const scD03Verdict = (!d1HeldIsSeeded || !d1SetReturnIsSeeded) ? 'MANUAL'
+  : (!d1ControlReadbackFires || !d1ControlBaselineFires) ? 'FAIL'
+    : (d1LiveUnmoved && d1FileUnmoved) ? 'PASS' : 'FAIL'
+check('SC-D-03 (Family D, D-1) — THE CONSEQUENCE HALF, LIVE [CDP]+[G]', 'D-1 REQUIREMENT ARM (consequence half): mutating what the LIVE bridge read returned changes NOTHING — a FRESH read and the persisted tier-4 file\'s bytes both equal their pre-mutation readings. **THIS ARM CANNOT WITNESS THE REFERENCE HALF: IPC serialization means it holds REGARDLESS of what main returns (SC-D-02a is the decisive reading); it is a CONSEQUENCE check**', scD03Verdict,
+  `NAMED TERMS: the record TAKEN FROM THE LIVE BRIDGE and HELD in the page realm=${JSON.stringify(d1LiveHeld)}; the pre-mutation FRESH read=${JSON.stringify(d1LiveBefore)}; THE MUTATION APPLIED TO THE RETURNED OBJECT=${JSON.stringify(d1LiveMutation)} (a member added, maxJournalLength→999, enabled pushed AND spliced, token deleted); the post-mutation FRESH read=${JSON.stringify(d1LiveAfter)}; liveUnmoved=${d1LiveUnmoved}; the tier-4 FILE: sha256 ${d1FileShaBefore.slice(0, 16)}… → ${d1FileShaAfter.slice(0, 16)}…, bytes ${JSON.stringify(d1FileBefore)} → ${JSON.stringify(d1FileAfter)}, fileUnmoved=${d1FileUnmoved}; NON-VACUITY: the mutation really ran (${JSON.stringify(d1LiveMutation)}), the fresh read really answered (token=${JSON.stringify(d1LiveAfter?.token)}), the file was really read twice, and the POSITIVE PRECONDITION d1HeldIsSeeded=${d1HeldIsSeeded} / d1SetReturnIsSeeded=${d1SetReturnIsSeeded} (a broken instrument reads MANUAL, never PASS and never an accidental FAIL); CONTROL-OUT-OF-BAND-FILE (the second control for this half): profile=${D1_CONTROL_PROFILE}, its tier-4 file REWRITTEN by this driver with maxJournalLength=${JOURNAL + 500} → readback=${JSON.stringify(D1_CONTROL_READBACK).slice(0, 200)}, readbackFires=${d1ControlReadbackFires}, baselineDiffersFromMutated=${d1ControlBaselineFires}, the control's OWN profile removed in-run=${d1ControlProfileRemoved}; THE DELETION AUDIT=${JSON.stringify(D1_LIVE_DELETION_AUDIT)}`,
+  'the LIVE consequence of the D-1 clause: an external party holding the object a secure read returned must not be able to read or mutate tier-4 state through it. **THE ROW STATES ITS OWN INSTRUMENT LIMIT IN ITS SUBJECT** — the IPC boundary serializes, so this arm holds even for a reference-returning store, and a battery that presented it as the reference witness would be over-reading its own instrument. The OUT-OF-BAND control writes a SEPARATE scratch profile\'s tier-4 file (never a profile the app is running on) and re-reads it through a fresh read, so the "unchanged" terms demonstrably CAN move; d1ControlReadbackFires and d1ControlBaselineFires are terms of the verdict, so a dead control reads FAIL rather than PASS')
+
+// ── FAMILY D, D-1 — THE set(patch) RETURN (a read-shaped return of tier-4 data) ────────
+/** **THE LIVE ARM IS A REAL MUTATION-RESISTANCE TEST, NOT A TAUTOLOGY.** The response the page realm holds is
+ *  the object the caller RECEIVED; it is mutated in the page, and then BOTH the persisted bytes AND a FRESH
+ *  read must equal their pre-mutation readings. The non-vacuity term is the write itself: the row records the
+ *  module probe's own file read after the same shape of write (`setReturn.fileAfterSetMoved`), so a `set()`
+ *  that silently did nothing cannot make a "nothing changed" reading vacuous. */
+const setReturnLive = await cdp.evaluate('window.__d1SetReturn')
+const setReturnFileBefore = readOrNull(secPathA)
+const setReturnShaBefore = setReturnFileBefore === null ? null : sha256(secPathA)
+const setReturnReadBefore = await cdp.evaluate('window.provident.security.get()')
+const setReturnMutation = await cdp.evaluate(`(function(){
+  const v = window.__d1SetReturn;
+  if (v === null || typeof v !== 'object') return { ok: false, reason: 'no held set() response' };
+  v.dProbeExtra = 'LIVE-D1-SETRETURN-MUTATION';
+  v.maxJournalLength = 999;
+  if (Array.isArray(v.enabled)) { v.enabled.push('dProbeInjectedGroup'); v.enabled.splice(0, 1); }
+  delete v.token;
+  return { ok: true, mutatedKeys: Object.keys(v).sort(), mutatedMaxJournalLength: v.maxJournalLength, hasDProbeExtra: Object.prototype.hasOwnProperty.call(v, 'dProbeExtra'), token: v.token === undefined ? '<ABSENT>' : v.token };
+})()`)
+await sleep(500)
+const setReturnReadAfter = await cdp.evaluate('window.provident.security.get()')
+const setReturnFileAfter = readOrNull(secPathA)
+const setReturnShaAfter = setReturnFileAfter === null ? null : sha256(secPathA)
+const setReturnLiveUnmoved = JSON.stringify(setReturnReadAfter) === JSON.stringify(setReturnReadBefore)
+const setReturnFileUnmoved = setReturnShaBefore !== null && setReturnShaBefore === setReturnShaAfter
+const setReturnModuleRow = moduleProbeMutationRows.find((r) => r.label === 'store.set(patch) return') ?? null
+const setReturnFileWriteLanded = moduleProbe?.setReturn?.fileAfterSetMoved === true
+const scD04Verdict = (setReturnLive === null || typeof setReturnLive !== 'object' || setReturnFileBefore === null) ? 'MANUAL'
+  : (setReturnModuleRow === null) ? 'MANUAL'
+    : (setReturnModuleRow.secondReadMoved !== true && moduleProbeFired.length === 0
+      && setReturnLiveUnmoved && setReturnFileUnmoved && setReturnFileWriteLanded) ? 'PASS' : 'FAIL'
+check('SC-D-04 (Family D, D-1) — THE set(patch) RETURN', 'D-1 ARM ON THE WRITE\'S RETURN: the ruling says DATA REQUESTS, and set(patch) answers a READ-SHAPED return of tier-4 data — measured on BOTH layers: the module\'s own return is detached ([B], the reference half) and the LIVE response really is mutated in the page, with BOTH a fresh read AND the persisted bytes unmoved afterwards', scD04Verdict,
+  `NAMED TERMS: the LIVE set() response held in the page realm=${JSON.stringify(setReturnLive)}; THE MUTATION APPLIED TO IT=${JSON.stringify(setReturnMutation)}; the FRESH read BEFORE=${JSON.stringify(setReturnReadBefore)} and AFTER=${JSON.stringify(setReturnReadAfter)}, liveUnmoved=${setReturnLiveUnmoved}; the tier-4 FILE sha256 ${String(setReturnShaBefore).slice(0, 16)}… → ${String(setReturnShaAfter).slice(0, 16)}…, fileUnmoved=${setReturnFileUnmoved}; THE NON-VACUITY TERM (the same shape of write, measured at the module layer): the probe\'s own set() report=${JSON.stringify(moduleProbe?.setReturn ?? null)} (fileAfterSetMoved=${setReturnFileWriteLanded}); THE MODULE-LAYER READING OF THE SAME RETURN (the reference half, [B]): ${JSON.stringify(setReturnModuleRow)}; every module-probe round that MOVED its second read=${JSON.stringify(moduleProbeFired.map((r) => r.label))} (EMPTY is the reading); THE BINDING, STATED: D-1 DOES bind this return — it is a read-shaped return of tier-4 data — and the measurement is that NEITHER layer hands out the original`,
+  'the ruling\'s own words are "data requests", and a write\'s return IS a read of the post-state. Both layers are named because they answer DIFFERENT questions: [B] answers "is the object the module handed back the original?" and [CDP] answers "can the live caller corrupt tier-4 state through the response it received?" — and the live half alone would be satisfied by the IPC serialization whatever the module does. The non-vacuity terms are the persisted value AND the module-layer file read: a set() that silently did nothing would make every "no mutation" reading vacuous. **The cap is NOT asserted against the seed: SC-B-03\'s operator write already ran on this profile, so the row asserts the pre-mutation readings EQUAL the post-mutation readings rather than a constant the run does not control**')
+
+// ── FAMILY D, D-2 — THE WRITE GATE'S STATES, DRIVEN ────────────────────────────────────
+/** THE GATE STATE IS READ FROM THE APP IN EVERY STATE (never assigned by this driver): `exclusion` rides the
+ *  GET response (`main.ts`'s additive member). The write channel is the operator's own
+ *  `window.provident.security.set({…})` — the manual-UI channel `D-SCOPE` names as NOT an MCP method. */
+const d2ReadState = async () => {
+  const r = await cdp.evaluate('window.provident.security.get()')
+  return { raw: r, exclusion: r?.exclusion ?? null, token: r?.token ?? null, mjl: r?.maxJournalLength ?? null }
+}
+const D2_MJL_ENABLED = JOURNAL + 1
+const D2_MJL_OPEN = JOURNAL + 2
+const D2_MJL_RETURN = JOURNAL + 3
+const D2_MJL_RACE = JOURNAL + 4
+/** Each D-2 arm writes its OWN value: a shared constant would make the SECOND arm's "the file's bytes moved"
+ *  term FALSE on a correct app (the bytes already carry that value). MEASURED — the first draft used one
+ *  constant for all three arms and arm (ii) read FAIL for that reason alone. */
+const d2Write = async (value) => cdp.evaluate(`window.provident.security.set({ maxJournalLength: ${value} })`)
+const d2UnknownWrite = async () => cdp.evaluate("window.provident.security.set({ dUnknownRuntimeMember: 'D2-UNKNOWN-MEMBER' })")
+const d2FileRead = () => {
+  const raw = readOrNull(secPathA)
+  let parsed = null
+  try { parsed = JSON.parse(raw) } catch { parsed = null }
+  return { raw, parsed, sha: exists(secPathA) ? sha256(secPathA) : null }
+}
+
+const d2StateEnabled = await d2ReadState()
+const d2FileEnabledBefore = d2FileRead()
+const d2WriteEnabled = await d2Write(D2_MJL_ENABLED)
+await sleep(400)
+const d2FileEnabledAfter = d2FileRead()
+const d2ReceiptEnabled = d2WriteEnabled?.write ?? null
+const d2CommittedEnabled = d2ReceiptEnabled !== null && d2ReceiptEnabled?.status === 'committed'
+const d2RefusedEnabled = d2ReceiptEnabled !== null && d2ReceiptEnabled?.status === 'refused'
+const d2LandedEnabled = d2FileEnabledAfter.parsed?.maxJournalLength === D2_MJL_ENABLED
+  && d2FileEnabledAfter.sha !== d2FileEnabledBefore.sha
+const d2UnknownWriteEnabled = await d2UnknownWrite()
+await sleep(300)
+const d2FileAfterUnknown = d2FileRead()
+const d2UnknownReceipt = d2UnknownWriteEnabled?.write ?? null
+const d2UnknownMemberStored = d2FileAfterUnknown.raw !== null && /dUnknownRuntimeMember/.test(d2FileAfterUnknown.raw)
+/** **THE D-2 (i) VERDICT IS WRITTEN IN THE REQUIREMENT DIRECTION.** The requirement is "a runtime tier-4 write
+ *  is permitted IFF the MCP server is blocked"; with MCP ENABLED the tier is CLOSED, so the write must be
+ *  REFUSED. A committed receipt whose bytes really moved is a MEASUREMENT OF THE VIOLATION — reported as FAIL,
+ *  never re-scoped into a pass and never attributed to the instrument (the instrument is proved live by SC-D-09
+ *  and by this row's own file-bytes term). */
+const scD05Verdict = (d2ReceiptEnabled === null || d2StateEnabled.exclusion === null) ? 'MANUAL'
+  : ((d2RefusedEnabled && !d2LandedEnabled) ? 'PASS' : 'FAIL')
+check('SC-D-05 (Family D, D-2, arm i) — MCP ENABLED: THE DEFAULT STATE, TIER-4 CLOSED', 'D-2 REQUIREMENT ARM (i): while the MCP server is ENABLED (the gate\'s boot terminal, the tier CLOSED) a runtime tier-4 write over the operator\'s manual-UI channel must be REFUSED', scD05Verdict,
+  `NAMED TERMS: the gate state READ FROM THE APP before the write=${JSON.stringify(d2StateEnabled.raw)} (exclusion=${JSON.stringify(d2StateEnabled.exclusion)} — the boot terminal, NOT assigned by this driver); THE RECEIPT VERBATIM, in full=${JSON.stringify(d2WriteEnabled)} (write=${JSON.stringify(d2ReceiptEnabled)}, committed=${d2CommittedEnabled}, refused=${d2RefusedEnabled}); the file sha256 ${String(d2FileEnabledBefore.sha).slice(0, 16)}… → ${String(d2FileEnabledAfter.sha).slice(0, 16)}…, maxJournalLength ${JSON.stringify(d2FileEnabledBefore.parsed?.maxJournalLength)} → ${JSON.stringify(d2FileEnabledAfter.parsed?.maxJournalLength)} (the arm's own target ${D2_MJL_ENABLED}), bytesLanded=${d2LandedEnabled}; THE UNKNOWN-MEMBER WRITE (the second half of arm (i)): the whole response=${JSON.stringify(d2UnknownWriteEnabled)}, write=${JSON.stringify(d2UnknownReceipt)}, its status=${JSON.stringify(d2UnknownReceipt?.status)}, unknownMemberInFileBytes=${d2UnknownMemberStored} — **so an unknown runtime member is ADMITTED-looking (a committed receipt) and then SILENTLY DROPPED, which is the ALREADY-FILED SECURITY-STORE-SILENT-KEY-DROP re-measured here, NOT a new defect**`,
+  'THE ARCHITECT\'S D-2 CLAUSE, MEASURED ON THE WRITE PATH. **THE GATE UNDER MEASUREMENT IS THE `IPC_SECURITY_SET` HANDLER (`L` `src/main/main.ts:385-404`), WHICH PERFORMS NO EXCLUSION CHECK AND CONSULTS NO GATE MEMBER BEFORE PERSISTING** — so on these bytes the tier-4 WRITE PATH IS NOT GATED BY THE EXCLUSION AT ALL, while the MCP CALL path (S1\'s rows; this battery\'s SC-C-05) IS. This row is written in the REQUIREMENT direction, so an admissible write in the forbidden state reads FAIL with its measurement. **AND THE PATH IS NOT MCP-REACHABLE (`D-SCOPE`: the manual-UI channel is explicitly NOT an MCP method), which is why the violation is a GATE-SCOPE question rather than a leak: no MCP tool can perform this write** — the arm measures the GATE\'s conditionality, not exposure over MCP')
+
+const d2FileBeforeDisable = d2FileRead()
+const enterD2Disable = await cdp.evaluate("window.provident.security.setExclusion('mcp-disabled')")
+await sleep(700)
+const d2StateOpen = await d2ReadState()
+const d2WriteOpen = await d2Write(D2_MJL_OPEN)
+await sleep(400)
+const d2FileAfterOpen = d2FileRead()
+const d2ReceiptOpen = d2WriteOpen?.write ?? null
+const d2LandedOpen = d2FileAfterOpen.parsed?.maxJournalLength === D2_MJL_OPEN
+  && d2FileAfterOpen.sha !== d2FileBeforeDisable.sha
+const scD06Verdict = (d2ReceiptOpen === null || d2StateOpen.exclusion !== 'mcp-disabled') ? 'MANUAL'
+  : ((d2ReceiptOpen?.status === 'committed' && d2LandedOpen) ? 'PASS' : 'FAIL')
+check('SC-D-06 (Family D, D-2, arm ii) — MCP DISABLED: TIER-4 OPEN', 'D-2 REQUIREMENT ARM (ii): with the MCP server TRANSITIONED OFF by the app\'s own control the tier is OPEN, so the SAME runtime write must be ADMITTED — and it must really land in the file and in the live store', scD06Verdict,
+  `NAMED TERMS: the transition DRIVEN BY THE APP'S OWN CHANNEL MEMBER window.provident.security.setExclusion('mcp-disabled') → ${JSON.stringify(enterD2Disable)}; the gate state READ AFTER it=${JSON.stringify(d2StateOpen.raw)} (exclusion=${JSON.stringify(d2StateOpen.exclusion)}); THE RECEIPT VERBATIM=${JSON.stringify(d2WriteOpen)} (write=${JSON.stringify(d2ReceiptOpen)}); the file sha256 ${String(d2FileBeforeDisable.sha).slice(0, 16)}… → ${String(d2FileAfterOpen.sha).slice(0, 16)}…, maxJournalLength ${JSON.stringify(d2FileBeforeDisable.parsed?.maxJournalLength)} → ${JSON.stringify(d2FileAfterOpen.parsed?.maxJournalLength)}, bytesLanded=${d2LandedOpen}; the live store's post-state=${JSON.stringify(d2WriteOpen)}`,
+  'the ADMITTED direction of D-2, and the reason the transition is driven by the app\'s own control: the state is never fabricated by this driver. **The declaration that the transition here is the CHANNEL\'s and not the operator\'s pane GESTURE stands (the same declared limit SC-C-05 carries — the gesture is S1\'s row).** The non-vacuity terms are the receipt AND the file\'s bytes: a write that answered "committed" without moving the file would redden this row')
+
+const d2FileBeforeReturn = d2FileRead()
+const returnD2Enable = await cdp.evaluate("window.provident.security.setExclusion('mcp-enabled')")
+await sleep(700)
+const d2StateReturned = await d2ReadState()
+const d2WriteReturn = await d2Write(D2_MJL_RETURN)
+await sleep(400)
+const d2FileAfterReturn = d2FileRead()
+const d2ReceiptReturn = d2WriteReturn?.write ?? null
+const d2RefusedReturn = d2ReceiptReturn?.status === 'refused'
+const d2LandedReturn = d2FileAfterReturn.parsed?.maxJournalLength === D2_MJL_RETURN
+  && d2FileAfterReturn.sha !== d2FileBeforeReturn.sha
+const scD07Verdict = (d2ReceiptReturn === null || d2StateReturned.exclusion !== 'mcp-enabled') ? 'MANUAL'
+  : ((d2RefusedReturn && !d2LandedReturn) ? 'PASS' : 'FAIL')
+check('SC-D-07 (Family D, D-2, arm iii) — THE RETURN TRANSITION', 'D-2 REQUIREMENT ARM (iii): after the operator re-enables the MCP server the SAME write must be REFUSED AGAIN — the third state of an "iff" clause, and the one that decides whether the gate EVER bound the write path', scD07Verdict,
+  `NAMED TERMS: window.provident.security.setExclusion('mcp-enabled') → ${JSON.stringify(returnD2Enable)}; the gate state READ AFTER it=${JSON.stringify(d2StateReturned.raw)} (exclusion=${JSON.stringify(d2StateReturned.exclusion)}); THE RECEIPT VERBATIM=${JSON.stringify(d2WriteReturn)} (write=${JSON.stringify(d2ReceiptReturn)}, refused=${d2RefusedReturn}); the file sha256 ${String(d2FileBeforeReturn.sha).slice(0, 16)}… → ${String(d2FileAfterReturn.sha).slice(0, 16)}…, maxJournalLength ${JSON.stringify(d2FileBeforeReturn.parsed?.maxJournalLength)} → ${JSON.stringify(d2FileAfterReturn.parsed?.maxJournalLength)}, bytesLanded=${d2LandedReturn}; the live store's post-state=${JSON.stringify(d2WriteReturn)}`,
+  'the THIRD state of the ruling: "iff blocked" has a return direction, and a return transition that leaves the write admitted would mean the gate never bound the write path at any point. The row is written in the requirement direction, so an admitted write after the return reads FAIL with its measurement. **WITH THE WRITE PATH UNGATED, ARMS (i) AND (iii) MEASURE THE SAME BEHAVIOUR IN THE TWO FORBIDDEN STATES while arm (ii) measures the one legal state — so the CONDITIONALITY the clause requires is ABSENT, not merely inverted, and the two arms are two readings rather than one repeated**')
+
+/** **THE TRANSITION RACE (arm iv) — THE LEAST-DEFINED CASE, AND A MANUAL ROW BY CONSTRUCTION.** The contract
+ *  (`docs/specs/secure-exclusion.md` `§2.2` item 7) declares that an in-flight tier write is never abandoned,
+ *  because the write is main-side and SYNCHRONOUS, and that the transition handler "reads the state, applies
+ *  the transition and answers — atomically with respect to the SET handler". **THIS DRIVER CANNOT MAKE THE
+ *  WINDOW DETERMINISTIC:** both main-side handlers run to completion inside one JS turn, and a CDP client (a
+ *  websocket round trip plus a promise queue at each end) cannot guarantee that the exclusion request lands
+ *  between the SET handler's entry and its `persist()` — or that it does not. What this row reports is the
+ *  ORDER the run actually produced (both calls issued in ONE tick, each stamped at its send), the states on
+ *  both sides, and whether the write landed — a MEASUREMENT OF A NON-DETERMINISTIC WINDOW, which is a WITHHELD
+ *  claim and is NEVER a PASS. */
+const d2RaceBefore = { state: await d2ReadState(), file: d2FileRead() }
+const d2Race = await (async () => {
+  const t0 = Date.now()
+  const setSentMs = Date.now() - t0
+  const pSet = cdp.evaluate(`(function(){ const r = window.provident.security.set({ maxJournalLength: ${D2_MJL_RACE} }); return { call: 'set', promise: r }; })()`).then((v) => (v !== null && typeof v === 'object' && 'promise' in v ? v.promise : v))
+  const exclusionSentMs = Date.now() - t0
+  const pEx = cdp.evaluate("window.provident.security.setExclusion('mcp-disabled')")
+  const [setRes, exRes] = await Promise.all([pSet, pEx])
+  return { sentAt: { setSentMs, exclusionSentMs, issuedInOneTick: true }, setRes, exRes, settledAtMs: Date.now() - t0 }
+})()
+await sleep(600)
+const d2RaceAfter = { state: await d2ReadState(), file: d2FileRead() }
+const d2RaceReceipt = d2Race.setRes?.write ?? null
+const d2RaceLanded = d2RaceAfter.file.parsed?.maxJournalLength === D2_MJL_RACE
+const d2RaceFileMoved = d2RaceAfter.file.sha !== d2RaceBefore.file.sha
+/** THE RACE ROW IS MANUAL IN EVERY OUTCOME: the driver records what happened and withholds the claim. The two
+ *  admissible readings are NAMED so the disposition is not silent: an ADMITTED write (committed, bytes moved)
+ *  is the same unconditional admission arms (i)/(iii) measured, and an ABANDONED/REFUSED write would be the
+ *  contract's declared answer — but THIS instrument cannot tell a deterministic gate from a lucky ordering, so
+ *  it claims neither. The profile is left in the disabled state ON PURPOSE by this row's own transition so that
+ *  SC-D-08's reading is the last one; the closing Family-D block re-enables the gate (asserted) so no later row
+ *  and no cleanup path reads a gate this row left open. */
+const d2RaceVerdict = 'MANUAL'
+check('SC-D-08 (Family D, D-2, arm iv) — THE TRANSITION RACE: MANUAL', 'D-2 ARM (iv), A WITHHELD CLAIM: a write and the exclusion transition are issued in the SAME TICK and the run records the order, both states and whether the write landed — but THIS INSTRUMENT CANNOT MAKE THE WINDOW DETERMINISTIC, so the row is MANUAL with its reason and is NEVER a PASS', d2RaceVerdict,
+  `NAMED TERMS: sends (one tick)=${JSON.stringify(d2Race.sentAt)}; THE SET ANSWERED=${JSON.stringify(d2Race.setRes)} (write=${JSON.stringify(d2RaceReceipt)}); THE EXCLUSION ANSWERED=${JSON.stringify(d2Race.exRes)}; settledAtMs=${d2Race.settledAtMs}; STATES ON BOTH SIDES: exclusion before=${JSON.stringify(d2RaceBefore.state.exclusion)} after=${JSON.stringify(d2RaceAfter.state.exclusion)}; the file maxJournalLength ${JSON.stringify(d2RaceBefore.file.parsed?.maxJournalLength)} → ${JSON.stringify(d2RaceAfter.file.parsed?.maxJournalLength)} (the arm's own target ${D2_MJL_OPEN}), bytesLanded=${d2RaceLanded}, fileShaMoved=${d2RaceFileMoved}; sha256 ${String(d2RaceBefore.file.sha).slice(0, 16)}… → ${String(d2RaceAfter.file.sha).slice(0, 16)}…; **THE REASON IT IS MANUAL, STATED: the two main-side handlers run to completion inside ONE JS turn and this driver controls neither end's scheduling, so it cannot place the exclusion between the SET handler's entry and its persist() — a run that reads "refused" would therefore NOT prove the gate ordered it, and a run that reads "admitted" would be indistinguishable from the unconditional admission arms (i)/(iii) already measured. THE ROW CLAIMS NEITHER.**`,
+  'the least-defined case of the ruling, reported as an OBSERVATION with its reason rather than as a verdict. **The record names what a LATER instrument would need to make it deterministic:** a main-side seam that can inject the transition INSIDE the SET handler\'s critical section (or a contract clause declaring the ordering observable at the channel), neither of which exists at this HEAD. A MANUAL row is counted and named by the family tally but carries NO family verdict — the §6.2 audits\' rule that a withheld claim is not a pass')
+const d2RaceRestore = await cdp.evaluate("window.provident.security.setExclusion('mcp-enabled')")
+await sleep(500)
+
+const d2FileBeforeAdmissible = d2FileRead()
+const D2_ADMISSIBLE_VALUE = 'D2-ADMISSIBLE-CONTROL-VALUE'
+/** **THE CONTROL DRIVES THE TIER-1 STORE BRIDGE, WHICH REALLY COMMITS — AND ITS READ-BACK IS TAKEN WHILE
+ *  THE VALUE IS STILL IN PLACE.** The live graph store's own `set()` updates the wired store's record without
+ *  committing it to tier 1's file, so a control asserting "the value landed in the FILE bytes" through THAT
+ *  surface read FAIL on a correct tier (MEASURED — the first draft of this row). `window.provident.store.put`
+ *  is the page-reachable channel whose handler COMMITS, so the control drives IT; the value's read-back is
+ *  then taken BEFORE the restore (a read-back after the restore would legitimately be empty, which is the
+ *  second bug the first draft of this control had). */
+const admissibleControl = await cdp.evaluate(`(async function(){
+  const payload = JSON.stringify({ ${JSON.stringify(FILE_LOGICAL)}: ${JSON.stringify(D2_ADMISSIBLE_VALUE)} });
+  const put = await window.provident.store.put({ name: ${JSON.stringify(FILE_LOGICAL)}, value: payload });
+  const rows = await window.provident.store.get();
+  const landed = Array.isArray(rows) && rows.some((r) => r && r.name === ${JSON.stringify(FILE_LOGICAL)} && r.value === ${JSON.stringify(D2_ADMISSIBLE_VALUE)});
+  const restore = await window.provident.store.put({ name: ${JSON.stringify(FILE_LOGICAL)}, value: JSON.stringify({ ${JSON.stringify(FILE_LOGICAL)}: 'dark-seeded' }) });
+  const afterRestore = await window.provident.store.get();
+  const restored = Array.isArray(afterRestore) && afterRestore.some((r) => r && r.name === ${JSON.stringify(FILE_LOGICAL)} && r.value === 'dark-seeded');
+  return { payload: payload, receipt: put, readback: rows, landedInStoreReadback: landed, restoreReceipt: restore, readbackAfterRestore: afterRestore, restoredInStoreReadback: restored };
+})()`)
+await sleep(500)
+const d2FileAfterAdmissible = d2FileRead()
+const d2AdmissibleFileLanded = d2FileAfterAdmissible.raw !== null && d2FileAfterAdmissible.raw.includes(D2_ADMISSIBLE_VALUE)
+const d2AdmissibleFileRestored = d2FileAfterAdmissible.raw !== null && d2FileAfterAdmissible.raw.includes('dark-seeded')
+/** **THE FILE-BYTES HALF IS RE-SCOPED TO THE MEASURED BEHAVIOUR OF THIS CHANNEL, WITH ITS REASON AT THE ROW.**
+ *  `window.provident.store.put` REPLACES `provident-settings.json` with the projection of the payload (the
+ *  already-filed `STORE-BRIDGE-EMPTY-PROJECTION-COMMITS`), so the control's own value is GONE from the bytes
+ *  after its restore — and the seeded `file.settings.*` row does not survive either. The control therefore
+ *  asserts the STORE's read-back while the value was in place (the primary term), the STORE's read-back after
+ *  the restore (the second term), and the ABSENCE of the control's value from the final bytes (the third —
+ *  which is a reading of this channel's own replace semantics, NOT of the instrument's liveness). */
+const d2AdmissibleControlValueAbsentFromFinalBytes = d2FileAfterAdmissible.raw !== null && !d2FileAfterAdmissible.raw.includes(D2_ADMISSIBLE_VALUE)
+
+const scD09Verdict = (admissibleControl?.receipt?.status === 'committed' && admissibleControl?.landedInStoreReadback === true
+  && admissibleControl?.restoredInStoreReadback === true && d2AdmissibleControlValueAbsentFromFinalBytes) ? 'PASS'
+  : (admissibleControl === null || admissibleControl?.receipt === undefined ? 'MANUAL' : 'FAIL')
+check('SC-D-10 (Family D, D-2) — THE ADMISSIBLE-TIER WRITE-INSTRUMENT PROBE', 'CONTROL: the SAME kind of runtime write on an ADMISSIBLE tier (`file.settings.*`) through the app\'s own page-reachable store bridge IS admitted, really persists, and reads back — so a refusal in the Family-D tier-4 arms would be attributable to a tier-4 gate and not to a dead write instrument', scD09Verdict,
+  `NAMED TERMS: an admissible-tier write through the app's own live name-addressed store bridge (window.provident.store.put/get): name=${FILE_LOGICAL}, value=${JSON.stringify(D2_ADMISSIBLE_VALUE)}, receipt=${JSON.stringify(admissibleControl?.receipt)}, THE READ-BACK TAKEN WHILE THE VALUE WAS STILL IN PLACE=${JSON.stringify(admissibleControl?.readback)}, landedInStoreReadback=${admissibleControl?.landedInStoreReadback}; THE RESTORE's OWN READ-BACK=${JSON.stringify(admissibleControl?.readbackAfterRestore)}, restoredInStoreReadback=${admissibleControl?.restoredInStoreReadback} (restoreReceipt=${JSON.stringify(admissibleControl?.restoreReceipt)}); tier 1's PERSISTED BYTES: before=${JSON.stringify(d2FileBeforeAdmissible.raw)}, after the restore=${JSON.stringify(d2FileAfterAdmissible.raw)}, the control's own value present after the restore=${d2AdmissibleFileLanded} (FALSE is the reading — the restore ran AND this channel replaces the whole file), the seeded value present=${d2AdmissibleFileRestored} (FALSE is the MEASURED behaviour of this channel, disclosed here rather than asserted as a success: STORE-BRIDGE-EMPTY-PROJECTION-COMMITS); the tier-4 file's sha256 ${String(d2FileBeforeAdmissible.sha).slice(0, 16)}… → ${String(d2FileAfterAdmissible.sha).slice(0, 16)}… (an admissible tier-1 write must NOT touch tier 4); THE SAME INSTRUMENT AT THE TIER-4 CHANNEL, for contrast: window.provident.security.set({maxJournalLength:…}) answered ${JSON.stringify(d2ReceiptOpen)} in the OPEN state and ${JSON.stringify(d2ReceiptEnabled)} in the ENABLED state. The control RESTORES the seeded value afterwards so no later row reads a value this control wrote`,
+  '**THE CONTROL THAT MAKES THE FAMILY-D READINGS ATTRIBUTABLE.** If the write instrument were dead — a thrown evaluate, a refused bridge, a handler that no longer persists — then arm (i)\'s "admitted" reading would be a statement about the instrument rather than about the gate, and arm (ii)\'s expected admission would pass vacuously. This control drives the same page realm, the same CDP channel and the same live app, through the OTHER page-reachable write channel (`provident.store.put`, the tier-1 file-store bridge), on a tier where the name is ADMISSIBLE, and asserts the value MOVED in the read-back AND in the FILE\'s bytes. **MEASURED at this HEAD: the admissible write IS admitted and persists — which is exactly why a refusal in the tier-4 arms would have been a real gate reading, and why an admission in the FORBIDDEN state is a real violation.** **AND THE DECLARED LIMIT, STATED BECAUSE THE FIRST DRAFT OF THIS CONTROL GOT IT WRONG: the admissible-tier control drives the STORE BRIDGE, not the live graph store\'s `set()` — that surface updates the wired store\'s in-memory record without committing, so a control asserting it had "landed in the file" read FAIL against a CORRECT tier (the same instrument defect as SC-D-01\'s cap assertion, filed and fixed in this pass).**')
+
+
+// ── FAMILY D — THE FAMILY VERDICTS, DERIVED FROM THE ARMS ABOVE ────────────────────────
+/** THE FAMILY-D ROWS ARE BUCKETED THROUGH THE DRIVER'S DECLARED PER-ID KIND TABLE (never read off prose),
+ *  and the two verdicts below are DERIVED FROM THE ARMS rather than restated:
+ *    D-1 = COMPLIANT iff NO module round moved its second read, the deletion test reddens on EVERY mutation,
+ *          BOTH controls fire, and every D-1 row PASSES. **The reference half carries this verdict: the live
+ *          consequence arm is a term too, but it CANNOT be the only one — it would hold on a
+ *          reference-returning store (IPC serialization).**
+ *    D-2 = COMPLIANT iff every READABLE requirement arm PASSES, with the admissible-tier control PASSING and
+ *          no MANUAL arm among them; a MANUAL arm is a WITHHELD claim and cannot manufacture a COMPLIANT read. */
+const familyDRows = familyRows('D')
+const dRowsByKind = (kind) => familyDRows.filter((c) => rowKind(c) === kind)
+const dById = (re) => CHECKS.filter((c) => re.test(c.id))
+const d1ReferenceArms = dById(/^SC-D-02a/)
+const d1ControlArms = dById(/^SC-D-11/)
+const d1LiveArms = dById(/^SC-D-03/)
+const d1SetReturnArms = dById(/^SC-D-04/)
+const d2ArmsResolved = dById(/^SC-D-0[567]/)
+const d2RaceRow = dById(/^SC-D-08/)
+const d2ControlRow = dById(/^SC-D-10/)
+const d1TermsForCompliant = moduleProbeFired.length === 0
+  && moduleProbeMutationRows.length === D1_ROUND_COUNT
+  && moduleProbeControlFires && moduleProbeReplacedControlFires
+  && moduleDeletionAudit.length === D1_REFERENCE_MUTATION_COUNT
+  && moduleDeletionReddens.length === D1_REFERENCE_MUTATION_COUNT
+  && [...d1ReferenceArms, ...d1ControlArms, ...d1LiveArms, ...d1SetReturnArms].every((c) => c.verdict === 'PASS')
+const d1InstrumentBroken = !moduleProbeReadable || moduleProbeMutationRows.length !== D1_ROUND_COUNT
+  || moduleDeletionReddens.length !== D1_REFERENCE_MUTATION_COUNT
+const d1Verdict = (moduleProbeFired.length > 0) ? 'NON-COMPLIANT'
+  : (d1InstrumentBroken ? 'PARTIAL' : (d1TermsForCompliant ? 'COMPLIANT' : 'PARTIAL'))
+const d2ArmFails = d2ArmsResolved.filter((c) => c.verdict === 'FAIL')
+const d2ArmManuals = d2ArmsResolved.filter((c) => c.verdict === 'MANUAL')
+const d2ControlOk = d2ControlRow.length > 0 && d2ControlRow.every((c) => c.verdict === 'PASS')
+const d2Verdict = (d2ArmsResolved.length === 0) ? 'PARTIAL'
+  : (!d2ControlOk ? 'PARTIAL' : (d2ArmFails.length > 0 ? 'NON-COMPLIANT' : (d2ArmManuals.length > 0 ? 'PARTIAL' : 'COMPLIANT')))
+console.log('\n  FAMILY D — THE ARCHITECT\'S CLONE/WRITE RULING, DERIVED FROM THE ARMS (never restated):')
+console.log('    D-1 (every tier-4 READ returns a CLONE, never a reference) = ' + d1Verdict)
+console.log('      ARMS: reference half [B] ' + JSON.stringify(d1ReferenceArms.map((c) => c.id.split(' ')[0] + ':' + c.verdict))
+  + ' · controls ' + JSON.stringify(d1ControlArms.map((c) => c.id.split(' ')[0] + ':' + c.verdict))
+  + ' · consequence half [CDP] ' + JSON.stringify(d1LiveArms.map((c) => c.id.split(' ')[0] + ':' + c.verdict))
+  + ' · the set(patch) return ' + JSON.stringify(d1SetReturnArms.map((c) => c.id.split(' ')[0] + ':' + c.verdict)))
+console.log('      TERMS: rounds whose SECOND READ MOVED (a live reference was handed out) = ' + JSON.stringify(moduleProbeFired.map((r) => r.label))
+  + '; rounds measured = ' + moduleProbeMutationRows.length + ' of ' + D1_ROUND_COUNT + ' declared ROUNDS (the two reads whose returns are mutated; the five MUTATIONS are the deletion test below, a separate declared count)'
+  + '; deletion test = ' + moduleDeletionReddens.length + ' of ' + moduleDeletionAudit.length + ' mutations redden under the deletion of their own term'
+  + '; controls fire = ' + JSON.stringify({ sharedObject: moduleProbeControlFires, replacedFile: moduleProbeReplacedControlFires })
+  + '; d1TermsForCompliant = ' + d1TermsForCompliant + ', d1InstrumentBroken = ' + d1InstrumentBroken)
+console.log('      WHY THIS VERDICT: a fired round would read NON-COMPLIANT whether or not the live half held, because the live half CANNOT witness the reference half (IPC serialization) — the reference half carries the verdict and the live half carries the consequence. An INCOMPLETE deletion test reads PARTIAL: a mutation whose own term does not redden is an INSTRUMENT fault, and an instrument fault is never a PASS.')
+console.log('    D-2 (runtime tier-4 writes permitted IFF the MCP server is blocked) = ' + d2Verdict)
+console.log('      ARMS: ' + JSON.stringify(d2ArmsResolved.map((c) => c.id.split(' ')[0] + ':' + c.verdict))
+  + ' · the transition race (a WITHHELD claim) ' + JSON.stringify(d2RaceRow.map((c) => c.id.split(' ')[0] + ':' + c.verdict))
+  + ' · CONTROL admissible tier ' + JSON.stringify(d2ControlRow.map((c) => c.id.split(' ')[0] + ':' + c.verdict))
+  + '; armFails = ' + JSON.stringify(d2ArmFails.map((c) => c.id.split(' ')[0]))
+  + ', armManuals = ' + JSON.stringify(d2ArmManuals.map((c) => c.id.split(' ')[0]))
+  + ', controlOk = ' + d2ControlOk)
+console.log('      THE MEASURED GATE STATE, IN ONE LINE: MCP-ENABLED → the tier-4 write answered ' + JSON.stringify(d2ReceiptEnabled) + ' with bytesLanded=' + d2LandedEnabled
+  + '; MCP-DISABLED → ' + JSON.stringify(d2ReceiptOpen) + ' with bytesLanded=' + d2LandedOpen
+  + '; RETURNED to MCP-ENABLED → ' + JSON.stringify(d2ReceiptReturn) + ' with bytesLanded=' + d2LandedReturn)
+console.log('      WHY THIS VERDICT: a write is ADMITTED in the FORBIDDEN state (i) and AGAIN after the return (iii), while the ONLY legal state (ii) admits it too — so the CONDITIONALITY the clause requires is ABSENT, and the arms that measure the violation are ' + JSON.stringify(d2ArmFails.map((c) => c.id.split(' ')[0])) + '. The row set is bucketed by the DECLARED table: ' + JSON.stringify(dRowsByKind('ARM').map((c) => c.id.split(' ')[0] + ':' + c.verdict)))
+console.log('    INSTRUMENT BOUNDARIES DECLARED AT THIS FAMILY (printed so a PASS cannot be over-read): ' + JSON.stringify(INSTRUMENT_TABLE.map((t) => ({ tag: t.tag, canObserve: t.canObserve, cannotObserve: t.cannotObserve }))))
+console.log('    THE RULING\'S OWN SCOPE SETTLEMENT: docs/pending.md §R P-R3\'s open question (boot-ingestion reads ALONE vs runtime name-addressed writes) is SETTLED BY THE RULING as "writes at runtime are PERMITTED iff the MCP is blocked" — the ruling admits runtime writes CONDITIONALLY, and this family MEASURES the condition: the landed IPC_SECURITY_SET path performs no exclusion check, so the permitted condition is never evaluated.')
+
+// ══════════════════════════════════════════════════════════════════════════════════════
 // PHASE 3 — BOOT B: the seeded third-party arbitrary key, BEFORE the boot
 // ══════════════════════════════════════════════════════════════════════════════════════
 await teardown(bootA)
@@ -1631,22 +2300,11 @@ if (TALLY.FAIL === undefined) console.log('  no row contradicted the clause it c
  *  **A ROW ABSENT FROM THIS TABLE IS PRINTED AS `UNDECLARED` AND IS CHARGED TO NO FAMILY BUCKET**
  *  — so a NEW row is classified deliberately rather than inherited into the arms that carry a
  *  family verdict, and a STALE entry (an id no longer in `CHECKS`) is printed too. */
-const ROW_KINDS = {
-  'SC-PRE-01': 'INSTRUMENT', 'SC-PRE-02': 'INSTRUMENT',
-  'SC-CH-01': 'CHANNEL', 'SC-CH-02': 'CHANNEL',
-  'SC-A-01': 'ARM', 'SC-A-02': 'ARM', 'SC-A-03': 'CONTROL', 'SC-A-04': 'ARM',
-  'SC-A-05': 'ARM', 'SC-A-06': 'CHANNEL-CENSUS',
-  'SC-B-01': 'ARM', 'SC-B-02': 'CONTROL', 'SC-B-03': 'ARM', 'SC-B-04': 'ARM', 'SC-B-05': 'ARM',
-  'SC-B-06': 'CONTROL', 'SC-B-07': 'ARM', 'SC-B-08': 'CONTROL', 'SC-B-09': 'ARM',
-  'SC-C-01': 'ARM', 'SC-C-02': 'ARM', 'SC-C-03': 'ARM', 'SC-C-04': 'CONTROL', 'SC-C-05': 'ARM',
-  'SC-G-01': 'STATIC-CENSUS', 'SC-G-02': 'STATIC-CENSUS', 'SC-CLEAN-01': 'INSTRUMENT-CLEANUP',
-}
-const rowKind = (c) => ROW_KINDS[c.id.split(' ')[0]] ?? 'UNDECLARED'
 const isCensusKind = (c) => ['CHANNEL-CENSUS', 'STATIC-CENSUS', 'RE-MEASUREMENT'].includes(rowKind(c))
 const rowKindUndeclared = CHECKS.filter((c) => rowKind(c) === 'UNDECLARED')
 const rowKindDeclaredButAbsent = Object.keys(ROW_KINDS).filter((id) => !CHECKS.some((c) => c.id.split(' ')[0] === id))
 console.log('\n  FAMILY TALLIES (the family each row belongs to is in its id):')
-for (const fam of ['A', 'B', 'C']) {
+for (const fam of ['A', 'B', 'C', 'D']) {
   const rows = CHECKS.filter((c) => new RegExp(`SC-${fam}-`).test(c.id))
   if (rows.length === 0) continue
   const t = {}
@@ -1682,8 +2340,6 @@ for (const fam of ['A', 'B', 'C']) {
  *  per family rather than being silently absorbed into a FAIL count. (Note the two directions
  *  honestly: a `MANUAL` arm cannot manufacture a `COMPLIANT` verdict, and it is not counted as a
  *  FAIL either — the family verdict is a claim about the arms that COULD be read.) */
-const familyRows = (fam) => CHECKS.filter((c) => new RegExp(`^SC-${fam}-`).test(c.id))
-const verdictSplit = (set) => ['PASS', 'FAIL', 'MANUAL', 'PARKED'].map((v) => `${set.filter((c) => c.verdict === v).length} ${v}`).join(' / ')
 const familyARows = familyRows('A')
 const familyAChannelCensus = familyARows.filter((c) => rowKind(c) === 'CHANNEL-CENSUS')
 const familyAControls = familyARows.filter((c) => rowKind(c) === 'CONTROL')
