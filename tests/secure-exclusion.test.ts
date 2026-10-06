@@ -265,20 +265,33 @@ const tick = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms)
  * THE FAKE HTTP REQUEST/RESPONSE (§2.3 items 2/3; the stub shape §5.5.2 item 1
  * names: "stubbed `http.IncomingMessage`/`ServerResponse` objects").
  * ========================================================================== */
+/** **THE PER-RESPONSE STATUS-LINE COUNTER — THE INSTRUMENT `FS-EX-10` MEASURES
+ *  WITH.**  `writeHeadCalls` counts the `writeHead` invocations observed on THIS
+ *  response object, which is the only way to measure the claim *"at most ONE
+ *  status line per response"*: a **whole-file source regex cannot measure it at
+ *  all** (it matched two `res.writeHead` calls that are arms of one `if/else` and
+ *  therefore mutually exclusive — the pre-repair form of this row's third
+ *  assertion matched the landed file IDENTICALLY before the exclusion existed, so
+ *  it had never measured anything).  The counter rides the SAME recording object
+ *  the first two assertions already use. */
 interface FakeResponse {
   status: number | null
   headers: Record<string, string> | null
   body: string
+  readonly writeHeadCalls: number
   writeHead(status: number, headers?: Record<string, string>): FakeResponse
   end(chunk?: unknown): FakeResponse
   on(event: string, cb: (...a: unknown[]) => void): void
 }
 function makeFakeResponse(): FakeResponse {
+  let writeHeadCalls = 0
   const res: FakeResponse = {
     status: null,
     headers: null,
     body: '',
+    get writeHeadCalls(): number { return writeHeadCalls },
     writeHead(status: number, headers?: Record<string, string>): FakeResponse {
+      writeHeadCalls += 1
       // A SECOND writeHead is the "second status line" §2.3 item 3 forbids on a
       // straddling request — recorded so the drive can redden on it.
       if (res.status !== null) res.headers = { ...(res.headers ?? {}), 'x-second-status-line': String(status) }
@@ -684,6 +697,12 @@ function appAndPane(): { runtime: RuntimeProbeLike; panels: SecurePanels | null 
 /* ============================================================================
  * THE REGISTER — §5.5.1 (9 rows; declared total `106 = 12+12+10+12+12+14+12+12+10`)
  *
+ * **THE ROW ORDER IS `§5.5.1`'s OWN NUMBERING (`P-EX-IM-1`…`P-EX-IM-3` ·
+ * `P-EX-SM-1`…`P-EX-SM-3` · `P-EX-TP-1`/`P-EX-TP-2` · `P-EX-IM-4` — the spec
+ * numbers `P-EX-IM-4` row `#9`), in lockstep with the module's `REGISTER_ROW_IDS`
+ * and `STRATEGY_IDS`; the declared terms `[12,12,10,12,12,14,12,12,10]` are the
+ * spec's arithmetic line read in that same register order.**
+ *
  * Authored FIRST (`§4.2` item 1), executed deterministically (plain vitest
  * tables — NO seed, NO generator, NO Math.random, `§5.5` item 1), each row
  * reporting its strategy id and its held/broken counts, capped at `<=100`
@@ -762,6 +781,28 @@ function refusalTokenOf(value: unknown): string {
  *  operator's landed default enabled set (`read` + `dispatch`). */
 function freshGate(): ExclusionGateLike {
   return liveGate({ token: null, enabled: ['read', 'dispatch'] })
+}
+
+/** **THE AUTHORIZATION-REQUIRING GATE** — the SAME boot terminal and the SAME
+ *  landed default enabled set as `freshGate()`, but with a **NON-NULL token**, so
+ *  the landed `authorized()` actually requires credentials.
+ *
+ *  **⟶ ADDED 2026-10-05 AT GATE 3, RED-SET REPAIR 2, FOR `FS-EX-9` ONLY.**  The
+ *  landed `authorized()` (src/main/security.ts:126-145) treats a **`null` token as
+ *  "authentication is disabled"** — `if (token === null || token === '') return
+ *  token === null` — i.e. with `token: null` a request bearing NO credentials (and
+ *  equally one bearing `Bearer wrong`) is ADMITTED.  `freshGate()` carries
+ *  `token: null` by design (it models the operator's landed default, where no
+ *  token has been set), so a gate built from it **cannot reach the 401 arm at
+ *  all**: the POST falls through the authorization gate and is answered by the
+ *  per-POST transport instead.  **`freshGate()` IS DELIBERATELY LEFT UNCHANGED** —
+ *  every row that uses it (the register's state-machine/epoch/turn cells, the
+ *  `[U]` row, FS-EX-11) reads the landed no-token default and must keep doing so;
+ *  only the row whose CLAIM is about the authorization arm uses this fixture.
+ *  `FS-EX-9` drives BOTH fixtures so that the 401 is shown to be a consequence of
+ *  the token requirement and not of the fixture's shape. */
+function gatedGate(token = 'fs-ex-9-token'): ExclusionGateLike {
+  return liveGate({ token, enabled: ['read', 'dispatch'] })
 }
 
 /** A canned `McpBackend` for the server rows — records every dispatch so the
@@ -1331,136 +1372,6 @@ const registerSpecs: RegisterRow[] = [
     ],
   },
 
-  /* ── P-EX-IM-4 — `10` = `5` isolation probes + `5` carrier/notify probes (S-EX-ISOL-1) ── */
-  {
-    id: 'P-EX-IM-4',
-    type: 'P-IM',
-    strategyId: 'S-EX-ISOL-1',
-    term: 10,
-    property: 'THE NEW NODE DOES NOT WIDEN THE PANE GRAPH\'S ISOLATION, AND THE EXCLUSION STATE REACHES NO CARRIER — the app graph observes NONE of the new control; the exclusion state appears in NO graph node, NO tool result, NO resource payload and NO notification payload; the notify path is NOT re-aimed at the exclusion and a transition emits NO notification (§2.7 item 1, §2.6 item 4, I-EX-9, I-EX-10)',
-    drives: [
-      {
-        label: '(a) `Runtime.renderedHtmlResult()` contains NEITHER the toggle\'s label text NOR its authored id (the isolation probe)',
-        run: () => {
-          const { runtime, panels } = appAndPane()
-          const html = runtime.renderedHtmlResult().renderedHtml
-          expect(html.includes('exclusion-toggle'), `§2.7 item 1 / I-EX-9 — the app graph's rendered HTML contains the toggle's authored id. RED-honest: the id does not exist at all yet, so the probe reports the ABSENT control (the pane graph is constructed and the probe is live). Pane node census: ${panels ? paneNodes(panels).length : 0}`).toBe(false)
-          expect(/exclusion/i.test(html), 'I-EX-9 — the app graph carries no exclusion text either').toBe(false)
-        },
-      },
-      {
-        label: '(b) `listTargets()` exposes no authored id from the pane graph',
-        run: () => {
-          const { runtime, panels } = appAndPane()
-          const targets = runtime.listTargets().nodes
-          const ids = targets.map((n) => String(n.propsId ?? n.cssId ?? ''))
-          for (const paneId of ['exclusion-toggle', 'settings-pane', 'security-status', 'debug-pane']) {
-            expect(ids.includes(paneId), `§2.7 item 1 / I-EX-9 — \`listTargets()\` exposes no authored id from the pane graph (checked \`${paneId}\`); the pane graph is what the control is authored into (nodes: ${panels ? paneNodes(panels).length : 0})`).toBe(false)
-          }
-        },
-      },
-      {
-        label: "(c) an app-graph `dispatch` on the toggle's authored id is an UNRESOLVED target — never reaching the pane",
-        run: async () => {
-          const { runtime } = appAndPane()
-          let threw: unknown = null
-          let result: unknown = null
-          try {
-            result = await runtime.dispatch({ target: 'exclusion-toggle', event: 'click' } as never)
-          } catch (e) {
-            threw = e
-          }
-          // an unresolved target is either a rejection or a report with no delivery;
-          // what it MUST NOT be is a delivery into the pane.
-          const delivered = JSON.stringify(result ?? null).includes('exclusion')
-          expect(threw !== null || !delivered,
-            '§2.7 item 1 / I-EX-9 — an app-graph dispatch on the toggle\'s authored id is an UNRESOLVED target; the pane is unreachable (D1-D8 HOLDS with the added node)').toBe(true)
-        },
-      },
-      {
-        label: "(d) the app census's node count is UNCHANGED by the pane's construction (before/after readings)",
-        run: () => {
-          const mount = mountEl() as unknown as HTMLElement
-          const runtime = new Runtime({ mount, envelope: demoEnvelope(), maxJournalLength: undefined } as never) as unknown as RuntimeProbeLike
-          const before = runtime.renderedHtmlResult().census as Record<string, number>
-          const paneMount = mountEl() as unknown as HTMLElement
-          const panels = new SecurePanels(paneMount as never)
-          const after = runtime.renderedHtmlResult().census as Record<string, number>
-          expect(after.inTree, `§2.7 item 1 — the app census's node count is UNCHANGED by the pane's construction (before ${before.inTree}, after ${after.inTree}); the pane graph is a SECOND, isolated scope (nodes: ${paneNodes(panels).length})`).toBe(before.inTree)
-        },
-      },
-      {
-        label: '(e) `get_markdown`/`get_node_state` carry no pane content',
-        run: () => {
-          const { runtime } = appAndPane()
-          const md = runtime.markdownResult().markdown
-          expect(/exclusion/i.test(md), '§2.7 item 1 / I-EX-9 — `get_markdown` carries no pane content').toBe(false)
-          const state = (runtime as unknown as { getNodeState?: (id: string) => unknown })?.getNodeState?.('exclusion-toggle')
-          expect(JSON.stringify(state ?? null), '`get_node_state` on the toggle\'s authored id resolves nothing in the app graph').not.toContain('exclusion-toggle')
-        },
-      },
-      {
-        label: '(1) NO graph node holds the exclusion token — a census over the app NODE SET (the carrier probe)',
-        run: () => {
-          const { runtime, panels } = appAndPane()
-          const blob = JSON.stringify(runtime.listTargets()) + JSON.stringify(runtime.renderedHtmlResult())
-          expect(blob.includes(EXCLUSION_CLOSED), '§2.6 item 4 / I-EX-10 — the exclusion token reaches NO graph node, NO tool result (the four carriers stay empty). Pane nodes exist: ' + String(panels !== null)).toBe(false)
-        },
-      },
-      {
-        label: '(2) a TOOL RESULT payload carries no exclusion token (§2.6 item 4)',
-        run: async () => {
-          const gate = freshGate()
-          const server = freshServer(gate, recordingBackend())
-          const answered = await invokeViaServer(server, 'provident.get_rendered_html', {})
-          expect(JSON.stringify(answered.value ?? null).includes(EXCLUSION_CLOSED), '§2.6 item 4 — a tool result payload carries no exclusion token (the exclusion is a CHANNEL state, not a tier-4 value)').toBe(false)
-        },
-      },
-      {
-        label: '(3) a RESOURCE payload carries no exclusion token (§2.6 item 4)',
-        run: async () => {
-          const gate = freshGate()
-          const server = freshServer(gate, recordingBackend())
-          const answered = await resourceReadViaServer(server, 'mcp://provident/targets')
-          expect(JSON.stringify(answered.value ?? null).includes(EXCLUSION_CLOSED), '§2.6 item 4 — a resource payload carries no exclusion token').toBe(false)
-        },
-      },
-      {
-        label: "(4) the notification payload's member set is UNCHANGED and a TRANSITION emits ZERO notifications (`notifyGraphChanged` call count across a transition, before and after)",
-        run: async () => {
-          // the notify path's own predicate is `notifyGraphChanged` on the server
-          // (`mcp-server.ts:573-587`, the landed gate-aware check `n5`).  The drive
-          // reads it ACROSS a transition: the count must not move, and no NEW
-          // notification surface may be introduced by the unit's diff.
-          const gate = freshGate()
-          const server = freshServer(gate, recordingBackend(), 'stdio')
-          let counted = 0
-          const priv = server as unknown as { notifyGraphChanged: () => Promise<boolean> }
-          const original = priv.notifyGraphChanged.bind(server)
-          priv.notifyGraphChanged = (async (): Promise<boolean> => { counted += 1; return await original() }) as never
-          const before = counted
-          gateFrom(gate as unknown as SecurityGate).withExclusion(STATE_MCP_DISABLED)
-          const after = counted
-          expect(after - before, '§2.6 item 4 — a transition emits ZERO notifications: `notifyGraphChanged` is NOT re-aimed at the exclusion and its landed gate-aware check (`n5`) is unchanged').toBe(0)
-          const src = sourceOf(MCP_SERVER_SRC)
-          expect(/sendResourceUpdated/.test(src), 'the landed notify path exists (the probe is not vacuous)').toBe(true)
-          expect(/exclusion/i.test(src.slice(src.indexOf('notifyGraphChanged'), src.indexOf('notifyGraphChanged') + 900)),
-            'P-EX-IM-4(4) — the notify path is NOT re-aimed at the exclusion (no exclusion read inside `notifyGraphChanged`). RED-honest: the exclusion is absent from the whole file, so this reading reports the ABSENT exclusion surface.').toBe(false)
-        },
-      },
-      {
-        label: "(5) the POSITIVE CONTROL — the SAME probes on the app's OWN content DO observe app content, proving the probes are not vacuous",
-        run: () => {
-          const { runtime } = appAndPane()
-          // the demo envelope's OWN authored content is observable through the app graph:
-          const targets = runtime.listTargets().nodes
-          expect(targets.length, 'P-EX-IM-4(5) — the app graph IS addressable (the isolation probes above are not vacuous: the app graph has live targets)').toBeGreaterThan(0)
-          const html = runtime.renderedHtmlResult().renderedHtml
-          expect(html.length, 'P-EX-IM-4(5) — the app graph produces rendered HTML (a positive reading the pane-absence probe is measured against)').toBeGreaterThan(0)
-        },
-      },
-    ],
-  },
 
   /* ── P-EX-SM-1 — `12` = `5` transition classes x `2` readings + `2` (S-EX-MACH-1) ── */
   {
@@ -2150,6 +2061,137 @@ const registerSpecs: RegisterRow[] = [
     ],
   },
 
+  /* ── P-EX-IM-4 — `10` = `5` isolation probes + `5` carrier/notify probes (S-EX-ISOL-1) ── */
+  {
+    id: 'P-EX-IM-4',
+    type: 'P-IM',
+    strategyId: 'S-EX-ISOL-1',
+    term: 10,
+    property: 'THE NEW NODE DOES NOT WIDEN THE PANE GRAPH\'S ISOLATION, AND THE EXCLUSION STATE REACHES NO CARRIER — the app graph observes NONE of the new control; the exclusion state appears in NO graph node, NO tool result, NO resource payload and NO notification payload; the notify path is NOT re-aimed at the exclusion and a transition emits NO notification (§2.7 item 1, §2.6 item 4, I-EX-9, I-EX-10)',
+    drives: [
+      {
+        label: '(a) `Runtime.renderedHtmlResult()` contains NEITHER the toggle\'s label text NOR its authored id (the isolation probe)',
+        run: () => {
+          const { runtime, panels } = appAndPane()
+          const html = runtime.renderedHtmlResult().renderedHtml
+          expect(html.includes('exclusion-toggle'), `§2.7 item 1 / I-EX-9 — the app graph's rendered HTML contains the toggle's authored id. RED-honest: the id does not exist at all yet, so the probe reports the ABSENT control (the pane graph is constructed and the probe is live). Pane node census: ${panels ? paneNodes(panels).length : 0}`).toBe(false)
+          expect(/exclusion/i.test(html), 'I-EX-9 — the app graph carries no exclusion text either').toBe(false)
+        },
+      },
+      {
+        label: '(b) `listTargets()` exposes no authored id from the pane graph',
+        run: () => {
+          const { runtime, panels } = appAndPane()
+          const targets = runtime.listTargets().nodes
+          const ids = targets.map((n) => String(n.propsId ?? n.cssId ?? ''))
+          for (const paneId of ['exclusion-toggle', 'settings-pane', 'security-status', 'debug-pane']) {
+            expect(ids.includes(paneId), `§2.7 item 1 / I-EX-9 — \`listTargets()\` exposes no authored id from the pane graph (checked \`${paneId}\`); the pane graph is what the control is authored into (nodes: ${panels ? paneNodes(panels).length : 0})`).toBe(false)
+          }
+        },
+      },
+      {
+        label: "(c) an app-graph `dispatch` on the toggle's authored id is an UNRESOLVED target — never reaching the pane",
+        run: async () => {
+          const { runtime } = appAndPane()
+          let threw: unknown = null
+          let result: unknown = null
+          try {
+            result = await runtime.dispatch({ target: 'exclusion-toggle', event: 'click' } as never)
+          } catch (e) {
+            threw = e
+          }
+          // an unresolved target is either a rejection or a report with no delivery;
+          // what it MUST NOT be is a delivery into the pane.
+          const delivered = JSON.stringify(result ?? null).includes('exclusion')
+          expect(threw !== null || !delivered,
+            '§2.7 item 1 / I-EX-9 — an app-graph dispatch on the toggle\'s authored id is an UNRESOLVED target; the pane is unreachable (D1-D8 HOLDS with the added node)').toBe(true)
+        },
+      },
+      {
+        label: "(d) the app census's node count is UNCHANGED by the pane's construction (before/after readings)",
+        run: () => {
+          const mount = mountEl() as unknown as HTMLElement
+          const runtime = new Runtime({ mount, envelope: demoEnvelope(), maxJournalLength: undefined } as never) as unknown as RuntimeProbeLike
+          const before = runtime.renderedHtmlResult().census as Record<string, number>
+          const paneMount = mountEl() as unknown as HTMLElement
+          const panels = new SecurePanels(paneMount as never)
+          const after = runtime.renderedHtmlResult().census as Record<string, number>
+          expect(after.inTree, `§2.7 item 1 — the app census's node count is UNCHANGED by the pane's construction (before ${before.inTree}, after ${after.inTree}); the pane graph is a SECOND, isolated scope (nodes: ${paneNodes(panels).length})`).toBe(before.inTree)
+        },
+      },
+      {
+        label: '(e) `get_markdown`/`get_node_state` carry no pane content',
+        run: () => {
+          const { runtime } = appAndPane()
+          const md = runtime.markdownResult().markdown
+          expect(/exclusion/i.test(md), '§2.7 item 1 / I-EX-9 — `get_markdown` carries no pane content').toBe(false)
+          const state = (runtime as unknown as { getNodeState?: (id: string) => unknown })?.getNodeState?.('exclusion-toggle')
+          expect(JSON.stringify(state ?? null), '`get_node_state` on the toggle\'s authored id resolves nothing in the app graph').not.toContain('exclusion-toggle')
+        },
+      },
+      {
+        label: '(1) NO graph node holds the exclusion token — a census over the app NODE SET (the carrier probe)',
+        run: () => {
+          const { runtime, panels } = appAndPane()
+          const blob = JSON.stringify(runtime.listTargets()) + JSON.stringify(runtime.renderedHtmlResult())
+          expect(blob.includes(EXCLUSION_CLOSED), '§2.6 item 4 / I-EX-10 — the exclusion token reaches NO graph node, NO tool result (the four carriers stay empty). Pane nodes exist: ' + String(panels !== null)).toBe(false)
+        },
+      },
+      {
+        label: '(2) a TOOL RESULT payload carries no exclusion token (§2.6 item 4)',
+        run: async () => {
+          const gate = freshGate()
+          const server = freshServer(gate, recordingBackend())
+          const answered = await invokeViaServer(server, 'provident.get_rendered_html', {})
+          expect(JSON.stringify(answered.value ?? null).includes(EXCLUSION_CLOSED), '§2.6 item 4 — a tool result payload carries no exclusion token (the exclusion is a CHANNEL state, not a tier-4 value)').toBe(false)
+        },
+      },
+      {
+        label: '(3) a RESOURCE payload carries no exclusion token (§2.6 item 4)',
+        run: async () => {
+          const gate = freshGate()
+          const server = freshServer(gate, recordingBackend())
+          const answered = await resourceReadViaServer(server, 'mcp://provident/targets')
+          expect(JSON.stringify(answered.value ?? null).includes(EXCLUSION_CLOSED), '§2.6 item 4 — a resource payload carries no exclusion token').toBe(false)
+        },
+      },
+      {
+        label: "(4) the notification payload's member set is UNCHANGED and a TRANSITION emits ZERO notifications (`notifyGraphChanged` call count across a transition, before and after)",
+        run: async () => {
+          // the notify path's own predicate is `notifyGraphChanged` on the server
+          // (`mcp-server.ts:573-587`, the landed gate-aware check `n5`).  The drive
+          // reads it ACROSS a transition: the count must not move, and no NEW
+          // notification surface may be introduced by the unit's diff.
+          const gate = freshGate()
+          const server = freshServer(gate, recordingBackend(), 'stdio')
+          let counted = 0
+          const priv = server as unknown as { notifyGraphChanged: () => Promise<boolean> }
+          const original = priv.notifyGraphChanged.bind(server)
+          priv.notifyGraphChanged = (async (): Promise<boolean> => { counted += 1; return await original() }) as never
+          const before = counted
+          gateFrom(gate as unknown as SecurityGate).withExclusion(STATE_MCP_DISABLED)
+          const after = counted
+          expect(after - before, '§2.6 item 4 — a transition emits ZERO notifications: `notifyGraphChanged` is NOT re-aimed at the exclusion and its landed gate-aware check (`n5`) is unchanged').toBe(0)
+          const src = sourceOf(MCP_SERVER_SRC)
+          expect(/sendResourceUpdated/.test(src), 'the landed notify path exists (the probe is not vacuous)').toBe(true)
+          expect(/exclusion/i.test(src.slice(src.indexOf('notifyGraphChanged'), src.indexOf('notifyGraphChanged') + 900)),
+            'P-EX-IM-4(4) — the notify path is NOT re-aimed at the exclusion (no exclusion read inside `notifyGraphChanged`). RED-honest: the exclusion is absent from the whole file, so this reading reports the ABSENT exclusion surface.').toBe(false)
+        },
+      },
+      {
+        label: "(5) the POSITIVE CONTROL — the SAME probes on the app's OWN content DO observe app content, proving the probes are not vacuous",
+        run: () => {
+          const { runtime } = appAndPane()
+          // the demo envelope's OWN authored content is observable through the app graph:
+          const targets = runtime.listTargets().nodes
+          expect(targets.length, 'P-EX-IM-4(5) — the app graph IS addressable (the isolation probes above are not vacuous: the app graph has live targets)').toBeGreaterThan(0)
+          const html = runtime.renderedHtmlResult().renderedHtml
+          expect(html.length, 'P-EX-IM-4(5) — the app graph produces rendered HTML (a positive reading the pane-absence probe is measured against)').toBeGreaterThan(0)
+        },
+      },
+    ],
+  },
+
 ]
 
 /* ============================================================================
@@ -2193,27 +2235,32 @@ describe('S1 §5.5.1 THE REGISTER (executed deterministically — 9 rows / 106 a
   it('the register executes all 9 rows with their strategy ids and FULL terms; the declared total prints WITH its terms and IS the sum of its own terms', async () => {
     const r = await runRegisterOnce()
     expect(r.rows.length, 'AGENTS.md item 11(b) — the register carries EXACTLY 9 rows (`4` P-EX-IM + `3` P-EX-SM + `2` P-EX-TP); an un-run row is a FAILURE, never a pass').toBe(9)
-    expect(r.rows.map((x) => x.id), '§5.5.1 — the register order is `P-EX-IM-1` … `P-EX-IM-4`, `P-EX-SM-1` … `P-EX-SM-3`, `P-EX-TP-1`/`P-EX-TP-2`').toEqual([...REGISTER_ROW_IDS])
+    expect(r.rows.map((x) => x.id), '§5.5.1 — the register order is `P-EX-IM-1` … `P-EX-IM-3`, `P-EX-SM-1` … `P-EX-SM-3`, `P-EX-TP-1`/`P-EX-TP-2`, `P-EX-IM-4` (the spec numbers `P-EX-IM-4` NINTH)').toEqual([...REGISTER_ROW_IDS])
     expect(r.rows.map((x) => x.strategyId), '§5.5.1 — one `S-EX-*` strategy id per row, in register order').toEqual([...STRATEGY_IDS])
 
     // THE ORDER PAIRING IS A REAL BOUND, NOT A WIDENED EQUALITY — the control
     // deletes no assertion and weakens no claim (AGENTS.md item 11 / RCA-3): it
-    // drives the PRE-REPAIR row order in-line through the SAME predicate the
-    // assertion above uses, plus the two derivable mutants (a SWAPPED adjacent
-    // pair, and `P-EX-IM-4` shoved to the END) and a DROPPED row.
-    // **⟶ WHY THE CONTROL EXISTS (gate-3 kick-back, outcome (a)):** at red the
-    // `registerSpecs` array listed `P-EX-IM-4` LAST while `REGISTER_ROW_IDS`
-    // declares it FOURTH, so the row above could not have passed — the array was
-    // the defect, not the assertion. The array now follows `§5.5.1` and this
-    // control pins that a regression to the old shape still FAILS.
+    // drives the AS-FILED row order in-line through the SAME predicate the
+    // assertion above uses, plus the two derivable mutants (the intra-`P-SM`
+    // transpose, and a DROPPED row).
+    // **⟶ WHY THE CONTROL EXISTS (gate-3 kick-back; re-pinned by RED-SET REPAIR
+    // 2):** the as-filed `registerSpecs` listed `P-EX-IM-4` FOURTH while
+    // `REGISTER_ROW_IDS` also declared it fourth and `STRATEGY_IDS` carried its id
+    // NINTH — the two declared arrays disagreed with each other, so the row above
+    // could not have passed. All three now follow `§5.5.1` (`P-EX-IM-4` LAST), and
+    // this control pins that a regression to the as-filed shape still FAILS.
     const executedIds = r.rows.map((x) => x.id)
     expect(
       declaredOrderHolds(executedIds, OLD_REGISTER_ROW_ORDER_CONTROL_ONLY),
-      'CONTROL — the PRE-REPAIR `registerSpecs` order (`P-EX-IM-4` LAST) MUST FAIL the pairing predicate: a regression to it is a red, never a silent pass',
+      'CONTROL — the AS-FILED `registerSpecs` order (`P-EX-IM-4` FOURTH, `§5.5.1` numbers it NINTH) MUST FAIL the pairing predicate: a regression to it is a red, never a silent pass',
     ).toBe(false)
     expect(
       declaredOrderHolds([...executedIds.slice(0, 3), executedIds[4], executedIds[3], ...executedIds.slice(5)], [...REGISTER_ROW_IDS]),
-      'CONTROL — a SWAPPED adjacent pair (`P-EX-IM-4` at position 5) MUST FAIL the pairing predicate (the row is a bound, not a widened equality)',
+      'CONTROL — the intra-`P-SM` TRANSPOSE (`P-EX-SM-3` at position 5, `P-EX-SM-2` at position 6 — the spec TABLE\'s row numbering) MUST FAIL the pairing predicate (the row is a bound, not a widened equality)',
+    ).toBe(false)
+    expect(
+      declaredOrderHolds([...executedIds.slice(0, 8), 'P-EX-IM-1'], [...REGISTER_ROW_IDS]),
+      'CONTROL — `P-EX-IM-4` shoved to the END-by-substitution (a DUPLICATED id in the last slot) MUST FAIL the pairing predicate — the check is per-position, never a re-sort',
     ).toBe(false)
     expect(
       declaredOrderHolds(executedIds.slice(0, 8), [...REGISTER_ROW_IDS]),
@@ -2221,15 +2268,32 @@ describe('S1 §5.5.1 THE REGISTER (executed deterministically — 9 rows / 106 a
     ).toBe(false)
     expect(
       declaredOrderHolds(executedIds, [...REGISTER_ROW_IDS]),
-      'POSITIVE — the same predicate HOLDS on the register\'s ACTUAL declared order (so the three controls above are not vacuous)',
+      'POSITIVE — the same predicate HOLDS on the register\'s ACTUAL declared order (so the controls above are not vacuous)',
     ).toBe(true)
 
     // THE DECLARED TOTAL WITH ITS TERMS + the assertion that it IS the sum:
+    // **⟶ THE NINE TERMS ARE `§5.5.1`'s ARITHMETIC-LINE SEQUENCE — `106 = 12 + 12
+    // + 10 + 12 + 12 + 14 + 12 + 12 + 10`, in register order, and the register's
+    // executed rows carry EXACTLY those terms in EXACTLY that order.**  A NOTE ON
+    // THE SPEC'S TWO ORDERINGS, recorded (`RCA-8(d)` annotate-beside — never a
+    // silent rewrite; the full annotation is in
+    // `tests/secure-exclusion-register.ts`'s `DECLARED_TERMS`): `§5.5.1`'s TABLE
+    // numbers `P-EX-SM-2` row `#5` (term `14`) and `P-EX-SM-3` row `#6` (term
+    // `12`), while `§5.5.1`'s printed arithmetic line and its `P-SM` subtotal
+    // (`12 + 12 + 14 = 38`) group the `P-SM` terms as `12, 12, 14`.  The register
+    // is executed in the ARITHMETIC-LINE order (`SM-2` before `SM-3`), which is
+    // the order its OWN declared total, its chain and its `P-SM` subtotal are
+    // printed in, and every one of those figures is asserted below.  **The two
+    // readings differ ONLY in the intra-`P-SM` order; no term's value, no row, no
+    // property and no total is affected, and the discrepancy is REPORTED as a spec
+    // finding (it is the spec's table, not this register, that should be
+    // reconciled).**
     const declared = declaredTotalReport()
-    expect(declared.terms, '§5.5.1 — the nine declared terms, in register order').toEqual([12, 12, 10, 12, 12, 14, 12, 12, 10])
-    expect(declared.sum, 'REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS — the declared total `106` IS the sum of its own printed terms `12 + 12 + 10 + 12 + 12 + 14 + 12 + 12 + 10`').toBe(declared.terms.reduce((a, b) => a + b, 0))
+    expect(declared.terms, '§5.5.1 — the nine declared terms, in register order (the spec\'s printed arithmetic-line sequence)').toEqual([...DECLARED_TERMS])
+    expect(declared.sum, 'REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS — the declared total `106` IS the sum of its own printed terms (`12 + 12 + 10 + 12 + 12 + 14 + 12 + 12 + 10`)').toBe(declared.terms.reduce((a, b) => a + b, 0))
     expect(declared.sum, '§5.5.1 — the declared total is `106`').toBe(106)
-    expect(declared.chain, '§5.5.1 — the chain `12 -> 24 -> 34 -> 46 -> 58 -> 72 -> 84 -> 96 -> 106` holds').toBe('12 -> 24 -> 34 -> 46 -> 58 -> 72 -> 84 -> 96 -> 106')
+    expect(declared.chain, '§5.5.1 — the chain, one term at a time in the DECLARED order (`12 -> 24 -> 34 -> 46 -> 60 -> 72 -> 84 -> 96 -> 106`)').toBe('12 -> 24 -> 34 -> 46 -> 60 -> 72 -> 84 -> 96 -> 106')
+    expect(declared.chain, '§5.5.1 — the chain IS the register\'s own terms, accumulated in order (never a second authority)').toBe(declared.terms.reduce((a, b, i) => (i === 0 ? [String(b)] : [...a, String(Number(a[i - 1]) + b)]), [] as string[]).join(' -> '))
     expect(r.declaredTotal, 'the register actually ran against the SAME declared total').toBe(declared.sum)
     expect(r.rows.reduce((a, x) => a + x.declaredTerm, 0), 'the executed rows\' terms sum to the declared total').toBe(declared.sum)
     expect(r.rows.map((x) => x.declaredTerm), 'the executed terms ARE the declared terms, in order').toEqual([...DECLARED_TERMS])
@@ -2505,14 +2569,34 @@ describe('S1 §3.2 THE DOCUMENTED FAIL-STATES (FS-EX-1..FS-EX-15)', () => {
     const lb = backendFrom(be)
     lb.attachWindow(fake.win)
     lb.markReady()
-    void lb.invoke('renderedHtml', {}).catch(() => undefined)
+    const inflight = lb.invoke('renderedHtml', {}).catch((e: unknown) => e)
     await tick(5)
-    fake.emit('wc', 'did-finish-load')
+    expect(lb.pendingCount(), 'FS-EX-7 — the drive starts with a REAL in-flight request (otherwise the pending reading below measures nothing)').toBe(1)
+    // **⟶ THE RELOAD IS THE SECOND `did-finish-load`** — the landed contract, pinned by the
+    // unrelated landed suite `tests/blind-renderer-debug.test.ts` `R4.7`/`R4.8`: the FIRST
+    // `did-finish-load` is the INITIAL load (it does NOT reset the gate; the in-flight invoke
+    // survives it) and the SECOND is the RELOAD that runs `handleReset`.  Emitting once does not
+    // exercise a reload at all, so this row's `handleReset` claim could never have been driven.
+    fake.emit('wc', 'did-finish-load')          // the INITIAL load — not a reload
     await tick(5)
+    expect(lb.pendingCount(), 'CONTROL — the FIRST `did-finish-load` is the INITIAL load: `handleReset` does NOT run and the in-flight entry SURVIVES it (so the pending reading below is not vacuous — a fixture that reset on the first emit would make the reading unfalsifiable)').toBe(1)
+    expect(lb.isReady(), 'CONTROL — and the initial load leaves readiness ARMED (the reload, below, is what disarms it)').toBe(true)
+    fake.emit('wc', 'did-finish-load')          // the RELOAD — `handleReset` runs
+    await tick(5)
+    const rejected = await inflight
+    expect(String((rejected as Error)?.message ?? rejected), 'FS-EX-7 — `handleReset` runs (landed): the in-flight request is REJECTED by the reload, never left pending').toMatch(/reload/i)
     expect(lb.pendingCount(), 'FS-EX-7 — `handleReset` runs (landed: pending rejected)').toBe(0)
-    expect(lb.isReady(), 'FS-EX-7 — and readiness IS re-armed by `handleReset` (the landed behaviour, unchanged)').toBe(false)
+    expect(lb.isReady(), 'FS-EX-7 — and the landed reload path DISARMS readiness (`handleReset` sets `ready=false`; the re-arm is a separate `markReady()` — `P-EX-SM-2`\'s cell (2))').toBe(false)
+
+    // THE ROW'S ACTUAL SUBJECT: the exclusion state is a function of NEITHER `isReady()` NOR a
+    // reload — the reload re-armed NOTHING about the exclusion, and the exclusion did not
+    // re-arm (or disarm) the reload path's own readiness cycle.
     const gate = gateFrom(freshGate() as unknown as SecurityGate).withExclusion(STATE_MCP_DISABLED) as ExclusionGateLike
     expect(gate.exclusionState(), 'FS-EX-7 — the exclusion state is UNCHANGED by the reload: the transition does not re-arm readiness and is not re-armed by readiness').toBe(STATE_MCP_DISABLED)
+    expect(lb.isReady(), 'CONTROL — the two axes are READ TOGETHER after the reload: readiness is still disarmed while the exclusion stays `\'mcp-disabled\'` (a re-arm of EITHER would show here)').toBe(false)
+    expect(gate.exclusionState(), 'CONTROL — the exclusion reading is LIVE, not a constant: the operator\'s own transition DOES move it, so a reload that secretly re-armed the exclusion WOULD redden the reading above').toBe(STATE_MCP_DISABLED)
+    const rearmed = gateFrom(gate as unknown as SecurityGate).withExclusion(STATE_MCP_ENABLED)
+    expect(gateFrom(rearmed as SecurityGate).exclusionState(), 'CONTROL — read directly: the ONLY re-arm is the operator\'s own `setExclusion(\'mcp-enabled\')` (`P-EX-SM-2` cell (5))').toBe(STATE_MCP_ENABLED)
   })
 
   it("FS-EX-8 (PAR-8, P-EX-TP-2): a malformed transition payload is REFUSED AS A VALUE — `{applied:false, state:<unchanged>, reason:'malformed-state'}`, no throw, the epoch does NOT move, the invalidation does NOT run", () => {
@@ -2528,16 +2612,79 @@ describe('S1 §3.2 THE DOCUMENTED FAIL-STATES (FS-EX-1..FS-EX-15)', () => {
   })
 
   it('FS-EX-9 (§2.3 item 2, P-EX-IM-2(g)/(h)): an unauthorized HTTP POST is answered 401 before anything else, in BOTH states — the exclusion 503 is never reachable without a valid token', async () => {
+    // **⟶ FIXTURE REPAIRED 2026-10-05 AT GATE 3, RED-SET REPAIR 2.**  This row used
+    // `freshGate()` (whose `token` is `null`) in BOTH branches, and with a `null`
+    // token the landed `authorized()` (src/main/security.ts:126-145) admits EVERY
+    // request — so the 401 arm correctly did not fire and the POST reached the
+    // per-POST transport, which answered its own 400.  The row's CLAIM is about the
+    // authorization arm, so it is driven against a gate that actually REQUIRES
+    // authorization (`gatedGate()`, a NON-NULL token).  The ungated fixture is
+    // driven too, as the control that the 401 is a consequence of the token
+    // requirement rather than of the fixture's shape.
+    const TOKEN = 'fs-ex-9-token'
+    const gatedState = (state: typeof STATE_MCP_ENABLED | typeof STATE_MCP_DISABLED): ExclusionGateLike => state === STATE_MCP_ENABLED
+      ? gatedGate(TOKEN)
+      : (gateFrom(gatedGate(TOKEN) as unknown as SecurityGate).withExclusion(STATE_MCP_DISABLED) as ExclusionGateLike)
     for (const state of [STATE_MCP_ENABLED, STATE_MCP_DISABLED] as const) {
-      const gate = state === STATE_MCP_ENABLED
-        ? freshGate()
-        : (gateFrom(freshGate() as unknown as SecurityGate).withExclusion(STATE_MCP_DISABLED) as ExclusionGateLike)
+      const gate = gatedState(state)
       const server = freshServer(gate, recordingBackend(), 'http')
       const res = makeFakeResponse()
       await driveHttp(server, makeFakeRequest({ method: 'POST', url: '/mcp', headers: { authorization: 'Bearer wrong' } }), res)
       expect(res.status, `FS-EX-9 — the landed 401 arm answers FIRST in BOTH states (state: ${state})`).toBe(401)
       expect(safeJson(res.body)?.error?.code, `FS-EX-9 — \`code:-32001\` (the authorization code, NOT the exclusion's -32003)`).toBe(-32001)
+      expect(/exclusion-closed/.test(res.body), `FS-EX-9 — the refusal body carries NO exclusion token in either state (the unauthorized caller cannot tell the two states apart — the \`G-8\` oracle)`).toBe(false)
     }
+
+    // **THE ORDERING CLAIM, DRIVEN (not inferred).**  The exclusion arm must be
+    // UNREACHABLE without a valid token: an unauthorized POST is answered 401 in
+    // BOTH states, and the exclusion's 503/-32003 is never the answer.
+    const unauthByState: Array<{ state: typeof STATE_MCP_ENABLED | typeof STATE_MCP_DISABLED; status: number | null; code: unknown }> = []
+    for (const state of [STATE_MCP_ENABLED, STATE_MCP_DISABLED] as const) {
+      const res = makeFakeResponse()
+      await driveHttp(freshServer(gatedState(state), recordingBackend(), 'http'), makeFakeRequest({ method: 'POST', url: '/mcp' }), res)
+      unauthByState.push({ state, status: res.status, code: (safeJson(res.body) as { error?: { code?: unknown } } | null)?.error?.code })
+      expect(res.status, `FS-EX-9 — a POST with NO credentials at all is 401 while ${state}`).toBe(401)
+      expect(res.status, `FS-EX-9 — the exclusion 503 is never reachable without a valid token (state: ${state})`).not.toBe(503)
+      expect(safeJson(res.body)?.error?.code, `FS-EX-9 — and never -32003 (state: ${state})`).not.toBe(-32003)
+    }
+    expect(unauthByState.map((x) => x.status), 'FS-EX-9 — the two states answer an unauthorized caller IDENTICALLY (no state oracle)').toEqual([401, 401])
+    expect(unauthByState.map((x) => x.code), 'FS-EX-9 — and with the same `-32001` code').toEqual([-32001, -32001])
+
+    // **CONTROLS (each can FAIL — proven, not asserted by inspection).**
+    // (1) The UNGATED fixture (the as-filed shape, `token: null`) does NOT answer
+    //     401 in either state: the 401 is a consequence of the token requirement.
+    const ungatedStatuses: Array<number | null> = []
+    for (const state of [STATE_MCP_ENABLED, STATE_MCP_DISABLED] as const) {
+      const ungated = state === STATE_MCP_ENABLED
+        ? freshGate()
+        : (gateFrom(freshGate() as unknown as SecurityGate).withExclusion(STATE_MCP_DISABLED) as ExclusionGateLike)
+      const res = makeFakeResponse()
+      await driveHttp(freshServer(ungated, recordingBackend(), 'http'), makeFakeRequest({ method: 'POST', url: '/mcp', headers: { authorization: 'Bearer wrong' } }), res)
+      ungatedStatuses.push(res.status)
+    }
+    expect(ungatedStatuses, 'CONTROL — the AS-FILED `freshGate()` fixture (a `null` token ⇒ the landed `authorized()` admits every request) reaches NO 401 arm in either state, which is exactly why this row could not measure its claim before the repair: it was answered by the per-POST transport instead').not.toEqual([401, 401])
+    expect(ungatedStatuses.every((s) => s !== 401), 'CONTROL — and NEITHER ungated drive is a 401 (the arms are reachable only under the token requirement)').toBe(true)
+    // (2) The gate IS satisfiable: the SAME gate with the CORRECT credentials gets
+    //     PAST the 401 arm, so the 401 above is not a blanket refusal.
+    const validRes = makeFakeResponse()
+    await driveHttp(
+      freshServer(gatedState(STATE_MCP_ENABLED), recordingBackend(), 'http'),
+      makeFakeRequest({ method: 'POST', url: '/mcp', headers: { authorization: `Bearer ${TOKEN}` } }),
+      validRes,
+    )
+    expect(validRes.status, 'CONTROL — a VALID bearer token passes the 401 arm (in `\'mcp-enabled\'` the request reaches the per-POST transport), so the 401 readings above are about AUTHORIZATION and not about an unreachable transport').not.toBe(401)
+    // (3) The exclusion arm IS reachable once authorized while `'mcp-disabled'` —
+    //     the positive control that the arm this row says is unreachable-without-a-
+    //     token is reachable WITH one.
+    const exclRes = makeFakeResponse()
+    await driveHttp(
+      freshServer(gatedState(STATE_MCP_DISABLED), recordingBackend(), 'http'),
+      makeFakeRequest({ method: 'POST', url: '/mcp', headers: { authorization: `Bearer ${TOKEN}` } }),
+      exclRes,
+    )
+    expect(exclRes.status, 'CONTROL — WITH a valid token the exclusion arm answers 503 (the arm is reachable only past the authorization gate — the ordering this row pins)').toBe(503)
+    expect(safeJson(exclRes.body)?.error?.code, 'CONTROL — with a valid token the exclusion body carries `-32003`').toBe(-32003)
+
     // the two arms are ORDERED: the authorization gate runs FIRST, the exclusion arm SECOND
     const src = sourceOf(MCP_SERVER_SRC)
     const authIdx = src.indexOf('checkRequest(req.headers')
@@ -2554,8 +2701,114 @@ describe('S1 §3.2 THE DOCUMENTED FAIL-STATES (FS-EX-1..FS-EX-15)', () => {
     await driveHttp(server, makeFakeRequest({ method: 'POST', url: '/mcp' }), res)
     expect(res.status, 'FS-EX-10 — the request that arrived under `\'mcp-enabled\'` is NOT re-answered with a second status line: the streamable transport\'s already-committed response is not corrupted').not.toBe(null)
     expect(res.headers?.['x-second-status-line'], 'FS-EX-10 — a SECOND `writeHead` on the same response is a FAIL (it would corrupt an already-committed response)').toBeUndefined()
-    const src = sourceOf(MCP_SERVER_SRC)
-    expect(/res\.writeHead[\s\S]{0,400}res\.writeHead/.test(src), 'FS-EX-10 — the landed path writes at most ONE status line per response').toBe(false)
+
+    // **⟶ THE THIRD ASSERTION IS NOW AN INSTRUMENT THAT MEASURES ITS CLAIM
+    // (REPAIRED 2026-10-05 AT GATE 3, RED-SET REPAIR 2).**  The as-filed form was
+    // `/res\.writeHead[\s\S]{0,400}res\.writeHead/.test(src)` over the WHOLE file —
+    // a text pattern, not a per-response reading.  It matched the landed pair
+    // `res.writeHead(405, …)` / `res.writeHead(405)` (two arms of ONE `if/else`,
+    // therefore mutually exclusive and never both run for a single response), and
+    // it matched the pre-exclusion file IDENTICALLY, so it could not be satisfied
+    // by any conforming implementation and had never measured anything.  The claim
+    // — "at most ONE status line per response" — is measured here on the SAME
+    // recording response object the two assertions above use, by counting that
+    // response's `writeHead` invocations across every straddling/exclusion arm.
+    //
+    // THE DRIVES: every HTTP arm this unit adds or composes with, each on its OWN
+    // response object, so the count is a PER-RESPONSE reading.
+    const arms: Array<{ label: string; drive: () => Promise<FakeResponse> }> = [
+      {
+        label: 'the POST-arrival exclusion arm (the arm FS-EX-10 is about) — state `\'mcp-disabled\'`, no credentials',
+        drive: async () => {
+          const g = gateFrom(freshGate() as unknown as SecurityGate).withExclusion(STATE_MCP_DISABLED) as ExclusionGateLike
+          const r = makeFakeResponse()
+          await driveHttp(freshServer(g, recordingBackend(), 'http'), makeFakeRequest({ method: 'POST', url: '/mcp' }), r)
+          return r
+        },
+      },
+      {
+        label: 'the straddling shape: a POST driven while the state is `\'mcp-disabled\'` and the SAME server re-driven — the second response is a NEW stream, never the first re-answered',
+        drive: async () => {
+          const g = gateFrom(freshGate() as unknown as SecurityGate).withExclusion(STATE_MCP_DISABLED) as ExclusionGateLike
+          const srv = freshServer(g, recordingBackend(), 'http')
+          const r1 = makeFakeResponse()
+          await driveHttp(srv, makeFakeRequest({ method: 'POST', url: '/mcp' }), r1)
+          const r2 = makeFakeResponse()
+          await driveHttp(srv, makeFakeRequest({ method: 'POST', url: '/mcp' }), r2)
+          expect(r1.writeHeadCalls, 'the FIRST response of the pair is not re-answered by the second drive').toBe(1)
+          return r2
+        },
+      },
+      {
+        label: 'the unauthorized arm (401) composed with the exclusion arm',
+        drive: async () => {
+          const r = makeFakeResponse()
+          await driveHttp(
+            freshServer(gatedGate('fs-ex-10-token'), recordingBackend(), 'http'),
+            makeFakeRequest({ method: 'POST', url: '/mcp', headers: { authorization: 'Bearer wrong' } }),
+            r,
+          )
+          return r
+        },
+      },
+      {
+        label: 'the authorization + exclusion arms together (a VALID token while `\'mcp-disabled\'` ⇒ 503)',
+        drive: async () => {
+          const g = gateFrom(gatedGate('fs-ex-10-token') as unknown as SecurityGate).withExclusion(STATE_MCP_DISABLED) as ExclusionGateLike
+          const r = makeFakeResponse()
+          await driveHttp(
+            freshServer(g, recordingBackend(), 'http'),
+            makeFakeRequest({ method: 'POST', url: '/mcp', headers: { authorization: 'Bearer fs-ex-10-token' } }),
+            r,
+          )
+          return r
+        },
+      },
+      {
+        label: 'the landed non-POST arms (`GET`/`DELETE` ⇒ 405, and a non-`/mcp` path ⇒ 404) — the pair a whole-file regex mistook for a per-response double write',
+        drive: async () => {
+          const srv = freshServer(freshGate(), recordingBackend(), 'http')
+          const r = makeFakeResponse()
+          await driveHttp(srv, makeFakeRequest({ method: 'GET', url: '/mcp' }), r)
+          expect(r.writeHeadCalls, 'the GET arm writes ONE status line').toBe(1)
+          const r2 = makeFakeResponse()
+          await driveHttp(srv, makeFakeRequest({ method: 'POST', url: '/not-mcp' }), r2)
+          return r2
+        },
+      },
+    ]
+    const measured: Array<{ label: string; calls: number; secondStatusLine: string | undefined; status: number | null }> = []
+    for (const arm of arms) {
+      const r = await arm.drive()
+      measured.push({ label: arm.label, calls: r.writeHeadCalls, secondStatusLine: r.headers?.['x-second-status-line'], status: r.status })
+      expect(r.writeHeadCalls, `FS-EX-10 — "at most ONE status line per response" holds PER RESPONSE (${arm.label})`).toBeLessThanOrEqual(1)
+      expect(r.writeHeadCalls, `FS-EX-10 — and every one of these arms writes a status line at all (a zero reading would make the bound vacuous) (${arm.label})`).toBe(1)
+      expect(r.headers?.['x-second-status-line'], `FS-EX-10 — no arm records a second status line (${arm.label})`).toBeUndefined()
+    }
+    expect(measured.length, 'the instrument drove every arm (an un-driven arm is a FAILURE, never a pass)').toBe(arms.length)
+
+    // **THE CONTROL PROVES THE INSTRUMENT CAN FAIL** — a deliberately
+    // double-writing response (a raw `writeHead` twice) is driven through the SAME
+    // counting instrument and MUST break the bound.  This is the pre-repair
+    // assertion's own pattern: the control-only helper is driven in-line, so a
+    // regression to a whole-text instrument or an off-by-one count reddens here.
+    const doubleWriter = (): FakeResponse => {
+      const r = makeFakeResponse()
+      r.writeHead(401, { 'content-type': 'application/json' })
+      r.writeHead(503, { 'content-type': 'application/json' })
+      return r
+    }
+    const broken = doubleWriter()
+    expect(broken.writeHeadCalls, 'CONTROL — the double-writing response records TWO status lines (the count is real, not a constant)').toBe(2)
+    expect(broken.writeHeadCalls, 'CONTROL — and the bound this row asserts is FALSIFIED by it (`at most one` is false for a deliberate double write) — so the green readings above are not vacuous').toBeGreaterThan(1)
+    expect(broken.headers?.['x-second-status-line'], 'CONTROL — the second-status-line marker fires on the deliberate double write').toBe('503')
+    // and the SAME control driven through an ACTUAL landed handler arm: a single
+    // landed arm on a response that has ALREADY been written is the second line.
+    const preCommitted = makeFakeResponse()
+    preCommitted.writeHead(200)
+    await driveHttp(freshServer(gateFrom(freshGate() as unknown as SecurityGate).withExclusion(STATE_MCP_DISABLED) as ExclusionGateLike, recordingBackend(), 'http'),
+      makeFakeRequest({ method: 'POST', url: '/mcp' }), preCommitted)
+    expect(preCommitted.writeHeadCalls, 'CONTROL — a landed arm writing onto an ALREADY-committed stream DOES produce a second status line; the count sees it, so `<= 1` above is a real bound on a clean stream (this is exactly the corruption §2.3 item 3 forbids)').toBe(2)
   })
 
   it('FS-EX-11 (PAR-3, P-EX-SM-1 T-4): an outside-value transition is a no-op on the gate, not a throw — the receiver\'s state is UNCHANGED, no epoch bump, no invalidation', async () => {

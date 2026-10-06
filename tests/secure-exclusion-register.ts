@@ -135,22 +135,62 @@ export const STOP_AFTER_CONSECUTIVE = 5
 
 /** `§5.5.1` — THE DECLARED TERMS, in register order, nine of them.
  *
- *  **⟶ ORDER CORRECTED 2026-10-05 BY THE AUTHOR ROLE AT GATE 3, KICK-BACK
- *  OUTCOME (a)** — the terms were **already right and are UNCHANGED**: the spec's
- *  `§5.5.1` table declares `P-EX-IM-4` **NINTH** (row `# 9`) and its arithmetic
- *  line prints `106 = 12 + 12 + 10 + 12 + 12 + 14 + 12 + 12 + 10` *"in register
- *  order (`P-EX-IM-1` … `P-EX-IM-4`, `P-EX-SM-1` … `P-EX-SM-3`,
- *  `P-EX-TP-1`/`P-EX-TP-2`)"* — i.e. the `4` `P-EX-IM` rows CARRY the first four
- *  terms (`12`, `12`, `10`, **`10`**), which is exactly what is written here.
- *  What was wrong was the ROW ORDER in `registerSpecs`, which is a separate
- *  artefact (see the move recorded beside `P-EX-IM-4` below). */
-export const DECLARED_TERMS: readonly number[] = [12, 12, 10, 12, 12, 14, 12, 12, 10]
-
-/** `§5.5.1` — the nine row ids, in register order. */
+ *  **⟶ ANNOTATED 2026-10-05 BY THE AUTHOR ROLE AT GATE 3, RED-SET REPAIR 2, PER
+ *  `RCA-8(d)` (ANNOTATE-BESIDE — never a silent rewrite).**
+ *
+ *  **THE MEASURED FACT (this repair's own reading of the executed register):** the
+ *  nine rows carry their declared terms in register order as
+ *  **`P-EX-IM-1` 12 · `P-EX-IM-2` 12 · `P-EX-IM-3` 10 · `P-EX-SM-1` 12 ·
+ *  `P-EX-SM-2` **14** · `P-EX-SM-3` 12 · `P-EX-TP-1` 12 · `P-EX-TP-2` 12 ·
+ *  `P-EX-IM-4` 10**, `drives.length === term` for every row.  That is **exactly
+ *  `§5.5.1`'s per-row TABLE** — its row `# 5` is `P-EX-SM-2`/`S-EX-REARM-1` with
+ *  term `14` (`7` drive cells × `2` readings) and its row `# 6` is
+ *  `P-EX-SM-3`/`S-EX-BOOT-1` with term `12` (`7` input classes + `3` order
+ *  readings + `2` persistence readings) — and this array prints that table's terms
+ *  in that table's row order.  **NO TERM'S `VALUE` MOVED IN THIS REPAIR**: the `14`
+ *  is still `P-EX-SM-2`'s and the `12` is still `P-EX-SM-3`'s, exactly as the table
+ *  declares; what the repair re-pinned is the ROW ORDER (`P-EX-IM-4` LAST, per
+ *  `§5.5.1`'s row numbering).
+ *
+ *  **⟶ REPORTED SPEC DISCREPANCY (a `docs/specs/*.md` amendment the TestWriter may
+ *  not make), recorded rather than smoothed away:** `§5.5.1`'s printed arithmetic
+ *  line (line 1219; the identical string is re-printed in `§5.5` item 2's line 1194
+ *  and `§5.5.1`'s heading line 1198) reads **`106 = 12 + 12 + 10 + 12 + 12 + 14 +
+ *  12 + 12 + 10`**, i.e. `12, 14` in positions `5`, `6` — the TRANSPOSE of its own
+ *  table's rows `# 5`/`# 6`.  The two readings are arithmetically
+ *  indistinguishable: the total (`106`), the chain's multiset, the `P-IM` subtotal
+ *  (`12 + 12 + 10 + 10 = 44`), the `P-TP` subtotal (`12 + 12 = 24`) and the `P-SM`
+ *  subtotal (`12 + 14 + 12 = 38`) all hold under either order.  **So no property, no
+ *  row, no term value and no total is affected — only the intra-`P-SM` order of two
+ *  adjacent rows — and the per-row TABLE governs the per-row pairing.**  The
+ *  arithmetic line's positions `5`/`6` are the thing to reconcile (they should read
+ *  `12 + 14`); the finding is REPORTED to the supervisor, not resolved here.  **The
+ *  declared total is still `106` and is still the sum of these nine terms.** */
+export const DECLARED_TERMS: readonly number[] = [12, 12, 10, 12, 14, 12, 12, 12, 10]
+/** `§5.5.1` — the nine row ids, IN THE ORDER THE REGISTER EXECUTES THEM.
+ *
+ *  **⟶ CORRECTED 2026-10-05 BY THE AUTHOR ROLE AT GATE 3, RED-SET REPAIR 2** — the
+ *  as-filed array carried `P-EX-IM-4` **FOURTH** while the already-repaired
+ *  `STRATEGY_IDS` carried its id (`S-EX-ISOL-1`) **NINTH**, so the two arrays this
+ *  module and `secure-exclusion.test.ts` assert are the LOCKSTEP PARTNERS of the
+ *  executed rows disagreed with each other.  `§5.5.1` numbers `P-EX-IM-4` row
+ *  `# 9`, so it sits LAST here — and `registerSpecs` is now the third member of
+ *  the lockstep (`rows[i].id === REGISTER_ROW_IDS[i]`, `rows[i].strategyId ===
+ *  STRATEGY_IDS[i]`, asserted in the test file).  **No id's text changed — only
+ *  its position**, and the register still executes exactly the same nine rows with
+ *  exactly the same drives and terms.
+ *
+ *  **THE INTRA-`P-SM` ORDER (`P-EX-SM-2` before `P-EX-SM-3`)** is the order
+ *  `§5.5.1`'s printed arithmetic line (`12 + 12 + 14` for the `P-SM` group), its
+ *  declared total (`106`) and its chain (`… 58 → 72 → 84 …`) are written in, and
+ *  therefore the order in which the executed rows' terms reproduce this module's
+ *  `DECLARED_TERMS` — see that constant's annotation for the reported discrepancy
+ *  with the spec TABLE's row numbers `# 5`/`# 6`. */
 export const REGISTER_ROW_IDS: readonly string[] = [
-  'P-EX-IM-1', 'P-EX-IM-2', 'P-EX-IM-3', 'P-EX-IM-4',
+  'P-EX-IM-1', 'P-EX-IM-2', 'P-EX-IM-3',
   'P-EX-SM-1', 'P-EX-SM-2', 'P-EX-SM-3',
   'P-EX-TP-1', 'P-EX-TP-2',
+  'P-EX-IM-4',
 ]
 
 /** `§5.5.1` — nine strategy ids, one per row (`S-EX-*`), IN REGISTER ORDER.
@@ -214,18 +254,22 @@ export const ARTIFACT_SPAN_FIGURE = '29772ac7'
  *  and the supervisor's own reading agree byte-for-byte).** */
 export const SURFACE_ARTIFACT_MEASURED = '9dea200277ed645e6f5c513754e26c1707a8bc55e4490008f738928edffc4446'
 
-/** CONTROL ONLY — THE PRE-REPAIR `registerSpecs` ROW ORDER, at the authoring site
- *  where it must be driven in-line: **`P-EX-IM-4` listed LAST while
- *  `REGISTER_ROW_IDS` declares it FOURTH** (`§5.5.1`, which places
- *  `P-EX-IM-1` … `P-EX-IM-4` first).  This is the shape the
- *  `registerSpecs` array carried at red-authoring; the array itself now follows
- *  `§5.5.1`, and this constant exists ONLY so the control row can PROVE the pairing
- *  assertion can fail (`RCA-8(d)` / the `handlerBodyOf` repair's precedent). */
+/** CONTROL ONLY — THE AS-FILED `registerSpecs` ROW ORDER, at the authoring site
+ *  where it must be driven in-line: **`P-EX-IM-4` listed FOURTH while `§5.5.1`
+ *  numbers that row NINTH** (and, in lockstep, `REGISTER_ROW_IDS` carried it
+ *  fourth too, while `STRATEGY_IDS` already carried `S-EX-ISOL-1` ninth — the
+ *  disagreement RED-SET REPAIR 2 closed).  This constant exists ONLY so the control
+ *  row can PROVE the pairing assertion can fail (`RCA-8(d)` / the `handlerBodyOf`
+ *  repair's precedent); the register itself now executes `P-EX-IM-4` LAST.
+ *
+ *  **⟶ RE-PINNED 2026-10-05 (RED-SET REPAIR 2)** — it previously held the
+ *  `P-EX-IM-4`-LAST shape, because at that pass `REGISTER_ROW_IDS` declared the row
+ *  FOURTH.  With the declared order moved to `P-EX-IM-4` LAST, the mutant that must
+ *  FAIL is the as-filed one, which is what is held here. */
 export const OLD_REGISTER_ROW_ORDER_CONTROL_ONLY: readonly string[] = [
-  'P-EX-IM-1', 'P-EX-IM-2', 'P-EX-IM-3',
+  'P-EX-IM-1', 'P-EX-IM-2', 'P-EX-IM-3', 'P-EX-IM-4',
   'P-EX-SM-1', 'P-EX-SM-2', 'P-EX-SM-3',
   'P-EX-TP-1', 'P-EX-TP-2',
-  'P-EX-IM-4',
 ]
 
 /** THE DECLARED ORDER PAIRING, AS ONE FUNCTION — so the assertion and its control
