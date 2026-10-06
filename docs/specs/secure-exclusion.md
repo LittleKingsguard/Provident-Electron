@@ -428,6 +428,39 @@ change owed** because every changed signature is inside an already-allowed file.
      **THE TEST-SIDE RE-GRAIN AND THE `G3` RE-GRAIN ARE RECORDED IN ONE PLACE:**
      `docs/specs/secure-store-discipline.md` `§9c` (the amendment set, `KB-8` · `KB-9`), so the
      unit's DONE row can cite it at gate 10.
+     **⟶ THE SECOND RE-POINT AND THE DIGEST LINEAGE, DATED `2026-10-06` (`RCA-8(d)`: the two
+     notes above STAND BYTE-FOR-BYTE and are NOT rewritten — this note governs the bullet's
+     pin citation after the second authorized move, never its text).** **THE ARTIFACT MOVED
+     AGAIN, AND THE REASON IS NAMED:** `S3`'s gate-4 remediation LANDED at `e317d82` — the
+     `ADV-1` host finding's fix, in which **each declared patch member (`groups` · `disable` ·
+     `token` · `maxJournalLength`) is read ONCE from the caller's patch and THAT reading is
+     what is admitted, coerced and stored**, closing the accessor/proxy hole where the
+     admission's read and the persisted read could answer DIFFERENT values of one member (a
+     getter answering `42` to the admission and `null` to the write). Under that change —
+     admitted by this unit's own `§5.1` item 1, which freezes only the two RENDERER modules —
+     **THE PIN'S EXPECTATION FOLLOWS THE ARTIFACT: a byte-pin that refused to follow an
+     authorized move would be an instrument demanding an unauthorized rollback, which is
+     exactly how the first re-point's `KB-8` collision arose.** **THE FULL DIGEST LINEAGE,
+     EACH VALUE MEASURED (`node:crypto` over the file's bytes) AND EACH CAUSE NAMED:**
+     `sha256:c7359530b530ed866a86908e176bf101b836f138793de0a0ac1db3df7dc8823d` (**the AS-FILED
+     bytes**, measured at `83f2dde`, `15,983` bytes — before any authorized move) →
+     `sha256:99618ac219ac4701e219e7926be61f78f22d3803818852a9dbca4fcf0e66aacc` (**CAUSE: the
+     `S3` implementer's green `460fb66` + its kick-back resolution `0d36c46`**, which landed
+     `O-1` refused-persist rollback · `O-2` JSON-representability admission · `O-3`
+     full-surface deep clone under the ACTIVE `docs/decisions.md` `TIER-4 …` ruling; the
+     2026-10-11 amendment re-pointed the pin here) →
+     `sha256:a98273b8f8a5cb5ec521f437eb7fe38f7adfa79cc22484d39fdcaa06c642eaa3` (**CAUSE: gate 4's
+     `ADV-1` read-once remediation, `e317d82`** — the current pin, `17,853` bytes, MEASURED
+     with `node:crypto` at this re-point). **WHAT DOES NOT MOVE:** the bullet's SUBJECT (the
+     bound is still *"this unit moves no byte of this path"* per unit, asserted as a MEASURED
+     digest), the BITE (ANY byte move of the file still reddens `FS-EX-15`, its `I-EX-6` arm
+     and `P-EX-IM-2` cells (j)/(l); the byte-moved POSITIVE CONTROL now answers NONE of the
+     three pinned digests) and the other three forbidden paths (`0664c52f…` / `5c0c1a97…` /
+     the surface artifact). **THE TEST-SIDE RE-POINT IS RECORDED IN ONE PLACE:**
+     `docs/specs/secure-store-discipline.md` `§9c` item 10 (the second re-point's own block),
+     and the test file keeps the lineage in-line at `SECURITY_STORE_PIN` (`c7359530…` =
+     `SECURITY_STORE_PIN_PRE_AMENDMENT`, `99618ac2…` = `SECURITY_STORE_PIN_PRE_ADV1`, both
+     asserted awake and distinct from the operative pin).
    **These come from THREE authorities, not one, so the pin is not a paraphrase:** the **decomposition row** names the
    `S1`/`S2` split (`A` `THE TIER-4 GENERALIZATION IS SPLIT PER UNIT`); the **gate-1 record** names *"NO frozen artifact
    and NO store byte"* as the boundary's decisive property (`R` `§6` column 3, and its RISK/COST table's *"Frozen

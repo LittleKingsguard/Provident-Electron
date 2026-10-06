@@ -678,7 +678,7 @@ const DIFF_SCOPE_PATHS: readonly string[] = [SECURITY_TS_SRC, MCP_SERVER_SRC, MA
  *  The spec pins the two frozen MODULE files explicitly and does NOT pin
  *  `security-store.ts`'s digest; this figure is THIS PASS'S measurement over the
  *  file bytes (node:crypto), recorded so a later byte-move reddens cell (j)/(l). */
-const SECURITY_STORE_PIN = '99618ac219ac4701e219e7926be61f78f22d3803818852a9dbca4fcf0e66aacc'
+const SECURITY_STORE_PIN = 'a98273b8f8a5cb5ec521f437eb7fe38f7adfa79cc22484d39fdcaa06c642eaa3'
 /* **⟶ AMENDMENT SET (2026-10-11; `RCA-8(a)` gate: `S1`'s pin re-grained to the `S3`
  * `U-SECURE-STORE-DISCIPLINE` landing — commits `460fb66` + `0d36c46`), `RCA-8(d)`
  * ANNOTATE-BESIDE: the as-filed clause above (and its digest) STANDS BYTE-FOR-BYTE
@@ -719,8 +719,58 @@ const SECURITY_STORE_PIN = '99618ac219ac4701e219e7926be61f78f22d3803818852a9dbca
  * store-byte arm) and `§5.5.1`'s register `REPORTS` row (whose `broken === 0` bound
  * the pin's two register cells, `P-EX-IM-2` (j)/(l), moved) — plus
  * `tests/store-security.test.ts`'s `G3` re-grain, all recorded in
- * `docs/specs/secure-store-discipline.md`'s amendment-set block. */
+ * `docs/specs/secure-store-discipline.md`'s amendment-set block.
+ *
+ * **⟶ SECOND RE-POINT, DATED `2026-10-06` (`RCA-8(a)` gate: `S3`'s gate-4 remediation
+ * → `S1`'s pin re-point; `RCA-8(d)` ANNOTATE-BESIDE — the first amendment block above
+ * STANDS BYTE-FOR-BYTE beside this one and is NOT rewritten).**
+ *
+ * REASON, ONE LINE: the pinned artifact moved AGAIN because gate 4's `ADV-1`
+ * remediation LANDED at `e317d82` — each declared patch member (`groups` · `disable` ·
+ * `token` · `maxJournalLength`) is now read ONCE from the caller's patch and THAT
+ * reading is what is admitted, coerced and stored, closing the accessor/proxy hole
+ * where the admission read and the persisted read could diverge (a getter answering
+ * `42` to the admission and `null` to the write) — and under that AUTHORIZED change
+ * the pin's EXPECTATION FOLLOWS THE ARTIFACT: a byte-pin that refused to follow an
+ * authorized move would be an instrument demanding an unauthorized rollback, which is
+ * how the first re-point's `KB-8` collision arose.
+ *
+ * THE DIGEST LINEAGE, EVERY VALUE MEASURED (`node:crypto` over the file's bytes),
+ * EVERY VALUE PINNED TO ITS CAUSE AND ITS COMMIT — the whole chain stays visible so
+ * the current pin is a MEASURED DELTA from an as-filed constant, never a silent
+ * re-point:
+ *   1. `c7359530b530ed866a86908e176bf101b836f138793de0a0ac1db3df7dc8823d` — the
+ *      AS-FILED pin, measured over the file at `83f2dde` (`15,983` bytes; `S2`'s
+ *      bytes, before any authorized move). Kept as
+ *      `SECURITY_STORE_PIN_PRE_AMENDMENT` below.
+ *   2. `99618ac219ac4701e219e7926be61f78f22d3803818852a9dbca4fcf0e66aacc` — the
+ *      FIRST re-point (`726ebd4`, the 2026-10-11 amendment set), CAUSE: the `S3`
+ *      implementer's green (`460fb66`) + its kick-back resolution (`0d36c46`) landed
+ *      `O-1` (refused-persist rollback) · `O-2` (JSON-representability admission) ·
+ *      `O-3` (full-surface deep clone) under the ACTIVE `docs/decisions.md`
+ *      `TIER-4 …` ruling. Kept as `SECURITY_STORE_PIN_PRE_ADV1` below.
+ *   3. `a98273b8f8a5cb5ec521f437eb7fe38f7adfa79cc22484d39fdcaa06c642eaa3` — the
+ *      CURRENT pin (`e317d82`, this second re-point), CAUSE: gate 4's `ADV-1`
+ *      remediation, the read-ONCE patch-member fix above.
+ * ALL THREE are asserted 64-hex, ALL THREE are asserted AWAKE and DISTINCT from each
+ * other (a typo, a no-op or a copy-paste that collapsed the chain reddens), and the
+ * byte-moved POSITIVE CONTROL still proves the comparison can FAIL — which is the
+ * bite this re-point must not weaken.
+ *
+ * THE SECOND RE-POINT'S SCOPE (`RCA-8(a)`, one commit): THIS file's three red rows —
+ * `FS-EX-15` (the artifact byte-pin), the `I-EX-6` store-byte arm of
+ * `I-EX-4/I-EX-5/I-EX-6/I-EX-7` and `§5.5.1`'s register `REPORTS` row (whose
+ * `broken === 0` bound the pin's two register cells, `P-EX-IM-2` (j)/(l), moved) —
+ * recorded in `docs/specs/secure-store-discipline.md` `§9c` item 10 with the lineage
+ * anchored beside `docs/specs/secure-exclusion.md` `§1.3` item 1's amendment note. */
 const SECURITY_STORE_PIN_PRE_AMENDMENT = 'c7359530b530ed866a86908e176bf101b836f138793de0a0ac1db3df7dc8823d'
+/** The FIRST RE-POINT's value — the `S3`-repaired bytes (`726ebd4`'s amendment set),
+ *  kept as a labelled PRE-`ADV-1` constant so the intermediate digest stays visible
+ *  and the delta from it to the operative pin is a MEASURED term (see the lineage
+ *  block above). NAMED `PRE_ADV1` — never `PRE_AMENDMENT`, so the two historical
+ *  figures cannot be conflated: `PRE_AMENDMENT` is the as-filed digest, this one is
+ *  the first re-pointed digest. */
+const SECURITY_STORE_PIN_PRE_ADV1 = '99618ac219ac4701e219e7926be61f78f22d3803818852a9dbca4fcf0e66aacc'
 
 function basenameOf(path: string): string {
   return path.slice(path.lastIndexOf('/') + 1)
@@ -1758,7 +1808,7 @@ const registerSpecs: RegisterRow[] = [
            * SUBJECT is unmoved — the union is READ at `16`, `'exclusion-closed'` is in NO
            * group — and the file half is still the SAME bound, over the amended pin. */
           expect(digest,
-            '§1.3 item 1 (AMENDED 2026-10-11) — `src/main/security-store.ts` is byte-identical to its MEASURED pin (`S3`-repaired bytes: the ruling reversed `O-1`/`O-2`/`O-3`; pre-amendment `c7359530…`, now `99618ac2…`); a moved byte is a COLLISION finding. Measured: ' + digest.slice(0, 12)).toBe(SECURITY_STORE_PIN)
+            '§1.3 item 1 (AMENDED 2026-10-11; SECOND RE-POINT 2026-10-06) — `src/main/security-store.ts` is byte-identical to its MEASURED pin (chain: as-filed `c7359530…` → the `S3` ruling\u2019s `O-1`/`O-2`/`O-3` re-point `99618ac2…` → gate 4\u2019s `ADV-1` read-once remediation `a98273b8…`); a moved byte is a COLLISION finding. Measured: ' + digest.slice(0, 12)).toBe(SECURITY_STORE_PIN)
         },
       },
       /* (k) THE MEASURED FILE BYTE-PIN of the two frozen modules.
@@ -1801,7 +1851,7 @@ const registerSpecs: RegisterRow[] = [
           expect(sha256Of(SURFACE_ARTIFACT),
             '§1.3 item 1 — the frozen SURFACE ARTIFACT is byte-identical (the spec pins no artifact-FILE digest of its own, so this is THIS PASS\'S measurement, labelled as such — never the span figure)').toBe(SURFACE_ARTIFACT_MEASURED)
           expect(sha256Of(SECURITY_STORE_SRC),
-            '§1.3 item 1 (AMENDED 2026-10-11) — `src/main/security-store.ts` (the tier\'s own bytes) is byte-identical to its MEASURED pin; the pin was re-grained from `c7359530…` to `99618ac2…` by the `S3` landing (`O-1`/`O-2`/`O-3`), never silently').toBe(SECURITY_STORE_PIN)
+            '§1.3 item 1 (AMENDED 2026-10-11; SECOND RE-POINT 2026-10-06) — `src/main/security-store.ts` (the tier\'s own bytes) is byte-identical to its MEASURED pin; the pin was re-grained `c7359530…` → `99618ac2…` by the `S3` landing (`O-1`/`O-2`/`O-3`) and AGAIN `99618ac2…` → `a98273b8…` by gate 4\'s `ADV-1` remediation, never silently').toBe(SECURITY_STORE_PIN)
         },
       },
       /* ── THE `A-1` CELLS (GATE 4, 2026-10-05) — THE LIVE TRANSITION ─────────
@@ -3784,7 +3834,22 @@ describe('S1 §5.5.1 THE REGISTER (executed deterministically — 9 rows / 117 o
      * `FS-EX-15`), so the count returns to `0` WITHOUT one term, row, declared total
      * (`117 = 12 + 17 + 13 + 13 + 14 + 12 + 12 + 14 + 10`), cap or strategy id moving —
      * and WITHOUT any cell's subject changing: both cells still assert the store's
-     * bytes are frozen at a measured digest and that its refusal union reads `16`. */
+     * bytes are frozen at a measured digest and that its refusal union reads `16`.
+     *
+     * **⟶ SECOND RE-POINT AT THIS ROW (`2026-10-06`, `RCA-8(d)` ANNOTATE-BESIDE: the
+     * record above STANDS BYTE-FOR-BYTE and governs ITS OWN re-point).** The SAME two
+     * register cells — `P-EX-IM-2` (j)/(l) — reddened AGAIN at the `S3` gate-4
+     * remediation (`e317d82`, `ADV-1`: each declared patch member read ONCE, the
+     * accessor/proxy divergence closed), which moved the pinned artifact
+     * `99618ac2…` → `a98273b8…`; at that landing this bound read `broken 2 of 117`,
+     * the same pair, ONE cause. The pin's expectation follows the artifact under that
+     * authorized change (`SECURITY_STORE_PIN`'s lineage block), and the count returns
+     * to `0` WITHOUT one term, row, declared total
+     * (`117 = 12 + 17 + 13 + 13 + 14 + 12 + 12 + 14 + 10`), cap or strategy id moving —
+     * and WITHOUT any cell's subject changing. `broken 2 of 117` → `0 of 117`, and the
+     * FIRST re-point's digest is RETAINED beside the operative one as
+     * `SECURITY_STORE_PIN_PRE_ADV1`, asserted distinct and awake at `FS-EX-15`, so the
+     * whole `c7359530…` → `99618ac2…` → `a98273b8…` chain is auditable from this file. */
     const check = brokenCountCheckOf(r)
     process.stdout.write('\nREGISTER BROKEN/UN-RUN BOUND (§5.5.2 item 3, AGENTS.md item 11(b) — the TIGHTENED guard):\n' +
       `  TOTAL ${String(r.declaredTotal)} = ${r.declaredTerms.join(' + ')} (chain ${r.chain})\n` +
@@ -4456,24 +4521,53 @@ describe('S1 §3.2 THE DOCUMENTED FAIL-STATES (FS-EX-1..FS-EX-15)', () => {
      * forbidden paths' byte-identity — and its BITE is EQUAL: any byte move of
      * `src/main/security-store.ts` still reddens it. THE MUTATION THAT STILL REDDENS
      * IT: one appended byte (driven as a POSITIVE CONTROL below, which the as-filed
-     * form did NOT have for this path, so the re-grain is STRONGER, not weaker). */
-    expect(sha256Of(SECURITY_STORE_SRC), 'FS-EX-15 (AMENDED 2026-10-11) — `src/main/security-store.ts` byte-identical to its MEASURED pin (the `S3`-repaired bytes: `c7359530…` -> `99618ac2…`, the ruling\'s `O-1`/`O-2`/`O-3`)').toBe(SECURITY_STORE_PIN)
+     * form did NOT have for this path, so the re-grain is STRONGER, not weaker).
+     *
+     * **⟶ SECOND RE-POINT 2026-10-06 (`S3` gate 4's `ADV-1` remediation, `e317d82`).**
+     * The block above STANDS BYTE-FOR-BYTE and governs its OWN re-point (`KB-8`). The
+     * artifact moved a SECOND time under the SAME authorization
+     * (`docs/specs/secure-store-discipline.md` `§5.1` item 1 admits the path; the two
+     * RENDERER modules stay frozen), and `SECURITY_STORE_PIN` follows it — keeping the
+     * as-filed value AND the first re-point's value as labelled constants beside the
+     * operative one. BITE: one appended byte reddens (the control below now asserts the
+     * moved copy answers NONE of the three pins), and a collapsed/duplicated constant
+     * reddens (the three values are asserted distinct). */
+    expect(sha256Of(SECURITY_STORE_SRC), 'FS-EX-15 (AMENDED 2026-10-11; SECOND RE-POINT 2026-10-06) — `src/main/security-store.ts` byte-identical to its MEASURED pin (chain: `c7359530…` → the `S3` ruling\'s `O-1`/`O-2`/`O-3` `99618ac2…` → gate 4\'s `ADV-1` read-once remediation `a98273b8…`)').toBe(SECURITY_STORE_PIN)
     /* THE STORE PIN'S OWN POSITIVE CONTROL (`RCA-8(d)`, the `A-8` precedent applied
      * to THIS path): a ONE-BYTE-MOVED copy of the module must NOT answer the pin —
      * so the comparison above is an instrument, not a tautology. The pre-amendment
      * digest is asserted DISTINCT beside it, so the re-point is a measured delta. */
     expect(SECURITY_STORE_PIN_PRE_AMENDMENT,
       'FS-EX-15 — the PRE-AMENDMENT pin is a distinct 64-hex measurement (the re-point is a delta, never a typo or a no-op)').toMatch(/^[0-9a-f]{64}$/)
+    /* ⟶ SECOND RE-POINT (`2026-10-06`, `RCA-8(d)`): the FIRST re-point's digest and the
+     * OPERATIVE pin are ADDED to the same controls — one extra historical constant,
+     * one extra 64-hex reading, and the distinctness asserted over the WHOLE chain —
+     * so the second re-point is a measured delta exactly as the first one was, and a
+     * chain that collapsed to two equal constants (or to one) cannot pass. NOTHING
+     * above or below is weakened: the byte-moved POSITIVE CONTROL now answers NEITHER
+     * of the THREE pinned digests. */
+    expect(SECURITY_STORE_PIN_PRE_ADV1,
+      'FS-EX-15 (SECOND RE-POINT) — the FIRST re-point\u2019s pin (`99618ac2\u2026`, `726ebd4`) is a distinct 64-hex measurement, kept visible so the chain is auditable').toMatch(/^[0-9a-f]{64}$/)
+    expect([SECURITY_STORE_PIN, SECURITY_STORE_PIN_PRE_ADV1, SECURITY_STORE_PIN_PRE_AMENDMENT],
+      'FS-EX-15 (SECOND RE-POINT) — the THREE pinned digests (as-filed `c7359530\u2026`, first re-point `99618ac2\u2026`, operative `a98273b8\u2026`) are THREE DISTINCT 64-hex measurements: no two equal, so no re-point in this chain was a silent no-op').toHaveLength(new Set([SECURITY_STORE_PIN, SECURITY_STORE_PIN_PRE_ADV1, SECURITY_STORE_PIN_PRE_AMENDMENT]).size)
+    expect([SECURITY_STORE_PIN, SECURITY_STORE_PIN_PRE_ADV1, SECURITY_STORE_PIN_PRE_AMENDMENT],
+      'FS-EX-15 (SECOND RE-POINT) — the chain has THREE distinct values (not two and not one)').toHaveLength(3)
     // (`string`-widened deliberately: the two constants are literal types, and the comparison
     //  is the POINT of this control — `tsc --strict` would otherwise refuse it as TS2367.)
     expect((SECURITY_STORE_PIN_PRE_AMENDMENT as string) === (SECURITY_STORE_PIN as string),
-      'FS-EX-15 — the amendment MOVED the pin: the pre-amendment digest `c7359530…` differs from the operative `99618ac2…`').toBe(false)
+      'FS-EX-15 — the amendment MOVED the pin: the pre-amendment digest `c7359530…` differs from the operative one').toBe(false)
+    expect((SECURITY_STORE_PIN_PRE_ADV1 as string) === (SECURITY_STORE_PIN as string),
+      'FS-EX-15 (SECOND RE-POINT) — the `ADV-1` remediation MOVED the pin: the first re-point\u2019s digest `99618ac2\u2026` differs from the operative `a98273b8\u2026`').toBe(false)
+    expect((SECURITY_STORE_PIN_PRE_ADV1 as string) === (SECURITY_STORE_PIN_PRE_AMENDMENT as string),
+      'FS-EX-15 (SECOND RE-POINT) — and the two historical figures are DISTINCT from each other (the as-filed `c7359530\u2026` is not the first re-point `99618ac2\u2026`): a single collapsed constant would redden here').toBe(false)
     const storeMutatedPath = join(baseDir, 'security-store.byte-moved.control.ts')
     await writeFile(storeMutatedPath, sourceOf(SECURITY_STORE_SRC) + '\n', 'utf8')
     expect(sha256Of(storeMutatedPath),
       'CONTROL — the SAME comparator over a ONE-BYTE-MOVED copy of `src/main/security-store.ts` answers a digest that is NOT the operative pin: the store byte-pin ABOVE can fail, exactly as the two renderer module pins are proven able to').not.toBe(SECURITY_STORE_PIN)
     expect(sha256Of(storeMutatedPath),
       'CONTROL — and the moved copy answers neither the PRE-amendment digest nor `\'ABSENT\'` (the control fails the PIN, not the comparator\'s shape)').not.toBe(SECURITY_STORE_PIN_PRE_AMENDMENT)
+    expect(sha256Of(storeMutatedPath),
+      'CONTROL (SECOND RE-POINT) — the moved copy answers NEITHER of the two HISTORICAL pins either: the bite survives every re-point in the chain (a byte move reddens against the operative pin AND every kept ancestor)').not.toBe(SECURITY_STORE_PIN_PRE_ADV1)
     expect(sha256Of(storeMutatedPath).length, 'CONTROL — the moved copy still answers a well-formed 64-char digest').toBe(64)
     // THE ATTRIBUTION ANNOTATION, asserted so the two figures cannot be conflated:
     const g3Spec = sourceOrEmpty(fileURLToPath(new URL('./../docs/specs/store-security.md', new URL('./', import.meta.url))))
@@ -4858,7 +4952,7 @@ describe('S1 §3.3 THE INVARIANTS (I-EX-1..I-EX-12)', () => {
 
   it('I-EX-4/I-EX-5/I-EX-6/I-EX-7 (driven at P-EX-TP-1, P-EX-SM-3 and §2.5/§2.6): every refusal is a VALUE with ONE token; the store\'s decision site and bytes are untouched; the state is not persisted', () => {
     expect(unionMembersOf(sourceOf(STORE_CORE_SRC)).includes(EXCLUSION_CLOSED), 'I-EX-5 — the token is `\'exclusion-closed\'` and NOTHING ELSE (never a store-union member, never a second spelling)').toBe(false)
-    expect(sha256Of(SECURITY_STORE_SRC), 'I-EX-6 (AMENDED 2026-10-11) — the store\'s DECISION SITE and its BYTES are FROZEN at their MEASURED pin (`S3` re-grained it `c7359530…` -> `99618ac2…`: the ruling reversed `O-1`/`O-2`/`O-3`; the `B-SECURE-GATE` is still the one site, the union still `16`, no new token — `I-EX-5` beside it)').toBe(SECURITY_STORE_PIN)
+    expect(sha256Of(SECURITY_STORE_SRC), 'I-EX-6 (AMENDED 2026-10-11; SECOND RE-POINT 2026-10-06) — the store\'s DECISION SITE and its BYTES are FROZEN at their MEASURED pin (chain: `S3` re-grained `c7359530…` → `99618ac2…` for the ruling\'s `O-1`/`O-2`/`O-3`; gate 4\'s `ADV-1` remediation re-pointed it again → `a98273b8…`, each declared patch member now read ONCE; the `B-SECURE-GATE` is still the one site, the union still `16`, no new token — `I-EX-5` beside it)').toBe(SECURITY_STORE_PIN)
     expect(/exclusion/i.test(sourceOf(SECURITY_STORE_SRC)), 'I-EX-7 — no persisted key, no new file, no new writer for the exclusion state in the tier\'s own bytes').toBe(false)
   })
 
