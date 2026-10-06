@@ -1540,19 +1540,58 @@ runRow('P-O3-IM-2', 'P-IM', 'S-SS-CLONE-1', 8, () => {
       const proto = Object.getPrototypeOf(rec)
       if (proto !== null) throw new Error(`get()'s copy's prototype is ${proto === Object.prototype ? 'Object.prototype' : String(proto)}, not null — §0A item 4 / §2.5 item 1`)
       const enabledProto = Object.getPrototypeOf(rec.enabled as object)
-      // `PBT-3` (GATE-4 correction — RE-GRAINED TO THE CONTRACT, never to the
-      // implementation).  The as-filed term asserted `enabledProto ===
-      // Array.prototype` and called it "an ordinary array".  The contract's own
-      // bytes say the OPPOSITE: §0A item 4 — *"`get()`'s record, `get()`'s
-      // `enabled` array, and any array/object inside a returned value ARE
-      // null-prototype copies (they are the ones that could one day carry a
-      // foreign datum)"* — and §8 item 3 FALSIFIES *"a copy whose prototype is
-      // not `null`"*.  §0A item 4 is the item the `§8` falsifier names, so the
-      // null-prototype reading is the contract's OPERATIVE reading and this term
-      // now drives it (the landed `freshCopy` builds arrays with `[]` and then
-      // returns them, so the implementation must null their prototype too).
-      if (enabledProto !== null) {
-        throw new Error(`get()'s \`enabled\` copy's prototype is ${enabledProto === Array.prototype ? 'Array.prototype' : String(enabledProto)}, not null — §0A item 4 ("get()'s record, get()'s enabled array, and any array/object inside a returned value ARE null-prototype copies") and §8 item 3 (a copy whose prototype is not null FAILS)`)
+      // THE ARRAY HALF — CORRECTED AT THE KICK-BACK (`2026-10-11`, the supervisor's
+      // ruling; spec `§9d` item 18, SPEC-FIX, outcome (a): THE TEST WAS MALFORMED).
+      // `PBT-3` (gate 4) had over-read §0A item 4: it required
+      // `Object.getPrototypeOf(rec.enabled) === null`, and the implementer MEASURED
+      // that satisfying it breaks EIGHT rows of this same file (`TypeError:
+      // enabled.push is not a function` / `pre.enabled is not iterable` at
+      // `expectedPost()`).  THE PRECEDENT THE CONTRACT ITSELF CITES (§0 ruling 6,
+      // `src/renderer/store-core-graph.ts:362-388` — the `G4-F5`/`G4-F6` amendment)
+      // resolves it: `snapshotValue` builds OBJECTS with `Object.create(null)` and
+      // returns `if (Array.isArray(candidate))` a REAL array `const out: unknown[] = []`.
+      // So the discipline is: the RECORD and every nested OBJECT are null-prototype;
+      // an ARRAY copy is a REAL array whose ELEMENTS are copied at depth.  A
+      // null-prototype array has no `Array.prototype` — no iterator, no `.push`, no
+      // `.includes` — so it is unusable by any consumer (§2.5 item 3's own
+      // mutation-visibility control, which MUTATES the returned array, cannot hold
+      // beside it).  THIS TERM NOW DRIVES THE OPERATIVE READING AND KEEPS ITS BITE:
+      // a null-prototyped array copy FAILS it (no `Array.prototype`), while the
+      // detachment it must keep is asserted by the mutation-visibility terms above
+      // and by the `M-4` row below.
+      if (enabledProto !== Array.prototype) {
+        throw new Error(`get()'s \`enabled\` copy's prototype is ${enabledProto === null ? 'null' : String(enabledProto)}, not Array.prototype — §0A item 4's OPERATIVE reading (the snapshotValue precedent: arrays stay real arrays) with §2.5 item 1: the array copy is a REAL array whose elements are copied at depth`)
+      }
+      if (!Array.isArray(rec.enabled) || typeof (rec.enabled as string[]).push !== 'function' || typeof (rec.enabled as string[]).includes !== 'function') {
+        throw new Error('get()\'s `enabled` copy is not a USABLE array (its iterator/push/includes are gone) — §0A item 4 (operative reading) forbids a null-prototype array')
+      }
+      // THE HOSTILE-`__proto__` FIXTURE — the copy discipline's own hazard, shown at
+      // ONE node: a hostile key must ride as DATA, never as a prototype.  The
+      // fixture is the module's own admitted hazard shape (§2.2 item 1 admits an
+      // own `__proto__` data key as REPRESENTABLE; `F-4`'s `C-8` control drives it),
+      // and its null-prototype copy is exactly the `snapshotValue`/
+      // `Object.create(null)` build §0A item 4 declares.
+      {
+        const hostile: Record<string, unknown> = JSON.parse('{"__proto__":{"polluted":true}}')
+        const hostileCopy: Record<string, unknown> = Object.create(null)
+        hostileCopy.__proto__ = (hostile as Record<string, unknown>).__proto__
+        if (Object.getPrototypeOf(hostileCopy) !== null || !Object.hasOwn(hostileCopy, '__proto__') || !Object.keys(hostileCopy).includes('__proto__')) {
+          throw new Error('a hostile `__proto__` key did not ride as DATA on a null-prototype copy — the hazard §0A item 4 names')
+        }
+        if ((Object.prototype as unknown as Record<string, unknown>).polluted !== undefined) {
+          throw new Error('the hostile fixture POLLUTED `Object.prototype` — the copy discipline failed')
+        }
+        // THE STORE'S OWN RECORD IS THE GUARDED NODE: the hostile fixture is driven at
+        // `set()`'s declared domain, where it is REFUSED WHOLE-PATCH (§2.2 item 3 —
+        // a non-array `groups`), and NOTHING of it enters; the record the store hands
+        // out is then re-read and stays null-prototype and unpolluted.  (A drive of a
+        // COMMITTED hostile patch is impossible by construction: `enabled`'s elements
+        // are filtered to the five VALID_GROUPS strings, so no hostile object can
+        // reach a record member — the fixture shows the mechanism, not a live path.)
+        store.set({ groups: hostile as never })
+        expect(store.lastWriteReceipt(), 'the hostile fixture driven at set() leaves the refused receipt (§0A item 1)').toEqual({ status: 'refused', reason: 'write-failed' })
+        expect(Object.getPrototypeOf(store.get()), 'and the record the store hands out is STILL null-prototype').toBeNull()
+        expect((Object.prototype as unknown as Record<string, unknown>).polluted, 'and `Object.prototype` is untouched by the drive').toBeUndefined()
       }
       const receipt = store.lastWriteReceipt() as Record<string, unknown>
       if (Object.getPrototypeOf(receipt) !== Object.prototype) {
