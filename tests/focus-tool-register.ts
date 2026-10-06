@@ -333,10 +333,60 @@ export const OPTIONAL_MEMBER = 'refused'
  *  which is the reading the contract's surface actually declares. */
 export const DECLARED_MEMBERS: string[] = [...REQUIRED_MEMBERS, OPTIONAL_MEMBER]
 
-/** The `src/main/security.ts` export NAMES as filed at this unit's red time — the baseline the
- *  `P-FT-RT-5` drive `(2)` reads, so a NEW EXPORT (an alias, a re-export, a second resolution
- *  path) FAILS the row rather than being absorbed (`§5.5.2` item 4b's obfuscation fence). */
+/** The `src/main/security.ts` export NAMES as filed at this unit's red time — THE FROZEN BASELINE the
+ *  `P-FT-RT-5` drive `(2)` reads, so an undeclared NEW EXPORT (an alias, a re-export, a second resolution
+ *  path) FAILS the row rather than being absorbed (`§5.5.2` item 4b's obfuscation fence).
+ *
+ *  **⟶ AMENDED 2026-10-05 (THE CROSS-UNIT SIBLING-REGISTRY REPAIR PASS — `U-SECURE-EXCLUSION` `S1`'s TWO
+ *  DECLARED ADDITIONS; THE AS-FILED LIST ABOVE IS KEPT BYTE-FOR-BYTE AND IS *NOT* REWRITTEN).**
+ *  **THE MEASURED CAUSE:** `S1`'s gate-3 green added `ExclusionState` (a `type`) and `exclusionAllowsWork`
+ *  (a `function`) to `src/main/security.ts`, and the as-filed read — *"no export name beyond this list"* —
+ *  therefore listed exactly those two names and reported `P-FT-RT-5` broken. **THE ADDITIONS ARE THE
+ *  CONTRACT'S, NOT THE FOCUS UNIT'S:** `docs/specs/secure-exclusion.md` `§2.2` item 1 REQUIRES
+ *  `exclusionAllowsWork` (the gate's exclusion predicate), and `ExclusionState` types the `§2.4` item 4 /
+ *  `PAR-13` read-side widening; both live in `security.ts` because that is where the gate lives. Under
+ *  `docs/specs/gutter.md` `§3.4 R-4` (*"a later unit that legitimately imports THIS module is not a
+ *  violation of it"*) and `§5.1`'s commit-range scope rule, a *sibling row reading a later unit's commits
+ *  as its own diff* is the instrument's defect, not the unit's.
+ *  **THE AS-FILED INSTRUMENT IS A PROXY FOR THE CLAIM, AND THE AMENDMENT RE-SCOPES IT TO THE CLAIM:** the
+ *  row exists to stop **THE FOCUS UNIT** from obfuscating its OWN group resolution — an alias, a re-export
+ *  or a second resolution path — not to freeze every unrelated name in a file the tool merely consumes.
+ *  So the fence now reads: **EVERY name in `security.ts` must be DECLARED — either in the frozen baseline
+ *  above, or in `S1_OWNED_SECURITY_EXPORTS` below WITH ITS OWNING UNIT AND SPEC CLAUSE NAMED — so an
+ *  UNDECLARED export FAILS the row, and the focus unit's own added name FAILS it twice over** (undeclared,
+ *  and a focus-shaped addition is exactly what `§2.2 P-FT-5`'s name-set pins forbid).
+ *  **WHAT THE AMENDMENT DOES *NOT* WEAKEN:** the fence still bites (`addedSecurityExports` is driven both
+ *  ways at the row's own controls — a synthetic focus-shaped ALIAS is REJECTED, and the PRE-AMENDMENT form
+ *  is driven inline over the LIVE file and MUST report the two names, which is the proof that the
+ *  narrowing was owed rather than convenient); no baseline name is removed or renamed; the branch scan
+ *  (`branchLines`) and the required group-map data row (`mapLiteral`) are untouched; and this list remains
+ *  a DECLARATION SITE — a name is admitted only by naming its owner and the clause that requires it, never
+ *  by emptying the list or by a `true`-hatch. */
 export const SECURITY_EXPORTS_AT_FILING: string[] = ['ToolGroup', 'groupForTool', 'toolAllowed', 'moduleToolAllowed', 'defaultSecurityConfig', 'authorized', 'applyPatch', 'SecurityConfig', 'SecurityGate']
+/** **THE CROSS-UNIT DECLARATION (`2026-10-05`) — `src/main/security.ts`'s names ADDED BY A UNIT OTHER THAN
+ *  THIS ONE, EACH ENTERED WITH ITS OWNER AND THE CLAUSE THAT REQUIRES IT.** An entry here is admissible
+ *  ONLY with an owner naming a real unit + spec clause (the sibling-registry discipline: the `R-12`
+ *  registry's declarations each carry their measured cause); the set is read as a lookup by
+ *  `addedSecurityExports`, so an undeclared name — including one the focus unit itself adds — is still a
+ *  FAILING finding. */
+export const S1_OWNED_SECURITY_EXPORTS: string[] = [
+  // `docs/specs/secure-exclusion.md` §2.2 item 1 — the exclusion predicate the gate consults (its `[H]`-layer
+  // API), added by `U-SECURE-EXCLUSION` (`S1`) in `src/main/security.ts` because the gate lives there.
+  'exclusionAllowsWork',
+  // `docs/specs/secure-exclusion.md` §2.4 item 4 / `PAR-13` — the closed two-token state type typing the
+  // read-side return widening; `S1`'s addition, NOT this unit's.
+  'ExclusionState',
+]
+/** **THE EXPORT-NAME READ (`§5.5.2` item 4b's fence), RE-SCOPED TO THE CLAIM:** every `export` name in
+ *  `security.ts` that is NOT declared — neither in the frozen baseline nor by an owning unit below. Driven
+ *  by `P-FT-RT-5` drive `(2)` for the live file and by that row's own controls over synthetic text, so the
+ *  instrument is exercised in both directions. */
+export function addedSecurityExports(security: string): string[] {
+  const declared = new Set([...SECURITY_EXPORTS_AT_FILING, ...S1_OWNED_SECURITY_EXPORTS])
+  return [...security.matchAll(/export\s+(?:function|class|const|let|interface|type)\s+([A-Za-z0-9_$]+)/g)]
+    .map((m) => m[1])
+    .filter((n) => !declared.has(n))
+}
 
 export function read(rel: string): string {
   return readFileSync(join(ROOT, rel), 'utf8')
@@ -350,6 +400,16 @@ export function scanLines(src: string, re: RegExp): string[] {
   const out: string[] = []
   src.split('\n').forEach((line, i) => { if (re.test(line)) out.push(`${i + 1}: ${line.trim()}`) })
   return out
+}
+
+/** **THE BRANCH SCAN, NAMED ONCE (`P-FT-RT-5` drive `(2)` and that row's control (iii) read the SAME
+ *  authority).** The CLAIM is *"no focus-specific BRANCH"* — a conditional keyed on the method name, a
+ *  second resolution path — never the absence of the REQUIRED group-map data row (`§0A` note 7, defect 2).
+ *  A SPLIT/BUILT literal is caught by control (iii) driving the branch form directly, and the export fence
+ *  (`addedSecurityExports`) catches the alias/re-export route; keeping the scan in ONE function means both
+ *  reads cannot drift apart. */
+export function branchLinesOf(security: string): string[] {
+  return scanLines(security, /\bfocus\b/i).filter((line) => /\bif\b|\?|&&|\|\||\bcase\b|\bswitch\b|\bthrow\b|\breturn\b/.test(line))
 }
 
 // ===========================================================================
@@ -1216,10 +1276,42 @@ export const REGISTER: readonly RegisterRow[] = [
     id: "P-FT-RT-5", type: "P-SM", domain: "THE ROUTE — the GROUP RESOLUTION on a call, and the denied group", strategyId: "S-FT-GROUP-1", term: 2, bound: "enumerated",
     // the resolution outcome and the absence form, with no focus-specific branch
     assertions: ["the resolution outcome", "the error/absence form", "NO focus-specific branch anywhere in the gate"],
-    controls: [{ label: 'control: the gate read distinguishes a disabled group (a graph tool under the default gate is absent)', run: () => expect(newServer(recorder([{}]).backend).allowedToolNames()).not.toContain('provident.load') }],
+    controls: [
+      { label: 'control: the gate read distinguishes a disabled group (a graph tool under the default gate is absent)', run: () => expect(newServer(recorder([{}]).backend).allowedToolNames()).not.toContain('provident.load') },
+      // THE OBFUSCATION FENCE'S FALSIFIERS, ALL FOUR DRIVEN (`§5.5.2` item 4b; the 2026-10-05 amendment):
+      // the fence was RE-SCOPED to its claim (the FOCUS unit's own additions), NOT weakened, and these
+      // controls are the proof. (i)/(ii) drive the AMENDED read in both directions over synthetic text;
+      // (iii) drives a focus-flavoured ALIAS; (iv) drives the PRE-AMENDMENT form inline over the LIVE file
+      // — it MUST report `S1`'s two declared names, which is exactly why the amendment was owed.
+      { label: 'control: a focus-related ALIAS export still FAILS the amended fence (and a DECLARED name does not)', run: () => {
+        expect(addedSecurityExports(`export function groupForToolAlias(): string { return 'dispatch' }\nexport const ${TOOL_NAME.replace('.', '_')}Group = 'dispatch'\n`),
+          'RT-5 control (i) — an ALIAS and a focus-shaped added export are UNDECLARED and MUST FAIL the re-scoped fence.').toEqual(['groupForToolAlias', 'provident_focusGroup'])
+        expect(addedSecurityExports(`export const declared = 1\n`.replace('declared', SECURITY_EXPORTS_AT_FILING[1])),
+          'RT-5 control (ii) — a name DECLARED by the frozen baseline must NOT be reported (the fence is not a blanket ban).').toEqual([])
+        expect(addedSecurityExports(`export function thing(): void {}\n`.replace('thing', S1_OWNED_SECURITY_EXPORTS[0])),
+          'RT-5 control (ii) — and a name DECLARED by its OWNING UNIT (`S1`) must NOT be reported either.').toEqual([])
+      } },
+      { label: 'control: a RE-EXPORT/split-literal obfuscation still FAILS, and the PRE-AMENDMENT form is driven over the LIVE file', run: () => {
+        const live = stripComments(read(SECURITY_REL))
+        // (iii) THE OBFUSCATION SHAPE THE FENCE EXISTS FOR, DRIVEN AS A FALSIFIER: a re-spelled/second
+        // resolution path (`export { map as groups }`, `export const X = 'provident.' + 'focus'`) is
+        // carried by the branch scan and by an added export, and both reads MUST still bite.
+        expect(scanLines("export { TOOL_GROUPS as groups } from './security.js'", /export\s*\{/),
+          'RT-5 control (iii) — a re-export IS an added surface and must be visible to the fence\'s reads.').not.toEqual([])
+        expect(branchLinesOf(`const n = 'provident.' + '${METHOD}'\nif (n) return 'dispatch'`),
+          'RT-5 control (iii) — a SPLIT/BUILT literal plus a second resolution path MUST FAIL the branch scan.').not.toEqual([])
+        // (iv) THE PRE-AMENDMENT INSTRUMENT, DRIVEN INLINE UNDER ITS OWN CONTROL-ONLY NAME: the as-filed
+        // read (`SECURITY_EXPORTS_AT_FILING` alone, no owning-unit declarations) reports the LIVE file's two
+        // `S1` names — the measured cause of this amendment, reproduced rather than asserted.
+        const asFiled = [...live.matchAll(/export\s+(?:function|class|const|let|interface|type)\s+([A-Za-z0-9_$]+)/g)]
+          .map((m) => m[1]).filter((n) => !SECURITY_EXPORTS_AT_FILING.includes(n))
+        expect(asFiled.sort(), "RT-5 control (iv) — the PRE-AMENDMENT form reports `S1`'s two DECLARED additions over the live file, so the narrowing was owed, not convenient.").toEqual([...S1_OWNED_SECURITY_EXPORTS].sort())
+        expect(addedSecurityExports(live), 'RT-5 control (iv) — the AMENDED form reports NOTHING undeclared: the fence holds with the sibling\'s declared additions in view.').toEqual([])
+      } },
+    ],
     drives: [
       { label: '(1) `dispatch` ON — the tool resolves and is callable', run: () => expect(newServer(recorder([{}]).backend).allowedToolNames(), 'RT-5 — registered under the default gate.').toContain(TOOL_NAME) },
-      { label: '(2) `dispatch` OFF — the tool is not registered/listed', run: async () => { const gate = new SecurityGate().apply({ disable: ['dispatch'] }); expect(newServer(recorder([{}]).backend, gate).allowedToolNames(), "RT-5 — the endpoint's existing group semantics, not a new case.").not.toContain(TOOL_NAME); const security = stripComments(read(SECURITY_REL)); const focusMentions = scanLines(security, /focus/i); const branchLines = scanLines(security, /\bfocus\b/i).filter((line) => /\bif\b|\?|&&|\|\||\bcase\b|\bswitch\b|\bthrow\b|\breturn\b/.test(line)); const mapLiteral = new RegExp(`(['"])${TOOL_NAME.replace('.', '\\.')}\\1\\s*:\\s*(['"])dispatch\\2`).test(security); // THE RE-SCOPED INSTRUMENT (`§5.5.1 RT-5`; `§0A` note 7, defect 2): THE CLAIM IS *"no
+      { label: '(2) `dispatch` OFF — the tool is not registered/listed', run: async () => { const gate = new SecurityGate().apply({ disable: ['dispatch'] }); expect(newServer(recorder([{}]).backend, gate).allowedToolNames(), "RT-5 — the endpoint's existing group semantics, not a new case.").not.toContain(TOOL_NAME); const security = stripComments(read(SECURITY_REL)); const focusMentions = scanLines(security, /focus/i); const branchLines = branchLinesOf(security); const mapLiteral = new RegExp(`(['"])${TOOL_NAME.replace('.', '\\.')}\\1\\s*:\\s*(['"])dispatch\\2`).test(security); // THE RE-SCOPED INSTRUMENT (`§5.5.1 RT-5`; `§0A` note 7, defect 2): THE CLAIM IS *"no
         // focus-specific BRANCH"* — NEVER the absence of the group-map DATA row `§2.1` item 2
         // and `§5.1` row 2 REQUIRE. The as-filed form asserted the method name does NOT appear
         // in this file at all, which FORBADE that required data row: NO implementation could
@@ -1227,7 +1319,17 @@ export const REGISTER: readonly RegisterRow[] = [
         // the branch scan carries the claim. OBFUSCATION IS NOT A SATISFACTION: a SPLIT or
         // BUILT literal, a NEW EXPORT, a re-export, an alias or a computed name that hides the
         // name from this read is its own FAILING finding (`§2.2 P-FT-5`).
-        expect(focusMentions, `RT-5 — the gate's group-map DATA row names the tool (the row \`§5.1\` row 2 REQUIRES). Security-source mentions measured: ${JSON.stringify(focusMentions)}`).not.toEqual([]); expect(mapLiteral, `RT-5 — and it resolves to the EXISTING \`dispatch\` group as DATA, never by a new case. Security-source mentions measured: ${JSON.stringify(focusMentions)}`).toBe(true); expect(branchLines, `RT-5 — NO focus-specific BRANCH: no conditional keyed on the method name and no second resolution path alongside \`TOOL_GROUPS\`/\`groupForTool\`. A branch FAILS this row. Measured: ${JSON.stringify(branchLines)}`).toEqual([]); const addedExports = [...security.matchAll(/export\s+(?:function|class|const|let|interface|type)\s+([A-Za-z0-9_$]+)/g)].map((m) => m[1]).filter((n) => !SECURITY_EXPORTS_AT_FILING.includes(n)); expect(addedExports, `RT-5 — no NEW EXPORT, alias or second resolution path is introduced to satisfy the row (an added name FAILS). Measured: ${JSON.stringify(addedExports)}`).toEqual([]) } },
+        //
+        // **⟶ AND THE EXPORT FENCE ITSELF IS RE-SCOPED TO ITS CLAIM (2026-10-05, `U-SECURE-EXCLUSION`
+        // `S1`):** the as-filed read — *"no export name beyond `SECURITY_EXPORTS_AT_FILING`"* — was a
+        // PROXY for *"the focus unit must not obfuscate its own group resolution by alias/re-export/
+        // second path"*, and it fired on `S1`'s DECLARED additions (`security.ts`'s `ExclusionState` and
+        // `exclusionAllowsWork`; `docs/specs/secure-exclusion.md` `§2.2` item 1 + `§2.4` item 4/`PAR-13`)
+        // — a sibling unit's legitimate addition, which `§3.4 R-4` says is NOT this module's violation.
+        // The fence now requires every name to be DECLARED (baseline, or `S1_OWNED_SECURITY_EXPORTS` with
+        // its owner named), so an UNDECLARED name — a focus-side alias, re-export or second resolution
+        // path above all — STILL FAILS, and both directions are driven at this row's controls (i)–(iv).
+        expect(focusMentions, `RT-5 — the gate's group-map DATA row names the tool (the row \`§5.1\` row 2 REQUIRES). Security-source mentions measured: ${JSON.stringify(focusMentions)}`).not.toEqual([]); expect(mapLiteral, `RT-5 — and it resolves to the EXISTING \`dispatch\` group as DATA, never by a new case. Security-source mentions measured: ${JSON.stringify(focusMentions)}`).toBe(true); expect(branchLines, `RT-5 — NO focus-specific BRANCH: no conditional keyed on the method name and no second resolution path alongside \`TOOL_GROUPS\`/\`groupForTool\`. A branch FAILS this row. Measured: ${JSON.stringify(branchLines)}`).toEqual([]); const addedExports = addedSecurityExports(security); expect(addedExports, `RT-5 — no UNDECLARED EXPORT, alias or second resolution path is introduced (each declared name is in the frozen baseline or carries an OWNING UNIT in \`S1_OWNED_SECURITY_EXPORTS\`; an added name that is neither FAILS). Measured: ${JSON.stringify(addedExports)}`).toEqual([]) } },
     ],
   },
   {

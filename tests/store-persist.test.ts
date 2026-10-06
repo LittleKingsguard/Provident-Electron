@@ -61,7 +61,32 @@ import { createModuleStore } from '../src/main/module-store'
 
 const DECLARED_STORE_FILE_GET = 'provident:store:file:get'
 const DECLARED_STORE_FILE_PUT = 'provident:store:file:put'
-const DECLARED_EXPORT_NAMES: readonly string[] = ['STORE_FILE_GET', 'STORE_FILE_PUT']
+const DECLARED_EXPORT_NAMES: readonly string[] = ['STORE_FILE_GET', 'STORE_FILE_PUT', 'IPC_SECURITY_EXCLUSION']
+/* ── THE CROSS-UNIT SIBLING-REGISTRY AMENDMENT (`2026-10-05`) — THE DECLARED CENSUS MOVES `2 → 3`. ──
+ *
+ * WHAT MOVED: `src/main/store-channels.ts` now carries THREE `export` tokens and the export-NAME set
+ * {`STORE_FILE_GET`, `STORE_FILE_PUT`, `IPC_SECURITY_EXCLUSION`}, where the as-filed `S-1`/`M-8` census
+ * declared exactly TWO.
+ *
+ * WHO OWNS THE CHANGE: the `U-SECURE-EXCLUSION` unit (ledger row `S1`) — its manual-UI channel adds the ONE
+ * constant (`src/main/store-channels.ts`'s own dated `RCA-8(d)` annotate-beside names it at `:24-27`).
+ *
+ * THE CLAUSE THAT DECLARES IT: `docs/specs/secure-exclusion.md` `§1.3` item 9 · `§2.4` item 4 · `§2.6` item 3 —
+ * *"The `store-channels.ts` census moves **`2 → 3`** constants"* (`§1.5` item 4 names the surface). The as-filed
+ * `store-persist` sentence *"the census stays EXACTLY TWO"* is KEPT VISIBLE in the module and is SUPERSEDED there
+ * by the same dated annotation — so this is a DECLARED cross-unit growth (`docs/specs/gutter.md` `§3.4 R-4`:
+ * *"a later unit that legitimately imports THIS module is not a violation of it"*), not a regression, and the
+ * census is the file's OWN single-source census (`§2.2` item 3) moving `2 + 1 = 3`.
+ *
+ * WHAT THIS AMENDMENT DOES **NOT** WEAKEN (the two halves of `S-1`/`M-8`, both still genuinely binding):
+ *  (a) THE CONSTANTS-ONLY CLASS — "constants and NOTHING else": no callable, no state, no type, no logic, no
+ *      runtime import. Now enforced STRUCTURALLY, per `export` declaration, instead of by a raw `export`-token
+ *      count (the count was only ever a PROXY for this claim);
+ *  (b) SINGLE-SOURCE + IMPORT-EQUALITY — every declared name is read from THIS ONE file and imported (never
+ *      re-spelled) by `main.ts`/`preload.ts` (`f8ImportProbe`, `P-PS-IM-1` A3 — untouched);
+ *  and the census stays FALSIFIABLE IN BOTH DIRECTIONS: a FOURTH constant, or ANY non-constant export, still
+ *  FAILS (the two positive controls driven at the `M-8` row below). The register row `P-PS-IM-1`'s own A1/A2
+ *  attempts read this SAME authority, so the file and the register cannot drift apart. */
 /** §7a item (2) — the declared current schema version, IN FORCE. */
 const DECLARED_SCHEMA_VERSION = '1'
 const DECLARED_RESERVED_NAMESPACES: readonly string[] = ['window', 'tabs', 'layout', 'settings', 'tracked', 'modules']
@@ -279,31 +304,40 @@ const REGISTER_ROWS: readonly RegisterRow[] = [
     type: 'P-IM',
     property: 'THE CHANNEL FILE IS DECLARED CONTENT ONLY, AND THE CHANNEL NAMES ARE SINGLE-SOURCED',
     strategy: 'S-PS-CH-1',
-    term: '3 attempts = (1) the module\'s export-name set equals {STORE_FILE_GET, STORE_FILE_PUT}; (2) every export is a non-empty string (no function, no state, no value export beyond the two); (3) the handler/invoke sites\' channel-name uses are identity-equal to the imports (import-equality; a literal re-spelling reddens)',
+    term: '3 attempts = (1) the module\'s export-name set equals the THREE DECLARED constants {STORE_FILE_GET, STORE_FILE_PUT, IPC_SECURITY_EXCLUSION} (the census `2 → 3` is `U-SECURE-EXCLUSION`\'s, DECLARED at `docs/specs/secure-exclusion.md` §1.3 item 9 / §2.6 item 3 — a FOURTH name FAILS); (2) every export is the declared constant — no function, no state, no type, no logic (the constants-only class, enforced per declaration); (3) the handler/invoke sites\' channel-name uses are identity-equal to the imports (import-equality; a literal re-spelling reddens)',
     attempts: [
       {
-        label: 'IM-1 A1 — export-name set equals {STORE_FILE_GET, STORE_FILE_PUT}',
+        label: 'IM-1 A1 — export-name set equals the declared {STORE_FILE_GET, STORE_FILE_PUT, IPC_SECURITY_EXCLUSION}',
         run: async (): Promise<Probe> => {
           const mod = await channelModule()
           if (mod === null) return BREAK('src/main/store-channels.ts does not exist — the constants are absent (the channel-name import fails)')
           const actual = Object.keys(mod).sort()
           const declared = [...DECLARED_EXPORT_NAMES].sort()
-          return JSON.stringify(actual) === JSON.stringify(declared)
-            ? HOLD(`export-name set is ${JSON.stringify(actual)}`)
-            : BREAK(`export-name set is ${JSON.stringify(actual)} — declared ${JSON.stringify(declared)}`)
+          const setOk = JSON.stringify(actual) === JSON.stringify(declared)
+          if (!setOk) return BREAK(`export-name set is ${JSON.stringify(actual)} — declared ${JSON.stringify(declared)}`)
+          // THE FALSIFIER, DRIVEN IN BOTH DIRECTIONS (the read CAN fail on an added name): the SAME
+          // instrument is driven over synthetic text carrying a FOURTH constant — the name parser must
+          // SEE that name and the probe must REJECT it, so the move `2 → 3` did not make the census vacuous.
+          const controlText = "export const STORE_FILE_GET = 'a'\nexport const STORE_FILE_PUT = 'b'\nexport const IPC_SECURITY_EXCLUSION = 'c'\nexport const IPC_SECURITY_FOURTH_CONTROL = 'd'\n"
+          const seen = exportNamesOf(controlText).sort()
+          if (JSON.stringify(seen) !== JSON.stringify([...declared, 'IPC_SECURITY_FOURTH_CONTROL'].sort())) {
+            return BREAK(`the export-name parser did not read the control's own names — measured ${JSON.stringify(seen)}; the census instrument is not reading declarations at all`)
+          }
+          if (constantsOnlyProbe(controlText, declared).held) {
+            return BREAK('the census ACCEPTED a synthetic FOURTH constant — the declared name-set equality is vacuous')
+          }
+          return HOLD(`export-name set is ${JSON.stringify(actual)} (the declared census; a FOURTH name fails)`)
         },
       },
       {
-        label: 'IM-1 A2 — every export is a non-empty string (a channel-name import OF a VALUE drives this row)',
+        label: 'IM-1 A2 — every export is the declared constant (the constants-only class, read per export declaration)',
         run: async (): Promise<Probe> => {
           const mod = await channelModule()
           if (mod === null) return BREAK('src/main/store-channels.ts does not exist — the constants are absent')
-          const values = Object.values(mod)
-          if (values.length !== 2) return BREAK(`expected exactly two exports, found ${values.length}`)
-          if (!values.every((v) => typeof v === 'string' && v.length > 0)) return BREAK('an export is not a non-empty string — the channel module must hold channel-name constant strings only (no function, no state, no value export)')
           const text = readSrcSafe('main/store-channels.ts')
-          if (text !== null && (/\bimport\b/.test(text) || /\bfunction\b/.test(text))) return BREAK('the channel module contains an import or a function — §2.1 item 1 declares constants only (no logic, no runtime import)')
-          return HOLD('both exports are non-empty strings; the module text is constants-only')
+          return text === null
+            ? BREAK('the channel module text is unreadable — the constants-only class cannot be read')
+            : constantsOnlyProbe(text, DECLARED_EXPORT_NAMES)
         },
       },
       {
@@ -938,7 +972,7 @@ describe('G2 U-STORE-PERSIST — tier-1 crossing: THE RED SET (from docs/specs/s
       ), 'M-7 holder bound')
     })
 
-    it('M-8: the channel is constants-only and single-sourced (§2.1/§2.2, R C-4)', async () => {
+    it('M-8: the channel is constants-only and single-sourced (§2.1/§2.2, R C-4; the census `2 → 3` is `U-SECURE-EXCLUSION`\'s — the amendment block beside `DECLARED_EXPORT_NAMES`)', async () => {
       assertProbe(ALL(
         (await channelModule()) === null
           ? BREAK('src/main/store-channels.ts does not exist — the constants are absent')
@@ -946,6 +980,31 @@ describe('G2 U-STORE-PERSIST — tier-1 crossing: THE RED SET (from docs/specs/s
         channelExportsProbe(),
         f8ImportProbe(),
       ), 'M-8 channel census')
+      // THE TWO POSITIVE CONTROLS, DRIVEN INLINE (`§5.5.2` item 3(a) shape; the sibling-registry rule
+      // "every instrument change ships a control that can FAIL"). Each drives the AMENDED instrument over
+      // SYNTHETIC module text, so neither direction of the census can become vacuous:
+      //  (a) a FOURTH constant FAILS the declared name-set equality (the census is not a rubber stamp);
+      //  (b) ANY non-constant export FAILS the constants-only class, whatever its kind — the claim the
+      //      raw `export`-token count was only ever a proxy for.
+      const controlFourthText = "export const STORE_FILE_GET = 'a'\nexport const STORE_FILE_PUT = 'b'\nexport const IPC_SECURITY_EXCLUSION = 'c'\nexport const IPC_SECURITY_FOURTH_CONTROL = 'd'\n"
+      // (a-0) THE PARSER ITSELF IS DRIVEN: the SAME `exportNamesOf` the real census reads must SEE all four
+      // names in the control's text — a parser that quietly finds nothing would make every direction vacuous.
+      expect([...exportNamesOf(controlFourthText)].sort(),
+        `M-8 CONTROL (a-0) — the export-name parser MUST read the control's own four names (measured ${JSON.stringify(exportNamesOf(controlFourthText))}); a parser that reads nothing makes the census vacuous.`).toEqual(['IPC_SECURITY_EXCLUSION', 'IPC_SECURITY_FOURTH_CONTROL', 'STORE_FILE_GET', 'STORE_FILE_PUT'])
+      const controlFourth = constantsOnlyProbe(controlFourthText, DECLARED_EXPORT_NAMES)
+      expect(controlFourth.held,
+        `M-8 CONTROL (a) — a FOURTH constant MUST FAIL the declared census (${DECLARED_EXPORT_NAMES.join(' · ')}). Measured: ${controlFourth.why}`).toBe(false)
+      for (const [kind, body] of [
+        ['a FUNCTION export', "export const STORE_FILE_GET = 'a'\nexport const STORE_FILE_PUT = 'b'\nexport const IPC_SECURITY_EXCLUSION = 'c'\nexport function readChannel() { return 1 }\n"],
+        ['a TYPE export', "export const STORE_FILE_GET = 'a'\nexport const STORE_FILE_PUT = 'b'\nexport const IPC_SECURITY_EXCLUSION = 'c'\nexport type ChannelName = string\n"],
+        ['an INTERFACE export', "export const STORE_FILE_GET = 'a'\nexport const STORE_FILE_PUT = 'b'\nexport const IPC_SECURITY_EXCLUSION = 'c'\nexport interface Channel { readonly get: string }\n"],
+        ['a STATE export (uninitialised let)', "export const STORE_FILE_GET = 'a'\nexport const STORE_FILE_PUT = 'b'\nexport const IPC_SECURITY_EXCLUSION = 'c'\nexport let lastChannel: string\n"],
+        ['a re-export', "export const STORE_FILE_GET = 'a'\nexport const STORE_FILE_PUT = 'b'\nexport const IPC_SECURITY_EXCLUSION = 'c'\nexport { readFileSync } from 'node:fs'\n"],
+        ['a runtime IMPORT', "import { readFileSync } from 'node:fs'\nexport const STORE_FILE_GET = 'a'\nexport const STORE_FILE_PUT = 'b'\nexport const IPC_SECURITY_EXCLUSION = 'c'\n"],
+      ] as const) {
+        const controlKind = constantsOnlyProbe(body, DECLARED_EXPORT_NAMES)
+        expect(controlKind.held, `M-8 CONTROL (b) — ${kind} MUST FAIL the constants-only class (${kind} is not a channel-name constant). Measured: ${controlKind.why}`).toBe(false)
+      }
     })
   })
 
@@ -1305,15 +1364,85 @@ function assertProbe(p: Probe, label: string): void {
   expect(p.held, `${label} — ${p.why}`).toBe(true)
 }
 
+/** THE AMENDED CENSUS INSTRUMENT — the export-NAME SET plus the constants-only CLASS, read per `export`
+ *  declaration over a module's TEXT. Shared by the `S-1` probe, the `M-8` row's positive controls and the
+ *  register row `P-PS-IM-1`'s A2 attempt, so the file carries ONE authority.
+ *
+ *  **WHY THE RE-GRAIN (`2026-10-05`, the `U-SECURE-EXCLUSION` `S1` sibling-registry amendment):** the
+ *  as-filed `S-1`/`M-8` instrument counted raw `export` TOKENS and BREAK on `> 2*`. `S1`'s DECLARED third
+ *  constant (`docs/specs/secure-exclusion.md` `§1.3` item 9 / `§2.6` item 3: the census `2 → 3`) made that
+ *  count read `3` and BROKE the row against an addition the contract requires — i.e. the instrument, not the
+ *  claim. The count was only ever a PROXY for "constants and nothing else", so the instrument reads the
+ *  DECLARED NAME SET (set-equality against the declared constants, `DECLARED_EXPORT_NAMES`) and the CLASS OF
+ *  EACH DECLARATION instead (through `exportNamesOf` / `constantsOnlyProbe`, the ONE authority this file's
+ *  `S-1` probe, `M-8` controls and `P-PS-IM-1` A2 attempt all read).
+ *  **THE CLAIM IS NOT WEAKENED:** a FOURTH constant fails the set-equality; ANY non-constant export fails the
+ *  class check whatever its kind (function · class · interface · type · enum · re-export · an uninitialised
+ *  `let`/`var` state binding · a non-literal initialiser · an `import` of any form); and the single-source
+ *  half stays with `f8ImportProbe` and `P-PS-IM-1` A3, untouched. */
+function exportDeclarations(text: string): Array<{ name: string | null; initialiser: string | null }> {
+  const out: Array<{ name: string | null; initialiser: string | null }> = []
+  const re = /^export\s+([^\n]*)$/gm
+  let m: RegExpExecArray | null
+  while ((m = re.exec(text)) !== null) {
+    const decl = m[1].trim()
+    const named = decl.match(/^(?:const|let|var|function|class|interface|type|enum)\s+([A-Za-z_$][\w$]*)/)
+    if (named) {
+      const eq = decl.indexOf('=')
+      out.push({ name: named[1], initialiser: eq < 0 ? null : decl.slice(eq + 1).trim() })
+      continue
+    }
+    if (/^\{[\s\S]*\}\s*from\b/.test(decl)) {
+      for (const part of (decl.match(/^\{([\s\S]*?)\}/)?.[1] ?? '').split(',')) {
+        const nm = part.trim().split(/\s+as\s+/).pop()?.trim() ?? ''
+        if (/^[A-Za-z_$][\w$]*$/.test(nm)) out.push({ name: nm, initialiser: null })
+      }
+      continue
+    }
+    out.push({ name: null, initialiser: null })
+  }
+  return out
+}
+
+/** The names an `export` declaration contributes, in source order (the re-export's LOCAL name is used). */
+function exportNamesOf(text: string): string[] {
+  const names: string[] = []
+  for (const d of exportDeclarations(text)) if (d.name !== null) names.push(d.name)
+  return names
+}
+
+function constantsOnlyProbe(text: string, declared: readonly string[] = DECLARED_EXPORT_NAMES): Probe {
+  const decls = exportDeclarations(text)
+  const named = decls.filter((d) => d.name !== null).map((d) => d.name as string)
+  if (decls.length !== named.length) {
+    return BREAK(`the module has ${decls.length - named.length} export declaration(s) that are NOT a named constant — §2.1 item 1 declares the channel-name constants and NOTHING else`)
+  }
+  const declaredSet = [...declared].sort()
+  const actual = [...named].sort()
+  if (JSON.stringify(actual) !== JSON.stringify(declaredSet)) {
+    return BREAK(`the module's export-NAME set is ${JSON.stringify(actual)} — declared ${JSON.stringify(declaredSet)} (a FOURTH name, a MISSING name or a renamed name FAILS: the census is set-equality, the count alone was only ever a PROXY — the as-filed 'export'-token count is what this amendment replaces)`)
+  }
+  for (const d of decls) {
+    if (d.initialiser === null) return BREAK(`the export '${String(d.name)}' carries NO initialiser — a channel-name constant is a string literal; a type/state/logic declaration is not one (§2.1 item 1: constants only)`)
+    if (!/^'[^']*'$/.test(d.initialiser) && !/^"[^"]*"$/.test(d.initialiser)) {
+      return BREAK(`the export '${String(d.name)}' initialises to \`${d.initialiser}\` — NOT a string literal: the module holds channel-name constants only (no callable, no state, no type, no computed value)`)
+    }
+  }
+  if (/(^|[;\n])\s*import\b/.test(text)) {
+    return BREAK('the module IMPORTs at runtime — §2.1 item 1 declares the constants only (no runtime dependency; the names are the SINGLE SOURCE, imported BY main.ts/preload.ts)')
+  }
+  return HOLD(`the export set is exactly the declared ${declared.length} constants and every declaration is a channel-name string literal`)
+}
+
+/** THE `S-1` / `M-8` PROBE, RE-GRAINED (`2026-10-05`). Its two real claims — (a) "constants and NOTHING
+ *  else" and (b) "the channel names are single-sourced HERE" — are carried by `constantsOnlyProbe` and
+ *  `f8ImportProbe` respectively; the raw `export`-token count it used to gate on was a proxy for (a) and
+ *  fired on `U-SECURE-EXCLUSION` `S1`'s DECLARED third constant (`docs/specs/secure-exclusion.md` `§1.3`
+ *  item 9 / `§2.4` item 4 / `§2.6` item 3: `2 → 3`). */
 function channelExportsProbe(): Probe {
   const text = readSrcSafe('main/store-channels.ts')
   if (text === null) return BREAK('src/main/store-channels.ts does not exist — the channel constants are absent (§1.2 row 1)')
-  const exportCount = (text.match(/\bexport\b/g) ?? []).length
-  if (exportCount > 2) return BREAK(`the channel module has ${exportCount} export statements — §2.1 item 1 declares the TWO channel-name constants and NOTHING else`)
-  if (text.includes(DECLARED_STORE_FILE_GET) && text.includes(DECLARED_STORE_FILE_PUT)) {
-    return HOLD('the file exists; the two declared channel-name values are present; no other guest.')
-  }
-  return BREAK('the declared channel-name values are not present in the module')
+  return constantsOnlyProbe(text)
 }
 
 /** The positive single-source half: main.ts and preload.ts import the channel module and use
