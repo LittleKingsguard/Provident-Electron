@@ -43,7 +43,7 @@
 //     HTTP`, and the summary prints the count WITH its terms. **THE FINDING'S LITERAL CLAIM — that the pane-realm
 //     row and the app-graph row are NOT members — is REFUTED BY MEASUREMENT** (both ids evaluate equal to their
 //     `check()` call sites; the guard fires for both on a dead channel), and the class it points at one row over
-//     is what this edit declares. See the map's own `⟶ EXTENDED BESIDE` note and the record `§4i`.
+//     is what this edit declares. See the map's own `⟶ EXTENDED BESIDE` note and the record `§4j`.
 //   · `A-9-02` — the third exit limb is keyed off `deadDeclared.length > 0` as well, so a channel dying AFTER the
 //     last declared row was recorded can no longer print `✗ NOT A GREEN BATTERY` and exit `0`; and the two stale
 //     sentences that read *"the EXIT CODE keeps its landed meaning (non-zero ⟺ at least one FAIL)"* (this header's
@@ -231,7 +231,7 @@ const CDP_DEPENDENT_ROWS = {
   // `26 = 24 on channel A + 2 on channel HTTP` (printed, with its terms, by the summary's INSTRUMENT STATE
   // line), and a dead channel turns any of the nine `MANUAL` instead of `PASS`. **THE MUTATION THAT STILL
   // BITES:** drop the first CDP frame (the throwaway `DEADPATH` control) → the `24` channel-A rows read
-  // `MANUAL` and the run exits `3`, never `0` (record `§4i`); with both channels LIVE nothing moves, so the
+  // `MANUAL` and the run exits `3`, never `0` (record `§4j`); with both channels LIVE nothing moves, so the
   // `42`-row result and every row's verdict are unperturbed.
   'U-1 / SX-G-59/60 — DELETION/RED-FAIL CONTROL (NEW 2026-10-09, the third `§6.2` audit\'s `R3-01`)': 'A',
   'U-5 / SX-G-65 (app graph) — DELETION/RED-FAIL CONTROL (NEW 2026-10-09, the third `§6.2` audit\'s `R3-01`)': 'A',
