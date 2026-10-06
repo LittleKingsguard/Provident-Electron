@@ -67,7 +67,15 @@ export function createSecurityStore(opts: SecurityStoreOptions): SecurityStore {
   /** O-3's COPY DISCIPLINE (§2.5 item 1 / §0A item 4): every value this module returns from a
    *  declared member is DETACHED AT EVERY DEPTH — the copy is built with `Object.create(null)`
    *  as its prototype and a `seen` map as its cycle guard (the `snapshotValue` shape, §0 ruling
-   *  6), never a JSON round-trip (§2.2 item 2's reason). */
+   *  6), never a JSON round-trip (§2.2 item 2's reason).
+   *  KICK-BACK (`ADV-1`'s sibling row `P-O3-IM-2` reading 7): this file's arrays are returned as
+   *  REAL arrays (their prototype is `Array.prototype`), NOT null-prototype copies — because
+   *  nulling `enabled`'s prototype makes the very red set that demands it throw: measured, that
+   *  single reading costs `P-O2-IM-1` `7`, `P-M-SM-1` `4`, `P-O2-IM-2` `1`, `P-O1-TP-1` `1`,
+   *  `P-O3-IM-2` `2` and `P-M-SM-2`/`P-O2-TP-1` whole-row failures (`TypeError: enabled.push is
+   *  not a function` / `pre.enabled is not iterable` at `expectedPost()`, `probe()`'s consumers
+   *  and `M-4`, all OUTSIDE `§5.1` item 1's edit set). Reported to the supervisor, not resolved
+   *  by an edit. */
   function freshCopy<T>(value: T, seen: Map<object, unknown> = new Map()): T {
     if (value === null || typeof value !== 'object') return value
     const node: object = value
@@ -131,7 +139,8 @@ export function createSecurityStore(opts: SecurityStoreOptions): SecurityStore {
    *  non-group strings), REFUSES THE WHOLE PATCH: `null` is this function's answer, and no
    *  filesystem call is made for it. A patch OUTSIDE the declared domain — a non-object, an
    *  array, a non-plain object — refuses in the same form, so `set()` never throws (§2.3 item 1:
-   *  the landed `set(null)` TypeError is CLOSED). */
+   *  the landed `set(null)` TypeError is CLOSED). Each declared member is read from the patch
+   *  EXACTLY ONCE and THAT reading is what is admitted, coerced and persisted (`ADV-1`). */
   function admittedRecord(patch: unknown): SecuritySettings | null {
     if (patch === null || typeof patch !== 'object' || Array.isArray(patch)) return null
     const proto: object | null = Object.getPrototypeOf(patch)
@@ -146,27 +155,41 @@ export function createSecurityStore(opts: SecurityStoreOptions): SecurityStore {
       for (const element of value) if (!admittedValue(element)) return null
       return [...new Set(value.filter((group): group is string => typeof group === 'string' && VALID_GROUPS.has(group)))]
     }
-    const add = src.groups === undefined ? [] : groupSet(src.groups)
+    // EACH DECLARED MEMBER IS READ FROM THE PATCH EXACTLY ONCE (`ADV-1`, GATE 4's HIGH host fix;
+    // `§2.2` item 2 — "the admitted-and-persisted value equals the value the caller supplied").
+    // The patch arrives from a caller, so a member may be an ACCESSOR (or a proxy's get trap):
+    // reading it again for the coercion would let a LATE read answer a DIFFERENT value than the
+    // one the admission approved — a 6th read of `maxJournalLength` answering `Infinity` passes
+    // the `> 0` guard, `Math.floor(Infinity)` is `Infinity`, and the tier would answer a
+    // `committed` receipt with a cap LIVE that `JSON.stringify` turns into a `null` cap in the
+    // file: exactly the live-versus-durable divergence (`§2.3` item 7 / I-1) this unit exists to
+    // close, re-opened through the caller's object. One read per member admits THAT reading and
+    // coerces/store THE SAME reading, so the admission and the persisted value cannot disagree.
+    const patchGroups = src.groups
+    const patchDisable = src.disable
+    const patchToken = src.token
+    const patchCap = src.maxJournalLength
+    const add = patchGroups === undefined ? [] : groupSet(patchGroups)
     if (add === null) return null
-    const del = src.disable === undefined ? [] : groupSet(src.disable)
+    const del = patchDisable === undefined ? [] : groupSet(patchDisable)
     if (del === null) return null
     let token: string | null = current.token
-    if (src.token !== undefined) {
-      if (src.token === null || src.token === '') token = null
-      else if (typeof src.token === 'string') token = src.token
+    if (patchToken !== undefined) {
+      if (patchToken === null || patchToken === '') token = null
+      else if (typeof patchToken === 'string') token = patchToken
       else return null
     }
     let maxJournalLength: number | undefined = current.maxJournalLength
-    if (src.maxJournalLength !== undefined) {
-      if (src.maxJournalLength === null) maxJournalLength = undefined
-      else if (typeof src.maxJournalLength === 'number') {
+    if (patchCap !== undefined) {
+      if (patchCap === null) maxJournalLength = undefined
+      else if (typeof patchCap === 'number') {
         // The NON-FINITE pair refuses (§2.2 item 3: "`Infinity`/`-Infinity` … REFUSE the patch" —
         // the measured divergence's own fixture). `NaN` does NOT: §2.2 item 3 declares it a
         // documented-clear-arm value ("NaN is unrepresentable but sits in the documented clear
         // arm, which is exactly why it needs this rule rather than the predicate alone") — the
         // `> 0` test below is the landed rule and clears it.
-        if (src.maxJournalLength === Infinity || src.maxJournalLength === -Infinity) return null
-        maxJournalLength = src.maxJournalLength > 0 ? Math.floor(src.maxJournalLength) : undefined
+        if (patchCap === Infinity || patchCap === -Infinity) return null
+        maxJournalLength = patchCap > 0 ? Math.floor(patchCap) : undefined
       } else return null
     }
     const enabled = [...current.enabled]
