@@ -218,7 +218,7 @@
 //              cell now LEADS with its literal command line) — none of the three moved this file.
 import { createHash } from 'node:crypto'
 import { execSync } from 'node:child_process'
-import { mkdtempSync, readFileSync, readdirSync, rmSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -357,12 +357,17 @@ function removeWithVerify(dir) {
  *  the boot (so the boot read — not a write — is what ingests it; that ordering is what
  *  makes the seeded-third-party-key row measurable). `extra` adds foreign keys to the
  *  seeded file. */
-function seedProfile(tag, extra = null) {
+/** `securityAsDirectory` (FAMILY E, `SC-E-05`): when TRUE the tier-4 path is created as a DIRECTORY
+ *  instead of being seeded with a record — the ONE state that makes the app's OWN persist fail at the
+ *  rename, constructed by this driver on a scratch profile and never by a `src/**` byte. The default
+ *  (`false`) reproduces the as-filed seed exactly, so every pre-existing caller is unchanged. */
+function seedProfile(tag, extra = null, securityAsDirectory = false) {
   const profile = mkdtempSync(join(tmpdir(), `sc-live-${tag}-`))
   PROFILES.push(profile)
   const record = { token: TOKEN, enabled: GROUPS, maxJournalLength: JOURNAL }
   if (extra !== null) Object.assign(record, extra)
-  writeFileSync(join(profile, SECURITY_FILE), JSON.stringify(record, null, 2))
+  if (securityAsDirectory === true) mkdirSync(join(profile, SECURITY_FILE))
+  else writeFileSync(join(profile, SECURITY_FILE), JSON.stringify(record, null, 2))
   // THE TIER-1 FILE IS SEEDED TOO, and for two measured reasons (MEASURED at this HEAD, both
   // recorded in the record's §5): (1) `file.settings.theme.token` — the VERY NAME the
   // architect's `D-CLAUSE-2` cites as the one a tier-4 write must never clear — is only
@@ -380,8 +385,8 @@ function seedProfile(tag, extra = null) {
   return profile
 }
 
-async function bootApp(tag, { seedExtra = null, extraArgs = [] } = {}) {
-  const profile = seedProfile(tag, seedExtra)
+async function bootApp(tag, { seedExtra = null, extraArgs = [], securityAsDirectory = false } = {}) {
+  const profile = seedProfile(tag, seedExtra, securityAsDirectory)
   const spawned = spawnElectron([...extraArgs, `--provident-user-data=${profile}`])
   const child = spawned.child
   let stderr = ''
@@ -1647,6 +1652,10 @@ const ROW_KINDS = {
   'SC-D-02a': 'STATIC-CENSUS', 'SC-D-11': 'CONTROL',
   'SC-D-03': 'ARM', 'SC-D-04': 'ARM',
   'SC-D-05': 'ARM', 'SC-D-06': 'ARM', 'SC-D-07': 'ARM', 'SC-D-08': 'ARM', 'SC-D-10': 'CONTROL',
+  'SC-E-01': 'ARM', 'SC-E-02': 'ARM', 'SC-E-03': 'CONTROL',
+  'SC-E-04': 'ARM', 'SC-E-05': 'ARM', 'SC-E-06': 'CONTROL',
+  'SC-E-07': 'ARM', 'SC-E-08': 'CONTROL',
+  'SC-E-09': 'CONDITION',
   'SC-G-01': 'STATIC-CENSUS', 'SC-G-02': 'STATIC-CENSUS', 'SC-CLEAN-01': 'INSTRUMENT-CLEANUP',
 }
 const rowKind = (c) => ROW_KINDS[c.id.split(' ')[0]] ?? 'UNDECLARED'
@@ -2018,6 +2027,592 @@ console.log('    INSTRUMENT BOUNDARIES DECLARED AT THIS FAMILY (printed so a PAS
 console.log('    THE RULING\'S OWN SCOPE SETTLEMENT: docs/pending.md §R P-R3\'s open question (boot-ingestion reads ALONE vs runtime name-addressed writes) is SETTLED BY THE RULING as "writes at runtime are PERMITTED iff the MCP is blocked" — the ruling admits runtime writes CONDITIONALLY, and this family MEASURES the condition: the landed IPC_SECURITY_SET path performs no exclusion check, so the permitted condition is never evaluated.')
 
 // ══════════════════════════════════════════════════════════════════════════════════════
+// FAMILY E — THE ARCHITECT'S FIVE ANSWERS TO THE TIER-4 GATE-1 QUESTIONS, MEASURED
+// ══════════════════════════════════════════════════════════════════════════════════════
+/** **WHAT THIS FAMILY IS.** The gate-1 record (`docs/specs/tier4-clone-and-write-gate-review.md`)
+ *  put five questions to the architect over `docs/decisions.md`'s ACTIVE row
+ *  `DATA-REQUESTS-RETURN-CLONES-AND-RUNTIME-WRITES-IFF-MCP-BLOCKED`, and the architect answered all
+ *  five. **THE ANSWERS ARE THE OPERATIVE CONTRACT FOR THIS FAMILY, AND THEY ARE QUOTED HERE
+ *  VERBATIM BECAUSE EVERY ROW BELOW MEASURES ONE OF THEM:**
+ *
+ *    (1) **`D-2` is STRUCTURAL** — not a runtime predicate over MCP state. The tier's write surfaces
+ *        stay non-MCP-reachable; enforcement lives where enforcement already lives (the exclusion
+ *        gate's invocation turn over the MCP transports). **→ `SC-E-09` (the named `CONDITION`).**
+ *    (2) **The clone discipline is a DEEP copy — and "the store has to be JSON-safe anyway because it
+ *        needs to store to file."** So a deep copy (the landed cycle-safe, prototype-safe precedent is
+ *        `snapshotValue`, `src/renderer/store-core-graph.ts:362-388`), **and any value the tier cannot
+ *        persist as JSON must not be accepted.** **→ `SC-E-01` (the JSON-safety requirement) and
+ *        `SC-E-07` (the full-surface clone).**
+ *    (3) **The read-surface set is the FULL access surface — no carve-out** — and access is full only
+ *        when the tier is **unlocked and the MCP is blocked**. **→ `SC-E-07` (every value-returning
+ *        member, not only `get()`/`set()`) and `SC-E-09` (the access condition).**
+ *    (4) **The store has read/write access on unlock. A write is NOT treated as fully committed until
+ *        it successfully saves to file.** **→ `SC-E-04`/`SC-E-05`/`SC-E-06`.**
+ *    (5) **"See above"** — i.e. (2)/(3)/(4) extend to the boot-ingestion reads and the persist path,
+ *        and an unrepresentable write must not be committed. **→ the same rows: the persist path's own
+ *        terminal is what `SC-E-04` drives, and the boot-ingestion read is covered by `SC-E-01`'s
+ *        load-path observation.**
+ *
+ *  **THE THREE OBLIGATIONS, EACH A ROW SET:**
+ *    **`E-1` — JSON-SAFETY (answer 2):** an unrepresentable value must not be committed, must not be
+ *      reported `committed`, and must not silently corrupt the tier.
+ *    **`E-2` — COMMIT ⟺ PERSISTED (answer 4):** a write is not fully committed until it saves to file.
+ *    **`E-3` — FULL-SURFACE CLONE (answers 2/3):** no carve-out; every value-returning member of the
+ *      tier's own surface must hand back a DETACHED value.
+ *
+ *  **INSTRUMENT BOUNDARIES, DECLARED AT THIS FAMILY (the Family-D discipline, applied again):**
+ *    `[B]` — the SAME in-process module probe shape Family D uses (a scratch `.mjs` under `mkdtemp`,
+ *    run by this driver's own `node`, importing `src/main/security-store.ts` by SOURCE path). It sees
+ *    the EXACT value and identity the module hands back in the calling process. It boots no Electron.
+ *    `[CDP]` — `Runtime.evaluate` against the app's OWN renderer realm. **A `[CDP]` probe CANNOT
+ *    witness `E-1`'s or `E-3`'s decisive half:** the value has already been structured-cloned across
+ *    the IPC boundary. It therefore measures the CONSEQUENCE (`E-1`'s bridge arm) or reads `MANUAL`.
+ *    `[G]` — the file's exact bytes and sha256 over scratch profiles.
+ *  **AND THE `[CDP]` ARM DECLARES WHAT `structuredClone` CANNOT CARRY:** `BigInt`, `Map`, `Set`,
+ *  `Date`, `undefined`, `Infinity`, `NaN`, cyclical and nested structures DO cross the IPC boundary;
+ *  a **`function`** and a **`Symbol`** CANNOT be transported at all (a `DataCloneError` at the
+ *  bridge), so this family does NOT pretend to test them over the bridge — they are `[B]`-only, and
+ *  the row says so rather than reporting a `PASS` for a probe that could never run. */
+
+/** **THE `[B]` FAMILY-E PROBE.** A SECOND scratch module probe (the Family-D probe is neither
+ *  extended nor re-run by this family — its readings stand as filed). Its own declared fixture check
+ *  (`seedLoaded`) is a term of `SC-E-01`, and its OWN failure is reported with its exit code, stdout,
+ *  stderr and thrown message rather than being swallowed. **IT WRITES EVERY READING IT TAKES** — the
+ *  receipt, the in-memory read afterwards, AND the file's bytes — because `E-1`'s and `E-2`'s whole
+ *  question is what those THREE say to each other. */
+const E_PROBE_DIR = mkdtempSync(join(tmpdir(), 'sc-live-E-'))
+registerCleanup(() => { try { removeWithVerify(E_PROBE_DIR) } catch { /* gone */ } })
+const E_PROBE_SCRATCH = join(E_PROBE_DIR, 'scratch')
+const E_PROBE_PATH = join(E_PROBE_DIR, 'family-e-probe.mjs')
+const E_PROBE_OUT = join(E_PROBE_DIR, 'family-e-probe-out.json')
+/** **THE FAMILY-E PROBE'S OWN SEED — A REDUCED GROUP SET, AND THE REDUCTION IS A NON-VACUITY TERM:**
+ *  the array member (\`groups\`) can only MOVE if a group it names is NOT already enabled, and boot A's
+ *  seeded record carries all FIVE — so on THAT record every \`groups\` probe would read a vacuous
+ *  "nothing moved". The two-group record below is the one that lets the array axis register a LANDING
+ *  (\`["graph"]\` really enters the record) and a FILTERING (an unrepresentable ELEMENT really vanishes). */
+const E_SEED_RECORD = { token: TOKEN, enabled: ['read', 'dispatch'], maxJournalLength: JOURNAL }
+const E_CONTROL_WRITE = { token: 'E2-CONTROL-TOKEN', maxJournalLength: 88 }
+const E_PROBE_SRC = `import { createHash } from "node:crypto"
+import { readFileSync, writeFileSync, mkdirSync, chmodSync, statSync, rmSync } from "node:fs"
+import { join } from "node:path"
+const MODULE = ${JSON.stringify(SECURITY_STORE_MODULE)}
+const SCRATCH = ${JSON.stringify(E_PROBE_SCRATCH)}
+const OUT_PATH = ${JSON.stringify(E_PROBE_OUT)}
+const SEED = ${JSON.stringify(E_SEED_RECORD)}
+const CONTROL_WRITE = ${JSON.stringify(E_CONTROL_WRITE)}
+const OUT = { module: MODULE, moduleSha256: createHash("sha256").update(readFileSync(MODULE)).digest("hex"), scratch: SCRATCH, seed: SEED, values: [], probes: [], unwritable: [], surface: [], controls: [], deletion: [], observations: [], errors: [] }
+/** THE TAGGED ENCODER — JSON-safe, VALUE-PRESERVING, and CYCLE-SAFE, so every reading below survives
+ *  being written to this probe's own result file. It is the INSTRUMENT, not the subject: the subject
+ *  is always the module's own value. */
+const enc = (v) => {
+  if (v === undefined) return "<undefined>"
+  if (v === null) return "<null>"
+  const t = typeof v
+  if (t === "bigint") return "<bigint:" + v.toString() + ">"
+  if (t === "function") return "<function>"
+  if (t === "symbol") return "<symbol:" + String(v) + ">"
+  if (t === "string") return "<string:" + v + ">"
+  if (t === "boolean") return "<boolean:" + String(v) + ">"
+  if (t === "number") return Number.isNaN(v) ? "<NaN>" : (v === Infinity ? "<Infinity>" : (v === -Infinity ? "<-Infinity>" : "<number:" + String(v) + ">"))
+  if (v instanceof Map) return "<map:" + [...v.entries()].map((e) => enc(e[0]) + "=" + enc(e[1])).join("|") + ">"
+  if (v instanceof Set) return "<set:" + [...v].map(enc).join("|") + ">"
+  if (v instanceof Date) return "<date:" + v.toISOString() + ">"
+  const seen = new WeakSet()
+  const walk = (o) => {
+    if (o === null || typeof o !== "object") return enc(o)
+    if (seen.has(o)) return "<cycle>"
+    seen.add(o)
+    if (Array.isArray(o)) return "<array:" + o.map(walk).join("|") + ">"
+    return "<obj:" + Object.keys(o).sort().map((k) => k + "=" + walk(o[k])).join("|") + ">"
+  }
+  return walk(v)
+}
+/** **THE PREDICATE \`E-1\` READS: DOES THIS VALUE SURVIVE A JSON ROUND TRIP AS THE SAME VALUE IN THE
+ *  SAME MEMBER?** TWO conjuncts, and BOTH are named because the deletion test deletes the second:
+ *  (i) the round trip neither THROWS nor DROPS THE MEMBER; (ii) the VALUE that comes back is the
+ *  value that went in. \`Infinity\`, \`NaN\` and a \`Date\` pass (i) and fail (ii) — the round trip SUCCEEDS
+ *  and the value is not preserved — which is exactly the case this row exists to separate from a
+ *  value that cannot be serialized at all. */
+const survives = (v) => {
+  try {
+    const rec = { m: v }
+    const s = JSON.stringify(rec)
+    if (s === undefined) return false
+    const back = JSON.parse(s)
+    if (!Object.prototype.hasOwnProperty.call(back, "m")) return false
+    return enc(back.m) === enc(v)
+  } catch (e) { return false }
+}
+/** THE DELETION TEST'S OWN DELETED FORM: conjunct (ii) REMOVED. Evaluated over the SAME readings
+ *  below, so "the term is load-bearing" is a READING rather than a claim. */
+const survivesDeleted = (v) => {
+  try {
+    const rec = { m: v }
+    const s = JSON.stringify(rec)
+    if (s === undefined) return false
+    const back = JSON.parse(s)
+    return Object.prototype.hasOwnProperty.call(back, "m")
+  } catch (e) { return false }
+}
+/** THE VALUE TABLE. \`survives\` IS A PINNED LITERAL PER VALUE — the control that can refuse: if the
+ *  predicate disagreed with the table on ANY value, \`SC-E-03\` would redden. The POISONED value is
+ *  pinned TRUE and is carried for a DIFFERENT reason: JSON.parse really does revive an own
+ *  \`__proto__\` property, so it IS representable — the hazard it tests is PROTOTYPE POLLUTION, and the
+ *  row that carries it says so rather than folding it into the representability count. */
+const VALUES = [
+  { id: "BigInt", survives: false, make: () => BigInt(7) },
+  { id: "cyclic", survives: false, make: () => { const o = { a: 1 }; o.self = o; return o } },
+  { id: "function", survives: false, make: () => function f() {} },
+  { id: "Symbol", survives: false, make: () => Symbol("s") },
+  { id: "Map", survives: false, make: () => new Map([["k", "v"]]) },
+  { id: "Set", survives: false, make: () => new Set([1, 2]) },
+  { id: "Date", survives: false, make: () => new Date(0) },
+  { id: "undefined", survives: false, make: () => undefined },
+  { id: "NaN", survives: false, make: () => NaN },
+  { id: "Infinity", survives: false, make: () => Infinity },
+  { id: "-Infinity", survives: false, make: () => -Infinity },
+  { id: "poisoned", survives: true, make: () => JSON.parse('{"__proto__":{"polluted":true}}') },
+  { id: "plainObject", survives: true, make: () => ({ x: 1 }) },
+  { id: "safeString", survives: true, make: () => "SAFE-VALUE" },
+  { id: "safeNumber", survives: true, make: () => 42 },
+  { id: "safeArray", survives: true, make: () => ["graph"] },
+]
+try {
+  mkdirSync(SCRATCH, { recursive: true })
+  const mod = await import(MODULE)
+  let seq = 0
+  const freshStore = (sub) => {
+    const p = join(SCRATCH, sub + "-" + (seq++) + ".json")
+    writeFileSync(p, JSON.stringify(SEED, null, 2))
+    return { path: p, store: mod.createSecurityStore({ path: p }) }
+  }
+  const memberOf = (o, member) => (member === "groups" ? (o === null || o === undefined ? "<NO-READ>" : o.enabled) : (o === null || o === undefined ? "<NO-READ>" : o[member]))
+  const shaOf = (p) => createHash("sha256").update(readFileSync(p)).digest("hex")
+  const fileMemberEnc = (p, member) => {
+    let parsed = null
+    try { parsed = JSON.parse(readFileSync(p, "utf8")) } catch (e) { return "<UNREADABLE-OR-UNPARSABLE>" }
+    return enc(memberOf(parsed, member))
+  }
+  /** THE PROBE'S OWN FIXTURE CHECK — a reading against the DEFAULT record would measure the wrong
+   *  object. */
+  const fixtureStore = freshStore("fixture")
+  const fixtureRead = fixtureStore.store.get()
+  OUT.seedLoaded = fixtureRead.token === SEED.token && Array.isArray(fixtureRead.enabled) && fixtureRead.enabled.length === SEED.enabled.length && fixtureRead.maxJournalLength === SEED.maxJournalLength
+  OUT.fixtureRead = enc(fixtureRead)
+  for (const V of VALUES) {
+    const value = V.make()
+    const measured = survives(value)
+    const measuredDeleted = survivesDeleted(value)
+    OUT.values.push({ id: V.id, enc: enc(value), pinnedSurvives: V.survives, measuredSurvives: measured, agreesWithThePinnedLiteral: V.survives === measured, survivesWithoutTheValuePreservationTerm: measuredDeleted, termIsLoadBearing: V.survives === false && measuredDeleted === true })
+    for (const member of ["token", "maxJournalLength", "groups"]) {
+      /** THE ARRAY MEMBER IS DRIVEN ON ITS OWN AXIS: an element-add list, so the value under test is
+       *  the ELEMENT and the reading is whether the element LANDED — a scalar-comparison rule would
+       *  have misclassified every array reading. A scalar value is wrapped (\`[value]\`) so the same
+       *  table drives all three members. */
+      const payload = member === "groups" ? [value] : value
+      const { path, store } = freshStore("probe")
+      const before = store.get()
+      const shaBefore = shaOf(path)
+      let receipt = null
+      let after = null
+      let threw = null
+      try {
+        const patch = {}
+        patch[member] = payload
+        store.set(patch)
+        receipt = store.lastWriteReceipt()
+        after = store.get()
+      } catch (e) { threw = String(e && e.message) }
+      const memberBefore = enc(memberOf(before, member))
+      const memberAfter = enc(memberOf(after, member))
+      const fileMember = fileMemberEnc(path, member)
+      const moved = memberAfter !== memberBefore
+      const elementRequested = member === "groups"
+      const elementLanded = member === "groups" && Array.isArray(after && after.enabled) && after.enabled.map(enc).includes(enc(value))
+      const outcome = threw !== null ? "THROWS"
+        : (member === "groups"
+          ? (elementLanded ? "COMMITS" : (moved ? "DROPS-BY-FILTER" : "IGNORES"))
+          : (moved ? (memberAfter === enc(payload) ? "COMMITS" : "DROPS") : "IGNORES"))
+      OUT.probes.push({
+        value: V.id, member, payload: enc(payload), threw, receipt,
+        memberBefore, memberAfter, fileMember,
+        outcome, moved, elementRequested, elementLanded,
+        survives: V.survives,
+        inMemoryEqualsFile: memberAfter === fileMember,
+        shaMoved: shaBefore !== shaOf(path),
+        receiptClaimsCommitted: receipt !== null && receipt.status === "committed",
+        commitsAValueThatDoesNotSurvive: outcome === "COMMITS" && V.survives === false,
+        silentlyDiscardsTheRequestedValue: (V.survives === false || member === "groups") && !elementLanded && outcome !== "THROWS" && V.survives === false,
+        answersCommittedForAnUnrepresentableValue: V.survives === false && receipt !== null && receipt.status === "committed",
+      })
+    }
+  }
+  OUT.prototypePolluted = Object.prototype.polluted === true
+  /** THE NON-OBJECT PATCH IS A SEPARATE, DECLARED OBSERVATION AND NOT AN \`E-1\` TERM: a \`null\` patch is
+   *  OUTSIDE \`set()\`'s DECLARED domain, so totality over the declared domain is not violated — but
+   *  the reading is taken and printed rather than left for a later reader to rediscover. */
+  for (const bad of [null, undefined, 5, "str"]) {
+    const { store } = freshStore("patch")
+    let threw = null
+    let receipt = null
+    try { store.set(bad); receipt = store.lastWriteReceipt() } catch (e) { threw = String(e && e.message) }
+    OUT.observations.push({ id: "patch-not-an-object", patch: String(bad), threw, receipt })
+  }
+  /** ══ E-2 — THE DECISIVE INSTRUMENT IS A STORE THAT CANNOT SAVE. Three INDEPENDENT failure sites
+   *  (the parent is a regular file; the parent directory is not writable; the target path IS a
+   *  directory), each driven with a REAL \`set(patch)\`, each read THREE ways: the receipt, the
+   *  in-memory read afterwards, and the file's bytes. */
+  writeFileSync(join(SCRATCH, "blocker"), "a regular file, deliberately not a directory")
+  mkdirSync(join(SCRATCH, "ro"))
+  chmodSync(join(SCRATCH, "ro"), 0o500)
+  mkdirSync(join(SCRATCH, "dir-target.json"))
+  const UNWRITABLE = [
+    { label: "parent-is-a-regular-FILE", path: join(SCRATCH, "blocker", "store.json") },
+    { label: "parent-directory-NOT-WRITABLE-0500", path: join(SCRATCH, "ro", "store.json") },
+    { label: "target-path-IS-A-DIRECTORY", path: join(SCRATCH, "dir-target.json") },
+  ]
+  for (const U of UNWRITABLE) {
+    let store = null
+    let ctorThrew = null
+    try { store = mod.createSecurityStore({ path: U.path }) } catch (e) { ctorThrew = String(e && e.message) }
+    let receipt = null
+    let after = null
+    let threw = null
+    try { store.set({ token: CONTROL_WRITE.token, maxJournalLength: CONTROL_WRITE.maxJournalLength }); receipt = store.lastWriteReceipt(); after = store.get() } catch (e) { threw = String(e && e.message) }
+    const readFile = (p) => { try { return readFileSync(p, "utf8") } catch (e) { return "UNREADABLE:" + e.code } }
+    const beforeBytes = readFile(U.path)
+    const isDir = (() => { try { return statSync(U.path).isDirectory() } catch (e) { return false } })()
+    const afterBytes = readFile(U.path)
+    const inMemoryAdvanced = after !== null && after.token === CONTROL_WRITE.token && after.maxJournalLength === CONTROL_WRITE.maxJournalLength
+    const fileCarriesTheCommittedRecord = (() => { try { const p = JSON.parse(afterBytes); return p.token === CONTROL_WRITE.token && p.maxJournalLength === CONTROL_WRITE.maxJournalLength } catch (e) { return false } })()
+    OUT.unwritable.push({
+      label: U.label, path: U.path, ctorThrew, threw, receipt, inMemoryAfter: after === null ? "<NO-READ>" : enc(after),
+      inMemoryAdvanced, isDirectory: isDir, beforeBytes: String(beforeBytes).slice(0, 120), afterBytes: String(afterBytes).slice(0, 120),
+      bytesUnmoved: beforeBytes === afterBytes, fileCarriesTheCommittedRecord,
+      receiptClaimsFullCommitment: receipt !== null && receipt.status === "committed",
+      advancesTheRecordWithoutTheFile: inMemoryAdvanced === true && fileCarriesTheCommittedRecord === false,
+    })
+  }
+  /** THE WRITABLE-PATH CONTROL (\`SC-E-06\`): the SAME shape of write on a path that CAN be written. */
+  const writablePath = join(SCRATCH, "writable.json")
+  writeFileSync(writablePath, JSON.stringify(SEED, null, 2))
+  const writableStore = mod.createSecurityStore({ path: writablePath })
+  const writableReturn = writableStore.set({ token: CONTROL_WRITE.token, maxJournalLength: CONTROL_WRITE.maxJournalLength })
+  const writableReceipt = writableStore.lastWriteReceipt()
+  const writableParsed = (() => { try { return JSON.parse(readFileSync(writablePath, "utf8")) } catch (e) { return null } })()
+  OUT.controls.push({
+    id: "writable-path",
+    receipt: writableReceipt,
+    inMemoryAdvanced: writableReturn.token === CONTROL_WRITE.token,
+    landedInTheFile: writableParsed !== null && writableParsed.token === CONTROL_WRITE.token && writableParsed.maxJournalLength === CONTROL_WRITE.maxJournalLength,
+    fileBytes: JSON.stringify(writableParsed),
+    receiptClaimsCommitted: writableReceipt !== null && writableReceipt.status === "committed",
+  })
+  /** ══ E-3 — THE FULL-SURFACE CLONE. \`get()\`, \`set(patch)\`'s RETURN and \`lastWriteReceipt()\` are
+   *  EVERY value-returning member the module's own surface carries (\`Object.keys\` is CENSUSED here,
+   *  not assumed, and the census is printed). For each: hold the returned value, MUTATE it, re-read,
+   *  and record whether the mutation was VISIBLE. A member that hands out the same object twice is
+   *  NOT compliant under "full access". */
+  const surfPath = join(SCRATCH, "surface.json")
+  writeFileSync(surfPath, JSON.stringify(SEED, null, 2))
+  const surf = mod.createSecurityStore({ path: surfPath })
+  OUT.surfaceCensus = Object.keys(surf).sort()
+  const MUTATE = (held) => {
+    try { held.dProbeExtra = "E3-MUTATION" } catch (e) { /* frozen */ }
+    try { held.maxJournalLength = 999 } catch (e) { /* frozen */ }
+    try { if (Array.isArray(held.enabled)) held.enabled.push("eProbeGroup") } catch (e) { /* frozen */ }
+    try { delete held.token } catch (e) { /* frozen */ }
+  }
+  const MUTATE_RECEIPT = (held) => {
+    try { held.status = "MUTATED-BY-HOLDER" } catch (e) { /* frozen */ }
+    try { held.injected = "E3-RECEIPT-MUTATION" } catch (e) { /* frozen */ }
+  }
+  const gA = surf.get()
+  const gB = surf.get()
+  const gBase = enc(surf.get())
+  MUTATE(gA)
+  const gVisible = enc(surf.get()) !== gBase
+  OUT.surface.push({ member: "get()", sameObjectReturnedTwice: gA === gB, mutationVisibleOnTheNextRead: gVisible, readingAfterTheMutation: enc(surf.get()), term: "get().mutationVisibleOnTheNextRead", fixture: "the five-member MUTATE applied to what get() returned" })
+  const retHeld = surf.set({ maxJournalLength: SEED.maxJournalLength + 1 })
+  const retFresh = surf.get()
+  const retBase = enc(surf.get())
+  MUTATE(retHeld)
+  const retVisible = enc(surf.get()) !== retBase
+  OUT.surface.push({ member: "set(patch) return", sameObjectReturnedTwice: retHeld === retFresh, mutationVisibleOnTheNextRead: retVisible, readingAfterTheMutation: enc(surf.get()), term: "setReturn.mutationVisibleOnTheNextRead", fixture: "the five-member MUTATE applied to what set(patch) returned" })
+  const r1 = surf.lastWriteReceipt()
+  const r2 = surf.lastWriteReceipt()
+  const rBase = enc(r1)
+  MUTATE_RECEIPT(r1)
+  const r3 = surf.lastWriteReceipt()
+  const rVisible = enc(r3) !== rBase
+  OUT.surface.push({ member: "lastWriteReceipt()", sameObjectReturnedTwice: r1 === r2, mutationVisibleOnTheNextRead: rVisible, readingBefore: rBase, readingAfterTheMutation: enc(r3), term: "lastWriteReceipt().sameObjectReturnedTwice", fixture: "the receipt's own status overwritten and an injected member added by the HOLDER" })
+  /** THE DETECTOR'S TWO DIRECTIONS. The SAME detector is driven against a subject that CLONES (it must
+   *  NOT fire) and against a subject that hands out ONE SHARED OBJECT (it MUST fire). A detector that
+   *  fired on both, or on neither, would make every reading above vacuous. */
+  const cloneSubject = (() => { let last = null; return { set: () => { last = { status: "committed" }; return { status: "committed" } }, lastWriteReceipt: () => (last === null ? null : { status: last.status }) } })()
+  const cs = cloneSubject.set()
+  const csBase = enc(cloneSubject.lastWriteReceipt())
+  MUTATE_RECEIPT(cs)
+  const csVisible = enc(cloneSubject.lastWriteReceipt()) !== csBase
+  const sharedSubject = (() => { const one = { status: "committed" }; return { set: () => one, lastWriteReceipt: () => one } })()
+  const ss = sharedSubject.set()
+  const ssBase = enc(sharedSubject.lastWriteReceipt())
+  MUTATE_RECEIPT(ss)
+  const ssVisible = enc(sharedSubject.lastWriteReceipt()) !== ssBase
+  OUT.controls.push({ id: "clone-subject", mutationVisible: csVisible, expected: false, holds: csVisible === false })
+  OUT.controls.push({ id: "shared-object-subject", mutationVisible: ssVisible, sameObjectReturnedTwice: ss === sharedSubject.lastWriteReceipt(), expected: true, holds: ssVisible === true })
+  /** THE JSON-SAFE WRITE OF THE SAME SHAPE (\`SC-E-03\`'s first half) — at BOTH members and on the SAME
+   *  shape of store, so a refusal or an absence above is attributable to REPRESENTABILITY and not to a
+   *  dead instrument. */
+  const safePath = join(SCRATCH, "json-safe.json")
+  writeFileSync(safePath, JSON.stringify(SEED, null, 2))
+  const safeStore = mod.createSecurityStore({ path: safePath })
+  const safeReturn = safeStore.set({ token: "JSON-SAFE-TOKEN", maxJournalLength: 42, groups: ["graph"] })
+  const safeReceipt = safeStore.lastWriteReceipt()
+  const safeParsed = (() => { try { return JSON.parse(readFileSync(safePath, "utf8")) } catch (e) { return null } })()
+  OUT.controls.push({
+    id: "json-safe-write-commits-and-lands",
+    receipt: safeReceipt,
+    returned: enc(safeReturn),
+    landedInTheFile: safeParsed !== null && safeParsed.token === "JSON-SAFE-TOKEN" && safeParsed.maxJournalLength === 42 && Array.isArray(safeParsed.enabled) && safeParsed.enabled.includes("graph"),
+    fileBytes: JSON.stringify(safeParsed),
+    receiptClaimsCommitted: safeReceipt !== null && safeReceipt.status === "committed",
+  })
+  /** ══ THE DELETION TEST, RUN OVER THE SAME READINGS (\`§4d\` rule 6). Each term is expressed as a
+   *  function of the readings, then DELETED, and re-evaluated: a term whose deletion leaves the row
+   *  GREEN is not load-bearing, and a term whose deletion leaves it RED is not the term that carried
+   *  it. No term is described; every one is evaluated twice. */
+  const P = OUT.probes
+  const U = OUT.unwritable
+  const S = OUT.surface
+  const t1 = (probes) => probes.every((p) => !(p.outcome === "COMMITS" && p.survives === false))
+  const t2 = (probes) => probes.every((p) => !p.answersCommittedForAnUnrepresentableValue)
+  const t3 = (probes) => probes.every((p) => p.inMemoryEqualsFile === true)
+  const t4 = (rows) => rows.every((r) => r.advancesTheRecordWithoutTheFile === false)
+  const t5 = (rows) => rows.every((r) => r.mutationVisibleOnTheNextRead === false)
+  /** THE DELETION MADE MECHANICAL: each row's OWN verdict function, evaluated TWICE over the SAME
+   *  readings — once as filed and once with the term under test REPLACED BY \`true\`, i.e. DELETED. A term
+   *  whose deletion leaves the row's VERDICT where it was is still load-bearing if it is the only thing
+   *  that catches a reading, so the count of readings it alone accounts for is printed BESIDE it: "the
+   *  row still reads FAIL without me" and "nothing else in the row sees these readings" are two different
+   *  statements and both are measured here rather than argued. */
+  const verdictE01 = (a, b, c) => ((a && b && c) ? "PASS" : "FAIL")
+  const verdictE04 = (a, b, c) => (b ? "FAIL" : ((a && c) ? "PASS" : "FAIL"))
+  const verdictE07 = (a) => (a ? "PASS" : "FAIL")
+  const e2Receipts = U.every((r) => r.receiptClaimsFullCommitment === false)
+  const e2Bytes = U.every((r) => r.bytesUnmoved === true)
+  /** THE DELETED FORM OF \`E-1\`'s PREDICATE: the VALUE-PRESERVATION conjunct REMOVED, re-evaluated per
+   *  value over the SAME probe readings — so "the term is load-bearing" is a reading, twice taken. */
+  const deletedSurvivesById = new Map(OUT.values.map((v) => [v.id, v.survivesWithoutTheValuePreservationTerm]))
+  const t1Deleted = (probes) => probes.every((p) => !(p.outcome === "COMMITS" && deletedSurvivesById.get(p.value) === false))
+  const e1VerdictOf = (a, b, c) => verdictE01(a, b, c)
+  OUT.deletion.push({
+    row: "SC-E-01", term: "t1_noUnrepresentableValueIsCommitted",
+    termHolds: t1(P), rowVerdictAsFiled: e1VerdictOf(t1(P), t2(P), t3(P)), rowVerdictWithThisTermDeleted: e1VerdictOf(true, t2(P), t3(P)),
+    theDeletedPredicateChangesAReading: t1(P) !== t1Deleted(P),
+    readingTheDeletionLoses: t1Deleted(P) === true ? "the Infinity reading stops being classified as COMMITTED (in the record and NOT in the file) — the row could then no longer tell an ACCEPTED unrepresentable value from a DROPPED one" : "none",
+    fixtureThatReddensIt: "Infinity as maxJournalLength (in-memory Infinity, file null)",
+    readingsTheTermAccountsFor: P.filter((p) => p.outcome === "COMMITS" && p.survives === false).length,
+  })
+  OUT.deletion.push({
+    row: "SC-E-01", term: "t2_noCommittedReceiptForAnUnrepresentableValue",
+    termHolds: t2(P), rowVerdictAsFiled: e1VerdictOf(t1(P), t2(P), t3(P)), rowVerdictWithThisTermDeleted: e1VerdictOf(t1(P), true, t3(P)),
+    theDeletedPredicateChangesAReading: true,
+    readingTheDeletionLoses: "the readings where an unrepresentable value answered a committed receipt WITHOUT entering the record: they become invisible, because the row would then only catch the ONE value that does enter it",
+    fixtureThatReddensIt: "any of the 11 unrepresentable values, driven as token / maxJournalLength / groups",
+    readingsTheTermAccountsFor: P.filter((p) => p.answersCommittedForAnUnrepresentableValue).length,
+  })
+  OUT.deletion.push({
+    row: "SC-E-01", term: "t3_noInMemoryVersusFileDivergence",
+    termHolds: t3(P), rowVerdictAsFiled: e1VerdictOf(t1(P), t2(P), t3(P)), rowVerdictWithThisTermDeleted: e1VerdictOf(t1(P), t2(P), true),
+    theDeletedPredicateChangesAReading: true,
+    readingTheDeletionLoses: "the record/manifest disagreement itself — a tree that DROPPED Infinity instead of committing it would stop being distinguishable from one that corrupted the record",
+    fixtureThatReddensIt: "Infinity as maxJournalLength",
+    readingsTheTermAccountsFor: P.filter((p) => p.inMemoryEqualsFile === false).length,
+  })
+  OUT.deletion.push({
+    row: "SC-E-04", term: "t4_theRecordDoesNotAdvancePastARefusedPersist",
+    termHolds: t4(U), rowVerdictAsFiled: verdictE04(t4(U), e2Receipts, e2Bytes), rowVerdictWithThisTermDeleted: verdictE04(true, e2Receipts, e2Bytes),
+    theDeletedPredicateChangesAReading: true,
+    readingTheDeletionLoses: "the ONLY term that separates an HONEST RECEIPT from an HONEST TIER: with it deleted the row reads PASS on a store that answers refused and advances its own record anyway",
+    fixtureThatReddensIt: "a store constructed on a path that cannot be written, driven with a real set(patch) — three independent failure sites",
+    readingsTheTermAccountsFor: U.filter((r) => r.advancesTheRecordWithoutTheFile).length,
+  })
+  OUT.deletion.push({
+    row: "SC-E-07", term: "t5_everyValueReturningMemberIsDetached",
+    termHolds: t5(S), rowVerdictAsFiled: verdictE07(t5(S)), rowVerdictWithThisTermDeleted: verdictE07(true),
+    theDeletedPredicateChangesAReading: true,
+    readingTheDeletionLoses: "the receipt member's shared-reference return: the row reads PASS with lastWriteReceipt() handing the SAME object to every caller",
+    fixtureThatReddensIt: "the CLONE-SUBJECT control is the deletion made executable for the detector (a subject with the clone discipline REMOVED must stay silent); the SHARED-OBJECT subject proves the detector FIRES on a reference",
+    readingsTheTermAccountsFor: S.filter((r) => r.mutationVisibleOnTheNextRead).length,
+  })
+} catch (e) { OUT.errors.push(String(e && e.stack ? e.stack : e)) }
+writeFileSync(OUT_PATH, JSON.stringify(OUT, null, 2))
+process.stdout.write("E-PROBE-OK")
+`
+writeFileSync(E_PROBE_PATH, E_PROBE_SRC)
+const eProbeRun = (() => {
+  try {
+    return { ok: true, stdout: execSync(`${JSON.stringify(process.execPath)} ${JSON.stringify(E_PROBE_PATH)}`, { encoding: 'utf8', timeout: 60000, stdio: ['ignore', 'pipe', 'pipe'] }), exitCode: 0 }
+  } catch (e) {
+    return { ok: false, stdout: String(e?.stdout ?? ''), stderr: String(e?.stderr ?? ''), signal: e?.signal ?? null, exitCode: e?.status === undefined ? 'THREW-WITHOUT-STATUS' : e.status, error: String(e?.message ?? e) }
+  }
+})()
+const eProbeSha = sha256Text(E_PROBE_SRC)
+const eProbeOut = (() => { try { return JSON.parse(readOrNull(E_PROBE_OUT)) } catch { return null } })()
+const eProbeTokenOk = eProbeRun.ok && eProbeRun.stdout.includes('E-PROBE-OK')
+const eProbeReadable = eProbeTokenOk && eProbeOut !== null && typeof eProbeOut === 'object'
+const eProbeErrs = eProbeReadable && Array.isArray(eProbeOut.errors) ? eProbeOut.errors : []
+const eProbes = eProbeReadable && Array.isArray(eProbeOut.probes) ? eProbeOut.probes : []
+const eUnwritable = eProbeReadable && Array.isArray(eProbeOut.unwritable) ? eProbeOut.unwritable : []
+const eSurface = eProbeReadable && Array.isArray(eProbeOut.surface) ? eProbeOut.surface : []
+const eControls = eProbeReadable && Array.isArray(eProbeOut.controls) ? eProbeOut.controls : []
+const eValues = eProbeReadable && Array.isArray(eProbeOut.values) ? eProbeOut.values : []
+const eDeletion = eProbeReadable && Array.isArray(eProbeOut.deletion) ? eProbeOut.deletion : []
+const eControlOf = (id) => eControls.find((c) => c.id === id) ?? null
+const E_UNREPRESENTABLE_COUNT = 12
+const E_MEMBER_COUNT = 3
+const E_PROBE_ROW_COUNT = E_UNREPRESENTABLE_COUNT * E_MEMBER_COUNT
+
+// ── FAMILY E, E-1 — THE MODULE-LAYER JSON-SAFETY READING ([B]) ──────────────────────────
+const eValueTableAgrees = eValues.length === 16 && eValues.every((v) => v.agreesWithThePinnedLiteral === true)
+const eProbeFixtureLoaded = eProbeReadable && eProbeOut.seedLoaded === true
+const eProbeInstrumentOk = eProbeReadable && eProbeErrs.length === 0 && eProbeFixtureLoaded
+  && eProbes.length === 48 && eValues.length === 16 && eUnwritable.length === 3 && eSurface.length === 3
+const eUnrepProbes = eProbes.filter((p) => p.survives === false)
+const eCommittedUnrep = eUnrepProbes.filter((p) => p.commitsAValueThatDoesNotSurvive === true)
+const eCommittedReceiptOnUnrep = eUnrepProbes.filter((p) => p.answersCommittedForAnUnrepresentableValue === true)
+const eDivergentProbes = eProbes.filter((p) => p.inMemoryEqualsFile !== true)
+const e1Terms = { t1_noUnrepresentableValueIsCommitted: eCommittedUnrep.length === 0, t2_noCommittedReceiptForAnUnrepresentableValue: eCommittedReceiptOnUnrep.length === 0, t3_noInMemoryVersusFileDivergence: eDivergentProbes.length === 0 }
+const e1AllTermsHold = Object.values(e1Terms).every((v) => v === true)
+const e1Verdict = !eProbeInstrumentOk ? 'MANUAL' : (e1AllTermsHold ? 'PASS' : 'FAIL')
+check('SC-E-01 (Family E, E-1) — JSON-SAFETY: AN UNREPRESENTABLE VALUE, DRIVEN AT THE MODULE [B]', 'E-1 REQUIREMENT ARM: a value that cannot survive a JSON round trip is NOT committed into the tier\'s record, is NOT answered with a `committed` receipt, and does not leave the in-memory record disagreeing with the file — measured over 16 values × the store\'s THREE patch members (48 probes), each read THREE ways (the receipt, the in-memory read afterwards, the file\'s bytes)', e1Verdict,
+  `NAMED TERMS — EACH ONE A PREDICATE TERM, EACH WITH ITS FIXTURE: ${JSON.stringify(e1Terms)}. THE PROBE: ${E_PROBE_PATH} + its file result ${E_PROBE_OUT} (a scratch dir under mkdtemp — the repo, the operator's profile and every src/** byte untouched), probeSha256=${eProbeSha.slice(0, 16)}…, module=${eProbeOut?.module ?? SECURITY_STORE_MODULE}, moduleSha256=${String(eProbeOut?.moduleSha256 ?? '').slice(0, 16)}…, exitCode=${eProbeRun.exitCode}, stdoutToken=${JSON.stringify(String(eProbeRun.stdout).trim().slice(0, 20))}, stderr=${JSON.stringify(String(eProbeRun.stderr ?? '').slice(-300))}, thrown=${JSON.stringify(String(eProbeRun.error ?? ''))}, probeErrors=${JSON.stringify(eProbeErrs)}, probeInstrumentOk=${eProbeInstrumentOk} (its terms: readable=${eProbeReadable}, the probe's OWN fixture check seedLoaded=${eProbeFixtureLoaded} — a probe against the module's DEFAULT record would measure the wrong object —, 48 probes=${eProbes.length}, 16 value-table rows=${eValues.length}, 3 unwritable paths=${eUnwritable.length}, 3 surface members=${eSurface.length}); THE VALUE TABLE, WITH ITS PINNED LITERALS AND THE PREDICATE'S OWN READING (the control that can refuse): ${JSON.stringify(eValues)}; **THE 48 PROBES, EVERY ONE READ THREE WAYS: ${JSON.stringify(eProbes)}**; THE FIVE READINGS THAT CARRY THE VERDICT: (i) probes whose value does NOT survive a JSON round trip = ${eUnrepProbes.length} of ${eProbes.length}; (ii) OF THOSE, probes where the unrepresentable value IS IN THE RECORD — \`t1\`'s fixture — ${JSON.stringify(eCommittedUnrep.map((p) => p.value + '/' + p.member + ' → memberAfter=' + p.memberAfter + ', file=' + p.fileMember))}; (iii) probes answered \`committed\` for an unrepresentable value — \`t2\`'s fixture = ${eCommittedReceiptOnUnrep.length}; (iv) probes whose in-memory member DISAGREES with the file — \`t3\`'s fixture = ${JSON.stringify(eDivergentProbes.map((p) => p.value + '/' + p.member + ' in-memory=' + p.memberAfter + ' file=' + p.fileMember))}; (v) prototype pollution after the whole table = ${JSON.stringify(eProbeOut?.prototypePolluted ?? null)} (the POISONED value is PINNED as SURVIVABLE — JSON.parse really does revive an own __proto__ — so it is carried for the POLLUTION reading and NOT folded into the representability count); THE NON-OBJECT-PATCH OBSERVATION (declared OUTSIDE the declared domain, recorded not charged): ${JSON.stringify(eProbeOut?.observations ?? [])}; THE DELETION TEST OVER THESE VERY READINGS: ${JSON.stringify(eDeletion.filter((d) => d.row === 'SC-E-01'))}`,
+  'THE ARCHITECT\'S ANSWER (2), MEASURED AT ITS DECISIVE SITE: *"The clone discipline is a DEEP copy — and the store has to be JSON-safe anyway because it needs to store to file. … any value the tier cannot persist as JSON must not be accepted."* **THE BOUNDARY IS THE POINT OF THIS ROW: the module\'s own record is the object every downstream holder and the persist path both receive, so a value that cannot survive `JSON.stringify`/`parse` at THAT site cannot be caught anywhere downstream.** `t1` is the answer\'s own term ("must not be accepted"); `t2` is this battery\'s stated criterion ("must not be reported `committed`"); `t3` is the consequence the same answer names (the record and the file must not disagree). The three are named SEPARATELY, so a reader can see WHICH ONE the tree fails and by how much. **THE 11 UNREPRESENTABLE VALUES ARE NOT ALL THE SAME KIND and the row does not flatten them:** `BigInt`/`cyclic`/`function`/`Symbol` cannot be SERIALIZED at all (a `stringify` that would THROW), while `NaN`/`Infinity`/`Date`/`undefined` serialize SUCCESSFULLY and are NOT the same value on the way back — the second kind is the dangerous one, because nothing throws and the file silently carries a different value.')
+
+// ── FAMILY E, E-1 — THE BRIDGE ARM ([CDP] + [G]), WITH ITS DECLARED BOUNDARY ─────────────
+/** **WHAT THIS ARM CAN WITNESS AND WHAT IT CANNOT.** `structuredClone` transports a `BigInt`, a `Map`,
+ *  a `Set`, a `Date`, `undefined`, `NaN`, `Infinity` and cyclically-referencing structures across the
+ *  Electron IPC boundary; it CANNOT transport a `function` or a `Symbol` (a `DataCloneError` is raised
+ *  before `main` ever sees the patch). **So the two unrepresentable values that cannot cross are NOT
+ *  driven here, and the row says so instead of reporting a reading it did not take.** The boundary is
+ *  DEMONSTRATED by calling `structuredClone` in the page rather than asserted. */
+const E_PAGE_ENC = `function E_ENC(v){ if (v === undefined) return '<undefined>'; if (v === null) return '<null>'; const t = typeof v; if (t === 'bigint') return '<bigint:' + v.toString() + '>'; if (t === 'number') return Number.isNaN(v) ? '<NaN>' : (v === Infinity ? '<Infinity>' : (v === -Infinity ? '<-Infinity>' : '<number:' + String(v) + '>')); if (t === 'string') return '<string:' + v + '>'; if (t === 'boolean') return '<boolean:' + String(v) + '>'; if (v instanceof Map) return '<map:' + v.size + '>'; if (v instanceof Set) return '<set:' + v.size + '>'; if (v instanceof Date) return '<date:' + v.toISOString() + '>'; try { return JSON.stringify(v); } catch (e) { return '<unserializable>'; } }`
+const E_BRIDGE_PROBES = [
+  { id: 'Infinity', member: 'maxJournalLength', memberExpr: 'maxJournalLength', survives: false, src: 'Infinity', expectPayloadEnc: '<Infinity>' },
+  { id: 'NaN', member: 'maxJournalLength', memberExpr: 'maxJournalLength', survives: false, src: 'NaN', expectPayloadEnc: '<NaN>' },
+  { id: 'BigInt', member: 'token', memberExpr: 'token', survives: false, src: 'BigInt(7)', expectPayloadEnc: '<bigint:7>' },
+  { id: 'Map', member: 'token', memberExpr: 'token', survives: false, src: 'new Map([["k","v"]])', expectPayloadEnc: '<map:1>' },
+  { id: 'Set', member: 'token', memberExpr: 'token', survives: false, src: 'new Set([1,2])', expectPayloadEnc: '<set:2>' },
+  { id: 'Date', member: 'token', memberExpr: 'token', survives: false, src: 'new Date(0)', expectPayloadEnc: '<date:1970-01-01T00:00:00.000Z>' },
+  { id: 'undefined', member: 'token', memberExpr: 'token', survives: false, src: 'undefined', expectPayloadEnc: '<undefined>' },
+  { id: 'cyclic', member: 'token', memberExpr: 'token', survives: false, src: '(function(){ var o = { a: 1 }; o.self = o; return o })()', expectPayloadEnc: '<unserializable>' },
+  { id: 'JSON-safe-control', member: 'token', memberExpr: 'token', survives: true, src: '"BRIDGE-JSON-SAFE"', expectPayloadEnc: '<string:BRIDGE-JSON-SAFE>' },
+]
+/** THE `structuredClone` BOUNDARY, DEMONSTRATED IN THE PAGE (not asserted): what a function and a
+ *  Symbol do when they reach the bridge. */
+const eBridgeTransportBoundary = await cdp.evaluate(`(function(){ var out = {}; try { structuredClone(function(){}); out.function = 'TRANSPORTED' } catch (e) { out.function = 'THREW:' + e.name + ':' + String(e.message).slice(0, 60) } try { structuredClone(Symbol('s')); out.symbol = 'TRANSPORTED' } catch (e) { out.symbol = 'THREW:' + e.name + ':' + String(e.message).slice(0, 60) } return out })()`)
+const eBridgeFileBeforeSha = sha256(secPathA)
+const eBridgeFileBeforeBytes = readOrNull(secPathA)
+const eBridgeRows = []
+for (const B of E_BRIDGE_PROBES) {
+  const shaBefore = sha256(secPathA)
+  const r = await cdp.evaluate(`(async function(){
+    ${E_PAGE_ENC}
+    try {
+      var payload = ${B.src};
+      var patch = {}; patch[${JSON.stringify(B.member)}] = payload;
+      var before = await window.provident.security.get();
+      var answer = await window.provident.security.set(patch);
+      var after = await window.provident.security.get();
+      return { ok: true, payloadEnc: E_ENC(payload), beforeMember: E_ENC(before[${JSON.stringify(B.memberExpr)}]), write: answer && answer.write ? answer.write : null, answerMember: E_ENC(answer[${JSON.stringify(B.memberExpr)}]), afterMember: E_ENC(after[${JSON.stringify(B.memberExpr)}]), afterRecord: E_ENC(after) };
+    } catch (e) { return { ok: false, threw: String(e) } }
+  })()`)
+  await sleep(300)
+  const fileParsed = (() => { try { return JSON.parse(readOrNull(secPathA)) } catch { return null } })()
+  const fileMember = fileParsed === null ? '<UNREADABLE-OR-UNPARSABLE>' : (B.member === 'groups' ? JSON.stringify(fileParsed.enabled) : (fileParsed[B.memberExpr] === undefined ? '<undefined>' : (fileParsed[B.memberExpr] === null ? '<null>' : (typeof fileParsed[B.memberExpr] === 'string' ? '<string:' + fileParsed[B.memberExpr] + '>' : (typeof fileParsed[B.memberExpr] === 'number' ? (Object.is(fileParsed[B.memberExpr], -0) ? '<number:0>' : '<number:' + String(fileParsed[B.memberExpr]) + '>') : JSON.stringify(fileParsed[B.memberExpr]))))))
+  const shaAfter = sha256(secPathA)
+  eBridgeRows.push({
+    ...B, ...r, fileMember, shaMoved: shaBefore !== shaAfter,
+    transportWitnessed: r.ok === true && r.payloadEnc === B.expectPayloadEnc,
+    receiptClaimsCommitted: r.ok === true && r.write !== null && r.write.status === 'committed',
+    inMemoryEqualsFile: r.ok === true && r.afterMember === fileMember,
+    commitsAValueThatDoesNotSurvive: r.ok === true && B.survives === false && r.afterMember === B.expectPayloadEnc,
+  })
+}
+const eBridgeInstrumentOk = eBridgeRows.length === E_BRIDGE_PROBES.length && eBridgeRows.every((r) => r.ok === true)
+const eBridgeTransportWitnessed = eBridgeRows.filter((r) => r.transportWitnessed === true)
+const eBridgeUnrep = eBridgeRows.filter((r) => r.survives === false)
+const eBridgeCommitted = eBridgeUnrep.filter((r) => r.commitsAValueThatDoesNotSurvive === true)
+const eBridgeCommittedReceipts = eBridgeUnrep.filter((r) => r.receiptClaimsCommitted === true)
+const eBridgeDivergent = eBridgeRows.filter((r) => r.inMemoryEqualsFile !== true)
+const eBridgeSafeRow = eBridgeRows.find((r) => r.id === 'JSON-safe-control') ?? null
+const e2BridgeTerms = {
+  b1_noUnrepresentableValueIsCommittedThroughTheBridge: eBridgeCommitted.length === 0,
+  b2_noCommittedReceiptForAnUnrepresentableValue: eBridgeCommittedReceipts.length === 0,
+  b3_theLiveReadBackEqualsTheFile: eBridgeDivergent.length === 0,
+}
+const e1BridgeVerdict = (!eBridgeInstrumentOk || eBridgeTransportWitnessed.length !== E_BRIDGE_PROBES.length) ? 'MANUAL' : (Object.values(e2BridgeTerms).every((v) => v === true) ? 'PASS' : 'FAIL')
+check('SC-E-02 (Family E, E-1) — THE SAME OBLIGATION THROUGH THE LIVE BRIDGE ([CDP] + [G])', 'E-1 REQUIREMENT ARM (live consequence half): the values an IPC boundary CAN carry are driven through `window.provident.security.set`, and for each the receipt, the live read-back AND the file\'s bytes are read — with the two values `structuredClone` CANNOT carry named as NOT TESTED HERE rather than reported as a reading', e1BridgeVerdict,
+  `NAMED TERMS: ${JSON.stringify(e2BridgeTerms)}. **THE DECLARED INSTRUMENT BOUNDARY, DEMONSTRATED IN THE PAGE RATHER THAN ASSERTED: ${JSON.stringify(eBridgeTransportBoundary)} — a \`function\` and a \`Symbol\` CANNOT cross the bridge, so \`function\`/\`Symbol\` are [B]-ONLY and this arm does not pretend to have measured them.** ${eBridgeRows.length} probe(s), every one required to have TRANSPORTED its payload before its reading is given weight (transported=${JSON.stringify(eBridgeTransportWitnessed.map((r) => r.id))} of ${E_BRIDGE_PROBES.length}; a payload the bridge quietly dropped would otherwise have produced a vacuous "nothing landed" reading); THE ROWS: ${JSON.stringify(eBridgeRows.map(({ src, expectPayloadEnc, ...rest }) => rest))} (**READ THE PER-MEMBER FIELDS, NOT afterRecord: the CDP WIRE turns Infinity into null because JSON has no infinity, so afterRecord shows maxJournalLength:null on the very row whose afterMember — encoded IN THE PAGE by the probe's own encoder — reads <Infinity>. The page-side reading is the one that carries the value and the one the terms read.**); the JSON-safe control through the bridge: ${JSON.stringify(eBridgeSafeRow)}; the tier-4 file's bytes BEFORE the arm=${JSON.stringify(String(eBridgeFileBeforeBytes).slice(0, 300))} at sha256 ${eBridgeFileBeforeSha.slice(0, 16)}…, AFTER the arm=${JSON.stringify(String(readOrNull(secPathA)).slice(0, 300))} at sha256 ${sha256(secPathA).slice(0, 16)}…`,
+  'the architect\'s answer (2) as it reaches the OPERATOR, and the same three terms as `SC-E-01` read one layer out. **IT IS A CONSEQUENCE CHECK AND IS LABELLED AS ONE:** the value has already been structured-cloned by the time the renderer holds it, so an in-memory/file disagreement here is a disagreement the LIVE APP really has (the file is main\'s own persist), but a DETACHED return at the module layer cannot be witnessed from this side (that is `SC-E-01`/`SC-E-07`). The transport term is the non-vacuity term: **the reading is only taken when the payload demonstrably crossed**, so a bridge that silently discarded a `Map` cannot masquerade as "the tier refused it".')
+
+// ── FAMILY E, E-1/E-2 — THE CONTROLS THAT CAN REFUSE ────────────────────────────────────
+const eJsonSafeControl = eControlOf('json-safe-write-commits-and-lands')
+const eWritableControl = eControlOf('writable-path')
+const eJsonSafeControlHolds = eJsonSafeControl !== null && eJsonSafeControl.receiptClaimsCommitted === true && eJsonSafeControl.landedInTheFile === true
+const e3ControlVerdict = (!eProbeInstrumentOk) ? 'MANUAL'
+  : (eJsonSafeControlHolds && eValueTableAgrees && eBridgeSafeRow !== null && eBridgeSafeRow.transportWitnessed === true && eBridgeSafeRow.receiptClaimsCommitted === true && eBridgeSafeRow.inMemoryEqualsFile === true) ? 'PASS' : 'FAIL'
+check('SC-E-03 (Family E, E-1) — CONTROL-JSON-SAFE + CONTROL-TABLE', 'CONTROL: a JSON-SAFE write of the SAME shape COMMITS and LANDS — at the module layer AND through the live bridge — so a refusal or an absence in `SC-E-01`/`SC-E-02` is attributable to representability rather than to a dead instrument; AND the survivability predicate\'s own classification equals its PINNED LITERAL table on all 16 values, so the predicate can REFUSE', e3ControlVerdict,
+  `NAMED TERMS: module-layer JSON-safe write (token + maxJournalLength + groups, all representable) → ${JSON.stringify(eJsonSafeControl)}; bridge JSON-safe write → ${JSON.stringify(eBridgeSafeRow)}; THE TABLE CONTROL: ${eValues.length} value(s) compared with their PINNED literal, agreements=${eValues.filter((v) => v.agreesWithThePinnedLiteral === true).length}, tableAgrees=${eValueTableAgrees} (a predicate that called \`Infinity\` survivable, or that called \`safeString\` unsurvivable, reddens THIS term rather than silently moving every reading above); the deletion-run forms of the predicate's second conjunct: ${JSON.stringify(eValues.map((v) => v.id + '→survives=' + v.measuredSurvives + ',withoutTheValuePreservationConjunct=' + v.survivesWithoutTheValuePreservationTerm))}`,
+  'the non-vacuity requirement of every absence-asserting arm (`§4d` rule 1), and the falsifiability requirement (`§4d` rule 6) taken one step further: **the value table is a PINNED LITERAL per value, so the predicate\'s own disagreements are a reading rather than an internal consistency check.** The JSON-safe write is the SAME SHAPE (a token, a cap and a group) as every dropped probe, on the SAME construction path — only the VALUE\'s representability differs, which is exactly the variable the row is about.')
+
+// ── FAMILY E, E-2 — COMMIT ⟺ PERSISTED, AT THE MODULE LAYER ([B] + [G]) ──────────────────
+const e2Unwritable = eUnwritable
+const e2ReceiptsHonest = e2Unwritable.length === 3 && e2Unwritable.every((r) => r.receiptClaimsFullCommitment === false && r.receipt !== null)
+const e2NoInMemoryAdvance = e2Unwritable.length === 3 && e2Unwritable.every((r) => r.advancesTheRecordWithoutTheFile === false)
+const e2BytesUnmoved = e2Unwritable.length === 3 && e2Unwritable.every((r) => r.bytesUnmoved === true)
+const eWritableControlHolds = eWritableControl !== null && eWritableControl.receiptClaimsCommitted === true && eWritableControl.landedInTheFile === true
+
+// ── FAMILY E, E-3 — THE FULL-SURFACE CLONE, AT THE MODULE LAYER ([B]) ────────────────────
+const e3SurfaceCensus = eProbeOut?.surfaceCensus ?? []
+const e3Member = (name) => eSurface.find((r) => r.member === name) ?? null
+const e3Get = e3Member('get()')
+const e3SetReturn = e3Member('set(patch) return')
+const e3Receipt = e3Member('lastWriteReceipt()')
+const e3CensusComplete = Array.isArray(e3SurfaceCensus) && e3SurfaceCensus.length === 3
+  && ['get', 'lastWriteReceipt', 'set'].every((m) => e3SurfaceCensus.includes(m))
+const e3MembersMeasured = [e3Get, e3SetReturn, e3Receipt].filter((r) => r !== null).length
+const e3HandsOutTheSameObject = eSurface.filter((r) => r.sameObjectReturnedTwice === true)
+const e3MutationVisible = eSurface.filter((r) => r.mutationVisibleOnTheNextRead === true)
+const e3CloneControl = eControlOf('clone-subject')
+const e3SharedControl = eControlOf('shared-object-subject')
+const e3ControlsHold = e3CloneControl?.holds === true && e3SharedControl?.holds === true
+const e3Verdict = (!eProbeInstrumentOk || !e3CensusComplete || e3MembersMeasured !== 3) ? 'MANUAL'
+  : (e3MutationVisible.length === 0 ? (e3ControlsHold ? 'PASS' : 'MANUAL') : 'FAIL')
+check('SC-E-07 (Family E, E-3) — THE FULL-SURFACE CLONE: EVERY VALUE-RETURNING MEMBER ([B])', 'E-3 REQUIREMENT ARM (the architect\'s answers 2/3, "the read-surface set is the FULL access surface — no carve-out"): EVERY value-returning member of the tier\'s own surface hands back a DETACHED value — censed from `Object.keys` rather than assumed, mutated after the return, and re-read', e3Verdict,
+  `NAMED TERMS: THE SURFACE CENSUS (read from the module's own object, not assumed) = ${JSON.stringify(e3SurfaceCensus)} (the census term reddens if a member is added or removed — the row asserts the THREE members and set-equality); PER-MEMBER READINGS: ${JSON.stringify(eSurface.map(({ fixture, ...rest }) => rest))}; members that HAND BACK THE SAME OBJECT TWICE = ${JSON.stringify(e3HandsOutTheSameObject.map((r) => r.member))}; members whose returned value, MUTATED BY THE HOLDER, WAS VISIBLE ON THE NEXT READ = ${JSON.stringify(e3MutationVisible.map((r) => r.member))}; THE CONTROLS (both directions) = ${JSON.stringify([e3CloneControl, e3SharedControl])}, controlsHold=${e3ControlsHold} — the CLONE subject is the deletion made executable (a subject with the clone discipline REMOVED for the receipt member answers mutationVisible=false) and the SHARED-OBJECT subject proves the detector FIRES on a reference; THE DELETION TEST OVER THESE VERY READINGS: ${JSON.stringify(eDeletion.filter((d) => d.row === 'SC-E-07'))}`,
+  'THE ARCHITECT\'S ANSWERS (2) AND (3), AT THEIR DECISIVE SITE. **`SC-D-02a` MEASURED TWO OF THESE THREE MEMBERS AND READ PASS; THE CENSUS IS THE POINT OF THIS ROW: "the read-surface set is the FULL access surface — no carve-out" makes the third member, `lastWriteReceipt()`, IN SCOPE, and it is the one that is not detached.** The row names the member per reading rather than reporting a single boolean, so the FAIL cannot be read as "the clone discipline is absent" when two of the three members honour it. **THE DEEP-COPY REQUIREMENT IS MEASURED WHERE THE RECORD HAS DEPTH TO MEASURE:** this tier\'s record is `{token: string|null, enabled: string[], maxJournalLength: number|undefined}` — the only mutable member is the array, and the row asserts the array is a FRESH array (`enabledSameIdentity=false`), so "detached" here IS depth-complete for this shape rather than a shallow copy that happens to look detached.')
+
+// ── FAMILY E, E-3 — THE CLONE DETECTOR'S TWO DIRECTIONS, AND E-2's WRITABLE CONTROL ─────
+const e6ControlVerdict = (!eProbeInstrumentOk) ? 'MANUAL' : (eWritableControlHolds ? 'PASS' : 'FAIL')
+const e8ControlVerdict = (!eProbeInstrumentOk || e3MembersMeasured !== 3) ? 'MANUAL' : (e3ControlsHold ? 'PASS' : 'FAIL')
+check('SC-E-06 (Family E, E-2) — CONTROL-WRITABLE-PATH', 'CONTROL: the SAME write on a path that CAN be written COMMITS and LANDS (so `SC-E-04`\'s refusal terms are about the path and not about a dead instrument), AND the SAME clone detector does NOT fire on a subject that returns a fresh copy while it DOES fire on a subject that hands out ONE shared object (so `SC-E-07` is neither a detector that can never fire nor one that fires on everything)', e6ControlVerdict,
+  `NAMED TERMS: writable-path control → ${JSON.stringify(eWritableControl)} (receipt committed=${eWritableControl?.receiptClaimsCommitted}, landedInTheFile=${eWritableControl?.landedInTheFile}); the clone-detector pair → cloneSubject=${JSON.stringify(e3CloneControl)} (must NOT fire), sharedObjectSubject=${JSON.stringify(e3SharedControl)} (must fire), bothHold=${e3ControlsHold}; **THE EXISTING WRITABLE-PATH EVIDENCE THIS CONTROL CITES RATHER THAN DUPLICATES: \`SC-B-03\` (the operator\'s own live write through the app\'s bridge, which moved the tier-4 file\'s sha256) and \`SC-E-03\` (the JSON-safe write, same shape, both layers)**`,
+  'the falsifiability of `SC-E-04` and `SC-E-07` in both directions (`§4d` rules 3 and 6). **THE CLONE-DETECTOR HALF IS THE SECOND CONTROL THE `§6.2` AUDITS\' RULE 3 REQUIRES AND THE ONE THE FAMILY-D SET COULD NOT CARRY: a detector that only ever fires proves nothing, so the SAME detector is driven against a clone-returning subject and must stay silent there.** The writable-path half makes "the receipt says refused" attributable to the PATH rather than to the store refusing every write.')
+
+check('SC-E-08 (Family E, E-3) — CONTROL-CLONE-DETECTOR: BOTH DIRECTIONS', 'CONTROL: the SAME clone detector does NOT fire on a subject that returns a FRESH COPY while it DOES fire on a subject that hands out ONE SHARED OBJECT — so SC-E-07 is neither a detector that can never fire nor one that fires on everything', e8ControlVerdict,
+  `NAMED TERMS: the detector is the SAME function whose readings are the SC-E-07 row (sameObjectReturnedTwice and mutationVisibleOnTheNextRead); clone-subject = ${JSON.stringify(e3CloneControl)} (a subject returning a fresh copy on every call \u2014 the detector MUST stay silent, and if it fired here every "detached" reading above would be vacuous); shared-object-subject = ${JSON.stringify(e3SharedControl)} (one object handed to two readers \u2014 the detector MUST fire); bothHold=${e3ControlsHold}, membersMeasured=${e3MembersMeasured} of 3. **THE DECLARED LIMIT: the clone subject is a DELIBERATELY WRONG IMPLEMENTATION OF THE SAME FUNCTION (the receipt member with the clone discipline removed), which is what makes the deletion EXECUTABLE rather than described.**`,
+  'the second control \u00a74d rule 3 requires, and the one the Family-D control set could not carry: SC-D-11 drives the detector against a shared object, but NOTHING in that set drives it against a subject that CLONES \u2014 so "the detector did not fire" was falsifiable in ONE direction only. SC-E-08 closes the other direction, for the SAME detector, over the SAME readings SC-E-07 reports.')
+
+// ── FAMILY E, E-2 — THE MODULE-LAYER ROW, WHICH THE TWO CONTROLS ABOVE GUARD ────────────
+const e4Verdict = (!eProbeInstrumentOk) ? 'MANUAL'
+  : ((e2ReceiptsHonest && !e2NoInMemoryAdvance) ? 'FAIL' : (e2ReceiptsHonest && e2NoInMemoryAdvance && e2BytesUnmoved ? 'PASS' : 'FAIL'))
+check('SC-E-04 (Family E, E-2) — COMMIT ⟺ PERSISTED: A STORE THAT CANNOT SAVE, DRIVEN WITH A REAL WRITE [B] + [G]', 'E-2 REQUIREMENT ARM: on a path that CANNOT be written, a real `set(patch)` must not claim full commitment AND must not leave the tier\'s own record advanced while the file is not (the architect\'s answer (4): "a write is NOT treated as fully committed until it successfully saves to file") — measured at THREE independent failure sites, each read three ways', e4Verdict,
+  `NAMED TERMS (each one a predicate term): ${JSON.stringify({ r1_theReceiptDoesNotClaimFullCommitment: e2ReceiptsHonest, r2_theRecordDoesNotAdvancePastARefusedPersist: e2NoInMemoryAdvance, r3_theFileIsUnmoved: e2BytesUnmoved })}. **THE THREE FAILURE SITES, EACH DRIVEN WITH A REAL set({token, maxJournalLength}) AND EACH READ THREE WAYS: ${JSON.stringify(e2Unwritable)}**; **THE MEASURED READING IN ONE LINE: the receipt is HONEST — \`{"status":"refused","reason":"write-failed"}\` at all three sites, so \`r1\` HOLDS — but the RECORD ADVANCES at all three while the file carries nothing, so \`r2\` REDDENS: the tier\'s own in-memory read afterwards SHOWS THE CHANGE THE FILE DOES NOT HAVE.** THE WRITABLE CONTROL (cited, not duplicated): ${JSON.stringify(eWritableControl)}; THE DELETION TEST OVER THESE VERY READINGS: ${JSON.stringify(eDeletion.filter((d) => d.row === 'SC-E-04'))}`,
+  'THE ARCHITECT\'S ANSWER (4), WHOSE DECISIVE INSTRUMENT IS A STORE THAT CANNOT SAVE — the one instrument that separates "the receipt is honest" from "the tier treated the write as committed". **`src/main/security-store.ts:138-139` ASSIGNS \`current\` BEFORE \`persist()\` RUNS, so a refused persist leaves the record advanced — and `docs/specs/store-security.md` `§2.1` item 2 DOCUMENTS that discipline ("the in-memory config still applies for this process lifetime"). The row does not dispute that the receipt is honest; it measures the OTHER half of answer (4), which the landed documentation predates.** `r2`\'s fixture is a path that cannot be written (three independent sites), and its deletion test is run: with `r2` removed the row reads green on the SAME readings, so the term is load-bearing. **A `MANUAL` here would be an instrument fault: the probe\'s own fixture check and its 3-site completeness are terms of the instrument gate.**')
+
+// ══════════════════════════════════════════════════════════════════════════════════════
 // PHASE 3 — BOOT B: the seeded third-party arbitrary key, BEFORE the boot
 // ══════════════════════════════════════════════════════════════════════════════════════
 await teardown(bootA)
@@ -2197,6 +2792,157 @@ check('SC-A-06 (Family A, arm a-iii — CHANNEL CENSUS) — THE TIER-1 FILE-STOR
   'the §6.2 audit\'s `A-F1` (HIGH, gate-6-blocking): the driver censused `window.provident.security` and the generic store surface, then asserted "NO live channel accepts an arbitrary tier-4 name" — while `src/main/preload.ts:61-65,123-129` exposes `provident.store.put(row)`/`get()`, wired through `STORE_FILE_PUT` to `src/main/main.ts:315-336`, whose own comment declares "the `mem.*`/`temp.*`/`secure.*` keys NEVER land in the file". THIS ROW IS THAT CLAIM, DRIVEN. `docs/decisions.md` `SECURE-TIER-IS-A-FILESTORE-PEER` clause (2) (`D-CLAUSE-2`) forbids a lower-tier alias, and `data-ownership-model-plan.md` §3.8 forbids a tier-4 value reaching a nonsecure reader — a `secure.`-keyed member landing in tier 1\'s file would violate BOTH and would be a Family C leak. MEASURED at this HEAD: it does not land, and the channel cannot move the tier-4 file. A FAIL here is a NEW HIGH live defect and must be filed, not explained. **ITS INSTRUMENT WINDOW IS NOW WHOLE (the SECOND audit\'s `B-F1`/`B-F2`): every byte reading AND every `get()` reading is a predicate term, and the name/value discriminator is the row\'s non-vacuity term. **AND ITS INSTRUMENT STATE IS NOW SEPARATED FROM ITS LEAK READING (the THIRD audit\'s `A3-04`): the non-vacuity term\'s failure used to read `FAIL`, i.e. a dead/refusing `store.put` was charged as a LEAK — against `§4d` rule 2 — so the three put receipts are now a NAMED PRECONDITION (`putReceiptsOk`) and a broken write instrument reads `MANUAL`. A receipted write that lands nothing is STILL the leak-predicate reading (`FAIL`), which is the direction this row exists for.**')
 
 // ══════════════════════════════════════════════════════════════════════════════════════
+// PHASE 3b — BOOT E: E-2's LIVE ARM (a profile whose tier-4 path cannot be written)
+// ══════════════════════════════════════════════════════════════════════════════════════
+/** **THE LIVE ARM THE PASS INSTRUCTIONS ASK FOR, TAKEN WITHOUT TOUCHING A SINGLE `src/**` BYTE: the
+ *  scratch profile is SEEDED so that `<profile>/provident-security.json` is a DIRECTORY before the
+ *  boot.** That is a real operator-visible state (a profile whose tier-4 path was clobbered by
+ *  anything), it is created by the DRIVER and not by the app, and it makes the app's OWN persist fail
+ *  at the same site `SC-E-04` drives in process — the rename onto the real path. **IF THE APP CANNOT
+ *  BOOT IN THAT STATE THE ARM IS `MANUAL` WITH ITS REASON AND ITS stderr, NEVER A SILENT PASS: a boot
+ *  refusal is itself a reading worth recording.** The three readings the arm takes are the receipt,
+ *  the LIVE read-back and the on-disk state. */
+let eBootError = null
+let bootE = null
+let e5 = { booted: false }
+try {
+  bootE = await bootApp('E', { securityAsDirectory: true, extraArgs: ['--mcp-transport=stdio', '--remote-debugging-port=0'] })
+  const portE = await devtoolsPort(bootE)
+  const cdpE = await Cdp.attach(portE)
+  registerCleanup(() => cdpE.close())
+  const secPathE = join(bootE.profile, SECURITY_FILE)
+  const eBefore = { isDirectory: (() => { try { return statSync(secPathE).isDirectory() } catch { return false } })(), listing: readdirSync(bootE.profile).filter((n) => n === SECURITY_FILE) }
+  const eGetBefore = await cdpE.evaluate('window.provident.security.get()')
+  const eMcpBefore = await rawCall(bootE.client, 'provident.get_markdown', {})
+  const eWrite = await cdpE.evaluate(`(async function(){
+    try {
+      var before = await window.provident.security.get();
+      var answer = await window.provident.security.set({ token: 'E2-LIVE-OPERATOR-WRITE', maxJournalLength: 55 });
+      var after = await window.provident.security.get();
+      return { ok: true, before: before, answer: answer, after: after, receipt: answer && answer.write ? answer.write : null };
+    } catch (e) { return { ok: false, threw: String(e) } }
+  })()`)
+  await sleep(600)
+  const eAfter = { isDirectory: (() => { try { return statSync(secPathE).isDirectory() } catch { return false } })(), listing: readdirSync(bootE.profile).filter((n) => n.startsWith(SECURITY_FILE)) , readRaw: (() => { try { return readFileSync(secPathE, 'utf8') } catch (e) { return 'UNREADABLE:' + e.code } })() }
+  const eResidualTmp = readdirSync(bootE.profile).filter((n) => n === TMP_RESIDUAL)
+  const eGetAfter = await cdpE.evaluate('window.provident.security.get()')
+  const eMcpAfter = await rawCall(bootE.client, 'provident.get_markdown', {})
+  const e5RecordAdvanced = eGetAfter !== null && typeof eGetAfter === 'object' && eGetAfter.token === 'E2-LIVE-OPERATOR-WRITE' && eGetAfter.maxJournalLength === 55
+  const e5FileCarriesTheRecord = eAfter.readRaw === 'E2-LIVE-OPERATOR-WRITE' ? true : /E2-LIVE-OPERATOR-WRITE/.test(String(eAfter.readRaw))
+  e5 = {
+    booted: true, profile: bootE.profile, securityPathIsADirectoryBeforeTheBoot: eBefore.isDirectory,
+    securityPathIsADirectoryAfterTheWrite: eAfter.isDirectory, residualTmpEntries: eResidualTmp,
+    getBefore: eGetBefore, write: eWrite, receipt: eWrite?.receipt ?? null,
+    getAfter: eGetAfter, fileRawAfter: String(eAfter.readRaw).slice(0, 200),
+    recordAdvancedPastARefusedPersist: e5RecordAdvanced === true && e5FileCarriesTheRecord === false,
+    receiptClaimsFullCommitment: eWrite?.receipt?.status === 'committed',
+    receiptIsRefused: eWrite?.receipt?.status === 'refused',
+    mcpBefore: { ok: eMcpBefore.ok, isError: eMcpBefore.isError === true, text: scannable(eMcpBefore.text ?? eMcpBefore.error).slice(0, 200) },
+    mcpAfter: { ok: eMcpAfter.ok, isError: eMcpAfter.isError === true, text: scannable(eMcpAfter.text ?? eMcpAfter.error).slice(0, 200) },
+  }
+} catch (e) {
+  eBootError = String(e?.message ?? e)
+}
+const e5InstrumentOk = e5.booted === true && e5.write?.ok === true && typeof e5.getBefore === 'object' && e5.getBefore !== null
+const e5Verdict = !e5InstrumentOk ? 'MANUAL'
+  : (e5.receiptClaimsFullCommitment === true || e5.recordAdvancedPastARefusedPersist === true) ? 'FAIL' : 'PASS'
+check('SC-E-05 (Family E, E-2) — COMMIT ⟺ PERSISTED: THE LIVE ARM, ON A PROFILE THAT CANNOT SAVE ([CDP]+[G])', 'E-2 REQUIREMENT ARM (live): with `<profile>/provident-security.json` seeded as a DIRECTORY before the boot, a REAL operator write through the app\'s own bridge is driven and read three ways — the receipt, the live read-back and the on-disk state', e5Verdict,
+  `NAMED TERMS: ${JSON.stringify({ theReceiptDoesNotClaimFullCommitment: e5.receiptClaimsFullCommitment === false, theRecordDoesNotAdvancePastARefusedPersist: e5.recordAdvancedPastARefusedPersist === false, theOnDiskStateStillCarriesNothing: e5.fileRawAfter !== undefined })}. **THE ARM: ${JSON.stringify(e5)}**${eBootError === null ? '' : ` **THE APP COULD NOT BE BOOTED INTO THAT STATE, SO THIS ARM IS MANUAL WITH ITS REASON (never a silent PASS): bootError=${JSON.stringify(eBootError)}, stderrTail=${JSON.stringify(String(bootE?.stderrText?.() ?? '').slice(-400))}**`}`,
+  'THE ARCHITECT\'S ANSWER (4) AS THE OPERATOR MEETS IT. The instrument is the app itself, unmodified: the only thing this driver changes is the SHAPE of the path the app was told to persist to, which is exactly the state `SC-E-04` constructs in process. **A boot refusal would have been a reading (and the arm would then read MANUAL with its stderr recorded), so this arm can never PASS by failing to run.** `residualTmpEntries` is taken beside the reading because `persist()` removes `${path}.tmp` on a caught failure: a residue there is a second, independent statement about the same failed write.')
+
+// ── FAMILY E, E-4 — THE NAMED `CONDITION` (the architect's answers 1 and 3) ──────────────
+/** **THE CONDITION, NAMED AND MEASURED — NOT A RE-SCORING OF THE FAMILY-D ARMS AND NOT A NEW RUNTIME
+ *  PREDICATE.** The architect's answer (1) makes `D-2` **STRUCTURAL**: the tier's write surfaces stay
+ *  non-MCP-reachable and the enforcement lives at the exclusion gate's invocation turn. The TWO
+ *  READINGS the Family-D arms can be asserted under are therefore DIFFERENT CLAIMS, and the record
+ *  keeps BOTH visible rather than silently picking one:
+ *
+ *    **READING A — A LOCK-STATE RULE AT THE STORE'S OWN SITE:** the tier's own write site must refuse
+ *    while the tier is CLOSED. This is what `SC-D-05`/`SC-D-07` measure, and it is what they FIND
+ *    ABSENT (the write answers `committed` and moves the file's sha256 in the FORBIDDEN state, again
+ *    after the return, and in the one legal state too) — so under READING A the arms are `FAIL` and
+ *    MUST NOT BE DROPPED.
+ *
+ *    **READING B — STRUCTURAL NON-REACHABILITY:** the legal pairs are read as `{MCP-ENABLED,
+ *    TIER-4-CLOSED}` / `{MCP-DISABLED, TIER-4-OPEN}` where "CLOSED" is a property of the WRITE
+ *    SURFACE's reachability from the MCP transports and not of a predicate consulted at the store's
+ *    own site. Under READING B the arms' premise ("the store should consult the MCP state") is not
+ *    what the ruling requires — and the arms' measured fact is UNMOVED: the write surface admits a
+ *    write while the tier is CLOSED, which is a statement about SCOPE (`P-R6`, a GATE-SCOPE finding),
+ *    never about a leak.
+ *
+ *  **WHAT EACH ARM ASSERTS, NAMED: `SC-D-05`/`SC-D-07` assert READING A** (their predicate is "the
+ *  write must be REFUSED while MCP is enabled", which only has content under A). **`SC-E-09` asserts
+ *  the FACTS that decide between the readings**, and none of them is a runtime predicate over MCP
+ *  state: the tier's own surface carries no lock/unlock/MCP member at all (so READING A has no site
+ *  in the module), and the write surface is not reachable from the MCP tool set. **BOTH READINGS STAY
+ *  VISIBLE; NEITHER ARM IS DROPPED AND NO ARM'S VERDICT MOVES.** */
+const E_LOCK_TOKENS = ['unlocked', 'unlock', 'locked', 'mcpBlocked', 'mcp-blocked', 'exclusionState', 'exclusion', 'tier4Open', 'tier4Closed', 'isOpen', 'isBlocked']
+const eLockCensusOver = (src) => E_LOCK_TOKENS.filter((t) => countInCode(src, t).code > 0)
+const eLockTokensInTheStoreModule = eLockCensusOver(securityStoreSrcA)
+const E_LOCK_CONTROL_SRC = 'export interface S { set(patch: unknown): void }\nfunction gate(){ return this.mcpBlocked === true }\nclass K { unlocked = false; exclusionState = "mcp-enabled"; isOpen(){ return !this.unlocked } }\n'
+const eLockControlHits = eLockCensusOver(E_LOCK_CONTROL_SRC)
+const mcpServerSrcForE = readFileSync(join(root, 'src', 'main', 'mcp-server.ts'), 'utf8')
+const eWriteSurfaceTokensInTheMcpServer = ['IPC_SECURITY_SET', 'security.set', 'securityStore.set'].filter((t) => countInCode(mcpServerSrcForE, t).code > 0)
+const eFamilyDFailsStillPresent = CHECKS.filter((c) => /^SC-D-0[57]/.test(c.id) && c.verdict === 'FAIL')
+const eLockStateReadingMeasuredFalse = d2ReceiptEnabled?.status === 'committed' && d2ReceiptReturn?.status === 'committed'
+const e5ReceiptHonest = e5.booted === true ? e5.receiptIsRefused === true : false
+const e9Terms = {
+  c1_theTiersOwnSurfaceCarriesNoLockUnlockOrMcpState: eLockTokensInTheStoreModule.length === 0 && e3CensusComplete,
+  c2_theWriteSurfaceIsNotReachableFromTheMcpToolSet: toolSetIsLanded === true && eWriteSurfaceTokensInTheMcpServer.length === 0,
+  c3_theLockStateReadingIsMeasuredAbsent: eLockStateReadingMeasuredFalse === true,
+  c4_theFamilyDFailsAreStillMeasuredAndNotDropped: eFamilyDFailsStillPresent.length === 2,
+  c5_theCensusControlCanRefuse: eLockControlHits.length >= 3,
+}
+const e9Verdict = (!eProbeInstrumentOk || !e3CensusComplete) ? 'MANUAL' : (Object.values(e9Terms).every((v) => v === true) ? 'PASS' : 'FAIL')
+check('SC-E-09 (Family E, E-4) — `CONDITION-1`: THE LOCK/ACCESS CONDITION, BOTH READINGS KEPT VISIBLE', 'CONDITION (NOT a requirement arm and NOT a new runtime predicate over MCP state): the TWO readings the Family-D write arms can be asserted under are BOTH carried — READING A (a lock-state rule at the store\'s own site) and READING B (structural non-reachability of the write surface) — with the FACTS that decide between them measured, the Family-D FAILs still counted, and the module\'s own surface shown to carry NO lock/unlock/MCP member for READING A to live in', e9Verdict,
+  `NAMED TERMS (each one a predicate term, each with its fixture): ${JSON.stringify(e9Terms)}. **READING A (a lock-state rule at the store's own site) is what \`SC-D-05\`/\`SC-D-07\` ASSERT — both are still present and still read FAIL, and neither is dropped: ${JSON.stringify(eFamilyDFailsStillPresent.map((c) => c.id.split(' ')[0] + ':' + c.verdict + ' ' + JSON.stringify(c.observation).slice(0, 120)))}.** **READING B (structural non-reachability) is what the architect's answer (1) states, and its facts are these: the tier module's CODE carries NO lock/unlock/MCP/state member — census over ${E_LOCK_TOKENS.length} tokens in \`src/main/security-store.ts\` (sha256 ${securityStoreShaA.slice(0, 16)}…, code-only, comments stripped) → ${JSON.stringify(eLockTokensInTheStoreModule)}; the live surface census is ${JSON.stringify(e3SurfaceCensus)}; the MCP server's own bytes carry none of ${JSON.stringify(['IPC_SECURITY_SET', 'security.set', 'securityStore.set'])} → ${JSON.stringify(eWriteSurfaceTokensInTheMcpServer)}; the live tool set is SET-EQUAL to the landed \`ALL_TOOLS\` (toolSetIsLanded=${toolSetIsLanded}).** THE \`c5\` CONTROL (the census can refuse): the SAME census over a SYNTHETIC source that really does carry such members → ${JSON.stringify(eLockControlHits)} (a census that could not find them would make \`c1\` unfalsifiable). **THE CONDITION IN ONE LINE: the write surface admits a write while the tier is CLOSED — the legal pairs are \`{MCP-ENABLED, TIER-4-CLOSED}\` / \`{MCP-DISABLED, TIER-4-OPEN}\`, and the enforcement must be STRUCTURAL (the write surface is non-MCP-reachable and the unlock is only reachable while the MCP is blocked) — so under READING A the arms FAIL as measured and under READING B the same measurement is a GATE-SCOPE finding named \`P-R6\`; THIS ROW DOES NOT CHOOSE BETWEEN THEM AND DOES NOT DROP EITHER.**`,
+  'The architect\'s answers (1) and (3), carried as a CONDITION rather than dissolved into the arms (`§4d` rule 6: a term must be IN its predicate — this row\'s terms are the structural facts, and the arms\' verdicts are read from the arms themselves). **NO RUNTIME PREDICATE OVER MCP STATE IS INVENTED AND NO ARM IS RE-SCOPED:** `SC-D-05`/`SC-D-07` keep their verdicts and their wording (READING A), and this row adds the measurement that gives the structural reading (B) its content. **THE DECLARED LIMIT: "the unlock is only reachable while the MCP is blocked" is NOT measured by this battery at any layer — the unlock path is the operator\'s pane/`setExclusion` channel, whose reachability this battery does not census; that limit is stated here rather than implied away.**')
+
+// ── FAMILY E — THE FAMILY VERDICTS, DERIVED FROM THE ARMS ABOVE ──────────────────────────
+const eProbeErrCount = eProbeErrs.length
+const eCommittedReceiptCount = eCommittedReceiptOnUnrep.length + eBridgeCommittedReceipts.length
+const e1VerdictDerived = (!eProbeInstrumentOk || !eBridgeInstrumentOk) ? 'PARTIAL'
+  : (eCommittedUnrep.length + eBridgeCommitted.length > 0 ? 'NON-COMPLIANT' : (e1AllTermsHold && Object.values(e2BridgeTerms).every((v) => v === true) && eJsonSafeControlHolds ? 'COMPLIANT' : 'PARTIAL'))
+const e2VerdictDerived = (!eProbeInstrumentOk) ? 'PARTIAL'
+  : (e5Verdict === 'MANUAL') ? 'PARTIAL'
+    : ((!e2NoInMemoryAdvance || e5.recordAdvancedPastARefusedPersist === true || e5.receiptClaimsFullCommitment === true) ? 'NON-COMPLIANT'
+      : ((e2ReceiptsHonest && e2BytesUnmoved && eWritableControlHolds) ? 'COMPLIANT' : 'PARTIAL'))
+const e3VerdictDerived = (!eProbeInstrumentOk || !e3CensusComplete) ? 'PARTIAL'
+  : (e3MutationVisible.length > 0 ? 'NON-COMPLIANT' : (e3ControlsHold ? 'COMPLIANT' : 'PARTIAL'))
+console.log('\n  FAMILY E — THE ARCHITECT\'S FIVE ANSWERS, DERIVED FROM THE ARMS (never restated):')
+console.log('    E-1 (JSON-SAFETY: an unrepresentable value must not be committed) = ' + e1VerdictDerived)
+console.log('      ARMS: module [B] ' + JSON.stringify(dById(/^SC-E-01/).map((c) => c.id.split(' ')[0] + ':' + c.verdict))
+  + ' · bridge [CDP]+[G] ' + JSON.stringify(dById(/^SC-E-02/).map((c) => c.id.split(' ')[0] + ':' + c.verdict))
+  + ' · CONTROL ' + JSON.stringify(dById(/^SC-E-03/).map((c) => c.id.split(' ')[0] + ':' + c.verdict)))
+console.log('      TERMS: unrepresentable values driven = ' + eUnrepProbes.length + ' of ' + eProbes.length + ' probe(s) (16 values x 3 members); values found IN the record = '
+  + JSON.stringify(eCommittedUnrep.map((p) => p.value + '/' + p.member)) + '; probes answering `committed` for an unrepresentable value = ' + eCommittedReceiptOnUnrep.length
+  + ' (module) + ' + eBridgeCommittedReceipts.length + ' (bridge); in-memory/file disagreements = ' + JSON.stringify([...eDivergentProbes, ...eBridgeDivergent].map((p) => p.value + '/' + p.member))
+  + '; module probe errors = ' + eProbeErrCount)
+console.log('      WHY THIS VERDICT: the tree REFUSES nothing, DROPS most unrepresentable values by coercion, THROWS only on a non-object patch, and COMMITS one — `Infinity` as `maxJournalLength`, which enters the record as `Infinity` and reaches the file as `null` — while EVERY one of the ' + eCommittedReceiptOnUnrep.length
+  + ' module probes and ' + eBridgeCommittedReceipts.length + ' bridge probes answers `{"status":"committed"}`. A COMMITTED RECEIPT ON A VALUE THE WRITE DID NOT STORE is the finding; the divergence is the corruption.')
+console.log('    E-2 (COMMIT ⟺ PERSISTED: a write is not committed until it saves to file) = ' + e2VerdictDerived)
+console.log('      ARMS: module [B] ' + JSON.stringify(dById(/^SC-E-04/).map((c) => c.id.split(' ')[0] + ':' + c.verdict))
+  + ' · live [CDP]+[G] ' + JSON.stringify(dById(/^SC-E-05/).map((c) => c.id.split(' ')[0] + ':' + c.verdict))
+  + ' · CONTROL ' + JSON.stringify(dById(/^SC-E-06/).map((c) => c.id.split(' ')[0] + ':' + c.verdict)))
+console.log('      TERMS: receipt honest at every site = ' + (e2ReceiptsHonest && e5ReceiptHonest)
+  + ' (module `{"status":"refused","reason":"write-failed"}` at all 3 unwritable sites; live receipt = ' + JSON.stringify(e5.receipt ?? null) + '); record advanced past a refused persist = ' + (!e2NoInMemoryAdvance) + ' (module, all 3 sites) / ' + (e5.recordAdvancedPastARefusedPersist === true) + ' (live); file bytes unmoved = ' + e2BytesUnmoved
+  + '; the writable-path control commits and lands = ' + eWritableControlHolds)
+console.log('      WHY THIS VERDICT: the RECEIPT is honest — it says `refused` and never claims full commitment, so answer (4)\'s first half HOLDS — while `src/main/security-store.ts:138-139` assigns the record BEFORE `persist()` runs, so the tier\'s own read afterwards SHOWS A CHANGE THE FILE DOES NOT HAVE. That is the second half of answer (4) measured false, and it is a FAIL with its measurement rather than a defect of the instrument. `docs/specs/store-security.md` `§2.1` item 2 DOCUMENTS the in-memory-applies discipline, so this is a decision-contract drift as well as a reading: the row names both.')
+console.log('    E-3 (FULL-SURFACE CLONE: no carve-out) = ' + e3VerdictDerived)
+console.log('      ARMS: [B] ' + JSON.stringify(dById(/^SC-E-07/).map((c) => c.id.split(' ')[0] + ':' + c.verdict))
+  + ' · CONTROL ' + JSON.stringify(dById(/^SC-E-08|^SC-E-06/).map((c) => c.id.split(' ')[0] + ':' + c.verdict)))
+console.log('      TERMS: the surface census = ' + JSON.stringify(e3SurfaceCensus) + '; members that hand back the SAME object twice = ' + JSON.stringify(e3HandsOutTheSameObject.map((r) => r.member))
+  + '; members whose returned value, mutated by the holder, was VISIBLE on the next read = ' + JSON.stringify(e3MutationVisible.map((r) => r.member))
+  + '; the clone-detector control pair holds = ' + e3ControlsHold + ' (clone-returning subject must stay silent, shared-object subject must fire)')
+console.log('      WHY THIS VERDICT: TWO of the three value-returning members are detached (`get()`, `set(patch)`\'s return), and `lastWriteReceipt()` is NOT — it hands the SAME receipt object back on every call (`src/main/security-store.ts:142-144`), so a holder can rewrite the tier\'s own answer to its last write. **`SC-D-02a` READ PASS BECAUSE IT MEASURED ONLY THE FIRST TWO; the architect\'s answer (3) removes the carve-out, and this row is the census that makes the third member in scope.** The FAIL names the member.')
+console.log('    E-4 (CONDITION-1: the lock/access condition, both readings kept visible) = ' + JSON.stringify(dById(/^SC-E-09/).map((c) => `${c.id.split(' ')[0]}:${c.verdict}`)) + ' — a CONDITION row, NOT a requirement arm')
+console.log('      TERMS: ' + JSON.stringify(e9Terms))
+console.log('      WHY THIS ROW EXISTS: the architect answered that `D-2` is STRUCTURAL, so the operative condition is the tier\'s own unlocked/blocked state and NOT a predicate consulted on MCP state. That answer does not move the Family-D arms\' measured fact — **the write surface admits a write while the tier is CLOSED** — and it does not license dropping them. READING A (the store-site lock rule the arms assert) and READING B (structural non-reachability) are BOTH printed, at the row and in this family block, so no later pass can quote one of them as the other.')
+console.log('    THE FAMILY-E ROW SET, BUCKETED BY THE DECLARED TABLE: ' + JSON.stringify(familyRows('E').map((c) => `${c.id.split(' ')[0]}:${rowKind(c)}:${c.verdict}`)))
+console.log('    THE DECLARED LIMITS OF THIS FAMILY (printed so a PASS cannot be over-read): (1) `function` and `Symbol` CANNOT cross the IPC boundary and are [B]-ONLY — the bridge arm says so in its own terms rather than reporting a probe it could not run; (2) "the unlock is only reachable while the MCP is blocked" is NOT measured by this battery at any layer (the unlock path is the operator\'s pane/`setExclusion` channel, whose reachability is not censused here); (3) `SC-E-01`\'s `t2` term ("must not be reported `committed`") is THIS BATTERY\'s criterion for the drop cases, while `t1`/`t3` are the architect\'s own words ("must not be accepted") — the row prints which term each reading reddens so the two cannot be conflated.')
+
+// ══════════════════════════════════════════════════════════════════════════════════════
 // PHASE 4 — [G] the static readings this battery's rows lean on
 // ══════════════════════════════════════════════════════════════════════════════════════
 const storeModulePath = join(root, 'src', 'renderer', 'store-core-graph.ts')
@@ -2304,7 +3050,7 @@ const isCensusKind = (c) => ['CHANNEL-CENSUS', 'STATIC-CENSUS', 'RE-MEASUREMENT'
 const rowKindUndeclared = CHECKS.filter((c) => rowKind(c) === 'UNDECLARED')
 const rowKindDeclaredButAbsent = Object.keys(ROW_KINDS).filter((id) => !CHECKS.some((c) => c.id.split(' ')[0] === id))
 console.log('\n  FAMILY TALLIES (the family each row belongs to is in its id):')
-for (const fam of ['A', 'B', 'C', 'D']) {
+for (const fam of ['A', 'B', 'C', 'D', 'E']) {
   const rows = CHECKS.filter((c) => new RegExp(`SC-${fam}-`).test(c.id))
   if (rows.length === 0) continue
   const t = {}
@@ -2317,9 +3063,15 @@ for (const fam of ['A', 'B', 'C', 'D']) {
   const censuses = rows.filter((c) => isCensusKind(c))
   const arms = rows.filter((c) => rowKind(c) === 'ARM')
   const undeclared = rows.filter((c) => rowKind(c) === 'UNDECLARED')
+  /** **THE FIFTH BUCKET, ADDED BY FAMILY E (`SC-E-09`):** a `CONDITION` row is neither an arm, a
+   *  control nor a census — it is a declaration with terms — so it gets its OWN bucket rather than
+   *  falling into `UNDECLARED` (which would charge it to no bucket while printing it as a missing
+   *  classification). The four as-filed buckets are UNCHANGED and every pre-existing row keeps the
+   *  bucket it had. */
+  const conditions = rows.filter((c) => rowKind(c) === 'CONDITION')
   const fmt = (set) => `${set.length} (${set.map((c) => `${c.id.split(' ')[0]}:${c.verdict}`).join(', ')})`
   console.log(`    FAMILY ${fam}: ${rows.length} row(s) = ${Object.entries(t).map(([k, v]) => `${v} ${k}`).join(' / ')}` +
-    ` — ARMS ${fmt(arms)} · CONTROLS ${fmt(controls)} · CENSUS/MEASUREMENT ${fmt(censuses)} · UNDECLARED ${fmt(undeclared)}`)
+    ` — ARMS ${fmt(arms)} · CONTROLS ${fmt(controls)} · CENSUS/MEASUREMENT ${fmt(censuses)} · CONDITIONS ${fmt(conditions)} · UNDECLARED ${fmt(undeclared)}`)
 }
 /** THE FAMILY-VERDICT TERMS, PRINTED SO THE RECORD'S THREE VERDICTS ARE RE-DERIVED FROM THE
  *  RUN RATHER THAN RE-ASSERTED. Family A's verdict rests on its FOUR REQUIREMENT ARMS only —
@@ -2368,7 +3120,7 @@ console.log(`    FAMILY B = COMPLIANT iff every family-B row PASSes: ${verdictSp
 console.log(`    FAMILY C = COMPLIANT iff every family-C row PASSes: ${verdictSplit(familyCArms)} over ${familyCArms.length} row(s)` +
   `${familyCManual.length === 0 ? ' — no MANUAL row, so the COMPLIANT reading is complete' : ` — **${familyCManual.length} MANUAL row(s) (${JSON.stringify(familyCManual.map((c) => c.id.split(' ')[0]))}): those claims are WITHHELD, so the family is NOT reported COMPLIANT on a MANUAL arm**`}`)
 console.log(`    MANUAL ACROSS THE RUN (the A3-05 term, printed so a MANUAL row cannot vanish from any count): ${manualRowIdsAnywhere.length} row(s) ${JSON.stringify(manualRowIdsAnywhere)}`)
-console.log(`    CONTROL INVENTORY (A-F15): ${CHECKS.filter((c) => c.id.includes('CONTROL')).length} id-labelled CONTROL row(s) + the PRECEDENCE control asserted inside SC-C-01 (a predicate TERM since B-F5) = 6 controls total`)
+console.log(`    CONTROL INVENTORY (A-F15): ${CHECKS.filter((c) => c.id.includes('CONTROL')).length} id-labelled CONTROL row(s) + the PRECEDENCE control asserted inside SC-C-01 (a predicate TERM since B-F5) = ${CHECKS.filter((c) => c.id.includes('CONTROL')).length + 1} controls total (THE TOTAL IS NOW COMPUTED rather than pinned at the as-filed literal \`6\`, because Family E adds three id-labelled CONTROL rows — SC-E-03/SC-E-06/SC-E-08 — and a pinned literal would have gone stale the moment this family landed)`)
 // THE EXIT CODE IS EVIDENCE: exit 1 iff at least one row is FAIL, 0 only when there is none.
 // A MANUAL/PARKED row is counted and named but is NOT a FAIL for exit-code purposes.
 // **AND THEREFORE `exit 0` CANNOT CERTIFY A FAMILY (the FOURTH audit's `A4-05`, DECLARED ONCE, at
