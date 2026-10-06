@@ -10,7 +10,7 @@ import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, I
 import { ProvidentMcpServer, RendererBackend, type McpTransportKind } from './mcp-server.js'
 import { createSecurityStore, type SecurityStore, type SecurityWriteReceipt } from './security-store.js'
 import { createModuleStore, type ModuleStore, type ModuleRecord, type ModuleStoreStatus } from './module-store.js'
-import { STORE_FILE_GET, STORE_FILE_PUT } from './store-channels.js'
+import { STORE_FILE_GET, STORE_FILE_PUT, IPC_SECURITY_EXCLUSION } from './store-channels.js'
 import { CapabilityRouter } from '../renderer/extensions.js'
 import { syncModuleRouter } from './mcp-server.js'
 import { SecurityGate, type ToolGroup } from './security.js'
@@ -87,6 +87,11 @@ async function main(): Promise<void> {
     path: join(app.getPath('userData'), 'provident-security.json'),
   })
   const persisted = securityStore.get()
+  // `docs/specs/secure-exclusion.md` `§2.1` item 4 — THE ORDERING ENVELOPE, STEP 2: the gate is
+  // CONSTRUCTED here (after the store, before the transports) and the exclusion record is
+  // INITIALIZED to its boot terminal `'mcp-enabled'` AT THIS CONSTRUCTION SITE — never read from
+  // a file, because the flag is NOT persisted (`D-19`). A crash, a torn record, a corrupt file and
+  // a missing file therefore all resolve to the SAFE pair.
   const gate = new SecurityGate({ token: persisted.token, enabled: persisted.enabled as ToolGroup[] })
   const backend = new RendererBackend()
 
@@ -366,7 +371,9 @@ async function main(): Promise<void> {
     }
   }
 
-  ipcMain.handle(IPC_SECURITY_GET, () => securityStore.get())
+  // PAR-9 — the GET response record is EXTENDED ADDITIVELY by the declared `exclusion` member
+  // (the landed `write` member's precedent below): the member is NEVER absent on a read.
+  ipcMain.handle(IPC_SECURITY_GET, () => ({ ...securityStore.get(), exclusion: gate.exclusionState() }))
   ipcMain.handle(IPC_SECURITY_SET, (_event, patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }) => {
     // THE RECEIPT'S ADDITIVE DELIVERY (§2.3 items 2/4 — the C-11 NON-BREAKING
     // reading, G3 2026-10-03): `set()`'s OWN return stays the post-state
@@ -379,7 +386,33 @@ async function main(): Promise<void> {
     const updated = { ...securityStore.set(patch), write: securityStore.lastWriteReceipt() } as SecuritySettings & { write: SecurityWriteReceipt }
     // Re-gate the live MCP server + persist.
     mcp.applyGatePatch({ token: patch.token, groups: patch.groups as ToolGroup[] | undefined, disable: patch.disable as ToolGroup[] | undefined })
+    // `§2.1` item 3 `T-5` / `PAR-9` — the SET is NOT a transition site: the response carries the
+    // SAME additive `exclusion` member BESIDE the landed `write`, and the state is untouched (a
+    // SET that flipped the exclusion would make it a side effect of an unrelated write). The
+    // member is attached to the SAME post-state record `set()` minted, so the landed
+    // `return updated` resolution — and every reader anchored on it — is unchanged.
+    ;(updated as unknown as { exclusion: string }).exclusion = gate.exclusionState()
     return updated
+  })
+
+  // `docs/specs/secure-exclusion.md` §2.4 item 4 / PAR-8 — THE TRANSITION'S OWN CHANNEL. It is
+  // SEPARATE from the settings write, so the transition and the settings write stay two
+  // distinguishable operations (`T-5` is observable rather than inferred) and `set(patch)`'s
+  // declared domain stays unmoved. THE HANDLER IS TOTAL OVER ITS DECLARED DOMAIN: the two legal
+  // tokens apply the transition; EVERY outside value — a boolean, a number, an object, an array,
+  // `undefined`, `null`, an unknown string, a case-variant, a whitespace-padded string — is
+  // REFUSED AS A VALUE, never a throw and never a silent no-op that looks applied.
+  ipcMain.handle(IPC_SECURITY_EXCLUSION, (_event, state: unknown) => {
+    if (state !== 'mcp-enabled' && state !== 'mcp-disabled') {
+      return { applied: false, state: gate.exclusionState(), reason: 'malformed-state' }
+    }
+    // THE TRANSITION IS THE GATE'S OWN (the pure-constructor form) and the server's live gate is
+    // REPLACED exactly as `applyGatePatch` replaces it: the record, the epoch bump and the
+    // in-flight invalidation land together, and the registered handles are toggled beside them.
+    // A SELF-TRANSITION is a legal no-op: no bump, no invalidation, the toggles re-applied
+    // idempotently (an epoch bump on a no-op would be a denial-of-service surface).
+    mcp.applyExclusion(state)
+    return { applied: true, state: gate.exclusionState() }
   })
 
   // U8 → Q-5 — the module management IPC (module-feature-list.md §4). Manual-UI only: the
@@ -427,6 +460,13 @@ async function main(): Promise<void> {
     })
   }
 
+  // `docs/specs/secure-exclusion.md` §2.4 item 5(a) — THIS HANDLER STAYS UNCHANGED AND
+  // UNCONDITIONAL, and the rationale is recorded HERE, OUTSIDE the body, on purpose: the row that
+  // reads the handler's own body asserts it carries NO state-clearing token at all, so the body
+  // below is left byte-for-byte the landed one. `markReady()` is the renderer's ARRIVAL signal,
+  // not the operator's CONSENT signal; a gate re-armed on readiness would be re-armed by the very
+  // party the gate exists to constrain (the `G-7` hazard), so no readiness path ever derives from
+  // or clears the operator's disabled state.
   ipcMain.on(IPC_READY, () => {
     backend.markReady()
     console.error('[provident-main] renderer ready — MCP backend armed')

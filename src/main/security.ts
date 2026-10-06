@@ -87,6 +87,19 @@ export function defaultSecurityConfig(): { token: string | null; enabled: ToolGr
   return { token: null, enabled: ['read', 'dispatch'] }
 }
 
+/** THE EXCLUSION STATE'S CLOSED TOKEN PAIR (`docs/specs/secure-exclusion.md` `§0A` item 1 /
+ *  `§2.1` item 1). ONE record with TWO DERIVED readings, so the illegal pair
+ *  `{MCP-ENABLED, TIER-4-OPEN}` (and its mirror) is UNSPELLABLE rather than merely forbidden. */
+export type ExclusionState = 'mcp-enabled' | 'mcp-disabled'
+
+/** `§2.2` item 1 — THE INVOCATION-TURN THRESHOLD PREDICATE, in the SAME FILE and the SAME STYLE
+ *  as the two landed gates above and with the same FAIL-CLOSED posture: `true` **iff** `state` is
+ *  the exact legal token `'mcp-enabled'`; `false` for EVERY other value — `undefined`, `null`, a
+ *  non-string, an unknown string, a hostile object. TOTAL: it never throws. */
+export function exclusionAllowsWork(state: unknown): boolean {
+  return state === 'mcp-enabled'
+}
+
 function safeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false
   return timingSafeEqual(Buffer.from(a), Buffer.from(b))
@@ -183,11 +196,27 @@ export interface SecurityConfig { token: string | null; enabled: ToolGroup[] }
 
 export class SecurityGate {
   private readonly _config: { token: string | null; enabled: ToolGroup[] }
+  /** `§2.1` items 2/3 — THE ONE EXCLUSION RECORD (the second axis, `CURRENT STATE` item 4).
+   *  PROCESS-GLOBAL and SINGLE-VALUED: it rides the ONE gate `main` constructs at boot and the
+   *  server holds; there is no per-window copy, no per-realm copy and no second holder. */
+  private _exclusion: ExclusionState
 
   constructor(initial?: SecurityConfig) {
+    // A PARTIAL initial (`{ token }` with no `enabled` — the boot-read shape the drives construct
+    // the gate with) falls back to the default enabled set rather than throwing. An `enabled` that
+    // IS supplied is carried in whatever iterable form it arrives (an array or a `Set` — both are
+    // landed call forms), so no caller's group set is silently replaced by the default.
     this._config = initial
-      ? { token: initial.token, enabled: [...initial.enabled] }
+      ? {
+        token: initial.token,
+        enabled: initial.enabled === undefined || initial.enabled === null
+          ? defaultSecurityConfig().enabled
+          : [...initial.enabled],
+      }
       : defaultSecurityConfig()
+    // THE BOOT TERMINAL (`§2.1` item 4): the record is INITIALIZED HERE to `'mcp-enabled'` — from
+    // the CONSTRUCTION SITE, never read from any file, because the flag is NOT persisted (`D-19`).
+    this._exclusion = 'mcp-enabled'
   }
 
   get config(): SecurityConfig {
@@ -196,6 +225,38 @@ export class SecurityGate {
 
   get enabled(): ReadonlySet<ToolGroup> {
     return new Set(this._config.enabled)
+  }
+
+  /** `§2.1` item 2 / `PAR-1` — THE DERIVED PAIR READER. A `readonly` getter with NO setter, so
+   *  no assignment path exists (`P-EX-IM-1`'s reading (3)); `mcpEnabled === !tier4Open` is an
+   *  INVARIANT of the one record, never a pair of assignable fields. */
+  get exclusion(): { readonly mcpEnabled: boolean; readonly tier4Open: boolean } {
+    const mcpEnabled = this._exclusion === 'mcp-enabled'
+    return { mcpEnabled, tier4Open: !mcpEnabled }
+  }
+
+  /** `§2.1` item 2 / `PAR-2` — THE TOTAL READER: the two closed tokens, never `undefined`, never
+   *  a throw, no third token. */
+  exclusionState(): ExclusionState {
+    return this._exclusion
+  }
+
+  /** `§2.1` item 2 / `PAR-3` — THE TRANSITION'S PURE CONSTRUCTOR, in the `apply`-family style: a
+   *  NEW gate is returned and the RECEIVER is unchanged (`applyGatePatch` REPLACES `this._gate`,
+   *  so a mutating form would leave the server's own replacement invisible to an earlier reader).
+   *  `T-3` (a self-transition) is a legal no-op. `T-4`: EVERY outside value — any other string,
+   *  `undefined`, `null`, a number, an object, an array, a hostile proxy — answers the UNCHANGED
+   *  gate and NEVER throws (the `SecurityGate.apply` posture above). */
+  withExclusion(next: ExclusionState): SecurityGate {
+    const changed = next === 'mcp-enabled' || next === 'mcp-disabled'
+    if (!changed || next === this._exclusion) {
+      const same = new SecurityGate(this.config)
+      same._exclusion = this._exclusion
+      return same
+    }
+    const moved = new SecurityGate(this.config)
+    moved._exclusion = next
+    return moved
   }
 
   toolAllowed(name: string): boolean {
@@ -209,6 +270,10 @@ export class SecurityGate {
   }
 
   apply(patch: { token?: string | null; groups?: ToolGroup[]; disable?: ToolGroup[] }): SecurityGate {
-    return new SecurityGate(applyPatch(this.config, patch))
+    const next = new SecurityGate(applyPatch(this.config, patch))
+    // `T-5` / `M-EX-9` — the SET/re-gate path is NOT a transition site: the exclusion record
+    // rides through UNTOUCHED, and the two axes stay separate.
+    next._exclusion = this._exclusion
+    return next
   }
 }

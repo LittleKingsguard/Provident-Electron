@@ -31,6 +31,9 @@ import type { SecuritySettings, RpcRequest, RpcReply } from '../shared/types.js'
 // `src/main/security-store.ts` and reaches the pane's bridge DECLARATION by
 // IMPORT (type-only — erased at build; no runtime coupling to the main side).
 import type { SecurityWriteReceipt } from '../main/security-store.js'
+// PAR-13 — the two closed state tokens, imported TYPE-ONLY from the gate module that owns them
+// (the `SecurityWriteReceipt` precedent above: erased at build, no runtime coupling to main).
+import type { ExclusionState as EXCLUSION_STATE } from '../main/security.js'
 
 declare global {
   interface Window {
@@ -40,10 +43,16 @@ declare global {
       sendReply(reply: RpcReply): void
       notify(payload: { uri: string }): void
       security?: {
-        get(): Promise<SecuritySettings>
+        // PAR-13 / §1.5 item 5 — this re-declaration MUST widen in LOCKSTEP with
+        // `preload.ts` or the pane cannot read the member: both sites declare the
+        // SAME `SecuritySettings & { exclusion }` superset (a half-widening FAILS).
+        get(): Promise<SecuritySettings & { exclusion: EXCLUSION_STATE }>
         // G3 §2.3 item 2 — the pane's declared `security.set` follows the same
         // superset as the preload's (the receipt's additive `write` member).
         set(patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }): Promise<SecuritySettings & { write: SecurityWriteReceipt }>
+        // §2.4 item 4 / PAR-10 — the exclusion transition's OWN member. The control's
+        // body calls it and NEVER throws; a malformed request answers `applied: false`.
+        setExclusion(state: EXCLUSION_STATE): Promise<{ applied: boolean; state: EXCLUSION_STATE; reason?: 'malformed-state' }>
       }
       module?: {
         get(): Promise<{ corrupt: boolean; quarantined: string[]; loaded: string[]; modules: Array<{ name: string; version: string; capabilities?: unknown; disabled?: boolean; quarantined?: boolean }> }>
@@ -135,6 +144,19 @@ const JOURNAL_LENGTH_BODY = `function (ctx) {
   else s.set({ maxJournalLength: num });
 }`
 
+// §2.4 item 2 / PAR-10 — THE EXCLUSION TOGGLE'S HANDLER BODY, in the SAME function-STRING form
+// as its four landed siblings above and with the SAME `!s` early-return guard: the bridge absent
+// ⇒ an early return, never a throw. It is STATELESS: the CURRENT state is read from the node's
+// OWN props (`data-state`, refreshed by `syncConfig` exactly as the group toggles' `data-on` is),
+// so the control is a pure flip and holds no state of its own.
+const EXCLUSION_TOGGLE_BODY = `function (ctx) {
+  var s = window && window.provident && window.provident.security;
+  if (!s) return;
+  var state = ctx.node.props && ctx.node.props['data-state'];
+  if (state !== 'mcp-enabled' && state !== 'mcp-disabled') return;
+  if (state === 'mcp-disabled') s.setExclusion('mcp-enabled'); else s.setExclusion('mcp-disabled');
+}`
+
 /** The pane-graph envelope: the Security Settings pane + the Debug pane,
  *  authored as provident data. The group toggles are one node per group; their
  *  `data-on`/`data-group` props are refreshed by syncConfig on each refresh. */
@@ -178,6 +200,32 @@ function paneEnvelope(): LegacyInitialData {
                 ],
               },
               { type: 'div', props: { id: 'group-toggles' }, children: toggles },
+              // §2.4 item 2 — THE ONE NEW CONTROL, authored as provident data inside the landed
+              // `settings-pane` section in EXACTLY the landed `journal-length` row's shape (the
+              // same `group-row` class + `token-row` inner div + `<button>` + handler), so the
+              // addition introduces no new class, no new CSS and no new structural pattern. It
+              // adds NO pane, no group row, no new pane id namespace and no new DOM.
+              {
+                type: 'div',
+                props: { id: 'exclusion-control' },
+                css: { classes: ['group-row'] },
+                children: [
+                  { type: 'label', content: 'MCP / secure-tier exclusion (mutually exclusive)' },
+                  {
+                    type: 'div',
+                    css: { classes: ['token-row'] },
+                    children: [
+                      {
+                        type: 'button',
+                        props: { id: 'exclusion-toggle', 'data-state': 'mcp-enabled' },
+                        css: { classes: ['btn'] },
+                        content: 'Disable MCP',
+                        handlers: [{ name: 'exclusion-toggle', event: 'click', body: EXCLUSION_TOGGLE_BODY }],
+                      },
+                    ],
+                  },
+                ],
+              },
               {
                 type: 'div',
                 props: { id: 'journal-length' },
@@ -240,7 +288,10 @@ export class SecurePanels {
   private root: unknown
   private nodes: unknown[]
   private prevMap: Map<string, unknown> | null = null
-  private cfg: SecuritySettings = { token: null, enabled: ['read', 'dispatch'] }
+  // PAR-13 — the pane's own snapshot holder follows the WIDENED declared return of the
+  // manual-UI read (the `SecuritySettings & { exclusion }` superset). `SecuritySettings` itself
+  // is unmoved; this is the renderer's local reading of the same additive member.
+  private cfg: SecuritySettings & { exclusion: EXCLUSION_STATE } = { token: null, enabled: ['read', 'dispatch'], exclusion: 'mcp-enabled' }
   private debugValue = 'booting…'
   private moduleStatus = 'loading…'
   private moduleListText = ''
@@ -429,7 +480,11 @@ export class SecurePanels {
       const mutation: Array<{ targetProp: string; value: unknown; mode?: string }> = []
       if (id === 'security-status') {
         const jl = this.cfg.maxJournalLength !== undefined ? ` · journal: ≤${this.cfg.maxJournalLength}` : ' · journal: ∞'
-        mutation.push({ targetProp: 'content', value: `token: ${this.cfg.token ? '••••' : '(none)'} · enabled: [${this.cfg.enabled.join(', ')}]${jl}` })
+        // §2.4 item 3 / PAR-11 — ONE TRAILING SEGMENT appended to the landed line, never a new
+        // node: the off-state's operator-visible signal. It carries a STATE WORD, never a tier-4
+        // value (the forbidden carriers stand).
+        const excl = this.cfg.exclusion === 'mcp-disabled' ? ' · MCP: disabled' : ' · MCP: enabled'
+        mutation.push({ targetProp: 'content', value: `token: ${this.cfg.token ? '••••' : '(none)'} · enabled: [${this.cfg.enabled.join(', ')}]${jl}${excl}` })
       } else if (id === 'status') {
         mutation.push({ targetProp: 'content', value: this.debugText() })
       } else if (id === 'token-input') {
@@ -439,6 +494,12 @@ export class SecurePanels {
         const on = this.cfg.enabled.includes(g)
         mutation.push({ targetProp: 'props.data-on', mode: 'replace', value: on ? 'true' : 'false' })
         mutation.push({ targetProp: 'content', value: `${on ? '☑' : '☐'} ${GROUP_LABELS[g]}` })
+      } else if (id === 'exclusion-toggle') {
+        // §2.4 items 2/3 — the toggle's `data-state` + its affordance word, refreshed by THIS pass
+        // exactly as the group toggles' `data-on` is.
+        const open = this.cfg.exclusion === 'mcp-disabled'
+        mutation.push({ targetProp: 'props.data-state', mode: 'replace', value: open ? 'mcp-disabled' : 'mcp-enabled' })
+        mutation.push({ targetProp: 'content', value: open ? 'Enable MCP' : 'Disable MCP' })
       } else if (id === 'journal-length-input') {
         mutation.push({ targetProp: 'props.value', mode: 'replace', value: this.cfg.maxJournalLength ?? '' })
       } else if (id === 'module-status') {

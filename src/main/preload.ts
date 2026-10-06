@@ -5,13 +5,31 @@
 // surface (no Node objects leak into the page).
 import { contextBridge, ipcRenderer } from 'electron'
 import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_NOTIFY, IPC_MODULE_GET, IPC_MODULE_SET_DISABLED, type RpcRequest, type RpcReply, type SecuritySettings, type NotifyPayload, type ModuleListEntry } from '../shared/types.js'
-import { STORE_FILE_GET, STORE_FILE_PUT } from '../main/store-channels.js'
+import { STORE_FILE_GET, STORE_FILE_PUT, IPC_SECURITY_EXCLUSION } from '../main/store-channels.js'
 import type { SecurityWriteReceipt } from './security-store.js'
+// PAR-13 — the two closed state tokens, imported TYPE-ONLY from the gate module that owns them
+// (erased at build; no runtime coupling). The WIDENING is an intersection at the declaration
+// sites below, never an edit to the shared `SecuritySettings` type (§1.3 item 9).
+import type { ExclusionState as EXCLUSION_STATE } from './security.js'
+
+/** PAR-13 (`docs/specs/secure-exclusion.md` §1.5 item 5) — THE BASE CARRIER, NAMED so the widened
+ *  declarations below READ as intersections over an unmoved type rather than as replacements of
+ *  it. `SecuritySettings` ITSELF is untouched (§1.3 item 9: `src/shared/types.ts` stays
+ *  byte-identical): the manual-UI read's declared return is this base `Promise<SecuritySettings>`,
+ *  EXTENDED at the two declaration sites by the additive members the two channels deliver
+ *  (`write` on the SET response, `exclusion` on the GET response). */
+type SecurityReadBase = Promise<SecuritySettings>
 
 /** THE Y-3 PUSH CHANNEL (G2 §2.5 — a DECLARED NO-OP on this single-window app): the change
  *  signal rides the existing `webContents.send` surface. The channel name stays a preload
  *  LOCAL (no third constant enters `store-channels.ts` — the constants census stays EXACTLY
- *  TWO, §2.2). */
+ *  TWO, §2.2).
+ *  ⟶ ANNOTATED BESIDE 2026-10-05 (`U-SECURE-EXCLUSION` `S1`, `RCA-8(d)` annotate-beside; the
+ *  sentence above STANDS as the as-filed words and is NOT rewritten): THE CENSUS IS NO LONGER
+ *  TWO — the exclusion unit adds `IPC_SECURITY_EXCLUSION` to `store-channels.ts` (§1.3 item 9 /
+ *  §2.4 item 4), moving that file's constant census `2 → 3`. THIS comment's own claim is
+ *  unaffected: the `store:file:changed` push still rides its preload LOCAL and still enters NO
+ *  constant. */
 const STORE_FILE_CHANGED = 'provident:store:file:changed'
 
 export interface ModuleBridgeResult {
@@ -27,13 +45,14 @@ export interface ProvidentBridge {
   sendReply(reply: RpcReply): void
   notify(payload: NotifyPayload): void
   security: {
-    get(): Promise<SecuritySettings>
+    get(): Promise<SecuritySettings & { exclusion: EXCLUSION_STATE }>
     // THE RECEIPT'S ADDITIVE DELIVERY (G3 §2.3 item 2): `security.set`'s
     // resolution is re-declared as the SUPERSET — the post-state settings
     // extended by the declared member `write` (the receipt of THIS write).
     // `set()`'s own return shape is UNCHANGED (C-11 NON-BREAKING — the receipt
     // rides NEW members only, §2.3 item 4).
     set(patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }): Promise<SecuritySettings & { write: SecurityWriteReceipt }>
+    setExclusion(state: EXCLUSION_STATE): Promise<{ applied: boolean; state: EXCLUSION_STATE; reason?: 'malformed-state' }>
   }
   module: {
     get(): Promise<ModuleBridgeResult>
@@ -68,11 +87,23 @@ const bridge: ProvidentBridge = {
   // renderer Settings pane ONLY. The MCP tool handlers never route to these
   // channels, so an agent cannot grant itself capabilities.
   security: {
-    get(): Promise<SecuritySettings> {
+    // PAR-13 / §1.5 item 5 — `get()`'s declared return WIDENS to the same superset idiom the
+    // landed `set` uses for its additive `write` member: `SecuritySettings & { exclusion }`.
+    // `SecuritySettings` ITSELF is unmoved (§1.3 item 9): the widening is an INTERSECTION applied
+    // at this declaration site and at the renderer's `declare global` re-declaration, which MUST
+    // move in LOCKSTEP (a half-widening FAILS).
+    get(): Promise<SecuritySettings & { exclusion: EXCLUSION_STATE }> {
       return ipcRenderer.invoke(IPC_SECURITY_GET)
     },
     set(patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }): Promise<SecuritySettings & { write: SecurityWriteReceipt }> {
       return ipcRenderer.invoke(IPC_SECURITY_SET, patch)
+    },
+    // §2.4 item 4 — the ONE new channel MEMBER (the `security` member set moves `2 → 3`): the
+    // operator's transition request over its OWN channel, distinguishable from a settings write
+    // (`T-5`). The answer is ONE of exactly TWO closed forms; a malformed payload is REFUSED AS A
+    // VALUE, never a throw.
+    setExclusion(state: EXCLUSION_STATE): Promise<{ applied: boolean; state: EXCLUSION_STATE; reason?: 'malformed-state' }> {
+      return ipcRenderer.invoke(IPC_SECURITY_EXCLUSION, state)
     },
   },
   // U8 — the module management bridge (module-feature-list.md §4). Manual-UI
