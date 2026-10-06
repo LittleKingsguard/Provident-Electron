@@ -332,15 +332,27 @@ check('U-2 (the gesture half)', 'a REAL CDP pointer gesture on the painted toggl
   `click landed on ${JSON.stringify(hit1?.hit)} at (${hit1?.x},${hit1?.y}) inside a ${Math.round(hit1?.w ?? 0)}x${Math.round(hit1?.h ?? 0)} box (isTarget=${hit1?.isTarget}); AFTER the gesture the status segment reads ${JSON.stringify(afterClick1.mcpSegment)} and the button reads ${JSON.stringify(afterClick1.buttonText)}; the bridge read answers exclusion=${JSON.stringify(bridgeAfterClick?.exclusion)}; MCP get_markdown → isError=${markdownAfterClick.isError} text=${JSON.stringify(String(markdownAfterClick.text).slice(0, 80))}`,
   'the gesture IS delivered to the renderer (a capture-phase `click` listener on the same element fires and `elementFromPoint` resolves the button) — the authored handler body does not run')
 
-check('U-2 (sibling control)', 'the SAME CDP gesture path DOES drive a landed sibling button in the same pane', (await (async () => {
+const siblingControl = await (async () => {
   const t0 = await cdp.evaluate(`window.provident.security.get().then(function(v){return v.token})`)
   await cdp.clickElement('token-gen')
   await sleep(1500)
   const t1 = await cdp.evaluate(`window.provident.security.get().then(function(v){return v.token})`)
-  return t0 !== t1
-})()) ? 'PASS' : 'FAIL',
-  'a REAL click on the landed `#token-gen` button in the SAME pane DID run its authored body (the token changed), so the dead click at the exclusion toggle is specific to that control, not to the driver',
-  'CONTROL ROW — without it, a failure of U-2 would be indistinguishable from a driver that cannot click at all')
+  // a SECOND control: the landed `#journal-length-apply` button, whose body — like the
+  // exclusion toggle's — READS `ctx.node.props` before calling the bridge.
+  const j0 = await cdp.evaluate(`window.provident.security.get().then(function(v){return String(v.maxJournalLength)})`)
+  await cdp.evaluate(`(function(){ var i=document.getElementById('journal-length-input'); i.value='7' })()`)
+  await cdp.clickElement('journal-length-apply')
+  await sleep(1500)
+  const j1 = await cdp.evaluate(`window.provident.security.get().then(function(v){return String(v.maxJournalLength)})`)
+  const g0 = await cdp.evaluate(`window.provident.security.get().then(function(v){return v.enabled.join(',')})`)
+  await cdp.clickElement('toggle:graph')
+  await sleep(1500)
+  const g1 = await cdp.evaluate(`window.provident.security.get().then(function(v){return v.enabled.join(',')})`)
+  return { token: [t0, t1], journal: [j0, j1], group: [g0, g1] }
+})()
+check('U-2 (sibling controls)', 'the SAME CDP gesture path DOES drive landed sibling controls in the same pane', siblingControl.token[0] !== siblingControl.token[1] && siblingControl.group[0] !== siblingControl.group[1] ? 'PASS' : 'FAIL',
+  `real clicks on landed controls in the SAME pane: #token-gen changed the token (${JSON.stringify(siblingControl.token[0])} → ${JSON.stringify(siblingControl.token[1])}); #toggle:graph changed the enabled set (${JSON.stringify(siblingControl.group[0])} → ${JSON.stringify(siblingControl.group[1])}); #journal-length-apply read maxJournalLength ${JSON.stringify(siblingControl.journal[0])} → ${JSON.stringify(siblingControl.journal[1])}`,
+  'CONTROL ROWS — without them a U-2 failure would be indistinguishable from a driver that cannot click at all. The discriminating pattern this run MEASURES: the two handlers that DO run (token-gen, toggle:graph) call the bridge FIRST; the two that do NOT run on a real click (journal-length-apply — a LANDED control, and exclusion-toggle) both read ctx.node.props BEFORE their bridge call, so the authored prop read is the failing step and this defect is NOT this unit\'s control alone')
 
 // the bridge's own transition (the pane body's declared call) — the gate DOES move
 await cdp.evaluate(`window.provident.security.setExclusion('mcp-disabled')`)
