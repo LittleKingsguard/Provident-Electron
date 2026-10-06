@@ -218,7 +218,7 @@ export function createSecurityStore(opts: SecurityStoreOptions): SecurityStore {
    *  stale `${path}.tmp` (a failure after the stage write) is removed best-effort on a CAUGHT
    *  failure — the tmp is never parsed as the record and is overwritten by the next write (§2.2
    *  items 3/6); a successful persist leaves NO tmp (the rename consumed it). */
-  function persist(candidate: SecuritySettings): SecurityWriteReceipt {
+  function persist(candidate: SecuritySettings, land: (staged: SecurityWriteReceipt) => void): SecurityWriteReceipt {
     const tmp = `${opts.path}.tmp`
     try {
       mkdirSync(dirname(opts.path), { recursive: true })
@@ -228,6 +228,10 @@ export function createSecurityStore(opts: SecurityStoreOptions): SecurityStore {
       closeSync(tmpFd)
       renameSync(tmp, opts.path)
     } catch {
+      // `§2.6` item 5's `(h-i)` landing sink, refused arm (items 2(ii)/3(b)/4): the REFUSAL TERMINAL
+      // is the caught failure, so the attempt's OWN refused closed form lands HERE — before the
+      // best-effort cleanup, whose own failure stays swallowed — and the record is advanced by
+      // NOTHING (the pre-write record is what `get()` answers at this terminal).
       // G3 gate-4 finding 1 (F-11, 2026-10-03): the stale-tmp cleanup must
       // NEVER escape persist() — a stale `${path}.tmp` that names a DIRECTORY
       // (or a protected path) made the earlier writeFileSync throw EISDIR and
@@ -238,16 +242,24 @@ export function createSecurityStore(opts: SecurityStoreOptions): SecurityStore {
       // the receipt is the refusal, never a throw; `recursive` restores
       // writability when the stale tmp is a directory (§2.2 item 3's "the tmp
       // fate": a stale tmp is never the record and is removed/overwritten next).
+      const refused: SecurityWriteReceipt = { status: 'refused', reason: 'write-failed' }
+      land(refused)
       try {
         rmSync(tmp, { recursive: true, force: true })
       } catch {
         // swallowed by design: the refused receipt is the write's only answer
       }
-      return { status: 'refused', reason: 'write-failed' }
+      return refused
     }
     // THE COMMIT POINT HAS PASSED (§0A item 2): the rename already put the candidate's bytes at
     // the real path, so the directory fsync is a best-effort DURABILITY STRENGTHENING — its own
     // failure is swallowed and the write stays `committed`, live still equals durable.
+    // `§2.6` item 5's `(h-i)` landing sink, committed arm (items 2(i)/3/4): the successful rename
+    // is the FIRST instant the real path's bytes ARE the candidate, so the record's advance and
+    // the attempt's own committed closed form land TOGETHER here — inside the write's own window,
+    // BEFORE the directory fsync, never after `persist()` has returned (I-10-a / I-10-b).
+    const committed: SecurityWriteReceipt = { status: 'committed' }
+    land(committed)
     try {
       const dirFd = openSync(dirname(opts.path), 'r')
       fsyncSync(dirFd)
@@ -255,7 +267,7 @@ export function createSecurityStore(opts: SecurityStoreOptions): SecurityStore {
     } catch {
       // swallowed by design: a refusal here would roll the record back out of the file's content
     }
-    return { status: 'committed' }
+    return committed
   }
 
   // THE DECLARED CENSUS ORDER (§2.5 item 3 / §0A item 5): `Object.keys(store)` is EXACTLY
@@ -290,14 +302,19 @@ export function createSecurityStore(opts: SecurityStoreOptions): SecurityStore {
       }
       // 2/3 · THE CANDIDATE IS A LOCAL, and the write path is handed THAT candidate — never the
       // closure's record (§0A item 3).
-      const staged = persist(candidate)
-      // 4 · THE COMMIT POINT (§2.1 item 3 step 4 / §2.3 item 2): the record advances IFF a save
-      // succeeded — HERE and nowhere else, at the first instant the file's bytes ARE the
-      // candidate. A refusal therefore returns the PRE-WRITE record: live equals durable.
-      if (staged.status === 'committed') current = candidate
+      // 4 · THE LANDING SINK (§2.6 item 5's mechanism `(h-i)`, the ONE production site this clause
+      // requires): the sink is the CALLER's own closure and it is invoked BY the write path
+      // EXACTLY ONCE, at the attempt's terminal — so the record's advance and the attempt's own
+      // closed form land TOGETHER there (§2.1 item 3 step 4 / §2.3 item 2: the record advances IFF
+      // a save succeeded, at the first instant the file's bytes ARE the candidate; a refusal
+      // advances nothing and answers the PRE-WRITE record). The write path itself is never given
+      // `current` and reads no closure state, so §2.1 item 4's declared shape is unmoved.
+      persist(candidate, (staged) => {
+        if (staged.status === 'committed') current = candidate
+        lastReceipt = staged
+      })
       // 6 · THE ANSWER: the record now live (the candidate on a commit, the PRE-WRITE record on a
       // refusal), plus the receipt of THIS attempt (§2.1 item 3 step 6).
-      lastReceipt = staged
       return this.get()
     },
   } as SecurityStore
