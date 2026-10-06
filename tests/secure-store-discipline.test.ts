@@ -121,6 +121,55 @@
  *  C-6 `REPRESENTABLE` (this file's own driver-side check) is driven against
  *      `Object.prototype` (a WRONG state) and must answer false.
  * ========================================================================== */
+/* ⟶ THE POST-DONE AMENDMENT'S RED SET, APPENDED `2026-10-11` (`§4.1` item 3;
+ * `§2.6` THE WRITE LOCK — reads are locked out until the commit lands; the
+ * witness is the gate-5 blind row `SSD-G-81`).  THE STATE MACHINE OF THE LOCK
+ * WINDOW, ENUMERATED BEFORE THE ROWS (TestWriter discipline):
+ *   the window OPENS at the attempt's FIRST FILESYSTEM EFFECT and CLOSES at its
+ *   TERMINAL — the COMMIT LANDING (the successful `renameSync`) or the REFUSAL
+ *   TERMINAL (the caught failure at one of the three pre-rename points).  An
+ *   ADMISSION refusal touches no filesystem and NEVER OPENS A WINDOW.
+ *   THE THREE PROBED IN-WINDOW INSTANTS × THE THREE READINGS (`get()` ·
+ *   `lastWriteReceipt()` · the REAL PATH's bytes):
+ *     (a) PRE-RENAME TMP `fsync` — get = PRE-WRITE · receipt = the last LANDED
+ *         closed form (`null` on a first attempt: the in-flight attempt's own
+ *         receipt is WITHHELD until its terminal) · bytes = PRE-WRITE.
+ *     (b) POST-RENAME DIR `fsync` — get = CANDIDATE · receipt =
+ *         `{status:'committed'}` (revealed AT the commit terminal) · bytes =
+ *         CANDIDATE.                                        [RED on today's bytes]
+ *     (c) REFUSAL TERMINAL (a failing `renameSync`, read at the attempt's own
+ *         cleanup site — the `rmSync` §2.6 item 7(a) names) — get = PRE-WRITE ·
+ *         receipt = `{status:'refused',reason:'write-failed'}` · bytes =
+ *         PRE-WRITE.                                        [RED on today's bytes]
+ *   + 2 DRIVEN MUTATION CONTROLS (an ASSIGN-EARLY subject must FIRE at (a); an
+ *     ADVANCE-AFTER-RETURN subject — the as-landed shape — must FIRE at (b))
+ *   + 1 WINDOW CONTROL (an ADMISSION refusal opens NO window: the in-window
+ *     reading is reported NOT-APPLICABLE, never as a pass)
+ *   = the register's NEW row `10`, `P-M-SM-3`, strategy `S-SS-LOCK-1`, `12`
+ *   declared attempts (`§5.6.1`).
+ * §3.2 FAIL-STATES THIS AMENDMENT'S ROWS COVER: `F-13`(a) an in-window read
+ *   returning the PRE-WRITE record while the real path already carries the
+ *   CANDIDATE (the measured `SSD-G-81` shape) · `F-13`(b) the CANDIDATE while the
+ *   real path still carries the pre-write record · `F-13`(c) the in-flight
+ *   attempt's receipt observed before its terminal has landed · plus `I-10`'s two
+ *   invariants (`I-10-a`: the advance lands IFF the `renameSync` succeeded, at
+ *   that first instant; `I-10-b`: the record's answer and the receipt's answer
+ *   FLIP AT THE SAME TERMINAL) and `§2.6` item 6's totality — no reading blocks,
+ *   waits, spins, queues, re-enters or throws.
+ * THE REGISTER'S OPERATIVE TOTALS: `10` rows, declared
+ *   `130 = 51+12+6+7+16+2+8+8+8+12` (subtotals `P-IM 66` · `P-SM 20` · `P-TP 44`),
+ *   caps `51 ≤ 100` / `130 ≤ 400`, stop after 5 consecutive failures; the
+ *   as-filed `9`-row / `118` arithmetic is kept visible beside every reading it
+ *   moved (`RCA-8(d)`).  NO new token, NO third receipt form, NO new
+ *   `SecuritySettings` member, the `16`-member refusal union UNMOVED — the lock
+ *   adds no member and no surface (`§2.6` items 3(d)/8).
+ * THE READING POINTS, STATED SO NOTHING IS SILENT: the in-window reads are issued
+ * from inside the attempt's OWN `node:fs` boundaries through this file's existing
+ * recording/EIO-injection shim (the same instrument class the landed `P-M-SM-1`/
+ * `P-M-SM-2` rows use; `§2.6` item 7 names exactly these sites).  A read that fails
+ * to return is BOUNDED by a liveness check over its own elapsed time — a read that
+ * does not return is not an answer (`§2.6` item 6).
+ * ========================================================================== */
 
 // NOTE: the repo's vitest.config.ts does NOT set `globals: true` — the suite
 // imports the vitest bindings explicitly (runtime), while tsconfig.tests.json
@@ -165,10 +214,28 @@ const hooks = vi.hoisted(() => ({
   currentTmp: '',
   inject: { writeFile: false, fsync: false, rename: false, fsyncAt: null as number | null },
   fsyncCalls: 0,
+  /** THE `§2.6` LOCK PROBE (APPENDED `2026-10-11`).  When armed, the shim calls it
+   *  AT THE ATTEMPT'S OWN fs BOUNDARY — the in-window read site `§2.6` item 7(a)
+   *  names — with the real path's bytes as they are AT THAT INSTANT, so a
+   *  re-entrant `get()`/`lastWriteReceipt()` is answered from inside the write's
+   *  own window.  Disarmed (`null`) for every landed row: no existing reading
+   *  moves. */
+  lockProbe: null as null | ((ev: { kind: 'fsync' | 'rename' | 'rm'; call: number; realBytes: string; tmpBytes: string }) => void),
+  /** The store's own `rmSync` activity (the attempt's caught-failure tmp cleanup). */
+  rmLinks: [] as string[],
 }))
 
 vi.mock('node:fs', async (importOriginal) => {
   const actual = await importOriginal<typeof import('node:fs')>()
+  /** The real path of the write in flight, read as bytes — the "durable state" half
+   *  of `§2.6` item 4's pair (never the module's own answer). */
+  const readReal = (): string => {
+    try {
+      return hooks.realPath === '' ? '' : (actual.readFileSync(hooks.realPath as never, 'utf8') as string)
+    } catch {
+      return ''
+    }
+  }
   return {
     ...actual,
     mkdirSync: (dir: unknown, opts?: unknown): void => {
@@ -190,19 +257,29 @@ vi.mock('node:fs', async (importOriginal) => {
       if (hooks.inject.rename) throw new Error('injected: rename failure')
       actual.renameSync(from as never, to as never)
     },
+    rmSync: (file: unknown, opts?: unknown): void => {
+      // APPENDED `2026-10-11` (`§2.6` item 7(a) names `rmSync` among the write path's
+      // own effects): the caught-failure tmp cleanup is the attempt's own REFUSAL
+      // TERMINAL handling site, and the lock probe is called there BEFORE the
+      // removal itself, delegating unchanged to the landed behaviour.
+      hooks.log.push(`rm:${String(file)}`)
+      hooks.rmLinks.push(String(file))
+      hooks.lockProbe?.({ kind: 'rm', call: hooks.rmLinks.length, realBytes: readReal(), tmpBytes: '' })
+      actual.rmSync(file as never, opts as never)
+    },
     fsyncSync: (fd: unknown): void => {
       hooks.fsyncCalls += 1
       hooks.log.push(`fsync:${hooks.fsyncCalls}`)
+      let tmpBytes = ''
       try {
-        hooks.fsyncTmpBytes.push(actual.readFileSync(hooks.currentTmp as never, 'utf8') as string)
+        tmpBytes = actual.readFileSync(hooks.currentTmp as never, 'utf8') as string
       } catch {
-        hooks.fsyncTmpBytes.push('')
+        tmpBytes = ''
       }
-      try {
-        hooks.fsyncRealBytes.push(hooks.realPath === '' ? '' : (actual.readFileSync(hooks.realPath as never, 'utf8') as string))
-      } catch {
-        hooks.fsyncRealBytes.push('')
-      }
+      hooks.fsyncTmpBytes.push(tmpBytes)
+      const realBytes = readReal()
+      hooks.fsyncRealBytes.push(realBytes)
+      hooks.lockProbe?.({ kind: 'fsync', call: hooks.fsyncCalls, realBytes, tmpBytes })
       if (hooks.inject.fsync) throw new Error('injected: tmp-fsync failure')
       if (hooks.inject.fsyncAt !== null && hooks.fsyncCalls === hooks.inject.fsyncAt) {
         throw new Error('injected: dir-fsync failure (the POST-RENAME directory fsync)')
@@ -251,6 +328,10 @@ function resetFsLog(): void {
   hooks.fsyncRealBytes = []
   hooks.currentTmp = ''
   hooks.realPath = ''
+  // APPENDED `2026-10-11` (`§2.6`): the lock probe is disarmed with the rest of the
+  // per-row log, so no landed row can inherit an armed probe.
+  hooks.rmLinks = []
+  hooks.lockProbe = null
 }
 /** EVERY filesystem call the store made (the full activity log). */
 function fsActivity(): string[] {
@@ -817,7 +898,7 @@ function printRegister(): void {
   const total = terms.reduce((a, b) => a + b, 0)
   const sum = (...ids: string[]): number => results.filter((r) => ids.includes(r.id)).reduce((a, r) => a + r.declared, 0)
   const im = sum('P-O2-IM-1', 'P-O2-IM-2', 'P-O3-IM-2')
-  const sm = sum('P-M-SM-1', 'P-M-SM-2')
+  const sm = sum('P-M-SM-1', 'P-M-SM-2', 'P-M-SM-3')
   const tp = sum('P-O1-TP-1', 'P-TP-2', 'P-O2-TP-1', 'P-O3-TP-1')
   const maxRow = Math.max(...terms)
   // eslint-disable-next-line no-console
@@ -826,7 +907,8 @@ function printRegister(): void {
       '',
       '================ THE §5.6.1 REGISTER — EXECUTED ================',
       ...lines,
-      `TOTAL (with its terms): 118 = ${terms.join(' + ')} — executed ${results.reduce((a, r) => a + r.attempts, 0)}`,
+      `TOTAL (with its terms): ${total} = ${terms.join(' + ')} — executed ${results.reduce((a, r) => a + r.attempts, 0)}`,
+      `THE AS-FILED TOTAL, KEPT BESIDE IT (APPENDED 2026-10-11; RCA-8(d)): 118 = 51+12+6+7+16+2+8+8+8 over the NINE landed rows, unmoved — the OPERATIVE total is ${total} = those nine terms + 12 (row 10, P-M-SM-3, S-SS-LOCK-1, §2.6)`,
       `SUBTOTALS BY TYPE: P-IM ${im} · P-SM ${sm} · P-TP ${tp} — ${im} + ${sm} + ${tp} = ${im + sm + tp}`,
       `CAPS: per-row max ${maxRow} ≤ 100 (headroom ${100 - maxRow}) · total ${total} ≤ 400 (headroom ${400 - total})`,
       `ROWS: ${results.length} (${results.filter((r) => r.type === 'P-IM').length} P-IM + ${results.filter((r) => r.type === 'P-SM').length} P-SM + ${results.filter((r) => r.type === 'P-TP').length} P-TP); executed = declared? ${results.every((r) => r.attempts === r.declared)}`,
@@ -2728,12 +2810,456 @@ describe('§3.2 the documented fail-states (F-1 … F-12)', () => {
 })
 
 /* ==========================================================================
+ * §2.6 THE WRITE LOCK — THE IN-WINDOW PROBE AND ITS ROWS (`M-8` · `F-13` ·
+ * `I-10`), APPENDED `2026-10-11` (`§4.1` item 3).
+ *
+ * THE INSTRUMENT.  A read is issued FROM INSIDE the attempt's own `node:fs`
+ * boundary (the shim above, `hooks.lockProbe`) — the same instrument class the
+ * landed `P-M-SM-1`/`P-M-SM-2` rows use, at the three sites `§2.6` item 7(a) names
+ * (the tmp `fsync`, the directory `fsync`, the caught-failure `rmSync`).  At each
+ * probed instant the probe records:
+ *   · `get()`'s answer          (§2.6 item 3(a))
+ *   · `lastWriteReceipt()`'s answer, or its `null`  (§2.6 item 3(b))
+ *   · THE REAL PATH'S BYTES at that instant  (the durable half of item 4's pair)
+ *   · whether either read THREW, and its own ELAPSED TIME — `§2.6` item 6: a read
+ *     that does not return is not an answer, so the probe carries a liveness
+ *     bound of its own (`LOCK_LIVENESS_BOUND_MS`; no timing CLAIM is made — the
+ *     window is an ordered interval of the attempt's own steps, `§1.4` item 2).
+ * THE TWO-INSTANCE SEEDING.  The probe runs on a FRESH instance over a path whose
+ * FILE already carries a known pre-write record (the seeding write goes through
+ * the landed write path in its OWN instance), so the declared answers are
+ * distinguishable: `lastWriteReceipt()` reads the declared pre-first-landing
+ * `null` (`§6` `PAR-10`'s dated in-window note) while the real path's bytes read
+ * the PRE-WRITE record.
+ * ======================================================================== */
+
+interface LockPairReading {
+  /** `get()`'s answer at the probed instant, normalized. */
+  get: string
+  /** `lastWriteReceipt()`'s answer at the probed instant ('null' for the member's `null`). */
+  receipt: string
+  /** THE REAL PATH'S BYTES at the probed instant, normalized. */
+  bytes: string
+}
+
+interface LockPairExpectation extends LockPairReading {
+  /** the instant's own name, carried into every failure message. */
+  label: string
+}
+
+interface LockReadingVerdict {
+  held: boolean
+  why: string
+}
+
+interface LockPairVerdict {
+  held: boolean
+  why: string
+  get: LockReadingVerdict
+  receipt: LockReadingVerdict
+  bytes: LockReadingVerdict
+}
+
+/** `§2.6` item 4 — THE PAIRING RULE, as one falsifiable predicate over the three
+ *  readings of ONE probed instant.  Each reading is dispositioned on its own, so
+ *  the register's three-per-instant terms are individually attributable. */
+function lockPairVerdict(r: LockPairReading, e: LockPairExpectation): LockPairVerdict {
+  const reading = (label: string, actual: string, expected: string): LockReadingVerdict =>
+    actual === expected ? { held: true, why: '' } : { held: false, why: `${e.label}: ${label} answers ${actual}, the clause requires ${expected}` }
+  const get = reading('`get()`', r.get, e.get)
+  const receipt = reading('`lastWriteReceipt()`', r.receipt, e.receipt)
+  const bytes = reading('the real path’s bytes', r.bytes, e.bytes)
+  const first = !get.held ? get : !receipt.held ? receipt : bytes
+  return { held: get.held && receipt.held && bytes.held, why: first.why, get, receipt, bytes }
+}
+
+interface LockInstantReadings {
+  kind: 'fsync' | 'rename' | 'rm'
+  call: number
+  get: string
+  getThrew: string | null
+  receipt: string
+  receiptThrew: string | null
+  realBytes: string
+  tmpBytes: string
+  elapsedMs: number
+  returned: boolean
+}
+
+/** `§2.6` item 6's liveness bound (a LIVENESS reading, never a timing claim). */
+const LOCK_LIVENESS_BOUND_MS = 2000
+
+/** ARM THE LOCK PROBE and run one write attempt.  The probe reads the declared
+ *  surface from inside the attempt's own fs boundary; it is disarmed in a
+ *  `finally`, so no landed row can inherit it. */
+function withLockProbe<T>(store: SecurityStore, run: () => T): { out: T; instants: LockInstantReadings[] } {
+  const instants: LockInstantReadings[] = []
+  hooks.lockProbe = (ev): void => {
+    const record: LockInstantReadings = {
+      kind: ev.kind,
+      call: ev.call,
+      get: '',
+      getThrew: null,
+      receipt: '',
+      receiptThrew: null,
+      realBytes: bytesSnapshot(ev.realBytes === '' ? null : ev.realBytes),
+      tmpBytes: bytesSnapshot(ev.tmpBytes === '' ? null : ev.tmpBytes),
+      elapsedMs: 0,
+      returned: false,
+    }
+    const t0 = Date.now()
+    try {
+      record.get = snapshot(asRecord(store.get()))
+    } catch (e) {
+      record.getThrew = (e as Error).message
+    }
+    try {
+      const receipt = store.lastWriteReceipt()
+      record.receipt = receipt === null ? 'null' : JSON.stringify(receipt)
+    } catch (e) {
+      record.receiptThrew = (e as Error).message
+    }
+    record.elapsedMs = Date.now() - t0
+    record.returned = true
+    instants.push(record)
+  }
+  try {
+    const out = run()
+    return { out, instants }
+  } finally {
+    hooks.lockProbe = null
+  }
+}
+
+/** The probed instant, or a FAILURE that names the un-run reading (`§5.6.1`: an
+ *  un-run row/reading is a FAILURE, never a pass). */
+function lockInstant(instants: readonly LockInstantReadings[], kind: 'fsync' | 'rm', call: number, label: string): LockInstantReadings {
+  const hit = Array.from(instants).filter((i) => i.kind === kind && i.call === call)[0]
+  if (hit === undefined) {
+    throw new Error(`${label}: the attempt never reached the probed instant (${kind} call ${call}) — the in-window reading is NOT-OBSERVED, and an un-run reading is a FAILURE, never a pass (§2.6 item 2)`)
+  }
+  return hit
+}
+
+/** Every reading taken inside the window must RETURN, on time, without throwing
+ *  (`§2.6` item 6) — this precondition rides every in-window term. */
+function assertLockTotality(i: LockInstantReadings, label: string): void {
+  if (i.getThrew !== null) throw new Error(`${label}: the re-entrant \`get()\` THREW — ${i.getThrew} (§2.6 item 6: the lock never throws)`)
+  if (i.receiptThrew !== null) throw new Error(`${label}: the re-entrant \`lastWriteReceipt()\` THREW — ${i.receiptThrew} (§2.6 item 6)`)
+  if (!i.returned) throw new Error(`${label}: the in-window read did not return inside its own call — a read that does not return is not an answer (§2.6 item 6)`)
+  if (!(i.elapsedMs <= LOCK_LIVENESS_BOUND_MS)) {
+    throw new Error(`${label}: the in-window reads took ${i.elapsedMs}ms, past the probe’s own liveness bound of ${LOCK_LIVENESS_BOUND_MS}ms — the instrument cannot bound the read's return (§2.6 item 6)`)
+  }
+}
+
+/** One instant's three readings, with the totality precondition applied. */
+function lockReadingsOf(i: LockInstantReadings, label: string): LockPairReading {
+  assertLockTotality(i, label)
+  return { get: i.get, receipt: i.receipt, bytes: i.realBytes }
+}
+
+/** THE COMMITTING-WRITE PROBE — instants (a) and (b) of ONE attempt. */
+function probeCommitAttempt(store: SecurityStore, patch: Record<string, unknown>, label: string): { out: unknown; atA: LockInstantReadings; atB: LockInstantReadings } {
+  resetInject()
+  resetFsLog()
+  const run = withLockProbe(store, () => store.set(patch))
+  return { out: run.out, atA: lockInstant(run.instants, 'fsync', 1, `${label} · instant (a) the PRE-RENAME TMP fsync`), atB: lockInstant(run.instants, 'fsync', 2, `${label} · instant (b) the POST-RENAME DIR fsync`) }
+}
+
+/** THE REFUSAL-TERMINAL PROBE — instant (c): a failing `renameSync`, read at the
+ *  attempt's own caught-failure cleanup (`rmSync`), the last site inside the
+ *  attempt before `set()` returns (`§2.6` item 7(a)). */
+function probeRefusalAttempt(store: SecurityStore, patch: Record<string, unknown>, label: string): { out: unknown; atC: LockInstantReadings } {
+  resetInject()
+  resetFsLog()
+  armRenameFailure()
+  const run = withLockProbe(store, () => store.set(patch))
+  return { out: run.out, atC: lockInstant(run.instants, 'rm', 1, `${label} · instant (c) the REFUSAL TERMINAL`) }
+}
+
+/** A path whose FILE already carries a known pre-write record + a FRESH instance
+ *  on it (so `lastWriteReceipt()` is the declared pre-first-landing `null`: no
+ *  attempt has gone through THIS instance). */
+async function seededStore(seedPatch: Record<string, unknown> = { token: 'PRE', groups: ['read'], maxJournalLength: 100 }): Promise<{ store: SecurityStore; path: string; pre: Record<string, unknown>; bytes: string | null }> {
+  // THE SEEDING IS NEVER DRIVEN BY AN INJECTION left armed by an earlier probe
+  // (MEASURED at the red run's first pass: the refusal probe arms the rename
+  // injection, and a later seeding silently refused, leaving the fixture on the
+  // first-run default — the fixture bug is now unmissable, see the assertions below).
+  resetInject()
+  const path = await freshPath()
+  const seeder = createSecurityStore({ path })
+  assertNoThrow(() => seeder.set(seedPatch), 'the lock probe’s seeding write')
+  const seedingReceipt = seeder.lastWriteReceipt()
+  const seededBytes = await rawBytes(path)
+  if (seedingReceipt === null || seedingReceipt.status !== 'committed') {
+    throw new Error(`the lock probe’s seeding write did not land (receipt ${JSON.stringify(seedingReceipt)}) — the fixture would silently run on the first-run default`)
+  }
+  const store = createSecurityStore({ path })
+  const pre = asRecord(store.get())
+  if (bytesSnapshot(seededBytes) !== snapshot(pre) || seededBytes === null) {
+    throw new Error(`the lock probe’s fixture is not isolated: the file’s bytes read ${bytesSnapshot(seededBytes)} while the fresh instance read ${snapshot(pre)}`)
+  }
+  resetInject()
+  resetFsLog()
+  return { store, path, pre, bytes: seededBytes }
+}
+
+const LOCK_COMMITTED = JSON.stringify({ status: 'committed' })
+const LOCK_REFUSED = JSON.stringify({ status: 'refused', reason: 'write-failed' })
+/** THE LOCK'S MEASURED EVIDENCE, printed at the register's own head (`§4.3` item 5
+ *  — the red set's failing set is RUN and REPORTED with its terms). */
+const lockEvidence: string[] = []
+
+describe('§2.6 THE WRITE LOCK — reads are locked out until the commit lands (`M-8` · `F-13` · `I-10`; APPENDED `2026-10-11`)', () => {
+  it('M-8 · the write lock’s paired answers at the window’s two halves — driven with an instrumented node:fs over a COMMITTING write', async () => {
+    const seeded = await seededStore()
+    const pre = seeded.pre
+    // THE FIRST, LANDED ATTEMPT IS A REFUSAL, so "the last LANDED attempt's closed
+    // form" is DISTINGUISHABLE from the form the commit reveals (§2.6 item 3(b)):
+    // at (a) the member must answer the refused form of the FIRST attempt, never
+    // this attempt's `committed`.
+    resetInject()
+    resetFsLog()
+    armRenameFailure()
+    assertNoThrow(() => seeded.store.set({ token: 'FIRST' }), 'M-8: the landed refusal attempt')
+    expect(seeded.store.lastWriteReceipt(), 'M-8 — the first attempt LANDED its refused closed form (the form the second attempt must withhold at (a))').toEqual({ status: 'refused', reason: 'write-failed' })
+    expect(bytesSnapshot(await rawBytes(seeded.path)), 'M-8 — the landed refusal left the pre-write record at the real path').toBe(snapshot(pre))
+
+    const candidate = expectedPost(pre, { token: 'LOCK' })
+    const probed = probeCommitAttempt(seeded.store, { token: 'LOCK' }, 'M-8')
+
+    // ---------------------------- INSTANT (a) ---------------------------------
+    const atA = lockReadingsOf(probed.atA, 'M-8 · (a)')
+    expect(atA.get, 'M-8 · (a) — before the commit lands `get()` answers the PRE-WRITE record, which is what the real path’s bytes carry at that instant (§2.6 items 3(a)/4)').toBe(snapshot(pre))
+    expect(atA.receipt, 'M-8 · (a) — the IN-FLIGHT attempt’s own receipt is WITHHELD until its terminal: the member answers the last LANDED closed form (the first attempt’s refusal), never this attempt’s committed form (§2.6 item 3(b))').toBe(LOCK_REFUSED)
+    expect(atA.bytes, 'M-8 · (a) — the staging file carries the candidate while the real path’s bytes are still the PRE-WRITE record (§2.1 item 3 steps 2/4)').toBe(snapshot(pre))
+    // ---------------------------- INSTANT (b) ---------------------------------
+    const atB = lockReadingsOf(probed.atB, 'M-8 · (b)')
+    expect(atB.get, 'M-8 · (b) — AT AND AFTER the commit landing `get()` answers the CANDIDATE, which is what the real path’s bytes carry from that instant (§2.6 items 3(a)/4/5)').toBe(snapshot(candidate))
+    expect(atB.receipt, 'M-8 · (b) — at the commit terminal the attempt’s own closed form is answerable: the member answers the committed form (I-10-b; §2.6 items 3(b)/5)').toBe(LOCK_COMMITTED)
+    expect(atB.bytes, 'M-8 · (b) — the real path’s bytes ARE the candidate at the post-rename instant').toBe(snapshot(candidate))
+    // ---------------------- TOTALITY AND THE CENSUS ---------------------------
+    expect(probed.out, 'M-8 — nothing blocks, waits or throws: the attempt RETURNED its answer (§2.6 item 6)').toBeDefined()
+    for (const instant of [probed.atA, probed.atB]) {
+      expect(instant.returned, 'M-8 — every in-window reading returned inside its own call (§2.6 item 6)').toBe(true)
+      expect(instant.getThrew, 'M-8 — no in-window `get()` threw (§2.6 item 6)').toBeNull()
+      expect(instant.receiptThrew, 'M-8 — no in-window `lastWriteReceipt()` threw (§2.6 item 6)').toBeNull()
+      expect(instant.elapsedMs <= LOCK_LIVENESS_BOUND_MS, `M-8 — the reading bounded its own return (${instant.elapsedMs}ms ≤ ${LOCK_LIVENESS_BOUND_MS}ms)`).toBe(true)
+    }
+    // §2.6 item 3(a)/§6 PAR-11: inside the window `get()` carries EXACTLY the three
+    // declared members — the lock adds no member, renames none and makes none absent.
+    const members = Object.keys(seeded.store.get()).sort()
+    expect(members, 'M-8 — the in-window answer carries EXACTLY the three declared members, so the lock creates no fourth (§2.6 item 3(a)/3(d); §6 PAR-11)').toEqual(['enabled', 'maxJournalLength', 'token'])
+    expect(seeded.store.lastWriteReceipt(), 'M-8 — outside the window (after the attempt’s terminal) the receipt is this attempt’s own committed form').toEqual({ status: 'committed' })
+    expect(snapshot(asRecord(seeded.store.get())), 'M-8 — and the record is live and equal to the durable bytes').toBe(snapshot(candidate))
+  })
+
+  it('F-13 · a read that observes the PRE-WRITE record — or the CANDIDATE — from inside the window fails the pairing (the lock’s own fail-state)', async () => {
+    const seeded = await seededStore()
+    const pre = seeded.pre
+    resetInject()
+    resetFsLog()
+    armRenameFailure()
+    assertNoThrow(() => seeded.store.set({ token: 'FIRST' }), 'F-13: the landed refusal attempt')
+    const candidate = expectedPost(pre, { token: 'LOCK' })
+    const probed = probeCommitAttempt(seeded.store, { token: 'LOCK' }, 'F-13')
+    const atA = lockReadingsOf(probed.atA, 'F-13 · (a)')
+    const atB = lockReadingsOf(probed.atB, 'F-13 · (b)')
+
+    // F-13 (a) — THE MEASURED `SSD-G-81` SHAPE, ON THE CURRENT BYTES.  The row is a
+    // FAIL-STATE row: it asserts the falsifying shape is NOT observable.  On the
+    // as-landed bytes it IS observable (the record advances only after `persist()`
+    // returns, `src/main/security-store.ts:293` then `:297`), so this reading REDDENS
+    // — and it is the red the host change `§2.6` item 5 must green.
+    const preWriteReadWhileBytesAreCandidate = atB.get === snapshot(pre) && atB.bytes === snapshot(candidate)
+    expect(
+      preWriteReadWhileBytesAreCandidate,
+      `F-13 (a) — §2.6 item 4: an in-window read answered ${atB.get} while the real path’s bytes already carry ${atB.bytes}. The gate-5 blind row SSD-G-81 MEASURED exactly this shape at the post-rename directory fsync; the clause forbids it`,
+    ).toBe(false)
+    // F-13 (b) — AN ASSIGN-EARLY SHAPE at the PRE-rename instant: `get()` answers the
+    // CANDIDATE while the real path still carries the PRE-WRITE record.  DRIVEN through
+    // the SAME detector, both ways (the detector must FIRE, and a conforming subject at
+    // the same instant must NOT).
+    const assignEarly = lockPairVerdict({ get: snapshot(candidate), receipt: atA.receipt, bytes: atA.bytes }, { label: 'F-13 (b) the ASSIGN-EARLY shape at instant (a)', get: snapshot(pre), receipt: atA.receipt, bytes: snapshot(pre) })
+    expect(assignEarly.held, `F-13 (b) — the detector MUST fire on the CANDIDATE-before-the-commit shape: ${assignEarly.why}`).toBe(false)
+    expect(assignEarly.get.held, 'F-13 (b) — the failing reading is named: the record, not the receipt or the bytes').toBe(false)
+    const conforming = lockPairVerdict({ get: atA.get, receipt: atA.receipt, bytes: atA.bytes }, { label: 'F-13 (b) the CONFORMING shape at instant (a)', get: snapshot(pre), receipt: atA.receipt, bytes: snapshot(pre) })
+    expect(conforming.held, `F-13 (b) — CONTROL: a conforming subject at the same instant HOLDS, so the detector is not one-sided (${conforming.why})`).toBe(true)
+    // F-13 (c) — THE IN-FLIGHT ATTEMPT'S RECEIPT OBSERVED BEFORE ITS TERMINAL: an
+    // eager-receipt shape must FIRE at instant (a), while the module at that instant
+    // must still answer the LAST LANDED form (withheld).
+    const eagerReceipt = lockPairVerdict({ get: atA.get, receipt: LOCK_COMMITTED, bytes: atA.bytes }, { label: 'F-13 (c) the EAGER-RECEIPT shape at instant (a)', get: snapshot(pre), receipt: LOCK_REFUSED, bytes: snapshot(pre) })
+    expect(eagerReceipt.held, `F-13 (c) — the detector MUST fire when the in-flight attempt’s own form is answered before its terminal has landed: ${eagerReceipt.why}`).toBe(false)
+    expect(eagerReceipt.receipt.held, 'F-13 (c) — the failing reading is named: the receipt').toBe(false)
+    expect(atA.receipt, 'F-13 (c) — and on the current bytes the member WITHHOLDS the in-flight form at (a): it answers the last LANDED closed form, which is the first attempt’s refusal (§2.6 item 3(b))').toBe(LOCK_REFUSED)
+    // §2.6 item 6 — THE LOCK NEVER BLOCKS, WAITS, SPINS, QUEUES, RE-ENTERS OR THROWS.
+    for (const instant of [probed.atA, probed.atB]) assertLockTotality(instant, 'F-13 · §2.6 item 6')
+    expect(hooks.rmLinks.filter((l) => l.endsWith('.tmp')).length, 'F-13 — the refusal terminal’s own cleanup ran (the probe site at (c) is reachable, so §2.6 item 7(a)’s rmSync site is real)').toBe(1)
+  })
+
+  it('I-10 · at every instant of a write’s window the read surface answers from the DURABLE state — I-10-a and I-10-b, with the lock’s totality', async () => {
+    const seeded = await seededStore()
+    const pre = seeded.pre
+    resetInject()
+    resetFsLog()
+    armRenameFailure()
+    assertNoThrow(() => seeded.store.set({ token: 'FIRST' }), 'I-10: the landed refusal attempt')
+    const candidate = expectedPost(pre, { token: 'LOCK' })
+    const probed = probeCommitAttempt(seeded.store, { token: 'LOCK' }, 'I-10')
+    const atA = lockReadingsOf(probed.atA, 'I-10 · (a)')
+    const atB = lockReadingsOf(probed.atB, 'I-10 · (b)')
+    const refusal = await seededStore()
+    const refusalProbe = probeRefusalAttempt(refusal.store, { token: 'REFUSED-ATTEMPT' }, 'I-10')
+    const refusalTerminal = lockReadingsOf(refusalProbe.atC, 'I-10 · (c)')
+
+    // I-10-a — THE ADVANCE LANDS IFF THE `renameSync` SUCCEEDED, AT THAT FIRST INSTANT.
+    expect(atB.get, 'I-10-a — at the post-rename instant the record ALREADY equals the candidate (the advance lands AT the commit, inside the window, §2.6 item 5)').toBe(snapshot(candidate))
+    expect(refusalTerminal.get, 'I-10-a — at the refusal terminal the record is UNMOVED: an advance on a failed rename is forbidden (§2.6 items 4/5)').toBe(snapshot(refusal.pre))
+    // I-10-b — THE RECORD’S ANSWER AND THE RECEIPT’S ANSWER FLIP AT THE SAME TERMINAL.
+    expect(
+      { get: atA.get, receipt: atA.receipt },
+      'I-10-b — at instant (a) BOTH answers are the pre-terminal pair: the PRE-WRITE record beside the last LANDED receipt (the in-flight form withheld)',
+    ).toEqual({ get: snapshot(pre), receipt: LOCK_REFUSED })
+    expect(
+      { get: atB.get, receipt: atB.receipt },
+      'I-10-b — at instant (b) BOTH answers are the post-terminal pair: the CANDIDATE beside the committed closed form. One answer flipping without the other fails the clause',
+    ).toEqual({ get: snapshot(candidate), receipt: LOCK_COMMITTED })
+    expect(
+      { get: refusalTerminal.get, receipt: refusalTerminal.receipt },
+      'I-10-b — at the refusal terminal the pair is the PRE-WRITE record beside the attempt’s own refused closed form',
+    ).toEqual({ get: snapshot(refusal.pre), receipt: LOCK_REFUSED })
+    // THE DURABLE HALF — the real path’s bytes at each probed instant.
+    expect(atA.bytes, 'I-10 — before the commit the real path carries the PRE-WRITE record').toBe(snapshot(pre))
+    expect(atB.bytes, 'I-10 — at and after the commit the real path carries the CANDIDATE').toBe(snapshot(candidate))
+    expect(refusalTerminal.bytes, 'I-10 — at a refusal terminal the real path still carries the PRE-WRITE record').toBe(snapshot(refusal.pre))
+    // THE VOCABULARY IS CLOSED AND THE LOCK ADDS NOTHING (§2.6 item 3(b)/3(d)).
+    const instants: { reading: LockPairReading; raw: LockInstantReadings; label: string }[] = [
+      { reading: atA, raw: probed.atA, label: 'I-10 · (a)' },
+      { reading: atB, raw: probed.atB, label: 'I-10 · (b)' },
+      { reading: refusalTerminal, raw: refusalProbe.atC, label: 'I-10 · (c)' },
+    ]
+    for (const instant of instants) {
+      expect(
+        instant.reading.receipt === 'null' || instant.reading.receipt === LOCK_COMMITTED || instant.reading.receipt === LOCK_REFUSED,
+        `${instant.label} — every in-window receipt reading is one of the closed two forms or the declared \`null\`; it read ${instant.reading.receipt} (no third form, no new token — §2.6 items 3(b)/8)`,
+      ).toBe(true)
+      assertLockTotality(instant.raw, `${instant.label} — §2.6 item 6`)
+      expect(instant.raw.returned, `${instant.label} — the in-window reads returned inside the attempt’s own fs call (§2.6 item 6)`).toBe(true)
+    }
+    expect(probed.out, 'I-10 — the write returned; the lock never blocks or waits (§2.6 item 6)').toBeDefined()
+    expect(refusalProbe.out, 'I-10 — the refused attempt returned too; a refusal is an answer, never a throw (§2.6 item 6)').toBeDefined()
+  })
+})
+
+/* ------------------------------------------------------------------ *
+ * REG-10 · `P-M-SM-3` — THE WRITE LOCK (12 attempts, APPENDED `2026-10-11`) *
+ * ------------------------------------------------------------------ */
+
+runRow('P-M-SM-3', 'P-SM', 'S-SS-LOCK-1', 12, () => {
+  it('§5.6.1 P-M-SM-3 (S-SS-LOCK-1) · 3 probed in-window instants × 3 readings (get · lastWriteReceipt · the real path’s bytes) + 2 driven mutation controls + 1 no-window control — 12 attempts', async () => {
+    // ONE committing attempt for instants (a)+(b), one refusing attempt for (c), each
+    // on a FRESH instance over a seeded path (so the declared pre-first-landing `null`
+    // is the pre-window form and the durable pre-write record is what the real path
+    // carries — the two halves of item 4's pair are distinguishable from the start).
+    const committing = await seededStore()
+    const pre = committing.pre
+    const candidate = expectedPost(pre, { token: 'LOCK' })
+    const probed = probeCommitAttempt(committing.store, { token: 'LOCK' }, 'P-M-SM-3')
+    const refusal = await seededStore()
+    const refusalProbe = probeRefusalAttempt(refusal.store, { token: 'REFUSED-ATTEMPT' }, 'P-M-SM-3')
+    const refPre = refusal.pre
+
+    const expectA: LockPairExpectation = { label: 'instant (a) the PRE-RENAME TMP fsync (window OPEN, commit NOT landed)', get: snapshot(pre), receipt: 'null', bytes: snapshot(pre) }
+    const expectB: LockPairExpectation = { label: 'instant (b) the POST-RENAME DIR fsync (the commit HAS landed)', get: snapshot(candidate), receipt: LOCK_COMMITTED, bytes: snapshot(candidate) }
+    const expectC: LockPairExpectation = { label: 'instant (c) the REFUSAL TERMINAL (a failing renameSync; the window closes without a commit)', get: snapshot(refPre), receipt: LOCK_REFUSED, bytes: snapshot(refPre) }
+
+    /** ONE reading of ONE instant = ONE register attempt (`§5.6.1` row 10: `3` instants
+     *  × `3` readings).  The totality precondition (§2.6 item 6) rides every term, and
+     *  each term's own held/broken reading is PRINTED with its strategy id. */
+    const term = (attempt: string, raw: LockInstantReadings, expect: LockPairExpectation, which: 'get' | 'receipt' | 'bytes', name: string): void => {
+      let reading = ''
+      drive('P-M-SM-3', attempt, () => {
+        const verdict = lockPairVerdict(lockReadingsOf(raw, `${expect.label} · ${name}`), expect)
+        reading = verdict[which].held ? `HELD (${verdict[which].why === '' ? name : verdict[which].why})` : `BROKEN — ${verdict[which].why}`
+        if (!verdict[which].held) throw new Error(verdict[which].why)
+      })
+      lockEvidence.push(`S-SS-LOCK-1 · ${attempt} → ${reading}`)
+    }
+    term('(a)·get() — the durable record at that instant', probed.atA, expectA, 'get', '`get()` answers the PRE-WRITE record')
+    term('(a)·lastWriteReceipt() — the in-flight receipt WITHHELD', probed.atA, expectA, 'receipt', 'the last LANDED form (the declared `null`)')
+    term('(a)·the real path’s bytes', probed.atA, expectA, 'bytes', 'the durable state before the commit')
+    term('(b)·get() — the CANDIDATE at and after the landing', probed.atB, expectB, 'get', '`get()` answers the CANDIDATE')
+    term('(b)·lastWriteReceipt() — revealed AT the terminal', probed.atB, expectB, 'receipt', 'the committed closed form')
+    term('(b)·the real path’s bytes', probed.atB, expectB, 'bytes', 'the durable state at and after the landing')
+    term('(c)·get() — the PRE-WRITE record at the refusal', refusalProbe.atC, expectC, 'get', '`get()` answers the PRE-WRITE record')
+    term('(c)·lastWriteReceipt() — the attempt’s own refused form', refusalProbe.atC, expectC, 'receipt', 'the refused closed form')
+    term('(c)·the real path’s bytes — untouched by the failed rename', refusalProbe.atC, expectC, 'bytes', 'the untouched real path')
+
+    // ---- THE 2 DRIVEN MUTATION CONTROLS (§2.5 item 5: a detector that cannot fail
+    // proves nothing).  EACH IS DRIVEN BOTH WAYS — the shape must FIRE, and a
+    // conforming subject at the SAME instant must NOT.
+    drive('P-M-SM-3', 'ctl (i) the ASSIGN-EARLY subject must FIRE at instant (a) — driven both ways', () => {
+      const atA = lockReadingsOf(probed.atA, 'ctl (i)')
+      const early = lockPairVerdict({ get: snapshot(candidate), receipt: atA.receipt, bytes: atA.bytes }, { ...expectA, label: 'ctl (i) the ASSIGN-EARLY subject at instant (a)' })
+      lockEvidence.push(`S-SS-LOCK-1 · ctl (i) ASSIGN-EARLY at (a) → ${early.held ? 'BROKEN — the detector did NOT fire' : 'FIRED (the detector caught the shape); the conforming subject beside it must HOLD'}`)
+      if (early.held) throw new Error('the ASSIGN-EARLY shape (`current = candidate` BEFORE the rename) was NOT caught at the pre-rename instant — the detector cannot fail (§2.6 item 4)')
+      if (early.get.held) throw new Error(`the ASSIGN-EARLY subject’s failing reading is not its RECORD answer — ${early.why}`)
+      const conforming = lockPairVerdict(atA, { ...expectA, label: 'ctl (i) the CONFORMING subject at instant (a)' })
+      if (!conforming.held) throw new Error(`the control is one-sided: the CONFORMING subject at instant (a) does not hold — ${conforming.why}`)
+    })
+    drive('P-M-SM-3', 'ctl (ii) the ADVANCE-AFTER-RETURN subject (the as-landed shape) must FIRE at instant (b) — driven both ways', () => {
+      const atB = lockReadingsOf(probed.atB, 'ctl (ii)')
+      const asLanded = lockPairVerdict({ get: snapshot(pre), receipt: 'null', bytes: atB.bytes }, { ...expectB, label: 'ctl (ii) the ADVANCE-AFTER-RETURN subject (the as-landed shape) at instant (b)' })
+      lockEvidence.push(`S-SS-LOCK-1 · ctl (ii) ADVANCE-AFTER-RETURN at (b) → ${asLanded.held ? 'BROKEN — the detector did NOT fire' : 'FIRED (the detector caught the shape); the advance-at-commit subject beside it must HOLD'}`)
+      if (asLanded.held) throw new Error('the ADVANCE-AFTER-RETURN shape (the record advanced only AFTER `persist()` returned — `src/main/security-store.ts:293` then `:297`) was NOT caught at the post-rename instant — the detector cannot fail (§2.6 items 4/5)')
+      if (asLanded.get.held || asLanded.receipt.held) throw new Error(`the as-landed shape’s failing readings are not its RECORD and its RECEIPT — ${asLanded.why}`)
+      const atCommit = lockPairVerdict({ get: snapshot(candidate), receipt: LOCK_COMMITTED, bytes: atB.bytes }, { ...expectB, label: 'ctl (ii) the ADVANCE-AT-COMMIT subject at instant (b)' })
+      if (!atCommit.held) throw new Error(`the control is one-sided: the ADVANCE-AT-COMMIT subject at instant (b) does not hold — ${atCommit.why}`)
+      // THE OBSERVATION, PRINTED — never asserted as a requirement (the requirement
+      // lives in `M-8`/`F-13`/`I-10`, which assert the CONFORMING pair; an assertion
+      // here would demand the module STAY broken).
+      lockEvidence.push(
+        `(b) the module’s OWN readings: get ${atB.get} · receipt ${atB.receipt} · bytes ${atB.bytes} → the ADVANCE-AFTER-RETURN shape is ${atB.get === snapshot(pre) && atB.receipt !== LOCK_COMMITTED ? 'OBSERVED ON THE CURRENT BYTES (the pre-fix red)' : 'not observed'}`,
+      )
+    })
+    // ---- THE 1 WINDOW CONTROL (§2.6 item 2): an ADMISSION refusal touches no
+    // filesystem, so it opens NO window and its in-window reading is NOT-APPLICABLE
+    // — reported as absent, NEVER as a pass.
+    const admission = await seededStore()
+    resetInject()
+    resetFsLog()
+    const windowProbe = withLockProbe(admission.store, () => admission.store.set({ token: BigInt(7) as never }))
+    const ordinaryGet = snapshot(asRecord(admission.store.get()))
+    const ordinaryReceipt = JSON.stringify(admission.store.lastWriteReceipt())
+    const ordinaryBytes = bytesSnapshot(await rawBytes(admission.path))
+    drive('P-M-SM-3', 'ctl (window) an ADMISSION refusal opens NO window — the in-window reading is NOT-APPLICABLE, never a pass', () => {
+      lockEvidence.push(`S-SS-LOCK-1 · ctl (window) ADMISSION refusal → in-window readings: ${windowProbe.instants.length === 0 ? 'NOT-APPLICABLE (no window opened)' : `${windowProbe.instants.length} — MALFORMED`}; fs calls: ${fsActivity().length === 0 && hooks.fsyncCalls === 0 && hooks.rmLinks.length === 0 ? 'none' : JSON.stringify(fsActivity())}; the read across it: get ${ordinaryGet} · receipt ${ordinaryReceipt} · bytes ${ordinaryBytes}`)
+      if (windowProbe.instants.length !== 0) throw new Error(`the lock probe fired ${windowProbe.instants.length} in-window reading(s) across an ADMISSION refusal — such an attempt touches no filesystem and NEVER OPENS A WINDOW (§2.6 item 2)`)
+      if (fsActivity().length !== 0) throw new Error(`the ADMISSION refusal touched the filesystem (${JSON.stringify(fsActivity())}) — §2.2 item 5(c)/F-9`)
+      if (hooks.fsyncCalls !== 0 || hooks.rmLinks.length !== 0) throw new Error(`the ADMISSION refusal reached an fs boundary (fsync ${hooks.fsyncCalls}, rm ${hooks.rmLinks.length}) — there is no window to read inside (§2.6 item 2)`)
+      if (windowProbe.out === undefined) throw new Error('the read taken across an ADMISSION refusal did not return (§2.6 item 6)')
+      if (ordinaryGet !== snapshot(admission.pre)) throw new Error(`the read across the ADMISSION refusal answered ${ordinaryGet}, not the pre-write record ${snapshot(admission.pre)} — a read across such an attempt is an ORDINARY pre-window read (§2.6 item 2)`)
+      if (ordinaryReceipt !== LOCK_REFUSED) throw new Error(`the read across the ADMISSION refusal answered the receipt ${ordinaryReceipt}, not the attempt’s own refused closed form`)
+      if (ordinaryBytes !== snapshot(admission.pre)) throw new Error(`the ADMISSION refusal’s real-path bytes read ${ordinaryBytes}, not the pre-write record — no attempt wrote anything`)
+    })
+
+    const row = rowById('P-M-SM-3')
+    expect(row.attempts, 'P-M-SM-3 runs EXACTLY its 12 declared attempts: 3 instants × 3 readings + 2 mutation controls + 1 window control (§5.6.1 row 10)').toBe(12)
+    expect(row.held + row.broken, 'P-M-SM-3: held + broken === attempts-run').toBe(row.attempts)
+    // eslint-disable-next-line no-console
+    console.log(
+      [`REGISTER §5.6.1 · P-M-SM-3 · S-SS-LOCK-1 · attempts-run ${row.attempts}/${row.declared} · held ${row.held} · broken ${row.broken}`, ...lockEvidence.map((l) => `  LOCK EVIDENCE ${l}`)].join('\n'),
+    )
+  })
+})
+
+/* ==========================================================================
  * THE REGISTER’S OWN SUMMARY ROW — the totals printed WITH THEIR TERMS, the
  * caps, the stop rule, and the UN-RUN rule (§5.6.1: an un-run row is a
  * FAILURE, never a pass).
  * ======================================================================== */
 
-describe('§5.6.1 THE REGISTER — the executed summary (118 = 51+12+6+7+16+2+8+8+8)', () => {
+describe('§5.6.1 THE REGISTER — the executed summary (118 = 51+12+6+7+16+2+8+8+8) ⟶ ANNOTATED BESIDE, APPENDED `2026-10-11` (`RCA-8(d)`: the as-filed heading STANDS; the OPERATIVE figures are `130 = 51+12+6+7+16+2+8+8+8+12` over `10` typed rows — row `10` is `P-M-SM-3`, `S-SS-LOCK-1`, `§2.6`)', () => {
   it('REGISTER-STOP · the stop-after-5 guard and the un-run-as-FAILURE rule are DRIVEN both ways (`F-3`, gate-4 re-audit; §9d item 2 / §4.3 item 1 / AGENTS.md item 11(b))', () => {
     // `F-3`: `§9d` item 2 claims "`REGISTER-EXEC` asserts both directions: the
     // register did NOT stop, AND the stop rule FIRES on a synthetic five-broken-row
@@ -2764,8 +3290,8 @@ describe('§5.6.1 THE REGISTER — the executed summary (118 = 51+12+6+7+16+2+8+
   })
 
   it('REGISTER-EXEC · the nine typed rows execute deterministically and carry id · type · strategy · attempts-run · held · broken', () => {
-    const ids = ['P-O2-IM-1', 'P-O1-TP-1', 'P-M-SM-1', 'P-O2-IM-2', 'P-TP-2', 'P-M-SM-2', 'P-O3-IM-2', 'P-O2-TP-1', 'P-O3-TP-1']
-    expect(results.map((r) => r.id), 'the register runs ALL nine rows, in register order (an un-run row is a FAILURE)').toEqual(ids)
+    const ids = ['P-O2-IM-1', 'P-O1-TP-1', 'P-M-SM-1', 'P-O2-IM-2', 'P-TP-2', 'P-M-SM-2', 'P-O3-IM-2', 'P-O2-TP-1', 'P-O3-TP-1', 'P-M-SM-3']
+    expect(results.map((r) => r.id), 'the register runs ALL TEN rows, in register order (an un-run row is a FAILURE; row 10 `P-M-SM-3` is APPENDED `2026-10-11`, `§2.6`)').toEqual(ids)
     // `F-4` (gate-4 re-audit): as filed this reading was `toBe(9)` — a CONSTANT.  With
     // every one of the nine rows holding, `ran === true` for all nine whatever the
     // guard did, so the count could not distinguish "no row was skipped" from "the
@@ -2785,19 +3311,23 @@ describe('§5.6.1 THE REGISTER — the executed summary (118 = 51+12+6+7+16+2+8+
     }
   })
 
-  it('REGISTER-TERMS · the declared total is 118 = its own nine terms, with the caps and the type subtotals', () => {
+  it('REGISTER-TERMS · the declared total is 130 = its own ten terms, with the caps and the type subtotals', () => {
     const declared = results.map((r) => r.declared)
-    expect(declared, 'the nine terms, in register order').toEqual([51, 12, 6, 7, 16, 2, 8, 8, 8])
+    // THE AS-FILED NINE TERMS, KEPT BESIDE (`RCA-8(d)`): 51, 12, 6, 7, 16, 2, 8, 8, 8
+    // sum to 118 and every one of them is UNMOVED; the tenth term (12, row 10,
+    // `P-M-SM-3`, APPENDED `2026-10-11`) is the amendment's own move: 118 → 130.
+    expect(declared, 'the ten terms, in register order (the nine landed terms, then row 10’s 12)').toEqual([51, 12, 6, 7, 16, 2, 8, 8, 8, 12])
     const total = declared.reduce((a, b) => a + b, 0)
-    expect(total, '118 = 51 + 12 + 6 + 7 + 16 + 2 + 8 + 8 + 8 (a total quoted without its terms is a review finding)').toBe(118)
+    expect(declared.slice(0, 9).reduce((a, b) => a + b, 0), 'the AS-FILED nine terms still sum to 118 — no landed term moved (§9e; RCA-8(d))').toBe(118)
+    expect(total, '130 = 51 + 12 + 6 + 7 + 16 + 2 + 8 + 8 + 8 + 12 (a total quoted without its terms is a review finding)').toBe(130)
     expect(declared.every((t) => t <= 100), '≤100 attempts per row').toBe(true)
-    expect(Math.max(...declared), 'the largest row is 51 ≤ 100 (headroom 49)').toBe(51)
-    expect(total <= 400, '118 ≤ 400 (headroom 282)').toBe(true)
+    expect(Math.max(...declared), 'the largest row is 51 ≤ 100 (headroom 49, UNMOVED)').toBe(51)
+    expect(total <= 400, '130 ≤ 400 (headroom 270, was 282)').toBe(true)
     const subtotal = (type: string): number => results.filter((r) => r.type === type).reduce((a, r) => a + r.declared, 0)
-    expect(subtotal('P-IM'), 'P-IM = 51 + 7 + 8').toBe(66)
-    expect(subtotal('P-SM'), 'P-SM = 6 + 2').toBe(8)
-    expect(subtotal('P-TP'), 'P-TP = 12 + 16 + 8 + 8').toBe(44)
-    expect(subtotal('P-IM') + subtotal('P-SM') + subtotal('P-TP'), '66 + 8 + 44 = 118 ✓').toBe(118)
+    expect(subtotal('P-IM'), 'P-IM = 51 + 7 + 8 (UNMOVED)').toBe(66)
+    expect(subtotal('P-SM'), 'P-SM = 6 + 2 + 12 — the new row’s 12 joined the family (was 8)').toBe(20)
+    expect(subtotal('P-TP'), 'P-TP = 12 + 16 + 8 + 8 (UNMOVED)').toBe(44)
+    expect(subtotal('P-IM') + subtotal('P-SM') + subtotal('P-TP'), '66 + 20 + 44 = 130 ✓').toBe(130)
   })
 
   it('REGISTER-RED · the register’s rows HOLD at the contract’s declared END STATE (§9 item 3 / §9a item 5 — the inverted form; the pre-fix RED-direction reading is kept below as a note)', () => {
@@ -2850,19 +3380,19 @@ describe('§5.6.1 THE REGISTER — the executed summary (118 = 51+12+6+7+16+2+8+
     for (const r of results) {
       expect(
         r.broken,
-        `${r.id} — the contract's END STATE (§9 item 3: "broken === 0 per row"; §9a item 5: "for all nine rows"): every term HOLDS on the landed bytes. Its row reads ${r.held} held / ${r.broken} broken (declared ${r.declared})`,
+        `${r.id} — the contract's END STATE (§9 item 3: "broken === 0 per row"; §9a item 5: "for all nine rows" — read over the TEN rows this amendment's register now carries): every term HOLDS on the landed bytes. Its row reads ${r.held} held / ${r.broken} broken (declared ${r.declared})`,
       ).toBe(0)
       expect(r.held, `${r.id} — at the end state each row's held readings are exactly its declared term`).toBe(r.declared)
     }
     expect(
       results.reduce((a, r) => a + r.broken, 0),
-      'the nine rows’ BROKEN readings, summed (END STATE: 0; the pre-fix reading was 20 against the landing before this pass’s corrections, 13+2+2+1+0+2+0+0+0, and 54 at the corrected red run, 28+9+4+2+5+2+3+0+1 — both kept as notes, neither rewritten)',
+      'the register’s BROKEN readings, summed (END STATE: 0; the pre-fix reading was 20 against the landing before this pass’s corrections, 13+2+2+1+0+2+0+0+0, and 54 at the corrected red run, 28+9+4+2+5+2+3+0+1 — both kept as notes, neither rewritten; this amendment’s PRE-FIX reading adds row 10’s own broken terms, so this row is EXPECTED to redden until the host change `§2.6` item 5 lands)',
     ).toBe(0)
     expect(
       results.reduce((a, r) => a + r.held, 0),
-      'the nine rows’ HELD readings, summed WITH THEIR TERMS (END STATE: 118: 51+12+6+7+16+2+8+8+8 = 118; held + broken = 118)',
-    ).toBe(118)
-    expect(results.length, 'the register is NINE rows, a signal and not a cap (AGENTS.md item 11(f))').toBe(9)
+      'the register’s HELD readings, summed WITH THEIR TERMS (END STATE: 130: 51+12+6+7+16+2+8+8+8+12 = 130; held + broken = 130. The as-filed nine-row reading 118 = 51+12+6+7+16+2+8+8+8 stands beside it, unmoved — RCA-8(d))',
+    ).toBe(130)
+    expect(results.length, 'the register is TEN rows, a signal and not a cap (AGENTS.md item 11(f): the as-filed nine-row count was a signal too, and the lock is enumerated rather than merged)').toBe(10)
   })
 
   it('REGISTER-CONTROL · the register’s own broken-detector is not vacuous — a wrong property is REPORTED broken, a right one is reported held', async () => {
