@@ -825,7 +825,7 @@ const scA01Verdict = bridgeNamespaceCensusUnreadable ? 'MANUAL'
     : (arbitraryRoundTripped ? 'PASS' : 'FAIL')
 check('SC-A-01 (Family A, arm a-i) — THE MAIN-SIDE RENDERER BRIDGE', 'REQUIREMENT ARM (a-i): an ARBITRARY caller-named datum can be written to and read back from tier 4 through the main-side renderer bridge — MEASURED: it cannot; the bridge is not name-addressed and the write is dropped', scA01Verdict,
   `NAMED TERMS: the ARM is MET iff the live read-back carries the caller's own key; the row's census clause CARRIES BOTH of its states as terms, each read BEFORE the round-trip term: an UNREADABLE census (window.provident absent, or ZERO object-valued namespaces enumerated) reads MANUAL, and a READABLE but DIRTY census (unknown/missing non-empty) reads FAIL whatever the round-trip says (the A3-02 split — before it, a fourth namespace read PASS whenever the round-trip succeeded). bridge top-level keys=${JSON.stringify(bridgeCensus?.topKeys)}, the object-valued namespaces READ OFF THE LIVE OBJECT=${JSON.stringify(bridgeNamespaces)} vs DECLARED=${JSON.stringify(BRIDGE_NAMESPACES_DECLARED)} (unknown=${JSON.stringify(bridgeNamespaceUnknowns)}, missing=${JSON.stringify(bridgeNamespaceMisses)}, censusUnreadable=${bridgeNamespaceCensusUnreadable}, censusDirty=${bridgeNamespaceCensusDirty}, censusOk=${bridgeNamespaceCensusOk} — the B-F15 SET-EQUALITY term, now in the predicate as TWO terms so a FOURTH page-reachable namespace reddens the row in EITHER live state), their members and Function.length arities=${JSON.stringify(bridgeCensus?.namespaces)}; a live set({myNewField:'COMPLIANCE-ARBITRARY-DATUM'}) answered ${JSON.stringify(arbitraryNameWritten?.setAnswer)}; the live get() AFTER it answered ${JSON.stringify(arbitraryNameReadBack)}; arbitraryKeyRoundTripped=${arbitraryRoundTripped}; rowVerdict=${scA01Verdict}. THE CHANNEL CENSUS, so "ANY live channel" is answered and not assumed — and RESTATED by the §6.2 audit's A-F1 over the THREE BRIDGE NAMESPACES rather than the security namespace alone: (i) security={${(bridgeCensus?.namespaces?.security?.members ?? []).join(',')}} with no name-addressed member; (ii) store={${(bridgeCensus?.namespaces?.store?.members ?? []).join(',')}} — the tier-1 FILE bridge, DRIVEN at SC-A-06 with a secure.-keyed payload and a secure.-looking name, because a name-parameterised put() exists there and was NEVER probed by this battery's first draft; (iii) module={${(bridgeCensus?.namespaces?.module?.members ?? []).join(',')}} (operator-only, main->renderer->main); (iv) the generic surface's six name-addressed members, driven at SC-A-02; (v) the live MCP tool set, censused against the landed ALL_TOOLS at SC-C-02. Every bridged member reports Function.length=0, so no census here rests on arity. NO live channel accepts an arbitrary tier-4 name`,
-  'the authority is the architect\'s clause (1) in docs/decisions.md `SECURE-TIER-IS-A-FILESTORE-PEER`: tier 4\'s ONLY distinctions from the `file` tier are "its FILE, its NO-LOWER-TIER-ALIAS rule and its ACCESS-CONTROL POLICY", with the shape "OPENED to arbitrary data keyed by the app\'s own subsystems". The landed three-member patch surface is the FOURTH distinction the same row says a pass must "surface rather than enforce". THIS ROW IS DELIBERATELY WRITTEN AS THE REQUIREMENT ARM: a PASS would mean an arbitrary datum round-tripped through the tier\'s own store API, which is the only admissible form of a Family A pass. ITS CENSUS CLAUSE IS NOW SUPPORTED BY A DRIVEN PROBE OF EVERY NAMESPACE, not by a member list — the `§6.2` audit\'s `A-F1` found the `store` namespace unprobed and every row still green, which is why SC-A-06 exists; and the NAMESPACE SET is itself a predicate term since the second audit\'s `B-F15` — **AND SINCE THE THIRD AUDIT\'S `A3-02` THAT TERM IS TWO TERMS READ BEFORE THE ROUND-TRIP: a fourth object-valued member used to redden nothing when the round-trip succeeded, and a readable-but-dirty census used to read `MANUAL` (which moves neither the exit code nor an arm count) while the prose claimed it FAILS the row. BOTH ARE CLOSED HERE, and the code comment, `§4d` rules 1/2 and this cell now say the same thing.**')
+  'the authority is the architect\'s clause (1) in docs/decisions.md `SECURE-TIER-IS-A-FILESTORE-PEER`: tier 4\'s ONLY distinctions from the `file` tier are "its FILE, its NO-LOWER-TIER-ALIAS rule and its ACCESS-CONTROL POLICY", with the shape "OPENED to arbitrary data keyed by the app\'s own subsystems". The landed three-member patch surface is the FOURTH distinction the same row says a pass must "surface rather than enforce". THIS ROW IS DELIBERATELY WRITTEN AS THE REQUIREMENT ARM: a PASS would mean an arbitrary datum round-tripped through the tier\'s own store API, which is the only admissible form of a Family A pass. ITS CENSUS CLAUSE IS NOW SUPPORTED BY A DRIVEN PROBE OF EVERY NAMESPACE, not by a member list — the `§6.2` audit\'s `A-F1` found the `store` namespace unprobed and every row still green, which is why SC-A-06 exists; and the NAMESPACE SET is itself a predicate term since the second audit\'s `B-F15` — **AND SINCE THE THIRD AUDIT\'S `A3-02` THAT TERM IS TWO TERMS READ BEFORE THE ROUND-TRIP: a fourth object-valued member used to redden nothing when the round-trip succeeded, and a readable-but-dirty census used to read `MANUAL` (which moves neither the exit code nor an arm count) while the prose claimed it FAILS the row. BOTH ARE CLOSED HERE, and the code comment, `§4d` rules 1/2 and this cell now say the same thing.** **⟶ AND THIS ROW CARRIES TWO FAIL DIRECTIONS UNDER ONE ID, WHICH IS DECLARED HERE RATHER THAN LEFT TO BE INFERRED (the FOURTH `§6.2` audit\'s `A4-06`, INFO, disposed `DECLARED`): (i) the REQUIREMENT direction — `arbitraryRoundTripped === false` means `S2`\'s requirement ("an arbitrary caller-named datum can be written to and read back from tier 4") is UNMET, which is why this row is one of Family A\'s four REQUIREMENT arms; and (ii) the CHANNEL-NAMESPACE CENSUS direction — `bridgeNamespaceCensusDirty === true` means a page-reachable namespace set that is NOT the declared three (a fourth namespace, or a declared one gone), which the `A3-02` remedy deliberately makes redden THIS row whatever the round-trip says, so that it cannot hide behind a successful round trip. THE CONSEQUENCE IS NAMED: **A DIRTY CENSUS THEREFORE FAILS A ROW THAT CARRIES FAMILY A\'S VERDICT** (the family verdict is derived from the ARMS `SC-A-01/02/04/05`, and this row is charged to that bucket), so a channel-census regression moves the family\'s FAIL/arm count and is not reported as a leak-class finding beside it. `A3-02`\'s remedy INTENDS this, and the two directions are NOT separately id\'d: a split id would remove a census regression from beneath the requirement arm\'s own line, which is the opposite of the repair. Both directions are printed as separate NAMED TERMS (`censusUnreadable`/`censusDirty`/`censusOk`/`arbitraryKeyRoundTripped`/`rowVerdict`) in this row\'s observation, so a later auditor can read which one moved the verdict (`§4` carries the same declaration).**')
 
 const genericSecure = await driveGenericSurface(cdp, 'secure.operator.token')
 const genericRefusals = ['resolve', 'set', 'commit', 'clear', 'remove', 'subscribe']
@@ -1596,6 +1596,48 @@ console.log(`LIVE COMPLIANCE BATTERY RESULT: ${CHECKS.length} recorded rows = ` 
 console.log(`  HEAD ${execSync('git rev-parse --short HEAD', { cwd: root }).toString().trim()} · the terms are the rows themselves; every verdict was produced by the instruments named in its own row`)
 for (const c of CHECKS.filter((x) => x.verdict === 'FAIL')) console.log(`  ✗ FAIL ${c.id}: ${c.subject}`)
 if (TALLY.FAIL === undefined) console.log('  no row contradicted the clause it cites')
+/** ══ THE DECLARED PER-ROW KIND TABLE — THE FOURTH `§6.2` AUDIT'S `A4-01` REMEDY, ADOPTED AS A
+ *  HARDENING RATHER THAN AS A REPAIR, WITH THE REASON IT IS NOT A REPAIR STATED FIRST ══
+ *  **THE AUDIT'S MEASURED PREMISE DID NOT REPRODUCE ON THESE BYTES.** `A4-01` (MED) reported that
+ *  the as-filed prose filter *"swallows `SC-A-05` … and `SC-B-09`"*, printing `ARMS 3 … CENSUS 2`
+ *  for Family A and `ARMS 5 · CENSUS 1` for B — while the record asserted `ARMS 4 (… SC-A-05:FAIL)
+ *  · CENSUS 1 (SC-A-06)` and `ARMS 6 · CENSUS 0`. **MEASURED, TWICE, BOTH BY COMMAND:** (i) the
+ *  filter's own regular expression run over the 27 rows' `id`+`subject` string literals (extracted
+ *  from this file, escapes unescaped) classifies `SC-A-05` as an ARM and `SC-B-09` as an ARM —
+ *  `RE-MEASUREMENT` is not in `SC-B-09`'s id or subject (*"the TIER KEY SET RE-MEASURED"*) and
+ *  `live channel` is not in `SC-A-05`'s (*"survives a real boot INTO THE LIVE STORE"*); (ii) a REAL
+ *  run of the PRE-EDIT bytes (`84c583f3…`) printed, verbatim, `FAMILY A: 6 row(s) = 4 FAIL / 2 PASS
+ *  — ARMS 4 (SC-A-01:FAIL, SC-A-02:FAIL, SC-A-04:FAIL, SC-A-05:FAIL) · CONTROLS 1 (SC-A-03:PASS) ·
+ *  CENSUS/MEASUREMENT 1 (SC-A-06:PASS)` and `FAMILY B: 9 row(s) = 9 PASS — ARMS 6 (…) · CONTROLS 3
+ *  (…) · CENSUS/MEASUREMENT 0 ()` — i.e. THE DRIVER ALREADY AGREED WITH THE RECORD, so no figure
+ *  in this record was re-derived from a wrong tally. **THE `ARMS 3 (SC-A-01,02,04) · CENSUS 2` line
+ *  the audit quotes is not this driver's output in any state on these bytes.**
+ *  **THE FRAGILITY THE FINDING NAMES IS REAL EVEN SO, AND IT IS THE REASON THIS TABLE EXISTS:** the
+ *  as-filed classification read PROSE (`/CHANNEL.CENSUS|RE-MEASUREMENT|static census|preflight|
+ *  live channel/i` over `${id} ${subject}`), so a single subject re-worded to carry any filter term
+ *  (e.g. writing *"RE-MEASUREMENT"* into `SC-B-09`'s subject, which its `§3` `nonRowNote` `kind`
+ *  already calls `RE-MEASUREMENT`) would SILENTLY RE-CLASSIFY the row out of its family's ARMS
+ *  count. **THE KIND IS THEREFORE DECLARED PER ID AND NEVER INFERRED FROM PROSE.** The table below
+ *  reproduces, on these bytes, EXACTLY the classification the prose filter produced (verified
+ *  against the pre-edit run above: A = ARMS 4 / CONTROLS 1 / CENSUS 1; B = ARMS 6 / CONTROLS 3 /
+ *  CENSUS 0; C = ARMS 4 / CONTROLS 1 / CENSUS 0), and it cannot drift with a subject.
+ *  **A ROW ABSENT FROM THIS TABLE IS PRINTED AS `UNDECLARED` AND IS CHARGED TO NO FAMILY BUCKET**
+ *  — so a NEW row is classified deliberately rather than inherited into the arms that carry a
+ *  family verdict, and a STALE entry (an id no longer in `CHECKS`) is printed too. */
+const ROW_KINDS = {
+  'SC-PRE-01': 'INSTRUMENT', 'SC-PRE-02': 'INSTRUMENT',
+  'SC-CH-01': 'CHANNEL', 'SC-CH-02': 'CHANNEL',
+  'SC-A-01': 'ARM', 'SC-A-02': 'ARM', 'SC-A-03': 'CONTROL', 'SC-A-04': 'ARM',
+  'SC-A-05': 'ARM', 'SC-A-06': 'CHANNEL-CENSUS',
+  'SC-B-01': 'ARM', 'SC-B-02': 'CONTROL', 'SC-B-03': 'ARM', 'SC-B-04': 'ARM', 'SC-B-05': 'ARM',
+  'SC-B-06': 'CONTROL', 'SC-B-07': 'ARM', 'SC-B-08': 'CONTROL', 'SC-B-09': 'ARM',
+  'SC-C-01': 'ARM', 'SC-C-02': 'ARM', 'SC-C-03': 'ARM', 'SC-C-04': 'CONTROL', 'SC-C-05': 'ARM',
+  'SC-G-01': 'STATIC-CENSUS', 'SC-G-02': 'STATIC-CENSUS', 'SC-CLEAN-01': 'INSTRUMENT-CLEANUP',
+}
+const rowKind = (c) => ROW_KINDS[c.id.split(' ')[0]] ?? 'UNDECLARED'
+const isCensusKind = (c) => ['CHANNEL-CENSUS', 'STATIC-CENSUS', 'RE-MEASUREMENT'].includes(rowKind(c))
+const rowKindUndeclared = CHECKS.filter((c) => rowKind(c) === 'UNDECLARED')
+const rowKindDeclaredButAbsent = Object.keys(ROW_KINDS).filter((id) => !CHECKS.some((c) => c.id.split(' ')[0] === id))
 console.log('\n  FAMILY TALLIES (the family each row belongs to is in its id):')
 for (const fam of ['A', 'B', 'C']) {
   const rows = CHECKS.filter((c) => new RegExp(`SC-${fam}-`).test(c.id))
@@ -1606,12 +1648,13 @@ for (const fam of ['A', 'B', 'C']) {
    *  *"C = COMPLIANT (5/5)"* WITHOUT their terms — those totals silently included 3 B-controls and
    *  1 C-control, while only Family A printed its arm/control/census split. Every family now prints
    *  its own breakdown, so a family verdict cannot be read off a number that hides a control. */
-  const controls = rows.filter((c) => c.id.includes('CONTROL'))
-  const censuses = rows.filter((c) => /CHANNEL.CENSUS|RE-MEASUREMENT|static census|preflight|live channel/i.test(`${c.id} ${c.subject}`))
-  const arms = rows.filter((c) => !controls.includes(c) && !censuses.includes(c))
+  const controls = rows.filter((c) => rowKind(c) === 'CONTROL')
+  const censuses = rows.filter((c) => isCensusKind(c))
+  const arms = rows.filter((c) => rowKind(c) === 'ARM')
+  const undeclared = rows.filter((c) => rowKind(c) === 'UNDECLARED')
   const fmt = (set) => `${set.length} (${set.map((c) => `${c.id.split(' ')[0]}:${c.verdict}`).join(', ')})`
   console.log(`    FAMILY ${fam}: ${rows.length} row(s) = ${Object.entries(t).map(([k, v]) => `${v} ${k}`).join(' / ')}` +
-    ` — ARMS ${fmt(arms)} · CONTROLS ${fmt(controls)} · CENSUS/MEASUREMENT ${fmt(censuses)}`)
+    ` — ARMS ${fmt(arms)} · CONTROLS ${fmt(controls)} · CENSUS/MEASUREMENT ${fmt(censuses)} · UNDECLARED ${fmt(undeclared)}`)
 }
 /** THE FAMILY-VERDICT TERMS, PRINTED SO THE RECORD'S THREE VERDICTS ARE RE-DERIVED FROM THE
  *  RUN RATHER THAN RE-ASSERTED. Family A's verdict rests on its FOUR REQUIREMENT ARMS only —
@@ -1635,9 +1678,9 @@ for (const fam of ['A', 'B', 'C']) {
 const familyRows = (fam) => CHECKS.filter((c) => new RegExp(`^SC-${fam}-`).test(c.id))
 const verdictSplit = (set) => ['PASS', 'FAIL', 'MANUAL', 'PARKED'].map((v) => `${set.filter((c) => c.verdict === v).length} ${v}`).join(' / ')
 const familyARows = familyRows('A')
-const familyAChannelCensus = familyARows.filter((c) => /CHANNEL.CENSUS/i.test(`${c.id} ${c.subject}`))
-const familyAControls = familyARows.filter((c) => c.id.includes('CONTROL'))
-const familyARequirementArms = familyARows.filter((c) => !familyAChannelCensus.includes(c) && !familyAControls.includes(c))
+const familyAChannelCensus = familyARows.filter((c) => rowKind(c) === 'CHANNEL-CENSUS')
+const familyAControls = familyARows.filter((c) => rowKind(c) === 'CONTROL')
+const familyARequirementArms = familyARows.filter((c) => rowKind(c) === 'ARM')
 const familyAArmManual = familyARequirementArms.filter((c) => c.verdict === 'MANUAL')
 const familyAArmFail = familyARequirementArms.filter((c) => c.verdict === 'FAIL')
 const familyAArmPass = familyARequirementArms.filter((c) => c.verdict === 'PASS')
@@ -1646,6 +1689,7 @@ const familyCArms = familyRows('C')
 const familyBManual = familyBArms.filter((c) => c.verdict === 'MANUAL')
 const familyCManual = familyCArms.filter((c) => c.verdict === 'MANUAL')
 const manualRowIdsAnywhere = CHECKS.filter((c) => c.verdict === 'MANUAL').map((c) => c.id.split(' ')[0])
+console.log(`    ROW-KIND COVERAGE (the A4-01 declaration: the kind is DECLARED PER ID, never read off the subject prose): ${Object.keys(ROW_KINDS).length} declared id(s), ${rowKindUndeclared.length} row(s) with NO declared kind ${JSON.stringify(rowKindUndeclared.map((c) => c.id.split(' ')[0]))} (charged to NO family bucket — a new row must be classified deliberately), ${rowKindDeclaredButAbsent.length} declared id(s) NOT present in this run's rows ${JSON.stringify(rowKindDeclaredButAbsent)} (a stale table entry is printed rather than silently harmless)`)
 console.log('  FAMILY-VERDICT TERMS (from this run, not re-asserted):')
 console.log(`    FAMILY A = NON-COMPLIANT iff every REQUIREMENT arm FAILs: ${familyARequirementArms.length} requirement arm(s) = ` +
   `${verdictSplit(familyARequirementArms)} ` +
@@ -1664,6 +1708,13 @@ console.log(`    MANUAL ACROSS THE RUN (the A3-05 term, printed so a MANUAL row 
 console.log(`    CONTROL INVENTORY (A-F15): ${CHECKS.filter((c) => c.id.includes('CONTROL')).length} id-labelled CONTROL row(s) + the PRECEDENCE control asserted inside SC-C-01 (a predicate TERM since B-F5) = 6 controls total`)
 // THE EXIT CODE IS EVIDENCE: exit 1 iff at least one row is FAIL, 0 only when there is none.
 // A MANUAL/PARKED row is counted and named but is NOT a FAIL for exit-code purposes.
+// **AND THEREFORE `exit 0` CANNOT CERTIFY A FAMILY (the FOURTH audit's `A4-05`, DECLARED ONCE, at
+// this clause, and nowhere else): a `MANUAL` row is a WITHHELD claim, so a run whose rows are all
+// PASS-or-MANUAL exits `0` while a family's arms may not have been readable at all — `0 PASS /
+// 0 FAIL / 4 MANUAL` and `4 PASS` BOTH exit `0`. The exit code is a statement about FAILs ALONE
+// ("no row contradicted the clause it cites"); it is NOT a statement about any family's claim, and
+// no family verdict may be read off it. The family verdicts are the `FAMILY-VERDICT TERMS` block
+// above, each printing its own `PASS`/`FAIL`/`MANUAL`/`PARKED` split with its terms.**
 // THE EXIT IS FORCED HERE so the drain above is the ONLY one (the `exit` hook then finds an
 // empty registry) and the cleanup row is COUNTED in every run, FAIL rows included.
 process.exit(CHECKS.some((c) => c.verdict === 'FAIL') ? 1 : 0)
