@@ -42,6 +42,34 @@
 //   P-EX-TP-2  12 = 9 payload classes + 3 channel readings
 //   P-EX-IM-4  10 = 5 isolation probes + 5 carrier/notify probes
 //
+// ⟶ THE AS-FILED BLOCK ABOVE IS KEPT BYTE-FOR-BYTE AND IS SUPERSEDED IN PLACE
+// (`RCA-8(d)` ANNOTATE-BESIDE — a term change is ANNOTATED, never silently rewritten).
+// **THE OPERATIVE TERMS AFTER THE GATE-4 RED PASS (`2026-10-05`, the adversarial
+// pass's A-1/A-2/A-3 host findings). The three rows below gained drives, so their
+// terms moved; the other six are unchanged:**
+//   P-EX-IM-1  12 = 2 legal states x 6 readings                                   (UNCHANGED)
+//   P-EX-IM-2  15 = 12 drive cells (a)..(l) + 3 `A-1` live-transition cells        (12 -> 15)
+//   P-EX-IM-3  13 = 10 drive cells (a)..(j) + 3 `A-2` epoch/stale-arm cells        (10 -> 13)
+//   P-EX-SM-1  13 = 5 transition classes x 2 readings + 2 machine-level readings
+//                     + 1 `A-3` T-2(d) widen cell                                  (12 -> 13)
+//   P-EX-SM-2  14 = 7 drive cells x 2 readings                                    (UNCHANGED)
+//   P-EX-SM-3  12 = 7 input classes + 3 order readings + 2 persistence readings   (UNCHANGED)
+//   P-EX-TP-1  12 = 5 refusal classes x 2 readings + 2 reading cells              (UNCHANGED)
+//   P-EX-TP-2  12 = 9 payload classes + 3 channel readings                        (UNCHANGED)
+//   P-EX-IM-4  10 = 5 isolation probes + 5 carrier/notify probes                  (UNCHANGED)
+// **THE OPERATIVE TOTAL IS `113 = 12 + 15 + 13 + 13 + 14 + 12 + 12 + 12 + 10`**
+// (chain `12 -> 27 -> 40 -> 53 -> 67 -> 79 -> 91 -> 103 -> 113`), subtotals
+// `P-IM 50 + P-SM 39 + P-TP 24 = 113`. **THE DELTA VS THE SPEC'S `§5.5.1` AS-FILED
+// DECLARED FIGURES IS `+7` and it is REPORTED, never smoothed**: the spec declares
+// `106 = 12 + 12 + 10 + 12 + 12 + 14 + 12 + 12 + 10` with subtotals `44 + 38 + 24`,
+// and this pass authorises 7 NEW DRIVE CELLS (`P-EX-IM-2` +3, `P-EX-IM-3` +3,
+// `P-EX-SM-1` +1) for the three host findings the adversarial pass raised. **THE
+// SPEC IS NOT EDITED BY A TESTWRITER** (`§1.3` item 10) — the discrepancy is a
+// finding for the spec amendment, carried by `SPEC_AS_FILED_*` below and printed
+// BESIDE the operative arithmetic by the register's own report. No term VALUE other
+// than those three moved, no row, strategy id, property or cap moved, and the
+// largest row (`15`) and the total (`113`) both remain inside their own caps.
+//
 // THE MODULE'S ABSENCE IS DATA, NOT AN ERROR: this file never statically imports
 // the modules under test (`§4.1`'s ABSENT-symbol red classes). It resolves them
 // the way the repo's other red harnesses do — an `existsSync` check before a
@@ -166,7 +194,67 @@ export const STOP_AFTER_CONSECUTIVE = 5
  *  arithmetic line's positions `5`/`6` are the thing to reconcile (they should read
  *  `12 + 14`); the finding is REPORTED to the supervisor, not resolved here.  **The
  *  declared total is still `106` and is still the sum of these nine terms.** */
-export const DECLARED_TERMS: readonly number[] = [12, 12, 10, 12, 14, 12, 12, 12, 10]
+export const DECLARED_TERMS: readonly number[] = [12, 15, 13, 13, 14, 12, 12, 12, 10]
+/* **⟶ ANNOTATED 2026-10-05 (GATE 4 RED PASS — the annotation ABOVE is the GATE-3
+ * reading and is kept byte-for-byte).  THREE TERMS MOVED because this pass authored
+ * SEVEN new drive cells for the adversarial pass's host findings: `P-EX-IM-2`
+ * `12 -> 15`, `P-EX-IM-3` `10 -> 13`, `P-EX-SM-1` `12 -> 13`; the other six terms,
+ * every row id, every strategy id, every property and both caps are unmoved.  The
+ * spec's `§5.5.1` figures are preserved as `SPEC_AS_FILED_*` below and the `+7`
+ * delta is REPORTED as the spec-amendment finding (`§1.3` item 10).** */
+/** **THE SPEC'S AS-FILED ARITHMETIC — KEPT SO THE DELTA IS PRINTED BESIDE IT**
+ *  (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`; `RCA-8(d)` annotate-beside).
+ *
+ *  These are `§5.5.1`'s OWN printed figures, byte-for-byte as filed: the
+ *  arithmetic line `106 = 12 + 12 + 10 + 12 + 12 + 14 + 12 + 12 + 10`, the chain
+ *  `12 -> 24 -> 34 -> 46 -> 58 -> 72 -> 84 -> 96 -> 106`, and the subtotals
+ *  `P-IM 44 + P-SM 38 + P-TP 24 = 106`.
+ *
+ *  **THEY ARE NOT THE OPERATIVE TERMS OF THIS REGISTER** (`DECLARED_TERMS` above
+ *  is) and they are NOT a second authority: they exist so that (a) each row's
+ *  as-filed figure stays visible beside its operative figure, and (b) the pass
+ *  that changed three terms PRINTS the delta instead of hiding it. **THE DELTA IS
+ *  `+7` ON THE TOTAL (`113` vs `106`) BECAUSE THIS PASS AUTHORED SEVEN NEW DRIVE
+ *  CELLS** — `P-EX-IM-2` +3 (`A-1`: the live transition, the resource
+ *  counterpart, the positive control), `P-EX-IM-3` +3 (`A-2`: the real
+ *  transition's three obligations, the epoch reader, the reply-turn stale arm)
+ *  and `P-EX-SM-1` +1 (`A-3`: the `T-2(d)` widen cell) — each required by an
+ *  adversarial finding, and **every pre-existing term, row, strategy id, property
+ *  and cap is unmoved.** The spec's `§5.5.1` table and its arithmetic paragraph
+ *  therefore OWE an amendment (a TestWriter may not make it: `§1.3` item 10), and
+ *  the amended form must re-print the total WITH its terms exactly as this
+ *  register does. */
+export const SPEC_AS_FILED_TERMS: readonly number[] = [12, 12, 10, 12, 12, 14, 12, 12, 10]
+/** **THE AS-FILED PER-ROW TABLE PAIRING** — the same nine `§5.5.1` figures, in the
+ *  spec TABLE's own ROW order, which is the PER-ROW AUTHORITY (`§5.5.1`'s own dated
+ *  annotation: the table numbers row `#5` = `P-EX-SM-2` at `14` and row `#6` =
+ *  `P-EX-SM-3` at `12`, while the arithmetic line above transposes those two
+ *  positions).  **A PER-ROW DELTA MUST BE MEASURED AGAINST THIS ARRAY**, because
+ *  pairing the arithmetic line's positions `5`/`6` to the rows would report a
+ *  phantom `+2` on `P-EX-SM-2` and `-2` on `P-EX-SM-3` — the transpose artefact,
+ *  not a term move.  The two arrays sum to the SAME `106`, so the TOTAL delta is
+ *  unaffected by which is used. */
+export const SPEC_AS_FILED_TABLE_TERMS: readonly number[] = [12, 12, 10, 12, 14, 12, 12, 12, 10]
+/** The as-filed total — the sum of the as-filed terms above. */
+export const SPEC_AS_FILED_TOTAL = 106
+/** The as-filed per-type subtotals (`§5.5.1`: `44 + 38 + 24 = 106`). */
+export const SPEC_AS_FILED_SUBTOTALS: { readonly im: number; readonly sm: number; readonly tp: number } = { im: 44, sm: 38, tp: 24 }
+/** The per-row term MOVES this pass made, in register order — named so the delta is
+ *  printed PER ROW rather than as a bare total. Every row not listed reads `0`. */
+export const TERM_MOVES: Readonly<Record<string, number>> = {
+  'P-EX-IM-2': 3, 'P-EX-IM-3': 3, 'P-EX-SM-1': 1,
+}
+/** `SPEC_AS_FILED_TERMS`' report, in the same shape `declaredTotalReport()` returns
+ *  — so the delta is printed through ONE formatter, never by hand-typed arithmetic. */
+export function specAsFiledTotalReport(): { terms: readonly number[]; sum: number; chain: string } {
+  const chain: number[] = []
+  let running = 0
+  for (const term of SPEC_AS_FILED_TERMS) {
+    running += term
+    chain.push(running)
+  }
+  return { terms: SPEC_AS_FILED_TERMS, sum: running, chain: chain.join(' -> ') }
+}
 /** `§5.5.1` — the nine row ids, IN THE ORDER THE REGISTER EXECUTES THEM.
  *
  *  **⟶ CORRECTED 2026-10-05 BY THE AUTHOR ROLE AT GATE 3, RED-SET REPAIR 2** — the

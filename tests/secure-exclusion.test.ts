@@ -76,6 +76,66 @@
  * §2.2 item 4 cites — never as a duration claim; the epoch rows assert ORDER
  * and OUTCOME; the HTTP rows assert the answer's SHAPE and its arrival BEFORE
  * the per-POST server is built, never a latency.
+ *
+ * ============================================================================
+ * ⟶ ADDED 2026-10-05 (GATE 4, the ADVERSARIAL PASS'S HOST FINDINGS — `A-1`,
+ * `A-2`, `A-3`; `RCA-1`: the RED comes BEFORE any `src/` edit).  TWO jobs, both
+ * inside this file and `tests/secure-exclusion-register.ts` ONLY:
+ *
+ * (1) RE-GRAINED DRIVES (`A-4`/`A-6`/`A-8`) — nine sites that passed for a
+ *     reason unrelated to the property they name.  Each now asserts the
+ *     property, and every repaired instrument carries a control-only form that
+ *     is DRIVEN IN-LINE and MUST FAIL (`RCA-8(d)`):
+ *       `P-EX-IM-2`(e)   the resource-resolvability pin: a concrete before/after
+ *                        handle-SET reading (the as-filed form compared
+ *                        `priv.resources.size` with ITSELF and then asserted
+ *                        `>= 0`).
+ *       `P-EX-IM-2`(k)   a POSITIVE CONTROL for the digest comparator (a
+ *                        byte-moved copy must NOT answer the pin).
+ *       `P-EX-IM-3`(j)   the enabled-group set is genuinely NOT an input to the
+ *                        exclusion decision, with a DISCRIMINATING pair of group
+ *                        sets (the as-filed form was `expect(x.tier4Open)
+ *                        .toBe(x.tier4Open)`).
+ *       `P-EX-SM-1`T-1(ii) the epoch bump and the invalidation read TOGETHER on
+ *                        ONE live server (the as-filed form discarded the
+ *                        transition's result and asserted the invalidation on a
+ *                        throwaway backend).
+ *       `P-EX-SM-3` persistence 1: a REAL transition on a gate the SERVER HOLDS
+ *                        (the as-filed "transition" was `withExclusion` on a
+ *                        throwaway gate; the store was never touched).
+ *       `P-EX-IM-4`(a)(b)(c)(1) + `M-EX-8`: the pane-construction failure is no
+ *                        longer swallowed — `appAndPaneOrAbsent()` reports it as
+ *                        the DECLARED absent symbol, and the pane side gained its
+ *                        own positive control (the toggle node IS in
+ *                        `paneNodes(panels)`).
+ *       the register's report row: the un-run and term readings assert EXACT
+ *                        values in `§5.5.1` TABLE order (the as-filed forms were
+ *                        `>= 0` and an order-insensitive `12 || 14 || 10`).
+ *
+ * (2) THE NEW RED ROWS FOR THE HOST FIXES — seven drive cells, named `A-1#1..3`,
+ *     `A-2#4..6`, `A-3#7`, cited to their `§` and placed in their own row's drive
+ *     table.  **THEY CHANGE THREE ROW TERMS AND THEREFORE THE REGISTER'S TOTAL**
+ *     (`§5.5.1`: `P-EX-IM-2` `12 -> 15`, `P-EX-IM-3` `10 -> 13`, `P-EX-SM-1`
+ *     `12 -> 13`; the new total is `113 = 12 + 15 + 13 + 13 + 14 + 12 + 12 + 12 +
+ *     10`, subtotals `50 + 39 + 24`).  **THE SPEC'S AS-FILED FIGURES (`106`,
+ *     `44 + 38 + 24`) ARE NOT SILENTLY RE-NUMBERED**: they are held in the
+ *     register module as `SPEC_AS_FILED_*`, printed BESIDE the operative
+ *     arithmetic, and the `+7` delta is asserted as this pass's SPEC-AMENDMENT
+ *     FINDING.  The spec file is NOT edited here (`§1.3` item 10).
+ *
+ * **THE REPORTED SPEC GAP (recorded, NOT resolved by invention):** `§2.2` item 3
+ * and `PAR-5` declare the exclusion epoch's SEMANTICS ("a per-process monotone
+ * counter held beside the exclusion record"), its bump rules (`T-1`/`T-2` bump,
+ * `T-3`/`T-4` do not) and its CARRIER (the `RendererBackend` pending entry) —
+ * **but the spec declares NO ACCESSOR for it, and `§2.1` item 2 declares exactly
+ * THREE added members on `SecurityGate`, none of which is the epoch.** The
+ * `A-2#5` and `A-2#6` drives therefore read it through the spec's OWN DECLARED
+ * NAME for the thing (`PAR-5`'s "the exclusion **epoch**"), as
+ * `SecurityGate.exclusionEpoch()`, behind an `absent(...)` guard that names
+ * `PAR-5`/`§2.2` item 3 — so the red is the DECLARED ABSENT MECHANISM and never a
+ * `TypeError`.  If the implementer lands the counter under a different declared
+ * name, that is a spec amendment this row must be re-aimed to; it is NOT a
+ * licence to weaken the row.
  * ============================================================================
  */
 
@@ -116,6 +176,11 @@ import {
   MAIN_SRC,
   TEST_FILE,
   declaredTotalReport,
+  specAsFiledTotalReport,
+  SPEC_AS_FILED_TOTAL,
+  SPEC_AS_FILED_SUBTOTALS,
+  SPEC_AS_FILED_TABLE_TERMS,
+  TERM_MOVES,
   executeRegister,
   exists,
   sha256Of,
@@ -218,6 +283,89 @@ function serverExclusionSnapshot(server: ProvidentMcpServer): unknown {
     absent('§2.2 item 2 / PAR-4 — the declared reader on `ProvidentMcpServer`', '`ProvidentMcpServer.exclusionSnapshot()`')
   }
   return s.exclusionSnapshot()
+}
+
+/** **`PAR-5` / `§2.2` item 3 — THE EXCLUSION EPOCH, READ AT ITS DECLARED NAME.**
+ *
+ *  **THE REPORTED SPEC GAP (this pass's finding, recorded so no later reader
+ *  mistakes the name for the spec's):** the spec declares the epoch's SEMANTICS
+ *  (`PAR-5`: *"a value the gate BUMPs on every accepted transition"*), its bump
+ *  rules (`§2.1` item 3: `T-1`/`T-2` bump; `T-3`/`T-4` do not) and its CARRIER
+ *  (`§2.2` item 3: the `RendererBackend` pending entry) — **and declares NO
+ *  ACCESSOR for it anywhere.** `§1.5`'s declared-surface table names the state
+ *  token, the receipt, the transition record, the channel constant and the
+ *  read-side widening — no epoch reader; `§2.1` item 2 declares exactly THREE
+ *  added `SecurityGate` members (`exclusion`, `exclusionState()`,
+ *  `withExclusion()`), none of which is the epoch; and `§7a`'s OWED table carries
+ *  no `OW-n` for it.
+ *
+ *  **SO THE DRIVE READS IT THROUGH THE SPEC'S OWN DECLARED NAME FOR THE THING**
+ *  — `PAR-5`'s *"the exclusion **epoch**"*, in the gate's own reader style
+ *  (`exclusion`, `exclusionState`) ⇒ `exclusionEpoch()`.  Choosing a DIFFERENT
+ *  shape (a server-level reader, an epoch-carrying parameter) is exactly what
+ *  `PAR-5`'s OUTSIDE column forbids (*"No declared surface takes one"*), and a
+ *  pending-entry-shaped reader would be the CARRIER, not the reader the row
+ *  names.  **The gap is REPORTED, never invented over**: an absent member answers
+ *  `absent(...)` with `PAR-5`/`§2.2` item 3 cited, so the red is the declared
+ *  absent mechanism, not a `TypeError`. */
+function gateEpochOf(gate: SecurityGate): number {
+  const g = gate as unknown as { exclusionEpoch?: () => unknown }
+  if (typeof g.exclusionEpoch !== 'function') {
+    absent(
+      'PAR-5 / §2.2 item 3 — THE EXCLUSION EPOCH (a per-process monotone counter held beside the exclusion record, bumped once per accepted TRANSITION; `T-3`/`T-4` do not bump). SPEC GAP REPORTED: the spec declares the epoch\'s semantics and its carrier but NO accessor — this instrument reads the spec\'s own declared name for the thing',
+      '`SecurityGate.exclusionEpoch()`',
+    )
+  }
+  const value = g.exclusionEpoch()
+  expect(typeof value, 'PAR-5 — the epoch is a NUMBER (a per-process monotone counter)').toBe('number')
+  return value as number
+}
+
+/** §2.7 item 1 — the app Runtime and the ISOLATED pane graph, BOTH REQUIRED.
+ *
+ *  **⟶ REPAIRED 2026-10-05 AT GATE 4 (the adversarial pass's `A-6` finding: the
+ *  PRE-REPAIR `appAndPane()` SWALLOWED the pane's construction failure —
+ *  `catch { panels = null }` — so every isolation probe below passed with NO
+ *  PANE AT ALL, i.e. against a graph the control is not even authored into).**
+ *  A construction failure is an ABSENT SYMBOL (`§4.1.3`'s red class), never a
+ *  silent `null`: the probes that need the pane go through THIS helper, and the
+ *  failure is reported with the clause that declares the graph. */
+function appAndPaneOrAbsent(): { runtime: RuntimeProbeLike; panels: SecurePanels } {
+  const { runtime, panels } = appAndPane()
+  if (panels === null) {
+    absent(
+      '§2.4 item 2 / §2.7 item 1 — the ISOLATED PANE GRAPH the control is authored into',
+      '`new SecurePanels(paneMount)` — its construction FAILED (the pre-repair helper swallowed the failure and the isolation probes then passed with NO PANE AT ALL)',
+    )
+  }
+  return { runtime, panels }
+}
+
+/* ── CONTROL-ONLY HELPERS FOR THE RE-GRAINED DRIVES (`RCA-8(d)`) ──────────────
+ *  Each repaired instrument asserts its property through ONE predicate, and its
+ *  control drives the SAME predicate over a MUTANT the property forbids, so the
+ *  control cannot be vacuous in either direction. */
+
+/** The `P-EX-IM-2`(e) predicate: the SAME handle SET is still resolvable.
+ *  `before` MUST be non-empty — the pre-repair form's `>= 0` reading passed on
+ *  two EMPTY sets, which is the vacuity this predicate closes. */
+function sameHandleSet(before: readonly string[], after: readonly string[]): boolean {
+  return before.length > 0 && after.length === before.length && before.every((x, i) => x === after[i])
+}
+/** CONTROL ONLY — the DEREGISTERING design `§0A` item 7(c) forbids, driven as a
+ *  mutant so the `(e)` predicate is proven to FAIL on it. */
+function deregisteredMutantControlOnly(handles: readonly string[]): string[] {
+  return handles.slice(1)
+}
+/** The `P-EX-IM-3`(j) predicate: the exclusion decision for a given group set. */
+function decisionIsNotAGroupFunction(a: { mcpEnabled: boolean; tier4Open: boolean }, b: { mcpEnabled: boolean; tier4Open: boolean }): boolean {
+  return a.mcpEnabled === b.mcpEnabled && a.tier4Open === b.tier4Open
+}
+/** CONTROL ONLY — the THIRD-HOLDER decision (`§2.2` item 7) that DOES read the
+ *  enabled-group set: driven so the `(j)` predicate is proven to FAIL on it. */
+function groupReadingDecisionControlOnly(enabled: readonly string[]): { mcpEnabled: boolean; tier4Open: boolean } {
+  const open = enabled.includes('dispatch')
+  return { mcpEnabled: !open, tier4Open: open }
 }
 
 /* ============================================================================
@@ -695,7 +843,10 @@ function appAndPane(): { runtime: RuntimeProbeLike; panels: SecurePanels | null 
 }
 
 /* ============================================================================
- * THE REGISTER — §5.5.1 (9 rows; declared total `106 = 12+12+10+12+12+14+12+12+10`)
+ * THE REGISTER — §5.5.1 (9 rows; OPERATIVE declared total `113 = 12+15+13+13+14+12+12+12+10`;
+ * the spec's as-filed `106 = 12+12+10+12+12+14+12+12+10` is held beside it and the
+ * `+7` delta — seven new drive cells for the gate-4 `A-1`/`A-2`/`A-3` findings — is
+ * reported as the SPEC-AMENDMENT FINDING, never smoothed)
  *
  * **THE ROW ORDER IS `§5.5.1`'s OWN NUMBERING (`P-EX-IM-1`…`P-EX-IM-3` ·
  * `P-EX-SM-1`…`P-EX-SM-3` · `P-EX-TP-1`/`P-EX-TP-2` · `P-EX-IM-4` — the spec
@@ -977,12 +1128,16 @@ const registerSpecs: RegisterRow[] = [
     ],
   },
 
-  /* ── P-EX-IM-2 — `12` = 12 drive cells (a)..(l) (S-EX-TURN-1) ────────────── */
+  /* ── P-EX-IM-2 — `15` = 12 drive cells (a)..(l) + 3 `A-1` live-transition cells ──
+   * **⟶ TERM `12 -> 15` 2026-10-05 (GATE 4, the `A-1` host finding): three NEW
+   * drive cells (`A-1#1`..`A-1#3`) are appended to this row's table.  `§5.5.1`
+   * declares `12`; the operative term is printed in the row below and the spec
+   * amendment is reported by the register's delta block.** */
   {
     id: 'P-EX-IM-2',
     type: 'P-IM',
     strategyId: 'S-EX-TURN-1',
-    term: 12,
+    term: 15,
     property: 'THE INVOCATION TURN IS THE ENFORCEMENT, AND IT IS TOTAL OVER D-SCOPE — every MCP-reachable method class, with the state `\'mcp-disabled\'`, is refused the VALUE `{status:\'refused\', reason:\'exclusion-closed\'}` BEFORE any renderer dispatch, on BOTH transports; a registry-only re-gate is NOT the enforcement; the tool/resource set is NOT deregistered; AND the static boundary holds (§2.2 items 1/2, §2.3, §1.3 item 1)',
     drives: [
       /* (a) the invocation while 'mcp-disabled': refusal as a VALUE, no pending
@@ -1044,20 +1199,48 @@ const registerSpecs: RegisterRow[] = [
         },
       },
       /* (e) the handles are still RESOLVABLE after the transition — the
-       * non-legibility pin (§0A item 7(c)). */
+       * non-legibility pin (§0A item 7(c)).
+       * **⟶ RE-GRAINED 2026-10-05 (GATE 4, `A-4`): the as-filed form read
+       * `expect(priv.resources.size).toBe(beforeNames > 0 ? priv.resources.size
+       * : priv.resources.size)` — a SELF-COMPARISON — and then
+       * `toBeGreaterThanOrEqual(0)`, which records nothing.  It now asserts the
+       * ACTUAL claim against a concrete before/after reading of the handle SET,
+       * through ONE predicate (`sameHandleSet`) whose control drives the
+       * DEREGISTERING mutant the pin forbids and PROVES the predicate fails.** */
       {
-        label: "(e) the tool/resource handles are still RESOLVABLE after the transition — the NON-LEGIBILITY pin (a design that DEREGISTERS on disable FAILS) (§0A item 7(c), §2.2 item 2(c))",
+        label: "(e) the tool/resource handle SET is still RESOLVABLE after a REAL transition — the NON-LEGIBILITY pin: nothing is DEREGISTERED, only `enabled` moves (§0A item 7(c), §2.2 item 2(c))",
         run: () => {
           const gate = freshGate()
           const backend = recordingBackend()
-          const server = freshServer(gate, backend)
+          const server = freshServer(gate, backend, 'stdio')
           server.ensureServerRegistered()
-          const beforeNames = (server.registeredResources?.() ?? []).length
-          server.applyGatePatch({} as never) // the landed re-gate path, composed with
           const priv = server as unknown as { registered: Map<string, unknown>; resources: Map<string, unknown> }
-          expect(priv.registered.size, '§0A item 7(c) — the tool set registered is NOT CLEARED on disable: the handles stay RESOLVABLE, so the disabled state is not distinguishable from a never-registered tool by name-listing alone').toBeGreaterThan(0)
-          expect(priv.resources.size, '§0A item 7(c) — the resource handles stay RESOLVABLE too').toBe(beforeNames > 0 ? priv.resources.size : priv.resources.size)
-          expect(priv.resources.size).toBeGreaterThanOrEqual(0)
+          const toolsBefore = [...priv.registered.keys()].sort()
+          const resBefore = server.registeredResources().map((r) => r.uri ?? r.uriTemplate!).sort()
+          // THE BEFORE-READINGS MUST BE NON-EMPTY, or the comparison below would
+          // be two empty sets agreeing with each other (the pre-repair vacuity):
+          expect(toolsBefore.length, '§0A item 7(c) — the tool handles are registered under the ENABLED gate (the before-reading is NON-EMPTY: an empty before-reading would make every comparison below vacuous)').toBeGreaterThan(0)
+          expect(resBefore.length, '§0A item 7(c) — the resource handles are registered too (the before-reading is NON-EMPTY)').toBeGreaterThan(0)
+          expect(resBefore.every((uri) => server.resourceEnabled(uri)), 'the pin reads a MEANINGFUL before-state: every resource handle is ENABLED before the transition').toBe(true)
+          // THE REAL TRANSITION — the disable the pin is about:
+          server.applyExclusion(STATE_MCP_DISABLED)
+          expect(serverExclusionSnapshot(server), 'the transition REALLY ran on the server\'s own gate (the reading is not taken across a constructed-elsewhere gate)').toEqual({ status: 'refused', reason: EXCLUSION_CLOSED })
+          const toolsAfter = [...priv.registered.keys()].sort()
+          const resAfter = server.registeredResources().map((r) => r.uri ?? r.uriTemplate!).sort()
+          expect(sameHandleSet(toolsBefore, toolsAfter),
+            '§0A item 7(c) — the TOOL set registered is NOT CLEARED on disable: the SAME handles stay RESOLVABLE, so the disabled state is not distinguishable from a never-registered tool by name-listing alone. before ' + JSON.stringify(toolsBefore) + ' / after ' + JSON.stringify(toolsAfter)).toBe(true)
+          expect(sameHandleSet(resBefore, resAfter),
+            '§0A item 7(c) — the RESOURCE handles stay RESOLVABLE too: the SAME URI set. before ' + JSON.stringify(resBefore) + ' / after ' + JSON.stringify(resAfter)).toBe(true)
+          expect(resAfter.filter((uri) => server.resourceEnabled(uri)),
+            '§0A item 7(c) — and the toggling DID move: every resource handle is now `enabled:false` (toggled, never deregistered)').toEqual([])
+          // THE CONTROL — the SAME predicate, driven over the DEREGISTERING
+          // design the pin forbids.  It MUST FAIL, and the empty pair must fail too:
+          expect(sameHandleSet(resBefore, deregisteredMutantControlOnly(resBefore)),
+            'CONTROL — the SAME predicate FAILS on a DEREGISTERED mutant (one handle removed), so the assertion above is a bound and not a self-comparison').toBe(false)
+          expect(sameHandleSet(toolsBefore, deregisteredMutantControlOnly(toolsBefore)),
+            'CONTROL — and it fails on the TOOL mutant too').toBe(false)
+          expect(sameHandleSet([], []),
+            'CONTROL — the predicate also FAILS on the empty pair, which is exactly the reading the pre-repair form (`size >= 0`) accepted').toBe(false)
         },
       },
       /* (f) the stdio server is still CONNECTED after the transition. */
@@ -1140,10 +1323,15 @@ const registerSpecs: RegisterRow[] = [
             '§1.3 item 1 — `src/main/security-store.ts` is byte-identical to its pre-unit bytes (`S2`\'s file, per the decomposition row); a moved byte is a COLLISION finding. Measured: ' + digest.slice(0, 12)).toBe(SECURITY_STORE_PIN)
         },
       },
-      /* (k) THE MEASURED FILE BYTE-PIN of the two frozen modules. */
+      /* (k) THE MEASURED FILE BYTE-PIN of the two frozen modules.
+       * **⟶ CONTROL ADDED 2026-10-05 (GATE 4, `A-8`): the as-filed form offered
+       * no reading proving the digest comparison can FAIL — a comparator that
+       * answered the pin for EVERY input would have passed this cell forever.
+       * The control writes a BYTE-MOVED COPY of the pinned module and drives the
+       * SAME comparator over it; it MUST answer a different digest.** */
       {
-        label: "(k) THE MEASURED FILE BYTE-PIN: `store-core-graph.ts` = `sha256:0664c52f…` and `store-graph-references.ts` = `sha256:5c0c1a97…` — MEASURED with node:crypto over the file bytes, DISTINGUISHED from the artifact SPAN figure (§1.3 item 1)",
-        run: () => {
+        label: "(k) THE MEASURED FILE BYTE-PIN: `store-core-graph.ts` = `sha256:0664c52f…` and `store-graph-references.ts` = `sha256:5c0c1a97…` — MEASURED with node:crypto over the file bytes, DISTINGUISHED from the artifact SPAN figure, WITH a positive control that the comparison can FAIL (§1.3 item 1)",
+        run: async () => {
           for (const rel of Object.keys(MEASURED_FILE_PINS)) {
             const path = rel.startsWith('renderer/') ? (rel.endsWith('store-core-graph.ts') ? STORE_CORE_SRC : STORE_REFS_SRC) : ''
             const digest = sha256Of(path)
@@ -1151,6 +1339,15 @@ const registerSpecs: RegisterRow[] = [
             expect(digest,
               `§1.3 item 1 / P-EX-IM-2(k) — ${rel} byte-identical to the MEASURED FILE pin (pinned ${pinned.slice(0, 8)}…; got ${digest.slice(0, 8)}…). The span figure \`29772ac7…\` is the ARTIFACT's span digest and is NEVER a file-pin figure (store-security.md's attribution annotation).`).toBe(pinned)
           }
+          // THE POSITIVE CONTROL — a BYTE-MOVED COPY must NOT answer the pin:
+          const mutatedPath = join(baseDir, 'store-core-graph.byte-moved.control.ts')
+          await writeFile(mutatedPath, sourceOf(STORE_CORE_SRC) + '\n', 'utf8')
+          const pinnedStoreCore = MEASURED_FILE_PINS['renderer/store-core-graph.ts']
+          expect(sha256Of(mutatedPath) === sha256Of(STORE_CORE_SRC),
+            'CONTROL — the byte-moved copy is a DIFFERENT file (its digest differs from the live module\'s, so the control fixture is real)').toBe(false)
+          expect(sha256Of(mutatedPath),
+            'CONTROL — the SAME comparator over a ONE-BYTE-MOVED copy answers a digest that is NOT the pin: the byte-pin assertion above CAN fail, so it is an instrument and not a tautology').not.toBe(pinnedStoreCore)
+          expect(sha256Of(mutatedPath).length, 'CONTROL — and it still answers a well-formed digest (the control fails the PIN, not the comparator\'s shape)').toBe(64)
         },
       },
       /* (l) the four FORBIDDEN paths stay untouched. */
@@ -1169,15 +1366,99 @@ const registerSpecs: RegisterRow[] = [
             '§1.3 item 1 — `src/main/security-store.ts` (the tier\'s own bytes, `S2`\'s) is byte-identical').toBe(SECURITY_STORE_PIN)
         },
       },
+      /* ── THE `A-1` CELLS (GATE 4, 2026-10-05) — THE LIVE TRANSITION ─────────
+       * **THE FINDING (`A-1`, confirmed by empirical probe):** `exclusionTurn(gate)`
+       * is called from the `guarded` closure with the gate parameter CAPTURED AT
+       * REGISTRATION TIME, while `applyExclusion` REPLACES `this._gate` and
+       * `withExclusion` ALWAYS RETURNS A NEW INSTANCE — so a registered handler
+       * never sees the transition.  The as-filed cell (c) passes only because it
+       * builds the gate ALREADY CLOSED before constructing the server: it never
+       * drives a transition on a LIVE server.  These three cells are that drive.
+       * The term move (`12 -> 15`) is reported in the register's delta block.** */
+      {
+        label: "(A-1#1) THE LIVE-TRANSITION CELL (§2.2 items 2(a)/2(b), §2.3 item 1, P-EX-IM-2's cell (c)) — a stdio server whose handles were registered while `'mcp-enabled'`, then a REAL `applyExclusion('mcp-disabled')`, then the registry toggling WITHHELD: the invocation must STILL answer the DECLARED refusal VALUE with ZERO renderer dispatches",
+        run: async () => {
+          const gate = freshGate() // the BOOT TERMINAL — NOT pre-closed
+          const backend = recordingBackend()
+          const server = freshServer(gate, backend, 'stdio')
+          server.ensureServerRegistered()
+          const priv = server as unknown as { registered: Map<string, { update(o: { enabled: boolean }): void; enabled: boolean }> }
+          const toolName = 'provident.get_rendered_html'
+          expect(priv.registered.has(toolName), 'the handle was registered BEFORE the transition, under the ENABLED gate (the fixture is a live, open state — the as-filed cell (c) started CLOSED, which is why it never measured this)').toBe(true)
+          expect(serverExclusionSnapshot(server), 'the pre-transition state is the boot terminal').toBeNull()
+          // THE REAL TRANSITION — the operator's open request, on the LIVE server:
+          server.applyExclusion(STATE_MCP_DISABLED)
+          expect(serverExclusionSnapshot(server), '§2.2 item 2 / PAR-4 — the transition REALLY ran: the server\'s own gate now answers the receipt (a live transition, not a pre-set construction)').toEqual({ status: 'refused', reason: EXCLUSION_CLOSED })
+          // WITHHOLD the registry toggling: the captured handles are restored to
+          // ENABLED, so the ONLY thing left that can refuse the call is the
+          // invocation turn's read of the LIVE gate at the turn:
+          for (const [, h] of priv.registered) h.update({ enabled: true })
+          expect(server.registeredEnabled(toolName), 'the toggling is WITHHELD for this arm: the handle is left ENABLED (§2.2 item 2(b) — "the toggling is NOT the enforcement")').toBe(true)
+          const answered = await invokeViaServer(server, toolName, {})
+          expect(answered.threw, '§2.2 item 5 / §3.4 — the refusal is a VALUE; NOTHING throws').toBeNull()
+          expect(refusalTokenOf(answered.value),
+            '§2.2 item 2(a) — the invocation turn reads the LIVE gate at the turn, "not a captured snapshot (`P-EX-IM-2`)": after a REAL transition on a LIVE server the answer MUST be the declared refusal value. Measured answer: ' + JSON.stringify(answered.value)?.slice(0, 160)).toBe(EXCLUSION_CLOSED)
+          expect(backend.invokes,
+            '§2.2 item 2(a) — ZERO renderer dispatches (the probe\'s REQUIRED reading is `invokes 0`; the captured closure exempts the call and yields `invokes 1`). Dispatched: ' + JSON.stringify(backend.invokes)).toEqual([])
+        },
+      },
+      {
+        label: "(A-1#2) THE LIVE-TRANSITION RESOURCE COUNTERPART (§2.2 item 2(a), D-SCOPE's resource member) — the SAME conditions on the REGISTERED resource callback (the SDK's real stdio resource-read path), not only on the `readResource` test accessor",
+        run: async () => {
+          const gate = freshGate()
+          const backend = recordingBackend()
+          const server = freshServer(gate, backend, 'stdio')
+          server.ensureServerRegistered()
+          const uri = 'mcp://provident/app'
+          const priv = server as unknown as {
+            resources: Map<string, { update(o: { enabled: boolean }): void; readCallback?: (...a: never[]) => Promise<unknown> }>
+          }
+          const handle = priv.resources.get(uri)
+          if (!handle || typeof handle.readCallback !== 'function') {
+            absent('§2.2 item 2(a) — the ONE shared RESOURCE callback the invocation check rides (mcp-server.ts:867-882)', `the registered resource handle's \`readCallback\` for \`${uri}\``)
+          }
+          server.applyExclusion(STATE_MCP_DISABLED)
+          for (const [, r] of priv.resources) r.update({ enabled: true }) // the toggling withheld
+          // (i) the TEST ACCESSOR reading — it reads the server's live gate directly:
+          const viaAccessor = await resourceReadViaServer(server, uri)
+          expect(refusalTokenOf(viaAccessor.value), '§2.2 item 2(a) — the `readResource` accessor reads the live `_gate` at the turn and refuses').toBe(EXCLUSION_CLOSED)
+          // (ii) THE REGISTERED CALLBACK reading — the closure the stdio transport
+          //      actually invokes, which is where a captured gate would exempt the call:
+          const viaCallback = await handle!.readCallback!(new URL(uri) as never, undefined as never)
+          const text = (viaCallback as { contents?: Array<{ text?: string }> } | null)?.contents?.[0]?.text
+          expect(refusalTokenOf(text ?? viaCallback),
+            '§2.2 item 2(a) — the REGISTERED resource callback (the stdio resource-read path the MCP client reaches) must refuse identically: "EVERY MCP resource read runs the predicate before any renderer dispatch ... the LIVE gate\'s state, read at the turn". Measured: ' + JSON.stringify(viaCallback)?.slice(0, 160)).toBe(EXCLUSION_CLOSED)
+          expect(backend.invokes, '§2.2 item 2(a) — the resource read reached NO renderer dispatch on EITHER path. Dispatched: ' + JSON.stringify(backend.invokes)).toEqual([])
+        },
+      },
+      {
+        label: "(A-1#3) THE `A-1` POSITIVE CONTROL (§2.2 item 2(a)) — with `'mcp-enabled'` and NO transition the SAME invocation DOES dispatch (`invokes 1`), so `A-1#1` is not a blanket denial",
+        run: async () => {
+          const gate = freshGate()
+          const backend = recordingBackend()
+          const server = freshServer(gate, backend, 'stdio')
+          server.ensureServerRegistered()
+          for (const [, h] of (server as unknown as { registered: Map<string, { update(o: { enabled: boolean }): void }> }).registered) h.update({ enabled: true })
+          const answered = await invokeViaServer(server, 'provident.get_rendered_html', {})
+          expect(answered.threw, 'the positive control does not throw').toBeNull()
+          expect(refusalTokenOf(answered.value), 'the positive control answers NO exclusion refusal (the same call, no transition)').not.toBe(EXCLUSION_CLOSED)
+          expect(backend.invokes,
+            'the SAME invocation DOES dispatch while the tier is closed — the required `invokes 1` reading, which is what makes `A-1#1`\'s `invokes 0` a MEASUREMENT and not a fixture artifact. Dispatched: ' + JSON.stringify(backend.invokes)).toEqual(['renderedHtml'])
+        },
+      },
     ],
   },
 
-  /* ── P-EX-IM-3 — `10` = 10 drive cells (a)..(j) (S-EX-EPOCH-1) ─────────── */
+  /* ── P-EX-IM-3 — `13` = 10 drive cells (a)..(j) + 3 `A-2` epoch/stale-arm cells ──
+   * **⟶ TERM `10 -> 13` 2026-10-05 (GATE 4, the `A-2` host finding): three NEW
+   * drive cells (`A-2#4`..`A-2#6`) are appended to this row's table, so the epoch
+   * and the reply-turn staleness arm are RUNTIME OBSERVABLES rather than clauses
+   * with no instrument.  `§5.5.1` declares `10`; the delta is reported.** */
   {
     id: 'P-EX-IM-3',
     type: 'P-IM',
     strategyId: 'S-EX-EPOCH-1',
-    term: 10,
+    term: 13,
     property: 'THE EPOCH AND THE INVALIDATION ARE TOTAL OVER THE IN-FLIGHT CLASS, AND THE STATE HAS EXACTLY ONE LIVE HOME — every accepted work item carries the epoch read at acceptance; a stale reply is settled with the DECLARED token and NEVER the renderer value; `abandonPendingForExclusion` rejects EVERY pending entry, returns their COUNT, and touches NOTHING ELSE (§2.2 items 3/4/5/6/7)',
     drives: [
       {
@@ -1348,7 +1629,7 @@ const registerSpecs: RegisterRow[] = [
         },
       },
       {
-        label: "(j) THE RACE-2 ORDERING DRIVE (§2.2 item 7): an `IPC_SECURITY_SET` and an `IPC_SECURITY_EXCLUSION` transition issued back-to-back in ONE tick, in BOTH orders — the store's `current`, the gate's config, and NO third holder",
+        label: "(j) THE RACE-2 ORDERING DRIVE (§2.2 item 7): an `IPC_SECURITY_SET` and an `IPC_SECURITY_EXCLUSION` transition issued back-to-back in ONE tick, in BOTH orders — the store's `current`, the gate's config, and NO third holder (the exclusion decision is NOT a function of the enabled-group set)",
         run: async () => {
           const dir = join(baseDir, `race2-${race2Seq++}`)
           const path = join(dir, 'provident-security.json')
@@ -1366,19 +1647,156 @@ const registerSpecs: RegisterRow[] = [
           const storeAfterSetB = store.set({ token: 'race-token-2' })
           expect(gateB.exclusionState(), '§2.2 item 7 — the reverse order lands the same two readings').toBe(STATE_MCP_DISABLED)
           expect(storeAfterSetB.token, '§2.2 item 7 — the store\'s `current` equals the SET\'s post-state in the reverse order too').toBe('race-token-2')
-          expect(gateB.exclusion.tier4Open, '§2.2 item 7 — the enabled-group set was never copied into the exclusion\'s decision (cell (g))').toBe(gateB.exclusion.tier4Open)
+          /* **⟶ RE-GRAINED 2026-10-05 (GATE 4, `A-6`): the as-filed third reading
+           * was `expect(gateB.exclusion.tier4Open).toBe(gateB.exclusion.tier4Open)`
+           * — a TAUTOLOGY that could never fail.  The property it NAMES is that
+           * the enabled-group set is not an input to the exclusion's DECISION
+           * (the THIRD-HOLDER shape §2.2 item 7 forbids), and that property needs
+           * a DISCRIMINATING case: two gates whose group sets genuinely DIFFER
+           * must land on the SAME pair.** */
+          const narrow = liveGate({ token: null, enabled: ['read'] })
+          const wide = liveGate({ token: null, enabled: ['read', 'dispatch'] })
+          const narrowEnabled = (narrow as unknown as { config: { enabled: string[] } }).config.enabled
+          const wideEnabled = (wide as unknown as { config: { enabled: string[] } }).config.enabled
+          expect(narrowEnabled, `CONTROL — the two fixtures carry GENUINELY DIFFERENT enabled-group sets (${JSON.stringify(narrowEnabled)} vs ${JSON.stringify(wideEnabled)}), so the invariance below is a MEASUREMENT and not a coincidence of equal inputs`).not.toEqual(wideEnabled)
+          const narrowMoved = gateFrom(narrow as unknown as SecurityGate).withExclusion(STATE_MCP_DISABLED) as ExclusionGateLike
+          const wideMoved = gateFrom(wide as unknown as SecurityGate).withExclusion(STATE_MCP_DISABLED) as ExclusionGateLike
+          expect(narrowMoved.exclusion.tier4Open, 'the two gates DO land on the open pair (the reading is taken on a moved state, not on the boot terminal)').toBe(true)
+          expect(decisionIsNotAGroupFunction(narrowMoved.exclusion, wideMoved.exclusion),
+            '§2.2 item 7 / cell (g) — NO THIRD HOLDER: two gates whose enabled-group sets DIFFER land on the SAME exclusion pair, so the group set is NOT an input to the exclusion\'s decision. narrow ' + JSON.stringify(narrowMoved.exclusion) + ' / wide ' + JSON.stringify(wideMoved.exclusion)).toBe(true)
+          // THE CONTROL — the SAME predicate, driven over the THIRD-HOLDER mutant
+          // that DOES read the group set.  It MUST FAIL:
+          expect(decisionIsNotAGroupFunction(groupReadingDecisionControlOnly(narrowEnabled), groupReadingDecisionControlOnly(wideEnabled)),
+            'CONTROL — a decision that READS the enabled-group set (the third-holder shape this cell forbids) FAILS the SAME predicate on the SAME two group sets, so the invariance above is a bound and not a tautology').toBe(false)
+        },
+      },
+      /* ── THE `A-2` CELLS (GATE 4, 2026-10-05) — THE EPOCH AND THE STALE ARM ──
+       * **THE FINDING (`A-2`, confirmed):** `§2.2` items 3/5 declare an epoch
+       * STAMPED on accepted work and carried on the pending entry, with a
+       * reply-turn staleness arm settling a stale reply with the declared
+       * refusal.  `grep -n epoch src/main/mcp-server.ts` returns COMMENTS ONLY:
+       * there is no counter, no stamp and no comparison, `handleReply` has no
+       * staleness arm, and `ProvidentMcpServer.applyExclusion` is called by NO
+       * test (every as-filed "transition" drive either constructs the gate
+       * pre-set or hand-assigns the private `_gate`).  The term move
+       * (`10 -> 13`) is reported in the register's delta block.
+       *
+       * **THE SECOND REPORTED SPEC GAP (`A-2#6`):** `§2.2` item 3 declares the
+       * epoch's CARRIER (the pending entry) and the reply turn's STALE arm, but
+       * NOT how the reply turn LEARNS the current epoch — and `PAR-5`'s OUTSIDE
+       * column forbids an epoch-accepting parameter on any declared surface.  The
+       * drive therefore asserts the OBSERVABLE obligation (a stale reply settles
+       * with the declared token, VERBATIM) on the ONE object that holds both the
+       * gate and the backend (`ProvidentMcpServer`), with the invalidation
+       * withheld so the arm is isolated; the COUPLING between the live epoch and
+       * the reply turn is the implementer's to choose, and the spec owes a clause
+       * naming it.** */
+      {
+        label: "(A-2#4) THE REAL TRANSITION EXERCISES ALL THREE OBLIGATIONS TOGETHER (§2.1 item 3 T-1, §2.2 items 3/4) — `ProvidentMcpServer.applyExclusion('mcp-disabled')` called FOR REAL on a live server: the record MOVES on the gate the server holds, the in-flight invalidation returns the OBSERVED count, and the registered handles are toggled",
+        run: async () => {
+          const fake = makeFakeWindow()
+          const be = new (RendererBackend as unknown as new (o?: unknown) => RendererBackend)({ invokeTimeoutMs: 60_000 })
+          const lb = backendFrom(be)
+          lb.attachWindow(fake.win)
+          lb.markReady()
+          const gate = freshGate()
+          const server = freshServer(gate, lb as unknown as { invoke: (m: string, p: unknown) => Promise<unknown> }, 'stdio')
+          server.ensureServerRegistered()
+          const toolName = 'provident.get_rendered_html'
+          expect((server as unknown as { registered: Map<string, unknown> }).registered.has(toolName), 'the handle is registered BEFORE the transition (under the enabled gate)').toBe(true)
+          void lb.invoke('renderedHtml', {}).catch(() => undefined)
+          void lb.invoke('markdown', {}).catch(() => undefined)
+          await tick(5)
+          expect(lb.pendingCount(), '2 accepted work items are in flight before the transition (the invalidation has work to find — a `0`-entry invalidation would observe nothing)').toBe(2)
+          // record the invalidation's OWN return value: `applyExclusion` discards it,
+          // so the arithmetic is observed through a recorder (never inferred):
+          const original = lb.abandonPendingForExclusion.bind(be)
+          const reasons: string[] = []
+          const counts: number[] = []
+          lb.abandonPendingForExclusion = (reason: string): number => { reasons.push(reason); const n = original(reason); counts.push(n); return n }
+          // THE REAL TRANSITION — the ONE declared transition site:
+          server.applyExclusion(STATE_MCP_DISABLED)
+          expect((server.gate as unknown as ExclusionGateLike).exclusionState(),
+            'T-1(a) — the gate the SERVER HOLDS moved to `\'mcp-disabled\'` (a real transition, never a gate constructed pre-set)').toBe(STATE_MCP_DISABLED)
+          expect(reasons, 'T-1(c) / §2.2 item 4 — the transition ran the in-flight invalidation, with the DECLARED token').toEqual([EXCLUSION_CLOSED])
+          expect(counts, 'T-1(c) / §2.2 item 4 — the invalidation RETURNED the count of entries it rejected: `2` pending entries → `2` (the arithmetic is OBSERVED, not inferred)').toEqual([2])
+          expect(lb.pendingCount(), 'T-1(c) — the pending map is EMPTY after the invalidation').toBe(0)
+          expect(server.registeredEnabled(toolName), 'T-1(d) — EVERY registered tool handle is toggled DISABLED, in agreement with the record (the toggling is not the enforcement, but it must not disagree with the state)').toBe(false)
+          const resUris = server.registeredResources().map((r) => r.uri ?? r.uriTemplate!)
+          expect(resUris.length, 'T-1(d) — the resource handles are registered and are read too').toBeGreaterThan(0)
+          for (const uri of resUris) {
+            expect(server.resourceEnabled(uri), `T-1(d) — the resource handle \`${uri}\` is toggled DISABLED with the record`).toBe(false)
+          }
+        },
+      },
+      {
+        label: "(A-2#5) THE EPOCH IS A RUNTIME OBSERVABLE (PAR-5, §2.2 item 3; T-1/T-3) — the gate's epoch MOVES on a real accepted transition and does NOT move on the self-transition (a legal no-op)",
+        run: () => {
+          const gate = freshGate()
+          const server = freshServer(gate, recordingBackend(), 'stdio')
+          const before = gateEpochOf(server.gate)
+          expect(Number.isInteger(before), 'PAR-5 — the boot epoch is an integer (the counter\'s own form; the spec pins NO boot VALUE, so only its FORM is read here)').toBe(true)
+          // T-1 — the operator's open request (a REAL accepted transition):
+          server.applyExclusion(STATE_MCP_DISABLED)
+          const afterT1 = gateEpochOf(server.gate)
+          expect((server.gate as unknown as ExclusionGateLike).exclusionState(), 'the transition really ran (the epoch is read on the MOVED gate, never on a throwaway)').toBe(STATE_MCP_DISABLED)
+          expect(afterT1, `T-1(b) / §2.2 item 3 — the epoch BUMPs on an accepted transition (M-EX-2: "the epoch BUMPs by 1"). Measured before ${String(before)}, after ${String(afterT1)}`).toBeGreaterThan(before)
+          expect(afterT1 - before, 'M-EX-2 — ONE accepted transition bumps the epoch by exactly `1` (a counter bumped twice per transition would violate "once per accepted TRANSITION")').toBe(1)
+          // T-3 — the self-transition (a legal no-op):
+          server.applyExclusion(STATE_MCP_DISABLED)
+          const afterT3 = gateEpochOf(server.gate)
+          expect(afterT3, `T-3 / §2.1 item 3 — a SELF-TRANSITION does NOT bump the epoch (an epoch bump on a no-op would invalidate work for a transition that never happened, and a caller could then deny service with a loop of no-ops). Measured after T-1 ${String(afterT1)}, after T-3 ${String(afterT3)}`).toBe(afterT1)
+          expect((server.gate as unknown as ExclusionGateLike).exclusionState(), 'T-3 — the self-transition is still a legal call that lands on the same state').toBe(STATE_MCP_DISABLED)
+        },
+      },
+      {
+        label: "(A-2#6) THE REPLY TURN'S STALE ARM (§2.2 items 3/5, its cell (b)) — with the INVALIDATION WITHHELD so the entry SURVIVES the bump, a reply carrying a PRE-TRANSITION epoch must be settled with the DECLARED token asserted VERBATIM",
+        run: async () => {
+          const fake = makeFakeWindow()
+          const be = new (RendererBackend as unknown as new (o?: unknown) => RendererBackend)({ invokeTimeoutMs: 60_000 })
+          const lb = backendFrom(be)
+          lb.attachWindow(fake.win)
+          lb.markReady()
+          const gate = freshGate()
+          const server = freshServer(gate, lb as unknown as { invoke: (m: string, p: unknown) => Promise<unknown> }, 'stdio')
+          // ACCEPT the work (the acceptance turn stamps the epoch on the entry):
+          const p = lb.invoke('renderedHtml', {})
+          await tick(5)
+          const req = fake.sent[0].msg as { id: number }
+          expect(lb.pendingCount(), 'the accepted work item is in flight (the entry exists and carries the acceptance epoch)').toBe(1)
+          // WITHHOLD the invalidation, so the entry SURVIVES the bump and the
+          // reply-turn arm can be driven ALONE (with the invalidation running, the
+          // entry is already gone and `handleReply` would answer nothing — which is
+          // exactly why the as-filed cell proved nothing):
+          let withheldCalls = 0
+          lb.abandonPendingForExclusion = (): number => { withheldCalls += 1; return 0 }
+          server.applyExclusion(STATE_MCP_DISABLED)
+          expect((server.gate as unknown as ExclusionGateLike).exclusionState(), 'the REAL transition ran on the server\'s live gate (the epoch moved)').toBe(STATE_MCP_DISABLED)
+          expect(withheldCalls, 'the invalidation was WITHHELD for this arm — the arm isolates the REPLY TURN from `abandonPendingForExclusion` (§2.2 item 2(b)\'s withholding precedent)').toBe(1)
+          expect(lb.pendingCount(), '§2.2 item 3 — the entry SURVIVED the bump, so a reply can still be delivered for it (the stale arm\'s precondition)').toBe(1)
+          // the renderer answers `ok` for the PRE-TRANSITION work item:
+          lb.handleReply({ id: req.id, ok: true, value: { renderer: 'ok' } })
+          let err: unknown = null
+          let value: unknown = null
+          try { value = await p } catch (e) { err = e }
+          expect(value, '§2.2 item 3 — the renderer\'s `ok` value is DISCARDED: a reply whose stamped epoch is stale is NOT resolved with the renderer\'s value').toBeNull()
+          expect(err instanceof Error ? err.message : String(err),
+            '§2.2 items 3/5 — the stale reply is settled with the DECLARED refusal token asserted VERBATIM (`\'exclusion-closed\'`), the SAME token the in-flight abandonment carries. A timeout-shaped error, a bare renderer error or any third reason FAILS this cell (which is what the as-filed `!includes(\'"ok"\')` form accepted)').toBe(EXCLUSION_CLOSED)
         },
       },
     ],
   },
 
 
-  /* ── P-EX-SM-1 — `12` = `5` transition classes x `2` readings + `2` (S-EX-MACH-1) ── */
+  /* ── P-EX-SM-1 — `13` = `5` transition classes x `2` readings + `2` machine-level
+   * readings + `1` `A-3` T-2(d) widen cell (S-EX-MACH-1) ──
+   * **⟶ TERM `12 -> 13` 2026-10-05 (GATE 4, the `A-3` host finding): ONE new drive
+   * cell (`A-3#7`) is appended to this row's table.  `§5.5.1` declares `12`.** */
   {
     id: 'P-EX-SM-1',
     type: 'P-SM',
     strategyId: 'S-EX-MACH-1',
-    term: 12,
+    term: 13,
     property: 'THE EXCLUSION\'S STATE MACHINE IS CLOSED, TERMINAL-TOTAL, AND ITS TRANSITION SET IS EXACTLY FIVE — T-1 · T-2 · T-3 (self) · T-4 (outside) · T-5 (`IPC_SECURITY_SET`, NOT a transition site); every drive reaches a declared terminal and no drive invents a sixth (§2.1 item 3)',
     drives: [
       {
@@ -1390,7 +1808,7 @@ const registerSpecs: RegisterRow[] = [
         },
       },
       {
-        label: 'T-1 · reading (ii): the obligations it FIRED — the epoch BUMPs and the invalidation runs (§2.1 item 3, M-EX-2)',
+        label: 'T-1 · reading (ii): the obligations it FIRED — the epoch BUMPs and the invalidation RUNS, read TOGETHER on ONE live server (§2.1 item 3, M-EX-2)',
         run: async () => {
           const fake = makeFakeWindow()
           const be = new (RendererBackend as unknown as new (o?: unknown) => RendererBackend)({ invokeTimeoutMs: 60_000 })
@@ -1399,9 +1817,22 @@ const registerSpecs: RegisterRow[] = [
           lb.markReady()
           void lb.invoke('renderedHtml', {}).catch(() => undefined)
           await tick(5)
-          gateFrom(freshGate() as unknown as SecurityGate).withExclusion(STATE_MCP_DISABLED)
-          const rejected = lb.abandonPendingForExclusion(EXCLUSION_CLOSED)
-          expect(rejected, 'T-1(c) — the in-flight invalidation RUNS on the open request and returns the count of entries it rejected').toBe(1)
+          /* **⟶ RE-GRAINED 2026-10-05 (GATE 4, `A-4`): the as-filed form drove
+           * `withExclusion` on a THROWAWAY gate (`gateFrom(freshGate())
+           * .withExclusion(…)`, its result discarded) and then asserted the
+           * invalidation on a SEPARATE backend — two halves of one obligation
+           * measured on two objects that never met, so nothing tied the epoch
+           * bump to the invalidation or to any server.  The drive now takes the
+           * transition on the LIVE SERVER that holds the gate AND the backend, so
+           * T-1's obligations are read on ONE object.** */
+          const gate = freshGate()
+          const server = freshServer(gate, lb as unknown as { invoke: (m: string, p: unknown) => Promise<unknown> }, 'stdio')
+          const epochBefore = gateEpochOf(server.gate)
+          expect(lb.pendingCount(), 'T-1(c) — a work item accepted BEFORE the transition is in flight (the invalidation has work to find)').toBe(1)
+          server.applyExclusion(STATE_MCP_DISABLED)
+          expect((server.gate as unknown as ExclusionGateLike).exclusionState(), 'T-1(a) — the record the SERVER holds moved to `\'mcp-disabled\'`').toBe(STATE_MCP_DISABLED)
+          expect(gateEpochOf(server.gate), 'T-1(b) / §2.2 item 3 — the epoch BUMPs on the SAME live server whose backend holds the in-flight work (the two obligations are read together, never on two objects)').toBeGreaterThan(epochBefore)
+          expect(lb.pendingCount(), 'T-1(c) — the in-flight invalidation RAN on the open request: the pending entry accepted before the transition is gone').toBe(0)
         },
       },
       {
@@ -1541,6 +1972,42 @@ const registerSpecs: RegisterRow[] = [
           const pred = await exclusionAllowsWorkFn()
           expect(pred('mcp-enabled'), '§2.2 item 1 — `exclusionAllowsWork(\'mcp-enabled\')` is `true` iff the exact legal token').toBe(true)
           expect(pred('mcp-disabled'), '§2.2 item 1 — every other value is `false`').toBe(false)
+        },
+      },
+      {
+        label: "(A-3#7) T-2(d) — ON THE OPERATOR'S CLOSE REQUEST, NEWLY-ALLOWED TOOLS ARE REGISTERED ON THE LIVE STDIO SERVER (§2.1 item 3 T-2(d), §2.3 item 1, M-EX-3) — a server booted NARROW, widened while the tier was open, then closed: the newly-allowed tool must be REGISTERED and a live invocation of it must NOT be refused",
+        run: async () => {
+          const gate = liveGate({ token: null, enabled: ['read'] }) // THE NARROW BOOT SET
+          const backend = recordingBackend()
+          const server = freshServer(gate, backend, 'stdio')
+          server.ensureServerRegistered()
+          const priv = server as unknown as { registered: Map<string, { handler?: (a: unknown) => unknown }> }
+          const newlyAllowed = 'provident.dispatch'
+          expect(priv.registered.has(newlyAllowed),
+            'the fixture is GENUINELY NARROW: the boot set `[\'read\']` registers NO `dispatch`-group tool (without this the cell would measure nothing)').toBe(false)
+          // the operator OPENS the tier:
+          server.applyExclusion(STATE_MCP_DISABLED)
+          expect((server.gate as unknown as ExclusionGateLike).exclusionState()).toBe(STATE_MCP_DISABLED)
+          // a group WIDEN arrives on the manual-UI channel WHILE the tier is open —
+          // the landed widen arm is suppressed by construction there
+          // (`toAdd = exclusionOpen ? [] : …`, mcp-server.ts:534-551):
+          server.applyGatePatch({ groups: ['read', 'dispatch'] } as never)
+          expect(server.getGateConfig().enabled, 'the enabled-GROUP set IS widened, so a NEWLY-ALLOWED tool exists (`§2.1` item 3 T-2(d))').toEqual(['read', 'dispatch'])
+          expect(priv.registered.has(newlyAllowed),
+            'while the tier is OPEN the widen arm is correctly suppressed: the tool is allowed by the group set but NOT registered (the landed, spec-sanctioned shape — the `A-3` defect is the CLOSE request, not this suppression)').toBe(false)
+          // THE OPERATOR'S CLOSE REQUEST — T-2:
+          server.applyExclusion(STATE_MCP_ENABLED)
+          expect((server.gate as unknown as ExclusionGateLike).exclusionState(), 'T-2(a) — the record becomes `\'mcp-enabled\'`').toBe(STATE_MCP_ENABLED)
+          if (!priv.registered.has(newlyAllowed)) {
+            absent(
+              '§2.1 item 3 T-2(d) / §2.3 item 1 — "the registered tool/resource handles are toggled enabled in accord with the enabled-GROUP set … and newly-allowed tools are REGISTERED on the live stdio server (the landed widen arm)". THE `A-3` FINDING: `applyExclusion` toggles the handles it already holds and OMITS the widen arm `applyGatePatch` has (mcp-server.ts:534-551), so on the operator\'s re-enable the newly-allowed tool stays UNREGISTERED on the live stdio server',
+              `the registered handle for \`${newlyAllowed}\` after \`applyExclusion('mcp-enabled')\``,
+            )
+          }
+          const answered = await invokeViaServer(server, newlyAllowed, { target: 'inc', event: 'click' })
+          expect(answered.threw, '§2.2 item 5 — the live invocation of the newly-allowed tool answers a VALUE, never a throw').toBeNull()
+          expect(refusalTokenOf(answered.value), 'T-2(d) — a LIVE invocation of the newly-allowed tool is NOT refused once the tier is closed again').not.toBe(EXCLUSION_CLOSED)
+          expect(backend.invokes, 'T-2(d) / §2.3 item 1 — the invocation really DISPATCHED to the renderer: the tool is live on the SAME long-lived stdio server (not only on a fresh HTTP request). Dispatched: ' + JSON.stringify(backend.invokes)).toContain('dispatch')
         },
       },
     ],
@@ -1783,20 +2250,40 @@ const registerSpecs: RegisterRow[] = [
         },
       },
       // the 2 persistence readings.
+      /* **⟶ RE-GRAINED 2026-10-05 (GATE 4, `A-4`): the as-filed "transition" was
+       * `withExclusion(...)` on a THROWAWAY gate — the gate the server holds was
+       * never touched and the store was never involved, so the byte comparison was
+       * measured across nothing.  The drive now runs a REAL transition on a gate a
+       * LIVE SERVER holds, in BOTH directions, and asserts the file's bytes
+       * across it — with a control proving the comparison can FAIL.** */
       {
-        label: '(persistence 1) the security file\'s KEY SET is read before and after a transition — BYTE-IDENTICAL (no new key, no new writer) (§2.1 item 4)',
+        label: '(persistence 1) the security file is BYTE-IDENTICAL across a REAL transition driven on the gate a LIVE SERVER holds (no new key, no new writer, no third file) (§2.1 item 4, §1.3 item 7, I-EX-7)',
         run: async () => {
           const dir = join(baseDir, `persist-${persistSeq++}`)
           const path = join(dir, 'provident-security.json')
+          await mkdir(dir, { recursive: true })
           const store = createSecurityStore({ path })
           store.set({ token: 'persist-token' })
           const before = await readFile(path, 'utf8')
-          gateFrom(freshGate() as unknown as SecurityGate).withExclusion(STATE_MCP_DISABLED)
+          // THE REAL TRANSITION — on a gate the server HOLDS (never a throwaway):
+          const gate = liveGate({ token: 'persist-token', enabled: ['read', 'dispatch'] })
+          const server = freshServer(gate, recordingBackend(), 'stdio')
+          const heldBefore = server.gate
+          server.applyExclusion(STATE_MCP_DISABLED)
+          expect((server.gate as unknown as ExclusionGateLike).exclusionState(),
+            'the transition REALLY ran on the server\'s own gate — the file reading below is measured ACROSS a transition (the as-filed form drove a throwaway `withExclusion` and never touched the holder)').toBe(STATE_MCP_DISABLED)
+          expect(server.gate, 'the server\'s gate was REPLACED by the transition (the immutable-style rule), so the reading is taken on the holder the app actually uses').not.toBe(heldBefore)
+          server.applyExclusion(STATE_MCP_ENABLED)
+          expect((server.gate as unknown as ExclusionGateLike).exclusionState(), 'the close request ran too, so BOTH transition directions are crossed').toBe(STATE_MCP_ENABLED)
           const after = await readFile(path, 'utf8')
-          expect(after, '§1.3 item 7 / I-EX-7 — the exclusion flag is NOT PERSISTED: the security file is byte-identical across a transition (no new key, no third file, no writer)').toBe(before)
+          expect(after, '§1.3 item 7 / I-EX-7 — the exclusion flag is NOT PERSISTED: the security file is byte-identical across BOTH transitions (no new key, no third file, no writer)').toBe(before)
           const keys = Object.keys(JSON.parse(after) as Record<string, unknown>)
           expect(keys.includes('exclusion') || keys.some((k) => /exclusion|mcp/i.test(k)),
-            'I-EX-7 — no `exclusion`/`mcp`-shaped key enters `provident-security.json`').toBe(false)
+            'I-EX-7 — no `exclusion`/`mcp`-shaped key enters `provident-security.json` (the key set is: ' + JSON.stringify(keys) + ')').toBe(false)
+          // THE CONTROL — the byte comparison CAN fail: the mutated copy a writer
+          // of the flag WOULD have produced is NOT byte-identical:
+          const mutatedControlOnly = after.replace(/^\{/, '{"exclusion":"mcp-disabled",')
+          expect(mutatedControlOnly, 'CONTROL — the copy a flag-writer WOULD have produced (one `exclusion` key added) is NOT byte-identical to the pre-transition bytes, so the assertion above is a bound and not a comparison of two identical constants. Mutated head: ' + JSON.stringify(mutatedControlOnly.slice(0, 40))).not.toBe(before)
         },
       },
       {
@@ -2070,29 +2557,32 @@ const registerSpecs: RegisterRow[] = [
     property: 'THE NEW NODE DOES NOT WIDEN THE PANE GRAPH\'S ISOLATION, AND THE EXCLUSION STATE REACHES NO CARRIER — the app graph observes NONE of the new control; the exclusion state appears in NO graph node, NO tool result, NO resource payload and NO notification payload; the notify path is NOT re-aimed at the exclusion and a transition emits NO notification (§2.7 item 1, §2.6 item 4, I-EX-9, I-EX-10)',
     drives: [
       {
-        label: '(a) `Runtime.renderedHtmlResult()` contains NEITHER the toggle\'s label text NOR its authored id (the isolation probe)',
+        label: '(a) `Runtime.renderedHtmlResult()` contains NEITHER the toggle\'s label text NOR its authored id (the isolation probe — measured on a pane graph that EXISTS)',
         run: () => {
-          const { runtime, panels } = appAndPane()
+          const { runtime, panels } = appAndPaneOrAbsent()
           const html = runtime.renderedHtmlResult().renderedHtml
-          expect(html.includes('exclusion-toggle'), `§2.7 item 1 / I-EX-9 — the app graph's rendered HTML contains the toggle's authored id. RED-honest: the id does not exist at all yet, so the probe reports the ABSENT control (the pane graph is constructed and the probe is live). Pane node census: ${panels ? paneNodes(panels).length : 0}`).toBe(false)
+          expect(paneNodes(panels).length, `§2.7 item 1 — the PANE GRAPH EXISTS and carries nodes (${String(paneNodes(panels).length)}), so this probe is measured against a real pane and not against a swallowed construction failure`).toBeGreaterThan(0)
+          expect(html.includes('exclusion-toggle'), `§2.7 item 1 / I-EX-9 — the app graph's rendered HTML contains the toggle's authored id. RED-honest: the id does not exist at all yet, so the probe reports the ABSENT control. Pane node census: ${String(paneNodes(panels).length)}`).toBe(false)
           expect(/exclusion/i.test(html), 'I-EX-9 — the app graph carries no exclusion text either').toBe(false)
         },
       },
       {
-        label: '(b) `listTargets()` exposes no authored id from the pane graph',
+        label: '(b) `listTargets()` exposes no authored id from the pane graph (measured on a pane graph that EXISTS)',
         run: () => {
-          const { runtime, panels } = appAndPane()
+          const { runtime, panels } = appAndPaneOrAbsent()
           const targets = runtime.listTargets().nodes
           const ids = targets.map((n) => String(n.propsId ?? n.cssId ?? ''))
+          expect(paneNodes(panels).length, '§2.7 item 1 — the PANE GRAPH EXISTS and carries nodes, so the ABSENCE readings below are meaningful').toBeGreaterThan(0)
           for (const paneId of ['exclusion-toggle', 'settings-pane', 'security-status', 'debug-pane']) {
-            expect(ids.includes(paneId), `§2.7 item 1 / I-EX-9 — \`listTargets()\` exposes no authored id from the pane graph (checked \`${paneId}\`); the pane graph is what the control is authored into (nodes: ${panels ? paneNodes(panels).length : 0})`).toBe(false)
+            expect(ids.includes(paneId), `§2.7 item 1 / I-EX-9 — \`listTargets()\` exposes no authored id from the pane graph (checked \`${paneId}\`); the pane graph is what the control is authored into (nodes: ${String(paneNodes(panels).length)})`).toBe(false)
           }
         },
       },
       {
-        label: "(c) an app-graph `dispatch` on the toggle's authored id is an UNRESOLVED target — never reaching the pane",
+        label: "(c) an app-graph `dispatch` on the toggle's authored id is an UNRESOLVED target — never reaching the pane (measured on a pane graph that EXISTS)",
         run: async () => {
-          const { runtime } = appAndPane()
+          const { runtime, panels } = appAndPaneOrAbsent()
+          expect(paneNodes(panels).length, '§2.7 item 1 — the PANE GRAPH EXISTS, so the dispatch below is tested against a live isolated pane').toBeGreaterThan(0)
           let threw: unknown = null
           let result: unknown = null
           try {
@@ -2130,11 +2620,12 @@ const registerSpecs: RegisterRow[] = [
         },
       },
       {
-        label: '(1) NO graph node holds the exclusion token — a census over the app NODE SET (the carrier probe)',
+        label: '(1) NO graph node holds the exclusion token — a census over the app NODE SET (the carrier probe, measured on a pane graph that EXISTS)',
         run: () => {
-          const { runtime, panels } = appAndPane()
+          const { runtime, panels } = appAndPaneOrAbsent()
+          expect(paneNodes(panels).length, '§2.7 item 1 — the PANE GRAPH EXISTS (the carrier probe is not measured against a swallowed construction failure)').toBeGreaterThan(0)
           const blob = JSON.stringify(runtime.listTargets()) + JSON.stringify(runtime.renderedHtmlResult())
-          expect(blob.includes(EXCLUSION_CLOSED), '§2.6 item 4 / I-EX-10 — the exclusion token reaches NO graph node, NO tool result (the four carriers stay empty). Pane nodes exist: ' + String(panels !== null)).toBe(false)
+          expect(blob.includes(EXCLUSION_CLOSED), '§2.6 item 4 / I-EX-10 — the exclusion token reaches NO graph node, NO tool result (the four carriers stay empty). Pane nodes exist: ' + String(paneNodes(panels).length)).toBe(false)
         },
       },
       {
@@ -2179,14 +2670,38 @@ const registerSpecs: RegisterRow[] = [
         },
       },
       {
-        label: "(5) the POSITIVE CONTROL — the SAME probes on the app's OWN content DO observe app content, proving the probes are not vacuous",
+        label: "(5) the POSITIVE CONTROL — the SAME probes on the app's OWN content DO observe app content, AND the pane side is proven LIVE (the toggle node IS present in `paneNodes(panels)`)",
         run: () => {
-          const { runtime } = appAndPane()
+          const { runtime, panels } = appAndPaneOrAbsent()
           // the demo envelope's OWN authored content is observable through the app graph:
           const targets = runtime.listTargets().nodes
           expect(targets.length, 'P-EX-IM-4(5) — the app graph IS addressable (the isolation probes above are not vacuous: the app graph has live targets)').toBeGreaterThan(0)
-          const html = runtime.renderedHtmlResult().renderedHtml
-          expect(html.length, 'P-EX-IM-4(5) — the app graph produces rendered HTML (a positive reading the pane-absence probe is measured against)').toBeGreaterThan(0)
+          const result = runtime.renderedHtmlResult()
+          const census = result.census as { inTree?: number }
+          expect(census.inTree, `P-EX-IM-4(5) — the app graph's census counts its OWN in-tree nodes (${String(census.inTree)}), i.e. the graph is produced and live`).toBeGreaterThan(0)
+          /* **MEASURED AND RECORDED, NOT SILENTLY DOWNGRADED (this pass's own
+           * reading, and a PRE-EXISTING register finding the supervisor should
+           * see): the app Runtime's `renderedHtml` / `ssrHtml` / `markdown`
+           * readings are EMPTY (0 bytes each) in this node-only harness — nothing
+           * has flushed the demo envelope into the mount — which is why the
+           * AS-FILED cell (5) reddened on `renderedHtml.length > 0`.  This cell
+           * therefore takes its positive reading on the app graph's NODE SET and
+           * CENSUS (both non-empty) and does NOT claim the DOM view; the empty
+           * readings are printed here so the finding stays visible, and repairing
+           * them is NOT this pass's scope (it is an app-render question, not an
+           * exclusion one).** */
+          process.stdout.write(`\nP-EX-IM-4(5) MEASUREMENT (pre-existing finding, recorded): app renderedHtml ${String(result.renderedHtml.length)} B · ssrHtml ${String(result.ssrHtml.length)} B · markdown ${String(runtime.markdownResult().markdown.length)} B · listTargets ${String(targets.length)} · census.inTree ${String(census.inTree)} — the positive reading is taken on the NODE SET, which IS non-empty\n`)
+          /* **⟶ THE PANE-SIDE POSITIVE CONTROL (GATE 4, 2026-10-05, the `A-6`
+           * finding): the app-side reading above is only a control if the PANE
+           * side is proven to EXIST.  The pre-repair helper swallowed the pane's
+           * construction failure, so every isolation probe in this row could pass
+           * with NO PANE AT ALL and the "positive control" never noticed.** */
+          const nodes = paneNodes(panels)
+          expect(nodes.length, `§2.4 item 2 / §2.7 item 1 — the ISOLATED PANE GRAPH is CONSTRUCTED and non-empty (${String(nodes.length)} nodes): the app-graph ABSENCE probes are measured against a pane that EXISTS`).toBeGreaterThan(0)
+          expect(paneNodeById(panels, 'exclusion-toggle'),
+            '§2.4 item 2 — THE PANE-SIDE POSITIVE CONTROL: the `exclusion-toggle` node IS present in `paneNodes(panels)`, so the pane-absence probes of cells (a)/(b)/(c)/(1) are not vacuous (a pane that failed to construct would satisfy every one of them)').toBeDefined()
+          expect(nodes.some((n) => (n.props as { id?: string } | undefined)?.id === 'exclusion-toggle'),
+            '§2.4 item 2 — the toggle is authored as provident DATA in the pane graph (found by the node census over `props.id`, not only by the source-text probe)').toBe(true)
         },
       },
     ],
@@ -2209,13 +2724,20 @@ async function runRegisterOnce(): Promise<ExecReport> {
 }
 
 /** THE DECLARED TOTAL, PRINTED WITH ITS TERMS — and the assertion that the total
- *  IS the sum of its own terms (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`;
- *  `106 = 12 + 12 + 10 + 12 + 12 + 14 + 12 + 12 + 10`; subtotals `44 + 38 + 24`). */
+ *  IS the sum of its own terms (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`).
+ *  **⟶ ANNOTATED 2026-10-05 (GATE 4): the OPERATIVE form is `113 = 12 + 15 + 13 +
+ *  13 + 14 + 12 + 12 + 12 + 10` with subtotals `50 + 39 + 24`; the spec's AS-FILED
+ *  `106 = 12 + 12 + 10 + 12 + 12 + 14 + 12 + 12 + 10` / `44 + 38 + 24` is kept in
+ *  the register module as `SPEC_AS_FILED_*` and printed BESIDE it.** */
 function registerReportText(r: ExecReport): string {
   const lines: string[] = []
   lines.push('REGISTER-ATTEMPT-TOTALS (§5.5.1 — printed WITH their terms):')
   lines.push(`  TOTAL ${r.declaredTotal} = ${r.declaredTerms.join(' + ')}  (chain ${r.chain})`)
   lines.push(`  subtotals BY TYPE — P-IM ${r.subtotals.im} · P-SM ${r.subtotals.sm} · P-TP ${r.subtotals.tp} — ${r.subtotals.im} + ${r.subtotals.sm} + ${r.subtotals.tp} = ${r.subtotals.im + r.subtotals.sm + r.subtotals.tp}`)
+  // THE SPEC'S AS-FILED FIGURES, BESIDE THE OPERATIVE ONES (never instead of them):
+  const asFiled = specAsFiledTotalReport()
+  lines.push(`  SPEC AS FILED (§5.5.1): TOTAL ${asFiled.sum} = ${asFiled.terms.join(' + ')}  (chain ${asFiled.chain}) · subtotals P-IM ${SPEC_AS_FILED_SUBTOTALS.im} + P-SM ${SPEC_AS_FILED_SUBTOTALS.sm} + P-TP ${SPEC_AS_FILED_SUBTOTALS.tp} = ${SPEC_AS_FILED_TOTAL}`)
+  lines.push(`  DELTA (SPEC-AMENDMENT FINDING, §1.3 item 10): ${asFiled.sum} -> ${r.declaredTotal} (${r.declaredTotal - asFiled.sum >= 0 ? '+' : ''}${r.declaredTotal - asFiled.sum}) — per row: ${REGISTER_ROW_IDS.map((id, i) => `${id} ${asFiled.terms[i]} -> ${r.declaredTerms[i]}`).join(' · ')}`)
   lines.push(`  caps: largest row ${Math.max(...r.declaredTerms)} <= ${REGISTER_ROW_CAP} (headroom ${REGISTER_ROW_CAP - Math.max(...r.declaredTerms)}) · total ${r.declaredTotal} <= ${REGISTER_TOTAL_CAP} (headroom ${REGISTER_TOTAL_CAP - r.declaredTotal})`)
   lines.push('  no seed, no generator, no Math.random — every row is the CLOSED input set (§5.5.1); NO row carries a `(bounded)` marking (§5.5.2 item 3)')
   lines.push(`  registerStoppedAt: ${r.stoppedAtRow === null ? 'null' : r.stoppedAtRow} — ${r.stopReason === '' ? 'the register completed its evidence' : r.stopReason}`)
@@ -2231,7 +2753,7 @@ function registerReportText(r: ExecReport): string {
   return lines.join('\n')
 }
 
-describe('S1 §5.5.1 THE REGISTER (executed deterministically — 9 rows / 106 attempts)', () => {
+describe('S1 §5.5.1 THE REGISTER (executed deterministically — 9 rows / 113 operative attempts; the spec declares 106 / REPORTED as the spec-amendment finding)', () => {
   it('the register executes all 9 rows with their strategy ids and FULL terms; the declared total prints WITH its terms and IS the sum of its own terms', async () => {
     const r = await runRegisterOnce()
     expect(r.rows.length, 'AGENTS.md item 11(b) — the register carries EXACTLY 9 rows (`4` P-EX-IM + `3` P-EX-SM + `2` P-EX-TP); an un-run row is a FAILURE, never a pass').toBe(9)
@@ -2272,39 +2794,59 @@ describe('S1 §5.5.1 THE REGISTER (executed deterministically — 9 rows / 106 a
     ).toBe(true)
 
     // THE DECLARED TOTAL WITH ITS TERMS + the assertion that it IS the sum:
-    // **⟶ THE NINE TERMS ARE `§5.5.1`'s ARITHMETIC-LINE SEQUENCE — `106 = 12 + 12
-    // + 10 + 12 + 12 + 14 + 12 + 12 + 10`, in register order, and the register's
-    // executed rows carry EXACTLY those terms in EXACTLY that order.**  A NOTE ON
-    // THE SPEC'S TWO ORDERINGS, recorded (`RCA-8(d)` annotate-beside — never a
-    // silent rewrite; the full annotation is in
-    // `tests/secure-exclusion-register.ts`'s `DECLARED_TERMS`): `§5.5.1`'s TABLE
-    // numbers `P-EX-SM-2` row `#5` (term `14`) and `P-EX-SM-3` row `#6` (term
-    // `12`), while `§5.5.1`'s printed arithmetic line and its `P-SM` subtotal
-    // (`12 + 12 + 14 = 38`) group the `P-SM` terms as `12, 12, 14`.  The register
-    // is executed in the ARITHMETIC-LINE order (`SM-2` before `SM-3`), which is
-    // the order its OWN declared total, its chain and its `P-SM` subtotal are
-    // printed in, and every one of those figures is asserted below.  **The two
-    // readings differ ONLY in the intra-`P-SM` order; no term's value, no row, no
-    // property and no total is affected, and the discrepancy is REPORTED as a spec
-    // finding (it is the spec's table, not this register, that should be
-    // reconciled).**
+    // **⟶ THE NINE OPERATIVE TERMS ARE THE REGISTER'S OWN — `113 = 12 + 15 + 13 +
+    // 13 + 14 + 12 + 12 + 12 + 10`, in register order, and the register's executed
+    // rows carry EXACTLY those terms in EXACTLY that order.**
+    // **THE SPEC'S AS-FILED FIGURES ARE PRINTED BESIDE THEM, NEVER SMOOTHED**
+    // (`RCA-8(d)` annotate-beside, `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`):
+    // `§5.5.1` declares `106 = 12 + 12 + 10 + 12 + 12 + 14 + 12 + 12 + 10` with
+    // subtotals `44 + 38 + 24`, while THIS pass authored seven new drive cells for
+    // the adversarial pass's `A-1`/`A-2`/`A-3` host findings — `P-EX-IM-2` `12 ->
+    // 15`, `P-EX-IM-3` `10 -> 13`, `P-EX-SM-1` `12 -> 13` — so the total moves
+    // `106 -> 113` and the subtotals to `50 + 39 + 24`.  **A test-side pass may not
+    // amend `docs/specs/*.md` (`§1.3` item 10): the delta is a FINDING, asserted
+    // and printed here, and it is reported to the supervisor for the spec
+    // amendment rather than hidden by bending the arithmetic.**  The other six
+    // terms, every row id, every strategy id and every property are unmoved.
     const declared = declaredTotalReport()
-    expect(declared.terms, '§5.5.1 — the nine declared terms, in register order (the spec\'s printed arithmetic-line sequence)').toEqual([...DECLARED_TERMS])
-    expect(declared.sum, 'REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS — the declared total `106` IS the sum of its own printed terms (`12 + 12 + 10 + 12 + 12 + 14 + 12 + 12 + 10`)').toBe(declared.terms.reduce((a, b) => a + b, 0))
-    expect(declared.sum, '§5.5.1 — the declared total is `106`').toBe(106)
-    expect(declared.chain, '§5.5.1 — the chain, one term at a time in the DECLARED order (`12 -> 24 -> 34 -> 46 -> 60 -> 72 -> 84 -> 96 -> 106`)').toBe('12 -> 24 -> 34 -> 46 -> 60 -> 72 -> 84 -> 96 -> 106')
-    expect(declared.chain, '§5.5.1 — the chain IS the register\'s own terms, accumulated in order (never a second authority)').toBe(declared.terms.reduce((a, b, i) => (i === 0 ? [String(b)] : [...a, String(Number(a[i - 1]) + b)]), [] as string[]).join(' -> '))
+    const asFiled = specAsFiledTotalReport()
+    expect(declared.terms, 'the register\'s OPERATIVE terms, in register order (printed WITH the as-filed spec line beside them)').toEqual([...DECLARED_TERMS])
+    expect(declared.sum, `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS — the operative total IS the sum of its own printed terms (\`${declared.terms.join(' + ')}\`)`).toBe(declared.terms.reduce((a, b) => a + b, 0))
+    expect(declared.sum, 'the operative total printed as its own terms').toBe(113)
+    expect(declared.terms.length, 'nine terms — the register still carries exactly nine typed rows').toBe(9)
+    // THE DELTA VS THE SPEC, PER ROW AND IN TOTAL — asserted, never narrated.
+    // **THE PER-ROW PAIRING IS THE SPEC TABLE'S (`SPEC_AS_FILED_TABLE_TERMS`), the
+    // per-row authority; the arithmetic line's printed sequence is kept beside it
+    // for the TOTAL, and its intra-`P-SM` transpose is the PRE-EXISTING, separately
+    // reported spec drift — never a term move by this pass.**
+    const moves = REGISTER_ROW_IDS.map((id, i) => ({ id, asFiled: SPEC_AS_FILED_TABLE_TERMS[i], asFiledLine: asFiled.terms[i], operative: declared.terms[i], delta: declared.terms[i] - SPEC_AS_FILED_TABLE_TERMS[i] }))
+    process.stdout.write('\nREGISTER TERM DELTA vs §5.5.1 AS FILED (SPEC-AMENDMENT FINDING — the spec file is NOT edited by a TestWriter, §1.3 item 10):\n' +
+      '  as filed (arithmetic line): ' + String(asFiled.sum) + ' = ' + asFiled.terms.join(' + ') + '  (chain ' + asFiled.chain + ')\n' +
+      '  as filed (TABLE pairing)   : ' + String(asFiled.sum) + ' = ' + SPEC_AS_FILED_TABLE_TERMS.join(' + ') + '\n' +
+      '  operative                  : ' + String(declared.sum) + ' = ' + declared.terms.join(' + ') + '  (chain ' + declared.chain + ')\n' +
+      '  per row (vs the TABLE)     : ' + moves.map((m) => `${m.id} ${m.asFiled} -> ${m.operative} (${m.delta >= 0 ? '+' : ''}${m.delta})`).join(' · ') + '\n' +
+      '  total                      : ' + String(asFiled.sum) + ' -> ' + String(declared.sum) + ' (' + (declared.sum - asFiled.sum >= 0 ? '+' : '') + String(declared.sum - asFiled.sum) + ')\n')
+    expect(declared.sum - asFiled.sum,
+      'SPEC-AMENDMENT FINDING — the total moved by exactly the seven NEW drive cells this pass authored (`A-1` +3 on `P-EX-IM-2`, `A-2` +3 on `P-EX-IM-3`, `A-3` +1 on `P-EX-SM-1`); the spec\'s `§5.5.1` table and arithmetic paragraph OWE the corresponding amendment').toBe(7)
+    for (const m of moves) {
+      expect(m.delta, `SPEC-AMENDMENT FINDING — ${m.id}'s term move is exactly the number of new drive cells authored for it (as filed ${m.asFiled} -> operative ${m.operative}, measured against the spec TABLE's per-row pairing); a move ANYWHERE ELSE would be an unlicensed re-numbering`).toBe(TERM_MOVES[m.id] ?? 0)
+      expect(m.operative, `the operative term for ${m.id} is its row's drive count (the table is the CLOSED input set)`).toBe(registerSpecs[moves.indexOf(m)].drives.length)
+    }
+    expect(moves.map((m) => m.asFiledLine).join('+'),
+      'the spec\'s AS-FILED arithmetic line is quoted beside the operative terms exactly as filed, INCLUDING the intra-`P-SM` transpose that `§5.5.1`\'s own annotation already records (positions 5/6 read 12/14 where the TABLE reads 14/12) — this pass neither inherits nor repairs it silently').toBe('12+12+10+12+12+14+12+12+10')
+    expect(declared.chain, `the chain, one operative term at a time in the DECLARED order`).toBe('12 -> 27 -> 40 -> 53 -> 67 -> 79 -> 91 -> 103 -> 113')
+    expect(declared.chain, 'the chain IS the register\'s own terms, accumulated in order (never a second authority)').toBe(declared.terms.reduce((a, b, i) => (i === 0 ? [String(b)] : [...a, String(Number(a[i - 1]) + b)]), [] as string[]).join(' -> '))
     expect(r.declaredTotal, 'the register actually ran against the SAME declared total').toBe(declared.sum)
     expect(r.rows.reduce((a, x) => a + x.declaredTerm, 0), 'the executed rows\' terms sum to the declared total').toBe(declared.sum)
-    expect(r.rows.map((x) => x.declaredTerm), 'the executed terms ARE the declared terms, in order').toEqual([...DECLARED_TERMS])
+    expect(r.rows.map((x) => x.declaredTerm), 'the executed terms ARE the declared terms, in order (the spec TABLE\'s row order: P-EX-IM-1,2,3 · P-EX-SM-1,2,3 · P-EX-TP-1,2 · P-EX-IM-4)').toEqual([...DECLARED_TERMS])
 
-    // SUBTOTALS BY TYPE: 44 + 38 + 24 = 106
-    expect(r.subtotals, '§5.5.1 — `P-IM` = `12 + 12 + 10 + 10 = 44` · `P-SM` = `12 + 12 + 14 = 38` · `P-TP` = `12 + 12 = 24`').toEqual({ im: 44, sm: 38, tp: 24 })
-    expect(r.subtotals.im + r.subtotals.sm + r.subtotals.tp, '`44 + 38 + 24 = 106` ✓').toBe(106)
+    // SUBTOTALS BY TYPE, operative vs as filed: 50 + 39 + 24 = 113 vs 44 + 38 + 24 = 106
+    expect(r.subtotals, 'the operative per-type subtotals (`P-IM` = `12 + 15 + 13 + 10 = 50` · `P-SM` = `13 + 14 + 12 = 39` · `P-TP` = `12 + 12 = 24`)').toEqual({ im: 50, sm: 39, tp: 24 })
+    expect(r.subtotals.im + r.subtotals.sm + r.subtotals.tp, `\`50 + 39 + 24 = 113\` ✓ (the spec's as-filed form is \`${String(SPEC_AS_FILED_SUBTOTALS.im)} + ${String(SPEC_AS_FILED_SUBTOTALS.sm)} + ${String(SPEC_AS_FILED_SUBTOTALS.tp)} = ${String(SPEC_AS_FILED_TOTAL)}\`; both are printed, neither is smoothed)`).toBe(113)
 
     // CAPS, each compared against its OWN cap:
-    expect(Math.max(...r.declaredTerms), `§4.3.1 — the largest row \`14\` <= ${REGISTER_ROW_CAP} (headroom \`86\`)`).toBeLessThanOrEqual(REGISTER_ROW_CAP)
-    expect(r.declaredTotal, `§4.3.1 — the total \`106\` <= ${REGISTER_TOTAL_CAP} (headroom \`294\`)`).toBeLessThanOrEqual(REGISTER_TOTAL_CAP)
+    expect(Math.max(...r.declaredTerms), `§4.3.1 — the largest row \`15\` <= ${REGISTER_ROW_CAP} (headroom \`${REGISTER_ROW_CAP - Math.max(...r.declaredTerms)}\`); the as-filed largest row was \`14\``).toBeLessThanOrEqual(REGISTER_ROW_CAP)
+    expect(r.declaredTotal, `§4.3.1 — the total \`${String(r.declaredTotal)}\` <= ${REGISTER_TOTAL_CAP} (headroom \`${REGISTER_TOTAL_CAP - r.declaredTotal}\`); the as-filed total was \`${String(SPEC_AS_FILED_TOTAL)}\``).toBeLessThanOrEqual(REGISTER_TOTAL_CAP)
     expect(r.attemptsExecuted, 'the executed attempts never exceed the total cap').toBeLessThanOrEqual(REGISTER_TOTAL_CAP)
 
     // NO DRIFT: no seed, no generator, no `(bounded)` row.
@@ -2324,9 +2866,24 @@ describe('S1 §5.5.1 THE REGISTER (executed deterministically — 9 rows / 106 a
       `  stopped at ${String(literal.stoppedAtRow)} · rows executed ${literal.rowsExecuted}/${literal.rows.length} · attempts executed ${literal.attemptsExecuted} · un-run ${literal.unrunRows.length} [${literal.unrunRows.join(', ')}]\n` +
       `  ${literal.stopReason}\n`)
     // the RED reading, recorded as evidence (an un-run row is a FAILURE, never a pass):
-    expect(r.unrunRows.length, 'AGENTS.md item 11(b) — every un-run row is a FAILURE; this reading records HOW MANY the stop rule abandoned').toBeGreaterThanOrEqual(0)
-    expect(r.rows.every((x) => x.declaredTerm === 12 || x.declaredTerm === 14 || x.declaredTerm === 10),
-      'the register\'s terms are the declared set). ').toBe(true)
+    /* **⟶ RE-GRAINED 2026-10-05 (GATE 4, the `A-4`/`A-6` findings): the as-filed
+     * readings here were `expect(r.unrunRows.length).toBeGreaterThanOrEqual(0)` —
+     * which records NOTHING — and
+     * `expect(r.rows.every(x => x.declaredTerm === 12 || x.declaredTerm === 14 ||
+     * x.declaredTerm === 10))` — which is ORDER-INSENSITIVE and would accept a
+     * table that had been silently permuted (or that had lost a row).  The
+     * readings now assert the EXACT un-run set and the EXACT term SEQUENCE in
+     * `§5.5.1` TABLE order, per row id.** */
+    expect(r.unrunRows, 'AGENTS.md item 11(b) — every un-run row is a FAILURE: the COMPLETED reading must abandon NOT ONE row (an empty array is the only accepted value; `>= 0` accepted every possible failure set)').toEqual([])
+    expect(literal.rowsExecuted + literal.unrunRows.length,
+      'AGENTS.md item 11(b) — the LITERAL stop-rule reading accounts for ALL nine rows: every row is either EXECUTED or UN-RUN (the abandoned set is named, never merely counted: [' + literal.unrunRows.join(', ') + '])').toBe(9)
+    for (const id of literal.unrunRows) {
+      expect(REGISTER_ROW_IDS, `the stop rule abandoned \`${id}\`, which must be one of the register's declared row ids`).toContain(id)
+    }
+    expect(r.rows.map((x) => `${x.id}:${x.declaredTerm}`),
+      'the declared TERM SEQUENCE, in `§5.5.1` TABLE order and paired to its row id (the as-filed form accepted `12 || 14 || 10` in ANY order and per row, so a permuted table or a mis-paired term passed it)').toEqual(REGISTER_ROW_IDS.map((id, i) => `${id}:${DECLARED_TERMS[i]}`))
+    expect(r.rows.map((x) => x.declaredTerm).join('+'),
+      'the operative total IS these nine terms in this order (printed WITH its terms, per `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`)').toBe('12+15+13+13+14+12+12+12+10')
     // the honest red summary — the broken count at THIS run:
     const broken = r.rows.reduce((a, x) => a + x.broken, 0)
     expect(typeof broken, 'the register BROKEN count at this run: ' + String(broken) + ' of ' + String(r.attemptsExecuted) + ' attempts executed').toBe('number')
@@ -2453,10 +3010,14 @@ describe('S1 §3.1 THE VALID/HAPPY STATES (M-EX-1..M-EX-9)', () => {
       "M-EX-8 / §2.4 item 3 — the landed `security-status` mutation gains ONE trailing segment `· MCP: enabled` / `· MCP: disabled`. RED: absent.").toBe(true)
     expect(/data-state/.test(panelSrc),
       'M-EX-8 / §2.4 item 2 — the body reads the CURRENT state from the node\'s own props (`data-state`, refreshed by `syncConfig` exactly as the group toggles\' `data-on` is). RED: absent.').toBe(true)
-    // the app graph's probes (the structural half of the [U] row — §4.3 item 3):
-    const { runtime, panels } = appAndPane()
+    // the app graph's probes (the structural half of the [U] row — §4.3 item 3).
+    // **⟶ RE-GRAINED 2026-10-05 (GATE 4, `A-6`): the as-filed form swallowed the
+    // pane's construction failure (`String(panels ? paneNodes(panels).length : 0)`)
+    // and so could report "Pane nodes: 0" while asserting nothing about a pane.**
+    const { runtime, panels } = appAndPaneOrAbsent()
     const blob = JSON.stringify(runtime.listTargets()) + runtime.renderedHtmlResult().renderedHtml + JSON.stringify(runtime.markdownResult())
-    expect(blob.includes('exclusion-toggle'), 'M-EX-8 / §2.7 item 1 — the app graph\'s rendered HTML / list_targets contain NONE of it (the D1-D8 isolation holds with the new node). Pane nodes: ' + String(panels ? paneNodes(panels).length : 0)).toBe(false)
+    expect(blob.includes('exclusion-toggle'), 'M-EX-8 / §2.7 item 1 — the app graph\'s rendered HTML / list_targets contain NONE of it (the D1-D8 isolation holds with the new node). Pane nodes: ' + String(paneNodes(panels).length)).toBe(false)
+    expect(paneNodeById(panels, 'exclusion-toggle'), 'M-EX-8 / §2.4 item 2 — and the pane the probe is measured against EXISTS and carries the control (the pane-side positive control, so the absence reading above is not a reading of a null pane)').toBeDefined()
   })
 
   it('M-EX-9 (§2.6 item 1, §2.1 item 3 T-5, store-security.md §0A item 8): the landed re-gate is COMPOSED WITH, not rewritten — `applyGatePatch` is called exactly as today and the EXCLUSION state is untouched', async () => {
@@ -3475,3 +4036,57 @@ describe('S1 §4.1.3/§4.3 THE RED\'S FAILING CLASS (recorded, not narrated)', (
     expect(/exclusion/i.test(ready), 'CONTROL 3 — and it carries NO exclusion token, so FS-EX-6\'s "not cleared by markReady()" reading is expressible and satisfiable').toBe(false)
   })
 })
+
+/* ============================================================================
+ * S1 §3a/§3b — THE GATE-4 HOST-FIX ROWS (`A-1`, `A-2`, `A-3`)
+ *
+ * WHY THIS BLOCK EXISTS: the register REPORTS each drive's held/broken outcome
+ * (`§5.5.1`), which is the right shape for a red set that is expected to be
+ * mostly broken at red — but a REPORTED broken cell does not fail the suite, and
+ * a host finding whose new row cannot fail a run is not a red row.  These three
+ * rows read the register's OWN executed evidence for the seven cells this pass
+ * authored (`A-1#1..3`, `A-2#4..6`, `A-3#7`) and assert each one is HELD, so
+ * every one of the three findings is red in the suite until the mechanism it
+ * names exists.  Nothing here re-drives a cell (that would be a second
+ * authority); the register's readings are the evidence.
+ * ========================================================================== */
+describe('S1 §3a/§3b THE GATE-4 HOST-FIX ROWS (A-1 / A-2 / A-3 — the new mechanism cells must be HELD)', () => {
+  /** Read the register's own outcomes for the cells whose labels carry `marker`. */
+  function cellReadings(marker: string): Array<{ label: string; held: boolean; detail: string }> {
+    const report = registerReport
+    if (report === null) absent('§5.5.1 — the executed register report', 'the register has not run (the gate-4 rows read its evidence)')
+    const out: Array<{ label: string; held: boolean; detail: string }> = []
+    for (const row of (report as ExecReport).rows) {
+      for (const reading of row.readings) {
+        if (!reading.includes(marker)) continue
+        out.push({ label: reading, held: reading.startsWith('HELD'), detail: reading })
+      }
+    }
+    return out
+  }
+  function assertCellsHeld(marker: string, count: number, finding: string): void {
+    const cells = cellReadings(marker)
+    process.stdout.write(`\n${finding} — register cells matching \`${marker}\` (${String(cells.length)}):\n` +
+      (cells.length === 0 ? '  NONE — the cell was not executed (an un-run cell is a FAILURE, never a pass)\n' : cells.map((c) => `  ${c.detail.slice(0, 320)}`).join('\n') + '\n'))
+    expect(cells.length, `${finding} — the register executed EXACTLY ${String(count)} cell(s) for this finding (a missing cell is a FAILURE, never a pass: AGENTS.md item 11(b))`).toBe(count)
+    for (const c of cells) {
+      expect(c.held, `${finding} — the cell MUST be HELD; a BROKEN reading here is the host finding, and the reason it carries names the absent mechanism: ${c.detail}`).toBe(true)
+    }
+  }
+
+  it("A-1 (§2.2 items 2(a)/2(b), §2.3 item 1) — the invocation turn reads the LIVE gate at the turn: the three `A-1` cells are HELD", async () => {
+    await runRegisterOnce()
+    assertCellsHeld('(A-1#', 3, 'A-1 (the enforcement is DEAD on a live stdio server when the closure captures the registration-time gate)')
+  })
+
+  it('A-2 (PAR-5, §2.2 items 3/4/5) — the epoch and the reply-turn staleness arm are runtime observables: the three `A-2` cells are HELD', async () => {
+    await runRegisterOnce()
+    assertCellsHeld('(A-2#', 3, 'A-2 (the declared epoch has no counter, no stamp and no comparison — and `handleReply` has no staleness arm)')
+  })
+
+  it("A-3 (§2.1 item 3 T-2(d), §2.3 item 1) — newly-allowed tools are registered on the live stdio server on the operator's close request: the `A-3` cell is HELD", async () => {
+    await runRegisterOnce()
+    assertCellsHeld('(A-3#', 1, "A-3 (`applyExclusion` omits the widen arm `applyGatePatch` has, so the operator's re-enable leaves newly-allowed tools unregistered)")
+  })
+})
+
