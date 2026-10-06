@@ -157,10 +157,13 @@
  *   FLIP AT THE SAME TERMINAL) and `§2.6` item 6's totality — no reading blocks,
  *   waits, spins, queues, re-enters or throws.
  * THE REGISTER'S OPERATIVE TOTALS: `10` rows, declared
- *   `130 = 51+12+6+7+16+2+8+8+8+12` (subtotals `P-IM 66` · `P-SM 20` · `P-TP 44`),
- *   caps `51 ≤ 100` / `130 ≤ 400`, stop after 5 consecutive failures; the
- *   as-filed `9`-row / `118` arithmetic is kept visible beside every reading it
- *   moved (`RCA-8(d)`).  NO new token, NO third receipt form, NO new
+ *   `139 = 51+12+6+7+16+2+8+8+8+21` (subtotals `P-IM 66` · `P-SM 29` · `P-TP 44`),
+ *   caps `51 ≤ 100` / `139 ≤ 400`, stop after 5 consecutive failures; the
+ *   as-filed `9`-row / `118` arithmetic and the amendment's own `130 = those nine
+ *   + 12` are kept visible beside every reading they moved (`RCA-8(d)`; the gate-4
+ *   confirmation round's `LOCK-1`/`LOCK-2` dispositions moved row `10`'s OWN term
+ *   `12 → 21` — the terminal row's `2 × 3` readings + `2` controls, and the
+ *   whole-log window control's non-vacuity control — and no landed row's term).  NO new token, NO third receipt form, NO new
  *   `SecuritySettings` member, the `16`-member refusal union UNMOVED — the lock
  *   adds no member and no surface (`§2.6` items 3(d)/8).
  * THE READING POINTS, STATED SO NOTHING IS SILENT: the in-window reads are issued
@@ -256,6 +259,22 @@ vi.mock('node:fs', async (importOriginal) => {
       hooks.log.push(`rename:${String(from)}`)
       if (hooks.inject.rename) throw new Error('injected: rename failure')
       actual.renameSync(from as never, to as never)
+      // APPENDED `2026-10-11` (`LOCK-1`, the gate-4 confirmation round).  `§2.6` item
+      // 7(a) NAMES `renameSync` among the write path's own in-window read sites — and
+      // as filed the shim DECLARED `kind:'rename'` and never fired it, so the site the
+      // clause names had no instrument at all.  The probe is fired HERE, at the ONE
+      // instant this instrument can reach: AFTER the syscall has landed the rename
+      // (the real path's bytes ARE the candidate from now on) and BEFORE the shim
+      // returns into the write path, which is where `§2.6` item 5's landing sink is
+      // invoked — the TERMINAL the clause pins.  So this reading is the read
+      // "immediately before the terminal", never the terminal's own instant: the
+      // syscall's INTERIOR, and the gap between its return and the module's own next
+      // statement, are UNREACHABLE by any module-controlled JS (the dated note beside
+      // `§2.6` items 4/7(a) states it; no host fix exists for a gap no host JS runs in).
+      // THE FAILING-RENAME ARM IS NOT PROBED HERE: its syscall landed nothing (the real
+      // path's bytes are unmoved) and its own terminal is probed at `rm` (instant (c)),
+      // so firing on the success arm alone moves no refusal attempt's instant list.
+      hooks.lockProbe?.({ kind: 'rename', call: 1, realBytes: readReal(), tmpBytes: '' })
     },
     rmSync: (file: unknown, opts?: unknown): void => {
       // APPENDED `2026-10-11` (`§2.6` item 7(a) names `rmSync` among the write path's
@@ -336,6 +355,19 @@ function resetFsLog(): void {
 /** EVERY filesystem call the store made (the full activity log). */
 function fsActivity(): string[] {
   return hooks.log.filter((l) => l.startsWith('writeFile:') || l.startsWith('rename:'))
+}
+/** THE WHOLE INSTRUMENTED LOG, EVERY EFFECT — `mkdirSync` INCLUDED (`LOCK-2`, the
+ *  gate-4 confirmation round).  `§2.6` item 2 names the attempt's FIRST FILESYSTEM
+ *  EFFECT — *"the first `mkdirSync`/`writeFileSync` the attempt performs"* — as the
+ *  effect that OPENS the window, so a control whose job is to prove that an admission
+ *  refusal opens NO window must count `mkdirSync` too.  As filed the window control
+ *  counted only `writeFile`/`rename` (plus `fsync`/`rm` by their own counters), so an
+ *  **mkdir-only** attempt — an admission refusal whose write path had already created
+ *  the parent directory — read `none` and printed `NOT-APPLICABLE`: the control was
+ *  VACUOUS over exactly the effect the clause names.  This reads the log WHOLE (every
+ *  entry the shim pushes), so no future effect can slip under the same filter. */
+function fsWholeLog(): string[] {
+  return hooks.log.slice()
 }
 /** THE STORE'S OWN WRITES to the record — the same filter, minus any tmp staging
  *  that names something other than the record's own staging path. */
@@ -908,7 +940,7 @@ function printRegister(): void {
       '================ THE §5.6.1 REGISTER — EXECUTED ================',
       ...lines,
       `TOTAL (with its terms): ${total} = ${terms.join(' + ')} — executed ${results.reduce((a, r) => a + r.attempts, 0)}`,
-      `THE AS-FILED TOTAL, KEPT BESIDE IT (APPENDED 2026-10-11; RCA-8(d)): 118 = 51+12+6+7+16+2+8+8+8 over the NINE landed rows, unmoved — the OPERATIVE total is ${total} = those nine terms + 12 (row 10, P-M-SM-3, S-SS-LOCK-1, §2.6)`,
+      `THE AS-FILED TOTAL, KEPT BESIDE IT (APPENDED 2026-10-11; RCA-8(d)): 118 = 51+12+6+7+16+2+8+8+8 over the NINE landed rows, unmoved — the amendment's own 130 = those nine terms + 12, and the OPERATIVE total is ${total} = those nine terms + ${terms[terms.length - 1]} (row 10, P-M-SM-3, S-SS-LOCK-1, §2.6: the gate-4 confirmation round's LOCK-1/LOCK-2 dispositions moved its own term)`,
       `SUBTOTALS BY TYPE: P-IM ${im} · P-SM ${sm} · P-TP ${tp} — ${im} + ${sm} + ${tp} = ${im + sm + tp}`,
       `CAPS: per-row max ${maxRow} ≤ 100 (headroom ${100 - maxRow}) · total ${total} ≤ 400 (headroom ${400 - total})`,
       `ROWS: ${results.length} (${results.filter((r) => r.type === 'P-IM').length} P-IM + ${results.filter((r) => r.type === 'P-SM').length} P-SM + ${results.filter((r) => r.type === 'P-TP').length} P-TP); executed = declared? ${results.every((r) => r.attempts === r.declared)}`,
@@ -2932,8 +2964,10 @@ function withLockProbe<T>(store: SecurityStore, run: () => T): { out: T; instant
 }
 
 /** The probed instant, or a FAILURE that names the un-run reading (`§5.6.1`: an
- *  un-run row/reading is a FAILURE, never a pass). */
-function lockInstant(instants: readonly LockInstantReadings[], kind: 'fsync' | 'rm', call: number, label: string): LockInstantReadings {
+ *  un-run row/reading is a FAILURE, never a pass).  `'rename'` joins the union
+ *  (`2026-10-11`, `LOCK-1`): `§2.6` item 7(a) names the `renameSync` site, and the
+ *  shim now fires it — the read IMMEDIATELY BEFORE the terminal the clause pins. */
+function lockInstant(instants: readonly LockInstantReadings[], kind: 'fsync' | 'rename' | 'rm', call: number, label: string): LockInstantReadings {
   const hit = Array.from(instants).filter((i) => i.kind === kind && i.call === call)[0]
   if (hit === undefined) {
     throw new Error(`${label}: the attempt never reached the probed instant (${kind} call ${call}) — the in-window reading is NOT-OBSERVED, and an un-run reading is a FAILURE, never a pass (§2.6 item 2)`)
@@ -2958,6 +2992,21 @@ function lockReadingsOf(i: LockInstantReadings, label: string): LockPairReading 
   return { get: i.get, receipt: i.receipt, bytes: i.realBytes }
 }
 
+/** ONE reading of ONE instant = ONE register attempt (`§5.6.1` row 10: `3` instants
+ *  × `3` readings).  The totality precondition (§2.6 item 6) rides every term, and
+ *  each term's own held/broken reading is PRINTED with its strategy id.  Hoisted out
+ *  of row `10`'s first test body (`2026-10-11`, `LOCK-1`) so the terminal row the
+ *  clause now pins drives its readings through the SAME detector. */
+function lockTerm(attempt: string, raw: LockInstantReadings, expect: LockPairExpectation, which: 'get' | 'receipt' | 'bytes', name: string): void {
+  let reading = ''
+  drive('P-M-SM-3', attempt, () => {
+    const verdict = lockPairVerdict(lockReadingsOf(raw, `${expect.label} · ${name}`), expect)
+    reading = verdict[which].held ? `HELD (${verdict[which].why === '' ? name : verdict[which].why})` : `BROKEN — ${verdict[which].why}`
+    if (!verdict[which].held) throw new Error(verdict[which].why)
+  })
+  lockEvidence.push(`S-SS-LOCK-1 · ${attempt} → ${reading}`)
+}
+
 /** THE COMMITTING-WRITE PROBE — instants (a) and (b) of ONE attempt. */
 function probeCommitAttempt(store: SecurityStore, patch: Record<string, unknown>, label: string): { out: unknown; atA: LockInstantReadings; atB: LockInstantReadings } {
   resetInject()
@@ -2975,6 +3024,30 @@ function probeRefusalAttempt(store: SecurityStore, patch: Record<string, unknown
   armRenameFailure()
   const run = withLockProbe(store, () => store.set(patch))
   return { out: run.out, atC: lockInstant(run.instants, 'rm', 1, `${label} · instant (c) the REFUSAL TERMINAL`) }
+}
+
+/** THE TERMINAL PROBE (`LOCK-1`, the gate-4 confirmation round, `2026-10-11`).  `§2.6`
+ *  item 4's pairing is asserted at the TERMINAL THE CLAUSE PINS — the landing sink's
+ *  own invocation (`§2.6` items 4/5, mechanism `(h-i)`) — and at the ONE instant that
+ *  sits IMMEDIATELY BEFORE it and that this instrument can reach: the `renameSync`
+ *  shim's post-syscall boundary (item 7(a)'s `renameSync` site).
+ *   · `atPreTerminal` — the syscall has landed (the real path's bytes ARE the
+ *     candidate) and the module's own next JS statement (the sink) has NOT run yet.
+ *     Only HARNESS code executes in that gap, so no module-controlled JS — and
+ *     therefore no host fix — can move the surface there; the clause's TERMINAL is
+ *     pinned at the sink's invocation, and this reading is the PRE-TERMINAL half.
+ *   · `atTerminal` — the first SHIM-OBSERVABLE instant at and after the terminal: the
+ *     post-rename directory `fsync` (call 2), which the landed sink's invocation
+ *     precedes (`§9g`: the sink runs BEFORE the parent-directory `fsyncSync`). */
+function probeTerminalAttempt(store: SecurityStore, patch: Record<string, unknown>, label: string): { out: unknown; atPreTerminal: LockInstantReadings; atTerminal: LockInstantReadings } {
+  resetInject()
+  resetFsLog()
+  const run = withLockProbe(store, () => store.set(patch))
+  return {
+    out: run.out,
+    atPreTerminal: lockInstant(run.instants, 'rename', 1, `${label} · the POST-SYSCALL PRE-TERMINAL boundary (the read immediately BEFORE the pinned terminal)`),
+    atTerminal: lockInstant(run.instants, 'fsync', 2, `${label} · the POST-RENAME DIR fsync (the first shim-observable instant at/after the pinned terminal)`),
+  }
 }
 
 /** A path whose FILE already carries a known pre-write record + a FRESH instance
@@ -3169,11 +3242,13 @@ describe('§2.6 THE WRITE LOCK — reads are locked out until the commit lands (
 })
 
 /* ------------------------------------------------------------------ *
- * REG-10 · `P-M-SM-3` — THE WRITE LOCK (12 attempts, APPENDED `2026-10-11`) *
+ * REG-10 · `P-M-SM-3` — THE WRITE LOCK (21 attempts: 12 as filed + the      *
+ * gate-4 confirmation round's LOCK-1 terminal readings and LOCK-2 control;  *
+ * APPENDED `2026-10-11`)                                                     *
  * ------------------------------------------------------------------ */
 
-runRow('P-M-SM-3', 'P-SM', 'S-SS-LOCK-1', 12, () => {
-  it('§5.6.1 P-M-SM-3 (S-SS-LOCK-1) · 3 probed in-window instants × 3 readings (get · lastWriteReceipt · the real path’s bytes) + 2 driven mutation controls + 1 no-window control — 12 attempts', async () => {
+runRow('P-M-SM-3', 'P-SM', 'S-SS-LOCK-1', 21, () => {
+  it('§5.6.1 P-M-SM-3 (S-SS-LOCK-1) · 3 probed in-window instants × 3 readings (get · lastWriteReceipt · the real path’s bytes) + 2 driven mutation controls + 1 no-window control + the `LOCK-1` terminal readings + the `LOCK-2` non-vacuity control — 21 attempts', async () => {
     // ONE committing attempt for instants (a)+(b), one refusing attempt for (c), each
     // on a FRESH instance over a seeded path (so the declared pre-first-landing `null`
     // is the pre-window form and the durable pre-write record is what the real path
@@ -3191,17 +3266,9 @@ runRow('P-M-SM-3', 'P-SM', 'S-SS-LOCK-1', 12, () => {
     const expectC: LockPairExpectation = { label: 'instant (c) the REFUSAL TERMINAL (a failing renameSync; the window closes without a commit)', get: snapshot(refPre), receipt: LOCK_REFUSED, bytes: snapshot(refPre) }
 
     /** ONE reading of ONE instant = ONE register attempt (`§5.6.1` row 10: `3` instants
-     *  × `3` readings).  The totality precondition (§2.6 item 6) rides every term, and
-     *  each term's own held/broken reading is PRINTED with its strategy id. */
-    const term = (attempt: string, raw: LockInstantReadings, expect: LockPairExpectation, which: 'get' | 'receipt' | 'bytes', name: string): void => {
-      let reading = ''
-      drive('P-M-SM-3', attempt, () => {
-        const verdict = lockPairVerdict(lockReadingsOf(raw, `${expect.label} · ${name}`), expect)
-        reading = verdict[which].held ? `HELD (${verdict[which].why === '' ? name : verdict[which].why})` : `BROKEN — ${verdict[which].why}`
-        if (!verdict[which].held) throw new Error(verdict[which].why)
-      })
-      lockEvidence.push(`S-SS-LOCK-1 · ${attempt} → ${reading}`)
-    }
+     *  × `3` readings).  The detector is `lockTerm` (hoisted, `2026-10-11`): the row's
+     *  TERMINAL test drives its readings through the same one. */
+    const term = lockTerm
     term('(a)·get() — the durable record at that instant', probed.atA, expectA, 'get', '`get()` answers the PRE-WRITE record')
     term('(a)·lastWriteReceipt() — the in-flight receipt WITHHELD', probed.atA, expectA, 'receipt', 'the last LANDED form (the declared `null`)')
     term('(a)·the real path’s bytes', probed.atA, expectA, 'bytes', 'the durable state before the commit')
@@ -3249,25 +3316,137 @@ runRow('P-M-SM-3', 'P-SM', 'S-SS-LOCK-1', 12, () => {
     const ordinaryGet = snapshot(asRecord(admission.store.get()))
     const ordinaryReceipt = JSON.stringify(admission.store.lastWriteReceipt())
     const ordinaryBytes = bytesSnapshot(await rawBytes(admission.path))
-    drive('P-M-SM-3', 'ctl (window) an ADMISSION refusal opens NO window — the in-window reading is NOT-APPLICABLE, never a pass', () => {
-      lockEvidence.push(`S-SS-LOCK-1 · ctl (window) ADMISSION refusal → in-window readings: ${windowProbe.instants.length === 0 ? 'NOT-APPLICABLE (no window opened)' : `${windowProbe.instants.length} — MALFORMED`}; fs calls: ${fsActivity().length === 0 && hooks.fsyncCalls === 0 && hooks.rmLinks.length === 0 ? 'none' : JSON.stringify(fsActivity())}; the read across it: get ${ordinaryGet} · receipt ${ordinaryReceipt} · bytes ${ordinaryBytes}`)
+    drive('P-M-SM-3', 'ctl (window) an ADMISSION refusal opens NO window — the in-window reading is NOT-APPLICABLE, never a pass (counted over the WHOLE instrumented log, `mkdirSync` INCLUDED)', () => {
+      // `LOCK-2` (the gate-4 confirmation round, `2026-10-11`): as filed this control
+      // counted `fsActivity()` (writeFile/rename) + `fsync` + `rm` only, so `mkdirSync`
+      // — the effect `§2.6` item 2 NAMES as the window-OPENER — was logged and never
+      // counted.  An mkdir-only admission refusal read `none` and printed
+      // NOT-APPLICABLE: a control vacuous over exactly the effect the clause names.
+      // It now reads the whole instrumented log.
+      const whole = fsWholeLog()
+      lockEvidence.push(`S-SS-LOCK-1 · ctl (window) ADMISSION refusal → in-window readings: ${windowProbe.instants.length === 0 ? 'NOT-APPLICABLE (no window opened)' : `${windowProbe.instants.length} — MALFORMED`}; fs effects (the WHOLE instrumented log, mkdir included): ${whole.length === 0 ? 'none' : JSON.stringify(whole)}; the read across it: get ${ordinaryGet} · receipt ${ordinaryReceipt} · bytes ${ordinaryBytes}`)
       if (windowProbe.instants.length !== 0) throw new Error(`the lock probe fired ${windowProbe.instants.length} in-window reading(s) across an ADMISSION refusal — such an attempt touches no filesystem and NEVER OPENS A WINDOW (§2.6 item 2)`)
-      if (fsActivity().length !== 0) throw new Error(`the ADMISSION refusal touched the filesystem (${JSON.stringify(fsActivity())}) — §2.2 item 5(c)/F-9`)
+      if (whole.length !== 0) throw new Error(`the ADMISSION refusal performed ${whole.length} filesystem effect(s) — ${JSON.stringify(whole)} — counted over the WHOLE instrumented log INCLUDING \`mkdirSync\`, which §2.6 item 2 names as the window-OPENING effect: an mkdir-only attempt OPENS the window and is not a refusal that touched nothing (§2.2 item 5(c)/F-9; the as-filed count read only writeFile/rename and was vacuous here)`)
       if (hooks.fsyncCalls !== 0 || hooks.rmLinks.length !== 0) throw new Error(`the ADMISSION refusal reached an fs boundary (fsync ${hooks.fsyncCalls}, rm ${hooks.rmLinks.length}) — there is no window to read inside (§2.6 item 2)`)
       if (windowProbe.out === undefined) throw new Error('the read taken across an ADMISSION refusal did not return (§2.6 item 6)')
       if (ordinaryGet !== snapshot(admission.pre)) throw new Error(`the read across the ADMISSION refusal answered ${ordinaryGet}, not the pre-write record ${snapshot(admission.pre)} — a read across such an attempt is an ORDINARY pre-window read (§2.6 item 2)`)
       if (ordinaryReceipt !== LOCK_REFUSED) throw new Error(`the read across the ADMISSION refusal answered the receipt ${ordinaryReceipt}, not the attempt’s own refused closed form`)
       if (ordinaryBytes !== snapshot(admission.pre)) throw new Error(`the ADMISSION refusal’s real-path bytes read ${ordinaryBytes}, not the pre-write record — no attempt wrote anything`)
     })
-
-    const row = rowById('P-M-SM-3')
-    expect(row.attempts, 'P-M-SM-3 runs EXACTLY its 12 declared attempts: 3 instants × 3 readings + 2 mutation controls + 1 window control (§5.6.1 row 10)').toBe(12)
-    expect(row.held + row.broken, 'P-M-SM-3: held + broken === attempts-run').toBe(row.attempts)
-    // eslint-disable-next-line no-console
-    console.log(
-      [`REGISTER §5.6.1 · P-M-SM-3 · S-SS-LOCK-1 · attempts-run ${row.attempts}/${row.declared} · held ${row.held} · broken ${row.broken}`, ...lockEvidence.map((l) => `  LOCK EVIDENCE ${l}`)].join('\n'),
-    )
+    // ---- ctl (window-ii) · `LOCK-2`'s NON-VACUITY CONTROL (§2.5 item 5: a detector
+    // that cannot fail proves nothing).  It drives the WHOLE-LOG counter both ways
+    // against the REAL module and against a synthetic log, so the strengthened
+    // control above is attributable rather than merely re-worded.
+    await driveAsync('P-M-SM-3', 'ctl (window-ii) the WHOLE-LOG window detector is non-vacuous — driven both ways (an mkdir-only attempt reddens it; the narrowed as-filed filter cannot see it; an empty log reads empty)', async () => {
+      const real = await seededStore()
+      resetFsLog()
+      assertNoThrow(() => real.store.set({ token: 'MKD' }), 'ctl (window-ii): the admitted write whose effects the WHOLE log must carry')
+      const realWhole = fsWholeLog()
+      const realNarrowed = fsActivity()
+      const realMkdir = realWhole.filter((l) => l.startsWith('mkdir:'))
+      let mkdirOnlyWhole: string[] = []
+      let mkdirOnlyNarrowed: string[] = []
+      resetFsLog()
+      hooks.log.push('mkdir:/synthetic/window-opener')
+      try {
+        mkdirOnlyWhole = fsWholeLog()
+        mkdirOnlyNarrowed = fsActivity()
+      } finally {
+        resetFsLog()
+      }
+      const emptyWhole = fsWholeLog()
+      const emptyNarrowed = fsActivity()
+      lockEvidence.push(`S-SS-LOCK-1 · ctl (window-ii) whole-log vs narrowed: an admitted write logged ${realWhole.length} effect(s), ${realMkdir.length} of them \`mkdirSync\` (the narrowed filter sees ${realNarrowed.length} and none of the mkdir); an mkdir-only log reads ${mkdirOnlyWhole.length} on the whole log and ${mkdirOnlyNarrowed.length} on the narrowed one; an empty log reads ${emptyWhole.length}/${emptyNarrowed.length}`)
+      if (realMkdir.length === 0) throw new Error(`the module’s own admitted write logged NO \`mkdirSync\` effect (${JSON.stringify(realWhole)}) — then the whole-log control above would still be vacuous over §2.6 item 2’s window-opener`)
+      if (realNarrowed.some((l) => l.startsWith('mkdir:'))) throw new Error('the NARROWED filter sees `mkdirSync` — then this control cannot show that the as-filed count was vacuous')
+      if (mkdirOnlyWhole.length !== 1) throw new Error(`the WHOLE-LOG detector did NOT fire on an mkdir-only attempt (it read ${JSON.stringify(mkdirOnlyWhole)}) — the window control above would still pass an attempt that opened its window with \`mkdirSync\` alone`)
+      if (mkdirOnlyNarrowed.length !== 0) throw new Error(`the as-filed narrowed filter DID see the mkdir-only attempt (${JSON.stringify(mkdirOnlyNarrowed)}) — the LOCK-2 measurement is refuted at these bytes`)
+      if (emptyWhole.length !== 0 || emptyNarrowed.length !== 0) throw new Error(`the counter is a CONSTANT: an empty log must read empty on BOTH readings (whole ${emptyWhole.length}, narrowed ${emptyNarrowed.length})`)
+    })
   })
+
+    /* ------------------------------------------------------------------ *
+     * `LOCK-1` (the gate-4 confirmation round, `2026-10-11`) — THE ROW THAT  *
+     * PROBES THE TERMINAL THE CLAUSE NOW PINS.  `§2.6` item 4's pairing is  *
+     * asserted at the landing SINK'S OWN INVOCATION (mechanism `(h-i)`), a  *
+     * terminal no instrument can sit inside, so it is read at its two       *
+     * REACHABLE neighbours: the `renameSync` shim's post-syscall boundary   *
+     * (the read IMMEDIATELY BEFORE it — item 7(a)'s `renameSync` site) and   *
+     * the post-rename directory fsync (the first instant AT/AFTER it).      *
+     * ------------------------------------------------------------------ */
+    it('§2.6 item 4 — THE TERMINAL THE CLAUSE PINS (the landing sink’s own invocation): the pre-terminal `renameSync` boundary × 3 readings + the post-terminal dir-`fsync` × 3 readings + 2 driven mutation controls', async () => {
+      // THE INSTANTS, NAMED AND PINNED.
+      //  · PRE-TERMINAL — the `renameSync` shim's post-syscall boundary.  The syscall
+      //    HAS landed (the real path's bytes ARE the candidate: §0A item 2) and the
+      //    module's own next JS statement — the landing sink that advances the record
+      //    and lands the receipt together — has NOT run.  ONLY HARNESS CODE executes in
+      //    that gap: `renameSync` has already returned from the kernel when the shim's
+      //    wrapper reads, and the module's next statement is the sink's call.  So the
+      //    syscall's interior (and that gap) is UNREACHABLE by any module-controlled JS
+      //    and NO HOST FIX EXISTS for it — the clause's TERMINAL is therefore pinned at
+      //    the SINK'S INVOCATION, and this instant is the PRE-TERMINAL half: the
+      //    PRE-WRITE record beside the WITHHELD form.  The DURABLE half at this instant
+      //    is the CANDIDATE, and it is ASSERTED here rather than smoothed — that
+      //    measurement is exactly what forced the narrowing (the dated note beside
+      //    `§2.6` items 4/7(a) carries it).
+      //  · AT/AFTER THE TERMINAL — the post-rename directory fsync (the landed sink is
+      //    invoked BEFORE it, `§9g`): the CANDIDATE beside `{status:'committed'}`, both
+      //    flipped TOGETHER (I-10-b).
+      const committing = await seededStore()
+      const pre = committing.pre
+      const candidate = expectedPost(pre, { token: 'LOCK' })
+      const probed = probeTerminalAttempt(committing.store, { token: 'LOCK' }, 'P-M-SM-3 · terminal')
+      const atPreTerminal = lockReadingsOf(probed.atPreTerminal, 'the pre-terminal rename boundary')
+      const atTerminal = lockReadingsOf(probed.atTerminal, 'the post-terminal dir fsync')
+      const expectPreTerminal: LockPairExpectation = { label: 'the POST-SYSCALL PRE-TERMINAL boundary (the rename has landed; the landing sink has NOT run)', get: snapshot(pre), receipt: 'null', bytes: snapshot(candidate) }
+      const expectTerminal: LockPairExpectation = { label: 'the first shim-observable instant AT/AFTER the pinned terminal (the post-rename directory fsync)', get: snapshot(candidate), receipt: LOCK_COMMITTED, bytes: snapshot(candidate) }
+
+      lockTerm('(t-)·get() — the PRE-TERMINAL record, the sink not yet run', probed.atPreTerminal, expectPreTerminal, 'get', '`get()` answers the PRE-WRITE record (the terminal has not landed)')
+      lockTerm('(t-)·lastWriteReceipt() — the in-flight form WITHHELD at the pre-terminal boundary', probed.atPreTerminal, expectPreTerminal, 'receipt', 'the last LANDED form (the declared `null`)')
+      lockTerm('(t-)·the real path’s bytes — ALREADY the candidate (the syscall landed)', probed.atPreTerminal, expectPreTerminal, 'bytes', 'the durable state the syscall left: the CANDIDATE')
+      lockTerm('(t+)·get() — the CANDIDATE at and after the pinned terminal', probed.atTerminal, expectTerminal, 'get', '`get()` answers the CANDIDATE')
+      lockTerm('(t+)·lastWriteReceipt() — the committed form AT the terminal', probed.atTerminal, expectTerminal, 'receipt', 'the committed closed form')
+      lockTerm('(t+)·the real path’s bytes — the candidate at and after the landing', probed.atTerminal, expectTerminal, 'bytes', 'the durable state at and after the landing')
+
+      // THE TOTALS RIDE EVERY READING (§2.6 item 6) — and the pair is ASSERTED
+      // TOGETHER at the terminal, so one answer flipping without the other fails.
+      for (const instant of [probed.atPreTerminal, probed.atTerminal]) {
+        assertLockTotality(instant, 'P-M-SM-3 · terminal · §2.6 item 6')
+      }
+      expect({ get: atTerminal.get, receipt: atTerminal.receipt }, 'I-10-b at the pinned terminal — the record’s answer and the receipt’s answer flip AT THE SAME TERMINAL, never one before the other').toEqual({ get: snapshot(candidate), receipt: LOCK_COMMITTED })
+      expect(probed.out, 'the terminal probe’s write RETURNED its answer — the lock never blocks, waits or throws (§2.6 item 6)').toBeDefined()
+
+      // ---- ctl (iii) · THE PRE-TERMINAL INSTANT, DRIVEN BOTH WAYS (§2.5 item 5).
+      drive('P-M-SM-3', 'ctl (iii) an ADVANCE-BEFORE-THE-SYSCALL subject must FIRE at the pre-terminal boundary — driven both ways', () => {
+        const eager = lockPairVerdict({ get: snapshot(candidate), receipt: LOCK_COMMITTED, bytes: atPreTerminal.bytes }, { ...expectPreTerminal, label: 'ctl (iii) the ADVANCE-BEFORE-THE-SYSCALL subject at the pre-terminal boundary' })
+        lockEvidence.push(`S-SS-LOCK-1 · ctl (iii) ADVANCE-BEFORE-THE-SYSCALL at the pre-terminal boundary → ${eager.held ? 'BROKEN — the detector did NOT fire' : 'FIRED (the detector caught the shape); the conforming subject beside it must HOLD'}`)
+        if (eager.held) throw new Error('the ADVANCE-BEFORE-THE-SYSCALL shape (the record advanced and the receipt landed BEFORE the rename landed — the assign-early family) was NOT caught at the pre-terminal boundary — the detector cannot fail (§2.6 items 4/5)')
+        if (eager.get.held || eager.receipt.held) throw new Error(`the ADVANCE-BEFORE-THE-SYSCALL subject’s failing readings are not its RECORD and its RECEIPT — ${eager.why}`)
+        const conforming = lockPairVerdict(atPreTerminal, { ...expectPreTerminal, label: 'ctl (iii) the CONFORMING subject at the pre-terminal boundary' })
+        if (!conforming.held) throw new Error(`the control is one-sided: the CONFORMING pre-terminal subject does not hold — ${conforming.why}`)
+      })
+      // ---- ctl (iv) · THE POST-TERMINAL INSTANT, DRIVEN BOTH WAYS — the as-landed
+      // (pre-`§9g`) ADVANCE-AFTER-RETURN shape, which is what the amendment greened.
+      drive('P-M-SM-3', 'ctl (iv) an ADVANCE-AFTER-RETURN subject must FIRE at the pinned terminal — driven both ways', () => {
+        const late = lockPairVerdict({ get: snapshot(pre), receipt: 'null', bytes: atTerminal.bytes }, { ...expectTerminal, label: 'ctl (iv) the ADVANCE-AFTER-RETURN subject at the pinned terminal' })
+        lockEvidence.push(`S-SS-LOCK-1 · ctl (iv) ADVANCE-AFTER-RETURN at the pinned terminal → ${late.held ? 'BROKEN — the detector did NOT fire' : 'FIRED (the detector caught the shape); the conforming subject beside it must HOLD'}`)
+        if (late.held) throw new Error('the ADVANCE-AFTER-RETURN shape (the record advanced only AFTER `persist()` returned) was NOT caught at the pinned terminal — the detector cannot fail (§2.6 items 4/5)')
+        if (late.get.held || late.receipt.held) throw new Error(`the ADVANCE-AFTER-RETURN subject’s failing readings are not its RECORD and its RECEIPT — ${late.why}`)
+        const conforming = lockPairVerdict(atTerminal, { ...expectTerminal, label: 'ctl (iv) the ADVANCE-AT-THE-TERMINAL subject at the pinned terminal' })
+        if (!conforming.held) throw new Error(`the control is one-sided: the CONFORMING terminal subject does not hold — ${conforming.why}`)
+      })
+    })
+
+    /* ---- THE ROW'S CENSUS, READ LAST so every attempt above is counted. ---- */
+    it('§5.6.1 P-M-SM-3 (S-SS-LOCK-1) · the row’s census, printed WITH ITS TERMS — 21 = (3×3 + 2 + 1) + (2×3 + 2) + 1', () => {
+      const row = rowById('P-M-SM-3')
+      expect(row.attempts, 'P-M-SM-3 runs EXACTLY its 21 declared attempts (§5.6.1 row 10): the 12 as filed (`3` instants × `3` readings + `2` mutation controls + `1` window control) + `2 × 3` readings of the terminal row (`LOCK-1`: the pre-terminal boundary + the post-terminal dir fsync) + its `2` driven mutation controls + `1` whole-log non-vacuity control (`LOCK-2`)').toBe(21)
+      expect(row.held + row.broken, 'P-M-SM-3: held + broken === attempts-run').toBe(row.attempts)
+      // eslint-disable-next-line no-console
+      console.log(
+        [`REGISTER §5.6.1 · P-M-SM-3 · S-SS-LOCK-1 · attempts-run ${row.attempts}/${row.declared} · held ${row.held} · broken ${row.broken}`, ...lockEvidence.map((l) => `  LOCK EVIDENCE ${l}`)].join('\n'),
+      )
+    })
 })
 
 /* ==========================================================================
@@ -3276,7 +3455,7 @@ runRow('P-M-SM-3', 'P-SM', 'S-SS-LOCK-1', 12, () => {
  * FAILURE, never a pass).
  * ======================================================================== */
 
-describe('§5.6.1 THE REGISTER — the executed summary (118 = 51+12+6+7+16+2+8+8+8) ⟶ ANNOTATED BESIDE, APPENDED `2026-10-11` (`RCA-8(d)`: the as-filed heading STANDS; the OPERATIVE figures are `130 = 51+12+6+7+16+2+8+8+8+12` over `10` typed rows — row `10` is `P-M-SM-3`, `S-SS-LOCK-1`, `§2.6`)', () => {
+describe('§5.6.1 THE REGISTER — the executed summary (118 = 51+12+6+7+16+2+8+8+8) ⟶ ANNOTATED BESIDE, APPENDED `2026-10-11` (`RCA-8(d)`: the as-filed heading STANDS; the OPERATIVE figures are `139 = 51+12+6+7+16+2+8+8+8+21` over `10` typed rows — row `10` is `P-M-SM-3`, `S-SS-LOCK-1`, `§2.6`, whose term the gate-4 confirmation round moved `12 → 21`)', () => {
   it('REGISTER-STOP · the stop-after-5 guard and the un-run-as-FAILURE rule are DRIVEN both ways (`F-3`, gate-4 re-audit; §9d item 2 / §4.3 item 1 / AGENTS.md item 11(b))', () => {
     // `F-3`: `§9d` item 2 claims "`REGISTER-EXEC` asserts both directions: the
     // register did NOT stop, AND the stop rule FIRES on a synthetic five-broken-row
@@ -3306,7 +3485,7 @@ describe('§5.6.1 THE REGISTER — the executed summary (118 = 51+12+6+7+16+2+8+
     ).toEqual([])
   })
 
-  it('REGISTER-EXEC · the nine typed rows execute deterministically and carry id · type · strategy · attempts-run · held · broken', () => {
+  it('REGISTER-EXEC · the ten typed rows execute deterministically and carry id · type · strategy · attempts-run · held · broken', () => {
     const ids = ['P-O2-IM-1', 'P-O1-TP-1', 'P-M-SM-1', 'P-O2-IM-2', 'P-TP-2', 'P-M-SM-2', 'P-O3-IM-2', 'P-O2-TP-1', 'P-O3-TP-1', 'P-M-SM-3']
     expect(results.map((r) => r.id), 'the register runs ALL TEN rows, in register order (an un-run row is a FAILURE; row 10 `P-M-SM-3` is APPENDED `2026-10-11`, `§2.6`)').toEqual(ids)
     // `F-4` (gate-4 re-audit): as filed this reading was `toBe(9)` — a CONSTANT.  With
@@ -3328,23 +3507,25 @@ describe('§5.6.1 THE REGISTER — the executed summary (118 = 51+12+6+7+16+2+8+
     }
   })
 
-  it('REGISTER-TERMS · the declared total is 130 = its own ten terms, with the caps and the type subtotals', () => {
+  it('REGISTER-TERMS · the declared total is 139 = its own ten terms, with the caps and the type subtotals', () => {
     const declared = results.map((r) => r.declared)
     // THE AS-FILED NINE TERMS, KEPT BESIDE (`RCA-8(d)`): 51, 12, 6, 7, 16, 2, 8, 8, 8
-    // sum to 118 and every one of them is UNMOVED; the tenth term (12, row 10,
-    // `P-M-SM-3`, APPENDED `2026-10-11`) is the amendment's own move: 118 → 130.
-    expect(declared, 'the ten terms, in register order (the nine landed terms, then row 10’s 12)').toEqual([51, 12, 6, 7, 16, 2, 8, 8, 8, 12])
+    // sum to 118 and every one of them is UNMOVED; the tenth term (`12` when the
+    // `§2.6` lock row was APPENDED `2026-10-11`; `21` after the gate-4 confirmation
+    // round's `LOCK-1`/`LOCK-2` dispositions added the terminal row's `2 × 3` readings
+    // and `2` controls and the whole-log non-vacuity control) is row 10's own cell.
+    expect(declared, 'the ten terms, in register order (the nine landed terms, then row 10’s 21)').toEqual([51, 12, 6, 7, 16, 2, 8, 8, 8, 21])
     const total = declared.reduce((a, b) => a + b, 0)
     expect(declared.slice(0, 9).reduce((a, b) => a + b, 0), 'the AS-FILED nine terms still sum to 118 — no landed term moved (§9e; RCA-8(d))').toBe(118)
-    expect(total, '130 = 51 + 12 + 6 + 7 + 16 + 2 + 8 + 8 + 8 + 12 (a total quoted without its terms is a review finding)').toBe(130)
+    expect(total, '139 = 51 + 12 + 6 + 7 + 16 + 2 + 8 + 8 + 8 + 21 (a total quoted without its terms is a review finding)').toBe(139)
     expect(declared.every((t) => t <= 100), '≤100 attempts per row').toBe(true)
     expect(Math.max(...declared), 'the largest row is 51 ≤ 100 (headroom 49, UNMOVED)').toBe(51)
-    expect(total <= 400, '130 ≤ 400 (headroom 270, was 282)').toBe(true)
+    expect(total <= 400, '139 ≤ 400 (headroom 261, was 270 at the amendment’s 130)').toBe(true)
     const subtotal = (type: string): number => results.filter((r) => r.type === type).reduce((a, r) => a + r.declared, 0)
     expect(subtotal('P-IM'), 'P-IM = 51 + 7 + 8 (UNMOVED)').toBe(66)
-    expect(subtotal('P-SM'), 'P-SM = 6 + 2 + 12 — the new row’s 12 joined the family (was 8)').toBe(20)
+    expect(subtotal('P-SM'), 'P-SM = 6 + 2 + 21 — the lock row’s term joined the family (was 8 before the lock, 20 at the amendment’s 12)').toBe(29)
     expect(subtotal('P-TP'), 'P-TP = 12 + 16 + 8 + 8 (UNMOVED)').toBe(44)
-    expect(subtotal('P-IM') + subtotal('P-SM') + subtotal('P-TP'), '66 + 20 + 44 = 130 ✓').toBe(130)
+    expect(subtotal('P-IM') + subtotal('P-SM') + subtotal('P-TP'), '66 + 29 + 44 = 139 ✓').toBe(139)
   })
 
   it('REGISTER-RED · the register’s rows HOLD at the contract’s declared END STATE (§9 item 3 / §9a item 5 — the inverted form; the pre-fix RED-direction reading is kept below as a note)', () => {
@@ -3407,8 +3588,8 @@ describe('§5.6.1 THE REGISTER — the executed summary (118 = 51+12+6+7+16+2+8+
     ).toBe(0)
     expect(
       results.reduce((a, r) => a + r.held, 0),
-      'the register’s HELD readings, summed WITH THEIR TERMS (END STATE: 130: 51+12+6+7+16+2+8+8+8+12 = 130; held + broken = 130. The as-filed nine-row reading 118 = 51+12+6+7+16+2+8+8+8 stands beside it, unmoved — RCA-8(d))',
-    ).toBe(130)
+      'the register’s HELD readings, summed WITH THEIR TERMS (END STATE: 139: 51+12+6+7+16+2+8+8+8+21 = 139; held + broken = 139. The as-filed nine-row reading 118 = 51+12+6+7+16+2+8+8+8 and the amendment’s own 130 = those nine + 12 stand beside it, unmoved — RCA-8(d); the gate-4 confirmation round moved row 10’s own term 12 → 21, LOCK-1/LOCK-2)',
+    ).toBe(139)
     expect(results.length, 'the register is TEN rows, a signal and not a cap (AGENTS.md item 11(f): the as-filed nine-row count was a signal too, and the lock is enumerated rather than merged)').toBe(10)
   })
 
