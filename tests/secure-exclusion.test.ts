@@ -1839,9 +1839,22 @@ const registerSpecs: RegisterRow[] = [
         },
       },
       /* (j) the union-count census — the union is READ at 16 and
-       * security-store.ts is byte-identical to its measured pre-unit bytes. */
+       * security-store.ts is byte-identical to its measured pre-unit bytes.
+       * **⟶ ANNOTATED BESIDE 2026-10-11 (the EIGHTH `§6.2` audit of this unit's
+       * gate-6 battery, `A-8-03`, LOW; `RCA-8(d)`: the two as-filed lines above are
+       * KEPT BYTE-FOR-BYTE and are NOT the operative reading).** The phrase
+       * "measured PRE-UNIT bytes" is SUPERSEDED BY THE THREE AUTHORISED RE-POINTS of
+       * this file's bytes — the `S3` ruling's `O-1`/`O-2`/`O-3` (`99618ac2…`), gate 4's
+       * `ADV-1` read-once remediation (`a98273b8…`) and the `§2.6` write-lock amendment
+       * (`8ed09c97…`) — so THE OPERATIVE PIN IS THE POST-`§2.6` BYTES, and this row
+       * asserts the file byte-identical to THAT pin. The assertion's own message
+       * already names the whole chain; what is added here is that the operative
+       * reading is stated at the COMMENT and the LABEL rather than left to be inferred
+       * from the chain. **THE BITE IS UNMOVED:** any moved byte still reddens the row,
+       * and it now compares against a pin three AUTHORISED moves have been recorded
+       * against, so a silent fourth move reddens here instead of passing as "pre-unit". */
       {
-        label: "(j) the UNION-COUNT census: the store's refusal union is READ at `16` and `src/main/security-store.ts` is byte-identical to its measured pre-unit bytes (§2.5 item 2, FS-EX-14)",
+        label: "(j) the UNION-COUNT census: the store's refusal union is READ at `16` and `src/main/security-store.ts` is byte-identical to its measured pre-unit bytes (§2.5 item 2, FS-EX-14) — ⟶ OPERATIVE READING 2026-10-11 (`A-8-03`): the pin is the POST-`§2.6` bytes `8ed09c97…`, the third of three AUTHORISED re-points; the as-filed \"pre-unit bytes\" wording is kept visible and is SUPERSEDED",
         run: () => {
           const union = unionMembersOf(sourceOf(STORE_CORE_SRC))
           expect(union.length, '§2.5 item 2 — the store\'s refusal union stays `16` (`8` held + `5` + `3`); `\'exclusion-closed\'` appears in NO group').toBe(16)

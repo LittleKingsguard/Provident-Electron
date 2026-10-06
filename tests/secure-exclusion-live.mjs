@@ -5,6 +5,34 @@
 //
 // Run:  npm run build && node tests/secure-exclusion-live.mjs
 //
+// ⟶ THE 2026-10-11 EIGHTH `§6.2` AUDIT — `A-8-04` IS THE ONE FINDING THAT CHANGES THIS DRIVER, AND
+// IT IS AN INSTRUMENT HARDENING, NOT A ROW. **THE ROW COUNT IS UNCHANGED AT `42`; NO PREDICATE, NO
+// FIXTURE, NO VERDICT EXPRESSION AND NO TERM WAS TOUCHED.**
+//   · `A-8-04` (LOW, gate-6-blocking only in the sense that a battery that CANNOT FINISH CANNOT
+//     REPORT) — MEASURED AT THE BYTES BEFORE THE REPAIR (`:318-326` of the as-filed file):
+//     `send()` returned a Promise resolved ONLY by a matching `message`; there was NO deadline,
+//     NO `close` listener and NO `error` listener, and `pending` was never settled — so an
+//     UNANSWERED CDP reply NEVER SETTLED, the battery HUNG on that `await`, the Electron window
+//     stayed on the operator's display, and **NO SUMMARY AND NO EXIT CODE WERE PRODUCED AT ALL**.
+//     The driver's "a leak is impossible" and "the exit code is evidence" claims therefore held
+//     for THROWS ONLY. THE REPAIR, in three limbs:
+//       (a) every reply is awaited under `CDP_REPLY_TIMEOUT_MS` (20000 ms, the same bound the
+//           boot-order and HTTP-readiness rows already use), and the channel marks itself DEAD
+//           with its REASON on timeout, on `close` and on `error`, settling EVERY pending reply;
+//       (b) a dead channel answers the SENTINEL `NO_CDP_REPLY` instead of hanging, and every
+//           reader propagates it (`evaluate`, `clickElement`, `waitForToggle` — the last returns
+//           immediately instead of spinning out its window);
+//       (c) **A BROKEN INSTRUMENT IS NOT A FINDING**: the rows whose subject or reading came off
+//           that channel — the DECLARED, printed set `CDP_DEPENDENT_ROWS`, each member naming the
+//           channel it depends on — report `MANUAL`, never `FAIL` (which would claim a finding the
+//           instrument cannot support) and never `PASS` (which would be silent). A row recorded
+//           BEFORE the channel died keeps its genuine verdict, so the gate is INERT on a live run.
+//     The summary prints the channel's state and the `MANUAL` ids, and says in one line that a
+//     `MANUAL` row is NOT a PASS. **THE EXIT CODE'S MEANING IS UNCHANGED** (`non-zero ⟺ at least
+//     one FAIL`), which is why the dead-channel state is PRINTED rather than folded into the exit
+//     code: the record's exit-code figures stay comparable, and no run may read the battery green
+//     while a row is `MANUAL`.
+//
 // ⟶ THE 2026-10-10 REPAIR PASS (FOURTH `§6.2` AUDIT, `R4-01`…`R4-08`) — WHAT IT CHANGED IN THIS
 // DRIVER, EACH WITH THE FINDING IT CLOSES. Every one of them is INSTRUMENT-side; `src/**` is
 // untouched. **THE ROW COUNT IS UNCHANGED AT `42`**: no row was added and no row was removed — the
@@ -124,6 +152,53 @@ const TOKEN = 'live-battery-token-4f9c1a7e'
 const GROUPS = ['read', 'dispatch', 'graph', 'code']
 const CENSUS_IN_TREE = 23
 
+// ---- the CDP channel's own bound (`A-8-04`, the EIGHTH `§6.2` audit) -------------
+/** HOW LONG A SINGLE CDP REPLY MAY TAKE BEFORE THE CHANNEL IS DECLARED DEAD. The same
+ *  20000 ms bound the boot-order settle (`SX-G-45`) and the HTTP readiness probe
+ *  (`SX-G-45 (HTTP boot)`) already use, so the driver has ONE declared instrument bound
+ *  rather than three. */
+const CDP_REPLY_TIMEOUT_MS = 20000
+/** THE SENTINEL A DEAD CHANNEL ANSWERS WITH. An OBJECT, deliberately: every reader that
+ *  does `read.x` on it reads `undefined` (a row's term goes FALSE, nothing throws), so a
+ *  dead channel can never abort the run with a TypeError the way an absent reading would. */
+const NO_CDP_REPLY = Object.freeze({ __cdpNoReply: true })
+const isNoCdpReply = (v) => v === NO_CDP_REPLY || (typeof v === 'object' && v !== null && v.__cdpNoReply === true)
+/** EVERY CHANNEL THIS RUN OPENS, in attach order. Each carries its own `dead` reason. */
+const CDP_CHANNELS = []
+const channelByLabel = (label) => CDP_CHANNELS.find((c) => c.label === label)
+const deadChannelReason = (label) => {
+  const c = channelByLabel(label)
+  return c && c.dead !== null ? c.dead : null
+}
+/** **THE ROWS WHOSE VERDICT CANNOT BE CERTIFIED OFF A DEAD CDP CHANNEL — DECLARED, PRINTED,
+ *  AND EACH WITH ITS DEPENDENCY.** Two classes are in here, both read off the driver's own
+ *  bytes rather than assumed: (i) a row that READS the channel (`paneRead`, `evaluate`,
+ *  `clickElement`, `isolationProbe`); (ii) a row whose SUBJECT is a state the channel
+ *  PERFORMED (`:797`/`:882`/`:886`/`:979`/`:1076` are `setExclusion` calls evaluated in boot A's
+ *  renderer realm, and the restart arm's whole profile copy is made at that post-transition
+ *  state). A row in NEITHER class — the fixture controls, the stderr boot-order row, the
+ *  preflight, the HTTP arms whose state this boot's own MCP channel drives, and the static
+ *  censuses — keeps its verdict, because the channel's death cannot move it. */
+const CDP_DEPENDENT_ROWS = {
+  'SX-G-01/02': 'A',
+  'U-1 / SX-G-59/60': 'A',
+  'SX-G-03 (the status line, printed with its terms)': 'A',
+  'U-5 / SX-G-65 (pane realm)': 'A',
+  'U-5 / SX-G-65 (app graph, `list_targets`) — RE-INSTRUMENTED 2026-10-09, the third `§6.2` audit\'s `R3-01`': 'A',
+  'U-2 (the gesture half)': 'A',
+  'U-2 (sibling controls)': 'A',
+  'SX-G-57 (live)': 'A',
+  'U-3 (via the bridge)': 'A',
+  'U-2 (registry, live) / U-7 / SX-G-23': 'A',
+  'U-4 (return arm)': 'A',
+  'U-6 (reload arm, main-side state)': 'A',
+  'U-6 (reload arm) — PREDICATE CONTROL': 'A',
+  'U-6 (reload arm, the operator\'s view)': 'A',
+  'U-6 (restart arm) / SX-G-46/47 — RE-INSTRUMENTED ON BOOT A\'S OWN PROFILE': 'A',
+  'SX-G-44 (live)': 'A',
+  'U-4 (return arm, HTTP) — RE-GROUNDED ON THE MANUAL-UI PATH': 'HTTP',
+}
+
 // ---- records -----------------------------------------------------------------
 const CHECKS = []
 /** Record one check. `verdict` is the CLOSED set this battery reports with:
@@ -134,7 +209,17 @@ const CHECKS = []
  *  so a boot-order regression printed NO FAIL and appeared in NO list. A failure
  *  verdict is `FAIL`, without exception.) */
 function check(id, subject, verdict, observation, evidence = '') {
-  CHECKS.push({ id, subject, verdict, observation, evidence })
+  // ⟶ `A-8-04`: A BROKEN INSTRUMENT READS `MANUAL`, NEVER `FAIL`, NEVER A SILENT PASS.
+  // The channel a row depends on is DECLARED (`CDP_DEPENDENT_ROWS`); if it died before this
+  // row was recorded, the verdict the dead channel produced is kept VISIBLE in the
+  // observation and the row reads `MANUAL`. A row recorded before the death is untouched.
+  const dependency = Object.prototype.hasOwnProperty.call(CDP_DEPENDENT_ROWS, id) ? CDP_DEPENDENT_ROWS[id] : null
+  const dead = dependency === null ? null : deadChannelReason(dependency)
+  if (dead !== null) {
+    observation = `[INSTRUMENT — THE CDP CHANNEL IS DEAD (declared dependency: channel ${dependency}; ${dead})] a broken instrument is NOT a finding, so this row reads MANUAL; the verdict the dead channel produced is kept verbatim here as what the instrument read: ${verdict}. ${observation}`
+    verdict = 'MANUAL'
+  }
+  CHECKS.push({ id, subject, verdict, observation, evidence, instrument: dead !== null })
   const mark = verdict === 'PASS' ? '✓' : verdict === 'FAIL' ? '✗' : verdict === 'MANUAL' ? '»' : '□'
   const line = `  ${mark} [${verdict}] ${id} ${subject}`
   if (verdict === 'FAIL') console.error(`${line}\n      observed: ${observation}`)
@@ -298,29 +383,79 @@ async function devtoolsPort(boot, timeoutMs = 20000) {
 }
 
 class Cdp {
-  static async attach(port) {
+  static async attach(port, label = 'cdp') {
     const listing = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json()
     const page = listing.find((t) => t.type === 'page')
     if (!page) throw new Error('no CDP page target in the app\'s renderer')
-    const cdp = new Cdp(page.webSocketDebuggerUrl)
+    const cdp = new Cdp(page.webSocketDebuggerUrl, label)
     await cdp.open()
     return cdp
   }
-  constructor(url) { this.url = url; this.id = 0; this.pending = new Map() }
+  constructor(url, label = 'cdp') {
+    this.url = url
+    this.label = label
+    this.id = 0
+    this.pending = new Map()
+    /** `null` while the channel is ALIVE; the REASON otherwise (`A-8-04`). */
+    this.dead = null
+    CDP_CHANNELS.push(this)
+  }
+  /** **DECLARE THE CHANNEL DEAD AND SETTLE EVERY PENDING REPLY, ONCE** (`A-8-04`). The
+   *  as-filed class had NO such path: `pending` was only ever settled by a matching
+   *  `message`, so a renderer that stopped answering left every waiter pending forever.
+   *  Every waiter is settled with `NO_CDP_REPLY` and every LATER `send` answers it
+   *  immediately, so the run FINISHES (its `exit` hook then drains the cleanup registry:
+   *  no window is left on the display) instead of hanging with no exit code. */
+  markDead(reason) {
+    if (this.dead !== null) return
+    this.dead = reason
+    for (const [, entry] of this.pending) { clearTimeout(entry.timer); entry.resolve(NO_CDP_REPLY) }
+    this.pending.clear()
+  }
   open() {
     this.ws = new WebSocket(this.url)
     this.ws.addEventListener('message', (e) => {
-      const m = JSON.parse(e.data)
-      if (m.id !== undefined && this.pending.has(m.id)) { this.pending.get(m.id)(m); this.pending.delete(m.id) }
+      let m
+      try { m = JSON.parse(e.data) } catch { return }   // a non-JSON frame is not a reply
+      if (m.id !== undefined && this.pending.has(m.id)) {
+        const entry = this.pending.get(m.id)
+        clearTimeout(entry.timer)
+        this.pending.delete(m.id)
+        entry.resolve(m)
+      }
     })
+    // THE TWO LISTENERS THE AS-FILED CLASS DID NOT HAVE (`A-8-04`): a socket that CLOSES
+    // (the renderer died, the child was killed) or ERRORS can never deliver another reply,
+    // so the channel is dead at that instant rather than at the next timeout.
+    this.ws.addEventListener('close', () => { if (this.closedByDriver === true) return; this.markDead('the CDP socket CLOSED — no further reply can arrive') })
+    this.ws.addEventListener('error', () => { if (this.closedByDriver === true) return; this.markDead('the CDP socket reported an ERROR — no further reply can arrive') })
     return new Promise((res, rej) => { this.ws.addEventListener('open', res); this.ws.addEventListener('error', rej) })
   }
+  /** A BOUNDED SEND (`A-8-04`): the wait for a reply is capped at `CDP_REPLY_TIMEOUT_MS`
+   *  and an unanswered reply settles as `NO_CDP_REPLY` with the channel declared dead —
+   *  never a hang, never a silent success-shaped value. */
   send(method, params = {}) {
+    if (this.dead !== null) return Promise.resolve(NO_CDP_REPLY)
     const i = ++this.id
-    return new Promise((r) => { this.pending.set(i, r); this.ws.send(JSON.stringify({ id: i, method, params })) })
+    return new Promise((resolve) => {
+      const timer = setTimeout(() => {
+        this.pending.delete(i)
+        this.markDead(`NO REPLY to \`${method}\` (id ${i}) within the bounded ${CDP_REPLY_TIMEOUT_MS} ms`)
+        resolve(NO_CDP_REPLY)
+      }, CDP_REPLY_TIMEOUT_MS)
+      this.pending.set(i, { resolve, timer })
+      try { this.ws.send(JSON.stringify({ id: i, method, params })) }
+      catch (err) {
+        clearTimeout(timer)
+        this.pending.delete(i)
+        this.markDead(`the CDP socket could not be written to (${String(err && err.message)}) — no reply can arrive`)
+        resolve(NO_CDP_REPLY)
+      }
+    })
   }
   async evaluate(expression) {
     const r = await this.send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true, includeCommandLineAPI: true })
+    if (isNoCdpReply(r)) return NO_CDP_REPLY   // ⟶ `A-8-04`: the instrument state PROPAGATES
     if (r.result?.exceptionDetails) return { __cdpError: r.result.exceptionDetails.exception?.description ?? r.result.exceptionDetails.text }
     return r.result?.result?.value
   }
@@ -337,6 +472,7 @@ class Cdp {
       var hit = document.elementFromPoint(x, y);
       return { x: x, y: y, w: r.width, h: r.height, hit: hit ? (hit.tagName + (hit.id ? '#' + hit.id : '')) : null, isTarget: hit === el };
     })()`)
+    if (isNoCdpReply(point)) return NO_CDP_REPLY   // ⟶ `A-8-04`: no gesture is attempted on a dead channel
     if (point === null || point === undefined) return null
     await this.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: point.x, y: point.y })
     await this.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 1, buttons: 1 })
@@ -370,6 +506,7 @@ class Cdp {
     const started = Date.now()
     while (Date.now() - started < timeoutMs) {
       const present = await this.evaluate(`!!document.getElementById('exclusion-toggle')`)
+      if (isNoCdpReply(present)) return false   // ⟶ `A-8-04`: a DEAD channel is not a 20 s spin (the row that reads this answers MANUAL)
       if (present === true) return true
       await sleep(200)
     }
@@ -388,7 +525,11 @@ class Cdp {
       };
     })()`)
   }
-  close() { try { this.ws.close() } catch { /* already closed */ } }
+  /** THE DRIVER'S OWN CLOSE IS NOT A DEAD CHANNEL (`A-8-04`): the driver closes its channel
+   *  BEFORE it tears its boot down (the order is asserted by the call sites below), so the
+   *  `close` event that follows is the driver's own act rather than a broken instrument —
+   *  otherwise every green run would end by declaring its own channel dead. */
+  close() { this.closedByDriver = true; try { this.ws.close() } catch { /* already closed */ } }
 }
 
 // ---- [G] the static readings --------------------------------------------------
@@ -463,7 +604,7 @@ if (staleBefore === null || staleBefore.length !== 0) {
 const bootAStartedAt = Date.now()   // the age floor for the restart arm's profile baseline
 const bootA = await bootApp('A', ['--mcp-transport=stdio', '--remote-debugging-port=0'])
 const portA = await devtoolsPort(bootA)
-const cdp = await Cdp.attach(portA)
+const cdp = await Cdp.attach(portA, 'A')
 const togglePainted = await cdp.waitForToggle()
 
 // boot-order evidence: the renderer's OWN stderr line for IPC_READY
@@ -1608,7 +1749,7 @@ const mcpCannotRearm = returnVia.status === 503 && returnVia.text.includes('excl
 // (its pane boot-read is post-`F-1`), so the authored body's `data-state` flip targets the true
 // return rather than a stale self-transition.
 const httpDevtoolsPort = await devtoolsPort({ stderrText: () => httpStderr })
-const cdpHttp = await Cdp.attach(httpDevtoolsPort)
+const cdpHttp = await Cdp.attach(httpDevtoolsPort, 'HTTP')
 registerCleanup(() => cdpHttp.close())
 await cdpHttp.send('Page.enable')
 await cdpHttp.send('Page.reload', { ignoreCache: true })
@@ -1692,8 +1833,11 @@ try { cdpHttp.close() } catch { /* gone */ }
 try { httpChild.kill('SIGKILL') } catch { /* gone */ }
 await sleep(400)
 rmSync(HTTP_PROFILE, { recursive: true, force: true })
-await teardown(bootA)
+// ⟶ `A-8-04`: THE DRIVER CLOSES ITS OWN CHANNEL BEFORE IT KILLS THE BOOT IT MEASURED. The
+// as-filed order killed boot A first, and a `close` event from a child this driver killed would
+// otherwise be read as a DEAD INSTRUMENT and misreport the whole run in the summary below.
 cdp.close()
+await teardown(bootA)
 
 // ══════════════════════════════════════════════════════════════════════════════
 // PHASE 6 — [G] the static boundary censuses, the byte pins, the diff scope
@@ -1757,8 +1901,29 @@ console.log(`LIVE BATTERY RESULT: ${CHECKS.length} recorded rows = ` +
 console.log('  the terms are the rows themselves; every verdict above was produced by the instruments named in its own row')
 for (const c of CHECKS.filter((x) => x.verdict === 'FAIL')) console.log(`  ✗ FAIL ${c.id}: ${c.subject}`)
 if (TALLY.FAIL === undefined) console.log('  no row contradicted the clause it cites')
+// ⟶ `A-8-04`: THE INSTRUMENT'S OWN STATE IS PRINTED WITH THE TALLY, so a dead channel can
+// never be read as a green battery. The EXIT CODE keeps its landed meaning (non-zero ⟺ at
+// least one FAIL); what a dead channel changes is that the run FINISHES and SAYS SO.
+const deadDeclared = Object.entries(CDP_DEPENDENT_ROWS)
+  .map(([id, label]) => ({ id, label, reason: deadChannelReason(label) }))
+  .filter((d) => d.reason !== null)
+console.log(`  INSTRUMENT STATE: ${CDP_CHANNELS.length} CDP channel(s) attached (${JSON.stringify(CDP_CHANNELS.map((c) => ({ channel: c.label, state: c.dead === null ? 'alive' : 'DEAD', reason: c.dead })))}); ${Object.keys(CDP_DEPENDENT_ROWS).length} row(s) DECLARED dependent on one; the reply bound is ${CDP_REPLY_TIMEOUT_MS} ms`)
+for (const c of CHECKS.filter((x) => x.verdict === 'MANUAL')) console.log(`  » MANUAL ${c.id}: ${c.subject}`)
+if (deadDeclared.length > 0) {
+  console.log(`  ✗ NOT A GREEN BATTERY: the CDP channel DIED (${deadDeclared.map((d) => `${d.label}: ${d.reason}`).join(' · ')}) — ` +
+    `${TALLY.MANUAL ?? 0} row(s) read MANUAL, and a MANUAL row is NOT a PASS: the §6.1 report's \`manual: 0\` claim FAILS and gate 6 is NOT green on this run.`)
+}
 // THE EXIT CODE IS EVIDENCE (the `§6.2` audit's `F5`): the as-filed driver ended
 // `process.exit(0)` UNCONDITIONALLY, so the `exit: 0` the record cited carried NO
 // information — the as-filed 6-FAIL run had the same exit code as the green one. A
 // non-zero exit now means "at least one row is FAIL", and nothing else.
-process.exit(TALLY.FAIL ? 1 : 0)
+//   ⟶ AMENDED BESIDE 2026-10-11 (`A-8-04`, the EIGHTH `§6.2` audit; `RCA-8(d)`: the sentence
+//   above is KEPT BYTE-FOR-BYTE as the `F5` landing's own claim). The sentence's "and nothing
+//   else" was TRUE OF THE VERDICTS and FALSE OF THE INSTRUMENT: before this pass an unanswered
+//   CDP reply did not produce a different exit code, it produced NO exit code at all (the run
+//   hung), so the claim could not be tested on the one state that makes it matter. It is now
+//   `3` for a run in which any DECLARED channel-dependent row read `MANUAL` — a state that
+//   could not previously reach an exit code — and a dead-instrument run can never read `0`.
+//   `0` therefore keeps its meaning (every row PASS, none MANUAL); `1` keeps its meaning
+//   (at least one FAIL); `3` is the new, and previously IMPOSSIBLE, dead-instrument code.
+process.exit(TALLY.FAIL ? 1 : (CHECKS.some((c) => c.instrument === true) ? 3 : 0))
