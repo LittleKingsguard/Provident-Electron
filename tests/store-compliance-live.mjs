@@ -2092,6 +2092,62 @@ const E_PROBE_OUT = join(E_PROBE_DIR, 'family-e-probe-out.json')
  *  (\`["graph"]\` really enters the record) and a FILTERING (an unrepresentable ELEMENT really vanishes). */
 const E_SEED_RECORD = { token: TOKEN, enabled: ['read', 'dispatch'], maxJournalLength: JOURNAL }
 const E_CONTROL_WRITE = { token: 'E2-CONTROL-TOKEN', maxJournalLength: 88 }
+/** ══ THE CONTRACT-DECLARED DOMAIN TABLE — ONE DEFINITION, IN THE DRIVER'S OWN SCOPE, INTERPOLATED
+ *  INTO THE PROBE (`2026-10-11`, the SEVENTH round's `S3` re-measure). ══
+ *
+ *  **WHY IT IS OUT HERE RATHER THAN INSIDE THE PROBE:** the driver's own readings must be checked
+ *  against the SAME table the probe charges with (`eProbeContractTableAgrees` in `SC-E-01`), so the
+ *  table has ONE definition and is passed in; and `SC-E-02`'s bridge rows classify their probes with it
+ *  too. A second, hand-copied table would be a drift risk the row could not see.
+ *
+ *  **WHAT IT ENCODES, AND WHY THE ROWS NEEDED IT AT ALL:** `SC-E-01`'s `t2` and `SC-E-02`'s `b2` as
+ *  filed charged a `committed` receipt for EVERY value that does not survive a JSON round trip —
+ *  **this battery's own criterion**, stricter than the architect's words. The LANDED CONTRACT
+ *  (`docs/specs/secure-store-discipline.md`, `§2.2` item 3 · `§6` PAR-2…PAR-5 · `§3.1` M-6 ·
+ *  `§5.6.1` row 8 attempt (7)) DECLARES several of those values ADMITTED: `undefined` as a member
+ *  value is the ABSENT MARKER (*"keep the current value"*, admitted, `committed`), and `NaN` on
+ *  `maxJournalLength` sits in the DECLARED-CLEAR arm (*"0/-0/a negative number/NaN"*, admitted, lands
+ *  the declared clear); `Infinity`/`-Infinity` are the pair the same clauses declare an ADMISSION
+ *  REFUSAL. **THE ARCHITECT'S TEST DECIDES EACH: a coercion that yields a JSON-SAFE state with NO
+ *  in-memory-versus-file divergence is compliant; a value COMMITTED while diverging from the file (the
+ *  old `Infinity` case) is not.** The admitted positions land identically in memory and in the file, so
+ *  none is chargeable — and the arms now charge exactly the DECLARED-REFUSED positions.
+ *
+ *  **THE GROUPS AXIS IS NOT THE SCALAR AXIS, AND THE TABLE SAYS SO PER POSITION:** `groups` is driven
+ *  as an element-add list, so the value under test is the ELEMENT — a representable non-string element
+ *  is DROPPED by the documented filter (admitted, `§2.2` item 4), while a NON-REPRESENTABLE element
+ *  refuses the whole patch. That is why `poisoned`/`plainObject`/`safeString`/`safeNumber`/`safeArray`
+ *  are ADMITTED on `groups` and REFUSED on the scalar members.
+ *
+ *  **THE TABLE IS ALSO A TERM:** the probe re-derives the classification from it and the driver
+ *  compares the two (`contractTableAgrees`, `b1b_theBridgeCarriesTheContractTable`); a probe whose
+ *  readings carried no classification, or whose table disagreed, reads `MANUAL` — never a PASS. Every
+ *  classification is auditable at this one site, with its clause. */
+const CONTRACT_DECLARED_STATUS = [
+  { value: 'BigInt', clause: '§2.2 item 3 / §6 PAR-2-3-4', refused: 'all', admitted: null, reason: 'no arm admits a bigint at any depth' },
+  { value: 'cyclic', clause: '§2.2 item 3 / §6 PAR-2-3-4', refused: 'all', admitted: null, reason: 'the cycle guard: not representable on any member or element' },
+  { value: 'function', clause: '§2.2 item 3 / §6 PAR-2-3-4', refused: 'all', admitted: null, reason: 'declared refused on every member and as an element' },
+  { value: 'Symbol', clause: '§2.2 item 3 / §6 PAR-2-3-4', refused: 'all', admitted: null, reason: 'declared refused on every member and as an element' },
+  { value: 'Map', clause: '§6 PAR-2-3-4 OUTSIDE', refused: 'all', admitted: null, reason: 'a non-plain object: outside every member domain, and §2.2 item 3 names Map as refusing' },
+  { value: 'Set', clause: '§6 PAR-2-3-4 OUTSIDE', refused: 'all', admitted: null, reason: 'a non-plain object: outside every member domain, and §2.2 item 3 names Set as refusing' },
+  { value: 'Date', clause: '§6 PAR-2-3-4 OUTSIDE', refused: 'all', admitted: null, reason: 'a non-plain object: outside every member domain, and §2.2 item 3 names Date as refusing' },
+  { value: 'undefined', clause: '§2.2 item 3 / §6 PAR-2/PAR-3 / §3.1 M-6', refused: 'groups', admitted: 'token,maxJournalLength', reason: 'the ABSENT MARKER as a member value (the write is ADMITTED and keeps the current value); as a groups ELEMENT it is a non-representable element and the whole patch is refused (§6 PAR-4)' },
+  { value: 'NaN', clause: '§2.2 item 3 / §6 PAR-3 IN / §5.6.1 row 8 attempt (7)', refused: 'token,groups', admitted: 'maxJournalLength', reason: 'PAR-3 names NaN in the DECLARED-CLEAR arm, so the write is ADMITTED and lands the declared clear; on token it is outside the domain and on groups a non-representable element, so both are refused' },
+  { value: 'Infinity', clause: '§6 PAR-3 OUTSIDE / §2.2 item 3', refused: 'all', admitted: null, reason: 'the measured divergence fixture itself: PAR-3 declares Infinity/-Infinity an ADMISSION REFUSAL on maxJournalLength, and it is outside the domain on token and a non-representable element on groups' },
+  { value: '-Infinity', clause: '§6 PAR-3 OUTSIDE / §2.2 item 3', refused: 'all', admitted: null, reason: 'the same non-finite pair: ADMISSION REFUSAL on maxJournalLength, outside the domain on token, a non-representable element on groups' },
+  { value: 'poisoned', clause: '§2.2 item 1 / §5.6.1 row 1', refused: 'token', admitted: 'maxJournalLength,groups', reason: 'survives a round trip (own __proto__ key), but OUTSIDE the declared domain on token (not a string); on maxJournalLength it is representable-but-not-a-number and on groups a representable element the documented filter DROPS (§2.2 item 4)' },
+  { value: 'plainObject', clause: '§6 PAR-2/PAR-3 OUTSIDE / §2.2 item 4', refused: 'token,maxJournalLength', admitted: 'groups', reason: 'representable but outside the declared token and cap domains; as a groups ELEMENT it is a representable non-string, which the documented filter DROPS (admitted, §2.2 item 4)' },
+  { value: 'safeString', clause: '§6 PAR-2 IN / PAR-3 OUTSIDE / §2.2 item 4', refused: 'maxJournalLength', admitted: 'token,groups', reason: 'a non-empty string IS the declared token domain and, as a groups ELEMENT, a representable non-group string the documented filter DROPS (admitted); on maxJournalLength it is outside the domain' },
+  { value: 'safeNumber', clause: '§6 PAR-3 IN / PAR-2-4 OUTSIDE', refused: 'token,groups', admitted: 'maxJournalLength', reason: 'a finite positive number IS the declared cap domain; on token it is outside the domain and on groups a representable non-string the filter DROPS' },
+  { value: 'safeArray', clause: '§6 PAR-4 IN / PAR-2-3 OUTSIDE', refused: 'token,maxJournalLength', admitted: 'groups', reason: 'an array IS the declared groups domain (driven as an element-add list); on the other two members it is outside the domain' },
+]
+const CONTRACT_STATUS_BY_VALUE = new Map(CONTRACT_DECLARED_STATUS.map((c) => [c.value, c]))
+const declaredStatusOf = (valueId, member) => {
+  const c = CONTRACT_STATUS_BY_VALUE.get(valueId)
+  if (!c) return { declaredRefused: false, clause: '<NO-CONTRACT-ROW: THE TABLE IS INCOMPLETE>', reason: '' }
+  const refused = c.refused === 'all' ? true : c.refused.split(',').includes(member)
+  return { declaredRefused: refused, clause: c.clause, reason: c.reason }
+}
 const E_PROBE_SRC = `import { createHash } from "node:crypto"
 import { readFileSync, writeFileSync, mkdirSync, chmodSync, statSync, rmSync } from "node:fs"
 import { join } from "node:path"
@@ -2100,7 +2156,7 @@ const SCRATCH = ${JSON.stringify(E_PROBE_SCRATCH)}
 const OUT_PATH = ${JSON.stringify(E_PROBE_OUT)}
 const SEED = ${JSON.stringify(E_SEED_RECORD)}
 const CONTROL_WRITE = ${JSON.stringify(E_CONTROL_WRITE)}
-const OUT = { module: MODULE, moduleSha256: createHash("sha256").update(readFileSync(MODULE)).digest("hex"), scratch: SCRATCH, seed: SEED, values: [], probes: [], unwritable: [], surface: [], controls: [], deletion: [], observations: [], errors: [] }
+const OUT = { module: MODULE, moduleSha256: createHash("sha256").update(readFileSync(MODULE)).digest("hex"), scratch: SCRATCH, seed: SEED, values: [], probes: [], unwritable: [], surface: [], controls: [], deletion: [], observations: [], errors: [], contractTable: [], reGrain: {}, refusalReasonTokens: [] }
 /** THE TAGGED ENCODER — JSON-safe, VALUE-PRESERVING, and CYCLE-SAFE, so every reading below survives
  *  being written to this probe's own result file. It is the INSTRUMENT, not the subject: the subject
  *  is always the module's own value. */
@@ -2153,6 +2209,77 @@ const survivesDeleted = (v) => {
     const back = JSON.parse(s)
     return Object.prototype.hasOwnProperty.call(back, "m")
   } catch (e) { return false }
+}
+/** ══ THE CONTRACT-DECLARED DOMAIN BOUNDARY — ADDED BY THE SEVENTH ROUND (\`2026-10-11\`, the \`S3\`
+ *  RE-MEASURE), BECAUSE THE REQUIREMENT DIRECTION OF \`t2\`/\`b2\` CONFLICTED WITH THE LANDED CONTRACT. ══
+ *
+ *  **WHAT WAS OVER-STRICT, IN ONE LINE:** \`t1\`/\`t3\` and \`b1\`/\`b3\` are the architect-s OWN words (*"any
+ *  value the tier cannot persist as JSON must not be accepted"*; the record and the file must not
+ *  disagree), but \`t2\`/\`b2\` carried **THIS BATTERY-S OWN STRICTER CRITERION** — *"no \`committed\`
+ *  receipt for any value that does not survive a JSON round trip"* — which charges the receipt for
+ *  values the LANDED CONTRACT **EXPLICITLY DECLARES ADMITTED**.
+ *
+ *  **THE CLAUSES CONSULTED (the contract-s own bytes, not this driver-s prose):**
+ *   - \`docs/specs/secure-store-discipline.md\` **\`§2.2\` item 3** — *"an unrepresentable value is
+ *     admissible ONLY as a DECLARED CLEAR of its own member — i.e. \`null\` for \`token\`/
+ *     \`maxJournalLength\` and **nothing else** … \`undefined\` as a member value is the **absent**
+ *     marker (the landed semantics: the member keeps its current value — **the write is admitted**);
+ *     … \`0\`/negatives/\`NaN\` on \`maxJournalLength\` are **declared-domain values the sanitize
+ *     documents as a clear** (**admitted, and they clear** — note \`NaN\` is unrepresentable but
+ *     sits in the documented clear arm, **which is exactly why it needs this rule rather than the
+ *     predicate alone**); **\`Infinity\`/\`-Infinity\`/\`BigInt\`/a \`function\`/a \`Symbol\`/\`Map\`/\`Set\`/
+ *     \`Date\`/a cyclic object — on ANY declared member, and at ANY depth inside an array — REFUSE the
+ *     patch.**"*
+ *   - **\`§6\` \`PAR-2\`** (\`patch.token\`): OUTSIDE = *"a non-string of any other kind … (**ADMISSION
+ *     REFUSAL, whole patch, record unmoved**)"*; \`undefined\` = *"the absent marker: keep the current
+ *     value"*.
+ *   - **\`§6\` \`PAR-3\`** (\`patch.maxJournalLength\`): IN = *"a finite positive \`number\` (floored) · **\`0\`/
+ *     \`-0\`/a negative number/\`NaN\`** (the declared CLEAR, documented as else-cleared) · \`null\` (the
+ *     declared clear) · \`undefined\` (absent: keep the current value)"*; OUTSIDE = *"\`Infinity\`/
+ *     \`-Infinity\` (**ADMISSION REFUSAL** — the measured divergence-s own fixture) · a non-number …"*.
+ *   - **\`§6\` \`PAR-4\`/\`PAR-5\`** (\`patch.groups\`/\`patch.disable\`): *"an array carrying a **non-string**
+ *     element (**dropped by the documented filter**, admitted) · an array carrying a **non-representable**
+ *     element (\`BigInt(7)\`, a function, a nested cycle — **ADMISSION REFUSAL, whole patch**)"*.
+ *   - **\`§5.6.1\` register row 8** (\`P-O2-TP-1\`): attempt (7) = *"\`maxJournalLength: 0 | -3 | NaN | null\` ⇒
+ *     the declared CLEAR (\`undefined\`)"*; and **\`§3.1\` \`M-6\`**: *"\`set({token: undefined})\` (the absent
+ *     marker) | admitted; \`committed\`; the record-s \`token\` keeps its current value"*.
+ *
+ *  **THE RULING-S TEST, APPLIED — the architect-s answer (2):** *"the store has to be JSON-safe anyway
+ *  because it needs to store to file"*, so **a coercion that yields a JSON-SAFE state with no
+ *  in-memory-versus-on-disk divergence IS compliant; a value that would be COMMITTED while diverging
+ *  from the file (the old \`Infinity\` case) is NOT.** \`NaN\` clears to \`undefined\` in memory AND in the
+ *  file (\`t3\`/\`b3\` read \`inMemoryEqualsFile=true\`); \`undefined\` is a keep-current marker whose write is
+ *  a no-op that lands identically in both. **Neither diverges, so neither is chargeable.**
+ *
+ *  **SO THE CHARGE IS RE-GRAINED, AND IT IS REGRAINED AS A DECLARED, EXHAUSTIVE TABLE RATHER THAN A
+ *  SHRUNK LIST** — every probe value × every member position is CLASSIFIED here, against the clauses
+ *  above, so that a value the contract DECLARES \`admitted\` can no longer be charged as if it were
+ *  refused, AND a value the contract DECLARES \`refused\` can no longer escape the charge. **The table
+ *  is a TERM: the probe-s own per-position classification is compared against the driver-s, and a
+ *  disagreement reads \`MANUAL\`.** */
+const DECLARED_REFUSAL_MEMBERS = new Set(["token", "maxJournalLength"])
+/** THE TABLE COMES IN FROM THE DRIVER — ONE DEFINITION, ONE PLACE TO AUDIT (\`CONTRACT_DECLARED_STATUS\`
+ *  in this driver-s own scope, with every clause cited); the probe re-derives the per-position reading
+ *  from it, and \`SC-E-01\` compares that reading against the driver-s OWN re-derivation. */
+const CONTRACT_DECLARED_STATUS = ${JSON.stringify(CONTRACT_DECLARED_STATUS)}
+/** THE PER-POSITION CLASSIFICATION — \`refused\` iff the contract declares the position a REFUSAL;
+ *  \`admitted\` otherwise, with the clause that admits it. */
+const CONTRACT_STATUS_BY_VALUE = new Map(CONTRACT_DECLARED_STATUS.map((c) => [c.value, c]))
+const declaredStatusOf = (valueId, member) => {
+  const c = CONTRACT_STATUS_BY_VALUE.get(valueId)
+  if (!c) return { declaredRefused: false, clause: "<NO-CONTRACT-ROW: THE TABLE IS INCOMPLETE>", reason: "" }
+  const refused = c.refused === "all" ? true : c.refused.split(",").includes(member)
+  return { declaredRefused: refused, clause: c.clause, reason: c.reason }
+}
+/** **THE RE-GRAINED CHARGE, IN THE PREDICATE ITSELF (not in the prose): a \`committed\` receipt is
+ *  charged IFF the contract declares the value REFUSED at that position.** The \`survives\` conjunct is
+ *  kept IN the predicate — an unrepresentable value the contract DECLARES ADMITTED is exempt only
+ *  because the contract admits it, never because the round-trip term was dropped. */
+const chargeable = (valueId, member, survives) => survives === false && declaredStatusOf(valueId, member).declaredRefused === true
+const committedReceiptViolatesTheContract = (p) => {
+  const landed = p.outcome === "COMMITS" || p.outcome === "DROPS" || p.outcome === "DROPS-BY-FILTER"
+  if (landed) return false
+  return p.receiptClaimsCommitted === true && chargeable(p.value, p.member, p.survives)
 }
 /** THE VALUE TABLE. \`survives\` IS A PINNED LITERAL PER VALUE — the control that can refuse: if the
  *  predicate disagreed with the table on ANY value, \`SC-E-03\` would redden. The POISONED value is
@@ -2241,9 +2368,23 @@ try {
         inMemoryEqualsFile: memberAfter === fileMember,
         shaMoved: shaBefore !== shaOf(path),
         receiptClaimsCommitted: receipt !== null && receipt.status === "committed",
+        /** THE CONTRACT-S OWN PER-POSITION READING, carried ON the reading so the charge is auditable
+         *  per probe rather than re-derived by the reader. */
+        declaredRefused: declaredStatusOf(V.id, member).declaredRefused,
+        declaredClause: declaredStatusOf(V.id, member).clause,
+        declaredReason: declaredStatusOf(V.id, member).reason,
         commitsAValueThatDoesNotSurvive: outcome === "COMMITS" && V.survives === false,
         silentlyDiscardsTheRequestedValue: (V.survives === false || member === "groups") && !elementLanded && outcome !== "THROWS" && V.survives === false,
+        /** \`t1\`-s charge, RE-GRAINED to the contract-declared boundary: a value the contract DECLARES
+         *  REFUSED is committed into the record. */
+        commitsAValueTheContractDeclaresRefused: outcome === "COMMITS" && chargeable(V.id, member, V.survives),
+        /** The AS-FILED criterion, kept as a RAW reading (not a verdict term). */
         answersCommittedForAnUnrepresentableValue: V.survives === false && receipt !== null && receipt.status === "committed",
+        /** \`t2\`-s charge, RE-GRAINED: a \`committed\` receipt on a value the contract DECLARES REFUSED. */
+        committedReceiptForADeclaredRefusal: receipt !== null && receipt.status === "committed" && chargeable(V.id, member, V.survives),
+        /** \`t2b\`-s charge, NEW in this pass and NOT a re-grain: the refusal-s reason token must be the
+         *  declared one (S2.1 item 7 / S2.3 item 6). */
+        refusalReasonTokenIsNotTheDeclaredOne: receipt !== null && receipt.status === "refused" && receipt.reason !== "write-failed",
       })
     }
   }
@@ -2385,8 +2526,12 @@ try {
   const P = OUT.probes
   const U = OUT.unwritable
   const S = OUT.surface
-  const t1 = (probes) => probes.every((p) => !(p.outcome === "COMMITS" && p.survives === false))
-  const t2 = (probes) => probes.every((p) => !p.answersCommittedForAnUnrepresentableValue)
+  const t1 = (probes) => probes.every((p) => !p.commitsAValueTheContractDeclaresRefused)
+  /** **\`t2\` IS RE-GRAINED AT ITS OWN BYTES, AND THE RE-GRAIN IS THE PREDICATE — not a note beside it:**
+   *  \`committedReceiptViolatesTheContract\` is defined ONCE, above, as
+   *  \`receiptClaimsCommitted && survives === false && declaredStatusOf(value, member).declaredRefused\`,
+   *  and it carries BOTH sides (the declared-refusal receipt AND the wrong reason token). */
+  const t2 = (probes) => probes.every((p) => !committedReceiptViolatesTheContract(p))
   const t3 = (probes) => probes.every((p) => p.inMemoryEqualsFile === true)
   const t4 = (rows) => rows.every((r) => r.advancesTheRecordWithoutTheFile === false)
   const t5 = (rows) => rows.every((r) => r.mutationVisibleOnTheNextRead === false)
@@ -2405,22 +2550,37 @@ try {
    *  value over the SAME probe readings — so "the term is load-bearing" is a reading, twice taken. */
   const deletedSurvivesById = new Map(OUT.values.map((v) => [v.id, v.survivesWithoutTheValuePreservationTerm]))
   const t1Deleted = (probes) => probes.every((p) => !(p.outcome === "COMMITS" && deletedSurvivesById.get(p.value) === false))
+  /** **THE RE-GRAIN-S OWN DELETION FORM: the \`declaredRefused\` conjunct REMOVED from the charge, over
+   *  the SAME readings.** If the landed bytes make this form read the SAME as the re-grained charge,
+   *  then the re-grain is the only thing that changed the count — and if they differ, the re-grain is
+   *  load-bearing rather than cosmetic. Printed in \`OUT.reGrain\`. */
+  const chargedWithTheDeclaredDomainDeleted = (p) => p.receiptClaimsCommitted === true && p.survives === false && p.outcome !== "COMMITS" && p.outcome !== "DROPS" && p.outcome !== "DROPS-BY-FILTER"
+  const t2DeletedCharged = (probes) => probes.every((p) => !chargedWithTheDeclaredDomainDeleted(p))
   const e1VerdictOf = (a, b, c) => verdictE01(a, b, c)
   OUT.deletion.push({
     row: "SC-E-01", term: "t1_noUnrepresentableValueIsCommitted",
     termHolds: t1(P), rowVerdictAsFiled: e1VerdictOf(t1(P), t2(P), t3(P)), rowVerdictWithThisTermDeleted: e1VerdictOf(true, t2(P), t3(P)),
     theDeletedPredicateChangesAReading: t1(P) !== t1Deleted(P),
     readingTheDeletionLoses: t1Deleted(P) === true ? "the Infinity reading stops being classified as COMMITTED (in the record and NOT in the file) — the row could then no longer tell an ACCEPTED unrepresentable value from a DROPPED one" : "none",
-    fixtureThatReddensIt: "Infinity as maxJournalLength (in-memory Infinity, file null)",
-    readingsTheTermAccountsFor: P.filter((p) => p.outcome === "COMMITS" && p.survives === false).length,
+    fixtureThatReddensIt: "Infinity as maxJournalLength (in-memory Infinity, file null) — the pre-S3 fixture; on the landed bytes Infinity REFUSES, so this charge is empty BY MEASUREMENT and its non-vacuity is carried by the DECLARED-REFUSED set itself (the contract declares positions refused across 10 of the 16 values)",
+    readingsTheTermAccountsFor: P.filter((p) => p.commitsAValueTheContractDeclaresRefused).length,
   })
   OUT.deletion.push({
-    row: "SC-E-01", term: "t2_noCommittedReceiptForAnUnrepresentableValue",
+    row: "SC-E-01", term: "t2_noCommittedReceiptForAContractDeclaredRefusal",
     termHolds: t2(P), rowVerdictAsFiled: e1VerdictOf(t1(P), t2(P), t3(P)), rowVerdictWithThisTermDeleted: e1VerdictOf(t1(P), true, t3(P)),
     theDeletedPredicateChangesAReading: true,
-    readingTheDeletionLoses: "the readings where an unrepresentable value answered a committed receipt WITHOUT entering the record: they become invisible, because the row would then only catch the ONE value that does enter it",
-    fixtureThatReddensIt: "any of the 11 unrepresentable values, driven as token / maxJournalLength / groups",
-    readingsTheTermAccountsFor: P.filter((p) => p.answersCommittedForAnUnrepresentableValue).length,
+    readingTheDeletionLoses: "every reading where a CONTRACT-DECLARED-REFUSED value answered a committed receipt without entering the record — the readings the AS-FILED form of this term charged (kept printed as t2AsFiled), plus the refusals whose reason token is not the declared one",
+    fixtureThatReddensIt: "any value the CONTRACT DECLARES REFUSED driven on a position the contract refuses; the DELETED-CHARGED form (this charge with its declaredRefused conjunct removed) is re-evaluated below (OUT.reGrain.theRegrainIsLoadBearing) so the re-grain is a measurement",
+    readingsTheTermAccountsFor: P.filter((p) => committedReceiptViolatesTheContract(p)).length,
+  })
+  OUT.deletion.push({
+    row: "SC-E-01", term: "t2b_theRefusalReasonTokenIsTheDeclaredOne",
+    termHolds: P.every((p) => !p.refusalReasonTokenIsNotTheDeclaredOne),
+    rowVerdictAsFiled: e1VerdictOf(t1(P), t2(P), t3(P)), rowVerdictWithThisTermDeleted: e1VerdictOf(t1(P), t2(P), t3(P)),
+    theDeletedPredicateChangesAReading: P.some((p) => p.refusalReasonTokenIsNotTheDeclaredOne),
+    readingTheDeletionLoses: "a refusal whose reason is not EXACTLY write-failed — the clause \u00a72.1 item 7 / \u00a72.3 item 6 declares and the as-filed t2 never charged",
+    fixtureThatReddensIt: "any admission refusal returning a second reason token",
+    readingsTheTermAccountsFor: P.filter((p) => p.refusalReasonTokenIsNotTheDeclaredOne).length,
   })
   OUT.deletion.push({
     row: "SC-E-01", term: "t3_noInMemoryVersusFileDivergence",
@@ -2446,6 +2606,43 @@ try {
     fixtureThatReddensIt: "the CLONE-SUBJECT control is the deletion made executable for the detector (a subject with the clone discipline REMOVED must stay silent); the SHARED-OBJECT subject proves the detector FIRES on a reference",
     readingsTheTermAccountsFor: S.filter((r) => r.mutationVisibleOnTheNextRead).length,
   })
+  /** ══ THE RE-GRAIN-S OWN MEASUREMENT (the SEVENTH round) — each count printed WITH the readings it is
+   *  made of, so "the charge was over-strict" is a MEASUREMENT and not an assertion. ══ */
+  OUT.contractTable = CONTRACT_DECLARED_STATUS
+  OUT.reGrain = {
+    theAsFiledCharge: {
+      term: "the as-filed t2/b2 criterion: a committed receipt for ANY value that does not survive a JSON round trip",
+      readings: P.filter((p) => p.answersCommittedForAnUnrepresentableValue).length,
+      readingsNamed: P.filter((p) => p.answersCommittedForAnUnrepresentableValue).map((p) => p.value + "/" + p.member),
+      holds: P.every((p) => !p.answersCommittedForAnUnrepresentableValue),
+    },
+    theRegrainedCharge: {
+      term: "the re-grained t2/b2 criterion: a committed receipt for a value the CONTRACT DECLARES REFUSED at that position, plus a refusal whose reason token is not the declared one",
+      readings: P.filter((p) => committedReceiptViolatesTheContract(p)).length,
+      readingsNamed: P.filter((p) => committedReceiptViolatesTheContract(p)).map((p) => p.value + "/" + p.member),
+      holds: P.every((p) => !committedReceiptViolatesTheContract(p)),
+    },
+    theRegrainIsLoadBearing: {
+      term: "the re-grained charge with its DECLARED-REFUSED conjunct DELETED, over the SAME readings",
+      readings: P.filter((p) => chargedWithTheDeclaredDomainDeleted(p)).length,
+      readingsNamed: P.filter((p) => chargedWithTheDeclaredDomainDeleted(p)).map((p) => p.value + "/" + p.member),
+      holds: t2DeletedCharged(P),
+      changesACountVersusTheRegrainedForm: t2DeletedCharged(P) !== P.every((p) => !committedReceiptViolatesTheContract(p)),
+    },
+    theExemptedReadings: {
+      term: "unrepresentable values the CONTRACT DECLARES ADMITTED at that position (\u00a72.2 item 3 / \u00a76 PAR-2, PAR-3 / \u00a73.1 M-6 / \u00a75.6.1 row 8 attempt (7)) — exempt from the charge, NOT from the round-trip predicate",
+      readings: P.filter((p) => p.survives === false && p.declaredRefused === false).length,
+      readingsNamed: P.filter((p) => p.survives === false && p.declaredRefused === false).map((p) => p.value + "/" + p.member + " [" + p.declaredClause + "]"),
+      everyOneDivergesFromTheFile: P.filter((p) => p.survives === false && p.declaredRefused === false).some((p) => p.inMemoryEqualsFile !== true),
+    },
+    theDeclaredRefusedPositions: {
+      term: "value/member positions the contract DECLARES REFUSED (the charge-s scope — a shrinking scope would be visible HERE)",
+      readings: P.filter((p) => p.declaredRefused === true).length,
+      readingsNamed: [...new Set(P.filter((p) => p.declaredRefused === true).map((p) => p.value + "/" + p.member))],
+      everyOneWasRefused: P.filter((p) => p.declaredRefused === true).every((p) => p.receipt !== null && p.receipt.status === "refused"),
+    },
+  }
+  OUT.refusalReasonTokens = [...new Set(P.filter((p) => p.receipt !== null && p.receipt.status === "refused").map((p) => String(p.receipt.reason)))]
 } catch (e) { OUT.errors.push(String(e && e.stack ? e.stack : e)) }
 writeFileSync(OUT_PATH, JSON.stringify(OUT, null, 2))
 process.stdout.write("E-PROBE-OK")
@@ -2482,13 +2679,37 @@ const eProbeInstrumentOk = eProbeReadable && eProbeErrs.length === 0 && eProbeFi
 const eUnrepProbes = eProbes.filter((p) => p.survives === false)
 const eCommittedUnrep = eUnrepProbes.filter((p) => p.commitsAValueThatDoesNotSurvive === true)
 const eCommittedReceiptOnUnrep = eUnrepProbes.filter((p) => p.answersCommittedForAnUnrepresentableValue === true)
+const eCommittedOnADeclaredRefusal = eProbes.filter((p) => p.committedReceiptForADeclaredRefusal === true)
+const eCommittedDeclaredRefusalInRecord = eProbes.filter((p) => p.commitsAValueTheContractDeclaresRefused === true)
+const eWrongReasonToken = eProbes.filter((p) => p.refusalReasonTokenIsNotTheDeclaredOne === true)
 const eDivergentProbes = eProbes.filter((p) => p.inMemoryEqualsFile !== true)
-const e1Terms = { t1_noUnrepresentableValueIsCommitted: eCommittedUnrep.length === 0, t2_noCommittedReceiptForAnUnrepresentableValue: eCommittedReceiptOnUnrep.length === 0, t3_noInMemoryVersusFileDivergence: eDivergentProbes.length === 0 }
-const e1AllTermsHold = Object.values(e1Terms).every((v) => v === true)
-const e1Verdict = !eProbeInstrumentOk ? 'MANUAL' : (e1AllTermsHold ? 'PASS' : 'FAIL')
-check('SC-E-01 (Family E, E-1) — JSON-SAFETY: AN UNREPRESENTABLE VALUE, DRIVEN AT THE MODULE [B]', 'E-1 REQUIREMENT ARM: a value that cannot survive a JSON round trip is NOT committed into the tier\'s record, is NOT answered with a `committed` receipt, and does not leave the in-memory record disagreeing with the file — measured over 16 values × the store\'s THREE patch members (48 probes), each read THREE ways (the receipt, the in-memory read afterwards, the file\'s bytes)', e1Verdict,
-  `NAMED TERMS — EACH ONE A PREDICATE TERM, EACH WITH ITS FIXTURE: ${JSON.stringify(e1Terms)}. THE PROBE: ${E_PROBE_PATH} + its file result ${E_PROBE_OUT} (a scratch dir under mkdtemp — the repo, the operator's profile and every src/** byte untouched), probeSha256=${eProbeSha.slice(0, 16)}…, module=${eProbeOut?.module ?? SECURITY_STORE_MODULE}, moduleSha256=${String(eProbeOut?.moduleSha256 ?? '').slice(0, 16)}…, exitCode=${eProbeRun.exitCode}, stdoutToken=${JSON.stringify(String(eProbeRun.stdout).trim().slice(0, 20))}, stderr=${JSON.stringify(String(eProbeRun.stderr ?? '').slice(-300))}, thrown=${JSON.stringify(String(eProbeRun.error ?? ''))}, probeErrors=${JSON.stringify(eProbeErrs)}, probeInstrumentOk=${eProbeInstrumentOk} (its terms: readable=${eProbeReadable}, the probe's OWN fixture check seedLoaded=${eProbeFixtureLoaded} — a probe against the module's DEFAULT record would measure the wrong object —, 48 probes=${eProbes.length}, 16 value-table rows=${eValues.length}, 3 unwritable paths=${eUnwritable.length}, 3 surface members=${eSurface.length}); THE VALUE TABLE, WITH ITS PINNED LITERALS AND THE PREDICATE'S OWN READING (the control that can refuse): ${JSON.stringify(eValues)}; **THE 48 PROBES, EVERY ONE READ THREE WAYS: ${JSON.stringify(eProbes)}**; THE FIVE READINGS THAT CARRY THE VERDICT: (i) probes whose value does NOT survive a JSON round trip = ${eUnrepProbes.length} of ${eProbes.length}; (ii) OF THOSE, probes where the unrepresentable value IS IN THE RECORD — \`t1\`'s fixture — ${JSON.stringify(eCommittedUnrep.map((p) => p.value + '/' + p.member + ' → memberAfter=' + p.memberAfter + ', file=' + p.fileMember))}; (iii) probes answered \`committed\` for an unrepresentable value — \`t2\`'s fixture = ${eCommittedReceiptOnUnrep.length}; (iv) probes whose in-memory member DISAGREES with the file — \`t3\`'s fixture = ${JSON.stringify(eDivergentProbes.map((p) => p.value + '/' + p.member + ' in-memory=' + p.memberAfter + ' file=' + p.fileMember))}; (v) prototype pollution after the whole table = ${JSON.stringify(eProbeOut?.prototypePolluted ?? null)} (the POISONED value is PINNED as SURVIVABLE — JSON.parse really does revive an own __proto__ — so it is carried for the POLLUTION reading and NOT folded into the representability count); THE NON-OBJECT-PATCH OBSERVATION (declared OUTSIDE the declared domain, recorded not charged): ${JSON.stringify(eProbeOut?.observations ?? [])}; THE DELETION TEST OVER THESE VERY READINGS: ${JSON.stringify(eDeletion.filter((d) => d.row === 'SC-E-01'))}`,
-  'THE ARCHITECT\'S ANSWER (2), MEASURED AT ITS DECISIVE SITE: *"The clone discipline is a DEEP copy — and the store has to be JSON-safe anyway because it needs to store to file. … any value the tier cannot persist as JSON must not be accepted."* **THE BOUNDARY IS THE POINT OF THIS ROW: the module\'s own record is the object every downstream holder and the persist path both receive, so a value that cannot survive `JSON.stringify`/`parse` at THAT site cannot be caught anywhere downstream.** `t1` is the answer\'s own term ("must not be accepted"); `t2` is this battery\'s stated criterion ("must not be reported `committed`"); `t3` is the consequence the same answer names (the record and the file must not disagree). The three are named SEPARATELY, so a reader can see WHICH ONE the tree fails and by how much. **THE 11 UNREPRESENTABLE VALUES ARE NOT ALL THE SAME KIND and the row does not flatten them:** `BigInt`/`cyclic`/`function`/`Symbol` cannot be SERIALIZED at all (a `stringify` that would THROW), while `NaN`/`Infinity`/`Date`/`undefined` serialize SUCCESSFULLY and are NOT the same value on the way back — the second kind is the dangerous one, because nothing throws and the file silently carries a different value.')
+const eExemptedProbes = eUnrepProbes.filter((p) => p.declaredRefused === false)
+const eDeclaredRefusedProbes = eProbes.filter((p) => p.declaredRefused === true)
+const eProbeReGrain = eProbeReadable && eProbeOut.reGrain ? eProbeOut.reGrain : {}
+const eProbeContractTable = eProbeReadable && Array.isArray(eProbeOut.contractTable) ? eProbeOut.contractTable : []
+/** THE NON-VACUITY OF THE CONTRACT TABLE (the module-layer twin of \`b1b\`): the classification the probe
+ *  applied must be PRESENT on every reading and must be the SAME table the driver declares. A probe
+ *  whose readings carried no classification would make the re-grained charge silently empty — so it
+ *  reads \`MANUAL\`, never a PASS. */
+const eProbeContractTableAgrees = eProbes.length > 0 && eProbes.every((p) => typeof p.declaredRefused === 'boolean' && typeof p.declaredClause === 'string' && p.declaredClause.length > 0)
+  && eProbeContractTable.length === CONTRACT_DECLARED_STATUS.length
+  && eProbes.every((p) => p.declaredRefused === declaredStatusOf(p.value, p.member).declaredRefused)
+  && eDeclaredRefusedProbes.length > 0 && eExemptedProbes.length > 0
+/** **\`t2\` IS RE-GRAINED AT ITS OWN BYTES** — the as-filed criterion is kept PRINTED as \`t2AsFiled\`
+ *  (not a term of the verdict) so the move is visible at the machine layer. */
+const e1Terms = {
+  t1_noUnrepresentableValueIsCommitted: eCommittedDeclaredRefusalInRecord.length === 0,
+  t2_noCommittedReceiptForAContractDeclaredRefusal: eCommittedOnADeclaredRefusal.length === 0,
+  t2b_theRefusalReasonTokenIsTheDeclaredOne: eWrongReasonToken.length === 0,
+  t3_noInMemoryVersusFileDivergence: eDivergentProbes.length === 0,
+  t2AsFiled_noCommittedReceiptForAnyUnsurvivableValue: eCommittedReceiptOnUnrep.length === 0,
+}
+const e1RequirementTerms = [e1Terms.t1_noUnrepresentableValueIsCommitted, e1Terms.t2_noCommittedReceiptForAContractDeclaredRefusal, e1Terms.t2b_theRefusalReasonTokenIsTheDeclaredOne, e1Terms.t3_noInMemoryVersusFileDivergence]
+const e1AllTermsHold = e1RequirementTerms.every((v) => v === true)
+const e1Verdict = (!eProbeInstrumentOk || !eProbeContractTableAgrees) ? 'MANUAL' : (e1AllTermsHold ? 'PASS' : 'FAIL')
+check('SC-E-01 (Family E, E-1) — JSON-SAFETY: AN UNREPRESENTABLE VALUE, DRIVEN AT THE MODULE [B]', 'E-1 REQUIREMENT ARM: a value the CONTRACT DECLARES REFUSED (`§2.2` item 3 / `§6` PAR-2…PAR-5), driven at the module, is NOT committed into the tier\'s record, is NOT answered with a `committed` receipt, does not leave the in-memory record disagreeing with the file, and its refusal carries the declared reason token — measured over 16 values × the store\'s THREE patch members (48 probes), EVERY POSITION CLASSIFIED AGAINST THE CONTRACT\'S DECLARED DOMAIN, each read THREE ways (the receipt, the in-memory read afterwards, the file\'s bytes)', e1Verdict,
+  `NAMED TERMS — EACH ONE A PREDICATE TERM, EACH WITH ITS FIXTURE: ${JSON.stringify(e1Terms)}. THE PROBE: ${E_PROBE_PATH} + its file result ${E_PROBE_OUT} (a scratch dir under mkdtemp — the repo, the operator's profile and every src/** byte untouched), probeSha256=${eProbeSha.slice(0, 16)}…, module=${eProbeOut?.module ?? SECURITY_STORE_MODULE}, moduleSha256=${String(eProbeOut?.moduleSha256 ?? '').slice(0, 16)}…, exitCode=${eProbeRun.exitCode}, stdoutToken=${JSON.stringify(String(eProbeRun.stdout).trim().slice(0, 20))}, stderr=${JSON.stringify(String(eProbeRun.stderr ?? '').slice(-300))}, thrown=${JSON.stringify(String(eProbeRun.error ?? ''))}, probeErrors=${JSON.stringify(eProbeErrs)}, probeInstrumentOk=${eProbeInstrumentOk} (its terms: readable=${eProbeReadable}, the probe's OWN fixture check seedLoaded=${eProbeFixtureLoaded} — a probe against the module's DEFAULT record would measure the wrong object —, 48 probes=${eProbes.length}, 16 value-table rows=${eValues.length}, 3 unwritable paths=${eUnwritable.length}, 3 surface members=${eSurface.length}); THE VALUE TABLE, WITH ITS PINNED LITERALS AND THE PREDICATE'S OWN READING (the control that can refuse): ${JSON.stringify(eValues)}; **THE 48 PROBES, EVERY ONE READ THREE WAYS: ${JSON.stringify(eProbes)}**; THE FIVE READINGS THAT CARRY THE VERDICT: (i) probes whose value does NOT survive a JSON round trip = ${eUnrepProbes.length} of ${eProbes.length}; (ii) of those, probes where a value the CONTRACT DECLARES REFUSED is IN THE RECORD — \`t1\`'s fixture — ${JSON.stringify(eCommittedDeclaredRefusalInRecord.map((p) => p.value + '/' + p.member + ' → memberAfter=' + p.memberAfter + ', file=' + p.fileMember))}; (iii) probes answered \`committed\` for a value the CONTRACT DECLARES REFUSED — \`t2\`'s fixture = ${eCommittedOnADeclaredRefusal.length} ${JSON.stringify(eCommittedOnADeclaredRefusal.map((p) => p.value + '/' + p.member))}; (iii-a) \`t2b\`'s fixture — refusals whose reason token is NOT the declared one = ${eWrongReasonToken.length} ${JSON.stringify(eWrongReasonToken.map((p) => p.value + '/' + p.member + ' → ' + JSON.stringify(p.receipt)))}; (iii-b) **THE RE-GRAIN'S OWN COUNT, KEPT BESIDE IT:** the AS-FILED criterion (a \`committed\` receipt for ANY value that does not survive a round trip) charges **${eCommittedReceiptOnUnrep.length}** reading(s) ${JSON.stringify(eCommittedReceiptOnUnrep.map((p) => p.value + '/' + p.member))} — and every one of them is a reading the CONTRACT DECLARES ADMITTED, which is why the criterion was re-grained; (iv) probes whose in-memory member DISAGREES with the file — \`t3\`'s fixture = ${JSON.stringify(eDivergentProbes.map((p) => p.value + '/' + p.member + ' in-memory=' + p.memberAfter + ' file=' + p.fileMember))}; (v) prototype pollution after the whole table = ${JSON.stringify(eProbeOut?.prototypePolluted ?? null)} (the POISONED value is PINNED as SURVIVABLE — JSON.parse really does revive an own __proto__ — so it is carried for the POLLUTION reading and NOT folded into the representability count); THE NON-OBJECT-PATCH OBSERVATION (declared OUTSIDE the declared domain, recorded not charged): ${JSON.stringify(eProbeOut?.observations ?? [])}; **THE CONTRACT-DECLARED DOMAIN TABLE THIS ROW'S RE-GRAINED CHARGE READS (the record's §7 carries the same table with its clauses; the probe re-derives it independently and the two are compared): ${JSON.stringify(eProbeContractTable)}; contractTableAgrees=${eProbeContractTableAgrees} (its terms: every probe reading carries a \`declaredRefused\` boolean and a non-empty \`declaredClause\`; the probe's own table has the DECLARED row count; every reading's classification equals the driver's re-derivation of the same table; at least one position is declared REFUSED and at least one is declared ADMITTED, so a table that had collapsed to all-refused or all-admitted would read MANUAL rather than PASS); THE RE-GRAIN, MEASURED — the as-filed charge = ${JSON.stringify(eProbeReGrain.theAsFiledCharge ?? null)}; the re-grained charge = ${JSON.stringify(eProbeReGrain.theRegrainedCharge ?? null)}; the re-grain's OWN DELETION FORM (its \`declaredRefused\` conjunct removed, on the same readings) = ${JSON.stringify(eProbeReGrain.theRegrainIsLoadBearing ?? null)}; the EXEMPTED readings (unrepresentable, declared admitted) = ${JSON.stringify(eProbeReGrain.theExemptedReadings ?? null)}; the DECLARED-REFUSED positions (the charge's scope) = ${JSON.stringify(eProbeReGrain.theDeclaredRefusedPositions ?? null)}; the distinct refusal reason tokens the whole table produced = ${JSON.stringify(eProbeOut?.refusalReasonTokens ?? null)}**; THE DELETION TEST OVER THESE VERY READINGS: ${JSON.stringify(eDeletion.filter((d) => d.row === 'SC-E-01'))}`,
+  'THE ARCHITECT\'S ANSWER (2), MEASURED AT ITS DECISIVE SITE: *"The clone discipline is a DEEP copy — and the store has to be JSON-safe anyway because it needs to store to file. … any value the tier cannot persist as JSON must not be accepted."* **THE BOUNDARY IS THE POINT OF THIS ROW: the module\'s own record is the object every downstream holder and the persist path both receive, so a value that cannot survive `JSON.stringify`/`parse` at THAT site cannot be caught anywhere downstream.** `t1` is the answer\'s own term ("must not be accepted"); `t2` is the SAME term READ AT THE RECEIPT, **re-grained `2026-10-11` to the LANDED CONTRACT\'s declared boundary** (the as-filed form charged every unsurvivable value\'s `committed` receipt, which the contract\'s `§2.2` item 3 / `§6` PAR-2/PAR-3 declare for two ADMITTED positions); `t2b` is the refusal\'s own shape (`§2.1` item 7 / `§2.3` item 6: the reason is EXACTLY `write-failed`); `t3` is the consequence the same answer names (the record and the file must not disagree). The terms are named SEPARATELY, so a reader can see WHICH ONE the tree fails and by how much. **THE 11 UNREPRESENTABLE VALUES ARE NOT ALL THE SAME KIND and the row does not flatten them:** `BigInt`/`cyclic`/`function`/`Symbol` cannot be SERIALIZED at all (a `stringify` that would THROW), while `NaN`/`Infinity`/`Date`/`undefined` serialize SUCCESSFULLY and are NOT the same value on the way back — the second kind is the dangerous one, because nothing throws and the file silently carries a different value. **AND THE CONTRACT SPLITS THE SECOND KIND AGAIN, WHICH IS THE RE-GRAIN: `Infinity` is DECLARED REFUSED (`§6` PAR-3\'s OUTSIDE column), while `NaN` (the declared clear arm) and `undefined` (the absent marker) are DECLARED ADMITTED and are exempt from the charge — NOT from the round-trip predicate, which still classifies them as unsurvivable.**')
 
 // ── FAMILY E, E-1 — THE BRIDGE ARM ([CDP] + [G]), WITH ITS DECLARED BOUNDARY ─────────────
 /** **WHAT THIS ARM CAN WITNESS AND WHAT IT CANNOT.** `structuredClone` transports a `BigInt`, a `Map`,
@@ -2538,6 +2759,13 @@ for (const B of E_BRIDGE_PROBES) {
     receiptClaimsCommitted: r.ok === true && r.write !== null && r.write.status === 'committed',
     inMemoryEqualsFile: r.ok === true && r.afterMember === fileMember,
     commitsAValueThatDoesNotSurvive: r.ok === true && B.survives === false && r.afterMember === B.expectPayloadEnc,
+    /** THE CONTRACT'S PER-POSITION READING AT THIS LAYER TOO, so `b2` charges the SAME boundary `t2`
+     *  charges and a reader can check the two arms against ONE table. */
+    declaredRefused: declaredStatusOf(B.id, B.member).declaredRefused,
+    declaredClause: declaredStatusOf(B.id, B.member).clause,
+    declaredReason: declaredStatusOf(B.id, B.member).reason,
+    committedReceiptForADeclaredRefusal: r.ok === true && r.write !== null && r.write.status === 'committed' && B.survives === false && declaredStatusOf(B.id, B.member).declaredRefused === true,
+    refusalReasonTokenIsNotTheDeclaredOne: r.ok === true && r.write !== null && r.write.status === 'refused' && r.write.reason !== 'write-failed',
   })
 }
 const eBridgeInstrumentOk = eBridgeRows.length === E_BRIDGE_PROBES.length && eBridgeRows.every((r) => r.ok === true)
@@ -2545,16 +2773,26 @@ const eBridgeTransportWitnessed = eBridgeRows.filter((r) => r.transportWitnessed
 const eBridgeUnrep = eBridgeRows.filter((r) => r.survives === false)
 const eBridgeCommitted = eBridgeUnrep.filter((r) => r.commitsAValueThatDoesNotSurvive === true)
 const eBridgeCommittedReceipts = eBridgeUnrep.filter((r) => r.receiptClaimsCommitted === true)
+const eBridgeDeclaredRefusalCommitted = eBridgeRows.filter((r) => r.committedReceiptForADeclaredRefusal === true)
+const eBridgeWrongReasonToken = eBridgeRows.filter((r) => r.refusalReasonTokenIsNotTheDeclaredOne === true)
 const eBridgeDivergent = eBridgeRows.filter((r) => r.inMemoryEqualsFile !== true)
 const eBridgeSafeRow = eBridgeRows.find((r) => r.id === 'JSON-safe-control') ?? null
+/** **`b2` IS RE-GRAINED AT ITS OWN BYTES, ON THE SAME DECLARED BOUNDARY AS `t2`** — the as-filed form
+ *  (a `committed` receipt for ANY value that does not survive a JSON round trip) is kept as a PRINTED
+ *  term (`b2AsFiled`), so the move is visible at the machine layer rather than only in prose. */
 const e2BridgeTerms = {
   b1_noUnrepresentableValueIsCommittedThroughTheBridge: eBridgeCommitted.length === 0,
-  b2_noCommittedReceiptForAnUnrepresentableValue: eBridgeCommittedReceipts.length === 0,
+  b2_noCommittedReceiptForAContractDeclaredRefusal: eBridgeDeclaredRefusalCommitted.length === 0,
+  b2b_theRefusalReasonTokenIsTheDeclaredOne: eBridgeWrongReasonToken.length === 0,
   b3_theLiveReadBackEqualsTheFile: eBridgeDivergent.length === 0,
+  b2AsFiled_noCommittedReceiptForAnyUnsurvivableValue: eBridgeCommittedReceipts.length === 0,
+  b1b_theBridgeCarriesTheContractTable: eBridgeRows.length > 0 && eBridgeRows.every((r) => typeof r.declaredRefused === 'boolean' && typeof r.declaredClause === 'string' && r.declaredClause.length > 0) && eBridgeRows.some((r) => r.declaredRefused === true) && eBridgeRows.some((r) => r.declaredRefused === false),
 }
-const e1BridgeVerdict = (!eBridgeInstrumentOk || eBridgeTransportWitnessed.length !== E_BRIDGE_PROBES.length) ? 'MANUAL' : (Object.values(e2BridgeTerms).every((v) => v === true) ? 'PASS' : 'FAIL')
-check('SC-E-02 (Family E, E-1) — THE SAME OBLIGATION THROUGH THE LIVE BRIDGE ([CDP] + [G])', 'E-1 REQUIREMENT ARM (live consequence half): the values an IPC boundary CAN carry are driven through `window.provident.security.set`, and for each the receipt, the live read-back AND the file\'s bytes are read — with the two values `structuredClone` CANNOT carry named as NOT TESTED HERE rather than reported as a reading', e1BridgeVerdict,
-  `NAMED TERMS: ${JSON.stringify(e2BridgeTerms)}. **THE DECLARED INSTRUMENT BOUNDARY, DEMONSTRATED IN THE PAGE RATHER THAN ASSERTED: ${JSON.stringify(eBridgeTransportBoundary)} — a \`function\` and a \`Symbol\` CANNOT cross the bridge, so \`function\`/\`Symbol\` are [B]-ONLY and this arm does not pretend to have measured them.** ${eBridgeRows.length} probe(s), every one required to have TRANSPORTED its payload before its reading is given weight (transported=${JSON.stringify(eBridgeTransportWitnessed.map((r) => r.id))} of ${E_BRIDGE_PROBES.length}; a payload the bridge quietly dropped would otherwise have produced a vacuous "nothing landed" reading); THE ROWS: ${JSON.stringify(eBridgeRows.map(({ src, expectPayloadEnc, ...rest }) => rest))} (**READ THE PER-MEMBER FIELDS, NOT afterRecord: the CDP WIRE turns Infinity into null because JSON has no infinity, so afterRecord shows maxJournalLength:null on the very row whose afterMember — encoded IN THE PAGE by the probe's own encoder — reads <Infinity>. The page-side reading is the one that carries the value and the one the terms read.**); the JSON-safe control through the bridge: ${JSON.stringify(eBridgeSafeRow)}; the tier-4 file's bytes BEFORE the arm=${JSON.stringify(String(eBridgeFileBeforeBytes).slice(0, 300))} at sha256 ${eBridgeFileBeforeSha.slice(0, 16)}…, AFTER the arm=${JSON.stringify(String(readOrNull(secPathA)).slice(0, 300))} at sha256 ${sha256(secPathA).slice(0, 16)}…`,
+const e2BridgeRequirementTerms = [e2BridgeTerms.b1_noUnrepresentableValueIsCommittedThroughTheBridge, e2BridgeTerms.b2_noCommittedReceiptForAContractDeclaredRefusal, e2BridgeTerms.b2b_theRefusalReasonTokenIsTheDeclaredOne, e2BridgeTerms.b3_theLiveReadBackEqualsTheFile]
+const e2BridgeReadings = { exemptedReadings: eBridgeUnrep.filter((r) => r.declaredRefused === false).map((r) => r.id + '/' + r.member + ' [' + r.declaredClause + ']'), refusedPositions: eBridgeUnrep.filter((r) => r.declaredRefused === true).map((r) => r.id + '/' + r.member), asFiledCharge: eBridgeCommittedReceipts.map((r) => r.id + '/' + r.member) }
+const e1BridgeVerdict = (!eBridgeInstrumentOk || eBridgeTransportWitnessed.length !== E_BRIDGE_PROBES.length || e2BridgeTerms.b1b_theBridgeCarriesTheContractTable !== true) ? 'MANUAL' : (e2BridgeRequirementTerms.every((v) => v === true) ? 'PASS' : 'FAIL')
+check('SC-E-02 (Family E, E-1) — THE SAME OBLIGATION THROUGH THE LIVE BRIDGE ([CDP] + [G])', 'E-1 REQUIREMENT ARM (live consequence half): the values an IPC boundary CAN carry are driven through `window.provident.security.set`, and for each the receipt, the live read-back AND the file\'s bytes are read — with the two values `structuredClone` CANNOT carry named as NOT TESTED HERE rather than reported as a reading; and with each probe classified against the CONTRACT\'S DECLARED DOMAIN (`§2.2` item 3 / `§6` PAR-2…PAR-5) before its receipt is charged', e1BridgeVerdict,
+  `NAMED TERMS: ${JSON.stringify(e2BridgeTerms)} — **\`b2AsFiled_*\` IS NOT A TERM OF THE VERDICT: it is the AS-FILED criterion, kept PRINTED so the re-grain is visible at the machine layer** (the verdict is carried by \`b1\`/\`b2\`/\`b2b\`/\`b3\`; \`b1b\` is the contract-table non-vacuity term, and a bridge whose rows carried no declared classification would read \`MANUAL\`). **THE RE-GRAIN'S OWN READINGS AT THIS LAYER: readings EXEMPTED because the CONTRACT DECLARES THEM ADMITTED = ${JSON.stringify(e2BridgeReadings.exemptedReadings)} (each with its clause); the positions the contract DECLARES REFUSED = ${JSON.stringify(e2BridgeReadings.refusedPositions)}; the readings the AS-FILED criterion charged = ${JSON.stringify(e2BridgeReadings.asFiledCharge)}.** **THE DECLARED INSTRUMENT BOUNDARY, DEMONSTRATED IN THE PAGE RATHER THAN ASSERTED: ${JSON.stringify(eBridgeTransportBoundary)} — a \`function\` and a \`Symbol\` CANNOT cross the bridge, so \`function\`/\`Symbol\` are [B]-ONLY and this arm does not pretend to have measured them.** ${eBridgeRows.length} probe(s), every one required to have TRANSPORTED its payload before its reading is given weight (transported=${JSON.stringify(eBridgeTransportWitnessed.map((r) => r.id))} of ${E_BRIDGE_PROBES.length}; a payload the bridge quietly dropped would otherwise have produced a vacuous "nothing landed" reading); THE ROWS: ${JSON.stringify(eBridgeRows.map(({ src, expectPayloadEnc, ...rest }) => rest))} (**READ THE PER-MEMBER FIELDS, NOT afterRecord: the CDP WIRE turns Infinity into null because JSON has no infinity, so afterRecord shows maxJournalLength:null on the very row whose afterMember — encoded IN THE PAGE by the probe's own encoder — reads <Infinity>. The page-side reading is the one that carries the value and the one the terms read.**); the JSON-safe control through the bridge: ${JSON.stringify(eBridgeSafeRow)}; the tier-4 file's bytes BEFORE the arm=${JSON.stringify(String(eBridgeFileBeforeBytes).slice(0, 300))} at sha256 ${eBridgeFileBeforeSha.slice(0, 16)}…, AFTER the arm=${JSON.stringify(String(readOrNull(secPathA)).slice(0, 300))} at sha256 ${sha256(secPathA).slice(0, 16)}…`,
   'the architect\'s answer (2) as it reaches the OPERATOR, and the same three terms as `SC-E-01` read one layer out. **IT IS A CONSEQUENCE CHECK AND IS LABELLED AS ONE:** the value has already been structured-cloned by the time the renderer holds it, so an in-memory/file disagreement here is a disagreement the LIVE APP really has (the file is main\'s own persist), but a DETACHED return at the module layer cannot be witnessed from this side (that is `SC-E-01`/`SC-E-07`). The transport term is the non-vacuity term: **the reading is only taken when the payload demonstrably crossed**, so a bridge that silently discarded a `Map` cannot masquerade as "the tier refused it".')
 
 // ── FAMILY E, E-1/E-2 — THE CONTROLS THAT CAN REFUSE ────────────────────────────────────
@@ -2902,8 +3140,13 @@ check('SC-E-09 (Family E, E-4) — `CONDITION-1`: THE LOCK/ACCESS CONDITION, BOT
 // ── FAMILY E — THE FAMILY VERDICTS, DERIVED FROM THE ARMS ABOVE ──────────────────────────
 const eProbeErrCount = eProbeErrs.length
 const eCommittedReceiptCount = eCommittedReceiptOnUnrep.length + eBridgeCommittedReceipts.length
-const e1VerdictDerived = (!eProbeInstrumentOk || !eBridgeInstrumentOk) ? 'PARTIAL'
-  : (eCommittedUnrep.length + eBridgeCommitted.length > 0 ? 'NON-COMPLIANT' : (e1AllTermsHold && Object.values(e2BridgeTerms).every((v) => v === true) && eJsonSafeControlHolds ? 'COMPLIANT' : 'PARTIAL'))
+/** The AS-FILED counts stay PRINTED; the DERIVED verdict reads the RE-GRAINED terms, because a family
+ *  verdict may not be carried by a criterion the LANDED CONTRACT contradicts (`2026-10-11`). */
+const eAsFiledChargeCount = eCommittedReceiptOnUnrep.length + eBridgeCommittedReceipts.length
+const eRegrainedChargeCount = eCommittedOnADeclaredRefusal.length + eBridgeDeclaredRefusalCommitted.length + eWrongReasonToken.length + eBridgeWrongReasonToken.length
+const e1VerdictDerived = (!eProbeInstrumentOk || !eBridgeInstrumentOk || !eProbeContractTableAgrees || e2BridgeTerms.b1b_theBridgeCarriesTheContractTable !== true) ? 'PARTIAL'
+  : (eCommittedDeclaredRefusalInRecord.length + eBridgeCommitted.length > 0 ? 'NON-COMPLIANT'
+    : ((e1AllTermsHold && e2BridgeRequirementTerms.every((v) => v === true) && eJsonSafeControlHolds) ? 'COMPLIANT' : 'PARTIAL'))
 const e2VerdictDerived = (!eProbeInstrumentOk) ? 'PARTIAL'
   : (e5Verdict === 'MANUAL') ? 'PARTIAL'
     : ((!e2NoInMemoryAdvance || e5.recordAdvancedPastARefusedPersist === true || e5.receiptClaimsFullCommitment === true) ? 'NON-COMPLIANT'
@@ -2915,12 +3158,15 @@ console.log('    E-1 (JSON-SAFETY: an unrepresentable value must not be committe
 console.log('      ARMS: module [B] ' + JSON.stringify(dById(/^SC-E-01/).map((c) => c.id.split(' ')[0] + ':' + c.verdict))
   + ' · bridge [CDP]+[G] ' + JSON.stringify(dById(/^SC-E-02/).map((c) => c.id.split(' ')[0] + ':' + c.verdict))
   + ' · CONTROL ' + JSON.stringify(dById(/^SC-E-03/).map((c) => c.id.split(' ')[0] + ':' + c.verdict)))
-console.log('      TERMS: unrepresentable values driven = ' + eUnrepProbes.length + ' of ' + eProbes.length + ' probe(s) (16 values x 3 members); values found IN the record = '
-  + JSON.stringify(eCommittedUnrep.map((p) => p.value + '/' + p.member)) + '; probes answering `committed` for an unrepresentable value = ' + eCommittedReceiptOnUnrep.length
-  + ' (module) + ' + eBridgeCommittedReceipts.length + ' (bridge); in-memory/file disagreements = ' + JSON.stringify([...eDivergentProbes, ...eBridgeDivergent].map((p) => p.value + '/' + p.member))
-  + '; module probe errors = ' + eProbeErrCount)
-console.log('      WHY THIS VERDICT: the tree REFUSES nothing, DROPS most unrepresentable values by coercion, THROWS only on a non-object patch, and COMMITS one — `Infinity` as `maxJournalLength`, which enters the record as `Infinity` and reaches the file as `null` — while EVERY one of the ' + eCommittedReceiptOnUnrep.length
-  + ' module probes and ' + eBridgeCommittedReceipts.length + ' bridge probes answers `{"status":"committed"}`. A COMMITTED RECEIPT ON A VALUE THE WRITE DID NOT STORE is the finding; the divergence is the corruption.')
+console.log('      TERMS: unrepresentable values driven = ' + eUnrepProbes.length + ' of ' + eProbes.length + ' probe(s) (16 values x 3 members); values declared REFUSED and found IN the record = '
+  + JSON.stringify(eCommittedDeclaredRefusalInRecord.map((p) => p.value + '/' + p.member)) + '; probes answering `committed` for a CONTRACT-DECLARED-REFUSED value = ' + eCommittedOnADeclaredRefusal.length
+  + ' (module) + ' + eBridgeDeclaredRefusalCommitted.length + ' (bridge); refusals whose reason token is not `write-failed` = ' + (eWrongReasonToken.length + eBridgeWrongReasonToken.length)
+  + '; THE RE-GRAINED CHARGE TOTAL = ' + eRegrainedChargeCount + '; THE AS-FILED CHARGE, KEPT PRINTED BUT NOT CARRYING THE VERDICT = ' + eAsFiledChargeCount
+  + ' (' + eCommittedReceiptOnUnrep.length + ' module + ' + eBridgeCommittedReceipts.length + ' bridge, all of them positions the CONTRACT DECLARES ADMITTED); in-memory/file disagreements = ' + JSON.stringify([...eDivergentProbes, ...eBridgeDivergent].map((p) => p.value + '/' + p.member))
+  + '; contractTableAgrees = ' + eProbeContractTableAgrees + ' (module) / ' + e2BridgeTerms.b1b_theBridgeCarriesTheContractTable + ' (bridge); module probe errors = ' + eProbeErrCount)
+console.log('      WHY THIS VERDICT: the re-grained charge covers ' + JSON.stringify([...new Set([...eDeclaredRefusedProbes.map((p) => p.value + '/' + p.member), ...eBridgeRows.filter((r) => r.declaredRefused === true).map((r) => r.id + '/' + r.member)])])
+  + ' — every one of them is REFUSED with the ONE declared token (`' + JSON.stringify([...new Set([...(eProbeOut?.refusalReasonTokens ?? []), ...eBridgeRows.filter((r) => r.write && r.write.status === 'refused').map((r) => String(r.write.reason))])]) + '`), while the readings the AS-FILED criterion charged ('
+  + eAsFiledChargeCount + ': ' + JSON.stringify([...eCommittedReceiptOnUnrep.map((p) => p.value + '/' + p.member), ...eBridgeCommittedReceipts.map((r) => r.id + '/' + r.member)]) + ') are the DECLARED-ADMITTED positions (`§2.2` item 3 / `§6` PAR-2/PAR-3 / `§3.1` M-6 / `§5.6.1` row 8 attempt (7)) — each of them lands a JSON-safe state with NO in-memory-versus-file divergence, which is the architect\'s own test. `Infinity` — the fixture the as-filed criterion was built on — is NOT committed anywhere on these bytes: it is REFUSED.')
 console.log('    E-2 (COMMIT ⟺ PERSISTED: a write is not committed until it saves to file) = ' + e2VerdictDerived)
 console.log('      ARMS: module [B] ' + JSON.stringify(dById(/^SC-E-04/).map((c) => c.id.split(' ')[0] + ':' + c.verdict))
   + ' · live [CDP]+[G] ' + JSON.stringify(dById(/^SC-E-05/).map((c) => c.id.split(' ')[0] + ':' + c.verdict))
@@ -2940,7 +3186,7 @@ console.log('    E-4 (CONDITION-1: the lock/access condition, both readings kept
 console.log('      TERMS: ' + JSON.stringify(e9Terms))
 console.log('      WHY THIS ROW EXISTS: the architect answered that `D-2` is STRUCTURAL, so the operative condition is the tier\'s own unlocked/blocked state and NOT a predicate consulted on MCP state. That answer does not move the Family-D arms\' measured fact — **the write surface admits a write while the tier is CLOSED** — and it does not license dropping them. READING A (the store-site lock rule the arms assert) and READING B (structural non-reachability) are BOTH printed, at the row and in this family block, so no later pass can quote one of them as the other.')
 console.log('    THE FAMILY-E ROW SET, BUCKETED BY THE DECLARED TABLE: ' + JSON.stringify(familyRows('E').map((c) => `${c.id.split(' ')[0]}:${rowKind(c)}:${c.verdict}`)))
-console.log('    THE DECLARED LIMITS OF THIS FAMILY (printed so a PASS cannot be over-read): (1) `function` and `Symbol` CANNOT cross the IPC boundary and are [B]-ONLY — the bridge arm says so in its own terms rather than reporting a probe it could not run; (2) "the unlock is only reachable while the MCP is blocked" is NOT measured by this battery at any layer (the unlock path is the operator\'s pane/`setExclusion` channel, whose reachability is not censused here); (3) `SC-E-01`\'s `t2` term ("must not be reported `committed`") is THIS BATTERY\'s criterion for the drop cases, while `t1`/`t3` are the architect\'s own words ("must not be accepted") — the row prints which term each reading reddens so the two cannot be conflated.')
+console.log('    THE DECLARED LIMITS OF THIS FAMILY (printed so a PASS cannot be over-read): (1) `function` and `Symbol` CANNOT cross the IPC boundary and are [B]-ONLY — the bridge arm says so in its own terms rather than reporting a probe it could not run; (2) "the unlock is only reachable while the MCP is blocked" is NOT measured by this battery at any layer (the unlock path is the operator\'s pane/`setExclusion` channel, whose reachability is not censused here); (3) `SC-E-01`\'s `t2` and `SC-E-02`\'s `b2` were RE-GRAINED `2026-10-11` (the `S3` re-measure) — the AS-FILED form ("no `committed` receipt for ANY value that does not survive a JSON round trip") is KEPT PRINTED as `t2AsFiled`/`b2AsFiled` and is NOT a term of the verdict, because it charged positions the LANDED CONTRACT DECLARES ADMITTED (`§2.2` item 3, `§6` PAR-2/PAR-3, `§3.1` M-6, `§5.6.1` row 8 attempt (7)); the verdict-carrying form is the CONTRACT-DECLARED boundary, and `t1`/`t3`/`b1`/`b3` remain the architect\'s own words ("must not be accepted"; the record and the file must not disagree) — the rows print WHICH term each reading reddens so no two can be conflated; (4) the re-grained charge is only as strong as the CONTRACT TABLE it reads, so the table is a NON-VACUITY TERM on both arms (`contractTableAgrees` and `b1b_theBridgeCarriesTheContractTable`): a table that had lost its refused positions, or its admitted ones, reads MANUAL rather than PASS; (5) `t2b`/`b2b` charge the refusal\'s OWN SHAPE (the reason token is exactly `write-failed`) — a clause the as-filed rows never charged, added in the same pass and NOT a re-grain.')
 
 // ══════════════════════════════════════════════════════════════════════════════════════
 // PHASE 4 — [G] the static readings this battery's rows lean on
