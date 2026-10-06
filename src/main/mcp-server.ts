@@ -41,9 +41,17 @@ function exclusionRefusal() {
 /** `§2.2` item 2(a) — THE INVOCATION TURN. The predicate is read off the LIVE gate at the turn
  *  (never a captured snapshot); `null` means the call may proceed, otherwise the refusal VALUE.
  *  This is the ONE shared check the tool closure and the resource callback call, so a tool added
- *  later cannot forget it. */
-function exclusionTurn(gate: SecurityGate) {
-  return exclusionAllowsWork(gate.exclusionState()) ? null : exclusionRefusal()
+ *  later cannot forget it.
+ *
+ *  **IT TAKES THE GATE'S READER, NOT A GATE.** `applyExclusion`/`applyGatePatch` REPLACE
+ *  `this._gate` and `withExclusion` ALWAYS RETURNS A NEW INSTANCE, so a handler registered once
+ *  (the stdio server is constructed once, at `start()`) would hold a closure over a gate that
+ *  stops being the live one the moment the operator acts — the enforcement would be DEAD on a
+ *  live server while every pre-set-construction drive still passed. The caller therefore passes
+ *  `() => this._gate`, and the state is read AT THE TURN: *"the predicate's read is the LIVE
+ *  gate's state, read at the turn: not a captured snapshot"* (`§2.2` item 2(a), `P-EX-IM-2`). */
+function exclusionTurn(gate: () => SecurityGate) {
+  return exclusionAllowsWork(gate().exclusionState()) ? null : exclusionRefusal()
 }
 
 /** U9 (F1) — invoke a dynamic `module:<name>.<tool>` tool. Enforces the
@@ -374,6 +382,16 @@ export class ProvidentMcpServer {
     this._gate = opts.gate ?? new SecurityGate()
     this.moduleStore = opts.moduleStore ?? null
     this.router = opts.router ?? null
+    // `§2.2` item 3 — THE ACCEPTOR'S EPOCH SOURCE IS BOUND TO THE **LIVE** GATE HERE (`PAR-5`
+    // forbids any caller-supplied epoch; the stamp therefore comes from the gate this server
+    // holds, read through `this`, never from an argument). The backend holds the READER, not a
+    // gate value, so the closure stays correct across `applyExclusion`/`applyGatePatch`
+    // replacements. A backend without the declared seam (`McpBackend` is structural — the unit
+    // tests pass a canned recorder) is left unwired and its reply turn is never stale.
+    const acceptor = this.backend as unknown as { setExclusionEpochSource?: (read: () => number) => void }
+    if (typeof acceptor.setExclusionEpochSource === 'function') {
+      acceptor.setExclusionEpochSource(() => this._gate.exclusionEpoch())
+    }
   }
 
   /** `docs/specs/secure-exclusion.md` `§2.1` item 3 (`T-1`/`T-2`/`T-3`) — THE TRANSITION SITE.
@@ -403,16 +421,59 @@ export class ProvidentMcpServer {
     // (c) the handles follow the record: while the tier is open NOTHING is enabled, and when it
     // closes they follow the landed group predicate again. The handles stay RESOLVABLE throughout
     // (they are toggled, never deregistered — the non-legibility pin).
-    const open = this._gate.exclusionState() === 'mcp-disabled'
+    // (c) the handles follow the record, and the registry is WIDENED where the record allows it —
+    // ONE shared helper with `applyGatePatch`, so neither path can omit an arm the other has.
+    this.regateLiveServer()
+  }
+
+  /** `§2.1` item 3 (`T-1`/`T-2`/`T-5`, `M-EX-3`/`M-EX-9`) — **THE ONE RE-GATE PATH**, shared by the
+   *  SET/re-gate (`applyGatePatch`) and the exclusion transition (`applyExclusion`) so the two
+   *  cannot drift: (a) every captured tool/resource handle is TOGGLED to agree with the record
+   *  (while the tier is open NOTHING is enabled; the handles stay RESOLVABLE throughout — they are
+   *  toggled, never deregistered, the non-legibility pin), and (b) any NEWLY-ALLOWED tool/resource
+   *  that is not registered yet is REGISTERED on the live stdio server.
+   *
+   *  (b) IS SUPPRESSED WHILE THE TIER IS OPEN (`exclusionOpen`) — the landed, spec-sanctioned shape:
+   *  nothing is widened into a surface that refuses everything anyway. It is therefore required in
+   *  BOTH directions: `T-2` (the operator's close request) MUST widen, because a group widen that
+   *  arrived while the tier was open left its newly-allowed tools unregistered — without (b) here
+   *  the MCP surface does not actually come back until the next settings write.
+   *
+   *  The HTTP transport needs no re-gate: it builds a fresh server per POST from the current gate. */
+  private regateLiveServer(): void {
+    const exclusionOpen = this._gate.exclusionState() === 'mcp-disabled'
     for (const [name, tool] of this.registered) {
+      // U3/F1 (adversarial) — module.install/update + dynamic module:<name>.<tool> tools are
+      // trusted-equivalent to `code`: the live re-gate must use the TWO-GATE (module AND code),
+      // not the module-only `toolAllowed`. Otherwise disabling `code` would leave them callable by
+      // a module-only agent. Both the static `module.` (dot) and dynamic `module:` (colon) prefixes
+      // catch.
       const isModuleTool = name.startsWith('module.') || name.startsWith('module:')
       const allowed = isModuleTool
         ? (this._gate.toolAllowed(name) && this._gate.enabled.has('code'))
         : this._gate.toolAllowed(name)
-      tool.update({ enabled: !open && allowed })
+      tool.update({ enabled: !exclusionOpen && allowed })
     }
+    // R2 — re-gate the captured resource handles the same way.
     for (const [uri, res] of this.resources) {
-      res.update({ enabled: !open && this._gate.toolAllowed(`resource:${uri}`) })
+      res.update({ enabled: !exclusionOpen && this._gate.toolAllowed(`resource:${uri}`) })
+    }
+    // M1-widen — REGISTER any newly-allowed tools that were not registered before (a widen to a
+    // previously-disabled group must make those tools callable on the live server, not only on the
+    // next fresh HTTP request). The live server is the stdio server (HTTP builds a fresh server per
+    // POST from the current gate, so widening is automatic there).
+    const liveServer = this.stdioServer
+    if (!liveServer) return
+    const liveGate = (): SecurityGate => this._gate
+    const toAdd = exclusionOpen ? [] : this.allowedToolNames().filter((n) => !this.registered.has(n))
+    if (toAdd.length > 0) {
+      ProvidentMcpServer.registerTools(liveServer, this.backend, toAdd, this.registered, this.moduleStore, this.router, liveGate)
+    }
+    const resToAdd = exclusionOpen ? [] : ProvidentMcpServer.ALL_RESOURCES.filter(
+      (r) => this._gate.toolAllowed(`resource:${r.uri ?? r.uriTemplate}`) && !this.resources.has(r.uri ?? r.uriTemplate!),
+    )
+    if (resToAdd.length > 0) {
+      ProvidentMcpServer.registerResources(liveServer, this.backend, resToAdd, this.resources, liveGate)
     }
   }
 
@@ -511,44 +572,9 @@ export class ProvidentMcpServer {
     // `docs/specs/secure-exclusion.md` `§2.1` item 3 `T-5` / §2.2 item 2(b) — the re-gate is
     // COMPOSED WITH the exclusion, never rewritten: while the tier is open EVERY handle stays
     // disabled regardless of the group set (the exclusion is a separate axis and the toggling is
-    // the SAME mechanism, not a second one). `withExclusion`'s own site toggles identically.
-    const exclusionOpen = this._gate.exclusionState() === 'mcp-disabled'
-    // M1 — re-gate the LIVE server (stdio, one long-lived McpServer): toggle
-    // the captured RegisteredTool handles so a narrow actually takes effect.
-    for (const [name, tool] of this.registered) {
-      // U3/F1 (adversarial) — module.install/update + dynamic module:<name>.<tool>
-      // tools are trusted-equivalent to `code`: the live re-gate must use the
-      // TWO-GATE (module AND code), not the module-only `toolAllowed`. Otherwise
-      // disabling `code` would leave them callable by a module-only agent. Both
-      // the static `module.` (dot) and dynamic `module:` (colon) prefixes catch.
-      const isModuleTool = name.startsWith('module.') || name.startsWith('module:')
-      const enabled = isModuleTool
-        ? (this._gate.toolAllowed(name) && this._gate.enabled.has('code'))
-        : this._gate.toolAllowed(name)
-      tool.update({ enabled: !exclusionOpen && enabled })
-    }
-    // R2 — re-gate the captured resource handles the same way.
-    for (const [uri, res] of this.resources) {
-      res.update({ enabled: !exclusionOpen && this._gate.toolAllowed(`resource:${uri}`) })
-    }
-    // M1-widen — REGISTER any newly-allowed tools that were not registered
-    // before (a widen to a previously-disabled group must make those tools
-    // callable on the live server, not only on the next fresh HTTP request).
-    // The live server is the stdio server (HTTP builds a fresh server per POST
-    // from the current gate, so widening is automatic there).
-    const liveServer = this.stdioServer
-    if (liveServer) {
-      const toAdd = exclusionOpen ? [] : this.allowedToolNames().filter((n) => !this.registered.has(n))
-      if (toAdd.length > 0) {
-        ProvidentMcpServer.registerTools(liveServer, this.backend, toAdd, this.registered, this.moduleStore, this.router, this._gate)
-      }
-      const resToAdd = exclusionOpen ? [] : ProvidentMcpServer.ALL_RESOURCES.filter(
-        (r) => this._gate.toolAllowed(`resource:${r.uri ?? r.uriTemplate}`) && !this.resources.has(r.uri ?? r.uriTemplate!),
-      )
-      if (resToAdd.length > 0) {
-        ProvidentMcpServer.registerResources(liveServer, this.backend, resToAdd, this.resources, this._gate)
-      }
-    }
+    // the SAME mechanism, not a second one). `applyExclusion` routes through the SAME helper, so
+    // the two paths are literally one mechanism and neither can omit an arm the other has.
+    this.regateLiveServer()
     return this._gate.config
   }
 
@@ -592,7 +618,7 @@ export class ProvidentMcpServer {
     // lookup or dispatch. A resource read while the tier is open answers the declared refusal
     // VALUE whether or not the handle happens to be registered on this instance: the refusal is a
     // property of the SURFACE (`D-SCOPE`'s resource member), never of a registration side effect.
-    const refused = exclusionTurn(this._gate)
+    const refused = exclusionTurn(() => this._gate)
     if (refused !== null) return JSON.parse(refused.content[0].text) as unknown
     let res = this.resources.get(uri)
     let variables: Record<string, string> = {}
@@ -690,11 +716,16 @@ export class ProvidentMcpServer {
           'DOM and the SSR fragment.',
       },
     )
-    ProvidentMcpServer.registerTools(server, this.backend, this.allowedToolNames(), this.registered, this.moduleStore, this.router, this._gate)
+    // `§2.2` item 2(a) — the handlers are registered ONCE (the stdio server is built once), so
+    // what they close over must be the READER of the live gate, never the gate instance: the
+    // transition REPLACES `this._gate`, and a captured instance would freeze the enforcement at
+    // its registration-time value.
+    const liveGate = (): SecurityGate => this._gate
+    ProvidentMcpServer.registerTools(server, this.backend, this.allowedToolNames(), this.registered, this.moduleStore, this.router, liveGate)
     // R3 — register the gated read-group resources in the SAME server build
     // (serves BOTH the stdio long-lived server and the per-POST HTTP server).
     const allowedResources = ProvidentMcpServer.ALL_RESOURCES.filter((r) => this._gate.toolAllowed(`resource:${r.uri ?? r.uriTemplate!}`))
-    ProvidentMcpServer.registerResources(server, this.backend, allowedResources, this.resources, this._gate)
+    ProvidentMcpServer.registerResources(server, this.backend, allowedResources, this.resources, liveGate)
     return server
   }
 
@@ -705,7 +736,7 @@ export class ProvidentMcpServer {
     registered: Map<string, RegisteredTool>,
     moduleStore: ModuleStore | null,
     router: CapabilityRouter | null,
-    gate: SecurityGate,
+    liveGate: () => SecurityGate,
   ): void {
     // `§2.2` item 2(a) — THE INVOCATION TURN, applied at the ONE REGISTRATION BOUNDARY so it is
     // UNFORGETTABLE for EVERY tool (including one added later): each declared handler below is
@@ -716,7 +747,7 @@ export class ProvidentMcpServer {
     // each declared registration keeps the SDK's inferred schema type and the wrapper costs the
     // call sites no annotation.
     const guarded = <H extends (...a: never[]) => unknown>(handler: H): H =>
-      (async (...a: never[]) => exclusionTurn(gate) ?? (await (handler as (...x: never[]) => unknown)(...a))) as unknown as H
+      (async (...a: never[]) => exclusionTurn(liveGate) ?? (await (handler as (...x: never[]) => unknown)(...a))) as unknown as H
     if (allowed.includes('provident.dispatch')) {
       registered.set('provident.dispatch', server.registerTool('provident.dispatch', {
         title: 'Dispatch a synthetic event',
@@ -879,7 +910,7 @@ export class ProvidentMcpServer {
           description: `A dynamic module tool (${tool}) — requires module AND code groups (invocation two-gate).`,
           inputSchema: {},
         }, guarded(async (args: Record<string, unknown>) => {
-          const value = invokeModuleTool(router, gate, tool, args)
+          const value = invokeModuleTool(router, liveGate(), tool, args)
           return text(value)
         })))
       }
@@ -938,7 +969,7 @@ export class ProvidentMcpServer {
     backend: McpBackend,
     defs: Array<ResourceDef>,
     resources: Map<string, RegisteredResource | RegisteredResourceTemplate>,
-    gate: SecurityGate,
+    liveGate: () => SecurityGate,
   ): void {
     for (const def of defs) {
       // R2 — each resource registration below is keyed on the SAME group gate the
@@ -958,7 +989,7 @@ export class ProvidentMcpServer {
           async (uri, variables) => {
             // `§2.2` item 2(a) — a RESOURCE READ runs the SAME predicate at the SAME turn: the
             // resource surface is inside `D-SCOPE`, so it is refused before any dispatch too.
-            const refused = exclusionTurn(gate)
+            const refused = exclusionTurn(liveGate)
             if (refused !== null) return { contents: [{ uri: uri.href, text: refused.content[0].text, mimeType: def.mimeType }] }
             const nodeId = decodeURIComponent(String(variables?.nodeId ?? ''))
             const value = await backend.invoke('nodeState', nodeId)
@@ -972,7 +1003,7 @@ export class ProvidentMcpServer {
           uri,
           { title: `provident.${def.name}`, description: def.description, mimeType: def.mimeType },
           async (u) => {
-            const refused = exclusionTurn(gate)
+            const refused = exclusionTurn(liveGate)
             if (refused !== null) return { contents: [{ uri: u.href, text: refused.content[0].text, mimeType: def.mimeType }] }
             const value = await backend.invoke(def.method, {})
             return { contents: [{ uri: u.href, text: JSON.stringify(value, null, 2), mimeType: def.mimeType }] }
@@ -1144,8 +1175,17 @@ export class RendererBackend implements McpBackend {
     resolve: (v: unknown) => void
     reject: (e: Error) => void
     timer: ReturnType<typeof setTimeout>
+    /** `§2.2` item 3 / `PAR-5` — THE ACCEPTED-WORK EPOCH STAMPED ON THIS ENTRY at acceptance
+     *  (the DECLARED CARRIER). It is read from the LIVE gate at acceptance, never from a caller
+     *  (`PAR-5`'s OUTSIDE column): there is no epoch-accepting parameter anywhere on this surface. */
+    epoch: number
   }>()
   private window: WindowLike | null = null
+  /** `§2.2` item 3 — THE ACCEPTOR'S EPOCH SOURCE, bound by the server to its LIVE gate (see
+   *  `ProvidentMcpServer`'s constructor). `null` when no server wired one (a standalone backend
+   *  in a unit drive): the stamp is then the constant `0` and the reply turn can never see a
+   *  stale entry, which is exactly the landed behaviour of an unwired backend. */
+  private exclusionEpochSource: (() => number) | null = null
 
   constructor(opts: RendererBackendOptions = {}) {
     this.readyTimeoutMs = opts.readyTimeoutMs ?? 30000
@@ -1219,6 +1259,26 @@ export class RendererBackend implements McpBackend {
     this.readyPromise = this.newReadyPromise()
   }
 
+  /** `§2.2` item 3 / `PAR-5` — bind the ACCEPTOR's epoch source. It takes a READER (not a value
+   *  and not a caller-supplied epoch) so the stamp is always the LIVE gate's counter at the moment
+   *  the work is accepted, and so the binding survives the transition's gate REPLACEMENT. */
+  setExclusionEpochSource(read: () => number): void {
+    this.exclusionEpochSource = read
+  }
+
+  /** `§2.2` item 3 — the epoch CURRENT at this turn, read from the source the server bound to its
+   *  live gate. Never throws and never `undefined`: an unwired backend answers `0`. */
+  private currentExclusionEpoch(): number {
+    const read = this.exclusionEpochSource
+    if (read === null) return 0
+    try {
+      const value = read()
+      return typeof value === 'number' ? value : 0
+    } catch {
+      return 0
+    }
+  }
+
   /** `§2.2` item 4 / `PAR-6` — THE IN-FLIGHT INVALIDATION on an exclusion transition. For every
    *  entry in `pending` it mirrors the landed `handleReset` loop EXACTLY (`clearTimeout`,
    *  `reject(new Error(reason))`, then `pending.clear()`), returning the NUMBER of entries it
@@ -1267,7 +1327,8 @@ export class RendererBackend implements McpBackend {
         },
         this.invokeTimeoutMs,
       )
-      this.pending.set(id, { resolve, reject, timer })
+      // `§2.2` item 3 — THE ACCEPTANCE TURN STAMPS THE LIVE EPOCH on the entry the call will ride.
+      this.pending.set(id, { resolve, reject, timer, epoch: this.currentExclusionEpoch() })
     })
     // F4 — a destroy between the check and the send throws on a destroyed
     // webContents; catch it + clean the pending entry + rethrow a spec-shaped
@@ -1285,11 +1346,26 @@ export class RendererBackend implements McpBackend {
     return result
   }
 
+  /** **`§2.2` item 3 (the REPLY TURN) / `PAR-5` — THE STALE-EPOCH ARM**, the belt-and-braces the
+   *  spec declares BESIDE `abandonPendingForExclusion` (which is the BULK invalidation).
+   *
+   *  A reply whose entry's stamped epoch is STALE — the gate's epoch moved between acceptance and
+   *  this turn — is **NOT** resolved with the renderer's value: the call is settled with the
+   *  DECLARED refusal token VERBATIM (`'exclusion-closed'`, `§2.2` item 5), the SAME token the
+   *  in-flight abandonment carries, so the token is identical at all three depths and only the
+   *  TRANSPORT of the refusal differs. The comparison is against the LIVE epoch read at THIS turn,
+   *  never against a caller-supplied one (`PAR-5`'s OUTSIDE column forbids an epoch-accepting
+   *  parameter: it would let a caller forge recency). An entry whose epoch still matches settles
+   *  exactly as it always did. */
   handleReply(reply: RpcReply): void {
     const entry = this.pending.get(reply.id)
     if (!entry) return
     this.pending.delete(reply.id)
     clearTimeout(entry.timer)
+    if (entry.epoch !== this.currentExclusionEpoch()) {
+      entry.reject(new Error(EXCLUSION_CLOSED))
+      return
+    }
     if (reply.ok) entry.resolve(this.maybeDigest(reply.value))
     else entry.reject(new Error(reply.error ?? 'renderer error'))
   }

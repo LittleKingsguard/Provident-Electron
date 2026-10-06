@@ -200,6 +200,14 @@ export class SecurityGate {
    *  PROCESS-GLOBAL and SINGLE-VALUED: it rides the ONE gate `main` constructs at boot and the
    *  server holds; there is no per-window copy, no per-realm copy and no second holder. */
   private _exclusion: ExclusionState
+  /** `§2.2` item 3 / `PAR-5` — THE ACCEPTED-WORK EPOCH, held BESIDE the exclusion record: a
+   *  monotone counter bumped ONCE per accepted TRANSITION (`T-1`/`T-2`) and carried forward
+   *  UNCHANGED by `T-3`/`T-4` and by every non-transition call (`apply`). It rides the gate the
+   *  process holds (there is ONE live gate — `§2.2` item 3 / the row that FAILS a module-global
+   *  design), so a gate constructed independently never observes another's bump. No declared
+   *  surface TAKES an epoch (`PAR-5`'s OUTSIDE column): it is read here and stamped by the
+   *  acceptor, never supplied by a caller. */
+  private _exclusionEpoch = 0
 
   constructor(initial?: SecurityConfig) {
     // A PARTIAL initial (`{ token }` with no `enabled` — the boot-read shape the drives construct
@@ -241,6 +249,13 @@ export class SecurityGate {
     return this._exclusion
   }
 
+  /** `§2.2` item 3 / `PAR-5` — THE EPOCH READER. It reports the counter's current value; it takes
+   *  NOTHING (`PAR-5`: *"No declared surface takes one"*), so a caller can never forge recency by
+   *  supplying an epoch, and it never throws and is never `undefined` (`P-EX-TP-1`'s totality). */
+  exclusionEpoch(): number {
+    return this._exclusionEpoch
+  }
+
   /** `§2.1` item 2 / `PAR-3` — THE TRANSITION'S PURE CONSTRUCTOR, in the `apply`-family style: a
    *  NEW gate is returned and the RECEIVER is unchanged (`applyGatePatch` REPLACES `this._gate`,
    *  so a mutating form would leave the server's own replacement invisible to an earlier reader).
@@ -250,12 +265,18 @@ export class SecurityGate {
   withExclusion(next: ExclusionState): SecurityGate {
     const changed = next === 'mcp-enabled' || next === 'mcp-disabled'
     if (!changed || next === this._exclusion) {
+      // `T-3`/`T-4` — the epoch does NOT move: an epoch bump on a no-op would invalidate work for
+      // a transition that never happened (and a caller could then deny service with a loop of
+      // no-ops), so the counter is CARRIED FORWARD unchanged.
       const same = new SecurityGate(this.config)
       same._exclusion = this._exclusion
+      same._exclusionEpoch = this._exclusionEpoch
       return same
     }
+    // `T-1`/`T-2` — AN ACCEPTED TRANSITION BUMPS THE EPOCH BY EXACTLY `1` (`M-EX-2`).
     const moved = new SecurityGate(this.config)
     moved._exclusion = next
+    moved._exclusionEpoch = this._exclusionEpoch + 1
     return moved
   }
 
@@ -274,6 +295,9 @@ export class SecurityGate {
     // `T-5` / `M-EX-9` — the SET/re-gate path is NOT a transition site: the exclusion record
     // rides through UNTOUCHED, and the two axes stay separate.
     next._exclusion = this._exclusion
+    // `M-EX-7` / `M-EX-9` — and the epoch does not move either: the SET neither transitions nor
+    // invalidates.
+    next._exclusionEpoch = this._exclusionEpoch
     return next
   }
 }
