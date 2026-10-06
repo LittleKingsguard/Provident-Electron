@@ -82,6 +82,28 @@
 // A DRIVE WHOSE SUBJECT THE CONTRACT DOES NOT SUPPLY IS STILL WRITTEN AS A REAL
 // ASSERTION and reported as a CONTRACT GAP in this pass's report rather than
 // satisfied with a placeholder or a fabricated seam.
+//
+// ⟶ **ANNOTATED BESIDE 2026-10-06 (`S1` GATE 6 RED — `RCA-8(d)` ANNOTATE-BESIDE;
+// the block above stands BYTE-FOR-BYTE and is NOT rewritten). THE GATE-6 LIVE
+// BATTERY FAILED WITH SIX CONTRADICTIONS** (`docs/specs/secure-exclusion-live-battery.md`
+// `§4` `F-1`…`F-5`), and THE RED ROWS FOR THEM ARE AUTHORED FIRST (`RCA-1`). FOUR
+// of the six are `[H]`-layer findings of ALREADY-DECLARED properties, so their
+// drive cells belong in the register's EXISTING rows (the `A-1`/`A-2`/`A-3`
+// precedent); the two `[U]`-layer ones (the toggle's authored body and the pane's
+// rendered view) stay OUT of the register, because `§5.5.2` item 4 pins that
+// *"THE `[U]` HALF OF THE CONTRACT IS NOT IN THIS REGISTER"*.
+// **THE OPERATIVE TERMS MOVE `113 -> 117`, AND THE DELTA IS `+4`, ACCOUNTED FOR BY
+// EXACTLY TWO ROWS — no third row moved and no term was re-assigned:**
+//   `P-EX-IM-2` `15 -> 17` (`+2`: `G6-F3#1` the live-transition RECEIPT cell,
+//                            `G6-F3#2` the live-transition LISTING cell)
+//   `P-EX-TP-2` `12 -> 14` (`+2`: `G6-F1#1` the GET member IS the live state,
+//                            `G6-F4#1` the operator's re-enable RESTORES answers)
+// **THE OPERATIVE TOTAL IS `117 = 12 + 17 + 13 + 13 + 14 + 12 + 12 + 14 + 10`**
+// (chain `12 -> 29 -> 42 -> 55 -> 69 -> 81 -> 93 -> 107 -> 117`), subtotals
+// `P-IM 52 + P-SM 39 + P-TP 26 = 117`. The SPEC'S `§5.5.1` AS-FILED `106` and the
+// gate-4 operative `113` are BOTH kept visible (`SPEC_AS_FILED_*` below, and the
+// annotation on `DECLARED_TERMS`); a TestWriter may not amend `docs/specs/*.md`
+// (`§1.3` item 10), so the `+4` is REPORTED as the spec-amendment finding.
 
 import { existsSync, readFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
@@ -194,7 +216,17 @@ export const STOP_AFTER_CONSECUTIVE = 5
  *  arithmetic line's positions `5`/`6` are the thing to reconcile (they should read
  *  `12 + 14`); the finding is REPORTED to the supervisor, not resolved here.  **The
  *  declared total is still `106` and is still the sum of these nine terms.** */
-export const DECLARED_TERMS: readonly number[] = [12, 15, 13, 13, 14, 12, 12, 12, 10]
+export const DECLARED_TERMS: readonly number[] = [12, 17, 13, 13, 14, 12, 12, 14, 10]
+/* **⟶ ANNOTATED 2026-10-06 (`S1` GATE 6 RED — `RCA-8(d)` ANNOTATE-BESIDE; the
+ * GATE-4 annotation ABOVE is kept byte-for-byte and is NOT rewritten).** FOUR more
+ * drive cells, in TWO rows — `P-EX-IM-2` `15 -> 17` and `P-EX-TP-2` `12 -> 14` — are
+ * authored for the six LIVE contradictions the gate-6 battery measured
+ * (`docs/specs/secure-exclusion-live-battery.md` `§4`): `G6-F3#1`/`G6-F3#2` (the
+ * declared receipt and the unchanged listing while the tier is open, both driven
+ * over the app's OWN MCP request path) and `G6-F1#1`/`G6-F4#1` (the manual-UI read
+ * reports the LIVE state, and the operator's re-enable restores answers). The other
+ * seven terms, every row id, every strategy id, every property and both caps are
+ * unmoved; the operative total is `117` and the delta vs the gate-4 `113` is `+4`. */
 /* **⟶ ANNOTATED 2026-10-05 (GATE 4 RED PASS — the annotation ABOVE is the GATE-3
  * reading and is kept byte-for-byte).  THREE TERMS MOVED because this pass authored
  * SEVEN new drive cells for the adversarial pass's host findings: `P-EX-IM-2`
@@ -242,7 +274,12 @@ export const SPEC_AS_FILED_SUBTOTALS: { readonly im: number; readonly sm: number
 /** The per-row term MOVES this pass made, in register order — named so the delta is
  *  printed PER ROW rather than as a bare total. Every row not listed reads `0`. */
 export const TERM_MOVES: Readonly<Record<string, number>> = {
-  'P-EX-IM-2': 3, 'P-EX-IM-3': 3, 'P-EX-SM-1': 1,
+  // GATE 4 (`A-1`/`A-2`/`A-3`) — three rows, seven cells, `106 -> 113`:
+  'P-EX-IM-2': 5, 'P-EX-IM-3': 3, 'P-EX-SM-1': 1,
+  // ⟶ GATE 6 (`G6-F3`/`G6-F1`/`G6-F4`) — two rows, four cells, `113 -> 117`
+  // (`RCA-8(d)` annotate-beside; the gate-4 figures above are UNCHANGED, and the
+  // per-row figures below are the CUMULATIVE move vs `SPEC_AS_FILED_TABLE_TERMS`).
+  'P-EX-TP-2': 2,
 }
 /** `SPEC_AS_FILED_TERMS`' report, in the same shape `declaredTotalReport()` returns
  *  — so the delta is printed through ONE formatter, never by hand-typed arithmetic. */

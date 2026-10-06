@@ -123,6 +123,25 @@
  *     arithmetic, and the `+7` delta is asserted as this pass's SPEC-AMENDMENT
  *     FINDING.  The spec file is NOT edited here (`§1.3` item 10).
  *
+ * ⟶ **ANNOTATED BESIDE 2026-10-06 (`S1` GATE 6 RED — `RCA-8(d)` ANNOTATE-BESIDE;
+ * the gate-3/gate-4 block above stands BYTE-FOR-BYTE and is NOT rewritten). THE
+ * GATE-6 LIVE BATTERY FAILED WITH SIX CONTRADICTIONS** (`docs/specs/secure-exclusion-live-battery.md`
+ * `§4` `F-1`…`F-6`), and the RED ROWS for them are authored FIRST (`RCA-1`): five
+ * `it` rows in the `S1 GATE 6 — THE SIX LIVE FAILURES` block (`G6-F1` the manual-UI
+ * read reports the LIVE state; `G6-F2` the authored toggle body, driven through the
+ * pane graph's own WIRED click path, asks for the OPPOSITE of the CURRENT state and
+ * a transition happens; `G6-F3` the DECLARED receipt and the UNCHANGED listing over
+ * the app's own request path while open; `G6-F4` the operator's return through the
+ * declared control restores answers; `G6-F5` the rendered pane — and a RE-PAINTED
+ * one — agrees with the LIVE gate, which folds the `U-6` operator-view clause).
+ * **FOUR more drive cells ride the register** (`G6-F3#1`/`G6-F3#2` in `P-EX-IM-2`,
+ * `G6-F1#1`/`G6-F4#1` in `P-EX-TP-2`) because the two `[U]`-layer findings must stay
+ * OUT of it (`§5.5.2` item 4): **THE OPERATIVE TOTAL MOVES `113 -> 117`**
+ * (`12 + 17 + 13 + 13 + 14 + 12 + 12 + 14 + 10`, subtotals `52 + 39 + 26`), delta
+ * `+4` vs the gate-4 operative form and `+11` vs the spec's as-filed `106`. Both
+ * earlier forms stay VISIBLE (`SPEC_AS_FILED_*` in the register module); the spec
+ * file is NOT edited here (`§1.3` item 10).
+ *
  * **THE REPORTED SPEC GAP (recorded, NOT resolved by invention):** `§2.2` item 3
  * and `PAR-5` declare the exclusion epoch's SEMANTICS ("a per-process monotone
  * counter held beside the exclusion record"), its bump rules (`T-1`/`T-2` bump,
@@ -153,7 +172,14 @@ import { createSecurityStore } from '../src/main/security-store.js'
 import { SecurePanels } from '../src/renderer/secure-panels.js'
 import { Runtime } from '../src/renderer/runtime.js'
 import { demoEnvelope } from '../src/shared/demo-envelope.js'
-import { installShim, mountEl } from '../src/shared/dom-shim.js'
+import { installShim, mountEl, type ShimElement } from '../src/shared/dom-shim.js'
+/* GATE 6 — THE SIX LIVE FAILURES' RED ROWS: the app's OWN MCP request path, driven
+ * by the repo's OWN `@modelcontextprotocol/sdk` client over an in-memory linked
+ * transport pair (the greens' `ChildProcessTransport` is the live runner's; this is
+ * the same SDK client driving the same server-side request handlers, in-process —
+ * NO hand-poked `_requestHandlers`, NO transport shim). */
+import { Client } from '@modelcontextprotocol/sdk/client/index.js'
+import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
 import {
   EXCLUSION_CLOSED,
   MALFORMED_STATE,
@@ -917,7 +943,9 @@ function appAndPane(): { runtime: RuntimeProbeLike; panels: SecurePanels | null 
 }
 
 /* ============================================================================
- * THE REGISTER — §5.5.1 (9 rows; OPERATIVE declared total `113 = 12+15+13+13+14+12+12+12+10`;
+ * THE REGISTER — §5.5.1 (9 rows; OPERATIVE declared total `117 = 12+17+13+13+14+12+12+14+10`;
+ * the gate-4 form was `113 = 12+15+13+13+14+12+12+12+10` and the spec's as-filed form is
+ * `106 = 12+12+10+12+12+14+12+12+10` — BOTH kept visible, `RCA-8(d)` annotate-beside);
  * the spec's as-filed `106 = 12+12+10+12+12+14+12+12+10` is held beside it and the
  * `+7` delta — seven new drive cells for the gate-4 `A-1`/`A-2`/`A-3` findings — is
  * reported as the SPEC-AMENDMENT FINDING, never smoothed)
@@ -1211,7 +1239,7 @@ const registerSpecs: RegisterRow[] = [
     id: 'P-EX-IM-2',
     type: 'P-IM',
     strategyId: 'S-EX-TURN-1',
-    term: 15,
+    term: 17,
     property: 'THE INVOCATION TURN IS THE ENFORCEMENT, AND IT IS TOTAL OVER D-SCOPE — every MCP-reachable method class, with the state `\'mcp-disabled\'`, is refused the VALUE `{status:\'refused\', reason:\'exclusion-closed\'}` BEFORE any renderer dispatch, on BOTH transports; a registry-only re-gate is NOT the enforcement; the tool/resource set is NOT deregistered; AND the static boundary holds (§2.2 items 1/2, §2.3, §1.3 item 1)',
     drives: [
       /* (a) the invocation while 'mcp-disabled': refusal as a VALUE, no pending
@@ -1518,6 +1546,72 @@ const registerSpecs: RegisterRow[] = [
           expect(refusalTokenOf(answered.value), 'the positive control answers NO exclusion refusal (the same call, no transition)').not.toBe(EXCLUSION_CLOSED)
           expect(backend.invokes,
             'the SAME invocation DOES dispatch while the tier is closed — the required `invokes 1` reading, which is what makes `A-1#1`\'s `invokes 0` a MEASUREMENT and not a fixture artifact. Dispatched: ' + JSON.stringify(backend.invokes)).toEqual(['renderedHtml'])
+        },
+      },
+      {
+        label: "(G6-F3#1) THE LIVE-TRANSITION RECEIPT CELL (§2.2 items 2(a)/2(b), §2.3 item 1, §3.1 M-EX-5, §3.2 FS-EX-3, §5.5.1 P-EX-TP-1) — a server whose handles were REGISTERED while `'mcp-enabled'` and then went through a REAL `applyExclusion('mcp-disabled')` (the app's OWN transition site, the registry toggling NOT withheld): an MCP invocation over the app's own request path must answer the DECLARED refusal VALUE `{status:'refused', reason:'exclusion-closed'}`, never the SDK's `-32602 … disabled`",
+        run: async () => {
+          /* **⟶ ADDED 2026-10-06 (`S1` GATE 6 RED): the gate-6 live battery measured
+           * that the registry toggling the `A-1` cells DELIBERATELY WITHHOLD is
+           * exactly what answers first on a REAL transition** — `regateLiveServer`
+           * disables EVERY captured handle, including `provident.dispatch`, so the
+           * SDK's `CallToolRequestSchema` handler throws `-32602 … disabled` before
+           * `exclusionTurn` ever runs (`docs/specs/secure-exclusion-live-battery.md`
+           * `§4` `F-3`).  The cell drives the app's OWN request path — the repo's own
+           * `@modelcontextprotocol/sdk` client over an in-memory linked transport —
+           * and reads the ANSWER, so the `[H]`-layer obligation is bound by the
+           * register too (`§5.5.2` item 4 keeps the `[U]` half out). */
+          const gate = freshGate()
+          const backend = recordingBackend()
+          const server = freshServer(gate, backend, 'stdio')
+          const mcp = server.ensureServerRegistered()
+          const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair()
+          await mcp.connect(serverTransport)
+          const client = new Client({ name: 's1-g6-f3-cell', version: '0.0.0' })
+          await client.connect(clientTransport)
+          try {
+            const enabled = await sdkCallTool(client, 'provident.get_rendered_html')
+            expect(refusalTokenOf(enabled.value),
+              'the POSITIVE CONTROL — while the tier is CLOSED the same call over the same path answers normally (no exclusion token), so the reading below is not a blanket refusal').not.toBe(EXCLUSION_CLOSED)
+            server.applyExclusion(STATE_MCP_DISABLED)
+            expect(server.exclusionSnapshot(),
+              'PAR-4 — the transition really ran (the server\'s own reader answers the receipt)').toEqual(REFUSAL)
+            const opened = await sdkCallTool(client, 'provident.get_rendered_html')
+            expect(opened.threw,
+              '§2.5 item 4 — the refusal is a VALUE at the tool boundary, never a throw').toBeNull()
+            expect((opened.value as { isError?: unknown } | null)?.isError,
+              '§3.1 M-EX-5 — the declared receipt is the tool\'s RESULT; `isError` is ABSENT, never an MCP protocol error').toBeUndefined()
+            expect(refusalTokenOf(opened.value),
+              '§2.2 item 2(a) — over the app\'s OWN request path, while the tier is open, the answer is the DECLARED receipt. Measured: ' + JSON.stringify(opened.value)?.slice(0, 200)).toBe(EXCLUSION_CLOSED)
+            // CONTROL (driven in-line): the pre-repair answer MUST FAIL the same predicate.
+            expect(stdioAnswerIsTheDeclaredReceiptControlOnly({ value: { content: [{ type: 'text', text: 'MCP error -32602: Tool provident.get_rendered_html disabled' }], isError: true }, threw: null }),
+              'CONTROL — the PRE-REPAIR answer (`-32602 … disabled`) MUST FAIL this row\'s own predicate').toBe(false)
+          } finally {
+            await client.close()
+          }
+        },
+      },
+      {
+        label: "(G6-F3#2) THE LIVE-TRANSITION LISTING CELL (§0A item 7(c), §2.2 item 2(c), §5.5.1 P-EX-IM-2 cell (e)) — the tool set is NOT cleared while the tier is open: `tools/list`, over the app's own request path, answers the SAME set it answered while the tier was closed, and a NON-EMPTY one",
+        run: async () => {
+          const gate = freshGate()
+          const server = freshServer(gate, recordingBackend(), 'stdio')
+          const mcp = server.ensureServerRegistered()
+          const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair()
+          await mcp.connect(serverTransport)
+          const client = new Client({ name: 's1-g6-f3-listing', version: '0.0.0' })
+          await client.connect(clientTransport)
+          try {
+            const enabled = await sdkListToolNames(client)
+            expect(enabled.length, '§0 ruling 11 — the default-gate registered subset is NON-EMPTY while the tier is closed').toBeGreaterThan(0)
+            server.applyExclusion(STATE_MCP_DISABLED)
+            const opened = await sdkListToolNames(client)
+            expect(opened,
+              '§0A item 7(c) / §2.2 item 2(c) — "the stdio registration set is UNCHANGED in both states — the gate does not deregister tools on disable". The reading is SET EQUALITY against the enabled-state listing (the spec declares NO count here; §2.6 item 3\'s `22` is `ALL_TOOLS` and §0 ruling 11\'s `8` is the default-gate registered subset). Measured while open: ' + JSON.stringify(opened)).toEqual(enabled)
+            expect(opened.length, '§0A item 7(c) — and it is NON-EMPTY: a vanished listing makes the disabled state legible by the surface disappearing, the oracle the pin refuses').toBeGreaterThan(0)
+          } finally {
+            await client.close()
+          }
         },
       },
     ],
@@ -2749,7 +2843,7 @@ const registerSpecs: RegisterRow[] = [
     id: 'P-EX-TP-2',
     type: 'P-TP',
     strategyId: 'S-EX-CHAN-1',
-    term: 12,
+    term: 14,
     property: 'THE MANUAL-UI CHANNEL IS TOTAL OVER ITS DECLARED DOMAIN, AND THE TRANSITION IS NOT A SETTING — every payload answers ONE of exactly TWO closed forms; the `exclusion` member is NEVER absent on a GET or a SET response; the SET response keeps its landed `write` member BESIDE it; and a SET does NOT change the state (§2.4 item 4, PAR-8, PAR-9, M-EX-7)',
     drives: [
       { label: '(payload 1) the legal token `\'mcp-disabled\'` · the answered form is `{applied:true, state:\'mcp-disabled\'}`', run: () => { expectApplied('mcp-disabled') } },
@@ -2843,6 +2937,78 @@ const registerSpecs: RegisterRow[] = [
             'CONTROL — the repaired instrument is LIVE on the re-gated object: the operator\'s own transition moves the state (`\'mcp-disabled\'` → `\'mcp-enabled\'`), so an instrument that could not see a move would be exposed here').toBe(STATE_MCP_ENABLED)
           expect(gateEpochOf(reGated.withExclusion(STATE_MCP_ENABLED)),
             'CONTROL — and it moves the epoch beside the state, so the two readings above are not constants').toBeGreaterThan(epochBefore)
+        },
+      },
+      {
+        label: "(G6-F1#1) THE GET MEMBER IS THE LIVE STATE (§2.4 item 4, PAR-9, §3.1 M-EX-7, §2.1 item 1, §3.3 I-EX-2) — after a REAL accepted transition, the value the LANDED `IPC_SECURITY_GET` response record's own `exclusion:` expression answers must be the state the server's LIVE gate is in",
+        run: async () => {
+          /* **⟶ ADDED 2026-10-06 (`S1` GATE 6 RED): the gate-6 live battery measured
+           * `IPC_SECURITY_GET` answering `'mcp-enabled'` after a real accepted
+           * transition** — `main.ts:376` closes over the BOOT-constructed gate while
+           * `mcp.applyExclusion(state)` (`:414`) REPLACES the SERVER's `_gate`
+           * (`SecurityGate.withExclusion` returns a NEW instance), so the operator's
+           * read never follows a transition (`docs/specs/secure-exclusion-live-battery.md`
+           * `§4` `F-1`/`F-4`).  The cell EXTRACTS that expression from the landed
+           * handler body and EVALUATES it against the REAL object boundary `main()`
+           * constructs, so the reading is the STATE the operator's own read answers —
+           * never a string match on the handler. */
+          const bootGate = new SecurityGate({ token: null, enabled: ['read', 'dispatch'] } as never)
+          gateFrom(bootGate)
+          const server = freshServer(gateFrom(bootGate), recordingBackend(), 'stdio')
+          const expr = mainGetExclusionExpression()
+          const before = manualUiExclusionRead({ gate: bootGate, mcp: server }, expr)
+          expect(before.error,
+            `PAR-9 — the extracted read expression (\`${expr}\`) is EVALUABLE in the declared scope (gate · mcp · liveGate); an expression outside it is a NAMED failure: ${String(before.error)}`).toBeNull()
+          expect(before.value, 'PAR-9 — before any transition the read and the live gate agree (the baseline)').toBe(STATE_MCP_ENABLED)
+          server.applyExclusion(STATE_MCP_DISABLED)
+          const live = server.gate.exclusionState()
+          expect(live, '§2.1 item 3 T-1 — the transition MOVED the server\'s live gate (so the reading below is taken against a transition that really happened)').toBe(STATE_MCP_DISABLED)
+          expect(manualUiReadReportsLiveStateControlOnly(STATE_MCP_ENABLED, live),
+            'CONTROL — a reading equal to the BOOT state MUST FAIL the row\'s predicate (the value the live battery measured); written as a PREDICATE so it cannot become a false red if a repair instead moves the object the handler closes over').toBe(false)
+          expect(manualUiReadReportsLiveStateControlOnly(live, live),
+            'CONTROL (positive) — and the LIVE state PASSES the same predicate, so the cell is satisfiable').toBe(true)
+          const after = manualUiExclusionRead({ gate: bootGate, mcp: server }, expr)
+          expect(manualUiReadReportsLiveStateControlOnly(after.value, live),
+            `PAR-9 / M-EX-7 — THE MANUAL-UI READ REPORTS THE LIVE STATE: the response record's \`exclusion:\` member must answer \`${live}\`, not the boot state. Measured: ${String(after.value)}`).toBe(true)
+        },
+      },
+      {
+        label: "(G6-F4#1) THE OPERATOR'S RE-ENABLE RESTORES ANSWERS (§2.4 item 6, §2.2 item 2(a), §3.1 U-4) — driven through the manual-UI channel (the DECLARED re-arm: \"the pane control ... or the channel directly\"): after a real `applyExclusion('mcp-disabled')`, the operator's own `applyExclusion('mcp-enabled')` must restore a NORMAL answer over the app's own request path",
+        run: async () => {
+          /* **⟶ ADDED 2026-10-06 (`S1` GATE 6 RED): `U-4`'s return arm is the ONE
+           * obligation `F-4` measured as structurally unreachable over MCP** (the
+           * `provident.dispatch` POST that would carry the return is itself an
+           * invocation, refused `503`).  `§2.4` item 6 declares the re-arm to be the
+           * operator's OWN act — "the pane control (`§2.4` item 2) or the channel
+           * directly" — so THIS cell drives the `[H]` channel arm (HELD today, and
+           * asserted so the obligation is bound where the register may bind it;
+           * `§5.5.2` item 4 keeps the `[U]` control arm out of the register). */
+          const gate = freshGate()
+          const backend = recordingBackend()
+          const server = freshServer(gate, backend, 'stdio')
+          const mcp = server.ensureServerRegistered()
+          const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair()
+          await mcp.connect(serverTransport)
+          const client = new Client({ name: 's1-g6-f4-cell', version: '0.0.0' })
+          await client.connect(clientTransport)
+          try {
+            server.applyExclusion(STATE_MCP_DISABLED)
+            const dispatchesBefore = backend.invokes.length
+            await sdkCallTool(client, 'provident.get_rendered_html')
+            expect(server.exclusionSnapshot(),
+              'PAR-4 — the precondition: the tier IS open (the server\'s own reader answers the receipt)').toEqual(REFUSAL)
+            expect(backend.invokes.length,
+              '§2.2 item 2(a) — and no renderer dispatch happened while open; the ANSWER\'s SHAPE is `G6-F3#1`\'s cell, never re-litigated here').toBe(dispatchesBefore)
+            server.applyExclusion(STATE_MCP_ENABLED)
+            const restored = await sdkCallTool(client, 'provident.get_rendered_html')
+            expect(restored.threw, '§2.5 item 4 — the answer is a VALUE').toBeNull()
+            expect(refusalTokenOf(restored.value),
+              '§2.4 item 6 / U-4 — the operator\'s own re-arm restores NORMAL answers: no exclusion token, no isError. Measured: ' + JSON.stringify(restored.value)?.slice(0, 200)).not.toBe(EXCLUSION_CLOSED)
+            expect((restored.value as { isError?: unknown } | null)?.isError,
+              'U-4 — "clicking it back ... restores tool answers": the restored answer is the tool\'s RESULT, not an SDK refusal').toBeUndefined()
+          } finally {
+            await client.close()
+          }
         },
       },
     ],
@@ -3025,10 +3191,14 @@ async function runRegisterOnce(): Promise<ExecReport> {
 
 /** THE DECLARED TOTAL, PRINTED WITH ITS TERMS — and the assertion that the total
  *  IS the sum of its own terms (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`).
- *  **⟶ ANNOTATED 2026-10-05 (GATE 4): the OPERATIVE form is `113 = 12 + 15 + 13 +
+ *  **⟶ ANNOTATED 2026-10-05 (GATE 4): the OPERATIVE form was `113 = 12 + 15 + 13 +
  *  13 + 14 + 12 + 12 + 12 + 10` with subtotals `50 + 39 + 24`; the spec's AS-FILED
  *  `106 = 12 + 12 + 10 + 12 + 12 + 14 + 12 + 12 + 10` / `44 + 38 + 24` is kept in
- *  the register module as `SPEC_AS_FILED_*` and printed BESIDE it.** */
+ *  the register module as `SPEC_AS_FILED_*` and printed BESIDE it.** **⟶ AND
+ *  ANNOTATED AGAIN 2026-10-06 (GATE 6 RED): the OPERATIVE form is now `117 = 12 +
+ *  17 + 13 + 13 + 14 + 12 + 12 + 14 + 10` (subtotals `52 + 39 + 26`) — the four
+ *  `G6-*` cells the six live failures forced, on the SAME two rows the gate-4
+ *  annotation already touched; the `113` above stands as the gate-4 reading.** */
 function registerReportText(r: ExecReport): string {
   const lines: string[] = []
   lines.push('REGISTER-ATTEMPT-TOTALS (§5.5.1 — printed WITH their terms):')
@@ -3053,7 +3223,7 @@ function registerReportText(r: ExecReport): string {
   return lines.join('\n')
 }
 
-describe('S1 §5.5.1 THE REGISTER (executed deterministically — 9 rows / 113 operative attempts; the spec declares 106 / REPORTED as the spec-amendment finding)', () => {
+describe('S1 §5.5.1 THE REGISTER (executed deterministically — 9 rows / 117 operative attempts; the spec declares 106 / REPORTED as the spec-amendment finding)', () => {
   it('the register executes all 9 rows with their strategy ids and FULL terms; the declared total prints WITH its terms and IS the sum of its own terms', async () => {
     const r = await runRegisterOnce()
     expect(r.rows.length, 'AGENTS.md item 11(b) — the register carries EXACTLY 9 rows (`4` P-EX-IM + `3` P-EX-SM + `2` P-EX-TP); an un-run row is a FAILURE, never a pass').toBe(9)
@@ -3112,7 +3282,7 @@ describe('S1 §5.5.1 THE REGISTER (executed deterministically — 9 rows / 113 o
     const asFiled = specAsFiledTotalReport()
     expect(declared.terms, 'the register\'s OPERATIVE terms, in register order (printed WITH the as-filed spec line beside them)').toEqual([...DECLARED_TERMS])
     expect(declared.sum, `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS — the operative total IS the sum of its own printed terms (\`${declared.terms.join(' + ')}\`)`).toBe(declared.terms.reduce((a, b) => a + b, 0))
-    expect(declared.sum, 'the operative total printed as its own terms').toBe(113)
+    expect(declared.sum, 'the operative total printed as its own terms').toBe(117)
     expect(declared.terms.length, 'nine terms — the register still carries exactly nine typed rows').toBe(9)
     // THE DELTA VS THE SPEC, PER ROW AND IN TOTAL — asserted, never narrated.
     // **THE PER-ROW PAIRING IS THE SPEC TABLE'S (`SPEC_AS_FILED_TABLE_TERMS`), the
@@ -3127,22 +3297,22 @@ describe('S1 §5.5.1 THE REGISTER (executed deterministically — 9 rows / 113 o
       '  per row (vs the TABLE)     : ' + moves.map((m) => `${m.id} ${m.asFiled} -> ${m.operative} (${m.delta >= 0 ? '+' : ''}${m.delta})`).join(' · ') + '\n' +
       '  total                      : ' + String(asFiled.sum) + ' -> ' + String(declared.sum) + ' (' + (declared.sum - asFiled.sum >= 0 ? '+' : '') + String(declared.sum - asFiled.sum) + ')\n')
     expect(declared.sum - asFiled.sum,
-      'SPEC-AMENDMENT FINDING — the total moved by exactly the seven NEW drive cells this pass authored (`A-1` +3 on `P-EX-IM-2`, `A-2` +3 on `P-EX-IM-3`, `A-3` +1 on `P-EX-SM-1`); the spec\'s `§5.5.1` table and arithmetic paragraph OWE the corresponding amendment').toBe(7)
+      'SPEC-AMENDMENT FINDING — the total moved by exactly the drive cells this unit has authored for its gate-4 AND gate-6 host findings (GATE 4: `A-1` +3 on `P-EX-IM-2`, `A-2` +3 on `P-EX-IM-3`, `A-3` +1 on `P-EX-SM-1` = +7; GATE 6: `G6-F3` +2 on `P-EX-IM-2`, `G6-F1`/`G6-F4` +2 on `P-EX-TP-2` = +4; `7 + 4 = 11`); the spec\'s `§5.5.1` table and arithmetic paragraph OWE the corresponding amendment').toBe(11)
     for (const m of moves) {
       expect(m.delta, `SPEC-AMENDMENT FINDING — ${m.id}'s term move is exactly the number of new drive cells authored for it (as filed ${m.asFiled} -> operative ${m.operative}, measured against the spec TABLE's per-row pairing); a move ANYWHERE ELSE would be an unlicensed re-numbering`).toBe(TERM_MOVES[m.id] ?? 0)
       expect(m.operative, `the operative term for ${m.id} is its row's drive count (the table is the CLOSED input set)`).toBe(registerSpecs[moves.indexOf(m)].drives.length)
     }
     expect(moves.map((m) => m.asFiledLine).join('+'),
       'the spec\'s AS-FILED arithmetic line is quoted beside the operative terms exactly as filed, INCLUDING the intra-`P-SM` transpose that `§5.5.1`\'s own annotation already records (positions 5/6 read 12/14 where the TABLE reads 14/12) — this pass neither inherits nor repairs it silently').toBe('12+12+10+12+12+14+12+12+10')
-    expect(declared.chain, `the chain, one operative term at a time in the DECLARED order`).toBe('12 -> 27 -> 40 -> 53 -> 67 -> 79 -> 91 -> 103 -> 113')
+    expect(declared.chain, `the chain, one operative term at a time in the DECLARED order`).toBe('12 -> 29 -> 42 -> 55 -> 69 -> 81 -> 93 -> 107 -> 117')
     expect(declared.chain, 'the chain IS the register\'s own terms, accumulated in order (never a second authority)').toBe(declared.terms.reduce((a, b, i) => (i === 0 ? [String(b)] : [...a, String(Number(a[i - 1]) + b)]), [] as string[]).join(' -> '))
     expect(r.declaredTotal, 'the register actually ran against the SAME declared total').toBe(declared.sum)
     expect(r.rows.reduce((a, x) => a + x.declaredTerm, 0), 'the executed rows\' terms sum to the declared total').toBe(declared.sum)
     expect(r.rows.map((x) => x.declaredTerm), 'the executed terms ARE the declared terms, in order (the spec TABLE\'s row order: P-EX-IM-1,2,3 · P-EX-SM-1,2,3 · P-EX-TP-1,2 · P-EX-IM-4)').toEqual([...DECLARED_TERMS])
 
-    // SUBTOTALS BY TYPE, operative vs as filed: 50 + 39 + 24 = 113 vs 44 + 38 + 24 = 106
-    expect(r.subtotals, 'the operative per-type subtotals (`P-IM` = `12 + 15 + 13 + 10 = 50` · `P-SM` = `13 + 14 + 12 = 39` · `P-TP` = `12 + 12 = 24`)').toEqual({ im: 50, sm: 39, tp: 24 })
-    expect(r.subtotals.im + r.subtotals.sm + r.subtotals.tp, `\`50 + 39 + 24 = 113\` ✓ (the spec's as-filed form is \`${String(SPEC_AS_FILED_SUBTOTALS.im)} + ${String(SPEC_AS_FILED_SUBTOTALS.sm)} + ${String(SPEC_AS_FILED_SUBTOTALS.tp)} = ${String(SPEC_AS_FILED_TOTAL)}\`; both are printed, neither is smoothed)`).toBe(113)
+    // SUBTOTALS BY TYPE, operative vs as filed: 52 + 39 + 26 = 117 vs 44 + 38 + 24 = 106
+    expect(r.subtotals, 'the operative per-type subtotals (`P-IM` = `12 + 17 + 13 + 10 = 52` · `P-SM` = `13 + 14 + 12 = 39` · `P-TP` = `12 + 14 = 26`)').toEqual({ im: 52, sm: 39, tp: 26 })
+    expect(r.subtotals.im + r.subtotals.sm + r.subtotals.tp, `\`52 + 39 + 26 = 117\` ✓ (the spec's as-filed form is \`${String(SPEC_AS_FILED_SUBTOTALS.im)} + ${String(SPEC_AS_FILED_SUBTOTALS.sm)} + ${String(SPEC_AS_FILED_SUBTOTALS.tp)} = ${String(SPEC_AS_FILED_TOTAL)}\`; both are printed, neither is smoothed)`).toBe(117)
 
     // CAPS, each compared against its OWN cap:
     expect(Math.max(...r.declaredTerms), `§4.3.1 — the largest row \`15\` <= ${REGISTER_ROW_CAP} (headroom \`${REGISTER_ROW_CAP - Math.max(...r.declaredTerms)}\`); the as-filed largest row was \`14\``).toBeLessThanOrEqual(REGISTER_ROW_CAP)
@@ -3183,7 +3353,7 @@ describe('S1 §5.5.1 THE REGISTER (executed deterministically — 9 rows / 113 o
     expect(r.rows.map((x) => `${x.id}:${x.declaredTerm}`),
       'the declared TERM SEQUENCE, in `§5.5.1` TABLE order and paired to its row id (the as-filed form accepted `12 || 14 || 10` in ANY order and per row, so a permuted table or a mis-paired term passed it)').toEqual(REGISTER_ROW_IDS.map((id, i) => `${id}:${DECLARED_TERMS[i]}`))
     expect(r.rows.map((x) => x.declaredTerm).join('+'),
-      'the operative total IS these nine terms in this order (printed WITH its terms, per `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`)').toBe('12+15+13+13+14+12+12+12+10')
+      'the operative total IS these nine terms in this order (printed WITH its terms, per `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`)').toBe('12+17+13+13+14+12+12+14+10')
     /* **⟶ THE BROKEN/UN-RUN GUARD, TIGHTENED 2026-10-05 (`S1` GATE 4 —
      * `RCA-8(d)` ANNOTATE-BESIDE: the as-filed form is KEPT and DRIVEN, never
      * erased).**
@@ -4447,6 +4617,549 @@ describe('S1 §3a/§3b THE GATE-4 HOST-FIX ROWS (A-1 / A-2 / A-3 — the new mec
   it("A-3 (§2.1 item 3 T-2(d), §2.3 item 1) — newly-allowed tools are registered on the live stdio server on the operator's close request: the `A-3` cell is HELD", async () => {
     await runRegisterOnce()
     assertCellsHeld('(A-3#', 1, "A-3 (`applyExclusion` omits the widen arm `applyGatePatch` has, so the operator's re-enable leaves newly-allowed tools unregistered)")
+  })
+})
+
+/* ============================================================================
+ * S1 GATE 6 — THE SIX LIVE FAILURES: THE RED ROWS (`F-1` … `F-6`).
+ *
+ * Authored FIRST, from the SPEC and the gate-6 RUN RECORD, BEFORE any `src/` fix
+ * (`RCA-1`; `AGENTS.md` item 3). Source of truth:
+ *   · `docs/specs/secure-exclusion-live-battery.md` `§4` — the six measured
+ *     contradictions, each with its clause, its EXPECTED value and its OBSERVED
+ *     value (`F-1`/`F-2` the inert operator control, `F-3` the refusal's shape over
+ *     stdio, `F-4` the stale `IPC_SECURITY_*` response members, `F-5` the
+ *     unreachable return, and the `U-6` operator-view fold);
+ *   · `docs/specs/secure-exclusion.md` `§2.1` (the state machine + the ONE live
+ *     home), `§2.2` items 2/3/5 (the invocation turn, the receipt as a VALUE, the
+ *     non-legibility pin), `§2.3` item 1, `§2.4` items 2/3/4/6 (the control, the
+ *     off-state segment, the channel's additive member, the operator's re-enable),
+ *     `§2.5` item 4, `§2.6` item 4, `PAR-9`/`PAR-10`/`PAR-11`, `M-EX-5`/`M-EX-7`/
+ *     `M-EX-8`, `FS-EX-3`, `I-EX-2`/`I-EX-4`.
+ *
+ * THE FIVE ROWS AND WHY EACH IS RED AT THIS HEAD (each drives the SPEC's declared
+ * observable; each carries its OWN control, driven in-line, that CAN FAIL):
+ *   `G6-F1` — `PAR-9`/`§2.4` item 4/`M-EX-7`/`I-EX-2`: after a REAL accepted
+ *             transition the manual-UI read reports the LIVE state. RED: the
+ *             landed `IPC_SECURITY_GET` binds `exclusion:` to the BOOT-CONSTRUCTED
+ *             `SecurityGate` (`main.ts:376`) while `mcp.applyExclusion(state)`
+ *             (`main.ts:414`) REPLACES the server's `_gate` — `withExclusion`
+ *             always returns a NEW instance — so the operator's read is
+ *             permanently stale after any transition (the gate-4 `A-1` defect
+ *             class, one layer up).
+ *   `G6-F2` — `§2.4` item 2 + `§3.1` `U-2`/`U-6`: the toggle's authored body,
+ *             driven through the pane graph's OWN wired click path, asks the
+ *             bridge for the OPPOSITE of the CURRENT state and a transition
+ *             happens. RED: the pane's `data-state` is refreshed from the SAME
+ *             stale read as `G6-F1`, so the body asks for the state the app is
+ *             ALREADY in — a `T-3` self-transition (a legal no-op) — and the
+ *             control is one-way.
+ *   `G6-F3` — `§2.2` items 2(a)/2(c), `§0A` item 7(c), `M-EX-5`, `FS-EX-3`: while
+ *             open, an MCP call over the app's OWN request path answers the
+ *             DECLARED receipt VALUE, and `tools/list` is the UNCHANGED set. RED:
+ *             `regateLiveServer` toggles EVERY captured handle `enabled: false`
+ *             (including `provident.dispatch`), so the SDK answers
+ *             `-32602 … disabled` before `exclusionTurn` runs and `tools/list`
+ *             reads `0`.
+ *   `G6-F4` — `§2.4` item 6 + `§3.1` `U-4`: the operator's re-enable through the
+ *             declared control restores normal answers. RED through the control
+ *             (the `G6-F2` cause); the `[H]` channel arm of the SAME obligation is
+ *             HELD and is recorded BESIDE it (the register's `G6-F4#1` cell).
+ *   `G6-F5` — `§2.4` item 3 / `PAR-11` / `M-EX-8` + the `U-6` reload arm: the
+ *             rendered status segment and the toggle's `data-state` agree with the
+ *             LIVE gate — including on a RE-PAINTED pane. RED: `F-1` surfacing in
+ *             the UI.
+ *
+ * THE `[U]` LAYER'S HONEST LIMIT, STATED: these rows drive the pane through the
+ * pane graph's own WIRED DOM click path (the same `handleDomEvent` the browser's
+ * listener calls) against a bridge bound to `main.ts`'s OWN objects. They are
+ * `[T]`-executed EVIDENCE FOR the `§5.U` subjects, NOT a substitute for gate 6's
+ * live battery, and NO matrix row is authored here (`docs/specs/user-flow-audit.md`
+ * `§5`).
+ * ========================================================================== */
+
+/** `§2.4` item 4 / `PAR-9` — the `exclusion:` expression the LANDED
+ *  `IPC_SECURITY_GET` response record is bound to, extracted from the handler body
+ *  (comments stripped). This is the ONE place `main.ts` is observable to this
+ *  layer; the rows EVALUATE the expression rather than text-matching it. */
+function mainGetExclusionExpression(): string {
+  const body = stripComments(handlerBodyOf(sourceOf(MAIN_SRC), 'IPC_SECURITY_GET'))
+  expect(body.length, 'the `IPC_SECURITY_GET` handler body is readable (the read-expression probe is not vacuous: an empty body would make every reading below a string comparison against nothing)').toBeGreaterThan(0)
+  const matched = /exclusion:\s*([^,}]+?)\s*\}/.exec(body)
+  if (!matched) {
+    absent(
+      '§2.4 item 4 / PAR-9 — the GET response record\'s additive `exclusion: <state>` member (`{ ...settings, exclusion: state }`)',
+      'the `exclusion:` binding inside the `IPC_SECURITY_GET` handler body',
+    )
+  }
+  return matched[1].trim()
+}
+
+/** Evaluate that expression against the REAL objects `main()` binds: the
+ *  boot-constructed gate, the server that holds it, and a `liveGate()` reader of
+ *  the server's own gate. The DECLARED scope is reported so an expression outside
+ *  it is a NAMED failure rather than a silent `ReferenceError`. */
+function manualUiExclusionRead(
+  scope: { gate: unknown; mcp: ProvidentMcpServer },
+  expr: string,
+): { value: unknown; error: string | null } {
+  try {
+    const read = new Function('gate', 'mcp', 'liveGate', `return (${expr})`) as (
+      g: unknown,
+      m: unknown,
+      l: () => unknown,
+    ) => unknown
+    return { value: read(scope.gate, scope.mcp, () => (scope.mcp as unknown as { gate: unknown }).gate), error: null }
+  } catch (e) {
+    return { value: null, error: e instanceof Error ? e.message : String(e) }
+  }
+}
+
+/** CONTROL ONLY — the row's OWN acceptance predicate, driven IN-LINE with the
+ *  PRE-REPAIR reading so the instrument is shown ABLE TO FAIL (`RCA-8(d)`). */
+function manualUiReadReportsLiveStateControlOnly(reading: unknown, liveState: string): boolean {
+  return reading === liveState
+}
+
+/** CONTROL ONLY — the `G6-F3` acceptance predicate, driven IN-LINE with the
+ *  pre-repair SDK answer (`-32602 … disabled`) so the receipt row is shown able to
+ *  bite, and with the declared receipt so it is shown satisfiable. */
+function stdioAnswerIsTheDeclaredReceiptControlOnly(answer: { value: unknown; threw: unknown }): boolean {
+  const isError = (answer.value as { isError?: unknown } | null)?.isError
+  return answer.threw === null && isError === undefined && refusalTokenOf(answer.value) === EXCLUSION_CLOSED
+}
+
+/** `§2.3` item 4 — an MCP call over the app's OWN request path, driven by the
+ *  repo's own SDK client (never a hand-poked handler map). */
+async function sdkCallTool(client: Client, name: string): Promise<{ value: unknown; threw: unknown }> {
+  try {
+    return { value: await client.callTool({ name, arguments: {} }), threw: null }
+  } catch (e) {
+    return { value: null, threw: e }
+  }
+}
+
+/** `§2.2` item 2(c) / `§0A` item 7(c) — the LISTING as the app's own request path
+ *  answers it (`tools/list`), sorted so the reading is set-shaped. */
+async function sdkListToolNames(client: Client): Promise<string[]> {
+  const listed = await client.listTools()
+  return listed.tools.map((t) => t.name).sort()
+}
+
+/** THE SHARED INSTRUMENT — the REAL object boundary `main()` constructs (the boot
+ *  gate + the `ProvidentMcpServer` that holds it) plus a repo-SDK client on the
+ *  app's own request path. */
+interface LiveBoundary {
+  readonly bootGate: SecurityGate
+  readonly server: ProvidentMcpServer
+  readonly mcp: ReturnType<ProvidentMcpServer['ensureServerRegistered']>
+  readonly client: Client
+  readonly backend: { invokes: string[]; invoke: (m: string, p: unknown) => Promise<unknown> }
+  liveState(): string
+  manualUiRead(): { value: unknown; error: string | null }
+  close(): Promise<void>
+}
+
+async function liveBoundary(): Promise<LiveBoundary> {
+  const bootGate = new SecurityGate({ token: null, enabled: ['read', 'dispatch'] } as never)
+  gateFrom(bootGate)
+  const backend = recordingBackend()
+  const server = new ProvidentMcpServer({ backend, gate: bootGate, transport: 'stdio' } as never)
+  const mcp = server.ensureServerRegistered()
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair()
+  await mcp.connect(serverTransport)
+  const client = new Client({ name: 's1-gate6-red', version: '0.0.0' })
+  await client.connect(clientTransport)
+  const expr = mainGetExclusionExpression()
+  return {
+    bootGate,
+    server,
+    mcp,
+    client,
+    backend,
+    liveState: () => server.gate.exclusionState(),
+    manualUiRead: () => manualUiExclusionRead({ gate: bootGate, mcp: server }, expr),
+    close: async () => {
+      await client.close()
+    },
+  }
+}
+
+/** The pane, wired to the SAME boundary `main.ts` uses: its bridge `get()` answers
+ *  the LANDED handler's own `exclusion:` expression, and its `setExclusion` goes to
+ *  `main.ts`'s OWN transition site (`IPC_SECURITY_EXCLUSION`'s handler calls
+ *  `mcp.applyExclusion(state)`). */
+interface PaneBoundary {
+  readonly panels: SecurePanels
+  readonly mount: ShimElement
+  readonly reads: Array<{ value: unknown; error: string | null }>
+  readonly setExclusionCalls: unknown[]
+  readonly setCalls: unknown[]
+  restore(): void
+}
+
+async function paneOnLiveBoundary(boundary: LiveBoundary): Promise<PaneBoundary> {
+  const previous = (globalThis as Record<string, unknown>).window
+  const reads: Array<{ value: unknown; error: string | null }> = []
+  const setExclusionCalls: unknown[] = []
+  const setCalls: unknown[] = []
+  const security = {
+    get: async (): Promise<unknown> => {
+      const read = boundary.manualUiRead()
+      reads.push(read)
+      return { token: null, enabled: ['read', 'dispatch'], exclusion: read.value }
+    },
+    set: async (patch: unknown): Promise<unknown> => {
+      setCalls.push(patch)
+      return { token: null, enabled: ['read', 'dispatch'], write: { status: 'committed' } }
+    },
+    setExclusion: async (state: unknown): Promise<unknown> => {
+      setExclusionCalls.push(state)
+      const legal = state === STATE_MCP_ENABLED || state === STATE_MCP_DISABLED
+      // `main.ts`'s OWN transition site — the handler at `:407-415` calls
+      // `mcp.applyExclusion(state)` (the landed `IPC_SECURITY_EXCLUSION` channel).
+      if (legal) boundary.server.applyExclusion(state as 'mcp-enabled' | 'mcp-disabled')
+      return { applied: legal, state: boundary.liveState() }
+    },
+  }
+  ;(globalThis as Record<string, unknown>).window = { provident: { security } }
+  const mount = mountEl()
+  const panels = new SecurePanels(mount as unknown as HTMLElement)
+  await panels.refresh()
+  return {
+    panels,
+    mount,
+    reads,
+    setExclusionCalls,
+    setCalls,
+    restore: () => {
+      ;(globalThis as Record<string, unknown>).window = previous
+    },
+  }
+}
+
+/** The pane's RENDERED elements carrying an authored id (the pane graph's own
+ *  adapter output — the surface the live battery reads with `elementFromPoint`). */
+function renderedElements(mount: ShimElement, id: string): ShimElement[] {
+  const out: ShimElement[] = []
+  const walk = (el: ShimElement): void => {
+    if (el.id === id) out.push(el)
+    for (const child of el.children) walk(child)
+  }
+  walk(mount)
+  return out
+}
+
+/** THE WIRED CLICK PATH — the same one the browser's own listener takes: fire
+ *  the listeners the pane graph's `DomAdapter` bound to the RENDERED element, then
+ *  let the handler's `flush() → render() → refresh()` chain settle. */
+async function clickRenderedControl(mount: ShimElement, id: string): Promise<{ fired: number; elements: number }> {
+  const elements = renderedElements(mount, id)
+  let fired = 0
+  for (const el of elements) {
+    for (const fn of el.listeners.click ?? []) {
+      fired += 1
+      fn({ type: 'click', target: el })
+    }
+  }
+  await tick(60)
+  return { fired, elements: elements.length }
+}
+
+/** CONTROL ONLY — the `G6-F5` acceptance predicate over a rendered status line and
+ *  a toggle `data-state`, driven IN-LINE with the PRE-REPAIR rendering. */
+function renderedPaneAgreesWithLiveStateControlOnly(status: unknown, dataState: unknown, liveState: string): boolean {
+  const word = liveState === STATE_MCP_DISABLED ? 'disabled' : 'enabled'
+  return typeof status === 'string' && status.includes(`· MCP: ${word}`) && dataState === liveState
+}
+
+describe('S1 GATE 6 — THE SIX LIVE FAILURES (F-1 .. F-5) — the red rows, authored FIRST (RCA-1)', () => {
+  it('G6-F1 (§2.4 item 4, PAR-9, M-EX-7, §2.1 item 1, I-EX-2) — after a REAL accepted transition the manual-UI read reports the LIVE state, never the boot state', async () => {
+    const boundary = await liveBoundary()
+    try {
+      // THE POSITIVE CONTROL FIRST: the boundary starts on the boot terminal, and
+      // the extracted read AGREES with it while no transition has happened — so the
+      // reading below measures the TRANSITION and not a constant.
+      const before = boundary.manualUiRead()
+      expect(before.error, `PAR-9 — the extracted \`exclusion:\` expression (\`${mainGetExclusionExpression()}\`) is EVALUABLE in the declared scope (gate · mcp · liveGate). An expression outside it is a NAMED failure, never a silent pass: ${String(before.error)}`).toBeNull()
+      expect(before.value, 'PAR-9 — the boot read and the boot gate agree BEFORE any transition (the baseline the reading below moves off)').toBe(STATE_MCP_ENABLED)
+      expect(boundary.liveState(), 'the server\'s OWN live gate starts on the boot terminal too').toBe(STATE_MCP_ENABLED)
+
+      // THE REAL ACCEPTED TRANSITION — the app's OWN path: `IPC_SECURITY_EXCLUSION`'s
+      // handler (`main.ts:407`) calls `mcp.applyExclusion(state)` (the landing at
+      // `:414`), which REPLACES the server's `_gate` with `withExclusion(state)`.
+      boundary.server.applyExclusion(STATE_MCP_DISABLED)
+      const live = boundary.liveState()
+      expect(live, '§2.1 item 3 T-1 — the transition MOVED the server\'s live gate (so the reading below is taken against a transition that really happened)').toBe(STATE_MCP_DISABLED)
+      // CONTROL (driven in-line, and written so it holds under EITHER declared repair
+      // shape): the row's OWN predicate MUST FAIL the stale reading and PASS the live
+      // one — the instrument is shown able to bite before it is asserted clean. The
+      // pre-repair reading is REPORTED beside it, never ASSERTED as a constant (a
+      // repair that moves the object the handler closes over would legitimately
+      // change it, and a control that forbade that would be a false red).
+      expect(manualUiReadReportsLiveStateControlOnly(STATE_MCP_ENABLED, live),
+        'CONTROL — a reading equal to the BOOT state MUST FAIL the row\'s predicate (this is the value the live battery measured)').toBe(false)
+      expect(manualUiReadReportsLiveStateControlOnly(live, live),
+        'CONTROL (positive) — and the LIVE state PASSES the same predicate, so the row is satisfiable').toBe(true)
+      process.stdout.write(`\nG6-F1 — the manual-UI read after a real accepted transition:\n  the landed expression: exclusion: ${mainGetExclusionExpression()}\n  the boot-gate reading (pre-repair, reported): ${String(manualUiExclusionRead({ gate: boundary.bootGate, mcp: boundary.server }, mainGetExclusionExpression()).value)}\n  the server's LIVE gate: ${live}\n  the operator's read: ${String(boundary.manualUiRead().value)}\n`)
+
+      // THE ROW — the value the operator's own read answers after the transition.
+      const after = boundary.manualUiRead()
+      expect(after.error, 'PAR-9 — the read expression stays evaluable after the transition').toBeNull()
+      expect(
+        after.value,
+        `F-1 (§2.4 item 4 / PAR-9 / M-EX-7 / I-EX-2) — THE MANUAL-UI READ REPORTS THE LIVE STATE. The landed \`IPC_SECURITY_GET\` binds \`exclusion: ${mainGetExclusionExpression()}\` and that source does NOT follow \`mcp.applyExclusion\` (\`SecurityGate.withExclusion\` returns a NEW gate, so the boot instance is never moved). The operator's snapshot is therefore permanently stale after any transition — the gate-4 \`A-1\` defect class, one layer up. Measured: the app's live gate reads \`${live}\`, the response member reads \`${String(after.value)}\`.`,
+      ).toBe(live)
+
+      // THE SCOPE'S SECOND READING — the row accepts EITHER repair shape (the
+      // handler reading the live gate, or the transition moving the object the
+      // handler closes over) and rejects neither, so it names the OBLIGATION and
+      // not an implementation.
+      expect(
+        manualUiReadReportsLiveStateControlOnly(after.value, live),
+        'PAR-9 — the obligation, as ONE checkable predicate, holds of the operator\'s read',
+      ).toBe(true)
+    } finally {
+      await boundary.close()
+    }
+  })
+
+  it('G6-F2 (§2.4 item 2, PAR-10, §3.1 U-2/U-6) — the authored toggle body, driven through the pane graph\'s WIRED click path, asks the bridge for the OPPOSITE of the CURRENT state and the live gate MOVES', async () => {
+    const boundary = await liveBoundary()
+    const pane = await paneOnLiveBoundary(boundary)
+    try {
+      // THE POSITIVE CONTROL FOR THE INSTRUMENT (and it CAN fail): the same wired
+      // click path, on a control whose body calls the bridge FIRST, must reach the
+      // bridge — and an id that is NOT in the pane must fire NOTHING.
+      const tokenGen = await clickRenderedControl(pane.mount, 'token-gen')
+      expect(tokenGen.fired, 'CONTROL — the wired-DOM click instrument reaches a LANDED sibling control\'s bound listener (`#token-gen`), so a zero reading on the toggle below is a measurement and not a broken instrument').toBeGreaterThan(0)
+      expect(pane.setCalls.length, 'CONTROL — `#token-gen`\'s authored body REACHED the bridge (`TOKEN_GEN_BODY` calls `s.set(...)` FIRST and reads no `ctx.node` prop)').toBeGreaterThan(0)
+      const absentControl = await clickRenderedControl(pane.mount, 'no-such-control-in-this-pane')
+      expect(absentControl, 'CONTROL (negative) — an id with no rendered element fires nothing and has no element, so the instrument cannot report a phantom click').toEqual({ fired: 0, elements: 0 })
+
+      // THE OPERATOR OPENS THE TIER — the app's own transition site, then the pane
+      // refreshes from the read the bridge actually answers (the `G6-F1` source).
+      boundary.server.applyExclusion(STATE_MCP_DISABLED)
+      await pane.panels.refresh()
+      expect(boundary.liveState(), 'the tier IS open (T-1 ran on the live gate)').toBe(STATE_MCP_DISABLED)
+      const toggleBefore = paneNodeById(pane.panels, 'exclusion-toggle')
+      expect(toggleBefore, '§2.4 item 2 — the control is authored in the pane graph (the drive below is measured against a pane that EXISTS)').toBeDefined()
+
+      // THE GESTURE — through the pane graph's own wired path.
+      const click = await clickRenderedControl(pane.mount, 'exclusion-toggle')
+      // THE BRIEF'S SIBLING CHECK: the landed `JOURNAL_LENGTH_BODY` is driven on the
+      // SAME wired path, so "does the landed sibling share the defect?" is MEASURED
+      // here rather than asserted from the battery's prose.
+      const setCallsBefore = pane.setCalls.length
+      const journalClick = await clickRenderedControl(pane.mount, 'journal-length-apply')
+      const journalReachedTheBridge = pane.setCalls.length > setCallsBefore
+      expect(journalClick.fired,
+        'CONTROL — the sibling drive is REAL (a bound listener fired on the rendered `#journal-length-apply`), so the reading below is about the BODY and not about a phantom element').toBeGreaterThan(0)
+      process.stdout.write('\nG6-F2 — a wired click on `#exclusion-toggle` while the live gate reads `mcp-disabled`:\n' +
+        `  bound listeners fired: ${String(click.fired)} (rendered elements carrying the id: ${String(click.elements)})\n` +
+        `  the authored body reached the bridge with: ${JSON.stringify(pane.setExclusionCalls)}\n` +
+        `  the LIVE gate after the gesture: ${boundary.liveState()}\n` +
+        `  the sibling \`#journal-length-apply\` on the SAME wired path: listeners fired ${String(journalClick.fired)}, the body reached the bridge: ${String(journalReachedTheBridge)} — ${JSON.stringify(pane.setCalls.slice(setCallsBefore))}\n`)
+
+      // (i) THE BODY RAN — the supervisor's `ctx.node` hypothesis, TESTED. In this
+      //     instrument the body DOES reach the bridge and DOES read
+      //     `ctx.node.props['data-state']` (a no-op body would push nothing).
+      expect(click.fired, '§2.4 item 2 — the toggle\'s bound listener fires on the wired path (the live battery measured the same, so this reading is not the finding)').toBeGreaterThan(0)
+      expect(pane.setExclusionCalls.length, '§2.4 item 2 / PAR-10 — the AUTHORED BODY REACHED THE BRIDGE. The live battery measured that it does NOT (`F-2`); in THIS instrument it does, which REFUTES the `ctx.node`-undefined hypothesis at this layer and is reported as such (gate-7/8 finding)').toBeGreaterThan(0)
+
+      // (ii) THE EFFECT — the target it asked for must be the OPPOSITE of the
+      //      CURRENT (live) state, so that a transition HAPPENS. The body reads the
+      //      CURRENT state from its OWN `data-state`, refreshed by `syncConfig` from
+      //      the SAME read `G6-F1` reds: while that read is stale the control asks
+      //      for the state the app is ALREADY in — a `T-3` legal no-op.
+      expect(
+        pane.setExclusionCalls,
+        `§2.4 item 2 / §3.1 U-2 — THE TARGET THE BODY ASKS FOR IS THE OPPOSITE OF THE CURRENT STATE. Measured target: ${JSON.stringify(pane.setExclusionCalls)} against a live gate reading \`${boundary.liveState()}\`. A target equal to the current state is a \`T-3\` self-transition: the operator presses the control and NOTHING moves.`,
+      ).toEqual([STATE_MCP_ENABLED])
+      expect(
+        boundary.liveState(),
+        '§2.4 item 2 / §3.1 U-2 — THE EFFECT, not the listener: the live gate must MOVE on the operator\'s press (`mcp-disabled` → `mcp-enabled`). The live battery measured the same defect in the opposite direction (a press while `mcp-enabled` left the pane reading `enabled` over a moved gate); both are the ONE obligation — the control must ask for the OPPOSITE of the CURRENT state.',
+      ).toBe(STATE_MCP_ENABLED)
+      // and the U-6 operator-visible arm of the SAME press: the pane's own
+      // `data-state`/affordance word must follow the transition it just caused.
+      expect(paneNodeById(pane.panels, 'exclusion-toggle')?.content, 'U-6 — the control\'s affordance word follows the state the press produced').toBe('Disable MCP')
+    } finally {
+      pane.restore()
+      await boundary.close()
+    }
+  })
+
+  it('G6-F3 (§2.2 items 2(a)/2(c), §0A item 7(c), §3.1 M-EX-5, §3.2 FS-EX-3, §5.5.1 P-EX-IM-2) — while open, an MCP call answers the DECLARED receipt VALUE over the app\'s own request path, and the tool listing is UNCHANGED', async () => {
+    const boundary = await liveBoundary()
+    try {
+      // THE POSITIVE CONTROL: the same client, the same call, the tier CLOSED.
+      const listedEnabled = await sdkListToolNames(boundary.client)
+      const answeredEnabled = await sdkCallTool(boundary.client, 'provident.get_markdown')
+      expect(answeredEnabled.threw, 'CONTROL — while the tier is closed the call is answered (no throw), so the readings below are taken on a WORKING path').toBeNull()
+      expect(refusalTokenOf(answeredEnabled.value), 'CONTROL — and it is NOT the exclusion refusal (the row below is not a blanket reading). Measured: ' + JSON.stringify(answeredEnabled.value)?.slice(0, 160)).not.toBe(EXCLUSION_CLOSED)
+      expect(listedEnabled.length, '§0 ruling 11 — the default-gate registered subset is NON-EMPTY while the tier is closed (the reading the open-state listing is compared against)').toBeGreaterThan(0)
+
+      // THE TRANSITION — the app's own path, toggling NOT withheld.
+      boundary.server.applyExclusion(STATE_MCP_DISABLED)
+      expect(boundary.server.exclusionSnapshot(), 'PAR-4 — the server\'s own reader agrees the tier is open (the transition really ran)').toEqual(REFUSAL)
+
+      // (1) THE DECLARED RECEIPT — a VALUE, never an MCP protocol error.
+      const answeredOpen = await sdkCallTool(boundary.client, 'provident.get_markdown')
+      const dispatched = await sdkCallTool(boundary.client, 'provident.dispatch')
+      expect(answeredOpen.threw, '§2.2 item 2(a) / §2.5 item 4 — the refusal is a VALUE at the tool boundary, never a throw').toBeNull()
+      expect(
+        refusalTokenOf(answeredOpen.value),
+        `F-3 (§2.2 item 2(a), §3.1 M-EX-5, §3.2 FS-EX-3, §5.5.1 P-EX-TP-1) — WHILE THE TIER IS OPEN AN MCP CALL ANSWERS THE DECLARED RECEIPT \`{status:'refused', reason:'exclusion-closed'}\` AS THE TOOL'S RESULT. The live battery measured the SDK's \`-32602 … disabled\` instead: \`regateLiveServer\` toggles EVERY captured handle \`enabled:false\` (including \`provident.dispatch\`, the one tool that stays registered on the group predicate alone), so the SDK refuses the call BEFORE \`exclusionTurn\` runs. Measured over the app's own request path: ${JSON.stringify(answeredOpen.value)?.slice(0, 200)}`,
+      ).toBe(EXCLUSION_CLOSED)
+      expect((answeredOpen.value as { isError?: unknown } | null)?.isError, '§3.1 M-EX-5 — and the receipt is the tool\'s RESULT (`isError` ABSENT), never an MCP protocol error').toBeUndefined()
+      expect(
+        refusalTokenOf(dispatched.value),
+        `F-3 — the SAME answer for \`provident.dispatch\`, the arm the battery named as the one that reaches \`exclusionTurn\` when it is allowed. Measured: ${JSON.stringify(dispatched.value)?.slice(0, 200)}`,
+      ).toBe(EXCLUSION_CLOSED)
+      // CONTROL (driven in-line): the PRE-REPAIR answer, through the SAME predicate.
+      expect(
+        stdioAnswerIsTheDeclaredReceiptControlOnly({
+          value: { content: [{ type: 'text', text: 'MCP error -32602: Tool provident.get_markdown disabled' }], isError: true },
+          threw: null,
+        }),
+        'CONTROL — the PRE-REPAIR answer (`-32602 … disabled`, `isError: true`) MUST FAIL this row\'s own predicate, so the predicate is shown able to bite before it is asserted clean',
+      ).toBe(false)
+      expect(
+        stdioAnswerIsTheDeclaredReceiptControlOnly({ value: { content: [{ type: 'text', text: JSON.stringify(REFUSAL) }] }, threw: null }),
+        'CONTROL (positive) — and the DECLARED receipt PASSES the same predicate, so the row is satisfiable',
+      ).toBe(true)
+
+      // (2) THE NON-LEGIBILITY PIN — the registration set is UNCHANGED in both
+      //     states (`§0A` item 7(c), `§2.2` item 2(c)): the handles are toggled, NOT
+      //     cleared, so the disabled state is not readable as "the surface
+      //     disappeared". The reading is SET EQUALITY, never an invented count.
+      const listedOpen = await sdkListToolNames(boundary.client)
+      expect(
+        listedOpen,
+        `F-3 (§0A item 7(c), §2.2 item 2(c)) — WHILE THE TIER IS OPEN THE TOOL LISTING IS THE DECLARED SET: "the stdio registration set is UNCHANGED in both states — the gate does not deregister tools on disable". Measured: ${JSON.stringify(listedOpen)} against the enabled-state set ${JSON.stringify(listedEnabled)} (the live battery read 0 where this reading held 8).`,
+      ).toEqual(listedEnabled)
+      expect(listedOpen.length, '§0A item 7(c) — and it is NON-EMPTY: a listing that vanished would make the disabled state legible by the surface disappearing, which is exactly what the pin forbids').toBeGreaterThan(0)
+
+      // (3) THE HONEST LIMIT OF THIS INSTRUMENT, reported rather than smoothed: the
+      //     `[H]`-layer register cells `G6-F3#1`/`G6-F3#2` drive the SAME two
+      //     obligations (they ride `npm test`); the live battery's stdio transport
+      //     (`ChildProcessTransport`) is gate 6's and is NOT re-driven here.
+      process.stdout.write('\nG6-F3 — the app\'s own request path while OPEN:\n' +
+        `  listing: ${String(listedOpen.length)} tools (enabled-state listing: ${String(listedEnabled.length)})\n` +
+        `  get_markdown: ${JSON.stringify(answeredOpen.value)?.slice(0, 160)}\n` +
+        `  dispatch:     ${JSON.stringify(dispatched.value)?.slice(0, 160)}\n`)
+    } finally {
+      await boundary.close()
+    }
+  })
+
+  it('G6-F4 (§2.4 item 6, §3.1 U-4, §2.2 item 2(a)) — the operator\'s return through the declared control restores normal answers (and the MCP arm is structurally unreachable BY CONTRACT)', async () => {
+    const boundary = await liveBoundary()
+    const pane = await paneOnLiveBoundary(boundary)
+    try {
+      boundary.server.applyExclusion(STATE_MCP_DISABLED)
+      const dispatchesBefore = boundary.backend.invokes.length
+      await sdkCallTool(boundary.client, 'provident.get_markdown')
+      expect(boundary.server.exclusionSnapshot(), 'PAR-4 — the precondition: the tier IS open (the server\'s own reader answers the receipt)').toEqual(REFUSAL)
+      expect(boundary.backend.invokes.length, '§2.2 item 2(a) — and no renderer dispatch happened while open (the SAFETY outcome the contract declares; the ANSWER\'s shape is `G6-F3`\'s row, never re-litigated here)').toBe(dispatchesBefore)
+      // THE `[H]` CHANNEL ARM OF THE SAME OBLIGATION — HELD, and recorded BESIDE the
+      // row: `§2.4` item 6 declares the return reachable "the pane control ... or the
+      // channel directly" and the channel arm works today.
+      boundary.server.applyExclusion(STATE_MCP_ENABLED)
+      const viaChannel = await sdkCallTool(boundary.client, 'provident.get_markdown')
+      expect(refusalTokenOf(viaChannel.value), '§2.4 item 6 — the return THROUGH THE CHANNEL restores normal answers (the `[H]` arm; the register\'s `G6-F4#1` cell rides it)').not.toBe(EXCLUSION_CLOSED)
+      // and the STRUCTURAL RECORD the brief asks for: no MCP-reachable path carries a
+      // transition — the manual-UI channel is NOT an MCP method (`D-SCOPE`, `§2.2`
+      // item 1's domain) — so the MCP arm's unreachability is BY CONTRACT and this
+      // row invents NO new surface for it: the return is reachable through the
+      // declared control (below) or the channel (above), and through nothing else.
+      // THE ROW: the return through the DECLARED CONTROL — a real press on the pane's
+      // own control, while the tier is open, must restore normal answers.
+      boundary.server.applyExclusion(STATE_MCP_DISABLED)
+      await pane.panels.refresh()
+      const click = await clickRenderedControl(pane.mount, 'exclusion-toggle')
+      const restored = await sdkCallTool(boundary.client, 'provident.get_markdown')
+      process.stdout.write('\nG6-F4 — the operator\'s return through the DECLARED control:\n' +
+        `  the control asked the bridge for: ${JSON.stringify(pane.setExclusionCalls)}\n` +
+        `  the live gate after the press: ${boundary.liveState()}\n` +
+        `  the app's own MCP answer: ${JSON.stringify(restored.value)?.slice(0, 160)} (listeners fired: ${String(click.fired)})\n`)
+      expect(
+        boundary.liveState(),
+        'F-4 (§2.4 item 6, §3.1 U-4) — THE OPERATOR\'S RE-ENABLE THROUGH THE DECLARED CONTROL MOVES THE GATE. The live battery measured the return UNREACHABLE from the control (and, over MCP, from the dispatch POST that is itself refused): the ONLY declared re-arm is the operator\'s own act, and that act must work. Measured target: ' + JSON.stringify(pane.setExclusionCalls),
+      ).toBe(STATE_MCP_ENABLED)
+      expect(
+        refusalTokenOf(restored.value),
+        `F-4 / §3.1 U-4 — "clicking it back ... restores tool answers": the app's own request path must answer NORMALLY after the operator's return. Measured: ${JSON.stringify(restored.value)?.slice(0, 200)}`,
+      ).not.toBe(EXCLUSION_CLOSED)
+    } finally {
+      pane.restore()
+      await boundary.close()
+    }
+  })
+
+  it('G6-F5 (§2.4 item 3, PAR-11, §3.1 M-EX-8/U-6) — the RENDERED pane agrees with the LIVE gate state, including on a RE-PAINTED pane', async () => {
+    const boundary = await liveBoundary()
+    const pane = await paneOnLiveBoundary(boundary)
+    try {
+      const bootRead = renderedPaneAgreesWithLiveStateControlOnly(
+        paneNodeById(pane.panels, 'security-status')?.content,
+        renderedElements(pane.mount, 'exclusion-toggle')[0]?.attrs['data-state'],
+        boundary.liveState(),
+      )
+      expect(bootRead, 'CONTROL — on the BOOT terminal the rendered pane and the live gate DO agree, so the reading below measures the transition and not a constant rendering').toBe(true)
+
+      boundary.server.applyExclusion(STATE_MCP_DISABLED)
+      await pane.panels.refresh()
+      const live = boundary.liveState()
+      expect(live, 'the tier IS open (the pane below is rendered over a REFUSING server — the exact live-battery condition)').toBe(STATE_MCP_DISABLED)
+
+      const status = paneNodeById(pane.panels, 'security-status')?.content
+      const dataState = renderedElements(pane.mount, 'exclusion-toggle')[0]?.attrs['data-state']
+      const affordance = paneNodeById(pane.panels, 'exclusion-toggle')?.content
+      process.stdout.write('\nG6-F5 — the rendered pane over an OPEN (refusing) gate:\n' +
+        `  the read the bridge answered: ${JSON.stringify(pane.reads.at(-1))}\n` +
+        `  security-status: ${JSON.stringify(status)}\n` +
+        `  the rendered toggle: data-state=${JSON.stringify(dataState)} content=${JSON.stringify(affordance)}\n`)
+
+      expect(
+        status,
+        `F-5 (§2.4 item 3 / PAR-11 / M-EX-8) — THE \`security-status\` LINE'S TRAILING SEGMENT CARRIES THE LIVE STATE (\`· MCP: disabled\` while the tier is open). The live battery measured \`· MCP: enabled\` over a server refusing every call — \`F-1\` surfacing in the UI. Measured: ${JSON.stringify(status)}`,
+      ).toContain('· MCP: disabled')
+      expect(
+        dataState,
+        `F-5 / §2.4 item 2 — THE RENDERED TOGGLE'S \`data-state\` AGREES WITH THE LIVE GATE (\`mcp-disabled\`). Measured: ${JSON.stringify(dataState)} against the live gate \`${live}\` (the live battery read \`mcp-enabled\` while the server refused every call).`,
+      ).toBe(STATE_MCP_DISABLED)
+      expect(affordance, '§2.4 item 3 — the toggle\'s affordance word follows the state it renders (`Enable MCP` while the tier is open)').toBe('Enable MCP')
+      expect(
+        renderedPaneAgreesWithLiveStateControlOnly(status, dataState, live),
+        'PAR-11 — the rendered status segment and the toggle\'s `data-state` AGREE WITH THE LIVE GATE STATE, as ONE checkable predicate',
+      ).toBe(true)
+      // CONTROL (driven in-line): the PRE-REPAIR rendering — the exact values the
+      // live battery measured — MUST FAIL the same predicate.
+      expect(
+        renderedPaneAgreesWithLiveStateControlOnly('token: •••• · enabled: [read, dispatch] · journal: ∞ · MCP: enabled', 'mcp-enabled', STATE_MCP_DISABLED),
+        'CONTROL — the PRE-REPAIR rendering the live battery measured (`· MCP: enabled`, `data-state="mcp-enabled"` over a refusing server) MUST FAIL this row\'s own predicate',
+      ).toBe(false)
+
+      // THE `U-6` RELOAD ARM (folded here, per the brief): a RE-PAINTED pane — a
+      // second `SecurePanels` on a fresh mount, the reload's re-paint — must agree
+      // with the SAME live gate, because the state is main-side and the reload does
+      // not re-arm it.
+      const repainted = await paneOnLiveBoundary(boundary)
+      try {
+        const repaintedStatus = paneNodeById(repainted.panels, 'security-status')?.content
+        const repaintedDataState = renderedElements(repainted.mount, 'exclusion-toggle')[0]?.attrs['data-state']
+        expect(
+          renderedPaneAgreesWithLiveStateControlOnly(repaintedStatus, repaintedDataState, live),
+          `U-6 (§2.4 item 3 / §2.1 item 5) — A RE-PAINTED PANE AGREES WITH THE LIVE GATE. The main-side state survives a reload (the live battery measured the call STILL refused); the OPERATOR-VISIBLE state must follow it. Measured: ${JSON.stringify(repaintedStatus)} / data-state=${JSON.stringify(repaintedDataState)}.`,
+        ).toBe(true)
+      } finally {
+        repainted.restore()
+      }
+    } finally {
+      pane.restore()
+      await boundary.close()
+    }
   })
 })
 
