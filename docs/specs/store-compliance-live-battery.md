@@ -864,3 +864,13 @@ AS-FILED DUPLICATED FRAGMENT (quoted so the repair is auditable; the WHOLE of li
 
 **WHY IT MATTERED:** a table with a duplicated row is not an eight-row table, and a reader counting row cells would have counted nine subjects against a claim of eight. **NO DATA WAS LOST AND NO ROW WAS WEAKENED — the removed bytes are a byte-identical duplicate of a row that is still present and still reads `PASS`.** The repair is recorded rather than performed silently (`RCA-8(d)`).
 
+### 9.9 THE POST-COMMIT RUN AND THE FOUR LEGS (`2026-10-11`; the RECORD-ONLY amendment for the `RCA-8(a)` gate boundary)
+
+**THE POST-COMMIT MEASUREMENT CANNOT LIVE INSIDE THE COMMIT IT MEASURES, SO IT IS RECORDED HERE BY A SECOND, RECORD-ONLY COMMIT** (the `RCA-8(a)` gate-boundary discipline the two preceding rounds used; the SCOPED commit is `f700aaf` and it carries the driver and this record **only** — no later commit touched a driver byte, so `git show f700aaf:tests/store-compliance-live.mjs` reproduces the pin below).
+
+- **THE EXECUTED BLOB IS PROVABLY THE PINNED ONE:** `git show f700aaf:tests/store-compliance-live.mjs | sha256sum` = **`ad7bbb6639ef9b7ad0f2d8ffa3b2c2d64bb6d3e03d5579fa1929562c06647751`** — byte-identical to the working-tree pin the two pre-commit runs were taken on, and the post-commit run was executed with `git status --short` EMPTY.
+- **THREE RUNS, ALL ON THE SAME BYTES:** `node tests/store-compliance-live.mjs` → exit **`1`** (run 1), exit **`1`** (run 2), exit **`1`** (run 3, POST-COMMIT at `f700aaf`), and **all three read `46 recorded rows = 34 PASS / 11 FAIL / 1 MANUAL / 0 PARKED`** — the same counts, the same exit code, on the same pinned bytes. The `FAIL` id set is exactly `{SC-A-01, SC-A-02, SC-A-04, SC-A-05, SC-D-05, SC-D-07, SC-E-01, SC-E-02, SC-E-04, SC-E-05, SC-E-07}` (11) and the one `MANUAL` is `SC-D-08` (the withheld transition race).
+- **`npm run build` BEFORE the runs → exit `0`.**
+- **THE FOUR LEGS, POST-COMMIT AT `f700aaf` WITH `git status --short` EMPTY:** `npm test` → exit **`0`**, **`86 passed (86)` files / `2729 passed | 2 skipped (2731)` tests / `0 failed`** (this is the leg that reddens on an edited-but-uncommitted driver — `tests/gutter.test.ts`'s `R-12` arm reads the WORKING TREE, and it is GREEN here, which is the third confirmation in this campaign that the fix is the commit and not a row change); `npm run typecheck` → exit **`0`**; `npm run typecheck:tests` → exit **`0`**; `npm run build` → exit **`0`**.
+- **AND THE EXIT CODE IS EVIDENCE ABOUT `FAIL`s ALONE (`A4-05`, declared once at the driver's own exit-code clause): `exit 1` here says "eleven rows contradicted the clause they cite"; it does NOT certify any family, because a `MANUAL` row is a WITHHELD claim.**
+
