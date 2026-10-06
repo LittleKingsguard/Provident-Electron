@@ -453,7 +453,7 @@ describe('G3 §2.2 THE ATOMIC WRITE (red: the plain writeFileSync is still the s
     expect(store.get().token, 'F-1 (AMENDED) — the rollback does not wedge the store: the NEXT (successful) write advances the record, and its receipt is committed (the refusal above moved nothing back out of the durable state)').toBe('after')
   })
 
-  it('F-2: a failed fsync and a failed rename — the same refusal, the same intact rule', async () => {
+  it('F-2: a failed fsync and a failed rename — the same refusal, the same intact rule (BOTH are PRE-RENAME points; the POST-RENAME dir-fsync class answers `committed`, never a refusal)', async () => {
     for (const point of ['fsync', 'rename'] as const) {
       const { store, path } = await makeStore()
       store.set({ token: 'before' })
@@ -1210,7 +1210,7 @@ const registerSpecs: RegisterRowSpec[] = [
     type: 'P-SM',
     strategy: 'S-SE-ASM-1',
     declared: 8,
-    property: 'THE ATOMIC-WRITE STATE MACHINE (CLOSED): IDLE → TMP-WRITTEN → FSYNCED → COMMITTED/RENAMED, every failure → REFUSED — FILE-STATE HONESTY (NEW-2 re-grain): a PRE-RENAME failure keeps the previous file intact; a POST-RENAME dir-fsync failure answers refused with the NEW record LIVE at the real path (§2.2; §3.3 I-1)',
+    property: 'THE ATOMIC-WRITE STATE MACHINE (CLOSED): IDLE → TMP-WRITTEN → FSYNCED → COMMITTED/RENAMED — a PRE-RENAME failure (tmp-write · tmp-fsync · rename) → REFUSED, while a POST-RENAME dir-fsync failure → COMMITTED with the NEW record LIVE (live equals durable; §0A item 2 / §2.4 R-5).  FILE-STATE HONESTY: a PRE-RENAME failure keeps the previous file intact (§2.2; §3.3 I-1).  RE-GRAINED 2026-10-11 (gate 4, AM-1): the as-filed string read "every failure → REFUSED … a POST-RENAME dir-fsync failure answers refused with the NEW record LIVE", which contradicted this row\'s OWN re-grained COMMITTED/RENAMED terminal (asserted at `:1291`); the terminal, not the prose, already carried the ruling\'s reading.',
     attempts: [
       {
         term: 'IDLE · committed terminal — the receipt is answered ONLY at a terminal: before any write, lastWriteReceipt() is null',

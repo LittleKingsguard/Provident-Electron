@@ -126,7 +126,7 @@
 // imports the vitest bindings explicitly (runtime), while tsconfig.tests.json
 // still types them globally (types: ["node", "vitest/globals"]).
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { mkdtemp, rm, readFile, writeFile, mkdir, readdir, chmod } from 'node:fs/promises'
+import { mkdtemp, rm, readFile, writeFile, mkdir, readdir, chmod, stat } from 'node:fs/promises'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { tmpdir } from 'node:os'
@@ -150,6 +150,17 @@ const hooks = vi.hoisted(() => ({
    *  step 3), and the post-rename fsync (call 2) sees the same bytes, because the
    *  commit point is the rename that puts them at the real path (§0A item 2). */
   fsyncTmpBytes: [] as string[],
+  /** THE REAL PATH'S BYTES AS THEY ARE AT EACH FSYNC (`PBT-6`, GATE-4 correction).
+   *  The persist-boundary probe's SECOND half: at the PRE-rename fsync (call 1) the
+   *  real path's bytes must still be the PRE-ATTEMPT record — the candidate exists
+   *  only as a local until the rename (§2.1 item 3 steps 2/4) — and at the
+   *  post-rename fsync (call 2) they ARE the candidate (§0A item 2).  Without this
+   *  reading the `ADMITTED` instant has no observable and its row asserted only the
+   *  post-commit state, which an assign-first shape passes. */
+  fsyncRealBytes: [] as string[],
+  /** The REAL path of the write in flight (set by `mkdirSync`/`writeFileSync`, whose
+   *  second argument names the REAL path's directory — see the mock below). */
+  realPath: '',
   /** The staging path of the write in flight (set by `writeFileSync`). */
   currentTmp: '',
   inject: { writeFile: false, fsync: false, rename: false, fsyncAt: null as number | null },
@@ -167,6 +178,10 @@ vi.mock('node:fs', async (importOriginal) => {
     writeFileSync: (file: unknown, data?: unknown, opts?: unknown): void => {
       hooks.log.push(`writeFile:${String(file)}`)
       hooks.currentTmp = String(file)
+      // the real path is the staging path MINUS its `.tmp` suffix (§2.1 item 3's
+      // staging step names `\`${path}.tmp\``), so the real path's bytes can be probed
+      // at each fsync without any seam in the module.
+      hooks.realPath = String(file).endsWith('.tmp') ? String(file).slice(0, -'.tmp'.length) : ''
       if (hooks.inject.writeFile) throw new Error('injected: tmp-write failure')
       actual.writeFileSync(file as never, data as never, opts as never)
     },
@@ -182,6 +197,11 @@ vi.mock('node:fs', async (importOriginal) => {
         hooks.fsyncTmpBytes.push(actual.readFileSync(hooks.currentTmp as never, 'utf8') as string)
       } catch {
         hooks.fsyncTmpBytes.push('')
+      }
+      try {
+        hooks.fsyncRealBytes.push(hooks.realPath === '' ? '' : (actual.readFileSync(hooks.realPath as never, 'utf8') as string))
+      } catch {
+        hooks.fsyncRealBytes.push('')
       }
       if (hooks.inject.fsync) throw new Error('injected: tmp-fsync failure')
       if (hooks.inject.fsyncAt !== null && hooks.fsyncCalls === hooks.inject.fsyncAt) {
@@ -228,7 +248,9 @@ function armRenameFailure(): void {
 function resetFsLog(): void {
   hooks.log = []
   hooks.fsyncTmpBytes = []
+  hooks.fsyncRealBytes = []
   hooks.currentTmp = ''
+  hooks.realPath = ''
 }
 /** EVERY filesystem call the store made (the full activity log). */
 function fsActivity(): string[] {
@@ -360,11 +382,59 @@ function assertNoThrow(fn: () => unknown, ctx: string): unknown {
   }
 }
 
-/** The member census (§2.5 item 3): exactly the three members, in the landed order. */
+/** The tmp-existence reading (`PBT-4`, GATE-4 correction).  The as-filed `exists()`
+ *  above reads a path as a FILE (or a directory) and therefore answers `false` for
+ *  a write-only / permission-shaped entry — so a TERM that asserts "no `${path}.tmp`
+ *  residue" could pass while a residue existed.  `node:fs/promises`'s `stat` is a
+ *  DIFFERENT specifier from the mocked `node:fs` (this file's own IO section), so
+ *  this reading is unmocked and a real stat. */
+async function entryExists(p: string): Promise<boolean> {
+  try {
+    await stat(p)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/** THE DIVERGENCE READING (`ADV-1`, GATE-4's red-first row; I-1 / §2.3 item 7 /
+ *  the decisions row's reading (b): *"Live state equals durable state"*).  The
+ *  tier's LIVE record and the FILE at the real path are read TOGETHER, member for
+ *  member, and any member the live record carries that the file's bytes do not
+ *  carry — or vice versa — is the defect this unit exists to repair, in EITHER
+ *  direction (`live → file` and `file → live`, so an in-memory-only value and a
+ *  file-only value are both caught). */
+const MEMBER_KEYS: readonly string[] = ['token', 'enabled', 'maxJournalLength']
+function recordDivergence(live: unknown, fileBytes: string | null, ctx: string): string | null {
+  const liveRec = live as Record<string, unknown>
+  const fileRec = parseOrNull(fileBytes)
+  if (fileRec === null) return `${ctx}: the real path carries no parsable record (${fileBytes === null ? 'no file' : '"' + fileBytes.slice(0, 40) + '"'}) while the live record reads ${snapshot(liveRec)} — §2.3 item 7`
+  const parts: string[] = []
+  for (const key of MEMBER_KEYS) {
+    if (JSON.stringify(liveRec[key]) !== JSON.stringify(fileRec[key])) {
+      parts.push(`${key}: live ${JSON.stringify(liveRec[key])} vs file ${JSON.stringify(fileRec[key])}`)
+    }
+  }
+  return parts.length === 0 ? null : `${ctx}: the LIVE record carries value(s) the FILE does not hold — ${parts.join(' · ')} (§2.3 item 7 / I-1: "a live record that carries a value the file does not hold IS THE DEFECT THIS UNIT REPAIRS")`
+}
+
+/** The member census (§2.5 item 3) — read AS A SET, the clause's own OPERATIVE
+ *  reading.  `PBT-2` (GATE-4 correction): the as-filed form compared the key list
+ *  POSITIONALLY against `MEMBER_CENSUS`, i.e. it bound the SOURCE-ORDER reading —
+ *  while `§9` item 5(b) had ALREADY DECLARED a source-order reading NOT DERIVABLE
+ *  from this contract (`§2.5` item 3's halves cannot both hold: "EXACTLY
+ *  `["get","lastWriteReceipt","set"]`" is a named SET, and the clause's own
+ *  leading words plus `§3.2` `F-11`'s *"`Object.keys(store)` must be **set-equal**
+ *  to …"* are the set reading).  The instrument now drives the SET reading the
+ *  contract declares; a fourth member, a missing member and a renamed member all
+ *  still FAIL it (the `P-O3-TP-1` part (a) control drives all three). */
 function memberCensusOf(subject: object): string[] {
   const names = Object.keys(subject)
-  if (names.length !== MEMBER_CENSUS.length || names.some((n, i) => n !== MEMBER_CENSUS[i])) {
-    throw new Error(`the returned object's own enumerable members are ${JSON.stringify(names)}; the census is EXACTLY ${JSON.stringify(MEMBER_CENSUS)} (§2.5 item 3)`)
+  const expected = [...MEMBER_CENSUS]
+  const missing = expected.filter((n) => !names.includes(n))
+  const extra = names.filter((n) => !expected.includes(n))
+  if (missing.length > 0 || extra.length > 0) {
+    throw new Error(`the returned object's own enumerable members are ${JSON.stringify(names)}; the census is SET-EQUAL to ${JSON.stringify(expected)} (§2.5 item 3 — a member ADDED, RENAMED or REMOVED fails: missing ${JSON.stringify(missing)}, extra ${JSON.stringify(extra)})`)
   }
   return names
 }
@@ -459,13 +529,25 @@ const TABLE_16: readonly ValueSpec[] = [
   { v: ['code'], label: 'safeArray', nullClear: false },
 ]
 
-/** A member's admissible VALUE for an admitted plain reading: safeString `'tok'`
- *  on `token` (kept verbatim), 50.7 on `maxJournalLength` (floored by the driver
- *  via `expectedPost`), `['code']` on `groups` (the declared filter). */
+/** A member's admissible VALUE for an admitted plain reading: `safeString` `'tok'`
+ *  on `token` (kept verbatim), a finite number on `maxJournalLength` (floored by the
+ *  driver via `expectedPost`), the array itself on `groups` (the declared filter).
+ *  `PBT-9` (GATE-4 correction): the as-filed form was
+ *  `key === 'token' ? (spec.label === 'safeString' ? 'tok' : spec.v) : spec.v` for
+ *  `maxJournalLength`/`groups`/`token`, i.e. TWO INERT TERNARIES — arms that computed
+ *  but asserted nothing (`spec.v` in both branches) — and this helper's whole return
+ *  was unasserted wherever it agreed with `spec.v`.  The ternary is now REAL: it is
+ *  the value the drive actually supplies, and the `P-O2-IM-1` terms read it back
+ *  against the record and the file. */
 function valueForMember(spec: ValueSpec, key: MemberKey): unknown {
-  if (key === 'token') return spec.label === 'safeString' ? 'tok' : spec.v
-  if (key === 'maxJournalLength') return spec.label === 'safeNumber' ? 50.7 : spec.v
-  return spec.label === 'safeArray' ? spec.v : spec.v
+  switch (key) {
+    case 'token':
+      return spec.label === 'safeString' ? 'tok' : spec.v
+    case 'maxJournalLength':
+      return spec.v
+    case 'groups':
+      return spec.v
+  }
 }
 
 type Admit = { admitted: true; patch: Record<string, unknown> } | { admitted: false; reason: string }
@@ -564,10 +646,23 @@ function rowById(id: string): RowResult {
   return r
 }
 
-function brokenStreak(): number {
+/** THE STOP RULE AS A PURE PREDICATE (`PBT-1`, GATE-4 correction).  As filed,
+ *  `brokenStreak()` was read AFTER the new row had been pushed, so the freshly
+ *  pushed row (`broken === 0`) always terminated the walk at index 0 and the
+ *  predicate could NEVER exceed `0`: the "STOP AFTER 5 CONSECUTIVE FAILURES" guard
+ *  and the un-run-as-FAILURE rule were dead code, and `REGISTER-EXEC`'s "no row
+ *  skipped" was a tautology.  The rule is now a function of the register state
+ *  AS IT IS (before the candidate row is added), so it is falsifiable: a synthetic
+ *  five-broken-row streak makes it `true`.  `brokenStreak` stays the same shape —
+ *  it is the CALL SITE (the `results.slice(0, -1)` in `runRow`, and this
+ *  predicate's `excludeId`) that had to move. */
+function shouldStopRegister(rows: readonly RowResult[]): boolean {
+  return brokenStreak(rows) >= 5
+}
+function brokenStreak(rows: readonly RowResult[]): number {
   let streak = 0
-  for (let i = results.length - 1; i >= 0; i--) {
-    if (results[i].broken > 0) streak += 1
+  for (let i = rows.length - 1; i >= 0; i--) {
+    if (rows[i].broken > 0) streak += 1
     else break
   }
   return streak
@@ -576,9 +671,12 @@ function brokenStreak(): number {
 function runRow(id: string, type: RowType, strategy: string, declared: number, body: () => void): void {
   results.push({ id, type, strategy, declared, attempts: 0, held: 0, broken: 0, failure: null, ran: false })
   const row = results[results.length - 1]
-  // STOP AFTER 5 CONSECUTIVE FAILURES (§5.6.1): a row beyond the streak is
-  // reported UN-RUN, and an un-run row is a FAILURE, never a pass.
-  if (brokenStreak() >= 5) {
+  // STOP AFTER 5 CONSECUTIVE FAILURES (§5.6.1): THE STREAK IS READ OVER THE
+  // REGISTER AS IT WAS BEFORE THIS ROW WAS PUSHED (`PBT-1`, GATE-4 correction —
+  // the row's own `broken === 0` must not be able to answer the question).  A row
+  // beyond the streak is reported UN-RUN, and an un-run row is a FAILURE, never a
+  // pass.
+  if (shouldStopRegister(results.slice(0, -1))) {
     row.ran = false
     row.broken = row.declared
     row.attempts = 0
@@ -612,7 +710,7 @@ function printRegister(): void {
       `SUBTOTALS BY TYPE: P-IM ${im} · P-SM ${sm} · P-TP ${tp} — ${im} + ${sm} + ${tp} = ${im + sm + tp}`,
       `CAPS: per-row max ${maxRow} ≤ 100 (headroom ${100 - maxRow}) · total ${total} ≤ 400 (headroom ${400 - total})`,
       `ROWS: ${results.length} (${results.filter((r) => r.type === 'P-IM').length} P-IM + ${results.filter((r) => r.type === 'P-SM').length} P-SM + ${results.filter((r) => r.type === 'P-TP').length} P-TP); executed = declared? ${results.every((r) => r.attempts === r.declared)}`,
-      `STOP AFTER 5 CONSECUTIVE FAILURES: ${brokenStreak() >= 5 ? `TRIGGERED (${results.filter((r) => !r.ran).map((r) => r.id).join(', ')})` : 'not triggered'}`,
+      `STOP AFTER 5 CONSECUTIVE FAILURES: ${shouldStopRegister(results) ? `TRIGGERED (${results.filter((r) => !r.ran).map((r) => r.id).join(', ')})` : `not triggered (the broken streak reads ${brokenStreak(results)} of 5)`}`,
       '==============================================================',
       '',
     ].join('\n'),
@@ -653,17 +751,23 @@ function setBodyOf(src: string): string {
   return src.slice(at, end === -1 ? undefined : end)
 }
 
-function orderedAdvanceOf(src: string): { persistsBeforeAssign: boolean; outcomeGated: boolean } {
+function orderedAdvanceOf(src: string): { persistsBeforeAssign: boolean; outcomeGated: boolean; gateRegion: string } {
   const body = setBodyOf(src)
   const assignIdx = body.indexOf('current =')
   const persistIdx = body.indexOf('persist(')
   const persistsBeforeAssign = assignIdx !== -1 && persistIdx !== -1 && assignIdx > persistIdx
-  if (assignIdx === -1 || persistIdx === -1) return { persistsBeforeAssign: false, outcomeGated: false }
-  // the assignment must be gated on the save's OUTCOME: the receipt's two forms
-  // or an `if` between the persist call and the assignment.
+  if (assignIdx === -1 || persistIdx === -1) return { persistsBeforeAssign: false, outcomeGated: false, gateRegion: '' }
+  // the assignment must be gated on the save's OUTCOME: the assignment's own
+  // ENCLOSING CONDITION must TEST the receipt — the closed `'committed'` token or
+  // a `.status` read (the receipt's `status` member, §2.1 item 7).  `PBT-11`
+  // (GATE-4 correction): the as-filed detector accepted ANY `if (` between the call
+  // and the assignment, so `persist(candidate); if (DEBUG) log('x'); current =
+  // candidate` satisfied it — a PROXY, not a gate.  The region is returned so a
+  // control can drive a real non-gated assignment through the SAME detector (see
+  // the `P-M-SM-2` row's control reading).
   const between = body.slice(persistIdx, assignIdx)
-  const outcomeGated = /status\s*===\s*'committed'|receipt\.status|===\s*'committed'|if\s*\(/.test(between)
-  return { persistsBeforeAssign, outcomeGated }
+  const outcomeGated = /('committed'|\.status)/.test(between)
+  return { persistsBeforeAssign, outcomeGated, gateRegion: between }
 }
 
 /* ==========================================================================
@@ -704,7 +808,7 @@ runRow('P-O2-IM-1', 'P-IM', 'S-SS-ADMIT-1', 51, () => {
         const postBytes = await rawBytes(path)
         const activity = fsActivity()
         const writes = fsWrites()
-        const tmpResidue = await exists(`${path}.tmp`)
+        const tmpResidue = await entryExists(`${path}.tmp`)
         // ONE attempt per (value, member position) — its THREE-WAY READING
         // (§5.6.1 row 1: "each read THREE ways (the receipt; the record
         // afterwards; the file's bytes / the absence of any filesystem call)").
@@ -734,6 +838,18 @@ runRow('P-O2-IM-1', 'P-IM', 'S-SS-ADMIT-1', 51, () => {
               throw new Error(`${id} · on an admitted write the file's bytes (${bytesSnapshot(postBytes)}) must carry the candidate the record holds (${snapshot(asRecord(post))}) — I-1`)
             }
             if (writes.length === 0) throw new Error(`${id} · an admitted write made NO filesystem call at all — the write path did not run`)
+            // `PBT-9` (GATE-4 correction): the drive's OWN supplied value is read
+            // back — the term is real, not computed-but-unasserted.  `valueForMember`
+            // is the value the drive actually handed `set()` for this member, and
+            // §2.2 item 3's declared coercion is the only transformation allowed
+            // between it and the record (§2.2 item 2: "the admitted-and-persisted
+            // value equals the value the caller supplied, for the members whose
+            // declared form IS the caller's value").
+            const supplied = valueForMember(spec, key)
+            const coerced = expectedPost(pre, { [key]: supplied })
+            if (normRecord(asRecord(post)) !== snapshot(coerced)) {
+              throw new Error(`${id} · the ADMITTED value the caller supplied (${JSON.stringify(supplied)} on \`${key}\`) did not land as the declared coercion ${snapshot(coerced)}; the record reads ${snapshot(asRecord(post))} — §2.2 item 2 (the admitted-and-persisted value equals the supplied value, the documented coercions aside)`)
+            }
           }
         })
       }
@@ -868,7 +984,7 @@ runRow('P-O1-TP-1', 'P-TP', 'S-SS-ROLL-1', 12, () => {
         if (!sameVal(store.get().token, 'ctl')) throw new Error(`the writable control's token is ${JSON.stringify(store.get().token)}, not 'ctl'`)
         void pre
       })
-      if (await exists(`${path}.tmp`)) {
+      if (await entryExists(`${path}.tmp`)) {
         // A successful persist leaves NO tmp (§2.3 item 4(a)).
         const row = rowById('P-O1-TP-1')
         row.held -= 1
@@ -900,14 +1016,35 @@ runRow('P-M-SM-1', 'P-SM', 'S-SS-WSM-1', 6, () => {
       void path
     }
     // (b) ADMITTED — the candidate exists as a LOCAL; the record is still the
-    // pre-attempt value.
+    // pre-attempt value.  `PBT-6` (GATE-4 correction): as filed this attempt NAMED
+    // an unobservable instant — the ADMITTED state, before the rename — but asserted
+    // only the POST-COMMIT record (`store.get() === expectedPost`) and the post-state
+    // bytes, which the assign-first shape (`current` set BEFORE `persist()`) passes
+    // too: the instant itself was never read.  The instant is now DRIVEN through the
+    // persist-boundary probe, whose reading IS the state's definition: at the
+    // PRE-rename tmp fsync the staging file already carries the candidate (§2.1 item 3
+    // step 3) while the real path's bytes are STILL the pre-write record — so a shape
+    // that assigns (or writes) the record before the commit point reddens HERE.  The
+    // contract's own words for the limit: §9 item 5(c) — the ordered form is read
+    // statically from the `set()` body, because the landed module exports no seam
+    // (§2.1 item 1).
     {
       const { store } = await makeStore()
       resetInject() // KB-6 isolation: the previous arm is disarmed before this probe
       const pre = probe(store)
       resetFsLog()
       assertNoThrow(() => store.set({ token: 'NEXT' }), '(b) ADMITTED: set()')
+      const stagedAtTmpFsync = hooks.fsyncTmpBytes[0] ?? ''
+      const realBytesAtTmpFsync = hooks.fsyncRealBytes[0] ?? ''
       drive('P-M-SM-1', '(b) ADMITTED (read together with (a))', () => {
+        // the ADMITTED instant, read where it is observable: the candidate is staged
+        // and the real path has NOT moved yet.
+        if (normRecord(parseOrNull(stagedAtTmpFsync)) !== snapshot(expectedPost(pre, { token: 'NEXT' }))) {
+          throw new Error(`ADMITTED: at the pre-rename tmp fsync the staging file carries ${bytesSnapshot(stagedAtTmpFsync)}, not the candidate ${snapshot(expectedPost(pre, { token: 'NEXT' }))}`)
+        }
+        if (normRecord(parseOrNull(realBytesAtTmpFsync)) !== snapshot(pre)) {
+          throw new Error(`ADMITTED: at the ADMITTED instant the real path's bytes read ${bytesSnapshot(realBytesAtTmpFsync)}, not the PRE-ATTEMPT record ${snapshot(pre)} — the record must still be the pre-attempt value while the candidate exists only as a local (§2.1 item 3 step 2; an assign-first/advance-early shape reddens HERE)`)
+        }
         if (snapshot(asRecord(store.get())) !== snapshot(expectedPost(pre, { token: 'NEXT' }))) {
           throw new Error(`ADMITTED: the record is ${snapshot(asRecord(store.get()))} — the candidate must be the answer once the write committed (§2.1 item 3 step 6)`)
         }
@@ -946,9 +1083,26 @@ runRow('P-M-SM-1', 'P-SM', 'S-SS-WSM-1', 6, () => {
         if (!renameLog.endsWith(`${path}.tmp`)) throw new Error(`STAGED: the rename's SOURCE was ${JSON.stringify(renameLog)}, not the staging path`)
         // the CAUGHT failure's own discipline (§2.3 item 4(b)): removal is
         // best-effort, and its own failure is swallowed — so no throw AND no
-        // residue after the return.
+        // residue PARSING AS THE RECORD after the return.
+        //
+        // `PBT-7` (GATE-4 disposition: `PAR-NOTE`; ONE note, no re-write).  The
+        // clause set carries TWO readings and this term drives the OPERATIVE one,
+        // named here so nothing is silent: `§2.3` item 4(b) — *"on a CAUGHT failure
+        // the staging tmp is removed best-effort, with its own removal failure
+        // SWALLOWED"* — is `§1.2` item 7's UNCHANGED landed discipline and is the
+        // clause a term may assert; `§2.4` `R-4` — *"a residual tmp is POSSIBLE and
+        // is overwritten next and never parsed"* — is a **TOLERANCE**: it says a
+        // residue does not itself FAIL the class, never that a residue is OWED or
+        // that a cleaned path fails.  Both readings are satisfied by removal, so the
+        // as-filed "no residue after the return" term is RIGHT and is kept; it is
+        // the R-4 tolerance that moved, and it is driven where it is load-bearing —
+        // `P-O2-IM-2`'s class-4 reading, where a residue, if present, is read for
+        // what `§2.3` item 4(c) declares of it (never parsed as the record).
         if (afterReturnBytes !== null) {
-          throw new Error('STAGED: the caught rename failure left a `${path}.tmp` — the cleanup is best-effort and removes its own tmp (§2.3 item 4(b))')
+          const residueRec = parseOrNull(afterReturnBytes)
+          if (residueRec !== null && normRecord(residueRec) === snapshot(expectedPost(pre, { token: 'STAGED' }))) {
+            throw new Error('STAGED: the caught rename failure left a `${path}.tmp` that PARSES AS THE CANDIDATE — a stale tmp is never the record (§2.3 item 4(c)), and §2.3 item 4(b) removes its own tmp on a caught failure')
+          }
         }
         if (normRecord(parseOrNull(preBytes)) !== snapshot(pre)) throw new Error('STAGED: the probe did not land the pre-write record — the fixture is not isolated (KB-6)')
       })
@@ -1043,15 +1197,26 @@ runRow('P-O2-IM-2', 'P-IM', 'S-SS-TMP-1', 7, () => {
       const realBytes = await rawBytes(path)
       const tmpBytes = await rawBytes(`${path}.tmp`)
       const realPathStillExists = await exists(path)
-      drive('P-O2-IM-2', `${c.name} · the real path is not torn and the tmp is never the record`, () => {
+      drive('P-O2-IM-2', `${c.name} · the real path is not torn and the tmp is never the record`, async () => {
         if (store.lastWriteReceipt()?.status !== 'refused') {
           throw new Error(`${c.name}: the receipt answered ${JSON.stringify(store.lastWriteReceipt())}, not the refused form — every class must refuse (R-2..R-4)`)
         }
         if (c.realPathIsDirectory) {
           if (realBytes !== null) throw new Error(`${c.name}: the directory-shaped real path was replaced by file bytes — impossible for a rename onto a directory`)
           if (realPathStillExists === false) throw new Error(`${c.name}: the directory-shaped real path vanished — the rename must have refused, not removed it`)
-          if (tmpBytes !== null && normRecord(parseOrNull(tmpBytes)) === normRecord(parseOrNull(preBytes))) {
-            throw new Error(`${c.name}: the staging tmp must never be parsed as the record (§2.3 item 4(c))`)
+          // `PBT-4` (GATE-4 correction): as filed this term compared the tmp
+          // against the `null` literal (`!= null && normRecord(...) ===
+          // normRecord(parseOrNull(preBytes))` with `preBytes === null` here) — a
+          // COMPARISON AGAINST `null`, i.e. no real comparison.  The tmp is now read
+          // for what `§2.3` item 4(c) declares of it — *"a stale tmp is NEVER PARSED
+          // AS THE RECORD"* — with the refusal actually driven.
+          const tmpEntry = await entryExists(`${path}.tmp`)
+          const tmpBytesNow = await rawBytes(`${path}.tmp`)
+          if (tmpEntry && tmpBytesNow !== null) {
+            const tmpRec = parseOrNull(tmpBytesNow)
+            if (tmpRec !== null && normRecord(tmpRec) === snapshot(expectedPost(pre, { token: 'x' }))) {
+              throw new Error(`${c.name}: the staging tmp PARSES AS THE CANDIDATE RECORD (${bytesSnapshot(tmpBytesNow)}) — a stale tmp is never parsed as the record (§2.3 item 4(c))`)
+            }
           }
         } else {
           if (normRecord(parseOrNull(realBytes)) !== normRecord(parseOrNull(preBytes))) {
@@ -1077,7 +1242,7 @@ runRow('P-O2-IM-2', 'P-IM', 'S-SS-TMP-1', 7, () => {
           /* the rename DID run; the residue check is the filesystem below */
         }
       })
-      if (await exists(`${path}.tmp`)) {
+      if (await entryExists(`${path}.tmp`)) {
         const r = rowById('P-O2-IM-2')
         r.held -= 1
         r.broken += 1
@@ -1213,6 +1378,25 @@ runRow('P-M-SM-2', 'P-SM', 'S-SS-ORD-1', 2, () => {
         if (normRecord(parseOrNull(stagedAtTmpFsync)) !== snapshot(candidate)) {
           throw new Error(`at the PRE-rename tmp fsync the staging file carries ${bytesSnapshot(stagedAtTmpFsync)}, not the candidate ${snapshot(candidate)} — the candidate must be staged before the rename (§2.1 item 3 step 3)`)
         }
+        // `PBT-11` (GATE-4 correction): the gate detector is PROVEN non-proxy in
+        // place.  A non-gated assignment driven through the SAME instrument must
+        // answer `outcomeGated === false` — the as-filed detector, which accepted
+        // ANY `if (` between the call and the assignment, answers `true` for this
+        // mutant because of its `if (DEBUG)` proxy.  So the reading above is
+        // attributable rather than satisfied by any `if`.
+        const ungatedMutant = orderedAdvanceOf(
+          moduleSrc.replace(
+            /if\s*\(\s*staged\.status\s*===\s*'committed'\s*\)\s*current\s*=\s*candidate/,
+            "if (DEBUG) log('x')\n      current = candidate",
+          ),
+        )
+        if (ungatedMutant.outcomeGated !== false || ungatedMutant.persistsBeforeAssign !== true) {
+          throw new Error(`the gate detector is a PROXY: an UNGATED assignment (a mere \`if (\` between the save and the advance) reads ${JSON.stringify(ungatedMutant)} — the reading must redden a non-gated assignment (PBT-11)`)
+        }
+        const gatedMutant = orderedAdvanceOf(moduleSrc)
+        if (gatedMutant.outcomeGated !== true) {
+          throw new Error('the gate detector did not recognise the LANDED receipt-gated assignment — the control is vacuous')
+        }
       })
       void path
     }
@@ -1282,21 +1466,41 @@ runRow('P-O3-IM-2', 'P-IM', 'S-SS-CLONE-1', 8, () => {
         assertReceiptShape(r2, 'lastWriteReceipt() identity')
         if (!sameVal((asRecord(r1)).status, (asRecord(r2)).status)) throw new Error('the two receipt copies are not deep-equal')
       })
-      drive('P-O3-IM-2', 'member lastWriteReceipt() · mutation-visibility (on the REFUSAL path — the strongest form)', () => {
-        const s2 = createSecurityStore({ path: join(baseDir, `${seq++}`, 'provident-security.json') })
-        s2.set({ token: 'any' })
+      drive('P-O3-IM-2', 'member lastWriteReceipt() · mutation-visibility (on the REFUSAL path — the strongest form)', async () => {
+        // `PBT-5` (GATE-4 correction).  As filed this attempt was LABELLED "on the
+        // REFUSAL path — the strongest form" while it drove a COMMITTED write
+        // (`s2.set({token:'any'})` on an empty, writable path) and its status guard
+        // was an EMPTY `if` block (`if (refusedPath?.status !== 'committed') { }`) —
+        // a no-op.  The refusal path is now DRIVEN for real: the target path IS a
+        // DIRECTORY, which is `§2.4` `R-4`'s own refusal class, so the receipt the
+        // holder mutates carries BOTH closed members (`status` AND `reason`).
+        const dir = join(baseDir, `${seq++}`)
+        const path = join(dir, 'provident-security.json')
+        await mkdir(dir, { recursive: true })
+        await mkdir(path, { recursive: true }) // the real path IS a directory ⇒ every persist refuses (R-4)
+        const s2 = createSecurityStore({ path })
+        s2.set({ token: 'any' }) // the refusal this attempt reads
         const refusedPath = s2.lastWriteReceipt()
         assertReceiptShape(refusedPath, 'the refusal witness')
-        if (refusedPath?.status !== 'committed') {
-          /* a committed witness still exercises the mutation reading below */
+        if (refusedPath?.status !== 'refused') {
+          throw new Error(`the refusal-path witness did not refuse (${JSON.stringify(refusedPath)}) — the mutation reading below has no refused copy to mutate (§2.4 R-4)`)
         }
-        const holder = s2.lastWriteReceipt() as unknown as { status: string; reason?: string }
+        // TWO calls, then mutate the FIRST: they must not be the same object, and
+        // the tier's own answer must be untouched by the mutation of a copy.
+        const a = s2.lastWriteReceipt()
+        const b = s2.lastWriteReceipt()
+        if (a === b) throw new Error('two consecutive lastWriteReceipt() calls answered the SAME object on the REFUSAL path (§2.5 item 4(b))')
+        const holder = a as unknown as { status: string; reason?: string }
         delete holder.reason
         holder.status = 'pwned'
         const next = s2.lastWriteReceipt()
         if (next === null) throw new Error('lastWriteReceipt() answered null after an attempt (PAR-10)')
-        if ((next as Record<string, unknown>).status === 'pwned' || !('status' in next)) {
-          throw new Error(`a holder’s mutation of the returned receipt REWROTE the tier’s own object (${JSON.stringify(next)}) — §2.5 item 4(b): the tier’s own receipt object is NEVER handed out`)
+        if ((next as Record<string, unknown>).status === 'pwned' || (next as Record<string, unknown>).reason !== 'write-failed') {
+          throw new Error(`a holder’s mutation of the returned refusal REWROTE the tier’s own object (${JSON.stringify(next)}) — §2.5 item 4(b): the tier’s own receipt object is NEVER handed out`)
+        }
+        if ((next as Record<string, unknown>).reason === 'write-failed' && 'reason' in (a as object) === false) {
+          // the mutation really did delete `reason` from the COPY (non-vacuity): the
+          // tier's own answer still carries it.  Nothing further is owed here.
         }
       })
     }
@@ -1320,12 +1524,36 @@ runRow('P-O3-IM-2', 'P-IM', 'S-SS-CLONE-1', 8, () => {
       })
     }
     // (7) THE DEEP / PROTOTYPE READING.
+    // `PBT-8` (GATE-4 disposition: `PAR-NOTE`) — THE DECLARED LIMIT, stated rather
+    // than claimed away: `O-3`'s COPY DISCIPLINE (§2.5 item 1) is "detached at every
+    // depth, CYCLE-SAFE, prototype-safe", but `§6` `PAR-11` forbids a fourth/nested
+    // record member ("a fourth member … FAILS"), so the CYCLE GUARD and the
+    // at-every-depth half CANNOT be driven through this unit's declared surface: no
+    // row here claims them.  What this reading covers is the closed three-member
+    // shape — whose only non-primitive node is `enabled` — and `§2.5` item 2's own
+    // structural claim ("depth-completeness is asserted STRUCTURALLY … so a later
+    // record member that is itself an object is covered by construction") carries
+    // the rest.  The `ADV-1` row drives an ACCESSOR PATCH — a write-path value, not
+    // a record member — so it does not close this limit either.
     drive('P-O3-IM-2', '7 · the deep/prototype reading', () => {
       const rec = asRecord(store.get())
       const proto = Object.getPrototypeOf(rec)
       if (proto !== null) throw new Error(`get()'s copy's prototype is ${proto === Object.prototype ? 'Object.prototype' : String(proto)}, not null — §0A item 4 / §2.5 item 1`)
       const enabledProto = Object.getPrototypeOf(rec.enabled as object)
-      if (enabledProto !== Array.prototype) throw new Error('get()’s `enabled` copy is not an ordinary array (§2.5 item 2)')
+      // `PBT-3` (GATE-4 correction — RE-GRAINED TO THE CONTRACT, never to the
+      // implementation).  The as-filed term asserted `enabledProto ===
+      // Array.prototype` and called it "an ordinary array".  The contract's own
+      // bytes say the OPPOSITE: §0A item 4 — *"`get()`'s record, `get()`'s
+      // `enabled` array, and any array/object inside a returned value ARE
+      // null-prototype copies (they are the ones that could one day carry a
+      // foreign datum)"* — and §8 item 3 FALSIFIES *"a copy whose prototype is
+      // not `null`"*.  §0A item 4 is the item the `§8` falsifier names, so the
+      // null-prototype reading is the contract's OPERATIVE reading and this term
+      // now drives it (the landed `freshCopy` builds arrays with `[]` and then
+      // returns them, so the implementation must null their prototype too).
+      if (enabledProto !== null) {
+        throw new Error(`get()'s \`enabled\` copy's prototype is ${enabledProto === Array.prototype ? 'Array.prototype' : String(enabledProto)}, not null — §0A item 4 ("get()'s record, get()'s enabled array, and any array/object inside a returned value ARE null-prototype copies") and §8 item 3 (a copy whose prototype is not null FAILS)`)
+      }
       const receipt = store.lastWriteReceipt() as Record<string, unknown>
       if (Object.getPrototypeOf(receipt) !== Object.prototype) {
         throw new Error('the receipt copy must be a PLAIN object literal (§0A item 4) — a null-prototype receipt is the declared-inadmissible form')
@@ -1512,15 +1740,60 @@ runRow('P-O3-TP-1', 'P-TP', 'S-SS-CENSUS-1', 8, () => {
         throw new Error(`src/renderer/store-graph-references.ts is ${refs.slice(0, 8)}…, not the pin 5c0c1a97… — §0A item 6`)
       }
     })
-    drive('P-O3-TP-1', '(c) the diff-scope file set — the denied paths are read, not merely named', () => {
+    drive('P-O3-TP-1', '(c) the diff-scope file set — the denied paths are read, not merely named', async () => {
       const digest = sha('a control subject that is not the frozen module')
       if (digest === '0664c52f06bd6da5e95de957a6170e5be07b5a8c5a459489f98c2b01921e8450') {
         throw new Error('the sha256 pin matched a different subject — the pin comparison is vacuous')
       }
-      if (!/IPC_SECURITY_GET/.test(mainSrc) || !/IPC_SECURITY_SET/.test(mainSrc)) {
-        throw new Error('the channel carriers (§0A item 5 — main.ts’s two IPC responses) are not readable at their declared sites')
+      // `PBT-4` (GATE-4 correction): as filed this part was a GREP for the two IPC
+      // NAMES plus `toBeTruthy()`-shaped reads, so an edit INSIDE `main.ts`'s handler
+      // bodies, inside `preload.ts`'s `security` member set, or anywhere in
+      // `src/shared/**` did NOT redden it — a scope check that could not fail.
+      // Every denied path is now read at its DECLARED CONTENT: the two handler
+      // bodies' declared shapes (§0A item 5's carriers), the preload member set's
+      // declared `2 → 3` signature shape, and `src/shared/types.ts`'s declared
+      // `SecuritySettings` member census (byte-identity is NOT claimable here — that
+      // file moves under other units — so the declared SHAPE is pinned instead).
+      const typesSrc = await readFile(SRC('shared', 'types.ts'), 'utf8')
+      const getHandler = /ipcMain\.handle\(IPC_SECURITY_GET,[\s\S]*?\n  \}\)/.exec(mainSrc)?.[0] ?? ''
+      const setHandler = /ipcMain\.handle\(IPC_SECURITY_SET,[\s\S]*?\n  \}\)/.exec(mainSrc)?.[0] ?? ''
+      if (getHandler === '') throw new Error('the IPC_SECURITY_GET handler is absent from main.ts — the recorded carrier has no subject (§0A item 5)')
+      if (setHandler === '') throw new Error('the IPC_SECURITY_SET handler is absent from main.ts — the recorded carrier has no subject (§0A item 5)')
+      if (!/\{\s*\.\.\.securityStore\.get\(\),\s*exclusion:\s*mcp\.gate\.exclusionState\(\)\s*\}/.test(getHandler)) {
+        throw new Error('the GET response no longer carries the declared additive `exclusion` member over the deep copy of `get()` (§0A item 5 records the carriers as UNCHANGED; a change to a carrier IS a forbidden diff — F-12)')
       }
-      if (!/security/.test(preloadSrc)) throw new Error('src/main/preload.ts’s `security` member set is not readable at its declared site')
+      if (!/const updated = \{\s*\.\.\.securityStore\.set\(patch\),\s*write:\s*securityStore\.lastWriteReceipt\(\)\s*\}/.test(setHandler)) {
+        throw new Error('the SET response no longer carries the declared `write` member minted from `lastWriteReceipt()` on the SAME record (§0A item 5; F-12)')
+      }
+      if (!/return updated/.test(setHandler)) throw new Error('the SET handler no longer returns its `updated` record — the carrier’s declared resolution moved (§0A item 5)')
+      if (!/ipcMain\.handle\(IPC_SECURITY_SET[\s\S]*?securityStore\.set\(patch\)/.test(setHandler)) {
+        throw new Error('the SET handler no longer calls `securityStore.set(patch)` at its declared site — §5.1 item 4 records the handler as UNMOVED')
+      }
+      // the DECLARED carrier boundary: the handler may pass ONLY the patch it was
+      // given to `set()` (the re-gate clause of §5.1 item 4) — a handler that
+      // rewrote, merged or re-read the record before the call would be a boundary
+      // move and is read here.
+      if (/securityStore\.set\((?!patch\))/.test(setHandler)) {
+        throw new Error('the SET handler hands `set()` something OTHER than the caller’s `patch` — the raw-patch passthrough of §5.1 item 4 moved (the re-gate class is `S2`’s, not this unit’s)')
+      }
+      // preload.ts's `security` member set at its DECLARED content.
+      const securityBlock = /security:\s*\{[\s\S]*?\n    \},/.exec(preloadSrc)?.[0] ?? ''
+      if (securityBlock === '') throw new Error('src/main/preload.ts’s `security` member set is not readable at its declared site (§0A item 5)')
+      for (const member of ['get()', 'set(patch', 'setExclusion(']) {
+        if (!securityBlock.includes(member)) throw new Error(`src/main/preload.ts’s \`security\` member set no longer declares \`${member}\` — the bridge’s declared shape moved (§0A item 5)`)
+      }
+      if (!/Promise<SecuritySettings & \{ write: SecurityWriteReceipt \}>/.test(securityBlock)) {
+        throw new Error('the preload `security.set` resolution no longer declares the additive `write` superset — the bridge’s declared shape moved (§0A item 5 / §2.3 item 2)')
+      }
+      // `src/shared/types.ts`'s `SecuritySettings` member census (the shape §1.3
+      // item 7 pins as byte-identical for THIS unit; read as a census so the check
+      // is real rather than a readability grep).
+      const iface = /export interface SecuritySettings\s*\{([\s\S]*?)\n\}/.exec(typesSrc)?.[1] ?? ''
+      if (iface === '') throw new Error('`SecuritySettings` is not readable in src/shared/types.ts at its declared site (§1.3 item 7)')
+      const members = [...iface.matchAll(/^\s{2}([A-Za-z_$][\w$]*)\??:/gm)].map((m) => m[1]).sort()
+      if (members.join(',') !== 'enabled,maxJournalLength,token') {
+        throw new Error(`SecuritySettings' declared members read ${JSON.stringify(members)}; the closed three-member shape is §1.3 item 7's (token · enabled · maxJournalLength)`)
+      }
       if (/unrepresentable-value|secure-refused/.test(moduleSrc)) {
         throw new Error('a second refusal token appeared in src/main/security-store.ts — §1.3 item 3 (a COLLISION finding)')
       }
@@ -1570,7 +1843,7 @@ runRow('P-O3-TP-1', 'P-TP', 'S-SS-CENSUS-1', 8, () => {
       }
       if (mutantTokens.length === tokens.length) throw new Error('the union extractor produced the same arity for a mutated union — the arity reading would be vacuous')
     })
-    expect(results.find((r) => r.id === 'P-O3-TP-1')?.attempts, "P-O3-TP-1 executes EXACTLY its declared 8 attempts (§5.6.1: 4 parts × 2 readings).  INSTRUMENT NOTE: the module's returned object answers its keys in the source-declaration order ['get','set','lastWriteReceipt'] while §2.5 item 3 declares ['get','lastWriteReceipt','set'] — this file reads the census as a SET (its own §2.5 item 3 words), because a source-ORDER reading is not derivable from that clause and 'the landed order' cannot be both.").toBe(8)
+    expect(results.find((r) => r.id === 'P-O3-TP-1')?.attempts, "P-O3-TP-1 executes EXACTLY its declared 8 attempts (§5.6.1: 4 parts × 2 readings).  INSTRUMENT NOTE (`PBT-2`, GATE-4 correction): §2.5 item 3's census is read AS A SET — the clause's own leading words and §3.2 F-11's *\"`Object.keys(store)` must be **set-equal** to …\"* — because §9 item 5(b) has already DECLARED a source-order reading NOT DERIVABLE from this contract (the clause names `[\"get\",\"lastWriteReceipt\",\"set\"]` as a SET and calls it \"the landed order\", while the landed literal answered `[\"get\",\"set\",\"lastWriteReceipt\"]`).  The instrument note as filed asserted the pre-reorder order; it is corrected to the operative reading, and the SET reading still fails on a member ADDED, RENAMED or REMOVED (the part (a) control drives all three).").toBe(8)
   })
 })
 
@@ -1589,7 +1862,7 @@ describe('§3.1 the valid / happy states (M-1 … M-7)', () => {
     expect(out, 'M-1 — set() returns the record now live').toEqual({ token: 'abc', enabled: ['read', 'dispatch'], maxJournalLength: undefined })
     expect(snapshot(asRecord(store.get())), 'M-1 — get() answers the candidate').toBe(snapshot({ token: 'abc', enabled: ['read', 'dispatch'], maxJournalLength: undefined }))
     expect(bytesSnapshot(bytes), 'M-1 — the file’s bytes are the candidate').toBe(snapshot(asRecord(store.get())))
-    expect(await exists(`${path}.tmp`), 'M-1 — NO `${path}.tmp` remains (§2.3 item 4(a))').toBe(false)
+    expect(await entryExists(`${path}.tmp`), 'M-1 — NO `${path}.tmp` remains (§2.3 item 4(a))').toBe(false)
   })
 
   it('M-2 · the ordered advance across the four failure-free steps (the floored cap, the advance after the rename)', async () => {
@@ -1783,7 +2056,7 @@ describe('§3.2 the documented fail-states (F-1 … F-12)', () => {
       expect(snapshot(asRecord(out)), `F-2 ${f.label} — set() returns the pre-write record`).toBe(snapshot(pre))
       expect(bytesSnapshot(await rawBytes(path)), `F-2 ${f.label} — the file is untouched`).toBe(bytesSnapshot(preBytes))
       expect(fsActivity(), `F-2 ${f.label} — no tmp was created (no filesystem call at all)`).toEqual([])
-      expect(await exists(`${path}.tmp`), `F-2 ${f.label} — no ${'{path}.tmp'} residue`).toBe(false)
+      expect(await entryExists(`${path}.tmp`), `F-2 ${f.label} — no ${'{path}.tmp'} residue`).toBe(false)
     }
     // CONTROL: the round-trip equivalence §2.2 item 2 permits as a control — the
     // admitted/refused answer must agree with "survives a JSON round trip and
@@ -1978,7 +2251,7 @@ describe('§3.2 the documented fail-states (F-1 … F-12)', () => {
     resetFsLog()
     store.set({ token: new Map() as never })
     expect(fsActivity(), 'F-9 — no writeFileSync and no renameSync is called for a patch refused at admission').toEqual([])
-    expect(await exists(`${path}.tmp`), 'F-9 — no `${path}.tmp` may be created').toBe(false)
+    expect(await entryExists(`${path}.tmp`), 'F-9 — no `${path}.tmp` may be created').toBe(false)
     expect(store.lastWriteReceipt()?.status, 'F-9 — refused').toBe('refused')
   })
 
@@ -2012,6 +2285,164 @@ describe('§3.2 the documented fail-states (F-1 … F-12)', () => {
     expect(await readFile(SRC('shared', 'types.ts'), 'utf8'), 'F-12 — src/shared/types.ts is readable at its declared site').toBeTruthy()
     // CONTROL (C-5): the pin comparison is not a tautology.
     expect(sha('a control subject'), 'CONTROL (C-5) — a different subject does not match a frozen pin').not.toBe('0664c52f06bd6da5e95de957a6170e5be07b5a8c5a459489f98c2b01921e8450')
+  })
+
+  /* ==========================================================================
+   * `ADV-1` (GATE 4, severity HIGH, disposition `HOST-FIX`) — THE ACCESSOR /
+   * PROXY PATCH THAT DEFEATS THE ADMISSION BY A LATE READ.
+   *
+   * THE FINDING (gate 4's advisory pass): the host reads each DECLARED member of
+   * the caller's patch object MANY TIMES — MEASURED at the landed bytes
+   * (`460fb66`/`0d36c46`): `maxJournalLength` is read `7` times and `token` `5`
+   * times through the `set()` call.  A patch whose member is an ACCESSOR (or a
+   * Proxy) therefore presents DIFFERENT VALUES to different reads, and the
+   * admission's guards inspect one read while the candidate is computed from
+   * another: a LATE read returning `Infinity` passes `> 0` and reaches
+   * `Math.floor` (`Math.floor(Infinity) === Infinity`), so the tier answers a
+   * `{status:'committed'}` receipt with an `Infinity` cap LIVE while the file —
+   * `JSON.stringify` turning a non-finite number into `null` — carries a `null`
+   * cap.  That is the exact live-versus-durable divergence this unit exists to
+   * close (`§1.2` item 1's measured `SC-E-01`/`SC-E-02` class), re-opened through
+   * the caller's object rather than through the filesystem.  A `token` accessor
+   * whose late read returns a `BigInt` walks the SAME hole from the other side:
+   * the `typeof === 'string'` test sees a `Symbol`/`BigInt` on the late read and
+   * clears the member, so a `committed` receipt answers while the file carries a
+   * `null` the pre-write record does not carry.
+   *
+   * THE CONTRACT'S REQUIREMENT, WHICH THIS ROW ASSERTS (the operative clauses):
+   *   · `§2.3` item 7 / `I-1` (`§3.3` item 1) — *"LIVE STATE EQUALS DURABLE
+   *     STATE … a live record that carries a value the file does not hold IS THE
+   *     DEFECT THIS UNIT REPAIRS"*, in EITHER direction;
+   *   · `§2.2` item 1 — the predicate is TOTAL and answers NOT representable for
+   *     every unrepresentable value, `Infinity` included; `§2.1` item 3 step 1 —
+   *     *"A patch containing any unrepresentable value is REFUSED HERE,
+   *     whole-patch … no filesystem call is made"*;
+   *   · `§2.2` item 2 — *"the admitted-and-persisted value equals the value the
+   *     caller supplied"*;
+   *   · the decisions row's follow-up block, verbatim: *"Live state equals durable
+   *     state"*.
+   *
+   * THE SHAPE OF THE ASSERTION IS IMPLEMENTATION-AGNOSTIC ON PURPOSE: the row
+   * drives the accessor and requires that the tier's live record and the file
+   * AGREE member for member (whatever value the host settles on), that the record
+   * never carries a value the contract declares unrepresentable, and that a
+   * refusal is a no-op on both.  The current bytes FAIL all three for BOTH
+   * fixtures — this row is RED against the landed bytes (the implementer greens it
+   * next, by reading each declared member ONCE and admitting that single reading).
+   *
+   * REGISTER NOTE: this row is a BEHAVIOURAL row and sits OUTSIDE the `§5.6.1`
+   * register's `118` declared attempts — it adds no attempt to any register row and
+   * changes no term, row id, cap or subtotal, because ADV-1 arrived AFTER the
+   * register was authored and a register amendment is the architect's cell to move
+   * (the amendment owed is stated in `§9d`).
+   * ======================================================================== */
+
+  it('ADV-1 (gate 4, HIGH, HOST-FIX) · a LATE accessor/proxy read must not defeat the admission — the tier’s live record may never carry a value the file does not hold', async () => {
+    // TERM 1 — the `maxJournalLength` accessor: representable for the admission's
+    // own reads, `Infinity` on a LATE read (the 6th, past the `> 0` guard).
+    {
+      const { store, path } = await makeStore()
+      probe(store)
+      const pre = asRecord(store.get())
+      const preBytes = await rawBytes(path)
+      resetFsLog()
+      let reads = 0
+      const patch: Record<string, unknown> = {
+        get maxJournalLength(): number {
+          reads += 1
+          return reads >= 6 ? Infinity : 42
+        },
+      }
+      let out: unknown
+      let threw: string | null = null
+      try {
+        out = store.set(patch as never)
+      } catch (e) {
+        threw = (e as Error).message
+      }
+      const receipt = store.lastWriteReceipt()
+      const live = store.get()
+      const afterBytes = await rawBytes(path)
+      expect(threw, 'ADV-1(1) — a declared member must never throw on a late-read accessor (I-4 / §2.3 item 1)').toBeNull()
+      // (a) THE TIER'S OWN INVARIANT: the live record and the file agree.
+      expect(
+        recordDivergence(live, afterBytes, 'ADV-1(1) the maxJournalLength accessor'),
+        'ADV-1(1) — LIVE MUST EQUAL DURABLE (I-1 / §2.3 item 7).  On the landed bytes the receipt answers committed with `<Infinity>` LIVE while the file (JSON.stringify’s non-finite → null) carries null — the exact divergence this unit exists to close, re-opened by the caller’s accessor',
+      ).toBeNull()
+      // (b) and the live record never carries a value the contract declares
+      // unrepresentable (§2.2 item 1): `Infinity` is NOT representable, and §2.2
+      // item 3's admissible arm for this member is the documented clear (`null`) or
+      // the finite positive number.
+      expect(
+        REPRESENTABLE(live.maxJournalLength === undefined ? null : live.maxJournalLength),
+        'ADV-1(1) — the live cap reads ' + String(live.maxJournalLength) + '; a value the tier cannot persist as JSON must not be ACCEPTED (§2.2 item 1 / I-2 — the Infinity divergence’s own fixture)',
+      ).toBe(true)
+      // (c) the write must be REFUSED (the contract's declared answer for an
+      // unrepresentable value) OR — if the host legitimately commits — the committed
+      // value must be the one the file carries, and no filesystem call may be made
+      // for a refusal.
+      if (receipt?.status === 'refused') {
+        expect(assertReceiptShape(receipt, 'ADV-1(1)'), 'ADV-1(1) — a refusal is the closed two-form receipt').toBeUndefined()
+        expect(snapshot(asRecord(store.get())), 'ADV-1(1) — a refusal is a no-op on the record (§2.2 item 5(d))').toBe(snapshot(pre))
+        expect(bytesSnapshot(afterBytes), 'ADV-1(1) — a refusal is a no-op on the file (§2.2 item 5(c))').toBe(bytesSnapshot(preBytes))
+        expect(fsActivity(), 'ADV-1(1) — an admission refusal touches NO file (§0A item 3 / F-9)').toEqual([])
+      } else {
+        expect(snapshot(asRecord(store.get())), 'ADV-1(1) — a committed write’s record is the supplied value’s declared coercion (§2.2 item 2)').toBe(snapshot(expectedPost(pre, { maxJournalLength: 42 })))
+        expect(snapshot(asRecord(out)), 'ADV-1(1) — set() returns the record now live (§2.1 item 3 step 6)').toBe(snapshot(asRecord(store.get())))
+      }
+      // THE CONTROL (`PBT-`style non-vacuity): the fixture really does present
+      // DIFFERENT values to different reads — so the exposure above is about reads,
+      // not about a literal.
+      expect(reads, 'ADV-1(1) — CONTROL: the fixture answered a DIFFERENT value on its later reads (the exposure is the host’s MULTIPLE reads of one member); the host made this many reads through the whole set() call').toBe(1)
+    }
+    // TERM 2 — the `token` accessor: a `BigInt` on the late read (the `typeof ===
+    // 'string'` test's own read).  The same hole, entered from the other side: the
+    // landed bytes answer a `committed` receipt while the member is CLEARED, so the
+    // file carries a `null` the pre-write record does not carry.
+    {
+      const { store, path } = await makeStore()
+      store.set({ token: 'PRE-KEEP' })
+      const pre = asRecord(store.get())
+      const preBytes = await rawBytes(path)
+      resetFsLog()
+      let tReads = 0
+      const patch: Record<string, unknown> = {
+        get token(): unknown {
+          tReads += 1
+          return tReads >= 3 ? (BigInt(9) as never) : 'NEW-TOKEN'
+        },
+      }
+      let threw: string | null = null
+      let out: unknown
+      try {
+        out = store.set(patch as never)
+      } catch (e) {
+        threw = (e as Error).message
+      }
+      const receipt = store.lastWriteReceipt()
+      const live = store.get()
+      const afterBytes = await rawBytes(path)
+      expect(threw, 'ADV-1(2) — never a throw (I-4)').toBeNull()
+      expect(
+        recordDivergence(live, afterBytes, 'ADV-1(2) the token accessor'),
+        'ADV-1(2) — LIVE MUST EQUAL DURABLE (I-1 / §2.3 item 7).  On the landed bytes the receipt answers committed while the token is cleared to null LIVE and the file carries null too, so the PRE-WRITE token the file no longer carries is the divergence’s other direction',
+      ).toBeNull()
+      expect(
+        REPRESENTABLE(live.token),
+        'ADV-1(2) — the live token reads ' + JSON.stringify(live.token) + '; a BigInt on a LATE read must not be admitted-and-dropped under a committed receipt (§2.2 items 3/4 — no committed receipt answers a discarded value)',
+      ).toBe(true)
+      if (receipt?.status === 'refused') {
+        expect(snapshot(asRecord(store.get())), 'ADV-1(2) — a refusal is a no-op on the record (§2.2 item 5(d))').toBe(snapshot(pre))
+        expect(bytesSnapshot(afterBytes), 'ADV-1(2) — a refusal is a no-op on the file (§2.2 item 5(c))').toBe(bytesSnapshot(preBytes))
+        expect(fsActivity(), 'ADV-1(2) — an admission refusal touches NO file (F-9)').toEqual([])
+      } else {
+        // a COMMITTED answer must carry the value the caller supplied on the read
+        // the host admitted — never a silent clear of a value the patch supplied.
+        expect(snapshot(asRecord(store.get())), 'ADV-1(2) — a committed write’s record must carry the supplied token (never the silent clear the landed bytes answer) — §2.2 item 2 / §2.2 item 4').toBe(snapshot(expectedPost(pre, { token: 'NEW-TOKEN' })))
+        expect(snapshot(asRecord(out)), 'ADV-1(2) — set() returns the record now live (§2.1 item 3 step 6)').toBe(snapshot(asRecord(store.get())))
+      }
+      expect(tReads, 'ADV-1(2) — CONTROL: the token fixture answered a DIFFERENT value on its later reads').toBe(1)
+    }
   })
 
   it('§2.4 R-5 · the post-commit directory-fsync failure is COMMITTED, never a rollback (its own row)', async () => {
