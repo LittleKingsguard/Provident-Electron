@@ -721,3 +721,18 @@
 12. **It did not make the transition race deterministic.** `SC-D-08` is `MANUAL` with its structural reason at the row. **A later instrument would need a main-side seam that can inject the transition INSIDE the `IPC_SECURITY_SET` handler's critical section (or a contract clause declaring the ordering observable at the channel) — neither exists at this HEAD. OWNER: the next pass that gates the write path (`P-R6`).**
 13. **It changed no `src/**` byte and filed no `docs/defects.md` row.** The `D-2` finding is a GATE-SCOPE item (`P-R6`), not a defect of a landed contract: the landed handler is exactly what its own contract says it is, and **the clause it does not satisfy arrived AFTER the handler did**. **No new host defect is owed; both `SECURITY-STORE-SILENT-KEY-DROP` and `STORE-BRIDGE-EMPTY-PROJECTION-COMMITS` are RE-MEASURED here (by `SC-D-05` and `SC-D-10`), and neither is superseded or extended.** **OWNER: whoever admits `P-R6`.**
 14. **It did not file the ruling.** See the note at the top of this section: the ruling's text is quoted here and is NOT in `docs/decisions.md`. **OWNER: the next pass that touches the ledger** — this pass's scope was the battery and its record.
+## 8. THE POST-COMMIT RUN AND THE FOUR LEGS' FIGURES (`2026-10-11`; the record-only amendment for the `RCA-8(a)` gate boundary)
+
+**MEASURED AT THE SCOPE COMMIT `78d1cce`, WITH `git status --short` EMPTY AT EVERY READING** (the post-commit measurement cannot live inside the commit it measures, so it is recorded here, in a second, record-only commit — the same discipline the earlier rounds used).
+
+| The reading | The figure, at `78d1cce` |
+| --- | --- |
+| **the post-commit battery run** | **`node tests/store-compliance-live.mjs` → exit `1`; `37` recorded rows = `30 PASS / 6 FAIL / 1 MANUAL / 0 PARKED`** — **the SAME row count and the SAME verdicts as BOTH pre-commit runs.** The whole log is EMPTY against run 1's after normalising the probe's own scratch path and sha256 — i.e. **the only differences are `HEAD 09a3c47 → 78d1cce` and the scratch-directory names**: the executed blob is provably the committed one |
+| **the blob identity** | `git show 78d1cce:tests/store-compliance-live.mjs \| sha256sum` = **`41b85af8b71a3d8e7e3e427e95fddb24cfef72a4159ccc6208be2cbbaaeac3c4`** = **the pin both pre-commit runs and the post-commit run were taken on** — the tree's working copy hashes identically (`sha256sum tests/store-compliance-live.mjs`), so no byte moved between the runs and the commit |
+| **`npm test`** | **exit `0` — `86 passed (86)` FILES / `2729 passed \| 2 skipped (2731)` / `0 failed`.** `tests/gutter.test.ts`'s `R-12 §3.4` is GREEN POST-COMMIT (`liveUnaccounted = []`) — the working-tree-tracking row that reddens on an UNCOMMITTED `tests/**` artifact, which is why the pre-commit reading is not quoted as a leg figure here |
+| **`npm run typecheck`** | **exit `0`** |
+| **`npm run typecheck:tests`** | **exit `0`** |
+| **`npm run build`** | **exit `0`** |
+
+**THE PRE-COMMIT READS, KEPT VISIBLE BESIDE THEM (a reading is a reading):** the two pre-commit battery runs (`37` rows = `30 PASS / 6 FAIL / 1 MANUAL`, exit `1` both) and the `§6.1` machine parse (`PARSE OK rows 8 total 8`) were taken on the WORKING-TREE driver before `78d1cce`; the post-commit run above is the third. **THE `§6.2` AUDIT REMAINS OWED TO A NON-AUTHOR — AN EIGHTH ROUND — OVER THIS PASS'S DRIVER AND RECORD, WITH FAMILY D NAMED AS ITS TARGET (`§5` item 1, `§7` item 14 above lists the pass's own declared limits); NOTHING IN THIS PASS CERTIFIES ITSELF.**
+
