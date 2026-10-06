@@ -470,22 +470,57 @@ function valueForMember(spec: ValueSpec, key: MemberKey): unknown {
 
 type Admit = { admitted: true; patch: Record<string, unknown> } | { admitted: false; reason: string }
 
-/** §2.2 item 3's RULE: an unrepresentable value is admissible ONLY as a DECLARED
- *  CLEAR of its own member (null on `token`/`maxJournalLength`), `undefined` is
- *  the ABSENT marker, and everything else unrepresentable REFUSES THE PATCH. */
+/** §2.2 item 3's RULE **AS `§6`'s DECLARED DOMAINS PIN IT** (`KB-4`, corrected at
+ *  the kick-back): the admission is over each member's DECLARED DOMAIN — a
+ *  REPRESENTABLE value that lies OUTSIDE that domain is refused exactly as an
+ *  unrepresentable one is, and an unrepresentable value is admissible ONLY as a
+ *  DECLARED CLEAR of its own member.  The contract's own cells, quoted:
+ *   · `§6` `PAR-2`'s OUTSIDE column: *"a non-string of any other kind — a number,
+ *     a boolean, an object, an array, `BigInt`, a `Map`/`Set`/`Date`, a function,
+ *     a `Symbol`, a cyclic object (**ADMISSION REFUSAL, whole patch, record
+ *     unmoved**)"*;
+ *   · `§3.2` `F-4`: *"the value is an ordinary object and is thus NOT a `string`
+ *     ⇒ **declared-domain refusal, whole patch**"*;
+ *   · `§6` `PAR-3`: a **non-number** on `maxJournalLength` (a string, a boolean, an
+ *     object, `BigInt`, a function) is **refused**, `Infinity`/`-Infinity` are
+ *     **refused** (the measured divergence's own fixture), and the CLEAR arm is
+ *     `0` · `-0` · a negative number · `NaN` · `null`;
+ *   · `§6` `PAR-4`/`PAR-5`: a **non-array** on `groups`/`disable` is *"refused,
+ *     whole patch"*, an array carrying a non-representable element refuses, and an
+ *     array element that is a non-group STRING is *"dropped by the documented
+ *     filter, admitted"*;
+ *   · `undefined` is the ABSENT marker on every member (admitted).
+ *  The as-filed reading — representability ALONE — admitted `{token: <ordinary
+ *  object>}` and contradicted this file's OWN `F-4` row (`:1741`): the row's bytes
+ *  were malformed, not the contract. */
 function admissionOf(spec: ValueSpec, key: MemberKey): Admit {
-  if (spec.v === undefined) return { admitted: true, patch: {} } // the absent marker (§2.2 item 3)
-  // (c) THE DOCUMENTED "ELSE CLEARED" ARM — §6 PAR-3 declares `0` · `-0` · a
-  // negative number · `NaN` as the CLEAR, and §2.2 item 3 says so explicitly
-  // ("`NaN` is unrepresentable but sits in the documented clear arm, which is
-  // exactly why it needs this rule rather than the predicate alone").  These are
-  // ADMITTED and they clear; they are NOT the `null` clear.
-  if (key === 'maxJournalLength' && typeof spec.v === 'number' && !(spec.v > 0)) {
-    return { admitted: true, patch: { maxJournalLength: spec.v } }
+  if (spec.v === undefined) return { admitted: true, patch: {} } // the absent marker (§2.2 item 3 / PAR-2…PAR-5)
+  if (key === 'token') {
+    // PAR-2's declared domain: a non-empty string (kept verbatim) · `null` (the clear) · `undefined` (absent).
+    if (typeof spec.v === 'string' && spec.v !== '') return { admitted: true, patch: { token: valueForMember(spec, key) } }
+    if (spec.v === null) return { admitted: true, patch: { token: null } }
+    return { admitted: false, reason: `outside PAR-2's declared domain (a non-string): ${spec.label} — ADMISSION REFUSAL, whole patch, record unmoved` }
   }
-  if (spec.v === null && spec.nullClear) return { admitted: true, patch: { [key]: null } } // the declared clear
-  if (REPRESENTABLE(spec.v)) return { admitted: true, patch: { [key]: valueForMember(spec, key) } }
-  return { admitted: false, reason: `unrepresentable at the ${key} member: ${spec.label} (§2.2 item 3 — the clear arm is null-on-token/maxJournalLength, nothing else)` }
+  if (key === 'maxJournalLength') {
+    // PAR-3's declared domain: a FINITE number (floored, or cleared by the documented
+    // `> 0` arm — `0` · `-0` · a negative number · `NaN`) · `null` (the clear) · `undefined` (absent).
+    if (typeof spec.v === 'number') {
+      if (spec.v === Infinity || spec.v === -Infinity) {
+        return { admitted: false, reason: `PAR-3's OUTSIDE column: \`${spec.label}\` is ADMISSION-REFUSED — the measured divergence's own fixture` }
+      }
+      return { admitted: true, patch: { maxJournalLength: valueForMember(spec, key) } }
+    }
+    if (spec.v === null) return { admitted: true, patch: { maxJournalLength: null } }
+    return { admitted: false, reason: `outside PAR-3's declared domain (a non-number): ${spec.label} — refused` }
+  }
+  // PAR-4 (`groups`) / PAR-5 (`disable`) — identical OUTSIDE columns.
+  if (Array.isArray(spec.v)) {
+    if (!(spec.v as unknown[]).every((el) => REPRESENTABLE(el))) {
+      return { admitted: false, reason: `an array carrying a non-representable element: ${spec.label} — §2.2 item 4's derived consequence: ADMISSION REFUSAL, whole patch` }
+    }
+    return { admitted: true, patch: { [key]: valueForMember(spec, key) } }
+  }
+  return { admitted: false, reason: `outside PAR-4/PAR-5's declared domain (a non-array): ${spec.label} — refused, whole patch` }
 }
 
 /* ==========================================================================
@@ -595,10 +630,26 @@ function printRegister(): void {
  * persist) FAILS it, and an assign-after-persist shape passes it.
  * ======================================================================== */
 
+/** THE WINDOW (`KB-5`, corrected at the kick-back).  The module declares a `set`
+ *  member TWICE — once in the `SecurityStore` INTERFACE near the head
+ *  (`set(patch: {…}): SecuritySettings`, `src/main/security-store.ts:27`) and once
+ *  as the IMPLEMENTATION inside the returned object literal (`:254`).  The row's
+ *  subject is the ORDERING DISCIPLINE of the WRITE PATH, so the window must open on
+ *  the IMPLEMENTATION: the search is anchored AFTER the factory's own declaration
+ *  (`export function createSecurityStore`), which precedes the returned literal,
+ *  and it closes at the literal's own end (`} as SecurityStore`).  AS FILED the
+ *  search matched the INTERFACE's declaration and closed on its neighbour's
+ *  doc-commented member (`:32`) — a 426-byte slice with `indexOf('current =') ===
+ *  -1`, i.e. a window that CANNOT CONTAIN the write path for ANY implementation:
+ *  a structurally unsatisfiable instrument, never a red the Implementer could turn
+ *  green.  MEASURED on the landed bytes after the correction: the window is 1447
+ *  bytes, `persist(` sits at 856 and `current =` at 1194 — the assignment AFTER
+ *  the save, gated on its outcome. */
 function setBodyOf(src: string): string {
-  const at = src.indexOf('set(patch:')
+  const factoryAt = src.indexOf('export function createSecurityStore')
+  const at = src.indexOf('set(patch:', factoryAt === -1 ? 0 : factoryAt)
   if (at === -1) return ''
-  const end = src.indexOf('lastWriteReceipt(): SecurityWriteReceipt | null', at)
+  const end = src.indexOf('} as SecurityStore', at)
   return src.slice(at, end === -1 ? undefined : end)
 }
 
@@ -745,6 +796,14 @@ runRow('P-O1-TP-1', 'P-TP', 'S-SS-ROLL-1', 12, () => {
     ]
     for (const c of classes) {
       const { store, path } = await makeStore(c.refusalClass ? 'provident-security.json' : 'provident-security.json')
+      // THE ISOLATION (`KB-6`, corrected at the kick-back): every arm is DISARMED
+      // before this attempt's `probe()` runs.  As filed, class N's injection was
+      // still live during class N+1's probe, so the probe's own write REFUSED and
+      // the real path never received the pre-write record — the byte-identity term
+      // below then compared `bytesSnapshot(postBytes)` with a RECORD snapshot
+      // (`'null'` vs `'{"token":…}'`) and could NEVER hold.  One fresh store, one
+      // ISOLATED probe, then the arm.
+      resetInject()
       const pre = probe(store)
       const preBytes = await rawBytes(path)
       c.arm()
@@ -844,6 +903,7 @@ runRow('P-M-SM-1', 'P-SM', 'S-SS-WSM-1', 6, () => {
     // pre-attempt value.
     {
       const { store } = await makeStore()
+      resetInject() // KB-6 isolation: the previous arm is disarmed before this probe
       const pre = probe(store)
       resetFsLog()
       assertNoThrow(() => store.set({ token: 'NEXT' }), '(b) ADMITTED: set()')
@@ -853,36 +913,51 @@ runRow('P-M-SM-1', 'P-SM', 'S-SS-WSM-1', 6, () => {
         }
       })
     }
-    // (c) STAGED — `${path}.tmp` exists while the real path is untouched.  The
-    // observable is frozen by a RENAME-INJECTED failure (§5.6.1's "the injected
-    // failure is DRIVEN, never described"), and the staged candidate's identity
-    // is read from the mock's own observation of the rename's SOURCE.
+    // (c) STAGED — the candidate is STAGED while the real path is untouched.  The
+    // observable is read AT THE PRE-RENAME TMP FSYNC (the mock's own reading of the
+    // staging file's bytes at that instant), because `§2.3` item 4(b) requires a
+    // CAUGHT failure to remove its own tmp best-effort — the landed, contract-declared
+    // discipline `§1.2` item 7 declares UNCHANGED — so a read taken AFTER `set()` has
+    // returned observes a state the contract REMOVES (`KB-6b`, corrected at the
+    // kick-back; `§2.4` `R-4`'s *"a residual tmp is possible"* is the only clause that
+    // would let one survive a rename failure, and the rename's own source is read from
+    // the mock's log).  The rename-injected failure drives the class, and the
+    // return-time reading is now the cleanup's OWN positive term (§2.3 item 4(b)).
     {
       const { store, path } = await makeStore()
+      resetInject() // KB-6 isolation
       const pre = probe(store)
       const preBytes = await rawBytes(path)
       armRenameFailure()
       resetFsLog()
       assertNoThrow(() => store.set({ token: 'STAGED' }), '(c) STAGED: set()')
-      const tmpBytes = await rawBytes(`${path}.tmp`)
+      const stagedAtTmpFsync = hooks.fsyncTmpBytes[0] ?? ''
+      const afterReturnBytes = await rawBytes(`${path}.tmp`)
       const realBytes = await rawBytes(path)
       const renameLog = hooks.log.find((l) => l.startsWith('rename:')) ?? ''
       drive('P-M-SM-1', '(c) STAGED (read together with (d))', () => {
-        if (tmpBytes === null) throw new Error('STAGED: the staging path `${path}.tmp` does not exist — the candidate must be staged before the rename (§2.1 item 3 step 3)')
-        if (normRecord(parseOrNull(tmpBytes)) !== snapshot(expectedPost(pre, { token: 'STAGED' }))) {
-          throw new Error(`STAGED: the staged bytes are ${bytesSnapshot(tmpBytes)}, not the candidate ${snapshot(expectedPost(pre, { token: 'STAGED' }))}`)
+        if (stagedAtTmpFsync === '') throw new Error('STAGED: the pre-rename tmp fsync read no staging bytes — the candidate must be staged before the rename (§2.1 item 3 step 3)')
+        if (normRecord(parseOrNull(stagedAtTmpFsync)) !== snapshot(expectedPost(pre, { token: 'STAGED' }))) {
+          throw new Error(`STAGED: the staged bytes at the pre-rename fsync are ${bytesSnapshot(stagedAtTmpFsync)}, not the candidate ${snapshot(expectedPost(pre, { token: 'STAGED' }))}`)
         }
         if (normRecord(parseOrNull(realBytes)) !== snapshot(pre)) {
           throw new Error(`STAGED: the real path's bytes are ${bytesSnapshot(realBytes)}, not the PRE-write record — the real path is untouched until the rename (§2.1 item 3 step 4)`)
         }
         if (!renameLog.endsWith(`${path}.tmp`)) throw new Error(`STAGED: the rename's SOURCE was ${JSON.stringify(renameLog)}, not the staging path`)
-        void preBytes
+        // the CAUGHT failure's own discipline (§2.3 item 4(b)): removal is
+        // best-effort, and its own failure is swallowed — so no throw AND no
+        // residue after the return.
+        if (afterReturnBytes !== null) {
+          throw new Error('STAGED: the caught rename failure left a `${path}.tmp` — the cleanup is best-effort and removes its own tmp (§2.3 item 4(b))')
+        }
+        if (normRecord(parseOrNull(preBytes)) !== snapshot(pre)) throw new Error('STAGED: the probe did not land the pre-write record — the fixture is not isolated (KB-6)')
       })
     }
     // (d) RENAMED — the bytes at the real path ARE the candidate and the record
     // has advanced.
     {
       const { store, path } = await makeStore()
+      resetInject() // KB-6 isolation: (c) left the rename armed; this probe runs injection-free
       const pre = probe(store)
       resetFsLog()
       assertNoThrow(() => store.set({ token: 'RENAMED' }), '(d) RENAMED: set()')
@@ -896,6 +971,7 @@ runRow('P-M-SM-1', 'P-SM', 'S-SS-WSM-1', 6, () => {
     // (e) REFUSED-ADMISSION — the filesystem was untouched (§2.2 item 5(c)).
     {
       const { store, path } = await makeStore()
+      resetInject() // KB-6 isolation
       const pre = probe(store)
       resetFsLog()
       assertNoThrow(() => store.set({ token: BigInt(7) as never }), '(e) REFUSED-ADMISSION: set()')
@@ -909,6 +985,7 @@ runRow('P-M-SM-1', 'P-SM', 'S-SS-WSM-1', 6, () => {
     // (f) POST-COMMIT-DIR-FSYNC-FAILURE — committed, advanced, NO rollback.
     {
       const { store, path } = await makeStore()
+      resetInject() // KB-6 isolation
       const pre = probe(store)
       armDirFsyncFailure()
       resetFsLog()
@@ -944,6 +1021,8 @@ runRow('P-O2-IM-2', 'P-IM', 'S-SS-TMP-1', 7, () => {
       let pre: Record<string, unknown> = { token: null, enabled: ['read', 'dispatch'], maxJournalLength: undefined }
       let preBytes: string | null = null
       if (!c.realPathIsDirectory) {
+        // KB-6 isolation: the PREVIOUS class's arm is disarmed before this class's probe.
+        resetInject()
         const store0 = createSecurityStore({ path })
         pre = probe(store0)
         preBytes = await rawBytes(path)
@@ -1012,10 +1091,12 @@ runRow('P-O2-IM-2', 'P-IM', 'S-SS-TMP-1', 7, () => {
       const preBytes = await rawBytes(path)
       await mkdir(`${path}.tmp`, { recursive: true })
       resetFsLog()
-      const receipt = assertNoThrow(() => store.set({ token: 'x' }), '6 · the directory-shaped stale tmp: set()')
+      const out = assertNoThrow(() => store.set({ token: 'x' }), '6 · the directory-shaped stale tmp: set()')
       drive('P-O2-IM-2', '6 · the stale tmp that names a DIRECTORY — refused, never a throw', () => {
-        if ((receipt as SecurityWriteReceipt).status !== 'refused') throw new Error('the directory-shaped stale tmp did not refuse (§2.3 item 4(b))')
-        if (store.lastWriteReceipt()?.status !== 'refused') throw new Error('the receipt is not the refused form')
+        // `KB-7`: `set()`'s return is the RECORD (§2.1 item 3 step 6 / §2.5 item 3) —
+        // the receipt is `lastWriteReceipt()`'s answer (§2.1 item 7).
+        if (store.lastWriteReceipt()?.status !== 'refused') throw new Error('the directory-shaped stale tmp did not refuse (§2.3 item 4(b))')
+        if (snapshot(asRecord(out)) !== snapshot(pre)) throw new Error('set()’s return is not the pre-write RECORD on the stale-tmp refusal (§2.1 item 3 step 6)')
         if (snapshot(asRecord(store.get())) !== snapshot(pre)) throw new Error('the record moved on the tmp-shape refusal')
       })
       if (normRecord(parseOrNull(await rawBytes(path))) !== normRecord(parseOrNull(preBytes))) {
@@ -1059,6 +1140,7 @@ runRow('P-TP-2', 'P-TP', 'S-SS-RCPT-1', 16, () => {
     for (const c of classes) {
       const { store } = await makeStore()
       const coldReceipt = store.lastWriteReceipt() // the ordered PRE-reading: null IFF no attempt has occurred (PAR-10)
+      resetInject() // KB-6 isolation: the PREVIOUS class's arm is disarmed before this warm-up probe
       probe(store)
       for (const surface of ['1 · the store’s lastWriteReceipt()', '2 · the SET response’s `write` member'] as const) {
         for (const assertion of ['a · the receipt is a declared closed form', 'b · no declared member threw'] as const) {
@@ -1146,6 +1228,7 @@ runRow('P-M-SM-2', 'P-SM', 'S-SS-ORD-1', 2, () => {
       const witnesses: string[] = []
       for (const c of classes) {
         const { store, path } = await makeStore()
+        resetInject() // KB-6 isolation: the PREVIOUS class's arm is disarmed before this probe
         const pre = probe(store)
         c.arm()
         resetFsLog()
@@ -1645,11 +1728,18 @@ describe('§3.2 the documented fail-states (F-1 … F-12)', () => {
       const pre = probe(store)
       const preBytes = await rawBytes(path)
       await chmod(dir, 0o500)
-      const receipt = assertNoThrow(() => store.set({ token: 'x', maxJournalLength: 55 }), 'F-1(ii)')
+      const out = assertNoThrow(() => store.set({ token: 'x', maxJournalLength: 55 }), 'F-1(ii)')
       const postBytes = await rawBytes(path)
       await chmod(dir, 0o700)
-      expect((receipt as SecurityWriteReceipt).status, 'F-1(ii) — refused').toBe('refused')
+      // `KB-7` (corrected at the kick-back): `set()`'s RETURN is read as the RECORD —
+      // `§2.1` item 3 step 6 declares it `this.get()` and `§2.5` item 3 declares it
+      // "`set(patch)` → `this.get()`, i.e. the same deep detached record (the pre-write
+      // one on a refusal)"; `§6` `PAR-11` forbids a fourth record member, so no return
+      // value can be both a record and a receipt.  The RECEIPT is read from
+      // `lastWriteReceipt()` (§2.1 item 7), which is the member that answers it.
+      expect(store.lastWriteReceipt(), 'F-1(ii) — the RECEIPT is the refused form (`lastWriteReceipt()`, §2.1 item 7)').toEqual({ status: 'refused', reason: 'write-failed' })
       expect(snapshot(asRecord(store.get())), 'F-1(ii) — the pre-write record').toBe(snapshot(pre))
+      expect(snapshot(asRecord(out)), 'F-1(ii) — set()’s RETURN is the pre-write RECORD (§2.1 item 3 step 6)').toBe(snapshot(pre))
       expect(bytesSnapshot(postBytes), 'F-1(ii) — the bytes unmoved').toBe(bytesSnapshot(preBytes))
     }
     // (iii) the target path IS a DIRECTORY (the LIVE class, SC-E-05's shape).
@@ -1660,9 +1750,13 @@ describe('§3.2 the documented fail-states (F-1 … F-12)', () => {
       await mkdir(path, { recursive: true })
       const store = createSecurityStore({ path })
       const pre = store.get()
-      const receipt = assertNoThrow(() => store.set({ token: 'E2-LIVE-OPERATOR-WRITE', maxJournalLength: 55 }), 'F-1(iii)')
-      expect((receipt as SecurityWriteReceipt).status, 'F-1(iii) — refused (the rename onto a directory)').toBe('refused')
+      const out = assertNoThrow(() => store.set({ token: 'E2-LIVE-OPERATOR-WRITE', maxJournalLength: 55 }), 'F-1(iii)')
+      // `KB-7` (the same malformed reading as (ii)): the receipt is read from
+      // `lastWriteReceipt()` (§2.1 item 7); `set()`'s return is the RECORD
+      // (§2.1 item 3 step 6), and on this refusal it is the PRE-WRITE record.
+      expect(store.lastWriteReceipt(), 'F-1(iii) — the RECEIPT of this attempt is the refused form (§2.1 item 7)').toEqual({ status: 'refused', reason: 'write-failed' })
       expect(snapshot(asRecord(store.get())), 'F-1(iii) — the record is the pre-write record, NOT the measured E2 leak').toBe(snapshot(asRecord(pre)))
+      expect(snapshot(asRecord(out)), 'F-1(iii) — set()’s RETURN is the pre-write RECORD (§2.1 item 3 step 6 / §2.5 item 3)').toBe(snapshot(asRecord(pre)))
       expect(store.get().token, 'F-1(iii) — the measured defect’s exact value must not appear').not.toBe('E2-LIVE-OPERATOR-WRITE')
     }
   })
@@ -1967,41 +2061,60 @@ describe('§5.6.1 THE REGISTER — the executed summary (118 = 51+12+6+7+16+2+8+
     expect(subtotal('P-IM') + subtotal('P-SM') + subtotal('P-TP'), '66 + 8 + 44 = 118 ✓').toBe(118)
   })
 
-  it('REGISTER-RED · the register’s rows redden against the landed bytes by construction (§4.3 item 2) and report their held/broken figures', () => {
-    // §4.3 item 2, exact: "A red run whose failing set is EMPTY is itself a
-    // finding — the register's rows MUST fail first against today's module (the
-    // ordered-advance rows, the admission rows, and the receipt-detachment row
-    // all redden on the landed bytes BY CONSTRUCTION)".  The sibling register's
-    // summary asserts the MIRROR of this (`rowsHeld === 22`); this unit's red set
-    // asserts the red direction over the EIGHT rows whose property this unit
-    // MOVES, and the nine rows' broken readings are named with their figures.
-    // THE EIGHTH ROW (`P-O2-TP-1`) IS THE EXCEPTION, AND WHY (the kick-back's
-    // correction, `docs/specs/secure-store-discipline.md` §9's kick-back
-    // resolution): its property — SET/SANITIZE TOTALITY, the DOCUMENTED
-    // COERCIONS PRESERVED INSIDE THE ADMISSION'S BOUNDARY (§5.6.1 row 8's own
-    // scope line) — pins behaviour this unit DECLARES UNCHANGED, so it holds
-    // fully against the landed bytes.  Its ONE former broken reading was a term
-    // asserting §6 PAR-3's `0.5` boundary value as the CLEAR, which the contract
-    // REFUSES (PAR-3's OUTSIDE column: "ADMITTED, floored to 0"; §2.2 item 3) —
-    // a malformed term, corrected in this pass, never a red the Implementer
-    // could turn green.  The red direction is therefore asserted per MOVED row,
-    // plus the eighth row's own fully-held reading, plus the sums.
-    const MOVED_ROWS = results.filter((r) => r.id !== 'P-O2-TP-1')
+  it('REGISTER-RED · the register’s rows HOLD at the contract’s declared END STATE (§9 item 3 / §9a item 5 — the inverted form; the pre-fix RED-direction reading is kept below as a note)', () => {
+    // THE END STATE (`KB-3`, corrected at the kick-back).  §9 item 3 declares, of THIS
+    // row: "The Implementer's green must invert THIS row (`broken === 0` per row)
+    // together with the sixteen behavioural rows"; §9a item 5 restates the delegation
+    // line as "the `REGISTER-RED` row (`broken === 0` for all nine rows — the inversion
+    // §9 item 3 already declares)".  The AS-FILED row asserted the RED-STATE direction
+    // instead (`broken > 0` over the eight moved rows, sums `54` broken / `64` held) —
+    // impossible for ANY implementation to satisfy once `F-8` and `F-10` are greened,
+    // because those two rows ARE the properties of `P-M-SM-2`'s attempt (1) and
+    // `P-O3-IM-2`'s identity reading, so greening them lowers the sum by construction.
+    // §4.3 item 2's "a red run whose failing set is EMPTY is itself a finding" governs
+    // THE RED RUN against the unimplemented module and names the row CLASSES that must
+    // redden THERE; it is not a green-state sum.  The row now asserts the declared END
+    // STATE: every one of the nine rows holds, `P-O2-TP-1` likewise.
+    //
+    // THE PRE-FIX READINGS, KEPT VISIBLE AS A NOTE (annotate-beside, never rewritten —
+    // RCA-8(d)); the as-filed bytes of §9 item 3 and §9a item 4/5 stand as the record:
+    //  · THE RED RUN (`eacce3f`; corrected at `83f2dde`, §9a item 4) — 62 held /
+    //    56 broken, whose per-row terms read 22+3+2+5+11+0+5+7+7 = 62 broken;
+    //    the KB-1/KB-2 correction moved it to 64 held / 54 broken, per-row terms
+    //    28+9+4+2+5+2+3+0+1 = 54.
+    //  · THE POST-GREEN, PRE-CORRECTION READING (`460fb66`, the Implementer's own §9b
+    //    item 3) — 98 held / 20 broken, per-row terms 13+2+2+1+0+2+0+0+0 = 20, EVERY
+    //    ONE of them a red-set defect of an instrument, a fixture, the drive table or
+    //    one row-internal return-shape contradiction (`KB-4`…`KB-7`, plus the `KB-6b`
+    //    fixture note) — not one of them a behavioural red.
+    //  · THE END STATE, MEASURED ON THE LANDED BYTES (`460fb66` + this pass's
+    //    corrections) — 118 held / 0 broken, per-row terms
+    //    51+12+6+7+16+2+8+8+8 = 118, i.e. every row `held === declared`.
     for (const r of results) {
       expect(r.held + r.broken, `${r.id}: held + broken === attempts-run`).toBe(r.attempts)
     }
-    for (const r of MOVED_ROWS) {
-      expect(r.broken, `${r.id} must carry at least one BROKEN reading against the landed bytes (§4.3 item 2) — its row reads ${r.held} held / ${r.broken} broken`).toBeGreaterThan(0)
+    for (const r of results) {
+      expect(
+        r.broken,
+        `${r.id} — the contract's END STATE (§9 item 3: "broken === 0 per row"; §9a item 5: "for all nine rows"): every term HOLDS on the landed bytes. Its row reads ${r.held} held / ${r.broken} broken (declared ${r.declared})`,
+      ).toBe(0)
+      expect(r.held, `${r.id} — at the end state each row's held readings are exactly its declared term`).toBe(r.declared)
     }
-    expect(results.find((r) => r.id === 'P-O2-TP-1')?.broken, 'P-O2-TP-1 pins the coercions the contract PRESERVES (§5.6.1 row 8) — on the landed bytes every one of its 8 terms HOLDS (its former single broken reading was the malformed `0.5`-as-clear term, corrected at the kick-back)').toBe(0)
-    expect(results.reduce((a, r) => a + r.broken, 0), 'the nine rows’ broken readings, summed (MEASURED against the landed bytes, in register order: 28 + 9 + 4 + 2 + 5 + 2 + 3 + 0 + 1 = 54 — the kick-back correction moved `P-O2-IM-1` 29 → 28 and `P-O2-TP-1` 1 → 0)').toBe(54)
-    expect(results.reduce((a, r) => a + r.held, 0), 'the nine rows’ held readings, summed (held + broken = 118: 64 + 54)').toBe(64)
+    expect(
+      results.reduce((a, r) => a + r.broken, 0),
+      'the nine rows’ BROKEN readings, summed (END STATE: 0; the pre-fix reading was 20 against the landing before this pass’s corrections, 13+2+2+1+0+2+0+0+0, and 54 at the corrected red run, 28+9+4+2+5+2+3+0+1 — both kept as notes, neither rewritten)',
+    ).toBe(0)
+    expect(
+      results.reduce((a, r) => a + r.held, 0),
+      'the nine rows’ HELD readings, summed WITH THEIR TERMS (END STATE: 118: 51+12+6+7+16+2+8+8+8 = 118; held + broken = 118)',
+    ).toBe(118)
     expect(results.length, 'the register is NINE rows, a signal and not a cap (AGENTS.md item 11(f))').toBe(9)
   })
 
   it('REGISTER-CONTROL · the register’s own broken-detector is not vacuous — a wrong property is REPORTED broken, a right one is reported held', () => {
     // The detector (`drive`) must FAIL for a falsified property and HOLD for a
-    // satisfied one, or `broken > 0` above would prove nothing.
+    // satisfied one, or `REGISTER-RED`'s end-state reading (`broken === 0` per row)
+    // above would prove nothing.
     const probeRow = { id: '__CONTROL__', type: 'P-TP' as const, strategy: 'S-SS-CTL-1', declared: 2, attempts: 0, held: 0, broken: 0, failure: null as string | null, ran: true }
     results.push(probeRow)
     drive('__CONTROL__', 'ctl·held', () => undefined)
