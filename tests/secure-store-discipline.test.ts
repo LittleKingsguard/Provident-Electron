@@ -638,6 +638,30 @@ function drive(id: string, attempt: string, fn: () => void): void {
   }
 }
 
+/** THE ASYNC ARM OF THE DETECTOR (`F-2a`, measured at the gate-4 re-audit's own
+ *  pass).  Three drive bodies are `async` (the tmp-fate class reads, the
+ *  refusal-path receipt mutation read, and the diff-scope census read): passed to
+ *  the SYNCHRONOUS `drive()`, a `throw` inside them never reached its `catch` — it
+ *  became a REJECTED PROMISE, which vitest reports as an "unhandled rejection"
+ *  while the row still counted `held` (MEASURED: a deliberately stale denied-file
+ *  pin left `P-O3-TP-1` at `8 held / 0 broken` and the suite at "37 passed … 1
+ *  error").  `driveAsync` AWAITS the body, so the row's reading is the row's own —
+ *  the same attempt/held/broken arithmetic, attributed at the call site and awaited
+ *  INLINE (so the register order is unchanged).  The control that this arm works
+ *  rides `REGISTER-CONTROL` beside the synchronous one. */
+async function driveAsync(id: string, attempt: string, fn: () => Promise<void>): Promise<void> {
+  const r = results.find((x) => x.id === id)
+  if (r === undefined) throw new Error(`driveAsync() for an undeclared row: ${id}`)
+  r.attempts += 1
+  try {
+    await fn()
+    r.held += 1
+  } catch (e) {
+    r.broken += 1
+    if (r.failure === null) r.failure = `attempt ${attempt}: ${(e as Error).message}`
+  }
+}
+
 /** The register row a repair belongs to, by id (never `results[last]` — a repair
  *  taken OUTSIDE a `drive()` must be attributed to its OWN row). */
 function rowById(id: string): RowResult {
@@ -666,6 +690,102 @@ function brokenStreak(rows: readonly RowResult[]): number {
     else break
   }
   return streak
+}
+
+/* ==========================================================================
+ * THE STOP RULE'S DRIVE — BOTH DIRECTIONS (`F-3`, the gate-4 RE-AUDIT finding;
+ * `§9d` item 2's claim that *"`REGISTER-EXEC` asserts both directions … a row
+ * beyond it is reported UN-RUN"* was AHEAD OF THE BYTES: the predicate existed
+ * and was correctly call-sited, but NO synthetic five-broken row streak was ever
+ * constructed, so neither the guard nor the un-run-as-FAILURE rule was ever
+ * DRIVEN — a five-row streak could not be produced by the register itself, whose
+ * nine rows all HOLD).
+ *
+ * THE DRIVE, and what each half of it proves:
+ *   DIRECTION 1 — the predicate.  `shouldStopRegister` is read on a FOUR-broken
+ *   streak (it must NOT fire: the boundary that makes `5` mean `5`) and on a
+ *   FIVE-broken streak (it MUST fire).  A predicate that answered `false` always
+ *   (the as-filed dead-code shape) fails the second reading.
+ *   DIRECTION 2 — the REAL call site.  With the five synthetic broken rows
+ *   ALREADY in `results` — exactly the state `runRow` reads its streak over
+ *   (`results.slice(0, -1)`) — `runRow` is called for a tenth row whose body
+ *   THROWS.  The body must NOT run: the row must come back `ran === false`,
+ *   `attempts === 0`, `broken === declared` and carry the `UN-RUN` failure
+ *   message — i.e. reported as a FAILURE, never as a pass.
+ *
+ * THE SYNTHETIC ROWS ARE REMOVED IN A `finally` (the register's own figures are
+ * untouched by this drive; `REGISTER-CONTROL` below uses the same push/pop
+ * discipline).  The drive is MEMOIZED so every reader sees the SAME reading and
+ * no second mutation is possible.
+ * ======================================================================== */
+interface StopRuleDrive {
+  /** DIRECTION 1 — the predicate on a four-broken streak: it must NOT fire. */
+  firedOnFour: boolean
+  /** DIRECTION 1 — the predicate on a five-broken streak: it MUST fire. */
+  firedOnFive: boolean
+  /** DIRECTION 2 — the row the real call site reported UN-RUN. */
+  unRunId: string | null
+  unRunRan: boolean | null
+  unRunAttempts: number | null
+  unRunBroken: number | null
+  unRunDeclared: number | null
+  unRunFailure: string | null
+  /** true iff the UN-RUN row's body was executed — it must NEVER be. */
+  unRunBodyRan: boolean
+  /** the synthetic ids this drive pushed, asserted gone from the register after it. */
+  syntheticIds: string[]
+}
+
+let stopRuleDriveCache: StopRuleDrive | null = null
+
+function driveStopRuleBothWays(): StopRuleDrive {
+  if (stopRuleDriveCache !== null) return stopRuleDriveCache
+  const syntheticIds: string[] = []
+  const synth = (id: string): RowResult => ({
+    id,
+    type: 'P-TP',
+    strategy: 'S-SS-CTL-9',
+    declared: 1,
+    attempts: 1,
+    held: 0,
+    broken: 1,
+    failure: `attempt __SYN__: a deliberately broken synthetic row (${id}) — the stop-rule drive's own material`,
+    ran: true,
+  })
+  const baseline = results.length
+  let unRunBodyRan = false
+  try {
+    const four: RowResult[] = [synth('__SYN-1__'), synth('__SYN-2__'), synth('__SYN-3__'), synth('__SYN-4__')]
+    const five: RowResult[] = [...four, synth('__SYN-5__')]
+    const firedOnFour = shouldStopRegister(four)
+    const firedOnFive = shouldStopRegister(five)
+    for (const r of five) {
+      syntheticIds.push(r.id)
+      results.push(r)
+    }
+    // The body is the control: if the stop rule does NOT hold, this body runs and
+    // the drive's own reading records it (`unRunBodyRan`).
+    runRow('__UNRUN__', 'P-TP', 'S-SS-CTL-9', 3, () => {
+      unRunBodyRan = true
+      throw new Error('the body of an UN-RUN row was executed — the stop rule did not hold')
+    })
+    const row = results[results.length - 1]
+    stopRuleDriveCache = {
+      firedOnFour,
+      firedOnFive,
+      unRunId: row.id,
+      unRunRan: row.ran,
+      unRunAttempts: row.attempts,
+      unRunBroken: row.broken,
+      unRunDeclared: row.declared,
+      unRunFailure: row.failure,
+      unRunBodyRan,
+      syntheticIds,
+    }
+    return stopRuleDriveCache
+  } finally {
+    while (results.length > baseline) results.pop()
+  }
 }
 
 function runRow(id: string, type: RowType, strategy: string, declared: number, body: () => void): void {
@@ -1197,7 +1317,7 @@ runRow('P-O2-IM-2', 'P-IM', 'S-SS-TMP-1', 7, () => {
       const realBytes = await rawBytes(path)
       const tmpBytes = await rawBytes(`${path}.tmp`)
       const realPathStillExists = await exists(path)
-      drive('P-O2-IM-2', `${c.name} · the real path is not torn and the tmp is never the record`, async () => {
+      await driveAsync('P-O2-IM-2', `${c.name} · the real path is not torn and the tmp is never the record`, async () => {
         if (store.lastWriteReceipt()?.status !== 'refused') {
           throw new Error(`${c.name}: the receipt answered ${JSON.stringify(store.lastWriteReceipt())}, not the refused form — every class must refuse (R-2..R-4)`)
         }
@@ -1466,7 +1586,7 @@ runRow('P-O3-IM-2', 'P-IM', 'S-SS-CLONE-1', 8, () => {
         assertReceiptShape(r2, 'lastWriteReceipt() identity')
         if (!sameVal((asRecord(r1)).status, (asRecord(r2)).status)) throw new Error('the two receipt copies are not deep-equal')
       })
-      drive('P-O3-IM-2', 'member lastWriteReceipt() · mutation-visibility (on the REFUSAL path — the strongest form)', async () => {
+      await driveAsync('P-O3-IM-2', 'member lastWriteReceipt() · mutation-visibility (on the REFUSAL path — the strongest form)', async () => {
         // `PBT-5` (GATE-4 correction).  As filed this attempt was LABELLED "on the
         // REFUSAL path — the strongest form" while it drove a COMMITTED write
         // (`s2.set({token:'any'})` on an empty, writable path) and its status guard
@@ -1779,7 +1899,7 @@ runRow('P-O3-TP-1', 'P-TP', 'S-SS-CENSUS-1', 8, () => {
         throw new Error(`src/renderer/store-graph-references.ts is ${refs.slice(0, 8)}…, not the pin 5c0c1a97… — §0A item 6`)
       }
     })
-    drive('P-O3-TP-1', '(c) the diff-scope file set — the denied paths are read, not merely named', async () => {
+    await driveAsync('P-O3-TP-1', '(c) the diff-scope file set — the denied paths are read, not merely named', async () => {
       const digest = sha('a control subject that is not the frozen module')
       if (digest === '0664c52f06bd6da5e95de957a6170e5be07b5a8c5a459489f98c2b01921e8450') {
         throw new Error('the sha256 pin matched a different subject — the pin comparison is vacuous')
@@ -1838,6 +1958,52 @@ runRow('P-O3-TP-1', 'P-TP', 'S-SS-CENSUS-1', 8, () => {
       }
       if (/export\s+function\s+representableValue/.test(moduleSrc)) {
         throw new Error('the admission predicate was EXPORTED (§2.2 item 1: module-internal, never exported)')
+      }
+      // `F-2` (GATE-4 RE-AUDIT): everything above this line is STRUCTURAL — regexes
+      // over the three denied files' DECLARED shapes — so an edit OUTSIDE the two
+      // handler bodies, outside the preload `security` member set and outside the
+      // `SecuritySettings` member census (one added line anywhere else in any of the
+      // three files) reddened NOTHING: the diff-scope check had a hole exactly the
+      // width of the files it denies.  The three denied files are now BYTE-PINNED at
+      // their MEASURED digests BESIDE the regexes, so a real edit outside the allowed
+      // set reddens this row (`§5.6.1` row 9 part (c): "the diff scope holds
+      // (`src/main/security-store.ts` + this unit's own files, with
+      // `src/main/main.ts`, `src/main/preload.ts` and `src/shared/**` unmoved)";
+      // `§1.3` items 5/7; `§0A` item 5; `§3.2` `F-12`).
+      //
+      // THE PIN'S DISCIPLINE, stated so a later authorized change is not confused
+      // with a violation: these are the BYTES AT THIS PASS, and the precedent for
+      // moving one is the sibling unit's re-point (`S1`'s `SECURITY_STORE_PIN`
+      // annotation beside the as-filed digest) — an AUTHORIZED diff re-points the pin
+      // in the same pass that moves the file and names the authority; an unauthorized
+      // diff finds this row red.
+      const deniedPaths: Array<{ label: string; rel: string[]; pin: string }> = [
+        { label: 'src/main/main.ts', rel: ['main', 'main.ts'], pin: '4be1af5a9e490f41f021f0feb2fb2dd86f5ac941ef02cb9de166c12fcb2499a4' },
+        { label: 'src/main/preload.ts', rel: ['main', 'preload.ts'], pin: '83bdbe81feefa6d5927efef5686aa2bdfd349204e131bf7feef20e468cd87bc8' },
+        { label: 'src/shared/types.ts', rel: ['shared', 'types.ts'], pin: '29af4efaf16a5cadf1ac22b63afda063495ce63ec95b56f1f6e397da1d8189c6' },
+      ]
+      for (const entry of deniedPaths) {
+        const bytes = await readFile(SRC(...entry.rel))
+        const digest = sha(bytes)
+        if (digest !== entry.pin) {
+          throw new Error(
+            `${entry.label} reads ${digest} (${bytes.length} bytes) — NOT the pinned ${entry.pin}.  A byte of a DENIED path moved: the diff scope of §5.6.1 row 9 part (c) is src/main/security-store.ts + this unit's own files, and a change to any CARRIER of the channel is a forbidden diff (§0A item 5 / §1.3 item 7 / F-12)`,
+          )
+        }
+      }
+      // CONTROL (a): the pins are three DISTINCT digests — a copied digest that
+      // pinned two files at once (or an accidental self-comparison) cannot pass.
+      if (new Set(deniedPaths.map((e) => e.pin)).size !== deniedPaths.length) {
+        throw new Error('two denied-file pins carry the SAME digest — the pin comparison would be vacuous for one of them')
+      }
+      // CONTROL (b): the comparison CAN fail — a one-byte-moved copy of each denied
+      // file's own bytes must NOT answer its pin (so a green here is evidence about
+      // the file, not about the string).
+      for (const entry of deniedPaths) {
+        const moved = sha((await readFile(SRC(...entry.rel))).toString('utf8') + '\n')
+        if (moved === entry.pin) {
+          throw new Error(`a one-byte-moved copy of ${entry.label} answered its pin — the pin comparison cannot fail and proves nothing`)
+        }
       }
     })
     // (d) the receipt vocabulary and the store's 16-member union.  The part's
@@ -2432,7 +2598,21 @@ describe('§3.2 the documented fail-states (F-1 … F-12)', () => {
       // THE CONTROL (`PBT-`style non-vacuity): the fixture really does present
       // DIFFERENT values to different reads — so the exposure above is about reads,
       // not about a literal.
-      expect(reads, 'ADV-1(1) — CONTROL: the fixture answered a DIFFERENT value on its later reads (the exposure is the host’s MULTIPLE reads of one member); the host made this many reads through the whole set() call').toBe(1)
+      expect(reads, 'ADV-1(1) — CONTROL (a): the host made this many reads of the member through the whole set() call (the post-`ADV-1` single-read discipline)').toBe(1)
+      // CONTROL (b) — `F-6` (GATE-4 RE-AUDIT).  Control (a) alone does NOT self-verify
+      // that the fixture WOULD have answered differently: a fixture answering `42` on
+      // EVERY read also satisfies `reads === 1`, and then the row would prove nothing
+      // about LATE reads (`REGISTER-CONTROL` is the model — its detector is driven
+      // against a falsified property as well as a satisfied one).  The fixture's
+      // late-read arm (`reads >= 6`) is therefore DRIVEN directly: the same accessor is
+      // read until it crosses its own threshold, and it must answer `Infinity` — the
+      // exact unrepresentable value the host's five-or-more-reads shape handed to
+      // `Math.floor` and admitted under a `committed` receipt.
+      const lateReads: unknown[] = []
+      for (let i = 0; i < 5; i++) lateReads.push(patch.maxJournalLength)
+      expect(lateReads.slice(0, 4), 'ADV-1(1) — CONTROL (b): the fixture’s EARLY reads answer the representable supplied value (the exposure is not a literal)').toEqual([42, 42, 42, 42])
+      expect(lateReads[4], 'ADV-1(1) — CONTROL (b): the fixture’s LATE read (its 6th) answers `Infinity` — the value `§2.2` item 1 declares NOT representable, and the value a multiple-read host admitted').toBe(Infinity)
+      expect(reads, 'ADV-1(1) — CONTROL (b): the host’s 1 read plus this control’s 5 = 6 total reads of the member').toBe(6)
     }
     // TERM 2 — the `token` accessor: a `BigInt` on the late read (the `typeof ===
     // 'string'` test's own read).  The same hole, entered from the other side: the
@@ -2480,7 +2660,17 @@ describe('§3.2 the documented fail-states (F-1 … F-12)', () => {
         expect(snapshot(asRecord(store.get())), 'ADV-1(2) — a committed write’s record must carry the supplied token (never the silent clear the landed bytes answer) — §2.2 item 2 / §2.2 item 4').toBe(snapshot(expectedPost(pre, { token: 'NEW-TOKEN' })))
         expect(snapshot(asRecord(out)), 'ADV-1(2) — set() returns the record now live (§2.1 item 3 step 6)').toBe(snapshot(asRecord(store.get())))
       }
-      expect(tReads, 'ADV-1(2) — CONTROL: the token fixture answered a DIFFERENT value on its later reads').toBe(1)
+      expect(tReads, 'ADV-1(2) — CONTROL (a): the host made this many reads of the token member through the whole set() call (the post-`ADV-1` single-read discipline)').toBe(1)
+      // CONTROL (b) — `F-6` (GATE-4 RE-AUDIT): the fixture's late-read arm
+      // (`tReads >= 3`) is DRIVEN directly, so `tReads === 1` is evidence about the
+      // host AND the control proves the fixture would have answered a `BigInt` — the
+      // unrepresentable value the landed `typeof === 'string'` test cleared while the
+      // receipt still answered `committed`.
+      const lateTokens: unknown[] = []
+      for (let i = 0; i < 2; i++) lateTokens.push(patch.token)
+      expect(lateTokens[0], 'ADV-1(2) — CONTROL (b): the fixture’s earlier read still answers the representable supplied token (the exposure is not a literal)').toBe('NEW-TOKEN')
+      expect(lateTokens[1], 'ADV-1(2) — CONTROL (b): the fixture’s LATE read answers a `BigInt` — the value `§2.2` item 1 declares NOT representable, and the value a multiple-read host silently cleared under a `committed` receipt').toBe(BigInt(9))
+      expect(tReads, 'ADV-1(2) — CONTROL (b): the host’s 1 read plus this control’s 2 = 3 total reads of the member').toBe(3)
     }
   })
 
@@ -2506,10 +2696,51 @@ describe('§3.2 the documented fail-states (F-1 … F-12)', () => {
  * ======================================================================== */
 
 describe('§5.6.1 THE REGISTER — the executed summary (118 = 51+12+6+7+16+2+8+8+8)', () => {
+  it('REGISTER-STOP · the stop-after-5 guard and the un-run-as-FAILURE rule are DRIVEN both ways (`F-3`, gate-4 re-audit; §9d item 2 / §4.3 item 1 / AGENTS.md item 11(b))', () => {
+    // `F-3`: `§9d` item 2 claims "`REGISTER-EXEC` asserts both directions: the
+    // register did NOT stop, AND the stop rule FIRES on a synthetic five-broken-row
+    // streak, AND a row beyond it is reported UN-RUN with `ran === false`,
+    // `broken === declared`, `attempts === 0` and its failure message".  As filed
+    // nothing constructed that streak — the guard was a predicate no register state
+    // could falsify (all nine rows HOLD, so `brokenStreak` reads `0` forever).  The
+    // drive below makes the claim TRUE: it is the measurement item 2 named.
+    const d = driveStopRuleBothWays()
+    // DIRECTION 1 — the predicate, at its own boundary.
+    expect(d.firedOnFour, 'F-3 (1) — the guard does NOT fire on a FOUR-broken streak (so its `5` means `5`, not "any streak")').toBe(false)
+    expect(d.firedOnFive, 'F-3 (1) — the guard FIRES on a synthetic FIVE-broken streak (the as-filed dead-code predicate could never answer `true`)').toBe(true)
+    // DIRECTION 2 — the REAL `runRow` call site, on the state that guard exists for.
+    expect(d.unRunId, 'F-3 (2) — the row driven past the fired streak').toBe('__UNRUN__')
+    expect(d.unRunRan, 'F-3 (2) — the row beyond the streak is reported NOT-RUN (`ran === false`)').toBe(false)
+    expect(d.unRunAttempts, 'F-3 (2) — and it ran ZERO attempts (its body never executed)').toBe(0)
+    expect(d.unRunBodyRan, 'F-3 (2) — CONTROL: the UN-RUN row’s body did NOT execute (the body throws, so an un-held guard is unmissable)').toBe(false)
+    expect(d.unRunBroken, 'F-3 (2) — AN UN-RUN ROW IS A FAILURE, never a pass: `broken === declared`').toBe(d.unRunDeclared)
+    expect(d.unRunBroken, 'F-3 (2) — the UN-RUN row carries its whole declared term as broken (3)').toBe(3)
+    expect(d.unRunFailure, 'F-3 (2) — and its failure message names the stop rule rather than a silent skip').toContain('UN-RUN')
+    // the drive is ISOLATED: its synthetic rows are not in the register (so every
+    // count, term and reading `REGISTER-EXEC`/`REGISTER-TERMS`/`REGISTER-RED` below
+    // reports is the register's own).
+    expect(
+      d.syntheticIds.filter((id) => results.some((r) => r.id === id)),
+      'F-3 — the drive’s synthetic rows were removed again (`REGISTER-CONTROL`’s own push/pop discipline)',
+    ).toEqual([])
+  })
+
   it('REGISTER-EXEC · the nine typed rows execute deterministically and carry id · type · strategy · attempts-run · held · broken', () => {
     const ids = ['P-O2-IM-1', 'P-O1-TP-1', 'P-M-SM-1', 'P-O2-IM-2', 'P-TP-2', 'P-M-SM-2', 'P-O3-IM-2', 'P-O2-TP-1', 'P-O3-TP-1']
     expect(results.map((r) => r.id), 'the register runs ALL nine rows, in register order (an un-run row is a FAILURE)').toEqual(ids)
-    expect(results.filter((r) => r.ran).length, 'no row was skipped by the stop rule').toBe(9)
+    // `F-4` (gate-4 re-audit): as filed this reading was `toBe(9)` — a CONSTANT.  With
+    // every one of the nine rows holding, `ran === true` for all nine whatever the
+    // guard did, so the count could not distinguish "no row was skipped" from "the
+    // stop rule was never consulted".  It is now read AGAINST THE DRIVEN GUARD
+    // (`F-3`'s `driveStopRuleBothWays()`): the same predicate that reports a
+    // synthetic row UN-RUN here reports none of the register's own rows un-run, and
+    // the count is stated as the register's length minus the rows it actually
+    // skipped (the driven guard's un-run reading is asserted beside it).
+    const stop = driveStopRuleBothWays()
+    const skipped = results.filter((r) => !r.ran).map((r) => r.id)
+    expect(stop.firedOnFive && stop.unRunRan === false, 'the guard that would skip a row is DRIVEN beside this reading (F-3): it fires on a five-broken streak and reports a row UN-RUN').toBe(true)
+    expect(skipped, `no row of the register was skipped by the stop rule — read with the driven guard, whose own un-run row is \`${stop.unRunId ?? '?'}\``).toEqual([])
+    expect(results.filter((r) => r.ran).length, `${results.length} rows less the ${skipped.length} the guard reports UN-RUN`).toBe(results.length - skipped.length)
     for (const r of results) {
       expect(r.attempts, `${r.id} executed its declared term (${r.declared})`).toBe(r.declared)
       expect(r.strategy, `${r.id} carries its strategy id`).toMatch(/^S-SS-[A-Z]+-\d+$/)
@@ -2552,6 +2783,21 @@ describe('§5.6.1 THE REGISTER — the executed summary (118 = 51+12+6+7+16+2+8+
     //    56 broken, whose per-row terms read 22+3+2+5+11+0+5+7+7 = 62 broken;
     //    the KB-1/KB-2 correction moved it to 64 held / 54 broken, per-row terms
     //    28+9+4+2+5+2+3+0+1 = 54.
+    //  · `F-7` PROVENANCE (GATE-4 RE-AUDIT; annotate-beside — the as-filed note above
+    //    STANDS, unrewritten, `RCA-8(d)`).  The two term vectors in that bullet are
+    //    different quantities from two different trees, and the as-filed wording
+    //    ("… = 62 broken") mislabels the first one.  MEASURED at the citing bytes:
+    //      – `§9` item 3's table (the FIRST run's record) reads BROKEN
+    //        `29+9+4+2+5+2+3+1+1 = 56` and HELD `22+3+2+5+11+0+5+7+7 = 62`
+    //        (`62 + 56 = 118` ✓) — so `22+3+2+5+11+0+5+7+7 = 62` is the HELD vector,
+    //        never a broken one.
+    //      – `§9a` item 4's correction (the `KB-1`/`KB-2` tree, PRE-`ADV1`) reads
+    //        BROKEN `28+9+4+2+5+2+3+0+1 = 54` beside HELD
+    //        `23+3+2+5+11+0+5+7+8 = 64` (`64 + 54 = 118` ✓), its two per-row moves
+    //        named there (`P-O2-IM-1` `22/29` → `23/28`; `P-O2-TP-1` `7/1` → `8/0`).
+    //    NO LIVE EXPECTED VALUE MOVES with this note: the row's operative readings are
+    //    the END STATE's below (`broken === 0` per row, `118` held), and the register's
+    //    terms, row ids, caps and subtotals are unmoved.
     //  · THE POST-GREEN, PRE-CORRECTION READING (`460fb66`, the Implementer's own §9b
     //    item 3) — 98 held / 20 broken, per-row terms 13+2+2+1+0+2+0+0+0 = 20, EVERY
     //    ONE of them a red-set defect of an instrument, a fixture, the drive table or
@@ -2581,7 +2827,7 @@ describe('§5.6.1 THE REGISTER — the executed summary (118 = 51+12+6+7+16+2+8+
     expect(results.length, 'the register is NINE rows, a signal and not a cap (AGENTS.md item 11(f))').toBe(9)
   })
 
-  it('REGISTER-CONTROL · the register’s own broken-detector is not vacuous — a wrong property is REPORTED broken, a right one is reported held', () => {
+  it('REGISTER-CONTROL · the register’s own broken-detector is not vacuous — a wrong property is REPORTED broken, a right one is reported held', async () => {
     // The detector (`drive`) must FAIL for a falsified property and HOLD for a
     // satisfied one, or `REGISTER-RED`'s end-state reading (`broken === 0` per row)
     // above would prove nothing.
@@ -2594,6 +2840,18 @@ describe('§5.6.1 THE REGISTER — the executed summary (118 = 51+12+6+7+16+2+8+
     expect(probeRow.held, 'REGISTER-CONTROL — a satisfied property is HELD').toBe(1)
     expect(probeRow.broken, 'REGISTER-CONTROL — a falsified property is BROKEN (the detector can fail)').toBe(1)
     expect(probeRow.failure, 'REGISTER-CONTROL — and its first failure is reported, not swallowed').toContain('deliberately falsified')
+    // THE ASYNC ARM (`F-2a`, measured this pass): a REJECTING async body must be
+    // attributed to the row.  Passed to the synchronous `drive()`, such a body's
+    // throw escaped as an unhandled rejection while the row counted HELD (MEASURED
+    // on the three `async` call sites); `driveAsync` awaits it, so the row reads the
+    // failure.  Without this control, `P-O2-IM-2`/`P-O3-IM-2`/`P-O3-TP-1`'s async
+    // readings would be un-falsifiable.
+    await driveAsync('__CONTROL__', 'ctl·async-broken', async () => {
+      throw new Error('a deliberately falsified ASYNC property')
+    })
+    expect(probeRow.broken, 'REGISTER-CONTROL — a falsified ASYNC property is BROKEN too (the async arm attributes, never swallows)').toBe(2)
+    expect(probeRow.held, 'REGISTER-CONTROL — and the satisfied reading is still exactly one').toBe(1)
+    expect(probeRow.attempts, 'REGISTER-CONTROL — three attempts, each counted once').toBe(3)
     results.pop()
   })
 })
