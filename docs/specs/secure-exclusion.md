@@ -1084,6 +1084,12 @@ implicit.**
      `scripts/*.mjs` DRIVER IS NOT A LOOPHOLE — IT WOULD REDDEN `tests/ui-leg-contract.test.ts`'s HELPER-CANDIDATE
      RULE** (`AGENTS.md` item 4's hazard note: the `L-1` row pins the `scripts` KEY SET, so a new key reddens it and a
      config change cannot satisfy it).
+**Therefore `MANUAL` is the DECLARED instrument for the gesture rows, and a row
+     that names "the live gate" or "the leg" instead names NO instrument and FAILS** (`§2.4` item 7(3)'s closed set).
+     **THE `OWED`'s OWNER AND POSITIVE REVISIT CONDITION**: owner **the live-scenario runner / the supervisor, at gate
+     6**; revisit condition **gate 6 runs** — then the matrix's values, its U-row count and the report's
+          `summary.total` are authored from the RUNS (`§7a` `OW-5`). **⟶ THE `F-A17` ANNOTATION THAT STOOD BESIDE THE SENTENCE ABOVE IS MOVED TO STAND AFTER THIS CONCLUSION (2026-10-09, the third `§6.2` audit's `R3-12`, LOW): the annotation sat BETWEEN the *"AND A NEW `scripts/*.mjs` DRIVER IS NOT A LOOPHOLE"* sentence and the *"Therefore `MANUAL`…"* conclusion that sentence supports, so the conclusion's antecedent was no longer adjacent. The block's bytes are UNCHANGED — only its position moved — and clause (ii)'s restatement of the as-filed parenthetical is left as it stands (an `ANNOTATE-BESIDE` duplicate of the sentence above it, kept rather than trimmed so the annotation remains self-contained).** **⟶ SPENT — THE REVISIT CONDITION IS MET, 2026-10-08: GATE 6 HAS RUN**, `29` rows = `23 PASS / 6 FAIL / 0 MANUAL / 0 PARKED`, the matrix `8` rows (`7` U-subjects + the demoted `U-8` precondition), the `§6.1` report emitted at `summary.total === 8` ✓ — **so the matrix, the report and the six failures `F-1`…`F-6` are cross-referenced at `§3b`'s gate-6 clause, and the STATUS LINE's 2026-10-08 addendum is the ONE operative gate cell.** `U-1`…`U-7` remain the subject list; **the instrument set is now the RUN'S, not this clause's declared prediction — the gate-4 prediction that the gesture rows must be `MANUAL` was FALSIFIED IN THE UNIT'S FAVOUR by the CDP route the gate-6 pass used** (`M`). **Authority `M`/`T`; class `OBSERVATION`.** **(The authority tag that follows is the AS-FILED CELL's own, kept in place; it belongs to the sentence ABOVE this clause, not to it.)** **Authority `T`; class `OWED` — with an owner and a
+     positive revisit condition, never a bare `OWED`.**
      **⟶ ANNOTATION SITE, ADDED 2026-10-09 BY THE GATE-6 LIVE-SCENARIO RUNNER (`RCA-8(d)` ANNOTATE-BESIDE: the
      sentence ABOVE stands BYTE-FOR-BYTE and is NOT rewritten — this note is placed BESIDE it, in the same cell).**
      **THE SENTENCE ABOVE IS VERIFIED FALSE, IN BOTH ITS HALVES, AND THE FALSIFICATION IS STATED WITH ITS SITE.**
@@ -1100,12 +1106,7 @@ implicit.**
      `scripts` key and is not selected by the helper rule), and the gate-6 driver's actual reason for living under
      `tests/**` is **non-structural** (it belongs with the batteries it re-runs). **THIS ANNOTATION IS THE ONLY EDIT
      THIS PASS MAKES TO THIS FILE** (the gate-6 live battery's `F-A17` disposition; the measurement is at
-     `docs/specs/secure-exclusion-live-battery.md` `§4b` `F-A17`). **Authority `T`; class `OBSERVATION`.** **Therefore `MANUAL` is the DECLARED instrument for the gesture rows, and a row
-     that names "the live gate" or "the leg" instead names NO instrument and FAILS** (`§2.4` item 7(3)'s closed set).
-     **THE `OWED`'s OWNER AND POSITIVE REVISIT CONDITION**: owner **the live-scenario runner / the supervisor, at gate
-     6**; revisit condition **gate 6 runs** — then the matrix's values, its U-row count and the report's
-     `summary.total` are authored from the RUNS (`§7a` `OW-5`). **⟶ SPENT — THE REVISIT CONDITION IS MET, 2026-10-08: GATE 6 HAS RUN**, `29` rows = `23 PASS / 6 FAIL / 0 MANUAL / 0 PARKED`, the matrix `8` rows (`7` U-subjects + the demoted `U-8` precondition), the `§6.1` report emitted at `summary.total === 8` ✓ — **so the matrix, the report and the six failures `F-1`…`F-6` are cross-referenced at `§3b`'s gate-6 clause, and the STATUS LINE's 2026-10-08 addendum is the ONE operative gate cell.** `U-1`…`U-7` remain the subject list; **the instrument set is now the RUN'S, not this clause's declared prediction — the gate-4 prediction that the gesture rows must be `MANUAL` was FALSIFIED IN THE UNIT'S FAVOUR by the CDP route the gate-6 pass used** (`M`). **Authority `M`/`T`; class `OBSERVATION`.** **(The authority tag that follows is the AS-FILED CELL's own, kept in place; it belongs to the sentence ABOVE this clause, not to it.)** **Authority `T`; class `OWED` — with an owner and a
-     positive revisit condition, never a bare `OWED`.**
+     `docs/specs/secure-exclusion-live-battery.md` `§4b` `F-A17`). **Authority `T`; class `OBSERVATION`.**
    - **(3) THE `§6.1` COVERAGE REPORT IS OWED**, with that file's declared fields (`unit` · `matrixSource` ·
      `predicateSource` = *this* obligation's source, i.e. `docs/specs/secure-exclusion.md` `§2.4` item 7, which cites
      `docs/specs/user-flow-audit.md` `§7.1` · `predicateSourcePresent: true` (that file exists — filed 2026-09-27) ·
