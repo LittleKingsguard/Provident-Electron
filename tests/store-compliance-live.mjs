@@ -237,6 +237,33 @@ const CLEANUPS = []
 function registerCleanup(fn) { CLEANUPS.push(fn) }
 process.on('exit', () => { for (const fn of CLEANUPS.splice(0)) { try { fn() } catch { /* best effort */ } } })
 
+/** A SYNCHRONOUS settle — usable inside the `exit` hook, where nothing can be awaited.
+ *  `Atomics.wait` on a private buffer is the portable sleep (Node ≥ 12); the bounded busy
+ *  wait is the fallback and can NEVER spin forever. */
+function settleSync(ms) {
+  try {
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms)
+  } catch {
+    const started = Date.now()
+    while (Date.now() - started < ms) { /* bounded spin */ }
+  }
+}
+/** THE DELETE-AND-VERIFY SWEEP — MEASURED AT THIS HEAD (see the record's `§4b` self-found row):
+ *  killing the child and removing the profile IMMEDIATELY let the child's own Chromium helpers
+ *  write again into the directory AFTER the removal, RE-CREATING it — one leftover
+ *  `/tmp/sc-live-B-*` per run, holding `Cache` and `Network Persistent State` and **no
+ *  `provident-security.json`** (the `S1` `F-1` symptom: a cleanup that verifies a delete it
+ *  performed is not a clean END STATE). The sweep re-removes a bounded number of times and
+ *  returns whether the directory is REALLY gone; it is idempotent and never throws. */
+function removeWithVerify(dir) {
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    try { rmSync(dir, { recursive: true, force: true }) } catch { /* already gone */ }
+    if (!exists(dir)) return true
+    settleSync(250)
+  }
+  return !exists(dir)
+}
+
 // ── the scratch profile + the boot ─────────────────────────────────────────────────────
 /** A fresh scratch profile under the OS temp dir, seeded with a REAL tier-4 record BEFORE
  *  the boot (so the boot read — not a write — is what ingests it; that ordering is what
@@ -285,7 +312,11 @@ async function bootApp(tag, { seedExtra = null, extraArgs = [] } = {}) {
     try { client.close() } catch { /* gone */ }
     try { transport.close() } catch { /* gone */ }
     try { child.kill('SIGKILL') } catch { /* gone */ }
-    rmSync(profile, { recursive: true, force: true })
+    // THE SETTLE IS SYNCHRONOUS HERE because an `exit` hook cannot await: the child's Chromium
+    // helpers need a moment to die, and removing the profile before they do lets them
+    // RE-CREATE it (the measured leftover, `§4b`). Then the delete-and-verify sweep.
+    settleSync(500)
+    removeWithVerify(profile)
   })
   return boot
 }
@@ -297,7 +328,7 @@ async function teardown(boot) {
   try { boot.transport.close() } catch { /* gone */ }
   try { boot.child.kill('SIGKILL') } catch { /* gone */ }
   await sleep(300)
-  rmSync(boot.profile, { recursive: true, force: true })
+  removeWithVerify(boot.profile)
 }
 
 async function rawCall(client, name, args = {}) {
