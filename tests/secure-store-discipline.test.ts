@@ -707,8 +707,12 @@ runRow('P-O2-IM-1', 'P-IM', 'S-SS-ADMIT-1', 51, () => {
       drive('P-O2-IM-1', "50 · groups ['code','code','nope'] ⇒ admitted, deduped+filtered to ['code']", () => {
         if (store.lastWriteReceipt()?.status !== 'committed') throw new Error('boundary 50: the patch was not ADMITTED')
         const enabled = store.get().enabled
-        if (enabled.length !== 2 || enabled[0] !== 'read' || enabled[1] !== 'code') {
-          throw new Error(`boundary 50: the enabled sequence is ${JSON.stringify(enabled)}, not ['read','code'] — the documented dedup+filter (PAR-4)`)
+        // §2.2 item 3: the patch's group set dedups+filters to the ADDED `code`
+        // "with current-state order preserved" — ADDITIVE over `probe()`'s
+        // pre-state `['read','dispatch']` (§2.1 item 2's first-run default,
+        // which M-1/M-7 assert; `groups:['read']` removes nothing).
+        if (enabled.length !== 3 || enabled[0] !== 'read' || enabled[1] !== 'dispatch' || enabled[2] !== 'code') {
+          throw new Error(`boundary 50: the enabled sequence is ${JSON.stringify(enabled)}, not ['read','dispatch','code'] — the documented dedup+filter over the ADDED set, current-state order preserved (PAR-4 / §2.2 item 3)`)
         }
       })
     }
@@ -1326,13 +1330,16 @@ runRow('P-O2-TP-1', 'P-TP', 'S-SS-SAN-1', 8, () => {
       })
     }
     // the class-7 sweep (§5.6.1 row 8's class 7 prints the four-arm arm set; the
-    // row counts ONE attempt for the class, so the sweep rides inside it, and it
-    // adds PAR-3's own declared boundary value `0.5` — "a positive number below
-    // `1` … ADMITTED, floored to `0`, which is the declared clear").
+    // row counts ONE attempt for the class, so the sweep rides inside it).  The
+    // FOUR declared arms (`0` · `-3` · `NaN` · `null`) are the DECLARED CLEAR
+    // (`undefined`); PAR-3's own declared boundary value `0.5` is read as its
+    // clause declares it — "a positive number below `1` … ADMITTED, floored to
+    // `0`" (§2.2 item 3 / §6 PAR-3's OUTSIDE column), i.e. the coercion's own
+    // landed `0`, which is NOT the clear.
     {
       const { store } = await makeStore()
       probe(store)
-      for (const v of [0, -3, NaN, null, 0.5] as const) {
+      for (const v of [0, -3, NaN, null] as const) {
         resetFsLog()
         assertNoThrow(() => store.set({ maxJournalLength: v }), `class 7 sweep: ${String(v)}`)
         const r = store.lastWriteReceipt()
@@ -1340,9 +1347,19 @@ runRow('P-O2-TP-1', 'P-TP', 'S-SS-SAN-1', 8, () => {
           const row = rowById('P-O2-TP-1')
           row.held -= 1
           row.broken += 1
-          row.failure = `class 7 sweep: maxJournalLength ${String(v)} did not land the declared CLEAR (receipt ${JSON.stringify(r)}, cap ${String(store.get().maxJournalLength)}; §2.2 item 3 / PAR-3: 0 · -0 · a negative number · NaN · null · a positive number below 1 floored to 0 ALL clear)`
+          row.failure = `class 7 sweep: maxJournalLength ${String(v)} did not land the declared CLEAR (receipt ${JSON.stringify(r)}, cap ${String(store.get().maxJournalLength)}; §2.2 item 3 / PAR-3: 0 · -0 · a negative number · NaN · null ALL clear)`
           break
         }
+      }
+      // PAR-3's declared boundary value, read AS THE CLAUSE DECLARES IT: `0.5` is
+      // ADMITTED and FLOORS TO `0` — the coercion's own value, never the clear.
+      resetFsLog()
+      assertNoThrow(() => store.set({ maxJournalLength: 0.5 }), 'class 7 sweep: 0.5')
+      if (store.lastWriteReceipt()?.status !== 'committed' || store.get().maxJournalLength !== 0) {
+        const row = rowById('P-O2-TP-1')
+        row.held -= 1
+        row.broken += 1
+        row.failure = `class 7 sweep: maxJournalLength 0.5 must be ADMITTED and FLOORED TO 0 (cap ${String(store.get().maxJournalLength)}, receipt ${JSON.stringify(store.lastWriteReceipt())}) — §6 PAR-3's OUTSIDE column and §2.2 item 3: "a positive number below 1 … ADMITTED, floored to 0"; the CLEAR arm is 0 · -0 · a negative number · NaN · null on the INPUT, and 0.5 is not one of them`
       }
       // and a positive number ≥ 1 must NOT clear (the boundary's other side).
       resetFsLog()
@@ -1535,7 +1552,14 @@ describe('§3.1 the valid / happy states (M-1 … M-7)', () => {
     store.set({ token: '  a  ' })
     expect(store.get().token, 'M-5 — a non-empty string is kept VERBATIM (no trim)').toBe('  a  ')
     store.set({ groups: ['code', 'code', 'nope'] })
-    expect(store.get().enabled, 'M-5 — dedup + the documented five-group filter').toEqual(['read', 'code'])
+    // §2.2 item 3: for `groups`/`disable` the array is "filtered through the five
+    // VALID_GROUPS …, deduplicated, with current-state order preserved", and
+    // PAR-4's domain is the set to ENABLE — so the patch is ADDITIVE over the
+    // current set.  `probe()`'s own `groups:['read']` cannot remove anything, so
+    // the pre-state is `['read','dispatch']` (§2.1 item 2's first-run default,
+    // which M-1/M-7 assert), and the patch's deduped+filtered `['code']` is
+    // APPENDED to it.
+    expect(store.get().enabled, 'M-5 — §2.2 item 3: the patch dedups and filters to the added code group, appended in current-state order (additive over the pre-state first-run default)').toEqual(['read', 'dispatch', 'code'])
     store.set({ maxJournalLength: 50.7 })
     expect(store.get().maxJournalLength, 'M-5 — floored').toBe(50)
     store.set({ token: '' })
@@ -1554,7 +1578,7 @@ describe('§3.1 the valid / happy states (M-1 … M-7)', () => {
     const { store } = await makeStore()
     store.set({ maxJournalLength: 0.5 })
     expect(store.lastWriteReceipt(), 'PAR-3 — ADMITTED (the alternative reading would refuse it; this spec DECLARES the landed clear)').toEqual({ status: 'committed' })
-    expect(store.get().maxJournalLength, 'PAR-3 — floored to 0, which is the declared clear').toBeUndefined()
+    expect(store.get().maxJournalLength, 'PAR-3 — ADMITTED and FLOORED TO 0: "a finite positive number is Math.floor-ed", so the landed post-state is the coercion’s own 0 (§2.2 item 3), never the clear').toBe(0)
   })
 
   it('M-5c · §6 PAR-3: `NaN` on maxJournalLength sits in the documented clear arm and is ADMITTED (while it is unrepresentable)', async () => {
@@ -1949,14 +1973,29 @@ describe('§5.6.1 THE REGISTER — the executed summary (118 = 51+12+6+7+16+2+8+
     // ordered-advance rows, the admission rows, and the receipt-detachment row
     // all redden on the landed bytes BY CONSTRUCTION)".  The sibling register's
     // summary asserts the MIRROR of this (`rowsHeld === 22`); this unit's red set
-    // asserts the red direction: EVERY one of the nine rows must CARRY a broken
-    // reading, and the nine rows' broken readings are named with their figures.
+    // asserts the red direction over the EIGHT rows whose property this unit
+    // MOVES, and the nine rows' broken readings are named with their figures.
+    // THE EIGHTH ROW (`P-O2-TP-1`) IS THE EXCEPTION, AND WHY (the kick-back's
+    // correction, `docs/specs/secure-store-discipline.md` §9's kick-back
+    // resolution): its property — SET/SANITIZE TOTALITY, the DOCUMENTED
+    // COERCIONS PRESERVED INSIDE THE ADMISSION'S BOUNDARY (§5.6.1 row 8's own
+    // scope line) — pins behaviour this unit DECLARES UNCHANGED, so it holds
+    // fully against the landed bytes.  Its ONE former broken reading was a term
+    // asserting §6 PAR-3's `0.5` boundary value as the CLEAR, which the contract
+    // REFUSES (PAR-3's OUTSIDE column: "ADMITTED, floored to 0"; §2.2 item 3) —
+    // a malformed term, corrected in this pass, never a red the Implementer
+    // could turn green.  The red direction is therefore asserted per MOVED row,
+    // plus the eighth row's own fully-held reading, plus the sums.
+    const MOVED_ROWS = results.filter((r) => r.id !== 'P-O2-TP-1')
     for (const r of results) {
       expect(r.held + r.broken, `${r.id}: held + broken === attempts-run`).toBe(r.attempts)
+    }
+    for (const r of MOVED_ROWS) {
       expect(r.broken, `${r.id} must carry at least one BROKEN reading against the landed bytes (§4.3 item 2) — its row reads ${r.held} held / ${r.broken} broken`).toBeGreaterThan(0)
     }
-    expect(results.reduce((a, r) => a + r.broken, 0), 'the nine rows’ broken readings, summed (MEASURED against the landed bytes, in register order: 29 + 9 + 4 + 2 + 5 + 2 + 3 + 1 + 1 = 56)').toBe(56)
-    expect(results.reduce((a, r) => a + r.held, 0), 'the nine rows’ held readings, summed (held + broken = 118: 62 + 56)').toBe(62)
+    expect(results.find((r) => r.id === 'P-O2-TP-1')?.broken, 'P-O2-TP-1 pins the coercions the contract PRESERVES (§5.6.1 row 8) — on the landed bytes every one of its 8 terms HOLDS (its former single broken reading was the malformed `0.5`-as-clear term, corrected at the kick-back)').toBe(0)
+    expect(results.reduce((a, r) => a + r.broken, 0), 'the nine rows’ broken readings, summed (MEASURED against the landed bytes, in register order: 28 + 9 + 4 + 2 + 5 + 2 + 3 + 0 + 1 = 54 — the kick-back correction moved `P-O2-IM-1` 29 → 28 and `P-O2-TP-1` 1 → 0)').toBe(54)
+    expect(results.reduce((a, r) => a + r.held, 0), 'the nine rows’ held readings, summed (held + broken = 118: 64 + 54)').toBe(64)
     expect(results.length, 'the register is NINE rows, a signal and not a cap (AGENTS.md item 11(f))').toBe(9)
   })
 
