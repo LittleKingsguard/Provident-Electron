@@ -418,12 +418,17 @@ export class ProvidentMcpServer {
       const backend = this.backend as unknown as { abandonPendingForExclusion?: (reason: string) => number }
       backend.abandonPendingForExclusion?.(EXCLUSION_CLOSED)
     }
-    // (c) the handles follow the record: while the tier is open NOTHING is enabled, and when it
-    // closes they follow the landed group predicate again. The handles stay RESOLVABLE throughout
-    // (they are toggled, never deregistered — the non-legibility pin).
-    // (c) the handles follow the record, and the registry is WIDENED where the record allows it —
-    // ONE shared helper with `applyGatePatch`, so neither path can omit an arm the other has.
-    this.regateLiveServer()
+    // `§2.1` item 3's OPERATIVE clause (`GAP-3` ruling, `A-11`) — THE EXCLUSION TRANSITION DOES NOT
+    // TOGGLE THE REGISTERED HANDLES: the registration set is IDENTICAL in both states, and the
+    // refusal is answered by the INVOCATION TURN alone (`exclusionTurn`, `§2.2` item 2(a)). The
+    // ground is measured on the landed SDK: a disabled handle is NOT LISTED (`mcp.js:68-69`,
+    // `:345-346`) and a call on one THROWS `-32602 … disabled` BEFORE the handler runs (`:106-107`,
+    // `:380-382`), so toggling would make the declared receipt UNREACHABLE and would create exactly
+    // the `disabled`-vs-`absent` oracle `§2.2` item 2(c) / `§0A` item 7(c) refuse.
+    // THE WIDEN ARM IS RETAINED (`T-2`'s registration obligation, the `A-3` cell): a group widen that
+    // arrived while the tier was open left its newly-allowed tools unregistered, so the CLOSE
+    // request must still widen the live stdio server.
+    this.regateLiveServer({ toggleHandles: false })
   }
 
   /** `§2.1` item 3 (`T-1`/`T-2`/`T-5`, `M-EX-3`/`M-EX-9`) — **THE ONE RE-GATE PATH**, shared by the
@@ -439,24 +444,34 @@ export class ProvidentMcpServer {
    *  arrived while the tier was open left its newly-allowed tools unregistered — without (b) here
    *  the MCP surface does not actually come back until the next settings write.
    *
-   *  The HTTP transport needs no re-gate: it builds a fresh server per POST from the current gate. */
-  private regateLiveServer(): void {
+   *  The HTTP transport needs no re-gate: it builds a fresh server per POST from the current gate.
+   *
+   *  **`toggleHandles` — THE EXCLUSION TRANSITION'S OPT-OUT (`GAP-3` ruling, `§2.1` item 3's
+   *  supersession clause, `§2.2` item 2(b)/(c))**: the arm (a) loop is the OPERATOR GROUP change's
+   *  mechanism and is UNTOUCHED on `applyGatePatch`'s path (its only caller with `toggleHandles`
+   *  true, the default). The EXCLUSION transition passes `false`, because the ruling drops the
+   *  toggling: with it ON a disabled handle is neither listed nor callable and the declared receipt
+   *  is unreachable. A designer MAY still route the transition through this helper — it MUST NOT
+   *  toggle. The arm (b) widen is retained in BOTH cases. */
+  private regateLiveServer(opts: { toggleHandles: boolean } = { toggleHandles: true }): void {
     const exclusionOpen = this._gate.exclusionState() === 'mcp-disabled'
-    for (const [name, tool] of this.registered) {
-      // U3/F1 (adversarial) — module.install/update + dynamic module:<name>.<tool> tools are
-      // trusted-equivalent to `code`: the live re-gate must use the TWO-GATE (module AND code),
-      // not the module-only `toolAllowed`. Otherwise disabling `code` would leave them callable by
-      // a module-only agent. Both the static `module.` (dot) and dynamic `module:` (colon) prefixes
-      // catch.
-      const isModuleTool = name.startsWith('module.') || name.startsWith('module:')
-      const allowed = isModuleTool
-        ? (this._gate.toolAllowed(name) && this._gate.enabled.has('code'))
-        : this._gate.toolAllowed(name)
-      tool.update({ enabled: !exclusionOpen && allowed })
-    }
-    // R2 — re-gate the captured resource handles the same way.
-    for (const [uri, res] of this.resources) {
-      res.update({ enabled: !exclusionOpen && this._gate.toolAllowed(`resource:${uri}`) })
+    if (opts.toggleHandles) {
+      for (const [name, tool] of this.registered) {
+        // U3/F1 (adversarial) — module.install/update + dynamic module:<name>.<tool> tools are
+        // trusted-equivalent to `code`: the live re-gate must use the TWO-GATE (module AND code),
+        // not the module-only `toolAllowed`. Otherwise disabling `code` would leave them callable by
+        // a module-only agent. Both the static `module.` (dot) and dynamic `module:` (colon) prefixes
+        // catch.
+        const isModuleTool = name.startsWith('module.') || name.startsWith('module:')
+        const allowed = isModuleTool
+          ? (this._gate.toolAllowed(name) && this._gate.enabled.has('code'))
+          : this._gate.toolAllowed(name)
+        tool.update({ enabled: !exclusionOpen && allowed })
+      }
+      // R2 — re-gate the captured resource handles the same way.
+      for (const [uri, res] of this.resources) {
+        res.update({ enabled: !exclusionOpen && this._gate.toolAllowed(`resource:${uri}`) })
+      }
     }
     // M1-widen — REGISTER any newly-allowed tools that were not registered before (a widen to a
     // previously-disabled group must make those tools callable on the live server, not only on the

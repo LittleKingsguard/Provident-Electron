@@ -373,7 +373,15 @@ async function main(): Promise<void> {
 
   // PAR-9 — the GET response record is EXTENDED ADDITIVELY by the declared `exclusion` member
   // (the landed `write` member's precedent below): the member is NEVER absent on a read.
-  ipcMain.handle(IPC_SECURITY_GET, () => ({ ...securityStore.get(), exclusion: gate.exclusionState() }))
+  // **THE READ IS OFF THE SERVER'S LIVE GATE, NOT THE BOOT-CONSTRUCTED ONE (gate-6 `F-1`).**
+  // `SecurityGate.withExclusion` ALWAYS returns a NEW instance and `mcp.applyExclusion` REPLACES the
+  // server's `_gate`, so a handler closing over the boot `gate` answers a PERMANENTLY STALE value
+  // after the operator's first transition — the gate-4 `A-1` defect class, one layer up, and the
+  // reason the pane rendered `· MCP: enabled` over a server refusing every call (`F-5`).
+  // `mcp.gate` is the server's OWN live accessor (`L` `mcp-server.ts:695`), so ONE holder answers
+  // BOTH the enforcement and the operator's read (`§2.1` item 1's "ONE live home"). This is NOT a
+  // `secure.*` segment check: `main` supplies STATE and asks only "is the exclusion open?" (`§2.6`).
+  ipcMain.handle(IPC_SECURITY_GET, () => ({ ...securityStore.get(), exclusion: mcp.gate.exclusionState() }))
   ipcMain.handle(IPC_SECURITY_SET, (_event, patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }) => {
     // THE RECEIPT'S ADDITIVE DELIVERY (§2.3 items 2/4 — the C-11 NON-BREAKING
     // reading, G3 2026-10-03): `set()`'s OWN return stays the post-state
@@ -391,7 +399,7 @@ async function main(): Promise<void> {
     // SET that flipped the exclusion would make it a side effect of an unrelated write). The
     // member is attached to the SAME post-state record `set()` minted, so the landed
     // `return updated` resolution — and every reader anchored on it — is unchanged.
-    ;(updated as unknown as { exclusion: string }).exclusion = gate.exclusionState()
+    ;(updated as unknown as { exclusion: string }).exclusion = mcp.gate.exclusionState()
     return updated
   })
 
@@ -404,7 +412,7 @@ async function main(): Promise<void> {
   // REFUSED AS A VALUE, never a throw and never a silent no-op that looks applied.
   ipcMain.handle(IPC_SECURITY_EXCLUSION, (_event, state: unknown) => {
     if (state !== 'mcp-enabled' && state !== 'mcp-disabled') {
-      return { applied: false, state: gate.exclusionState(), reason: 'malformed-state' }
+      return { applied: false, state: mcp.gate.exclusionState(), reason: 'malformed-state' }
     }
     // THE TRANSITION IS THE GATE'S OWN (the pure-constructor form) and the server's live gate is
     // REPLACED exactly as `applyGatePatch` replaces it: the record, the epoch bump and the
@@ -412,7 +420,7 @@ async function main(): Promise<void> {
     // A SELF-TRANSITION is a legal no-op: no bump, no invalidation, the toggles re-applied
     // idempotently (an epoch bump on a no-op would be a denial-of-service surface).
     mcp.applyExclusion(state)
-    return { applied: true, state: gate.exclusionState() }
+    return { applied: true, state: mcp.gate.exclusionState() }
   })
 
   // U8 → Q-5 — the module management IPC (module-feature-list.md §4). Manual-UI only: the
