@@ -419,14 +419,35 @@ function appProcesses() {
     return out.split('\n').map((l) => l.trim()).filter((l) => l !== '' && l.includes('dist/main/main.cjs'))
   } catch { return null }
 }
+// ⟶ THE PREFLIGHT'S OWN NON-VACUITY CONTROL (`R5-08`, the FIFTH `§6.2` audit's LOW finding —
+// the ONE FAIL-capable row that carried NO fixture block): as filed, this row's predicate could
+// only ever be refused by a REAL stale window on the operator's display, i.e. its ability to fail
+// was never DRIVEN. The probe's two failure modes are now terms of the SAME named predicate and
+// are driven beside the live reading: a SYNTHETIC `ps` listing that carries a stale app process,
+// and an unrunnable probe (`ps` threw → `null`). NO ROW WAS ADDED (the count stays `42`) and the
+// row's verdict semantics are unchanged (`FAIL` on a stale process; the stop block below still
+// refuses to measure through one, with `exit 1` and no summary).
+function preflightProperty(found) {
+  const terms = {
+    'probe-ran': Array.isArray(found),
+    'no-stale-app-process': Array.isArray(found) && found.length === 0,
+  }
+  return { ok: Object.values(terms).every(Boolean), terms }
+}
 const staleBefore = appProcesses()
+const preflightLive = preflightProperty(staleBefore)
+const preflightControls = {
+  'a SYNTHETIC `ps` listing carrying a stale app process (the shape a leftover window produces)': preflightProperty(['4242 /usr/bin/electron --mcp-transport=stdio dist/main/main.cjs']),
+  'the probe ITSELF could not be run (`ps` threw, so the listing is `null`)': preflightProperty(null),
+}
+const preflightNotRefused = Object.entries(preflightControls).filter(([, v]) => v.ok !== false).map(([k]) => k)
 // THE PREFLIGHT'S OWN ID, DISTINCT FROM THE BOOT-ORDER ROW'S (`§6.2` audit `F-A15`): the
 // as-filed id was `'SX-G-45 (preflight)'` while the boot-order row below is also `SX-G-45`,
 // so the FAIL list (`§5`'s tail) printed an AMBIGUOUS line naming a row it could not
 // identify. This row answers to `SX-G-45p`; the boot-order row keeps `SX-G-45`.
-check('SX-G-45p (preflight)', 'the battery is SELF-GUARDING: NO pre-existing app process is on the display before the first boot', staleBefore !== null && staleBefore.length === 0 ? 'PASS' : 'FAIL',
-  staleBefore === null ? 'the preflight probe itself could not be run' : `ps -eo pid=,args= | grep 'dist/main/main.cjs' → ${JSON.stringify(staleBefore)} before boot A`,
-  'a stale window from an earlier run would make the CDP attach and the rendered-box readings ambiguous, so the run refuses to measure through one')
+check('SX-G-45p (preflight)', 'the battery is SELF-GUARDING: NO pre-existing app process is on the display before the first boot — and the probe\'s predicate CAN FAIL (a SYNTHETIC listing carrying a stale app process, and an unrunnable probe, are each REFUSED)', preflightLive.ok ? 'PASS' : 'FAIL',
+  `${staleBefore === null ? 'the preflight probe itself could not be run' : `ps -eo pid=,args= | grep 'dist/main/main.cjs' → ${JSON.stringify(staleBefore)} before boot A`}; TERMS ${JSON.stringify(preflightLive.terms)}; THE NON-VACUITY CONTROL (NEW 2026-10-10, the fifth \`§6.2\` audit\'s \`R5-08\`): ${JSON.stringify(Object.fromEntries(Object.entries(preflightControls).map(([k, v]) => [k, v.ok])))} driven through the SAME \`preflightProperty\`; fixtures NOT refused: ${JSON.stringify(preflightNotRefused)}; the terms each fixture broke: ${JSON.stringify(Object.fromEntries(Object.entries(preflightControls).map(([k, v]) => [k, Object.entries(v.terms).filter(([, b]) => b === false).map(([t]) => t)])))}`,
+  'a stale window from an earlier run would make the CDP attach and the rendered-box readings ambiguous, so the run refuses to measure through one. **THE CONTROL IS OVER THE PROBE\'S OWN FAILURE MODES, NOT OVER A FEATURE DELETION (`R5-08`):** no term of this row names the new node or the transition, so a feature deletion cannot redden it — which is why the row is `PRECONDITION-BY-DESIGN` in `§2`\'s falsification table; what the control removes is the VACUITY of a predicate that had never been driven red at all')
 if (staleBefore === null || staleBefore.length !== 0) {
   console.error('\nPREFLIGHT STOP — a stale app process is on the display (or the probe could not be run). Nothing is measured through it.')
   console.error('Kill it (e.g. `pkill -f dist/main/main.cjs`) and re-run.')
@@ -1024,7 +1045,7 @@ const returnArmStdioControls = {
   }),
 }
 const returnArmStdioNotRefused = Object.entries(returnArmStdioControls).filter(([, v]) => v.ok !== false).map(([k]) => k)
-check('U-4 (return arm) — DELETION/RED-FAIL CONTROL (NEW 2026-10-09, `R3-01`; THE DELETION FIXTURE REBUILT 2026-10-10 BY THE FOURTH AUDIT\'S `R4-01`)', 'the `U-4` stdio return row\'s predicate CAN FAIL: the DELETION fixture is an ACTUAL deletion (four terms redden, the two open-state preconditions among them) and the five other regression shapes are each REFUSED by the SAME code path, each naming the term that caught it',  returnArmStdioNotRefused.length === 0 && Object.values(returnArmStdioControls).every((v) => v.ok === false) ? 'PASS' : 'FAIL',
+check('U-4 (return arm) — DELETION/RED-FAIL CONTROL (NEW 2026-10-09, `R3-01`; THE DELETION FIXTURE REBUILT 2026-10-10 BY THE FOURTH AUDIT\'S `R4-01`)', 'the `U-4` stdio return row\'s predicate CAN FAIL: the DELETION fixture is an ACTUAL deletion (the TWO terms it reddens are the two ADDED precondition terms, and NO other term reddens) and the FOUR other regression shapes are each REFUSED by the SAME code path, each naming the term that caught it',  returnArmStdioNotRefused.length === 0 && Object.values(returnArmStdioControls).every((v) => v.ok === false) ? 'PASS' : 'FAIL',
   `fixtures driven through returnArmStdioProperty itself: ${JSON.stringify(Object.fromEntries(Object.entries(returnArmStdioControls).map(([k, v]) => [k, v.ok])))}; fixtures NOT refused: ${JSON.stringify(returnArmStdioNotRefused)}; the terms each fixture broke: ${JSON.stringify(Object.fromEntries(Object.entries(returnArmStdioControls).map(([k, v]) => [k, Object.entries(v.terms).filter(([, b]) => b === false).map(([t]) => t)])))}`,
   'WHY THIS ROW EXISTS (`R3-01`\'s CLASS CLOSURE): the `U-4` row\'s re-grained predicate had no fixture of its own — the neighbouring control row belongs to the RELOAD arm\'s receipt predicate (`declaredReceipt`), a DIFFERENT function. **AND WHY IT WAS REBUILT (`R4-01`): the as-filed DELETION fixture was a HALF-APPLIED RETURN, NOT A DELETION, so it could not have caught the hole it was captioned to catch — with `setExclusion` deleted the row still read PASS. The first fixture now holds the ACTUAL deletion shape and reddens `call-issued-while-open-answered-the-receipt` and `bridge-read-open-before-return` (the two ADDED precondition terms) plus `answer-is-not-a-receipt` and `bridge-reads-closed`. The LAST fixture keeps the as-filed caption\'s half-applied-return shape, so the two are separately attributable rather than conflated.**')
 
