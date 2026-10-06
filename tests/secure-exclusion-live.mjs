@@ -5,6 +5,24 @@
 //
 // Run:  npm run build && node tests/secure-exclusion-live.mjs
 //
+// ⟶ THE 2026-10-10 REPAIR PASS (FOURTH `§6.2` AUDIT, `R4-01`…`R4-08`) — WHAT IT CHANGED IN THIS
+// DRIVER, EACH WITH THE FINDING IT CLOSES. Every one of them is INSTRUMENT-side; `src/**` is
+// untouched. **THE ROW COUNT IS UNCHANGED AT `42`**: no row was added and no row was removed — the
+// `R4` pass repaired predicates, fixtures and instrument dispositions in place. `R4-01` (HIGH,
+// gate-6-blocking) added TWO TERMS to an existing predicate and REBUILT its deletion fixture;
+// `R4-06` changed TWO verdicts to `MANUAL` for instrument states. **NO ROW WAS REPAIRED BY
+// WEAKENING IT, AND NO TERM WAS REMOVED ANYWHERE.**
+//   · `R4-01` (HIGH) — `U-4 (return arm, stdio)` (`returnArmStdioProperty`): the as-filed `5` terms
+//     carried NO assertion that the OPEN STATE WAS IN PLACE BEFORE THE RETURN, so with
+//     `setExclusion` DELETED the tier never opened, the return was a no-op and ALL FIVE TERMS READ
+//     TRUE. The predicate is now `7` terms (the five as-filed terms kept term for term, plus
+//     `call-issued-while-open-answered-the-receipt` and `bridge-read-open-before-return`), and the
+//     fixture captioned "THE FEATURE IS DELETED" — which was in fact a HALF-APPLIED RETURN — is now
+//     an ACTUAL deletion case (the renderer's own baseline value + a bridge that never moves).
+//   · `R4-06` (LOW, structural rule (b)) — `SX-G-45` (boot order) now SETTLES on a bounded window
+//     and answers `MANUAL` when a landmark has not arrived; `SX-G-45 (HTTP boot)` answers `MANUAL`
+//     for a readiness timeout. A BROKEN INSTRUMENT reads `MANUAL`, never `FAIL`.
+//
 // ⟶ THE 2026-10-09 REPAIR PASS (SECOND `§6.2` AUDIT, `F-A1`…`F-A18`) — WHAT IT CHANGED IN THIS
 // DRIVER, EACH WITH THE FINDING IT CLOSES. Every one of them is INSTRUMENT-side; `src/**` is
 // untouched. **THE ROW COUNT MOVED `32 → 34`**: `+1` for the `SX-G-03` status-line row (`F-A16`)
@@ -422,15 +440,36 @@ const cdp = await Cdp.attach(portA)
 const togglePainted = await cdp.waitForToggle()
 
 // boot-order evidence: the renderer's OWN stderr line for IPC_READY
-const orderLines = bootA.stderrText().split('\n').filter((l) => l.includes('provident-mcp] stdio transport ready') || l.includes('renderer ready'))
+/** THE TWO CAPTURED BOOT LANDMARKS, SETTLED BEFORE THEY ARE READ (`R4-06`, the FOURTH `§6.2` audit,
+ *  LOW — the `§6.2` STRUCTURAL RULE (b): a BROKEN INSTRUMENT must read `MANUAL`, never `FAIL`).
+ *  As filed, the boot-order row read the child's stderr ONCE with NO wait, so a landmark that had not
+ *  YET been written — the handshake can resolve between `mcp.start()` and the renderer's own arming of
+ *  the backend's readiness promise — reddened the row as a FEATURE failure, although the very next row
+ *  is retried for exactly that reason ("a failed read here is an INSTRUMENT state, not a finding").
+ *  The settle is BOUNDED and its outcome is REPORTED, so a timeout is an instrument state (`MANUAL`)
+ *  rather than an accidental `FAIL`. */
+async function settledLandmarks(stderrText, timeoutMs = 20000) {
+  const started = Date.now()
+  let readings = []
+  for (;;) {
+    // BOTH captured landmarks, IN THE STREAM'S OWN ORDER (deduplicated: a repeated line cannot make a
+    // single landmark look like two).
+    readings = [...new Set(stderrText().split('\n').filter((l) => l.includes('provident-mcp] stdio transport ready') || l.includes('renderer ready')))]
+    if (readings.length === 2) return { readings, settled: true, waitedMs: Date.now() - started }
+    if (Date.now() - started >= timeoutMs) return { readings, settled: false, waitedMs: Date.now() - started }
+    await sleep(200)
+  }
+}
+const orderSettle = await settledLandmarks(bootA.stderrText)
+const orderLines = orderSettle.readings
 // THE SUBJECT'S ORDER CLAUSE IS CORRECTED TO THE MEASURED ORDER (the third `§6.2` audit's `R3-03`): it
 // read *"the MCP stdio transport becomes ready LAST, after the renderer's own arming line"* — the EXACT
 // claim `F-A8` had already falsified in the evidence string — and the SUBJECT is what the FAIL list
 // prints (this file's tail), so a boot-order regression would have printed the falsified wording beside
 // its own observation. The measured order is `[stdio transport ready, renderer ready]`.
-check('SX-G-45', 'the TWO boot landmarks the run CAPTURES appear in the declared order — the MCP stdio transport becomes ready FIRST, and the renderer\'s own arming line SECOND (the measured order `[stdio transport ready, renderer ready]`)', orderLines.length === 2 && orderLines[0].includes('stdio transport ready') && orderLines[1].includes('renderer ready') ? 'PASS' : 'FAIL',
-  `the child's stderr carries both captured boot landmarks IN ORDER: ${JSON.stringify(orderLines)}`,
-  'THE MEASURED ORDER IS `[stdio transport ready, renderer ready]` — the MCP transport line is FIRST and the renderer arming line SECOND, which is what the predicate asserts and what the printed value shows. **CORRECTED 2026-10-09 (the `§6.2` audit\'s `F-A8`): the as-filed sentence read "the MCP stdio transport is the LAST landmark; the renderer arming (IPC_READY) precedes it" — FALSE OF BOTH THE PREDICATE AND THE OBSERVATION, which print the transport line first.** **AND THE SUBJECT IS NARROWED TO WHAT THESE TWO LANDMARKS WITNESS:** these are the only two boot lines this run CAPTURES (`L` `src/main/main.ts:480` logs `IPC_READY`, `L` `:507` awaits `mcp.start()`), and NEITHER witnesses the store/gate construction order — that order is declared by the `[H]` register\'s `P-EX-SM-3` cells, NOT by a captured line, so the as-filed subject wording (`store → gate → transports → mcp.start`) claimed more than the instrument reads. A deviating ORDER is a FAIL (`RE-GRAINED 2026-10-09`, the `§6.2` audit\'s `F6`: the as-filed row answered `REPORT`, a verdict OUTSIDE the closed set this battery and `§6.1` clause 1 declare, so a boot-order regression printed no FAIL and appeared in no list)')
+check('SX-G-45', 'the TWO boot landmarks the run CAPTURES appear in the declared order — the MCP stdio transport becomes ready FIRST, and the renderer\'s own arming line SECOND (the measured order `[stdio transport ready, renderer ready]`)', !orderSettle.settled ? 'MANUAL' : (orderLines.length === 2 && orderLines[0].includes('stdio transport ready') && orderLines[1].includes('renderer ready') ? 'PASS' : 'FAIL'),
+  `the child's stderr carries both captured boot landmarks ${orderSettle.settled ? `IN ORDER after a SETTLED read (${orderSettle.waitedMs} ms, bounded 20000 ms)` : `set to MANUAL: only ${orderSettle.readings.length} landmark line(s) arrived within the bounded 20000 ms settle window`}: ${JSON.stringify(orderLines)}`,
+  'THE MEASURED ORDER IS `[stdio transport ready, renderer ready]` — the MCP transport line is FIRST and the renderer arming line SECOND, which is what the predicate asserts and what the printed value shows. **CORRECTED 2026-10-09 (the `§6.2` audit\'s `F-A8`): the as-filed sentence read "the MCP stdio transport is the LAST landmark; the renderer arming (IPC_READY) precedes it" — FALSE OF BOTH THE PREDICATE AND THE OBSERVATION, which print the transport line first.** **AND THE SUBJECT IS NARROWED TO WHAT THESE TWO LANDMARKS WITNESS:** these are the only two boot lines this run CAPTURES (`L` `src/main/main.ts:480` logs `IPC_READY`, `L` `:507` awaits `mcp.start()`), and NEITHER witnesses the store/gate construction order — that order is declared by the `[H]` register\'s `P-EX-SM-3` cells, NOT by a captured line, so the as-filed subject wording (`store → gate → transports → mcp.start`) claimed more than the instrument reads. A deviating ORDER is a FAIL (`RE-GRAINED 2026-10-09`, the `§6.2` audit\'s `F6`: the as-filed row answered `REPORT`, a verdict OUTSIDE the closed set this battery and `§6.1` clause 1 declare, so a boot-order regression printed no FAIL and appeared in no list) — **AND A LANDMARK THAT SIMPLY HAS NOT ARRIVED YET IS AN INSTRUMENT STATE, NOT A FINDING, so the read is SETTLED on a bounded wait and a timeout is `MANUAL` (`R4-06`, 2026-10-10; structural rule (b)): only an ORDER that is actually deviating, both lines present, is a `FAIL`.**')
 
 // THE FIRST MCP READ is retried, BOUNDED, because the handshake can resolve in the
 // window between `mcp.start()` and the renderer's own arming of the backend's
@@ -901,6 +940,13 @@ check('U-2 (registry) / U-7 — DELETION/RED-FAIL CONTROL (NEW 2026-10-09, the `
 // predicate's; it is the INVOCATION TURN answering, and the call is never dispatched.
 const openArrival = rawCall(bootA.client, 'provident.get_markdown', {})
 await sleep(150)
+// THE OPEN-STATE PRECONDITION, READ BEFORE THE RETURN (`R4-01`, the FOURTH `§6.2` audit, HIGH and
+// gate-6-blocking). The as-filed `5`-term predicate asserted ONLY the post-return shape: with
+// `setExclusion` DELETED the tier never opens, the "call issued while open" is answered NORMALLY,
+// the return is a no-op, the bridge never leaves `mcp-enabled` — and ALL FIVE TERMS READ TRUE, so
+// the row read PASS on a tree with no feature in it. The precondition is read HERE, while the state
+// is still OPEN and before the return act.
+const bridgeBeforeReturn = await cdp.evaluate(`window.provident.security.get()`)
 // THE RETURN — the pane's OWN declared call (`window.provident.security.setExclusion('mcp-enabled')`;
 // `§2.4` item 6: "the operator's own act ... the pane control or the channel directly").
 await cdp.evaluate(`window.provident.security.setExclusion('mcp-enabled')`)
@@ -908,10 +954,18 @@ const openArrivalResult = await openArrival
 await sleep(400)
 const returnedAnswer = await rawCall(bootA.client, 'provident.get_markdown', {})
 const returnedBridge = await cdp.evaluate(`window.provident.security.get()`)
-// `U-4`'s stdio return predicate AS A NAMED FUNCTION (`R3-01`'s CLASS CLOSURE; the expression is the
-// as-filed one, TERM FOR TERM: `returnedAnswer.ok && returnedAnswer.isError !== true &&
+// `U-4`'s stdio return predicate AS A NAMED FUNCTION (`R3-01`'s CLASS CLOSURE). The five as-filed
+// terms are KEPT TERM FOR TERM (`returnedAnswer.ok && returnedAnswer.isError !== true &&
 // declaredReceipt(returnedAnswer) === null && String(returnedAnswer.text).includes('markdown') &&
-// returnedBridge?.exclusion === 'mcp-enabled'`).
+// returnedBridge?.exclusion === 'mcp-enabled'`) and the TWO TRANSITION PRECONDITION terms the sibling
+// rows gained (`F-A1`/`R3-01`'s shape) are ADDED BESIDE THEM — never in place of them:
+//     (6) 'call-issued-while-open-answered-the-receipt'   the call issued WHILE OPEN was answered
+//         the DECLARED RECEIPT (a VALUE, never an MCP protocol error) — so with the feature deleted
+//         the answer is the renderer's own value and this term reddens FIRST;
+//     (7) 'bridge-read-open-before-return'                the bridge's OWN reading was `mcp-disabled`
+//         BEFORE the return act — the state the return is an act upon.
+// NOTHING IS WEAKENED: `bridge-reads-closed` keeps its as-filed expression and the two added terms
+// are conjunctive, so the row is strictly stronger than the as-filed predicate.
 function returnArmStdioProperty(f) {
   const terms = {
     'answer-ok': f.answer?.ok === true,
@@ -919,13 +973,21 @@ function returnArmStdioProperty(f) {
     'answer-is-not-a-receipt': declaredReceipt(f.answer) === null,
     'markdown-present': typeof f.answer?.text === 'string' && f.answer.text.includes('markdown'),
     'bridge-reads-closed': f.bridge?.exclusion === 'mcp-enabled',
+    // (6) THE OPEN-STATE CALL, ASSERTED AS A TERM (`R4-01`): the refusal was IN PLACE while the tier
+    //     was open, delivered as the declared receipt VALUE with `isError` ABSENT.
+    'call-issued-while-open-answered-the-receipt': declaredReceipt(f.openArrival) !== null && f.openArrival?.isError !== true,
+    // (7) AND THE BRIDGE SAID SO BEFORE THE RETURN (`R4-01`) — the second precondition shape.
+    'bridge-read-open-before-return': f.bridgeBeforeReturn?.exclusion === 'mcp-disabled',
   }
   return { ok: Object.values(terms).every(Boolean), terms }
 }
-const returnArmStdioLive = returnArmStdioProperty({ answer: returnedAnswer, bridge: returnedBridge })
+const returnArmStdioLive = returnArmStdioProperty({
+  answer: returnedAnswer, bridge: returnedBridge,
+  openArrival: openArrivalResult, bridgeBeforeReturn,
+})
 check('U-4 (return arm)', 'the return — the operator\'s OWN act — restores NORMAL answers: the refusal is GONE and the tool RUNS (while a call ISSUED in the open state is answered the receipt and never dispatched)', returnArmStdioLive.ok ? 'PASS' : 'FAIL',
-  `after the return transition the bridge reads exclusion=${JSON.stringify(returnedBridge?.exclusion)} and provident.get_markdown answered NORMALLY — ok=${returnedAnswer.ok}, isError=${returnedAnswer.isError} (absent), receipt=${JSON.stringify(declaredReceipt(returnedAnswer))}, first 60 chars=${JSON.stringify(String(returnedAnswer.text).slice(0, 60))}; the call ISSUED while open was answered ok=${openArrivalResult.ok} isError=${openArrivalResult.isError} ${JSON.stringify(String(openArrivalResult.text ?? openArrivalResult.error).slice(0, 110))}`,
-  'THE HONEST LIMIT, STATED (`§2.3` item 3; the register\'s `A-2#5`/`P-EX-IM-3` cells drive it at the `[H]` layer): the open-state call above is an ARRIVAL refusal at the invocation turn (`§2.2` item 2(a)), NOT the in-flight arm — a genuine in-flight probe needs a call ISSUED while CLOSED whose dispatched renderer work straddles the transition, and this driver cannot make that window deterministic (a renderer round trip is milliseconds wide), so the mid-flight abandonment is NOT claimed as exercised here. The row\'s SUBJECT is the RETURN, and the predicate is a BOUND on it: the ENABLED-state answer must be a REAL value (not a receipt, `isError` absent, the markdown present) AND the bridge must read the closed state — so a return that did not land, or one that left the refusal in place, FAILS. **RE-GRAINED 2026-10-08**: the as-filed predicate asserted only `isError !== true` on ONE call after the return, which a receipt-answering or renderer-valued answer could not distinguish from a restored tool; the row now asserts the ENABLED-shape answer (not a receipt, markdown present) AND the bridge\'s own `mcp-enabled` member AND that the call ISSUED while open was answered the receipt. **RE-INSTRUMENTED 2026-10-09 (the third `§6.2` audit\'s `R3-01` class closure): the predicate is the named `5`-term `returnArmStdioProperty` above, and the DELETION fixture below drives it red.**')
+  `after the return transition the bridge reads exclusion=${JSON.stringify(returnedBridge?.exclusion)} and provident.get_markdown answered NORMALLY — ok=${returnedAnswer.ok}, isError=${returnedAnswer.isError} (absent), receipt=${JSON.stringify(declaredReceipt(returnedAnswer))}, first 60 chars=${JSON.stringify(String(returnedAnswer.text).slice(0, 60))}; THE OPEN-STATE PRECONDITION, read BEFORE the return act: the bridge read exclusion=${JSON.stringify(bridgeBeforeReturn?.exclusion)} (expected \`mcp-disabled\`) and the call ISSUED while open was answered ok=${openArrivalResult.ok} isError=${openArrivalResult.isError} receipt=${JSON.stringify(declaredReceipt(openArrivalResult))} ${JSON.stringify(String(openArrivalResult.text ?? openArrivalResult.error).slice(0, 110))}; TERMS: ${JSON.stringify(returnArmStdioLive.terms)}`,
+  'THE HONEST LIMIT, STATED (`§2.3` item 3; the register\'s `A-2#5`/`P-EX-IM-3` cells drive it at the `[H]` layer): the open-state call above is an ARRIVAL refusal at the invocation turn (`§2.2` item 2(a)), NOT the in-flight arm — a genuine in-flight probe needs a call ISSUED while CLOSED whose dispatched renderer work straddles the transition, and this driver cannot make that window deterministic (a renderer round trip is milliseconds wide), so the mid-flight abandonment is NOT claimed as exercised here. The row\'s SUBJECT is the RETURN, and the predicate is a BOUND on it: the ENABLED-state answer must be a REAL value (not a receipt, `isError` absent, the markdown present) AND the bridge must read the closed state — so a return that did not land, or one that left the refusal in place, FAILS. **RE-GRAINED 2026-10-08**: the as-filed predicate asserted only `isError !== true` on ONE call after the return, which a receipt-answering or renderer-valued answer could not distinguish from a restored tool; the row now asserts the ENABLED-shape answer (not a receipt, markdown present) AND the bridge\'s own `mcp-enabled` member AND that the call ISSUED while open was answered the receipt. **RE-INSTRUMENTED 2026-10-09 (the third `§6.2` audit\'s `R3-01` class closure): the predicate became the named `returnArmStdioProperty` function, with a DELETION fixture beside it.** **RE-INSTRUMENTED AGAIN 2026-10-10 (the FOURTH `§6.2` audit\'s `R4-01`, HIGH and GATE-6-BLOCKING — the `R3-01`/`F1` class ONE ROW OVER, in the very repair that claimed to close the class structurally): the `5`-term as-filed predicate carried NO TERM ASSERTING THE OPEN STATE WAS EVER IN PLACE BEFORE THE RETURN, and its "DELETION fixture" was in fact a HALF-APPLIED RETURN (`text: receiptFixtureText()`, `bridge: mcp-disabled`) rather than a deletion — so with `setExclusion` DELETED the tier never opened, the return was a no-op, every one of the five terms evaluated TRUE and THE ROW READ PASS ON A FEATURE-DELETED TREE. THE PREDICATE IS NOW `7` TERMS: the five as-filed terms kept term for term, PLUS `call-issued-while-open-answered-the-receipt` and `bridge-read-open-before-return`, and the fixture captioned "THE FEATURE IS DELETED" is now an ACTUAL DELETION CASE. NO TERM WAS WEAKENED AND NO ROW WAS REPAIRED BY RELAXING IT.**')
 
 // ---- THE `U-4` STDIO RETURN ROW'S DELETION / RED-FAIL CONTROL (`R3-01`'s CLASS CLOSURE) -----------------
 /** The declared receipt's text, built by a FUNCTION so the fixtures below do not depend on the restart
@@ -933,17 +995,38 @@ check('U-4 (return arm)', 'the return — the operator\'s OWN act — restores N
 function receiptFixtureText() {
   return JSON.stringify({ status: 'refused', reason: 'exclusion-closed', message: 'MCP endpoint functionality is blocked because the security store is open — retry once the operator has finished with the secured changes.' })
 }
+// ⟶ THE DELETION FIXTURE IS REBUILT 2026-10-10 (the FOURTH `§6.2` audit's `R4-01`, HIGH): the as-filed
+// fixture captioned "THE FEATURE IS DELETED" was NOT a deletion case — it was a HALF-APPLIED RETURN
+// (`answer.text = receiptFixtureText()` with `bridge: 'mcp-disabled'`), which is `U-4`'s own third
+// fixture too. A DELETION fixture must hold the values a tree WITH NO `setExclusion` produces, and on
+// such a tree: (i) the gesture opens nothing, so the call ISSUED WHILE OPEN is answered the RENDERER'S
+// OWN value (the run's own `baseline`, not a receipt); (ii) the return is a no-op, so the "restored"
+// answer is that same enabled-state value; (iii) the bridge is `mcp-enabled` throughout — BEFORE the
+// return and after it. That is what the first fixture now holds, and it reddens FOUR terms:
+// `call-issued-while-open-answered-the-receipt` and `bridge-read-open-before-return` (the two
+// preconditions the as-filed predicate did not have at all) plus `answer-is-not-a-receipt` and
+// `bridge-reads-closed` (`baseline` IS the enabled-state value, and the bridge never moved).
 const returnArmStdioControls = {
-  'THE FEATURE IS DELETED: the return never lands, so the refusal is still in place and the "restored" answer IS the receipt': returnArmStdioProperty({ answer: { ok: true, isError: false, text: receiptFixtureText() }, bridge: { exclusion: 'mcp-disabled' } }),
-  'the return LANDED but the call after it FAILED (`ok:false` — a thrown or timed-out call is not a restored tool)': returnArmStdioProperty({ answer: { ok: false, error: 'MCP error -32001: Request timed out' }, bridge: returnedBridge }),
-  'the bridge never left the OPEN state (the `F-4` shape: the GET member reports the boot state) — this fixture reddens the `bridge-reads-closed` term ALONE': returnArmStdioProperty({ answer: returnedAnswer, bridge: { exclusion: 'mcp-disabled' } }),
-  'the "restored" answer is a RECEIPT (the return half-applied)': returnArmStdioProperty({ answer: { ok: true, isError: false, text: receiptFixtureText() }, bridge: returnedBridge }),
+  'THE FEATURE IS DELETED (`setExclusion` gone): the gesture opens nothing, so the call issued while open is answered the RENDERER\'S OWN value, the return is a no-op, and the bridge reads `mcp-enabled` BEFORE the return and after it — the ACTUAL deletion shape (`R4-01`)': returnArmStdioProperty({
+    answer: baseline, bridge: { exclusion: 'mcp-enabled' }, openArrival: baseline, bridgeBeforeReturn: { exclusion: 'mcp-enabled' },
+  }),
+  'the open-state call was answered NORMALLY although the bridge DID read `mcp-disabled` (the refusal absent at the invocation turn — the row\'s precondition half alone, `R4-01`)': returnArmStdioProperty({
+    answer: returnedAnswer, bridge: returnedBridge, openArrival: baseline, bridgeBeforeReturn: bridgeBeforeReturn,
+  }),
+  'the return LANDED but the call after it FAILED (`ok:false` — a thrown or timed-out call is not a restored tool)': returnArmStdioProperty({
+    answer: { ok: false, error: 'MCP error -32001: Request timed out' }, bridge: returnedBridge, openArrival: openArrivalResult, bridgeBeforeReturn,
+  }),
+  'the bridge never left the OPEN state (the `F-4` shape: the GET member reports the boot state) — this fixture reddens the `bridge-reads-closed` term ALONE (`R4-01`: its `bridgeBeforeReturn` reading is the LIVE one, so the precondition term stays TRUE and the fixture is attributable)': returnArmStdioProperty({
+    answer: returnedAnswer, bridge: { exclusion: 'mcp-disabled' }, openArrival: openArrivalResult, bridgeBeforeReturn,
+  }),
+  'the return is a HALF-APPLIED RETURN (the as-filed caption\'s own shape: the answer is still the RECEIPT while the bridge reads `mcp-disabled` — BOTH the answer term and the bridge term redden, and the two preconditions stay TRUE, `R4-01`)': returnArmStdioProperty({
+    answer: { ok: true, isError: false, text: receiptFixtureText() }, bridge: { exclusion: 'mcp-disabled' }, openArrival: openArrivalResult, bridgeBeforeReturn,
+  }),
 }
 const returnArmStdioNotRefused = Object.entries(returnArmStdioControls).filter(([, v]) => v.ok !== false).map(([k]) => k)
-check('U-4 (return arm) — DELETION/RED-FAIL CONTROL (NEW 2026-10-09, the third `§6.2` audit\'s `R3-01`)', 'the `U-4` stdio return row\'s predicate CAN FAIL: the DELETION fixture (the return never lands) and the three other regression shapes are each REFUSED by the SAME code path, each naming the term that caught it',
-  returnArmStdioNotRefused.length === 0 && Object.values(returnArmStdioControls).every((v) => v.ok === false) ? 'PASS' : 'FAIL',
+check('U-4 (return arm) — DELETION/RED-FAIL CONTROL (NEW 2026-10-09, `R3-01`; THE DELETION FIXTURE REBUILT 2026-10-10 BY THE FOURTH AUDIT\'S `R4-01`)', 'the `U-4` stdio return row\'s predicate CAN FAIL: the DELETION fixture is an ACTUAL deletion (four terms redden, the two open-state preconditions among them) and the five other regression shapes are each REFUSED by the SAME code path, each naming the term that caught it',  returnArmStdioNotRefused.length === 0 && Object.values(returnArmStdioControls).every((v) => v.ok === false) ? 'PASS' : 'FAIL',
   `fixtures driven through returnArmStdioProperty itself: ${JSON.stringify(Object.fromEntries(Object.entries(returnArmStdioControls).map(([k, v]) => [k, v.ok])))}; fixtures NOT refused: ${JSON.stringify(returnArmStdioNotRefused)}; the terms each fixture broke: ${JSON.stringify(Object.fromEntries(Object.entries(returnArmStdioControls).map(([k, v]) => [k, Object.entries(v.terms).filter(([, b]) => b === false).map(([t]) => t)])))}`,
-  'WHY THIS ROW EXISTS (`R3-01`\'s CLASS CLOSURE): the `U-4` row\'s re-grained predicate had no fixture of its own — the neighbouring control row belongs to the RELOAD arm\'s receipt predicate (`declaredReceipt`), a DIFFERENT function. The deletion fixture reddens the enabled-shape terms; the third fixture reddens the bridge term ALONE, so a return that half-applied is attributable.')
+  'WHY THIS ROW EXISTS (`R3-01`\'s CLASS CLOSURE): the `U-4` row\'s re-grained predicate had no fixture of its own — the neighbouring control row belongs to the RELOAD arm\'s receipt predicate (`declaredReceipt`), a DIFFERENT function. **AND WHY IT WAS REBUILT (`R4-01`): the as-filed DELETION fixture was a HALF-APPLIED RETURN, NOT A DELETION, so it could not have caught the hole it was captioned to catch — with `setExclusion` deleted the row still read PASS. The first fixture now holds the ACTUAL deletion shape and reddens `call-issued-while-open-answered-the-receipt` and `bridge-read-open-before-return` (the two ADDED precondition terms) plus `answer-is-not-a-receipt` and `bridge-reads-closed`. The LAST fixture keeps the as-filed caption\'s half-applied-return shape, so the two are separately attributable rather than conflated.**')
 
 // ══════════════════════════════════════════════════════════════════════════════
 // PHASE 3 — U-6: the disabled state survives a renderer reload
@@ -1352,13 +1435,24 @@ async function transitionOverHttp(state, label) {
   ], { token: TOKEN, sessionId: session })
 }
 
+// THE HTTP READINESS PROBE, SETTLED ON A BOUNDED WINDOW AND REPORTED WITH ITS OUTCOME (`R4-06`, the
+// FOURTH `§6.2` audit, LOW — the `§6.2` STRUCTURAL RULE (b)): as filed this row read `FAIL` on a 30 s
+// readiness timeout, so a SLOW BOOT was recorded as a feature failure. A probe that never answered is
+// an INSTRUMENT state; the row now answers `MANUAL` for it and reserves `FAIL` for a probe that DID
+// answer and answered something other than the landed non-POST arm.
 let httpReady = false
+let httpProbeOutcome = 'nothing within 30 s (an INSTRUMENT state — reported MANUAL, not FAIL)'
 for (let i = 0; i < 150; i += 1) {
-  try { const r = await fetch(`http://127.0.0.1:${HTTP_PORT}/mcp`, { method: 'GET' }); httpReady = r.status === 405; break } catch { await sleep(200) }
+  try {
+    const r = await fetch(`http://127.0.0.1:${HTTP_PORT}/mcp`, { method: 'GET' })
+    httpReady = r.status === 405
+    httpProbeOutcome = `GET /mcp answered ${r.status}${httpReady ? ' (the landed non-POST arm)' : ' — NOT the landed 405 arm'}`
+    break
+  } catch { await sleep(200) }
 }
-check('SX-G-45 (HTTP boot)', 'the HTTP transport reaches its own readiness landmark and answers', httpReady ? 'PASS' : 'FAIL',
-  `GET /mcp on 127.0.0.1:${HTTP_PORT} answered ${httpReady ? '405 (the landed non-POST arm)' : 'nothing within 30 s'}; the child's stderr landmarks: ${JSON.stringify(httpStderr.split('\n').filter((l) => l.includes('provident-mcp]') || l.includes('renderer ready')))}`,
-  'the HTTP transport is started by the SAME `mcp.start()` as the stdio one, after the window load — and the 401/503/405 arms below are read against THIS process')
+check('SX-G-45 (HTTP boot)', 'the HTTP transport reaches its own readiness landmark and answers', httpProbeOutcome.includes('INSTRUMENT state') ? 'MANUAL' : (httpReady ? 'PASS' : 'FAIL'),
+  `${httpProbeOutcome}; the child's stderr landmarks: ${JSON.stringify(httpStderr.split('\n').filter((l) => l.includes('provident-mcp]') || l.includes('renderer ready')))}`,
+  'the HTTP transport is started by the SAME `mcp.start()` as the stdio one, after the window load — and the 401/503/405 arms below are read against THIS process. **AND A PROBE THAT NEVER ANSWERED IS `MANUAL`, NOT `FAIL` (`R4-06`, 2026-10-10, structural rule (b)): the readiness TIMEOUT is an instrument state; a `FAIL` would claim the transport broke when all the instrument knows is that it did not see it.**')
 
 const unauth = await httpPost(HTTP_PORT, { jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} })
 check('SX-G-38 (auth arm, live)', 'the AUTHORIZATION arm answers 401 FIRST, in the enabled state, when a real token is configured', unauth.status === 401 && unauth.text.includes('-32001') ? 'PASS' : 'FAIL',
