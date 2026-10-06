@@ -1083,7 +1083,24 @@ implicit.**
      (`L` `:46`); **so `executeJavaScript`/`debugger` are BOTH unavailable to a conforming battery.** **AND A NEW
      `scripts/*.mjs` DRIVER IS NOT A LOOPHOLE — IT WOULD REDDEN `tests/ui-leg-contract.test.ts`'s HELPER-CANDIDATE
      RULE** (`AGENTS.md` item 4's hazard note: the `L-1` row pins the `scripts` KEY SET, so a new key reddens it and a
-     config change cannot satisfy it). **Therefore `MANUAL` is the DECLARED instrument for the gesture rows, and a row
+     config change cannot satisfy it).
+     **⟶ ANNOTATION SITE, ADDED 2026-10-09 BY THE GATE-6 LIVE-SCENARIO RUNNER (`RCA-8(d)` ANNOTATE-BESIDE: the
+     sentence ABOVE stands BYTE-FOR-BYTE and is NOT rewritten — this note is placed BESIDE it, in the same cell).**
+     **THE SENTENCE ABOVE IS VERIFIED FALSE, IN BOTH ITS HALVES, AND THE FALSIFICATION IS STATED WITH ITS SITE.**
+     **(i) A NEW, UNIMPORTED `scripts/*.mjs` FILE DOES NOT REDDEN THE HELPER-CANDIDATE RULE.** That rule is
+     `HELPER_NAME = HELPERS.find((f) => importsHelper(DIVERGENCE_SRC, f)) ?? HELPERS[0] ?? null`
+     (`L` `tests/ui-leg-contract.test.ts:110`): it selects the candidate **the DIVERGENCE LEG IMPORTS** — the landed
+     `scripts/electron-spawn.mjs` — so an unimported new file is **never selected** unless the imported one disappears;
+     the *"IT WOULD REDDEN"* clause has no mechanism behind it. **(ii) THE REAL PINNED HAZARD IS THE OTHER HALF OF THE
+     SAME CONTRACT FILE — THE `package.json` `scripts` KEY SET**, which the `L-1` row pins as a SET in BOTH directions
+     (`LANDED_SCRIPT_KEYS` — the landed keys plus exactly `ui`, `L` `tests/ui-leg-contract.test.ts:164-201`): **a new
+     KEY reddens it, a new FILE does not, and a config change cannot satisfy it** — which is the hazard `AGENTS.md`
+     item 4's own note names, and the one the as-filed sentence attached to the wrong thing. **CONSEQUENCE, RECORDED SO
+     NO LATER PASS RE-DERIVES IT:** the `scripts/` route is **PERMISSIBLE** for a live battery (a driver there adds no
+     `scripts` key and is not selected by the helper rule), and the gate-6 driver's actual reason for living under
+     `tests/**` is **non-structural** (it belongs with the batteries it re-runs). **THIS ANNOTATION IS THE ONLY EDIT
+     THIS PASS MAKES TO THIS FILE** (the gate-6 live battery's `F-A17` disposition; the measurement is at
+     `docs/specs/secure-exclusion-live-battery.md` `§4b` `F-A17`). **Authority `T`; class `OBSERVATION`.** **Therefore `MANUAL` is the DECLARED instrument for the gesture rows, and a row
      that names "the live gate" or "the leg" instead names NO instrument and FAILS** (`§2.4` item 7(3)'s closed set).
      **THE `OWED`'s OWNER AND POSITIVE REVISIT CONDITION**: owner **the live-scenario runner / the supervisor, at gate
      6**; revisit condition **gate 6 runs** — then the matrix's values, its U-row count and the report's

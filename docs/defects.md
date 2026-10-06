@@ -301,6 +301,17 @@ favor of the published surfaces.
 
 ## FIXED (in this repo)
 
+**⟶ OWED HOST CARRY, FILED 2026-10-09 BY THE GATE-6 LIVE-SCENARIO RUNNER (unit `U-SECURE-EXCLUSION`, `S1`; the
+`RCA-8(d)` ANNOTATE-BESIDE convention — nothing below is rewritten and none of it is renumbered).** **This block is an
+OPEN host carry, and it is filed here rather than fixed because its site lies OUTSIDE the unit's declared diff scope.**
+The finding is the second `§6.2` read-only audit's `F-A18` over the gate-6 live battery; that pass's edit scope is
+`docs/specs/secure-exclusion.md` `§5.1` item 1, and the pass did **not** widen a diff scope to fix a comment
+(`docs/specs/secure-exclusion-live-battery.md` `§4b` `F-A18` carries the disposition and the scope test).
+
+| ID | The finding (as measured) | Observed / repro | Suspected cause | Disposition owed |
+| --- | --- | --- | --- | --- |
+| **SEX-GATE-COMMENT-CITE** *(filed 2026-10-09, gate 6, from the second `§6.2` audit's `F-A18`)* | **A comment in `src/main/main.ts` cites a STALE line anchor for the MCP server's live gate accessor** — the comment reads `L` `mcp-server.ts:695`, but **`:695` is a docstring** and the accessor `get gate(): SecurityGate { return this._gate }` sits at **`:742`**. | Read the comment at `src/main/main.ts:381` (inside the `IPC_SECURITY_GET` handler's rationale block — the one explaining why the read is off the server's LIVE gate and not the boot-constructed one), then read `src/main/mcp-server.ts:695` (a docstring for `connectMockTransport`) and `:742` (`get gate(): SecurityGate`). **No live behaviour is affected** — this is a citation defect in a comment, not a code defect — but it is the `[H]`-layer explanation a later reader will follow, so the anchor is worth correcting. | **A line anchor written before a later insert moved the accessor** — the drift class this repo records elsewhere (`R13-HOST-FIX`'s own "cite the row BY NAME, never by line" clause at `docs/decisions.md:58`). The unit's landed `afd3212` fix moved the accessor's neighbourhood. | **OWNER: `S1`'s IMPLEMENTER, on their next touch of `src/main/main.ts`.** Correct the citation to `mcp-server.ts:742` (`get gate(): SecurityGate`) — or, preferred because it cannot drift again, cite the accessor **BY NAME** (`mcp.gate`, the server's own live accessor) with the line as a dated parenthetical. **NOT fixed by the gate-6 pass:** `src/main/main.ts` IS on `§5.1` item 1's ALLOWED list, but that clause names the sites it permits in that file (the gate construction site's initialization, the ONE new channel constant's handler, and the additive `exclusion` member on the two `IPC_SECURITY_*` responses) — **this comment is none of them**, so correcting it would be an undeclared `src/**` edit. **No `docs/HANDOFF.md` round and no upstream issue is owed** (HOST-owned; `R13-HOST-FIX` precedent). |
+
 **Convention:** this section holds rows that were filed in this file but are **HOST-owned** —
 i.e. defects fixed **here**, never handed off (`## OPEN`'s caveat; the `R13-HOST-FIX`
 precedent, `docs/decisions.md:39`) *(row cited by name: `R13-HOST-FIX`; `:39` was the pre-amendment anchor and is now `GSESSION-THE-DISPOSAL-GOVERNS-A-MID-CALL-BEGIN`; the row sits at `:58` — dated clause added 2026-09-29 by the gate-7/8 repair pass, finding `PF-NC-1`/`PF-NC-2`/`PF-NC-3`; `RCA-8(d)`: the as-filed anchor is kept visible and is not rewritten)*. The former placeholder — _"(none this pass — the battery
