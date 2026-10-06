@@ -515,13 +515,98 @@ async function loadSecurityExports(): Promise<Record<string, unknown>> {
 
 /** §2.2 item 2(a) — the `IPC_SECURITY_*` handler's BODY window, read off the
  *  landed `main.ts` source (the sibling's `setHandlerSource()` shape: anchored
- *  through the handler's own closing so a nested `})` never truncates it). */
+ *  through the handler's own closing so a nested `})` never truncates it).
+ *
+ *  ── INSTRUMENT REPAIR (2026-10-05, TestWriter; outcome (a) of the kick-back
+ *  rule — the TEST, not the spec, was wrong; the supervisor re-measured the
+ *  defect first-hand) ──────────────────────────────────────────────────────
+ *  THE DEFECT THIS REPLACES: the previous form anchored on `src.indexOf(
+ *  channelConst + ',' )` — the FIRST occurrence of the constant.  In `main.ts`
+ *  that first occurrence is NOT the handler: it is the SHARED IMPORT STATEMENT
+ *  on line 9.  Measured offsets, landed `src/main/main.ts`:
+ *
+ *      channel             first occurrence   real registration site
+ *      IPC_READY           char     542      ipcMain.on(…)     char 22823
+ *      IPC_SECURITY_GET    char     553      ipcMain.handle(…) char 19691
+ *      IPC_SECURITY_SET    char     571      ipcMain.handle(…) char 19753
+ *
+ *  All three anchors fell inside ONE 59-char span of the single `import { … }
+ *  from '../shared/types.js'` statement, ~20 000 characters BEFORE any handler,
+ *  so the 1800-char forward window never reached a handler and its `\n  })`
+ *  terminator never fired.  Because the three anchors coincidentally coincided,
+ *  all three "bodies" were THE SAME REGION — a substring present in one was
+ *  present in all three — which made `FS-EX-6` (the `IPC_READY` window must NOT
+ *  contain `exclusion`) and `M-EX-7` (the `IPC_SECURITY_GET`/`SET` windows MUST
+ *  contain it) mutually unsatisfiable by ANY conforming implementation.  The
+ *  malformed INSTRUMENT was at fault, never the contract: §2.4 item 5(a) and
+ *  §2.4 item 4 are each individually satisfiable and mutually consistent.
+ *  Every assertion's MEANING is byte-identical after this repair — no property,
+ *  token, term, cap or strategy id was weakened, deleted or re-worded.
+ *
+ *  THE ANCHOR: the registration site itself — `ipcMain.handle(<const>` /
+ *  `ipcMain.on(<const>` — with a fallback to the LAST occurrence of the
+ *  constant (a handler is always registered AFTER the module's imports, so the
+ *  last occurrence is the handler site even under a registration spelling this
+ *  helper does not anticipate).  A helper that silently returns the import line
+ *  can no longer pass: the positive controls in the §4.1.3 describe block pin
+ *  that the extracted bodies are REAL handler bodies and that the three of them
+ *  are DISTINCT strings (the coincidence was the root cause; a control that
+ *  pins distinctness prevents its return).
+ *
+ *  THE WINDOW: 1800 chars is RETAINED and is proven sufficient by measurement,
+ *  not by guess — each real body's `\n  })` terminator offset from its anchor:
+ *
+ *      IPC_READY          terminator at +126   (whole body 126 chars)
+ *      IPC_SECURITY_GET   terminator at +1176  (whole body 1176 chars)
+ *      IPC_SECURITY_SET   terminator at +1114  (whole body 1114 chars)
+ *
+ *  All three terminators fire strictly inside the 1800-char window, so each
+ *  returned body is that handler's WHOLE body.  A body that outgrew the window
+ *  would NOT be silently truncated at 1800: the controls' handler-signature
+ *  pin fails first. */
+const HANDLER_BODY_WINDOW = 1800
+
+function handlerAnchorOf(src: string, channelConst: string): number {
+  const handleAt = Math.max(
+    src.lastIndexOf(`ipcMain.handle(${channelConst}`),
+    src.lastIndexOf(`ipcMain.on(${channelConst}`),
+  )
+  return handleAt === -1 ? src.lastIndexOf(`${channelConst},`) : handleAt
+}
+
 function handlerBodyOf(src: string, channelConst: string): string {
+  const start = handlerAnchorOf(src, channelConst)
+  if (start === -1) return ''
+  const window = src.slice(start, start + HANDLER_BODY_WINDOW)
+  const endIdx = window.indexOf('\n  })')
+  return endIdx === -1 ? window : window.slice(0, endIdx)
+}
+
+/** CONTROL ONLY — the PRE-REPAIR form of `handlerBodyOf()`, kept verbatim so
+ *  the controls can drive it and prove they FAIL against it (a control that
+ *  only ever passes is not a control).  NEVER used by an assertion of the
+ *  contract: it exists solely as the negative half of CONTROLS 1 and 2. */
+function oldBrokenHandlerBodyOf(src: string, channelConst: string): string {
   const start = src.indexOf(`${channelConst},`)
   if (start === -1) return ''
   const window = src.slice(start, start + 1800)
   const endIdx = window.indexOf('\n  })')
   return endIdx === -1 ? window : window.slice(0, endIdx)
+}
+
+/** CONTROL ONLY — the `main.ts` statement that mentions every security channel
+ *  constant.  This is the statement the pre-repair anchor resolved into, so it
+ *  is the region the repaired helper must NOT return.  Located by its own
+ *  content, never by a line number (the sibling's line-pins drift; this pin
+ *  does not); measured 216 chars at char 510..726 in the landed `main.ts`. */
+function importLineOf(src: string): string {
+  return src.split('\n').find((l) => l.includes('IPC_SECURITY_GET') && l.includes('IPC_SECURITY_SET') && l.includes('IPC_READY')) ?? ''
+}
+
+/** CONTROL ONLY — that statement's own offset, so the negative controls can
+ *  assert the old form's bodies begin INSIDE it without a bare magic number. */
+function importLineAtOf(src: string): number {
+  return src.indexOf(importLineOf(src))
 }
 
 /** PAR-8 — the manual-UI transition channel's answered form, read through the
@@ -2728,5 +2813,134 @@ describe('S1 §4.1.3/§4.3 THE RED\'S FAILING CLASS (recorded, not narrated)', (
       classes.map(([name, a]) => `  ${a ? 'ABSENT ' : 'present'} ${name}`).join('\n') + '\n')
     expect(red.length, '§4.1.3 — the red set\'s absent-symbol classes are DRIVEN against the live tree; at RED the declared surfaces do not exist, so their classes read ABSENT').toBeGreaterThan(0)
     expect(typeof surface.reason, 'the resolver reports its absence reason (module absence is DATA, never an error)').toBe('string')
+  })
+
+  /* ── THE INSTRUMENT'S POSITIVE CONTROLS (2026-10-05, the malformed-test
+   * repair's controls — §2.2 item 2(a)).  `handlerBodyOf()` is the ONE
+   * instrument behind seven behavioural assertions across four rows, and the
+   * defect it was repaired for was SILENT: the broken form returned a
+   * 1800-char slice of the shared `import` statement for every channel, and
+   * every one of those seven assertions read a window that was coincidentally
+   * IDENTICAL across the three channels.  A silent instrument is worse than a
+   * failing one, so the repair is pinned by three controls that FAIL against
+   * the old form and pass against the new one.  Each control is written as a
+   * control PAIR: the positive half (the new form is sound) and the negative
+   * half (the OLD BROKEN FORM is driven in-line and MUST be caught), so the
+   * controls cannot themselves become vacuous. */
+
+  it('(CONTROL 1) §2.2 item 2(a) — `handlerBodyOf()` reads a HANDLER BODY, never an import region: each extracted body opens with its own registration call', () => {
+    const src = sourceOf(MAIN_SRC)
+    const expectations: Array<[string, string]> = [
+      ['IPC_READY', 'ipcMain.on(IPC_READY'],
+      ['IPC_SECURITY_GET', 'ipcMain.handle(IPC_SECURITY_GET'],
+      ['IPC_SECURITY_SET', 'ipcMain.handle(IPC_SECURITY_SET'],
+    ]
+    for (const [channel, opener] of expectations) {
+      const body = handlerBodyOf(src, channel)
+      expect(body.length, `CONTROL 1 — the \`${channel}\` body is non-empty`).toBeGreaterThan(0)
+      expect(body.startsWith(opener),
+        `CONTROL 1 — the extracted \`${channel}\` body IS that channel's registration site (\`${opener}\`), not an import region. The repaired anchor is \`ipcMain.handle(<const>\`/\`ipcMain.on(<const>\`; the pre-repair form anchored on the FIRST occurrence of the constant, which is line 9's shared \`import { … } from '../shared/types.js'\` — measured at char 542/553/571 against real registration sites at 22823/19691/19753.`)
+        .toBe(true)
+      expect(body.includes(importLineOf(src)),
+        `CONTROL 1 — the extracted \`${channel}\` body does NOT contain the shared import statement (the import-only text a silently-returned import region would carry verbatim)`).toBe(false)
+    }
+    // the NEGATIVE half — the OLD BROKEN FORM, driven in-line. It must be caught.
+    const oldBodies = expectations.map(([channel]) => oldBrokenHandlerBodyOf(src, channel))
+    expect(oldBodies.every((b) => b !== '' && b.length === 1800),
+      'CONTROL 1 (negative) — the OLD broken form returned a FULL-WINDOW body for every channel (1800 chars, measured) with NO terminator firing, because all three anchors landed inside the shared import statement ~20 000 chars before any handler: measured anchors 542/553/571, all < the import line\'s end at 726. Measured old lengths: ' + oldBodies.map((b) => b.length).join('/'))
+      .toBe(true)
+    expect(oldBodies.every((b) => /\n  \}\)/.test(b)),
+      'CONTROL 1 (negative) — NOT ONE old-form body contains the `\\n  })` handler terminator: none of them reaches a handler at all, so none is a handler body. This is the silent-pass mode the repair removes (the old form returned a plausible-looking non-empty string for every channel and every assertion that only checked `.length > 0` would read it as a body).')
+      .toBe(false)
+    expect(oldBodies.every((b) => sourceOf(MAIN_SRC).indexOf(b) < importLineAtOf(src) + importLineOf(src).length),
+      'CONTROL 1 (negative) — EVERY old-form body begins INSIDE the shared import statement (each is a slice of the region between the constant\'s first occurrence and 1800 chars on), which is exactly why the three windows coincided and why the control FAILS against the old form. Measured offset of each old anchor into that statement: IPC_READY 32, IPC_SECURITY_GET 43, IPC_SECURITY_SET 61.')
+      .toBe(true)
+  })
+
+  it('(CONTROL 2) §2.2 item 2(a) — the three extracted bodies are DISTINCT strings (the coincidence was the root cause; distinctness prevents its return)', () => {
+    const src = sourceOf(MAIN_SRC)
+    const ready = handlerBodyOf(src, 'IPC_READY')
+    const get = handlerBodyOf(src, 'IPC_SECURITY_GET')
+    const set = handlerBodyOf(src, 'IPC_SECURITY_SET')
+    expect(ready).not.toBe(get)
+    expect(get).not.toBe(set)
+    expect(ready).not.toBe(set)
+    // DISTINCTNESS IN THE SENSE THAT MATTERS: each window must TERMINATE at its
+    // own handler's closing `\n  })` and must OPEN at its own registration site.
+    // String inequality alone does NOT pin that — the pre-repair windows were
+    // three 1800-char slices of ONE import statement, offset by 11 and 18 chars,
+    // and were therefore UNEQUAL strings while still being the SAME region.  So
+    // the pin is the (anchor-start, terminator-end) PAIR: three different
+    // handler extents, none of which is a shift of another.  Note that the
+    // regions may legitimately NEST (the GET handler is a one-line
+    // `() => securityStore.get()`, so its 1800-char forward window necessarily
+    // runs on into the SET registration which is 62 chars later) — nesting of
+    // the RAW WINDOW is fine; what must not happen is the same region answering
+    // for all three channels, which the extent pair below forbids.
+    const extents: Array<[string, number, number]> = [
+      ['IPC_READY', handlerAnchorOf(src, 'IPC_READY'), handlerAnchorOf(src, 'IPC_READY') + ready.length],
+      ['IPC_SECURITY_GET', handlerAnchorOf(src, 'IPC_SECURITY_GET'), handlerAnchorOf(src, 'IPC_SECURITY_GET') + get.length],
+      ['IPC_SECURITY_SET', handlerAnchorOf(src, 'IPC_SECURITY_SET'), handlerAnchorOf(src, 'IPC_SECURITY_SET') + set.length],
+    ]
+    expect(new Set(extents.map(([n, s, e]) => `${s}:${e}`)).size,
+      'CONTROL 2 — the three channels resolve to THREE different (start,end) handler extents in `main.ts`: ' + extents.map(([n, s, e]) => `${n}=[${s},${e})`).join(' '))
+      .toBe(3)
+    // the three bodies must also have three DIFFERENT extents — a shift of one
+    // region (the pre-repair failure mode) would give three bodies of the SAME
+    // length spanning nearly the same characters.
+    expect(new Set([ready.length, get.length, set.length]).size,
+      'CONTROL 2 — the three bodies have three different lengths (measured 126 / 1176 / 1114), so no one is another shifted by a constant. The pre-repair form returned three 1800-char bodies (identical lengths).')
+      .toBe(3)
+    // and the region test the old form cannot satisfy: a HANDLER BODY contains
+    // a registration call; an import-prologue slice contains none.
+    for (const [channel, body] of [['IPC_READY', ready], ['IPC_SECURITY_GET', get], ['IPC_SECURITY_SET', set]] as Array<[string, string]>) {
+      expect((body.match(/ipcMain\.(handle|on)\(/g) ?? []).length,
+        `CONTROL 2 — the \`${channel}\` window contains a registration call, i.e. it is a handler region and not an import-prologue slice (measured 1 for READY, 2 for GET — it abuts the SET registration — and 1 for SET; the old form measured 0 for all three).`)
+        .toBeGreaterThan(0)
+    }
+    // every window's own terminator is inside it, so each has a real handler end
+    for (const [channel] of [['IPC_READY'], ['IPC_SECURITY_GET'], ['IPC_SECURITY_SET']] as Array<[string]>) {
+      const start = handlerAnchorOf(src, channel)
+      expect(src.slice(start, start + HANDLER_BODY_WINDOW).indexOf('\n  })'),
+        `CONTROL 2 — the \`${channel}\` window carries its own handler terminator (measured READY +126, GET +1176, SET +1114 — three different offsets, so the three windows are not one region read three times)`).toBeGreaterThan(-1)
+    }
+    // the NEGATIVE half — the OLD BROKEN FORM, driven in-line. It must be caught.
+    const oldBodies = [
+      oldBrokenHandlerBodyOf(src, 'IPC_READY'),
+      oldBrokenHandlerBodyOf(src, 'IPC_SECURITY_GET'),
+      oldBrokenHandlerBodyOf(src, 'IPC_SECURITY_SET'),
+    ]
+    expect(oldBodies.filter((b) => (b.match(/ipcMain\.(handle|on)\(/g) ?? []).length === 0).length,
+      'CONTROL 2 (negative) — NOT ONE old-form window contains a registration call (measured 0/0/0): every one of them is an import-prologue slice, so the region pin above FAILS against the old form. That is the coincidence this control forbids.')
+      .toBe(3)
+    expect(oldBodies.filter((b) => b.startsWith('IPC_')).length,
+      'CONTROL 2 (negative) — every OLD window opens mid-import-statement (`IPC_…`), so all three read the SAME import text. Measured heads: ' + oldBodies.map((b) => JSON.stringify(b.slice(0, 30))).join(' | ')).toBe(3)
+    // and the alignment: every old anchor lies in the import prologue, before
+    // the first registration site in the whole file.
+    expect(importLineAtOf(src) + importLineOf(src).length < src.indexOf('ipcMain.handle('),
+      'CONTROL 2 (negative) — the shared import statement ends before the file\'s FIRST registration site, so every old anchor lay ~20 000 chars before any handler.').toBe(true)
+  })
+
+  it('(CONTROL 3) §2.2 item 2(a) — the window provably contains each handler\'s WHOLE body: the terminator fires inside it, and the body reaches the handler\'s real end', () => {
+    const src = sourceOf(MAIN_SRC)
+    // (a) the terminator fires strictly inside the window for all three —
+    //     measured at +126 (READY), +1176 (GET), +1114 (SET) from each anchor,
+    //     all well short of the 1800-char window, so no body is truncated by it.
+    for (const channel of ['IPC_READY', 'IPC_SECURITY_GET', 'IPC_SECURITY_SET']) {
+      const start = handlerAnchorOf(src, channel)
+      expect(start, `CONTROL 3 — \`${channel}\` has a registration anchor`).toBeGreaterThan(-1)
+      const terminator = src.indexOf('\n  })', start)
+      expect(terminator - start,
+        `CONTROL 3 — the \`${channel}\` body's \`\\n  })\` terminator (measured +126/+1176/+1114) fires strictly inside the ${HANDLER_BODY_WINDOW}-char window, so the returned body is the WHOLE body and not a window-truncated fragment`).toBeLessThan(HANDLER_BODY_WINDOW)
+      expect(handlerBodyOf(src, channel).length, `CONTROL 3 — \`${channel}\`'s returned body is exactly its terminator-bounded length`).toBe(terminator - start)
+    }
+    // (b) the READY reading is genuinely reachable: the body it returns carries
+    //     `markReady` and NOT one exclusion token.  This is the SAME reading
+    //     FS-EX-6 takes, asserted here as an instrument control so a helper that
+    //     silently returned an import region could never make FS-EX-6 vacuous
+    //     in EITHER direction.
+    const ready = handlerBodyOf(src, 'IPC_READY')
+    expect(/markReady/.test(ready), 'CONTROL 3 — the IPC_READY window reaches `markReady` (~22k chars after the import line the old form anchored on)').toBe(true)
+    expect(/exclusion/i.test(ready), 'CONTROL 3 — and it carries NO exclusion token, so FS-EX-6\'s "not cleared by markReady()" reading is expressible and satisfiable').toBe(false)
   })
 })
