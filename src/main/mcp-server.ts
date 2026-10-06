@@ -588,6 +588,12 @@ export class ProvidentMcpServer {
    *  Returns the underlying Runtime snapshot (JSON-safe). A concrete node URI
    *  resolves to the `{nodeId}` template. */
   async readResource(uri: string): Promise<unknown> {
+    // `§2.2` item 2(a) — THE INVOCATION TURN, applied on the RESOURCE surface too and BEFORE any
+    // lookup or dispatch. A resource read while the tier is open answers the declared refusal
+    // VALUE whether or not the handle happens to be registered on this instance: the refusal is a
+    // property of the SURFACE (`D-SCOPE`'s resource member), never of a registration side effect.
+    const refused = exclusionTurn(this._gate)
+    if (refused !== null) return JSON.parse(refused.content[0].text) as unknown
     let res = this.resources.get(uri)
     let variables: Record<string, string> = {}
     if (!res) {
