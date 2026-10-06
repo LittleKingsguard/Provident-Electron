@@ -33,6 +33,22 @@
 //     code: the record's exit-code figures stay comparable, and no run may read the battery green
 //     while a row is `MANUAL`.
 //
+// ⟶ THE 2026-10-11 CLOSE-OUT HARDENING (THE NINTH, TARGETED `§6.2` ROUND'S `A-9-01` AND `A-9-02`, BOTH LOW;
+//    the round returned `NOT-EMPTY` with FOUR LOW findings, NONE blocking, and stated that the battery MAY BE
+//    DECLARED GREEN at gate 6). Two INSTRUMENT sites change and NOTHING else does: **THE ROW COUNT IS UNCHANGED
+//    AT `42`; no predicate, no fixture, no verdict expression and no term moved; no `src/**` byte is touched.**
+//   · `A-9-01` — the DECLARED set is EXTENDED by the nine DELETION/RED-FAIL CONTROL rows that consume a
+//     channel-derived reading in their own FIXTURE BASE (eight channel `A`, one channel `HTTP`), so the set the
+//     map's own two-class comment describes is complete for those too: `17 → 26 = 24 on channel A + 2 on channel
+//     HTTP`, and the summary prints the count WITH its terms. **THE FINDING'S LITERAL CLAIM — that the pane-realm
+//     row and the app-graph row are NOT members — is REFUTED BY MEASUREMENT** (both ids evaluate equal to their
+//     `check()` call sites; the guard fires for both on a dead channel), and the class it points at one row over
+//     is what this edit declares. See the map's own `⟶ EXTENDED BESIDE` note and the record `§4i`.
+//   · `A-9-02` — the third exit limb is keyed off `deadDeclared.length > 0` as well, so a channel dying AFTER the
+//     last declared row was recorded can no longer print `✗ NOT A GREEN BATTERY` and exit `0`; and the two stale
+//     sentences that read *"the EXIT CODE keeps its landed meaning (non-zero ⟺ at least one FAIL)"* (this header's
+//     own `A-8-04` block and the summary's) are corrected BESIDE, their as-filed bytes kept (`RCA-8(d)`).
+//
 // ⟶ THE 2026-10-10 REPAIR PASS (FOURTH `§6.2` AUDIT, `R4-01`…`R4-08`) — WHAT IT CHANGED IN THIS
 // DRIVER, EACH WITH THE FINDING IT CLOSES. Every one of them is INSTRUMENT-side; `src/**` is
 // untouched. **THE ROW COUNT IS UNCHANGED AT `42`**: no row was added and no row was removed — the
@@ -197,6 +213,35 @@ const CDP_DEPENDENT_ROWS = {
   'U-6 (restart arm) / SX-G-46/47 — RE-INSTRUMENTED ON BOOT A\'S OWN PROFILE': 'A',
   'SX-G-44 (live)': 'A',
   'U-4 (return arm, HTTP) — RE-GROUNDED ON THE MANUAL-UI PATH': 'HTTP',
+
+  // ⟶ EXTENDED BESIDE, 2026-10-11 (the NINTH, TARGETED `§6.2` round's `A-9-01`, LOW; `RCA-8(d)`: every
+  // byte of the two-class comment above is KEPT and is NOT rewritten). **THE FINDING'S LITERAL CLAIM WAS
+  // REFUTED BY MEASUREMENT AND THE CLASS IT POINTS AT IS DECLARED HERE.** (a) REFUTED: the two rows it named
+  // — the pane-realm row and the app-graph row (`:740`/`:791` of the as-filed bytes) — ARE members of this
+  // map: evaluating both literals and comparing them answers `true` for each, so a dead channel A already
+  // sends both to `MANUAL`. (b) WHAT IS REAL, ONE ROW OVER: this map held the rows that CALL the channel's
+  // methods and the rows whose SUBJECT is a state the channel PERFORMED, but NOT the nine
+  // DELETION/RED-FAIL CONTROL rows that CONSUME a channel-derived reading in their own FIXTURE BASE
+  // (`panePaintedLiveRead()` / `isolationLiveReading` / `gestureLive` / `siblingLive` / `openStateRefusalLive`
+  // / `registryLive` / `returnArmStdioLive` / `reloadOperatorViewLive` / `httpReturnArmLive` — eight on channel
+  // `A`, one on `HTTP`). On a channel dead at boot their fixtures are still refused, but they are refused on a
+  // term the LIVE reading has already falsified (e.g. `pane-realm-has-toggle` fires first on the app-graph
+  // control's fixtures), so those nine rows could read `PASS` while the reading their own evidence quotes was
+  // `false`/`undefined` — the exact vacuity the finding names. THEY ARE DECLARED HERE: the declared set is now
+  // `26 = 24 on channel A + 2 on channel HTTP` (printed, with its terms, by the summary's INSTRUMENT STATE
+  // line), and a dead channel turns any of the nine `MANUAL` instead of `PASS`. **THE MUTATION THAT STILL
+  // BITES:** drop the first CDP frame (the throwaway `DEADPATH` control) → the `24` channel-A rows read
+  // `MANUAL` and the run exits `3`, never `0` (record `§4i`); with both channels LIVE nothing moves, so the
+  // `42`-row result and every row's verdict are unperturbed.
+  'U-1 / SX-G-59/60 — DELETION/RED-FAIL CONTROL (NEW 2026-10-09, the third `§6.2` audit\'s `R3-01`)': 'A',
+  'U-5 / SX-G-65 (app graph) — DELETION/RED-FAIL CONTROL (NEW 2026-10-09, the third `§6.2` audit\'s `R3-01`)': 'A',
+  'U-2 (the gesture half) — DELETION/RED-FAIL CONTROL (NEW 2026-10-09, the third `§6.2` audit\'s `R3-01`)': 'A',
+  'U-3 (via the bridge) + `SX-G-57` (live) — DELETION/RED-FAIL CONTROL (NEW 2026-10-09, the third `§6.2` audit\'s `R3-01`)': 'A',
+  'U-2 (registry) / U-7 — DELETION/RED-FAIL CONTROL (NEW 2026-10-09, the `§6.2` audit\'s `F-A1`; EXTENDED by the third audit\'s `R3-01` with `U-7`\'s own term)': 'A',
+  'U-4 (return arm) — DELETION/RED-FAIL CONTROL (NEW 2026-10-09, `R3-01`; THE DELETION FIXTURE REBUILT 2026-10-10 BY THE FOURTH AUDIT\'S `R4-01`)': 'A',
+  'U-6 (reload arm: main-side state + the operator\'s view) — DELETION/RED-FAIL CONTROL (NEW 2026-10-09, the third `§6.2` audit\'s `R3-01`)': 'A',
+  'U-6 (restart arm) — DELETION/RED-FAIL CONTROL': 'A',
+  'U-4 (return arm, HTTP) — DELETION/RED-FAIL CONTROL (NEW 2026-10-09, the third `§6.2` audit\'s `R3-01`)': 'HTTP',
 }
 
 // ---- records -----------------------------------------------------------------
@@ -2018,10 +2063,22 @@ if (TALLY.FAIL === undefined) console.log('  no row contradicted the clause it c
 // ⟶ `A-8-04`: THE INSTRUMENT'S OWN STATE IS PRINTED WITH THE TALLY, so a dead channel can
 // never be read as a green battery. The EXIT CODE keeps its landed meaning (non-zero ⟺ at
 // least one FAIL); what a dead channel changes is that the run FINISHES and SAYS SO.
+//   ⟶ CORRECTED BESIDE 2026-10-11 (the NINTH, TARGETED `§6.2` round's `A-9-02`, LOW; `RCA-8(d)`:
+//   the two lines above are KEPT BYTE-FOR-BYTE and are NOT the operative reading). "non-zero ⟺
+//   at least one FAIL" was ALREADY stale when it was written: the `A-8-04` limb directly below
+//   added a `3` for a run in which a DECLARED row read `MANUAL`, so the operative meanings are
+//   `0` ⟺ every row PASS and nothing declared-dependent read `MANUAL`; `1` ⟺ at least one `FAIL`;
+//   `3` ⟺ a declared-dependent row read `MANUAL` OR a declared channel DIED at any point. That
+//   sentence is what the exit expression now implements (see its own annotation below): a run
+//   that prints `✗ NOT A GREEN BATTERY` can no longer exit `0`.
 const deadDeclared = Object.entries(CDP_DEPENDENT_ROWS)
   .map(([id, label]) => ({ id, label, reason: deadChannelReason(label) }))
   .filter((d) => d.reason !== null)
-console.log(`  INSTRUMENT STATE: ${CDP_CHANNELS.length} CDP channel(s) attached (${JSON.stringify(CDP_CHANNELS.map((c) => ({ channel: c.label, state: c.dead === null ? 'alive' : 'DEAD', reason: c.dead })))}); ${Object.keys(CDP_DEPENDENT_ROWS).length} row(s) DECLARED dependent on one; the reply bound is ${CDP_REPLY_TIMEOUT_MS} ms`)
+// THE DECLARED SET'S COUNT IS PRINTED **WITH ITS TERMS** (`A-9-01`: a count quoted without its
+// terms cannot be checked — the set's own members are the terms, given here by the channel each
+// one names).
+const declaredByChannel = Object.values(CDP_DEPENDENT_ROWS).reduce((a, l) => ({ ...a, [l]: (a[l] ?? 0) + 1 }), {})
+console.log(`  INSTRUMENT STATE: ${CDP_CHANNELS.length} CDP channel(s) attached (${JSON.stringify(CDP_CHANNELS.map((c) => ({ channel: c.label, state: c.dead === null ? 'alive' : 'DEAD', reason: c.dead })))}); ${Object.keys(CDP_DEPENDENT_ROWS).length} row(s) DECLARED dependent on one = ${Object.entries(declaredByChannel).map(([l, n]) => `${n} on channel ${l}`).join(' + ')} (${Object.values(declaredByChannel).reduce((a, b) => a + b, 0)} ✓); the reply bound is ${CDP_REPLY_TIMEOUT_MS} ms`)
 for (const c of CHECKS.filter((x) => x.verdict === 'MANUAL')) console.log(`  » MANUAL ${c.id}: ${c.subject}`)
 if (deadDeclared.length > 0) {
   console.log(`  ✗ NOT A GREEN BATTERY: the CDP channel DIED (${deadDeclared.map((d) => `${d.label}: ${d.reason}`).join(' · ')}) — ` +
@@ -2040,4 +2097,14 @@ if (deadDeclared.length > 0) {
 //   could not previously reach an exit code — and a dead-instrument run can never read `0`.
 //   `0` therefore keeps its meaning (every row PASS, none MANUAL); `1` keeps its meaning
 //   (at least one FAIL); `3` is the new, and previously IMPOSSIBLE, dead-instrument code.
-process.exit(TALLY.FAIL ? 1 : (CHECKS.some((c) => c.instrument === true) ? 3 : 0))
+//   ⟶ THIRD LIMB KEYED BESIDE 2026-10-11 (the NINTH, TARGETED `§6.2` round's `A-9-02`, LOW;
+//   `RCA-8(d)`: every byte above is KEPT). The `A-8-04` expression keyed `3` off the RECORDED
+//   ROWS only (`CHECKS.some(c => c.instrument === true)`), so a channel that died AFTER the last
+//   declared row was recorded printed `✗ NOT A GREEN BATTERY … the §6.1 report's manual: 0 claim
+//   FAILS` and STILL exited `0` — the printed state and the exit code could contradict each
+//   other. THE KEY IS NOW THE SAME `deadDeclared.length > 0` THE SUMMARY BLOCK ABOVE USES, so the
+//   two can never disagree: a dead declared channel exits `3` whether the death landed on a
+//   recorded row or after all of them. **Strict strengthening:** it adds states that previously
+//   exited `0`; no live run's code moves (with both channels alive `deadDeclared` is empty, so
+//   `42 PASS / 0 FAIL / 0 MANUAL` still exits `0`, and the `42`-row result is untouched).
+process.exit(TALLY.FAIL ? 1 : ((CHECKS.some((c) => c.instrument === true) || deadDeclared.length > 0) ? 3 : 0))
