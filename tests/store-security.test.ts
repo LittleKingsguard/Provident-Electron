@@ -399,18 +399,58 @@ describe('G3 §2.2 THE ATOMIC WRITE (red: the plain writeFileSync is still the s
     expect(onDisk.enabled).toEqual(['read', 'dispatch'])
   })
 
-  it('F-1: a failed write leaves the previous file intact and answers the refused receipt — never a swallow', async () => {
+  it('F-1: a failed write leaves the previous file intact and answers the refused receipt — never a swallow; and the refused persist ROLLS THE RECORD BACK (live state equals durable state)', async () => {
     const { store, path } = await makeStore()
     store.set({ token: 'before' })
     const pre = await readFile(path, 'utf8')
     hooks.inject.writeFile = true
-    store.set({ token: 'after' })
+    const returned = store.set({ token: 'after' })
     // the previous record survives:
     expect(await readFile(path, 'utf8'), 'F-1 — the REAL path\'s record is byte-identical to the pre-write record (§2.2 item 6)').toBe(pre)
     // the refusal is DECLARED — never swallowed (§2.3 item 1, F-5):
     expect(lastWriteReceipt(store), 'F-1 — lastWriteReceipt() answers {status:\'refused\', reason:\'write-failed\'} (§2.3 item 5, F-6)').toEqual({ status: 'refused', reason: 'write-failed' })
-    // the in-memory config still applies — the divergence is VISIBLE, never silent (§2.3 item 3):
-    expect(store.get().token, 'the in-memory post-state applies for the process lifetime (§2.1 item 2)').toBe('after')
+    /* **⟶ RE-GRAINED 2026-10-11 (`S3` amendment set, `KB-9`; `RCA-8(d)` annotate-beside:
+     * the as-filed expectation below is KEPT VERBATIM in this note, never rewritten).**
+     *
+     * THE AS-FILED FORM WAS:
+     *   `expect(store.get().token, 'the in-memory post-state applies for the process
+     *    lifetime (§2.1 item 2)').toBe('after')`
+     * **THE CLAUSE IT WAS RE-GRAINED AGAINST, QUOTED:** the ACTIVE `docs/decisions.md`
+     * row **`TIER-4 READS RETURN DEEP CLONES OVER THE FULL READ SURFACE, AND TIER-4
+     * WRITE SURFACES ARE ADMISSION-CONTROLLED BY THEIR REACHABLE SET — `D-1` · `D-2`**,
+     * dated follow-up block (2026-10-11), verbatim — ***"Live state equals durable
+     * state"*** — clause (1): *"a refused persist ROLLS THE RECORD BACK, so a READ
+     * never shows a value the FILE does not carry. `current` is assigned ONLY after a
+     * SUCCESSFUL `persist()`, and a refusal RETURNS THE PRE-WRITE RECORD"*; read with
+     * `docs/specs/secure-store-discipline.md` `§2.1` item 3 (the six ordered steps —
+     * *"A refusal therefore returns the PRE-WRITE record: live equals durable"*), its
+     * `§2.3` item 5 (*"THE EXACT POST-REFUSAL `get()` ANSWER … the PRE-WRITE record,
+     * member for member"*) and its `§3.2` `F-1` (*"`get()` answers the PRE-WRITE record
+     * member for member (NOT `x`, NOT `55`)"*). The superseded opposite discipline
+     * (`store-security.md` `§2.1` item 2) carries a dated `SUPERSEDED BY` note beside
+     * it, and that file is the documentation pass's, not this row's.
+     *
+     * THE RE-GRAIN, AND WHY IT IS NOT A WEAKENING: the SUBJECT is unmoved — "a refused
+     * write leaves the durable record alone and answers honestly" — and the bite is
+     * STRONGER (the as-filed form read ONE member of the post-state; this form reads the
+     * WHOLE record, member for member, on BOTH the `get()` surface and `set()`'s own
+     * return, plus the durable bytes above). **THE MUTATIONS THAT STILL REDDEN IT:**
+     * (i) the landed `:138-139`-class ORDER — assigning `current` BEFORE `persist()`
+     * (`token` then answers `'after'`, and the whole-record equality fails);
+     * (ii) an assign-then-restore rollback that restores a STALE copy (`enabled` or
+     * `maxJournalLength` drift from the pre-write record);
+     * (iii) a coercion-into-commit — a refused patch whose value is partially applied
+     * (`§2.3` item 5's "a `get()` that answers any member of the refused patch is
+     * FAILING"); (iv) an over-strict rollback that also refuses the NEXT good write
+     * (`before` no longer round-trips — driven at the tail of this row). */
+    const expectedPreWrite = { token: 'before', enabled: ['read', 'dispatch'], maxJournalLength: undefined }
+    expect(store.get(), 'F-1 (AMENDED 2026-10-11) — the refused persist ROLLS THE RECORD BACK: `get()` answers the PRE-WRITE record member for member (reading (b), "live state equals durable state") — never the uncommitted `after`').toEqual(expectedPreWrite)
+    expect((returned as unknown as { token?: unknown }).token,
+      'F-1 (AMENDED) — `set()`\'s OWN return is the PRE-WRITE record on a refusal too (`§2.1` item 3 step 6 / `§2.5` item 3: the return is `this.get()`, the RECORD — never the receipt)').toBe('before')
+    // the rollback is a RECORD rollback, not a broken store: the NEXT write still commits:
+    hooks.inject.writeFile = false
+    store.set({ token: 'after' })
+    expect(store.get().token, 'F-1 (AMENDED) — the rollback does not wedge the store: the NEXT (successful) write advances the record, and its receipt is committed (the refusal above moved nothing back out of the durable state)').toBe('after')
   })
 
   it('F-2: a failed fsync and a failed rename — the same refusal, the same intact rule', async () => {
@@ -1136,13 +1176,29 @@ const registerSpecs: RegisterRowSpec[] = [
         },
       },
       {
-        term: 'refused · reading 2: the in-memory post-state answers get() and the handler still re-gates — the divergence is visible, never silent',
+        /* **⟶ RE-GRAINED 2026-10-11 (`S3` amendment set, `KB-9`; `RCA-8(d)` annotate-beside:
+         * the as-filed term string and expectation stand quoted in this note, never rewritten).**
+         * AS FILED: term `'refused · reading 2: the in-memory post-state answers get() and the
+         * handler still re-gates — the divergence is visible, never silent'`, asserting
+         * `expect(fresh.store.get().token, 'the in-memory config is the process-lifetime
+         * authority (§2.1 item 2)').toBe('v2')`. **THE CLAUSE RE-GRAINED AGAINST, QUOTED:**
+         * the ACTIVE `docs/decisions.md` ruling's follow-up block (2026-10-11) — ***"Live state
+         * equals durable state"*** — with `docs/specs/secure-store-discipline.md` `§2.3` item 5
+         * (*"THE EXACT POST-REFUSAL `get()` ANSWER … the PRE-WRITE record, member for member"*)
+         * and `§2.3` item 7 (*"a live record that carries a value the file does not hold IS THE
+         * DEFECT THIS UNIT REPAIRS"*). **THE SUBJECT IS UNMOVED** — this row is still the
+         * two-holder reading on the REFUSED path (the store's own answer AND the handler's
+         * re-gate, read together); the bite is EQUAL (one member of the pre-write record, read
+         * after a refused patch). **THE MUTATIONS THAT STILL REDDEN IT:** assigning the record
+         * before `persist()` (token answers `'v2'`); a partial/coerced application of the refused
+         * patch; a store that refuses but leaves `get()` aliased to the candidate. */
+        term: 'refused · reading 2: the post-state answers get() with the PRE-WRITE record (the refusal ROLLED THE RECORD BACK — live equals durable) and the handler still re-gates (the two-holder shape is NOT merged; the receipt and the tier AGREE)',
         run: async () => {
           const fresh = await rowStore()
           fresh.store.set({ token: 'v1' })
           hooks.inject.writeFile = true
           fresh.store.set({ token: 'v2' })
-          expect(fresh.store.get().token, 'the in-memory config is the process-lifetime authority (§2.1 item 2)').toBe('v2')
+          expect(fresh.store.get().token, 'AMENDED 2026-10-11 — the refused persist rolls the record back: `get()` answers the PRE-WRITE record (reading (b), §2.1 item 3 step 6 / §2.3 item 5), never the uncommitted `v2`').toBe('v1')
           const setHandler = await setHandlerSource()
           expect(/mcp\.applyGatePatch/.test(setHandler)).toBe(true)
         },
@@ -1202,20 +1258,43 @@ const registerSpecs: RegisterRowSpec[] = [
         },
       },
       {
-        term: 'COMMITTED/RENAMED · refused at the POST-RENAME DIR-FSYNC (NEW-2 re-grain, 2026-10-03) — the honest state: the refused receipt with the NEW record LIVE at the real path (the rename already committed it; the pre-write bytes are GONE — no torn-file, no data-loss, never silent). The PRE-RENAME tmp-fsync refused terminal is driven at P-SE-IM-1 reading (a) + P-SE-TP-1\'s fsync rows + F-2',
+        /* **⟶ RE-GRAINED 2026-10-11 (`S3` amendment set, `KB-9`; `RCA-8(d)` annotate-beside:
+         * the as-filed term string and expectation stand quoted in this note, never rewritten).**
+         * AS FILED: term `'COMMITTED/RENAMED · refused at the POST-RENAME DIR-FSYNC (NEW-2
+         * re-grain, 2026-10-03) — the honest state: the refused receipt with the NEW record LIVE
+         * at the real path …'`, asserting the receipt `{status:'refused', reason:'write-failed'}`
+         * at this terminal. **THE CLAUSE RE-GRAINED AGAINST, QUOTED:**
+         * `docs/specs/secure-store-discipline.md` `§0A` item 2 (*"THE COMMIT POINT IS THE
+         * SUCCESSFUL RENAME, AND A POST-COMMIT DIRECTORY-`fsync` FAILURE DOES NOT ROLL BACK …
+         * the write is `committed`, the record advances, and live equals durable; the durability
+         * strengthening … is best-effort at that point, and its failure is not a refusal and
+         * moves nothing back"*), read with its `§2.1` item 3 steps 4/5 and its `§2.4` `R-5`
+         * (*"`{status:'committed'}`, the record ADVANCED, live equals durable; NOT a refusal and
+         * NOT a rollback"*) — i.e. the ACTIVE `docs/decisions.md` ruling's ***"Live state equals
+         * durable state"*** applied at the one failure point the rename does not cover: a refusal
+         * HERE would put the live record and the file's bytes into the very disagreement reading
+         * (b) forbids. **THE SUBJECT IS UNMOVED** — the terminal's FILE-STATE HONESTY: what the
+         * real path holds at POST-RENAME (the NEW record, valid, never torn) and whether live
+         * equals durable — and the bite is EQUAL (the receipt's form AND the on-disk record AND
+         * `get()` are all read at one terminal). **THE MUTATIONS THAT STILL REDDEN IT:** treating
+         * the post-rename dir-fsync failure as a REFUSAL (the as-filed reading — the receipt
+         * answers `refused`); rolling the record back there while the file already carries the new
+         * record (`get()` and the disk disagree); losing the rename's content (a torn/unparsable
+         * record, or a pre-write record at the real path). */
+        term: 'COMMITTED/RENAMED · POST-RENAME DIR-FSYNC FAILURE — the commit point has passed, so the write stays committed and the record ADVANCES: live equals durable (§0A item 2, §2.4 R-5). The PRE-RENAME tmp-fsync refused terminal is driven at P-SE-IM-1 reading (a) + P-SE-TP-1\'s fsync rows + F-2',
         run: async () => {
           const fresh = await rowStore()
           fresh.store.set({ token: 'before' })
-          armDirFsyncFailure() // the 2nd fsyncSync of the NEXT persist — the parent-DIRECTORY fsync AFTER renameSync (security-store.ts:93-95)
+          armDirFsyncFailure() // the 2nd fsyncSync of the NEXT persist — the parent-DIRECTORY fsync AFTER renameSync (security-store.ts:229-231)
           fresh.store.set({ token: 'after' })
-          // the refused receipt — the dir-fsync failure still answers the closed refusal form:
-          expect(lastWriteReceipt(fresh.store), 'COMMITTED/RENAMED · dir-fsync refused — the receipt answers {status:\'refused\', reason:\'write-failed\'} (§2.3 item 5)').toEqual({ status: 'refused', reason: 'write-failed' })
+          // the COMMITTED receipt — a post-commit durability failure is not a refusal (§0A item 2):
+          expect(lastWriteReceipt(fresh.store), 'AMENDED 2026-10-11 — the POST-RENAME dir-fsync failure answers {status:\'committed\'} (§0A item 2 / §2.4 R-5: a refusal here would roll the record back out of the file\'s content)').toEqual({ status: 'committed' })
           // the HONEST file state: the rename already replaced the real path, so the NEW
           // record is LIVE — a VALID (parseable, untorn) record; the pre-write bytes are gone:
           const onDisk = JSON.parse(await readFile(fresh.path, 'utf8')) as { token: unknown }
           expect(onDisk.token,
-            'COMMITTED/RENAMED · dir-fsync refused — the real path holds the NEW record (the rename already committed it); a valid, never-torn record; the pre-write bytes are GONE — NEW-2: the previous-file-intact claim is scoped to the PRE-RENAME failure points').toBe('after')
-          // the in-memory post-state still answers (the process-lifetime authority, §2.1 item 2):
+            'COMMITTED/RENAMED · dir-fsync failure — the real path holds the NEW record (the rename already committed it); a valid, never-torn record; the pre-write bytes are GONE').toBe('after')
+          // live equals durable — the record advanced WITH the file, not past a refusal (§2.3 item 7):
           expect(fresh.store.get().token).toBe('after')
         },
       },
@@ -1355,7 +1434,19 @@ const registerSpecs: RegisterRowSpec[] = [
         },
       },
       {
-        term: 'tmp-write failure · assertion 2: on a refusal the file\'s post-state is the pre-write record — byte-identical — and the in-memory post-state still answers',
+        /* **⟶ RE-GRAINED 2026-10-11 (`S3` amendment set, `KB-9`; `RCA-8(d)` annotate-beside: the
+         * as-filed term string and its `toBe('v2')` expectation stand quoted in this note, never
+         * rewritten).** AS FILED: term `'tmp-write failure · assertion 2: on a refusal the file's
+         * post-state is the pre-write record — byte-identical — and the in-memory post-state still
+         * answers'`. **THE CLAUSE RE-GRAINED AGAINST, QUOTED:** `docs/specs/secure-store-discipline.md`
+         * `§2.3` item 5 — *"THE EXACT POST-REFUSAL `get()` ANSWER: the PRE-WRITE record, member for
+         * member … A `get()` that answers any member of the refused patch is FAILING"* — with `§2.4`
+         * `R-2` (*"record unmoved; `get()` = pre-write"*) and the ACTIVE `docs/decisions.md` ruling's
+         * ***"Live state equals durable state"***. **THE SUBJECT IS UNMOVED** (the refusal's file
+         * state AND its live state, read together); the bite is EQUAL (one member, on the same drive).
+         * **THE MUTATIONS THAT STILL REDDEN IT:** the pre-`persist()` assignment (`'v2'` answers);
+         * a partial patch application; `get()` aliased to the refused candidate. */
+        term: 'tmp-write failure · assertion 2: on a refusal the file\'s post-state is the pre-write record — byte-identical — and the live record is the PRE-WRITE record too (live equals durable)',
         run: async () => {
           const fresh = await rowStore()
           fresh.store.set({ token: 'v1' })
@@ -1363,7 +1454,7 @@ const registerSpecs: RegisterRowSpec[] = [
           hooks.inject.writeFile = true
           fresh.store.set({ token: 'v2' })
           expect(await readFile(fresh.path, 'utf8')).toBe(pre)
-          expect(fresh.store.get().token).toBe('v2')
+          expect(fresh.store.get().token, 'AMENDED 2026-10-11 — the refusal did NOT advance the record: `get()` answers the PRE-WRITE value (§2.3 item 5, reading (b))').toBe('v1')
         },
       },
       {
@@ -1377,7 +1468,7 @@ const registerSpecs: RegisterRowSpec[] = [
         },
       },
       {
-        term: 'fsync failure (the PRE-RENAME tmp-fsync class — the FIRST fsync) · assertion 2: the file\'s post-state is the pre-write record and the in-memory post-state still answers — the POST-RENAME dir-fsync class (the refused receipt with the NEW record live) is driven at P-SE-SM-1\'s COMMITTED/RENAMED refused terminal (NEW-2 re-grain)',
+        term: 'fsync failure (the PRE-RENAME tmp-fsync class — the FIRST fsync) · assertion 2: the file\'s post-state is the pre-write record and the live record is the PRE-WRITE record too (live equals durable) — the POST-RENAME dir-fsync class (now a COMMITTED terminal with the record advanced) is driven at P-SE-SM-1\'s COMMITTED/RENAMED dir-fsync terminal',
         run: async () => {
           const fresh = await rowStore()
           fresh.store.set({ token: 'v1' })
@@ -1385,7 +1476,7 @@ const registerSpecs: RegisterRowSpec[] = [
           hooks.inject.fsync = true // the FIRST fsync of the next persist — the tmp, PRE-RENAME (the dir-fsync is call 2 and never runs — the rename is not reached; the class's file state is scoped accordingly)
           fresh.store.set({ token: 'v2' })
           expect(await readFile(fresh.path, 'utf8')).toBe(pre)
-          expect(fresh.store.get().token).toBe('v2')
+          expect(fresh.store.get().token, 'AMENDED 2026-10-11 — a PRE-RENAME refusal rolls the record back: `get()` answers the PRE-WRITE value (§2.3 item 5, reading (b))').toBe('v1')
         },
       },
       {
@@ -1399,7 +1490,19 @@ const registerSpecs: RegisterRowSpec[] = [
         },
       },
       {
-        term: 'rename failure · assertion 2: the file\'s post-state is the pre-write record and the in-memory post-state still answers',
+        /* **⟶ RE-GRAINED 2026-10-11 (`S3` amendment set, `KB-9`; `RCA-8(d)` annotate-beside: the
+         * as-filed term string and its `toBe('v2')` expectation stand quoted in this note, never
+         * rewritten).** AS FILED: term `'rename failure · assertion 2: the file's post-state is the
+         * pre-write record and the in-memory post-state still answers'`. **THE CLAUSE RE-GRAINED
+         * AGAINST, QUOTED:** `docs/specs/secure-store-discipline.md` `§2.4` `R-4` (*"previous file
+         * intact; a residual tmp is possible and is overwritten next and never parsed; record
+         * unmoved; `get()` = pre-write; refused receipt; no throw"*) with `§2.3` item 5 — and the
+         * ACTIVE `docs/decisions.md` ruling's ***"Live state equals durable state"***. **THE SUBJECT
+         * IS UNMOVED** (the rename refusal's file state AND its live state, read together); the bite
+         * is EQUAL. **THE MUTATIONS THAT STILL REDDEN IT:** the pre-`persist()` assignment; a
+         * rollback that restores a stale copy; an implementation that parses the residual tmp as the
+         * record; a throw out of `set()` on the rename failure. */
+        term: 'rename failure · assertion 2: the file\'s post-state is the pre-write record and the live record is the PRE-WRITE record too (live equals durable)',
         run: async () => {
           const fresh = await rowStore()
           fresh.store.set({ token: 'v1' })
@@ -1407,7 +1510,7 @@ const registerSpecs: RegisterRowSpec[] = [
           hooks.inject.rename = true
           fresh.store.set({ token: 'v2' })
           expect(await readFile(fresh.path, 'utf8')).toBe(pre)
-          expect(fresh.store.get().token).toBe('v2')
+          expect(fresh.store.get().token, 'AMENDED 2026-10-11 — a RENAME refusal rolls the record back: `get()` answers the PRE-WRITE value (§2.4 R-4 / §2.3 item 5, reading (b))').toBe('v1')
         },
       },
     ],
@@ -1623,8 +1726,23 @@ describe('G3 §5.5.1 THE REGISTER (executed deterministically — 8 rows / 50 at
     // term at green is a FAILURE, never a pass (§5.5.1).  The byte-pin terms (P-SE-IM-2(4)) were
     // the register's last permanently-red class — corrected to the measured FILE sha256s, so the
     // gate now pins the green shape (broken MUST be 0):
+    //
+    // **⟶ RE-GRAINED 2026-10-11 (`S3` amendment set, `KB-9`) — THIS ROW'S OWN RECORD, and the
+    // amendment is what returned it to `broken === 0`.** At the `S3` landing (`460fb66`) this row
+    // read `BROKEN 5 attempt(s) at green`. Those FIVE were not this unit's red set: they were the
+    // `G3` drift cells the SAME clause was read through, asserting the two disciplines the
+    // architect's ruling REVERSES — `P-SE-IM-3`'s `refused · reading 2` (the in-memory-applies
+    // authority), `P-SE-TP-1`'s tmp-write / tmp-fsync / rename `assertion 2` terms, and
+    // `P-SE-SM-1`'s `COMMITTED/RENAMED · refused at the POST-RENAME DIR-FSYNC` terminal. Each was
+    // re-grained ABOVE, annotate-beside, to the same clauses the `S3` unit implements
+    // (`docs/specs/secure-store-discipline.md` `§2.3` item 5 for the three refusals, `§0A` item 2
+    // / `§2.4` `R-5` for the post-commit dir-fsync), and to the ACTIVE `docs/decisions.md` ruling's
+    // ***"Live state equals durable state"***. NO TERM COUNT, NO ROW, NO STRATEGY ID MOVED:
+    // `50 = 6 + 4 + 4 + 8 + 6 + 8 + 8 + 6`, executed `50`, subtotals `P-IM 20` / `P-SM 14` /
+    // `P-TP 16` — only the five expectations. `docs/specs/store-security.md`'s own cells for those
+    // five terms are the DOCUMENTATION PASS's (this file may not edit that spec).
     const broken = outcomes.reduce((s, o) => s + o.failed, 0)
-    expect(broken, 'G3-green — the register holds ALL 50 terms (the red class is recorded in the red run, commit b8abcea): BROKEN ' + broken + ' attempt(s) at green').toBe(0)
+    expect(broken, 'G3-green — the register holds ALL 50 terms (the red class is recorded in the red run, commit b8abcea; the `S3` amendment set re-grained the five superseded cells back to 0 at `KB-9`): BROKEN ' + broken + ' attempt(s) at green').toBe(0)
     // the remaining rows, if any, also execute (never skipped):
     expect(outcomes.every((o) => o.attempts.length === o.declared)).toBe(true)
   })

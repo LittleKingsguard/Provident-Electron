@@ -407,6 +407,27 @@ change owed** because every changed signature is inside an already-allowed file.
    - **`src/renderer/store-graph-references.ts`** — MEASURED file pin `sha256:5c0c1a97…`;
    - **`docs/specs/store-core-module-store-core-graph-surface.md`** — the frozen SURFACE ARTIFACT;
    - **`src/main/security-store.ts`** — the tier's own bytes (`S2`'s, per the decomposition row).
+     **⟶ ANNOTATED BESIDE, DATED `2026-10-11` (`RCA-8(d)`: the as-filed bytes above STAND
+     BYTE-FOR-BYTE and are NOT rewritten — this note governs the bullet's `L`/byte-pin citation,
+     never its text).** **THE PIN MOVED, AND BY AUTHORITY, NOT BY DRIFT:** the ACTIVE
+     `docs/decisions.md` row **`TIER-4 READS RETURN DEEP CLONES OVER THE FULL READ SURFACE, AND
+     TIER-4 WRITE SURFACES ARE ADMISSION-CONTROLLED BY THEIR REACHABLE SET — `D-1` · `D-2`** and
+     its dated follow-up block (***"Live state equals durable state"***) REVERSED THREE of this
+     file's behaviours on purpose — `O-1` the refused-persist rollback, `O-2` the
+     JSON-representability admission, `O-3` the full-surface deep clone — and **`S3`
+     (`U-SECURE-STORE-DISCIPLINE`, commits `460fb66` + `0d36c46`) ADMITS this path to its diff**
+     (`docs/specs/secure-store-discipline.md` `§5.1` item 1; its `§1.3` item 4 and `§0A` item 6
+     freeze only the two RENDERER modules). **THE MEASURED DELTA:** this unit's pinned digest
+     `sha256:c7359530b530ed866a86908e176bf101b836f138793de0a0ac1db3df7dc8823d` (the pre-`S3` bytes)
+     → **`sha256:99618ac219ac4701e219e7926be61f78f22d3803818852a9dbca4fcf0e66aacc`** (MEASURED at
+     the amendment pass with `node:crypto`, `15,983` bytes). **WHAT DOES NOT MOVE:** the bullet's
+     SUBJECT — the bound is still *"this unit moves no byte of this path"* per unit, asserted as a
+     MEASURED digest, and it is now enforced for `S1` against the `S3`-repaired bytes with a
+     byte-moved POSITIVE CONTROL the as-filed form did not carry for this path; the other three
+     forbidden paths are UNTOUCHED (`0664c52f…` / `5c0c1a97…` / the surface artifact).
+     **THE TEST-SIDE RE-GRAIN AND THE `G3` RE-GRAIN ARE RECORDED IN ONE PLACE:**
+     `docs/specs/secure-store-discipline.md` `§9c` (the amendment set, `KB-8` · `KB-9`), so the
+     unit's DONE row can cite it at gate 10.
    **These come from THREE authorities, not one, so the pin is not a paraphrase:** the **decomposition row** names the
    `S1`/`S2` split (`A` `THE TIER-4 GENERALIZATION IS SPLIT PER UNIT`); the **gate-1 record** names *"NO frozen artifact
    and NO store byte"* as the boundary's decisive property (`R` `§6` column 3, and its RISK/COST table's *"Frozen
