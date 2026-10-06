@@ -5,21 +5,38 @@
 //
 // Run:  npm run build && node tests/secure-exclusion-live.mjs
 //
-// WHY THIS FILE IS HERE AND NOT IN `scripts/` (the two hard constraints, both
-// cited because a reader must be able to check the choice):
-//   1. `tests/ui-leg-contract.test.ts`'s `helperCandidates()` takes
-//      `readdirSync(scripts).filter(f => f.endsWith('.mjs') && !RESERVED_SCRIPT_NAMES.has(f))`
-//      and asserts the FIRST candidate carries `mkdtempSync`/`tmpdir()`/
-//      `PINNED_SPAWN_FLAGS`/`spawn(`/`process.on('exit')`/`rmSync`. A NEW file
-//      under `scripts/` would redden that row, so the driver lives under
-//      `tests/**`, which that row does not enumerate (its `walkCensusPaths`
-//      filter is `/^census/i`).
+// WHY THIS FILE IS HERE AND NOT IN `scripts/` — AND THE REASON, STATED
+// ACCURATELY SINCE THE `§6.2` AUDIT'S `F7` CORRECTED AN EARLIER, WRONG CITATION
+// (2026-10-09). The as-filed reason claimed a NEW `scripts/*.mjs` "would redden"
+// `tests/ui-leg-contract.test.ts`'s helper-candidate row. IT WOULD NOT:
+//      `HELPER_NAME = HELPERS.find((f) => importsHelper(DIVERGENCE_SRC, f)) ?? HELPERS[0]`
+//      (`tests/ui-leg-contract.test.ts:110`) prefers the candidate the DIVERGENCE
+//      LEG IMPORTS — `scripts/electron-spawn.mjs` — so a NEW, UNIMPORTED file is
+//      never selected unless the imported one disappears. The PINNED hazard on
+//      the `scripts/` route is the OTHER half of that same contract file: its
+//      `L-1` row pins the `package.json` `scripts` KEY SET (the landed keys plus
+//      exactly `ui`; `LANDED_SCRIPT_KEYS`, asserted in BOTH directions), so a new
+//      script KEY — not a new file — reddens it and a config change cannot satisfy
+//      it (`AGENTS.md` item 4's hazard note). THIS DRIVER ADDS NO KEY: its literal
+//      command line is `node tests/secure-exclusion-live.mjs`, so the `scripts/`
+//      ROUTE WAS PERMISSIBLE and is not taken for a different, non-structural
+//      reason: this harness is a `tests/**`-owned live battery and lives with the
+//      batteries it re-runs. The census walker (`walkCensusPaths`, filter
+//      `/^census/i`) does not enumerate it.
 //   2. `scripts/electron-ui.mjs`'s `R4` static row forbids the two reach-in call
 //      sites in any SHIPPED path (comments stripped, code scanned as a SET):
 //      `webContents.executeJavaScript` and `webContents.debugger`. This driver
 //      uses NEITHER and does not weaken that row: it drives the renderer over
 //      CDP (`--remote-debugging-port=0` + the DevTools HTTP endpoint + a raw
-//      WebSocket), a channel the `R4` set does not name.
+//      WebSocket), a channel the `R4` set does not name. **THE AUTHORITY FOR THAT
+//      CHANNEL IS AN OWNER RULING, NOT THIS PASS'S ANNOTATION**: `docs/decisions.md`'s
+//      `REAL-DOM-UI-GATE-LEG` row (architect ruling `A-d8`) admits the reach-ins
+//      `webContents.executeJavaScript`, then CDP, as LEG-ONLY channels that "may
+//      NEVER become MCP tools". **THE RESIDUAL IS A GAP, NOT SELF-RATIFIED**: `A-d8`
+//      rules about the `ui` LEG and does NOT name this unit's gate-6 battery, while
+//      `docs/specs/secure-exclusion.md` `§2.4` item 7(2-note) PREDICTS `MANUAL` for
+//      the gesture rows; whether `[CDP]` supersedes that declared `MANUAL` for gate 6
+//      is the SPEC OWNER's ruling to make (`GAP-1`, recorded in the battery record).
 //
 // INSTRUMENTS, in the closed set `docs/specs/user-flow-audit.md` `§6.1` item 3
 // declares:
@@ -50,7 +67,7 @@
 // path.
 import { createHash } from 'node:crypto'
 import { execSync, spawn } from 'node:child_process'
-import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -66,16 +83,57 @@ const CENSUS_IN_TREE = 23
 
 // ---- records -----------------------------------------------------------------
 const CHECKS = []
-/** Record one check. `verdict` is the closed set this battery reports with:
- *  PASS / FAIL / MANUAL / PARKED / REPORT. */
+/** Record one check. `verdict` is the CLOSED set this battery reports with:
+ *  PASS / FAIL / MANUAL / PARKED. (`REPORT` was in this set until 2026-10-09: the
+ *  `§6.2` audit's `F6` found the boot-order row using it for a failure, and it is
+ *  OUTSIDE the set `docs/specs/user-flow-audit.md` `§6.1` clause 1 and this battery's
+ *  own preamble declare — worse, the FAIL list below filters on `verdict === 'FAIL'`,
+ *  so a boot-order regression printed NO FAIL and appeared in NO list. A failure
+ *  verdict is `FAIL`, without exception.) */
 function check(id, subject, verdict, observation, evidence = '') {
   CHECKS.push({ id, subject, verdict, observation, evidence })
-  const mark = verdict === 'PASS' ? '✓' : verdict === 'FAIL' ? '✗' : verdict === 'MANUAL' ? '»' : verdict === 'PARKED' ? '□' : '·'
+  const mark = verdict === 'PASS' ? '✓' : verdict === 'FAIL' ? '✗' : verdict === 'MANUAL' ? '»' : '□'
   const line = `  ${mark} [${verdict}] ${id} ${subject}`
   if (verdict === 'FAIL') console.error(`${line}\n      observed: ${observation}`)
   else console.log(`${line}\n      observed: ${observation}`)
 }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+
+/** THE PROFILE DIRECTORY'S SETTLED LISTING — `N` consecutive IDENTICAL raw readings, taken
+ *  no earlier than `minAgeMs` after the child was SPAWNED, with the entries the RUNTIME
+ *  itself added before it settled REPORTED, and the poll count and the bounded timeout
+ *  reported with them.
+ *
+ *  WHY BOTH CONDITIONS ARE OWED (MEASURED, 2026-10-09): Chromium writes its OWN bookkeeping
+ *  into the `userData` directory lazily in the first seconds of a boot — `Cache/`,
+ *  `Code Cache/`, `GPUCache/`, `DIPS`, `Trust Tokens`, `blob_storage/`,
+ *  `declarative_performance_observer.db` and peers appear within ~6 s, and
+ *  `Network Persistent State` + `Preferences` only at ~8–14 s (MEASURED: absent at 6 s,
+ *  present at 14 s, then stable for ≥ 20 s of activity). A three-read settle at 5 s is
+ *  therefore NOT settled, and a `D-19`/`N-5` "NO NEW FILE APPEARED" term measured from a
+ *  baseline taken at the pane's first paint reddens on the BROWSER's own writes — an
+ *  instrument defect, not a finding. The baseline is taken only after BOTH the age floor and
+ *  the stability condition hold, and both are printed. */
+async function settledListing(dir, { spawnedAt = 0, minAgeMs = 0, stableReads = 3, timeoutMs = 90000 } = {}) {
+  const started = Date.now()
+  let last = null
+  let stable = 0
+  let polls = 0
+  const added = []
+  while (Date.now() - started < timeoutMs) {
+    polls += 1
+    const now = readdirSync(dir).sort()
+    if (last !== null) for (const e of now) if (!last.includes(e)) added.push(e)
+    const ageMs = spawnedAt === 0 ? Infinity : Date.now() - spawnedAt
+    stable = last !== null && JSON.stringify(now) === JSON.stringify(last) ? stable + 1 : 0
+    last = now
+    if (stable >= stableReads && ageMs >= minAgeMs) {
+      return { list: now, polls, added: [...new Set(added)], settled: true, ageMs }
+    }
+    await sleep(1000)
+  }
+  return { list: last ?? [], polls, added: [...new Set(added)], settled: false, ageMs: spawnedAt === 0 ? null : Date.now() - spawnedAt }
+}
 
 /** THE CLEANUP REGISTRY — every boot registers its OWN teardown here the moment it
  *  exists, and one top-level `exit` hook drains it. Nothing is left to the driver's
@@ -304,6 +362,31 @@ console.log(`  seed: a fresh scratch profile carrying token=${TOKEN.slice(0, 12)
 console.log('        authorization-first ordering rows of FS-EX-9 are measurable)')
 console.log(`  driver: node tests/secure-exclusion-live.mjs   ·   HEAD: ${execSync('git rev-parse --short HEAD', { cwd: root }).toString().trim()}`)
 
+// ═══ THE STALE-WINDOW PREFLIGHT, TAKEN INSIDE THE DRIVER (the `§6.2` audit's `F10`).
+// The as-filed record declared the preflight as an OPERATOR STEP (`pgrep` → empty before
+// each boot), so a reader had to take on trust that no earlier run's window was still on
+// the display — and a stale window makes BOTH the CDP attach and the rendered-box reads
+// ambiguous. The run is now SELF-GUARDING: it probes, records the probe as a row like any
+// other, and REFUSES TO MEASURE (exit `1`, no summary) if anything is found. The scan is
+// `ps`, not `pgrep`, so the probe does not depend on `procps` and does not match itself
+// (its own command line carries no `dist/main/main.cjs`). ═══
+function appProcesses() {
+  try {
+    const out = execSync('ps -eo pid=,args=', { cwd: root, maxBuffer: 8 * 1024 * 1024 }).toString()
+    return out.split('\n').map((l) => l.trim()).filter((l) => l !== '' && l.includes('dist/main/main.cjs'))
+  } catch { return null }
+}
+const staleBefore = appProcesses()
+check('SX-G-45 (preflight)', 'the battery is SELF-GUARDING: NO pre-existing app process is on the display before the first boot', staleBefore !== null && staleBefore.length === 0 ? 'PASS' : 'FAIL',
+  staleBefore === null ? 'the preflight probe itself could not be run' : `ps -eo pid=,args= | grep 'dist/main/main.cjs' → ${JSON.stringify(staleBefore)} before boot A`,
+  'a stale window from an earlier run would make the CDP attach and the rendered-box readings ambiguous, so the run refuses to measure through one')
+if (staleBefore === null || staleBefore.length !== 0) {
+  console.error('\nPREFLIGHT STOP — a stale app process is on the display (or the probe could not be run). Nothing is measured through it.')
+  console.error('Kill it (e.g. `pkill -f dist/main/main.cjs`) and re-run.')
+  process.exit(1)
+}
+
+const bootAStartedAt = Date.now()   // the age floor for the restart arm's profile baseline
 const bootA = await bootApp('A', ['--mcp-transport=stdio', '--remote-debugging-port=0'])
 const portA = await devtoolsPort(bootA)
 const cdp = await Cdp.attach(portA)
@@ -311,9 +394,9 @@ const togglePainted = await cdp.waitForToggle()
 
 // boot-order evidence: the renderer's OWN stderr line for IPC_READY
 const orderLines = bootA.stderrText().split('\n').filter((l) => l.includes('provident-mcp] stdio transport ready') || l.includes('renderer ready'))
-check('SX-G-45', 'the boot ORDER (store → gate → transports → mcp.start) read live', orderLines.length === 2 && orderLines[0].includes('stdio transport ready') ? 'PASS' : 'REPORT',
+check('SX-G-45', 'the boot ORDER (store → gate → transports → mcp.start) read live', orderLines.length === 2 && orderLines[0].includes('stdio transport ready') ? 'PASS' : 'FAIL',
   `the child's stderr carries both boot landmarks IN ORDER: ${JSON.stringify(orderLines)}`,
-  'the MCP stdio transport is the LAST landmark; the renderer arming (IPC_READY) precedes it, so the store/gate construction the pane then reads is already complete')
+  'the MCP stdio transport is the LAST landmark; the renderer arming (IPC_READY) precedes it, so the store/gate construction the pane then reads is already complete. A deviating order is a FAIL (`RE-GRAINED 2026-10-09`, the `§6.2` audit\'s `F6`: the as-filed row answered `REPORT`, a verdict OUTSIDE the closed set this battery and `§6.1` clause 1 declare, so a boot-order regression printed no FAIL and appeared in no list)')
 
 // THE FIRST MCP READ is retried, BOUNDED, because the handshake can resolve in the
 // window between `mcp.start()` and the renderer's own arming of the backend's
@@ -336,9 +419,18 @@ check('SX-G-01/02', 'the boot state is the safe pair and the pane shows it', bef
   `pane: data-state=${JSON.stringify(beforePane.dataState)} button=${JSON.stringify(beforePane.buttonText)} status segment=${JSON.stringify(beforePane.mcpSegment)}`,
   'the IPC_SECURITY_GET response is the pane\'s own source (`refresh()`/`syncConfig`), so this reading is the declared `{...settings, exclusion}` record rendered')
 
-check('U-1 / SX-G-59/60', 'the toggle + its label are PAINTED in the operator pane (rendered box oracle)', beforePane.box.w > 0 && beforePane.box.h > 0 && beforePane.display === 'block' && typeof beforePane.label === 'string' ? 'PASS' : 'FAIL',
-  `box ${Math.round(beforePane.box.w)}x${Math.round(beforePane.box.h)} px at (${Math.round(beforePane.box.left)},${Math.round(beforePane.box.top)}), display=${beforePane.display}, classes=${JSON.stringify(beforePane.classes)}, label=${JSON.stringify(beforePane.label)}`,
-  'a REAL rendered box (not a computed-style-only reading), inside `#exclusion-control` in `#panes` — the provident-authored isolated pane graph')
+// THE `[U]` FALSIFIER'S OWN SHAPE (the `§6.2` audit's `F14`): `paneRead()` answers
+// `{present:false}` when the control is NOT in the DOM, so the as-filed predicate
+// dereferenced `beforePane.box.w` on a `present:false` reading and ABORTED THE WHOLE
+// RUN with a TypeError instead of recording the red row this row exists to record.
+// `present` is asserted FIRST, so the absent-control regression prints a FAIL here and
+// the battery keeps going.
+const paneBox = beforePane.present === true && beforePane.box ? beforePane.box : null
+check('U-1 / SX-G-59/60', 'the toggle + its label are PAINTED in the operator pane (rendered box oracle)', paneBox !== null && paneBox.w > 0 && paneBox.h > 0 && beforePane.display === 'block' && typeof beforePane.label === 'string' ? 'PASS' : 'FAIL',
+  beforePane.present !== true
+    ? `the control is NOT in the DOM at all (\`paneRead() → {present:false}\`): no box to measure, no label to read — a FAIL, recorded rather than thrown`
+    : `box ${Math.round(paneBox.w)}x${Math.round(paneBox.h)} px at (${Math.round(paneBox.left)},${Math.round(paneBox.top)}), display=${beforePane.display}, classes=${JSON.stringify(beforePane.classes)}, label=${JSON.stringify(beforePane.label)}`,
+  'a REAL rendered box (not a computed-style-only reading), inside `#exclusion-control` in `#panes` — the provident-authored isolated pane graph. `present` is asserted first so an ABSENT control reddens this row instead of aborting the run')
 
 const isolation = await cdp.isolationProbe()
 const appHtml = typeof before.renderedHtml === 'string' ? before.renderedHtml : ''
@@ -362,7 +454,23 @@ check('U-3 (precondition)', 'with MCP enabled a normal tool call answers normall
   'the U-2/U-3 positive control: a refusal later cannot be read as a permanently-broken tool')
 
 const namesEnabledBoot = await listToolNames(bootA.client)
-const toolsBefore = namesEnabledBoot === null ? 0 : namesEnabledBoot.length
+
+// ═══ THE PROFILE-DIRECTORY BASELINE, taken BEFORE the first exclusion transition and only
+// once the RUNTIME's own writes have SETTLED (`settledListing` above: Chromium writes
+// `Preferences`/`Network Persistent State` lazily in the first seconds of a boot, so a
+// baseline at the pane's first paint would redden the `N-5` term on the browser's own
+// bookkeeping). This is the `Pre` half of the restart arm's `D-19`/`N-5` reading (`§4`
+// PHASE 4): the property under measurement is that the transition PERSISTS NOTHING, so the
+// window that can falsify it is `[this snapshot, the restart-copy snapshot]` — and the
+// baseline has to be taken before the FIRST transition (the phase-2 gesture) to enclose the
+// whole window. It is a RAW listing (no name filter: the as-filed restart row filtered on
+// `f.includes('security') || f.includes('settings')`, which is exactly why a third file
+// under any other name could not have been seen).
+const PROFILE_STORE_FILE = 'provident-security.json'
+const bootABaseline = await settledListing(bootA.profile, { spawnedAt: bootAStartedAt, minAgeMs: 30000 })
+const profileListingBootA0 = bootABaseline.list
+// (the store BYTES are read at the restart arm, where they are a PREDICATE TERM — read here they
+//  would be a binding nobody asserts, which is exactly the shape the `§6.2` audit's `F9` flagged)
 
 // ══════════════════════════════════════════════════════════════════════════════
 // PHASE 2 — THE GESTURE (U-2): a REAL pointer click on the painted toggle
@@ -373,10 +481,15 @@ const afterClick1 = await cdp.paneRead()
 const markdownAfterClick = await rawCall(bootA.client, 'provident.get_markdown', {})
 const bridgeAfterClick = await cdp.evaluate(`window.provident.security.get()`)
 
-const clickLanded = hit1 !== null && hit1.isTarget === true
-check('U-2 (the gesture half)', 'a REAL CDP pointer gesture on the painted toggle moves the status line `MCP: enabled → disabled`', afterClick1.mcpSegment === 'disabled' ? 'PASS' : 'FAIL',
+const clickLanded = hit1 !== null && hit1.isTarget === true && hit1.hit === 'BUTTON#exclusion-toggle'
+// THE PREDICATE CARRIES `clickLanded` (`§6.2` audit `F9`): the as-filed row computed the
+// landing flag and then asserted ONLY the segment, so a gesture that never reached the
+// control could still read PASS on a segment another path had moved — while the record
+// printed "the gesture landed on BUTTON#exclusion-toggle (isTarget=true)". The flag is
+// now INSIDE the predicate (and `U-4`'s HTTP row asserts the same shape).
+check('U-2 (the gesture half)', 'a REAL CDP pointer gesture on the painted toggle moves the status line `MCP: enabled → disabled`', clickLanded && afterClick1.mcpSegment === 'disabled' ? 'PASS' : 'FAIL',
   `click landed on ${JSON.stringify(hit1?.hit)} at (${hit1?.x},${hit1?.y}) inside a ${Math.round(hit1?.w ?? 0)}x${Math.round(hit1?.h ?? 0)} box (isTarget=${hit1?.isTarget}); AFTER the gesture the status segment reads ${JSON.stringify(afterClick1.mcpSegment)} and the button reads ${JSON.stringify(afterClick1.buttonText)}; the bridge read answers exclusion=${JSON.stringify(bridgeAfterClick?.exclusion)}; MCP get_markdown → isError=${markdownAfterClick.isError} text=${JSON.stringify(String(markdownAfterClick.text).slice(0, 80))}`,
-  'the gesture IS delivered to the renderer (a capture-phase `click` listener on the same element fires and `elementFromPoint` resolves the button) — the authored handler body does not run')
+  'THE PREDICATE IS `clickLanded && the rendered segment moved` (the landing flag — element, box centre, `elementFromPoint` identity — is asserted, not merely printed). **CORRECTED 2026-10-09 (the `§6.2` audit\'s `F3`): THE AS-FILED EVIDENCE SENTENCE — "the authored handler body does not run" — DESCRIBED THE `F-2` DEFECT, WHICH IS FIXED.** Under this very gesture the authored `EXCLUSION_TOGGLE_BODY` DOES run: it reads `ctx.node.props[\'data-state\']` and flips it, which is why the same reading prints `data-state="mcp-disabled"` and the live MCP call answers the DECLARED RECEIPT. **THIS ROW WAS NOT RE-GRAINED**: its predicate is the as-filed one, and the as-filed `FAIL` was the HOST defect `F-2` (`afd3212`), not the row')
 
 const siblingControl = await (async () => {
   const t0 = await cdp.evaluate(`window.provident.security.get().then(function(v){return v.token})`)
@@ -409,7 +522,7 @@ const paneAfterDirect = await cdp.paneRead()
 
 check('SX-G-57 (live)', 'the IPC_SECURITY_GET response member reports the LIVE state after a real transition', bridgeStateAfterDirect?.exclusion === 'mcp-disabled' ? 'PASS' : 'FAIL',
   `after a REAL accepted transition (the bridge answered applied:true and the live MCP server began refusing), IPC_SECURITY_GET answered exclusion=${JSON.stringify(bridgeStateAfterDirect?.exclusion)} — expected 'mcp-disabled'`,
-  'the handler closes over the gate instance constructed at boot, while `applyExclusion` REPLACES the server\'s `_gate` (`SecurityGate.withExclusion` returns a NEW gate) — so the response record reports the boot state, never the live one')
+  '**EVIDENCE STRING CORRECTED 2026-10-09 (the `§6.2` audit\'s `F3`): THE AS-FILED SENTENCE DESCRIBED THE `F-4` DEFECT AS IF IT WERE THE LANDED CODE — "the handler closes over the gate instance constructed at boot ... so the response record reports the boot state, never the live one" — AND IT IS FALSE OF THIS TREE.** The landed handler reads the server\'s OWN LIVE accessor: `L` `src/main/main.ts:384` answers `{ ...securityStore.get(), exclusion: mcp.gate.exclusionState() }` (`mcp.gate`, `L` `src/main/mcp-server.ts:742`), i.e. the same ONE holder that enforces the exclusion — which is exactly why the reading above is `mcp-disabled` and not the boot state. The boot-gate closure was the `F-4` defect, fixed by the implementer at `afd3212` before this row was re-read. **THIS ROW WAS NOT RE-GRAINED**: its predicate is the as-filed one and the as-filed `FAIL` was that host defect')
 
 // WHICH ARM ANSWERS? `provident.dispatch` is ALWAYS registered on the ENABLED-GROUP predicate, so
 // it is the ONE tool that certainly reaches the INVOCATION TURN while the tier is open; its answer
@@ -435,7 +548,7 @@ await sleep(600)
 const namesOpenGroupFixed = await listToolNames(bootA.client)
 check('U-2 (registry, live) / U-7 / SX-G-23', 'across a REAL exclusion transition the registration set is ENTIRELY UNCHANGED — `tools/list` answers the SAME non-empty set on BOTH sides, on the ONE already-connected stdio client (no reconnect, no re-handshake)', sameSet(namesClosedGroupFixed, namesOpenGroupFixed) && (namesOpenGroupFixed?.length ?? 0) > 0 ? 'PASS' : 'FAIL',
   `the enabled-group set held CONSTANT around the transition: tools/list while CLOSED returned ${namesClosedGroupFixed === null ? 'NOT an array (the call failed)' : namesClosedGroupFixed.length + ' handles'} and the SAME client answered ${namesOpenGroupFixed === null ? 'NOT an array (the call failed)' : namesOpenGroupFixed.length + ' handles'} while OPEN; set-equal=${sameSet(namesClosedGroupFixed, namesOpenGroupFixed)}; the boot's own enabled-state listing was ${namesEnabledBoot === null ? 'n/a' : namesEnabledBoot.length + ' handles'} BEFORE the sibling-control row moved the enabled-group set; names present while closed and absent while open: ${namesClosedGroupFixed && namesOpenGroupFixed ? JSON.stringify(namesClosedGroupFixed.filter((n) => !namesOpenGroupFixed.includes(n))) : 'n/a'}`,
-  'THE OPERATIVE PIN (`§0A` item 7(c), amended 2026-10-08): "the registered tool/resource set is IDENTICAL in both states — nothing is cleared and NOTHING IS TOGGLED", so the disabled state stays indistinguishable from a never-registered tool by name-listing alone. A design that CLEARS the set fails the non-empty half; a design that TOGGLES it fails the equality half (the landed SDK renders a disabled handle as an EMPTY listing — the `disabled`-vs-`absent` oracle `§2.2` item 2(c) refuses). This row also carries `U-7`: the SAME connected client answered both sides, so the transport was never closed, rebuilt or re-handshaken')
+  'THE OPERATIVE PIN (`§0A` item 7(c), amended 2026-10-08): "the registered tool/resource set is IDENTICAL in both states — nothing is cleared and NOTHING IS TOGGLED", so the disabled state stays indistinguishable from a never-registered tool by name-listing alone. A design that CLEARS the set fails the non-empty half; a design that TOGGLES it fails the equality half (the landed SDK renders a disabled handle as an EMPTY listing — the `disabled`-vs-`absent` oracle `§2.2` item 2(c) refuses). This row also carries `U-7`: the SAME connected client answered both sides, so the transport was never closed, rebuilt or re-handshaken. **RE-GRAINED 2026-10-08** (the as-filed row was `tools/list` `length > 0` while open — a count cannot see a same-size change; the as-filed reading was `0` handles under the SUPERSEDED registry-toggling carrier, `§4` `F-3`)')
 
 // A CALL ISSUED WHILE OPEN — read by name, so the ARM that answers it is attributable: it is an
 // ENABLED-GROUP tool (`provident.get_markdown`, group `read`), so the refusal cannot be the group
@@ -451,11 +564,16 @@ const returnedAnswer = await rawCall(bootA.client, 'provident.get_markdown', {})
 const returnedBridge = await cdp.evaluate(`window.provident.security.get()`)
 check('U-4 (return arm)', 'the return — the operator\'s OWN act — restores NORMAL answers: the refusal is GONE and the tool RUNS (while a call ISSUED in the open state is answered the receipt and never dispatched)', returnedAnswer.ok && returnedAnswer.isError !== true && declaredReceipt(returnedAnswer) === null && String(returnedAnswer.text).includes('markdown') && returnedBridge?.exclusion === 'mcp-enabled' ? 'PASS' : 'FAIL',
   `after the return transition the bridge reads exclusion=${JSON.stringify(returnedBridge?.exclusion)} and provident.get_markdown answered NORMALLY — ok=${returnedAnswer.ok}, isError=${returnedAnswer.isError} (absent), receipt=${JSON.stringify(declaredReceipt(returnedAnswer))}, first 60 chars=${JSON.stringify(String(returnedAnswer.text).slice(0, 60))}; the call ISSUED while open was answered ok=${openArrivalResult.ok} isError=${openArrivalResult.isError} ${JSON.stringify(String(openArrivalResult.text ?? openArrivalResult.error).slice(0, 110))}`,
-  'THE HONEST LIMIT, STATED (`§2.3` item 3; the register\'s `A-2#5`/`P-EX-IM-3` cells drive it at the `[H]` layer): the open-state call above is an ARRIVAL refusal at the invocation turn (`§2.2` item 2(a)), NOT the in-flight arm — a genuine in-flight probe needs a call ISSUED while CLOSED whose dispatched renderer work straddles the transition, and this driver cannot make that window deterministic (a renderer round trip is milliseconds wide), so the mid-flight abandonment is NOT claimed as exercised here. The row\'s SUBJECT is the RETURN, and the predicate is a BOUND on it: the ENABLED-state answer must be a REAL value (not a receipt, `isError` absent, the markdown present) AND the bridge must read the closed state — so a return that did not land, or one that left the refusal in place, FAILS')
+  'THE HONEST LIMIT, STATED (`§2.3` item 3; the register\'s `A-2#5`/`P-EX-IM-3` cells drive it at the `[H]` layer): the open-state call above is an ARRIVAL refusal at the invocation turn (`§2.2` item 2(a)), NOT the in-flight arm — a genuine in-flight probe needs a call ISSUED while CLOSED whose dispatched renderer work straddles the transition, and this driver cannot make that window deterministic (a renderer round trip is milliseconds wide), so the mid-flight abandonment is NOT claimed as exercised here. The row\'s SUBJECT is the RETURN, and the predicate is a BOUND on it: the ENABLED-state answer must be a REAL value (not a receipt, `isError` absent, the markdown present) AND the bridge must read the closed state — so a return that did not land, or one that left the refusal in place, FAILS. **RE-GRAINED 2026-10-08**: the as-filed predicate asserted only `isError !== true` on ONE call after the return, which a receipt-answering or renderer-valued answer could not distinguish from a restored tool; the row now asserts the ENABLED-shape answer (not a receipt, markdown present) AND the bridge\'s own `mcp-enabled` member AND that the call ISSUED while open was answered the receipt')
 
 // ══════════════════════════════════════════════════════════════════════════════
 // PHASE 3 — U-6: the disabled state survives a renderer reload
 // ══════════════════════════════════════════════════════════════════════════════
+// THE TIGHT WINDOW'S `Pre` READING: the profile listing immediately BEFORE the transition
+// this phase performs (`setExclusion('mcp-disabled')` + the reload). It is the `N-5`
+// window's sharpest form — the phase-4 term below asserts that the transition added NOTHING
+// to the profile between this reading and the restart copy.
+const profileListingBeforeReload = readdirSync(bootA.profile).sort()
 await cdp.evaluate(`window.provident.security.setExclusion('mcp-disabled')`)
 await sleep(400)
 await cdp.send('Page.enable')
@@ -479,17 +597,116 @@ check('U-6 (reload arm) — PREDICATE CONTROL', 'the re-grained predicate CAN st
   'WHY A CONTROL IS OWED: the re-grained predicate must not be a rubber stamp, and the LIVE half is the discriminating one — with the invocation turn inert (gate-4\'s `A-1` defect class, the regression `§2.2` item 2(a) now depends on) an open-state call returns the RENDERER\'S value, and the predicate would read exactly what these two enabled-state answers read. The IN-LINE half pins the mandated DOMAIN (`§2.5` item 1: an absent, empty, cause-less or remedy-less message is OUTSIDE) so the additive member cannot become silently optional')
 check('U-6 (reload arm, the operator\'s view)', 'after the reload the pane shows the state it actually is in', afterReload.present && afterReload.mcpSegment === 'disabled' ? 'PASS' : 'FAIL',
   `after Page.reload the pane re-painted=${reloadedPainted} and its status segment reads ${JSON.stringify(afterReload.mcpSegment)} with the button reading ${JSON.stringify(afterReload.buttonText)} and data-state ${JSON.stringify(afterReload.dataState)}, while IPC_SECURITY_GET answered exclusion=${JSON.stringify(reloadBridge?.exclusion)} and the live MCP surface IS refusing with the declared receipt (${JSON.stringify(reloadReceipt)})`,
-  'the operator-visible half of `U-6` (`§0A` item 5; `§2.4` item 3; `PAR-9`): the GET response member is the STATE and it is NEVER absent, so the pane\'s own source reports the live gate after the reload — the reading that `F-4` (the stale boot-gate read) contradicted before the host fix landed')
+  'the operator-visible half of `U-6` (`§0A` item 5; `§2.4` item 3; `PAR-9`): the GET response member is the STATE and it is NEVER absent, so the pane\'s own source reports the live gate after the reload — the reading that `F-4` (the stale boot-gate read) contradicted before the host fix landed. **THIS ROW WAS NOT RE-GRAINED** (the as-filed predicate is `afterReload.present && afterReload.mcpSegment === \'disabled\'` and is unchanged): the as-filed `FAIL` was the HOST defect `F-4`, fixed by the implementer at `afd3212`, and the as-filed EVIDENCE SENTENCE (which attributed the pane\'s reading to a handler closing over the boot gate) was this file\'s own stale text and stands corrected here — the pane\'s source is `L` `src/main/main.ts:384`\'s live `mcp.gate.exclusionState()` read')
 
-// BOOT A STAYS ALIVE THROUGH PHASE 5: it is the CDP boot, and the HTTP phase needs
-// a REAL transition driven through the app while an HTTP POST is in flight (the
-// app's own gate is the shared authority). It is torn down after PHASE 5.
+// BOOT A STAYS ALIVE UNTIL AFTER PHASE 5, and the reason is CORRECTED 2026-10-09 (the
+// `§6.2` audit's `F12`): the as-filed text claimed the HTTP phase *"needs a REAL transition
+// driven through the app while an HTTP POST is in flight (the app's own gate is the shared
+// authority)"* — it does NOT: each boot has its OWN gate (`§2.4` item 7's per-process
+// reading) and the HTTP phase drives its transitions on the HTTP boot's own surface. Boot A
+// is kept alive because PHASE 4 copies ITS post-transition profile (and its phase-2/3
+// gesture rows are still its own). It is torn down after PHASE 5.
 
 // ══════════════════════════════════════════════════════════════════════════════
-// PHASE 4 — U-6: a RESTART returns to `mcp-enabled` (same profile, new process)
+// PHASE 4 — U-6: a RESTART returns to `mcp-enabled`, ON BOOT A'S OWN POST-TRANSITION
+// PROFILE, and the flag is NOT PERSISTED (the `D-19`/`N-5` property)
+//
+// ⟶ RE-INSTRUMENTED 2026-10-09 — THE `§6.2` AUDIT'S BLOCKING `F1`. The as-filed arm
+// booted the restart on a FRESH `mkdtemp` profile THE DRIVER SEEDED ITSELF
+// (`mkdtempSync` + `writeFileSync` of `{token, enabled}`), so it measured a boot on a
+// profile it had just written — a DIFFERENT profile from boot A's post-transition one —
+// while the record claimed "the same scratch profile"; boot A's OWN post-transition
+// profile was never read; and the predicate (`restartAnswer.isError !== true &&
+// !JSON.stringify(restartHtml.census ?? {}).includes('exclusion')`) was satisfied by a
+// THROWN call (`rawCall` → `{ok:false,error}`, so `isError` is `undefined`) and by an
+// ABSENT `census` member (`?? {}`), i.e. DELETING THE FEATURE STILL READ PASS. The
+// `D-19`/`N-5` property — no persisted flag, no third file, no exclusion key in the file
+// — was not measured at all.
+//
+// WHAT THE ARM DOES NOW: the restart boots on a BYTE-EXACT COPY of BOOT A'S OWN
+// post-transition profile, made HERE, AFTER the transition (`cpSync` of boot A's live
+// profile directory) — the copy is the record's own artefact, and its fidelity is a
+// PREDICATE TERM (the copy's listing must equal boot A's own listing and the store bytes
+// must be identical), not an assumption. Boot A's own post-transition profile is READ
+// (listing + bytes) and both readings are terms. THE WHOLE PROPERTY IS INSIDE THE
+// PREDICATE — the answered shape, the process identity, the profile file LIST and the
+// store file's BYTES — and a POSITIVE CONTROL (below) drives two deletion/regression
+// fixtures through the SAME predicate function and shows every term reddening.
 // ══════════════════════════════════════════════════════════════════════════════
-const profileRestart = mkdtempSync(join(tmpdir(), 'se-live-restart-'))
-writeFileSync(join(profileRestart, 'provident-security.json'), JSON.stringify({ token: TOKEN, enabled: GROUPS }, null, 2))
+const restartHome = mkdtempSync(join(tmpdir(), 'se-live-restart-'))
+const profileRestart = join(restartHome, 'profile')   // the copy target — NOT pre-created
+
+/** THE RESTART ARM'S PREDICATE, as a NAMED FUNCTION OF ITS TERMS, so the LIVE reading and
+ *  every CONTROL fixture go through the SAME code (a predicate that is a lambda inside a
+ *  `check()` call can only be controlled by editing the driver). Every term is reported
+ *  by name, so a red row says WHICH part of the property broke. */
+function restartArmProperty(f) {
+  const terms = {
+    // (1) the restarted app ANSWERED — a throw (`{ok:false,error}`) reddens here, which is
+    //     the vacuity the as-filed `isError !== true` could not see.
+    'answer-ok': f.answer?.ok === true,
+    // (2) and it is not an error answer of any kind.
+    'answer-not-error': f.answer?.isError !== true,
+    // (3) and the answer is a NORMAL value — NOT the declarator receipt (a restart that
+    //     came back CLOSED would answer the receipt, and this term reddens) and carrying
+    //     the markdown the enabled state produces.
+    'answer-normal': declaredReceipt(f.answer) === null && typeof f.answer?.text === 'string' && f.answer.text.includes('markdown'),
+    // (4) a GENUINELY NEW PROCESS (not a reading of the boot A client).
+    'new-process': typeof f.pidRestart === 'number' && f.pidRestart !== f.pidBootA,
+    // (5) THE PRECONDITION, measured: boot A was IN THE OPEN STATE when the copy was made
+    //     (its live bridge read `mcp-disabled` AND its live stdio call answered the
+    //     receipt) — otherwise the restart reading is vacuous.
+    'precondition-open': f.preconditionOpen === true,
+    // (6) NO NEW PROFILE ENTRY ACROSS THE TRANSITION WINDOW: every name in boot A's own
+    //     post-transition listing was already there before the first transition. THIS IS
+    //     THE `N-5` "ANY THIRD FILENAME" TERM — raw, unfiltered (the as-filed row's
+    //     `f.includes('security') || f.includes('settings')` filter could not see a third
+    //     file under any other name). Its baseline is SETTLED (`baseline-settled` below),
+    //     so it cannot redden on Chromium's own lazy writes.
+    'no-new-entry': Array.isArray(f.sourceList) && f.sourceList.every((e) => f.baselineList.includes(e)),
+    // (6a) AND THE BASELINE WAS TAKEABLE: the listing had stopped moving before the window
+    //      opened (otherwise the term above is a race, not a reading).
+    'baseline-settled': f.baselineSettled === true,
+    // (6b) THE TIGHT WINDOW — THE `D-19`/`N-5` CORE: the transition THIS phase performs
+    //      (`setExclusion('mcp-disabled')` + the renderer reload) added NOTHING to the
+    //      profile between the reading taken immediately before it and the restart copy.
+    //      This is the term the as-filed arm did not have at all.
+    'transition-window-clean': Array.isArray(f.sourceList) && Array.isArray(f.preTransitionList) && f.sourceList.every((e) => f.preTransitionList.includes(e)),
+    // (7) THE COPY IS OF BOOT A'S OWN PROFILE, exactly: listing-equal and byte-equal.
+    'copy-is-of-source': Array.isArray(f.sourceList) && Array.isArray(f.copyList) && JSON.stringify(f.copyList) === JSON.stringify(f.sourceList) && typeof f.sourceBytes === 'string' && f.sourceBytes === f.copyBytes,
+    // (8) NO `exclusion` KEY IN THE STORE, in any of the three readings (boot A's own
+    //     post-transition file, the copy as made, and the copy after the restart boot).
+    'no-exclusion-key': [f.sourceBytes, f.copyBytes, f.copyBytesAfterBoot].every((b) => typeof b === 'string' && !b.includes('exclusion')),
+    // (9) THE STORE-SPACE FILE SET IS EXACTLY THE ONE DECLARED FILE, on both the source and
+    //     the post-boot copy (the `N-5` second half — no third *store* file).
+    'store-file-set': ['provident-security.json'].join(',') === (f.sourceList ?? []).filter((e) => /^provident-/.test(e)).sort().join(',')
+      && ['provident-security.json'].join(',') === (f.postBootList ?? []).filter((e) => /^provident-/.test(e)).sort().join(','),
+    // (10) AND THE STORE FILE IS A REAL, NON-EMPTY STORE — the positive control against
+    //      reading an ABSENT key off an absent file (the as-filed `?? {}` vacuity).
+    'store-non-vacuous': (function () {
+      try {
+        const v = JSON.parse(f.copyBytes)
+        return v !== null && typeof v === 'object' && 'token' in v && 'enabled' in v
+      } catch { return false }
+    })(),
+  }
+  return { ok: Object.values(terms).every(Boolean), terms }
+}
+
+// THE LIVE PRECONDITION, read on boot A at the moment of the copy: the OPEN state, and a
+// live call still answered the receipt. (Without this the restart arm would be measuring
+// a profile from a boot that never transitioned.)
+const preconditionBridge = await cdp.evaluate(`window.provident.security.get()`)
+const preconditionCall = await rawCall(bootA.client, 'provident.get_markdown', {})
+const preconditionOpen = preconditionBridge?.exclusion === 'mcp-disabled' && declaredReceipt(preconditionCall) !== null
+
+// BOOT A'S OWN POST-TRANSITION PROFILE, read where it lives (never seeded by this pass):
+const sourceList = readdirSync(bootA.profile).sort()
+const sourceBytes = readFileSync(join(bootA.profile, PROFILE_STORE_FILE), 'utf8')
+cpSync(bootA.profile, profileRestart, { recursive: true })       // the copy, made AFTER the transition
+const copyList = readdirSync(profileRestart).sort()
+const copyBytes = readFileSync(join(profileRestart, PROFILE_STORE_FILE), 'utf8')
+
 const childR = spawnElectron(['--mcp-transport=stdio', `--provident-user-data=${profileRestart}`])
 const childRestart = childR.child
 let stderrR = ''
@@ -499,21 +716,62 @@ const transportR = new ChildProcessTransport(childRestart)
 const clientR = new Client({ name: 'se-live-restart', version: '0.1.0' })
 await clientR.connect(transportR)
 const restartAnswer = await rawCall(clientR, 'provident.get_markdown', {})
-const restartHtml = await parsed(rawCall(clientR, 'provident.get_rendered_html', {}))
-check('U-6 (restart arm) / SX-G-46/47', 'a RESTART returns to `mcp-enabled` and the flag is NOT persisted', restartAnswer.isError !== true && !JSON.stringify(restartHtml.census ?? {}).includes('exclusion') ? 'PASS' : 'FAIL',
-  `a NEW process on the SAME scratch profile answered a normal get_markdown (isError=${restartAnswer.isError}); the profile's files are ${JSON.stringify((await import('node:fs')).readdirSync(profileRestart).filter((f) => f.includes('security') || f.includes('settings')))} — no third file and no exclusion key anywhere in the store (the flag is a CONSTRUCTION TERMINAL, never a file read)`,
-  'the state was `mcp-disabled` at the end of PHASE 3 in another process, so the enabled reading here is the boot terminal, not a carried value')
+const postBootList = readdirSync(profileRestart).sort()
+const copyBytesAfterBoot = readFileSync(join(profileRestart, PROFILE_STORE_FILE), 'utf8')
+
+const restartLive = restartArmProperty({
+  answer: restartAnswer, pidRestart: childRestart.pid, pidBootA: bootA.child.pid,
+  preconditionOpen, baselineList: profileListingBootA0, baselineSettled: bootABaseline.settled,
+  preTransitionList: profileListingBeforeReload, sourceList, copyList,
+  sourceBytes, copyBytes, copyBytesAfterBoot, postBootList,
+})
+// THE POSITIVE CONTROL — MANDATORY (the audit's item 3), and it is a FILESYSTEM fixture,
+// not a boolean: a profile directory that DOES carry the exclusion flag (a store file
+// with an `exclusion` key AND a third `provident-exclusion.json`) plus the two answer
+// regressions (a THROWN call, and a restart that came back answering the RECEIPT). Each
+// fixture is run through the SAME `restartArmProperty`, and the control row asserts that
+// EVERY fixture is REFUSED and that it names the term that caught it.
+const controlDir = join(restartHome, 'deletion-control')
+mkdirSync(controlDir, { recursive: true })
+const persistentStore = JSON.stringify({ token: TOKEN, enabled: GROUPS, exclusion: 'mcp-disabled' })
+writeFileSync(join(controlDir, PROFILE_STORE_FILE), persistentStore)
+writeFileSync(join(controlDir, 'provident-exclusion.json'), JSON.stringify({ exclusion: 'mcp-disabled' }))
+const controlList = readdirSync(controlDir).sort()
+const receiptText = JSON.stringify({ status: 'refused', reason: 'exclusion-closed', message: 'MCP endpoint functionality is blocked because the security store is open — retry once the operator has finished with the secured changes.' })
+const liveBase = { pidRestart: 2, pidBootA: 1, preconditionOpen: true, baselineList: sourceList, baselineSettled: true, preTransitionList: sourceList, sourceList, copyList, sourceBytes, copyBytes, copyBytesAfterBoot, postBootList }
+const restartControls = {
+  'the flag IS persisted (a store file carrying `exclusion` + a third profile file)': restartArmProperty({
+    ...liveBase, answer: restartAnswer, sourceList: controlList, copyList: controlList,
+    sourceBytes: persistentStore, copyBytes: persistentStore, copyBytesAfterBoot: persistentStore,
+    postBootList: controlList,
+  }),
+  'the restart came back CLOSED (the answer IS the receipt)': restartArmProperty({ ...liveBase, answer: { ok: true, isError: false, text: receiptText } }),
+  'the restart call THREW (the as-filed predicate\'s `isError === undefined` hole)': restartArmProperty({ ...liveBase, answer: { ok: false, error: 'MCP error -32001: Request timed out' } }),
+  'a THIRD profile entry appeared across the transition window': restartArmProperty({ ...liveBase, answer: restartAnswer, sourceList: [...sourceList, 'provident-exclusion.json'].sort() }),
+  'the TRANSITION ITSELF wrote a file (the tight `N-5` window)': restartArmProperty({ ...liveBase, answer: restartAnswer, preTransitionList: sourceList.filter((e) => e !== 'Preferences') }),
+  'boot A was NOT in the open state when the copy was made': restartArmProperty({ ...liveBase, answer: restartAnswer, preconditionOpen: false }),
+  'the baseline never settled (the `N-5` window would be a race, not a reading)': restartArmProperty({ ...liveBase, answer: restartAnswer, baselineSettled: false }),
+  'the copy is NOT of boot A\'s profile (a re-seeded store)': restartArmProperty({ ...liveBase, answer: restartAnswer, copyBytes: JSON.stringify({ token: 'other', enabled: GROUPS }) }),
+}
+const failedControls = Object.entries(restartControls).filter(([, v]) => v.ok !== false).map(([k]) => k)
+
+check('U-6 (restart arm) / SX-G-46/47 — RE-INSTRUMENTED ON BOOT A\'S OWN PROFILE', 'a RESTART on BOOT A\'S OWN post-transition profile returns to `mcp-enabled`, and the flag is NOT persisted (no third file, no `exclusion` key in the store bytes) — the WHOLE property, read as 12 named terms', restartLive.ok ? 'PASS' : 'FAIL',
+  `the restart child's OWN boot landmarks: ${JSON.stringify(stderrR.split('\n').filter((l) => l.includes('provident-mcp]') || l.includes('renderer ready')))} — a genuine separate boot; the copy was made at boot A's post-transition state (precondition: bridge exclusion=${JSON.stringify(preconditionBridge?.exclusion)}, live call receipt=${JSON.stringify(declaredReceipt(preconditionCall))}); a NEW process (pid ${childRestart.pid} vs boot A's ${bootA.child.pid}) on that copy answered ok=${restartAnswer.ok} isError=${restartAnswer.isError} receipt=${JSON.stringify(declaredReceipt(restartAnswer))} first 80 chars=${JSON.stringify(String(restartAnswer.text ?? restartAnswer.error).slice(0, 80))}; THE BASELINE (boot A's profile listing, taken before the first transition once the RUNTIME's own writes had settled: ${bootABaseline.polls} poll(s), settled=${bootABaseline.settled}, first taken at age ${bootABaseline.ageMs === null ? 'n/a' : Math.round(bootABaseline.ageMs / 1000) + ' s'} — the runtime having added ${JSON.stringify(bootABaseline.added)} while it settled) = ${JSON.stringify(profileListingBootA0)}; THE TIGHT N-5 WINDOW opens at the listing taken immediately BEFORE the phase-3 transition = ${JSON.stringify(profileListingBeforeReload)} — the transition added ${JSON.stringify(sourceList.filter((e) => !profileListingBeforeReload.includes(e)))} to it; boot A's OWN post-transition listing = ${JSON.stringify(sourceList)} (the Chromium runtime's own entries are present and named — they are NOT the app's store; the store-space filter is a term); the copy's listing EQUALS it = ${JSON.stringify(copyList) === JSON.stringify(sourceList)}; store bytes: boot A's own ${sourceBytes.length} chars == the copy's ${copyBytes.length} chars = ${sourceBytes === copyBytes}, no 'exclusion' key in any of the three readings = ${[sourceBytes, copyBytes, copyBytesAfterBoot].every((b) => !b.includes('exclusion'))}; after the restart's own boot the listing is ${JSON.stringify(postBootList)}. TERMS: ${JSON.stringify(restartLive.terms)}`,
+  `TERMS (each one a reading, none an assumption): ${JSON.stringify(restartLive.terms)}. **THE INSTRUMENT**: \`cpSync\` of boot A's LIVE profile directory, made AFTER the phase-3 transition, and the restart spawned on that copy — the SAME profile the open state was reached on, never a profile this pass seeded. **THE DELETION CONTROL (mandatory, and it is a FILESYSTEM fixture)**: ${JSON.stringify({ fixtures: Object.keys(restartControls).length, refused: Object.values(restartControls).filter((v) => v.ok === false).length, notRefused: failedControls })} — a profile whose store DOES carry \`exclusion\` plus a third \`provident-exclusion.json\` is REFUSED (terms ${JSON.stringify(restartControls['the flag IS persisted (a store file carrying `exclusion` + a third profile file)'].terms)}), a receipt-answering restart is REFUSED, a THROWN call is REFUSED (the as-filed \`isError === undefined\` hole), a third profile entry is REFUSED, a non-open precondition is REFUSED, and a re-seeded copy is REFUSED — so the predicate above CAN fail, and DELETING THE FEATURE IS NOT A PASS. The property is \`D-19\`/\`N-5\` (\`§2.1\` item 5; \`§1.3\` item 7's two-file pin): the flag is a CONSTRUCTION TERMINAL, never a file read`)
+check('U-6 (restart arm) — DELETION/RED-FAIL CONTROL', 'the re-instrumented restart predicate CAN FAIL: every deletion/regression fixture is REFUSED by the SAME code path, and each fixture names the term that caught it', failedControls.length === 0 && Object.values(restartControls).every((v) => v.ok === false) ? 'PASS' : 'FAIL',
+  `fixtures driven through \`restartArmProperty\` itself: ${JSON.stringify(Object.fromEntries(Object.entries(restartControls).map(([k, v]) => [k, v.ok])))}; fixtures NOT refused: ${JSON.stringify(failedControls)}; the terms each fixture broke: ${JSON.stringify(Object.fromEntries(Object.entries(restartControls).map(([k, v]) => [k, Object.entries(v.terms).filter(([, b]) => b === false).map(([t]) => t)])))}`,
+  'WHY THIS ROW EXISTS (the `§6.2` audit found the as-filed restart predicate COULD NOT FAIL — a deleted feature still read PASS): a predicate is evidence only if a control drives it red. The control here is the DELETION CASE ITSELF — a store file carrying the `exclusion` key, a third profile file, a receipt-answering restart and a thrown call all REDDEN the same terms the live reading turns green')
 registerCleanup(() => {
   try { clientR.close() } catch { /* gone */ }
   try { transportR.close() } catch { /* gone */ }
   try { childRestart.kill('SIGKILL') } catch { /* gone */ }
-  rmSync(profileRestart, { recursive: true, force: true })
+  rmSync(restartHome, { recursive: true, force: true })
 })
 try { await clientR.close() } catch { /* gone */ }
 try { transportR.close() } catch { /* gone */ }
 try { childRestart.kill('SIGKILL') } catch { /* gone */ }
 await sleep(300)
-rmSync(profileRestart, { recursive: true, force: true })
+rmSync(restartHome, { recursive: true, force: true })
 
 // ══════════════════════════════════════════════════════════════════════════════
 // PHASE 5 — THE HTTP TRANSPORT: the auth-first ordering, the POST arms, the straddle
@@ -531,8 +789,10 @@ async function httpPost(port, body, { token = null, sessionId = null } = {}) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// PHASE 0b — THE HTTP BOOT (spawned HERE, beside boot A, so the HTTP phase can
-// drive REAL transitions on boot A's live window while an HTTP POST is in flight)
+// PHASE 0b — THE HTTP BOOT (spawned HERE, beside boot A; the HTTP phase drives its OWN
+// transitions on THIS process — CORRECTED 2026-10-09, the `§6.2` audit's `F12`: the
+// as-filed header claimed the phase drives "REAL transitions on boot A's live window",
+// which the per-process gate forbids and which the code below does not do)
 // ══════════════════════════════════════════════════════════════════════════════
 const HTTP_PORT = 3900 + Math.floor(Math.random() * 90)
 // WHY THIS BOOT IS SPAWNED DIRECTLY AND NOT THROUGH `spawnElectron`: the helper's
@@ -560,12 +820,20 @@ registerCleanup(() => {
   rmSync(HTTP_PROFILE, { recursive: true, force: true })
 })
 
-// THE TRANSITION CHANNEL FOR THE WHOLE RUN is BOOT A's CDP surface: the app's gate
-// is ONE per process, and the HTTP phase must be able to land a transition while an
-// HTTP POST is in flight, so the state is driven on the boot that already holds a
-// window. (The HTTP boot gets no second MCP client: its stdio channel is its own
-// `stdioServer`, and a second client's handshake there would contend with the app's
-// own request stream — MEASURED: an `MCP error -32001: Request timed out` after 60 s.)
+// THE TWO BOOTS HAVE TWO SEPARATE GATES — CORRECTED 2026-10-09 (the `§6.2` audit's `F12`:
+// this block used to claim the OPPOSITE of the block 100 lines below it, and of the
+// measurement). The as-filed text read *"THE TRANSITION CHANNEL FOR THE WHOLE RUN is
+// BOOT A's CDP surface … the HTTP phase must be able to land a transition while an HTTP
+// POST is in flight, so the state is driven on the boot that already holds a window"* —
+// and BOTH halves are wrong: the exclusion gate is ONE PER PROCESS, so a transition
+// landed on boot A does NOT move the HTTP boot's server (`§2.4` item 7's per-process
+// reading, and the reason the `SX-G-36` rows read 503 against THIS process). THE HTTP
+// PHASE'S TRANSITIONS ARE LANDED ON THE HTTP BOOT'S OWN SURFACE — the same boot whose
+// POSTs the rows then measure (see the `transitionOverHttp` block below). Boot A's CDP
+// surface is kept alive only for PHASE 4's restart copy and the phase-2/3 gesture rows.
+// (The HTTP boot gets no second stdio MCP client: its stdio channel is its own
+// `stdioServer` and a second client's handshake there contends with the app's own request
+// stream — MEASURED: an `MCP error -32001: Request timed out` after 60 s.)
 
 /** Drive a transition on the HTTP BOOT through its OWN MCP surface. The HTTP
  *  transport is STATELESS (`§2.3` item 2: a fresh McpServer + transport per POST), so
@@ -651,16 +919,16 @@ check('SX-G-40 (live)', 'a GET /mcp keeps its landed 405 answer while the exclus
   `GET /mcp → ${getRes.status} ${JSON.stringify(getBody.slice(0, 140))}`,
   'the exclusion arm is reachable ONLY for POST')
 
-// OPEN THE STATE THROUGH THE APP'S OWN CHANNEL. There is no CDP on this boot (the
-// state is driven where the app puts it: the pane's bridge reaches main over the
-// `IPC_SECURITY_EXCLUSION` channel), so the transition is triggered by loading a
-// TINY handler envelope over the app graph and dispatching it — the declared
-// `window.provident.security.setExclusion` call, exercised by the app's own
-// MCP dispatch surface rather than by a second reach-in.
+// OPEN THE STATE THROUGH THE APP'S OWN CHANNEL. This boot DOES carry the CDP listener
+// (`--remote-debugging-port=0`, attached later for the operator's return gesture), but the
+// TRANSITION is driven over the app's own MCP surface instead: the envelope loads a TINY
+// handler, dispatches it, and its body calls the pane's OWN declared bridge member
+// (`window.provident.security.setExclusion`, reached over the `IPC_SECURITY_EXCLUSION`
+// channel) — exercised by the app's own dispatch surface rather than by a second reach-in.
 // THE TRANSITIONS ARE DRIVEN THROUGH THE APP'S OWN CHANNEL on the boot that serves
 // the HTTP endpoint. Boot A is a SEPARATE process with its own gate, so a transition
 // landed there would not move this server. BOTH envelopes are pre-loaded while the
-// tier admits MCP work (see `preloadTransition`: `provident.load` is itself refused
+// tier admits MCP work (see `transitionOverHttp`: `provident.load` is itself refused
 // while the state is open).
 const openVia = await transitionOverHttp('mcp-disabled', 'open')
 await sleep(400)
@@ -688,10 +956,20 @@ const straddlePromise = httpPost(HTTP_PORT, { jsonrpc: '2.0', id: 6, method: 'to
 await sleep(60)
 const returnVia = await transitionOverHttp('mcp-enabled', 'return')
 const straddle = await straddlePromise
-const statusLines = (straddle.text.match(/HTTP\/1\.[01] \d{3}/g) ?? [])
-check('SX-G-43 (live)', 'a straddling POST is answered ONCE on its own stream (the falsifier: a second status line)', straddle.status !== 503 || straddle.text.includes('exclusion-closed') ? 'PASS' : 'FAIL',
-  `the POST that arrived while the tier was in transition was answered status ${straddle.status} with ${straddle.lines.length} body line(s), content-type=${JSON.stringify(straddle.contentType)}, and it carries a SECOND status line: ${statusLines.length > 1}; body starts ${JSON.stringify(straddle.text.slice(0, 160))}; the return POST that landed beside it answered ${returnVia.status}`,
-  'the falsifier `§2.3` item 3 declares is a SECOND status line on the one response stream; the status decided for this POST was decided AT ARRIVAL (no status was written twice). Note honestly: this POST did not carry a resolving renderer round trip across the transition, so the mid-flight abandonment path is NOT exercised by this row')
+/** THE DECLARED FALSIFIER, TURNED INTO A PREDICATE TERM (the `§6.2` audit's `F4`): `§2.3`
+ *  item 3's falsifier is a SECOND STATUS LINE on the one response stream, so the row must
+ *  ASSERT the count. The as-filed predicate was `straddle.status !== 503 ||
+ *  straddle.text.includes('exclusion-closed')`, which CANNOT fail on its own declared
+ *  falsifier — a 200/404/500 answer, or a second status line, passed it. The counter is a
+ *  named function so the CONTROL below can drive it (a body carrying two status lines must
+ *  count 2). */
+const countStatusLines = (text) => (String(text).match(/HTTP\/1\.[01] \d{3}/g) ?? []).length
+const statusLines = countStatusLines(straddle.text)
+const straddleFalsifierControl = countStatusLines('HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\nHTTP/1.1 503 Service Unavailable\r\n\r\n{}') === 2
+const straddleOnce = statusLines <= 1 && straddle.lines.length >= 1 && straddleFalsifierControl && (straddle.status !== 503 || straddle.text.includes('exclusion-closed'))
+check('SX-G-43 (live)', 'a straddling POST is answered ONCE on its own stream (the falsifier — a SECOND status line — is ASSERTED, not merely printed)', straddleOnce ? 'PASS' : 'FAIL',
+  `the POST that arrived while the tier was in transition was answered status ${straddle.status} with ${straddle.lines.length} body line(s), content-type=${JSON.stringify(straddle.contentType)}; the DECLARED FALSIFIER (a second status line) is counted: ${statusLines} status line(s) ≤ 1 = ${statusLines <= 1}; the counter's own control (a synthetic body carrying two status lines) counts ${countStatusLines('HTTP/1.1 200 OK\r\n\r\nHTTP/1.1 503 Service Unavailable\r\n\r\n')} = 2, so the reading above is not a counter that cannot see one; body starts ${JSON.stringify(straddle.text.slice(0, 160))}; the return POST that landed beside it answered ${returnVia.status}`,
+  'RE-GRAINED 2026-10-09 (the `§6.2` audit\'s `F4`): the as-filed predicate could NOT fail on the falsifier `§2.3` item 3 declares — a 200/404/500 answer, and equally a SECOND status line, passed it. The count is now a term AND its counter is controlled. Note honestly: this POST did not carry a resolving renderer round trip across the transition, so the mid-flight abandonment path is NOT exercised by this row (the row measures the ARRIVAL decision: one status line, one body)')
 
 await sleep(300)
 // (i) THE MCP/HTTP ROUTE GRANTS NO RE-ARM AUTHORITY — measured, not asserted (`§2.4` item 6: the
@@ -794,4 +1072,8 @@ console.log(`LIVE BATTERY RESULT: ${CHECKS.length} recorded rows = ` +
 console.log('  the terms are the rows themselves; every verdict above was produced by the instruments named in its own row')
 for (const c of CHECKS.filter((x) => x.verdict === 'FAIL')) console.log(`  ✗ FAIL ${c.id}: ${c.subject}`)
 if (TALLY.FAIL === undefined) console.log('  no row contradicted the clause it cites')
-process.exit(0)
+// THE EXIT CODE IS EVIDENCE (the `§6.2` audit's `F5`): the as-filed driver ended
+// `process.exit(0)` UNCONDITIONALLY, so the `exit: 0` the record cited carried NO
+// information — the as-filed 6-FAIL run had the same exit code as the green one. A
+// non-zero exit now means "at least one row is FAIL", and nothing else.
+process.exit(TALLY.FAIL ? 1 : 0)
