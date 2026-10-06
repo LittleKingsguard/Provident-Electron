@@ -32,10 +32,36 @@ const TOOL_PREFIX = 'provident.'
  *  16-member refusal union (the `SecurityWriteReceipt` precedent — the union stays `16`). */
 export const EXCLUSION_CLOSED = 'exclusion-closed'
 
+/** `§2.5` item 1 (AMENDED 2026-10-08 — THE ARCHITECT'S `GAP-3` RULING) — **THE SERVER-AUTHORED
+ *  `message`**: the receipt's ADDITIVE third member. It is **built HERE and NEVER derived from
+ *  caller input** (`PAR-8`: a caller-supplied message would let a caller forge the cause and the
+ *  remedy, the same reason `PAR-5` refuses a caller-supplied epoch).
+ *
+ *  Its declared DOMAIN (`§2.5` item 1 · `PAR-4`): a non-empty `string` naming the CAUSE (the
+ *  security store is open) AND the REMEDY (retry once the operator has finished with the secured
+ *  changes). Its OUTSIDE values — an absent member · an empty or whitespace-only string · a
+ *  cause-less or remedy-less sentence · a message naming a DIFFERENT cause · a message carrying a
+ *  tier-4 value, a store token or a group set · a message substituted for the `reason` token —
+ *  each FAIL and NONE throws.
+ *
+ *  `status` and `reason` stay CLOSED at one token each; this member closes no third state, adds no
+ *  second token and widens no declared domain. It is delivered as a VALUE, serialized into the
+ *  carrier's `text`, on the MCP tool/RESOURCE refusal and on the manual-UI snapshot reader. **It is
+ *  deliberately NOT delivered on the HTTP `503` body nor on the in-flight arm's `Error.message`**:
+ *  `§7a` `OW-9` records those two carriers' layout as UNSETTLED, and `P-EX-IM-3`'s cell (b) pins the
+ *  in-flight arm's `Error.message` to the closed token VERBATIM. */
+export const EXCLUSION_CLOSED_MESSAGE =
+  'MCP endpoint functionality is blocked because the security store is open — retry once the operator has finished with the secured changes.'
+
 /** `§2.2` item 5 — the tool-RESULT carrier of the refusal: a VALUE, never an MCP protocol error.
  *  ONE answer at all three depths, differing in TRANSPORT and never in token. */
 function exclusionRefusal() {
-  return { content: [{ type: 'text' as const, text: JSON.stringify({ status: 'refused', reason: EXCLUSION_CLOSED }) }] }
+  return {
+    content: [{
+      type: 'text' as const,
+      text: JSON.stringify({ status: 'refused', reason: EXCLUSION_CLOSED, message: EXCLUSION_CLOSED_MESSAGE }),
+    }],
+  }
 }
 
 /** `§2.2` item 2(a) — THE INVOCATION TURN. The predicate is read off the LIVE gate at the turn
@@ -433,16 +459,20 @@ export class ProvidentMcpServer {
 
   /** `§2.1` item 3 (`T-1`/`T-2`/`T-5`, `M-EX-3`/`M-EX-9`) — **THE ONE RE-GATE PATH**, shared by the
    *  SET/re-gate (`applyGatePatch`) and the exclusion transition (`applyExclusion`) so the two
-   *  cannot drift: (a) every captured tool/resource handle is TOGGLED to agree with the record
-   *  (while the tier is open NOTHING is enabled; the handles stay RESOLVABLE throughout — they are
-   *  toggled, never deregistered, the non-legibility pin), and (b) any NEWLY-ALLOWED tool/resource
-   *  that is not registered yet is REGISTERED on the live stdio server.
+   *  cannot drift: (a) every captured tool/resource handle is TOGGLED to agree with the ENABLED-GROUP
+   *  set (the handles stay RESOLVABLE throughout — they are toggled, never deregistered, the
+   *  non-legibility pin), and (b) any NEWLY-ALLOWED tool/resource that is not registered yet is
+   *  REGISTERED on the live stdio server.
    *
-   *  (b) IS SUPPRESSED WHILE THE TIER IS OPEN (`exclusionOpen`) — the landed, spec-sanctioned shape:
-   *  nothing is widened into a surface that refuses everything anyway. It is therefore required in
-   *  BOTH directions: `T-2` (the operator's close request) MUST widen, because a group widen that
-   *  arrived while the tier was open left its newly-allowed tools unregistered — without (b) here
-   *  the MCP surface does not actually come back until the next settings write.
+   *  **(a) AND (b) READ THE OPERATOR'S GROUP SET AND NOTHING ELSE.** `§2.1` item 3 (the `GAP-3`
+   *  ruling's supersession clause) / `§2.2` item 2(b)/(c): *"the exclusion is no longer a registry
+   *  state at all"*. The superseded composition — `enabled: !exclusionOpen && allowed`, and the
+   *  matching `toAdd = exclusionOpen ? [] : …` widen suppression — carried an EXCLUSION TERM: one
+   *  operator group change while the store was open switched EVERY handle in the registry to
+   *  `enabled:false` (`tools/list` read `0` of `19`; every call answered `-32602 … disabled` — the
+   *  gate-6 `U-4` regression). That term
+   *  is DELETED here in BOTH arms; the exclusion is read at the INVOCATION TURN alone
+   *  (`exclusionTurn`, `§2.2` item 2(a)), which is what makes the declared receipt REACHABLE.
    *
    *  The HTTP transport needs no re-gate: it builds a fresh server per POST from the current gate.
    *
@@ -452,9 +482,8 @@ export class ProvidentMcpServer {
    *  true, the default). The EXCLUSION transition passes `false`, because the ruling drops the
    *  toggling: with it ON a disabled handle is neither listed nor callable and the declared receipt
    *  is unreachable. A designer MAY still route the transition through this helper — it MUST NOT
-   *  toggle. The arm (b) widen is retained in BOTH cases. */
+   *  toggle. The arm (b) widen runs in BOTH cases. */
   private regateLiveServer(opts: { toggleHandles: boolean } = { toggleHandles: true }): void {
-    const exclusionOpen = this._gate.exclusionState() === 'mcp-disabled'
     if (opts.toggleHandles) {
       for (const [name, tool] of this.registered) {
         // U3/F1 (adversarial) — module.install/update + dynamic module:<name>.<tool> tools are
@@ -466,11 +495,11 @@ export class ProvidentMcpServer {
         const allowed = isModuleTool
           ? (this._gate.toolAllowed(name) && this._gate.enabled.has('code'))
           : this._gate.toolAllowed(name)
-        tool.update({ enabled: !exclusionOpen && allowed })
+        tool.update({ enabled: allowed })
       }
       // R2 — re-gate the captured resource handles the same way.
       for (const [uri, res] of this.resources) {
-        res.update({ enabled: !exclusionOpen && this._gate.toolAllowed(`resource:${uri}`) })
+        res.update({ enabled: this._gate.toolAllowed(`resource:${uri}`) })
       }
     }
     // M1-widen — REGISTER any newly-allowed tools that were not registered before (a widen to a
@@ -480,11 +509,11 @@ export class ProvidentMcpServer {
     const liveServer = this.stdioServer
     if (!liveServer) return
     const liveGate = (): SecurityGate => this._gate
-    const toAdd = exclusionOpen ? [] : this.allowedToolNames().filter((n) => !this.registered.has(n))
+    const toAdd = this.allowedToolNames().filter((n) => !this.registered.has(n))
     if (toAdd.length > 0) {
       ProvidentMcpServer.registerTools(liveServer, this.backend, toAdd, this.registered, this.moduleStore, this.router, liveGate)
     }
-    const resToAdd = exclusionOpen ? [] : ProvidentMcpServer.ALL_RESOURCES.filter(
+    const resToAdd = ProvidentMcpServer.ALL_RESOURCES.filter(
       (r) => this._gate.toolAllowed(`resource:${r.uri ?? r.uriTemplate}`) && !this.resources.has(r.uri ?? r.uriTemplate!),
     )
     if (resToAdd.length > 0) {
@@ -498,10 +527,13 @@ export class ProvidentMcpServer {
 
   /** `§2.2` item 2 / `PAR-4` — the DECLARED reader: the refusal receipt while the gate says
    *  `'mcp-disabled'`, and `null` ONLY when the gate says `'mcp-enabled'`. No third return value;
-   *  it never throws. */
-  exclusionSnapshot(): { status: 'refused'; reason: string } | null {
+   *  it never throws. **The returned receipt carries the AMENDED additive `message` member**
+   *  (`§2.5` item 1, 2026-10-08): `null` still means `'mcp-enabled'` and NOTHING ELSE, the two
+   *  closed tokens are unmoved, and the message is the SAME server-authored sentence the tool
+   *  carrier delivers — never a caller-supplied one (`PAR-8`). */
+  exclusionSnapshot(): { status: 'refused'; reason: string; message: string } | null {
     return this._gate.exclusionState() === 'mcp-disabled'
-      ? { status: 'refused', reason: EXCLUSION_CLOSED }
+      ? { status: 'refused', reason: EXCLUSION_CLOSED, message: EXCLUSION_CLOSED_MESSAGE }
       : null
   }
 
