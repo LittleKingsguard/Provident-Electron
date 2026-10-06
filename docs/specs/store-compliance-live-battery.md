@@ -931,7 +931,12 @@ AS-FILED DUPLICATED FRAGMENT (quoted so the repair is auditable; the WHOLE of li
 
 ### 10.6 THE POST-COMMIT RUN AND THE FOUR LEGS
 
-**RECORDED AFTER THE SCOPED COMMIT LANDED, WITH `git status --short` EMPTY** (`RCA-8(a)`'s gate boundary: the post-commit measurement cannot live inside the commit it measures, so it is filed by this section). **See §10.7 for the verbatim figures.**
+**RECORDED AFTER THE SCOPED COMMIT `3e8a302` LANDED, WITH `git status --short` EMPTY** (`RCA-8(a)`'s gate boundary: the post-commit measurement cannot live inside the commit it measures, so it is filed by this section, committed by a SECOND, RECORD-ONLY commit — the same two-commit discipline the sixth round used at `f700aaf`).
+
+- **`npm run build` BEFORE the runs → exit `0`.**
+- **THE POST-COMMIT RUN:** `node tests/store-compliance-live.mjs` → exit **`1`**, **`46 recorded rows = 39 PASS / 6 FAIL / 1 MANUAL / 0 PARKED`** — the SAME counts and the SAME exit code as both pre-commit runs, on the pinned bytes.
+- **THE FOUR LEGS, POST-COMMIT WITH `git status --short` EMPTY:** `npm test` → exit **`0`**, **`87 passed (87)` files / `2764 passed | 2 skipped (2766)` tests / `0 failed`** (this is the leg that reddens on an edited-but-uncommitted `tests/**` artifact — `tests/gutter.test.ts`'s `R-12` arm reads the WORKING TREE and read **1 failed** in the PRE-commit position with `liveUnaccounted = ["tests/store-compliance-live.mjs"]`, i.e. exactly this driver; **it is GREEN here, which is the fourth confirmation in this campaign that the fix is the commit and not a row change**); `npm run typecheck` → exit **`0`** (0 diagnostics, `src/**` only); `npm run typecheck:tests` → exit **`0`** (0 diagnostics, the whole `tests/**/*.ts` tree — the additive leg); `npm run build` → exit **`0`** (all five bundles + the renderer copy).
+- **THE PRE-COMMIT READING, KEPT VISIBLE BESIDE IT (a reading is a reading): `npm test` in the pre-commit position read `1 failed | 86 passed (87)` files / `2763 passed | 1 failed | 2 skipped (2766)` tests — the single failure being `R-12`'s working-tree accounting row naming this driver, cleared by the commit itself, NOT by any test edit.**
 
 ### 10.7 THE POST-COMMIT FIGURES AND THE DRIVER PIN
 
@@ -939,6 +944,7 @@ AS-FILED DUPLICATED FRAGMENT (quoted so the repair is auditable; the WHOLE of li
 - **THE POST-COMMIT RUN:** `node tests/store-compliance-live.mjs` → exit **`1`**, **`46 recorded rows = 39 PASS / 6 FAIL / 1 MANUAL / 0 PARKED`**, `FAIL` set `{SC-A-01, SC-A-02, SC-A-04, SC-A-05, SC-D-05, SC-D-07}`, one `MANUAL` (`SC-D-08`).
 - **THE FOUR LEGS, POST-COMMIT WITH `git status --short` EMPTY:** `npm test` · `npm run typecheck` · `npm run typecheck:tests` · `npm run build` — **the figures are appended by the post-commit record commit, below.**
 - **AND THE EXIT CODE IS EVIDENCE ABOUT `FAIL`s ALONE (`A4-05`): `exit 1` here says "six rows contradicted the clause they cite"; it does NOT certify any family, because a `MANUAL` row is a WITHHELD claim.**
+- **THE FOUR LEGS' FIGURES ARE AT §10.6 ABOVE** (post-commit, `git status --short` EMPTY: `npm test` `0` / `87` files / `2764 passed | 2 skipped` / `0 failed`; `npm run typecheck` `0`; `npm run typecheck:tests` `0`; `npm run build` `0`).
 
 ### 10.8 THE `§6.2` AUDITS OWED — TWO ROUNDS, AND NEITHER IS DISCHARGED HERE
 
