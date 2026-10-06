@@ -30,7 +30,11 @@ import type { SecuritySettings, RpcRequest, RpcReply } from '../shared/types.js'
 // G3 §1.3 item 4 — the NEW `SecurityWriteReceipt` type lives in
 // `src/main/security-store.ts` and reaches the pane's bridge DECLARATION by
 // IMPORT (type-only — erased at build; no runtime coupling to the main side).
-import type { SecurityWriteReceipt } from '../main/security-store.js'
+// `tier4-arbitrary-storage.md` `§2.4` item 8 adds the tier-4 refusal's own type
+// (`Tier4ClosedRefusal`) and the store's answer superset (`Tier4WriteAnswer`) to
+// the SAME import: the two declaration sites widen in LOCKSTEP with `preload.ts`
+// and `SecuritySettings` itself is untouched (§1.3 item 5).
+import type { SecurityWriteReceipt, Tier4ClosedRefusal, Tier4WriteAnswer } from '../main/security-store.js'
 // PAR-13 — the two closed state tokens, imported TYPE-ONLY from the gate module that owns them
 // (the `SecurityWriteReceipt` precedent above: erased at build, no runtime coupling to main).
 import type { ExclusionState as EXCLUSION_STATE } from '../main/security.js'
@@ -45,11 +49,14 @@ declare global {
       security?: {
         // PAR-13 / §1.5 item 5 — this re-declaration MUST widen in LOCKSTEP with
         // `preload.ts` or the pane cannot read the member: both sites declare the
-        // SAME `SecuritySettings & { exclusion }` superset (a half-widening FAILS).
-        get(): Promise<SecuritySettings & { exclusion: EXCLUSION_STATE }>
+        // SAME `SecuritySettings & { exclusion }` superset (a half-widening FAILS), and
+        // `tier4-arbitrary-storage.md` `§2.4` item 8 adds the ONE further additive member
+        // `read` at BOTH sites together (the pane's refusal segment is sourced from it).
+        get(): Promise<SecuritySettings & { exclusion: EXCLUSION_STATE; read: Tier4ClosedRefusal | null }>
         // G3 §2.3 item 2 — the pane's declared `security.set` follows the same
-        // superset as the preload's (the receipt's additive `write` member).
-        set(patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }): Promise<SecuritySettings & { write: SecurityWriteReceipt }>
+        // superset as the preload's (the receipt's additive `write` member), with the holder's
+        // type following the store's own declared answer superset (`Tier4WriteAnswer`).
+        set(patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }): Promise<SecuritySettings & { write: Tier4WriteAnswer }>
         // §2.4 item 4 / PAR-10 — the exclusion transition's OWN member. The control's
         // body calls it and NEVER throws; a malformed request answers `applied: false`.
         setExclusion(state: EXCLUSION_STATE): Promise<{ applied: boolean; state: EXCLUSION_STATE; reason?: 'malformed-state' }>
@@ -289,9 +296,12 @@ export class SecurePanels {
   private nodes: unknown[]
   private prevMap: Map<string, unknown> | null = null
   // PAR-13 — the pane's own snapshot holder follows the WIDENED declared return of the
-  // manual-UI read (the `SecuritySettings & { exclusion }` superset). `SecuritySettings` itself
-  // is unmoved; this is the renderer's local reading of the same additive member.
-  private cfg: SecuritySettings & { exclusion: EXCLUSION_STATE } = { token: null, enabled: ['read', 'dispatch'], exclusion: 'mcp-enabled' }
+  // manual-UI read (the `SecuritySettings & { exclusion }` superset, `§2.4` item 8's additive
+  // `read` included). `SecuritySettings` itself is unmoved; this is the renderer's local reading
+  // of the same additive members. `read: null` is the declared INITIAL reading — "the last
+  // observed read was performed" (`§2.6` item 3: the refusal segment is rendered IFF `read` is
+  // non-null, so an un-refreshed pane fabricates no refusal).
+  private cfg: SecuritySettings & { exclusion: EXCLUSION_STATE; read: Tier4ClosedRefusal | null } = { token: null, enabled: ['read', 'dispatch'], exclusion: 'mcp-enabled', read: null }
   private debugValue = 'booting…'
   private moduleStatus = 'loading…'
   private moduleListText = ''
@@ -484,7 +494,14 @@ export class SecurePanels {
         // node: the off-state's operator-visible signal. It carries a STATE WORD, never a tier-4
         // value (the forbidden carriers stand).
         const excl = this.cfg.exclusion === 'mcp-disabled' ? ' · MCP: disabled' : ' · MCP: enabled'
-        mutation.push({ targetProp: 'content', value: `token: ${this.cfg.token ? '••••' : '(none)'} · enabled: [${this.cfg.enabled.join(', ')}]${jl}${excl}` })
+        // `tier4-arbitrary-storage.md` `§2.6` items 3/4 — THE REFUSAL'S OWN SEGMENT, the SECOND
+        // trailing segment on this same line: rendered **IFF the carrier's `read` is non-null**
+        // (absent means the last observed read was PERFORMED), carrying the refusal **TOKEN** and
+        // never its message, never a tier-4 value, never a name and never a group set. Both cells
+        // above are fed by the carrier's BOOLEAN-sourced `exclusion` member — never by a
+        // store-derived value and never by this pane's own prior state.
+        const refused = this.cfg.read === null ? '' : ' · refused: tier4-closed'
+        mutation.push({ targetProp: 'content', value: `token: ${this.cfg.token ? '••••' : '(none)'} · enabled: [${this.cfg.enabled.join(', ')}]${jl}${excl}${refused}` })
       } else if (id === 'status') {
         mutation.push({ targetProp: 'content', value: this.debugText() })
       } else if (id === 'token-input') {

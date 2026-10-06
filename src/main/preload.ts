@@ -6,7 +6,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { IPC_INVOKE, IPC_REPLY, IPC_READY, IPC_SECURITY_GET, IPC_SECURITY_SET, IPC_NOTIFY, IPC_MODULE_GET, IPC_MODULE_SET_DISABLED, type RpcRequest, type RpcReply, type SecuritySettings, type NotifyPayload, type ModuleListEntry } from '../shared/types.js'
 import { STORE_FILE_GET, STORE_FILE_PUT, IPC_SECURITY_EXCLUSION } from '../main/store-channels.js'
-import type { SecurityWriteReceipt } from './security-store.js'
+import type { Tier4ClosedRefusal, Tier4WriteAnswer } from './security-store.js'
 // PAR-13 — the two closed state tokens, imported TYPE-ONLY from the gate module that owns them
 // (erased at build; no runtime coupling). The WIDENING is an intersection at the declaration
 // sites below, never an edit to the shared `SecuritySettings` type (§1.3 item 9).
@@ -45,13 +45,22 @@ export interface ProvidentBridge {
   sendReply(reply: RpcReply): void
   notify(payload: NotifyPayload): void
   security: {
-    get(): Promise<SecuritySettings & { exclusion: EXCLUSION_STATE }>
+    // `tier4-arbitrary-storage.md` `§2.4` item 8 / `§6` `PAR-10` — the declaration site WIDENS by
+    // INTERSECTION with ONE further additive member: `read` (`null` iff the read was performed, the
+    // closed tier-4 refusal otherwise — the boolean-fed signal that stops a gated store from
+    // blanking the operator's only reader). `SecuritySettings` ITSELF stays unmoved (§1.3 item 5)
+    // and this site MUST move in LOCKSTEP with `secure-panels.ts`'s `declare global` re-declaration
+    // (a half-widening FAILS).
+    get(): Promise<SecuritySettings & { exclusion: EXCLUSION_STATE; read: Tier4ClosedRefusal | null }>
     // THE RECEIPT'S ADDITIVE DELIVERY (G3 §2.3 item 2): `security.set`'s
     // resolution is re-declared as the SUPERSET — the post-state settings
     // extended by the declared member `write` (the receipt of THIS write).
     // `set()`'s own return shape is UNCHANGED (C-11 NON-BREAKING — the receipt
-    // rides NEW members only, §2.3 item 4).
-    set(patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }): Promise<SecuritySettings & { write: SecurityWriteReceipt }>
+    // rides NEW members only, §2.3 item 4). The `write` holder's declared type follows the
+    // store's OWN answer type (`Tier4WriteAnswer`, the declared superset): a SET attempted while
+    // the tier is CLOSED answers the channel refusal `{status:'refused', reason:'tier4-closed'}`
+    // as a VALUE, so the declaration follows the artifact rather than refusing to name it.
+    set(patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }): Promise<SecuritySettings & { write: Tier4WriteAnswer }>
     setExclusion(state: EXCLUSION_STATE): Promise<{ applied: boolean; state: EXCLUSION_STATE; reason?: 'malformed-state' }>
   }
   module: {
@@ -88,14 +97,15 @@ const bridge: ProvidentBridge = {
   // channels, so an agent cannot grant itself capabilities.
   security: {
     // PAR-13 / §1.5 item 5 — `get()`'s declared return WIDENS to the same superset idiom the
-    // landed `set` uses for its additive `write` member: `SecuritySettings & { exclusion }`.
+    // landed `set` uses for its additive `write` member: `SecuritySettings & { exclusion }`, and
+    // `§2.4` item 8 adds the ONE further additive member `read` (`Tier4ClosedRefusal | null`).
     // `SecuritySettings` ITSELF is unmoved (§1.3 item 9): the widening is an INTERSECTION applied
     // at this declaration site and at the renderer's `declare global` re-declaration, which MUST
     // move in LOCKSTEP (a half-widening FAILS).
-    get(): Promise<SecuritySettings & { exclusion: EXCLUSION_STATE }> {
+    get(): Promise<SecuritySettings & { exclusion: EXCLUSION_STATE; read: Tier4ClosedRefusal | null }> {
       return ipcRenderer.invoke(IPC_SECURITY_GET)
     },
-    set(patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }): Promise<SecuritySettings & { write: SecurityWriteReceipt }> {
+    set(patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }): Promise<SecuritySettings & { write: Tier4WriteAnswer }> {
       return ipcRenderer.invoke(IPC_SECURITY_SET, patch)
     },
     // §2.4 item 4 — the ONE new channel MEMBER (the `security` member set moves `2 → 3`): the

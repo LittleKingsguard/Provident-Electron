@@ -32,6 +32,28 @@ const TOOL_PREFIX = 'provident.'
  *  16-member refusal union (the `SecurityWriteReceipt` precedent — the union stays `16`). */
 export const EXCLUSION_CLOSED = 'exclusion-closed'
 
+/** `docs/specs/tier4-arbitrary-storage.md` `§2.4` items 1/5 — **THE TIER-4 REFUSAL'S CHANNEL
+ *  TOKEN, HOMED BESIDE `EXCLUSION_CLOSED` BECAUSE THE TWO NAME MUTUAL INVERSES ON ONE AXIS**: the
+ *  landed pair's cause is the MCP-call cause (*"blocked because the security store is open"*),
+ *  this one's cause is the INVERSE (*a tier-4 read/write refused because the MCP endpoint is
+ *  open*). It is a **CHANNEL token**: `'tier4-closed'` is **NOT** a member of the store's closed
+ *  `16`-member refusal union (`D-GATE` clause (2) — a security token added to it is a collision
+ *  finding) and **NOT** a constant of the channel-NAMES module (that module's census is pinned at the
+ *  three channel NAMES it carries; a refusal token is not a channel name). ONE spelling:
+ *  lowercase, hyphenated, no case variant, no whitespace variant, no third spelling (`§2.4`). */
+export const TIER4_CLOSED = 'tier4-closed'
+
+/** `§2.4` item 4 / `§6` `PAR-7` — **THE SERVER-AUTHORED MESSAGE**: CAUSE FIRST (the MCP endpoint
+ *  is open), REMEDY SECOND (disable MCP). Built HERE and NEVER derived from caller input (a
+ *  caller-supplied message would let a caller forge the cause and the remedy — the landed
+ *  `EXCLUSION_CLOSED_MESSAGE` precedent directly below). Its declared domain: a non-empty `string`
+ *  naming the cause from the refusal's OWN side and the remedy, carrying **no tier-4 value, no
+ *  name, no group set and no store token**; its OUTSIDE values (an absent member, an empty or
+ *  whitespace-only string, a cause-less or remedy-less sentence, a message naming the INVERSE
+ *  cause, a message substituted for the `reason` token) each FAIL and NONE throws. */
+export const TIER4_CLOSED_MESSAGE =
+  'Tier-4 access is blocked because the MCP endpoint is open — disable MCP before reading or writing secured data.'
+
 /** `§2.5` item 1 (AMENDED 2026-10-08 — THE ARCHITECT'S `GAP-3` RULING) — **THE SERVER-AUTHORED
  *  `message`**: the receipt's ADDITIVE third member. It is **built HERE and NEVER derived from
  *  caller input** (`PAR-8`: a caller-supplied message would let a caller forge the cause and the
