@@ -33,7 +33,10 @@
 //          this host cannot write `<default userData>/DevToolsActivePort`
 //          (measured: `Error writing DevTools active port to file …:
 //          Permission denied (13)`) — the boot still succeeds, only the
-//          port FILE is refused.
+//          port FILE is refused. TWO boots carry it: boot A (the stdio boot) and
+//          the HTTP boot — the latter so the RETURN can be driven on the
+//          manual-UI path `§2.4` item 6 declares (the pane control), on the very
+//          process whose HTTP answers the row then measures.
 //   [G]    repo records: file bytes (`sha256`), the git landing chain, `grep`
 //          over the unit's declared diff scope.
 // The `[U]` oracle for every gesture row is the RENDERED BOX + the rendered
@@ -138,6 +141,48 @@ async function rawCall(client, name, args = {}) {
   }
 }
 const parsed = (r) => (r.ok ? JSON.parse(r.text) : { __error: r.error })
+
+/** THE DECLARED REFUSAL RECEIPT, READ AS THE LIVE ANSWER (`§2.2` item 2(a): the refusal IS the
+ *  tool's RESULT — a VALUE, never a throw — and `§2.5` item 1's AMENDED shape carries the
+ *  additive, server-authored `message` naming the CAUSE and the REMEDY).
+ *
+ *  WHY THE PREDICATE IS THE RECEIPT AND NOT `isError`: under the architect's `GAP-3` ruling the
+ *  exclusion transition toggles NOTHING (`§2.1` item 3's supersession clause; `§2.2` item 2(b)),
+ *  so the landed SDK's `-32602 … disabled` throw — the ONLY thing that ever made a refusal read
+ *  `isError === true` — is GONE by ruling. A row asserting `isError === true` asserts the
+ *  SUPERSEDED carrier. The unit's own `G6-F3` row (`tests/secure-exclusion.test.ts`) and its
+ *  register cell `G6-F3#1` assert `isError` is ABSENT on this very answer, and `P-EX-TP-1` pins
+ *  the refusal a VALUE at all three depths.
+ *
+ *  RETURNS the parsed receipt when the answer IS the declared receipt, and `null` otherwise — so
+ *  the predicate REDDENS on: a protocol error / a throw (`ok:false` or `isError:true` — the
+ *  superseded carrier), the RENDERER'S OWN value (the inert-turn regression: a markdown/HTML
+ *  answer is not a receipt), a two-member receipt (the pre-ruling shape — an ABSENT `message` is
+ *  OUTSIDE `§2.5` item 1), and a cause-less or remedy-less sentence.
+ *
+ *  THE MESSAGE IS ASSERTED AS ITS DECLARED DOMAIN, NEVER AS A LITERAL SPELLING (`§2.5` item 1's
+ *  `DECLARED-DEFAULT`: the exact sentence is the Implementer's, provided it carries both named
+ *  elements — a literal-only assertion would redden on any wording change). */
+function declaredReceipt(answer) {
+  if (!answer || answer.ok !== true || answer.isError === true) return null
+  let v = null
+  try { v = JSON.parse(answer.text) } catch { return null }
+  if (v === null || typeof v !== 'object' || Array.isArray(v)) return null
+  if (v.status !== 'refused' || v.reason !== 'exclusion-closed') return null
+  const m = typeof v.message === 'string' ? v.message : ''
+  if (m.trim() === '') return null
+  const cause = /security store/i.test(m) && /\bopen\b/i.test(m)
+  const remedy = /(retry|try again|wait)/i.test(m) && /operator/i.test(m)
+  return cause && remedy ? v : null
+}
+
+/** The tool NAMES the live stdio surface advertises, SORTED — the SET-equality reading `§0A`
+ *  item 7(c) / `§2.2` item 2(c) pin ("the registration set is ENTIRELY UNCHANGED"), never a bare
+ *  count: a count cannot tell an unchanged set from a different one of the same size. */
+async function listToolNames(client) {
+  try { return (await client.listTools()).tools.map((t) => String(t.name)).sort() } catch { return null }
+}
+const sameSet = (a, b) => Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((n, i) => n === b[i])
 
 // ---- the CDP channel ---------------------------------------------------------
 /** Port of the child's OWN DevTools endpoint, read from its stderr. */
@@ -316,7 +361,8 @@ check('U-3 (precondition)', 'with MCP enabled a normal tool call answers normall
   `provident.get_markdown → ok=${baseline.ok} isError=${baseline.isError} first 60 chars=${JSON.stringify(baseline.text.slice(0, 60))}`,
   'the U-2/U-3 positive control: a refusal later cannot be read as a permanently-broken tool')
 
-const toolsBefore = (await bootA.client.listTools()).tools.length
+const namesEnabledBoot = await listToolNames(bootA.client)
+const toolsBefore = namesEnabledBoot === null ? 0 : namesEnabledBoot.length
 
 // ══════════════════════════════════════════════════════════════════════════════
 // PHASE 2 — THE GESTURE (U-2): a REAL pointer click on the painted toggle
@@ -352,7 +398,7 @@ const siblingControl = await (async () => {
 })()
 check('U-2 (sibling controls)', 'the SAME CDP gesture path DOES drive landed sibling controls in the same pane', siblingControl.token[0] !== siblingControl.token[1] && siblingControl.group[0] !== siblingControl.group[1] ? 'PASS' : 'FAIL',
   `real clicks on landed controls in the SAME pane: #token-gen changed the token (${JSON.stringify(siblingControl.token[0])} → ${JSON.stringify(siblingControl.token[1])}); #toggle:graph changed the enabled set (${JSON.stringify(siblingControl.group[0])} → ${JSON.stringify(siblingControl.group[1])}); #journal-length-apply read maxJournalLength ${JSON.stringify(siblingControl.journal[0])} → ${JSON.stringify(siblingControl.journal[1])}`,
-  'CONTROL ROWS — without them a U-2 failure would be indistinguishable from a driver that cannot click at all. The discriminating pattern this run MEASURES: the two handlers that DO run (token-gen, toggle:graph) call the bridge FIRST; the two that do NOT run on a real click (journal-length-apply — a LANDED control, and exclusion-toggle) both read ctx.node.props BEFORE their bridge call, so the authored prop read is the failing step and this defect is NOT this unit\'s control alone')
+  'CONTROL COLUMN — without it a U-2 failure would be indistinguishable from a driver that cannot click at all. The DISCRIMINATING controls are the two that MOVE the bridge state (`#token-gen`, `#toggle:graph`); `#journal-length-apply` is NOT one of them and its unchanged reading proves nothing either way: its authored body reads the prop `value` off ITS OWN node (the `journal-length-apply` BUTTON, which carries no `value` member — `L` `secure-panels.ts:132-140`), so it asks the bridge to set `null` — the state the pane already holds (`maxJournalLength` was `undefined` both times), a NO-CHANGE reading. The as-filed `F-2` reading of this row (that the authored `ctx.node.props` read was the failing step, shared with a landed sibling) is SPENT: `#exclusion-toggle` — whose body reads `ctx.node.props[\'data-state\']` and flips it — now drives the gate under this very gesture, and the gesture row above measures it')
 
 // the bridge's own transition (the pane body's declared call) — the gate DOES move
 await cdp.evaluate(`window.provident.security.setExclusion('mcp-disabled')`)
@@ -365,33 +411,47 @@ check('SX-G-57 (live)', 'the IPC_SECURITY_GET response member reports the LIVE s
   `after a REAL accepted transition (the bridge answered applied:true and the live MCP server began refusing), IPC_SECURITY_GET answered exclusion=${JSON.stringify(bridgeStateAfterDirect?.exclusion)} — expected 'mcp-disabled'`,
   'the handler closes over the gate instance constructed at boot, while `applyExclusion` REPLACES the server\'s `_gate` (`SecurityGate.withExclusion` returns a NEW gate) — so the response record reports the boot state, never the live one')
 
-// WHICH ARM ACTUALLY REFUSED? `provident.dispatch` is ALWAYS registered (the
-// registry toggle cannot remove it), so it is the ONE tool that reaches the
-// INVOCATION TURN while the tier is open: its answer distinguishes the turn check
-// from the registry toggle.
+// WHICH ARM ANSWERS? `provident.dispatch` is ALWAYS registered on the ENABLED-GROUP predicate, so
+// it is the ONE tool that certainly reaches the INVOCATION TURN while the tier is open; its answer
+// therefore distinguishes the turn check from the group predicate. `provident.get_markdown` rides
+// an ENABLED group (`read`), so its refusal is attributable to the turn too — whereas a group-
+// disabled tool (`provident.load`, group `graph`) would be refused by `applyGatePatch` instead.
 const dispatchWhileOpen = await rawCall(bootA.client, 'provident.dispatch', { target: 'inc', event: 'click' })
-check('U-3 (via the bridge)', 'while the state is OPEN a live tool call is refused, and the arm that answers is observed by name', String(gateMoved.text).includes('exclusion-closed') && String(dispatchWhileOpen.text).includes('exclusion-closed') ? 'PASS' : 'FAIL',
-  `after the transition: provident.get_markdown → isError=${gateMoved.isError} text=${JSON.stringify(String(gateMoved.text).slice(0, 120))}; provident.dispatch (a tool that stays REGISTERED) → isError=${dispatchWhileOpen.isError} text=${JSON.stringify(String(dispatchWhileOpen.text).slice(0, 120))}`,
-  'the arm that answers is READ BY NAME and it is the REGISTRY TOGGLE, not the invocation turn: the SDK answers `-32602: Tool … disabled` before the handler runs, because `regateLiveServer` toggles EVERY captured handle disabled while the tier is open — including `provident.dispatch`, which the group predicate alone would always register. The invocation turn (`exclusionTurn`) therefore does NOT answer a live stdio call while open; the declared receipt value is reachable only where the handler actually runs')
+check('U-3 (via the bridge)', 'while the state is OPEN a live tool call answers the DECLARED RECEIPT as a VALUE (never an MCP protocol error) — for a tool an ENABLED group allows and for the always-registered `provident.dispatch`', declaredReceipt(gateMoved) !== null && declaredReceipt(dispatchWhileOpen) !== null ? 'PASS' : 'FAIL',
+  `after the transition: provident.get_markdown (enabled group 'read') → isError=${gateMoved.isError} (must be ABSENT), received=${JSON.stringify(declaredReceipt(gateMoved))}, raw=${JSON.stringify(String(gateMoved.text).slice(0, 160))}; provident.dispatch (the tool the ENABLED-GROUP predicate alone always registers) → isError=${dispatchWhileOpen.isError} (must be ABSENT), received=${JSON.stringify(declaredReceipt(dispatchWhileOpen))}, raw=${JSON.stringify(String(dispatchWhileOpen.text).slice(0, 160))}`,
+  'RE-GRAINED 2026-10-08 (the `F-3` live half, closed by the ruling): the as-filed row only asked whether the text CONTAINED the token — which the superseded registry carrier could never satisfy, but which a bare token string could satisfy without the receipt\'s declared SHAPE. The row now asserts the RECEIPT itself — `status`/`reason` CLOSED at their one token each plus the additive `message` naming the cause AND the remedy, with `isError` ABSENT (`§2.2` item 2(a); `§2.5` item 1; `§3.1` `M-EX-5`; `P-EX-TP-1`; the unit\'s `G6-F3#1` cell). BOTH calls are named so the answer is attributable to the INVOCATION TURN: `provident.dispatch` stays registered on the group predicate alone and `provident.get_markdown` rides an enabled group, so neither refusal can be the group predicate\'s')
 
-const toolsWhileOpenList = await bootA.client.listTools()
-const toolsWhileOpen = toolsWhileOpenList.tools.length
-check('U-2 (registry, live)', 'while the state is OPEN the registered handles stay RESOLVABLE (a design that DEREGISTERS FAILS)', toolsWhileOpen > 0 ? 'PASS' : 'FAIL',
-  `tools/list while the state is open returned ${toolsWhileOpen} handles (was ${toolsBefore} while enabled) — the handles are TOGGLED, not deregistered, so the SDK advertises nothing while open`,
-  'GATE-5 CONTRADICTION CANDIDATE, recorded as measured: the gate-5 blind probe read `count=8` for `tools/list` while open (SX-G-23) — its probe held its own harness registry, not the live SDK surface')
+// ═══ THE REGISTRATION SET IS ENTIRELY UNCHANGED ACROSS THE EXCLUSION TRANSITION (`§0A` item 7(c) /
+// `§2.2` item 2(c) / `§2.1` item 3's supersession clause; register cell `G6-F3#2`). ═══
+// THE READING IS SET EQUALITY, AND THE ENABLED-GROUP SET IS HELD CONSTANT AROUND IT: the sibling
+// control row above ALREADY moved the enabled-group set (a DIFFERENT mechanism — `applyGatePatch`'s
+// group change, which the ruling leaves untouched), and a listing taken across both mechanisms would
+// attribute the group's shrink to the exclusion.
+await cdp.evaluate(`window.provident.security.setExclusion('mcp-enabled')`)
+await sleep(600)
+const namesClosedGroupFixed = await listToolNames(bootA.client)
+await cdp.evaluate(`window.provident.security.setExclusion('mcp-disabled')`)   // THE EXCLUSION TRANSITION — nothing else moves
+await sleep(600)
+const namesOpenGroupFixed = await listToolNames(bootA.client)
+check('U-2 (registry, live) / U-7 / SX-G-23', 'across a REAL exclusion transition the registration set is ENTIRELY UNCHANGED — `tools/list` answers the SAME non-empty set on BOTH sides, on the ONE already-connected stdio client (no reconnect, no re-handshake)', sameSet(namesClosedGroupFixed, namesOpenGroupFixed) && (namesOpenGroupFixed?.length ?? 0) > 0 ? 'PASS' : 'FAIL',
+  `the enabled-group set held CONSTANT around the transition: tools/list while CLOSED returned ${namesClosedGroupFixed === null ? 'NOT an array (the call failed)' : namesClosedGroupFixed.length + ' handles'} and the SAME client answered ${namesOpenGroupFixed === null ? 'NOT an array (the call failed)' : namesOpenGroupFixed.length + ' handles'} while OPEN; set-equal=${sameSet(namesClosedGroupFixed, namesOpenGroupFixed)}; the boot's own enabled-state listing was ${namesEnabledBoot === null ? 'n/a' : namesEnabledBoot.length + ' handles'} BEFORE the sibling-control row moved the enabled-group set; names present while closed and absent while open: ${namesClosedGroupFixed && namesOpenGroupFixed ? JSON.stringify(namesClosedGroupFixed.filter((n) => !namesOpenGroupFixed.includes(n))) : 'n/a'}`,
+  'THE OPERATIVE PIN (`§0A` item 7(c), amended 2026-10-08): "the registered tool/resource set is IDENTICAL in both states — nothing is cleared and NOTHING IS TOGGLED", so the disabled state stays indistinguishable from a never-registered tool by name-listing alone. A design that CLEARS the set fails the non-empty half; a design that TOGGLES it fails the equality half (the landed SDK renders a disabled handle as an EMPTY listing — the `disabled`-vs-`absent` oracle `§2.2` item 2(c) refuses). This row also carries `U-7`: the SAME connected client answered both sides, so the transport was never closed, rebuilt or re-handshaken')
 
-// the invocation turn with the registry toggling WITHHELD: the state flips via the
-// bridge while the pane never refreshes, and the epoch-bump/abandon path is observed
-const inflight = rawCall(bootA.client, 'provident.load', { kind: 'envelope', envelope: {
-  template: { root: { type: 'div', css: { id: 'se-live-probe' }, content: 'probe' } }, content: [], clientConfig: {},
-} })
+// A CALL ISSUED WHILE OPEN — read by name, so the ARM that answers it is attributable: it is an
+// ENABLED-GROUP tool (`provident.get_markdown`, group `read`), so the refusal cannot be the group
+// predicate's; it is the INVOCATION TURN answering, and the call is never dispatched.
+const openArrival = rawCall(bootA.client, 'provident.get_markdown', {})
 await sleep(150)
-await cdp.evaluate(`window.provident.security.setExclusion('mcp-enabled')`)   // close it again (the return arm)
-const inflightResult = await inflight
-await cdp.evaluate(`window.provident.security.get()`)
-check('U-4 (return arm)', 'closing the state restores normal answers', (await rawCall(bootA.client, 'provident.get_markdown', {})).isError !== true ? 'PASS' : 'FAIL',
-  `after the return transition, provident.get_markdown answered normally again — the refusal is gone and the tool runs (a call in flight ACROSS the transition answered ${JSON.stringify(String(inflightResult.text ?? inflightResult.error).slice(0, 100))})`,
-  'the return arm is exercised through the pane\'s OWN declared call (`window.provident.security.setExclusion`); the GESTURE half of the return is the MANUAL row below')
+// THE RETURN — the pane's OWN declared call (`window.provident.security.setExclusion('mcp-enabled')`;
+// `§2.4` item 6: "the operator's own act ... the pane control or the channel directly").
+await cdp.evaluate(`window.provident.security.setExclusion('mcp-enabled')`)
+const openArrivalResult = await openArrival
+await sleep(400)
+const returnedAnswer = await rawCall(bootA.client, 'provident.get_markdown', {})
+const returnedBridge = await cdp.evaluate(`window.provident.security.get()`)
+check('U-4 (return arm)', 'the return — the operator\'s OWN act — restores NORMAL answers: the refusal is GONE and the tool RUNS (while a call ISSUED in the open state is answered the receipt and never dispatched)', returnedAnswer.ok && returnedAnswer.isError !== true && declaredReceipt(returnedAnswer) === null && String(returnedAnswer.text).includes('markdown') && returnedBridge?.exclusion === 'mcp-enabled' ? 'PASS' : 'FAIL',
+  `after the return transition the bridge reads exclusion=${JSON.stringify(returnedBridge?.exclusion)} and provident.get_markdown answered NORMALLY — ok=${returnedAnswer.ok}, isError=${returnedAnswer.isError} (absent), receipt=${JSON.stringify(declaredReceipt(returnedAnswer))}, first 60 chars=${JSON.stringify(String(returnedAnswer.text).slice(0, 60))}; the call ISSUED while open was answered ok=${openArrivalResult.ok} isError=${openArrivalResult.isError} ${JSON.stringify(String(openArrivalResult.text ?? openArrivalResult.error).slice(0, 110))}`,
+  'THE HONEST LIMIT, STATED (`§2.3` item 3; the register\'s `A-2#5`/`P-EX-IM-3` cells drive it at the `[H]` layer): the open-state call above is an ARRIVAL refusal at the invocation turn (`§2.2` item 2(a)), NOT the in-flight arm — a genuine in-flight probe needs a call ISSUED while CLOSED whose dispatched renderer work straddles the transition, and this driver cannot make that window deterministic (a renderer round trip is milliseconds wide), so the mid-flight abandonment is NOT claimed as exercised here. The row\'s SUBJECT is the RETURN, and the predicate is a BOUND on it: the ENABLED-state answer must be a REAL value (not a receipt, `isError` absent, the markdown present) AND the bridge must read the closed state — so a return that did not land, or one that left the refusal in place, FAILS')
 
 // ══════════════════════════════════════════════════════════════════════════════
 // PHASE 3 — U-6: the disabled state survives a renderer reload
@@ -405,12 +465,21 @@ const reloadedPainted = await cdp.waitForToggle(20000)
 const afterReload = await cdp.paneRead()
 const reloadBridge = await cdp.evaluate(`window.provident.security.get()`)
 const mcpAfterReload = await rawCall(bootA.client, 'provident.get_markdown', {})
-check('U-6 (reload arm, main-side state)', 'the disabled state survives a renderer reload — a live MCP call is STILL refused after the reload', mcpAfterReload.isError === true ? 'PASS' : 'FAIL',
-  `after Page.reload: the pane re-painted=${reloadedPainted}; the live MCP call is still refused (provident.get_markdown → isError=${mcpAfterReload.isError}, ${JSON.stringify(String(mcpAfterReload.text).slice(0, 80))}) — the state is MAIN-side and the renderer never cleared it`,
-  'the reload arm of U-6: the state is not re-armed by the renderer\'s arrival (`IPC_READY` → `markReady()` is not a re-arm)')
+const reloadReceipt = declaredReceipt(mcpAfterReload)
+check('U-6 (reload arm, main-side state)', 'the disabled state survives a renderer reload — a live MCP call is STILL REFUSED after the reload, and the refusal IS the DECLARED RECEIPT delivered as a VALUE (`isError` ABSENT)', reloadReceipt !== null ? 'PASS' : 'FAIL',
+  `after Page.reload: the pane re-painted=${reloadedPainted}; the live MCP call is still refused and the answer IS the declared receipt — ok=${mcpAfterReload.ok}, isError=${mcpAfterReload.isError} (must be ABSENT), received=${JSON.stringify(reloadReceipt)}, raw=${JSON.stringify(String(mcpAfterReload.text ?? mcpAfterReload.error).slice(0, 160))} — the state is MAIN-side and the renderer never cleared it`,
+  'RE-GRAINED 2026-10-08 (gate-6 re-run). THE AS-FILED PREDICATE WAS `mcpAfterReload.isError === true`, AND IT IS STALE: it is satisfiable ONLY under the SUPERSEDED registry-toggling carrier (`§2.1` `T-1(d)`/`T-2(d)`), where the landed SDK answers `-32602 … Tool … disabled` BEFORE the handler runs and the SDK surfaces that as `isError`. Under the architect\'s `GAP-3` ruling the exclusion transition toggles NOTHING and the invocation turn answers `ExclusionReceipt` as the tool\'s RESULT — a VALUE (`§2.1` item 3\'s supersession clause; `§2.2` item 2(a); `§2.5` item 1; `§3.1` `M-EX-5`; `P-EX-TP-1`) — and the unit\'s own `G6-F3` row plus register cell `G6-F3#1` assert `isError` is ABSENT on this very answer. THE ROW THEREFORE NOW ASSERTS THE RECEIPT ITSELF: `status`/`reason` CLOSED at their one token each, plus the additive server-authored `message` naming the cause (the security store is open) AND the remedy (retry once the operator has finished); `isError` must be ABSENT. The re-grained predicate is STRONGER, not weaker: it reddens on a protocol error, on a receipt with the member missing or the sentence cause-less, AND on the renderer\'s own value — which is exactly what an inert invocation turn would return')
+
+// THE PREDICATE'S OWN CONTROL — a re-grained predicate that cannot fail is not evidence.
+const twoMemberReceipt = { ok: true, isError: false, text: JSON.stringify({ status: 'refused', reason: 'exclusion-closed' }) }
+const causeLessReceipt = { ok: true, isError: false, text: JSON.stringify({ status: 'refused', reason: 'exclusion-closed', message: 'refused' }) }
+const supersededCarrier = { ok: true, isError: true, text: 'MCP error -32602: Tool provident.get_markdown disabled' }
+check('U-6 (reload arm) — PREDICATE CONTROL', 'the re-grained predicate CAN still FAIL — it is NULL on the RENDERER\'S OWN enabled-state values of this same run and on every OUTSIDE shape of the receipt', declaredReceipt(baseline) === null && declaredReceipt(returnedAnswer) === null && declaredReceipt(twoMemberReceipt) === null && declaredReceipt(causeLessReceipt) === null && declaredReceipt(supersededCarrier) === null ? 'PASS' : 'FAIL',
+  `LIVE controls (this run's OWN enabled-state answers — i.e. the renderer's value, which is exactly what an inert invocation turn would return for an open-state call): the boot baseline answered ${JSON.stringify(String(baseline.text).slice(0, 40))}… → predicate ${JSON.stringify(declaredReceipt(baseline))}; the post-return answer answered ${JSON.stringify(String(returnedAnswer.text).slice(0, 40))}… → predicate ${JSON.stringify(declaredReceipt(returnedAnswer))}. IN-LINE controls (values, NOT live readings — the register row\'s own negative-control form): a PRE-RULING TWO-MEMBER receipt → ${JSON.stringify(declaredReceipt(twoMemberReceipt))} (an ABSENT \`message\` is OUTSIDE \`§2.5\` item 1); a CAUSE-LESS message → ${JSON.stringify(declaredReceipt(causeLessReceipt))}; the SUPERSEDED \`-32602 … disabled\` carrier → ${JSON.stringify(declaredReceipt(supersededCarrier))}`,
+  'WHY A CONTROL IS OWED: the re-grained predicate must not be a rubber stamp, and the LIVE half is the discriminating one — with the invocation turn inert (gate-4\'s `A-1` defect class, the regression `§2.2` item 2(a) now depends on) an open-state call returns the RENDERER\'S value, and the predicate would read exactly what these two enabled-state answers read. The IN-LINE half pins the mandated DOMAIN (`§2.5` item 1: an absent, empty, cause-less or remedy-less message is OUTSIDE) so the additive member cannot become silently optional')
 check('U-6 (reload arm, the operator\'s view)', 'after the reload the pane shows the state it actually is in', afterReload.present && afterReload.mcpSegment === 'disabled' ? 'PASS' : 'FAIL',
-  `after Page.reload the pane re-painted=${reloadedPainted} and its status segment reads ${JSON.stringify(afterReload.mcpSegment)} with the button reading ${JSON.stringify(afterReload.buttonText)} and data-state ${JSON.stringify(afterReload.dataState)}, while IPC_SECURITY_GET answered exclusion=${JSON.stringify(reloadBridge?.exclusion)} and the live MCP surface IS refusing (isError=${mcpAfterReload.isError})`,
-  'same root cause as the SX-G-57 row: the renderer\'s boot read (`bridge.security.get()`, awaited BEFORE the panes are constructed) answers the boot-time gate, not the live one — so the operator sees `MCP: enabled` on a server that refuses every call')
+  `after Page.reload the pane re-painted=${reloadedPainted} and its status segment reads ${JSON.stringify(afterReload.mcpSegment)} with the button reading ${JSON.stringify(afterReload.buttonText)} and data-state ${JSON.stringify(afterReload.dataState)}, while IPC_SECURITY_GET answered exclusion=${JSON.stringify(reloadBridge?.exclusion)} and the live MCP surface IS refusing with the declared receipt (${JSON.stringify(reloadReceipt)})`,
+  'the operator-visible half of `U-6` (`§0A` item 5; `§2.4` item 3; `PAR-9`): the GET response member is the STATE and it is NEVER absent, so the pane\'s own source reports the live gate after the reload — the reading that `F-4` (the stale boot-gate read) contradicted before the host fix landed')
 
 // BOOT A STAYS ALIVE THROUGH PHASE 5: it is the CDP boot, and the HTTP phase needs
 // a REAL transition driven through the app while an HTTP POST is in flight (the
@@ -478,7 +547,7 @@ const HTTP_PORT = 3900 + Math.floor(Math.random() * 90)
 const HTTP_PROFILE = mkdtempSync(join(tmpdir(), 'se-live-http-'))
 writeFileSync(join(HTTP_PROFILE, 'provident-security.json'), JSON.stringify({ token: TOKEN, enabled: GROUPS }, null, 2))
 const httpChild = spawn(electronBin, [
-  '--mcp-transport=http', `--mcp-port=${HTTP_PORT}`,
+  '--mcp-transport=http', `--mcp-port=${HTTP_PORT}`, '--remote-debugging-port=0',
   mainCjs,
   '--no-sandbox', '--disable-gpu', '--disable-software-rasterizer', '--in-process-gpu', '--ozone-platform=x11', '--disable-dev-shm-usage',
   `--provident-user-data=${HTTP_PROFILE}`,
@@ -606,10 +675,10 @@ check('SX-G-38 (order, live)', 'while OPEN an UNAUTHORIZED POST still answers 40
   `POST /mcp with NO token while the state is OPEN → ${unauthOpen.status} ${JSON.stringify(unauthOpen.text.slice(0, 120))}`,
   'authorization FIRST, exclusion SECOND — reversing the order would let an unauthenticated caller distinguish the two states (the G-8 oracle)')
 
-check('SX-G-44 (live)', 'ONE predicate, ONE answer shape, TWO deliveries (a stdio tool result vs an HTTP status + JSON-RPC error object)',
-  authorizedOpen.status === 503 && !baseline.isError ? 'PASS' : 'FAIL',
-  `in this ONE run the same state produced both deliveries: on stdio a tools/call answered through the gate's registry toggle (isError=${gateMoved.isError}), and on HTTP the authorized POST answered ${authorizedOpen.status} with -32003 'exclusion-closed'; the SAME POST in the enabled state answered ${authorizedEnabled.status} (not 503)`,
-  'neither transport was specified twice — the transports differ only in how the refusal is DELIVERED')
+check('SX-G-44 (live)', 'ONE predicate, ONE answer shape, TWO deliveries (a stdio tool RESULT carrying the receipt vs an HTTP status + JSON-RPC error object)',
+  authorizedOpen.status === 503 && declaredReceipt(gateMoved) !== null && baseline.isError !== true ? 'PASS' : 'FAIL',
+  `in this ONE run the same state produced both deliveries: on stdio the tools/call answered the DECLARED RECEIPT as a VALUE (isError=${gateMoved.isError}, must be ABSENT; received=${JSON.stringify(declaredReceipt(gateMoved))}), and on HTTP the authorized POST answered ${authorizedOpen.status} with -32003 'exclusion-closed'; the SAME POST in the enabled state answered ${authorizedEnabled.status} (not 503)`,
+  'RE-GRAINED 2026-10-08: the as-filed observation attributed the stdio delivery to "the gate\'s registry toggle", the SUPERSEDED carrier — the two deliveries now differ only in TRANSPORT, both carrying the one declared refusal (`§2.3` item 4: "A pass that implements the exclusion as a transport-specific special case ... FAILS"), and the stdio half is asserted as the receipt itself rather than as an `isError` flag')
 
 // THE STRADDLING POST (§2.3 item 3): a POST that ARRIVES while the tier is admitted
 // and whose tool work is still in flight when a transition lands. The straddle is
@@ -625,10 +694,37 @@ check('SX-G-43 (live)', 'a straddling POST is answered ONCE on its own stream (t
   'the falsifier `§2.3` item 3 declares is a SECOND status line on the one response stream; the status decided for this POST was decided AT ARRIVAL (no status was written twice). Note honestly: this POST did not carry a resolving renderer round trip across the transition, so the mid-flight abandonment path is NOT exercised by this row')
 
 await sleep(300)
+// (i) THE MCP/HTTP ROUTE GRANTS NO RE-ARM AUTHORITY — measured, not asserted (`§2.4` item 6: the
+// re-enable is the OPERATOR's own act; `§2.2` item 2(a): every tool invocation while open answers
+// the receipt; `§2.3` item 2: a POST arriving while open is answered 503 at arrival and no server
+// is built for it). This is the SAME measurement that made the as-filed row read FAIL — it is now
+// read as the property the contract DECLARES, and it is the negative half of the row's predicate.
 const restoreArm = await httpPost(HTTP_PORT, { jsonrpc: '2.0', id: 7, method: 'tools/call', params: { name: 'provident.get_markdown', arguments: {} } }, { token: TOKEN, sessionId: session })
-check('U-4 (return arm, HTTP) — LIVE FINDING', 'the transition back restores the HTTP answers (503 → a normal response)', restoreArm.status !== 503 ? 'PASS' : 'FAIL',
-  `after the return transition the authorized POST still answered ${restoreArm.status}; the return POST (which performed the transition) answered ${returnVia.status} with ${JSON.stringify(returnVia.text.slice(0, 140))}, and the POST that followed it answered ${restoreArm.status}`,
-  'the return arm cannot be reached on this transport: the transition envelope was PRE-LOADED while enabled, but the DISPATCH that performs it is itself an invocation, and the invocation turn refuses EVERY tool call while the tier is open — so the operator\'s return is reachable only through the renderer bridge (the pane control), never over MCP. Recorded as a live finding about the MCP-only recovery path, not as a driver failure')
+const mcpCannotRearm = returnVia.status === 503 && returnVia.text.includes('exclusion-closed') && restoreArm.status === 503
+// (ii) THE OPERATOR'S OWN ACT ON THIS BOOT — the manual-UI path `§2.4` item 6 declares ("the pane
+// control ... or the channel directly"), driven as a REAL pointer gesture on THIS boot's own
+// renderer over the app's own CDP listener. The reload first gives this boot's pane the LIVE state
+// (its pane boot-read is post-`F-1`), so the authored body's `data-state` flip targets the true
+// return rather than a stale self-transition.
+const httpDevtoolsPort = await devtoolsPort({ stderrText: () => httpStderr })
+const cdpHttp = await Cdp.attach(httpDevtoolsPort)
+registerCleanup(() => cdpHttp.close())
+await cdpHttp.send('Page.enable')
+await cdpHttp.send('Page.reload', { ignoreCache: true })
+await sleep(4000)
+const httpPainted = await cdpHttp.waitForToggle(20000)
+const httpPaneBefore = await cdpHttp.paneRead()
+const httpHit = await cdpHttp.clickElement('exclusion-toggle')
+await sleep(1500)
+const httpPaneAfter = await cdpHttp.paneRead()
+const httpBridgeAfter = await cdpHttp.evaluate(`window.provident.security.get()`)
+const restoredArm = await httpPost(HTTP_PORT, { jsonrpc: '2.0', id: 8, method: 'tools/call', params: { name: 'provident.get_markdown', arguments: {} } }, { token: TOKEN, sessionId: session })
+const operatorRearms = httpPaneBefore.present === true && httpPaneBefore.mcpSegment === 'disabled' && httpHit !== null && httpHit.isTarget === true && httpPaneAfter.mcpSegment === 'enabled' && httpBridgeAfter?.exclusion === 'mcp-enabled' && restoredArm.status !== 503
+check('U-4 (return arm, HTTP) — RE-GROUNDED ON THE MANUAL-UI PATH', 'the OPERATOR\'s own act restores the HTTP answers (`503 → a normal response`), while NO MCP/HTTP route can re-arm the state — the exclusion grants an MCP caller no re-arm authority', mcpCannotRearm && operatorRearms ? 'PASS' : 'FAIL',
+  `(i) NO MCP RE-ARM: the batched POST carrying the return transition (load+dispatch, pre-loaded while the tier admitted work) answered ${returnVia.status} ${JSON.stringify(returnVia.text.slice(0, 120))}, and the authorized POST after it answered ${restoreArm.status} — the tier was NOT re-armed by it. (ii) THE OPERATOR'S ACT: real CDP pointer gesture on THIS boot's painted control (box ${Math.round(httpHit?.w ?? 0)}x${Math.round(httpHit?.h ?? 0)} px, hit=${JSON.stringify(httpHit?.hit)}, isTarget=${httpHit?.isTarget}); the pane re-painted=${httpPainted}; segment BEFORE the gesture ${JSON.stringify(httpPaneBefore.mcpSegment)} (data-state ${JSON.stringify(httpPaneBefore.dataState)}) → AFTER ${JSON.stringify(httpPaneAfter.mcpSegment)} (data-state ${JSON.stringify(httpPaneAfter.dataState)}, button ${JSON.stringify(httpPaneAfter.buttonText)}); the bridge answered exclusion=${JSON.stringify(httpBridgeAfter?.exclusion)}; the authorized POST after the gesture answered ${restoredArm.status} (not 503)`,
+  'RE-GROUNDED 2026-10-08 (gate-6 re-run). THE AS-FILED ROW ASSERTED A RETURN ARM THE CONTRACT DOES NOT PROVIDE: it required a POST to carry the transition back, and that POST is refused at arrival. THERE IS NO HTTP/MCP RE-ENABLE ROUTE ANYWHERE IN THE CONTRACT, and that is stated with its clauses rather than assumed: `§2.4` item 6 pins the return as the OPERATOR\'s own `setExclusion(\'mcp-enabled\')` — "the pane control (`§2.4` item 2) or the channel directly" — and its 2026-10-08 annotation adds "the re-enable remains the OPERATOR\'s own `setExclusion(\'mcp-enabled\')` and nothing else ... a message is a VALUE, not a transition"; `§2.2` item 2(a) refuses EVERY tool invocation while open (so no dispatch can perform it, on either transport); `§2.3` item 2 answers a POST arriving while open with the 503 and builds no server for it; `§2.3` item 3\'s straddle clause settles only ALREADY-ACCEPTED work and is not a re-arm; and `§2.4` item 1 declares the manual-UI channel NOT an MCP method. So the row now asserts BOTH halves on the HTTP transport: the MCP route does NOT re-arm (the measured negative) and the operator\'s own control DOES (the positive, over the app\'s own renderer). A regression that handed an MCP caller re-arm authority would redden the first half; a return that failed to restore would redden the second')
+
+try { cdpHttp.close() } catch { /* gone */ }
 
 try { httpChild.kill('SIGKILL') } catch { /* gone */ }
 await sleep(400)

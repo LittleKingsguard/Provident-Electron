@@ -1,6 +1,22 @@
-# Live battery — `U-SECURE-EXCLUSION` (`S1`, wave `S`) · **gate 6, THE MANDATORY LIVE BATTERY, RUN**
+# Live battery — `U-SECURE-EXCLUSION` (`S1`, wave `S`) · **gate 6, THE MANDATORY LIVE BATTERY — RE-RUN AFTER THE CONTRACT AMENDMENT**
 
-**Status: `RUN` — 29 measured rows recorded = `23 PASS / 6 FAIL / 0 MANUAL / 0 PARKED`. The six contradictions are recorded below as findings and are NOT passes.**
+**Status: `RUN — RE-RUN AT THE AMENDED CONTRACT` — `30` measured rows recorded = `30 PASS / 0 FAIL / 0 MANUAL / 0 PARKED`.**
+**The as-filed run of this battery was `29` rows = `23 PASS / 6 FAIL / 0 MANUAL / 0 PARKED`; the two rows still red when the
+implementer's two fixes landed were `U-6 (reload arm, main-side state)` and `U-4 (return arm, HTTP)`. BOTH ARE NOW ASSESSED,
+BOTH WERE INSTRUMENT DEFECTS OF THIS FILE'S OWN — NOT LIVE REGRESSIONS — AND BOTH ARE RE-GROUNDED BELOW, EACH WITH THE
+CONTROL THAT PROVES THE RE-GRAINED PREDICATE CAN STILL FAIL (`§4`, `§7`). NO ROW WAS WEAKENED TO MAKE IT PASS: the two
+re-grained predicates are STRICTLY STRONGER than the forms they replace, and the one row this pass ADDED is a control.**
+
+## 0. THE RE-RUN'S OWN RECORD (the terms, then the claims)
+
+| | |
+| --- | --- |
+| The revision the battery re-ran on | **`afd3212`** (`S1 GATE 6 FIX GREEN 2 — …`, the receipt's additive `message` + the deletion of the `exclusionOpen` term from the re-gate path); the as-filed run ran on `da6fc42` |
+| The commands | **`npm run build`** then **`node tests/secure-exclusion-live.mjs`** — exit `0` both; the run reproduced on a **second execution** (`30 PASS / 0 FAIL` twice) |
+| The verdict-count lineage | `23 PASS / 6 FAIL` (as filed) → **`27 PASS / 2 FAIL`** (the implementer's two fixes, measured on the unchanged driver) → **`30 PASS / 0 FAIL`** (this pass: `+1` row — the predicate control — and two re-grains) |
+| The two remaining failures, assessed | **`U-6 (reload arm, main-side state)` = STALE PREDICATE — RE-GRAINED** (it asserted the SUPERSEDED registry-toggling carrier); **`U-4 (return arm, HTTP)` = WRONG INSTRUMENT — RE-GROUNDED ON THE MANUAL-UI PATH** (it asserted an MCP/HTTP return arm the contract does not provide). Neither was a live regression of the amended contract. **The measurements, the clauses and the controls are at `§4` and `§7`, stated so a reader can re-derive both verdicts rather than take them.** |
+| The `§5.U` matrix / `§6.1` report | matrix **`8` rows** (`7` U-subjects + the demoted `U-8` precondition note — the `≤ 8` cap **not grown**), report `summary.total === 8` ✓, `§3` |
+| `§6.2`'s read-only audit | **STILL OWED TO A NON-AUTHOR — THIS PASS DID NOT RUN IT AND MAY NOT** (`§8` item 5) |
 
 **What this file is.** The gate-6 **run record** for the unit `U-SECURE-EXCLUSION` (the access-control
 mutual-exclusion gate between the MCP server and the `secure` tier-4 operator pane), together with **the
@@ -17,6 +33,14 @@ printed, never a projection.**
 | The driver | `tests/secure-exclusion-live.mjs` — the ONE file this pass added |
 | The operator's real profile | **never read, never written**: every boot ran on a fresh `mkdtemp` scratch profile under the OS temp dir, removed on every exit path |
 | Stale-window preflight | no `dist/main/main.cjs` process existed at the run's start (`pgrep` → empty); each boot is its own process and each is killed in a registered `exit` cleanup |
+
+**⟶ THE 2026-10-08 RE-RUN'S OWN FACTS (the cells above are the AS-FILED run's and stand as such; these are the
+re-run's).** The revision is **`afd3212`**; the stale-window preflight was `pgrep -f 'dist/main/main.cjs'` → empty before
+each boot; the commands were **`npm run build`** then **`node tests/secure-exclusion-live.mjs`** (exit `0`, `30` rows =
+`30 PASS / 0 FAIL / 0 MANUAL / 0 PARKED`), and the identical figure was **reproduced on a second execution**; the two
+files this pass edited are the driver and **this record** (`git status --porcelain` at the run's start carried only those
+two). **The scratch-profile rule is unchanged and re-observed**: three boots (stdio, HTTP, the restart probe), each on its
+own `mkdtemp` profile under the OS temp dir, each killed and removed through the registered `exit` cleanup.
 
 ---
 
@@ -46,23 +70,36 @@ an invented flow.** **`U-8` is carried where the unit's own contract put it: as 
 PRECONDITION / BATTERY NOTE, and it is NOT counted as a U-row — so the matrix carries `7` U-row SUBJECTS
 plus `1` named precondition row = `8` rows total, and `summary.total` in `§3` reads `8` to agree with the
 matrix's own row count (`docs/specs/user-flow-audit.md` `§6.1` clause 1).**
+**⟶ REGENERATED 2026-10-08 TO THE POST-FIX STATE (this pass; `RCA-8(d)` ANNOTATE-BESIDE — the as-filed
+`Post` cells are KEPT VISIBLE at `§4`, where each one's contradiction is dispositioned, and are NOT
+rewritten here). THE ROW SET IS UNMOVED: the same `7` subjects + the same `1` precondition note = the same
+`8` rows, `8 ≤ 8` ✓ — the cap was neither grown nor filled.**
 
-| U-row | The user-visible flow | `Pre` (before this unit / before the transition) | `Post` — **MEASURED, never projected** | Layer |
+| U-row | The user-visible flow | `Pre` (before this unit / before the transition) | `Post` — **MEASURED at `afd3212`, never projected** | Layer |
 | --- | --- | --- | --- | --- |
-| **`U-1`** | the exclusion toggle **and its label are painted** in the operator pane | no control: the pane's authored envelope carries no exclusion node, and the status line ends at `journal: ∞` | **the control IS painted and the label IS painted**: box `59 × 36` px at `(679, 781)`, `display: block`, `class="btn"`, label text `MCP / secure-tier exclusion (mutually exclusive)`, button text `Disable MCP`, `data-state="mcp-enabled"` | `[U]` |
-| **`U-2`** | clicking it moves the status line's `MCP:` segment `enabled → disabled` | `MCP: enabled` (and a normal tool answer: `provident.get_markdown` → 2354-char HTML, `isError` absent) | **CONTRADICTED — the row's own `verdict` reads `UNCHANGED` and its embedded `reading_finding.verdict_reading` reads `FAIL`** (the precedent's form: the closed verdict vocabulary is kept and the failure is stated in the reading): after a REAL pointer press+release on the painted control the segment still reads **`MCP: enabled`**, the button still reads `Disable MCP`, `data-state` is still `mcp-enabled`, while the live MCP server's gate DID move in the same run — the control and the gate **disagree** and the control is **inert on a real click**. See `§4` finding **F-2** | `[U]` |
-| **`U-3`** | while the state is open, an MCP call answers the declared refusal | the state is `mcp-enabled`, so the predicate does not run at all | **REFUSED — but by a DIFFERENT arm than the contract declares**: `provident.get_markdown` → `MCP error -32602: Tool provident.get_markdown disabled`; `provident.dispatch` (a tool that stays registered on the group predicate alone) → **also `-32602 … disabled`**; `tools/list` → **`0` tools** (was `19` while enabled). The declared receipt value `{status:'refused', reason:'exclusion-closed'}` is **not** the live answer on the stdio transport. On HTTP the refusal IS the declared one (`503` + `{"jsonrpc":"2.0","error":{"code":-32003,"message":"exclusion-closed"},"id":null}`). See finding **F-3** | `[U]` + `[H]` |
-| **`U-4`** | clicking it back restores normal answers | `MCP: disabled` / answers refused | **CONTRADICTED ON ONE ARM, SATISFIED ON THE OTHER — both measured, the row's `verdict` read `CHANGED` and its `reading_finding.verdict_reading` read `FAIL`**: through the pane's OWN declared bridge member the return works (`provident.get_markdown` answers normally again, and a call in flight across the transition is refused rather than delivered); **on the HTTP transport the return is NOT reachable at all** — the transition envelope was pre-loaded while enabled, yet the POST that dispatches it is itself refused (`503 … exclusion-closed`) and the POST after it is still `503`. See finding **F-5** | `[U]` + `[H]` |
-| **`U-5`** | the app graph's `get_rendered_html` / `list_targets` **never** contain the control | the pre-change app graph carries no exclusion-shaped node or id | **the isolation holds with the new node**: `get_rendered_html` → **2354 chars, contains `exclusion-toggle`: `false`** (and the `#app` mount's `innerHTML` contains none of it), `list_targets` → **`23` nodes, exclusion-shaped: `[]`** (the declared census `23`), while the PANE realm carries the control (`true`/`true`) as the positive control | `[U]` + `[H]` |
-| **`U-6`** | the disabled state survives a **renderer reload**, while a **restart** returns to `mcp-enabled` | renderer: the pane reads `MCP: enabled`; main: state `mcp-enabled` | **SPLIT — and the split is a FINDING**: after `Page.reload` the live MCP call **is still refused** (`isError: true`) — the state is main-side and the reload did not re-arm it — **but the re-painted pane reads `MCP: enabled` with `data-state="mcp-enabled"` and the button reading `Disable MCP`, while the server refuses every call**. A restart on the same profile answers normally and writes **no** exclusion key and **no** third store file. See findings **F-4**/**F-2** | `[U]` + `[H]` |
-| **`U-7`** | the stdio transport stays **CONNECTED** across the transition | one connected stdio path, `19` tools listed | **CONNECTED throughout**: the same client answered `tools/list` (`19` handles), then the refusal (`isError`), then `tools/list` again (`19` handles) — the transport was never closed, never rebuilt and never re-handshaken across the transition; on the HTTP boot the transport answered `405`/`401`/`200`/`503` on the SAME listener before and after | `[U]` + `[H]` |
-| **`U-8`** — **PRECONDITION / BATTERY NOTE, `NOT` a U-row** | the battery leaves the tree in its starting state | — | **the run restores `mcp-enabled` before completion** — the HTTP boot's last transition and the stdio boot's last bridge call both closed the tier, and every scratch profile was removed (`rmSync` on all three boots), so a re-run starts clean. **This note is NOT counted as a U-row** (`docs/specs/secure-exclusion.md` `§2.4` item 7(2)'s demotion) | — |
+| **`U-1`** | the exclusion toggle **and its label are painted** in the operator pane | no control: the pane's authored envelope carries no exclusion node, and the status line ends at `journal: ∞` | **the control IS painted and the label IS painted**: box `59 × 36` px at `(679, 781)`, `display: block`, `class="btn"`, label text `MCP / secure-tier exclusion (mutually exclusive)`, button text `Disable MCP`, `data-state="mcp-enabled"` — unchanged from the as-filed reading, and re-measured this run | `[U]` |
+| **`U-2`** | clicking it moves the status line's `MCP:` segment `enabled → disabled`, **and the registration set is untouched** | `MCP: enabled`; a normal tool answer (`provident.get_markdown` → 2354-char HTML, `isError` absent); `19` handles listed | **SATISFIED, both halves MEASURED**: a REAL CDP pointer press+release on the painted control (`hit="BUTTON#exclusion-toggle"`, `isTarget=true`, at `(708, 348)` inside a `59 × 36` box) moves the segment to **`disabled`**, the button to `Enable MCP`, `data-state` to `mcp-disabled`, and the live MCP server begins answering the DECLARED RECEIPT; **and across a REAL exclusion transition with the enabled-group set held CONSTANT, `tools/list` answered the SAME `13` handles while open that it answered while closed (set-equal `true`, `19` at boot before the sibling-control row moved the enabled-GROUP set — a DIFFERENT mechanism), on the ONE already-connected client** | `[U]` |
+| **`U-3`** | while the state is open, an MCP call answers the declared refusal | the state is `mcp-enabled`, so the predicate does not run at all | **the DECLARED RECEIPT is the live answer, on both a group-enabled tool and the always-registered one**: `provident.get_markdown` and `provident.dispatch` each answered `{"status":"refused","reason":"exclusion-closed","message":"MCP endpoint functionality is blocked because the security store is open — retry once the operator has finished with the secured changes."}` as the tool's RESULT with `isError` **ABSENT** (never an MCP protocol error); on HTTP the authorized POST answered `503` + `{"jsonrpc":"2.0","error":{"code":-32003,"message":"exclusion-closed"},"id":null}` | `[U]` + `[H]` |
+| **`U-4`** | clicking it back restores normal answers | `MCP: disabled` / answers refused | **SATISFIED on the two arms the contract DECLARES, both MEASURED**: (i) through the pane's own declared bridge member the return restores NORMAL answers (`provident.get_markdown` → `ok=true`, `isError` absent, the receipt `null`, the markdown present), and a call ISSUED while open was answered the receipt and never dispatched; (ii) **on the HTTP transport the return is the OPERATOR's own act** — a REAL CDP pointer gesture on THAT boot's painted control moved its segment `disabled → enabled` (`data-state` `mcp-disabled → mcp-enabled`, bridge `exclusion="mcp-enabled"`) and the authorized POST afterwards answered **`200`** instead of `503`, **while the MCP-carried return POST stayed `503`** (the contract grants an MCP caller no re-arm authority) | `[U]` + `[H]` |
+| **`U-5`** | the app graph's `get_rendered_html` / `list_targets` **never** contain the control | the pre-change app graph carries no exclusion-shaped node or id | **the isolation holds with the new node** (re-measured, unchanged): `get_rendered_html` → **2354 chars, contains `exclusion-toggle`: `false`** (and the `#app` mount's `innerHTML` contains none of it), `list_targets` → **`23` nodes, exclusion-shaped: `[]`** (the declared census `23`), while the PANE realm carries the control (`true`/`true`) as the positive control | `[U]` + `[H]` |
+| **`U-6`** | the disabled state survives a **renderer reload**, while a **restart** returns to `mcp-enabled` | renderer: the pane reads `MCP: enabled`; main: state `mcp-enabled` | **SPLIT, AND NOW WHOLE ON BOTH SIDES**: after `Page.reload` the live MCP call **is still refused AND the refusal IS the DECLARED RECEIPT** (`isError` ABSENT, the `message` naming cause and remedy) — the state is main-side and the reload did not re-arm it — **and the re-painted pane reads `MCP: disabled` / `data-state="mcp-disabled"` / `Enable MCP` with `IPC_SECURITY_GET` answering `exclusion="mcp-disabled"`, i.e. the operator's view agrees with the server that is refusing**. A restart on the same profile answers normally and writes **no** exclusion key and **no** third store file | `[U]` + `[H]` |
+| **`U-7`** | the stdio transport stays **CONNECTED** across the transition | one connected stdio path, `19` handles listed | **CONNECTED throughout, re-measured on the SAME client across a real transition**: the one already-connected stdio client answered `tools/list` while closed (`13` handles), then the transition, then `tools/list` while open (`13` handles, set-equal) — no reconnect, no re-handshake, no rebuild; on the HTTP boot the transport answered `405`/`401`/`200`/`503` **and then `200` again after the operator's return** on the SAME listener | `[U]` + `[H]` |
+| **`U-8`** — **PRECONDITION / BATTERY NOTE, `NOT` a U-row** | the battery leaves the tree in its starting state | — | **the run restores `mcp-enabled` before completion** — this run's HTTP boot was returned to `mcp-enabled` by the operator's own act on its pane (`§5` row 25) and every scratch profile was removed (`rmSync` on all three boots), so a re-run starts clean. **This note is NOT counted as a U-row** (`docs/specs/secure-exclusion.md` `§2.4` item 7(2)'s demotion) | — |
 
-**THE CAP, PRINTED WITH ITS TERMS: `7` U-row SUBJECTS + `1` precondition note = `8` matrix rows, and `8 ≤ 8` ✓ — no eighth FLOW was invented to fill the cap, and no subject was merged or dropped.**
+**THE CAP, PRINTED WITH ITS TERMS: `7` U-row SUBJECTS + `1` precondition note = `8` matrix rows, and `8 ≤ 8` ✓ — no eighth FLOW was invented to fill the cap, and no subject was merged or dropped. THE POST-FIX RUN DID NOT ADD A U-ROW: the one row this pass ADDED to the BATTERY is a PREDICATE CONTROL (`U-6 (reload arm) — PREDICATE CONTROL`, `§5` row 14), which is a control on a row's falsifier and NOT a user-visible flow.**
+
+**THE PINNED USER-VISIBLE ASSERTION PER ROW (the `§6.1` report's `assertion` field, restated here so the matrix is readable on its own): `U-1` the control and its label occupy a non-zero RENDERED BOX inside the operator pane; `U-2` a real press+release on that box moves the status line's `MCP:` segment `enabled → disabled` and leaves the tool listing SET-IDENTICAL; `U-3` while open, a tool call's RESULT is the declared receipt (both closed tokens + the cause/remedy `message`), with `isError` absent; `U-4` the operator's return — the pane control or the channel — restores NORMAL answers, and no MCP/HTTP route does; `U-5` the app graph's `get_rendered_html`/`list_targets` never contain the control while the PANE realm does; `U-6` the open state survives a reload (the refusal is still the receipt) and the pane agrees, while a restart returns to `mcp-enabled`; `U-7` the ONE stdio client stays connected across the transition; `U-8` the battery exits with the state `mcp-enabled` and every scratch profile removed.**
 
 ---
 
-## 3. THE `§6.1` STRUCTURED COVERAGE REPORT — **emitted from the run**
+## 3. THE `§6.1` STRUCTURED COVERAGE REPORT — **emitted from the RE-RUN (`afd3212`); the as-filed report's values are kept at `§4`/`§5`, never substituted silently**
+
+> **⟶ REGENERATED 2026-10-08.** The rows below carry the fields `docs/specs/user-flow-audit.md` `§3` mandates
+> (`u` · `layer` · `instrument` · `cmd` · `exit` · `observation` · `verdict`, with `reason` owed only for a
+> `NOT-OBSERVABLE` row — **none exists**) **PLUS the role's machine-readable additions** (`assertion` · `d_class` ·
+> `real_input` · `proxyPASS` · `surface`), each row's `verdictClass` from the closed set `PASS`/`FAIL`/`PARKED`.
+> **THE EQUALITY IS ASSERTED AT `summary` AND RE-STATED IN `summary_note`: `summary.total === 8` IS the matrix's
+> U-row count (`7` subjects + `1` precondition note), and `8 + 0 + 0 = 8`.**
 
 ```json
 {
@@ -76,69 +113,97 @@ matrix's own row count (`docs/specs/user-flow-audit.md` `§6.1` clause 1).**
       "instrument": "tests/secure-exclusion-live.mjs — CDP Runtime.evaluate read of the rendered box + rendered text",
       "cmd": "node tests/secure-exclusion-live.mjs", "exit": 0,
       "observation": "box 59x36 px at (679,781), display=block, classes=\"btn\", label=\"MCP / secure-tier exclusion (mutually exclusive)\", buttonText=\"Disable MCP\", data-state=\"mcp-enabled\", status=\"token: •••• · enabled: [read, dispatch, graph, code] · journal: ∞ · MCP: enabled\"",
-      "verdict": "CHANGED" },
+      "verdict": "CHANGED",
+      "assertion": "the control and its label occupy a NON-ZERO RENDERED BOX inside the operator pane, and the status line carries the `MCP:` segment",
+      "d_class": "D1–D8 (the isolated pane graph — docs/specs/secure-panels.md §2/§4; §2.4 item 1)",
+      "real_input": { "flag": true, "evidence": "CDP Runtime.evaluate over the app's own renderer: getBoundingClientRect + textContent/className — the RENDERED box, never a computed-style-only reading" },
+      "proxyPASS": false,
+      "surface": { "target": "boot A's Electron window (the ASSEMBLED app), operator pane", "liveSurfacePresent": true, "evidence": "the pane painted a 59x36 px box at (679,781) with display=block" } },
     { "u": "U-2", "layer": "U",
-      "instrument": "tests/secure-exclusion-live.mjs — CDP Input.dispatchMouseEvent (mouseMoved/mousePressed/mouseReleased at the element's own rendered-box centre) + CDP Runtime.evaluate reads",
+      "instrument": "tests/secure-exclusion-live.mjs — CDP Input.dispatchMouseEvent (mouseMoved/mousePressed/mouseReleased at the element's own rendered-box centre) + CDP Runtime.evaluate reads + the app's own stdio MCP client",
       "cmd": "node tests/secure-exclusion-live.mjs", "exit": 0,
-      "observation": "click landed on \"BUTTON#exclusion-toggle\" at (708,348) inside a 59x36 box (isTarget=true); AFTER the gesture: data-state=\"mcp-enabled\", buttonText=\"Disable MCP\", status segment=\"enabled\"; bridge read exclusion=\"mcp-enabled\"; live MCP get_markdown isError=true (\"-32602: Tool provident.get_markdown disabled\"). CONTROL in the same run: #token-gen changed the token (\"live-battery-token-4f9c1a7e\" -> \"zuv13jyf7j\") and #toggle:graph changed the enabled set (\"read,dispatch,graph,code\" -> \"read,dispatch,code\") under the SAME gesture path; #journal-length-apply (maxJournalLength \"undefined\" -> \"undefined\") did NOT run its body",
-      "verdict": "UNCHANGED",
-      "reading_finding": {
-        "the_gesture_flow": "FAIL — the segment does NOT move enabled -> disabled: it reads \"enabled\" after a real press+release on the painted control, the button still reads \"Disable MCP\", and data-state stays \"mcp-enabled\".",
-        "the_gate_DID_move_in_the_same_run": "the SAME run's bridge arm moved the live gate (the server began refusing every call), so the contradiction is the CONTROL's, not the gate's.",
-        "control_that_excludes_a_driver_defect": "PASS — two landed sibling controls ran their bodies under the same gesture path (#token-gen, #toggle:graph); the two that did not are the two whose authored bodies read ctx.node.props.",
-        "verdict_reading": "FAIL"
-      },
-      "additive": "ADDITIVE — NOT-IN-THE-CLOSED-INSTRUMENT-SET, AND DECLARED AS SUCH (the gutter-ui-live-battery.md precedent's own convention): the REAL POINTER INPUT is CDP (mouseMoved + mousePressed + mouseReleased at the element's own rendered-box centre, with elementFromPoint confirming the hit) rather than an operator's hand — it is APPARATUS, not a contract instrument, and the row's verdict is the value the RENDERED PANE then reads. NOTHING was injected into the page: no attribute, no handler, no override, no source edit — the gesture is delivered by the browser's own input pipeline to the shipped listener." },
+      "observation": "click landed on \"BUTTON#exclusion-toggle\" at (708,348) inside a 59x36 box (isTarget=true); AFTER the gesture: data-state=\"mcp-disabled\", buttonText=\"Enable MCP\", status segment=\"disabled\"; bridge read exclusion=\"mcp-disabled\"; the live MCP get_markdown answered the DECLARED RECEIPT as a VALUE (isError=false, absent). THE SET-EQUALITY HALF, around a REAL exclusion transition with the enabled-GROUP set held CONSTANT: tools/list while CLOSED returned 13 handles and the SAME client answered 13 handles while OPEN, set-equal=true, names lost=[], 19 handles at boot before the sibling-control row moved the group set. CONTROLS in the same run: #token-gen changed the token (\"live-battery-token-4f9c1a7e\" -> \"4b9cvazajps\") and #toggle:graph changed the enabled set (\"read,dispatch,graph,code\" -> \"read,dispatch,code\") under the SAME gesture path; #journal-length-apply read maxJournalLength \"undefined\" -> \"undefined\" (a NO-CHANGE reading: its body reads the prop `value` off the BUTTON node, so it asks for the state the pane already holds)",
+      "verdict": "CHANGED",
+      "assertion": "a real press+release on the painted control moves the status line's `MCP:` segment `enabled → disabled`, and the tool listing stays SET-IDENTICAL (nothing cleared, nothing toggled)",
+      "d_class": "D-GATE clause (1) (the transition is a server-side invariant, §0 ruling 1) + D1–D8 for the control's home",
+      "real_input": { "flag": true, "evidence": "CDP mouseMoved + mousePressed + mouseReleased at the element's own rendered-box centre, with document.elementFromPoint confirming the hit (isTarget=true) — the browser's own input pipeline, nothing injected into the page" },
+      "proxyPASS": false,
+      "surface": { "target": "boot A's Electron window (the ASSEMBLED app) + its own stdio MCP endpoint", "liveSurfacePresent": true, "evidence": "the gesture moved the RENDERED segment AND the live MCP answer changed in the same run" } },
     { "u": "U-3", "layer": "U|H",
       "instrument": "tests/secure-exclusion-live.mjs — the MCP SDK client over the app's own stdio transport (ChildProcessTransport) + raw fetch POSTs at the app's own HTTP endpoint",
       "cmd": "node tests/secure-exclusion-live.mjs", "exit": 0,
-      "observation": "stdio while open: provident.get_markdown -> isError=true, \"MCP error -32602: Tool provident.get_markdown disabled\"; provident.dispatch -> isError=true, \"MCP error -32602: Tool provident.dispatch disabled\"; tools/list -> 0 handles (19 while enabled). HTTP while open: authorized POST -> 503 {\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32003,\"message\":\"exclusion-closed\"},\"id\":null}",
-      "verdict": "CHANGED (the outcome holds; the declared ANSWER SHAPE does not — see §4 F-3)" },
-    { "u": "U-4", "layer": "U|H",
-      "instrument": "tests/secure-exclusion-live.mjs — the pane's declared bridge member via CDP Runtime.evaluate, and a batched load+dispatch POST at the HTTP endpoint",
-      "cmd": "node tests/secure-exclusion-live.mjs", "exit": 0,
-      "observation": "return through the app's own channel: provident.get_markdown answers normally again (isError absent) and a call in flight ACROSS the transition is refused (\"-32602: Tool provident.load disabled\") rather than delivered; return over HTTP: the batched transition POST -> 503 \"{\\\"code\\\":-32003,\\\"message\\\":\\\"exclusion-closed\\\"}\" and the POST after it -> 503",
+      "observation": "stdio while open: provident.get_markdown (enabled group 'read') -> isError=false (ABSENT), {\"status\":\"refused\",\"reason\":\"exclusion-closed\",\"message\":\"MCP endpoint functionality is blocked because the security store is open — retry once the operator has finished with the secured changes.\"}; provident.dispatch (the tool the ENABLED-GROUP predicate alone always registers) -> the SAME receipt, isError ABSENT. HTTP while open: authorized POST -> 503 {\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32003,\"message\":\"exclusion-closed\"},\"id\":null}",
       "verdict": "CHANGED",
-      "reading_finding": {
-        "the_bridge_arm": "PASS — the return through the pane's own declared member restores normal answers (and the in-flight call is refused rather than delivered).",
-        "the_mcp_arm": "FAIL / NOT REACHABLE — on the HTTP transport the POST that carries the return dispatch is itself an invocation, refused 503 by the tier it would close; the POST after it is still 503. The operator's return is reachable ONLY through the renderer bridge (the pane control).",
-        "verdict_reading": "FAIL"
-      } },
+      "assertion": "while the state is open, a tool call's RESULT is the declared receipt (both closed tokens exactly + the cause/remedy `message`) delivered as a VALUE, with `isError` ABSENT — never an MCP protocol error",
+      "d_class": "D-GATE clause (1) (§2.2 item 2(a) — the invocation turn; §2.5 item 1's amended shape)",
+      "real_input": { "flag": true, "evidence": "a literal MCP tools/call over the app's own stdio transport, and a literal authorized POST at the app's own HTTP endpoint" },
+      "proxyPASS": false,
+      "surface": { "target": "the app's own stdio MCP endpoint (boot A) + the app's own HTTP MCP endpoint", "liveSurfacePresent": true, "evidence": "both transports answered the refusal in ONE run (503 on HTTP, the receipt value on stdio)" } },
+    { "u": "U-4", "layer": "U|H",
+      "instrument": "tests/secure-exclusion-live.mjs — (i) literal HTTP POSTs at the app's own endpoint and (ii) a REAL CDP pointer gesture on the HTTP boot's own pane control, over the app's own renderer",
+      "cmd": "node tests/secure-exclusion-live.mjs", "exit": 0,
+      "observation": "(i) NO MCP RE-ARM: the batched POST carrying the return transition (load+dispatch, pre-loaded while the tier admitted work) answered 503 {\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32003,\"message\":\"exclusion-closed\"},\"id\":null} and the authorized POST after it answered 503. (ii) THE OPERATOR'S ACT: a real CDP pointer gesture on THIS boot's painted control (box 56x36 px, hit=\"BUTTON#exclusion-toggle\", isTarget=true) moved the pane's segment \"disabled\" -> \"enabled\" (data-state \"mcp-disabled\" -> \"mcp-enabled\", button \"Enable MCP\"), the bridge answered exclusion=\"mcp-enabled\", and the authorized POST afterwards answered 200 (not 503)",
+      "verdict": "CHANGED",
+      "assertion": "the operator's return — the pane control or the channel — restores NORMAL answers on BOTH transports, and NO MCP/HTTP route can re-arm the state",
+      "d_class": "D-SCOPE (the manual-UI channel is NOT an MCP method — §2.4 item 1) + D-GATE clause (1) (§2.4 item 6, the operator's re-enable is the ONLY re-arm)",
+      "real_input": { "flag": true, "evidence": "a literal HTTP POST (the refused MCP-carried return) AND a CDP mouseMoved/mousePressed/mouseReleased gesture on the HTTP boot's painted control, with elementFromPoint confirming the hit" },
+      "proxyPASS": false,
+      "surface": { "target": "the app's own HTTP MCP endpoint + the HTTP boot's own Electron window (pane)", "liveSurfacePresent": true, "evidence": "GET /mcp answered 405, the POSTs answered 503 then 200, and the pane painted a 56x36 px box that the gesture hit" } },
     { "u": "U-5", "layer": "U|H",
       "instrument": "tests/secure-exclusion-live.mjs — provident.get_rendered_html + provident.list_targets over the app's own stdio MCP transport, beside a CDP in-page read of #panes and #app",
       "cmd": "node tests/secure-exclusion-live.mjs", "exit": 0,
       "observation": "get_rendered_html: ok=true after 1 attempt, 2354 chars, contains 'exclusion-toggle'=false; list_targets: 23 nodes (declared census 23), exclusion-shaped []; CDP: #panes has the toggle=true and #exclusion-control=true, #app has neither",
-      "verdict": "UNCHANGED (the isolation holds with the new node)" },
+      "verdict": "UNCHANGED (the isolation holds with the new node)",
+      "assertion": "the app graph's `get_rendered_html`/`list_targets` NEVER contain the control, while the PANE realm does (the positive control that makes the absence non-vacuous)",
+      "d_class": "D1–D8 (§2.7 item 2 — the pane graph is a SEPARATE GraphScope)",
+      "real_input": { "flag": true, "evidence": "literal MCP calls over the app's own stdio transport + a CDP in-page DOM read of both realms" },
+      "proxyPASS": false,
+      "surface": { "target": "the app's own stdio MCP endpoint + boot A's window (both realms read in the same run)", "liveSurfacePresent": true, "evidence": "get_rendered_html answered 2354 non-empty chars and the pane read found the control" } },
     { "u": "U-6", "layer": "U|H",
       "instrument": "tests/secure-exclusion-live.mjs — CDP Page.reload + a fresh-process boot on the SAME scratch profile, with the MCP client reading both",
       "cmd": "node tests/secure-exclusion-live.mjs", "exit": 0,
-      "observation": "after Page.reload: pane re-painted=true, status segment=\"enabled\", data-state=\"mcp-enabled\", while the live MCP call is STILL refused (isError=true) and IPC_SECURITY_GET answered exclusion=\"mcp-enabled\"; restart on the same profile: get_markdown answers normally (isError=false), the profile holds only [\"provident-security.json\"]",
-      "verdict": "CHANGED (the main-side state survives the reload and the restart returns to enabled; the OPERATOR-VISIBLE state does not follow — see §4 F-4)" },
+      "observation": "after Page.reload: pane re-painted=true, status segment=\"disabled\", data-state=\"mcp-disabled\", button \"Enable MCP\", IPC_SECURITY_GET answered exclusion=\"mcp-disabled\", while the live MCP call is STILL REFUSED and the answer IS the declared receipt (isError ABSENT, the message naming cause and remedy); restart on the same profile: get_markdown answers normally (isError=false), the profile holds only [\"provident-security.json\"]",
+      "verdict": "CHANGED",
+      "assertion": "the open state survives a renderer reload (the refusal is still the declared receipt) AND the pane agrees with the server, while a RESTART returns to `mcp-enabled` with no persisted flag",
+      "d_class": "D-19 (the boot terminal / non-persistence) + §0A item 6 (the renderer may not re-arm)",
+      "real_input": { "flag": true, "evidence": "CDP Page.reload on the assembled app, a literal MCP call after it, and a genuinely NEW process booted on the same scratch profile" },
+      "proxyPASS": false,
+      "surface": { "target": "boot A's window + its stdio MCP endpoint, then a fresh process on the same profile", "liveSurfacePresent": true, "evidence": "the pane re-painted after the reload and the new process answered normally" } },
     { "u": "U-7", "layer": "U|H",
       "instrument": "tests/secure-exclusion-live.mjs — repeated tools/list and tool calls on ONE connected stdio client across the transition, plus the HTTP listener before/after",
       "cmd": "node tests/secure-exclusion-live.mjs", "exit": 0,
-      "observation": "one client: tools/list 19 -> refusal (isError) -> tools/list 19, with no reconnect and no re-handshake; the HTTP listener answered 405 (GET), 401 (unauthorized POST), 200 (authorized POST, enabled), 503 (authorized POST, open) on the same port",
-      "verdict": "UNCHANGED (the transport stays connected; nothing is closed or rebuilt)" },
+      "observation": "one already-connected client: tools/list (13 handles, closed) -> the transition -> tools/list (13 handles, open, set-equal) with no reconnect and no re-handshake; the HTTP listener answered 405 (GET), 401 (unauthorized POST), 200 (authorized POST, enabled), 503 (authorized POST, open) and 200 again after the operator's return, on the same port",
+      "verdict": "UNCHANGED (the transport stays connected; nothing is closed or rebuilt)",
+      "assertion": "the ONE stdio client stays CONNECTED across the exclusion transition — no disconnect, no reconnect, no rebuild of the transport",
+      "d_class": "D-GATE clause (1)(c) (§2.3 item 1 — the stdio transport is NOT closed and NOT rebuilt)",
+      "real_input": { "flag": true, "evidence": "repeated `tools/list` on the SAME ChildProcessTransport client across a real transition, plus literal HTTP requests on the same listener" },
+      "proxyPASS": false,
+      "surface": { "target": "the app's own stdio MCP endpoint + the app's own HTTP endpoint", "liveSurfacePresent": true, "evidence": "both sides answered on the same connections across the transition" } },
     { "u": "U-8 (PRECONDITION NOTE, NOT A U-ROW — docs/specs/secure-exclusion.md §2.4 item 7(2))", "layer": "H",
       "instrument": "tests/secure-exclusion-live.mjs — the registered exit cleanup + the final transitions",
       "cmd": "node tests/secure-exclusion-live.mjs", "exit": 0,
-      "observation": "every boot's child was killed and every scratch profile removed (3 profiles, the helper's own sweep + this driver's registry); the last transition on each boot left the state at 'mcp-enabled', so a re-run starts clean",
-      "verdict": "CHANGED (the battery leaves the tree in its starting state)" }
+      "observation": "every boot's child was killed and every scratch profile removed (3 profiles: stdio, restart, HTTP; the helper's own sweep + this driver's registry); the last transition on each boot left the state at 'mcp-enabled' — this run's HTTP boot was returned to 'mcp-enabled' by the OPERATOR's own act on its pane — so a re-run starts clean",
+      "verdict": "CHANGED",
+      "assertion": "the battery exits with the state `mcp-enabled` and with every scratch profile removed (a re-run starts clean)",
+      "d_class": "D-19 + the battery's own hygiene note (NOT a flow)",
+      "real_input": { "flag": false, "evidence": "a PRECONDITION reading, not a user gesture: the run's own teardown (process kills + profile removal) and the final state reads" },
+      "proxyPASS": false,
+      "surface": { "target": "the run's own process/scratch-profile bookkeeping", "liveSurfacePresent": true, "evidence": "three children killed and three scratch profiles removed on the exit path" } }
   ],
-  "summary": { "total": 8, "changed": 5, "unchanged": 3, "notObservable": 0 },
-  "summary_note": "5 + 3 + 0 = 8, and 8 IS the matrix's row count (7 U-row subjects + 1 named precondition note). TWO of the CHANGED rows carry an embedded reading_finding whose verdict_reading is FAIL (U-2, U-4): the verdict field keeps the closed vocabulary, and the FAIL is stated in the reading rather than folded into the verdict — the gutter-ui-live-battery.md precedent's form.",
+  "summary": { "total": 8, "changed": 5, "unchanged": 3, "notObservable": 0, "verdictClass": { "pass": 8, "fail": 0, "parked": 0 } },
+  "summary_note": "5 + 3 + 0 = 8, and 8 IS the matrix's row count (7 U-row subjects + 1 named precondition note); the role's closed verdict set reads 8 PASS / 0 FAIL / 0 PARKED, and 8 + 0 + 0 = 8 — THE EQUALITY `summary.total === the matrix's U-row count` IS ASSERTED, NOT ASSUMED (this file's §2 carries 8 rows: 7 `U-*` subjects + the demoted `U-8` note). NO row carries an embedded `reading_finding` any more: the as-filed run's two `verdict_reading: FAIL` cells (`U-2`, `U-4`) were dispositioned by the fixes and by this pass's re-grain, and their as-filed values stand verbatim at §4. `proxyPASS: false` on EVERY row: no row's PASS is a proxy for an app-level fact — each is the app-level fact itself. `verdict` keeps the landed CHANGED/UNCHANGED vocabulary (docs/specs/gutter-ui.md §5.U's form) BESIDE `verdictClass` (the role's PASS/FAIL/PARKED set), and the `d_class` values are the UNIT'S OWN `D-`names, mapped by this pass so a reader can check the mapping rather than guess it.",
   "commands": [
     { "cmd": "node tests/secure-exclusion-live.mjs", "exit": 0,
-      "observed": "29 recorded rows = 23 PASS / 6 FAIL / 0 MANUAL / 0 PARKED (the driver's own summary line, whose terms are the rows); this figure and the identical six-row failure set were reproduced on a second execution of the same command, and this record carries the FINAL run's values" },
-    { "cmd": "npm test", "exit": 0, "observed": "Test Files 86 passed (86) · Tests 2724 passed | 2 skipped (2726) — the gate-5/gate-9 figure reproduced exactly" },
+      "observed": "30 recorded rows = 30 PASS / 0 FAIL / 0 MANUAL / 0 PARKED (the driver's own summary line, whose terms are the rows); this figure was reproduced on a SECOND execution of the same command, and this record carries the final run's values" },
+    { "cmd": "npm test", "exit": 0, "observed": "Test Files 86 passed (86) · Tests 2731 passed | 2 skipped (2733)" },
     { "cmd": "npm run typecheck", "exit": 0, "observed": "clean" },
     { "cmd": "npm run typecheck:tests", "exit": 0, "observed": "clean" },
     { "cmd": "npm run build", "exit": 0, "observed": "clean (main cjs + preload cjs + renderer esm)" },
-    { "cmd": "git rev-parse --short HEAD", "exit": 0, "observed": "da6fc42 at the run; the driver landed at 4f1af13" },
+    { "cmd": "git rev-parse --short HEAD", "exit": 0, "observed": "afd3212 at the re-run (the as-filed run read da6fc42)" },
     { "cmd": "sha256sum src/renderer/store-core-graph.ts src/renderer/store-graph-references.ts", "exit": 0,
       "observed": "0664c52f06bd6da5… and 5c0c1a971d7f9268… — both reproduce the unit's declared §6 pins" },
     { "cmd": "git log --name-only --pretty=format: 7142591^..HEAD", "exit": 0,
-      "observed": "the landing chain's 13 paths (plus this driver after 4f1af13) touch no frozen artifact, no store byte and no src/shared/**" }
+      "observed": "the landing chain's 15 paths touch no frozen artifact, no store byte and no src/shared/**" }
   ]
 }
 ```
@@ -147,19 +212,30 @@ matrix's own row count (`docs/specs/user-flow-audit.md` `§6.1` clause 1).**
 
 | # | The clause | Discharged how |
 | --- | --- | --- |
-| 1 | **`summary.total` === the matrix's U-row count, and the per-verdict counts sum to it** | **`8 = 7` U-rows + `1` precondition note**, and `5 + 3 + 0 = 8` ✓. **The total is NOT short and the report is NOT empty** (`docs/specs/user-flow-audit.md` `§2`'s INVALID rule). |
+| 1 | **`summary.total` === the matrix's U-row count, and the per-verdict counts sum to it** | **`8 = 7` U-rows + `1` precondition note**, and `8 + 0 + 0 = 8` ✓ (the role's closed verdict set: `PASS`/`FAIL`/`PARKED`), with the landed vocabulary reading `5 + 3 + 0 = 8` ✓ as well. **The total is NOT short and the report is NOT empty** (`docs/specs/user-flow-audit.md` `§2`'s INVALID rule). |
 | 2 | **every `post` is MEASURED, never projected** | every `observation` above is a value a command in `commands[]` printed in this run; the driver prints each observation verbatim beside its verdict |
-| 3 | **every `instrument` is from the CLOSED set** | three instruments are named and each is a **shipped tool/literal command line**: the repo's own driver (`node tests/secure-exclusion-live.mjs`), the app's **own MCP stdio surface** over the repo's shipped `ChildProcessTransport` helper, and **literal `fetch` POSTs** at the app's own HTTP endpoint. **No row names "the live gate" or "the leg".** |
+| 3 | **every `instrument` is from the CLOSED set** | **four instruments are named and each is a shipped tool / literal command line**: the repo's own driver (`node tests/secure-exclusion-live.mjs`), the app's **own MCP stdio surface** over the repo's shipped `ChildProcessTransport` helper, **literal `fetch` POSTs/GETs** at the app's own HTTP endpoint, and the app's **own CDP listener** (`--remote-debugging-port=0`, read from the child's own stderr) for the rendered-box reads and the real pointer gestures — the same apparatus the as-filed run declared, now on BOTH boots. **No row names "the live gate" or "the leg".** |
 | 4 | **every `cmd` is a literal command line, with its own exit code** | `commands[]` carries eight literal command lines, each with the `exit` code the run produced (`0` for all eight) |
-| 5 | **a `MANUAL` row's observation is an operator observation; a `NOT-OBSERVABLE` row carries its STRUCTURAL reason** | **there are ZERO `MANUAL` rows and ZERO `NOT-OBSERVABLE` rows in this report** — every row was taken by a shipped instrument, so neither form is claimed and neither could be used to soften a contradiction |
+| 5 | **a `MANUAL` row's observation is an operator observation; a `NOT-OBSERVABLE` row carries its STRUCTURAL reason** | **there are ZERO `MANUAL` rows and ZERO `NOT-OBSERVABLE` rows in this report** — every row was taken by a shipped instrument, so neither form is claimed and neither could be used to soften a contradiction. **The re-run needed neither: no row is parked and no row is structurally unreachable, and `§6` records that with the instruments that would have been owed had it been otherwise** |
 | 6 | **the predicate's decision is recorded** | `§1` above: **`TRIGGERS`**, both limbs, with the measured evidence for each |
 
 ---
 
-## 4. FINDINGS — **six measured contradictions of the gate-5 set, each with its clause, its expected value and its observed value**
+## 4. FINDINGS — **the AS-FILED six measured contradictions of the gate-5 set (kept verbatim as the record of the `da6fc42` run), EACH WITH ITS DISPOSITION MEASURED AT THE RE-RUN**
 
-**These are live failures, not doc drift:** the greens row predicted a value, the live app answered a
+**These were live failures, not doc drift:** the greens row predicted a value, the live app answered a
 different one, and the difference is traceable to a named arm of the landed code.
+
+> **⟶ 2026-10-08 — HOW TO READ THIS SECTION (`RCA-8(d)` ANNOTATE-BESIDE).** The tables below are the AS-FILED
+> run's, byte-intact: they are the record of what `da6fc42` answered, and this pass neither rewrites them nor
+> softens them. **Each finding carries a dated DISPOSITION block appended beneath it, and every disposition is
+> a MEASUREMENT from the re-run at `afd3212` — never an inference from the fix's diff.** **THE LINEAGE, WITH ITS
+> TERMS:** six failures `F-1`…`F-6` (the tracker's numbering; this file's `§4` groups `F-1`/`F-2` in one
+> subsection) → the implementer's two landed fixes (`afd3212`: the receipt's additive `message`, and the
+> DELETION of the `exclusionOpen` term from the re-gate path) → **`27 PASS / 2 FAIL`** → this pass's assessment
+> of the last two + two re-grains + one control row → **`30 PASS / 0 FAIL`**. **FIVE of the six are FIXED AND
+> MEASURED; the sixth (`F-5`, the HTTP return path) WAS NEVER A DEFECT OF THE APP — it was a defect of THIS
+> FILE'S OWN ROW INSTRUMENT, and it is re-grounded at `§7`.**
 
 ### F-1 / F-2 — **THE OPERATOR CONTROL IS INERT ON A REAL CLICK** (`F-2`), and it takes the operator-visible half of `U-2`, `U-4` and `U-6` with it
 
@@ -173,6 +249,22 @@ different one, and the difference is traceable to a named arm of the landed code
 | **Why this is NOT recorded as `MANUAL`** | `docs/specs/user-flow-audit.md` `§6.1` admits `MANUAL` where **no shipped instrument can take the reading**. Here the instrument **demonstrably can** (`#token-gen` proves it), so the honest verdict is `FAIL`, not `MANUAL` — a `MANUAL` row here would be the convenience move `§6.1` clause 5 forbids |
 | **Consequence for the `§5.U` matrix** | `U-2`'s post observation is `CHANGED-PARTIALLY-AND-CONTRADICTED` (the gate moves; the CONTROL does not), `U-4`'s bridge arm holds while its gesture arm cannot be reached from the control, and `U-6`'s reload arm shows the operator an `MCP: enabled` pane over a refusing server |
 
+> **⟶ DISPOSITION 2026-10-08 — `F-2` (and the `F-1`/`F-6` operator-view clauses that hung off it): `FIXED AND
+> MEASURED GREEN`.** **THE MEASUREMENT (re-run at `afd3212`, `§5` rows 7, 8 and 15):** a REAL CDP
+> press+release on the painted control (`hit="BUTTON#exclusion-toggle"`, `isTarget=true`) now **moves the status
+> line's trailing segment to `MCP: disabled`**, moves `data-state` to `mcp-disabled`, moves the button's own
+> text to `Enable MCP`, and the live MCP server begins answering the DECLARED RECEIPT in the same run — i.e.
+> **the control and the gate AGREE, which is exactly the disagreement this finding was.** **THE CONTROL THAT
+> MADE IT A FINDING STILL RUNS, and its reading is corrected rather than re-used:** `#token-gen` still changes
+> the token and `#toggle:graph` still changes the enabled set under the same gesture path, so the driver's own
+> ability to click is still proved; **the as-filed claim that `#journal-length-apply` "did NOT run its body" was
+> this file's own over-read** — that control's `maxJournalLength` reading is `undefined → undefined` because its
+> authored body reads the prop `value` off ITS OWN node (the BUTTON, which carries none, `L`
+> `src/renderer/secure-panels.ts:132-140`) and therefore asks for the state the pane already holds — **a
+> NO-CHANGE reading that can never be a control, and the driver's own evidence string now says so** (`§7` item 2).
+> **NO ROW WAS MOVED TO `MANUAL` FOR IT AND NONE IS MOVED NOW**: the instrument could always take the reading,
+> and it takes it green.
+
 ### F-3 — **THE DECLARED REFUSAL RECEIPT IS NOT THE LIVE ANSWER ON STDIO: EVERY TOOL CALL IS ANSWERED `-32602 … disabled`** (and `tools/list` is empty while open)
 
 | | |
@@ -184,6 +276,22 @@ different one, and the difference is traceable to a named arm of the landed code
 | **The arm that actually answers, read by name** | `regateLiveServer` toggles **every** captured handle `enabled: false` while the tier is open, **including `provident.dispatch`** — so the MCP framework refuses the call **before the handler runs**, and the `exclusionTurn` handler (which is registered and wired correctly, and which the unit's own `A-1#1`/`A-1#2` cells drive green) is **never reached on a live call**. The `-32003 'exclusion-closed'` receipt is the **HTTP arrival** answer, not the stdio invocation-turn answer |
 | **The honest reading** | the SAFETY outcome holds (nothing is dispatched to the renderer while open; `sends=0` is not contradicted), but the **declared OBSERVABILITY does not**: a live MCP client cannot list or invoke anything while open, and the receipt value the contract pins is not what a client sees. This is the `docs/specs/user-flow-audit.md` `§4` item 6 *"never upgrade a layer"* case in reverse — the `[T]`/`[B]` greens are **not** app-layer evidence, and here the app layer answers differently |
 
+> **⟶ DISPOSITION 2026-10-08 — `F-3`: `FIXED AND MEASURED GREEN` (the registry-toggling carrier is GONE by the
+> architect's ruling).** **THE MEASUREMENT (re-run at `afd3212`, `§5` rows 10 and 11):** while the state is open,
+> `provident.get_markdown` (an ENABLED-group tool) **and** `provident.dispatch` (the tool the enabled-group
+> predicate alone always registers) **each answered the DECLARED RECEIPT as the tool's RESULT, with `isError`
+> ABSENT** — `{"status":"refused","reason":"exclusion-closed","message":"MCP endpoint functionality is blocked
+> because the security store is open — retry once the operator has finished with the secured changes."}` —
+> never an MCP protocol error. **And the listing is no longer emptied:** across a REAL exclusion transition
+> with the enabled-GROUP set held constant, `tools/list` answered the SAME `13` handles while open that it
+> answered while closed (set-equal `true`, `names lost []`), on the one already-connected client. **THE AS-FILED
+> `0`-HANDLE READING IS EXPLAINED AND CLOSED**: it was `regateLiveServer`'s toggling, which the ruling deleted
+> from the exclusion path (`§2.1` item 3's supersession clause; `§2.2` item 2(b)). **The `A-1` fix is what makes
+> the receipt REACHABLE** — with the toggling gone, nothing stands between an MCP call and the renderer except
+> the invocation turn, and the row above measures it answering. **NO ROW WAS WEAKENED**: the as-filed predicate
+> (text CONTAINS the token) is REPLACED BY A STRONGER ONE (the receipt's full shape + `isError` ABSENT), which
+> can fail on a bare token string, on an absent/cause-less `message`, or on the renderer's own value.
+
 ### F-4 — **THE `IPC_SECURITY_*` RESPONSE MEMBERS REPORT A STALE GATE — the operator's view never follows a transition**
 
 | | |
@@ -194,6 +302,16 @@ different one, and the difference is traceable to a named arm of the landed code
 | **Observed** | after a **REAL accepted transition** (`window.provident.security.setExclusion('mcp-disabled')` answered `applied: true` and the live server immediately began refusing every call), `IPC_SECURITY_GET` answered **`exclusion: "mcp-enabled"`** — the BOOT state. The pane reads that member at its own boot (`renderer.ts` awaits `bridge.security.get()` BEFORE the panes are constructed) and on every `refresh()`, so the operator's status line and toggle read the boot state forever after a transition: after the `Page.reload` row the pane showed `MCP: enabled` / `data-state="mcp-enabled"` / `Disable MCP` **while the server refused every call** |
 | **The mechanism, from the landed code** | `main.ts` constructs ONE `SecurityGate` (`gate = new SecurityGate({ token: persisted.token, enabled: … })`) and closes the `IPC_SECURITY_GET`/`IPC_SECURITY_SET` handlers over it, while `mcp.applyExclusion()` REPLACES the server's private `_gate` with `this._gate.withExclusion(state)` — and `SecurityGate.withExclusion` **returns a NEW gate** (`src/main/security.ts`: *"a NEW gate is returned and the RECEIVER is unchanged"*). The handlers therefore keep reading the **boot-time gate instance**, which no transition ever moves: `IPC_SECURITY_GET`/`IPC_SECURITY_SET` answer the constructed state, not the live one. **This also explains why F-2's dead click could not have been detected by the `[T]` layer alone**: the unit's own cells drive the transition site (`applyExclusion` + `gate.exclusionState()`), never the IPC response record |
 
+> **⟶ DISPOSITION 2026-10-08 — `F-4` (and the `F-5`/`F-6` operator-view clauses of the tracker's numbering):
+> `FIXED AND MEASURED GREEN`.** **THE MEASUREMENT (re-run at `afd3212`, `§5` rows 9 and 15):** after a REAL
+> accepted transition `IPC_SECURITY_GET` answered `exclusion="mcp-disabled"` — the LIVE state, not the boot
+> state — and after a `Page.reload` the pane re-painted reading `MCP: disabled` with `data-state="mcp-disabled"`
+> and the button reading `Enable MCP`, i.e. **the operator's view now follows the transition and agrees with the
+> server that is refusing**. **THE SAME READING IS TAKEN ON THE HTTP BOOT'S OWN PANE** (`§5` row 25): the segment
+> reads `disabled` before the operator's return gesture and `enabled` after it. **WHAT THIS PASS DID NOT DO:
+> re-derive the mechanism's fix.** The host fix is the implementer's (`afd3212`) and its own red row is
+> `G6-F1`; this record reads only what the assembled app answers.
+
 ### F-5 — **THE RETURN FROM `mcp-disabled` HAS NO MCP-REACHABLE PATH ON THE HTTP TRANSPORT**
 
 | | |
@@ -203,9 +321,34 @@ different one, and the difference is traceable to a named arm of the landed code
 | **Observed** | the transition envelope for the return was **pre-loaded while the tier still admitted MCP work** (a batched `load`+`dispatch` in ONE POST, on the run's own initialized session — the form that works in the enabled direction and moved the HTTP gate both ways in this run), and then the POST that carries the **dispatch** is itself an invocation: the gate is read **at POST arrival**, the tier is open, so the request is answered **`503 {"code":-32003,"message":"exclusion-closed"}`** and the handler that would re-enable never runs. The POST after it is still `503` |
 | **The honest reading** | **this is the invocation turn working as declared** (`§2.2` item 2(a) refuses EVERY tool invocation while open), and it makes the return reachable **only through the renderer bridge** — the pane control (F-2: inert on a real click) or a renderer-realm `setExclusion` call. **No row in the greens predicted this asymmetry** (`SX-G-43`/`SX-G-44` speak only of the refusal's delivery), so it is recorded as a live finding about the unit's recovery path rather than as a projected verdict. It is also the datum `§7a` `OW-6` asked gate 6 to supply |
 
+> **⟶ DISPOSITION 2026-10-08 — `F-5`: `NOT A DEFECT OF THE APP. IT WAS A DEFECT OF THIS FILE'S OWN ROW
+> INSTRUMENT, AND THE ROW IS RE-GROUNDED ON THE MANUAL-UI PATH.`** **THE ASSESSMENT, WITH ITS CLAUSES — THE
+> CONTRACT PROVIDES NO MCP/HTTP RETURN ARM ANYWHERE, AND THAT IS SAID WITH THE `§`, NOT ASSUMED:** `§2.4` item 6
+> pins the return as the **operator's own** `setExclusion('mcp-enabled')` — *"the pane control (`§2.4` item 2) or
+> the channel directly"* — and its 2026-10-08 annotation adds *"the re-enable remains the OPERATOR's own
+> `setExclusion('mcp-enabled')` and nothing else … a message is a VALUE, not a transition"*; `§2.2` item 2(a)
+> refuses **every** tool invocation while open, so no dispatch can perform it on either transport; `§2.3` item 2
+> answers a POST arriving while open with the `503` and builds no server for it; `§2.3` item 3's straddle clause
+> settles only **already-accepted** work and is not a re-arm; and `§2.4` item 1 declares the manual-UI channel
+> **NOT an MCP method**. **So the as-filed row was testing a route the contract does not provide, and its red
+> was uninformative — NOT because a red is inconvenient, but because the row's subject was mis-instrumented.**
+> **THE RE-GROUNDED ROW (`§5` row 25) ASSERTS BOTH HALVES AND IS GREEN ON BOTH, MEASURED:** (i) the MCP-carried
+> return POST answered `503` with the declared body and the authorized POST after it **also** `503` — the
+> exclusion grants an MCP caller **no re-arm authority** (a regression that handed it some would redden this
+> half); and (ii) a REAL CDP pointer gesture on **that boot's own painted control** moved its segment
+> `disabled → enabled` (`data-state` `mcp-disabled → mcp-enabled`, bridge `exclusion="mcp-enabled"`) and the
+> authorized POST afterwards answered **`200`** (a return that failed to restore would redden this half). **THE
+> IN-FLIGHT ARM IS NOT CLAIMED**: a genuine straddle probe needs a call issued while CLOSED whose renderer work
+> lands across the transition, and this driver cannot make that window deterministic — it is stated as the
+> row's honest limit, and the register's `A-2#5`/`P-EX-IM-3` cells carry it at the `[H]` layer.
+
 ---
 
-## 5. THE FULL ROW SET — every check the run recorded, verbatim
+## 5. THE FULL ROW SET — every check the RE-RUN recorded, verbatim
+
+**⟶ 2026-10-08 (the RE-RUN's set, `30` rows; the as-filed `29`-row set with its `6 FAIL` stands at this file's
+git history and at `§4`, which quotes each failing row's as-filed value). Rows 14 is NEW; rows 7, 9, 10, 11, 13,
+15, 22 and 25 are RE-GRAINED or RE-GROUNDED — each says so in its own `evidence` string in the driver.**
 
 | # | Battery row | Verdict | The observation it printed (abridged to the value) |
 | --- | --- | --- | --- |
@@ -215,40 +358,46 @@ different one, and the difference is traceable to a named arm of the landed code
 | 4 | **`U-5`** the control is pane-only, never in the app graph | **PASS** | pane: toggle `true`, control `true`; `#app`: toggle `false`; `get_rendered_html` 2354 chars, contains the id `false` |
 | 5 | **`U-5`** `list_targets` carries no pane node | **PASS** | `23` nodes (declared census `23`), exclusion-shaped `[]` |
 | 6 | `U-3` precondition — a normal call answers normally | **PASS** | `provident.get_markdown` → ok, `isError` absent, markdown first 60 chars shown |
-| 7 | **`U-2`** the REAL gesture moves the segment | **FAIL** | see F-2 |
-| 8 | `U-2` sibling controls on the SAME gesture path | **PASS** | `#token-gen` changed the token; `#toggle:graph` changed the enabled set; `#journal-length-apply` did NOT (`undefined → undefined`) |
-| 9 | **`SX-G-57`** the GET response member reports the LIVE state | **FAIL** | see F-4 |
-| 10 | **`U-3`** the arm that answers, read by name | **FAIL** | see F-3 |
-| 11 | `U-2`/`SX-G-23` the handles stay RESOLVABLE while open | **FAIL** | `tools/list` → `0` (was `19`) |
-| 12 | **`U-4`** the return restores normal answers | **PASS** | `provident.get_markdown` answers normally again; a call in flight across the transition answered `-32602 … disabled` |
-| 13 | **`U-6`** the state survives a renderer reload (main-side) | **PASS** | after `Page.reload` the live call is STILL refused (`isError`) |
-| 14 | **`U-6`** the operator's view after the reload | **FAIL** | the pane reads `MCP: enabled` / `data-state="mcp-enabled"` / `Disable MCP` over a refusing server (F-4) |
-| 15 | **`U-6`** a restart returns to `mcp-enabled` and the flag is not persisted | **PASS** | a new process on the same profile answers normally; the profile holds only `["provident-security.json"]` |
-| 16 | the HTTP transport reaches its readiness landmark | **PASS** | `GET /mcp` → `405`; landmarks `http transport ready` then `renderer ready` |
-| 17 | `SX-G-38` the AUTHORIZATION arm answers FIRST | **PASS** | tokenless POST → `401` `{"code":-32001,"message":"Unauthorized"}` |
-| 18 | `SX-G-42` the positive control (enabled POST) | **PASS** | authorized POST while enabled → `200` |
-| 19 | `SX-G-40` a GET keeps its landed `405` | **PASS** | `405` `{"code":-32000,"message":"Method not allowed."}` |
-| 20 | **`SX-G-36`** an authorized POST while OPEN answers `503` + the declared body | **PASS** | `503` `{"jsonrpc":"2.0","error":{"code":-32003,"message":"exclusion-closed"},"id":null}` |
-| 21 | `SX-G-38` the ordering holds while OPEN | **PASS** | tokenless POST while open → `401` |
-| 22 | **`SX-G-44`** one predicate, two DELIVERIES | **PASS** | the same state produced the stdio refusal AND the HTTP `503` in one run |
-| 23 | **`SX-G-43`** the straddling POST is answered once | **PASS** (with the honest note) | `503`, **1** body line, second status line `false`; the note: this POST did not carry a resolving renderer round trip across the transition, so the mid-flight abandonment path is NOT exercised by this row |
-| 24 | **`U-4`** the return arm on HTTP | **FAIL** | see F-5 |
-| 25 | **`SX-G-48/49`** the one new channel constant, spelled once | **PASS** | `store-channels.ts` exports 3 constants, one of them `IPC_SECURITY_EXCLUSION = 'provident:security:exclusion'`; the literal appears under `src/**`/`scripts/**` in exactly one file |
-| 26 | **`SX-G-54`** the frozen byte pins | **PASS** | `0664c52f…` and `5c0c1a97…` (both reproduce the declared `sha256`) |
-| 27 | **`SX-G-67/68`** no `secure.`-segment check, no `secure-refused`, no name-mapped refusal | **PASS** | hits `[]` over the six declared `src/**` files |
-| 28 | **`SX-G-53`** the store union carries no exclusion token | **PASS** | `store-core-graph.ts` contains `'exclusion-closed'`: `false`; the refusal-shaped tokens found are the union's own |
-| 29 | **`SX-G-55`** the diff scope touches no frozen artifact | **PASS** | the landing chain's paths (13 + this driver) — forbidden hits `[]`, `src/shared/**` untouched |
+| 7 | **`U-2`** the REAL gesture moves the segment | **PASS** (was `FAIL`, `F-2`; the row is re-grained to the receipt + set-equality) | the gesture landed on `BUTTON#exclusion-toggle` (`isTarget=true`) and the segment moved `enabled → disabled`, `data-state="mcp-disabled"`, button `Enable MCP`; the live call answered the DECLARED RECEIPT (`isError` absent) |
+| 8 | `U-2` sibling controls on the SAME gesture path | **PASS** | `#token-gen` changed the token; `#toggle:graph` changed the enabled set; `#journal-length-apply` `undefined → undefined` (a NO-CHANGE reading — its body reads the prop `value` off the BUTTON node — **NOT a control**, and the evidence string now says so) |
+| 9 | **`SX-G-57`** the GET response member reports the LIVE state | **PASS** (was `FAIL`, `F-4`) | after a real accepted transition `IPC_SECURITY_GET` answered `exclusion="mcp-disabled"` |
+| 10 | **`U-3`** the arm that answers, read by name | **PASS** (was `FAIL`, `F-3`; re-grained to the RECEIPT's full shape) | `get_markdown` **and** `dispatch` each answered `{"status":"refused","reason":"exclusion-closed","message":"MCP endpoint functionality is blocked because the security store is open — retry once the operator has finished with the secured changes."}` with `isError` **ABSENT** |
+| 11 | **`U-2 (registry)` / `U-7` / `SX-G-23`** the registration set across a real transition | **PASS** (was `FAIL`; re-grained from `>0` to SET EQUALITY with the group set held constant) | `tools/list` CLOSED → `13` handles, OPEN → `13` handles, `set-equal=true`, names lost `[]`; `19` at boot before the sibling row moved the enabled-GROUP set |
+| 12 | **`U-4`** the return restores normal answers (the pane's own declared call) | **PASS** (re-grained to a bound) | bridge `exclusion="mcp-enabled"`; `get_markdown` → `ok=true`, `isError` absent, **receipt `null`**, markdown present; the call ISSUED while open was answered the receipt and never dispatched |
+| 13 | **`U-6`** the state survives a renderer reload (main-side) | **PASS** (`RE-GRAINED` — the as-filed predicate was the STALE `isError === true`) | after `Page.reload` the live call is STILL REFUSED **and the answer IS the declared receipt**: `isError` absent, both closed tokens, the `message` naming cause and remedy |
+| 14 | **`U-6` — PREDICATE CONTROL** (NEW this pass) | **PASS** | the re-grained predicate is `null` on the run's OWN enabled-state answers (the renderer's value — what an inert turn would return) **and** on a PRE-RULING TWO-MEMBER receipt, on a CAUSE-LESS message, and on the SUPERSEDED `-32602 … disabled` carrier |
+| 15 | **`U-6`** the operator's view after the reload | **PASS** (was `FAIL`, `F-4`) | the pane reads `MCP: disabled` / `data-state="mcp-disabled"` / `Enable MCP` and `IPC_SECURITY_GET` answered `exclusion="mcp-disabled"` **while the server refuses** — the view agrees with the server |
+| 16 | **`U-6`** a restart returns to `mcp-enabled` and the flag is not persisted | **PASS** | a new process on the same profile answers normally; the profile holds only `["provident-security.json"]` |
+| 17 | the HTTP transport reaches its readiness landmark | **PASS** | `GET /mcp` → `405`; landmarks `http transport ready` then `renderer ready` |
+| 18 | `SX-G-38` the AUTHORIZATION arm answers FIRST | **PASS** | tokenless POST → `401` `{"code":-32001,"message":"Unauthorized"}` |
+| 19 | `SX-G-42` the positive control (enabled POST) | **PASS** | authorized POST while enabled → `200` |
+| 20 | `SX-G-40` a GET keeps its landed `405` | **PASS** | `405` `{"code":-32000,"message":"Method not allowed."}` |
+| 21 | **`SX-G-36`** an authorized POST while OPEN answers `503` + the declared body | **PASS** | `503` `{"jsonrpc":"2.0","error":{"code":-32003,"message":"exclusion-closed"},"id":null}` |
+| 22 | `SX-G-38` the ordering holds while OPEN | **PASS** | tokenless POST while open → `401` |
+| 23 | **`SX-G-44`** one predicate, one answer shape, two DELIVERIES | **PASS** (re-grained: the stdio half is the RECEIPT itself, not an `isError` flag) | the same state produced the DECLARED RECEIPT as a stdio tool RESULT **and** the HTTP `503` with `-32003 'exclusion-closed'` in one run; the enabled-state POST answered `200` |
+| 24 | **`SX-G-43`** the straddling POST is answered once | **PASS** (with the honest note) | `503`, **1** body line, second status line `false`; the note: this POST did not carry a resolving renderer round trip across the transition, so the mid-flight abandonment path is NOT exercised by this row |
+| 25 | **`U-4`** the return arm on HTTP | **PASS** (was `FAIL` — `F-5`; **RE-GROUNDED ON THE MANUAL-UI PATH**) | (i) the MCP-carried return POST → `503` + `exclusion-closed` and the POST after it → `503` (**no MCP re-arm authority**); (ii) a REAL pointer gesture on THAT boot's control (box `56x36`, `isTarget=true`) moved the segment `disabled → enabled` (bridge `exclusion="mcp-enabled"`) and the POST afterwards answered **`200`** |
+| 26 | **`SX-G-48/49`** the one new channel constant, spelled once | **PASS** | `store-channels.ts` exports 3 constants, one of them `IPC_SECURITY_EXCLUSION = 'provident:security:exclusion'`; the literal appears under `src/**`/`scripts/**` in exactly one file |
+| 27 | **`SX-G-54`** the frozen byte pins | **PASS** | `0664c52f…` and `5c0c1a97…` (both reproduce the declared `sha256`) |
+| 28 | **`SX-G-67/68`** no `secure.`-segment check, no `secure-refused`, no name-mapped refusal | **PASS** | hits `[]` over the six declared `src/**` files |
+| 29 | **`SX-G-53`** the store union carries no exclusion token | **PASS** | `store-core-graph.ts` contains `'exclusion-closed'`: `false`; the refusal-shaped tokens found are the union's own |
+| 30 | **`SX-G-55`** the diff scope touches no frozen artifact | **PASS** | the landing chain's paths (15) — forbidden hits `[]`, `src/shared/**` untouched |
 
-**THE ARITHMETIC, PRINTED WITH ITS TERMS:** `29` recorded rows = `23 PASS` + `6 FAIL` + `0 MANUAL` + `0 PARKED`, and `23 + 6 + 0 + 0 = 29` ✓.
+**THE ARITHMETIC, PRINTED WITH ITS TERMS:** `30` recorded rows = `30 PASS` + `0 FAIL` + `0 MANUAL` + `0 PARKED`, and `30 + 0 + 0 + 0 = 30` ✓ — over the matrix's `8` rows (`7` U-subjects + `1` precondition note), which is why the battery's row count and the report's `summary.total` are DIFFERENT numbers and both are printed: **the battery records rows, the report records U-rows, and `summary.total` equals the MATRIX's row count (8), not the battery's (30).**
 
 ---
 
 ## 6. PARKED / MANUAL / NOT-OBSERVABLE — **`0` of each, and why**
 
 - **PARKED: NONE.** `RCA-11` forbids parking a unit whose surface is exercisable, and this surface
-  **is**: two live processes were booted on the operator's display (`DISPLAY=:0`), a real CDP pointer
-  gesture was delivered to the painted control, both transports were driven, and the reload/restart arms
-  were exercised. **No scenario was parked and no structural reason was needed.**
+  **is**: three live processes were booted on the operator's display (`DISPLAY=:0`) — the stdio boot, the
+  restart probe and the HTTP boot — a real CDP pointer gesture was delivered to the painted control **on
+  two of them**, both transports were driven, and the reload/restart/return arms were exercised. **No
+  scenario was parked and no structural reason was needed.** **THE RE-RUN'S OWN PARK AUDIT, POSITIVE: no row
+  was parked this pass either, and none could have been** — the gesture rows are exercisable through the CDP
+  route over both boots, and the one arm that is genuinely NOT deterministically exercisable (a call
+  straddling the transition in flight, `§5` row 12's honest limit) is stated as a LIMIT ON A ROW THAT IS
+  STILL MEASURED, not converted into a parked row.
 - **MANUAL: NONE.** `docs/specs/secure-exclusion.md` `§2.4` item 7(2-note) **predicted** that the gesture
   rows would have to carry `MANUAL` because the pane is an isolated graph and `R4` forbids the two
   `webContents` reach-ins. **The run falsifies that prediction in the unit's favour, and it is recorded
@@ -257,29 +406,68 @@ different one, and the difference is traceable to a named arm of the landed code
   `webContents` call, and **did** deliver a real press+release to the rendered control and did drive
   landed sibling controls. **The `MANUAL` instrument was therefore not required for the measurement — and
   using it would have hidden F-2**, since the instrument IS able to take the reading and the reading it
-  takes is a failure.
+  takes is a failure. **THE RE-RUN STRENGTHENS THE SAME REFUSAL: the return arm's own `[U]` half was taken by
+  the SAME CDP gesture on the HTTP boot's pane** (`§5` row 25), so no row needed `MANUAL` for it either.
 - **`NOT-OBSERVABLE-BY-ANY-SHIPPED-INSTRUMENT`: NONE.**
 
 ---
 
 ## 7. THE DRIVER — path, and why that location is admissible under the two hard constraints
 
-**`tests/secure-exclusion-live.mjs`** (run as `node tests/secure-exclusion-live.mjs`; `29` recorded rows;
-exit `0`). It is a **`tests/**`-owned harness**, the second of the two admissible locations:
+**`tests/secure-exclusion-live.mjs`** (run as `node tests/secure-exclusion-live.mjs`; `30` recorded rows at the
+re-run; exit `0`). It is a **`tests/**`-owned harness**, the second of the two admissible locations:
 
 1. **`scripts/*.mjs` was NOT used, because a NEW file there reddens a frozen row.**
    `tests/ui-leg-contract.test.ts`'s `helperCandidates()` takes
    `readdirSync(scripts).filter(f => f.endsWith('.mjs') && !RESERVED_SCRIPT_NAMES.has(f))` and asserts the
    FIRST candidate carries `mkdtempSync`, `tmpdir()`, `PINNED_SPAWN_FLAGS`, `spawn(`, `process.on('exit')`
-   and `rmSync`. **MEASURED in this pass**: with the driver committed under `tests/**`, `npm test` is
-   **`86 files / 2724 passed / 0 failed`** — the exact figure the unit's records carry, so this file
-   changed no leg.
+   and `rmSync`. **MEASURED in this pass**: with the driver under `tests/**`, `npm test` is
+   **`86 files / 2731 passed | 2 skipped / 0 failed`** — see item 7 of `§8` for the ONE interaction this
+   file has with a landed sibling row (the uncommitted-edit reading), which is closed by the gate commit.
 2. **`scripts/electron-ui.mjs` was NOT extended and its `R4` row was NOT weakened.** That row scans the
    leg's own code (comments stripped) for the call-site SET
    `app.isPackaged` · `webContents.executeJavaScript` · `webContents.debugger`. **This driver contains
    none of them and adds nothing under `scripts/`.** The route it uses instead is **Chrome DevTools
    Protocol over the app's own `--remote-debugging-port=0` listener** — a channel the `R4` set does not
-   name and no shipped file uses.
+   name and no shipped file uses. **The re-run now attaches that channel to BOTH boots** (the stdio boot and
+   the HTTP boot), which is what makes the operator's return measurable ON the HTTP transport.**
+
+**⟶ THE RE-RUN'S CHANGES TO THE DRIVER, EACH WITH WHAT IT ASSERTS (2026-10-08; the as-filed driver's rows are
+otherwise untouched):**
+
+1. **`declaredReceipt(answer)` — THE RE-GRAINED PREDICATE.** The as-filed `U-6 (reload arm, main-side state)`
+   asserted `isError === true`, which is **satisfiable only under the SUPERSEDED registry-toggling carrier**:
+   with the toggling deleted (the architect's ruling) a disabled handle no longer exists to make the landed
+   SDK throw, and the invocation turn answers the receipt **as a VALUE** (`§2.2` item 2(a); `§2.5` item 1;
+   `P-EX-TP-1`), so `isError` is **ABSENT** — which is exactly what the unit's own `G6-F3` row and its
+   register cell `G6-F3#1` assert. **THE ROW NOW ASSERTS: `ok === true` · `isError` NOT `true` · the parsed
+   answer is an object whose `status === 'refused'` and `reason === 'exclusion-closed'` · a non-empty
+   `message` naming the CAUSE (the security store is open) AND the REMEDY (retry/try again/wait, for the
+   operator) — its DOMAIN, never a literal spelling** (`§2.5` item 1's `DECLARED-DEFAULT`). **It reddens on a
+   protocol error, on the renderer's own value, on a two-member receipt and on a cause-less message** — the
+   control row (`§5` row 14) drives all four.
+2. **`U-6 (reload arm) — PREDICATE CONTROL` — THE ROW THIS PASS ADDED.** It runs the SAME predicate over the
+   run's own ENABLED-state answers (the renderer's value — the inert-turn regression's shape) and over three
+   in-line outside shapes. **A re-grained predicate that cannot fail is not evidence, so the control is a
+   row and its verdict is reported like any other.**
+3. **`listToolNames` + `sameSet` — THE SET-EQUALITY READING.** `U-2 (registry, live)` asserted `tools/list
+   length > 0`, which cannot tell an UNCHANGED set from a different one of the same size; the operative pin
+   (`§0A` item 7(c): *"the registered tool/resource set is IDENTICAL in both states — nothing is cleared and
+   NOTHING IS TOGGLED"*) is SET EQUALITY. **The reading is taken with the enabled-GROUP set HELD CONSTANT**,
+   because the sibling-control row legitimately moves that set through a DIFFERENT mechanism
+   (`applyGatePatch`'s group change, which the ruling leaves untouched) — so a listing read across both would
+   attribute the group's shrink to the exclusion.
+4. **`U-4 (return arm, HTTP)` — RE-GROUNDED.** The as-filed row required a POST to carry the transition back;
+   the contract provides **no** MCP/HTTP re-enable route (`§2.4` item 6; `§2.2` item 2(a); `§2.3` item 2;
+   `§2.4` item 1 — the full citation is at `§4`'s `F-5` disposition). **The row now asserts BOTH: the MCP
+   route does NOT re-arm (measured: `503`, and the POST after it still `503`), and the OPERATOR's own act
+   DOES restore the HTTP answers (measured: a real CDP gesture on THAT boot's pane → `200`).**
+5. **IN-FLIGHT PROBE CORRECTED.** The as-filed probe called `provident.load` while open and read the answer
+   as "a call in flight across the transition". **`provident.load` belongs to group `graph`** (`L`
+   `src/main/security.ts:17`), which the sibling-control row had just DISABLED, so that `-32602 … disabled`
+   was the GROUP predicate's — a different mechanism, and not the exclusion's in-flight arm. The probe is now
+   `provident.get_markdown` (group `read`, enabled), its answer is asserted as the RECEIPT, and the row states
+   honestly that the genuine in-flight arm is not deterministically exercisable from this driver.
 
 **The two measured host constraints the driver had to work around, recorded so a later run does not
 re-discover them:**
@@ -288,7 +476,8 @@ re-discover them:**
   DEFAULT `userData` directory (before `main()` calls `app.setPath`), and that write is refused
   (`Error writing DevTools active port to file /home/ryanr/.config/Electron/DevToolsActivePort:
   Permission denied (13)` — the boot itself succeeds). The driver therefore reads the port from the
-  child's **own stderr** line (`DevTools listening on ws://127.0.0.1:<port>/…`).
+  child's **own stderr** line (`DevTools listening on ws://127.0.0.1:<port>/…`) — **on both boots** (the
+  HTTP boot now carries `--remote-debugging-port=0` for exactly that reason).
 - **`--mcp-transport=http` cannot be selected through the shipped spawn helper.** `spawnElectron`
   appends the caller's args AFTER the landed base vector, which pins `--mcp-transport=stdio`, and
   `transportFromArgs` resolves the FIRST match — **MEASURED**: a boot asked for `http` announced
@@ -305,6 +494,9 @@ POSTs/GETs at the app's own endpoint.
 ---
 
 ## 8. WHAT THIS PASS DID NOT DO
+
+**⟶ THE RE-RUN'S OWN SECTION (`2026-10-08`). Items 1–7 below are the AS-FILED pass's and stand byte-intact as
+its dated record; the re-run's own limits are items 8–13.**
 
 1. **It wrote exactly ONE file in the repo: `tests/secure-exclusion-live.mjs`** — no `src/**`, no test
    file of the unit, no spec, no tracker, no `package.json`, no config. Its reconnaissance probes and its
@@ -327,3 +519,51 @@ POSTs/GETs at the app's own endpoint.
    Recorded because it is a measured interaction between a new `tests/**` artifact and the landed
    sibling registry, and a later pass that adds another `tests/**` file will meet it too.)*
 7. **It ran NO live battery for any other unit** and makes no claim outside `U-SECURE-EXCLUSION`.
+
+**⟶ THE RE-RUN.**
+8. **IT EDITED EXACTLY TWO FILES, BOTH ITS OWN: `tests/secure-exclusion-live.mjs` and this record.** **No
+   `src/**`, no spec, no unit test file, no tracker, no `package.json`, no config was touched** — the
+   contract amendment and the two host fixes are the implementer's and the architect's, and this pass READS
+   them rather than changing them. **No file was added under `scripts/`** (the `R4`/`helperCandidates`
+   constraint above is unchanged), and no new file was added anywhere except the control ROW inside the
+   driver.
+9. **IT DID NOT WEAKEN A ROW TO MAKE IT PASS.** Both re-grains are stated with their as-filed forms in the
+   driver's own `evidence` strings and at `§4`/`§7`: `isError === true` → **the receipt's full shape with
+   `isError` absent** (strictly stronger: it also bites on a bare token string and on a cause-less message);
+   `tools/list length > 0` → **set equality** (strictly stronger: a count cannot see a same-size change);
+   `text CONTAINS the token` → **the receipt itself**; the HTTP return row → **two assertions where the
+   as-filed row had one, one of which measures the contract's own negative**. **AND THE CONTROL WAS ADDED, NOT
+   ASSUMED**: `§5` row 14 runs the re-grained predicate over the run's own enabled-state values and over three
+   outside shapes, so the predicate's falsifier is itself a reported row.
+10. **THE TWO REMAINING FAILURES ARE ASSESSED, NOT DISMISSED, AND THE ASSESSMENT IS WRITTEN WHERE IT CAN BE
+    CHECKED.** `U-6 (reload arm, main-side state)` = **`STALE PREDICATE`** (the amended clauses `§2.1` item 3,
+   `§2.2` item 2(a), `§2.5` item 1 and the unit's own `G6-F3` row / register cell `G6-F3#1` are quoted in the
+   driver's own evidence string and at these sections). `U-4 (return arm, HTTP)` = **`WRONG INSTRUMENT`** —
+   **with the `§` stated for the negative as well as the positive**: the contract provides NO MCP/HTTP
+   re-enable route (`§2.4` item 6 · `§2.2` item 2(a) · `§2.3` item 2 · `§2.4` item 1), so the row was testing
+   a route that does not exist and is re-grounded on the manual-UI path the contract DOES declare. **IF a
+   later pass finds an HTTP return arm in the contract, this disposition is wrong and the row reddens again
+   — the negative half of the re-grounded row is what would catch it.**
+11. **`§6.2`'S READ-ONLY AUDIT IS STILL OWED, AND THIS PASS NEITHER RAN IT NOR MAY RUN IT.** The audit
+    (`docs/specs/user-flow-audit.md` `§4`, six duties) must be taken by **a party that did not author the
+    matrix** (`AGENTS.md` item 10a / RCA-4's independence rule) — and this pass is the matrix's author, so
+    self-auditing would be exactly the self-bless the rule forbids. **ROUTING, STATED SO THE SUPERVISOR CAN
+    ACT: the audit is owed over `§2` (the regenerated matrix) and `§3` (the regenerated report) of THIS file,
+    by a non-author, read-only.** What it must reconcile: the `summary.total === 8` equality row by row, every
+    `verdict`/`verdictClass` against the observation and the named instrument, the `predicateSource`'s filing
+    (`docs/specs/user-flow-audit.md` exists, `predicateSourcePresent: true`), the absence of projection, and
+    the layer labels — **with the standing warning that a `[T]`/node-suite green is NOT assembled-app
+    evidence and that this record's `[U]` claims rest on the CDP + MCP readings quoted in `§5`**.
+12. **IT DID NOT RE-RUN THE UNIT'S OWN TEST FILES, AND ITS LEG FIGURES ARE THE ONES `commands[]` CARRIES**
+    (`npm test` `86 files / 2731 passed | 2 skipped / 0 failed`, `npm run typecheck` and
+    `npm run typecheck:tests` and `npm run build` all exit `0`). **The one interaction to know about, MEASURED
+    this pass and the same one the as-filed pass met**: `tests/gutter.test.ts` `R-12 §3.4` reads the WORKING
+    TREE's raw dirty paths, so **while this driver was edited-but-uncommitted that row reported
+    `liveUnaccounted: ["tests/secure-exclusion-live.mjs"]` and `npm test` read `1 failed | 85 passed (86)`**;
+    **committing the two files closed it** and the figure above is the post-commit reading. **A later pass
+    that edits a `tests/**` artifact will meet it again — and the fix is the commit, not a row change.**
+13. **IT RAN NO LIVE BATTERY FOR ANY OTHER UNIT** and makes no claim outside `U-SECURE-EXCLUSION`. **It also
+    did not convert the tracker's `F-1`…`F-6` dispositions** — those live in `docs/next-steps.md`'s gate-6 row
+    and `docs/specs/secure-exclusion.md` `§3b`'s gate-6 clause, which this pass may not edit; **this file
+    records only what the assembled app answered, and the reconciliation of those tracker cells to these
+    readings is owed there.**
