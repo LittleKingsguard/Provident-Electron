@@ -940,9 +940,9 @@ AS-FILED DUPLICATED FRAGMENT (quoted so the repair is auditable; the WHOLE of li
 
 ### 10.7 THE POST-COMMIT FIGURES AND THE DRIVER PIN
 
-- **THE EXECUTED BLOB IS PROVABLY THE PINNED ONE:** `git show <the scoped commit>:tests/store-compliance-live.mjs | sha256sum` = **`430a2b1dd92766efb7f5efc083bbbf2f104ae5683bc4a4594f5e35ca623f020d`** — byte-identical to the working-tree pin the two pre-commit runs were taken on.
+- **THE EXECUTED BLOB IS PROVABLY THE PINNED ONE:** `git show 3e8a302:tests/store-compliance-live.mjs | sha256sum` = **`430a2b1dd92766efb7f5efc083bbbf2f104ae5683bc4a4594f5e35ca623f020d`** — byte-identical to the working-tree pin the two pre-commit runs were taken on; **and the record-only follow-up commit `d1af471` did not touch a driver byte, so the pin names the bytes the post-commit run executed.**
 - **THE POST-COMMIT RUN:** `node tests/store-compliance-live.mjs` → exit **`1`**, **`46 recorded rows = 39 PASS / 6 FAIL / 1 MANUAL / 0 PARKED`**, `FAIL` set `{SC-A-01, SC-A-02, SC-A-04, SC-A-05, SC-D-05, SC-D-07}`, one `MANUAL` (`SC-D-08`).
-- **THE FOUR LEGS, POST-COMMIT WITH `git status --short` EMPTY:** `npm test` · `npm run typecheck` · `npm run typecheck:tests` · `npm run build` — **the figures are appended by the post-commit record commit, below.**
+- **THE FOUR LEGS, POST-COMMIT WITH `git status --short` EMPTY:** the figures are at §10.6 above (`npm test` `0` · `87 passed (87)` files · `2764 passed | 2 skipped (2766)` · `0 failed`; `npm run typecheck` `0`; `npm run typecheck:tests` `0`; `npm run build` `0`).
 - **AND THE EXIT CODE IS EVIDENCE ABOUT `FAIL`s ALONE (`A4-05`): `exit 1` here says "six rows contradicted the clause they cite"; it does NOT certify any family, because a `MANUAL` row is a WITHHELD claim.**
 - **THE FOUR LEGS' FIGURES ARE AT §10.6 ABOVE** (post-commit, `git status --short` EMPTY: `npm test` `0` / `87` files / `2764 passed | 2 skipped` / `0 failed`; `npm run typecheck` `0`; `npm run typecheck:tests` `0`; `npm run build` `0`).
 
