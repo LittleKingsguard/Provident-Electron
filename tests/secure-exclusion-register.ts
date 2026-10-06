@@ -104,6 +104,29 @@
 // gate-4 operative `113` are BOTH kept visible (`SPEC_AS_FILED_*` below, and the
 // annotation on `DECLARED_TERMS`); a TestWriter may not amend `docs/specs/*.md`
 // (`§1.3` item 10), so the `+4` is REPORTED as the spec-amendment finding.
+//
+// ⟶ **ANNOTATED BESIDE 2026-10-08 (`S1` GATE 6, THE RED-SET RE-GRAIN — `RCA-8(d)`
+// ANNOTATE-BESIDE; every block above stands BYTE-FOR-BYTE and is NOT rewritten).
+// NO TERM MOVED IN THIS PASS, AND NO ROW, STRATEGY ID, PROPERTY OR CAP MOVED EITHER.**
+// The `GAP-3` ruling's amendment (`docs/specs/secure-exclusion.md` `b4efacf`) made FOUR
+// assertions of the unit file's register cells and rows STALE instruments; this pass
+// corrects them **IN PLACE — every corrected cell is an existing drive of an existing
+// row, so no row gains or loses an attempt**:
+//   · `P-EX-IM-2` cell (e) — the superseded `T-1(d)` *"the toggling DID move"* reading is
+//     INVERTED to the amended rule (the registered SET and every `enabled` flag are
+//     IDENTICAL across a transition): **same cell, same term `17`**;
+//   · `P-EX-IM-3` cell `A-2#4` — the same inversion: **same cell, same term `13`**;
+//   · `P-EX-TP-1` cell (1)(i) — the exact two-member equality becomes the declared DOMAIN
+//     of the amended receipt (both closed tokens plus the additive `message`):
+//     **same cell, same term `12`**;
+//   · `P-EX-TP-2`'s `G6-F4#1`, `P-EX-IM-2`'s `A-1#1`/`G6-F3#1`/cell (e) and `P-EX-SM-1`'s
+//     `A-3#7` — the same instrument correction inside their existing drives: **no term
+//     moves** (`G6-F4#1` is `P-EX-TP-2`'s `+2` cell, already counted at `113 -> 117`).
+// **THEREFORE THE EXECUTED ARITHMETIC BELOW IS UNCHANGED, AND THE `+11` DELTA VS THE
+// SPEC'S AS-FILED `106` IS UNCHANGED TOO — this pass moves NO term and invents no
+// amendment.**  What this pass DOES add is INSTRUMENT ONLY (the receipt's declared
+// domain, the registry identity predicate and their controls), which lives in the test
+// file: the register's rows, terms, ids and order are the gate-6 pass's own.
 
 import { existsSync, readFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'

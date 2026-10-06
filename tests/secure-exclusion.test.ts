@@ -155,6 +155,59 @@
  * `TypeError`.  If the implementer lands the counter under a different declared
  * name, that is a spec amendment this row must be re-aimed to; it is NOT a
  * licence to weaken the row.
+ *
+ * ⟶ **ANNOTATED BESIDE 2026-10-08 (`S1` GATE 6, THE RED-SET RE-GRAIN — `RCA-8(d)`
+ * ANNOTATE-BESIDE; every block above stands BYTE-FOR-BYTE and is NOT rewritten).**  The
+ * architect's `GAP-3` ruling landed (`docs/specs/secure-exclusion.md` `b4efacf`, quoted
+ * verbatim at its `§3b` `A-11` row) and **FOUR of this red set's assertions encoded the
+ * PRE-RULING contract** — they were MALFORMED INSTRUMENTS, not contract defects, and this
+ * pass corrects them (the contract keeps its hash; no re-freeze occurs):
+ *
+ * 1. **THE RECEIPT'S SHAPE WAS PINNED TO THE OLD TWO-MEMBER FORM.**  `§2.5` item 1 now
+ *    declares `ExclusionReceipt = { status: 'refused'; reason: 'exclusion-closed';
+ *    message: string }`, `message` **purely additive** — and the as-filed
+ *    `toEqual({status, reason})` / exact-`JSON.stringify` equalities therefore
+ *    **FORBADE the mandated member** (`M`: adding it took this file `3 → 5 failed`, the
+ *    register `2 → 6`).  **Every such site now reads the DECLARED DOMAIN through ONE
+ *    predicate** (`receiptDomainHolds`, `§2.5` item 1's own `DECLARED-DEFAULT` clause: *"a
+ *    TestWriter asserts the DOMAIN this clause declares, never a single literal
+ *    spelling"*): both CLOSED TOKENS still pinned **EXACTLY**, plus a non-empty `message`
+ *    naming the CAUSE and the REMEDY — and every OUTSIDE class the clause declares driven
+ *    in-line as a **failing control**, with the pre-ruling form kept ALIVE as a predicate
+ *    (`preRepairTwoMemberReceiptFormControlOnly`, `preRepairExactBodyFormControlOnly`).
+ *    **The HTTP body's member LAYOUT is NOT pinned** — `§7a` records it as `OW-9`
+ *    (unsettled), so that row pins the closed TOKEN and no layout.
+ * 2. **TWO REGISTER CELLS ASSERTED THE SUPERSEDED `T-1(d)`/`T-2(d)` VERBATIM** — `P-EX-IM-2`
+ *    cell (e) (*"the toggling DID move"*) and `P-EX-IM-3` cell `A-2#4` (*"EVERY registered
+ *    tool handle is toggled DISABLED"*).  Both are **INVERTED** to the amended rule: the
+ *    registered SET and **every `enabled` flag** are read before and after a transition and
+ *    asserted **IDENTICAL** (`registryReadingOf` / `registryIdentityHolds`), with the
+ *    superseded composition kept as the failing control
+ *    (`preRepairExclusionDarkenedRegistryControlOnly`).
+ * 3. **`§3.1` `M-EX-2` ASSERTED THE GROUP PATH TOGGLED *"PER THE EXCLUSION STATE"*** — the
+ *    live `U-4` regression.  Re-grained to the amended reading: **the group machinery
+ *    toggles on the OPERATOR'S GROUP SET ALONE, regardless of the exclusion state** (the
+ *    same group change produces the same registry while open and while closed), and the
+ *    exclusion transition toggles nothing.
+ * 4. **`G6-F3`'s `provident.dispatch` ARM WAS ILL-FORMED** (no `target`): the landed SDK
+ *    validates the input (`mcp.js:104`) after its `enabled` check and **before** the
+ *    handler, so with the toggling dropped the arm measured `-32602 … Invalid input at
+ *    target` — normal MCP behaviour for a malformed call, not a contract gap.  The arm is
+ *    now driven with **well-formed arguments**, and the malformed answer is kept as the
+ *    failing control that shows WHY.
+ * 5. **AND ONE MORE SITE THE SAME AMENDMENT MOVED** (`A-3#7`, reported as the FIFTH): its
+ *    interim assertion pinned the SUPERSEDED widen-suppression-while-open clause
+ *    (`toAdd = exclusionOpen ? [] : …`), which `§2.2` item 2(b)'s consequence clause names
+ *    as FALLING AWAY.  The cell now reads the amendment's own rule — a group change must
+ *    not toggle or deregister an already-registered handle — a reading satisfiable under
+ *    EITHER scope of that deletion and still RED on the pre-ruling composition.
+ *
+ * **NOTHING ELSE MOVED.**  The closed tokens, the two-token state machine, the epoch and
+ * its bump rules, the in-flight invalidation, the non-legibility pins, the frozen-path and
+ * byte-pin censuses, the forbidden-carrier rows and the `[U]`/isolation rows are
+ * **byte-for-byte as filed**.  **NO TERM MOVED** (`117 = 12 + 17 + 13 + 13 + 14 + 12 + 12 +
+ * 14 + 10`, subtotals `52 + 39 + 26`, the same nine rows — see the register module's
+ * 2026-10-08 annotation).
  * ============================================================================
  */
 
@@ -1007,8 +1060,143 @@ afterAll(async () => {
   await rm(baseDir, { recursive: true, force: true })
 })
 
-/** The refusal VALUE §2.2 item 5 pins — the ONE answer at all three depths. */
+/** The refusal VALUE §2.2 item 5 pins — the ONE answer at all three depths, **in its
+ *  AS-FILED (pre-ruling) TWO-MEMBER form**.  It is kept as the CONTROL FIXTURE of that
+ *  form (the `preRepairTwoMemberReceiptFormControlOnly` / `preRepairExactBodyFormControlOnly`
+ *  controls drive it) — **it is NOT the shape the amended `§2.5` item 1 declares**, and no
+ *  contract assertion of this pass reads a receipt through it any more. */
 const REFUSAL = { status: 'refused', reason: EXCLUSION_CLOSED }
+
+/* ============================================================================
+ * THE AMENDED `§2.5` item 1 RECEIPT — ITS DECLARED **DOMAIN**, NOT A LITERAL SPELLING
+ * (`RCA-8(d)` annotate-beside; the 2026-10-08 `GAP-3` ruling, `§3b`'s `A-11` row).
+ *
+ * **WHY THIS REPLACES THE EXACT TWO-MEMBER EQUALITY THIS PASS FIRST AUTHORED.**  `§2.5`
+ * item 1 now declares
+ * `ExclusionReceipt = { status: 'refused'; reason: 'exclusion-closed'; message: string }`,
+ * with `message` **ADDITIVE**: `status` and `reason` each stay CLOSED AT ONE token.  The
+ * as-filed `expect(...).toEqual({ status, reason })` therefore **FORBADE the mandated
+ * member** — any conforming implementation reddened it (`M`, the implementer's gate-6
+ * measurement: `3 → 5 failed`), which is why the repair could not land.  `§2.5` item 1's
+ * own `DECLARED-DEFAULT` clause is the authority for reading the DOMAIN and not the
+ * sentence: *"a TestWriter asserts the DOMAIN this clause declares, never a single literal
+ * spelling (a literal-only assertion would redden on any wording change)"*.
+ *
+ * **THE DOMAIN, AS ONE CHECKABLE PREDICATE**: `status` is EXACTLY `'refused'`; `reason` is
+ * EXACTLY `'exclusion-closed'` (**the CLOSED TOKENS ARE STILL PINNED EXACTLY — this repair
+ * weakens no token and moves no state-machine reading**); and `message` is a NON-EMPTY
+ * `string` naming BOTH the CAUSE (the security store is open) AND the REMEDY (retry once
+ * the operator has finished with the secured changes).  EVERY OUTSIDE value the clause
+ * declares fails it: **(a)** an absent member · **(b)** an empty or whitespace-only string
+ * (or a non-string) · **(c)** a cause-less or remedy-less sentence · **(d)** a message
+ * naming a different cause · **(f)** a message substituted for a closed token — and any
+ * other `status`/`reason` token.  The predicate NEVER throws (`§2.5` item 4): an
+ * unresolvable carrier answers `false`.
+ * ========================================================================== */
+const RECEIPT_CAUSE = /security\s+store/i
+const RECEIPT_CAUSE_STATE = /\bopen(?:ed)?\b/i
+const RECEIPT_REMEDY = /\bretry\b|\btry again\b|\btry later\b|\bwait\b/i
+const RECEIPT_REMEDY_ACTOR = /\boperator\b|\buser\b/i
+
+function parseJsonObject(text: string): Record<string, unknown> | null {
+  try {
+    const parsed: unknown = JSON.parse(text)
+    return typeof parsed === 'object' && parsed !== null ? (parsed as Record<string, unknown>) : null
+  } catch {
+    return null
+  }
+}
+
+/** The receipt RECORD, whatever declared carrier the refusal rode: the record itself (the
+ *  `exclusionSnapshot()` / `PAR-4` reading) or the tool RESULT
+ *  `{content:[{type:'text',text:'<json>'}]}` (`§2.2` item 5).  A carrier this reader cannot
+ *  resolve answers `null`, which FAILS the domain — never a throw. */
+function receiptRecordOf(value: unknown): Record<string, unknown> | null {
+  if (value === null || value === undefined) return null
+  if (typeof value === 'string') return parseJsonObject(value)
+  if (typeof value !== 'object') return null
+  const v = value as Record<string, unknown>
+  if ('status' in v || 'reason' in v) return v
+  if (Array.isArray(v.content)) {
+    for (const c of v.content as Array<{ text?: unknown }>) {
+      if (typeof c?.text === 'string') {
+        const parsed = parseJsonObject(c.text)
+        if (parsed !== null) return parsed
+      }
+    }
+  }
+  return null
+}
+
+/** `§2.5` item 1 (AMENDED 2026-10-08) — DOES THIS CARRIER CARRY THE DECLARED RECEIPT? */
+function receiptDomainHolds(value: unknown): boolean {
+  const rec = receiptRecordOf(value)
+  if (rec === null) return false
+  if (rec.status !== 'refused') return false
+  if (rec.reason !== EXCLUSION_CLOSED) return false
+  if (typeof rec.message !== 'string') return false
+  const text = rec.message.trim()
+  if (text === '') return false
+  // (f) a message SUBSTITUTED for a closed token is not a message (`PAR-9`'s reading: a
+  // message is not a state, and the reason token is never replaced by one).
+  if (text === EXCLUSION_CLOSED || text === MALFORMED_STATE || text === STATE_MCP_ENABLED || text === STATE_MCP_DISABLED) return false
+  return RECEIPT_CAUSE.test(text) && RECEIPT_CAUSE_STATE.test(text) && RECEIPT_REMEDY.test(text) && RECEIPT_REMEDY_ACTOR.test(text)
+}
+
+/** **CONTROL ONLY — THE PRE-RULING FORM, KEPT VERBATIM AS A PREDICATE** (`RCA-8(d)`
+ *  annotate-beside; the `brokenCountGuardOldForm` / `oldBrokenHandlerBodyOf` precedent):
+ *  the exact two-member equality the as-filed cells asserted.  Driven in-line at the
+ *  amended sites so the difference between the two forms is a MEASUREMENT and not a
+ *  narration: it PASSES a message-less receipt that the amended domain FAILS.  **NEVER
+ *  used by an assertion of the contract.** */
+function preRepairTwoMemberReceiptFormControlOnly(value: unknown): boolean {
+  const rec = receiptRecordOf(value)
+  return rec !== null && JSON.stringify(rec) === JSON.stringify(REFUSAL)
+}
+
+/** **CONTROL ONLY — THE AS-FILED EXACT WHOLE-BODY FORM of the HTTP refusal** (`§2.3`
+ *  item 2 / `M-EX-6`): the equality that pinned the body's member LAYOUT.  It is kept so
+ *  the re-grained row can PROVE it fails an AMENDED body carrying the `message`
+ *  ADDITIVELY — which is exactly why it could not be kept as the row's assertion
+ *  (`§7a` `OW-9` records the two non-JSON carriers' layout as unsettled). */
+function preRepairExactBodyFormControlOnly(body: unknown): boolean {
+  return JSON.stringify(body) === JSON.stringify({ jsonrpc: '2.0', error: { code: -32003, message: EXCLUSION_CLOSED }, id: null })
+}
+
+/** The receipt the ruling declares, as a FIXTURE for the controls' positive input — its
+ *  WORDING is this pass's and is pinned nowhere (`§2.5` item 1: the sentence is the
+ *  Implementer's); only its ELEMENTS are the clause's. */
+const RECEIPT_AMENDED_CONTROL_ONLY = {
+  status: 'refused',
+  reason: EXCLUSION_CLOSED,
+  message: 'MCP endpoint functionality is blocked because the security store is open — retry once the operator has finished with the secured changes.',
+}
+
+/** **THE DOMAIN CONTROLS — EVERY CLASS `§2.5` item 1 DECLARES IS DRIVEN IN-LINE**, each
+ *  against the verdict the clause requires, so the instrument is falsifiable in BOTH
+ *  directions (a predicate that answered `true` for everything would fail the OUTSIDE
+ *  rows; one that answered `false` for everything would fail the `IN` rows). */
+function receiptDomainControls(): readonly { label: string; value: unknown; expected: boolean }[] {
+  const base = { status: 'refused', reason: EXCLUSION_CLOSED }
+  const withMessage = (m: unknown): unknown => ({ ...base, message: m })
+  const carrier = (value: unknown): unknown => ({ content: [{ type: 'text', text: JSON.stringify(value) }] })
+  return [
+    { label: 'IN — the declared domain, on the record carrier (PAR-4)', value: RECEIPT_AMENDED_CONTROL_ONLY, expected: true },
+    { label: 'IN — the SAME receipt on the tool-RESULT carrier (§2.2 item 5)', value: carrier(RECEIPT_AMENDED_CONTROL_ONLY), expected: true },
+    { label: 'OUTSIDE (a) — an ABSENT member (the pre-ruling two-member form)', value: base, expected: false },
+    { label: 'OUTSIDE (b) — an EMPTY string', value: withMessage(''), expected: false },
+    { label: 'OUTSIDE (b) — a WHITESPACE-ONLY string', value: withMessage('  \n\t '), expected: false },
+    { label: 'OUTSIDE (b) — a NON-STRING member (a number)', value: withMessage(7), expected: false },
+    { label: 'OUTSIDE (c) — a CAUSE-LESS sentence (the remedy alone)', value: withMessage('Please retry once the operator has finished with the secured changes.'), expected: false },
+    { label: 'OUTSIDE (c) — a REMEDY-LESS sentence (the cause alone)', value: withMessage('MCP endpoints are blocked because the security store is open.'), expected: false },
+    { label: 'OUTSIDE (d) — a DIFFERENT cause, carrying a valid remedy', value: withMessage('The read enabled-group is closed — retry once the operator has finished.'), expected: false },
+    { label: 'OUTSIDE (f) — a message SUBSTITUTED for the state string (PAR-9)', value: withMessage(STATE_MCP_DISABLED), expected: false },
+    { label: 'OUTSIDE (f) — a message SUBSTITUTED for the reason token', value: withMessage(EXCLUSION_CLOSED), expected: false },
+    { label: 'OUTSIDE — any other `reason` token', value: { status: 'refused', reason: MALFORMED_STATE, message: RECEIPT_AMENDED_CONTROL_ONLY.message }, expected: false },
+    { label: 'OUTSIDE — any other `status` token', value: { status: 'ok', reason: EXCLUSION_CLOSED, message: RECEIPT_AMENDED_CONTROL_ONLY.message }, expected: false },
+    { label: 'OUTSIDE — a carrier that resolves to no record (never a throw)', value: { content: [{ type: 'text', text: 'not json' }] }, expected: false },
+  ]
+}
 
 /** Read a tool-result-shaped value's refusal token, whatever carrier it rode. */
 function refusalTokenOf(value: unknown): string {
@@ -1074,6 +1262,82 @@ function recordingBackend(): { invokes: string[]; invoke: (m: string, p: unknown
 /** A fresh server on the given gate + backend (the mcp-server-gate.test.ts shape). */
 function freshServer(gate: ExclusionGateLike, backend: { invoke: (m: string, p: unknown) => Promise<unknown> }, transport: 'stdio' | 'http' = 'stdio'): ProvidentMcpServer {
   return new ProvidentMcpServer({ backend, gate, transport } as never)
+}
+
+/* ============================================================================
+ * THE REGISTRY READING — **THE SET *AND* EVERY HANDLE'S `enabled` FLAG, AS ONE RECORD**
+ * (`§2.2` item 2(c); `§2.1` item 3's 2026-10-08 supersession clause of `T-1(d)`/`T-2(d)`;
+ * `§3.1` `M-EX-2`/`M-EX-3`'s re-grain; `§3.2` `FS-EX-6`'s).
+ *
+ * **THE AMENDED RULE, IN ONE LINE** (`§2.1` item 3): *on EITHER direction of the
+ * exclusion transition THE REGISTRATION SET IS ENTIRELY UNCHANGED* — no handle's `enabled`
+ * flag moves, nothing is registered and nothing is deregistered — **because the exclusion
+ * is no longer a registry state at all** (`§2.2` item 2(b): it is a state of the GATE, read
+ * at the invocation turn).  A flag that moves, or a handle added/removed, FAILS.
+ *
+ * **WHY THE READING IS A RECORD AND NOT A COUNT**: the pre-ruling cells read a COUNT
+ * (`some(h => h.enabled === true)`, `resAfter.filter(uri => server.resourceEnabled(uri))`),
+ * which cannot distinguish "nothing moved" from "everything moved together"; and the
+ * superseded `T-1(d)` reading is kept alive as a CONTROL function below so the identity
+ * predicate is proven able to bite.
+ * ========================================================================== */
+interface RegistryReading {
+  toolSet: string[]
+  toolFlags: Record<string, boolean>
+  resourceSet: string[]
+  resourceFlags: Record<string, boolean>
+}
+
+/** Read the live registry the server holds.  The caller registers first
+ *  (`ensureServerRegistered()`); an empty reading is asserted NON-EMPTY at every call site,
+ *  so a vacuous comparison cannot pass as an identity. */
+function registryReadingOf(server: ProvidentMcpServer): RegistryReading {
+  const priv = server as unknown as { registered: Map<string, { enabled?: boolean }> }
+  const toolSet = [...priv.registered.keys()].sort()
+  const toolFlags: Record<string, boolean> = {}
+  for (const name of toolSet) toolFlags[name] = server.registeredEnabled(name)
+  const resourceSet = server.registeredResources().map((r) => r.uri ?? r.uriTemplate!).sort()
+  const resourceFlags: Record<string, boolean> = {}
+  for (const uri of resourceSet) resourceFlags[uri] = server.resourceEnabled(uri)
+  return { toolSet, toolFlags, resourceSet, resourceFlags }
+}
+
+/** THE IDENTITY PREDICATE — the ONE check the assertion AND its control drive. */
+function registryIdentityHolds(a: RegistryReading, b: RegistryReading): boolean {
+  return JSON.stringify(a) === JSON.stringify(b)
+}
+
+/** **CONTROL ONLY — THE SUPERSEDED `T-1`/`T-2` (d) COMPOSITION, KEPT VERBATIM AS A
+ *  FUNCTION** (`L` `mcp-server.ts:469`/`:473`, `enabled: !exclusionOpen && allowed`): while
+ *  the tier was open EVERY captured handle read `enabled:false`.  Driven in-line so the
+ *  identity predicate is PROVEN able to fail, and the pre-ruling form is a measurement
+ *  rather than a narration.  **NEVER used by an assertion of the contract.** */
+function preRepairExclusionDarkenedRegistryControlOnly(reading: RegistryReading): RegistryReading {
+  const dark = (flags: Record<string, boolean>): Record<string, boolean> =>
+    Object.fromEntries(Object.keys(flags).map((k) => [k, false]))
+  return { ...reading, toolFlags: dark(reading.toolFlags), resourceFlags: dark(reading.resourceFlags) }
+}
+
+/** **CONTROL ONLY — THE DARKENING CONTROL'S OWN FIXTURE.**  It carries handles whose flags
+ *  are NOT already `false`, so its darkened image is genuinely a DIFFERENT registry
+ *  **whatever the live registry currently reads** — the control must prove the predicate
+ *  can bite without borrowing a live reading whose value is itself the defect under test
+ *  (a live reading that is ALREADY dark makes the darkening a no-op and turns the control
+ *  into a false red).  **NEVER used by an assertion of the contract.** */
+const REGISTRY_DARKENING_CONTROL_FIXTURE: RegistryReading = {
+  toolSet: ['ctrl.registered.tool'],
+  toolFlags: { 'ctrl.registered.tool': true },
+  resourceSet: ['ctrl://registered/resource'],
+  resourceFlags: { 'ctrl://registered/resource': true },
+}
+/** The ONE control every registry-identity site drives: **does the identity predicate
+ *  HOLD on a pre-ruling-darkened pair?**  It MUST answer `false` — on ANY implementation
+ *  state — so every assertion that reads `..., .toBe(true)` is shown to be a bound. */
+function identityHoldsOnPreRepairDarkenedFixtureControlOnly(): boolean {
+  return registryIdentityHolds(
+    REGISTRY_DARKENING_CONTROL_FIXTURE,
+    preRepairExclusionDarkenedRegistryControlOnly(REGISTRY_DARKENING_CONTROL_FIXTURE),
+  )
 }
 
 /** The pane node census, read off the LIVE pane graph's supervisor — the
@@ -1309,8 +1573,19 @@ const registerSpecs: RegisterRow[] = [
        * ACTUAL claim against a concrete before/after reading of the handle SET,
        * through ONE predicate (`sameHandleSet`) whose control drives the
        * DEREGISTERING mutant the pin forbids and PROVES the predicate fails.** */
+      /* (e) the tool/resource handle SET is still RESOLVABLE after a REAL
+       * transition — the NON-LEGIBILITY pin, AND the amended rule that the
+       * registration set is ENTIRELY UNCHANGED (§0A item 7(c), §2.2 item 2(c),
+       * §2.1 item 3's 2026-10-08 supersession clause of `T-1(d)`/`T-2(d)`).
+       * **⟶ RE-GRAINED 2026-10-08 (THE `GAP-3` RULING, `§3b` `A-11`; `RCA-8(d)`
+       * ANNOTATE-BESIDE — the as-filed form is kept at the control below).**  The
+       * as-filed cell asserted *"the toggling DID move: every resource handle is
+       * now `enabled:false`"* — the SUPERSEDED `T-1(d)` clause.  The transition now
+       * toggles NOTHING, so the cell reads the SET **and every `enabled` flag** on
+       * both sides of the transition and asserts they are IDENTICAL; a flag that
+       * moves, or a handle added/removed, FAILS. */
       {
-        label: "(e) the tool/resource handle SET is still RESOLVABLE after a REAL transition — the NON-LEGIBILITY pin: nothing is DEREGISTERED, only `enabled` moves (§0A item 7(c), §2.2 item 2(c))",
+        label: "(e) the tool/resource handle SET and EVERY `enabled` flag are IDENTICAL across a REAL transition — the NON-LEGIBILITY pin AND the amended no-toggle rule (§0A item 7(c), §2.2 item 2(c), §2.1 item 3 (2026-10-08))",
         run: () => {
           const gate = freshGate()
           const backend = recordingBackend()
@@ -1324,25 +1599,38 @@ const registerSpecs: RegisterRow[] = [
           expect(toolsBefore.length, '§0A item 7(c) — the tool handles are registered under the ENABLED gate (the before-reading is NON-EMPTY: an empty before-reading would make every comparison below vacuous)').toBeGreaterThan(0)
           expect(resBefore.length, '§0A item 7(c) — the resource handles are registered too (the before-reading is NON-EMPTY)').toBeGreaterThan(0)
           expect(resBefore.every((uri) => server.resourceEnabled(uri)), 'the pin reads a MEANINGFUL before-state: every resource handle is ENABLED before the transition').toBe(true)
+          const registryBefore = registryReadingOf(server)
           // THE REAL TRANSITION — the disable the pin is about:
           server.applyExclusion(STATE_MCP_DISABLED)
-          expect(serverExclusionSnapshot(server), 'the transition REALLY ran on the server\'s own gate (the reading is not taken across a constructed-elsewhere gate)').toEqual({ status: 'refused', reason: EXCLUSION_CLOSED })
           const toolsAfter = [...priv.registered.keys()].sort()
           const resAfter = server.registeredResources().map((r) => r.uri ?? r.uriTemplate!).sort()
           expect(sameHandleSet(toolsBefore, toolsAfter),
             '§0A item 7(c) — the TOOL set registered is NOT CLEARED on disable: the SAME handles stay RESOLVABLE, so the disabled state is not distinguishable from a never-registered tool by name-listing alone. before ' + JSON.stringify(toolsBefore) + ' / after ' + JSON.stringify(toolsAfter)).toBe(true)
           expect(sameHandleSet(resBefore, resAfter),
             '§0A item 7(c) — the RESOURCE handles stay RESOLVABLE too: the SAME URI set. before ' + JSON.stringify(resBefore) + ' / after ' + JSON.stringify(resAfter)).toBe(true)
-          expect(resAfter.filter((uri) => server.resourceEnabled(uri)),
-            '§0A item 7(c) — and the toggling DID move: every resource handle is now `enabled:false` (toggled, never deregistered)').toEqual([])
-          // THE CONTROL — the SAME predicate, driven over the DEREGISTERING
-          // design the pin forbids.  It MUST FAIL, and the empty pair must fail too:
+          /* **THE CONTROL IS DRIVEN FIRST, BEFORE THE READING IT GUARDS IS ASSERTED CLEAN**
+           * (the file's own `G6-F3` idiom): a control that sits behind a failing assertion is
+           * never EXECUTED at red, so it would be an unproven instrument.  The SUPERSEDED
+           * `T-1(d)` composition (every handle toggled `enabled:false` while open) MUST FAIL
+           * the identity predicate.  The DEREGISTERING mutant of the non-legibility pin is
+           * driven too: */
+          expect(identityHoldsOnPreRepairDarkenedFixtureControlOnly(),
+            'CONTROL — the SUPERSEDED `T-1(d)`/`T-2(d)` composition (`enabled: !exclusionOpen && allowed`; every handle darkened while open) FAILS the identity predicate, so the assertion below is a bound and not a tautology').toBe(false)
           expect(sameHandleSet(resBefore, deregisteredMutantControlOnly(resBefore)),
-            'CONTROL — the SAME predicate FAILS on a DEREGISTERED mutant (one handle removed), so the assertion above is a bound and not a self-comparison').toBe(false)
+            'CONTROL — the SAME `sameHandleSet` predicate FAILS on a DEREGISTERED mutant (one handle removed), so the assertion above is a bound and not a self-comparison').toBe(false)
           expect(sameHandleSet(toolsBefore, deregisteredMutantControlOnly(toolsBefore)),
             'CONTROL — and it fails on the TOOL mutant too').toBe(false)
           expect(sameHandleSet([], []),
             'CONTROL — the predicate also FAILS on the empty pair, which is exactly the reading the pre-repair form (`size >= 0`) accepted').toBe(false)
+          const registryAfter = registryReadingOf(server)
+          expect(registryIdentityHolds(registryBefore, registryAfter),
+            '§2.1 item 3 (2026-10-08, THE `GAP-3` RULING) / §2.2 item 2(b)/(c) — THE EXCLUSION TRANSITION TOGGLES NOTHING: the registered SET and EVERY handle\'s `enabled` flag are IDENTICAL on both sides of the transition, because the exclusion is not a registry state at all (it is read at the INVOCATION TURN). before ' + JSON.stringify(registryBefore) + ' / after ' + JSON.stringify(registryAfter)).toBe(true)
+          // THE RECEIPT'S DECLARED DOMAIN — LAST in this cell, so the CONTROL above is
+          // EXECUTED before this reading is asserted clean:
+          expect(receiptDomainHolds(REFUSAL),
+            'CONTROL — the PRE-RULING two-member receipt FAILS this row\'s own predicate (an ABSENT `message` is OUTSIDE §2.5 item 1), so the reading below can bite and the mandated member is not silently optional').toBe(false)
+          expect(receiptDomainHolds(serverExclusionSnapshot(server)),
+            '§2.2 item 2 / PAR-4 / §2.5 item 1 (AMENDED) — the transition REALLY ran on the server\'s own gate (the reading is not taken across a constructed-elsewhere gate): the receipt answers its declared DOMAIN — `status` and `reason` EXACTLY as filed, PLUS the additive `message` naming the cause and the remedy. Measured: ' + JSON.stringify(serverExclusionSnapshot(server))).toBe(true)
         },
       },
       /* (f) the stdio server is still CONNECTED after the transition. */
@@ -1490,7 +1778,10 @@ const registerSpecs: RegisterRow[] = [
           expect(serverExclusionSnapshot(server), 'the pre-transition state is the boot terminal').toBeNull()
           // THE REAL TRANSITION — the operator's open request, on the LIVE server:
           server.applyExclusion(STATE_MCP_DISABLED)
-          expect(serverExclusionSnapshot(server), '§2.2 item 2 / PAR-4 — the transition REALLY ran: the server\'s own gate now answers the receipt (a live transition, not a pre-set construction)').toEqual({ status: 'refused', reason: EXCLUSION_CLOSED })
+          expect(receiptDomainHolds(REFUSAL),
+            'CONTROL — the PRE-RULING two-member receipt FAILS this row\'s own predicate (an ABSENT `message` is OUTSIDE §2.5 item 1), so the reading below can bite — the control is driven BEFORE the reading is asserted clean').toBe(false)
+          expect(receiptDomainHolds(serverExclusionSnapshot(server)),
+            '§2.2 item 2 / PAR-4 / §2.5 item 1 (AMENDED) — the transition REALLY ran: the server\'s own gate now answers the receipt\'s declared DOMAIN (the two CLOSED tokens exactly as filed, plus the additive `message` naming the cause and the remedy) — a live transition, not a pre-set construction. Measured: ' + JSON.stringify(serverExclusionSnapshot(server))).toBe(true)
           // WITHHOLD the registry toggling: the captured handles are restored to
           // ENABLED, so the ONLY thing left that can refuse the call is the
           // invocation turn's read of the LIVE gate at the turn:
@@ -1574,8 +1865,10 @@ const registerSpecs: RegisterRow[] = [
             expect(refusalTokenOf(enabled.value),
               'the POSITIVE CONTROL — while the tier is CLOSED the same call over the same path answers normally (no exclusion token), so the reading below is not a blanket refusal').not.toBe(EXCLUSION_CLOSED)
             server.applyExclusion(STATE_MCP_DISABLED)
-            expect(server.exclusionSnapshot(),
-              'PAR-4 — the transition really ran (the server\'s own reader answers the receipt)').toEqual(REFUSAL)
+            expect(receiptDomainHolds(REFUSAL),
+              'CONTROL — the PRE-RULING two-member receipt FAILS this row\'s own predicate (an ABSENT `message` is OUTSIDE §2.5 item 1), so the reading below can bite — the control is driven BEFORE it').toBe(false)
+            expect(receiptDomainHolds(server.exclusionSnapshot()),
+              'PAR-4 / §2.5 item 1 (AMENDED) — the transition really ran: the server\'s own reader answers the receipt\'s declared DOMAIN (the two CLOSED tokens exactly, plus the additive `message` naming the cause and the remedy). Measured: ' + JSON.stringify(server.exclusionSnapshot())).toBe(true)
             const opened = await sdkCallTool(client, 'provident.get_rendered_html')
             expect(opened.threw,
               '§2.5 item 4 — the refusal is a VALUE at the tool boundary, never a throw').toBeNull()
@@ -1941,7 +2234,7 @@ const registerSpecs: RegisterRow[] = [
        * the reply turn is the implementer's to choose, and the spec owes a clause
        * naming it.** */
       {
-        label: "(A-2#4) THE REAL TRANSITION EXERCISES ALL THREE OBLIGATIONS TOGETHER (§2.1 item 3 T-1, §2.2 items 3/4) — `ProvidentMcpServer.applyExclusion('mcp-disabled')` called FOR REAL on a live server: the record MOVES on the gate the server holds, the in-flight invalidation returns the OBSERVED count, and the registered handles are toggled",
+        label: "(A-2#4) THE REAL TRANSITION EXERCISES ALL THREE OBLIGATIONS TOGETHER (§2.1 item 3 T-1, §2.2 items 3/4) — `ProvidentMcpServer.applyExclusion('mcp-disabled')` called FOR REAL on a live server: the record MOVES on the gate the server holds, the in-flight invalidation returns the OBSERVED count, and the registered SET and EVERY `enabled` flag stay IDENTICAL (the exclusion toggles NOTHING)",
         run: async () => {
           const fake = makeFakeWindow()
           const be = new (RendererBackend as unknown as new (o?: unknown) => RendererBackend)({ invokeTimeoutMs: 60_000 })
@@ -1953,6 +2246,8 @@ const registerSpecs: RegisterRow[] = [
           server.ensureServerRegistered()
           const toolName = 'provident.get_rendered_html'
           expect((server as unknown as { registered: Map<string, unknown> }).registered.has(toolName), 'the handle is registered BEFORE the transition (under the enabled gate)').toBe(true)
+          const registryBefore = registryReadingOf(server)
+          expect(registryBefore.toolSet.length, 'the before-reading is NON-EMPTY (an empty pair would agree with itself and the identity below would be vacuous)').toBeGreaterThan(0)
           void lb.invoke('renderedHtml', {}).catch(() => undefined)
           void lb.invoke('markdown', {}).catch(() => undefined)
           await tick(5)
@@ -1970,12 +2265,20 @@ const registerSpecs: RegisterRow[] = [
           expect(reasons, 'T-1(c) / §2.2 item 4 — the transition ran the in-flight invalidation, with the DECLARED token').toEqual([EXCLUSION_CLOSED])
           expect(counts, 'T-1(c) / §2.2 item 4 — the invalidation RETURNED the count of entries it rejected: `2` pending entries → `2` (the arithmetic is OBSERVED, not inferred)').toEqual([2])
           expect(lb.pendingCount(), 'T-1(c) — the pending map is EMPTY after the invalidation').toBe(0)
-          expect(server.registeredEnabled(toolName), 'T-1(d) — EVERY registered tool handle is toggled DISABLED, in agreement with the record (the toggling is not the enforcement, but it must not disagree with the state)').toBe(false)
+          /* **⟶ RE-GRAINED 2026-10-08 (THE `GAP-3` RULING; `RCA-8(d)` ANNOTATE-BESIDE — the
+           * as-filed `T-1(d)` reading is kept ALIVE at the control below).**  The as-filed
+           * cell asserted *"EVERY registered tool handle is toggled DISABLED"* — the
+           * SUPERSEDED `T-1(d)`/`T-2(d)` clause.  `§2.1` item 3's supersession clause and
+           * `§2.2` items 2(b)/(c) now require the OPPOSITE observable: **the registration
+           * SET and every handle's `enabled` flag are IDENTICAL across the transition** —
+           * a flag that moves, or a handle added/removed, FAILS. */
+          const registryAfter = registryReadingOf(server)
+          expect(registryIdentityHolds(registryBefore, registryAfter),
+            'T-1(d)-SUPERSEDED / §2.1 item 3 (2026-10-08) / §2.2 item 2(b)/(c) — THE EXCLUSION TRANSITION TOGGLES NOTHING: the registered SET and EVERY `enabled` flag are IDENTICAL on both sides of a REAL transition (nothing is registered, nothing is deregistered, no flag moves — the refusal is answered by the INVOCATION TURN alone, `§2.2` item 2(a)). before ' + JSON.stringify(registryBefore) + ' / after ' + JSON.stringify(registryAfter)).toBe(true)
           const resUris = server.registeredResources().map((r) => r.uri ?? r.uriTemplate!)
-          expect(resUris.length, 'T-1(d) — the resource handles are registered and are read too').toBeGreaterThan(0)
-          for (const uri of resUris) {
-            expect(server.resourceEnabled(uri), `T-1(d) — the resource handle \`${uri}\` is toggled DISABLED with the record`).toBe(false)
-          }
+          expect(resUris.length, 'the resource handles are registered and are read too').toBeGreaterThan(0)
+          expect(identityHoldsOnPreRepairDarkenedFixtureControlOnly(),
+            'CONTROL — the SUPERSEDED `T-1(d)` composition (every handle toggled `enabled:false` while open) FAILS the identical predicate, so the reading above is a bound and not a tautology').toBe(false)
         },
       },
       {
@@ -2286,13 +2589,32 @@ const registerSpecs: RegisterRow[] = [
           // the operator OPENS the tier:
           server.applyExclusion(STATE_MCP_DISABLED)
           expect((server.gate as unknown as ExclusionGateLike).exclusionState()).toBe(STATE_MCP_DISABLED)
-          // a group WIDEN arrives on the manual-UI channel WHILE the tier is open —
-          // the landed widen arm is suppressed by construction there
-          // (`toAdd = exclusionOpen ? [] : …`, mcp-server.ts:534-551):
+          const registryBeforeWiden = registryReadingOf(server)
+          // a group WIDEN arrives on the manual-UI channel WHILE the tier is open:
           server.applyGatePatch({ groups: ['read', 'dispatch'] } as never)
           expect(server.getGateConfig().enabled, 'the enabled-GROUP set IS widened, so a NEWLY-ALLOWED tool exists (`§2.1` item 3 T-2(d))').toEqual(['read', 'dispatch'])
-          expect(priv.registered.has(newlyAllowed),
-            'while the tier is OPEN the widen arm is correctly suppressed: the tool is allowed by the group set but NOT registered (the landed, spec-sanctioned shape — the `A-3` defect is the CLOSE request, not this suppression)').toBe(false)
+          /* **⟶ RE-GRAINED 2026-10-08 (THE `GAP-3` RULING; `RCA-8(d)` ANNOTATE-BESIDE).**  The
+           * as-filed cell pinned the SUPERSEDED widen-suppression-while-open clause
+           * (`toAdd = exclusionOpen ? [] : …`, `L` `mcp-server.ts:468`/`:472`) — which `§2.2`
+           * item 2(b)'s consequence clause names as FALLING AWAY (*"that suppression existed
+           * only because the exclusion used to disable every handle, and the exclusion is no
+           * longer a registry state at all"*).  Whether the group change while open ALSO
+           * registers the newly-allowed tool is therefore the implementer's to choose; what
+           * the amended contract DOES pin is that **a GROUP change must not TOGGLE an
+           * already-registered handle whose own group it leaves enabled, and must not
+           * deregister one** — the exclusion is not a registry state.  The reading below is
+           * satisfiable under BOTH readings of the deletion, and FAILS on the pre-ruling
+           * composition (the control drives it). */
+          const registryAfterWiden = registryReadingOf(server)
+          // CONTROL FIRST, and written so it holds WHATEVER the implementation currently
+          // does (ONE reading against its OWN darkened image, never two live readings whose
+          // agreement is itself the defect under test):
+          expect(identityHoldsOnPreRepairDarkenedFixtureControlOnly(),
+            'CONTROL — the SUPERSEDED composition (`enabled: !exclusionOpen && allowed`; every handle darkened while open) FAILS that same "no already-registered handle moved" predicate, so the reading below can bite.  Driven BEFORE it is asserted clean').toBe(false)
+          expect(registryBeforeWiden.toolSet.every((n) => registryAfterWiden.toolSet.includes(n)),
+            '§0A item 7(c) — a GROUP widen while the tier is open DEREGISTERS nothing: every handle registered before it is still registered after it. before ' + JSON.stringify(registryBeforeWiden.toolSet) + ' / after ' + JSON.stringify(registryAfterWiden.toolSet)).toBe(true)
+          expect(registryBeforeWiden.toolSet.every((n) => registryAfterWiden.toolFlags[n] === registryBeforeWiden.toolFlags[n]),
+            '§2.1 item 3 (2026-10-08) / §2.2 item 2(b) — a GROUP change whose set leaves an already-registered handle\'s own group ENABLED does NOT toggle it: the EXCLUSION is not a registry state, so the open state must not darken the registry the way the superseded `enabled: !exclusionOpen && allowed` composition did. before ' + JSON.stringify(registryBeforeWiden.toolFlags) + ' / after ' + JSON.stringify(registryAfterWiden.toolFlags)).toBe(true)
           // THE OPERATOR'S CLOSE REQUEST — T-2:
           server.applyExclusion(STATE_MCP_ENABLED)
           expect((server.gate as unknown as ExclusionGateLike).exclusionState(), 'T-2(a) — the record becomes `\'mcp-enabled\'`').toBe(STATE_MCP_ENABLED)
@@ -2329,13 +2651,18 @@ const registerSpecs: RegisterRow[] = [
         },
       },
       {
-        label: '(1) `markReady()` while `\'mcp-disabled\'` · reading (ii): the tool handles stay DISABLED and the invocation turn still refuses',
+        label: '(1) `markReady()` while `\'mcp-disabled\'` · reading (ii): the handles are UNCHANGED (the exclusion never toggles them) and the invocation turn still refuses (§3.2 FS-EX-6\'s 2026-10-08 supersession annotation)',
         run: async () => {
           const gate = gateFrom(freshGate() as unknown as SecurityGate).withExclusion(STATE_MCP_DISABLED) as ExclusionGateLike
           const be = new (RendererBackend as unknown as new (o?: unknown) => RendererBackend)()
           backendFrom(be).markReady()
           const backend = recordingBackend()
-          const server = freshServer(gate, backend)
+          const server = freshServer(gate, backend, 'stdio')
+          server.ensureServerRegistered()
+          const registryBefore = registryReadingOf(server)
+          backendFrom(be).markReady()
+          expect(registryIdentityHolds(registryBefore, registryReadingOf(server)),
+            '§3.2 FS-EX-6 (SUPERSEDED cell: "the tool handles stay disabled") — the AMENDED observable: `markReady()` moves NO handle (the exclusion never toggles the registry at all) AND the invocation turn still refuses. before ' + JSON.stringify(registryBefore) + ' / after ' + JSON.stringify(registryReadingOf(server))).toBe(true)
           const answered = await invokeViaServer(server, 'provident.get_rendered_html', {})
           expect(refusalTokenOf(answered.value), 'FS-EX-6 — after `markReady()` the invocation turn STILL refuses; the readiness signal is the renderer\'s ARRIVAL, not the operator\'s CONSENT').toBe(EXCLUSION_CLOSED)
           expect(backend.invokes, 'FS-EX-6 — the renderer is never reached').toEqual([])
@@ -2663,19 +2990,34 @@ const registerSpecs: RegisterRow[] = [
     property: 'EVERY REFUSAL IS A VALUE, NEVER A THROW, AND THE REFUSAL\'S TOKEN IS EXACTLY ONE — for EVERY refusal class, `status` is exactly `\'refused\'`, the token is exactly `\'exclusion-closed\'` for state refusals and exactly `\'malformed-state\'` for payload refusals, and NO throw escapes any declared surface (§2.2 item 5, §2.3 item 2, PAR-8, §2.5 item 4)',
     drives: [
       {
-        label: "(1) the `'mcp-disabled'` INVOCATION TURN · reading (i): the value's exact shape — `{status:'refused', reason:'exclusion-closed'}`",
+        label: "(1) the `'mcp-disabled'` INVOCATION TURN · reading (i): the value's declared DOMAIN — the two CLOSED tokens EXACTLY, PLUS the amended `message` naming the cause and the remedy (§2.5 item 1, 2026-10-08)",
         run: async () => {
           const gate = gateFrom(freshGate() as unknown as SecurityGate).withExclusion(STATE_MCP_DISABLED) as ExclusionGateLike
           const server = freshServer(gate, recordingBackend())
           const answered = await invokeViaServer(server, 'provident.get_rendered_html', {})
           expect(answered.threw, '§3.4 — the invocation-turn refusal is a VALUE, never a throw').toBeNull()
-          const v = answered.value as { content?: Array<{ type?: string; text?: string }>; status?: string; reason?: string }
-          // §2.2 item 5's EXACT declared carrier:
-          const text = Array.isArray(v?.content) ? String(v.content[0]?.text ?? '') : ''
-          const declared = v?.status === 'refused' && v?.reason === EXCLUSION_CLOSED
-          const viaContent = JSON.stringify(safeJson(text) ?? {}) === JSON.stringify(REFUSAL) || text === JSON.stringify(REFUSAL)
-          expect(declared || viaContent,
-            "§2.2 item 5 / P-EX-TP-1(1) — the invocation-turn refusal answers the tool RESULT `{status:'refused', reason:'exclusion-closed'}` (a VALUE; NEVER an MCP protocol error). Got: " + JSON.stringify(answered.value)?.slice(0, 160)).toBe(true)
+          /* **⟶ RE-GRAINED 2026-10-08 (THE `GAP-3` RULING; `RCA-8(d)` ANNOTATE-BESIDE
+           * — the as-filed form is driven at the controls below).**  The as-filed cell
+           * read `declared || viaContent`, where `viaContent` was an EXACT
+           * two-member `JSON.stringify(...) === JSON.stringify(REFUSAL)` equality —
+           * which **FORBADE the `message` member `§2.5` item 1 now MANDATES**.  The
+           * reading is now the clause's declared DOMAIN: the closed tokens stay
+           * pinned EXACTLY and the additive member is REQUIRED (an absent, empty,
+           * whitespace-only, cause-less or remedy-less message FAILS, as does a
+           * message substituted for a token, and so does any other `reason`). */
+          // THE INSTRUMENT'S OWN CONTROLS ARE DRIVEN FIRST — every OUTSIDE class the
+          // clause declares MUST FAIL the predicate and the declared domain MUST PASS it;
+          // a control behind a failing assertion is never EXECUTED and would be unproven:
+          for (const c of receiptDomainControls()) {
+            expect(receiptDomainHolds(c.value), `CONTROL — §2.5 item 1's declared IN/OUTSIDE class: ${c.label}`).toBe(c.expected)
+          }
+          // …and the PRE-RULING form is driven in-line so the difference is MEASURED:
+          expect(preRepairTwoMemberReceiptFormControlOnly(REFUSAL),
+            'CONTROL — the PRE-RULING exact two-member form PASSES the message-less receipt (so it is a real, discriminating instrument and not a straw man)').toBe(true)
+          expect(preRepairTwoMemberReceiptFormControlOnly(RECEIPT_AMENDED_CONTROL_ONLY),
+            'CONTROL — and that SAME pre-ruling form FAILS the amended receipt, which is exactly why it could not be kept: it forbade the mandated member').toBe(false)
+          expect(receiptDomainHolds(answered.value),
+            "§2.2 item 5 / P-EX-TP-1(1) / §2.5 item 1 — the invocation-turn refusal answers the tool RESULT `{status:'refused', reason:'exclusion-closed', message:<cause + remedy>}` (a VALUE; NEVER an MCP protocol error). Got: " + JSON.stringify(answered.value)?.slice(0, 200)).toBe(true)
         },
       },
       {
@@ -2995,8 +3337,10 @@ const registerSpecs: RegisterRow[] = [
             server.applyExclusion(STATE_MCP_DISABLED)
             const dispatchesBefore = backend.invokes.length
             await sdkCallTool(client, 'provident.get_rendered_html')
-            expect(server.exclusionSnapshot(),
-              'PAR-4 — the precondition: the tier IS open (the server\'s own reader answers the receipt)').toEqual(REFUSAL)
+            expect(receiptDomainHolds(REFUSAL),
+              'CONTROL — the PRE-RULING two-member receipt FAILS the same predicate (an ABSENT `message` is OUTSIDE §2.5 item 1), so the precondition below can bite — the control is driven BEFORE it').toBe(false)
+            expect(receiptDomainHolds(server.exclusionSnapshot()),
+              'PAR-4 / §2.5 item 1 (AMENDED) — the precondition: the tier IS open (the server\'s own reader answers the receipt\'s declared DOMAIN: both CLOSED tokens exactly, plus the additive `message`). Measured: ' + JSON.stringify(server.exclusionSnapshot())).toBe(true)
             expect(backend.invokes.length,
               '§2.2 item 2(a) — and no renderer dispatch happened while open; the ANSWER\'s SHAPE is `G6-F3#1`\'s cell, never re-litigated here').toBe(dispatchesBefore)
             server.applyExclusion(STATE_MCP_ENABLED)
@@ -3442,7 +3786,7 @@ describe('S1 §3.1 THE VALID/HAPPY STATES (M-EX-1..M-EX-9)', () => {
       'M-EX-1 / §1.3 item 7 — the exclusion record is initialized to `\'mcp-enabled\'` at the GATE CONSTRUCTION SITE (main.ts:90), never read from a file. RED: no exclusion byte exists in main.ts.').toBe(true)
   })
 
-  it('M-EX-2 (§2.1 item 3 T-1, §2.2 items 3/4, P-EX-SM-1/SM-2): the operator opens the tier — the record, the pair, the epoch bump, the invalidation, the disabled handles, the CONNECTED server, the applied answer', async () => {
+  it('M-EX-2 (§2.1 item 3 T-1, §2.2 items 2(b)/(c) and 3/4, P-EX-SM-1/SM-2): the operator opens the tier — the record, the pair, the epoch bump, the invalidation, the UNCHANGED registration set and flags, the CONNECTED server, the applied answer', async () => {
     const fake = makeFakeWindow()
     const be = new (RendererBackend as unknown as new (o?: unknown) => RendererBackend)({ invokeTimeoutMs: 60_000 })
     const lb = backendFrom(be)
@@ -3453,12 +3797,46 @@ describe('S1 §3.1 THE VALID/HAPPY STATES (M-EX-1..M-EX-9)', () => {
     const opened = gateFrom(freshGate() as unknown as SecurityGate).withExclusion(STATE_MCP_DISABLED) as ExclusionGateLike
     expect(opened.exclusion, 'M-EX-2 — the pair becomes `{mcpEnabled:false, tier4Open:true}`').toEqual({ mcpEnabled: false, tier4Open: true })
     expect(lb.abandonPendingForExclusion(EXCLUSION_CLOSED), 'M-EX-2 — the in-flight invalidation runs, returning the count of entries it rejected').toBe(1)
-    const server = freshServer(opened, recordingBackend())
+    /* **⟶ RE-GRAINED 2026-10-08 (THE `GAP-3` RULING — `§3.1` `M-EX-2`'s own supersession
+     * annotation and `§2.2` item 2(b)/(c); `RCA-8(d)` ANNOTATE-BESIDE).**  The as-filed
+     * cell drove `applyGatePatch({})` on an OPEN gate and asserted `every registered tool
+     * handle is toggled enabled:false … "toggled per the exclusion state"` — the
+     * SUPERSEDED reading, and the LIVE `U-4` regression source: with the exclusion term in
+     * the composition, ONE operator group change while the store is open darkens the WHOLE
+     * registry (`tools/list` reads `0`; every call answers `-32602 … disabled`) and, with
+     * `T-2` no longer re-toggling, it STAYS dark.  `M-EX-2`'s replacement reading, printed in
+     * its own annotation, is: **the registered tool/resource SET and every handle's
+     * `enabled` flag are IDENTICAL before and after the transition**, and the group
+     * machinery toggles on the OPERATOR'S GROUP SET ALONE — **regardless of the exclusion
+     * state**.  The pre-ruling form is kept ALIVE as the control below. */
+    const gate = freshGate() // THE BOOT TERMINAL — the transition below is a REAL T-1
+    const server = freshServer(gate, recordingBackend(), 'stdio')
     server.ensureServerRegistered()
-    server.applyGatePatch({} as never)
-    const priv = server as unknown as { registered: Map<string, { enabled: boolean }> }
-    const anyEnabled = [...priv.registered.values()].some((h) => (h as unknown as { enabled: boolean }).enabled === true)
-    expect(anyEnabled, 'M-EX-2 — every registered tool handle is toggled `enabled:false` (the landed `applyGatePatch` mechanism, toggled per the exclusion state)').toBe(false)
+    const registryBefore = registryReadingOf(server)
+    expect(registryBefore.toolSet.length,
+      'M-EX-2 — the before-reading is NON-EMPTY (an empty pair would agree with itself and every identity below would be vacuous)').toBeGreaterThan(0)
+    server.applyExclusion(STATE_MCP_DISABLED)
+    expect((server.gate as unknown as ExclusionGateLike).exclusionState(), 'M-EX-2 / T-1(a) — the record becomes `\'mcp-disabled\'` on the gate the server holds').toBe(STATE_MCP_DISABLED)
+    expect(registryIdentityHolds(registryBefore, registryReadingOf(server)),
+      'M-EX-2 (2026-10-08) / §2.1 item 3 / §2.2 item 2(b)/(c) — THE EXCLUSION TRANSITION TOGGLES NOTHING: the registered SET and EVERY `enabled` flag are IDENTICAL across it (the exclusion is NOT a registry state). before ' + JSON.stringify(registryBefore) + ' / after ' + JSON.stringify(registryReadingOf(server))).toBe(true)
+    // (2) THE GROUP MACHINERY IS THE OPERATOR'S — the SAME group change produces the SAME
+    //     registry in BOTH exclusion states, and it toggles ONLY the changed group's handles:
+    const openServer = server // the tier is OPEN on this one
+    openServer.applyGatePatch({ disable: ['dispatch'] } as never)
+    const closedServer = freshServer(freshGate(), recordingBackend(), 'stdio') // the tier is CLOSED on this one
+    closedServer.ensureServerRegistered()
+    closedServer.applyGatePatch({ disable: ['dispatch'] } as never)
+    const openReading = registryReadingOf(openServer)
+    const closedReading = registryReadingOf(closedServer)
+    expect(openReading.toolSet.length, 'the group-change reading is NON-EMPTY on both servers (the comparison below is not two empty registries agreeing)').toBeGreaterThan(0)
+    expect(identityHoldsOnPreRepairDarkenedFixtureControlOnly(),
+      'CONTROL — the SUPERSEDED composition (`enabled: !exclusionOpen && allowed`, `L` `mcp-server.ts:469`/`:473`) makes a registry read every handle DARK while the same registry left alone keeps the group set: the identity predicate FAILS on that pair, so it is a real instrument and not one that answers `true` for everything.  (The control compares ONE reading against its OWN darkened image, so it holds whatever the implementation currently does.)  Driven BEFORE the reading below is asserted clean').toBe(false)
+    expect(registryIdentityHolds(openReading, closedReading),
+      'M-EX-2 (2026-10-08) / §2.2 item 2(b) — THE GROUP MACHINERY IS A DIFFERENT MECHANISM AND IS UNAFFECTED BY THE EXCLUSION: the SAME operator group change (`disable: [\'dispatch\']`) produces the SAME registration set and the SAME `enabled` flags whether the tier is OPEN or CLOSED. While open: ' + JSON.stringify(openReading) + ' / while closed: ' + JSON.stringify(closedReading)).toBe(true)
+    expect(openReading.toolFlags['provident.dispatch'],
+      'M-EX-2 — the CHANGED group\'s handle DID move (`provident.dispatch` follows its group into `enabled:false`), so the identity above is a measurement of the exclusion\'s ABSENCE and not a frozen registry').toBe(false)
+    expect(openReading.toolFlags['provident.get_rendered_html'],
+      'M-EX-2 — and an UNCHANGED group\'s handle did NOT move (`provident.get_rendered_html` stays enabled): ONE group change toggles ONLY that group\'s handles, never the whole registry').toBe(true)
     expect((server as unknown as { stdioServer: unknown }).stdioServer, 'M-EX-2 — the stdio server stays CONNECTED (not closed, not rebuilt)').not.toBeNull()
   })
 
@@ -3509,7 +3887,30 @@ describe('S1 §3.1 THE VALID/HAPPY STATES (M-EX-1..M-EX-9)', () => {
     const res = makeFakeResponse()
     await driveHttp(server, makeFakeRequest({ method: 'POST', url: '/mcp', headers: { authorization: 'Bearer anything' } }), res)
     expect(res.status, 'M-EX-6 — HTTP `503` with a VALID bearer token while the state is `\'mcp-disabled\'`').toBe(503)
-    expect(JSON.parse(res.body), "M-EX-6 — the body is exactly `{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32003,\"message\":\"exclusion-closed\"},\"id\":null}`").toEqual({ jsonrpc: '2.0', error: { code: -32003, message: EXCLUSION_CLOSED }, id: null })
+    /* **⟶ RE-GRAINED 2026-10-08 (THE `GAP-3` RULING; `RCA-8(d)` ANNOTATE-BESIDE — the
+     * as-filed exact-body equality is kept as the control below).**  The as-filed form
+     * pinned the body's EXACT member LAYOUT, and `§7a` `OW-9` records that layout as
+     * **UNSETTLED** for the two non-JSON carriers: *"Whether the message replaces the
+     * token, rides BESIDE it, or arrives as a separate member on those two carriers is
+     * NOT settled by the ruling"* — with the INTERIM constraint that those carriers
+     * *"MUST deliver the message as a VALUE (never a throw) and MUST keep the closed
+     * token READABLE"*.  This row therefore pins the CLOSED TOKENS on the body (each
+     * one EXACTLY as filed) and asserts NO member layout: an ADDITIVE `message` — the
+     * shape `OW-9` leaves to the implementer — must not redden it, while a body that
+     * loses the token MUST fail. */
+    const body = JSON.parse(res.body) as { jsonrpc?: unknown; error?: { code?: unknown; message?: unknown }; id?: unknown }
+    expect(body.jsonrpc, 'M-EX-6 — the body is the declared JSON-RPC error record').toBe('2.0')
+    expect(body.error?.code, 'M-EX-6 — the body carries `error.code === -32003` (the EXCLUSION code, distinct from the 401 arm\'s `-32001`)').toBe(-32003)
+    expect(body.error?.message, "M-EX-6 / §7a OW-9's operative constraint — the closed token `'exclusion-closed'` stays READABLE on the body's `error.message`").toBe(EXCLUSION_CLOSED)
+    expect(body.id, 'M-EX-6 — `id: null` (the refusal is not correlated to a request body that was never read)').toBeNull()
+    // THE CONTROL — the as-filed EXACT-member-layout form, driven in-line over BOTH an
+    // unamended body and an AMENDED one:
+    expect(preRepairExactBodyFormControlOnly(body),
+      'CONTROL — the AS-FILED exact-body form PASSES the pre-ruling body (the form these readings replace)').toBe(true)
+    expect(preRepairExactBodyFormControlOnly({ jsonrpc: '2.0', error: { code: -32003, message: EXCLUSION_CLOSED, data: { message: RECEIPT_AMENDED_CONTROL_ONLY.message } }, id: null }),
+      'CONTROL — and that SAME exact-body form FAILS an AMENDED body carrying the message ADDITIVELY (`OW-9`\'s unsettled layout), which is precisely why it could not be kept as this row\'s assertion').toBe(false)
+    expect({ jsonrpc: '2.0', error: { code: -32602, message: 'Tool provident.dispatch disabled' }, id: null }.error.message,
+      'CONTROL (negative) — the SAME token reading FAILS on the PRE-REPAIR `-32602 … disabled` body, so the pin above can bite').not.toBe(EXCLUSION_CLOSED)
     expect(httpServerCount(server), 'M-EX-6 — the body is not read and NO per-POST server is built (the created-server set does not grow)').toBe(before)
   })
 
@@ -4723,17 +5124,29 @@ function manualUiReadReportsLiveStateControlOnly(reading: unknown, liveState: st
 
 /** CONTROL ONLY — the `G6-F3` acceptance predicate, driven IN-LINE with the
  *  pre-repair SDK answer (`-32602 … disabled`) so the receipt row is shown able to
- *  bite, and with the declared receipt so it is shown satisfiable. */
+ *  bite, and with the declared receipt so it is shown satisfiable.
+ *
+ *  **⟶ RE-GRAINED 2026-10-08 (THE `GAP-3` RULING): the predicate reads the AMENDED
+ *  declared DOMAIN (`§2.5` item 1 — the two CLOSED tokens plus the additive `message`
+ *  naming the cause and the remedy), never a token-only reading that would accept a
+ *  message-less receipt the clause calls OUTSIDE.** */
 function stdioAnswerIsTheDeclaredReceiptControlOnly(answer: { value: unknown; threw: unknown }): boolean {
   const isError = (answer.value as { isError?: unknown } | null)?.isError
-  return answer.threw === null && isError === undefined && refusalTokenOf(answer.value) === EXCLUSION_CLOSED
+  return answer.threw === null && isError === undefined && receiptDomainHolds(answer.value)
 }
 
 /** `§2.3` item 4 — an MCP call over the app's OWN request path, driven by the
- *  repo's own SDK client (never a hand-poked handler map). */
-async function sdkCallTool(client: Client, name: string): Promise<{ value: unknown; threw: unknown }> {
+ *  repo's own SDK client (never a hand-poked handler map).  `args` defaults to `{}`
+ *  (the as-filed call form); a row whose SUBJECT is the invocation turn and whose tool
+ *  carries a REQUIRED schema (`provident.dispatch`: `target` + `event`) passes the
+ *  well-formed arguments instead — see the `G6-F3` row's re-drive note. */
+async function sdkCallTool(
+  client: Client,
+  name: string,
+  args: Record<string, unknown> = {},
+): Promise<{ value: unknown; threw: unknown }> {
   try {
-    return { value: await client.callTool({ name, arguments: {} }), threw: null }
+    return { value: await client.callTool({ name, arguments: args }), threw: null }
   } catch (e) {
     return { value: null, threw: e }
   }
@@ -4999,24 +5412,19 @@ describe('S1 GATE 6 — THE SIX LIVE FAILURES (F-1 .. F-5) — the red rows, aut
       expect(refusalTokenOf(answeredEnabled.value), 'CONTROL — and it is NOT the exclusion refusal (the row below is not a blanket reading). Measured: ' + JSON.stringify(answeredEnabled.value)?.slice(0, 160)).not.toBe(EXCLUSION_CLOSED)
       expect(listedEnabled.length, '§0 ruling 11 — the default-gate registered subset is NON-EMPTY while the tier is closed (the reading the open-state listing is compared against)').toBeGreaterThan(0)
 
-      // THE TRANSITION — the app's own path, toggling NOT withheld.
-      boundary.server.applyExclusion(STATE_MCP_DISABLED)
-      expect(boundary.server.exclusionSnapshot(), 'PAR-4 — the server\'s own reader agrees the tier is open (the transition really ran)').toEqual(REFUSAL)
-
-      // (1) THE DECLARED RECEIPT — a VALUE, never an MCP protocol error.
-      const answeredOpen = await sdkCallTool(boundary.client, 'provident.get_markdown')
-      const dispatched = await sdkCallTool(boundary.client, 'provident.dispatch')
-      expect(answeredOpen.threw, '§2.2 item 2(a) / §2.5 item 4 — the refusal is a VALUE at the tool boundary, never a throw').toBeNull()
+      // THE INSTRUMENT'S CONTROLS ARE DRIVEN FIRST, before the reading they guard is
+      // asserted clean (a control behind a failing assertion is never EXECUTED):
+      //  (i) the MALFORMED call's answer — the measurement that forced this row's re-drive;
+      //  (ii) the PRE-REPAIR answer (`-32602 … disabled`, `isError: true`);
+      //  (iii) the DECLARED receipt (the amended domain) — the row shown satisfiable;
+      //  (iv) the PRE-RULING two-member receipt — the row shown able to FAIL on it.
       expect(
-        refusalTokenOf(answeredOpen.value),
-        `F-3 (§2.2 item 2(a), §3.1 M-EX-5, §3.2 FS-EX-3, §5.5.1 P-EX-TP-1) — WHILE THE TIER IS OPEN AN MCP CALL ANSWERS THE DECLARED RECEIPT \`{status:'refused', reason:'exclusion-closed'}\` AS THE TOOL'S RESULT. The live battery measured the SDK's \`-32602 … disabled\` instead: \`regateLiveServer\` toggles EVERY captured handle \`enabled:false\` (including \`provident.dispatch\`, the one tool that stays registered on the group predicate alone), so the SDK refuses the call BEFORE \`exclusionTurn\` runs. Measured over the app's own request path: ${JSON.stringify(answeredOpen.value)?.slice(0, 200)}`,
-      ).toBe(EXCLUSION_CLOSED)
-      expect((answeredOpen.value as { isError?: unknown } | null)?.isError, '§3.1 M-EX-5 — and the receipt is the tool\'s RESULT (`isError` ABSENT), never an MCP protocol error').toBeUndefined()
-      expect(
-        refusalTokenOf(dispatched.value),
-        `F-3 — the SAME answer for \`provident.dispatch\`, the arm the battery named as the one that reaches \`exclusionTurn\` when it is allowed. Measured: ${JSON.stringify(dispatched.value)?.slice(0, 200)}`,
-      ).toBe(EXCLUSION_CLOSED)
-      // CONTROL (driven in-line): the PRE-REPAIR answer, through the SAME predicate.
+        stdioAnswerIsTheDeclaredReceiptControlOnly({
+          value: { content: [{ type: 'text', text: 'MCP error -32602: Input validation error: Invalid arguments for tool provident.dispatch: Invalid input at target' }], isError: true },
+          threw: null,
+        }),
+        'CONTROL — the MALFORMED call\'s answer (`-32602 Input validation error: … Invalid input at target`) FAILS this row\'s predicate: a call that fails its OWN schema never reaches a handler and is not the receipt\'s subject, which is why the dispatch arm below is driven with a valid `target`',
+      ).toBe(false)
       expect(
         stdioAnswerIsTheDeclaredReceiptControlOnly({
           value: { content: [{ type: 'text', text: 'MCP error -32602: Tool provident.get_markdown disabled' }], isError: true },
@@ -5025,9 +5433,48 @@ describe('S1 GATE 6 — THE SIX LIVE FAILURES (F-1 .. F-5) — the red rows, aut
         'CONTROL — the PRE-REPAIR answer (`-32602 … disabled`, `isError: true`) MUST FAIL this row\'s own predicate, so the predicate is shown able to bite before it is asserted clean',
       ).toBe(false)
       expect(
-        stdioAnswerIsTheDeclaredReceiptControlOnly({ value: { content: [{ type: 'text', text: JSON.stringify(REFUSAL) }] }, threw: null }),
-        'CONTROL (positive) — and the DECLARED receipt PASSES the same predicate, so the row is satisfiable',
+        stdioAnswerIsTheDeclaredReceiptControlOnly({ value: { content: [{ type: 'text', text: JSON.stringify(RECEIPT_AMENDED_CONTROL_ONLY) }] }, threw: null }),
+        'CONTROL (positive) — and the DECLARED receipt (`§2.5` item 1\'s AMENDED domain: both closed tokens plus the additive `message`) PASSES the same predicate, so the row is satisfiable',
       ).toBe(true)
+      expect(
+        stdioAnswerIsTheDeclaredReceiptControlOnly({ value: { content: [{ type: 'text', text: JSON.stringify(REFUSAL) }] }, threw: null }),
+        'CONTROL (negative) — the PRE-RULING two-member receipt FAILS it (an ABSENT `message` is OUTSIDE `§2.5` item 1), so the predicate is a bound and the mandated member is not silently optional',
+      ).toBe(false)
+
+      // THE TRANSITION — the app's own path, toggling NOT withheld.
+      boundary.server.applyExclusion(STATE_MCP_DISABLED)
+      expect(receiptDomainHolds(REFUSAL),
+        'CONTROL — the PRE-RULING two-member receipt FAILS this row\'s own predicate (an ABSENT `message` is OUTSIDE §2.5 item 1), so the reading below can bite').toBe(false)
+      expect(receiptDomainHolds(boundary.server.exclusionSnapshot()),
+        'PAR-4 / §2.5 item 1 (AMENDED) — the server\'s own reader agrees the tier is open (the transition really ran): the receipt answers its declared DOMAIN (both closed tokens exactly, plus the additive `message`). Measured: ' + JSON.stringify(boundary.server.exclusionSnapshot())).toBe(true)
+
+      // (1) THE DECLARED RECEIPT — a VALUE, never an MCP protocol error.
+      const answeredOpen = await sdkCallTool(boundary.client, 'provident.get_markdown')
+      /* **⟶ RE-DRIVEN 2026-10-08 (`S1` GATE 6, THE RED-SET RE-GRAIN): the dispatch arm
+       * now passes WELL-FORMED arguments.**  The as-filed form called
+       * `sdkCallTool(client, 'provident.dispatch')`, whose `arguments: {}` omits the
+       * REQUIRED `target` (`L` `mcp-server.ts:778-783`: a `cssId`/`nodeId`/`wire` object
+       * or a bare string) and the REQUIRED `event` (`L` `:784`) — and the landed SDK
+       * validates the tool input (`mcp.js:104`) AFTER its `enabled` check (`:79-81`)
+       * and BEFORE the handler, so with the toggling dropped the arm measured
+       * `-32602 Input validation error: … Invalid input at target` (`M`).  That is
+       * NORMAL MCP behaviour for a MALFORMED call, **not** a contract gap: a call that
+       * fails its own schema never reaches a handler and is never the receipt's
+       * subject.  The arm's SUBJECT is the invocation turn, so it must be driven with a
+       * call that would otherwise REACH the handler. */
+      const dispatched = await sdkCallTool(boundary.client, 'provident.dispatch', { target: 'inc', event: 'click' })
+      expect(answeredOpen.threw, '§2.2 item 2(a) / §2.5 item 4 — the refusal is a VALUE at the tool boundary, never a throw').toBeNull()
+      expect(
+        refusalTokenOf(answeredOpen.value),
+        `F-3 (§2.2 item 2(a), §3.1 M-EX-5, §3.2 FS-EX-3, §5.5.1 P-EX-TP-1) — WHILE THE TIER IS OPEN AN MCP CALL ANSWERS THE DECLARED RECEIPT \`{status:'refused', reason:'exclusion-closed'}\` AS THE TOOL'S RESULT. The live battery measured the SDK's \`-32602 … disabled\` instead: \`regateLiveServer\` toggles EVERY captured handle \`enabled:false\` (including \`provident.dispatch\`, the one tool that stays registered on the group predicate alone), so the SDK refuses the call BEFORE \`exclusionTurn\` runs. Measured over the app's own request path: ${JSON.stringify(answeredOpen.value)?.slice(0, 200)}`,
+      ).toBe(EXCLUSION_CLOSED)
+      expect((answeredOpen.value as { isError?: unknown } | null)?.isError, '§3.1 M-EX-5 — and the receipt is the tool\'s RESULT (`isError` ABSENT), never an MCP protocol error').toBeUndefined()
+      expect(
+        refusalTokenOf(dispatched.value),
+        `F-3 — the SAME answer for \`provident.dispatch\`, the arm the battery named as the one that reaches \`exclusionTurn\` when it is allowed. Driven with WELL-FORMED arguments (\`{target:'inc', event:'click'}\`), so the call passes the SDK's input validation and the receipt — not the validator — is what answers. Measured: ${JSON.stringify(dispatched.value)?.slice(0, 200)}`,
+      ).toBe(EXCLUSION_CLOSED)
+      // (the row's four instrument CONTROLS are driven ABOVE, before the transition —
+      //  so they are EXECUTED even while this row is red)
 
       // (2) THE NON-LEGIBILITY PIN — the registration set is UNCHANGED in both
       //     states (`§0A` item 7(c), `§2.2` item 2(c)): the handles are toggled, NOT
@@ -5060,7 +5507,10 @@ describe('S1 GATE 6 — THE SIX LIVE FAILURES (F-1 .. F-5) — the red rows, aut
       boundary.server.applyExclusion(STATE_MCP_DISABLED)
       const dispatchesBefore = boundary.backend.invokes.length
       await sdkCallTool(boundary.client, 'provident.get_markdown')
-      expect(boundary.server.exclusionSnapshot(), 'PAR-4 — the precondition: the tier IS open (the server\'s own reader answers the receipt)').toEqual(REFUSAL)
+      expect(receiptDomainHolds(REFUSAL),
+        'CONTROL — the PRE-RULING two-member receipt FAILS the same predicate (an ABSENT `message` is OUTSIDE §2.5 item 1), so the precondition below can bite').toBe(false)
+      expect(receiptDomainHolds(boundary.server.exclusionSnapshot()),
+        'PAR-4 / §2.5 item 1 (AMENDED) — the precondition: the tier IS open (the server\'s own reader answers the receipt\'s declared DOMAIN: both closed tokens exactly, plus the additive `message`). Measured: ' + JSON.stringify(boundary.server.exclusionSnapshot())).toBe(true)
       expect(boundary.backend.invokes.length, '§2.2 item 2(a) — and no renderer dispatch happened while open (the SAFETY outcome the contract declares; the ANSWER\'s shape is `G6-F3`\'s row, never re-litigated here)').toBe(dispatchesBefore)
       // THE `[H]` CHANNEL ARM OF THE SAME OBLIGATION — HELD, and recorded BESIDE the
       // row: `§2.4` item 6 declares the return reachable "the pane control ... or the
