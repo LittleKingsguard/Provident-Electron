@@ -424,9 +424,15 @@ function appProcesses() {
 // only ever be refused by a REAL stale window on the operator's display, i.e. its ability to fail
 // was never DRIVEN. The probe's two failure modes are now terms of the SAME named predicate and
 // are driven beside the live reading: a SYNTHETIC `ps` listing that carries a stale app process,
-// and an unrunnable probe (`ps` threw → `null`). NO ROW WAS ADDED (the count stays `42`) and the
-// row's verdict semantics are unchanged (`FAIL` on a stale process; the stop block below still
-// refuses to measure through one, with `exit 1` and no summary).
+// and an unrunnable probe (`ps` threw → `null`). NO ROW WAS ADDED (the count stays `42`); the
+// stop block below still refuses to measure through one (`exit 1`, no summary); and **THE FIXTURES'
+// REFUSAL IS NOW PART OF THIS ROW'S VERDICT** — corrected 2026-10-11 by the SIXTH `§6.2` audit's
+// `R6-02` (LOW, the *"computed but not asserted"* class): as filed the fixture booleans were PRINTED
+// only while the verdict reduced to `preflightLive.ok`, so the row's own subject claim *"each
+// REFUSED"* could not redden the row — every other control row asserts
+// `every(v.ok === false)`. The verdict now folds both in, which is a strict STRENGTHENING (the fold
+// is a conjunction, so it can only turn a false PASS into a FAIL — no run that read PASS before can
+// read FAIL after unless a fixture was NOT refused).
 function preflightProperty(found) {
   const terms = {
     'probe-ran': Array.isArray(found),
@@ -445,7 +451,7 @@ const preflightNotRefused = Object.entries(preflightControls).filter(([, v]) => 
 // as-filed id was `'SX-G-45 (preflight)'` while the boot-order row below is also `SX-G-45`,
 // so the FAIL list (`§5`'s tail) printed an AMBIGUOUS line naming a row it could not
 // identify. This row answers to `SX-G-45p`; the boot-order row keeps `SX-G-45`.
-check('SX-G-45p (preflight)', 'the battery is SELF-GUARDING: NO pre-existing app process is on the display before the first boot — and the probe\'s predicate CAN FAIL (a SYNTHETIC listing carrying a stale app process, and an unrunnable probe, are each REFUSED)', preflightLive.ok ? 'PASS' : 'FAIL',
+check('SX-G-45p (preflight)', 'the battery is SELF-GUARDING: NO pre-existing app process is on the display before the first boot — and the probe\'s predicate CAN FAIL (a SYNTHETIC listing carrying a stale app process, and an unrunnable probe, are each REFUSED, so each fixture is ASSERTED to be refused rather than merely printed)', preflightLive.ok && preflightNotRefused.length === 0 && Object.values(preflightControls).every((v) => v.ok === false) ? 'PASS' : 'FAIL',
   `${staleBefore === null ? 'the preflight probe itself could not be run' : `ps -eo pid=,args= | grep 'dist/main/main.cjs' → ${JSON.stringify(staleBefore)} before boot A`}; TERMS ${JSON.stringify(preflightLive.terms)}; THE NON-VACUITY CONTROL (NEW 2026-10-10, the fifth \`§6.2\` audit\'s \`R5-08\`): ${JSON.stringify(Object.fromEntries(Object.entries(preflightControls).map(([k, v]) => [k, v.ok])))} driven through the SAME \`preflightProperty\`; fixtures NOT refused: ${JSON.stringify(preflightNotRefused)}; the terms each fixture broke: ${JSON.stringify(Object.fromEntries(Object.entries(preflightControls).map(([k, v]) => [k, Object.entries(v.terms).filter(([, b]) => b === false).map(([t]) => t)])))}`,
   'a stale window from an earlier run would make the CDP attach and the rendered-box readings ambiguous, so the run refuses to measure through one. **THE CONTROL IS OVER THE PROBE\'S OWN FAILURE MODES, NOT OVER A FEATURE DELETION (`R5-08`):** no term of this row names the new node or the transition, so a feature deletion cannot redden it — which is why the row is `PRECONDITION-BY-DESIGN` in `§2`\'s falsification table; what the control removes is the VACUITY of a predicate that had never been driven red at all')
 if (staleBefore === null || staleBefore.length !== 0) {
@@ -1023,10 +1029,20 @@ function receiptFixtureText() {
 // such a tree: (i) the gesture opens nothing, so the call ISSUED WHILE OPEN is answered the RENDERER'S
 // OWN value (the run's own `baseline`, not a receipt); (ii) the return is a no-op, so the "restored"
 // answer is that same enabled-state value; (iii) the bridge is `mcp-enabled` throughout — BEFORE the
-// return and after it. That is what the first fixture now holds, and it reddens FOUR terms:
-// `call-issued-while-open-answered-the-receipt` and `bridge-read-open-before-return` (the two
-// preconditions the as-filed predicate did not have at all) plus `answer-is-not-a-receipt` and
-// `bridge-reads-closed` (`baseline` IS the enabled-state value, and the bridge never moved).
+// return and after it. That is what the first fixture now holds, and it reddens **TWO** terms —
+// `call-issued-while-open-answered-the-receipt` and `bridge-read-open-before-return`, the two
+// preconditions the as-filed predicate did not have at all — and NO OTHER term:
+// `answer-is-not-a-receipt` and `bridge-reads-closed` evaluate TRUE on this shape (`baseline` IS
+// the enabled-state value, so `declaredReceipt(baseline) === null`, and the bridge never left
+// `mcp-enabled`, so its post-return reading is the closed-state one).
+// THE AS-FILED SENTENCE (KEPT VISIBLE BECAUSE IT WAS WRONG, `RCA-8(d)`; filed as
+// `SEX-LIVE-DELETION-TERM-COUNT-COMMENT` and corrected here by the SIXTH `§6.2` audit's `R6-01`,
+// LOW): *"it reddens FOUR terms: `call-issued-while-open-answered-the-receipt` and
+// `bridge-read-open-before-return` … plus `answer-is-not-a-receipt` and `bridge-reads-closed`
+// (`baseline` IS the enabled-state value, and the bridge never moved)"* — the run's own
+// `the terms each fixture broke:` line prints EXACTLY the two precondition terms for fixture 1 and
+// nothing else, and this claim was also internally inconsistent with `R4-01`'s own finding, which
+// turned on all five as-filed terms reading TRUE on this shape.
 const returnArmStdioControls = {
   'THE FEATURE IS DELETED (`setExclusion` gone): the gesture opens nothing, so the call issued while open is answered the RENDERER\'S OWN value, the return is a no-op, and the bridge reads `mcp-enabled` BEFORE the return and after it — the ACTUAL deletion shape (`R4-01`)': returnArmStdioProperty({
     answer: baseline, bridge: { exclusion: 'mcp-enabled' }, openArrival: baseline, bridgeBeforeReturn: { exclusion: 'mcp-enabled' },
@@ -1046,8 +1062,8 @@ const returnArmStdioControls = {
 }
 const returnArmStdioNotRefused = Object.entries(returnArmStdioControls).filter(([, v]) => v.ok !== false).map(([k]) => k)
 check('U-4 (return arm) — DELETION/RED-FAIL CONTROL (NEW 2026-10-09, `R3-01`; THE DELETION FIXTURE REBUILT 2026-10-10 BY THE FOURTH AUDIT\'S `R4-01`)', 'the `U-4` stdio return row\'s predicate CAN FAIL: the DELETION fixture is an ACTUAL deletion (the TWO terms it reddens are the two ADDED precondition terms, and NO other term reddens) and the FOUR other regression shapes are each REFUSED by the SAME code path, each naming the term that caught it',  returnArmStdioNotRefused.length === 0 && Object.values(returnArmStdioControls).every((v) => v.ok === false) ? 'PASS' : 'FAIL',
-  `fixtures driven through returnArmStdioProperty itself: ${JSON.stringify(Object.fromEntries(Object.entries(returnArmStdioControls).map(([k, v]) => [k, v.ok])))}; fixtures NOT refused: ${JSON.stringify(returnArmStdioNotRefused)}; the terms each fixture broke: ${JSON.stringify(Object.fromEntries(Object.entries(returnArmStdioControls).map(([k, v]) => [k, Object.entries(v.terms).filter(([, b]) => b === false).map(([t]) => t)])))}`,
-  'WHY THIS ROW EXISTS (`R3-01`\'s CLASS CLOSURE): the `U-4` row\'s re-grained predicate had no fixture of its own — the neighbouring control row belongs to the RELOAD arm\'s receipt predicate (`declaredReceipt`), a DIFFERENT function. **AND WHY IT WAS REBUILT (`R4-01`): the as-filed DELETION fixture was a HALF-APPLIED RETURN, NOT A DELETION, so it could not have caught the hole it was captioned to catch — with `setExclusion` deleted the row still read PASS. The first fixture now holds the ACTUAL deletion shape and reddens `call-issued-while-open-answered-the-receipt` and `bridge-read-open-before-return` (the two ADDED precondition terms) plus `answer-is-not-a-receipt` and `bridge-reads-closed`. The LAST fixture keeps the as-filed caption\'s half-applied-return shape, so the two are separately attributable rather than conflated.**')
+  `fixtures driven through returnArmStdioProperty itself: ${JSON.stringify(Object.fromEntries(Object.entries(returnArmStdioControls).map(([k, v]) => [k, v.ok])))}; fixtures NOT refused: ${JSON.stringify(returnArmStdioNotRefused)}; the terms each fixture broke: ${JSON.stringify(Object.fromEntries(Object.entries(returnArmStdioControls).map(([k, v]) => [k, Object.entries(v.terms).filter(([, b]) => b === false).map(([t]) => t)])))}. THE DELETION FIXTURE (fixture 1) REDDENS **TWO** TERMS — \`call-issued-while-open-answered-the-receipt\` and \`bridge-read-open-before-return\` — AND NO OTHER (\`R6-01\`, the SIXTH \`§6.2\` audit, LOW: the as-filed evidence string asserted \`FOUR\`, contradicting its own subject and this very printed line; the as-filed form is kept visible in the row's \`WHY THIS ROW EXISTS\` sentence below)`,
+  'WHY THIS ROW EXISTS (`R3-01`\'s CLASS CLOSURE): the `U-4` row\'s re-grained predicate had no fixture of its own — the neighbouring control row belongs to the RELOAD arm\'s receipt predicate (`declaredReceipt`), a DIFFERENT function. **AND WHY IT WAS REBUILT (`R4-01`): the as-filed DELETION fixture was a HALF-APPLIED RETURN, NOT A DELETION, so it could not have caught the hole it was captioned to catch — with `setExclusion` deleted the row still read PASS. The first fixture now holds the ACTUAL deletion shape and reddens `call-issued-while-open-answered-the-receipt` and `bridge-read-open-before-return` (the two ADDED precondition terms) and NO OTHER term — `answer-is-not-a-receipt` and `bridge-reads-closed` evaluate TRUE on this shape. The LAST fixture keeps the as-filed caption\'s half-applied-return shape, so the two are separately attributable rather than conflated.** **⟶ CORRECTED 2026-10-11 (`R6-01`, the SIXTH `§6.2` audit, LOW): the as-filed tail of this sentence read *"plus `answer-is-not-a-receipt` and `bridge-reads-closed`"*, i.e. FOUR terms, which the run\'s own printed `the terms each fixture broke:` line refutes for fixture 1 in BOTH executions (it prints the two precondition terms only) and which contradicted this row\'s own subject. The predicate is NOT in question — only this sentence\'s and the evidence string\'s claim — and the as-filed form is kept visible here (`RCA-8(d)`).**')
 
 // ══════════════════════════════════════════════════════════════════════════════
 // PHASE 3 — U-6: the disabled state survives a renderer reload
