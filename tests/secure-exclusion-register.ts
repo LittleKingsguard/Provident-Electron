@@ -599,6 +599,135 @@ export async function executeRegister(
   }
 }
 
+// ---- THE SYNTHETIC RUNS + THE BROKEN/UN-RUN GUARD (`RCA-8(d)`) ---------------------------
+/** **THE REGISTER'S BOUND, AS ONE CHECKABLE FUNCTION — AND THE TERMS OF ITS READING**
+ *  (`AGENTS.md` item 11(b), `§5.5.2` item 3: *an un-run register row is reported as a
+ *  FAILURE, never as a pass*).
+ *
+ *  **WHY THIS EXISTS — THE FALSE GREEN THIS PASS CLOSES (`S1` gate 4, 2026-10-05).** The
+ *  register's own report row asserted the BROKEN count through
+ *  `expect(typeof broken).toBe('number')` — a VACUOUS bound: it accepts `5` as readily as
+ *  `0`, so the register reported **5 BROKEN attempts of 113** while the suite printed
+ *  *52 passed*. A broken-count guard that cannot fail is worse than no guard, because the
+ *  report it prints is read as evidence. The bound is now `broken === 0` AND
+ *  `unrun === 0`, with the printed total retained for provenance.
+ *
+ *  **THE RED-TIME READING IS KEPT VISIBLE (`RCA-8(d)` annotate-beside — the earlier form
+ *  is not erased):** at the red phase this bound was LEGITIMATELY non-zero — every row
+ *  fails before its mechanism lands, which is exactly what `§4.3.2`'s *"the register's
+ *  rows MUST fail first"* and the stop-rule discussion in `executeRegister` require — so a
+ *  `broken === 0` bound could not have been asserted then. It is asserted NOW, and only
+ *  now, because the implementation has landed: from this gate on, a non-zero broken count
+ *  is a REGRESSION, not a red. `brokenCountGuardOldForm()` below keeps the vacuous form
+ *  ALIVE and is DRIVEN by the report row's positive control, so the difference between the
+ *  two forms is a measurement rather than a narration. */
+export interface BrokenCountCheck {
+  readonly broken: number
+  readonly unrun: number
+  readonly terms: readonly string[]
+  readonly brokenOk: boolean
+  readonly unrunOk: boolean
+  /** The bound the register asserts: EVERY attempt held and NOT ONE row was abandoned. */
+  readonly heldOk: boolean
+}
+
+/** The bound, evaluated over ANY `ExecReport` — the register's own run or a synthetic one,
+ *  so the report row can drive a KNOWN-broken run through it and prove it FAILS. */
+export function brokenCountCheckOf(r: ExecReport): BrokenCountCheck {
+  const broken = r.rows.reduce((a, x) => a + x.broken, 0)
+  const held = r.rows.reduce((a, x) => a + x.held, 0)
+  const unrun = r.unrunRows.length
+  return {
+    broken,
+    unrun,
+    terms: r.rows.map((x) => `${x.id} ${x.strategyId} ${String(x.held)}/${String(x.attemptsRun)}`),
+    brokenOk: broken === 0,
+    unrunOk: unrun === 0,
+    heldOk: held === r.attemptsExecuted && r.rowsExecuted === r.rows.length,
+  }
+}
+
+/** **CONTROL ONLY — THE PRE-REPAIR FORM, KEPT VERBATIM** (`RCA-8(d)`; the
+ *  `oldBrokenHandlerBodyOf` precedent).  It is the as-filed bound
+ *  `expect(typeof broken).toBe('number')` reduced to a predicate, so the report row can
+ *  prove that the OLD form PASSES a deliberately broken run while the new form FAILS it.
+ *  NEVER used by an assertion of the contract. */
+export function brokenCountGuardOldForm(r: ExecReport): boolean {
+  const broken = r.rows.reduce((a, x) => a + x.broken, 0)
+  return typeof broken === 'number'
+}
+
+/** **A SYNTHETIC REGISTER RUN CARRYING ONE DELIBERATELY BROKEN ATTEMPT — CONTROL ONLY.**
+ *  The register's own run is green (`broken 0`), so the guard's ability to FAIL cannot be
+ *  demonstrated on it; this builds a ONE-ROW register whose single drive throws, executes
+ *  it through the SAME `executeRegister`, and answers the resulting report. Every figure
+ *  in it is derived from the executed result — nothing is hand-assembled — so the control
+ *  cannot drift from the executor it exists to exercise. */
+export function syntheticBrokenRegisterControlOnly(): Promise<ExecReport> {
+  const brokenRow: RegisterRow = {
+    id: 'P-EX-CONTROL-1',
+    type: 'P-IM',
+    strategyId: 'S-EX-CONTROL-1',
+    term: 1,
+    property: 'CONTROL ONLY — a synthetic row whose single drive falsifies itself, so the broken-count guard is exercised against a run that REALLY carries one broken attempt',
+    drives: [
+      {
+        label: 'CONTROL — the synthetic drive asserts a bound its own subject falsifies',
+        run: () => {
+          throw new Error('CONTROL: the synthetic drive is BROKEN by construction (the broken-count guard must FAIL on this run)')
+        },
+      },
+    ],
+  }
+  return executeRegister([brokenRow])
+}
+
+/** **A SYNTHETIC REPORT IN WHICH ONE ROW IS UN-RUN — CONTROL ONLY** (`§5.5.2` item 3 /
+ *  `AGENTS.md` item 11(b): an un-run row is a FAILURE, never a pass). Built from the
+ *  register's OWN declared term and rows so the figures stay in lockstep with `§5.5.1`;
+ *  it exists solely so the report row can prove the `un-run === 0` bound FAILS on an
+ *  abandoned row. */
+export function syntheticUnRunRegisterControlOnly(): ExecReport {
+  const total = declaredTotalReport()
+  // THE DECLARED TYPES IN REGISTER ORDER — read off the same `§5.5.1` row order the id/term
+  // arrays carry, so `P-EX-IM-4` (the ninth row) is an `P-IM` here exactly as it is in the
+  // register (a positional `i < 4 ? …` guess would mis-type it and mis-state the subtotals).
+  const types: readonly RowReport['type'][] = ['P-IM', 'P-IM', 'P-IM', 'P-SM', 'P-SM', 'P-SM', 'P-TP', 'P-TP', 'P-IM']
+  const rows: RowReport[] = REGISTER_ROW_IDS.map((id, i) => ({
+    id,
+    type: types[i],
+    strategyId: STRATEGY_IDS[i],
+    declaredTerm: DECLARED_TERMS[i],
+    attemptsRun: 0,
+    abandoned: DECLARED_TERMS[i],
+    held: 0,
+    broken: 0,
+    state: 'un-run',
+    maxConsecutiveFailures: 0,
+    readings: ['UN-RUN — CONTROL ONLY (the stop rule fired before this row)'],
+  }))
+  return {
+    rows,
+    declaredTotal: total.sum,
+    declaredTerms: total.terms,
+    chain: total.chain,
+    attemptsExecuted: 0,
+    rowsExecuted: 0,
+    rowsHeld: 0,
+    rowsBroken: rows.length,
+    unrunRows: rows.map((x) => x.id),
+    unrunAreFailures: true,
+    stoppedAtRow: rows[0].id,
+    stopReason: 'CONTROL ONLY — a synthetic run in which every row is UN-RUN',
+    registerReasons: rows.map((x) => `${x.id} (${x.strategyId}) — UN-RUN (CONTROL ONLY)`),
+    subtotals: {
+      im: DECLARED_TERMS[0] + DECLARED_TERMS[1] + DECLARED_TERMS[2] + DECLARED_TERMS[8],
+      sm: DECLARED_TERMS[3] + DECLARED_TERMS[4] + DECLARED_TERMS[5],
+      tp: DECLARED_TERMS[6] + DECLARED_TERMS[7],
+    },
+  }
+}
+
 // ---- SOURCE PROBES (the static/existence rows ride the same reads) ----------------------
 export function sourceOf(path: string): string {
   return readFileSync(path, 'utf8')

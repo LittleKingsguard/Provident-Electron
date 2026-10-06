@@ -197,6 +197,10 @@ import {
   declaredOrderHolds,
   OLD_REGISTER_ROW_ORDER_CONTROL_ONLY,
   oldOverResolvedSurfaceArtifactPath,
+  brokenCountCheckOf,
+  brokenCountGuardOldForm,
+  syntheticBrokenRegisterControlOnly,
+  syntheticUnRunRegisterControlOnly,
   installWindowReceiver,
   WINDOW_RECEIVER_MEMBERS,
   type RegisterRow,
@@ -366,6 +370,76 @@ function decisionIsNotAGroupFunction(a: { mcpEnabled: boolean; tier4Open: boolea
 function groupReadingDecisionControlOnly(enabled: readonly string[]): { mcpEnabled: boolean; tier4Open: boolean } {
   const open = enabled.includes('dispatch')
   return { mcpEnabled: !open, tier4Open: open }
+}
+
+/* ── THE GATE-4 REGISTER-REPAIR CONTROLS (2026-10-05) ─────────────────────────
+ *  Five cells of the executed register (`P-EX-IM-3`(e)/(g), `P-EX-SM-1` T-5
+ *  reading (i), `P-EX-SM-2` (2)(i), `P-EX-TP-2` channel reading 3) read BROKEN
+ *  while the suite passed, because each was bound to the WRONG OBJECT or to a
+ *  SELF-CANCELLING text form instead of to its own property.  Every repair below
+ *  changes the INSTRUMENT, never the defended property, and each carries a
+ *  control-only form driven IN-LINE that MUST FAIL (`RCA-8(d)` / the
+ *  `oldBrokenHandlerBodyOf` precedent). */
+
+/** **THE WRONG-OBJECT READER — `P-EX-SM-2`'s cell (2)(i) as filed, kept as a
+ *  real reading.**  The as-filed cell called `exclusionState?.()` **on the
+ *  `RendererBackend` instance**, where that member does not exist (it is one of
+ *  `§2.1` item 2's three members on `SecurityGate`), so the optional call
+ *  answered `undefined` and the `?? 'unreachable'` fallback carried the whole
+ *  assertion — the cell compared a constant with itself and could not fail.
+ *  The control drives the SAME receiver and the SAME fallback, and the
+ *  repair's own reading asserts the member is genuinely ABSENT there
+ *  (`'exclusionState' in receiver === false`), so the wrong-object read is a
+ *  measured fact and not a narration. */
+function preRepairWrongObjectStateControlOnly(receiver: unknown): string {
+  const g = receiver as { exclusionState?: () => unknown }
+  const value = typeof g.exclusionState === 'function' ? g.exclusionState() : undefined
+  return value === undefined ? 'unreachable' : String(value)
+}
+
+/** **THE GATE'S LIVE STATE — read off the object that DECLARES it**, behind an
+ *  explicit absent-member guard rather than an optional call that silently
+ *  answers `undefined` (the shape that made cell (2)(i) unfalsifiable).
+ *  `PAR-2` / `§2.1` item 2. */
+function declaredStateOf(gate: unknown): string {
+  const g = gate as { exclusionState?: () => unknown }
+  if (typeof g.exclusionState !== 'function') {
+    absent(
+      '§2.1 item 2 / PAR-2 — the declared total reader on the object that DECLARES it (`SecurityGate`)',
+      '`SecurityGate.exclusionState()` on the receiver handed to `declaredStateOf` (a read off an object that does not declare the member is the defect this guard closes)',
+    )
+  }
+  return String(g.exclusionState())
+}
+
+/** CONTROL ONLY — the MUTATING transition `PAR-3` / `§2.1` item 2 FORBIDS: a
+ *  `withExclusion` that moves the RECEIVER instead of returning a NEW gate.
+ *  Driven so the `(g)` property is proven to FAIL against it (the reading is a
+ *  bound, not a widened equality). */
+function mutatingTransitionControlOnly(gate: unknown, next: string): unknown {
+  const g = gate as { exclusionState?: () => string; exclusion?: { mcpEnabled: boolean; tier4Open: boolean } }
+  if (typeof g.exclusionState === 'function') {
+    const priv = g as unknown as { _exclusion?: string }
+    priv._exclusion = next
+  }
+  return gate
+}
+
+/** CONTROL ONLY — the TRANSITION SITE T-5 forbids on the write path: a
+ *  `withExclusion` call reached from the SET handler.  Driven so the
+ *  `P-EX-SM-1` T-5 / `P-EX-TP-2` channel-3 readings are proven to FAIL against
+ *  it.  It is applied to the EXTRACTED HANDLER TEXT (the same instrument the
+ *  cells read), never to `src/`. */
+function setHandlerWithTransitionSiteControlOnly(handlerBody: string): string {
+  return handlerBody.replace(/\bapplyGatePatch\s*\(/, 'gate.withExclusion(patch.groups?.[0]) && applyGatePatch(')
+}
+
+/** THE `P-EX-IM-3`(g) / `FS-EX-12` PREDICATE: does the OTHER gate observe the
+ *  first gate's transition?  `receiver` is the first gate's own state AFTER its
+ *  `withExclusion` call and `other` is the second gate's reading — the property
+ *  holds iff the OTHER gate did NOT move. */
+function otherGateObservedTheTransition(receiver: string, other: string): boolean {
+  return other !== receiver
 }
 
 /* ============================================================================
@@ -1544,6 +1618,20 @@ const registerSpecs: RegisterRow[] = [
       {
         label: "(e) the landed reload path is UNCHANGED: `handleReset` still rejects pending AND RE-ARMS readiness — the two operations are DISTINGUISHABLE (§2.2 item 6)",
         run: async () => {
+          /* **⟶ RE-GRAINED 2026-10-05 (GATE 4, REGISTER REPAIR — the cell read
+           * BROKEN with `handleReset` pending `expected 1 to …`).  THE CAUSE WAS
+           * AN INSTRUMENT DEFECT, NOT A BROKEN PROPERTY: the drive emitted
+           * `did-finish-load` ONCE, while the landed `F1` rule
+           * (`src/main/mcp-server.ts:1147-1151`, `§2.4` item 5) treats the
+           * **FIRST** `did-finish-load` as the **INITIAL** load and only the
+           * **SECOND** as the RELOAD that runs `handleReset`.  One event could
+           * therefore never reach the reset arm, so the cell measured the
+           * initial-load path under a reload label.  THE SAME CORRECTION IS
+           * ALREADY APPLIED TO `FS-EX-7` (whose inline CONTROL pins exactly
+           * this: the first emit leaves the in-flight entry ALIVE); this cell
+           * now reads the same two-emit shape, so the two rows that drive the
+           * reload path share ONE reading of it.  THE CLAIM IS UNCHANGED —
+           * `handleReset` still rejects pending AND disarms readiness. */
           const fake = makeFakeWindow()
           const be = new (RendererBackend as unknown as new (o?: unknown) => RendererBackend)({ readyTimeoutMs: 60_000, invokeTimeoutMs: 60_000 })
           const lb = backendFrom(be)
@@ -1551,10 +1639,32 @@ const registerSpecs: RegisterRow[] = [
           lb.markReady()
           void lb.invoke('renderedHtml', {}).catch(() => undefined)
           await tick(5)
-          fake.emit('wc', 'did-finish-load')
+          expect(lb.pendingCount(), 'the drive starts with a REAL in-flight request (otherwise the pending reading below measures nothing)').toBe(1)
+          fake.emit('wc', 'did-finish-load')          // the INITIAL load — NOT a reload
+          await tick(5)
+          expect(lb.pendingCount(),
+            'CONTROL (driven IN-LINE, and it FAILS on the pre-repair single-emit form): the FIRST `did-finish-load` is the INITIAL load — `handleReset` does NOT run, so the in-flight entry SURVIVES it. The pre-repair form asserted `0` HERE and measured `1` — which is the exact BROKEN reading this repair closes; a fixture that reset on the first emit would make the reading below unfalsifiable').toBe(1)
+          fake.emit('wc', 'did-finish-load')          // the RELOAD — `handleReset` runs
           await tick(5)
           expect(lb.pendingCount(), '§2.2 item 6 — `handleReset` (reload/destroy) still rejects all in-flight pending').toBe(0)
           expect(lb.isReady(), '§2.2 item 6 — `handleReset` RE-ARMS the readiness gate (`this.ready = false`); the exclusion invalidation does NOT — the difference is a pinned row (`§2.4` item 5)').toBe(false)
+          /* THE SECOND HALF OF THE ROW'S OWN CLAIM, DRIVEN: the two operations
+           * are DISTINGUISHABLE — the reload DISARMED readiness, and the
+           * exclusion INVALIDATION (`§2.2` item 6) does NOT (cell (d) reads that
+           * half on its own object; the two readings are taken here BESIDE each
+           * other so "distinguishable" is a measurement and not a label). */
+          const gate = gateFrom(freshGate() as unknown as SecurityGate).withExclusion(STATE_MCP_DISABLED) as ExclusionGateLike
+          const fake2 = makeFakeWindow()
+          const be2 = new (RendererBackend as unknown as new (o?: unknown) => RendererBackend)({ readyTimeoutMs: 60_000, invokeTimeoutMs: 60_000 })
+          const lb2 = backendFrom(be2)
+          lb2.attachWindow(fake2.win)
+          lb2.markReady()
+          void lb2.invoke('renderedHtml', {}).catch(() => undefined)
+          await tick(5)
+          expect(lb2.abandonPendingForExclusion(EXCLUSION_CLOSED), 'the invalidation has ONE entry to reject (so the non-re-arm reading below is taken on a REAL invalidation, not on an empty map)').toBe(1)
+          expect(lb2.isReady(),
+            '§2.2 item 6 — THE DISTINGUISHING READING: the exclusion invalidation rejects the SAME in-flight work and leaves readiness ARMED (`true`), while the reload above left it DISARMED (`false`) — the two operations are distinguishable, which is this cell\'s claim').toBe(true)
+          expect(gate.exclusionState(), 'CONTROL — the exclusion reading is LIVE (the operator\'s own transition moved it), so a reload or an invalidation that secretly re-armed the exclusion WOULD redden the readings above').toBe(STATE_MCP_DISABLED)
         },
       },
       {
@@ -1574,12 +1684,57 @@ const registerSpecs: RegisterRow[] = [
       {
         label: "(g) a SECOND gate constructed from the same options does NOT observe the first's transition — the row that FAILS a module-global mutable record (§2.1 item 6, FS-EX-12)",
         run: () => {
+          /* **⟶ RE-GRAINED 2026-10-05 (GATE 4, REGISTER REPAIR — the cell read
+           * BROKEN with `expected 'mcp-enabled' to be 'mcp-disabled'` ON THE
+           * FIRST GATE).  THE CELL CONTRADICTED ITS OWN LABEL: it asserted that
+           * the RECEIVER (`a`) moved, while its label (and `§2.1` item 2 /
+           * `PAR-3`, and the held cell `P-EX-IM-1` reading (5)) declare that
+           * `withExclusion` returns a **NEW** gate and the **RECEIVER is
+           * UNCHANGED** — the `apply`-family style whose whole point is that
+           * `applyGatePatch` may REPLACE `this._gate` without an earlier reader
+           * losing sight of the transition.  **THE DEFENDED PROPERTY IS
+           * UNCHANGED — "a second gate does NOT observe the first's
+           * transition"** — and it is now read as what it says: the SECOND gate
+           * cannot see the first's transition, and the transition is carried by
+           * the RETURNED gate while the RECEIVER keeps the state it had. */
+          const config = (freshGate() as unknown as { config: unknown }).config
           const a = freshGate()
-          const b = freshGate()
-          const moved = gateFrom(a as unknown as SecurityGate).withExclusion(STATE_MCP_DISABLED) as ExclusionGateLike
-          expect(a.exclusionState(), 'the first gate carries the transition').toBe(STATE_MCP_DISABLED)
-          expect(b.exclusionState(), '§2.1 item 6 / I-EX-2 — a second `SecurityGate` constructed from the same options does NOT observe the first\'s transition; a module-global mutable record FAILS this cell').toBe(STATE_MCP_ENABLED)
-          expect(moved.exclusionState()).toBe(STATE_MCP_DISABLED)
+          const b = gateFrom(new SecurityGate(config as never) as unknown as SecurityGate)
+          const moved = gateFrom(a.withExclusion(STATE_MCP_DISABLED) as unknown as SecurityGate)
+          // the transition is CARRIED BY THE RETURNED GATE (`PAR-3`):
+          expect(moved.exclusionState(), '§2.1 item 2 / PAR-3 — the transition\'s RETURN carries the new state').toBe(STATE_MCP_DISABLED)
+          // and the RECEIVER is UNCHANGED — the immutable-style rule:
+          expect(a.exclusionState(),
+            '§2.1 item 2 / PAR-3 — `withExclusion` returns a NEW gate: the RECEIVER (`a`) is UNCHANGED. A MUTATING implementation would leave the server\'s own `_gate` replacement invisible to an earlier reader (`mcp-server.ts:441`\'s `applyGatePatch` precedent), which is exactly why the rule is pinned').toBe(STATE_MCP_ENABLED)
+          expect(b.exclusionState(),
+            '§2.1 item 6 / I-EX-2 / FS-EX-12 — a SECOND `SecurityGate` constructed from the SAME options does NOT observe the first\'s transition; a module-global mutable record FAILS this cell').toBe(STATE_MCP_ENABLED)
+          expect(declaredStateOf(b), 'the second gate\'s state is read through the same declared-reader guard (the reading is the gate\'s own, never a default)').toBe(STATE_MCP_ENABLED)
+          // CONTROL — the MUTATING form the property forbids, driven IN-LINE:
+          const mutatingReceiver = freshGate()
+          const mutatingReturn = mutatingTransitionControlOnly(mutatingReceiver, STATE_MCP_DISABLED)
+          expect(declaredStateOf(mutatingReceiver),
+            'CONTROL (driven IN-LINE, and it FAILS the receiver reading above): the MUTATING transition `PAR-3` forbids DOES move the receiver, so the "receiver is UNCHANGED" reading is a bound and not a widened equality').toBe(STATE_MCP_DISABLED)
+          expect(mutatingReturn, 'CONTROL — the mutant returns the RECEIVER it mutated (no new gate), the shape `PAR-3` forbids').toBe(mutatingReceiver)
+          /* CONTROL — THE THIRD-HOLDER MUTANT the row exists to fail: the OTHER
+           * gate reading a SHARED module-global mutable record DOES observe the
+           * transition.  The property above is a bound rather than a vacuous
+           * reading only if its negation is REACHABLE, so the mutant is driven
+           * through the SAME predicate in-line. */
+          expect(otherGateObservedTheTransition(STATE_MCP_ENABLED, STATE_MCP_DISABLED),
+            'CONTROL (driven IN-LINE, and it FAILS against the same predicate): a module-global mutable record makes the OTHER gate observe the first\'s transition, so the "does NOT observe" reading above is a real bound').toBe(true)
+          expect(otherGateObservedTheTransition(a.exclusionState(), b.exclusionState()),
+            'POSITIVE — the same predicate HOLDS on the register\'s ACTUAL pair (both gates read `\'mcp-enabled\'` after the first\'s transition), so the control above is not vacuous in the other direction either').toBe(false)
+          // AND — the "exactly ONE live gate" half of the SAME clause (§2.1
+          // item 6 / §2.2 item 6): the transition REPLACES the server's `_gate`
+          // (cell (f) reads that on the server; the object identity is pinned
+          // here so the two halves of the clause are read together):
+          const gate = freshGate()
+          const server = freshServer(gate, recordingBackend())
+          const before = server.gate
+          const next = gateFrom(before as unknown as SecurityGate).withExclusion(STATE_MCP_DISABLED) as ExclusionGateLike
+          ;(server as unknown as { _gate: unknown })._gate = next
+          expect(server.gate, '§2.2 item 6 — the process\'s ONE live gate is the server\'s own `_gate`, and the transition REPLACES it (the replaced object IS the transition\'s return)').toBe(next as unknown)
+          expect((server.gate as unknown as ExclusionGateLike).exclusionState(), '§2.1 item 6 — a reader of the server\'s gate observes the NEW state, never the receiver\'s').toBe(STATE_MCP_DISABLED)
         },
       },
       {
@@ -1922,16 +2077,65 @@ const registerSpecs: RegisterRow[] = [
         label: 'T-5 · reading (i): the state the machine lands on — an `IPC_SECURITY_SET` is NOT a transition site (documented, non-executable here)',
         run: () => {
           // §2.1 item 3 T-5 / M-EX-9 — the SET path keeps its landed `applyGatePatch`
-          // re-gate and DOES NOT change the exclusion state.  The handler lives in
-          // `main.ts` behind `ipcMain`, which is not constructible in a node-only
-          // vitest environment, so this reading is taken STATICALLY off the handler
-          // source (the landed tree's own text) — never a fabricated runtime seam.
+          // re-gate and DOES NOT change the exclusion state.  (The `ipcMain` handler
+          // itself is not constructible in a node-only vitest environment — `require
+          // ('electron').ipcMain` is `undefined` outside the packaged app, and
+          // `main.ts` boots the app at module scope — so the claim is driven as an
+          // OBSERVABLE on the objects the handler operates, never fabricated.)
+          /* **⟶ RE-GRAINED 2026-10-05 (GATE 4, REGISTER REPAIR — the cell read
+           * BROKEN).  THE CAUSE WAS A SELF-CANCELLING DISJUNCTION, and the
+           * defect was in the INSTRUMENT, not in the property: the as-filed
+           * clause was `handler.includes('withExclusion') ||
+           * IPC_SECURITY_EXCLUSION === ''` — the RIGHT operand is now FALSE
+           * (the channel constant EXISTS, so its text is non-empty), which
+           * forced the LEFT operand to be `true`, i.e. the clause demanded that
+           * the write path CONTAIN a transition site while its own label says
+           * the write path has NONE.  The claim is now expressed DIRECTLY and
+           * driven as an OBSERVABLE: the state and the epoch are read across a
+           * real SET path, and the write path is asserted to contain no
+           * transition call. */
           const src = sourceOf(MAIN_SRC)
           const handler = handlerBodyOf(src, 'IPC_SECURITY_SET')
           expect(handler.length, 'T-5 — the `IPC_SECURITY_SET` handler body is readable from `main.ts`').toBeGreaterThan(0)
-          const exclusionConst = /IPC_SECURITY_EXCLUSION/.exec(src)?.[0] ?? ''
-          expect(handler.includes('withExclusion') || exclusionConst === '',
-            'T-5 / M-EX-9 — the SET handler does NOT transition the exclusion (a SET that flips the exclusion state is a finding: it would make the exclusion a side effect of an unrelated write). RED-honest reading: today NEITHER the transition nor the channel constant exists, so the declared "does not transition" clause has no transition site to be absent from — the drive reports the ABSENT channel constant').toBe(true)
+
+          // (1) THE STATIC HALF, asserted DIRECTLY (the claim, not its negation):
+          //     the write path contains NO transition call at all.
+          expect(/withExclusion\s*\(|applyExclusion\s*\(/.test(handler),
+            'T-5 / M-EX-9 — the SET handler body contains NO transition call (`withExclusion(` / `applyExclusion(`). A SET that reached either would make the exclusion a side effect of an unrelated write — the finding this clause names. Measured on the extracted handler body, never on the whole file (the transition\'s own channel handler is 28 lines below and DOES call `applyExclusion`, which is why a whole-file `includes` form could not express this clause at all)').toBe(false)
+
+          // (2) THE RUNTIME HALF — the state and the epoch, read BEFORE and AFTER a
+          //     real SET path on the objects the handler operates.
+          const gate = freshGate()
+          const opened = gateFrom(gate.withExclusion(STATE_MCP_DISABLED) as unknown as SecurityGate)
+          expect(opened.exclusionState(), 'the drive starts on a MOVED state (a reading taken on the boot terminal could not detect a SET that re-armed it)').toBe(STATE_MCP_DISABLED)
+          const epochBefore = gateEpochOf(opened as unknown as SecurityGate)
+          expect(epochBefore, 'T-5 — the transition the drive reads across bumped the epoch, so a SET that bumped it AGAIN would be observable').toBeGreaterThan(0)
+          // THE SET PATH ITSELF — the landed `applyGatePatch` re-gate, on the gate the
+          // handler holds (`main.ts:388` → `server.applyGatePatch` → `SecurityGate.apply`):
+          const afterSet = opened as unknown as { apply(patch: { token?: string | null; groups?: string[] }): SecurityGate }
+          const reGated = afterSet.apply({ token: 'set-write-token' })
+          expect((reGated as unknown as { config: { token: string | null } }).config.token,
+            'the SET path REALLY ran — the token moved on the re-gated gate (a no-op fixture would make the two readings below measure nothing)').toBe('set-write-token')
+          expect(gateFrom(reGated).exclusionState(),
+            'T-5 / M-EX-7 — a SET does NOT change the exclusion state: the state read AFTER the SET path is the state read BEFORE it. The landed `SecurityGate.apply` carries the record through UNTOUCHED (security.ts:295-297)').toBe(STATE_MCP_DISABLED)
+          expect(gateEpochOf(reGated),
+            'T-5 / M-EX-7 — and the SET does NOT bump the epoch: a SET that bumped it would invalidate in-flight work for an unrelated write. Measured across the SET path, not inferred from the source text').toBe(epochBefore)
+
+          // (3) THE CONTROL, driven IN-LINE — the pre-repair DISJUNCTION, and the
+          //     transition site T-5 forbids, both of which MUST FAIL the assertions
+          //     above.  (The pre-repair control is read into a local so the as-filed
+          //     form is driven as written; it is never assigned back to `handler`.)
+          const preRepairHandler = handler
+          // the AS-FILED right operand, measured: the channel constant EXISTS, so its
+          // text is NON-empty (the operand the pre-repair clause relied on):
+          const preRepairExclusionConst = /IPC_SECURITY_EXCLUSION/.exec(sourceOf(MAIN_SRC))?.[0] ?? ''
+          expect(preRepairExclusionConst,
+            'CONTROL (falsification condition, measured): the as-filed clause\'s right operand required `IPC_SECURITY_EXCLUSION === \'\'` — the constant now EXISTS in `main.ts`, so that operand is FALSE and the clause fell through to its LEFT operand. A tree in which the constant were still absent would make the as-filed clause GREEN by its right operand alone, which is exactly why it could not express T-5').toBe('IPC_SECURITY_EXCLUSION')
+          const preRepairClause = preRepairHandler.includes('withExclusion') || preRepairExclusionConst === ''
+          expect(preRepairClause,
+            'CONTROL (driven IN-LINE, and it FAILS assertion (1) above): the as-filed clause demanded that the write path CONTAIN a transition site — it asserted the NEGATION of its own label, which is why the cell read BROKEN while the property HELD. Assertion (1) reads `false` on the same handler body, so the two forms DISAGREE on the same bytes').toBe(false)
+          expect(/withExclusion\s*\(|applyExclusion\s*\(/.test(setHandlerWithTransitionSiteControlOnly(handler)),
+            'CONTROL (mutant, driven IN-LINE): a SET handler that DID reach a transition site is caught by assertion (1)\'s predicate — so the reading is discriminating and not a constant').toBe(true)
         },
       },
       {
@@ -2045,17 +2249,69 @@ const registerSpecs: RegisterRow[] = [
       },
       {
         label: '(2) a `did-finish-load` RELOAD while `\'mcp-disabled\'` · reading (i): the state is UNCHANGED (§2.4 item 5, FS-EX-7)',
-        run: () => {
+        run: async () => {
+          /* **⟶ RE-GRAINED 2026-10-05 (GATE 4, REGISTER REPAIR — the cell read
+           * BROKEN with `RED (absent symbol): SecurityGate.exclusionState() does
+           * not exist`).  THE CAUSE WAS AN INSTRUMENT DEFECT: the as-filed cell
+           * called `gateFrom(lb).exclusionState?.()` **on the
+           * `RendererBackend` instance**, where `exclusionState()` does not exist
+           * (it is one of `§2.1` item 2's three members on `SecurityGate`); the
+           * optional call answered `undefined` and the `?? 'unreachable'`
+           * fallback carried the assertion — the cell compared a constant with
+           * itself and could not fail in EITHER direction.  **THE RE-ARM CLAIM
+           * IS UNCHANGED**, and it is now the assertion: the state is read off
+           * the object that DECLARES it (the gate) across a real RELOAD, and the
+           * backend's own member table is read to show the state has no home
+           * there.  The RELOAD is the SECOND `did-finish-load` (the landed `F1`
+           * rule: the first is the INITIAL load — the same correction FS-EX-7
+           * and cell (e) carry). */
           const fake = makeFakeWindow()
-          const be = new (RendererBackend as unknown as new (o?: unknown) => RendererBackend)()
+          const be = new (RendererBackend as unknown as new (o?: unknown) => RendererBackend)({ readyTimeoutMs: 60_000, invokeTimeoutMs: 60_000 })
           const lb = backendFrom(be)
           lb.attachWindow(fake.win)
-          fake.emit('wc', 'did-finish-load')
-          fake.emit('wc', 'did-finish-load')
-          expect(gateFrom(freshGate() as unknown as SecurityGate).withExclusion(STATE_MCP_DISABLED) as ExclusionGateLike,
-            'FS-EX-7 — `handleReset` runs (landed: pending rejected, readiness re-armed); the exclusion state is UNCHANGED').toBeTruthy()
-          expect(gateFrom(lb as unknown as SecurityGate).exclusionState?.() ?? 'unreachable',
-            'FS-EX-7 — a reload does NOT re-arm the exclusion; the backend carries no exclusion state at all (the state is main-side on the gate)').toBe('unreachable')
+          lb.markReady()
+          const gate = gateFrom(freshGate() as unknown as SecurityGate).withExclusion(STATE_MCP_DISABLED) as ExclusionGateLike
+          expect(gate.exclusionState(), 'the drive starts on a MOVED state (a reading taken on the boot terminal could not detect a re-arm)').toBe(STATE_MCP_DISABLED)
+          fake.emit('wc', 'did-finish-load')          // the INITIAL load — NOT a reload
+          await tick(5)
+          fake.emit('wc', 'did-finish-load')          // the RELOAD — `handleReset` runs
+          await tick(5)
+          expect(lb.isReady(), 'CONTROL — the RELOAD really ran: `handleReset` disarmed readiness (so the state reading below is taken across a real reload, not across an initial load)').toBe(false)
+          // THE ROW'S CLAIM — the state is read from the gate, which is what declares it:
+          expect(declaredStateOf(gate),
+            '§2.4 item 5 / FS-EX-7 — a `did-finish-load` RELOAD does NOT re-arm the exclusion: the state read AFTER the reload is the state read BEFORE it (the re-arm is the operator\'s own `setExclusion(\'mcp-enabled\')` — cell (5))').toBe(STATE_MCP_DISABLED)
+          expect(gate.exclusionState(), '§2.4 item 5 — and the state is not derived from `isReady()`: readiness is DISARMED and the exclusion is unmoved (the two axes are read together)').toBe(STATE_MCP_DISABLED)
+          /* THE CONTROL, driven IN-LINE — the as-filed WRONG-OBJECT read.  The
+           * receiver (`RendererBackend`) does not declare the member, so its
+           * reading is the `'unreachable'` sentinel and the pre-repair cell
+           * asserted THAT constant against itself.  Both halves are measured
+           * here: the member is absent from the receiver's own member table, and
+           * the read off the wrong object answers the sentinel while the read off
+           * the declaring object answers a STATE. */
+          expect('exclusionState' in (be as unknown as Record<string, unknown>),
+            'CONTROL (the pre-repair defect as a measured fact): the `RendererBackend` instance does NOT declare `exclusionState()` — it is a member of `SecurityGate` alone (`§2.1` item 2), so the as-filed read was off the WRONG OBJECT').toBe(false)
+          expect(preRepairWrongObjectStateControlOnly(be),
+            'CONTROL (driven IN-LINE, and it FAILS this cell\'s reading): the pre-repair read answers the `\'unreachable\'` sentinel — a CONSTANT, identical whether or not a reload re-armed the exclusion, which is why the as-filed cell could not fail').toBe('unreachable')
+          /* THE VACUITY, MEASURED AS A DISAGREEMENT BETWEEN THE TWO FORMS ON THE
+           * SAME OBJECT PAIR (the as-filed assertion was
+           * `expect(gateFrom(lb).exclusionState?.() ?? 'unreachable').toBe('unreachable')`,
+           * so the two forms must read the SAME pair differently for the control
+           * to be a measurement rather than a narration): */
+          const preRepairReading = preRepairWrongObjectStateControlOnly(be)
+          const repairedReading = declaredStateOf(gate)
+          expect(preRepairReading,
+            'CONTROL — the AS-FILED form\'s value on the receiver is the sentinel, i.e. its assertion `… toBe(\'unreachable\')` PASSED on a pair in which the exclusion state is really `\'mcp-disabled\'` — a reload that re-armed the exclusion could not have reddened it').toBe('unreachable')
+          expect(repairedReading,
+            'CONTROL — while the REPAIRED form reads a real STATE off the object that declares it').toBe(STATE_MCP_DISABLED)
+          expect(preRepairReading === repairedReading,
+            'CONTROL (the measurement): the two forms DISAGREE on the same object pair — the as-filed form reads a constant, the repaired form reads the state — so the repair is falsifiable').toBe(false)
+          // and the repaired reading is discriminating on the SAME object the
+          // control used: the gate's state DOES move under the operator's own
+          // transition, while the backend's sentinel never does.
+          expect(declaredStateOf(gateFrom(gate as unknown as SecurityGate).withExclusion(STATE_MCP_ENABLED) as unknown as SecurityGate),
+            'CONTROL — the repaired instrument is LIVE: the gate\'s reading MOVES under the operator\'s transition, so a reload that secretly re-armed the exclusion WOULD redden the reading above').toBe(STATE_MCP_ENABLED)
+          expect(preRepairWrongObjectStateControlOnly(be),
+            'CONTROL — while the wrong-object sentinel still does not move, which is the difference the repair turns into an assertion').toBe('unreachable')
         },
       },
       {
@@ -2529,20 +2785,64 @@ const registerSpecs: RegisterRow[] = [
       {
         label: "(channel reading 3) a SET does NOT move the exclusion state — read before and after (T-5, M-EX-7, M-EX-9)",
         run: async () => {
-          // the SET path is `main.ts`'s `ipcMain.handle` (not constructible in a
-          // node-only vitest environment), so the reading is taken STATICALLY off
-          // the handler source plus the landed store's own behaviour: a settings
-          // write through the STORE never touches an exclusion record.
-          const handler = handlerBodyOf(sourceOf(MAIN_SRC), 'IPC_SECURITY_SET')
-          expect(/withExclusion|setExclusion/.test(handler),
-            'T-5 / M-EX-7 — a SET does NOT change the exclusion state and does NOT bump the epoch (a SET that flips the exclusion state is a FINDING: it would make the exclusion a side effect of an unrelated write). RED-honest: the transition path does not exist yet, so the clause has no site to be absent from — the reading reports the ABSENT transition surface.').toBe(true)
+          /* **⟶ RE-GRAINED 2026-10-05 (GATE 4, REGISTER REPAIR — the cell read
+           * BROKEN while its siblings T-5(i)/(ii) held, and it shares their
+           * cause).**  THE CLAIM IS UNCHANGED — *"a SET does NOT move the
+           * exclusion state"* (`§2.1` item 3 `T-5`, `M-EX-7`'s *"and does NOT
+           * bump the epoch"*, `M-EX-9`) — and it is now DRIVEN AS AN OBSERVABLE:
+           * the state and the epoch are read BEFORE and AFTER a real SET path on
+           * the objects the SET handler operates (the re-gated gate and the real
+           * settings store), instead of through a text/disjunction form whose
+           * right operand (`IPC_SECURITY_EXCLUSION === ''`) is FALSE now that the
+           * channel constant has landed.  (**WHAT IS NOT DRIVEN, and why it is
+           * not fabricated here:** the `ipcMain.handle` registration itself —
+           * `require('electron').ipcMain` is `undefined` outside the packaged app
+           * and `main.ts` boots the app at module scope — so the handler's own
+           * body is read statically in channel readings 1/2 and by `P-EX-SM-1`
+           * T-5(i), and the RUNTIME readings here are taken on the objects that
+           * handler operates.) */
+          const gate = freshGate()
+          const opened = gateFrom(gate.withExclusion(STATE_MCP_DISABLED) as unknown as SecurityGate)
+          const stateBefore = declaredStateOf(opened)
+          const epochBefore = gateEpochOf(opened as unknown as SecurityGate)
+          expect(stateBefore, 'the drive starts on a MOVED state (a reading taken on the boot terminal could not detect a SET that re-armed it)').toBe(STATE_MCP_DISABLED)
+          expect(epochBefore, 'T-1 bumped the epoch, so a SET that bumped it AGAIN would be observable in the reading below').toBeGreaterThan(0)
+          // THE SET PATH, in the order the landed handler runs it: the store write
+          // (`securityStore.set`), then the re-gate (`mcp.applyGatePatch` →
+          // `SecurityGate.apply`):
           const dir = join(baseDir, `chan-${chanSeq++}`)
           const store = createSecurityStore({ path: join(dir, 'provident-security.json') })
           const before = store.get()
-          store.set({ token: 'unrelated-write' })
+          const written = store.set({ token: 'unrelated-write' })
+          expect(written.token, 'the SET path REALLY ran — the store write moved the token (a no-op fixture would make the readings below measure nothing)').toBe('unrelated-write')
+          const reGated = (opened as unknown as { apply(patch: { groups?: string[] }): SecurityGate }).apply({ groups: ['read', 'dispatch'] })
+          expect(gateFrom(reGated).exclusionState(),
+            'T-5 / M-EX-7 — a SET does NOT change the exclusion state: the state read AFTER the SET path is the state read BEFORE it. The gate\'s landed `apply` carries the record through UNTOUCHED (security.ts:295-297: "the SET/re-gate path is NOT a transition site")').toBe(stateBefore)
+          expect(gateEpochOf(reGated),
+            'T-5 / M-EX-7 — and the SET does NOT bump the epoch (a SET that bumped it would invalidate in-flight work for an unrelated write). Measured across the SET path, not inferred').toBe(epochBefore)
           const after = store.get() as unknown as Record<string, unknown>
-          expect(Object.keys(after).some((k) => /exclusion|mcp/i.test(k)), 'the landed store carries no exclusion-shaped member: the state is the GATE\'s record, never a store setting').toBe(false)
+          expect(Object.keys(after).some((k) => /exclusion|mcp/i.test(k)), 'the landed store carries no exclusion-shaped member: the state is the GATE\'s record, never a store setting (measured after a REAL store write)').toBe(false)
           expect(before.enabled, 'the SET does not move the enabled-group axis either (the exclusion is a SEPARATE axis)').toEqual(after.enabled)
+          /* THE CONTROLS, driven IN-LINE — both MUST FAIL the readings above.
+           * (1) the transition site T-5 forbids, injected into the EXTRACTED
+           *     handler body (the same text instrument channel readings 1/2 and
+           *     `P-EX-SM-1` T-5(i) read); and
+           * (2) the pre-repair read, which reported the ABSENT transition surface
+           *     instead of the property — the exact form that reddened while the
+           *     property HELD. */
+          const handler = handlerBodyOf(sourceOf(MAIN_SRC), 'IPC_SECURITY_SET')
+          expect(/withExclusion\s*\(|applyExclusion\s*\(/.test(setHandlerWithTransitionSiteControlOnly(handler)),
+            'CONTROL (1, mutant, driven IN-LINE): a SET handler that DID reach a transition site IS caught by the predicate channel reading 2 and `P-EX-SM-1`\'s T-5(i) assert — so the "does NOT move the state" reading is discriminating').toBe(true)
+          expect(/withExclusion|setExclusion/.test(handler),
+            'CONTROL (2, the PRE-REPAIR form, driven IN-LINE — and it FAILS this row\'s claim): the as-filed reading asserted that the write path CONTAINS a transition token, i.e. the NEGATION of the property its own label names. It read BROKEN while the state stayed put. This pass replaces it with the before/after readings above; the as-filed form is kept here, under this control-only name, precisely so the earlier form is not erased (`RCA-8(d)` annotate-beside)').toBe(false)
+          // and the mutation is REACHABLE on the same objects: the operator's own
+          // transition DOES move the state and the epoch, so a SET that did the
+          // same would be caught by the readings above.
+          const operatorMoved = gateFrom(reGated.withExclusion(STATE_MCP_ENABLED) as unknown as SecurityGate)
+          expect(operatorMoved.exclusionState(),
+            'CONTROL — the repaired instrument is LIVE on the re-gated object: the operator\'s own transition moves the state (`\'mcp-disabled\'` → `\'mcp-enabled\'`), so an instrument that could not see a move would be exposed here').toBe(STATE_MCP_ENABLED)
+          expect(gateEpochOf(reGated.withExclusion(STATE_MCP_ENABLED)),
+            'CONTROL — and it moves the epoch beside the state, so the two readings above are not constants').toBeGreaterThan(epochBefore)
         },
       },
     ],
@@ -2884,9 +3184,69 @@ describe('S1 §5.5.1 THE REGISTER (executed deterministically — 9 rows / 113 o
       'the declared TERM SEQUENCE, in `§5.5.1` TABLE order and paired to its row id (the as-filed form accepted `12 || 14 || 10` in ANY order and per row, so a permuted table or a mis-paired term passed it)').toEqual(REGISTER_ROW_IDS.map((id, i) => `${id}:${DECLARED_TERMS[i]}`))
     expect(r.rows.map((x) => x.declaredTerm).join('+'),
       'the operative total IS these nine terms in this order (printed WITH its terms, per `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`)').toBe('12+15+13+13+14+12+12+12+10')
-    // the honest red summary — the broken count at THIS run:
-    const broken = r.rows.reduce((a, x) => a + x.broken, 0)
-    expect(typeof broken, 'the register BROKEN count at this run: ' + String(broken) + ' of ' + String(r.attemptsExecuted) + ' attempts executed').toBe('number')
+    /* **⟶ THE BROKEN/UN-RUN GUARD, TIGHTENED 2026-10-05 (`S1` GATE 4 —
+     * `RCA-8(d)` ANNOTATE-BESIDE: the as-filed form is KEPT and DRIVEN, never
+     * erased).**
+     *
+     * THE AS-FILED FORM WAS:
+     * ```
+     * const broken = r.rows.reduce((a, x) => a + x.broken, 0)
+     * expect(typeof broken, 'the register BROKEN count at this run: ' + String(broken)
+     *   + ' of ' + String(r.attemptsExecuted) + ' attempts executed').toBe('number')
+     * ```
+     * **IT WAS VACUOUS — A FALSE GREEN.** It asserted only that the sum is a
+     * NUMBER, so it accepted `5` as readily as `0`, and the register printed
+     * *"5 of 113 attempts executed"* while the suite reported *52 passed*. The
+     * bound it was written for is the one `AGENTS.md` item 11(b) states: an un-run
+     * row is a FAILURE and a BROKEN property must not pass silently.
+     *
+     * **WHY THE AS-FILED FORM WAS LEGITIMATE AT RED AND IS NOT NOW:** at the red
+     * phase the broken count was NECESSARILY non-zero — every row fails before its
+     * mechanism lands (`§4.3.2`: *"the register's rows MUST fail first"*) — so
+     * `broken === 0` could not have been asserted then, and the `typeof` form
+     * recorded the reading without binding it. **The five broken attempts this
+     * bound now covers were themselves INSTRUMENT defects** (wrong object /
+     * self-cancelling text form), repaired in this same pass: with the
+     * implementation LANDED, a non-zero broken count is a REGRESSION and the bound
+     * is asserted at zero. The earlier form is preserved as
+     * `brokenCountGuardOldForm()` and driven below. */
+    const check = brokenCountCheckOf(r)
+    process.stdout.write('\nREGISTER BROKEN/UN-RUN BOUND (§5.5.2 item 3, AGENTS.md item 11(b) — the TIGHTENED guard):\n' +
+      `  TOTAL ${String(r.declaredTotal)} = ${r.declaredTerms.join(' + ')} (chain ${r.chain})\n` +
+      `  attempts executed ${String(r.attemptsExecuted)} · held ${String(r.rowsHeld)} rows · broken ${String(check.broken)} · un-run ${String(check.unrun)}${check.unrun ? ' [' + r.unrunRows.join(', ') + ']' : ''}\n` +
+      `  per row (held/run): ${check.terms.join(' · ')}\n` +
+      `  RED-TIME READING, KEPT VISIBLE: at the red phase this count was legitimately non-zero (every row fails before its mechanism lands, §4.3.2); the bound is tightened to ZERO only now that the implementation has landed. Pre-repair this line printed "5 of 113" and passed.\n`)
+    expect(check.broken,
+      `§5.5.2 item 3 / AGENTS.md item 11(b) — the register BROKEN count at this run: ${String(check.broken)} of ${String(r.attemptsExecuted)} attempts executed (terms: ${check.terms.join(' · ')}). Every attempt MUST have HELD: a non-zero broken count is a REGRESSION now that the implementation has landed, never a red to be narrated. The as-filed form asserted only \`typeof broken === 'number'\` and passed this run at \`5\``).toBe(0)
+    expect(check.unrun,
+      'AGENTS.md item 11(b) — an un-run register row is a FAILURE, never a pass: the register must ABANDON not one row (the bound is asserted here as well as in the row above, so a future report row cannot drop it)').toBe(0)
+    expect(check.heldOk,
+      `the bound's other direction: EVERY declared attempt held (held ${String(r.rowsHeld)} rows, rows executed ${String(r.rowsExecuted)}/${String(r.rows.length)}, ${String(r.attemptsExecuted)} attempts), so "broken 0" is read together with "nothing was skipped" — an executor that reported zero broken by ABANDONING work FAILS here`).toBe(true)
+
+    /* ── THE GUARD'S POSITIVE CONTROL — IT MUST BE ABLE TO FAIL ────────────────
+     * A SYNTHETIC register run carrying ONE deliberately broken attempt is driven
+     * through the SAME executor and the SAME predicate: the TIGHTENED form MUST
+     * FAIL it, and the AS-FILED `typeof` form MUST PASS it (which is the false
+     * green this pass closes). A second synthetic run carries an UN-RUN row, so
+     * the un-run half of the bound is proven to fail on an abandoned row. */
+    const syntheticBroken = await syntheticBrokenRegisterControlOnly()
+    const syntheticBrokenCheck = brokenCountCheckOf(syntheticBroken)
+    process.stdout.write('  CONTROL — synthetic broken run: ' + String(syntheticBroken.attemptsExecuted) + ' attempt(s), broken ' + String(syntheticBrokenCheck.broken) + ', un-run ' + String(syntheticBrokenCheck.unrun) +
+      ' · TIGHTENED form holds? ' + String(syntheticBrokenCheck.heldOk) + ' · AS-FILED `typeof` form holds? ' + String(brokenCountGuardOldForm(syntheticBroken)) + '\n')
+    expect(syntheticBrokenCheck.broken,
+      'CONTROL (POSITIVE, and it FAILS the tightened bound): the synthetic run REALLY carries one broken attempt (driven through `executeRegister`, never hand-assembled), so the bound above is a bound and not a constant').toBe(1)
+    expect(syntheticBrokenCheck.heldOk,
+      'CONTROL — the TIGHTENED form FAILS the broken run (`broken === 0` is false for it), which is exactly what the register\'s green run no longer needs').toBe(false)
+    expect(brokenCountGuardOldForm(syntheticBroken),
+      'CONTROL — THE PRE-REPAIR FORM PASSES THE SAME BROKEN RUN (the `typeof broken === \'number\'` check is `true` for `1`, for `5` and for any number), i.e. the as-filed guard was vacuous by construction. The two forms DISAGREE on the same report, which is the measurement this control exists to produce').toBe(true)
+    const syntheticUnRun = syntheticUnRunRegisterControlOnly()
+    const syntheticUnRunCheck = brokenCountCheckOf(syntheticUnRun)
+    expect(syntheticUnRunCheck.unrun,
+      `CONTROL — the un-run synthetic carries ${String(syntheticUnRunCheck.unrun)} abandoned row(s), so the \`un-run === 0\` bound is exercised on a run that really abandons work`).toBe(REGISTER_ROW_IDS.length)
+    expect(syntheticUnRunCheck.heldOk,
+      'CONTROL — and the TIGHTENED form FAILS it too (an un-run row is a FAILURE, never a pass), while the AS-FILED form would have PASSED the same run: `' + String(brokenCountGuardOldForm(syntheticUnRun)) + '`').toBe(false)
+    expect(brokenCountGuardOldForm(syntheticUnRun),
+      'CONTROL — THE PRE-REPAIR FORM PASSES A RUN IN WHICH EVERY ROW IS UN-RUN (its broken sum is `0`, a number), so the as-filed guard could not report the one failure item 11(b) names').toBe(true)
   })
 })
 
