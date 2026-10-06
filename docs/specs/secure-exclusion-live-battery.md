@@ -195,7 +195,7 @@ rewritten here). THE ROW SET IS UNMOVED: the same `7` subjects + the same `1` pr
   "commands": [
     { "cmd": "node tests/secure-exclusion-live.mjs", "exit": 0,
       "observed": "30 recorded rows = 30 PASS / 0 FAIL / 0 MANUAL / 0 PARKED (the driver's own summary line, whose terms are the rows); this figure was reproduced on a SECOND execution of the same command, and this record carries the final run's values" },
-    { "cmd": "npm test", "exit": 0, "observed": "Test Files 86 passed (86) · Tests 2731 passed | 2 skipped (2733)" },
+    { "cmd": "npm test", "exit": 0, "observed": "Test Files 86 passed (86) · Tests 2729 passed | 2 skipped (2731) — the POST-COMMIT reading (the pre-commit reading, while this driver was edited-but-uncommitted, was 1 failed | 85 passed (86): tests/gutter.test.ts R-12 §3.4's raw dirty-path reading; see §8 item 12)" },
     { "cmd": "npm run typecheck", "exit": 0, "observed": "clean" },
     { "cmd": "npm run typecheck:tests", "exit": 0, "observed": "clean" },
     { "cmd": "npm run build", "exit": 0, "observed": "clean (main cjs + preload cjs + renderer esm)" },
@@ -421,8 +421,8 @@ re-run; exit `0`). It is a **`tests/**`-owned harness**, the second of the two a
    `tests/ui-leg-contract.test.ts`'s `helperCandidates()` takes
    `readdirSync(scripts).filter(f => f.endsWith('.mjs') && !RESERVED_SCRIPT_NAMES.has(f))` and asserts the
    FIRST candidate carries `mkdtempSync`, `tmpdir()`, `PINNED_SPAWN_FLAGS`, `spawn(`, `process.on('exit')`
-   and `rmSync`. **MEASURED in this pass**: with the driver under `tests/**`, `npm test` is
-   **`86 files / 2731 passed | 2 skipped / 0 failed`** — see item 7 of `§8` for the ONE interaction this
+   and `rmSync`. **MEASURED in this pass (post-commit)**: with the driver under `tests/**`, `npm test` is
+   **`86 files / 2729 passed | 2 skipped (2731) / 0 failed`** — see item 12 of `§8` for the ONE interaction this
    file has with a landed sibling row (the uncommitted-edit reading), which is closed by the gate commit.
 2. **`scripts/electron-ui.mjs` was NOT extended and its `R4` row was NOT weakened.** That row scans the
    leg's own code (comments stripped) for the call-site SET
@@ -555,13 +555,14 @@ its dated record; the re-run's own limits are items 8–13.**
     the layer labels — **with the standing warning that a `[T]`/node-suite green is NOT assembled-app
     evidence and that this record's `[U]` claims rest on the CDP + MCP readings quoted in `§5`**.
 12. **IT DID NOT RE-RUN THE UNIT'S OWN TEST FILES, AND ITS LEG FIGURES ARE THE ONES `commands[]` CARRIES**
-    (`npm test` `86 files / 2731 passed | 2 skipped / 0 failed`, `npm run typecheck` and
-    `npm run typecheck:tests` and `npm run build` all exit `0`). **The one interaction to know about, MEASURED
-    this pass and the same one the as-filed pass met**: `tests/gutter.test.ts` `R-12 §3.4` reads the WORKING
-    TREE's raw dirty paths, so **while this driver was edited-but-uncommitted that row reported
-    `liveUnaccounted: ["tests/secure-exclusion-live.mjs"]` and `npm test` read `1 failed | 85 passed (86)`**;
-    **committing the two files closed it** and the figure above is the post-commit reading. **A later pass
-    that edits a `tests/**` artifact will meet it again — and the fix is the commit, not a row change.**
+    (`npm test` **post-commit** → `86 files / 2729 passed | 2 skipped (2731) / 0 failed`, exit `0`;
+    `npm run typecheck` and `npm run typecheck:tests` and `npm run build` all exit `0`, re-run after the
+    commit). **The one interaction to know about, MEASURED this pass and the same one the as-filed pass met**:
+    `tests/gutter.test.ts` `R-12 §3.4` reads the WORKING TREE's raw dirty paths, so **while this driver was
+    edited-but-uncommitted that row reported `liveUnaccounted: ["tests/secure-exclusion-live.mjs"]` and
+    `npm test` read `1 failed | 85 passed (86)`**; **committing the two files closed it** and the figure above
+    is the post-commit reading. **A later pass that edits a `tests/**` artifact will meet it again — and the
+    fix is the commit, not a row change.**
 13. **IT RAN NO LIVE BATTERY FOR ANY OTHER UNIT** and makes no claim outside `U-SECURE-EXCLUSION`. **It also
     did not convert the tracker's `F-1`…`F-6` dispositions** — those live in `docs/next-steps.md`'s gate-6 row
     and `docs/specs/secure-exclusion.md` `§3b`'s gate-6 clause, which this pass may not edit; **this file
