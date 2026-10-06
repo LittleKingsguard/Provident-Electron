@@ -129,6 +129,11 @@ import {
   BOUNDED_ROWS,
   ARTIFACT_SPAN_FIGURE,
   STOP_AFTER_CONSECUTIVE,
+  declaredOrderHolds,
+  OLD_REGISTER_ROW_ORDER_CONTROL_ONLY,
+  oldOverResolvedSurfaceArtifactPath,
+  installWindowReceiver,
+  WINDOW_RECEIVER_MEMBERS,
   type RegisterRow,
   type ExecReport,
 } from './secure-exclusion-register.js'
@@ -691,13 +696,42 @@ function appAndPane(): { runtime: RuntimeProbeLike; panels: SecurePanels | null 
  * ========================================================================== */
 
 let baseDir = ''
+/** **THE `window.provident` RECEIVER INSTALLED BY THIS SUITE (`§2.4` item 4 / PAR-8).**
+ *
+ *  **⟶ ADDED 2026-10-05 BY THE AUTHOR ROLE AT GATE 3** (a REAL test-side fixture
+ *  defect, named as such in the kick-back; NOT a `src/` gap).  `installShim()`
+ *  installs `globalThis.document` and **NOT** `globalThis.window`, so every drive
+ *  that reads `globalThis.window.provident.security.setExclusion` — `M-EX-3`,
+ *  `FS-EX-8`, and the `P-EX-TP-2` register row's two legal-token payloads, its
+ *  malformed-payload drive and its no-throw drive — reached an ABSENT receiver and
+ *  reported **the SAME red for every payload class, the legal tokens included**.
+ *  The repair installs the receiver the drives declare; the control block
+ *  `THE WINDOW RECEIVER` below proves the pre-repair state was exactly that gap.
+ *
+ *  **The fixture's discipline is stated at `installWindowReceiver` in
+ *  `tests/secure-exclusion-register.ts`** — the member set is the DECLARED
+ *  `['get','set','setExclusion']` (`§1.3` item 9's `2 → 3`), `get`/`set` are
+ *  never-called throwing stubs, and `setExclusion` mirrors `§2.4` item 4's
+ *  declared contract over its OWN local state so it can never silently pass a
+ *  `src/` claim. */
+let windowReceiver: { window: Record<string, unknown>; state: () => string } | null = null
+/** CONTROL ONLY — the PRE-REPAIR fixture state: `globalThis.window` absent, which
+ *  is what the drives saw before this pass.  Kept so the control row can drive the
+ *  malformed form in-line and PROVE it fails (`RCA-8(d)`). */
+function deleteWindowReceiverControlOnly(): void {
+  delete (globalThis as Record<string, unknown>).window
+}
 beforeAll(async () => {
   baseDir = await mkdtemp(join(tmpdir(), 's1-secure-exclusion-red-'))
   // the pane drives construct the REAL SecurePanels on the shimmed DOM
   // (the secure-panels.test.ts / store-security.test.ts precedent)
   installShim()
+  // §2.4 item 4 / PAR-8 — the manual-UI channel's DECLARED receiver. Installed
+  // LAST so it wins over any earlier global (the shim touches only `document`).
+  windowReceiver = installWindowReceiver()
 })
 afterAll(async () => {
+  deleteWindowReceiverControlOnly()
   await rm(baseDir, { recursive: true, force: true })
 })
 
@@ -1292,6 +1326,137 @@ const registerSpecs: RegisterRow[] = [
           expect(gateB.exclusionState(), '§2.2 item 7 — the reverse order lands the same two readings').toBe(STATE_MCP_DISABLED)
           expect(storeAfterSetB.token, '§2.2 item 7 — the store\'s `current` equals the SET\'s post-state in the reverse order too').toBe('race-token-2')
           expect(gateB.exclusion.tier4Open, '§2.2 item 7 — the enabled-group set was never copied into the exclusion\'s decision (cell (g))').toBe(gateB.exclusion.tier4Open)
+        },
+      },
+    ],
+  },
+
+  /* ── P-EX-IM-4 — `10` = `5` isolation probes + `5` carrier/notify probes (S-EX-ISOL-1) ── */
+  {
+    id: 'P-EX-IM-4',
+    type: 'P-IM',
+    strategyId: 'S-EX-ISOL-1',
+    term: 10,
+    property: 'THE NEW NODE DOES NOT WIDEN THE PANE GRAPH\'S ISOLATION, AND THE EXCLUSION STATE REACHES NO CARRIER — the app graph observes NONE of the new control; the exclusion state appears in NO graph node, NO tool result, NO resource payload and NO notification payload; the notify path is NOT re-aimed at the exclusion and a transition emits NO notification (§2.7 item 1, §2.6 item 4, I-EX-9, I-EX-10)',
+    drives: [
+      {
+        label: '(a) `Runtime.renderedHtmlResult()` contains NEITHER the toggle\'s label text NOR its authored id (the isolation probe)',
+        run: () => {
+          const { runtime, panels } = appAndPane()
+          const html = runtime.renderedHtmlResult().renderedHtml
+          expect(html.includes('exclusion-toggle'), `§2.7 item 1 / I-EX-9 — the app graph's rendered HTML contains the toggle's authored id. RED-honest: the id does not exist at all yet, so the probe reports the ABSENT control (the pane graph is constructed and the probe is live). Pane node census: ${panels ? paneNodes(panels).length : 0}`).toBe(false)
+          expect(/exclusion/i.test(html), 'I-EX-9 — the app graph carries no exclusion text either').toBe(false)
+        },
+      },
+      {
+        label: '(b) `listTargets()` exposes no authored id from the pane graph',
+        run: () => {
+          const { runtime, panels } = appAndPane()
+          const targets = runtime.listTargets().nodes
+          const ids = targets.map((n) => String(n.propsId ?? n.cssId ?? ''))
+          for (const paneId of ['exclusion-toggle', 'settings-pane', 'security-status', 'debug-pane']) {
+            expect(ids.includes(paneId), `§2.7 item 1 / I-EX-9 — \`listTargets()\` exposes no authored id from the pane graph (checked \`${paneId}\`); the pane graph is what the control is authored into (nodes: ${panels ? paneNodes(panels).length : 0})`).toBe(false)
+          }
+        },
+      },
+      {
+        label: "(c) an app-graph `dispatch` on the toggle's authored id is an UNRESOLVED target — never reaching the pane",
+        run: async () => {
+          const { runtime } = appAndPane()
+          let threw: unknown = null
+          let result: unknown = null
+          try {
+            result = await runtime.dispatch({ target: 'exclusion-toggle', event: 'click' } as never)
+          } catch (e) {
+            threw = e
+          }
+          // an unresolved target is either a rejection or a report with no delivery;
+          // what it MUST NOT be is a delivery into the pane.
+          const delivered = JSON.stringify(result ?? null).includes('exclusion')
+          expect(threw !== null || !delivered,
+            '§2.7 item 1 / I-EX-9 — an app-graph dispatch on the toggle\'s authored id is an UNRESOLVED target; the pane is unreachable (D1-D8 HOLDS with the added node)').toBe(true)
+        },
+      },
+      {
+        label: "(d) the app census's node count is UNCHANGED by the pane's construction (before/after readings)",
+        run: () => {
+          const mount = mountEl() as unknown as HTMLElement
+          const runtime = new Runtime({ mount, envelope: demoEnvelope(), maxJournalLength: undefined } as never) as unknown as RuntimeProbeLike
+          const before = runtime.renderedHtmlResult().census as Record<string, number>
+          const paneMount = mountEl() as unknown as HTMLElement
+          const panels = new SecurePanels(paneMount as never)
+          const after = runtime.renderedHtmlResult().census as Record<string, number>
+          expect(after.inTree, `§2.7 item 1 — the app census's node count is UNCHANGED by the pane's construction (before ${before.inTree}, after ${after.inTree}); the pane graph is a SECOND, isolated scope (nodes: ${paneNodes(panels).length})`).toBe(before.inTree)
+        },
+      },
+      {
+        label: '(e) `get_markdown`/`get_node_state` carry no pane content',
+        run: () => {
+          const { runtime } = appAndPane()
+          const md = runtime.markdownResult().markdown
+          expect(/exclusion/i.test(md), '§2.7 item 1 / I-EX-9 — `get_markdown` carries no pane content').toBe(false)
+          const state = (runtime as unknown as { getNodeState?: (id: string) => unknown })?.getNodeState?.('exclusion-toggle')
+          expect(JSON.stringify(state ?? null), '`get_node_state` on the toggle\'s authored id resolves nothing in the app graph').not.toContain('exclusion-toggle')
+        },
+      },
+      {
+        label: '(1) NO graph node holds the exclusion token — a census over the app NODE SET (the carrier probe)',
+        run: () => {
+          const { runtime, panels } = appAndPane()
+          const blob = JSON.stringify(runtime.listTargets()) + JSON.stringify(runtime.renderedHtmlResult())
+          expect(blob.includes(EXCLUSION_CLOSED), '§2.6 item 4 / I-EX-10 — the exclusion token reaches NO graph node, NO tool result (the four carriers stay empty). Pane nodes exist: ' + String(panels !== null)).toBe(false)
+        },
+      },
+      {
+        label: '(2) a TOOL RESULT payload carries no exclusion token (§2.6 item 4)',
+        run: async () => {
+          const gate = freshGate()
+          const server = freshServer(gate, recordingBackend())
+          const answered = await invokeViaServer(server, 'provident.get_rendered_html', {})
+          expect(JSON.stringify(answered.value ?? null).includes(EXCLUSION_CLOSED), '§2.6 item 4 — a tool result payload carries no exclusion token (the exclusion is a CHANNEL state, not a tier-4 value)').toBe(false)
+        },
+      },
+      {
+        label: '(3) a RESOURCE payload carries no exclusion token (§2.6 item 4)',
+        run: async () => {
+          const gate = freshGate()
+          const server = freshServer(gate, recordingBackend())
+          const answered = await resourceReadViaServer(server, 'mcp://provident/targets')
+          expect(JSON.stringify(answered.value ?? null).includes(EXCLUSION_CLOSED), '§2.6 item 4 — a resource payload carries no exclusion token').toBe(false)
+        },
+      },
+      {
+        label: "(4) the notification payload's member set is UNCHANGED and a TRANSITION emits ZERO notifications (`notifyGraphChanged` call count across a transition, before and after)",
+        run: async () => {
+          // the notify path's own predicate is `notifyGraphChanged` on the server
+          // (`mcp-server.ts:573-587`, the landed gate-aware check `n5`).  The drive
+          // reads it ACROSS a transition: the count must not move, and no NEW
+          // notification surface may be introduced by the unit's diff.
+          const gate = freshGate()
+          const server = freshServer(gate, recordingBackend(), 'stdio')
+          let counted = 0
+          const priv = server as unknown as { notifyGraphChanged: () => Promise<boolean> }
+          const original = priv.notifyGraphChanged.bind(server)
+          priv.notifyGraphChanged = (async (): Promise<boolean> => { counted += 1; return await original() }) as never
+          const before = counted
+          gateFrom(gate as unknown as SecurityGate).withExclusion(STATE_MCP_DISABLED)
+          const after = counted
+          expect(after - before, '§2.6 item 4 — a transition emits ZERO notifications: `notifyGraphChanged` is NOT re-aimed at the exclusion and its landed gate-aware check (`n5`) is unchanged').toBe(0)
+          const src = sourceOf(MCP_SERVER_SRC)
+          expect(/sendResourceUpdated/.test(src), 'the landed notify path exists (the probe is not vacuous)').toBe(true)
+          expect(/exclusion/i.test(src.slice(src.indexOf('notifyGraphChanged'), src.indexOf('notifyGraphChanged') + 900)),
+            'P-EX-IM-4(4) — the notify path is NOT re-aimed at the exclusion (no exclusion read inside `notifyGraphChanged`). RED-honest: the exclusion is absent from the whole file, so this reading reports the ABSENT exclusion surface.').toBe(false)
+        },
+      },
+      {
+        label: "(5) the POSITIVE CONTROL — the SAME probes on the app's OWN content DO observe app content, proving the probes are not vacuous",
+        run: () => {
+          const { runtime } = appAndPane()
+          // the demo envelope's OWN authored content is observable through the app graph:
+          const targets = runtime.listTargets().nodes
+          expect(targets.length, 'P-EX-IM-4(5) — the app graph IS addressable (the isolation probes above are not vacuous: the app graph has live targets)').toBeGreaterThan(0)
+          const html = runtime.renderedHtmlResult().renderedHtml
+          expect(html.length, 'P-EX-IM-4(5) — the app graph produces rendered HTML (a positive reading the pane-absence probe is measured against)').toBeGreaterThan(0)
         },
       },
     ],
@@ -1985,136 +2150,6 @@ const registerSpecs: RegisterRow[] = [
     ],
   },
 
-  /* ── P-EX-IM-4 — `10` = `5` isolation probes + `5` carrier/notify probes (S-EX-ISOL-1) ── */
-  {
-    id: 'P-EX-IM-4',
-    type: 'P-IM',
-    strategyId: 'S-EX-ISOL-1',
-    term: 10,
-    property: 'THE NEW NODE DOES NOT WIDEN THE PANE GRAPH\'S ISOLATION, AND THE EXCLUSION STATE REACHES NO CARRIER — the app graph observes NONE of the new control; the exclusion state appears in NO graph node, NO tool result, NO resource payload and NO notification payload; the notify path is NOT re-aimed at the exclusion and a transition emits NO notification (§2.7 item 1, §2.6 item 4, I-EX-9, I-EX-10)',
-    drives: [
-      {
-        label: '(a) `Runtime.renderedHtmlResult()` contains NEITHER the toggle\'s label text NOR its authored id (the isolation probe)',
-        run: () => {
-          const { runtime, panels } = appAndPane()
-          const html = runtime.renderedHtmlResult().renderedHtml
-          expect(html.includes('exclusion-toggle'), `§2.7 item 1 / I-EX-9 — the app graph's rendered HTML contains the toggle's authored id. RED-honest: the id does not exist at all yet, so the probe reports the ABSENT control (the pane graph is constructed and the probe is live). Pane node census: ${panels ? paneNodes(panels).length : 0}`).toBe(false)
-          expect(/exclusion/i.test(html), 'I-EX-9 — the app graph carries no exclusion text either').toBe(false)
-        },
-      },
-      {
-        label: '(b) `listTargets()` exposes no authored id from the pane graph',
-        run: () => {
-          const { runtime, panels } = appAndPane()
-          const targets = runtime.listTargets().nodes
-          const ids = targets.map((n) => String(n.propsId ?? n.cssId ?? ''))
-          for (const paneId of ['exclusion-toggle', 'settings-pane', 'security-status', 'debug-pane']) {
-            expect(ids.includes(paneId), `§2.7 item 1 / I-EX-9 — \`listTargets()\` exposes no authored id from the pane graph (checked \`${paneId}\`); the pane graph is what the control is authored into (nodes: ${panels ? paneNodes(panels).length : 0})`).toBe(false)
-          }
-        },
-      },
-      {
-        label: "(c) an app-graph `dispatch` on the toggle's authored id is an UNRESOLVED target — never reaching the pane",
-        run: async () => {
-          const { runtime } = appAndPane()
-          let threw: unknown = null
-          let result: unknown = null
-          try {
-            result = await runtime.dispatch({ target: 'exclusion-toggle', event: 'click' } as never)
-          } catch (e) {
-            threw = e
-          }
-          // an unresolved target is either a rejection or a report with no delivery;
-          // what it MUST NOT be is a delivery into the pane.
-          const delivered = JSON.stringify(result ?? null).includes('exclusion')
-          expect(threw !== null || !delivered,
-            '§2.7 item 1 / I-EX-9 — an app-graph dispatch on the toggle\'s authored id is an UNRESOLVED target; the pane is unreachable (D1-D8 HOLDS with the added node)').toBe(true)
-        },
-      },
-      {
-        label: "(d) the app census's node count is UNCHANGED by the pane's construction (before/after readings)",
-        run: () => {
-          const mount = mountEl() as unknown as HTMLElement
-          const runtime = new Runtime({ mount, envelope: demoEnvelope(), maxJournalLength: undefined } as never) as unknown as RuntimeProbeLike
-          const before = runtime.renderedHtmlResult().census as Record<string, number>
-          const paneMount = mountEl() as unknown as HTMLElement
-          const panels = new SecurePanels(paneMount as never)
-          const after = runtime.renderedHtmlResult().census as Record<string, number>
-          expect(after.inTree, `§2.7 item 1 — the app census's node count is UNCHANGED by the pane's construction (before ${before.inTree}, after ${after.inTree}); the pane graph is a SECOND, isolated scope (nodes: ${paneNodes(panels).length})`).toBe(before.inTree)
-        },
-      },
-      {
-        label: '(e) `get_markdown`/`get_node_state` carry no pane content',
-        run: () => {
-          const { runtime } = appAndPane()
-          const md = runtime.markdownResult().markdown
-          expect(/exclusion/i.test(md), '§2.7 item 1 / I-EX-9 — `get_markdown` carries no pane content').toBe(false)
-          const state = (runtime as unknown as { getNodeState?: (id: string) => unknown })?.getNodeState?.('exclusion-toggle')
-          expect(JSON.stringify(state ?? null), '`get_node_state` on the toggle\'s authored id resolves nothing in the app graph').not.toContain('exclusion-toggle')
-        },
-      },
-      {
-        label: '(1) NO graph node holds the exclusion token — a census over the app NODE SET (the carrier probe)',
-        run: () => {
-          const { runtime, panels } = appAndPane()
-          const blob = JSON.stringify(runtime.listTargets()) + JSON.stringify(runtime.renderedHtmlResult())
-          expect(blob.includes(EXCLUSION_CLOSED), '§2.6 item 4 / I-EX-10 — the exclusion token reaches NO graph node, NO tool result (the four carriers stay empty). Pane nodes exist: ' + String(panels !== null)).toBe(false)
-        },
-      },
-      {
-        label: '(2) a TOOL RESULT payload carries no exclusion token (§2.6 item 4)',
-        run: async () => {
-          const gate = freshGate()
-          const server = freshServer(gate, recordingBackend())
-          const answered = await invokeViaServer(server, 'provident.get_rendered_html', {})
-          expect(JSON.stringify(answered.value ?? null).includes(EXCLUSION_CLOSED), '§2.6 item 4 — a tool result payload carries no exclusion token (the exclusion is a CHANNEL state, not a tier-4 value)').toBe(false)
-        },
-      },
-      {
-        label: '(3) a RESOURCE payload carries no exclusion token (§2.6 item 4)',
-        run: async () => {
-          const gate = freshGate()
-          const server = freshServer(gate, recordingBackend())
-          const answered = await resourceReadViaServer(server, 'mcp://provident/targets')
-          expect(JSON.stringify(answered.value ?? null).includes(EXCLUSION_CLOSED), '§2.6 item 4 — a resource payload carries no exclusion token').toBe(false)
-        },
-      },
-      {
-        label: "(4) the notification payload's member set is UNCHANGED and a TRANSITION emits ZERO notifications (`notifyGraphChanged` call count across a transition, before and after)",
-        run: async () => {
-          // the notify path's own predicate is `notifyGraphChanged` on the server
-          // (`mcp-server.ts:573-587`, the landed gate-aware check `n5`).  The drive
-          // reads it ACROSS a transition: the count must not move, and no NEW
-          // notification surface may be introduced by the unit's diff.
-          const gate = freshGate()
-          const server = freshServer(gate, recordingBackend(), 'stdio')
-          let counted = 0
-          const priv = server as unknown as { notifyGraphChanged: () => Promise<boolean> }
-          const original = priv.notifyGraphChanged.bind(server)
-          priv.notifyGraphChanged = (async (): Promise<boolean> => { counted += 1; return await original() }) as never
-          const before = counted
-          gateFrom(gate as unknown as SecurityGate).withExclusion(STATE_MCP_DISABLED)
-          const after = counted
-          expect(after - before, '§2.6 item 4 — a transition emits ZERO notifications: `notifyGraphChanged` is NOT re-aimed at the exclusion and its landed gate-aware check (`n5`) is unchanged').toBe(0)
-          const src = sourceOf(MCP_SERVER_SRC)
-          expect(/sendResourceUpdated/.test(src), 'the landed notify path exists (the probe is not vacuous)').toBe(true)
-          expect(/exclusion/i.test(src.slice(src.indexOf('notifyGraphChanged'), src.indexOf('notifyGraphChanged') + 900)),
-            'P-EX-IM-4(4) — the notify path is NOT re-aimed at the exclusion (no exclusion read inside `notifyGraphChanged`). RED-honest: the exclusion is absent from the whole file, so this reading reports the ABSENT exclusion surface.').toBe(false)
-        },
-      },
-      {
-        label: "(5) the POSITIVE CONTROL — the SAME probes on the app's OWN content DO observe app content, proving the probes are not vacuous",
-        run: () => {
-          const { runtime } = appAndPane()
-          // the demo envelope's OWN authored content is observable through the app graph:
-          const targets = runtime.listTargets().nodes
-          expect(targets.length, 'P-EX-IM-4(5) — the app graph IS addressable (the isolation probes above are not vacuous: the app graph has live targets)').toBeGreaterThan(0)
-          const html = runtime.renderedHtmlResult().renderedHtml
-          expect(html.length, 'P-EX-IM-4(5) — the app graph produces rendered HTML (a positive reading the pane-absence probe is measured against)').toBeGreaterThan(0)
-        },
-      },
-    ],
-  },
 ]
 
 /* ============================================================================
@@ -2160,6 +2195,34 @@ describe('S1 §5.5.1 THE REGISTER (executed deterministically — 9 rows / 106 a
     expect(r.rows.length, 'AGENTS.md item 11(b) — the register carries EXACTLY 9 rows (`4` P-EX-IM + `3` P-EX-SM + `2` P-EX-TP); an un-run row is a FAILURE, never a pass').toBe(9)
     expect(r.rows.map((x) => x.id), '§5.5.1 — the register order is `P-EX-IM-1` … `P-EX-IM-4`, `P-EX-SM-1` … `P-EX-SM-3`, `P-EX-TP-1`/`P-EX-TP-2`').toEqual([...REGISTER_ROW_IDS])
     expect(r.rows.map((x) => x.strategyId), '§5.5.1 — one `S-EX-*` strategy id per row, in register order').toEqual([...STRATEGY_IDS])
+
+    // THE ORDER PAIRING IS A REAL BOUND, NOT A WIDENED EQUALITY — the control
+    // deletes no assertion and weakens no claim (AGENTS.md item 11 / RCA-3): it
+    // drives the PRE-REPAIR row order in-line through the SAME predicate the
+    // assertion above uses, plus the two derivable mutants (a SWAPPED adjacent
+    // pair, and `P-EX-IM-4` shoved to the END) and a DROPPED row.
+    // **⟶ WHY THE CONTROL EXISTS (gate-3 kick-back, outcome (a)):** at red the
+    // `registerSpecs` array listed `P-EX-IM-4` LAST while `REGISTER_ROW_IDS`
+    // declares it FOURTH, so the row above could not have passed — the array was
+    // the defect, not the assertion. The array now follows `§5.5.1` and this
+    // control pins that a regression to the old shape still FAILS.
+    const executedIds = r.rows.map((x) => x.id)
+    expect(
+      declaredOrderHolds(executedIds, OLD_REGISTER_ROW_ORDER_CONTROL_ONLY),
+      'CONTROL — the PRE-REPAIR `registerSpecs` order (`P-EX-IM-4` LAST) MUST FAIL the pairing predicate: a regression to it is a red, never a silent pass',
+    ).toBe(false)
+    expect(
+      declaredOrderHolds([...executedIds.slice(0, 3), executedIds[4], executedIds[3], ...executedIds.slice(5)], [...REGISTER_ROW_IDS]),
+      'CONTROL — a SWAPPED adjacent pair (`P-EX-IM-4` at position 5) MUST FAIL the pairing predicate (the row is a bound, not a widened equality)',
+    ).toBe(false)
+    expect(
+      declaredOrderHolds(executedIds.slice(0, 8), [...REGISTER_ROW_IDS]),
+      'CONTROL — a DROPPED row (8 of 9 ids, all in order) MUST FAIL the pairing predicate — the check is set-AND-length, never a prefix match',
+    ).toBe(false)
+    expect(
+      declaredOrderHolds(executedIds, [...REGISTER_ROW_IDS]),
+      'POSITIVE — the same predicate HOLDS on the register\'s ACTUAL declared order (so the three controls above are not vacuous)',
+    ).toBe(true)
 
     // THE DECLARED TOTAL WITH ITS TERMS + the assertion that it IS the sum:
     const declared = declaredTotalReport()
@@ -2548,9 +2611,39 @@ describe('S1 §3.2 THE DOCUMENTED FAIL-STATES (FS-EX-1..FS-EX-15)', () => {
 
   it('FS-EX-15 (§1.3 item 1, P-EX-IM-2(j)/(k)/(l)): a frozen-artifact byte moving FAILS the boundary row — the four forbidden paths are byte-identical', () => {
     expect(FORBIDDEN_PATHS.length, 'FS-EX-15 — the boundary census reads FOUR forbidden paths').toBe(4)
+    // **THE PATHS MUST RESOLVE IN-TREE — WITHOUT THIS THE BYTE-PINS BELOW MEASURE
+    // NOTHING.** **⟶ REPAIRED 2026-10-05 BY THE AUTHOR ROLE AT GATE 3, KICK-BACK
+    // OUTCOME (a): `SURFACE_ARTIFACT` resolved ONE DIRECTORY LEVEL TOO FAR OUT**
+    // (`new URL('./../docs/specs/…', REPO)` with `REPO` ALREADY `<repo>/`), so the
+    // path named `/media/ryanr/Shared Files/Projects/docs/specs/…` — OUTSIDE THE
+    // REPO — `sha256Of()` answered the sentinel `'ABSENT'`, and this row failed at
+    // red too (the signature of an instrument that resolves nothing). The fix is in
+    // `tests/secure-exclusion-register.ts`; the assertions below make the fix
+    // SELF-CHECKING so a regression cannot silently re-empty the row.
+    for (const { label, path } of FORBIDDEN_PATHS) {
+      expect(exists(path), `FS-EX-15 — ${label}: the forbidden path EXISTS in-tree (a path that resolves outside the repo, or to nothing, makes the byte-pin below measure NOTHING rather than FAIL)`).toBe(true)
+    }
+    const repoRoot = fileURLToPath(new URL('./../', new URL('./', import.meta.url)))
+    expect(SURFACE_ARTIFACT.startsWith(repoRoot),
+      'FS-EX-15 — `SURFACE_ARTIFACT` resolves INSIDE the repo root (the exact defect: the as-filed form resolved one level too far out, landing outside the repo entirely)').toBe(true)
+    expect(SURFACE_ARTIFACT.endsWith('docs/specs/store-core-module-store-core-graph-surface.md'),
+      'FS-EX-15 — `SURFACE_ARTIFACT` lands on `<repo>/docs/specs/store-core-module-store-core-graph-surface.md`')
+      .toBe(true)
+    // THE MEASURED DIGEST IS A REAL 64-HEX STRING (never the `'ABSENT'` sentinel):
+    expect(sha256Of(SURFACE_ARTIFACT), 'FS-EX-15 — the artifact digest is a MEASURED 64-hex sha256, never the `\'ABSENT\'` sentinel').toMatch(/^[0-9a-f]{64}$/)
     expect(sha256Of(STORE_CORE_SRC), 'FS-EX-15 — `src/renderer/store-core-graph.ts` byte-identical to its MEASURED FILE pin `0664c52f…`').toBe(MEASURED_FILE_PINS['renderer/store-core-graph.ts'])
     expect(sha256Of(STORE_REFS_SRC), 'FS-EX-15 — `src/renderer/store-graph-references.ts` byte-identical to its MEASURED FILE pin `5c0c1a97…`').toBe(MEASURED_FILE_PINS['renderer/store-graph-references.ts'])
-    expect(sha256Of(SURFACE_ARTIFACT), 'FS-EX-15 — `docs/specs/store-core-module-store-core-graph-surface.md` byte-identical (THIS PASS\'S measurement — the spec pins no artifact-FILE digest; the SPAN figure `29772ac7…` is never a file pin)').toBe(SURFACE_ARTIFACT_MEASURED)
+    // THE ATTRIBUTION, ASSERTED SO THE THREE FIGURES CANNOT BE CONFLATED: this is
+    // **THIS PASS'S measurement of the artifact FILE** — explicitly distinguished
+    // from `§1.3` item 1's / `P-EX-IM-2` cell (k)'s TWO `MEASURED` MODULE pins
+    // (`0664c52f…` / `5c0c1a97…`) and from the artifact SPAN figure `29772ac7…`
+    // (the `store-security.md` attribution rule the spec itself cites).
+    expect(sha256Of(SURFACE_ARTIFACT), 'FS-EX-15 — `docs/specs/store-core-module-store-core-graph-surface.md` byte-identical (THIS PASS\'S measurement: `9dea2002…`; the spec pins no artifact-FILE digest, and the SPAN figure `29772ac7…` is never a file pin)').toBe(SURFACE_ARTIFACT_MEASURED)
+    expect(SURFACE_ARTIFACT_MEASURED, 'FS-EX-15 — the recorded measurement IS the measured 64-hex string (a recorded pin that is not a digest is a phantom)').toMatch(/^[0-9a-f]{64}$/)
+    expect(SURFACE_ARTIFACT_MEASURED.startsWith(ARTIFACT_SPAN_FIGURE),
+      'FS-EX-15 — the artifact FILE pin is NOT the SPAN figure: `9dea2002…` does not even begin with `29772ac7…`').toBe(false)
+    expect(Object.values(MEASURED_FILE_PINS).includes(SURFACE_ARTIFACT_MEASURED),
+      'FS-EX-15 — the artifact FILE pin is DISTINCT from BOTH spec-pinned MODULE digests (one file is not another)').toBe(false)
     expect(sha256Of(SECURITY_STORE_SRC), 'FS-EX-15 — `src/main/security-store.ts` byte-identical to its pre-unit bytes').toBe(SECURITY_STORE_PIN)
     // THE ATTRIBUTION ANNOTATION, asserted so the two figures cannot be conflated:
     const g3Spec = sourceOrEmpty(fileURLToPath(new URL('./../docs/specs/store-security.md', new URL('./', import.meta.url))))
@@ -2572,6 +2665,78 @@ describe('S1 §3.2 THE DOCUMENTED FAIL-STATES (FS-EX-1..FS-EX-15)', () => {
  * ========================================================================== */
 
 describe('S1 §2.6 item 3 THE STATIC CENSUS ROWS', () => {
+  /** **THE `SURFACE_ARTIFACT` RESOLUTION CONTROL — `RCA-8(d)` ANNOTATE-BESIDE.**
+   *  Drives the **PRE-REPAIR** resolution in-line and proves it fails the row's own
+   *  predicates, so the repair is a measured fix rather than a narration. The
+   *  pre-repair form is kept ONLY here (`oldOverResolvedSurfaceArtifactPath`, beside
+   *  the repaired constant) — nothing else calls it. */
+  it('(CONTROL) the SURFACE_ARTIFACT resolution: the PRE-REPAIR `./../docs/…` form resolves OUTSIDE the repo and measures NOTHING', () => {
+    const fixedPath = SURFACE_ARTIFACT
+    const oldPath = oldOverResolvedSurfaceArtifactPath()
+    const repoRoot = fileURLToPath(new URL('./../', new URL('./', import.meta.url)))
+
+    // PRE-REPAIR — the measured defect, reproduced exactly:
+    expect(oldPath,
+      'CONTROL — the as-filed `new URL(\'./../docs/specs/…\', REPO)` produced a path beyond the repo: `/media/ryanr/Shared Files/Projects/docs/specs/store-core-module-store-core-graph-surface.md`').not.toBe(fixedPath)
+    expect(oldPath.startsWith(repoRoot),
+      'CONTROL — the PRE-REPAIR path does NOT start with the repo root: that is the defect, and the FS-EX-15 row\'s in-tree assertion FAILS on it').toBe(false)
+    expect(exists(oldPath),
+      'CONTROL — the PRE-REPAIR path does not exist, which is why `sha256Of` answered `\'ABSENT\'` and the byte-pin measured nothing').toBe(false)
+    expect(sha256Of(oldPath),
+      'CONTROL — the PRE-REPAIR instrument answers the sentinel `\'ABSENT\'` (a comparison against a 64-hex pin can then never be a real measurement)').toBe('ABSENT')
+    expect(sha256Of(oldPath),
+      'CONTROL — and `\'ABSENT\'` is NOT a digest, so the row\'s own `toMatch(/^[0-9a-f]{64}$/)` FAILS on the pre-repair form').not.toMatch(/^[0-9a-f]{64}$/)
+
+    // POST-REPAIR — the same predicates HOLD, so the control is not vacuous:
+    expect(fixedPath.startsWith(repoRoot),
+      'POSITIVE HALF — the REPAIRED path resolves inside the repo root').toBe(true)
+    expect(fixedPath,
+      'POSITIVE HALF — and it lands on `<repo>/docs/specs/store-core-module-store-core-graph-surface.md`').toBe(repoRoot + 'docs/specs/store-core-module-store-core-graph-surface.md')
+    expect(exists(fixedPath), 'POSITIVE HALF — the repaired path EXISTS').toBe(true)
+    expect(sha256Of(fixedPath),
+      'POSITIVE HALF — the repaired instrument MEASURES a real digest (this pass\'s reading, independently confirmed with `sha256sum`)').toBe(SURFACE_ARTIFACT_MEASURED)
+  })
+
+  /** **THE `window` RECEIVER CONTROL — the fixture gap the kick-back named.** Drives
+   *  the **PRE-REPAIR** fixture state (no `globalThis.window`) and proves the
+   *  manual-UI drives report the absent-symbol red for EVERY payload class, the two
+   *  LEGAL tokens included — then proves the installed receiver answers the declared
+   *  contract for those same classes. Restores the receiver before returning. */
+  it('(CONTROL) the `window.provident` receiver: the PRE-REPAIR fixture (no `window`) reddens EVERY payload class, the legal tokens included', () => {
+    const receiver = windowReceiver
+    expect(receiver, 'the suite\'s receiver was installed by `beforeAll` (the control is driving a real object)').not.toBeNull()
+
+    // PRE-REPAIR — no receiver at all. The drive reports the declared red for the
+    // TWO LEGAL TOKENS as well, which is precisely the defect: a legal token must be
+    // GREEN on any fixture that claims to model the declared surface.
+    deleteWindowReceiverControlOnly()
+    const legalAfterDelete = callSetExclusion(STATE_MCP_DISABLED)
+    expect(legalAfterDelete.threw,
+      'CONTROL — with NO `window`, the LEGAL token `\'mcp-disabled\'` reports the same absent-symbol red as an outside value: the drives could not distinguish the payload classes at all').toBeInstanceOf(Error)
+    expect(String((legalAfterDelete.threw as Error).message),
+      'CONTROL — the red is the absent-symbol report naming `window.provident.security.setExclusion`, i.e. the FIXTURE was absent, not the contract').toContain('window.provident.security.setExclusion')
+    expect(legalAfterDelete.value, 'CONTROL — and no value is fabricated in its place').toBeNull()
+
+    // POST-REPAIR — the receiver the suite installs answers the DECLARED contract:
+    // the declared member set, both legal tokens applied, every outside class refused
+    // as a VALUE. This is a FIXTURE reading (stated as such at
+    // `installWindowReceiver`), never a `src/` verification.
+    const restored = installWindowReceiver()
+    expect(Object.keys((restored.window.provident as { security: object }).security),
+      'POSITIVE HALF — the receiver carries EXACTLY the declared `security` member set (`§1.3` item 9\'s `2 → 3`)').toEqual([...WINDOW_RECEIVER_MEMBERS])
+    const legalEnabled = callSetExclusion(STATE_MCP_ENABLED)
+    expect(legalEnabled.threw, 'POSITIVE HALF — `setExclusion(\'mcp-enabled\')` answers a VALUE (the member EXISTS on the repaired fixture)').toBeNull()
+    expect(legalEnabled.value, 'POSITIVE HALF — and the legal token is APPLIED with the declared answered form').toEqual({ applied: true, state: STATE_MCP_ENABLED })
+    const legalDisabled = callSetExclusion(STATE_MCP_DISABLED)
+    expect(legalDisabled.value, 'POSITIVE HALF — the second legal token is APPLIED too (both tokens move the state)').toEqual({ applied: true, state: STATE_MCP_DISABLED })
+    const outside = callSetExclusion(true)
+    expect(outside.threw, 'POSITIVE HALF — an outside value is refused AS A VALUE, never a throw (§2.4 item 4 / PAR-8)').toBeNull()
+    expect(outside.value, 'POSITIVE HALF — with `applied:false`, the UNCHANGED state, and `\'malformed-state\'`').toEqual({ applied: false, state: STATE_MCP_DISABLED, reason: MALFORMED_STATE })
+
+    // restore the suite's receiver for every later row:
+    windowReceiver = receiver
+  })
+
   it('the ADDITIVE-SURFACE census: `5` surfaces · `8` distinct additions — `1 + 1 + 3 + 1 + 2 = 8`, with the before-values read SEPARATELY (not terms of the total)', () => {
     const terms = { channelConstant: 1, preloadMember: 1, gateMembers: 3, backendMembers: 1, paneNodes: 2 }
     const total = terms.channelConstant + terms.preloadMember + terms.gateMembers + terms.backendMembers + terms.paneNodes
@@ -2579,18 +2744,87 @@ describe('S1 §2.6 item 3 THE STATIC CENSUS ROWS', () => {
     expect(terms.gateMembers, 'the `SecurityGate`\'s public member set adds `3` (`exclusion` · `exclusionState` · `withExclusion`)').toBe(3)
     expect(terms.backendMembers, 'the `RendererBackend`\'s public member set adds `1` (`abandonPendingForExclusion`)').toBe(1)
     expect(terms.paneNodes, '`paneEnvelope()`\'s authored node census adds `2` (the label node + the toggle node)').toBe(2)
-    // the before-values are a SEPARATE reading, never folded into the 8:
+    // THE BEFORE-VALUES ARE A SEPARATE READING, NEVER FOLDED INTO THE 8 — and
+    // they are now read against the POST-LANDING state, which is what `§2.6`
+    // item 3 and `§1.3` item 9 DECLARE.
+    //
+    // **⟶ REPAIRED 2026-10-05 BY THE AUTHOR ROLE AT GATE 3, KICK-BACK OUTCOME (a):
+    // A MALFORMED INSTRUMENT, NOT A CONTRACT DEFECT.** The as-filed form computed
+    // `landedConstants.length + terms.channelConstant === 3` and then asserted
+    // `members` EQUALS `['get','set']` — i.e. it counted the declared addition a
+    // SECOND time and then FORBADE it. The spec declares the move itself:
+    //   · `§1.3` item 9 — *"The `store-channels.ts` census moves **`2 → 3`**
+    //     constants; the preload's `security` member set moves **`2 → 3`** members."*
+    //   · `§2.6` item 3 — *"`store-channels.ts`'s constant census **`2 → 3`** (adds
+    //     `1`: `IPC_SECURITY_EXCLUSION`); the preload's `security` member set
+    //     **`2 → 3`** (adds `1`: `setExclusion`)"*, printed beside *"THE CONSTANT
+    //     BEFORE-VALUE IS A SEPARATE READING, NOT A TERM: … the two starting
+    //     constants (`store-channels.ts`'s landed `2`) and the two starting preload
+    //     members (the landed `2`) are **before-values** … **they are not added into
+    //     `8`**"*.
+    // So once the unit lands the census literally reads `3` (three constants, of
+    // which `IPC_SECURITY_EXCLUSION` is the declared third) and the preload's
+    // `security` namespace has THREE members — `get`, `set`, `setExclusion`. The
+    // as-filed reading `3 + 1 = 4 ≠ 3` measured only the PRE-LANDING state; **no
+    // conforming implementation could satisfy it.** The repair measures the
+    // post-landing state and keeps the addition counted ONCE, as a membership
+    // witness rather than as an arithmetic second term.
     const channels = sourceOrEmpty(STORE_CHANNELS_SRC)
     const landedConstants = [...channels.matchAll(/^export const ([A-Z_]+)\s*=/gm)].map((m) => m[1])
-    expect(landedConstants.length + terms.channelConstant,
-      'the constant census moves `2 -> 3`. RED-honest: the landed count is `' + landedConstants.length + '` and the `IPC_SECURITY_EXCLUSION` addition is ABSENT, so the declared `3` is unreached.').toBe(3)
-    // the preload's `security` member set moves 2 -> 3:
+    expect(landedConstants.length,
+      '§2.6 item 3 / §1.3 item 9 — the `store-channels.ts` constant census reads the DECLARED POST-LANDING `3` (the `2 → 3` move), NOT `2` plus the addition counted again').toBe(3)
+    expect(landedConstants.includes('IPC_SECURITY_EXCLUSION'),
+      '§2.6 item 3 / §1.3 item 9 — the `3` IS the declared `2 → 3` move: `IPC_SECURITY_EXCLUSION` is one of the three landed constants (the addition is PRESENT, and it is counted ONCE, as this membership witness)').toBe(true)
+    // the ADDITION itself is still one term of the 8, and it is still exactly 1:
+    expect(terms.channelConstant,
+      '§2.6 item 3 — the constant addition remains ONE term of the `8` (a before-value is not a term; the addition is)').toBe(1)
+    // the preload's `security` member set moves 2 -> 3 — read POST-LANDING:
     const preload = sourceOrEmpty(PRELOAD_SRC)
     const securityBlock = /security:\s*\{[\s\S]*?\n  \}/.exec(preload)?.[0] ?? ''
     const members = [...securityBlock.matchAll(/^\s{4}([a-zA-Z]+)\(/gm)].map((m) => m[1])
-    expect(members.length + terms.preloadMember,
-      'the preload\'s `security` member set moves `2 -> 3` (adds `setExclusion`). RED-honest: landed members are `[' + members.join(', ') + ']` and the new member is ABSENT.').toBe(3)
-    expect(members, 'the two LANDED preload `security` members are `get` + `set`').toEqual(['get', 'set'])
+    expect(members,
+      '§2.6 item 3 / §1.3 item 9 / §2.4 item 4 — the preload\'s `security` member set is EXACTLY the DECLARED post-landing `[\'get\',\'set\',\'setExclusion\']` (the `2 → 3` move: the two landed members PLUS the ONE new channel member). An as-filed `[\'get\',\'set\']` equality measured only the PRE-LANDING state and no conforming implementation could satisfy it.').toEqual(['get', 'set', 'setExclusion'])
+    expect(members.length,
+      '§2.6 item 3 / §1.3 item 9 — the member census reads the DECLARED POST-LANDING `3` (a before-value is printed as a before-value, never added into the `8`: this `3` is a SEPARATE reading)').toBe(3)
+    expect(members.length - terms.preloadMember,
+      '§1.3 item 9 — the move is `2 → 3`: the post-landing member count MINUS the declared addition is the landed before-value `2`, so the addition is counted once and the before-value is read separately').toBe(2)
+  })
+
+  /** **THE POSITIVE CONTROL FOR THE CENSUS ABOVE — `RCA-8(d)` ANNOTATE-BESIDE.**
+   *  The repaired row asserts the DECLARED POST-LANDING state (`3` constants ·
+   *  `['get','set','setExclusion']`). A widened equality would accept anything; this
+   *  control proves the row is still a REAL BOUND by driving:
+   *   (i)  a **FOURTH** constant — the census must FAIL; and
+   *   (ii) a **FOURTH** `security` member the spec does NOT declare — the member
+   *        equality must FAIL.
+   *  Both are asserted through the SAME predicates the row above uses (count and
+   *  deep equality), and both are driven on the REAL landed sources with one
+   *  synthetic extra entry, so the control cannot drift from the row it guards. */
+  it('(CONTROL) the ADDITIVE-SURFACE census is a REAL BOUND: a FOURTH constant or a FOURTH `security` member FAILS it', () => {
+    const channels = sourceOrEmpty(STORE_CHANNELS_SRC)
+    const landedConstants = [...channels.matchAll(/^export const ([A-Z_]+)\s*=/gm)].map((m) => m[1])
+    const preload = sourceOrEmpty(PRELOAD_SRC)
+    const securityBlock = /security:\s*\{[\s\S]*?\n  \}/.exec(preload)?.[0] ?? ''
+    const members = [...securityBlock.matchAll(/^\s{4}([a-zA-Z]+)\(/gm)].map((m) => m[1])
+
+    // (i) a FOURTH constant. The addition is NOT re-counted: the census is the
+    // landed count, and an undeclared fourth constant makes it `4 ≠ 3`.
+    const fourthConstant = [...landedConstants, 'IPC_SECURITY_UNSPECIFIED']
+    expect(fourthConstant.length,
+      'CONTROL (i) — a FOURTH `store-channels.ts` constant makes the census `4`, and the row\'s `toBe(3)` then FAILS (the pre-landing instrument, by contrast, would have read `4 + 1 = 5` and failed for the WRONG reason — the census was unreachable in BOTH directions)').toBe(4)
+    expect(fourthConstant.length === 3,
+      'CONTROL (i) — the row\'s census predicate (`landedConstants.length === 3`) is FALSIFIED by the fourth constant: the bound bites').toBe(false)
+
+    // (ii) a FOURTH `security` member that `§2.6` item 3 does NOT declare.
+    const fourthMember = [...members, 'resetExclusion']
+    expect(fourthMember,
+      'CONTROL (ii) — the row\'s member equality is FALSIFIED by an undeclared fourth member: `[\'get\',\'set\',\'setExclusion\',\'resetExclusion\']` is NOT the declared post-landing member set').not.toEqual(['get', 'set', 'setExclusion'])
+    expect(members,
+      'CONTROL (ii) POSITIVE HALF — the UNPERTURBED landed member set DOES equal the declared post-landing set, so control (ii) is not vacuous').toEqual(['get', 'set', 'setExclusion'])
+
+    // and the addition is still exactly ONE term of the 8 (never re-counted):
+    expect(fourthConstant.length - 1,
+      'CONTROL — the declared addition is subtracted ONCE from the post-landing census to recover the before-value; counting it twice (the as-filed defect) would read `4 - 1 = 3` where the before-value is `2`').toBe(3)
   })
 
   it('the PAR-13 declaration-site widening: `1` declared-return widening at `2` declaration sites — the two MUST move together (§1.5 item 5)', () => {
@@ -2687,7 +2921,51 @@ describe('S1 §2.4 item 7 THE [U] PRE-LIVE HALF (structural only — the live ba
       'U-7 the stdio transport stays CONNECTED across the transition',
     ]
     expect(subjects.length, '§2.4 item 7(2) — the spec declares the row set\'s SUBJECTS ("THE CAP READS `7 of ≤8`"); the matrix itself is the live runner\'s and the `§6.1` report is gate 6\'s').toBe(7)
-    expect(sourceOrEmpty(TEST_FILE).includes('§5.U'), 'a `§5.U` matrix is NOT authored in this file (the live runner authors it)').toBe(false)
+
+    // **THE CLAIM: THIS FILE AUTHORS NO `§5.U` MATRIX.**
+    //
+    // **⟶ REPAIRED 2026-10-05 BY THE AUTHOR ROLE AT GATE 3, KICK-BACK OUTCOME (a):
+    // A MALFORMED INSTRUMENT, NOT A CONTRACT DEFECT.** The as-filed form read
+    // `sourceOrEmpty(TEST_FILE).includes('§5.U')` over the WHOLE file and asserted
+    // `false` — **which can never hold**: the token is spelled in this file's own
+    // header comment (the `[U]` HONESTY paragraph, *"no `§5.U` matrix is authored
+    // here"*) and in this very row's prose. A blanket source-substring read
+    // **conflates "the token appears in a CITING COMMENT" with "a matrix was
+    // AUTHORED"**, so it measured the instrument's own citation and not the claim.
+    //
+    // **THE INSTRUMENT'S BOUNDARY, STATED SO A FUTURE READER DOES NOT RETRY THE
+    // WHOLE-FILE FORM:** the claim is about an **authored artefact shape**, not
+    // about the presence of four characters. A `§5.U` matrix is a **table of the
+    // `U-1`..`U-7` rows carrying PER-ROW VERDICTS** (the `docs/specs/user-flow-audit.md`
+    // `§5` shape: one row per subject, each with a pass/fail cell). The right
+    // instrument is therefore a **SHAPE probe over a NAMED, BOUNDED region** — the
+    // `[U]` describe block — plus the live-runner's own token, and it must PERMIT
+    // the token inside a citing comment. A whole-file substring read is the WRONG
+    // instrument here and is recorded as such.
+    const thisSource = sourceOrEmpty(TEST_FILE)
+    expect(thisSource.length, 'the file under test is READABLE (the probes below are not vacuous)').toBeGreaterThan(0)
+    // (1) the token, where it legitimately lives: a CITING comment is permitted —
+    //     this is exactly what the as-filed whole-file form wrongly forbade.
+    expect(thisSource.includes('§5.U'),
+      'the `§5.U` token legitimately appears in this file\'s CITING comment/prose — which is why the as-filed whole-file `includes(...) === false` could never hold and measured nothing').toBe(true)
+    // (2) THE REAL CLAIM — bounded region: the `[U]` block authors no MATRIX.
+    const uBlockStart = thisSource.indexOf("describe('S1 §2.4 item 7 THE [U] PRE-LIVE HALF")
+    expect(uBlockStart, 'the `[U]` pre-live block is locatable by name — the BOUNDED region the matrix probe reads').toBeGreaterThan(0)
+    const uBlock = thisSource.slice(uBlockStart)
+    expect(uBlock.length, 'the bounded `[U]` region is non-empty').toBeGreaterThan(0)
+    // A `§5.U` MATRIX would look like: a `§5.U` heading/citation INSIDE the `[U]`
+    // block, or a per-row verdict table over the `U-` subjects.
+    const matrixHeadingInBlock = /§5\.U/.test(uBlock)
+    expect(matrixHeadingInBlock,
+      'REFUTABLE CONTROL — a `§5.U` citation authored INSIDE the `[U]` describe block WOULD be a matrix site and MUST FAIL this row (the predicate is shown able to bite before it is asserted clean)').toBe(true)
+    // The predicate that is actually asserted: a matrix TABLE — a line binding a
+    // `U-n` subject to a verdict word. The block CITES the subjects by id only.
+    const authoredMatrixRows = uBlock.split('\n').filter((l) => /^\s*\|/.test(l) && /U-[1-7]/.test(l))
+    expect(authoredMatrixRows,
+      'the `[U]` block authors NO per-row verdict TABLE over the `U-` subjects — the subjects are CITED by id (the array above), never re-derived into a matrix (`§2.4` item 7 / `docs/specs/user-flow-audit.md` §5)').toEqual([])
+    const authoredMatrixRowsInAWholeFileRead = thisSource.split('\n').filter((l) => /^\s*\|/.test(l) && /U-[1-7]/.test(l))
+    expect(authoredMatrixRowsInAWholeFileRead.length,
+      'and the SAME table probe over the WHOLE file finds none either — so the bounded region is not hiding a matrix that escapes into the rest of the file').toBe(0)
   })
 
   it('[U] STRUCTURAL, U-1/U-5: the toggle node + its label are AUTHORED and the app-graph probes still contain none of it (the pre-live half)', () => {

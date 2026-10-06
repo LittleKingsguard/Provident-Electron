@@ -79,7 +79,42 @@ export const STORE_CHANNELS_SRC = SRC('main/store-channels.ts')
 export const STORE_CORE_SRC = SRC('renderer/store-core-graph.ts')
 export const STORE_REFS_SRC = SRC('renderer/store-graph-references.ts')
 export const SECURITY_STORE_SRC = SRC('main/security-store.ts')
-export const SURFACE_ARTIFACT = fileURLToPath(new URL('./../docs/specs/store-core-module-store-core-graph-surface.md', REPO))
+/** `<repo>/docs/` — the repo-root `docs/` tree, resolved from the constant this
+ *  module already documents as **the repo root**.
+ *
+ *  **⟶ REPAIRED 2026-10-05 BY THE AUTHOR ROLE AT GATE 3, KICK-BACK OUTCOME (a):
+ *  A MALFORMED INSTRUMENT, NOT A CONTRACT DEFECT** (`RCA-8(d)` annotate-beside —
+ *  the as-filed form is RECORDED here and RE-DRIVEN by the control row
+ *  `SURFACE_ARTIFACT_RESOLUTION_CONTROLS`, never silently rewritten).
+ *
+ *  **THE AS-FILED FORM WAS** `new URL('./../docs/specs/…', REPO)`.  `REPO` is
+ *  ALREADY `<repo>/` — one level ABOVE `tests/` — so the extra `./../` resolved
+ *  **ONE DIRECTORY LEVEL TOO FAR OUT**.  Measured pre-repair (supervisor-verified
+ *  first-hand, and re-measured by this pass's own control):
+ *  ```
+ *  TESTS_DIR        = file:///…/Provident-Electron/tests/
+ *  REPO             = file:///…/Provident-Electron/
+ *  SURFACE_ARTIFACT = /media/ryanr/Shared Files/Projects/docs/specs/store-core-module-store-core-graph-surface.md  ← OUTSIDE THE REPO
+ *  exists? false
+ *  ```
+ *  `exists()` was therefore `false`, `sha256Of()` answered the sentinel `'ABSENT'`,
+ *  and BOTH consumers of the path measured nothing: `FORBIDDEN_PATHS`' existence
+ *  check and the `FS-EX-15` byte-pin (which is why **it failed at red too** — the
+ *  signature of an instrument that resolves nothing rather than of a broken claim).
+ *
+ *  **THE REPAIR**: the artifact is anchored on `REPO` through the repo-root `docs/`
+ *  prefix it always meant — `'./docs/specs/…'` from `REPO` is byte-for-byte the same
+ *  path as `'./../docs/specs/…'` from `TESTS_DIR`, so **the CLAIM is unchanged** (the
+ *  frozen artifact is byte-identical to its measured digest) and only the
+ *  instrument's resolution is corrected. */
+const DOCS = (rel: string): string => fileURLToPath(new URL('./docs/' + rel, REPO))
+export const SURFACE_ARTIFACT = DOCS('specs/store-core-module-store-core-graph-surface.md')
+/** CONTROL ONLY — the PRE-REPAIR resolution, kept under a clearly-named helper so the
+ *  control row can drive the malformed form in-line and PROVE it resolves outside the
+ *  repo (`RCA-8(d)` / the `handlerBodyOf` repair's `oldBrokenHandlerBodyOf` precedent). */
+export function oldOverResolvedSurfaceArtifactPath(): string {
+  return fileURLToPath(new URL('./../docs/specs/store-core-module-store-core-graph-surface.md', REPO))
+}
 export const TEST_FILE = TEST('secure-exclusion.test.ts')
 
 /** `§1.3` item 1 — THE FOUR FORBIDDEN PATHS, named so the list is checkable. */
@@ -98,7 +133,17 @@ export const REGISTER_TOTAL_CAP = 400
 /** `§4.3.1` — the stop rule. */
 export const STOP_AFTER_CONSECUTIVE = 5
 
-/** `§5.5.1` — THE DECLARED TERMS, in register order, nine of them. */
+/** `§5.5.1` — THE DECLARED TERMS, in register order, nine of them.
+ *
+ *  **⟶ ORDER CORRECTED 2026-10-05 BY THE AUTHOR ROLE AT GATE 3, KICK-BACK
+ *  OUTCOME (a)** — the terms were **already right and are UNCHANGED**: the spec's
+ *  `§5.5.1` table declares `P-EX-IM-4` **NINTH** (row `# 9`) and its arithmetic
+ *  line prints `106 = 12 + 12 + 10 + 12 + 12 + 14 + 12 + 12 + 10` *"in register
+ *  order (`P-EX-IM-1` … `P-EX-IM-4`, `P-EX-SM-1` … `P-EX-SM-3`,
+ *  `P-EX-TP-1`/`P-EX-TP-2`)"* — i.e. the `4` `P-EX-IM` rows CARRY the first four
+ *  terms (`12`, `12`, `10`, **`10`**), which is exactly what is written here.
+ *  What was wrong was the ROW ORDER in `registerSpecs`, which is a separate
+ *  artefact (see the move recorded beside `P-EX-IM-4` below). */
 export const DECLARED_TERMS: readonly number[] = [12, 12, 10, 12, 12, 14, 12, 12, 10]
 
 /** `§5.5.1` — the nine row ids, in register order. */
@@ -108,11 +153,20 @@ export const REGISTER_ROW_IDS: readonly string[] = [
   'P-EX-TP-1', 'P-EX-TP-2',
 ]
 
-/** `§5.5.1` — nine strategy ids, one per row (`S-EX-*`). */
+/** `§5.5.1` — nine strategy ids, one per row (`S-EX-*`), IN REGISTER ORDER.
+ *
+ *  **⟶ ORDER CORRECTED 2026-10-05 BY THE AUTHOR ROLE AT GATE 3, KICK-BACK
+ *  OUTCOME (a)** — the as-filed array carried `S-EX-ISOL-1` FOURTH (mirroring the
+ *  `registerSpecs` row order that was itself wrong).  `S-EX-ISOL-1` is
+ *  `P-EX-IM-4`'s strategy id and `§5.5.1` places that row NINTH, so the id must sit
+ *  NINTH for the array to be the lockstep partner of `REGISTER_ROW_IDS` it is
+ *  asserted against. **No id's text changed — only its position**, and the register
+ *  still executes exactly the same nine rows with exactly the same drives. */
 export const STRATEGY_IDS: readonly string[] = [
-  'S-EX-STATE-1', 'S-EX-TURN-1', 'S-EX-EPOCH-1', 'S-EX-ISOL-1',
+  'S-EX-STATE-1', 'S-EX-TURN-1', 'S-EX-EPOCH-1',
   'S-EX-MACH-1', 'S-EX-REARM-1', 'S-EX-BOOT-1',
   'S-EX-RFUS-1', 'S-EX-CHAN-1',
+  'S-EX-ISOL-1',
 ]
 
 /** `§5.5.2` item 3 — the `(bounded)` set is EMPTY: no row draws. */
@@ -131,10 +185,56 @@ export const MEASURED_FILE_PINS: Readonly<Record<string, string>> = {
 }
 /** The ARTIFACT SPAN figure — recorded here so it is never mistaken for a file pin. */
 export const ARTIFACT_SPAN_FIGURE = '29772ac7'
-/** `§1.3` item 1 — the surface artifact's MEASURED file pin (this pass's measurement).
- *  The spec pins the two module files' digests; it does NOT pin an artifact-file
- *  digest, so this one is measured here and labelled as this pass's reading. */
+/** `§1.3` item 1 — the surface artifact's MEASURED file pin.
+ *
+ *  **THIS IS THIS PASS'S MEASUREMENT OF THE LIVE ARTIFACT FILE** — computed with
+ *  `node:crypto` over `SURFACE_ARTIFACT`'s bytes, i.e. over
+ *  `<repo>/docs/specs/store-core-module-store-core-graph-surface.md`.  **IT IS
+ *  NEITHER OF THE TWO `MEASURED` MODULE PINS ABOVE, AND IT IS NOT THE ARTIFACT
+ *  SPAN FIGURE** — the three figures are DISTINCT and must never be conflated:
+ *  1. `MEASURED_FILE_PINS['renderer/store-core-graph.ts']` = `0664c52f…` — the
+ *     store MODULE file's digest (spec-pinned).
+ *  2. `MEASURED_FILE_PINS['renderer/store-graph-references.ts']` = `5c0c1a97…` —
+ *     the references MODULE file's digest (spec-pinned).
+ *  3. `ARTIFACT_SPAN_FIGURE` = `29772ac7…` — the frozen artifact's **fields-1–7
+ *     SPAN** digest at the `HYDRATE-1` head, **NEVER a file hash**, per
+ *     `docs/specs/store-security.md`'s attribution annotation (the `G3` gate-4
+ *     doc-review item 4) — the rule the spec itself cites at `§1.3` item 1.
+ *  4. **THIS VALUE** — the artifact FILE's whole-file digest.  `docs/specs/
+ *     secure-exclusion.md` pins no artifact-FILE digest, so the pin is taken here
+ *     and labelled as **this pass's reading**; the `FS-EX-15` row asserts it
+ *     against the live bytes.
+ *
+ *  **⟶ UPDATED 2026-10-05 BY THE AUTHOR ROLE AT GATE 3** (the same kick-back that
+ *  repaired the path above): at red-authoring the value below could not have been
+ *  confirmed by the instrument at all, because the path resolved outside the repo
+ *  and `sha256Of()` answered `'ABSENT'`.  With the resolution repaired, this pass
+ *  re-measured the live file directly: **`9dea2002…` — CONFIRMED BY INDEPENDENT
+ *  MEASUREMENT (`sha256sum docs/specs/store-core-module-store-core-graph-surface.md`
+ *  and the supervisor's own reading agree byte-for-byte).** */
 export const SURFACE_ARTIFACT_MEASURED = '9dea200277ed645e6f5c513754e26c1707a8bc55e4490008f738928edffc4446'
+
+/** CONTROL ONLY — THE PRE-REPAIR `registerSpecs` ROW ORDER, at the authoring site
+ *  where it must be driven in-line: **`P-EX-IM-4` listed LAST while
+ *  `REGISTER_ROW_IDS` declares it FOURTH** (`§5.5.1`, which places
+ *  `P-EX-IM-1` … `P-EX-IM-4` first).  This is the shape the
+ *  `registerSpecs` array carried at red-authoring; the array itself now follows
+ *  `§5.5.1`, and this constant exists ONLY so the control row can PROVE the pairing
+ *  assertion can fail (`RCA-8(d)` / the `handlerBodyOf` repair's precedent). */
+export const OLD_REGISTER_ROW_ORDER_CONTROL_ONLY: readonly string[] = [
+  'P-EX-IM-1', 'P-EX-IM-2', 'P-EX-IM-3',
+  'P-EX-SM-1', 'P-EX-SM-2', 'P-EX-SM-3',
+  'P-EX-TP-1', 'P-EX-TP-2',
+  'P-EX-IM-4',
+]
+
+/** THE DECLARED ORDER PAIRING, AS ONE FUNCTION — so the assertion and its control
+ *  drive the SAME predicate. Given the executed rows' ids and the register's
+ *  declared ids, it answers whether the executed order IS the declared order
+ *  (`§5.5.1`, asserted by `the register executes all 9 rows …`). */
+export function declaredOrderHolds(executedIds: readonly string[], declaredIds: readonly string[]): boolean {
+  return executedIds.length === declaredIds.length && executedIds.every((id, i) => id === declaredIds[i])
+}
 
 /** The exclusion's two closed refusal tokens (`§2.5` items 1/3). */
 export const EXCLUSION_CLOSED = 'exclusion-closed'
@@ -379,5 +479,70 @@ export function sha256Of(path: string): string {
 }
 export function exists(path: string): boolean {
   return existsSync(path)
+}
+
+// ---- THE WINDOW RECEIVER (the `[H]` fixture the manual-UI drives read) -------------------
+/** **THE `window.provident` RECEIVER'S DECLARED MEMBER SET (`§2.4` item 4 / `§2.PAR`,
+ *  `PAR-8`/`PAR-9`/`PAR-13`) — and the string row the receiver carries on a REFUSAL.**
+ *
+ *  **⟶ INSTALLED 2026-10-05 BY THE AUTHOR ROLE AT GATE 3** (kick-back outcome (a);
+ *  the fixture gap the supervisor named): the `beforeAll`'s `installShim()` sets
+ *  `globalThis.document` and **NOT** `globalThis.window`, so the drives that read
+ *  `globalThis.window.provident.security.setExclusion` — `M-EX-3`, `FS-EX-8`, and
+ *  the `P-EX-TP-2` register row's two legal-token payloads, the malformed-payload
+ *  drive and the no-throw drive — reached an ABSENT receiver and reported the SAME
+ *  red for every payload class, including the ones that must be GREEN.
+ *
+ *  **WHY A RECEIVER IS THE RIGHT INSTRUMENT (and nothing in `src/` can supply it):**
+ *  the member's real home is `contextBridge.exposeInMainWorld('provident', bridge)`
+ *  (`src/main/preload.ts:140`), which is **Electron-runtime-only** — under node
+ *  vitest there is no `contextBridge` and no renderer world, so no `src/` code path
+ *  can install this receiver.  The drives' subject is the **DECLARED SURFACE**
+ *  (`window.provident.security.setExclusion` + its answered form), exactly as the
+ *  file's own `callSetExclusion` helper already documents; the receiver is the
+ *  fixture, and `src/main/main.ts`'s `IPC_SECURITY_EXCLUSION` handler remains
+ *  `M-EX-2`/`M-EX-7`/`P-EX-TP-2`'s **static** reading (`handlerBodyOf`).
+ *
+ *  **THE DISCIPLINE THAT KEEPS THE FIXTURE HONEST — NO CLAIM IS WEAKENED:**
+ *  - the member set is `['get', 'set', 'setExclusion']` — the SAME declared
+ *    `2 → 3` member set the preload census row measures (`§1.3` item 9);
+ *  - `get`/`set` are present but **DELIBERATELY UNIMPLEMENTED stubs that THROW**:
+ *    NOTHING in this red set calls them, so they can never silently answer;
+ *  - `setExclusion` **MIRRORS `§2.4` item 4's DECLARED CONTRACT** (the two legal
+ *    tokens applied; EVERY outside value refused as a VALUE with `'malformed-state'`
+ *    and the UNCHANGED state) over its OWN local state.  It is a fixture, so a
+ *    transition driven through it is **NOT** verification that `src/` implements
+ *    the contract — that is `M-EX-2`/`M-EX-3`'s `src/`-side reading and
+ *    `P-EX-TP-2`'s two driver cells;
+ *  - the receiver is the LAST thing `beforeAll` installs and is installed on
+ *    `globalThis` only for the duration of the suite. */
+export const WINDOW_RECEIVER_MEMBERS: readonly string[] = ['get', 'set', 'setExclusion']
+
+/** Install `globalThis.window.provident` with the declared member set. Returns the
+ *  receiver so a control can prove the receiver is LIVE and the pre-repair state
+ *  (no receiver at all) is reproducible. */
+export function installWindowReceiver(): {
+  window: Record<string, unknown>
+  state: () => string
+} {
+  let current = STATE_MCP_ENABLED
+  const security = {
+    get: (): never => {
+      throw new Error('fixture: `security.get` is NOT driven by this red set (the receipt row is M-EX-7\'s static reading)')
+    },
+    set: (): never => {
+      throw new Error('fixture: `security.set` is NOT driven by this red set (the receipt row is M-EX-7\'s static reading)')
+    },
+    setExclusion: (state: unknown): { applied: boolean; state: string; reason?: string } => {
+      if (state === STATE_MCP_ENABLED || state === STATE_MCP_DISABLED) {
+        current = state
+        return { applied: true, state: current }
+      }
+      return { applied: false, state: current, reason: MALFORMED_STATE }
+    },
+  }
+  const win = { provident: { security } }
+  ;(globalThis as Record<string, unknown>).window = win
+  return { window: win as unknown as Record<string, unknown>, state: () => current }
 }
 export { TESTS_DIR, REPO }
