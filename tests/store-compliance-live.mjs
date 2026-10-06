@@ -170,6 +170,37 @@
 //   CONTROL-FILE-TIER  the `file` tier's own value at the logical path is WRITTEN live
 //                      between the two readings → the "unchanged after the `secure.*`
 //                      attempt" term must be shown to be able to MOVE.
+//
+// THE THIRD `§6.2` READ-ONLY AUDIT'S `A3-02`…`A3-09` — THE TERMS THIS PASS ADDED, NAMED HERE SO A
+// LATER AUDITOR CHECKS THE CLAIM INSTEAD OF RE-DERIVING IT (the third round returned
+// `VALID-WITH-FINDINGS` with `A3-01`/`A3-02` HIGH; `A3-01` was a RECORD-side defect — a malformed
+// `§6.1` JSON block — and the eight below are the DRIVER-side ones):
+//   `SC-A-01`  (`A3-02`, HIGH) THE CENSUS IS SPLIT INTO TWO NAMED TERMS READ BEFORE THE ROUND-TRIP:
+//              `bridgeNamespaceCensusUnreadable` → `MANUAL`; `bridgeNamespaceCensusDirty` (readable
+//              and `unknown`/`missing` non-empty) → **`FAIL`**. The as-filed single boolean was read
+//              only in the round-trip's FALSE arm, so a FOURTH page-reachable namespace read `PASS`
+//              whenever an arbitrary datum round-tripped, and a readable-but-dirty census read
+//              `MANUAL` while the prose claimed it "FAILS the row" (`MANUAL` moves neither the exit
+//              code nor an arm count).
+//   `SC-A-06`  (`A3-04`, MED) THE PUT-RECEIPT PRECONDITION: `putReceiptsOk` requires each of the
+//              three probes to answer a `committed` receipt, so a DEAD/refusing write instrument
+//              reads `MANUAL` instead of being charged as a LEAK (the `B-F2` non-vacuity term had
+//              mapped its own failure to `FAIL`, against `§4d` rule 2). A RECEIPTED write that lands
+//              nothing is still the leak-predicate reading.
+//   `SC-B-09`  (`A3-06`, LOW) THE TIER-SHAPE RE-MEASUREMENT: `SC-B-04`'s `setEquality` key-set
+//              predicate is re-run on the END-of-run profile as a term of this row, because the key
+//              set was read ONCE before both `setExclusion` transitions — an `exclusion` key landing
+//              during them reddened nothing.
+//   `SC-CH-02` (`A3-07`, LOW) THE SIX-MEMBER TERM: `STORE_SURFACE_MEMBERS_REQUIRED` is required in
+//              the predicate, because `storeProbe.members` was PRINTED while the subject claimed the
+//              generic name-addressed surface was PRESENT — a DELETED member left the row green.
+//   THE FAMILY TALLY (`A3-05`, MED) now prints each family's `PASS`/`FAIL`/`MANUAL`/`PARKED` split
+//              with its terms and NAMES every `MANUAL` arm, because the as-filed lines counted only
+//              `FAIL` and a `MANUAL` arm (reachable at `SC-A-01/02/05/06`, `SC-C-01`) vanished from
+//              both the family verdict and every count.
+//   `A3-03` (MED) was the record's `get()`-reading count (`GET_READINGS` is THREE, not four) and
+//              `A3-08`/`A3-09` are RECORD-side (`2c53a76` named in no `.md`; each `§3` `instrument`
+//              cell now LEADS with its literal command line) — none of the three moved this file.
 import { createHash } from 'node:crypto'
 import { execSync } from 'node:child_process'
 import { mkdtempSync, readFileSync, readdirSync, rmSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
@@ -221,6 +252,14 @@ const ARBITRARY_FILE_NAME = 'file.settings.complianceprobe.value'
  *  object-valued members (`B-F15`), so a FOURTH such member is an un-censused channel and FAILS
  *  the census rather than being filtered away. */
 const BRIDGE_NAMESPACES_DECLARED = ['module', 'security', 'store']
+/** The SIX generic name-addressed members `SC-CH-02`'s subject claims are PRESENT on the live
+ *  boot-constructed store (`resolve`/`set`/`commit`/`clear`/`remove`/`subscribe`). Required in the
+ *  predicate since the THIRD `§6.2` audit's `A3-07` (disposed `FIXED`, `§4d` rule 1): the as-filed
+ *  row PRINTED `storeProbe.members` while the predicate read only `sameIdentity`/`tierHandles`, so
+ *  **a DELETED member left the row green while its own subject claimed the surface was present**.
+ *  `hydrate`/`tiers`/`register` remain REPORTED rather than REQUIRED — they are reported-not-required
+ *  in the row's printed list and in the record, so nothing the row does not claim is asserted. */
+const STORE_SURFACE_MEMBERS_REQUIRED = ['resolve', 'set', 'commit', 'clear', 'remove', 'subscribe']
 
 // ── records ────────────────────────────────────────────────────────────────────────────
 const CHECKS = []
@@ -691,9 +730,14 @@ const storeProbe = await cdp.evaluate(`(async function(){
 })()`)
 const storeIsLive = storeProbe !== null && typeof storeProbe === 'object' && storeProbe.sameIdentity === true
   && Array.isArray(storeProbe.tierHandles) && storeProbe.tierHandles.join(',') === 'temp,mem,file'
-check('SC-CH-02 (live channel 2)', 'the app\'s own renderer module answers THE ONE boot-constructed store of this live realm, with the generic name-addressed surface present and `secure` NOT among the tier handles', storeIsLive ? 'PASS' : 'FAIL',
-  `import(new URL('./renderer.js', document.baseURI).href).getWiredGraphStore(): sameIdentity=${storeProbe?.sameIdentity}, tierHandles=${JSON.stringify(storeProbe?.tierHandles)}, members present ${JSON.stringify(storeProbe?.members)}`,
-  'the live renderer graph, not a reconstruction: the ESM module map returns the already-evaluated instance. `tiers` is the landed 3-member `Object.freeze({temp,mem,file})` (the dossier\'s A-2 OUT row), so `store.tiers.secure` cannot exist')
+  && Array.isArray(storeProbe.members)
+  && STORE_SURFACE_MEMBERS_REQUIRED.every((k) => storeProbe.members.includes(k))
+const storeSurfaceMissing = Array.isArray(storeProbe?.members)
+  ? STORE_SURFACE_MEMBERS_REQUIRED.filter((k) => !storeProbe.members.includes(k))
+  : STORE_SURFACE_MEMBERS_REQUIRED.slice()
+check('SC-CH-02 (live channel 2)', 'the app\'s own renderer module answers THE ONE boot-constructed store of this live realm, with the generic name-addressed surface present — ALL SIX members its subject names — and `secure` NOT among the tier handles', storeIsLive ? 'PASS' : 'FAIL',
+  `import(new URL('./renderer.js', document.baseURI).href).getWiredGraphStore(): sameIdentity=${storeProbe?.sameIdentity}, tierHandles=${JSON.stringify(storeProbe?.tierHandles)}, members present ${JSON.stringify(storeProbe?.members)}, the SIX members this row REQUIRES=${JSON.stringify(STORE_SURFACE_MEMBERS_REQUIRED)} (missing=${JSON.stringify(storeSurfaceMissing)} — the A3-07 term: the subject claims the generic name-addressed surface is PRESENT, so a DELETED member reddens this row instead of leaving it green while the row printed the surviving list)`,
+  'the live renderer graph, not a reconstruction: the ESM module map returns the already-evaluated instance. `tiers` is the landed 3-member `Object.freeze({temp,mem,file})` (the dossier\'s A-2 OUT row), so `store.tiers.secure` cannot exist. **THE SIX-MEMBER SET IS A PREDICATE TERM SINCE THE THIRD AUDIT\'S `A3-07` (rule 1: `storeProbe.members` was PRINTED but never read, so a deleted member left this row PASS); `hydrate`/`tiers`/`register` stay reported-not-required, and the required six are exactly the members the row\'s own subject names as the generic name-addressed surface**')
 
 // ── FAMILY A, arm (a) — an arbitrary name through ANY live channel ─────────────────────
 /** The bridge's declared member set and its patch surface, read off the LIVE object. A
@@ -731,7 +775,33 @@ const bridgeCensus = await cdp.evaluate(`(function(){
 const bridgeNamespaces = Object.entries(bridgeCensus?.namespaces ?? {}).map(([k, v]) => (v.present !== false ? k : null)).filter((k) => k !== null).sort()
 const bridgeNamespaceUnknowns = bridgeNamespaces.filter((k) => !BRIDGE_NAMESPACES_DECLARED.includes(k))
 const bridgeNamespaceMisses = BRIDGE_NAMESPACES_DECLARED.filter((k) => !bridgeNamespaces.includes(k))
-const bridgeNamespaceCensusOk = bridgeCensus?.present === true && bridgeNamespaceUnknowns.length === 0 && bridgeNamespaceMisses.length === 0
+/** **THE CENSUS IS SPLIT INTO ITS TWO STATES — the THIRD `§6.2` audit's `A3-02`, disposed `FIXED`
+ *  (HIGH, gate-6-blocking), and THE TERM NOW BITES INDEPENDENTLY OF THE ROUND-TRIP TERM.** The
+ *  as-filed form was ONE boolean (`present && unknown === 0 && missing === 0`) read ONLY inside the
+ *  FALSE arm of the round-trip term (`arbitraryRoundTripped ? 'PASS' : (censusOk ? 'FAIL' :
+ *  'MANUAL')`), which had two measured consequences: **(a) with an arbitrary datum round-tripping —
+ *  the post-`S2` state this record expects — a FOURTH page-reachable namespace reads `PASS`
+ *  outright, i.e. a regression HIDES BEHIND THE ROUND-TRIP READING one line above the term the
+ *  `B-F15` repair added; and (b) a READABLE census carrying an unknown/missing namespace reads
+ *  `MANUAL`, while the code comment and `§4d` rules 1/2 both claim it *"FAILS the row"* — and
+ *  `MANUAL` moves neither the exit code nor either family arm count.** MEASURED against the
+ *  as-filed bytes at `bae67ebc…`: `arbitraryRoundTripped=true` + `unknown=['fourthChannel']` →
+ *  `PASS` (the regression invisible), and `arbitraryRoundTripped=false` + `unknown=['fourthChannel']`
+ *  → `MANUAL` (the claim false). The two named terms below are read by the verdict SEQUENTIALLY and
+ *  the round-trip term can no longer bypass either:
+ *    `bridgeNamespaceCensusUnreadable` — the census could NOT BE TAKEN (`window.provident` absent,
+ *      or the whole walk enumerated ZERO object-valued namespaces, which cannot be a reading about
+ *      the declared three) → the row reads `MANUAL` (rule 2: a broken instrument manufactures
+ *      neither direction).
+ *    `bridgeNamespaceCensusDirty` — the census WAS readable and its namespace set is NOT equal to
+ *      the declared three (`unknown`/`missing` non-empty) → the row reads **`FAIL`**, whatever the
+ *      round-trip term says (rule 1: every computed term the evidence claims is IN the predicate).
+ *  The two are mutually exclusive by construction, and `bridgeNamespaceCensusOk` is retained as the
+ *  conjunction so the printed term keeps its `B-F15` meaning. */
+const bridgeNamespaceCensusUnreadable = bridgeCensus?.present !== true || bridgeNamespaces.length === 0
+const bridgeNamespaceCensusDirty = !bridgeNamespaceCensusUnreadable
+  && (bridgeNamespaceUnknowns.length !== 0 || bridgeNamespaceMisses.length !== 0)
+const bridgeNamespaceCensusOk = !bridgeNamespaceCensusUnreadable && !bridgeNamespaceCensusDirty
 const arbitraryNameWritten = await cdp.evaluate(`(async function(){
   var r = null;
   try { r = await window.provident.security.set({ myNewField: 'COMPLIANCE-ARBITRARY-DATUM' }); } catch (e) { r = { threw: String(e) }; }
@@ -742,14 +812,20 @@ const arbitraryNameWritten = await cdp.evaluate(`(async function(){
 const arbitraryNameReadBack = arbitraryNameWritten?.getAnswer ?? null
 const arbitraryRoundTripped = arbitraryNameReadBack !== null && typeof arbitraryNameReadBack === 'object'
   && Object.prototype.hasOwnProperty.call(arbitraryNameReadBack, 'myNewField')
-/** THE ARM'S VERDICT (`B-F3`'s rule 2, applied here too): a bridge census that could not be taken
- *  is a BROKEN INSTRUMENT, so the row reads `MANUAL` while the "NO live channel" clause it carries
- *  is unproven — it never reads PASS on a dead census, and it never manufactures a FAIL either.
- *  `bridgeNamespaceCensusOk` is a TERM in BOTH live states (the `B-F15` remedy). */
-const scA01Verdict = arbitraryRoundTripped ? 'PASS' : (bridgeNamespaceCensusOk ? 'FAIL' : 'MANUAL')
+/** THE ARM'S VERDICT — **THE CENSUS IS READ FIRST AND THE ROUND-TRIP TERM CANNOT BYPASS IT**
+ *  (the `B-F3` rule-2 mapping, applied here too, and the `A3-02` repair). Three states, in this
+ *  order: an UNREADABLE census → `MANUAL` (a broken instrument never manufactures a verdict in
+ *  either direction); a READABLE but DIRTY census → `FAIL` (an un-censused or missing page-reachable
+ *  namespace is a channel defect this row exists to redden, and it no longer hides behind a
+ *  successful round trip); otherwise the requirement arm decides on `arbitraryRoundTripped`.
+ *  `bridgeNamespaceCensusOk` therefore holds only in the live state, and both of its halves are
+ *  NAMED TERMS in the predicate rather than one opaque boolean. */
+const scA01Verdict = bridgeNamespaceCensusUnreadable ? 'MANUAL'
+  : bridgeNamespaceCensusDirty ? 'FAIL'
+    : (arbitraryRoundTripped ? 'PASS' : 'FAIL')
 check('SC-A-01 (Family A, arm a-i) — THE MAIN-SIDE RENDERER BRIDGE', 'REQUIREMENT ARM (a-i): an ARBITRARY caller-named datum can be written to and read back from tier 4 through the main-side renderer bridge — MEASURED: it cannot; the bridge is not name-addressed and the write is dropped', scA01Verdict,
-  `NAMED TERMS: the ARM is MET iff the live read-back carries the caller's own key; the row's census clause CARRIES the namespace-set term, so a census that could not be taken reads MANUAL (never PASS). bridge top-level keys=${JSON.stringify(bridgeCensus?.topKeys)}, the object-valued namespaces READ OFF THE LIVE OBJECT=${JSON.stringify(bridgeNamespaces)} vs DECLARED=${JSON.stringify(BRIDGE_NAMESPACES_DECLARED)} (unknown=${JSON.stringify(bridgeNamespaceUnknowns)}, missing=${JSON.stringify(bridgeNamespaceMisses)}, censusOk=${bridgeNamespaceCensusOk} — the B-F15 SET-EQUALITY term, IN the predicate: a FOURTH page-reachable namespace is an un-censused channel and reddens this row), their members and Function.length arities=${JSON.stringify(bridgeCensus?.namespaces)}; a live set({myNewField:'COMPLIANCE-ARBITRARY-DATUM'}) answered ${JSON.stringify(arbitraryNameWritten?.setAnswer)}; the live get() AFTER it answered ${JSON.stringify(arbitraryNameReadBack)}; arbitraryKeyRoundTripped=${arbitraryRoundTripped}. THE CHANNEL CENSUS, so "ANY live channel" is answered and not assumed — and RESTATED by the §6.2 audit's A-F1 over the THREE BRIDGE NAMESPACES rather than the security namespace alone: (i) security={${(bridgeCensus?.namespaces?.security?.members ?? []).join(',')}} with no name-addressed member; (ii) store={${(bridgeCensus?.namespaces?.store?.members ?? []).join(',')}} — the tier-1 FILE bridge, DRIVEN at SC-A-06 with a secure.-keyed payload and a secure.-looking name, because a name-parameterised put() exists there and was NEVER probed by this battery's first draft; (iii) module={${(bridgeCensus?.namespaces?.module?.members ?? []).join(',')}} (operator-only, main->renderer->main); (iv) the generic surface's six name-addressed members, driven at SC-A-02; (v) the live MCP tool set, censused against the landed ALL_TOOLS at SC-C-02. Every bridged member reports Function.length=0, so no census here rests on arity. NO live channel accepts an arbitrary tier-4 name`,
-  'the authority is the architect\'s clause (1) in docs/decisions.md `SECURE-TIER-IS-A-FILESTORE-PEER`: tier 4\'s ONLY distinctions from the `file` tier are "its FILE, its NO-LOWER-TIER-ALIAS rule and its ACCESS-CONTROL POLICY", with the shape "OPENED to arbitrary data keyed by the app\'s own subsystems". The landed three-member patch surface is the FOURTH distinction the same row says a pass must "surface rather than enforce". THIS ROW IS DELIBERATELY WRITTEN AS THE REQUIREMENT ARM: a PASS would mean an arbitrary datum round-tripped through the tier\'s own store API, which is the only admissible form of a Family A pass. ITS CENSUS CLAUSE IS NOW SUPPORTED BY A DRIVEN PROBE OF EVERY NAMESPACE, not by a member list — the `§6.2` audit\'s `A-F1` found the `store` namespace unprobed and every row still green, which is why SC-A-06 exists; and the NAMESPACE SET is itself a predicate term since the second audit\'s `B-F15` (a fourth object-valued member used to redden nothing)')
+  `NAMED TERMS: the ARM is MET iff the live read-back carries the caller's own key; the row's census clause CARRIES BOTH of its states as terms, each read BEFORE the round-trip term: an UNREADABLE census (window.provident absent, or ZERO object-valued namespaces enumerated) reads MANUAL, and a READABLE but DIRTY census (unknown/missing non-empty) reads FAIL whatever the round-trip says (the A3-02 split — before it, a fourth namespace read PASS whenever the round-trip succeeded). bridge top-level keys=${JSON.stringify(bridgeCensus?.topKeys)}, the object-valued namespaces READ OFF THE LIVE OBJECT=${JSON.stringify(bridgeNamespaces)} vs DECLARED=${JSON.stringify(BRIDGE_NAMESPACES_DECLARED)} (unknown=${JSON.stringify(bridgeNamespaceUnknowns)}, missing=${JSON.stringify(bridgeNamespaceMisses)}, censusUnreadable=${bridgeNamespaceCensusUnreadable}, censusDirty=${bridgeNamespaceCensusDirty}, censusOk=${bridgeNamespaceCensusOk} — the B-F15 SET-EQUALITY term, now in the predicate as TWO terms so a FOURTH page-reachable namespace reddens the row in EITHER live state), their members and Function.length arities=${JSON.stringify(bridgeCensus?.namespaces)}; a live set({myNewField:'COMPLIANCE-ARBITRARY-DATUM'}) answered ${JSON.stringify(arbitraryNameWritten?.setAnswer)}; the live get() AFTER it answered ${JSON.stringify(arbitraryNameReadBack)}; arbitraryKeyRoundTripped=${arbitraryRoundTripped}; rowVerdict=${scA01Verdict}. THE CHANNEL CENSUS, so "ANY live channel" is answered and not assumed — and RESTATED by the §6.2 audit's A-F1 over the THREE BRIDGE NAMESPACES rather than the security namespace alone: (i) security={${(bridgeCensus?.namespaces?.security?.members ?? []).join(',')}} with no name-addressed member; (ii) store={${(bridgeCensus?.namespaces?.store?.members ?? []).join(',')}} — the tier-1 FILE bridge, DRIVEN at SC-A-06 with a secure.-keyed payload and a secure.-looking name, because a name-parameterised put() exists there and was NEVER probed by this battery's first draft; (iii) module={${(bridgeCensus?.namespaces?.module?.members ?? []).join(',')}} (operator-only, main->renderer->main); (iv) the generic surface's six name-addressed members, driven at SC-A-02; (v) the live MCP tool set, censused against the landed ALL_TOOLS at SC-C-02. Every bridged member reports Function.length=0, so no census here rests on arity. NO live channel accepts an arbitrary tier-4 name`,
+  'the authority is the architect\'s clause (1) in docs/decisions.md `SECURE-TIER-IS-A-FILESTORE-PEER`: tier 4\'s ONLY distinctions from the `file` tier are "its FILE, its NO-LOWER-TIER-ALIAS rule and its ACCESS-CONTROL POLICY", with the shape "OPENED to arbitrary data keyed by the app\'s own subsystems". The landed three-member patch surface is the FOURTH distinction the same row says a pass must "surface rather than enforce". THIS ROW IS DELIBERATELY WRITTEN AS THE REQUIREMENT ARM: a PASS would mean an arbitrary datum round-tripped through the tier\'s own store API, which is the only admissible form of a Family A pass. ITS CENSUS CLAUSE IS NOW SUPPORTED BY A DRIVEN PROBE OF EVERY NAMESPACE, not by a member list — the `§6.2` audit\'s `A-F1` found the `store` namespace unprobed and every row still green, which is why SC-A-06 exists; and the NAMESPACE SET is itself a predicate term since the second audit\'s `B-F15` — **AND SINCE THE THIRD AUDIT\'S `A3-02` THAT TERM IS TWO TERMS READ BEFORE THE ROUND-TRIP: a fourth object-valued member used to redden nothing when the round-trip succeeded, and a readable-but-dirty census used to read `MANUAL` (which moves neither the exit code nor an arm count) while the prose claimed it FAILS the row. BOTH ARE CLOSED HERE, and the code comment, `§4d` rules 1/2 and this cell now say the same thing.**')
 
 const genericSecure = await driveGenericSurface(cdp, 'secure.operator.token')
 const genericRefusals = ['resolve', 'set', 'commit', 'clear', 'remove', 'subscribe']
@@ -1248,10 +1324,22 @@ check('SC-C-05 (Family C, arm c) — THE EXCLUSION GATE, BOTH ARMS', 'with the g
 const settledPost = await settledListing(bootA.profile, { spawnedAt: 0, minAgeMs: 0, stableReads: 2 })
 const censusPost = persistedCensus(settledPost.list)
 const residuePost = tmpResidueCensus(bootA.profile)
-const censusPostHolds = censusPost.ok === true && residuePost.residuals.length === 0
-check('SC-B-09 (Family B, arm a) — THE CENSUS RE-MEASURED AFTER THE FAMILY C PHASE', 'the SAME exactly-two-`.json` predicate (no third name, the security file present) and the SAME no-`.tmp` term STILL hold after the operator write, both live controls and both exclusion transitions — the pre-write reading is not the only reading', censusPostHolds ? 'PASS' : 'FAIL',
-  `NAMED TERMS: post-phase settled listing=${JSON.stringify(settledPost.list.filter((n) => n.endsWith('.json') || n.endsWith('.tmp')))}, settled=${settledPost.settled} after ${settledPost.polls} poll(s); jsonNames=${JSON.stringify(censusPost.jsonNames)}, undeclaredJsonNames=${JSON.stringify(censusPost.undeclaredJsonNames)}, securityPresent=${censusPost.securityPresent}, settingsPresent=${censusPost.settingsPresent}, predicate=${censusPost.ok}; residual .tmp entries after the whole phase=${JSON.stringify(residuePost.residuals)}; the PRE-WRITE reading this re-asserts is SC-B-01's (jsonNames=${JSON.stringify(censusA.jsonNames)}, predicate=${censusA.ok})`,
-  'the EXACTLY-TWO pin re-read at the END of the run rather than only at its start (docs/specs/store-persist.md; `store-security.md` §1.2 item 2; `docs/FORKER.md` §4 (ii)/(iv)). This row adds no new property: it makes `SC-B-01`\'s claim non-vacuous AFTER every live write and transition this battery itself performed, which is the §6.2 audit\'s A-F12 remedy — a phase that ends with a third file or a leftover `.tmp` would otherwise have been unmeasured')
+/** **THE SECURITY FILE'S KEY SET IS RE-MEASURED HERE TOO — the THIRD `§6.2` audit's `A3-06`,
+ *  disposed `FIXED` (LOW).** `SC-B-04`'s *"no `exclusion`/`write` key in the file"* term was read
+ *  **ONCE**, before both `setExclusion` transitions and before the store-bridge probes, so **an
+ *  `exclusion` key landing in the file during the gate transitions reddened NOTHING** — the very
+ *  class (`exclusion` riding the GET RESPONSE rather than the file) the row exists for. The SAME
+ *  `setEquality` predicate is therefore re-run here, on the profile the run actually left behind,
+ *  and it is a TERM of this row's verdict beside the census and residue terms. */
+const secParsedPost = JSON.parse(readOrNull(secPathA))
+const secKeySetPost = Object.keys(secParsedPost).sort()
+const secKeySetEqualityPost = setEquality(secKeySetPost, DECLARED_SECURITY_KEYS)
+const forbiddenSecKeysPost = secKeySetPost.filter((k) => FORBIDDEN_SECURITY_KEYS.includes(k))
+const secShapePostHolds = secKeySetEqualityPost.equal && forbiddenSecKeysPost.length === 0
+const censusPostHolds = censusPost.ok === true && residuePost.residuals.length === 0 && secShapePostHolds
+check('SC-B-09 (Family B, arm a) — THE CENSUS AND THE TIER KEY SET RE-MEASURED AFTER THE FAMILY C PHASE', 'the SAME exactly-two-`.json` predicate (no third name, the security file present), the SAME no-`.tmp` term AND the SAME tier-shape key set (`SC-B-04`\'s set-equality, no `exclusion`/`write`/`schemaVersion` key) STILL hold after the operator write, both live controls and both exclusion transitions — the pre-write readings are not the only readings', censusPostHolds ? 'PASS' : 'FAIL',
+  `NAMED TERMS: post-phase settled listing=${JSON.stringify(settledPost.list.filter((n) => n.endsWith('.json') || n.endsWith('.tmp')))}, settled=${settledPost.settled} after ${settledPost.polls} poll(s); jsonNames=${JSON.stringify(censusPost.jsonNames)}, undeclaredJsonNames=${JSON.stringify(censusPost.undeclaredJsonNames)}, securityPresent=${censusPost.securityPresent}, settingsPresent=${censusPost.settingsPresent}, predicate=${censusPost.ok}; residual .tmp entries after the whole phase=${JSON.stringify(residuePost.residuals)}; **THE TIER-SHAPE RE-MEASUREMENT (the A3-06 term): topLevelKeys AFTER the whole phase=${JSON.stringify(secKeySetPost)} vs declaredMembers=${JSON.stringify(DECLARED_SECURITY_KEYS)} (SET-EQUALITY missing=${JSON.stringify(secKeySetEqualityPost.missing)} extra=${JSON.stringify(secKeySetEqualityPost.extra)} equal=${secKeySetEqualityPost.equal}), forbiddenChannelOrSchemaKeys=${JSON.stringify(forbiddenSecKeysPost)}, secShapePostHolds=${secShapePostHolds} — an 'exclusion' key landing during either setExclusion transition reddens THIS row, which the as-filed bytes could not do (the key set was read once, before both transitions)**; the PRE-WRITE readings this re-asserts are SC-B-01's (jsonNames=${JSON.stringify(censusA.jsonNames)}, predicate=${censusA.ok}) and SC-B-04's (topLevelKeys=${JSON.stringify(secKeySet)}, equal=${secKeySetEquality.equal}, forbidden=${JSON.stringify(forbiddenSecKeys)}); the PRE-phase file's OWN bytes=${JSON.stringify(secBytesAfterWrite)}`,
+  'the EXACTLY-TWO pin re-read at the END of the run rather than only at its start (docs/specs/store-persist.md; `store-security.md` §1.2 item 2; `docs/FORKER.md` §4 (ii)/(iv)). This row adds no new property: it makes `SC-B-01`\'s claim non-vacuous AFTER every live write and transition this battery itself performed, which is the §6.2 audit\'s A-F12 remedy — a phase that ends with a third file or a leftover `.tmp` would otherwise have been unmeasured. **AND SINCE THE THIRD AUDIT\'S `A3-06` THE SAME RE-MEASUREMENT COVERS `SC-B-04`\'s TIER-SHAPE CLAIM: the key set was read ONCE before both `setExclusion` transitions, so an `exclusion` key landing there reddened nothing; the set-equality predicate is now re-run on the END-of-run profile and is a term of this row.**')
 
 // ══════════════════════════════════════════════════════════════════════════════════════
 // PHASE 3 — BOOT B: the seeded third-party arbitrary key, BEFORE the boot
@@ -1316,13 +1404,18 @@ check('SC-A-05 (Family A, arm c)', 'REQUIREMENT ARM (c): a profile whose securit
  *  (`SC-A-01/02/04/05`) and never from this row.
  *
  *  THREE probes, in ONE boot, each with its OWN before/after byte reading **AND ITS OWN `get()`
- *  reading** — the `§6.2` audit's `B-F1` (`FIXED`): the as-filed row asserted the leak term over
+ *  reading**, PLUS a PRE-PROBE `get()` baseline — the `§6.2` audit's `B-F1` (`FIXED`), whose count
+ *  the THIRD audit's `A3-03` (`FIXED`) reconciled: the as-filed row asserted the leak term over
  *  `settingsBytesB3` ALONE while its evidence claimed *"no `secure.`-keyed member appears in tier
  *  1's bytes at ANY of the four readings"*, and probe (iii) **REPLACES THE WHOLE FILE** (the very
  *  behaviour filed as `STORE-BRIDGE-EMPTY-PROJECTION-COMMITS`), so **a leak landing at (i) or at
  *  the strict alias probe (ii) was ERASED before B3 and before the single live `get()` — a
  *  regression re-introducing the `secure.*` lower-tier alias still read PASS.** ALL FOUR byte
- *  readings and ALL FOUR per-probe `get()` readings are now terms of the predicate. */
+ *  readings and ALL FOUR live `get()` readings — the pre-probe baseline `B0` plus one after each
+ *  probe — are now terms of the predicate; **the `A3-03` remedy taken here is the second of the two
+ *  the audit offered: the count is made true by ADDING the pre-probe reading, because a pre-probe
+ *  `get()` is a reading the row did not previously take and it strengthens the window rather than
+ *  correcting five cells downward.** */
 const settingsPathB = join(bootB.profile, SETTINGS_FILE)
 const settingsBytesB0 = readOrNull(settingsPathB)
 const secShaBBefore = sha256(secBPath)
@@ -1332,6 +1425,9 @@ const storeGet = async (label) => {
   })()`)
   return { label, raw, rows: Array.isArray(raw) ? raw : [] }
 }
+/** THE PRE-PROBE READING (`A3-03`): the live store bridge's OWN rows BEFORE any put this row issues
+ *  — so "no `secure.`-named row at ANY reading" covers a state the probes did not create. */
+const getB0 = await storeGet('B0 (before any probe)')
 const putSecureName = await cdpB.evaluate(`(async function(){
   try { return await window.provident.store.put({ name: 'secure.complianceprobe', value: JSON.stringify({ 'secure.complianceprobe': 'TIER4-LEAK-PROBE-DATUM' }) }); }
   catch (e) { return { threw: String(e) }; }
@@ -1368,7 +1464,7 @@ const SETTINGS_READINGS = [
 ]
 const secureKeyInSettingsBytesPerReading = SETTINGS_READINGS.map((r) => ({ label: r.label, present: r.bytes !== null && /"secure\./.test(r.bytes) }))
 const secureKeyInSettingsBytes = secureKeyInSettingsBytesPerReading.some((r) => r.present)
-const GET_READINGS = [getB1, getB2, getB3]
+const GET_READINGS = [getB0, getB1, getB2, getB3]
 const storeBridgeGetReadable = GET_READINGS.every((g) => Array.isArray(g.raw))
 const secureNameInStoreGetPerReading = GET_READINGS.map((g) => ({ label: g.label, present: g.rows.some((r) => typeof r?.name === 'string' && r.name.startsWith('secure.')) }))
 const secureNameInStoreGet = secureNameInStoreGetPerReading.some((r) => r.present)
@@ -1386,25 +1482,43 @@ const settingsB0Present = settingsBytesB0 !== null && /"file\.settings\./.test(s
 const securityFileUnmovedByStoreBridge = secShaBBefore === secShaBAfter
 const storeBridgeNoLeak = storeBridgeReadable && storeBridgeGetReadable && !secureKeyInSettingsBytes && !secureNameInStoreGet
   && securityFileUnmovedByStoreBridge && (nameHonoured || valueKeyLanded)
+/** **THE PUT-RECEIPT PRECONDITION — the THIRD `§6.2` audit's `A3-04`, disposed `FIXED` (MED).**
+ *  The `B-F2` remedy made `(nameHonoured || valueKeyLanded)` a TERM of `storeBridgeNoLeak`, which
+ *  closed the "a dead put moves nothing, so nothing leaked" vacuity — **but it mapped the outcome
+ *  to `FAIL`**: with a dead or refusing `store.put` all three probes land nothing, the non-vacuity
+ *  term is false, and the row read **`FAIL` — A BROKEN WRITE INSTRUMENT CHARGED AS A LEAK**, against
+ *  `§4d` rule 2 (*"a broken instrument reads `MANUAL`, never `PASS`, never an accidental `FAIL`"*).
+ *  The distinction the row needs is: a put that **ANSWERED A COMMITTED RECEIPT and still landed
+ *  nothing** is a LEAK-PREDICATE reading (the filter dropped it — the row's FAIL direction); a put
+ *  that **THREW, or answered no receipt at all** is a DEAD INSTRUMENT (the row has no reading at
+ *  all). Both probes are now NAMED TERMS: `putReceiptsOk` requires each of the three probes to have
+ *  answered an object carrying a string `status`, and the INSTRUMENT-BROKEN state (a failed receipt
+ *  OR the `B-F1` read preconditions) reads `MANUAL` — so a dead write instrument can no longer be
+ *  charged as a leak, and the leak reading is taken only over RECEIPTED writes. */
+const putReceiptStatuses = [putSecureName, putFileLookingName, putNameHonour]
+  .map((r, i) => ({ label: ['(i)', '(ii)', '(iii)'][i], status: r !== null && typeof r === 'object' && !Array.isArray(r) && typeof r.status === 'string' ? r.status : null, raw: r?.threw ?? r }))
+const putReceiptStatusesNotCommitted = putReceiptStatuses.filter((r) => r.status !== 'committed')
+const putReceiptsOk = putReceiptStatusesNotCommitted.length === 0
 /** THE FOUR-STATE MAPPING (rules 1/2/5 of the record's `§4d` per-row table, applied): a real leak
  *  is a FAIL whatever the instrument's health; an instrument that could not READ (no settings file
- *  to census at B0, or a `get()` that did not answer an array at every probe) reads `MANUAL`;
- *  otherwise the census's own claim decides. */
+ *  to census at B0, a `get()` that did not answer an array at every probe, **or a put probe that
+ *  answered no `committed` receipt — the `A3-04` term**) reads `MANUAL`; otherwise the census's own
+ *  claim decides. */
 const storeBridgeLeakTermsBreached = secureKeyInSettingsBytes || secureNameInStoreGet
-const scA06InstrumentOk = settingsB0Present && storeBridgeGetReadable
+const scA06InstrumentOk = settingsB0Present && storeBridgeGetReadable && putReceiptsOk
 const scA06Verdict = storeBridgeLeakTermsBreached ? 'FAIL' : (!scA06InstrumentOk ? 'MANUAL' : (storeBridgeNoLeak ? 'PASS' : 'FAIL'))
 const scA06TermNames = [
   `storeBridgeReadable=${storeBridgeReadable}`, `storeBridgeGetReadable=${storeBridgeGetReadable}`,
   `noSecureKeyInAnySettingsReading=${!secureKeyInSettingsBytes}`, `noSecureNameInAnyStoreGetReading=${!secureNameInStoreGet}`,
   `securityFileUnmovedByStoreBridge=${securityFileUnmovedByStoreBridge}`, `nameHonoured||valueKeyLanded=${nameHonoured || valueKeyLanded}`,
-  `settingsB0Present=${settingsB0Present}`,
+  `settingsB0Present=${settingsB0Present}`, `putReceiptsOk=${putReceiptsOk}`,
 ].join(', ')
 const scA06NameTerm = nameHonoured
   ? 'MEASURED, the name parameter IS honoured: the landed row is keyed by the NAME the caller passed'
   : 'MEASURED, the name parameter is INERT: the landed row is keyed by the VALUE\'s own spelling (file.settings.theme.token), i.e. the main-side handler projects the crossing\'s translation by the value\'s keys and never reads row.name'
 check('SC-A-06 (Family A, arm a-iii — CHANNEL CENSUS) — THE TIER-1 FILE-STORE BRIDGE NAMESPACE', 'CHANNEL-CENSUS ARM: the third page-reachable bridge namespace (`provident.store.put/get`) accepts NO arbitrary tier-4 NAME — a `secure.`-keyed name and a `secure.`-keyed value member both fail to land in `provident-settings.json`\'s bytes or in the live `get()`, and the tier-4 file is untouched by this channel', scA06Verdict,
-  `NAMED TERMS (the predicate in full — rules 1 and 3 of §4d): ${scA06TermNames} => storeBridgeNoLeak=${storeBridgeNoLeak}. live store.get() ANSWERED AFTER EACH PROBE (the B-F1 widening): after (i) rows=${JSON.stringify(getB1.rows)}, after (ii) rows=${JSON.stringify(getB2.rows)}, after (iii) rows=${JSON.stringify(getB3.rows)} (the final reading, ${storeBridgeReadable ? storeBridgeRows.length : JSON.stringify(liveRowsB)} row(s)); settings bytes BEFORE the probe=${JSON.stringify(settingsBytesB0)}; after (i) put with a secure.-keyed NAME and a secure.-keyed VALUE member: receipt=${JSON.stringify(putSecureName)} => ${JSON.stringify(settingsBytesB1)}; after (ii) put with a file.-looking NAME carrying a secure.-keyed VALUE member: receipt=${JSON.stringify(putFileLookingName)} => ${JSON.stringify(settingsBytesB2)}; after (iii) put with the NAME file.settings.namedprobe and the VALUE key file.settings.theme.token: receipt=${JSON.stringify(putNameHonour)} => ${JSON.stringify(settingsBytesB3)}. LEAK TERMS, EACH READING ITS OWN TERM: secureKeyInSettingsBytesPerReading=${JSON.stringify(secureKeyInSettingsBytesPerReading)}, secureKeyInSettingsBytes=${secureKeyInSettingsBytes} (no secure.-keyed member appears in tier 1's bytes at ANY of the four readings — the as-filed claim, now true of its predicate instead of only of its prose); secureNameInStoreGetPerReading=${JSON.stringify(secureNameInStoreGetPerReading)}, secureNameInStoreGet=${secureNameInStoreGet} (no row ANY of the four live get() readings reports is secure.-named); securityFileUnmovedByStoreBridge=${securityFileUnmovedByStoreBridge} (the tier-4 file's sha256 ${secShaBBefore.slice(0, 16)} ... ${secShaBAfter.slice(0, 16)}: this channel cannot reach tier 4's file). THE NAME-PARAMETER DISCRIMINATOR (iii): nameHonoured=${nameHonoured}, valueKeyLanded=${valueKeyLanded} - ${scA06NameTerm}. **NOTHING LANDED IS ALSO A NON-VACUITY QUESTION (B-F2): this row's own positive evidence is that the channel MOVES bytes and lands a name at all, so \`nameHonoured || valueKeyLanded\` is a TERM — a dead or refusing put() moves nothing and no longer reads PASS**`,
-  'the §6.2 audit\'s `A-F1` (HIGH, gate-6-blocking): the driver censused `window.provident.security` and the generic store surface, then asserted "NO live channel accepts an arbitrary tier-4 name" — while `src/main/preload.ts:61-65,123-129` exposes `provident.store.put(row)`/`get()`, wired through `STORE_FILE_PUT` to `src/main/main.ts:315-336`, whose own comment declares "the `mem.*`/`temp.*`/`secure.*` keys NEVER land in the file". THIS ROW IS THAT CLAIM, DRIVEN. `docs/decisions.md` `SECURE-TIER-IS-A-FILESTORE-PEER` clause (2) (`D-CLAUSE-2`) forbids a lower-tier alias, and `data-ownership-model-plan.md` §3.8 forbids a tier-4 value reaching a nonsecure reader — a `secure.`-keyed member landing in tier 1\'s file would violate BOTH and would be a Family C leak. MEASURED at this HEAD: it does not land, and the channel cannot move the tier-4 file. A FAIL here is a NEW HIGH live defect and must be filed, not explained. **ITS INSTRUMENT WINDOW IS NOW WHOLE (the SECOND audit\'s `B-F1`/`B-F2`): every byte reading AND every `get()` reading is a predicate term, and the name/value discriminator is the row\'s non-vacuity term**')
+  `NAMED TERMS (the predicate in full — rules 1 and 3 of §4d): ${scA06TermNames} => storeBridgeNoLeak=${storeBridgeNoLeak}. live store.get() ANSWERED AT EVERY READING (the B-F1 widening, its count reconciled by A3-03): PRE-PROBE baseline (B0) rows=${JSON.stringify(getB0.rows)}; after (i) rows=${JSON.stringify(getB1.rows)}, after (ii) rows=${JSON.stringify(getB2.rows)}, after (iii) rows=${JSON.stringify(getB3.rows)} (the final reading, ${storeBridgeReadable ? storeBridgeRows.length : JSON.stringify(liveRowsB)} row(s)); settings bytes BEFORE the probe=${JSON.stringify(settingsBytesB0)}; after (i) put with a secure.-keyed NAME and a secure.-keyed VALUE member: receipt=${JSON.stringify(putSecureName)} => ${JSON.stringify(settingsBytesB1)}; after (ii) put with a file.-looking NAME carrying a secure.-keyed VALUE member: receipt=${JSON.stringify(putFileLookingName)} => ${JSON.stringify(settingsBytesB2)}; after (iii) put with the NAME file.settings.namedprobe and the VALUE key file.settings.theme.token: receipt=${JSON.stringify(putNameHonour)} => ${JSON.stringify(settingsBytesB3)}. THE PUT-RECEIPT PRECONDITION (the A3-04 term, so a DEAD write instrument reads MANUAL rather than being charged as a LEAK — §4d rule 2): putReceiptStatuses=${JSON.stringify(putReceiptStatuses.map((r) => ({ label: r.label, status: r.status })))}, putReceiptStatusesNotCommitted=${JSON.stringify(putReceiptStatusesNotCommitted.map((r) => r.label))}, putReceiptsOk=${putReceiptsOk}, scA06InstrumentOk=${scA06InstrumentOk}, putReceiptsWithAnEmptyProjectionButACommittedReceipt=${JSON.stringify(putReceiptStatuses.filter((r) => r.status === 'committed' && (nameHonoured || valueKeyLanded)).map((r) => r.label))} (a committed receipt on a probe that landed nothing IS the leak-predicate reading — the filter dropped it; a THROWN or receipt-less probe is the instrument state). LEAK TERMS, EACH READING ITS OWN TERM: secureKeyInSettingsBytesPerReading=${JSON.stringify(secureKeyInSettingsBytesPerReading)}, secureKeyInSettingsBytes=${secureKeyInSettingsBytes} (no secure.-keyed member appears in tier 1's bytes at ANY of the four readings — the as-filed claim, now true of its predicate instead of only of its prose); secureNameInStoreGetPerReading=${JSON.stringify(secureNameInStoreGetPerReading)}, secureNameInStoreGet=${secureNameInStoreGet} (no row ANY of the four live get() readings reports is secure.-named); securityFileUnmovedByStoreBridge=${securityFileUnmovedByStoreBridge} (the tier-4 file's sha256 ${secShaBBefore.slice(0, 16)} ... ${secShaBAfter.slice(0, 16)}: this channel cannot reach tier 4's file). THE NAME-PARAMETER DISCRIMINATOR (iii): nameHonoured=${nameHonoured}, valueKeyLanded=${valueKeyLanded} - ${scA06NameTerm}. **NOTHING LANDED IS ALSO A NON-VACUITY QUESTION (B-F2): this row's own positive evidence is that the channel MOVES bytes and lands a name at all, so \`nameHonoured || valueKeyLanded\` is a TERM — a dead or refusing put() moves nothing and no longer reads PASS**`,
+  'the §6.2 audit\'s `A-F1` (HIGH, gate-6-blocking): the driver censused `window.provident.security` and the generic store surface, then asserted "NO live channel accepts an arbitrary tier-4 name" — while `src/main/preload.ts:61-65,123-129` exposes `provident.store.put(row)`/`get()`, wired through `STORE_FILE_PUT` to `src/main/main.ts:315-336`, whose own comment declares "the `mem.*`/`temp.*`/`secure.*` keys NEVER land in the file". THIS ROW IS THAT CLAIM, DRIVEN. `docs/decisions.md` `SECURE-TIER-IS-A-FILESTORE-PEER` clause (2) (`D-CLAUSE-2`) forbids a lower-tier alias, and `data-ownership-model-plan.md` §3.8 forbids a tier-4 value reaching a nonsecure reader — a `secure.`-keyed member landing in tier 1\'s file would violate BOTH and would be a Family C leak. MEASURED at this HEAD: it does not land, and the channel cannot move the tier-4 file. A FAIL here is a NEW HIGH live defect and must be filed, not explained. **ITS INSTRUMENT WINDOW IS NOW WHOLE (the SECOND audit\'s `B-F1`/`B-F2`): every byte reading AND every `get()` reading is a predicate term, and the name/value discriminator is the row\'s non-vacuity term. **AND ITS INSTRUMENT STATE IS NOW SEPARATED FROM ITS LEAK READING (the THIRD audit\'s `A3-04`): the non-vacuity term\'s failure used to read `FAIL`, i.e. a dead/refusing `store.put` was charged as a LEAK — against `§4d` rule 2 — so the three put receipts are now a NAMED PRECONDITION (`putReceiptsOk`) and a broken write instrument reads `MANUAL`. A receipted write that lands nothing is STILL the leak-predicate reading (`FAIL`), which is the direction this row exists for.**')
 
 // ══════════════════════════════════════════════════════════════════════════════════════
 // PHASE 4 — [G] the static readings this battery's rows lean on
@@ -1506,19 +1620,47 @@ for (const fam of ['A', 'B', 'C']) {
  *  verdict in either direction. Families B and C are read as their arms' verdicts, and if a
  *  repaired predicate FAILS the family verdict moves with it. `A-F15`'s counting rule is printed
  *  BESIDE the row count so the record and the driver cannot disagree about how many controls
- *  exist. */
-const familyARows = CHECKS.filter((c) => /SC-A-/.test(c.id))
+ *  exist.
+ *
+ *  **THE `MANUAL` TERM — the THIRD `§6.2` audit's `A3-05`, disposed `FIXED` (MED, latent: `0
+ *  MANUAL` this run).** Every family line counted ONLY `FAIL` (B/C printed *"the FAIL row count
+ *  under COMPLIANT iff every … row PASSes"*, and Family A's arm line printed `FAIL / PASS`), so
+ *  **a `MANUAL` arm — reachable at `SC-A-01/02/05/06` and `SC-C-01` through the very precondition
+ *  terms the second audit required — vanished from the totals**: `1 PASS / 3 FAIL / 1 MANUAL` and
+ *  `4 FAIL / 0 PASS` printed the SAME string. Each family's `PASS`/`FAIL`/`MANUAL`/`PARKED` split
+ *  is now printed WITH ITS TERMS, and **a `MANUAL` arm is a WITHHELD claim**: it is named as such
+ *  per family rather than being silently absorbed into a FAIL count. (Note the two directions
+ *  honestly: a `MANUAL` arm cannot manufacture a `COMPLIANT` verdict, and it is not counted as a
+ *  FAIL either — the family verdict is a claim about the arms that COULD be read.) */
+const familyRows = (fam) => CHECKS.filter((c) => new RegExp(`^SC-${fam}-`).test(c.id))
+const verdictSplit = (set) => ['PASS', 'FAIL', 'MANUAL', 'PARKED'].map((v) => `${set.filter((c) => c.verdict === v).length} ${v}`).join(' / ')
+const familyARows = familyRows('A')
 const familyAChannelCensus = familyARows.filter((c) => /CHANNEL.CENSUS/i.test(`${c.id} ${c.subject}`))
 const familyAControls = familyARows.filter((c) => c.id.includes('CONTROL'))
 const familyARequirementArms = familyARows.filter((c) => !familyAChannelCensus.includes(c) && !familyAControls.includes(c))
+const familyAArmManual = familyARequirementArms.filter((c) => c.verdict === 'MANUAL')
+const familyAArmFail = familyARequirementArms.filter((c) => c.verdict === 'FAIL')
+const familyAArmPass = familyARequirementArms.filter((c) => c.verdict === 'PASS')
+const familyBArms = familyRows('B')
+const familyCArms = familyRows('C')
+const familyBManual = familyBArms.filter((c) => c.verdict === 'MANUAL')
+const familyCManual = familyCArms.filter((c) => c.verdict === 'MANUAL')
+const manualRowIdsAnywhere = CHECKS.filter((c) => c.verdict === 'MANUAL').map((c) => c.id.split(' ')[0])
 console.log('  FAMILY-VERDICT TERMS (from this run, not re-asserted):')
 console.log(`    FAMILY A = NON-COMPLIANT iff every REQUIREMENT arm FAILs: ${familyARequirementArms.length} requirement arm(s) = ` +
-  `${familyARequirementArms.filter((c) => c.verdict === 'FAIL').length} FAIL / ${familyARequirementArms.filter((c) => c.verdict === 'PASS').length} PASS ` +
-  `(${familyARequirementArms.map((c) => `${c.id.split(' ')[0]}:${c.verdict}`).join(', ')}) — BESIDE them: ${familyAControls.length} CONTROL row(s) ` +
+  `${verdictSplit(familyARequirementArms)} ` +
+  `(${familyARequirementArms.map((c) => `${c.id.split(' ')[0]}:${c.verdict}`).join(', ')})` +
+  `${familyAArmManual.length === 0 ? ` — NO arm is MANUAL, so the verdict is carried by ${familyAArmFail.length} FAIL / ${familyAArmPass.length} PASS` : ` — **${familyAArmManual.length} arm(s) MANUAL (${JSON.stringify(familyAArmManual.map((c) => c.id.split(' ')[0]))}): A WITHHELD claim. The family verdict is not COMPLIANT while any arm is MANUAL` +
+    `${familyAArmFail.length !== 0 ? `, and it is NON-COMPLIANT only on the ${familyAArmFail.length} arm(s) that COULD be read` : ''}` +
+    `${familyAArmFail.length === 0 && familyAArmPass.length === 0 ? ', and with NO arm readable at all the verdict is WITHHELD ENTIRELY — NOT COMPLIANT' : ''}**`}` +
+  ` — BESIDE them: ${familyAControls.length} CONTROL row(s) ` +
   `(${familyAControls.map((c) => `${c.id.split(' ')[0]}:${c.verdict}`).join(', ')}) and ${familyAChannelCensus.length} CHANNEL-CENSUS row(s) ` +
   `(${familyAChannelCensus.map((c) => `${c.id.split(' ')[0]}:${c.verdict}`).join(', ')}) — NEITHER carries the family verdict`)
-console.log(`    FAMILY B = COMPLIANT iff every family-B row PASSes: ${CHECKS.filter((c) => /SC-B-/.test(c.id)).filter((c) => c.verdict === 'FAIL').length} FAIL row(s)`)
-console.log(`    FAMILY C = COMPLIANT iff every family-C row PASSes: ${CHECKS.filter((c) => /SC-C-/.test(c.id)).filter((c) => c.verdict === 'FAIL').length} FAIL row(s)`)
+console.log(`    FAMILY B = COMPLIANT iff every family-B row PASSes: ${verdictSplit(familyBArms)} over ${familyBArms.length} row(s)` +
+  `${familyBManual.length === 0 ? ' — no MANUAL row, so the COMPLIANT reading is complete' : ` — **${familyBManual.length} MANUAL row(s) (${JSON.stringify(familyBManual.map((c) => c.id.split(' ')[0]))}): those claims are WITHHELD, so the family is NOT reported COMPLIANT on a MANUAL arm**`}`)
+console.log(`    FAMILY C = COMPLIANT iff every family-C row PASSes: ${verdictSplit(familyCArms)} over ${familyCArms.length} row(s)` +
+  `${familyCManual.length === 0 ? ' — no MANUAL row, so the COMPLIANT reading is complete' : ` — **${familyCManual.length} MANUAL row(s) (${JSON.stringify(familyCManual.map((c) => c.id.split(' ')[0]))}): those claims are WITHHELD, so the family is NOT reported COMPLIANT on a MANUAL arm**`}`)
+console.log(`    MANUAL ACROSS THE RUN (the A3-05 term, printed so a MANUAL row cannot vanish from any count): ${manualRowIdsAnywhere.length} row(s) ${JSON.stringify(manualRowIdsAnywhere)}`)
 console.log(`    CONTROL INVENTORY (A-F15): ${CHECKS.filter((c) => c.id.includes('CONTROL')).length} id-labelled CONTROL row(s) + the PRECEDENCE control asserted inside SC-C-01 (a predicate TERM since B-F5) = 6 controls total`)
 // THE EXIT CODE IS EVIDENCE: exit 1 iff at least one row is FAIL, 0 only when there is none.
 // A MANUAL/PARKED row is counted and named but is NOT a FAIL for exit-code purposes.
