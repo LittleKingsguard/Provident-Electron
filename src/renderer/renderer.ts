@@ -2,13 +2,13 @@
 // Bootstraps the provident-ssr producing process into #app and serves the
 // MCP-facing operations over the preload bridge (main process = MCP server).
 import { Runtime } from './runtime.js'
-import { demoEnvelope, gutterSeamExample, GUTTER_AFFORDANCE_ID, GUTTER_STATUS_ID, GUTTER_TARGET_ID } from '../shared/demo-envelope.js'
+import { demoEnvelope, gutterSeamExample, GUTTER_AFFORDANCE_ID, GUTTER_STATUS_ID, GUTTER_TARGET_ID, TABS_LANDING_PAGE_ID, TABS_ERROR_PAGE_ID } from '../shared/demo-envelope.js'
 import { SecurePanels } from './secure-panels.js'
 import { createGestureSession, POINTER_TYPES } from '../shared/gesture-session.js'
 import { createGutterAffordance, domEventSource } from '../shared/gutter-affordance.js'
 import type { RpcRequest, RpcReply } from '../shared/types.js'
 import { focusTransition, focusOrder, persist, type FocusEntry, type FocusState } from '../shared/focus-model.js'
-import { createGraphStore, type GraphStore, type GraphEvent, type GraphCrossing } from './store-core-graph.js'
+import { createGraphStore, type GraphStore, type GraphEvent, type GraphConstraint, type GraphCrossing } from './store-core-graph.js'
 import { storeGraphReferences } from './store-graph-references.js'
 import { clampToBounds } from '../shared/gutter.js'
 
@@ -55,6 +55,10 @@ const FILE_TIER_ROOT_NAMES: ReadonlyArray<{ readonly name: string }> = [
 interface WiredStoreOptions {
   readonly declarations?: ReadonlyArray<{ readonly name: string }>
   readonly crossing?: GraphCrossing | null
+  /** `§2.2` item 1 — THE ONE SUPPLY SITE: this unit supplies its ONE `exactly-one-active`
+   *  member at the store's EXISTING construction call and creates NO new construction site
+   *  (`§5.1` item 1's "the WIRING's tab-record region ONLY"). */
+  readonly constraints?: readonly GraphConstraint[]
 }
 
 /** THE TIER-1 BRIDGE SURFACE (G2 §2.10 item 4 / §2.11 item 4 — the THREE preload members
@@ -80,6 +84,240 @@ interface Tier1StoreSurface {
  *  hand-off answered and hydrated (the starting-order gate, §2.9 consequence (1)). */
 let bootHandoff: { name: string; value: unknown }[] = []
 
+/* ══════════════════════════════════════════════════════════════════════════════════════════
+ * THE TAB-RECORD WIRING REGION — `U-STORE-TABS-RECORD` (`T2`, `docs/specs/store-tabs-record.md`
+ * `§2.2` item 1 · `§2.4` · `§3.2` · `§3.3` · `§3.5` · `§5.1` item 1's WIRING's tab-record region
+ * ONLY). THE STORE IS FROZEN: this region adds NO store byte, NO store member, NO union member
+ * and NO MCP surface (`§1.2` item 3, `§2.6`, `§5.1` item 7 — the two file pins and the artifact
+ * span are UNMOVED). Everything here is the CALLER's own spelling, carried verbatim.
+ *
+ * THE RECORD'S DECLARED MEMBERS (`§2.1`): the ROOT `tabs` is ALREADY declared at the store's
+ * construction site (`FILE_TIER_ROOT_NAMES` above — this region adds NO root name and edits that
+ * array NOT AT ALL); this region declares the two member spellings it WRITES — the membership
+ * sequence and the reserved landing ENTRY — and reads every tab through its ONE flat leaf.
+ *
+ * THE PER-TAB REFERENCE IS ONE FLAT LEAF, `file.tabs.<tabId>`, WHOSE VALUE IS THE TAB'S DECLARED
+ * RECORD (`§0D` item 1(c); `SD-1`): the matched record's keys are the root's leaf names, so the
+ * flat leaf's own name IS the tab id and each tab contributes EXACTLY ONE entry to the record the
+ * constraint reads (`§2.2` item 4, `§2.3` item 2). The ACTIVE READ is the declared ACCESSOR PAIR —
+ * `entry.active === true` for an OBJECT-valued entry, `entry === true` for a SCALAR-valued one —
+ * and the WRITE-BACK PRESERVES THE ARM THE STORE SURFACES, so the constraint's read and the
+ * repair's write touch the SAME reference (`§2.2` item 5: a mutation the repair makes through the
+ * record's values lands on the nodes' stored values, which is what makes the store's own
+ * `repaired[]` name it).
+ * ══════════════════════════════════════════════════════════════════════════════════════════ */
+
+/** `§2.1` row 1 — THE MEMBERSHIP SEQUENCE, the caller's own ordered tab-id sequence. */
+const TABS_ORDER_NAME = 'file.tabs.order'
+/** `§2.1` item 6 — THE RESERVED LANDING ENTRY, a NORMAL `<tabId>` instance: its own removal is
+ *  refused BY NAME while its properties behave as ordinary instances (`R3-2`). The reservation is
+ *  a REGISTRY declaration on the ENTRY's own spelling — NEVER on the `tabs` ROOT, which stays an
+ *  ordinary declared root (`§0A` item 1: marking the ROOT reserved refuses a sibling `remove` and
+ *  FAILS `§2.1` item 6's positive control). */
+const TABS_LANDING_NAME = 'file.tabs.landing'
+/** `§2.1` item 6 / `R3-2` — THE RESERVED ENTRY'S OWN ID, as a `<tabId>` member of the sequence. */
+const TABS_LANDING_ID = 'landing'
+/** `§2.1` — THE ONE FLAT PER-TAB LEAF, NAMED BY THE TAB ID. */
+const tabsEntryName = (tabId: string): string => `file.tabs.${tabId}`
+
+/** THE DECLARED ACCESSOR PAIR (`§0D` item 1(c)) — BOTH ARMS DECLARED, so neither read is
+ *  unsatisfiable: an OBJECT-valued entry reads active through its own `active` member; a
+ *  SCALAR-valued entry IS the caller's boolean. Only `=== true` counts as active (`§6` PAR-3). */
+function tabsEntryReadsActive(entry: unknown): boolean {
+  if (entry !== null && typeof entry === 'object') return (entry as { readonly active?: unknown }).active === true
+  return entry === true
+}
+
+/** THE ACCESSOR'S WRITE-BACK (`§0D` item 1(c)/(e)): the repair writes the arm the store ACTUALLY
+ *  SURFACES — `entry.active` INSIDE an object-valued entry (the admissible home of the richer
+ *  per-tab data), the boolean itself AT a scalar-valued one. A mutation through this reference
+ *  lands on the node's stored value, so the corrected reference is reported by the store. */
+function writeTabsEntryActive(record: Record<string, unknown>, tabId: string, value: boolean): void {
+  const current = record[tabId]
+  record[tabId] =
+    current !== null && typeof current === 'object'
+      ? { ...(current as Record<string, unknown>), active: value }
+      : value
+}
+
+/** THE CLOSE SITE'S OWN CALLER-SIDE PRE-STATE CAPTURE (`§0A` item 4's declared default, `AMB-2`;
+ *  `§2.4` item 5). A `remove`-triggered evaluation has NO caller-written reference, so the
+ *  `≥2`/zero-active referent is THE REMOVED ENTRY'S OWN INDEX — and the INDEX lives in the
+ *  PRE-removal sequence while the repair runs on the POST-state. The machinery's own `current`
+ *  is the pre-write capture (`§2.4` item 5), and the wiring's close site holds the pre-removal
+ *  sequence in ITS OWN closure here, so the index is readable either way. */
+let tabsPreRemovalOrder: readonly string[] = []
+/** THE CALLER'S OWN WRITTEN REFERENCE (the write-triggered `≥2` referent, `§3.2` F-T2-2). */
+let tabsWrittenReferent: string | null = null
+
+/** THE ONE `constraints` MEMBER THIS UNIT SUPPLIES, ITS CELLS FILLED (`§2.2` item 3, `§0A`
+ *  item 3) — `id` a DECLARATION KEY (never a store mechanism word, never a store vocabulary
+ *  member), `matchedSet: 'tabs'` the caller-supplied name the machinery resolves to the written
+ *  root's TOP-LEVEL name, `evaluatedOn` the three operations that evaluate it (`clear`/`sweep`
+ *  are NOT among them — `§3.4` item 3).
+ *
+ *  THE CONSTRAINT FUNCTION MUST NOT MUTATE ITS ARGUMENTS (`§0A` item 3): the corrective action
+ *  belongs to the REPAIR alone, and a mutation performed by the constraint is not a repaired
+ *  reference the store reports. The constraint is TOTAL and never throws: a record that carries
+ *  no membership sequence at all is not a violating state, it is a state with nothing to check
+ *  (`§3.1` M-3's declared-miss arm). */
+const TABS_CONSTRAINT: GraphConstraint = {
+  id: 'exactly-one-active',
+  matchedSet: 'tabs',
+  evaluatedOn: ['set', 'commit', 'remove'],
+  constraint: (...args: [unknown, unknown, unknown, unknown?]): boolean => {
+    const next = args[2]
+    if (next === null || typeof next !== 'object') return true
+    const record = next as Record<string, unknown>
+    const order = record['order']
+    // AN EMPTY SEQUENCE IS `F-T2-4`'s DECLARED VIOLATION ARM, NOT A NON-STATE: only a record
+    // that carries NO membership sequence at all answers `true` without counting (`§3.1` M-3's
+    // declared-miss arm). An empty `order` must reach the repair, or it would survive a
+    // committed write (`§3.2` F-T2-3/F-T2-4, `§3.1` M-1/M-3).
+    if (!Array.isArray(order)) return true
+    let actives = 0
+    for (const tabId of order as readonly unknown[]) {
+      if (typeof tabId === 'string' && tabsEntryReadsActive(record[tabId])) actives += 1
+    }
+    return order.length > 0 && actives === 1
+  },
+  repair: (nextState: unknown): boolean => {
+    if (nextState === null || typeof nextState !== 'object') return true
+    const record = nextState as Record<string, unknown>
+    const order = record['order']
+    const post = Array.isArray(order) ? (order as string[]) : null
+    if (post === null) return true
+    if (post.length === 0) {
+      // THE ZERO-ACTIVE ARM ON AN EMPTIED SEQUENCE (`§3.2` F-T2-3/F-T2-4, `R3-2`): removing the
+      // last non-landing entry leaves no member, so the repair re-seats the RESERVED LANDING
+      // ENTRY at index 0 — it lands at no index because the sequence was empty — and activates
+      // it, IN THE SAME COMMITTED WRITE, through the record's own value reference.
+      post.push(TABS_LANDING_ID)
+      writeTabsEntryActive(record, TABS_LANDING_ID, true)
+      return true
+    }
+    const active = post.filter((tabId) => tabsEntryReadsActive(record[tabId]))
+    if (active.length === 1) return true
+    if (active.length === 0) {
+      // THE ZERO-ACTIVE ARM (`§3.2` F-T2-1, `R3-1`): activate THE NEXT SURVIVING ENTRY BY
+      // `order`, WRAPPING when the referent was last. THE REFERENT IS A POSITION IN THE
+      // SEQUENCE, NEVER A NAME: on a `remove` it is THE REMOVED ENTRY'S OWN INDEX in the
+      // PRE-removal sequence (`§2.4` item 5 — read off the caller's captured pre-state), and
+      // on a caller write it is the index of the caller's own written reference. `order` is the
+      // ONLY input: NO insertion time, NO tie-break, NO store-side preference (`R3-1` (3)).
+      let referentIndex: number | null = null
+      for (const removed of tabsPreRemovalOrder) {
+        const at = post.indexOf(removed)
+        if (at < 0) {
+          referentIndex = tabsPreRemovalOrder.indexOf(removed)
+          break
+        }
+      }
+      if (referentIndex === null && tabsWrittenReferent !== null) {
+        const at = post.indexOf(tabsWrittenReferent)
+        if (at >= 0) referentIndex = at
+      }
+      const index = referentIndex === null ? 0 : referentIndex % post.length
+      const survivor = post[index]
+      if (survivor !== undefined) writeTabsEntryActive(record, survivor, true)
+      return true
+    }
+    // THE SURPLUS ARM (`§3.2` F-T2-2): deactivate EVERY ACTIVE ENTRY EXCEPT THE REFERENT —
+    // the caller's own written reference on a write-triggered evaluation, the surviving entry
+    // AT THE REMOVED ENTRY'S OWN INDEX on a `remove`-triggered one, with the WRAP when that
+    // index is no longer present. A first-surviving scan, insertion order and recency all FAIL
+    // this arm.
+    let keep: string | null = null
+    for (const removed of tabsPreRemovalOrder) {
+      if (post.includes(removed)) continue
+      const survivors = post.filter((tabId) => tabId !== removed)
+      if (survivors.length > 0) {
+        keep = survivors[tabsPreRemovalOrder.indexOf(removed) % survivors.length] ?? null
+      }
+      break
+    }
+    if (keep === null && tabsWrittenReferent !== null && active.includes(tabsWrittenReferent)) {
+      keep = tabsWrittenReferent
+    }
+    for (const tabId of active) if (tabId !== keep) writeTabsEntryActive(record, tabId, false)
+    return true
+  },
+}
+
+/** THE TAB RECORD'S READ TURN — ONE helper, reached through a LOCAL alias, exactly as the
+ *  focus mirror's `readMirrorRef` helper is (`U-STORE-FOCUS` `§2.3` item 3). It answers the
+ *  store's own declared read (`{found,value}` — `§2.5`), and a hostile surface (absent,
+ *  non-callable, throwing) answers the declared EMPTY READING, never a throw. The parameter is
+ *  named for the TAB RECORD, not for the store handle, so the wiring's read turn is spelled once
+ *  and only once. */
+function readTabsRef(holder: GraphStore, name: string): { readonly found: boolean; readonly value: unknown } {
+  try {
+    const read = holder.resolve as ((n: string) => unknown) | undefined
+    if (typeof read !== 'function') return { found: false, value: undefined }
+    const answer = read.call(holder, name) as { readonly found?: unknown; readonly value?: unknown } | null | undefined
+    if (answer === null || answer === undefined || typeof answer !== 'object') return { found: false, value: undefined }
+    return answer.found === true ? { found: true, value: answer.value } : { found: false, value: undefined }
+  } catch {
+    return { found: false, value: undefined }
+  }
+}
+
+/** THE TAB-ID MINTING SITE — the ONE BOUNDED WIRING ROLE (`§1.1` item 8, `§0A` item 2): ids are
+ *  minted HERE and nowhere else, and a minted id ALREADY a member of the persisted
+ *  `file.tabs.order` is a DUPLICATE and is REFUSED AT THE SITE with a caller-side declared
+ *  outcome — the caller does not write it, so no duplicate entry ever appears in `order`. The
+ *  refusal is CALLER-SIDE because the store ships no `'duplicate-id'` refusal and adding one
+ *  would be a store-member change this unit is forbidden (`§5.1`). TOTAL: an unreadable record
+ *  answers the refusal and never throws. */
+function mintTabId(holder: GraphStore, tabId: string): { readonly ok: boolean; readonly id: string | null } {
+  const refused = { ok: false, id: null } as const
+  if (typeof tabId !== 'string' || tabId.length === 0) return refused
+  const answer = readTabsRef(holder, TABS_ORDER_NAME)
+  const members = Array.isArray(answer.value) ? (answer.value as readonly unknown[]) : []
+  if (members.includes(tabId)) return refused
+  return { ok: true, id: tabId }
+}
+
+/** THE CLOSE SITE (`§2.4` item 1's note; `§3.4` item 4): the declared reference set under the
+ *  ruled flat form is TWO tier-qualified names — ONE `remove('file.tabs.<tabId>')` for the tab's
+ *  OWN flat leaf PLUS ONE `commit('file.tabs.order', <the sequence without the id>)`. The close
+ *  is NEVER `set(name, undefined)` and NEVER an in-memory splice (`§2.4` item 6), and the
+ *  `order` rewrite is a WRITE (the minting/re-minting operation) because `set` on a cold leaf is
+ *  REFUSED `'undeclared-name'` (`§2.4` item 3). THE PRE-STATE IS CAPTURED HERE, at the caller's
+ *  own close site, BEFORE the removals — so a `remove`-triggered evaluation can read the removed
+ *  entry's own index (`AMB-2`'s declared default). The reserved landing entry's OWN removal is
+ *  refused by name, so it is never in this set. */
+function closeTab(holder: GraphStore, tabId: string, nextOrder: readonly string[]): void {
+  const current = readTabsRef(holder, TABS_ORDER_NAME)
+  tabsPreRemovalOrder = Array.isArray(current.value) ? [...(current.value as readonly string[])] : []
+  holder.remove(tabsEntryName(tabId))
+  holder.commit(TABS_ORDER_NAME, [...nextOrder])
+}
+
+/** THE BOUNDED WIRING ROLE THAT DRIVES THE AUTHORED LANDING PAGE (`§3.5` item 1, `§3.5` item 3).
+ *  THE RECORD'S WITNESS: the landing ENTRY's value reads active by the DECLARED ACCESSOR PAIR
+ *  with NO other active entry. The role READS THE RECORD and resolves the AUTHORED node through
+ *  the already-landed host-side query (`Runtime.elementForNodeId`, `§3.5` item 4 — the ONE
+ *  renderability instrument, which reads no rect, no coordinate and no computed style); it
+ *  authors no element, no class and no text, and it is driven by the RECORD — NEVER by the
+ *  wiring's recollection of an event (`§3.5` item 1: a landing page rendered from a state whose
+ *  `landing.active` is not `true` FAILS). */
+function driveTabsLandingPage(holder: GraphStore, runtime: { elementForNodeId(id: string): unknown | null }): void {
+  const landing = readTabsRef(holder, TABS_LANDING_NAME)
+  if (!tabsEntryReadsActive(landing.value)) return
+  const order = readTabsRef(holder, TABS_ORDER_NAME)
+  const members = Array.isArray(order.value) ? (order.value as readonly unknown[]) : []
+  let actives = 0
+  for (const tabId of members) {
+    if (typeof tabId !== 'string') continue
+    const entry = readTabsRef(holder, tabsEntryName(tabId))
+    if (entry.found && tabsEntryReadsActive(entry.value)) actives += 1
+  }
+  if (actives !== 1) return
+  void runtime.elementForNodeId(TABS_LANDING_PAGE_ID)
+  void TABS_ERROR_PAGE_ID
+}
+
 function buildWiredGraphStore(options?: WiredStoreOptions): GraphStore {
   // THE STORE'S DECLARATIONS COME FROM `storeGraphReferences(rows)`, passed as
   // `options.declarations` (the sibling artifact's field 6 — the wiring's single call site
@@ -88,8 +326,13 @@ function buildWiredGraphStore(options?: WiredStoreOptions): GraphStore {
   // the `file` tier's commit crosses through the seam handed in at the construction site —
   // `crossing: { put(row) { return bridge.store.put(row) } }`, the Y-2 wire.
   wiredGraphStore = createGraphStore({
-    declarations: storeGraphReferences(options?.declarations ?? []),
+    declarations: storeGraphReferences(options?.declarations ?? FILE_TIER_ROOT_NAMES),
     crossing: options?.crossing ?? null,
+    // ⟶ `U-STORE-TABS-RECORD` (`T2`, `§2.2` item 1): THE ONE CONSTRAINT MEMBER, supplied HERE —
+    // at the store's EXISTING construction call, so the store is constructed exactly ONCE per
+    // realm (`§5.1` item 1, the frozen artifact's field 6) and a realm where `main()` never runs
+    // (a node test, the W4 lazy form) carries the SAME member. NO new construction site exists.
+    constraints: options?.constraints ?? [TABS_CONSTRAINT],
   })
   return wiredGraphStore
 }
@@ -603,6 +846,23 @@ async function main(): Promise<void> {
   // (§2.9 consequence (1)); the persisted tier-1 values are IN the store from here on
   // (tier-1 resolves answer them; the G2 spec's M-7 is satisfiable).
   wired.hydrate(bootHandoff)
+  // ⟶ THE SLICE BOOT STEP (`U-STORE-TABS-RECORD`, `T2`, `§3.3` items 1/3/4 — `C-12`'s claim).
+  // THE RESERVATION IS TAKEN HERE: the frozen store reserved its FIRST CONSTRAINT EVALUATION for
+  // this slice's boot step ("the FIRST constraint evaluation stays reserved for `U-STORE-FOCUS`'s
+  // boot step", `store-core-graph.ts:2169-2170`), and this unit is the constraint's landing, so
+  // the reservation is its own. THE DECLARED SHAPE: after `hydrate(bootHandoff)` and BEFORE the
+  // first graph load, ONE `commit` on a declared name of the `tabs` root whose post-state the
+  // constraint evaluates — the membership rewrite is the declared vehicle (it is the record's own
+  // membership write and idempotent in substance), so the first evaluation lands on a WRITE's
+  // post-state, in the SAME committed write as any repair it lands, and NEVER on a later read
+  // (`§3.3` item 3). WHAT IT MUST NOT DO, and does not (`§3.3` item 4): it performs NO caller
+  // `set` of the landing entry's `active` (that would be `F-T2-3`'s forbidden shape), it does NOT
+  // bypass `hydrate` by re-minting the record through duplicate `commit` chains, and it does not
+  // run before the hand-off. A cold tier hands off `[]`, and the write is a total no-op there.
+  if (Array.isArray(bootHandoff)) {
+    const handedTabsOrder = bootHandoff.find((row) => row.name === TABS_ORDER_NAME)
+    wired.commit(TABS_ORDER_NAME, Array.isArray(handedTabsOrder?.value) ? [...(handedTabsOrder.value as readonly string[])] : [])
+  }
   // ⟶ THE FOCUS CARRIER (`U-STORE-FOCUS`, §2.3 items 1/2): boot-constructed from the
   // wired store — the boot MINT-DECLARES `mem.focus` (the register's row pre-exists the
   // first focus write) and the two exact-reference store subscriptions (rule 2) register
@@ -613,6 +873,13 @@ async function main(): Promise<void> {
   // loads before the Y-1 answer FAILS the starting-order gate (§2.9 consequence (1)).
   const runtime = new Runtime({ mount, envelope: demoEnvelope(), maxJournalLength })
   runtime.bootstrap()
+  // ⟶ THE AUTHORED PAGES' DRIVER (`U-STORE-TABS-RECORD`, `T2`, `§3.5` items 1/3): the bounded
+  // wiring role reads the RECORD's witness and drives the authored landing node through
+  // `Runtime.elementForNodeId` — the record decides, the wiring only carries it, and the node
+  // itself is envelope-authored DATA (this region authors NO element, NO class and NO text —
+  // no hand-written DOM exists in it at all). Their `[U]`
+  // truth is gate 6's live battery's; this role claims NOTHING about a rendered pixel (`§1.3`).
+  driveTabsLandingPage(wired, runtime)
   // ⟶ THE GUTTER WIRING (`U-GUTTER-UI`): attaches AFTER the first envelope load — its
   // pre-drag read now hits an in-realm tier (NO crossing, §2.9 item 1). It is part of the
   // APP UI and exists with or without the preload bridge (only the MCP endpoints need it).

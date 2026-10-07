@@ -112,6 +112,57 @@ export const GUTTER_AFFORDANCE_ID = 'gutter-vertical'
 /** The authored target node's id — the pane the affordance resizes. */
 export const GUTTER_TARGET_ID = 'gutter-target'
 
+// ---------------------------------------------------------------------------
+// ⟶ ADDED (`U-STORE-TABS-RECORD`, `T2`, `docs/specs/store-tabs-record.md` `§0A` item 5, `§6`
+// `PAR-9`, `§3.5` items 1/2, `§5.1` item 2): THE RECORD'S TWO AUTHORED TERMINAL PAGES — the
+// LANDING PAGE and the ERROR PAGE, authored HERE as envelope DATA plus handler-body STRINGS,
+// exactly as every other element of this file is authored. They are the record's terminals: the
+// surface the operator sees when the RESERVED LANDING ENTRY is the active entry and no other tab
+// is active, and the surface the operator sees for a tab whose `error` leaf carries the caller's
+// own error token.
+//
+// THE PROJECT-WIDE UI CONSTRAINT IS HONOURED BY CONSTRUCTION (`AGENTS.md`): every element below
+// is provident-ssr DATA driven through the producing graph — NO hand-written DOM exists in this
+// unit's diff and no `createElement` appears anywhere in it. WHAT THE RECORD DOES AND WHAT THE
+// PAGE DOES ARE SEPARATE: the pages carry NO state of their own and render from the record — the
+// wiring's bounded role reads the record's witness (`file.tabs.landing` reading active by the
+// declared accessor pair; a tab whose `error` leaf carries a value) and drives the authored node.
+//
+// THEIR `[U]` HALF IS GATE 6'S (`§1.3` item 3, `§5.2` items 5/7): a node-green here is
+// ENVELOPE-green and is NEVER APP-green, and no `[T]` row — and nothing in this file — claims
+// that either page was SEEN.
+// ---------------------------------------------------------------------------
+
+/** THE LANDING PAGE'S AUTHORED NODE ID (`§0A` item 5, `DECLARED-DEFAULT`). The record's
+ *  ZERO-ACTIVE terminal. */
+export const TABS_LANDING_PAGE_ID = 'tabs-landing-page'
+/** THE ERROR PAGE'S AUTHORED NODE ID (`§0A` item 5, `DECLARED-DEFAULT`). The record's ERROR
+ *  terminal — a tab whose `error` leaf carries the caller's error token. */
+export const TABS_ERROR_PAGE_ID = 'tabs-error-page'
+
+/** THE TWO PAGES' AUTHORED BASE STYLE — DATA, as every `css.style` object in this file is. Each
+ *  page is a `card`-classed `section` like the demo's other panels; the style carries NO geometry
+ *  claim and no measurement (`§1.3` item 4). */
+const tabsPageStyle: Record<string, string> = { display: 'block' }
+
+/** THE LANDING PAGE'S AUTHORED HANDLER BODY — a function STRING, the data format this file uses
+ *  (`translate.md` §2), following the framework's canonical `(ctx, value)` convention. It is
+ *  `list_targets`-visible and `provident.dispatch`-reachable exactly as every other authored
+ *  element is, and it writes NOTHING of its own: the page renders from the RECORD, and the
+ *  record's witness is the landing entry reading active with no other active entry (`§3.5`
+ *  item 1). A body that carried the page's truth in a closure or a remembered event would violate
+ *  that clause, so this one holds no state. */
+const TABS_LANDING_PAGE_BODY = `function (ctx) {
+  void ctx;
+}`
+
+/** THE ERROR PAGE'S AUTHORED HANDLER BODY — the same declared form. The page's truth is the
+ *  record's own: a tab whose `error` leaf carries a value (`§3.5` item 2), never a `null` — a tab
+ *  whose `error` leaf holds no value MUST NOT render the error page (`§6` PAR-5). */
+const TABS_ERROR_PAGE_BODY = `function (ctx) {
+  void ctx;
+}`
+
 /** THIS REPO'S ONE EXAMPLE IMPLEMENTATION OF THE ELEVEN CALLER SEAMS. Each closure is the
  *  shape the affordance's own option set names (`GutterAffordanceOptions`); the wiring reads the
  *  handle's authored axis token, maps it to a cursor declaration, and supplies the pane's own
@@ -424,6 +475,29 @@ export function demoEnvelope() {
                 content: THEME_INITIAL_TOKEN,
               },
             ],
+          },
+          // ---- the tab record's two authored terminal pages (U-STORE-TABS-RECORD) ---------
+          // THE LANDING PAGE and THE ERROR PAGE, `page`-roled TERMINALS rather than list rows
+          // (`§0A` item 5). They are the record's own terminals and they are AUTHORED HERE, one
+          // node each with its own authored structure, its own authored handler STRING and its
+          // own `data-*`-free declarative styling — the same envelope-data form the gutter and
+          // theme cards above use. NEITHER page carries state: each renders from the record, and
+          // the wiring's bounded role reads the record's witness and drives the node (`§3.5`
+          // items 1/3). The two ids are the declared pairs `PAR-9` names and `T1` must read from
+          // the contract rather than re-declare.
+          {
+            type: 'section',
+            css: { id: TABS_LANDING_PAGE_ID, classes: ['card', 'tabs-page'], style: tabsPageStyle },
+            props: { id: TABS_LANDING_PAGE_ID, role: 'page' },
+            content: 'Landing',
+            handlers: [{ name: 'tabs-landing-page-open', event: 'click', body: TABS_LANDING_PAGE_BODY }],
+          },
+          {
+            type: 'section',
+            css: { id: TABS_ERROR_PAGE_ID, classes: ['card', 'tabs-page'], style: tabsPageStyle },
+            props: { id: TABS_ERROR_PAGE_ID, role: 'page' },
+            content: 'Tab error',
+            handlers: [{ name: 'tabs-error-page-open', event: 'click', body: TABS_ERROR_PAGE_BODY }],
           },
         ],
       },
