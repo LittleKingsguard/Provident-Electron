@@ -47,6 +47,10 @@ export const SRC = (rel: string): string => fileURLToPath(new URL('./src/' + rel
 export const TEST = (rel: string): string => fileURLToPath(new URL('./' + rel, TESTS_DIR))
 
 export const SECURITY_STORE_SRC = SRC('main/security-store.ts')
+/** `§0A` item 1 (AMENDED `2026-10-11`, the architect's `A-1` ruling) — **THE STATIC HOLDER'S OWN
+ *  MODULE**: the ONE main-side LEAF that holds the one boolean (`tier4OpenState()` /
+ *  `setTier4OpenState()`), added to `§5.1` item 1's allowed edit set as its item (6). */
+export const TIER4_STATE_SRC = SRC('main/tier4-state.ts')
 export const MCP_SERVER_SRC = SRC('main/mcp-server.ts')
 export const MAIN_SRC = SRC('main/main.ts')
 export const PRELOAD_SRC = SRC('main/preload.ts')
@@ -67,7 +71,13 @@ export const STATE_MCP_DISABLED = 'mcp-disabled' as const
 // ---- THE DECLARED CENSUS TERMS (`§5.1` item 4) ------------------------------------------
 export const DECLARED_SURFACE_MEMBERS: readonly string[] = ['get', 'lastWriteReceipt', 'readEntry', 'set', 'writeEntry']
 export const LANDED_SURFACE_MEMBERS: readonly string[] = ['get', 'lastWriteReceipt', 'set']
-export const DECLARED_OPTION_CENSUS = 2
+/** ⟶ RE-GRAINED `2026-10-11` (`kick-back resolution`, outcome (a): the as-filed constant asserted
+ *  the SUPERSEDED clause). `§0A` item 1's `A-1` amendment, quoted: *"**`SecurityStoreOptions` IS
+ *  UNMOVED AT `{ path: string }`** … the operative census is **`1 = 1 (path)`**, UNMOVED and owed
+ *  by no amendment."* The DECLARED census is therefore `1`, identical to the landed one — the
+ *  as-filed `2` (and the `1 → 2` movement it read) is WITHDRAWN, and `LANDED_OPTION_CENSUS` below
+ *  keeps the landed figure it always carried. */
+export const DECLARED_OPTION_CENSUS = 1
 export const LANDED_OPTION_CENSUS = 1
 export const DECLARED_CARRIER_MEMBERS: readonly string[] = ['exclusion', 'read']
 export const LANDED_CARRIER_MEMBERS: readonly string[] = ['exclusion']

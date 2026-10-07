@@ -14,7 +14,8 @@
  * WHAT THIS FILE IS: the store-local arbitrary-storage opening's and the four
  * gating clauses' red set — authored from THE SPEC ALONE against the CURRENT
  * tree.  Everything the contract declares (`readEntry`/`writeEntry` · the
- * `entries` member · the `tier4Open` option · the `'tier4-closed'` channel token
+ * `entries` member · the STATIC HOLDER `src/main/tier4-state.ts` (`A-1`'s `2026-10-11`
+ * ruling, `§0A` item 1) · the `'tier4-closed'` channel token
  * and its message · the additive `read` carrier member · the pane's two
  * re-sourced cells and the ONE additive `· refused: tier4-closed` segment) is
  * asserted AS IF IT ALREADY EXISTED, so the absent symbols fail FIRST, in the
@@ -92,7 +93,7 @@ import {
   MAIN_SRC, MCP_SERVER_SRC, MEASURED_FROZEN_PINS, PRELOAD_SRC, REGISTER_ROW_CAP, REGISTER_ROW_IDS,
   REGISTER_TOTAL_CAP, SECURE_PANELS_SRC, SECURITY_STORE_PIN, SECURITY_STORE_PIN_CHAIN, SECURITY_STORE_SRC,
   SHARED_TYPES_SRC, STATE_MCP_DISABLED, STATE_MCP_ENABLED, STOP_AFTER_CONSECUTIVE, STRATEGY_IDS,
-  STORE_CHANNELS_SRC, STORE_CORE_SRC, TIER4_CLOSED, TIER4_CLOSED_MESSAGE,
+  STORE_CHANNELS_SRC, STORE_CORE_SRC, TIER4_CLOSED, TIER4_CLOSED_MESSAGE, TIER4_STATE_SRC,
   brokenCountCheckOf, brokenCountGuardOldForm, declaredReasonTokens, declaredTotalReport, exists,
   executeRegister, loadStoreModule, registerReportLines, sha256Of, sourceOrEmpty,
   syntheticBrokenRegisterControlOnly, syntheticUnRunRegisterControlOnly,
@@ -194,11 +195,56 @@ type StoreLike = {
 let storeModule: Awaited<ReturnType<typeof loadStoreModule>> = { module: null, reason: 'not loaded' }
 let baseDir = ''
 let seq = 0
-let openState = true
+/** The TEST-SIDE mirror of the holder, kept ONLY so the legacy fallback can drive the landed
+ *  option while `src/main/tier4-state.ts` is absent. The DECLARED value is the leaf's. */
+let openState: boolean = true
 
-/** The `A-1` reader: a NAMED, GATE-LESS thunk read ONCE PER CALL at the call's own
- *  turn — mutating `openState` between calls is what the per-turn reading means. */
-const tier4Reader = (): boolean => openState
+/* ═══════════════════════════ THE STATIC HOLDER (`A-1`'s `2026-10-11` RULING) ═══════════════
+ * `docs/specs/tier4-arbitrary-storage.md` `§0A` item 1's dated amendment REPLACED the injected
+ * thunk with ONE main-side LEAF module: `src/main/tier4-state.ts`, whose STATIC module-level
+ * holder IS the one boolean, whose declared INITIAL VALUE is STORE-OPEN, whose ONE reader is
+ * `tier4OpenState()` and whose ONE writer is `setTier4OpenState()` (its only production caller
+ * being the transition). `SecurityStoreOptions` is UNMOVED at `{ path }`, so these rows drive the
+ * holder — never an option. The module is resolved by a FRAGMENT-ASSEMBLED specifier (the
+ * `loadStoreModule` precedent), so its ABSENCE is DATA: while it is absent the fixture falls back
+ * to the landed option so the OTHER rows keep their own subjects, and every row that ASSERTS the
+ * holder reddens with the declared absent symbol. */
+const TIER4_STATE_SPEC = ['..', 'src', 'main', 'tier4-state.js'].join('/')
+interface Tier4StateModule {
+  tier4OpenState?: () => boolean
+  setTier4OpenState?: (open: boolean) => void
+}
+let tier4StateModule: Tier4StateModule | null = null
+let tier4StateReason = 'not loaded'
+async function loadTier4StateModule(): Promise<void> {
+  try {
+    const mod = (await import(/* @vite-ignore */ TIER4_STATE_SPEC)) as Tier4StateModule
+    if (typeof mod.tier4OpenState !== 'function') {
+      tier4StateModule = null
+      tier4StateReason = 'ABSENT: the leaf exports no `tier4OpenState`'
+      return
+    }
+    tier4StateModule = mod
+    tier4StateReason = ''
+  } catch (e) {
+    tier4StateModule = null
+    tier4StateReason = `ABSENT: ${e instanceof Error ? e.message : String(e)}`
+  }
+}
+function tier4HolderAbsent(where: string): Error {
+  return new Error(`S2-RED: the STATIC HOLDER is absent (${where}) — ${tier4StateReason}; \`src/main/tier4-state.ts\` must export \`tier4OpenState()\` (\`§0A\` item 1, the \`A-1\` ruling)`)
+}
+/** THE DECLARED READER (`§0A` item 1): `tier4OpenState()` — read ONCE PER CALL at the call's own
+ *  turn. While the leaf is absent the fixture's LEGACY fallback keeps the mirror authoritative, so
+ *  only the rows that assert the holder redden. */
+const tier4Reader = (): boolean => (tier4StateModule === null ? openState : (tier4StateModule.tier4OpenState as () => boolean)())
+/** THE DECLARED WRITER (`§0A` item 1): `setTier4OpenState(open)`. In PRODUCTION its only caller is
+ *  the transition (`mcp-server.ts`'s `applyExclusion`); a test driving it directly is not a second
+ *  production site, and the one-writer census is asserted over `src/main/**` by `P-T4-IM-2`. */
+function setTier4Open(open: boolean): void {
+  openState = open
+  tier4StateModule?.setTier4OpenState?.(open)
+}
 
 interface StoreFixture {
   store: StoreLike
@@ -212,15 +258,20 @@ interface StoreFixture {
   makeDirAtPath: () => Promise<void>
 }
 
-async function makeStoreFixture(opts?: { absentReader?: boolean; fsOpts?: boolean }): Promise<StoreFixture> {
+async function makeStoreFixture(opts?: { fsOpts?: boolean }): Promise<StoreFixture> {
   if (storeModule.module === null) {
     throw new Error(`S2-RED: the store module is ABSENT — ${storeModule.reason}`)
   }
   const dir = join(baseDir, String(seq++))
   const path = join(dir, 'provident-security.json')
   const log = freshFsLog()
+  // `SecurityStoreOptions` IS UNMOVED AT `{ path }` (`§0A` item 1, `A-1`'s ruling): the ONLY
+  // construction input is the path. The `fs` seam stays an UNDECLARED construction extra (`§9`
+  // item 5(b)), so it moves no option term. WHILE THE LEAF IS ABSENT the fixture passes the landed
+  // `tier4Open` thunk as a LEGACY FALLBACK — dead code the instant `src/main/tier4-state.ts`
+  // lands — so the rows that do NOT assert the holder keep their own subjects.
   const construction: Record<string, unknown> = { path }
-  if (opts?.absentReader !== true) construction.tier4Open = tier4Reader
+  if (tier4StateModule === null) construction.tier4Open = () => openState
   if (opts?.fsOpts !== false) construction.fs = makeFsSeam(log)
   const store = storeModule.module.createSecurityStore(construction) as StoreLike
   return {
@@ -322,18 +373,18 @@ function bootWindowIndexes(mainSrc: string): {
   store: number
   bootRead: number
   gate: number
-  readerBeforeStore: boolean
+  readerConstructed: boolean
   storeIndex: number
 } {
   const storeIndex = mainSrc.search(/createSecurityStore\(/)
   const bootRead = mainSrc.search(/securityStore\.get\(\)/)
   const gate = mainSrc.search(/new SecurityGate\(/)
-  const readerIndex = mainSrc.search(/tier4Open|tier4Reader|isTier4Open|storeOpenReader/)
-  return {
-    store: storeIndex, bootRead, gate,
-    readerBeforeStore: readerIndex !== -1 && storeIndex !== -1 && readerIndex < storeIndex,
-    storeIndex,
-  }
+  // `§0A` item 1 (AMENDED `2026-10-11`, the `A-1` ruling): NO READER IS CONSTRUCTED AT ALL — the
+  // holder is a module-level static needing no construction site, and the as-filed "reader before
+  // the store" price is WITHDRAWN. A `tier4Open:` option handed at construction is the WITHDRAWN
+  // shape and is what this probe detects.
+  const readerConstructed = /tier4Open\s*:/.test(mainSrc)
+  return { store: storeIndex, bootRead, gate, readerConstructed, storeIndex }
 }
 /** THE CARRIER'S COMPOSITION, read off the live handler's own bytes (`§2.4` item 7).
  *  The handler closure is `() => ({ … })`, so the answer record's member set is the
@@ -383,12 +434,12 @@ function buildRegister(): RegisterRow[] {
       drives: [
         {
           label: 'set({token}) · CLOSED ⇒ refused, no fs, no advance',
-          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = false; await assertRefusedWrite(fx, () => { fx.store.set({ token: 'NOPE' }) }, 'set({token}) CLOSED') },
+          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(false); await assertRefusedWrite(fx, () => { fx.store.set({ token: 'NOPE' }) }, 'set({token}) CLOSED') },
         },
         {
           label: 'set({token}) · OPEN ⇒ committed and landed (the non-vacuity term)',
           run: async () => {
-            const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = true
+            const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(true)
             const before = await fx.bytes()
             fx.store.set({ token: 'YES' })
             expect(receiptOf(fx.store)).toEqual({ status: 'committed' })
@@ -401,10 +452,10 @@ function buildRegister(): RegisterRow[] {
           label: 'set({token}) · the TRANSIENT BOOT WINDOW (OPEN at the call, CLOSED after the flip) ⇒ the write inside the window commits',
           run: async () => {
             const fx = await makeStoreFixture(); await fx.seed(SEEDED)
-            openState = true
+            setTier4Open(true)
             fx.store.set({ token: 'WINDOW' })
             expect(receiptOf(fx.store)).toEqual({ status: 'committed' })
-            openState = false
+            setTier4Open(false)
             expect(readEntryOf(fx.store, 'any'), 'the flip closes the store (§2.5 item 4)').toBeNull()
             const callsBefore = fx.calls().length
             fx.store.set({ token: 'AFTER' })
@@ -414,12 +465,12 @@ function buildRegister(): RegisterRow[] {
         },
         {
           label: 'set(four-member patch) · CLOSED ⇒ refused, no fs, no advance',
-          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = false; await assertRefusedWrite(fx, () => { fx.store.set({ token: 'T', groups: ['code'], disable: ['read'], maxJournalLength: 7 }) }, 'set(four-member) CLOSED') },
+          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(false); await assertRefusedWrite(fx, () => { fx.store.set({ token: 'T', groups: ['code'], disable: ['read'], maxJournalLength: 7 }) }, 'set(four-member) CLOSED') },
         },
         {
           label: 'set(four-member patch) · OPEN ⇒ committed and landed',
           run: async () => {
-            const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = true
+            const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(true)
             fx.store.set({ token: 'T', groups: ['code'], disable: ['read'], maxJournalLength: 7 })
             expect(receiptOf(fx.store)).toEqual({ status: 'committed' })
             const live = fx.store.get()
@@ -432,10 +483,10 @@ function buildRegister(): RegisterRow[] {
           label: 'set(four-member patch) · the TRANSIENT BOOT WINDOW ⇒ the write inside the window commits',
           run: async () => {
             const fx = await makeStoreFixture(); await fx.seed(SEEDED)
-            openState = true
+            setTier4Open(true)
             fx.store.set({ groups: ['code'] })
             expect(receiptOf(fx.store)).toEqual({ status: 'committed' })
-            openState = false
+            setTier4Open(false)
             fx.store.set({ groups: ['graph'] })
             assertClosedRefusal(receiptOf(fx.store), 'window patch · post-flip')
           },
@@ -443,7 +494,7 @@ function buildRegister(): RegisterRow[] {
         {
           label: 'writeEntry(name, value) · CLOSED ⇒ refused, no fs, nothing written',
           run: async () => {
-            const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = false
+            const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(false)
             const before = await fx.bytes()
             const callsBefore = fx.calls().length
             const answer = writeEntryOf(fx.store, 'alpha', { n: 1 })
@@ -456,7 +507,7 @@ function buildRegister(): RegisterRow[] {
         {
           label: 'writeEntry(name, value) · OPEN ⇒ committed; the entry is live AND in the file',
           run: async () => {
-            const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = true
+            const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(true)
             const answer = writeEntryOf(fx.store, 'alpha', { n: 1 })
             expect(answer).toEqual({ status: 'committed' })
             expect(readEntryOf(fx.store, 'alpha')).toEqual({ name: 'alpha', value: { n: 1 } })
@@ -467,9 +518,9 @@ function buildRegister(): RegisterRow[] {
           label: 'writeEntry(name, value) · the TRANSIENT BOOT WINDOW ⇒ the write inside the window commits',
           run: async () => {
             const fx = await makeStoreFixture(); await fx.seed(SEEDED)
-            openState = true
+            setTier4Open(true)
             expect(writeEntryOf(fx.store, 'boot', 9)).toEqual({ status: 'committed' })
-            openState = false
+            setTier4Open(false)
             const callsBefore = fx.calls().length
             assertClosedRefusal(writeEntryOf(fx.store, 'boot', 10), 'window writeEntry · post-flip')
             expect(readEntryOf(fx.store, 'boot'), 'the PRE-CALL value of that name is answered (2), not the refused write').toEqual({ name: 'boot', value: 9 })
@@ -479,14 +530,14 @@ function buildRegister(): RegisterRow[] {
         {
           label: 'the whole-record patch path (a patch the landed admission refuses) · CLOSED ⇒ the GATE refusal precedes the admission',
           run: async () => {
-            const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = false
+            const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(false)
             await assertRefusedWrite(fx, () => { fx.store.set({ token: 12 as never }) }, 'whole-record patch CLOSED')
           },
         },
         {
           label: 'the whole-record patch path · OPEN ⇒ the LANDED admission refusal (`write-failed`) is what answers',
           run: async () => {
-            const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = true
+            const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(true)
             const answer = fx.store.set({ token: 12 as never })
             expect(receiptOf(fx.store), 'the landed admission refusal, NOT the gate refusal (§2.1 item 5 step 3)').toEqual({ status: 'refused', reason: 'write-failed' })
             expect(answer).toBeTruthy()
@@ -495,7 +546,7 @@ function buildRegister(): RegisterRow[] {
         {
           label: 'the gate consult is AHEAD of the admission and BESIDE `persist()` — a CLOSED refusal of a patch the admission would ALSO refuse answers `tier4-closed`',
           run: async () => {
-            const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = false
+            const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(false)
             fx.store.set({ token: 12 as never })
             expect(receiptOf(fx.store), 'the gate consult runs FIRST (§2.1 item 5 step 1 — a consult after the admission FAILS)').toEqual({ status: 'refused', reason: TIER4_CLOSED, message: TIER4_CLOSED_MESSAGE })
           },
@@ -511,7 +562,7 @@ function buildRegister(): RegisterRow[] {
         {
           label: 'get() · CLOSED ⇒ PRE-CALL record, detached, no throw',
           run: async () => {
-            const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = false
+            const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(false)
             const pre = JSON.stringify(SEEDED)
             const read = fx.store.get()
             expect(JSON.stringify(read)).toBe(pre)
@@ -523,7 +574,7 @@ function buildRegister(): RegisterRow[] {
         {
           label: 'get() · OPEN ⇒ the live value',
           run: async () => {
-            const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = true
+            const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(true)
             expect(fx.store.get().token).toBe('SEED')
           },
         },
@@ -531,30 +582,30 @@ function buildRegister(): RegisterRow[] {
           label: 'get() · the TRANSIENT BOOT WINDOW ⇒ the live value inside the window',
           run: async () => {
             const fx = await makeStoreFixture(); await fx.seed(SEEDED)
-            openState = true
+            setTier4Open(true)
             expect(fx.store.get().token).toBe('SEED')
-            openState = false
+            setTier4Open(false)
             expect(fx.store.get().token, 'no carve-out: the value is the tier PRE-CALL record').toBe('SEED')
           },
         },
         {
           label: 'lastWriteReceipt() · CLOSED ⇒ the PRE-CALL receipt, detached (no carve-out, §2.3 G-2)',
           run: async () => {
-            const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = true
+            const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(true)
             expect(writeEntryOf(fx.store, 'k', 1)).toEqual({ status: 'committed' })
-            openState = false
+            setTier4Open(false)
             const pre = receiptOf(fx.store)
             expect(pre, 'the PRE-CALL receipt is answered, not the gate refusal (§2.4 item 6)').toEqual({ status: 'committed' })
-            openState = true
+            setTier4Open(true)
             expect(writeEntryOf(fx.store, 'k2', 2)).toEqual({ status: 'committed' })
-            openState = false
+            setTier4Open(false)
             expect(receiptOf(fx.store), 'the receipt did not advance while CLOSED').toEqual({ status: 'committed' })
           },
         },
         {
           label: 'lastWriteReceipt() · OPEN ⇒ the live receipt',
           run: async () => {
-            const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = true
+            const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(true)
             expect(receiptOf(fx.store)).toBeNull()
             fx.store.set({ token: 'A' })
             expect(receiptOf(fx.store)).toEqual({ status: 'committed' })
@@ -564,10 +615,10 @@ function buildRegister(): RegisterRow[] {
           label: 'lastWriteReceipt() · the TRANSIENT BOOT WINDOW ⇒ one side of the pair, never a mixture',
           run: async () => {
             const fx = await makeStoreFixture(); await fx.seed(SEEDED)
-            openState = true
+            setTier4Open(true)
             fx.store.set({ token: 'A' })
             const open = receiptOf(fx.store)
-            openState = false
+            setTier4Open(false)
             const closed = receiptOf(fx.store)
             expect([JSON.stringify(open), JSON.stringify(closed)].includes(JSON.stringify({ status: 'committed' }))).toBe(true)
             expect(JSON.stringify(closed), 'NO half-moved pair is legible (§2.5 item 6)').not.toContain('mcp-')
@@ -583,7 +634,7 @@ function buildRegister(): RegisterRow[] {
             const beforeBoot = bootSrc.slice(0, bootReadIndex)
             expect(/new SecurityGate\(/.test(beforeBoot), 'THE BOOT ORDER: the store is constructed (and its OPEN boot value declared) BEFORE the gate exists (`§0A` item 4 / `D-19`)').toBe(false)
             expect(/const\s+persisted\s*=\s*securityStore\.get\(\)/.test(bootSrc), 'the boot-ingestion read is a PLAIN read — no try/catch exception (`§2.5` item 5 `F-3`)').toBe(true)
-            openState = true
+            setTier4Open(true)
             expect(fx.store.get().token, 'the boot read is INSIDE the declared OPEN window and succeeds without exception').toBe('SEED')
           },
         },
@@ -623,18 +674,18 @@ function buildRegister(): RegisterRow[] {
       drives: [
         {
           label: 'the store side · the CLOSED half (a write is refused)',
-          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = false; assertClosedRefusal(writeEntryOf(fx.store, 'p', 1), 'pair · closed') },
+          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(false); assertClosedRefusal(writeEntryOf(fx.store, 'p', 1), 'pair · closed') },
         },
         {
           label: 'the store side · the OPEN half (a write commits)',
-          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = true; expect(writeEntryOf(fx.store, 'p', 1)).toEqual({ status: 'committed' }) },
+          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(true); expect(writeEntryOf(fx.store, 'p', 1)).toEqual({ status: 'committed' }) },
         },
         {
           label: 'the store side · the TRANSIENT WINDOW (the store reads ONE side, never a mixture)',
           run: async () => {
-            const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = true
+            const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(true)
             const a = writeEntryOf(fx.store, 'p', 1)
-            openState = false
+            setTier4Open(false)
             const b = writeEntryOf(fx.store, 'p', 2)
             expect([JSON.stringify(a), JSON.stringify(b)]).toEqual([JSON.stringify({ status: 'committed' }), JSON.stringify({ status: 'refused', reason: TIER4_CLOSED, message: TIER4_CLOSED_MESSAGE })])
           },
@@ -669,7 +720,7 @@ function buildRegister(): RegisterRow[] {
           label: 'ONE live value · the store and the MCP side read the SAME boolean, closed',
           run: async () => {
             const fx = await makeStoreFixture()
-            openState = false
+            setTier4Open(false)
             const storeRefused = (writeEntryOf(fx.store, 'x', 1) as { reason?: string }).reason === TIER4_CLOSED
             const mcpRefuses = fx.store.get() !== undefined && !tier4Reader()
             expect(storeRefused && mcpRefuses, 'the two sides read the SAME one value — never two homes').toBe(true)
@@ -679,7 +730,7 @@ function buildRegister(): RegisterRow[] {
           label: 'ONE live value · the same reading, open',
           run: async () => {
             const fx = await makeStoreFixture()
-            openState = true
+            setTier4Open(true)
             const storeCommitted = JSON.stringify(writeEntryOf(fx.store, 'x', 1)) === JSON.stringify({ status: 'committed' })
             expect(storeCommitted && tier4Reader()).toBe(true)
           },
@@ -688,9 +739,9 @@ function buildRegister(): RegisterRow[] {
           label: 'ONE live value · a flipped pair is never legible in halves (the reader is re-read per call)',
           run: async () => {
             const fx = await makeStoreFixture()
-            openState = true
+            setTier4Open(true)
             const first = JSON.stringify(writeEntryOf(fx.store, 'x', 1))
-            openState = false
+            setTier4Open(false)
             const second = JSON.stringify(writeEntryOf(fx.store, 'x', 2))
             expect(first).toBe(JSON.stringify({ status: 'committed' }))
             expect(second).toBe(JSON.stringify({ status: 'refused', reason: TIER4_CLOSED, message: TIER4_CLOSED_MESSAGE }))
@@ -730,12 +781,12 @@ function buildRegister(): RegisterRow[] {
       property: 'THE BOOLEAN IS ONE VALUE WITH ONE WRITER, READABLE REGARDLESS OF GATING — one home, one writer, no reader routes through a store read, so a gated store cannot blank the operator\'s reader',
       drives: [
         {
-          label: 'reader 1 · the store\'s functions read the ONE value at their own turn (the `A-1` reader, gate-less)',
+          label: 'reader 1 · the store\'s functions read the ONE value at their own turn (off the STATIC HOLDER, read once per call)',
           run: async () => {
             const fx = await makeStoreFixture()
-            openState = false
-            expect(readEntryOf(fx.store, 'never'), 'the reader is consulted and the tier answers CLOSED').toBeNull()
-            openState = true
+            setTier4Open(false)
+            expect(readEntryOf(fx.store, 'never'), 'the holder is consulted and the tier answers CLOSED').toBeNull()
+            setTier4Open(true)
             expect(writeEntryOf(fx.store, 'never', 1)).toEqual({ status: 'committed' })
           },
         },
@@ -746,12 +797,12 @@ function buildRegister(): RegisterRow[] {
           },
         },
         {
-          label: 'reader 3 · the operator\'s carrier reads the boolean INDEPENDENTLY of any store read',
+          label: 'reader 3 · the operator\'s carrier reads the boolean INDEPENDENTLY of any store read (off the STATIC HOLDER)',
           run: () => {
             const handler = getHandlerBody(sourceOrEmpty(MAIN_SRC))
             expect(handler.length, 'the GET handler exists').toBeGreaterThan(0)
             expect(/securityStore\.get\(\)/.test(handler), 'the boolean is NOT routed through a store read (`§2.4` item 7 — the deadlock\'s dissolution)').toBe(false)
-            expect(/mcp\.gate\.exclusionState\(\)/.test(handler), 'the carrier reads the ONE boolean directly off the live gate').toBe(true)
+            expect(/tier4OpenState\(\)/.test(handler), 'the carrier reads the ONE boolean off the STATIC HOLDER (`§0A` item 1, the `A-1` ruling — the `F-1` captured-instance class is closed structurally)').toBe(true)
           },
         },
         {
@@ -764,13 +815,35 @@ function buildRegister(): RegisterRow[] {
           },
         },
         {
-          label: 'a second WRITER · a module-level assignment/record as the home ⇒ FAILS (`FS-T4-12`)',
+          label: 'a second WRITER · the ONE home is the DECLARED leaf module and the ONE writer is the transition (drive RE-GRAINED at `KB-1`)',
           run: () => {
-            const src = sourceOrEmpty(MCP_SERVER_SRC) + sourceOrEmpty(MAIN_SRC)
-            const moduleLevelAssignment = /^\s*(?:let|var)\s+\w*(?:exclusion|storeOpen|tier4Open)\w*\s*=\s*(?:true|false)\s*;?\s*$/m
-            expect(moduleLevelAssignment.test('let storeOpen = true;'), 'CONTROL: the second-writer detector FIRES on a module-level mutable boolean').toBe(true)
-            expect(moduleLevelAssignment.test(src), 'the tree holds NO module-level mutable home for the boolean').toBe(false)
-            expect(/withExclusion\s*\(/.test(src), 'and no writer of its own (`§2.5` item 2: the store consults the state, it does not hold or move it)').toBe(false)
+            /* ── RE-GRAINED `2026-10-11` (`kick-back resolution`, outcome (a): the as-filed drive
+             * asserted the SUPERSEDED clause) — the as-filed second half required ZERO
+             * `withExclusion(` occurrences in `mcp-server.ts` + `main.ts` while `FS-T4-12` required
+             * EXACTLY `1` in `mcp-server.ts` (the LANDED transition site `applyExclusion`, `§2.5`
+             * item 2's ONE production call, which `§2.3` `G-3` cites as landed): the two rows were
+             * mutually unsatisfiable. THE AMENDED CLAUSE (`§0A` item 1, the `A-1` ruling): the
+             * boolean's home is the STATIC HOLDER of the ONE main-side leaf `src/main/tier4-state.ts`,
+             * and its ONE writer is the TRANSITION, whose only production site is that same
+             * `applyExclusion`. So the drive now counts SITES, on the amended terms. */
+            const moduleLevelAssignment = /^\s*(?:let|var)\s+\w+\s*=\s*(?:true|false)\s*;?\s*$/m
+            expect(moduleLevelAssignment.test('let storeOpen = true;'), 'CONTROL: the holder detector FIRES on a module-level mutable boolean').toBe(true)
+            const leaf = sourceOrEmpty(TIER4_STATE_SRC)
+            expect(moduleLevelAssignment.test(leaf), 'the ONE declared home — `src/main/tier4-state.ts` — DOES hold the module-level mutable boolean (`§0A` item 1)').toBe(true)
+            for (const [label, src] of [['mcp-server.ts', sourceOrEmpty(MCP_SERVER_SRC)], ['main.ts', sourceOrEmpty(MAIN_SRC)], ['security-store.ts', sourceOrEmpty(SECURITY_STORE_SRC)]] as Array<[string, string]>) {
+              expect(moduleLevelAssignment.test(src), `${label} holds NO module-level mutable home for the boolean — the home is the ONE leaf, never a second holder`).toBe(false)
+            }
+            const writer = /setTier4OpenState\s*\(/g
+            const sitesIn = (src: string): number => (src.match(writer) ?? []).length
+            const mcp = sourceOrEmpty(MCP_SERVER_SRC)
+            expect(sitesIn('setTier4OpenState(true)'), 'CONTROL: the writer-sites detector FIRES on a call').toBe(1)
+            expect(sitesIn(mcp), '`mcp-server.ts` holds the transition\'s ONE write of the holder').toBe(1)
+            expect(sitesIn(sourceOrEmpty(MAIN_SRC)), '`main.ts` holds NO writer of its own (`F-11`: main supplies STATE, never takes the DECISION)').toBe(0)
+            expect(sitesIn(sourceOrEmpty(SECURITY_STORE_SRC)), 'the store CONSULTS the holder; it never writes it (`§2.5` item 1)').toBe(0)
+            const withExclusionSites = (source: string): number => (source.match(/withExclusion\s*\(/g) ?? []).length
+            expect(withExclusionSites('const gate = other.withExclusion(next)'), 'CONTROL: the detector FIRES on a foreign site').toBe(1)
+            expect(withExclusionSites(mcp), '`mcp-server.ts` holds the ONE landed transition site (`applyExclusion`) — the row `FS-T4-12` also counts, so the two rows now AGREE (`KB-1`)').toBe(1)
+            expect(withExclusionSites(sourceOrEmpty(MAIN_SRC)), '`main.ts` holds NO writer of its own').toBe(0)
           },
         },
         {
@@ -787,14 +860,14 @@ function buildRegister(): RegisterRow[] {
           label: 'readable-regardless-of-gating · a CLOSED-state OPERATOR read still succeeds (`§2.6` item 2)',
           run: () => {
             const handler = getHandlerBody(sourceOrEmpty(MAIN_SRC))
-            expect(/mcp\.gate\.exclusionState\(\)/.test(handler), 'the operator\'s read is off the live gate, so a gated store cannot blank it').toBe(true)
+            expect(/tier4OpenState\(\)/.test(handler), 'the operator\'s read is off the STATIC HOLDER, so a gated store cannot blank it (`§0A` item 1)').toBe(true)
             expect(/securityStore\.get\(\)/.test(handler)).toBe(false)
           },
         },
         {
           label: 'readable-regardless-of-gating · CLOSED: the STORE read is refused while the OPERATOR read is not',
           run: async () => {
-            const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = false
+            const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(false)
             assertClosedRefusal(writeEntryOf(fx.store, 'z', 1), 'store side, closed')
             const carried = carrierRecord(STATE_MCP_DISABLED, null)
             expect(carried.exclusion, 'the operator still reads the STATE').toBe(STATE_MCP_DISABLED)
@@ -811,44 +884,56 @@ function buildRegister(): RegisterRow[] {
       drives: [
         {
           label: '(1) a CLOSED-state write · CLOSED ⇒ the closed value, never a throw',
-          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = false; assertClosedRefusal(writeEntryOf(fx.store, 'v', 1), 'vocab (1) closed') },
+          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(false); assertClosedRefusal(writeEntryOf(fx.store, 'v', 1), 'vocab (1) closed') },
         },
         {
           label: '(1) a CLOSED-state write · OPEN ⇒ no gate refusal at all',
-          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = true; expect(writeEntryOf(fx.store, 'v', 1)).toEqual({ status: 'committed' }) },
+          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(true); expect(writeEntryOf(fx.store, 'v', 1)).toEqual({ status: 'committed' }) },
         },
         {
           label: '(2) a non-representable value · CLOSED ⇒ the gate token (the consult precedes the admission)',
-          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = false; assertClosedRefusal(writeEntryOf(fx.store, 'v', 1n), 'vocab (2) closed') },
+          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(false); assertClosedRefusal(writeEntryOf(fx.store, 'v', 1n), 'vocab (2) closed') },
         },
         {
           label: '(2) a non-representable value · OPEN ⇒ the LANDED `write-failed` form (two tokens, no third)',
-          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = true; expect(writeEntryOf(fx.store, 'v', 1n)).toEqual({ status: 'refused', reason: 'write-failed' }) },
+          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(true); expect(writeEntryOf(fx.store, 'v', 1n)).toEqual({ status: 'refused', reason: 'write-failed' }) },
         },
         {
-          label: '(3) a hostile patch · CLOSED ⇒ the gate token',
+          label: '(3) a hostile patch · CLOSED ⇒ the PRE-WRITE record as a VALUE, never a throw (drive RE-GRAINED at `KB-2`)',
           run: async () => {
-            const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = false
+            const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(false)
             const hostile = new Proxy({}, { get: () => { throw new Error('hostile get') }, ownKeys: () => { throw new Error('hostile keys') } })
-            assertClosedRefusal(fx.store.set(hostile), 'vocab (3) — set() answers the PRE-WRITE record, never a throw')
-            assertClosedRefusal(receiptOf(fx.store), 'vocab (3) closed · receipt')
+            /* ── RE-GRAINED `2026-10-11` (`kick-back resolution`, outcome (a): the as-filed drive
+             * asserted the SUPERSEDED clause). The as-filed assertion called
+             * `assertClosedRefusal(fx.store.set(hostile))`, requiring `set()` to ANSWER the closed
+             * refusal while CLOSED — contradicting its OWN label, `M-5` and `§2.1` item 5 step 1
+             * ("the answer is the PRE-WRITE record (for `set`) or the closed refusal VALUE (for
+             * `writeEntry`)"). THE AMENDED CLAUSE, quoted: "the answer is the **PRE-WRITE** record
+             * (for `set`) or the closed refusal VALUE (for `writeEntry`)" — and `§2.1` item 3's
+             * table: "the record now live (... the **PRE-WRITE** record on any refusal)". So the
+             * drive asserts the AMENDED answer, and keeps the refusal's legibility on the RECEIPT
+             * — which is where `§2.1` item 5 step 1 puts it: `lastReceipt = { status:'refused',
+             * reason:'tier4-closed', message: TIER4_CLOSED_MESSAGE }`. */
+            const returned = fx.store.set(hostile)
+            expect(returned, '`set()` answers the PRE-WRITE record as a VALUE — the hostile patch changes nothing about that answer').toEqual({ token: 'SEED', enabled: ['read', 'dispatch'], maxJournalLength: 120 })
+            assertClosedRefusal(receiptOf(fx.store), 'vocab (3) closed · the receipt carries the closed refusal')
           },
         },
         {
           label: '(3) a hostile patch · OPEN ⇒ the LANDED refused form, never a throw',
           run: async () => {
-            const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = true
+            const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(true)
             expect(() => fx.store.set(new Proxy({}, { get: () => { throw new Error('hostile get') } }) as never)).not.toThrow()
             expect(receiptOf(fx.store)).toEqual({ status: 'refused', reason: 'write-failed' })
           },
         },
         {
           label: '(4) an out-of-domain patch · CLOSED ⇒ the gate token',
-          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = false; fx.store.set(null as never); assertClosedRefusal(receiptOf(fx.store), 'vocab (4) closed') },
+          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(false); fx.store.set(null as never); assertClosedRefusal(receiptOf(fx.store), 'vocab (4) closed') },
         },
         {
           label: '(4) an out-of-domain patch · OPEN ⇒ the LANDED refused form',
-          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = true; expect(() => fx.store.set(null as never)).not.toThrow(); expect(receiptOf(fx.store)).toEqual({ status: 'refused', reason: 'write-failed' }) },
+          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(true); expect(() => fx.store.set(null as never)).not.toThrow(); expect(receiptOf(fx.store)).toEqual({ status: 'refused', reason: 'write-failed' }) },
         },
         {
           label: 'vocabulary cell: NOT A THROW — no declared member throws in any state',
@@ -859,7 +944,7 @@ function buildRegister(): RegisterRow[] {
               () => readEntryOf(fx.store, 'x'), () => writeEntryOf(fx.store, 'x', 1),
             ]
             for (const state of [true, false]) {
-              openState = state
+              setTier4Open(state)
               for (const arm of arms) expect(arm, `no member throws (state open=${String(state)})`).not.toThrow()
             }
           },
@@ -867,7 +952,7 @@ function buildRegister(): RegisterRow[] {
         {
           label: 'vocabulary cell: the token is spelled VERBATIM `tier4-closed` (one token, lowercase, hyphenated)',
           run: async () => {
-            const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = false
+            const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(false)
             const answer = writeEntryOf(fx.store, 'x', 1) as { reason?: unknown }
             expect(answer.reason).toBe('tier4-closed')
             expect(TIER4_CLOSED).toBe('tier4-closed')
@@ -877,7 +962,7 @@ function buildRegister(): RegisterRow[] {
         {
           label: 'vocabulary cell: NO case variant and NO whitespace variant',
           run: async () => {
-            const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = false
+            const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(false)
             const answer = writeEntryOf(fx.store, 'x', 1) as { reason?: unknown }
             expect(['tier4-closed']).toContain(answer.reason)
             expect(String(answer.reason)).not.toMatch(/[A-Z\s]/)
@@ -886,7 +971,7 @@ function buildRegister(): RegisterRow[] {
         {
           label: 'vocabulary cell: the message is PRESENT, server-authored, and names CAUSE + REMEDY (`PAR-7`)',
           run: async () => {
-            const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = false
+            const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(false)
             const answer = writeEntryOf(fx.store, 'x', 1) as { message?: unknown }
             expect(typeof answer.message).toBe('string')
             expect(String(answer.message).length).toBeGreaterThan(0)
@@ -1017,11 +1102,24 @@ function buildRegister(): RegisterRow[] {
       property: 'THE BOOT WINDOW IS THE DECLARED DEFAULT, NOT AN ILLEGAL PAIR — at boot the boolean is STORE-OPEN; the boot-ingestion read therefore succeeds without exception; the flip to store-closed lands BEFORE the MCP is enabled; `{MCP-DISABLED, TIER-4-CLOSED}` is reachable ONLY inside the window and is not a legal steady pair',
       drives: [
         {
-          label: 'D-19 step 1 OPEN · the store is constructed with the reader ALREADY existing (the `A-1` default — the FIRST thing the red set checks)',
+          label: 'D-19 step 1 OPEN · the store is constructed with NO READER AT ALL, and the holder\'s declared initial value is STORE-OPEN (drive RE-GRAINED at the `A-1` ruling)',
           run: () => {
+            /* The as-filed drive asserted the WITHDRAWN `§0A` item 1 price (`readerBeforeStore`). The
+             * amended clause: the one boolean lives in a STATIC module-level holder with no
+             * construction site, so there is no reader to construct and no boot re-ordering — the
+             * LANDED window `store → boot read → gate → flip → mcp.start()` stands, and the store's
+             * OPEN reading at the boot read comes from the holder's declared initial. */
             const idx = bootWindowIndexes(sourceOrEmpty(MAIN_SRC))
             expect(idx.storeIndex, 'the store construction exists at `main.ts`').toBeGreaterThan(-1)
-            expect(idx.readerBeforeStore, 'the named, gate-less reader is constructed BEFORE the store (`§0A` item 1 — its price, re-ordering `main.ts:86-95`)').toBe(true)
+            expect(idx.readerConstructed, 'NO reader is constructed and no `tier4Open` option is handed (`§0A` item 1, amended)').toBe(false)
+            const leaf = sourceOrEmpty(TIER4_STATE_SRC)
+            expect(leaf, 'the STATIC HOLDER is a main-side leaf (`src/main/tier4-state.ts`)').not.toBe('')
+            expect(/export function tier4OpenState\s*\(/.test(leaf), 'its ONE reader is `tier4OpenState()`').toBe(true)
+            expect(/export function setTier4OpenState\s*\(/.test(leaf), 'its ONE writer is `setTier4OpenState()` — the transition\'s').toBe(true)
+            expect(/^\s*(?:let|var)\s+\w+\s*=\s*(?:true|false)\s*;?\s*$/m.test(leaf), 'the holder is a STATIC module-level boolean reference').toBe(true)
+            expect(/from\s+['"][^'"]*shared\//.test(leaf), 'the leaf imports NOTHING from `src/shared/**` (which would pull the renderer in)').toBe(false)
+            const declaredInitial = /^\s*(?:let|var)\s+(\w+)\s*=\s*(true|false)\s*;?\s*$/m.exec(leaf)
+            expect(declaredInitial?.[2], `the holder's DECLARED INITIAL VALUE is \`STORE-OPEN\` (\`true\`) — D-19's window; measured initializer: ${String(declaredInitial?.[2])}`).toBe('true')
           },
         },
         {
@@ -1074,16 +1172,17 @@ function buildRegister(): RegisterRow[] {
           label: 'PAIR 3 · `{MCP-DISABLED, TIER-4-CLOSED}` is reachable ONLY inside the boot window — never as a steady pair',
           run: () => {
             const src = sourceOrEmpty(MAIN_SRC)
-            expect(src, 'the boot value is DECLARED STORE-OPEN (`§0A` item 4): the reader must exist and the gate must be constructed AFTER the store').toMatch(/createSecurityStore\(/)
+            expect(src, 'the boot value is DECLARED STORE-OPEN (`§0A` item 4, now the HOLDER\'s declared initial: `§0A` item 1, amended)').toMatch(/createSecurityStore\(/)
             const gateAfterStore = (() => { const i = bootWindowIndexes(src); return i.gate === -1 || i.gate > i.storeIndex })()
             expect(gateAfterStore).toBe(true)
+            expect(/^\s*(?:let|var)\s+\w+\s*=\s*true\s*;?\s*$/m.test(sourceOrEmpty(TIER4_STATE_SRC)), 'and the HOLDER\'s declared initial value is STORE-OPEN (`§0A` item 1, amended) — which is what makes the boot read legal without any exception').toBe(true)
           },
         },
         {
           label: 'BOOT FAIL-STATE 1 · a MISSING file, ingested while OPEN ⇒ the first-run default, never a throw',
           run: async () => {
             const fx = await makeStoreFixture()
-            openState = true
+            setTier4Open(true)
             expect(fx.store.get().token).toBe(FIRST_RUN_DEFAULT.token)
             expect(fx.store.get().enabled).toEqual(FIRST_RUN_DEFAULT.enabled)
           },
@@ -1092,7 +1191,7 @@ function buildRegister(): RegisterRow[] {
           label: 'BOOT FAIL-STATE 2 · a CORRUPT file, ingested while OPEN ⇒ the first-run default, never a throw',
           run: async () => {
             const fx = await makeStoreFixture(); await fx.rawSeed('{ not json at all')
-            openState = true
+            setTier4Open(true)
             expect(fx.store.get().token).toBe(FIRST_RUN_DEFAULT.token)
           },
         },
@@ -1100,7 +1199,7 @@ function buildRegister(): RegisterRow[] {
           label: 'BOOT FAIL-STATE 3 · a path that IS A DIRECTORY, ingested while OPEN ⇒ the first-run default, never a throw',
           run: async () => {
             const fx = await makeStoreFixture(); await fx.makeDirAtPath()
-            openState = true
+            setTier4Open(true)
             expect(fx.store.get().token).toBe(FIRST_RUN_DEFAULT.token)
           },
         },
@@ -1115,14 +1214,14 @@ function buildRegister(): RegisterRow[] {
         {
           label: 'SURFACE ARM 1 · the name-addressed READ · CLOSED ⇒ the PRE-CALL value',
           run: async () => {
-            const fx = await makeStoreFixture(); await fx.seed({ ...SEEDED, entries: { a: 1 } }); openState = false
+            const fx = await makeStoreFixture(); await fx.seed({ ...SEEDED, entries: { a: 1 } }); setTier4Open(false)
             expect(readEntryOf(fx.store, 'a')).toEqual({ name: 'a', value: 1 })
           },
         },
         {
           label: 'SURFACE ARM 1 · the name-addressed READ · OPEN ⇒ the live value, detached',
           run: async () => {
-            const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = true
+            const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(true)
             writeEntryOf(fx.store, 'a', { deep: { n: [1, 2] } })
             const read = readEntryOf(fx.store, 'a') as { name: string; value: { deep: { n: number[] } } }
             expect(read).toEqual({ name: 'a', value: { deep: { n: [1, 2] } } })
@@ -1132,12 +1231,12 @@ function buildRegister(): RegisterRow[] {
         },
         {
           label: 'SURFACE ARM 2 · the name-addressed WRITE · CLOSED ⇒ the gate refusal',
-          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = false; assertClosedRefusal(writeEntryOf(fx.store, 'a', 1), 'arm 2 closed') },
+          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(false); assertClosedRefusal(writeEntryOf(fx.store, 'a', 1), 'arm 2 closed') },
         },
         {
           label: 'SURFACE ARM 2 · the name-addressed WRITE · OPEN ⇒ committed and durable',
           run: async () => {
-            const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = true
+            const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(true)
             expect(writeEntryOf(fx.store, 'a', 1)).toEqual({ status: 'committed' })
             expect(JSON.parse(String(await fx.bytes())).entries.a, 'the file carries the entry (reading (b))').toBe(1)
           },
@@ -1146,7 +1245,7 @@ function buildRegister(): RegisterRow[] {
           label: 'SURFACE ARM 3 · the boot treatment of unknown keys · CLOSED ⇒ a CLOSED store still cannot read them',
           run: async () => {
             const fx = await makeStoreFixture(); await fx.seed({ ...SEEDED, thirdPartyBlob: { x: 1 } })
-            openState = false
+            setTier4Open(false)
             expect(readEntryOf(fx.store, 'thirdPartyBlob'), 'the refused read answers the PRE-CALL value — which here EXISTS').toEqual({ name: 'thirdPartyBlob', value: { x: 1 } })
           },
         },
@@ -1154,7 +1253,7 @@ function buildRegister(): RegisterRow[] {
           label: 'SURFACE ARM 3 · the boot treatment of unknown keys · OPEN ⇒ INGESTED VERBATIM, never dropped (`M-3`)',
           run: async () => {
             const fx = await makeStoreFixture(); await fx.seed({ ...SEEDED, thirdPartyBlob: { x: 1 }, extra: 'keep' })
-            openState = true
+            setTier4Open(true)
             expect(readEntryOf(fx.store, 'thirdPartyBlob')).toEqual({ name: 'thirdPartyBlob', value: { x: 1 } })
             expect(readEntryOf(fx.store, 'extra')).toEqual({ name: 'extra', value: 'keep' })
           },
@@ -1164,7 +1263,7 @@ function buildRegister(): RegisterRow[] {
           run: async () => {
             const fx = await makeStoreFixture(); await fx.seed(SEEDED)
             const before = await fx.bytes()
-            openState = false
+            setTier4Open(false)
             writeEntryOf(fx.store, 'a', 1)
             expect(await fx.bytes()).toBe(before)
             expect(JSON.parse(String(before)).entries, '`entries` is ABSENT until the first successful write (§2.2 item 2(i))').toBeUndefined()
@@ -1173,7 +1272,7 @@ function buildRegister(): RegisterRow[] {
         {
           label: 'SURFACE ARM 4 · the persisted format\'s evolution · OPEN ⇒ `{token, enabled, maxJournalLength, entries}` and NO `schemaVersion`',
           run: async () => {
-            const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = true
+            const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(true)
             writeEntryOf(fx.store, 'a', 1)
             const persisted = JSON.parse(String(await fx.bytes())) as Record<string, unknown>
             expect(Object.keys(persisted).sort()).toEqual(['enabled', 'entries', 'maxJournalLength', 'token'])
@@ -1182,32 +1281,32 @@ function buildRegister(): RegisterRow[] {
         },
         {
           label: 'VALUE CLASS 1 refused: `BigInt`',
-          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = true; expect(writeEntryOf(fx.store, 'v', 1n)).toEqual({ status: 'refused', reason: 'write-failed' }) },
+          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(true); expect(writeEntryOf(fx.store, 'v', 1n)).toEqual({ status: 'refused', reason: 'write-failed' }) },
         },
         {
           label: 'VALUE CLASS 2 refused: `Symbol`',
-          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = true; expect(writeEntryOf(fx.store, 'v', Symbol('s'))).toEqual({ status: 'refused', reason: 'write-failed' }) },
+          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(true); expect(writeEntryOf(fx.store, 'v', Symbol('s'))).toEqual({ status: 'refused', reason: 'write-failed' }) },
         },
         {
           label: 'VALUE CLASS 3 refused: a function',
-          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = true; expect(writeEntryOf(fx.store, 'v', () => 1)).toEqual({ status: 'refused', reason: 'write-failed' }) },
+          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(true); expect(writeEntryOf(fx.store, 'v', () => 1)).toEqual({ status: 'refused', reason: 'write-failed' }) },
         },
         {
           label: 'VALUE CLASS 4 refused: `Map`',
-          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = true; expect(writeEntryOf(fx.store, 'v', new Map())).toEqual({ status: 'refused', reason: 'write-failed' }) },
+          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(true); expect(writeEntryOf(fx.store, 'v', new Map())).toEqual({ status: 'refused', reason: 'write-failed' }) },
         },
         {
           label: 'VALUE CLASS 5 refused: `Set`',
-          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = true; expect(writeEntryOf(fx.store, 'v', new Set([1]))).toEqual({ status: 'refused', reason: 'write-failed' }) },
+          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(true); expect(writeEntryOf(fx.store, 'v', new Set([1]))).toEqual({ status: 'refused', reason: 'write-failed' }) },
         },
         {
           label: 'VALUE CLASS 6 refused: `Date`',
-          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = true; expect(writeEntryOf(fx.store, 'v', new Date())).toEqual({ status: 'refused', reason: 'write-failed' }) },
+          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(true); expect(writeEntryOf(fx.store, 'v', new Date())).toEqual({ status: 'refused', reason: 'write-failed' }) },
         },
         {
           label: 'VALUE CLASS 7 refused: a CYCLIC value (and a JSON round trip is NOT the check)',
           run: async () => {
-            const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = true
+            const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(true)
             const cyclic: Record<string, unknown> = {}
             cyclic.self = cyclic
             expect(writeEntryOf(fx.store, 'v', cyclic)).toEqual({ status: 'refused', reason: 'write-failed' })
@@ -1217,7 +1316,7 @@ function buildRegister(): RegisterRow[] {
         {
           label: 'VALUE CLASS 8 refused: `Infinity` / `NaN`',
           run: async () => {
-            const fx = await makeStoreFixture(); await fx.seed(SEEDED); openState = true
+            const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(true)
             expect(writeEntryOf(fx.store, 'v', Number.POSITIVE_INFINITY)).toEqual({ status: 'refused', reason: 'write-failed' })
             expect(writeEntryOf(fx.store, 'v', Number.NaN)).toEqual({ status: 'refused', reason: 'write-failed' })
           },
@@ -1313,16 +1412,25 @@ function buildRegister(): RegisterRow[] {
           },
         },
         {
-          label: 'the carrier\'s two members · CLOSED ⇒ `read` = the closed refusal',
+          label: 'the carrier\'s two members · CLOSED ⇒ `read` = the closed refusal (drive RE-GRAINED at `KB-3`)',
           run: () => {
             const handler = getHandlerBody(sourceOrEmpty(MAIN_SRC))
-            expect(handler, 'the refusal rides the CHANNEL (§2.4 item 7)').toBeGreaterThan(0)
+            /* ── RE-GRAINED `2026-10-11` (`kick-back resolution`, outcome (a): the as-filed drive
+             * asserted an UNSATISFIABLE instrument). The as-filed form read
+             * `expect(handler, …).toBeGreaterThan(0)` where `handler = getHandlerBody(MAIN_SRC)` is a
+             * `string`, so vitest answered "actual value must be number or bigint, received string"
+             * for EVERY possible implementation — unconditionally unsatisfiable. THE AMENDED DRIVE
+             * keeps the SAME bite on the handler's own bytes (`handler.length`) and adds the amended
+             * clause's own term: the `read` member derives from the SAME ONE READING of the STATIC
+             * HOLDER as `exclusion`. */
+            expect(handler.length, 'the refusal rides the CHANNEL (`§2.4` item 7)').toBeGreaterThan(0)
             expect(/read\s*:/.test(handler), 'the `read` member is composed in the handler').toBe(true)
+            expect(/tier4OpenState\(\)/.test(handler), 'and BOTH members derive from ONE reading of the STATIC HOLDER (`§0A` item 1, amended)').toBe(true)
           },
         },
         {
           label: 'the carrier\'s two members · the STATE member is never absent (`PAR-9`)',
-          run: () => { expect(/exclusion\s*:\s*mcp\.gate\.exclusionState\(\)/.test(getHandlerBody(sourceOrEmpty(MAIN_SRC))), 'the state member never routes through the store read').toBe(true) },
+          run: () => { expect(/exclusion\s*:\s*tier4OpenState\(\)\s*\?/.test(getHandlerBody(sourceOrEmpty(MAIN_SRC))), 'the state member is fed by the ONE STATIC HOLDER reading and never routes through the store read (`§0A` item 1, amended)').toBe(true) },
         },
         {
           label: 'the carrier\'s two members · neither is substituted for the other (§3.4)',
@@ -1383,12 +1491,13 @@ beforeAll(async () => {
   installShim()
   baseDir = await mkdtemp(join(tmpdir(), 's2-tier4-red-'))
   storeModule = await loadStoreModule()
+  await loadTier4StateModule()
   registerRows = buildRegister()
 })
 afterAll(async () => {
   if (baseDir !== '') await rm(baseDir, { recursive: true, force: true })
 })
-beforeEach(() => { openState = true })
+beforeEach(() => { setTier4Open(true) })
 
 describe('S2 §2.1 THE STORE\'S DECLARED SURFACE (census, options, member order)', () => {
   it('P-T4-CENSUS: `Object.keys(store)` is EXACTLY the declared FIVE, in the declared order', async () => {
@@ -1398,15 +1507,22 @@ describe('S2 §2.1 THE STORE\'S DECLARED SURFACE (census, options, member order)
     expect(keys.length).toBe(LANDED_SURFACE_MEMBERS.length + 2)
   })
 
-  it('P-T4-OPTIONS: `SecurityStoreOptions`\'s option census moves 1 → 2 (path + tier4Open)', async () => {
+  it('P-T4-OPTIONS RE-GRAINED (`kick-back resolution`, outcome (a)): the option census is UNMOVED at `1 = 1 (path)` — the `1 → 2` movement is WITHDRAWN', async () => {
+    /* ── RE-GRAINED `2026-10-11`. The as-filed row asserted the SUPERSEDED `1 → 2` clause
+     * (`§2.1` item 2 / `§1.2` item 9 / `§5.1` item 4 / `§7b` row 3). THE AMENDED CLAUSE (`§0A`
+     * item 1, the `A-1` ruling), quoted VERBATIM: "**`SecurityStoreOptions` IS UNMOVED AT
+     * `{ path: string }`, AND THE TWO CLAUSES THAT MOVED IT ARE WITHDRAWN.** The as-filed
+     * **`1 → 2` option-census clause** … and the **injected-thunk shape** … are **SUPERSEDED IN
+     * EFFECT**: the operative census is **`1 = 1 (path)`**, UNMOVED and owed by no amendment." */
     const src = sourceOrEmpty(SECURITY_STORE_SRC)
     const iface = /export interface SecurityStoreOptions\s*\{[\s\S]*?\n\}/.exec(src)?.[0] ?? ''
     expect(iface, 'the options interface exists').not.toBe('')
     const declared = [...iface.matchAll(/^\s*(\w+)\??\s*:/gm)].map((m) => m[1])
-    expect(declared, `the option census is 2 = 1 (path) + 1 (tier4Open) — measured [${declared.join(', ')}]`).toHaveLength(DECLARED_OPTION_CENSUS)
-    expect(declared).toContain('path')
-    expect(declared.length).toBeGreaterThan(LANDED_OPTION_CENSUS - 1)
-    expect(declared, 'the `A-1` reader is a DECLARED option of this unit (`§0A` item 1)').toContain('tier4Open')
+    expect(declared, `the option census is UNMOVED at 1 = 1 (path) — measured [${declared.join(', ')}]`).toHaveLength(DECLARED_OPTION_CENSUS)
+    expect(declared.length, 'the census is UNMOVED (`1 = 1 (path)`)').toBe(LANDED_OPTION_CENSUS)
+    expect(declared).toEqual(['path'])
+    expect(declared, 'the `A-1` reader is NOT an option — it is the STATIC HOLDER (`§0A` item 1, amended)').not.toContain('tier4Open')
+    expect(/tier4Open/.test(src), 'and the withdrawn option leaves no trace in the module\'s own bytes').toBe(false)
   })
 
   it('P-T4-EXPORTS: the module\'s export census moves by NOTHING (the four landed names survive)', async () => {
@@ -1442,7 +1558,7 @@ describe('S2 §3.1 THE HAPPY STATES (M-1…M-11)', () => {
 
   it('M-2 the boot-ingestion read at the declared OPEN window succeeds without exception', async () => {
     const fx = await makeStoreFixture(); await fx.seed(SEEDED)
-    openState = true
+    setTier4Open(true)
     let threw = false
     try { fx.store.get() } catch { threw = true }
     expect(threw, '`G-2` binds and PASSES at boot (`§2.5 item 5 F-3`) — no carve-out is needed').toBe(false)
@@ -1452,7 +1568,7 @@ describe('S2 §3.1 THE HAPPY STATES (M-1…M-11)', () => {
   it('M-3 a legacy file\'s foreign top-level keys are INGESTED VERBATIM and survive the next successful write', async () => {
     const fx = await makeStoreFixture()
     await fx.seed({ token: 'SEED', enabled: ['read', 'dispatch'], maxJournalLength: 120, thirdPartyBlob: { x: 1 }, extra: 'keep' })
-    openState = true
+    setTier4Open(true)
     expect(readEntryOf(fx.store, 'thirdPartyBlob')).toEqual({ name: 'thirdPartyBlob', value: { x: 1 } })
     expect(readEntryOf(fx.store, 'extra')).toEqual({ name: 'extra', value: 'keep' })
     expect(writeEntryOf(fx.store, 'mine', 1)).toEqual({ status: 'committed' })
@@ -1464,7 +1580,7 @@ describe('S2 §3.1 THE HAPPY STATES (M-1…M-11)', () => {
 
   it('M-4 the CLOSED state: a tier read answers the PRE-CALL value, detached; a never-written name answers null', async () => {
     const fx = await makeStoreFixture(); await fx.seed({ ...SEEDED, entries: { a: { deep: 1 } } })
-    openState = false
+    setTier4Open(false)
     const read = readEntryOf(fx.store, 'a') as { name: string; value: { deep: number } }
     expect(read).toEqual({ name: 'a', value: { deep: 1 } })
     read.value.deep = 99
@@ -1475,7 +1591,7 @@ describe('S2 §3.1 THE HAPPY STATES (M-1…M-11)', () => {
 
   it('M-5 the CLOSED state: a write answers the VALUE, `set()` the PRE-WRITE record, the receipt the refusal', async () => {
     const fx = await makeStoreFixture(); await fx.seed(SEEDED)
-    openState = false
+    setTier4Open(false)
     const returned = fx.store.set({ token: 'NOPE' })
     expect(returned, '`set()` answers the PRE-WRITE record (§2.1 item 3)').toEqual({ token: 'SEED', enabled: ['read', 'dispatch'], maxJournalLength: 120 })
     assertClosedRefusal(receiptOf(fx.store), 'M-5 receipt')
@@ -1485,7 +1601,7 @@ describe('S2 §3.1 THE HAPPY STATES (M-1…M-11)', () => {
 
   it('M-6 THE NON-VACUITY TERM: the OPEN state\'s write commits and lands', async () => {
     const fx = await makeStoreFixture(); await fx.seed(SEEDED)
-    openState = true
+    setTier4Open(true)
     const before = await fx.bytes()
     fx.store.set({ token: 'LANDED' })
     expect(receiptOf(fx.store)).toEqual({ status: 'committed' })
@@ -1496,7 +1612,7 @@ describe('S2 §3.1 THE HAPPY STATES (M-1…M-11)', () => {
 
   it('M-7 the OPEN state: an admitted `writeEntry` commits; the entry is live AND durable; the read is detached', async () => {
     const fx = await makeStoreFixture(); await fx.seed(SEEDED)
-    openState = true
+    setTier4Open(true)
     expect(writeEntryOf(fx.store, 'alpha', { n: 1 })).toEqual({ status: 'committed' })
     expect(readEntryOf(fx.store, 'alpha')).toEqual({ name: 'alpha', value: { n: 1 } })
     expect(JSON.parse(String(await fx.bytes())).entries.alpha).toEqual({ n: 1 })
@@ -1504,7 +1620,7 @@ describe('S2 §3.1 THE HAPPY STATES (M-1…M-11)', () => {
 
   it('M-8 the OPEN state: a name written twice answers the LAST admitted value, live == durable', async () => {
     const fx = await makeStoreFixture(); await fx.seed(SEEDED)
-    openState = true
+    setTier4Open(true)
     writeEntryOf(fx.store, 'k', 1)
     writeEntryOf(fx.store, 'k', 2)
     expect(readEntryOf(fx.store, 'k')).toEqual({ name: 'k', value: 2 })
@@ -1522,13 +1638,13 @@ describe('S2 §3.1 THE HAPPY STATES (M-1…M-11)', () => {
   it('M-10 the RETURN transition then a write: REFUSED (the measured SC-D-07 shape closes)', async () => {
     const fx = await makeStoreFixture(); await fx.seed(SEEDED)
     let gate = new SecurityGate({ token: null, enabled: ['read', 'dispatch'] })
-    openState = false // the MCP is enabled ⇒ the store is closed
+    setTier4Open(false) // the MCP is enabled ⇒ the store is closed
     const closedWrite = writeEntryOf(fx.store, 'ret', 1)
     assertClosedRefusal(closedWrite, 'M-10 · closed')
     gate = gate.withExclusion(STATE_MCP_DISABLED)
-    openState = true
+    setTier4Open(true)
     expect(writeEntryOf(fx.store, 'ret', 1), 'the operator returns ⇒ the write commits').toEqual({ status: 'committed' })
-    openState = false
+    setTier4Open(false)
     expect(writeEntryOf(fx.store, 'ret', 2), 'and the return to MCP-enabled closes it again').toEqual({ status: 'refused', reason: TIER4_CLOSED, message: TIER4_CLOSED_MESSAGE })
     expect(gate.exclusionState()).toBe(STATE_MCP_DISABLED)
   })
@@ -1547,7 +1663,7 @@ describe('S2 §3.1 THE HAPPY STATES (M-1…M-11)', () => {
 describe('S2 §3.2 THE FAIL-STATES (FS-T4-01…FS-T4-13)', () => {
   it('FS-T4-01 a write while CLOSED: the refusal VALUE; no commit, no persist, no advance, NO filesystem call', async () => {
     const fx = await makeStoreFixture(); await fx.seed(SEEDED)
-    openState = false
+    setTier4Open(false)
     const before = await fx.bytes()
     const mtimeBefore = await fx.mtime()
     const callsBefore = fx.calls().length
@@ -1556,7 +1672,7 @@ describe('S2 §3.2 THE FAIL-STATES (FS-T4-01…FS-T4-13)', () => {
     expect(await fx.bytes()).toBe(before)
     expect(await fx.mtime()).toBe(mtimeBefore)
     // CTL-4 — the same detector MUST move on a COMMITTED write (non-vacuity):
-    openState = true
+    setTier4Open(true)
     const callsBeforeCommit = fx.calls().length
     fx.store.set({ token: 'MOVED' })
     expect(fx.calls().length, 'CONTROL: the filesystem-call detector FIRES on a committed write').toBeGreaterThan(callsBeforeCommit)
@@ -1564,7 +1680,7 @@ describe('S2 §3.2 THE FAIL-STATES (FS-T4-01…FS-T4-13)', () => {
 
   it('FS-T4-02 a read while CLOSED: the PRE-CALL value, detached; the refusal is NOT in the value', async () => {
     const fx = await makeStoreFixture(); await fx.seed(SEEDED)
-    openState = false
+    setTier4Open(false)
     const read = fx.store.get()
     expect(read).toEqual({ token: 'SEED', enabled: ['read', 'dispatch'], maxJournalLength: 120 })
     expect(JSON.stringify(read)).not.toContain('refused')
@@ -1573,7 +1689,7 @@ describe('S2 §3.2 THE FAIL-STATES (FS-T4-01…FS-T4-13)', () => {
 
   it('FS-T4-03 `writeEntry` with a non-representable value: the landed refused form, no filesystem call', async () => {
     const fx = await makeStoreFixture(); await fx.seed(SEEDED)
-    openState = true
+    setTier4Open(true)
     for (const [label, bad] of [['BigInt', 1n], ['Symbol', Symbol('s')], ['function', () => 1], ['Map', new Map()], ['Set', new Set()], ['Date', new Date()], ['Infinity', Infinity], ['NaN', NaN], ['undefined', undefined]] as Array<[string, unknown]>) {
       const callsBefore = fx.calls().length
       expect(writeEntryOf(fx.store, 'bad', bad), `${label} REFUSES the whole request (§2.2 item 5)`).toEqual({ status: 'refused', reason: 'write-failed' })
@@ -1584,7 +1700,7 @@ describe('S2 §3.2 THE FAIL-STATES (FS-T4-01…FS-T4-13)', () => {
 
   it('FS-T4-04 a name OUTSIDE `PAR-3`\'s domain: a write refuses in the landed form, a read answers null, neither throws', async () => {
     const fx = await makeStoreFixture(); await fx.seed(SEEDED)
-    openState = true
+    setTier4Open(true)
     const names: Array<[string, unknown]> = [['non-string', 12], ['empty string', ''], ['over-long', 'x'.repeat(513)], ['control char', 'a\u0000b'], ['DEL', 'a\u007fb']]
     for (const [label, name] of names) {
       expect(readEntryOf(fx.store, name), `${label}: a READ answers null (§6 PAR-3)`).toBeNull()
@@ -1597,7 +1713,7 @@ describe('S2 §3.2 THE FAIL-STATES (FS-T4-01…FS-T4-13)', () => {
 
   it('FS-T4-05 a patch OUTSIDE `set()`\'s declared domain: the landed refused form, never a throw', async () => {
     const fx = await makeStoreFixture(); await fx.seed(SEEDED)
-    openState = true
+    setTier4Open(true)
     const patches: Array<[string, unknown]> = [['null', null], ['array', [1, 2]], ['number', 7], ['Date (non-plain)', new Date()], ['hostile proxy', new Proxy({}, { get: () => { throw new Error('hostile') } })]]
     for (const [label, patch] of patches) {
       expect(() => fx.store.set(patch), `${label}: never a throw (§2.3 item 1)`).not.toThrow()
@@ -1608,7 +1724,7 @@ describe('S2 §3.2 THE FAIL-STATES (FS-T4-01…FS-T4-13)', () => {
   it('FS-T4-06 a `persist()` failure: refused; the record stays PRE-WRITE; the live map advances nothing', async () => {
     for (const [label, arm] of [['tmp write', (l: FsLog) => { l.writeFileAt = 1 }], ['tmp fsync', (l: FsLog) => { l.fsyncAt = 1 }], ['rename', (l: FsLog) => { l.renameFail = true }]] as Array<[string, (l: FsLog) => void]>) {
       const fx = await makeStoreFixture(); await fx.seed(SEEDED)
-      openState = true
+      setTier4Open(true)
       arm(fx.log)
       const before = await fx.bytes()
       expect(writeEntryOf(fx.store, 'k', 1), `${label} failure ⇒ the landed refusal`).toEqual({ status: 'refused', reason: 'write-failed' })
@@ -1620,7 +1736,7 @@ describe('S2 §3.2 THE FAIL-STATES (FS-T4-01…FS-T4-13)', () => {
 
   it('FS-T4-07 a post-rename directory-`fsync` failure is NOT a refusal (the write stays committed)', async () => {
     const fx = await makeStoreFixture(); await fx.seed(SEEDED)
-    openState = true
+    setTier4Open(true)
     fx.log.fsyncAt = 2 // call 2 = the parent-directory fsync AFTER the rename (the commit point has passed)
     expect(writeEntryOf(fx.store, 'k', 1), 'the successful rename answers `committed` regardless of the directory fsync (§2.1 item 6)').toEqual({ status: 'committed' })
     expect(readEntryOf(fx.store, 'k'), 'nothing rolls back').toEqual({ name: 'k', value: 1 })
@@ -1631,20 +1747,40 @@ describe('S2 §3.2 THE FAIL-STATES (FS-T4-01…FS-T4-13)', () => {
     for (const [label, malformed] of [['array', [1, 2]], ['string', 'nope'], ['number', 7], ['null', null], ['boolean', true]] as Array<[string, unknown]>) {
       const fx = await makeStoreFixture()
       await fx.seed({ ...SEEDED, entries: malformed, thirdPartyBlob: { x: 1 } })
-      openState = true
+      setTier4Open(true)
       expect(readEntryOf(fx.store, 'anything'), `${label}: the map reads EMPTY (§2.2 item 4 arm 5)`).toBeNull()
       expect(readEntryOf(fx.store, 'thirdPartyBlob'), `${label}: the top-level arm still ingests VERBATIM (the residue is BOUNDED)`).toEqual({ name: 'thirdPartyBlob', value: { x: 1 } })
     }
   })
 
-  it('FS-T4-09 `tier4Open` ABSENT: the tier answers CLOSED — reads answer the pre-call value, writes refuse, never a throw', async () => {
-    const fx = await makeStoreFixture({ absentReader: true })
-    openState = true // irrelevant: no reader was passed
-    expect(() => writeEntryOf(fx.store, 'a', 1), 'never a throw').not.toThrow()
-    assertClosedRefusal(writeEntryOf(fx.store, 'a', 1), 'FS-T4-09 write')
-    expect(readEntryOf(fx.store, 'a'), 'the read answers the pre-call value (none)').toBeNull()
+  it('FS-T4-09 WITHDRAWN / RE-GRAINED (`kick-back resolution`, outcome (a)): the store reads the STATIC HOLDER, its declared initial value is STORE-OPEN, and NO absent arm, fail-safe default or sibling-site wave exists', async () => {
+    /* ── RE-GRAINED `2026-10-11`. The as-filed row asserted the now-SUPERSEDED `§3.2` `FS-T4-09`
+     * (`"tier4Open absent from the options ⇒ FAIL-SAFE: the tier answers CLOSED"`), which drove the
+     * fixture with `{ absentReader: true }`. THE AMENDED CLAUSE (`§0A` item 1, the `A-1` ruling;
+     * `§2.1` item 2's amendment), quoted: "**THERE IS NO `READER OMITTED` STATE AND NO FAIL-SAFE
+     * DEFAULT**: the holder always exists and its **declared initial value is `STORE-OPEN`**, so a
+     * bare `createSecurityStore({ path })` reads it and behaves exactly as before". So the row now
+     * asserts (i) the option census is `{ path }` — hence no absent arm can exist; (ii) the store
+     * reads THE HOLDER: a bare store admits a write while the holder says OPEN and refuses it with
+     * the closed token once the holder says CLOSED — same instance, no re-construction; (iii) the
+     * holder's declared initial is STORE-OPEN, so the bare construction behaves exactly as before. */
+    const src = sourceOrEmpty(SECURITY_STORE_SRC)
+    const iface = /export interface SecurityStoreOptions\s*\{[\s\S]*?\n\}/.exec(src)?.[0] ?? ''
+    const declared = [...iface.matchAll(/^\s*(\w+)\??\s*:/gm)].map((m) => m[1])
+    expect(declared, `there is NO reader option to omit — measured [${declared.join(', ')}]`).toEqual(['path'])
+    expect(/tier4Open/.test(iface), 'the withdrawn option is NOT declared (no absent arm exists)').toBe(false)
+    expect(tier4StateModule, `the STATIC HOLDER must exist — ${tier4StateReason}`).not.toBeNull()
+    const fx = await makeStoreFixture()
+    await fx.seed(SEEDED)
+    setTier4Open(true)
+    expect(writeEntryOf(fx.store, 'a', 1), 'a BARE `createSecurityStore({ path })` reads the holder: OPEN ⇒ the write commits and lands').toEqual({ status: 'committed' })
+    expect(readEntryOf(fx.store, 'a'), 'and the read answers the live value').toEqual({ name: 'a', value: 1 })
+    setTier4Open(false)
+    assertClosedRefusal(writeEntryOf(fx.store, 'a', 2), 'the SAME instance, the holder now CLOSED ⇒ the closed refusal VALUE (`G-1`)')
+    expect(readEntryOf(fx.store, 'a'), 'the refused read answers the PRE-CALL value, detached — no throw').toEqual({ name: 'a', value: 1 })
     expect(() => fx.store.get()).not.toThrow()
     expect(() => receiptOf(fx.store)).not.toThrow()
+    expect(/^\s*(?:let|var)\s+\w+\s*=\s*true\s*;?\s*$/m.test(sourceOrEmpty(TIER4_STATE_SRC)), 'the holder\'s DECLARED INITIAL VALUE is STORE-OPEN (`true`), which is `D-19`\'s window — a bare store therefore behaves exactly as before').toBe(true)
   })
 
   it('FS-T4-10 a missing / corrupt / directory-shaped file at boot: the first-run default, never a throw', async () => {
@@ -1660,7 +1796,7 @@ describe('S2 §3.2 THE FAIL-STATES (FS-T4-01…FS-T4-13)', () => {
     const fx = await makeStoreFixture(); await fx.seed(SEEDED)
     const flips = [true, false, true, false]
     for (const state of flips) {
-      openState = state
+      setTier4Open(state)
       const answer = JSON.stringify(writeEntryOf(fx.store, 'w', 1))
       const expected = state
         ? JSON.stringify({ status: 'committed' })
@@ -1735,13 +1871,19 @@ describe('S2 §2.6 THE PANE\'S TWO RE-SOURCED CELLS + THE ONE ADDITIVE SEGMENT',
   })
 })
 
-describe('S2 §4.2 THE AUTHORING ORDER (the static/census rows redden FIRST on the tree as it stands)', () => {
-  it('the red\'s own non-vacuity: the landed census is 3 and the landed tree carries NO `readEntry`/`writeEntry`', async () => {
+describe('S2 §4.2 THE AUTHORING ORDER (the static/census rows REDDENED FIRST on the tree as it stood; this row is RE-GRAINED to the GREEN direction)', () => {
+  it('the census row RE-GRAINED (`kick-back resolution`, outcome (a)): `Object.keys(store)` is the DECLARED FIVE and BOTH new members exist', async () => {
+    /* ── RE-GRAINED `2026-10-11` (the Implementer's `§10` item 6 kick-back): the as-filed row was a
+     * RED-STATE assertion (`"the landed census is 3 and the landed tree carries NO
+     * \`readEntry\`/\`writeEntry\`"`) that contradicted `P-T4-CENSUS` (the declared FIVE) inside the
+     * SAME file. The green-side form keeps the row's own bite — the census TERMS are printed, and
+     * both members are asserted to be FUNCTIONS, not merely present keys. */
     const fx = await makeStoreFixture()
     const keys = Object.keys(fx.store)
-    expect(keys, 'the landed surface, as the spec measures it (`§1.2` item 2)').toEqual(['get', 'lastWriteReceipt', 'set'])
-    expect(typeof fx.store.readEntry, 'the opening is ABSENT at red').toBe('undefined')
-    expect(typeof fx.store.writeEntry, 'the opening is ABSENT at red').toBe('undefined')
+    expect(keys, `5 = 3 (landed: get · lastWriteReceipt · set) + 2 (new: readEntry · writeEntry) — measured [${keys.join(', ')}]`).toEqual([...DECLARED_SURFACE_MEMBERS])
+    expect(keys.length, 'the movement is exactly 3 → 5').toBe(LANDED_SURFACE_MEMBERS.length + 2)
+    expect(typeof fx.store.readEntry, 'the name-addressed READ landed').toBe('function')
+    expect(typeof fx.store.writeEntry, 'the name-addressed WRITE landed').toBe('function')
   })
 })
 
@@ -1789,14 +1931,22 @@ describe('S2 §5.5.1 THE REGISTER (executed deterministically — 10 rows / 108 
     expect(brokenCountCheckOf(execReport).unrunOk, 'the register really ran every row').toBe(true)
   })
 
-  it('REGISTER-RED: the register\'s RED DIRECTION is asserted, not merely reported (every row carries broken > 0 at red)', async () => {
+  it('REGISTER-GREEN (RE-GRAINED from `REGISTER-RED`; `kick-back resolution`, outcome (a)): the register\'s rows hold — `broken === 0` for every row, executed = declared, total printed WITH its terms', async () => {
+    /* ── RE-GRAINED `2026-10-11` (the Implementer's `§10` item 6 kick-back): the as-filed row was a
+     * RED-STATE assertion (`broken > 0` / `rowsWithoutBreak === []`), which `§9` item 3 itself had
+     * already assigned to the green's inversion. The green-side form keeps the SAME instrument and
+     * the SAME terms, and only flips the direction (`§4.3` item 3: re-grained BESIDE its as-filed
+     * form, never silently rewritten). */
     if (execReport === null) execReport = await executeRegister(registerRows)
     const broken = execReport.rows.reduce((a, r) => a + r.broken, 0)
     const held = execReport.rows.reduce((a, r) => a + r.held, 0)
     const summary = execReport.rows.map((r) => `${r.id} ${r.held}/${r.attemptsRun}`).join(' · ')
     const rowsWithoutBreak = execReport.rows.filter((r) => r.broken === 0).map((r) => r.id)
     expect(held + broken, 'held + broken = the executed total').toBe(execReport.attemptsExecuted)
-    expect(broken, `at RED every row fails (the measured state is the red's non-vacuity ground, §4.2 item 2) — per row: ${summary}`).toBeGreaterThan(0)
-    expect(rowsWithoutBreak, `rows with NO broken attempt at red: [${rowsWithoutBreak.join(', ')}]`).toEqual([])
+    expect(broken, `EVERY row holds at green (executed = declared) — per row: ${summary}`).toBe(0)
+    expect(rowsWithoutBreak, `rows carrying NO broken attempt: [${rowsWithoutBreak.join(', ')}]`).toEqual([...REGISTER_ROW_IDS])
+    expect(held, 'the held attempts are the DECLARED total, WITH its terms').toBe(108)
+    expect(execReport.attemptsExecuted, `executed = declared = ${DECLARED_TERMS.join(' + ')}`).toBe(declaredTotalReport().sum)
+    expect(execReport.unrunRows, 'and no row is un-run — an un-run row is a FAILURE, never a pass').toEqual([])
   })
 })
