@@ -29,6 +29,13 @@
 //   the chain `12 → 20 → 36 → 48 → 54 → 64 → 74 → 80 → 88 → 104 → 112 → 120 → 128 → 136 → 148`
 //   subtotals BY TYPE `P-IM 54 = 12 + 8 + 16 + 12 + 6` · `P-SM 26 = 10 + 10 + 6` ·
 //   `P-TP 68 = 16 + 8 + 8 + 8 + 8 + 12` — `54 + 26 + 68 = 148` ✓ (`5 + 4 + 6 = 15` ✓)
+//   ⟶ `2026-10-11` ANNOTATE-BESIDE (`SD-2`; `§0D` item `2`; `RCA-8(d)`): the `P-SM 26` above is
+//   the AS-FILED MIS-SUM and it OMITTED row `9` (`P-TR-SM-3`, term `8` = `4` boot states × `2`
+//   readings), which the printed `P-TP 68` correspondingly carried. THE OPERATIVE SUBTOTALS,
+//   PRINTED WITH THEIR TERMS: `P-IM 54 = 12 + 8 + 16 + 12 + 6` · `P-SM 34 = 10 + 10 + 6 + 8` ·
+//   `P-TP 60 = 16 + 8 + 8 + 8 + 8 + 12` — `54 + 34 + 60 = 148` ✓. THE TOTAL IS UNMOVED AT `148`,
+//   THE CHAIN IS UNMOVED, `max 16 ≤ 100` ✓ and `148 ≤ 400` ✓, and NO ROW'S TERM, STRATEGY ID OR
+//   ATTEMPT COUNT MOVES.
 //   caps: per-row maximum `16` ≤ `100` per row; declared total `148` ≤ `400` in total.
 //
 // NO GENERATOR, NO PINNED SEED, NO NEW DEPENDENCY (`§5.5`'s execution form): every row's
@@ -132,25 +139,61 @@ export const REGISTER_ROW_TYPES: readonly string[] = [
 /** `§2.1` — the six declared spellings (`§0A` item 1's "MEMBERS THIS CONTRACT DECLARES"),
  *  carried VERBATIM. The per-tab members are CONCRETE spellings, ONE tier-qualified name
  *  each: a pattern is a REGISTRY declaration's shape, never an operation argument, so no
- *  drive below passes a wildcard to `remove`/`commit` (`§2.1`'s closing clause). */
+ *  drive below passes a wildcard to `remove`/`commit` (`§2.1`'s closing clause).
+ *
+ *  ── `2026-10-11` ANNOTATE-BESIDE: THE PER-TAB REFERENCE IS ONE FLAT LEAF (`SD-1`) ────────
+ *  **THE AS-FILED FORM ABOVE — `target` · `active` · `error` · `label` as four tier-qualified
+ *  NESTED leaves at `file.tabs.<tabId>.<member>` — IS KEPT VISIBLE AND IS MARKED
+ *  SUPERSEDED-IN-EFFECT** (`§0D` item `1`(a); `§2.1`'s name-table note; `RCA-8(d)`).
+ *  **THE OPERATIVE FORM (`§0D` item `1`(c)): the per-tab reference is ONE FLAT LEAF under the
+ *  `tabs` root, NAMED BY THE TAB ID — `file.tabs.<tabId>` — WHOSE VALUE IS THE TAB'S DECLARED
+ *  RECORD, and the constraint's declared accessor is the entry's value at the tab's own key:
+ *  `entry.active === true` for an OBJECT-valued entry and `entry === true` for a SCALAR-valued
+ *  one, BOTH ARMS DECLARED.** `DECLARED_SPELLINGS.entry` is that operative leaf and
+ *  `CLOSE_REFERENCE_SET_MEMBERS` reads `2` under it (`§2.4` item 1's note; `§3.4` item 4's
+ *  operative `2` caller operations `+` `1` repair `=` `3` committed operations).
+ *
+ *  **THE MEASURED TWO-ARM EVIDENCE, TAKEN AT THIS HEAD AND REPORTED BESIDE BOTH FORMS:**
+ *  a FLAT SCALAR at `file.tabs.t7` ⇒ the matched record is `{"order":["t7"],"t7":true}`
+ *  (accessor `entry === true`); a FLAT OBJECT ⇒ `{"order":["t7"],"t7":{"active":true,…}}`
+ *  (accessor `entry.active === true`); the AS-FILED NESTED spelling ⇒ the matched record's
+ *  keys are `["order","t7"]` while its ENTRIES are `{}` — **the tab's value is ABSENT under
+ *  its own key**, which is the retained NEGATIVE CONTROL's declared reading (`§0D` item
+ *  `1`(g)). Which arm the store's own record surfaces at the GREEN is the implementer's
+ *  measurement to REPORT (`§7c` `AMB-6`); BOTH arms are declared here so no drive is
+ *  unsatisfiable either way (`§0D` item `1`(c)). */
 export const DECLARED_SPELLINGS = {
   root: 'file.tabs',
   order: 'file.tabs.order',
   landing: 'file.tabs.landing',
+  /** ── THE OPERATIVE PER-TAB REFERENCE (`SD-1`; `§0D` item `1`(c); `§2.1`'s note):
+   *  ONE FLAT LEAF whose NAME IS THE TAB ID, whose VALUE is the tab's declared record. */
+  entry: (id: string): string => `file.tabs.${id}`,
+  /** ── THE AS-FILED NESTED MEMBER SPELLINGS, KEPT VISIBLE AND SUPERSEDED-IN-EFFECT. */
   target: (id: string): string => `file.tabs.${id}.target`,
   active: (id: string): string => `file.tabs.${id}.active`,
   error: (id: string): string => `file.tabs.${id}.error`,
   label: (id: string): string => `file.tabs.${id}.label`,
 } as const
 
-/** `§2.1` — the four per-tab leaves, in the table's own order. */
+/** `§2.1` — the four per-tab members, in the table's own order. **AS FILED** these were four
+ *  independent NESTED leaves; **under the operative flat form (`SD-1`; `§0D` item `1`(e))
+ *  the same four members ride the tab's ONE flat entry's value** — they are the names INSIDE
+ *  `file.tabs.<tabId>`'s declared record, which is what `DECLARED_SPELLINGS.entry` holds. */
 export const PER_TAB_LEAVES: readonly ('target' | 'active' | 'error' | 'label')[] = [
   'target', 'active', 'error', 'label',
 ]
 
-/** `§2.4` item 1 — THE CLOSE'S DECLARED REFERENCE SET: the four per-tab leaves PLUS the
- *  id's own `order` seat. */
-export const CLOSE_REFERENCE_SET_MEMBERS = 5
+/** `§2.4` item 1 — THE CLOSE'S DECLARED REFERENCE SET. **AS FILED: the four per-tab leaves
+ *  PLUS the id's own `order` seat = `5`.** **OPERATIVE (`SD-1`; `§0D` item `1`(d); `§2.4`
+ *  item 1's note): THE TAB'S ONE FLAT LEAF `file.tabs.<tabId>` PLUS the id's own place in
+ *  `file.tabs.order` = `2`** — and `§3.4` item 4's operative print (`2` caller operations
+ *  `+` `1` repair `=` `3` committed operations) is that count WITH its terms. */
+export const CLOSE_REFERENCE_SET_MEMBERS = 2
+/** THE AS-FILED FIGURE, KEPT VISIBLE BESIDE THE OPERATIVE ONE (`RCA-8(d)`): the four per-tab
+ *  leaves plus the id's own `order` seat. A row that reports the close's cost from this
+ *  figure instead of the operative `2` FAILS (`§2.4` item 4's note; `§0D` item `1`(d)). */
+export const CLOSE_REFERENCE_SET_MEMBERS_AS_FILED = 4 + 1
 
 /** `§2.2` item 3 — THIS UNIT'S ONE CONSTRAINT MEMBER'S DECLARED CELLS, exact. */
 export const CONSTRAINT_ID = 'exactly-one-active'
@@ -176,6 +219,31 @@ export const U_MATRIX_CAP = 8
  *  **an un-run live row is a FAILURE, never a pass** (`§5.5.1` `P-TR-TP-4`/`-TP-5`). */
 const LIVE_BATTERY_SRC = new URL('./../docs/specs/' + 'store-tabs-record-live' + '-battery.md', import.meta.url)
 export const LIVE_BATTERY_PATH = fileURLToPath(LIVE_BATTERY_SRC)
+
+/** `§5.1` item `3b` / `§5.2` item `7`(a) — THE UNIT'S OWN POINTER-CARRYING DRIVER, at the
+ *  unit's own `tests/*-live.mjs` path, RUN BY A LITERAL COMMAND LINE so that NO `scripts` KEY
+ *  IS ADDED (`§0D` item `3`(a); the landed sibling form is `tests/store-compliance-live.mjs`).
+ *  It does NOT exist at this head — the `[U]` layer is OWED — and the node-layer half of
+ *  `P-TR-TP-4`/`-TP-5` is driven here while the LIVE half is recorded IN-LINE as UN-RUN. */
+export const LIVE_DRIVER_SRC = new URL('./../tests/' + 'store-tabs-record-live' + '.mjs', import.meta.url)
+export const LIVE_DRIVER_PATH = fileURLToPath(LIVE_DRIVER_SRC)
+/** `§5.2` item `7`(a) — the driver's run form, DECLARED so it cannot be paraphrased. */
+export const DRIVER_RUN_FORM = 'node tests/store-tabs-record-live.mjs'
+/** `§5.2` item `7`(d) — the LIVE half's status, recorded in-line so the two layers are never
+ *  conflated (`§0D` item `3`(d)): `(b)`'s machine rows are evidence about the WIRING AND THE
+ *  RECORD's reachability; `(a)`'s `MANUAL OPERATOR` rows are the ONLY rows carrying a
+ *  PAINTED-SURFACE observation. */
+export const LIVE_HALF_STATUS = 'un-run' as const
+/** `§5.2` item `7`(b) — THE DRIVER'S DECLARED BOUND, AND THE BOUND IS STRUCTURAL, NOT A WAIVER
+ *  (`A1`; the handoff record's `S-d9`, `docs/specs/provident-electron-shell-chrome-handoff-review.md:185`):
+ *  a CDP click does NOT make the surface agent-drivable — the MCP tool surface carries an event
+ *  NAME and `no pointer coordinates`, and a synthetic click is `not a human’s eye` on a painted
+ *  box. **THE PAINTED/VISUAL ROWS THEREFORE STAY `MANUAL OPERATOR`**, owner the supervisor, at a
+ *  session with a human at the window — and `MANUAL OPERATOR` is the token the closed instrument
+ *  set carries (`§7` item `2`(d)). A pass that reports the driver's rows as proof of
+ *  agent-drivability, or as proof that a page was SEEN, FAILS. */
+export const S_D9_BOUND =
+  'A CDP click does NOT make the surface agent-drivable: the MCP tool surface carries an event name with no pointer coordinates, and a synthetic click is not a human’s eye on a painted box. The painted/visual rows therefore remain MANUAL OPERATOR, discharged in one supervised session with a human at the window, and NO TOOL OUTPUT IS SUBSTITUTED FOR AN OPERATOR OBSERVATION.'
 
 /** `§7` item 2(c)/(d) — THE CLOSED `instrument` SET the gate-6 rows must draw from. */
 export const CLOSED_INSTRUMENT_SET: readonly string[] = [
@@ -203,10 +271,37 @@ export const FROZEN_FILE_PINS: readonly { readonly path: string; readonly prefix
  *  the two are never conflated (`§5.1` item 7's attribution note). */
 export const FROZEN_SPAN_PREFIX = '29772ac7'
 
-/** `§5.1`'s ALLOWED SET plus this pass's own two files, as a PATH SET: the edit-set
- *  assertion is a SUBSET assertion with a positive control (`§5.1`'s closing clause,
- *  `C-9`), never a name list. */
+/** `§5.1`'s ALLOWED SET PLUS THIS UNIT'S OWN FILES, AS A PATH SET, with the two paths the
+ *  AMENDED contract adds (`§5.1` item `3b`): `tests/store-tabs-record-live.mjs` (the unit's
+ *  OWN pointer-carrying driver, RUN BY A LITERAL COMMAND LINE so that NO `scripts` KEY IS
+ *  ADDED — `§0D` item `3`(a)) and its battery record at the repo's gate-6 convention path.
+ *  **THE AS-FILED SET IS KEPT VISIBLE (`RCA-8(d)`): as filed it carried SEVEN paths and
+ *  OMITTED BOTH OF THE ABOVE — the three-way trap this row closes** — while `§5.1` item `3b`
+ *  DECLARES the driver in the allowed edit set, `P-TR-TP-4`/`P-TR-TP-5` *require* the battery
+ *  record to exist, and `P-TR-TP-6`(1) asserts `edit-set ⊆ DECLARED_SCOPE_PATHS`: creating
+ *  either artifact flipped a held row to BROKEN against a scope that did not declare it.
+ *  **THE ASSERTION IS STILL A SUBSET ASSERTION WITH ITS POSITIVE CONTROL (`C-9`) AND IS STILL
+ *  ASSERTED AS A SET — NEVER AS A COUNT** (`§5.1`'s closing clause): an UNDECLARED path must
+ *  still fail, and `EDIT_SET_OFFENDER_FIXTURE` is that control. */
 export const DECLARED_SCOPE_PATHS: readonly string[] = [
+  'src/renderer/renderer.ts',
+  'src/shared/demo-envelope.ts',
+  'tests/store-tabs-record.test.ts',
+  'tests/store-tabs-record-register.ts',
+  'docs/specs/store-tabs-record.md',
+  'docs/specs/store-tabs-record-greens.md',
+  'tests/theme-control.test.ts',
+  // ── `§5.1` item `3b`, ADDED `2026-10-11` BY THE ARCHITECT'S `[U]`-EVIDENCE-LAYER RULING.
+  'tests/store-tabs-record-live.mjs',
+  'docs/specs/store-tabs-record-live-battery.md',
+]
+
+/** THE AS-FILED SEVEN-PATH SET, KEPT VISIBLE BESIDE THE OPERATIVE NINE (`RCA-8(d)`): the
+ *  amendment ADDED two paths and removed none, so the operative set is a strict SUPERSET and
+ *  the subset assertion's bite is unchanged (every path the as-filed set admitted is still
+ *  admitted; the two added paths are exactly what `§5.1` item `3b` and the gate-6 convention
+ *  declare). A pass that drops a path the as-filed set carried FAILS the set assertion below. */
+export const DECLARED_SCOPE_PATHS_AS_FILED: readonly string[] = [
   'src/renderer/renderer.ts',
   'src/shared/demo-envelope.ts',
   'tests/store-tabs-record.test.ts',
@@ -410,54 +505,39 @@ export function tabsConstraintMember(probe?: ConstraintProbe): ConstraintMemberH
     preOrder: [] as string[],
   }
   let attachedStore: Rec | undefined
-  /** THE ACTIVE READ, IN TWO ARMS — RECORDED BECAUSE THE CONTRACT'S DECLARED READ AND THE
-   *  FROZEN STORE's MATCHED RECORD DIVERGE (this pass's report, SPEC DEFECT #1):
-   *  (1) THE DECLARED ARM (`§2.2` items 4/5, `§2.3` item 2): the record's own `<tabId>`
-   *      entry holds that tab's `active` leaf value;
-   *  (2) THE LANDED ARM: under the declared per-tab leaf spelling
-   *      `file.tabs.<tabId>.active` the `<tabId>` node is an INTERIOR node and the frozen
-   *      store's matched record carries no value for it, so the actives are read through
-   *      the store's OWN declared answer for the leaf spelling instead.
-   *  The divergence is measured and reported by the `recordEntryReading` instrument and by
-   *  the test file's SPEC-DEFECT row; THIS member reads the value whichever arm supplies
-   *  it, so the register's drives measure the WIRING (the absent constraint member), not
-   *  this harness. */
-  /** THE REPAIR'S OWN WRITE, IN TWO ARMS, FOR THE SAME RECORDED REASON AS `activeOf`:
-   *  the mark is written to the DECLARED PER-TAB LEAF SPELLING (`file.tabs.<tabId>.active`)
-   *  when a store is attached — because that is the leaf the contract declares (`§2.1`
-   *  item 3) and because a mutation of the record's `<tabId>` entry lands on the
-   *  INTERMEDIATE node, NOT on the leaf; and to the record's own entry (arm (1), the
-   *  contract's declared mechanism) otherwise. */
+  void attachedStore
+  /** ── `2026-10-11` RE-GRAIN OF THE MEMBER'S RECORD ACCESS (`SD-1`; `§0D` item `1`(c)) ─────
+   *  **THE AS-FILED FORM IS KEPT VISIBLE: as filed, `activeOf` preferred the store's NESTED
+   *  `resolve('file.tabs.<id>.active')` and fell back to the record entry, while `writeActive`
+   *  preferred the nested `set('file.tabs.<id>.active', …)` and only fell back to
+   *  `rec[id] = value`. READ AND WRITE AGREED WITH EACH OTHER AND DISAGREED WITH THE
+   *  CONTRACT'S DECLARED ACCESSOR — the asymmetry this pass MEASURED, and the reason no
+   *  seeding permutation satisfied `§2.2` item 3 with `§3.2` `F-T2-1`/`F-T2-2` together.**
+   *  **THE OPERATIVE FORM IS ONE DECLARED ACCESSOR ON EACH SIDE, READ AND WRITE SYMMETRIC,
+   *  NEVER ONE NESTED AND ONE FLAT: `file.tabs.<tabId>` — the tab's ONE flat leaf, whose
+   *  VALUE is the tab's declared record — read by the declared accessor pair
+   *  (`entry.active === true` for an OBJECT-valued entry; `entry === true` for a SCALAR-valued
+   *  one) and WRITTEN BACK IN THE SHAPE THE ENTRY ALREADY HAS, so the arm the store surfaces
+   *  is the arm the repair corrects.**
+   *  **WHY THE WRITE PRESERVES THE SHAPE:** an object-valued entry carries the tab's declared
+   *  record (`§0D` item `1`(e): the richer per-tab data's admissible home), so the repair
+   *  writes `entry.active` INSIDE it; a scalar-valued entry is the caller's boolean itself,
+   *  so the repair writes the boolean AT it. Either way the change lands on the SAME reference
+   *  the constraint read, which is what makes the store's own `repaired[]` name it. */
   const writeActive = (rec: Record<string, unknown>, id: string, value: boolean): void => {
-    if (attachedStore !== undefined) {
-      const set = attachedStore['set'] as ((n: string, v: unknown) => Rec) | undefined
-      const answer = set === undefined ? undefined : set.call(attachedStore, `file.tabs.${id}.active`, value)
-      if (answer !== undefined && answer['status'] === 'committed') return
-    }
-    rec[id] = value
+    const current = rec[id]
+    rec[id] = current !== null && typeof current === 'object' ? { ...(current as Rec), active: value } : value
   }
 
-  const activeOf = (rec: Record<string, unknown>, id: string): unknown => {
-    // ── THE TWO ARMS, RECORDED HERE BECAUSE THE CONTRACT'S DECLARED READ AND THE FROZEN
-    //    STORE'S MATCHED RECORD DIVERGE (this pass's report, SPEC DEFECT #1) ──
-    // ARM (2), USED WHEN A STORE IS ATTACHED: the active mark is read through the store's
-    // OWN declared answer for the per-tab leaf spelling (`§2.1` item 3's caller-boolean
-    // leaf). WHY: under the DECLARED per-tab leaf spelling `file.tabs.<tabId>.active` the
-    // `<tabId>` node is an INTERIOR node, so the record's `<tabId>` entry carries NO leaf
-    // value — and a repair that mutates that entry does NOT land on the leaf, while a
-    // repair whose diff reaches the leaf does (the store's own `repaired[]` names it).
-    // ARM (1), THE CONTRACT'S DECLARED READ (`§2.2` item 4 / `§2.3` item 2: the record's
-    // `<tabId>` entry holds that tab's `active` leaf value): used when no store is attached,
-    // and MEASURED SEPARATELY by `recordEntryReading` / `recordEntryProbeMember` and by the
-    // test file's SPEC-DEFECT row — so the divergence is a RED ROW with both clauses and
-    // never a smoothed assumption. The landing entry's own mark rides arm (1) in either
-    // case (its entry is the record's own `landing` key).
-    if (attachedStore !== undefined) {
-      const resolve = attachedStore['resolve'] as ((n: string) => Rec) | undefined
-      const answer = resolve === undefined ? undefined : resolve.call(attachedStore, `file.tabs.${id}.active`)
-      if (answer !== undefined && answer['found'] === true && typeof answer['value'] === 'boolean') return answer['value']
-    }
-    return rec[id]
+  const activeOf = (rec: Record<string, unknown>, id: string): boolean => {
+    // THE ONE DECLARED ACCESSOR (`§0D` item `1`(c)): the matched record's entry at the tab's
+    // own key IS the flat leaf's value, and the active read is `entry.active === true` for an
+    // OBJECT-valued entry and `entry === true` for a SCALAR-valued one. The record read and
+    // the record write above touch the SAME reference the store handed the member — so a row
+    // whose drive writes `file.tabs.<tabId>` and a repair that corrects it measure one
+    // spelling on each side, NEVER one nested and one flat (`§2.2` item 5: a mutation the
+    // repair makes through the record's values lands on the nodes' stored values).
+    return entryReadsActive(rec[id])
   }
   const member = {
     id: CONSTRAINT_ID,
@@ -472,7 +552,7 @@ export function tabsConstraintMember(probe?: ConstraintProbe): ConstraintMemberH
       // constraint reads the `order` member and, for every id in it, that id's own value —
       // "a constraint that treats the `order` member as a tab entry FAILS").
       const order = Array.isArray(rec['order']) ? (rec['order'] as string[]) : []
-      const actives = order.filter((id) => activeOf(rec, id) === true)
+      const actives = order.filter((id) => activeOf(rec, id))
       const currentRec = (current ?? {}) as Record<string, unknown>
       if (probe !== undefined) {
         // THE ROOT'S OWN LEAF NAMES, read off the record (`§2.2` items 4/5): a row may
@@ -497,7 +577,7 @@ export function tabsConstraintMember(probe?: ConstraintProbe): ConstraintMemberH
       // SEQUENCE, not a missing leaf).
       if (!Array.isArray(rec['order'])) return true
       const order = rec['order'] as string[]
-      const actives = order.filter((id) => activeOf(rec, id) === true)
+      const actives = order.filter((id) => activeOf(rec, id))
       if (order.length === 0) {
         // `F-T2-4`/`F-T2-3`: the zero-active arm's landing re-seat — the landing entry lands
         // at no index (the sequence was empty), so it is written as `order[0]`, and its
@@ -512,23 +592,54 @@ export function tabsConstraintMember(probe?: ConstraintProbe): ConstraintMemberH
       if (actives.length === 0) {
         // the NEXT SURVIVING entry by `order`, WRAPPING (`R3-1`): the referent is the
         // caller's own written reference, or on a `remove` the removed entry's own index.
+        // **THE WRAP IS THE DECLARED ARM (`§3.2` F-T2-1: "WRAPPING to the first surviving when
+        // the referent was last") AND IT IS A CLAUSE, NOT A GUARD:** an index past the end of
+        // the SHORTER post-remove `order` wraps to its first member. **AS FILED this clamped
+        // with `Math.min(index, order.length - 1)`, which activates the LAST entry where the
+        // clause declares the FIRST — so a drive with the referent LAST read `B` where the
+        // clause declares `A`, and the row could not distinguish the ruled wrap from a
+        // clamp-and-pick-the-last body.**
         let referentIndex = 0
         if (state.removedId !== null && state.preOrder.includes(state.removedId)) {
-          referentIndex = Math.min(state.preOrder.indexOf(state.removedId), order.length - 1)
+          referentIndex = state.preOrder.indexOf(state.removedId)
         } else if (state.referent !== null && order.includes(state.referent)) {
           referentIndex = order.indexOf(state.referent)
         }
-        const survivor = order[referentIndex] ?? order[0]
+        const survivor = order[referentIndex % order.length] ?? order[0]
         if (survivor !== undefined) writeActive(rec, survivor, true)
         return true
       }
       if (actives.length > 1) {
+        // THE SURPLUS ARM (`§3.2` F-T2-2): the REFERENT is KEPT and every OTHER active entry
+        // is deactivated. **THE ORDER OF THE REPAIR'S OWN WRITES IS PART OF THE CLAUSE, NOT AN
+        // IMPLEMENTATION DETAIL** (`§2.2` item 5: the corrective action must land so the
+        // post-state NEVER violates the constraint — the store may re-evaluate between writes,
+        // and a re-evaluation that fires mid-repair would apply the ZERO-ACTIVE arm and
+        // activate the WRONG entry). **SO THE REFERENT IS WRITTEN ACTIVE FIRST, AND ONLY THEN
+        // ARE THE OTHERS DEACTIVATED** — the `≥2` referent rule is thereby observable in the
+        // post-state of every evaluation the repair's own writes trigger. **AS FILED this
+        // function deactivated the others without first (re)asserting the referent's own
+        // `true`, which under the operative flat accessor pair let a mid-repair evaluation
+        // activate the WRONG entry and made the `≥2` arm's own reading unsatisfiable.**
+        // THE WRAP APPLIES HERE TOO (`§3.2` F-T2-2: "the WRAP applies when that index is no
+        // longer present"). **THE SURVIVOR IS TAKEN FROM THE SEQUENCE THE EVALUATION SEES, AT
+        // THE REMOVED ENTRY'S OWN INDEX (`§2.4` item 5: "the REMOVED entry's own INDEX in
+        // `file.tabs.order`" — the NEXT-SURVIVING entry AT THAT INDEX), NOT BY NAME FROM THE
+        // PRE-REMOVAL SEQUENCE.** On a `remove` the matched record's `order` still holds the
+        // id (`§2.4` item 5: the index is readable off `current` while the absence is readable
+        // off `next`), so a name-wise read of that array returns THE REMOVED ENTRY ITSELF —
+        // which is exactly the wrong-entry bug the `≥2` arm's row falsifies. The removed id's
+        // INDEX is therefore mapped INTO the order the record carries, modulo its length.
         let keep: string | undefined
         if (state.removedId !== null && state.preOrder.includes(state.removedId)) {
-          keep = order[Math.min(state.preOrder.indexOf(state.removedId), order.length - 1)]
+          const removedIndex = state.preOrder.indexOf(state.removedId)
+          const survivors = order.filter((id) => id !== state.removedId)
+          const referentIndex = survivors.length === 0 ? 0 : removedIndex % survivors.length
+          keep = survivors[referentIndex] ?? order[referentIndex % order.length]
         } else if (state.referent !== null && actives.includes(state.referent)) {
           keep = state.referent
         }
+        if (keep !== undefined && !activeOf(rec, keep)) writeActive(rec, keep, true)
         for (const id of actives) if (id !== keep) writeActive(rec, id, false)
         return true
       }
@@ -611,24 +722,73 @@ export function valueOf(store: Rec, name: string): unknown {
 }
 
 /** THE ACTIVE ENTRY as the RECORD holds it — read through the store's own declared answer
- *  for the per-tab leaf spelling (`§2.1` item 3). This is the STATE instrument the register
- *  uses; the CONSTRAINT'S OWN record access is a separate, separately-failing reading. */
-export function activesOf(store: Rec, order: readonly string[]): string[] {
-  return order.filter((id) => valueOf(store, DECLARED_SPELLINGS.active(id)) === true)
+ *  for the OPERATIVE per-tab reference (`SD-1`; `§0D` item `1`(c): ONE FLAT LEAF
+ *  `file.tabs.<tabId>` whose value is the tab's declared record, read by the declared
+ *  accessor pair). This is the STATE instrument the register uses; the CONSTRAINT'S OWN
+ *  record access is a separate, separately-failing reading.
+ *
+ *  **THE RE-GRAIN, STATED SO THE AS-FILED FORM STAYS VISIBLE (`RCA-8(d)`): as filed this
+ *  instrument read `DECLARED_SPELLINGS.entry(id)` (`file.tabs.<tabId>.active`, the nested
+ *  member leaf) and the register's repair wrote the SAME nested spelling — read and write
+ *  AGREED with each other and DISAGREED with the contract's declared accessor, so every
+ *  drive that turned on the active mark measured the harness instead of the invariant. The
+ *  operative instrument reads the FLAT entry and `tabsConstraintMember`'s repair writes the
+ *  SAME flat entry: ONE declared accessor on each side, read and write SYMMETRIC, never one
+ *  nested and one flat (`§0D` item `1`(c); `§2.3`'s note).**
+ *
+ *  **BOTH ARMS OF THE DECLARED ACCESSOR PAIR ARE READ** (`§0D` item `1`(c); a row asserting
+ *  only one arm is failing, one asserting neither is under-asserted): an OBJECT-valued entry
+ *  counts as active when `entry.active === true`, a SCALAR-valued entry when `entry === true`. */
+export function entryActiveOf(store: Rec, id: string): boolean {
+  const value = valueOf(store, DECLARED_SPELLINGS.entry(id))
+  return entryReadsActive(value)
 }
 
-/** SEEDS a record state through the DECLARED surface only: each tab's leaves by `commit`,
- *  the `order` member by `commit` (the minting/re-minting write, `§2.4` item 3), and every
- *  `active` mark with the ACTIVE id written LAST — the transient zero-active post-state the
- *  `order` write itself produces is repaired to an entry the FINAL write then clears, so the
- *  SEEDED state is exactly the declared one and every later drive's reading is attributable
- *  to that drive. */
+/** THE DECLARED ACCESSOR PAIR ITSELF (`§0D` item `1`(c)), read off an ENTRY VALUE both arms
+ *  of which are declared: `entry.active === true` for an object-valued entry; `entry === true`
+ *  for a scalar-valued one. */
+export function entryReadsActive(entry: unknown): boolean {
+  if (entry !== null && typeof entry === 'object') return (entry as Rec)['active'] === true
+  return entry === true
+}
+
+export function activesOf(store: Rec, order: readonly string[]): string[] {
+  return order.filter((id) => entryActiveOf(store, id))
+}
+
+/** SEEDS a record state through the DECLARED surface only: each tab's declared record by
+ *  `commit`, the `order` member by `commit` (the minting/re-minting write, `§2.4` item 3),
+ *  and every `active` mark with the ACTIVE id written LAST — the transient zero-active
+ *  post-state the `order` write itself produces is repaired to an entry the FINAL write then
+ *  clears, so the SEEDED state is exactly the declared one and every later drive's reading is
+ *  attributable to that drive.
+ *
+ *  **THE OPERATIVE RE-GRAIN (`SD-1`; `§0D` item `1`(c)/(e)): THE `active` MARK IS SEEDED
+ *  THROUGH THE TAB'S ONE FLAT ENTRY `file.tabs.<tabId>`** — the reference the constraint
+ *  reads, the reference the ruled repair writes, and the reference the OPERATIVE close removes
+ *  (`§2.4` item 1's note). **THE AS-FILED FORM IS KEPT VISIBLE AND DRIVEN NOWHERE HERE:** as
+ *  filed this seeded the nested member leaf `file.tabs.<tabId>.active`, which under the ruled
+ *  flat form is not the reference the constraint's record carries — the harness and the
+ *  invariant then read DIFFERENT spellings and no seeding permutation satisfied `§2.2` item 3
+ *  and `§3.2` `F-T2-1`/`F-T2-2` together (this pass's measurement; `§0D` item `1`(g)).
+ *
+ *  **THE RICHER PER-TAB DATA (`label` · `target` · `error`) RIDES THE ENTRY'S VALUE** — that
+ *  is the admissible home `§0D` item `1`(e) declares, and it is the object-valued arm of the
+ *  accessor pair; it is OTHERWISE `T1`'s authored data and this unit mints no second home.
+ *  The object arm is driven by `seedEntryRecord` below so BOTH arms of the pair are exercised. */
 export function seedRecord(
   store: Rec,
   ids: readonly string[],
   activeId: string | null,
   leaves: Partial<Record<'target' | 'error' | 'label', unknown>> = {},
 ): void {
+  // THE THREE NON-ACTIVE MEMBER LEAVES ARE STILL WRITTEN AT THEIR AS-FILED NESTED SPELLINGS
+  // (`file.tabs.<tabId>.target` · `.error` · `.label`) SO THE SEEDED STATE IS COHERENT AND
+  // THE `§2.1`-items-2/4/5 READINGS STAY FALSIFIABLE: they are NOT the constraint's subject
+  // and NOT the close's operative reference, and they coexist with the tab's flat entry
+  // (`§0D` item `1`(e): the richer per-tab data's home is declared, not left silent). The
+  // OBJECT-valued arm of the accessor pair — where those three ride INSIDE the flat entry's
+  // value — is driven by `seedEntryRecord` below, so BOTH arms are exercised.
   for (const id of ids) {
     callStore(store, 'commit', DECLARED_SPELLINGS.target(id), leaves.target ?? `target-${id}`)
     callStore(store, 'commit', DECLARED_SPELLINGS.error(id), leaves.error ?? null)
@@ -640,10 +800,54 @@ export function seedRecord(
   // final write leaves exactly one active entry (the declared one).
   for (const id of ids) {
     if (id === activeId) continue
-    callStore(store, 'commit', DECLARED_SPELLINGS.active(id), false)
+    callStore(store, 'commit', DECLARED_SPELLINGS.entry(id), false)
   }
   callStore(store, 'commit', DECLARED_SPELLINGS.order, [...ids])
-  if (activeId !== null) callStore(store, 'commit', DECLARED_SPELLINGS.active(activeId), true)
+  if (activeId !== null) callStore(store, 'commit', DECLARED_SPELLINGS.entry(activeId), true)
+}
+
+/** SEEDS THE **OBJECT-VALUED ARM** OF THE DECLARED ACCESSOR PAIR (`§0D` item `1`(c)/(e)): the
+ *  tab's declared record rides its ONE flat entry as `{ target, active, error, label }`, so
+ *  the constraint's active read is `entry.active === true` and the richer per-tab data has its
+ *  declared home. A row that asserts only the scalar arm is a FAILING row and a row that
+ *  asserts neither is under-asserted (gate 4), so both arms are driven. */
+export function seedEntryRecord(
+  store: Rec,
+  ids: readonly string[],
+  activeId: string | null,
+  leaves: Partial<Record<'target' | 'error' | 'label', unknown>> = {},
+): void {
+  for (const id of ids) {
+    if (id === activeId) continue
+    callStore(store, 'commit', DECLARED_SPELLINGS.entry(id), {
+      target: leaves.target ?? `target-${id}`,
+      active: false,
+      error: leaves.error ?? null,
+      label: leaves.label ?? `label-${id}`,
+    })
+  }
+  callStore(store, 'commit', DECLARED_SPELLINGS.order, [...ids])
+  if (activeId !== null) {
+    callStore(store, 'commit', DECLARED_SPELLINGS.entry(activeId), {
+      target: leaves.target ?? `target-${activeId}`,
+      active: true,
+      error: leaves.error ?? null,
+      label: leaves.label ?? `label-${activeId}`,
+    })
+  }
+}
+
+/** THE OPERATIVE CLOSE (`§2.4` item 1's note; `§3.4` item 4) — `2` CALLER OPERATIONS: ONE
+ *  `remove('file.tabs.<tabId>')` for the tab's own flat leaf `+` ONE
+ *  `commit('file.tabs.order', <the sequence without the id>)`. **THE AS-FILED FORM — four
+ *  per-tab-leaf `remove`s plus the `order` rewrite = `5` caller operations (`§2.4` item 4's
+ *  as-filed figure) — IS KEPT VISIBLE AND IS SUPERSEDED-IN-EFFECT**; a row that reports the
+ *  close's cost from that figure FAILS (`§0D` item `1`(d)). */
+export function closeTab(store: Rec, id: string, nextOrder: readonly string[]): { readonly callerOperations: number; readonly receipts: readonly Rec[] } {
+  const receipts: Rec[] = []
+  receipts.push(callStore(store, 'remove', DECLARED_SPELLINGS.entry(id)))
+  receipts.push(callStore(store, 'commit', DECLARED_SPELLINGS.order, [...nextOrder]))
+  return { callerOperations: 2, receipts }
 }
 
 /* ───────────────────────────── THE STATIC READING HELPERS (`§5.3`, `§5.5.1` `P-TR-TP-6`) ─ */
@@ -973,15 +1177,32 @@ export function registerRows(): readonly RegisterRow[] {
       term: 12,
       property: 'MEMBERSHIP AND ORDER ARE THE RECORD’S OWN (the six named states × the record reading and the registry reading)',
       drives: [
-        { name: '(1) record reading — `order = [t7]`, t7’s four leaves present', drive: (): void => {
+        { name: '(1) record reading — `order = [t7]`, t7’s declared record present with its four members', drive: (): void => {
             const s = surface as TabsSurface
             const store = tabsStore(s, null)
-            seedRecord(store, ['t7'], 't7')
+            // ── THE OPERATIVE READING (`SD-1`; `§0D` item `1`(c)/(e)): the tab's ONE flat leaf
+            //    `file.tabs.t7` holds its DECLARED RECORD, so the four members ride the ENTRY'S
+            //    VALUE — the object-valued arm of the declared accessor pair.
+            //    **AS FILED this read the four NESTED member leaves
+            //    (`file.tabs.t7.target` · `.active` · `.error` · `.label`); that form is kept
+            //    visible in `DECLARED_SPELLINGS` and `PER_TAB_LEAVES` and is MARKED
+            //    SUPERSEDED-IN-EFFECT, and its own reading is asserted below as the control.**
+            seedEntryRecord(store, ['t7'], 't7')
             expect(valueOf(store, S.order), '§3.1 M-3 — the order member’s members').toEqual(['t7'])
-            for (const leaf of PER_TAB_LEAVES) {
-              const a = resolveOf(store, `file.tabs.t7.${leaf}`)
-              expect(a['found'], `§2.1 item 2/3/4/5 — file.tabs.t7.${leaf} is a declared, written leaf`).toBe(true)
+            const entry = resolveOf(store, S.entry('t7'))
+            expect(entry['found'], '§2.1 item 2/3/4/5 / §0D item 1 (c) — the tab’s ONE flat leaf exists under its own key').toBe(true)
+            const value = (entry['value'] ?? {}) as Rec
+            for (const member of PER_TAB_LEAVES) {
+              expect(member in value, `§0D item \`1\`(c)/(e) — the declared record carries ${member} inside the entry’s value`).toBe(true)
             }
+            expect(entryReadsActive(value), '§0D item 1 (c) — the OBJECT arm reads active through entry.active === true').toBe(true)
+            // ── THE AS-FILED NESTED SPELLING, DRIVEN AS THE RETAINED NEGATIVE CONTROL
+            //    (`§0D` item `1`(g)): a tab whose mark is written ONLY at the nested member leaf
+            //    contributes NO value at its own key — the ABSENCE that clause declares.
+            const control = tabsStore(s, null)
+            callStore(control, 'commit', S.active('t8'), true)
+            const nestedOnly = resolveOf(control, S.entry('t8'))
+            expect(nestedOnly['found'], '§0D item 1 (g) — the nested spelling is the RETAINED NEGATIVE CONTROL: its declared reading is the ENTRY’S ABSENCE').toBe(false)
           } },
         { name: '(1) registry reading — no second membership authority', drive: (): void => {
             const r = registryReading(wiring as WiringProbe)
@@ -1020,15 +1241,15 @@ export function registerRows(): readonly RegisterRow[] {
             const s = surface as TabsSurface
             const store = tabsStore(s, null)
             seedRecord(store, ['t7'], 't7')
-            callStore(store, 'commit', S.active('w9'), true)
-            expect(valueOf(store, S.active('w9')), '§2.1 item 1 — the record answers an unlisted entry').toBe(true)
+            callStore(store, 'commit', S.entry('w9'), true)
+            expect(valueOf(store, S.entry('w9')), '§2.1 item 1 — the record answers an unlisted entry').toBe(true)
             expect(valueOf(store, S.order), '§1.1 item 2 — `order` does not name it, so no row may treat it as a member').toEqual(['t7'])
           } },
         { name: '(4) registry reading — membership is derived from `order` alone', drive: (): void => {
             const s = surface as TabsSurface
             const store = tabsStore(s, null)
             seedRecord(store, ['t7'], 't7')
-            callStore(store, 'commit', S.active('w9'), true)
+            callStore(store, 'commit', S.entry('w9'), true)
             const order = valueOf(store, S.order) as string[]
             expect(order.includes('w9'), '§1.1 item 2 — the unlisted id is not a member').toBe(false)
           } },
@@ -1051,8 +1272,8 @@ export function registerRows(): readonly RegisterRow[] {
             const s = surface as TabsSurface
             const store = tabsStore(s, null)
             callStore(store, 'commit', S.order, ['__proto__'])
-            callStore(store, 'commit', S.active('__proto__'), true)
-            const a = resolveOf(store, S.active('__proto__'))
+            callStore(store, 'commit', S.entry('__proto__'), true)
+            const a = resolveOf(store, S.entry('__proto__'))
             expect(a['found'], '§2.3 item 4 — `__proto__` is an ORDINARY STRING and its entry exists').toBe(true)
             expect(a['value']).toBe(true)
             const probe = {} as Rec
@@ -1063,7 +1284,7 @@ export function registerRows(): readonly RegisterRow[] {
             const s = surface as TabsSurface
             const store = tabsStore(s, null)
             callStore(store, 'commit', S.order, ['__proto__'])
-            callStore(store, 'commit', S.active('__proto__'), true)
+            callStore(store, 'commit', S.entry('__proto__'), true)
             expect(valueOf(store, S.order)).toEqual(['__proto__'])
           } },
       ],
@@ -1082,10 +1303,10 @@ export function registerRows(): readonly RegisterRow[] {
             const store = tabsStore(s, null)
             store['hydrate'] !== undefined && (store['hydrate'] as (rows: unknown) => void)([
               { name: S.order, value: ['t7', 'landing'] },
-              { name: S.active('t7'), value: true },
+              { name: S.entry('t7'), value: true },
             ])
             expect(valueOf(store, S.order), '§3.1 M-5 — the hand-off’s own sequence, re-projected').toEqual(['t7', 'landing'])
-            expect(valueOf(store, S.active('t7'))).toBe(true)
+            expect(valueOf(store, S.entry('t7'))).toBe(true)
           } },
         { name: '(1) negative reading — no `mem.focus.*` write and no focus register re-grain', drive: (): void => {
             const s = surface as TabsSurface
@@ -1096,7 +1317,7 @@ export function registerRows(): readonly RegisterRow[] {
             const s = surface as TabsSurface
             const store = tabsStore(s, null)
             seedRecord(store, ['t7', 't8', 'landing'], 't7')
-            callStore(store, 'remove', S.active('t8'))
+            callStore(store, 'remove', S.entry('t8'))
             callStore(store, 'commit', S.order, ['t7', 'landing'])
             expect(valueOf(store, S.order), '§3.1 M-5 — the closed id is absent and the landing entry is present').toEqual(['t7', 'landing'])
           } },
@@ -1127,12 +1348,12 @@ export function registerRows(): readonly RegisterRow[] {
             const first = tabsStore(s, null)
             first['hydrate'] !== undefined && (first['hydrate'] as (rows: unknown) => void)([
               { name: S.order, value: ['landing'] },
-              { name: S.active('landing'), value: true },
+              { name: S.entry('landing'), value: true },
             ])
             const second = tabsStore(s, null)
             second['hydrate'] !== undefined && (second['hydrate'] as (rows: unknown) => void)([
               { name: S.order, value: valueOf(first, S.order) },
-              { name: S.active('landing'), value: true },
+              { name: S.entry('landing'), value: true },
             ])
             expect(valueOf(second, S.order), '§3.5 item 1(c) / §3.1 M-5 — the re-boot’s seat survives').toEqual(['landing'])
           } },
@@ -1141,7 +1362,7 @@ export function registerRows(): readonly RegisterRow[] {
             const store = tabsStore(s, null)
             store['hydrate'] !== undefined && (store['hydrate'] as (rows: unknown) => void)([
               { name: S.order, value: ['landing'] },
-              { name: S.active('landing'), value: true },
+              { name: S.entry('landing'), value: true },
             ])
             expect(valueOf(store, S.order)).toEqual(['landing'])
             expect(resolveOf(store, 'mem.focus.entries')['found']).not.toBe(true)
@@ -1165,7 +1386,7 @@ export function registerRows(): readonly RegisterRow[] {
             const st = memberStateOf(member)
             st.preOrder = ['A', 'B', 'C']
             st.removedId = 'B'
-            callStore(store, 'remove', S.active('B'))
+            callStore(store, 'remove', S.entry('B'))
             callStore(store, 'commit', S.order, ['A', 'C'])
             expect(activesOf(store, ['A', 'C']), '§3.2 F-T2-1 — the NEXT SURVIVING entry by `order`; activating A FAILS').toEqual(['C'])
           } },
@@ -1189,7 +1410,7 @@ export function registerRows(): readonly RegisterRow[] {
             const st = memberStateOf(member)
             st.preOrder = ['A', 'B', 'C']
             st.removedId = 'C'
-            callStore(store, 'remove', S.active('C'))
+            callStore(store, 'remove', S.entry('C'))
             callStore(store, 'commit', S.order, ['A', 'B'])
             expect(activesOf(store, ['A', 'B']), '§3.2 F-T2-1 — the WRAP to the first surviving; activating B FAILS').toEqual(['A'])
           } },
@@ -1212,7 +1433,7 @@ export function registerRows(): readonly RegisterRow[] {
             const st = memberStateOf(member)
             st.preOrder = ['A', 'B']
             st.removedId = 'A'
-            callStore(store, 'remove', S.active('A'))
+            callStore(store, 'remove', S.entry('A'))
             callStore(store, 'commit', S.order, ['B'])
             expect(activesOf(store, ['B']), '§3.2 F-T2-1 — the next surviving entry').toEqual(['B'])
           } },
@@ -1233,7 +1454,7 @@ export function registerRows(): readonly RegisterRow[] {
             const member = tabsConstraintMember()
             const store = tabsStore(s, member)
             seedRecord(store, ['A'], 'A')
-            callStore(store, 'remove', S.active('A'))
+            callStore(store, 'remove', S.entry('A'))
             const rec = callStore(store, 'commit', S.order, [])
             expect(valueOf(store, S.order), '§3.4 item 1 / R3-2 — `order` is NEVER EMPTY and holds the landing seat').toEqual(['landing'])
             expect((rec['repaired'] as string[]).length, '§3.2 F-T2-3 — the repair’s own write, in the SAME committed write').toBeGreaterThan(0)
@@ -1251,7 +1472,7 @@ export function registerRows(): readonly RegisterRow[] {
             const member = tabsConstraintMember()
             const store = tabsStore(s, member)
             callStore(store, 'commit', S.order, ['A'])
-            callStore(store, 'commit', S.active('A'), true)
+            callStore(store, 'commit', S.entry('A'), true)
             const rec = callStore(store, 'commit', S.order, [])
             expect(rec['status'], '§3.2 F-T2-4 — a DECLARED ARM, never a refusal').toBe('committed')
             expect(valueOf(store, S.order), '§3.2 F-T2-4 — the landing entry lands at index 0').toEqual(['landing'])
@@ -1271,7 +1492,7 @@ export function registerRows(): readonly RegisterRow[] {
             seedRecord(store, ['A', 'B'], 'A')
             const st = memberStateOf(member)
             st.referent = 'B'
-            callStore(store, 'commit', S.active('B'), true)
+            callStore(store, 'commit', S.entry('B'), true)
             expect(activesOf(store, ['A', 'B']), '§3.2 F-T2-2 — the caller’s OWN written reference is the referent').toEqual(['B'])
           } },
         { name: '(6) receipt reading — the surplus deactivation is reported', drive: (): void => {
@@ -1281,34 +1502,53 @@ export function registerRows(): readonly RegisterRow[] {
             seedRecord(store, ['A', 'B'], 'A')
             const st = memberStateOf(member)
             st.referent = 'B'
-            const rec = callStore(store, 'commit', S.active('B'), true)
+            const rec = callStore(store, 'commit', S.entry('B'), true)
             expect((rec['repaired'] as string[]).length).toBeGreaterThan(0)
           } },
-        { name: '(7) state reading — surplus-active, `remove`-triggered ([A,B,C] all active, B closed): the winner read BY THE REMOVED ENTRY’S INDEX', drive: (): void => {
+        { name: '(7) state reading — surplus-active, `remove`-triggered ([A,B,C] ALL active, B closed): the winner read BY THE REMOVED ENTRY’S INDEX', drive: (): void => {
             const s = surface as TabsSurface
             const member = tabsConstraintMember()
             const store = tabsStore(s, member)
-            seedRecord(store, ['A', 'B', 'C'], 'A')
-            callStore(store, 'commit', S.active('B'), true)
+            // ── THE `≥2` POST-STATE IS CREATED BY ONE LANDED WRITE, NOT BY A SECOND `true`
+            //    WRITE (`SD-1`; `§3.2` F-T2-2): under the operative flat accessor pair a second
+            //    `entry = true` write is IMMEDIATELY REPAIRED (the `§3.2` F-T2-2 write-triggered
+            //    arm), so the drive that reaches a `remove`-triggered `≥2` evaluation is the
+            //    one whose PRE-STATE ENTERS the store with two or more active entries at once.
+            //    `hydrate` is that seam, and it NEVER evaluates the constraint table
+            //    (`§3.3` item 2) — so [A,B,C] all active is a real, landed, un-evaluated
+            //    pre-state and the `remove` of `B` is the evaluation that fires the arm.
+            const hydrate = store['hydrate'] as ((rows: readonly unknown[]) => void) | undefined
+            hydrate?.([
+              { name: S.order, value: ['A', 'B', 'C'] },
+              { name: S.entry('A'), value: true },
+              { name: S.entry('B'), value: true },
+              { name: S.entry('C'), value: true },
+            ])
+            expect(activesOf(store, ['A', 'B', 'C']), '§3.2 F-T2-2 — the landed pre-state carries THREE actives (no evaluation has run)').toEqual(['A', 'B', 'C'])
             const st = memberStateOf(member)
             st.preOrder = ['A', 'B', 'C']
             st.removedId = 'B'
-            callStore(store, 'remove', S.active('B'))
+            callStore(store, 'remove', S.entry('B'))
             const actives = activesOf(store, ['A', 'C'])
             expect(actives.length, '§2.4 item 5 — exactly one survivor is kept').toBe(1)
-            expect(actives[0], '§3.2 F-T2-2 — the winner is the survivor AT THE REMOVED ENTRY’S INDEX, never recency / first-surviving').toBe('C')
+            expect(actives[0], '§3.2 F-T2-2 — the winner is the survivor AT THE REMOVED ENTRY’S INDEX (C), never recency and never a first-surviving scan (which would keep A)').toBe('C')
           } },
         { name: '(7) receipt reading — no insertion time, no tie-break, no store-side preference', drive: (): void => {
             const s = surface as TabsSurface
             const run = (): string[] => {
               const member = tabsConstraintMember()
               const store = tabsStore(s, member)
-              seedRecord(store, ['A', 'B', 'C'], 'A')
-              callStore(store, 'commit', S.active('B'), true)
+              const hydrate = store['hydrate'] as ((rows: readonly unknown[]) => void) | undefined
+              hydrate?.([
+                { name: S.order, value: ['A', 'B', 'C'] },
+                { name: S.entry('A'), value: true },
+                { name: S.entry('B'), value: true },
+                { name: S.entry('C'), value: true },
+              ])
               const st = memberStateOf(member)
               st.preOrder = ['A', 'B', 'C']
               st.removedId = 'B'
-              callStore(store, 'remove', S.active('B'))
+              callStore(store, 'remove', S.entry('B'))
               return activesOf(store, ['A', 'C'])
             }
             expect(run(), '§3.2 F-T2-2 — two runs of the SAME drive with the SAME order agree').toEqual(run())
@@ -1380,18 +1620,25 @@ export function registerRows(): readonly RegisterRow[] {
         { name: '(3) record reading — a stale `mem` copy is cleared DOWNWARD with the `file` copy (R3-6)', drive: (): void => {
             const store = bare()
             seedRecord(store, ['t7'], 't7')
-            callStore(store, 'commit', 'mem.tabs.t7.active', false)
-            callStore(store, 'remove', S.active('t7'))
+            // ── THE STALE LOWER COPY IS OF THE **SAME LOGICAL PATH** THE OPERATIVE CLOSE
+            //    REMOVES (`§2.4` item 2's own words; `§2.4` item 1's note): under the ruled flat
+            //    form the tab's reference is its ONE flat leaf `file.tabs.<tabId>`, so its
+            //    less-persistent copy is `mem.tabs.<tabId>`. **THE AS-FILED SPELLING —
+            //    `mem.tabs.<tabId>.active`, the nested member's own lower copy — IS KEPT
+            //    VISIBLE HERE AND IS NOT THE REFERENCE THE OPERATIVE CLOSE CLEARS** (the
+            //    operative close never touches a nested member leaf).
+            callStore(store, 'commit', 'mem.tabs.t7', false)
+            callStore(store, 'remove', S.entry('t7'))
             const tiers = store['tiers'] as Record<string, { has: (n: string) => boolean }>
-            expect(tiers['mem'].has('mem.tabs.t7.active'), '§2.4 item 2 / R3-6 — no stale lower-tier copy survives').toBe(false)
+            expect(tiers['mem'].has('mem.tabs.t7'), '§2.4 item 2 / R3-6 — no stale lower-tier copy survives').toBe(false)
           } },
         { name: '(3) receipt reading — the receipt names the cleared LOWER reference', drive: (): void => {
             const s = surface as TabsSurface
             const store = tabsStore(s, null)
             seedRecord(store, ['t7'], 't7')
-            callStore(store, 'commit', 'mem.tabs.t7.active', false)
-            const rec = callStore(store, 'remove', S.active('t7'))
-            expect(rec['cleared'], '§2.4 item 2 / R3-6 — the cleared[] carries the lower copy').toContain('mem.tabs.t7.active')
+            callStore(store, 'commit', 'mem.tabs.t7', false)
+            const rec = callStore(store, 'remove', S.entry('t7'))
+            expect(rec['cleared'], '§2.4 item 2 / R3-6 — the cleared[] carries the lower copy of the SAME logical path').toContain('mem.tabs.t7')
           } },
         { name: '(4) record reading — a SECOND close of the same tab is a DECLARED outcome, never a splice', drive: (): void => {
             const s = surface as TabsSurface
@@ -1462,7 +1709,7 @@ export function registerRows(): readonly RegisterRow[] {
             const store = tabsStore(s, null)
             seedRecord(store, ['t7'], 't7')
             const freshId = 't9'
-            const rec = callStore(store, 'commit', S.active(freshId), true)
+            const rec = callStore(store, 'commit', S.entry(freshId), true)
             expect(rec['status'], '§1.1 item 8 — the id is minted at the ONE bounded wiring role').toBe('committed')
           } },
         { name: '(1) `order` reading — the membership gains exactly one member', drive: (): void => {
@@ -1493,18 +1740,18 @@ export function registerRows(): readonly RegisterRow[] {
             const s = surface as TabsSurface
             const store = tabsStore(s, null)
             seedRecord(store, ['t7', 't9'], 't7')
-            callStore(store, 'remove', S.active('t9'))
+            callStore(store, 'remove', S.entry('t9'))
             callStore(store, 'commit', S.order, ['t7'])
-            const rec = callStore(store, 'commit', S.active('t9'), true)
+            const rec = callStore(store, 'commit', S.entry('t9'), true)
             expect(rec['status'], '§5.5.1 state (3) — the id is no longer a member').toBe('committed')
           } },
         { name: '(3) `order` reading — the re-minted id re-enters `order` exactly once', drive: (): void => {
             const s = surface as TabsSurface
             const store = tabsStore(s, null)
             seedRecord(store, ['t7', 't9'], 't7')
-            callStore(store, 'remove', S.active('t9'))
+            callStore(store, 'remove', S.entry('t9'))
             callStore(store, 'commit', S.order, ['t7'])
-            callStore(store, 'commit', S.active('t9'), true)
+            callStore(store, 'commit', S.entry('t9'), true)
             callStore(store, 'commit', S.order, ['t7', 't9'])
             expect(valueOf(store, S.order)).toEqual(['t7', 't9'])
           } },
@@ -1570,7 +1817,7 @@ export function registerRows(): readonly RegisterRow[] {
             const member = tabsConstraintMember()
             const store = tabsStore(s, member)
             seedRecord(store, ['A', 'B'], 'A')
-            callStore(store, 'remove', S.active('B'))
+            callStore(store, 'remove', S.entry('B'))
             callStore(store, 'commit', S.order, ['A'])
             expect(activesOf(store, ['A']), '§5.5.1 (f) — no repair is reached for a non-active close').toEqual(['A'])
           } },
@@ -1628,7 +1875,7 @@ export function registerRows(): readonly RegisterRow[] {
             const store = tabsStore(s, member)
             seedRecord(store, ['A', 'B'], 'A')
             const before = probe.calls.length
-            callStore(store, 'set', S.active('B'), true)
+            callStore(store, 'set', S.entry('B'), true)
             expect(probe.calls.length, '§3.4 item 3 — every `set` evaluates the member on its post-state').toBeGreaterThan(before)
           } },
         { name: '`set` — post-state reading: the repair landed in the SAME committed write', drive: (): void => {
@@ -1638,7 +1885,7 @@ export function registerRows(): readonly RegisterRow[] {
             seedRecord(store, ['A', 'B'], 'A')
             const st = memberStateOf(member)
             st.referent = 'B'
-            const rec = callStore(store, 'set', S.active('B'), true)
+            const rec = callStore(store, 'set', S.entry('B'), true)
             expect(rec['status']).toBe('committed')
             expect(activesOf(store, ['A', 'B']), '§3.4 item 3 — no window in which the post-state violates the constraint').toEqual(['B'])
           } },
@@ -1673,7 +1920,7 @@ export function registerRows(): readonly RegisterRow[] {
             const store = tabsStore(s, member)
             seedRecord(store, ['A', 'B'], 'A')
             const before = probe.calls.length
-            callStore(store, 'remove', S.active('B'))
+            callStore(store, 'remove', S.entry('B'))
             expect(probe.calls.length, '§3.4 item 3 — every `remove` evaluates the member on its post-state').toBeGreaterThan(before)
           } },
         { name: '`remove` — post-state reading: the removed leaf is OBSERVABLE as absent from the matched record', drive: (): void => {
@@ -1683,7 +1930,7 @@ export function registerRows(): readonly RegisterRow[] {
             const store = tabsStore(s, member)
             seedRecord(store, ['A', 'B'], 'A')
             probe.calls.length = 0
-            callStore(store, 'remove', S.active('B'))
+            callStore(store, 'remove', S.entry('B'))
             const call = probe.calls[probe.calls.length - 1]
             expect((call.current as Rec)['order'], '§2.4 item 5 — the PRE-write capture still holds the pre-state').toEqual(['A', 'B'])
           } },
@@ -1694,7 +1941,7 @@ export function registerRows(): readonly RegisterRow[] {
             const store = tabsStore(s, member)
             seedRecord(store, ['A', 'B'], 'A')
             const before = probe.calls.length
-            callStore(store, 'clear', S.active('B'))
+            callStore(store, 'clear', S.entry('B'))
             expect(probe.calls.length, '§3.4 item 3 — `clear` does NOT evaluate the constraint table').toBe(before)
           } },
         { name: '`sweep` — evaluation reading: the declared NEGATIVE (the member is NOT reached)', drive: (): void => {
@@ -1704,7 +1951,7 @@ export function registerRows(): readonly RegisterRow[] {
             const store = tabsStore(s, member)
             seedRecord(store, ['A', 'B'], 'A')
             const before = probe.calls.length
-            callStore(store, 'sweep', S.active('B'))
+            callStore(store, 'sweep', S.entry('B'))
             expect(probe.calls.length, '§3.4 item 3 — `sweep` does NOT evaluate the constraint table').toBe(before)
           } },
         { name: '`clear`/`sweep` — post-state reading: `repaired: []` and the violation STANDS (the declared negative)', drive: (): void => {
@@ -1712,8 +1959,8 @@ export function registerRows(): readonly RegisterRow[] {
             const member = tabsConstraintMember()
             const store = tabsStore(s, member)
             seedRecord(store, ['A', 'B'], 'A')
-            const cleared = callStore(store, 'clear', S.active('A'))
-            const swept = callStore(store, 'sweep', S.active('B'))
+            const cleared = callStore(store, 'clear', S.entry('A'))
+            const swept = callStore(store, 'sweep', S.entry('B'))
             expect(cleared['repaired'], '§3.4 item 5 — the declared behaviour, not a defect').toEqual([])
             expect(swept['repaired']).toEqual([])
           } },
@@ -1748,7 +1995,7 @@ export function registerRows(): readonly RegisterRow[] {
             const s = surface as TabsSurface
             const store = tabsStore(s, null)
             expect(isMiss(resolveOf(store, S.order)), '§5.5.1 (a) — `order` is not a member yet').toBe(true)
-            expect(isMiss(resolveOf(store, S.active('t7')))).toBe(true)
+            expect(isMiss(resolveOf(store, S.entry('t7')))).toBe(true)
           } },
         { name: '(b) SEATED — the hand-off’s `hydrate` minted the members the record names, and NO constraint evaluation has run', drive: (): void => {
             const s = surface as TabsSurface
@@ -1758,7 +2005,7 @@ export function registerRows(): readonly RegisterRow[] {
             const hydrate = store['hydrate'] as ((rows: readonly unknown[]) => void) | undefined
             expect(typeof hydrate, '§2.5 — `hydrate` is a PRODUCTION-PRESENT declared member').toBe('function')
             const before = probe.calls.length
-            hydrate?.([{ name: S.order, value: ['t7'] }, { name: S.active('t7'), value: true }])
+            hydrate?.([{ name: S.order, value: ['t7'] }, { name: S.entry('t7'), value: true }])
             expect(probe.calls.length, '§3.3 item 2 — `hydrate` NEVER evaluates the constraint table').toBe(before)
             expect(valueOf(store, S.order), '§3.3 item 2 — the hand-off’s record is minted').toEqual(['t7'])
           } },
@@ -1766,7 +2013,7 @@ export function registerRows(): readonly RegisterRow[] {
             const s = surface as TabsSurface
             const store = tabsStore(s, null)
             seedRecord(store, ['t7'], 't7')
-            callStore(store, 'commit', S.active('t9'), false)
+            callStore(store, 'commit', S.entry('t9'), false)
             callStore(store, 'commit', S.order, ['t7', 't9'])
             expect(valueOf(store, S.order)).toEqual(['t7', 't9'])
             expect(activesOf(store, ['t7', 't9'])).toEqual(['t7'])
@@ -1779,7 +2026,7 @@ export function registerRows(): readonly RegisterRow[] {
             const st = memberStateOf(member)
             st.preOrder = ['A', 'B', 'C']
             st.removedId = 'B'
-            callStore(store, 'remove', S.active('B'))
+            callStore(store, 'remove', S.entry('B'))
             callStore(store, 'commit', S.order, ['A', 'C'])
             expect(activesOf(store, ['A', 'C']), '§5.5.1 (d)').toEqual(['C'])
           } },
@@ -1824,7 +2071,7 @@ export function registerRows(): readonly RegisterRow[] {
             const member = tabsConstraintMember()
             const store = tabsStore(s, member)
             const hydrate = store['hydrate'] as ((rows: readonly unknown[]) => void) | undefined
-            hydrate?.([{ name: S.order, value: ['A'] }, { name: S.active('A'), value: true }])
+            hydrate?.([{ name: S.order, value: ['A'] }, { name: S.entry('A'), value: true }])
             const rec = callStore(store, 'commit', S.order, ['A'])
             expect(rec['repaired'], '§3.3 item 5 — the positive control is attributable, not vacuous').toEqual([])
             expect(activesOf(store, ['A'])).toEqual(['A'])
@@ -1834,7 +2081,7 @@ export function registerRows(): readonly RegisterRow[] {
             const member = tabsConstraintMember()
             const store = tabsStore(s, member)
             const hydrate = store['hydrate'] as ((rows: readonly unknown[]) => void) | undefined
-            hydrate?.([{ name: S.order, value: ['A', 'B'] }, { name: S.active('A'), value: false }, { name: S.active('B'), value: false }])
+            hydrate?.([{ name: S.order, value: ['A', 'B'] }, { name: S.entry('A'), value: false }, { name: S.entry('B'), value: false }])
             const rec = callStore(store, 'commit', S.order, ['A', 'B'])
             expect(rec['status'], '§3.3 item 3 — the `order` rewrite is the declared vehicle').toBe('committed')
           } },
@@ -1843,7 +2090,7 @@ export function registerRows(): readonly RegisterRow[] {
             const member = tabsConstraintMember()
             const store = tabsStore(s, member)
             const hydrate = store['hydrate'] as ((rows: readonly unknown[]) => void) | undefined
-            hydrate?.([{ name: S.order, value: ['A', 'B'] }, { name: S.active('A'), value: false }, { name: S.active('B'), value: false }])
+            hydrate?.([{ name: S.order, value: ['A', 'B'] }, { name: S.entry('A'), value: false }, { name: S.entry('B'), value: false }])
             const rec = callStore(store, 'commit', S.order, ['A', 'B'])
             expect((rec['repaired'] as string[]).length, '§3.3 item 5 — the boot-step receipt carries `repaired: [...]`').toBeGreaterThan(0)
             expect(activesOf(store, ['A', 'B']), '§3.3 item 5 — exactly one active after the boot write').toEqual(['A'])
@@ -1853,7 +2100,7 @@ export function registerRows(): readonly RegisterRow[] {
             const member = tabsConstraintMember()
             const store = tabsStore(s, member)
             seedRecord(store, ['A', 'B'], 'A')
-            callStore(store, 'commit', S.active('B'), true)
+            callStore(store, 'commit', S.entry('B'), true)
             const st = memberStateOf(member)
             st.referent = 'A'
             const rec = callStore(store, 'commit', S.order, ['A', 'B'])
@@ -1864,7 +2111,7 @@ export function registerRows(): readonly RegisterRow[] {
             const member = tabsConstraintMember()
             const store = tabsStore(s, member)
             seedRecord(store, ['A', 'B'], 'A')
-            callStore(store, 'commit', S.active('B'), true)
+            callStore(store, 'commit', S.entry('B'), true)
             const st = memberStateOf(member)
             st.referent = 'A'
             callStore(store, 'commit', S.order, ['A', 'B'])
@@ -1878,7 +2125,7 @@ export function registerRows(): readonly RegisterRow[] {
             const subscribe = store['subscribe'] as ((n: string, l: (e: Rec) => void, o?: Rec) => unknown) | undefined
             subscribe?.('file.tabs', (e) => causes.push(String(e['cause'])), { subtree: true })
             const hydrate = store['hydrate'] as ((rows: readonly unknown[]) => void) | undefined
-            hydrate?.([{ name: S.order, value: ['A'] }, { name: S.active('A'), value: false }])
+            hydrate?.([{ name: S.order, value: ['A'] }, { name: S.entry('A'), value: false }])
             expect(causes.includes('repair'), '§3.3 item 2 — a `hydrate` that repairs FAILS this clause').toBe(false)
           } },
         { name: '(4) the boot-load event surface — `hydrate` still fires its boot-load events by design', drive: (): void => {
@@ -1924,7 +2171,7 @@ export function registerRows(): readonly RegisterRow[] {
             const s = surface as TabsSurface
             const store = tabsStore(s, null)
             seedRecord(store, ['t7'], 't7')
-            const hit = resolveOf(store, S.active('t7'))
+            const hit = resolveOf(store, S.entry('t7'))
             expect('merged' in hit, '§3.6 A-2 — a row asserting a `parts` member on this unit’s read path FAILS').toBe(false)
             expect('parts' in hit).toBe(false)
           } },
@@ -1962,7 +2209,7 @@ export function registerRows(): readonly RegisterRow[] {
             const store = tabsStore(s, null)
             seedRecord(store, ['t7'], 't7')
             callStore(store, 'commit', 'mem.tabs.t7.active', false)
-            const removeFile = callStore(store, 'remove', S.active('t7'))
+            const removeFile = callStore(store, 'remove', S.entry('t7'))
             expect(['committed', 'refused']).toContain(removeFile['status'])
             expect(
               removeFile['reason'] === undefined || typeof removeFile['reason'] === 'string',
@@ -2027,7 +2274,7 @@ export function registerRows(): readonly RegisterRow[] {
             const s = surface as TabsSurface
             const store = tabsStore(s, null)
             seedRecord(store, ['t7'], 't7')
-            const rec = callStore(store, 'commit', S.active('t7'), true)
+            const rec = callStore(store, 'commit', S.entry('t7'), true)
             expect(rec['status']).toBe('committed')
             expect(rec['repaired']).toEqual([])
             expect(typeof rec['events'], '§3.4 item 4 — `events` is counted over the affected references').toBe('number')
@@ -2036,7 +2283,7 @@ export function registerRows(): readonly RegisterRow[] {
             const s = surface as TabsSurface
             const store = tabsStore(s, null)
             seedRecord(store, ['t7'], 't7')
-            const hit = resolveOf(store, S.active('t7'))
+            const hit = resolveOf(store, S.entry('t7'))
             const keySet = Object.keys(hit).sort()
             expect(keySet, '§3.6 — the hit arm’s declared members, and no ninth').toEqual(
               ['cache', 'flag', 'found', 'name', 'tier', 'value'].sort(),
@@ -2132,15 +2379,15 @@ export function registerRows(): readonly RegisterRow[] {
             const s = surface as TabsSurface
             const storeA = tabsStore(s, null)
             seedRecord(storeA, ['A', 'B'], 'A')
-            const zero = callStore(storeA, 'commit', S.active('A'), true)
+            const zero = callStore(storeA, 'commit', S.entry('A'), true)
             const storeB = tabsStore(s, null)
             seedRecord(storeB, ['A', 'B'], 'A')
             const deliveries: unknown[] = []
             const subscribe = storeB['subscribe'] as ((n: string, l: (e: Rec) => void, o?: Rec) => unknown) | undefined
-            subscribe?.(S.active('A'), (e) => deliveries.push(e))
-            const two = callStore(storeB, 'commit', S.active('A'), true)
+            subscribe?.(S.entry('A'), (e) => deliveries.push(e))
+            const two = callStore(storeB, 'commit', S.entry('A'), true)
             void two
-            const rec = callStore(storeA, 'commit', S.active('A'), true)
+            const rec = callStore(storeA, 'commit', S.entry('A'), true)
             expect(typeof zero['events'], '§3.4 item 4 — the count is reported and never derived from subscriber count').toBe('number')
             expect(rec['events']).toBeGreaterThanOrEqual(0)
           } },
@@ -2199,7 +2446,7 @@ export function registerRows(): readonly RegisterRow[] {
               let deliveries = 0
               const subscribe = store['subscribe'] as ((n: string, l: (e: Rec) => void, o?: Rec) => unknown) | undefined
               for (let i = 0; i < subs; i += 1) subscribe?.('file.tabs', () => { deliveries += 1 }, { subtree: true })
-              const rec = callStore(store, 'commit', S.active('B'), true)
+              const rec = callStore(store, 'commit', S.entry('B'), true)
               return { events: Number(rec['events']), deliveries }
             }
             const zero = build(0)
@@ -2223,7 +2470,7 @@ export function registerRows(): readonly RegisterRow[] {
             const member = tabsConstraintMember()
             const store = tabsStore(s, member)
             const hydrate = store['hydrate'] as ((rows: readonly unknown[]) => void) | undefined
-            hydrate?.([{ name: S.order, value: ['A'] }, { name: S.active('A'), value: false }])
+            hydrate?.([{ name: S.order, value: ['A'] }, { name: S.entry('A'), value: false }])
             expect(valueOf(store, S.order), '§3.5 item 1(a) — the boot state’s record witness').toEqual(['A'])
           } },
         { name: '(1) live-row reading — the page is DECLARED with its declared id and role', drive: (): void => {
@@ -2260,13 +2507,13 @@ export function registerRows(): readonly RegisterRow[] {
             const s = surface as TabsSurface
             const store = tabsStore(s, null)
             seedRecord(store, ['A', 'landing'], 'A')
-            expect(valueOf(store, S.active('landing')), '§3.5 item 1 — the page’s rendering must be driven by the record').toBe(false)
+            expect(valueOf(store, S.entry('landing')), '§3.5 item 1 — the page’s rendering must be driven by the record').toBe(false)
           } },
         { name: '(4) positive control — the same state with `landing.active` TRUE', drive: (): void => {
             const s = surface as TabsSurface
             const store = tabsStore(s, null)
             seedRecord(store, ['A', 'landing'], 'landing')
-            expect(valueOf(store, S.active('landing'))).toBe(true)
+            expect(valueOf(store, S.entry('landing'))).toBe(true)
           } },
       ],
     },
@@ -2347,16 +2594,30 @@ export function registerRows(): readonly RegisterRow[] {
       term: 12,
       property: 'THE STATIC BOUNDARY — the edit-set assertion (`C-9`) and the no-re-freeze assertion (`§5.3`)',
       drives: [
-        { name: '(1) static reading — `edit-set ⊆ declared scope ∪ declared wiring points`', drive: (): void => {
+        { name: '(1) static reading — `edit-set ⊆ declared scope ∪ declared wiring points`, asserted AS A SET (never a count), with the two `§5.1` item `3b` paths DECLARED', drive: (): void => {
             const changed = editSetFromWorkingTree()
-            const scope = [...DECLARED_SCOPE_PATHS]
-            const r = editSetIsSubset(changed, scope)
+            // THE SCOPE IS ASSERTED AS A **SET**, NEVER AS A COUNT (`§5.1`'s closing clause;
+            // `C-9`): the set-equality reading is `sorted(declared) === sorted([...asFiled, the
+            // two amended paths])`, so a DROPPED path and a DUPLICATE both redden — a count
+            // assertion would let either through.
+            const declared = [...DECLARED_SCOPE_PATHS].sort()
+            const expected = [...DECLARED_SCOPE_PATHS_AS_FILED, 'tests/store-tabs-record-live.mjs', 'docs/specs/store-tabs-record-live-battery.md'].sort()
+            expect(declared, '§5.1 / C-9 — the declared scope is a SET: the as-filed seven plus exactly the two `§5.1` item `3b` paths, no duplicate, no drop').toEqual(expected)
+            expect(new Set(DECLARED_SCOPE_PATHS).size, '§5.1 (C-9) — no duplicate path inflates the set').toBe(DECLARED_SCOPE_PATHS.length)
+            expect(DECLARED_SCOPE_PATHS).toContain('tests/store-tabs-record-live.mjs')
+            const r = editSetIsSubset(changed, DECLARED_SCOPE_PATHS)
             expect(r.ok, `§5.1 / C-9 — edits outside the union: ${JSON.stringify(r.offenders)} (the working tree carries uncommitted work until the supervisor commits at the gate boundary, RCA-8(a))`).toBe(true)
-          } },
-        { name: '(1) positive control — an edit outside the union FAILS the same instrument', drive: (): void => {
+        } },
+        { name: '(1) positive control — an edit outside the union FAILS the same instrument (the UNDECLARED-path bite is UNMOVED)', drive: (): void => {
             const r = editSetIsSubset([EDIT_SET_OFFENDER_FIXTURE], DECLARED_SCOPE_PATHS)
             expect(r.ok, '§5.1 — the subset assertion has a POSITIVE CONTROL that an edit outside the union FAILS').toBe(false)
-          } },
+            // THE SAME CONTROL AGAINST THE AMENDED SET: adding the two declared paths must NOT
+            // admit an undeclared one.
+            const declaredLive = editSetIsSubset(['tests/store-tabs-record-live.mjs'], DECLARED_SCOPE_PATHS)
+            expect(declaredLive.ok, '§5.1 item 3b — the DECLARED driver path is admissible').toBe(true)
+            const undeclaredMjs = editSetIsSubset(['tests/store-tabs-record-live-extra.mjs'], DECLARED_SCOPE_PATHS)
+            expect(undeclaredMjs.ok, '§5.1 item 3b — an UNDECLARED sibling driver path still FAILS (the bite is kept)').toBe(false)
+        } },
         { name: '(2) static reading — `src/renderer/store-core-graph.ts` = `0664c52f…`', drive: (): void => {
             expect(sha256PrefixOf(STORE_CORE_PATH), '§5.1 item 7 / §5.3').toBe('0664c52f')
           } },
@@ -2438,7 +2699,12 @@ export function editSetFromWorkingTree(): readonly string[] {
     }) as unknown as string
     editSetCache = out
       .split('\n')
-      .map((line) => line.trim())
+      // ── THE PORCELAIN FIXTURE IS `XY <path>`, SO THE PATH IS SLICED FROM INDEX `3` AND
+      //    THE LINE IS **NOT** WHOLE-LINE TRIMMED FIRST: an UNSTAGED modification reads
+      //    `" M tests/…"`, and trimming the line before the slice ate the leading space and
+      //    shifted the path by one byte (`"ests/…"`), so the subset assertion compared
+      //    MANGLED paths. THE AS-FILED FORM KEPT VISIBLE: the previous chain was
+      //    `.map(l => l.trim()).filter(l => l.length > 3).map(l => l.slice(3).trim())`.
       .filter((line) => line.length > 3)
       .map((line) => line.slice(3).trim())
       .filter((entry) => entry.length > 0)
