@@ -140,15 +140,50 @@ function writeTabsEntryActive(record: Record<string, unknown>, tabId: string, va
       : value
 }
 
-/** THE CLOSE SITE'S OWN CALLER-SIDE PRE-STATE CAPTURE (`§0A` item 4's declared default, `AMB-2`;
- *  `§2.4` item 5). A `remove`-triggered evaluation has NO caller-written reference, so the
- *  `≥2`/zero-active referent is THE REMOVED ENTRY'S OWN INDEX — and the INDEX lives in the
- *  PRE-removal sequence while the repair runs on the POST-state. The machinery's own `current`
- *  is the pre-write capture (`§2.4` item 5), and the wiring's close site holds the pre-removal
- *  sequence in ITS OWN closure here, so the index is readable either way. */
-let tabsPreRemovalOrder: readonly string[] = []
-/** THE CALLER'S OWN WRITTEN REFERENCE (the write-triggered `≥2` referent, `§3.2` F-T2-2). */
-let tabsWrittenReferent: string | null = null
+/** THE PRE-STATE THE REFERENT RULES READ — **PER EVALUATION, NEVER A CALL-CROSSING CELL**
+ *  (`§0A` item 4's declared default, `AMB-2`; `§2.4` item 5; `H-3`). A `remove`-triggered
+ *  evaluation has NO caller-written reference, so the `≥2`/zero-active referent is THE REMOVED
+ *  ENTRY'S OWN INDEX — and the INDEX lives in the PRE-removal sequence while the repair runs on
+ *  the POST-state. **THE MACHINERY'S OWN `current` ARGUMENT IS THAT PRE-STATE** (the store's own
+ *  declared capture: `captureConstraintSlots` reads it BEFORE the mutation, so a removed leaf's
+ *  own data is still present in it) — so the pre-removal sequence is READ OFF `current`, per
+ *  evaluation, and lands in `preOrderOf` for the repair call that follows in the SAME evaluation.
+ *  **WHAT THIS REPLACES, NAMED (`RCA-8(d)`): a module-level `tabsPreRemovalOrder` cell written
+ *  ONLY by the close site was STALE ACROSS CALLS — a later, unrelated evaluation whose `post`
+ *  did not confirm the removal was answered from a PREVIOUS sequence, and the cell was read
+ *  FIRST, so the stale sequence decided the referent (`H-3`). The cell is DELETED rather than
+ *  re-set: a per-evaluation read cannot go stale, and the repair never consults a sequence
+ *  `post` does not confirm.** */
+let preOrderOf: readonly string[] = []
+/** THE CALLER'S OWN WRITTEN REFERENCE (the write-triggered `≥2` referent, `§3.2` F-T2-2) — the
+ *  entry whose value CHANGED in this evaluation's pre→post pair, and NEVER a name read from a
+ *  module cell (`H-2`: the as-filed `tabsWrittenReferent` cell was declared and read but NEVER
+ *  assigned, so the arm was unreachable). It is written per evaluation beside `preOrderOf` and
+ *  cleared once consumed. */
+let writtenOf: string | null = null
+/** THE REFUSALS THE EVALUATION ITSELF DERIVED (`H-1`): the ids the PRE-state carried whose
+ *  value the post-state can no longer read — the `remove`-triggered referent's own source. */
+let removalsOf: string[] = []
+/** THE CALLER'S OWN WRITTEN REFERENCE, derived pre→post (`H-2`): the entry whose value the
+ *  evaluation MOVED while it stayed readable. */
+let writtenReferentOf: string | null = null
+
+/** WHETHER THE POST-STATE'S OWN MEMBERSHIP STILL NAMES AN ID — the membership half of the
+ *  removal derivation, read off the record's `order` member and never off a second authority. */
+function postNames(order: unknown, tabId: string): boolean {
+  return Array.isArray(order) && (order as readonly unknown[]).includes(tabId)
+}
+
+/** THE PER-EVALUATION PRE-STATE READ (`§2.4` item 5) — the pre-removal sequence, taken from the
+ *  machinery's OWN pre-write capture (`current`) so the removed entry's own index is readable
+ *  while its absence is readable off `next`. TOTAL: a `current` that carries no sequence, or none
+ *  at all, answers an EMPTY sequence (the caller's write-triggered arms then carry the referent
+ *  alone) — never a throw. */
+function preOrderOfConstraint(current: unknown): readonly string[] {
+  if (current === null || typeof current !== 'object') return []
+  const order = (current as Record<string, unknown>)['order']
+  return Array.isArray(order) ? (order as readonly string[]) : []
+}
 
 /** THE ONE `constraints` MEMBER THIS UNIT SUPPLIES, ITS CELLS FILLED (`§2.2` item 3, `§0A`
  *  item 3) — `id` a DECLARATION KEY (never a store mechanism word, never a store vocabulary
@@ -166,6 +201,14 @@ const TABS_CONSTRAINT: GraphConstraint = {
   matchedSet: 'tabs',
   evaluatedOn: ['set', 'commit', 'remove'],
   constraint: (...args: [unknown, unknown, unknown, unknown?]): boolean => {
+    // ── THE EVALUATION'S OWN REFERENT CELLS, TAKEN FIRST AND CLEARED FIRST (`H-2`/`H-3`): a
+    //    cell that is not re-derived by THIS evaluation must not survive it, so the cells are
+    //    reset on entry and re-derived below. The member mutates NEITHER of its arguments
+    //    (`§0A` item 3) — it only READS them.
+    preOrderOf = []
+    writtenOf = null
+    removalsOf = []
+    writtenReferentOf = null
     const next = args[2]
     if (next === null || typeof next !== 'object') return true
     const record = next as Record<string, unknown>
@@ -175,11 +218,58 @@ const TABS_CONSTRAINT: GraphConstraint = {
     // declared-miss arm). An empty `order` must reach the repair, or it would survive a
     // committed write (`§3.2` F-T2-3/F-T2-4, `§3.1` M-1/M-3).
     if (!Array.isArray(order)) return true
-    let actives = 0
-    for (const tabId of order as readonly unknown[]) {
-      if (typeof tabId === 'string' && tabsEntryReadsActive(record[tabId])) actives += 1
+    // ── THE PRE-REMOVAL SEQUENCE, THE REMOVED ENTRY AND THE CALLER'S OWN WRITTEN REFERENCE,
+    //    ALL DERIVED FROM THE ARGUMENTS THE STORE ITSELF SUPPLIES — never from a call-crossing
+    //    module cell (`H-2`/`H-3`). `pre` IS THE MACHINERY'S OWN PRE-WRITE CAPTURE (`current`:
+    //    `captureConstraintSlots` reads it BEFORE the mutation, so a removed entry's own key is
+    //    still present and still holds its pre-value — `§2.4` item 5), and `order` is the
+    //    landed post-state's own membership.
+    const pre = args[1] !== null && typeof args[1] === 'object' ? (args[1] as Record<string, unknown>) : null
+    const preOrder = preOrderOfConstraint(pre)
+    // (a) THE RECORD-LEVEL REMOVAL — THE SIGNAL THAT SEPARATES A REMOVAL FROM A DEACTIVATION
+    //     (`H-1`/`H-3`, MEASURED): the machinery builds the matched record from the root's
+    //     CURRENT anchors, so an entry whose OWN KEY the post-state DOES NOT CARRY is one whose
+    //     leaf this evaluation detached, while an entry whose key IS carried — with `false`
+    //     under it — was merely DEACTIVATED (a write, `PAR-3`), and treating THAT as a removal
+    //     is exactly the stale-referent defect `H-3` drives.
+    const droppedKeys: string[] = []
+    if (pre !== null) {
+      for (const tabId of Object.keys(pre)) {
+        if (tabId === 'order') continue
+        if (!Object.prototype.hasOwnProperty.call(record, tabId)) droppedKeys.push(tabId)
+        // (b) THE CALLER'S OWN WRITTEN REFERENCE: the entry whose value moved pre→post while its
+        //     own key stayed readable (a write, not a removal).
+        const after = tabsEntryReadsActive(record[tabId])
+        if (after && !Object.is(pre[tabId], record[tabId])) writtenReferentOf = tabId
+      }
     }
-    return order.length > 0 && actives === 1
+    // (c) THE MEMBERSHIP-LEVEL REMOVAL: an id the PRE-state's own membership carried and the
+    //     post-state's does NOT name is likewise gone from this evaluation's record — that is
+    //     the caller's `order` rewrite (`§2.4` item 1/3), and `§2.4` item 1's FAIL clause
+    //     ("a close that leaves the id in `order`") is what makes it a removal.
+    const membershipDropped = preOrder.filter((tabId) => !postNames(order, tabId))
+    // THE REPAIR'S OWN REFERENT SOURCE — BOTH KINDS, because EITHER removes the entry from the
+    // record: the dropped-key id is the caller's own `remove` (the entry's own anchor went), the
+    // membership-dropped id is the caller's `order` rewrite.
+    removalsOf = [...droppedKeys, ...membershipDropped.filter((tabId) => !droppedKeys.includes(tabId))]
+    // THE PRE-REMOVAL SEQUENCE (`§2.4` item 5): the pre-state's OWN membership, with the id's
+    // seat carried forward while it is still a member — the removed entry's OWN INDEX is read
+    // off THIS sequence, never off a first-surviving position.
+    preOrderOf = preOrder
+    writtenOf = writtenReferentOf
+    // ── THE ACTIVE COUNT IS TAKEN OVER THE **RECORD** SURVIVORS — **AND ONLY THE DROPPED-KEY
+    //    KINDS ARE EXCLUDED FROM IT** (`H-1`, MEASURED): on the caller's own `remove` the
+    //    matched record still CARRIES the removed id in its `order` (`§2.4` item 5: the
+    //    pre-removal index is readable off `current` because the id is still a member), while
+    //    that id's own entry no longer reads — so a naive count sees `0` actives on a record
+    //    whose LIVE members hold exactly one, fires the zero-active arm, and lands a repair AT
+    //    the removed id's own position, which RE-LANDS the severed leaf (the resurrection the
+    //    repair's own guard below refuses). The dropped-key ids are excluded from BOTH sides of
+    //    the count; the membership-dropped ids are NOT — they are simply not members any more.
+    const activeMembers = (order as readonly unknown[]).filter((tabId): tabId is string => typeof tabId === 'string')
+    const actives = activeMembers.filter((tabId) => !droppedKeys.includes(tabId) && tabsEntryReadsActive(record[tabId])).length
+    const survivors = activeMembers.filter((tabId) => !droppedKeys.includes(tabId)).length
+    return survivors > 0 && actives === 1
   },
   repair: (nextState: unknown): boolean => {
     if (nextState === null || typeof nextState !== 'object') return true
@@ -187,6 +277,46 @@ const TABS_CONSTRAINT: GraphConstraint = {
     const order = record['order']
     const post = Array.isArray(order) ? (order as string[]) : null
     if (post === null) return true
+    // THE EVALUATION'S REFERENT CELLS — read ONCE, then CONSUMED (`H-3`: a cell that outlives its
+    // own evaluation is a stale cell). `pre` is the PRE-removal sequence THIS evaluation derived
+    // (the pre-state's own membership extended by the removed id's seat); `written` is the
+    // caller's own written reference; `removals` are the ids the pre-state carried whose value the
+    // post-state can no longer read. **A REMOVAL IS CONFIRMED BY THIS EVALUATION'S OWN DERIVATION
+    // AND BY NOTHING ELSE** — never by a sequence a previous call left behind, and never by a
+    // `post` that does not carry the removal (`H-3`).
+    const pre = preOrderOf
+    const written = writtenOf
+    const removals = removalsOf
+    preOrderOf = []
+    writtenOf = null
+    removalsOf = []
+    writtenReferentOf = null
+    const removed = removals.find((tabId) => !post.includes(tabId) || !tabsEntryReadsActive(record[tabId])) ?? null
+    // ── THE REMOVED ENTRY'S KEY IS DROPPED FROM THE RECORD, NOT LEFT HOLDING `undefined`
+    //    (`H-1`'s own mechanism, named): a key that is still PRESENT with an `undefined` value
+    //    reads as CHANGED by the store's own repair diff, so a later write would RE-LAND the
+    //    closed id's value and MINT its severed leaf back — the closed tab would be
+    //    RESURRECTED and the removed id would ride the receipt's `repaired[]`. Dropping the key
+    //    leaves the entry ABSENT, which is the state the repair's own arm must read (`§3.1`
+    //    M-3's declared miss for an id whose entry is absent; `§2.4` item 1's "a close that
+    //    leaves the id in `order` FAILS"). This mutates NOTHING the caller did not already
+    //    remove: the entry was removed by the caller's own `remove` before this evaluation.
+    for (const key of Object.keys(record)) {
+      if (key === 'order') continue
+      // AN ENTRY THE EVALUATION DID NOT REMOVE AND THAT STILL READS A VALUE IS LEFT EXACTLY AS
+      // THE RECORD HAS IT. EVERY OTHER KEY IS DROPPED: the machinery's `leafRecordFor` builds
+      // the matched record from the root's CURRENT anchors, so a leaf the caller has just
+      // REMOVED still occupies its own key with an `undefined` value — and a key that is PRESENT
+      // while its value CHANGED reads, to the store's own repair diff, as a repaired reference
+      // that must be RE-LANDED (a severed leaf re-minted as a REAL leaf, the removed id riding
+      // the receipt's `repaired[]`: the resurrection `H-1` measures). Dropping the key makes the
+      // entry ABSENT, which is the state the repair's own arm must read (`§3.1` M-3's declared
+      // miss for an id whose entry is absent). MEASURED, on the frozen store: dropping the key on
+      // a `remove` evaluation leaves the closed id a declared MISS with `repaired: []`, while
+      // writing its `true` back re-mints the leaf and names it in `repaired[]`.
+      if (!removals.includes(key) && record[key] !== undefined) continue
+      delete record[key]
+    }
     if (post.length === 0) {
       // THE ZERO-ACTIVE ARM ON AN EMPTIED SEQUENCE (`§3.2` F-T2-3/F-T2-4, `R3-2`): removing the
       // last non-landing entry leaves no member, so the repair re-seats the RESERVED LANDING
@@ -202,43 +332,48 @@ const TABS_CONSTRAINT: GraphConstraint = {
       // THE ZERO-ACTIVE ARM (`§3.2` F-T2-1, `R3-1`): activate THE NEXT SURVIVING ENTRY BY
       // `order`, WRAPPING when the referent was last. THE REFERENT IS A POSITION IN THE
       // SEQUENCE, NEVER A NAME: on a `remove` it is THE REMOVED ENTRY'S OWN INDEX in the
-      // PRE-removal sequence (`§2.4` item 5 — read off the caller's captured pre-state), and
-      // on a caller write it is the index of the caller's own written reference. `order` is the
-      // ONLY input: NO insertion time, NO tie-break, NO store-side preference (`R3-1` (3)).
+      // PRE-removal sequence (`§2.4` item 5 — read off the machinery's own `current` capture),
+      // and on a caller write it is the position of the caller's own written reference.
+      // `order` is the ONLY input: NO insertion time, NO tie-break, NO store-side preference
+      // (`R3-1` (3)). **`pre` IS CONSULTED ONLY WHERE `post` CONFIRMS THE REMOVAL** (a removed
+      // id is one the post-sequence does not name): a survivor index is NEVER taken from a
+      // sequence the evaluation's own post-state does not carry.
       let referentIndex: number | null = null
-      for (const removed of tabsPreRemovalOrder) {
-        const at = post.indexOf(removed)
-        if (at < 0) {
-          referentIndex = tabsPreRemovalOrder.indexOf(removed)
-          break
-        }
-      }
-      if (referentIndex === null && tabsWrittenReferent !== null) {
-        const at = post.indexOf(tabsWrittenReferent)
+      if (removed !== null && pre.includes(removed)) {
+        referentIndex = pre.indexOf(removed)
+      } else if (written !== null) {
+        const at = post.indexOf(written)
         if (at >= 0) referentIndex = at
       }
-      const index = referentIndex === null ? 0 : referentIndex % post.length
+      const index = referentIndex === null ? 0 : ((referentIndex % post.length) + post.length) % post.length
       const survivor = post[index]
-      if (survivor !== undefined) writeTabsEntryActive(record, survivor, true)
+      // ── A SURVIVOR WHOSE ENTRY THIS EVALUATION REMOVED IS NEVER WRITTEN (`H-1`): the removed
+      //    member still OCCUPIES its key in the matched record with an `undefined` value (the
+      //    machinery builds the record from the root's CURRENT anchors), so a write there reads
+      //    as a CHANGED value to the store's own repair diff, which RE-LANDS it — MINTS the
+      //    severed leaf back and NAMES the closed id in `repaired[]`. The survivor's own seat is
+      //    a MEMBERSHIP question, and the caller's `order` rewrite is where it is settled: when
+      //    the referent's own index names the removed entry, the repair REFRAINS.
+      if (survivor !== undefined && !removals.includes(survivor)) writeTabsEntryActive(record, survivor, true)
       return true
     }
     // THE SURPLUS ARM (`§3.2` F-T2-2): deactivate EVERY ACTIVE ENTRY EXCEPT THE REFERENT —
-    // the caller's own written reference on a write-triggered evaluation, the surviving entry
+    // the caller's own WRITTEN reference on a write-triggered evaluation, the surviving entry
     // AT THE REMOVED ENTRY'S OWN INDEX on a `remove`-triggered one, with the WRAP when that
     // index is no longer present. A first-surviving scan, insertion order and recency all FAIL
-    // this arm.
+    // this arm. **A `remove`-triggered evaluation WINS over the written reference** — that is
+    // the arm's own rule (the referent is the removed entry's index), so the branch is entered
+    // only when `post` CONFIRMS the removal.
     let keep: string | null = null
-    for (const removed of tabsPreRemovalOrder) {
-      if (post.includes(removed)) continue
+    if (removed !== null && pre.includes(removed)) {
       const survivors = post.filter((tabId) => tabId !== removed)
       if (survivors.length > 0) {
-        keep = survivors[tabsPreRemovalOrder.indexOf(removed) % survivors.length] ?? null
+        const at = pre.indexOf(removed)
+        keep = survivors[((at % survivors.length) + survivors.length) % survivors.length] ?? null
       }
-      break
     }
-    if (keep === null && tabsWrittenReferent !== null && active.includes(tabsWrittenReferent)) {
-      keep = tabsWrittenReferent
-    }
+    if (keep === null && written !== null && active.includes(written)) keep = written
+    if (keep === null) keep = active[0] ?? null
     for (const tabId of active) if (tabId !== keep) writeTabsEntryActive(record, tabId, false)
     return true
   },
@@ -249,16 +384,44 @@ const TABS_CONSTRAINT: GraphConstraint = {
  *  store's own declared read (`{found,value}` — `§2.5`), and a hostile surface (absent,
  *  non-callable, throwing) answers the declared EMPTY READING, never a throw. The parameter is
  *  named for the TAB RECORD, not for the store handle, so the wiring's read turn is spelled once
- *  and only once. */
-function readTabsRef(holder: GraphStore, name: string): { readonly found: boolean; readonly value: unknown } {
+ *  and only once.
+ *
+ *  **THE TWO ADMISSIBLE READ ANSWERS ARE KEPT DISTINGUISHABLE (`§3.6`'s dated note; `H-9`):**
+ *  a name that is DECLARED but never written answers the DECLARED MISS (`A-1`), while a name the
+ *  OPERATIVE CLOSE has severed answers THIS UNIT'S CLOSED-REFERENCE REFUSAL — the RETURNED
+ *  refusal record carrying `reason: 'no-such-anchor'` at `step: 'D-ANCHOR'` (`§3.6`'s
+ *  `(R-2)`). **THE AS-FILED FORM COLLAPSED THE SECOND INTO THE FIRST** (`answer.found !== true`
+ *  answered `{found:false}` for BOTH), so no caller could tell a refusal from a miss; the
+ *  refusal's own `reason`/`step`/`status` members are therefore CARRIED OUT OF THE READ on the
+ *  declared surface, never re-shaped into a miss. */
+export interface TabsRefAnswer {
+  readonly found: boolean
+  readonly value: unknown
+  /** `(R-2)`: the store's own returned refusal record's reason (`'no-such-anchor'` at the
+   *  severed-anchor arm; the store's read-side union otherwise), `null` on a hit or a miss. */
+  readonly refused: string | null
+  /** The store's own refusal STEP (`'D-ANCHOR'` at the severed-anchor arm), `null` otherwise. */
+  readonly refusedStep: string | null
+  /** The store's own returned record for the refused arm, UNCHANGED — a VALUE, never a throw. */
+  readonly record: Record<string, unknown> | null
+}
+
+function readTabsRef(holder: GraphStore, name: string): TabsRefAnswer {
+  const miss: TabsRefAnswer = { found: false, value: undefined, refused: null, refusedStep: null, record: null }
   try {
     const read = holder.resolve as ((n: string) => unknown) | undefined
-    if (typeof read !== 'function') return { found: false, value: undefined }
-    const answer = read.call(holder, name) as { readonly found?: unknown; readonly value?: unknown } | null | undefined
-    if (answer === null || answer === undefined || typeof answer !== 'object') return { found: false, value: undefined }
-    return answer.found === true ? { found: true, value: answer.value } : { found: false, value: undefined }
+    if (typeof read !== 'function') return miss
+    const answer = read.call(holder, name) as Record<string, unknown> | null | undefined
+    if (answer === null || answer === undefined || typeof answer !== 'object') return miss
+    if (answer['found'] === true) return { found: true, value: answer['value'], refused: null, refusedStep: null, record: null }
+    // `(R-2)` — THE CLOSED-REFERENCE REFUSAL, CARRIED THROUGH RATHER THAN COLLAPSED: the returned
+    // record is the store's own answer (a VALUE — `§2.5`'s throw pattern names no read throw), and
+    // its own `reason`/`step` are surfaced so the two admissible answers stay distinguishable.
+    const reason = typeof answer['reason'] === 'string' ? (answer['reason'] as string) : null
+    const step = typeof answer['step'] === 'string' ? (answer['step'] as string) : null
+    return { found: false, value: undefined, refused: reason, refusedStep: step, record: answer }
   } catch {
-    return { found: false, value: undefined }
+    return miss
   }
 }
 
@@ -268,14 +431,36 @@ function readTabsRef(holder: GraphStore, name: string): { readonly found: boolea
  *  outcome — the caller does not write it, so no duplicate entry ever appears in `order`. The
  *  refusal is CALLER-SIDE because the store ships no `'duplicate-id'` refusal and adding one
  *  would be a store-member change this unit is forbidden (`§5.1`). TOTAL: an unreadable record
- *  answers the refusal and never throws. */
-function mintTabId(holder: GraphStore, tabId: string): { readonly ok: boolean; readonly id: string | null } {
-  const refused = { ok: false, id: null } as const
-  if (typeof tabId !== 'string' || tabId.length === 0) return refused
+ *  answers the refusal and never throws.
+ *
+ *  **THE MINT ENFORCES `PAR-4`'s WHOLE DOMAIN, WITH A DECLARED OUTCOME PER REFUSAL (`H-6`).**
+ *  As filed the role returned a BARE BOOLEAN pair and enforced the duplicate rule ALONE, so
+ *  three declared OUTSIDE values entered `order` unchallenged: a DOTTED id (a dotted spelling
+ *  addresses a DEEPER LEAF — a tab id is ONE segment, `PAR-4`; `§2.1`'s "no name is a wildcard"
+ *  note makes every operation argument a concrete spelling), the RESERVED spelling `landing`
+ *  (a mint of a second entry under that spelling is THE SAME ENTRY — `PAR-4`; `§2.1` item 6,
+ *  `R3-2`), and an EMPTY/NON-STRING segment (`'malformed-name'`'s own domain, `PAR-1`). The
+ *  outcome is a DECLARED refusal REASON beside the boolean, so every outside value names WHY it
+ *  was refused rather than sharing one bare `false`. */
+export interface TabsMintOutcome {
+  readonly ok: boolean
+  readonly id: string | null
+  /** THE DECLARED REFUSAL REASON (`PAR-4`/`PAR-1`): `'malformed-id'` (a non-string or an empty
+   *  segment), `'dotted-id'` (a spelling that addresses a deeper leaf), `'reserved-spelling'`
+   *  (the reserved `landing` entry, whose second mint is the same entry), `'duplicate-id'` (the
+   *  id is already a member of the persisted `order`), or `null` on a successful mint. */
+  readonly refusal: 'malformed-id' | 'dotted-id' | 'reserved-spelling' | 'duplicate-id' | null
+}
+
+export function mintTabId(holder: GraphStore, tabId: string): TabsMintOutcome {
+  const refuse = (refusal: TabsMintOutcome['refusal']): TabsMintOutcome => ({ ok: false, id: null, refusal })
+  if (typeof tabId !== 'string' || tabId.length === 0) return refuse('malformed-id')
+  if (tabId.includes('.')) return refuse('dotted-id')
+  if (tabId === TABS_LANDING_ID) return refuse('reserved-spelling')
   const answer = readTabsRef(holder, TABS_ORDER_NAME)
   const members = Array.isArray(answer.value) ? (answer.value as readonly unknown[]) : []
-  if (members.includes(tabId)) return refused
-  return { ok: true, id: tabId }
+  if (members.includes(tabId)) return refuse('duplicate-id')
+  return { ok: true, id: tabId, refusal: null }
 }
 
 /** THE CLOSE SITE (`§2.4` item 1's note; `§3.4` item 4): the declared reference set under the
@@ -283,39 +468,140 @@ function mintTabId(holder: GraphStore, tabId: string): { readonly ok: boolean; r
  *  OWN flat leaf PLUS ONE `commit('file.tabs.order', <the sequence without the id>)`. The close
  *  is NEVER `set(name, undefined)` and NEVER an in-memory splice (`§2.4` item 6), and the
  *  `order` rewrite is a WRITE (the minting/re-minting operation) because `set` on a cold leaf is
- *  REFUSED `'undeclared-name'` (`§2.4` item 3). THE PRE-STATE IS CAPTURED HERE, at the caller's
- *  own close site, BEFORE the removals — so a `remove`-triggered evaluation can read the removed
- *  entry's own index (`AMB-2`'s declared default). The reserved landing entry's OWN removal is
- *  refused by name, so it is never in this set. */
-function closeTab(holder: GraphStore, tabId: string, nextOrder: readonly string[]): void {
-  const current = readTabsRef(holder, TABS_ORDER_NAME)
-  tabsPreRemovalOrder = Array.isArray(current.value) ? [...(current.value as readonly string[])] : []
-  holder.remove(tabsEntryName(tabId))
-  holder.commit(TABS_ORDER_NAME, [...nextOrder])
+ *  REFUSED `'undeclared-name'` (`§2.4` item 3). The pre-state the referent rules read is the
+ *  MACHINERY'S OWN capture (`current` — `§2.4` item 5), read per evaluation by the member; the
+ *  site itself no longer holds a call-crossing pre-removal cell (`H-3`). The reserved landing
+ *  entry's OWN removal is refused by name, so it is never in this set.
+ *
+ *  **BOTH RECEIPTS ARE RETURNED, AND A CALLER-SUPPLIED SEQUENCE THAT STILL NAMES THE CLOSED ID
+ *  IS REFUSED (`H-7`).** As filed the role returned `void` and discarded BOTH receipts, so a
+ *  second close, a close of a non-existent tab and a `nextOrder` that still names the closed id
+ *  were INDISTINGUISHABLE to any caller — the close's own declared outcome set (`F-T2-5`'s
+ *  repeated-close record above all) was unobservable at the site that performs it. THE THREE
+ *  OUTCOMES ARE NOW DISTINGUISHABLE WITHOUT CHANGING THE CLOSE'S DECLARED OPERATIONS: the two
+ *  receipts (`remove`'s own returned record, the `order` rewrite's record) are returned, and the
+ *  `order` rewrite is WITHHELD — never performed — when `nextOrder` still names `tabId`, because
+ *  `§2.4` item 1's FAIL clause is "a close that leaves the id in `order`" and `PAR-10`'s declared
+ *  set is the id's own seat DROPPED. */
+export interface TabsCloseOutcome {
+  /** THE TWO CALLER OPERATIONS, `2` under the ruled flat form (`§2.4` item 4's note). */
+  readonly callerOperations: number
+  /** The `remove`'s returned record (the declared `'undeclared-name'` record on a repeat). */
+  readonly remove: unknown
+  /** The `order` rewrite's returned record; `undefined` when the rewrite was REFUSED AT THE SITE. */
+  readonly commit: unknown
+  /** `null`, or the site's own declared refusal when `nextOrder` still named the closed id. */
+  readonly refusal: 'order-names-closed-id' | null
 }
 
-/** THE BOUNDED WIRING ROLE THAT DRIVES THE AUTHORED LANDING PAGE (`§3.5` item 1, `§3.5` item 3).
- *  THE RECORD'S WITNESS: the landing ENTRY's value reads active by the DECLARED ACCESSOR PAIR
- *  with NO other active entry. The role READS THE RECORD and resolves the AUTHORED node through
- *  the already-landed host-side query (`Runtime.elementForNodeId`, `§3.5` item 4 — the ONE
- *  renderability instrument, which reads no rect, no coordinate and no computed style); it
- *  authors no element, no class and no text, and it is driven by the RECORD — NEVER by the
+export function closeTab(holder: GraphStore, tabId: string, nextOrder: readonly string[]): TabsCloseOutcome {
+  const removeReceipt = holder.remove(tabsEntryName(tabId))
+  if (nextOrder.includes(tabId)) {
+    return { callerOperations: 1, remove: removeReceipt, commit: undefined, refusal: 'order-names-closed-id' }
+  }
+  const commitReceipt = holder.commit(TABS_ORDER_NAME, [...nextOrder])
+  return { callerOperations: 2, remove: removeReceipt, commit: commitReceipt, refusal: null }
+}
+
+/** THE BOUNDED WIRING ROLE THAT DRIVES THE TWO AUTHORED PAGES (`§3.5` items 1/3) — **ONE BOUNDED
+ *  PATH FOR BOTH TERMINALS** (`H-8`). THE RECORD'S WITNESS: the landing ENTRY's value reads
+ *  active by the DECLARED ACCESSOR PAIR with NO other active entry; the error page's witness is a
+ *  tab whose own ENTRY carries an `error` value (`§3.5` item 2's record witness, read through the
+ *  same flat accessor as the active mark). The role READS THE RECORD and resolves the AUTHORED
+ *  nodes through the already-landed host-side query (`Runtime.elementForNodeId`, `§3.5` item 4 —
+ *  the ONE renderability instrument, which reads no rect, no coordinate and no computed style);
+ *  it authors no element, no class and no text, and it is driven by the RECORD — NEVER by the
  *  wiring's recollection of an event (`§3.5` item 1: a landing page rendered from a state whose
- *  `landing.active` is not `true` FAILS). */
-function driveTabsLandingPage(holder: GraphStore, runtime: { elementForNodeId(id: string): unknown | null }): void {
+ *  `landing.active` is not `true` FAILS).
+ *
+ *  **WHAT THE AS-FILED FORM GOT WRONG, NAMED (`H-8`):** the ERROR page had NO DRIVER at all
+ *  (`TABS_ERROR_PAGE_ID` appeared only as a DISCARDED expression), the landing driver DISCARDED
+ *  its own resolved answer (`void runtime.elementForNodeId(...)`), and the in-code comment cited
+ *  a clause the body did not satisfy. The resolved node's own ANSWER is now USED and REPORTED as
+ *  a VALUE (`§3.5` item 4: `elementForNodeId(id)` answers a value or `null`), and a witness that
+ *  is FALSE drives NOTHING for that page. TOTAL: the role answers a record and never throws. */
+export interface TabsPagesReading {
+  /** The landing entry's own record witness (`§3.5` item 1) and the node the witness drives. */
+  readonly landing: { readonly witness: boolean; readonly nodeId: string; readonly resolved: unknown }
+  /** The error page's own record witness (`§3.5` item 2) and the node the witness drives. */
+  readonly error: { readonly witness: boolean; readonly nodeId: string; readonly tabId: string | null; readonly resolved: unknown }
+}
+
+export function driveTabsLandingPage(holder: GraphStore, runtime: { elementForNodeId(id: string): unknown | null }): TabsPagesReading {
   const landing = readTabsRef(holder, TABS_LANDING_NAME)
-  if (!tabsEntryReadsActive(landing.value)) return
   const order = readTabsRef(holder, TABS_ORDER_NAME)
   const members = Array.isArray(order.value) ? (order.value as readonly unknown[]) : []
   let actives = 0
+  let errorTabId: string | null = null
   for (const tabId of members) {
     if (typeof tabId !== 'string') continue
     const entry = readTabsRef(holder, tabsEntryName(tabId))
     if (entry.found && tabsEntryReadsActive(entry.value)) actives += 1
+    // THE ERROR PAGE'S OWN WITNESS (`§3.5` item 2): a tab whose ENTRY carries an `error` value —
+    // the caller's own token, read off the declared flat entry (`entry.error`, the object-valued
+    // arm's declared home, `§0D` item `1`(e)); a tab carrying NO value MUST NOT drive the page.
+    if (entry.found && entry.value !== null && typeof entry.value === 'object') {
+      const error = (entry.value as Record<string, unknown>)['error']
+      if (error !== null && error !== undefined && errorTabId === null) errorTabId = tabId
+    }
   }
-  if (actives !== 1) return
-  void runtime.elementForNodeId(TABS_LANDING_PAGE_ID)
-  void TABS_ERROR_PAGE_ID
+  const landingWitness = tabsEntryReadsActive(landing.value) && actives === 1
+  const errorWitness = errorTabId !== null
+  const landingResolved = landingWitness ? runtime.elementForNodeId(TABS_LANDING_PAGE_ID) : null
+  const errorResolved = errorWitness ? runtime.elementForNodeId(TABS_ERROR_PAGE_ID) : null
+  return {
+    landing: { witness: landingWitness, nodeId: TABS_LANDING_PAGE_ID, resolved: landingResolved },
+    error: { witness: errorWitness, nodeId: TABS_ERROR_PAGE_ID, tabId: errorTabId, resolved: errorResolved },
+  }
+}
+
+/** THE SLICE BOOT STEP'S OWN ROLE (`§3.3` items 1/3/4/5 — `C-12`'s claim, the reservation's
+ *  form), **EXPORTED AS `SD-G4-1`'S SIBLING SEAM**: the step's behaviour is MOVED HERE OUT OF
+ *  `main()` UNCHANGED IN SEMANTICS and `main()` CALLS THIS FUNCTION, so the guarded site is the
+ *  SAME code a row drives — there is no second copy of the step anywhere (the close site's, the
+ *  mint's and the two pages' drives answer exported seams already; the boot step answers this
+ *  one, which is what makes `G-5`/`H-4` drivable at all).
+ *
+ *  **THE DECLARED SHAPE, EXACTLY AS `§3.3` ITEM 3 STATES IT:** the caller hands the store its
+ *  handed-off membership sequence, and when a sequence is ACTUALLY CARRIED the function performs
+ *  **ONE `commit` on the record's membership name** (`TABS_ORDER_NAME` — the membership rewrite
+ *  is the declared vehicle), whose post-state the constraint evaluates, in the SAME committed
+ *  write as any repair it lands, and NEVER on a later read. `§3.3` item 4's three negatives hold
+ *  in this body: it performs NO caller `set` of the landing entry's `active` (that is `F-T2-3`'s
+ *  forbidden shape), it does NOT re-mint the record through duplicate `commit` chains, and it
+ *  cannot run before the hand-off because the hand-off is its argument.
+ *
+ *  **THE GUARD, AND WHY IT IS THE WHOLE OF `H-4`** (`§3.3` item 4; the as-filed defect, named):
+ *  as filed the step committed `[]` WHENEVER the hand-off was an ARRAY, so a FIRST-EVER boot — a
+ *  COLD tier handing off `[]`, the boot-handoff default — MINTED the membership leaf and, through
+ *  the repair that evaluates it, the reserved landing ENTRY's own leaf, emitting repair events on
+ *  a tier that held NOTHING. **A HAND-OFF THAT CARRIES NO MEMBERSHIP SEQUENCE PERFORMS NO WRITE
+ *  AT ALL: no commit, nothing minted, no event.** A hand-off that DOES carry a sequence IS
+ *  evaluated — that is the reservation this unit takes — and an EMPTY sequence is the
+ *  no-sequence case too: committing it would mint, and `[]` is precisely what a cold tier hands
+ *  off. The answer is a DECLARED outcome either way — the evaluated write's own receipt, or the
+ *  declared no-write value — NEVER a bare `void` and NEVER a throw (the store answers values,
+ *  `§2.5`'s throw pattern names no store throw this path can trigger). */
+export interface TabsBootOutcome {
+  /** THE DISCRIMINATOR: `true` exactly when ONE committed membership write was performed and
+   *  evaluated; `false` on the declared no-write arm (`receipt` then `null`). */
+  readonly written: boolean
+  /** THE EVALUATED WRITE'S OWN RECEIPT — the store's returned `GraphWriteReceipt`
+   *  (`§2.5`: `{ status, name, cleared, repaired, rows, crossings, events, … }`), which is
+   *  where the boot step's repair is OBSERVABLE (`§3.3` item 5's `repaired: [...]` terms and
+   *  its `repaired: []` positive control); **`null` on the declared no-write arm** — so "no
+   *  write was performed" is a VALUE the caller reads, never an absence it must infer. */
+  readonly receipt: unknown
+}
+
+export function evaluateTabsBootStep(store: GraphStore, handedOrder: readonly string[] | undefined): TabsBootOutcome {
+  // THE GUARD (`H-4`): a hand-off carrying NO membership sequence — absent, or the cold tier's
+  // empty one — performs NO commit, mints nothing and fires nothing.
+  if (!Array.isArray(handedOrder) || handedOrder.length === 0) return { written: false, receipt: null }
+  // THE ONE EVALUATED WRITE (`§3.3` item 3): the membership rewrite, carrying the handed-off
+  // sequence in the same copy discipline the caller's own writes use.
+  const receipt = store.commit(TABS_ORDER_NAME, [...handedOrder])
+  return { written: true, receipt }
 }
 
 function buildWiredGraphStore(options?: WiredStoreOptions): GraphStore {
@@ -858,11 +1144,23 @@ async function main(): Promise<void> {
   // (`§3.3` item 3). WHAT IT MUST NOT DO, and does not (`§3.3` item 4): it performs NO caller
   // `set` of the landing entry's `active` (that would be `F-T2-3`'s forbidden shape), it does NOT
   // bypass `hydrate` by re-minting the record through duplicate `commit` chains, and it does not
-  // run before the hand-off. A cold tier hands off `[]`, and the write is a total no-op there.
-  if (Array.isArray(bootHandoff)) {
-    const handedTabsOrder = bootHandoff.find((row) => row.name === TABS_ORDER_NAME)
-    wired.commit(TABS_ORDER_NAME, Array.isArray(handedTabsOrder?.value) ? [...(handedTabsOrder.value as readonly string[])] : [])
-  }
+  // run before the hand-off.
+  // **A COLD TIER PERFORMS NO COMMIT AT ALL (`H-4`), AND THAT IS THE CODE'S OWN CLAIM MADE
+  // TRUE: the step is GUARDED ON THE HAND-OFF ACTUALLY CARRYING A MEMBERSHIP SEQUENCE.** As
+  // filed the step committed `[]` whenever the hand-off was an ARRAY — so a FIRST-EVER boot (a
+  // cold tier handing off `[]`, the boot-handoff default) MINTED the membership leaf and,
+  // through the repair that evaluates it, the reserved landing ENTRY's own leaf, emitting
+  // repair events on a tier that held NOTHING. A hand-off that DOES carry an `order` sequence IS
+  // evaluated (that is the reservation this unit takes, `§3.3` item 3/5); a hand-off carrying NO
+  // sequence performs no write, mints nothing and fires nothing. NO CALLER `set` of the landing
+  // entry's `active` is involved either way (`§3.3` item 4).
+  // **THE BODY LIVES IN THE EXPORTED SEAM, NOT HERE** (`evaluateTabsBootStep`, this unit's
+  // `SD-G4-1`-sibling addition): the guard, the ONE evaluated `commit` and its declared outcome
+  // are ONE body, `main()` calls it, and the boot step therefore has NO second copy — a row can
+  // drive the very site this call executes (`§3.3` items 3/4/5).
+  const handedTabsOrder = Array.isArray(bootHandoff) ? bootHandoff.find((row) => row.name === TABS_ORDER_NAME) : undefined
+  const handedOrderSequence = Array.isArray(handedTabsOrder?.value) ? (handedTabsOrder.value as readonly string[]) : undefined
+  evaluateTabsBootStep(wired, handedOrderSequence)
   // ⟶ THE FOCUS CARRIER (`U-STORE-FOCUS`, §2.3 items 1/2): boot-constructed from the
   // wired store — the boot MINT-DECLARES `mem.focus` (the register's row pre-exists the
   // first focus write) and the two exact-reference store subscriptions (rule 2) register
