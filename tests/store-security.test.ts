@@ -122,7 +122,7 @@ import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { tmpdir } from 'node:os'
 import { createHash } from 'node:crypto'
-import { createSecurityStore, type SecurityStore, type SecurityWriteReceipt } from '../src/main/security-store.js'
+import { createSecurityStore, type SecurityStore, type SecurityWriteReceipt, type Tier4WriteAnswer } from '../src/main/security-store.js'
 import { createGraphStore } from '../src/renderer/store-core-graph.js'
 import { SecurePanels } from '../src/renderer/secure-panels.js'
 // G3 gate-4 finding 2 (RED-SET-FIX): the re-authored P-SE-SM-2 reading-1 drives the REAL
@@ -529,7 +529,12 @@ describe('G3 §2.3 THE RECEIPT (red: the receipt members do not exist)', () => {
     expect(lastWriteReceipt(store), 'M-2 — lastWriteReceipt() = committed (§2.3 item 2)').toEqual({ status: 'committed' })
     // THE TYPED CALL — the honest tsc diagnostic (TS2339 below: `lastWriteReceipt` does not
     // exist on `SecurityStore` today; the member is the receipt's HOME, §2.1 item 4):
-    const __typedReceipt: SecurityWriteReceipt | null = store.lastWriteReceipt()
+    // `S2` `U-TIER4-ARBITRARY-STORAGE` `§7b` row 3 ANNOTATION (`§2.1` item 3 / `§2.4` item 3):
+    // this annotation was `SecurityWriteReceipt | null`; the member's LANDED declared type is the
+    // SUPERSET `Tier4WriteAnswer | null` (`= SecurityWriteReceipt | Tier4ClosedRefusal`, with
+    // `SecurityWriteReceipt` itself byte-identical).  TYPE-only: the assertion below is unmoved and
+    // still demands the ONE closed commit form on a first write to a cold, writable path.
+    const __typedReceipt: Tier4WriteAnswer | null = store.lastWriteReceipt()
     expect(__typedReceipt).toEqual({ status: 'committed' })
     // the in-memory config is the process-lifetime authority (§2.1 item 2, P §1.1 store 4):
     expect(store.get().token).toBe('abc')

@@ -183,7 +183,7 @@ import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { tmpdir } from 'node:os'
 import { createHash } from 'node:crypto'
-import { createSecurityStore, type SecurityStore, type SecurityWriteReceipt } from '../src/main/security-store.js'
+import { createSecurityStore, type SecurityStore, type SecurityWriteReceipt, type Tier4WriteAnswer } from '../src/main/security-store.js'
 
 /* ==========================================================================
  * THE `node:fs` FAILURE INJECTION (the seam §5.6.1 REG-2's "each refusal
@@ -492,7 +492,18 @@ const MEMBER_CENSUS: readonly string[] = ['get', 'lastWriteReceipt', 'readEntry'
  * THE RECEIPT / RECORD DETECTORS
  * ======================================================================== */
 
-function assertReceiptShape(r: SecurityWriteReceipt | null | undefined, ctx: string): void {
+/* `S2` `U-TIER4-ARBITRARY-STORAGE` `§7b` row 3 / `§2.1` item 3 / `§2.4` item 3 ANNOTATION
+ * (a TYPE-only correction on the TEST side; `src/**` is the contract and NO byte of it moves).
+ * As filed this parameter was `SecurityWriteReceipt | null | undefined`; the tier's ONE declared
+ * read-surface widening is `lastWriteReceipt(): Tier4WriteAnswer | null` — the declared SUPERSET
+ * `SecurityWriteReceipt | Tier4ClosedRefusal`, with `SecurityWriteReceipt` itself byte-identical —
+ * so this detector now takes the SAME answer the production holder answers.  NO ASSERTION IS
+ * TOUCHED: the body still pins BOTH closed forms member-for-member (`status` alone on a commit;
+ * exactly `status`+`reason` on a refusal), and the `'tier4-closed'` form has exactly that shape
+ * (its `message` member rides the THIRD closed form's own carrier, asserted in
+ * `tests/tier4-arbitrary-storage.test.ts`, never here).  The four CONTROL rows at `:2571-2574`
+ * (a third status · an extra member · a reason-less refusal · `null`) keep their bite unchanged. */
+function assertReceiptShape(r: Tier4WriteAnswer | null | undefined, ctx: string): void {
   if (r === null || r === undefined) throw new Error(`${ctx}: the receipt is ${String(r)} (never after an attempt — §2.1 item 6/PAR-10)`)
   const keys = Object.keys(r).sort()
   if (r.status === 'committed') {
