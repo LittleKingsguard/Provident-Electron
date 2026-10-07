@@ -344,6 +344,10 @@ this set over-reads either half.
 
 ---
 
+**⟶ DATED POINTER, `2026-10-11` — THE `docs/pending.md` CITATIONS IN THIS FILE RESOLVE HERE (`RCA-8(d)`: an ADDITIVE block, placed beside the file-end note below; NOT ONE PRE-EXISTING BYTE IS REWRITTEN, no reading or verdict moves).** **THE CITED SECTION IS `docs/pending.md` `§Q` — the two-rule re-read and the `provident.focus` `PENDING-REBUILD` cell (named at the tracker-cells row, at `SF-G-09` and at `SF-G-45`'s supporting citations).** **`§Q` IS RETIRED BY THE `2026-10-11` SWEEP, AND EVERY CITE-SITE RESOLVES TO A STUB IN `docs/pending.md` `§6.4` + `§6.6` (the `§Q` row and the letter stub).** **THE PER-ROW RECORD IS `archive/pending/2026-10-11-retired-rows-index.md` (`§E`); THE AS-FILED TEXT IS `archive/pending/2026-10-11-pending-as-filed-pre-sweep.md` (`sha256 b437a7db5398af3f14d8286f8b3e442ceae38308baf17ee8970da4fa89368382`, byte-identical to `git show 35fc7f2:docs/pending.md`).** **AND THE LIVE OBLIGATION IS RESTATED IN `docs/pending.md` `§1(i)` (`§Q`'s exemption arm) and `§3` (the store-side carries); this unit's authority remains `docs/next-steps.md`'s `## DONE — U-STORE-FOCUS` section.**
+
+---
+
 *File-end note (the sibling convention): nothing follows this line. This artifact is `docs/specs/store-focus-greens.md`
 — the unit's gate-5 blind-greens record (the spec's `§5.1` row 3's `ALLOWED — NEW` artifact and `§5.3` item 7's named
 record). It was authored from the documentation alone and run against the live suites; it edits no spec, no tracker, no
