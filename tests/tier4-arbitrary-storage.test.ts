@@ -114,9 +114,15 @@ interface FsLog {
   writeFileAt: number | null
   fsyncAt: number | null
   renameFail: boolean
+  /** ⟶ ADDED `2026-10-11` (the repair contract, **D-ix**): the READ-class members of the seam
+   *  (`existsSync` / `readFileSync`) are logged too, so the DECLARED boot-ingestion turn is a
+   *  MEASUREMENT. It defaults to `false`, so every pre-existing drive's readings are byte-for-byte
+   *  what they were (the as-filed instrument could not see the ingestion read at all, which is
+   *  exactly what D-ix names: the clause binds the REFUSAL path's WRITE-class calls). */
+  logReads: boolean
 }
 function freshFsLog(): FsLog {
-  return { calls: [], writeFileAt: null, fsyncAt: null, renameFail: false }
+  return { calls: [], writeFileAt: null, fsyncAt: null, renameFail: false, logReads: false }
 }
 /** THE SEAM'S TYPE — exact-`typeof` compatibility (`leg 4`, `npm run typecheck:tests`):
  *  each member is declared with the REAL `node:fs` signature, so the seam is
@@ -142,9 +148,14 @@ function makeFsSeam(log: FsLog): FsSeam {
   const seam: FsSeam = {
     // The store's own read shape: a UTF-8 string. Declared explicitly (and cast) so the
     // seam satisfies the real `node:fs` overload without widening the store's contract.
-    readFileSync: ((path: Parameters<typeof fsModule.readFileSync>[0], options?: unknown) =>
-      fsModule.readFileSync(path as never, (options ?? 'utf8') as never) as never) as FsSeam['readFileSync'],
-    existsSync: (path) => fsModule.existsSync(path),
+    readFileSync: ((path: Parameters<typeof fsModule.readFileSync>[0], options?: unknown) => {
+      if (log.logReads) log.calls.push(`readFile:${String(path)}`)
+      return fsModule.readFileSync(path as never, (options ?? 'utf8') as never) as never
+    }) as FsSeam['readFileSync'],
+    existsSync: (path) => {
+      if (log.logReads) log.calls.push(`exists:${String(path)}`)
+      return fsModule.existsSync(path)
+    },
     mkdirSync: (dir, options) => {
       log.calls.push(`mkdir:${String(dir)}`)
       return fsModule.mkdirSync(dir, options)
@@ -258,21 +269,33 @@ interface StoreFixture {
   makeDirAtPath: () => Promise<void>
 }
 
-async function makeStoreFixture(opts?: { fsOpts?: boolean }): Promise<StoreFixture> {
+async function makeStoreFixture(opts?: { fsOpts?: boolean; readLog?: boolean; fsSurface?: unknown }): Promise<StoreFixture> {
+  const dir = join(baseDir, String(seq++))
+  const path = join(dir, 'provident-security.json')
+  return makeStoreOnPath(path, { ...opts, dir })
+}
+
+/** ⟶ ADDED `2026-10-11` (the repair contract, **D-ii**'s *"still there after a RE-CONSTRUCTED store
+ *  on the same path"*): the SAME construction, against a path that already exists — so the second
+ *  instance's own boot INGESTION is what is being read, never a re-used closure. Also the ONE place
+ *  a caller-supplied `fs` surface is handed (`D-iv`: an INCOMPLETE surface must NOT be adopted). */
+async function makeStoreOnPath(path: string, opts?: { fsOpts?: boolean; readLog?: boolean; fsSurface?: unknown; dir?: string }): Promise<StoreFixture> {
   if (storeModule.module === null) {
     throw new Error(`S2-RED: the store module is ABSENT — ${storeModule.reason}`)
   }
-  const dir = join(baseDir, String(seq++))
-  const path = join(dir, 'provident-security.json')
+  const dir = opts?.dir ?? join(baseDir, String(seq++))
   const log = freshFsLog()
+  log.logReads = opts?.readLog === true
   // `SecurityStoreOptions` IS UNMOVED AT `{ path }` (`§0A` item 1, `A-1`'s ruling): the ONLY
-  // construction input is the path. The `fs` seam stays an UNDECLARED construction extra (`§9`
-  // item 5(b)), so it moves no option term. WHILE THE LEAF IS ABSENT the fixture passes the landed
-  // `tier4Open` thunk as a LEGACY FALLBACK — dead code the instant `src/main/tier4-state.ts`
-  // lands — so the rows that do NOT assert the holder keep their own subjects.
+  // construction input is the path. The `fs` seam is the module's SECOND declared construction
+  // input (`D-iv`, the `§6` `PAR-14` row) — the declared interface PLUS the destructured extra.
+  // WHILE THE LEAF IS ABSENT the fixture passes the landed `tier4Open` thunk as a LEGACY FALLBACK —
+  // dead code the instant `src/main/tier4-state.ts` lands — so the rows that do NOT assert the
+  // holder keep their own subjects.
   const construction: Record<string, unknown> = { path }
   if (tier4StateModule === null) construction.tier4Open = () => openState
-  if (opts?.fsOpts !== false) construction.fs = makeFsSeam(log)
+  if (opts?.fsSurface !== undefined) construction.fs = opts.fsSurface
+  else if (opts?.fsOpts !== false) construction.fs = makeFsSeam(log)
   const store = storeModule.module.createSecurityStore(construction) as StoreLike
   return {
     store, path, log,
@@ -358,6 +381,161 @@ function segmentDetector(text: string, read: unknown): boolean {
 function fabricatedDisabledDetector(text: string, exclusion: string): boolean {
   if (exclusion === STATE_MCP_DISABLED) return /· MCP: disabled/.test(text)
   return /· MCP: enabled/.test(text)
+}
+
+/* ═══════════ THE REPAIR CONTRACT'S INSTRUMENTS (`2026-10-11`, gate 4's ruled repairs) ═══════
+ * Every detector below is driven BOTH WAYS by the row that uses it (a control that MUST fire and
+ * a control that MUST NOT), so no absence-asserting arm is vacuous (`RCA-8(d)`).
+ * `D-i` `-0` · `D-ii` `__proto__` · `D-iii` the non-object boot record · `D-iv` the `fs` seam's
+ * census and its call surface · `D-vi` the pane's fabrications · `D-vii` the boot order ·
+ * `D-viii` the handler's ONE reading · `D-ix` the WRITE-class `fs` reading · `D-x` the full pins. */
+const FS_MEMBER_NAMES = ['readFileSync', 'existsSync', 'mkdirSync', 'writeFileSync', 'openSync', 'closeSync', 'fsyncSync', 'renameSync', 'rmSync'] as const
+/** `D-ix`: the WRITE-class members of the `fs` surface — the ones a refusal must never touch — and
+ *  the READ-class pair, which is the DECLARED boot-ingestion turn (`exists:`/`readFile:`). */
+const WRITE_CLASS_CALL = /^(?:mkdir|writeFile|open|fsync|rename|rm):/
+const READ_CLASS_CALL = /^(?:exists|readFile):/
+function writeClassCalls(calls: readonly string[]): string[] { return calls.filter((c) => WRITE_CLASS_CALL.test(c)) }
+function readClassCalls(calls: readonly string[]): string[] { return calls.filter((c) => READ_CLASS_CALL.test(c)) }
+/** Comments stripped, by a small SCANNER (never by a regex): the subject is CODE, never prose —
+ *  `D-vi`/`D-viii` and the row-10 re-grain all require a detector a comment cannot satisfy. The
+ *  scanner walks strings VERBATIM (a `//` inside a literal is not a comment), which also means a
+ *  prose mention of a glob such as `src/**` inside a LINE comment can never open a block comment
+ *  and swallow the code beneath it — the failure mode a regex stripper has, and one this file
+ *  hit while being authored. */
+function codeOnly(src: string): string {
+  let out = ''
+  let i = 0
+  while (i < src.length) {
+    const ch = src[i]
+    const next = src[i + 1]
+    if (ch === '/' && next === '*') {
+      const end = src.indexOf('*/', i + 2)
+      i = end === -1 ? src.length : end + 2
+      out += ' '
+      continue
+    }
+    if (ch === '/' && next === '/') {
+      const end = src.indexOf('\n', i)
+      i = end === -1 ? src.length : end
+      out += ' '
+      continue
+    }
+    if (ch === "'" || ch === '"' || ch === '`') {
+      const quote = ch
+      let j = i + 1
+      while (j < src.length) {
+        if (src[j] === '\\') { j += 2; continue }
+        if (src[j] === quote) { j += 1; break }
+        j += 1
+      }
+      out += src.slice(i, j)
+      i = j
+      continue
+    }
+    out += ch
+    i += 1
+  }
+  return out
+}
+/** The GET answer's OWN object literal — the ONLY region a carrier-MEMBER detector may read, so a
+ *  detector can never fire on a LOCAL (`const exclusion: ExclusionState = …` · `const read: …`),
+ *  which is exactly the class the row-10 re-grain exists to close. */
+function answerLiteralOf(handlerSrc: string): string {
+  const braceAt = handlerSrc.indexOf('({')
+  if (braceAt === -1) return ''
+  let depth = 0
+  for (let i = braceAt + 1; i < handlerSrc.length; i++) {
+    const ch = handlerSrc[i]
+    if (ch === '{') depth += 1
+    else if (ch === '}') { depth -= 1; if (depth === 0) return handlerSrc.slice(braceAt + 1, i + 1) }
+  }
+  return ''
+}
+/** `D-iv`: the module's REAL construction inputs — the DECLARED interface's members PLUS the
+ *  destructured extra. The non-destructured signature the bytes carry today answers `[]`. */
+function destructuredConstructionInputs(src: string): string[] {
+  const sig = /export function createSecurityStore\s*\(([\s\S]*?)\)\s*:/.exec(codeOnly(src))?.[1] ?? ''
+  if (!/\{/.test(sig)) return []
+  const brace = sig.slice(sig.indexOf('{') + 1, sig.lastIndexOf('}'))
+  return brace.split(',').map((p) => p.split(/[:=]/)[0].trim()).filter((n) => /^\w+$/.test(n)).sort()
+}
+/** `D-iv`: a call to a `node:fs` member by its BARE imported name (not through the surface
+ *  variable, whose receiver is `.`-qualified) — i.e. a call that BYPASSES the declared seam. */
+function bareFsCallNames(src: string): string[] {
+  const re = new RegExp(`(?<![.\\w$])(?:${FS_MEMBER_NAMES.join('|')})\\s*\\(`, 'g')
+  return [...src.matchAll(re)].map((m) => m[0].replace(/\s*\($/, ''))
+}
+/** `D-iv`: the `nodeFs` literal's own byte range — the ONE place the real `node:fs` may be read. */
+function nodeFsLiteralRange(src: string): [number, number] {
+  const at = src.indexOf('const nodeFs')
+  if (at === -1) return [-1, -1]
+  const open = src.indexOf('{', at)
+  if (open === -1) return [-1, -1]
+  let depth = 0
+  for (let i = open; i < src.length; i++) {
+    if (src[i] === '{') depth += 1
+    else if (src[i] === '}') { depth -= 1; if (depth === 0) return [at, i + 1] }
+  }
+  return [-1, -1]
+}
+function bareFsCallsOutsideNodeFs(src: string): string[] {
+  const [from, to] = nodeFsLiteralRange(src)
+  const outside = from === -1 ? src : src.slice(0, from) + src.slice(to)
+  return bareFsCallNames(outside)
+}
+/** `D-iv` (`(c)`): the module's own INCOMPLETE surface fixture — the four members a boot read needs
+ *  and NOT the write-critical ones, so an implementation that ADOPTS it refuses every write while
+ *  one that falls back to the real `node:fs` commits. */
+function incompleteFsSurface(): Record<string, unknown> {
+  return { existsSync: fsModule.existsSync, readFileSync: fsModule.readFileSync }
+}
+/** The expression bound to an object literal's MEMBER (`exclusion:` · `read:`), comment-stripped,
+ *  terminated at the member's own top-level `,` or `}` — never evaluated here. */
+function memberExpression(src: string, member: string): string {
+  const at = src.search(new RegExp(`\\b${member}\\s*:`))
+  if (at === -1) return ''
+  const start = src.indexOf(':', at) + 1
+  let depth = 0
+  for (let i = start; i < src.length; i++) {
+    const ch = src[i]
+    if ('([{'.includes(ch)) depth += 1
+    else if (')]}'.includes(ch)) { if (depth === 0) return src.slice(start, i).trim(); depth -= 1 }
+    else if (ch === ',' && depth === 0) return src.slice(start, i).trim()
+  }
+  return src.slice(start).trim()
+}
+/** `D-v`: the carrier's DERIVED `exclusion` member, EVALUATED with the ONE holder reading bound to
+ *  `open` — the `secure-exclusion.md` `§9` G6-row precedent (the expression is read off the
+ *  handler's own bytes and evaluated in a scope built from its own free identifiers).
+ *  DECLARED LIMIT, stated: a free identifier other than the holder reader (or a declared constant)
+ *  is bound to the boolean `open` — the shape both the landed and the repaired carrier have, since
+ *  the value it holds IS the one reading. An expression that reaches anything else (a store read,
+ *  a captured gate) throws here, which is exactly the FAILING direction. */
+function carrierExclusionAtBoot(handlerSrc: string, open: boolean): unknown {
+  const expr = memberExpression(answerLiteralOf(codeOnly(handlerSrc)), 'exclusion')
+  const names = [...new Set([...expr.matchAll(/[A-Za-z_$][\w$]*/g)].map((m) => m[0]))]
+    .filter((n) => !['true', 'false', 'null', 'undefined'].includes(n))
+  const values = names.map((n) => {
+    if (n === 'tier4OpenState') return () => open
+    if (n === STATE_MCP_DISABLED) return STATE_MCP_DISABLED
+    if (n === STATE_MCP_ENABLED) return STATE_MCP_ENABLED
+    if (n === 'TIER4_CLOSED') return TIER4_CLOSED
+    if (n === 'TIER4_CLOSED_MESSAGE') return TIER4_CLOSED_MESSAGE
+    if (n === 'EXCLUSION_CLOSED') return EXCLUSION_CLOSED
+    return open
+  })
+  // eslint-disable-next-line @typescript-eslint/no-implied-eval
+  return new Function(...names, `return (${expr})`)(...values) as unknown
+}
+/** `D-ii`/`D-iv`: every TypeScript module under `src/` (recursively), so a home or a direct `node:fs` call in a module the
+ *  as-filed three-file detectors did not read is still FOUND. */
+function listSourceFiles(root: string, out: string[] = []): string[] {
+  for (const entry of fsModule.readdirSync(root, { withFileTypes: true })) {
+    const full = join(root, entry.name)
+    if (entry.isDirectory()) listSourceFiles(full, out)
+    else if (entry.name.endsWith('.ts')) out.push(full)
+  }
+  return out
 }
 
 /* ═══════════════════════════ THE `main.ts` SOURCE PROBES (`[H]`, declared limit) ═════ */
@@ -839,10 +1017,56 @@ function buildRegister(): RegisterRow[] {
             const moduleLevelAssignment = /^(?:let|var)\s+\w+\s*=\s*(?:true|false)\s*;?\s*$/m
             expect(moduleLevelAssignment.test('let storeOpen = true;'), 'CONTROL: the holder detector FIRES on a MODULE-LEVEL mutable boolean (column 0)').toBe(true)
             expect(moduleLevelAssignment.test('  let settingsCorrupt = false'), 'CONTROL (negative): and it does NOT fire on a FUNCTION LOCAL (`main.ts`:127/136/142, `security-store.ts`:169 — the four unrelated `let … = true|false` bindings the as-filed form misfired on)').toBe(false)
+            /* ── RE-GRAINED `2026-10-11` (GATE 4's REPAIR CONTRACT, the row-4 re-grain — the four
+             * evasions gate 4 PROVED at the bytes must now FAIL, and the AS-FILED form above stays
+             * VISIBLE beside them, `RCA-8(d)`):
+             *   (a) a TYPED module-level declaration — `let tier4Open: boolean = true`: the as-filed
+             *       regex demands `= true|false` IMMEDIATELY after the name, so a type annotation
+             *       walked straight through it;
+             *   (b) a module-level RECORD home — `const tier4State = { open: true }`;
+             *   (c) a second home in a module the detector DOES NOT READ — the as-filed form tested
+             *       exactly three hard-coded files, so every other `src/**` module was unread;
+             *   (d) an ALIASED writer call — `import { setTier4OpenState as setOpen }` · `setOpen(true)`
+             *       · `const w = setTier4OpenState; w(true)`.
+             *  THE FOUR FUNCTION-LOCAL DECLARATIONS the predecessor already controlled for must STILL
+             *  NOT fire, and the leaf ALONE must fire. */
+            const moduleLevelTypedBoolean = /^(?:let|var)\s+[\w$]+\s*(?::\s*boolean)?\s*=\s*(?:true|false)\s*;?\s*$/m
+            const moduleLevelRecordHome = /^(?:const|let|var)\s+[\w$]+\s*(?::[^=]+)?=\s*\{[^}]*\b(?:open|closed|openState|tier4[\w$]*)\s*:\s*(?:true|false)\b/m
+            const homeDetector = (src: string): boolean => moduleLevelTypedBoolean.test(src) || moduleLevelRecordHome.test(src)
+            expect(moduleLevelTypedBoolean.test('let tier4Open: boolean = true'), 'CONTROL (a): a TYPED module-level declaration FIRES').toBe(true)
+            expect(moduleLevelAssignment.test('let tier4Open: boolean = true'), 'CONTROL (a): and the AS-FILED form did NOT — this is the evasion the re-grain closes').toBe(false)
+            expect(moduleLevelRecordHome.test('const tier4State = { open: true }'), 'CONTROL (b): a module-level RECORD home FIRES').toBe(true)
+            expect(moduleLevelRecordHome.test('const nodeFs: FsSurface = { readFileSync, existsSync }'), 'CONTROL (b, negative): a module-level record that carries NO boolean member does NOT fire').toBe(false)
+            /* (c) THE SCAN SCOPE — the detector must read the WHOLE `src/**` tree: */
+            const sourceFiles = listSourceFiles(join(REPO_ROOT, 'src'))
+            expect(sourceFiles.length, 'CONTROL (c): the declared scope is the WHOLE TypeScript tree under `src/`, not three hard-coded modules').toBeGreaterThan(20)
+            expect(sourceFiles.some((p) => p.endsWith(join('renderer', 'secure-panels.ts'))), 'CONTROL (c): a module the as-filed three-file list did NOT read is INSIDE the read set').toBe(true)
+            expect(homeDetector(codeOnly('let tier4Open: boolean = true')), 'CONTROL (c): a second home in a module the as-filed detector never read (e.g. `src/renderer/some-other-home.ts`) FIRES').toBe(true)
+            const homes = sourceFiles.filter((p) => homeDetector(codeOnly(sourceOrEmpty(p))))
+            expect(homes, `NO second home ANYWHERE in \`src/**\` — measured [${homes.map((p) => p.replace(REPO_ROOT, '')).join(', ')}]`).toEqual([TIER4_STATE_SRC])
+            for (const local of ['  let settingsCorrupt = false', '  let corrupt = false', '  let admissible: boolean = true', '  let loaded = false']) {
+              expect(homeDetector(local), `NEGATIVE CONTROL: the function local \`${local.trim()}\` is NOT a module-level home`).toBe(false)
+            }
+            /* (d) THE ALIASED WRITER — the census counts the DIRECT call sites, the import ALIASES
+             * and the VALUE ALIASES, so an aliased write cannot leave the subject: */
+            const writerSitesTotal = (src: string): number => {
+              const code = codeOnly(src)
+              const direct = (code.match(/setTier4OpenState\s*\(/g) ?? []).length
+              const importAliases = [...code.matchAll(/setTier4OpenState\s+as\s+([\w$]+)/g)].map((m) => m[1])
+              const valueAliases = [...code.matchAll(/(?:const|let|var)\s+([\w$]+)\s*=\s*setTier4OpenState\b/g)].map((m) => m[1])
+              let total = direct + importAliases.length + valueAliases.length
+              for (const alias of [...importAliases, ...valueAliases]) {
+                total += (code.match(new RegExp(`(?<![.\\w$])${alias}\\s*\\(`, 'g')) ?? []).length
+              }
+              return total
+            }
+            expect(writerSitesTotal("import { setTier4OpenState as setOpen } from './tier4-state.js'\nsetOpen(true)\n"), 'CONTROL (d): an ALIASED IMPORT call site FIRES').toBeGreaterThan(1)
+            expect(writerSitesTotal('const w = setTier4OpenState\nw(true)\n'), 'CONTROL (d): an ALIASED VALUE call site FIRES').toBeGreaterThan(1)
             const leaf = sourceOrEmpty(TIER4_STATE_SRC)
-            expect(moduleLevelAssignment.test(leaf), 'the ONE declared home — `src/main/tier4-state.ts` — DOES hold the module-level mutable boolean (`§0A` item 1)').toBe(true)
-            for (const [label, src] of [['mcp-server.ts', sourceOrEmpty(MCP_SERVER_SRC)], ['main.ts', sourceOrEmpty(MAIN_SRC)], ['security-store.ts', sourceOrEmpty(SECURITY_STORE_SRC)]] as Array<[string, string]>) {
-              expect(moduleLevelAssignment.test(src), `${label} holds NO module-level mutable home for the boolean — the home is the ONE leaf, never a second holder`).toBe(false)
+            expect(homeDetector(leaf), 'the ONE declared home — `src/main/tier4-state.ts` — DOES hold the module-level mutable boolean (`§0A` item 1)').toBe(true)
+            const mcp = sourceOrEmpty(MCP_SERVER_SRC)
+            for (const [label, src] of [['mcp-server.ts', mcp], ['main.ts', sourceOrEmpty(MAIN_SRC)], ['security-store.ts', sourceOrEmpty(SECURITY_STORE_SRC)]] as Array<[string, string]>) {
+              expect(homeDetector(codeOnly(src)), `${label} holds NO module-level mutable home for the boolean — the home is the ONE leaf, never a second holder`).toBe(false)
             }
             /* THE SITE DETECTOR READS CODE, NEVER PROSE (`2026-10-11`, the same class as item
              * (b)'s scope anchoring): the as-filed counter matched raw source, so the store's
@@ -850,15 +1074,30 @@ function buildRegister(): RegisterRow[] {
              * the holder; it never writes it"*) counted as a WRITE SITE. The subject is a call,
              * so comments are stripped before counting, and a commented mention is driven as a
              * NEGATIVE control. */
-            const withoutComments = (src: string): string => src.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/[^\n]*/g, '$1 ')
+            /* ⟶ RE-POINTED `2026-10-11` to the SCANNER (`codeOnly`): the as-filed local stripper was
+             * a REGEX whose `/*` opener could be found inside a PROSE glob (`src/**`) in a line
+             * comment, which then swallowed the code beneath it — a stripper that eats code makes a
+             * `0` reading meaningless. The subject and the bite are unchanged; the instrument is
+             * now sound. */
+            const withoutComments = codeOnly
             const writer = /setTier4OpenState\s*\(/g
             const sitesIn = (src: string): number => (withoutComments(src).match(writer) ?? []).length
-            const mcp = sourceOrEmpty(MCP_SERVER_SRC)
             expect(sitesIn('setTier4OpenState(true)'), 'CONTROL: the writer-sites detector FIRES on a call').toBe(1)
             expect(sitesIn('// the transition calls setTier4OpenState(...) here\n'), 'CONTROL (negative): and a COMMENTED mention is not a write site — the detector reads code, never prose').toBe(0)
-            expect(sitesIn(mcp), '`mcp-server.ts` holds the transition\'s ONE write of the holder').toBe(1)
-            expect(sitesIn(sourceOrEmpty(MAIN_SRC)), '`main.ts` holds NO writer of its own (`F-11`: main supplies STATE, never takes the DECISION)').toBe(0)
-            expect(sitesIn(sourceOrEmpty(SECURITY_STORE_SRC)), 'the store CONSULTS the holder; it never writes it (`§2.5` item 1)').toBe(0)
+            expect(writerSitesTotal(mcp), '`mcp-server.ts` holds the transition\'s ONE write of the holder — the DIRECT call site, with NO import alias and NO value alias (`D`\'s aliased-writer evasion is what the widened census closes)').toBe(1)
+            expect(sitesIn(mcp), 'and the as-filed direct-call reading agrees: one call site').toBe(1)
+            expect(writerSitesTotal(sourceOrEmpty(MAIN_SRC)), '`main.ts` holds NO writer of its own, aliased or direct (`F-11`: main supplies STATE, never takes the DECISION)').toBe(0)
+            expect(writerSitesTotal(sourceOrEmpty(SECURITY_STORE_SRC)), 'the store CONSULTS the holder; it never writes it (`§2.5` item 1)').toBe(0)
+            /* ── `2026-10-11` (the gate-4 repair contract, the audit's `I-4`'s second half — "the site
+             * counter is ARGUMENT-BLIND"): the ONE site's ARGUMENT must be the TRANSITION'S OWN
+             * INPUT (`state === 'mcp-disabled'`), never a constant — a counter that cannot see what
+             * the site writes cannot tell the transition's write from a bare `setTier4OpenState(true)`.
+             * The detector is driven both ways. */
+            const writerArgument = /setTier4OpenState\s*\(\s*([^)]*)\)/.exec(codeOnly(mcp))?.[1] ?? ''
+            expect(writerArgument, 'the ONE writer site passes an argument').not.toBe('')
+            expect(/^state\s*===\s*'mcp-disabled'$/.test(writerArgument), `the site writes the TRANSITION'S OWN INPUT — measured argument: \`${writerArgument}\``).toBe(true)
+            expect(/^(?:true|false)$/.test('true'), 'CONTROL: the constant-argument detector FIRES on a bare \`true\`').toBe(true)
+            expect(/^(?:true|false)$/.test(writerArgument), 'and the live site is NOT a bare constant').toBe(false)
             const withExclusionSites = (source: string): number => (withoutComments(source).match(/withExclusion\s*\(/g) ?? []).length
             expect(withExclusionSites('const gate = other.withExclusion(next)'), 'CONTROL: the detector FIRES on a foreign site').toBe(1)
             expect(withExclusionSites(mcp), '`mcp-server.ts` holds the ONE landed transition site (`applyExclusion`) — the row `FS-T4-12` also counts, so the two rows now AGREE (`KB-1`)').toBe(1)
@@ -998,6 +1237,20 @@ function buildRegister(): RegisterRow[] {
             expect(/MCP endpoint is open/i.test(String(answer.message)), 'the message names the CAUSE (the MCP is open)').toBe(true)
             expect(/disable MCP/i.test(String(answer.message)), 'the message names the REMEDY (disable MCP)').toBe(true)
             expect(sourceOrEmpty(MCP_SERVER_SRC), 'built in THIS module, never derived from caller input (`PAR-7`)').toContain('TIER4_CLOSED_MESSAGE')
+            /* ── `2026-10-11` (the gate-4 repair contract, the audit's `I-5` — `PAR-7`'s declared
+             * OUTSIDE set): a message CONSTANT that INTERPOLATES a stored value, an entry name or a
+             * group set holds under the as-filed arm. The re-grained arm reads the DECLARATION SITE
+             * of the module's own constant (comments stripped) and drives the interpolation detector
+             * on fixture strings, so the OUTSIDE cell is measured rather than inferred. */
+            const mcpCode = codeOnly(sourceOrEmpty(MCP_SERVER_SRC))
+            const site = mcpCode.indexOf('TIER4_CLOSED_MESSAGE')
+            const declSite = site === -1 ? '' : mcpCode.slice(site, site + 240)
+            expect(declSite.length, 'the constant\'s declaration site is read').toBeGreaterThan(0)
+            const interpolates = /\$\{|`[^`]*\$\{/
+            expect(interpolates.test('Tier-4 blocked for ${value}'), 'CONTROL: the interpolation detector FIRES on an interpolated message').toBe(true)
+            expect(interpolates.test(declSite), 'PAR-7 OUTSIDE: the constant interpolates NO stored value, NO entry name and NO group set').toBe(false)
+            expect(/entries|read,\s*dispatch|patch\.|req\./.test(declSite), 'PAR-7 OUTSIDE: nor does it carry a tier-4 name, a group set or caller input').toBe(false)
+            expect(answer.message, 'and the message the store MINTS is the declared constant VERBATIM, never a composed string').toBe(TIER4_CLOSED_MESSAGE)
           },
         },
         {
@@ -1188,13 +1441,41 @@ function buildRegister(): RegisterRow[] {
           },
         },
         {
-          label: 'PAIR 3 · `{MCP-DISABLED, TIER-4-CLOSED}` is reachable ONLY inside the boot window — never as a steady pair',
+          label: 'PAIR 3 RE-GRAINED (`2026-10-11`, the repair contract\'s D-v): THE TRANSIENT BOOT WINDOW, RE-READ AT THE LANDED READINGS — the holder says STORE-OPEN, the GATE sits at its `S1` boot terminal `mcp-enabled` with `await mcp.start()` still AHEAD, and the carrier\'s DERIVED `exclusion` reads `mcp-disabled`, consistent with the holder it consults — NEVER the as-filed `{MCP-DISABLED, TIER-4-CLOSED}` pair',
           run: () => {
+            /* ── RE-GRAINED `2026-10-11` (`RCA-8(d)`: the AS-FILED terms below stay VISIBLE and
+             * asserted; the re-grain ADDS the landed window's readings, with EACH SIDE'S READER
+             * NAMED — which is what D-v requires and what the as-filed summary label
+             * (`{MCP-DISABLED, TIER-4-CLOSED}`) got wrong: it is the HOLDER's window, and the
+             * carrier paints the HOLDER, so the painted word is `mcp-disabled` while the
+             * enforcement record — which does NOT paint the operator's line — sits at the gate's
+             * `S1` boot terminal `mcp-enabled` and the MCP is NOT serving yet. */
             const src = sourceOrEmpty(MAIN_SRC)
+            // THE AS-FILED TERMS, KEPT AWAKE:
             expect(src, 'the boot value is DECLARED STORE-OPEN (`§0A` item 4, now the HOLDER\'s declared initial: `§0A` item 1, amended)').toMatch(/createSecurityStore\(/)
             const gateAfterStore = (() => { const i = bootWindowIndexes(src); return i.gate === -1 || i.gate > i.storeIndex })()
             expect(gateAfterStore).toBe(true)
             expect(/^\s*(?:let|var)\s+\w+\s*=\s*true\s*;?\s*$/m.test(sourceOrEmpty(TIER4_STATE_SRC)), 'and the HOLDER\'s declared initial value is STORE-OPEN (`§0A` item 1, amended) — which is what makes the boot read legal without any exception').toBe(true)
+            // THE RE-GRAINED WINDOW, READER BY READER:
+            const holderAtBoot = /^\s*(?:let|var)\s+\w+\s*=\s*(true|false)\s*;?\s*$/m.exec(sourceOrEmpty(TIER4_STATE_SRC))?.[1] === 'true'
+            expect(holderAtBoot, 'READER 1 (the store\'s functions — and, through the SAME holder, the operator\'s carrier): the HOLDER\'s declared initial is STORE-OPEN').toBe(true)
+            const gateTerminal = new SecurityGate({ token: null, enabled: [] }).exclusionState()
+            expect(gateTerminal, 'READER 2 (the MCP ENFORCEMENT path): the gate sits at its `S1` boot terminal `mcp-enabled` — the enforcement record is NOT the operator\'s line').toBe(STATE_MCP_ENABLED)
+            const handler = getHandlerBody(src)
+            expect(handler.length, 'the carrier handler exists').toBeGreaterThan(0)
+            const carrierWordAtBoot = carrierExclusionAtBoot(handler, holderAtBoot)
+            expect(carrierWordAtBoot, 'READER 3 (the operator\'s carrier): its DERIVED `exclusion` member reads `mcp-disabled` — CONSISTENT WITH THE HOLDER IT CONSULTS, and NOT with the gate\'s boot terminal').toBe(STATE_MCP_DISABLED)
+            expect(carrierExclusionAtBoot(handler, false), 'CONTROL (the reading is LIVE, never a constant): the SAME expression answers `mcp-enabled` once the holder says CLOSED').toBe(STATE_MCP_ENABLED)
+            const enable = src.search(/await\s+mcp\.start\(/)
+            const flip = src.search(/mcp\.applyExclusion\(\s*'mcp-enabled'\s*\)/)
+            expect(flip, 'the CLOSE site exists as the literal flip (`D-vii`\'s named site)').toBeGreaterThan(-1)
+            expect(enable, 'the enable site exists').toBeGreaterThan(-1)
+            expect(flip, 'and `await mcp.start()` is STILL AHEAD of the flip — inside the window the MCP is NOT serving').toBeLessThan(enable)
+            expect(
+              { holder: holderAtBoot ? STATE_MCP_DISABLED : STATE_MCP_ENABLED, enforcement: gateTerminal, carrier: carrierWordAtBoot },
+              'THE LANDED WINDOW, stated as its own reading: holder STORE-OPEN ⇒ the carrier paints `mcp-disabled` while the enforcement record reads `mcp-enabled` and the MCP is not serving — this is the pair the window really shows, NOT the as-filed `{MCP-DISABLED, TIER-4-CLOSED}`',
+            ).toEqual({ holder: STATE_MCP_DISABLED, enforcement: STATE_MCP_ENABLED, carrier: STATE_MCP_DISABLED })
+            expect({ enforcement: gateTerminal, carrier: carrierWordAtBoot }, 'and the two sides are NEVER the same word inside the window — the transient pair is exactly this asymmetry').not.toEqual({ enforcement: STATE_MCP_ENABLED, carrier: STATE_MCP_ENABLED })
           },
         },
         {
@@ -1227,7 +1508,16 @@ function buildRegister(): RegisterRow[] {
 
     /* ── ROW 8 · P-T4-TP-4 · S-T4-OPEN-1 · 16 = 4 × 2 + 8 ──────────────── */
     {
-      id: 'P-T4-TP-4', type: 'P-TP', strategyId: 'S-T4-OPEN-1', term: 16,
+      /* ── THE TERM'S DATED MOVE (`2026-10-11`, GATE 4's REPAIR CONTRACT; `RCA-8(d)`: annotate
+       * BESIDE the as-filed form). AS FILED: `16 = 4 (the four surface arms: the name-addressed
+       * read · the name-addressed write · the boot treatment of unknown keys · the persisted
+       * format's evolution) × 2 (states) = 8 + 8 (the eight value classes the write admission
+       * REFUSES)`. OPERATIVE: `20 = 16 (the as-filed arithmetic, UNMOVED) + 4 (the four terms this
+       * re-grain ADDS: the namespace seam · the `__proto__` key (D-ii) · the `-0` value (D-i) · an
+       * out-of-ingestion-domain name surviving every write)`. The two CLOSED-state arms are
+       * re-grained IN PLACE for D-ix (the reading becomes "no WRITE-class `fs` call"), so they move
+       * no term. */
+      id: 'P-T4-TP-4', type: 'P-TP', strategyId: 'S-T4-OPEN-1', term: 20,
       property: 'THE OPENED SHAPE IS TOTAL AND LOSSLESS AT BOOT, AND ADMISSION-CONTROLLED ON WRITE — the name-addressed surface answers for every name in its domain and refuses out-of-domain names as values; a top-level member outside the four declared names is INGESTED VERBATIM (never dropped) and survives every subsequent write; NO per-entry admission runs at boot; every WRITE runs the landed value-preservation admission, refusing the whole request with no filesystem call',
       drives: [
         {
@@ -1249,8 +1539,20 @@ function buildRegister(): RegisterRow[] {
           },
         },
         {
-          label: 'SURFACE ARM 2 · the name-addressed WRITE · CLOSED ⇒ the gate refusal',
-          run: async () => { const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(false); assertClosedRefusal(writeEntryOf(fx.store, 'a', 1), 'arm 2 closed') },
+          label: 'SURFACE ARM 2 · the name-addressed WRITE · CLOSED ⇒ the gate refusal, with NO WRITE-class `fs` call (RE-GRAINED `2026-10-11`, the repair contract\'s D-ix: the one lazy boot-ingestion READ is the DECLARED turn)',
+          run: async () => {
+            const fx = await makeStoreFixture({ readLog: true }); await fx.seed(SEEDED); setTier4Open(false)
+            const callsBefore = fx.calls().length
+            assertClosedRefusal(writeEntryOf(fx.store, 'a', 1), 'arm 2 closed')
+            const window = fx.calls().slice(callsBefore)
+            expect(writeClassCalls(window), `NO WRITE-class \`fs\` call on a refusal (§3.3 item 4) — measured [${window.join(', ')}]`).toEqual([])
+            expect(readClassCalls(window).length, 'and the refusal\'s window carries ONLY the DECLARED boot-ingestion read (the laziness D-ix names, never a defect)').toBeGreaterThan(0)
+            expect(window.every((c) => READ_CLASS_CALL.test(c)), 'every call in a refusal\'s window is READ-class').toBe(true)
+            // THE PRIMED CONTROL (D-ix): the SAME refusal on the SAME instance shows NO further call.
+            const primedBefore = fx.calls().length
+            assertClosedRefusal(writeEntryOf(fx.store, 'a', 2), 'arm 2 closed · primed')
+            expect(fx.calls().slice(primedBefore), 'CONTROL: with the tier PRIMED (its ingestion turn already spent) a refusal makes NO further \`fs\` call at all').toEqual([])
+          },
         },
         {
           label: 'SURFACE ARM 2 · the name-addressed WRITE · OPEN ⇒ committed and durable',
@@ -1278,14 +1580,21 @@ function buildRegister(): RegisterRow[] {
           },
         },
         {
-          label: 'SURFACE ARM 4 · the persisted format\'s evolution · CLOSED ⇒ the file is untouched by a refused write',
+          label: 'SURFACE ARM 4 · the persisted format\'s evolution · CLOSED ⇒ the file is untouched by a refused write, and the refusal\'s only `fs` reading is the DECLARED ingestion turn (RE-GRAINED `2026-10-11`, D-ix)',
           run: async () => {
-            const fx = await makeStoreFixture(); await fx.seed(SEEDED)
+            const fx = await makeStoreFixture({ readLog: true }); await fx.seed(SEEDED)
             const before = await fx.bytes()
+            const callsBefore = fx.calls().length
             setTier4Open(false)
             writeEntryOf(fx.store, 'a', 1)
             expect(await fx.bytes()).toBe(before)
             expect(JSON.parse(String(before)).entries, '`entries` is ABSENT until the first successful write (§2.2 item 2(i))').toBeUndefined()
+            const window = fx.calls().slice(callsBefore)
+            expect(writeClassCalls(window), `NO WRITE-class \`fs\` call on a refusal: the refusal precedes the staging write (measured [${window.join(', ')}])`).toEqual([])
+            expect(readClassCalls(window).length, 'the DECLARED boot-ingestion read (existsSync/readFileSync) is the ONE admitted call — named, not smuggled').toBeGreaterThan(0)
+            const primedBefore = fx.calls().length
+            fx.store.get()
+            expect(fx.calls().slice(primedBefore), 'CONTROL: the primed instance reads nothing further (the ingestion turn is spent)').toEqual([])
           },
         },
         {
@@ -1340,6 +1649,93 @@ function buildRegister(): RegisterRow[] {
             expect(writeEntryOf(fx.store, 'v', Number.NaN)).toEqual({ status: 'refused', reason: 'write-failed' })
           },
         },
+        /* ── THE FOUR TERMS THIS ROW GAINS `2026-10-11` (GATE 4's REPAIR CONTRACT, the row-8
+         * re-grain — `RCA-8(d)`: the as-filed term cell `16 = 4 × 2 + 8` stays VISIBLE and its
+         * arithmetic UNMOVED; the operative term is `20 = 16 + 4 (the four terms below)`, so the
+         * declared total moves `108 → 112` with its terms printed in the register report). */
+        {
+          label: 'TERM ADDED (the row-8 re-grain, term 16 → 20): THE NAMESPACE SEAM — `writeEntry(\'token\', …)` and `writeEntry(\'entries\', …)` leave the file\'s top-level `token`/`enabled`/`maxJournalLength` UNMOVED and round-trip under their OWN names',
+          run: async () => {
+            const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(true)
+            expect(writeEntryOf(fx.store, 'token', 'NOT-A-TOKEN')).toEqual({ status: 'committed' })
+            expect(writeEntryOf(fx.store, 'entries', 'NOT-A-MAP')).toEqual({ status: 'committed' })
+            expect(readEntryOf(fx.store, 'token'), 'the arbitrary namespace answers under its OWN name').toEqual({ name: 'token', value: 'NOT-A-TOKEN' })
+            expect(readEntryOf(fx.store, 'entries')).toEqual({ name: 'entries', value: 'NOT-A-MAP' })
+            const persisted = JSON.parse(String(await fx.bytes())) as Record<string, unknown>
+            expect(persisted.token, 'the TOP-LEVEL `token` is UNMOVED by the same-named arbitrary write (`§2.2` item 1: a SEPARATE namespace)').toBe('SEED')
+            expect(persisted.enabled).toEqual(['read', 'dispatch'])
+            expect(persisted.maxJournalLength).toBe(120)
+            const map = persisted.entries as Record<string, unknown>
+            expect(map.token, 'and the arbitrary value round-trips under its own name, never into a landed member').toBe('NOT-A-TOKEN')
+            expect(map.entries).toBe('NOT-A-MAP')
+            expect(Object.keys(map).sort(), 'the map carries exactly the two arbitrary names — no landed member was routed into it').toEqual(['entries', 'token'])
+          },
+        },
+        {
+          label: 'TERM ADDED (D-ii): a `__proto__` KEY is preserved VERBATIM — at boot (top level AND inside `entries`), on `writeEntry`, in the persisted bytes, and after a RE-CONSTRUCTED store on the same path (a plain foreign name is the non-vacuity control)',
+          run: async () => {
+            const fx = await makeStoreFixture()
+            await fx.seed({ ...SEEDED, ['__proto__']: { x: 1 }, ordinaryName: 'keep' })
+            const seededBytes = String(await fx.bytes())
+            expect(seededBytes, 'CONTROL: the fixture really carries an OWN `__proto__` key at top level').toContain('"__proto__"')
+            setTier4Open(true)
+            expect(Object.prototype.hasOwnProperty.call(JSON.parse(seededBytes), '__proto__'), 'CONTROL: `JSON.parse` mints it as an OWN data property — so the INGESTION is what loses it').toBe(true)
+            expect(readEntryOf(fx.store, 'ordinaryName'), 'CONTROL (non-vacuity): a PLAIN foreign name ingests and reads').toEqual({ name: 'ordinaryName', value: 'keep' })
+            expect(readEntryOf(fx.store, '__proto__'), 'the boot\'s top-level `__proto__` is INGESTED VERBATIM under its own name (`§2.2` item 4 arms 3/4)').toEqual({ name: '__proto__', value: { x: 1 } })
+            expect(writeEntryOf(fx.store, '__proto__', { y: 2 }), 'and the WRITE is admitted').toEqual({ status: 'committed' })
+            expect(readEntryOf(fx.store, '__proto__'), 'readable in-process, under its own name').toEqual({ name: '__proto__', value: { y: 2 } })
+            const persisted = JSON.parse(String(await fx.bytes())) as { entries: Record<string, unknown> }
+            expect(Object.prototype.hasOwnProperty.call(persisted.entries, '__proto__'), 'present in the persisted BYTES as an OWN key of `entries`').toBe(true)
+            expect(Object.getOwnPropertyDescriptor(persisted.entries, '__proto__')?.value, 'and carrying the admitted value').toEqual({ y: 2 })
+            const second = await makeStoreOnPath(fx.path)
+            expect(readEntryOf(second.store, '__proto__'), 'and STILL THERE after a RE-CONSTRUCTED store on the same path — never lost to the `Object.prototype` setter').toEqual({ name: '__proto__', value: { y: 2 } })
+            expect(readEntryOf(second.store, 'ordinaryName'), 'CONTROL (non-vacuity): the plain foreign name survives the same re-construction').toEqual({ name: 'ordinaryName', value: 'keep' })
+            const fx2 = await makeStoreFixture()
+            await fx2.seed({ ...SEEDED, entries: { ['__proto__']: 5 } })
+            expect(readEntryOf(fx2.store, '__proto__'), 'an `entries.__proto__` member at boot is ingested member by member VERBATIM (`§2.2` item 4 arm 4)').toEqual({ name: '__proto__', value: 5 })
+          },
+        },
+        {
+          label: 'TERM ADDED (D-i): `-0` — a number that is NOT JSON-round-trip-identical — is REFUSED whole-request in the landed form with NO filesystem call, while `0` still commits (control)',
+          run: async () => {
+            const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(true)
+            expect(Number.isFinite(-0), 'CONTROL: `-0` IS a finite number, so the landed finiteness arm admits it — which is why the clause needs its own identity ground').toBe(true)
+            expect(Object.is(JSON.parse(JSON.stringify(-0)), -0), 'CONTROL: the JSON round trip is NOT identity for `-0` (it answers `0`) — the clause\'s own ground').toBe(false)
+            expect(Object.is(JSON.parse(JSON.stringify(0)), 0), 'CONTROL: and it IS identity for `0`').toBe(true)
+            const before = await fx.bytes()
+            const callsBefore = fx.calls().length
+            expect(writeEntryOf(fx.store, 'negzero', -0), '`-0` REFUSES the whole request in the LANDED refused form (`§2.2` item 5; `PAR-4`\'s OUTSIDE list gains `-0`)').toEqual({ status: 'refused', reason: 'write-failed' })
+            expect(fx.calls().length, 'no filesystem call').toBe(callsBefore)
+            expect(await fx.bytes(), 'the file did not move').toBe(before)
+            expect(readEntryOf(fx.store, 'negzero'), 'nothing was written — a refusal is NEVER a delete').toBeNull()
+            expect(writeEntryOf(fx.store, 'nested', { a: [-0] }), 'and the identity binds at EVERY DEPTH the predicate walks').toEqual({ status: 'refused', reason: 'write-failed' })
+            const zeroCalls = fx.calls().length
+            expect(writeEntryOf(fx.store, 'zero', 0), 'CONTROL: `0` STILL COMMITS').toEqual({ status: 'committed' })
+            expect(fx.calls().length, 'CONTROL: and the committed write really LANDS').toBeGreaterThan(zeroCalls)
+            expect(Object.is((readEntryOf(fx.store, 'zero') as { value: number }).value, 0)).toBe(true)
+            expect(JSON.parse(String(await fx.bytes())).entries.zero, 'CONTROL: `0` is in the file').toBe(0)
+            expect(writeEntryOf(fx.store, 'finite', -1.5), 'CONTROL: an ordinary negative finite number stays IN the domain').toEqual({ status: 'committed' })
+          },
+        },
+        {
+          label: 'TERM ADDED (the row-8 re-grain): an out-of-INGESTION-domain name is INGESTED VERBATIM at boot, stays UNREACHABLE by `readEntry`, and SURVIVES every subsequent write',
+          run: async () => {
+            const fx = await makeStoreFixture()
+            const oddName = 'odd\u0000name'
+            await fx.seed({ ...SEEDED, [oddName]: { kept: true } })
+            const seededBytes = String(await fx.bytes())
+            expect(seededBytes, 'CONTROL: the fixture carries the odd name verbatim (JSON escapes its control character)').toContain('\\u0000')
+            setTier4Open(true)
+            expect(readEntryOf(fx.store, oddName), 'the boot does not adjudicate a name it merely read — while the READ surface REFUSES it (`PAR-3`, `§2.2` item 4 arm 3)').toBeNull()
+            expect(writeEntryOf(fx.store, 'mine', 1), 'a first successful arbitrary write').toEqual({ status: 'committed' })
+            const persisted = JSON.parse(String(await fx.bytes())) as { entries: Record<string, unknown> }
+            expect(Object.prototype.hasOwnProperty.call(persisted.entries, oddName), 'and the odd name SURVIVES that write, still under its own name').toBe(true)
+            expect(persisted.entries[oddName]).toEqual({ kept: true })
+            expect(Object.keys(persisted.entries).sort(), 'the survivors are exactly the odd name and the new one').toEqual([oddName, 'mine'].sort())
+            expect(writeEntryOf(fx.store, oddName, 1), 'a WRITE under that name answers the landed refused form and writes nothing').toEqual({ status: 'refused', reason: 'write-failed' })
+            expect((JSON.parse(String(await fx.bytes())) as { entries: Record<string, unknown> }).entries[oddName], 'nothing under that name moved').toEqual({ kept: true })
+          },
+        },
       ],
     },
 
@@ -1349,8 +1745,24 @@ function buildRegister(): RegisterRow[] {
       property: 'THE TOKEN\'S HOME AND EVERY UNMOVED SET ARE HELD — `tier4-closed` is a CHANNEL token declared beside `EXCLUSION_CLOSED`; it is NOT a constant in `store-channels.ts`, NOT in `src/shared/**`, NOT a member of the store\'s closed 16-member union; no `GraphNodeFlag` widening, no frozen-byte move, no fourth tier-4/file distinction',
       drives: [
         {
-          label: 'the token\'s home ✓ `src/main/mcp-server.ts` (beside `EXCLUSION_CLOSED`)',
-          run: () => { expect(sourceOrEmpty(MCP_SERVER_SRC), 'the constant lands beside the landed pair (`§2.4` item 1)').toContain("'tier4-closed'") },
+          label: 'the token\'s home ✓ `src/main/mcp-server.ts` — DECLARED AND EXPORTED (RE-GRAINED `2026-10-11`, the repair contract\'s row-9 re-grain: a COMMENT-ONLY mention must NOT satisfy the row, so this instrument now AGREES with the non-register `P-T4-TOKEN-HOME` row)',
+          run: () => {
+            /* ── AS FILED (kept visible, `RCA-8(d)`): `expect(mcp).toContain("'tier4-closed'")` — a
+             * plain substring search over the whole file, which a COMMENT satisfies. The
+             * re-grained form requires the token to be DECLARED AND EXPORTED, reads its own
+             * initializer off the comment-stripped CODE, and proves the difference on a FIXTURE
+             * string. */
+            const mcp = sourceOrEmpty(MCP_SERVER_SRC)
+            expect(mcp, 'AS FILED: the constant lands beside the landed pair (`§2.4` item 1)').toContain("'tier4-closed'")
+            const declaredExport = /export\s+const\s+TIER4_CLOSED\s*(?::[^=]+)?=\s*'([^']*)'/
+            expect(codeOnly(mcp), 'THE RE-GRAINED FORM: the token is DECLARED AND EXPORTED in `mcp-server.ts`').toMatch(declaredExport)
+            expect(declaredExport.exec(codeOnly(mcp))?.[1], 'and its own initializer reads the verbatim token').toBe(TIER4_CLOSED)
+            const commentOnly = "// `§2.4`: the token is 'tier4-closed', homed beside EXCLUSION_CLOSED\nexport const TIER4_CLOSED = 'exclusion-closed'\n"
+            expect(commentOnly.includes("'tier4-closed'"), 'CONTROL: the AS-FILED `toContain` instrument PASSES a COMMENT-ONLY mention — the evasion this re-grain closes').toBe(true)
+            expect(declaredExport.exec(codeOnly(commentOnly))?.[1], 'CONTROL: and the re-grained instrument reads the COMMENT-ONLY fixture\'s DECLARED VALUE — which is NOT the token, so the row FAILS where the as-filed form passed').toBe('exclusion-closed')
+            expect(declaredExport.exec(codeOnly(commentOnly))?.[1], 'CONTROL: the declared-and-exported instrument therefore does NOT satisfy the row on a comment-only mention').not.toBe(TIER4_CLOSED)
+            expect(/export\s+const\s+TIER4_CLOSED_MESSAGE\s*=/.test(codeOnly(mcp)), 'and the message constant is exported beside it (`§2.4` item 1)').toBe(true)
+          },
         },
         {
           label: 'the token\'s home ✗ `store-channels.ts` (its constant census stays 3)',
@@ -1380,10 +1792,19 @@ function buildRegister(): RegisterRow[] {
           },
         },
         {
-          label: 'the two frozen field-7 pins are UNMOVED (`0664c52f…` / `5c0c1a97…`)',
+          label: 'the two frozen field-7 pins are UNMOVED at FULL 64-HEX DIGEST (`0664c52f…` / `5c0c1a97…`) — RE-GRAINED `2026-10-11` (D-x; the audit\'s instrument defect `I-6`), with the as-filed `slice(0, 8)` proxy kept awake as the CONTROL it is',
           run: () => {
+            /* ── AS FILED (kept visible, `RCA-8(d)`): `expect(sha256Of(path)).toContain(pin.slice(0, 8))`.
+             * `§2.7` item 1 pins a FILE HASH, so the comparison is the WHOLE 64-hex digest: a row
+             * answering with an 8-hex prefix cannot distinguish a moved file from a moved file with
+             * the same head (`I-6`). The re-grained form asserts the FULL digest and drives the PROXY
+             * form as a control that must pass a digest it must not. */
             for (const [rel, pin] of Object.entries(MEASURED_FROZEN_PINS)) {
-              expect(sha256Of(join(REPO_ROOT, rel)), `the frozen pin of ${rel} is UNMOVED (§2.7 item 1)`).toContain(pin.slice(0, 8))
+              const actual = sha256Of(join(REPO_ROOT, rel))
+              expect(actual, `the as-filed PROXY (8 hex) still agrees — ${rel}`).toContain(pin.slice(0, 8))
+              expect(`${pin.slice(0, 8)}${'0'.repeat(56)}`.includes(pin.slice(0, 8)), `CONTROL: the PROXY form PASSES a digest it must not (\`${pin.slice(0, 8)}…0000\`)`).toBe(true)
+              expect(pin.length, `the pin of ${rel} is the FULL 64-hex digest`).toBe(64)
+              expect(actual, `the frozen pin of ${rel} is UNMOVED, compared at FULL digest (§2.7 item 1; D-x)`).toBe(pin)
             }
           },
         },
@@ -1444,6 +1865,17 @@ function buildRegister(): RegisterRow[] {
              * HOLDER as `exclusion`. */
             expect(handler.length, 'the refusal rides the CHANNEL (`§2.4` item 7)').toBeGreaterThan(0)
             expect(/read\s*:/.test(handler), 'the `read` member is composed in the handler').toBe(true)
+            /* ── `2026-10-11` (the gate-4 repair contract, `D-viii` — `§2.4` item 7's dated note
+             * assigns THIS row the TWO-LEGGED witness; the audit's `S2-ADV-06`/`I-2`): LEG 1 is the
+             * SITE CENSUS — `tier4OpenState(` appears EXACTLY ONCE in the handler body, comments
+             * stripped, so the two additive members cannot carry two different states in one
+             * response. The as-filed drive asserted only that the reader APPEARS (measured: twice,
+             * at the local and again in the response record). */
+            const handlerCode = codeOnly(handler)
+            const holderConsults = handlerCode.match(/tier4OpenState\s*\(\s*\)/g) ?? []
+            expect(holderConsults.length, `LEG 1 (the site census): EXACTLY ONE \`tier4OpenState()\` in the handler — measured ${holderConsults.length}`).toBe(1)
+            expect((codeOnly('() => { /* tier4OpenState() */ return ({}) }').match(/tier4OpenState\s*\(\s*\)/g) ?? []).length, 'CONTROL (negative): a COMMENT-ONLY mention is not a consult').toBe(0)
+            expect((codeOnly('() => { const a = tier4OpenState(); const b = tier4OpenState(); return ({}) }').match(/tier4OpenState\s*\(\s*\)/g) ?? []).length, 'CONTROL: the census FIRES on a two-consult body').toBe(2)
             expect(/tier4OpenState\(\)/.test(handler), 'and BOTH members derive from ONE reading of the STATIC HOLDER (`§0A` item 1, amended)').toBe(true)
           },
         },
@@ -1452,13 +1884,37 @@ function buildRegister(): RegisterRow[] {
           run: () => { expect(/exclusion\s*:\s*tier4OpenState\(\)\s*\?/.test(getHandlerBody(sourceOrEmpty(MAIN_SRC))), 'the state member is fed by the ONE STATIC HOLDER reading and never routes through the store read (`§0A` item 1, amended)').toBe(true) },
         },
         {
-          label: 'the carrier\'s two members · neither is substituted for the other (§3.4)',
+          label: 'the carrier\'s two members · neither is substituted for the other — RE-GRAINED `2026-10-11` (the repair contract\'s row-10 re-grain): the substitution control is driven against a FIXTURE STRING, and the row now FAILS on an unconditionally-`null` `read` and on a COMMENT-ONLY `tier4OpenState()` mention',
           run: () => {
-            const handler = getHandlerBody(sourceOrEmpty(MAIN_SRC))
-            const stateFedByRefusal = /exclusion\s*:\s*(?:[^,{}]*\W)?read\b/.test(handler)
-            const refusalFedByState = /read\s*:\s*exclusion\b/.test(handler)
-            expect(stateFedByRefusal, 'CONTROL: the substitution detector FIRES on a state fed by the refusal member').toBe(true)
-            expect(refusalFedByState, 'the live handler substitutes neither member for the other').toBe(false)
+            /* ── AS FILED (kept visible, `RCA-8(d)`): `stateFedByRefusal` — a substitution detector
+             * — was applied to the LIVE HANDLER, where it could never leave its subject; it
+             * asserted a property of the live bytes under the name of a control. THE RE-GRAINED
+             * FORM drives the same detector against the FIXTURE STRING `'exclusion: read'`, and the
+             * handler-side detectors read CODE (comments stripped), because gate 4 PROVED both
+             * evasions at the bytes: a handler whose `read` is unconditionally `null`, and a
+             * handler that only MENTIONS `tier4OpenState()` in a comment. */
+            const liveHandler = codeOnly(getHandlerBody(sourceOrEmpty(MAIN_SRC)))
+            /* THE MEMBER DETECTORS READ THE ANSWER LITERAL ONLY — the as-filed form read the whole
+             * handler, where the LOCALS `const exclusion: ExclusionState = …` / `const read: …`
+             * made the substitution detector fire on the handler unconditionally (so the "control"
+             * could never leave its subject). Scoping it to the answer's own object literal is what
+             * lets the SAME detector be driven both ways. */
+            const liveAnswer = answerLiteralOf(liveHandler)
+            expect(liveAnswer.length, 'the handler\'s answer literal exists').toBeGreaterThan(0)
+            const stateFedByRefusal = /exclusion\s*:\s*(?:[^,{}]*\W)?read\b/
+            expect(stateFedByRefusal.test('exclusion: read'), 'CONTROL: the substitution detector FIRES on the FIXTURE STRING `exclusion: read` — the subject it can actually leave').toBe(true)
+            expect(stateFedByRefusal.test(liveAnswer), 'THE LIVE SUBJECT: the handler substitutes neither member for the other').toBe(false)
+            const refusalFedByState = /read\s*:\s*exclusion\b/
+            expect(refusalFedByState.test('read: exclusion'), 'CONTROL: the mirror detector FIRES on the fixture string').toBe(true)
+            expect(refusalFedByState.test(liveAnswer), 'and the live handler never feeds `read` from the state').toBe(false)
+            const unconditionalNull = /read\s*:\s*null\b/
+            expect(unconditionalNull.test('() => ({ exclusion: x, read: null })'), 'CONTROL: the detector FIRES on an unconditionally-`null` `read`').toBe(true)
+            expect(unconditionalNull.test(liveHandler), 'THE UNCONDITIONAL-`null` ARM: the live handler\'s `read` is CONDITIONAL — it is fed by the ONE holder reading (`§2.4` item 7)').toBe(false)
+            const holderRead = /tier4OpenState\s*\(\s*\)/g
+            const commentOnlyFixture = '() => { /* tier4OpenState() is read here, once per turn */ return ({}) }'
+            expect((commentOnlyFixture.match(holderRead) ?? []).length, 'CONTROL: the un-stripped form counts a COMMENT-ONLY mention (which is exactly why the detectors strip)').toBe(1)
+            expect((codeOnly(commentOnlyFixture).match(holderRead) ?? []).length, 'CONTROL (negative): the COMMENT-ONLY `tier4OpenState()` mention is NOT a reading').toBe(0)
+            expect((liveHandler.match(holderRead) ?? []).length, 'THE COMMENT-ONLY ARM: the live handler carries the holder reading in CODE, not in prose').toBeGreaterThan(0)
           },
         },
         {
@@ -1923,7 +2379,7 @@ describe('S2 §4.2 THE AUTHORING ORDER (the static/census rows REDDENED FIRST on
   })
 })
 
-describe('S2 §5.5.1 THE REGISTER (executed deterministically — 10 rows / 108 attempts)', () => {
+describe('S2 §5.5.1 THE REGISTER (executed deterministically — 10 rows / 112 attempts; the AS-FILED total was 108 = 12+10+12+8+14+10+10+16+8+8, and the row-8 re-grain of `2026-10-11` adds the four terms below, printed WITH their terms)', () => {
   it('REGISTER-EXEC: every row executes its FULL declared term, in register order, and no row is un-run', async () => {
     execReport = await executeRegister(registerRows)
     expect(execReport.rows.length, '10 rows executed — an un-run row is a FAILURE, never a pass').toBe(10)
@@ -1931,17 +2387,20 @@ describe('S2 §5.5.1 THE REGISTER (executed deterministically — 10 rows / 108 
     expect(execReport.rows.map((r) => r.strategyId)).toEqual([...STRATEGY_IDS])
     expect(execReport.rows.every((r) => r.attemptsRun === r.declaredTerm), 'every row executed its full term').toBe(true)
     expect(execReport.unrunRows, `un-run rows: [${execReport.unrunRows.join(', ')}]`).toEqual([])
-    expect(execReport.attemptsExecuted).toBe(108)
+    // AS FILED: 108. OPERATIVE (`2026-10-11`, the row-8 re-grain): 108 + 4 = 112.
+    expect(execReport.attemptsExecuted).toBe(112)
   })
 
   it('REGISTER-TERMS: the total is the SUM OF ITS OWN PRINTED TERMS, with the subtotals and the caps', async () => {
     if (execReport === null) execReport = await executeRegister(registerRows)
     const declared = declaredTotalReport()
-    expect(declared.sum, `108 = ${DECLARED_TERMS.join(' + ')}`).toBe(108)
+    expect(declared.sum, `112 = ${DECLARED_TERMS.join(' + ')}`).toBe(112)
     expect(declared.sum).toBe(DECLARED_TERMS.reduce((a, b) => a + b, 0))
     expect(execReport.rows.map((r) => r.declaredTerm)).toEqual([...DECLARED_TERMS])
-    expect(execReport.subtotals).toEqual({ im: 46, sm: 10, tp: 52 })
-    expect(execReport.subtotals.im + execReport.subtotals.sm + execReport.subtotals.tp).toBe(108)
+    // AS FILED: `{ im: 46, sm: 10, tp: 52 }`. OPERATIVE: `P-TP 52 → 56` (row 8: 16 → 20), `P-IM 46`
+    // and `P-SM 10` UNMOVED, so `46 + 10 + 56 = 112`.
+    expect(execReport.subtotals).toEqual({ im: 46, sm: 10, tp: 56 })
+    expect(execReport.subtotals.im + execReport.subtotals.sm + execReport.subtotals.tp).toBe(112)
     expect(Math.max(...DECLARED_TERMS), `per row ≤ ${REGISTER_ROW_CAP}`).toBeLessThanOrEqual(REGISTER_ROW_CAP)
     expect(execReport.declaredTotal).toBeLessThanOrEqual(REGISTER_TOTAL_CAP)
     expect(BOUNDED_ROWS, 'no row takes a draw (`§5.5.2` item 3)').toEqual([])
@@ -1981,8 +2440,213 @@ describe('S2 §5.5.1 THE REGISTER (executed deterministically — 10 rows / 108 
     expect(held + broken, 'held + broken = the executed total').toBe(execReport.attemptsExecuted)
     expect(broken, `EVERY row holds at green (executed = declared) — per row: ${summary}`).toBe(0)
     expect(rowsWithoutBreak, `rows carrying NO broken attempt: [${rowsWithoutBreak.join(', ')}]`).toEqual([...REGISTER_ROW_IDS])
-    expect(held, 'the held attempts are the DECLARED total, WITH its terms').toBe(108)
+    expect(held, 'the held attempts are the DECLARED total, WITH its terms — AS FILED 108, OPERATIVE 112 (the row-8 re-grain adds four terms)').toBe(112)
     expect(execReport.attemptsExecuted, `executed = declared = ${DECLARED_TERMS.join(' + ')}`).toBe(declaredTotalReport().sum)
     expect(execReport.unrunRows, 'and no row is un-run — an un-run row is a FAILURE, never a pass').toEqual([])
+  })
+})
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════
+ * S2 REPAIR — GATE 4's RULED REPAIR CONTRACT (`2026-10-11`). THE RED SET OF THE REPAIR.
+ *
+ * Authored FROM THE CONTRACT (`docs/specs/tier4-arbitrary-storage.md` `§0`–`§8`, each row citing
+ * the clause it reads) and from GATE 4's RULING, as run and reported BEFORE any `src/**` byte of
+ * the repair. Every row enumerates its states FIRST, then drives one assertion per state; every
+ * absence-asserting arm carries a control that MUST fire, so no arm is vacuous.
+ *
+ * THE STATES ENUMERATED UP FRONT (one line each):
+ *  · `D-i`   `-0` (a number that is NOT JSON-round-trip-identical) · `0` (identity) · a NESTED `-0`
+ *            · an ordinary negative finite number.
+ *  · `D-ii`  `__proto__` as a boot TOP-LEVEL key · as an `entries` member · through `writeEntry`
+ *            · in the persisted bytes · across a RE-CONSTRUCTED store · a plain foreign name.
+ *  · `D-iii` a top-level ARRAY · a top-level STRING · a top-level NUMBER · a top-level BOOLEAN,
+ *            each at the boot read, at the first write, and at the file's own bytes.
+ *  · `D-iv`  the declared interface · the destructured extra · a call THROUGH the surface · a call
+ *            BYPASSING it · an INCOMPLETE surface hand-in.
+ *  · `D-vi`  a never-supplied reading (a rejected bridge) · `read: undefined` · an ABSENT `read`
+ *            member · the pane's own field default.
+ *  · `D-vii` the four `D-19` sites + the window creation.
+ *  · `D-viii` the handler's reading count · a TWO-call synthetic body.
+ *  · `D-ix`  a refusal on an UNPRIMED instance · the same refusal PRIMED.
+ *  · `D-x`   the two frozen pins · the store pin · the chain's five terms.
+ * ═══════════════════════════════════════════════════════════════════════════════════════════ */
+describe('S2 REPAIR (gate 4\'s ruled repair contract) — THE RED ROWS', () => {
+  it('D-I · `-0` is REFUSED: a number that is NOT JSON-round-trip-identical refuses the whole request in the LANDED form with NO filesystem call — and `0` still commits (the control)', async () => {
+    const fx = await makeStoreFixture(); await fx.seed(SEEDED); setTier4Open(true)
+    expect(Number.isFinite(-0), 'CONTROL: `-0` IS a finite number, so the landed finiteness arm admits it — which is exactly why the clause needs its own identity ground').toBe(true)
+    expect(Object.is(JSON.parse(JSON.stringify(-0)), -0), 'CONTROL: the JSON round trip is NOT identity for `-0` (it answers `0`) — the clause\'s own ground for refusing it').toBe(false)
+    expect(Object.is(JSON.parse(JSON.stringify(0)), 0), 'CONTROL: and it IS identity for `0`').toBe(true)
+    const before = await fx.bytes()
+    const callsBefore = fx.calls().length
+    expect(writeEntryOf(fx.store, 'negzero', -0), '`-0` REFUSES the whole request in the LANDED refused form (`§2.2` item 5; `PAR-4`\'s OUTSIDE list gains `-0`)').toEqual({ status: 'refused', reason: 'write-failed' })
+    expect(fx.calls().length, 'no filesystem call').toBe(callsBefore)
+    expect(await fx.bytes(), 'the file did not move').toBe(before)
+    expect(readEntryOf(fx.store, 'negzero'), 'nothing was written — a refusal is NEVER a delete').toBeNull()
+    expect(writeEntryOf(fx.store, 'nested', { a: [-0] }), 'and the identity binds at EVERY DEPTH the predicate walks').toEqual({ status: 'refused', reason: 'write-failed' })
+    const zeroCalls = fx.calls().length
+    expect(writeEntryOf(fx.store, 'zero', 0), 'CONTROL: `0` STILL COMMITS').toEqual({ status: 'committed' })
+    expect(fx.calls().length, 'CONTROL: and the committed write really LANDS').toBeGreaterThan(zeroCalls)
+    expect(Object.is((readEntryOf(fx.store, 'zero') as { value: number }).value, 0)).toBe(true)
+    expect(writeEntryOf(fx.store, 'finite', -1.5), 'CONTROL: an ordinary negative finite number stays IN the domain').toEqual({ status: 'committed' })
+  })
+
+  it('D-II · `__proto__` is PRESERVED: a boot top-level key, an `entries` member and a `writeEntry(\'__proto__\', v)` are VERBATIM — readable in-process, present in the persisted bytes, and still there after a RE-CONSTRUCTED store on the same path (a plain foreign name is the non-vacuity control)', async () => {
+    const fx = await makeStoreFixture()
+    await fx.seed({ ...SEEDED, ['__proto__']: { x: 1 }, ordinaryName: 'keep' })
+    const seededBytes = String(await fx.bytes())
+    expect(seededBytes, 'CONTROL: the fixture really carries an OWN `__proto__` key at top level').toContain('"__proto__"')
+    setTier4Open(true)
+    expect(Object.prototype.hasOwnProperty.call(JSON.parse(seededBytes), '__proto__'), 'CONTROL: `JSON.parse` mints it as an OWN data property — so the INGESTION is what loses it').toBe(true)
+    expect(readEntryOf(fx.store, 'ordinaryName'), 'CONTROL (non-vacuity): a PLAIN foreign name ingests and reads').toEqual({ name: 'ordinaryName', value: 'keep' })
+    expect(readEntryOf(fx.store, '__proto__'), 'the boot\'s top-level `__proto__` is INGESTED VERBATIM under its own name (`§2.2` item 4 arms 3/4)').toEqual({ name: '__proto__', value: { x: 1 } })
+    expect(writeEntryOf(fx.store, '__proto__', { y: 2 }), 'and the WRITE is admitted').toEqual({ status: 'committed' })
+    expect(readEntryOf(fx.store, '__proto__'), 'readable in-process, under its own name').toEqual({ name: '__proto__', value: { y: 2 } })
+    const persisted = JSON.parse(String(await fx.bytes())) as { entries: Record<string, unknown> }
+    expect(Object.prototype.hasOwnProperty.call(persisted.entries, '__proto__'), 'present in the persisted BYTES as an OWN key of `entries`').toBe(true)
+    expect(Object.getOwnPropertyDescriptor(persisted.entries, '__proto__')?.value, 'carrying the admitted value VERBATIM').toEqual({ y: 2 })
+    const second = await makeStoreOnPath(fx.path)
+    expect(readEntryOf(second.store, '__proto__'), 'and STILL THERE after a RE-CONSTRUCTED store on the same path — never lost to the `Object.prototype` setter').toEqual({ name: '__proto__', value: { y: 2 } })
+    expect(readEntryOf(second.store, 'ordinaryName'), 'CONTROL (non-vacuity): the plain foreign name survives the same re-construction').toEqual({ name: 'ordinaryName', value: 'keep' })
+    const fx2 = await makeStoreFixture()
+    await fx2.seed({ ...SEEDED, entries: { ['__proto__']: 5 } })
+    expect(readEntryOf(fx2.store, '__proto__'), 'an `entries.__proto__` member at boot is ingested member by member VERBATIM (`§2.2` item 4 arm 4)').toEqual({ name: '__proto__', value: 5 })
+  })
+
+  it('D-III · a top-level NON-OBJECT record is the CORRUPT arm: the first-run default with `entries` ABSENT (`null`), the file\'s bytes UNTOUCHED, never a throw, and NO entries minted from index keys at the first write', async () => {
+    for (const [label, text] of [['an ARRAY', '[1,2,3]'], ['a STRING', '"hello"'], ['a NUMBER', '7'], ['a BOOLEAN', 'true']] as Array<[string, string]>) {
+      const fx = await makeStoreFixture(); await fx.rawSeed(text)
+      expect(await fx.bytes(), `${label}: the fixture carries the raw bytes`).toBe(text)
+      setTier4Open(true)
+      let threw = false
+      try { fx.store.get() } catch { threw = true }
+      expect(threw, `${label}: NEVER a throw — the landed boot fail-state (\`FS-T4-10\`)`).toBe(false)
+      expect(fx.store.get().token, `${label}: the first-run default`).toBeNull()
+      expect(fx.store.get().enabled, `${label}: the first-run default`).toEqual(['read', 'dispatch'])
+      expect(fx.store.get().maxJournalLength, `${label}: the first-run default`).toBeUndefined()
+      expect(readEntryOf(fx.store, '0'), `${label}: NO entry is minted from an INDEX key — \`entries\` reads ABSENT (\`null\`)`).toBeNull()
+      expect(readEntryOf(fx.store, '1'), `${label}: nor from any other index key`).toBeNull()
+      expect(await fx.bytes(), `${label}: and the boot NEVER rewrites the file (the record's re-serialization is the first successful write's, \`§2.2\` item 4 arm 6)`).toBe(text)
+      expect(writeEntryOf(fx.store, 'k', 1), `${label}: the first write commits`).toEqual({ status: 'committed' })
+      const persisted = JSON.parse(String(await fx.bytes())) as { entries: Record<string, unknown> }
+      expect(Object.keys(persisted.entries), `${label}: and MINTS NO index-key entries into the record — the map carries exactly the written name`).toEqual(['k'])
+    }
+  })
+
+  it('D-IV · the `fs` seam is DECLARED: the module\'s REAL construction inputs are the declared interface PLUS the destructured extra (`2 = 1 (path) + 1 (fs)`), EVERY filesystem call is taken from that surface, and an INCOMPLETE surface is NOT adopted — never a throw', async () => {
+    const src = sourceOrEmpty(SECURITY_STORE_SRC)
+    const code = codeOnly(src)
+    // (a) THE CONSTRUCTION-INPUT CENSUS — the declared interface PLUS the destructured extra:
+    const iface = /export interface SecurityStoreOptions\s*\{[\s\S]*?\n\}/.exec(code)?.[0] ?? ''
+    expect([...iface.matchAll(/^\s*(\w+)\??\s*:/gm)].map((m) => m[1]), 'the DECLARED interface itself stays UNMOVED: its census `1 = 1 (path)` STANDS (`§0A` item 1)').toEqual(['path'])
+    const destructured = destructuredConstructionInputs(src)
+    expect(destructured, `the module's REAL construction inputs: \`2 = 1 (the declared interface: path) + 1 (the destructured extra: fs)\` — measured [${destructured.join(', ')}]`).toEqual(['fs', 'path'])
+    expect(destructuredConstructionInputs('export function createSecurityStore(opts: SecurityStoreOptions): SecurityStore {'), 'CONTROL: the AS-FILED non-destructured signature answers NO construction input — which is what the bytes carry today').toEqual([])
+    expect(destructuredConstructionInputs('export function createSecurityStore({ path, fs = nodeFs }: SecurityStoreOptions & { fs?: FsSurface }): SecurityStore {'), 'CONTROL: the DECLARED shape answers both inputs').toEqual(['fs', 'path'])
+    // (b) EVERY FILESYSTEM CALL IS TAKEN FROM THAT SURFACE:
+    const [from, to] = nodeFsLiteralRange(code)
+    expect(from, 'the `nodeFs` literal exists — the ONE place the real `node:fs` is touched').toBeGreaterThan(-1)
+    expect(to).toBeGreaterThan(from)
+    expect(to - from, 'and the literal is a literal, not an empty shell').toBeGreaterThan(20)
+    const bypasses = bareFsCallsOutsideNodeFs(code)
+    expect(bypasses, `NO direct \`node:fs\` call outside the \`nodeFs\` literal (D-iv) — measured bypasses: [${bypasses.join(', ')}]`).toEqual([])
+    expect(bareFsCallsOutsideNodeFs('const nodeFs: FsSurface = { rmSync }\nfunction f(tmp: string) { rmSync(tmp, { recursive: true, force: true }) }\n'), 'CONTROL: the detector FIRES on a call that BYPASSES the surface').toEqual(['rmSync'])
+    expect(bareFsCallsOutsideNodeFs('const nodeFs: FsSurface = { readFileSync, existsSync }\nfunction f(p: string) { return nodeFs.readFileSync(p) }\n'), 'CONTROL (negative): a call THROUGH the surface does NOT fire').toEqual([])
+    // (c) AN INCOMPLETE SURFACE IS NOT ADOPTED — the real `node:fs` is used, never a throw:
+    const partial = await makeStoreFixture({ fsSurface: incompleteFsSurface() })
+    await partial.seed(SEEDED)
+    setTier4Open(true)
+    let threw = false
+    try { partial.store.set({ token: 'FULL' }) } catch { threw = true }
+    expect(threw, 'an INCOMPLETE surface is NOT adopted — never a throw').toBe(false)
+    expect(receiptOf(partial.store), 'the REAL `node:fs` is used, so the write COMMITS and lands').toEqual({ status: 'committed' })
+    expect(partial.store.get().token).toBe('FULL')
+    expect(String(await partial.bytes()), 'and the bytes really moved').toContain('FULL')
+  })
+
+  it('D-VI · THE PANE FABRICATES NOTHING: a reading the carrier never supplied paints NO `· MCP:` word, no affordance word and no refusal segment — and the refusal segment appears IFF the carrier\'s `read` is non-null, with `undefined` counting as null', async () => {
+    // state 1 — a BRIDGE-REJECTED refresh on a never-supplied pane (the ruling's own named case):
+    ;(globalThis as unknown as { window?: unknown }).window = { provident: { security: { get: async () => { throw new Error('bridge down') } } } }
+    const mount = mountEl()
+    const panels = new SecurePanels(mount as never)
+    await panels.refresh()
+    const text = paneTextOf(panels, 'security-status')
+    expect(text, `the pane's own FIELD DEFAULT must paint NO \`· MCP:\` word when no carrier supplied a reading — measured text: "${text}"`).not.toMatch(/· MCP:/)
+    expect(text, 'nor a refusal segment').not.toContain(REFUSAL_SEGMENT)
+    expect(paneTextOf(panels, 'exclusion-toggle'), 'and the AFFORDANCE word is not painted from the field default either — no carrier supplied a reading to word it from').not.toMatch(/Disable MCP|Enable MCP/)
+    // state 2 — `read: undefined` (the ruling: `undefined` COUNTS AS null):
+    const undef = await mountPaneFor({ ...carrierRecord(STATE_MCP_ENABLED, null), read: undefined })
+    expect(paneTextOf(undef.panels, 'security-status'), '`read: undefined` ⇒ NO refusal segment').not.toContain(REFUSAL_SEGMENT)
+    // state 3 — an ABSENT `read` member (the same reading, via `PAR-8`'s OUTSIDE cell):
+    const absentMember: Record<string, unknown> = { ...carrierRecord(STATE_MCP_ENABLED, null) }
+    delete absentMember.read
+    const absent = await mountPaneFor(absentMember)
+    expect(paneTextOf(absent.panels, 'security-status'), 'an ABSENT `read` member ⇒ NO refusal segment').not.toContain(REFUSAL_SEGMENT)
+    // state 4 — the pane's own FIELD DEFAULT carries no state member (the source instrument for the
+    // `data-state` half, whose VALUE is byte-identical to the authored envelope and is therefore not
+    // separately observable — a DECLARED LIMIT, named rather than hidden):
+    const panelsSrc = codeOnly(sourceOrEmpty(SECURE_PANELS_SRC))
+    const fieldInit = /private\s+cfg\b[^=]*=\s*\{([\s\S]*?)\}/.exec(panelsSrc)?.[1] ?? ''
+    expect(fieldInit, 'CONTROL: the pane\'s `cfg` field initializer is found').not.toBe('')
+    expect(/exclusion\s*:/.test(fieldInit), `the pane's own FIELD DEFAULT carries NO state member — a never-supplied pane has nothing to fabricate from. MEASURED INITIALIZER: ${fieldInit.trim().slice(0, 160)}`).toBe(false)
+  })
+
+  it('D-VII · the boot order: `createSecurityStore(` < the boot read < the flip < `await mcp.start()`, AND the flip < `new BrowserWindow(` (the CLOSE lands before the window is created/loaded)', () => {
+    const src = sourceOrEmpty(MAIN_SRC)
+    const store = src.search(/createSecurityStore\(/)
+    const bootRead = src.search(/securityStore\.get\(\)/)
+    const gate = src.search(/new SecurityGate\(/)
+    const flip = src.search(/mcp\.applyExclusion\(\s*'mcp-enabled'\s*\)/)
+    const enable = src.search(/await\s+mcp\.start\(/)
+    const window = src.search(/new BrowserWindow\(/)
+    for (const [label, at] of [['createSecurityStore(', store], ['the boot read', bootRead], ['the flip', flip], ['await mcp.start()', enable], ['new BrowserWindow(', window]] as Array<[string, number]>) {
+      expect(at, `the site \`${label}\` exists in \`main.ts\``).toBeGreaterThan(-1)
+    }
+    expect(store, 'D-19 step 1: the store is constructed FIRST').toBeLessThan(bootRead)
+    expect(bootRead, 'D-19 step 2: the boot-ingestion read follows it').toBeLessThan(flip)
+    expect(gate === -1 || (gate > bootRead && gate < flip), 'D-19: the gate construction sits between the boot read and the flip (`store → boot read → gate → flip → mcp.start()` is PRESERVED)').toBe(true)
+    expect(flip, 'D-19 step 3: the CLOSE precedes the enable').toBeLessThan(enable)
+    expect(flip, `THE REPAIR'S OWN CLAUSE (D-vii): the CLOSE (\`mcp.applyExclusion('mcp-enabled')\`) lands BEFORE the window is created/loaded — measured flip@${flip} vs \`new BrowserWindow(\`@${window}`).toBeLessThan(window)
+  })
+
+  it('D-VIII · the GET handler reads the holder EXACTLY ONCE per turn — the returned `exclusion` member comes from the SAME single reading as `read`', () => {
+    const handler = getHandlerBody(sourceOrEmpty(MAIN_SRC))
+    expect(handler.length, 'the GET handler exists').toBeGreaterThan(0)
+    const code = codeOnly(handler)
+    const reads = code.match(/tier4OpenState\s*\(\s*\)/g) ?? []
+    expect(reads.length, `EXACTLY ONE \`tier4OpenState()\` occurrence in the handler body — measured ${reads.length} (a second consult is a SECOND reading, and the two members could then disagree)`).toBe(1)
+    const twoCallBody = "ipcMain.handle(IPC_SECURITY_GET, () => { const open = tier4OpenState(); return ({ read: open ? null : R, exclusion: tier4OpenState() ? 'mcp-disabled' : 'mcp-enabled' }) })"
+    expect((codeOnly(twoCallBody).match(/tier4OpenState\s*\(\s*\)/g) ?? []).length, 'CONTROL: the detector FIRES on a synthetic TWO-call body').toBe(2)
+    expect(/read\s*:/.test(code), 'and the ONE reading feeds BOTH members (the `read` member is composed in the handler)').toBe(true)
+    expect(/securityStore\.get\(\)/.test(code), 'while the boolean is NEVER routed through a store read (`§2.4` item 7)').toBe(false)
+  })
+
+  it('D-IX · `§3.3` item 4, RE-READ AT ITS DECLARED SCOPE: a refusal makes NO WRITE-class `fs` call — the ONE lazy boot-ingestion READ is the DECLARED turn — and the primed control shows no further call', async () => {
+    const fx = await makeStoreFixture({ readLog: true }); await fx.seed(SEEDED); setTier4Open(false)
+    const unprimed = fx.calls().length
+    assertClosedRefusal(writeEntryOf(fx.store, 'a', 1), 'D-IX · unprimed')
+    const window = fx.calls().slice(unprimed)
+    expect(writeClassCalls(window), `a refusal's window is EMPTY of WRITE-class calls — measured [${window.join(', ')}]`).toEqual([])
+    expect(window.every((c) => READ_CLASS_CALL.test(c)), 'every call in it is READ-class').toBe(true)
+    expect(window.some((c) => c.startsWith('readFile:')), 'and it carries the DECLARED boot-ingestion read (`§2.2` item 4: "Ingestion is a READ") — named, never smuggled').toBe(true)
+    const primed = fx.calls().length
+    assertClosedRefusal(writeEntryOf(fx.store, 'a', 2), 'D-IX · primed')
+    expect(fx.calls().slice(primed), 'CONTROL: on the PRIMED instance the same refusal makes NO further call at all (the laziness is one-shot by declaration)').toEqual([])
+    const blind = await makeStoreFixture(); await blind.seed(SEEDED); setTier4Open(false)
+    assertClosedRefusal(writeEntryOf(blind.store, 'a', 1), 'D-IX · the as-filed instrument')
+    expect(blind.calls(), 'CONTROL: the AS-FILED instrument (write-class-blind) is BLIND to the ingestion read — which is why the reading is re-grained to "no WRITE-class call"').toEqual([])
+  })
+
+  it('D-X · the frozen pins are compared at FULL digest (64 hex), and the register\'s `SECURITY_STORE_PIN` is ASSERTED — a dead stale pin may not stand', () => {
+    for (const [rel, pin] of Object.entries(MEASURED_FROZEN_PINS)) {
+      expect(pin.length, `the pin of ${rel} is the FULL 64-hex digest, not an 8-char proxy`).toBe(64)
+      expect(pin.slice(0, 8), 'CONTROL: the AS-FILED 8-char proxy is the FIRST EIGHT of the same digest — so the proxy alone cannot tell them apart').toBe(sha256Of(join(REPO_ROOT, rel)).slice(0, 8))
+      expect(`${pin.slice(0, 8)}${'0'.repeat(56)}`.includes(pin.slice(0, 8)), 'CONTROL: the PROXY form PASSES a digest it must not (`0664c52f…0000`) — the bite the full comparison adds').toBe(true)
+      expect(sha256Of(join(REPO_ROOT, rel)), `the frozen pin of ${rel} is UNMOVED, at FULL digest (\`§2.7\` item 1)`).toBe(pin)
+    }
+    expect(SECURITY_STORE_PIN.length, 'the store pin is a FULL 64-hex digest too').toBe(64)
+    expect(SECURITY_STORE_PIN, 'and it is LIVE: it equals the module\'s actual bytes digest — the as-filed `8ed09c97…` was STALE and read by NO row').toBe(sha256Of(SECURITY_STORE_SRC))
+    expect(SECURITY_STORE_PIN_CHAIN.length, 'the chain keeps its terms awake, including the fifth (`§7b` row 1)').toBe(5)
+    expect(new Set(SECURITY_STORE_PIN_CHAIN).size, `the chain's terms are DISTINCT: [${SECURITY_STORE_PIN_CHAIN.join(', ')}]`).toBe(5)
+    expect(SECURITY_STORE_PIN.startsWith(SECURITY_STORE_PIN_CHAIN[4]), 'and the operative term IS the chain\'s fifth').toBe(true)
   })
 })

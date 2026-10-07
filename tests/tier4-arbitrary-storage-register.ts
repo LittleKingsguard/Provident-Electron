@@ -90,16 +90,31 @@ export const MEASURED_FROZEN_PINS: Readonly<Record<string, string>> = {
   'src/renderer/store-graph-references.ts': '5c0c1a971d7f9268866b46b4d34f803694dd5a43f3b06a0cf81012c20d8f9657',
 }
 /** THE PIN CHAIN (`§2.7` item 5 / `§7b` row 1): `c7359530…` as-filed → `99618ac2…` `S3`'s green
- *  → `a98273b8…` `ADV-1` → `8ed09c97…` the `§2.6` write-lock amendment. The red set keeps all
- *  four awake and distinct; the CURRENT bytes are asserted against the FOURTH (`8ed09c97…`) at
- *  red, and the fifth move is `§7b` row 1's owner. */
+ *  → `a98273b8…` `ADV-1` → `8ed09c97…` the `§2.6` write-lock amendment → **`fd242633…` the `A-1`
+ *  STATIC-HOLDER landing (`19da51d`, `docs/specs/tier4-arbitrary-storage.md` `§10b` item 5's
+ *  recorded digest)**. The red set keeps every term awake and distinct.
+ *
+ *  ⟶ ANNOTATED BESIDE `2026-10-11` (GATE 4's REPAIR CONTRACT, **D-x** — `RCA-8(d)`: annotate
+ *  beside, never over). THE AS-FILED FORM OF THIS CELL WAS A **DEAD STALE PIN**: `SECURITY_STORE_PIN`
+ *  read `8ed09c97358b…`, the FOURTH term, while the module's bytes had already moved to
+ *  `fd2426339a41…` at `19da51d` — and the constant was **imported and read by NO ROW** of the red
+ *  set, so nothing in this repo asserted it. D-x makes the pin LIVE: the operative term is
+ *  re-pointed to the CURRENT bytes (`fd2426339a41…`, the FIFTH dated move) and `P-T4-PINS-FULL`
+ *  in `tests/tier4-arbitrary-storage.test.ts` now asserts `sha256Of(SECURITY_STORE_SRC) ===
+ *  SECURITY_STORE_PIN` at FULL 64-hex length. The as-filed fourth term stays VISIBLE in the chain
+ *  and awake — it is never erased, and no term is rewritten to silence it.
+ *  **THE FIFTH MOVE'S OWN CONSEQUENCE, STATED SO IT IS NOT READ AS A REGRESSION:** the repair
+ *  pass on `src/main/security-store.ts` moves the digest AGAIN; `§7b` row 1 already owns that
+ *  amendment cell, and the pin follows the artifact (a byte-pin that refused to follow an
+ *  authorized move would be an instrument demanding an unauthorized rollback). */
 export const SECURITY_STORE_PIN_CHAIN: readonly string[] = [
   'c7359530', // as filed
   '99618ac2', // S3's green
   'a98273b8', // ADV-1
-  '8ed09c97', // the §2.6 write-lock amendment (the operative term)
+  '8ed09c97', // the §2.6 write-lock amendment (the as-filed operative term, kept awake)
+  'fd242633', // the A-1 static-holder landing 19da51d (D-x: the LIVE operative term)
 ]
-export const SECURITY_STORE_PIN = '8ed09c97358b0eaab81b60d665519498552cd6f20bb748afceaff030494f0419'
+export const SECURITY_STORE_PIN = 'fd2426339a413d04d77c039f32782c90497e614ddf7bb185900283fdbf0635c3'
 
 // ---- THE REGISTER'S DECLARED NUMBERS (`§5.5.1`) -----------------------------------------
 export const REGISTER_ROW_CAP = 100
@@ -110,7 +125,27 @@ export const REGISTER_ROW_IDS: readonly string[] = [
   'P-T4-TP-1', 'P-T4-TP-2', 'P-T4-IM-1', 'P-T4-IM-2', 'P-T4-TP-3',
   'P-T4-IM-3', 'P-T4-SM-1', 'P-T4-TP-4', 'P-T4-IM-4', 'P-T4-IM-5',
 ]
-export const DECLARED_TERMS: readonly number[] = [12, 10, 12, 8, 14, 10, 10, 16, 8, 8]
+/** THE DECLARED TERMS (`§5.5.1`), WITH THEIR DATED MOVE.
+ *
+ *  **AS FILED (`§5.5.1`): `108 = 12 + 10 + 12 + 8 + 14 + 10 + 10 + 16 + 8 + 8`** — the as-filed
+ *  row 8 (`P-T4-TP-4`) declared `16 = 4 (the four surface arms) × 2 (states) = 8 + 8 (the eight
+ *  value classes the write admission REFUSES)`.
+ *
+ *  ⟶ ANNOTATED BESIDE `2026-10-11` (GATE 4's REPAIR CONTRACT, the row-8 re-grain —
+ *  `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`: a mis-sum is corrected by annotating BESIDE the
+ *  as-filed form, never by silently rewriting it): **row 8 GAINS FOUR TERMS**, each the drive of
+ *  an assertion the repair contract names —
+ *  `+ 1` THE NAMESPACE SEAM (`writeEntry('token', …)` / `writeEntry('entries', …)` leave the file's
+ *  top-level `token`/`enabled`/`maxJournalLength` UNMOVED and round-trip under their own names) ·
+ *  `+ 1` THE `__proto__` KEY (D-ii: preserved VERBATIM at boot, on write, in the bytes, and across
+ *  a RE-CONSTRUCTED store) · `+ 1` THE `-0` VALUE (D-i: REFUSED whole-request, `0` still commits) ·
+ *  `+ 1` AN OUT-OF-INGESTION-DOMAIN NAME SURVIVING EVERY WRITE (`§2.2` item 4 arm 3's residue).
+ *  **SO THE OPERATIVE TERM IS `108 + 4 = 112 = 12 + 10 + 12 + 8 + 14 + 10 + 10 + 20 + 8 + 8`**,
+ *  with row 8 = `20 = 16 (the as-filed four arms × two states + the eight value classes) + 4 (the
+ *  four added terms above)`; the subtotals move `P-TP 52 → 56` and `P-IM 46` / `P-SM 10` are
+ *  UNMOVED, so `46 + 10 + 56 = 112`. **NO term is dropped, no row is merged and the `≤8` figure
+ *  stays a SIGNAL, never a ceiling.** */
+export const DECLARED_TERMS: readonly number[] = [12, 10, 12, 8, 14, 10, 10, 20, 8, 8]
 export const STRATEGY_IDS: readonly string[] = [
   'S-T4-WGATE-1', 'S-T4-RGATE-1', 'S-T4-PAIR-1', 'S-T4-STATE-1', 'S-T4-VOCAB-1',
   'S-T4-PANE-1', 'S-T4-BOOT-1', 'S-T4-OPEN-1', 'S-T4-HOME-1', 'S-T4-CARRIER-1',
