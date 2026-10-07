@@ -1074,11 +1074,19 @@ describe('§4.1 · the STATIC and EXISTENCE rows (both branches)', () => {
     //   (c) a path whose only occurrence of a SET date is AS-FILED TEXT (present in `HEAD`, on a
     //       line this pass did not add) is NOT attributed — THE ARM THE RE-GRAIN EXISTS FOR, driven
     //       against the LIVE `docs/decisions.md` reading AND against a synthetic fixture;
-    //   (d) a path whose added lines DO carry a set date IS attributed;
+    //   (d) a path whose added lines DO carry a set date IS attributed — driven on the SYNTHETIC
+    //       fixture (BYTE-UNTOUCHED by the 2026-10-11 second re-grain), and TREE-STATE
+    //       CONDITIONALLY on the LIVE path: the live arm reports the marker it finds when
+    //       `docs/decisions.md` DIFFERS from `HEAD`, and otherwise PRINTS `LIVE-CLEAN` and asserts
+    //       the row's own guard;
     //   (e) a marker carried ONLY by diff plumbing (`+++`/`---`/`@@`) is NOT content — it does not
     //       attribute (an instrument whose header attributed a path would be an over-read);
     //   (f) no added lines at all (git unavailable / untracked / unchanged) FAILS CLOSED: no
     //       attribution, and the fallback is the as-filed outcome.
+    // THE CLAIM SPLIT (2026-10-11, the SECOND re-grain of this arm): the FALSIFIABILITY lives with
+    // (a)/(b)/(c)/(d)-FIXTURE on synthetic diffs — all four claims are byte-untouched here and all
+    // four hold in EITHER tree state — while the LIVE arm supplies the POSITIVE evidence when the
+    // path differs from `HEAD` and degrades to the row's own guard when it does not.
     // =========================================================================================
 
     // (a) — the existing `ghost-that-does-not-exist.md`-class control, KEPT BYTE-UNCHANGED and now
@@ -1181,35 +1189,97 @@ describe('§4.1 · the STATIC and EXISTENCE rows (both branches)', () => {
     ).toBe(true)
 
     // --- (c) AND (d) DRIVEN AGAINST THE LIVE `docs/decisions.md` READING (the architect's ruling
-    // names this arm explicitly). The diff is read through the same `git diff -U0 HEAD -- <path>`
-    // shape the predicate uses; if git cannot answer, the row says so in the failure message rather
-    // than silently passing — an unrun arm is reported, never absorbed.
+    // names this arm explicitly). **THE LIVE ARM (d) IS TREE-STATE CONDITIONAL AND HONEST IN BOTH
+    // STATES** (`RCA-8(d)` ANNOTATE-BESIDE, 2026-10-11 — the SECOND re-grain of this arm). The
+    // re-grain that ADDED the live arm was authored while the architect's `2026-10-11` doc set was
+    // UNCOMMITTED, so `git diff -U0 HEAD -- docs/decisions.md` had added lines to read; the set is
+    // now COMMITTED and the tree is CLEAN for that path, so the live diff is EMPTY and the arm's
+    // PRE-CONDITION (`added-line marker hits` non-empty) cannot hold. **THE ROW'S VERDICT IS NOT
+    // WHAT MOVED:** `expect(unclaimed).toEqual([])` above stays THIS row's guard in BOTH states;
+    // what this re-grain re-shapes is the NON-VACUITY CONTROL beside it, which must be able to hold
+    // in either tree state rather than assert a state the clean tree cannot be in.
+    //
+    // WHICH ARM CARRIES WHICH CLAIM, stated so a reader can see the split:
+    //   · state=DIFFERS-FROM-HEAD — **THE LIVE POSITIVE EVIDENCE**: `docs/decisions.md` differs from
+    //     `HEAD` and a member of the printed closed set occurs ON ONE OF ITS ADDED LINES, so the
+    //     path the red reported IS attributed on evidence the pass WROTE. A path that DIFFERS with
+    //     NO set marker on any added line is a BOUNDARY VIOLATION: this arm reddens AND `unclaimed`
+    //     is non-empty — the two are ONE event, and both are asserted below.
+    //   · state=LIVE-CLEAN — **THE ARM DEGRADES TO THE ROW'S REAL GUARD, AND PRINTS `LIVE-CLEAN`**:
+    //     it asserts the fail-closed reading (with no added line there is no added-line evidence, so
+    //     the path is NOT attributed) AND the guard itself on the LIVE denied set (`unclaimed ===
+    //     []`). It is neither vacuous nor unreachable: the guard is evaluated on the same live
+    //     reading the row's verdict uses, and the state it is in is PRINTED, never silently skipped.
+    //   · (a)/(b)/(c)/(d)-FIXTURE, on SYNTHETIC diffs — **THE FALSIFIABILITY**, and those arms are
+    //     BYTE-UNTOUCHED by this re-grain because each holds in EITHER tree state: unchanged bytes ⇒
+    //     not attributed · a date OUTSIDE the closed set on an added line ⇒ not attributed (with its
+    //     set-extended positive control) · a set date present only in AS-FILED text ⇒ not attributed ·
+    //     a set date ON AN ADDED LINE ⇒ attributed. The live arm may therefore be conditional
+    //     without the instrument becoming unfalsifiable, which is what makes this shape admissible.
+    //   · (c) LIVE (`ATTRIBUTION_AS_FILED`, the as-filed form) — **STATE-INDEPENDENT AND KEPT**: it
+    //     reads `HEAD`'s OWN bytes, which carry the pass's date SEVEN times, so it reads the same in
+    //     both states and its drive is not made conditional.
+    //
+    // THE DIFF IS READ ONLY WHEN THE BYTES DIFFER (a `HEAD`-vs-worktree byte compare FIRST, the
+    // `git diff` SECOND): on a clean tree this arm makes NO diff call for a diff the compare has
+    // already answered. IT STAYS FAIL-CLOSED: if the path differs and `git` cannot answer, there is
+    // NO added-line evidence, so the arm REDDENS rather than silently passing.
     const LIVE_REL = 'docs/decisions.md'
+    const liveHead = headBytes(LIVE_REL) ?? ''
+    const liveNow = workTreeBytes(LIVE_REL) ?? ''
+    const liveDiffers = liveNow !== liveHead
     let liveDiff = ''
-    try {
-      liveDiff = execFileSync('git', ['diff', '-U0', 'HEAD', '--', LIVE_REL], { cwd: REPO_ROOT, encoding: 'utf8' })
-    } catch {
-      liveDiff = ''
+    let liveDiffReading = 'NOT-READ (byte-identical to HEAD: the compare answered it, so no `git` diff call is made)'
+    if (liveDiffers) {
+      try {
+        liveDiff = execFileSync('git', ['diff', '-U0', 'HEAD', '--', LIVE_REL], { cwd: REPO_ROOT, encoding: 'utf8' })
+        liveDiffReading = 'READ (the path differs from HEAD)'
+      } catch {
+        liveDiff = ''
+        liveDiffReading = 'GIT-FAILED (fail closed: no added-line evidence, so NOT attributed, and this arm reddens)'
+      }
     }
     const liveAdded = liveDiff.split('\n').filter((line) => line.startsWith('+') && !line.startsWith('+++ '))
     const liveMarkers = LATER_PASS_MARKERS.filter((m) => liveAdded.some((line) => line.includes(m)))
-    expect(
-      liveMarkers,
-      `§5.1 (d) — THE LIVE ARM: \`${LIVE_REL}\`'s ADDED lines carry a member of the closed set, so the path the red reported IS attributed on added-line evidence. FOUND added lines: ${JSON.stringify(liveAdded.map((l) => l.slice(0, 40)))}; added-line marker hits: ${JSON.stringify(liveMarkers)}`,
-    ).not.toEqual([])
-    expect(
-      liveMarkers,
-      '§5.1 (d) — and the attribution is the pass\'s OWN date (`2026-10-11`), not an older member of the set leaking through: the marker that attributes the live path is exactly the date the later pass wrote',
-    ).toEqual([M_TODAY])
-    expect(
-      attributedToALaterPass(LIVE_REL),
-      '§5.1 (d)/(c) — THE LIVE PATH-LEVEL CALL (the one the row above evaluated) ATTRIBUTES this path on added-line evidence, exactly as it did before this re-grain moved the SUBJECT and not the verdict',
-    ).toBe(true)
-    // (c) LIVE: the as-filed form could not have answered this. `HEAD`'s bytes carry the pass's own
-    // date SEVEN times (the architect's earlier same-day rulings), so the as-filed conjunct
+    const liveState = liveDiffers ? 'DIFFERS-FROM-HEAD' : 'LIVE-CLEAN'
+    // THE READING IS PRINTED, NEVER SKIPPED (`tests/census.test.ts`'s `§5.5.1 register status ::`
+    // reading line is this repo's precedent for an in-row reading): the arm's STATE, its diff
+    // reading and its live denied/attributed/unclaimed triple are on the run's output whichever
+    // branch executes — an unrun arm is reported, never absorbed.
+    console.log(
+      `§5.1 (d) LIVE-ARM :: state=${liveState} path=${LIVE_REL} diff=${liveDiffReading} addedLines=${liveAdded.length} addedLineMarkerHits=${JSON.stringify(liveMarkers)} denied=${JSON.stringify(denied)} attributed=${JSON.stringify(attributed)} unclaimed=${JSON.stringify(unclaimed)} markerSet=${JSON.stringify(LATER_PASS_MARKERS)}`,
+    )
+    if (liveDiffers) {
+      expect(
+        liveMarkers,
+        `§5.1 (d) state=${liveState} — THE LIVE ARM: \`${LIVE_REL}\`'s ADDED lines carry a member of the closed set, so the path the red reported IS attributed on added-line evidence. FOUND added lines: ${JSON.stringify(liveAdded.map((l) => l.slice(0, 40)))}; added-line marker hits: ${JSON.stringify(liveMarkers)}; diff reading: ${liveDiffReading}. (A path that differs from HEAD with NO set marker on any added line is a BOUNDARY VIOLATION: this arm reddens and unclaimed is non-empty.)`,
+      ).not.toEqual([])
+      expect(
+        liveMarkers,
+        '§5.1 (d) state=DIFFERS-FROM-HEAD — and the attribution is the pass\'s OWN date (`2026-10-11`), not an older member of the set leaking through: the marker that attributes the live path is exactly the date the later pass wrote',
+      ).toEqual([M_TODAY])
+      expect(
+        attributedToALaterPass(LIVE_REL),
+        '§5.1 (d)/(c) state=DIFFERS-FROM-HEAD — THE LIVE PATH-LEVEL CALL (the one the row above evaluated) ATTRIBUTES this path on added-line evidence, exactly as it did before this re-grain moved the SUBJECT and not the verdict',
+      ).toBe(true)
+      expect(
+        unclaimed,
+        `§5.1 (d) state=${liveState} — THE ROW'S REAL GUARD, ON THE SAME LIVE READ: the arm reddening above and unclaimed being non-empty are ONE event, never two readings. Denied paths seen: ${JSON.stringify(denied)}; attributed to a later pass: ${JSON.stringify(attributed)}; marker set: ${JSON.stringify(LATER_PASS_MARKERS)}`,
+      ).toEqual([])
+    } else {
+      expect(
+        attributedToALaterPass(LIVE_REL),
+        `§5.1 (d) state=${liveState} — LIVE-CLEAN: \`${LIVE_REL}\` is byte-identical to HEAD (${liveDiffReading}), so there are NO added lines and therefore NO added-line evidence, and the FAIL-CLOSED reading is asserted explicitly rather than assumed: NOT attributed. The positive half of this claim is carried by the byte-untouched FIXTURE arms (c2)/(d), which hold in BOTH tree states`,
+      ).toBe(false)
+      expect(
+        unclaimed,
+        `§5.1 (d) state=${liveState} — LIVE-CLEAN: THE ROW'S REAL GUARD, ON LIVE EVIDENCE — no denied path is unattributed. The arm degrades to the guard rather than becoming vacuous or unreachable. Denied paths seen live: ${JSON.stringify(denied)}; attributed: ${JSON.stringify(attributed)}; marker set: ${JSON.stringify(LATER_PASS_MARKERS)}`,
+      ).toEqual([])
+    }
+    // (c) LIVE: the as-filed form could not have answered this, and this reading does NOT depend on
+    // the tree state (it is read off `HEAD`'s OWN bytes). `HEAD`'s bytes carry the pass's own date
+    // SEVEN times (the architect's earlier same-day rulings), so the as-filed conjunct
     // `!head.includes(marker)` is FALSE for the date that actually attributes the path.
-    const liveHead = headBytes(LIVE_REL) ?? ''
-    const liveNow = workTreeBytes(LIVE_REL) ?? ''
     expect(
       liveNow.includes(M_TODAY) && liveHead.includes(M_TODAY),
       `§5.1 (c) LIVE — the as-filed form COULD NOT admit this one: the same-day date is ALREADY in HEAD (occurrences in HEAD: ${liveHead.split(M_TODAY).length - 1}; work tree: ${liveNow.split(M_TODAY).length - 1}), so the as-filed conjunct is FALSE and a set-only extension attributes NOTHING — the measured reason the re-grain moves the SUBJECT`,
