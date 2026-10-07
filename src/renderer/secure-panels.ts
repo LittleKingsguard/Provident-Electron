@@ -224,7 +224,23 @@ function paneEnvelope(): LegacyInitialData {
                     children: [
                       {
                         type: 'button',
-                        props: { id: 'exclusion-toggle', 'data-state': 'mcp-enabled' },
+                        // ⟶ **THE AUTHORED STATE LITERAL IS REMOVED (`2026-10-11`; GATE-6's `F-1`,
+                        // `HIGH`; `§2.6` item 3's `D-vi`, `§2.6` item 1(b), `§3.2` `FS-T4-13` + its
+                        // dated note).** The as-filed node declared
+                        // `props: { id: 'exclusion-toggle', 'data-state': 'mcp-enabled' }` and the
+                        // `null` arm of `syncConfig` cleared only the AFFORDANCE WORD, so the node
+                        // itself carried a STATE WORD the carrier had never supplied — at first paint
+                        // and on a bridge rejection alike, and in the MCP-DISABLED document it is the
+                        // **INVERSE** of the carried state (measured live: `2.4` ms / `2.6` ms).
+                        // `D-vi`'s own words — *"writes NO `data-state` PROP"* — bind the PROP, so the
+                        // node DECLARES none and the ONE writer of this prop is the `syncConfig`
+                        // settled arm below, which writes it FROM THE CARRIER. NO explicit
+                        // clear/`removeAttribute` arm is added in the `null` arm (the second admissible
+                        // shape): with the literal gone there is nothing to clear, and a nullish-value
+                        // mutation would ride the SAME batch as the affordance clear, where an engine
+                        // refusal would take the (landed, green) affordance clear down with it. The
+                        // settled arm is UNCHANGED and still writes BOTH cells from the carrier.
+                        props: { id: 'exclusion-toggle' },
                         css: { classes: ['btn'] },
                         content: 'Disable MCP',
                         handlers: [{ name: 'exclusion-toggle', event: 'click', body: EXCLUSION_TOGGLE_BODY }],
@@ -540,6 +556,14 @@ export class SecurePanels {
         // re-worded, so a never-answered (or bridge-rejected) pane fabricates no state at all. A
         // value the CARRIER previously supplied is retained and re-painted, which is the declared
         // reading of `§2.6` item 3's *"absent means the last observed read was performed"*.
+        // **⟶ ANNOTATED BESIDE, `2026-10-11` (GATE-6's `F-1`, `HIGH`; `RCA-8(d)`: the as-filed
+        // paragraph above STANDS).** The phrase *"the authored envelope's own default is CLEARED"*
+        // named a default the `null` arm never in fact reached: the envelope declared
+        // `'data-state': 'mcp-enabled'` and only the affordance word moved. The envelope node now
+        // DECLARES NO STATE MEMBER AT ALL (see the node's own note), so this arm's landed shape —
+        // write no prop, clear the word — is now the WHOLE of the pre-carrier surface, with no
+        // second writer and no clearing arm to justify. `D-vi`'s PROP clause is satisfied by the
+        // node's silence, not by a write that removes what the node once said.
         const carrierReading = this.cfg.exclusion
         if (carrierReading === null || carrierReading === undefined) {
           mutation.push({ targetProp: 'content', value: '' })
