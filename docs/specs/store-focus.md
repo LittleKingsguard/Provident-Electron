@@ -1013,3 +1013,7 @@ form).**
 
 *File-end note (the sibling convention): nothing follows this line. `§3b` is the file-end attachment; the `CURRENT STATE` block
 sits before `§0`; a reader who found a section numbered after `§3b` should treat it as a drifted addition, not this unit's.*
+
+---
+
+**⟶ DATED POINTER, `2026-10-11` — THE `docs/pending.md` CITATIONS IN THIS FILE RESOLVE HERE (`RCA-8(d)`: an ADDITIVE block past the file-end note; NOT ONE PRE-EXISTING BYTE IS REWRITTEN, no section, row id or count moves).** **THE CITED SECTION IS `docs/pending.md` `§Q` — the two-rule re-read and the `provident.focus` `PENDING-REBUILD` cell (cited at `§0` row 1, `§0A.3` `S-1`, `§1`/`§2.3`/`§2.4`'s re-home row, and `§6` item 1).** **`§Q` IS RETIRED BY THE `2026-10-11` SWEEP, AND EVERY CITE-SITE RESOLVES TO ITS STUB IN `docs/pending.md` `§6.4` + `§6.6`.** **THE PER-ROW RECORD IS `archive/pending/2026-10-11-retired-rows-index.md` (`§E`); THE AS-FILED TEXT IS `archive/pending/2026-10-11-pending-as-filed-pre-sweep.md` (`sha256 b437a7db5398af3f14d8286f8b3e442ceae38308baf17ee8970da4fa89368382`, byte-identical to `git show 35fc7f2:docs/pending.md`).** **THIS FILE'S OWN LANDING (the store-mirror re-home plus the two subscriptions) IS THE `§Q` REBUILD; the cell's flip was the supervisor's act at gate 10 and is recorded at `docs/next-steps.md`'s `## DONE — U-STORE-FOCUS` section, NOT in `docs/pending.md`. The live `§Q` obligation that survives is `docs/pending.md` `§1(i)` (the exemption arm).**
