@@ -1367,6 +1367,19 @@ describe('T2 §4.2 item 9 — THE STATIC BOUNDARY (`§5.1`, `C-9`, `§5.3`, `§2
       'docs/specs/store-tabs-record.md',
       'docs/specs/store-tabs-record-greens.md',
       'tests/theme-control.test.ts',
+      // ── ADDED `2026-10-11` BY THIS PASS, AND IT IS A DECLARED WRITE-BACK — NOT A WIDENED
+      //    SCOPE: `store-focus.md` `§2.2` item 1's cell (*"today NO `file.tabs.*` record has
+      //    landed"*) is named by `T2`'s contract `§7b` item 3 as a cell this unit's landing
+      //    moves, and its negative pin (`tests/store-focus.test.ts`'s S22-1) asserts the bare
+      //    ABSENCE `!rendererSrc().includes('file.tabs')` — which `T2`'s landing of
+      //    `file.tabs.*` supersedes IN SUBSTANCE, so the row re-grains to the ATTRIBUTED
+      //    POSITIVE on the same declared path (`§5.1` item 1). The AS-FILED seven-path set is
+      //    kept visible in the register's own `DECLARED_SCOPE_PATHS_AS_FILED` (beside the
+      //    operative ten, which the register's `P-TR-TP-6`(1) asserts as a SET); **THE
+      //    ASSERTION HERE IS STILL A SUBSET ASSERTION WITH ITS POSITIVE CONTROL (`C-9`),
+      //    asserted AS A SET and never as a count** — an UNDECLARED path still fails
+      //    (`EDIT_SET_OFFENDER_FIXTURE`, the control two lines above).
+      'tests/store-focus.test.ts',
     ]
     const subset = editSetIsSubset(changed, scope)
     expect(subset.ok, `§5.1 — edits outside the union: ${JSON.stringify(subset.offenders)} (the working tree carries this pass’s uncommitted files until the supervisor commits at the gate boundary, RCA-8(a); these rows are red BY CONSTRUCTION and must NOT be touched)`).toBe(true)

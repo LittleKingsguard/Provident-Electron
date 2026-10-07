@@ -113,8 +113,39 @@ const CARD_CLASS_MEMBERS = ['card', 'btn', 'theme-setting'] // §2.1 item 1 (the
 const TOKEN_DOMAIN = ['dark', 'light'] // §2.1 item 3 — CLOSED AT TWO, demo data
 const DECLARED_ID_SET = [CARD_ID, DARK_ID, LIGHT_ID, STATE_ID] // four ids across FIVE nodes
 const PRE_CENSUS = 18 // §3.5 X-1 — the filing-time authored census
-const POST_CENSUS = 23 // §3.1 M-2 — 18 + 5
-const CENSUS_DELTA = 5
+/* ── THE CENSUS RE-GRAIN, LANDED 2026-10-11 (`C-6`; `RCA-8(d)`; `T2`'s contract
+ *  `docs/specs/store-tabs-record.md` `§5.5.2` item 3 / `§5.1` item 2 / `§7c` `AMB-5`). ──────
+ *  **THE AS-FILED PAIR, IN ITS OWN BYTES (kept visible, never silently rewritten):**
+ *      const POST_CENSUS = 23 // §3.1 M-2 — 18 + 5
+ *      const CENSUS_DELTA = 5
+ *  **AND IT IS SUPERSEDED IN SUBSTANCE — THE ENVELOPE NOW MEASURES `25`.** `T2`
+ *  (`U-STORE-TABS-RECORD`) authored the TWO declared page nodes (`tabs-landing-page` /
+ *  `tabs-error-page`, `§0A` item 5 / `§6` `PAR-9`) into `src/shared/demo-envelope.ts` — the
+ *  file `§5.1` item 2 licenses for *"TWO authored page nodes ONLY"* — so the authored-object
+ *  census moved by EXACTLY that unit's declared delta. **`T2` DECLARED the drift and named
+ *  the owner rather than performing it silently, and DELIBERATELY PRINTED NO POST FIGURE**
+ *  (`AMB-5`: *"THE FIGURE IS DELIBERATELY NOT PRINTED"* — a spec filing may not project an
+ *  envelope measurement; `EVIDENCE-ROW-MUST-OBSERVE-WHAT-IT-PRINTS`). **THIS RE-GRAIN IS THE
+ *  MEASUREMENT THAT WAS OWED:** `T2`'s `§7b` item 5 / `§5.1` item 7 name
+ *  `tests/theme-control.test.ts` as the cell whose *"four rows that read it"* re-grain at
+ *  *"the unit that touched the envelope"* — this pass. **THE DECOMPOSITION, PRINTED WITH ITS
+ *  TERMS: `18` (filing time) `+ 5` (the theme card, `18 + 5 = 23`) `+ 2` (the pair of `T2`
+ *  page nodes) `= 25`.** **THE BITE IS KEPT AND MADE ATTRIBUTED:** the census rows below assert
+ *  the DELTA (not only the figure), so a count that moves for an UNDECLARED reason reddens
+ *  instead of being re-spelled. */
+const POST_CENSUS = 25 // as filed `23`; measured `25` = 18 + 5 + 2 (T2's two page nodes)
+const CENSUS_DELTA = 5 // the theme card's own FIVE authored nodes (UNMOVED by this re-grain)
+/** THE `T2` PAGE-NODE DELTA (`docs/specs/store-tabs-record.md` `§5.1` item 2 / `§0A` item 5):
+ *  the TWO authored page nodes `tabs-landing-page` and `tabs-error-page`. **THE VALUE IS READ
+ *  FROM THE REGISTER WHOSE CONTRACT DECLARES IT** (`tests/store-tabs-record-register.ts`'s own
+ *  `PAGE_NODE_CENSUS_DELTA`), never re-derived here — the `X-1` row asserts the two agree. */
+const PAGE_NODE_CENSUS_DELTA_SOURCE = 'tests/store-tabs-record-register.ts'
+const PAGE_NODE_CENSUS_DELTA_AS_FILED = ((): number => {
+  const raw = sourceOrEmpty(PAGE_NODE_CENSUS_DELTA_SOURCE)
+  const m = /export const PAGE_NODE_CENSUS_DELTA = (\d+)/.exec(raw)
+  return m === null ? -1 : Number(m[1])
+})()
+const T2_PAGE_NODE_CENSUS_DELTA = 2 // as filed `-`; measured `2` — T2's two declared page nodes
 
 const CARD_ABSENT =
   '§2.1 item 1 — the authored `theme-card` section is ABSENT from `demoEnvelope()` ' +
@@ -823,13 +854,22 @@ describe('§3.1 M-* — valid / happy states', () => {
     ).toBe(STATE_ID)
   })
 
-  it('M-2 (§2.1 item 1, §3.5 X-1/X-2) — the AUTHORED object census moves 18 -> 23, and it is the authored noun', () => {
+  it('M-2 (§2.1 item 1, §3.5 X-1/X-2) — the AUTHORED object census moves 18 -> 25 (AS FILED 18 -> 23), and it is the authored noun', () => {
     const measured = authoredCensus()
     expect(
       measured,
-      `§3.1 M-2 — the AUTHORED OBJECT census of \`demoEnvelope()\` must read ${POST_CENSUS} once the card lands; measured ${measured} (${PRE_CENSUS} + ${CENSUS_DELTA} = ${POST_CENSUS}).`,
+      `§3.1 M-2 — the AUTHORED OBJECT census of \`demoEnvelope()\` must read ${POST_CENSUS}; measured ${measured} (${PRE_CENSUS} + ${CENSUS_DELTA} + ${T2_PAGE_NODE_CENSUS_DELTA} = ${POST_CENSUS}). AS FILED the post figure was 23 (18 + 5): \`T2\`'s two declared page nodes moved it by ${T2_PAGE_NODE_CENSUS_DELTA} (docs/specs/store-tabs-record.md §5.1 item 2 / §0A item 5).`,
     ).toBe(POST_CENSUS)
-    expect(measured - PRE_CENSUS, '§2.1 item 1 — the drift is EXACTLY the five authored nodes').toBe(CENSUS_DELTA)
+    // ── THE ATTRIBUTED DRIFT (`RCA-8(d)`; `C-6`): the delta is asserted as the SUM OF ITS
+    //    DECLARED TERMS, not as one bare figure — a count that moves for an UNDECLARED reason
+    //    reddens HERE as well as at the figure above. THE AS-FILED FORM (`expect(measured -
+    //    PRE_CENSUS).toBe(CENSUS_DELTA)`, true only while the card was the sole mover) is kept
+    //    visible in the constants block above and is re-grained, not deleted.
+    expect(
+      measured - PRE_CENSUS,
+      '§2.1 item 1 / §3.1 M-2 — the drift is EXACTLY the two declared terms WITH their terms: the five authored card nodes PLUS T2\'s two page nodes',
+    ).toBe(CENSUS_DELTA + T2_PAGE_NODE_CENSUS_DELTA)
+    expect(measured - PRE_CENSUS - CENSUS_DELTA, 'T2 §5.1 item 2 — the residue is EXACTLY this unit\'s two declared page nodes').toBe(T2_PAGE_NODE_CENSUS_DELTA)
   })
 
   it('M-3 (§2.1 item 2) — both buttons carry `theme-set`/`click`, as a function STRING, with one token each', () => {
@@ -1205,12 +1245,16 @@ describe('§3.3 I-* — invariants that hold in every state', () => {
     }
   })
 
-  it('I-10 (§3.5 X-1/X-2, §5.U U-7) — the AUTHORED census is reconciled, and no live reading is claimed here', () => {
+  it('I-10 (§3.5 X-1/X-2, §5.U U-7) — the AUTHORED census is reconciled as 25 (AS FILED 23), and no live reading is claimed here', () => {
     const authored = authoredCensus()
     expect(
       authored,
-      `§3.3 I-10 — the AUTHORED OBJECT census is the only census this [T] half measures; it must read ${POST_CENSUS} (measured ${authored}). The LOADED census belongs to the live app and its own command (§5.U U-7) and is NEVER re-quoted for this figure.`,
+      `§3.3 I-10 — the AUTHORED OBJECT census is the only census this [T] half measures; it must read ${POST_CENSUS} (measured ${authored}). AS FILED it read 23 (18 + 5): T2's two declared page nodes moved it by ${T2_PAGE_NODE_CENSUS_DELTA} (docs/specs/store-tabs-record.md §5.1 item 2 / §0A item 5). The LOADED census belongs to the live app and its own command (§5.U U-7) and is NEVER re-quoted for this figure.`,
     ).toBe(POST_CENSUS)
+    expect(
+      authored - PRE_CENSUS,
+      '§3.3 I-10 / C-6 — the drift is ATTRIBUTED, never re-spelled: the five card nodes PLUS T2\'s two page nodes',
+    ).toBe(CENSUS_DELTA + T2_PAGE_NODE_CENSUS_DELTA)
     const titles = thisFileTitles()
     expect(
       titles.filter((t) => /loaded census|targets reading|rendered html reading/i.test(t)),
@@ -1409,15 +1453,31 @@ describe('§3.4 R-* — the static rows', () => {
 // §3.5 — the EXISTENCE rows, each with its probe
 // ===========================================================================
 describe('§3.5 X-* — the existence rows', () => {
-  it('X-1 (§2.1 item 1) — the authored census: 18 at filing time, 23 once the card lands', () => {
+  it('X-1 (§2.1 item 1) — the authored census: 18 at filing time, 25 at this head (AS FILED 23 once the card landed)', () => {
     const spec = sourceOrEmpty(SPEC_PATH)
-    expect(spec.includes('`18`') && spec.includes('`23`'), '§3.5 X-1 records BOTH figures (18 before, 23 after)').toBe(true)
+    expect(
+      spec.includes('`18`') && spec.includes('`23`'),
+      '§3.5 X-1 records the filing-time `18` and the as-filed post `23`; both figures stay visible in the contract, which this re-grain does NOT rewrite (the re-grain is OWED to the census rows, §1.1 C-6 — the figure `25` is an ENVELOPE MEASUREMENT, never a spec projection)',
+    ).toBe(true)
+    // ── THE ATTRIBUTION IS READ FROM THE DECLARING FILE ITSELF (`T2`'s register), so this
+    //    re-grain cannot silently diverge from the unit that owns the delta.
+    expect(
+      PAGE_NODE_CENSUS_DELTA_AS_FILED,
+      `T2 docs/specs/store-tabs-record.md §5.1 item 2 — ${PAGE_NODE_CENSUS_DELTA_SOURCE} must still declare PAGE_NODE_CENSUS_DELTA; a moved or deleted declaration reddens HERE`,
+    ).toBe(T2_PAGE_NODE_CENSUS_DELTA)
     const measured = authoredCensus()
     expect(
       measured,
-      `§3.5 X-1 — a pass quoting ${PRE_CENSUS} as the POST figure, or ${POST_CENSUS} as the pre figure, FAILS this row; measured ${measured}`,
+      `§3.5 X-1 — a pass quoting ${PRE_CENSUS} as the POST figure, or ${POST_CENSUS} as the pre figure, FAILS this row; measured ${measured}. AS FILED the post figure was 23.`,
     ).toBe(POST_CENSUS)
-    expect(measured - PRE_CENSUS).toBe(CENSUS_DELTA)
+    expect(
+      measured - PRE_CENSUS,
+      'C-6 / §3.5 X-1 — the drift is ATTRIBUTED: the five card nodes PLUS T2\'s two declared page nodes, with the undeclared residue asserted at ZERO',
+    ).toBe(CENSUS_DELTA + T2_PAGE_NODE_CENSUS_DELTA)
+    expect(
+      measured - PRE_CENSUS - CENSUS_DELTA - T2_PAGE_NODE_CENSUS_DELTA,
+      'C-6 — an UNDECLARED mover of the authored census: the delta is not the sum of its two declared terms',
+    ).toBe(0)
   })
 
   it('X-2 (§3.5 X-2) — the tool/type censuses and the shipped command surface', () => {
@@ -1815,9 +1875,10 @@ function im2Attempt(shape: 1 | 2 | 3 | 4, config: 'object' | 'scan'): AttemptRes
         [
           { label: '§5.5.1 P-TC-IM-2 shape (1) — the authored id set is CLOSED at the four declared ids', ok: idSetClauseHolds(card.section) },
           { label: '§5.5.1 P-TC-IM-2 shape (1) — the state node carries BOTH `css.id` and `props.id`', ok: propsClauseHolds(card.section) },
-          { label: `§5.5.1 P-TC-IM-2 shape (1) — the authored census moves ${PRE_CENSUS} -> ${POST_CENSUS}`, ok: authoredCensus() === POST_CENSUS },
+          { label: `§5.5.1 P-TC-IM-2 shape (1) — the authored census moves ${PRE_CENSUS} -> ${POST_CENSUS} (AS FILED 18 -> 23; T2's two page nodes, docs/specs/store-tabs-record.md §5.1 item 2)`, ok: authoredCensus() === POST_CENSUS },
+          { label: `§5.5.1 P-TC-IM-2 shape (1) / C-6 — the drift is ATTRIBUTED: measured - pre === the five card nodes + T2's ${T2_PAGE_NODE_CENSUS_DELTA} page nodes (an UNDECLARED mover reddens here)`, ok: authoredCensus() - PRE_CENSUS === CENSUS_DELTA + T2_PAGE_NODE_CENSUS_DELTA },
         ],
-        3,
+        4,
       )
     }
     if (shape === 2) {

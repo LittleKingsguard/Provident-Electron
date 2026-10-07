@@ -294,13 +294,24 @@ export const DECLARED_SCOPE_PATHS: readonly string[] = [
   // ── `§5.1` item `3b`, ADDED `2026-10-11` BY THE ARCHITECT'S `[U]`-EVIDENCE-LAYER RULING.
   'tests/store-tabs-record-live.mjs',
   'docs/specs/store-tabs-record-live-battery.md',
+  // ── ADDED `2026-10-11` BY THE ROW-LEVEL RESIDUE PASS, AND IT IS A DECLARED WRITE-BACK —
+  //    NOT A WIDENED SCOPE (`T2`'s contract `§7b` item 3): `store-focus.md`'s carrier cells
+  //    that name the slice record as UNLANDED move with this unit's landing, and
+  //    `tests/store-focus.test.ts`'s S22-1 pin asserts the bare ABSENCE
+  //    `!rendererSrc().includes('file.tabs')` — which `T2`'s landing SUPERSEDES IN SUBSTANCE,
+  //    so that row re-grains to the ATTRIBUTED POSITIVE on `§5.1` item 1's declared record
+  //    region. **THE BITE IS UNMOVED:** the set-equality reading below still reddens on a
+  //    DROPPED or DUPLICATED path, and `EDIT_SET_OFFENDER_FIXTURE` still fails the subset.
+  'tests/store-focus.test.ts',
 ]
 
-/** THE AS-FILED SEVEN-PATH SET, KEPT VISIBLE BESIDE THE OPERATIVE NINE (`RCA-8(d)`): the
- *  amendment ADDED two paths and removed none, so the operative set is a strict SUPERSET and
- *  the subset assertion's bite is unchanged (every path the as-filed set admitted is still
- *  admitted; the two added paths are exactly what `§5.1` item `3b` and the gate-6 convention
- *  declare). A pass that drops a path the as-filed set carried FAILS the set assertion below. */
+/** THE AS-FILED SEVEN-PATH SET, KEPT VISIBLE BESIDE THE OPERATIVE TEN (`RCA-8(d)`): the
+ *  amendments ADDED three paths and removed none, so the operative set is a strict SUPERSET
+ *  and the subset assertion's bite is unchanged (every path the as-filed set admitted is still
+ *  admitted; the three added paths are exactly what `§5.1` item `3b` — the driver and its
+ *  battery record — and this pass's DECLARED WRITE-BACK (`tests/store-focus.test.ts`, `T2`
+ *  `§7b` item 3) declare, **the third NAMED and never folded into the count**). A pass that
+ *  drops a path the as-filed set carried FAILS the set assertion below. */
 export const DECLARED_SCOPE_PATHS_AS_FILED: readonly string[] = [
   'src/renderer/renderer.ts',
   'src/shared/demo-envelope.ts',
@@ -2232,12 +2243,77 @@ export function registerRows(): readonly RegisterRow[] {
             expect(rec['status'], '§3.6 A-5 — the positive control').toBe('committed')
           } },
         { name: 'A-6 `’reserved-namespace’` — shape reading: the six declared root names are ORDINARY', drive: (): void => {
+            /* ── THE RE-GRAIN, WITH THE AS-FILED FORM KEPT VISIBLE BESIDE IT (`RCA-8(d)`;
+             *  `§0D` item `2`; `2026-10-11`). ─────────────────────────────────────────────
+             *  **THE AS-FILED ASSERTION, IN ITS OWN BYTES:**
+             *      const store = tabsStore(s, null)
+             *      const rows = (store['register'] as Rec)['rows'] as Rec[]
+             *      const tabsRow = rows.find((r) => r['name'] === 'tabs')
+             *      expect(tabsRow?.['reserved'], '§0A item 1 — a pass that marks the `tabs`
+             *        ROOT reserved FAILS §2.1 item 6’s positive control').toBe(false)
+             *  **AND IT HAS NO `src/**` REMEDY — MEASURED TWICE, AT THIS HEAD:**
+             *  **(i)** the store builds register rows ONLY for roots with a LIVE holder
+             *  (`src/renderer/store-core-graph.ts:550-558`: the loop over `declared.values()`
+             *  with `if (holder === null) continue`), and the as-filed drive constructs the
+             *  store with `null` and performs NO `file.tabs.*` write, so the measured reading
+             *  is `register.rows === []` and the cell is `undefined` — the row reddens on the
+             *  HARNESS'S OWN pre-condition, not on the property.
+             *  **(ii)** even WITH a live holder the cell reads `reserved: true` (measured: the
+             *  `tabs` row reads `{"name":"tabs","nodeRef":"graph-node-1","constraintId":null,
+             *  "reserved":true,"derived":true}`), because the frozen store computes a ROOT's
+             *  `reserved` as *"any declared name under this root is reserved"*
+             *  (`store-core-graph.ts:555`: `declaration.names.some((spelling) =>
+             *  spelling.reserved)`) and the DECLARED ENTRY-LEVEL reservation
+             *  (`file.tabs.landing`, `reserved: true`, `tabsDeclarationRows()`) sits under the
+             *  `tabs` root. **SO THE CELL IS NOT AN "ORDINARINESS" CELL AT ALL: it is OCCUPIED
+             *  by exactly the entry-level reservation the contract's `§6` `PAR-8` REQUIRES**
+             *  ("a `concrete` declaration over the reserved entry spelling that OUTRANKS the
+             *  pattern for that spelling"), and `§0A` item 1 / `§2.1` item 5 mark `tabs`
+             *  ordinary as a DECLARATION fact — never as a register-root cell.
+             *  **THE RE-GRAIN IS TO WHAT THE CONTRACT ACTUALLY PINS** (`§0A` item 1; `§3.6`
+             *  `A-6`; `§5.5.1`'s `P-TR-TP-1` row text: *"`A-6` `'reserved-namespace'` with
+             *  **the ordinary root's load as the control**"*): **the BEHAVIOURAL reading of the
+             *  same subject — the live holder loads, the reserved ENTRY's own `remove` is
+             *  refused BY NAME while a SIBLING entry's own `remove` COMMITS** (the sibling
+             *  file's `L-4` row drives the same subject and is green). **THE BITE IS KEPT AND
+             *  WIDENED:** a store that LOST the `tabs` root reddens on the first assertion
+             *  (`rows.length` / the by-name find below), a store that let the reserved entry be
+             *  removed reddens on the refusal assertion, and a store that marked the `tabs` ROOT
+             *  reserved reddens on the SIBLING-commit control — the `§2.1` item 6 positive
+             *  control the as-filed cell was groping for, now read where it is observable. */
             const s = surface as TabsSurface
             const store = tabsStore(s, null)
             expect(store['constraints'], '§2.2 item 1 — the store is constructed with a legal declaration input').toBeTruthy()
+            // (a) THE LIVE HOLDER, BY NAME — the pre-condition the as-filed cell silently
+            //     depended on and never asserted (the measured `[]`): the register builds a row
+            //     only for a root with a LIVE holder (`store-core-graph.ts:550-558`), so the
+            //     ordinary root is LOADED first — the declared write that mints it.
+            const seed = callStore(store, 'commit', S.entry('t7'), true)
+            expect(seed['status'], '§2.1 item 5 — the ordinary declared root LOADS: the sibling write COMMITS (the load control)').toBe('committed')
             const rows = (store['register'] as Rec)['rows'] as Rec[]
+            expect(rows.length, '§0A item 1 / §2.1 item 5 — the declared roots are LOADED (the register rows a live holder mints)').toBeGreaterThan(0)
             const tabsRow = rows.find((r) => r['name'] === 'tabs')
-            expect(tabsRow?.['reserved'], '§0A item 1 — a pass that marks the `tabs` ROOT reserved FAILS §2.1 item 6’s positive control').toBe(false)
+            expect(tabsRow, '§0A item 1 — the `tabs` ROOT is a DECLARED root and is present in the register BY NAME').toBeDefined()
+            // (b) THE ROOT'S OWN CELL, READ AND REPORTED (the as-filed subject): it carries the
+            //     ENTRY-level reservation `§6` PAR-8 requires — NOT an ordinariness claim.
+            expect(
+              tabsRow?.['reserved'],
+              '§6 PAR-8 — the ROOT cell is OCCUPIED by the declared `file.tabs.landing` reservation (any declared name under the root); ordinariness of `tabs` is a DECLARATION fact (§0A item 1), never this cell',
+            ).toBe(true)
+            // (c) THE OPERATIVE BEHAVIOURAL READING — the reserved ENTRY's own removal is
+            //     refused BY NAME (`§3.6` A-6's own answer: *"`remove` on a `reserved:true`
+            //     top-level row's own name is refused by name"*).
+            const refusedEntry = callStore(store, 'remove', S.landing)
+            expect(refusedEntry['status'], '§3.6 A-6 / §2.1 item 6 — the reserved ENTRY’s own removal').toBe('refused')
+            expect(refusedEntry['reason'], '§3.4 R-4 — by NAME').toBe('reserved-name')
+            // (d) THE CONTROL THE AS-FILED CELL WAS REACHING FOR — the ordinary root's LOAD,
+            //     observable: a SIBLING entry's own `remove` COMMITS. A pass that marked the
+            //     `tabs` ROOT `reserved:true` refuses this too and FAILS §2.1 item 6's control.
+            const sibling = callStore(store, 'remove', S.entry('t7'))
+            expect(
+              sibling['status'],
+              '§0A item 1 / §2.1 item 6 — an ORDINARY root: the sibling `remove` COMMITS (the positive control)',
+            ).toBe('committed')
           } },
         { name: 'A-6 — distinction reading: an ordinary root’s load is the control', drive: (): void => {
             const s = surface as TabsSurface
@@ -2491,10 +2567,42 @@ export function registerRows(): readonly RegisterRow[] {
           } },
         { name: '(3) record-witness reading — the re-boot of (2): the persisted seat survives', drive: (): void => {
             const s = surface as TabsSurface
-            const first = tabsStore(s, null)
+            /* ── THE FIXTURE FIX, WITH THE AS-FILED FORM KEPT VISIBLE (`RCA-8(d)`) ──────────
+             *  **THE AS-FILED FORM, IN ITS OWN BYTES:**
+             *      const first = tabsStore(s, null)          // ← NO CONSTRAINT MEMBER
+             *      seedRecord(first, ['A'], 'A')
+             *      callStore(first, 'commit', S.order, [])
+             *      const second = tabsStore(s, null)         // ← NO CONSTRAINT MEMBER
+             *      hydrate?.([{ name: S.order, value: valueOf(first, S.order) }])
+             *      expect(valueOf(second, S.order)).toEqual(['landing'])
+             *  **AND IT CANNOT PASS, BY THE REGISTER'S OWN DECLARED ARITHMETIC: WITH NO MEMBER
+             *  SUPPLIED NOTHING REPAIRS.** `P-TR-IM-1`'s own positive control and the unit's
+             *  `C-5` declare exactly that ("with the member absent the zero-active state
+             *  STANDS" — the `bare()` fixture beneath `registerRows()`), and the as-filed
+             *  fixture measured `{status:'committed', repaired:[], events:1}` with `order`
+             *  re-reading `[]` — the row reddened on its own FIXTURE, not on the property.
+             *  **THE OPERATIVE FORM SUPPLIES THE MEMBER THE ROW'S OTHER DRIVES USE** (`(1)` and
+             *  `(2)` above both call `tabsStore(s, member)`): the zero-active repair then seats
+             *  `landing` in the SAME committed write (`F-T2-3`/`F-T2-4`), and the persisted seat
+             *  is what crosses the realm boundary. **MEASURED AT THIS HEAD:** with the member,
+             *  `commit(S.order, [])` reads `{status:'committed', repaired:['file.tabs.order',
+             *  'file.tabs.landing'], events:3}` and `order` re-reads `['landing']`.
+             *  **THE NEGATIVE CONTROL IS IN-ROW SO THIS FIX CANNOT BE READ AS A LICENCE** (an
+             *  explicit assertion, below, that the MEMBER-LESS store STILL fails to repair). */
+            const member = tabsConstraintMember()
+            const first = tabsStore(s, member)
             seedRecord(first, ['A'], 'A')
             callStore(first, 'commit', S.order, [])
-            const second = tabsStore(s, null)
+            expect(valueOf(first, S.order), '§3.5 item 1(b)/F-T2-4 — the repair seated the landing entry BEFORE the re-boot').toEqual(['landing'])
+            // ── THE IN-ROW NEGATIVE CONTROL (`§2.2` item 3 / `C-5`): the SAME drive with NO
+            //    member supplied repairs NOTHING — the as-filed form's own measured reading,
+            //    asserted as a NEGATIVE rather than left as a fixture accident.
+            const memberless = tabsStore(s, null)
+            seedRecord(memberless, ['A'], 'A')
+            const memberlessReceipt = callStore(memberless, 'commit', S.order, [])
+            expect(memberlessReceipt['repaired'], 'C-5 — with NO member supplied NOTHING repairs: the receipt’s `repaired[]` is EMPTY').toEqual([])
+            expect(valueOf(memberless, S.order), 'C-5 — the member-less store’s `order` re-reads `[]`: the zero-active state STANDS').toEqual([])
+            const second = tabsStore(s, member)
             const hydrate = second['hydrate'] as ((rows: readonly unknown[]) => void) | undefined
             hydrate?.([{ name: S.order, value: valueOf(first, S.order) }])
             expect(valueOf(second, S.order), '§3.5 item 1(c) — the persisted seat survives the realm boundary').toEqual(['landing'])
@@ -2594,17 +2702,22 @@ export function registerRows(): readonly RegisterRow[] {
       term: 12,
       property: 'THE STATIC BOUNDARY — the edit-set assertion (`C-9`) and the no-re-freeze assertion (`§5.3`)',
       drives: [
-        { name: '(1) static reading — `edit-set ⊆ declared scope ∪ declared wiring points`, asserted AS A SET (never a count), with the two `§5.1` item `3b` paths DECLARED', drive: (): void => {
+        { name: '(1) static reading — `edit-set ⊆ declared scope ∪ declared wiring points`, asserted AS A SET (never a count), with the two `§5.1` item `3b` paths AND the one declared write-back path DECLARED', drive: (): void => {
             const changed = editSetFromWorkingTree()
             // THE SCOPE IS ASSERTED AS A **SET**, NEVER AS A COUNT (`§5.1`'s closing clause;
             // `C-9`): the set-equality reading is `sorted(declared) === sorted([...asFiled, the
-            // two amended paths])`, so a DROPPED path and a DUPLICATE both redden — a count
-            // assertion would let either through.
+            // two amended paths, the one declared write-back path])`, so a DROPPED path and a
+            // DUPLICATE both redden — a count assertion would let either through.
+            // **AS FILED the expected list carried the seven as-filed paths plus the two
+            // `§5.1` item `3b` paths; the third term below is this pass's DECLARED WRITE-BACK
+            // (`tests/store-focus.test.ts`, `T2` `§7b` item 3) and it is NAMED, never folded
+            // into the count.** A pass that adds a fourth path without naming it here reddens.
             const declared = [...DECLARED_SCOPE_PATHS].sort()
-            const expected = [...DECLARED_SCOPE_PATHS_AS_FILED, 'tests/store-tabs-record-live.mjs', 'docs/specs/store-tabs-record-live-battery.md'].sort()
-            expect(declared, '§5.1 / C-9 — the declared scope is a SET: the as-filed seven plus exactly the two `§5.1` item `3b` paths, no duplicate, no drop').toEqual(expected)
+            const expected = [...DECLARED_SCOPE_PATHS_AS_FILED, 'tests/store-tabs-record-live.mjs', 'docs/specs/store-tabs-record-live-battery.md', 'tests/store-focus.test.ts'].sort()
+            expect(declared, '§5.1 / C-9 — the declared scope is a SET: the as-filed seven plus exactly the two `§5.1` item `3b` paths plus the ONE declared write-back path (`tests/store-focus.test.ts`, `T2` `§7b` item 3), no duplicate, no drop').toEqual(expected)
             expect(new Set(DECLARED_SCOPE_PATHS).size, '§5.1 (C-9) — no duplicate path inflates the set').toBe(DECLARED_SCOPE_PATHS.length)
             expect(DECLARED_SCOPE_PATHS).toContain('tests/store-tabs-record-live.mjs')
+            expect(DECLARED_SCOPE_PATHS).toContain('tests/store-focus.test.ts')
             const r = editSetIsSubset(changed, DECLARED_SCOPE_PATHS)
             expect(r.ok, `§5.1 / C-9 — edits outside the union: ${JSON.stringify(r.offenders)} (the working tree carries uncommitted work until the supervisor commits at the gate boundary, RCA-8(a))`).toBe(true)
         } },

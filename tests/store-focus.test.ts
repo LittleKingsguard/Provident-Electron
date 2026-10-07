@@ -457,6 +457,77 @@ function noTierOneWriteProbe(): { readonly ok: boolean; readonly detail: string 
   return { ok: true, detail: 'the focus region contains no tier-1 spelling — the mirror never writes the tab list' }
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+ * S22-1 RE-GRAINED 2026-10-11 — THE `file.tabs` REFERENCE IS `T2`'s OWN DECLARED
+ * LANDING (`RCA-8(d)`; the write-back `T2`'s contract `§7b` item 3 declares).
+ *
+ * **THE AS-FILED ASSERTION, IN ITS OWN BYTES:**
+ *     expect(!rendererSrc().includes('file.tabs')).toBe(true)
+ * — this unit's declaration that the tabs-slice record landing was NOT its work.
+ * **AND IT IS SUPERSEDED IN SUBSTANCE: `U-STORE-TABS-RECORD` (`T2`) HAS NOW LANDED
+ * `file.tabs.*` IN `src/renderer/renderer.ts`** (`docs/specs/store-tabs-record.md`
+ * `§5.1` item 1: *"`src/renderer/renderer.ts` — the WIRING's tab-record region ONLY"*;
+ * the gate-1 record's `§10.3` `T2` cell). The bare ABSENCE therefore no longer holds and
+ * cannot be restored by any `src/**` remedy — the landing is the unit's declared act.
+ *
+ * **THE PIN BECOMES AN ATTRIBUTED POSITIVE, NOT A BARE ABSENCE:** every `file.tabs`
+ * reference that lands must be (a) inside the DECLARED RECORD REGION — the tab-record
+ * wiring region `T2` `§5.1` item 1 authors, from its own contract header down to the
+ * `main()` boundary, i.e. the region's declarations and the wiring roles that read them,
+ * **never the FOCUS region between them** (`store-tabs-record.md` `§5.1` item 1: *"NO byte
+ * of the focus region (`createFocusCarrier`, the `mem.focus.*` mirror) moves"*) — and
+ * (b) a reference `T2`'s own declaration made.
+ *
+ * **THE BITE IS KEPT:** a `file.tabs` reference on an UNDECLARED path — a synthetic
+ * fixture outside the region, or the DENIED `src/main/**` — still REDDENS (the positive
+ * controls below), and the focus region's own tier-1-freedom pin (`R-5`/S22-2) is
+ * untouched by this re-grain.
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+/** THE DECLARED RECORD REGION of `renderer.ts` — `T2` `§5.1` item 1's *"tab-record region"*:
+ *  the slice between the unit's OWN contract header (`U-STORE-TABS-RECORD` +
+ *  `store-tabs-record.md`) and the `async function main` boundary. The region is named by the
+ *  unit's own contract citation, so a rewrite of its content does not move its boundary. */
+function tabRecordRegion(): string {
+  const src = rendererSrc()
+  const end = src.indexOf('async function main')
+  const marker = src.indexOf('THE TAB-RECORD WIRING REGION')
+  if (marker < 0 || end < 0 || end <= marker) return ''
+  return src.slice(marker, end)
+}
+
+/** THE ATTRIBUTION PROBE (S22-1's re-grain): every `file.tabs` reference in the wiring is
+ *  `T2`'s own DECLARED landing — inside the declared record region — and NONE is outside it. */
+function tabsRecordAttribution(): { readonly ok: boolean; readonly detail: string } {
+  const src = rendererSrc()
+  const region = tabRecordRegion()
+  if (region === '') {
+    return { ok: false, detail: 'the declared record region is not locatable (no `THE TAB-RECORD WIRING REGION` header before `main()`) — T2 §5.1 item 1 names that region' }
+  }
+  const regionStart = src.indexOf(region)
+  const references = [...src.matchAll(/file\.tabs/g)].map((m) => m.index ?? -1)
+  if (references.length === 0) {
+    return { ok: false, detail: 'the wiring carries NO `file.tabs` reference — T2 §5.1 item 1 declares the record landed HERE; an absent landing is a FAILURE of the attribution this row now asserts' }
+  }
+  const outside = references.filter((at) => at < regionStart || at >= regionStart + region.length)
+  if (outside.length > 0) {
+    return { ok: false, detail: `a \`file.tabs\` reference sits OUTSIDE the declared record region (offsets ${outside.join(', ')}) — ` +
+      'T2 §5.1 item 1 licenses the tab-record region ONLY, and its item 1 pins that no byte of the focus region moves' }
+  }
+  return { ok: true, detail: `${references.length} \`file.tabs\` reference(s), ALL inside T2 §5.1 item 1's declared record region` }
+}
+
+/** S22-1's POSITIVE CONTROL — the same attribution instrument against a subject that puts the
+ *  reference on an UNDECLARED path: the envelope module is `T2`'s for its TWO PAGE NODES ONLY
+ *  (`§5.1` item 2), so a `file.tabs` reference THERE fails the attribution; and `src/main/**` is
+ *  in `T2`'s DENIED set in full (`§5.1`, denied item 1), so a reference there fails too. */
+function tabsRecordAttributionFires(outsideReference: string, declaredRegion: string): boolean {
+  return outsideReference.includes('file.tabs') && !declaredRegion.includes(outsideReference)
+}
+const ATTRIBUTION_OUTSIDE_FIXTURE = "const envelopeTabs = 'file.tabs.order' // src/shared/demo-envelope.ts — an UNDECLARED path"
+const ATTRIBUTION_DENIED_MAIN_FIXTURE = "const mainTabs = 'file.tabs.order' // src/main/mcp-server.ts — the DENIED set, item 1"
+
+
 /** R-6 / P-2.6-6 — NO CAP ROW on the mirror: no declared cap, no overflow limit and no
  *  eviction policy appears in the focus region's bytes (Q-9 SUPERSEDED; RH-4 answered by
  *  the slice). */
@@ -637,10 +708,42 @@ describe('H1 U-STORE-FOCUS — §2.1 THE STORE ROUTE AND THE CARRIED STATE SHAPE
 })
 
 describe('H1 U-STORE-FOCUS — §2.2 THE AUTHORITY AND THE DIVERGENCE', () => {
-  it('S22-1 §2.2 item 1 — THE AUTHORITY IS TIER 1\'S TAB LIST (Q-9 SUPERSEDED): the mirror is a WORKING COPY, never a second authority; today NO file.tabs.* record has landed (this unit declares the authority only)', () => {
+  it('S22-1 §2.2 item 1 — THE AUTHORITY IS TIER 1\'S TAB LIST (Q-9 SUPERSEDED): the mirror is a WORKING COPY, never a second authority; the `file.tabs` reference that NOW exists is `T2`\'s OWN DECLARED LANDING, on its declared path only — AS FILED this row asserted the bare ABSENCE `!rendererSrc().includes(\'file.tabs\')`, which `U-STORE-TABS-RECORD`\'s landing has SUPERSEDED IN SUBSTANCE (kept visible in the probe\'s note above)', () => {
     const probe = noTierOneWriteProbe()
     expect(probe.ok, probe.detail).toBe(true)
-    expect(!rendererSrc().includes('file.tabs')).toBe(true)
+    /* ── THE RE-GRAIN, WITH THE AS-FILED FORM KEPT VISIBLE (`RCA-8(d)`; the write-back `T2`'s
+     *  contract `§7b` item 3 declares) ─────────────────────────────────────────────────────
+     *  **AS FILED (and no longer true):** `expect(!rendererSrc().includes('file.tabs')).toBe(true)`
+     *  — the FOCUS unit's declaration that the tabs-slice record landing was NOT its work.
+     *  **MEASURED AT THIS HEAD: the wiring carries `7` `file.tabs` references and the as-filed
+     *  form measures `false`.** **`T2` HAS LANDED `file.tabs.*` IN `src/renderer/renderer.ts`**
+     *  — its contract's `§5.1` item 1 licenses exactly *"the WIRING's tab-record region ONLY"*
+     *  and adds *"NO byte of the focus region (`createFocusCarrier`, the `mem.focus.*` mirror)
+     *  moves"* — so the pin is re-grained to the ATTRIBUTED POSITIVE: **the reference IS `T2`'s
+     *  own declared landing, inside its declared record region and nowhere else.** **THE BITE
+     *  IS KEPT:** the two positive controls below put a `file.tabs` reference on an UNDECLARED
+     *  path (the envelope, which `§5.1` item 2 licenses for its two PAGE NODES only) and on the
+     *  DENIED `src/main/**` (`§5.1` denied item 1) — each MUST redden the attribution. */
+    const attribution = tabsRecordAttribution()
+    expect(attribution.ok, `T2 §5.1 item 1 — ${attribution.detail}`).toBe(true)
+    // THE POSITIVE CONTROLS: an undeclared path and a DENIED path each FAIL the attribution.
+    const declaredRegion = tabRecordRegion()
+    expect(
+      tabsRecordAttributionFires(ATTRIBUTION_OUTSIDE_FIXTURE, declaredRegion),
+      'T2 §5.1 item 2 — a `file.tabs` reference in `src/shared/demo-envelope.ts` is on an UNDECLARED path (that file is licensed for its two page nodes only) and MUST redden',
+    ).toBe(true)
+    expect(
+      tabsRecordAttributionFires(ATTRIBUTION_DENIED_MAIN_FIXTURE, declaredRegion),
+      'T2 §5.1 denied item 1 — a `file.tabs` reference in `src/main/**` is in the DENIED set and MUST redden',
+    ).toBe(true)
+    // THE AS-FILED FORM, DRIVEN AS THE RETAINED READING SO ITS SUPERSESSION IS OBSERVABLE
+    // (`RCA-8(d)`: the as-filed bytes stay visible and are not silently rewritten): the bare
+    // absence is asserted FALSE — the reading the landing produces — and is reported here
+    // rather than re-spelled as a passing assertion.
+    expect(
+      rendererSrc().includes('file.tabs'),
+      'T2 §5.1 item 1 — AS FILED this read `false` (no `file.tabs` anywhere); `T2`\'s declared landing produces `true`: the ABSENCE is superseded IN SUBSTANCE, so the row asserts WHERE the reference is, never THAT it is absent',
+    ).toBe(true)
   })
 
   it('S22-2 §2.2 item 2 — THE ROW LEVEL: the wiring NEVER writes tier 1 from the mirror (static guard — the focus region carries no tier-1 write)', () => {
