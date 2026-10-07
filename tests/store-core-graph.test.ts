@@ -590,14 +590,110 @@ function workTreeBytes(relPath: string): string | null {
  *  marker list is closed and printed; a change with no marker is NOT subtracted (so a silent edit
  *  still FAILS); `docs/specs/store-core.md` — the held contract — is read by the row's own
  *  byte-identity arm above and is **never** subtracted here. */
-const LATER_PASS_MARKERS: readonly string[] = ['2026-10-05', '2026-10-04', '2026-10-03']
+// ⟶ RE-GRAINED `2026-10-11` (`RCA-8(d)` ANNOTATE-BESIDE — the predicate above is NOT rewritten
+// and its as-filed form is KEPT VISIBLE below as `ATTRIBUTION_AS_FILED` and DRIVEN as a control
+// arm by the row). **THE MEASURED RED THAT FORCED IT (`cf1fd38` + the architect's uncommitted
+// `2026-10-11` doc set, this file's `§5.1` row): `Denied paths seen: ["docs/decisions.md"];
+// attributed to a later pass: []`** — the row's `toEqual([])` arm reddened on a path whose change
+// IS a later pass's dated work.
+//
+// **WHY THE OBVIOUS FIX IS INERT (measured, and this is the reason the SET is not the instrument):
+// simply adding `'2026-10-11'` to the set attributes NOTHING**, because the as-filed conjunct
+// `!head.includes(marker)` reads the architect's EARLIER same-day rulings — `HEAD`'s
+// `docs/decisions.md` ALREADY carries `2026-10-11` SEVEN times (and carries `2026-10-05` FOUR
+// times, `2026-10-04` ONCE, `2026-10-03` EIGHT times). A pure set extension cannot admit any pass
+// that shares a day with the boundary. **The guard's SUBJECT was wrong, not its width**: it asked
+// *"is this marker present somewhere in the file's current bytes?"*, and a marker merely
+// INHERITED from `HEAD`'s own as-filed text answers that `true`.
+//
+// **THE RE-GRAIN (ADDED-LINE GRANULARITY — the STRICTER of the two candidate shapes): a marker
+// attributes a denied path only when it occurs ON A LINE THE CURRENT BYTES ADD relative to
+// `HEAD`.** The later pass must have **WRITTEN the marker**, not merely left it lying in the file.
+// The path's added lines are the `+` lines of `git diff -U0 HEAD -- <path>` (the repo already runs
+// `git` from tests: `tests/gutter.test.ts` `R-12`, `tests/layout-projection.test.ts` `R-20`, and
+// this very file's `R-9` above). A marker on an added line **ATTRIBUTES**; a marker that only
+// EXISTS in the file — as-filed text, an unchanged line, or a line this pass did not add — **does
+// NOT**. **THE SET STAYS CLOSED AND PRINTED**, extended with `'2026-10-11'` beside its three
+// as-filed members so a later pass's OWN date is admissible.
+//
+// **FAIL CLOSED, AND SAY SO (never silently attribute):** if `git` is unavailable, the path is
+// untracked, or the diff carries no added lines, there is NO added-line evidence — so the
+// predicate answers `false` (NOT attributed), which is the as-filed arm's own outcome for an
+// untracked path. A vacuous read can therefore under-attribute (the row reddens on a change it
+// cannot read); it can never over-attribute. The row's controls below drive both arms of that too.
+const LATER_PASS_MARKERS: readonly string[] = ['2026-10-05', '2026-10-04', '2026-10-03', '2026-10-11']
+
+//  THE AS-FILED ATTRIBUTION PREDICATE — KEPT VISIBLE AND DRIVEN, never deleted (`RCA-8(d)`).
+//   This is the form the `2026-10-05` repair landed, and the reason the `2026-10-11` red could not
+//   be greened by extending the set: its subject is *presence anywhere in the file*, so a marker
+//   the boundary commit already carried is not evidence of a later pass. AS FILED (the body and
+//   its return, kept VERBATIM so the as-filed form is readable in-line and not merely described):
+//     function attributedToALaterPass(relPath: string): boolean {
+//       const head = headBytes(relPath) ?? ''
+//       const now = workTreeBytes(relPath) ?? ''
+//       if (now === head) return false
+//       // A denied file counts as a LATER pass's work only when its own bytes show a
+//       // dated marker the boundary commit did not already carry.
+//       return LATER_PASS_MARKERS.some((marker) => now.includes(marker) && !head.includes(marker))
+//     }
+//   It survives below as the row's control-arm instrument, driven on fixtures AND on the live tree.
+function ATTRIBUTION_AS_FILED(head: string, now: string, markers: readonly string[]): boolean {
+  if (now === head) return false
+  // A denied file counts as a LATER pass's work only when its own bytes show a
+  // dated marker the boundary commit did not already carry.
+  return markers.some((marker) => now.includes(marker) && !head.includes(marker))
+}
+
+//  THE PURE INSTRUMENT of the re-grained predicate — the whole of the change is here, so the row
+//   can drive every arm on fixtures without rewriting git history.
+//
+//   `head` — the path's bytes at `HEAD`; `diffText` — the path's `git diff -U0 HEAD -- <path>`;
+//   `markers` — the closed, printed set. TRUE is reserved for "a marker occurs on a line these
+//   bytes ADD". Diff plumbing is NOT content: the `+++`/`---` header lines and the `@@` hunk
+//   separator are skipped, so a marker carried only by a header cannot attribute a path. The
+//   `head` parameter is read by NO arm of this function (added-line evidence is independent of it)
+//   and is held so the row can drive the AS-FILED form through the SAME call shape beside it —
+//   which is what keeps the two forms comparable rather than two different instruments.
+//
+//   **FAIL CLOSED:** an empty `diffText` (git unavailable, a path untracked, a path unchanged)
+//   yields `false`. `diffText` is never read as a STAND-IN for "attributed": this function cannot
+// answer `true` without an added line carrying a marker of the closed set.
+function attributedFromDiff(head: string, diffText: string, markers: readonly string[]): boolean {
+  const added = diffText.split('\n').filter((line) => {
+    if (line.startsWith('+++ ')) return false
+    if (line.startsWith('--- ')) return false
+    if (line.startsWith('@@ ')) return false
+    return line.startsWith('+')
+  })
+  // No added lines ⇒ no added-line evidence ⇒ FAIL CLOSED (the as-filed outcome: NOT attributed).
+  if (added.length === 0) return false
+  return markers.some((marker) => added.some((line) => line.includes(marker)))
+}
+
+//  The path-level predicate THE ROW EVALUATES. It reads the path's `HEAD` bytes, its current
+//   bytes and its added lines, in that order, and delegates every judgement to
+// `attributedFromDiff`, so the row's live answer and its fixture controls run ONE instrument.
 function attributedToALaterPass(relPath: string): boolean {
   const head = headBytes(relPath) ?? ''
   const now = workTreeBytes(relPath) ?? ''
   if (now === head) return false
-  // A denied file counts as a LATER pass's work only when its own bytes show a
-  // dated marker the boundary commit did not already carry.
-  return LATER_PASS_MARKERS.some((marker) => now.includes(marker) && !head.includes(marker))
+  // THE ADDED-LINE EVIDENCE. A path the tree does not track has NO `HEAD` side to diff against,
+  // and a path whose bytes did not move has no added lines: both fall back to the as-filed
+  // outcome (NOT attributed) inside `attributedFromDiff` — stated here, never assumed.
+  let diffText = ''
+  try {
+    const tracked = execFileSync('git', ['ls-files', '--error-unmatch', '--', relPath], {
+      cwd: REPO_ROOT,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
+    if (tracked.trim().length > 0) {
+      diffText = execFileSync('git', ['diff', '-U0', 'HEAD', '--', relPath], { cwd: REPO_ROOT, encoding: 'utf8' })
+    }
+  } catch {
+    diffText = ''
+  }
+  return attributedFromDiff(head, diffText, LATER_PASS_MARKERS)
 }
 
 /** `§3.1` `M-17` / `§3.4` `R-1` — the vocabulary scan's own instrument, as a
@@ -945,24 +1041,195 @@ describe('§4.1 · the STATIC and EXISTENCE rows (both branches)', () => {
     // NAMED, CLOSED and printed (`LATER_PASS_MARKERS`), a denied path with NO attribution still
     // FAILS, and `docs/specs/store-core.md` is never subtracted (its byte-identity is asserted
     // above). The positive control below drives the subtraction BOTH ways.
+    //
+    // ⟶ RE-GRAINED 2026-10-11 (`RCA-8(d)` ANNOTATE-BESIDE — the as-filed conjunct `!head.includes(marker)`
+    // is NOT deleted: it is kept visible as `ATTRIBUTION_AS_FILED` and DRIVEN below as control arm
+    // (c2)'s negative control). **THE MEASURED RED THAT FORCED IT (`cf1fd38` + the architect's
+    // uncommitted `2026-10-11` doc set, THIS row, BEFORE this re-grain):** the two lines the row
+    // evaluates were byte-unchanged (`const attributed = denied.filter((p) => attributedToALaterPass(p))`
+    // · `expect(unclaimed, …).toEqual([])`), and the failure read — VERBATIM —
+    // `Denied paths seen: ["docs/decisions.md"]; attributed to a later pass: [] (marker set:
+    // ["2026-10-05","2026-10-04","2026-10-03"]): expected [ 'docs/decisions.md' ] to deeply equal []`.
+    // **WHY THE SET EXTENSION ALONE IS INERT (measured, not argued):** `docs/decisions.md`'s `HEAD`
+    // bytes ALREADY carry `2026-10-11` SEVEN times — the architect's earlier same-day rulings — so
+    // `!head.includes('2026-10-11')` is FALSE and a set-only fix still attributes NOTHING. The
+    // as-filed subject is *marker present anywhere in the current bytes*, which a marker INHERITED
+    // from `HEAD`'s own as-filed text satisfies. The re-grain moves the subject to *a line these
+    // bytes ADD*: the later pass must have WRITTEN the marker, not merely left it in the file.
     const attributed = denied.filter((p) => attributedToALaterPass(p))
     const unclaimed = denied.filter((p) => !attributed.includes(p))
     expect(
       unclaimed,
       `§5.1 — the DENIED set binds absolutely: no contract, tracker or record outside this unit's jurisdiction is touched. UNCLAIMED (a change with no later-pass marker is a boundary violation whatever its content). Denied paths seen: ${JSON.stringify(denied)}; attributed to a later pass: ${JSON.stringify(attributed)} (marker set: ${JSON.stringify(LATER_PASS_MARKERS)})`,
     ).toEqual([])
-    // THE SUBTRACTION'S OWN FALSIFIABILITY, BOTH WAYS (`§5.1`'s controls-not-assumptions rule):
-    // (a) a denied path whose CURRENT bytes are UNCHANGED from HEAD is NOT attributed — so the
-    // subtraction cannot swallow a silent edit; (b) the predicate the row relies on really rejects
-    // a path with no dated later-pass marker.
+
+    // =========================================================================================
+    // THE RE-GRAIN'S OWN CONTROLS (`§5.1`'s controls-not-assumptions rule; `RCA-8(d)`: a re-grain
+    // that cannot make the row vacuous). EVERY arm below MEASURES an outcome; every arm drives the
+    // SAME instrument the row above evaluated — the path-level `attributedToALaterPass` where the
+    // subject is a PATH, and its pure delegate `attributedFromDiff` where the subject is a FIXTURE
+    // (so the bite is falsifiable WITHOUT a git-history rewrite). The arms and their owners:
+    //   (a) a denied path whose bytes are UNCHANGED from `HEAD` is NOT attributed;
+    //   (b) a path whose added lines carry a date OUTSIDE the closed set is NOT attributed;
+    //   (c) a path whose only occurrence of a SET date is AS-FILED TEXT (present in `HEAD`, on a
+    //       line this pass did not add) is NOT attributed — THE ARM THE RE-GRAIN EXISTS FOR, driven
+    //       against the LIVE `docs/decisions.md` reading AND against a synthetic fixture;
+    //   (d) a path whose added lines DO carry a set date IS attributed;
+    //   (e) a marker carried ONLY by diff plumbing (`+++`/`---`/`@@`) is NOT content — it does not
+    //       attribute (an instrument whose header attributed a path would be an over-read);
+    //   (f) no added lines at all (git unavailable / untracked / unchanged) FAILS CLOSED: no
+    //       attribution, and the fallback is the as-filed outcome.
+    // =========================================================================================
+
+    // (a) — the existing `ghost-that-does-not-exist.md`-class control, KEPT BYTE-UNCHANGED and now
+    // NAMED as arm (a): a path the tree does not track has no `HEAD` side and therefore no added
+    // lines, so the subtraction cannot swallow a silent edit or an absent path.
     expect(
       attributedToALaterPass('docs/specs/ghost-that-does-not-exist.md'),
-      '§5.1 — the attribution predicate REJECTS an untracked/absent path (a subtraction that answered `true` for everything would make this row vacuous)',
+      '§5.1 (a) — the attribution predicate REJECTS an untracked/absent path (a subtraction that answered `true` for everything would make this row vacuous); it covers BOTH the unchanged-bytes arm and the no-`HEAD`-side arm, since neither can produce an added line',
     ).toBe(false)
     expect(
       LATER_PASS_MARKERS.length,
       '§5.1 — the marker set is NON-EMPTY and closed (a vacuous marker list makes the subtraction a no-op, which the unclaimed arm above would then absorb silently)',
     ).toBeGreaterThan(0)
+    // THE CLOSED SET IS PRINTED BY NAME, not merely counted: extending it is a deliberate, visible
+    // act, and a re-grain may not smuggle a marker in (the set is where a reader checks the boundary).
+    expect(
+      [...LATER_PASS_MARKERS],
+      '§5.1 — the marker set is EXACTLY the three as-filed members plus the re-grain\'s own date, in order (printed so an extension is visible rather than absorbed)',
+    ).toEqual(['2026-10-05', '2026-10-04', '2026-10-03', '2026-10-11'])
+
+    // --- THE FIXTURES. Marker dates are assembled from FRAGMENTS (this file's own convention,
+    // `vocabularyHits` above): a literal would let the fixture text read as this file's own rule
+    // list, and the point of these arms is that the INSTRUMENT — not the surrounding prose — is
+    // what answers.
+    //
+    // THE TWO HEADS ARE THE WHOLE POINT OF ARM (c), and they are the two shapes the as-filed guard
+    // cannot tell apart:
+    //   `FRESH_HEAD`        — the file did NOT carry the set date at the boundary;
+    //   `ALREADY_DATED_HEAD` — the file DID (the architect's earlier same-day rulings — `HEAD`'s
+    //                          `docs/decisions.md` carries `2026-10-11` SEVEN times).
+    // Arm (c) drives the SAME added lines — the pass WRITING the date on an added line — against
+    // BOTH heads. The as-filed guard answers `true` for one and `false` for the other **on evidence
+    // that has nothing to do with what the pass wrote**, which is the measured inertness of a
+    // set-only extension and the reason the re-grain moves the SUBJECT (added lines) and not the set.
+    const M_TODAY = ['2026-10-', '11'].join('')
+    const M_OUTSIDE = ['2026-01-', '01'].join('')
+    const FRESH_HEAD = 'as-filed line: an earlier pass, with NO set date in these bytes\n'
+    const ALREADY_DATED_HEAD = `as-filed line: an earlier same-day ruling already in HEAD ${M_TODAY}\n`
+    const ADDED_AS_FILED_LINE = '+a later pass appends a block with NO same-day date in its added bytes'
+    const ADDED_MARKER_LINE = `+**⟶ A LATER PASS'S OWN RULING, DATED \`${M_TODAY}\`**`
+    // Builds a `git diff -U0`-shaped fixture whose ADDED lines are exactly `addedLines`.
+    const diffFixture = (relPath: string, addedLines: readonly string[]): string =>
+      [
+        `diff --git a/${relPath} b/${relPath}`,
+        'index 1111111..2222222 100644',
+        `--- a/${relPath}`,
+        `+++ b/${relPath}`,
+        `@@ -1,1 +1,${addedLines.length + 1} @@`,
+        ...addedLines,
+      ].join('\n')
+    // The row's live predicate answers for a PATH; a fixture has no path, so the fixture arms drive
+    // the row's OWN delegate (`attributedFromDiff` — the one the path-level call delegates to)
+    // rather than a copy of it. The path-level call itself is driven by arms (a) and (d) over the
+    // LIVE tree, so the delegating shape cannot drift from the pure one unobserved.
+    const UNCHANGED_DIFF = ''
+    expect(
+      attributedFromDiff(ALREADY_DATED_HEAD, UNCHANGED_DIFF, LATER_PASS_MARKERS),
+      // NOTE for a later reader: this file's `R-7`/`R-8` rows scan its OWN string literals, so an
+      // assertion message here may not carry a banned token — that is why these are terse. Named,
+      // not silently trimmed.
+      '§5.1 (a) — an empty diff yields NO added-line evidence: NOT attributed (fail closed)',
+    ).toBe(false)
+
+    const OUTSIDE_SET_DIFF = diffFixture('docs/decisions.md', [`+a later pass dated ${M_OUTSIDE} — OUTSIDE the closed set`])
+    expect(
+      attributedFromDiff(ALREADY_DATED_HEAD, OUTSIDE_SET_DIFF, LATER_PASS_MARKERS),
+      '§5.1 (b) — added lines carrying a date OUTSIDE the closed set: NOT attributed',
+    ).toBe(false)
+    expect(
+      attributedFromDiff(ALREADY_DATED_HEAD, OUTSIDE_SET_DIFF, [...LATER_PASS_MARKERS, M_OUTSIDE]),
+      '§5.1 (b) POSITIVE control — with that date ADDED to the set the very same bytes DO attribute, so arm (b) measures the closure and not a dead scan',
+    ).toBe(true)
+
+    const AS_FILED_ONLY_DIFF = diffFixture('docs/decisions.md', [ADDED_AS_FILED_LINE])
+    expect(
+      attributedFromDiff(ALREADY_DATED_HEAD, AS_FILED_ONLY_DIFF, LATER_PASS_MARKERS),
+      '§5.1 (c) FIXTURE — a set date present in HEAD but on NO added line: NOT attributed. (A head with that shape covers (c)\'s "marker only EXISTS in the file" arm whether the date arrived at the boundary or not.)',
+    ).toBe(false)
+    // (c1) THE DEFECT RE-DRIVEN — the as-filed form reads ONLY *is the marker somewhere in the
+    // current bytes*: it answers `true` for a FRESH head with an added marker and `false` for an
+    // ALREADY-DATED head with the SAME added marker. The second `false` is the measured red.
+    const ADDED_SET_DIFF = diffFixture('docs/decisions.md', [ADDED_MARKER_LINE])
+    expect(
+      ATTRIBUTION_AS_FILED(FRESH_HEAD, FRESH_HEAD + '\n' + ADDED_SET_DIFF, LATER_PASS_MARKERS),
+      '§5.1 (c1) — the AS-FILED form on a FRESH head with an ADDED set date answers `true` (the control arm: this is the one shape it happens to get right)',
+    ).toBe(true)
+    expect(
+      ATTRIBUTION_AS_FILED(ALREADY_DATED_HEAD, ALREADY_DATED_HEAD + '\n' + ADDED_SET_DIFF, LATER_PASS_MARKERS),
+      '§5.1 (c1) THE MEASURED DEFECT — the SAME added date against an ALREADY-DATED head answers `false`: the as-filed guard attributes on the boundary commit\'s own bytes, not on what the pass wrote, so it is BLIND to a later pass that shares a day with the boundary',
+    ).toBe(false)
+    // (c2) AND THE RE-GRAIN READS THE SAME TWO CASES CORRECTLY — `true` for both, because in BOTH
+    // the date sits on a line the current bytes ADD. This is the arm the whole re-grain exists for.
+    expect(
+      attributedFromDiff(FRESH_HEAD, ADDED_SET_DIFF, LATER_PASS_MARKERS),
+      '§5.1 (c2) — the re-grained form attributes the ADDED date on a fresh head',
+    ).toBe(true)
+    expect(
+      attributedFromDiff(ALREADY_DATED_HEAD, ADDED_SET_DIFF, LATER_PASS_MARKERS),
+      '§5.1 (c2) — and it attributes the SAME added date on an ALREADY-DATED head, which is exactly the case the as-filed guard could not admit (the measured red of 2026-10-11)',
+    ).toBe(true)
+
+    // --- (c) AND (d) DRIVEN AGAINST THE LIVE `docs/decisions.md` READING (the architect's ruling
+    // names this arm explicitly). The diff is read through the same `git diff -U0 HEAD -- <path>`
+    // shape the predicate uses; if git cannot answer, the row says so in the failure message rather
+    // than silently passing — an unrun arm is reported, never absorbed.
+    const LIVE_REL = 'docs/decisions.md'
+    let liveDiff = ''
+    try {
+      liveDiff = execFileSync('git', ['diff', '-U0', 'HEAD', '--', LIVE_REL], { cwd: REPO_ROOT, encoding: 'utf8' })
+    } catch {
+      liveDiff = ''
+    }
+    const liveAdded = liveDiff.split('\n').filter((line) => line.startsWith('+') && !line.startsWith('+++ '))
+    const liveMarkers = LATER_PASS_MARKERS.filter((m) => liveAdded.some((line) => line.includes(m)))
+    expect(
+      liveMarkers,
+      `§5.1 (d) — THE LIVE ARM: \`${LIVE_REL}\`'s ADDED lines carry a member of the closed set, so the path the red reported IS attributed on added-line evidence. FOUND added lines: ${JSON.stringify(liveAdded.map((l) => l.slice(0, 40)))}; added-line marker hits: ${JSON.stringify(liveMarkers)}`,
+    ).not.toEqual([])
+    expect(
+      liveMarkers,
+      '§5.1 (d) — and the attribution is the pass\'s OWN date (`2026-10-11`), not an older member of the set leaking through: the marker that attributes the live path is exactly the date the later pass wrote',
+    ).toEqual([M_TODAY])
+    expect(
+      attributedToALaterPass(LIVE_REL),
+      '§5.1 (d)/(c) — THE LIVE PATH-LEVEL CALL (the one the row above evaluated) ATTRIBUTES this path on added-line evidence, exactly as it did before this re-grain moved the SUBJECT and not the verdict',
+    ).toBe(true)
+    // (c) LIVE: the as-filed form could not have answered this. `HEAD`'s bytes carry the pass's own
+    // date SEVEN times (the architect's earlier same-day rulings), so the as-filed conjunct
+    // `!head.includes(marker)` is FALSE for the date that actually attributes the path.
+    const liveHead = headBytes(LIVE_REL) ?? ''
+    const liveNow = workTreeBytes(LIVE_REL) ?? ''
+    expect(
+      liveNow.includes(M_TODAY) && liveHead.includes(M_TODAY),
+      `§5.1 (c) LIVE — the as-filed form COULD NOT admit this one: the same-day date is ALREADY in HEAD (occurrences in HEAD: ${liveHead.split(M_TODAY).length - 1}; work tree: ${liveNow.split(M_TODAY).length - 1}), so the as-filed conjunct is FALSE and a set-only extension attributes NOTHING — the measured reason the re-grain moves the SUBJECT`,
+    ).toBe(true)
+    expect(
+      ATTRIBUTION_AS_FILED(liveHead, liveNow, LATER_PASS_MARKERS),
+      '§5.1 (c) LIVE — THE MEASURED RED, re-driven in-row on the LIVE tree: the as-filed form, even with the set carrying the pass itself\u2019s date, answers `false`, because the date was ALREADY in HEAD. It cannot see that this pass WROTE it on an added line',
+    ).toBe(false)
+
+    const SET_DIFF = diffFixture('docs/decisions.md', [ADDED_MARKER_LINE])
+    expect(
+      attributedFromDiff(ALREADY_DATED_HEAD, SET_DIFF, LATER_PASS_MARKERS),
+      '§5.1 (d) FIXTURE — a path whose ADDED lines DO carry a set date IS attributed (the positive arm: without it the instrument could answer `false` forever and every negative arm above would be vacuous)',
+    ).toBe(true)
+
+    const PLUMBING_DIFF = [`diff --git a/docs/decisions.md b/docs/decisions.md`, 'index 1111111..2222222 100644', `--- a/docs/decisions.md`, `+++ b/docs/decisions.md dated ${M_TODAY}`, `@@ -1,1 +1,2 @@ ${M_TODAY}`, '+a later pass whose added line carries NO set date'].join('\n')
+    expect(
+      attributedFromDiff(ALREADY_DATED_HEAD, PLUMBING_DIFF, LATER_PASS_MARKERS),
+      '§5.1 (e) — a marker carried ONLY by diff plumbing (`+++`/`---`/`@@` header lines) is NOT content and does not attribute: an instrument that read the header would attribute a path on the strength of its NAME and line numbers alone',
+    ).toBe(false)
   })
 })
 
