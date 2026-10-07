@@ -466,6 +466,38 @@ T-1..T-10).
 **(vii) THE RETURN NOTE.** **This repo writes NO file under `<Astrographer>/`** (`H-r6`), and this pass closed nothing on your tree: the re-route is **your pass**, the foundation-side rule + shape + migration contract are `docs/specs/fork-store-reads.md`, and its own test set (`tests/fork-store-reads.test.ts`) asserts the rule over **this** repo's surface. **`H3`'s DONE row records your half as OWED to you.**
 
 
+### THE GESTURE SESSION'S INSTALL COLLISION — ONE ELEMENT, ONE INSTALL PER SESSION (the fork-sourced ask `FOUNDATION-INSTALL-COLLISION-ONE-ELEMENT-ONE-SESSION`)
+
+**⟶ ADDED `2026-10-11`, THE DOCS-ONLY LANDING of the gate-1 disposition record `docs/specs/install-collision-one-element-one-session-review.md` (verdict `APPROVE-WITH-CONDITIONS`), which was itself `PARKED BY THE ARCHITECT` (*"Park until data architecture is finished"*) as `docs/pending.md` `P-1` and is UNPARKED BY THE `2026-10-11` ARCHITECT RULING (`docs/pending.md` §6's `P-1` stub).** **EVERY CLAUSE BELOW IS A CITATION, NEVER A RESTATEMENT — the specs and the `docs/decisions.md` ACTIVE rows cited here govern, and where this block and a spec disagree, the spec governs and this block is the thing to fix.** **The pinning row is `docs/decisions.md`'s ACTIVE row `GSESSION-LEDGER-AND-ITS-GUARD-ARE-INSTANCE-LOCAL-AND-THE-SINGLE-AUTHORITY-RULE-IS-PER-INSTANCE` (cited by row name), and the correction list is the record's `§8`.**
+
+**(i) THE POSITIVE RULE.** One element holds **one install per session**; a repeat `install` of the same element **in the same session** is the pinned first-config-wins **no-op returning `false`, with no event-source call at all** — `docs/specs/gsession.md` §2.3 item 1(b), §2.4 item 2, §7a.1 item 4 (ADOPTED), §2.5 item 2.
+
+**(ii) THE SCOPE, AFFIRMATIVELY — AND THIS IS THE ONE A FORK GETS WRONG.** The ledger and its guard are **INSTANCE-LOCAL**: the session holds no registry of other sessions and never inspects another session's ledger, so **the contract makes NO cross-instance claim — a second session is not forbidden by the session from installing an element another session installed, and no later pass may read the guard as a cross-instance prohibition.** Evidence: `docs/specs/gsession.md` §3.1 `M-16`, §2.3 item 3 (*"its whole instance"*), §2.6 item 6, and the module's closure-local `entries`.
+
+**(iii) WHY THE REFUSAL CANNOT CARRY AN EXPLANATION.** `install`'s declared return is a **boolean** (`docs/specs/gsession.md` §2.1, §2.5 item 2), and its `false` is **total and reasonless by row**; its **four causes are each already declared** (repeat install; `null`/`undefined` element; disposed session; unusable or throwing source). The consumer's diagnostic surface is the **adjacent** one: `begin`/the terminals answer the closed **seven-member** code union, and `stats().lastCode` carries the last result code.
+
+**(iv) THE COMPOSITION OBLIGATION.** Running two mechanisms over one gesture surface is **one session + one composer + one install** (the second mechanism rides the first composer's channels) **or two elements**; **two sessions over one element produce two gesture authorities and two sink writers**, inadmissible under ACTIVE `docs/decisions.md` `E10-SINGLE-SINK-CHANNEL` read with `docs/specs/gutter.md` §4.4 `S-11`, and under `docs/specs/gsession.md` §2.6 item 6's per-instance derivation. **Do not dress that composition rule as a session law.**
+
+**(v) THE ROUTE, STATED AS THE WIRING'S.** A composer installs into the session the **caller** injected (`docs/specs/relocate.md` §0A note 4; `GutterAffordanceOptions.session`, `docs/specs/gutter-ui.md` §2.1 clause 4); it **never constructs** the session; and the element **must not already be installed *in that session***.
+
+**THE RETURN NOTE.** Your own row is **yours to annotate**: this repo writes **no** file under `<Astrographer>/` (the `H-r6` fork-side-return convention), and this disposition **moves no `src/**` byte** — so **no re-vendor is owed** and your byte-identity pin, drift monitor and conformance leg stay valid as they stand. The record's own `§8` is the correction list, so no separate fork-facing feedback document exists for this ask (stated so the absence is not read as an omission).
+
+**WHAT A FORK MUST NOT BELIEVE — the record's `§8` correction list, fold-in (each item is a correction of a reading, never a new mechanism):**
+
+- **WRONG (1):** *"two vendored sessions cannot both drive one element"* is **FALSE at the bytes** — the guard scans one instance's own `entries`, and `docs/specs/gsession.md` §3.1 **`M-16`** asserts the cross-session case (`sessionA.install(elX)`; `sessionB.begin(elX)` → `'not-installed'`, **zero** source calls, `sessionA` unaffected).
+- **WRONG (2):** the forbid is **composition / single-authority**, not the ledger — `docs/specs/gsession.md` §2.3 item 3 read instance-scoped + §2.6 item 6, with ACTIVE `E10-SINGLE-SINK-CHANNEL` and `docs/specs/gutter.md` §4.4 `S-11`.
+- **WRONG (3):** the premise that a relocate composer needs a **second** session is false — it installs into the **caller's injected** session and keeps its **own** per-instance ledger.
+- **WRONG (4):** the premise that the affordance accepts a **controller** is false — it has **no controller option**; it **builds** its controller and **exposes** it, and the guard that would refuse a *host* controller is `src/shared/gutter.ts`'s per-controller `entryOf`, a **different** guard from the session's ledger.
+- **WRONG (5):** the install collision is your own contract's **§4.0 BLOCKER 1**, not BLOCKER 2 — the citation is off by one; correct it and **annotate, do not delete**, the `DECLINED FOR THIS UNIT` records that rest on the collision reading.
+- **WRONG (6):** the `E-22`-class claim holds on **your** tree and **not here** — this repo's renderer value-imports and composes `createGutterAffordance`, while `createRelocateSession` is imported by no `src/**` file here.
+- **WRONG (7):** `install`'s reasonlessness is a **declared property of the surface**, not a withdrawn capability — **do not record it as an `E3-CAPTURE-OPT-IN-IS-STILL-OWED…`-style degradation.**
+- **WRONG (8):** `install`'s `false` has **four** declared causes and deliberately does not discriminate between them.
+- **DO NOT RECORD A REFUSAL:** *"one session per element; layering not supported"* would **misstate** this contract — the layering is **one session + one composer + one install**, or **two elements**, and it **is** supported.
+- **ALSO:** label **APP-layer** readings per row (`RCA-12`); **keep the pin** (no `src/**` byte moves, so no re-vendor is owed); and **record your outcome as a DECISION, not an open question** — the foundation cannot settle your consumer-side replace-not-ride choice by declaration.
+- **CARRIED, NOT CHARGED:** the ask's outcome (C)'s identity and outcome (B)'s tail are **unreadable to this tree's read-only tools** (the entry is a single physical line over `2000` characters); the fork is told so plainly rather than left with an unresolved item.
+
+**WHAT THIS BLOCK IS NOT.** It is **not** an option, a variant, a helper, an export or a file — nothing is added to any mechanism; it is a reading of contracts that already stand. It is **not** a promise of a controller-accepting member on the affordance (the affordance **composes** its own controller and takes your **session**; that direction does not reverse without a frozen-contract change and its own gate). It is **not** a restatement of any seam row, seam census, degradation cell or census figure — **it cites them** (`docs/decisions.md` `GUTTER-CALLER-SEAMS-ARE-THE-FAMILY'S-DOWNSTREAM-CONTRACT`'s three homes move together, and a `docs/specs/gutter-ui.md` `§R.3` row may not be restated here). And it is **not** a new session law of any kind: it changes **no code, no test, no count and no contract clause**, and it amends **no** frozen surface.
+
 ## 5. The archival-loop convention (was only in gitignored `archive/README.md`)
 
 `archive/` is **gitignored and does not ship**. It is a write-only dump for
@@ -520,3 +552,18 @@ provenance only — the contract is in `docs/specs/`.
 4. `src/` — the implementation (main = MCP + gate + store; renderer = Runtime +
    router + panes; shared = types).
 5. `tests/` — the suites; `module-*.test.ts` show the module system's TDD.
+
+---
+
+**⟶ ADDED `2026-10-11` — THE GUTTER AFFORDANCE INSTALLS NO POINTER CAPTURE: AN ACCEPTED LIMITATION YOU MUST PLAN AROUND (the architect's `ACCEPT` ruling on `docs/pending.md` §1(a); the ledger record is `docs/decisions.md`'s dated follow-up block beside the ACTIVE row `E3-CAPTURE-OPT-IN-IS-STILL-OWED-AND-ITS-CONSEQUENCE-IS-LIVE`, and the contract text is `docs/specs/gutter-ui.md`'s `§2.1` `capturePointer?` seam cell, its `§2.6` item 4 and its `§8`).**
+
+**WHAT YOU ADOPT HAS THIS LIMITATION, STATED IN ONE SENTENCE: the panes/zones family's gutter affordance delivers NO pointer capture, so A DRAG THAT LEAVES THE HANDLE'S BOX LOSES ITS READING — the live reading FREEZES AT THE LAST IN-BOX POSITION while the gesture is still active.** The gesture's own terminal is unaffected (it is the session's), so the commit still happens; what stops is the **live feedback** the operator sees while dragging. Why: the session's tracking listeners are **LOCAL to the element** (`INTERACTION-NODE-LOCAL`, A-d3), so once the pointer is outside the affordance's box the move turn has **no source**.
+
+**THE LIMITATION IS MEASURED, NOT HYPOTHETICAL.** The unit's mandatory live battery drove a **real drag to a committed value** — **`U-5` `145` = `200 − 55`** and **`U-8`(e) `105` = `160 − 55`** (`docs/specs/gutter-ui-live-battery.md`).
+
+**YOUR TWO REMEDIES — the choice is yours and the foundation prescribes neither:**
+
+1. **Install capture yourself.** The session's capability is **yours to supply**: `EventSource.capturePointer?(element)` is declared and invoked by the session (at most once per gesture, inside `begin`, only for a control that opted in with a truthy `capture`) — `docs/specs/gsession.md` `§2.1`, `§2.5` item 2, §2.3 item 6(b) — so an injected source that implements it, plus the opt-in on the install options, gets you capture **with no change to this repo**. **What you cannot get is the composition opting you in:** `E3`'s `attach` hooks carry no `capturePointer?` field (`docs/specs/gutter-ui.md` `§2.1`'s seam cell: DECLARED and IGNORED; `§3.3 I-13`, `§3.2 F-14`), so the affordance passes no `capture` field anywhere and installs no capture call of its own.
+2. **Size the handle generously**, so its box covers the travel the drag needs.
+
+**WHAT THIS IS NOT.** It is **not a defect** and **not an owed fix** — it is an **ACCEPTED, RECORDED LIMITATION** of the delivered affordance, and this block is where it is stated for downstream. It is **not a promise that the opt-in will arrive**: the alternative the architect **DECLINED** was `ADOPT` (amending `E3`'s sealed `attach` to accept the opt-in), which is a **FROZEN-CONTRACT CHANGE** — its own gate, a spec amendment and a red-first row, because `E3` is `DONE` with its checks parked and `docs/decisions.md` `GSESSION-DELEGATE-SURFACE-IS-FROZEN-FOR-E3-E4` freezes the delegate surface — **so no later pass may add it silently, and you should not plan as though it is coming**. And it is **not** a re-opening of any seam, register or census cell: this block **cites** `docs/specs/gutter-ui.md`'s three cells and `docs/specs/gsession.md`'s two, and restates none of them.
