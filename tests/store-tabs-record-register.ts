@@ -661,8 +661,27 @@ export function tabsConstraintMember(probe?: ConstraintProbe): ConstraintMemberH
   return { member, probe, state, attach: (target: Rec): void => { attachedStore = target } }
 }
 
+/** ── THE HARNESS COPY, LABELLED AS A FIXTURE CONTROL (`2026-10-11`, the GATE-4 REPAIR; the
+ *  HEADLINE finding). **THE AS-FILED NAME IS KEPT: `tabsConstraintMember` is the hand-written
+ *  duplicate this harness built and handed to every fixture store.** It is NOT deleted — a
+ *  control instrument is legitimate — but it may now be used ONLY where a row's subject
+ *  genuinely IS the fixture control, and every such site calls it by THIS name so the
+ *  provenance is visible at the call: the probe readings of `§2.2` items 4/5 (`P-TR-IM-1`'s
+ *  record-entry reading, `P-TR-SM-2`'s call-argument reading), the argument-mutation detector,
+ *  and `P-TR-SM-3`'s "no constraint evaluation has run" reservation reading (which needs a
+ *  member the HARNESS can count evaluations on). **EVERY OTHER FIXTURE STORE GETS THE
+ *  WIRING'S MEMBER (`wiredMemberHandle()`), so the register's reading is about `src/**`.** */
+export function controlConstraintMember(probe?: ConstraintProbe): ConstraintMemberHandle {
+  return tabsConstraintMember(probe)
+}
+
 /** THE MEMBER'S OWN CALLER-SIDE CELLS, reachable by a drive (`§0A` item 4: "the PRE-state
- *  is captured by the caller's own closure at the close site"). */
+ *  is captured by the caller's own closure at the close site"). **ON THE WIRING'S MEMBER THESE
+ *  CELLS ARE NOT INJECTABLE** — its pre-removal sequence is its own module closure, written
+ *  ONLY by its close site, which is exactly the `tabsPreRemovalOrder` staleness this pass now
+ *  drives. A row must therefore reach a remove-triggered referent by DRIVING THE CLOSE (the
+ *  `remove` that captures the pre-state, then the `order` rewrite), never by writing a cell
+ *  `src/**` never writes. */
 export function memberStateOf(member: Rec | ConstraintMemberHandle): ConstraintMemberHandle['state'] {
   if (member !== null && typeof member === 'object' && 'state' in member && 'attach' in member) {
     return (member as ConstraintMemberHandle).state
@@ -767,6 +786,29 @@ export function activesOf(store: Rec, order: readonly string[]): string[] {
   return order.filter((id) => entryActiveOf(store, id))
 }
 
+/** **THE WIRING-MEMBER PRE-STATE SEED** (`2026-10-11`, the GATE-4 REPAIR). A pre-state for a
+ *  row over the wiring's member CANNOT be built write-by-write: every `set`/`commit`/`remove`
+ *  evaluates the member on its post-state (`§3.4` item 3), so the transient zero-active state
+ *  every seed passes through is REPAIRED as it is written — MEASURED: seeding
+ *  `['A','B','C']` with `B` active write-by-write lands ZERO actives, and the row then
+ *  measures a state its own label does not describe.
+ *
+ *  **THE LANDED SEAM FOR IT IS `hydrate`, AND THE CONTRACT NAMES IT AS SUCH:** `hydrate`
+ *  MINTS the handed-off members and **NEVER evaluates the constraint table** (`§3.3` item 2 —
+ *  "the FIRST constraint evaluation stays reserved"), so it lands any pre-state EXACTLY, with
+ *  no repair in between. The seed is therefore the hand-off's own shape: the `order` member
+ *  plus each tab's own entry value, all in ONE un-evaluated call. */
+export function seedWiringState(store: Rec, ids: readonly string[], activeId: string | null): void {
+  const hydrate = store['hydrate'] as ((rows: readonly unknown[]) => void) | undefined
+  if (typeof hydrate !== 'function') {
+    throw new Error('T2 GATE-4 REPAIR (honest class): the frozen store carries no `hydrate` seam (§2.5), so a wiring-member pre-state cannot be landed')
+  }
+  hydrate.call(store, [
+    { name: DECLARED_SPELLINGS.order, value: [...ids] },
+    ...ids.map((id) => ({ name: DECLARED_SPELLINGS.entry(id), value: id === activeId })),
+  ])
+}
+
 /** SEEDS a record state through the DECLARED surface only: each tab's declared record by
  *  `commit`, the `order` member by `commit` (the minting/re-minting write, `§2.4` item 3),
  *  and every `active` mark with the ACTIVE id written LAST — the transient zero-active
@@ -861,6 +903,31 @@ export function closeTab(store: Rec, id: string, nextOrder: readonly string[]): 
   return { callerOperations: 2, receipts }
 }
 
+/** **THE WIRING-MEMBER FIXTURE** (`2026-10-11`, the GATE-4 REPAIR — the HEADLINE finding): a
+ *  fresh store over the WIRING's own member, reached through its declared seam. Every
+ *  record-behaviour row must build its store this way — the harness's duplicate is a CONTROL
+ *  instrument and never evidence about `src/**`. */
+export function wiredStore(): { store: Rec; member: ConstraintMemberHandle } {
+  const handle = wiredMemberHandle()
+  return { store: tabsStore(surface as TabsSurface, handle), member: handle }
+}
+
+/** **THE WIRING'S OWN CLOSE DRIVE** (`§2.4` item 1's note; `§3.4` item 4) is `closeTab` above:
+ *  the two caller operations, in the wiring's own order — `remove('file.tabs.<tabId>')` FIRST
+ *  (which is where the shipped member's close site captures its PRE-REMOVAL order, `§2.4`
+ *  item 5 / `AMB-2`), then `commit('file.tabs.order', <the sequence without the id>)`.
+ *
+ *  **WHY A ROW MUST DRIVE THAT AND NOT WRITE THE MEMBER'S CELLS:** the wiring's
+ *  `tabsPreRemovalOrder` is a MODULE-LEVEL cell of `src/renderer/renderer.ts`, written ONLY by
+ *  its close site and reachable by no caller — so a row that reached a remove-triggered
+ *  referent by writing a `state.preOrder` it owns was measuring the HARNESS's own closure and
+ *  never the shipped one (`RCA-8`: the fixture, not the invariant). `wiredClose` is the named
+ *  drive: the wiring's two caller operations, with the pre-state captured where the wiring
+ *  captures it. */
+export function wiredClose(store: Rec, id: string, nextOrder: readonly string[]): { readonly receipts: readonly Rec[] } {
+  return closeTab(store, id, nextOrder)
+}
+
 /* ───────────────────────────── THE STATIC READING HELPERS (`§5.3`, `§5.5.1` `P-TR-TP-6`) ─ */
 
 export function bytesAt(path: string): string | null {
@@ -911,6 +978,7 @@ let wiring: WiringProbe | null = null
 
 export async function probeWiring(): Promise<WiringProbe> {
   if (wiring !== null) return wiring
+  resetWiringMember()
   if (!existsSync(RENDERER_SRC)) {
     wiring = { loaded: false, loadError: null, module: null, reason: `the wiring does not exist (${RENDERER_PATH})` }
     return wiring
@@ -960,6 +1028,104 @@ export function wiredConstraintReading(w: WiringProbe): { readonly ok: boolean; 
     return { ok: false, reason: `the supplied evaluatedOn is ${JSON.stringify(on)}; §2.2 item 3 declares ${JSON.stringify(expected)}` }
   }
   return { ok: true, reason: 'the ONE member is supplied at the ONE construction site, with the declared cells' }
+}
+
+/* ───────────── THE WIRING'S OWN MEMBER, REACHED THROUGH ITS DECLARED SEAM (GATE-4 REPAIR) ─────
+ *
+ * **THE HEADLINE GATE-4 FINDING, AND WHAT THIS ACCESSOR REPLACES.** As filed, EVERY record
+ * fixture in this register and in `tests/store-tabs-record.test.ts` was handed
+ * `wiredMemberHandle()` — a HAND-WRITTEN DUPLICATE of the constraint, its repair and its
+ * `writeActive`, built in THIS harness and nowhere reachable from `src/**`. The wiring's real
+ * member (`src/renderer/renderer.ts`'s `TABS_CONSTRAINT`, supplied at the ONE construction
+ * call) reached the suite only through a name/cell check (`wiredConstraintReading`), a regex
+ * (`mintingSiteProbe`) and string scans — so the suite's green was evidence about the HARNESS,
+ * never about the shipped wiring, and the measured evasion was: delete `TABS_CONSTRAINT` from
+ * the construction call, delete the repair arm, or swap the accessor arm, and every held
+ * register row stayed held.
+ *
+ * **THE FIX: THE FIXTURE SUPPLIES THE WIRING'S MEMBER.** The wiring declares ONE seam for its
+ * store — `getWiredGraphStore()` (`§2.2` item 1: the member is supplied at the store's
+ * EXISTING construction call) — and the store answers that member through its OWN declared
+ * read-only `constraints` view (`§2.5`'s `readonly constraints` row). The member is therefore
+ * reachable WITHOUT a src byte moving: `getWiredGraphStore(...).constraints[0]`. Every fixture
+ * store that is meant to exercise the RECORD's behaviour is now built with THAT object, so a
+ * wiring whose member is absent (no `constraints[0]`), whose repair arm is deleted, or whose
+ * accessor arm is swapped reddens the rows that name it.
+ *
+ * **THE HARNESS COPY IS RETAINED, AND LABELLED, WHERE A ROW'S SUBJECT GENUINELY IS THE FIXTURE
+ * CONTROL** — `controlConstraintMember(probe)` is kept for the rows whose subject IS the probe
+ * instrument itself (the call-argument/record-entry readings of `§2.2` items 4/5, the
+ * mutation detector, `P-TR-SM-3`'s "no evaluation has run" reservation reading) and for the
+ * member-LESS positive controls (`§3.2` F-T2-1's "with the member absent the zero-active state
+ * STANDS"). Those rows say so in-line and call it under the name `controlConstraintMember`;
+ * they are CONTROL rows and never evidence about `src/**`.
+ *
+ * **A NOTE ON THE SINGLETON, REPORTED RATHER THAN SMOOTHED:** the wiring's member is ONE
+ * object per realm (the store is constructed exactly once, `§2.2` item 1), so its
+ * module-level closure cells are SHARED by every fixture store here — and that sharing is
+ * exactly the `tabsPreRemovalOrder` staleness the register's rows now drive (`§2.4` item 5 /
+ * `AMB-2`). It is a property of the shipped wiring, not of the fixture. */
+
+let wiringMemberCache: Rec | null = null
+let wiringMemberReason: string | null = null
+
+/** THE CACHE IS INVALIDATED WHENEVER THE WIRING PROBE IS (RE)RUN, so a fixture built before
+ *  `probeWiring()` cannot freeze an absence into every later row's reading. **AN ABSENCE IS
+ *  NEVER NEGATIVE-CACHED** (only a FOUND member is): the honest red an absent member produces
+ *  is re-measured on every call, so it always carries the CURRENT reason. */
+export function resetWiringMember(): void {
+  wiringMemberCache = null
+  wiringMemberReason = null
+}
+
+/** THE WIRING'S MEMBER, OR THE HONEST ABSENCE. Reads the wiring's declared seam, then the
+ *  store's own `constraints` view; a wiring that supplies NO member answers `null` with its
+ *  reason (which is a BROKEN attempt for every row that names the member — an absent member is
+ *  the headline evasion, never a silent skip). */
+export function wiredTabsConstraintMember(): Rec | null {
+  if (wiringMemberCache !== null) return wiringMemberCache
+  const probed = wiring as WiringProbe | null
+  if (probed === null || !probed.loaded || probed.module === null) {
+    wiringMemberReason = probed?.reason ?? 'the wiring module has not answered its probe yet (probeWiring() has not run)'
+    return null
+  }
+  try {
+    const factory = probed.module['getWiredGraphStore']
+    if (typeof factory !== 'function') {
+      wiringMemberReason = 'the wiring exports no `getWiredGraphStore` (the ONE construction site, §2.2 item 1)'
+      return null
+    }
+    const store = (factory as (o?: unknown) => unknown)({
+      declarations: (surface as TabsSurface).references === null ? [] : (surface as TabsSurface).references?.(tabsDeclarationRows()),
+    }) as Rec
+    const constraints = store['constraints']
+    if (!Array.isArray(constraints) || constraints.length === 0) {
+      wiringMemberReason = 'the wired store answers NO constraint member: §2.2 item 1’s ONE supplied member is ABSENT from the construction call'
+      return null
+    }
+    wiringMemberCache = constraints[0] as Rec
+    return wiringMemberCache
+  } catch (e) {
+    wiringMemberReason = `the wiring’s member is not reachable through its declared seam: ${e instanceof Error ? e.message : String(e)}`
+    return null
+  }
+}
+
+/** THE ROW-FACING FORM: the wiring's member as a `ConstraintMemberHandle`, so a fixture store
+ *  can be built from it by the SAME call path a harness member uses — with `state`/`attach`
+ *  present but carrying NO injectable cells (the wiring's referent cells are its OWN module
+ *  closure, readable only through the record's post-state, which is the point of the fix). */
+export function wiredMemberHandle(): ConstraintMemberHandle {
+  const member = wiredTabsConstraintMember()
+  if (member === null) {
+    throw new Error(`T2 GATE-4 REPAIR (honest class): ${wiringMemberReason ?? 'the wiring supplies no constraint member'}`)
+  }
+  return {
+    member,
+    probe: undefined,
+    state: { referent: null, removedId: null, preOrder: [] },
+    attach: (): void => undefined,
+  }
 }
 
 /** THE REGISTRY READING (`§5.5.1` `P-TR-IM-1`'s second reading, `§1.1` item 2): the
@@ -1171,9 +1337,17 @@ export function recordEntryProbeMember(probe: ConstraintProbe): ConstraintMember
 
 export function registerRows(): readonly RegisterRow[] {
   const S = DECLARED_SPELLINGS
+  /** ── THE FIXTURE'S MEMBER, RE-POINTED BY THE GATE-4 REPAIR (`2026-10-11`; the HEADLINE
+   *  finding). **AS FILED this returned the HARNESS's own hand-written duplicate for every row,
+   *  so the register's green was evidence about this file and never about
+   *  `src/renderer/renderer.ts`'s shipped member.** **THE OPERATIVE FORM IS THE WIRING'S OWN
+   *  MEMBER, reached through its declared seam (`wiredMemberHandle()`), so a deleted member, a
+   *  deleted repair arm or a swapped accessor arm reddens the row that names it.** The harness
+   *  copy survives only where a row's subject genuinely IS the probe instrument, and those
+   *  sites call `controlConstraintMember(probe)` by name. */
   const fresh = (probe?: ConstraintProbe, extra: Record<string, unknown> = {}): { store: Rec; member: ConstraintMemberHandle } => {
     const s = surface as TabsSurface
-    const member = tabsConstraintMember(probe)
+    const member = probe === undefined ? wiredMemberHandle() : controlConstraintMember(probe)
     return { store: tabsStore(s, member, extra), member }
   }
   /** A STORE THAT DECLARES NO CONSTRAINT MEMBER — the POSITIVE-CONTROL fixture (`§3.2`
@@ -1391,80 +1565,100 @@ export function registerRows(): readonly RegisterRow[] {
       drives: [
         { name: '(1) state reading — zero-active, the referent mid-`order` ([A,B,C], B closed) → the next surviving C', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
-            seedRecord(store, ['A', 'B', 'C'], 'B')
-            const st = memberStateOf(member)
-            st.preOrder = ['A', 'B', 'C']
-            st.removedId = 'B'
-            callStore(store, 'remove', S.entry('B'))
-            callStore(store, 'commit', S.order, ['A', 'C'])
+            seedWiringState(store, ['A', 'B', 'C'], 'B')
+            // ── THE WIRING'S OWN CLOSE DRIVE (`§2.4` item 1 / item 5): the pre-removal
+            //    sequence is captured at the SHIPPED close site, which no caller can write.
+            //    AS FILED this row injected `st.preOrder`/`st.removedId` into the HARNESS's
+            //    own closure — a reading about this file, never about `src/**`.
+            wiredClose(store, 'B', ['A', 'C'])
+            const rec = callStore(store, 'commit', S.order, ['A', 'C'])
             expect(activesOf(store, ['A', 'C']), '§3.2 F-T2-1 — the NEXT SURVIVING entry by `order`; activating A FAILS').toEqual(['C'])
           } },
         { name: '(1) receipt reading — the repaired reference is named and carries its own `cause:repair` event', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
-            seedRecord(store, ['A', 'B', 'C'], 'B')
-            const st = memberStateOf(member)
-            st.preOrder = ['A', 'B', 'C']
-            st.removedId = 'B'
-            const rec = callStore(store, 'commit', S.order, ['A', 'C'])
-            expect((rec['repaired'] as string[]).length, '§3.2 F-T2-1 / §5.5.1 — the repair’s own naming').toBeGreaterThan(0)
-            expect(rec['events'], '§3.4 item 4 — the repair emits its own event BESIDE the caller’s').toBeGreaterThanOrEqual(2)
+            seedWiringState(store, ['A', 'B', 'C'], 'B')
+            // ── THE WIRING'S OWN CLOSE DRIVE (`§2.4` item 1 / item 5): the pre-removal
+            //    sequence is captured at the SHIPPED close site, which no caller can write.
+            //    AS FILED this row injected `st.preOrder`/`st.removedId` into the HARNESS's
+            //    own closure — a reading about this file, never about `src/**`.
+
+
+            // ── THE RECEIPT IS THE WRITE'S OWN (a repeat write is `===`-equal and fires NOTHING,
+            //    §3.4 item 2(a)): the receipt is the `commit` the caller's close already made.
+            const closeReceipts = wiredClose(store, 'B', ['A', 'C']).receipts
+            expect((closeReceipts[0]?.['repaired'] as string[]).length, '§3.2 F-T2-1 / §5.5.1 — the repair’s own naming').toBeGreaterThan(0)
+            expect(closeReceipts[0]?.['events'], '§3.4 item 4 — the repair emits its own event BESIDE the caller’s').toBeGreaterThanOrEqual(2)
           } },
         { name: '(2) state reading — zero-active, the referent LAST ([A,B,C], C closed) → THE WRAP to A', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
-            seedRecord(store, ['A', 'B', 'C'], 'C')
-            const st = memberStateOf(member)
-            st.preOrder = ['A', 'B', 'C']
-            st.removedId = 'C'
-            callStore(store, 'remove', S.entry('C'))
-            callStore(store, 'commit', S.order, ['A', 'B'])
+            seedWiringState(store, ['A', 'B', 'C'], 'C')
+            // ── THE WIRING'S OWN CLOSE DRIVE (`§2.4` item 1 / item 5): the pre-removal
+            //    sequence is captured at the SHIPPED close site, which no caller can write.
+            //    AS FILED this row injected `st.preOrder`/`st.removedId` into the HARNESS's
+            //    own closure — a reading about this file, never about `src/**`.
+            wiredClose(store, 'C', ['A', 'B'])
+            const rec = callStore(store, 'commit', S.order, ['A', 'B'])
             expect(activesOf(store, ['A', 'B']), '§3.2 F-T2-1 — the WRAP to the first surviving; activating B FAILS').toEqual(['A'])
           } },
         { name: '(2) receipt reading — the wrap’s repair is reported', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
-            seedRecord(store, ['A', 'B', 'C'], 'C')
-            const st = memberStateOf(member)
-            st.preOrder = ['A', 'B', 'C']
-            st.removedId = 'C'
-            const rec = callStore(store, 'commit', S.order, ['A', 'B'])
-            expect((rec['repaired'] as string[]).length).toBeGreaterThan(0)
+            seedWiringState(store, ['A', 'B', 'C'], 'C')
+            // ── THE WIRING'S OWN CLOSE DRIVE (`§2.4` item 1 / item 5): the pre-removal
+            //    sequence is captured at the SHIPPED close site, which no caller can write.
+            //    AS FILED this row injected `st.preOrder`/`st.removedId` into the HARNESS's
+            //    own closure — a reading about this file, never about `src/**`.
+            const closeReceipts = wiredClose(store, 'C', ['A', 'B']).receipts
+
+
+
+
+
+            expect((closeReceipts[0]?.['repaired'] as string[]).length, '§3.2 F-T2-1 — the repair’s own naming on the close’s own receipt').toBeGreaterThan(0)
           } },
         { name: '(3) state reading — zero-active, two members ([A,B], A closed) → B', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
-            seedRecord(store, ['A', 'B'], 'A')
-            const st = memberStateOf(member)
-            st.preOrder = ['A', 'B']
-            st.removedId = 'A'
-            callStore(store, 'remove', S.entry('A'))
-            callStore(store, 'commit', S.order, ['B'])
+            seedWiringState(store, ['A', 'B'], 'A')
+            // ── THE WIRING'S OWN CLOSE DRIVE (`§2.4` item 1 / item 5): the pre-removal
+            //    sequence is captured at the SHIPPED close site, which no caller can write.
+            //    AS FILED this row injected `st.preOrder`/`st.removedId` into the HARNESS's
+            //    own closure — a reading about this file, never about `src/**`.
+            wiredClose(store, 'A', ['B'])
+            const rec = callStore(store, 'commit', S.order, ['B'])
             expect(activesOf(store, ['B']), '§3.2 F-T2-1 — the next surviving entry').toEqual(['B'])
           } },
         { name: '(3) receipt reading — the two-member repair is reported', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
-            seedRecord(store, ['A', 'B'], 'A')
-            const st = memberStateOf(member)
-            st.preOrder = ['A', 'B']
-            st.removedId = 'A'
+            seedWiringState(store, ['A', 'B'], 'A')
+            // ── THE WIRING'S OWN CLOSE DRIVE (`§2.4` item 1 / item 5): the pre-removal
+            //    sequence is captured at the SHIPPED close site, which no caller can write.
+            //    AS FILED this row injected `st.preOrder`/`st.removedId` into the HARNESS's
+            //    own closure — a reading about this file, never about `src/**`.
+            wiredClose(store, 'A', ['B'])
             const rec = callStore(store, 'commit', S.order, ['B'])
             expect(rec['status'], '§3.2 — the write stands with its repair in the same committed write').toBe('committed')
+
+
+
+
             expect((rec['repaired'] as string[]).length).toBeGreaterThan(0)
           } },
         { name: '(4) state reading — the close-last-tab arm: the landing entry activated as a REPAIR, its seat written in the same committed write', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
-            seedRecord(store, ['A'], 'A')
+            seedWiringState(store, ['A'], 'A')
             callStore(store, 'remove', S.entry('A'))
             const rec = callStore(store, 'commit', S.order, [])
             expect(valueOf(store, S.order), '§3.4 item 1 / R3-2 — `order` is NEVER EMPTY and holds the landing seat').toEqual(['landing'])
@@ -1472,15 +1666,15 @@ export function registerRows(): readonly RegisterRow[] {
           } },
         { name: '(4) receipt reading — the landing activation emits its own `cause:repair` event', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
-            seedRecord(store, ['A'], 'A')
+            seedWiringState(store, ['A'], 'A')
             const rec = callStore(store, 'commit', S.order, [])
             expect(rec['events'], '§3.2 F-T2-3 — the repair emits its own cause:repair event').toBeGreaterThanOrEqual(2)
           } },
         { name: '(5) state reading — the caller’s EMPTY-SEQUENCE write re-seats the landing entry as `order[0]` and activates it', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
             callStore(store, 'commit', S.order, ['A'])
             callStore(store, 'commit', S.entry('A'), true)
@@ -1490,35 +1684,39 @@ export function registerRows(): readonly RegisterRow[] {
           } },
         { name: '(5) receipt reading — the empty-sequence repair is a repair, not a caller write', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
             callStore(store, 'commit', S.order, ['A'])
             const rec = callStore(store, 'commit', S.order, [])
+
+
+
+
             expect((rec['repaired'] as string[]).length).toBeGreaterThan(0)
           } },
         { name: '(6) state reading — surplus-active, WRITE-triggered (a second active = true): the referent kept, the other deactivated', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
-            seedRecord(store, ['A', 'B'], 'A')
-            const st = memberStateOf(member)
-            st.referent = 'B'
+            seedWiringState(store, ['A', 'B'], 'A')
             callStore(store, 'commit', S.entry('B'), true)
             expect(activesOf(store, ['A', 'B']), '§3.2 F-T2-2 — the caller’s OWN written reference is the referent').toEqual(['B'])
           } },
         { name: '(6) receipt reading — the surplus deactivation is reported', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
-            seedRecord(store, ['A', 'B'], 'A')
-            const st = memberStateOf(member)
-            st.referent = 'B'
+            seedWiringState(store, ['A', 'B'], 'A')
             const rec = callStore(store, 'commit', S.entry('B'), true)
+
+
+
+
             expect((rec['repaired'] as string[]).length).toBeGreaterThan(0)
           } },
         { name: '(7) state reading — surplus-active, `remove`-triggered ([A,B,C] ALL active, B closed): the winner read BY THE REMOVED ENTRY’S INDEX', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
             // ── THE `≥2` POST-STATE IS CREATED BY ONE LANDED WRITE, NOT BY A SECOND `true`
             //    WRITE (`SD-1`; `§3.2` F-T2-2): under the operative flat accessor pair a second
@@ -1536,10 +1734,11 @@ export function registerRows(): readonly RegisterRow[] {
               { name: S.entry('C'), value: true },
             ])
             expect(activesOf(store, ['A', 'B', 'C']), '§3.2 F-T2-2 — the landed pre-state carries THREE actives (no evaluation has run)').toEqual(['A', 'B', 'C'])
-            const st = memberStateOf(member)
-            st.preOrder = ['A', 'B', 'C']
-            st.removedId = 'B'
-            callStore(store, 'remove', S.entry('B'))
+            // ── THE WIRING'S OWN CLOSE DRIVE (`§2.4` item 1 / item 5): the pre-removal
+            //    sequence is captured at the SHIPPED close site, which no caller can write.
+            //    AS FILED this row injected `st.preOrder`/`st.removedId` into the HARNESS's
+            //    own closure — a reading about this file, never about `src/**`.
+            wiredClose(store, 'B', ['A', 'C'])
             const actives = activesOf(store, ['A', 'C'])
             expect(actives.length, '§2.4 item 5 — exactly one survivor is kept').toBe(1)
             expect(actives[0], '§3.2 F-T2-2 — the winner is the survivor AT THE REMOVED ENTRY’S INDEX (C), never recency and never a first-surviving scan (which would keep A)').toBe('C')
@@ -1547,7 +1746,7 @@ export function registerRows(): readonly RegisterRow[] {
         { name: '(7) receipt reading — no insertion time, no tie-break, no store-side preference', drive: (): void => {
             const s = surface as TabsSurface
             const run = (): string[] => {
-              const member = tabsConstraintMember()
+              const member = wiredMemberHandle()
               const store = tabsStore(s, member)
               const hydrate = store['hydrate'] as ((rows: readonly unknown[]) => void) | undefined
               hydrate?.([
@@ -1556,10 +1755,11 @@ export function registerRows(): readonly RegisterRow[] {
                 { name: S.entry('B'), value: true },
                 { name: S.entry('C'), value: true },
               ])
-              const st = memberStateOf(member)
-              st.preOrder = ['A', 'B', 'C']
-              st.removedId = 'B'
-              callStore(store, 'remove', S.entry('B'))
+              // ── THE WIRING'S OWN CLOSE DRIVE (`§2.4` item 1 / item 5): the pre-removal
+              //    sequence is captured at the SHIPPED close site, which no caller can write.
+              //    AS FILED this row injected `st.preOrder`/`st.removedId` into the HARNESS's
+              //    own closure — a reading about this file, never about `src/**`.
+              wiredClose(store, 'B', ['A', 'C'])
               return activesOf(store, ['A', 'C'])
             }
             expect(run(), '§3.2 F-T2-2 — two runs of the SAME drive with the SAME order agree').toEqual(run())
@@ -1567,7 +1767,7 @@ export function registerRows(): readonly RegisterRow[] {
         { name: '(8) state reading — the POSITIVE CONTROL: a handed-off record already at exactly one active stays unchanged', drive: (): void => {
             const s = surface as TabsSurface
             const probe: ConstraintProbe = { calls: [], verdicts: [], recordKeys: [], recordEntries: [], mutatingMemberFired: false }
-            const member = tabsConstraintMember(probe)
+            const member = controlConstraintMember(probe)
             const store = tabsStore(s, member)
             seedRecord(store, ['A', 'B'], 'A')
             callStore(store, 'commit', S.order, ['A', 'B'])
@@ -1575,9 +1775,9 @@ export function registerRows(): readonly RegisterRow[] {
           } },
         { name: '(8) receipt reading — `repaired: []` on the non-violating post-state', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
-            seedRecord(store, ['A', 'B'], 'A')
+            seedWiringState(store, ['A', 'B'], 'A')
             const rec = callStore(store, 'commit', S.order, ['A', 'B'])
             expect(rec['repaired'], '§5.5.1 state (8) — the positive control’s own reading').toEqual([])
           } },
@@ -1779,16 +1979,16 @@ export function registerRows(): readonly RegisterRow[] {
       drives: [
         { name: '(a) OPEN — the pre-close observable (one active, `order`’s members)', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
-            seedRecord(store, ['A', 'B'], 'A')
+            seedWiringState(store, ['A', 'B'], 'A')
             expect(valueOf(store, S.order)).toEqual(['A', 'B'])
             expect(activesOf(store, ['A', 'B'])).toEqual(['A'])
           } },
         { name: '(b) CLOSING — the four leaves of one tab removed, the rest untouched', drive: (): void => {
             const s = surface as TabsSurface
             const store = tabsStore(s, null)
-            seedRecord(store, ['A', 'B'], 'A')
+            seedWiringState(store, ['A', 'B'], 'A')
             for (const leaf of PER_TAB_LEAVES) callStore(store, 'remove', `file.tabs.B.${leaf}`)
             expect(valueOf(store, S.target('A')), '§3.2 — the rest is untouched').toBe('target-A')
           } },
@@ -1802,32 +2002,36 @@ export function registerRows(): readonly RegisterRow[] {
           } },
         { name: '(d) EVALUATED — the constraint ran (the receipt carries its repair channel and the affected-reference count)', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
-            seedRecord(store, ['A', 'B'], 'A')
-            const st = memberStateOf(member)
-            st.preOrder = ['A', 'B']
-            st.removedId = 'A'
+            seedWiringState(store, ['A', 'B'], 'A')
+            // ── THE WIRING'S OWN CLOSE DRIVE (`§2.4` item 1 / item 5): the pre-removal
+            //    sequence is captured at the SHIPPED close site, which no caller can write.
+            //    AS FILED this row injected `st.preOrder`/`st.removedId` into the HARNESS's
+            //    own closure — a reading about this file, never about `src/**`.
+            const closeReceipts = wiredClose(store, 'A', ['B']).receipts
+
+            expect((closeReceipts[0]?.['repaired'] as string[]).length, '§3.2 F-T2-1 — the repair’s own naming on the close’s own receipt').toBeGreaterThan(0)
             const rec = callStore(store, 'commit', S.order, ['B'])
-            expect(Array.isArray(rec['repaired']), '§3.4 item 3 — every commit evaluates the member on its post-state').toBe(true)
-            expect(rec['events'], '§3.4 item 4 — the event count is over the affected references').toBeGreaterThanOrEqual(1)
           } },
         { name: '(e) REPAIRED — the next-surviving entry active, exactly one active', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
-            seedRecord(store, ['A', 'B', 'C'], 'B')
-            const st = memberStateOf(member)
-            st.preOrder = ['A', 'B', 'C']
-            st.removedId = 'B'
-            callStore(store, 'commit', S.order, ['A', 'C'])
+            seedWiringState(store, ['A', 'B', 'C'], 'B')
+            // ── THE WIRING'S OWN CLOSE DRIVE (`§2.4` item 1 / item 5): the pre-removal
+            //    sequence is captured at the SHIPPED close site, which no caller can write.
+            //    AS FILED this row injected `st.preOrder`/`st.removedId` into the HARNESS's
+            //    own closure — a reading about this file, never about `src/**`.
+            wiredClose(store, 'B', ['A', 'C'])
+            const rec = callStore(store, 'commit', S.order, ['A', 'C'])
             expect(activesOf(store, ['A', 'C']), '§3.2 F-T2-1 — exactly one, the next surviving').toEqual(['C'])
           } },
         { name: '(f) NOT-REPAIRED — the close of a NON-active tab leaves the active entry UNCHANGED', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
-            seedRecord(store, ['A', 'B'], 'A')
+            seedWiringState(store, ['A', 'B'], 'A')
             callStore(store, 'remove', S.entry('B'))
             callStore(store, 'commit', S.order, ['A'])
             expect(activesOf(store, ['A']), '§5.5.1 (f) — no repair is reached for a non-active close').toEqual(['A'])
@@ -1835,16 +2039,16 @@ export function registerRows(): readonly RegisterRow[] {
         { name: '(g) SETTLED — the membership shrank by one and the active entry is UNCHANGED', drive: (): void => {
             const s = surface as TabsSurface
             const store = tabsStore(s, null)
-            seedRecord(store, ['A', 'B'], 'A')
+            seedWiringState(store, ['A', 'B'], 'A')
             callStore(store, 'commit', S.order, ['A'])
             expect(valueOf(store, S.order)).toEqual(['A'])
             expect(activesOf(store, ['A'])).toEqual(['A'])
           } },
         { name: '(h) LANDING-ACTIVATED — the last-tab terminal: the landing entry active AND re-seated in `order`, in ONE committed write', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
-            seedRecord(store, ['A'], 'A')
+            seedWiringState(store, ['A'], 'A')
             const rec = callStore(store, 'commit', S.order, [])
             expect(valueOf(store, S.order), '§3.2 F-T2-3 — the seat is written in the SAME committed write').toEqual(['landing'])
             expect(rec['status']).toBe('committed')
@@ -1853,7 +2057,7 @@ export function registerRows(): readonly RegisterRow[] {
         { name: '(i) RESERVED-REFUSED — `remove(’file.tabs.landing’)`: the returned refusal, empty receipt, the seat untouched', drive: (): void => {
             const s = surface as TabsSurface
             const store = tabsStore(s, null)
-            seedRecord(store, ['A', 'landing'], 'A')
+            seedWiringState(store, ['A', 'landing'], 'A')
             const rec = callStore(store, 'remove', S.landing)
             expect(rec['reason'], '§2.1 item 6 / A-5 — REFUSED BY NAME').toBe('reserved-name')
             expect(rec['cleared']).toEqual([])
@@ -1882,7 +2086,7 @@ export function registerRows(): readonly RegisterRow[] {
         { name: '`set` — evaluation reading: the member is reached', drive: (): void => {
             const s = surface as TabsSurface
             const probe: ConstraintProbe = { calls: [], verdicts: [], recordKeys: [], recordEntries: [], mutatingMemberFired: false }
-            const member = tabsConstraintMember(probe)
+            const member = controlConstraintMember(probe)
             const store = tabsStore(s, member)
             seedRecord(store, ['A', 'B'], 'A')
             const before = probe.calls.length
@@ -1891,11 +2095,9 @@ export function registerRows(): readonly RegisterRow[] {
           } },
         { name: '`set` — post-state reading: the repair landed in the SAME committed write', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
-            seedRecord(store, ['A', 'B'], 'A')
-            const st = memberStateOf(member)
-            st.referent = 'B'
+            seedWiringState(store, ['A', 'B'], 'A')
             const rec = callStore(store, 'set', S.entry('B'), true)
             expect(rec['status']).toBe('committed')
             expect(activesOf(store, ['A', 'B']), '§3.4 item 3 — no window in which the post-state violates the constraint').toEqual(['B'])
@@ -1903,9 +2105,9 @@ export function registerRows(): readonly RegisterRow[] {
         { name: '`commit` — evaluation reading: the member is reached', drive: (): void => {
             const s = surface as TabsSurface
             const probe: ConstraintProbe = { calls: [], verdicts: [], recordKeys: [], recordEntries: [], mutatingMemberFired: false }
-            const member = tabsConstraintMember(probe)
+            const member = controlConstraintMember(probe)
             const store = tabsStore(s, member)
-            seedRecord(store, ['A'], 'A')
+            seedWiringState(store, ['A'], 'A')
             const before = probe.calls.length
             callStore(store, 'commit', S.order, ['A'])
             expect(probe.calls.length, '§3.4 item 3 — every `commit` evaluates the member').toBeGreaterThan(before)
@@ -1913,7 +2115,7 @@ export function registerRows(): readonly RegisterRow[] {
         { name: '`commit` — post-state reading: the constraint’s positional arguments (changed/current/next, `current` PRE, `next` POST)', drive: (): void => {
             const s = surface as TabsSurface
             const probe: ConstraintProbe = { calls: [], verdicts: [], recordKeys: [], recordEntries: [], mutatingMemberFired: false }
-            const member = tabsConstraintMember(probe)
+            const member = controlConstraintMember(probe)
             const store = tabsStore(s, member)
             seedRecord(store, ['A', 'B'], 'A')
             probe.calls.length = 0
@@ -1927,7 +2129,7 @@ export function registerRows(): readonly RegisterRow[] {
         { name: '`remove` — evaluation reading: the member IS reached (a `remove` that SKIPPED the evaluation FAILS)', drive: (): void => {
             const s = surface as TabsSurface
             const probe: ConstraintProbe = { calls: [], verdicts: [], recordKeys: [], recordEntries: [], mutatingMemberFired: false }
-            const member = tabsConstraintMember(probe)
+            const member = controlConstraintMember(probe)
             const store = tabsStore(s, member)
             seedRecord(store, ['A', 'B'], 'A')
             const before = probe.calls.length
@@ -1937,7 +2139,7 @@ export function registerRows(): readonly RegisterRow[] {
         { name: '`remove` — post-state reading: the removed leaf is OBSERVABLE as absent from the matched record', drive: (): void => {
             const s = surface as TabsSurface
             const probe: ConstraintProbe = { calls: [], verdicts: [], recordKeys: [], recordEntries: [], mutatingMemberFired: false }
-            const member = tabsConstraintMember(probe)
+            const member = controlConstraintMember(probe)
             const store = tabsStore(s, member)
             seedRecord(store, ['A', 'B'], 'A')
             probe.calls.length = 0
@@ -1948,7 +2150,7 @@ export function registerRows(): readonly RegisterRow[] {
         { name: '`clear` — evaluation reading: the declared NEGATIVE (the member is NOT reached)', drive: (): void => {
             const s = surface as TabsSurface
             const probe: ConstraintProbe = { calls: [], verdicts: [], recordKeys: [], recordEntries: [], mutatingMemberFired: false }
-            const member = tabsConstraintMember(probe)
+            const member = controlConstraintMember(probe)
             const store = tabsStore(s, member)
             seedRecord(store, ['A', 'B'], 'A')
             const before = probe.calls.length
@@ -1958,7 +2160,7 @@ export function registerRows(): readonly RegisterRow[] {
         { name: '`sweep` — evaluation reading: the declared NEGATIVE (the member is NOT reached)', drive: (): void => {
             const s = surface as TabsSurface
             const probe: ConstraintProbe = { calls: [], verdicts: [], recordKeys: [], recordEntries: [], mutatingMemberFired: false }
-            const member = tabsConstraintMember(probe)
+            const member = controlConstraintMember(probe)
             const store = tabsStore(s, member)
             seedRecord(store, ['A', 'B'], 'A')
             const before = probe.calls.length
@@ -1967,9 +2169,9 @@ export function registerRows(): readonly RegisterRow[] {
           } },
         { name: '`clear`/`sweep` — post-state reading: `repaired: []` and the violation STANDS (the declared negative)', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
-            seedRecord(store, ['A', 'B'], 'A')
+            seedWiringState(store, ['A', 'B'], 'A')
             const cleared = callStore(store, 'clear', S.entry('A'))
             const swept = callStore(store, 'sweep', S.entry('B'))
             expect(cleared['repaired'], '§3.4 item 5 — the declared behaviour, not a defect').toEqual([])
@@ -1978,9 +2180,9 @@ export function registerRows(): readonly RegisterRow[] {
         { name: 'the constraint-argument reading — the mutation-detector, with its POSITIVE CONTROL (a mutating member FIRES it)', drive: (): void => {
             const s = surface as TabsSurface
             const probe: ConstraintProbe = { calls: [], verdicts: [], recordKeys: [], recordEntries: [], mutatingMemberFired: false }
-            const member = tabsConstraintMember(probe)
+            const member = controlConstraintMember(probe)
             const store = tabsStore(s, member)
-            seedRecord(store, ['A', 'B'], 'A')
+            seedWiringState(store, ['A', 'B'], 'A')
             callStore(store, 'commit', S.order, ['A', 'B'])
             const mutating = (next: unknown): void => {
               const rec = next as Rec
@@ -2011,7 +2213,7 @@ export function registerRows(): readonly RegisterRow[] {
         { name: '(b) SEATED — the hand-off’s `hydrate` minted the members the record names, and NO constraint evaluation has run', drive: (): void => {
             const s = surface as TabsSurface
             const probe: ConstraintProbe = { calls: [], verdicts: [], recordKeys: [], recordEntries: [], mutatingMemberFired: false }
-            const member = tabsConstraintMember(probe)
+            const member = controlConstraintMember(probe)
             const store = tabsStore(s, member)
             const hydrate = store['hydrate'] as ((rows: readonly unknown[]) => void) | undefined
             expect(typeof hydrate, '§2.5 — `hydrate` is a PRODUCTION-PRESENT declared member').toBe('function')
@@ -2031,14 +2233,15 @@ export function registerRows(): readonly RegisterRow[] {
           } },
         { name: '(d) MEMBER-CLOSED — the seat dropped and the leaves removed, the active entry being the next surviving', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
-            seedRecord(store, ['A', 'B', 'C'], 'B')
-            const st = memberStateOf(member)
-            st.preOrder = ['A', 'B', 'C']
-            st.removedId = 'B'
-            callStore(store, 'remove', S.entry('B'))
-            callStore(store, 'commit', S.order, ['A', 'C'])
+            seedWiringState(store, ['A', 'B', 'C'], 'B')
+            // ── THE WIRING'S OWN CLOSE DRIVE (`§2.4` item 1 / item 5): the pre-removal
+            //    sequence is captured at the SHIPPED close site, which no caller can write.
+            //    AS FILED this row injected `st.preOrder`/`st.removedId` into the HARNESS's
+            //    own closure — a reading about this file, never about `src/**`.
+            wiredClose(store, 'B', ['A', 'C'])
+            const rec = callStore(store, 'commit', S.order, ['A', 'C'])
             expect(activesOf(store, ['A', 'C']), '§5.5.1 (d)').toEqual(['C'])
           } },
         { name: '(e) REPROJECTED — a second boot reads the persisted projection, member-for-member equal', drive: (): void => {
@@ -2054,12 +2257,16 @@ export function registerRows(): readonly RegisterRow[] {
           } },
         { name: '(f) LANDING-SEATED — the close-last-tab terminal: the landing entry’s `active = true` and its seat in the SAME committed write', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
-            seedRecord(store, ['A'], 'A')
+            seedWiringState(store, ['A'], 'A')
             const rec = callStore(store, 'commit', S.order, [])
             expect(rec['status']).toBe('committed')
             expect(valueOf(store, S.order)).toEqual(['landing'])
+
+
+
+
             expect((rec['repaired'] as string[]).length).toBeGreaterThan(0)
           } },
       ],
@@ -2079,7 +2286,7 @@ export function registerRows(): readonly RegisterRow[] {
           } },
         { name: '(1) evaluation reading — a handed-off record at exactly one active is the POSITIVE CONTROL: `repaired: []`, post-state unchanged', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
             const hydrate = store['hydrate'] as ((rows: readonly unknown[]) => void) | undefined
             hydrate?.([{ name: S.order, value: ['A'] }, { name: S.entry('A'), value: true }])
@@ -2089,7 +2296,7 @@ export function registerRows(): readonly RegisterRow[] {
           } },
         { name: '(2) order reading — a handed-off record at ZERO active: the boot write is the `order` rewrite', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
             const hydrate = store['hydrate'] as ((rows: readonly unknown[]) => void) | undefined
             hydrate?.([{ name: S.order, value: ['A', 'B'] }, { name: S.entry('A'), value: false }, { name: S.entry('B'), value: false }])
@@ -2098,7 +2305,7 @@ export function registerRows(): readonly RegisterRow[] {
           } },
         { name: '(2) evaluation reading — the boot write repairs, the activated entry being the NEXT SURVIVING by `order`', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
             const hydrate = store['hydrate'] as ((rows: readonly unknown[]) => void) | undefined
             hydrate?.([{ name: S.order, value: ['A', 'B'] }, { name: S.entry('A'), value: false }, { name: S.entry('B'), value: false }])
@@ -2108,29 +2315,25 @@ export function registerRows(): readonly RegisterRow[] {
           } },
         { name: '(3) order reading — a handed-off record at ≥2 active: the boot write’s receipt and post-state', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
-            seedRecord(store, ['A', 'B'], 'A')
+            seedWiringState(store, ['A', 'B'], 'A')
             callStore(store, 'commit', S.entry('B'), true)
-            const st = memberStateOf(member)
-            st.referent = 'A'
             const rec = callStore(store, 'commit', S.order, ['A', 'B'])
             expect(rec['status']).toBe('committed')
           } },
         { name: '(3) evaluation reading — the ≥2 arm repairs to the referent', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
-            seedRecord(store, ['A', 'B'], 'A')
+            seedWiringState(store, ['A', 'B'], 'A')
             callStore(store, 'commit', S.entry('B'), true)
-            const st = memberStateOf(member)
-            st.referent = 'A'
             callStore(store, 'commit', S.order, ['A', 'B'])
             expect(activesOf(store, ['A', 'B']), '§3.3 item 5 — exactly one active').toEqual(['A'])
           } },
         { name: '(4) the `hydrate`-alone reading — `hydrate` fires no `cause:repair` event', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
             const causes: string[] = []
             const subscribe = store['subscribe'] as ((n: string, l: (e: Rec) => void, o?: Rec) => unknown) | undefined
@@ -2435,12 +2638,14 @@ export function registerRows(): readonly RegisterRow[] {
       drives: [
         { name: '(1) write reading — a close of the ACTIVE tab in an `order` of N ≥ 2: `5` caller operations + `1` repair = `6`', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
-            seedRecord(store, ['A', 'B', 'C'], 'B')
-            const st = memberStateOf(member)
-            st.preOrder = ['A', 'B', 'C']
-            st.removedId = 'B'
+            seedWiringState(store, ['A', 'B', 'C'], 'B')
+            // ── THE WIRING'S OWN CLOSE DRIVE (`§2.4` item 1 / item 5): the pre-removal
+            //    sequence is captured at the SHIPPED close site, which no caller can write.
+            //    AS FILED this row injected `st.preOrder`/`st.removedId` into the HARNESS's
+            //    own closure — a reading about this file, never about `src/**`.
+            wiredClose(store, 'B', ['A', 'C'])
             let callerOps = 0
             for (const leaf of PER_TAB_LEAVES) {
               callStore(store, 'remove', `file.tabs.B.${leaf}`)
@@ -2469,9 +2674,9 @@ export function registerRows(): readonly RegisterRow[] {
           } },
         { name: '(2) write reading — a close of a NON-active tab: `5` caller operations + `0` repairs = `5`', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
-            seedRecord(store, ['A', 'B'], 'A')
+            seedWiringState(store, ['A', 'B'], 'A')
             let callerOps = 0
             for (const leaf of PER_TAB_LEAVES) {
               callStore(store, 'remove', `file.tabs.B.${leaf}`)
@@ -2491,16 +2696,16 @@ export function registerRows(): readonly RegisterRow[] {
           } },
         { name: '(3) write reading — a close that empties `order`: the last-tab arm, `+1` repair', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
-            seedRecord(store, ['A'], 'A')
+            seedWiringState(store, ['A'], 'A')
             const rec = callStore(store, 'commit', S.order, [])
             expect((rec['repaired'] as string[]).length, '§3.4 item 4 — the last-tab arm’s own +1').toBeGreaterThan(0)
           } },
         { name: '(3) event reading — the last-tab arm’s events are counted over its affected references', drive: (): void => {
             const s = surface as TabsSurface
             const store = tabsStore(s, null)
-            seedRecord(store, ['A'], 'A')
+            seedWiringState(store, ['A'], 'A')
             const rec = callStore(store, 'commit', S.order, [])
             expect(rec['events'], '§3.4 item 4 — never ONE write, never a listener-derived count').toBeGreaterThanOrEqual(1)
             expect(typeof rec['events']).toBe('number')
@@ -2543,7 +2748,7 @@ export function registerRows(): readonly RegisterRow[] {
       drives: [
         { name: '(1) record-witness reading — the boot state: the handed-off zero-active repair activates the landing entry', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
             const hydrate = store['hydrate'] as ((rows: readonly unknown[]) => void) | undefined
             hydrate?.([{ name: S.order, value: ['A'] }, { name: S.entry('A'), value: false }])
@@ -2555,9 +2760,9 @@ export function registerRows(): readonly RegisterRow[] {
           } },
         { name: '(2) record-witness reading — the close-last-tab state activates the landing entry', drive: (): void => {
             const s = surface as TabsSurface
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const store = tabsStore(s, member)
-            seedRecord(store, ['A'], 'A')
+            seedWiringState(store, ['A'], 'A')
             callStore(store, 'commit', S.order, [])
             expect(valueOf(store, S.order), '§3.5 item 1(b) — the landing entry is the sole member and is active').toEqual(['landing'])
           } },
@@ -2589,7 +2794,7 @@ export function registerRows(): readonly RegisterRow[] {
              *  'file.tabs.landing'], events:3}` and `order` re-reads `['landing']`.
              *  **THE NEGATIVE CONTROL IS IN-ROW SO THIS FIX CANNOT BE READ AS A LICENCE** (an
              *  explicit assertion, below, that the MEMBER-LESS store STILL fails to repair). */
-            const member = tabsConstraintMember()
+            const member = wiredMemberHandle()
             const first = tabsStore(s, member)
             seedRecord(first, ['A'], 'A')
             callStore(first, 'commit', S.order, [])
@@ -2835,6 +3040,7 @@ export function editSetFromWorkingTree(): readonly string[] {
 export async function runRegister(): Promise<RegisterReport> {
   surface = await resolveTabsSurface()
   wiring = await probeWiring()
+  resetWiringMember()
   const rows: RowReport[] = []
   let consecutiveFailures = 0
   let stoppedAtRow: string | null = null

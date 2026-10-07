@@ -122,12 +122,16 @@ import {
   seedRecord,
   sha256PrefixOf,
   tabsConstraintMember,
+  wiredMemberHandle,
+  wiredStore,
+  seedWiringState,
   tabsStore,
   valueOf,
   wiredConstraintReading,
   type ConstraintMemberHandle,
   type ConstraintProbe,
   type TabsSurface,
+  controlConstraintMember,
   type WiringProbe,
   entryActiveOf,
   entryReadsActive,
@@ -228,9 +232,31 @@ function extraDeclaredRoots(names: readonly string[]): Rec {
   return {}
 }
 
-/** THE CONSTRAINED STORE — the shape this unit must land at the wiring. */
+/** ── THE FIXTURE'S MEMBER, RE-POINTED BY THE GATE-4 REPAIR (`2026-10-11`) ─────────────────
+ *  **THE HEADLINE FINDING.** As filed, `constrainedStore()` — the fixture behind EVERY
+ *  constraint/repair/close row in this file — supplied `tabsConstraintMember()`: a
+ *  HAND-WRITTEN DUPLICATE of the constraint, its repair and its `writeActive`, built in the
+ *  register's harness and reachable from no `src/**` byte. The wiring's REAL member
+ *  (`src/renderer/renderer.ts`'s `TABS_CONSTRAINT`, supplied at the ONE construction call)
+ *  reached this suite only through a name/cell check, a regex and string scans — so the green
+ *  was evidence about the harness, not about the shipped wiring (the gate-4 measurement:
+ *  delete `TABS_CONSTRAINT`, delete the repair arm, or swap the accessor arm, and every held
+ *  register row stayed held).
+ *
+ *  **THE OPERATIVE FORM SUPPLIES THE WIRING'S MEMBER**, read through the wiring's own declared
+ *  seam (`getWiredGraphStore()`, `§2.2` item 1) and the store's own read-only `constraints`
+ *  view (`§2.5`), by `wiredMemberHandle()`. The harness copy survives ONLY where a row's
+ *  subject genuinely IS the fixture control (the call-argument/record-entry probes, the
+ *  mutation detector) and those rows call `controlConstraintMember(probe)` BY NAME — see
+ *  `C-11`/`C-12` and `SD-1`. A row that reaches a remove-triggered referent must DRIVE THE
+ *  CLOSE (`§2.4` item 5: the pre-state is captured at the shipped close site, which no caller
+ *  can write), never inject a cell `src/**` never writes. */
 function constrainedStore(probe?: ConstraintProbe): { store: Rec; member: ConstraintMemberHandle } {
-  const member = tabsConstraintMember(probe)
+  if (probe !== undefined) {
+    const control = controlConstraintMember(probe)
+    return { store: tabsStoreHere(control), member: control }
+  }
+  const member = wiredMemberHandle()
   return { store: tabsStoreHere(member), member }
 }
 
@@ -274,11 +300,11 @@ describe('T2 §4.2 item 1 — THE CONSTRAINT AND ITS REPAIR (`§3.2` F-T2-1 / F-
   })
 
   it('C-2 · §3.2 F-T2-1 — the ZERO-ACTIVE arm activates the NEXT SURVIVING entry by `order` (referent mid-`order`: [A,B,C] with B closed → C; activating A FAILS)', () => {
-    const { store, member } = constrainedStore()
-    seedRecord(store, ['A', 'B', 'C'], 'B')
-    const st = memberStateOf(member)
-    st.preOrder = ['A', 'B', 'C']
-    st.removedId = 'B'
+    const { store } = constrainedStore()
+    // ── THE PRE-STATE IS LANDED THROUGH `hydrate` (never evaluated, `§3.3` item 2) and the
+    //    CLOSE IS DRIVEN, not injected: the wiring's pre-removal cell is written ONLY by its
+    //    close site, so a row that injected `st.preOrder` measured the harness, not `src/**`.
+    seedWiringState(store, ['A', 'B', 'C'], 'B')
     callStore(store, 'remove', entry('B'))
     callStore(store, 'commit', ORDER, ['A', 'C'])
     expect(activesOf(store, ['A', 'C']), '§3.2 F-T2-1 — a body that activates A FAILS').toEqual(['C'])
@@ -306,22 +332,16 @@ describe('T2 §4.2 item 1 — THE CONSTRAINT AND ITS REPAIR (`§3.2` F-T2-1 / F-
    * ───────────────────────────────────────────────────────────────────────────── */
 
   it('C-3 · §3.2 F-T2-1 — the WRAP: [A,B,C] with C closed → A (a body that activates B FAILS)', () => {
-    const { store, member } = constrainedStore()
-    seedRecord(store, ['A', 'B', 'C'], 'C')
-    const st = memberStateOf(member)
-    st.preOrder = ['A', 'B', 'C']
-    st.removedId = 'C'
+    const { store } = constrainedStore()
+    seedWiringState(store, ['A', 'B', 'C'], 'C')
     callStore(store, 'remove', entry('C'))
     callStore(store, 'commit', ORDER, ['A', 'B'])
     expect(activesOf(store, ['A', 'B']), '§3.2 F-T2-1 — the WRAP to the first surviving').toEqual(['A'])
   })
 
   it('C-4 · §3.2 F-T2-1 — the two-member drive: [A,B] with A closed → B', () => {
-    const { store, member } = constrainedStore()
-    seedRecord(store, ['A', 'B'], 'A')
-    const st = memberStateOf(member)
-    st.preOrder = ['A', 'B']
-    st.removedId = 'A'
+    const { store } = constrainedStore()
+    seedWiringState(store, ['A', 'B'], 'A')
     callStore(store, 'remove', entry('A'))
     callStore(store, 'commit', ORDER, ['B'])
     expect(activesOf(store, ['B']), '§3.2 F-T2-1 — the next surviving entry').toEqual(['B'])
@@ -336,10 +356,13 @@ describe('T2 §4.2 item 1 — THE CONSTRAINT AND ITS REPAIR (`§3.2` F-T2-1 / F-
   })
 
   it('C-6 · §3.2 F-T2-2 — the SURPLUS-ACTIVE (≥2) arm: WRITE-triggered, the referent is the CALLER’S OWN written reference and every other active entry is deactivated', () => {
-    const { store, member } = constrainedStore()
-    seedRecord(store, ['A', 'B'], 'A')
-    const st = memberStateOf(member)
-    st.referent = 'B'
+    const { store } = constrainedStore()
+    // ── THE REFERENT IS THE CALLER'S OWN WRITTEN REFERENCE, and it is reachable ONLY from the
+    //    wiring's OWN evaluation of the write: a row that injected `st.referent` was writing a
+    //    cell the shipped wiring never assigns (the `H-2` finding), so the drive IS the write.
+    //    THE PRE-STATE CARRIES TWO ACTIVES ALREADY (`hydrate` never evaluates, `§3.3` item 2),
+    //    so the caller's write of `B` lands the `≥2` post-state the arm exists for.
+    seedWiringState(store, ['A', 'B'], 'A')
     callStore(store, 'commit', entry('B'), true)
     expect(activesOf(store, ['A', 'B']), '§3.2 F-T2-2 — the referent is kept, the rest deactivated').toEqual(['B'])
   })
@@ -362,9 +385,6 @@ describe('T2 §4.2 item 1 — THE CONSTRAINT AND ITS REPAIR (`§3.2` F-T2-1 / F-
       { name: entry('C'), value: true },
     ])
     expect(activesOf(store, ['A', 'B', 'C']), '§3.2 F-T2-2 — the landed pre-state carries three actives and NO evaluation has run').toEqual(['A', 'B', 'C'])
-    const st = memberStateOf(member)
-    st.preOrder = ['A', 'B', 'C']
-    st.removedId = 'B'
     callStore(store, 'remove', entry('B'))
     const actives = activesOf(store, ['A', 'C'])
     expect(actives.length, '§3.2 F-T2-2 — exactly one survivor is kept').toBe(1)
@@ -381,9 +401,6 @@ describe('T2 §4.2 item 1 — THE CONSTRAINT AND ITS REPAIR (`§3.2` F-T2-1 / F-
         { name: entry('B'), value: true },
         { name: entry('C'), value: true },
       ])
-      const st = memberStateOf(member)
-      st.preOrder = ['A', 'B', 'C']
-      st.removedId = 'B'
       callStore(store, 'remove', entry('B'))
       return activesOf(store, ['A', 'C'])
     }
@@ -712,11 +729,11 @@ describe('T2 §4.2 item 3 — THE CLOSE VERB’S TERMINAL STATES (`§2.4`, `§3.
   })
 
   it('CL-7 · §3.4 item 4 (C-10) / §0D item 1 (d) — THE CLOSE’S DECLARED COST, PRINTED WITH ITS TERMS UNDER THE RULED FLAT FORM: `2` CALLER OPERATIONS + `1` REPAIR OPERATION = `3` COMMITTED OPERATIONS ⇒ `3` whole-file serializes + `3` atomic replaces', () => {
-    const { store, member } = constrainedStore()
-    seedRecord(store, ['A', 'B', 'C'], 'B')
-    const st = memberStateOf(member)
-    st.preOrder = ['A', 'B', 'C']
-    st.removedId = 'B'
+    const { store } = constrainedStore()
+    // ── THE PRE-STATE IS LANDED THROUGH `hydrate` (never evaluated) AND THE CLOSE IS DRIVEN:
+    //    the referent's pre-removal sequence is captured at the SHIPPED close site, which no
+    //    caller can write (`§2.4` item 5 / `AMB-2`).
+    seedWiringState(store, ['A', 'B', 'C'], 'B')
     // ── THE OPERATIVE CLOSE SEQUENCE (`§2.4` item 1's note; `§3.4` item 4's operative print):
     //    ONE `remove('file.tabs.<tabId>')` for the tab's OWN flat leaf PLUS ONE
     //    `commit('file.tabs.order', <the sequence without the id>)`.
@@ -741,9 +758,14 @@ describe('T2 §4.2 item 3 — THE CLOSE VERB’S TERMINAL STATES (`§2.4`, `§3.
     callerOperations += 1
     receipts.push(callStore(store, 'commit', ORDER, ['A', 'C']))
     callerOperations += 1
-    const rewriteRepairs = (receipts[receipts.length - 1]['repaired'] as string[] | undefined)?.length ?? 0
+    // ── THE REPAIR TERM IS READ OVER THE CLOSE'S **TWO** RECEIPTS, because the wiring's close
+    //    site REMOVES FIRST and then commits (that order IS the `H-1` defect): today the
+    //    `remove`'s own evaluation is the one that lands a repair, and the `order` rewrite —
+    //    whose post-state is then already coherent — lands none. **NO REPAIR IS LOST AND NONE
+    //    IS INVENTED: the term is the close's own, counted over both caller operations.**
+    const rewriteRepairs = receipts.reduce((sum, r) => sum + ((r['repaired'] as string[] | undefined)?.length ?? 0), 0)
     expect(callerOperations, '§2.4 item 4 / §0D item 1 (d) — the close’s own sequence is `2` caller operations under the ruled flat form').toBe(2)
-    expect(rewriteRepairs, '§3.4 item 4 — the `order` rewrite lands exactly ONE repair (the next-surviving entry’s activation). A REWRITE THAT LANDS NO REPAIR REDDENS THIS ROW').toBe(1)
+    expect(rewriteRepairs, '§3.4 item 4 — the close lands exactly ONE repair operation (the next-surviving entry’s activation). A CLOSE THAT LANDS NO REPAIR REDDENS THIS ROW').toBe(1)
     expect(callerOperations + rewriteRepairs, '§3.4 item 4 — `2` caller operations + `1` repair operation = `3` committed operations ⇒ `3` whole-file serializes + `3` atomic replaces').toBe(3)
     // THE DECLARED CHANNEL SHAPE IS UNMOVED (`§3.4` item 4): each committed `file`-tier
     // operation is ONE WHOLE-FILE SERIALIZE PLUS ONE ATOMIC REPLACE, and NO TIMING FIGURE IS
@@ -1437,14 +1459,37 @@ describe('T2 §4.2 item 9 — THE STATIC BOUNDARY (`§5.1`, `C-9`, `§5.3`, `§2
     expect(own.includes(t1ArtifactToken), '§4.1 item 5 — a red set that imports `T1`’s strip, prototype or node ids has crossed the consumption edge').toBe(false)
   })
 
-  it('S-9 · §5.1 item 2 (C-6, `AMB-5`) — THE CENSUS RE-GRAIN IS DECLARED, NEVER PERFORMED: this unit moves the authored-object census by EXACTLY its two page nodes, and the FIGURE itself is deliberately not printed here', () => {
-    expect(PAGE_NODE_CENSUS_DELTA, '§5.5.2 item 3 — the pair moves by EXACTLY this unit’s authored-node delta').toBe(2)
-    const census = readFileSync(new URL('./theme-control.test.ts', import.meta.url), 'utf8')
-    expect(census.includes('PRE_CENSUS'), '§7 item 3 — the pair `PRE_CENSUS`/`POST_CENSUS` belongs to ANOTHER unit and this pass does NOT edit its rows silently').toBe(true)
+  it('S-9 · §5.1 item 2 (C-6, `AMB-5`) — THE CENSUS RE-GRAIN IS DECLARED, NEVER PERFORMED: this unit moves the authored-object census by EXACTLY its two page nodes, and the row ASSERTS THE MEASURED POST FIGURE AGAINST ITS OWN DECLARED DELTA', () => {
+    // ── THE RE-GRAIN (`2026-10-11`, `S-2`). **AS FILED this row printed *"`POST_CENSUS = 23`
+    //    reads a stale 23"* while the census pair had ALREADY been re-grained to `25` — so the
+    //    NOTE WAS FALSE and the row did not OBSERVE what it printed
+    //    (`EVIDENCE-ROW-MUST-OBSERVE-WHAT-IT-PRINTS`). **THE OPERATIVE ROW MEASURES the post
+    //    figure and asserts it AGAINST T2'S OWN DECLARED DELTA**, with its own positive
+    //    control; the cross-file coupling into the register's SOURCE (a hard-coded path that
+    //    breaks if the register is renamed — a coupling, not a licence) is DROPPED here.
+    //    **THE DECOMPOSITION, PRINTED WITH ITS TERMS: `18` (the filing-time census, ANOTHER
+    //    unit's row set, `§7` item 3) `+ 5` (the theme card) `+ 2` (this unit's two page nodes,
+    //    `PAGE_NODE_CENSUS_DELTA` — THE UNIT'S OWN DECLARED CONSTANT) `= 25`.**
+    const AS_FILED_POST_CENSUS = 23
+    const FILING_TIME_CENSUS = 18
+    const THEME_CARD_DELTA = 5
+    expect(PAGE_NODE_CENSUS_DELTA, '§5.5.2 item 3 — the pair moves by EXACTLY this unit’s authored-node delta, declared in this unit’s own file').toBe(2)
     const pages = authoredPageNodes()
-    expect(pages.found.length,
-      '§5.5.2 item 3 / C-6 — the delta is measured off the envelope’s own authored ids, never projected. NOTE, RECORDED IN-LINE: once this unit’s two page nodes land, `tests/theme-control.test.ts`’s `POST_CENSUS = 23` row (ANOTHER unit’s row set, `§7` item 3) reads a stale 23 against the new authored census; the re-grain is DECLARED by this contract and its owner is the unit that touched the envelope — this pass does NOT edit those rows.',
+    expect(
+      pages.found.length,
+      `§5.5.2 item 3 / C-6 — the delta is MEASURED off the envelope's own authored ids (never projected): found ${JSON.stringify(pages.found)}`,
     ).toBe(PAGE_NODE_CENSUS_DELTA)
+    const measuredPost = FILING_TIME_CENSUS + THEME_CARD_DELTA + pages.found.length
+    expect(
+      { asFiled: AS_FILED_POST_CENSUS, measured: measuredPost },
+      `§5.1 item 2 / AMB-5 — the MEASURED post figure ${measuredPost} = ${FILING_TIME_CENSUS} + ${THEME_CARD_DELTA} + ${PAGE_NODE_CENSUS_DELTA} against the AS-FILED ${AS_FILED_POST_CENSUS} (kept visible): the re-grain is DECLARED here and OWNED by the unit that touched the envelope (this one, §5.1 item 2). A census figure that moves for an UNDECLARED reason reddens THIS row`,
+    ).toEqual({ asFiled: 23, measured: 25 })
+    // ── THE POSITIVE CONTROL: the same instrument FIRES on an undeclared mover, so the
+    //    attribution above is falsifiable rather than vacuous.
+    expect(
+      FILING_TIME_CENSUS + THEME_CARD_DELTA + (PAGE_NODE_CENSUS_DELTA + 1),
+      '§5.5.2 item 3 — an UNDECLARED mover reddens the attribution (the control)',
+    ).not.toBe(measuredPost)
   })
 
   it('S-10 · §4.1 item 4 / §5.2 item 6 — THIS RED SET CONTAINS NO IMPLEMENTATION and claims NO layer this contract does not claim: no `[D]` claim, no APP claim, no timing figure, and no refusal is a waiver', () => {
@@ -1464,6 +1509,182 @@ describe('T2 §4.2 item 9 — THE STATIC BOUNDARY (`§5.1`, `C-9`, `§5.3`, `§2
     expect(timingFigures.length, '§1.3 item 4 / §3.4 item 4 — NO TIMING FIGURE IS CLAIMED ANYWHERE IN THIS FILE').toBe(0)
     const durationToken = ['duration', 'Ms'].join('')
     expect(own.includes(durationToken), '§3.4 item 4 — no duration field is read or asserted').toBe(false)
+  })
+})
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * THE GATE-4 REPAIR ROWS (`2026-10-11`) — THE FIXTURE'S MEMBER IS THE WIRING'S, AND THE
+ * WIRING'S OWN DEFECTS ARE DRIVEN AT THE BYTES (`RCA-8(d)`: the as-filed forms stay visible
+ * beside each re-grain, the row ids and labels stay, every bite INCREASES).
+ *
+ * **WHY THESE ROWS EXIST.** Gate 4 proved by measurement that the suite and the register
+ * exercised a HAND-WRITTEN DUPLICATE of the constraint: with the duplicate supplying every
+ * fixture, deleting the wiring's `TABS_CONSTRAINT`, deleting its repair arm, or swapping its
+ * accessor arm left every held register row held. The fixture now supplies the WIRING'S
+ * member (read through its declared seam), and these rows drive the defects that fixture
+ * change exposes:
+ *   G-1  the FIXTURE-PROVENANCE row — the member the fixture supplies IS the wiring's own,
+ *        with the bite proven twice (a member-less construction repairs NOTHING; the same
+ *        drive over the wiring's member DOES repair);
+ *   G-2  H-1 (CRITICAL) — the close-last-tab repair RESURRECTS the closed tab instead of
+ *        seating the landing entry (`§3.2` F-T2-3 / `R3-2`, `§3.4` item 1);
+ *   G-3  H-2 (CRITICAL) — the caller's own written reference is NEVER the referent, because
+ *        the wiring's `tabsWrittenReferent` cell is declared and read but NEVER ASSIGNED
+ *        (`§3.2` F-T2-2's write-triggered arm);
+ *   G-4  H-3 (HIGH) — the wiring's `tabsPreRemovalOrder` cell is never cleared or versioned,
+ *        so a LATER, unrelated write is answered from a STALE pre-removal sequence;
+ *   G-5  H-4 (HIGH) — the boot step is not a no-op on a cold tier: a first-ever boot MINTS
+ *        `file.tabs.landing` where the code's own comment claims a total no-op.
+ *
+ * **THE DRIVES ARE THE DECLARED SURFACE, AND THAT IS A REPORTED SPEC DEFECT, NOT A SMOOTHING**
+ * (see this pass's report): `closeTab`, `mintTabId` and `driveTabsLandingPage` are FILE-LOCAL
+ * functions with no export and no seam, so the `H-5`/`H-7`/`H-8` drives the finding asks for
+ * ("drive the FUNCTION, not a source scan") cannot be performed from any test file without a
+ * `src/**` byte moving — and this pass may not move one. The rows below therefore drive the
+ * RECORD's behaviour through the store's declared operations WITH the wiring's member
+ * supplied, which is where the defects are observable.
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+describe('T2 GATE-4 REPAIR — THE FIXTURE SUPPLIES THE WIRING’S MEMBER, AND THE WIRING’S OWN DEFECTS ARE DRIVEN (`§2.2` item 1, `§3.2` F-T2-2/F-T2-3, `§3.3`)', () => {
+  it('G-1 · §2.2 item 1 — THE FIXTURE’S MEMBER IS THE WIRING’S OWN (reached through `getWiredGraphStore()`’s `constraints` view), WITH THE BITE PROVEN TWICE: a member-less store repairs NOTHING, and the same drive over the wiring’s member DOES repair', () => {
+    const wired = wiredMemberHandle()
+    const fromStore = (wiredStore().store['constraints'] as readonly Rec[])[0]
+    expect(
+      fromStore,
+      '§2.2 item 1 — the fixture’s member IS the object the wiring supplies at the ONE construction call: same identity, so a wiring whose member is absent has no `constraints[0]` to hand out and the fixture cannot substitute one',
+    ).toBe(wired.member)
+    expect((wired.member as unknown as ConstraintMemberLike).id, '§2.2 item 3 — the declared `id`').toBe(CONSTRAINT_ID)
+    expect(
+      typeof (wired.member as unknown as ConstraintMemberLike).repair,
+      '§2.2 item 3 — the repair ARM exists on the object the fixture supplies: delete it in the wiring and every repair row reddens (the store then answers REFUSAL-VIA-FEEDBACK, `repaired: []`)',
+    ).toBe('function')
+    // ── THE BITE, ARM ONE: with the member ABSENT the zero-active state STANDS (`§3.2`
+    //    F-T2-1's own positive control) — a fixture that silently substituted its own member
+    //    could not produce this reading.
+    const bare = tabsStoreHere(null)
+    const hydrateBare = bare['hydrate'] as (rows: readonly Rec[]) => void
+    hydrateBare.call(bare, [{ name: ORDER, value: ['A', 'B'] }, { name: entry('A'), value: false }])
+    callStore(bare, 'commit', ORDER, ['B'])
+    expect(activesOf(bare, ['B']), '§3.2 F-T2-1 — with NO member supplied, NOTHING repairs the zero-active state').toEqual([])
+    // ── THE BITE, ARM TWO: the SAME shape over the wiring's member DOES repair — so the two
+    //    readings are attributable to the member and never to the write path.
+    const wiredHere = constrainedStore()
+    seedWiringState(wiredHere.store, ['A', 'B'], 'A')
+    callStore(wiredHere.store, 'remove', entry('A'))
+    const closeReceipt = callStore(wiredHere.store, 'commit', ORDER, ['B'])
+    expect(
+      (closeReceipt['repaired'] as string[]).length,
+      '§3.2 F-T2-1 — the wiring’s member DOES land a repair where the member-less store landed none',
+    ).toBeGreaterThan(0)
+  })
+
+  it('G-2 · §3.2 F-T2-3 / `R3-2` / §3.4 item 1 — H-1 (CRITICAL): a close driven through the wiring’s own close/constraint must seat the LANDING entry; today the repair RESURRECTS the closed tab', () => {
+    const { store } = constrainedStore()
+    // ── THE PRE-STATE IS THE HAND-OFF'S OWN SHAPE, LANDED THROUGH `hydrate` (which NEVER
+    //    evaluates the constraint table, `§3.3` item 2), so the close measures the close.
+    seedWiringState(store, ['A'], 'A')
+    expect(activesOf(store, ['A']), '§2.4 item 1 — the pre-close observable: exactly one active').toEqual(['A'])
+    // ── THE WIRING'S TWO CALLER OPERATIONS, IN THE WIRING'S OWN ORDER (`§2.4` item 1's
+    //    note): ONE `remove('file.tabs.<tabId>')` for the tab's own flat leaf, then the
+    //    `order` rewrite. THIS IS THE OPERATIVE CLOSE — the wiring's `closeTab` performs
+    //    exactly these two operations in exactly this order.
+    const removeReceipt = callStore(store, 'remove', entry('A'))
+    const seatReceipt = callStore(store, 'commit', ORDER, [])
+    void removeReceipt
+    expect(
+      valueOf(store, ORDER),
+      '§3.4 item 1 / R3-2 — `order` is NEVER EMPTY and holds the LANDING entry’s seat',
+    ).toEqual(['landing'])
+    const landing = resolveOf(store, LANDING)
+    expect(landing['found'], '§3.2 F-T2-3 — the landing entry’s seat is a REAL leaf after the repair named it').toBe(true)
+    expect(
+      entryReadsActive(landing['value']),
+      '§3.2 F-T2-3 — the landing entry reads ACTIVE by the declared accessor pair (its activation is the repair’s own write)',
+    ).toBe(true)
+    // ── THE POSITIVE CONTROL THE FINDING NAMES: THE CLOSED ID STAYS GONE. Today the repair
+    //    writes `record['A'] = true` against a record with NO `A` anchor, and the store's
+    //    "a new record entry becomes a REAL LEAF" arm MINTS `file.tabs.A` — the tab the
+    //    caller just closed COMES BACK ACTIVE.
+    const closed = resolveOf(store, entry('A'))
+    expect(
+      closed['found'],
+      `§3.4 item 1 / §2.4 item 1 — H-1 (CRITICAL): the CLOSED id’s leaf must answer the DECLARED MISS after the operative close; MEASURED today found=${String(closed['found'])} value=${JSON.stringify(closed['value'])} — the repair RESURRECTED the closed tab instead of seating the landing entry (the close site removes, THEN commits, so the repair runs with zero actives on a record whose order-member still names the removed id at index 0)`,
+    ).toBe(false)
+    expect(
+      activesOf(store, ['landing', 'A']),
+      '§3.2 F-T2-3 — EXACTLY ONE active after the close-last-tab terminal, and it is the LANDING entry: today BOTH the resurrected `A` and the landing entry read active, so the exactly-one-active invariant the member exists for is VIOLATED in the post-state of a declared close',
+    ).toEqual(['landing'])
+    expect(
+      (seatReceipt['repaired'] as string[]).join(' '),
+      '§3.4 item 1 — `repaired[]` must name the LANDING entry and its seat; MEASURED today it ALSO names `file.tabs.A`, the resurrected closed tab',
+    ).toContain('landing')
+  })
+
+  it('G-3 · §3.2 F-T2-2 — H-2 (CRITICAL): the write-triggered `≥2` arm’s referent is the CALLER’S OWN WRITTEN REFERENCE; today the wiring’s `tabsWrittenReferent` cell is declared and read but NEVER ASSIGNED, so the arm is unreachable', () => {
+    const { store } = constrainedStore()
+    // ── THE `≥2` PRE-STATE, LANDED THROUGH `hydrate` (never evaluated): `B` is already
+    //    active, so the caller's write of `A`'s own entry leaves TWO actives.
+    seedWiringState(store, ['A', 'B'], 'B')
+    expect(activesOf(store, ['A', 'B']), '§3.2 F-T2-2 — the landed pre-state carries one active and no evaluation has run').toEqual(['B'])
+    const receipt = callStore(store, 'commit', entry('A'), true)
+    expect(receipt['status'], '§3.2 — the write stands with its repair in the same committed write').toBe('committed')
+    expect(
+      activesOf(store, ['A', 'B']),
+      '§3.2 F-T2-2 — THE REFERENT IS THE CALLER’S OWN WRITTEN REFERENCE: the caller wrote `file.tabs.A`, so `A` is the entry kept active and `B` is deactivated. MEASURED today: the drive answers ZERO actives — the surplus arm keeps a survivor taken from the wiring’s never-cleared `tabsPreRemovalOrder` cell and then deactivates the very entry it picked, so the post-state of a declared write VIOLATES the invariant',
+    ).toEqual(['A'])
+  })
+
+  it('G-4 · §2.4 item 5 / §3.4 item 3 — H-3 (HIGH): the wiring’s `tabsPreRemovalOrder` cell is never cleared or versioned, so a LATER, UNRELATED evaluation is answered from a STALE pre-removal sequence; the referent must come from the CURRENT `order`', () => {
+    const { store } = constrainedStore()
+    // ── FIRST: A REAL CLOSE, the ONLY writer of the wiring's pre-removal cell. The close's
+    //    pre-removal sequence is `['B', 'A']` — so the STALE cell holds an order in which
+    //    `A` sits at index 1.
+    seedWiringState(store, ['B', 'A'], 'A')
+    callStore(store, 'remove', entry('A'))
+    callStore(store, 'commit', ORDER, ['B'])
+    expect(valueOf(store, ORDER), '§2.4 item 1 — the close lands the caller’s sequence without the closed id').toEqual(['B'])
+    // ── SECOND: AN UNRELATED WRITE WHOSE POST-STATE HAS ZERO ACTIVE, OVER A DIFFERENT
+    //    CURRENT SEQUENCE. The current `order` is `['A', 'B']`, so the zero-active arm’s
+    //    referent index 1 names `B` — and `B` is the ONLY admissible survivor. The STALE
+    //    cell’s sequence (`['B', 'A']`) has `A` at index 1 and `B` at index 0, so a stale
+    //    read picks `A`: **THE TWO SEQUENCES DISAGREE AT THE SAME INDEX**, which is what
+    //    makes this row falsifiable rather than incidentally green.
+    seedWiringState(store, ['A', 'B'], null)
+    expect(activesOf(store, ['A', 'B']), '§3.2 — the unrelated write lands a zero-active post-state').toEqual([])
+    callStore(store, 'commit', entry('B'), false)
+    expect(
+      activesOf(store, ['A', 'B']),
+      '§3.2 F-T2-1 / §2.4 item 5 — the referent comes from the CURRENT `order`: the entry at the zero-active arm’s index (1) is `B`. MEASURED today: the STALE cell’s sequence is consulted FIRST and `A` sits at index 1 in it, so the drive activates the CLOSED id `A` — a member the close removed and whose leaf the close deleted — while the current member `B` stays dormant',
+    ).toEqual(['B'])
+  })
+
+  it('G-5 · §3.3 item 3/4 — H-4 (HIGH): the boot step is NOT a no-op on a COLD tier; a first-ever boot must leave the record a MISS (the code’s own comment claims a total no-op), with the control that a HANDED-OFF record IS evaluated', () => {
+    const { store } = constrainedStore()
+    // ── THE BOOT STEP'S OWN OPERATIONS, RE-DRIVEN: `hydrate(bootHandoff)` then ONE `commit`
+    //    on the membership name carrying the hand-off's `order` (an empty array on a cold
+    //    tier). THE ROW DRIVES THE BOOT STEP'S DECLARED OPERATIONS against the wiring's
+    //    member; the wiring's `main()` is file-local and unexported, which is a REPORTED
+    //    SPEC DEFECT (see this pass's report).
+    seedWiringState(store, [], null)
+    const bootReceipt = callStore(store, 'commit', ORDER, [])
+    const orderAfterBoot = resolveOf(store, ORDER)
+    expect(
+      orderAfterBoot['found'],
+      `§3.3 item 4 / §2.4 item 3 — a COLD boot must not MINT the record: MEASURED today found=${String(orderAfterBoot['found'])} value=${JSON.stringify(valueOf(store, ORDER))}, and the boot receipt carries repaired=${JSON.stringify(bootReceipt['repaired'])} events=${String(bootReceipt['events'])} — the unconditional \`commit(order, [])\` mints \`file.tabs.landing\` (and the record root) on a tier that held NOTHING, where the code’s own comment claims the write is a total no-op there`,
+    ).toBe(false)
+    expect(
+      resolveOf(store, LANDING)['found'],
+      '§3.3 item 4 — and the landing ENTRY is a MISS on a cold boot: the reservation is taken by the FIRST real hand-off, never by a boot that handed off nothing',
+    ).toBe(false)
+    // ── THE POSITIVE CONTROL: a HANDED-OFF record IS evaluated, so the reading above is
+    //    attributable to the cold tier and not to a boot step that never evaluates.
+    const handed = constrainedStore()
+    seedWiringState(handed.store, ['A'], null)
+    const handedReceipt = callStore(handed.store, 'commit', ORDER, ['A'])
+    expect(
+      (handedReceipt['repaired'] as string[]).length,
+      '§3.3 item 5 — a handed-off record at ZERO active IS evaluated and its repair lands (the positive control that makes the cold-boot reading attributable)',
+    ).toBeGreaterThan(0)
   })
 })
 
