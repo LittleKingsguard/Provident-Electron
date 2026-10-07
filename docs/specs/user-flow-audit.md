@@ -131,3 +131,7 @@ annotated the gap's rows in `docs/pending.md` §H/§I/§J. **This file's own gat
 artefact — no code, no test, no register** (it declares no `§5.x` typed register, and that is the recorded
 zero-row exemption of `§2` applied to itself: it authors no code-bearing surface, so gate 11 has nothing to
 register).
+
+---
+
+**⟶ DATED POINTER, `2026-10-11` — THE `docs/pending.md` CITATIONS IN THIS FILE RESOLVE HERE (`RCA-8(d)`: an ADDITIVE block at the file's end; NOT ONE PRE-EXISTING BYTE IS REWRITTEN, no field, cap or clause moves).** **THE TWO CITED SITES both cite `docs/pending.md` `§H`/`§I`/`§J` — the `U-PROJ`, `U-GSESSION` and `U-DIVERGENCE-EXT` DONE-pass residue sets.** **ALL THREE LETTERS ARE RETIRED BY THE `2026-10-11` SWEEP, AND EACH CITE-SITE RESOLVES TO A STUB IN `docs/pending.md` `§6.2` (`§H`, `§I`) + `§6.4` (`§J`) + `§6.6` (the letter stubs).** **THE PER-ROW RECORD IS `archive/pending/2026-10-11-retired-rows-index.md` (`§B`/`§D`); THE AS-FILED TEXT IS `archive/pending/2026-10-11-pending-as-filed-pre-sweep.md` (`sha256 b437a7db5398af3f14d8286f8b3e442ceae38308baf17ee8970da4fa89368382`, byte-identical to `git show 35fc7f2:docs/pending.md`).** **THE LIVE OBLIGATIONS ARE RESTATED IN `docs/pending.md`'S NUMBERED SECTIONS — the `U-DIVERGENCE-EXT` four `OWED` gate items are `§2.1`, the `mcp-endpoint.md` `§3.8` repair is `§2.3`, the `docs/FORKER.md` carries are `§2.9`, and the mandatory-battery standing obligation this file's `§7.1` predicate governs is `§5.5`.**
