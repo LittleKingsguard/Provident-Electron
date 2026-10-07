@@ -421,19 +421,21 @@ async function main(): Promise<void> {
   const liveSecurityRecord = (): SecuritySettings => securityStore.get()
   const tier4ClosedRefusal = (): Tier4ClosedRefusal => ({ status: 'refused', reason: TIER4_CLOSED, message: TIER4_CLOSED_MESSAGE })
   ipcMain.handle(IPC_SECURITY_GET, () => {
-    // `§0A` item 1 (the `A-1` ruling): the ONE boolean is read OFF THE STATIC HOLDER at THIS
-    // handler's own turn — never through a store read and never through a captured gate instance
-    // (`mcp.gate` is REPLACED by `applyExclusion`, so a captured accessor was the `F-1` defect
-    // class; the holder has no instance to capture). `main` supplies STATE, never the DECISION.
-    // The STATE local keeps the LANDED shape (it is the member the record's `exclusion` term is
-    // composed from); only its SOURCE moved, from the live gate's accessor to the static holder.
-    const exclusion: ExclusionState = tier4OpenState() ? 'mcp-disabled' : 'mcp-enabled'
-    const read: Tier4ClosedRefusal | null = exclusion === 'mcp-disabled' ? null : tier4ClosedRefusal()
-    // THE MEMBER ORDER IS DELIBERATE: the LANDED `exclusion` term stays the record's LAST member (the
-    // shape the landed `PAR-9` reading evaluates — `{ ...settings, exclusion: <expr> }`), and the new
-    // `read` term rides BESIDE it. Both are the SAME intersection §2.4 item 8 declares; only the two
-    // additive members' order differs, and no consumer reads by position.
-    return ({ ...liveSecurityRecord(), read: read, exclusion: tier4OpenState() ? 'mcp-disabled' : 'mcp-enabled' })
+    // `§0A` item 1 (the `A-1` ruling) + `§2.4` item 7's dated note (`D-viii`, `2026-10-11`; `§3c`'s
+    // `S2-ADV-06`): THE HOLDER IS READ **EXACTLY ONCE PER TURN**, AND BOTH ADDITIVE MEMBERS DERIVE
+    // FROM THAT ONE READING. The ONE consult is the `exclusion` member of the local below — the
+    // STATE WORD this carrier reports — and the boolean it yields feeds BOTH: `read` answers the
+    // closed refusal iff that reading does not say `mcp-disabled`, and `exclusion` re-states it. No
+    // second consult can therefore answer differently (the two members cannot carry two states in
+    // one response). `main` supplies STATE, never the DECISION: the boolean is never routed through
+    // a store read and never through a captured gate instance (`mcp.gate` is REPLACED by
+    // `applyExclusion`, so a captured accessor was the `F-1` class; the holder has no instance).
+    const holder = { exclusion: tier4OpenState() ? 'mcp-disabled' : 'mcp-enabled' } as const satisfies { exclusion: ExclusionState }
+    const open: boolean = holder.exclusion === 'mcp-disabled'
+    // THE MEMBER ORDER IS DELIBERATE: the LANDED `exclusion` term stays the record's LAST member
+    // (the shape the landed `PAR-9` reading evaluates — `{ ...settings, exclusion: <expr> }`), and
+    // the new `read` term rides BESIDE it (§2.4 item 8's ONE intersection).
+    return ({ ...liveSecurityRecord(), read: open ? null : tier4ClosedRefusal(), exclusion: open ? 'mcp-disabled' : 'mcp-enabled' })
   })
   ipcMain.handle(IPC_SECURITY_SET, (_event, patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }) => {
     // THE RECEIPT'S ADDITIVE DELIVERY (§2.3 items 2/4 — the C-11 NON-BREAKING
@@ -543,6 +545,23 @@ async function main(): Promise<void> {
     void mcp.notifyGraphChanged()
   })
 
+  // `D-19` STEP 3 — THE CLOSE (`tier4-arbitrary-storage.md` `§2.5` item 4 / `§0A` item 4, AMENDED
+  // `2026-10-11` by the gate-4 repair contract's `D-vii`; `§3c`'s `S2-ADV-01` limb (b)): the flip
+  // off the declared boot value lands HERE — **BEFORE THE WINDOW IS CREATED OR LOADED** — and the
+  // gate is constructed with its boot terminal `'mcp-enabled'`, so this is a SELF-TRANSITION — the
+  // landed `T-3` arm: a legal NO-OP that bumps no epoch and invalidates nothing. It is written
+  // explicitly because the ORDER is the clause: `{MCP-DISABLED, TIER-4-CLOSED}` is reachable ONLY
+  // inside this window and is not a legal steady pair, and a design in which the MCP enables while
+  // the state still says store-open FAILS. **`D-vii`'s own repair, stated at the bytes:** the
+  // landed boot created the window and LOADED the renderer (`win.loadFile(...)`, below) BEFORE this
+  // flip, so a renderer turn in that gap could take its carrier read with the holder still
+  // `STORE-OPEN` and paint the INVERSE of the steady pair with nothing re-sourcing it. The close
+  // therefore MOVES AHEAD of the window's creation/load; `D-19`'s order
+  // `store → boot read → gate → flip → mcp.start()` is PRESERVED UNMOVED (the boot read still
+  // precedes the flip, and the enable below still follows it), and nothing else in the boot is
+  // re-ordered. From here the two axes move together, one writer only.
+  mcp.applyExclusion('mcp-enabled')
+
   const win = new BrowserWindow({
     width: 980,
     height: 720,
@@ -557,14 +576,8 @@ async function main(): Promise<void> {
   const rendererHtml = join(here, '..', 'renderer', 'index.html')
   await win.loadFile(rendererHtml)
 
-  // `D-19` STEP 3 — THE CLOSE (`tier4-arbitrary-storage.md` `§2.5` item 4 / `§0A` item 4): the flip
-  // off the declared boot value lands HERE, **BEFORE the MCP is enabled**, and the gate is
-  // constructed with its boot terminal `'mcp-enabled'`, so this is a SELF-TRANSITION — the landed
-  // `T-3` arm: a legal NO-OP that bumps no epoch and invalidates nothing. It is written explicitly
-  // because the ORDER is the clause: `{MCP-DISABLED, TIER-4-CLOSED}` is reachable ONLY inside this
-  // window and is not a legal steady pair, and a design in which the MCP enables while the state
-  // still says store-open FAILS. From here the two axes move together, one writer only.
-  mcp.applyExclusion('mcp-enabled')
+  // `D-19` STEP 4 — ENABLE: the MCP is enabled LAST, with the close already landed above, so no
+  // reader ever observes the pre-flip value (`D-vii`).
   await mcp.start()
 
   win.on('closed', () => {

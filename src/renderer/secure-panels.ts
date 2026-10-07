@@ -301,7 +301,20 @@ export class SecurePanels {
   // of the same additive members. `read: null` is the declared INITIAL reading — "the last
   // observed read was performed" (`§2.6` item 3: the refusal segment is rendered IFF `read` is
   // non-null, so an un-refreshed pane fabricates no refusal).
-  private cfg: SecuritySettings & { exclusion: EXCLUSION_STATE; read: Tier4ClosedRefusal | null } = { token: null, enabled: ['read', 'dispatch'], exclusion: 'mcp-enabled', read: null }
+  //
+  // ⟶ AMENDED `2026-10-11` (GATE 4's REPAIR CONTRACT, **`D-vi`**; `§3c`'s `S2-ADV-01`, `HIGH`,
+  // `HOST-FIX`; `§2.6` item 3's dated note / `§3.2` `FS-T4-13`): **THE PANE FABRICATES NOTHING.**
+  // **`cfg.exclusion` IS NULLABLE, and `null` is the declared INITIAL *"no reading yet"* state**
+  // — the as-filed field initializer's `exclusion:'mcp-enabled'` is SUPERSEDED IN EFFECT as a
+  // PAINT SOURCE (a state member is carried only when the CARRIER supplied one), so a never-
+  // answered pane — the first paint, and a bridge rejection — paints NO `· MCP:` word, writes NO
+  // `data-state` prop and words NO affordance. `read` counts `undefined` as `null` (a missing
+  // member is not a refusal), and a PREVIOUSLY CARRIER-SUPPLIED value is retained across a later
+  // bridge error (that is the declared reading of item 3's "absent means the last observed read
+  // was performed": no reading was TAKEN this turn, never that the state flipped). BOTH additive
+  // members are therefore `null`-OR-`undefined` before the first carrier answer, and NEITHER arm
+  // below is painted from that absence.
+  private cfg: SecuritySettings & { exclusion?: EXCLUSION_STATE | null; read: Tier4ClosedRefusal | null | undefined } = { token: null, enabled: ['read', 'dispatch'], read: null }
   private debugValue = 'booting…'
   private moduleStatus = 'loading…'
   private moduleListText = ''
@@ -492,15 +505,22 @@ export class SecurePanels {
         const jl = this.cfg.maxJournalLength !== undefined ? ` · journal: ≤${this.cfg.maxJournalLength}` : ' · journal: ∞'
         // §2.4 item 3 / PAR-11 — ONE TRAILING SEGMENT appended to the landed line, never a new
         // node: the off-state's operator-visible signal. It carries a STATE WORD, never a tier-4
-        // value (the forbidden carriers stand).
-        const excl = this.cfg.exclusion === 'mcp-disabled' ? ' · MCP: disabled' : ' · MCP: enabled'
+        // value (the forbidden carriers stand). **⟶ `D-vi` (`2026-10-11`, the gate-4 repair
+        // contract): the segment is composed ONLY from a CARRIER-SUPPLIED reading** — with
+        // `exclusion` at its declared `null` (*"no reading yet"*, the first paint before any
+        // carrier answer and a bridge rejection alike) NO `· MCP:` word is painted at all, and a
+        // missing/`undefined` `read` counts as `null` (no refusal was supplied this turn).
+        const carrierState = this.cfg.exclusion
+        const excl = carrierState === null || carrierState === undefined
+          ? ''
+          : carrierState === 'mcp-disabled' ? ' · MCP: disabled' : ' · MCP: enabled'
         // `tier4-arbitrary-storage.md` `§2.6` items 3/4 — THE REFUSAL'S OWN SEGMENT, the SECOND
         // trailing segment on this same line: rendered **IFF the carrier's `read` is non-null**
         // (absent means the last observed read was PERFORMED), carrying the refusal **TOKEN** and
         // never its message, never a tier-4 value, never a name and never a group set. Both cells
         // above are fed by the carrier's BOOLEAN-sourced `exclusion` member — never by a
         // store-derived value and never by this pane's own prior state.
-        const refused = this.cfg.read === null ? '' : ' · refused: tier4-closed'
+        const refused = this.cfg.read === null || this.cfg.read === undefined ? '' : ' · refused: tier4-closed'
         mutation.push({ targetProp: 'content', value: `token: ${this.cfg.token ? '••••' : '(none)'} · enabled: [${this.cfg.enabled.join(', ')}]${jl}${excl}${refused}` })
       } else if (id === 'status') {
         mutation.push({ targetProp: 'content', value: this.debugText() })
@@ -513,10 +533,21 @@ export class SecurePanels {
         mutation.push({ targetProp: 'content', value: `${on ? '☑' : '☐'} ${GROUP_LABELS[g]}` })
       } else if (id === 'exclusion-toggle') {
         // §2.4 items 2/3 — the toggle's `data-state` + its affordance word, refreshed by THIS pass
-        // exactly as the group toggles' `data-on` is.
-        const open = this.cfg.exclusion === 'mcp-disabled'
-        mutation.push({ targetProp: 'props.data-state', mode: 'replace', value: open ? 'mcp-disabled' : 'mcp-enabled' })
-        mutation.push({ targetProp: 'content', value: open ? 'Enable MCP' : 'Disable MCP' })
+        // exactly as the group toggles' `data-on` is. **⟶ `D-vi` (`2026-10-11`, the gate-4 repair
+        // contract): NOTHING is painted from the pane's OWN FIELD DEFAULT.** With NO
+        // carrier-supplied reading yet (`exclusion === null`) the pane writes NO `data-state` prop
+        // and NO affordance word — the authored envelope's own default is CLEARED rather than
+        // re-worded, so a never-answered (or bridge-rejected) pane fabricates no state at all. A
+        // value the CARRIER previously supplied is retained and re-painted, which is the declared
+        // reading of `§2.6` item 3's *"absent means the last observed read was performed"*.
+        const carrierReading = this.cfg.exclusion
+        if (carrierReading === null || carrierReading === undefined) {
+          mutation.push({ targetProp: 'content', value: '' })
+        } else {
+          const open = carrierReading === 'mcp-disabled'
+          mutation.push({ targetProp: 'props.data-state', mode: 'replace', value: open ? 'mcp-disabled' : 'mcp-enabled' })
+          mutation.push({ targetProp: 'content', value: open ? 'Enable MCP' : 'Disable MCP' })
+        }
       } else if (id === 'journal-length-input') {
         mutation.push({ targetProp: 'props.value', mode: 'replace', value: this.cfg.maxJournalLength ?? '' })
       } else if (id === 'module-status') {

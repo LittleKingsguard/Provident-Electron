@@ -110,7 +110,14 @@ const DECLARED_RECORD_MEMBERS = new Set(['token', 'enabled', 'maxJournalLength',
  *  `entries` answers **`null`** iff the file carried NEITHER an `entries` member NOR any foreign
  *  top-level key — i.e. iff the member must stay ABSENT from the file (`§2.2` item 2 `(i)`). */
 function ingest(input: unknown): { record: SecuritySettings; entries: Record<string, unknown> | null } {
-  const src = (input ?? {}) as Record<string, unknown>
+  /** `§2.2` item 4's dated note (B) + `§3.2` `FS-T4-15` (the gate-4 repair contract's `D-iii`,
+   *  `§3c`'s `S2-ADV-08`): **A TOP-LEVEL NON-OBJECT RECORD IS THE CORRUPT ARM.** The parsed
+   *  document is READ ONLY AS A PLAIN OBJECT — an ARRAY (`[1,2,3]`), a string, a number or a
+   *  boolean is NOT a record, so it resolves to the FIRST-RUN DEFAULT with `entries` ABSENT (its
+   *  index-like member names are never walked into `entries`), never a throw and never a write —
+   *  the file's own bytes are left untouched, exactly as the three landed boot fail-states are
+   *  (`FS-T4-10`). */
+  const src = (input !== null && typeof input === 'object' && !Array.isArray(input) ? input : {}) as Record<string, unknown>
   const enabled = Array.isArray(src.enabled)
     ? [...new Set(src.enabled.filter((g): g is string => typeof g === 'string' && VALID_GROUPS.has(g)))]
     : ['read', 'dispatch']
@@ -121,19 +128,31 @@ function ingest(input: unknown): { record: SecuritySettings; entries: Record<str
   const declared = src.entries
   const declaredIsMap = declared !== null && typeof declared === 'object' && !Array.isArray(declared)
   const foreign = Object.keys(src).filter((name) => !DECLARED_RECORD_MEMBERS.has(name))
-  const entries: Record<string, unknown> = {}
+  /** `§2.2` item 4 arms 3/4 (the gate-4 repair contract's `D-ii`, `§3c`'s `S2-ADV-02`): **THE
+   *  INGESTION MAP IS NOT A NORMAL-PROTOTYPE OBJECT.** A name `__proto__` written into a plain
+   *  `{}` invokes the `Object.prototype` SETTER (the entry is DROPPED and the map's prototype is
+   *  poisoned) — against *"INGESTED INTO `entries` UNDER ITS OWN NAME, VERBATIM — PRESERVED, never
+   *  dropped"*. The map is therefore built with `Object.create(null)` (the `freshCopy`
+   *  precedent's prototype discipline), so every ingested name — `__proto__` included — lands as
+   *  an OWN data property and survives to the persisted bytes and across a re-construction. */
+  const entries: Record<string, unknown> = Object.create(null) as Record<string, unknown>
   if (declaredIsMap) for (const [name, value] of Object.entries(declared as Record<string, unknown>)) entries[name] = value
   for (const name of foreign) entries[name] = src[name]
   return { record, entries: declaredIsMap || foreign.length > 0 ? entries : null }
 }
 
-/** THE `fs` SEAM — **SPEC FINDING (b)** (`docs/specs/tier4-arbitrary-storage.md` `§9` item 5):
- *  *"the `fs` seam is undeclared, and `§3.3` item 4's 'NO FILESYSTEM CALL ON A REFUSAL' is not
- *  measurable without one"*. The red set hands an instrumented surface at construction so a
- *  refusal's no-`fs` property is a MEASUREMENT rather than an inference from a code read. It is
+/** THE `fs` SEAM — **THE MODULE'S SECOND DECLARED CONSTRUCTION INPUT** (`docs/specs/
+ *  tier4-arbitrary-storage.md` `§6` `PAR-14`, the gate-4 repair contract's `D-iv`; `§3c`'s
+ *  `S2-ADV-04`). The red set hands an instrumented surface at construction so a refusal's
+ *  no-`fs` property is a MEASUREMENT rather than an inference from a code read. It is
  *  deliberately **NOT a member of the declared `SecurityStoreOptions`**, whose census `§0A` item 1
- *  leaves UNMOVED at `1 = 1 (path)` — so it is read as an undeclared construction extra; absent,
- *  every call below is the landed `node:fs` one, byte for byte. */
+ *  leaves UNMOVED at `1 = 1 (path)` — so it is the module's **second construction input**
+ *  (`§5.1` item 4's construction-input census `2 = 1 (path) + 1 (fs)`), read by DESTRUCTURING the
+ *  factory's own parameter. **DECLARED DOMAIN: a COMPLETE `FsSurface`.** **Absent ⇒ the real
+ *  `node:fs` is used, byte for byte the landed behaviour; an INCOMPLETE surface (any member
+ *  missing or not callable) ⇒ NOT ADOPTED — the real `node:fs` is used, and NEITHER arm THROWS**
+ *  (the landed `?? nodeFs` adopted a partial object and threw at the first missing call, which is
+ *  the defect `S2-ADV-04` names, never a licence to widen `SecurityStoreOptions`). */
 interface FsSurface {
   readFileSync: typeof readFileSync
   existsSync: typeof existsSync
@@ -147,15 +166,32 @@ interface FsSurface {
 }
 const nodeFs: FsSurface = { readFileSync, existsSync, mkdirSync, writeFileSync, openSync, closeSync, fsyncSync, renameSync, rmSync }
 
+/** `§6` `PAR-14`'s ADOPTION ARM — **THE COMPLETENESS TEST** (`D-iv`): all NINE members of the
+ *  declared `FsSurface` must be present and callable, else the candidate is NOT ADOPTED and the
+ *  real `node:fs` is used INSTEAD — never a throw, for any candidate (a non-object, a partial
+ *  object, a hostile proxy). */
+const FS_SURFACE_MEMBERS = ['readFileSync', 'existsSync', 'mkdirSync', 'writeFileSync', 'openSync', 'closeSync', 'fsyncSync', 'renameSync', 'rmSync'] as const
+function completeFsSurface(candidate: unknown): candidate is FsSurface {
+  if (candidate === null || typeof candidate !== 'object') return false
+  const surface = candidate as Record<string, unknown>
+  try {
+    return FS_SURFACE_MEMBERS.every((member) => typeof surface[member] === 'function')
+  } catch {
+    return false
+  }
+}
+
 /** Create a security settings store backed by `path`. A missing/empty file is
  *  treated as the first-run default; a corrupt file falls back to the default
  *  (never throws — a settings read must not crash the app). */
-export function createSecurityStore(opts: SecurityStoreOptions): SecurityStore {
-  /** THE CONSTRUCTION SEAM (`SPEC FINDING (b)` above). **THE GATE CONSULT IS THE STATIC HOLDER**
-   *  (`§0A` item 1, the `A-1` ruling): the boolean is read ONCE PER CALL at the call's own turn
-   *  through the leaf's ONE total reader — never an option, never a thunk, never a construction-time
-   *  copy. The reader never throws, so there is no fail-safe arm to answer. */
-  const fs: FsSurface = (opts as SecurityStoreOptions & { fs?: FsSurface }).fs ?? nodeFs
+export function createSecurityStore({ path, fs: fsInput }: SecurityStoreOptions & { fs?: FsSurface }): SecurityStore {
+  /** THE CONSTRUCTION SEAM, READ HERE (`§6` `PAR-14`, `D-iv` — the second declared construction
+   *  input, explicitly destructured and explicitly adjudicated): a COMPLETE surface is adopted;
+   *  an absent or INCOMPLETE one falls back to the real `node:fs`. **THE GATE CONSULT IS THE
+   *  STATIC HOLDER** (`§0A` item 1, the `A-1` ruling): the boolean is read ONCE PER CALL at the
+   *  call's own turn through the leaf's ONE total reader — never an option, never a thunk, never a
+   *  construction-time copy. The reader never throws, so there is no fail-safe arm to answer. */
+  const fs: FsSurface = completeFsSurface(fsInput) ? fsInput : nodeFs
   /** `§2.4` items 3/4 — THE CLOSED REFUSAL VALUE, minted from the channel token and the
    *  server-authored message (`mcp-server.ts`), never from caller input. */
   const tier4Closed = (): Tier4ClosedRefusal => ({ status: 'refused', reason: TIER4_CLOSED, message: TIER4_CLOSED_MESSAGE })
@@ -176,8 +212,8 @@ export function createSecurityStore(opts: SecurityStoreOptions): SecurityStore {
     if (loaded) return
     loaded = true
     try {
-      if (fs.existsSync(opts.path)) {
-        const ingested = ingest(JSON.parse(fs.readFileSync(opts.path, 'utf8')))
+      if (fs.existsSync(path)) {
+        const ingested = ingest(JSON.parse(fs.readFileSync(path, 'utf8')))
         current = ingested.record
         entries = ingested.entries
       }
@@ -228,12 +264,21 @@ export function createSecurityStore(opts: SecurityStoreOptions): SecurityStore {
    *  number · a string — or an ARRAY / ordinary object whose own enumerable members are each
    *  representable, with NO path revisiting a node it already visited (the cycle guard). Symbols,
    *  `BigInt`s, functions, `Map`/`Set`/`Date` and every other non-plain object are NOT
-   *  representable; `NaN`/`Infinity`/`-Infinity` are NOT (the finite test). */
+   *  representable; `NaN`/`Infinity`/`-Infinity` are NOT (the finite test) — and **`-0` is NOT**
+   *  either: it IS finite (the landed arm admitted it) but it is **NOT JSON-round-trip-identical**
+   *  (`JSON.stringify(-0)` is `'0'`, which parses back to `0`), so a stored `-0` would be live `-0`
+   *  and durable `0` — the live-versus-durable disagreement `§3.3` item 5 forbids. `§2.2` item 5's
+   *  dated note (`D-i`, `§3c`'s `S2-ADV-03`, `§3.2` `FS-T4-14`): **`-0` ANYWHERE in the request (the
+   *  value itself, an own member of a plain object at ANY depth, an array element) REFUSES THE
+   *  WHOLE REQUEST** in the landed `write-failed` form, with no filesystem call and nothing moved;
+   *  **`0` is unaffected and still commits** (`PAR-4`'s OUTSIDE list gains `-0`). The check is the
+   *  IDENTITY ground `Object.is(value, -0)`, never a JSON round trip (which `A-1`'s answer (2)
+   *  forbids as the implementation: it throws on a cyclic fixture). */
   function representableValue(value: unknown, seen: Set<object>): boolean {
     if (value === null) return true
     const kind = typeof value
     if (kind === 'string' || kind === 'boolean') return true
-    if (kind === 'number') return Number.isFinite(value as number)
+    if (kind === 'number') return Number.isFinite(value as number) && !Object.is(value as number, -0)
     if (kind !== 'object') return false
     const node = value as object
     if (seen.has(node)) return false
@@ -357,14 +402,14 @@ export function createSecurityStore(opts: SecurityStoreOptions): SecurityStore {
    *  failure — the tmp is never parsed as the record and is overwritten by the next write (§2.2
    *  items 3/6); a successful persist leaves NO tmp (the rename consumed it). */
   function persist(candidate: PersistedSecurityRecord, land: (staged: SecurityWriteReceipt) => void): SecurityWriteReceipt {
-    const tmp = `${opts.path}.tmp`
+    const tmp = `${path}.tmp`
     try {
-      fs.mkdirSync(dirname(opts.path), { recursive: true })
+      fs.mkdirSync(dirname(path), { recursive: true })
       fs.writeFileSync(tmp, JSON.stringify(candidate, null, 2))
       const tmpFd = fs.openSync(tmp, 'r')
       fs.fsyncSync(tmpFd)
       fs.closeSync(tmpFd)
-      fs.renameSync(tmp, opts.path)
+      fs.renameSync(tmp, path)
     } catch {
       // `§2.6` item 5's `(h-i)` landing sink, refused arm (items 2(ii)/3(b)/4): the REFUSAL TERMINAL
       // is the caught failure, so the attempt's OWN refused closed form lands HERE — before the
@@ -380,10 +425,14 @@ export function createSecurityStore(opts: SecurityStoreOptions): SecurityStore {
       // the receipt is the refusal, never a throw; `recursive` restores
       // writability when the stale tmp is a directory (§2.2 item 3's "the tmp
       // fate": a stale tmp is never the record and is removed/overwritten next).
+      // ⟶ `D-iv` (`2026-10-11`): the cleanup goes THROUGH THE DECLARED SURFACE (`fs.rmSync`),
+      // exactly as every other filesystem call here does — a BARE `node:fs` call beside the seam
+      // would be the bypass `S2-ADV-04` names (an implementation calling `node:fs` directly reads
+      // an EMPTY call log against the instrumented surface, i.e. a false green).
       const refused: SecurityWriteReceipt = { status: 'refused', reason: 'write-failed' }
       land(refused)
       try {
-        rmSync(tmp, { recursive: true, force: true })
+        fs.rmSync(tmp, { recursive: true, force: true })
       } catch {
         // swallowed by design: the refused receipt is the write's only answer
       }
@@ -399,7 +448,7 @@ export function createSecurityStore(opts: SecurityStoreOptions): SecurityStore {
     const committed: SecurityWriteReceipt = { status: 'committed' }
     land(committed)
     try {
-      const dirFd = fs.openSync(dirname(opts.path), 'r')
+      const dirFd = fs.openSync(dirname(path), 'r')
       fs.fsyncSync(dirFd)
       fs.closeSync(dirFd)
     } catch {
