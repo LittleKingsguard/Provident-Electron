@@ -1929,3 +1929,7 @@ corrections** — no attempt discipline moves, no row statement moves, and **no 
 the test file (`tests/owned-list-host.test.ts`'s executed pool, read only, NOT edited); this pass ran
 NO test, NO leg and NO trio.**
 
+---
+
+**⟶ DATED POINTER, `2026-10-11` — THE `docs/pending.md` CITATIONS IN THIS FILE RESOLVE HERE (`RCA-8(d)`: an ADDITIVE block at the file's end; NOT ONE PRE-EXISTING BYTE IS REWRITTEN, no row id, term, strategy id, seed or cap moves).** **THE TWO CITED SITES both cite `docs/pending.md` `§G` — the gate-11 PBT ruling's follow-ups and the doc defects it surfaced.** **`§G` IS RETIRED BY THE `2026-10-11` SWEEP, AND BOTH SITES RESOLVE TO ITS STUB IN `docs/pending.md` `§6.2` + `§6.6`.** **THE PER-ROW RECORD IS `archive/pending/2026-10-11-retired-rows-index.md` (`§B`); THE AS-FILED TEXT IS `archive/pending/2026-10-11-pending-as-filed-pre-sweep.md` (`sha256 b437a7db5398af3f14d8286f8b3e442ceae38308baf17ee8970da4fa89368382`, byte-identical to `git show 35fc7f2:docs/pending.md`).** **THE LIVE OBLIGATIONS ARE RESTATED IN `docs/pending.md`'S NUMBERED SECTIONS — the false `92`-diagnostic claim is `§2.5`, the `AGENTS.md` gate-11 text's own drift is retired `CLOSED`, and the mis-sum rule is the standing `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS` — and this unit's authority remains `docs/next-steps.md`'s `## DONE — U-LISTHOST` section.**
+
