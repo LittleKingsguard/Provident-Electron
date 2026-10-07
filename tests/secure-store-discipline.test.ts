@@ -466,8 +466,27 @@ function unionTokensOf(src: string): string[] {
 const UNION_ARITY = 16
 const RECEIPT_TOKENS: readonly string[] = ['committed', 'refused']
 const RECEIPT_REASONS: readonly string[] = ['write-failed']
-const MODULE_EXPORTS: readonly string[] = ['createSecurityStore', 'SecurityStoreOptions', 'SecurityStore', 'SecurityWriteReceipt']
-const MEMBER_CENSUS: readonly string[] = ['get', 'lastWriteReceipt', 'set']
+/* **⟶ RE-GRAINED `2026-10-11` (`S2` kick-back item (4)'s row, whose export half reddens for
+ * the SAME landing): THE MODULE'S EXPORT NAMES ARE THE DECLARED SEVEN.** `S2`
+ * `U-TIER4-ARBITRARY-STORAGE`'s `§2.1` item 3 DECLARES THREE new exported types in this very
+ * module — `Tier4Entry`, `Tier4WriteAnswer` (the declared SUPERSET, so `SecurityWriteReceipt`
+ * itself stays byte-identical) and `Tier4ClosedRefusal` (`§2.4` item 3's declared spelling) —
+ * while the FOUR landed names survive UNMOVED (`S2`'s own `P-T4-EXPORTS`: *"the module's export
+ * census moves by NOTHING (the four landed names survive)"*). THE BITE IS UNMOVED: the census
+ * is read as SET-EQUALITY, so an ADDED, RENAMED or REMOVED name still reddens (an eighth name
+ * is now the added case; the extractor's non-vacuity drive adds one and must see it). */
+const MODULE_EXPORTS: readonly string[] = ['createSecurityStore', 'SecurityStoreOptions', 'SecurityStore', 'SecurityWriteReceipt', 'Tier4Entry', 'Tier4WriteAnswer', 'Tier4ClosedRefusal']
+/* **⟶ RE-GRAINED `2026-10-11` (`S2` kick-back item (4)): THE READ SURFACE IS THE DECLARED
+ * FIVE.** This unit's contract froze the census at the module's own three members
+ * (`docs/specs/secure-store-discipline.md` `§2.5` item 3 / `§0A` item 5), and `S2`
+ * `U-TIER4-ARBITRARY-STORAGE` MOVES it **BY DECLARATION, NOT BY ACCIDENT**: the tier gains
+ * `readEntry(name)` and `writeEntry(name, value)`, so `Object.keys(store)` is EXACTLY
+ * `["get","lastWriteReceipt","readEntry","set","writeEntry"]` — `5 = 3 (landed: get ·
+ * lastWriteReceipt · set) + 2 (new)` (S2 `§2.1` item 3, `§5.1` item 4's census table row 2,
+ * and `§7b` row 3's declaration to this unit). THE BITE IS UNMOVED: an ADDED, RENAMED or
+ * REMOVED member still reddens — a SIXTH member is now the added case, and the part (a)
+ * control below drives the added, the renamed and the removed shapes. */
+const MEMBER_CENSUS: readonly string[] = ['get', 'lastWriteReceipt', 'readEntry', 'set', 'writeEntry']
 
 /* ==========================================================================
  * THE RECEIPT / RECORD DETECTORS
@@ -1972,12 +1991,17 @@ runRow('P-O3-TP-1', 'P-TP', 'S-SS-CENSUS-1', 8, () => {
     const preloadSrc = await readFile(SRC('main', 'preload.ts'), 'utf8')
     const sha = (buf: string | Buffer): string => createHash('sha256').update(buf).digest('hex')
 
-    // (a) the member census + the "a fourth value-returning member fails" control.
+    // (a) the member census + the "a SIXTH value-returning member fails" control.
+    /* **⟶ RE-GRAINED `2026-10-11` (`S2` kick-back item (4)): the declared census is the FIVE
+     * the tier now carries — `get · lastWriteReceipt · readEntry · set · writeEntry`
+     * (`5 = 3 + 2`, S2 `§2.1` item 3 / `§7b` row 3's declaration to this unit). The term
+     * moved `3 → 5`; the BITE did not move (an added, renamed or removed member still
+     * throws, and the added case is now the SIXTH member).** */
     drive('P-O3-TP-1', '(a) the key-list reading', () => {
       memberCensusOf(store)
-      if (Object.keys(store).length !== 3) throw new Error(`the returned object has ${Object.keys(store).length} members (§2.5 item 3)`)
+      if (Object.keys(store).length !== MEMBER_CENSUS.length) throw new Error(`the returned object has ${Object.keys(store).length} members; the declared read-surface census is ${MEMBER_CENSUS.length} (\`5 = 3 (landed) + 2 (S2's readEntry · writeEntry)\`, S2 §2.1 item 3)`)
     })
-    drive('P-O3-TP-1', '(a) the "a fourth value-returning member FAILS" control', () => {
+    drive('P-O3-TP-1', '(a) the "a sixth value-returning member FAILS" control', () => {
       let fired = 0
       for (const wrong of [[...MEMBER_CENSUS, 'inspect'], MEMBER_CENSUS.slice(0, 2), ['get', 'setReceipt', 'set']]) {
         try {
@@ -1986,20 +2010,25 @@ runRow('P-O3-TP-1', 'P-TP', 'S-SS-CENSUS-1', 8, () => {
           fired += 1
         }
       }
-      if (fired !== 3) throw new Error(`the census detector fired on only ${fired}/3 wrong states (a 4-member shape, a 2-member shape, a renamed member) — a detector that cannot fail proves nothing (F-11)`)
+      if (fired !== 3) throw new Error(`the census detector fired on only ${fired}/3 wrong states (a 6-member shape, a 2-member shape, a renamed member) — a detector that cannot fail proves nothing (F-11)`)
     })
     // (b) the export census + the "no new name" reading.
+    /* **⟶ RE-GRAINED `2026-10-11` (`S2` kick-back item (4)'s row): the census is the DECLARED
+     * SEVEN — this unit's four landed names plus `S2` `§2.1` item 3's three declared types
+     * (`Tier4Entry` · `Tier4WriteAnswer` · `Tier4ClosedRefusal`). SET-EQUALITY keeps the bite:
+     * the non-vacuity drive below adds an EIGHTH name and the extractor must see it.** */
     drive('P-O3-TP-1', '(b) the export list', () => {
       const found = [...moduleSrc.matchAll(/^export\s+(?:type\s+|interface\s+|function\s+|const\s+)?([A-Za-z_$][\w$]*)/gm)].map((m) => m[1])
       const uniq = [...new Set(found)].sort()
       if (uniq.join(',') !== [...MODULE_EXPORTS].sort().join(',')) {
-        throw new Error(`the module's exports are ${JSON.stringify(uniq)}; the census is EXACTLY ${JSON.stringify([...MODULE_EXPORTS].sort())} (§2.1 item 1: no new export, no rename, no removal)`)
+        throw new Error(`the module's exports are ${JSON.stringify(uniq)}; the DECLARED census is ${JSON.stringify([...MODULE_EXPORTS].sort())} (\`§2.1\` item 1's four landed names + \`S2\` \`§2.1\` item 3's three declared types: no new export, no rename, no removal)`)
       }
     })
     drive('P-O3-TP-1', '(b) the "no new name" reading — the extractor is not vacuous', () => {
       const mutant = moduleSrc + '\nexport function inspectStore(): void {}\n'
       const found = [...mutant.matchAll(/^export\s+(?:type\s+|interface\s+|function\s+|const\s+)?([A-Za-z_$][\w$]*)/gm)].map((m) => m[1])
       if (!found.includes('inspectStore')) throw new Error('the export extractor did not detect an ADDED export name — the "no new name" reading would be vacuous')
+      if ([...new Set(found)].sort().join(',') === [...MODULE_EXPORTS].sort().join(',')) throw new Error('the census still matched after an EIGHTH export name was added — the set-equality reading cannot bite')
     })
     // (c) the two file digests + the diff-scope file set.
     const refsDigest = sha(await readFile(SRC('renderer', 'store-graph-references.ts')))
@@ -2034,13 +2063,48 @@ runRow('P-O3-TP-1', 'P-TP', 'S-SS-CENSUS-1', 8, () => {
       // the authorized-diff re-point discipline stated below (an authorized diff
       // re-points it in the same pass that names its authority; an unauthorized diff
       // finds this row red).
+      /* **⟶ RE-GRAINED `2026-10-11` (`S2` `U-TIER4-ARBITRARY-STORAGE`'s AUTHORIZED carrier
+       * movement, `§5.1` item 1's allowed-edit-set items (2) `src/main/main.ts` and (4)
+       * `src/main/preload.ts` — the row's OWN stated discipline: *"an AUTHORIZED diff
+       * re-points the pin in the same pass that moves the file and names the authority; an
+       * unauthorized diff finds this row red"*).** What moved, and what each reading now
+       * asserts: **(i)** `main.ts`'s GET carrier composes the SAME record with the SAME two
+       * additive members, but the boolean is now read OFF THE STATIC HOLDER
+       * (`tier4OpenState()`, `S2` `§2.4` item 7's amendment) instead of the live gate's
+       * accessor — so the detector reads the DECLARED MEMBER SET (`read:` + `exclusion:`)
+       * plus the declared SOURCE, never the superseded spelling; **(ii)** `preload.ts`'s SET
+       * declaration reads `write: Tier4WriteAnswer` (the declared superset, `S2` `§2.1` item
+       * 8 / `PAR-10`); **(iii)** the two MOVED denied-path pins are re-pointed to this
+       * landing's bytes, each with its cause named, while `src/shared/types.ts` keeps its
+       * UNMOVED pin. THE BITE IS UNMOVED: a carrier that dropped either additive member, a
+       * SET handler that stopped passing the raw `patch`, a `write` member minted from
+       * anything else, or a byte move in ANY of the three files still reddens.**
+       * `F-2` (GATE-4 RE-AUDIT): everything above this line is STRUCTURAL — regexes
+       * over the three denied files' DECLARED shapes — so an edit OUTSIDE the two
+       * handler bodies, outside the preload `security` member set and outside the
+       * `SecuritySettings` member census (one added line anywhere else in any of the
+       * three files) reddened NOTHING: the diff-scope check had a hole exactly the
+       * width of the files it denies.  The three denied files are now BYTE-PINNED at
+       * their MEASURED digests BESIDE the regexes, so a real edit outside the allowed
+       * set reddens this row (`§5.6.1` row 9 part (c): "the diff scope holds
+       * (`src/main/security-store.ts` + this unit's own files, with
+       * `src/main/main.ts`, `src/main/preload.ts` and `src/shared/**` unmoved)";
+       * `§1.3` items 5/7; `§0A` item 5; `§3.2` `F-12`). */
       const typesSrc = await readFile(SRC('shared', 'types.ts'), 'utf8')
       const getHandler = /ipcMain\.handle\(IPC_SECURITY_GET,[\s\S]*?\n  \}\)/.exec(mainSrc)?.[0] ?? ''
       const setHandler = /ipcMain\.handle\(IPC_SECURITY_SET,[\s\S]*?\n  \}\)/.exec(mainSrc)?.[0] ?? ''
       if (getHandler === '') throw new Error('the IPC_SECURITY_GET handler is absent from main.ts — the recorded carrier has no subject (§0A item 5)')
       if (setHandler === '') throw new Error('the IPC_SECURITY_SET handler is absent from main.ts — the recorded carrier has no subject (§0A item 5)')
-      if (!/\{\s*\.\.\.securityStore\.get\(\),\s*exclusion:\s*mcp\.gate\.exclusionState\(\)\s*\}/.test(getHandler)) {
-        throw new Error('the GET response no longer carries the declared additive `exclusion` member over the deep copy of `get()` (§0A item 5 records the carriers as UNCHANGED; a change to a carrier IS a forbidden diff — F-12)')
+      // (i) the GET carrier: BOTH additive members, over the deep copy of `get()`, with the
+      //     boolean read off the DECLARED holder source (`S2` `§2.4` item 7's amendment).
+      if (!/return\s*\(\s*\{\s*\.\.\.liveSecurityRecord\(\)/.test(getHandler) && !/\{\s*\.\.\.securityStore\.get\(\)/.test(getHandler)) {
+        throw new Error('the GET response no longer carries the record over a deep copy of the store read (`liveSecurityRecord()` / `...securityStore.get()`): `§0A` item 5 records the carrier as COMPOSED FROM THE STORE READ (a change to that class IS a forbidden diff — F-12)')
+      }
+      for (const member of ['read:', 'exclusion:']) {
+        if (!getHandler.includes(member)) throw new Error(`the GET response no longer carries the declared additive \`${member}\` member (\`§0A\` item 5's recorded carrier, re-grained for \`S2\` \`§2.4\` item 7)`)
+      }
+      if (!/tier4OpenState\(\)/.test(getHandler)) {
+        throw new Error('the GET carrier no longer reads the ONE boolean off the STATIC HOLDER (`tier4OpenState()`, `S2` `§2.4` item 7 / `§0A` item 1) — the boolean is NEVER routed through a store read')
       }
       if (!/const updated = \{\s*\.\.\.securityStore\.set\(patch\),\s*write:\s*securityStore\.lastWriteReceipt\(\)\s*\}/.test(setHandler)) {
         throw new Error('the SET response no longer carries the declared `write` member minted from `lastWriteReceipt()` on the SAME record (§0A item 5; F-12)')
@@ -2062,8 +2126,8 @@ runRow('P-O3-TP-1', 'P-TP', 'S-SS-CENSUS-1', 8, () => {
       for (const member of ['get()', 'set(patch', 'setExclusion(']) {
         if (!securityBlock.includes(member)) throw new Error(`src/main/preload.ts’s \`security\` member set no longer declares \`${member}\` — the bridge’s declared shape moved (§0A item 5)`)
       }
-      if (!/Promise<SecuritySettings & \{ write: SecurityWriteReceipt \}>/.test(securityBlock)) {
-        throw new Error('the preload `security.set` resolution no longer declares the additive `write` superset — the bridge’s declared shape moved (§0A item 5 / §2.3 item 2)')
+      if (!/Promise<SecuritySettings & \{ write: Tier4WriteAnswer \}>/.test(securityBlock)) {
+        throw new Error('the preload `security.set` resolution no longer declares the additive `write` superset in its LANDED spelling (`write: Tier4WriteAnswer` — the declared superset that CONTAINS `SecurityWriteReceipt`, `S2` `§2.1` item 8 / `PAR-10`) — the bridge’s declared shape moved (§0A item 5 / §2.3 item 2)')
       }
       // `src/shared/types.ts`'s `SecuritySettings` member census (the shape §1.3
       // item 7 pins as byte-identical for THIS unit; read as a census so the check
@@ -2098,9 +2162,20 @@ runRow('P-O3-TP-1', 'P-TP', 'S-SS-CENSUS-1', 8, () => {
       // annotation beside the as-filed digest) — an AUTHORIZED diff re-points the pin
       // in the same pass that moves the file and names the authority; an unauthorized
       // diff finds this row red.
+      //
+      // **⟶ RE-POINTED `2026-10-11`, each cause named in ONE LINE (`S2`
+      // `U-TIER4-ARBITRARY-STORAGE`, `§5.1` item 1's allowed-edit-set items (2) and (4);
+      // `RCA-8(d)`: the as-filed pins above STOOD from this unit's landing until then).**
+      // `src/main/main.ts` `4be1af5a…` → `0c0c3c9f…`: the GET carrier's boolean is now read
+      // OFF THE STATIC HOLDER (`tier4OpenState()`) and the record carries the additive `read`
+      // member BESIDE `exclusion` (`S2` `§2.4` items 7/8). `src/main/preload.ts` `83bdbe81…`
+      // → `fa4a142f…`: the two declaration sites' additive members are now typed
+      // (`read: Tier4ClosedRefusal | null`, `write: Tier4WriteAnswer`, `S2` `§2.1` item 8).
+      // `src/shared/types.ts` is **UNMOVED** and keeps its pin — the widening is an
+      // INTERSECTION at the declaration sites, never an edit to the shared type.
       const deniedPaths: Array<{ label: string; rel: string[]; pin: string }> = [
-        { label: 'src/main/main.ts', rel: ['main', 'main.ts'], pin: '4be1af5a9e490f41f021f0feb2fb2dd86f5ac941ef02cb9de166c12fcb2499a4' },
-        { label: 'src/main/preload.ts', rel: ['main', 'preload.ts'], pin: '83bdbe81feefa6d5927efef5686aa2bdfd349204e131bf7feef20e468cd87bc8' },
+        { label: 'src/main/main.ts', rel: ['main', 'main.ts'], pin: '0c0c3c9f28634d1f1c8342c658649b97c0b8959bc35c866a1cf77e40618e125e' },
+        { label: 'src/main/preload.ts', rel: ['main', 'preload.ts'], pin: 'fa4a142f6362c55bf8a4b7a800574231e7212b4dc1b056eb1eda3168030545ac' },
         { label: 'src/shared/types.ts', rel: ['shared', 'types.ts'], pin: '29af4efaf16a5cadf1ac22b63afda063495ce63ec95b56f1f6e397da1d8189c6' },
       ]
       for (const entry of deniedPaths) {
@@ -2606,29 +2681,37 @@ describe('§3.2 the documented fail-states (F-1 … F-12)', () => {
     // NO order is asserted here: a behaviour-preserving reorder must NOT redden this row.
     const census = memberCensusOf(store) // set-equality against MEMBER_CENSUS is enforced inside; an ADDED, RENAMED or REMOVED member throws there
     expect(new Set(census).size, 'F-11 — every member name appears EXACTLY ONCE').toBe(census.length)
-    expect([...census].sort(), 'F-11 — SET-EQUAL to the three declared members (`§2.5` item 3 read as a SET; `§9` item 5(b): the order half is not derivable)').toEqual([...MEMBER_CENSUS].sort())
-    expect(Object.keys(store).length, 'F-11 — a fourth value-returning member FAILS').toBe(3)
+    /* **⟶ RE-GRAINED `2026-10-11` (`S2` kick-back item (4), `RCA-8(d)` annotate-beside: the
+     * as-filed three-member reading stands above as this row's own record).** The declared
+     * read surface is the FIVE `S2` `U-TIER4-ARBITRARY-STORAGE` carries BY DECLARATION:
+     * `get · lastWriteReceipt · readEntry · set · writeEntry` (`5 = 3 (landed) + 2 (new)`,
+     * S2 `§2.1` item 3 / `§5.1` item 4's census table row 2 / `§7b` row 3's declaration to
+     * this unit). Read AS A SET, as before — NO order is pinned, and the term's bite is
+     * unmoved: an ADDED member (now the SIXTH), a RENAMED one or a REMOVED one all still
+     * redden, driven by the controls below and by `P-O3-TP-1` part (a). */
+    expect([...census].sort(), 'F-11 — SET-EQUAL to the FIVE declared members (`S2` §2.1 item 3 read as a SET, this unit\'s `§2.5` item 3 census moved `3 → 5` by declaration; `§9` item 5(b): the order half is not derivable)').toEqual([...MEMBER_CENSUS].sort())
+    expect(Object.keys(store).length, 'F-11 — a SIXTH value-returning member FAILS').toBe(5)
     // CONTROLS — the SET terms are not vacuous, and the row keeps its bite on all three
     // failure states.  A DUPLICATE own key is unrepresentable in `Object.keys` output
     // (own keys are unique by definition), so the duplicate state is driven where it IS
     // reachable — a census/declaration carrying a repeated name; a MISSING member and a
     // RENAMED one throw inside `memberCensusOf()` (`P-O3-TP-1` part (a) drives all three).
     const duplicated = [...MEMBER_CENSUS, 'get']
-    const fourth = [...MEMBER_CENSUS, 'inspect']
+    const fourth = [...MEMBER_CENSUS, 'inspect'] // RE-GRAINED `2026-10-11`: the ADDED case is now the SIXTH member
     const removed = MEMBER_CENSUS.slice(0, 2)
     const asSet = (names: readonly string[]): string => [...names].sort().join('|')
     expect(
       [
         new Set(duplicated).size !== duplicated.length, // the "exactly ONCE" term
         asSet(duplicated) !== asSet(MEMBER_CENSUS), // the SET term is not a silent DEDUP
-        asSet(fourth) !== asSet(MEMBER_CENSUS), // a FOURTH member
+        asSet(fourth) !== asSet(MEMBER_CENSUS), // an ADDED member (the SIXTH, over the declared five)
         asSet(removed) !== asSet(MEMBER_CENSUS), // a REMOVED member
       ],
-      'F-11 CONTROL — the SET terms FIRE on a duplicate, a fourth member and a missing member (a detector that cannot fail proves nothing)',
+      'F-11 CONTROL — the SET terms FIRE on a duplicate, an ADDED (sixth) member and a missing member (a detector that cannot fail proves nothing)',
     ).toEqual([true, true, true, true])
     const moduleSrc = await readFile(SRC('main', 'security-store.ts'), 'utf8')
     const found = [...moduleSrc.matchAll(/^export\s+(?:type\s+|interface\s+|function\s+|const\s+)?([A-Za-z_$][\w$]*)/gm)].map((m) => m[1])
-    expect([...new Set(found)].sort(), 'F-11 — the export census is UNMOVED at four names (§2.1 item 1)').toEqual([...MODULE_EXPORTS].sort())
+    expect([...new Set(found)].sort(), 'F-11 (RE-GRAINED `2026-10-11`) — the export census is the DECLARED SEVEN: the four names this unit landed (`§2.1` item 1) plus `S2` `§2.1` item 3\'s three declared types (`Tier4Entry` · `Tier4WriteAnswer` · `Tier4ClosedRefusal`); SET-EQUALITY keeps the bite, so an ADDED, RENAMED or REMOVED name still reddens').toEqual([...MODULE_EXPORTS].sort())
   })
 
   it('F-12 · an edit to a frozen or out-of-scope file FAILS (a COLLISION finding) — the frozen digests, read as EVIDENCE', async () => {

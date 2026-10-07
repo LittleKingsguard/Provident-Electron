@@ -826,21 +826,40 @@ function buildRegister(): RegisterRow[] {
              * boolean's home is the STATIC HOLDER of the ONE main-side leaf `src/main/tier4-state.ts`,
              * and its ONE writer is the TRANSITION, whose only production site is that same
              * `applyExclusion`. So the drive now counts SITES, on the amended terms. */
-            const moduleLevelAssignment = /^\s*(?:let|var)\s+\w+\s*=\s*(?:true|false)\s*;?\s*$/m
-            expect(moduleLevelAssignment.test('let storeOpen = true;'), 'CONTROL: the holder detector FIRES on a module-level mutable boolean').toBe(true)
+            /* ── RE-GRAINED `2026-10-11` (`kick-back resolution`, item (b): the detector is
+             * MODULE-SCOPE ANCHORED). The as-filed form was
+             * `/^\s*(?:let|var)\s+\w+\s*=\s*(?:true|false)\s*;?\s*$/m` — its leading `\s*`
+             * let it fire on ANY INDENTED line, i.e. on four UNRELATED FUNCTION LOCALS that
+             * happen to bind a boolean (`main.ts`'s `let settingsCorrupt = false` · `let corrupt
+             * = false` · `let admissible = true`, and `security-store.ts`'s `let loaded = false`),
+             * so `main.ts`/`security-store.ts` were reported as holding a SECOND HOME for the one
+             * boolean while holding none. The term's subject is a **MODULE-LEVEL** mutable
+             * boolean, so the detector is now anchored to MODULE SCOPE — a column-0 declaration —
+             * and the indented class is driven as a NEGATIVE control beside it. */
+            const moduleLevelAssignment = /^(?:let|var)\s+\w+\s*=\s*(?:true|false)\s*;?\s*$/m
+            expect(moduleLevelAssignment.test('let storeOpen = true;'), 'CONTROL: the holder detector FIRES on a MODULE-LEVEL mutable boolean (column 0)').toBe(true)
+            expect(moduleLevelAssignment.test('  let settingsCorrupt = false'), 'CONTROL (negative): and it does NOT fire on a FUNCTION LOCAL (`main.ts`:127/136/142, `security-store.ts`:169 — the four unrelated `let … = true|false` bindings the as-filed form misfired on)').toBe(false)
             const leaf = sourceOrEmpty(TIER4_STATE_SRC)
             expect(moduleLevelAssignment.test(leaf), 'the ONE declared home — `src/main/tier4-state.ts` — DOES hold the module-level mutable boolean (`§0A` item 1)').toBe(true)
             for (const [label, src] of [['mcp-server.ts', sourceOrEmpty(MCP_SERVER_SRC)], ['main.ts', sourceOrEmpty(MAIN_SRC)], ['security-store.ts', sourceOrEmpty(SECURITY_STORE_SRC)]] as Array<[string, string]>) {
               expect(moduleLevelAssignment.test(src), `${label} holds NO module-level mutable home for the boolean — the home is the ONE leaf, never a second holder`).toBe(false)
             }
+            /* THE SITE DETECTOR READS CODE, NEVER PROSE (`2026-10-11`, the same class as item
+             * (b)'s scope anchoring): the as-filed counter matched raw source, so the store's
+             * own DOC COMMENT naming the leaf's two names (`§2.5` item 1's *"the store CONSULTS
+             * the holder; it never writes it"*) counted as a WRITE SITE. The subject is a call,
+             * so comments are stripped before counting, and a commented mention is driven as a
+             * NEGATIVE control. */
+            const withoutComments = (src: string): string => src.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/[^\n]*/g, '$1 ')
             const writer = /setTier4OpenState\s*\(/g
-            const sitesIn = (src: string): number => (src.match(writer) ?? []).length
+            const sitesIn = (src: string): number => (withoutComments(src).match(writer) ?? []).length
             const mcp = sourceOrEmpty(MCP_SERVER_SRC)
             expect(sitesIn('setTier4OpenState(true)'), 'CONTROL: the writer-sites detector FIRES on a call').toBe(1)
+            expect(sitesIn('// the transition calls setTier4OpenState(...) here\n'), 'CONTROL (negative): and a COMMENTED mention is not a write site — the detector reads code, never prose').toBe(0)
             expect(sitesIn(mcp), '`mcp-server.ts` holds the transition\'s ONE write of the holder').toBe(1)
             expect(sitesIn(sourceOrEmpty(MAIN_SRC)), '`main.ts` holds NO writer of its own (`F-11`: main supplies STATE, never takes the DECISION)').toBe(0)
             expect(sitesIn(sourceOrEmpty(SECURITY_STORE_SRC)), 'the store CONSULTS the holder; it never writes it (`§2.5` item 1)').toBe(0)
-            const withExclusionSites = (source: string): number => (source.match(/withExclusion\s*\(/g) ?? []).length
+            const withExclusionSites = (source: string): number => (withoutComments(source).match(/withExclusion\s*\(/g) ?? []).length
             expect(withExclusionSites('const gate = other.withExclusion(next)'), 'CONTROL: the detector FIRES on a foreign site').toBe(1)
             expect(withExclusionSites(mcp), '`mcp-server.ts` holds the ONE landed transition site (`applyExclusion`) — the row `FS-T4-12` also counts, so the two rows now AGREE (`KB-1`)').toBe(1)
             expect(withExclusionSites(sourceOrEmpty(MAIN_SRC)), '`main.ts` holds NO writer of its own').toBe(0)
@@ -1522,7 +1541,24 @@ describe('S2 §2.1 THE STORE\'S DECLARED SURFACE (census, options, member order)
     expect(declared.length, 'the census is UNMOVED (`1 = 1 (path)`)').toBe(LANDED_OPTION_CENSUS)
     expect(declared).toEqual(['path'])
     expect(declared, 'the `A-1` reader is NOT an option — it is the STATIC HOLDER (`§0A` item 1, amended)').not.toContain('tier4Open')
-    expect(/tier4Open/.test(src), 'and the withdrawn option leaves no trace in the module\'s own bytes').toBe(false)
+    /* ── RE-GRAINED `2026-10-11` (`kick-back resolution`, outcome (a)): the AS-FILED term
+     * here was `/tier4Open/.test(src) === false` — *"and the withdrawn option leaves no
+     * trace in the module's own bytes"* — and it CONTRADICTED the clause it rode with.
+     * `§0A` item 1 / `§2.1` item 2's amendment REQUIRE `security-store.ts` to consult the
+     * holder THROUGH the leaf's declared reader **`tier4OpenState()`**, whose identifier
+     * CONTAINS the withdrawn option's token as a substring: no module that names the
+     * reader can be token-free, so the two clauses could not both hold and the only
+     * token-free bytes would need an UNDECLARED seam (a fragment-assembled key lookup, or
+     * an alias invented in `mcp-server.ts` — both outside `§5.1` item 1's edit set).
+     * THE RE-GRAINED TERM PINS WHAT THE CLAUSE ACTUALLY PINS — the OPTION CENSUS
+     * (`1 = 1 (path)`: no injected option member) — and REQUIRES the reader's name
+     * beneath it, so the bite survives: re-adding `tier4Open?: () => boolean` to the
+     * interface reddens BOTH the census terms above and the member term here. */
+    const optionMemberShaped = /(?:^|[\s{,(])tier4Open\s*\??\s*:/m
+    expect(optionMemberShaped.test('  tier4Open?: () => boolean'), 'CONTROL — the option-member detector FIRES on the withdrawn declaration').toBe(true)
+    expect(optionMemberShaped.test('  tier4OpenState(): boolean'), 'CONTROL (negative) — and it does NOT fire on the REQUIRED reader\'s own name, which is the substring that made the as-filed term unsatisfiable').toBe(false)
+    expect(optionMemberShaped.test(src), 'the withdrawn OPTION MEMBER (`tier4Open: …`) is declared NOWHERE in the module — the census is `1 = 1 (path)`').toBe(false)
+    expect(/tier4OpenState\(\)/.test(src), 'AND the store reads the ONE boolean through the leaf\'s DECLARED READER (`tier4OpenState()`, `§0A` item 1) — the token the withdrawn option shares is REQUIRED here, never banished').toBe(true)
   })
 
   it('P-T4-EXPORTS: the module\'s export census moves by NOTHING (the four landed names survive)', async () => {

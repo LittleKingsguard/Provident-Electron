@@ -543,15 +543,29 @@ describe('G3 §2.3 THE RECEIPT (red: the receipt members do not exist)', () => {
 
   it('the preload\'s security.set is re-declared as the SUPERSET Promise<SecuritySettings & { write }> (§2.3 item 2)', async () => {
     const preloadSrc = await sourceOf(['main', 'preload.ts'])
-    // the base form exists (GREEN half — Promise<SecuritySettings> is the preload's declaration today):
-    expect(/Promise<SecuritySettings>/.test(preloadSrc), 'the preload declares Promise<SecuritySettings> today (preload.ts:30,68-69)').toBe(true)
-    // the DECLARED superset (the receipt's additive write member) is absent — RED:
-    expect(/Promise<SecuritySettings\s*&\s*\{\s*write\s*:\s*SecurityWriteReceipt\s*\}>/.test(preloadSrc),
-      '§2.3 item 2 — the preload\'s security.set is re-declared as `Promise<SecuritySettings & { write: SecurityWriteReceipt }>` (§2.3 item 2). RED: it still declares `Promise<SecuritySettings>` — the additive `write` member is absent (preload.ts:30,68-69).').toBe(true)
-    // the pane module's OWN bridge declaration (secure-panels.ts:38-40) carries the same superset:
+    /* **⟶ RE-GRAINED `2026-10-11` (`S2` kick-back item (5)): THE LANDED SHAPE.** The as-filed
+     * term pinned `{ write: SecurityWriteReceipt }`; `S2` `U-TIER4-ARBITRARY-STORAGE`
+     * DECLARES the response record's `write` member as the store's own ANSWER SUPERSET —
+     * `Tier4WriteAnswer = SecurityWriteReceipt | Tier4ClosedRefusal` — at BOTH declaration
+     * sites (`S2` `§2.4` item 2's superset clause, `§2.1` item 3's declared types, `PAR-10`
+     * and `§2.1` item 8: *"the SET sites become `Promise<SecuritySettings & { write:
+     * Tier4WriteAnswer }>`"*), and `SecurityWriteReceipt` ITSELF stays byte-identical inside
+     * that superset. The term reads the LANDED spelling; the bite is kept below by a control
+     * that drives the detector on a shape MISSING the member. */
+    const writeSuperset = /Promise<SecuritySettings\s*&\s*\{\s*write\s*:\s*Tier4WriteAnswer\s*\}>/
+    expect(writeSuperset.test('set(): Promise<SecuritySettings & { write: Tier4WriteAnswer }>'),
+      'CONTROL — the superset detector FIRES on the LANDED declaration').toBe(true)
+    expect(writeSuperset.test('set(): Promise<SecuritySettings>'),
+      'CONTROL (negative) — and it does NOT fire on the UNWIDENED carrier (`Promise<SecuritySettings>`), so the reading below is a bound').toBe(false)
+    // the base form exists (GREEN half — the preload's own read base is still declared):
+    expect(/Promise<SecuritySettings>/.test(preloadSrc), 'the preload still declares the base `Promise<SecuritySettings>` (preload.ts:21, the read base)').toBe(true)
+    // the DECLARED superset (the receipt's additive write member, in its LANDED spelling) is present — GREEN:
+    expect(writeSuperset.test(preloadSrc),
+      '§2.3 item 2 / `S2` PAR-10 — the preload\'s security.set is re-declared as `Promise<SecuritySettings & { write: Tier4WriteAnswer }>`: the declared SUPERSET of the committed receipt (`SecurityWriteReceipt`, byte-identical inside it) and the new sibling closed refusal (`Tier4ClosedRefusal`).').toBe(true)
+    // the pane module's OWN bridge declaration (secure-panels.ts:55-59) carries the same superset:
     const panelSrc = await sourceOf(['renderer', 'secure-panels.ts'])
-    expect(/Promise<SecuritySettings\s*&\s*\{\s*write\s*:\s*SecurityWriteReceipt\s*\}>/.test(panelSrc),
-      '§2.3 item 2 — the pane\'s declared `security.set` follows the same superset (secure-panels.ts:38-40). RED: it stays Promise<SecuritySettings>.').toBe(true)
+    expect(writeSuperset.test(panelSrc),
+      '§2.3 item 2 / `S2` PAR-10 — the pane\'s declared `security.set` follows the same LANDED superset, so the two declaration sites are widened in LOCKSTEP (a HALF-WIDENING fails, `S2` `§2.1` item 8).').toBe(true)
   })
 
   it('M-6: the operator\'s journal-length change round-trips atomically — set({maxJournalLength: 50}), reload, and the committed receipt on the response', async () => {
