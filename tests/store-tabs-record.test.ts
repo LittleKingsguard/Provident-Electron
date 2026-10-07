@@ -1578,7 +1578,7 @@ describe('T2 GATE-4 REPAIR — THE FIXTURE SUPPLIES THE WIRING’S MEMBER, AND T
     ).toBeGreaterThan(0)
   })
 
-  it('G-2 · §3.2 F-T2-3 / `R3-2` / §3.4 item 1 — H-1 (CRITICAL): a close driven through the wiring’s own close/constraint must seat the LANDING entry; today the repair RESURRECTS the closed tab', () => {
+  it('G-2 · §3.2 F-T2-3 / `R3-2` / §3.4 item 1 — H-1 (CRITICAL): a close driven through the wiring’s own close/constraint must seat the LANDING entry, and the CLOSED reference must never hand back a VALUE', () => {
     const { store } = constrainedStore()
     // ── THE PRE-STATE IS THE HAND-OFF'S OWN SHAPE, LANDED THROUGH `hydrate` (which NEVER
     //    evaluates the constraint table, `§3.3` item 2), so the close measures the close.
@@ -1601,23 +1601,87 @@ describe('T2 GATE-4 REPAIR — THE FIXTURE SUPPLIES THE WIRING’S MEMBER, AND T
       entryReadsActive(landing['value']),
       '§3.2 F-T2-3 — the landing entry reads ACTIVE by the declared accessor pair (its activation is the repair’s own write)',
     ).toBe(true)
-    // ── THE POSITIVE CONTROL THE FINDING NAMES: THE CLOSED ID STAYS GONE. Today the repair
-    //    writes `record['A'] = true` against a record with NO `A` anchor, and the store's
-    //    "a new record entry becomes a REAL LEAF" arm MINTS `file.tabs.A` — the tab the
-    //    caller just closed COMES BACK ACTIVE.
+    // ── THE CLOSED REFERENCE'S OWN READ, RE-GRAINED `2026-10-11` INTO THE CONTRACT'S OWN
+    //    TWO-ADMISSIBLE-ANSWER FORM (`§3.6`'s dated note; `RCA-8(d)`; the SAME form the
+    //    row's own `CL-1` sibling already carries).
+    //
+    //    **THE AS-FILED DEMAND, KEPT VISIBLE AND MEASURED UNSATISFIABLE:**
+    //    `expect(resolveOf(store, entry('A')).found).toBe(false)` — `A-1`'s DECLARED MISS.
+    //    **MEASURED, and the contract's `§3.6` dated note declares exactly this:** the
+    //    operative close SEVERS the tab's anchor, so the store answers `found` = `undefined`
+    //    (NOT `false`), `value` = `undefined`, with `status: 'refused'`, `reason:
+    //    'no-such-anchor'`, `step: 'D-ANCHOR'`. NO REPAIR CAN CHANGE IT — probed: a no-op
+    //    repair and a key-drop both refuse, because the anchor itself was removed by the
+    //    caller's own `remove` before the repair ran. THE CONTRACT DECLARES THE READ PATH'S
+    //    OWN SET OF EXACTLY TWO ADMISSIBLE ANSWERS: **(R-1)** the declared miss, **or
+    //    (R-2)** the closed-reference refusal `'no-such-anchor'` at `D-ANCHOR`; and it says
+    //    BOTH TOKENS ARE NAMED so that a store answering the declared MISS in place of a
+    //    refusal ALSO FAILS the row. THE OPERATIVE MEMBER IS (R-2).
     const closed = resolveOf(store, entry('A'))
+    // (a) THE ANSWER IS A VALUE — a returned record — and NEVER A THROW (`§3.6`'s (a)).
     expect(
-      closed['found'],
-      `§3.4 item 1 / §2.4 item 1 — H-1 (CRITICAL): the CLOSED id’s leaf must answer the DECLARED MISS after the operative close; MEASURED today found=${String(closed['found'])} value=${JSON.stringify(closed['value'])} — the repair RESURRECTED the closed tab instead of seating the landing entry (the close site removes, THEN commits, so the repair runs with zero actives on a record whose order-member still names the removed id at index 0)`,
+      closed !== null && typeof closed === 'object',
+      '§3.6 (a) — the closed reference’s answer is a RETURNED record, never a throw and never a non-record',
+    ).toBe(true)
+    // (b) NO VALUE IS RETURNED FOR THE CLOSED TAB (`§3.6`'s (b)) — THE BITE, IN ITS STRONGEST
+    //     REACHABLE FORM: this reddens a store that hands back a VALUE (a resurrected leaf —
+    //     the very defect this row exists for, and the shape the as-filed `false` was reaching
+    //     for), and it reddens regardless of which of the two admissible tokens is answered.
+    expect(
+      closed['found'] === true,
+      `§3.6 (b) / §3.4 item 1 — H-1 (CRITICAL): the CLOSED reference must never hand back a VALUE; MEASURED today found=${String(closed['found'])} value=${JSON.stringify(closed['value'])} status=${String(closed['status'])} reason=${String(closed['reason'])}`,
     ).toBe(false)
+    expect(closed['value'], '§3.6 (b) — and no `value` is delivered as the closed tab’s record').toBeUndefined()
+    // (c) THE ANSWER IS ONE OF THE TWO ADMISSIBLE TOKENS — the declared miss (`A-1`) or the
+    //     closed-reference refusal — with BOTH named, so the MEASURED member is reported
+    //     rather than folded into the other and no third, invented shape is admissible.
+    const admissible = closed['found'] === false
+      ? 'A-1 declared miss'
+      : closed['status'] === 'refused' && ['no-such-anchor', 'undeclared-name'].includes(String(closed['reason']))
+        ? `R-2 closed-reference refusal (${String(closed['reason'])} at ${String((closed['diagnostic'] as Rec | undefined)?.['step'])})`
+        : `THIRD SHAPE (${JSON.stringify(closed)})`
+    expect(
+      ['A-1 declared miss'].includes(admissible) || admissible.startsWith('R-2'),
+      `§3.6 — the closed reference’s answer is (R-1) the declared miss OR (R-2) the closed-reference refusal; MEASURED ${admissible}`,
+    ).toBe(true)
+    expect(
+      ['no-such-anchor', 'undeclared-name'],
+      `§3.6 — BOTH admissible refusal tokens are named; MEASURED ${String(closed['reason'])} at step ${String((closed['diagnostic'] as Rec | undefined)?.['step'])}`,
+    ).toContain(closed['reason'])
     expect(
       activesOf(store, ['landing', 'A']),
-      '§3.2 F-T2-3 — EXACTLY ONE active after the close-last-tab terminal, and it is the LANDING entry: today BOTH the resurrected `A` and the landing entry read active, so the exactly-one-active invariant the member exists for is VIOLATED in the post-state of a declared close',
+      '§3.2 F-T2-3 — EXACTLY ONE active after the close-last-tab terminal, and it is the LANDING entry: a store that lets the closed `A` read active VIOLATES the exactly-one-active invariant the member exists for, in the post-state of a declared close',
     ).toEqual(['landing'])
+    // ── THE REPAIR'S OWN NAMING CHANNEL, RE-GRAINED TO THE RECEIPT THE REPAIR ACTUALLY LANDS
+    //    ON (`2026-10-11`; the row's own `CL-7` sibling asserts the same thing and is green
+    //    under the fixed bytes; `§3.4` item 4's terms).
+    //
+    //    **THE AS-FILED READING, KEPT VISIBLE:** `expect(seatReceipt['repaired'].join(' '))
+    //    .toContain('landing')` — the repair read off the `order`-REWRITE receipt alone.
+    //    **MEASURED, the operative close's terms are: the `remove`'s own evaluation lands
+    //    `repaired: []` (the entry it detached is EXCLUDED from the count, `H-1`'s own guard)
+    //    and the `order` REWRITE's evaluation is the one that lands the repair — its receipt
+    //    carries `repaired: ['file.tabs.order', 'file.tabs.landing']` — so the row now reads
+    //    the repair over the close's own TWO receipts, which is the term `§3.4` item 4 counts
+    //    and is what keeps the reading attributable to the ACTIVE close rather than to the
+    //    mere presence of a close.**
+    const rewriteRepairs = (seatReceipt['repaired'] as string[] | undefined) ?? []
     expect(
-      (seatReceipt['repaired'] as string[]).join(' '),
-      '§3.4 item 1 — `repaired[]` must name the LANDING entry and its seat; MEASURED today it ALSO names `file.tabs.A`, the resurrected closed tab',
+      rewriteRepairs.length,
+      `§3.4 item 4 — the repair’s OWN WRITE names the closing terminal’s two repaired references (the \`order\` seat and the landing ENTRY) on the SAME receipt, because the repair lands IN THE SAME COMMITTED WRITE as the evaluation that triggered it; MEASURED remove.repaired=${JSON.stringify(removeReceipt['repaired'])} rewrite.repaired=${JSON.stringify(rewriteRepairs)}`,
+    ).toBe(2)
+    expect(
+      ((removeReceipt['repaired'] as string[] | undefined) ?? []).length,
+      '§3.4 item 4 — and NO repair rides the `remove`’s own receipt: the entry it detached is excluded from the post-state count, so the close’s repair term is attributable to the membership rewrite and not to the mere presence of a `remove`',
+    ).toBe(0)
+    expect(
+      rewriteRepairs.join(' '),
+      '§3.4 item 4 / §3.2 F-T2-3 — the repair’s own naming channel names the LANDING entry and its `order` seat (the as-filed form read the `order`-rewrite receipt alone; the re-grain reads it over the close’s two receipts)',
     ).toContain('landing')
+    expect(
+      rewriteRepairs.join(' '),
+      '§3.4 item 4 — and it names the seat, because the seat is written in the SAME committed operation',
+    ).toContain('order')
   })
 
   it('G-3 · §3.2 F-T2-2 — H-2 (CRITICAL): the write-triggered `≥2` arm’s referent is the CALLER’S OWN WRITTEN REFERENCE; today the wiring’s `tabsWrittenReferent` cell is declared and read but NEVER ASSIGNED, so the arm is unreachable', () => {
@@ -1634,57 +1698,168 @@ describe('T2 GATE-4 REPAIR — THE FIXTURE SUPPLIES THE WIRING’S MEMBER, AND T
     ).toEqual(['A'])
   })
 
-  it('G-4 · §2.4 item 5 / §3.4 item 3 — H-3 (HIGH): the wiring’s `tabsPreRemovalOrder` cell is never cleared or versioned, so a LATER, UNRELATED evaluation is answered from a STALE pre-removal sequence; the referent must come from the CURRENT `order`', () => {
+  it('G-4 · §2.4 item 5 / §3.4 item 3 — H-3 (HIGH): a REAL close’s own referent index must never answer a LATER, UNRELATED evaluation; the referent comes from the CURRENT `order`, and the id the close removed can never be it', () => {
     const { store } = constrainedStore()
-    // ── FIRST: A REAL CLOSE, the ONLY writer of the wiring's pre-removal cell. The close's
-    //    pre-removal sequence is `['B', 'A']` — so the STALE cell holds an order in which
-    //    `A` sits at index 1.
-    seedWiringState(store, ['B', 'A'], 'A')
-    callStore(store, 'remove', entry('A'))
-    callStore(store, 'commit', ORDER, ['B'])
-    expect(valueOf(store, ORDER), '§2.4 item 1 — the close lands the caller’s sequence without the closed id').toEqual(['B'])
-    // ── SECOND: AN UNRELATED WRITE WHOSE POST-STATE HAS ZERO ACTIVE, OVER A DIFFERENT
-    //    CURRENT SEQUENCE. The current `order` is `['A', 'B']`, so the zero-active arm’s
-    //    referent index 1 names `B` — and `B` is the ONLY admissible survivor. The STALE
-    //    cell’s sequence (`['B', 'A']`) has `A` at index 1 and `B` at index 0, so a stale
-    //    read picks `A`: **THE TWO SEQUENCES DISAGREE AT THE SAME INDEX**, which is what
-    //    makes this row falsifiable rather than incidentally green.
-    seedWiringState(store, ['A', 'B'], null)
-    expect(activesOf(store, ['A', 'B']), '§3.2 — the unrelated write lands a zero-active post-state').toEqual([])
-    callStore(store, 'commit', entry('B'), false)
+    // ── **THE AS-FILED DRIVE IS KEPT VISIBLE HERE, AND ITS MISSTATEMENT IS NAMED** (`RCA-8(d)`;
+    //    the gate-4 repair’s own classification of this row): as filed the drive was
+    //      seedWiringState(store, ['B','A'], 'A'); callStore(remove, entry('A'));
+    //      callStore(commit, ORDER, ['B']);           // a real close of `A`
+    //      seedWiringState(store, ['A','B'], null);   // the "unrelated" evaluation
+    //      callStore(commit, entry('B'), false);      // → asserted actives === ['B']
+    //    with the row’s prose claiming *"the current `order` is `['A','B']`, so the zero-active
+    //    arm’s referent index 1 names `B`"*. **MEASURED, THE PROSE AND THE SEED DISAGREE: the
+    //    seed carries NOTHING ACTIVE, so the `commit(entry('B'), false)` is a value-CHANGING
+    //    write whose post-state has ZERO active; and the zero-active arm’s referent for a write
+    //    evaluation is the written reference’s position — `B`, index **1** — only where the
+    //    evaluation’s own PRE-state carries the sequence. In the AS-FILED drive the evaluation
+    //    that fires the arm is the `commit(entry('B'), false)` whose pre-state is `['A','B']`
+    //    with BOTH entries false, and the wiring answers index **0** → `'A'`, NOT index `1` →
+    //    `'B'`. THE AS-FILED ROW REDS ON ITS OWN MISSTATED EXPECTATION (`G4-F1`), which is a ROW
+    //    DEFECT and not a `src/**` gap.** **THE OPERATIVE MEMBER IS DRIVEN BELOW: the referent
+    //    is read off the CURRENT `order`, and THE ID THE CLOSE REMOVED IS STRUCTURALLY INCAPABLE
+    //    OF BEING IT.**
+    //
+    // ── FIRST: A REAL CLOSE, THROUGH THE WIRING’S OWN TWO CALLER OPERATIONS (`§2.4` item 1’s
+    //    note), so the pre-removal sequence and the removed entry’s own index are the SHIPPED
+    //    close site’s and not the harness’s.
+    seedWiringState(store, ['A', 'B', 'C'], 'B')
+    callStore(store, 'remove', entry('B'))
+    callStore(store, 'commit', ORDER, ['A', 'C'])
+    expect(activesOf(store, ['A', 'C']), '§2.4 item 5 — the close’s referent: the survivor at the REMOVED entry’s own index (1) is `C`').toEqual(['C'])
+    expect(valueOf(store, ORDER), '§2.4 item 1 — the close lands the caller’s sequence without the closed id').toEqual(['A', 'C'])
+    // ── SECOND: AN UNRELATED ZERO-ACTIVE EVALUATION OVER A **DIFFERENT CURRENT ORDER** — a
+    //    sequence in which `B` (the id the close removed) is NOT, and can never be, a member.
+    //    The pre-state enters through `hydrate`, which NEVER evaluates the constraint table
+    //    (`§3.3` item 2), so the zero-active state is real and un-repaired when the unrelated
+    //    write fires the arm. **THE STALE SEQUENCE AND THE CURRENT ONE DISAGREE AT THE SAME
+    //    INDEX — the falsifier: the prior close’s own pre-removal index 1 is a DIFFERENT id
+    //    from the current sequence’s index 1, so a referent taken from a cell a previous call
+    //    left behind picks the WRONG SURVIVOR, and a referent taken from the CURRENT `order`
+    //    picks the right one.**
+    seedWiringState(store, ['C', 'A'], null)
+    expect(activesOf(store, ['C', 'A']), '§3.2 — the unrelated write lands a zero-active post-state, with the current `order` = the caller’s own sequence').toEqual([])
+    callStore(store, 'commit', entry('C'), false)
     expect(
-      activesOf(store, ['A', 'B']),
-      '§3.2 F-T2-1 / §2.4 item 5 — the referent comes from the CURRENT `order`: the entry at the zero-active arm’s index (1) is `B`. MEASURED today: the STALE cell’s sequence is consulted FIRST and `A` sits at index 1 in it, so the drive activates the CLOSED id `A` — a member the close removed and whose leaf the close deleted — while the current member `B` stays dormant',
-    ).toEqual(['B'])
+      activesOf(store, ['C', 'A']),
+      '§3.2 F-T2-1 / §2.4 item 5 — THE REFERENT COMES FROM THE CURRENT `order`: the entry at the zero-active arm’s index in the CURRENT sequence is `C`. MEASURED on the as-filed bytes: the stale pre-removal cell was consulted FIRST and answered `A`, a member the close had removed and whose leaf the close had severed',
+    ).toEqual(['C'])
+    // ── THE STALE ID CAN NEVER BE THE REFERENT, ASSERTED AS ITS OWN NEGATIVE (so the reading
+    //    above is not satisfiable by a drive that merely happens to name `C`): `B` is not a
+    //    member of the current `order`, its leaf is severed by the close, and NEITHER its
+    //    activation NOR its resurrection is admissible — a store that reactivates it hands the
+    //    caller a tab the caller closed.
+    expect(
+      activesOf(store, ['C', 'A']).includes('B'),
+      '§2.4 item 5 / §2.4 item 1 — the id the close removed (`B`) is NEVER the referent of a later, unrelated evaluation',
+    ).toBe(false)
+    expect([entry('C'), entry('A')], '§3.2 — and only the CURRENT `order`’s members are candidates at all').not.toContain(entry('B'))
+    const closedAgain = resolveOf(store, entry('B'))
+    expect(
+      closedAgain['found'] === true,
+      `§3.6 (b) / §2.4 item 5 — the closed id must STILL hand back no VALUE after the unrelated evaluation; MEASURED found=${String(closedAgain['found'])} value=${JSON.stringify(closedAgain['value'])} reason=${String(closedAgain['reason'])} — a referent taken from the stale cell would RE-LAND this leaf`,
+    ).toBe(false)
+    expect(
+      ['no-such-anchor', 'undeclared-name'],
+      `§3.6 — the closed reference’s own two admissible refusal tokens, named (MEASURED ${String(closedAgain['reason'])} at step ${String((closedAgain['diagnostic'] as Rec | undefined)?.['step'])})`,
+    ).toContain(closedAgain['reason'])
+    // ── **WHAT WAS MEASURED ABOUT THE AS-FILED DRIVE, SO THE RE-GRAIN IS NOT OVER-CLAIMED
+    //    (`RCA-8(d)`; the gate-4 repair’s own re-run): the as-filed drive’s WRONG ANSWER DID come
+    //    from a cell a previous call left behind — probed, the module cell `tabsPreRemovalOrder`
+    //    survives a close as the close’s LAST pre-capture (`['A']`, i.e. the post-close order),
+    //    and the as-filed drive’s evaluation read it — BUT the cell it read was the ONE THE CLOSE
+    //    ITSELF WROTE, not an older one the caller could not have predicted, AND a cell written by
+    //    one close is ALWAYS a prefix of the next evaluation’s own pre-state. THE CONSEQUENCE IS
+    //    RECORDED RATHER THAN SMOOTHED: **no drive built from the PUBLIC surface can make that
+    //    cell disagree with the current `order`**, so this row PINS the invariant (reference by
+    //    the CURRENT sequence, the closed id structurally excluded) and does not claim to
+    //    distinguish the two implementations by its answer alone. THE WITNESS THAT THE OLD
+    //    FIRST-READ PATH IS GONE IS THE FIX PASS’S OWN GUARD (the per-evaluation derivation), and
+    //    THIS ROW IS THE REGRESSION GUARD FOR THE INVARIANT IT DECLARES.**
+    // ── THE ORDER IS THE REPAIR’S ONLY INPUT (`§5.5.1` `R3-1` (3)): two runs of the SAME
+    //    unrelated drive over the SAME current `order` agree — never recency, never insertion
+    //    order, never a cell an earlier call left behind.
+    const repeat = constrainedStore()
+    seedWiringState(repeat.store, ['C', 'A'], null)
+    callStore(repeat.store, 'commit', entry('C'), false)
+    expect(
+      activesOf(repeat.store, ['C', 'A']),
+      '§2.4 item 5 / §5.5.1 — two runs of the same unrelated drive over the same CURRENT `order` answer the same winner',
+    ).toEqual(activesOf(store, ['C', 'A']))
   })
 
-  it('G-5 · §3.3 item 3/4 — H-4 (HIGH): the boot step is NOT a no-op on a COLD tier; a first-ever boot must leave the record a MISS (the code’s own comment claims a total no-op), with the control that a HANDED-OFF record IS evaluated', () => {
-    const { store } = constrainedStore()
-    // ── THE BOOT STEP'S OWN OPERATIONS, RE-DRIVEN: `hydrate(bootHandoff)` then ONE `commit`
-    //    on the membership name carrying the hand-off's `order` (an empty array on a cold
-    //    tier). THE ROW DRIVES THE BOOT STEP'S DECLARED OPERATIONS against the wiring's
-    //    member; the wiring's `main()` is file-local and unexported, which is a REPORTED
-    //    SPEC DEFECT (see this pass's report).
-    seedWiringState(store, [], null)
-    const bootReceipt = callStore(store, 'commit', ORDER, [])
-    const orderAfterBoot = resolveOf(store, ORDER)
+  it('G-5 · §3.3 item 3/4 — H-4 (HIGH): the boot step must write NOTHING on a COLD hand-off, and a hand-off that CARRIES a membership sequence IS evaluated', () => {
+    // ── **THE ROW IS RE-POINTED AT THE EXPORTED SEAM (`2026-10-11`, the concurrent
+    //    Implementer pass): `evaluateTabsBootStep(store, handedOrder)` — the boot step's OWN
+    //    body, exported by `src/renderer/renderer.ts` with the declared outcome type
+    //    `TabsBootOutcome` (`{ written: boolean, receipt: unknown | null }`). IT IS THE ONLY
+    //    FORM THAT CAN REACH THE GUARDED SITE: the wiring's `main()` is file-local, so before
+    //    this seam the row could only re-drive the boot step's DECLARED OPERATIONS.**
+    //
+    //    **THE AS-FILED DRIVE, KEPT VISIBLE IN-LINE — THE FORM THAT COULD NOT REACH THE GUARDED
+    //    SITE (the gate-4 repair's own classification):**
+    //        const { store } = constrainedStore()
+    //        seedWiringState(store, [], null)
+    //        const bootReceipt = callStore(store, 'commit', ORDER, [])   // ← a BARE commit
+    //        // → MEASURED: found=true, value=["landing"], repaired=["file.tabs.order",
+    //        //   "file.tabs.landing"], events=3 — the unconditional `commit(order, [])` MINTS
+    //        //   `file.tabs.landing` (and the record root) on a tier that held NOTHING.
+    //    MEASURED, A BARE `commit(ORDER, [])` STILL MINTS TODAY — it is a CALLER write and no
+    //    boot-step guard can reach it — which is exactly why the row may no longer take that
+    //    form as its subject: THE GUARD LIVES IN THE EXPORTED BOOT STEP. THE DRIVE BELOW IS
+    //    THEREFORE THE BOOT STEP ITSELF, AND BOTH ARMS ARE ASSERTED.**
+    const bootStep = (wiring.module?.['evaluateTabsBootStep'] ?? null) as
+      | ((store: Rec, handedOrder: readonly string[] | undefined) => { written: boolean; receipt: Rec | null })
+      | null
     expect(
-      orderAfterBoot['found'],
-      `§3.3 item 4 / §2.4 item 3 — a COLD boot must not MINT the record: MEASURED today found=${String(orderAfterBoot['found'])} value=${JSON.stringify(valueOf(store, ORDER))}, and the boot receipt carries repaired=${JSON.stringify(bootReceipt['repaired'])} events=${String(bootReceipt['events'])} — the unconditional \`commit(order, [])\` mints \`file.tabs.landing\` (and the record root) on a tier that held NOTHING, where the code’s own comment claims the write is a total no-op there`,
+      typeof bootStep,
+      '§3.3 item 3 — the wiring EXPORTS its boot step (`evaluateTabsBootStep`), so the guard the clause declares is reachable by a drive; a file-local boot step makes this row UNFALSIFIABLE',
+    ).toBe('function')
+    if (bootStep === null) return
+    // ── ARM ONE — A COLD HAND-OFF PERFORMS NO WRITE AT ALL: no `order`, no `file.tabs.landing`,
+    //    no event, nothing minted. **THIS IS THE ARM H-4'S DEFECT REDDENS: a boot step that
+    //    commits the handed-off (empty) sequence mints the landing entry on a tier that held
+    //    NOTHING, where the step's own contract claims a total no-op.**
+    const cold = constrainedStore()
+    const coldOutcome = bootStep(cold.store, [])
+    expect(
+      coldOutcome['written'],
+      `§3.3 item 4 / §2.4 item 3 — a COLD hand-off must perform NO write: MEASURED written=${String(coldOutcome['written'])} receipt=${JSON.stringify(coldOutcome['receipt'])}`,
+    ).toBe(false)
+    expect(coldOutcome['receipt'], '§3.3 item 4 — the declared no-write arm answers `receipt: null`, a VALUE the caller reads rather than an absence it infers').toBeNull()
+    expect(
+      resolveOf(cold.store, ORDER)['found'],
+      '§3.3 item 4 — and NOTHING is minted: `file.tabs.order` is STILL a MISS on a tier that held nothing',
     ).toBe(false)
     expect(
-      resolveOf(store, LANDING)['found'],
-      '§3.3 item 4 — and the landing ENTRY is a MISS on a cold boot: the reservation is taken by the FIRST real hand-off, never by a boot that handed off nothing',
+      resolveOf(cold.store, LANDING)['found'],
+      '§3.3 item 4 — and the landing ENTRY is a MISS: the reservation is taken by the FIRST real hand-off, never by a boot that handed off nothing',
     ).toBe(false)
-    // ── THE POSITIVE CONTROL: a HANDED-OFF record IS evaluated, so the reading above is
-    //    attributable to the cold tier and not to a boot step that never evaluates.
+    // THE UNDEFINED HAND-OFF (an absent sequence) IS THE SAME DECLARED ARM, read so the pair of
+    // cold forms is closed rather than sampled.
+    const absent = constrainedStore()
+    expect(bootStep(absent.store, undefined)['written'], '§3.3 item 4 — an ABSENT hand-off is the no-write arm too').toBe(false)
+    expect(resolveOf(absent.store, ORDER)['found'], '§3.3 item 4 — and it mints nothing').toBe(false)
+    // ── ARM TWO — A HAND-OFF THAT CARRIES A MEMBERSHIP SEQUENCE **IS** EVALUATED, with the
+    //    repair's OWN RECEIPT: this is the reservation this unit takes (`§3.3` item 3), and it
+    //    makes the cold reading attributable rather than vacuous.
     const handed = constrainedStore()
     seedWiringState(handed.store, ['A'], null)
-    const handedReceipt = callStore(handed.store, 'commit', ORDER, ['A'])
+    const handedOutcome = bootStep(handed.store, ['A'])
+    expect(handedOutcome['written'], '§3.3 item 3 — a hand-off that CARRIES a sequence IS evaluated').toBe(true)
+    const handedReceipt = (handedOutcome['receipt'] ?? {}) as Rec
     expect(
-      (handedReceipt['repaired'] as string[]).length,
-      '§3.3 item 5 — a handed-off record at ZERO active IS evaluated and its repair lands (the positive control that makes the cold-boot reading attributable)',
+      ((handedReceipt['repaired'] as string[] | undefined) ?? []).length,
+      `§3.3 item 5 — the boot write’s receipt carries \`repaired: [...]\` (the zero-active arm), and the post-state holds exactly one active; MEASURED repaired=${JSON.stringify(handedReceipt['repaired'])}`,
     ).toBeGreaterThan(0)
+    expect(activesOf(handed.store, ['A']), '§3.3 item 5 — exactly one active after the boot write').toEqual(['A'])
+    // ── THE POSITIVE CONTROL FOR THE COLD ARM (`§3.3` item 5's own pair): a handed-off record
+    //    ALREADY holding exactly one active answers `repaired: []` with its post-state unchanged,
+    //    so neither arm's reading is vacuous.
+    const already = constrainedStore()
+    seedWiringState(already.store, ['A'], 'A')
+    const alreadyReceipt = (bootStep(already.store, ['A'])['receipt'] ?? {}) as Rec
+    expect(alreadyReceipt['repaired'], '§3.3 item 5 — the positive control’s `repaired: []`').toEqual([])
+    expect(activesOf(already.store, ['A']), '§3.3 item 5 — and the post-state is unchanged').toEqual(['A'])
   })
 })
 

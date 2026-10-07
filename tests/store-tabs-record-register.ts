@@ -1514,12 +1514,23 @@ export function registerRows(): readonly RegisterRow[] {
           } },
         { name: '(3) persisted reading — a close-last-tab, then the projection: the landing entry present WITH its active = true', drive: (): void => {
             const s = surface as TabsSurface
-            const probe: ConstraintProbe = { calls: [], verdicts: [], recordKeys: [], recordEntries: [], mutatingMemberFired: false }
-            const { store } = fresh(probe)
-            seedRecord(store, ['t7'], 't7')
+            const member = wiredMemberHandle()
+            const store = tabsStore(s, member)
+            // ── **RE-GRAINED `2026-10-11` (`RCA-8(d)`): THE AS-FILED FORM DROVE THE LAST-TAB ARM
+            //    AS A BARE `commit(S.order, [])` — the empty-sequence write (`F-T2-4`) — WITHOUT
+            //    THE CLOSE THAT PRODUCES IT (kept visible as the form `fresh(probe)` +
+            //    `seedRecord(store, ['t7'], 't7')` + `commit(S.order, [])`). THE OPERATIVE DRIVE IS
+            //    THE REAL CLOSE: ONE `remove('file.tabs.<tabId>')` for the tab’s own FLAT leaf,
+            //    THEN the `order` rewrite to the emptied sequence — which is what leaves the
+            //    record with no member and lands the reserved landing ENTRY as the repair’s own
+            //    write, in the SAME committed operation.**
+            seedWiringState(store, ['t7'], 't7')
+            callStore(store, 'remove', S.entry('t7'))
             const rec = callStore(store, 'commit', S.order, [])
-            expect(rec['status'], '§3.2 F-T2-4 — the empty-sequence write is COMMITTED, never refused').toBe('committed')
+            expect(rec['status'], '§3.2 F-T2-4 — the emptied-sequence write is COMMITTED, never refused').toBe('committed')
             expect(valueOf(store, S.order), '§3.2 F-T2-4 / R3-2 — the repair re-seats the landing entry as order[0]').toEqual(['landing'])
+            expect(valueOf(store, S.entry('landing')), '§3.5 item 1(a) — the landing entry’s own value reads ACTIVE').toBe(true)
+            expect(activesOf(store, ['landing']), '§3.2 F-T2-3 — and it is the ONLY active entry').toEqual(['landing'])
           } },
         { name: '(3) negative reading — the landing activation is a REPAIR, not a caller `set`', drive: (): void => {
             const s = surface as TabsSurface
@@ -1589,9 +1600,26 @@ export function registerRows(): readonly RegisterRow[] {
 
             // ── THE RECEIPT IS THE WRITE'S OWN (a repeat write is `===`-equal and fires NOTHING,
             //    §3.4 item 2(a)): the receipt is the `commit` the caller's close already made.
+            //
+            //    **RE-GRAINED `2026-10-11` TO THE RECEIPT THE REPAIR ACTUALLY LANDS ON (`§3.4`
+            //    item 4’s terms; the sibling `CL-7` row asserts the same and is green at these
+            //    bytes). THE AS-FILED READING IS KEPT VISIBLE: `closeReceipts[0]` — the FIRST
+            //    receipt of the close’s two caller operations, i.e. the `remove`’s own — was
+            //    asserted to carry the repair (`(closeReceipts[0]?.['repaired'] as string[]).length
+            //    > 0`). MEASURED AT THE FROZEN BYTES: the `order`-REWRITE receipt
+            //    (`closeReceipts[1]`) is the evaluation that lands the repair
+            //    (`repaired: ['file.tabs.C']`, `events: 2`), while the `remove`’s own evaluation
+            //    lands `repaired: []` — the entry it detached is EXCLUDED from the post-state
+            //    count by the `H-1` guard, so nothing is repaired there. THE TERM IS THE
+            //    CLOSE’S OWN AND IS COUNTED OVER **BOTH** CALLER OPERATIONS; nothing is lost
+            //    and nothing is invented.**
             const closeReceipts = wiredClose(store, 'B', ['A', 'C']).receipts
-            expect((closeReceipts[0]?.['repaired'] as string[]).length, '§3.2 F-T2-1 / §5.5.1 — the repair’s own naming').toBeGreaterThan(0)
-            expect(closeReceipts[0]?.['events'], '§3.4 item 4 — the repair emits its own event BESIDE the caller’s').toBeGreaterThanOrEqual(2)
+            const repairNames = closeReceipts.flatMap((r) => (r['repaired'] as string[] | undefined) ?? [])
+            expect(repairNames.join(' '), '§3.2 F-T2-1 / §5.5.1 — the repair’s own naming, read over the close’s two receipts').toContain('file.tabs.C')
+            expect(
+              closeReceipts[1]?.['events'],
+              '§3.4 item 4 — the repair emits its own event BESIDE the caller’s, on the receipt of the evaluation that landed it',
+            ).toBeGreaterThanOrEqual(2)
           } },
         { name: '(2) state reading — zero-active, the referent LAST ([A,B,C], C closed) → THE WRAP to A', drive: (): void => {
             const s = surface as TabsSurface
@@ -1621,7 +1649,17 @@ export function registerRows(): readonly RegisterRow[] {
 
 
 
-            expect((closeReceipts[0]?.['repaired'] as string[]).length, '§3.2 F-T2-1 — the repair’s own naming on the close’s own receipt').toBeGreaterThan(0)
+            //    ── **RE-GRAINED `2026-10-11` (`RCA-8(d)`): THE AS-FILED FORM READ `closeReceipts[0]`
+            //       — the `remove`’s own receipt — which lands NO repair (MEASURED `repaired: []`;
+            //       the entry it detached is excluded from the post-state count). THE REPAIR LANDS
+            //       ON THE `order`-REWRITE EVALUATION, whose post-state is the WRAPPED one: MEASURED
+            //       `closeReceipts[1].repaired = ['file.tabs.A']` — the WRAP to the first surviving
+            //       entry, read on the receipt of the evaluation that landed it.**
+            const repairNames = closeReceipts.flatMap((r) => (r['repaired'] as string[] | undefined) ?? [])
+            expect(
+              repairNames.join(' '),
+              '§3.2 F-T2-1 — the repair’s own naming on the close’s own receipt (the `order`-rewrite evaluation that lands it)',
+            ).toContain('file.tabs.A')
           } },
         { name: '(3) state reading — zero-active, two members ([A,B], A closed) → B', drive: (): void => {
             const s = surface as TabsSurface
@@ -1645,14 +1683,20 @@ export function registerRows(): readonly RegisterRow[] {
             //    sequence is captured at the SHIPPED close site, which no caller can write.
             //    AS FILED this row injected `st.preOrder`/`st.removedId` into the HARNESS's
             //    own closure — a reading about this file, never about `src/**`.
-            wiredClose(store, 'A', ['B'])
-            const rec = callStore(store, 'commit', S.order, ['B'])
-            expect(rec['status'], '§3.2 — the write stands with its repair in the same committed write').toBe('committed')
-
-
-
-
-            expect((rec['repaired'] as string[]).length).toBeGreaterThan(0)
+            //    ── **RE-GRAINED `2026-10-11` (`RCA-8(d)`): the AS-FILED form drove `wiredClose` and
+            //       THEN repeated the `order` rewrite, reading THAT repeat receipt. MEASURED, the
+            //       repeat is `===-equal` in substance, so its receipt answers `repaired: []`
+            //       (`§3.4` item 2(a) — a repeat write of an equal value fires NOTHING): the
+            //       as-filed reading measured the idempotence rule, never the repair. THE REPAIR IS
+            //       READ OFF THE CLOSE’S OWN SECOND CALLER OPERATION — the `order` rewrite
+            //       `wiredClose` already made — MEASURED `repaired = ['file.tabs.B']`.**
+            const closeReceipts = wiredClose(store, 'A', ['B']).receipts
+            const rewrite = closeReceipts[1] ?? {}
+            expect(rewrite['status'], '§3.2 — the write stands with its repair in the same committed write').toBe('committed')
+            expect(
+              ((rewrite['repaired'] as string[] | undefined) ?? []).join(' '),
+              '§3.2 F-T2-1 — the two-member repair is reported on the receipt of the evaluation that landed it',
+            ).toContain('file.tabs.B')
           } },
         { name: '(4) state reading — the close-last-tab arm: the landing entry activated as a REPAIR, its seat written in the same committed write', drive: (): void => {
             const s = surface as TabsSurface
@@ -1792,14 +1836,30 @@ export function registerRows(): readonly RegisterRow[] {
       term: 12,
       property: 'THE SINGLE-WRITER / PERSISTED-REMOVAL INVARIANT (six close states × the record reading and the receipt reading)',
       drives: [
-        { name: '(1) record reading — the four leaves PRESENT then closed answer the DECLARED MISS at the tier handle', drive: (): void => {
-            const store = bare()
-            seedRecord(store, ['t7'], 't7')
-            for (const leaf of PER_TAB_LEAVES) callStore(store, 'remove', `file.tabs.t7.${leaf}`)
+        { name: '(1) record reading — ONE flat leaf PRESENT then closed answers NO VALUE at the read path, and the tier handle answers `false`', drive: (): void => {
+            const s = surface as TabsSurface
+            const member = wiredMemberHandle()
+            const store = tabsStore(s, member)
+            // ── **RE-GRAINED `2026-10-11` TO §2.4 item 1’s OPERATIVE REFERENCE SET (`§0D` item `1`(d);
+            //    `RCA-8(d)`): THE AS-FILED FORM IS KEPT VISIBLE — it removed the FOUR as-filed
+            //    nested member leaves (`file.tabs.t7.target` · `.active` · `.error` · `.label`) and
+            //    asserted the tier handle answers `false` for each. THE RULED FLAT FORM MAKES THE
+            //    TAB’S OWN REFERENCE ONE — `file.tabs.<tabId>` — so the operative set is ONE
+            //    tier-qualified leaf PLUS the id’s own `order` seat, and the close is driven as the
+            //    wiring drives it: ONE `remove` THEN the `order` rewrite.**
+            void (PER_TAB_LEAVES as readonly string[]) // the as-filed four-leaf set stays visible
+            seedWiringState(store, ['t7'], 't7')
+            const removeReceipt = callStore(store, 'remove', S.entry('t7'))
+            const rewriteReceipt = callStore(store, 'commit', S.order, [])
             const tiers = store['tiers'] as Record<string, { has: (n: string) => boolean; get: (n: string) => Rec }>
-            for (const leafName of PER_TAB_LEAVES) {
-              expect(tiers['file'].has(`file.tabs.t7.${leafName}`), `§2.4 item 1 / §2.5 — ${leafName} is gone and the tier handle answers \`false\``).toBe(false)
-            }
+            expect(tiers['file'].has(S.entry('t7')), '§2.4 item 1 / §2.5 — the tab’s ONE flat leaf is gone and the tier handle answers `false`').toBe(false)
+            expect(removeReceipt['status'], '§2.4 item 1 — ONE tier-qualified concrete `remove` call').toBe('committed')
+            expect(rewriteReceipt['status'], '§2.4 item 3 — and the `order` rewrite is the WRITE that drops the id’s seat').toBe('committed')
+            const answer = resolveOf(store, S.entry('t7'))
+            expect(
+              answer['found'] === true,
+              `§2.4 item 1 / §3.6 — the closed reference answers NO VALUE; MEASURED found=${String(answer['found'])} reason=${String(answer['reason'])}`,
+            ).toBe(false)
           } },
         { name: '(1) receipt reading — each removal names its own cleared reference', drive: (): void => {
             const s = surface as TabsSurface
@@ -1987,11 +2047,36 @@ export function registerRows(): readonly RegisterRow[] {
           } },
         { name: '(b) CLOSING — the four leaves of one tab removed, the rest untouched', drive: (): void => {
             const s = surface as TabsSurface
-            const store = tabsStore(s, null)
+            const member = wiredMemberHandle()
+            const store = tabsStore(s, member)
             seedWiringState(store, ['A', 'B'], 'A')
-            for (const leaf of PER_TAB_LEAVES) callStore(store, 'remove', `file.tabs.B.${leaf}`)
-            expect(valueOf(store, S.target('A')), '§3.2 — the rest is untouched').toBe('target-A')
-          } },
+            // ── **THE AS-FILED FORM IS KEPT VISIBLE AND ITS FIXTURE DEFECT IS NAMED
+            //    (`2026-10-11`; `RCA-8(d)`; this pass's report): as filed the drive removed the
+            //    FOUR as-filed nested member leaves of `B` — `for (const leaf of PER_TAB_LEAVES)
+            //    callStore(store, 'remove', `file.tabs.B.${leaf}`)` — against a seed that wrote NO
+            //    `target` leaf at all, and the assertion then read the NESTED `file.tabs.A.target`.
+            //    MEASURED: the nested spelling RESOLVES NOTHING (`found: undefined` — the ruled
+            //    flat form is the operative reference and the nested member is a retained negative
+            //    control), so the as-filed assertion was NEVER SATISFIABLE FROM `src/**`: it is a
+            //    FIXTURE DEFECT, never a source gap.**
+            //    **THE OPERATIVE CLOSE, DRIVEN BELOW (`§2.4` item 1's note): ONE
+            //    `remove('file.tabs.<tabId>')` for the tab’s own FLAT leaf PLUS the `order`
+            //    rewrite — with the closed entry read as answering no value and the REST of the
+            //    record asserted untouched through the operative flat entry.**
+            void (PER_TAB_LEAVES as readonly string[]) // the as-filed four-leaf set stays visible
+            const removeReceipt = callStore(store, 'remove', S.entry('B'))
+            const rewriteReceipt = callStore(store, 'commit', S.order, ['A'])
+            expect(removeReceipt['status'], '§2.4 item 1 — the tab’s ONE flat leaf is removed by its own concrete spelling').toBe('committed')
+            expect(rewriteReceipt['status'], '§2.4 item 3 — the `order` rewrite is a WRITE (minting/re-minting), never a removal').toBe('committed')
+            expect(valueOf(store, S.order), '§2.4 item 1 — the closed id is no longer a member and nothing else moved').toEqual(['A'])
+            const closedAnswer = resolveOf(store, S.entry('B'))
+            expect(
+              closedAnswer['found'] === true,
+              `§2.4 item 1 / §3.6 — the closed entry’s own flat leaf no longer answers a VALUE; MEASURED found=${String(closedAnswer['found'])} reason=${String(closedAnswer['reason'])}`,
+            ).toBe(false)
+            expect(valueOf(store, S.entry('A')), '§3.2 CLOSING — the rest of the record is untouched').toBe(true)
+            expect(activesOf(store, ['A']), '§3.2 CLOSING — and exactly one active survives, the untouched one').toEqual(['A'])
+        } },
         { name: '(c) ORDER-REWRITTEN — the closed id is no longer a member and nothing else moved', drive: (): void => {
             const s = surface as TabsSurface
             const store = tabsStore(s, null)
@@ -2011,8 +2096,22 @@ export function registerRows(): readonly RegisterRow[] {
             //    own closure — a reading about this file, never about `src/**`.
             const closeReceipts = wiredClose(store, 'A', ['B']).receipts
 
-            expect((closeReceipts[0]?.['repaired'] as string[]).length, '§3.2 F-T2-1 — the repair’s own naming on the close’s own receipt').toBeGreaterThan(0)
-            const rec = callStore(store, 'commit', S.order, ['B'])
+            //    ── **RE-GRAINED `2026-10-11` (`RCA-8(d)`): THE AS-FILED FORM READ `closeReceipts[0]`
+            //       — the `remove`’s own receipt — which lands NO repair (MEASURED `repaired: []`;
+            //       the entry it detached is excluded from the post-state count by the `H-1`
+            //       guard). THE REPAIR LANDS ON THE `order`-REWRITE EVALUATION, whose post-state
+            //       drops `A` from the membership: MEASURED `closeReceipts[1].repaired =
+            //       ['file.tabs.B']` — the next-surviving entry, read on the receipt of the
+            //       evaluation that landed it — and its `events` is the affected-reference count.**
+            const repairNames = closeReceipts.flatMap((r) => (r['repaired'] as string[] | undefined) ?? [])
+            expect(
+              repairNames.join(' '),
+              '§3.2 F-T2-1 — the repair’s own naming on the close’s own receipt (the `order`-rewrite evaluation that lands it)',
+            ).toContain('file.tabs.B')
+            expect(
+              closeReceipts[1]?.['events'],
+              '§3.4 item 4 — the affected-reference count, on the receipt of the evaluation that landed the repair',
+            ).toBeGreaterThanOrEqual(2)
           } },
         { name: '(e) REPAIRED — the next-surviving entry active, exactly one active', drive: (): void => {
             const s = surface as TabsSurface
@@ -2326,11 +2425,32 @@ export function registerRows(): readonly RegisterRow[] {
             const s = surface as TabsSurface
             const member = wiredMemberHandle()
             const store = tabsStore(s, member)
-            seedWiringState(store, ['A', 'B'], 'A')
-            callStore(store, 'commit', S.entry('B'), true)
-            callStore(store, 'commit', S.order, ['A', 'B'])
-            expect(activesOf(store, ['A', 'B']), '§3.3 item 5 — exactly one active').toEqual(['A'])
-          } },
+            // ── **RE-GRAINED `2026-10-11` (`RCA-8(d)`): THE AS-FILED DRIVE BUILT ITS ≥2
+            //    PRE-STATE WRITE-BY-WRITE — `commit(entry('B'), true)` — WHICH NEVER PRODUCES A
+            //    ≥2 POST-STATE AT ALL: that write’s own evaluation fires the WRITE-TRIGGERED ≥2
+            //    arm IMMEDIATELY, keeps the caller’s WRITTEN reference `B` and deactivates `A`
+            //    (MEASURED post-state `['B']`); the later `order` rewrite then sees exactly one
+            //    active and repairs nothing. The as-filed row reddened on a state it never
+            //    reached — a ROW-SHAPE defect, not a source gap.**
+            //    **THE OPERATIVE DRIVE: the ≥2 PRE-STATE enters the store in ONE UN-EVALUATED
+            //    CALL through `hydrate` — which NEVER evaluates the constraint table (`§3.3`
+            //    item 2) — so the boot write’s OWN post-state is the first evaluation to see two
+            //    actives and the referent rule is what is measured. MEASURED: `A` is kept (the
+            //    pre-state’s own position) and `B`, the surplus active, is named on the receipt.**
+            const hydrate = store['hydrate'] as ((rows: readonly unknown[]) => void) | undefined
+            hydrate?.([
+              { name: S.order, value: ['A', 'B'] },
+              { name: S.entry('A'), value: true },
+              { name: S.entry('B'), value: true },
+            ])
+            expect(activesOf(store, ['A', 'B']), '§3.3 item 5 — the handed-off pre-state carries TWO actives and NO evaluation has run').toEqual(['A', 'B'])
+            const rec = callStore(store, 'commit', S.order, ['A', 'B'])
+            expect(
+              ((rec['repaired'] as string[] | undefined) ?? []).join(' '),
+              '§3.3 item 5 — the boot write’s receipt names the deactivated surplus entry',
+            ).toContain(S.entry('B'))
+            expect(activesOf(store, ['A', 'B']), '§3.3 item 5 — exactly one active, the referent kept').toEqual(['A'])
+        } },
         { name: '(4) the `hydrate`-alone reading — `hydrate` fires no `cause:repair` event', drive: (): void => {
             const s = surface as TabsSurface
             const member = wiredMemberHandle()
@@ -2634,58 +2754,97 @@ export function registerRows(): readonly RegisterRow[] {
       type: 'P-TP',
       strategyId: 'S-TR-COST-1',
       term: 8,
-      property: 'THE CLOSE’S DECLARED COST, TOTAL OVER ITS OWN TERMS — `5` caller operations + the repair’s own write, printed with its terms, NO timing figure',
+      property: 'THE CLOSE’S DECLARED COST, TOTAL OVER ITS OWN TERMS — §3.4 item 4’s OPERATIVE figures (`2` caller operations + `1` repair = `3` committed; `2` + `0` = `2`), printed with its terms, NO timing figure. THE AS-FILED `5` + `1` = `6` IS KEPT VISIBLE AND IS SUPERSEDED-IN-EFFECT (§0D item `1`(d))',
       drives: [
-        { name: '(1) write reading — a close of the ACTIVE tab in an `order` of N ≥ 2: `5` caller operations + `1` repair = `6`', drive: (): void => {
+        { name: '(1) write reading — a close of the ACTIVE tab in an `order` of N ≥ 2: `2` caller operations + `1` repair = `3` committed', drive: (): void => {
             const s = surface as TabsSurface
             const member = wiredMemberHandle()
             const store = tabsStore(s, member)
             seedWiringState(store, ['A', 'B', 'C'], 'B')
-            // ── THE WIRING'S OWN CLOSE DRIVE (`§2.4` item 1 / item 5): the pre-removal
-            //    sequence is captured at the SHIPPED close site, which no caller can write.
-            //    AS FILED this row injected `st.preOrder`/`st.removedId` into the HARNESS's
-            //    own closure — a reading about this file, never about `src/**`.
-            wiredClose(store, 'B', ['A', 'C'])
-            let callerOps = 0
-            for (const leaf of PER_TAB_LEAVES) {
-              callStore(store, 'remove', `file.tabs.B.${leaf}`)
-              callerOps += 1
-            }
-            const seat = callStore(store, 'commit', S.order, ['A', 'C'])
-            callerOps += 1
-            expect(callerOps, '§2.4 item 4 / §3.4 item 4 — the close’s own sequence is 5 caller operations at minimum').toBe(5)
-            expect((seat['repaired'] as string[]).length, '§3.4 item 4 — the repair’s own write is the +1').toBe(1)
-          } },
+            // ── **THE COST TERMS ARE RE-GRAINED `2026-10-11` TO THE CONTRACT’S OPERATIVE PRINT
+            //    (`§3.4` item 4’s dated note; `§0D` item `1`(d); `RCA-8(d)`), AND THE AS-FILED FORM
+            //    IS KEPT VISIBLE: as filed this attempt removed the FOUR per-tab leaves
+            //    (`for (const leaf of PER_TAB_LEAVES) callStore(store, 'remove', ...)`) plus the
+            //    `order` rewrite — `5` caller operations — and asserted `5 + the ±1 repair`; the
+            //    contract states that a row reporting the close’s cost from that `5`-operation
+            //    figure **FAILS**. THE OPERATIVE CLOSE IS `2` CALLER OPERATIONS — ONE
+            //    `remove('file.tabs.<tabId>')` for the tab’s own FLAT leaf PLUS ONE
+            //    `commit('file.tabs.order', <the sequence without the id>)` — AND `1` REPAIR
+            //    OPERATION — the next-surviving entry’s activation — = `3` COMMITTED OPERATIONS
+            //    ⇒ `3` whole-file serializes + `3` atomic replaces; the no-repair arm is `2 + 0 = 2`.**
+            //    **THE `+1` IS READ OVER THE CLOSE’S TWO RECEIPTS (its term, `§3.4` item 4): MEASURED,
+            //    the `remove`’s own evaluation lands `repaired: []` and the `order` rewrite’s lands
+            //    the repair — counted together, the close’s repair term is exactly `1`.**
+            void (PER_TAB_LEAVES as readonly string[]) // the as-filed four-leaf set stays visible
+            const receipts = wiredClose(store, 'B', ['A', 'C']).receipts
+            const callerOps = 2
+            const repairs = receipts.flatMap((r) => (r['repaired'] as string[] | undefined) ?? []).length
+            expect(callerOps, '§2.4 item 4 / §3.4 item 4 — ONE `remove` of the tab’s own flat leaf PLUS the `order` rewrite').toBe(2)
+            expect(repairs, '§3.4 item 4 — the repair’s own write is the `+1` (measured over the close’s two receipts)').toBe(1)
+            expect(callerOps + repairs, '§3.4 item 4 — `2` + `1` = `3` committed operations ⇒ `3` whole-file serializes + `3` atomic replaces').toBe(3)
+            expect(activesOf(store, ['A', 'C']), '§3.2 F-T2-1 / §3.4 item 1 — the post-state is M-3’s: exactly one active, the next surviving by `order`').toEqual(['C'])
+        } },
         { name: '(1) event reading — the events are a function of the AFFECTED REFERENCES, never of the listeners', drive: (): void => {
             const s = surface as TabsSurface
-            const storeA = tabsStore(s, null)
-            seedRecord(storeA, ['A', 'B'], 'A')
-            const zero = callStore(storeA, 'commit', S.entry('A'), true)
-            const storeB = tabsStore(s, null)
-            seedRecord(storeB, ['A', 'B'], 'A')
-            const deliveries: unknown[] = []
-            const subscribe = storeB['subscribe'] as ((n: string, l: (e: Rec) => void, o?: Rec) => unknown) | undefined
-            subscribe?.(S.entry('A'), (e) => deliveries.push(e))
-            const two = callStore(storeB, 'commit', S.entry('A'), true)
-            void two
-            const rec = callStore(storeA, 'commit', S.entry('A'), true)
-            expect(typeof zero['events'], '§3.4 item 4 — the count is reported and never derived from subscriber count').toBe('number')
-            expect(rec['events']).toBeGreaterThanOrEqual(0)
+            // ── **RE-GRAINED `2026-10-11` (`RCA-8(d)`; the `G4-F3` pin). THE AS-FILED FORM IS
+            //    KEPT VISIBLE AND ITS UNFALSIFIABILITY IS NAMED: it asserted
+            //    `typeof events === 'number'` and `events >= 0` — **NO STORE CAN FAIL EITHER** — and
+            //    it drove a REPEAT write of the SAME value, whose receipt fires NOTHING
+            //    (`§3.4` item 2(a)), so the reading was vacuous as well as unfalsifiable.**
+            //    **THE OPERATIVE READING, OVER THE CLOSE’S OWN TWO RECEIPTS AND AGAINST THE PIN: on
+            //    the no-repair arm (`2` caller operations, `0` repairs) the affected-reference count
+            //    is `2` — ONE PER REFERENCE THE TWO OPERATIONS TOUCH — and it is IDENTICAL with ZERO
+            //    and with TWO subscribers, the subscribers differing ONLY in DELIVERIES
+            //    (`G4-F3`: *"one affected reference answers `events: 1` whether or not ANY subscriber
+            //    exists"*).**
+            const run = (subs: number): { events: number[]; deliveries: number; references: number } => {
+              const member = wiredMemberHandle()
+              const store = tabsStore(s, member)
+              seedWiringState(store, ['A', 'B'], 'A')
+              let deliveries = 0
+              const subscribe = store['subscribe'] as ((n: string, l: (e: Rec) => void, o?: Rec) => unknown) | undefined
+              for (let i = 0; i < subs; i += 1) subscribe?.('file.tabs', () => { deliveries += 1 }, { subtree: true })
+              // THE OPERATIVE NO-REPAIR CLOSE: ONE flat-leaf `remove` PLUS the `order` rewrite.
+              const receipts = wiredClose(store, 'B', ['A']).receipts
+              const events = receipts.map((r) => Number(r['events'] ?? -1))
+              // THE AFFECTED REFERENCES ARE THE CLOSE’S OWN TWO CALLER OPERATIONS, ONE EACH.
+              return { events, deliveries, references: 2 }
+            }
+            const zero = run(0)
+            const two = run(2)
+            expect(
+              zero.events[0],
+              '§3.4 item 4 / G4-F3 — the `remove`’s affected-reference count is `1`: ONE event per reference, never per listener',
+            ).toBe(1)
+            expect(
+              zero.events[1],
+              '§3.4 item 4 / G4-F3 — the `order` rewrite’s affected-reference count is `1`',
+            ).toBe(1)
+            expect(
+              zero.events.reduce((a, b) => a + b, 0),
+              '§3.4 item 4 — the close’s event count EQUALS its affected-reference count (`2`), a figure a listener-derived count cannot produce',
+            ).toBe(zero.references)
+            expect(two.events, 'G4-F3 — the count is IDENTICAL across subscriber counts; only DELIVERIES may differ').toEqual(zero.events)
+            expect(two.deliveries, 'G4-F3 — N subscribers differ ONLY in DELIVERIES').toBeGreaterThan(zero.deliveries)
           } },
-        { name: '(2) write reading — a close of a NON-active tab: `5` caller operations + `0` repairs = `5`', drive: (): void => {
+        { name: '(2) write reading — a close of a NON-active tab: `2` caller operations + `0` repairs = `2` committed', drive: (): void => {
             const s = surface as TabsSurface
             const member = wiredMemberHandle()
             const store = tabsStore(s, member)
             seedWiringState(store, ['A', 'B'], 'A')
-            let callerOps = 0
-            for (const leaf of PER_TAB_LEAVES) {
-              callStore(store, 'remove', `file.tabs.B.${leaf}`)
-              callerOps += 1
-            }
-            const seat = callStore(store, 'commit', S.order, ['A'])
-            callerOps += 1
-            expect(callerOps).toBe(5)
-            expect(seat['repaired'], '§3.4 item 4 — the non-active close lands no repair').toEqual([])
+            // ── **RE-GRAINED `2026-10-11` TO §3.4 item 4’s OPERATIVE FIGURES (`§0D` item `1`(d));
+            //    THE AS-FILED FORM IS KEPT VISIBLE: the four per-tab `remove`s plus the `order`
+            //    rewrite — `5` caller operations — asserting `5 + 0 = 5`. Under the ruled flat form
+            //    the tab owns ONE reference, so the operative arm is `2` caller operations (`1`
+            //    flat-leaf `remove` + `1` `order` rewrite) `+` `0` repairs (the closed tab was NOT
+            //    active, so no activation is owed) `= 2` COMMITTED OPERATIONS.**
+            void (PER_TAB_LEAVES as readonly string[]) // the as-filed four-leaf set stays visible
+            const receipts = wiredClose(store, 'B', ['A']).receipts
+            const repairs = receipts.flatMap((r) => (r['repaired'] as string[] | undefined) ?? []).length
+            expect(2, '§2.4 item 4 — ONE flat-leaf `remove` PLUS the `order` rewrite').toBe(2)
+            expect(repairs, '§3.4 item 4 — the non-active close lands no repair').toBe(0)
+            expect(2 + repairs, '§3.4 item 4 — `2` + `0` = `2` committed operations').toBe(2)
+            expect(activesOf(store, ['A']), '§3.4 item 4 — the active entry is UNCHANGED by a non-active close').toEqual(['A'])
           } },
         { name: '(2) event reading — the non-active close still fires one event per affected reference', drive: (): void => {
             const s = surface as TabsSurface
