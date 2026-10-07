@@ -2171,6 +2171,10 @@ BLIND-GREENS PASS'S OWN READING, quoted with that ownership (as `docs/specs/them
    only by a change to `src/shared/theme.ts`, and the `F1` pin is satisfied by the LANDED module, so NO re-drive is
    owed by this amendment.**
 
+---
+
+**⟶ DATED POINTER, `2026-10-11` — THE `docs/pending.md` CITATIONS IN THIS FILE RESOLVE HERE (`RCA-8(d)`: an ADDITIVE block at the file's end, past `§3b`'s own closing note and `§3c`; NOT ONE PRE-EXISTING BYTE IS REWRITTEN, no term, row id, strategy id, seed, cap, shape, pool member, `(bounded)` marking or section number moves).** **THE CITED SITES: the `§R`/`§M`-built clause block cites `docs/pending.md` `§H` (the gate-11 register re-derivation carried by that letter); the `§K` row (`the RCA's requested harness modifications`) is cited at `§5.1` item 11 and `§8`; and `§B`'s `SCH-3` row is cited for the "measure it, do not assume it" lesson.** **`§H`, `§K` AND `§B` ARE ALL RETIRED BY THE `2026-10-11` SWEEP, AND EACH CITE-SITE RESOLVES TO A STUB IN `docs/pending.md` `§6.1` (`§B`) + `§6.2` (`§H`) + `§6.4` (`§K`) + `§6.6` (the letter stubs).** **THE PER-ROW RECORD IS `archive/pending/2026-10-11-retired-rows-index.md` (`§A`/`§B`/`§D`); THE AS-FILED TEXT IS `archive/pending/2026-10-11-pending-as-filed-pre-sweep.md` (`sha256 b437a7db5398af3f14d8286f8b3e442ceae38308baf17ee8970da4fa89368382`, byte-identical to `git show 35fc7f2:docs/pending.md`).** **THE LIVE OBLIGATIONS ARE RESTATED IN `docs/pending.md`'S NUMBERED SECTIONS: the closed units' `§5.5` re-derivation conditional is `§5.1`; the `§K` unadopted guards are `§1(c)`; and the `§B` npm advisory is `§1(g)`.** **This unit's authority remains `docs/next-steps.md`'s `## DONE — U-THEME` section, and this file's `§K` row's own reading — *"Its own header reads 'REQUESTS, NOT LANDED RULINGS'"* — stands unmoved.**
+
 
 
 
