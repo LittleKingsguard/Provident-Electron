@@ -991,7 +991,35 @@ describe('§6.3 — the `H-r6` handoff note: the as-filed `OWED` is KEPT VISIBLE
     const footerText = footer ?? ''
     const noteStart = footerText.indexOf('### THE STORE-ADDRESSED MCP READS — WHAT A FORK MUST RE-ROUTE')
     expect(noteStart, `S-10 — \`${footerRel}\` §4 carries the delivered block "THE STORE-ADDRESSED MCP READS — WHAT A FORK MUST RE-ROUTE (\`H3\`, \`U-FORK-STORE-READS\`)"`).toBeGreaterThan(-1)
-    const noteEnd = footerText.indexOf('\n## ', noteStart)
+    // ⟶ RE-GRAINED 2026-10-11 — THE WINDOW'S OWN END (an instrument whose window is wrong: the class
+    // the `S1` battery's `B-F1` and this unit's own doc-review `F-2` both name; `RCA-8(d)`
+    // ANNOTATE-BESIDE — the as-filed form is kept visible here AND driven as control arm (c1) below).
+    // AS FILED (the window `S-10` carried; MEASURED RED at `cf1fd38` + the architect's uncommitted
+    // `2026-10-11` doc set):  const noteEnd = footerText.indexOf('\n## ', noteStart)
+    //   FOUND: ["i","ii","iii","iv","v","vi","vii","i","ii","iii","iv","v"] — expected `['i'…'vii']`.
+    // THE DEFECT: that end binds the block to the next LEVEL-2 heading, so a SECOND legitimate `###`
+    // block landing anywhere in the same `§4` falls INSIDE the window. The architect's `P-1` unparking
+    // landed exactly that — `### THE GESTURE SESSION'S INSTALL COLLISION — ONE ELEMENT, ONE INSTALL
+    // PER SESSION` (immediately above `## 5.`) — and the five `**(i)**…**(v)**` clauses of THAT block
+    // were counted as this block's clauses. The NOTE was never wrong; the WINDOW was.
+    // THE RE-GRAIN: the slice's end is the next heading of ANY level after the block's own heading —
+    // i.e. the block the heading actually delimits. VERIFIED AT THE BYTES (not assumed): `docs/FORKER.md`
+    // §4 is carried ENTIRELY by `###` blocks — twelve `###` headings between its `## 4.` heading and
+    // `## 5.` — and no `####` heading exists anywhere in the file, so `### `/`## ` is this file's own
+    // whole convention for a block boundary. This row's own sibling at `§6.3` above already binds its
+    // block end to `(?=\n### |\n## )`; the `\n## `-only arm was the outlier.
+    const heading = '### THE STORE-ADDRESSED MCP READS — WHAT A FORK MUST RE-ROUTE'
+    // THE PREDICATE, as ONE function that BOTH the live measurement and every control below drive.
+    const endOfBlock = (text: string, from: number): number => {
+      const ends = ['\n## ', '\n### '].map((h) => text.indexOf(h, from)).filter((i) => i !== -1)
+      return ends.length === 0 ? text.length : Math.min(...ends)
+    }
+    const clauseMarkers = (text: string, fromHeading: string): string[] => {
+      const start = text.indexOf(fromHeading)
+      if (start === -1) return []
+      return [...text.slice(start, endOfBlock(text, start)).matchAll(/\*\*\((i|ii|iii|iv|v|vi|vii)\)/g)].map((m) => m[1] as string)
+    }
+    const noteEnd = endOfBlock(footerText, noteStart)
     const note = footerText.slice(noteStart, noteEnd === -1 ? footerText.length : noteEnd)
     const roman = [...note.matchAll(/\*\*\((i|ii|iii|iv|v|vi|vii)\)/g)].map((m) => m[1] as string)
     expect(roman, `S-10 — the delivered block carries the SEVEN clauses (i)–(vii), in order and without a gap — the shape \`§6.3\` OWED. FOUND: ${JSON.stringify(roman)}`).toEqual(['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii'])
@@ -1002,6 +1030,73 @@ describe('§6.3 — the `H-r6` handoff note: the as-filed `OWED` is KEPT VISIBLE
     }
     expect(note, `S-10 — and the delivered block CROSS-REFERENCES BACK to its authority at \`${SPEC_REL}\` §6.3, so the note and the spec are one carry rather than two drifting texts`).toMatch(/`docs\/specs\/fork-store-reads\.md` `§6\.3`/)
     expect(note, 'S-10 — the delivered block carries the FORK-side return rule (`H-r6`: this repo writes NO file under `<Astrographer>/`), the half that stays the fork\'s').toMatch(/^\(vii\) THE RETURN NOTE\.\*\* \*\*This repo writes NO file under `<Astrographer>\/`\*\* \(|This repo writes NO file under `<Astrographer>\/`/)
+
+    // =========================================================================================
+    // THE RE-GRAINED WINDOW'S OWN CONTROLS (`RCA-8(d)`: a re-grain that cannot make the row
+    // vacuous — the SAME predicate, driven on fixtures, must still be able to FAIL). Six arms,
+    // every one of them measured rather than asserted: the live reading is the predicate's own
+    // reading; (a) a DELETED marker fails; (b) two markers SWAPPED OUT OF ORDER fail; (c1) the
+    // AS-FILED window on the LIVE bytes over-collects (the measured red, re-driven in-row);
+    // (c2) the re-grain holds on a synthetic fixture of that same shape while the as-filed window
+    // fails on it; (c3) an eighth marker INSIDE the window still fails (so the window's WIDTH,
+    // not the marker count, is what the re-grain moved).
+    // =========================================================================================
+    const SEVEN = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii']
+    expect(
+      clauseMarkers(footerText, heading),
+      'S-10 · CONTROL (the row reads what the predicate reads) — the live block\'s clauses via the shared predicate ARE the clauses the row above asserts, so every control below drives the SAME instrument and not a second one',
+    ).toEqual(roman)
+    // -- (a) ONE of the seven clause markers DELETED -------------------------------------------------
+    const droppedOne = note.replace('**(vi) ', '')
+    expect(
+      clauseMarkers(droppedOne, heading).length,
+      `S-10 · CONTROL (a) — deleting ONE clause marker leaves SIX, so the predicate is not a ` +
+        `constant that would answer the same thing whatever the block holds. FOUND: ${JSON.stringify(clauseMarkers(droppedOne, heading))}`,
+    ).toBe(6)
+    expect(
+      clauseMarkers(droppedOne, heading),
+      'S-10 · CONTROL (a) — and the predicate therefore FAILS the seven-clause shape on a block missing one of its clauses (the gap `§6.3` promises to detect)',
+    ).not.toEqual(SEVEN)
+    // -- (b) TWO markers SWAPPED OUT OF ORDER --------------------------------------------------------
+    const swapped = note.replace(/\*\*\((i|ii|iii|iv|v|vi|vii)\)/g, (_m: string, r: string) => `**(${r === 'iii' ? 'iv' : r === 'iv' ? 'iii' : r})`)
+    expect(
+      clauseMarkers(swapped, heading).length,
+      'S-10 · CONTROL (b) — the swap keeps the COUNT at seven, so the failure below is the ORDER and nothing else',
+    ).toBe(7)
+    expect(
+      clauseMarkers(swapped, heading),
+      'S-10 · CONTROL (b) — two markers swapped out of order FAIL the in-order `(i)…(vii)` shape (a row that only counted markers would pass this — the order half of the assertion is load-bearing)',
+    ).not.toEqual(SEVEN)
+    // -- (c1) THE AS-FILED WINDOW, RE-DRIVEN ON THE LIVE BYTES (the as-filed form, executable) ------
+    const asFiledEnd = footerText.indexOf('\n## ', noteStart)
+    const asFiledNote = footerText.slice(noteStart, asFiledEnd === -1 ? footerText.length : asFiledEnd)
+    const asFiledMarkers = [...asFiledNote.matchAll(/\*\*\((i|ii|iii|iv|v|vi|vii)\)/g)].map((m) => m[1] as string)
+    expect(
+      asFiledMarkers.length,
+      `S-10 · CONTROL (c1) — the AS-FILED window (next \`\n## \` only) OVER-COLLECTS on the live file: it swallows the sibling \`###\` block's own clauses. FOUND: ${JSON.stringify(asFiledMarkers)}`,
+    ).toBeGreaterThan(7)
+    expect(
+      clauseMarkers(footerText, heading),
+      'S-10 · CONTROL (c1) — while the RE-GRAINED window holds at exactly seven on the SAME bytes, which is the whole of the change: the window, not the note',
+    ).toEqual(SEVEN)
+    // -- (c2) A SYNTHETIC FIXTURE OF THE SAME SHAPE (self-contained; no dependence on future bytes) --
+    const siblingFixture = `${heading}\n\n**(i) A. **(ii) B. **(iii) C. **(iv) D. **(v) E. **(vi) F. **(vii) G.\n\n### A SIBLING BLOCK\n\n**(i) THE SIBLING'S OWN FIRST CLAUSE.\n\n## A LEVEL-2 HEADING\n`
+    const fixtureAsFiledEnd = siblingFixture.indexOf('\n## ', siblingFixture.indexOf(heading))
+    const fixtureAsFiled = [...siblingFixture.slice(siblingFixture.indexOf(heading), fixtureAsFiledEnd === -1 ? siblingFixture.length : fixtureAsFiledEnd).matchAll(/\*\*\((i|ii|iii|iv|v|vi|vii)\)/g)].map((m) => m[1] as string)
+    expect(
+      fixtureAsFiled.length,
+      `S-10 · CONTROL (c2) — on a fixture where an eighth marker of a SIBLING block sits inside the window, the AS-FILED boundary collects eight and FAILS the seven-clause shape (this is the defect reproduced in miniature). FOUND: ${JSON.stringify(fixtureAsFiled)}`,
+    ).toBe(8)
+    expect(
+      clauseMarkers(siblingFixture, heading),
+      'S-10 · CONTROL (c2) — and the RE-GRAINED boundary stops at the sibling `###` heading, so the fixture\'s eighth marker is NOT this block\'s clause and the shape HOLDS',
+    ).toEqual(SEVEN)
+    // -- (c3) AN EIGHTH MARKER INSIDE THE WINDOW STILL FAILS ----------------------------------------
+    const leakedFixture = `${heading}\n\n**(i) A. **(ii) B. **(iii) C. **(iv) D. **(v) E. **(vi) F. **(vii) G. **(i) AN EIGHTH MARKER INSIDE THE WINDOW.\n\n### A SIBLING BLOCK\n`
+    expect(
+      clauseMarkers(leakedFixture, heading),
+      `S-10 · CONTROL (c3) — the re-grain moved the WIDTH of the window and nothing else: an eighth marker landing INSIDE the window is still collected and still FAILS. FOUND: ${JSON.stringify(clauseMarkers(leakedFixture, heading))}`,
+    ).not.toEqual(SEVEN)
   })
 
   it('S-10 (fail-state F-G): the spec does NOT claim to have written the handoff note, and this repo writes NO file under `<Astrographer>/` — the fork tree is the fork\'s pass (`H-r6`) (§0.1; §6.2 prohibition 3)', () => {
