@@ -58,6 +58,11 @@
  *   log MUST move) — so "no filesystem call on a refusal" is not vacuous.
  * `CTL-5` the pane's `data-state` probe is driven against a pane whose carrier
  *   was NOT refreshed (the probe MUST be able to read a stale value).
+ * `CTL-6` (**ADDED `2026-10-11` by the gate-6 `F-1` red row — the note sits BESIDE `CTL-5`,
+ *   never over it**) the SAME probe is driven against a pane whose carrier SUPPLIED
+ *   `exclusion:'mcp-disabled'`, and it MUST read that supplied word — which is the INVERSE of
+ *   the AUTHORED envelope literal. So `F-1`'s four no-answer readings are SOURCE readings, and no
+ *   repair may satisfy the row by blanking the prop forever.
  *
  * ── THE TYPE SHIM (the sibling red sets' `-mend`-style pattern) ─────────────
  * Leg 4 is `npm run typecheck:tests` (`tsc -p tsconfig.tests.json`), which
@@ -95,7 +100,7 @@ import {
   SHARED_TYPES_SRC, STATE_MCP_DISABLED, STATE_MCP_ENABLED, STOP_AFTER_CONSECUTIVE, STRATEGY_IDS,
   STORE_CHANNELS_SRC, STORE_CORE_SRC, TIER4_CLOSED, TIER4_CLOSED_MESSAGE, TIER4_STATE_SRC,
   brokenCountCheckOf, brokenCountGuardOldForm, declaredReasonTokens, declaredTotalReport, exists,
-  executeRegister, loadStoreModule, registerReportLines, sha256Of, sourceOrEmpty,
+  executeRegister, loadStoreModule, preCarrierPaneDrives, registerReportLines, sha256Of, sourceOrEmpty,
   syntheticBrokenRegisterControlOnly, syntheticUnRunRegisterControlOnly,
   type Drive, type RegisterRow,
 } from './tier4-arbitrary-storage-register.js'
@@ -1274,9 +1279,21 @@ function buildRegister(): RegisterRow[] {
       ],
     },
 
-    /* ── ROW 6 · P-T4-IM-3 · S-T4-PANE-1 · 10 = 4 + 6 ──────────────────── */
+    /* ── ROW 6 · P-T4-IM-3 · S-T4-PANE-1 · `10 = 4 + 6` (AS FILED) · `11 = 10 + 1` (OPERATIVE,
+     * `2026-10-11`, the gate-6 `F-1` re-grain) ─────────────────────────────────────────────
+     * `RCA-8(d)` — ANNOTATE BESIDE, NEVER OVER: the AS-FILED term `10 = 2 (the `MCP:` segment ·
+     * the toggle's `data-state`) × 2 (states) = 4 + 6 (the six fabrications)` STANDS, its six
+     * FABRICATION drives below are UNMOVED, and the operative `11` is the as-filed `10` PLUS the
+     * ELEVENTH drive, which is the LAST entry of THIS row's own `drives` array (below the six
+     * FABRICATION drives). **CAUSE, DATED: `F-1`, THE GATE-6 LIVE FINDING** (`docs/specs/
+     * tier4-arbitrary-storage-live-battery.md` `§5` `F-1` / its `§3` `U-1`, verdict `FAIL`) — the
+     * toggle node carried the AUTHORED envelope literal `props['data-state'] = 'mcp-enabled'`
+     * before any carrier answer, so the register held `112/112` while the live first paint
+     * falsified the property. **THE RELOCATION THE HARNESS'S OWN NOTE NAMED AS OWED IS HERE:** the
+     * term is no longer composed into this row by `REGISTER_OWNED_TERMS` (that table now stands
+     * EMPTY); it is an entry of this table, and declared here as `term: 11`. ——————————————— */
     {
-      id: 'P-T4-IM-3', type: 'P-IM', strategyId: 'S-T4-PANE-1', term: 10,
+      id: 'P-T4-IM-3', type: 'P-IM', strategyId: 'S-T4-PANE-1', term: 11,
       property: 'THE PANE FABRICATES NO OBSERVABLE — the `MCP:` segment and the toggle\'s `data-state`/affordance are fed by the BOOLEAN-sourced carrier member, never by a store-derived value, never by the pane\'s own prior state; the refusal segment is present IFF the carrier\'s `read` is non-null; no tier-4 value or name ever appears in a rendered surface',
       drives: [
         {
@@ -1365,6 +1382,33 @@ function buildRegister(): RegisterRow[] {
             expect(paneTextOf(open.panels, 'security-status'), '`read: null` ⇒ NO refusal segment').not.toContain(REFUSAL_SEGMENT)
           },
         },
+        /* ── THE ELEVENTH DRIVE · `11 = 10 (as filed) + 1` · THE PRE-CARRIER FAMILY ────────────
+         * ADDED `2026-10-11` (THE GATE-6 `F-1` EVASION RULING; `§5.5.1` row 6, re-grained
+         * `10 → 11`). `RCA-8(d)`: the as-filed ten drives above STAND UNMOVED and this one is
+         * added BESIDE them — no term is dropped, merged or re-worded.
+         *
+         * WHY THE ROW NEEDED IT, AT THE MEASUREMENT: NOT ONE of the six FABRICATION drives above
+         * reads the PRE-CARRIER shape — `FABRICATION 2` drives the pane's own PRIOR state,
+         * `FABRICATION 4` the affordance substitution — so this row's `broken === 0` stood while
+         * the gate-6 live battery's `F-1` read, at first paint, `data-state: 'mcp-enabled'`: a word
+         * the carrier had NEVER supplied, and the INVERSE of the carried state in the
+         * MCP-DISABLED document. **THE PROPERTY WAS FALSIFIABLE AND WAS NOT DRIVEN — that is the
+         * evaded term this drive closes.**
+         *
+         * THE DRIVE ITSELF (its body, its four states `S1`/`S2`/`S3`/`S4` and its four in-row
+         * controls `CTL-0` · `CTL-P` · `CTL-N` · `NV`) is `preCarrierPaneDrives()` in
+         * `tests/tier4-arbitrary-storage-register.ts`, where it was first carried as a
+         * register-owned term; `REGISTER_OWNED_TERMS` there is now EMPTY, so the drive is THIS
+         * row's own attempt — one more attempt of `P-T4-IM-3`, never a new row and never another
+         * row's control — and the executor binds `drives.length (11)` directly to this row's
+         * declared cell. ITS ASSERTIONS, NAMED SO THE TERM CANNOT BE READ AS A COUNT ONLY: at
+         * EVERY one of the four PRE-CARRIER states (no carrier at all · a rejecting `get()` · the
+         * synchronous first-paint shape · an answer omitting the `exclusion` member) the toggle
+         * node's `props['data-state']` carries NEITHER `'mcp-enabled'` NOR `'mcp-disabled'` — the
+         * prop is ABSENT — and NO affordance word (`Disable MCP|Enable MCP`) is painted; and its
+         * controls prove the drive can FAIL (`CTL-0` fires on the as-filed authored literal, so
+         * the term may not be satisfied by blanking the toggle forever). */
+        ...preCarrierPaneDrives(),
       ],
     },
 
@@ -1653,6 +1697,13 @@ function buildRegister(): RegisterRow[] {
          * re-grain — `RCA-8(d)`: the as-filed term cell `16 = 4 × 2 + 8` stays VISIBLE and its
          * arithmetic UNMOVED; the operative term is `20 = 16 + 4 (the four terms below)`, so the
          * declared total moves `108 → 112` with its terms printed in the register report). */
+        /* ⟶ ANNOTATED BESIDE `2026-10-11` (THE GATE-6 `F-1` RE-GRAIN — `RCA-8(d)`: the note above
+         * STANDS and this one is added BESIDE it): the register's total moves ONCE MORE, at ROW 6
+         * and not here — `112 → 113 = 12 + 10 + 12 + 8 + 14 + 11 + 10 + 20 + 8 + 8` — because row 6
+         * (`P-T4-IM-3`) gained the PRE-CARRIER family its own eleventh drive counts, forced by the
+         * gate-6 live finding `F-1`. THIS ROW-8 CELL IS UNMOVED BY THAT MOVE: its declared term
+         * stays `20 = 16 (as filed: 4 arms × 2 states, + the eight refused value classes) + 4 (the
+         * four terms below)`, and this row's four drives below are the ones that carry them. */
         {
           label: 'TERM ADDED (the row-8 re-grain, term 16 → 20): THE NAMESPACE SEAM — `writeEntry(\'token\', …)` and `writeEntry(\'entries\', …)` leave the file\'s top-level `token`/`enabled`/`maxJournalLength` UNMOVED and round-trip under their OWN names',
           run: async () => {
@@ -2379,7 +2430,7 @@ describe('S2 §4.2 THE AUTHORING ORDER (the static/census rows REDDENED FIRST on
   })
 })
 
-describe('S2 §5.5.1 THE REGISTER (executed deterministically — 10 rows / 112 attempts; the AS-FILED total was 108 = 12+10+12+8+14+10+10+16+8+8, and the row-8 re-grain of `2026-10-11` adds the four terms below, printed WITH their terms)', () => {
+describe('S2 §5.5.1 THE REGISTER (executed deterministically — 10 rows / 113 attempts: the OPERATIVE total, printed WITH its terms, is `113 = 12 + 10 + 12 + 8 + 14 + 11 + 10 + 20 + 8 + 8` — `P-IM 47` · `P-SM 10` · `P-TP 56`, `47 + 10 + 56 = 113`, chain `12 → 22 → 34 → 42 → 56 → 67 → 77 → 97 → 105 → 113`; BOTH earlier forms stand BESIDE it, never over it — the FILING\'s `108 = 12 + 10 + 12 + 8 + 14 + 10 + 10 + 16 + 8 + 8` (`2026-10-11`, the spec gate) and the GATE-4 row-8 re-grain\'s `112 = 12 + 10 + 12 + 8 + 14 + 10 + 10 + 20 + 8 + 8` (`2026-10-11`, the four `D-i`…`D-iv` terms at row 8); the operative one is the gate-6 `F-1` re-grain of `2026-10-11`, row 6\'s PRE-CARRIER `+ 1`, caused by the live finding `F-1`)', () => {
   it('REGISTER-EXEC: every row executes its FULL declared term, in register order, and no row is un-run', async () => {
     execReport = await executeRegister(registerRows)
     expect(execReport.rows.length, '10 rows executed — an un-run row is a FAILURE, never a pass').toBe(10)
@@ -2387,20 +2438,41 @@ describe('S2 §5.5.1 THE REGISTER (executed deterministically — 10 rows / 112 
     expect(execReport.rows.map((r) => r.strategyId)).toEqual([...STRATEGY_IDS])
     expect(execReport.rows.every((r) => r.attemptsRun === r.declaredTerm), 'every row executed its full term').toBe(true)
     expect(execReport.unrunRows, `un-run rows: [${execReport.unrunRows.join(', ')}]`).toEqual([])
-    // AS FILED: 108. OPERATIVE (`2026-10-11`, the row-8 re-grain): 108 + 4 = 112.
-    expect(execReport.attemptsExecuted).toBe(112)
+    /* ── `RCA-8(d)` — THE OPERATIVE TOTAL PRINTED WITH ITS TERMS, EVERY DATED FORM KEPT
+     * BESIDE IT, NEVER OVER IT (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`) ————————————
+     * AS FILED (the spec gate's filing, `2026-10-11`): `108 = 12 + 10 + 12 + 8 + 14 + 10 + 10
+     *   + 16 + 8 + 8`, subtotals `P-IM 46` · `P-SM 10` · `P-TP 52`, `46 + 10 + 52 = 108`.
+     *   CAUSE, DATED: row 8 (`P-T4-TP-4`) then declared `16 = 4 × 2 + 8`.
+     * GATE-4 RE-GRAIN (`2026-10-11`, the ruled repair contract): `108 + 4 = 112 = 12 + 10 + 12
+     *   + 8 + 14 + 10 + 10 + 20 + 8 + 8`, subtotals `P-IM 46` · `P-SM 10` · `P-TP 56`,
+     *   `46 + 10 + 56 = 112`. CAUSE, DATED: row 8 gained the four `D-i`…`D-iv` terms (`+ 1` × 4).
+     * OPERATIVE (the gate-6 `F-1` evasion ruling, `2026-10-11`): `112 + 1 = 113 = 12 + 10 + 12
+     *   + 8 + 14 + 11 + 10 + 20 + 8 + 8`, subtotals `P-IM 47` · `P-SM 10` · `P-TP 56`,
+     *   `47 + 10 + 56 = 113`. CAUSE, DATED: row 6 (`P-T4-IM-3`, `S-T4-PANE-1`) gained the
+     *   PRE-CARRIER family — the `+ 1` term the gate-6 LIVE finding `F-1` forced (the AUTHORED
+     *   envelope literal `data-state: 'mcp-enabled'` standing before any carrier answer), now an
+     *   entry of row 6's OWN drives array (`11 = 10` as filed `+ 1`), not a composed term.
+     * THE FIGURE BELOW IS THE ONE THE RUN PRINTS — no form is silently rewritten by this edit. */
+    expect(execReport.attemptsExecuted, `the operative total, WITH its terms: 113 = ${DECLARED_TERMS.join(' + ')}`).toBe(113)
   })
 
   it('REGISTER-TERMS: the total is the SUM OF ITS OWN PRINTED TERMS, with the subtotals and the caps', async () => {
     if (execReport === null) execReport = await executeRegister(registerRows)
     const declared = declaredTotalReport()
-    expect(declared.sum, `112 = ${DECLARED_TERMS.join(' + ')}`).toBe(112)
+    expect(declared.sum, `113 = ${DECLARED_TERMS.join(' + ')}`).toBe(113)
     expect(declared.sum).toBe(DECLARED_TERMS.reduce((a, b) => a + b, 0))
     expect(execReport.rows.map((r) => r.declaredTerm)).toEqual([...DECLARED_TERMS])
-    // AS FILED: `{ im: 46, sm: 10, tp: 52 }`. OPERATIVE: `P-TP 52 → 56` (row 8: 16 → 20), `P-IM 46`
-    // and `P-SM 10` UNMOVED, so `46 + 10 + 56 = 112`.
-    expect(execReport.subtotals).toEqual({ im: 46, sm: 10, tp: 56 })
-    expect(execReport.subtotals.im + execReport.subtotals.sm + execReport.subtotals.tp).toBe(112)
+    /* ── THE SUBTOTALS BY TYPE, PRINTED WITH THEIR TERMS, EVERY DATED FORM BESIDE THE OPERATIVE
+     * ONE (`RCA-8(d)`) ———
+     * AS FILED (the spec gate, `2026-10-11`): `P-IM 46 = 12 + 8 + 10 + 8 + 8` · `P-SM 10` ·
+     *   `P-TP 52 = 12 + 10 + 14 + 16` — `46 + 10 + 52 = 108`.
+     * GATE-4 RE-GRAIN (`2026-10-11`, row 8's four `D-i`…`D-iv` terms): `P-TP 52 → 56 = 12 + 10 +
+     *   14 + 20` while `P-IM 46` and `P-SM 10` are UNMOVED — `46 + 10 + 56 = 112`.
+     * OPERATIVE (gate 6's `F-1` evasion ruling, `2026-10-11`, row 6's PRE-CARRIER `+ 1`):
+     *   `P-IM 46 → 47 = 12 + 8 + 11 + 8 + 8` while `P-SM 10` and `P-TP 56` are UNMOVED —
+     *   `47 + 10 + 56 = 113`. */
+    expect(execReport.subtotals).toEqual({ im: 47, sm: 10, tp: 56 })
+    expect(execReport.subtotals.im + execReport.subtotals.sm + execReport.subtotals.tp, '47 + 10 + 56 = 113').toBe(113)
     expect(Math.max(...DECLARED_TERMS), `per row ≤ ${REGISTER_ROW_CAP}`).toBeLessThanOrEqual(REGISTER_ROW_CAP)
     expect(execReport.declaredTotal).toBeLessThanOrEqual(REGISTER_TOTAL_CAP)
     expect(BOUNDED_ROWS, 'no row takes a draw (`§5.5.2` item 3)').toEqual([])
@@ -2440,7 +2512,7 @@ describe('S2 §5.5.1 THE REGISTER (executed deterministically — 10 rows / 112 
     expect(held + broken, 'held + broken = the executed total').toBe(execReport.attemptsExecuted)
     expect(broken, `EVERY row holds at green (executed = declared) — per row: ${summary}`).toBe(0)
     expect(rowsWithoutBreak, `rows carrying NO broken attempt: [${rowsWithoutBreak.join(', ')}]`).toEqual([...REGISTER_ROW_IDS])
-    expect(held, 'the held attempts are the DECLARED total, WITH its terms — AS FILED 108, OPERATIVE 112 (the row-8 re-grain adds four terms)').toBe(112)
+    expect(held, `the held attempts are the DECLARED total, WITH its terms — OPERATIVE 113 = ${DECLARED_TERMS.join(' + ')}, row 6's PRE-CARRIER + 1 forced by the gate-6 live finding F-1; BOTH earlier forms stay printed beside it — AS FILED 108 = 12 + 10 + 12 + 8 + 14 + 10 + 10 + 16 + 8 + 8 (the spec gate) and the GATE-4 RE-GRAIN 112 = 12 + 10 + 12 + 8 + 14 + 10 + 10 + 20 + 8 + 8 (row 8's four terms)`).toBe(113)
     expect(execReport.attemptsExecuted, `executed = declared = ${DECLARED_TERMS.join(' + ')}`).toBe(declaredTotalReport().sum)
     expect(execReport.unrunRows, 'and no row is un-run — an un-run row is a FAILURE, never a pass').toEqual([])
   })
@@ -2588,6 +2660,16 @@ describe('S2 REPAIR (gate 4\'s ruled repair contract) — THE RED ROWS', () => {
     const fieldInit = /private\s+cfg\b[^=]*=\s*\{([\s\S]*?)\}/.exec(panelsSrc)?.[1] ?? ''
     expect(fieldInit, 'CONTROL: the pane\'s `cfg` field initializer is found').not.toBe('')
     expect(/exclusion\s*:/.test(fieldInit), `the pane's own FIELD DEFAULT carries NO state member — a never-supplied pane has nothing to fabricate from. MEASURED INITIALIZER: ${fieldInit.trim().slice(0, 160)}`).toBe(false)
+    /* ── ANNOTATED BESIDE `2026-10-11` (`RCA-8(d)`: every byte above STANDS — this note is added
+     * BESIDE the as-filed cell, never over it). **THE `data-state` HALF IS NO LONGER A DECLARED
+     * LIMIT.** The as-filed state 4 above declared the `data-state` half *"not separately
+     * observable"* because its VALUE (with no reading yet) is byte-identical to the authored
+     * envelope's own literal. The gate-6 live battery's finding `F-1` REFUTED that instrument
+     * limit: the prop's PRESENCE before a carrier answer IS observable at the node layer and it IS
+     * the fabrication (`docs/specs/tier4-arbitrary-storage-live-battery.md` `§5` `F-1`), and the
+     * `[T]` row `F-1` below now reads it in four no-answer states. THE AS-FILED FIELD-DEFAULT
+     * TERM ABOVE IS UNAFFECTED AND STILL HOLDS: the pane's own FIELD carries no state member, so
+     * the literal the operator saw is not the field's — it is the AUTHORED NODE's. */
   })
 
   it('D-VII · the boot order: `createSecurityStore(` < the boot read < the flip < `await mcp.start()`, AND the flip < `new BrowserWindow(` (the CLOSE lands before the window is created/loaded)', () => {
@@ -2648,5 +2730,225 @@ describe('S2 REPAIR (gate 4\'s ruled repair contract) — THE RED ROWS', () => {
     expect(SECURITY_STORE_PIN_CHAIN.length, 'the chain keeps its terms awake, including the fifth (`§7b` row 1)').toBe(5)
     expect(new Set(SECURITY_STORE_PIN_CHAIN).size, `the chain's terms are DISTINCT: [${SECURITY_STORE_PIN_CHAIN.join(', ')}]`).toBe(5)
     expect(SECURITY_STORE_PIN.startsWith(SECURITY_STORE_PIN_CHAIN[4]), 'and the operative term IS the chain\'s fifth').toBe(true)
+  })
+})
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════
+ * S2 = `U-TIER4-ARBITRARY-STORAGE` — GATE 6's `F-1` (`HIGH`): THE RED ROW (`RCA-1`).
+ *
+ * Authored from the CONTRACT and from the gate-6 RECORD, against the tree as it stands, and RUN
+ * and REPORTED failing BEFORE any `src/**` byte of the repair. Nothing in `src/**` was read as a
+ * SOURCE OF EXPECTATIONS; the two sites cited below are cited so the repair has a site.
+ *
+ * ── THE FINDING, AS MEASURED ON THE ASSEMBLED APP (cited, never re-derived) ─────────────────
+ * Record: `docs/specs/tier4-arbitrary-storage-live-battery.md` `§5` `F-1`, whose matrix row is its
+ * `§3` `U-1` — verdict **`FAIL`**, falsifier *"a state that paints a `· MCP:` word OR a `data-state`
+ * PROP the carrier did not supply — i.e. a pre-carrier paint that carries state at all"*. A
+ * document-start `MutationObserver` on the real app read, at FIRST PAINT,
+ * `statusText: "token: (none) · enabled: [read, dispatch] · journal: ∞"` — NO `· MCP:` word, i.e.
+ * the pane's own reading is `null` and the `D-vi` FIELD-default fix DID land — while the toggle
+ * still carried `data-state: "mcp-enabled"` and its affordance had been cleared to `""`. In the
+ * MCP-DISABLED document that literal is the INVERSE of the carried state. Window measured: `2.4`
+ * ms (boot) / `2.6` ms (MCP-disabled), `68.3` ms instrument-widened, with a compositor frame
+ * delivered inside it.
+ *
+ * ── THE CLAUSES THIS ROW READS (each named, each a term of the assertion below) ─────────────
+ *  (1) `§2.6` item 3's dated `D-vi` note (`§3c`'s `S2-ADV-01`, `HIGH`, `HOST-FIX` + `RED-SET-FIX`):
+ *      *"BEFORE ANY CARRIER ANSWER — and ON A BRIDGE REJECTION — the pane paints NO `· MCP:` word
+ *      and writes NO `data-state` PROP."* — `D-vi` names THE PROP, not only the field, and
+ *      `§2.6` item 3's own words declare `cfg.exclusion` NULLABLE with `null` as the *"no reading
+ *      yet"* state.
+ *  (2) `§2.6` item 1(b): the toggle's `data-state` prop and its affordance word *"must come from
+ *      the boolean-fed carrier member"*.
+ *  (3) `§3.2` `FS-T4-13` + the dated note BESIDE it: a `data-state` PROP written before the
+ *      carrier has answered is a **FAILING** row.
+ *
+ * ── THE MECHANISM, AT THE BYTES (a cited reading, not an expectation) ───────────────────────
+ * The `null` arm of `syncConfig` pushes only `content: ''` for the toggle — it clears the
+ * AFFORDANCE WORD and writes NO prop — while the AUTHORED ENVELOPE NODE still declares
+ * `props: { id: 'exclusion-toggle', 'data-state': 'mcp-enabled' }`
+ * (`src/renderer/secure-panels.ts:227`), and nothing clears or removes that PROP. So the pane
+ * paints no state of its OWN and the surface it mounts still does. `D-vi`'s own words name the
+ * PROP, not only the field.
+ *
+ * ── THE STATES THIS ROW ENUMERATES, BEFORE THE DRIVES (`§3.1`/`§3.2` vocabulary) ─────────────
+ *  `F1-S1` **NO CARRIER AT ALL** — `window.provident.security` ABSENT: the pane's declared
+ *          `refresh()` skips the read entirely and `cfg.exclusion` stays at its declared `null`.
+ *  `F1-S2` **A BRIDGE THAT REJECTS** — `get()` throws (`S2-ADV-01` limb (c); the swallow at
+ *          `secure-panels.ts:462-464`), so no reading was taken this turn.
+ *  `F1-S3` **THE FIRST PAINT, DRIVEN SYNCHRONOUSLY** — see the layer note below.
+ *  `F1-S4` **A CARRIER ANSWER THAT OMITS THE `exclusion` MEMBER** — the pane's own declared
+ *          `undefined`-counts-as-`null` arm.
+ *  `F1-CTL` **THE INVERSE, CARRIER-SUPPLIED** (`CTL-6`) — `exclusion: 'mcp-disabled'` paints
+ *          `data-state='mcp-disabled'`, through the SAME probe. Driven FIRST, so the four
+ *          no-answer readings above are readings by a probe SEEN to read a SUPPLIED state word —
+ *          and that word is the INVERSE of the authored literal, which is the whole of `F-1`.
+ *  The settled states (`F1-CTL-1`..`F1-CTL-4`) are enumerated in the second row below.
+ * FAIL-STATE COVERED: **`FS-T4-13`** (extended by its dated note) — the pane rendering a state the
+ * carrier did not supply. `FS-T4-14`/`FS-T4-15` are NOT this row's subject.
+ *
+ * ── THE LAYER, AND WHAT THIS ROW DOES *NOT* INSTRUMENT (stated, never hidden) ───────────────
+ * This is a `[T]` row. **THE CLOSEST `[T]` SHAPE OF THE LIVE FIRST PAINT IS DRIVEN HERE, AND IT
+ * IS `F1-S3`:** `src/renderer/renderer.ts:643` calls `void panels.refresh()` **UN-AWAITED** while
+ * `:645` calls `refreshDebug(runtime)` **synchronously in the same turn**, so `syncConfig()` — and
+ * therefore the null arm — runs with NO reading taken. `F1-S3` drives exactly that: the pane is
+ * constructed, `refreshDebug(runtimeStub)` is called SYNCHRONOUSLY (no carrier, no await), and the
+ * node is read. `F1-S1`/`F1-S2` drive the same arm through `refresh()`'s two no-answer paths.
+ * **WHAT IS NOT REPRODUCIBLE AT `[T]`, AND WHERE IT IS CARRIED:** the DOCUMENT-START/TIMING half —
+ * the `2.4`/`2.6` ms window and the compositor frame delivered inside it — needs a real document,
+ * a real first paint and an injection-time observer. **THE LIVE ROW THAT CARRIES THAT HALF IS THE
+ * GATE-6 RECORD'S `U-1` (`docs/specs/tier4-arbitrary-storage-live-battery.md` `§3`), currently
+ * `FAIL`**, and its falsifier is quoted above. No `[U]` claim is made or moved by this file
+ * (`§1.4` item 3: no timing figure is claimed; every drive asserts SOURCE, ORDER and OUTCOME).
+ *
+ * ── THE REGISTER, AND WHY NO TERM MOVES IN THIS PASS ─────────────────────────────────────────
+ * `§5.5.1` row 6 (`P-T4-IM-3`, `S-T4-PANE-1`, term `10 = 4 + 6`) IS the pane's fabrication row, and
+ * NOT ONE of its six FABRICATION drives reads the PRE-CARRIER shape: FABRICATION 2 drives the
+ * pane's own PRIOR state, FABRICATION 4 the affordance substitution. **THAT GAP IS WHY THE
+ * REGISTER READ `112/112 held` WHILE THE LIVE BATTERY CAUGHT THIS.** A row-6 term `10 → 11` would
+ * move the file's DECLARED total `112 → 113`, i.e. a SPEC-OWNED cell (`§5.5.1`'s declared
+ * arithmetic, `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`), so **THIS PASS MOVES NO DECLARED TERM
+ * AND TOUCHES NO REGISTER BYTE**; the re-grain is recorded here as OWED, WITH ITS ARITHMETIC
+ * (`P-T4-IM-3 10 → 11 ⇒ 112 → 113`), to the supervisor's ruling — the same authority that owns
+ * every other register re-grain of this unit.
+ *
+ * ⟶ ANNOTATED BESIDE `2026-10-11` (THE OWED RE-GRAIN HAS LANDED — `RCA-8(d)`: the paragraph
+ * ABOVE STANDS, all of it, and this note is inserted BESIDE it, never over it). **THE RULING THE
+ * PASS ABOVE DEFERRED HAS BEEN GIVEN AND EXECUTED IN THE SAME `2026-10-11` WAVE**, so the
+ * paragraph's closing clause (*"THIS PASS MOVES NO DECLARED TERM AND TOUCHES NO REGISTER BYTE"*)
+ * is a record of THAT pass and MUST NOT BE READ AS THE CURRENT STATE: `§5.5.1` row 6
+ * (`P-T4-IM-3`, `S-T4-PANE-1`) now DECLARES **`11 = 10 (as filed) + 1`**, the register's declared
+ * total is **`113 = 12 + 10 + 12 + 8 + 14 + 11 + 10 + 20 + 8 + 8`** (`P-IM 47` · `P-SM 10` ·
+ * `P-TP 56`, `47 + 10 + 56 = 113`), and the eleventh drive it counts is an entry of that row's OWN
+ * `drives` array in this file (the PRE-CARRIER family, `...preCarrierPaneDrives()`), with
+ * `REGISTER_OWNED_TERMS` in the register harness standing EMPTY. **BOTH EARLIER FORMS STAY WAKE
+ * AND PRINTED:** the filing's `108 = 12 + 10 + 12 + 8 + 14 + 10 + 10 + 16 + 8 + 8` (the spec gate)
+ * and the gate-4 re-grain's `112 = 12 + 10 + 12 + 8 + 14 + 10 + 10 + 20 + 8 + 8` (row 8's four
+ * `D-i`…`D-iv` terms) — the `112 → 113` movement is row 6's `+ 1`, caused by `F-1`, the gate-6
+ * live finding this whole block is authored from. NO term, row, strategy id or cap is dropped,
+ * merged or re-worded by the relocation.
+ * ========================================================================================= */
+describe('S2 GATE-6 `F-1` — THE PANE\'S RE-SOURCE TO THE HOLDER IS TOTAL: no AUTHORED state literal may stand in for a reading the carrier never supplied', () => {
+  const STATE_WORDS: readonly string[] = [STATE_MCP_ENABLED, STATE_MCP_DISABLED]
+  const MCP_WORD = /· MCP:\s*(?:enabled|disabled)/
+  const AFFORDANCE_WORD = /Disable MCP|Enable MCP/
+  /** `refreshDebug`'s own runtime stub — the synchronous first-paint driver. The pane reads ONLY
+   *  `renderedHtmlResult()` from its runtime, so the stub carries exactly that one member. */
+  const runtimeStub = {
+    renderedHtmlResult: () => ({
+      census: { inTree: 0, registered: 0, unplaced: 0, destroyed: 0, prototypes: 0 },
+      ssrHtml: '',
+    }),
+  }
+
+  it('F-1 · NO `data-state` PROP BEFORE A CARRIER ANSWER (`§2.6` item 3\'s `D-vi` · item 1(b) · `§3.2` `FS-T4-13`): the AUTHORED ENVELOPE LITERAL may not stand in for a reading that does not exist — in four no-answer states, DRIVEN', async () => {
+    /* ── THE IN-ROW CONTROL (`CTL-6`), DRIVEN FIRST: the SAME probe reads a CARRIER-SUPPLIED word,
+     * and that supplied word is the INVERSE of the authored literal — so the readings below are
+     * SOURCE readings, and no repair may satisfy this row by blanking the prop forever. */
+    expect(STATE_WORDS, 'CONTROL: the clause\'s closed STATE-WORD pair — the only two words a `data-state` may ever carry — and the AUTHORED literal is one of them').toEqual([STATE_MCP_ENABLED, STATE_MCP_DISABLED])
+    const supplied = await mountPaneFor(carrierRecord(STATE_MCP_DISABLED, null))
+    expect(panePropOf(supplied.panels, 'exclusion-toggle', 'data-state'), 'CONTROL (`CTL-6`): a CARRIER-SUPPLIED `exclusion: mcp-disabled` paints the SUPPLIED word, through the same probe — the INVERSE of the authored literal').toBe(STATE_MCP_DISABLED)
+    expect(paneTextOf(supplied.panels, 'exclusion-toggle'), 'CONTROL: and the carrier-supplied affordance word is painted').toMatch(AFFORDANCE_WORD)
+
+    const readings: Array<{ state: string; prop: unknown; status: string; affordance: string }> = []
+    const readOf = (state: string, panels: SecurePanels): void => {
+      readings.push({
+        state,
+        prop: panePropOf(panels, 'exclusion-toggle', 'data-state'),
+        status: paneTextOf(panels, 'security-status'),
+        affordance: paneTextOf(panels, 'exclusion-toggle'),
+      })
+    }
+
+    /* `F1-S1` — NO CARRIER AT ALL: `window.provident.security` is ABSENT, so the pane's declared
+     * read is skipped entirely and `cfg.exclusion` stays at its declared `null` ("no reading
+     * yet"). */
+    ;(globalThis as unknown as { window?: unknown }).window = {}
+    const s1 = new SecurePanels(mountEl() as never)
+    await s1.refresh()
+    readOf('F1-S1', s1)
+
+    /* `F1-S2` — A BRIDGE THAT REJECTS (`S2-ADV-01` limb (c)): no reading was TAKEN this turn. */
+    ;(globalThis as unknown as { window?: unknown }).window = { provident: { security: { get: async () => { throw new Error('bridge down') } } } }
+    const s2 = new SecurePanels(mountEl() as never)
+    await s2.refresh()
+    readOf('F1-S2', s2)
+
+    /* `F1-S3` — THE FIRST PAINT, DRIVEN SYNCHRONOUSLY: the `[T]` shape of the live sequence
+     * (`renderer.ts:643`'s UN-AWAITED `void panels.refresh()` beside `:645`'s synchronous
+     * `refreshDebug(runtime)` in the SAME TURN) — `syncConfig()` runs with NO reading taken. */
+    const s3 = new SecurePanels(mountEl() as never)
+    s3.refreshDebug(runtimeStub)
+    readOf('F1-S3', s3)
+
+    /* `F1-S4` — A CARRIER ANSWER THAT OMITS THE `exclusion` MEMBER (the declared
+     * `undefined`-counts-as-`null` arm). */
+    const omittingExclusion: Record<string, unknown> = { token: 'SEED', enabled: ['read', 'dispatch'], maxJournalLength: 120, read: null }
+    const s4 = await mountPaneFor(omittingExclusion)
+    readOf('F1-S4', s4.panels)
+
+    /* ── THE LANDED HALF OF `D-vi`, ASSERTED PER STATE, AND IT HOLDS ON TODAY'S BYTES: the
+     * `· MCP:` word and the affordance word are NOT painted before a carrier answer. That is what
+     * makes the red below ATTRIBUTABLE TO THE PROP ALONE — the FIELD-default repair landed; the
+     * AUTHORED NODE's literal did not move with it. */
+    for (const r of readings) {
+      expect(r.status, `${r.state} — the \`· MCP:\` WORD is not painted before a carrier answer (measured line: "${r.status}")`).not.toMatch(MCP_WORD)
+      expect(r.affordance, `${r.state} — nor is the AFFORDANCE WORD (measured: "${r.affordance}")`).not.toMatch(AFFORDANCE_WORD)
+    }
+    /* THE FIDELITY ANCHOR — the `[T]` shape of `F1-S1` reproduces the LIVE record's own pre-carrier
+     * `statusText` VERBATIM (`docs/specs/tier4-arbitrary-storage-live-battery.md` `§3` `U-1`), so
+     * the four readings below are the same paint the live observer caught, measured one layer
+     * down. */
+    expect(readings[0].status, 'THE FIDELITY ANCHOR: `F1-S1` reproduces the live record\'s pre-carrier `statusText` VERBATIM — the same paint, read at the node layer').toBe('token: (none) · enabled: [read, dispatch] · journal: ∞')
+
+    /* ── THE RED (all FOUR no-answer states measured in ONE reading, so a first failure hides
+     * none of them): NO `data-state` PROP BEFORE A CARRIER ANSWER. The expected reading is the
+     * clause's own — `D-vi`: *"writes NO `data-state` PROP"* — so an absent prop is the term, and
+     * NEITHER state word is admitted (an authored `mcp-enabled` is the INVERSE of the carried
+     * state in the MCP-DISABLED case: the live record's own figure). */
+    expect(
+      readings.map((r) => `${r.state}: ${JSON.stringify(r.prop)}`),
+      'NO AUTHORED STATE LITERAL BEFORE A CARRIER ANSWER — `§2.6` item 3\'s `D-vi` ("BEFORE ANY CARRIER ANSWER … writes NO `data-state` PROP"), `§2.6` item 1(b) (the prop "must come from the boolean-fed carrier member"), `§3.2` `FS-T4-13`. Expected every no-answer state to write NO prop at all (`undefined`); what stands there instead is the AUTHORED ENVELOPE LITERAL `\'mcp-enabled\'` (`src/renderer/secure-panels.ts:227`), the one thing the `null` arm never clears — it clears the affordance WORD and writes no prop. The clause admits NEITHER state word, and the value is measured, never inferred.',
+    ).toEqual(['F1-S1: undefined', 'F1-S2: undefined', 'F1-S3: undefined', 'F1-S4: undefined'])
+  })
+
+  it('F-1-CTL · THE SETTLED PATH IS UNCHANGED (the non-vacuity control for `F-1`): a successful carrier answer paints the CARRIER\'s value at BOTH cells — so the repair may NOT be "stop painting the toggle" — and the refusal segment is present IFF `read` is non-null', async () => {
+    /* `F1-CTL-1` — OPEN, `read: null` (the steady open pair): BOTH cells carry the carrier. */
+    const open = await mountPaneFor(carrierRecord(STATE_MCP_DISABLED, null))
+    expect(panePropOf(open.panels, 'exclusion-toggle', 'data-state'), 'CELL 1 (`§2.6` item 1(b)): the toggle\'s `data-state` carries the CARRIER\'s value').toBe(STATE_MCP_DISABLED)
+    expect(paneTextOf(open.panels, 'security-status'), 'CELL 2: the `MCP:` segment carries the SAME reading').toContain('· MCP: disabled')
+    expect(paneTextOf(open.panels, 'exclusion-toggle'), 'and the affordance word follows it').toContain('Enable MCP')
+    expect(paneTextOf(open.panels, 'security-status'), '`read: null` ⇒ NO refusal segment').not.toContain(REFUSAL_SEGMENT)
+
+    /* `F1-CTL-2` — CLOSED with the refusal (the SAME two cells, the INVERSE value — DRIVEN, never
+     * inferred: this is the value pair the `F-1` finding turns on). */
+    const closed = await mountPaneFor(carrierRecord(STATE_MCP_ENABLED, { status: 'refused', reason: TIER4_CLOSED, message: TIER4_CLOSED_MESSAGE }))
+    expect(panePropOf(closed.panels, 'exclusion-toggle', 'data-state'), 'the INVERSE value, driven from the carrier').toBe(STATE_MCP_ENABLED)
+    expect(paneTextOf(closed.panels, 'security-status')).toContain('· MCP: enabled')
+    expect(paneTextOf(closed.panels, 'exclusion-toggle')).toContain('Disable MCP')
+    expect(paneTextOf(closed.panels, 'security-status'), 'the segment is PRESENT iff `read` is non-null').toContain(REFUSAL_SEGMENT)
+
+    /* `F1-CTL-3` — the SAME pane, re-refreshed with the OTHER carrier value (the re-source
+     * driven, `CTL-5`'s own subject): the two cells move TOGETHER, and the segment leaves with the
+     * refusal. */
+    ;(globalThis as unknown as { window?: unknown }).window = { provident: { security: { get: async () => ({ ...carrierRecord(STATE_MCP_DISABLED, null) }) } } }
+    await closed.panels.refresh()
+    expect(panePropOf(closed.panels, 'exclusion-toggle', 'data-state'), 'the pane re-sources from the CARRIER — never from its own prior value, never from a literal').toBe(STATE_MCP_DISABLED)
+    expect(paneTextOf(closed.panels, 'security-status'), 'and BOTH cells moved together').toContain('· MCP: disabled')
+    expect(paneTextOf(closed.panels, 'security-status'), '`read` is null again ⇒ the segment is gone').not.toContain(REFUSAL_SEGMENT)
+
+    /* `F1-CTL-4` — THE DECLARED RETENTION ACROSS A BRIDGE ERROR (`§2.6` item 3's own reading of the
+     * as-filed *"absent means the last observed read was performed"*: *"the last value it WAS TOLD
+     * stays on screen"*), which `§3.2` `FS-T4-13`'s dated note declares NOT A FAILURE. **THE LIMIT
+     * OF THIS ARM, NAMED:** the note makes RETENTION of a CARRIER-SUPPLIED value not-a-failure, so
+     * this row does NOT require the prop to be retained; what it requires is that the AUTHORED
+     * LITERAL is not what stands there — the two admitted readings are the last CARRIER-SUPPLIED
+     * value or an absent prop. */
+    ;(globalThis as unknown as { window?: unknown }).window = { provident: { security: { get: async () => { throw new Error('bridge down') } } } }
+    await closed.panels.refresh()
+    expect(paneTextOf(closed.panels, 'security-status'), 'the last CARRIER-SUPPLIED reading stays on the line — and it is `mcp-disabled`, NOT the authored literal').toContain('· MCP: disabled')
+    const retained = panePropOf(closed.panels, 'exclusion-toggle', 'data-state')
+    expect([STATE_MCP_DISABLED, undefined], `the prop carries the last CARRIER-SUPPLIED value or is ABSENT — never the AUTHORED literal (measured: ${JSON.stringify(retained)}; the authored literal is ${STATE_MCP_ENABLED}, which is the value \`F-1\` measures in the no-answer states)`).toContain(retained)
+    expect([STATE_MCP_DISABLED, undefined], `CONTROL: NEITHER admitted reading is the AUTHORED literal — \`${STATE_MCP_DISABLED}\` and an absent prop are BOTH distinct from \`${STATE_MCP_ENABLED}\`, which is the value \`F-1\` measures in its four no-answer states`).not.toContain(STATE_MCP_ENABLED)
   })
 })

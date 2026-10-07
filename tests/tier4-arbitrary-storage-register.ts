@@ -70,6 +70,29 @@
 // (`DECLARED_TERMS`), so the two files' numbers cannot drift apart silently. **THE RELOCATION IS
 // OWED AND NAMED:** when the sibling test file is free to be edited, the same drive belongs in
 // row 6's own `drives` array beside its as-filed ten, and this table empties.
+//
+// ⟶ RELOCATED `2026-10-11` (THE OWED RELOCATION, LANDED — `RCA-8(d)`: the paragraph above STANDS,
+// every byte of it, and this one is inserted BESIDE it, never over it). **THE DECLARED CELL AND THE
+// DRIVE'S HOME ARE NOW ROW 6'S OWN:** `tests/tier4-arbitrary-storage.test.ts`'s `buildRegister()`
+// declares `P-T4-IM-3 … term: 11` and its `drives` array carries ELEVEN entries — the as-filed ten,
+// then `...preCarrierPaneDrives()` (THIS module's own drive builder, still live, still carrying the
+// four controls `CTL-0` · `CTL-P` · `CTL-N` · `NV`). **THIS TABLE NOW STANDS EMPTY**
+// (`REGISTER_OWNED_TERMS = []`): the executor composes nothing into any row and its cross-check
+// binds `row.drives.length` DIRECTLY to `DECLARED_TERMS[i]`, so the two files' numbers still cannot
+// drift apart silently. The arithmetic is UNMOVED by the relocation — `113 = 12 + 10 + 12 + 8 + 14
+// + 11 + 10 + 20 + 8 + 8` · `P-IM 47` · `P-SM 10` · `P-TP 56` · `47 + 10 + 56 = 113` · chain
+// `12 → 22 → 34 → 42 → 56 → 67 → 77 → 97 → 105 → 113` — and BOTH as-filed forms stay printed,
+// each under its own dated note, in `arithmeticForms()` below.
+//
+// **THE SHAPE TAKEN, NAMED (the supervisor's obligation 2, and WHY):** the TERM'S HOME — its
+// declared cell and its count inside row 6's own strategy table — is RELOCATED; the DRIVE'S BUILDER
+// stays in this module as a LIVE, SINGLE-CONSUMER factory invoked by that table (so the four
+// controls above remain THIS harness's own, driven verbatim, and NO second, unexecuted copy of the
+// drive exists — a dead instrument is exactly what `§3c`'s `S2-ADV-09` condemned for the stale pin).
+// Deleting the builder instead would be a destructive edit this pass cannot commit (`RCA-8(b)`:
+// commit before a destructive-capable operation; `RCA-8(c)`: a whole-file rewrite of a >200-line
+// file is forbidden unless committed in the same pass), and re-writing its body inline in the test
+// file would duplicate it. No row, term, strategy id or cap moves with the relocation.
 
 import { existsSync, readFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
@@ -353,7 +376,10 @@ export interface RowReport {
   /** THE REGISTER-OWNED TERM COUNT composed into this row (`2026-10-11`, the gate-6 `F-1`
    *  re-grain): `0` for every row but `P-T4-IM-3`, whose declared cell is its as-filed `10` PLUS
    *  `1` register-owned attempt. Recorded so `declared 11` is never misread as eleven as-filed
-   *  drives. */
+   *  drives.
+   *  ⟶ RELOCATED `2026-10-11`: this count is now `0` for EVERY row — row 6's `+ 1` term lives in
+   *  that row's OWN `drives` array (`tests/tier4-arbitrary-storage.test.ts`, `term: 11` with
+   *  ELEVEN drives) — so `declared 11` IS eleven as-filed drives and nothing is composed in. */
   readonly harnessOwnedTerm: number
   readonly attemptsRun: number
   readonly abandoned: number
@@ -420,6 +446,19 @@ export interface ExecReport {
  *           value — the word standing there is the carrier's, not the pane's.
  *   `NV`    (**NON-VACUITY**) the settled arm still writes **BOTH** cells from the carrier, in
  *           BOTH directions — so a pane that blanked the prop forever FAILS this term.
+ *
+ * ⟶ RELOCATED `2026-10-11` (THE OWED RELOCATION, LANDED — `RCA-8(d)`: every byte above STANDS, and
+ * this note is added BESIDE it). **THE PARAGRAPH ABOVE'S PREMISE IS NOW HISTORICAL, NAMED SO IT IS
+ * NOT READ AS CURRENT:** the drive is NO LONGER a `REGISTER-OWNED TERM` composed in-row by
+ * `executeRegister` — `REGISTER_OWNED_TERMS` below stands EMPTY — and it is NO LONGER out of the
+ * test file's reach. **ITS HOME IS ROW 6'S OWN `drives` ARRAY** in
+ * `tests/tier4-arbitrary-storage.test.ts` (`P-T4-IM-3`, `S-T4-PANE-1`, `term: 11`), whose eleventh
+ * entry is `...preCarrierPaneDrives()` — this builder, UNCHANGED, now reached as one more attempt
+ * of that row rather than composed by the register. THE FOUR STATES, THE FOUR CONTROLS AND THE
+ * READING (`the toggle node's `props['data-state']` carries NEITHER state word and no affordance
+ * word, at every PRE-CARRIER state`) are EXACTLY as filed; the term's count is unchanged at one
+ * attempt (`11 = 10 as filed + 1`), and the register's arithmetic is UNMOVED:
+ * `113 = 12 + 10 + 12 + 8 + 14 + 11 + 10 + 20 + 8 + 8`.
  * ═════════════════════════════════════════════════════════════════════════════════════════ */
 
 export const PANE_TOGGLE_NODE_ID = 'exclusion-toggle'
@@ -512,7 +551,7 @@ function installCarrier(bridge: Record<string, unknown> | null): void {
 export function preCarrierPaneDrives(): readonly Drive[] {
   return [
     {
-      label: 'REGISTER-OWNED TERM (+1) `S-T4-PANE-1` · THE PRE-CARRIER FAMILY: S1 no carrier at all · S2 a rejecting bridge · S3 the first paint driven synchronously (a read IN FLIGHT) · S4 a carrier answer omitting `exclusion` ⇒ at EVERY one of them the toggle node carries NEITHER `mcp-enabled` NOR `mcp-disabled` and NO affordance word; CONTROLS: the predicate FIRES on the as-filed authored literal (CTL-0) · the same probe READS a carrier-supplied inverse word (CTL-P) · the predicate does NOT fire on the settled carrier value (CTL-N) · the settled arm writes BOTH cells from the carrier, BOTH directions (NV)',
+      label: 'PRE-CARRIER FAMILY — row 6\'s OWN ELEVENTH drive (`P-T4-IM-3`, `term: 11`; RELOCATED `2026-10-11` beside the as-filed carrier label `REGISTER-OWNED TERM (+1) \`S-T4-PANE-1\``, which is no longer its home): S1 no carrier at all · S2 a rejecting bridge · S3 the first paint driven synchronously (a read IN FLIGHT) · S4 a carrier answer omitting `exclusion` ⇒ at EVERY one of them the toggle node carries NEITHER `mcp-enabled` NOR `mcp-disabled` and NO affordance word; CONTROLS: the predicate FIRES on the as-filed authored literal (CTL-0) · the same probe READS a carrier-supplied inverse word (CTL-P) · the predicate does NOT fire on the settled carrier value (CTL-N) · the settled arm writes BOTH cells from the carrier, BOTH directions (NV)',
       run: async () => {
         const { tools, reason } = await loadPaneTools()
         if (tools === null) throw new Error(`the PRE-CARRIER term cannot be driven — ${reason}`)
@@ -676,7 +715,18 @@ export function preCarrierPaneDrives(): readonly Drive[] {
  *  and fabrication predicate on the AS-FILED literal `'mcp-enabled'` (which
  *  `git show 8955c4f:src/renderer/secure-panels.ts` declares) and BOTH FIRE there — so at the
  *  as-filed bytes this attempt would have been a BROKEN one. **A red re-grain here must never be
- *  manufactured by pinning bytes; it is read from the node, and the node now answers silence.** */
+ *  manufactured by pinning bytes; it is read from the node, and the node now answers silence.**
+ *
+ *  ⟶ RELOCATED `2026-10-11` (`RCA-8(d)`: the whole note above STANDS, unedited, and this one is
+ *  inserted BESIDE it). **THE SHAPE THIS INTERFACE WAS AUTHORED FOR IS NOW THE EMPTY CASE:** the
+ *  re-grain's own premise — *"while the sibling test file is out of the pass’s edit set"* — no
+ *  longer holds. Row 6's term is declared and carried in THAT file (`P-T4-IM-3`, `term: 11`,
+  * eleven drives, the last of them `...preCarrierPaneDrives()`), `REGISTER_OWNED_TERMS` below
+ *  stands EMPTY, `Σ term = 0` for every row, and the cross-check this interface names now reduces
+ *  to `row.drives.length === DECLARED_TERMS[i]` — still a refusal to run, still per row. The
+ *  interface and the composition path are KEPT so a future register-owned term is expressible;
+ *  NOTHING is deleted, and the measured outcome quoted above (`held 11 · BROKEN 0`) is the reading
+ *  the relocated term reproduces as row 6's own eleventh attempt. */
 export interface RegisterOwnedTerm {
   readonly rowId: string
   readonly strategyId: string
@@ -685,11 +735,30 @@ export interface RegisterOwnedTerm {
   readonly drives: readonly Drive[]
 }
 export const REGISTER_OWNED_TERMS: readonly RegisterOwnedTerm[] = [
-  {
-    rowId: 'P-T4-IM-3', strategyId: 'S-T4-PANE-1', term: 1,
-    cause: 'GATE-6 `F-1` (HIGH): the toggle node carried the AUTHORED envelope literal `data-state: \'mcp-enabled\'` before any carrier answer, so the register held `112/112` while the live layer FALSIFIED the property — the row’s as-filed `10 = 4 + 6` drives the fabrications but reads NO PRE-CARRIER shape.',
-    drives: preCarrierPaneDrives(),
-  },
+  /* ⟶ EMPTIED `2026-10-11` (THE OWED RELOCATION, LANDED — `RCA-8(d)`: the as-filed entry that stood
+   * here is RECORDED HERE, never erased). **THE TERM'S HOME IS ROW 6'S OWN `drives` ARRAY** in
+   * `tests/tier4-arbitrary-storage.test.ts` (`P-T4-IM-3`, `S-T4-PANE-1`, `term: 11`; its ELEVENTH
+   * driver is `...preCarrierPaneDrives()`), so THE REGISTER OWNS NO TERM OF ANY ROW: the executor's
+   * in-row composition composes nothing and its cross-check binds `row.drives.length` DIRECTLY to
+   * the row's declared cell.
+   *
+   * THE AS-FILED ENTRY, KEPT VISIBLE, STOOD EXACTLY:
+   *   `{ rowId: 'P-T4-IM-3', strategyId: 'S-T4-PANE-1', term: 1, drives: preCarrierPaneDrives() }`
+   * with the cause *"GATE-6 `F-1` (HIGH): the toggle node carried the AUTHORED envelope literal
+   * `data-state: 'mcp-enabled'` before any carrier answer, so the register held `112/112` while
+   * the live layer FALSIFIED the property — the row's as-filed `10 = 4 + 6` drives the fabrications
+   * but reads NO PRE-CARRIER shape."* THAT CAUSE IS UNCHANGED and now rides the row's own drive.
+   *
+   * THE ARITHMETIC IS UNMOVED BY THE RELOCATION (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`):
+   * `113 = 12 + 10 + 12 + 8 + 14 + 11 + 10 + 20 + 8 + 8` · `P-IM 47 = 12 + 8 + 11 + 8 + 8` ·
+   * `P-SM 10` · `P-TP 56 = 12 + 10 + 14 + 20` · `47 + 10 + 56 = 113` · chain
+   * `12 → 22 → 34 → 42 → 56 → 67 → 77 → 97 → 105 → 113` — and BOTH as-filed forms (`108`… the spec
+   * gate; `112`… the gate-4 row-8 re-grain) stay printed beside it in `arithmeticForms()`.
+   *
+   * **NOTHING WAS DELETED FROM THIS MODULE:** `RegisterOwnedTerm`, `registerOwnedTermsFor`, the
+   * executor's composition path and its cross-check all STAND — empty-case exercised — so a future
+   * register-owned term is still expressible, and `preCarrierPaneDrives()` below stays LIVE with
+   * its one consumer (row 6's own table). */
 ]
 export function registerOwnedTermsFor(row: RegisterRow): readonly RegisterOwnedTerm[] {
   return REGISTER_OWNED_TERMS.filter((t) => t.rowId === row.id && t.strategyId === row.strategyId)
@@ -728,7 +797,12 @@ export async function executeRegister(
     }
     /* THE REGISTER-OWNED TERMS OF THIS ROW (`2026-10-11`, the gate-6 `F-1` re-grain): composed
      * IN-ROW, so the declared cell is the row's own drives PLUS what the register itself owns —
-     * and the two are cross-checked against the declared cell, so neither can drift silently. */
+     * and the two are cross-checked against the declared cell, so neither can drift silently.
+     * ⟶ RELOCATED `2026-10-11`: `REGISTER_OWNED_TERMS` stands EMPTY, so this path composes NOTHING
+     * for ANY row and the cross-check below now binds `row.drives.length` DIRECTLY to
+     * `DECLARED_TERMS[i]` — the empty case is what the ten rows exercise. The path is KEPT (not
+     * removed): a future register-owned term is still expressible, and the cross-check keeps its
+     * bite either way. */
     const owned = registerOwnedTermsFor(row)
     const ownedTerm = owned.reduce((a, t) => a + t.term, 0)
     const ownedDrives = owned.flatMap((t) => [...t.drives])
@@ -840,6 +914,10 @@ export function registerReportLines(r: ExecReport): string[] {
   lines.push('REGISTER-ROW-OUTCOMES (executed run):')
   for (const o of r.rows) {
     const owned = o.harnessOwnedTerm > 0 ? ` = ${o.declaredTerm - o.harnessOwnedTerm} (as filed) + ${o.harnessOwnedTerm} (REGISTER-OWNED TERM: the PRE-CARRIER family)` : ''
+    // ⟶ `2026-10-11`: THE `else` BRANCH IS NOW THE OPERATIVE ONE FOR EVERY ROW (`REGISTER_OWNED_TERMS`
+    // stands EMPTY after the relocation of row 6's term into row 6's OWN `drives` array), so no row's
+    // line is annotated as composed; row 6 prints `declared 11 → attempts 11 · held 11`, its eleven
+    // drives being its own.
     lines.push(`  ${o.id} [${o.type}] ${o.strategyId}: declared ${o.declaredTerm}${owned} → attempts ${o.attemptsRun} · held ${o.held} · BROKEN ${o.broken} · state ${o.state} · maxConsecutiveFailures ${o.maxConsecutiveFailures} · cap ${o.declaredTerm} ≤ ${REGISTER_ROW_CAP} ${o.declaredTerm <= REGISTER_ROW_CAP ? '✓' : '✗'}`)
   }
   if (r.registerReasons.length > 0) {
