@@ -858,3 +858,7 @@ red set in the unit's OWN file, `tests/store-modules-bytes.test.ts`; **no over-s
 survives the review** (the differential proves the anti-ambient claim, not the store's correctness —
 `§5.5.2`'s honesty block is the audit's own basis), and **an un-run register row is a FAILURE,
 never a pass** — the standing rule, unchanged.
+
+---
+
+**⟶ DATED POINTER, `2026-10-11` — THE `docs/pending.md` CITATIONS IN THIS FILE RESOLVE HERE (`RCA-8(d)`: an ADDITIVE block at the file's end; NOT ONE PRE-EXISTING BYTE IS REWRITTEN, no finding, verdict or count moves).** **THE TWO CITED SITES: the `§0` reference-table row cites `docs/pending.md` `§Q`'s mechanism row (the listhost/slothost object-placement halves among the NON-DATA set), and the `F-6d` row cites `docs/pending.md` `§Q`'s mechanism row again.** **`§Q` IS RETIRED BY THE `2026-10-11` SWEEP, AND BOTH SITES RESOLVE TO ITS STUB IN `docs/pending.md` `§6.4` + `§6.6`.** **THE PER-ROW RECORD IS `archive/pending/2026-10-11-retired-rows-index.md` (`§E`); THE AS-FILED TEXT IS `archive/pending/2026-10-11-pending-as-filed-pre-sweep.md` (`sha256 b437a7db5398af3f14d8286f8b3e442ceae38308baf17ee8970da4fa89368382`, byte-identical to `git show 35fc7f2:docs/pending.md`).** **THE LIVE OBLIGATION IS RESTATED IN `docs/pending.md` `§1(i)` (the `§Q` exemption arm) and `§3` (the store-side carries); this unit's authority remains `docs/next-steps.md`'s `## DONE — U-STORE-MODULES-BYTES` record.**
