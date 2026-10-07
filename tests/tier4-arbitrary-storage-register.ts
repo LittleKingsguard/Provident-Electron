@@ -35,6 +35,41 @@
 // **THIS REGISTER IS AUTHORED AT THE `§5.5.1` AS-FILED FIGURES AND ITS EXECUTED TERMS
 // ARE `108`, UNMOVED.** No term, row, strategy id or cap is re-grained by the red pass;
 // the red is REPORTED (per-row `held`/`broken`), never smoothed.
+//
+// ⟶ RE-GRAINED `2026-10-11` (THE GATE-6 `F-1` **EVASION** RULING — `AGENTS.md` item 11(f): *"a
+// property the live layer could FALSIFY while this register read `broken === 0` is a measured
+// EVASION … so the term is ADDED, never merged away, and the row's count is an OUTCOME, not a
+// budget"*; `RCA-8(d)`: **annotate BESIDE, never over** — every byte of the contract block above
+// STANDS, and the as-filed `108` and the gate-4 `112` forms stand below, each under its own dated
+// note). **THE REGISTER'S OPERATIVE DECLARED TOTAL IS NOW
+// `113 = 12 + 10 + 12 + 8 + 14 + 11 + 10 + 20 + 8 + 8`**, with `P-IM 47 = 12 + 8 + 11 + 8 + 8` ·
+// `P-SM 10` · `P-TP 56 = 12 + 10 + 14 + 20`, and `47 + 10 + 56 = 113`; chain
+// `12 → 22 → 34 → 42 → 56 → 67 → 77 → 97 → 105 → 113`; caps: largest row `20 ≤ 100` · total
+// `113 ≤ 400`; an un-run row is still reported as a FAILURE, never as a pass.
+//
+// **WHAT MOVED, AND WHY IT IS +1 AND NOT A MERGE (`§5.5.1` row 6 = `P-T4-IM-3`, strategy
+// `S-T4-PANE-1`): THE AS-FILED TERM `10 = 2 (the `MCP:` segment · the toggle's `data-state`) ×
+// 2 (states) = 4 + 6 (the six fabrications) STAYS PRINTED HERE, BESIDE THE RE-GRAINED `11`.**
+// The added term is the **PRE-CARRIER FAMILY**: `(a)` no `window.provident.security` at all ·
+// `(b)` a `get()` that REJECTS · `(c)` the FIRST-PAINT shape driven synchronously (a carrier
+// read IN FLIGHT, `refreshDebug` in the same turn) · `(d)` a carrier answer OMITTING the
+// `exclusion` member. **ITS CAUSE IS NAMED: `F-1`, THE GATE-6 LIVE FINDING**
+// (`docs/specs/tier4-arbitrary-storage-live-battery.md` `§5` `F-1` / its `§3` `U-1`, verdict
+// `FAIL`). None of row 6's as-filed ten drives reads the PRE-CARRIER shape — `FABRICATION 2`
+// drives the pane's own PRIOR state, `FABRICATION 4` the affordance substitution — so the
+// register held `112/112` while the live first paint carried a `data-state: 'mcp-enabled'` the
+// carrier had never supplied, the **INVERSE** of the carried state in the MCP-DISABLED document.
+// **THAT IS THE EVASION THIS TERM CLOSES: the property was FALSIFIABLE and was not driven.**
+//
+// **WHERE THE TERM'S DRIVE LIVES, STATED SO NO LATER READER HAS TO INFER IT:** the as-filed ten
+// drives of row 6 are built by `buildRegister()` in `tests/tier4-arbitrary-storage.test.ts`. This
+// pass's edit set is THIS FILE ONLY, so the added term is carried as a **REGISTER-OWNED TERM**
+// (`REGISTER_OWNED_TERMS` below) that `executeRegister` composes INTO the row **in-row** — the
+// term is one attempt of row 6, not a new row and not a separate row's control — and the executor
+// cross-checks `the row's own drives + its register-owned terms === the declared cell`
+// (`DECLARED_TERMS`), so the two files' numbers cannot drift apart silently. **THE RELOCATION IS
+// OWED AND NAMED:** when the sibling test file is free to be edited, the same drive belongs in
+// row 6's own `drives` array beside its as-filed ten, and this table empties.
 
 import { existsSync, readFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
@@ -156,8 +191,85 @@ export const REGISTER_ROW_IDS: readonly string[] = [
  *  with row 8 = `20 = 16 (the as-filed four arms × two states + the eight value classes) + 4 (the
  *  four added terms above)`; the subtotals move `P-TP 52 → 56` and `P-IM 46` / `P-SM 10` are
  *  UNMOVED, so `46 + 10 + 56 = 112`. **NO term is dropped, no row is merged and the `≤8` figure
- *  stays a SIGNAL, never a ceiling.** */
-export const DECLARED_TERMS: readonly number[] = [12, 10, 12, 8, 14, 10, 10, 20, 8, 8]
+ *  stays a SIGNAL, never a ceiling.**
+ *
+ *  ⟶ RE-GRAINED BESIDE `2026-10-11` (THE GATE-6 `F-1` EVASION RULING — the row-6 PRE-CARRIER
+ *  term; `RCA-8(d)`: neither form above is overwritten, and BOTH keep their own dated note in
+ *  `DECLARED_TERMS_AS_FILED` / `DECLARED_TERMS_ROW8_REGRAIN` below): **ROW 6 (`P-T4-IM-3`,
+ *  `S-T4-PANE-1`) GAINS ONE TERM — `10 → 11`, the PRE-CARRIER FAMILY, whose as-filed form
+ *  `10 = 2 × 2 + 6` stays printed above and in the row's own table.** Cause, named: **`F-1`, the
+ *  gate-6 live finding** — the toggle node carried the AUTHORED envelope literal
+ *  `props['data-state'] = 'mcp-enabled'` before any carrier answer, so the register's `112/112`
+ *  stood while the live layer FALSIFIED the property. **SO THE OPERATIVE TERM IS
+ *  `112 + 1 = 113 = 12 + 10 + 12 + 8 + 14 + 11 + 10 + 20 + 8 + 8`**, with row 6 =
+ *  `11 = 10 (as filed: 4 + 6) + [1] (the PRE-CARRIER family)`; the subtotals move
+ *  `P-IM 46 → 47 (12 + 8 + 11 + 8 + 8)` while `P-SM 10` and `P-TP 56` are UNMOVED, so
+ *  `47 + 10 + 56 = 113`; the chain is `12 → 22 → 34 → 42 → 56 → 67 → 77 → 97 → 105 → 113`; the
+ *  caps are `largest row 20 ≤ 100` and `113 ≤ 400`. **NO term is dropped, no row is merged and
+ *  the `≤8` figure stays a SIGNAL, never a ceiling.** */
+
+/** THE AS-FILED FORM (`§5.5.1`, the spec-gate filing of `2026-10-11`) — **KEPT AWAKE AND
+ *  DISTINCT, NEVER SILENTLY REWRITTEN.** Its own dated note, its own arithmetic, and it is
+ *  printed BESIDE the operative form on every register run (`registerReportLines`):
+ *  `108 = 12 + 10 + 12 + 8 + 14 + 10 + 10 + 16 + 8 + 8` · `P-IM 46 = 12 + 8 + 10 + 8 + 8` ·
+ *  `P-SM 10` · `P-TP 52 = 12 + 10 + 14 + 16` · `46 + 10 + 52 = 108`. */
+export const DECLARED_TERMS_AS_FILED: readonly number[] = [12, 10, 12, 8, 14, 10, 10, 16, 8, 8]
+/** THE GATE-4 FORM (`2026-10-11`, the row-8 re-grain — `D-i`…`D-iv`'s four added terms at row 8)
+ *  — **KEPT AWAKE AND DISTINCT** beside the as-filed form it moved from and beside the operative
+ *  form that moved from IT: `112 = 12 + 10 + 12 + 8 + 14 + 10 + 10 + 20 + 8 + 8` · `P-IM 46` ·
+ *  `P-SM 10` · `P-TP 56 = 12 + 10 + 14 + 20` · `46 + 10 + 56 = 112`. */
+export const DECLARED_TERMS_ROW8_REGRAIN: readonly number[] = [12, 10, 12, 8, 14, 10, 10, 20, 8, 8]
+/** THE OPERATIVE FORM (`2026-10-11`, the gate-6 `F-1` re-grain): row 6 gains the PRE-CARRIER
+ *  family — **`113 = 12 + 10 + 12 + 8 + 14 + 11 + 10 + 20 + 8 + 8`**. */
+export const DECLARED_TERMS: readonly number[] = [12, 10, 12, 8, 14, 11, 10, 20, 8, 8]
+
+/** ONE DATED ARITHMETIC FORM of the register — every figure DERIVED from its own term list
+ *  (`REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`: a total is never quoted without its terms, and
+ *  a mis-sum is corrected by annotating BESIDE the as-filed form). */
+export interface ArithmeticForm {
+  readonly name: string
+  readonly dated: string
+  readonly cause: string
+  readonly terms: readonly number[]
+  readonly sum: number
+  readonly chain: string
+  readonly subtotals: { im: number; sm: number; tp: number }
+  readonly largestRow: number
+  readonly operative: boolean
+}
+export function arithmeticFormOf(
+  name: string, dated: string, cause: string, terms: readonly number[], operative: boolean,
+): ArithmeticForm {
+  let running = 0
+  const chain = terms.map((t) => (running += t)).join(' → ')
+  const byType = (type: 'P-IM' | 'P-SM' | 'P-TP'): number =>
+    terms.reduce((s, t, i) => (DECLARED_TYPES[i] === type ? s + t : s), 0)
+  return {
+    name, dated, cause, terms, sum: running, chain, operative,
+    subtotals: { im: byType('P-IM'), sm: byType('P-SM'), tp: byType('P-TP') },
+    largestRow: terms.length === 0 ? 0 : Math.max(...terms),
+  }
+}
+/** THE THREE DATED FORMS, each printed WITH its terms, its chain, its subtotals and its caps. */
+export function arithmeticForms(): readonly ArithmeticForm[] {
+  return [
+    arithmeticFormOf(
+      'AS FILED (§5.5.1 — the spec-gate filing)', '2026-10-11',
+      'row 8 (`P-T4-TP-4`) declared 16 = 4 × 2 + 8',
+      DECLARED_TERMS_AS_FILED, false,
+    ),
+    arithmeticFormOf(
+      'RE-GRAINED (gate-4 repair contract — the row-8 re-grain)', '2026-10-11',
+      'row 8 gains `+ 1` × 4 (the namespace seam · `__proto__` · `-0` · the out-of-ingestion-domain name)',
+      DECLARED_TERMS_ROW8_REGRAIN, false,
+    ),
+    arithmeticFormOf(
+      'RE-GRAINED (gate-6 `F-1` EVASION RULING — the row-6 PRE-CARRIER term, OPERATIVE)', '2026-10-11',
+      '`F-1`: row 6 (`P-T4-IM-3`, `S-T4-PANE-1`) gains the PRE-CARRIER family — 10 → 11',
+      DECLARED_TERMS, true,
+    ),
+  ]
+}
 export const STRATEGY_IDS: readonly string[] = [
   'S-T4-WGATE-1', 'S-T4-RGATE-1', 'S-T4-PAIR-1', 'S-T4-STATE-1', 'S-T4-VOCAB-1',
   'S-T4-PANE-1', 'S-T4-BOOT-1', 'S-T4-OPEN-1', 'S-T4-HOME-1', 'S-T4-CARRIER-1',
@@ -235,7 +347,14 @@ export interface RowReport {
   readonly id: string
   readonly type: 'P-IM' | 'P-SM' | 'P-TP'
   readonly strategyId: string
+  /** The row's declared term AS FILED (the row object's own `term`, carried by the row's own
+   *  `drives`), PLUS `harnessOwnedTerm` below when a register-owned term is composed in. */
   readonly declaredTerm: number
+  /** THE REGISTER-OWNED TERM COUNT composed into this row (`2026-10-11`, the gate-6 `F-1`
+   *  re-grain): `0` for every row but `P-T4-IM-3`, whose declared cell is its as-filed `10` PLUS
+   *  `1` register-owned attempt. Recorded so `declared 11` is never misread as eleven as-filed
+   *  drives. */
+  readonly harnessOwnedTerm: number
   readonly attemptsRun: number
   readonly abandoned: number
   readonly held: number
@@ -262,6 +381,318 @@ export interface ExecReport {
   readonly stopReason: string
   readonly registerReasons: readonly string[]
   readonly subtotals: { im: number; sm: number; tp: number }
+}
+
+/* ═════════════════════════════════════════════════════════════════════════════════════════
+ * THE REGISTER-OWNED TERM OF ROW 6 (`P-T4-IM-3` · strategy `S-T4-PANE-1`) — **THE PRE-CARRIER
+ * FAMILY** (`§5.5.1` row 6, re-grained `10 → 11` by the gate-6 `F-1` evasion ruling).
+ *
+ * WHY THIS DRIVE IS HERE AND NOT IN THE ROW'S OWN `drives` ARRAY: the as-filed ten drives of
+ * row 6 are built by `buildRegister()` in `tests/tier4-arbitrary-storage.test.ts`; the re-grain
+ * pass's edit set is THIS FILE ONLY, so the added term is carried as a REGISTER-OWNED TERM and
+ * `executeRegister` composes it INTO the row (`in-row`: one more attempt of row 6, never a new
+ * row, never another row's control). The executor cross-checks
+ * `row.drives.length + owned terms === DECLARED_TERMS[i]`, so the declared cell and the drives
+ * that carry it cannot drift apart silently. **THE DRIVE IS A REAL ASSERTION AND THROWS ONLY
+ * WHEN THE PROPERTY IS FALSIFIED** — and the module's absence would make this attempt a counted
+ * BROKEN attempt carrying its reason, exactly as for every other absent subject here.
+ *
+ * THE PROPERTY IT DRIVES (`§2.6` item 3's dated `D-vi` note · item 1(b) · `§3.2` `FS-T4-13` + its
+ * dated note): **BEFORE ANY CARRIER ANSWER — and ON A BRIDGE REJECTION — the toggle node writes
+ * NO `data-state` PROP**, so its `props['data-state']` carries **NEITHER** `'mcp-enabled'`
+ * **NOR** `'mcp-disabled'`; and **no affordance word** is painted either. THE STATES THIS TERM
+ * ENUMERATES (the closed PRE-CARRIER family, `§5.5.1` vocabulary):
+ *   `S1` **NO CARRIER AT ALL** — `window.provident.security` ABSENT.
+ *   `S2` **A BRIDGE THAT REJECTS** — `get()` throws; no reading was taken this turn.
+ *   `S3` **THE FIRST PAINT, DRIVEN SYNCHRONOUSLY** — the carrier is PRESENT and its answer has
+ *        NOT arrived (its read is IN FLIGHT); `refreshDebug` runs in the SAME turn, which is the
+ *        `[T]` shape of `renderer.ts`'s un-awaited `void panels.refresh()` beside the synchronous
+ *        `refreshDebug(runtime)`.
+ *   `S4` **A CARRIER ANSWER THAT OMITS THE `exclusion` MEMBER** — the pane's own declared
+ *        `undefined`-counts-as-`null` arm.
+ * AND ITS CONTROLS, DRIVEN IN-ROW SO THE TERM CAN FAIL (`RCA-8(d)`: a detector that cannot fail
+ * proves nothing — and the term may NOT be satisfied by blanking the toggle forever):
+ *   `CTL-0` the fabrication predicate is driven on the **AS-FILED AUTHORED LITERAL**
+ *           `'mcp-enabled'` with NO carrier supply ⇒ it **FIRES** (the `F-1` falsifier itself).
+ *   `CTL-P` (**POSITIVE**) the same probe, on a pane whose CARRIER SUPPLIED the **INVERSE** word
+ *           `'mcp-disabled'` ⇒ it **READS** that word, exactly as supplied.
+ *   `CTL-N` (**NEGATIVE**) the fabrication predicate does **NOT** fire on the settled carrier
+ *           value — the word standing there is the carrier's, not the pane's.
+ *   `NV`    (**NON-VACUITY**) the settled arm still writes **BOTH** cells from the carrier, in
+ *           BOTH directions — so a pane that blanked the prop forever FAILS this term.
+ * ═════════════════════════════════════════════════════════════════════════════════════════ */
+
+export const PANE_TOGGLE_NODE_ID = 'exclusion-toggle'
+export const PANE_STATE_PROP = 'data-state'
+export const PANE_AFFORDANCE_WORD = /Disable MCP|Enable MCP/
+export const PRE_CARRIER_STATE_WORDS: readonly string[] = [STATE_MCP_ENABLED, STATE_MCP_DISABLED]
+
+interface PaneLike {
+  refresh(): Promise<void>
+  refreshDebug(runtime: unknown): void
+  supervisor: { allNodes(): unknown[] }
+}
+interface PaneTools {
+  readonly SecurePanels: new (mount: unknown) => PaneLike
+  readonly mountEl: () => unknown
+  readonly installShim: () => void
+}
+
+/** Resolve the pane class + the DOM shim the way every other red harness here does: the
+ *  specifiers are FRAGMENT-ASSEMBLED, so no static import exists for tsc to resolve and an
+ *  absent module answers a reason string rather than throwing at collection time. */
+export async function loadPaneTools(): Promise<{ tools: PaneTools | null; reason: string }> {
+  try {
+    const paneSpec = ['..', 'src', 'renderer', 'secure-panels.js'].join('/')
+    const shimSpec = ['..', 'src', 'shared', 'dom-shim.js'].join('/')
+    const pane = (await import(/* @vite-ignore */ paneSpec)) as { SecurePanels?: unknown }
+    const shim = (await import(/* @vite-ignore */ shimSpec)) as { mountEl?: unknown; installShim?: unknown }
+    if (typeof pane.SecurePanels !== 'function') {
+      return { tools: null, reason: 'ABSENT: `src/renderer/secure-panels.ts` exports no `SecurePanels`' }
+    }
+    if (typeof shim.mountEl !== 'function' || typeof shim.installShim !== 'function') {
+      return { tools: null, reason: 'ABSENT: `src/shared/dom-shim.ts` exports no `mountEl`/`installShim`' }
+    }
+    return {
+      tools: {
+        SecurePanels: pane.SecurePanels as PaneTools['SecurePanels'],
+        mountEl: shim.mountEl as PaneTools['mountEl'],
+        installShim: shim.installShim as PaneTools['installShim'],
+      },
+      reason: '',
+    }
+  } catch (e) {
+    return { tools: null, reason: `ABSENT: ${e instanceof Error ? e.message : String(e)}` }
+  }
+}
+
+function toggleNodeOf(panels: PaneLike): { props?: Record<string, unknown>; content?: unknown } {
+  const nodes = panels.supervisor.allNodes()
+  for (const n of nodes) {
+    const node = n as { props?: Record<string, unknown>; content?: unknown }
+    if (node.props?.id === PANE_TOGGLE_NODE_ID) return node
+  }
+  throw new Error(`the pane carries no node with id "${PANE_TOGGLE_NODE_ID}" — the toggle this term reads is absent`)
+}
+/** THE ONE READING this term asserts on: the toggle node's own `data-state` member. */
+export function toggleStateWordOf(panels: PaneLike): unknown {
+  return (toggleNodeOf(panels).props ?? {})[PANE_STATE_PROP]
+}
+/** The toggle's AFFORDANCE word (its `content`). */
+export function toggleAffordanceOf(panels: PaneLike): string {
+  return String(toggleNodeOf(panels).content ?? '')
+}
+/** THE DETECTOR: does the node carry one of the clause's TWO state words? (`§2.6` item 1(b):
+ *  the closed pair, and the authored literal `'mcp-enabled'` is one of them.) */
+export function carriesStateWord(word: unknown): boolean {
+  return typeof word === 'string' && PRE_CARRIER_STATE_WORDS.includes(word)
+}
+/** THE FABRICATION PREDICATE: a state word standing that the CARRIER did not supply. */
+export function fabricatesState(word: unknown, carrierSupplied: unknown): boolean {
+  if (word === undefined || word === null) return false
+  return word !== carrierSupplied
+}
+
+/** THE DRIVE-LEVEL ASSERTION. This module is NOT a test file (it is never collected as a suite
+ *  and it imports nothing from a test runner), so a drive THROWS — with the measured reading in
+ *  the message — exactly when its property is falsified, and `executeRegister` counts that
+ *  throw as a BROKEN attempt. */
+function mustHold(condition: boolean, message: string): void {
+  if (!condition) throw new Error(message)
+}
+
+function installCarrier(bridge: Record<string, unknown> | null): void {
+  const windowValue: unknown = bridge === null ? {} : { provident: { security: bridge } }
+  ;(globalThis as unknown as { window?: unknown }).window = windowValue
+}
+
+/** THE ONE DRIVE = ONE ATTEMPT of row 6: the four PRE-CARRIER states, each read at the node,
+ *  with its positive, negative and non-vacuity controls driven FIRST (so a failure message
+ *  carries the whole measured family and hides none of it). */
+export function preCarrierPaneDrives(): readonly Drive[] {
+  return [
+    {
+      label: 'REGISTER-OWNED TERM (+1) `S-T4-PANE-1` · THE PRE-CARRIER FAMILY: S1 no carrier at all · S2 a rejecting bridge · S3 the first paint driven synchronously (a read IN FLIGHT) · S4 a carrier answer omitting `exclusion` ⇒ at EVERY one of them the toggle node carries NEITHER `mcp-enabled` NOR `mcp-disabled` and NO affordance word; CONTROLS: the predicate FIRES on the as-filed authored literal (CTL-0) · the same probe READS a carrier-supplied inverse word (CTL-P) · the predicate does NOT fire on the settled carrier value (CTL-N) · the settled arm writes BOTH cells from the carrier, BOTH directions (NV)',
+      run: async () => {
+        const { tools, reason } = await loadPaneTools()
+        if (tools === null) throw new Error(`the PRE-CARRIER term cannot be driven — ${reason}`)
+        /* the suite's own `beforeAll` installs the shim; install it only if it is genuinely
+         * absent, so this drive is self-sufficient without disturbing the suite's byId state. */
+        if ((globalThis as { document?: unknown }).document === undefined) tools.installShim()
+        const fresh = (): PaneLike => new tools.SecurePanels(tools.mountEl())
+        const runtimeStub = {
+          renderedHtmlResult: () => ({
+            census: { inTree: 0, registered: 0, unplaced: 0, destroyed: 0, prototypes: 0 },
+            ssrHtml: '',
+          }),
+        }
+        const carrierAnswer = (exclusion: unknown, read: unknown): Record<string, unknown> => ({
+          token: 'SEED', enabled: ['read', 'dispatch'], maxJournalLength: 120, exclusion, read,
+        })
+
+        /* ── `CTL-0` — THE FALSIFIER ITSELF, DRIVEN: the AS-FILED authored literal standing with
+         * NO carrier supply is EXACTLY what the per-state assertion must catch (`F-1`). Both the
+         * detector the four states assert with AND the fabrication predicate are driven on it, so
+         * the term is SEEN to bite on the as-filed bytes (`git show HEAD:src/renderer/secure-panels.ts`
+         * declared `props: { id: 'exclusion-toggle', 'data-state': 'mcp-enabled' }`) and to hold on
+         * the repaired bytes: an instrument that could not do both proves nothing. */
+        mustHold(
+          carriesStateWord(STATE_MCP_ENABLED),
+          'CONTROL (`CTL-0`): the per-state detector FIRES on the AS-FILED AUTHORED LITERAL `\'mcp-enabled\'` — so the four `!carriesStateWord(prop)` assertions below WOULD have failed at the as-filed node',
+        )
+        mustHold(
+          !carriesStateWord(undefined),
+          'CONTROL (`CTL-0`): and the detector does NOT fire on the clause’s own admissible reading — no state member at all',
+        )
+        mustHold(
+          fabricatesState(STATE_MCP_ENABLED, undefined),
+          'CONTROL (`CTL-0`): the fabrication predicate FIRES on the AS-FILED AUTHORED LITERAL `\'mcp-enabled\'` with NO carrier supply — this is the live `F-1` reading the term exists to catch',
+        )
+        mustHold(
+          !fabricatesState(undefined, undefined),
+          'CONTROL (`CTL-0`): and it does NOT fire on the clause’s own admissible reading (no state member at all)',
+        )
+
+        /* ── `CTL-P` + `CTL-N` — THE SAME PROBE, ON A CARRIER THAT SUPPLIED THE **INVERSE** WORD
+         * (`mcp-disabled`, the inverse of the authored literal), driven FIRST so the four
+         * no-answer readings below are readings by a probe SEEN to read a supplied word. */
+        installCarrier({ get: async () => ({ ...carrierAnswer(STATE_MCP_DISABLED, null) }) })
+        const suppliedInverse = fresh()
+        await suppliedInverse.refresh()
+        const suppliedWord = toggleStateWordOf(suppliedInverse)
+        mustHold(
+          carriesStateWord(suppliedWord),
+          `POSITIVE CONTROL (\`CTL-P\`): the SAME probe FIRES on the carrier-supplied INVERSE word — measured ${JSON.stringify(suppliedWord)}. Without this the term could be satisfied by blanking the toggle forever.`,
+        )
+        mustHold(
+          suppliedWord === STATE_MCP_DISABLED,
+          `POSITIVE CONTROL (\`CTL-P\`): and it is EXACTLY the word the carrier supplied — measured ${JSON.stringify(suppliedWord)}, supplied ${JSON.stringify(STATE_MCP_DISABLED)}`,
+        )
+        mustHold(
+          !fabricatesState(suppliedWord, STATE_MCP_DISABLED),
+          'NEGATIVE CONTROL (`CTL-N`): the fabrication predicate does NOT fire on the settled carrier value — the word standing there is the carrier’s, not the pane’s',
+        )
+
+        /* ── `NV` — THE SETTLED ARM'S NON-VACUITY, BOTH DIRECTIONS, BOTH CELLS: the carrier’s
+         * word is written to `data-state` AND to the affordance word, so a permanently blanked
+         * toggle FAILS here (the second admissible shape of the same clause). */
+        installCarrier({ get: async () => ({ ...carrierAnswer(STATE_MCP_ENABLED, null) }) })
+        const settledEnabled = fresh()
+        await settledEnabled.refresh()
+        mustHold(
+          toggleStateWordOf(settledEnabled) === STATE_MCP_ENABLED,
+          `NON-VACUITY: the settled arm writes the CARRIER’s \`mcp-enabled\` into \`data-state\` — measured ${JSON.stringify(toggleStateWordOf(settledEnabled))}`,
+        )
+        mustHold(
+          PANE_AFFORDANCE_WORD.test(toggleAffordanceOf(settledEnabled)),
+          `NON-VACUITY: and its affordance word is painted from the same carrier reading — measured ${JSON.stringify(toggleAffordanceOf(settledEnabled))}`,
+        )
+        installCarrier({ get: async () => ({ ...carrierAnswer(STATE_MCP_DISABLED, null) }) })
+        const settledDisabled = fresh()
+        await settledDisabled.refresh()
+        mustHold(
+          toggleStateWordOf(settledDisabled) === STATE_MCP_DISABLED,
+          `NON-VACUITY: the OTHER direction, from the carrier — measured ${JSON.stringify(toggleStateWordOf(settledDisabled))}`,
+        )
+        mustHold(
+          PANE_AFFORDANCE_WORD.test(toggleAffordanceOf(settledDisabled)),
+          `NON-VACUITY: and the other direction’s affordance word — measured ${JSON.stringify(toggleAffordanceOf(settledDisabled))}`,
+        )
+        mustHold(
+          toggleAffordanceOf(settledDisabled) !== toggleAffordanceOf(settledEnabled),
+          'NON-VACUITY: the two directions paint DIFFERENT affordance words (a single constant word satisfies neither direction)',
+        )
+
+        /* ── THE PRE-CARRIER FAMILY, EACH STATE READ AT THE NODE ────────────────────────────── */
+        const readings: Array<{ state: string; prop: unknown; affordance: string }> = []
+        const take = (state: string, panels: PaneLike): void => {
+          readings.push({ state, prop: toggleStateWordOf(panels), affordance: toggleAffordanceOf(panels) })
+        }
+
+        /* `S1` — NO CARRIER AT ALL: the pane’s declared read is skipped entirely. */
+        installCarrier(null)
+        const s1 = fresh()
+        await s1.refresh()
+        take('S1 no-carrier-at-all', s1)
+
+        /* `S2` — A BRIDGE THAT REJECTS: no reading was TAKEN this turn. */
+        installCarrier({ get: async () => { throw new Error('bridge down') } })
+        const s2 = fresh()
+        await s2.refresh()
+        take('S2 bridge-rejects', s2)
+
+        /* `S3` — THE FIRST PAINT, DRIVEN SYNCHRONOUSLY: the carrier is PRESENT, its read is IN
+         * FLIGHT and never answers; `refreshDebug` runs in the SAME turn. */
+        installCarrier({ get: () => new Promise<never>(() => undefined) })
+        const s3 = fresh()
+        void s3.refresh()
+        s3.refreshDebug(runtimeStub)
+        take('S3 first-paint (synchronous)', s3)
+
+        /* `S4` — A CARRIER ANSWER THAT OMITS THE `exclusion` MEMBER. */
+        installCarrier({
+          get: async () => ({ token: 'SEED', enabled: ['read', 'dispatch'], maxJournalLength: 120, read: null }),
+        })
+        const s4 = fresh()
+        await s4.refresh()
+        take('S4 carrier-answer-omits-exclusion', s4)
+
+        /* ── THE TERM ───────────────────────────────────────────────────────────────────────── */
+        const measured = readings
+          .map((r) => `${r.state}: data-state=${JSON.stringify(r.prop)} affordance=${JSON.stringify(r.affordance)}`)
+          .join(' | ')
+        for (const r of readings) {
+          mustHold(
+            !carriesStateWord(r.prop),
+            `${r.state} — the toggle node carries NEITHER \`mcp-enabled\` NOR \`mcp-disabled\` before a carrier answer (measured ${JSON.stringify(r.prop)}); FULL FAMILY: ${measured}`,
+          )
+          mustHold(
+            r.prop === undefined,
+            `${r.state} — and \`§2.6\` item 3’s \`D-vi\` binds the PROP itself: *"writes NO \`data-state\` PROP"* (measured ${JSON.stringify(r.prop)}); FULL FAMILY: ${measured}`,
+          )
+          mustHold(
+            !PANE_AFFORDANCE_WORD.test(r.affordance),
+            `${r.state} — nor is the AFFORDANCE word painted before a carrier answer (measured ${JSON.stringify(r.affordance)}); FULL FAMILY: ${measured}`,
+          )
+        }
+      },
+    },
+  ]
+}
+
+/** A TERM THE REGISTER ITSELF OWNS AND EXECUTES IN-ROW — the shape the gate-6 `F-1` re-grain
+ *  needs while the sibling test file is out of the pass’s edit set. `executeRegister` composes
+ *  `row.drives` with these, and refuses to run at all unless
+ *  `row.drives.length + Σ term === the row’s DECLARED_TERMS cell`.
+ *
+ *  THE MEASURED OUTCOME OF THIS TERM'S FIRST RUN (`2026-10-11`, recorded because a later reader
+ *  will ask whether the re-grained term BITES or HOLDS): **`P-T4-IM-3` executed `11 = 10 (as
+ *  filed) + 1` and reported `held 11 · BROKEN 0`** against the tree at that head, because the
+ *  rule-11(f) repair the same wave authorized in `src/renderer/secure-panels.ts` (the removal of
+ *  the AUTHORED envelope literal) was ALREADY in the working tree when the term was driven — the
+ *  `[T]` row `F-1` in `tests/tier4-arbitrary-storage.test.ts` read the same repair as `PASS` in
+ *  the SAME run. **THAT IS THE INSTRUMENT FOLLOWING THE ARTIFACT, NOT A VACUOUS TERM**, and the
+ *  proof that it bites is driven IN-ROW rather than argued: `CTL-0` runs the term’s own detector
+ *  and fabrication predicate on the AS-FILED literal `'mcp-enabled'` (which
+ *  `git show 8955c4f:src/renderer/secure-panels.ts` declares) and BOTH FIRE there — so at the
+ *  as-filed bytes this attempt would have been a BROKEN one. **A red re-grain here must never be
+ *  manufactured by pinning bytes; it is read from the node, and the node now answers silence.** */
+export interface RegisterOwnedTerm {
+  readonly rowId: string
+  readonly strategyId: string
+  readonly term: number
+  readonly cause: string
+  readonly drives: readonly Drive[]
+}
+export const REGISTER_OWNED_TERMS: readonly RegisterOwnedTerm[] = [
+  {
+    rowId: 'P-T4-IM-3', strategyId: 'S-T4-PANE-1', term: 1,
+    cause: 'GATE-6 `F-1` (HIGH): the toggle node carried the AUTHORED envelope literal `data-state: \'mcp-enabled\'` before any carrier answer, so the register held `112/112` while the live layer FALSIFIED the property — the row’s as-filed `10 = 4 + 6` drives the fabrications but reads NO PRE-CARRIER shape.',
+    drives: preCarrierPaneDrives(),
+  },
+]
+export function registerOwnedTermsFor(row: RegisterRow): readonly RegisterOwnedTerm[] {
+  return REGISTER_OWNED_TERMS.filter((t) => t.rowId === row.id && t.strategyId === row.strategyId)
 }
 
 /** THE EXECUTOR — every row's FULL declared term, sequentially, in register order; the caps
@@ -295,10 +726,26 @@ export async function executeRegister(
     if (row.drives.length !== row.term) {
       throw new Error(`register FAILURE: row ${row.id} declares term ${row.term} but carries ${row.drives.length} drives — the term is misdeclared`)
     }
+    /* THE REGISTER-OWNED TERMS OF THIS ROW (`2026-10-11`, the gate-6 `F-1` re-grain): composed
+     * IN-ROW, so the declared cell is the row's own drives PLUS what the register itself owns —
+     * and the two are cross-checked against the declared cell, so neither can drift silently. */
+    const owned = registerOwnedTermsFor(row)
+    const ownedTerm = owned.reduce((a, t) => a + t.term, 0)
+    const ownedDrives = owned.flatMap((t) => [...t.drives])
+    if (ownedDrives.length !== ownedTerm) {
+      throw new Error(`register FAILURE: row ${row.id}'s register-owned terms declare ${ownedTerm} attempt(s) but carry ${ownedDrives.length} drive(s) — the owned term is misdeclared`)
+    }
+    const declaredCell = REGISTER_ROW_IDS.indexOf(row.id)
+    if (declaredCell >= 0 && DECLARED_TERMS[declaredCell] !== row.term + ownedTerm) {
+      throw new Error(`register FAILURE: row ${row.id} carries ${row.drives.length} as-filed drive(s) + ${ownedTerm} register-owned term(s) = ${row.term + ownedTerm}, but its declared cell reads ${DECLARED_TERMS[declaredCell]} — the term is misdeclared`)
+    }
+    const effectiveTerm = row.term + ownedTerm
+    const drives: readonly Drive[] = ownedDrives.length === 0 ? row.drives : [...row.drives, ...ownedDrives]
     if (stopped) {
       reports.push({
-        id: row.id, type: row.type, strategyId: row.strategyId, declaredTerm: row.term,
-        attemptsRun: 0, abandoned: row.term, held: 0, broken: 0, state: 'un-run',
+        id: row.id, type: row.type, strategyId: row.strategyId, declaredTerm: effectiveTerm,
+        harnessOwnedTerm: ownedTerm,
+        attemptsRun: 0, abandoned: effectiveTerm, held: 0, broken: 0, state: 'un-run',
         maxConsecutiveFailures: 0, property: row.property,
         readings: ['UN-RUN — the stop rule fired before this row; an un-run row is a FAILURE, never a pass'],
       })
@@ -313,8 +760,8 @@ export async function executeRegister(
     let inRow = 0
     let abandoned = 0
     let rowStopped = false
-    for (let i = 0; i < row.drives.length; i++) {
-      const drive = row.drives[i]
+    for (let i = 0; i < drives.length; i++) {
+      const drive = drives[i]
       attemptsExecuted += 1
       let ok = false
       let detail = ''
@@ -342,7 +789,7 @@ export async function executeRegister(
         stopped = true
         stoppedAtRow = row.id
         stopReason = `${STOP_AFTER_CONSECUTIVE} consecutive failures at ${row.id} drive "${drive.label}" — STOP`
-        abandoned = row.drives.length - (i + 1)
+        abandoned = drives.length - (i + 1)
         rowStopped = true
         break
       }
@@ -352,8 +799,8 @@ export async function executeRegister(
     else rowsBroken += 1
     if (state !== 'held') registerReasons.push(`${row.id} (${row.strategyId}) — ${broken} broken of ${held + broken} attempted`)
     reports.push({
-      id: row.id, type: row.type, strategyId: row.strategyId, declaredTerm: row.term,
-      attemptsRun: held + broken, abandoned, held, broken, state,
+      id: row.id, type: row.type, strategyId: row.strategyId, declaredTerm: effectiveTerm,
+      harnessOwnedTerm: ownedTerm, attemptsRun: held + broken, abandoned, held, broken, state,
       maxConsecutiveFailures: maxConsec, readings, property: row.property,
     })
   }
@@ -375,17 +822,30 @@ export async function executeRegister(
 // ---- THE REPORT ------------------------------------------------------------------------
 export function registerReportLines(r: ExecReport): string[] {
   const lines: string[] = []
-  lines.push('REGISTER-ATTEMPT-TOTALS (§5.5.1 — printed WITH their terms):')
-  lines.push(`  TOTAL ${r.declaredTotal} = ${r.declaredTerms.join(' + ')}  (chain ${r.chain})`)
+  lines.push('REGISTER-ATTEMPT-TOTALS (§5.5.1 — printed WITH their terms; `REGISTER-ATTEMPT-TOTALS-PRINT-THEIR-TERMS`):')
+  lines.push(`  OPERATIVE TOTAL ${r.declaredTotal} = ${r.declaredTerms.join(' + ')}  (chain ${r.chain})`)
   lines.push(`  subtotals BY TYPE — P-IM ${r.subtotals.im} · P-SM ${r.subtotals.sm} · P-TP ${r.subtotals.tp} — ${r.subtotals.im} + ${r.subtotals.sm} + ${r.subtotals.tp} = ${r.subtotals.im + r.subtotals.sm + r.subtotals.tp}`)
-  lines.push(`  caps: largest row ${Math.max(...r.rows.map((x) => x.declaredTerm))} ≤ ${REGISTER_ROW_CAP} · total ${r.declaredTotal} ≤ ${REGISTER_TOTAL_CAP} (headroom ${REGISTER_TOTAL_CAP - r.declaredTotal})`)
+  for (const f of arithmeticForms()) {
+    lines.push(`  ${f.operative ? 'OPERATIVE' : 'AS FILED '} · ${f.name} · ${f.dated} · cause: ${f.cause}`)
+    lines.push(`      ${f.sum} = ${f.terms.join(' + ')}`)
+    lines.push(`      chain ${f.chain}`)
+    lines.push(`      P-IM ${f.subtotals.im} · P-SM ${f.subtotals.sm} · P-TP ${f.subtotals.tp} — ${f.subtotals.im} + ${f.subtotals.sm} + ${f.subtotals.tp} = ${f.subtotals.im + f.subtotals.sm + f.subtotals.tp} · caps: largest row ${f.largestRow} ≤ ${REGISTER_ROW_CAP} · total ${f.sum} ≤ ${REGISTER_TOTAL_CAP}`)
+  }
+  lines.push(`  caps, EACH AGAINST ITS OWN: largest row ${Math.max(...r.rows.map((x) => x.declaredTerm))} ≤ ${REGISTER_ROW_CAP} per row ✓ · total ${r.declaredTotal} ≤ ${REGISTER_TOTAL_CAP} in total ✓ (headroom ${REGISTER_TOTAL_CAP - r.declaredTotal}) · STOP AFTER ${STOP_AFTER_CONSECUTIVE} CONSECUTIVE FAILURES`)
   lines.push(`  attempts executed: ${r.attemptsExecuted} · rows executed: ${r.rowsExecuted} of ${r.rows.length} · un-run: ${r.unrunRows.length === 0 ? 'none' : r.unrunRows.join(', ')}`)
+  lines.push(`  AN UN-RUN ROW IS REPORTED AS A FAILURE, NEVER AS A PASS — un-run rows here: ${r.unrunRows.length} (each one counts as a FAILURE against this register)`)
   lines.push(`  no seed, no generator, no Math.random — every row is the closed input set (§5.5.2 item 3)`)
   lines.push(`  registerStoppedAt: ${r.stoppedAtRow === null ? 'null' : r.stoppedAtRow} (the completed reading; the literal stop-after-5 reading is reported beside it)`)
   lines.push('')
   lines.push('REGISTER-ROW-OUTCOMES (executed run):')
   for (const o of r.rows) {
-    lines.push(`  ${o.id} [${o.type}] ${o.strategyId}: declared ${o.declaredTerm} → attempts ${o.attemptsRun} · held ${o.held} · BROKEN ${o.broken} · state ${o.state} · maxConsecutiveFailures ${o.maxConsecutiveFailures}`)
+    const owned = o.harnessOwnedTerm > 0 ? ` = ${o.declaredTerm - o.harnessOwnedTerm} (as filed) + ${o.harnessOwnedTerm} (REGISTER-OWNED TERM: the PRE-CARRIER family)` : ''
+    lines.push(`  ${o.id} [${o.type}] ${o.strategyId}: declared ${o.declaredTerm}${owned} → attempts ${o.attemptsRun} · held ${o.held} · BROKEN ${o.broken} · state ${o.state} · maxConsecutiveFailures ${o.maxConsecutiveFailures} · cap ${o.declaredTerm} ≤ ${REGISTER_ROW_CAP} ${o.declaredTerm <= REGISTER_ROW_CAP ? '✓' : '✗'}`)
+  }
+  if (r.registerReasons.length > 0) {
+    lines.push('')
+    lines.push('REGISTER-BROKEN/UN-RUN REASONS (each one a FAILURE of this register):')
+    for (const reason of r.registerReasons) lines.push(`  ${reason}`)
   }
   lines.push('')
   for (const o of r.rows) {
@@ -433,6 +893,7 @@ export function syntheticUnRunRegisterControlOnly(): ExecReport {
   const total = declaredTotalReport()
   const rows: RowReport[] = REGISTER_ROW_IDS.map((id, i) => ({
     id, type: DECLARED_TYPES[i], strategyId: STRATEGY_IDS[i], declaredTerm: DECLARED_TERMS[i],
+    harnessOwnedTerm: 0,
     attemptsRun: 0, abandoned: DECLARED_TERMS[i],
     held: 0, broken: 0, state: i === 0 ? 'held' : 'un-run',
     maxConsecutiveFailures: 0, readings: [], property: 'CONTROL ONLY (synthetic un-run register)',

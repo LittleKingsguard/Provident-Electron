@@ -1968,6 +1968,63 @@ check('SX-G-53 (static census)', 'the store\'s refusal union carries no exclusio
 // a FABRICATED digest, a lineage short by one value, a lineage whose operative pin is not the
 // recorded one, an absent decisions row, a sibling edit to a frozen module and a sibling
 // `src/shared/**` edit — and the row reads `PASS` only if every one of them is REFUSED.
+//
+// ⟶ **RE-GRAINED AGAIN 2026-10-11 — THE `S2` `U-TIER4-ARBITRARY-STORAGE` GATE-6 RE-GRAIN, AUTHORIZED BY
+// THE SUPERVISOR AT THIS UNIT'S GATE 6.** The precedent cited is `docs/specs/tier4-arbitrary-storage.md`
+// `§3c`'s `D-x` authorization-note: the instrument re-grain is OWED to the unit whose RULED landing moved
+// the artifact the row reads, and it lands BESIDE the as-filed bytes, never over them (`RCA-8(d)`).
+// WHAT MOVED, AND WHY: unit `S2`'s ruled gate-4 landings (`2d07d3f` · `19da51d` · `269beac`) moved
+// `src/main/security-store.ts` — a path in THIS row's DENIED set — under the architect's `A-1` ruling and
+// the four gating clauses `G-1`…`G-4` (recorded in `docs/specs/tier4-arbitrary-storage.md` `§3c`, `§9`–`§10d`),
+// and its instrument re-point (`8955c4f`) carried the unit's own test chain to FIVE labelled 64-hex terms
+// (`…_PRE_HOLDER` = `8ed09c97…` kept awake; the OPERATIVE term `39bfa51a…` = the artifact's CURRENT bytes).
+// The as-filed vocabulary could read neither movement: `length === 4` pinned a CHAIN LENGTH, and the
+// attribution rule admitted ONE sibling unit (`U-SECURE-STORE-DISCIPLINE`). THE RE-GRAIN, IN TWO HALVES,
+// WITH EVERY BITE KEPT OR INCREASED:
+//   (a) THE LINEAGE TERM reads **N labelled, full-64-hex, AWAKE and pairwise-DISTINCT terms, the
+//       OPERATIVE one being the ARTIFACT'S CURRENT DIGEST** — never a hard-coded count. `N >= 4` is a
+//       FLOOR (the as-filed chain); every term must be AWAKE (its label read beyond its own declaration: a
+//       dead stale pin is a finding, per `D-x`) and CORROBORATED (the artifact's own bytes carried that
+//       digest at a recorded commit, read here out of the object store); exactly ONE term may carry the
+//       operative label, and it must equal the artifact's current digest; and EVERY term the as-filed
+//       licence itself RECORDS (`c7359530…` · `99618ac2…` · `a98273b8…` · `8ed09c97…`) must STILL BE AWAKE.
+//       SO: a MISSING term reddens it (the as-filed `PRE_ADV1` fixture's own shape, KEPT) — while a LATER
+//       unit's ruled store move, which only ADDS a term, is ADMITTED, and an EXTRA term reddens it unless
+//       it is labelled, full-64-hex, distinct, awake and corroborated by the artifact's own bytes.
+//   (b) THE ATTRIBUTION HALF NAMES THIS UNIT'S THREE LANDINGS (`2d07d3f` · `19da51d` · `269beac`, each
+//       RESOLVED to its full commit id at the run's own bytes) as ATTRIBUTED-AND-LICENCED, with the licence
+//       CITED LIVE — `docs/specs/tier4-arbitrary-storage.md` must carry `§3c`, the `A-1` ruling and the four
+//       gating clauses `G-1`…`G-4` — never merely asserted. AND THE NAMED SET IS CLOSED: a store move that
+//       merely NAMES the unit is NOT thereby licenced, so an unnamed new move of the unit's, an
+//       UNATTRIBUTED move of anybody's, and any move of a genuinely frozen artifact or of `src/shared/**`
+//       ALL STILL REDDEN THE ROW. The vocabulary is a TABLE a later unit's mandate EXTENDS (as this one
+//       does for `S2`); it is never widened by a subject string alone.
+//
+// THE TWO AS-FILED TERM LINES, KEPT VERBATIM HERE BECAUSE `RCA-8(d)` FORBIDS LOSING THEM (they are
+// SUPERSEDED IN EFFECT by the re-grained terms below and are NOT the operative reading):
+//   'sibling-store-moves-all-attributed': unattributed.length === 0,
+//   'store-licence-lineage-four-values-awake-distinct-and-recorded': r.lineage.length === 4 && new Set(r.lineage.map(([n]) => n)).size === 4 && new Set(values).size === 4 && values.every((v) => /^[0-9a-f]{64}$/.test(v)) && operativePin === RECORDED_STORE_PIN,
+//     const isAttributed = (c) => c.subject.includes(SIBLING_UNIT) && AMENDMENT_MARKERS.some((m) => c.subject.includes(m))
+//     return { terms, ok: Object.values(terms).every(Boolean), own, ownPaths, siblings, storeMoves, unattributed, anyPaths }
+//     return { commits, storeDigest: sha256(join(root, 'src', 'main', 'security-store.ts')), lineage, decisionsLicence: DECISIONS_LICENCE.every((t) => decisions.includes(t)) }
+// AND THE FIVE AS-FILED SOURCE LINES THE RE-GRAIN REPLACES, QUOTED VERBATIM HERE (`RCA-8(d)`: no
+// as-filed byte is lost — each of these was superseded IN EFFECT, never deleted):
+//     ['HALF B · a sibling store move attributed to the WRONG unit (`S2`, `U-TIER4-ARBITRARY-STORAGE`)', diffScopeProperty(scopeWithCommit('S2 (U-TIER4-ARBITRARY-STORAGE) — a store tweak', [DENIED_STORE])(SCOPE_LIVE))],
+//     ['HALF B · the LICENCE\'s pin lineage is SHORT by one value (`PRE_ADV1`)', diffScopeProperty({ ...SCOPE_LIVE, lineage: SCOPE_LIVE.lineage.filter(([n]) => n !== 'SECURITY_STORE_PIN_PRE_ADV1') })],
+//     ['HALF B · the LICENCE\'s lineage is complete but the OPERATIVE pin is not the recorded `8ed09c97…`', diffScopeProperty({ ...SCOPE_LIVE, lineage: SCOPE_LIVE.lineage.map(([n, v]) => [n, n === 'SECURITY_STORE_PIN' ? 'ab'.repeat(32) : v]) })],
+//     `landing chain paths: ${JSON.stringify(liveScope.anyPaths)}; HALF A — own diff scope: ${liveScope.own.length} of ${SCOPE_LIVE.commits.length} commit(s) in \`${SCOPE_WINDOW}\` name this unit and touch ${liveScope.ownPaths.length} path(s) ${JSON.stringify(liveScope.ownPaths)}; own forbidden hits: ${JSON.stringify(liveScope.ownPaths.filter((p) => p === DENIED_STORE || DENIED_FROZEN.includes(p)))}; own \`src/shared/**\` hits: ${JSON.stringify(liveScope.ownPaths.filter((p) => p.startsWith('src/shared/')))}; own \`src/**\` outside the ALLOWED six: ${JSON.stringify(liveScope.ownPaths.filter((p) => p.startsWith('src/') && !OWN_ALLOWED_SRC.includes(p)))}; HALF B — ${liveScope.storeMoves.length} sibling commit(s) move \`${DENIED_STORE}\`: ${JSON.stringify(liveScope.storeMoves.map((c) => [c.sha.slice(0, 7), AMENDMENT_MARKERS.filter((m) => c.subject.includes(m))]))} with ${liveScope.unattributed.length} UNATTRIBUTED; the store's CURRENT digest ${SCOPE_LIVE.storeDigest.slice(0, 12)}… vs the pin the unit's own test carries ${scopeOperativePin.slice(0, 12)}…; the licence: lineage ${SCOPE_LIVE.lineage.length} value(s) ${JSON.stringify(SCOPE_LIVE.lineage.map(([n]) => n))}, decisions row ${SCOPE_LIVE.decisionsLicence ? 'present' : 'ABSENT'}; frozen-or-shared paths touched by ANY commit: ${JSON.stringify(liveScope.anyPaths.filter((p) => DENIED_FROZEN.includes(p) || p.startsWith('src/shared/')))}; terms: ${JSON.stringify(liveScope.terms)}; FIXTURES driving this row's OWN predicate (each must be REFUSED, each printed with the terms it broke): ${JSON.stringify(Object.fromEntries(Object.entries(scopeControls).map(([k, v]) => [k, { ok: v.ok, broke: Object.entries(v.terms).filter(([, b]) => !b).map(([t]) => t) }])))}; fixtures NOT refused: ${JSON.stringify(scopeNotRefused)}`,
+//     'HALF A `docs/specs/secure-exclusion.md` `§5.1` item 1 (the ALLOWED six) and item 2 (the DENIED set, incl. `package.json` and *"every other `src/**` path"*) · HALF B `§1.3` item 1\'s DATED ANNOTATIONS (the three AUTHORISED re-points `c7359530…` → `99618ac2…` → `a98273b8…` → `8ed09c97…`, `S3`\'s `§2.6`/`ADV-1`/earlier landing) and `docs/decisions.md`\'s `TIER-4 READS RETURN DEEP CLONES … `D-1` · `D-2` row — **the licence a sibling store move must carry, and the ONE path that ruling admits**')
+// AND THE ROW'S OWN AS-FILED SUBJECT IS KEPT BYTE-FOR-BYTE (the re-grain adds NOTHING to it — what it
+// adds is READINGS in the evidence below), so the summary line this row prints is the as-filed one:
+//   'this unit\'s own diff touches no frozen artifact, no store byte and no `src/shared/**` — while a RULED SIBLING MOVE of the store byte is ATTRIBUTED and LICENCED (never forbidden), and an UNATTRIBUTED move, or any move of a genuinely frozen artifact or of `src/shared/**`, still reddens it'
+// AND THE THREE AS-FILED EVIDENCE FRAGMENTS THIS RE-GRAIN REPLACES ARE QUOTED HERE, IN PLACE: the
+// sibling-move reading `${liveScope.storeMoves.map((c) => [c.sha.slice(0, 7), AMENDMENT_MARKERS.filter((m) => c.subject.includes(m))])}`, the licence reading `the licence: lineage ${SCOPE_LIVE.lineage.length} value(s) ${JSON.stringify(SCOPE_LIVE.lineage.map(([n]) => n))}, decisions row ${SCOPE_LIVE.decisionsLicence ? 'present' : 'ABSENT'}` and the fixture sentence `each printed with the terms it broke` — each SUPERSEDED IN EFFECT by the re-grained readings beside it, none of them silently dropped.
+// AND THE AS-FILED `FIFTEEN` FIXTURE COUNT IS SUPERSEDED BESIDE ITS OWN SENTENCE ABOVE: this pass drives
+// the SAME predicate over **TWENTY-TWO** mutated readings — the as-filed fifteen (one of them, the
+// `S2`-named move, re-driven at its operative shape; the lineage-short and operative-revalued pair
+// re-driven on their re-grained sub-terms) plus SEVEN NEW ones: an EXTRA fabricated term, an EXTRA
+// duplicated-value term, an EXTRA dead term, a MISSING operative term, a unit-NAMING but UNNAMED new
+// store move, an UNCITED licence and a VACUOUS named set. The row count is UNCHANGED at `42`.
 const SCOPE_WINDOW = '7142591^..HEAD'
 const DENIED_STORE = 'src/main/security-store.ts'
 const DENIED_FROZEN = ['src/renderer/store-core-graph.ts', 'src/renderer/store-graph-references.ts', 'docs/specs/store-core-module-store-core-graph-surface.md', 'package.json']
@@ -1977,6 +2034,37 @@ const SIBLING_UNIT = 'U-SECURE-STORE-DISCIPLINE'
 const AMENDMENT_MARKERS = ['§2.6', 'ADV-1', '(S3)']
 const RECORDED_STORE_PIN = '8ed09c97358b0eaab81b60d665519498552cd6f20bb748afceaff030494f0419'
 const DECISIONS_LICENCE = ['TIER-4 READS RETURN DEEP CLONES OVER THE FULL READ SURFACE', '`D-1` · `D-2`']
+
+// ⟶ THE RE-GRAIN'S VOCABULARY (`2026-10-11`, the `S2` `U-TIER4-ARBITRARY-STORAGE` GATE-6 mandate — see
+// the dated note above `SCOPE_WINDOW`). EVERY AS-FILED NAME IS KEPT AND IS PRINTED BESIDE ITS
+// RE-GRAINED READING (`RCA-8(d)`): `AS_FILED_LINEAGE_TERM` is the row's as-filed term name, kept
+// visible in the row's own printed terms, and it is NOT the operative term any more — its
+// `r.lineage.length === 4` reading is what the re-grain supersedes IN EFFECT.
+const AS_FILED_LINEAGE_TERM = 'store-licence-lineage-four-values-awake-distinct-and-recorded'
+const LINEAGE_TERM = 'store-licence-lineage-terms-awake-distinct-and-operative-is-the-artifact'
+// THE FLOOR, NOT A CEILING: the as-filed chain's own count (`4`). A LATER unit's ruled store move
+// ADDS a term and is ADMITTED; the chain may never SHRINK below what the licence already attained.
+const LICENCE_LINEAGE_MIN_TERMS = 4
+// THE TERMS THE AS-FILED LICENCE ITSELF RECORDS (the as-filed chain `c7359530…` → `99618ac2…` →
+// `a98273b8…` plus the `S3` ruling's re-point `8ed09c97…` = `RECORDED_STORE_PIN`). They are CITATIONS,
+// not a count: each must STILL BE AWAKE, so a MISSING historical term reddens the row while a
+// genuinely LATER term does not.
+const LICENCE_RECORDED_TERMS = ['c7359530b530ed866a86908e176bf101b836f138793de0a0ac1db3df7dc8823d', '99618ac219ac4701e219e7926be61f78f22d3803818852a9dbca4fcf0e66aacc', 'a98273b8f8a5cb5ec521f437eb7fe38f7adfa79cc22484d39fdcaa06c642eaa3', RECORDED_STORE_PIN]
+// THE SIBLING UNIT WHOSE LANDINGS MOVED THE STORE UNDER THE `A-1` RULING AND THE FOUR GATING CLAUSES,
+// AND THE THREE COMMITS OF ITS THAT DID — NAMED HERE, RESOLVED TO FULL IDS AT THE RUN'S OWN BYTES,
+// AND LICENCED BY A CITATION READ LIVE OUT OF THE UNIT'S SPEC (never merely asserted).
+const UNIT_UNIT = 'U-TIER4-ARBITRARY-STORAGE'
+const UNIT_STORE_MOVES = ['2d07d3f', '19da51d', '269beac']
+const NAMED_MOVES_TERM = 'unit-store-moves-are-the-three-named-ruled-landings'
+const UNIT_LICENCE_TERM = 'unit-store-move-licence-is-cited-live'
+const UNIT_LICENCE_SPEC = 'docs/specs/tier4-arbitrary-storage.md'
+const UNIT_LICENCE_CITATIONS = ['§3c', 'A-1', 'G-1', 'G-2', 'G-3', 'G-4']
+
+// ⟶ THE GATE-4 AUDIT'S `§3c` ITEM 1 LIMIT CLOSED FOR THIS ROW: the digest the artifact carried at a
+// commit is RECOMPUTED here, at the bytes, instead of being taken on the instrument's word.
+function storeDigestAt(sha) {
+  return createHash('sha256').update(execSync(`git show ${sha}:${DENIED_STORE}`, { cwd: root, maxBuffer: 1 << 28 })).digest('hex')
+}
 
 function diffScopeReading() {
   const raw = execSync(`git log --name-only --pretty=format:@@%H@@%s ${SCOPE_WINDOW}`, { cwd: root, maxBuffer: 1 << 28 }).toString()
@@ -1988,7 +2076,29 @@ function diffScopeReading() {
   const unitTest = readFileSync(join(root, 'tests', 'secure-exclusion.test.ts'), 'utf8')
   const lineage = [...unitTest.matchAll(/const (SECURITY_STORE_PIN(?:_PRE_[A-Z0-9]+)?) = '([0-9a-f]{64})'/g)].map((m) => [m[1], m[2]])
   const decisions = readFileSync(join(root, 'docs', 'decisions.md'), 'utf8')
-  return { commits, storeDigest: sha256(join(root, 'src', 'main', 'security-store.ts')), lineage, decisionsLicence: DECISIONS_LICENCE.every((t) => decisions.includes(t)) }
+  // (a-i) AWAKE: a term is awake iff its LABEL is READ beyond its own declaration, in the unit's own test
+  // file — the `D-x` rule (`a dead stale pin is a finding, not a harmless constant`). The count is read
+  // from the file's own bytes; nothing is assumed about how many terms the file carries.
+  const awake = Object.fromEntries(lineage.map(([n]) => [n, (unitTest.match(new RegExp(`\\b${n}\\b`, 'g')) ?? []).length > 1]))
+  // (a-ii) CORROBORATED: the artifact's OWN bytes must have carried that digest at a recorded commit —
+  // the window's baseline commit, every commit of the window that moves the store, and the tree's current
+  // bytes. Read out of the object store at this run's own bytes, never assumed.
+  const storeDigest = sha256(join(root, 'src', 'main', 'security-store.ts'))
+  const baseline = execSync(`git rev-parse ${SCOPE_WINDOW.split('..')[0]}`, { cwd: root }).toString().trim()
+  const storeMoveCommits = commits.filter((c) => c.paths.includes(DENIED_STORE))
+  const attested = new Set([storeDigest, storeDigestAt(baseline), ...storeMoveCommits.map((c) => storeDigestAt(c.sha))])
+  // (b-i) THE NAMED LANDINGS, each RESOLVED to its FULL commit id at this run's own bytes (a 7-hex
+  // abbreviation in the mandate is resolved, never matched by prefix).
+  const unitMoves = Object.fromEntries(UNIT_STORE_MOVES.map((a) => [a, execSync(`git rev-parse --verify '${a}^{commit}'`, { cwd: root }).toString().trim()]))
+  // (b-ii) THE LICENCE, CITED LIVE: the unit's spec must carry the record (`§3c`), the `A-1` ruling and the
+  // four gating clauses — the citation is READ, so `the unit said so` cannot stand in for it.
+  const unitSpec = readFileSync(join(root, UNIT_LICENCE_SPEC), 'utf8')
+  const unitLicence = Object.fromEntries(UNIT_LICENCE_CITATIONS.map((c) => [c, unitSpec.includes(c)]))
+  return {
+    commits, storeDigest, lineage, awake, attested, baseline, storeMoveCommits, unitMoves, unitLicence,
+    unitLicenceAll: Object.values(unitLicence).every(Boolean),
+    decisionsLicence: DECISIONS_LICENCE.every((t) => decisions.includes(t)),
+  }
 }
 
 function diffScopeProperty(r) {
@@ -1997,12 +2107,33 @@ function diffScopeProperty(r) {
   const ownPaths = [...new Set(own.flatMap((c) => c.paths))].sort()
   const siblings = r.commits.filter((c) => !isOwn(c))
   const storeMoves = siblings.filter((c) => c.paths.includes(DENIED_STORE))
-  const isAttributed = (c) => c.subject.includes(SIBLING_UNIT) && AMENDMENT_MARKERS.some((m) => c.subject.includes(m))
+  // (b) THE ATTRIBUTION VOCABULARY, EXTENDED BY THE MANDATE AT THIS UNIT'S GATE 6: a store move is
+  // ATTRIBUTED iff its OWN subject names a RECORDED amendment (the `S3` table, UNCHANGED) OR its commit
+  // IS one of the three NAMED `S2` landings — whose licence is CITED LIVE (the term beside this one).
+  const namedIds = Object.values(r.unitMoves)
+  const isAttributed = (c) => (c.subject.includes(SIBLING_UNIT) && AMENDMENT_MARKERS.some((m) => c.subject.includes(m))) || namedIds.includes(c.sha)
   const unattributed = storeMoves.filter((c) => !isAttributed(c))
+  const unitNamedMoves = storeMoves.filter((c) => c.subject.includes(UNIT_UNIT))
+  const namedPresent = namedIds.filter((id) => storeMoves.some((c) => c.sha === id))
   const anyPaths = [...new Set(r.commits.flatMap((c) => c.paths))].sort()
+  const labels = r.lineage.map(([n]) => n)
   const values = r.lineage.map(([, v]) => v)
   const operative = r.lineage.filter(([n]) => n === 'SECURITY_STORE_PIN')
   const operativePin = operative.length === 1 ? operative[0][1] : null
+  // (a) THE LINEAGE, RE-GRAINED: N labelled, full-64-hex, AWAKE and pairwise-DISTINCT terms, the
+  // OPERATIVE one being the ARTIFACT'S CURRENT DIGEST. The sub-terms are kept SEPARATE so a fixture that
+  // breaks one of them says WHICH — the row's whole point is that its bite is MEASURED, not asserted.
+  const lineageTerms = {
+    'labels-are-pairwise-distinct': new Set(labels).size === labels.length,
+    'values-are-pairwise-distinct': new Set(values).size === values.length,
+    'every-term-is-a-full-64-hex-digest': values.length > 0 && values.every((v) => /^[0-9a-f]{64}$/.test(v)),
+    'every-term-is-awake': labels.length > 0 && labels.every((n) => r.awake[n] === true),
+    'every-term-is-corroborated-by-the-artifacts-own-bytes': values.every((v) => r.attested.has(v)),
+    'exactly-one-operative-term': operative.length === 1,
+    'the-operative-term-is-the-artifacts-current-digest': operativePin !== null && operativePin === r.storeDigest,
+    'every-term-the-as-filed-licence-records-is-still-awake': LICENCE_RECORDED_TERMS.every((t) => values.includes(t)),
+    'N-is-at-least-the-as-filed-chain-and-is-never-a-hard-coded-four': r.lineage.length >= LICENCE_LINEAGE_MIN_TERMS,
+  }
   const terms = {
     // HALF A — this unit's own diff scope (`§5.1` items 1/2)
     'own-scope-denied-set-clean': ownPaths.filter((p) => p === DENIED_STORE || DENIED_FROZEN.includes(p)).length === 0,
@@ -2012,19 +2143,26 @@ function diffScopeProperty(r) {
     // HALF B — a sibling store move: ATTRIBUTED and LICENCED, never forbidden
     'sibling-store-moves-all-attributed': unattributed.length === 0,
     'sibling-store-move-present-in-window': storeMoves.length > 0,
+    [NAMED_MOVES_TERM]: unitNamedMoves.length === UNIT_STORE_MOVES.length && namedPresent.length === UNIT_STORE_MOVES.length && unitNamedMoves.every((c) => namedIds.includes(c.sha)),
+    [UNIT_LICENCE_TERM]: r.unitLicenceAll,
     'store-digest-equals-the-operative-pin': r.storeDigest === operativePin,
-    'store-licence-lineage-four-values-awake-distinct-and-recorded': r.lineage.length === 4 && new Set(r.lineage.map(([n]) => n)).size === 4 && new Set(values).size === 4 && values.every((v) => /^[0-9a-f]{64}$/.test(v)) && operativePin === RECORDED_STORE_PIN,
+    [LINEAGE_TERM]: Object.values(lineageTerms).every(Boolean),
     'store-licence-decisions-row-present': r.decisionsLicence,
     // HALF B — the genuinely frozen artifacts and `src/shared/**`: NOBODY may move these
     'genuinely-frozen-and-src-shared-untouched-by-ANY-commit': anyPaths.filter((p) => DENIED_FROZEN.includes(p) || p.startsWith('src/shared/')).length === 0,
   }
-  return { terms, ok: Object.values(terms).every(Boolean), own, ownPaths, siblings, storeMoves, unattributed, anyPaths }
+  return { terms, lineageTerms, ok: Object.values(terms).every(Boolean), own, ownPaths, siblings, storeMoves, unattributed, unitNamedMoves, namedPresent, namedIds, anyPaths, operativePin }
 }
 
 const SCOPE_LIVE = diffScopeReading()
 const liveScope = diffScopeProperty(SCOPE_LIVE)
 const scopeWithCommit = (subject, paths) => (r) => ({ ...r, commits: [...r.commits, { sha: 'f'.repeat(40), subject, paths }] })
 const ownHalfEmptied = (r) => ({ ...r, commits: r.commits.map((c) => (OWN_TOKENS.some((re) => re.test(c.subject)) ? { ...c, subject: `SIBLING RECORD — ${c.subject.replace(/U-SECURE-EXCLUSION/g, 'U-OTHER')}` } : c)) })
+// THE LINEAGE MUTATORS THE RE-GRAINED TERM IS DRIVEN WITH: an EXTRA term (awake or dead), a MISSING
+// term, and a re-valued operative label — each is a reading of the SAME predicate, never a mock.
+const lineageWithTerm = (label, value, isAwake = true) => (r) => ({ ...r, lineage: [...r.lineage, [label, value]], awake: { ...r.awake, [label]: isAwake } })
+const lineageWithoutLabel = (label) => (r) => ({ ...r, lineage: r.lineage.filter(([n]) => n !== label) })
+const lineageRevalued = (label, value) => (r) => ({ ...r, lineage: r.lineage.map(([n, v]) => (n === label ? [n, value] : [n, v])) })
 const scopeControls = Object.fromEntries([
   ['HALF A · an OWN commit moves the STORE byte', diffScopeProperty(scopeWithCommit('U-SECURE-EXCLUSION (S1) GATE 9 — a stray store edit', [DENIED_STORE])(SCOPE_LIVE))],
   ['HALF A · an OWN commit moves a GENUINELY FROZEN artifact (`store-core-graph.ts`)', diffScopeProperty(scopeWithCommit('U-SECURE-EXCLUSION (S1) GATE 9 — a frozen-module edit', ['src/renderer/store-core-graph.ts'])(SCOPE_LIVE))],
@@ -2033,21 +2171,36 @@ const scopeControls = Object.fromEntries([
   ['HALF A · an OWN commit edits a `src/**` path OUTSIDE the ALLOWED six (`src/renderer/renderer.ts`)', diffScopeProperty(scopeWithCommit('U-SECURE-EXCLUSION (S1) GATE 9 — an undeclared src path', ['src/renderer/renderer.ts'])(SCOPE_LIVE))],
   ['HALF A · the own classifier finds NOTHING (a VACUOUS own half: the unit\'s commits renamed out of the token rule)', diffScopeProperty(ownHalfEmptied(SCOPE_LIVE))],
   ['HALF B · an UNATTRIBUTED sibling store move (subject names no recorded amendment)', diffScopeProperty(scopeWithCommit('chore: tidy the security store', [DENIED_STORE])(SCOPE_LIVE))],
-  ['HALF B · a sibling store move attributed to the WRONG unit (`S2`, `U-TIER4-ARBITRARY-STORAGE`)', diffScopeProperty(scopeWithCommit('S2 (U-TIER4-ARBITRARY-STORAGE) — a store tweak', [DENIED_STORE])(SCOPE_LIVE))],
+  ['HALF B · a sibling store move attributed to the WRONG unit (`S2`, `U-TIER4-ARBITRARY-STORAGE`) — RE-GRAINED 2026-10-11: the unit is now a RECORDED, licence-bearing unit, so this fixture is driven at its OPERATIVE shape, a commit that NAMES the unit but is NOT one of the three NAMED landings; it is REFUSED by `unit-store-moves-are-the-three-named-ruled-landings` and by `sibling-store-moves-all-attributed`, i.e. NAMING IS NOT LICENCING (`RCA-8(d)`: the as-filed caption stands above)', diffScopeProperty(scopeWithCommit('S2 (U-TIER4-ARBITRARY-STORAGE) — a store tweak', [DENIED_STORE])(SCOPE_LIVE))],
   ['HALF B · NO sibling store move in the window (the attribution half would be VACUOUS)', diffScopeProperty({ ...SCOPE_LIVE, commits: SCOPE_LIVE.commits.filter((c) => !c.paths.includes(DENIED_STORE)) })],
   ['HALF B · a FABRICATED digest (the store\'s current byte digest is not the pin)', diffScopeProperty({ ...SCOPE_LIVE, storeDigest: '0'.repeat(64) })],
-  ['HALF B · the LICENCE\'s pin lineage is SHORT by one value (`PRE_ADV1`)', diffScopeProperty({ ...SCOPE_LIVE, lineage: SCOPE_LIVE.lineage.filter(([n]) => n !== 'SECURITY_STORE_PIN_PRE_ADV1') })],
-  ['HALF B · the LICENCE\'s lineage is complete but the OPERATIVE pin is not the recorded `8ed09c97…`', diffScopeProperty({ ...SCOPE_LIVE, lineage: SCOPE_LIVE.lineage.map(([n, v]) => [n, n === 'SECURITY_STORE_PIN' ? 'ab'.repeat(32) : v]) })],
+  ['HALF B · the LICENCE\'s pin lineage is SHORT by one value (`PRE_ADV1`) — RE-GRAINED 2026-10-11: STILL REFUSED, now by `every-term-the-as-filed-licence-records-is-still-awake` (the removed term is one the as-filed licence itself records), NOT by a hard-coded count of four (`RCA-8(d)`: the as-filed caption and shape stand)', diffScopeProperty({ ...SCOPE_LIVE, lineage: SCOPE_LIVE.lineage.filter(([n]) => n !== 'SECURITY_STORE_PIN_PRE_ADV1') })],
+  ['HALF B · the LICENCE\'s lineage is complete but the OPERATIVE pin is not the recorded `8ed09c97…` — RE-GRAINED 2026-10-11: the operative term must be the ARTIFACT\'S CURRENT DIGEST and a CORROBORATED one, so the fixture is driven as a re-valued operative term (`ab…`) that is neither; the as-filed `8ed09c97…` reading is kept visible in `RECORDED_STORE_PIN` and in the citation-continuity term beside it', diffScopeProperty(lineageRevalued('SECURITY_STORE_PIN', 'ab'.repeat(32))(SCOPE_LIVE))],
   ['HALF B · the LICENCE\'s decisions row is ABSENT from `docs/decisions.md`', diffScopeProperty({ ...SCOPE_LIVE, decisionsLicence: false })],
   ['HALF B · a SIBLING (`S3`) commit edits a GENUINELY FROZEN artifact (`store-graph-references.ts`)', diffScopeProperty(scopeWithCommit('S3 (U-SECURE-STORE-DISCIPLINE) — `§2.6` — an edit to a frozen module', ['src/renderer/store-graph-references.ts'])(SCOPE_LIVE))],
   ['HALF B · a SIBLING commit edits `src/shared/types.ts`', diffScopeProperty(scopeWithCommit('S2 (U-TIER4-ARBITRARY-STORAGE) — a shared edit', ['src/shared/types.ts'])(SCOPE_LIVE))],
+  // ⟶ THE RE-GRAIN'S OWN FIXTURES (`2026-10-11`): the two NEW bites the mandate names — an EXTRA
+  // licence-lineage term and a MISSING one — plus the two licence-half bites (the NAMED set is CLOSED;
+  // the citation must be READ, not asserted). Each one is the SAME predicate over a mutated READING.
+  ['HALF B · an EXTRA licence-lineage term whose digest is FABRICATED (no recorded commit ever carried it)', diffScopeProperty(lineageWithTerm('SECURITY_STORE_PIN_PRE_FABRICATED', 'ab'.repeat(32))(SCOPE_LIVE))],
+  ['HALF B · an EXTRA licence-lineage term that merely REPEATS an awake value (not DISTINCT)', diffScopeProperty(lineageWithTerm('SECURITY_STORE_PIN_PRE_DUPLICATE', LICENCE_RECORDED_TERMS[0])(SCOPE_LIVE))],
+  ['HALF B · an EXTRA licence-lineage term that is DEAD (its label is read nowhere beyond its own declaration)', diffScopeProperty(lineageWithTerm('SECURITY_STORE_PIN_PRE_DEAD', 'cd'.repeat(32), false)(SCOPE_LIVE))],
+  ['HALF B · the lineage is MISSING its OPERATIVE term (no `SECURITY_STORE_PIN` label in the file at all)', diffScopeProperty(lineageWithoutLabel('SECURITY_STORE_PIN')(SCOPE_LIVE))],
+  ['HALF B · a NEW store move that NAMES the unit but is NOT one of the three NAMED ruled landings', diffScopeProperty(scopeWithCommit('S2 (U-TIER4-ARBITRARY-STORAGE) GATE 7 — a further store landing', [DENIED_STORE])(SCOPE_LIVE))],
+  ['HALF B · the LICENCE is NOT CITED LIVE (the unit\'s spec no longer carries `§3c` / the `A-1` ruling / the four gating clauses)', diffScopeProperty({ ...SCOPE_LIVE, unitLicenceAll: false })],
+  ['HALF B · the three NAMED landings are ABSENT from the window (the citation would be VACUOUS)', diffScopeProperty({ ...SCOPE_LIVE, commits: SCOPE_LIVE.commits.filter((c) => !Object.values(SCOPE_LIVE.unitMoves).includes(c.sha)) })],
 ])
 const scopeNotRefused = Object.entries(scopeControls).filter(([, v]) => v.ok !== false).map(([k]) => k)
 const scopeOperativePin = (SCOPE_LIVE.lineage.find(([n]) => n === 'SECURITY_STORE_PIN') ?? [null, 'ABSENT'])[1]
+const scopeFixtureReport = Object.fromEntries(Object.entries(scopeControls).map(([k, v]) => [k, {
+  ok: v.ok,
+  broke: Object.entries(v.terms).filter(([, b]) => !b).map(([t]) => t),
+  brokeInTheLineageTerm: Object.entries(v.lineageTerms).filter(([, b]) => !b).map(([t]) => t),
+}]))
 check('SX-G-55 (diff scope)', 'this unit\'s own diff touches no frozen artifact, no store byte and no `src/shared/**` — while a RULED SIBLING MOVE of the store byte is ATTRIBUTED and LICENCED (never forbidden), and an UNATTRIBUTED move, or any move of a genuinely frozen artifact or of `src/shared/**`, still reddens it',
   liveScope.ok && Object.values(scopeControls).every((v) => v.ok === false) && scopeNotRefused.length === 0 ? 'PASS' : 'FAIL',
-  `landing chain paths: ${JSON.stringify(liveScope.anyPaths)}; HALF A — own diff scope: ${liveScope.own.length} of ${SCOPE_LIVE.commits.length} commit(s) in \`${SCOPE_WINDOW}\` name this unit and touch ${liveScope.ownPaths.length} path(s) ${JSON.stringify(liveScope.ownPaths)}; own forbidden hits: ${JSON.stringify(liveScope.ownPaths.filter((p) => p === DENIED_STORE || DENIED_FROZEN.includes(p)))}; own \`src/shared/**\` hits: ${JSON.stringify(liveScope.ownPaths.filter((p) => p.startsWith('src/shared/')))}; own \`src/**\` outside the ALLOWED six: ${JSON.stringify(liveScope.ownPaths.filter((p) => p.startsWith('src/') && !OWN_ALLOWED_SRC.includes(p)))}; HALF B — ${liveScope.storeMoves.length} sibling commit(s) move \`${DENIED_STORE}\`: ${JSON.stringify(liveScope.storeMoves.map((c) => [c.sha.slice(0, 7), AMENDMENT_MARKERS.filter((m) => c.subject.includes(m))]))} with ${liveScope.unattributed.length} UNATTRIBUTED; the store's CURRENT digest ${SCOPE_LIVE.storeDigest.slice(0, 12)}… vs the pin the unit's own test carries ${scopeOperativePin.slice(0, 12)}…; the licence: lineage ${SCOPE_LIVE.lineage.length} value(s) ${JSON.stringify(SCOPE_LIVE.lineage.map(([n]) => n))}, decisions row ${SCOPE_LIVE.decisionsLicence ? 'present' : 'ABSENT'}; frozen-or-shared paths touched by ANY commit: ${JSON.stringify(liveScope.anyPaths.filter((p) => DENIED_FROZEN.includes(p) || p.startsWith('src/shared/')))}; terms: ${JSON.stringify(liveScope.terms)}; FIXTURES driving this row's OWN predicate (each must be REFUSED, each printed with the terms it broke): ${JSON.stringify(Object.fromEntries(Object.entries(scopeControls).map(([k, v]) => [k, { ok: v.ok, broke: Object.entries(v.terms).filter(([, b]) => !b).map(([t]) => t) }])))}; fixtures NOT refused: ${JSON.stringify(scopeNotRefused)}`,
-  'HALF A `docs/specs/secure-exclusion.md` `§5.1` item 1 (the ALLOWED six) and item 2 (the DENIED set, incl. `package.json` and *"every other `src/**` path"*) · HALF B `§1.3` item 1\'s DATED ANNOTATIONS (the three AUTHORISED re-points `c7359530…` → `99618ac2…` → `a98273b8…` → `8ed09c97…`, `S3`\'s `§2.6`/`ADV-1`/earlier landing) and `docs/decisions.md`\'s `TIER-4 READS RETURN DEEP CLONES … `D-1` · `D-2` row — **the licence a sibling store move must carry, and the ONE path that ruling admits**')
+  `landing chain paths: ${JSON.stringify(liveScope.anyPaths)}; HALF A — own diff scope: ${liveScope.own.length} of ${SCOPE_LIVE.commits.length} commit(s) in \`${SCOPE_WINDOW}\` name this unit and touch ${liveScope.ownPaths.length} path(s) ${JSON.stringify(liveScope.ownPaths)}; own forbidden hits: ${JSON.stringify(liveScope.ownPaths.filter((p) => p === DENIED_STORE || DENIED_FROZEN.includes(p)))}; own \`src/shared/**\` hits: ${JSON.stringify(liveScope.ownPaths.filter((p) => p.startsWith('src/shared/')))}; own \`src/**\` outside the ALLOWED six: ${JSON.stringify(liveScope.ownPaths.filter((p) => p.startsWith('src/') && !OWN_ALLOWED_SRC.includes(p)))}; HALF B — ${liveScope.storeMoves.length} sibling commit(s) move \`${DENIED_STORE}\`: ${JSON.stringify(liveScope.storeMoves.map((c) => [c.sha.slice(0, 7), c.subject.includes(SIBLING_UNIT) ? AMENDMENT_MARKERS.filter((m) => c.subject.includes(m)) : (liveScope.namedIds.includes(c.sha) ? ['NAMED-S2-LANDING'] : [])]))} with ${liveScope.unattributed.length} UNATTRIBUTED; the three NAMED \`${UNIT_UNIT}\` landings ${JSON.stringify(SCOPE_LIVE.unitMoves)} RESOLVED at this run's bytes, ${liveScope.namedPresent.length} of ${UNIT_STORE_MOVES.length} PRESENT in the window as store moves and ${liveScope.unitNamedMoves.length} unit-naming store move(s) total; the licence CITED LIVE out of \`${UNIT_LICENCE_SPEC}\`: ${JSON.stringify(SCOPE_LIVE.unitLicence)} (all six citations ${SCOPE_LIVE.unitLicenceAll ? 'PRESENT' : 'INCOMPLETE'}); the store's CURRENT digest ${SCOPE_LIVE.storeDigest.slice(0, 12)}… vs the pin the unit's own test carries ${scopeOperativePin.slice(0, 12)}…; THE LINEAGE, READ AS N TERMS — as-filed term name kept visible: \`${AS_FILED_LINEAGE_TERM}\` (its \`length === 4\` reading is SUPERSEDED IN EFFECT by the re-grained \`${LINEAGE_TERM}\`), N = ${SCOPE_LIVE.lineage.length} ≥ floor ${LICENCE_LINEAGE_MIN_TERMS}, terms ${JSON.stringify(SCOPE_LIVE.lineage.map(([n, v]) => [n, v.slice(0, 12)]))}, AWAKENESS ${JSON.stringify(SCOPE_LIVE.lineage.map(([n]) => [n, SCOPE_LIVE.awake[n] === true]))}, the artefact's own attested digests ${JSON.stringify([...SCOPE_LIVE.attested].map((d) => d.slice(0, 12)))}, sub-terms ${JSON.stringify(liveScope.lineageTerms)}; the decisions row ${SCOPE_LIVE.decisionsLicence ? 'present' : 'ABSENT'}; frozen-or-shared paths touched by ANY commit: ${JSON.stringify(liveScope.anyPaths.filter((p) => DENIED_FROZEN.includes(p) || p.startsWith('src/shared/')))}; terms: ${JSON.stringify(liveScope.terms)}; FIXTURES driving this row's OWN predicate (each must be REFUSED, each printed with the terms it broke AND, where it is the lineage, with the sub-term it broke): ${JSON.stringify(scopeFixtureReport)}; fixtures NOT refused: ${JSON.stringify(scopeNotRefused)}`,
+  'HALF A `docs/specs/secure-exclusion.md` `§5.1` item 1 (the ALLOWED six) and item 2 (the DENIED set, incl. `package.json` and *"every other `src/**` path"*) · HALF B `§1.3` item 1\'s DATED ANNOTATIONS (the three AUTHORISED re-points `c7359530…` → `99618ac2…` → `a98273b8…` → `8ed09c97…`, `S3`\'s `§2.6`/`ADV-1`/earlier landing) and `docs/decisions.md`\'s `TIER-4 READS RETURN DEEP CLONES … `D-1` · `D-2` row — **the licence a sibling store move must carry, and the ONE path that ruling admits**; AND, for the LATER unit this re-grain admits, `docs/specs/tier4-arbitrary-storage.md`\'s `§3c` record, its `A-1` ruling and its four gating clauses `G-1`…`G-4` READ LIVE, with the unit\'s own three ruled landings (`2d07d3f` · `19da51d` · `269beac`) NAMED — the mandate for this re-grain is the supervisor\'s at this unit\'s gate 6')
 
 // ══════════════════════════════════════════════════════════════════════════════
 // THE VERDICT SUMMARY (printed WITH its terms)
