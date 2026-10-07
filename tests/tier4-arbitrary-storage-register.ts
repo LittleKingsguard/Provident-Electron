@@ -106,15 +106,27 @@ export const MEASURED_FROZEN_PINS: Readonly<Record<string, string>> = {
  *  **THE FIFTH MOVE'S OWN CONSEQUENCE, STATED SO IT IS NOT READ AS A REGRESSION:** the repair
  *  pass on `src/main/security-store.ts` moves the digest AGAIN; `§7b` row 1 already owns that
  *  amendment cell, and the pin follows the artifact (a byte-pin that refused to follow an
- *  authorized move would be an instrument demanding an unauthorized rollback). */
+ *  authorized move would be an instrument demanding an unauthorized rollback).
+ *
+ *  ⟶ RE-POINTED `2026-10-11` (THE GATE-4 REPAIR'S IMPLEMENTER PASS, `D-i`…`D-iv` — `RCA-8(a):
+ *  ONE CAUSE, ONE LINE`). **THE PREDICTED MOVE ABOVE HAS HAPPENED, AND THE PIN FOLLOWS THE
+ *  ARTIFACT.** `src/main/security-store.ts`'s bytes moved `fd2426339a41…` → **`39bfa51a578a…`**
+ *  under the ruled repair the contract's `§3c.4` authorizes (the `-0` refusal — `D-i`; the
+ *  null-prototype ingestion map — `D-ii`; the non-object record's corrupt arm — `D-iii`; the
+ *  DECLARED `fs` construction input with its completeness test and its `fs.rmSync` cleanup —
+ *  `D-iv`; `§5.1` item 1's allowed-edit-set item (1) names this very file). **THE AS-FILED FOURTH
+ *  TERM (`8ed09c97…`) AND THE FIFTH (`fd242633…`) STAY AWAKE AND NAMED — the fifth is the term
+ *  this re-point moves FROM — and the chain keeps its declared FIVE terms, distinct, with the
+ *  operative one at its head position (the D-x row asserts exactly that shape).** No row, term,
+ *  strategy id, cap or declared total moves with it. */
 export const SECURITY_STORE_PIN_CHAIN: readonly string[] = [
   'c7359530', // as filed
   '99618ac2', // S3's green
   'a98273b8', // ADV-1
-  '8ed09c97', // the §2.6 write-lock amendment (the as-filed operative term, kept awake)
-  'fd242633', // the A-1 static-holder landing 19da51d (D-x: the LIVE operative term)
+  '8ed09c97', // the §2.6 write-lock amendment (kept awake)
+  '39bfa51a', // ⟶ the gate-4 REPAIR landing (D-i…D-iv); it moved FROM fd242633 (the A-1 static-holder landing, kept awake in the note above)
 ]
-export const SECURITY_STORE_PIN = 'fd2426339a413d04d77c039f32782c90497e614ddf7bb185900283fdbf0635c3'
+export const SECURITY_STORE_PIN = '39bfa51a578a1c56acc188199caf190957e1a52d770c5471a530c55c98410295'
 
 // ---- THE REGISTER'S DECLARED NUMBERS (`§5.5.1`) -----------------------------------------
 export const REGISTER_ROW_CAP = 100

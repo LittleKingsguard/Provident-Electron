@@ -2184,8 +2184,18 @@ runRow('P-O3-TP-1', 'P-TP', 'S-SS-CENSUS-1', 8, () => {
       // (`read: Tier4ClosedRefusal | null`, `write: Tier4WriteAnswer`, `S2` `§2.1` item 8).
       // `src/shared/types.ts` is **UNMOVED** and keeps its pin — the widening is an
       // INTERSECTION at the declaration sites, never an edit to the shared type.
+      //
+      // **⟶ RE-POINTED AGAIN `2026-10-11`, CAUSE IN ONE LINE — the SAME discipline, applied to the
+      // gate-4 repair.** `src/main/main.ts` `0c0c3c9f…` →
+      // **`d447a523578b117c9ab6c1723f46ad9823f4de36dd6c3656bc6d674f717cc9f4`**: the ruled repair
+      // contract's `D-vii`/`D-viii` (`docs/specs/tier4-arbitrary-storage.md` `§3c.4`; `§5.1` item 1's
+      // allowed-edit-set item (2) names `src/main/main.ts`) — the boot's CLOSE
+      // (`mcp.applyExclusion('mcp-enabled')`) MOVES AHEAD of the window's creation/load with
+      // `D-19`'s four-step order preserved, and the GET handler reads the holder EXACTLY ONCE per
+      // turn with BOTH additive members deriving from that ONE reading. `src/main/preload.ts` and
+      // `src/shared/types.ts` are UNMOVED and keep their pins (the as-filed pins above STAND).
       const deniedPaths: Array<{ label: string; rel: string[]; pin: string }> = [
-        { label: 'src/main/main.ts', rel: ['main', 'main.ts'], pin: '0c0c3c9f28634d1f1c8342c658649b97c0b8959bc35c866a1cf77e40618e125e' },
+        { label: 'src/main/main.ts', rel: ['main', 'main.ts'], pin: 'd447a523578b117c9ab6c1723f46ad9823f4de36dd6c3656bc6d674f717cc9f4' },
         { label: 'src/main/preload.ts', rel: ['main', 'preload.ts'], pin: 'fa4a142f6362c55bf8a4b7a800574231e7212b4dc1b056eb1eda3168030545ac' },
         { label: 'src/shared/types.ts', rel: ['shared', 'types.ts'], pin: '29af4efaf16a5cadf1ac22b63afda063495ce63ec95b56f1f6e397da1d8189c6' },
       ]

@@ -697,8 +697,20 @@ const DIFF_SCOPE_PATHS: readonly string[] = [SECURITY_TS_SRC, MCP_SERVER_SRC, MA
  *  The digest it moved FROM is kept below as `SECURITY_STORE_PIN_PRE_HOLDER`, awake and
  *  asserted distinct. The two register cells that read this constant — `P-EX-IM-2`
  *  (j)/(l) — redden WITH it and clear with it, ONE cause; no term, row, declared total,
- *  cap or strategy id moves.** */
-const SECURITY_STORE_PIN = 'fd2426339a413d04d77c039f32782c90497e614ddf7bb185900283fdbf0635c3'
+ *  cap or strategy id moves.**
+ *
+ *  **⟶ FIFTH RE-POINT, CAUSE IN ONE DATED LINE (`2026-10-11`): THE `S2`
+ *  `U-TIER4-ARBITRARY-STORAGE` GATE-4 REPAIR LANDED (`D-i`…`D-iv`, `§3c.4`) AND MOVED THE
+ *  STORE'S BYTES — the `-0` refusal, the null-prototype ingestion map, the non-object
+ *  record's corrupt arm and the DECLARED `fs` construction input with its completeness
+ *  test and its surface-routed cleanup — so the pin's EXPECTATION FOLLOWS THE ARTIFACT
+ *  under that authorized change (`S2`'s `§5.1` item 1 allowed-edit-set item (1), which
+ *  names this very file). The digest the FOURTH re-point made operative — `fd242633…` — is
+ *  named one block above and stays visible in this file's lineage prose and in the unit's
+ *  own register-harness chain, and the operative figure here is `39bfa51a…` — the same
+ *  figure the unit's own register harness now asserts at FULL 64-hex (`D-x`; its
+ *  `SECURITY_STORE_PIN`, whose dead-stale form gate 4 measured).** */
+const SECURITY_STORE_PIN = '39bfa51a578a1c56acc188199caf190957e1a52d770c5471a530c55c98410295'
 /* **⟶ AMENDMENT SET (2026-10-11; `RCA-8(a)` gate: `S1`'s pin re-grained to the `S3`
  * `U-SECURE-STORE-DISCIPLINE` landing — commits `460fb66` + `0d36c46`), `RCA-8(d)`
  * ANNOTATE-BESIDE: the as-filed clause above (and its digest) STANDS BYTE-FOR-BYTE
