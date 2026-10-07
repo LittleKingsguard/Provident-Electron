@@ -14,18 +14,23 @@ import type { SecuritySettings } from '../shared/types.js'
 // this module, so the edge is acyclic; the constant is never re-spelled here (`§2.4` item 4:
 // built once, in the module that mints it).
 import { TIER4_CLOSED, TIER4_CLOSED_MESSAGE } from './mcp-server.js'
+// `§0A` item 1 (the `A-1` ruling) — **THE ONE BOOLEAN'S STATIC MODULE-LEVEL HOLDER**, read DIRECTLY
+// here at each gate consult, ONCE PER CALL at that call's own turn and never cached across a call.
+// The leaf imports nothing, so this edge is acyclic (`security-store.ts` -> `tier4-state.ts`).
+import { tier4OpenState } from './tier4-state.js'
 
+/** `§0A` item 1 (the `A-1` ruling, AMENDED `2026-10-11`) — **THE OPTION CENSUS IS UNMOVED AT
+ *  `1 = 1 (path)`.** The as-filed `1 → 2` movement, the injected-thunk shape and its
+ *  fail-safe-CLOSED absent arm are WITHDRAWN: there is **NO "reader omitted" state**, because the
+ *  ONE boolean's home is the STATIC MODULE-LEVEL HOLDER of the main-side leaf
+ *  `src/main/tier4-state.ts` (`tier4OpenState()` / `setTier4OpenState()`), whose declared initial
+ *  value is `STORE-OPEN`. The store reads that holder DIRECTLY at each call's own turn — never
+ *  through an option, a thunk or a construction-time copy — so a bare
+ *  `createSecurityStore({ path })` behaves exactly as before. The store CONSULTS the state; it
+ *  never holds, moves or persists it (`§2.5` items 1/2). */
 export interface SecurityStoreOptions {
   /** The JSON file the settings persist to (usually in Electron userData). */
   path: string
-  /** `§0A` item 1 / `§6` `PAR-2` — **THE ONE BOOLEAN'S NAMED, GATE-LESS READER**, constructed
-   *  before the store and handed to it here: a THUNK read ONCE PER CALL at the caller's own turn
-   *  and never cached across a call (the landed `exclusionTurn` precedent, `mcp-server.ts:72-81`).
-   *  `true` means the store is OPEN (the MCP endpoint is blocked), `false` means CLOSED. ITS
-   *  ABSENT ARM IS TOTAL AND FAIL-SAFE (`§3.2` `FS-T4-09`): with the option absent — or with a
-   *  thunk that throws, or one answering a non-boolean — the tier answers CLOSED, never a throw.
-   *  The store CONSULTS this state; it never holds, moves or persists it (`§2.5` items 1/2). */
-  tier4Open?: () => boolean
 }
 
 /** THE RECEIPT — the persist outcome of a `set()` attempt, in the TWO closed
@@ -126,10 +131,9 @@ function ingest(input: unknown): { record: SecuritySettings; entries: Record<str
  *  *"the `fs` seam is undeclared, and `§3.3` item 4's 'NO FILESYSTEM CALL ON A REFUSAL' is not
  *  measurable without one"*. The red set hands an instrumented surface at construction so a
  *  refusal's no-`fs` property is a MEASUREMENT rather than an inference from a code read. It is
- *  deliberately **NOT a member of the declared `SecurityStoreOptions`** — whose census this unit
- *  moves `1 → 2` (`§5.1` item 4: `2 = path + tier4Open`) and NOT to `3` — so it is read as an
- *  undeclared construction extra; absent, every call below is the landed `node:fs` one, byte for
- *  byte. */
+ *  deliberately **NOT a member of the declared `SecurityStoreOptions`**, whose census `§0A` item 1
+ *  leaves UNMOVED at `1 = 1 (path)` — so it is read as an undeclared construction extra; absent,
+ *  every call below is the landed `node:fs` one, byte for byte. */
 interface FsSurface {
   readFileSync: typeof readFileSync
   existsSync: typeof existsSync
@@ -147,17 +151,11 @@ const nodeFs: FsSurface = { readFileSync, existsSync, mkdirSync, writeFileSync, 
  *  treated as the first-run default; a corrupt file falls back to the default
  *  (never throws — a settings read must not crash the app). */
 export function createSecurityStore(opts: SecurityStoreOptions): SecurityStore {
-  /** THE CONSTRUCTION SEAM (`SPEC FINDING (b)` above) and **THE DECLARED READER** (`§2.1` item 2
-   *  / `PAR-2`): the boolean is read ONCE PER CALL at the call's own turn, never cached across a
-   *  call, and its absent/throwing/non-boolean arms are FAIL-SAFE CLOSED (`§3.2` `FS-T4-09`). */
+  /** THE CONSTRUCTION SEAM (`SPEC FINDING (b)` above). **THE GATE CONSULT IS THE STATIC HOLDER**
+   *  (`§0A` item 1, the `A-1` ruling): the boolean is read ONCE PER CALL at the call's own turn
+   *  through the leaf's ONE total reader — never an option, never a thunk, never a construction-time
+   *  copy. The reader never throws, so there is no fail-safe arm to answer. */
   const fs: FsSurface = (opts as SecurityStoreOptions & { fs?: FsSurface }).fs ?? nodeFs
-  const tier4Open = (): boolean => {
-    try {
-      return opts.tier4Open !== undefined && opts.tier4Open() === true
-    } catch {
-      return false
-    }
-  }
   /** `§2.4` items 3/4 — THE CLOSED REFUSAL VALUE, minted from the channel token and the
    *  server-authored message (`mcp-server.ts`), never from caller input. */
   const tier4Closed = (): Tier4ClosedRefusal => ({ status: 'refused', reason: TIER4_CLOSED, message: TIER4_CLOSED_MESSAGE })
@@ -446,7 +444,7 @@ export function createSecurityStore(opts: SecurityStoreOptions): SecurityStore {
       // AHEAD of, and BESIDE, the landed admission check — the refusal the admission would ALSO
       // make answers `tier4-closed`, makes NO filesystem call and advances NOTHING. The answer is
       // the PRE-WRITE record (`this.get()`), and the receipt is the attempt's own closed refusal.
-      if (!tier4Open()) {
+      if (!tier4OpenState()) {
         lastReceipt = tier4Closed()
         return this.get()
       }
@@ -489,7 +487,7 @@ export function createSecurityStore(opts: SecurityStoreOptions): SecurityStore {
       // 1 · THE GATE CONSULT (`§2.1` item 5 step 1 / `G-1`): CLOSED ⇒ no admission, no filesystem
       // call, no record advance, nothing written; the answer is the closed refusal VALUE and the
       // receipt is that same attempt.
-      if (!tier4Open()) {
+      if (!tier4OpenState()) {
         lastReceipt = tier4Closed()
         return lastReceipt
       }

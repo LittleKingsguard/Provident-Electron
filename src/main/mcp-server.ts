@@ -21,6 +21,11 @@ import type {
   NodeStateResult,
 } from '../shared/types.js'
 import { SecurityGate, exclusionAllowsWork, type ToolGroup, moduleToolAllowed } from './security.js'
+// `docs/specs/tier4-arbitrary-storage.md` `§0A` item 1 (the `A-1` ruling): THIS MODULE HOLDS THE
+// TRANSITION'S **ONE WRITE** OF THE STATIC HOLDER — `applyExclusion` writes it FROM the very input
+// it hands `withExclusion`, in the same turn, so the gate (the enforcement path) and the holder
+// (the store's consult and `main`'s carrier) are one value and cannot disagree.
+import { setTier4OpenState } from './tier4-state.js'
 import type { ModuleStore } from './module-store.js'
 import type { CapabilityRouter } from '../renderer/extensions.js'
 
@@ -459,6 +464,13 @@ export class ProvidentMcpServer {
    *  oracle `§0A` item 7(c) refuses). The HTTP path needs no re-gate: it is per-POST. */
   applyExclusion(state: 'mcp-enabled' | 'mcp-disabled'): void {
     const self = state === this._gate.exclusionState()
+    // `§0A` item 1 (the `A-1` ruling) / `§2.5` item 2 `W-1` — **THE ONE WRITE OF THE STATIC HOLDER**,
+    // taken from the VERY SAME INPUT this method hands `withExclusion` one line below, in the same
+    // turn: the gate is the ENFORCEMENT path and the holder is what the store consults and what
+    // `main`'s carrier reads, so writing both from one input makes the two unable to disagree (the
+    // `F-1`/`A-1` captured-instance class is closed structurally — there is no instance to capture).
+    // `'mcp-disabled'` means the store is OPEN (`true`), `'mcp-enabled'` means CLOSED (`false`).
+    setTier4OpenState(state === 'mcp-disabled')
     this._gate = this._gate.withExclusion(state)
     if (!self) {
       // (b) THE EPOCH BUMPS AND THE IN-FLIGHT WORK IS INVALIDATED — the ONE bulk-abandon path for

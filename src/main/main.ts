@@ -14,6 +14,11 @@ import { STORE_FILE_GET, STORE_FILE_PUT, IPC_SECURITY_EXCLUSION } from './store-
 import { CapabilityRouter } from '../renderer/extensions.js'
 import { syncModuleRouter, TIER4_CLOSED, TIER4_CLOSED_MESSAGE } from './mcp-server.js'
 import { SecurityGate, type ExclusionState, type ToolGroup } from './security.js'
+// `docs/specs/tier4-arbitrary-storage.md` `§0A` item 1 (the `A-1` ruling) — THE ONE BOOLEAN'S STATIC
+// MODULE-LEVEL HOLDER, read here (the operator's carrier) exactly as `security-store.ts` reads it
+// at its gates. `main` is a READER only: the holder's ONE writer is the transition in
+// `mcp-server.ts` (`F-11`: `main` supplies STATE, never takes the DECISION).
+import { tier4OpenState } from './tier4-state.js'
 
 // The main process is bundled as CJS (Electron runs it reliably that way), so
 // `__dirname` is available.
@@ -84,24 +89,17 @@ async function main(): Promise<void> {
   // userData so a restart restores them. The MCP server gate is built from the
   // persisted config (read+dispatch ON by default on first run).
   //
-  // ═══ `A-1`'S DECLARED DEFAULT (`docs/specs/tier4-arbitrary-storage.md` `§0A` item 1, `§6`
-  // `PAR-2`) — THE NAMED, GATE-LESS READER, CONSTRUCTED BEFORE THE STORE ═══
-  // The ONE boolean's home stays the gate's own `_exclusion` record (`§2.5` item 1): this thunk
-  // only CARRIES it to the store's read/write functions, read ONCE PER CALL at the call's own turn
-  // and never cached across a call — it is handed to the store as the ONE added option, not a gate
-  // and not a captured value (`mcp-server.ts:72-81`'s `exclusionTurn` precedent: *"it takes the
-  // gate's reader, not a gate"*). ITS PRICE, PAID HERE: the reader must exist BEFORE the store is
-  // constructed, so the boot window is re-ordered (reader → store → boot read → gate). Inside that
-  // pre-gate window no gate exists yet, so the reader answers the DECLARED BOOT VALUE — the store is
-  // OPEN (the MCP is blocked, `§0A` item 4) — which is what makes the boot-ingestion read at `:89`
-  // legal WITHOUT any exception (`§2.5` item 5 `F-3`, `D-19`'s `OPEN → INGEST → CLOSE → ENABLE`).
-  // Once the gate exists the reader reads the LIVE gate and never a captured instance
-  // (`withExclusion` REPLACES it), so `G-1`/`G-2` bind the live server and nothing goes stale.
-  let liveExclusionState: () => ExclusionState = () => 'mcp-disabled'
-  const tier4Open = (): boolean => liveExclusionState() === 'mcp-disabled'
+  // ═══ `A-1`'S RULING (`docs/specs/tier4-arbitrary-storage.md` `§0A` item 1, AMENDED
+  // `2026-10-11`) — THE ONE BOOLEAN'S HOME IS THE STATIC HOLDER, AND THIS MODULE HOLDS NO READER
+  // AND NO WRITER OF IT ═══
+  // The as-filed named-reader option is WITHDRAWN: nothing is constructed before the store, so the
+  // LANDED boot window `store → boot read → gate → flip → mcp.start()` stands unmoved. The store's
+  // OPEN reading at the boot read below comes from the holder's DECLARED INITIAL VALUE `STORE-OPEN`
+  // (`src/main/tier4-state.ts`), which is `D-19`'s ingestion window and why that read is legal
+  // without any exception. `main` supplies STATE and never takes the DECISION (`F-11`): the only
+  // writer of the holder is the transition (`mcp.applyExclusion`), never this module.
   const securityStore: SecurityStore = createSecurityStore({
     path: join(app.getPath('userData'), 'provident-security.json'),
-    tier4Open,
   })
   const persisted = securityStore.get()
   // `docs/specs/secure-exclusion.md` `§2.1` item 4 — THE ORDERING ENVELOPE, STEP 2: the gate is
@@ -110,7 +108,6 @@ async function main(): Promise<void> {
   // a file, because the flag is NOT persisted (`D-19`). A crash, a torn record, a corrupt file and
   // a missing file therefore all resolve to the SAFE pair.
   const gate = new SecurityGate({ token: persisted.token, enabled: persisted.enabled as ToolGroup[] })
-  liveExclusionState = () => gate.exclusionState()
   const backend = new RendererBackend()
 
   // ═══════════════════════════ TIER 1 — THE CHANNEL + THE FILE (G2 `U-STORE-PERSIST`,
@@ -285,11 +282,11 @@ async function main(): Promise<void> {
   // THE ONE-LINE OPTIONS PASS (§2.8 item 3): the server's construction options receive the
   // re-pointed module surface — the module tools' REPLY SHAPES are UNCHANGED.
   const mcp = new ProvidentMcpServer({ backend, transport, port, gate, moduleStore: moduleSurface, router: moduleRouter })
-  // `G-4`'s READER, RE-POINTED TO THE LIVE SERVER (`§2.5` item 3 `R-2`): the store now consults the
-  // SERVER's own accessor (`mcp-server.ts`'s `get gate()`), so the operator's transitions — which
-  // REPLACE `_gate` — are seen by the store's functions at the next call's own turn. No second
-  // home and no second writer is created: the value stays the gate's `_exclusion` record.
-  liveExclusionState = () => mcp.gate.exclusionState()
+  // `§0A` item 1 (the `A-1` ruling) — NO RE-POINT IS OWED HERE ANY MORE. The landed `R-2` re-point
+  // existed because the store consulted a reader `main` had to keep aimed at the LIVE server
+  // (`mcp-server.ts`'s `get gate()`). The store now reads the STATIC HOLDER, and the server's own
+  // `applyExclusion` is that holder's ONE writer, so there is nothing to re-point and no window in
+  // which the store and the operator could disagree. No second home and no second writer exists.
 
   // The manual-UI settings IPC: main owns the config + re-wires the MCP server
   // tool-gating on change. This is manual-UI-ONLY — it is NOT reachable over an
@@ -401,16 +398,18 @@ async function main(): Promise<void> {
   // server's `_gate`, so a handler closing over the boot `gate` answers a PERMANENTLY STALE value
   // after the operator's first transition — the gate-4 `A-1` defect class, one layer up, and the
   // reason the pane rendered `· MCP: enabled` over a server refusing every call (`F-5`).
-  // `mcp.gate` is the server's OWN live accessor (`L` `mcp-server.ts:695`), so ONE holder answers
-  // BOTH the enforcement and the operator's read (`§2.1` item 1's "ONE live home"). This is NOT a
-  // `secure.*` segment check: `main` supplies STATE and asks only "is the exclusion open?" (`§2.6`).
+  // **THE CARRIER NO LONGER READS THE SERVER'S LIVE GATE (`§0A` item 1, AMENDED `2026-10-11`).** The
+  // gate-6 `F-1` hazard the landed wording below worked around — a handler closing over a since-
+  // REPLACED gate instance — is now closed STRUCTURALLY: the ONE boolean lives in the static holder
+  // `src/main/tier4-state.ts`, whose ONE writer is the transition itself, so there is no instance to
+  // capture and nothing to re-point. `mcp.gate` is still the ENFORCEMENT path's accessor.
   //
   // ═══ THE CARRIER'S COMPOSITION, AND THE DEADLOCK'S DISSOLUTION (`tier4-arbitrary-storage.md`
   // `§2.4` item 7 / `§2.6` item 2) ═══
   // The record's own members come from the tier's read; the ONE boolean is read at the handler's own
-  // turn DIRECTLY OFF THE LIVE GATE and is **NEVER routed through a store read** — which is exactly
-  // what stops a gated store from blanking the operator's only reader (pre-amendment `:384` routed
-  // it through `securityStore.get()`). From THAT ONE READING both additive members derive: the
+  // turn DIRECTLY OFF THE STATIC HOLDER and is **NEVER routed through a store read** — which is
+  // exactly what stops a gated store from blanking the operator's only reader (pre-amendment `:384`
+  // routed it through `securityStore.get()`). From THAT ONE READING both additive members derive: the
   // landed `exclusion` (the STATE token — never the message, never a tier-4 value) and the NEW
   // `read` (`null` iff the read was performed, the closed refusal otherwise). They are mutual
   // inverses on one axis and NEITHER may be substituted for the other (`§3.4`).
@@ -422,14 +421,19 @@ async function main(): Promise<void> {
   const liveSecurityRecord = (): SecuritySettings => securityStore.get()
   const tier4ClosedRefusal = (): Tier4ClosedRefusal => ({ status: 'refused', reason: TIER4_CLOSED, message: TIER4_CLOSED_MESSAGE })
   ipcMain.handle(IPC_SECURITY_GET, () => {
-    const exclusion: ExclusionState = mcp.gate.exclusionState()
-    const open = exclusion === 'mcp-disabled'
-    const read: Tier4ClosedRefusal | null = open ? null : tier4ClosedRefusal()
+    // `§0A` item 1 (the `A-1` ruling): the ONE boolean is read OFF THE STATIC HOLDER at THIS
+    // handler's own turn — never through a store read and never through a captured gate instance
+    // (`mcp.gate` is REPLACED by `applyExclusion`, so a captured accessor was the `F-1` defect
+    // class; the holder has no instance to capture). `main` supplies STATE, never the DECISION.
+    // The STATE local keeps the LANDED shape (it is the member the record's `exclusion` term is
+    // composed from); only its SOURCE moved, from the live gate's accessor to the static holder.
+    const exclusion: ExclusionState = tier4OpenState() ? 'mcp-disabled' : 'mcp-enabled'
+    const read: Tier4ClosedRefusal | null = exclusion === 'mcp-disabled' ? null : tier4ClosedRefusal()
     // THE MEMBER ORDER IS DELIBERATE: the LANDED `exclusion` term stays the record's LAST member (the
     // shape the landed `PAR-9` reading evaluates — `{ ...settings, exclusion: <expr> }`), and the new
     // `read` term rides BESIDE it. Both are the SAME intersection §2.4 item 8 declares; only the two
     // additive members' order differs, and no consumer reads by position.
-    return ({ ...liveSecurityRecord(), read: read, exclusion: mcp.gate.exclusionState() })
+    return ({ ...liveSecurityRecord(), read: read, exclusion: tier4OpenState() ? 'mcp-disabled' : 'mcp-enabled' })
   })
   ipcMain.handle(IPC_SECURITY_SET, (_event, patch: { token?: string | null; groups?: string[]; disable?: string[]; maxJournalLength?: number | null }) => {
     // THE RECEIPT'S ADDITIVE DELIVERY (§2.3 items 2/4 — the C-11 NON-BREAKING
