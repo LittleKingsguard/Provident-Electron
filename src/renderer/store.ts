@@ -518,8 +518,19 @@ function mintsFileState(node: InternalNode, state: StoreValue, tier: Tier): bool
     if (key === '') return false
     const member = members[key] as StoreValue
     if (member === undefined) return false
+    /**
+     * **`(D2)`/`(D3)` — THE SAVE'S BYTES DECODE INTO THE SAME LINKED ANCHOR SET THE MINT PRODUCES,
+     * SO THE ROUND TRIP IS EXACT.** A literal member is read back as the TRANSPARENT CHILD NODE its
+     * member anchor carries (`R16`(e) · this file's `mintsFileState` twin arm above), NOT as an
+     * entry of the node's own `literals` table: the earlier form wrote a literal straight into
+     * `node.literals`, which is the superseded `DD-13` *"a DICT member is a LITERAL ON THE NODE
+     * ITSELF"* reading, and under it a saved-then-loaded tree carried NO node at that member's own
+     * address — so a qualified read of it could not answer the node.
+     */
     if (isLiteralValue(member)) {
-      node.literals[key] = member
+      const transparent = emptyNode(tier)
+      transparent.literals[RESERVED_VALUE_MEMBER] = member
+      node.anchors.push({ parent: node, links: [transparent], type: 'parent', key, order: node.anchors.length })
       continue
     }
     if (member === null || typeof member !== 'object') return false
@@ -530,24 +541,75 @@ function mintsFileState(node: InternalNode, state: StoreValue, tier: Tier): bool
   return true
 }
 
-/** `§2.4` item 3 — a LITERAL member is a `literals` entry; a CONTAINER member an anchor + child. */
+/**
+ * **THE MINT'S OWN MEMBER ARM — `§2.4` item 3's RECURSION, READ AS THE ARCHITECT RULED IT
+ * (2026-10-11, `docs/decisions.md`'s ACTIVE row — `(D2)`)**: a **CONTAINER**-classed member is one
+ * `parent` anchor keyed by the member's own name, whose link leads to the child node minted for that
+ * member's value — **and at whole depth, so the child's own members recurse through this same arm**
+ * (`C18`'s *"link with nodes"*, `C3`/`C11`).
+ *
+ * **⟶ `(D2)`/`(D3)`'s SCOPE, STATED HERE BECAUSE THE ARMS ARE ADJACENT AND EASY TO CONFLATE:** the
+ * ruling reaches **what a CONTAINER's contents are minted as** — a linked anchor set, where a
+ * literal-valued member is a child node readable through the reserved `_value` transparency. It does
+ * **NOT** reach the arms that put a **LITERAL PAYLOAD at a NODE LOCATION**, where the contract pins
+ * the opposite shape explicitly and green rows measure it: `R16`(a) — *"re-mint the node with the
+ * literal added at that property"* — is `A1`/`A3`/`A4` (`§2.5` item 7), whose declared mint is
+ * *"NO CHILD NODE IS MINTED"*, and the register's `P-SD-IM-13` (`S-SD-LITPROP-1`) asserts exactly
+ * that at all four resolution rows. Those arms are applied at `applyPlan`/`applyPayloadTo` and never
+ * route a bare literal through this function; a **literal MEMBER of a container**, by contrast, does
+ * — and lands as the transparent child node of `A10`.
+ *
+ * **WHAT THE EARLIER FORM DID, so the correction is auditable: it wrote EVERY literal member straight
+ * into the node's own `literals` table and minted NO child node for the CONTAINER case too** — the
+ * `§0A` `DD-13` reading *"A DICT member is a LITERAL ON THE NODE ITSELF"* that **`(D3)` SUPERSEDES**.
+ * Under that reading such a member had **no node at its own address**, so `M-PROP` answered it
+ * LITERAL PROPERTY and the walk's terminal arm answered the literal for EVERY read form, qualified or
+ * not — exactly what the register's `P-SD-IM-6 · S-SD-TOMB-1` cell (row 26) measured as broken at
+ * `['tabs','page','body','title']` against a `file`-qualified read.
+ */
 function mintMember(node: InternalNode, key: string, value: StoreValue, tier: Tier): void {
   if (key === RESERVED_VALUE_MEMBER) return
-  if (isLiteralValue(value)) {
-    // `C11` — a literal member is an entry of the node's OWN table, keyed by the member's name.
-    node.literals[key] = value
-    return
-  }
   const child = emptyNode(tier)
-  mintInto(child, value, tier)
+  mintContents(child, value, tier)
   node.anchors.push({ parent: node, links: [child], type: 'parent', key, order: node.anchors.length })
 }
 
 /** `§2.4` item 7 · `§2.5` item 7 `A10` — an ARRAY element: a child node carrying `_value`. */
 function mintElement(node: InternalNode, key: string, value: StoreValue, tier: Tier): void {
   const child = emptyNode(tier)
-  mintInto(child, value, tier)
+  mintContents(child, value, tier)
   node.anchors.push({ parent: node, links: [child], type: 'parent', key, order: node.anchors.length })
+}
+
+/**
+ * **`(D2)` — THE CONTENTS MINT: what a container's contents become.** One node per member, reached
+ * by an anchor: a **CONTAINER** member recurses through `mintMember`, and a **LITERAL-VALUED member
+ * becomes a child node carrying the reserved `_value`** (`(D2)` verbatim: *"a literal-valued member
+ * becoming a child node readable as its literal through the reserved `_value` transparency"* — the
+ * TRANSPARENCY of `R16`(e), so `§2.8` item 7 arm `R2` answers the literal ALONE unqualified and the
+ * NODE when tier-qualified, `(D4)`).
+ */
+function mintContents(node: InternalNode, value: StoreValue, tier: Tier): void {
+  node.literals = {}
+  node.anchors = []
+  node.tombstone = false
+  if (isLiteralValue(value)) {
+    // `R16`(e) — a literal in a NODE POSITION is a TRANSPARENT node: `_value` alone.
+    node.literals[RESERVED_VALUE_MEMBER] = value
+    return
+  }
+  if (Array.isArray(value)) {
+    for (let index = 0; index < value.length; index += 1) {
+      mintElement(node, String(index), value[index] as StoreValue, tier)
+    }
+    return
+  }
+  if (value === null || typeof value !== 'object') return
+  for (const key of Object.keys(value)) {
+    const member = (value as Record<string, StoreValue>)[key]
+    if (member === undefined) continue
+    mintMember(node, key, member, tier)
+  }
 }
 
 /** `§2.4` item 3 — `mint(value, tier)` produces a node and its subtree, at whole depth. */
@@ -599,13 +661,31 @@ const lowestOf = (options: readonly InternalNode[]): InternalNode | undefined =>
 const selectLink = (anchor: InternalAnchor, tier: Tier | undefined): InternalNode | undefined =>
   tier === undefined ? lowestOf(anchor.links) : anchor.links.find((candidate) => candidate.tier === tier)
 
-/** `§2.4` item 7 — list-shaped recognition, keyed on the CHILDREN and the dense `order`s. */
+/** `§2.4` item 7 · `DD-13` — list-shaped recognition, keyed on the CHILDREN and the dense `order`s.
+ *
+ *  **⟶ THE ANCHOR `key` IS PART OF THE TEST, AND THE `(D2)` LINKED ANCHOR SET MAKES IT
+ *  LOAD-BEARING (`docs/decisions.md`'s ACTIVE ruling of 2026-10-11, `(D2)`/`(D3)` · `DD-13`'s
+ *  AS-FILED test: *"its `parent` anchors' `key`s are exactly the canonical decimal spellings of a
+ *  dense range `0..n-1` (`n ≥ 1`) **in `order` order**"*).** Under the ruling EVERY literal-valued
+ *  member of a container is a transparent child node exactly like a LIST element, so *"no literals
+ *  · every child transparent · dense `order`s"* alone would read the dict `{seed: 'a'}`
+ *  (one anchor, `order 0`, one transparent child) as the LIST `['a']` — and the two are declared
+ *  **TWO STATES** (`DD-13` (2): *"the dict answers `{'0':'a'}` and the list answers `['a']`"*; green
+ *  `M-10` measures their two byte forms). The `key`s separate them: a list element's anchor is keyed
+ *  by its index, a dict member's by the member's own name. `store-model.md` §2.4 item 7's amendment
+ *  demotes the canonical-decimal spelling to a *"CONSEQUENCE of the mint"* — **and with `(D2)`'s
+ *  linked anchor set that consequence is exactly what no longer follows from the children**, so the
+ *  as-filed `DD-13` test is the operative form and the demotion is reported as a finding rather than
+ *  silently followed into a collapse of two declared states. The demotion stands in every reading
+ *  where dict members are literals on the node (the superseded `DD-13`), which is precisely the
+ *  reading `(D3)` removes. */
 function isListShaped(node: InternalNode, tier: Tier | undefined): boolean {
   if (node.anchors.length === 0) return false
   if (Object.keys(node.literals).length > 0) return false
   for (let index = 0; index < node.anchors.length; index += 1) {
     const anchor = node.anchors[index] as InternalAnchor
     if (anchor.order !== index) return false
+    if (anchor.key !== String(index)) return false
     const child = selectLink(anchor, tier)
     if (child === undefined || child.tombstone) return false
     if (transparentLiteral(child) === undefined) return false
@@ -671,7 +751,34 @@ function transcribeNode(node: InternalNode, tier: Tier | undefined = undefined):
       continue
     }
     Object.defineProperty(out, anchor.key, {
-      value: transcribeNode(child, tier),
+      /**
+       * **`§2.8` item 7 arm `R2`'s TRANSPARENCY PROJECTION, APPLIED AT EVERY DESCENT**
+       * (`RCA-8(d)`; the ACTIVE ruling of 2026-10-11, `(D2)`/`(D4)`): a child node carrying the
+       * reserved `_value` alone IS its literal *inside a parent's transcription* — the parent's
+       * member is the literal, never `{_value: <literal>}`. **This arm is what keeps `C21`'s
+       * transcription the SAME VALUE that was written under `(D2)`'s linked anchor set**: with
+       * every literal-valued member of a container minted as a transparent child, `R16`(e)'s round
+       * trip (*"write … → link with nodes of values … → read the same value"*) holds only if the
+       * descent projects the child's literal, and the read of the ROOT of a written container —
+       * qualified or not — is the same declared transcription.
+       *
+       * **WHERE THE SPLIT OF `(D4)` LIVES, EXACTLY: `R2`'s UNQUALIFIED-vs-QUALIFIED difference is a
+       * difference about the ADDRESSED ADDRESS, never about a member of a parent's object.** A read
+       * whose ADDRESS IS the transparent node answers the literal alone when unqualified (green
+       * `A-6`: `['tabs','page','body','title']` ⇒ `'t'`) and the NODE when tier-qualified (the
+       * register's `P-SD-IM-6 · S-SD-TOMB-1` cell: that same address against the `file` tier ⇒
+       * `{title: 't'}`) — which is the arm `transcribeNode`'s own head decides. A MEMBER of an
+       * object being transcribed is **not** an addressed address — **the addressed node's own
+       * transcription is this function's answer**, and inside it the member is the literal the child
+       * carries. **THIS IS MEASURED, NOT ASSUMED: a tier-qualified read of a written container
+       * answers `{seed: 'file'}` (green `W-3`, `W-7`, `B-4`, `F-4`, `Z-1`, `L-5`), while the child's
+       * OWN qualified read answers the raw node (`{_value: 'file'}`, green `R-2`, `W-17`) — the two
+       * arms are the SAME rule seen from the node's side and from the member's side.**
+       */
+      value:
+        transparentLiteral(child) !== undefined
+          ? deepCopy(transparentLiteral(child) as StoreValue)
+          : transcribeNode(child, tier),
       enumerable: true,
       writable: true,
       configurable: true,
@@ -1370,7 +1477,34 @@ export function createStore(options: StoreOptions): Store {
       kind === 'node-location' &&
       standingAtTier !== undefined
     ) {
-      if (carriesReservedLiteral(standingAtTier)) return { refusal: secondMemberRefusal(address) }
+      /**
+       * **THE `A2` ARM WINS AT A NODE LOCATION — THE ARM ORDER, CORRECTED (`RCA-8(d)`; the ACTIVE
+       * ruling of 2026-10-11, `(D2)`, and the contract's own token assignment).** `write-and-read.md`
+       * §2.5 item 7's `A2` row is the arm of a **CONTAINER at a NODE LOCATION** and gives it token
+       * `21` `'node-location-container'` at `step: 'M-PROP'`, with `R16`(d)'s **wrapper-node
+       * guidance** in the message list — while `property-register.md`'s `P-SD-SM-6` assigns token
+       * `9` `'value-not-admitted'` to exactly two drives: *"a container written to `_value`, and a
+       * second member beside a `_value` literal"*. A container written at an address whose final
+       * segment is **carried by an existing link** (`M-PROP` ⇒ NODE LOCATION) is a **MISPLACEMENT,
+       * not an inadmissible value** (`R16`(d) verbatim) — so the NODE-LOCATION refusal is consulted
+       * FIRST, whatever the node standing there carries.
+       *
+       * **WHAT THE EARLIER FORM DID, so the correction is auditable: it consulted
+       * `secondMemberRefusal` first and answered token 9 whenever the standing instance carried the
+       * reserved `_value` literal** — which is `R17`(c)'s exclusivity, an arm about the node's own
+       * MEMBER SET, applied to a write whose own arm is decided at `M-PROP` **before** any member of
+       * that node is consulted. `W-4a` measures the difference: a container written at
+       * `['tabs','seed']` — a node location the FIRST write's own mint created — is refused token 21
+       * at `M-PROP` by the corrected order, and the node at the address is **never reached**, so its
+       * `_value` exclusivity is not consulted at all.
+       *
+       * **WHERE TOKEN 9 IS STILL DECIDED AT THIS ARM: the TRANSPARENCY's own second-member test
+       * below** (a `{transparent: true}` write over a node that already carries a member — `P §12`'s
+       * second carriage, `R17`(c)) **and the 1-SEGMENT arm above** (a 1-segment address is not a
+       * NODE LOCATION in `R16`(d)'s sense: the register entry's own node is carried by no parent's
+       * link, so the address's classification is `A2`'s condition false and the write proceeds to its
+       * value arm — green `M-6`).
+       */
       // `§2.5` item 7 `A2` · `R17`(a) — a CONTAINER at a NODE LOCATION is REFUSED where the write
       // would OVERWRITE an instance at its own tier: NOTHING minted, NO file written, the purge does
       // not run.  Where the write's own tier holds no instance, `C20`'s coexisting lower-tier write
