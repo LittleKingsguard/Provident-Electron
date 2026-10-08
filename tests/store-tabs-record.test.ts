@@ -128,6 +128,11 @@ import {
   tabsStore,
   valueOf,
   wiredConstraintReading,
+  shippedBootSeamDrive,
+  shippedLandingReservationDrive,
+  shippedMint,
+  type BootSeamReading,
+  type LandingReservationReading,
   type ConstraintMemberHandle,
   type ConstraintProbe,
   type TabsSurface,
@@ -541,6 +546,9 @@ describe('T2 §4.2 item 2 — THE RECORD’S ARITHMETIC (`§2.1`, `§3.1` M-1…
   })
 
   it('R-3 · §1.1 item 2 — MEMBERSHIP IS THE RECORD’S OWN: no module-level id registry in the wiring and no second membership authority', () => {
+    // ── **STATIC READING (DECLARED, `2026-10-11`, `RCA-8(d)`; enumerated by `SR-1`):**
+    //    `registryReading` reads the WIRING REGION'S BYTES. It is a reading of the shipped TEXT
+    //    and never behavioural evidence about a host's state.
     const reading = registryReading(wiring)
     expect(reading.ok, `§1.1 item 2 — ${reading.reason}`).toBe(true)
   })
@@ -1116,6 +1124,9 @@ describe('T2 §4.2 item 6 — THE BOOT STEP (`§3.3`, C-12, `§5.5.1` `P-TR-SM-3
   })
 
   it('B-6 · §3.3 item 3 — the wiring performs the boot step AFTER `hydrate(bootHandoff)` and before the first graph load (the landed order, unmoved)', () => {
+    // ── **STATIC READING (DECLARED, `2026-10-11`, `RCA-8(d)`; named by `SR-1`):** the boot ORDER is
+    //    read from the wiring's BYTES. The BEHAVIOURAL half of the same clause is driven by
+    //    `B-1`/`B-2`/`B-3` (through the exported seam) and by `B-8`'s argument-domain rows.
     const region = rendererSrc()
     const hydrateAt = region.indexOf('wired.hydrate(bootHandoff)')
     const runtimeAt = region.indexOf('new Runtime(')
@@ -1125,6 +1136,9 @@ describe('T2 §4.2 item 6 — THE BOOT STEP (`§3.3`, C-12, `§5.5.1` `P-TR-SM-3
   })
 
   it('B-7 · §3.3 item 4 — the boot step must NOT bypass `hydrate` by re-minting the record through `commit` chains that duplicate what `hydrate` already minted', () => {
+    // ── **STATIC READING (DECLARED, `2026-10-11`, `RCA-8(d)`; named by `SR-1`):** a byte-level
+    //    COUNT of `commit('file.tabs.…')` occurrences in the wiring region — a reading of the
+    //    shipped text, never of a host's state.
     const region = rendererSrc()
     const tabRecordCommits = region.match(/commit\(\s*['"`]file\.tabs\./g) ?? []
     expect(tabRecordCommits.length, '§3.3 item 4 — no `commit` chain duplicates what `hydrate` already minted').toBeLessThanOrEqual(1)
@@ -1196,6 +1210,8 @@ describe('T2 §4.2 item 7 — THE TWO AUTHORED PAGES’ NODE-LAYER HALF (`§3.5`
   })
 
   it('P-4 · §3.5 item 3 — NO PAGE IS BUILT BY HAND-WRITTEN DOM: the wiring authors no element (the detector fires on its own synthetic POSITIVE CONTROL)', () => {
+    // ── **STATIC READING (DECLARED, `2026-10-11`, `RCA-8(d)`; enumerated by `SR-1`):** a byte
+    //    scan of the wiring region, with its own synthetic positive control. Never behavioural.
     const region = rendererSrc()
     const scan = createElementScan(region)
     expect(scan.controlFires, '§3.5 item 3 — the detector’s own positive control: a page built with `createElement` in the wiring FAILS').toBe(true)
@@ -1203,6 +1219,8 @@ describe('T2 §4.2 item 7 — THE TWO AUTHORED PAGES’ NODE-LAYER HALF (`§3.5`
   })
 
   it('P-5 · §3.5 item 4 — the renderability query is HOST-SIDE and READ-ONLY: it reads no rect, no coordinate and no computed style, and resolves by no selector', () => {
+    // ── **STATIC READING (DECLARED, `2026-10-11`, `RCA-8(d)`; enumerated by `SR-1`):** a byte
+    //    scan of the wiring region for forbidden APIs. Never behavioural.
     const region = rendererSrc()
     for (const forbidden of ['getBoundingClientRect', 'querySelector', 'getComputedStyle', 'offsetWidth', 'clientHeight']) {
       expect(
@@ -1251,6 +1269,145 @@ describe('T2 §4.2 item 7 — THE TWO AUTHORED PAGES’ NODE-LAYER HALF (`§3.5`
   it('P-8 · §7 item 2(d) — the operator-row discipline is REAL in this repo: the named precedent carries the `MANUAL OPERATOR` token and its no-substitution rule', () => {
     const precedent = operatorRowPrecedent()
     expect(precedent.ok, `§7 item 2(d) — ${precedent.reason}`).toBe(true)
+  })
+})
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * THE RE-TRIAGE'S BEHAVIOURAL ROWS (`2026-10-11`) — `F-6` / host `H-1`, `F-1` / host `H-3`,
+ * `F-4` / `T2-C-15`, AND THE DECLARED STATIC READINGS.
+ *
+ * These rows are driven against the SHIPPED seams (`getWiredGraphStore()` with NO options, the
+ * exported `closeTab`, the exported `evaluateTabsBootStep`, the exported `mintTabId`) — never
+ * against a fixture that supplies a declaration `src/**` does not carry, and never against a
+ * source-text match.  Every as-filed form stays VISIBLE beside its re-grain (`RCA-8(d)`): the
+ * fixture-declared reserved-entry rows (`L-1`…`L-6`, `A-5`), the sequence-only boot rows
+ * (`B-1`…`B-7`) and the source REGEX mint probe (`M-2`, `SR-1`).  No register term, count, total,
+ * chain, subtotal or cap is moved by any row below.
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+describe('T2 §4.2 items 4/6/8b — THE RE-TRIAGE’S BEHAVIOURAL ROWS (`F-6`·`H-1`, `F-1`·`H-3`, `F-4`·`T2-C-15`) AND THE DECLARED STATIC READINGS', () => {
+  it('L-7 · §2.1 item 6 / §3.2 F-T2-3 (`F-6` / host `H-1`) — THE RESERVED ENTRY IS DECLARED ON THE SHIPPED WIRING: `remove(’file.tabs.landing’)` answers the `’reserved-name’` REFUSAL on the store `main()` boots, with the sibling removal COMMITTED as the positive control', () => {
+    const reading: LandingReservationReading = shippedLandingReservationDrive()
+    expect(reading.reason, 'the shipped wiring and its store are reachable — an ABSENT seam is this row’s own failure, never a skip').toBeNull()
+    expect(reading.removalIsRefusal, '§2.1 item 6 (A-5) — `remove(’file.tabs.landing’)` REFUSED').toBe(true)
+    expect(reading.removalReason, '§2.1 item 6 (A-5) — the `’reserved-name’` token, BY NAME and before the walk').toBe('reserved-name')
+    expect(reading.removalCleared, '§3.2 F-T2-6 / §3.6 A-7 — a refused receipt clears NOTHING').toEqual([])
+    expect(reading.landingFoundAfterRemoval, '§2.1 item 6 — the reserved entry is STILL READABLE after the refusal').toBe(true)
+    expect(reading.orderAfterRemoval, '§2.1 item 6 (R3-2) — its `order` seat is UNTOUCHED').toEqual(['A', 'landing'])
+    expect(reading.siblingStatus, '§3.2 F-T2-3 / §0A item 1 — the POSITIVE CONTROL: the sibling instance’s own removal commits').toBe('committed')
+    expect(
+      reading.singletonIgnoresLaterOptions,
+      'THE MECHANISM (`H-1`, MEASURED): `getWiredGraphStore` is a SINGLETON whose options are the FIRST caller’s (`renderer.ts:626-628`) — in this DOM-less node realm `main()` never runs, so the FIRST row to call the seam decides the store’s declaration set, and this suite’s own `wiredConstraintReading`/`wiredMemberHandle` prime it with the FIXTURE’s AUGMENTED rows',
+    ).toBe(true)
+    // ── **THE IN-LINE STATEMENT OF THE WHOLE DISAGREEMENT (`F-6` / `H-1`):** the rows `L-1`…`L-6`
+    //    above and `A-5` below pass ONLY because the FIXTURE they are built from
+    //    (`tabsStoreHere` → `tabsStore` → `tabsDeclarationRows()`) **ADDS**
+    //    `{ name: 'file.tabs.landing', reserved: true }`. The SHIPPED declaration set is the SIX
+    //    ROOTS VERBATIM (`renderer.ts:43-50` → `renderer.ts:615`'s
+    //    `options?.declarations ?? FILE_TIER_ROOT_NAMES`) and carries NO `reserved:true` row, and
+    //    the store refuses by name only where one exists (`store-core-graph.ts:1950-1953`) — so
+    //    `closeTab(store, 'landing', …)` COMMITS the removal of the reserved entry at the verb the
+    //    operator uses. **This is the ONE finding where the blind pass (`T2-F-06`) beat the
+    //    suite, and this row is the re-measurement of it on the shipped construction.** `L-8`
+    //    drives the same defect through the exported close verb. **MEASURED, AND RECORDED HERE
+    //    BECAUSE IT IS THE REASON THE SUITE’S OWN ROWS ARE GREEN: an early draft of this row read
+    //    the SINGLETON (`getWiredGraphStore()`), was primed by the rows above with the FIXTURE’s
+    //    augmented declarations, and PASSED on a re-run — a false green the singleton’s
+    //    first-caller-wins construction hands to any row that does not build the store the way
+    //    `src/**` builds it** (`shippedConstruction`).
+  })
+
+  it('L-8 · §2.1 item 6 / §3.2 F-T2-3 (`F-6` / host `H-1`) — THE SAME THROUGH THE EXPORTED `closeTab`: `refusal === ’reserved-name’`, the `order` seat untouched and the landing entry still readable', () => {
+    const reading: LandingReservationReading = shippedLandingReservationDrive()
+    expect(reading.reason).toBeNull()
+    expect(reading.closeCallerOperations, '§2.4 item 4 — the close is TWO caller operations under the ruled flat form').toBe(2)
+    expect(reading.closeRefusal, '§2.1 item 6 / §3.2 F-T2-3 — the close verb REFUSES the reserved entry’s own removal BY NAME').toBe('reserved-name')
+    expect(reading.closeRemoveStatus, '§2.1 item 6 — the reserved entry’s own `remove` is refused, not committed').toBe('refused')
+    expect(reading.closeRemoveReason, '§2.1 item 6 (A-5) — the `’reserved-name’` token at the close site').toBe('reserved-name')
+    expect(reading.closeLandingFound, '§2.1 item 6 — the entry is STILL READABLE after the close').toBe(true)
+    expect(reading.closeOrderAfter, '§2.1 item 6 / §3.1 M-1 — its `order` seat is untouched (the close never leaves the sequence without the reserved entry)').toEqual(['A', 'landing'])
+  })
+
+  it('B-8 · §3.3 items 3/4 (`F-1` / host `H-3`) — **SPEC-SILENT-OWED**: the boot seam must REFUSE or NORMALIZE a non-string-sequence argument — a DECLARED outcome, never a corrupted write — with the declared-sequence arm as the positive control', () => {
+    const reading: BootSeamReading = shippedBootSeamDrive()
+    expect(reading.reason).toBeNull()
+    // ── THE POSITIVE CONTROL (`§3.3` item 3): the DECLARED sequence form writes the membership.
+    expect(reading.declaredArmWritten, '§3.3 item 3 — a hand-off that CARRIES a sequence is evaluated: ONE `commit` on `file.tabs.order`').toBe(true)
+    expect(reading.declaredArmOrderAfter, '§3.3 item 3 — the declared-sequence arm writes the SEQUENCE itself').toEqual(['A', 'B'])
+    // ── THE DECLARED NO-WRITE ARM (`§3.3` item 4, `H-4`): a hand-off carrying NO sequence writes NOTHING.
+    expect(reading.absentArmWritten, '§3.3 item 4 — no sequence, no commit, nothing minted, no event').toBe(false)
+    expect(reading.absentArmReceipt).toBeNull()
+    // ── THE ROWS ARM. **SPEC-SILENT-OWED, MARKED IN-LINE AS THE INSTRUCTION REQUIRES:** the
+    //    contract pins NO outcome for a hand-off that carries the HAND-OFF'S OWN ROWS
+    //    (`{ name, value }[]`, what `bridge.store.get()` answers) instead of a membership
+    //    sequence; the declared outcome the triage owes is a REFUSAL (no write) or a
+    //    NORMALIZATION (the rows' own `file.tabs.order` value written as the sequence). NEITHER
+    //    is landed: the ROWS ARRAY ITSELF is written into `file.tabs.order`, and the store's own
+    //    repair diff MINTS a `file.tabs.[object Object]` leaf that is afterwards READABLE — a
+    //    corrupted write, which is the one outcome no clause declares. (`main()` derives the
+    //    correct membership sequence at `renderer.ts:1161` and is the seam's ONLY shipped caller,
+    //    so no shipped path ever hands it rows.)
+    const refused = reading.rowsArmWritten === false
+    const normalized = JSON.stringify(reading.rowsArmOrderAfter) === JSON.stringify(['A', 'B'])
+    expect(refused || normalized, 'SPEC-SILENT-OWED — the seam must REFUSE the rows argument or NORMALIZE it to the rows’ own membership sequence; writing the rows array into `file.tabs.order` is a corrupted write').toBe(true)
+    expect(reading.rowsArmBogusLeafFound, 'SPEC-SILENT-OWED — the corrupted write MINTS and makes READABLE a `file.tabs.[object Object]` leaf (the rows’ `join` spelling)').toBe(false)
+    expect(reading.nonStringArmWritten, 'SPEC-SILENT-OWED — the same seam accepts an array of NON-STRING members (`[1, 2, null]`); the declared sequence domain is the caller’s id sequence').toBe(false)
+  })
+
+  it('M-1 · §0A item 2 / §1.1 item 8 / §5.5.1 `P-TR-IM-5` (`F-4` / `T2-C-15`) — THE MINT’S REFUSAL DRIVEN BEHAVIOURALLY AT THE EXPORTED SEAM `mintTabId(holder, tabId)`: a duplicate, a dotted, a malformed and the reserved spelling each answer their DECLARED refusal reason, with a fresh id MINTED as the positive control', () => {
+    const holder = tabsStoreHere(null)
+    callStore(holder, 'commit', ORDER, ['A', 'landing'])
+    const cases: readonly (readonly [unknown, string])[] = [
+      ['A', 'duplicate-id'],
+      ['x.y', 'dotted-id'],
+      ['', 'malformed-id'],
+      [42, 'malformed-id'],
+      ['landing', 'reserved-spelling'],
+    ]
+    for (const [id, refusal] of cases) {
+      const answer = shippedMint(holder, id)
+      expect(answer['ok'], `§0A item 2 / §1.1 item 8 — ${JSON.stringify(id)} is REFUSED at the minting site`).toBe(false)
+      expect(answer['refusal'], `§0A item 2 / §6 PAR-4 — ${JSON.stringify(id)}’s DECLARED refusal reason`).toBe(refusal)
+      expect(answer['id'], '§0A item 2 — the caller does not write a refused id, so no duplicate entry can appear in `order`').toBeNull()
+    }
+    const fresh = shippedMint(holder, 'C')
+    expect(fresh['ok'], '§5.5.1 `P-TR-IM-5` state (1) — the POSITIVE CONTROL: a FRESH id is minted').toBe(true)
+    expect(fresh['id']).toBe('C')
+    expect(fresh['refusal']).toBeNull()
+    // THE AS-FILED FORM, NAMED AND KEPT VISIBLE: `tests/store-tabs-record-register.ts`'s
+    // `mintingSiteProbe()` — a source REGEX whose success reason is a BARE CLAIM — survives
+    // unchanged beside this row and is DECLARED a static reading by `M-2`/`SR-1`. The register's
+    // own `P-TR-IM-5` drives (2) are re-pointed at THIS seam (`RCA-8(d)`).
+  })
+
+  it('M-2 · §0A item 2 / §5.5.1 `P-TR-IM-5` — THE AS-FILED MINT PROBE IS DECLARED A STATIC READING AND KEPT VISIBLE (`RCA-8(d)`): its success reason is a BARE CLAIM, never behavioural evidence', () => {
+    const asFiled = mintingSiteProbe()
+    expect(asFiled.ok, 'the as-filed probe reads `renderer.ts`’s BYTES and finds the mint identifier').toBe(true)
+    expect(
+      asFiled.reason,
+      'THE DECLARATION: the as-filed probe’s success reason is a BARE CLAIM — a host that DELETED the duplicate branch while KEEPING the identifier `mintTabId` stays GREEN, which is why `M-1` drives the exported seam beside it',
+    ).toBe('the minting site exists and enforces the duplicate rule')
+  })
+
+  it('SR-1 · §5.3 / §5.5.1 `P-TR-TP-6` — EVERY ROW THAT PROVES A BEHAVIOUR BY READING SOURCE TEXT IS DECLARED A STATIC READING, BY NAME (`RCA-8(d)`): `R-3`, `P-4`, `P-5`, `B-6`, `B-7` and the as-filed mint probe of `M-2`', () => {
+    // ── THE DECLARATION (`RCA-8(d)`: the as-filed form stays VISIBLE and is NAMED). Each row
+    //    below reads the WIRING REGION'S BYTES and nothing else; each is therefore a STATIC
+    //    READING of the shipped text and NEVER behavioural evidence about a host. `R-3`
+    //    (`registryReading`), `P-4` (the `createElement` byte scan) and `M-2`
+    //    (`mintingSiteProbe`) are enumerated here; `P-5` (the forbidden-API byte scan) and
+    //    `B-6`/`B-7` (the boot order and the `commit`-chain count over the same bytes) are
+    //    declared in-line at their own sites.
+    const region = rendererSrc()
+    expect(region.length, 'the wiring region is readable, so every named row’s instrument is a byte read of `src/renderer/renderer.ts`').toBeGreaterThan(0)
+    const scan = createElementScan(region)
+    const declared: readonly (readonly [string, boolean])[] = [
+      ['R-3 · `registryReading` over the wiring bytes (§1.1 item 2)', registryReading(wiring).ok],
+      ['P-4 · the `createElement` byte scan of the wiring region (§3.5 item 3)', !scan.fired && scan.controlFires],
+      ['M-2 · `mintingSiteProbe` — the as-filed REGEX over the wiring bytes (§0A item 2)', mintingSiteProbe().ok],
+    ]
+    for (const [name, held] of declared) {
+      expect(held, `STATIC READING (declared): ${name} — a byte read of the shipped text, never behavioural evidence`).toBe(true)
+    }
   })
 })
 

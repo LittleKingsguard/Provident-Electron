@@ -928,6 +928,273 @@ export function wiredClose(store: Rec, id: string, nextOrder: readonly string[])
   return closeTab(store, id, nextOrder)
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════════════════════
+ * THE SHIPPED SEAMS THIS RE-TRIAGE'S ROWS DRIVE — `2026-10-11` (`F-6` / host `H-1`,
+ * `F-1` / host `H-3`, `F-4` / `T2-C-15`, and the register's own UNDER-ASSERTION).
+ *
+ * WHY THESE EXIST, AND WHAT THEY REPLACE (each as-filed form stays VISIBLE below):
+ *   · `F-6`/`H-1` — as filed, every reserved-entry row (`L-1`…`L-6`, `A-5`) was driven against a
+ *     FIXTURE store built from `tabsDeclarationRows()`, which ADDS `{ name: 'file.tabs.landing',
+ *     reserved: true }`. The SHIPPED declaration set is the SIX ROOTS VERBATIM (`renderer.ts:43-50`
+ *     → `renderer.ts:615`'s `options?.declarations ?? FILE_TIER_ROOT_NAMES`) and carries NO
+ *     `reserved:true` row, and the store refuses by name only where one exists
+ *     (`store-core-graph.ts:1950-1953`). The rows below therefore drive the WIRED store — the one
+ *     `main()` boots — and never a fixture that supplies the missing declaration.
+ *   · `F-1`/`H-3` — as filed, the boot step was measured only through the DECLARED sequence form
+ *     (`B-1`…`B-7`), while its parameter accepts any array. The rows below drive the ROWS form
+ *     (`{ name, value }[]`, what `bridge.store.get()` answers) through the SHIPPED
+ *     `evaluateTabsBootStep` seam.
+ *   · `F-4`/`T2-C-15` — as filed, `mintingSiteProbe()` (below, KEPT VISIBLE) is a SOURCE REGEX
+ *     whose success reason is a BARE CLAIM, so a host that deleted the duplicate branch while
+ *     keeping the identifier `mintTabId` stayed green. The behavioural rows below drive the
+ *     EXPORTED seam `mintTabId(holder, tabId)` — the SHIPPED signature — instead.
+ * ═══════════════════════════════════════════════════════════════════════════════════════════ */
+
+/** THE FOUR SHIPPED SEAMS THE RE-TRIAGE'S ROWS DRIVE, read off the wiring module the suite
+ *  already probes (`probeWiring()`, `§4.1` item 2). An absent export is DATA — a reason the row
+ *  reports — never a throw. */
+export interface ShippedSeams {
+  readonly getWiredGraphStore: ((options?: unknown) => Rec) | null
+  readonly closeTab: ((holder: unknown, tabId: string, nextOrder: readonly string[]) => Rec) | null
+  readonly evaluateTabsBootStep: ((store: unknown, handedOrder: unknown) => Rec) | null
+  readonly mintTabId: ((holder: unknown, tabId: string) => Rec) | null
+  readonly reason: string | null
+}
+
+export function shippedSeams(): ShippedSeams {
+  const probed = wiring as WiringProbe | null
+  const absent = (reason: string): ShippedSeams => ({
+    getWiredGraphStore: null, closeTab: null, evaluateTabsBootStep: null, mintTabId: null, reason,
+  })
+  if (probed === null || !probed.loaded || probed.module === null) {
+    return absent(probed?.reason ?? 'the wiring module has not answered its probe yet (probeWiring() has not run)')
+  }
+  const mod = probed.module
+  const wired = mod['getWiredGraphStore']
+  const close = mod['closeTab']
+  const boot = mod['evaluateTabsBootStep']
+  const mint = mod['mintTabId']
+  const missing = [
+    typeof wired === 'function' ? null : 'getWiredGraphStore',
+    typeof close === 'function' ? null : 'closeTab',
+    typeof boot === 'function' ? null : 'evaluateTabsBootStep',
+    typeof mint === 'function' ? null : 'mintTabId',
+  ].filter((name): name is string => name !== null)
+  if (missing.length > 0) {
+    return absent(`the wiring exports no ${missing.join(', ')} — the seam this row drives is not landed`)
+  }
+  return {
+    getWiredGraphStore: wired as (options?: unknown) => Rec,
+    closeTab: close as (holder: unknown, tabId: string, nextOrder: readonly string[]) => Rec,
+    evaluateTabsBootStep: boot as (store: unknown, handedOrder: unknown) => Rec,
+    mintTabId: mint as (holder: unknown, tabId: string) => Rec,
+    reason: null,
+  }
+}
+
+/** CALLS A SHIPPED SEAM WITHOUT THROWING: a throwing seam answers a RECORD carrying its own
+ *  `__threw` reason, so the row reports a value (the contract's own throw pattern is a row).
+ *  The parameter is deliberately un-narrowed: each seam's OWN signature is declared on
+ *  `ShippedSeams` above and the call is the only place the two meet. */
+function callSeam(fn: (...args: never[]) => unknown, ...args: unknown[]): Rec {
+  try {
+    const call = fn as (...a: unknown[]) => unknown
+    return (call(...args) ?? {}) as Rec
+  } catch (e) {
+    return { __threw: e instanceof Error ? e.message : String(e) }
+  }
+}
+
+/** THE WIRED STORE'S PRE-STATE, LANDED EXACTLY: `hydrate` mints the handed-off members and never
+ *  evaluates the constraint table (`§3.3` item 2), so the reserved ENTRY is PRESENT and READABLE
+ *  under the row. The entry values are the SCALAR arm the shipped repair itself lands. */
+export function shippedSeedEntryState(store: Rec, order: readonly string[], activeId: string | null): void {
+  const hydrate = store['hydrate'] as ((rows: readonly Rec[]) => void) | undefined
+  if (typeof hydrate !== 'function') {
+    throw new Error('T2 RE-TRIAGE (honest class): the frozen store carries no `hydrate` seam (§2.5), so a wired pre-state cannot be landed')
+  }
+  const rows: Rec[] = [{ name: DECLARED_SPELLINGS.order, value: [...order] }]
+  for (const id of order) rows.push({ name: DECLARED_SPELLINGS.entry(id), value: id === activeId })
+  hydrate.call(store, rows)
+}
+
+/** THE SHIPPED FILE-TIER DECLARATION SET, VERBATIM (`renderer.ts:43-50` → `renderer.ts:615`'s
+ *  `options?.declarations ?? FILE_TIER_ROOT_NAMES`): **SIX ROOTS AND NOTHING ELSE — NO
+ *  `reserved:true` ROW EXISTS FOR `file.tabs.landing` IN `src/**`.** */
+export const SHIPPED_FILE_TIER_ROOTS: readonly { readonly name: string }[] = [
+  { name: 'window' }, { name: 'tabs' }, { name: 'layout' }, { name: 'settings' }, { name: 'tracked' }, { name: 'modules' },
+]
+
+/** **A STORE BUILT EXACTLY AS `buildWiredGraphStore` BUILDS IT** (`renderer.ts:607-624`): the
+ *  SHIPPED six-root declaration set, `crossing: null`, and the SHIPPED member supplied at the
+ *  ONE construction call. This exists because `getWiredGraphStore()` is a SINGLETON whose
+ *  options are taken from the FIRST caller (`renderer.ts:626-628`) — in a DOM-less node realm
+ *  `main()` never runs, so the FIRST row to call the seam decides the store's declaration set,
+ *  and this suite's own `wiredConstraintReading`/`wiredMemberHandle` prime it with the
+ *  FIXTURE's augmented rows. **A row that measures the reserved-entry behaviour must therefore
+ *  construct the store the way `src/**` does, never inherit whichever caller went first**
+ *  (MEASURED, `2026-10-11`: an early draft of `L-7` read `'reserved-name'` on a re-run for
+ *  exactly this reason). */
+export function shippedConstruction(member: Rec | null): Rec {
+  const surf = surface as TabsSurface
+  if (surf.resolved === null || surf.references === null) {
+    throw new Error(`T2 RE-TRIAGE (honest class): the frozen store surface is not resolvable — ${surf.reason ?? 'unknown reason'}`)
+  }
+  return surf.resolved({
+    declarations: surf.references(SHIPPED_FILE_TIER_ROOTS),
+    crossing: null,
+    constraints: member === null ? [] : [member],
+  }) as Rec
+}
+
+/** `F-6`/`H-1` — **THE RESERVED ENTRY IS NEVER DECLARED**, measured on a store built EXACTLY as
+ *  the shipped constructor builds one: `remove('file.tabs.landing')` (i) directly and (ii)
+ *  through the exported `closeTab`, each on its OWN fresh store, with the sibling
+ *  `remove('file.tabs.<id>')` committed as the POSITIVE CONTROL. The declared answer is the
+ *  `'reserved-name'` REFUSAL with the entry still readable and its `order` seat untouched. */
+export interface LandingReservationReading {
+  readonly reason: string | null
+  readonly removalStatus: unknown
+  readonly removalReason: unknown
+  readonly removalCleared: unknown
+  readonly removalIsRefusal: unknown
+  readonly landingFoundAfterRemoval: unknown
+  readonly orderAfterRemoval: unknown
+  readonly siblingStatus: unknown
+  readonly closeCallerOperations: unknown
+  readonly closeRefusal: unknown
+  readonly closeRemoveStatus: unknown
+  readonly closeRemoveReason: unknown
+  readonly closeLandingFound: unknown
+  readonly closeOrderAfter: unknown
+  /** THE MECHANISM, MEASURED (`H-1`'s own reason the suite's rows pass): the shipped seam is a
+   *  SINGLETON whose options come from the FIRST caller, so a later `getWiredGraphStore(...)`
+   *  answers the SAME store and its options are DISCARDED. */
+  readonly singletonIgnoresLaterOptions: unknown
+}
+
+export function shippedLandingReservationDrive(): LandingReservationReading {
+  const blank: LandingReservationReading = {
+    reason: 'unreachable', removalStatus: undefined, removalReason: undefined, removalCleared: undefined,
+    removalIsRefusal: undefined, landingFoundAfterRemoval: undefined, orderAfterRemoval: undefined,
+    siblingStatus: undefined, closeCallerOperations: undefined, closeRefusal: undefined,
+    closeRemoveStatus: undefined, closeRemoveReason: undefined, closeLandingFound: undefined,
+    closeOrderAfter: undefined, singletonIgnoresLaterOptions: undefined,
+  }
+  const seams = shippedSeams()
+  if (seams.reason !== null || seams.closeTab === null || seams.getWiredGraphStore === null) {
+    return { ...blank, reason: seams.reason ?? 'the wiring’s seams are unreachable' }
+  }
+  const member = wiredTabsConstraintMember()
+  if (member === null) return { ...blank, reason: wiringMemberReason ?? 'the wiring supplies no constraint member' }
+  // THE MECHANISM READING (order-independent): the seam is a singleton, so a caller that supplies
+  // its OWN declarations a second time still receives the FIRST caller's store.
+  const singletonIgnoresLaterOptions = seams.getWiredGraphStore({ declarations: SHIPPED_FILE_TIER_ROOTS }) === seams.getWiredGraphStore()
+  // (i) THE REMOVAL, on a store built exactly as `buildWiredGraphStore` builds one.
+  const store = shippedConstruction(member)
+  shippedSeedEntryState(store, ['A', 'landing'], 'A')
+  const removal = callSeam(store['remove'] as (...args: never[]) => unknown, DECLARED_SPELLINGS.landing)
+  const landingAfter = resolveOf(store, DECLARED_SPELLINGS.landing)
+  const orderAfterRemoval = valueOf(store, DECLARED_SPELLINGS.order)
+  const sibling = callSeam(store['remove'] as (...args: never[]) => unknown, DECLARED_SPELLINGS.entry('A'))
+  // (ii) THE CLOSE VERB, on its OWN fresh store of the same construction.
+  const closeStore = shippedConstruction(member)
+  shippedSeedEntryState(closeStore, ['A', 'landing'], 'A')
+  const close = callSeam(seams.closeTab, closeStore, 'landing', ['A'])
+  const closeRemove = (close['remove'] ?? {}) as Rec
+  const closeLanding = resolveOf(closeStore, DECLARED_SPELLINGS.landing)
+  return {
+    reason: null,
+    removalStatus: removal['status'], removalReason: removal['reason'], removalCleared: removal['cleared'],
+    removalIsRefusal: isRefusal(removal),
+    landingFoundAfterRemoval: landingAfter['found'],
+    orderAfterRemoval,
+    siblingStatus: sibling['status'],
+    closeCallerOperations: close['callerOperations'], closeRefusal: close['refusal'],
+    closeRemoveStatus: closeRemove['status'], closeRemoveReason: closeRemove['reason'],
+    closeLandingFound: closeLanding['found'],
+    closeOrderAfter: valueOf(closeStore, DECLARED_SPELLINGS.order),
+    singletonIgnoresLaterOptions,
+  }
+}
+
+/** `F-1`/`H-3` — **THE BOOT SEAM ACCEPTS AN ARGUMENT ITS ONLY SHIPPED CALLER NEVER PASSES**, the
+ *  ROWS form (`{ name, value }[]`). The declared-sequence arm is the POSITIVE CONTROL and the
+ *  no-sequence arm the declared no-write arm; a NON-STRING sequence is the third, undeclared one. */
+export interface BootSeamReading {
+  readonly reason: string | null
+  readonly rowsArmWritten: unknown
+  readonly rowsArmReceipt: unknown
+  readonly rowsArmOrderAfter: unknown
+  readonly rowsArmBogusLeafFound: unknown
+  readonly rowsArmBogusLeafReadsActive: unknown
+  readonly nonStringArmWritten: unknown
+  readonly nonStringArmRepaired: unknown
+  readonly nonStringArmOrderAfter: unknown
+  readonly declaredArmWritten: unknown
+  readonly declaredArmOrderAfter: unknown
+  readonly absentArmWritten: unknown
+  readonly absentArmReceipt: unknown
+}
+
+export function shippedBootSeamDrive(): BootSeamReading {
+  const blank: BootSeamReading = {
+    reason: 'unreachable', rowsArmWritten: undefined, rowsArmReceipt: undefined, rowsArmOrderAfter: undefined,
+    rowsArmBogusLeafFound: undefined, rowsArmBogusLeafReadsActive: undefined, nonStringArmWritten: undefined,
+    nonStringArmRepaired: undefined, nonStringArmOrderAfter: undefined, declaredArmWritten: undefined,
+    declaredArmOrderAfter: undefined, absentArmWritten: undefined, absentArmReceipt: undefined,
+  }
+  const seams = shippedSeams()
+  const member = wiredTabsConstraintMember()
+  if (seams.reason !== null || seams.evaluateTabsBootStep === null || member === null) {
+    return { ...blank, reason: seams.reason ?? wiringMemberReason ?? 'the wiring supplies no constraint member' }
+  }
+  // A STORE BUILT EXACTLY AS `buildWiredGraphStore` BUILDS ONE (six shipped roots + the shipped
+  // member), never the suite-primed singleton — see `shippedConstruction`.
+  const store = shippedConstruction(member)
+  const bogus = `${DECLARED_SPELLINGS.root}.[object Object]`
+  shippedSeedEntryState(store, ['A'], 'A')
+  // (1) THE ROWS ARM — the hand-off's OWN rows, exactly as `bridge.store.get()` answers them.
+  const handoffRows: Rec[] = [
+    { name: DECLARED_SPELLINGS.order, value: ['A', 'B'] },
+    { name: DECLARED_SPELLINGS.entry('A'), value: { target: 'target-A', active: false, error: null, label: 'label-A' } },
+    { name: DECLARED_SPELLINGS.entry('B'), value: { target: 'target-B', active: false, error: null, label: 'label-B' } },
+  ]
+  const rowsArm = callSeam(seams.evaluateTabsBootStep, store, handoffRows)
+  const rowsArmReceipt = (rowsArm['receipt'] ?? {}) as Rec
+  const rowsArmOrder = valueOf(store, DECLARED_SPELLINGS.order)
+  const bogusLeaf = resolveOf(store, bogus)
+  // (2) THE NON-STRING-SEQUENCE ARM — an array of values no `order` member can be.
+  shippedSeedEntryState(store, ['A'], 'A')
+  const nonStringArm = callSeam(seams.evaluateTabsBootStep, store, [1, 2, null])
+  const nonStringReceipt = (nonStringArm['receipt'] ?? {}) as Rec
+  const nonStringOrder = valueOf(store, DECLARED_SPELLINGS.order)
+  // (3) THE DECLARED-SEQUENCE ARM (POSITIVE CONTROL) and (4) THE NO-SEQUENCE ARM.
+  shippedSeedEntryState(store, ['A'], 'A')
+  const declaredArm = callSeam(seams.evaluateTabsBootStep, store, ['A', 'B'])
+  const declaredOrder = valueOf(store, DECLARED_SPELLINGS.order)
+  const absentArm = callSeam(seams.evaluateTabsBootStep, store, undefined)
+  return {
+    reason: null,
+    rowsArmWritten: rowsArm['written'], rowsArmReceipt,
+    rowsArmOrderAfter: rowsArmOrder, rowsArmBogusLeafFound: bogusLeaf['found'],
+    rowsArmBogusLeafReadsActive: entryReadsActive(bogusLeaf['value']),
+    nonStringArmWritten: nonStringArm['written'], nonStringArmRepaired: nonStringReceipt['repaired'],
+    nonStringArmOrderAfter: nonStringOrder,
+    declaredArmWritten: declaredArm['written'], declaredArmOrderAfter: declaredOrder,
+    absentArmWritten: absentArm['written'], absentArmReceipt: absentArm['receipt'],
+  }
+}
+
+/** `F-4`/`T2-C-15` — THE EXPORTED MINT SEAM DRIVEN BEHAVIOURALLY (`mintTabId(holder, tabId)`, the
+ *  SHIPPED signature). A duplicate id, a dotted id, a malformed id and the reserved spelling each
+ *  answer a DECLARED refusal; a fresh id answers a successful mint (the positive control). */
+export function shippedMint(holder: Rec, tabId: unknown): Rec {
+  const seams = shippedSeams()
+  if (seams.mintTabId === null) return { ok: false, id: null, refusal: null, reason: seams.reason }
+  return callSeam(seams.mintTabId, holder, tabId)
+}
+
 /* ───────────────────────────── THE STATIC READING HELPERS (`§5.3`, `§5.5.1` `P-TR-TP-6`) ─ */
 
 export function bytesAt(path: string): string | null {
@@ -1991,21 +2258,34 @@ export function registerRows(): readonly RegisterRow[] {
             expect(valueOf(store, S.order), '§5.5.1 state (1)').toEqual(['t7', 't9'])
           } },
         { name: '(2) mint reading — a DUPLICATE id is REFUSED at the minting site (no write)', drive: (): void => {
-            const ids = (valueOf(tabsStore(surface as TabsSurface, null), S.order) ?? []) as unknown
-            void ids
+            const s = surface as TabsSurface
+            const store = tabsStore(s, null)
+            seedRecord(store, ['t7'], 't7')
             // §0A item 2: "a minted id ALREADY a member of the persisted file.tabs.order is a
             // DUPLICATE and the mint is REFUSED at the minting site" — refused CALLER-SIDE (the
             // store ships no 'duplicate-id' token, and this unit may add none: §5.1).
-            const mintingSite = mintingSiteProbe()
-            expect(mintingSite.ok, `§0A item 2 / §1.1 item 8 — ${mintingSite.reason}`).toBe(true)
+            // ── **AS FILED (`RCA-8(d)`, KEPT VISIBLE): this drive called `mintingSiteProbe()` — a
+            //    SOURCE REGEX over `renderer.ts` (`/mintTabId|mintTab|DUPLICATE|duplicate/i`) whose
+            //    success reason was the BARE CLAIM "the minting site exists and enforces the
+            //    duplicate rule", so a host that DELETED the duplicate branch while KEEPING the
+            //    identifier stayed GREEN (MEASURED, re-triage `2026-10-11`). THE OPERATIVE FORM
+            //    DRIVES THE EXPORTED SEAM `mintTabId(holder, tabId)` — the SHIPPED signature — and
+            //    asserts its DECLARED refusal reason.** The as-filed probe stays visible below and
+            //    is asserted as a STATIC READING in `tests/store-tabs-record.test.ts`'s `M-2`. */
+            const refused = shippedMint(store, 't7')
+            expect(refused['ok'], '§0A item 2 / §1.1 item 8 — the duplicate mint is refused AT THE SITE').toBe(false)
+            expect(refused['refusal'], '§0A item 2 — the refusal is a DECLARED outcome the caller can read').toBe('duplicate-id')
           } },
         { name: '(2) `order` reading — no duplicate entry ever appears in `order`', drive: (): void => {
             const s = surface as TabsSurface
             const store = tabsStore(s, null)
             seedRecord(store, ['t7'], 't7')
-            const mintingSite = mintingSiteProbe()
-            expect(mintingSite.ok, '§5.5.1 state (2) — the falsifier: the id must NOT appear twice').toBe(true)
-            expect(valueOf(store, S.order), '§5.5.1 state (2) — no duplicate order member').toEqual(['t7'])
+            // **THE BEHAVIOURAL FORM BESIDE THE AS-FILED REGEX (`RCA-8(d)`): the refusal is DRIVEN,
+            //  so the `order` reading below is attributable to the shipped mint and not to a
+            //  source-text match.** The as-filed form read `mintingSiteProbe().ok` here.
+            const refused = shippedMint(store, 't7')
+            expect(refused['ok'], '§5.5.1 state (2) — a refused mint writes nothing').toBe(false)
+            expect(valueOf(store, S.order), '§5.5.1 state (2) — the falsifier: the id must NOT appear twice').toEqual(['t7'])
           } },
         { name: '(3) mint reading — the POSITIVE CONTROL: the same id minted against an `order` from which it was closed SUCCEEDS', drive: (): void => {
             const s = surface as TabsSurface
