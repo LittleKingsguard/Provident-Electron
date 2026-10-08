@@ -83,6 +83,7 @@ import {
   CONSTRAINT_MATCHED_SET,
   DECLARED_PAGES,
   DECLARED_SPELLINGS,
+  DECLARATION_READ_CANDIDATES,
   CREATE_ELEMENT_DETECTOR_FIXTURE,
   EDIT_SET_OFFENDER_FIXTURE,
   FROZEN_FILE_PINS,
@@ -1291,41 +1292,86 @@ describe('T2 §4.2 item 7 — THE TWO AUTHORED PAGES’ NODE-LAYER HALF (`§3.5`
  * ───────────────────────────────────────────────────────────────────────────── */
 
 describe('T2 §4.2 items 4/6/8b — THE RE-TRIAGE’S BEHAVIOURAL ROWS (`F-6`·`H-1`, `F-1`·`H-3`, `F-4`·`T2-C-15`) AND THE DECLARED STATIC READINGS', () => {
-  it('L-7 · §2.1 item 6 / §3.2 F-T2-3 (`F-6` / host `H-1`) — THE RESERVED ENTRY IS DECLARED ON THE SHIPPED WIRING: `remove(’file.tabs.landing’)` answers the `’reserved-name’` REFUSAL on the store `main()` boots, with the sibling removal COMMITTED as the positive control', () => {
-    const reading: LandingReservationReading = shippedLandingReservationDrive()
+  it('L-7 · §2.1 item 6 / §3.2 F-T2-3 (`F-6` / host `H-1`) — THE RESERVED ENTRY IS DECLARED ON THE SHIPPED WIRING: `remove(’file.tabs.landing’)` answers the `’reserved-name’` REFUSAL on the construction the WIRING ITSELF performs, with the sibling removal COMMITTED as the positive control and the reservation UNMASKABLE by a caller-supplied declaration set', async () => {
+    const reading: LandingReservationReading = await shippedLandingReservationDrive()
     expect(reading.reason, 'the shipped wiring and its store are reachable — an ABSENT seam is this row’s own failure, never a skip').toBeNull()
+    // ── THE INSTRUMENT’S OWN PRECONDITIONS, MEASURED, NOT ASSUMED (`2026-10-11` RE-GRAIN).
+    expect(reading.freshInstance, `THE INSTRUMENT MUST REACH THE SITE THE FIX IS AT: every arm’s store comes from a DISTINCT module instance of the wiring, so the arm’s own call is the FIRST caller of \`getWiredGraphStore\` and \`buildWiredGraphStore\` is the code that runs (${reading.instrument})`).toBe(true)
+    expect(reading.armsIndependent, 'THE INSTRUMENT’S OWN BITE (`2026-10-11`): the THREE arms’ stores are three DIFFERENT objects. The six-roots arm and the close arm hand the SAME declarations, so they could only answer ONE object if a single module instance had served both — i.e. if an arm’s call were NOT the first caller of its own instance (a driver that reuses an import token across rows reddens here, and its green would have been unearned)').toBe(true)
+    expect(reading.declarationsReadAbsent, 'THE WIRING EXPOSES NO READ OF ITS OWN SHIPPED DECLARATION SET, so the rows take the instruction’s named alternative — the SEAM — and hand the caller’s rows VERBATIM; this is the MEASURED absence, off the module namespace the suite already holds').toEqual([...DECLARATION_READ_CANDIDATES])
+    expect(reading.sixRootsConstructionThrew, 'the SIX-ROOTS-verbatim construction does not throw (renderer.ts:748-761 adds the reserved row without declaring any name twice)').toBeNull()
+    expect(reading.handedRoots, 'THE CALLER’S ROWS AS HANDED: the six shipped roots, VERBATIM (renderer.ts:43-50 / :1269-1272)').toEqual(['window', 'tabs', 'layout', 'settings', 'tracked', 'modules'])
+    // ── (i) THE SIX-ROOTS ARM: the shipped caller’s own rows.
     expect(reading.removalIsRefusal, '§2.1 item 6 (A-5) — `remove(’file.tabs.landing’)` REFUSED').toBe(true)
     expect(reading.removalReason, '§2.1 item 6 (A-5) — the `’reserved-name’` token, BY NAME and before the walk').toBe('reserved-name')
     expect(reading.removalCleared, '§3.2 F-T2-6 / §3.6 A-7 — a refused receipt clears NOTHING').toEqual([])
     expect(reading.landingFoundAfterRemoval, '§2.1 item 6 — the reserved entry is STILL READABLE after the refusal').toBe(true)
     expect(reading.orderAfterRemoval, '§2.1 item 6 (R3-2) — its `order` seat is UNTOUCHED').toEqual(['A', 'landing'])
     expect(reading.siblingStatus, '§3.2 F-T2-3 / §0A item 1 — the POSITIVE CONTROL: the sibling instance’s own removal commits').toBe('committed')
+    // ── (iii) THE UNMASKABILITY ARM — THE LOAD-BEARING HALF OF THE FIX (`renderer.ts:751-759`): a
+    //    caller that declares the reserved SPELLING without the flag must NOT be able to turn the
+    //    entry’s own refusal off. The construction UPGRADES the row in place (never a second row).
+    expect(reading.maskRemovalIsRefusal, '§2.1 item 6 / R3-2 — A CALLER-SUPPLIED DECLARATION SET CANNOT MASK THE RESERVATION: `{ name: ’file.tabs.landing’ }` WITHOUT `reserved:true` is UPGRADED IN PLACE and the removal is STILL refused').toBe(true)
+    expect(reading.maskRemovalReason, '§2.1 item 6 (A-5) — the same `’reserved-name’` token on the masking caller’s arm').toBe('reserved-name')
+    expect(reading.maskArmConstructionThrew, '§2.1 item 6 — the upgrade-in-place declares NO NAME TWICE (the store refuses a duplicate declaration row at construction), so the masking caller’s construction is TOTAL').toBeNull()
+    expect(reading.maskLandingFound, '§2.1 item 6 — the entry is STILL READABLE on the masking arm').toBe(true)
+    expect(reading.maskOrderAfter, '§2.1 item 6 / §3.1 M-1 — the `order` seat is UNTOUCHED on the masking arm').toEqual(['A', 'landing'])
+    expect(reading.maskingCallerRows, 'THE MASKING CALLER’S ROWS, PRINTED WITH THEIR TERMS: the six roots plus the reserved spelling WITHOUT the flag').toEqual(['window', 'tabs', 'layout', 'settings', 'tracked', 'modules', 'file.tabs.landing'])
+    // ── (iv) THE BITE — **THE ROW CANNOT BE SATISFIED BY AN ALWAYS-REFUSING MEMBER**: a store the
+    //    FROZEN FACTORY builds with the six roots ALONE (no `wiredDeclarations` merge) still
+    //    COMMITS this very removal. That is the as-filed behaviour, retained as the control.
+    expect(reading.frozenFactoryRemovalStatus, 'THE BITE (`G-5`): on a store built by the FROZEN FACTORY directly — no declaration merge, the AS-FILED construction — the reserved entry’s own removal COMMITS; the store refuses by name only where a `reserved:true` row exists (`store-core-graph.ts:1950-1953`), so a member that refused EVERYTHING would fail here').toBe('committed')
     expect(
       reading.singletonIgnoresLaterOptions,
-      'THE MECHANISM (`H-1`, MEASURED): `getWiredGraphStore` is a SINGLETON whose options are the FIRST caller’s (`renderer.ts:626-628`) — in this DOM-less node realm `main()` never runs, so the FIRST row to call the seam decides the store’s declaration set, and this suite’s own `wiredConstraintReading`/`wiredMemberHandle` prime it with the FIXTURE’s AUGMENTED rows',
+      'THE MECHANISM (`H-1`, MEASURED ON THIS ARM’S OWN INSTANCE, so it does not depend on which row called the probed module’s seam first): `getWiredGraphStore` is a SINGLETON whose options are the FIRST caller’s (`renderer.ts:782-785`) — a SECOND call carrying the masking declarations answers the SAME store object and its options are DISCARDED',
     ).toBe(true)
-    // ── **THE IN-LINE STATEMENT OF THE WHOLE DISAGREEMENT (`F-6` / `H-1`):** the rows `L-1`…`L-6`
-    //    above and `A-5` below pass ONLY because the FIXTURE they are built from
+    // ── THE DRIVE, PRINTED WITH ITS TERMS (`§4.1` item 2 / `EVIDENCE-ROW-MUST-OBSERVE-WHAT-IT-
+    //    PRINTS`): the row reports the readings `L-8` and this row assert, so a failure is
+    //    diagnosable without re-instrumenting and the supervisor can read the measurement.
+    process.stdout.write(
+      `\n── T2 \`L-7\`/\`L-8\` — THE LANDING RESERVATION DRIVE, MEASURED ──\n` +
+      `  INSTRUMENT: ${reading.instrument}\n` +
+      `  PRECONDITIONS: fresh instance ${String(reading.freshInstance)} · arms independent (three distinct stores) ${String(reading.armsIndependent)} · declaration-set reads ABSENT from the wiring’s namespace ${JSON.stringify(reading.declarationsReadAbsent)} · constructions threw ${JSON.stringify([reading.sixRootsConstructionThrew, reading.maskArmConstructionThrew, reading.closeArmConstructionThrew])}\n` +
+      `  (i) SIX ROOTS VERBATIM ${JSON.stringify(reading.handedRoots)}: remove(’file.tabs.landing’) → status ${JSON.stringify(reading.removalStatus)} · reason ${JSON.stringify(reading.removalReason)} · cleared ${JSON.stringify(reading.removalCleared)} · landing still found ${JSON.stringify(reading.landingFoundAfterRemoval)} · order ${JSON.stringify(reading.orderAfterRemoval)} · SIBLING CONTROL remove(’file.tabs.A’) → ${JSON.stringify(reading.siblingStatus)}\n` +
+      `  (iii) MASKING CALLER ${JSON.stringify(reading.maskingCallerRows)} (no \`reserved:true\`): remove(’file.tabs.landing’) → status ${JSON.stringify(reading.maskRemovalStatus)} · reason ${JSON.stringify(reading.maskRemovalReason)} · landing still found ${JSON.stringify(reading.maskLandingFound)} · order ${JSON.stringify(reading.maskOrderAfter)}\n` +
+      `  (iv) BITE — FROZEN FACTORY, six roots ALONE (no declaration merge): remove(’file.tabs.landing’) → status ${JSON.stringify(reading.frozenFactoryRemovalStatus)} · reason ${JSON.stringify(reading.frozenFactoryRemovalReason)}\n` +
+      `  (ii) CLOSE VERB on the wiring’s own construction: callerOperations ${JSON.stringify(reading.closeCallerOperations)} · refusal ${JSON.stringify(reading.closeRefusal)} · remove ${JSON.stringify([reading.closeRemoveStatus, reading.closeRemoveReason])} · landing still found ${JSON.stringify(reading.closeLandingFound)} · order ${JSON.stringify(reading.closeOrderAfter)}\n` +
+      `  SINGLETON: a SECOND call carrying the masking declarations answers the SAME store — ${String(reading.singletonIgnoresLaterOptions)}\n` +
+      `────────────────────────────────────────────────────────────────\n`,
+    )
+    // ── **THE IN-LINE STATEMENT OF THE WHOLE DISAGREEMENT (`F-6` / `H-1`), WITH BOTH FORMS.** The
+    //    rows `L-1`…`L-6` above and `A-5` below pass ONLY because the FIXTURE they are built from
     //    (`tabsStoreHere` → `tabsStore` → `tabsDeclarationRows()`) **ADDS**
-    //    `{ name: 'file.tabs.landing', reserved: true }`. The SHIPPED declaration set is the SIX
-    //    ROOTS VERBATIM (`renderer.ts:43-50` → `renderer.ts:615`'s
-    //    `options?.declarations ?? FILE_TIER_ROOT_NAMES`) and carries NO `reserved:true` row, and
-    //    the store refuses by name only where one exists (`store-core-graph.ts:1950-1953`) — so
-    //    `closeTab(store, 'landing', …)` COMMITS the removal of the reserved entry at the verb the
-    //    operator uses. **This is the ONE finding where the blind pass (`T2-F-06`) beat the
-    //    suite, and this row is the re-measurement of it on the shipped construction.** `L-8`
-    //    drives the same defect through the exported close verb. **MEASURED, AND RECORDED HERE
-    //    BECAUSE IT IS THE REASON THE SUITE’S OWN ROWS ARE GREEN: an early draft of this row read
-    //    the SINGLETON (`getWiredGraphStore()`), was primed by the rows above with the FIXTURE’s
-    //    augmented declarations, and PASSED on a re-run — a false green the singleton’s
-    //    first-caller-wins construction hands to any row that does not build the store the way
-    //    `src/**` builds it** (`shippedConstruction`).
+    //    `{ name: 'file.tabs.landing', reserved: true }`. **AS FILED — KEPT VISIBLE, AND NOW
+    //    SUPERSEDED-IN-EFFECT (`RCA-8(d)`):** this row read "*the SHIPPED declaration set is the
+    //    SIX ROOTS VERBATIM (`renderer.ts:43-50` → `renderer.ts:615`’s `options?.declarations ??
+    //    FILE_TIER_ROOT_NAMES`) and carries NO `reserved:true` row, and the store refuses by name
+    //    only where one exists (`store-core-graph.ts:1950-1953`) — so `closeTab(store, 'landing', …)`
+    //    COMMITS the removal of the reserved entry at the verb the operator uses*", and the row was
+    //    driven on a store the register built by calling the **FROZEN FACTORY DIRECTLY** with those
+    //    six roots. **THAT INSTRUMENT COULD NOT SEE THE FIX AND NEVER COULD:** the reservation is
+    //    declared by the WIRING, and the frozen factory is not on `buildWiredGraphStore`’s path,
+    //    so no edit inside `src/renderer/renderer.ts` could have made the old arm green. **AT THIS
+    //    HEAD the repaired bytes are (`renderer.ts`):** `:136-138`
+    //    `TABS_RESERVED_DECLARATION_ROWS = [{ name: TABS_LANDING_NAME, reserved: true }]` — the row
+    //    whose absence the old form measured; `:748-761` `wiredDeclarations(supplied)` — the
+    //    caller’s rows VERBATIM, ADDing the reserved row when the spelling is absent and
+    //    UPGRADING IT IN PLACE (`rows[at] = { ...rows[at], reserved: true }`) when the caller
+    //    declares it without the flag, which is what makes the reservation UNMASKABLE; `:763-780`
+    //    `buildWiredGraphStore` — the ONE construction, handing
+    //    `storeGraphReferences(wiredDeclarations(options?.declarations))`; and `:593-600` the close
+    //    site reading the store’s OWN remove receipt and answering `refusal: ’reserved-name’` with
+    //    the `order` rewrite WITHHELD. **`L-8` drives the same construction through the exported
+    //    close verb.** THE OUT-OF-REPO PROBE the implementer reported is the standing evidence for
+    //    the SAME three readings this row now measures IN-REPO through the wiring’s own seam.
   })
 
-  it('L-8 · §2.1 item 6 / §3.2 F-T2-3 (`F-6` / host `H-1`) — THE SAME THROUGH THE EXPORTED `closeTab`: `refusal === ’reserved-name’`, the `order` seat untouched and the landing entry still readable', () => {
-    const reading: LandingReservationReading = shippedLandingReservationDrive()
+  it('L-8 · §2.1 item 6 / §3.2 F-T2-3 (`F-6` / host `H-1`) — THE SAME THROUGH THE EXPORTED `closeTab`, DRIVEN ON THE WIRING’S OWN CONSTRUCTION: `refusal === ’reserved-name’`, the `order` seat untouched and the landing entry still readable', async () => {
+    const reading: LandingReservationReading = await shippedLandingReservationDrive()
     expect(reading.reason).toBeNull()
-    expect(reading.closeCallerOperations, '§2.4 item 4 — the close is TWO caller operations under the ruled flat form').toBe(2)
+    expect(reading.freshInstance, 'THE INSTRUMENT MUST REACH THE SITE THE FIX IS AT: the close arm drives `closeTab` against a store built by the WIRING’S OWN construction on a DISTINCT module instance — never the frozen factory directly, which is not on `buildWiredGraphStore`’s path').toBe(true)
+    expect(reading.closeArmConstructionThrew, 'the six-roots-verbatim construction does not throw on the close arm either').toBeNull()
+    expect(reading.closeCallerOperations, '§2.4 item 4 — the close is TWO caller operations under the ruled flat form, reported on the refusal arm exactly as `CL-7`/§3.4 item 4 print it; `commit: undefined` is what says the second operation was NOT performed').toBe(2)
     expect(reading.closeRefusal, '§2.1 item 6 / §3.2 F-T2-3 — the close verb REFUSES the reserved entry’s own removal BY NAME').toBe('reserved-name')
     expect(reading.closeRemoveStatus, '§2.1 item 6 — the reserved entry’s own `remove` is refused, not committed').toBe('refused')
     expect(reading.closeRemoveReason, '§2.1 item 6 (A-5) — the `’reserved-name’` token at the close site').toBe('reserved-name')
@@ -1354,8 +1400,54 @@ describe('T2 §4.2 items 4/6/8b — THE RE-TRIAGE’S BEHAVIOURAL ROWS (`F-6`·`
     //    so no shipped path ever hands it rows.)
     const refused = reading.rowsArmWritten === false
     const normalized = JSON.stringify(reading.rowsArmOrderAfter) === JSON.stringify(['A', 'B'])
-    expect(refused || normalized, 'SPEC-SILENT-OWED — the seam must REFUSE the rows argument or NORMALIZE it to the rows’ own membership sequence; writing the rows array into `file.tabs.order` is a corrupted write').toBe(true)
-    expect(reading.rowsArmBogusLeafFound, 'SPEC-SILENT-OWED — the corrupted write MINTS and makes READABLE a `file.tabs.[object Object]` leaf (the rows’ `join` spelling)').toBe(false)
+    expect(refused || normalized, `SPEC-SILENT-OWED — the seam must REFUSE the rows argument or NORMALIZE it to the rows’ own membership sequence; writing the rows array into \`file.tabs.order\` is a corrupted write. MEASURED at this head: written ${String(reading.rowsArmWritten)} · refusal ${JSON.stringify(reading.rowsArmRefusal)} · receipt ${JSON.stringify(reading.rowsArmReceipt)} · \`file.tabs.order\` after ${JSON.stringify(reading.rowsArmOrderAfter)}`).toBe(true)
+    // ── **ASSERTION 3, RE-GRAINED THE `CL-1` WAY (`2026-10-11`; `RCA-8(d)` — THE AS-FILED FORM IS
+    //    KEPT VISIBLE IN-LINE WITH ITS CAUSE).** **AS FILED this assertion demanded**
+    //    `expect(reading.rowsArmBogusLeafFound, '… the corrupted write MINTS and makes READABLE a
+    //    `file.tabs.[object Object]` leaf …').toBe(false)` — **the DECLARED MISS (`§3.6` `A-1`).
+    //    THAT DEMAND IS UNSATISFIABLE ON THE FROZEN STORE'S OWN READ PATH, AND IT WAS ALREADY
+    //    RECORDED AS SUCH BY THIS UNIT'S OWN SIBLING ROW:** `CL-1` (this file, the close verb's
+    //    terminal state) MEASURES the same store fact — a reference the store cannot resolve
+    //    answers a **READ-SIDE REFUSAL**, `{ status: 'refused', reason: 'no-such-anchor',
+    //    diagnostic: { step: 'D-ANCHOR' } }`, **which carries NO `found` member at all**, so the
+    //    reading is `undefined`, never `false` — and `CL-1` therefore asserts the readable effect
+    //    (`afterClose['found'] ?? false → false`) together with the CLOSED token set
+    //    `['no-such-anchor', 'undeclared-name']`. **THE AS-FILED `=== false` AND `CL-1`’S OWN
+    //    FORM ARE AN ASSERTION PAIR THIS SUITE CANNOT BOTH HOLD**; the demand is re-grained to the
+    //    fact the store actually delivers, NEVER WEAKENED IN SUBSTANCE: what the row must exclude
+    //    is a BOGUS LEAF THAT WAS MINTED AND IS READABLE, and `found !== true` excludes exactly
+    //    that (a minted, readable leaf answers `found: true` and reddens here).
+    expect(
+      reading.rowsArmBogusLeafFound !== true,
+      `SPEC-SILENT-OWED / §3.6 A-1 — the read must NOT answer the bogus spelling as a FOUND value. AS FILED this demanded \`=== false\`; the frozen read path answers a READ-SIDE REFUSAL with NO \`found\` member (the store fact \`CL-1\` already records), so the as-filed form could never hold. MEASURED: found ${JSON.stringify(reading.rowsArmBogusLeafFound)} · reason ${JSON.stringify(reading.rowsArmBogusLeafReason)} · step ${JSON.stringify(reading.rowsArmBogusLeafStep)}`,
+    ).toBe(true)
+    // ── AND THE CL-1 ROW'S OWN CLOSED SET, ASSERTED THE WAY `CL-1` ASSERTS IT (`:666-669`), so the
+    //    row RECORDS WHAT THE READ DOES ANSWER instead of only what it does not: a RETURNED
+    //    refusal record whose token is in the unit's closed answer set for this store fact. The
+    //    token is MEASURED at this head (`no-such-anchor` at step `D-ANCHOR`); a store that answers
+    //    the declared miss INSTEAD also fails it (`CL-1`'s own stated reason for its pair), and a
+    //    fourth, un-enumerated token fails it as a `§3.6` totality finding — `CL-1` reddens with
+    //    this row, never diverging from it.
+    expect(
+      ['no-such-anchor', 'undeclared-name'],
+      `SPEC-SILENT-OWED / §3.6 — the read on the un-minted bogus spelling answers a RETURNED refusal record, never a throw and never an un-enumerated token. MEASURED: reason ${JSON.stringify(reading.rowsArmBogusLeafReason)} · step ${JSON.stringify(reading.rowsArmBogusLeafStep)}`,
+    ).toContain(reading.rowsArmBogusLeafReason)
+    expect(
+      reading.rowsArmBogusLeafReadsActive,
+      'SPEC-SILENT-OWED — **THE BITE, KEPT:** NO LEAF IS MINTED for the rows’ `join` spelling, so nothing reads active at `file.tabs.[object Object]` (a run that DID mint a readable, ACTIVE bogus leaf reddens here)',
+    ).toBe(false)
+    // ── THE ROWS ARM AND THE BOGUS READ, PRINTED WITH THEIR TERMS (`§4.1` item 2 /
+    //    `EVIDENCE-ROW-MUST-OBSERVE-WHAT-IT-PRINTS`): the SPEC-SILENT-OWED readings are reported,
+    //    including the read-side token the frozen path answers where the as-filed form demanded a
+    //    `found: false` miss.
+    process.stdout.write(
+      `\n── T2 \`B-8\` — THE BOOT SEAM’S ARGUMENT DOMAIN, MEASURED ──\n` +
+      `  ROWS ARM (\`{name,value}[]\`, what \`bridge.store.get()\` answers): written ${String(reading.rowsArmWritten)} · refusal ${JSON.stringify(reading.rowsArmRefusal)} · receipt ${JSON.stringify(reading.rowsArmReceipt)} · \`file.tabs.order\` after ${JSON.stringify(reading.rowsArmOrderAfter)}\n` +
+      `  BOGUS LEAF \`file.tabs.[object Object]\`: found ${JSON.stringify(reading.rowsArmBogusLeafFound)} · reason ${JSON.stringify(reading.rowsArmBogusLeafReason)} · step ${JSON.stringify(reading.rowsArmBogusLeafStep)} · reads active ${String(reading.rowsArmBogusLeafReadsActive)}\n` +
+      `  NON-STRING SEQUENCE \`[1, 2, null]\`: written ${String(reading.nonStringArmWritten)} · order after ${JSON.stringify(reading.nonStringArmOrderAfter)}\n` +
+      `  CONTROLS: declared sequence \`['A','B']\` → written ${String(reading.declaredArmWritten)} · order ${JSON.stringify(reading.declaredArmOrderAfter)} · absent → written ${String(reading.absentArmWritten)} · receipt ${JSON.stringify(reading.absentArmReceipt)}\n` +
+      `────────────────────────────────────────────────────────────\n`,
+    )
     expect(reading.nonStringArmWritten, 'SPEC-SILENT-OWED — the same seam accepts an array of NON-STRING members (`[1, 2, null]`); the declared sequence domain is the caller’s id sequence').toBe(false)
   })
 

@@ -70,7 +70,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { createHash } from 'node:crypto'
-import { expect } from 'vitest'
+import { expect, vi } from 'vitest'
 
 /* ───────────────────────────── THE PATHS (`§5.1`, `§2.1`) ───────────────────────────── */
 
@@ -935,11 +935,25 @@ export function wiredClose(store: Rec, id: string, nextOrder: readonly string[])
  * WHY THESE EXIST, AND WHAT THEY REPLACE (each as-filed form stays VISIBLE below):
  *   · `F-6`/`H-1` — as filed, every reserved-entry row (`L-1`…`L-6`, `A-5`) was driven against a
  *     FIXTURE store built from `tabsDeclarationRows()`, which ADDS `{ name: 'file.tabs.landing',
- *     reserved: true }`. The SHIPPED declaration set is the SIX ROOTS VERBATIM (`renderer.ts:43-50`
+ *     reserved: true }`. **THE AS-FILED READING OF THE SHIPPED SET IS KEPT VISIBLE AND IS NOW
+ *     SUPERSEDED-IN-EFFECT (`RCA-8(d)`; annotation beside, never a silent rewrite):** as filed
+ *     this bullet read "The SHIPPED declaration set is the SIX ROOTS VERBATIM (`renderer.ts:43-50`
  *     → `renderer.ts:615`'s `options?.declarations ?? FILE_TIER_ROOT_NAMES`) and carries NO
  *     `reserved:true` row, and the store refuses by name only where one exists
- *     (`store-core-graph.ts:1950-1953`). The rows below therefore drive the WIRED store — the one
- *     `main()` boots — and never a fixture that supplies the missing declaration.
+ *     (`store-core-graph.ts:1950-1953`)". That WAS the pre-repair byte-state, and it is why the
+ *     rows below were red. **AT THIS HEAD THE CONSTRUCTION'S SET IS NO LONGER THE ARGUMENT:** the
+ *     six roots are still VERBATIM the CALLER'S ROWS (`renderer.ts:43-50`, the
+ *     `declarations: FILE_TIER_ROOT_NAMES` argument `renderer.ts:1269-1272` hands at boot), but
+ *     `buildWiredGraphStore` (`renderer.ts:763-780`) passes `wiredDeclarations(...)`
+ *     (`renderer.ts:748-761`), which merges `TABS_RESERVED_DECLARATION_ROWS`
+ *     (`renderer.ts:136-138`: `{ name: 'file.tabs.landing', reserved: true }`) over the caller's
+ *     rows — ADDING it when the caller's set lacks the spelling and UPGRADING IT IN PLACE when
+ *     the caller declares the same name WITHOUT the flag, so the reservation cannot be masked and
+ *     no name is ever declared twice. The store still refuses by name only where such a row
+ *     exists (`store-core-graph.ts:1950-1953`) — which is exactly why `L-7`'s FROZEN-FACTORY arm,
+ *     built with the six roots ALONE, still COMMITS the removal (the row's own bite). The rows
+ *     below therefore drive the WIRED construction — the set `main()` boots — and never a fixture
+ *     that supplies the missing declaration.
  *   · `F-1`/`H-3` — as filed, the boot step was measured only through the DECLARED sequence form
  *     (`B-1`…`B-7`), while its parameter accepts any array. The rows below drive the ROWS form
  *     (`{ name, value }[]`, what `bridge.store.get()` answers) through the SHIPPED
@@ -1018,23 +1032,44 @@ export function shippedSeedEntryState(store: Rec, order: readonly string[], acti
   hydrate.call(store, rows)
 }
 
-/** THE SHIPPED FILE-TIER DECLARATION SET, VERBATIM (`renderer.ts:43-50` → `renderer.ts:615`'s
- *  `options?.declarations ?? FILE_TIER_ROOT_NAMES`): **SIX ROOTS AND NOTHING ELSE — NO
- *  `reserved:true` ROW EXISTS FOR `file.tabs.landing` IN `src/**`.** */
+/** THE SIX FILE-TIER ROOTS **AS THE SHIPPED CALLER HANDS THEM** (`renderer.ts:43-50`, the
+ *  `declarations: FILE_TIER_ROOT_NAMES` argument `renderer.ts:1269-1272` passes at boot).
+ *
+ *  **THE AS-FILED PROSE IS KEPT VISIBLE AND IS SUPERSEDED-IN-EFFECT (`RCA-8(d)`):** as filed this
+ *  cell read "*THE SHIPPED FILE-TIER DECLARATION SET, VERBATIM (`renderer.ts:43-50` →
+ *  `renderer.ts:615`'s `options?.declarations ?? FILE_TIER_ROOT_NAMES`): SIX ROOTS AND NOTHING
+ *  ELSE — NO `reserved:true` ROW EXISTS FOR `file.tabs.landing` IN `src/**`*". That was true of the
+ *  PRE-REPAIR bytes and is FALSE of the repaired ones: `renderer.ts:136-138`'s
+ *  `TABS_RESERVED_DECLARATION_ROWS` carries exactly that row and `buildWiredGraphStore`
+ *  (`renderer.ts:763-780`) merges it through `wiredDeclarations` (`renderer.ts:748-761`) into
+ *  EVERY construction's declaration set. These six rows are therefore the CALLER'S rows VERBATIM —
+ *  never the construction's whole set, and never the reservation. */
 export const SHIPPED_FILE_TIER_ROOTS: readonly { readonly name: string }[] = [
   { name: 'window' }, { name: 'tabs' }, { name: 'layout' }, { name: 'settings' }, { name: 'tracked' }, { name: 'modules' },
 ]
 
-/** **A STORE BUILT EXACTLY AS `buildWiredGraphStore` BUILDS IT** (`renderer.ts:607-624`): the
- *  SHIPPED six-root declaration set, `crossing: null`, and the SHIPPED member supplied at the
- *  ONE construction call. This exists because `getWiredGraphStore()` is a SINGLETON whose
- *  options are taken from the FIRST caller (`renderer.ts:626-628`) — in a DOM-less node realm
- *  `main()` never runs, so the FIRST row to call the seam decides the store's declaration set,
- *  and this suite's own `wiredConstraintReading`/`wiredMemberHandle` prime it with the
- *  FIXTURE's augmented rows. **A row that measures the reserved-entry behaviour must therefore
- *  construct the store the way `src/**` does, never inherit whichever caller went first**
- *  (MEASURED, `2026-10-11`: an early draft of `L-7` read `'reserved-name'` on a re-run for
- *  exactly this reason). */
+/** **A STORE BUILT BY THE FROZEN FACTORY DIRECTLY** (`renderer.ts:607-624`'s call shape — the same
+ *  options object, with the SHIPPED six-root declaration set, `crossing: null` and the SHIPPED
+ *  member — but reaching `createGraphStore` WITHOUT `buildWiredGraphStore`'s declaration merge,
+ *  `renderer.ts:763-780`).
+ *
+ *  **WHAT THIS INSTRUMENT IS FOR AT THIS HEAD, RE-GRAINED (`2026-10-11`; the as-filed note is kept
+ *  below):** it is the **FROZEN-FACTORY ARM — the BITE**, i.e. the store on which the reserved
+ *  entry's own removal is NOT refused, held as the negative control that stops any always-refusing
+ *  member from satisfying `L-7`. It is **NEVER the landing rows' evidence store**: it cannot reach
+ *  the licensed fix site, so it can neither see the fix nor falsify it.
+ *
+ *  **THE AS-FILED NOTE, KEPT VERBATIM:** "a store built EXACTLY as `buildWiredGraphStore` builds
+ *  it … This exists because `getWiredGraphStore()` is a SINGLETON whose options are taken from the
+ *  FIRST caller … **A row that measures the reserved-entry behaviour must therefore construct the
+ *  store the way `src/**` does, never inherit whichever caller went first** (MEASURED,
+ *  `2026-10-11`: an early draft of `L-7` read `'reserved-name'` on a re-run for exactly this
+ *  reason)." **THE RE-GRAIN, AND WHY IT IS THE FIX'S SHAPE (`G-5`):** the singleton hazard is real
+ *  but the remedy as filed BYPASSED THE LICENSED FIX SITE — the reservation is declared by
+ *  `buildWiredGraphStore`, not by the frozen factory, so a direct factory call could only ever
+ *  measure the PRE-REPAIR construction. The landing rows now drive **the wiring's own exported
+ *  seam on a FRESH MODULE INSTANCE** (`wiredConstructionArm` below), where the first caller is the
+ *  row itself and the construction performed is `src/**`'s own. */
 export function shippedConstruction(member: Rec | null): Rec {
   const surf = surface as TabsSurface
   if (surf.resolved === null || surf.references === null) {
@@ -1047,13 +1082,128 @@ export function shippedConstruction(member: Rec | null): Rec {
   }) as Rec
 }
 
-/** `F-6`/`H-1` — **THE RESERVED ENTRY IS NEVER DECLARED**, measured on a store built EXACTLY as
- *  the shipped constructor builds one: `remove('file.tabs.landing')` (i) directly and (ii)
- *  through the exported `closeTab`, each on its OWN fresh store, with the sibling
- *  `remove('file.tabs.<id>')` committed as the POSITIVE CONTROL. The declared answer is the
- *  `'reserved-name'` REFUSAL with the entry still readable and its `order` seat untouched. */
+/* ─────────── THE WIRING'S OWN CONSTRUCTION, ON A FRESH MODULE INSTANCE (`G-5` RE-GRAIN) ─────────
+ *
+ * **WHY A FRESH MODULE INSTANCE, AND WHY THE PROBED ONE IS NOT EVIDENCE.** `getWiredGraphStore`
+ * is a SINGLETON (`renderer.ts:782-785`: `if (wiredGraphStore === null) …`), so the FIRST caller
+ * of the PROBED module decides that module's declaration set for the rest of the realm — and in
+ * this suite the first caller is `wiredConstraintReading`/`wiredTabsConstraintMember`, which hand
+ * the FIXTURE's own augmented rows (`tabsDeclarationRows()`, carrying the reserved row). A row
+ * that drove only that store would be GREEN with or without the fix: it cannot attribute the
+ * refusal to the wiring's merge. **A DISTINCT module instance has its own `wiredGraphStore` cell
+ * (`null`), so the row's own call IS the first caller**, and the construction that runs is
+ * `buildWiredGraphStore` — the licensed fix site — with exactly the declaration argument the row
+ * hands. Distinctness is MEASURED (function identity), never assumed.
+ *
+ * **THE DECLARATION SET IS THE CALLER'S, VERBATIM — NOTHING IS TRANSCRIBED HERE.** The wiring
+ * exposes NO read of its own shipped set: `FILE_TIER_ROOT_NAMES`, `TABS_RESERVED_DECLARATION_ROWS`,
+ * `wiredDeclarations` and `buildWiredGraphStore` are all module-private in `renderer.ts`
+ * (`:43`, `:136`, `:748`, `:763` — no `export`), and `declarationReadCandidatesAbsent()` below
+ * MEASURES that absence off the module namespace rather than asserting it. The rows therefore take
+ * the declared route the instruction's alternative names: **the seam** — with the six roots handed
+ * VERBATIM as the shipped caller hands them. */
+export interface WiringConstructionArm {
+  /** The store the wiring's OWN construction returned, or `null` (the arm's own red). */
+  readonly store: Rec | null
+  /** The instance's own seam, so a second call can be made ON IT (the singleton reading). */
+  readonly seam: ((options?: unknown) => Rec) | null
+  /** MEASURED: the instance is DISTINCT from the probed module's (function identity). */
+  readonly distinct: boolean
+  /** A construction or import that threw — an honest red, never a skip. */
+  readonly threw: string | null
+}
+
+/** THE MODULE-PRIVATE NAMES a read of the wiring's own shipped declaration set would have to be
+ *  exported under. `renderer.ts` exports NONE of them; this is measured off the module namespace
+ *  the suite already holds (`probeWiring()`). */
+export const DECLARATION_READ_CANDIDATES: readonly string[] = [
+  'FILE_TIER_ROOT_NAMES', 'TABS_RESERVED_DECLARATION_ROWS', 'wiredDeclarations', 'buildWiredGraphStore',
+]
+
+export function declarationReadCandidatesAbsent(): readonly string[] {
+  const mod = (wiring as WiringProbe | null)?.module ?? null
+  if (mod === null) return []
+  return DECLARATION_READ_CANDIDATES.filter((name) => !(name in mod))
+}
+
+/** THE CALLER'S ROWS AS THE NAME SEQUENCE THE READING PRINTS — the declaration rows a caller
+ *  hands the seam, read by their own `name` member (`§0A` item 1). */
+function namesOf(rows: readonly Rec[]): readonly string[] {
+  return rows.map((row) => String(row['name']))
+}
+
+/** THE PER-INVOCATION IMPORT TOKEN: **UNIQUE PER ARM AND PER DRIVE CALL, so EVERY arm gets its
+ *  own module evaluation.** A token derived from the arm's NAME ALONE is NOT enough: two rows that
+ *  drive the same arm (this unit's `L-7` and `L-8` both call `shippedLandingReservationDrive`) would
+ *  re-import the SAME instance, whose `wiredGraphStore` cell the first row already filled — and the
+ *  arm's claim to be "the FIRST caller" would be false on every invocation after the first, while
+ *  the row stayed green. MEASURED `2026-10-11` and fixed here: the counter makes the instance, its
+ *  null cell and the construction unambiguous on every call. */
+let wiredArmSeq = 0
+
+/** ONE ARM OF THE WIRING'S OWN CONSTRUCTION: a FRESH module instance of `renderer.ts`, then ONE
+ *  construction call through that instance's OWN `getWiredGraphStore({ declarations })`. */
+async function wiredConstructionArm(token: string, declarations: readonly Rec[]): Promise<WiringConstructionArm> {
+  const probed = (wiring as WiringProbe | null)?.module ?? null
+  let mod: Rec
+  try {
+    wiredArmSeq += 1
+    mod = (await import(/* @vite-ignore */ `${RENDERER_SPECIFIER}?wired-arm=${token}-${String(wiredArmSeq)}`)) as Rec
+    if (probed !== null && mod['getWiredGraphStore'] === probed['getWiredGraphStore']) {
+      // THE RE-IMPORT WAS SERVED FROM THE SAME MODULE GRAPH ENTRY (the query was keyed away): take
+      // a genuinely fresh one. `vi.resetModules()` is the runner's own declared instrument for it.
+      // **MEASURED `2026-10-11`: this branch is NOT taken at this head — the query-suffixed import
+      // already answers a DISTINCT instance (the exported function identity differs) — so it stands
+      // as a safety net for a runner that keys the query away, never as the arm's evidence path.**
+      vi.resetModules()
+      mod = (await import(/* @vite-ignore */ RENDERER_SPECIFIER)) as Rec
+    }
+  } catch (e) {
+    return { store: null, seam: null, distinct: false, threw: e instanceof Error ? e.message : String(e) }
+  }
+  const distinct = probed === null || mod['getWiredGraphStore'] !== probed['getWiredGraphStore']
+  const seam = mod['getWiredGraphStore']
+  if (typeof seam !== 'function') {
+    return { store: null, seam: null, distinct, threw: 'the fresh module instance exports no `getWiredGraphStore` (the ONE construction site, §2.2 item 1)' }
+  }
+  const call = seam as (options?: unknown) => Rec
+  try {
+    return { store: call({ declarations }), seam: call, distinct, threw: null }
+  } catch (e) {
+    return { store: null, seam: call, distinct, threw: e instanceof Error ? e.message : String(e) }
+  }
+}
+
+/** `F-6`/`H-1` — **THE RESERVED ENTRY'S OWN REMOVAL IS REFUSED BY NAME ON THE WIRING'S OWN
+ *  CONSTRUCTION**, measured through the seam `getWiredGraphStore({ declarations })` ON A FRESH
+ *  MODULE INSTANCE per arm, with the SIX SHIPPED ROOTS VERBATIM as the caller's rows (the exact
+ *  declaration argument `renderer.ts:1269-1272` hands at boot): `remove('file.tabs.landing')`
+ *  (i) directly, (ii) through the exported `closeTab`, and (iii) with a caller that declares the
+ *  reserved SPELLING WITHOUT the flag — with the sibling `remove('file.tabs.<id>')` COMMITTED as
+ *  the POSITIVE CONTROL and a FROZEN-FACTORY store (no declaration merge) COMMITTING the same
+ *  removal as the BITE. The declared answer is the `'reserved-name'` REFUSAL with the entry still
+ *  readable and its `order` seat untouched. */
 export interface LandingReservationReading {
   readonly reason: string | null
+  /** THE INSTRUMENT'S OWN PROVENANCE (`EVIDENCE-ROW-MUST-OBSERVE-WHAT-IT-PRINTS`). */
+  readonly instrument: string
+  /** MEASURED: every arm's store came from a DISTINCT module instance (its own singleton cell). */
+  readonly freshInstance: boolean
+  /** MEASURED, AND THE BITE ON THIS INSTRUMENT ITSELF: the THREE arms' stores are THREE DIFFERENT
+   *  objects. Two arms that hand the SAME declarations (the six-roots arm and the close arm) can
+   *  only answer the same object if they were served by ONE module instance — i.e. if the arm's
+   *  call was NOT the first caller of its own instance. A driver that reuses an import token fails
+   *  here. */
+  readonly armsIndependent: boolean
+  /** MEASURED: the module-private names a declaration-SET read would have to be exported under,
+   *  ALL ABSENT from the wiring's namespace — which is why the rows take the SEAM instead. */
+  readonly declarationsReadAbsent: readonly string[]
+  /** The caller's rows AS HANDED (the six roots, verbatim) and the masking caller's rows. */
+  readonly handedRoots: readonly string[]
+  readonly maskingCallerRows: readonly string[]
+  readonly sixRootsConstructionThrew: string | null
+  readonly maskArmConstructionThrew: string | null
+  readonly closeArmConstructionThrew: string | null
   readonly removalStatus: unknown
   readonly removalReason: unknown
   readonly removalCleared: unknown
@@ -1061,25 +1211,40 @@ export interface LandingReservationReading {
   readonly landingFoundAfterRemoval: unknown
   readonly orderAfterRemoval: unknown
   readonly siblingStatus: unknown
+  /** (iii) THE UNMASKABILITY ARM (`renderer.ts:748-761`'s in-place UPGRADE): the caller declares
+   *  `file.tabs.landing` WITHOUT `reserved:true`. */
+  readonly maskRemovalStatus: unknown
+  readonly maskRemovalReason: unknown
+  readonly maskRemovalIsRefusal: unknown
+  readonly maskLandingFound: unknown
+  readonly maskOrderAfter: unknown
+  /** THE BITE: the FROZEN-FACTORY store (six roots ALONE, no merge) COMMITS the same removal. */
+  readonly frozenFactoryRemovalStatus: unknown
+  readonly frozenFactoryRemovalReason: unknown
   readonly closeCallerOperations: unknown
   readonly closeRefusal: unknown
   readonly closeRemoveStatus: unknown
   readonly closeRemoveReason: unknown
   readonly closeLandingFound: unknown
   readonly closeOrderAfter: unknown
-  /** THE MECHANISM, MEASURED (`H-1`'s own reason the suite's rows pass): the shipped seam is a
-   *  SINGLETON whose options come from the FIRST caller, so a later `getWiredGraphStore(...)`
-   *  answers the SAME store and its options are DISCARDED. */
+  /** THE MECHANISM, MEASURED ON THE ARM'S OWN INSTANCE (order-independent, `H-1`): the shipped
+   *  seam is a SINGLETON whose options come from the FIRST caller, so a SECOND call carrying the
+   *  masking declarations answers the SAME store object and its options are DISCARDED. */
   readonly singletonIgnoresLaterOptions: unknown
 }
 
-export function shippedLandingReservationDrive(): LandingReservationReading {
+export async function shippedLandingReservationDrive(): Promise<LandingReservationReading> {
   const blank: LandingReservationReading = {
-    reason: 'unreachable', removalStatus: undefined, removalReason: undefined, removalCleared: undefined,
-    removalIsRefusal: undefined, landingFoundAfterRemoval: undefined, orderAfterRemoval: undefined,
-    siblingStatus: undefined, closeCallerOperations: undefined, closeRefusal: undefined,
-    closeRemoveStatus: undefined, closeRemoveReason: undefined, closeLandingFound: undefined,
-    closeOrderAfter: undefined, singletonIgnoresLaterOptions: undefined,
+    reason: 'unreachable', instrument: 'not driven', freshInstance: false, armsIndependent: false, declarationsReadAbsent: [],
+    handedRoots: [], maskingCallerRows: [], sixRootsConstructionThrew: null, maskArmConstructionThrew: null,
+    closeArmConstructionThrew: null, removalStatus: undefined, removalReason: undefined,
+    removalCleared: undefined, removalIsRefusal: undefined, landingFoundAfterRemoval: undefined,
+    orderAfterRemoval: undefined, siblingStatus: undefined, maskRemovalStatus: undefined,
+    maskRemovalReason: undefined, maskRemovalIsRefusal: undefined, maskLandingFound: undefined,
+    maskOrderAfter: undefined, frozenFactoryRemovalStatus: undefined, frozenFactoryRemovalReason: undefined,
+    closeCallerOperations: undefined, closeRefusal: undefined, closeRemoveStatus: undefined,
+    closeRemoveReason: undefined, closeLandingFound: undefined, closeOrderAfter: undefined,
+    singletonIgnoresLaterOptions: undefined,
   }
   const seams = shippedSeams()
   if (seams.reason !== null || seams.closeTab === null || seams.getWiredGraphStore === null) {
@@ -1087,33 +1252,91 @@ export function shippedLandingReservationDrive(): LandingReservationReading {
   }
   const member = wiredTabsConstraintMember()
   if (member === null) return { ...blank, reason: wiringMemberReason ?? 'the wiring supplies no constraint member' }
-  // THE MECHANISM READING (order-independent): the seam is a singleton, so a caller that supplies
-  // its OWN declarations a second time still receives the FIRST caller's store.
-  const singletonIgnoresLaterOptions = seams.getWiredGraphStore({ declarations: SHIPPED_FILE_TIER_ROOTS }) === seams.getWiredGraphStore()
-  // (i) THE REMOVAL, on a store built exactly as `buildWiredGraphStore` builds one.
-  const store = shippedConstruction(member)
+  // ── (0) THE DECLARATION-READ PROBE: the wiring exports NO read of its own shipped set, so the
+  //    instruction's alternative — "take the declaration rows from the wiring's own shipped set" —
+  //    is NOT AVAILABLE, and the SEAM is used instead (each arm still hands the CALLER'S rows
+  //    verbatim; nothing is transcribed from `src/**` into this file's expectations).
+  const declarationsReadAbsent = declarationReadCandidatesAbsent()
+  const roots: Rec[] = SHIPPED_FILE_TIER_ROOTS.map((row) => ({ name: row.name }))
+  const maskingCallerRows: Rec[] = [...roots.map((row) => ({ name: row.name })), { name: DECLARED_SPELLINGS.landing }]
+  const instrument =
+    'the wiring’s OWN construction — its exported seam `getWiredGraphStore({ declarations })` called ON A FRESH MODULE INSTANCE per arm, its own `wiredGraphStore` cell still null, so the arm’s call IS the first caller and `buildWiredGraphStore` (renderer.ts:763-780) is the code that runs; the caller’s rows are the SIX SHIPPED ROOTS VERBATIM (renderer.ts:43-50, the argument renderer.ts:1269-1272 hands at boot)'
+
+  // ── (i) THE SIX-ROOTS ARM — the shipped caller's own rows.
+  const armA = await wiredConstructionArm('six-roots', roots)
+  if (armA.store === null) {
+    return { ...blank, instrument, declarationsReadAbsent, handedRoots: namesOf(roots), maskingCallerRows: namesOf(maskingCallerRows), freshInstance: armA.distinct, sixRootsConstructionThrew: armA.threw, reason: `the wiring’s own construction could not be driven on a fresh module instance: ${armA.threw ?? 'no store answered'}` }
+  }
+  const store = armA.store
   shippedSeedEntryState(store, ['A', 'landing'], 'A')
   const removal = callSeam(store['remove'] as (...args: never[]) => unknown, DECLARED_SPELLINGS.landing)
   const landingAfter = resolveOf(store, DECLARED_SPELLINGS.landing)
   const orderAfterRemoval = valueOf(store, DECLARED_SPELLINGS.order)
   const sibling = callSeam(store['remove'] as (...args: never[]) => unknown, DECLARED_SPELLINGS.entry('A'))
-  // (ii) THE CLOSE VERB, on its OWN fresh store of the same construction.
-  const closeStore = shippedConstruction(member)
-  shippedSeedEntryState(closeStore, ['A', 'landing'], 'A')
-  const close = callSeam(seams.closeTab, closeStore, 'landing', ['A'])
-  const closeRemove = (close['remove'] ?? {}) as Rec
-  const closeLanding = resolveOf(closeStore, DECLARED_SPELLINGS.landing)
+  // THE SINGLETON READING, ON THIS ARM'S OWN INSTANCE: a SECOND call carrying the MASKING caller's
+  // declarations answers the FIRST caller's store — the mechanism, measured without depending on
+  // which row of this suite called the probed module's seam first.
+  const singletonIgnoresLaterOptions = armA.seam !== null && callSeam(armA.seam, { declarations: maskingCallerRows }) === store
+  // ── (iii) THE UNMASKABILITY ARM — the caller declares the reserved SPELLING, no flag.
+  const armB = await wiredConstructionArm('masking-declaration', maskingCallerRows)
+  let maskRemovalStatus: unknown
+  let maskRemovalReason: unknown
+  let maskRemovalIsRefusal: unknown
+  let maskLandingFound: unknown
+  let maskOrderAfter: unknown
+  if (armB.store !== null) {
+    shippedSeedEntryState(armB.store, ['A', 'landing'], 'A')
+    const masked = callSeam(armB.store['remove'] as (...args: never[]) => unknown, DECLARED_SPELLINGS.landing)
+    maskRemovalStatus = masked['status']
+    maskRemovalReason = masked['reason']
+    maskRemovalIsRefusal = isRefusal(masked)
+    maskLandingFound = resolveOf(armB.store, DECLARED_SPELLINGS.landing)['found']
+    maskOrderAfter = valueOf(armB.store, DECLARED_SPELLINGS.order)
+  }
+  // ── (iv) THE BITE — the FROZEN FACTORY DIRECTLY, six roots alone, NO declaration merge: the
+  //    store on which this very removal is NOT refused (the as-filed red, kept as the control).
+  const frozenStore = shippedConstruction(member)
+  shippedSeedEntryState(frozenStore, ['A', 'landing'], 'A')
+  const frozenRemoval = callSeam(frozenStore['remove'] as (...args: never[]) => unknown, DECLARED_SPELLINGS.landing)
+  // ── (ii) THE CLOSE VERB, on its OWN fresh instance of the same construction.
+  const armC = await wiredConstructionArm('close-verb', roots)
+  let closeCallerOperations: unknown
+  let closeRefusal: unknown
+  let closeRemoveStatus: unknown
+  let closeRemoveReason: unknown
+  let closeLandingFound: unknown
+  let closeOrderAfter: unknown
+  if (armC.store !== null) {
+    shippedSeedEntryState(armC.store, ['A', 'landing'], 'A')
+    const close = callSeam(seams.closeTab, armC.store, 'landing', ['A'])
+    const closeRemove = (close['remove'] ?? {}) as Rec
+    closeCallerOperations = close['callerOperations']
+    closeRefusal = close['refusal']
+    closeRemoveStatus = closeRemove['status']
+    closeRemoveReason = closeRemove['reason']
+    closeLandingFound = resolveOf(armC.store, DECLARED_SPELLINGS.landing)['found']
+    closeOrderAfter = valueOf(armC.store, DECLARED_SPELLINGS.order)
+  }
   return {
-    reason: null,
+    reason: null, instrument,
+    freshInstance: armA.distinct && armB.distinct && armC.distinct,
+    armsIndependent:
+      armA.store !== null && armB.store !== null && armC.store !== null
+      && armA.store !== armB.store && armA.store !== armC.store && armB.store !== armC.store,
+    declarationsReadAbsent,
+    handedRoots: namesOf(roots),
+    maskingCallerRows: namesOf(maskingCallerRows),
+    sixRootsConstructionThrew: armA.threw,
+    maskArmConstructionThrew: armB.threw,
+    closeArmConstructionThrew: armC.threw,
     removalStatus: removal['status'], removalReason: removal['reason'], removalCleared: removal['cleared'],
     removalIsRefusal: isRefusal(removal),
     landingFoundAfterRemoval: landingAfter['found'],
     orderAfterRemoval,
     siblingStatus: sibling['status'],
-    closeCallerOperations: close['callerOperations'], closeRefusal: close['refusal'],
-    closeRemoveStatus: closeRemove['status'], closeRemoveReason: closeRemove['reason'],
-    closeLandingFound: closeLanding['found'],
-    closeOrderAfter: valueOf(closeStore, DECLARED_SPELLINGS.order),
+    maskRemovalStatus, maskRemovalReason, maskRemovalIsRefusal, maskLandingFound, maskOrderAfter,
+    frozenFactoryRemovalStatus: frozenRemoval['status'], frozenFactoryRemovalReason: frozenRemoval['reason'],
+    closeCallerOperations, closeRefusal, closeRemoveStatus, closeRemoveReason, closeLandingFound, closeOrderAfter,
     singletonIgnoresLaterOptions,
   }
 }
@@ -1125,8 +1348,16 @@ export interface BootSeamReading {
   readonly reason: string | null
   readonly rowsArmWritten: unknown
   readonly rowsArmReceipt: unknown
+  /** The seam's OWN declared refusal token, read off the OUTCOME (not the receipt — a refusal
+   *  carries `receipt: null`), so the row can PRINT what it measured. */
+  readonly rowsArmRefusal: unknown
   readonly rowsArmOrderAfter: unknown
   readonly rowsArmBogusLeafFound: unknown
+  /** THE READ THE FROZEN PATH ACTUALLY ANSWERS for the bogus spelling — CL-1's own store fact
+   *  (`tests/store-tabs-record.test.ts:654-669`): a READ-SIDE refusal record, which carries no
+   *  `found` member at all. Printed by the row beside the as-filed `=== false` demand. */
+  readonly rowsArmBogusLeafReason: unknown
+  readonly rowsArmBogusLeafStep: unknown
   readonly rowsArmBogusLeafReadsActive: unknown
   readonly nonStringArmWritten: unknown
   readonly nonStringArmRepaired: unknown
@@ -1139,8 +1370,9 @@ export interface BootSeamReading {
 
 export function shippedBootSeamDrive(): BootSeamReading {
   const blank: BootSeamReading = {
-    reason: 'unreachable', rowsArmWritten: undefined, rowsArmReceipt: undefined, rowsArmOrderAfter: undefined,
-    rowsArmBogusLeafFound: undefined, rowsArmBogusLeafReadsActive: undefined, nonStringArmWritten: undefined,
+    reason: 'unreachable', rowsArmWritten: undefined, rowsArmReceipt: undefined, rowsArmRefusal: undefined,
+    rowsArmOrderAfter: undefined, rowsArmBogusLeafFound: undefined, rowsArmBogusLeafReason: undefined,
+    rowsArmBogusLeafStep: undefined, rowsArmBogusLeafReadsActive: undefined, nonStringArmWritten: undefined,
     nonStringArmRepaired: undefined, nonStringArmOrderAfter: undefined, declaredArmWritten: undefined,
     declaredArmOrderAfter: undefined, absentArmWritten: undefined, absentArmReceipt: undefined,
   }
@@ -1149,8 +1381,16 @@ export function shippedBootSeamDrive(): BootSeamReading {
   if (seams.reason !== null || seams.evaluateTabsBootStep === null || member === null) {
     return { ...blank, reason: seams.reason ?? wiringMemberReason ?? 'the wiring supplies no constraint member' }
   }
-  // A STORE BUILT EXACTLY AS `buildWiredGraphStore` BUILDS ONE (six shipped roots + the shipped
-  // member), never the suite-primed singleton — see `shippedConstruction`.
+  // THE STORE THIS ROW'S SUBJECT SEAM WRITES INTO: the frozen factory's own construction with the
+  // shipped member — the SAME options `buildWiredGraphStore` (renderer.ts:763-780) passes, EXCEPT
+  // the declaration merge (see `shippedConstruction`, which is re-grain 1's BITE and never an
+  // evidence store for a WIRING-side behaviour). **THIS ROW'S FIX SITE IS NOT THE CONSTRUCTION:**
+  // `H-3`'s argument-domain fix lives in the EXPORTED seam `evaluateTabsBootStep`
+  // (renderer.ts:714-737), which is driven DIRECTLY here — so this instrument reaches the site
+  // the fix is at, and the store is only the subject the refuse-before-any-write arm is measured
+  // on. Every store-shaped reading below (the undeclared bogus leaf's own answer) is a FROZEN
+  // read-path fact, exactly as the unit's own `CL-1` row records it. `B-8`'s instrument carries no
+  // `T2`-wiring-side expectation through this store.
   const store = shippedConstruction(member)
   const bogus = `${DECLARED_SPELLINGS.root}.[object Object]`
   shippedSeedEntryState(store, ['A'], 'A')
@@ -1164,6 +1404,7 @@ export function shippedBootSeamDrive(): BootSeamReading {
   const rowsArmReceipt = (rowsArm['receipt'] ?? {}) as Rec
   const rowsArmOrder = valueOf(store, DECLARED_SPELLINGS.order)
   const bogusLeaf = resolveOf(store, bogus)
+  const bogusDiagnostic = (bogusLeaf['diagnostic'] ?? {}) as Rec
   // (2) THE NON-STRING-SEQUENCE ARM — an array of values no `order` member can be.
   shippedSeedEntryState(store, ['A'], 'A')
   const nonStringArm = callSeam(seams.evaluateTabsBootStep, store, [1, 2, null])
@@ -1176,8 +1417,9 @@ export function shippedBootSeamDrive(): BootSeamReading {
   const absentArm = callSeam(seams.evaluateTabsBootStep, store, undefined)
   return {
     reason: null,
-    rowsArmWritten: rowsArm['written'], rowsArmReceipt,
+    rowsArmWritten: rowsArm['written'], rowsArmReceipt, rowsArmRefusal: rowsArm['refusal'],
     rowsArmOrderAfter: rowsArmOrder, rowsArmBogusLeafFound: bogusLeaf['found'],
+    rowsArmBogusLeafReason: bogusLeaf['reason'], rowsArmBogusLeafStep: bogusDiagnostic['step'],
     rowsArmBogusLeafReadsActive: entryReadsActive(bogusLeaf['value']),
     nonStringArmWritten: nonStringArm['written'], nonStringArmRepaired: nonStringReceipt['repaired'],
     nonStringArmOrderAfter: nonStringOrder,
