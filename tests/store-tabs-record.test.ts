@@ -321,6 +321,211 @@ describe('T2 §4.2 item 1 — THE CONSTRAINT AND ITS REPAIR (`§3.2` F-T2-1 / F-
     expect(activesOf(store, ['A', 'C']), '§3.2 F-T2-1 — a body that activates A FAILS').toEqual(['C'])
   })
 
+  /* ═══════════════════════════════════════════════════════════════════════════════════════
+   * THE REMOVE-TRIGGERED ARM — THE NEW HOST DEFECT (`2026-10-11`, this pass's rows).
+   *
+   * **WHAT `C-2`·`C-3`·`C-4` PROVE, AND WHAT THEY DO NOT.** All three drive `remove(...)`
+   * FOLLOWED BY `commit(ORDER, <the sequence without the id>)` — i.e. they drive the WIRING'S
+   * OWN CLOSE (`§2.4` item 1's note: `2` caller operations, `remove` then the `order` rewrite)
+   * — and their green is landed BY THE REWRITE'S EVALUATION, not by the remove's: the register's
+   * own `P-TR-IM-3` state (1) receipt reading already RECORDS the measurement in-line ("the
+   * `remove`'s own evaluation lands `repaired: []` — the entry it detached is EXCLUDED from the
+   * post-state count"). **SO EVERY GREEN ROW IN THIS FILE THAT DRIVES A CLOSE PROVES THE CLOSE
+   * PATH AND *NOT* THE BARE `remove` PATH — which is why `§3b.2`'s `F-2` "FIXED" disposition is
+   * NARROWED here: the write-triggered arm is discharged, the REMOVE-triggered arm is NOT.**
+   *
+   * **THE CLAUSE EACH ROW DRIVES, PRINTED WITH ITS OWN FALSIFIER.** `§3.2` `F-T2-1`: *"on a
+   * `remove`-triggered (or write-triggered) evaluation that finds ZERO active, the repair
+   * activates the NEXT SURVIVING entry by `file.tabs.order` … THE FALSIFIER, WITH ITS TERMS:
+   * `order = [A,B,C]` with `B` active → a close of `B` activates `C`"*; `§1.1` item 3
+   * (*"evaluated by the store on every write (`set`/`commit`) AND every `remove`, on the call's
+   * POST-STATE"*); `§1.1` item 4 (the ruled repair rule) · `§3.1` `M-2` path **(c)** (*"a `remove`
+   * that leaves zero or ≥2 and is REPAIRED in the same committed write"*) · `§3.1` `M-3` ·
+   * `§3.1` `M-6` · `§3.2` `F-T2-3` · `§3.4` item 1 and item 3 (*"a row that observes a `remove`
+   * SKIPPING the evaluation FAILS"*) · `§5.5.1` `P-TR-IM-3` (its state (1) and its state (4)).
+   *
+   * **THE CONSTRUCTION IS THE SHIPPED ONE** — `constrainedStore()` with no probe answers the
+   * store built over `wiredMemberHandle()` (the wiring's REAL member, `§2.2` item 1), and the
+   * pre-state is landed UN-EVALUATED through `seedWiringState`'s `hydrate` (`§3.3` item 2), so
+   * nothing but the drive under test can account for the reading.
+   *
+   * **THE CLAUSES, CITED ONE PER ROW, AT THE BYTES OF `docs/specs/store-tabs-record.md`:**
+   * `RM-1` drives `§3.2` `F-T2-1` (its own printed falsifier, quoted above), read with `§1.1`
+   * item 3 (the constraint is evaluated on EVERY `remove`'s POST-STATE), `§1.1` item 4 (the ruled
+   * repair rule), `§3.1` `M-2` path **(c)**, `§3.4` item 3 (*"a row that observes a `remove`
+   * SKIPPING the evaluation FAILS"*) and `§5.5.1` `P-TR-IM-3`'s state (1) + its receipt reading;
+   * · `RM-2` drives `§3.2` `F-T2-3` (the landing entry's activation is a REPAIR, **never a caller
+   * write**, with its `order` seat written in the SAME committed write) read with `§3.1` `M-1`
+   * (the zero-tab state is unreachable by design) · `§3.1` `M-2`(c) · `§3.1` `M-3` (*"`order` …
+   * is NEVER EMPTY after any declared operation"*) · `§3.1` `M-6` (the landing page's record
+   * witness) · `§3.4` item 1 (*"a row that observes the pre-repair state as the post-state
+   * FAILS"*) · `§5.5.1` `P-TR-IM-3`'s state (4); · and the two CONTROLS (`RM-1c`, `RM-2c`) drive
+   * the WRITE-triggered arm and the SHIPPED exported close verb respectively, which is the
+   * ATTRIBUTION the defect localises on.
+   *
+   * **WHY THESE ROWS LIVE IN THIS FILE AND NOT IN THE REGISTER (`P-TR-IM-3`'s declared home).**
+   * The register-arm option was evaluated and does NOT fit without moving a term: `P-TR-IM-3`'s
+   * row id, its type `P-IM`, its strategy id `S-TR-CON-1` and its term `16` must stay UNMOVED,
+   * and its `8` declared violating/non-violating states are ALREADY each driven TWICE (the state
+   * reading and the receipt reading — the register row's own drives are `remove` + the `order`
+   * rewrite, i.e. the CLOSE, and its state (1) comment ALREADY records *"the `remove`'s own
+   * evaluation lands `repaired: []`"* as a measured fact). A seventeenth drive would break
+   * `REG-TERMS`' `drives.length === row.term` assertion, and replacing an as-filed arm would move
+   * an as-filed form (`RCA-8(d)`) or drop a declared reading. **SO THE PROPERTY IS DRIVEN HERE,
+   * IN THE UNIT'S OWN FILE, AND THE REGISTER'S AS-FILED STATE (1) ARM IS KEPT VISIBLE AND STILL
+   * DRIVEN AS ITS OWN CONTROL** — no register term, count, total, chain, subtotal or cap moves,
+   * and the live rows `P-TR-TP-4`/`-TP-5` stay UN-RUN = FAILING.
+   *
+   * **`§3b.2`'s `F-2` DISPOSITION, NARROWED IN-ROW (as this pass's instruction requires).**
+   * `§3b.2`'s `F-2` row reads, in its own terms: *"the zero-active arm does NOT activate the
+   * reserved landing entry on a REMOVAL-triggered evaluation (`T2-C-18`, `T2-E-08`; the `remove`
+   * columns of `T2-C-14`) | HOST DEFECT | `FIXED` | the close-last-tab repair seats and activates
+   * the landing entry in the same committed write (`H-1`'s fix; `renderer.ts` `:326`, `:425`)"*.
+   * **`F-2`'s SUBJECT IS THE REMOVAL-TRIGGERED EVALUATION; WHAT IS MEASURED GREEN AT THESE BYTES
+   * IS THE CLOSE (a `remove` FOLLOWED BY the `order` rewrite), whose repair lands on the REWRITE'S
+   * evaluation — a WRITE-TRIGGERED one.** So the `FIXED` disposition is hereby NARROWED to
+   * **`FIXED` on the write-triggered arm / `NOT FIXED` on the remove-triggered arm**: `RM-1` and
+   * `RM-2` measure `repaired: []` with zero actives after the BARE `remove`, and `RM-1c`/`RM-2c`
+   * measure the same states repaired through the write/close path. **A PASS THAT READS `F-2`'s
+   * `FIXED` AS COVERING THE BARE `remove` PATH HAS MISREAD IT.**
+   * ═══════════════════════════════════════════════════════════════════════════════════════ */
+
+  it('RM-1 · §3.2 F-T2-1 (its own printed falsifier) / §1.1 items 3–4 / §3.1 M-2(c) / §3.4 item 3 / §5.5.1 P-TR-IM-3 state (1) — THE REMOVE-TRIGGERED EVALUATION DOES NOT REPAIR: `order [A,B,C]` with `B` active, seeded un-evaluated through `hydrate`, then the BARE `remove(’file.tabs.B’)` (NO `order` rewrite) must leave EXACTLY ONE active — `C` — and a receipt that NAMES the repair', () => {
+    const { store } = constrainedStore()
+    seedWiringState(store, ['A', 'B', 'C'], 'B')
+    // ── THE PRE-STATE IS THE DECLARED ONE, ASSERTED BEFORE THE DRIVE (`§3.3` item 2: `hydrate`
+    //    mints and NEVER evaluates the constraint table, so `B` alone is active and no repair
+    //    has run yet) — a row whose pre-state is not the declared one measures nothing.
+    const preActives = activesOf(store, ['A', 'B', 'C'])
+    const preOrder = valueOf(store, ORDER)
+    // ── THE DRIVE IS THE BARE REMOVE PATH: ONE `remove('file.tabs.B')`, and NOTHING after it.
+    //    The wiring's `closeTab` performs this leg FIRST and then the `order` rewrite; the
+    //    evaluation this row isolates is the REMOVE's OWN post-state evaluation (`§3.4` item 3),
+    //    so the rewrite is deliberately NOT issued.
+    const receipt = callStore(store, 'remove', entry('B'))
+    const postOrder = valueOf(store, ORDER)
+    const postActives = activesOf(store, ['A', 'C'])
+    // ── THE RECEIPT, IN FULL, SO THE FAILURE IS DIAGNOSABLE WITHOUT RE-INSTRUMENTING
+    //    (`EVIDENCE-ROW-MUST-OBSERVE-WHAT-IT-PRINTS`).
+    process.stdout.write(
+      `\n── T2 \`RM-1\` — THE REMOVE-TRIGGERED EVALUATION, MEASURED ON THE SHIPPED CONSTRUCTION ──\n` +
+      `  PRE:   order ${JSON.stringify(preOrder)} · actives ${JSON.stringify(preActives)} (hydrate landed it UN-EVALUATED, §3.3 item 2)\n` +
+      `  DRIVE: remove('${entry('B')}') — the BARE remove path, NO \`order\` rewrite\n` +
+      `  RECEIPT: status ${JSON.stringify(receipt['status'])} · reason ${JSON.stringify(receipt['reason'])} · repaired ${JSON.stringify(receipt['repaired'])} · cleared ${JSON.stringify(receipt['cleared'])} · rows ${JSON.stringify((receipt['rows'] as unknown[] | undefined)?.length)} · events ${JSON.stringify(receipt['events'])}\n` +
+      `  POST:  order ${JSON.stringify(postOrder)} · actives ${JSON.stringify(postActives)} (the contract's §3.2 F-T2-1 demands ${JSON.stringify(['C'])})\n` +
+      `────────────────────────────────────────────────────────────────\n`,
+    )
+    expect(preActives, '§3.3 item 2 — the landed pre-state carries exactly one active (B) and NO evaluation has run').toEqual(['B'])
+    expect(
+      postActives,
+      `§3.2 F-T2-1 — ITS OWN PRINTED FALSIFIER: \`order = [A,B,C]\` with \`B\` active → a close of \`B\` activates \`C\`; a body that activates \`A\` FAILS, and a body that activates NOTHING fails this row too. The evaluation this drive isolates is the REMOVE'S OWN post-state evaluation (§1.1 item 3: every \`remove\` evaluates it), so nothing but the remove's own evaluation can land the repair. MEASURED: order ${JSON.stringify(postOrder)} · actives ${JSON.stringify(postActives)} · receipt status ${JSON.stringify(receipt['status'])} · repaired ${JSON.stringify(receipt['repaired'])} · events ${JSON.stringify(receipt['events'])}`,
+    ).toEqual(['C'])
+    expect(
+      ((receipt['repaired'] as string[] | undefined) ?? []).length,
+      `§3.1 M-2 path (c) / §3.2 F-T2-1 — the remove-triggered repair REPORTS ITSELF on its own receipt: \`repaired: [...]\` names the repaired reference in the SAME committed write. MEASURED: status ${JSON.stringify(receipt['status'])} · repaired ${JSON.stringify(receipt['repaired'])} · events ${JSON.stringify(receipt['events'])}`,
+    ).toBeGreaterThan(0)
+  })
+
+  it('RM-1c · §3.2 F-T2-1 — THE POSITIVE CONTROL FOR `RM-1`, ASSERTED GREEN: the SAME pre-state reached through the WRITE-triggered arm (the `order` rewrite as the evaluation’s vehicle) DOES repair, so `RM-1` cannot be satisfied by a member that refuses or does nothing at all', () => {
+    const { store } = constrainedStore()
+    seedWiringState(store, ['A', 'B', 'C'], 'B')
+    // ── THE CLOSE PATH: the same `remove` leg `RM-1` drives, FOLLOWED by the `order` rewrite
+    //    that the wiring's `closeTab` issues (`§2.4` item 1's note: two caller operations).
+    callStore(store, 'remove', entry('B'))
+    const receipt = callStore(store, 'commit', ORDER, ['A', 'C'])
+    const actives = activesOf(store, ['A', 'C'])
+    process.stdout.write(
+      `\n── T2 \`RM-1c\` — THE WRITE-TRIGGERED ARM, MEASURED (the control that keeps \`RM-1\` honest) ──\n` +
+      `  DRIVE: remove('${entry('B')}') then commit('${ORDER}', ['A','C']) — the WRITE-triggered evaluation\n` +
+      `  RECEIPT (the rewrite's, then the ===-equal repeat's — §3.4 item 2(a) fires NOTHING): repaired ${JSON.stringify(receipt['repaired'])} · events ${JSON.stringify(receipt['events'])}\n` +
+      `  POST: actives ${JSON.stringify(actives)}\n` +
+      `────────────────────────────────────────────────────────────────\n`,
+    )
+    expect(
+      actives,
+      '§3.2 F-T2-1 / §3.1 M-2 path (b) — the ATTRIBUTION: the SAME zero-active state, reached through a WRITE, IS repaired. This is the control that proves the defect is the REMOVE-triggered arm and not a member that repairs nothing.',
+    ).toEqual(['C'])
+    expect(
+      ((receipt['repaired'] as string[] | undefined) ?? []).length,
+      '§3.1 M-2 — the write-triggered repair reports itself on the receipt of the evaluation that landed it (the `order` rewrite’s own)',
+    ).toBeGreaterThan(0)
+  })
+
+  it('RM-2 · §3.2 F-T2-3 / §3.1 M-1 · M-2(c) · M-3 / §3.4 item 1 / §5.5.1 P-TR-IM-3 state (4) — THE LANDING SEAT ON THE BARE REMOVE PATH: `order [’landing’,’A’]` with `A` active, then `remove(’file.tabs.A’)` (NO rewrite) must seat AND activate the reserved landing entry IN THE SAME COMMITTED WRITE', () => {
+    const { store } = constrainedStore()
+    // ── THE RESERVED ENTRY'S OWN SEGMENT IS `landing` — the `order` MEMBER carries TAB IDS
+    //    (`§0D` item `1`(c); `§2.1` item 6: the reserved ENTRY is a NORMAL `<tabId>` instance
+    //    whose id happens to be the reserved spelling, and `LANDING` is its tier-qualified
+    //    NAME). A sequence of NAMES would be a second spelling of the membership, so the
+    //    sequence and the `hydrate` row's name are built from the ID.
+    const LANDING_ID = 'landing'
+    seedWiringState(store, [LANDING_ID, 'A'], 'A')
+    const receipt = callStore(store, 'remove', entry('A'))
+    const postOrder = valueOf(store, ORDER)
+    const landingActive = entryActiveOf(store, LANDING_ID)
+    const landingSeat = Array.isArray(postOrder) && (postOrder as string[]).includes(LANDING_ID)
+    const postActives = activesOf(store, [LANDING_ID])
+    process.stdout.write(
+      `\n── T2 \`RM-2\` — THE LANDING SEAT ON THE BARE REMOVE PATH, MEASURED ──\n` +
+      `  PRE:   order ${JSON.stringify([LANDING_ID, 'A'])} · \`${LANDING}.active\` ${String(false)} · A active ${String(true)} (hydrate, un-evaluated)\n` +
+      `  DRIVE: remove('${entry('A')}') — the BARE remove path, NO \`order\` rewrite\n` +
+      `  RECEIPT: status ${JSON.stringify(receipt['status'])} · repaired ${JSON.stringify(receipt['repaired'])} · cleared ${JSON.stringify(receipt['cleared'])} · events ${JSON.stringify(receipt['events'])}\n` +
+      `  POST:  order ${JSON.stringify(postOrder)} · \`${LANDING}.active\` ${String(landingActive)} · landing seated ${String(landingSeat)} · actives ${JSON.stringify(postActives)}\n` +
+      `────────────────────────────────────────────────────────────────\n`,
+    )
+    expect(
+      postActives,
+      `§3.2 F-T2-3 / §3.1 M-2(c) — the ZERO-ACTIVE arm fires on the remove's own post-state and the repair ACTIVATES the reserved entry as a REPAIR (\`F-T2-3\`'s "the landing entry's activation is a repair, never a caller write"), IN THE SAME COMMITTED WRITE. MEASURED: actives ${JSON.stringify(postActives)} · \`${LANDING}.active\` ${String(landingActive)} · receipt repaired ${JSON.stringify(receipt['repaired'])} · events ${JSON.stringify(receipt['events'])}`,
+    ).toEqual([LANDING_ID])
+    expect(
+      landingSeat,
+      `§3.2 F-T2-3 (R3-2) / §3.4 item 1 — the landing entry is SEATED in \`${ORDER}\` by the repair's own write. MEASURED: order ${JSON.stringify(postOrder)}`,
+    ).toBe(true)
+    expect(
+      ((receipt['repaired'] as string[] | undefined) ?? []).length,
+      '§3.2 F-T2-3 — the repair reports its own naming on the receipt of the evaluation that landed it',
+    ).toBeGreaterThan(0)
+  })
+
+  it('RM-2c · §3.2 F-T2-3 / §2.4 item 1 — THE POSITIVE CONTROL FOR `RM-2`, ASSERTED GREEN: the SAME state reached through the SHIPPED exported `closeTab` (its `order`-rewrite COMMIT) DOES seat and activate the landing entry', () => {
+    const { store } = constrainedStore()
+    const LANDING_ID = 'landing'
+    seedWiringState(store, [LANDING_ID, 'A'], 'A')
+    // ── THE CLOSE VERB IS THE SHIPPED ONE, TAKEN OFF THE SAME WIRING MODULE THE FIXTURE'S
+    //    MEMBER CAME FROM (`wiring.module`, the probe this suite already holds) — so the arm's
+    //    verb and the arm's member are ONE module instance and the singleton hazard that makes
+    //    `getWiredGraphStore` answer the FIRST caller's store cannot make this arm vacuous.
+    const closeVerb = (wiring.module?.['closeTab'] ?? null) as
+      | ((holder: Rec, tabId: string, nextOrder: readonly string[]) => Rec)
+      | null
+    expect(
+      typeof closeVerb,
+      '§2.5 W-2 / §2.4 item 1 — the shipped close verb is reachable off the wiring module the member came from (an absent verb is this control’s own failure, never a skip)',
+    ).toBe('function')
+    const outcome = closeVerb !== null ? closeVerb(store, 'A', [LANDING_ID]) : {}
+    const postOrder = valueOf(store, ORDER)
+    process.stdout.write(
+      `\n── T2 \`RM-2c\` — THE CLOSE PATH, MEASURED (the control that keeps \`RM-2\` honest) ──\n` +
+      `  DRIVE: closeTab(store, 'A', ['${LANDING_ID}']) — the SHIPPED exported close verb\n` +
+      `  OUTCOME: callerOperations ${JSON.stringify(outcome['callerOperations'])} · refusal ${JSON.stringify(outcome['refusal'])} · remove ${JSON.stringify((outcome['remove'] as Rec | undefined)?.['status'])} · commit ${JSON.stringify((outcome['commit'] as Rec | undefined)?.['status'])} · repaired ${JSON.stringify((outcome['commit'] as Rec | undefined)?.['repaired'])}\n` +
+      `  POST:  order ${JSON.stringify(postOrder)} · \`${LANDING}.active\` ${String(entryActiveOf(store, LANDING_ID))}\n` +
+      `────────────────────────────────────────────────────────────────\n`,
+    )
+    expect(outcome['refusal'], '§2.4 item 1 (W-2) — the close’s declared refusal is `null` on the committed arm').toBe(null)
+    expect(
+      outcome['callerOperations'],
+      '§2.4 item 4’s note — TWO caller operations under the ruled flat form (`commit: undefined` is what says the second operation was NOT performed)',
+    ).toBe(2)
+    expect(
+      entryActiveOf(store, LANDING_ID),
+      '§3.2 F-T2-3 — the close path DOES activate the landing entry, through its own `order`-rewrite COMMIT. This is the attribution control: the green rows in this file prove THIS path (the close), and `RM-2` measures the bare `remove` path it does not cover.',
+    ).toBe(true)
+    expect(
+      Array.isArray(postOrder) && (postOrder as string[]).includes(LANDING_ID),
+      '§3.2 F-T2-3 (R3-2) / §3.1 M-3 — the landing entry KEEPS its `order` seat on the close path',
+    ).toBe(true)
+  })
+
   /* ─────────────────────────────────────────────────────────────────────────────
    * C-3 · C-4 · C-7 — RE-GRAINED `2026-10-11` (`SD-1`; `§0D` item `1`(c); `RCA-8(d)`).
    *
