@@ -170,3 +170,19 @@
 **WHAT IT SUPERSEDES IN THE HELD SUCCESSOR CONTRACT (`docs/specs/store-rederive.md`, `§0A`):** `DD-3`'s as-filed reading (*"no constraint is evaluated twice … one ordered pass"*, a repaired write landing without re-checking) and `DD-2`'s single `message` member are **superseded as declarations by this ruling** — **the as-filed cells stand visible and the ruling is the operative reading**; the amendment is the contract's own author's to land, together with the register rows and the fail-state arm the ruling forces.
 
 **WHAT THIS §10 DOES NOT DO.** It starts no cycle, admits no unit, re-opens no `DONE` row, re-freezes no artifact, moves no ledger count, and softens nothing in `C1`..`C24` or `R1`..`R14`.
+
+---
+
+## §11 — THE WRITE/READ CLARIFICATION AND THE `_value` TRANSPARENCY RULE (`R16`, added 2026-10-08; §1–§10 STAND BYTE-FOR-BYTE)
+
+**`RCA-8(d)` ANNOTATE-BESIDE.** The architect's own words, verbatim and unedited, in four clauses:
+
+- **`R16`(a) — A LITERAL WRITE RE-MINTS ITS IMMEDIATE PARENT NODE.** *"If writing a literal value (ex. true, 123, "Foo"), and the address's immediate parent resolves to a node (ex. 'window.tabs.landingPage.active', where 'window.tabs.landingPage' is a node), re-mint the node with the literal added at that property. (ex. 'landingPage.active = true')"*
+- **`R16`(b) — A READ AT A LITERAL PROPERTY RETURNS ONLY THAT PROPERTY.** *"If a read address corresponds to a literal property, return only that property."*
+- **`R16`(c) — A WRITE AT A LITERAL PROPERTY EDITS OR REPLACES IT BY KIND.** *"If a write address resolves to a literal property, edit as above if the value to write is a literal, or replace with an anchor/link/child set if it is an array or object"*
+- **`R16`(d) — NODE-LOCATION vs PROPERTY ADDRESS, AND THE ANTI-PATTERN.** *"Passing an array/list/dict to a node location (ex. an address that resolves to being contained in an existing link, ex. 'window.tabs.doc1') is an anti-pattern and the user should create a wrapper node. If passing to a property address (ex. 'window.tabs') then create/overwrite the link and add the contents as nodes."*
+- **`R16`(e) — `_value`: TRANSPARENCY ON READ, AND THE RESERVED KEY.** *"A node should be able to be made "transparent" on read (ex. write [true, 123, "Foo"] --> link with nodes of values true, 123, "Foo" --> read [true, 123, "Foo"]) by assigning the literal value to the `_value` property. This is otherwise a reserved keyword."*
+
+**WHAT IT PINS, IN HIS OWN TERMS:** a **literal** written at an address whose **immediate parent resolves to a node** is added **at that property of the re-minted parent node**; a **read** at an address that **is a literal property** returns **only that property**; a write at such an address either **edits the literal** (when the written value is a literal) or **replaces it with an anchor/link/child set** (when the value is an array or object); passing an **array/list/dict to a NODE LOCATION** — an address that resolves to something already carried by an existing link — is an **ANTI-PATTERN** (the user is to create a **wrapper node**), whereas passing it to a **PROPERTY ADDRESS** **creates/overwrites the link and adds the contents as nodes**; and a node is made **TRANSPARENT ON READ** by assigning a literal to its **reserved `_value` property**, so a list of literals round-trips as that list.
+
+**WHAT THIS §11 DOES NOT DO.** It starts no cycle, admits no unit, re-opens no `DONE` row, re-freezes no artifact, moves no ledger count, and softens nothing in `C1`..`C24` or `R1`..`R15`. **The held successor contract's amendment to it is its own author's**, and the open readings this clarification leaves are set out for the architect in the same pass.
