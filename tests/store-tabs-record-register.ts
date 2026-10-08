@@ -3515,9 +3515,23 @@ export function registerRows(): readonly RegisterRow[] {
             //    `commit('file.tabs.order', <the sequence without the id>)` — AND `1` REPAIR
             //    OPERATION — the next-surviving entry’s activation — = `3` COMMITTED OPERATIONS
             //    ⇒ `3` whole-file serializes + `3` atomic replaces; the no-repair arm is `2 + 0 = 2`.**
-            //    **THE `+1` IS READ OVER THE CLOSE’S TWO RECEIPTS (its term, `§3.4` item 4): MEASURED,
-            //    the `remove`’s own evaluation lands `repaired: []` and the `order` rewrite’s lands
-            //    the repair — counted together, the close’s repair term is exactly `1`.**
+            //    **THE `+1` IS READ OVER THE CLOSE’S TWO RECEIPTS (its term, `§3.4` item 4):** the
+            //    as-filed note read the split as a measured FACT and hardened it into the term —
+            //    *“MEASURED, the `remove`’s own evaluation lands `repaired: []` and the `order`
+            //    rewrite’s lands the repair — counted together, the close’s repair term is exactly
+            //    `1`.”* **THAT SPLIT IS A MEASUREMENT OF THE DEFECTIVE PATH: the bare `remove`
+            //    cannot land the repair because it names the id it just removed (`H-1`’s
+            //    `removals` guard suppresses the write), so the zero-active state survives the
+            //    `remove` and the REWRITE repairs.** **`2026-10-11` RE-GRAIN, MEASURED AND
+            //    DATE-STAMPED (`§3.4` item 4; `RCA-8(d)`): under the referent fix (the referent’s
+            //    index applied to `pre` minus `removals`, `post` as the write arm’s fallback) the
+            //    REMOVE-TRIGGERED evaluation lands the repair and the rewrite repairs NOTHING —
+            //    the term is UNMOVED at `1` in BOTH readings, because `§3.4` item 4 binds the
+            //    `+1` to the CLOSE, not to the receipt that happens to report it. MEASURED at this
+            //    head: `remove.repaired = []`, `rewrite.repaired = ['file.tabs.C']` ⇒ `0 + 1 = 1`;
+            //    under the fix: `['file.tabs.C'] + []` ⇒ `1 + 0 = 1`.** **NOTHING IN THIS ROW
+            //    MOVES — its id, type `P-TP`, strategy id `S-TR-COST-1` and term `8` are
+            //    UNMOVED, and the drive below already counts the aggregate.**
             void (PER_TAB_LEAVES as readonly string[]) // the as-filed four-leaf set stays visible
             const receipts = wiredClose(store, 'B', ['A', 'C']).receipts
             const callerOps = 2
