@@ -144,3 +144,15 @@
 **WHAT `R11` SETTLES:** a **tombstone is never returned as data** — it does not appear in a transcription — **it hides the tombstoned node, and the read does not propagate through it**: there is **no fall-through to a lower-persistence copy of the same address** and **no descent through the tombstone into its subtree**, because the tombstone **represents deleted data**. **`R10`'s tier-scoped read stands beside this**: a read scoped to the tombstoned node's own tier still reads it (the `mem`-scoped read of `R10`'s own example), which is how a consumer inspects the retained state behind a soft delete.
 
 **WHAT THESE §§ DO NOT DO.** They admit no unit, re-open no `DONE` row, re-freeze no artifact, move no ledger count, and soften nothing in `C1`..`C24` or `R1`..`R10`.
+
+---
+
+## §9 — THE SPEC-GATE RETURN AND THE TWO OPEN QUESTIONS RULED (`RCA-8(d)`, added 2026-10-08; §1–§8 STAND BYTE-FOR-BYTE)
+
+**The successor contract was authored and filed at `docs/specs/store-rederive.md` (`f5664e9`), and the architect returned at its spec gate. His own selections, verbatim:**
+
+- **THE SPEC GATE.** *"HOLD — do not start the cycle"*: **no red set is delegated, no implementer is dispatched, no property-layer row is executed, no unit row is admitted, and no ledger count moves.** The contract stands as **evidence and as the successor's text**.
+- **`R13` — Q-1, THE MODULE PATH AND THE OLD LICENCE.** *"The successor gets its OWN surface artifact; the old one is superseded-in-effect"*: the frozen artifact's licence set is **not** widened and **not one of its bytes moves**; the successor's own surface artifact is owed at the successor's freeze; the replaced family's evidence is annotated `STALE PENDING`, never deleted.
+- **`R14` — Q-2, `REPLACE` AGAINST `AR-15`.** *"REPLACE governs — AR-15's per-clause table is vacuous"*: traceability lives in the successor's `§0` ruling ledger and `§8` cross-references; no `KEPT`/`RE-DERIVED`/`DELETED` clause table is owed.
+
+**WHAT THIS §9 DOES NOT DO.** It admits no unit, starts no cycle, re-opens no `DONE` row, re-freezes no artifact, moves no ledger count, and softens nothing in `C1`..`C24` or `R1`..`R12`.
