@@ -875,19 +875,60 @@ describe('§2.4 — THE MINT AND THE ADMISSION SET', () => {
     expect(readValue(readOn(emptyObject, 'generic', ROOT)), 'DD-13 (3) — the object arm is the `otherwise` arm and the bytes answer `{}`').toEqual({})
   })
 
-  it('M-10 · §2.4 item 7 / DD-13 (2) — `{\'0\':\'a\'}` and `[\'a\']` are TWO STATES with TWO byte forms', async () => {
+  it('M-10 · §2.4 item 7 / DD-13 (2) / `(D2)` — a DICT’s KEYED anchor set and a LIST’s DENSE-ORDER anchor set are TWO STATES with TWO byte forms, and both carry `{\'_value\': …}` children', async () => {
     await resolveStoreSurface()
-    const fs = memoryFs()
-    const dict = storeOver(fs)
-    call(dict, 'write', ROOT, 'file', { value: { '0': 'a' } })
-    const dictBytes = fs.bytes(FILE_PATH)
+    /** **RE-DERIVED 2026-10-11 (THE TESTWRITER, ON THE ARCHITECT'S ACTIVE RULING IN
+     *  `docs/decisions.md`: `(D2)`/`(D3)`).** THE EARLIER FORM DROVE `{'0':'a'}` AGAINST `['a']` AND
+     *  CLAIMED THAT `DD-13`(2)'s *"A DICT member is a LITERAL ON THE NODE ITSELF"* reading made their
+     *  bytes differ (`"0"` in the dict, `[` in the list). **`(D3)` SUPERSEDES THAT READING, and the
+     *  clause's own two-state claim dies with it — NOT as a test defect but as a CONTRACT-INTERNAL
+     *  follow-up, reported by this cell's author and NOT rewritten here.** Under `(D2)` a
+     *  literal-valued member of ANY container is minted as a child node carrying the reserved
+     *  `_value` (`R16`(e)), so `{'0':'a'}` and `['a']` mint the SAME tree: one anchor, `order 0`, one
+     *  transparent child — and even their ANCHOR KEYS coincide, because a 1-element list's element
+     *  anchor is keyed `'0'` (`§2.4` item 3) exactly as the dict's member anchor is. `DD-13`'s
+     *  AS-FILED array test was restored to operate on the keys, so the pair is NOT interchangeable —
+     *  but the distinction `DD-13`(2) asserts is not derivable at a `'0'`-spelled key, and a
+     *  `{'0':'a'}` ≅ `['a']` row of its own is OWED to the spec writer (`§2.4` item 7's third
+     *  amendment *"THE CANONICAL-DECIMAL KEY SPELLING IS DEMOTED FROM TEST TO CONSEQUENCE"*, whose
+     *  *follows-from-the-mint* claim is refuted by `(D2)`'s linked anchor set). **WHAT THIS ROW
+     *  DERIVES NOW IS THE DISTINCTION `(D2)` LEAVES STANDING** — `§2.4` item 7's two recognised
+     *  SHAPES: a **DICT-SHAPED** node *"condensed by anchor `key`"* (a keyed anchor set) against a
+     *  **LIST-SHAPED** node *"condensed by anchor `order`"* (a dense-order anchor set), both carrying
+     *  `_value`-carrying children, and `DD-13`'s `[]` ≅ `{}` half kept exactly as the clause states
+     *  it (`M-9` carries that half's own equality). `PAR-11` — a `memoryFs` per drive. */
+    const dictFs = memoryFs()
+    const dict = storeOver(dictFs)
+    call(dict, 'write', ROOT, 'file', { value: { k: 'a' } })
+    const dictBytes = dictFs.bytes(FILE_PATH)
     const listFs = memoryFs()
     const list = storeOver(listFs)
     call(list, 'write', ROOT, 'file', { value: ['a'] })
     const listBytes = listFs.bytes(FILE_PATH)
-    expect(dictBytes, 'DD-13 (2) — the dict’s bytes carry a LITERAL on the node itself, so the as-filed `≅` consequence is STRUCK').not.toBe(listBytes)
-    expect(dictBytes ?? '', 'DD-13 (2) — the dict answers `{\'0\':\'a\'}`').toContain('"0"')
-    expect(listBytes ?? '', 'DD-13 (2) — the list answers `[\'a\']`, its elements being TRANSPARENT CHILD NODES').toContain('[')
+    expect(dictBytes, 'C7 — the keyed arm’s bytes are the state').not.toBeNull()
+    expect(listBytes, 'C7 — the dense-order arm’s bytes are the state').not.toBeNull()
+    expect(dictBytes, '`DD-13` (2) as re-derived by `(D2)` — a KEYED anchor set and a DENSE-ORDER anchor set are two states with TWO byte forms').not.toBe(listBytes)
+    expect(dictBytes ?? '', '`(D2)`/`R16`(e) — BOTH arms carry the transparency’s child nodes: the dict’s member child is `{"_value":"a"}`').toContain('"_value"')
+    expect(listBytes ?? '', '`(D2)`/`R16`(e) — and so is the list’s element child').toContain('"_value"')
+    expect(
+      JSON.parse(dictBytes ?? '{}') as unknown,
+      '§2.4 item 7 — the DICT-SHAPED arm is condensed BY ANCHOR `key`: the object’s member is the member’s own name and its value is the child node’s `_value`',
+    ).toEqual({ tabs: { k: { _value: 'a' } } })
+    expect(
+      JSON.parse(listBytes ?? '{}') as unknown,
+      '§2.4 item 7 — the LIST-SHAPED arm is condensed BY ANCHOR `order`: the array’s element is the child node’s `_value`',
+    ).toEqual({ tabs: [{ _value: 'a' }] })
+    /** THE READ SIDE OF THE SAME TWO ARMS, so the byte forms are tied to the states they condense:
+     *  the dict answers ONE object whose member is the member’s own name, and the list answers a real
+     *  ARRAY. (The `'0'`-spelled dict is deliberately NOT driven here — see the note above: its
+     *  distinctness from `['a']` is a contract-internal follow-up, not this row’s claim.) */
+    const dictRead = readValue(readOn(dict, 'generic', ROOT)) as Rec
+    const listRead = readValue(readOn(list, 'generic', ROOT))
+    expect(Array.isArray(listRead), '§2.4 item 7 — the list arm condenses to an ARRAY (its children being transparent, condensed AWAY)').toBe(true)
+    expect(Array.isArray(dictRead), '§2.4 item 7 — the dict arm is the `otherwise` arm and never an array').toBe(false)
+    expect(Object.keys(dictRead), '§2.4 item 7 — the dict’s member naming is the ANCHOR KEY’s').toEqual(['k'])
+    expect(readValue(readOn(dict, 'generic', ['tabs', 'k'])), '`R16`(e)/`(D2)` — the dict member’s own address is a NODE LOCATION, answering its literal through the transparency').toBe('a')
+    expect(readValue(readOn(list, 'generic', ['tabs', '0'])), '`R16`(e)/`(D2)` — and the list element’s own address is the same kind of node').toBe('a')
   })
 
   it('M-11 · §2.4 item 3 — the mint keys a CONTAINER member’s anchor by the member’s name and orders it densely from 0', async () => {
@@ -1015,41 +1056,67 @@ describe('§2.5 — THE WRITE ORDER AND THE COMPLETE `A1`–`A10` ARM TABLE', ()
     expect(readValue(readOn(f, 'generic', CHILD)), 'A2 — NOTHING IS MINTED: the pre-call state stands, and the caller’s container is never partially placed').toEqual(preState)
   })
 
-  it('W-4a · §2.5 item 3 / C19+C4 — the overwrite IS TOTAL at (address, tier) and the PATH is re-minted: the landing drive, at a PROPERTY address (`A5`/`A6`)', async () => {
+  it('W-4a · §2.5 item 3 / `A2` / `R17`(a) / `R16`(d) / `D2` — the CONTAINER at the NODE LOCATION the first write’s own mint created: REFUSED `\'node-location-container\'` at `M-PROP`', async () => {
     await resolveStoreSurface()
-    /** THE LANDING ARM THIS ROW MEANS TO DRIVE, re-derived from the arm table: the addressed
-     *  address must resolve to a LITERAL PROPERTY (`A5`: *"the literal is replaced by an
-     *  anchor/link/child set"*) or an ABSENT PROPERTY (`A6`: `C18`'s add), NEVER to a NODE
-     *  LOCATION (which `A2` refuses `'node-location-container'`). `CHILD` = `['tabs','page']` has
-     *  `ROOT` as its immediate parent, so `CHILD` is a PROPERTY address of `tabs` throughout — and
-     *  the drive writes it TWICE, so the second write is the TOTAL OVERWRITE of the instance at
-     *  `(CHILD, 'mem')` and the fire set is the re-mint's observable (`C4`/`C19` · `§2.11` item 5).
-     *  The first write supplies the literal at `ROOT`'s own `seed` member, so the sibling-member
-     *  claim is driven at the same time. `store()`'s explicit `PAR-11` double is supplied. */
-    const f = store()
-    call(f, 'write', ROOT, 'mem', { value: { seed: 1, other: 3 } })
-    const preRoot = readValue(readOn(f, 'generic', ROOT)) as Rec
+    /** **RE-DERIVED 2026-10-11 (THE TESTWRITER, ON THE ARCHITECT'S ACTIVE RULING IN
+     *  `docs/decisions.md`: `(D1)`…`(D4)`, the row of `2026-10-11`; `(D3)` SUPERSEDES `§0A`
+     *  `DD-13`'s *"A DICT member is a LITERAL ON THE NODE ITSELF"* reading).** THE EARLIER FORM OF
+     *  THIS CELL DROVE `write(ROOT, 'mem', {value: {seed: 1, other: 3}})`, then asserted `A5`'s
+     *  LANDING at `['tabs','seed']` — which requires that address to be a LITERAL PROPERTY, i.e.
+     *  `seed` to stand in `tabs`' OWN `literals` table. **UNDER `(D2)` IT DOES NOT: the first write's
+     *  payload IS A CONTAINER, so `(D2)` MINTS ITS CONTENTS AS A LINKED ANCHOR SET — *"a
+     *  literal-valued member becoming a child node readable as its literal through the reserved
+     *  `_value` transparency"* (`R16`(e)) — and a child node is reached by an ANCHOR at `seed`, so
+     *  `§2.3` item 2's `M-PROP` answers NODE LOCATION (i) at that address, not LITERAL PROPERTY (ii).
+     *  **A CONTAINER WRITTEN THERE IS THEREFORE THE ANTI-PATTERN `R16`(d) NAMES:**
+     *  *"Passing an array/list/dict to a node location … is an anti-pattern and the user should
+     *  create a wrapper node"* ⇒ `A2`/`R17`(a). **THE RULING'S OWN WORDS, AND WHY NO EXCEPTION IS
+     *  AVAILABLE:** *"adding an array, dict, or other container as a node value is an unsupported
+     *  anti-pattern and this needs to be wrapped in another node so that is can be translated to a
+     *  linked anchor set"* — the REFUSAL is what makes the wrapper necessary, so a cell that LANDED a
+     *  container here would assert an arm OUTSIDE the table (`§2.5` item 7: *"a row driven to an arm
+     *  outside this table FAILS"*). **`A5`'s ARM IS NOT WITHDRAWN BY THIS RE-DERIVATION: it is driven
+     *  — deliberately and legitimately — by `W-12` beside this cell, whose drive writes the literal
+     *  DIRECTLY AT THE PROPERTY ADDRESS first (`A1`/`A4`: *"an entry of the IMMEDIATE PARENT's own
+     *  `literals`"*), which is the ONE way `M-PROP` answers LITERAL PROPERTY at that address.**
+     *  `PAR-11` — the fixture supplies the explicit `memoryFs` double, so the bytes are readable on
+     *  both sides of the refusal. */
+    const fs = memoryFs()
+    const f = storeOver(fs)
+    expect(
+      expectCommitted(call(f, 'write', ROOT, 'mem', { value: { seed: 1, other: 3 } }))['status'],
+      '(D2) — the container mint lands: its literal-valued members become CHILD NODES (`R16`(e))',
+    ).toBe('committed')
+    /** THE ADDRESS CLASSIFICATION `M-PROP` MAKES THEREAFTER, MEASURED BEFORE THE REFUSAL: the
+     *  unqualified read at the address PROJECTS the `_value` transparency (`R2`/`(D4)`), the
+     *  tier-qualified read returns the NODE — which is what NODE LOCATION means at an address. */
+    expect(readValue(readOn(f, 'generic', ['tabs', 'seed'])), '`R2`/`(D4)` — unqualified, the child node answers its literal ALONE').toBe(1)
+    expect(
+      readValue(readOn(f, 'generic', ['tabs', 'seed'], 'mem')),
+      '(D2)/`(D4)`/`R16`(e) — the qualified read returns the NODE: the member was minted as a child node carrying the reserved `_value`',
+    ).toEqual({ _value: 1 })
+    const preBytes = fs.bytes(FILE_PATH)
+    const preState = readValue(readOn(f, 'generic', ROOT))
     let firedAncestor = 0
     let firedAddress = 0
     call(f, 'listen', ROOT, () => {
       firedAncestor += 1
     })
-    call(f, 'listen', CHILD, () => {
+    call(f, 'listen', ['tabs', 'seed'], () => {
       firedAddress += 1
     })
-    expect(expectCommitted(writeOn(f, 'generic', CHILD, 'mem', { value: { first: 1 } }))['status'], 'A6 — the link is CREATED and the child node’s subtree is minted at whole depth').toBe('committed')
-    /** THE SECOND WRITE IS THE PROBLEM'S OWN PROPERTY ADDRESS (`CHILD` is a property of `ROOT`, and
-     *  its own member `first` is a LITERAL PROPERTY of `CHILD`): a CONTAINER there is `A5`'s
-     *  replace-the-literal arm — a LANDING arm — where a CONTAINER at `CHILD` ITSELF would be `A2`'s
-     *  NODE-LOCATION refusal (nothing minted, nothing to overwrite). */
-    const r = expectCommitted(writeOn(f, 'generic', [...CHILD, 'first'], 'mem', { value: { c: 3 } }))
-    expect(r['purged'], '§2.5 item 4 — the purge set is `∅` for a `mem` write over a `mem` instance').toEqual([])
-    expect(readValue(readOn(f, 'generic', [...CHILD, 'first'])), 'A5 — “the literal is replaced by an anchor/link/child set”: there is no read-modify-write, no merge and no partial member update').toEqual({ c: 3 })
-    expect(readValue(readOn(f, 'generic', CHILD)), 'C19 — the addressed instance is discarded and re-minted WHOLESALE from the write’s own payload, and its OWN sibling member survives').toEqual({ first: { c: 3 } })
-    expect(readValue(readOn(f, 'generic', ROOT)), 'C4 — the re-mint is of the PARENT PATH, not a second mechanism: the parent carries the new child beside its own literals').toEqual({ seed: 1, other: 3, page: { first: { c: 3 } } })
-    expect(Object.keys(preRoot), 'A5 — the pre-write parent carried the literal members the re-mint preserves').toEqual(['seed', 'other'])
-    expect(firedAncestor, 'C4/§2.11 item 5 — every node on the walk from the register is re-minted, and the FIRE SET is the re-mint’s only observable: the ancestor fires ONCE per LANDING write').toBe(2)
-    expect(firedAddress, '§2.11 item 5 — the addressed address is re-minted too, so its own listener fires ONCE per write').toBe(2)
+    const r = expectNodeLocationContainerRefusal(
+      writeOn(f, 'generic', ['tabs', 'seed'], 'mem', { value: { c: 3 } }),
+      'W-4a (`A2` ⇒ token 21, `M-PROP`)',
+    )
+    expect(fs.bytes(FILE_PATH), '`A2`/`R17`(a) — NO FILE IS WRITTEN: the pre-call file bytes stand byte-identical').toBe(preBytes)
+    expect(firedAncestor + firedAddress, '`A2`/`R17`(a) — the purge does not run and NO listener fires, at the ancestor or at the address').toBe(0)
+    expect('purged' in r, '`A2`/`R17`(a) — the answer is the closed `Refusal`: the purge is not even recorded').toBe(false)
+    expect(readValue(readOn(f, 'generic', ROOT)), '`A2` — NOTHING IS MINTED: the pre-call state stands and the caller’s container is never partially placed').toEqual(preState)
+    expect(
+      readValue(readOn(f, 'generic', ['tabs', 'seed'], 'mem')),
+      '`A2` — the node at the address is UNTOUCHED: `_value`’s exclusivity (`R17`(c)) is not consulted because the arm that refuses this write is the NODE-LOCATION arm, which never reaches the node',
+    ).toEqual({ _value: 1 })
   })
 
   it('W-5 · §2.5 item 4 / C19 — the PURGE runs at step (8) with its EXACT set: `0 + 1 + 2 = 3`', async () => {
@@ -1130,12 +1197,78 @@ describe('§2.5 — THE WRITE ORDER AND THE COMPLETE `A1`–`A10` ARM TABLE', ()
     expect(readValue(readOn(f, 'generic', ['tabs', 'seed'])), 'A4 — no property deletion is involved and none is possible').toBe('second')
   })
 
-  it('W-12 · §2.5 item 7 `A5` — a CONTAINER at a LITERAL PROPERTY replaces the literal with an anchor/link/child set', async () => {
+  it('W-12 · §2.5 item 7 `A5` / `R16`(c) / `R17`(b) / `(D2)` — a CONTAINER at a LITERAL PROPERTY replaces the literal with an anchor/link/child set: the overwrite is TOTAL at (address, tier) and the PATH is re-minted', async () => {
     await resolveStoreSurface()
+    /** **RE-DERIVED 2026-10-11 (THE TESTWRITER, ON THE ARCHITECT'S ACTIVE RULING IN
+     *  `docs/decisions.md`: `(D1)`…`(D4)`; `(D3)` SUPERSEDES `§0A` `DD-13`'s *"A DICT member is a
+     *  LITERAL ON THE NODE ITSELF"* reading).** THE EARLIER DRIVE REACHED `A5`'s LITERAL-PROPERTY
+     *  ROW BY WRITING THE CONTAINER `{seed: 1}` AT `ROOT` — which under `(D2)` MINTS `seed`'s
+     *  contents as a CHILD NODE (`R16`(e)'s reserved `_value`), so `M-PROP` answers NODE LOCATION
+     *  there and the next container write is `A2`'s REFUSAL (`W-4a` beside this cell). **THE LEGAL
+     *  ROUTE TO `A5`, AND THE ONE DRIVEN HERE, IS THE LITERAL WRITTEN DIRECTLY AT THE PROPERTY
+     *  ADDRESS:** `write(['tabs','seed'], …, {value: 'a literal'})` is `A1`/`A4` — *"an entry of the
+     *  IMMEDIATE PARENT's own `literals` table, with NO child node minted"* (`R16`(c) first half,
+     *  `R16`(a)'s re-mint) — and `A4`'s own cell `W-11` already pins that this member is the parent's
+     *  own literal. **`M-PROP` therefore answers LITERAL PROPERTY (ii) at that address, and THAT is
+     *  `A5`'s row:** *"replace with an anchor/link/child set if it is an array or object"*
+     *  (`R16`(c) second half) — ONE `parent` anchor at the final segment on the re-minted parent, ONE
+     *  link, ONE child node minted from the payload container, its subtree at whole depth, the literal
+     *  OVERWRITTEN and never deleted (`R17`(b)). **THE OVERWRITE IS TOTAL AT `(address, tier)` and the
+     *  FIRE SET is the re-mint's only observable (`C4`/`C19` · `§2.11` item 5) — the properties the
+     *  pre-`(D3)` form of this cell drove at a drive that could no longer reach the arm.**
+     *  `PAR-11` — `store()`'s explicit double is supplied. */
     const f = store()
-    call(f, 'write', ROOT, 'mem', { value: { seed: 1 } })
-    expect(expectCommitted(writeOn(f, 'generic', ['tabs', 'seed'], 'mem', { value: { inner: { deep: 2 } } }))['status'], 'R16(c) second half — “replace with an anchor/link/child set if it is an array or object”').toBe('committed')
-    expect(readValue(readOn(f, 'generic', ['tabs', 'seed'])), 'A5 — ONE parent anchor, ONE link, ONE child node minted from the payload container, its subtree at whole depth').toEqual({ inner: { deep: 2 } })
+    expect(
+      expectCommitted(call(f, 'write', ROOT, 'mem', { value: { other: 3 } }))['status'],
+      '`A1`/`R16`(a) — the register entry’s own root node is minted first, so the property address below has a resolved parent',
+    ).toBe('committed')
+    expect(
+      expectCommitted(writeOn(f, 'generic', ['tabs', 'seed'], 'mem', { value: 'a literal' }))['status'],
+      '`A4`/`R16`(c) first half — a LITERAL written at a property address is an entry of the IMMEDIATE PARENT’s own `literals`: NO child node is minted there',
+    ).toBe('committed')
+    const preMember = readValue(readOn(f, 'generic', ['tabs', 'seed']))
+    expect(preMember, '`A4` — the member is the parent’s own literal, so `M-PROP` will answer LITERAL PROPERTY for the next write').toBe('a literal')
+    expect(
+      readValue(readOn(f, 'generic', ['tabs', 'seed'], 'mem')),
+      '`A4`/`R16`(b) — and a LITERAL PROPERTY is not a node: the qualified read answers the LITERAL, never a node transcription (the contrast `A5`’s landing will break)',
+    ).toBe('a literal')
+    const preRoot = readValue(readOn(f, 'generic', ROOT)) as Rec
+    let firedAncestor = 0
+    let firedAddress = 0
+    call(f, 'listen', ROOT, () => {
+      firedAncestor += 1
+    })
+    call(f, 'listen', ['tabs', 'seed'], () => {
+      firedAddress += 1
+    })
+    const r = expectCommitted(writeOn(f, 'generic', ['tabs', 'seed'], 'mem', { value: { inner: { deep: 2 } } }))
+    expect(r['status'], '`R16`(c) second half — “replace with an anchor/link/child set if it is an array or object”').toBe('committed')
+    expect(r['purged'], '§2.5 item 4 — the purge set is `∅` for a `mem` write over a `mem` instance').toEqual([])
+    expect(readValue(readOn(f, 'generic', ['tabs', 'seed'])), '`A5` — ONE parent anchor, ONE link, ONE child node minted from the payload container, its subtree at whole depth').toEqual({ inner: { deep: 2 } })
+    expect(
+      Object.keys(readValue(readOn(f, 'generic', ['tabs', 'seed'])) as Rec),
+      '`(D2)`/`R16`(e) — the minted child’s own subtree is a LINKED ANCHOR SET: `inner` is a child node (readable as its literal through `_value`), not a literal on its parent',
+    ).toEqual(['inner'])
+    expect(
+      readValue(readOn(f, 'generic', ['tabs', 'seed', 'inner'], 'mem')),
+      '`(D2)` — `inner` is a DICT-SHAPED child node whose own member `deep` is a further child: the container’s contents translate to nodes at WHOLE DEPTH (`§2.4` item 3), so a qualified read at its own address returns the NODE, not the literal',
+    ).toEqual({ deep: 2 })
+    expect(
+      readValue(readOn(f, 'generic', ['tabs', 'seed', 'inner', 'deep'])),
+      '`(D2)`/`R16`(e) — the WHOLE-DEPTH mint: `deep` is a transparent child node, so the unqualified read at ITS own address projects its `_value` literal alone',
+    ).toBe(2)
+    expect(
+      readValue(readOn(f, 'generic', ['tabs', 'seed', 'inner', 'deep'], 'mem')),
+      '`(D2)`/`(D4)` — and the tier-qualified read at that same address returns the NODE: the reserved `_value` is what carries the literal',
+    ).toEqual({ _value: 2 })
+    expect(readValue(readOn(f, 'generic', ROOT)), '`C4` — the re-mint is of the PARENT PATH, not a second mechanism: the parent carries the new child beside its own surviving literal').toEqual({ other: 3, seed: { inner: { deep: 2 } } })
+    expect(Object.keys(preRoot), '`A5` — the pre-write parent carried the literal members the re-mint preserves').toEqual(['other', 'seed'])
+    expect(
+      Object.keys(readValue(readOn(f, 'generic', ROOT)) as Rec),
+      '`R17`(b) — NO PROPERTY DELETION: the member at the final segment is the SAME key set afterwards, the literal having been OVERWRITTEN (replaced by the anchor/link/child set), never removed',
+    ).toEqual(['other', 'seed'])
+    expect(firedAncestor, '`C4`/`§2.11` item 5 — the FIRE SET is the re-mint’s only observable: the ancestor fires ONCE per LANDING write').toBe(1)
+    expect(firedAddress, '`§2.11` item 5 — the addressed address is re-minted too, so its own listener fires ONCE').toBe(1)
   })
 
   it('W-13 · §2.5 item 7 `A6` — a CONTAINER at an ABSENT PROPERTY creates the link (`C18`’s add arm)', async () => {
@@ -1390,7 +1523,7 @@ describe('§2.7 — THE `file` TIER', () => {
     call(f, 'write', ROOT, 'file', { value: { seed: { deep: 1 } } })
     const bytes = fs.bytes(FILE_PATH)
     expect(bytes, 'C7 — the file must “exactly match the data state”').not.toBeNull()
-    expect(JSON.parse(bytes ?? '{}'), 'C7 — the bytes are the state, keyed by register-entry name').toEqual({ tabs: { seed: { deep: 1 } } })
+    expect(JSON.parse(bytes ?? '{}'), 'C7 — the bytes are the state, keyed by register-entry name; `DD-13`(iv)/`(D2)` — a member position holds a NODE, so the bytes carry the state’s node as `{"_value": <the literal>}` and a member that is itself a container as the object its own child members condense to').toEqual({ tabs: { seed: { deep: { _value: 1 } } } })
   })
 
   it('F-2 · §2.7 item 2 — the FOUR bound mutation classes, each answering a returned typed record', async () => {
@@ -1466,7 +1599,7 @@ describe('§2.7 — THE `file` TIER', () => {
     expect(expectCommitted(writeOn(f, 'generic', ROOT, 'file', { value: { seed: 2 } }))['status'], 'R3 — the commit writes a replacement beside the path and renames it onto the path').toBe('committed')
     const after = fs.bytes(FILE_PATH)
     expect(after, 'R3 — the path never holds a mixture').not.toBe(before)
-    expect(JSON.parse(after ?? '{}'), 'R3 — the post-call bytes are the post-call state').toEqual({ tabs: { seed: 2 } })
+    expect(JSON.parse(after ?? '{}'), 'R3 — the post-call bytes are the post-call state; `DD-13`(iv)/`(D2)` — the member position carries the minted child node, whose bytes are `{"_value": <the literal>}` EXPLICITLY (the member is no bare scalar: `C7`’s duty binds the bytes to the STATE, which holds a node)').toEqual({ tabs: { seed: { _value: 2 } } })
   })
 
   it('F-8 · §2.7 item 5 — the `file` tier is UNLOADED after a refused load: every read/write refuses `not-loaded`', async () => {
@@ -2664,8 +2797,8 @@ describe('§6 — PARAMETER SEMANTICS (the `16 = 13 + 3` `PAR-` rows)', () => {
     expect(existsSync(path), 'PAR-11 — “absent ⇒ the real `node:fs`”: the JSON file EXISTS on the real path after the commit').toBe(true)
     expect(
       JSON.parse(readFileSync(path, 'utf8')) as unknown,
-      'C7 — the real file’s bytes are the state, keyed by register-entry name',
-    ).toEqual({ tabs: { seed: { deep: 1 } } })
+      'C7 — the real file’s bytes are the state, keyed by register-entry name; `DD-13`(iv)/`(D2)` — a container’s literal-valued member is a NODE in the state, so the bytes carry `{"_value": <the literal>}` EXPLICITLY at that member position',
+    ).toEqual({ tabs: { seed: { deep: { _value: 1 } } } })
     const second = storeWithoutFs({ file: { path } })
     /** `PAR-12`/`§2.12` item 1 — the LOAD is its OWN arm (`'loaded' | 'refused'`), never a `committed`
      *  record, so the load's own status and its `present`/`roots` figure are what this drive asserts. */

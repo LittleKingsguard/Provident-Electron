@@ -1075,6 +1075,45 @@ export function tombstoneAttempts(): Attempt[] {
   return out
 }
 
+/**
+ * **`P-SD-IM-7`'s `file`-tier BYTE FORM, RE-DERIVED 2026-10-11 (THE TESTWRITER, ON THE ARCHITECT'S
+ * ACTIVE RULING IN `docs/decisions.md`: `(D2)`/`(D3)`, the row of `2026-10-11`; `RCA-8(d)`).**
+ * `DD-13`(iv) declares the value arm's SAVE-side bytes: **where a transparent node stands AT A NODE
+ * POSITION — a member’s child, or the root of a saved tree — the bytes carry `{"_value": <the
+ * literal>}` EXPLICITLY**, because *"the file holds the STATE, and the load re-mints the transparency
+ * from the reserved key"* (`C7`: the bytes must *"exactly match the data state"*). **Under `(D2)` EVERY
+ * literal-valued member of a container is such a node** — its contents *"translate to a LINKED ANCHOR
+ * SET"* and *"a literal-valued member becomes a child node readable as its literal through the
+ * reserved `_value` transparency"* (`R16`(e)) — so this row's save-success cells assert the DECLARED
+ * byte form rather than the superseded `DD-13` *"A DICT member is a LITERAL ON THE NODE ITSELF"*
+ * reading, which the ruling SUPERSEDES (`(D3)`) and which the earlier form of these two cells
+ * carried.
+ *
+ * THE TRANSFORMATION IS EXACTLY `DD-13`(iv)'s TWO ARMS, and nothing else moves:
+ *  · an ARRAY becomes an array of its elements' own file forms (its elements are transparent child
+ *    nodes, so each is `{"_value": …}` — the array arm *"consumes the children"*);
+ *  · a plain OBJECT becomes an object of its members' own file forms;
+ *  · a LITERAL (a string, a finite number, a boolean, `null`) becomes `{"_value": <the literal>}` —
+ *    the node the state holds at that position;
+ * and the row's `[]`/`{}` corner is untouched by it (`{}` has no member to transform, so the empty
+ * arms still meet at `{}`, `DD-13`(3)).
+ *
+ * **WHAT THIS HELPER DOES NOT DO: it is NOT an implementation of the mint, and it re-derives nothing
+ * beyond the two bytes these cells already asserted.** It takes the write payload's VALUE and answers
+ * the bytes `C7` binds to the state that payload mints — a closed, pure transformation of the
+ * closed payload table this row drives (`{seed: 1}` and `{seed: {deeper: 2}}`), so the row's declared
+ * term `6 = 3 × 2` and its property (`THE file TIER ALWAYS REPRESENTS THE SAVED STATE`) are unmoved
+ * and no cell takes a draw (`§5.5` item 1). */
+function fileBytesOf(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map((element) => fileBytesOf(element))
+  if (value !== null && typeof value === 'object') {
+    const out: Rec = {}
+    for (const [key, member] of Object.entries(value as Rec)) out[key] = fileBytesOf(member)
+    return out
+  }
+  return { _value: value }
+}
+
 /** `P-SD-IM-7` · `S-SD-FILE-1` — `3 (mutation classes) × 2 (save arms)`. */
 export function fileTierAttempts(): Attempt[] {
   const out: Attempt[] = []
@@ -1125,7 +1164,17 @@ export function fileTierAttempts(): Attempt[] {
           }
           const committed = expectCommitted(answer)
           expect(committed['purged'], 'C19 — purge(file) = {mem, temp instances at the address}').toEqual([])
-          expect(fs.bytes(FILE_PATH), 'C7 — the file matches the state exactly at every quiescent point').not.toBeNull()
+          const savedBytes = fs.bytes(FILE_PATH)
+          expect(savedBytes, 'C7 — the file matches the state exactly at every quiescent point').not.toBeNull()
+          /** **THIS ROW’S SAVE-SUCCESS BYTE ASSERTION, RE-DERIVED 2026-10-11 FROM `DD-13`(iv) WITH
+           *  `(D2)`/`(D3)`** (see `fileBytesOf` above): the tier’s state holds, at each member
+           *  position, the CHILD NODE `(D2)`’s mint produced, and the bytes declare it
+           *  `{"_value": <the literal>}` — the file holds the STATE and the load re-mints the
+           *  transparency from the reserved key. The earlier form asserted the bare literal
+           *  (`{tabs: {seed: 1}}`), which is the superseded `DD-13` reading `(D3)` removes; the
+           *  assertion is therefore NOT weakened but moved onto the declared form, and it is stated
+           *  against the PAYLOAD THIS CELL DRIVES (the closed table above) rather than against a
+           *  literal copied from a measurement. */
           if (klass === 'a tombstone write') {
             /** **`P-SD-IM-7`'s `a tombstone write · the save success` CELL, RE-DERIVED FROM `§2.6`
              *  item 3 WITH `R10`/`R12` (`RCA-8(d)`):** *"Tombstoning at file tier omits it from the
@@ -1138,7 +1187,7 @@ export function fileTierAttempts(): Attempt[] {
              *  the CONDENSATION (`C7`/`R3`): the tier's state and the file's bytes AGREE at every
              *  quiescent point** — so what is asserted is the removal in BOTH its declared places. */
             expect(committed['tombstoned'], '§2.6 item 3 — the committed record declares the tombstone').toBe(true)
-            const saved = JSON.parse(fs.bytes(FILE_PATH) ?? '{}') as Rec
+            const saved = JSON.parse(savedBytes ?? '{}') as Rec
             expect(
               Object.prototype.hasOwnProperty.call(saved, ROOT[0]),
               'C7/§2.6 item 3 — THE FILE’S BYTES CARRY NO INSTANCE AT THE TOMBSTONED ADDRESS: the tombstone is omitted from the saved file, so a fresh load cannot re-mint the node',
@@ -1162,9 +1211,9 @@ export function fileTierAttempts(): Attempt[] {
             payload['value'],
           )
           expect(
-            JSON.parse(fs.bytes(FILE_PATH) ?? 'null'),
-            'C7 — the CONDENSATION: the file’s bytes and the tier’s state agree (the addressed root’s own instance is what the file carries)',
-          ).toEqual({ [ROOT[0]]: payload['value'] })
+            JSON.parse(savedBytes ?? 'null'),
+            'C7 — the CONDENSATION: the file’s bytes and the tier’s state agree (the addressed root’s own instance is what the file carries), and `DD-13`(iv)/`(D2)` fix the FORM of that state at a member position: `{"_value": <the literal>}` EXPLICITLY, because the state holds the child node the mint produced',
+          ).toEqual({ [ROOT[0]]: fileBytesOf(payload['value']) })
         },
       })
     }
